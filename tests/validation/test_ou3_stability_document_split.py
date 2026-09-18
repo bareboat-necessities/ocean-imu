@@ -96,11 +96,11 @@ class StabilityDocumentSplitTests(unittest.TestCase):
     def test_study_uses_same_ieee_two_column_style_as_article(self):
         article = MAIN.read_text()
         study = STUDY.read_text()
-        self.assertIn(r'\\documentclass[conference]{IEEEtran}', article)
-        self.assertIn(r'\\documentclass[conference]{IEEEtran}', study)
-        self.assertNotIn(r'\\usepackage[margin=27mm]{geometry}', study)
-        self.assertIn(r'\\IEEEauthorblockN', study)
-        self.assertIn(r'\\IEEEauthorblockA', study)
+        self.assertIn(r'\documentclass[conference]{IEEEtran}', article)
+        self.assertIn(r'\documentclass[conference]{IEEEtran}', study)
+        self.assertNotIn(r'\usepackage[margin=27mm]{geometry}', study)
+        self.assertIn(r'\IEEEauthorblockN', study)
+        self.assertIn(r'\IEEEauthorblockA', study)
 
     def test_both_top_level_documents_are_covered_by_existing_latex_build(self):
         workflow = (DOC.parents[1] / '.github/workflows/build.yml').read_text()

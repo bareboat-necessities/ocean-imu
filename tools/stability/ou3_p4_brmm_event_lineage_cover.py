@@ -37,7 +37,8 @@ import ou3_p4_kalman_reset_binary32_iss as FPISS
 import ou3_p4_joint_brmm_prefix_ldlt as PREFIX
 import ou3_p4_brmm_reduced_event_master as EVENTMASTER
 import ou3_p4_brmm_same_Dtheta_reset_binding as RESETBIND
-import ou3_p4_same_cell_correction_domain as CORR
+import ou3_p4_brmm_nonlinear_correction_domain as CORRDOMAIN
+import ou3_p4_brmm_szero_correction_domain as SZERO
 import ou3_brmm_private_mahony_state_step as MAHONY
 import ou3_brmm_frontend_state_step as FRONT
 
@@ -74,6 +75,7 @@ class CertifiedJosephPrefix:
     reset_delta:float
     D_theta:object
     B_theta:object
+    within_declared_correction_chart:bool
 
 
 def root_radial(token='RADIAL_ROOT'):
@@ -115,7 +117,7 @@ def validate_event_lineage(lineage:EventLineage):
         if i>0 and c.predecessor_token!=cells[i-1].source_token:f.append(f'event {i}: literal predecessor detached')
     return list(dict.fromkeys(f))
 
-def certify_joseph_prefix(cell:COVER.SourceCoverCell,radial:RadialCell,corr:dict)->CertifiedJosephPrefix:
+def certify_joseph_prefix(cell:COVER.SourceCoverCell,radial:RadialCell)->CertifiedJosephPrefix:
     if cell.kind not in ('S_zero','accelerometer','magnetometer'):
         raise ValueError('certified Joseph prefix requires Joseph event')
     if cell.radial_scale is None or cell.radial_scale.lo!=radial.interval.lo or cell.radial_scale.hi!=radial.interval.hi:
@@ -123,13 +125,27 @@ def certify_joseph_prefix(cell:COVER.SourceCoverCell,radial:RadialCell,corr:dict
     em=EVENTMASTER.build_event_master(cell)
     ef=EVENTMASTER.validate_event_master(cell,em)
     if ef:raise RuntimeError('real event master invalid: '+repr(ef))
-    rb=RESETBIND.bind_event(em,corr)
+    if cell.kind=='S_zero':
+        raw=SZERO.certify_szero_event(em)
+        if not raw['strict_outward_LDLT_closed']:
+            raise RuntimeError('same-graph S=0 correction target did not close')
+        certificate={'delta':raw['certified_delta'],
+                     'event_source_token':em.source_token,
+                     'estimator_source_token':em.estimator_source_token,
+                     'premise_multipliers':dict.fromkeys(raw['hard_entry_groups'],raw['common_Sprocedure_multiplier'])}
+    else:
+        chart=CORRDOMAIN.certify_event(em)
+        if not chart['closed']:
+            raise RuntimeError('same-graph nonlinear correction target did not close')
+        certificate=chart['certificate']
+    rb=RESETBIND.bind_event_certified_graph(em,certificate)
     if not rb.get('closed'):
         raise RuntimeError('same-Dtheta reset binding did not close: '+repr(rb))
     return CertifiedJosephPrefix(
         radial.token,cell.estimator_source_token or '',cell.source_token,cell.predecessor_token,
         cell.mode,cell.kind,em.coordinate_dimension,em.master,em.nonlinear_sectors,
-        rb['reset_sector'],float(rb['delta']),em.D_theta,em.B_theta)
+        rb['reset_sector'],float(rb['delta']),em.D_theta,em.B_theta,
+        bool(rb['within_declared_correction_chart']))
 
 def validate_certified_prefix(prefix:CertifiedJosephPrefix,cell:COVER.SourceCoverCell,radial:RadialCell):
     f=[]
@@ -158,14 +174,18 @@ def _smoke_lineage(radial:RadialCell):
     im=_smoke_image();n=18;P=_identity(n);x=[I(0) for _ in range(n)]
     e0=im.source_token+':e0';e1=im.source_token+':e1'
     c0=COVER.source_cell_from_joint_image(im,mode='H',sample_index=0,event_ordinal=0,kind='prediction',state=x,P=P,dt_s=I(.005),pseudo_elapsed_s=I(0),radial_scale=radial.interval,event_source_token=e0,event_predecessor_token=im.predecessor_token)
-    c1=COVER.source_cell_from_joint_image(im,mode='H',sample_index=0,event_ordinal=1,kind='aw_floor',state=x,P=P,dt_s=I(.005),pseudo_elapsed_s=I(.005),radial_scale=radial.interval,event_source_token=e1,event_predecessor_token=e0)
+    # Carry the complete outward image, not a point identity that loses ulps.
+    P1=COV.prediction_image(P,_identity(n),_zeros(n))
+    c1=COVER.source_cell_from_joint_image(im,mode='H',sample_index=0,event_ordinal=1,kind='aw_floor',state=x,P=P1,dt_s=I(.005),pseudo_elapsed_s=I(.005),radial_scale=radial.interval,event_source_token=e1,event_predecessor_token=e0)
     return im,EventLineage(radial,im.source_token,(c0,c1))
 
 def _smoke_joseph_cells(im,radial):
     n=18;x=[I(0) for _ in range(n)];P=_identity(n);R=_identity(3);Rhat=_identity(3);f=[I(.2),I(-.1),I(-9.7)]
-    e1=im.source_token+':j1';e2=im.source_token+':j2'
-    s=COVER.source_cell_from_joint_image(im,mode='H',sample_index=0,event_ordinal=1,kind='S_zero',state=x,P=P,dt_s=I(.005),pseudo_elapsed_s=I(.01),radial_scale=radial.interval,event_source_token=e1,event_predecessor_token=im.predecessor_token)
-    a=COVER.source_cell_from_joint_image(im,mode='H',sample_index=0,event_ordinal=2,kind='accelerometer',state=x,P=P,dt_s=I(.005),pseudo_elapsed_s=I(.015),radial_scale=radial.interval,event_source_token=e2,event_predecessor_token=e1,R=R,f_hat=f,R_hat=Rhat)
+    # Continue the prediction (:e0), floor (:e1) event namespace. These
+    # are local Joseph fixtures, not a claim of full covariance continuity.
+    e1=im.source_token+':e2';e2=im.source_token+':e3'
+    s=COVER.source_cell_from_joint_image(im,mode='H',sample_index=0,event_ordinal=2,kind='S_zero',state=x,P=P,dt_s=I(.005),pseudo_elapsed_s=I(.01),radial_scale=radial.interval,event_source_token=e1,event_predecessor_token=im.source_token+':e1')
+    a=COVER.source_cell_from_joint_image(im,mode='H',sample_index=0,event_ordinal=3,kind='accelerometer',state=x,P=P,dt_s=I(.005),pseudo_elapsed_s=I(.015),radial_scale=radial.interval,event_source_token=e2,event_predecessor_token=e1,R=R,f_hat=f,R_hat=Rhat)
     return s,a
 
 def build():
@@ -174,8 +194,7 @@ def build():
     bias=BIASISS.build();bf=BIASISS.validate(bias)
     fp=FPISS.build();ff=FPISS.validate(fp)
     prefix=PREFIX.build();pf=PREFIX.validate(prefix)
-    corr=CORR.build();cf=CORR.validate(corr)
-    bad={k:v for k,v in (('signed_master',sf),('joint_master',mf),('BIAS1_ISS',bf),('binary32_ISS',ff),('prefix_bridge',pf),('same_cell_correction',cf)) if v}
+    bad={k:v for k,v in (('signed_master',sf),('joint_master',mf),('BIAS1_ISS',bf),('binary32_ISS',ff),('prefix_bridge',pf)) if v}
     if bad:raise RuntimeError('lineage prerequisites failed: '+repr(bad))
 
     root=root_radial();p1=split_radial(root);p2=refine_partition(p1,p1[1].token)
@@ -185,7 +204,7 @@ def build():
     cov=COV.prediction_transition_closed(lineage.cells[0],lineage.cells[1],F,Q)
 
     sj,aj=_smoke_joseph_cells(im,root)
-    sp=certify_joseph_prefix(sj,root,corr);ap=certify_joseph_prefix(aj,root,corr)
+    sp=certify_joseph_prefix(sj,root);ap=certify_joseph_prefix(aj,root)
     sfp=validate_certified_prefix(sp,sj,root);afp=validate_certified_prefix(ap,aj,root)
     structured_prefix_smoke=not(sfp or afp)
 
@@ -207,6 +226,8 @@ def build():
       'Joseph_prefix_bundle_contains_certified_same_Dtheta_reset_sector':structured_prefix_smoke,
       'Joseph_prefix_bundle_retains_event_specific_reset_delta':structured_prefix_smoke and sp.reset_delta>=0 and ap.reset_delta>=0,
       'Joseph_prefix_validation_failures':sfp+afp,
+      'local_prefixes_within_declared_correction_chart':sp.within_declared_correction_chart and ap.within_declared_correction_chart,
+      'production_correction_chart_qualified_here':False,
       'synthetic_identity_master_may_promote':False,
       'production_same_history_event_master_maps_materialized_here':False,
       'all_admitted_BRMM_predecessor_cells_covered_here':False,'all_continuous_radial_cells_certified_here':False,
@@ -220,7 +241,7 @@ def validate(d):
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
     for k in ('same_signal_estimator_ancestry_required','literal_event_ancestry_required','continuous_radial_coordinate_retained','radial_root_is_closed_unit_interval','binary_refinement_children_union_exact_parent','recursive_partition_exactly_covers_unit_interval','radial_point_sampling_forbidden','estimator_owned_event_lineage_smoke_pass','reachable_covariance_event_continuity_smoke_pass','same_signal_period_sigma_relation_consumed','real_exact_chord_signed_master_prerequisite_consumed','real_joint_sector_master_builder_consumed','physical_BIAS1_ISS_supply_consumed','binary32_Kalman_reset_ISS_consumed','real_estimator_owned_Joseph_prefix_bundle_materialized_smoke','Joseph_prefix_bundle_contains_real_signed_master','Joseph_prefix_bundle_contains_structured_nonlinear_sectors','Joseph_prefix_bundle_contains_certified_same_Dtheta_reset_sector','Joseph_prefix_bundle_retains_event_specific_reset_delta'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('synthetic_identity_master_may_promote','production_same_history_event_master_maps_materialized_here','all_admitted_BRMM_predecessor_cells_covered_here','all_continuous_radial_cells_certified_here','production_BIAS1_and_binary32_maps_embedded_in_prefix_coordinate_here','production_endpoint_augmented_LDLT_closed_here','production_every_prefix_augmented_LDLT_closed_here','production_every_prefix_hard_domain_retention_closed_here','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
+    for k in ('production_correction_chart_qualified_here','synthetic_identity_master_may_promote','production_same_history_event_master_maps_materialized_here','all_admitted_BRMM_predecessor_cells_covered_here','all_continuous_radial_cells_certified_here','production_BIAS1_and_binary32_maps_embedded_in_prefix_coordinate_here','production_endpoint_augmented_LDLT_closed_here','production_every_prefix_augmented_LDLT_closed_here','production_every_prefix_hard_domain_retention_closed_here','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
         if d.get(k) is not False:f.append(k+' not false')
     if d.get('Joseph_prefix_validation_failures')!=[]:f.append('certified Joseph prefix smoke validation failed')
     return f

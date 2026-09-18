@@ -12,7 +12,9 @@ D_theta event graph proves a strict chart-safe correction radius from the full
 hard-entry IQCs and all retained chord/cross sectors.  That exact event-specific
 delta is then supplied to the reset-sector constructor.  Thus the reset IQC is
 never formed across the Cayley-composition antipode and no rowwise-K or detached
-residual ceiling is introduced.
+residual ceiling is introduced. This local certificate does not change the
+canonical 0.25 production chart; qualification against that chart is reported
+separately and is never inferred from local reset-sector validity.
 """
 from __future__ import annotations
 import argparse,json,math
@@ -53,7 +55,7 @@ def build_augmented_prefix(cell):
     if not chart.get('closed'):
         raise RuntimeError('same-Dtheta A21 correction target did not close: '+repr(chart))
     delta=float(chart['certificate']['delta'])
-    rb=RESETBIND.bind_event_first_exit(em,delta)
+    rb=RESETBIND.bind_event_certified_graph(em,chart['certificate'])
     if not rb.get('closed'):raise RuntimeError('same-Dtheta first-exit reset structure failed: '+repr(rb))
     n0=em.coordinate_dimension;beta0=n0;f0=n0+3;n=n0+6
     master=embed_square(em.master,n);nonlinear=tuple((name,embed_square(Pi,n)) for name,Pi in em.nonlinear_sectors)
@@ -68,7 +70,8 @@ def build_augmented_prefix(cell):
             'h_index':em.h_index,'preprojection_ba_map':preba,'beta_map':Beta,'projected_ba_map':F,'reset_utility_delta':float(rb['delta']),
             'same_graph_chart_certificate':chart['certificate'],'same_graph_chart_attempts':int(chart['attempts']),
             'event_token':cell.source_token,'estimator_token':cell.estimator_source_token,'radial_scale':cell.radial_scale,
-            'reset_correction_domain_target_proved_by_same_event_graph':True}
+            'reset_correction_domain_target_proved_by_same_event_graph':True,
+            'within_declared_correction_chart':rb['within_declared_correction_chart']}
 def _smoke_cell():
     im=EVENT._smoke_image();n=21;x=[I(0) for _ in range(n)];P=EVENT._identity(n);R=EVENT._identity(3);Rhat=EVENT._identity(3);f=[I(.2),I(-.1),I(-9.7)];beta=[I(.02),I(-.01),I(.015)]
     return EVENT.COVER.source_cell_from_joint_image(im,mode='A',sample_index=0,event_ordinal=3,kind='accelerometer',state=x,P=P,dt_s=I(.005),pseudo_elapsed_s=I(.015),radial_scale=Interval(0,1),event_source_token=im.source_token+':e3',event_predecessor_token=im.source_token+':e2',R=R,f_hat=f,R_hat=Rhat,true_bias=beta,bias_projection_limit=.4)
@@ -86,6 +89,8 @@ def build():
       'same_event_graph_correction_target_strict_LDLT_closed':True,'same_event_graph_correction_LDLT_pivot_lower':float(cert['minimum_pivot_lower']),
       'reset_target_preproved_by_scalar_ceiling':False,'reset_target_proved_by_same_event_graph':True,
       'structured_chord_cross_sectors_preserved_under_embedding':len(a['nonlinear_sectors'])>0,'all_augmented_matrices_share_one_coordinate':dims,
+      'local_certificate_within_declared_correction_chart':a['within_declared_correction_chart'],
+      'production_correction_chart_qualified_here':False,
       'augmented_coordinate_dimension':n,'reset_utility_delta':delta,'inactive_projection_assumed':False,'rowwise_K_bound_used':False,'independent_beta_slots_per_event_used':False,
       'production_BIAS1_driver_recurrence_embedded_here':False,'production_binary32_forcing_embedded_here':False,'production_complete_prefix_storage_delta_closed_here':False,
       'P4_MOTION_PASS':False,'P4_PASS':False,'P5_MAY_START':False,'next_obligation':'carry beta_true and each BIAS-family driver state across prediction prefixes, add binary32 ISS forcing, and close endpoint/every-prefix storage on the common augmented coordinate'}
@@ -94,7 +99,7 @@ def validate(d):
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
     for k in ('estimator_owned_A21_event_consumed','same_event_D_equals_Kq_bias_correction_consumed','preprojection_ba_is_e_ba_minus_same_cell_d_ba','physical_BIAS1_beta_coordinate_materialized','projected_ba_output_coordinate_materialized','global_active_projection_IQC_attached','saturated_unsaturated_Clarke_branches_all_retained','BIAS1_true_bias_hard_bound_attached_on_same_h','same_Dtheta_reset_sector_embedded','same_Dtheta_first_exit_correction_target_embedded','event_specific_same_Dtheta_reset_sector_embedded','same_event_graph_correction_target_strict_LDLT_closed','reset_target_proved_by_same_event_graph','structured_chord_cross_sectors_preserved_under_embedding','all_augmented_matrices_share_one_coordinate'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('reset_target_preproved_by_scalar_ceiling','inactive_projection_assumed','rowwise_K_bound_used','independent_beta_slots_per_event_used','production_BIAS1_driver_recurrence_embedded_here','production_binary32_forcing_embedded_here','production_complete_prefix_storage_delta_closed_here','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
+    for k in ('reset_target_preproved_by_scalar_ceiling','inactive_projection_assumed','rowwise_K_bound_used','independent_beta_slots_per_event_used','production_correction_chart_qualified_here','production_BIAS1_driver_recurrence_embedded_here','production_binary32_forcing_embedded_here','production_complete_prefix_storage_delta_closed_here','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
         if d.get(k) is not False:f.append(k+' not false')
     if not(math.isfinite(float(d.get('reset_utility_delta',math.nan))) and 0<float(d['reset_utility_delta'])<2.31):f.append('reset utility delta invalid')
     if float(d.get('event_specific_reset_delta',0))!=float(d.get('reset_utility_delta',-1)):f.append('compatibility reset delta drifted')

@@ -31,6 +31,7 @@ jobs:
           tests=(
             test_ou3_stability_package_integrity
             test_ou3_p4_coordinate_transport_algebra
+            test_ou3_p4_ci_event_prefix
             test_ou3_p4_complete_brmm_correction_information_bound
             test_ou3_result_determinism
             test_ou3_source_domain_contract

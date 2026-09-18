@@ -4,6 +4,8 @@ import re
 import unittest
 from pathlib import Path
 
+from test_publication_references import STUDY, reachable_sources
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
@@ -74,14 +76,19 @@ class OUIIIStochasticConcentrationContractTests(unittest.TestCase):
         self.assertIn("raw and localized trajectories coincide", flat)
         self.assertIn("finite-horizon and high-probability", flat)
 
-    def test_conclusion_no_longer_lists_concentration_as_future_work(self):
+    def test_companion_study_owns_the_conditional_concentration_results(self):
         conclusion = _read("w3d-conclusion-summary.tex-part")
-        flat = _flat(conclusion)
+        self.assertIn("kalman_ou-w3d-stability-study.pdf", conclusion)
         self.assertNotIn("Sharper stochastic concentration", conclusion)
-        self.assertIn("Conditional Gaussian quadratic-form concentration", flat)
+        # Check the rendered study graph, not the article from which the proof
+        # was deliberately removed. A detached proof fragment is insufficient.
+        study = "\n".join(reachable_sources(STUDY).values())
+        flat = _flat(study)
+        self.assertIn("conditional Gaussian quadratic-form concentration", flat)
         self.assertIn("Bernstein/Freedman", flat)
-        self.assertIn(r"$\overline\Sigma$", conclusion)
-        self.assertIn(r"$(b_W,v_W)$", conclusion)
+        self.assertIn(r"\overline\Sigma", study)
+        self.assertIn(r"b_W,v_W", study)
+        self.assertIn("They do not remove the open deterministic shipping obligations", flat)
 
 
 if __name__ == "__main__":

@@ -1288,3 +1288,63 @@ in force.
 
 `ALT_LIVE_PASS=false`, `ALT_STARTUP_PASS=false`, `ALT_END_TO_END_PASS=false`,
 `storage_search_allowed=false`.
+
+
+## 2026-09-18 — CI producer repair: event ownership and correction search
+
+**Execute.** Reproduced the source-owned Joseph fixture rejection and the A21
+correction search failure on the shipping 0.72/0.50 standard-deviation factors.
+The first constructs `:j1/:j2` tokens although the retained source contract only
+admits the estimator token or its `:e` event descendants. A later bias-chain
+producer also passes a removed scalar-correction argument to the same-graph
+A21 prefix builder. Neither failure calls for changing the source contract.
+
+**Analyze.** The correction grid has two structural obstructions, not merely an
+insufficient number of trials. Its common hard multiplier is at least 0.001;
+the declared S radius alone then spends 90 in the homogeneous diagonal, while
+the largest trial delta spends at most 2.30 squared. Independently, assigning
+equal coefficients to both chord retention inequalities cancels their chord
+output squared terms, and equal coefficients on opposite equality IQCs cancel
+those too. The remaining correction target has a negative chord diagonal.
+Repeating or extending that tied grid cannot produce a strict certificate.
+
+**Replan.** Keep every original hard ball and nonlinear IQC and the unchanged
+outward-interval LDLT checker. Search independently weighted premise seeds,
+including unequal coefficients on opposite IQCs; zero multipliers are allowed
+by the existing S-procedure. Seeds are numerical certificate candidates, not
+new physical assumptions, covariance membership, or replay-based conclusions.
+An offline convex candidate search followed by the existing outward checker
+found a witness; rounded simple coefficients certify the unchanged A21 smoke
+cell at delta=1.50 with a positive minimum pivot above 9.99e-10. The production
+code must recompute and verify the certificate from each supplied event.
+A negative or unverified result remains open, and no P4/P5/ALT gate is promoted.
+
+**Scope check.** The repaired search exposed a second integration defect: the
+local A21 prefix supplied its independently proved delta=1.50 to the frozen
+production first-exit binder, which correctly accepts at most 0.25. Keep that
+binder and the closure JSON unchanged. A separate local binding rechecks the
+complete S-procedure against the supplied event matrices and constructs its
+chart-safe sector, while explicitly reporting whether its radius fits the
+canonical chart. The A21 smoke does not, and production qualification remains
+false. The lineage producer must likewise consume a reverified same-graph
+certificate, not the obsolete scalar diagnostic. This does not close the
+canonical 0.25 target, source reachability, retention, or any stability theorem.
+
+The complete lineage rerun then exposed a covariance-fixture defect: its
+identity prediction reused point P=I for the successor rather than the outward
+image FPF^T+Q, so the unchanged enclosure predicate correctly rejected it. The
+fixture now carries that exact interval image; a regression rejects reverting
+to the narrower point matrix. No containment tolerance was introduced.
+
+The full native `make all` run also reached an obsolete quiet-startup assertion:
+ordinary aligned samples now enter Live at 79.225 s, so their session-origin
+integral norm is 288.166 rather than above 300. The deliberately zero-proxy
+history still waits for the 150 s timeout and exceeds 545.6. Restrict the
+counterexample assertion to that actual timeout witness; retain all state,
+covariance, noise-bound, and first-post-Live propagation checks for both paths.
+This changes no shipping startup condition or theorem assumption.
+The same native fixture incorrectly assumed the magnetic refinement window
+starts immediately at Live entry. Its observation horizon now follows the
+actual max(Live, configured 90 s session clock) plus configured 30 s window,
+while preserving the original 33 s ambiguity comparison and the actual H18 to
+A21 release assertion. No runtime timing parameter is changed.

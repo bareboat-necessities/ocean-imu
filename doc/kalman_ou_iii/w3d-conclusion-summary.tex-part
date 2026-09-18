@@ -38,21 +38,22 @@ $\OUValidationNormalizedDifference$ percentage points and bootstrap 95\%
 interval
 $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$.
 PM--Stokes gives the same qualitative vertical result.  Mean 3-D displacement
-RMS is also lower for the current isotropic OU--III configuration in each
+RMS is also lower for the current axis-dependent OU--III configuration in each
 stationary JONSWAP sea and in the controlled transition, with paired bootstrap
 intervals excluding zero.  These simulation results apply to the tested
 directional and spectral families, not to absolute navigation.
 
-The horizontal analysis explains why isotropic regularization can remain useful
-despite much larger low-frequency horizontal acceleration error.  The scalar
-spectral reduction identifies how posterior acceleration-error intensity,
-pseudo-measurement covariance, and cadence jointly place the low-frequency
-correction corner, but it does not determine universal world-axis gains in the
-presence of attitude coupling and heading-dependent orbital motion.  Reducing
-tilt error, improving accelerometer-bias observability, or adding horizontal
-aiding remains a more direct route to reducing the horizontal disturbance.  The
-observed $x/y$ split is heading dependent and does not support universal
-world-axis tuning constants.
+The horizontal analysis separates the isotropic OU-acceleration prior from
+the axis-dependent integral regularization of
+Eq.~\eqref{eq:fus-rs-anisotropy}. The scalar spectral reduction identifies how
+posterior acceleration-error intensity, pseudo-measurement covariance, and
+cadence jointly place the low-frequency correction corner, but it does not
+replace the full attitude and bias coupling. The deployed horizontal factors
+are applied in world NED, without heading rotation. Their surge/sway
+interpretation is therefore restricted to the zero-yaw vessel-response records
+used here; general heading changes require additional validation. Reducing
+tilt error, improving accelerometer-bias observability, and adding horizontal
+aiding remain direct routes to reducing the horizontal disturbance.
 
 The remaining analytical gap in the adaptation study is the complete 21-state
 physical error $H_2$ problem.  The reduced performance model does not retain
@@ -90,10 +91,10 @@ reference; no global navigation position is claimed without external aiding.
         tilt information, and accelerometer-bias observability reduce the
         low-frequency horizontal acceleration-error density identified in
         Sec.~\ref{sec:riccati-per-axis-limits}.
-  \item \textbf{Vessel-response realism.}  Apply hull response-amplitude
-        operators to the directional sea and include off-CoG rotational
-        acceleration so validation distinguishes ocean forcing from vessel
-        response.
+  \item \textbf{Vessel-response generalization.}  Extend the present
+        vessel-response dataset to additional hulls and changing headings,
+        and validate off-CoG rotational acceleration against a surveyed
+        sensor reference point.
   \item \textbf{Multimodal and multidirectional seas.}  Test crossing seas,
         independent swell and wind-sea components, multiple peaks, heading
         changes, and time-varying directional spectra.

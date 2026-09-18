@@ -31,7 +31,6 @@ import ou3_p4_brmm_a21_projection_prefix as PROJP
 import ou3_p4_brmm_bias1_prediction_lift as BIASP
 import ou3_p4_affine_hard_tube_iqc as HARD
 import ou3_p4_bias1_joint_iss_supply as BIASISS
-import ou3_p4_same_cell_correction_domain as CORR
 
 SCHEMA=1
 QUALIFICATION='OU3_P4_BRMM_A21_PROJECTION_TO_BIAS1_PREDICTION_CHAIN_V1'
@@ -65,9 +64,9 @@ def compose_projection_to_prediction(prefix,bias_contract):
             'h_index':int(prefix['h_index']),'supply_bound':supply_bound}
 
 def build():
-    corr=CORR.build();cf=CORR.validate(corr);bc=BIASISS.build();bf=BIASISS.validate(bc)
-    if cf or bf:raise RuntimeError(f'chain prerequisites failed correction={cf} bias={bf}')
-    cell=PROJP._smoke_cell();p=PROJP.build_augmented_prefix(cell,corr);c=compose_projection_to_prediction(p,bc)
+    bc=BIASISS.build();bf=BIASISS.validate(bc)
+    if bf:raise RuntimeError(f'chain bias prerequisite failed: {bf}')
+    cell=PROJP._smoke_cell();p=PROJP.build_augmented_prefix(cell);c=compose_projection_to_prediction(p,bc)
     n=c['coordinate_dimension'];Y=c['next_bias_true_map'];_S=c['supply_map']
     # Structural checks: same w columns feed e_b and beta, m only e_b.
     w_shared=all(Y[i][c['source_offset']+i].contains(1) and Y[3+i][c['source_offset']+i].contains(1) for i in range(3))
@@ -75,6 +74,8 @@ def build():
     beta_input_present=any(not (Y[i][j].lo==0 and Y[i][j].hi==0) for i in range(6) for j in range(p['beta_offset'],p['beta_offset']+3))
     projected_input_present=any(not (Y[i][j].lo==0 and Y[i][j].hi==0) for i in range(3) for j in range(p['projected_ba_offset'],p['projected_ba_offset']+3))
     return {'schema':SCHEMA,'qualification':QUALIFICATION,'canonical_source':'COMPLETE_BRMM_NORMAL_LIVE_WORD',
+      'local_projection_within_declared_correction_chart':p['within_declared_correction_chart'],
+      'production_correction_chart_qualified_here':False,
       'A21_projection_prefix_consumed':True,'projected_ba_is_next_prediction_error_input':projected_input_present,
       'same_persistent_beta_is_next_prediction_true_bias_input':beta_input_present,
       'BIAS1_prediction_A_B_matrices_consumed':True,'same_w_enters_next_error_and_true_bias':w_shared,
@@ -90,7 +91,7 @@ def validate(d):
     if d.get('schema')!=SCHEMA or d.get('qualification')!=QUALIFICATION:f.append('schema/qualification mismatch')
     for k in ('A21_projection_prefix_consumed','projected_ba_is_next_prediction_error_input','same_persistent_beta_is_next_prediction_true_bias_input','BIAS1_prediction_A_B_matrices_consumed','same_w_enters_next_error_and_true_bias','m_tau_enters_next_error_not_true_bias','joint_supply_ball_IQC_embedded_on_same_h'):
         if d.get(k) is not True:f.append(k+' not true')
-    for k in ('independent_beta_slot_created_for_next_prediction','projection_output_charged_as_exogenous_supply','packet_count_multiplier_used','trajectory_replay_used','production_other_18_state_coordinates_composed_here','production_full_24state_prefix_transport_closed_here','production_prefix_LDLT_closed_here','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
+    for k in ('production_correction_chart_qualified_here','independent_beta_slot_created_for_next_prediction','projection_output_charged_as_exogenous_supply','packet_count_multiplier_used','trajectory_replay_used','production_other_18_state_coordinates_composed_here','production_full_24state_prefix_transport_closed_here','production_prefix_LDLT_closed_here','P4_MOTION_PASS','P4_PASS','P5_MAY_START'):
         if d.get(k) is not False:f.append(k+' not false')
     if not(math.isfinite(float(d.get('joint_supply_bound_mps2',math.nan))) and float(d['joint_supply_bound_mps2'])>=0):f.append('supply bound invalid')
     return f
