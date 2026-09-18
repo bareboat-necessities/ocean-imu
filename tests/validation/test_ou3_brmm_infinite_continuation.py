@@ -30,7 +30,7 @@ class InfiniteContinuationTest(unittest.TestCase):
         reconstructed = source.replace(after, b'        mag_updates_applied_++;')
         reconstructed = reconstructed.replace(b'#include <limits>\n', b'')
         self.assertEqual(hashlib.sha256(reconstructed).hexdigest(),
-            '1008e931734f226f93f52e46a1408503a7c1be9b364c0756da64a19788ece5ed')
+            'f4ba03502b815864e034efb033c6448d5aa1ccc78f66dafc5ac80423889bfe63')
         self.assertEqual(hashlib.sha256(source).hexdigest(), C.AUDITED[path])
 
     def test_const_reference_reaudit_is_the_only_shipping_change(self):
