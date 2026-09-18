@@ -47,6 +47,69 @@ class MarineLimits:
             raise ValueError("marine limits must be positive and finite")
 
 @dataclass(frozen=True)
+class MarineContinuationCertificate:
+    """All-time theorem-side MARINE MOTION certificate.
+
+    The booleans are obligations established by upstream physical/source
+    reasoning; finite sampled replay is not allowed to manufacture them.
+    """
+    history_id: str
+    p_norm_upper_m: float
+    v_norm_upper_mps: float
+    a_norm_upper_mps2: float
+    omega_norm_upper_rad_s: float
+    primitive_span_upper_m_s: float
+    translation_kinematics_certified: bool
+    attitude_rate_kinematics_certified: bool
+    persistent_primitive_state_certified: bool
+    reference_acceleration_accounted: bool
+    all_time_continuation_certified: bool
+
+    def __post_init__(self) -> None:
+        if not self.history_id:
+            raise ValueError("nonempty history_id required")
+        vals=(
+            self.p_norm_upper_m,self.v_norm_upper_mps,self.a_norm_upper_mps2,
+            self.omega_norm_upper_rad_s,self.primitive_span_upper_m_s,
+        )
+        if not all(math.isfinite(v) and v>=0.0 for v in vals):
+            raise ValueError("certificate bounds must be finite and nonnegative")
+
+
+def continuation_admitted(cert: MarineContinuationCertificate,
+                          limits: MarineLimits) -> bool:
+    """Admission requires one persistent continuous physical continuation."""
+    return (
+        cert.p_norm_upper_m <= limits.p_max_m
+        and cert.v_norm_upper_mps <= limits.v_max_mps
+        and cert.a_norm_upper_mps2 <= limits.a_max_mps2
+        and cert.omega_norm_upper_rad_s <= limits.omega_max_rad_s
+        and cert.primitive_span_upper_m_s <= limits.p_ac_max_m_s
+        and cert.translation_kinematics_certified
+        and cert.attitude_rate_kinematics_certified
+        and cert.persistent_primitive_state_certified
+        and cert.reference_acceleration_accounted
+        and cert.all_time_continuation_certified
+    )
+
+
+def quiet_water_continuation_certificate(history_id: str="quiet") -> MarineContinuationCertificate:
+    return MarineContinuationCertificate(
+        history_id=history_id,
+        p_norm_upper_m=0.0,
+        v_norm_upper_mps=0.0,
+        a_norm_upper_mps2=0.0,
+        omega_norm_upper_rad_s=0.0,
+        primitive_span_upper_m_s=0.0,
+        translation_kinematics_certified=True,
+        attitude_rate_kinematics_certified=True,
+        persistent_primitive_state_certified=True,
+        reference_acceleration_accounted=True,
+        all_time_continuation_certified=True,
+    )
+
+
+@dataclass(frozen=True)
 class MarineSample:
     history_id: str
     t_s: float
