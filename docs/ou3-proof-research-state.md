@@ -2,64 +2,96 @@
 
 ## Current hypothesis
 
-A single regional-practical-stability theorem is sought for the shipping estimator on one persistent physical execution satisfying MARINE MOTION, IMU BIAS, and MAGNETIC SERVICE. Capture may be history dependent. The certified tail must include held-bias H18, the actual release, and active-bias A21.
+Seek regional practical stability of the shipping estimator on one persistent
+execution satisfying MARINE MOTION, IMU BIAS and MAGNETIC SERVICE. The same
+path must carry history-dependent capture, magnetically informed H18, the
+implemented release and magnetically informed A21. The theorem remains open.
 
 ## Evidence
 
-CI run `35382314754` failed `test_no_retired_architecture_survives_repository`
-with 14 findings across seven files. The causes were stale fingerprint entries,
-shared workflow tests targeting deleted machinery, a dangling study reference,
-and ambiguous simulation/test variable names. The cleanup gate is unchanged;
-the remnants are removed. The replay fingerprint is explicitly invalidated,
-not regenerated from un-replayed results. Scientific simulation settings and
-shipping estimator behavior are unchanged.
+The repository cleanup gate found 14 obsolete-architecture references across
+seven files in CI run `35382314754`. Those remnants and the shared workflow
+assertions have been corrected without weakening the cleanup gate. The replay
+fingerprint is explicitly invalidated, not regenerated from un-replayed results.
+Scientific simulation settings and shipping estimator behavior are unchanged.
 
-The bias graph now retains the shared physical-increment column, separate
-correction/projection defect, and conditional Euclidean projection inequality.
-The marine integral innovation retains the physical potential term. Tests
-cover rectangular magnetic sensitivity transport without certifying a release
-map or source-uniform information floor.
+The operation lemmas retain the joint bias state `[e_b; b_true]`, the single
+shared physical-increment column, the separate Kalman correction and projection
+defect, and the conditional Euclidean projection inequality. The integral
+innovation retains `r_S=e_S-S_true` for one fixed physical-potential origin.
+Rectangular magnetic sensitivity transport retains the original information
+coordinates; its dimensional check does not certify the physical release map.
 
+The focused Python suite has 63 passing tests, including the repository audit,
+shared workflow and replay-fingerprint contracts, and finite-error
+non-promotion regressions. Source and operation provenance validation passes.
+The native shipping-contract, shipping-transition and common-math tests pass.
+These results establish implementation regressions and subordinate algebra,
+not a source-uniform finite-error stability certificate.
 
-Source provenance binds the analysis to shipping code. Structural regressions establish the displacement-DC exclusion, predecessor-constrained bias evolution, one mode-dependent accelerometer-bias prediction relation, separate correction/projection algebra, applied-magnetic-information accounting, and the indefinitely ungauged unipotent obstruction. Literal implementation regressions distinguish magnetic attempts from applied corrections and check state inheritance across Live and bias release.
+The local full-build command was
+`make all EIGEN_DIR=/opt/pyvenv/lib/python3.13/site-packages/casadi/include/eigen3`.
+Compilation completed, but `ensure-sim-data` failed when
+`curl -fL --retry 3 https://github.com/bareboat-necessities/oceanography-waves-lib/releases/download/v1.2.1/sim-data-files-vessel-rao-28ft.zip -o /mnt/data/ocean-imu/sim-data-files-vessel-rao-28ft.zip.download`
+returned exit 6: `Could not resolve host: github.com`.
+Consequently the complete local simulation/data-dependent validation did not
+run. This is an environment/data-acquisition failure, not evidence of a
+mathematical or estimator regression.
 
 ## Current limiter
 
-The first controlling mathematical limiter is the absence of a complete finite-error, same-history H18 service-superword inequality with strict dissipation, every-prefix retention, and actual magnetic information. Source-uniform recurring service, capture, H18-to-A21 retention, A21 dissipation, and target arithmetic remain open.
+A complete source-uniform finite-error H18 service-superword inequality with
+strict dissipation, inherited covariance and every-prefix retention is absent.
+Capture, actual H18-to-A21 retention, A21 dissipation, recurring informative
+service and target arithmetic remain open. Passing point-audit flags do not
+close any of these obligations.
 
 ## Failed approaches / DEAD_ENDS
 
-- Operation-parity failure: a zero-radius proof projection mapped a nonzero
-  estimate to zero, whereas shipping code disables projection. The proof
-  operation is corrected; no estimator change is made. Invalid attitude
-  injection can also bypass projection, so its domain premise is explicit.
-- Admission failure: squared-norm underflow classified tiny nonzero constant
-  wave displacement as quiet water. Componentwise exact zero comparison fixes
-  the required infinite-continuation rejection.
-- Transport failure: a square-only matrix check rejected dimension-changing
-  error-coordinate transport. Source/destination dimensions are now separate;
-  physical release and full-state retention are still open.
-
-
-- Strict full-state contraction over indefinitely ungauged intervals is impossible because the heading/axial-gyro-bias centre block has spectral radius one.
-- Maximum magnetic callback or accepted-packet gap alone cannot prove heading/bias information; frequent collinear sensitivities remain rank deficient.
-- A finite replay or finite sample mean cannot prove the all-time bounded primitive of wave displacement.
-- Independent per-sample bias boxes destroy the predecessor relation required by a rate-bounded physical bias history.
-- Replacing physical bias truth by the estimator OU prior erases the model-mismatch term and is invalid.
+- A zero-radius proof projection erased the estimate, whereas the shipping
+  operation disables projection. The proof now carries the actual branch.
+  Invalid attitude injection can also bypass projection; successful finite
+  injection remains an explicit domain premise.
+- Squared-norm underflow classified tiny nonzero constant displacement as quiet
+  water. Componentwise exact-zero admission preserves the mandatory DC rejection.
+- Square-only sensitivity transport rejected dimension-changing error charts.
+  Source and destination dimensions are now separate; no release certificate is
+  inferred from this algebraic repair.
+- A point-diagnostic constructor supplied infinite prefix bounds that its own
+  validation rejected. Replacing those bounds by the observed values would be
+  circular. Missing bounds are now explicit, empty prefixes are rejected, and
+  finite endpoint/flag checks never set `certificate_complete`.
+- Overflow of the scalar dissipation right-hand side cannot be used to pass an
+  inequality. Nonfinite derived arithmetic makes the point audit fail.
+- Strict full-state contraction on indefinitely ungauged intervals is blocked
+  by the unit-spectral-radius heading/axial-gyro-bias unipotent block.
+- Callback cadence, independent per-sample bias boxes, a finite replay, or
+  imposing the estimator OU prior on physical bias cannot supply the missing
+  magnetic, temporal or source-coverage premises.
 
 ## Retained facts
 
-- Wave displacement is relative to a local equilibrium/reference; reference motion cannot erase real IMU acceleration.
-- A one-time proof-coordinate origin is permitted only as a coordinate transformation of the same continuation.
-- Physical bias persists through construction, startup, Live, estimator hold/release, corrections, projection, and relocks.
-- The estimator prediction coefficient is `phi_e=1` in H18 and `phi_e=phi_OU` in A21; the physical recurrence is unchanged.
-- Magnetic service must be computed from actually applied measurement quantities and the complete preceding transition.
-- Shipping estimator behavior is not modified for proof convenience.
+The bounded displacement potential and true IMU bias histories persist across
+all estimator events. Physical reference acceleration remains in the specific
+force or declared model disturbance. H18 and A21 share one bias prediction
+relation; correction and projection do not reset truth. Actual applied magnetic
+innovation covariance and complete preceding transport define information.
+Euclidean bias projection compactness is not contraction in a full coupled
+covariance metric. No estimator reset defines the certified-tail boundary.
 
 ## Alternatives
 
-For the H18 tail inequality compare: an inverse-free information/dissipativity storage; a finite-error incremental attitude-group/additive-state Lyapunov construction; and a bounded-real/small-gain decomposition retaining physical bias/model mismatch as same-history coordinates.
+Before further enclosure work compare an inverse-free information storage, a
+finite-error attitude-group/additive-state storage, and a bounded-real supply
+construction retaining physical bias and model mismatch. These are candidate
+methods for the same theorem, not parallel theorem paths.
 
 ## Next falsifiable experiment
 
-Construct one literal magnetically informed H18 superword from inherited shipping state, with actual accepted magnetic events and transported information. Evaluate a high-precision finite-error storage ratio over the declared local domain while retaining the physical bias predecessor state and every prefix. Report the limiting direction and operation-by-operation margin. Rigorous enclosure starts only if the complete finite-error margin is materially below one.
+Construct a literal magnetically informed H18 superword from an actually
+reached state. Retain the full covariance, physical bias predecessor and every
+shipping event. Export applied magnetic information and evaluate the complete
+finite-error storage/supply residual and every-prefix retention margin at high
+precision. Report the limiting direction and event contributions. Start a
+source-uniform enclosure only after a useful feasible margin is demonstrated;
+point consistency alone is not a certificate.
