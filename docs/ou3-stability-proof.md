@@ -22,6 +22,8 @@ One deterministic physical assumption covers total residual accelerometer and gy
 
 `||b_g||<=B_g, ||dot b_g||<=D_g`.
 
+No physical decomposition is required. Constant offset, temperature drift, strain, hysteresis, aging, correlated drift, and other mechanisms may occur simultaneously when the resulting total residual satisfies these limits.
+
 The sampled physical recurrence is predecessor constrained:
 
 `b_a[k+1]=b_a[k]+w_a[k], ||w_a[k]||<=D_a dt[k]`
