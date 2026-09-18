@@ -9,6 +9,10 @@ on:
     paths:
       - .github/workflows/render-stability-study-review.yml
       - doc/kalman_ou_iii/**
+concurrency:
+  group: render-stability-study-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 jobs:
