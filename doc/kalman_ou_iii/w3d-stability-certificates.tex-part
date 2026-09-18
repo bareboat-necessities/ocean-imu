@@ -96,9 +96,8 @@ admitted branch with shared source variables; outward rounding or exact
 arithmetic for the checker; target compiler/library and floating-point
 execution premises; explicit handling of rejected or nonfinite outcomes.
 \item \textbf{Provenance and independent checking:} source revision/hashes,
-parameters, generator/checker commands, retained machine-readable report,
-limiting direction or counterexample, and negative tests that reject stale,
-incomplete or inconsistent evidence.
+parameters, retained machine-readable evidence, limiting direction or counterexample,
+and independent checks that reject stale, incomplete or inconsistent evidence.
 \end{enumerate}
 A rational identity test and a source-coverage gate answer different questions.
 A successful checker can correctly verify a report whose \emph{theorem gate is
@@ -184,19 +183,11 @@ compose the tail theorem, and finally attach the startup conclusion with its
 correct quantifiers. Failure at any stage is evidence to analyze, not a reason
 to weaken the physical domain or bypass a gate.
 
-\subsection{Reproduction and navigation}
-The following commands run from the repository root. The native diagnostic
-requires the Eigen/build dependencies; its output remains diagnostic. The
-provenance command checks evidence lineage, not a new stability inequality.
-\begin{quote}\small\ttfamily
-PYTHONPATH=.:tools/stability OPENBLAS\_NUM\_THREADS=1 python3 -m\\
-\hspace*{1em}tools.stability.ou3\_alt\_contraction.carried\_storage\_rho\_diagnostic\\
-\hspace*{1em}--work /tmp/ou3-alt-carried-storage\\
-\hspace*{1em}--output /tmp/ou3-alt-carried-storage.json
-\end{quote}
-\begin{quote}\small\ttfamily
-python3 tools/ou\_evidence\_contract.py --check --study all
-\end{quote}
+\subsection{Evidence and navigation}
+The retained numerical evidence, executable obligation inventory and proof
+continuation records are maintained in the repository alongside this study.
+They provide provenance and independent checking for the numerical claims;
+implementation commands and scripting details are intentionally omitted here.
 For the current executable obligation inventory and proof continuation use
 \path{docs/ou3-alt-main-handover.md} and
 \path{docs/ou3-alt-proof-plan.md}; for the independent original route use
