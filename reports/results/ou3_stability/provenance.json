@@ -1,0 +1,18 @@
+{
+  "qualification": "OU3_SHIPPING_PROVENANCE_V1",
+  "base_main_commit": "80dbd74c1c5badb750bfd45c9480dab2f2a181ce",
+  "estimator_behavior_authority": "shipping implementation, not proof model",
+  "authoritative_shipping_sources": [
+    {"path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h", "git_blob_sha": "6fac9fa3cb7e5ff1d90a6e6cd07d8ecaf0795abe"},
+    {"path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h", "git_blob_sha": "d369bede9c1476fd1d5058e694fadd438a70d4d3"},
+    {"path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino", "git_blob_sha": "58976d6a6fdb37b8e00d43c271c62883a2ccf2b6"}
+  ],
+  "semantic_bindings": {
+    "accelerometer_bias_estimator_prior": "OU mean predictor while active; held while disabled",
+    "accelerometer_bias_estimate_projection_radius_mps2": 0.4,
+    "magnetometer_acceptance": "lastMagDiag().accepted becomes true only after the correction is actually applied",
+    "magnetic_attempt_counter": "the wrapper control counter advances after a forwarded attempt and is not an informative-service certificate",
+    "live_handoff": "the certified tail inherits the actual reached execution",
+    "accel_bias_release": "release enables estimator bias dynamics and does not reset physical accelerometer bias"
+  }
+}

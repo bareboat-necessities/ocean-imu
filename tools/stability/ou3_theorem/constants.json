@@ -1,0 +1,42 @@
+{
+  "qualification": "OU3_MARINE_IMU_MAGNETIC_CONTRACT_V1",
+  "role": "Declared deterministic certification limits. A numeric limit is not a claim that every assembled device has been qualified to it.",
+  "marine_motion": {
+    "P_max_m": 8.1,
+    "V_max_mps": 5.5,
+    "A_max_mps2": 8.8,
+    "Omega_max_rad_s": 0.6108652381980153,
+    "P_AC_max_m_s": 1100.0,
+    "qualification": "retained outward marine envelope; same-history all-time primitive membership must still be certified"
+  },
+  "imu_bias": {
+    "B_a_mps2": 0.22516660498395405,
+    "D_a_mps3": 0.001,
+    "B_g_rad_s": 0.02,
+    "D_g_rad_s2": 0.00001,
+    "qualification": {
+      "B_a": "derived from the retained commissioned per-axis 0.13 m/s^2 residual envelope",
+      "D_a": "selected deterministic deployment limit; assembled-history qualification is open",
+      "B_g": "retained commissioned residual norm envelope",
+      "D_g": "retained commissioned gyro-bias rate envelope"
+    }
+  },
+  "magnetic_service": {
+    "T_M_s": 1.0,
+    "mu_M": 1.0,
+    "field_norm_min_uT": 20.0,
+    "field_norm_max_uT": 75.0,
+    "horizontal_field_min_uT": 15.0,
+    "hard_iron_residual_norm_max_uT": 5.0,
+    "measurement_residual_norm_max_uT": 2.0,
+    "heading_coordinate_scale_rad": 1.0,
+    "axial_gyro_bias_coordinate_scale_rad_s": 0.02,
+    "qualification": "selected certification limits; source-uniform accepted informative service is open"
+  },
+  "sensor_model": {
+    "nominal_sample_period_s": 0.005,
+    "accel_fast_residual_norm_max_mps2": 0.30,
+    "gyro_fast_residual_norm_max_rad_s": 0.02,
+    "qualification": "deterministic commissioned BMI270 profile; deployment qualification remains separate"
+  }
+}
