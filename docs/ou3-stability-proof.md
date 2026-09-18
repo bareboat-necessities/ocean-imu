@@ -10,7 +10,7 @@ The wave coordinate `p` is displacement about a local equilibrium/reference, wit
 
 `|| integral_(t1)^(t2) p(tau) d tau || <= P_AC`
 
-for every continuation. Equivalently, `qdot=p` has uniformly bounded potential differences. Therefore permanent `p(t)=p0 != 0` is outside the class, while quiet water `p=0` is inside. Bounded samples, finite means, spectra, or finite-window increments do not prove this all-time condition.
+for every continuation. Equivalently, `qdot=p` has uniformly bounded potential differences. The same `q` continuation persists through successive proof superwords; a one-time proof-coordinate origin at certified-tail entry does not authorize later physical resets or reanchoring. Therefore permanent `p(t)=p0 != 0` is outside the class, while quiet water `p=0` is inside. Bounded samples, finite means, spectra, or finite-window increments do not prove this all-time condition.
 
 Physical translation is `p_CoG=p_eq+p`. Global origin, current, propulsion, leeway, and secular reference motion may be represented in `p_eq`, but nonzero `ddot(p_eq)` remains actual specific force/model disturbance unless the shipping implementation explicitly compensates it.
 
