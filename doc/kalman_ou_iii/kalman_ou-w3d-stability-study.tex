@@ -158,14 +158,20 @@ $e_{b_g,k+1}^{-}=e_{b_g,k}^{+}+w_{g,k}$ before its actual correction.
 \section{Magnetic service}
 For a certified service window rooted at $s$, let $\Phi_{k\leftarrow s}$ be
 the ordered differential of the complete preceding same-history shipping
-evolution. Let $H_{m,k}$ and $R_{m,k}$ be the sensitivity and covariance of a
-magnetic correction that was actually applied. With $E_{hb}$ injecting
+evolution. Let $H_{m,k}$ be the literal magnetic sensitivity and let
+$S_{m,k}^{\rm act}$ be the actual innovation covariance presented to the
+shipping update's factorization for a correction that was actually applied.
+Choose any whitening factor $W_k$ satisfying
+$W_k^\mathsf{T}W_k=(S_{m,k}^{\rm act})^{-1}$. With $E_{hb}$ injecting
 normalized heading and axial gyro-bias coordinates, define
 \begin{equation}
- G_k=R_{m,k}^{-1/2}H_{m,k}\Phi_{k\leftarrow s}E_{hb},
+ G_k=W_kH_{m,k}\Phi_{k\leftarrow s}E_{hb}.
  \label{eq:G}
 \end{equation}
-or an algebraically equivalent inverse-free factorization. For
+Equivalently, if $S_{m,k}^{\rm act}=L_kL_k^\mathsf{T}$, one may take
+$W_k=L_k^{-1}$. This square-root choice is algebraic only; the information
+matrix is built from the same $S_{m,k}^{\rm act}$ that the shipping update
+actually factors. For
 $T_M<\infty$ and $\mu_M>0$, every certified tail interval must satisfy
 \begin{equation}
  \boxed{\sum_{k\in\mathcal M[s,s+T_M]}G_k^\mathsf{T}G_k
