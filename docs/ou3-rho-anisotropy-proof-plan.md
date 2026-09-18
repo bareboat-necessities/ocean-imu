@@ -155,6 +155,23 @@ today and no workflow turns red because of them.
    `tests/kalman_ou_iii/kalman_ou_iii-sim.cpp`, so `ou_evidence_contract`
    reports both studies as stale until `ou-validation` regenerates and commits.
 
+   **This is blocked by item 1 and cannot be done first.** The evidence branch
+   job regenerates, then runs the validation gate before committing, and that
+   gate fails on the same premise:
+
+   ```
+   FAIL: test_complete_brmm_conditional_source_does_not_claim_physical_left_inclusion
+     (test_ou3_source_domain_contract)
+   AssertionError: ['P3_source_contract_ready is not true',
+                    'R_S source parity failed: horizontal_RS_factors_are_0p72'] != []
+   Ran 499 tests - FAILED (failures=1, skipped=1)
+   make: *** [Makefile:32: evidence-test] Error 1
+   ```
+
+   So the commit step never runs and the tree stays stale. Do item 1 first; the
+   evidence then regenerates on the next push without further work. Do not try
+   to regenerate the evidence by hand to get around this.
+
 ## Acceptance
 
 - `ou3_brmm_complete_source.build()` validates with the deployed pair, and
