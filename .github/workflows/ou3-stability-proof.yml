@@ -1,0 +1,56 @@
+name: ou3-stability-proof
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "src/kalman_ou_iii/**"
+      - "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/**"
+      - "tools/stability/**"
+      - "tests/validation/test_ou3_*.py"
+      - "tests/kalman_ou_iii/**"
+      - "docs/ou3-*.md"
+      - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
+      - "reports/results/ou3_stability/**"
+      - ".github/workflows/ou3-stability-proof.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/kalman_ou_iii/**"
+      - "tools/stability/**"
+      - "tests/validation/test_ou3_*.py"
+      - "docs/ou3-*.md"
+      - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
+      - "reports/results/ou3_stability/**"
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate theorem contracts
+        run: python3 -m unittest discover -v -s tests/validation -p 'test_ou3_*.py'
+      - name: Validate provenance and fail-closed status
+        run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ou3-stability-evidence
+          path: /tmp/ou3-stability-evidence.json
+          retention-days: 7
+  shipping-transitions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install compiler dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
+      - name: Build literal shipping regressions
+        run: make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test
+      - name: Run literal shipping regressions
+        run: |
+          ./tests/kalman_ou_iii/shipping_contract-test
+          ./tests/kalman_ou_iii/shipping_transition-test

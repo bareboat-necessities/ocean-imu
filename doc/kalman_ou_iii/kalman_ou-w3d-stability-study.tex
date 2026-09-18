@@ -1,261 +1,293 @@
-\documentclass[conference]{IEEEtran}
-
+\documentclass[journal]{IEEEtran}
 \usepackage{iftex}
 \ifPDFTeX
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \fi
-\usepackage{amsthm}
-\usepackage{amsmath, bm}
+\usepackage{amsmath,amssymb,amsthm,bm}
 \usepackage{newtxtext,newtxmath}
-\usepackage{textcomp}
-\interdisplaylinepenalty=2500
-\usepackage{pgf}
-\usepackage{pgfplots}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,fit,backgrounds,positioning,calc}
-\usepackage{xcolor}
-\usepackage{float}
-\usepackage{mathrsfs}
-\usepackage{graphicx}
-\usepackage{svg}
-\usepackage{placeins}
-\usepackage{array, booktabs, makecell, adjustbox}
-\usepackage{mathtools}
-\usepackage{nccmath, relsize}
-\usepackage{enumitem}
-\usepackage{balance}
-\usepackage{flafter}
+\usepackage{booktabs,array,adjustbox}
 \usepackage{siunitx}
 \usepackage[final]{microtype}
-\usepackage{etoolbox}
-
-\DeclareRobustCommand{\vct}[1]{\bm{#1}}
-\DeclareRobustCommand{\mat}[1]{\bm{#1}}
-\DeclareRobustCommand{\matg}[1]{\bm{#1}}
-\newcommand{\Quat}{\mathbb{H}}
-\newcommand{\Sph}{\mathbb{S}}
-\newcommand{\SO}{\mathrm{SO}}
-\newcommand{\SE}{\mathrm{SE}}
-\newcommand{\quat}[1]{\vct{#1}}
-\newcommand{\Rot}{\bm{\mathcal{R}}}
-\newcommand{\qconj}[1]{\overline{#1}}
-\newcommand{\qreal}[1]{\operatorname{Re}\! \left(#1\right)}
-\newcommand{\qimag}[1]{\operatorname{Im}\! \left(#1\right)}
-
-\usepackage{cite}
 \usepackage[breaklinks=true,hidelinks]{hyperref}
-\usepackage{bookmark}
-\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
-
-\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
-\setlist[description]{font=\footnotesize\bfseries,labelsep=0.6em,leftmargin=1.8em}
-
-\pdfstringdefDisableCommands{%
-    \def\SI#1#2{#1 #2}%
-    \def\bm#1{#1}%
-    \def\Skew#1{[#1]_\text{x}}%
-    \def\Id{I}%
-    \def\pct#1{#1\%}%
-    \def\circ{deg}%
-    \def\degree{deg}%
-    \def\propto{∝}%
-    \def\sigma{sigma}%
-    \def\tau{tau}%
-    \def\Phi{Phi}%
-    \def\omega{omega}%
-    \def\_{}%
-    \def\cdot{}%
-    \def\;{ }%
-    \def\I{I}%
-    \def\quat#1{#1}%
-    \def\SO{SO}%
-    \def\SE{SE}%
-    \def\Quat{H}%
-    \def\Sph{S}%
-}
-
-\AtBeginEnvironment{equation}{\small}
-\AtBeginEnvironment{align}{\small}
-\AtBeginEnvironment{gather}{\small}
-\AtBeginEnvironment{multline}{\small}
-\AtBeginEnvironment{equation*}{\small}
-\AtBeginEnvironment{align*}{\small}
-\AtBeginEnvironment{gather*}{\small}
-\AtBeginEnvironment{multline*}{\small}
-\providecommand{\mathdefault}[1]{#1}
-
-\setcounter{topnumber}{5}
-\setcounter{dbltopnumber}{5}
-\renewcommand{\topfraction}{0.95}
-\renewcommand{\dbltopfraction}{0.95}
-\renewcommand{\textfraction}{0.05}
-\renewcommand{\floatpagefraction}{0.9}
-\renewcommand{\dblfloatpagefraction}{0.9}
-\newcommand{\IncludePGF}[1]{\resizebox{\linewidth}{!}{\input{#1}}}
-
-\ifPDFTeX
-\DeclareUnicodeCharacter{2013}{\textendash}
-\DeclareUnicodeCharacter{2014}{\textemdash}
-\DeclareUnicodeCharacter{2018}{\textquoteleft}
-\DeclareUnicodeCharacter{2019}{\textquoteright}
-\DeclareUnicodeCharacter{201C}{\textquotedblleft}
-\DeclareUnicodeCharacter{201D}{\textquotedblright}
-\DeclareUnicodeCharacter{2212}{\textminus}
-\fi
-
-\pdfstringdefDisableCommands{%
-    \def\vct#1{#1}%
-    \def\mat#1{#1}%
-    \def\matg#1{#1}%
-    \def\I{I}%
-}
-
-\newtheoremstyle{bodysmall}{3pt}{3pt}{\normalfont\small}{0pt}{\bfseries\small}{.}{0.5em}{}
-\theoremstyle{bodysmall}
+\interdisplaylinepenalty=2500
+\allowdisplaybreaks
+\emergencystretch=2em
 \newtheorem{lemma}{Lemma}
 \newtheorem{theorem}{Theorem}
-\newtheorem*{theorem*}{Theorem}
-\theoremstyle{remark}
 \newtheorem{remark}{Remark}
-
-\newcommand{\Skew}[1]{\left[#1\right]_\times}
-\newcommand{\Id}{\mat{I}}
-\newcommand{\pct}[1]{#1\%}
-\newcommand{\meanstd}[2]{#1 \pm #2}
-\newcommand{\ci}[2]{#1\,(\,#2\,\text{CI}\,)}
-\newcommand{\Ito}{\mathrm{It\hat{o}}}
-\newcommand{\ItoInt}[2]{\int_0^{#1} #2\, dW_s^{\Ito}}
-\DeclareMathOperator{\proj}{\mathcal{P}}
-\DeclareMathOperator{\clip}{clip}
-\DeclareMathOperator{\wrap}{wrap}
-\DeclareMathOperator{\sgn}{sgn}
-\DeclareMathOperator{\blkdiag}{blkdiag}
-\DeclareMathOperator{\diag}{diag}
-\DeclareMathOperator{\scomp}{scomp}
-\newcommand{\set}[1]{\mathcal{#1}}
 \newcommand{\R}{\mathbb{R}}
-\newcommand{\C}{\mathbb{C}}
-\newcommand{\N}{\mathbb{N}}
-\newcommand{\Z}{\mathbb{Z}}
-\newcommand{\E}{\mathbb{E}}
-\DeclareMathOperator{\Var}{Var}
-\DeclareMathOperator{\Cov}{Cov}
-\newcommand{\ts}[1]{\text{#1}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\Id}{I}
 \newcommand{\fitcol}[1]{\adjustbox{max width=\columnwidth}{\ensuremath{\displaystyle #1}}}
-% Keep legacy long proof displays inside an IEEE column without changing their
-% mathematical content. The original filter article uses the same column width.
-\newenvironment{studyfitdisplay}{\begin{adjustbox}{max width=\columnwidth}\begin{minipage}{\columnwidth}}{\end{minipage}\end{adjustbox}}
+\AtBeginEnvironment{equation}{\small}
+\AtBeginEnvironment{align}{\small}
 
-\makeatletter
-\@ifpackageloaded{cite}{\renewcommand{\citepunct}{,\penalty\citepunctpenalty\,}\renewcommand{\citedash}{--}}{}
-\makeatother
-\emergencystretch=2em
-\allowdisplaybreaks
-
-\title{Adaptive OU-Regularized Quaternion MEKF for 3-D Marine Inertial Wave Motion Estimation}
-\author{%
-    \IEEEauthorblockN{Mikhail S. Grushinskiy}
-    \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
-    Bareboat Necessities GitHub Project\\
-    Email: mgrouch@users.github.com}%
-}
-\newcommand{\studysource}[1]{\par\smallskip
-  {\footnotesize\noindent Repository source: \path{#1}.\par}\smallskip}
-\newcounter{studypart}
-\renewcommand{\thestudypart}{\Roman{studypart}}
-\newcommand{\studypart}[1]{%
-  \refstepcounter{studypart}%
-  \section*{Part \thestudypart: #1}%
-}
-\pgfplotsset{compat=1.18}
-
+\title{Stability Study of an Adaptive OU-Regularized Quaternion MEKF for Marine Inertial Wave Estimation}
+\author{Mikhail S. Grushinskiy}
 
 \begin{document}
 \maketitle
+
 \begin{abstract}
-This companion to the OU--III filter and performance article studies the
-stability of the shipping hybrid estimator, not merely a frozen linear model.
-We first state why a physical motion class, qualified bias histories and
-accepted informative magnetic service are necessary, and exactly which
-conclusions depend on them. We distinguish actual Mahony-based startup,
-entry into Live, held/active accelerometer-bias modes, gravity-only centre
-dynamics, and magnetically informed Live dissipation. The analysis retains complete same-history finite increments and the full
-covariance. Analytical lemmas establish the finite-error structure, while
-validated numerical certificates are used only for bounded inequalities that
-are impractical to close analytically. This study makes
-those roles and the remaining obligations explicit; it does not report a
-completed shipping startup or end-to-end stability theorem.
+This study formulates a deterministic stability architecture for the shipping
+OU--III marine estimator. The physical domain is defined by three simultaneous
+contracts: bounded marine motion with an all-time bounded wave-displacement
+primitive, bounded and rate-bounded total IMU residual bias, and recurring
+accepted informative magnetic observations. The estimator bias prior is kept
+distinct from physical bias truth. One prediction relation covers held and
+active accelerometer-bias modes, while correction and estimate projection are
+retained as separate implemented operations. The analysis uses one path from
+construction through finite capture, held-bias Live operation, bias-state
+release, and magnetically informed active-bias operation. An exact unipotent
+heading/axial gyro-bias block establishes the need for continuing heading
+information. End-to-end regional practical stability remains open until finite
+capture, finite-error dissipativity, retention, and implementation arithmetic
+are certified.
 \end{abstract}
 
-\studypart{Assumptions, objectives, and the selected proof architecture}
-\input{w3d-stability-reader-guide.tex-part}
-\input{w3d-stability-proof-roadmap.tex-part}
-\input{w3d-stability-certificates.tex-part}
+\section{Theorem scope}
+Let one physical execution be denoted by $h$. The principal domain is
+\begin{equation}
+ h\in\mathcal M_{\rm marine}\cap\mathcal B_{\rm IMU}\cap\mathcal S_{\rm mag}.
+ \label{eq:intersection}
+\end{equation}
+The intersection is a same-history requirement. The execution determines
+vessel translation, attitude, IMU measurements, physical biases, magnetic
+measurements, frontend and tuning state, covariance, event acceptance,
+scheduler state, and estimator variables. The proof boundary does not alter
+the deployed estimator.
 
+\section{Marine motion}
+Let $p(t)\in\R^3$ be wave-induced displacement about a local equilibrium,
+$v=\dot p$, $a=\dot v$, with the same history supplying
+$R(t)\in{\rm SO}(3)$ and body rate $\omega(t)$. Require
+\begin{align}
+ \norm{p(t)}&\le P_{\max},& \norm{v(t)}&\le V_{\max},\nonumber\\
+ \norm{a(t)}&\le A_{\max},& \norm{\omega(t)}&\le\Omega_{\max}.
+ \label{eq:pointwise}
+\end{align}
+Pointwise bounds are insufficient. Admission additionally requires
+\begin{equation}
+ \boxed{\norm{\int_{t_1}^{t_2}p(\tau)\,d\tau}\le P_{\rm AC},
+ \qquad t_2\ge t_1 .}
+ \label{eq:pac}
+\end{equation}
+Equivalently, $\dot q=p$ has uniformly bounded potential differences.
 
-\studypart{Detailed physical contracts and conditional motion theorem}
-\label{part:study-contracts}
-The following sections retain the detailed physical definitions and original
-conditional lemmas. Their hypotheses are local to each statement: a narrower
-baseline source, continuous observer, or assumed certificate is not a proved
-claim for the padded ALT shipping domain. In particular, the optional BIAS2
-separation condition below is not the mandatory non-relaxing BIAS2 source
-family of Sec.~\ref{sec:study-bias-families}. Numerical implementation scope and
-the current evidence boundary are summarized in Part~I.
+\begin{lemma}[Permanent displacement DC is inadmissible]
+If $p(t)\equiv p_0\ne0$, $v(t)=0$, and $a(t)=0$ indefinitely, then
+\eqref{eq:pac} fails.
+\end{lemma}
+\begin{proof}
+On an interval of length $T$,
+$\norm{\int p\,dt}=T\norm{p_0}\to\infty$.
+\end{proof}
+Quiet water $p\equiv0$ remains admissible. Finite approximately constant
+segments are not excluded. Bounded samples, a finite mean, a spectrum, or
+finite-window increments do not prove \eqref{eq:pac}.
 
-\input{w3d-brmm-physical-wave-condition.tex-part}
-\input{w3d-mems-bias-preconditions.tex-part}
-\input{w3d-brmm-stability-theorem.tex-part}
-\input{w3d-brmm-period-bridge.tex-part}
+Physical CoG translation may be written
+\begin{equation}
+ p_{\rm CoG}=p_{\rm eq}+p .
+\end{equation}
+Global origin, current, propulsion, leeway, and secular reference translation
+may be represented by $p_{\rm eq}$. If $\ddot p_{\rm eq}\ne0$, however, the
+associated specific force remains an implemented model term or a declared
+same-history disturbance.
 
+\section{IMU bias}
+The total residual accelerometer and gyro biases after the calibration
+actually performed satisfy
+\begin{align}
+ \norm{b_a(t)}&\le B_a,& \norm{\dot b_a(t)}&\le D_a,\nonumber\\
+ \norm{b_g(t)}&\le B_g,& \norm{\dot b_g(t)}&\le D_g
+ \quad\text{a.e.}
+ \label{eq:bias-cont}
+\end{align}
+The constants are qualified separately. The sampled physical histories obey
+\begin{align}
+ b_{a,k+1}&=b_{a,k}+w_{a,k},&
+ \norm{w_{a,k}}&\le D_a\Delta t_k,\nonumber\\
+ b_{g,k+1}&=b_{g,k}+w_{g,k},&
+ \norm{w_{g,k}}&\le D_g\Delta t_k .
+ \label{eq:bias-discrete}
+\end{align}
+Thus the successor is constrained by its predecessor rather than selected
+independently from an amplitude box.
 
-\studypart{Information and finite-error analysis}
-\label{part:study-original}
-This part develops the information, covariance, and finite-error bounds used by
-the complete finite-word stability argument. Gravity-only results retain their
-explicit information premises and do not override the ungauged heading and
-axial gyro-bias obstruction in Sec.~\ref{sec:study-ungauged}.
+Let $e_b=b-\hat b$. For the accelerometer-bias estimate, define the implemented
+prediction factor
+\begin{equation}
+ \phi_{e,k}=
+ \begin{cases}
+ 1,&\text{H18/held prediction},\\
+ \phi_{{\rm OU},k},&\text{A21/active prediction}.
+ \end{cases}
+ \label{eq:phi-mode}
+\end{equation}
+With physical truth $b_{k+1}=b_k+w_k$, both modes obey the single relation
+\begin{equation}
+ \boxed{
+ e_{b,k+1}^{-}=
+ \phi_{e,k}e_{b,k}^{+}+
+ (1-\phi_{e,k})b_k+w_k .}
+ \label{eq:bias-prediction}
+\end{equation}
+Equation~\eqref{eq:bias-prediction} is an estimator-mode relation, not a model
+imposed on physical truth.
 
-\input{w3d-iss-stability.tex-part}
-\input{w3d-analytical-stability-widening.tex-part}
-\input{w3d-stability-widening-phase-c.tex-part}
-\input{w3d-stability-widening-source-path.tex-part}
+Measurement correction is carried separately. If the implemented correction
+changes the estimate by $\Delta\hat b_k$, then
+\begin{equation}
+ e_{b,k}^{\rm corr}=e_{b,k}^{-}-\Delta\hat b_k .
+ \label{eq:bias-correction}
+\end{equation}
+For the shipping accelerometer-bias projection,
+\begin{align}
+ \hat b_{a,k}^{+}&=\operatorname{Proj}_{R_b}
+                      (\hat b_{a,k}^{\rm corr}),\nonumber\\
+ e_{b_a,k}^{+}&=b_{a,k}-
+ \operatorname{Proj}_{R_b}(\hat b_{a,k}^{\rm corr}).
+ \label{eq:bias-projection}
+\end{align}
+Physical bias is unchanged by prediction mode, correction, hold/release, or
+projection. The shipping gyro-bias mean predictor is identity, giving
+$e_{b_g,k+1}^{-}=e_{b_g,k}^{+}+w_{g,k}$ before its actual correction.
 
+\section{Magnetic service}
+For a certified service window rooted at $s$, let $\Phi_{k\leftarrow s}$ be
+the ordered differential of the complete preceding same-history shipping
+evolution. Let $H_{m,k}$ and $R_{m,k}$ be the sensitivity and covariance of a
+magnetic correction that was actually applied. With $E_{hb}$ injecting
+normalized heading and axial gyro-bias coordinates, define
+\begin{equation}
+ G_k=R_{m,k}^{-1/2}H_{m,k}\Phi_{k\leftarrow s}E_{hb},
+ \label{eq:G}
+\end{equation}
+or an algebraically equivalent inverse-free factorization. For
+$T_M<\infty$ and $\mu_M>0$, every certified tail interval must satisfy
+\begin{equation}
+ \boxed{\sum_{k\in\mathcal M[s,s+T_M]}G_k^\mathsf{T}G_k
+ \succeq\mu_M I_2.}
+ \label{eq:mag-service}
+\end{equation}
+Only finite, unsaturated, gauged measurements whose shipping correction was
+actually applied belong to $\mathcal M$. Attempted callbacks, due events,
+packets, rejected or invalid measurements, and saturation do not contribute.
+A maximum event gap alone is insufficient because frequent collinear
+sensitivities may remain rank deficient.
 
-\studypart{Startup, capture, and hybrid transport}
-\label{part:study-startup}
-The implementation description and auxiliary continuous-time arguments below
-must be connected by a shipping reachability and arithmetic proof. A theorem
-whose hypotheses include an accepted handoff set, a retained domain, or a
-contracting word does not establish those hypotheses. In particular it is not
-a universal startup deadline. The displacement-integral origin used for Live analysis is fixed at first
-Live entry as described in Sec.~\ref{sec:study-origin}.
+\section{Single shipping proof path}
+The theorem uses
+\begin{equation}
+\fitcol{\text{construction}\to\text{capture}\to
+\text{magnetic Live/H18}\to\text{H18}\to\text{A21}\to
+\text{magnetic A21}.}
+\end{equation}
+The physical bias history is continuous through all modes. The capture time may
+depend on execution and initial state,
+\begin{equation}
+ \boxed{T_c=T_c(h,x_0)<\infty.}
+\end{equation}
+No common finite startup deadline is assumed. Live intervals preceding the
+required magnetic information remain part of the finite pre-certified prefix.
 
-\input{w3d-init.tex-part}
-\input{w3d-p5-staged-capture.tex-part}
-\input{w3d-semiglobal-stability.tex-part}
-\input{w3d-stability-widening-phase-d.tex-part}
-\input{w3d-stability-widening-phase-e.tex-part}
+\section{Necessity of heading information}
+On an interval without informative heading observations, heading error and
+axial gyro-bias error contain
+\begin{equation}
+ \begin{bmatrix}\theta_\parallel^+\\e_{b_g,\parallel}^+\end{bmatrix}
+ =
+ \begin{bmatrix}1&T\\0&1\end{bmatrix}
+ \begin{bmatrix}\theta_\parallel\\e_{b_g,\parallel}\end{bmatrix}.
+ \label{eq:unipotent}
+\end{equation}
+Both eigenvalues are one and repeated application gives linear heading growth
+when $e_{b_g,\parallel}\ne0$. Hence strict coercive full-state contraction is
+not generally available during indefinite loss of informative heading service.
+This is a necessity result, not a second stability theorem.
 
+\section{Conditional practical-stability statement}
+After capture, let $t_j$ be consecutive informative-service superword
+boundaries and $e_j$ the complete finite estimation-error coordinate. A
+completion certificate must establish, on one retained domain,
+\begin{align}
+ m\norm{e_j}^2&\le V_j\le M\norm{e_j}^2,\nonumber\\
+ V_{j+1}&\le\rho V_j+c_d\norm{d}_{[t_j,t_{j+1}]}^2,
+ \qquad 0\le\rho<1,
+ \label{eq:diss}
+\end{align}
+together with finite every-prefix bounds and forward retention under every
+implemented event. If $\norm d\le D$, iteration gives
+\begin{equation}
+ \limsup_{j\to\infty}\norm{e_j}
+ \le\sqrt{\frac{c_d}{m(1-\rho)}}D .
+\end{equation}
+Zero supply gives geometric decay at service boundaries. This implication is
+conditional until capture, H18 finite-error dissipation, the H18--A21 release,
+A21 dissipation, recurring service, retention, and implementation arithmetic
+are certified.
 
-\studypart{Stochastic qualification}
-\label{part:study-stochastic}
-\section{Scope of the stochastic extension}
-The deterministic hard-envelope theorem and the following localized stochastic
-results are different statements. Unbounded Gaussian noise does not satisfy a
-fixed compact pathwise bound for all time merely because its variance is small.
-The conditional localization and moment hypotheses below must be proved on
-the same accepted/rejected event history; simulation RMS values do not supply
-them. They do not remove the open deterministic shipping obligations.
-\input{w3d-stability-widening-phase-f.tex-part}
+\section{Declared constants}
+Symbolic assumptions are separated from current numerical certification limits
+in Table~\ref{tab:limits}. A declared value is a testable deployment
+requirement, not proof that every assembled unit satisfies it.
+
+\begin{table}[t]
+\centering
+\caption{Current deterministic certification limits}
+\label{tab:limits}
+\small
+\begin{tabular}{lll}
+\toprule
+Quantity & Value & Unit\\
+\midrule
+$P_{\max}$ & 8.10 & m\\
+$V_{\max}$ & 5.50 & m/s\\
+$A_{\max}$ & 8.80 & m/s$^2$\\
+$\Omega_{\max}$ & 0.610865 & rad/s\\
+$P_{\rm AC}$ & 1100 & m\,s\\
+$B_a$ & 0.225167 & m/s$^2$\\
+$D_a$ & 0.001 & m/s$^3$\\
+$B_g$ & 0.020 & rad/s\\
+$D_g$ & $1.0\times10^{-5}$ & rad/s$^2$\\
+$T_M$ & 1.0 & s\\
+$\mu_M$ & 1.0 & normalized\\
+$\norm B$ & 20--75 & $\mu$T\\
+$B_{\rm horiz,min}$ & 15 & $\mu$T\\
+hard-iron residual & 5 & $\mu$T\\
+magnetic residual & 2 & $\mu$T\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The accelerometer bias-rate value is a selected deterministic qualification
+limit; assembled-history qualification remains open. Magnetic information
+constants likewise remain to be certified uniformly from actually applied
+shipping sensitivities.
+
+\section{Evidence boundary}
+Executable regressions verify the constant-displacement exclusion, sampled
+predecessor bias rule, mode-dependent prediction identity, separate
+correction/projection algebra, attempted-versus-applied magnetic distinction,
+rank-deficient frequent magnetic service, unipotent obstruction, and state
+inheritance across Live and bias release. Finite simulations do not establish
+the all-time displacement primitive, recurring tail service, finite-error
+contraction, or infinite-duration stability.
+
+\section{Conclusion}
+The stability problem is posed as one same-history theorem with continuing
+magnetic information. The formulation excludes permanent wave-coordinate
+offsets without excluding quiet water, treats total residual bias independently
+of estimator priors, and uses one prediction equation across held and active
+accelerometer-bias modes. End-to-end regional practical stability remains
+conditional on the open capture, dissipativity, retention, qualification, and
+arithmetic certificates.
 
 \section*{Acknowledgments and disclosure}
 This work was prepared with supervised assistance from artificial intelligence
-tools for mathematical drafting, code development and editorial preparation.
+tools for mathematical drafting, code development, and editorial preparation.
 The author is responsible for the conceptual development and final revisions,
 declares no conflicts of interest, and received no funding for this research.
-
-\bibliographystyle{IEEEtran}
-\bibliography{w3d,w3d-modern,w3d-iss,w3d-baselines}
 \end{document}
