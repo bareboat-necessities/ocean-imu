@@ -58,9 +58,10 @@
     "certified_tail_prefix_retention": false,
     "source_uniform_magnetic_service_certificate_schema": true,
     "source_uniform_magnetic_service_certificate": false,
-    "implementation_and_arithmetic_totality": false
+    "implementation_and_arithmetic_totality": false,
+    "source_uniform_block_factor_root_coercivity": true
   },
   "theorem_closed": false,
   "regional_practical_stability_claimed": false,
-  "next_controlling_obligation": "block/factor LIN certificate: enclose the useful scaled integrated-OU factor source-uniformly over continuous tau/process-noise range and carry it through intervening corrections (or verified 4x4 LIN Riccati factor). Generic cross-ceiling Gershgorin is retired after gamma=-5.122292072e8; post-prediction root coercivity uses additive block-diagonal Q factors with structural gamma=1."
+  "next_controlling_obligation": "constructive numeric block factors for covariance-normalized rho0. Source-uniform block metric positivity is closed at post-prediction roots with gamma=1 from block-diagonal process injection; finite cross bounds follow from covariance compactness. Need numerical LIN continuous-tau factor (and compatible AG/BA scales) to compute mu_cov/rho0; the generic absolute-cross Gershgorin formula is retired as a conditioning failure."
 }
