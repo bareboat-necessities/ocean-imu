@@ -15,7 +15,7 @@ from tools.stability.ou3_theorem.interval_riccati_21 import (
     adaptive_verified_update,recurring_box_over_cells,exact_midpoint_seed,
     interval_failure_metrics,psd_spectral_prediction_floor,
     psd_spectral_correction_floor,psd_spectral_word_floor,
-    integrated_ou_window_controllability_floor,
+    integrated_ou_window_controllability_floor,integrated_ou_scaled_factor_probe,
 )
 
 
@@ -243,6 +243,18 @@ class IntervalRiccati21Tests(unittest.TestCase):
         print("OU_CONTROLLABILITY_PROBE",vals)
         # Feasibility diagnostic: plain Gershgorin is allowed to fail closed.
         self.assertEqual(set(vals),{"0.02","0.2","2.0","12.0"})
+
+    def test_scaled_integrated_ou_factor_refinement(self):
+        vals=[]
+        for tau in (.02,.2,2.0,12.0):
+            vals.append(integrated_ou_scaled_factor_probe(
+                tau=tau,sigma=.15,window_s=.156,
+                scales=(5.5,8.1,1100.0,4.0),slices=64))
+        print("OU_SCALED_LDLT_PROBE",[
+            {"tau":x["tau"],"verified":x["verified"],
+             "pivot_floor":x["pivot_floor"],"pivots":x["pivots"]} for x in vals])
+        self.assertTrue(all(x["verified"] for x in vals))
+        self.assertGreater(min(x["pivot_floor"] for x in vals),0.0)
 
     def test_spectral_box_is_finite(self):
         lo,hi=spectral_box(diag(N,1.0))
