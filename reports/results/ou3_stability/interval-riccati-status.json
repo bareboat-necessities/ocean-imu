@@ -26,5 +26,17 @@
     "maximal_optional_correction_monotonicity_proved": true,
     "branch_subdivision": true,
     "all_branch_recurring_hull": true
+  },
+  "last_failed_enclosure": {
+    "classification": "interval-conditioning",
+    "failed_quantity": "initial full attitude-transition interval used R_step entrywise [-1,1], destroying near-identity structure before Riccati multiplication",
+    "retained_facts": [
+      "fixed-coordinate mu_N >= 2.04e-3",
+      "source-uniform UCO/UCC",
+      "literal 21-state covariance/Joseph kernels",
+      "verified innovation inverse machinery"
+    ],
+    "refinement": "Rodrigues near-identity F_AA and Bstep bounds plus one finite branch subdivision",
+    "next_experiment": "record first innovation residual r/a or recurring spectral inclusion margin under the single refined enclosure"
   }
 }
