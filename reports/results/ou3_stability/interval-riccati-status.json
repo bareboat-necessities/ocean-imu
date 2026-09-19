@@ -8,7 +8,7 @@
   "full_shipping_schedule_included": false,
   "float32_rounding_included": false,
   "certificate_complete": false,
-  "blocker": "all literal 21-state interval kernels, verified gain, event ordering, monotonic maximal-correction reduction, and dependency-control subdivision are implemented. Remaining p_min blocker is to choose a finite outward-covering subdivision of the compact shipping attitude/tuner parameter domain whose all-branch recurring hull is self-containing with positive spectral floor.",
+  "blocker": "entrywise midpoint-radius Riccati enclosure failed after its one permitted near-identity refinement; architecture review requires a PSD-structure-preserving spectral/square-root enclosure before p_min can be certified",
   "kernel_status": {
     "matrix_interval_arithmetic": true,
     "prediction_21_state": true,
@@ -28,15 +28,20 @@
     "all_branch_recurring_hull": true
   },
   "last_failed_enclosure": {
-    "classification": "interval-conditioning",
-    "failed_quantity": "initial full attitude-transition interval used R_step entrywise [-1,1], destroying near-identity structure before Riccati multiplication",
+    "classification": "second interval-dependency/conditioning failure",
+    "covariance_spectral_lower": -18.790704021519012,
+    "covariance_spectral_upper": 2502.414418537763,
+    "S_innovation_residual_ratio": 0.6666638644523901,
+    "S_innovation_verified": true,
+    "acc_innovation_verified": false,
+    "mag_innovation_verified": false,
+    "invalidated_hypothesis": "one finite entrywise midpoint-radius refinement/subdivision can certify the recurring 21-state covariance box",
     "retained_facts": [
       "fixed-coordinate mu_N >= 2.04e-3",
       "source-uniform UCO/UCC",
-      "literal 21-state covariance/Joseph kernels",
-      "verified innovation inverse machinery"
+      "literal shipping covariance/Joseph semantics",
+      "strict 3x3 inverse verifier"
     ],
-    "refinement": "Rodrigues near-identity F_AA and Bstep bounds plus one finite branch subdivision",
-    "next_experiment": "record first innovation residual r/a or recurring spectral inclusion margin under the single refined enclosure"
+    "next_experiment": "structure-preserving spectral/square-root Riccati enclosure; no further blind entrywise subdivision"
   }
 }
