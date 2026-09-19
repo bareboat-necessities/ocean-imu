@@ -8,7 +8,7 @@
   "full_shipping_schedule_included": false,
   "float32_rounding_included": false,
   "certificate_complete": false,
-  "blocker": "entrywise midpoint-radius Riccati enclosure failed after its one permitted near-identity refinement; architecture review requires a PSD-structure-preserving spectral/square-root enclosure before p_min can be certified",
+  "blocker": "block/factor metric selected. Need source-uniform factor floors for AG/LIN/BA and cross-block operator bounds on the recurring shipping word; only then may block-normalized mu_cov/rho0 be promoted.",
   "kernel_status": {
     "matrix_interval_arithmetic": true,
     "prediction_21_state": true,
@@ -70,5 +70,16 @@
     "no_Q_32_step_end_floor": 1.467130430205166e-19,
     "classification": "conditioning failure of raw scalar/Gershgorin reduction",
     "next_refinement": "proof-coordinate-scaled factor/LDLT enclosure of the multi-step controllability Gramian"
+  },
+  "covariance_metric": "block/factor",
+  "entrywise_interval_riccati": "RETIRED_AFTER_SECOND_CONDITIONING_FAILURE",
+  "block_factor_status": {
+    "implemented": true,
+    "translation_factor_probe": true,
+    "attitude_gyro_factor_certificate": false,
+    "translation_tau_uniform_factor_certificate": false,
+    "active_bias_factor_certificate": false,
+    "cross_block_coupling_certificate": false,
+    "recurring_block_factor_enclosure": false
   }
 }
