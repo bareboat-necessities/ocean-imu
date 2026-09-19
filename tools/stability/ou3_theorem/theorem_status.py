@@ -25,6 +25,8 @@ def status_report() -> dict:
         "finite_reference_refinement_and_bias_release":False,
         "H18_to_A21_release_retention":False,
         "source_uniform_A21_linear_dissipativity":True,
+        "constructive_fixed_coordinate_A21_mu_enclosure":True,
+        "constructive_root_covariance_floor":False,
         "constructive_full_A21_mu_rho_enclosure":False,
         "explicit_A21_nonlinear_radius":False,
         "whole_word_float32_supply_bound":False,
@@ -48,5 +50,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"compose the actual transported MAGNETIC SERVICE heading/axial-bias Gramian with recurring accelerometer rows over the full A21 word to obtain a tight constructive full mu_N/rho0; then certify L2, kernelwise float32 supply, and capture/release retention. The translation subfloor is already explicit (mu_trans >= 2.04734e-3); projection-inactive release is correctly abandoned in favor of the literal dissipative sector.",
+        "next_controlling_obligation":"enclose the recurring A21 root covariance from below in the same proof coordinates. The fixed-coordinate neutral Gramian is now constructive (mu_N >= 2.04e-3 on a 2048 s word), but rho0=1/(1+mu) is valid only after covariance whitening: mu_cov >= p_min*mu_N. Then compute rho0, L2/r*, whole-word float32 supply, and capture/release retention.",
     }
