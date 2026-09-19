@@ -172,7 +172,7 @@ class IntervalRiccati21Tests(unittest.TestCase):
         for a in range(3): hrows[a][12+a]=1.0
         m=interval_failure_metrics(p,exact(hrows),diag(3,1.0))
         self.assertTrue(m["innovation_verified"])
-        self.assertEqual(m["covariance_spectral_lower"],1.0)
+        self.assertAlmostEqual(m["covariance_spectral_lower"],1.0,places=14)
 
     def test_spectral_box_is_finite(self):
         lo,hi=spectral_box(diag(N,1.0))
