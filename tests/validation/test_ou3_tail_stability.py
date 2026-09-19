@@ -30,6 +30,17 @@ class TailStabilityTests(unittest.TestCase):
 
 
 
+class TranslationalObservabilityTests(unittest.TestCase):
+    def test_exact_ou_minor_is_nonzero(self):
+        for dt in (.004,.005,.006):
+            for tau in (.25,1.0,10.0):
+                self.assertTrue(translational_observability_nonsingular(dt,tau))
+                self.assertLess(translational_observability_determinant(dt,tau),0)
+
+    def test_invalid_ou_minor_inputs_refused(self):
+        with self.assertRaises(ValueError): translational_observability_determinant(0,1)
+        with self.assertRaises(ValueError): translational_observability_determinant(.005,0)
+
 class A21InformationTests(unittest.TestCase):
     def test_information_floor_gives_strict_linear_ratio(self):
         self.assertAlmostEqual(information_contraction_ratio(1.0),.5)
