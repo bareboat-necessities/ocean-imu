@@ -129,3 +129,32 @@ real-arithmetic linear certificate, but the margin is extremely small.  The
 next falsifiable step is the explicit nonlinear remainder and float32 supply:
 they must fit inside this margin, or a sharper factor-coordinate normalization
 must be derived without weakening assumptions.
+
+
+## Matched factor-coordinate sharpening
+
+The previous normalization used the retained physical-envelope coordinate scales
+(5.5,8.1,1100,4) and then collapsed the complete LIN factor to its smallest
+singular value.  That collapse is coordinate dependent.  A fixed diagonal
+congruence is therefore allowed provided *both* covariance and information are
+recertified in the same coordinates; changing the estimator, motion contract,
+or measured data is not allowed.
+
+The declared proof coordinates are now tested at
+`(v,p,S,a_w)=(2.4,18,132,4)`.  These are proof coordinates only, not tighter
+physical bounds.  The exact-rational path-action certificate is rerun with that
+map, and the analytic three-S-row information certificate is independently
+rerun with the same map.  It gives `mu_trans > 2.1e-3`, while the LIN factor
+is about `8.91e-6`.  The resulting conservative neutral normalization is
+
+`mu_cov >= 1.66e-13`,
+`rho0 <= 0.9999999999998335`.
+
+This is more than fifty times the prior scalar-coordinate margin, without
+sampling trajectories or fitting rho.  It is nevertheless far too small to
+assume that nonlinear and float32 supplies will fit.  The remaining avoidable
+loss is the scalar collapse itself.  The next sharpening must retain the full
+LIN endpoint action/factor matrix and the compatible translation information
+matrix and certify `lambda_min(L^T J L)` directly.  No physical assumption or
+quality gate is to be tightened if that matrix certificate is still
+insufficient.
