@@ -550,3 +550,6 @@ entrywise subdivision is therefore excluded.  A recurring $p_{\min}$ must be
 obtained with a PSD-structure-preserving spectral or square-root enclosure
 before covariance-normalized $\mu$, $\rho_0$, or a nonlinear radius is
 claimed.
+
+\subsection{PSD-preserving covariance feasibility}
+After the entrywise interval dependency failure, a structure-preserving one-sample spectral check gives $\sigma_{\min}(F)\ge0.6440871$. Starting from the constructor covariance floor, the certified lower covariance is $4.14848\times10^{-7}$ after prediction and $1.49403\times10^{-7}$ after the maximal $S$/accelerometer/magnetometer correction sequence. These are feasibility margins only. Recurring certification still requires a full-rank factor enclosure of the literal $Q_{AA}$, integrated-OU $Q_{LL}$, and active-bias $Q_{BA}$ and multi-step propagation that preserves controllability structure. A tiny one-step scalar process-noise eigenvalue is not substituted for that factor certificate.
