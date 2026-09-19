@@ -27,7 +27,7 @@ def status_report() -> dict:
         "principal_assumptions":["MARINE MOTION","IMU BIAS","MAGNETIC SERVICE"],
         "quantifier":"one persistent physical execution belongs to all three assumption classes simultaneously",
         "proof_path":["construction","startup/capture","finite magnetically informed Live/H18 bridge",
-                      "finite reference refinement and H18-to-A21 release",
+                      "finite reference refinement","H18-to-A21 release",
                       "recurring magnetically informed A21 tail","regional practical stability"],
         "certified_capture_time":"history dependent T_c(h,x_0) < infinity; no common finite deadline is claimed",
         "parallel_no_magnetometer_stability_path":False,
