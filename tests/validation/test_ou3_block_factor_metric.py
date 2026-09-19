@@ -11,7 +11,7 @@ from tools.stability.ou3_theorem.block_factor_metric import (
     ag_one_second_factor_floor,ba_process_variance,block_factor_feasibility,
     additive_process_metric_certificate,block_metric_correction_margin,
     normalized_measurement_information_ceiling,
-    uniform_lin_jensen_factor_certificate,
+    uniform_lin_jensen_factor_certificate,source_uniform_root_block_certificate,
 )
 from tools.stability.ou3_theorem.interval_riccati_21 import (
     integrated_ou_scaled_factor_probe,
@@ -48,6 +48,16 @@ class BlockFactorMetricTests(unittest.TestCase):
     def test_generic_psd_cross_bound_is_too_weak_for_small_factors(self):
         c=cross_block_psd_bound(2.0,3.0)
         self.assertAlmostEqual(c,math.sqrt(6.0))
+
+    def test_source_uniform_root_block_metric_is_coercive(self):
+        r=source_uniform_root_block_certificate(
+            ag_process_spd=True,lin_process_spd=True,ba_process_spd=True,
+            compact_parameter_domain=True,block_diagonal_process_noise=True,
+            covariance_psd_before_prediction=True,
+            finite_block_covariance_ceilings=True)
+        self.assertTrue(r["verified"])
+        self.assertEqual(r["root_metric_gamma"],1.0)
+        self.assertFalse(r["constructive_numeric_factors"])
 
     def test_additive_process_factor_gives_root_gamma_one_despite_cross_terms(self):
         r=additive_process_metric_certificate(
