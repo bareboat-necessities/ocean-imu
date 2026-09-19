@@ -132,6 +132,36 @@ class IntervalRiccati21Tests(unittest.TestCase):
             return box,[{"verified":False,"name":"synthetic"}]
         self.assertFalse(iterate_recurring_box(seed,word)["verified"])
 
+    def test_split_cells_cover_original_entry(self):
+        a=diag(N,1.0)
+        m=[list(r) for r in a.mid];q=[list(r) for r in a.rad]
+        m[0][1]=0.0;q[0][1]=2.0
+        x=IMat(tuple(tuple(r) for r in m),tuple(tuple(r) for r in q))
+        cells=split_interval_matrix(x,((0,1),))
+        self.assertEqual(len(cells),2)
+        lo=min(z.mid[0][1]-z.rad[0][1] for z in cells)
+        hi=max(z.mid[0][1]+z.rad[0][1] for z in cells)
+        self.assertLessEqual(lo,-2.0);self.assertGreaterEqual(hi,2.0)
+
+    def test_recurring_box_requires_all_branch_cells(self):
+        seed=diag(N,1.0)
+        def good(p): return p,[{"verified":True}]
+        def bad(p):
+            out=diag(N,2.0)
+            return out,[{"verified":True}]
+        r=recurring_box_over_cells(seed,(good,bad),max_iterations=1)
+        self.assertFalse(r["verified"])
+        self.assertEqual(r["branch_count"],2)
+
+    def test_adaptive_update_accepts_exact_cell_without_split(self):
+        p=diag(N,1.0)
+        hrows=[[0.0]*N for _ in range(3)]
+        for a in range(3): hrows[a][12+a]=1.0
+        out,certs=adaptive_verified_update(
+            p,exact(hrows),diag(3,1.0),split_entries=((0,12),),max_depth=1)
+        self.assertEqual(out.shape,(N,N))
+        self.assertEqual(certs[0]["depth"],0)
+
     def test_spectral_box_is_finite(self):
         lo,hi=spectral_box(diag(N,1.0))
         self.assertLessEqual(lo,1.0); self.assertGreaterEqual(hi,1.0)
