@@ -40,7 +40,8 @@
     "a21_time_varying_observability": "The tau-scaled progress-preserving S scheduler plus dt in [0.004,0.006] s and tau in [0.02,12] s gives a uniform positive time-varying translation minor by the extended-Chebyshev property K'''=exp(-integral 1/tau)>0.",
     "a21_uniform_detectability": "Active accelerometer bias is a strictly stable OU mode in A21. On the neutral quotient, translation is uniformly observable from S recurrence, gravity observes tilt/transverse gyro bias with sensitivity >=g-A_max, and MAGNETIC SERVICE observes heading/axial gyro bias. Strict compact branch cells imply an existential uniform quotient information floor mu_N>0.",
     "a21_uniform_controllability": "Positive integrated-OU, gyro white-noise, gyro-bias RW and active accelerometer-bias OU driving densities on the compact timing/tau envelope imply uniform complete controllability. Default a_w covariance sync is a bounded PSD prediction increment; bias release is a bounded diagonal covariance floor.",
-    "a21_local_nonlinear_closure": "On tilt<=6 deg and accelerometer-bias error<=0.15 m/s^2, projection is inactive; tuner and refined magnetic-reference schedules are same-history exogenous; smooth MEKF measurement/reset remainder has eta(r)->0. Thus source-uniform linear rho0<1 implies existence of r*>0 with sqrt(rho0)+eta(r*)<1. Roundoff remains additive supply."
+    "a21_local_nonlinear_closure": "On tilt<=6 deg and accelerometer-bias error<=0.15 m/s^2, projection is inactive; tuner and refined magnetic-reference schedules are same-history exogenous; smooth MEKF measurement/reset remainder has eta(r)->0. Thus source-uniform linear rho0<1 implies existence of r*>0 with sqrt(rho0)+eta(r*)<1. Roundoff remains additive supply.",
+    "a21_constructive_small_gain": "Once a certified linear rho0 and quadratic remainder slope L2 are enclosed, r*=min(r_guard,(1-sqrt(rho0))/L2). Additive physical/arithmetic supply then gives the practical radius separately."
   },
   "operation_lemma_sources": [
     {
@@ -77,7 +78,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
-      "git_blob_sha": "34a275a9ff1f07e3155c54f0205ef4d3480b2d62"
+      "git_blob_sha": "908731bb49cc78d40e550f7bfcc92cdd5deb6557"
     }
   ]
 }
