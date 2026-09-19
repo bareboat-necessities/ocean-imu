@@ -53,6 +53,11 @@ class RefinementTests(unittest.TestCase):
         # window. Real shipping cadence is much faster but is not needed.
         self.assertEqual(refinement_completion_bound(90.0,p),218.0)
 
+    def test_capture_to_a21_entry_is_finite(self):
+        p=self.deployed_like()
+        # refinement: 128 s worst case; then at most 250 service windows + 1 s guard
+        self.assertEqual(a21_entry_bound(80.0,90.0,p,250,1.0),469.0)
+
     def test_large_tilt_error_refuses_horizontal_gate(self):
         p=self.deployed_like(tilt_error_upper_rad=math.radians(15.0))
         self.assertFalse(refinement_sample_gate_uniform(p))
