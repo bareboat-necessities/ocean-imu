@@ -1,0 +1,97 @@
+# LIN endpoint-path factor certificate
+
+## Role in the single proof
+
+This is the constructive LIN covariance lemma within the AG/LIN/BA factor
+metric. It does not create a second theorem path. The long-word neutral
+information floor remains `mu_N >= 2.04e-3`; covariance normalization, finite
+error, arithmetic and capture remain separate fail-closed obligations.
+
+The executed rational comparison gives `ell_LIN >= 1.196007314542406680e-6`
+after the complete correction window, conditional on the stated shipping
+noise-floor binding and real-arithmetic covariance equations. It covers every
+piecewise-constant `tau(t) in [0.02,12]`, every mesh step in `[0.004,0.006]`, and
+every correction subset. No frozen-tau sampling or one-step scalar q_min is
+used. Float32 transfer is NOT claimed by this result.
+
+## Variational factor construction
+
+Write a scalar LIN path as `(v,p,S,a)=(S'',S',S,S''')`. A degree-seven Hermite
+polynomial has four zero initial jets and any prescribed final jets. This is a
+comparison path for a covariance inequality; neither the actual estimator nor
+its physical history is reset. At any endpoint after 16 seconds, choose the
+sample just before its 16-second look-back, so the comparison duration belongs
+to `[16,16.006]` seconds. Discarding the actual PSD prior only reduces the
+comparison covariance.
+
+For `lambda=1/tau`, the path's control is `a'+lambda a`. With
+`q(t)>=2 sigma_min^2 lambda(t)`, its process action obeys
+
+`integral (a'+lambda a)^2/q <= [12 integral (a')^2 + 50 integral a^2 + a(T)^2] / (2 sigma_min^2)`.
+
+The cross term telescopes without differentiating lambda. Thus arbitrary tuner
+changes are admitted. A trial path upper-bounds the minimum endpoint action,
+which is the inverse controllability Gramian quadratic form.
+
+## Literal correction survival
+
+For an accelerometer row partitioned into AG/LIN/BA,
+`H' R^-1 H <= 3 diag(H_AG' R^-1 H_AG,H_LIN' R^-1 H_LIN,H_BA' R^-1 H_BA)`.
+This introduces more informative block-separated observations, so Riccati
+monotonicity gives a lower covariance comparison. The LIN accelerometer part
+observes only `a` through an orthogonal rotation. Integral observations select
+`S`. Applied magnetic observations affect the AG comparison only; no rejected
+or unavailable event is counted as magnetic information.
+
+For a sample mesh with separation at least delta and any path with f(0)=0,
+
+`sum_i |f(t_i)|^2 <= (2/delta) integral |f|^2 + 2 delta integral |f'|^2`.
+
+Proof: compare f(t_i) to f(t) on disjoint backward intervals of length delta,
+use Cauchy-Schwarz and `(x+y)^2<=2x^2+2y^2`, and integrate. Apply this to both
+`a` and `S`. It covers an integral update at every IMU sample, hence every
+literal sparser scheduler history, and includes accelerometer corrections at
+every sample. Add the resulting measurement energies to the process action.
+The variational posterior precision is no greater than this trial action.
+Taking the trace of each PSD endpoint-energy matrix gives the certified
+precision ceiling and its reciprocal factor floor.
+
+The deployed integral standard deviation has the lateral factor 0.50, not
+0.72 on both axes. Hence the comparison uses `0.15*0.50=0.075`, not 0.108.
+The initial unbound calculation at 0.108 was conditional, not a deployment
+certificate. Noise-floor binding is kept open until the complete configuration
+and parameter-smoothing paths are audited.
+
+## Literal small-argument polynomial defects
+
+The shipping OU transition and covariance use finite polynomials for
+`x=dt/tau<0.01`. These are not silently identified with an exact exponential.
+In natural step coordinates `D_h=diag(h,h^2,h^3,1)`, write
+`Q_exact=sigma^2*x*D_h B(x) D_h'`. For integration orders m,n in `(1,2,3,0)`,
+
+`B_mn(x)=2 sum_r (-x)^r sum_{j=0}^r [1/((m+j)!(n+r-j)!(m+n+r+1))]`.
+
+The retained degree is read from the literal h^9 covariance formulas. A
+positive-series geometric tail majorant and the zero-drift controllability
+inverse give the rational relative defect ceiling
+`epsilon_Q < 1.944803e-5`; thus `Q_poly >= (1-epsilon_Q) Q_exact`.
+The transition defects obey
+`|Delta F_pa|<=h^2*x^3/120` and `|Delta F_Sa|<=h^3*x^3/720`.
+Their endpoint action is bounded using the same natural-step inverse and added
+to the process action via Young's inequality. This is a relative factor
+comparison, not a tiny raw one-step eigenvalue replacement.
+
+The resulting posterior precision ceiling is at most
+`6.990887744796e11`, with covariance floor greater than `1.4304334964e-12`
+in the retained `(5.5,8.1,1100,4)` LIN coordinates. All certificate arithmetic
+is rational; decimal endpoints and the square-root lower export are outward.
+
+## Remaining falsifiable transfer
+
+Bind all source polynomial coefficients and deployed noise floors, including
+smoothing, hard events and anisotropy. Then enclose the literal float32
+covariance perturbation in this factor metric. A positive real-arithmetic
+factor is not permission to set constructive_root_covariance_floor or
+constructive_full_A21_mu_rho_enclosure true. No numerical cross-block ceiling,
+complete rho0, nonlinear radius, startup capture, or practical radius is
+claimed by this module.
