@@ -6,12 +6,23 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 
 from tools.stability.ou3_theorem.magnetic_service import (
-    MagneticEvent,audit_window,transported_whitened_rows,
+    MagneticEvent,MagneticServiceContinuationCertificate,audit_window,
+    continuation_admitted,transported_whitened_rows,
 )
 
 class MagneticServiceTests(unittest.TestCase):
     def event(self,t,rows,*,applied=True,gauged=True,finite=True,saturated=False):
         return MagneticEvent("h",t,applied,gauged,finite,saturated,tuple(rows))
+
+    def test_source_uniform_service_requires_all_time_certificate(self):
+        cert=MagneticServiceContinuationCertificate(
+            "h",1.0,1.0,True,True,True,True)
+        self.assertTrue(continuation_admitted(
+            cert,required_window_s=1.0,required_information_floor=1.0))
+        bad=MagneticServiceContinuationCertificate(
+            "h",1.0,1.0,True,True,True,False)
+        self.assertFalse(continuation_admitted(
+            bad,required_window_s=1.0,required_information_floor=1.0))
 
     def test_whitening_uses_actual_innovation_covariance(self):
         # H=diag(1,2), S=diag(4,9), Phi=E=I gives
