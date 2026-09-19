@@ -169,15 +169,15 @@ Uniform quotient observability/detectability plus uniform controllability gives
 uniform upper/lower Riccati bounds and therefore a source-uniform linear A21
 covariance-metric ratio `rho0<1`. No sampled rho is used.
 
-On the strict inner domain (tilt error <=6 deg and accelerometer-bias error
-<=0.15 m/s^2), projection is inactive and all quaternion measurement/reset
-maps are smooth. The tuner and refined magnetic-reference paths are
-measurement-only and therefore identical in a same-history comparison: they
-belong to the bounded LTV schedule, not to the nonlinear remainder. Hence the
-multiplicative nonlinear remainder satisfies `eta(r)->0` as `r->0`.
-Since `rho0<1`, there exists `r_*>0` for which
-`sqrt(rho0)+eta(r_*)<1`. Floating-point roundoff is retained as additive
-supply rather than hidden in eta.
+The earlier attempt to require projection-inactive release was too strong and
+has been removed. H18 holds the accelerometer-bias estimate while physical
+truth may be anywhere in the all-time ball ||b_a||<=0.2251666 m/s^2. Even with
+a zero held estimate, universal release error can therefore be 0.2251666
+m/s^2, which exceeds the projection-inactive radius 0.1748334 m/s^2. The A21
+proof now carries the literal projection sector
+||e_ba^+||^2+||d_b||^2<=||e_ba^corr||^2 instead. This is dissipative and gives
+the global post-projection bound ||e_ba||<=B_a+R_b=0.6251666 m/s^2; capture no
+longer has to manufacture an unjustified 0.15 m/s^2 bias error.
 
 The remaining work is constructive rather than architectural: rigorously
 enclose a usable numerical `mu_N`/`rho0`, derive an explicit `r_*`, bound
@@ -213,3 +213,34 @@ existing MARINE MOTION and MAGNETIC SERVICE assumptions, rather than adding a
 persistent-excitation assumption. The 16 s word also improves the active
 accelerometer-bias homogeneous norm factor to `exp(-16/5000)=0.996805...`
 (`rho_b=exp(-32/5000)<0.994`).
+
+
+## Quantitative enclosure status
+
+A first fully analytic normalized translation enclosure is now constructive.
+On the 16 s word, selecting S updates after times 0, 8 and 16 s with the
+literal maximum scheduler delay 0.156 s, state scales
+(V,p,S)=(5.5,8.1,1100), and worst declared S-noise standard deviation 100,
+the determinant/Frobenius certificate gives
+
+`mu_trans >= 2.04734e-3`.
+
+This is a real lower bound, not a sampled singular value.
+
+A deliberately sparse two-epoch attitude/gyro calculation gives a much weaker
+candidate scale (~6.18e-7) and therefore is **not promoted as the final
+shipping mu_N certificate**. The reason is important: MAGNETIC SERVICE is an
+already-transported two-coordinate heading/axial-bias Gramian over a window,
+not an instantaneous pure-heading row. A tight full certificate must compose
+that actual 2-D service Gramian directly with the many accelerometer rows in
+the same 16 s word; replacing it by a fictitious instantaneous attitude
+measurement would be an invalid shortcut. The next quantitative proof step is
+therefore the aggregate Schur/Gramian bound on the literal partition, using all
+recurring accelerometer and S information rather than two sparse rows.
+
+The float32 arithmetic path is likewise separated correctly. A straight-line
+kernel with n rounded operations has the standard gamma_n bound
+`gamma_n=n*u/(1-n*u)`, u=2^-24. This is implemented as a certificate
+primitive, but no whole-word arithmetic supply is claimed until literal kernel
+operation counts and magnitude envelopes are composed. Roundoff remains
+additive supply and is not allowed to consume the nonlinear derivative margin.
