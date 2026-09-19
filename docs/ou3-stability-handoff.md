@@ -193,3 +193,34 @@ coordinate-dependent and invalid shortcut. The next quantitative certificate
 is therefore a recurring lower enclosure `p_min>0` for the shipping A21 root
 covariance. Only after that enclosure is established will rho0, the explicit
 L2/r* radius, and the arithmetic/practical-radius bounds be promoted.
+
+
+## Verified interval Riccati certificate implementation
+
+The covariance-normalization blocker now has executable fail-closed certificate
+machinery. A candidate covariance trajectory may propose a spectral box
+`p_min I <= P <= p_max I`, but it cannot promote it.
+
+For every accelerometer, integral, and magnetic innovation interval, write
+`S=S_0+E`. The certificate requires
+`lambda_min(S_0)>=a`, `||E||_2<=r<a`. Then the midpoint inverse residual is
+bounded by `r/a<1`, and Neumann/Krawczyk inclusion gives
+`||S^{-1}||<=1/(a-r)`. If this strict inequality fails, the certificate fails
+closed.
+
+The complete interval Riccati image must then satisfy, with outward-rounding
+slack included,
+
+`[R(P,parameters)] subseteq [p_min I,p_max I]`
+
+for every covariance in the proposed box and every admitted shipping parameter
+box. The certificate also requires explicit inclusion of the periodic
+`a_w` covariance synchronization, H18-to-A21 bias-release covariance floor,
+the complete bounded tuner/scheduler envelope, and float32 rounding. Only after
+all flags and inclusions verify does the machinery compute
+
+`mu_cov=p_min*mu_N`, `rho0=1/(1+mu_cov)`.
+
+A committed status artifact currently remains OPEN. This is deliberate: the
+residual/inclusion checker is now present, but the full outward-rounded shipping
+Riccati image has not yet been generated. No midpoint-only p_min is accepted.
