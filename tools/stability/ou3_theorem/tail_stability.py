@@ -631,3 +631,62 @@ def projection_sector_retained_error_bound(physical_bias_bound: float,
             truth_bound=physical_bias_bound,projection_radius=projection_radius):
         raise ValueError("truth not inside projection ball")
     return physical_bias_bound+projection_radius
+
+def vector_attitude_information_floor(*, vertical_specific_force_floor: float,
+                                      horizontal_specific_force_ceiling: float,
+                                      accel_noise_std_ceiling: float,
+                                      heading_information_floor: float) -> float:
+    """Exact worst-corner lower bound for attitude vector information.
+
+    In coordinates with horizontal specific force on x and world down on z,
+    alpha*[f]x^T[f]x + m*zz^T has one eigenvalue alpha*|f|^2 and a 2x2 block
+    with trace alpha*|f|^2+m and determinant alpha*m*f_z^2. The smaller root
+    increases with f_z and decreases with |f_h|, so the declared corner gives
+    a rigorous floor.
+    """
+    vals=(vertical_specific_force_floor,horizontal_specific_force_ceiling,
+          accel_noise_std_ceiling,heading_information_floor)
+    if not all(math.isfinite(x) for x in vals) or min(vals) <= 0:
+        raise ValueError("positive finite attitude information data required")
+    a=1.0/(accel_noise_std_ceiling**2)
+    fz=vertical_specific_force_floor; fh=horizontal_specific_force_ceiling
+    tr=a*(fz*fz+fh*fh)+heading_information_floor
+    det=a*heading_information_floor*fz*fz
+    return 2.0*det/(tr+math.sqrt(max(0.0,tr*tr-4.0*det)))
+
+def rotation_integral_singular_floor(window_s: float, angular_rate_ceiling: float) -> float:
+    """Lower singular value of integral R(t)dt from a midpoint rotation bound."""
+    if not all(math.isfinite(x) for x in (window_s,angular_rate_ceiling)) or window_s <= 0 or angular_rate_ceiling < 0:
+        raise ValueError("valid rotation-integral data required")
+    if angular_rate_ceiling == 0: return window_s
+    loss=8.0/angular_rate_ceiling*(1.0-math.cos(angular_rate_ceiling*window_s/4.0))
+    return max(0.0,window_s-loss)
+
+def two_epoch_attitude_gyro_floor(attitude_information_floor: float,
+                                  bias_coordinate_scale: float,
+                                  rotation_integral_floor: float) -> float:
+    """Information floor for [attitude,gyro-bias] from two full-rank attitude epochs.
+
+    Factor the two epoch observation operator as diag(C0,C1) times
+    [[I,0],[R,B*s_b]]. With C_i^T C_i>=jI and sigma_min(B)>=b, the inverse
+    block matrix has Frobenius norm squared <=3+6/(b*s_b)^2. Therefore
+    sigma_min^2 is at least its reciprocal.
+    """
+    vals=(attitude_information_floor,bias_coordinate_scale,rotation_integral_floor)
+    if not all(math.isfinite(x) for x in vals) or min(vals) <= 0:
+        raise ValueError("positive finite two-epoch data required")
+    beta=bias_coordinate_scale*rotation_integral_floor
+    temporal=1.0/(3.0+6.0/(beta*beta))
+    return attitude_information_floor*temporal
+
+def explicit_neutral_information_floor(translation_floor: float,
+                                       attitude_gyro_floor: float) -> float:
+    """Block-min floor on neutral quotient after exact S/attitude partition."""
+    if not all(math.isfinite(x) for x in (translation_floor,attitude_gyro_floor)):
+        raise ValueError("finite neutral information floors required")
+    if min(translation_floor,attitude_gyro_floor) <= 0:
+        raise ValueError("strict positive neutral information required")
+    return min(translation_floor,attitude_gyro_floor)
+
+def rho_from_explicit_mu(mu_neutral: float) -> float:
+    return information_contraction_ratio(mu_neutral)
