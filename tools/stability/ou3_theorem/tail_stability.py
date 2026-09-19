@@ -62,8 +62,7 @@ class RefinementPremises:
     """Sufficient conditions for the deployed unweighted MagAutoTuner."""
     min_samples: int
     min_window_s: float
-    accepted_dt_lower_s: float
-    accepted_dt_upper_s: float
+    service_window_s: float
     true_field_norm_lower: float
     true_field_norm_upper: float
     measurement_residual_norm: float
@@ -73,14 +72,14 @@ class RefinementPremises:
     min_horizontal_fraction: float
     def __post_init__(self) -> None:
         if self.min_samples < 1: raise ValueError("positive sample count required")
-        vals=(self.min_window_s,self.accepted_dt_lower_s,self.accepted_dt_upper_s,
+        vals=(self.min_window_s,self.service_window_s,
               self.true_field_norm_lower,self.true_field_norm_upper,
               self.measurement_residual_norm,self.true_horizontal_lower,
               self.tilt_error_upper_rad,self.max_norm_ratio_from_mean,
               self.min_horizontal_fraction)
         if not all(math.isfinite(x) for x in vals): raise ValueError("finite refinement premises required")
-        if self.min_window_s < 0 or self.accepted_dt_lower_s <= 0 or self.accepted_dt_upper_s < self.accepted_dt_lower_s:
-            raise ValueError("ordered positive accepted-sample timing required")
+        if self.min_window_s < 0 or self.service_window_s <= 0:
+            raise ValueError("positive service-window timing required")
         if self.true_field_norm_lower <= self.measurement_residual_norm or self.true_field_norm_upper < self.true_field_norm_lower:
             raise ValueError("field must dominate residual")
         if self.measurement_residual_norm < 0 or self.true_horizontal_lower <= 0 or self.tilt_error_upper_rad < 0:
@@ -112,13 +111,16 @@ def refinement_sample_gate_uniform(p: RefinementPremises) -> bool:
     m=refinement_gate_margins(p)
     return m["norm_ratio_margin"] >= 0.0 and m["horizontal_fraction_margin"] >= 0.0
 
-def refinement_required_accepted_samples(p: RefinementPremises) -> int:
-    """Samples sufficient for both literal count and accepted-window gates."""
-    return max(p.min_samples, math.ceil(p.min_window_s/p.accepted_dt_lower_s))
-
 def refinement_completion_bound(start_s: float, p: RefinementPremises) -> float:
-    """Wall-clock completion bound under recurring accepted samples."""
+    """Completion bound from recurring MAGNETIC SERVICE.
+
+    Once the physical margins make every service event acceptable to the
+    unweighted tuner, at least one such event occurs per T_M. The count reaches
+    N in at most N*T_M. Because accepted-window time telescopes between accepted
+    callbacks, the elapsed-window gate reaches W in at most W+T_M.
+    """
     if not math.isfinite(start_s) or start_s < 0: raise ValueError("finite nonnegative start required")
     if not refinement_sample_gate_uniform(p):
         raise ValueError("physical bounds do not guarantee MagAutoTuner acceptance")
-    return start_s + refinement_required_accepted_samples(p)*p.accepted_dt_upper_s
+    wait=max(p.min_samples*p.service_window_s,p.min_window_s+p.service_window_s)
+    return start_s+wait
