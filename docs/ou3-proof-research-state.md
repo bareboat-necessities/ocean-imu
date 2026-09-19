@@ -456,3 +456,14 @@ noise therefore preserves a strictly positive prefix metric margin.  The next
 controlling numeric task is consequently the source-uniform factorization of
 the three literal process blocks, especially Q_LIN; AG and BA have closed-form
 process factors.
+
+
+## Block-factor source-range feasibility result
+
+The source-range diagnostic was executed in CI. It gives an exact scaled AG one-second process factor ell_AG=4.999974644e-4; the active BA recurrence gives ell_BA=5.618273739e-4. The 16-s scaled LIN controllability probe is positive at every tested tau, with its smallest sampled pivot 1.194309698e-7 at tau=0.02 s. These values support the factor architecture but the LIN number is not promoted until the continuous tau interval is enclosed.
+
+The first cross-block mechanism, the universal PSD ceiling bound, decisively fails the requested scalar block-Gershgorin test. Its normalized cross bounds were (4.092217619e8, 2.013744150e6, 1.030074464e8), giving gamma=-5.122292072e8. Classification: **conditioning failure of absolute cross-ceiling / scalar-factor Gershgorin**, not failure of covariance coercivity. The invalidated hypothesis is that generic PSD cross ceilings can be divided by the small process factor floors to certify the root metric.
+
+The mathematically justified block/factor refinement uses the additive shipping process identity instead. At a post-prediction root, P-=F P+ F^T+Q and Q is block diagonal. Certified process factors Q_i>=L_iL_i^T imply exactly P->=diag(L_iL_i^T) regardless of the carried cross covariance, i.e. root metric gamma=1. Corrections preserve a positive factor-metric margin through gamma+=gamma-/(1+gamma- j_D) for finite normalized information ceiling j_D. Absolute cross-block bounds remain a prefix/totality obligation, but the failed generic cross-Gershgorin reduction is no longer used to establish root coercivity.
+
+The remaining quantitative issue is LIN: the useful 16-s controllability factor must be propagated through the intervening literal corrections, or an equivalent verified 4x4 LIN Riccati factor must be enclosed. Using the one-sample scalar eigenfloor would be positive but numerically useless and is not promoted.
