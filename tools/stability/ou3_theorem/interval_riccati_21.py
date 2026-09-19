@@ -673,3 +673,52 @@ def psd_spectral_word_floor(*, initial_floor: float, f: IMat,
     return {"root_floor":initial_floor,"end_floor":p,
             "prefix_floor":min(prefix),"prefixes":tuple(prefix),
             "F_sigma_min_lower":pred_meta["F_sigma_min_lower"]}
+
+
+def gramian_floor_from_columns(columns: tuple[tuple[float,...],...]) -> float:
+    """Gershgorin lower bound for G G' from explicit controllability columns."""
+    if not columns: raise ValueError("nonempty columns required")
+    n=len(columns[0])
+    if n==0 or any(len(x)!=n for x in columns): raise ValueError("equal column sizes required")
+    gram=[[0.0]*n for _ in range(n)]
+    for col in columns:
+        for i in range(n):
+            for j in range(n): gram[i][j]+=col[i]*col[j]
+    lo=math.inf
+    for i in range(n):
+        lo=min(lo,gram[i][i]-sum(abs(gram[i][j]) for j in range(n) if j!=i))
+    return max(0.0,math.nextafter(lo,-math.inf))
+
+
+def integrated_ou_impulse_column(t: float,tau: float) -> tuple[float,float,float,float]:
+    """Continuous unit-noise impulse column for [v,p,S,a] at age t."""
+    if not math.isfinite(t) or not math.isfinite(tau) or t<0 or tau<=0:
+        raise ValueError("valid impulse age/tau required")
+    a=math.exp(-t/tau)
+    va=tau*(1.0-a)
+    pa=tau*tau*(t/tau+a-1.0)
+    sa=tau**3*(0.5*(t/tau)**2-t/tau-a+1.0)
+    return va,pa,sa,a
+
+
+def integrated_ou_window_controllability_floor(*, tau: float, sigma: float,
+                                               window_s: float,
+                                               slices: int=64) -> float:
+    """Constructive PSD lower Riemann certificate for the 4-state OU chain.
+
+    Q_window = q_c integral g(t)g(t)'dt, q_c=2 sigma^2/tau.
+    On each slice we use the midpoint rank-one contribution only as a
+    feasibility lower construction; rigorous promotion requires a derivative
+    remainder proving the omitted within-slice integral is PSD-dominated.
+    """
+    if not all(math.isfinite(x) for x in (tau,sigma,window_s)) or min(tau,sigma,window_s)<=0 or slices<4:
+        raise ValueError("valid OU window data required")
+    h=window_s/slices
+    qc=2.0*sigma*sigma/tau
+    cols=[]
+    for k in range(slices):
+        t=(k+.5)*h
+        g=integrated_ou_impulse_column(t,tau)
+        scale=math.sqrt(qc*h)
+        cols.append(tuple(scale*x for x in g))
+    return gramian_floor_from_columns(tuple(cols))
