@@ -65,7 +65,8 @@
     "interval_attitude_prediction": "Shipping attitude prediction interval uses Rodrigues near-identity bounds at Omega_max*dt_max, not an entrywise [-1,1] rotation box; gyro-bias injection retains near -dt I diagonal and O(Omega dt^2) off-diagonal structure.",
     "interval_riccati_architecture_review": "Executed refined entrywise enclosure: predicted covariance spectral lower -18.7907040215, upper 2502.41441854; S innovation r/a=0.666663864 verifies, acc/mag do not. This is interval dependency, not pointwise PSD failure. AGENTS protocol forbids further subdivision; next representation must preserve PSD structure.",
     "psd_riccati_review": "After entrywise interval dependency failure, covariance architecture review uses PSD-preserving spectral bounds: Weyl lower singular bound for F P F'+Q and information-form correction floor. This is a feasibility construction only until a recurring source-uniform box/factor certificate is run.",
-    "psd_riccati_probe": "One-sample PSD-preserving feasibility: sigma_min(F)>=0.64408710396; covariance floors prediction 4.14848197e-7, after S 4.14825252e-7, after acc 3.01357721e-7, after mag 1.49402788e-7. Not promoted to recurring p_min until literal Q factors and multi-step controllability are enclosed."
+    "psd_riccati_probe": "One-sample PSD-preserving feasibility: sigma_min(F)>=0.64408710396; covariance floors prediction 4.14848197e-7, after S 4.14825252e-7, after acc 3.01357721e-7, after mag 1.49402788e-7. Not promoted to recurring p_min until literal Q factors and multi-step controllability are enclosed.",
+    "ou_controllability_probe": "Integrated-OU multi-step process covariance is explored via explicit continuous impulse columns over a scheduler-scale window. Current midpoint Riemann Gramian is feasibility-only until a derivative remainder certifies a true lower integral bound."
   },
   "operation_lemma_sources": [
     {
@@ -114,11 +115,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/interval_riccati_21.py",
-      "git_blob_sha": "9af7734da5952a296b64c1a572cdf06bc7a5f411"
+      "git_blob_sha": "bc0e29741aacd5c9a7a7d877e8f44e77d0d8f954"
     },
     {
       "path": "tests/validation/test_ou3_interval_riccati_21.py",
-      "git_blob_sha": "8c322353e5742d753a078e5449236ce9e5102984"
+      "git_blob_sha": "3919d7ea70f396c575ad076da5595218e6eedbc1"
     },
     {
       "path": "tools/stability/ou3_theorem/physical_qualification.py",
