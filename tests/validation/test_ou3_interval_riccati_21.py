@@ -199,6 +199,24 @@ class IntervalRiccati21Tests(unittest.TestCase):
         print("RICCATI_PROBE",metrics)
         self.assertTrue(all("innovation_residual_ratio" in x for x in metrics.values()))
 
+    def test_psd_preserving_feasibility_probe(self):
+        fp,_=shipping_prediction_intervals(
+            dt_min=.004,dt_max=.006,tau_min=.02,tau_max=12.0,
+            omega_max=.6108652382,tau_bacc=5000.0,
+            gyro_white_density=.00157,gyro_bias_rw_density=1e-5,
+            aw_sigma_max=4.0,accel_bias_drive_density=5e-4)
+        pred=psd_spectral_prediction_floor(1e-6,fp)
+        hs,rs=shipping_integral_update_intervals(.15,100.0)
+        ha,ra=shipping_acc_update_intervals(18.7,.05,.30104)
+        hm,rm=shipping_mag_update_intervals(75.0,.1,2.0)
+        p=pred["predicted_covariance_floor"]
+        s=psd_spectral_correction_floor(p,hs,.15**2)
+        a=psd_spectral_correction_floor(s["posterior_covariance_floor"],ha,.05**2)
+        m=psd_spectral_correction_floor(a["posterior_covariance_floor"],hm,.1**2)
+        print("PSD_RICCATI_PROBE",{"prediction":pred,"S":s,"acc":a,"mag":m})
+        self.assertGreater(pred["predicted_covariance_floor"],0.0)
+        self.assertGreater(m["posterior_covariance_floor"],0.0)
+
     def test_spectral_box_is_finite(self):
         lo,hi=spectral_box(diag(N,1.0))
         self.assertLessEqual(lo,1.0); self.assertGreaterEqual(hi,1.0)
