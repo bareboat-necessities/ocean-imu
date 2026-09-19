@@ -45,7 +45,7 @@ jobs:
       - name: Validate theorem contracts
         working-directory: tests/validation
         run: |
-          python3 -m unittest -v             test_ou3_architecture_cleanup             test_ou3_imu_bias             test_ou3_magnetic_service             test_ou3_marine_motion             test_ou3_no_mag_obstruction             test_ou3_same_execution             test_ou3_theorem_status             test_ou3_tail_stability             test_workflow_contract             test_ou_replay_fingerprint
+          python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_same_execution test_ou3_theorem_status test_ou3_tail_stability test_ou3_interval_riccati test_ou3_interval_riccati_21 test_ou3_physical_qualification test_workflow_contract test_ou_replay_fingerprint
       - name: Validate provenance and fail-closed status
         run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
       - name: Build literal shipping regressions
