@@ -32,7 +32,8 @@
     "held_accelerometer_bias_hold": "On feasible held segments without projection-changing or frame/relock events, the bias estimate and its decoupled covariance block are unchanged. Same-history incremental bias is invariant; absolute bias error still carries the shared physical increment. The incremental full-state contraction obstruction does not remove hard-event or release obligations.",
     "h18_role": "finite bridge until magnetic-reference refinement and implemented accelerometer-bias release; asymptotic contraction is not required on H18",
     "a21_tail": "recurring magnetically informed asymptotic tail; linear storage contraction plus a finite-error nonlinear small-gain remainder is the productive proof target",
-    "pr557_negative_result": "held-bias identity obstructs one strict full-state H18 incremental contraction formulation; diagnostic scripts are not theorem machinery"
+    "pr557_negative_result": "held-bias identity obstructs one strict full-state H18 incremental contraction formulation; diagnostic scripts are not theorem machinery",
+    "mag_refinement_completion": "For deployed unweighted refinement, finite completion follows from recurring usable samples plus the literal min-sample/min-window, norm-ratio and horizontal-field gates; broad global field limits alone do not prove the running norm-ratio gate."
   },
   "operation_lemma_sources": [
     {
@@ -69,7 +70,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
-      "git_blob_sha": "d7686daef80a1f816b59368b2756c2c924ebf80e"
+      "git_blob_sha": "b0dc6b202a9eeacd8545cf7119dd2fe32f4d44c5"
     }
   ]
 }
