@@ -331,28 +331,23 @@ def uniform_lin_jensen_factor_certificate(*, tau_min: float,tau_max: float,
 def batch_information_degraded_factor(*, process_factor: float,
                                       event_information_ceilings: tuple[tuple[int,float],...],
                                       transport_norm_ceiling: float=1.0) -> dict:
-    """Conservative final-state factor after a process window and measurements.
+    """Fail closed: endpoint process factor alone cannot survive interleaved corrections.
 
-    Treat the accumulated process-driven final state as having covariance
-    >=ell^2 I. Every actual measurement is replaced by a hypothetical direct
-    final-state observation with no less Fisher information: its information
-    norm ceiling is multiplied by the squared backward transport norm. This can
-    only reduce the comparison covariance. Summing those ceilings gives
-      P_end >= (ell^-2 I + J_total I)^-1.
-    This is the batch counterpart of gamma+=gamma/(1+gamma*j).
+    A lower bound on the *accumulated endpoint* process Gramian plus per-event
+    information ceilings does not imply the formerly claimed posterior floor:
+    an early correction can remove a direction supplied by early process noise
+    before later anisotropic process noise is added.  Promotion therefore
+    requires a separately proved effective-endpoint-information comparison
+    through the literal shipping event sequence.
     """
     if not math.isfinite(process_factor) or process_factor<=0 or not math.isfinite(transport_norm_ceiling) or transport_norm_ceiling<1:
         raise ValueError("valid process factor/transport ceiling required")
-    total=0.0
     for count,j in event_information_ceilings:
         if count<0 or not math.isfinite(j) or j<0:
             raise ValueError("valid event information ceiling required")
-        total += count*j*transport_norm_ceiling*transport_norm_ceiling
-    var=process_factor*process_factor
-    post=var/(1.0+var*total)
-    return {"total_information_ceiling":total,"covariance_floor":post,
-            "factor_floor":math.sqrt(post),
-            "gamma_relative_to_process":post/var,"verified":post>0}
+    return {"verified":False,"factor_floor":0.0,"covariance_floor":0.0,
+            "failure":"endpoint_process_factor_does_not_bound_interleaved_corrections",
+            "requires":"literal_event_sequence_effective_information_comparison"}
 
 def maximum_event_count(window_s: float,dt_min: float) -> int:
     if not all(math.isfinite(x) for x in (window_s,dt_min)) or min(window_s,dt_min)<=0:
