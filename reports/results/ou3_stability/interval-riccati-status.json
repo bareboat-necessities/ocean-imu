@@ -8,7 +8,7 @@
   "full_shipping_schedule_included": false,
   "float32_rounding_included": false,
   "certificate_complete": false,
-  "blocker": "literal 21-state matrix kernels are implemented; remaining work is shipping-specific interval F/Q/H/R construction, verified gain/inverse enclosure, and recurring self-containing box iteration",
+  "blocker": "literal 21-state covariance/Joseph and acc/S/mag H/R interval kernels are implemented; remaining work is shipping F/Q interval construction, interval gain solve, and recurring self-containing box iteration",
   "kernel_status": {
     "matrix_interval_arithmetic": true,
     "prediction_21_state": true,
@@ -17,9 +17,9 @@
     "aw_covariance_floor_event": true,
     "accel_bias_release_event": true,
     "shipping_F_Q_interval_constructor": false,
-    "shipping_acc_H_R_interval_constructor": false,
-    "shipping_S_H_R_interval_constructor": false,
-    "shipping_mag_H_R_interval_constructor": false,
+    "shipping_acc_H_R_interval_constructor": true,
+    "shipping_S_H_R_interval_constructor": true,
+    "shipping_mag_H_R_interval_constructor": true,
     "recurring_box_iteration": false
   }
 }
