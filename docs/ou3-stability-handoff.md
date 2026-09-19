@@ -224,3 +224,10 @@ all flags and inclusions verify does the machinery compute
 A committed status artifact currently remains OPEN. This is deliberate: the
 residual/inclusion checker is now present, but the full outward-rounded shipping
 Riccati image has not yet been generated. No midpoint-only p_min is accepted.
+
+
+## Current covariance-normalization result
+
+The literal entrywise midpoint-radius 21-state Riccati enclosure was executed after its one permitted near-identity Rodrigues refinement. It failed as an interval-conditioning mechanism: the predicted covariance spectral enclosure was [-18.7907040, 2502.41442]. The S innovation still verified with r/a=0.666663864<1, but accelerometer and magnetometer innovation boxes did not admit strict inverse certificates. Pointwise shipping covariances remain PSD; the negative lower endpoint is interval dependency, not a physical covariance counterexample.
+
+Per the research protocol, do not subdivide this entrywise mechanism again. The next covariance-normalization construction must preserve PSD structure (spectral/square-root factor enclosure) and must itself be run before p_min is promoted. Until then constructive_root_covariance_floor, mu_cov/rho0, explicit r_*, arithmetic practical radius, capture/release-to-tail, and prefix retention remain open.
