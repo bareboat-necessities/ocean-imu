@@ -8,6 +8,8 @@ from tools.stability.ou3_theorem.interval_riccati_21 import (
     IMat,N,accel_bias_release_event,add,aw_covariance_floor_event,
     innovation_covariance,innovation_inverse_spectral_certificate,
     joseph_covariance,matmul,predict_covariance,spectral_box,
+    shipping_acc_update_intervals,shipping_integral_update_intervals,
+    shipping_mag_update_intervals,
 )
 
 
@@ -62,6 +64,18 @@ class IntervalRiccati21Tests(unittest.TestCase):
         ba=accel_bias_release_event(p,.04)
         for i in range(18,21):
             self.assertGreaterEqual(ba.mid[i][i]-ba.rad[i][i],.04)
+
+    def test_literal_measurement_interval_constructors(self):
+        hs,rs=shipping_integral_update_intervals(.01,100.0)
+        self.assertEqual(hs.mid[0][12],1.0)
+        self.assertGreater(rs.mid[0][0]+rs.rad[0][0],9999.0)
+        hm,rm=shipping_mag_update_intervals(75.0,.1,2.0)
+        self.assertEqual(hm.rad[0][1],75.0)
+        self.assertEqual(hm.rad[0][3],0.0)
+        ha,ra=shipping_acc_update_intervals(18.7,.05,.31)
+        self.assertEqual(ha.mid[0][18],1.0)
+        self.assertEqual(ha.rad[0][15],1.0)
+        self.assertGreater(ra.mid[0][0],0.0)
 
     def test_spectral_box_is_finite(self):
         lo,hi=spectral_box(diag(N,1.0))
