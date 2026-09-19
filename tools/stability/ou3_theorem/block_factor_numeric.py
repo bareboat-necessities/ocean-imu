@@ -77,3 +77,40 @@ def blockwise_factor_coordinate_diagnostic() -> dict:
             "compatible factor-coordinate information matrix/block floors; "
             "compute lambda_min(L' J L) directly instead of mu_N*min(ell)^2",
     }
+
+
+def sharpened_factor_coordinate_certificate() -> dict:
+    """Fixed, source-independent diagonal coordinate congruence.
+
+    This is not a fitted rho: the declared diagonal coordinate map is certified
+    by rerunning both the exact-rational LIN action bound and the analytic
+    translation information bound in the same coordinates.
+    """
+    scales=(2.4,18.0,132.0,4.0)
+    lin=lin_certificate(scales)
+    ell=float(lin["factor_floor"])
+    word=16.0; gap=.156; v,p,s=scales[:3]; noise=100.0
+    d=.5*word-gap; t=word+gap
+    det=(d**3)*v*p*s
+    row2=(.5*v*t*t)**2+(p*t)**2+s*s
+    sigma_min=det/(3.0*row2)
+    mu_trans=(sigma_min/noise)**2
+    # Retained long-word AG floor is >2.1e-3.  2.1e-3 is used downward.
+    mu_ag=2.1e-3
+    mu_neutral=min(mu_trans,mu_ag)
+    # BA and a_w are strictly stable modes and are handled by detectability,
+    # not allowed to dilute the neutral-quotient information floor.
+    mu_cov=mu_neutral*ell*ell
+    rho0=1.0/(1.0+mu_cov)
+    return {
+        "qualification":"OU3_A21_SHARP_FACTOR_COORDINATES_REAL_ARITHMETIC_V1",
+        "verified":lin["verified"] and mu_cov>0 and rho0<1,
+        "coordinate_map":{"v":v,"p":p,"S":s,"a_w":scales[3]},
+        "ell_LIN":ell,"mu_translation":mu_trans,"mu_AG":mu_ag,
+        "mu_neutral":mu_neutral,"mu_cov":mu_cov,"rho0":rho0,
+        "sqrt_rho0_margin":1.0-rho0**0.5,
+        "active_stable_modes":"a_w and BA retained by detectability; not neutral quotient",
+        "selection_role":"fixed proof-coordinate congruence, not sampled/fitted rho",
+        "float32_whole_word_supply_closed":False,
+        "theorem_closed":False,
+    }
