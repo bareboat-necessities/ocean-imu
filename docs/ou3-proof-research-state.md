@@ -98,3 +98,27 @@ the A21 linear error-transition energy inequality from the literal shipping
 operations and the MAGNETIC SERVICE Gramian. The nonlinear small-gain remainder
 is then bounded on the retained finite-error domain against that analytic
 linear margin.
+
+
+## A21 structural observability advance
+
+For one scalar active-bias OU-III translation chain with state
+`(v,p,S,a_w,b_a)`, exact constant-parameter OU transition, four successive
+integral observations `H_S F^j`, `j=0..3`, and one attitude-normalized
+accelerometer row `H_a=(0,0,0,1,1)`, a five-row observability minor has the
+closed-form determinant
+
+`det O = -Delta^3 tau^3 (1-exp(-Delta/tau))^3`.
+
+It is nonzero for every finite `Delta,tau>0`. This removes a possible
+structural rank obstruction: the integral chain plus active accelerometer-bias
+state is observable per axis; the bias does not create an unobservable
+translation mode after release.
+
+This is not yet the shipping full-information certificate. The deployed tuner
+can change `tau`, integral pseudo-updates occur on their actual scheduler, and
+attitude is coupled rather than known. The next analytic step is to extend this
+minor to bounded time-varying shipping transitions and combine its three-axis
+floor with gravity/attitude and MAGNETIC SERVICE. That extension, rather than a
+sampled matrix rank calculation, is the current route to the complete A21
+information floor.
