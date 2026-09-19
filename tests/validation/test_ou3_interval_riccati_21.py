@@ -9,7 +9,8 @@ from tools.stability.ou3_theorem.interval_riccati_21 import (
     innovation_covariance,innovation_inverse_spectral_certificate,
     joseph_covariance,matmul,predict_covariance,spectral_box,
     shipping_acc_update_intervals,shipping_integral_update_intervals,
-    shipping_mag_update_intervals,
+    shipping_mag_update_intervals,shipping_prediction_intervals,
+    verified_gain_interval,verified_joseph_update,
 )
 
 
@@ -64,6 +65,30 @@ class IntervalRiccati21Tests(unittest.TestCase):
         ba=accel_bias_release_event(p,.04)
         for i in range(18,21):
             self.assertGreaterEqual(ba.mid[i][i]-ba.rad[i][i],.04)
+
+    def test_shipping_prediction_interval_has_literal_blocks(self):
+        f,q=shipping_prediction_intervals(
+            dt_min=.004,dt_max=.006,tau_min=.02,tau_max=12.0,
+            omega_max=.6108652382,tau_bacc=5000.0,
+            gyro_white_density=.00157,gyro_bias_rw_density=1e-5,
+            aw_sigma_max=4.0,accel_bias_drive_density=5e-4)
+        self.assertEqual(f.shape,(N,N)); self.assertEqual(q.shape,(N,N))
+        self.assertEqual(f.mid[3][3],1.0)
+        self.assertGreater(f.rad[0][0],.9)
+        self.assertGreater(f.mid[18][18]-f.rad[18][18],0.999)
+        self.assertGreater(q.mid[15][15]+q.rad[15][15],0.0)
+
+    def test_verified_gain_and_joseph_update(self):
+        p=diag(N,2.0)
+        hrows=[[0.0]*N for _ in range(3)]
+        for a in range(3): hrows[a][12+a]=1.0
+        h=exact(hrows);r=diag(3,1.0)
+        k,cert=verified_gain_interval(p,h,r)
+        self.assertTrue(cert["verified"])
+        self.assertAlmostEqual(k.mid[12][0],2/3,places=12)
+        out,cert2=verified_joseph_update(p,h,r)
+        self.assertTrue(cert2["verified"])
+        self.assertAlmostEqual(out.mid[12][12],2/3,places=12)
 
     def test_literal_measurement_interval_constructors(self):
         hs,rs=shipping_integral_update_intervals(.01,100.0)
