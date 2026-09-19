@@ -387,6 +387,21 @@ $\sqrt{\rho_0}+\eta(r_*)<1$.  Roundoff is retained as additive supply.
 A numerical enclosure of $\mu_N$, an explicit $r_*$, and capture/retention
 into that domain remain to be certified.
 
+For a completed A21 word the target finite-error certificate is
+\begin{equation}
+ V_{j+1}\le\rho V_j+c_d\bar d^2,\qquad 0\le\rho<1 .
+ \label{eq:diss}
+\end{equation}
+Uniform coercivity requires
+\begin{equation}
+ m\norm{e_j}^2\le V_j\le M\norm{e_j}^2 .
+\end{equation}
+The word certificate must be accompanied by every-prefix bounds and forward
+retention of the strict inner domain.  This implication is conditional until
+the numerical information floor, nonlinear radius, additive arithmetic supply,
+capture, and release-retention certificates are complete. Finite simulations
+do not establish these source-uniform inequalities.
+
 \balance
 \section{Declared constants}
 Symbolic assumptions are separated from current numerical certification limits
