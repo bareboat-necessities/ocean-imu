@@ -464,3 +464,25 @@ def attitude_gyro_quotient_uniformly_observable(*, gravity_floor: float,
     vals=(gravity_floor,magnetic_floor,sample_spacing_floor,angular_rate_ceiling)
     if not all(math.isfinite(x) for x in vals): raise ValueError("finite attitude bounds required")
     return gravity_floor > 0 and magnetic_floor > 0 and sample_spacing_floor > 0 and angular_rate_ceiling >= 0
+
+def explicit_small_gain_radius(linear_rho0: float, quadratic_remainder_slope: float,
+                               guard_radius: float) -> float:
+    """Constructive radius when eta(r)<=L2*r on the strict inner domain."""
+    vals=(linear_rho0,quadratic_remainder_slope,guard_radius)
+    if not all(math.isfinite(x) for x in vals): raise ValueError("finite constructive bounds required")
+    if not 0 <= linear_rho0 < 1 or quadratic_remainder_slope <= 0 or guard_radius <= 0:
+        raise ValueError("strict linear margin and positive remainder/domain bounds required")
+    margin=1.0-math.sqrt(linear_rho0)
+    return min(guard_radius,margin/quadratic_remainder_slope)
+
+def additive_supply_practical_radius(linear_rho0: float, nonlinear_eta: float,
+                                     coercivity_lower: float,
+                                     additive_supply_energy: float) -> float:
+    """Practical radius after multiplicative small gain and additive arithmetic/physical supply."""
+    vals=(linear_rho0,nonlinear_eta,coercivity_lower,additive_supply_energy)
+    if not all(math.isfinite(x) for x in vals): raise ValueError("finite practical bounds required")
+    if linear_rho0 < 0 or nonlinear_eta < 0 or coercivity_lower <= 0 or additive_supply_energy < 0:
+        raise ValueError("valid practical bounds required")
+    rho=(math.sqrt(linear_rho0)+nonlinear_eta)**2
+    if not rho < 1.0: raise ValueError("small-gain condition not satisfied")
+    return math.sqrt(additive_supply_energy/(coercivity_lower*(1.0-rho)))
