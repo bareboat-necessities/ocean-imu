@@ -301,3 +301,29 @@ coordinate-dependent and invalid shortcut. The next quantitative certificate
 is therefore a recurring lower enclosure `p_min>0` for the shipping A21 root
 covariance. Only after that enclosure is established will rho0, the explicit
 L2/r* radius, and the arithmetic/practical-radius bounds be promoted.
+
+
+## Riccati enclosure route
+
+The covariance-normalization step now has two layers. First, the corrected
+classical UCO/UCC bounds are implemented as a fail-closed cross-check. For
+`alpha1 I<=O<=alpha2 I` and `beta1 I<=C<=beta2 I` over N discrete steps,
+
+`P_max <= (alpha1 + N alpha2^2 beta2)/alpha1^2`,
+
+`P_min >= beta1^2/(beta1 + N alpha2 beta2^2)`.
+
+The corrected form is important: the simpler historical upper bound
+`O^{-1}+C` is not generally valid. These formulas prove a positive recurring
+covariance floor once all four Gramian constants are enclosed, but on the raw
+IMU-step horizon they are expected to be too conservative to leave a useful
+nonlinear margin.
+
+Therefore they are a verification fallback, not the primary numerical route.
+The primary route is a **verified interval Riccati enclosure** of the bounded
+shipping schedule, using midpoint-radius arithmetic and a residual/Krawczyk
+inverse check for each 3x3 innovation solve. A floating-point midpoint trajectory
+may propose the box; only outward-rounded residual inclusion can certify it.
+The enclosure must cover the full dt/tau/R_S/R_acc/service ranges and the
+literal covariance sync/release events. Its resulting p_min/p_max are then
+cross-checked against the classical UCO/UCC bounds before rho0 is promoted.
