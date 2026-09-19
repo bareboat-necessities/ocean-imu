@@ -183,3 +183,33 @@ The remaining work is constructive rather than architectural: rigorously
 enclose a usable numerical `mu_N`/`rho0`, derive an explicit `r_*`, bound
 the additive arithmetic supply, and prove finite capture/H18 release enters and
 retains that explicit inner domain.
+
+
+## Marine motion supplies the missing attitude diversity
+
+A separate attitude-excitation assumption is not required. Let
+`f=a-g` be the world specific-force vector and `B` the true geomagnetic
+field. On every interval of length `T`,
+
+`integral f x B dt = (v(T)-v(0)) x B - T g x B`.
+
+The marine contract gives `||v||<=5.5 m/s`; the magnetic contract gives
+`B_h>=15 uT` and `||B||<=75 uT`. Therefore
+
+`(1/T)||integral f x B dt|| >= g B_h - 2 V_max B_max/T`.
+
+The right side is positive for `T>5.60844 s`. Choosing an 8 s subwindow gives
+a uniform diversity floor `43.97475 (m/s^2) uT`. Hence every 8 s physical
+marine history contains an instant where accelerometer and magnetic vector
+sensitivities are non-collinear. MAGNETIC SERVICE supplies an applied magnetic
+observation in every 1 s interval; transporting that sensitivity through the
+known attitude transition to the diversity instant preserves its norm. The two
+rank-two vector observations are therefore jointly full rank for attitude.
+Two consecutive 8 s diversity windows expose gyro bias through its attitude
+injection. The A21 proof word is consequently taken as 16 s.
+
+This closes the earlier gap in the attitude/gyro-bias quotient argument using
+existing MARINE MOTION and MAGNETIC SERVICE assumptions, rather than adding a
+persistent-excitation assumption. The 16 s word also improves the active
+accelerometer-bias homogeneous norm factor to `exp(-16/5000)=0.996805...`
+(`rho_b=exp(-32/5000)<0.994`).
