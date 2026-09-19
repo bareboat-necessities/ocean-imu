@@ -31,8 +31,8 @@ def status_report() -> dict:
         "constructive_fixed_coordinate_A21_mu_enclosure":True,
         "interval_riccati_kernel_layer":True,
         "maximal_correction_covariance_order":True,
-        "constructive_root_covariance_floor":False,
-        "constructive_full_A21_mu_rho_enclosure":False,
+        "constructive_root_covariance_floor":True,
+        "constructive_full_A21_mu_rho_enclosure":True,
         "explicit_A21_nonlinear_radius":False,
         "whole_word_float32_supply_composition":True,
         "whole_word_float32_supply_bound":False,
@@ -58,5 +58,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"constructive numeric block factors for covariance-normalized rho0. Source-uniform block metric positivity is closed at post-prediction roots with gamma=1 from block-diagonal process injection; finite cross bounds follow from covariance compactness. Need numerical LIN continuous-tau factor (and compatible AG/BA scales) to compute mu_cov/rho0; the generic absolute-cross Gershgorin formula is retired as a conditioning failure.",
+        "next_controlling_obligation":"The real-arithmetic LIN path factor is promoted: ell_LIN>=1.196007314542406680e-6, giving conservative mu_cov>=2.9180843327e-15 and rho0<=0.9999999999999971 with root gamma=1. The margin is positive but extremely small. Next: derive the explicit nonlinear remainder/radius and determine whether this conservative rho0 leaves a nonzero certifiable float32 practical region; cross-block prefix bounds remain required for totality.",
     }
