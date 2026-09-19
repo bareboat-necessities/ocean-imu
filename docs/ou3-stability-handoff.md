@@ -228,3 +228,10 @@ Riccati image has not yet been generated. No midpoint-only p_min is accepted.
 The literal entrywise midpoint-radius 21-state Riccati enclosure was executed after its one permitted near-identity Rodrigues refinement. It failed as an interval-conditioning mechanism: the predicted covariance spectral enclosure was [-18.7907040, 2502.41442]. The S innovation still verified with r/a=0.666663864<1, but accelerometer and magnetometer innovation boxes did not admit strict inverse certificates. Pointwise shipping covariances remain PSD; the negative lower endpoint is interval dependency, not a physical covariance counterexample.
 
 Per the research protocol, do not subdivide this entrywise mechanism again. The next covariance-normalization construction must preserve PSD structure (spectral/square-root factor enclosure) and must itself be run before p_min is promoted. Until then constructive_root_covariance_floor, mu_cov/rho0, explicit r_*, arithmetic practical radius, capture/release-to-tail, and prefix retention remain open.
+
+
+## PSD-preserving covariance review result
+
+A one-sample source-range feasibility check of the replacement PSD-preserving representation is positive: sigma_min(F) >= 0.6440871, with covariance floor 4.14848e-7 after prediction and 1.49403e-7 after the maximal S/accelerometer/magnetometer correction sequence. These are non-promoting feasibility margins.
+
+The remaining recurring-covariance task is now the exact process-noise factor: certify a full-rank lower factor/floor for shipping Q_AA, integrated-OU Q_LL, and active-bias Q_BA, then iterate the PSD representation over the actual cadence. A one-step scalar Q eigenvalue is expected to be extremely conservative for the triple-integrated chain, so it must not be used to manufacture a useless rho0; the factor/block structure must retain multi-step controllability.
