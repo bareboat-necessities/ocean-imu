@@ -655,12 +655,20 @@ def vector_attitude_information_floor(*, vertical_specific_force_floor: float,
     return 2.0*det/(tr+math.sqrt(max(0.0,tr*tr-4.0*det)))
 
 def rotation_integral_singular_floor(window_s: float, angular_rate_ceiling: float) -> float:
-    """Lower singular value of integral R(t)dt from a midpoint rotation bound."""
+    """Lower singular value of an attitude-transport integral.
+
+    Center the interval at its midpoint. For any unit vector x, bounded angular
+    speed gives x' R(mid)'R(t)x >= cos(Omega*|t-mid|). Integrating the scalar
+    projection yields sigma_min(integral R dt) >= 2 sin(Omega*T/2)/Omega while
+    Omega*T/2 < pi/2. Beyond that this elementary bound is zero rather than an
+    invented positive margin.
+    """
     if not all(math.isfinite(x) for x in (window_s,angular_rate_ceiling)) or window_s <= 0 or angular_rate_ceiling < 0:
         raise ValueError("valid rotation-integral data required")
     if angular_rate_ceiling == 0: return window_s
-    loss=8.0/angular_rate_ceiling*(1.0-math.cos(angular_rate_ceiling*window_s/4.0))
-    return max(0.0,window_s-loss)
+    half=0.5*angular_rate_ceiling*window_s
+    if half >= 0.5*math.pi: return 0.0
+    return 2.0*math.sin(half)/angular_rate_ceiling
 
 def two_epoch_attitude_gyro_floor(attitude_information_floor: float,
                                   bias_coordinate_scale: float,
@@ -736,3 +744,77 @@ def certified_rho_and_margin(mu_full: float) -> dict:
     margin=1.0-math.sqrt(rho)
     return {"mu":mu_full,"rho0":rho,"sqrt_rho0":math.sqrt(rho),
             "nonlinear_norm_margin":margin}
+
+def vibration_inflated_accel_std_ceiling(*, nominal_std: float,
+                                         vibration_gain: float,
+                                         detector_residual_rms_ceiling: float) -> float:
+    """Shipping Racc ceiling from the commissioned detector-band residual."""
+    vals=(nominal_std,vibration_gain,detector_residual_rms_ceiling)
+    if not all(math.isfinite(x) for x in vals) or nominal_std <= 0 or vibration_gain < 0 or detector_residual_rms_ceiling < 0:
+        raise ValueError("valid accelerometer noise bounds required")
+    return math.hypot(nominal_std,vibration_gain*detector_residual_rms_ceiling)
+
+def root_attitude_information_floor(*, vertical_specific_force_floor: float,
+                                    horizontal_specific_force_ceiling: float,
+                                    accel_std_ceiling: float,
+                                    magnetic_heading_floor: float) -> float:
+    """Pure attitude information extractable at a service-window root.
+
+    MAGNETIC SERVICE J_hb>=mu I permits subtracting diag(mu,0), leaving a PSD
+    remainder, so mu units of pure root-heading information may be used without
+    double counting axial-bias service. The simultaneous root accelerometer row
+    has no preceding gyro-bias transport. The exact 3-D corner calculation then
+    gives this attitude floor.
+    """
+    return vector_attitude_information_floor(
+        vertical_specific_force_floor=vertical_specific_force_floor,
+        horizontal_specific_force_ceiling=horizontal_specific_force_ceiling,
+        accel_noise_std_ceiling=accel_std_ceiling,
+        heading_information_floor=magnetic_heading_floor)
+
+def attitude_gyro_information_floor_from_windows(*, root_attitude_floor: float,
+                                                 service_windows: int,
+                                                 gyro_bias_coordinate_scale: float,
+                                                 one_window_rotation_integral_floor: float) -> float:
+    """Full attitude/gyro-bias floor from many disjoint service windows.
+
+    Let y_k=theta_0+C_k b be the pure attitude observation extracted at each
+    integer service root. E>=j*sum|y_k|^2. Consecutive differences satisfy
+    |y_{k+1}-y_k| >= beta|b| with
+    beta=s_b*sigma_min(int R dt). Also E>=j|theta_0|^2 and
+    E>=j/4*sum|Delta y_k|^2 (path-graph inequality).
+    Convexly combining those two valid lower bounds gives
+      mu=j*c/(1+c), c=(N-1)*beta^2/4.
+    No long-horizon attitude integral is used, so arbitrary bounded rotation
+    cannot cancel the gyro-bias information.
+    """
+    vals=(root_attitude_floor,gyro_bias_coordinate_scale,
+          one_window_rotation_integral_floor)
+    if not all(math.isfinite(x) for x in vals) or min(vals) <= 0 or service_windows < 2:
+        raise ValueError("positive attitude/window data required")
+    beta=gyro_bias_coordinate_scale*one_window_rotation_integral_floor
+    c=((service_windows-1)*beta*beta)/4.0
+    return root_attitude_floor*c/(1.0+c)
+
+def full_neutral_information_floor(*, translation_floor: float,
+                                   attitude_gyro_floor: float) -> float:
+    """Neutral quotient is block separated: S rows carry translation, while
+    the extracted root accelerometer+magnetic rows carry attitude/gyro bias."""
+    if not all(math.isfinite(x) for x in (translation_floor,attitude_gyro_floor)) or min(translation_floor,attitude_gyro_floor) <= 0:
+        raise ValueError("strict neutral floors required")
+    return min(translation_floor,attitude_gyro_floor)
+
+def covariance_normalized_information_floor(proof_coordinate_floor: float,
+                                            root_covariance_floor: float) -> float:
+    """Convert a fixed-coordinate Gramian floor to root-covariance whitening.
+
+    If P_root >= p_min I in the same proof coordinates and J>=mu I, then
+    P_root^(1/2) J P_root^(1/2) >= p_min*mu I.
+    """
+    if not all(math.isfinite(x) for x in (proof_coordinate_floor,root_covariance_floor)) or min(proof_coordinate_floor,root_covariance_floor) <= 0:
+        raise ValueError("positive information/covariance floors required")
+    return proof_coordinate_floor*root_covariance_floor
+
+def rho_from_covariance_normalized_mu(mu_normalized: float) -> float:
+    """Information-form contraction; input MUST already be covariance-whitened."""
+    return information_contraction_ratio(mu_normalized)
