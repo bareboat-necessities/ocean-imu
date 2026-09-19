@@ -10,7 +10,7 @@ from tools.stability.ou3_theorem.interval_riccati_21 import (
     joseph_covariance,matmul,predict_covariance,spectral_box,
     shipping_acc_update_intervals,shipping_integral_update_intervals,
     shipping_mag_update_intervals,shipping_prediction_intervals,
-    verified_gain_interval,verified_joseph_update,
+    verified_gain_interval,verified_joseph_update,iterate_recurring_box,
 )
 
 
@@ -101,6 +101,20 @@ class IntervalRiccati21Tests(unittest.TestCase):
         self.assertEqual(ha.mid[0][18],1.0)
         self.assertEqual(ha.rad[0][15],1.0)
         self.assertGreater(ra.mid[0][0],0.0)
+
+    def test_recurring_box_requires_positive_self_inclusion(self):
+        seed=diag(N,1.0)
+        def word(box):
+            return box,[{"verified":True,"name":"synthetic"}]
+        out=iterate_recurring_box(seed,word,max_iterations=2)
+        self.assertTrue(out["verified"])
+        self.assertGreater(out["spectral_lower"],0.0)
+
+    def test_recurring_box_fails_on_unverified_innovation(self):
+        seed=diag(N,1.0)
+        def word(box):
+            return box,[{"verified":False,"name":"synthetic"}]
+        self.assertFalse(iterate_recurring_box(seed,word)["verified"])
 
     def test_spectral_box_is_finite(self):
         lo,hi=spectral_box(diag(N,1.0))
