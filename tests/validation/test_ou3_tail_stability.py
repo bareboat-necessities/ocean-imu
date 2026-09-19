@@ -32,8 +32,7 @@ class TailStabilityTests(unittest.TestCase):
 
 class RefinementTests(unittest.TestCase):
     def deployed_like(self, **kw):
-        d=dict(min_samples=128,min_window_s=30.0,accepted_dt_lower_s=.04,
-               accepted_dt_upper_s=.04,true_field_norm_lower=20.0,
+        d=dict(min_samples=128,min_window_s=30.0,service_window_s=1.0,true_field_norm_lower=20.0,
                true_field_norm_upper=75.0,measurement_residual_norm=2.0,
                true_horizontal_lower=15.0,tilt_error_upper_rad=math.radians(2.0),
                max_norm_ratio_from_mean=.35,min_horizontal_fraction=.05)
@@ -46,10 +45,11 @@ class RefinementTests(unittest.TestCase):
         self.assertGreater(m["horizontal_fraction_lower"],.05)
         self.assertTrue(refinement_sample_gate_uniform(p))
 
-    def test_window_not_confused_with_callback_gap(self):
+    def test_service_closes_count_and_window_gates(self):
         p=self.deployed_like()
-        self.assertEqual(refinement_required_accepted_samples(p),750)
-        self.assertEqual(refinement_completion_bound(90.0,p),120.0)
+        # Conservative theorem bound: one usable event per one-second service
+        # window. Real shipping cadence is much faster but is not needed.
+        self.assertEqual(refinement_completion_bound(90.0,p),218.0)
 
     def test_large_tilt_error_refuses_horizontal_gate(self):
         p=self.deployed_like(tilt_error_upper_rad=math.radians(15.0))
