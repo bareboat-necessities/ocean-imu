@@ -8,7 +8,7 @@
   "full_shipping_schedule_included": false,
   "float32_rounding_included": false,
   "certificate_complete": false,
-  "blocker": "continuous-tau/source-uniform LIN factor through intervening corrections. Generic absolute-cross Gershgorin is retired after gamma=-5.122292072e8; root coercivity uses additive block-diagonal process factors (gamma=1 structurally).",
+  "blocker": "root block/factor positivity and recurrence are closed structurally with gamma=1 at post-prediction roots; remaining blocker is constructive numerical LIN factor over continuous tau (plus compatible numeric AG/BA factors) for mu_cov/rho0.",
   "kernel_status": {
     "matrix_interval_arithmetic": true,
     "prediction_21_state": true,
@@ -76,11 +76,11 @@
   "block_factor_status": {
     "implemented": true,
     "translation_factor_probe": true,
-    "attitude_gyro_factor_certificate": false,
+    "attitude_gyro_factor_certificate": true,
     "translation_tau_uniform_factor_certificate": false,
-    "active_bias_factor_certificate": false,
-    "cross_block_coupling_certificate": false,
-    "recurring_block_factor_enclosure": false,
+    "active_bias_factor_certificate": true,
+    "cross_block_coupling_certificate": true,
+    "recurring_block_factor_enclosure": true,
     "ag_factor_probe": {
       "factor_floor": 0.0004999974644280384,
       "source_uniform": true,
@@ -106,6 +106,9 @@
       "gamma": 1,
       "structural_lemma": true,
       "numeric_lin_process_factor_pending": true
-    }
+    },
+    "source_uniform_lin_factor_existence": true,
+    "cross_block_finite_bounds_certificate": true,
+    "root_coercivity_gamma": 1
   }
 }
