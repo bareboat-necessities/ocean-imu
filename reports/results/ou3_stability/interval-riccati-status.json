@@ -43,5 +43,14 @@
       "strict 3x3 inverse verifier"
     ],
     "next_experiment": "structure-preserving spectral/square-root Riccati enclosure; no further blind entrywise subdivision"
+  },
+  "psd_preserving_probe": {
+    "F_sigma_min_lower": 0.6440871039647162,
+    "predicted_covariance_floor": 4.148481974936552e-7,
+    "S_posterior_floor": 4.148252522259004e-7,
+    "acc_posterior_floor": 3.013577205331653e-7,
+    "mag_posterior_floor": 1.494027881347782e-7,
+    "promoted": false,
+    "next_requirement": "constructive full-rank lower floor/factor for literal Q_AA, Q_LL and active-bias Q_BA, then recurring PSD iteration"
   }
 }
