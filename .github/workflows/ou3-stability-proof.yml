@@ -42,6 +42,25 @@ jobs:
           python-version: "3.12"
       - name: Compile theorem tooling
         run: python3 -m py_compile tools/stability/ou3_theorem/*.py
+      - name: Execute rational LIN path certificate
+        run: |
+          python3 tools/stability/ou3_theorem/lin_path_certificate.py --output /tmp/ou3-lin-path-certificate.json
+          python3 -m unittest discover -s tests/validation -p test_ou3_lin_path_certificate.py -v
+      - name: Preserve reproducible source and LIN certificate
+        if: ${{ !cancelled() }}
+        run: |
+          git rev-parse HEAD > /tmp/ou3-proof-source-commit.txt
+          git archive --format=tar HEAD | gzip > /tmp/ou3-proof-source.tar.gz
+      - uses: actions/upload-artifact@v6
+        if: ${{ !cancelled() }}
+        with:
+          name: ou3-proof-reproduction
+          path: |
+            /tmp/ou3-proof-source.tar.gz
+            /tmp/ou3-proof-source-commit.txt
+            /tmp/ou3-lin-path-certificate.json
+          retention-days: 7
+          if-no-files-found: error
       - name: Validate theorem contracts
         working-directory: tests/validation
         run: |
