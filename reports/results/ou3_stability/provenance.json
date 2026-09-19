@@ -54,7 +54,10 @@
     "interval_riccati_certificate": "A midpoint covariance trajectory cannot promote p_min. Completion requires every innovation box to pass a strict residual/Krawczyk inverse test, the outward-rounded Riccati image to lie inside the proposed recurring spectral box, and explicit inclusion of shipping schedule, covariance hard events, and float32 rounding.",
     "interval_arithmetic": "Certificate interval arithmetic uses explicit midpoint-radius analytic radii plus nextafter outward expansion, independent of host BLAS rounding mode. Shipping float32 rounding is a separate gamma_n budget.",
     "interval_riccati_21": "21-state midpoint-radius kernels now implement P-=F P F'+Q, 3-D innovation covariance, literal Joseph covariance update with all cross-covariances, AW covariance-floor event, and accelerometer-bias release floor. Shipping-specific interval F/Q/H/R constructors and the self-containing recurring box remain open.",
-    "interval_measurements": "Literal 3-D interval constructors cover S selector/R_S, magnetic J_att/Rmag, and active-A21 accelerometer J_att/J_aw/J_ba/Racc. They remain conservative entrywise boxes; innovation inverse verification is separate and fail-closed."
+    "interval_measurements": "Literal 3-D interval constructors cover S selector/R_S, magnetic J_att/Rmag, and active-A21 accelerometer J_att/J_aw/J_ba/Racc. They remain conservative entrywise boxes; innovation inverse verification is separate and fail-closed.",
+    "interval_riccati_kernel_completion": "Generic full 21-state interval layer now includes source-uniform F/Q, acc/S/mag H/R, verified gain/Joseph, AW/bias hard events, and self-containing box iteration. The actual shipping cadence/event-word assembly must still produce a verified recurring box before p_min is promoted.",
+    "source_uniform_service_qualification": "All-time MAGNETIC SERVICE has a continuation certificate requiring every-window same-history applied-event semantics and actual transported innovation covariance. Finite replay cannot establish this certificate.",
+    "physical_qualification": "MARINE MOTION, IMU BIAS and MAGNETIC SERVICE continuation certificates are composed only when they share one history_id and assembled sensor/mounting/calibration qualification is explicit."
   },
   "operation_lemma_sources": [
     {
@@ -67,7 +70,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/magnetic_service.py",
-      "git_blob_sha": "5a73347ff64b33c84222210048082ec78d9eacba"
+      "git_blob_sha": "0177867ee178cf4cdd946e826d6993338e780703"
     },
     {
       "path": "tests/validation/test_ou3_imu_bias.py",
@@ -79,7 +82,7 @@
     },
     {
       "path": "tests/validation/test_ou3_magnetic_service.py",
-      "git_blob_sha": "70448e4acfac7a5be8fc4c105f572273d408691b"
+      "git_blob_sha": "8609eec39978804ec3791ffa50eb4871934328f0"
     },
     {
       "path": "tests/kalman_ou_iii/shipping_transition-test.cpp",
@@ -103,11 +106,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/interval_riccati_21.py",
-      "git_blob_sha": "26037c0e0a9c2452aff31db860ed84d9a7bb1da3"
+      "git_blob_sha": "26e92ca130f67df0ef240c1a7091a14bcd90c328"
     },
     {
       "path": "tests/validation/test_ou3_interval_riccati_21.py",
-      "git_blob_sha": "6aa0ac1621f794adc5e442f7b15f75b168cf05cc"
+      "git_blob_sha": "1ea31ca97d30ad22a5960cf969ba806cbc2bdc7e"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/physical_qualification.py",
+      "git_blob_sha": "2a6283b1d2834bda9cf872cea5ed803dcd7a5fdb"
+    },
+    {
+      "path": "tests/validation/test_ou3_physical_qualification.py",
+      "git_blob_sha": "c622bc4868ca90c969890fb07db3c2682eaeeda2"
     }
   ]
 }
