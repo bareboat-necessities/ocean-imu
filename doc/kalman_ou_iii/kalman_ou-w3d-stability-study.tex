@@ -533,3 +533,20 @@ tools for mathematical drafting, code development, and editorial preparation.
 The author is responsible for the conceptual development and final revisions,
 declares no conflicts of interest, and received no funding for this research.
 \end{document}
+
+
+\subsection{Covariance-enclosure conditioning result}
+The literal 21-state midpoint--radius Riccati enclosure was executed after the
+single permitted Rodrigues near-identity refinement.  Its predicted covariance
+spectral enclosure was
+\[
+ [-18.7907040,\;2502.41442].
+\]
+The integral innovation retained a strict inverse certificate with residual
+ratio $r/a=0.666663864<1$, whereas the accelerometer and magnetometer interval
+innovations did not.  This is an interval-dependency failure, not a pointwise
+covariance counterexample: the shipping Riccati map remains PSD.  Further blind
+entrywise subdivision is therefore excluded.  A recurring $p_{\min}$ must be
+obtained with a PSD-structure-preserving spectral or square-root enclosure
+before covariance-normalized $\mu$, $\rho_0$, or a nonlinear radius is
+claimed.
