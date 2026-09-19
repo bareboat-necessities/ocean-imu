@@ -467,3 +467,25 @@ The first cross-block mechanism, the universal PSD ceiling bound, decisively fai
 The mathematically justified block/factor refinement uses the additive shipping process identity instead. At a post-prediction root, P-=F P+ F^T+Q and Q is block diagonal. Certified process factors Q_i>=L_iL_i^T imply exactly P->=diag(L_iL_i^T) regardless of the carried cross covariance, i.e. root metric gamma=1. Corrections preserve a positive factor-metric margin through gamma+=gamma-/(1+gamma- j_D) for finite normalized information ceiling j_D. Absolute cross-block bounds remain a prefix/totality obligation, but the failed generic cross-Gershgorin reduction is no longer used to establish root coercivity.
 
 The remaining quantitative issue is LIN: the useful 16-s controllability factor must be propagated through the intervening literal corrections, or an equivalent verified 4x4 LIN Riccati factor must be enclosed. Using the one-sample scalar eigenfloor would be positive but numerically useless and is not promoted.
+
+
+## LIN correction-survival falsification
+
+The generic batch endpoint comparison has been retired fail-closed.  An
+accumulated process Gramian floor together with per-event information ceilings
+does not by itself survive corrections interleaved with process injection.  A
+two-dimensional exact counterexample is
+
+`Q1=[[4,2],[2,5/4]], Q2=diag(100,1/100), H=[1,0], R=1`.
+
+Although `Q1+Q2 >= I`, the exact correction between `Q1` and `Q2` gives
+endpoint covariance `[[504/5,2/5],[2/5,23/50]]`, whose second diagonal is
+`23/50 < 1/2`.  Thus the former endpoint formula would overclaim the floor.
+
+This does not invalidate the additive post-prediction identity, the
+single-correction factor-metric inequality, UCO/UCC, or the fixed-coordinate
+`mu_N >= 2.04e-3`.  It narrows the controlling LIN obligation: prove an
+effective endpoint-information comparison through the literal shipping
+correction/synchronization sequence, or propagate a structure-preserving LIN
+factor recurrence event by event.  The theorem remains fail-closed until that
+shipping comparison is numerical and source-uniform.
