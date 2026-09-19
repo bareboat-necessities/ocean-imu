@@ -98,8 +98,9 @@ class QuantitativeCertificateTests(unittest.TestCase):
         self.assertLess(conservative_float32_kernel_error(100,1.0),6e-6)
 
     def test_release_cannot_start_in_old_point_one_five_bias_ball(self):
-        e=bias_release_error_bound(.22516660498395405,0.0,.001,379.0)
-        self.assertGreater(e,.60)
+        e=bias_release_error_bound(.22516660498395405,0.0)
+        self.assertGreater(e,.225)
+        self.assertLess(e,.226)
         self.assertAlmostEqual(projection_sector_retained_error_bound(
             .22516660498395405,.4),.6251666049839541)
 
