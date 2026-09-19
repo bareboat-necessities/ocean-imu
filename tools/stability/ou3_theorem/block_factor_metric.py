@@ -101,3 +101,42 @@ def translation_factor_probe(*, controllability_floor: float,
     if controllability_floor<=0:
         raise ValueError("positive translation controllability floor required")
     return BlockFactorFloor(math.sqrt(controllability_floor),covariance_ceiling)
+
+
+def ba_ou_recurring_factor_floor(*, phi_max: float, process_variance_floor: float,
+                                 release_variance_floor: float,
+                                 corrections_information_ceiling: float) -> dict:
+    """Scalar isotropic BA block floor under A21 OU prediction/correction.
+
+    Prediction: p- >= phi^2 p+ + q.  A correction with information norm <=j
+    gives p+ >= 1/(1/p-+j).  This recurrence is monotone; its positive fixed
+    point and the literal release floor give a recurring factor certificate.
+    """
+    vals=(phi_max,process_variance_floor,release_variance_floor,corrections_information_ceiling)
+    if not all(math.isfinite(x) for x in vals) or not 0<phi_max<1 or min(process_variance_floor,release_variance_floor)<=0 or corrections_information_ceiling<0:
+        raise ValueError("valid BA recurrence data required")
+    p=release_variance_floor
+    prefix=p
+    for _ in range(100000):
+        pred=phi_max*phi_max*p+process_variance_floor
+        post=1.0/(1.0/pred+corrections_information_ceiling)
+        prefix=min(prefix,pred,post)
+        if abs(post-p)<=1e-14*max(1.0,p):
+            p=post;break
+        p=post
+    return {"covariance_floor":min(p,release_variance_floor),
+            "factor_floor":math.sqrt(min(p,release_variance_floor)),
+            "prefix_floor":prefix}
+
+def cross_block_psd_bound(ceiling_i: float,ceiling_j: float) -> float:
+    """Universal PSD cross-covariance operator bound ||Pij||<=sqrt(||Pii||||Pjj||)."""
+    if not all(math.isfinite(x) for x in (ceiling_i,ceiling_j)) or min(ceiling_i,ceiling_j)<=0:
+        raise ValueError("positive block ceilings required")
+    return math.sqrt(ceiling_i*ceiling_j)
+
+def required_cross_fraction_for_gamma(*, ell_i: float,ell_j: float,
+                                      desired_normalized_cross: float) -> float:
+    """Absolute cross-block threshold needed for a target scaled coupling."""
+    if min(ell_i,ell_j)<=0 or desired_normalized_cross<0:
+        raise ValueError("valid factor/cross target required")
+    return desired_normalized_cross*ell_i*ell_j
