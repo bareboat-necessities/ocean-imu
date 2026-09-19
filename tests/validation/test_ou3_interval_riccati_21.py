@@ -1,0 +1,71 @@
+from __future__ import annotations
+import sys
+from pathlib import Path
+import unittest
+
+ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
+from tools.stability.ou3_theorem.interval_riccati_21 import (
+    IMat,N,accel_bias_release_event,add,aw_covariance_floor_event,
+    innovation_covariance,innovation_inverse_spectral_certificate,
+    joseph_covariance,matmul,predict_covariance,spectral_box,
+)
+
+
+def exact(rows):
+    return IMat(tuple(tuple(float(x) for x in r) for r in rows),
+                tuple(tuple(0.0 for _ in r) for r in rows))
+
+
+def diag(n,x):
+    return exact([[x if i==j else 0.0 for j in range(n)] for i in range(n)])
+
+
+class IntervalRiccati21Tests(unittest.TestCase):
+    def test_prediction_keeps_cross_covariance(self):
+        p=diag(N,1.0)
+        frows=[[1.0 if i==j else 0.0 for j in range(N)] for i in range(N)]
+        frows[0][3]=.5
+        q=diag(N,.1)
+        out=predict_covariance(p,exact(frows),q)
+        self.assertAlmostEqual(out.mid[0][3],.5)
+        self.assertAlmostEqual(out.mid[3][0],.5)
+        self.assertAlmostEqual(out.mid[0][0],1.35)
+
+    def test_integral_innovation_and_joseph(self):
+        p=diag(N,2.0)
+        hrows=[[0.0]*N for _ in range(3)]
+        for a in range(3): hrows[a][12+a]=1.0
+        h=exact(hrows); r=diag(3,1.0)
+        s=innovation_covariance(p,h,r)
+        cert=innovation_inverse_spectral_certificate(s)
+        self.assertTrue(cert["verified"])
+        krows=[[0.0]*3 for _ in range(N)]
+        for a in range(3): krows[12+a][a]=2.0/3.0
+        out=joseph_covariance(p,exact(krows),h,r)
+        self.assertAlmostEqual(out.mid[12][12],2.0/3.0,places=12)
+
+    def test_interval_innovation_can_fail_closed(self):
+        p=diag(N,1.0)
+        hrows=[[0.0]*N for _ in range(3)]
+        for a in range(3): hrows[a][a]=1.0
+        h=exact(hrows)
+        r=IMat(((.01,0,0),(0,.01,0),(0,0,.01)),
+               ((2.0,0,0),(0,2.0,0),(0,0,2.0)))
+        cert=innovation_inverse_spectral_certificate(innovation_covariance(p,h,r))
+        self.assertFalse(cert["verified"])
+
+    def test_hard_covariance_events_are_enclosed(self):
+        p=diag(N,.01)
+        aw=aw_covariance_floor_event(p,.25)
+        for i in range(15,18):
+            self.assertGreaterEqual(aw.mid[i][i]+aw.rad[i][i],.25)
+        ba=accel_bias_release_event(p,.04)
+        for i in range(18,21):
+            self.assertGreaterEqual(ba.mid[i][i]-ba.rad[i][i],.04)
+
+    def test_spectral_box_is_finite(self):
+        lo,hi=spectral_box(diag(N,1.0))
+        self.assertLessEqual(lo,1.0); self.assertGreaterEqual(hi,1.0)
+
+
+if __name__=="__main__": unittest.main()
