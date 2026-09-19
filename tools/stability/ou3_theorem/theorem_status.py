@@ -22,6 +22,7 @@ def status_report() -> dict:
         "assembled_sensor_and_bias_limit_qualification":False,
         "all_time_marine_motion_membership_certificate":False,
         "finite_history_dependent_capture":False,
+        "capture_H18_release_retention_composition":True,
         "finite_H18_bridge_retention":False,
         "finite_reference_refinement_and_bias_release":False,
         "H18_to_A21_release_retention":False,
