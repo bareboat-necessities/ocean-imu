@@ -115,11 +115,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/interval_riccati_21.py",
-      "git_blob_sha": "bc0e29741aacd5c9a7a7d877e8f44e77d0d8f954"
+      "git_blob_sha": "213a633dc39c091e3e26013e0a1807043781007f"
     },
     {
       "path": "tests/validation/test_ou3_interval_riccati_21.py",
-      "git_blob_sha": "5169f38e29e146b3e881d354dcafec497e8c7f3d"
+      "git_blob_sha": "73d1b1245588e10958ea3145712d7ff287bc3f0b"
     },
     {
       "path": "tools/stability/ou3_theorem/physical_qualification.py",
