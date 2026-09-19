@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "a5d547209037a6cb4a8be5adf0df0167970015ad1aa6cb75288754551b59c61a",
+  "replay_fingerprint": "5ac4ab4dc41b007dc3f77237503bf479594e0d5050d022740d9c953c64da4426",
   "results_file_count": 275,
   "results_files": [
     {
@@ -261,17 +261,17 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "5b04dd04dd434a3384e5031515e3b481b27318239736a58052d42f8bfbdee39e"
+      "sha256": "79827dc13f21c755e66634aeb6165b24203ae7e03b6a9f2e2d107a766ae79eca"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "sha256": "029ec145ded33fa4a1021e9803adf81e8f5f3342861f264dd7e0739e0de17da1"
+      "sha256": "c74809dccb9a6e35ae0ef24ddb0d1e1641fb588b5779989c78bd8901b0bbf621"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness.json",
-      "sha256": "0e9ecc0bfd88777372720c30b1076bd22c532cb635c7b7f9015592f97e21a165"
+      "sha256": "de2c4c05d74070b0cd6d8da13102f20477b622abe274a7ed8857936d9ea82a56"
     },
     {
       "kind": "file",
@@ -281,12 +281,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "bd76765ad03836af94e7240bacfbdcd5e8c1b271c84564c6c12137f9b5c6d5f5"
+      "sha256": "4e4b943f60d632b1966b8eafed293616e705c23ac809b058a8a37948f2d07d04"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_paired_effects.csv",
-      "sha256": "4bf8525008d46a0b6688878dfc0e238b0a331da616b86293de60c81b2c97f6bf"
+      "sha256": "d325fc573972337fca57bc485a8853fe0733eb942835764e05b2a87a1444b138"
     },
     {
       "kind": "file",
@@ -296,22 +296,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_raw.csv",
-      "sha256": "ae5b058c888a2ff90e9ac9f230555154b48b29a31ed084b5fdbebbd7dde7c201"
+      "sha256": "9057062a3369b0451ce6cf09f9a571d00ddd794d74a893e773199fe9b212d401"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_sensitivity.svg",
-      "sha256": "86b0a59129cd948930c8c9372bc29b8fa2ac414d826978a3826353cb903aa0f7"
+      "sha256": "c0df6befc8d56c8be888a152d59f5a30e42f9a85920bf165327e35ebe49838c1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_stress.svg",
-      "sha256": "5019bc46f73cd94d1316a9ea4243ed1149c526855d7885943e2f0f0d187f0e85"
+      "sha256": "b7cd3707388b3a3e9f204be0d02606122c902dec0b6baaf158b77c423b92cb17"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_summary.csv",
-      "sha256": "479af08c1bd8d82bdbe99dbe33b81797620abf3378fb6d7270d4f9a1e92e225a"
+      "sha256": "8d7b3b11959d9f9bb9bd883772553875367a7e7b7b3b5096083fe1b68c16d8b8"
     },
     {
       "kind": "file",
@@ -351,67 +351,67 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "51bd401d38eaabba45ebbb0c131e59cb642efbd960289902749e4d696cfc1b52"
+      "sha256": "5977e979fe3844f8f4c0bcace53c429db7e3523c8c753b3301819fbcda0d9dec"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "d55e057a15f382b30b6b13713af761caed8dae289eb4d1da6cb9032b9bcad9ed"
+      "sha256": "a9c7f5f07ebe67d9daaa957072a276195a22694bd126f7607f051a61f6dbc816"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "474b5c88fdeb288aa20b49b651c9922f15fbf509fd5be1ea4b58bf420a2d89a9"
+      "sha256": "2df9ec8b5a00ad28d8fe3eb1fbbec00796c76c299e753232e4d3c703b76da8c1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "2aa7adb869664a910ce0c2bd0743bc2667d18300a2bd54e72278071a242ec603"
+      "sha256": "eb3e40a2f86e64c4c573f54a05a5246dcfe3c437cde50f1a31bba6ac749fdc2d"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "ae7ed6495f1a7a1988d0e7f567c5b83455145cac1f0432f5cc3eb48c987ed153"
+      "sha256": "cab73d32b06d2734a7e95152feb89a85abeb54deb7ca74f794b5a975819198e9"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "576c5b469ce0a281bb4503d69615abad557c6d7222be9f3766164992f1d62ed3"
+      "sha256": "7d9dd05b944d3ab48ceb5740efcf360e5a693154a82d1abdc067dd4673fa4854"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "8f249b5c64703b8893c92b1e7e2a8129698144b5de250131054d28d66d68110e"
+      "sha256": "6278c2b9cb324637ec578797650d622b0d96ef0521573d4b09928c97b5af9f84"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "26d9286fae24318a60a42fcd123eb78b56aa61a2704b9f2dd575641f824dfe0b"
+      "sha256": "45bc2f1ca450ecd2a1821812546fb171eded7e10582ff9a6b0472f7bea98b9cb"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "32b799140ea8d12cb3e9a741a4cf4159c508423874bad6a2af4e110841d23ad3"
+      "sha256": "ca7e5df4562370daa0461fcc524cb2d6b33a2ecb0f2f82004d5ac8459ef6cf2f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "e8532bebc4e5cce52300f5f5f618b95f66e0a703f7885afc786a6ec075e2198c"
+      "sha256": "329acfcc7b068e82900b550d38c860e9e4fb7bddc07749b23db203e9beaace35"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "912ae92290657474c64027db5a455b648f7bf11f85d8af38b05d6b29d6e1ff29"
+      "sha256": "556977f21fc813f396f9e5f78d722e154e39f6ee7ce10c7b2cc723d24ae8d83f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "d9795996bf59fccd094470094646152c0a1ce892d58fa5f8427dbef5bfff1abb"
+      "sha256": "594222f2dd3f40d4dbd30e3d7b74593ee41f7ff513b9a546e4753520012eea92"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.svg",
-      "sha256": "fd899b5e0d6634cbc634706b10bcea7e99f580bbddf0775b08af235e90007a52"
+      "sha256": "a94ba73e20bc4b7f17388fb4f1db5354b051006832d81bd67a5b1b40d1b6b771"
     },
     {
       "kind": "file",
@@ -421,7 +421,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "311baa06669ce3a39164ee6bbc06bbba91161e922a2176ca03e58df439373164"
+      "sha256": "cb5d9c1a933581e27c61e01bb4cb9ce16b99f9ecdd556975102ce66db685f31f"
     },
     {
       "kind": "file",
@@ -1379,13 +1379,13 @@
       "sha256": "d59590abd2add23cdf5302ec8eface7c7bf7a1f0c641d3251aaef21e66a12ce0"
     }
   ],
-  "results_fingerprint": "77b2fb9fb693e58c058fa16e7b0c2f544034737b09d4734d9633cd0e34e9a3d2",
+  "results_fingerprint": "8c82e34c9544fa20d5bfa552e08abad217279d3f90e5920bca64ece3955e0515",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 296,
+  "tracked_replay_file_count": 300,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -1425,7 +1425,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou3-stability-proof.yml",
-      "sha256": "5ed1a506b6596a8c4e5b4ecd7e3348e699a3e4ff49863ec49e54f66c5f217c2c"
+      "sha256": "518b484e810638a1d6ab087099bbb88fe8f4a20a5ae5e15ef137343fbc7fd810"
     },
     {
       "mode": "100644",
@@ -2195,7 +2195,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_ou_iii/shipping_transition-test.cpp",
-      "sha256": "7f8c56d71db1e79ee7d09163911f2eb05d111dbeee670e490da451906109fd06"
+      "sha256": "430210c5b2b6627a3e6559c0fc18ba120e6b10b3ac3b82c4ccabfbb674137052"
     },
     {
       "mode": "100644",
@@ -2400,7 +2400,12 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_finite_error.py",
-      "sha256": "781ed16d1e5c5bb5f857f07e1d4900d56699d2bb32fe36b6dda7c6925253b8e1"
+      "sha256": "9ccf5822162e8143577ba97a7434f2dcd443bada4e1ad6170e165d54d45a1302"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_h18_superword.py",
+      "sha256": "11de447902d8af3ca4d0176be29bfdaa7d0f18415cf4f6ff55cbd42e8c374104"
     },
     {
       "mode": "100644",
@@ -2804,6 +2809,11 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/Makefile",
+      "sha256": "6a1273cd2ff2f75bf78889d6cf65747bc0ec53e953e9f9202d4d18aa2677af05"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/__init__.py",
       "sha256": "fa8d81b18e741dec1d0863925bd61476791cd41607b065cbd1d9bf85224c7cee"
     },
@@ -2825,7 +2835,17 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/finite_error.py",
-      "sha256": "6cc15665c186beb47c2cc2d3d72548ab3e6cc431a022fac54b687bbace4bfa5a"
+      "sha256": "4b277c5a0f9a1faac1a0daa77bd23a9fdb47f8c9e5c8338e725613e41f4464b8"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/h18_superword.py",
+      "sha256": "3e9c7babfda8974ccb000f7eab178ecb5c6d08c701ea8de3ec4f9bb38b470504"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/h18_superword_export.cpp",
+      "sha256": "5532bea4a4a6aced5f468ec68b77c5aeb452007b905c512cc434ab97f5bc8669"
     },
     {
       "mode": "100644",
@@ -2850,7 +2870,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "sha256": "51fa3fe7c98e0510a820c3d17caab1e72ce256216f817dd3eb37c96826474535"
+      "sha256": "12ce3daab3d340929e1b1d789dbb86dcf5adc93cd4da6035b861f968e4b2373e"
     },
     {
       "mode": "100644",
