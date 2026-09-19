@@ -11,7 +11,8 @@ from tools.stability.ou3_theorem.interval_riccati_21 import (
     shipping_acc_update_intervals,shipping_integral_update_intervals,
     shipping_mag_update_intervals,shipping_prediction_intervals,
     verified_gain_interval,verified_joseph_update,iterate_recurring_box,
-    shipping_max_correction_step,shipping_word_map,
+    shipping_max_correction_step,shipping_word_map,split_interval_matrix,
+    adaptive_verified_update,recurring_box_over_cells,
 )
 
 
