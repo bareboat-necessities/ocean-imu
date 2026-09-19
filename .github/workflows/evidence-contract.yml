@@ -1,0 +1,60 @@
+name: evidence-contract
+
+# This is the same non-simulation gate used before publishing regenerated
+# evidence on main. Run it even when the simulation smoke classifier skips a
+# proof-only change: deleted article inputs can break publication independently.
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "src/**"
+      - "tests/**"
+      - "tools/**"
+      - "plots/**"
+      - "doc/**"
+      - "docs/**"
+      - "reports/**"
+      - "Makefile"
+      - ".github/workflows/**"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evidence-contract-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evidence-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install evidence-test dependencies
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y --no-install-recommends \
+            python3-numpy python3-matplotlib python3-pandas
+      - name: Validate complete committed evidence and publication contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C tests/validation evidence-test 2>&1 | tee "$RUNNER_TEMP/evidence-test.log"
+      - name: Save the tested source for failure reproduction
+        if: failure()
+        run: git archive --format=tar.gz --output="$RUNNER_TEMP/evidence-source.tar.gz" HEAD
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: evidence-contract-failure-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/evidence-test.log
+            ${{ runner.temp }}/evidence-source.tar.gz
+          if-no-files-found: warn
+          retention-days: 3
