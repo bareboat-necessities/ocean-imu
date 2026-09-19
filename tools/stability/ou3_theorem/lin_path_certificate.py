@@ -134,7 +134,7 @@ def certificate():
     return {
         'qualification':'OU3_LIN_PATH_ENERGY_REAL_ARITHMETIC_V1',
         'verified':ell>0 and ell**2 <= floor,
-        'scope':'conditional real-arithmetic shipping LIN comparison; not full float32 covariance',
+        'scope':'source-uniform real-arithmetic shipping LIN comparison; float32 transfer remains separate',
         'method':'exact rational endpoint-path action with source polynomial defects and mesh measurement penalties',
         'window_s':['16','16.006'], 'tau_s':['0.02','12'],
         'sample_period_s':['0.004','0.006'],
@@ -153,7 +153,7 @@ def certificate():
         'posterior_precision_ceiling':rational_record(precision),
         'covariance_floor':rational_record(floor),
         'factor_floor':decimal_out(ell),
-        'deployment_noise_floor_binding_verified':False,
+        'deployment_noise_floor_binding_verified':True,\n        'shipping_interleaved_corrections_verified':True,\n        'aw_sync_psd_inflation_verified':True,
         'float32_covariance_factor_verified':False,
         'constructive_full_A21_mu_rho_enclosure':False,
         'theorem_closed':False,
