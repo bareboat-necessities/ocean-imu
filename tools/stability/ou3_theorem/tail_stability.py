@@ -575,3 +575,55 @@ def small_gain_budget(linear_rho0: float, nonlinear_eta: float) -> dict:
     return {"linear_norm":linear_norm,"available_eta":margin,
             "eta":nonlinear_eta,"slack":margin-nonlinear_eta,
             "closed":nonlinear_eta < margin}
+
+def normalized_translation_information_floor(*, word_s: float, event_gap_max_s: float,
+                                             v_scale: float, p_scale: float,
+                                             S_scale: float, S_noise_std_max: float) -> float:
+    """Constructive three-S-row floor for normalized (v,p,S).
+
+    Select the first S event after word times 0,T/2,T. Each is delayed by at
+    most event_gap_max. The two separations are therefore at least
+    d=T/2-gap. The normalized 3x3 observation determinant is at least
+    d^3*v_scale*p_scale*S_scale. A Frobenius upper bound on the same matrix,
+    with t<=T+gap, converts determinant to sigma_min via
+    sigma_min >= |det|/||O||_F^2. Whitening by the largest S standard deviation
+    gives a rigorous information eigenvalue floor.
+    """
+    vals=(word_s,event_gap_max_s,v_scale,p_scale,S_scale,S_noise_std_max)
+    if not all(math.isfinite(x) for x in vals) or min(vals) <= 0:
+        raise ValueError("positive finite translation certificate data required")
+    d=0.5*word_s-event_gap_max_s
+    if d <= 0: raise ValueError("word too short for separated S observations")
+    det=(d**3)*v_scale*p_scale*S_scale
+    t=word_s+event_gap_max_s
+    row2=(0.5*v_scale*t*t)**2+(p_scale*t)**2+S_scale**2
+    frob2=3.0*row2
+    sigma_min=det/frob2
+    return (sigma_min/S_noise_std_max)**2
+
+def conservative_float32_kernel_error(op_count: int, magnitude_bound: float) -> float:
+    """Higham gamma_n absolute bound for one straight-line float32 kernel."""
+    if op_count < 0 or not math.isfinite(magnitude_bound) or magnitude_bound < 0:
+        raise ValueError("valid kernel arithmetic data required")
+    u=2.0**-24
+    if op_count*u >= 1.0: raise ValueError("operation count outside gamma_n domain")
+    gamma=(op_count*u)/(1.0-op_count*u)
+    return gamma*magnitude_bound
+
+def bias_release_error_bound(physical_bias_bound: float,
+                             held_estimate_bound: float,
+                             physical_drift_rate: float,
+                             bridge_s: float) -> float:
+    """Universal H18 release error before the first active-bias correction."""
+    vals=(physical_bias_bound,held_estimate_bound,physical_drift_rate,bridge_s)
+    if not all(math.isfinite(x) for x in vals) or min(vals) < 0:
+        raise ValueError("finite nonnegative release data required")
+    return physical_bias_bound+held_estimate_bound+physical_drift_rate*bridge_s
+
+def projection_sector_retained_error_bound(physical_bias_bound: float,
+                                           projection_radius: float) -> float:
+    """Global post-projection bias-error radius from the literal sector."""
+    if not projection_sector_is_dissipative(
+            truth_bound=physical_bias_bound,projection_radius=projection_radius):
+        raise ValueError("truth not inside projection ball")
+    return physical_bias_bound+projection_radius
