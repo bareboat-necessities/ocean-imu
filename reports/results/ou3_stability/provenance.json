@@ -42,7 +42,10 @@
     "a21_uniform_controllability": "Positive integrated-OU, gyro white-noise, gyro-bias RW and active accelerometer-bias OU driving densities on the compact timing/tau envelope imply uniform complete controllability. Default a_w covariance sync is a bounded PSD prediction increment; bias release is a bounded diagonal covariance floor.",
     "a21_local_nonlinear_closure": "On tilt<=6 deg and accelerometer-bias error<=0.15 m/s^2, projection is inactive; tuner and refined magnetic-reference schedules are same-history exogenous; smooth MEKF measurement/reset remainder has eta(r)->0. Thus source-uniform linear rho0<1 implies existence of r*>0 with sqrt(rho0)+eta(r*)<1. Roundoff remains additive supply.",
     "a21_constructive_small_gain": "Once a certified linear rho0 and quadratic remainder slope L2 are enclosed, r*=min(r_guard,(1-sqrt(rho0))/L2). Additive physical/arithmetic supply then gives the practical radius separately.",
-    "a21_attitude_diversity": "No extra excitation assumption: integral(f x B)=Delta v x B-T g x B. With Vmax=5.5 m/s, Bh>=15 uT, |B|<=75 uT, every T>5.60844 s window has positive vector diversity; T=8 s gives floor 43.97475 (m/s^2)uT. Two 8 s subwindows define the 16 s A21 word and, with recurring magnetic service, expose attitude and gyro bias."
+    "a21_attitude_diversity": "No extra excitation assumption: integral(f x B)=Delta v x B-T g x B. With Vmax=5.5 m/s, Bh>=15 uT, |B|<=75 uT, every T>5.60844 s window has positive vector diversity; T=8 s gives floor 43.97475 (m/s^2)uT. Two 8 s subwindows define the 16 s A21 word and, with recurring magnetic service, expose attitude and gyro bias.",
+    "a21_projection_release": "Universal H18 release cannot guarantee projection-inactive bias error: B_a=0.2251666 exceeds R_b-B_a=0.1748334 even for zero held estimate. A21 therefore retains the literal dissipative projection sector and global post-projection error bound B_a+R_b=0.6251666 m/s^2.",
+    "a21_quantitative_translation": "Constructive normalized neutral translation floor mu_trans>=2.04734e-3 from three literal S events on a 16 s word, max 0.156 s event delay, scales (5.5,8.1,1100), and r_S<=100. Full mu_N remains open because the transported MAGNETIC SERVICE heading/axial-bias Gramian must be composed directly with recurring accelerometer rows.",
+    "float32_supply": "Kernelwise arithmetic uses gamma_n=n*2^-24/(1-n*2^-24); no whole-word supply is promoted until literal operation counts and magnitude envelopes are composed."
   },
   "operation_lemma_sources": [
     {
@@ -75,11 +78,11 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "148eeb973ea44b1f2253f316a627105ff286b276"
+      "git_blob_sha": "a0bb482f4418e89d42e9f2603cd08c3ba9d4fc59"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
-      "git_blob_sha": "64e3f07d4f35cd2586c2694a73a621007ef1716d"
+      "git_blob_sha": "e4f0b53ea7c0a4a524c4ff57cc8aa794154f8338"
     }
   ]
 }
