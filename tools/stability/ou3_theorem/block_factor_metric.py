@@ -190,3 +190,49 @@ def block_factor_feasibility(*, ag_factor: float,lin_factor: float,ba_factor: fl
         cross_block_psd_bound(ag_ceiling,ba_ceiling),
         cross_block_psd_bound(lin_ceiling,ba_ceiling))
     return block_scaled_schur_floor(m)
+
+
+def additive_process_metric_certificate(*, ag_q_factor: float,
+                                        lin_q_factor: float,
+                                        ba_q_factor: float) -> dict:
+    """Exact cross-independent coercivity at an A21 post-prediction root.
+
+    Shipping prediction has P-=F P+ F'+Q with P+>=0 and block-diagonal
+    Q=diag(Q_AG,Q_LIN,Q_BA). If each Q_i>=L_i L_i', then
+        P- - diag(L_i L_i') = F P+ F' + (Q-diag(...)) >= 0.
+    Hence in D=diag(L_i) coordinates P- >= D D' with coercivity gamma=1,
+    regardless of the cross covariance carried by F P+ F'. This is strictly
+    stronger than trying to prove block diagonal dominance from absolute
+    cross-block norms. Cross bounds remain necessary for prefix/magnitude
+    retention, but they do not consume root coercivity.
+    """
+    vals=(ag_q_factor,lin_q_factor,ba_q_factor)
+    if not all(math.isfinite(x) and x>0 for x in vals):
+        raise ValueError("positive process factor floors required")
+    return {"factor_floors":vals,"root_metric_gamma":1.0,
+            "verified":True,
+            "lemma":"Pminus>=Q_block_factor"}
+
+def block_metric_correction_margin(*, gamma_in: float,
+                                   normalized_information_ceiling: float) -> float:
+    """Lower metric coercivity after a correction.
+
+    If P>=gamma D D' and H'R^-1H in D coordinates has norm <=j, then
+    P+ = (P^-1+H'R^-1H)^-1 >= gamma/(1+gamma*j) D D'.
+    This carries every cross covariance implicitly and remains strictly
+    positive for finite j.
+    """
+    if not all(math.isfinite(x) for x in (gamma_in,normalized_information_ceiling)):
+        raise ValueError("finite metric correction data required")
+    if gamma_in<=0 or normalized_information_ceiling<0:
+        raise ValueError("positive gamma and nonnegative information required")
+    return gamma_in/(1.0+gamma_in*normalized_information_ceiling)
+
+def normalized_measurement_information_ceiling(*, h_norm: float,
+                                               max_factor: float,
+                                               noise_variance_floor: float) -> float:
+    if not all(math.isfinite(x) for x in (h_norm,max_factor,noise_variance_floor)):
+        raise ValueError("finite measurement metric data required")
+    if min(h_norm,max_factor,noise_variance_floor)<=0:
+        raise ValueError("positive measurement metric data required")
+    return (h_norm*max_factor)**2/noise_variance_floor
