@@ -79,3 +79,12 @@ with sqrt(rho0)+eta<1. Arithmetic is additive supply.
 Next work is to make these existential margins constructive: enclose numerical
 mu_N/rho0, derive an explicit nonlinear radius, bound arithmetic supply, and
 prove capture/release retention into that radius.
+
+
+## Validation note
+
+The proof branch was rebuilt once on current main to remove stale generated
+evidence from the PR. Subsequent validation runs should compare ordinary
+descendant commits; the one synchronization run immediately following that
+history rewrite can fail its shallow before/after classifier because the old
+pre-rewrite object is intentionally no longer in branch history.
