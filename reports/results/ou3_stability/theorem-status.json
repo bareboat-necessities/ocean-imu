@@ -28,6 +28,7 @@
     "accepted_magnetic_information_definition": true,
     "no_heading_service_obstruction": true,
     "captured_domain_implies_finite_mag_refinement": true,
+    "captured_domain_implies_finite_A21_entry": true,
     "assembled_sensor_and_bias_limit_qualification": false,
     "all_time_marine_motion_membership_certificate": false,
     "finite_history_dependent_capture": false,
@@ -42,5 +43,5 @@
   },
   "theorem_closed": false,
   "regional_practical_stability_claimed": false,
-  "next_controlling_obligation": "prove finite reference refinement/release and finite H18 bridge retention, then certify source-uniform A21 linear dissipation and nonlinear small-gain remainder"
+  "next_controlling_obligation": "prove finite capture into the retained <=7 degree tilt domain and finite H18 bridge retention; in parallel certify source-uniform A21 linear dissipation and nonlinear small-gain remainder"
 }
