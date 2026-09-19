@@ -690,3 +690,28 @@ def explicit_neutral_information_floor(translation_floor: float,
 
 def rho_from_explicit_mu(mu_neutral: float) -> float:
     return information_contraction_ratio(mu_neutral)
+
+def psd_service_schur_floor(*, controlled_block_floor: float,
+                            controlled_block_ceiling: float,
+                            nuisance_block_ceiling: float,
+                            service_floor: float) -> float:
+    """Rigorous composition of a PSD measurement Gramian with service.
+
+    Let G0=[[A,C],[C',D]]>=0 with
+      a I <= A <= q I,  0<=D<=d I,
+    and add service M>=m I on the nuisance block. Then
+      S=A-C(D+M)^-1 C' >= (m/(d+m)) A.
+    Also ||C(D+M)^-1|| <= sqrt(q*d)/m. Block LDL congruence and
+    ||[[I,-X],[0,I]]|| <= 1+||X|| give the explicit full floor below.
+    This is intentionally conservative but cannot mistake a transported
+    service Gramian for an instantaneous measurement row.
+    """
+    vals=(controlled_block_floor,controlled_block_ceiling,
+          nuisance_block_ceiling,service_floor)
+    if not all(math.isfinite(x) for x in vals) or min(vals) <= 0:
+        raise ValueError("positive finite Schur data required")
+    a,q,d,m=vals
+    if q < a: raise ValueError("controlled ceiling below floor")
+    schur=a*m/(d+m)
+    xnorm=math.sqrt(q*d)/m
+    return min(schur,m)/((1.0+xnorm)**2)
