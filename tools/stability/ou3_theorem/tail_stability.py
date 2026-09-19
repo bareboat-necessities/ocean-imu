@@ -534,3 +534,42 @@ def attitude_information_from_marine_diversity(*, diversity_floor: float,
     vals=(diversity_floor,magnetic_service_floor,magnetic_service_window_s,angular_rate_ceiling)
     if not all(math.isfinite(x) for x in vals): raise ValueError("finite attitude information bounds required")
     return diversity_floor > 0 and magnetic_service_floor > 0 and magnetic_service_window_s > 0 and angular_rate_ceiling >= 0
+
+def release_can_guarantee_projection_inactive(*, physical_bias_bound: float,
+                                               projection_radius: float,
+                                               pre_release_estimate_bound: float) -> bool:
+    """Necessary worst-case test for universal projection-inactive A21 entry.
+
+    During H18 the accelerometer-bias estimate is held. Without a stronger
+    pre-release estimate/truth relation, the release error can be as large as
+    B_a + ||hat b_a||. Therefore a universal claim that release already lies
+    inside R_b-B_a requires that worst-case error to fit there.
+    """
+    vals=(physical_bias_bound,projection_radius,pre_release_estimate_bound)
+    if not all(math.isfinite(x) for x in vals): raise ValueError("finite release bounds required")
+    if physical_bias_bound < 0 or projection_radius <= physical_bias_bound or pre_release_estimate_bound < 0:
+        raise ValueError("valid release/projection bounds required")
+    inactive=projection_radius-physical_bias_bound
+    return physical_bias_bound+pre_release_estimate_bound < inactive
+
+def projection_sector_is_dissipative(*, truth_bound: float, projection_radius: float) -> bool:
+    """The literal Euclidean projection contributes no positive error energy.
+
+    For truth inside the projection ball, ||e+||^2+||d||^2<=||e_corr||^2.
+    This is the correct universal A21 treatment when release cannot be shown to
+    start in the projection-inactive interior.
+    """
+    if not all(math.isfinite(x) for x in (truth_bound,projection_radius)):
+        raise ValueError("finite projection bounds required")
+    return 0 <= truth_bound <= projection_radius
+
+def small_gain_budget(linear_rho0: float, nonlinear_eta: float) -> dict:
+    if not all(math.isfinite(x) for x in (linear_rho0,nonlinear_eta)):
+        raise ValueError("finite small-gain data required")
+    if not 0 <= linear_rho0 < 1 or nonlinear_eta < 0:
+        raise ValueError("strict linear ratio and nonnegative eta required")
+    linear_norm=math.sqrt(linear_rho0)
+    margin=1.0-linear_norm
+    return {"linear_norm":linear_norm,"available_eta":margin,
+            "eta":nonlinear_eta,"slack":margin-nonlinear_eta,
+            "closed":nonlinear_eta < margin}
