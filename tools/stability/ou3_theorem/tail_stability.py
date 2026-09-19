@@ -715,3 +715,24 @@ def psd_service_schur_floor(*, controlled_block_floor: float,
     schur=a*m/(d+m)
     xnorm=math.sqrt(q*d)/m
     return min(schur,m)/((1.0+xnorm)**2)
+
+def aggregate_repeated_row_information_floor(single_event_floor: float,
+                                             guaranteed_events: int) -> float:
+    """Information floors add for PSD event Gramians."""
+    if not math.isfinite(single_event_floor) or single_event_floor <= 0 or guaranteed_events < 1:
+        raise ValueError("positive event floor and count required")
+    return single_event_floor*guaranteed_events
+
+def aggregate_translation_information_floor(single_three_row_floor: float,
+                                            independent_axes: int = 3) -> float:
+    """Block-diagonal three-axis repetition preserves the per-axis minimum."""
+    if not math.isfinite(single_three_row_floor) or single_three_row_floor <= 0 or independent_axes < 1:
+        raise ValueError("positive translation floor and axis count required")
+    return single_three_row_floor
+
+def certified_rho_and_margin(mu_full: float) -> dict:
+    """Constructive linear ratio and norm margin from a full normalized floor."""
+    rho=rho_from_explicit_mu(mu_full)
+    margin=1.0-math.sqrt(rho)
+    return {"mu":mu_full,"rho0":rho,"sqrt_rho0":math.sqrt(rho),
+            "nonlinear_norm_margin":margin}
