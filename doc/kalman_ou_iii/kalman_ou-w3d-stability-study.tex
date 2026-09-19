@@ -518,6 +518,12 @@ A constructive recurring lower covariance enclosure is therefore the next
 quantitative certificate.  This normalization prevents coordinate scaling from
 artificially improving the claimed contraction factor.
 
+\subsection{Covariance-enclosure conditioning result}
+The literal 21-state midpoint--radius Riccati enclosure was executed after the single permitted Rodrigues near-identity refinement. Its predicted covariance spectral enclosure was $[-18.7907040,\,2502.41442]$. The integral innovation retained a strict inverse certificate with residual ratio $r/a=0.666663864<1$, whereas the accelerometer and magnetometer interval innovations did not. This is an interval-dependency failure, not a pointwise covariance counterexample: the shipping Riccati map remains PSD. Further blind entrywise subdivision is therefore excluded. A recurring $p_{\min}$ must be obtained with a PSD-structure-preserving spectral or square-root enclosure before covariance-normalized $\mu$, $\rho_0$, or a nonlinear radius is claimed.
+
+\subsection{PSD-preserving covariance feasibility}
+A structure-preserving one-sample spectral check gives $\sigma_{\min}(F)\ge0.6440871$. Starting from the constructor covariance floor, the certified lower covariance is $4.14848\times10^{-7}$ after prediction and $1.49403\times10^{-7}$ after the maximal $S$/accelerometer/magnetometer correction sequence. These are feasibility margins only. Recurring certification still requires a full-rank factor enclosure of the literal $Q_{AA}$, integrated-OU $Q_{LL}$, and active-bias $Q_{BA}$ and multi-step propagation that preserves controllability structure. A tiny one-step scalar process-noise eigenvalue is not substituted for that factor certificate.
+
 \section{Conclusion}
 The stability problem is posed as one same-history theorem with continuing
 magnetic information. The formulation excludes permanent wave-coordinate
@@ -533,23 +539,3 @@ tools for mathematical drafting, code development, and editorial preparation.
 The author is responsible for the conceptual development and final revisions,
 declares no conflicts of interest, and received no funding for this research.
 \end{document}
-
-
-\subsection{Covariance-enclosure conditioning result}
-The literal 21-state midpoint--radius Riccati enclosure was executed after the
-single permitted Rodrigues near-identity refinement.  Its predicted covariance
-spectral enclosure was
-\[
- [-18.7907040,\;2502.41442].
-\]
-The integral innovation retained a strict inverse certificate with residual
-ratio $r/a=0.666663864<1$, whereas the accelerometer and magnetometer interval
-innovations did not.  This is an interval-dependency failure, not a pointwise
-covariance counterexample: the shipping Riccati map remains PSD.  Further blind
-entrywise subdivision is therefore excluded.  A recurring $p_{\min}$ must be
-obtained with a PSD-structure-preserving spectral or square-root enclosure
-before covariance-normalized $\mu$, $\rho_0$, or a nonlinear radius is
-claimed.
-
-\subsection{PSD-preserving covariance feasibility}
-After the entrywise interval dependency failure, a structure-preserving one-sample spectral check gives $\sigma_{\min}(F)\ge0.6440871$. Starting from the constructor covariance floor, the certified lower covariance is $4.14848\times10^{-7}$ after prediction and $1.49403\times10^{-7}$ after the maximal $S$/accelerometer/magnetometer correction sequence. These are feasibility margins only. Recurring certification still requires a full-rank factor enclosure of the literal $Q_{AA}$, integrated-OU $Q_{LL}$, and active-bias $Q_{BA}$ and multi-step propagation that preserves controllability structure. A tiny one-step scalar process-noise eigenvalue is not substituted for that factor certificate.
