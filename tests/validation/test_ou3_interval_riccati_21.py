@@ -12,7 +12,8 @@ from tools.stability.ou3_theorem.interval_riccati_21 import (
     shipping_mag_update_intervals,shipping_prediction_intervals,
     verified_gain_interval,verified_joseph_update,iterate_recurring_box,
     shipping_max_correction_step,shipping_word_map,split_interval_matrix,
-    adaptive_verified_update,recurring_box_over_cells,
+    adaptive_verified_update,recurring_box_over_cells,exact_midpoint_seed,
+    interval_failure_metrics,
 )
 
 
@@ -164,6 +165,14 @@ class IntervalRiccati21Tests(unittest.TestCase):
             p,exact(hrows),diag(3,1.0),split_entries=((0,12),),max_depth=1)
         self.assertEqual(out.shape,(N,N))
         self.assertEqual(certs[0]["depth"],0)
+
+    def test_failure_metrics_are_nonpromoting_and_numeric(self):
+        p=exact_midpoint_seed((1.0,)*N)
+        hrows=[[0.0]*N for _ in range(3)]
+        for a in range(3): hrows[a][12+a]=1.0
+        m=interval_failure_metrics(p,exact(hrows),diag(3,1.0))
+        self.assertTrue(m["innovation_verified"])
+        self.assertEqual(m["covariance_spectral_lower"],1.0)
 
     def test_spectral_box_is_finite(self):
         lo,hi=spectral_box(diag(N,1.0))
