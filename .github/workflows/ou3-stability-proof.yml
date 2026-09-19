@@ -45,7 +45,7 @@ jobs:
       - name: Execute rational LIN path certificate
         run: |
           python3 tools/stability/ou3_theorem/lin_path_certificate.py --output /tmp/ou3-lin-path-certificate.json
-          python3 -m unittest discover -s tests/validation -p test_ou3_lin_path_certificate.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_lin_path_certificate.py -v\n          python3 tools/stability/ou3_theorem/block_factor_numeric.py\n          python3 -m unittest discover -s tests/validation -p test_ou3_block_factor_numeric.py -v
       - name: Preserve reproducible source and LIN certificate
         if: ${{ !cancelled() }}
         run: |
