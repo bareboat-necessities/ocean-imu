@@ -76,7 +76,9 @@ class IntervalRiccati21Tests(unittest.TestCase):
             aw_sigma_max=4.0,accel_bias_drive_density=5e-4)
         self.assertEqual(f.shape,(N,N)); self.assertEqual(q.shape,(N,N))
         self.assertEqual(f.mid[3][3],1.0)
-        self.assertGreater(f.rad[0][0],.9)
+        self.assertLess(f.rad[0][0],1e-4)
+        self.assertLess(f.rad[0][1],.004)
+        self.assertLess(f.rad[0][3],.0021)
         self.assertGreater(f.mid[18][18]-f.rad[18][18],0.999)
         self.assertGreater(q.mid[15][15]+q.rad[15][15],0.0)
 
