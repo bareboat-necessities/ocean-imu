@@ -412,3 +412,12 @@ The first structure-preserving process-noise feasibility construction formed exp
 Classification: **conditioning failure of the scalar/Gershgorin controllability reduction**, not loss of controllability. The exact integrated-OU Gramian is SPD for positive window, tau and process density, and uniform controllability was already proved structurally. The failed hypothesis is that an unscaled scalar eigenvalue/Gershgorin reduction can preserve enough of that structure for covariance normalization.
 
 This is the first implementation of the new PSD-preserving mechanism, so one mathematically motivated refinement remains available. The quantitative reason is explicit: the state units differ by powers of time, making the raw Gramian strongly scaled. The next falsifiable experiment is therefore a **proof-coordinate-scaled factor/LDLT enclosure** using the already declared (v,p,S,a) scales rather than another scalar norm. It must certify positive pivots of the multi-step controllability Gramian uniformly over tau/dt; otherwise the PSD-preserving covariance-normalization route must be reviewed again.
+
+
+## Block/factor covariance metric
+
+The covariance-normalization architecture has moved to a block/factor metric after the second conditioning failure of the entrywise midpoint-radius Riccati box. The state is partitioned as AG=(attitude,gyro bias), LIN=(v,p,S,a_w), and BA=(active accelerometer bias). Each diagonal covariance block is represented by a certified factor floor P_ii >= L_i L_i^T, while cross-block covariance is carried by operator-norm bounds.
+
+After scaling by the factor floors, block Gershgorin/Schur coercivity requires gamma=1-max_i sum_(j!=i) ||P_ij||/(ell_i ell_j)>0. Only then can fixed-coordinate information be covariance-normalized. For block information floors mu_i, the certificate uses mu_cov >= gamma*min_i(mu_i ell_i^2), followed by rho0<=1/(1+mu_cov). This prevents a poorly conditioned global scalar covariance eigenvalue from destroying useful block information while still accounting for every cross-covariance.
+
+The old entrywise interval Riccati representation is retired and must not be subdivided again. A non-promoting scaled integrated-OU factor probe is now in CI. The next source-uniform certificate must enclose tau/process-noise variation and the within-slice controllability remainder, then establish AG and BA factor floors and recurring cross-block operator bounds under the literal shipping correction/event cadence.
