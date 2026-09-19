@@ -82,6 +82,11 @@ class RiccatiAndNonlinearClosureTests(unittest.TestCase):
             uniform_detectability=True,uniform_controllability=True,
             covariance_hard_events_retained=True))
 
+    def test_constructive_radius_and_additive_supply_formulae(self):
+        r=explicit_small_gain_radius(.81,2.0,.1)
+        self.assertAlmostEqual(r,.05)
+        self.assertTrue(math.isfinite(additive_supply_practical_radius(.81,.05,.5,1e-4)))
+
     def test_same_history_exogenous_schedule_leaves_smooth_local_remainder(self):
         smooth=smooth_a21_remainder_vanishes_locally(
             projection_inactive=True,tuner_exogenous_same_history=True,
