@@ -10,7 +10,8 @@ sys.path.insert(0,str(ROOT))
 
 from tools.stability.ou3_theorem.interval_riccati import (
     InnovationCertificate, IntervalRiccatiCertificate,
-    RiccatiImageCertificate, load_certificate,
+    RiccatiImageCertificate, load_certificate, outward_dot_interval,
+    symmetric_interval_gershgorin,
 )
 
 
@@ -48,6 +49,19 @@ class IntervalRiccatiCertificateTests(unittest.TestCase):
     def test_noninvariant_box_fails_closed(self):
         image=RiccatiImageCertificate(.1,10.0,.05,9.0,.01)
         self.assertFalse(self.certificate(recurring_image=image).verify()["certificate_complete"])
+
+    def test_outward_dot_contains_corner_products(self):
+        lo,hi=outward_dot_interval((1.0,2.0),(.1,.2),(3.0,4.0),(.3,.4))
+        for a in ((.9,1.8),(1.1,2.2)):
+            for b in ((2.7,3.6),(3.3,4.4)):
+                value=sum(x*y for x,y in zip(a,b))
+                self.assertLessEqual(lo,value); self.assertGreaterEqual(hi,value)
+
+    def test_interval_gershgorin_contains_diagonal_case(self):
+        lo,hi=symmetric_interval_gershgorin(
+            ((2.0,0.0),(0.0,3.0)),((.1,.01),(.01,.2)))
+        self.assertLessEqual(lo,1.89)
+        self.assertGreaterEqual(hi,3.21)
 
     def test_json_loader(self):
         raw={
