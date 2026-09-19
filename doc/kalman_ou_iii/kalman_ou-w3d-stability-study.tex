@@ -351,6 +351,20 @@ $\{1,t,t^2/2,K(t)\}$ is an extended complete Chebyshev system, and four
 successive integral observations have a strictly positive uniform
 observability minor.
 
+No additional attitude-excitation assumption is needed.  With world
+specific force $f=a-g$ and true magnetic field $B$,
+\begin{equation}
+ \int_0^T f\times B\,dt=\Delta v\times B-Tg\times B .
+\end{equation}
+Hence the marine velocity bound and magnetic limits give
+$T^{-1}\|\int f\times B\,dt\|\ge gB_{h,\min}-2V_{\max}B_{\max}/T$.
+This is positive for $T>5.60844$~s and equals $43.97475$ in
+$(\mathrm{m/s^2})\,\mu\mathrm T$ units at $T=8$~s.  Thus every 8-s
+physical history contains non-collinear inertial and magnetic vector
+sensitivities.  Magnetic service supplies an applied sensitivity that can be
+transported to that interval.  Two such subwindows form the 16-s A21 proof
+word and expose gyro bias through attitude propagation.
+
 The accelerometer attitude Jacobian has two nonzero singular values bounded
 below by $g-A_{\max}=1.00665$~m/s$^2$.  Quotienting the strictly stable active
 accelerometer-bias OU mode, repeated gravity observations expose tilt and
