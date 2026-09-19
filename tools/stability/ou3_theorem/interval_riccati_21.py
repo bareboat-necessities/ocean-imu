@@ -459,3 +459,107 @@ def shipping_word_map(max_steps: int, **step_kwargs):
             certs.extend(c)
         return out,certs
     return word
+
+
+def split_interval_matrix(a: IMat, entries: tuple[tuple[int,int],...]) -> tuple[IMat,...]:
+    """Bisect selected interval entries, preserving all correlations not split.
+
+    This is a dependency-control primitive for the verified Riccati enclosure.
+    It never shrinks the union: the returned cells exactly cover the original
+    entrywise box.  Use only a small set of dominant attitude/tuner entries per
+    branch to avoid exponential explosion.
+    """
+    cells=[a]
+    for i,j in entries:
+        nxt=[]
+        for x in cells:
+            if not (0<=i<x.shape[0] and 0<=j<x.shape[1]):
+                raise ValueError("split entry outside matrix")
+            r=x.rad[i][j]
+            if r==0.0:
+                nxt.append(x);continue
+            lo=x.mid[i][j]-r;hi=x.mid[i][j]+r;cut=.5*(lo+hi)
+            for aa,bb in ((lo,cut),(cut,hi)):
+                m=[list(row) for row in x.mid];q=[list(row) for row in x.rad]
+                m[i][j]=.5*(aa+bb);q[i][j]=_out(.5*(bb-aa))
+                nxt.append(IMat(tuple(tuple(row) for row in m),
+                                tuple(tuple(row) for row in q)))
+        cells=nxt
+    return tuple(cells)
+
+
+def branch_verified_joseph_update(p: IMat, h_cells: tuple[IMat,...],
+                                  r: IMat) -> tuple[IMat,list[dict]]:
+    """Union enclosure of Joseph updates over a finite H subdivision."""
+    if not h_cells: raise ValueError("nonempty H subdivision required")
+    outs=[];certs=[]
+    for idx,h in enumerate(h_cells):
+        out,cert=verified_joseph_update(p,h,r)
+        outs.append(out);certs.append({"cell":idx,**cert})
+    union=outs[0]
+    for out in outs[1:]: union=hull(union,out)
+    return union,certs
+
+
+def adaptive_verified_update(p: IMat,h: IMat,r: IMat, *,
+                             split_entries: tuple[tuple[int,int],...],
+                             max_depth: int=3) -> tuple[IMat,list[dict]]:
+    """Verify an update, subdividing H only when the innovation box is too wide.
+
+    The full unsplit cell is attempted first. On failure, dominant uncertain H
+    entries are bisected one level at a time. Every cell must verify; otherwise
+    the update fails closed. This directly attacks interval dependency without
+    trusting a midpoint branch.
+    """
+    try:
+        out,cert=verified_joseph_update(p,h,r)
+        return out,[{"depth":0,"cell":0,**cert}]
+    except ValueError:
+        pass
+    cells=(h,)
+    used=0
+    for depth in range(1,max_depth+1):
+        if used>=len(split_entries): break
+        cells=tuple(y for x in cells for y in split_interval_matrix(x,(split_entries[used],)))
+        used+=1
+        try:
+            out,certs=branch_verified_joseph_update(p,cells,r)
+            return out,[{"depth":depth,**x} for x in certs]
+        except ValueError:
+            continue
+    raise ValueError("innovation inverse not verified after H subdivision")
+
+
+def recurring_box_over_cells(seed: IMat, word_maps: tuple, *,
+                             max_iterations: int=24,
+                             hull_inflation: float=.01) -> dict:
+    """Verified recurring box for a finite union of schedule/attitude cells.
+
+    Each word map represents one outward-covered branch cell. The invariant
+    image is the hull of *all* cells, so no favorable midpoint schedule can
+    certify the box.
+    """
+    if not word_maps: raise ValueError("nonempty branch-cell family required")
+    box=seed
+    for it in range(max_iterations):
+        images=[];certs=[]
+        try:
+            for idx,w in enumerate(word_maps):
+                image,c=w(box);images.append(image)
+                certs.extend({"branch":idx,**x} for x in c)
+        except ValueError:
+            return {"verified":False,"reason":"branch innovation inverse",
+                    "iterations":it+1,"box":box,"innovation_certificates":certs}
+        image=images[0]
+        for x in images[1:]: image=hull(image,x)
+        if contains(box,image):
+            lo,hi=spectral_box(box)
+            return {"verified":lo>0.0,"reason":"contained" if lo>0 else "nonpositive spectral floor",
+                    "iterations":it+1,"box":box,"image":image,
+                    "spectral_lower":lo,"spectral_upper":hi,
+                    "innovation_certificates":certs,"branch_count":len(word_maps)}
+        box=inflate(hull(box,image),hull_inflation)
+    lo,hi=spectral_box(box)
+    return {"verified":False,"reason":"iteration limit","iterations":max_iterations,
+            "box":box,"spectral_lower":lo,"spectral_upper":hi,
+            "branch_count":len(word_maps)}
