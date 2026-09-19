@@ -97,6 +97,72 @@ static void test_bias_prediction_correction_and_projection() {
     require(m.get_acc_bias().x() == .5f, "invalid attitude injection bypasses projection");
 }
 
+
+// The held accelerometer bias is what the H18 leg of the proof path has to
+// contract, and it cannot: while the hold is in force the shipping estimator
+// applies no bias mean dynamics, freezes the bias rows of every gain, and
+// leaves the bias cross-covariances at the zero the hold installed. The
+// consequences pinned here -- an estimate and a covariance block that are
+// bit-for-bit unchanged across a magnetically served window, and cross terms
+// that stay exactly zero -- are the literal premises of the held-bias
+// non-contraction obstruction in tools/stability/ou3_theorem/finite_error.py.
+// They are facts about the deployed hold, not a stability or instability claim.
+static void test_held_bias_is_invariant_across_a_served_window(){
+    Filter f(true);
+    f.setWithMag(true);
+    f.setOnlineTuneWarmupSec(5.0f);
+    f.initialize(V3::Constant(.0148f), V3::Constant(.00157f), V3::Constant(.25f));
+    f.setAccBiasHold(true);
+    f.setMagDelaySec(0.0f);
+    const V3 field(20.0f, 2.0f, 43.0f);
+    f.mekf().set_mag_world_ref(field);
+
+    const float dt = .005f;
+    auto stream = [&](int k, V3& gyro, V3& acc){
+        const float t = static_cast<float>(k)*dt;
+        const float w = 2.0f*float(M_PI)/8.0f;
+        const float roll = .35f*std::sin(w*t);
+        const float pitch = .22f*std::sin(w*t + 1.1f);
+        gyro = V3(.35f*w*std::cos(w*t), .22f*w*std::cos(w*t + 1.1f), 0.0f);
+        acc = V3(g_std*std::sin(pitch), -g_std*std::sin(roll),
+                 -g_std - 1.2f*w*w*std::sin(w*t));
+    };
+
+    V3 gyro, acc;
+    stream(0, gyro, acc);
+    f.initialize_from_acc(acc);
+    int live = -1;
+    for (int k = 0; k < 200*400 && live < 0; ++k) {
+        stream(k, gyro, acc);
+        f.updateFrontEnd(dt, gyro, acc);
+        if (f.isTunerReady()) { f.goLive(f.startupProxyQuat(), .035f, 1.5708f); live = k; }
+    }
+    require(live >= 0, "the shipping startup never reached the Live handoff");
+
+    auto& m = f.mekf();
+    const V3 estimate_before = m.get_acc_bias();
+    const auto covariance_before = m.covariance_full();
+    int applied = 0;
+    for (int k = live + 1; k <= live + 200; ++k) {
+        stream(k, gyro, acc);
+        f.updateTime(dt, gyro, acc);
+        if ((k % 20) == 0) {
+            f.updateMag(field);
+            if (m.lastMagDiag().accepted) ++applied;
+        }
+    }
+    require(applied > 0, "the window carried no actually applied magnetic correction");
+    require(!m.acc_bias_updates_enabled(), "the external hold did not keep the window in H18");
+    require(same(m.get_acc_bias(), estimate_before), "a held accelerometer-bias estimate moved");
+    require(same(m.covariance_full().block<3,3>(18,18),
+                 covariance_before.block<3,3>(18,18)),
+            "the held accelerometer-bias covariance block changed");
+    require(m.covariance_full().block<3,18>(18,0).isZero(0.0f) &&
+            m.covariance_full().block<18,3>(0,18).isZero(0.0f),
+            "held accelerometer-bias cross-covariances reappeared");
+}
+
 int main(){test_live_and_bias_release_inherit_state();test_attempt_is_not_acceptance();
     test_bias_prediction_correction_and_projection();
+    test_held_bias_is_invariant_across_a_served_window();
     std::cout<<"OU3_SHIPPING_TRANSITION_PASS="<<(failures==0?"true":"false")<<'\n';return failures?1:0;}

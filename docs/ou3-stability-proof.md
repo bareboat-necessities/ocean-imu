@@ -72,6 +72,8 @@ At informative-service superword boundaries, a completion certificate must estab
 
 The complete relation must include prediction, accelerometer correction, integral pseudo-update, magnetic correction, bias correction and projection, quaternion reset, covariance evolution, tuner commits, scheduler/clocks, magnetic-reference changes, tilt relocks, and the H18-to-A21 release.
 
+On the H18 leg this target is not available for the full error coordinate; see the next section. The H18 obligation is therefore the restated one: strict dissipation on the complement of the held accelerometer-bias coordinates, with the held bias carried as a bounded input.
+
 ## Loss of heading service
 
 Indefinite absence of informative heading observations contains
@@ -80,9 +82,25 @@ Indefinite absence of informative heading observations contains
 
 The block has spectral radius one and produces linear heading growth for nonzero axial gyro-bias error. It is a necessity result for MAGNETIC SERVICE, not a second stability theorem.
 
+## Held accelerometer bias in H18
+
+While H18 holds the accelerometer bias, the shipping estimator applies no bias mean dynamics, freezes the bias rows of every gain, and leaves the bias cross-covariances at the zero the hold installed. Write the finite error as `(e_o, e_b)` with `e_b` the held accelerometer-bias coordinates. The complete superword map is then
+
+`(e_o, e_b) -> (A e_o + B e_b, e_b)`,
+
+and the shipping covariance is block diagonal against the same split with `P_bb` unchanged across the superword. For `e=(0,e_b)`,
+
+`V_(end)(Psi e) = (B e_b)^T P_(oo,end)^(-1) (B e_b) + V_(root)(e) >= V_(root)(e)`.
+
+So `rho<1` is unavailable on the full H18 coordinate at any superword length, under any admissible motion, and with any amount of magnetic information. Equivalently the map is block triangular with an exact identity block, so it carries eigenvalue one and no time-invariant quadratic storage escapes the bound either.
+
+This is a non-contraction obstruction, not an instability result: the held bias is bounded by the estimate-projection lemma, `|e_b| <= B_a + R_b`. The consequence is that the H18 dissipation target must be restated on the complement with the held bias as a bounded input, or the certified tail must begin at the H18-to-A21 release where the shipping multiplier is `phi_OU<1`. The obstruction is the H18 counterpart of the ungauged heading necessity result above, and like it, it is a necessity lemma rather than a second theorem.
+
+The measured instance is recorded in `docs/ou3-proof-research-state.md`. Its premises are pinned by `tests/kalman_ou_iii/shipping_transition-test.cpp` and stated executably by `held_bias_non_contraction` in `tools/stability/ou3_theorem/finite_error.py`.
+
 ## Current closure
 
-The machine-readable status in `reports/results/ou3_stability/theorem-status.json` intentionally remains open. The next controlling obligation is a finite-error magnetically informed H18 service-superword storage inequality with prefix retention.
+The machine-readable status in `reports/results/ou3_stability/theorem-status.json` intentionally remains open. The next controlling obligation is to restate H18 dissipation off the held accelerometer-bias coordinates and to prove the restated inequality, with prefix retention, on the same physical history.
 
 ## Finite-error operation lemmas
 

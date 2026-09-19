@@ -28,7 +28,9 @@
     "projection_scope": "Positive radius after a finite completed injection; nonpositive radius disables projection; projection changes the estimate but not covariance; invalid attitude injection may bypass projection.",
     "integral_innovation": "With a single fixed capture origin S_true=q(t)-q(T_c), shipping r_S=-S_hat=e_S-S_true retains the physical potential forcing.",
     "magnetic_coordinate_transport": "The complete preceding transport may be rectangular between error charts. Dimension compatibility and finite audits do not certify a release map or source-uniform information.",
-    "point_audit_scope": "Supplied finite-error values and structural flags are diagnostic assertions, not a verified source-uniform certificate. Missing bounds, vacuous prefixes and overflow cannot promote completion."
+    "point_audit_scope": "Supplied finite-error values and structural flags are diagnostic assertions, not a verified source-uniform certificate. Missing bounds, vacuous prefixes and overflow cannot promote completion.",
+    "held_accelerometer_bias_hold": "While the hold is in force the estimate, its covariance block and its zeroed cross-covariances are unchanged, so the held bias is an invariant coordinate of the superword error map and no full-state rho<1 exists on that leg.",
+    "superword_feasibility_scope": "The exported superword and its high-precision evaluation measure one reached execution. They are non-promoting evidence: no ratio, direction or margin they report discharges a proof obligation or establishes source uniformity."
   },
   "operation_lemma_sources": [
     {
@@ -57,19 +59,31 @@
     },
     {
       "path": "tests/kalman_ou_iii/shipping_transition-test.cpp",
-      "git_blob_sha": "7abd5f55952430ade16e1a3d76992e20c787ddc2"
+      "git_blob_sha": "90e036f7e4973dafb9effc26d1b1611285385f1a"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "fde2637e3a3f174e64b3756fa095cf34de42e97a"
+      "git_blob_sha": "062afbf8294f08d86e806ebd7045fd10f09ede59"
     },
     {
       "path": "tools/stability/ou3_theorem/finite_error.py",
-      "git_blob_sha": "1366851dd3bd8b01c217416c9656c87067fb37d0"
+      "git_blob_sha": "9cfbf802037b43872179c6b64af6a641e4408280"
     },
     {
       "path": "tests/validation/test_ou3_finite_error.py",
-      "git_blob_sha": "e515812d6a404cf7bbcfc4c8308de6e5a83fcde6"
+      "git_blob_sha": "ff433a993750a5beda200c4daac6a0b307090961"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/h18_superword.py",
+      "git_blob_sha": "500c9e2eaca121de66bbc116e5e7d977b23f911d"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/h18_superword_export.cpp",
+      "git_blob_sha": "54b3ee201a2aabf41e117d9984340054ab2d745b"
+    },
+    {
+      "path": "tests/validation/test_ou3_h18_superword.py",
+      "git_blob_sha": "ddb7449cbb9a89b46fbe7d0047036134dd8aca3a"
     }
   ]
 }
