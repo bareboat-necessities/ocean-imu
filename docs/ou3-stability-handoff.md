@@ -244,3 +244,12 @@ The covariance-normalization architecture has moved to a block/factor metric aft
 After scaling by the factor floors, block Gershgorin/Schur coercivity requires gamma=1-max_i sum_(j!=i) ||P_ij||/(ell_i ell_j)>0. Only then can fixed-coordinate information be covariance-normalized. For block information floors mu_i, the certificate uses mu_cov >= gamma*min_i(mu_i ell_i^2), followed by rho0<=1/(1+mu_cov). This prevents a poorly conditioned global scalar covariance eigenvalue from destroying useful block information while still accounting for every cross-covariance.
 
 The old entrywise interval Riccati representation is retired and must not be subdivided again. A non-promoting scaled integrated-OU factor probe is now in CI. The next source-uniform certificate must enclose tau/process-noise variation and the within-slice controllability remainder, then establish AG and BA factor floors and recurring cross-block operator bounds under the literal shipping correction/event cadence.
+
+
+## Block-factor coercivity result
+
+The generic absolute cross-ceiling/Gershgorin attempt was executed and is retired: normalized cross bounds (4.0922e8,2.0137e6,1.0301e8) gave gamma=-5.1223e8. This is conditioning of that sufficient reduction, not covariance loss.
+
+Root coercivity now uses the exact shipping additive-process identity. Since P-=F P+ F^T+Q and Q is block diagonal, certified process factors Q_i>=L_iL_i^T imply P->=diag(L_iL_i^T), hence root block-metric gamma=1 regardless of cross covariance. Corrections preserve positive metric margin by gamma+=gamma-/(1+gamma- j_D). Cross-block absolute bounds remain required for prefix magnitude/totality, but no longer establish root coercivity.
+
+AG and BA factor constructions are positive. The controlling numeric certificate is LIN: source-uniform continuous-tau enclosure of the useful scaled integrated-OU factor and its survival through intervening corrections.
