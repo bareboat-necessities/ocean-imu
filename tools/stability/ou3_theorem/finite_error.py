@@ -118,3 +118,77 @@ def incomplete_diagnostic(history_id: str, storage_values: Sequence[float],
         applied_magnetic_information=False, finite_error_map=False,
         arithmetic_enclosed=False,
     )
+
+
+@dataclass(frozen=True)
+class HeldBiasSuperwordBlock:
+    """Literal shipping facts about the held accelerometer bias on one superword.
+
+    While H18 holds the accelerometer bias, the shipping estimator applies no
+    bias mean dynamics, freezes the bias rows of every gain, and keeps the bias
+    cross-covariances at the zero they were set to when the hold was taken. The
+    three fields record exactly that, measured on the execution rather than
+    assumed: the held-bias block of the complete superword error map, the
+    largest surviving bias cross-covariance at either endpoint, and the change
+    in the held-bias covariance block across the superword.
+    """
+    history_id: str
+    map_block: tuple[tuple[float, float, float], ...]
+    cross_covariance_max: float
+    covariance_block_change: float
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.history_id, str) or not self.history_id.strip():
+            raise ValueError("nonempty history_id required")
+        if len(self.map_block) != 3 or any(len(row) != 3 for row in self.map_block):
+            raise ValueError("the held accelerometer-bias block is 3x3")
+        values = [v for row in self.map_block for v in row]
+        values += [self.cross_covariance_max, self.covariance_block_change]
+        if not all(math.isfinite(v) for v in values):
+            raise ValueError("finite measured block entries required")
+        if min(self.cross_covariance_max, self.covariance_block_change) < 0.0:
+            raise ValueError("measured magnitudes are nonnegative")
+
+
+def held_bias_non_contraction(block: HeldBiasSuperwordBlock,
+                              tolerance: float = 0.0) -> dict:
+    """No H18 service superword contracts the shipping covariance storage.
+
+    Write the error as (e_o, e_b) with e_b the held accelerometer-bias block.
+    The measured superword map is (e_o, e_b) -> (A e_o + B e_b, e_b): the held
+    bias reproduces itself exactly, because nothing in the held mode moves its
+    estimate. The shipping covariance is block diagonal against that split for
+    the same reason, so
+
+        V(e) = e_o^T P_oo^(-1) e_o + e_b^T P_bb^(-1) e_b,
+
+    and P_bb is unchanged across the superword. Taking e = (0, e_b) gives
+
+        V_end(Psi e) = (B e_b)^T P_oo,end^(-1) (B e_b) + V_root(e) >= V_root(e).
+
+    So rho < 1 is unavailable on the full H18 coordinate for this storage at any
+    superword length, under any motion, and with any amount of magnetic
+    information. The conclusion is a non-contraction obstruction, not an
+    instability result and not a certificate of anything: it says the H18
+    dissipation target has to be restated, for instance on the complement with
+    the held bias carried as a bounded input, or after the release to A21.
+    """
+    identity_defect = max(
+        abs(block.map_block[i][j] - (1.0 if i == j else 0.0))
+        for i in range(3) for j in range(3)
+    )
+    reproduces = identity_defect <= tolerance
+    decoupled = block.cross_covariance_max <= tolerance
+    frozen = block.covariance_block_change <= tolerance
+    obstructed = bool(reproduces and decoupled and frozen)
+    return {
+        "history_id": block.history_id,
+        "held_bias_identity_defect": identity_defect,
+        "held_bias_reproduces_itself": reproduces,
+        "bias_covariance_decoupled": decoupled,
+        "bias_covariance_frozen": frozen,
+        "strict_full_state_rho_available": not obstructed,
+        "non_contraction_obstruction": obstructed,
+        "obstruction_is_an_instability_claim": False,
+        "certificate_complete": False,
+    }

@@ -32,5 +32,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"construct a same-history finite-error magnetically informed H18 service-superword storage inequality with prefix retention",
+        "next_controlling_obligation":"restate H18 dissipation off the held accelerometer-bias coordinates, which the shipping H18 superword map reproduces exactly, and prove the restated inequality with prefix retention on the same physical history",
     }

@@ -6,8 +6,11 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from tools.stability.ou3_theorem.finite_error import (
-    ServiceSuperwordWitness, audit_service_superword, incomplete_diagnostic,
+    HeldBiasSuperwordBlock, ServiceSuperwordWitness, audit_service_superword,
+    held_bias_non_contraction, incomplete_diagnostic,
 )
+
+IDENTITY = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
 
 
 class FiniteErrorTargetTests(unittest.TestCase):
@@ -74,6 +77,45 @@ class FiniteErrorTargetTests(unittest.TestCase):
             replace(self.witness(), rho_candidate=1.0),
         ):
             self.assertFalse(audit_service_superword(w)["point_consistency_pass"])
+
+
+class HeldBiasObstructionTests(unittest.TestCase):
+    def block(self, **overrides):
+        fields = dict(history_id="h", map_block=IDENTITY, cross_covariance_max=0.0,
+                      covariance_block_change=0.0)
+        fields.update(overrides)
+        return HeldBiasSuperwordBlock(**fields)
+
+    def test_the_held_block_obstructs_strict_full_state_contraction(self):
+        r = held_bias_non_contraction(self.block())
+        self.assertTrue(r["held_bias_reproduces_itself"])
+        self.assertTrue(r["non_contraction_obstruction"])
+        self.assertFalse(r["strict_full_state_rho_available"])
+
+    def test_the_obstruction_is_not_an_instability_or_a_certificate(self):
+        r = held_bias_non_contraction(self.block())
+        self.assertFalse(r["obstruction_is_an_instability_claim"])
+        self.assertFalse(r["certificate_complete"])
+
+    def test_each_premise_is_required_separately(self):
+        moving = ((0.5, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
+        for overrides in ({"map_block": moving}, {"cross_covariance_max": 1e-9},
+                          {"covariance_block_change": 1e-9}):
+            with self.subTest(**overrides):
+                r = held_bias_non_contraction(self.block(**overrides))
+                self.assertFalse(r["non_contraction_obstruction"])
+                self.assertTrue(r["strict_full_state_rho_available"])
+                self.assertFalse(r["certificate_complete"])
+
+    def test_malformed_measurements_are_rejected(self):
+        with self.assertRaises(ValueError):
+            self.block(map_block=((1.0, 0.0), (0.0, 1.0)))
+        with self.assertRaises(ValueError):
+            self.block(cross_covariance_max=float("nan"))
+        with self.assertRaises(ValueError):
+            self.block(covariance_block_change=-1.0)
+        with self.assertRaises(ValueError):
+            self.block(history_id=" ")
 
 
 if __name__ == "__main__":

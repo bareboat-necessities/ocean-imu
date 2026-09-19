@@ -42,9 +42,11 @@ retained as separate implemented operations. The analysis uses one path from
 construction through finite capture, held-bias Live operation, bias-state
 release, and magnetically informed active-bias operation. An exact unipotent
 heading/axial gyro-bias block establishes the need for continuing heading
-information. End-to-end regional practical stability remains open until finite
-capture, finite-error dissipativity, retention, and implementation arithmetic
-are certified.
+information, and an exact identity block on the held accelerometer bias shows
+that the held-bias leg admits no strict full-state contraction at all, so its
+dissipation target is restated with that bias as a bounded input. End-to-end
+regional practical stability remains open until finite capture, finite-error
+dissipativity, retention, and implementation arithmetic are certified.
 \end{abstract}
 
 \section{Theorem scope}
@@ -283,6 +285,46 @@ when $e_{b_g,\parallel}\ne0$. Hence strict coercive full-state contraction is
 not generally available during indefinite loss of informative heading service.
 This is a necessity result, not a second stability theorem.
 
+\section{Non-contraction of the held bias}
+While the accelerometer-bias hold is in force, the implementation applies no
+bias mean dynamics, zeroes the bias rows of every gain, and leaves the bias
+cross-covariances at the zero installed when the hold was taken. Split the
+finite error as $e=(e_o,e_b)$ with $e_b$ the held accelerometer-bias
+coordinates. The complete superword map is then block triangular,
+\begin{equation}
+ \Psi=\begin{bmatrix}A&B\\0&\Id\end{bmatrix},
+ \label{eq:held-bias-block}
+\end{equation}
+and the covariance is block diagonal against the same split with $P_{bb}$
+unchanged across the superword.
+
+\begin{lemma}[Held bias blocks strict contraction]
+Under \eqref{eq:held-bias-block} with $P_{bb}$ unchanged and the bias
+cross-covariances zero, every held superword satisfies
+\begin{equation}
+ \max_{e\ne0}\frac{V_{\rm end}(\Psi e)}{V_{\rm root}(e)}\ge1 .
+ \label{eq:held-bias-obstruction}
+\end{equation}
+\end{lemma}
+\begin{proof}
+Take $e=(0,e_b)$. Block diagonality gives
+$V_{\rm root}(e)=e_b^\mathsf{T}P_{bb}^{-1}e_b$ and
+$V_{\rm end}(\Psi e)=(Be_b)^\mathsf{T}P_{oo,\rm end}^{-1}(Be_b)
++e_b^\mathsf{T}P_{bb}^{-1}e_b$, since $P_{bb}$ is unchanged. The first term is
+nonnegative.
+\end{proof}
+Since $\Psi$ is block triangular with an identity block it also carries the
+eigenvalue one, so no time-invariant quadratic storage attains $\rho<1$ either.
+The bound is independent of superword length, sea state and accumulated
+magnetic information.
+
+This is a necessity result about the held mode, not an instability claim: the
+held bias remains bounded by the estimate-projection lemma,
+$\norm{e_{b_a}}\le B_a+R_b$. Its consequence is that the held-bias leg of the
+path has to state dissipation on the complement coordinates with $Be_b$ carried
+as a bounded input, or that the certified tail has to begin at the release,
+where the implemented multiplier is $\phi_{\rm OU}<1$.
+
 \section{Conditional practical-stability statement}
 After capture, let $t_j$ be consecutive informative-service superword
 boundaries and $e_j$ the complete finite estimation-error coordinate. A
@@ -299,10 +341,12 @@ implemented event. If $\norm d\le D$, iteration gives
  \limsup_{j\to\infty}\norm{e_j}
  \le\sqrt{\frac{c_d}{m(1-\rho)}}D .
 \end{equation}
-Zero supply gives geometric decay at service boundaries. This implication is
-conditional until capture, H18 finite-error dissipation, the H18--A21 release,
-A21 dissipation, recurring service, retention, and implementation arithmetic
-are certified.
+Zero supply gives geometric decay at service boundaries. On the held-bias leg
+$e_j$ is the complement coordinate and $d$ absorbs $Be_b$, because
+\eqref{eq:held-bias-obstruction} rules out the full-state form. This
+implication is conditional until capture, held-bias finite-error dissipation in
+its restated form, the H18--A21 release, A21 dissipation, recurring service,
+retention, and implementation arithmetic are certified.
 
 \balance
 \section{Declared constants}
@@ -349,8 +393,14 @@ shipping sensitivities.
 Executable regressions verify the constant-displacement exclusion, sampled
 predecessor bias rule, mode-dependent prediction identity, separate
 correction/projection algebra, attempted-versus-applied magnetic distinction,
-rank-deficient frequent magnetic service, unipotent obstruction, and state
-inheritance across Live and bias release. Finite simulations do not establish
+rank-deficient frequent magnetic service, unipotent obstruction, exactness of
+the bias hold across a magnetically served window, and state inheritance across
+Live and bias release. One superword of the implementation was measured
+directly: central differences of the complete closed-loop map taken through the
+implementation itself, evaluated against the covariance storage at sixty decimal
+digits, give a worst admissible ratio of $3.26$ over one second of served
+operation while the applied magnetic information exceeds $\mu_M$, which is the
+measured instance of \eqref{eq:held-bias-obstruction}. Finite simulations do not establish
 the all-time displacement primitive, recurring tail service, finite-error
 contraction, or infinite-duration stability.
 
