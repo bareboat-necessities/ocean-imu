@@ -33,11 +33,15 @@ refinement is finite.
 3. Prove finite magnetic-reference refinement and hence finite H18 release.
 4. Bound the finite H18 bridge and prove the literal release retains the A21
    tail domain.
-5. Establish source-uniform linear A21 dissipation from the actual shipping
-   prediction/correction sequence plus MAGNETIC SERVICE.
-6. Bound the nonlinear/reset/projection/tuner remainder. If the linear storage
-   ratio is `rho0` and the remainder Lipschitz gain is `eta`, close the
-   finite-error contraction with `(sqrt(rho0)+eta)^2 < 1`.
+5. Establish a source-uniform complete A21 information floor in normalized
+   covariance coordinates. MAGNETIC SERVICE supplies the heading/axial
+   gyro-bias component; gravity/accelerometer and integral pseudo-updates must
+   close the remaining directions. A full floor mu gives the linear comparison
+   rho0<=1/(1+mu).
+6. Retain A21 inside the inactive accelerometer-bias projection region
+   (bias-error radius <0.1748334 m/s^2), then bound the remaining nonlinear
+   reset/tuner/arithmetic remainder. Close finite-error contraction with
+   (sqrt(rho0)+eta)^2 < 1.
 7. Close every-prefix retention, recurring service, and finite-precision
    arithmetic.
 
