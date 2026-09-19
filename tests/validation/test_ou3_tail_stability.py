@@ -21,6 +21,8 @@ from tools.stability.ou3_theorem.tail_stability import (
     vector_attitude_information_floor, rotation_integral_singular_floor,
     two_epoch_attitude_gyro_floor, explicit_neutral_information_floor,
     rho_from_explicit_mu, psd_service_schur_floor,
+    aggregate_repeated_row_information_floor, aggregate_translation_information_floor,
+    certified_rho_and_margin,
     practical_radius_bound, projection_sector_is_dissipative, proof_route_status,
     pseudo_decay_exponent_per_gap, release_can_guarantee_projection_inactive,
     small_gain_budget,
@@ -117,6 +119,13 @@ class QuantitativeCertificateTests(unittest.TestCase):
         self.assertGreater(rho,.9999993)
         self.assertLess(rho,1.0)
         self.assertLess(1-math.sqrt(rho),3.1e-7)
+
+    def test_information_adds_over_guaranteed_events(self):
+        self.assertEqual(aggregate_repeated_row_information_floor(.25,16),4.0)
+        self.assertEqual(aggregate_translation_information_floor(.002,3),.002)
+        c=certified_rho_and_margin(.002)
+        self.assertLess(c["rho0"],.999)
+        self.assertGreater(c["nonlinear_norm_margin"],.0009)
 
     def test_transported_service_uses_schur_not_instantaneous_row(self):
         mu=psd_service_schur_floor(
