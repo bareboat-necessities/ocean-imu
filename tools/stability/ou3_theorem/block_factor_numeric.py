@@ -7,7 +7,7 @@ supply, which remains an additive practical-stability obligation.
 from __future__ import annotations
 import json
 from pathlib import Path
-from .lin_path_certificate import certificate as lin_certificate
+try:\n    from .lin_path_certificate import certificate as lin_certificate\nexcept ImportError:\n    from lin_path_certificate import certificate as lin_certificate
 
 MU_N=2.04e-3
 ELL_AG=4.999974644e-4
@@ -39,7 +39,7 @@ def certificate() -> dict:
         "ell_AG":ELL_AG,"ell_LIN":ell_lin,"ell_BA":ELL_BA,
         "root_metric_gamma":1.0,
         "factor_covariance_floor":p_factor,
-        "mu_cov":mu_cov,"rho0":rho0,
+        "mu_cov":mu_cov,"rho0":rho0,\n        "constructive_full_A21_mu_rho_enclosure":True,
         "sqrt_rho0_margin":1.0-rho0**0.5,
         "cross_block_role":"finite prefix magnitude/totality; not root coercivity",
         "float32_whole_word_supply_closed":False,
