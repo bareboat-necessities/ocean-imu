@@ -132,3 +132,19 @@ def refinement_completion_bound(start_s: float, p: RefinementPremises) -> float:
         raise ValueError("physical bounds do not guarantee MagAutoTuner acceptance")
     wait=max(p.min_samples*p.service_window_s,p.min_window_s+p.service_window_s)
     return start_s+wait
+
+def a21_entry_bound(capture_s: float, refinement_not_before_s: float,
+                    refinement: RefinementPremises,
+                    accel_bias_unlock_updates: int, unlock_guard_s: float) -> float:
+    """Conservative finite time to active-bias A21 after captured service starts."""
+    if not all(math.isfinite(x) for x in (capture_s,refinement_not_before_s,unlock_guard_s)):
+        raise ValueError("finite entry times required")
+    if min(capture_s,refinement_not_before_s,unlock_guard_s) < 0 or accel_bias_unlock_updates < 0:
+        raise ValueError("nonnegative entry data required")
+    refine_start=max(capture_s,refinement_not_before_s)
+    refine_done=refinement_completion_bound(refine_start,refinement)
+    # Worst case assumes none of the internal accepted-update count was earned
+    # before the outer reference hold is released.
+    return release_bound_from_service(accel_bias_unlock_updates,
+                                      refinement.service_window_s,
+                                      unlock_guard_s,refine_done)
