@@ -63,5 +63,5 @@
   },
   "theorem_closed": false,
   "regional_practical_stability_claimed": false,
-  "next_controlling_obligation": "The real-arithmetic LIN path factor is promoted: ell_LIN>=1.196007314542406680e-6, giving conservative mu_cov>=2.9180843327e-15 and rho0<=0.9999999999999971 with root gamma=1. The margin is positive but extremely small. Next: derive the explicit nonlinear remainder/radius and determine whether this conservative rho0 leaves a nonzero certifiable float32 practical region; cross-block prefix bounds remain required for totality."
-}
+  "next_controlling_obligation": "Matched factor coordinates (v,p,S,a_w)=(2.4,18,132,4) sharpen the real-arithmetic normalization without changing assumptions or fitting rho: mu_trans>2.1e-3, mu_cov>=1.66e-13, rho0<=0.9999999999998335, over 50x the previous scalar margin. This is still too small to presume float32/nonlinear closure. Next: replace the remaining scalar LIN factor by a full matrix/factor action certificate and compute lambda_min(L^T J L) directly; retain fail-closed nonlinear/float32 status."
+}\n
