@@ -647,3 +647,29 @@ def psd_spectral_correction_floor(p_lower: float,h: IMat,
     hn=_frob_mid(h)+_frob_rad(h)
     out=1.0/(1.0/p_lower+(hn*hn)/r_noise_lower)
     return {"H_norm_upper":hn,"posterior_covariance_floor":out}
+
+
+def psd_spectral_word_floor(*, initial_floor: float, f: IMat,
+                            q_floor: float,
+                            corrections: tuple[tuple[IMat,float],...],
+                            steps: int) -> dict:
+    """Iterate a PSD-preserving scalar spectral lower recurrence.
+
+    This is rigorous once q_floor is a certified lower eigenvalue of the
+    literal full 21-state process covariance for every admitted prediction.
+    It is intentionally not a replacement for multi-step controllability when
+    q_floor is zero or numerically useless.
+    """
+    if not math.isfinite(initial_floor) or initial_floor<=0 or not math.isfinite(q_floor) or q_floor<0 or steps<1:
+        raise ValueError("valid spectral word data required")
+    p=initial_floor; prefix=[p]
+    pred_meta=None
+    for _ in range(steps):
+        pred_meta=psd_spectral_prediction_floor(p,f,q_floor)
+        p=pred_meta["predicted_covariance_floor"];prefix.append(p)
+        for h,rlo in corrections:
+            meta=psd_spectral_correction_floor(p,h,rlo)
+            p=meta["posterior_covariance_floor"];prefix.append(p)
+    return {"root_floor":initial_floor,"end_floor":p,
+            "prefix_floor":min(prefix),"prefixes":tuple(prefix),
+            "F_sigma_min_lower":pred_meta["F_sigma_min_lower"]}
