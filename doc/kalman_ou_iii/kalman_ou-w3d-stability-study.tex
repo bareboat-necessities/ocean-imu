@@ -477,6 +477,47 @@ certified. Finite capture, reference-refinement completion, bridge retention,
 release retention, recurring service, physical qualification and arithmetic
 closure therefore remain open.
 
+\section{Constructive long-word information}
+The weak gyro-bias direction is accumulated rather than hidden by a stronger
+excitation assumption.  The A21 proof word is extended to 2048~s while the
+translation certificate remains a 16-s prefix.  At each disjoint one-second
+magnetic-service root, $J_{hb}\succeq I$ permits extraction of one unit of pure
+heading information.  The simultaneous accelerometer row has no preceding
+gyro-bias transport.  The commissioned detector-band residual bound and the
+shipping vibration gain give
+\[
+ \sigma_{a,\mathrm{eff}}\le
+ \operatorname{hypot}(0.2,0.75\,0.3)=0.3010399~\mathrm{m/s^2}.
+\]
+Together with $|f_z|\ge1.00665$ and $|f_h|\le8.8$, this gives a root-attitude
+information floor above $0.0129$.
+
+Writing the extracted root observations as $y_k=\theta_0+C_k b_g$, the
+one-second bounded-rate transport obeys
+\[
+ \sigma_{\min}(C_{k+1}-C_k)\ge
+ 0.02\frac{2\sin(\Omega_{\max}/2)}{\Omega_{\max}} .
+\]
+The path-graph inequality and $y_0=\theta_0$ then give
+$\mu_{ag}=j c/(1+c)$,
+$c=(N-1)\beta^2/4$.  For $N=2048$, $\mu_{ag}>2.1\times10^{-3}$.
+Combined with the independent translation bound,
+\[
+ \boxed{\mu_N\ge2.04\times10^{-3}}
+\]
+in the declared fixed proof coordinates.
+
+This value is not inserted directly into an information-form contraction.
+That step requires root-covariance whitening.  If
+$P_{\rm root}\succeq p_{\min}I$ in the same coordinates, then
+\[
+ \mu_{\rm cov}\ge p_{\min}\mu_N,\qquad
+ \rho_0\le(1+p_{\min}\mu_N)^{-1}.
+\]
+A constructive recurring lower covariance enclosure is therefore the next
+quantitative certificate.  This normalization prevents coordinate scaling from
+artificially improving the claimed contraction factor.
+
 \section{Conclusion}
 The stability problem is posed as one same-history theorem with continuing
 magnetic information. The formulation excludes permanent wave-coordinate
