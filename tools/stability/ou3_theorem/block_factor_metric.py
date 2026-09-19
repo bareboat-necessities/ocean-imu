@@ -326,3 +326,35 @@ def uniform_lin_jensen_factor_certificate(*, tau_min: float,tau_max: float,
                 "covariance_floor":float(certified*certified),
                 "tau_cells":tau_cells,"worst_cell":best_cell,
                 "decimal_lower":str(certified)}
+
+
+def batch_information_degraded_factor(*, process_factor: float,
+                                      event_information_ceilings: tuple[tuple[int,float],...],
+                                      transport_norm_ceiling: float=1.0) -> dict:
+    """Conservative final-state factor after a process window and measurements.
+
+    Treat the accumulated process-driven final state as having covariance
+    >=ell^2 I. Every actual measurement is replaced by a hypothetical direct
+    final-state observation with no less Fisher information: its information
+    norm ceiling is multiplied by the squared backward transport norm. This can
+    only reduce the comparison covariance. Summing those ceilings gives
+      P_end >= (ell^-2 I + J_total I)^-1.
+    This is the batch counterpart of gamma+=gamma/(1+gamma*j).
+    """
+    if not math.isfinite(process_factor) or process_factor<=0 or not math.isfinite(transport_norm_ceiling) or transport_norm_ceiling<1:
+        raise ValueError("valid process factor/transport ceiling required")
+    total=0.0
+    for count,j in event_information_ceilings:
+        if count<0 or not math.isfinite(j) or j<0:
+            raise ValueError("valid event information ceiling required")
+        total += count*j*transport_norm_ceiling*transport_norm_ceiling
+    var=process_factor*process_factor
+    post=var/(1.0+var*total)
+    return {"total_information_ceiling":total,"covariance_floor":post,
+            "factor_floor":math.sqrt(post),
+            "gamma_relative_to_process":post/var,"verified":post>0}
+
+def maximum_event_count(window_s: float,dt_min: float) -> int:
+    if not all(math.isfinite(x) for x in (window_s,dt_min)) or min(window_s,dt_min)<=0:
+        raise ValueError("positive timing required")
+    return math.ceil(window_s/dt_min)+1
