@@ -486,3 +486,51 @@ def additive_supply_practical_radius(linear_rho0: float, nonlinear_eta: float,
     rho=(math.sqrt(linear_rho0)+nonlinear_eta)**2
     if not rho < 1.0: raise ValueError("small-gain condition not satisfied")
     return math.sqrt(additive_supply_energy/(coercivity_lower*(1.0-rho)))
+
+def marine_magnetic_vector_diversity_floor(window_s: float, gravity_mps2: float,
+                                           horizontal_field_min: float,
+                                           field_norm_max: float,
+                                           velocity_bound_mps: float) -> float:
+    """Uniform f x B diversity forced by bounded marine velocity.
+
+    With f=a-g and a=dv/dt for one persistent physical history,
+      integral_0^T f x B dt = (v(T)-v(0)) x B - T g x B.
+    Hence the average cross-product magnitude is at least
+      g*B_h,min - 2*V_max*B_max/T.
+    A positive value proves that some instant in every T-window has at least
+    that much gravity/magnetic vector diversity. This rules out sustained
+    accelerometer/magnetometer collinearity without adding an excitation
+    assumption: it follows from bounded marine velocity and nonzero horizontal
+    geomagnetic field.
+    """
+    vals=(window_s,gravity_mps2,horizontal_field_min,field_norm_max,velocity_bound_mps)
+    if not all(math.isfinite(x) for x in vals): raise ValueError("finite diversity bounds required")
+    if min(window_s,gravity_mps2,horizontal_field_min,field_norm_max) <= 0 or velocity_bound_mps < 0:
+        raise ValueError("positive physical diversity bounds required")
+    return gravity_mps2*horizontal_field_min - 2.0*velocity_bound_mps*field_norm_max/window_s
+
+def marine_magnetic_diversity_window_min(gravity_mps2: float, horizontal_field_min: float,
+                                         field_norm_max: float, velocity_bound_mps: float) -> float:
+    """Strict threshold above which every window has positive vector diversity."""
+    vals=(gravity_mps2,horizontal_field_min,field_norm_max,velocity_bound_mps)
+    if not all(math.isfinite(x) for x in vals) or min(gravity_mps2,horizontal_field_min,field_norm_max) <= 0 or velocity_bound_mps < 0:
+        raise ValueError("valid physical diversity bounds required")
+    return 2.0*velocity_bound_mps*field_norm_max/(gravity_mps2*horizontal_field_min)
+
+def attitude_information_from_marine_diversity(*, diversity_floor: float,
+                                               magnetic_service_floor: float,
+                                               magnetic_service_window_s: float,
+                                               angular_rate_ceiling: float) -> bool:
+    """Full attitude information over a diversity window.
+
+    A magnetic event from each service interval can be transported through the
+    known attitude transition to the diversity instant. Orthogonal attitude
+    transport preserves the magnetic sensitivity norm. Positive f x B
+    diversity makes the two rank-two vector sensitivities jointly full rank.
+    Recurrence over consecutive diversity windows then exposes gyro bias through
+    its attitude injection. Bounded angular rate keeps all finite transports
+    continuous on the compact branch cells.
+    """
+    vals=(diversity_floor,magnetic_service_floor,magnetic_service_window_s,angular_rate_ceiling)
+    if not all(math.isfinite(x) for x in vals): raise ValueError("finite attitude information bounds required")
+    return diversity_floor > 0 and magnetic_service_floor > 0 and magnetic_service_window_s > 0 and angular_rate_ceiling >= 0
