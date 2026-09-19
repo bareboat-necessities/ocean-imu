@@ -60,7 +60,8 @@
     "physical_qualification": "MARINE MOTION, IMU BIAS and MAGNETIC SERVICE continuation certificates are composed only when they share one history_id and assembled sensor/mounting/calibration qualification is explicit.",
     "maximal_correction_order": "Kalman/Joseph corrections with SPD R are Loewner-decreasing, prediction is PSD-order monotone, and AW/bias covariance hard events are PSD inflations. Therefore inserting optional S/mag corrections at every sample gives a covariance no larger than any admissible sparser cadence; a positive floor for this maximal-correction word is conservative.",
     "float32_word_supply": "Float32 gamma_n is applied locally per straight-line kernel and propagated by certified remaining-prefix gains; no invalid whole-word gamma_N operation count is used.",
-    "capture_bridge_release": "Finite bridge and release retention is composed as an explicit storage set inclusion against the eventual certified A21 radius; the composition exists but numerical premises remain open."
+    "capture_bridge_release": "Finite bridge and release retention is composed as an explicit storage set inclusion against the eventual certified A21 radius; the composition exists but numerical premises remain open.",
+    "interval_subdivision": "Wide H/parameter interval dependency is handled by finite outward-covering branch subdivision. Every cell must verify its innovation inverse; recurring covariance inclusion uses the hull of all branch images, never a favorable midpoint branch."
   },
   "operation_lemma_sources": [
     {
@@ -109,11 +110,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/interval_riccati_21.py",
-      "git_blob_sha": "22b4d7ee556a97e0376138ec4110da09fac48cb9"
+      "git_blob_sha": "d8d4a65d3cf4f93d12242a54ac234bce5aec45b3"
     },
     {
       "path": "tests/validation/test_ou3_interval_riccati_21.py",
-      "git_blob_sha": "9ec12dba096faf8158b199c153a109f32dca8b61"
+      "git_blob_sha": "6d78c311e3975dfb68484f1663da0c3a2a9e02a8"
     },
     {
       "path": "tools/stability/ou3_theorem/physical_qualification.py",
