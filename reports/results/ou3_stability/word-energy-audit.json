@@ -1,0 +1,41 @@
+{
+  "endpoint_energy": "20",
+  "full_loss": [
+    [
+      "1",
+      "0",
+      "1"
+    ],
+    [
+      "0",
+      "1",
+      "0"
+    ],
+    [
+      "1",
+      "0",
+      "1"
+    ]
+  ],
+  "full_state_strict_margin": false,
+  "null_error": [
+    "1",
+    "0",
+    "-1"
+  ],
+  "qualification": "OU3_RESTRICTED_SERVICE_LIFTING_COUNTEREXAMPLE_V1",
+  "required_replacement": "full transported loss with cross blocks and covariance-whitened coercivity",
+  "restricted_heading_bias_loss": [
+    [
+      "1",
+      "0"
+    ],
+    [
+      "0",
+      "1"
+    ]
+  ],
+  "root_energy": "20",
+  "scope": "falsifies the principal-block lifting implication, not a shipping marine-history counterexample",
+  "verified": true
+}

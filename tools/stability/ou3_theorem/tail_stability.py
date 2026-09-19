@@ -754,17 +754,15 @@ def vibration_inflated_accel_std_ceiling(*, nominal_std: float,
         raise ValueError("valid accelerometer noise bounds required")
     return math.hypot(nominal_std,vibration_gain*detector_residual_rms_ceiling)
 
-def root_attitude_information_floor(*, vertical_specific_force_floor: float,
+def independent_heading_attitude_information_floor(*, vertical_specific_force_floor: float,
                                     horizontal_specific_force_ceiling: float,
                                     accel_std_ceiling: float,
                                     magnetic_heading_floor: float) -> float:
-    """Pure attitude information extractable at a service-window root.
+    """Conditional geometry with an independently certified full-state heading floor.
 
-    MAGNETIC SERVICE J_hb>=mu I permits subtracting diag(mu,0), leaving a PSD
-    remainder, so mu units of pure root-heading information may be used without
-    double counting axial-bias service. The simultaneous root accelerometer row
-    has no preceding gyro-bias transport. The exact 3-D corner calculation then
-    gives this attitude floor.
+    A principal heading/bias restriction of magnetic loss is insufficient for
+    this premise. Full transported cross blocks must first be controlled.
+    This helper does not establish that implication for the shipping filter.
     """
     return vector_attitude_information_floor(
         vertical_specific_force_floor=vertical_specific_force_floor,
@@ -798,8 +796,11 @@ def attitude_gyro_information_floor_from_windows(*, root_attitude_floor: float,
 
 def full_neutral_information_floor(*, translation_floor: float,
                                    attitude_gyro_floor: float) -> float:
-    """Neutral quotient is block separated: S rows carry translation, while
-    the extracted root accelerometer+magnetic rows carry attitude/gyro bias."""
+    """Conditional block-diagonal information algebra, not a shipping certificate.
+
+    Callers must establish independent full-state information contributions;
+    positive principal-block restrictions do not suffice.
+    """
     if not all(math.isfinite(x) for x in (translation_floor,attitude_gyro_floor)) or min(translation_floor,attitude_gyro_floor) <= 0:
         raise ValueError("strict neutral floors required")
     return min(translation_floor,attitude_gyro_floor)

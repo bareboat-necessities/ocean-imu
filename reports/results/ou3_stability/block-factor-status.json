@@ -1,0 +1,26 @@
+{
+  "constructive_full_A21_mu_rho_enclosure": false,
+  "ell_LIN": "0.000001196007314542406680",
+  "float32_whole_word_supply_closed": false,
+  "full_word_energy_algebra_verified": true,
+  "lin_matrix_verified": true,
+  "lin_path_verified": true,
+  "mu_cov": null,
+  "open_obligations": [
+    "source-uniform full transported loss including cross-coordinate cancellation",
+    "recurring AG and BA factors through literal corrections and resets",
+    "complete finite-error projection/reset/tuner composition",
+    "float32 supply, coercivity and every-prefix retention"
+  ],
+  "qualification": "OU3_A21_BLOCK_FACTOR_ASSEMBLY_V2",
+  "raw_translation_normalization_lower": {
+    "decimal_lower": "0.000000000035959862602014",
+    "decimal_upper": "0.000000000035959862602015",
+    "denominator": "177554620394858134201218661277764099620363783651412873007903092339",
+    "numerator": "6384839753752027773395464617984000000000000000000000000"
+  },
+  "restricted_service_lifting_valid": false,
+  "rho0": null,
+  "theorem_closed": false,
+  "verified": false
+}

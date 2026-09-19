@@ -42,8 +42,7 @@ retained as separate implemented operations. The analysis uses one path from
 construction through finite capture, held-bias Live operation, bias-state
 release, and magnetically informed active-bias operation. An exact unipotent
 heading/axial gyro-bias block establishes the need for continuing heading
-information, while the held-bias identity block rules out one unnecessary H18
-full-state contraction tactic. H18 is instead treated as a finite bridge to the
+information. H18 is treated as a finite bridge to the
 implemented active-bias release. The recurring A21 tail is organized around a
 complete information floor and a nonlinear small-gain remainder. End-to-end
 regional practical stability remains open until finite capture, A21
@@ -286,13 +285,7 @@ when $e_{b_g,\parallel}\ne0$. Hence strict coercive full-state contraction is
 not generally available during indefinite loss of informative heading service.
 This is a necessity result, not a second stability theorem.
 
-\section{Held-bias negative result and finite bridge}
-A held accelerometer-bias coordinate contains an identity block in the
-same-history incremental map while its covariance block is frozen and
-decoupled. Consequently a strict full-state H18 contraction argument in that
-metric is unavailable. This negative result eliminates that proof tactic; it
-is not itself a stability theorem.
-
+\section{Finite held-bias bridge}
 The shipping architecture makes H18 a finite bridge. The external bias hold is
 released after magnetic-reference refinement, while the internal gate requires
 a finite accepted-update count and a one-second guard. Under
@@ -301,126 +294,157 @@ each service window. Thus, once reference refinement is proved finite, the
 count/guard portion of release is finite. H18 then requires finite retention,
 not asymptotic contraction.
 
-\section{A21 finite-error tail}
-Let a source-uniform linear A21 service word satisfy
+\section{Complete A21 covariance energy}
+Consider the linear comparison along one carried execution and write
+$V_k=e_k^{\mathsf T}P_k^{-1}e_k$. Prediction and an applied correction obey
+\begin{align}
+ P_k^-&=F_kP_k^+F_k^{\mathsf T}+Q_k,\nonumber\\
+ S_k&=H_kP_k^-H_k^{\mathsf T}+R_k,\nonumber\\
+ K_k&=P_k^-H_k^{\mathsf T}S_k^{-1}.
+\end{align}
+Here $S_k$ is the actual innovation covariance. The Joseph update and
+$e_k^+=(I-K_kH_k)e_k^-$ give the exact identity
 \begin{equation}
- \norm{F e}_{W}\le\sqrt{\rho_0}\norm{e}_{W},\qquad \rho_0<1.
- \label{eq:a21-linear}
+ V_k^- - V_k^+
+ =(e_k^-)^{\mathsf T}H_k^{\mathsf T}S_k^{-1}H_ke_k^-.
+ \label{eq:measurement-energy}
 \end{equation}
-Suppose the complete nonlinear shipping word has a same-history remainder
-whose incremental storage gain on the retained domain is $\eta$. Then
+Prediction contributes the positive-semidefinite loss
 \begin{equation}
- \norm{F_{\rm nl}(e_1)-F_{\rm nl}(e_2)}_W
- \le(\sqrt{\rho_0}+\eta)\norm{e_1-e_2}_W .
+ B_k=(P_k^+)^{-1}-F_k^{\mathsf T}(P_{k+1}^-)^{-1}F_k\succeq0.
 \end{equation}
-Therefore
+A nonsingular reset applied by the same congruence to error and covariance
+preserves this linear energy. Differences between that comparison and the
+finite attitude injection belong to the nonlinear remainder.
+
+Let $M_k$ denote the complete preceding error transport from the word root.
+Transport each prediction loss $B_k$ and measurement loss in
+\eqref{eq:measurement-energy} to that root and sum them as $D_W$. Then
 \begin{equation}
- \boxed{\rho=(\sqrt{\rho_0}+\eta)^2<1}
+ \boxed{M_W^{\mathsf T}P_W^{-1}M_W+D_W=P_0^{-1}.}
+ \label{eq:word-energy}
+\end{equation}
+Every applied correction and reset is included in $M_k$. Bare kinematic
+transport cannot replace it. Rejected measurements contribute no loss.
+A sufficient full-state certificate is
+\begin{equation}
+ D_W\succeq\delta P_0^{-1},\quad 0<\delta<1,
+ \qquad \rho_0\le1-\delta.
+ \label{eq:full-loss}
+\end{equation}
+This includes all 21 coordinates and the covariance carried into the word.
+
+\subsection{Restricted service and cross terms}
+The service premise \eqref{eq:mag-service} controls a restriction to heading
+and axial gyro bias. It does not imply an independently embedded full-state
+heading observation. For example,
+\begin{equation}
+ D=\begin{bmatrix}1&0&1\\0&1&0\\1&0&1\end{bmatrix}\succeq0,
+ \qquad E_{hb}^{\mathsf T}DE_{hb}=I_2,
+
+\end{equation}
+yet $D(1,0,-1)^{\mathsf T}=0$. This matrix is the innovation-energy loss of
+a positive-noise Kalman correction: take $P=I_3/10$, measurement rows
+$(2,0,2)$ and $(0,2,0)$, and
+$R=\operatorname{diag}(16/5,18/5)$, giving $S=4I_2$.
+The cancellation direction preserves energy exactly.
+This is a counterexample to information lifting, not to a physical marine
+execution. Full transported cross terms must be bounded, for example through
+a verified Schur complement. A restricted neutral Gramian also cannot supply
+a quantitative full-state contraction rate for the stable $a_w$ and $b_a$
+coordinates without a compatible comparison.
+
+\section{Matrix LIN covariance comparison}
+Partition the state into attitude/gyro bias (AG),
+$(v,p,S,a_w)$ (LIN), and active accelerometer bias (BA).
+For the linear Gaussian covariance recursion, the endpoint precision quadratic
+is the minimum path action with a prescribed endpoint. A trial path beginning
+at zero is admissible for every positive initial covariance and eliminates
+its initial action. Choose a degree-seven Hermite polynomial for $S(t)$,
+with zero initial jets and prescribed terminal $(S,p,v,a_w)$; put
+$p=\dot S$, $v=\ddot S$, and $a_w=S^{(3)}$ along this trial path.
+AG and BA trial paths remain zero.
+
+For $\lambda=1/\tau$, the process action is bounded using
+\begin{equation}
+ \int_0^T {\norm{\dot a_w+\lambda a_w}^2\over2\sigma_{aw}^2\lambda}\,dt.
+\end{equation}
+The cross integral telescopes even when $\lambda$ changes between samples.
+All intervening integral and accelerometer observations are charged at their
+actual sample times. For a component with $f(0)=0$, disjoint backward cells
+of length $h_{\min}$ give
+\begin{equation}
+ \sum_i |f(t_i)|^2\le {2\over h_{\min}}\int_0^T |f|^2dt
+                 +2h_{\min}\int_0^T |\dot f|^2dt.
+\end{equation}
+Small-argument transition and process-covariance polynomial defects are
+included in the same action. Positive-semidefinite covariance synchronization
+can only reduce endpoint precision.
+
+With $E_L$ embedding the scaled LIN coordinates, the resulting rational
+matrix $A\succ0$ satisfies
+\begin{equation}
+ E_L^{\mathsf T}P_T^{-1}E_L\preceq A,
+ \qquad P_T\succeq E_LA^{-1}E_L^{\mathsf T}.
+ \label{eq:lin-path-factor}
+\end{equation}
+The second inequality retains the full carried cross covariance. It is a
+singular full-state bound, not joint AG/LIN/BA coercivity. Separate marginal
+floors cannot simply be added. Exact LDL factors verify $A\succ0$; their
+smallest pivot is not used as an eigenvalue bound.
+
+The enclosure covers $T\in[16,16.006]$~s,
+$\tau\in[0.02,12]$~s, and sample intervals $[0.004,0.006]$~s.
+It uses the default spectral-MSE schedule, horizontal process factor one,
+$\sigma_{aw}\ge0.05$, accelerometer standard deviation at least $0.05$, and
+actual integral standard deviation at least $0.15(0.5)=0.075$.
+Alternative user-configured noise policies are not certified by these values.
+
+In scales $(v,p,S,a_w)=(2.4,18,132,4)$, retaining the matrix action and
+three raw neutral integral rows gives
+\begin{equation}
+ J_{S,N}\succeq\mu_{S,N}A_{NN},\qquad
+ \mu_{S,N}\ge3.59\times10^{-11}.
+\end{equation}
+The three event-time intervals are $[0,0.156]$, $[8,8.156]$, and
+$[16,16.156]$~s; the endpoint paths have $a_w(T)=0$.
+A determinant/adjugate bound encloses all these times with rational arithmetic.
+This is a raw translation comparison. It is not $D_W$ in
+\eqref{eq:word-energy} and is not assigned to $\rho_0$.
+
+\section{Finite-error regional theorem obligations}
+After \eqref{eq:full-loss} is certified uniformly, let the complete nonlinear
+word remainder have storage-norm Lipschitz bound $\eta(r)$ on a retained
+region. The sufficient finite-error condition is
+\begin{equation}
+ \boxed{\rho=(\sqrt{\rho_0}+\eta(r))^2<1.}
  \label{eq:a21-small-gain}
 \end{equation}
-is sufficient for finite-error contraction. Bounded physical, model and
-arithmetic forcing then gives the practical-stability recurrence once
-coercivity and every-prefix retention are certified.
+For a smooth remainder with $\eta(r)\le L_2r$, a strict radius must satisfy
+$r<(1-\sqrt{\rho_0})/L_2$. The bias projection sector
+\eqref{eq:bias-projection-sector} must be composed in the same storage;
+Euclidean dissipation of one component does not control covariance cross
+terms. Projection-inactive release is not assumed.
 
-The preferred linear route follows the covariance algebra rather than a
-trajectory fit. Prediction with positive-semidefinite process covariance is
-nonexpansive in the covariance metric, as is each linear Kalman correction in
-its updated metric. If the complete A21 word has normalized transported
-information bounded below by $\mu I$, the information-form comparison gives
+Bounded physical, model, and arithmetic forcing then requires an independently
+certified supply bound in
 \begin{equation}
- \rho_0\le(1+\mu)^{-1}.
-\end{equation}
-Magnetic service supplies only the heading/axial gyro-bias part of this floor;
-gravity/accelerometer and integral pseudo-updates must close the complementary
-directions. The accelerometer-bias projection is inactive on the inner domain
-$\norm{e_{b_a}}<R_b-B_a=0.1748334$~m/s$^2$, so release retention into that
-domain removes projection from the local A21 remainder. The remaining task is
-to certify the full information floor and bound the MEKF reset, tuner and
-finite-precision remainder $\eta$ below $1-\sqrt{\rho_0}$. Finite-difference
-trajectory diagnostics are not used.
-
-\section{Uniform time-varying A21 closure}
-The adaptive operating point need not be frozen.  The implemented pseudo-update
-period is the clipped multiple of $\tau$ and preserves scheduler progress when
-retargeted.  On $\Delta t\in[0.004,0.006]$~s and
-$\tau\in[0.02,12]$~s, the OU decay exponent between consecutive integral
-updates is uniformly bounded.  For arbitrary positive time-varying
-$\lambda(t)=1/\tau(t)$, the initial-acceleration contribution to $S(t)$ has
-kernel $K'''(t)=\exp[-\int\lambda]>0$.  Thus
-$\{1,t,t^2/2,K(t)\}$ is an extended complete Chebyshev system, and four
-successive integral observations have a strictly positive uniform
-observability minor.
-
-No additional attitude-excitation assumption is needed.  With world
-specific force $f=a-g$ and true magnetic field $B$,
-\begin{equation}
- \int_0^T f\times B\,dt=\Delta v\times B-Tg\times B .
-\end{equation}
-Hence the marine velocity bound and magnetic limits give
-$T^{-1}\|\int f\times B\,dt\|\ge gB_{h,\min}-2V_{\max}B_{\max}/T$.
-This is positive for $T>5.60844$~s and equals $43.97475$ in
-$(\mathrm{m/s^2})\,\mu\mathrm T$ units at $T=8$~s.  Thus every 8-s
-physical history contains non-collinear inertial and magnetic vector
-sensitivities.  Magnetic service supplies an applied sensitivity that can be
-transported to that interval.  Two such subwindows form the 16-s A21 proof
-word and expose gyro bias through attitude propagation.
-
-The accelerometer attitude Jacobian has two nonzero singular values bounded
-below by $g-A_{\max}=1.00665$~m/s$^2$.  Quotienting the strictly stable active
-accelerometer-bias OU mode, repeated gravity observations expose tilt and
-transverse gyro bias, while \eqref{eq:mag-service} controls heading and axial
-gyro bias.  On strict compact hybrid branch cells the normalized neutral
-information Gramian is continuous and pointwise positive definite; hence
-\begin{equation}
- \mu_N:=\min_h\lambda_{\min}J_N(h)>0 .
-\end{equation}
-Positive process-noise densities provide uniform complete controllability, so
-the Riccati covariance is uniformly coercive and bounded and the linear A21
-word admits a source-uniform $\rho_0<1$.
-
-Projection-inactive entry is not assumed.  During H18 the bias estimate is
-held, while physical truth may attain $B_a=0.2251666$~m/s$^2$; this already
-exceeds $R_b-B_a=0.1748334$~m/s$^2$ even for a zero held estimate.  A universal
-release theorem must therefore retain the implemented projection sector
-\begin{equation}
- \|e_{b_a}^{+}\|^2+\|d_b\|^2\le\|e_{b_a}^{\rm corr}\|^2 ,
-\end{equation}
-which is dissipative and gives
-$\|e_{b_a}^{+}\|\le B_a+R_b=0.6251666$~m/s$^2$.
-
-For the neutral translation block, a constructive bound is already available.
-Selecting integral updates after 0, 8 and 16~s, allowing the literal 0.156~s
-maximum event delay, normalizing $(v,p,S)$ by $(5.5,8.1,1100)$, and using the
-declared $r_S\le100$ gives
-\begin{equation}
- \mu_{\rm trans}\ge2.04734\times10^{-3}.
-\end{equation}
-The full $\mu_N$ is not assigned this value: magnetic service is a transported
-heading/axial-bias Gramian over a window, not an instantaneous heading row.
-The remaining quantitative step must compose that actual two-coordinate
-Gramian with all recurring accelerometer rows.  A sparse two-epoch surrogate
-is intentionally not promoted.
-
-After a certified $\rho_0$ is obtained, smooth MEKF measurement/reset terms
-are bounded by $\eta(r)\le L_2r$ and one may take
-$r_*\le(1-\sqrt{\rho_0})/L_2$.  Float32 roundoff is retained as additive
-supply using kernelwise $\gamma_n=nu/(1-nu)$, $u=2^{-24}$; literal operation
-counts and magnitude envelopes remain to be composed.
-
-For a completed A21 word the target finite-error certificate is
-\begin{equation}
- V_{j+1}\le\rho V_j+c_d\bar d^2,\qquad 0\le\rho<1 .
+ V_{j+1}\le\rho V_j+c_d\bar d^2,\qquad 0\le\rho<1.
  \label{eq:diss}
 \end{equation}
-Uniform coercivity requires
+Uniform coercivity and every-prefix bounds and forward retention require
 \begin{equation}
- m\norm{e_j}^2\le V_j\le M\norm{e_j}^2 .
+ m\norm{e_j}^2\le V_j\le M\norm{e_j}^2.
 \end{equation}
-The word certificate must be accompanied by every-prefix bounds and forward
-retention of the strict inner domain.  This implication is conditional until
-the numerical information floor, nonlinear radius, additive arithmetic supply,
-capture, and release-retention certificates are complete. Finite simulations
-do not establish these source-uniform inequalities.
+If these bounds and finite entry are established, the ultimate root-error
+bound is $\limsup_j\norm{e_j}\le
+\sqrt{c_d/[m(1-\rho)]}\,\bar d$, with a separate prefix gain.
+Float32 roundoff is additive supply; kernel bounds use
+$\gamma_n=nu/(1-nu)$, $u=2^{-24}$, before composing actual operations and
+magnitude bounds. This implication is conditional until full loss,
+covariance coercivity, nonlinear radius, supply, capture, bridge/release, and
+prefix certificates close. Finite simulations do not establish these
+source-uniform inequalities.
 
 \balance
 \section{Declared constants}
@@ -464,95 +488,13 @@ constants likewise remain to be certified uniformly from actually applied
 shipping sensitivities.
 
 \section{Evidence boundary}
-Executable regressions verify the physical-history contracts, mode-dependent
-bias prediction, correction/projection separation, magnetic-service
-accounting, heading-service necessity, and literal shipping handoff/release
-semantics. PR~\#557 additionally established that one full-state H18
-incremental contraction formulation is obstructed by the held-bias identity
-block. The numerical research machinery used to discover that obstruction is
-not part of the proof.
-
-No source-uniform A21 contraction factor or nonlinear remainder bound is yet
-certified. Finite capture, reference-refinement completion, bridge retention,
-release retention, recurring service, physical qualification and arithmetic
-closure therefore remain open.
-
-\section{Constructive long-word information}
-The weak gyro-bias direction is accumulated rather than hidden by a stronger
-excitation assumption.  The A21 proof word is extended to 2048~s while the
-translation certificate remains a 16-s prefix.  At each disjoint one-second
-magnetic-service root, $J_{hb}\succeq I$ permits extraction of one unit of pure
-heading information.  The simultaneous accelerometer row has no preceding
-gyro-bias transport.  The commissioned detector-band residual bound and the
-shipping vibration gain give
-\[
- \sigma_{a,\mathrm{eff}}\le
- \operatorname{hypot}(0.2,0.75\,0.3)=0.3010399~\mathrm{m/s^2}.
-\]
-Together with $|f_z|\ge1.00665$ and $|f_h|\le8.8$, this gives a root-attitude
-information floor above $0.0129$.
-
-Writing the extracted root observations as $y_k=\theta_0+C_k b_g$, the
-one-second bounded-rate transport obeys
-\[
- \sigma_{\min}(C_{k+1}-C_k)\ge
- 0.02\frac{2\sin(\Omega_{\max}/2)}{\Omega_{\max}} .
-\]
-The path-graph inequality and $y_0=\theta_0$ then give
-$\mu_{ag}=j c/(1+c)$,
-$c=(N-1)\beta^2/4$.  For $N=2048$, $\mu_{ag}>2.1\times10^{-3}$.
-Combined with the independent translation bound,
-\[
- \boxed{\mu_N\ge2.04\times10^{-3}}
-\]
-in the declared fixed proof coordinates.
-
-This value is not inserted directly into an information-form contraction.
-That step requires root-covariance whitening.  If
-$P_{\rm root}\succeq p_{\min}I$ in the same coordinates, then
-\[
- \mu_{\rm cov}\ge p_{\min}\mu_N,\qquad
- \rho_0\le(1+p_{\min}\mu_N)^{-1}.
-\]
-A constructive recurring lower covariance enclosure is therefore the next
-quantitative certificate.  This normalization prevents coordinate scaling from
-artificially improving the claimed contraction factor.
-
-\subsection{Covariance-enclosure conditioning result}
-The literal 21-state midpoint--radius Riccati enclosure was executed after the single permitted Rodrigues near-identity refinement. Its predicted covariance spectral enclosure was $[-18.7907040,\,2502.41442]$. The integral innovation retained a strict inverse certificate with residual ratio $r/a=0.666663864<1$, whereas the accelerometer and magnetometer interval innovations did not. This is an interval-dependency failure, not a pointwise covariance counterexample: the shipping Riccati map remains PSD. Further blind entrywise subdivision is therefore excluded. A recurring $p_{\min}$ must be obtained with a PSD-structure-preserving spectral or square-root enclosure before covariance-normalized $\mu$, $\rho_0$, or a nonlinear radius is claimed.
-
-\subsection{PSD-preserving covariance feasibility}
-A structure-preserving one-sample spectral check gives $\sigma_{\min}(F)\ge0.6440871$. Starting from the constructor covariance floor, the certified lower covariance is $4.14848\times10^{-7}$ after prediction and $1.49403\times10^{-7}$ after the maximal $S$/accelerometer/magnetometer correction sequence. These are feasibility margins only. Recurring certification still requires a full-rank factor enclosure of the literal $Q_{AA}$, integrated-OU $Q_{LL}$, and active-bias $Q_{BA}$ and multi-step propagation that preserves controllability structure. A tiny one-step scalar process-noise eigenvalue is not substituted for that factor certificate.
-
-\subsection{Block/factor covariance metric}
-After the second conditioning failure of the entrywise midpoint--radius
-Riccati enclosure, covariance normalization is carried in a structure-
-preserving block/factor metric.  Partition the A21 covariance into
-attitude/gyro-bias (AG), translation/integrated-OU (LIN), and active
-accelerometer-bias (BA) blocks.  For each diagonal block certify
-\[
- P_{ii}\succeq L_iL_i^{\mathsf T},\qquad
- \sigma_{\min}(L_i)\ge\ell_i>0 ,
-\]
-and retain operator-norm bounds $c_{ij}$ on every cross block.  In factor-scaled
-coordinates block Gershgorin gives
-\[
- \gamma=1-\max_i\sum_{j\ne i}{c_{ij}\over\ell_i\ell_j}.
-\]
-Only $\gamma>0$ promotes covariance coercivity.  If the corresponding
-fixed-coordinate block information floors are $\mu_i$, then
-\[
- \mu_{\rm cov}\ge
- \gamma\min_i(\mu_i\ell_i^2),\qquad
- \rho_0\le(1+\mu_{\rm cov})^{-1}.
-\]
-This representation preserves block conditioning while accounting for all
-cross-covariances; it does not reuse the failed entrywise covariance box.
-The remaining certificate is source-uniform enclosure of the three factor
-floors and cross-block norms under the literal shipping cadence.
-
-\subsection{Block-factor coercivity refinement}
-A generic absolute cross-ceiling reduction is too conservative: its executed normalized cross bounds give $\gamma=-5.1223\times10^8$. Root coercivity instead follows directly from the shipping prediction $P^-=FP^+F^{\mathsf T}+Q$. Since $Q$ is block diagonal, process factors $Q_i\succeq L_iL_i^{\mathsf T}$ imply $P^-\succeq\operatorname{diag}(L_iL_i^{\mathsf T})$, i.e. factor-metric root margin $\gamma=1$ independently of carried cross covariance. A correction with normalized information ceiling $j_D$ preserves $\gamma^+=\gamma^-/(1+\gamma^-j_D)>0$. The remaining quantitative certificate is the source-uniform LIN factor over continuous $\tau$ and its propagation through intervening corrections; absolute cross bounds remain prefix/totality bounds.
+Exact rational checks establish the LIN matrix action, the complete linear
+energy identity, and the failure of restricted-information lifting. These
+results do not establish a source-uniform full-state contraction factor.
+Finite capture, magnetic-reference completion, H18 and release retention,
+recurring service, physical qualification, nonlinear storage and target
+arithmetic remain open. Numerical certificate reproduction does not imply
+end-to-end proof completion.
 
 \section{Conclusion}
 The stability problem is posed as one same-history theorem with continuing

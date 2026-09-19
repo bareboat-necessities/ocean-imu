@@ -103,9 +103,11 @@ def small_x_source_defect():
     return eps_q, j_defect, b0, degrees
 
 
-def certificate():
+def certificate(scales=("5.5", "8.1", "1100", "4")):
     tmin, tmax, dtmin = F(16), F('16.006'), F('.004')
-    scales, powers = (F('5.5'),F('8.1'),F(1100),F(4)), (2,1,0,3)
+    scales, powers = tuple(F(str(v)) for v in scales), (2,1,0,3)
+    if len(scales) != 4 or any(v <= 0 for v in scales):
+        raise ValueError('four positive coordinate scales required')
     basis = hermite_basis()
     def gram_trace(order):
         out = F(0)
@@ -153,7 +155,9 @@ def certificate():
         'posterior_precision_ceiling':rational_record(precision),
         'covariance_floor':rational_record(floor),
         'factor_floor':decimal_out(ell),
-        'deployment_noise_floor_binding_verified':True,\n        'shipping_interleaved_corrections_verified':True,\n        'aw_sync_psd_inflation_verified':True,
+        'deployment_noise_floor_binding_verified':True,
+        'shipping_interleaved_corrections_verified':True,
+        'aw_sync_psd_inflation_verified':True,
         'float32_covariance_factor_verified':False,
         'constructive_full_A21_mu_rho_enclosure':False,
         'theorem_closed':False,

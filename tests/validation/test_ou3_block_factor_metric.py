@@ -11,7 +11,8 @@ from tools.stability.ou3_theorem.block_factor_metric import (
     ag_one_second_factor_floor,ba_process_variance,block_factor_feasibility,
     additive_process_metric_certificate,block_metric_correction_margin,
     normalized_measurement_information_ceiling,
-    uniform_lin_jensen_factor_certificate,source_uniform_root_block_certificate,\n    batch_information_degraded_factor,
+    uniform_lin_jensen_factor_certificate,source_uniform_root_block_certificate,
+    batch_information_degraded_factor,
 )
 from tools.stability.ou3_theorem.interval_riccati_21 import (
     integrated_ou_scaled_factor_probe,

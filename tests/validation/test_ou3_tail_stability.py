@@ -23,7 +23,7 @@ from tools.stability.ou3_theorem.tail_stability import (
      psd_service_schur_floor,
     aggregate_repeated_row_information_floor, aggregate_translation_information_floor,
     certified_rho_and_margin, vibration_inflated_accel_std_ceiling,
-    root_attitude_information_floor, attitude_gyro_information_floor_from_windows,
+    independent_heading_attitude_information_floor, attitude_gyro_information_floor_from_windows,
     full_neutral_information_floor, covariance_normalized_information_floor,
     rho_from_covariance_normalized_mu, classical_riccati_covariance_bounds,
     maximal_correction_cadence_is_lower_covariance_bound,
@@ -137,12 +137,12 @@ class QuantitativeCertificateTests(unittest.TestCase):
         self.assertLess(c["rho0"],.999)
         self.assertGreater(c["nonlinear_norm_margin"],.0009)
 
-    def test_long_word_closes_fixed_coordinate_neutral_floor(self):
+    def test_conditional_independent_heading_geometry(self):
         racc=vibration_inflated_accel_std_ceiling(
             nominal_std=.2,vibration_gain=.75,
             detector_residual_rms_ceiling=.3)
         self.assertLess(racc,.302)
-        j=root_attitude_information_floor(
+        j=independent_heading_attitude_information_floor(
             vertical_specific_force_floor=9.80665-8.8,
             horizontal_specific_force_ceiling=8.8,
             accel_std_ceiling=racc,magnetic_heading_floor=1.0)

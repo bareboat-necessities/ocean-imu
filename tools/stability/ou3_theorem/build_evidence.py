@@ -36,6 +36,19 @@ def validate() -> dict:
         verified=load_certificate(RICCATI_STATUS).verify()
         if not verified["certificate_complete"]:
             failures.append("interval Riccati status claims completion without verified inclusion")
+    if str(REPO) not in sys.path:
+        sys.path.insert(0,str(REPO))
+    from tools.stability.ou3_theorem.lin_matrix_certificate import certificate as matrix_certificate
+    from tools.stability.ou3_theorem.word_energy import restricted_service_counterexample
+    from tools.stability.ou3_theorem.block_factor_numeric import certificate as block_certificate
+    for name, generate in (
+        ("lin-matrix-certificate.json",matrix_certificate),
+        ("word-energy-audit.json",restricted_service_counterexample),
+        ("block-factor-status.json",block_certificate),
+    ):
+        artifact=STATUS.parent/name
+        if not artifact.is_file() or json.loads(artifact.read_text())!=generate():
+            failures.append(f"committed {name} differs from exact reproduction")
     return {"validation_pass":not failures,"failures":failures,"base_main_commit":provenance["base_main_commit"],
             "shipping_behavior_authority":"source implementation","theorem_closed":expected["theorem_closed"]}
 
