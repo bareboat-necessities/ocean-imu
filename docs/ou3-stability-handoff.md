@@ -235,3 +235,12 @@ Per the research protocol, do not subdivide this entrywise mechanism again. The 
 A one-sample source-range feasibility check of the replacement PSD-preserving representation is positive: sigma_min(F) >= 0.6440871, with covariance floor 4.14848e-7 after prediction and 1.49403e-7 after the maximal S/accelerometer/magnetometer correction sequence. These are non-promoting feasibility margins.
 
 The remaining recurring-covariance task is now the exact process-noise factor: certify a full-rank lower factor/floor for shipping Q_AA, integrated-OU Q_LL, and active-bias Q_BA, then iterate the PSD representation over the actual cadence. A one-step scalar Q eigenvalue is expected to be extremely conservative for the triple-integrated chain, so it must not be used to manufacture a useless rho0; the factor/block structure must retain multi-step controllability.
+
+
+## Block/factor covariance metric
+
+The covariance-normalization architecture has moved to a block/factor metric after the second conditioning failure of the entrywise midpoint-radius Riccati box. The state is partitioned as AG=(attitude,gyro bias), LIN=(v,p,S,a_w), and BA=(active accelerometer bias). Each diagonal covariance block is represented by a certified factor floor P_ii >= L_i L_i^T, while cross-block covariance is carried by operator-norm bounds.
+
+After scaling by the factor floors, block Gershgorin/Schur coercivity requires gamma=1-max_i sum_(j!=i) ||P_ij||/(ell_i ell_j)>0. Only then can fixed-coordinate information be covariance-normalized. For block information floors mu_i, the certificate uses mu_cov >= gamma*min_i(mu_i ell_i^2), followed by rho0<=1/(1+mu_cov). This prevents a poorly conditioned global scalar covariance eigenvalue from destroying useful block information while still accounting for every cross-covariance.
+
+The old entrywise interval Riccati representation is retired and must not be subdivided again. A non-promoting scaled integrated-OU factor probe is now in CI. The next source-uniform certificate must enclose tau/process-noise variation and the within-slice controllability remainder, then establish AG and BA factor floors and recurring cross-block operator bounds under the literal shipping correction/event cadence.
