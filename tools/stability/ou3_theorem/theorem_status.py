@@ -57,5 +57,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"block/factor covariance metric: certify recurring source-uniform AG/LIN/BA factor floors and cross-block operator bounds. Entrywise midpoint-radius Riccati is retired after its second conditioning failure. Promote mu_cov/rho0 only after positive block Schur/Gershgorin coercivity.",
+        "next_controlling_obligation":"block/factor LIN certificate: enclose the useful scaled integrated-OU factor source-uniformly over continuous tau/process-noise range and carry it through intervening corrections (or verified 4x4 LIN Riccati factor). Generic cross-ceiling Gershgorin is retired after gamma=-5.122292072e8; post-prediction root coercivity uses additive block-diagonal Q factors with structural gamma=1.",
     }
