@@ -152,3 +152,80 @@ def accel_bias_release_event(p: IMat, target_variance: float,
 def spectral_box(p: IMat) -> tuple[float,float]:
     if p.shape!=(N,N): raise ValueError("21-state covariance required")
     return symmetric_interval_gershgorin(p.mid,p.rad)
+
+
+def diagonal_interval(values_lo: tuple[float,...], values_hi: tuple[float,...]) -> IMat:
+    if len(values_lo)!=len(values_hi): raise ValueError("equal diagonal lengths required")
+    n=len(values_lo); mid=[];rad=[]
+    for i,(lo,hi) in enumerate(zip(values_lo,values_hi)):
+        if not all(math.isfinite(x) for x in (lo,hi)) or hi<lo:
+            raise ValueError("ordered finite diagonal intervals required")
+        mr=[0.0]*n;rr=[0.0]*n
+        mr[i]=.5*(lo+hi);rr[i]=_out(.5*(hi-lo))
+        mid.append(tuple(mr));rad.append(tuple(rr))
+    return IMat(tuple(mid),tuple(rad))
+
+
+def selector_h(offset: int) -> IMat:
+    """Exact 3x21 selector used by the integral S update."""
+    if offset<0 or offset+3>N: raise ValueError("selector outside state")
+    rows=[]
+    for a in range(3):
+        row=[0.0]*N;row[offset+a]=1.0;rows.append(row)
+    return IMat(tuple(tuple(x) for x in rows),
+                tuple(tuple(0.0 for _ in row) for row in rows))
+
+
+def shipping_integral_update_intervals(r_s_std_min: float,
+                                       r_s_std_max: float) -> tuple[IMat,IMat]:
+    """Literal H/R interval constructor for applyIntegralZeroPseudoMeas."""
+    if not all(math.isfinite(x) for x in (r_s_std_min,r_s_std_max)) or not 0<r_s_std_min<=r_s_std_max:
+        raise ValueError("ordered positive S-noise std required")
+    h=selector_h(12)
+    r=diagonal_interval((r_s_std_min**2,)*3,(r_s_std_max**2,)*3)
+    return h,r
+
+
+def shipping_mag_update_intervals(field_norm_max: float,
+                                  mag_noise_std_min: float,
+                                  mag_noise_std_max: float) -> tuple[IMat,IMat]:
+    """Conservative literal H/R box for J_att=-[R_wb B]x.
+
+    Every skew entry is in [-|B|,|B|], with exact zeros on the diagonal of the
+    3x3 attitude block. The remaining 18 columns are exactly zero.
+    """
+    vals=(field_norm_max,mag_noise_std_min,mag_noise_std_max)
+    if not all(math.isfinite(x) for x in vals) or field_norm_max<=0 or not 0<mag_noise_std_min<=mag_noise_std_max:
+        raise ValueError("valid magnetic interval data required")
+    hm=[];hr=[]
+    for i in range(3):
+        mr=[0.0]*N;rr=[0.0]*N
+        for j in range(3):
+            if i!=j: rr[j]=field_norm_max
+        hm.append(tuple(mr));hr.append(tuple(rr))
+    r=diagonal_interval((mag_noise_std_min**2,)*3,(mag_noise_std_max**2,)*3)
+    return IMat(tuple(hm),tuple(hr)),r
+
+
+def shipping_acc_update_intervals(specific_force_norm_max: float,
+                                  accel_noise_std_min: float,
+                                  accel_noise_std_max: float) -> tuple[IMat,IMat]:
+    """Conservative active-A21 H/R box for [J_att,0,0,0,J_aw,I_ba].
+
+    J_att=-[f]x has off-diagonal magnitude <=|f|. J_aw=R_wb is enclosed
+    entrywise in [-1,1]; J_ba=I. Lever-arm J_bg is absent in the commissioned
+    theorem scope where lever arm is disabled.
+    """
+    vals=(specific_force_norm_max,accel_noise_std_min,accel_noise_std_max)
+    if not all(math.isfinite(x) for x in vals) or specific_force_norm_max<=0 or not 0<accel_noise_std_min<=accel_noise_std_max:
+        raise ValueError("valid accelerometer interval data required")
+    hm=[];hr=[]
+    for i in range(3):
+        mr=[0.0]*N;rr=[0.0]*N
+        for j in range(3):
+            if i!=j: rr[j]=specific_force_norm_max
+        for j in range(3): rr[15+j]=1.0
+        mr[18+i]=1.0
+        hm.append(tuple(mr));hr.append(tuple(rr))
+    r=diagonal_interval((accel_noise_std_min**2,)*3,(accel_noise_std_max**2,)*3)
+    return IMat(tuple(hm),tuple(hr)),r
