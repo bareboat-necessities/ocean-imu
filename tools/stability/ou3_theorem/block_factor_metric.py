@@ -8,6 +8,7 @@ is certified by a positive factor lower bound plus bounded cross-block coupling.
 from __future__ import annotations
 from dataclasses import dataclass
 import math
+from decimal import Decimal, localcontext
 
 BLOCKS=(6,12,3)
 
@@ -236,3 +237,92 @@ def normalized_measurement_information_ceiling(*, h_norm: float,
     if min(h_norm,max_factor,noise_variance_floor)<=0:
         raise ValueError("positive measurement metric data required")
     return (h_norm*max_factor)**2/noise_variance_floor
+
+
+def _det_decimal(a: list[list[Decimal]]) -> Decimal:
+    n=len(a)
+    if n==1: return a[0][0]
+    out=Decimal(0)
+    for j in range(n):
+        minor=[row[:j]+row[j+1:] for row in a[1:]]
+        term=a[0][j]*_det_decimal(minor)
+        out += term if j%2==0 else -term
+    return out
+
+def _ou_integral_primitive_decimal(t: Decimal,tau: Decimal) -> tuple[Decimal,...]:
+    """Primitive of the positive OU impulse components (v,p,S,a)."""
+    e=(-t/tau).exp()
+    return (tau*t+tau*tau*e,
+            tau*t*t/Decimal(2)-tau*tau*t-tau**3*e,
+            tau*t**3/Decimal(6)-tau*tau*t*t/Decimal(2)+tau**3*t+tau**4*e,
+            -tau*e)
+
+def uniform_lin_jensen_factor_certificate(*, tau_min: float,tau_max: float,
+                                          sigma_min: float,window_s: float,
+                                          scales: tuple[float,float,float,float],
+                                          tau_cells: int=4096) -> dict:
+    """Source-uniform LIN factor from Jensen subinterval columns.
+
+    For each of four equal time intervals I, Jensen gives
+      integral_I z z' dt >= |I|^-1 (integral_I z)(integral_I z)'.
+    The OU impulse components are positive and increase with tau because they
+    are convolutions of nonnegative polynomials with exp(-s/tau). The factor
+    sqrt(2 sigma^2/tau/|I|) decreases with tau, so endpoint products give a
+    rigorous entrywise column box on each tau cell. For midpoint M and radius
+    E, sigma_min(C)>=sigma_min(M)-||E||_F. We lower-bound sigma_min(M) by
+    |det M|/||adj M||_F. Decimal arithmetic at 70 digits plus a 1e-50 downward
+    reserve makes the returned binary64 value non-promoting-safe.
+    """
+    if not (0<tau_min<tau_max and sigma_min>0 and window_s>0 and tau_cells>=4):
+        raise ValueError("valid LIN certificate domain required")
+    if len(scales)!=4 or min(scales)<=0: raise ValueError("four positive scales required")
+    with localcontext() as ctx:
+        ctx.prec=70
+        d0=Decimal(str(tau_min));d1=Decimal(str(tau_max))
+        sig=Decimal(str(sigma_min));T=Decimal(str(window_s))
+        sc=[Decimal(str(x)) for x in scales]
+        ratio=(d1/d0).ln()/Decimal(tau_cells)
+        edges=[d0*(ratio*Decimal(k)).exp() for k in range(tau_cells+1)]
+        h=T/Decimal(4)
+        best=None;best_cell=-1
+        for k in range(tau_cells):
+            lo_tau,hi_tau=edges[k],edges[k+1]
+            lows=[]; highs=[]
+            for m in range(4):
+                a=Decimal(m)*h;b=Decimal(m+1)*h
+                plo=_ou_integral_primitive_decimal(b,lo_tau)
+                qlo=_ou_integral_primitive_decimal(a,lo_tau)
+                phi=_ou_integral_primitive_decimal(b,hi_tau)
+                qhi=_ou_integral_primitive_decimal(a,hi_tau)
+                ilo=[(plo[i]-qlo[i])/sc[i] for i in range(4)]
+                ihi=[(phi[i]-qhi[i])/sc[i] for i in range(4)]
+                slo=(Decimal(2)*sig*sig/hi_tau/h).sqrt()
+                shi=(Decimal(2)*sig*sig/lo_tau/h).sqrt()
+                lows.append([slo*x for x in ilo]);highs.append([shi*x for x in ihi])
+            # columns are time intervals
+            mid=[[Decimal(0)]*4 for _ in range(4)]
+            rad=[[Decimal(0)]*4 for _ in range(4)]
+            for j in range(4):
+                for i in range(4):
+                    mid[i][j]=(lows[j][i]+highs[j][i])/Decimal(2)
+                    rad[i][j]=(highs[j][i]-lows[j][i])/Decimal(2)
+            det=abs(_det_decimal(mid))
+            cof=[]
+            for i in range(4):
+                row=[]
+                for j in range(4):
+                    minor=[r[:j]+r[j+1:] for ii,r in enumerate(mid) if ii!=i]
+                    x=_det_decimal(minor)
+                    row.append(x if (i+j)%2==0 else -x)
+                cof.append(row)
+            adj_frob=sum(x*x for row in cof for x in row).sqrt()
+            rad_frob=sum(x*x for row in rad for x in row).sqrt()
+            lower=det/adj_frob-rad_frob
+            if best is None or lower<best:
+                best=lower;best_cell=k
+        reserve=Decimal("1e-50")
+        certified=max(Decimal(0),best-reserve)
+        return {"verified":certified>0,"singular_factor_floor":float(certified),
+                "covariance_floor":float(certified*certified),
+                "tau_cells":tau_cells,"worst_cell":best_cell,
+                "decimal_lower":str(certified)}
