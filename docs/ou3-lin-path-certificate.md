@@ -95,3 +95,37 @@ factor is not permission to set constructive_root_covariance_floor or
 constructive_full_A21_mu_rho_enclosure true. No numerical cross-block ceiling,
 complete rho0, nonlinear radius, startup capture, or practical radius is
 claimed by this module.
+
+
+## Promotion audit
+
+The interleaved-correction audit distinguishes this variational certificate from
+the retired generic endpoint helper.  The latter attempted to infer a posterior
+floor from only an accumulated endpoint process floor plus event information
+ceilings; that implication is false.  Here the comparison is instead an
+endpoint minimum-action problem: each trial path pays its process action and
+the measurement action at the literal event times.  The measurement mesh bound
+therefore applies before minimization and directly upper-bounds endpoint
+precision.  The two-dimensional counterexample to the generic helper is
+admitted by this formulation and does not contradict the action inequality.
+
+Shipping bindings were checked against the authoritative implementation:
+`tau` is clamped to [0.02,12] s; the a_w stationary standard deviation is
+floored at 0.05 m/s^2; the deployed accelerometer standard deviation is 0.2
+m/s^2 before only nonnegative vibration/noise inflation, so the certificate's
+0.05 lower bound is conservative; the S base standard deviation is clamped at
+0.15 m*s and the smallest deployed axis factor is 0.50, giving the used 0.075
+floor.  The default periodic a_w synchronization is a queued PSD covariance
+inflation inside prediction, so omitting it can only reduce the comparison
+covariance.  The real-arithmetic shipping factor is therefore promoted as
+`ell_LIN >= 1.196007314542406680e-6`.
+
+Combining this with `ell_AG=4.999974644e-4`,
+`ell_BA=5.618273739e-4`, root `gamma=1`, and
+`mu_N>=2.04e-3` gives the conservative scalar normalization
+`mu_cov>=2.9180843327e-15` and
+`rho0<=0.9999999999999971`.  This closes positivity of the constructive
+real-arithmetic linear certificate, but the margin is extremely small.  The
+next falsifiable step is the explicit nonlinear remainder and float32 supply:
+they must fit inside this margin, or a sharper factor-coordinate normalization
+must be derived without weakening assumptions.
