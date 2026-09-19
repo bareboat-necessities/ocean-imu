@@ -55,3 +55,49 @@ def proof_route_status(*, reference_refinement_finite: bool, h18_bridge_retained
     return {"h18_role":"finite bridge only","a21_role":"recurring asymptotic tail",
             "release_finite":reference_refinement_finite,"h18_bridge_closed":h18_bridge_retained,
             "a21_tail_closed":all(flags[2:]),"route_closed":all(flags)}
+
+
+@dataclass(frozen=True)
+class RefinementPremises:
+    """Sufficient conditions for MagAutoTuner refinement to finish."""
+    min_samples: int
+    min_window_s: float
+    usable_sample_gap_s: float
+    field_norm_lower: float
+    field_norm_upper: float
+    max_norm_ratio_from_mean: float
+    horizontal_mean_lower: float
+    min_horizontal_fraction: float
+    def __post_init__(self) -> None:
+        if self.min_samples < 1: raise ValueError("positive sample count required")
+        vals=(self.min_window_s,self.usable_sample_gap_s,self.field_norm_lower,
+              self.field_norm_upper,self.max_norm_ratio_from_mean,
+              self.horizontal_mean_lower,self.min_horizontal_fraction)
+        if not all(math.isfinite(x) for x in vals): raise ValueError("finite refinement premises required")
+        if self.min_window_s < 0 or self.usable_sample_gap_s <= 0 or self.field_norm_lower <= 0:
+            raise ValueError("positive refinement timing/field bounds required")
+        if self.field_norm_upper < self.field_norm_lower or self.max_norm_ratio_from_mean < 0:
+            raise ValueError("ordered field bounds required")
+        if self.horizontal_mean_lower <= 0 or not 0 < self.min_horizontal_fraction < 1:
+            raise ValueError("positive horizontal field requirement")
+
+def refinement_sample_gate_uniform(p: RefinementPremises) -> bool:
+    """Sufficient all-sample conditions for the unweighted MagAutoTuner gate.
+
+    The running accepted mean norm remains in [field_norm_lower,field_norm_upper].
+    Hence every next norm differs from that mean by at most
+    (upper-lower)/lower.  The horizontal mean is also nondegenerate.
+    """
+    norm_ratio=(p.field_norm_upper-p.field_norm_lower)/p.field_norm_lower
+    horizontal_fraction=p.horizontal_mean_lower/p.field_norm_upper
+    return (norm_ratio <= p.max_norm_ratio_from_mean and
+            horizontal_fraction >= p.min_horizontal_fraction)
+
+def refinement_completion_bound(start_s: float, p: RefinementPremises) -> float:
+    """Finite refinement time once recurring usable samples satisfy the gate."""
+    if not math.isfinite(start_s) or start_s < 0: raise ValueError("finite nonnegative start required")
+    if not refinement_sample_gate_uniform(p):
+        raise ValueError("premises do not guarantee MagAutoTuner sample acceptance")
+    # One usable sample every gap. The accepted-window clock advances by the
+    # actual intersample time, so min_window and min_samples are both covered.
+    return start_s + max(p.min_window_s, p.min_samples*p.usable_sample_gap_s)
