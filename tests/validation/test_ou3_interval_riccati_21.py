@@ -15,6 +15,7 @@ from tools.stability.ou3_theorem.interval_riccati_21 import (
     adaptive_verified_update,recurring_box_over_cells,exact_midpoint_seed,
     interval_failure_metrics,psd_spectral_prediction_floor,
     psd_spectral_correction_floor,psd_spectral_word_floor,
+    integrated_ou_window_controllability_floor,
 )
 
 
@@ -233,6 +234,14 @@ class IntervalRiccati21Tests(unittest.TestCase):
         print("PSD_WORD_NO_Q",{"end":z["end_floor"],"prefix":z["prefix_floor"]})
         self.assertGreater(z["end_floor"],0.0)
         self.assertLess(z["end_floor"],1e-12)
+
+    def test_integrated_ou_multistep_controllability_probe(self):
+        vals={}
+        for tau in (.02,.2,2.0,12.0):
+            vals[str(tau)]=integrated_ou_window_controllability_floor(
+                tau=tau,sigma=.15,window_s=.156,slices=64)
+        print("OU_CONTROLLABILITY_PROBE",vals)
+        self.assertTrue(all(v>0 for v in vals.values()))
 
     def test_spectral_box_is_finite(self):
         lo,hi=spectral_box(diag(N,1.0))
