@@ -13,14 +13,14 @@ There is one architecture with three simultaneous principal assumptions: MARINE 
 - An attempted magnetic callback is not the same as an applied correction. Informative service consumes only actually applied, valid, unsaturated, gauged corrections and their transported/whitened information.
 - The indefinitely ungauged heading/axial-gyro-bias block is unipotent with spectral radius one and survives only as a necessity result.
 - Live handoff and H18-to-A21 release inherit the existing execution and are not proof resets.
-- The H18 hold is exact: the held accelerometer-bias estimate, its covariance block and its zeroed cross-covariances are bit-for-bit unchanged across a magnetically served window. The held bias is therefore an invariant coordinate of the H18 superword map, and strict full-state contraction is unavailable on that leg. It is bounded instead, by the estimate-projection lemma.
+- The H18 hold is exact: the held accelerometer-bias estimate, its covariance block and its zeroed cross-covariances are bit-for-bit unchanged across a magnetically served window. On feasible held segments without projection-changing or frame/relock events, the same-history incremental bias coordinate is invariant. Absolute physical bias error still carries its predecessor increment. Strict full-state incremental contraction is unavailable there; the absolute bias is bounded under the projection lemma premises.
 
 ## Open controlling obligations
 
 1. Qualify assembled-sensor bias/residual limits, including the accelerometer bias-rate limit.
 2. Supply an all-time marine bounded-primitive certificate.
 3. Prove finite history-dependent startup/capture into the finite-error tail domain.
-4. Restate the H18 obligation off the held accelerometer-bias coordinates -- strict dissipation on the complement, with the held bias as a bounded input -- and prove the restated same-history inequality with every-prefix retention. The full-state form is refuted, not merely unproved.
+4. Certify the H18 complement matrix inequality and total finite-error supply, including held bias and nonlinear/reference forcing, with every-prefix retention. The conditional supply algebra and complement feasibility diagnostic are implemented; their source-uniform premises remain open.
 5. Prove the actual H18-to-A21 transition retains the certified domain.
 6. Close the corresponding magnetically informed A21 finite-error inequality.
 7. Prove recurring MAGNETIC SERVICE using actually applied sensitivities.
@@ -30,7 +30,7 @@ No end-to-end stability claim is authorized while any item remains open.
 
 ## Reproduction
 
-`cd tests/validation && python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_theorem_status test_ou3_finite_error test_ou3_h18_superword`
+`cd tests/validation && python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_theorem_status test_ou3_finite_error test_ou3_h18_superword test_ou3_h18_iss`
 
 `python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json`
 
@@ -38,31 +38,46 @@ No end-to-end stability claim is authorized while any item remains open.
 
 ## Measuring one superword
 
-    make -C tools/stability h18-superword OUTPUT_DIR=/tmp
+    make -C tools/stability h18-iss OUTPUT_DIR=/tmp
 
-`tools/stability/ou3_theorem/h18_superword_export.cpp` runs the shipping filter
-through its own startup and deployed handoff, keeps H18 with the shipping
-external hold, and exports one magnetically informed service superword: the
-covariance at every prefix, central differences of the complete closed-loop
-finite-error map taken through the shipping code, and the actual innovation
-covariance and sensitivity of every correction the update really applied.
-`h18_superword.py` evaluates the candidate storage on that export in `decimal`
-at 60 digits and reports the worst admissible ratio, its limiting direction,
-every-prefix retention, applied magnetic information and the held-bias
-obstruction. Neither step gates CI and neither can discharge an obligation; the
-measured numbers live in `docs/ou3-proof-research-state.md`.
+The exporter runs shipping startup and the deployed handoff, preserves one
+physical history, and holds bias using the existing external control. V2
+records each applied magnetic sensitivity and error response immediately
+**before** correction, with the actual innovation covariance. Perturbed runs
+must have the same applied-event sequence. Old post-correction exports are
+refused, not silently reinterpreted.
+
+`h18_superword.py` measures the full incremental map. Its endpoint-direction
+prefix profile is labeled accordingly. `h18_iss.py` uses the same export for
+all-direction, every-prefix complement gains, fine/coarse conditioning, the
+conditional Young multiplier and the isolated linear bias Schur gain. Decimal
+Jacobi evaluation resolves the whole symmetric spectrum, not a single power
+iteration direction. None is a finite-error or source-uniform certificate.
+CI gates valid production of measurements and contracts, never the numerical
+contraction result. Raw exports and both reports are uploaded together.
 
 ## Latest continuation
 
-The full-state H18 dissipation target is refuted by the held-bias obstruction,
-so the next measurement is the complement map described under Next falsifiable
-experiment in the research state. Do not spend further enclosure effort on the
-full-state form.
+At the one-second word rooted 30 seconds after Live, the corrected magnetic
+information minimum is 1.707892 (floor 1). The complement endpoint ratio is
+0.999803093, but the whitened fine/coarse map discrepancy 0.0140108 is about
+142 times the available perturbation margin. Both scales have endpoint ratios
+below one; their disagreement is not a rigorous error bound or an instability
+result. The all-direction prefix maximum is 1.001023761 at sample 5.
+
+The exact conditional supply lemma is stated in `docs/ou3-stability-proof.md`.
+For the diagnostic rho 0.999901546, the isolated linear bias gain is about
+1.690e6; the total-supply Young multiplier is about 1.016e4. The nonlinear and
+reference forcing remain unbounded in this storage. These are not practical
+error bounds and do not authorize promotion of any theorem obligation.
+
+The next falsifiable experiment is a branch-consistent sensitivity/remainder
+calculation about the same inherited execution, with all auxiliary states
+carried. Its error budget must be compared quantitatively with 9.846e-5 in the
+whitened operator norm. Do not pursue blind step-size or interval refinement;
+change the storage construction if a reliable matrix bound is not below one.
 
 Run the shared workflow and fingerprint regressions alongside the theorem tests:
 `cd tests/validation && python3 -m unittest -v test_workflow_contract test_ou_replay_fingerprint`.
-The native shipping-transition test also checks actual gain correction,
-nonpositive projection radius, covariance preservation at projection, the
-invalid-injection branch that bypasses projection, and the exactness of the H18
-hold across a served window. Source-pinned CI archives and logs are retained
-even when a contract fails.
+The native transition regressions remain unchanged. Mainline estimator source,
+quality gates and physical certification constants are unchanged.

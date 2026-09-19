@@ -16,9 +16,9 @@ This module runs exactly that check for the candidate storage
     V(e) = e^T P^(-1) e
 
 built from the shipping covariance itself, on the export produced by
-`h18_superword_export.cpp`. Central differences of the shipping execution
-isolate the homogeneous part of the finite-error map from the affine supply,
-so the reported ratio is the quantity `rho` would have to dominate. Source
+`h18_superword_export.cpp`. Central differences about a reached nonzero error measure a local incremental
+surrogate, not the complete finite-error map or its affine supply. The reference
+forcing and nonlinear remainder still require separate same-history bounds. Source
 uniformity, the supply constant, capture, recurrence, release retention and
 arithmetic totality are not addressed here at all, and no result of this module
 sets any proof obligation.
@@ -337,7 +337,12 @@ def applied_magnetic_information(export: dict, maps: Sequence[SuperwordMap],
         prefix = int(event["prefix"])
         sensitivity = [exact(v) for v in event["sensitivity_axis"]]
         innovation = ldl_factor(square_from_rows(event["innovation_covariance"], 3))
-        transported = [maps[prefix](column) for column in injection]
+        # The pre-correction response and pre-correction sensitivity must be
+        # paired with the innovation covariance this correction actually used.
+        preceding = SuperwordMap(
+            square_from_rows(event["pre_error_difference"], ERROR_DIMENSION),
+            maps[0].root_inverse)
+        transported = [preceding(column) for column in injection]
         # H_(m,k) = -[zhat]x on the attitude block, zero elsewhere.
         sensed = []
         for column in transported:
@@ -383,9 +388,11 @@ def validate(export: dict) -> None:
     for key in REQUIRED_KEYS:
         if key not in export:
             raise SuperwordExportError(f"missing export field: {key}")
-    if int(export["error_dimension"]) != ERROR_DIMENSION:
+    if export["error_dimension"] != ERROR_DIMENSION:
         raise SuperwordExportError("unexpected shipping error dimension")
     samples = int(export["superword_samples"])
+    if samples != export["superword_samples"]:
+        raise SuperwordExportError("superword_samples must be an integer")
     if samples < 1:
         raise SuperwordExportError("an empty superword proves nothing")
     for key in ("reference_error", "covariance_upper", "error_difference"):
@@ -395,20 +402,38 @@ def validate(export: dict) -> None:
     if not export["applied_magnetic_corrections"]:
         raise SuperwordExportError(
             "a magnetically informed superword needs an actually applied correction")
+    previous_prefix = 0
     for event in export["applied_magnetic_corrections"]:
         prefix = int(event["prefix"])
-        if not 0 < prefix <= samples:
+        if prefix != event["prefix"] or not previous_prefix < prefix <= samples:
             raise SuperwordExportError(
-                "an applied correction outside the superword cannot inform it")
+                "applied corrections need distinct ordered integer prefixes in the superword")
+        previous_prefix = prefix
+        if event.get("phase") != "pre_correction":
+            raise SuperwordExportError("magnetic sensitivity/transport must precede correction")
+        for field, size in (("pre_error_difference", ERROR_DIMENSION**2),
+                            ("sensitivity_axis", 3), ("innovation_covariance", 9)):
+            values = event.get(field, [])
+            if len(values) != size or any(not math.isfinite(float(v)) for v in values):
+                raise SuperwordExportError(f"invalid magnetic {field}")
     for flag in ("acc_bias_held_through_superword", "attitude_injection_finite",
                  "inherited_state"):
         if export[flag] is not True:
             raise SuperwordExportError(f"the export does not satisfy {flag}")
-    for key in ("reference_error", "covariance_upper", "error_difference"):
+    for key, size in (("reference_error", ERROR_DIMENSION),
+                      ("covariance_upper", ERROR_DIMENSION*(ERROR_DIMENSION+1)//2),
+                      ("error_difference", ERROR_DIMENSION**2)):
         for row in export[key]:
+            if len(row) != size:
+                raise SuperwordExportError(f"invalid row size in {key}")
             for value in row:
                 if not math.isfinite(float(value)):
                     raise SuperwordExportError(f"nonfinite entry in {key}")
+    for key, size in (("root_difference_coarse", ERROR_DIMENSION**2),
+                      ("endpoint_difference_coarse", ERROR_DIMENSION**2),
+                      ("root_rotation_world_to_body", 9)):
+        if len(export[key]) != size or any(not math.isfinite(float(v)) for v in export[key]):
+            raise SuperwordExportError(f"invalid entries in {key}")
 
 
 def _relative_map_discrepancy(fine: Matrix, coarse: Matrix) -> Decimal:
@@ -512,7 +537,7 @@ def evaluate(export: dict, *, precision: int = 60, prefix_stride: int = 1) -> di
 
         floor = exact(service["mu_M"])
         report = {
-            "qualification": "OU3_H18_SERVICE_SUPERWORD_FEASIBILITY_V1",
+            "qualification": "OU3_H18_SERVICE_SUPERWORD_FEASIBILITY_V2",
             "history_id": history_id,
             "role": ("non-promoting feasibility diagnostic of one candidate storage on "
                      "one reached execution; not a certificate and not source uniform"),
@@ -531,11 +556,11 @@ def evaluate(export: dict, *, precision: int = 60, prefix_stride: int = 1) -> di
             "power_iteration_seeds": ERROR_DIMENSION,
             "eigenpair_relative_residual": float(eigenpair_residual),
             "strict_contraction_observed": bool(ratio < 1),
-            "prefix_retention_ratio_max": float(retention),
-            "prefix_retention_observed": bool(retention <= 1),
+            "endpoint_direction_prefix_ratio_max": float(retention),
+            "endpoint_direction_prefix_nonexpansive": bool(retention <= 1),
             "limiting_direction": [float(v) for v in direction],
             "limiting_direction_blocks": _direction_blocks(direction),
-            "prefix_profile": [{"prefix": prefix, "storage_ratio": float(value)}
+            "endpoint_direction_prefix_profile": [{"prefix": prefix, "storage_ratio": float(value)}
                                for prefix, value in profile],
             "reference_storage_root": reference[0],
             "reference_storage_end": reference[1],
@@ -544,7 +569,9 @@ def evaluate(export: dict, *, precision: int = 60, prefix_stride: int = 1) -> di
             "magnetic_information_floor": float(floor),
             "magnetic_information_meets_floor": bool(information >= floor),
             "magnetic_event_contributions": events,
-            "homogeneous_map_only": True,
+            "local_incremental_map_only": True,
+            "finite_error_remainder_bounded": False,
+            "all_direction_prefix_retention_evaluated": False,
             "supply_constant_evaluated": False,
             "source_uniform": False,
             "certificate_complete": False,
@@ -585,7 +612,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         args.output.write_text(text, encoding="utf-8")
     summary = {key: report[key] for key in (
         "worst_admissible_ratio", "strict_contraction_observed",
-        "prefix_retention_ratio_max", "magnetic_information_min_eigenvalue",
+        "endpoint_direction_prefix_ratio_max", "magnetic_information_min_eigenvalue",
         "magnetic_information_meets_floor", "certificate_complete")}
     print(json.dumps(summary, sort_keys=True))
     # The diagnostic reports; it never gates on its own numbers.
