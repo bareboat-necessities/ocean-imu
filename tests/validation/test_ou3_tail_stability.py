@@ -25,7 +25,7 @@ from tools.stability.ou3_theorem.tail_stability import (
     certified_rho_and_margin, vibration_inflated_accel_std_ceiling,
     root_attitude_information_floor, attitude_gyro_information_floor_from_windows,
     full_neutral_information_floor, covariance_normalized_information_floor,
-    rho_from_covariance_normalized_mu,
+    rho_from_covariance_normalized_mu, classical_riccati_covariance_bounds,
     practical_radius_bound, projection_sector_is_dissipative, proof_route_status,
     pseudo_decay_exponent_per_gap, release_can_guarantee_projection_inactive,
     small_gain_budget,
@@ -146,6 +146,14 @@ class QuantitativeCertificateTests(unittest.TestCase):
             translation_floor=mu_t,attitude_gyro_floor=mu_ag)
         self.assertGreater(mu,.00204)
         self.assertLess(mu,.00205)
+
+    def test_corrected_classical_riccati_bounds_are_fail_closed(self):
+        b=classical_riccati_covariance_bounds(
+            observability_lower=.1,observability_upper=2.0,
+            controllability_lower=.2,controllability_upper=3.0,
+            horizon_steps=10)
+        self.assertGreater(b["p_min"],0)
+        self.assertGreater(b["p_max"],b["p_min"])
 
     def test_rho_requires_covariance_normalization(self):
         mu=covariance_normalized_information_floor(.002, .5)
