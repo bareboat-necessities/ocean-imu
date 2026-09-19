@@ -37,9 +37,12 @@
     "nominal_sample_period_s": 0.005,
     "accel_fast_residual_norm_max_mps2": 0.3,
     "gyro_fast_residual_norm_max_rad_s": 0.02,
-    "qualification": "deterministic commissioned BMI270 profile; A21 theorem admits 166.7--250 Hz sample timing [0.004,0.006] s; deployment qualification remains separate",
+    "qualification": "deterministic commissioned BMI270 profile; fast residual bound also caps the vibration detector-band RMS used by Racc inflation; A21 theorem admits 166.7--250 Hz timing [0.004,0.006] s; deployment qualification remains separate",
     "sample_period_min_s": 0.004,
-    "sample_period_max_s": 0.006
+    "sample_period_max_s": 0.006,
+    "accel_nominal_std_mps2": 0.2,
+    "accel_vibration_racc_gain": 0.75,
+    "accel_effective_std_max_mps2": 0.3010398644698074
   },
   "a21_schedule": {
     "tau_min_s": 0.02,
@@ -47,9 +50,10 @@
     "pseudo_update_tau_ratio": 0.013636363636363634,
     "pseudo_update_period_min_s": 0.005,
     "pseudo_update_period_max_s": 0.15,
-    "qualification": "literal shipping clamps/cadence plus theorem word: 8 s marine/magnetic diversity subwindows, two per 16 s A21 word; pseudo scheduler retargets elapsed progress when tau changes",
-    "proof_word_s": 16,
-    "attitude_diversity_subwindow_s": 8
+    "qualification": "literal shipping clamps/cadence; 16 s subword closes translation while 2048 disjoint one-second MAGNETIC SERVICE windows accumulate weak transverse gyro-bias information without a long-horizon rotation assumption",
+    "proof_word_s": 2048,
+    "attitude_diversity_subwindow_s": 8,
+    "translation_certificate_subword_s": 16
   },
   "a21_retained_domain": {
     "tilt_error_max_rad": 0.10471975511965977,
