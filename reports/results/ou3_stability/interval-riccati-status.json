@@ -8,7 +8,7 @@
   "full_shipping_schedule_included": false,
   "float32_rounding_included": false,
   "certificate_complete": false,
-  "blocker": "maximal optional S/mag correction cadence is now proved conservative for a covariance lower floor. Remaining p_min blocker is numerical interval dependency: obtain a verified self-containing 21-state box for that maximal-correction word (with parameter/attitude branch subdivision as needed).",
+  "blocker": "all literal 21-state interval kernels, verified gain, event ordering, monotonic maximal-correction reduction, and dependency-control subdivision are implemented. Remaining p_min blocker is to choose a finite outward-covering subdivision of the compact shipping attitude/tuner parameter domain whose all-branch recurring hull is self-containing with positive spectral floor.",
   "kernel_status": {
     "matrix_interval_arithmetic": true,
     "prediction_21_state": true,
@@ -23,6 +23,8 @@
     "recurring_box_iteration": true,
     "verified_interval_gain": true,
     "shipping_event_order_assembled": true,
-    "maximal_optional_correction_monotonicity_proved": true
+    "maximal_optional_correction_monotonicity_proved": true,
+    "branch_subdivision": true,
+    "all_branch_recurring_hull": true
   }
 }
