@@ -18,6 +18,7 @@ def status_report() -> dict:
         "uniform_A21_controllability_exists":True,
         "A21_covariance_hard_event_compactness":True,
         "local_A21_nonlinear_small_gain_exists":True,
+        "physical_qualification_composition":True,
         "assembled_sensor_and_bias_limit_qualification":False,
         "all_time_marine_motion_membership_certificate":False,
         "finite_history_dependent_capture":False,
@@ -33,6 +34,7 @@ def status_report() -> dict:
         "capture_release_into_explicit_A21_region":False,
         "finite_error_A21_nonlinear_remainder":True,
         "certified_tail_prefix_retention":False,
+        "source_uniform_magnetic_service_certificate_schema":True,
         "source_uniform_magnetic_service_certificate":False,
         "implementation_and_arithmetic_totality":False,
     }
@@ -50,5 +52,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"enclose the recurring A21 root covariance from below in the same proof coordinates. The fixed-coordinate neutral Gramian is now constructive (mu_N >= 2.04e-3 on a 2048 s word), but rho0=1/(1+mu) is valid only after covariance whitening: mu_cov >= p_min*mu_N. Then compute rho0, L2/r*, whole-word float32 supply, and capture/release retention.",
+        "next_controlling_obligation":"assemble the literal shipping event cadence into the completed 21-state interval Riccati kernels and verify a self-containing recurring box. Generic F/Q, acc/S/mag H/R, gain/Joseph, hard-event, and box-iteration kernels are present. Then promote p_min and rho0; startup/capture, H18/release retention, explicit nonlinear/arithmetic bounds, all-time magnetic service, and physical qualification remain fail-closed.",
     }
