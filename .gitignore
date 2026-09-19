@@ -83,7 +83,6 @@ vertical_accel_drift_*.csv
 tests/*/*-sim
 tests/*/*-test
 tests/freq/freq-track
-tools/stability/ou3_theorem/h18_superword_export
 tests/pii_observer/pii_observer-adaptive
 tests/wave_sim/wave-convention-check
 
