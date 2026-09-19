@@ -927,3 +927,47 @@ def maximal_correction_cadence_is_lower_covariance_bound(*,
            hard_events_are_psd_inflations)
     if any(type(x) is not bool for x in flags): raise ValueError("literal proof flags required")
     return all(flags)
+
+
+def float32_kernel_absolute_error(*, operation_count: int,
+                                  input_magnitude_bound: float,
+                                  exact_output_magnitude_bound: float) -> float:
+    """Local straight-line float32 forward-error budget.
+
+    The kernel is restarted at each shipping operation, so gamma_n is applied
+    locally rather than once to the entire 2048-s word.
+    """
+    mag=max(input_magnitude_bound,exact_output_magnitude_bound)
+    return conservative_float32_kernel_error(operation_count,mag)
+
+
+def whole_word_additive_supply(*, per_event_error_bounds: tuple[float,...],
+                               prefix_state_gains: tuple[float,...]) -> float:
+    """Euclidean additive error at word end from local arithmetic residuals.
+
+    Error injected after event i is multiplied only by the certified remaining
+    prefix gain. This avoids the invalid gamma_N bound with N equal to every
+    floating-point operation in the whole word.
+    """
+    if len(per_event_error_bounds)!=len(prefix_state_gains):
+        raise ValueError("one prefix gain per arithmetic event required")
+    if not per_event_error_bounds:
+        return 0.0
+    if not all(math.isfinite(x) and x>=0 for x in
+               (*per_event_error_bounds,*prefix_state_gains)):
+        raise ValueError("finite nonnegative arithmetic bounds required")
+    return sum(e*g for e,g in zip(per_event_error_bounds,prefix_state_gains))
+
+
+def every_prefix_retained(*, prefix_gains: tuple[float,...],
+                          entry_radius: float,
+                          per_prefix_additive_bounds: tuple[float,...],
+                          retained_radius: float) -> bool:
+    """Forward retention test for every operation prefix in an A21 word."""
+    if len(prefix_gains)!=len(per_prefix_additive_bounds):
+        raise ValueError("one additive bound per prefix required")
+    vals=(entry_radius,retained_radius,*prefix_gains,*per_prefix_additive_bounds)
+    if not all(math.isfinite(x) and x>=0 for x in vals) or retained_radius<=0:
+        raise ValueError("valid prefix-retention bounds required")
+    return all(g*entry_radius+d <= retained_radius
+               for g,d in zip(prefix_gains,per_prefix_additive_bounds))
