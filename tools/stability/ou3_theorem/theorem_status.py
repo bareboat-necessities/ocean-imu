@@ -25,6 +25,10 @@ def status_report() -> dict:
         "finite_reference_refinement_and_bias_release":False,
         "H18_to_A21_release_retention":False,
         "source_uniform_A21_linear_dissipativity":True,
+        "constructive_full_A21_mu_rho_enclosure":False,
+        "explicit_A21_nonlinear_radius":False,
+        "whole_word_float32_supply_bound":False,
+        "capture_release_into_explicit_A21_region":False,
         "finite_error_A21_nonlinear_remainder":True,
         "certified_tail_prefix_retention":False,
         "source_uniform_magnetic_service_certificate":False,
@@ -44,5 +48,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"make the existential A21 margins constructive enough for capture/retention: enclose an explicit mu_N and rho0 on the strict inner domain, then bound the smooth nonlinear remainder radius and additive floating-point supply; finite capture and H18-to-A21 retention remain controlling",
+        "next_controlling_obligation":"compose the actual transported MAGNETIC SERVICE heading/axial-bias Gramian with recurring accelerometer rows over the full A21 word to obtain a tight constructive full mu_N/rho0; then certify L2, kernelwise float32 supply, and capture/release retention. The translation subfloor is already explicit (mu_trans >= 2.04734e-3); projection-inactive release is correctly abandoned in favor of the literal dissipative sector.",
     }
