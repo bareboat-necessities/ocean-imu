@@ -57,7 +57,10 @@
     "interval_measurements": "Literal 3-D interval constructors cover S selector/R_S, magnetic J_att/Rmag, and active-A21 accelerometer J_att/J_aw/J_ba/Racc. They remain conservative entrywise boxes; innovation inverse verification is separate and fail-closed.",
     "interval_riccati_kernel_completion": "Generic full 21-state interval layer now includes source-uniform F/Q, acc/S/mag H/R, verified gain/Joseph, AW/bias hard events, and self-containing box iteration. The actual shipping cadence/event-word assembly must still produce a verified recurring box before p_min is promoted.",
     "source_uniform_service_qualification": "All-time MAGNETIC SERVICE has a continuation certificate requiring every-window same-history applied-event semantics and actual transported innovation covariance. Finite replay cannot establish this certificate.",
-    "physical_qualification": "MARINE MOTION, IMU BIAS and MAGNETIC SERVICE continuation certificates are composed only when they share one history_id and assembled sensor/mounting/calibration qualification is explicit."
+    "physical_qualification": "MARINE MOTION, IMU BIAS and MAGNETIC SERVICE continuation certificates are composed only when they share one history_id and assembled sensor/mounting/calibration qualification is explicit.",
+    "maximal_correction_order": "Kalman/Joseph corrections with SPD R are Loewner-decreasing, prediction is PSD-order monotone, and AW/bias covariance hard events are PSD inflations. Therefore inserting optional S/mag corrections at every sample gives a covariance no larger than any admissible sparser cadence; a positive floor for this maximal-correction word is conservative.",
+    "float32_word_supply": "Float32 gamma_n is applied locally per straight-line kernel and propagated by certified remaining-prefix gains; no invalid whole-word gamma_N operation count is used.",
+    "capture_bridge_release": "Finite bridge and release retention is composed as an explicit storage set inclusion against the eventual certified A21 radius; the composition exists but numerical premises remain open."
   },
   "operation_lemma_sources": [
     {
@@ -94,7 +97,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
-      "git_blob_sha": "1b3f792f79fa62d3611f4fbf68ad2e775e943d99"
+      "git_blob_sha": "fe06d29907a8f4e2f28898b228e8d6af4bb50b57"
     },
     {
       "path": "tools/stability/ou3_theorem/interval_riccati.py",
