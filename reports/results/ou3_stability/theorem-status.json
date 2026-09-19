@@ -27,6 +27,7 @@
     "same_history_bias_recurrence": true,
     "accepted_magnetic_information_definition": true,
     "no_heading_service_obstruction": true,
+    "captured_domain_implies_finite_mag_refinement": true,
     "assembled_sensor_and_bias_limit_qualification": false,
     "all_time_marine_motion_membership_certificate": false,
     "finite_history_dependent_capture": false,
