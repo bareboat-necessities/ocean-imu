@@ -139,7 +139,7 @@ def certificate():
         'window_s':['16','16.006'], 'tau_s':['0.02','12'],
         'sample_period_s':['0.004','0.006'],
         'sigma_aw_min':'0.05', 'accel_std_min':'0.05', 'integral_std_min':'0.075',
-        'scales':['5.5','8.1','1100','4'],
+        'scales':[str(x) for x in scales],
         'arbitrary_piecewise_constant_tau':True,
         'all_acc_and_integral_corrections_included':True,
         'cross_block_measurement_domination_factor':3,
