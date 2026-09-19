@@ -229,3 +229,88 @@ def shipping_acc_update_intervals(specific_force_norm_max: float,
         hm.append(tuple(mr));hr.append(tuple(rr))
     r=diagonal_interval((accel_noise_std_min**2,)*3,(accel_noise_std_max**2,)*3)
     return IMat(tuple(hm),tuple(hr)),r
+
+
+def shipping_prediction_intervals(*, dt_min: float, dt_max: float,
+                                  tau_min: float, tau_max: float,
+                                  omega_max: float, tau_bacc: float,
+                                  gyro_white_density: float,
+                                  gyro_bias_rw_density: float,
+                                  aw_sigma_max: float,
+                                  accel_bias_drive_density: float) -> tuple[IMat,IMat]:
+    """Conservative literal A21 F/Q box for the shipping 21-state predictor.
+
+    F follows the exact block structure used by time_update:
+      [F_AA,0,0; 0,F_LL,0; 0,0,phi_b I],
+    with all propagated cross-covariances handled by P-=FPF'+Q.
+    Rotation entries are enclosed in [-1,1], Bstep by |B|<=dt_max.
+    The integrated-OU influence coefficients are bounded by their causal
+    integrals dt,dt^2/2,dt^3/6, uniformly in positive tau.
+
+    Q uses rigorous PSD diagonal ceilings. For the OU chain,
+    q_c=2 sigma_aw^2/tau <= q_c,max and the impulse-response bounds give
+    q_c*(dt^3/3,dt^5/20,dt^7/252,dt) for (v,p,S,a). Off-diagonal entries use
+    |Qij|<=sqrt(Qii Qjj). This is conservative but source-uniform.
+    """
+    vals=(dt_min,dt_max,tau_min,tau_max,omega_max,tau_bacc,
+          gyro_white_density,gyro_bias_rw_density,aw_sigma_max,
+          accel_bias_drive_density)
+    if not all(math.isfinite(x) for x in vals) or min(vals)>0 is False:
+        raise ValueError("positive finite prediction bounds required")
+    if dt_max<dt_min or tau_max<tau_min:
+        raise ValueError("ordered timing/tau bounds required")
+
+    fm=[[0.0]*N for _ in range(N)]; fr=[[0.0]*N for _ in range(N)]
+    # Attitude rotation Rstep: orthogonal; entrywise [-1,1].
+    for i in range(3):
+        for j in range(3): fr[i][j]=1.0
+    # Exact Bstep integral, each entry bounded by dt_max.
+    for i in range(3):
+        for j in range(3): fr[i][3+j]=dt_max
+    for i in range(3): fm[3+i][3+i]=1.0
+
+    # Linear [v,p,S,a_w], group-first offsets.
+    for a in range(3):
+        v,p,s,aw=6+a,9+a,12+a,15+a
+        fm[v][v]=fm[p][p]=fm[s][s]=1.0
+        fm[p][v]=.5*(dt_min+dt_max);fr[p][v]=_out(.5*(dt_max-dt_min))
+        lo2=.5*dt_min*dt_min;hi2=.5*dt_max*dt_max
+        fm[s][v]=.5*(lo2+hi2);fr[s][v]=_out(.5*(hi2-lo2))
+        fm[s][p]=.5*(dt_min+dt_max);fr[s][p]=_out(.5*(dt_max-dt_min))
+        # OU homogeneous factor.
+        plo=math.exp(-dt_max/tau_min);phi=math.exp(-dt_min/tau_max)
+        fm[aw][aw]=.5*(plo+phi);fr[aw][aw]=_out(.5*(phi-plo))
+        # Positive causal a_w influence coefficients.
+        for row,hi in ((v,dt_max),(p,.5*dt_max**2),(s,dt_max**3/6.0)):
+            fm[row][aw]=.5*hi;fr[row][aw]=_out(.5*hi)
+
+    # Active accelerometer-bias OU factor.
+    blo=math.exp(-dt_max/tau_bacc);bhi=math.exp(-dt_min/tau_bacc)
+    for a in range(3):
+        fm[18+a][18+a]=.5*(blo+bhi);fr[18+a][18+a]=_out(.5*(bhi-blo))
+
+    # Q diagonal ceilings, then PSD Cauchy-Schwarz cross bounds inside blocks.
+    qdiag=[0.0]*N
+    qg=gyro_white_density**2; qbg=gyro_bias_rw_density**2
+    for a in range(3):
+        qdiag[a]=qg*dt_max+qbg*dt_max**3/3.0
+        qdiag[3+a]=qbg*dt_max
+    qc=2.0*aw_sigma_max**2/tau_min
+    for a in range(3):
+        qdiag[6+a]=qc*dt_max**3/3.0
+        qdiag[9+a]=qc*dt_max**5/20.0
+        qdiag[12+a]=qc*dt_max**7/252.0
+        qdiag[15+a]=qc*dt_max
+        qdiag[18+a]=accel_bias_drive_density**2*dt_max
+    qm=[[0.0]*N for _ in range(N)];qr=[[0.0]*N for _ in range(N)]
+    for i in range(N):
+        qm[i][i]=.5*qdiag[i];qr[i][i]=_out(.5*qdiag[i])
+    # Actual Q is block diagonal AA/LL/BA. Bound possible within-block cross terms.
+    blocks=(range(0,6),range(6,18),range(18,21))
+    for block in blocks:
+        inds=list(block)
+        for i in inds:
+            for j in inds:
+                if i!=j: qr[i][j]=_out(math.sqrt(qdiag[i]*qdiag[j]))
+    return IMat(tuple(tuple(x) for x in fm),tuple(tuple(x) for x in fr)), IMat(
+        tuple(tuple(x) for x in qm),tuple(tuple(x) for x in qr))
