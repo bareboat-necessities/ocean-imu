@@ -30,9 +30,9 @@
     "magnetic_coordinate_transport": "The complete preceding transport may be rectangular between error charts. Dimension compatibility and finite audits do not certify a release map or source-uniform information.",
     "point_audit_scope": "Supplied finite-error values and structural flags are diagnostic assertions, not a verified source-uniform certificate. Missing bounds, vacuous prefixes and overflow cannot promote completion.",
     "held_accelerometer_bias_hold": "On feasible held segments without projection-changing or frame/relock events, the bias estimate and its decoupled covariance block are unchanged. Same-history incremental bias is invariant; absolute bias error still carries the shared physical increment. The incremental full-state contraction obstruction does not remove hard-event or release obligations.",
-    "superword_feasibility_scope": "Central differences about one reached error are a local incremental surrogate, not an exact nonlinear homogeneous map. V2 measures pre-correction magnetic transport. Neither a measured ratio nor a conditioning discrepancy certifies finite-error supply, retention or source uniformity.",
-    "h18_complement_supply": "For x_plus=A x+B e_b+r and certified A^T W_plus A<=alpha W, alpha<rho<1, Young gives V_plus<=rho V+rho/(rho-alpha)|B e_b+r|^2_W_plus. The Schur gain covers only isolated linear bias, not unbounded nonlinear/reference remainder.",
-    "magnetic_measurement_phase": "Both sensitivity and transported response precede the actually applied correction; the exported innovation covariance is the one that correction factored. Perturbed exports must preserve its applied-event sequence."
+    "h18_role": "finite bridge until magnetic-reference refinement and implemented accelerometer-bias release; asymptotic contraction is not required on H18",
+    "a21_tail": "recurring magnetically informed asymptotic tail; linear storage contraction plus a finite-error nonlinear small-gain remainder is the productive proof target",
+    "pr557_negative_result": "held-bias identity obstructs one strict full-state H18 incremental contraction formulation; diagnostic scripts are not theorem machinery"
   },
   "operation_lemma_sources": [
     {
@@ -65,35 +65,11 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "4cd2c2d982ae1649a4eddb34a853115bf8520066"
+      "git_blob_sha": "81c2a007a58fbc5b787612033fcd819792dfe94d"
     },
     {
-      "path": "tools/stability/ou3_theorem/finite_error.py",
-      "git_blob_sha": "263f6505dd33a73ef4f5e9adc4f5f15b08532f5a"
-    },
-    {
-      "path": "tests/validation/test_ou3_finite_error.py",
-      "git_blob_sha": "d16f32ebbaefb2241b60871d4cb8d39a5105bbf5"
-    },
-    {
-      "path": "tools/stability/ou3_theorem/h18_superword.py",
-      "git_blob_sha": "65887c748110c7beda53aa81020169013d244bd5"
-    },
-    {
-      "path": "tools/stability/ou3_theorem/h18_superword_export.cpp",
-      "git_blob_sha": "38d3f783b80ea31aec6fb4525f1daec72e252618"
-    },
-    {
-      "path": "tests/validation/test_ou3_h18_superword.py",
-      "git_blob_sha": "96000a1b02b288a0ecfea8e8e49ce06340d075be"
-    },
-    {
-      "path": "tools/stability/ou3_theorem/h18_iss.py",
-      "git_blob_sha": "4af829e4b773b11ca5aa0385f078c304875c5b7b"
-    },
-    {
-      "path": "tests/validation/test_ou3_h18_iss.py",
-      "git_blob_sha": "cff3f9c8548dd752220f9f3d478934c93c406e14"
+      "path": "tools/stability/ou3_theorem/tail_stability.py",
+      "git_blob_sha": "d7686daef80a1f816b59368b2756c2c924ebf80e"
     }
   ]
 }
