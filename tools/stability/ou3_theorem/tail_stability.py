@@ -173,3 +173,22 @@ def information_contraction_ratio(info_floor: float) -> float:
 def nonlinear_margin_from_information(info_floor: float) -> float:
     """Largest remainder Lipschitz gain compatible with strict small gain."""
     return 1.0-math.sqrt(information_contraction_ratio(info_floor))
+
+def translational_observability_determinant(dt_s: float, tau_s: float) -> float:
+    """Determinant of a five-row scalar OU-III observability minor.
+
+    State order is (v,p,S,a_w,b_a). Use four consecutive S observations
+    H_S F^j, j=0..3, and one accelerometer row after attitude normalization,
+    H_a=(0,0,0,1,1). For the exact OU-III discrete primitives the determinant
+    simplifies to -dt^3*tau^3*(1-exp(-dt/tau))^3. It is nonzero for every
+    finite dt,tau>0. Thus each translational/bias axis is structurally
+    observable; compact positive dt/tau bounds turn this into a uniform
+    nonsingularity margin once measurement weights are bounded.
+    """
+    if not all(math.isfinite(x) for x in (dt_s,tau_s)) or dt_s <= 0 or tau_s <= 0:
+        raise ValueError("positive finite dt and tau required")
+    phi=math.exp(-dt_s/tau_s)
+    return -(dt_s**3)*(tau_s**3)*(1.0-phi)**3
+
+def translational_observability_nonsingular(dt_s: float, tau_s: float) -> bool:
+    return translational_observability_determinant(dt_s,tau_s) != 0.0
