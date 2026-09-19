@@ -52,7 +52,8 @@
     "a21_covariance_normalization": "rho0<=1/(1+mu) may only consume covariance-whitened information. If P_root>=p_min I in the proof coordinates, mu_cov>=p_min*mu_N. The fixed-coordinate mu_N is not directly promoted to rho0.",
     "a21_riccati_enclosure": "Corrected classical UCO/UCC P_min/P_max formulas are retained as a fail-closed cross-check. Primary constructive covariance normalization is a verified interval Riccati enclosure over bounded shipping schedule/hard events; midpoint trajectories cannot certify it without outward-rounded residual inclusion.",
     "interval_riccati_certificate": "A midpoint covariance trajectory cannot promote p_min. Completion requires every innovation box to pass a strict residual/Krawczyk inverse test, the outward-rounded Riccati image to lie inside the proposed recurring spectral box, and explicit inclusion of shipping schedule, covariance hard events, and float32 rounding.",
-    "interval_arithmetic": "Certificate interval arithmetic uses explicit midpoint-radius analytic radii plus nextafter outward expansion, independent of host BLAS rounding mode. Shipping float32 rounding is a separate gamma_n budget."
+    "interval_arithmetic": "Certificate interval arithmetic uses explicit midpoint-radius analytic radii plus nextafter outward expansion, independent of host BLAS rounding mode. Shipping float32 rounding is a separate gamma_n budget.",
+    "interval_riccati_21": "21-state midpoint-radius kernels now implement P-=F P F'+Q, 3-D innovation covariance, literal Joseph covariance update with all cross-covariances, AW covariance-floor event, and accelerometer-bias release floor. Shipping-specific interval F/Q/H/R constructors and the self-containing recurring box remain open."
   },
   "operation_lemma_sources": [
     {
@@ -98,6 +99,14 @@
     {
       "path": "tests/validation/test_ou3_interval_riccati.py",
       "git_blob_sha": "20661c742220aa5a683c17602ff331d251d62070"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/interval_riccati_21.py",
+      "git_blob_sha": "ca4e4a1af60957bd5ead7903106b39d7a04588b4"
+    },
+    {
+      "path": "tests/validation/test_ou3_interval_riccati_21.py",
+      "git_blob_sha": "5b7cb1f41f633bd2e5af6b2f04520df5144e87b3"
     }
   ]
 }
