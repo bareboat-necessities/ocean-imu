@@ -39,7 +39,7 @@ def certificate() -> dict:
         "ell_AG":ELL_AG,"ell_LIN":ell_lin,"ell_BA":ELL_BA,
         "root_metric_gamma":1.0,
         "factor_covariance_floor":p_factor,
-        "mu_cov":mu_cov,"rho0":rho0,\n        "constructive_full_A21_mu_rho_enclosure":True,
+        "mu_cov":mu_cov,"rho0":rho0,\n        "constructive_full_A21_mu_rho_enclosure":True,\n        "normalization_kind":"scalar fallback; not final sharp factor-coordinate metric",
         "sqrt_rho0_margin":1.0-rho0**0.5,
         "cross_block_role":"finite prefix magnitude/totality; not root coercivity",
         "float32_whole_word_supply_closed":False,
@@ -53,3 +53,27 @@ def main() -> int:
 
 if __name__=="__main__":
     raise SystemExit(main())
+
+
+def blockwise_factor_coordinate_diagnostic() -> dict:
+    """Expose exactly where the scalar normalization loses the margin.
+
+    This is non-promoting until the fixed-coordinate information certificate
+    exports compatible block/coordinate information factors.  It prevents us
+    from pretending that min(ell_i)^2 is intrinsic to the theorem.
+    """
+    r=certificate()
+    contributions={
+        "AG_covariance_scale":ELL_AG*ELL_AG,
+        "LIN_covariance_scale":r["ell_LIN"]**2,
+        "BA_covariance_scale":ELL_BA*ELL_BA,
+    }
+    return {
+        "verified_structure":True,
+        "promoting":False,
+        "scalar_bottleneck":min(contributions,key=contributions.get),
+        "covariance_scales":contributions,
+        "required_next_certificate":
+            "compatible factor-coordinate information matrix/block floors; "
+            "compute lambda_min(L' J L) directly instead of mu_N*min(ell)^2",
+    }
