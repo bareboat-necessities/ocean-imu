@@ -596,3 +596,54 @@ def interval_failure_metrics(p: IMat,h: IMat,r: IMat) -> dict:
             "innovation_verified":cert["verified"],
             "covariance_spectral_lower":lo,
             "covariance_spectral_upper":hi}
+
+
+def _frob_mid(a: IMat) -> float:
+    return math.sqrt(sum(x*x for row in a.mid for x in row))
+
+
+def _frob_rad(a: IMat) -> float:
+    return math.sqrt(sum(x*x for row in a.rad for x in row))
+
+
+def midpoint_sigma_min_lower(a: IMat) -> float:
+    """Gershgorin lower bound on sigma_min of the midpoint matrix."""
+    at=transpose(IMat(a.mid,tuple(tuple(0.0 for _ in row) for row in a.mid)))
+    am=IMat(a.mid,tuple(tuple(0.0 for _ in row) for row in a.mid))
+    gram=matmul(at,am)
+    lo,_=symmetric_interval_gershgorin(gram.mid,gram.rad)
+    return math.sqrt(max(0.0,lo))
+
+
+def psd_spectral_prediction_floor(p_lower: float, f: IMat,
+                                  q_lower: float=0.0) -> dict:
+    """PSD-structure-preserving prediction floor.
+
+    For F=F0+dF, ||dF||2<=||rad(F)||F, Weyl gives
+    sigma_min(F)>=sigma_min(F0)-||dF||. Therefore
+    F P F'+Q >= (sigma_floor^2*p_lower+q_lower) I.
+    Unlike entrywise covariance propagation this cannot manufacture a negative
+    covariance eigenvalue merely from dependency.
+    """
+    if not all(math.isfinite(x) for x in (p_lower,q_lower)) or p_lower<=0 or q_lower<0:
+        raise ValueError("positive covariance floor and nonnegative Q floor required")
+    smid=midpoint_sigma_min_lower(f);dr=_frob_rad(f)
+    sf=max(0.0,smid-dr)
+    return {"midpoint_sigma_min_lower":smid,"F_radius_norm_upper":dr,
+            "F_sigma_min_lower":sf,
+            "predicted_covariance_floor":sf*sf*p_lower+q_lower}
+
+
+def psd_spectral_correction_floor(p_lower: float,h: IMat,
+                                  r_noise_lower: float) -> dict:
+    """Information-form lower covariance bound for one 3-D correction.
+
+    P+ = (P^-1+H'R^-1H)^-1 and ||H||2 is bounded by midpoint+radius
+    Frobenius norms. This is conservative but PSD preserving and valid with all
+    cross-covariances present.
+    """
+    if not all(math.isfinite(x) for x in (p_lower,r_noise_lower)) or p_lower<=0 or r_noise_lower<=0:
+        raise ValueError("positive covariance/noise floors required")
+    hn=_frob_mid(h)+_frob_rad(h)
+    out=1.0/(1.0/p_lower+(hn*hn)/r_noise_lower)
+    return {"H_norm_upper":hn,"posterior_covariance_floor":out}
