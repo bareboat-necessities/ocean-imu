@@ -29,6 +29,7 @@ from tools.stability.ou3_theorem.tail_stability import (
     maximal_correction_cadence_is_lower_covariance_bound,
     one_step_noise_covariance_floor, verified_interval_innovation_inverse,
     float32_kernel_absolute_error,whole_word_additive_supply,every_prefix_retained,
+    capture_bridge_release_bound,release_enters_explicit_tail,
     riccati_box_inclusion, covariance_floor_to_rho,
     practical_radius_bound, projection_sector_is_dissipative, proof_route_status,
     pseudo_decay_exponent_per_gap, release_can_guarantee_projection_inactive,
@@ -42,6 +43,16 @@ from tools.stability.ou3_theorem.tail_stability import (
 )
 
 class TailStabilityTests(unittest.TestCase):
+    def test_capture_bridge_release_composition(self):
+        out=capture_bridge_release_bound(
+            capture_storage=1.0,bridge_steps=3,bridge_gain=1.0,
+            bridge_supply=.1,release_gain=.5,release_supply=.1)
+        self.assertAlmostEqual(out,.75)
+        self.assertTrue(release_enters_explicit_tail(
+            capture_storage=1.0,bridge_steps=3,bridge_gain=1.0,
+            bridge_supply=.1,release_gain=.5,release_supply=.1,
+            tail_storage_radius=.8))
+
     def test_h18_is_finite_bridge(self):
         self.assertAlmostEqual(finite_bridge_bound(2,3,1,.5),3.5)
         self.assertAlmostEqual(finite_bridge_bound(2,2,2,1),11)
