@@ -107,8 +107,12 @@ jobs:
           ./tests/kalman_ou_iii/shipping_transition-test
       # The export measures one magnetically informed H18 service superword on a
       # reached shipping state and the diagnostic evaluates the candidate storage
-      # on it at high precision. Neither step gates the build: both are evidence
-      # for the research ledger, and neither can discharge an obligation.
+      # on it at high precision. The step gates on the measurement being
+      # producible at all -- a refused export or a diagnostic that cannot
+      # establish its numbers is a real failure and must be seen. No measured
+      # value gates anything: the ratio, the margins and the direction are
+      # evidence for the research ledger, and none of them discharges an
+      # obligation or is asserted by this workflow.
       - name: Measure one H18 service superword and evaluate the candidate storage
         run: make -C tools/stability h18-superword OUTPUT_DIR=/tmp
       - uses: actions/upload-artifact@v6
@@ -119,4 +123,6 @@ jobs:
             /tmp/ou3-h18-superword.json
             /tmp/ou3-h18-superword-feasibility.json
           retention-days: 7
-          if-no-files-found: error
+          # A refused measurement already failed the step above. Keep whatever
+          # it did produce instead of raising a second, misleading failure.
+          if-no-files-found: warn

@@ -290,6 +290,11 @@ RunRecord run_execution(const std::vector<Sample>& history, int settle_samples,
 
         if (rooted) {
             const int prefix = k - root_index;
+            // The error is read against the physical state the step advanced to.
+            // A startup that reached Live unusually late can run the history out
+            // before the superword closes; stop here so the caller reports an
+            // incomplete superword rather than reading past the end.
+            if (k + 1 >= samples) break;
             const Sample& next = history[static_cast<size_t>(k + 1)];
             rec.prefix_error.push_back(finite_error(f, next, primitive_origin));
             if (export_events) {

@@ -124,6 +124,42 @@ class WorstRatioTests(unittest.TestCase):
         blocks = report["limiting_direction_blocks"]
         self.assertGreater(blocks["position"], 0.999)
 
+    def test_a_dominant_direction_no_seed_favours_is_still_found(self):
+        # The only nonzero gain sits on the last coordinate, so a map that an
+        # unlucky single seed would miss entirely. The seeds span the space, so
+        # the reported ratio is the real maximum rather than a subdominant one.
+        export = synthetic_export(gain=0.0, samples=1, mag_prefix=1)
+        gains = [0.0] * N
+        gains[N - 1] = 2.0
+        difference = [[STEP if i == j else 0.0 for j in range(N)] for i in range(N)]
+        export["error_difference"] = [
+            rows(difference), rows(product(diagonal(gains), difference))]
+        export["endpoint_difference_coarse"] = export["error_difference"][-1]
+        report = diag.evaluate(export, precision=40)
+        self.assertAlmostEqual(report["worst_admissible_ratio"], 4.0, places=12)
+        self.assertFalse(report["strict_contraction_observed"])
+        self.assertGreater(report["limiting_direction_blocks"]["accelerometer_bias"], 0.999)
+
+    def test_an_unconverged_ratio_fails_closed(self):
+        export = synthetic_export(gain=0.5, samples=1, mag_prefix=1)
+        with localcontext() as context:
+            context.prec = 40
+            n = N
+            differences = [diag.square_from_rows(row, n)
+                           for row in export["error_difference"]]
+            covariances = [diag.symmetric_from_upper(row, n)
+                           for row in export["covariance_upper"]]
+            superword = diag.SuperwordMap(differences[-1], diag.inverse(differences[0]))
+            metric = diag.ldl_factor(covariances[0])
+            with self.assertRaises(diag.SuperwordExportError):
+                diag.worst_admissible_ratio(superword, covariances[0], metric, metric,
+                                            n, iterations=1)
+
+    def test_the_reported_eigenpair_carries_its_residual(self):
+        report = diag.evaluate(synthetic_export(gain=0.5, samples=2), precision=40)
+        self.assertLess(report["eigenpair_relative_residual"], 1e-20)
+        self.assertEqual(report["power_iteration_seeds"], N)
+
     def test_growth_is_reported_without_being_promoted(self):
         report = diag.evaluate(synthetic_export(gain=1.4, samples=2), precision=40)
         self.assertGreater(report["worst_admissible_ratio"], 1.0)
@@ -208,12 +244,14 @@ class NonPromotionTests(unittest.TestCase):
         # A unit-gain synthetic map reproduces the held bias and keeps the
         # covariance block fixed, which is exactly the obstruction's premise.
         self.assertTrue(obstruction["non_contraction_obstruction"])
-        self.assertFalse(obstruction["strict_full_state_rho_available"])
+        self.assertEqual(obstruction["full_state_rho_status"], "excluded")
         self.assertFalse(obstruction["obstruction_is_an_instability_claim"])
 
     def test_a_moving_bias_block_is_not_claimed_as_an_obstruction(self):
         report = diag.evaluate(synthetic_export(gain=0.5), precision=40)
-        self.assertFalse(report["held_bias_obstruction"]["non_contraction_obstruction"])
+        obstruction = report["held_bias_obstruction"]
+        self.assertFalse(obstruction["non_contraction_obstruction"])
+        self.assertEqual(obstruction["full_state_rho_status"], "undecided_here")
 
 
 if __name__ == "__main__":

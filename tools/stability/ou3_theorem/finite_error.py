@@ -172,6 +172,10 @@ def held_bias_non_contraction(block: HeldBiasSuperwordBlock,
     instability result and not a certificate of anything: it says the H18
     dissipation target has to be restated, for instance on the complement with
     the held bias carried as a bounded input, or after the release to A21.
+
+    When a premise is outside tolerance this argument simply does not apply.
+    That is reported as `undecided_here`, never as availability of rho < 1:
+    the absence of this obstruction is not the absence of every obstruction.
     """
     identity_defect = max(
         abs(block.map_block[i][j] - (1.0 if i == j else 0.0))
@@ -187,8 +191,12 @@ def held_bias_non_contraction(block: HeldBiasSuperwordBlock,
         "held_bias_reproduces_itself": reproduces,
         "bias_covariance_decoupled": decoupled,
         "bias_covariance_frozen": frozen,
-        "strict_full_state_rho_available": not obstructed,
         "non_contraction_obstruction": obstructed,
+        # Failing to establish this one obstruction says nothing about whether
+        # rho < 1 is available: some other obstruction, or none, may apply. The
+        # only two outcomes here are "excluded by this argument" and "this
+        # argument does not decide it".
+        "full_state_rho_status": "excluded" if obstructed else "undecided_here",
         "obstruction_is_an_instability_claim": False,
         "certificate_complete": False,
     }

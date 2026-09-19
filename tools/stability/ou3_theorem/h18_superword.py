@@ -202,26 +202,22 @@ class SuperwordMap:
         return [[columns[j][i] for j in range(n)] for i in range(n)]
 
 
-def worst_admissible_ratio(superword: "SuperwordMap", root_covariance: Matrix,
-                           root_metric: tuple[Matrix, Vector],
-                           end_metric: tuple[Matrix, Vector], n: int,
-                           iterations: int = 400,
-                           tolerance: Decimal = Decimal("1e-30")
-                           ) -> tuple[Decimal, Vector, Decimal, int]:
-    """Largest V_end(Psi e)/V_root(e) over nonzero directions, with its argument.
+def _rayleigh_iteration(superword: "SuperwordMap", root_covariance: Matrix,
+                        root_metric: tuple[Matrix, Vector],
+                        end_metric: tuple[Matrix, Vector], seed: Vector,
+                        iterations: int, tolerance: Decimal
+                        ) -> tuple[Decimal, Vector, Decimal, int, bool]:
+    """One normalized power iteration of P_root A from `seed`.
 
-    The generalized problem is A x = lambda B x with A = Psi^T P_end^(-1) Psi
-    and B = P_root^(-1). The operator B^(-1)A = P_root A is self-adjoint in the
-    B inner product, so a normalized power iteration converges to the extreme
-    ratio. The returned residual is the final Rayleigh-quotient increment: it
-    reports convergence of this evaluation and bounds nothing about the map.
+    A = Psi^T P_end^(-1) Psi and B = P_root^(-1). The operator B^(-1)A = P_root A
+    is self-adjoint in the B inner product, so the iteration converges to the
+    eigenvalue whose eigenspace the seed has a component in -- the dominant one
+    unless the seed happens to be B-orthogonal to it.
     """
-    x = [Decimal(1) / Decimal(i + 2) for i in range(n)]
+    x = list(seed)
     ratio = Decimal(0)
     residual = Decimal(0)
-    used = 0
     for step in range(iterations):
-        used = step + 1
         a_x = superword.transpose(ldl_solve(end_metric, superword(x)))
         denominator = storage(root_metric, x)
         if denominator <= 0:
@@ -232,11 +228,82 @@ def worst_admissible_ratio(superword: "SuperwordMap", root_covariance: Matrix,
         nxt = matvec(root_covariance, a_x)
         scale = storage(root_metric, nxt)
         if scale <= 0:
-            raise SuperwordExportError("the superword map annihilates every iterate")
+            # The map sends this seed to zero: its ratio is exactly zero and
+            # there is nothing left to iterate on. Other seeds carry the rest.
+            return Decimal(0), x, Decimal(0), step + 1, True
         x = [value / scale.sqrt() for value in nxt]
         if step > 2 and residual < tolerance * (Decimal(1) + abs(ratio)):
-            break
-    return ratio, x, residual, used
+            return ratio, x, residual, step + 1, True
+    return ratio, x, residual, iterations, False
+
+
+def worst_admissible_ratio(superword: "SuperwordMap", root_covariance: Matrix,
+                           root_metric: tuple[Matrix, Vector],
+                           end_metric: tuple[Matrix, Vector], n: int,
+                           iterations: int = 400,
+                           tolerance: Decimal = Decimal("1e-30")
+                           ) -> tuple[Decimal, Vector, Decimal, int]:
+    """Largest V_end(Psi e)/V_root(e) over nonzero directions, with its argument.
+
+    The generalized problem is A x = lambda B x with A = Psi^T P_end^(-1) Psi
+    and B = P_root^(-1), and the ratio is the largest eigenvalue of B^(-1)A.
+
+    A single power iteration is not enough to claim that largest eigenvalue: a
+    seed B-orthogonal to the dominant eigenspace converges, cleanly and with a
+    small Rayleigh-quotient increment, to a subdominant eigenvalue instead. The
+    shipping map has exactly invariant subspaces -- the held accelerometer bias
+    is one -- so that case is real here rather than hypothetical, and reporting
+    a subdominant value would understate the ratio and could assert contraction
+    that does not hold.
+
+    The iteration therefore runs from every coordinate direction. Those seeds
+    span the space, so at least one has a component in the dominant eigenspace
+    and the maximum over the runs is the largest eigenvalue. A seed that has
+    not converged within the budget fails the diagnostic closed rather than
+    contributing an unestablished number.
+    """
+    best_ratio = Decimal(0)
+    best_direction: Vector | None = None
+    worst_residual = Decimal(0)
+    total_steps = 0
+    for index in range(n):
+        seed = [Decimal(1) if i == index else Decimal(0) for i in range(n)]
+        scale = storage(root_metric, seed)
+        if scale <= 0:
+            raise SuperwordExportError("degenerate storage metric at the root")
+        seed = [value / scale.sqrt() for value in seed]
+        ratio, direction, residual, steps, converged = _rayleigh_iteration(
+            superword, root_covariance, root_metric, end_metric, seed,
+            iterations, tolerance)
+        if not converged:
+            raise SuperwordExportError(
+                f"the storage ratio did not converge from direction {index} "
+                f"within {iterations} iterations; no ratio is established")
+        total_steps += steps
+        worst_residual = max(worst_residual, residual)
+        if best_direction is None or ratio > best_ratio:
+            best_ratio, best_direction = ratio, direction
+    if best_direction is None:
+        raise SuperwordExportError("no admissible direction was evaluated")
+    return best_ratio, best_direction, worst_residual, total_steps
+
+
+def eigenvalue_residual(superword: "SuperwordMap", root_covariance: Matrix,
+                        root_metric: tuple[Matrix, Vector],
+                        end_metric: tuple[Matrix, Vector],
+                        ratio: Decimal, direction: Vector) -> Decimal:
+    """Relative B-norm residual of A x = lambda B x at the reported pair.
+
+    This is an a posteriori check on the returned eigenpair, reported for the
+    reader. It is not a bound on anything the diagnostic is measuring.
+    """
+    a_x = superword.transpose(ldl_solve(end_metric, superword(direction)))
+    gap = [value - ratio * component
+           for value, component in zip(matvec(root_covariance, a_x), direction)]
+    scale = storage(root_metric, direction)
+    if scale <= 0:
+        raise SuperwordExportError("degenerate limiting direction")
+    return (storage(root_metric, gap) / scale).sqrt()
 
 
 # --------------------------------------------------------------------------
@@ -380,6 +447,8 @@ def evaluate(export: dict, *, precision: int = 60, prefix_stride: int = 1) -> di
         end_metric = ldl_factor(covariances[-1])
         ratio, direction, residual, iterations = worst_admissible_ratio(
             maps[-1], covariances[0], root_metric, end_metric, n)
+        eigenpair_residual = eigenvalue_residual(
+            maps[-1], covariances[0], root_metric, end_metric, ratio, direction)
 
         # The same map measured in a frozen metric separates amplification of
         # the shipping map from drift of the covariance that weights it.
@@ -459,6 +528,8 @@ def evaluate(export: dict, *, precision: int = 60, prefix_stride: int = 1) -> di
             "map_scale_discrepancy": float(conditioning),
             "power_iteration_residual": float(residual),
             "power_iteration_steps": iterations,
+            "power_iteration_seeds": ERROR_DIMENSION,
+            "eigenpair_relative_residual": float(eigenpair_residual),
             "strict_contraction_observed": bool(ratio < 1),
             "prefix_retention_ratio_max": float(retention),
             "prefix_retention_observed": bool(retention <= 1),

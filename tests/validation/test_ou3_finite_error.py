@@ -90,7 +90,7 @@ class HeldBiasObstructionTests(unittest.TestCase):
         r = held_bias_non_contraction(self.block())
         self.assertTrue(r["held_bias_reproduces_itself"])
         self.assertTrue(r["non_contraction_obstruction"])
-        self.assertFalse(r["strict_full_state_rho_available"])
+        self.assertEqual(r["full_state_rho_status"], "excluded")
 
     def test_the_obstruction_is_not_an_instability_or_a_certificate(self):
         r = held_bias_non_contraction(self.block())
@@ -104,8 +104,14 @@ class HeldBiasObstructionTests(unittest.TestCase):
             with self.subTest(**overrides):
                 r = held_bias_non_contraction(self.block(**overrides))
                 self.assertFalse(r["non_contraction_obstruction"])
-                self.assertTrue(r["strict_full_state_rho_available"])
                 self.assertFalse(r["certificate_complete"])
+
+    def test_a_premise_outside_tolerance_decides_nothing(self):
+        # Not establishing this obstruction is not availability of rho < 1:
+        # another obstruction may apply, and none of them is checked here.
+        r = held_bias_non_contraction(self.block(cross_covariance_max=1e-9))
+        self.assertEqual(r["full_state_rho_status"], "undecided_here")
+        self.assertNotIn("strict_full_state_rho_available", r)
 
     def test_malformed_measurements_are_rejected(self):
         with self.assertRaises(ValueError):
