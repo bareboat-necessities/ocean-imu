@@ -362,3 +362,68 @@ def verified_joseph_update(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
     """Complete verified 3-D shipping covariance correction."""
     k,cert=verified_gain_interval(p,h,r)
     return joseph_covariance(p,k,h,r),cert
+
+
+def contains(outer: IMat, inner: IMat) -> bool:
+    if outer.shape!=inner.shape: return False
+    n,m=outer.shape
+    for i in range(n):
+        for j in range(m):
+            olo=outer.mid[i][j]-outer.rad[i][j];ohi=outer.mid[i][j]+outer.rad[i][j]
+            ilo=inner.mid[i][j]-inner.rad[i][j];ihi=inner.mid[i][j]+inner.rad[i][j]
+            if ilo<olo or ihi>ohi: return False
+    return True
+
+
+def hull(a: IMat,b: IMat) -> IMat:
+    if a.shape!=b.shape: raise ValueError("shape mismatch")
+    n,m=a.shape;cm=[];cr=[]
+    for i in range(n):
+        mr=[];rr=[]
+        for j in range(m):
+            lo=min(a.mid[i][j]-a.rad[i][j],b.mid[i][j]-b.rad[i][j])
+            hi=max(a.mid[i][j]+a.rad[i][j],b.mid[i][j]+b.rad[i][j])
+            mr.append(.5*(lo+hi));rr.append(_out(.5*(hi-lo)))
+        cm.append(tuple(mr));cr.append(tuple(rr))
+    return IMat(tuple(cm),tuple(cr))
+
+
+def inflate(a: IMat, relative: float, absolute: float=0.0) -> IMat:
+    if not math.isfinite(relative) or relative<0 or not math.isfinite(absolute) or absolute<0:
+        raise ValueError("nonnegative inflation required")
+    r=[]
+    for mr,rr in zip(a.mid,a.rad):
+        r.append(tuple(_out(x+relative*abs(m)+absolute) for m,x in zip(mr,rr)))
+    return IMat(a.mid,tuple(r))
+
+
+def iterate_recurring_box(seed: IMat, word_map, *, max_iterations: int=32,
+                          hull_inflation: float=.02) -> dict:
+    """Iterate a verified interval word map to a self-containing covariance box.
+
+    word_map must use interval kernels and verified innovation solves and return
+    (image, innovation_certificates). No midpoint trajectory can promote this
+    routine. Completion requires a final fresh image contained entrywise in the
+    proposed box and a strictly positive interval spectral lower bound.
+    """
+    if seed.shape!=(N,N) or max_iterations<1:
+        raise ValueError("valid 21-state seed/iteration count required")
+    box=seed
+    for it in range(max_iterations):
+        image,certs=word_map(box)
+        if any(not x.get("verified",False) for x in certs):
+            return {"verified":False,"reason":"innovation inverse","iterations":it+1,
+                    "box":box,"innovation_certificates":certs}
+        if contains(box,image):
+            lo,hi=spectral_box(box)
+            return {"verified":lo>0.0,"reason":"contained" if lo>0 else "nonpositive spectral floor",
+                    "iterations":it+1,"box":box,"image":image,
+                    "spectral_lower":lo,"spectral_upper":hi,
+                    "innovation_certificates":certs}
+        box=inflate(hull(box,image),hull_inflation)
+    image,certs=word_map(box)
+    lo,hi=spectral_box(box)
+    return {"verified":contains(box,image) and lo>0 and all(x.get("verified",False) for x in certs),
+            "reason":"iteration limit","iterations":max_iterations,"box":box,"image":image,
+            "spectral_lower":lo,"spectral_upper":hi,
+            "innovation_certificates":certs}
