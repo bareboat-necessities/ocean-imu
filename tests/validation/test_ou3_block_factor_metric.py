@@ -1,12 +1,11 @@
 from __future__ import annotations
-import math,sys
+import sys
 from pathlib import Path
 import unittest
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_theorem.block_factor_metric import (
     BlockFactorFloor,BlockFactorMetric,active_bias_factor_floor,
-    attitude_bias_factor_probe,block_information_normalization,
-    block_scaled_schur_floor,translation_factor_probe,
+    block_information_normalization,block_scaled_schur_floor,
 )
 from tools.stability.ou3_theorem.interval_riccati_21 import (
     integrated_ou_scaled_factor_probe,
