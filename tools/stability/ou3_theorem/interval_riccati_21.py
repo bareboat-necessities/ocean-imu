@@ -261,12 +261,27 @@ def shipping_prediction_intervals(*, dt_min: float, dt_max: float,
         raise ValueError("ordered timing/tau bounds required")
 
     fm=[[0.0]*N for _ in range(N)]; fr=[[0.0]*N for _ in range(N)]
-    # Attitude rotation Rstep: orthogonal; entrywise [-1,1].
+    # Attitude rotation Rstep=Exp(-omega^ dt).  Do not throw away the
+    # near-identity structure by enclosing every entry in [-1,1]: Rodrigues
+    # gives |R_ii-1|<=1-cos(theta_max), |R_ij|<=sin(theta_max)+1-cos(theta_max).
+    # This is the first mathematically justified dependency refinement because
+    # theta_max=Omega_max*dt_max is only ~3.7e-3 rad.
+    theta_max=omega_max*dt_max
+    diag_rad=1.0-math.cos(theta_max)
+    off_rad=math.sin(theta_max)+diag_rad
     for i in range(3):
-        for j in range(3): fr[i][j]=1.0
-    # Exact Bstep integral, each entry bounded by dt_max.
+        fm[i][i]=1.0;fr[i][i]=_out(diag_rad)
+        for j in range(3):
+            if i!=j: fr[i][j]=_out(off_rad)
+    # Bstep=-int_0^dt Exp(-omega^ s) ds.  Its diagonal is near -dt and
+    # off-diagonals are O(Omega dt^2); preserve that structure as an interval.
+    dt_mid=.5*(dt_min+dt_max);dt_rad=.5*(dt_max-dt_min)
+    b_off=.5*omega_max*dt_max*dt_max + (omega_max**2)*dt_max**3/6.0
+    b_diag_extra=(omega_max**2)*dt_max**3/6.0
     for i in range(3):
-        for j in range(3): fr[i][3+j]=dt_max
+        fm[i][3+i]=-dt_mid;fr[i][3+i]=_out(dt_rad+b_diag_extra)
+        for j in range(3):
+            if i!=j: fr[i][3+j]=_out(b_off)
     for i in range(3): fm[3+i][3+i]=1.0
 
     # Linear [v,p,S,a_w], group-first offsets.
