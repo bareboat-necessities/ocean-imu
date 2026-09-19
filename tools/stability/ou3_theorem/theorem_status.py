@@ -27,6 +27,7 @@ def status_report() -> dict:
         "finite_reference_refinement_and_bias_release":False,
         "H18_to_A21_release_retention":False,
         "source_uniform_A21_linear_dissipativity":True,
+        "source_uniform_block_factor_root_coercivity":True,
         "constructive_fixed_coordinate_A21_mu_enclosure":True,
         "interval_riccati_kernel_layer":True,
         "maximal_correction_covariance_order":True,
@@ -57,5 +58,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"block/factor LIN certificate: enclose the useful scaled integrated-OU factor source-uniformly over continuous tau/process-noise range and carry it through intervening corrections (or verified 4x4 LIN Riccati factor). Generic cross-ceiling Gershgorin is retired after gamma=-5.122292072e8; post-prediction root coercivity uses additive block-diagonal Q factors with structural gamma=1.",
+        "next_controlling_obligation":"constructive numeric block factors for covariance-normalized rho0. Source-uniform block metric positivity is closed at post-prediction roots with gamma=1 from block-diagonal process injection; finite cross bounds follow from covariance compactness. Need numerical LIN continuous-tau factor (and compatible AG/BA scales) to compute mu_cov/rho0; the generic absolute-cross Gershgorin formula is retired as a conditioning failure.",
     }
