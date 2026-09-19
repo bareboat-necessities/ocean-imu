@@ -95,6 +95,20 @@ class RiccatiAndNonlinearClosureTests(unittest.TestCase):
         self.assertTrue(smooth)
         self.assertTrue(nonlinear_small_gain_exists_from_linear(.99,smooth))
 
+class MarineMagneticDiversityTests(unittest.TestCase):
+    def test_bounded_velocity_forces_vector_diversity(self):
+        threshold=marine_magnetic_diversity_window_min(9.80665,15.0,75.0,5.5)
+        self.assertGreater(threshold,5.6); self.assertLess(threshold,5.7)
+        floor=marine_magnetic_vector_diversity_floor(8.0,9.80665,15.0,75.0,5.5)
+        self.assertAlmostEqual(floor,43.97475)
+        self.assertTrue(attitude_information_from_marine_diversity(
+            diversity_floor=floor,magnetic_service_floor=1.0,
+            magnetic_service_window_s=1.0,angular_rate_ceiling=.6108652382))
+
+    def test_too_short_window_does_not_claim_diversity(self):
+        self.assertLess(marine_magnetic_vector_diversity_floor(
+            5.0,9.80665,15.0,75.0,5.5),0.0)
+
 class NeutralQuotientDetectabilityTests(unittest.TestCase):
     def test_tilt_gyro_bias_quotient_minor_is_uniform(self):
         self.assertAlmostEqual(abs(tilt_gyro_bias_quotient_minor(1.00665,.004)),
