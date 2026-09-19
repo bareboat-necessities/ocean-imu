@@ -106,52 +106,45 @@ projection/feasible-estimate premises hold. The single proof path therefore
 uses the complement with held bias as input on H18, then the actual release
 and A21 dynamics; it does not bypass the held leg.
 
-## H18 complement and supply inequality
+## Finite H18 bridge and A21 asymptotic tail
 
-Write the exact finite-error relation on one retained superword as
+PR #557 rules out one full-state H18 contraction tactic. It does not create a
+new proof obligation: shipping H18 is a finite bridge while the magnetic
+reference is provisional. A finite recurrence
 
-`x_plus=A x+B e_b+r`, `V=x^T W x`, `W=P_oo^-1`.
+`V_{k+1} <= g_H V_k + d_H`
 
-This identity can define `r` for a chosen surrogate `A,B`; it does not bound
-`r`. In particular, central differences about a nonzero reached error measure
-local incremental sensitivity. They do not eliminate the reference forcing,
-nonlinear terms, changing covariance/gains, frontend/tuner dependence, physical
-bias increments, model mismatch or arithmetic. All remain in `r` unless
-explicitly represented and bounded. Later superwords inherit the actual
-auxiliary state rather than the fixed auxiliary root of this diagnostic.
+has a finite bound for every finite bridge length, even when `g_H >= 1`.
+Therefore H18 needs finite retention until the implemented reference refinement
+and bias release, not asymptotic contraction.
 
-**Conditional finite-error supply lemma.** If certified matrices satisfy
-`A^T W_plus A <= alpha W` with `0<=alpha<rho<1`, then
+MAGNETIC SERVICE supplies at least one actually applied informative correction
+per service window. Conditional on finite completion of the outer magnetic
+reference refinement, the remaining internal accepted-update count and the
+one-second guard therefore clear in finite time. Proving finite reference
+refinement from the shipping state machine is the current release obligation.
 
-`V_plus <= rho V + rho/(rho-alpha) |B e_b+r|^2_W_plus`.
+After release, A21 is the recurring tail. Let a source-uniform linear A21
+service word satisfy
 
-Proof: use `|A x|_W_plus<=sqrt(alpha V)` and apply weighted Young's inequality
-to the cross term with weight `(rho-alpha)/alpha`; the case `alpha=0` is
-immediate. This is the location of the held-bias input in the controlling tail
-inequality. It is conditional until the same-history matrix bound, finite-error
-supply bound, coercivity and retained domain are certified.
+`||F e||_W <= sqrt(rho_0) ||e||_W`,  `rho_0 < 1`.
 
-For the isolated linear bias contribution, let `P_oo=L L^T` and
-`P_oo,plus=L_plus L_plus^T`, `M=L_plus^-1 A L`, `N=L_plus^-1 B`.
-If `Q=rho I-M^T M` is positive definite, completing the square gives the sharp
-linear gain
+If the complete finite nonlinear shipping word differs from its linear word by
+a same-history remainder with Lipschitz storage gain `eta`, then
 
-`gamma_b=lambda_max(N^T N+(M^T N)^T Q^-1(M^T N))`.
+`||F_nl(e_1)-F_nl(e_2)||_W <= (sqrt(rho_0)+eta)||e_1-e_2||_W`.
 
-It bounds `|M y+N u|^2<=rho |y|^2+gamma_b |u|^2` for the linear surrogate
-only. It must not replace the unknown total finite-error supply. Every-prefix
-retention additionally needs all-direction operator and supply bounds at each
-prefix, not the trajectory of the endpoint-maximizing direction alone.
+Hence the finite-error storage ratio is
 
-## Current closure
+`rho=(sqrt(rho_0)+eta)^2`,
 
-The machine-readable theorem status remains open. The complement diagnostic
-finds a positive but small endpoint margin. Its fine/coarse operator
-discrepancy is larger than the available norm margin; that discrepancy is not
-a rigorous uncertainty bound. Neither the exact nonlinear matrix inequality
-nor a bounded finite-error supply has been established. The next experiment
-must resolve sensitivity conditioning and bound the same-history finite-error
-remainder before any rigorous stability enclosure is claimed.
+and strict contraction follows from the explicit small-gain condition
+`sqrt(rho_0)+eta<1`. Bounded physical/model/arithmetic forcing then gives the
+usual practical-stability radius after coercivity and every-prefix retention
+are certified.
+
+This is the controlling proof route. Finite-difference superwords and candidate
+point ratios are not proof evidence and are not retained.
 
 ## Finite-error operation lemmas
 
