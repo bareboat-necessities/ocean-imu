@@ -393,3 +393,16 @@ innovation residual `r/a`, or the recurring spectral inclusion margins. If
 this single refinement does not cross the threshold, stop interval subdivision
 and review the covariance-normalization architecture rather than subdividing
 again.
+
+
+## Interval Riccati enclosure attempt
+
+The first full 21-state interval enclosure exposed a dependency failure rather than a covariance instability. The original attitude prediction constructor used the valid but useless entrywise box R_step in [-1,1]. At the shipping bound Omega <= 0.610865 rad/s and dt <= 0.006 s, the actual step rotation is within 0.003666 rad of identity, so that box discards almost all structure before the first Riccati multiplication.
+
+Classification: **interval-conditioning failure**, not a mathematical certificate failure. The fixed-coordinate information floor, UCO/UCC result, literal 21-state covariance/Joseph maps, and hard-event semantics remain valid.
+
+One mathematically motivated refinement has been applied, as permitted by the research protocol: Rodrigues bounds now retain |R_ii-1| <= 1-cos(Omega dt) and |R_ij| <= sin(Omega dt)+1-cos(Omega dt), while the gyro-bias injection integral keeps its near -dt I diagonal and O(Omega dt^2) off-diagonal structure. At the declared ceiling this reduces the attitude diagonal interval radius from 1 to below 7e-6 and off-diagonal radius below 0.0037.
+
+The finite branch-subdivision machinery is also in place. It exactly covers the unsplit parameter/H box, verifies every cell independently, and forms the hull of every branch image. It may be used only once to test whether the tightened near-identity transition crosses the innovation/self-inclusion threshold.
+
+**Next falsifiable experiment:** run the recurring-box certificate with the Rodrigues-tight F interval and one finite subdivision of the dominant accelerometer/magnetic attitude-Jacobian entries. Record the first failed innovation residual r/a, or the recurring spectral inclusion margins. If this single refinement does not cross the threshold, stop interval subdivision and review the covariance-normalization architecture rather than subdividing again.
