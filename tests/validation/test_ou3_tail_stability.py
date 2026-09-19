@@ -28,4 +28,17 @@ class TailStabilityTests(unittest.TestCase):
         with self.assertRaises(ValueError): release_bound_from_service(-1,1,1,1)
         with self.assertRaises(ValueError): A21TailPremises(-1,0,1,1,1)
 
+
+
+class RefinementTests(unittest.TestCase):
+    def test_uniform_gate_gives_finite_refinement(self):
+        p=RefinementPremises(128,30.0,1.0,40.0,44.0,.35,15.0,.05)
+        self.assertTrue(refinement_sample_gate_uniform(p))
+        self.assertEqual(refinement_completion_bound(90.0,p),218.0)
+
+    def test_wide_norm_envelope_does_not_fake_completion(self):
+        p=RefinementPremises(128,30.0,1.0,20.0,75.0,.35,15.0,.05)
+        self.assertFalse(refinement_sample_gate_uniform(p))
+        with self.assertRaises(ValueError): refinement_completion_bound(90.0,p)
+
 if __name__=="__main__": unittest.main()
