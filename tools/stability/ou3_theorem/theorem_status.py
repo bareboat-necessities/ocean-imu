@@ -11,6 +11,7 @@ def status_report() -> dict:
         "accepted_magnetic_information_definition":True,
         "no_heading_service_obstruction":True,
         "captured_domain_implies_finite_mag_refinement":True,
+        "captured_domain_implies_finite_A21_entry":True,
         "assembled_sensor_and_bias_limit_qualification":False,
         "all_time_marine_motion_membership_certificate":False,
         "finite_history_dependent_capture":False,
@@ -37,5 +38,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"prove finite reference refinement/release and finite H18 bridge retention, then certify source-uniform A21 linear dissipation and nonlinear small-gain remainder",
+        "next_controlling_obligation":"prove finite capture into the retained <=7 degree tilt domain and finite H18 bridge retention; in parallel certify source-uniform A21 linear dissipation and nonlinear small-gain remainder",
     }
