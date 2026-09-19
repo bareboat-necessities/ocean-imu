@@ -9,9 +9,10 @@
   "proof_path": [
     "construction",
     "startup/capture",
-    "magnetically informed Live/H18",
+    "finite magnetically informed Live/H18 bridge",
+    "finite reference refinement",
     "H18-to-A21 release",
-    "magnetically informed A21",
+    "recurring magnetically informed A21 tail",
     "regional practical stability"
   ],
   "certified_capture_time": "history dependent T_c(h,x_0) < infinity; no common finite deadline is claimed",
@@ -26,17 +27,27 @@
     "same_history_bias_recurrence": true,
     "accepted_magnetic_information_definition": true,
     "no_heading_service_obstruction": true,
+    "captured_domain_implies_finite_mag_refinement": true,
+    "captured_domain_implies_finite_A21_entry": true,
+    "time_varying_A21_translation_observability": true,
+    "uniform_gravity_tilt_sensitivity": true,
     "assembled_sensor_and_bias_limit_qualification": false,
     "all_time_marine_motion_membership_certificate": false,
     "finite_history_dependent_capture": false,
-    "finite_error_H18_dissipativity": false,
+    "finite_H18_bridge_retention": false,
+    "finite_reference_refinement_and_bias_release": false,
     "H18_to_A21_release_retention": false,
-    "finite_error_A21_dissipativity": false,
+    "uniform_A21_neutral_quotient_information_exists": true,
+    "uniform_A21_controllability_exists": true,
+    "A21_covariance_hard_event_compactness": true,
+    "local_A21_nonlinear_small_gain_exists": true,
+    "source_uniform_A21_linear_dissipativity": true,
+    "finite_error_A21_nonlinear_remainder": true,
     "certified_tail_prefix_retention": false,
     "source_uniform_magnetic_service_certificate": false,
     "implementation_and_arithmetic_totality": false
   },
   "theorem_closed": false,
   "regional_practical_stability_claimed": false,
-  "next_controlling_obligation": "restate H18 dissipation off the held accelerometer-bias coordinates, which the shipping H18 superword map reproduces exactly, and prove the restated inequality with prefix retention on the same physical history"
+  "next_controlling_obligation": "make the existential A21 margins constructive enough for capture/retention: enclose an explicit mu_N and rho0 on the strict inner domain, then bound the smooth nonlinear remainder radius and additive floating-point supply; finite capture and H18-to-A21 retention remain controlling"
 }

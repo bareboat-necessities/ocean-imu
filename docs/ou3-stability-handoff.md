@@ -1,68 +1,81 @@
 # OU-III stability handoff
 
-## Current theorem
+## Architecture
 
-There is one architecture with three simultaneous principal assumptions: MARINE MOTION, IMU BIAS, and MAGNETIC SERVICE. Shipping implementation is authoritative and pinned by `reports/results/ou3_stability/provenance.json`.
+There is one theorem under simultaneous MARINE MOTION, IMU BIAS, and MAGNETIC
+SERVICE assumptions on one persistent physical execution. Shipping code is
+authoritative.
 
-## Closed structural facts
+The proof route is
+`construction -> capture -> finite H18 bridge -> finite reference refinement
+and bias release -> recurring magnetically informed A21 -> regional practical
+stability`.
 
-- Permanent nonzero wave-displacement DC is excluded by the all-time bounded-primitive contract; quiet water is admitted.
-- Motion and bias samples are predecessor-linked parts of one persistent physical history.
-- Physical accelerometer and gyro biases are independent bounded/rate-bounded total residuals.
-- One accelerometer-bias prediction equation covers both estimator modes: `phi_e=1` in H18 and `phi_e=phi_OU` in A21. Correction and projection are separate literal shipping operations.
-- An attempted magnetic callback is not the same as an applied correction. Informative service consumes only actually applied, valid, unsaturated, gauged corrections and their transported/whitened information.
-- The indefinitely ungauged heading/axial-gyro-bias block is unipotent with spectral radius one and survives only as a necessity result.
-- Live handoff and H18-to-A21 release inherit the existing execution and are not proof resets.
-- The H18 hold is exact: the held accelerometer-bias estimate, its covariance block and its zeroed cross-covariances are bit-for-bit unchanged across a magnetically served window. The held bias is therefore an invariant coordinate of the H18 superword map, and strict full-state contraction is unavailable on that leg. It is bounded instead, by the estimate-projection lemma.
+## Key correction in PR #558
 
-## Open controlling obligations
+H18 is no longer asked to provide asymptotic contraction. PR #557 showed why a
+particular full-state held-bias contraction formulation cannot work. That
+negative result is retained in prose, while its experimental export and
+finite-difference scripts have been removed.
 
-1. Qualify assembled-sensor bias/residual limits, including the accelerometer bias-rate limit.
-2. Supply an all-time marine bounded-primitive certificate.
-3. Prove finite history-dependent startup/capture into the finite-error tail domain.
-4. Restate the H18 obligation off the held accelerometer-bias coordinates -- strict dissipation on the complement, with the held bias as a bounded input -- and prove the restated same-history inequality with every-prefix retention. The full-state form is refuted, not merely unproved.
-5. Prove the actual H18-to-A21 transition retains the certified domain.
-6. Close the corresponding magnetically informed A21 finite-error inequality.
-7. Prove recurring MAGNETIC SERVICE using actually applied sensitivities.
-8. Close shipping finite-precision/arithmetic totality and all hard-event retention.
+The shipping wrapper itself supplies the reason to move on: accelerometer-bias
+learning is externally held while the magnetic reference is provisional, and
+the hold is released when refinement completes. The internal gate additionally
+requires its accepted-magnetometer-update threshold and a one-second guard.
+Under recurring MAGNETIC SERVICE the count/guard part is finite once reference
+refinement is finite.
 
-No end-to-end stability claim is authorized while any item remains open.
+## Productive proof obligations
+
+1. Qualify the assembled sensor/bias limits and all-time marine-motion
+   membership.
+2. Prove finite history-dependent startup/capture.
+3. Prove finite magnetic-reference refinement and hence finite H18 release.
+4. Bound the finite H18 bridge and prove the literal release retains the A21
+   tail domain.
+5. Establish a source-uniform complete A21 information floor in normalized
+   covariance coordinates. MAGNETIC SERVICE supplies the heading/axial
+   gyro-bias component; gravity/accelerometer and integral pseudo-updates must
+   close the remaining directions. A full floor mu gives the linear comparison
+   rho0<=1/(1+mu).
+6. Retain A21 inside the inactive accelerometer-bias projection region
+   (bias-error radius <0.1748334 m/s^2), then bound the remaining nonlinear
+   reset/tuner/arithmetic remainder. Close finite-error contraction with
+   (sqrt(rho0)+eta)^2 < 1.
+7. Close every-prefix retention, recurring service, and finite-precision
+   arithmetic.
 
 ## Reproduction
 
-`cd tests/validation && python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_theorem_status test_ou3_finite_error test_ou3_h18_superword`
+`cd tests/validation && python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_same_execution test_ou3_theorem_status test_ou3_tail_stability`
 
 `python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json`
 
 `make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test && ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test`
 
-## Measuring one superword
+No H18 numerical diagnostic is a proof gate. The next implementation work
+should target finite reference refinement/release and the analytic A21
+dissipativity inequality.
 
-    make -C tools/stability h18-superword OUTPUT_DIR=/tmp
 
-`tools/stability/ou3_theorem/h18_superword_export.cpp` runs the shipping filter
-through its own startup and deployed handoff, keeps H18 with the shipping
-external hold, and exports one magnetically informed service superword: the
-covariance at every prefix, central differences of the complete closed-loop
-finite-error map taken through the shipping code, and the actual innovation
-covariance and sensitivity of every correction the update really applied.
-`h18_superword.py` evaluates the candidate storage on that export in `decimal`
-at 60 digits and reports the worst admissible ratio, its limiting direction,
-every-prefix retention, applied magnetic information and the held-bias
-obstruction. Neither step gates CI and neither can discharge an obligation; the
-measured numbers live in `docs/ou3-proof-research-state.md`.
+## Latest analytic closure
 
-## Latest continuation
+The A21 operating point is now handled as genuinely time varying. The
+tau-scaled, progress-preserving S scheduler plus compact dt/tau bounds yields a
+uniform positive translation observability minor through an extended-Chebyshev
+argument. Gravity supplies a uniform 1.00665 m/s^2 tilt sensitivity floor;
+MAGNETIC SERVICE supplies the missing heading/axial-gyro-bias information.
+After quotienting the strictly stable active accelerometer-bias OU mode, the
+neutral information Gramian is pointwise positive on strict compact hybrid
+cells, hence has an existential uniform floor mu_N>0.
 
-The full-state H18 dissipation target is refuted by the held-bias obstruction,
-so the next measurement is the complement map described under Next falsifiable
-experiment in the research state. Do not spend further enclosure effort on the
-full-state form.
+Positive process-noise densities give uniform complete controllability, and the
+shipping covariance sync/release operations preserve compactness. Therefore
+the linear A21 LTV Kalman error word has a source-uniform rho0<1. On the strict
+6-degree / 0.15 m/s^2 inner domain, projection is inactive and the same-history
+nonlinear remainder is smooth with eta(r)->0, so a positive local radius exists
+with sqrt(rho0)+eta<1. Arithmetic is additive supply.
 
-Run the shared workflow and fingerprint regressions alongside the theorem tests:
-`cd tests/validation && python3 -m unittest -v test_workflow_contract test_ou_replay_fingerprint`.
-The native shipping-transition test also checks actual gain correction,
-nonpositive projection radius, covariance preservation at projection, the
-invalid-injection branch that bypasses projection, and the exactness of the H18
-hold across a served window. Source-pinned CI archives and logs are retained
-even when a contract fails.
+Next work is to make these existential margins constructive: enclose numerical
+mu_N/rho0, derive an explicit nonlinear radius, bound arithmetic supply, and
+prove capture/release retention into that radius.

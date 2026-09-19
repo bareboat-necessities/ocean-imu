@@ -1,6 +1,6 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "802747dd6c4f8d381f5db01478aef71cf74070c2",
+  "base_main_commit": "1c0c799a6d8d6b8aadbff95a92f975a33cea7f2f",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
@@ -29,8 +29,18 @@
     "integral_innovation": "With a single fixed capture origin S_true=q(t)-q(T_c), shipping r_S=-S_hat=e_S-S_true retains the physical potential forcing.",
     "magnetic_coordinate_transport": "The complete preceding transport may be rectangular between error charts. Dimension compatibility and finite audits do not certify a release map or source-uniform information.",
     "point_audit_scope": "Supplied finite-error values and structural flags are diagnostic assertions, not a verified source-uniform certificate. Missing bounds, vacuous prefixes and overflow cannot promote completion.",
-    "held_accelerometer_bias_hold": "While the hold is in force the estimate, its covariance block and its zeroed cross-covariances are unchanged, so the held bias is an invariant coordinate of the superword error map and no full-state rho<1 exists on that leg.",
-    "superword_feasibility_scope": "The exported superword and its high-precision evaluation measure one reached execution. They are non-promoting evidence: no ratio, direction or margin they report discharges a proof obligation or establishes source uniformity."
+    "held_accelerometer_bias_hold": "On feasible held segments without projection-changing or frame/relock events, the bias estimate and its decoupled covariance block are unchanged. Same-history incremental bias is invariant; absolute bias error still carries the shared physical increment. The incremental full-state contraction obstruction does not remove hard-event or release obligations.",
+    "h18_role": "finite bridge until magnetic-reference refinement and implemented accelerometer-bias release; asymptotic contraction is not required on H18",
+    "a21_tail": "recurring magnetically informed asymptotic tail; linear storage contraction plus a finite-error nonlinear small-gain remainder is the productive proof target",
+    "pr557_negative_result": "held-bias identity obstructs one strict full-state H18 incremental contraction formulation; diagnostic scripts are not theorem machinery",
+    "mag_refinement_completion": "On the captured <=~7 degree tilt domain, existing |B|>=20 uT, |B|<=75 uT, horizontal>=15 uT and residual<=2 uT bounds imply the deployed unweighted MagAutoTuner 35% norm and 5% horizontal gates. MAGNETIC SERVICE then gives finite 128-sample/30-s completion and, with the internal 250-update/1-s guard, finite A21 entry.",
+    "a21_information_route": "Use the complete normalized transported information of all A21 gravity/accelerometer, integral pseudo-, and magnetic corrections. A full floor mu>0 yields the linear covariance-metric comparison rho0<=1/(1+mu); MAGNETIC SERVICE alone covers only the heading/axial gyro-bias component.",
+    "a21_projection_interior": "With estimate projection radius 0.4 m/s^2 and physical accelerometer-bias bound 0.22516660498395405 m/s^2, ||e_ba||<0.17483339501604597 m/s^2 keeps projection inactive on the local A21 tail.",
+    "a21_translation_observability": "For constant-parameter scalar active-bias OU-III, the observability minor from four S rows and one attitude-normalized accel row has determinant -Delta^3 tau^3 (1-exp(-Delta/tau))^3, nonzero for positive finite Delta,tau. Time-varying shipping extension remains open.",
+    "a21_time_varying_observability": "The tau-scaled progress-preserving S scheduler plus dt in [0.004,0.006] s and tau in [0.02,12] s gives a uniform positive time-varying translation minor by the extended-Chebyshev property K'''=exp(-integral 1/tau)>0.",
+    "a21_uniform_detectability": "Active accelerometer bias is a strictly stable OU mode in A21. On the neutral quotient, translation is uniformly observable from S recurrence, gravity observes tilt/transverse gyro bias with sensitivity >=g-A_max, and MAGNETIC SERVICE observes heading/axial gyro bias. Strict compact branch cells imply an existential uniform quotient information floor mu_N>0.",
+    "a21_uniform_controllability": "Positive integrated-OU, gyro white-noise, gyro-bias RW and active accelerometer-bias OU driving densities on the compact timing/tau envelope imply uniform complete controllability. Default a_w covariance sync is a bounded PSD prediction increment; bias release is a bounded diagonal covariance floor.",
+    "a21_local_nonlinear_closure": "On tilt<=6 deg and accelerometer-bias error<=0.15 m/s^2, projection is inactive; tuner and refined magnetic-reference schedules are same-history exogenous; smooth MEKF measurement/reset remainder has eta(r)->0. Thus source-uniform linear rho0<1 implies existence of r*>0 with sqrt(rho0)+eta(r*)<1. Roundoff remains additive supply."
   },
   "operation_lemma_sources": [
     {
@@ -63,27 +73,11 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "062afbf8294f08d86e806ebd7045fd10f09ede59"
+      "git_blob_sha": "782484a303f52aa4cc8b655b9387949e6ca3daef"
     },
     {
-      "path": "tools/stability/ou3_theorem/finite_error.py",
-      "git_blob_sha": "9cfbf802037b43872179c6b64af6a641e4408280"
-    },
-    {
-      "path": "tests/validation/test_ou3_finite_error.py",
-      "git_blob_sha": "ff433a993750a5beda200c4daac6a0b307090961"
-    },
-    {
-      "path": "tools/stability/ou3_theorem/h18_superword.py",
-      "git_blob_sha": "500c9e2eaca121de66bbc116e5e7d977b23f911d"
-    },
-    {
-      "path": "tools/stability/ou3_theorem/h18_superword_export.cpp",
-      "git_blob_sha": "54b3ee201a2aabf41e117d9984340054ab2d745b"
-    },
-    {
-      "path": "tests/validation/test_ou3_h18_superword.py",
-      "git_blob_sha": "ddb7449cbb9a89b46fbe7d0047036134dd8aca3a"
+      "path": "tools/stability/ou3_theorem/tail_stability.py",
+      "git_blob_sha": "34a275a9ff1f07e3155c54f0205ef4d3480b2d62"
     }
   ]
 }
