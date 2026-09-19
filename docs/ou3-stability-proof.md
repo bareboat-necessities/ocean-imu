@@ -220,3 +220,20 @@ same-history exogenous. The remaining MEKF measurement/reset maps are smooth,
 so their multiplicative remainder gain satisfies `eta(r)->0`. Hence some
 positive `r_*` satisfies `sqrt(rho_0)+eta(r_*)<1`. Floating-point error is
 an additive bounded supply and does not consume this derivative margin.
+
+
+## Marine-forced attitude diversity
+
+The attitude information floor follows from the existing physical contracts.
+For `f=a-g` and true field `B`,
+
+`integral_0^T f x B dt = Delta v x B - T g x B`.
+
+Thus
+`T^-1 ||integral f x B dt|| >= g B_h,min - 2 V_max B_max/T`.
+With the declared limits this becomes positive after 5.60844 s and is
+43.97475 (m/s^2) uT for T=8 s. Every 8 s marine history therefore contains
+non-collinear gravity/specific-force and magnetic sensitivity. Recurring
+MAGNETIC SERVICE transports an applied magnetic sensitivity into that interval.
+Two 8 s subwindows form the 16 s A21 proof word and expose gyro bias through
+attitude propagation. No additional attitude-excitation assumption is used.
