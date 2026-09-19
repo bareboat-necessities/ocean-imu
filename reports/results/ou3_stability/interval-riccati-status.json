@@ -1,0 +1,12 @@
+{
+  "qualification": "OU3_A21_INTERVAL_RICCATI_V1",
+  "fixed_coordinate_mu": 0.00204,
+  "status": "OPEN",
+  "innovations": [],
+  "recurring_image": null,
+  "covariance_hard_events_included": false,
+  "full_shipping_schedule_included": false,
+  "float32_rounding_included": false,
+  "certificate_complete": false,
+  "blocker": "outward-rounded full shipping Riccati image and verified innovation inverse enclosures have not yet been produced"
+}
