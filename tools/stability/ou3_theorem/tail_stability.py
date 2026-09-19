@@ -971,3 +971,35 @@ def every_prefix_retained(*, prefix_gains: tuple[float,...],
         raise ValueError("valid prefix-retention bounds required")
     return all(g*entry_radius+d <= retained_radius
                for g,d in zip(prefix_gains,per_prefix_additive_bounds))
+
+
+def capture_bridge_release_bound(*, capture_storage: float,
+                                 bridge_steps: int,
+                                 bridge_gain: float,
+                                 bridge_supply: float,
+                                 release_gain: float,
+                                 release_supply: float) -> float:
+    """Compose finite capture -> H18 bridge -> literal release in storage."""
+    if not all(math.isfinite(x) and x>=0 for x in
+               (capture_storage,bridge_gain,bridge_supply,release_gain,release_supply)):
+        raise ValueError("finite nonnegative capture/release data required")
+    if bridge_steps<0:
+        raise ValueError("nonnegative bridge length required")
+    before=finite_bridge_bound(capture_storage,bridge_steps,bridge_gain,bridge_supply)
+    return release_gain*before+release_supply
+
+
+def release_enters_explicit_tail(*, capture_storage: float,
+                                 bridge_steps: int,
+                                 bridge_gain: float,
+                                 bridge_supply: float,
+                                 release_gain: float,
+                                 release_supply: float,
+                                 tail_storage_radius: float) -> bool:
+    """Fail-closed set inclusion once the explicit A21 radius exists."""
+    if not math.isfinite(tail_storage_radius) or tail_storage_radius<=0:
+        raise ValueError("positive explicit tail radius required")
+    return capture_bridge_release_bound(
+        capture_storage=capture_storage,bridge_steps=bridge_steps,
+        bridge_gain=bridge_gain,bridge_supply=bridge_supply,
+        release_gain=release_gain,release_supply=release_supply) <= tail_storage_radius
