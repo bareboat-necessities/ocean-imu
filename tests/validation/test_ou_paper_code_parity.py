@@ -39,8 +39,7 @@ class OUPaperCodeParityTests(unittest.TestCase):
         cls.ou3_impl = text("doc/kalman_ou_iii/w3d-fus-methods.tex-part")
         cls.ou3_axes = text("doc/kalman_ou_iii/w3d-rs-anisotropy-design.tex-part")
         cls.ou3_conclusion = text("doc/kalman_ou_iii/w3d-conclusion-summary.tex-part")
-        cls.ou3_iss = text("doc/kalman_ou_iii/w3d-iss-stability.tex-part")
-        cls.ou3_init = text("doc/kalman_ou_iii/w3d-init.tex-part")
+        cls.ou3_init = text("doc/kalman_ou_iii/w3d-initialization-overview.tex-part")
         cls.ou3_mag = text("doc/kalman_ou_iii/w3d-mag-hard-iron.tex-part")
         cls.ou2_paper = text("doc/kalman_ou_ii/ou2-dual-regularization-mse.tex")
         cls.ou2_iss = text("doc/kalman_ou_ii/ou2-iss-stability.tex-part")
@@ -156,32 +155,25 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("$[\\SI{0.5}{s},\\SI{6}{s}]$", self.ou3_impl)
         self.assertIn("$[\\SI{0.05}{s},\\SI{35}{s}]$", self.ou3_impl)
 
-    def test_ou3_iss_source_clamp_family_matches_the_header(self):
-        """The ISS section names the clamp family the machine certificate assumes.
-
-        Those clamps are the theorem's domain, not decoration: a retune that
-        moves a header constant without moving this paragraph leaves the
-        certificate quoting an envelope the implementation no longer enforces.
-        The same numbers are pinned on the C++ side by
-        tests/kalman_ou_iii/iss_contract-test.cpp.
-        """
-        for token in (
-            "MAX_TUNE_FREQ_HZ = 1.2f",
-            "MAX_SIGMA_A = 4.0f",
-            "MAX_R_S     = 100.0f",
-            "PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f",
+    def test_ou3_implementation_clamps_match_the_header(self):
+        """Pin runtime defaults in the current implementation table, not a proof."""
+        for name, label, pattern in (
+            ("MAX_TUNE_FREQ_HZ", "tuning-frequency bounds",
+             r"\$\[[0-9.]+,([0-9.]+)\]\$ Hz"),
+            ("MAX_SIGMA_A", r"stationary scale ceiling $\sigma_{aw,\max}$",
+             r"\\SI\{([0-9.]+)\}\{m.s\^\{-2\}\}"),
+            ("MAX_R_S", r"base integral scale $[r_{S,\min},r_{S,\max}]$",
+             r"\$\[[0-9.]+,([0-9.]+)\]\$"),
         ):
-            self.assertIn(token, self.ou3_wrap)
-        self.assertIn("kDynamicEmaHorizonMaxSec = 35.0f", self.limits)
-
-        for token in (
-            r"f_{\rm tune}\le\SI{1.2}{Hz}",
-            r"\sigma_{aw,k}^{\rm proc}\le\SI{4}{m/s^2}",
-            r"r_{S,k}\le\SI{100}{m.s}",
-            r"T_{S,k}\le\SI{0.15}{s}",
-            r"clamped at $\SI{35}{s}$",
-        ):
-            self.assertIn(token, self.ou3_iss)
+            with self.subTest(constant=name):
+                source = re.search(rf"\b{name}\s*=\s*([0-9.]+)f", self.ou3_wrap)
+                row = next(line for line in self.ou3_impl.splitlines() if label in line)
+                paper = re.search(pattern, row)
+                self.assertIsNotNone(source, name)
+                self.assertIsNotNone(paper, row)
+                self.assertEqual(float(source.group(1)), float(paper.group(1)))
+        # The cadence and dynamic-horizon bounds have dedicated parity tests.
+        self.assertIn(r"\label{tab:implementation-gates}", self.ou3_impl)
 
     def test_ou3_candidate_emas_and_activation_hold_match_source(self):
         for token in (
@@ -200,13 +192,13 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("$1.5\\tau_\\star$", self.ou3_impl)
         self.assertIn("discrepancy-based\nhorizon-shortening term is disabled", self.ou3_impl)
 
-        # The stability source family must model the same two-layer recurrence,
-        # not silently apply the candidate EMA directly to the active MEKF.
-        self.assertIn(r"\widetilde x_{k+1}", self.ou3_iss)
-        self.assertIn(r"\label{eq:iss-source-hold-commit}", self.ou3_iss)
-        self.assertIn("active schedule is sample-and-hold", self.ou3_iss)
-        self.assertIn("activation timer", self.ou3_iss)
-        self.assertIn("on non-commit samples it is exactly\nzero", self.ou3_iss)
+        # Candidate smoothing is not an applied MEKF update. The current
+        # implementation description carries the pending/next-sample boundary.
+        self.assertIn(r"\label{eq:adapt-ewma}", self.ou3_impl)
+        self.assertIn(r"\label{eq:adapt-one-sample-staging}", self.ou3_impl)
+        self.assertIn("active MEKF schedule is held between", self.ou3_impl)
+        self.assertIn("activation timer", self.ou3_impl)
+        self.assertIn("committed at the beginning of sample $k+1$", self.ou3_impl)
 
     def test_ou3_startup_gravity_ema_matches_source(self):
         self.assertRegex(
