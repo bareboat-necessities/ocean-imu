@@ -46,7 +46,8 @@
     "a21_projection_release": "Universal H18 release cannot guarantee projection-inactive bias error: B_a=0.2251666 exceeds R_b-B_a=0.1748334 even for zero held estimate. A21 therefore retains the literal dissipative projection sector and global post-projection error bound B_a+R_b=0.6251666 m/s^2.",
     "a21_quantitative_translation": "Constructive normalized neutral translation floor mu_trans>=2.04734e-3 from three literal S events on a 16 s word, max 0.156 s event delay, scales (5.5,8.1,1100), and r_S<=100. Full mu_N remains open because the transported MAGNETIC SERVICE heading/axial-bias Gramian must be composed directly with recurring accelerometer rows.",
     "float32_supply": "Kernelwise arithmetic uses gamma_n=n*2^-24/(1-n*2^-24); no whole-word supply is promoted until literal operation counts and magnitude envelopes are composed.",
-    "a21_service_schur": "Full quantitative composition uses a PSD block-Schur bound for the actual transported MAGNETIC SERVICE Gramian; it does not replace service by an instantaneous heading row."
+    "a21_service_schur": "Full quantitative composition uses a PSD block-Schur bound for the actual transported MAGNETIC SERVICE Gramian; it does not replace service by an instantaneous heading row.",
+    "a21_quantitative_status": "Constructive translation floor is closed. Sparse two-epoch attitude/gyro number is diagnostic only and explicitly not promoted. Full mu_N must use PSD Schur composition of the actual transported 2-D MAGNETIC SERVICE Gramian with aggregate accelerometer information."
   },
   "operation_lemma_sources": [
     {
@@ -83,7 +84,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
-      "git_blob_sha": "400fbadcb6db9a4a11f8178d0a80d15f91cb485b"
+      "git_blob_sha": "9a167e2e81a013c5942f57151cbba96109c586b5"
     }
   ]
 }
