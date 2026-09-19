@@ -16,7 +16,9 @@ from tools.stability.ou3_theorem.tail_stability import (
     marine_magnetic_diversity_window_min, marine_magnetic_vector_diversity_floor,
     neutral_quotient_uniform_mu_exists, nonlinear_margin_from_information,
     nonlinear_small_gain_exists_from_linear, nonlinear_tail_ratio,
-    practical_radius_bound, proof_route_status, pseudo_decay_exponent_per_gap,
+    practical_radius_bound, projection_sector_is_dissipative, proof_route_status,
+    pseudo_decay_exponent_per_gap, release_can_guarantee_projection_inactive,
+    small_gain_budget,
     refinement_completion_bound, refinement_gate_margins,
     refinement_sample_gate_uniform, refinement_tilt_limit_rad,
     release_bound_from_service, shipping_covariance_hard_events_retain_compactness,
@@ -81,6 +83,20 @@ class TimeVaryingShippingObservabilityTests(unittest.TestCase):
     def test_cross_coupling_must_fit_block_floors(self):
         self.assertGreater(coupled_information_floor(2.0,3.0,1.0),0)
         self.assertLessEqual(coupled_information_floor(1.0,1.0,1.0),0)
+
+class ProjectionReleaseTests(unittest.TestCase):
+    def test_universal_release_is_not_projection_inactive(self):
+        self.assertFalse(release_can_guarantee_projection_inactive(
+            physical_bias_bound=.22516660498395405,projection_radius=.4,
+            pre_release_estimate_bound=0.0))
+        self.assertTrue(projection_sector_is_dissipative(
+            truth_bound=.22516660498395405,projection_radius=.4))
+
+    def test_small_gain_budget_is_explicit(self):
+        b=small_gain_budget(.81,.05)
+        self.assertAlmostEqual(b["available_eta"],.1)
+        self.assertAlmostEqual(b["slack"],.05)
+        self.assertTrue(b["closed"])
 
 class RiccatiAndNonlinearClosureTests(unittest.TestCase):
     def test_shipping_positive_noise_envelope_is_uniformly_controllable(self):
