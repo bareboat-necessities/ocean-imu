@@ -611,14 +611,18 @@ def conservative_float32_kernel_error(op_count: int, magnitude_bound: float) -> 
     return gamma*magnitude_bound
 
 def bias_release_error_bound(physical_bias_bound: float,
-                             held_estimate_bound: float,
-                             physical_drift_rate: float,
-                             bridge_s: float) -> float:
-    """Universal H18 release error before the first active-bias correction."""
-    vals=(physical_bias_bound,held_estimate_bound,physical_drift_rate,bridge_s)
+                             held_estimate_bound: float) -> float:
+    """Universal H18 release error before the first active-bias correction.
+
+    The physical bias contract is an all-time amplitude bound, so rate drift
+    must not be added to it again. H18 holds the estimate; absent a stronger
+    correlation between truth and that held estimate, triangle inequality is
+    sharp.
+    """
+    vals=(physical_bias_bound,held_estimate_bound)
     if not all(math.isfinite(x) for x in vals) or min(vals) < 0:
         raise ValueError("finite nonnegative release data required")
-    return physical_bias_bound+held_estimate_bound+physical_drift_rate*bridge_s
+    return physical_bias_bound+held_estimate_bound
 
 def projection_sector_retained_error_bound(physical_bias_bound: float,
                                            projection_radius: float) -> float:
