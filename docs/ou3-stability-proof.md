@@ -46,7 +46,7 @@ Estimator hold, release, correction, and projection never reset physical truth. 
 
 ## MAGNETIC SERVICE
 
-For each certified tail window rooted at `s`, let `Phi(k,s)` be the ordered differential of the complete preceding same-history shipping execution. Let `H_m,k` be the literal magnetic sensitivity and `S_m,k^act` the actual innovation covariance presented to the shipping factorization for a correction that was actually applied. In normalized heading/axial-gyro-bias root coordinates,
+For each certified tail window rooted at `s`, let `Phi(k,s)` be the ordered differential of the complete preceding same-history shipping execution. The transport ends immediately before the magnetic correction, not after it. Let `H_m,k` be the literal pre-correction magnetic sensitivity and `S_m,k^act` the actual innovation covariance presented to the shipping factorization for a correction that was actually applied. In normalized heading/axial-gyro-bias root coordinates,
 
 `G_k=W_k H_m,k Phi(k,s) E_hb`, with `W_k^T W_k=(S_m,k^act)^(-1)`.
 
@@ -84,23 +84,74 @@ The block has spectral radius one and produces linear heading growth for nonzero
 
 ## Held accelerometer bias in H18
 
-While H18 holds the accelerometer bias, the shipping estimator applies no bias mean dynamics, freezes the bias rows of every gain, and leaves the bias cross-covariances at the zero the hold installed. Write the finite error as `(e_o, e_b)` with `e_b` the held accelerometer-bias coordinates. The complete superword map is then
+On a held segment with completed finite operations, an already feasible bias
+estimate, and no frame/relock or projection-changing event, the estimator bias
+is constant, its gain rows vanish, and its covariance block is frozen and
+decoupled. Physical bias need not be constant: the absolute error obeys
+`e_b[k+1]=e_b[k]+w[k]`. Only differences between executions with the **same
+physical history** cancel this shared increment.
 
-`(e_o, e_b) -> (A e_o + B e_b, e_b)`,
+The same-history incremental differential has block form
+`Psi=[[A,B],[0,I3]]`. It is not a global linear formula for the absolute
+nonlinear finite error. With decoupled covariance and unchanged `P_bb`, a
+direction `delta e=(0,u)` gives
 
-and the shipping covariance is block diagonal against the same split with `P_bb` unchanged across the superword. For `e=(0,e_b)`,
+`V_end(Psi delta e)=(B u)^T P_oo,end^-1 (B u)+V_root(delta e)>=V_root(delta e)`.
 
-`V_(end)(Psi e) = (B e_b)^T P_(oo,end)^(-1) (B e_b) + V_(root)(e) >= V_(root)(e)`.
+The identity block also precludes strict contraction in a fixed quadratic
+metric. This is a held-mode necessity result, not instability, and does not
+remove the separate projection, relock, frame-change or release obligations.
+The absolute held bias is bounded by `|e_b|<=B_a+R_b` once the finite completed
+projection/feasible-estimate premises hold. The single proof path therefore
+uses the complement with held bias as input on H18, then the actual release
+and A21 dynamics; it does not bypass the held leg.
 
-So `rho<1` is unavailable on the full H18 coordinate at any superword length, under any admissible motion, and with any amount of magnetic information. Equivalently the map is block triangular with an exact identity block, so it carries eigenvalue one and no time-invariant quadratic storage escapes the bound either.
+## H18 complement and supply inequality
 
-This is a non-contraction obstruction, not an instability result: the held bias is bounded by the estimate-projection lemma, `|e_b| <= B_a + R_b`. The consequence is that the H18 dissipation target must be restated on the complement with the held bias as a bounded input, or the certified tail must begin at the H18-to-A21 release where the shipping multiplier is `phi_OU<1`. The obstruction is the H18 counterpart of the ungauged heading necessity result above, and like it, it is a necessity lemma rather than a second theorem.
+Write the exact finite-error relation on one retained superword as
 
-The measured instance is recorded in `docs/ou3-proof-research-state.md`. Its premises are pinned by `tests/kalman_ou_iii/shipping_transition-test.cpp` and stated executably by `held_bias_non_contraction` in `tools/stability/ou3_theorem/finite_error.py`.
+`x_plus=A x+B e_b+r`, `V=x^T W x`, `W=P_oo^-1`.
+
+This identity can define `r` for a chosen surrogate `A,B`; it does not bound
+`r`. In particular, central differences about a nonzero reached error measure
+local incremental sensitivity. They do not eliminate the reference forcing,
+nonlinear terms, changing covariance/gains, frontend/tuner dependence, physical
+bias increments, model mismatch or arithmetic. All remain in `r` unless
+explicitly represented and bounded. Later superwords inherit the actual
+auxiliary state rather than the fixed auxiliary root of this diagnostic.
+
+**Conditional finite-error supply lemma.** If certified matrices satisfy
+`A^T W_plus A <= alpha W` with `0<=alpha<rho<1`, then
+
+`V_plus <= rho V + rho/(rho-alpha) |B e_b+r|^2_W_plus`.
+
+Proof: use `|A x|_W_plus<=sqrt(alpha V)` and apply weighted Young's inequality
+to the cross term with weight `(rho-alpha)/alpha`; the case `alpha=0` is
+immediate. This is the location of the held-bias input in the controlling tail
+inequality. It is conditional until the same-history matrix bound, finite-error
+supply bound, coercivity and retained domain are certified.
+
+For the isolated linear bias contribution, let `P_oo=L L^T` and
+`P_oo,plus=L_plus L_plus^T`, `M=L_plus^-1 A L`, `N=L_plus^-1 B`.
+If `Q=rho I-M^T M` is positive definite, completing the square gives the sharp
+linear gain
+
+`gamma_b=lambda_max(N^T N+(M^T N)^T Q^-1(M^T N))`.
+
+It bounds `|M y+N u|^2<=rho |y|^2+gamma_b |u|^2` for the linear surrogate
+only. It must not replace the unknown total finite-error supply. Every-prefix
+retention additionally needs all-direction operator and supply bounds at each
+prefix, not the trajectory of the endpoint-maximizing direction alone.
 
 ## Current closure
 
-The machine-readable status in `reports/results/ou3_stability/theorem-status.json` intentionally remains open. The next controlling obligation is to restate H18 dissipation off the held accelerometer-bias coordinates and to prove the restated inequality, with prefix retention, on the same physical history.
+The machine-readable theorem status remains open. The complement diagnostic
+finds a positive but small endpoint margin. Its fine/coarse operator
+discrepancy is larger than the available norm margin; that discrepancy is not
+a rigorous uncertainty bound. Neither the exact nonlinear matrix inequality
+nor a bounded finite-error supply has been established. The next experiment
+must resolve sensitivity conditioning and bound the same-history finite-error
+remainder before any rigorous stability enclosure is claimed.
 
 ## Finite-error operation lemmas
 

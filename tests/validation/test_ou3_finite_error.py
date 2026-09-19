@@ -113,6 +113,17 @@ class HeldBiasObstructionTests(unittest.TestCase):
         self.assertEqual(r["full_state_rho_status"], "undecided_here")
         self.assertNotIn("strict_full_state_rho_available", r)
 
+    def test_approximate_identity_does_not_prove_exact_obstruction(self):
+        moving = tuple(tuple((1.0-1e-8) if i == j else 0.0 for j in range(3))
+                       for i in range(3))
+        r = held_bias_non_contraction(self.block(map_block=moving), tolerance=1e-6)
+        self.assertTrue(r["within_diagnostic_tolerance"])
+        self.assertFalse(r["non_contraction_obstruction"])
+        self.assertEqual(r["full_state_rho_status"], "undecided_here")
+        for value in (-1.0, float("nan"), float("inf")):
+            with self.assertRaises(ValueError):
+                held_bias_non_contraction(self.block(), tolerance=value)
+
     def test_malformed_measurements_are_rejected(self):
         with self.assertRaises(ValueError):
             self.block(map_block=((1.0, 0.0), (0.0, 1.0)))

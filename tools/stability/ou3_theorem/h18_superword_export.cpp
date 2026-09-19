@@ -196,6 +196,7 @@ struct MagEvent {
     double time = 0.0;
     std::array<double, 3> sensitivity_axis{};   // predicted field in body coordinates
     std::array<double, 9> innovation_covariance{};
+    ErrorVec pre_error{};            // same truth, immediately BEFORE this correction
 };
 
 struct RunRecord {
@@ -273,7 +274,27 @@ RunRecord run_execution(const std::vector<Sample>& history, int settle_samples,
         }
 
         const bool mag_due = f.isAdaptiveLive() && (k % MAG_STRIDE) == 0;
+        MagEvent candidate;
+        const bool record_mag = rooted && mag_due && k + 1 < samples;
+        if (record_mag) {
+            candidate.prefix = k - root_index;
+            candidate.time = static_cast<double>(k) * DT;
+            candidate.pre_error = finite_error(
+                f, history[static_cast<size_t>(k + 1)], primitive_origin);
+            // The core forms J_att from this predicted vector BEFORE injection.
+            const V3f axis = f.mekf().R_wb() * f.mekf().v2ref;
+            for (int i = 0; i < 3; ++i)
+                candidate.sensitivity_axis[static_cast<size_t>(i)] =
+                    static_cast<double>(axis(i));
+        }
         if (mag_due) f.updateMag(to_float(s.mag_body));
+        if (record_mag && f.mekf().lastMagDiag().accepted) {
+            for (int i = 0; i < 3; ++i)
+                for (int j = 0; j < 3; ++j)
+                    candidate.innovation_covariance[static_cast<size_t>(3 * i + j)] =
+                        static_cast<double>(f.mekf().lastMagDiag().S(i, j));
+            rec.applied_mag.push_back(candidate);
+        }
 
         if (live_index >= 0 && k == live_index + settle_samples) {
             root_index = k;
@@ -304,30 +325,16 @@ RunRecord run_execution(const std::vector<Sample>& history, int settle_samples,
                     for (int j = i; j < NE; ++j)
                         upper[at++] = static_cast<double>(f.mekf().Pext(i, j));
                 rec.prefix_covariance.push_back(upper);
-                // A correction applied at the root precedes the displaced estimate,
-                // so it belongs to the inherited prefix rather than to the superword.
-                if (prefix > 0 && mag_due && f.mekf().lastMagDiag().accepted) {
-                    MagEvent ev;
-                    ev.prefix = prefix;
-                    ev.time = static_cast<double>(k) * DT;
-                    const V3f axis = f.mekf().R_wb() * f.mekf().v2ref;
-                    for (int i = 0; i < 3; ++i)
-                        ev.sensitivity_axis[static_cast<size_t>(i)] =
-                            static_cast<double>(axis(i));
-                    for (int i = 0; i < 3; ++i)
-                        for (int j = 0; j < 3; ++j)
-                            ev.innovation_covariance[static_cast<size_t>(3 * i + j)] =
-                                static_cast<double>(f.mekf().lastMagDiag().S(i, j));
-                    rec.applied_mag.push_back(ev);
-                }
+
             }
+            rec.acc_bias_held = rec.acc_bias_held && !f.mekf().acc_bias_updates_enabled();
+            rec.attitude_injection_valid = rec.attitude_injection_valid &&
+                f.mekf().xext.allFinite() && f.mekf().qref.coeffs().allFinite();
             if (prefix >= superword_samples) break;
         }
     }
 
     rec.mag_attempts = f.mag_updates_applied_;
-    rec.acc_bias_held = !f.mekf().acc_bias_updates_enabled();
-    rec.attitude_injection_valid = f.mekf().xext.allFinite();
     return rec;
 }
 
@@ -396,6 +403,8 @@ int main(int argc, char** argv) {
     const size_t prefixes = reference.prefix_error.size();
     std::vector<std::vector<double>> difference(prefixes,
                                                 std::vector<double>(NE * NE, 0.0));
+    std::vector<std::vector<double>> mag_difference(reference.applied_mag.size(),
+                                                    std::vector<double>(NE * NE, 0.0));
     std::vector<double> endpoint_coarse(NE * NE, 0.0);
     std::vector<double> root_coarse(NE * NE, 0.0);
     for (int coordinate = 0; coordinate < NE; ++coordinate) {
@@ -408,6 +417,25 @@ int main(int argc, char** argv) {
             if (up.prefix_error.size() != prefixes || down.prefix_error.size() != prefixes) {
                 std::fprintf(stderr, "a displaced shipping execution did not reach the superword end\n");
                 return 1;
+            }
+            // A perturbation that changes applied events is a hybrid branch
+            // change, not a derivative on the reference correction sequence.
+            if (up.applied_mag.size() != reference.applied_mag.size() ||
+                down.applied_mag.size() != reference.applied_mag.size()) {
+                std::fprintf(stderr, "a perturbation changed magnetic acceptance\n");
+                return 1;
+            }
+            for (size_t event = 0; event < reference.applied_mag.size(); ++event) {
+                if (up.applied_mag[event].prefix != reference.applied_mag[event].prefix ||
+                    down.applied_mag[event].prefix != reference.applied_mag[event].prefix) {
+                    std::fprintf(stderr, "a perturbation changed the magnetic event sequence\n");
+                    return 1;
+                }
+                if (scale == 1.0)
+                    for (int row = 0; row < NE; ++row)
+                        mag_difference[event][static_cast<size_t>(row * NE + coordinate)] =
+                            0.5 * (up.applied_mag[event].pre_error[static_cast<size_t>(row)] -
+                                   down.applied_mag[event].pre_error[static_cast<size_t>(row)]);
             }
             if (scale == 1.0) {
                 for (size_t prefix = 0; prefix < prefixes; ++prefix)
@@ -435,7 +463,7 @@ int main(int argc, char** argv) {
     }
 
     std::fprintf(out, "{\n");
-    std::fprintf(out, "  \"qualification\": \"OU3_H18_SERVICE_SUPERWORD_EXPORT_V1\",\n");
+    std::fprintf(out, "  \"qualification\": \"OU3_H18_SERVICE_SUPERWORD_EXPORT_V2\",\n");
     std::fprintf(out, "  \"role\": \"literal shipping measurement; no inequality is evaluated or asserted here\",\n");
     std::fprintf(out, "  \"error_dimension\": %d,\n", NE);
     std::fprintf(out, "  \"sample_period_s\": %.17g,\n", DT);
@@ -496,6 +524,8 @@ int main(int argc, char** argv) {
         print_vector(out, ev.sensitivity_axis.data(), ev.sensitivity_axis.size());
         std::fprintf(out, ", \"innovation_covariance\": ");
         print_vector(out, ev.innovation_covariance.data(), ev.innovation_covariance.size());
+        std::fprintf(out, ", \"phase\": \"pre_correction\", \"pre_error_difference\": ");
+        print_vector(out, mag_difference[i].data(), mag_difference[i].size());
         std::fprintf(out, "}%s", i + 1 < reference.applied_mag.size() ? ",\n" : "\n");
     }
     std::fprintf(out, "  ]\n}\n");

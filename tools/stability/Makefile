@@ -1,4 +1,4 @@
-.PHONY: all build h18-superword clean
+.PHONY: all build h18-superword h18-iss clean
 CC = g++
 TOOL_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 REPO_ROOT := $(abspath $(TOOL_DIR)/../..)
@@ -18,12 +18,13 @@ EXPORT_BINARY := $(TOOL_DIR)/ou3_theorem/h18_superword_export
 OUTPUT_DIR ?= /tmp
 EXPORT_JSON ?= $(OUTPUT_DIR)/ou3-h18-superword.json
 REPORT_JSON ?= $(OUTPUT_DIR)/ou3-h18-superword-feasibility.json
+ISS_JSON ?= $(OUTPUT_DIR)/ou3-h18-complement-input.json
 
 all: build
 
 build: $(EXPORT_BINARY)
 
-$(EXPORT_BINARY): $(EXPORT_SOURCE)
+$(EXPORT_BINARY): $(EXPORT_SOURCE) $(wildcard $(REPO_ROOT)/src/kalman_ou_iii/*.h)
 	$(CC) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
 # Measure one magnetically informed H18 service superword and evaluate the
@@ -32,6 +33,10 @@ h18-superword: $(EXPORT_BINARY)
 	$(EXPORT_BINARY) --output $(EXPORT_JSON)
 	python3 $(TOOL_DIR)/ou3_theorem/h18_superword.py \
 	    --export $(EXPORT_JSON) --output $(REPORT_JSON)
+
+# The same export is consumed; no new physical root or estimator reset.
+h18-iss: h18-superword
+	python3 $(TOOL_DIR)/ou3_theorem/h18_iss.py --export $(EXPORT_JSON) --output $(ISS_JSON)
 
 clean:
 	rm -f $(EXPORT_BINARY)

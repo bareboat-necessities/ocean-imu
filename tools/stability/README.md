@@ -18,24 +18,38 @@ The proof path is
 
 ## Measuring one H18 service superword
 
-    make -C tools/stability h18-superword OUTPUT_DIR=/tmp
+    make -C tools/stability h18-iss OUTPUT_DIR=/tmp
 
-`ou3_theorem/h18_superword_export.cpp` drives the shipping filter through its
-own startup and deployed handoff, keeps the accelerometer bias held with the
-shipping external hold, and exports one magnetically informed service superword
-rooted at an actually reached state: the covariance at every prefix, central
-differences of the complete closed-loop finite-error map taken through the
-shipping code, and the actual innovation covariance and sensitivity of every
-correction the update really applied.
+The target runs one shipping-history export, the full-state obstruction
+measurement, and the H18 complement/input diagnostic on that **same export**.
+Use `h18-superword` to run only the first two steps.
 
-`ou3_theorem/h18_superword.py` evaluates the candidate storage `V(e)=e^T P^-1 e`
-on that export in `decimal`, reporting the worst admissible ratio, its limiting
-direction, every-prefix retention, the applied magnetic information and the
-held-bias non-contraction obstruction. It is a feasibility diagnostic: it
-measures one execution, sets no obligation, and cannot become a certificate.
-The measured numbers are recorded in `docs/ou3-proof-research-state.md`.
+`ou3_theorem/h18_superword_export.cpp` starts the shipping filter through its
+own startup and handoff, using the existing external bias hold. The V2 export
+records covariance and central differences at every prefix. Applied magnetic
+sensitivities and transported error responses are captured before correction;
+the whitening covariance is the actual one factored by that correction. A
+changed applied-event sequence in the perturbed runs refuses the measurement.
 
-The committed theorem status is fail-closed. Capture, finite-error
-dissipativity, release retention, recurring magnetic information, every-prefix
-retention, physical constant qualification, and finite-precision closure remain
-open until certified.
+`h18_superword.py` evaluates the full local incremental map at 60 Decimal
+digits. Its prefix profile follows only the endpoint-maximizing direction and
+is named accordingly. `h18_iss.py` separately evaluates **all directions at
+every prefix** on the 18-dimensional complement using a complete symmetric
+Jacobi eigensystem. It reports the fine/coarse discrepancy, available norm
+margin, conditional Young multiplier and isolated linear bias Schur gain.
+
+The exact conditional relation is `x_plus=A x+B e_b+r`. Local central
+differences do not bound `r`, which includes reference forcing and nonlinear,
+model and arithmetic remainders. Increasing evaluation precision does not
+restore information lost in single-precision shipping differences. An observed
+fine/coarse discrepancy is not a rigorous uncertainty bound.
+
+Old post-correction magnetic exports, malformed measurements and incomplete
+held histories are rejected. CI requires valid measurements but does not gate
+on their ratios. Reports keep certificate, source-uniform and obligation flags
+false, whether the numerical ratio is below or above one. Research findings
+are recorded in `docs/ou3-proof-research-state.md`.
+
+Capture, finite-error dissipativity, release retention, recurring magnetic
+information, every-prefix retention, physical constant qualification, and
+finite-precision closure remain open until certified.

@@ -1,6 +1,6 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "802747dd6c4f8d381f5db01478aef71cf74070c2",
+  "base_main_commit": "1c0c799a6d8d6b8aadbff95a92f975a33cea7f2f",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
@@ -29,8 +29,10 @@
     "integral_innovation": "With a single fixed capture origin S_true=q(t)-q(T_c), shipping r_S=-S_hat=e_S-S_true retains the physical potential forcing.",
     "magnetic_coordinate_transport": "The complete preceding transport may be rectangular between error charts. Dimension compatibility and finite audits do not certify a release map or source-uniform information.",
     "point_audit_scope": "Supplied finite-error values and structural flags are diagnostic assertions, not a verified source-uniform certificate. Missing bounds, vacuous prefixes and overflow cannot promote completion.",
-    "held_accelerometer_bias_hold": "While the hold is in force the estimate, its covariance block and its zeroed cross-covariances are unchanged, so the held bias is an invariant coordinate of the superword error map and no full-state rho<1 exists on that leg.",
-    "superword_feasibility_scope": "The exported superword and its high-precision evaluation measure one reached execution. They are non-promoting evidence: no ratio, direction or margin they report discharges a proof obligation or establishes source uniformity."
+    "held_accelerometer_bias_hold": "On feasible held segments without projection-changing or frame/relock events, the bias estimate and its decoupled covariance block are unchanged. Same-history incremental bias is invariant; absolute bias error still carries the shared physical increment. The incremental full-state contraction obstruction does not remove hard-event or release obligations.",
+    "superword_feasibility_scope": "Central differences about one reached error are a local incremental surrogate, not an exact nonlinear homogeneous map. V2 measures pre-correction magnetic transport. Neither a measured ratio nor a conditioning discrepancy certifies finite-error supply, retention or source uniformity.",
+    "h18_complement_supply": "For x_plus=A x+B e_b+r and certified A^T W_plus A<=alpha W, alpha<rho<1, Young gives V_plus<=rho V+rho/(rho-alpha)|B e_b+r|^2_W_plus. The Schur gain covers only isolated linear bias, not unbounded nonlinear/reference remainder.",
+    "magnetic_measurement_phase": "Both sensitivity and transported response precede the actually applied correction; the exported innovation covariance is the one that correction factored. Perturbed exports must preserve its applied-event sequence."
   },
   "operation_lemma_sources": [
     {
@@ -63,27 +65,35 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "062afbf8294f08d86e806ebd7045fd10f09ede59"
+      "git_blob_sha": "4cd2c2d982ae1649a4eddb34a853115bf8520066"
     },
     {
       "path": "tools/stability/ou3_theorem/finite_error.py",
-      "git_blob_sha": "9cfbf802037b43872179c6b64af6a641e4408280"
+      "git_blob_sha": "263f6505dd33a73ef4f5e9adc4f5f15b08532f5a"
     },
     {
       "path": "tests/validation/test_ou3_finite_error.py",
-      "git_blob_sha": "ff433a993750a5beda200c4daac6a0b307090961"
+      "git_blob_sha": "d16f32ebbaefb2241b60871d4cb8d39a5105bbf5"
     },
     {
       "path": "tools/stability/ou3_theorem/h18_superword.py",
-      "git_blob_sha": "500c9e2eaca121de66bbc116e5e7d977b23f911d"
+      "git_blob_sha": "65887c748110c7beda53aa81020169013d244bd5"
     },
     {
       "path": "tools/stability/ou3_theorem/h18_superword_export.cpp",
-      "git_blob_sha": "54b3ee201a2aabf41e117d9984340054ab2d745b"
+      "git_blob_sha": "38d3f783b80ea31aec6fb4525f1daec72e252618"
     },
     {
       "path": "tests/validation/test_ou3_h18_superword.py",
-      "git_blob_sha": "ddb7449cbb9a89b46fbe7d0047036134dd8aca3a"
+      "git_blob_sha": "96000a1b02b288a0ecfea8e8e49ce06340d075be"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/h18_iss.py",
+      "git_blob_sha": "4af829e4b773b11ca5aa0385f078c304875c5b7b"
+    },
+    {
+      "path": "tests/validation/test_ou3_h18_iss.py",
+      "git_blob_sha": "cff3f9c8548dd752220f9f3d478934c93c406e14"
     }
   ]
 }

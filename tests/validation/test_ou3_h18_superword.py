@@ -65,6 +65,8 @@ def synthetic_export(gain=0.5, samples=4, covariance=1.0, mag_prefix=2):
             "time_s": 12.51,
             "sensitivity_axis": [20.0, 0.0, 43.0],
             "innovation_covariance": [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+            "phase": "pre_correction",
+            "pre_error_difference": rows(differences[0]),
         }],
         "acc_bias_held_through_superword": True,
         "attitude_injection_finite": True,
@@ -109,7 +111,7 @@ class WorstRatioTests(unittest.TestCase):
         # Psi = 0.5^4 I in an identity metric, so the worst ratio is (0.5^4)^2.
         self.assertAlmostEqual(report["worst_admissible_ratio"], 0.5 ** 8, places=12)
         self.assertTrue(report["strict_contraction_observed"])
-        self.assertTrue(report["prefix_retention_observed"])
+        self.assertTrue(report["endpoint_direction_prefix_nonexpansive"])
 
     def test_the_worst_direction_is_the_largest_gain(self):
         export = synthetic_export(gain=0.5, samples=1, mag_prefix=1)
@@ -164,7 +166,7 @@ class WorstRatioTests(unittest.TestCase):
         report = diag.evaluate(synthetic_export(gain=1.4, samples=2), precision=40)
         self.assertGreater(report["worst_admissible_ratio"], 1.0)
         self.assertFalse(report["strict_contraction_observed"])
-        self.assertFalse(report["prefix_retention_observed"])
+        self.assertFalse(report["endpoint_direction_prefix_nonexpansive"])
         self.assertFalse(report["certificate_complete"])
 
 
@@ -236,7 +238,7 @@ class NonPromotionTests(unittest.TestCase):
                 self.assertFalse(report["obligation_discharged"])
                 self.assertFalse(report["source_uniform"])
                 self.assertFalse(report["supply_constant_evaluated"])
-                self.assertTrue(report["homogeneous_map_only"])
+                self.assertTrue(report["local_incremental_map_only"])
 
     def test_the_held_bias_obstruction_travels_with_the_report(self):
         report = diag.evaluate(synthetic_export(gain=1.0), precision=40)

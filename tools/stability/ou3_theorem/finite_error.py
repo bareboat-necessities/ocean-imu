@@ -128,7 +128,7 @@ class HeldBiasSuperwordBlock:
     bias mean dynamics, freezes the bias rows of every gain, and keeps the bias
     cross-covariances at the zero they were set to when the hold was taken. The
     three fields record exactly that, measured on the execution rather than
-    assumed: the held-bias block of the complete superword error map, the
+    assumed: the held-bias block of a same-history incremental superword map, the
     largest surviving bias cross-covariance at either endpoint, and the change
     in the held-bias covariance block across the superword.
     """
@@ -152,38 +152,31 @@ class HeldBiasSuperwordBlock:
 
 def held_bias_non_contraction(block: HeldBiasSuperwordBlock,
                               tolerance: float = 0.0) -> dict:
-    """No H18 service superword contracts the shipping covariance storage.
+    """Held-bias obstruction for the incremental covariance-storage map.
 
-    Write the error as (e_o, e_b) with e_b the held accelerometer-bias block.
-    The measured superword map is (e_o, e_b) -> (A e_o + B e_b, e_b): the held
-    bias reproduces itself exactly, because nothing in the held mode moves its
-    estimate. The shipping covariance is block diagonal against that split for
-    the same reason, so
+    On a feasible held segment with no projection-changing or frame/relock
+    event, the same-history differential is [[A,B],[0,I]]. Physical bias
+    increments cancel between those executions, not from absolute error:
+    e_b_plus=e_b+w still holds. This is not a global linear finite-error map.
 
-        V(e) = e_o^T P_oo^(-1) e_o + e_b^T P_bb^(-1) e_b,
+    With decoupled frozen P_bb, a direction (0,u) has endpoint energy
+    (B u)^T P_oo,end^-1 (B u)+u^T P_bb^-1 u, at least its initial energy.
+    The H18 complement therefore carries bounded held bias as an input in the
+    single theorem path. Projection, hard events and release remain separate.
 
-    and P_bb is unchanged across the superword. Taking e = (0, e_b) gives
-
-        V_end(Psi e) = (B e_b)^T P_oo,end^(-1) (B e_b) + V_root(e) >= V_root(e).
-
-    So rho < 1 is unavailable on the full H18 coordinate for this storage at any
-    superword length, under any motion, and with any amount of magnetic
-    information. The conclusion is a non-contraction obstruction, not an
-    instability result and not a certificate of anything: it says the H18
-    dissipation target has to be restated, for instance on the complement with
-    the held bias carried as a bounded input, or after the release to A21.
-
-    When a premise is outside tolerance this argument simply does not apply.
-    That is reported as `undecided_here`, never as availability of rho < 1:
-    the absence of this obstruction is not the absence of every obstruction.
+    A tolerance may diagnose proximity, but only exact supplied premises
+    exclude contraction by this argument. Neither case certifies the source.
+    Missing premises decide nothing about availability of other contractions.
     """
+    if not math.isfinite(tolerance) or tolerance < 0:
+        raise ValueError("finite nonnegative diagnostic tolerance required")
     identity_defect = max(
         abs(block.map_block[i][j] - (1.0 if i == j else 0.0))
         for i in range(3) for j in range(3)
     )
-    reproduces = identity_defect <= tolerance
-    decoupled = block.cross_covariance_max <= tolerance
-    frozen = block.covariance_block_change <= tolerance
+    reproduces = identity_defect == 0.0
+    decoupled = block.cross_covariance_max == 0.0
+    frozen = block.covariance_block_change == 0.0
     obstructed = bool(reproduces and decoupled and frozen)
     return {
         "history_id": block.history_id,
@@ -192,6 +185,8 @@ def held_bias_non_contraction(block: HeldBiasSuperwordBlock,
         "bias_covariance_decoupled": decoupled,
         "bias_covariance_frozen": frozen,
         "non_contraction_obstruction": obstructed,
+        "within_diagnostic_tolerance": max(identity_defect, block.cross_covariance_max,
+                                           block.covariance_block_change) <= tolerance,
         # Failing to establish this one obstruction says nothing about whether
         # rho < 1 is available: some other obstruction, or none, may apply. The
         # only two outcomes here are "excluded by this argument" and "this

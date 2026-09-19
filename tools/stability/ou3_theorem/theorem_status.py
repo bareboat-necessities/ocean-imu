@@ -32,5 +32,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"restate H18 dissipation off the held accelerometer-bias coordinates, which the shipping H18 superword map reproduces exactly, and prove the restated inequality with prefix retention on the same physical history",
+        "next_controlling_obligation":"certify conditioned H18 complement finite-error storage with held-bias and nonlinear/reference supply and every-prefix retention on the same inherited physical history",
     }
