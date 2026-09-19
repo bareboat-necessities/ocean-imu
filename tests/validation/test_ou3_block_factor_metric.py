@@ -11,6 +11,7 @@ from tools.stability.ou3_theorem.block_factor_metric import (
     ag_one_second_factor_floor,ba_process_variance,block_factor_feasibility,
     additive_process_metric_certificate,block_metric_correction_margin,
     normalized_measurement_information_ceiling,
+    uniform_lin_jensen_factor_certificate,
 )
 from tools.stability.ou3_theorem.interval_riccati_21 import (
     integrated_ou_scaled_factor_probe,
@@ -58,6 +59,14 @@ class BlockFactorMetricTests(unittest.TestCase):
         g=block_metric_correction_margin(gamma_in=1.0,
                                          normalized_information_ceiling=j)
         self.assertGreater(g,0.0);self.assertLessEqual(g,1.0)
+
+    def test_source_uniform_lin_factor_certificate(self):
+        r=uniform_lin_jensen_factor_certificate(
+            tau_min=.02,tau_max=12.0,sigma_min=.05,window_s=16.0,
+            scales=(5.5,8.1,1100.0,4.0),tau_cells=4096)
+        print("LIN_UNIFORM_FACTOR",r)
+        self.assertTrue(r["verified"])
+        self.assertGreater(r["singular_factor_floor"],0)
 
     def test_source_range_factor_feasibility_diagnostic(self):
         ag=ag_one_second_factor_floor(
