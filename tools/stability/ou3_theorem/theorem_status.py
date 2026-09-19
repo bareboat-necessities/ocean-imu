@@ -10,6 +10,7 @@ def status_report() -> dict:
         "same_history_bias_recurrence":True,
         "accepted_magnetic_information_definition":True,
         "no_heading_service_obstruction":True,
+        "captured_domain_implies_finite_mag_refinement":True,
         "assembled_sensor_and_bias_limit_qualification":False,
         "all_time_marine_motion_membership_certificate":False,
         "finite_history_dependent_capture":False,
