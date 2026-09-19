@@ -140,3 +140,53 @@ def required_cross_fraction_for_gamma(*, ell_i: float,ell_j: float,
     if min(ell_i,ell_j)<=0 or desired_normalized_cross<0:
         raise ValueError("valid factor/cross target required")
     return desired_normalized_cross*ell_i*ell_j
+
+
+def ag_one_second_factor_floor(*, gyro_white_density: float,
+                               gyro_bias_rw_density: float,
+                               attitude_scale: float,
+                               gyro_bias_scale: float,
+                               window_s: float=1.0) -> dict:
+    """Scaled exact continuous AG process Gramian, one axis.
+
+    theta_dot=-b_g+n_g, bdot=n_bg.  The exact process Gramian is used; three
+    axes repeat independently.  LDL pivots in proof coordinates avoid mixing
+    radians and rad/s.
+    """
+    vals=(gyro_white_density,gyro_bias_rw_density,attitude_scale,gyro_bias_scale,window_s)
+    if not all(math.isfinite(x) for x in vals) or min(vals)<=0:
+        raise ValueError("positive AG process data required")
+    sg2=gyro_white_density**2; sb2=gyro_bias_rw_density**2; T=window_s
+    q00=sg2*T+sb2*T**3/3.0
+    q01=-sb2*T*T/2.0
+    q11=sb2*T
+    a=q00/(attitude_scale**2)
+    b=q01/(attitude_scale*gyro_bias_scale)
+    d=q11/(gyro_bias_scale**2)
+    p1=a
+    p2=d-b*b/a
+    floor=min(p1,p2)
+    return {"scaled_gramian":((a,b),(b,d)),"pivot_floor":floor,
+            "factor_floor":math.sqrt(floor),"verified":floor>0}
+
+def ba_process_variance(*, dt: float,tau_bacc: float,
+                        drive_density: float) -> float:
+    """Literal scalar active-bias OU process variance from continuous drive."""
+    if min(dt,tau_bacc,drive_density)<=0:
+        raise ValueError("positive BA process data required")
+    phi=math.exp(-dt/tau_bacc)
+    # shipping Q_BA uses stationary sigma_bacc0 with q=2 sigma^2/tau;
+    # drive_density is sqrt(q), so exact scalar Q is q*tau/2*(1-phi^2).
+    return drive_density*drive_density*tau_bacc*.5*(1.0-phi*phi)
+
+def block_factor_feasibility(*, ag_factor: float,lin_factor: float,ba_factor: float,
+                             ag_ceiling: float,lin_ceiling: float,ba_ceiling: float) -> dict:
+    """Non-promoting threshold diagnostic using only universal PSD cross bounds."""
+    m=BlockFactorMetric(
+        BlockFactorFloor(ag_factor,ag_ceiling),
+        BlockFactorFloor(lin_factor,lin_ceiling),
+        BlockFactorFloor(ba_factor,ba_ceiling),
+        cross_block_psd_bound(ag_ceiling,lin_ceiling),
+        cross_block_psd_bound(ag_ceiling,ba_ceiling),
+        cross_block_psd_bound(lin_ceiling,ba_ceiling))
+    return block_scaled_schur_floor(m)
