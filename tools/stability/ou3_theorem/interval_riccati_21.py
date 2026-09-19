@@ -427,3 +427,35 @@ def iterate_recurring_box(seed: IMat, word_map, *, max_iterations: int=32,
             "reason":"iteration limit","iterations":max_iterations,"box":box,"image":image,
             "spectral_lower":lo,"spectral_upper":hi,
             "innovation_certificates":certs}
+
+
+def shipping_max_correction_step(p: IMat, *, f: IMat, q: IMat,
+                                 h_s: IMat, r_s: IMat,
+                                 h_acc: IMat, r_acc: IMat,
+                                 h_mag: IMat, r_mag: IMat) -> tuple[IMat,list[dict]]:
+    """Conservative maximal-correction A21 sample.
+
+    Literal wrapper order is time_update (which may apply S), then accelerometer;
+    updateMag is asynchronous afterward. For a covariance lower-bound search,
+    applying every optional S and magnetic correction at every sample is a
+    conservative maximal-information cadence. A final proof must justify this
+    monotonic replacement in information form; this function does not itself
+    promote that ordering argument.
+    """
+    out=predict_covariance(p,f,q);certs=[]
+    for name,h,r in (("S",h_s,r_s),("acc",h_acc,r_acc),("mag",h_mag,r_mag)):
+        out,cert=verified_joseph_update(out,h,r)
+        certs.append({"name":name,**cert})
+    return out,certs
+
+
+def shipping_word_map(max_steps: int, **step_kwargs):
+    """Return a recurring-box map built from the conservative sample step."""
+    if max_steps<1: raise ValueError("positive step count required")
+    def word(p: IMat):
+        out=p;certs=[]
+        for _ in range(max_steps):
+            out,c=shipping_max_correction_step(out,**step_kwargs)
+            certs.extend(c)
+        return out,certs
+    return word
