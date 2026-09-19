@@ -28,6 +28,7 @@ from tools.stability.ou3_theorem.tail_stability import (
     rho_from_covariance_normalized_mu, classical_riccati_covariance_bounds,
     maximal_correction_cadence_is_lower_covariance_bound,
     one_step_noise_covariance_floor, verified_interval_innovation_inverse,
+    float32_kernel_absolute_error,whole_word_additive_supply,every_prefix_retained,
     riccati_box_inclusion, covariance_floor_to_rho,
     practical_radius_bound, projection_sector_is_dissipative, proof_route_status,
     pseudo_decay_exponent_per_gap, release_can_guarantee_projection_inactive,
@@ -205,6 +206,17 @@ class QuantitativeCertificateTests(unittest.TestCase):
             nuisance_block_ceiling=10.0,service_floor=1.0)
         self.assertGreater(mu,0.0)
         self.assertLess(mu,.1)
+
+    def test_whole_word_float32_is_composed_from_local_kernels(self):
+        e=float32_kernel_absolute_error(
+            operation_count=100,input_magnitude_bound=2.0,
+            exact_output_magnitude_bound=1.0)
+        total=whole_word_additive_supply(
+            per_event_error_bounds=(e,e),prefix_state_gains=(.5,1.0))
+        self.assertGreater(total,e);self.assertLess(total,2*e)
+        self.assertTrue(every_prefix_retained(
+            prefix_gains=(1.1,.9),entry_radius=.1,
+            per_prefix_additive_bounds=(.001,.002),retained_radius=.12))
 
     def test_float32_kernel_gamma_bound(self):
         self.assertLess(conservative_float32_kernel_error(100,1.0),6e-6)
