@@ -143,3 +143,42 @@ def audit_window(events: Sequence[MagneticEvent],start_s: float,T_M_s: float,mu_
             "information_gramian":[[a,b],[b,c]],"information_min_eigenvalue":lam,
             "information_pass":lam>=mu_M,"max_usable_event_gap_s_diagnostic_only":max_gap,
             "gap_alone_implies_service":False,"finite_window_audit_only":True}
+
+
+@dataclass(frozen=True)
+class MagneticServiceContinuationCertificate:
+    """All-time source-uniform MAGNETIC SERVICE certificate.
+
+    A finite event replay cannot establish this object. It is a theorem-side
+    continuation certificate for one persistent physical execution, analogous
+    to MARINE MOTION and IMU BIAS continuation certificates.
+    """
+    history_id: str
+    service_window_s: float
+    information_floor: float
+    every_window_same_history_certified: bool
+    applied_event_semantics_certified: bool
+    transported_actual_innovation_covariance_certified: bool
+    all_time_continuation_certified: bool
+
+    def __post_init__(self) -> None:
+        if not self.history_id:
+            raise ValueError("nonempty history id required")
+        if not all(math.isfinite(x) and x>0 for x in
+                   (self.service_window_s,self.information_floor)):
+            raise ValueError("positive finite service constants required")
+
+
+def continuation_admitted(cert: MagneticServiceContinuationCertificate,
+                          *, required_window_s: float,
+                          required_information_floor: float) -> bool:
+    """Source-uniform service is an all-time contract, never a finite replay."""
+    if not all(math.isfinite(x) and x>0 for x in
+               (required_window_s,required_information_floor)):
+        raise ValueError("positive required service constants")
+    return (cert.service_window_s <= required_window_s
+            and cert.information_floor >= required_information_floor
+            and cert.every_window_same_history_certified
+            and cert.applied_event_semantics_certified
+            and cert.transported_actual_innovation_covariance_certified
+            and cert.all_time_continuation_certified)

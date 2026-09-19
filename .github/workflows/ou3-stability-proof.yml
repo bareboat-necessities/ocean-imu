@@ -9,12 +9,9 @@ on:
       - "tools/stability/**"
       - "tests/validation/test_ou3_*.py"
       - "tests/kalman_ou_iii/**"
-      - "tests/validation/test_workflow_contract.py"
       - "docs/ou3-*.md"
       - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
-      - "doc/kalman_ou_iii/w3d-intro.tex-part"
       - "reports/results/ou3_stability/**"
-      - "reports/ou_evidence_fingerprint.json"
       - ".github/workflows/ou3-stability-proof.yml"
   push:
     branches: [main]
@@ -25,20 +22,15 @@ on:
       - "tests/kalman_ou_iii/**"
       - "docs/ou3-*.md"
       - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
-      - "doc/kalman_ou_iii/w3d-intro.tex-part"
       - "reports/results/ou3_stability/**"
-      - "reports/ou_evidence_fingerprint.json"
       - ".github/workflows/ou3-stability-proof.yml"
-
 concurrency:
   group: ou3-stability-proof-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-
 permissions:
   contents: read
-
 jobs:
-  contract:
+  theorem:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -52,77 +44,18 @@ jobs:
         run: python3 -m py_compile tools/stability/ou3_theorem/*.py
       - name: Validate theorem contracts
         working-directory: tests/validation
-        shell: bash
         run: |
-          set -euo pipefail
-          python3 -m unittest -v \
-            test_ou3_architecture_cleanup \
-            test_ou3_imu_bias \
-            test_ou3_magnetic_service \
-            test_ou3_marine_motion \
-            test_ou3_no_mag_obstruction \
-            test_ou3_same_execution \
-            test_ou3_theorem_status \
-            test_ou3_finite_error \
-            test_ou3_h18_superword \
-            test_workflow_contract \
-            test_ou_replay_fingerprint 2>&1 | tee /tmp/ou3-contract-tests.log
+          python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_same_execution test_ou3_theorem_status test_ou3_tail_stability test_ou3_interval_riccati test_ou3_interval_riccati_21 test_ou3_block_factor_metric test_ou3_physical_qualification test_workflow_contract test_ou_replay_fingerprint
       - name: Validate provenance and fail-closed status
-        if: ${{ !cancelled() }}
         run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
-      - name: Preserve exact checked source and provenance
-        if: ${{ !cancelled() }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          git archive --format=tar.gz --prefix=ocean-imu/ HEAD > /tmp/ou3-checked-source.tar.gz
-          git log -1 --format='commit=%H%ntree=%T%nparents=%P' > /tmp/ou3-checked-source.txt
-          sha256sum /tmp/ou3-checked-source.tar.gz >> /tmp/ou3-checked-source.txt
+      - name: Build literal shipping regressions
+        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test
+      - name: Run literal shipping regressions
+        run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
           name: ou3-stability-evidence
-          path: |
-            /tmp/ou3-stability-evidence.json
-            /tmp/ou3-contract-tests.log
-            /tmp/ou3-checked-source.tar.gz
-            /tmp/ou3-checked-source.txt
+          path: /tmp/ou3-stability-evidence.json
           retention-days: 7
           if-no-files-found: error
-
-  shipping-transitions:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-      - name: Install compiler dependencies
-        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
-      - name: Build literal shipping regressions
-        run: make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test
-      - name: Run literal shipping regressions
-        run: |
-          ./tests/kalman_ou_iii/shipping_contract-test
-          ./tests/kalman_ou_iii/shipping_transition-test
-      # The export measures one magnetically informed H18 service superword on a
-      # reached shipping state and the diagnostic evaluates the candidate storage
-      # on it at high precision. The step gates on the measurement being
-      # producible at all -- a refused export or a diagnostic that cannot
-      # establish its numbers is a real failure and must be seen. No measured
-      # value gates anything: the ratio, the margins and the direction are
-      # evidence for the research ledger, and none of them discharges an
-      # obligation or is asserted by this workflow.
-      - name: Measure one H18 service superword and evaluate the candidate storage
-        run: make -C tools/stability h18-superword OUTPUT_DIR=/tmp
-      - uses: actions/upload-artifact@v6
-        if: ${{ !cancelled() }}
-        with:
-          name: ou3-h18-superword
-          path: |
-            /tmp/ou3-h18-superword.json
-            /tmp/ou3-h18-superword-feasibility.json
-          retention-days: 7
-          # A refused measurement already failed the step above. Keep whatever
-          # it did produce instead of raising a second, misleading failure.
-          if-no-files-found: warn

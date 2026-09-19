@@ -6,7 +6,7 @@
     "V_max_mps": 5.5,
     "A_max_mps2": 8.8,
     "Omega_max_rad_s": 0.6108652381980153,
-    "P_AC_max_m_s": 1100.0,
+    "P_AC_max_m_s": 1100,
     "qualification": "retained outward marine envelope; same-history all-time primitive membership must still be certified"
   },
   "imu_bias": {
@@ -22,21 +22,42 @@
     }
   },
   "magnetic_service": {
-    "T_M_s": 1.0,
-    "mu_M": 1.0,
-    "field_norm_min_uT": 20.0,
-    "field_norm_max_uT": 75.0,
-    "horizontal_field_min_uT": 15.0,
-    "hard_iron_residual_norm_max_uT": 5.0,
-    "measurement_residual_norm_max_uT": 2.0,
-    "heading_coordinate_scale_rad": 1.0,
+    "T_M_s": 1,
+    "mu_M": 1,
+    "field_norm_min_uT": 20,
+    "field_norm_max_uT": 75,
+    "horizontal_field_min_uT": 15,
+    "hard_iron_residual_norm_max_uT": 5,
+    "measurement_residual_norm_max_uT": 2,
+    "heading_coordinate_scale_rad": 1,
     "axial_gyro_bias_coordinate_scale_rad_s": 0.02,
     "qualification": "selected certification limits; source-uniform accepted informative service is open"
   },
   "sensor_model": {
     "nominal_sample_period_s": 0.005,
-    "accel_fast_residual_norm_max_mps2": 0.30,
+    "accel_fast_residual_norm_max_mps2": 0.3,
     "gyro_fast_residual_norm_max_rad_s": 0.02,
-    "qualification": "deterministic commissioned BMI270 profile; deployment qualification remains separate"
+    "qualification": "deterministic commissioned BMI270 profile; fast residual bound also caps the vibration detector-band RMS used by Racc inflation; A21 theorem admits 166.7--250 Hz timing [0.004,0.006] s; deployment qualification remains separate",
+    "sample_period_min_s": 0.004,
+    "sample_period_max_s": 0.006,
+    "accel_nominal_std_mps2": 0.2,
+    "accel_vibration_racc_gain": 0.75,
+    "accel_effective_std_max_mps2": 0.3010398644698074
+  },
+  "a21_schedule": {
+    "tau_min_s": 0.02,
+    "tau_max_s": 12,
+    "pseudo_update_tau_ratio": 0.013636363636363634,
+    "pseudo_update_period_min_s": 0.005,
+    "pseudo_update_period_max_s": 0.15,
+    "qualification": "literal shipping clamps/cadence; 16 s subword closes translation while 2048 disjoint one-second MAGNETIC SERVICE windows accumulate weak transverse gyro-bias information without a long-horizon rotation assumption",
+    "proof_word_s": 2048,
+    "attitude_diversity_subwindow_s": 8,
+    "translation_certificate_subword_s": 16
+  },
+  "a21_retained_domain": {
+    "tilt_error_max_rad": 0.10471975511965977,
+    "accel_bias_post_projection_error_max_mps2": 0.625166604983954,
+    "qualification": "strict tilt proof domain plus universal literal projection-sector bias bound; projection-inactive release is not assumed"
   }
 }

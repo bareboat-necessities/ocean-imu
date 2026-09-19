@@ -1,0 +1,114 @@
+{
+  "qualification": "OU3_A21_INTERVAL_RICCATI_V1",
+  "fixed_coordinate_mu": 0.00204,
+  "status": "OPEN",
+  "innovations": [],
+  "recurring_image": null,
+  "covariance_hard_events_included": false,
+  "full_shipping_schedule_included": false,
+  "float32_rounding_included": false,
+  "certificate_complete": false,
+  "blocker": "root block/factor positivity and recurrence are closed structurally with gamma=1 at post-prediction roots; remaining blocker is constructive numerical LIN factor over continuous tau (plus compatible numeric AG/BA factors) for mu_cov/rho0.",
+  "kernel_status": {
+    "matrix_interval_arithmetic": true,
+    "prediction_21_state": true,
+    "joseph_21_state": true,
+    "all_cross_covariances": true,
+    "aw_covariance_floor_event": true,
+    "accel_bias_release_event": true,
+    "shipping_F_Q_interval_constructor": true,
+    "shipping_acc_H_R_interval_constructor": true,
+    "shipping_S_H_R_interval_constructor": true,
+    "shipping_mag_H_R_interval_constructor": true,
+    "recurring_box_iteration": true,
+    "verified_interval_gain": true,
+    "shipping_event_order_assembled": true,
+    "maximal_optional_correction_monotonicity_proved": true,
+    "branch_subdivision": true,
+    "all_branch_recurring_hull": true
+  },
+  "last_failed_enclosure": {
+    "classification": "second interval-dependency/conditioning failure",
+    "covariance_spectral_lower": -18.790704021519012,
+    "covariance_spectral_upper": 2502.414418537763,
+    "S_innovation_residual_ratio": 0.6666638644523901,
+    "S_innovation_verified": true,
+    "acc_innovation_verified": false,
+    "mag_innovation_verified": false,
+    "invalidated_hypothesis": "one finite entrywise midpoint-radius refinement/subdivision can certify the recurring 21-state covariance box",
+    "retained_facts": [
+      "fixed-coordinate mu_N >= 2.04e-3",
+      "source-uniform UCO/UCC",
+      "literal shipping covariance/Joseph semantics",
+      "strict 3x3 inverse verifier"
+    ],
+    "next_experiment": "structure-preserving spectral/square-root Riccati enclosure; no further blind entrywise subdivision"
+  },
+  "psd_preserving_probe": {
+    "F_sigma_min_lower": 0.6440871039647162,
+    "predicted_covariance_floor": 4.148481974936552e-7,
+    "S_posterior_floor": 4.148252522259004e-7,
+    "acc_posterior_floor": 3.013577205331653e-7,
+    "mag_posterior_floor": 1.494027881347782e-7,
+    "promoted": false,
+    "next_requirement": "constructive full-rank lower floor/factor for literal Q_AA, Q_LL and active-bias Q_BA, then recurring PSD iteration"
+  },
+  "psd_process_controllability_probe": {
+    "window_s": 0.156,
+    "tau_samples": [
+      0.02,
+      0.2,
+      2,
+      12
+    ],
+    "raw_gershgorin_floors": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "no_Q_32_step_end_floor": 1.467130430205166e-19,
+    "classification": "conditioning failure of raw scalar/Gershgorin reduction",
+    "next_refinement": "proof-coordinate-scaled factor/LDLT enclosure of the multi-step controllability Gramian"
+  },
+  "covariance_metric": "block/factor",
+  "entrywise_interval_riccati": "RETIRED_AFTER_SECOND_CONDITIONING_FAILURE",
+  "block_factor_status": {
+    "implemented": true,
+    "translation_factor_probe": true,
+    "attitude_gyro_factor_certificate": true,
+    "translation_tau_uniform_factor_certificate": false,
+    "active_bias_factor_certificate": true,
+    "cross_block_coupling_certificate": true,
+    "recurring_block_factor_enclosure": true,
+    "ag_factor_probe": {
+      "factor_floor": 0.0004999974644280384,
+      "source_uniform": true,
+      "scope": "one-second exact scaled AG process Gramian"
+    },
+    "ba_factor_probe": {
+      "factor_floor": 0.0005618273738837149,
+      "source_uniform": true,
+      "scope": "active OU recurrence under declared correction-information ceiling"
+    },
+    "lin_factor_probe": {
+      "sampled_pivot_min": 1.194309697532038e-7,
+      "sampled_tau": 0.02,
+      "source_uniform": false,
+      "continuous_tau_enclosure_pending": true
+    },
+    "generic_cross_gershgorin": {
+      "gamma": -512229207.2430692,
+      "verified": false,
+      "classification": "conditioning failure; retired as root-coercivity mechanism"
+    },
+    "additive_process_root_metric": {
+      "gamma": 1,
+      "structural_lemma": true,
+      "numeric_lin_process_factor_pending": true
+    },
+    "source_uniform_lin_factor_existence": true,
+    "cross_block_finite_bounds_certificate": true,
+    "root_coercivity_gamma": 1
+  }
+}

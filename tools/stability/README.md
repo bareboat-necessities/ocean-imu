@@ -1,41 +1,28 @@
 # OU-III stability tooling
 
-The repository has one OU-III stability theorem architecture. The shipping
-implementation in `src/kalman_ou_iii/` is authoritative for estimator
-behavior.
+The executable package contains only contracts and algebra used by the single
+OU-III theorem. Shipping estimator behavior remains authoritative.
 
-MARINE MOTION, IMU BIAS, and MAGNETIC SERVICE apply simultaneously to one
-persistent physical execution. The executable theorem package is
-`tools/stability/ou3_theorem/`.
+The proof route is
+`construction -> capture -> finite H18 bridge -> finite reference refinement
+and release -> recurring magnetically informed A21 -> regional practical
+stability`.
 
-The accelerometer-bias prediction relation is shared by held and active modes:
-the estimator multiplier is one while held and the literal OU multiplier while
-active. Measurement correction, estimate projection, release, and attitude
-operations are composed separately using the shipping maps.
+PR #557 supplied a negative research result: strict full-state H18 incremental
+contraction is obstructed by the held accelerometer-bias identity block. Its
+trajectory export and finite-difference diagnostics are intentionally not
+retained as proof machinery.
 
-The proof path is
-`construction -> startup/capture -> magnetically informed Live/H18 -> H18-to-A21 release -> magnetically informed A21 -> regional practical stability`.
+Current theorem tooling covers MARINE MOTION, IMU BIAS, MAGNETIC SERVICE,
+same-execution linkage, the no-heading-service necessity result, and analytic
+finite-bridge/A21 small-gain lemmas. No sampled trajectory can promote a proof
+obligation.
 
-## Measuring one H18 service superword
+Run the theorem contracts with:
 
-    make -C tools/stability h18-superword OUTPUT_DIR=/tmp
+    cd tests/validation
+    python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias       test_ou3_magnetic_service test_ou3_marine_motion       test_ou3_no_mag_obstruction test_ou3_same_execution       test_ou3_theorem_status test_ou3_tail_stability
 
-`ou3_theorem/h18_superword_export.cpp` drives the shipping filter through its
-own startup and deployed handoff, keeps the accelerometer bias held with the
-shipping external hold, and exports one magnetically informed service superword
-rooted at an actually reached state: the covariance at every prefix, central
-differences of the complete closed-loop finite-error map taken through the
-shipping code, and the actual innovation covariance and sensitivity of every
-correction the update really applied.
-
-`ou3_theorem/h18_superword.py` evaluates the candidate storage `V(e)=e^T P^-1 e`
-on that export in `decimal`, reporting the worst admissible ratio, its limiting
-direction, every-prefix retention, the applied magnetic information and the
-held-bias non-contraction obstruction. It is a feasibility diagnostic: it
-measures one execution, sets no obligation, and cannot become a certificate.
-The measured numbers are recorded in `docs/ou3-proof-research-state.md`.
-
-The committed theorem status is fail-closed. Capture, finite-error
-dissipativity, release retention, recurring magnetic information, every-prefix
-retention, physical constant qualification, and finite-precision closure remain
-open until certified.
+The controlling open work is finite magnetic-reference refinement/release,
+source-uniform A21 linear dissipation, and a nonlinear finite-error remainder
+bound small enough to satisfy `sqrt(rho0)+eta < 1`.

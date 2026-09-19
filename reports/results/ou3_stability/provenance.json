@@ -1,6 +1,6 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "802747dd6c4f8d381f5db01478aef71cf74070c2",
+  "base_main_commit": "1c0c799a6d8d6b8aadbff95a92f975a33cea7f2f",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
@@ -29,8 +29,49 @@
     "integral_innovation": "With a single fixed capture origin S_true=q(t)-q(T_c), shipping r_S=-S_hat=e_S-S_true retains the physical potential forcing.",
     "magnetic_coordinate_transport": "The complete preceding transport may be rectangular between error charts. Dimension compatibility and finite audits do not certify a release map or source-uniform information.",
     "point_audit_scope": "Supplied finite-error values and structural flags are diagnostic assertions, not a verified source-uniform certificate. Missing bounds, vacuous prefixes and overflow cannot promote completion.",
-    "held_accelerometer_bias_hold": "While the hold is in force the estimate, its covariance block and its zeroed cross-covariances are unchanged, so the held bias is an invariant coordinate of the superword error map and no full-state rho<1 exists on that leg.",
-    "superword_feasibility_scope": "The exported superword and its high-precision evaluation measure one reached execution. They are non-promoting evidence: no ratio, direction or margin they report discharges a proof obligation or establishes source uniformity."
+    "held_accelerometer_bias_hold": "On feasible held segments without projection-changing or frame/relock events, the bias estimate and its decoupled covariance block are unchanged. Same-history incremental bias is invariant; absolute bias error still carries the shared physical increment. The incremental full-state contraction obstruction does not remove hard-event or release obligations.",
+    "h18_role": "finite bridge until magnetic-reference refinement and implemented accelerometer-bias release; asymptotic contraction is not required on H18",
+    "a21_tail": "recurring magnetically informed asymptotic tail; linear storage contraction plus a finite-error nonlinear small-gain remainder is the productive proof target",
+    "pr557_negative_result": "held-bias identity obstructs one strict full-state H18 incremental contraction formulation; diagnostic scripts are not theorem machinery",
+    "mag_refinement_completion": "On the captured <=~7 degree tilt domain, existing |B|>=20 uT, |B|<=75 uT, horizontal>=15 uT and residual<=2 uT bounds imply the deployed unweighted MagAutoTuner 35% norm and 5% horizontal gates. MAGNETIC SERVICE then gives finite 128-sample/30-s completion and, with the internal 250-update/1-s guard, finite A21 entry.",
+    "a21_information_route": "Use the complete normalized transported information of all A21 gravity/accelerometer, integral pseudo-, and magnetic corrections. A full floor mu>0 yields the linear covariance-metric comparison rho0<=1/(1+mu); MAGNETIC SERVICE alone covers only the heading/axial gyro-bias component.",
+    "a21_projection_interior": "With estimate projection radius 0.4 m/s^2 and physical accelerometer-bias bound 0.22516660498395405 m/s^2, ||e_ba||<0.17483339501604597 m/s^2 keeps projection inactive on the local A21 tail.",
+    "a21_translation_observability": "For constant-parameter scalar active-bias OU-III, the observability minor from four S rows and one attitude-normalized accel row has determinant -Delta^3 tau^3 (1-exp(-Delta/tau))^3, nonzero for positive finite Delta,tau. Time-varying shipping extension remains open.",
+    "a21_time_varying_observability": "The tau-scaled progress-preserving S scheduler plus dt in [0.004,0.006] s and tau in [0.02,12] s gives a uniform positive time-varying translation minor by the extended-Chebyshev property K'''=exp(-integral 1/tau)>0.",
+    "a21_uniform_detectability": "Active accelerometer bias is a strictly stable OU mode in A21. On the neutral quotient, translation is uniformly observable from S recurrence, gravity observes tilt/transverse gyro bias with sensitivity >=g-A_max, and MAGNETIC SERVICE observes heading/axial gyro bias. Strict compact branch cells imply an existential uniform quotient information floor mu_N>0.",
+    "a21_uniform_controllability": "Positive integrated-OU, gyro white-noise, gyro-bias RW and active accelerometer-bias OU driving densities on the compact timing/tau envelope imply uniform complete controllability. Default a_w covariance sync is a bounded PSD prediction increment; bias release is a bounded diagonal covariance floor.",
+    "a21_local_nonlinear_closure": "On tilt<=6 deg and accelerometer-bias error<=0.15 m/s^2, projection is inactive; tuner and refined magnetic-reference schedules are same-history exogenous; smooth MEKF measurement/reset remainder has eta(r)->0. Thus source-uniform linear rho0<1 implies existence of r*>0 with sqrt(rho0)+eta(r*)<1. Roundoff remains additive supply.",
+    "a21_constructive_small_gain": "Once a certified linear rho0 and quadratic remainder slope L2 are enclosed, r*=min(r_guard,(1-sqrt(rho0))/L2). Additive physical/arithmetic supply then gives the practical radius separately.",
+    "a21_attitude_diversity": "No extra excitation assumption: integral(f x B)=Delta v x B-T g x B. With Vmax=5.5 m/s, Bh>=15 uT, |B|<=75 uT, every T>5.60844 s window has positive vector diversity; T=8 s gives floor 43.97475 (m/s^2)uT. Two 8 s subwindows define the 16 s A21 word and, with recurring magnetic service, expose attitude and gyro bias.",
+    "a21_projection_release": "Universal H18 release cannot guarantee projection-inactive bias error: B_a=0.2251666 exceeds R_b-B_a=0.1748334 even for zero held estimate. A21 therefore retains the literal dissipative projection sector and global post-projection error bound B_a+R_b=0.6251666 m/s^2.",
+    "a21_quantitative_translation": "Constructive normalized neutral translation floor mu_trans>=2.04734e-3 from three literal S events on a 16 s word, max 0.156 s event delay, scales (5.5,8.1,1100), and r_S<=100. Full mu_N remains open because the transported MAGNETIC SERVICE heading/axial-bias Gramian must be composed directly with recurring accelerometer rows.",
+    "float32_supply": "Kernelwise arithmetic uses gamma_n=n*2^-24/(1-n*2^-24); no whole-word supply is promoted until literal operation counts and magnitude envelopes are composed.",
+    "a21_service_schur": "Full quantitative composition uses a PSD block-Schur bound for the actual transported MAGNETIC SERVICE Gramian; it does not replace service by an instantaneous heading row.",
+    "a21_quantitative_status": "Constructive translation floor is closed. Sparse two-epoch attitude/gyro number is diagnostic only and explicitly not promoted. Full mu_N must use PSD Schur composition of the actual transported 2-D MAGNETIC SERVICE Gramian with aggregate accelerometer information.",
+    "a21_long_word_information": "Using 2048 disjoint one-second service roots, pure heading information extracted from J_hb>=I, root accelerometer samples, and one-second bounded-rotation bias increments gives mu_ag>2.1e-3. The 16 s translation subcertificate gives mu_trans>=2.04734e-3, so fixed-coordinate neutral mu_N>=2.04e-3.",
+    "a21_covariance_normalization": "rho0<=1/(1+mu) may only consume covariance-whitened information. If P_root>=p_min I in the proof coordinates, mu_cov>=p_min*mu_N. The fixed-coordinate mu_N is not directly promoted to rho0.",
+    "a21_riccati_enclosure": "Corrected classical UCO/UCC P_min/P_max formulas are retained as a fail-closed cross-check. Primary constructive covariance normalization is a verified interval Riccati enclosure over bounded shipping schedule/hard events; midpoint trajectories cannot certify it without outward-rounded residual inclusion.",
+    "interval_riccati_certificate": "A midpoint covariance trajectory cannot promote p_min. Completion requires every innovation box to pass a strict residual/Krawczyk inverse test, the outward-rounded Riccati image to lie inside the proposed recurring spectral box, and explicit inclusion of shipping schedule, covariance hard events, and float32 rounding.",
+    "interval_arithmetic": "Certificate interval arithmetic uses explicit midpoint-radius analytic radii plus nextafter outward expansion, independent of host BLAS rounding mode. Shipping float32 rounding is a separate gamma_n budget.",
+    "interval_riccati_21": "21-state midpoint-radius kernels now implement P-=F P F'+Q, 3-D innovation covariance, literal Joseph covariance update with all cross-covariances, AW covariance-floor event, and accelerometer-bias release floor. Shipping-specific interval F/Q/H/R constructors and the self-containing recurring box remain open.",
+    "interval_measurements": "Literal 3-D interval constructors cover S selector/R_S, magnetic J_att/Rmag, and active-A21 accelerometer J_att/J_aw/J_ba/Racc. They remain conservative entrywise boxes; innovation inverse verification is separate and fail-closed.",
+    "interval_riccati_kernel_completion": "Generic full 21-state interval layer now includes source-uniform F/Q, acc/S/mag H/R, verified gain/Joseph, AW/bias hard events, and self-containing box iteration. The actual shipping cadence/event-word assembly must still produce a verified recurring box before p_min is promoted.",
+    "source_uniform_service_qualification": "All-time MAGNETIC SERVICE has a continuation certificate requiring every-window same-history applied-event semantics and actual transported innovation covariance. Finite replay cannot establish this certificate.",
+    "physical_qualification": "MARINE MOTION, IMU BIAS and MAGNETIC SERVICE continuation certificates are composed only when they share one history_id and assembled sensor/mounting/calibration qualification is explicit.",
+    "maximal_correction_order": "Kalman/Joseph corrections with SPD R are Loewner-decreasing, prediction is PSD-order monotone, and AW/bias covariance hard events are PSD inflations. Therefore inserting optional S/mag corrections at every sample gives a covariance no larger than any admissible sparser cadence; a positive floor for this maximal-correction word is conservative.",
+    "float32_word_supply": "Float32 gamma_n is applied locally per straight-line kernel and propagated by certified remaining-prefix gains; no invalid whole-word gamma_N operation count is used.",
+    "capture_bridge_release": "Finite bridge and release retention is composed as an explicit storage set inclusion against the eventual certified A21 radius; the composition exists but numerical premises remain open.",
+    "interval_subdivision": "Wide H/parameter interval dependency is handled by finite outward-covering branch subdivision. Every cell must verify its innovation inverse; recurring covariance inclusion uses the hull of all branch images, never a favorable midpoint branch.",
+    "interval_attitude_prediction": "Shipping attitude prediction interval uses Rodrigues near-identity bounds at Omega_max*dt_max, not an entrywise [-1,1] rotation box; gyro-bias injection retains near -dt I diagonal and O(Omega dt^2) off-diagonal structure.",
+    "interval_riccati_architecture_review": "Executed refined entrywise enclosure: predicted covariance spectral lower -18.7907040215, upper 2502.41441854; S innovation r/a=0.666663864 verifies, acc/mag do not. This is interval dependency, not pointwise PSD failure. AGENTS protocol forbids further subdivision; next representation must preserve PSD structure.",
+    "psd_riccati_review": "After entrywise interval dependency failure, covariance architecture review uses PSD-preserving spectral bounds: Weyl lower singular bound for F P F'+Q and information-form correction floor. This is a feasibility construction only until a recurring source-uniform box/factor certificate is run.",
+    "psd_riccati_probe": "One-sample PSD-preserving feasibility: sigma_min(F)>=0.64408710396; covariance floors prediction 4.14848197e-7, after S 4.14825252e-7, after acc 3.01357721e-7, after mag 1.49402788e-7. Not promoted to recurring p_min until literal Q factors and multi-step controllability are enclosed.",
+    "ou_controllability_probe": "Raw unscaled Gershgorin lower bound on the 0.156 s integrated-OU impulse Gramian is zero at tau .02,.2,2,12 despite structural SPD; q_floor=0 spectral recurrence decays 1e-6 to 1.46713e-19 in 32 maximal-correction samples. Classified as scaling/conditioning; one refinement is proof-coordinate-scaled factor/LDLT.",
+    "block_factor_covariance_metric": "After two conditioning failures the entrywise Riccati box is retired. A21 covariance normalization uses AG(6)/LIN(12)/BA(3) factor floors plus cross-block operator bounds. Positive scaled block-Gershgorin margin gamma yields mu_cov>=gamma*min_i(mu_i ell_i^2), then rho0<=1/(1+mu_cov).",
+    "block_factor_next": "BA factor uses monotone active-OU prediction/correction recurrence from literal release floor. Cross-block proof starts from PSD ||Pij||<=sqrt(||Pii||||Pjj||); useful gamma requires tighter recurring cross bounds from literal Joseph/event dynamics.",
+    "block_factor_source_probe": "AG uses exact scaled one-second process Gramian; BA uses literal active-OU process variance and correction recurrence; LIN source-range probe evaluates scaled controllability pivots across tau. Generic PSD cross bounds are diagnostic only and may not promote gamma.",
+    "block_factor_cross_result": "Executed generic PSD cross-ceiling diagnostic gives gamma=-5.122292072e8, a conditioning failure. Root coercivity instead uses exact additive process identity P-=F P+ F'+Q with block-diagonal Q: certified Q factors imply root block metric gamma=1 independent of carried cross covariance. Cross bounds remain prefix/totality obligations.",
+    "block_factor_root_certificate": "Source-uniform positivity/recurrence closes at post-prediction roots: exact AG/LIN/BA process covariances are SPD on the compact positive-noise shipping domain, Q is block diagonal, and P-=F P+ F'+Q gives factor-scaled gamma=1 independent of cross covariance. Existing covariance compactness gives finite cross-block bounds. Numeric factor minima for constructive rho0 remain separate."
   },
   "operation_lemma_sources": [
     {
@@ -43,7 +84,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/magnetic_service.py",
-      "git_blob_sha": "5a73347ff64b33c84222210048082ec78d9eacba"
+      "git_blob_sha": "0177867ee178cf4cdd946e826d6993338e780703"
     },
     {
       "path": "tests/validation/test_ou3_imu_bias.py",
@@ -55,7 +96,7 @@
     },
     {
       "path": "tests/validation/test_ou3_magnetic_service.py",
-      "git_blob_sha": "70448e4acfac7a5be8fc4c105f572273d408691b"
+      "git_blob_sha": "8609eec39978804ec3791ffa50eb4871934328f0"
     },
     {
       "path": "tests/kalman_ou_iii/shipping_transition-test.cpp",
@@ -63,27 +104,43 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "062afbf8294f08d86e806ebd7045fd10f09ede59"
+      "git_blob_sha": "724da1c157dc97a14470588aca3b33b4cccc15a2"
     },
     {
-      "path": "tools/stability/ou3_theorem/finite_error.py",
-      "git_blob_sha": "9cfbf802037b43872179c6b64af6a641e4408280"
+      "path": "tools/stability/ou3_theorem/tail_stability.py",
+      "git_blob_sha": "fe06d29907a8f4e2f28898b228e8d6af4bb50b57"
     },
     {
-      "path": "tests/validation/test_ou3_finite_error.py",
-      "git_blob_sha": "ff433a993750a5beda200c4daac6a0b307090961"
+      "path": "tools/stability/ou3_theorem/interval_riccati.py",
+      "git_blob_sha": "ef0471241417de0e72e36fd92ca0e49afc86c5a9"
     },
     {
-      "path": "tools/stability/ou3_theorem/h18_superword.py",
-      "git_blob_sha": "500c9e2eaca121de66bbc116e5e7d977b23f911d"
+      "path": "tests/validation/test_ou3_interval_riccati.py",
+      "git_blob_sha": "20661c742220aa5a683c17602ff331d251d62070"
     },
     {
-      "path": "tools/stability/ou3_theorem/h18_superword_export.cpp",
-      "git_blob_sha": "54b3ee201a2aabf41e117d9984340054ab2d745b"
+      "path": "tools/stability/ou3_theorem/interval_riccati_21.py",
+      "git_blob_sha": "213a633dc39c091e3e26013e0a1807043781007f"
     },
     {
-      "path": "tests/validation/test_ou3_h18_superword.py",
-      "git_blob_sha": "ddb7449cbb9a89b46fbe7d0047036134dd8aca3a"
+      "path": "tests/validation/test_ou3_interval_riccati_21.py",
+      "git_blob_sha": "73d1b1245588e10958ea3145712d7ff287bc3f0b"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/physical_qualification.py",
+      "git_blob_sha": "2a6283b1d2834bda9cf872cea5ed803dcd7a5fdb"
+    },
+    {
+      "path": "tests/validation/test_ou3_physical_qualification.py",
+      "git_blob_sha": "94aba2bf37b7991ed6b0fb6218e1a16563d6d96c"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/block_factor_metric.py",
+      "git_blob_sha": "9d1f8892c67c891578e53770d58c86feb11fd44a"
+    },
+    {
+      "path": "tests/validation/test_ou3_block_factor_metric.py",
+      "git_blob_sha": "2cfe10325678c4005c75239f836738028711d1db"
     }
   ]
 }
