@@ -1,4 +1,6 @@
 from pathlib import Path
+import os
+import shlex
 import subprocess
 import unittest
 
@@ -173,16 +175,41 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("EVIDENCE_TESTS := $(wildcard test_*.py)", makefile)
         self.assertIn("evidence-test: evidence-contract", makefile)
         self.assertIn("test: evidence-contract", makefile)
-        command = subprocess.check_output(
-            ["make", "-s", "-n", "evidence-test"],
-            cwd=VALIDATION_MAKEFILE.parent, text=True,
-        )
-        modules = set(command.split("python3 -m unittest -v ")[-1].split())
         expected = {path.stem for path in VALIDATION_MAKEFILE.parent.glob("test_*.py")}
-        self.assertEqual(expected, modules)
+        # The evidence gate itself runs under make. Recursive Make inherits
+        # directory banners, so its trailing output is not part of unittest's
+        # argument list. Exercise that environment as well as the caller's.
+        for context in ({}, {"MAKEFLAGS": "w", "MAKELEVEL": "1"}):
+            with self.subTest(environment=context):
+                output = subprocess.check_output(
+                    ["make", "-s", "-n", "evidence-test"],
+                    cwd=VALIDATION_MAKEFILE.parent, text=True,
+                    env={**os.environ, **context},
+                )
+                commands = [
+                    shlex.split(line) for line in output.splitlines()
+                    if line.startswith("python3 -m unittest -v ")
+                ]
+                self.assertEqual(len(commands), 1, output)
+                modules = commands[0][4:]
+                self.assertEqual(expected, set(modules))
+                self.assertEqual(len(expected), len(modules))
         workflow = WORKFLOW.read_text(encoding="utf-8")
         smoke = workflow[workflow.index("  validate:"):workflow.index("  fingerprint:")]
         self.assertIn("make -C tests/validation test", smoke)
+
+    def test_evidence_workflow_independently_checks_full_contract(self):
+        workflow = (REPO_ROOT / ".github/workflows/evidence-contract.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("pull_request:", workflow)
+        for path in ("doc/**", "docs/**", "tests/**", "reports/**"):
+            self.assertIn(f'- "{path}"', workflow)
+        self.assertIn("make -C tests/validation evidence-test", workflow)
+        self.assertIn("set -euo pipefail", workflow)
+        self.assertIn("contents: read", workflow)
+        self.assertNotIn("needs: classify", workflow)
+        self.assertNotIn("continue-on-error", workflow)
 
     def test_single_stability_workflow_covers_contracts_without_promoting_status(self):
         proof = PROOF_WORKFLOW.read_text(encoding="utf-8")

@@ -9,11 +9,23 @@ implemented release and magnetically informed A21. The theorem remains open.
 
 ## Evidence
 
-The repository cleanup gate found 14 obsolete-architecture references across
-seven files in CI run `35382314754`. Those remnants and the shared workflow
-assertions have been corrected without weakening the cleanup gate. The replay
-fingerprint is explicitly invalidated, not regenerated from un-replayed results.
-Scientific simulation settings and shipping estimator behavior are unchanged.
+Main CI run `35403900965`, job `105795514565`, failed at
+`make -C tests/validation evidence-test`: 319 tests reported two failures and
+eight errors. Publication checks still loaded deleted stability/startup inputs
+and required a removed concentration argument. A recursive Make dry-run also
+included its directory-exit banner in the parsed unittest module list.
+Classification: publication/test-infrastructure regression, not a failure of
+an estimator or mathematical inequality. The invalidated hypothesis was that
+the focused architecture suite covered the complete publication gate.
+
+The publication checks now use the current initialization overview and single
+conditional stability study. Runtime clamps and smoothing remain checked
+against shipping source. The module inventory is checked with inherited
+`MAKEFLAGS=w` and `MAKELEVEL=1`, without treating directory banners as modules.
+A separate PR workflow runs the complete evidence gate independently of the
+simulation smoke classifier. It must not accept stale replay provenance: the
+committed bundles still require the full branch regeneration already provided
+by the evidence workflow. No old replay is relabeled as a fresh simulation.
 
 The operation lemmas retain the joint bias state `[e_b; b_true]`, the single
 shared physical-increment column, the separate Kalman correction and projection
@@ -22,9 +34,9 @@ innovation retains `r_S=e_S-S_true` for one fixed physical-potential origin.
 Rectangular magnetic sensitivity transport retains the original information
 coordinates; its dimensional check does not certify the physical release map.
 
-The focused Python suite has 63 passing tests, including the repository audit,
-shared workflow and replay-fingerprint contracts, and finite-error
-non-promotion regressions. Source and operation provenance validation passes.
+The architecture suite includes the repository audit, shared workflow and
+replay-fingerprint contracts, and finite-error non-promotion regressions.
+Source and operation provenance validation passes.
 The native shipping-contract, shipping-transition and common-math tests pass.
 These results establish implementation regressions and subordinate algebra,
 not a source-uniform finite-error stability certificate.
@@ -87,6 +99,10 @@ construction retaining physical bias and model mismatch. These are candidate
 methods for the same theorem, not parallel theorem paths.
 
 ## Next falsifiable experiment
+
+CI check: run the exact complete evidence gate on genuinely regenerated
+bundles matching the source, then check both the PR and publication workflows.
+A focused test pass alone does not establish complete-build success.
 
 Construct a literal magnetically informed H18 superword from an actually
 reached state. Retain the full covariance, physical bias predecessor and every

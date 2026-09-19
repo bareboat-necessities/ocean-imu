@@ -206,13 +206,13 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertNotIn(r"\tau^{5/2}", intro)
 
     def test_startup_keeps_the_deployed_proxy_architecture(self):
-        startup = _read("w3d-init.tex-part")
+        startup = _read("w3d-initialization-overview.tex-part")
         self.assertIn(r"\label{sec:startup-policy}", startup)
         self.assertIn(r"\label{sec:proxy-handoff}", startup)
         _assert_any(self, startup, "measurement-only", "measurement only")
-        for term in ("Mahony", "MEKF", "Live", "ISS"):
+        for term in ("Mahony", "MEKF", "Live", "TunerWarm"):
             self.assertIn(term, startup)
-        for legacy in ("StagedMekf", "TunerWarm", "degraded warmup"):
+        for legacy in ("StagedMekf", "degraded warmup"):
             self.assertNotIn(legacy, startup)
 
     def test_required_methodology_and_result_assets_remain_wired(self):
@@ -252,7 +252,7 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         cadence = _read("w3d-adaptation-cadence-interpretation.tex-part")
         lti = _read("w3d-lti-discrete.tex-part")
         analytic = _read("w3d-analytic-coeff.tex-part")
-        stability = _read("w3d-iss-stability.tex-part")
+        stability = _read("kalman_ou-w3d-stability-study.tex")
         combined_adaptation = "\n".join((adaptation, observables, cadence, deployed))
         for marker in (
             r"\label{eq:adapt-sigma-map}",
@@ -283,10 +283,17 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertIn(r"1-e^{-2h/\tau_b}", lti)
         self.assertIn(r"\eqref{eq:ba-ou-phi}", analytic)
         self.assertIn(r"\eqref{eq:ba-ou-Qd}", analytic)
-        self.assertIn(r"\label{eq:iss-bias-contraction}", stability)
-        self.assertIn(r"\|\Phi_b(k,j)\|", stability)
-        _assert_any(self, stability, r"\tau_{b,+}", r"\overline\tau_b")
-        self.assertNotIn(r"1-e^{-2h_k/\tau_b}", stability)
+        # The estimate's OU prior does not impose OU decay on physical truth.
+        for marker in (
+            r"\label{eq:bias-discrete}", r"\label{eq:phi-mode}",
+            r"\label{eq:bias-prediction}", r"\label{eq:bias-joint}",
+            r"\label{eq:bias-correction}", r"\label{eq:bias-projection}",
+            r"(1-\phi_{e,k})b_k+w_k",
+        ):
+            self.assertIn(marker, stability)
+        self.assertIn("H18/held prediction", stability)
+        self.assertIn("A21/active prediction", stability)
+        self.assertIn("not a model\nimposed on physical truth", stability)
 
     def test_reference_point_and_sim_scope_remain_explicit(self):
         protocol = _read("w3d-sim-charts.tex-part")

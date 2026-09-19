@@ -211,7 +211,7 @@ def _full_result_bundle_is_complete_and_self_consistent(self):
 def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
     baseline = self.read_flat("w3d-baseline-comparison.tex-part")
     fusion = self.read("w3d-fus-methods.tex-part")
-    startup = self.read("w3d-init.tex-part")
+    startup = self.read("w3d-initialization-overview.tex-part")
     results = self.read_flat("w3d-results.tex-part")
 
     baseline_norm = re.sub(r"\s+", " ", baseline).lower()
