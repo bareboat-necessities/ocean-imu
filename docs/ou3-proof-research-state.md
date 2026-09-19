@@ -244,3 +244,60 @@ kernel with n rounded operations has the standard gamma_n bound
 primitive, but no whole-word arithmetic supply is claimed until literal kernel
 operation counts and magnitude envelopes are composed. Roundoff remains
 additive supply and is not allowed to consume the nonlinear derivative margin.
+
+
+## Constructive long-word neutral information
+
+The weak gyro-bias scale is handled by accumulation, not by strengthening the
+physical assumptions. The proof word is now 2048 s. At every disjoint one-second
+MAGNETIC SERVICE root, the service inequality J_hb>=I permits extraction of one
+unit of **pure root-heading information** (subtract diag(1,0); the remainder is
+PSD). The simultaneous root accelerometer sample has no preceding gyro-bias
+transport. With the commissioned detector-band residual bound 0.3 m/s^2,
+shipping vibration gain 0.75, and nominal accelerometer std 0.2 m/s^2, the
+literal effective accelerometer std is bounded by
+
+`sigma_acc,eff <= hypot(0.2,0.75*0.3)=0.3010399 m/s^2`.
+
+Together with `|f_z|>=g-A_max=1.00665`, `|f_h|<=8.8`, and one unit of
+heading service, each service root supplies a pure attitude information floor
+greater than 0.0129 in the declared proof coordinates.
+
+Let `y_k=theta_0+C_k b_g` be those extracted root-attitude observations.
+Bounded angular rate gives
+
+`sigma_min(C_(k+1)-C_k) >=
+  s_bg * 2 sin(Omega_max/2)/Omega_max`
+
+with `s_bg=0.02`, so the normalized increment is at least about 0.01969.
+The path-graph inequality
+`sum |y_(k+1)-y_k|^2 <= 4 sum |y_k|^2`, combined with the root observation
+`y_0=theta_0`, gives the joint attitude/gyro-bias floor
+
+`mu_ag = j*c/(1+c),  c=(N-1) beta^2/4`.
+
+For N=2048 this exceeds 2.1e-3. The independent 16-s S certificate remains
+`mu_trans>=2.04734e-3`; therefore the complete **fixed-coordinate neutral
+Gramian** satisfies
+
+`mu_N >= 2.04e-3`.
+
+This construction never integrates attitude over 2048 s: it uses only
+one-second transport increments, so bounded rotations cannot cancel the
+gyro-bias information.
+
+### Important normalization correction
+
+The number above is not yet a covariance-metric contraction factor. The
+information-form identity `rho0<=1/(1+mu)` requires the Gramian to be whitened
+by the actual root covariance. If, in the same proof coordinates,
+`P_root>=p_min I`, then
+
+`mu_cov >= p_min mu_N`,
+`rho0 <= 1/(1+p_min mu_N)`.
+
+Using the fixed-coordinate 2.04e-3 directly in the latter formula would be a
+coordinate-dependent and invalid shortcut. The next quantitative certificate
+is therefore a recurring lower enclosure `p_min>0` for the shipping A21 root
+covariance. Only after that enclosure is established will rho0, the explicit
+L2/r* radius, and the arithmetic/practical-radius bounds be promoted.
