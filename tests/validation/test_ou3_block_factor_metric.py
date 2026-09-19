@@ -11,7 +11,7 @@ from tools.stability.ou3_theorem.block_factor_metric import (
     ag_one_second_factor_floor,ba_process_variance,block_factor_feasibility,
     additive_process_metric_certificate,block_metric_correction_margin,
     normalized_measurement_information_ceiling,
-    uniform_lin_jensen_factor_certificate,source_uniform_root_block_certificate,
+    uniform_lin_jensen_factor_certificate,source_uniform_root_block_certificate,\n    batch_information_degraded_factor,
 )
 from tools.stability.ou3_theorem.interval_riccati_21 import (
     integrated_ou_scaled_factor_probe,
@@ -48,6 +48,15 @@ class BlockFactorMetricTests(unittest.TestCase):
     def test_generic_psd_cross_bound_is_too_weak_for_small_factors(self):
         c=cross_block_psd_bound(2.0,3.0)
         self.assertAlmostEqual(c,math.sqrt(6.0))
+
+    def test_batch_factor_fails_closed_without_literal_event_comparison(self):
+        r=batch_information_degraded_factor(
+            process_factor=1.0,event_information_ceilings=((1,1.0),),
+            transport_norm_ceiling=1.0)
+        self.assertFalse(r["verified"])
+        self.assertEqual(
+            r["failure"],
+            "endpoint_process_factor_does_not_bound_interleaved_corrections")
 
     def test_source_uniform_root_block_metric_is_coercive(self):
         r=source_uniform_root_block_certificate(
