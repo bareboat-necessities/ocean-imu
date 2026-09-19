@@ -524,6 +524,33 @@ The literal 21-state midpoint--radius Riccati enclosure was executed after the s
 \subsection{PSD-preserving covariance feasibility}
 A structure-preserving one-sample spectral check gives $\sigma_{\min}(F)\ge0.6440871$. Starting from the constructor covariance floor, the certified lower covariance is $4.14848\times10^{-7}$ after prediction and $1.49403\times10^{-7}$ after the maximal $S$/accelerometer/magnetometer correction sequence. These are feasibility margins only. Recurring certification still requires a full-rank factor enclosure of the literal $Q_{AA}$, integrated-OU $Q_{LL}$, and active-bias $Q_{BA}$ and multi-step propagation that preserves controllability structure. A tiny one-step scalar process-noise eigenvalue is not substituted for that factor certificate.
 
+\subsection{Block/factor covariance metric}
+After the second conditioning failure of the entrywise midpoint--radius
+Riccati enclosure, covariance normalization is carried in a structure-
+preserving block/factor metric.  Partition the A21 covariance into
+attitude/gyro-bias (AG), translation/integrated-OU (LIN), and active
+accelerometer-bias (BA) blocks.  For each diagonal block certify
+\[
+ P_{ii}\succeq L_iL_i^{\mathsf T},\qquad
+ \sigma_{\min}(L_i)\ge\ell_i>0 ,
+\]
+and retain operator-norm bounds $c_{ij}$ on every cross block.  In factor-scaled
+coordinates block Gershgorin gives
+\[
+ \gamma=1-\max_i\sum_{j\ne i}{c_{ij}\over\ell_i\ell_j}.
+\]
+Only $\gamma>0$ promotes covariance coercivity.  If the corresponding
+fixed-coordinate block information floors are $\mu_i$, then
+\[
+ \mu_{\rm cov}\ge
+ \gamma\min_i(\mu_i\ell_i^2),\qquad
+ \rho_0\le(1+\mu_{\rm cov})^{-1}.
+\]
+This representation preserves block conditioning while accounting for all
+cross-covariances; it does not reuse the failed entrywise covariance box.
+The remaining certificate is source-uniform enclosure of the three factor
+floors and cross-block norms under the literal shipping cadence.
+
 \section{Conclusion}
 The stability problem is posed as one same-history theorem with continuing
 magnetic information. The formulation excludes permanent wave-coordinate
