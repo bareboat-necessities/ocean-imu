@@ -66,7 +66,8 @@
     "interval_riccati_architecture_review": "Executed refined entrywise enclosure: predicted covariance spectral lower -18.7907040215, upper 2502.41441854; S innovation r/a=0.666663864 verifies, acc/mag do not. This is interval dependency, not pointwise PSD failure. AGENTS protocol forbids further subdivision; next representation must preserve PSD structure.",
     "psd_riccati_review": "After entrywise interval dependency failure, covariance architecture review uses PSD-preserving spectral bounds: Weyl lower singular bound for F P F'+Q and information-form correction floor. This is a feasibility construction only until a recurring source-uniform box/factor certificate is run.",
     "psd_riccati_probe": "One-sample PSD-preserving feasibility: sigma_min(F)>=0.64408710396; covariance floors prediction 4.14848197e-7, after S 4.14825252e-7, after acc 3.01357721e-7, after mag 1.49402788e-7. Not promoted to recurring p_min until literal Q factors and multi-step controllability are enclosed.",
-    "ou_controllability_probe": "Raw unscaled Gershgorin lower bound on the 0.156 s integrated-OU impulse Gramian is zero at tau .02,.2,2,12 despite structural SPD; q_floor=0 spectral recurrence decays 1e-6 to 1.46713e-19 in 32 maximal-correction samples. Classified as scaling/conditioning; one refinement is proof-coordinate-scaled factor/LDLT."
+    "ou_controllability_probe": "Raw unscaled Gershgorin lower bound on the 0.156 s integrated-OU impulse Gramian is zero at tau .02,.2,2,12 despite structural SPD; q_floor=0 spectral recurrence decays 1e-6 to 1.46713e-19 in 32 maximal-correction samples. Classified as scaling/conditioning; one refinement is proof-coordinate-scaled factor/LDLT.",
+    "block_factor_covariance_metric": "After two conditioning failures the entrywise Riccati box is retired. A21 covariance normalization uses AG(6)/LIN(12)/BA(3) factor floors plus cross-block operator bounds. Positive scaled block-Gershgorin margin gamma yields mu_cov>=gamma*min_i(mu_i ell_i^2), then rho0<=1/(1+mu_cov)."
   },
   "operation_lemma_sources": [
     {
@@ -99,7 +100,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "de0ef0e2a18adf2fac8513ba3009f3cccc59ed5b"
+      "git_blob_sha": "fa75c3a30ac5b8e0081f1b232991e335298c3a96"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -128,6 +129,14 @@
     {
       "path": "tests/validation/test_ou3_physical_qualification.py",
       "git_blob_sha": "94aba2bf37b7991ed6b0fb6218e1a16563d6d96c"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/block_factor_metric.py",
+      "git_blob_sha": "ea37040880e75760dda7920d61efd41980c023d7"
+    },
+    {
+      "path": "tests/validation/test_ou3_block_factor_metric.py",
+      "git_blob_sha": "7b22c08851b521efe5076c1d21c0c84b2ecfbe04"
     }
   ]
 }
