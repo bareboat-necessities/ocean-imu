@@ -9,6 +9,8 @@ from tools.stability.ou3_theorem.block_factor_metric import (
     block_information_normalization,block_scaled_schur_floor,
     ba_ou_recurring_factor_floor,cross_block_psd_bound,
     ag_one_second_factor_floor,ba_process_variance,block_factor_feasibility,
+    additive_process_metric_certificate,block_metric_correction_margin,
+    normalized_measurement_information_ceiling,
 )
 from tools.stability.ou3_theorem.interval_riccati_21 import (
     integrated_ou_scaled_factor_probe,
@@ -45,6 +47,17 @@ class BlockFactorMetricTests(unittest.TestCase):
     def test_generic_psd_cross_bound_is_too_weak_for_small_factors(self):
         c=cross_block_psd_bound(2.0,3.0)
         self.assertAlmostEqual(c,math.sqrt(6.0))
+
+    def test_additive_process_factor_gives_root_gamma_one_despite_cross_terms(self):
+        r=additive_process_metric_certificate(
+            ag_q_factor=5e-4,lin_q_factor=1e-9,ba_q_factor=3e-5)
+        self.assertTrue(r["verified"])
+        self.assertEqual(r["root_metric_gamma"],1.0)
+        j=normalized_measurement_information_ceiling(
+            h_norm=10.0,max_factor=5e-4,noise_variance_floor=.0025)
+        g=block_metric_correction_margin(gamma_in=1.0,
+                                         normalized_information_ceiling=j)
+        self.assertGreater(g,0.0);self.assertLessEqual(g,1.0)
 
     def test_source_range_factor_feasibility_diagnostic(self):
         ag=ag_one_second_factor_floor(
