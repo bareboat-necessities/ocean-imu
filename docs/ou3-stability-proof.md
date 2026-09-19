@@ -143,6 +143,22 @@ and strict contraction follows from the explicit small-gain condition
 usual practical-stability radius after coercivity and every-prefix retention
 are certified.
 
+For the linear A21 word, use the covariance/information structure directly.
+Prediction with positive-semidefinite process covariance is nonexpansive in the
+covariance metric, and literal linear Kalman corrections are nonexpansive in
+their updated metric. Define the **complete normalized A21 information floor**
+to include the transported information of all actual accelerometer/gravity,
+integral pseudo-, and magnetic corrections over the service word. If this full
+floor satisfies `J_A21 >= mu I`, `mu>0`, the information comparison gives
+
+`rho_0 <= 1/(1+mu)`.
+
+MAGNETIC SERVICE establishes only the heading/axial-gyro-bias component; it
+must not be substituted for the complete floor. On the inner bias domain
+`||e_ba|| < R_b-B_a = 0.1748334 m/s^2`, the shipping estimate projection is
+inactive and therefore does not contribute a local A21 nonlinearity. Release
+retention must place the execution in this domain.
+
 This is the controlling proof route. Finite-difference superwords and candidate
 point ratios are not proof evidence and are not retained.
 
