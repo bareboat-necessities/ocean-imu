@@ -844,3 +844,64 @@ def classical_riccati_covariance_bounds(*, observability_lower: float,
     upper=(a1+horizon_steps*a2*a2*b2)/(a1*a1)
     lower=(b1*b1)/(b1+horizon_steps*a2*b2*b2)
     return {"p_min":lower,"p_max":upper}
+
+def one_step_noise_covariance_floor(*, dt_min_s: float,
+                                    gyro_white_density: float,
+                                    gyro_bias_rw_density: float,
+                                    accel_bias_drive_density: float) -> float:
+    """Conservative full-rank prediction-noise floor for base/bias coordinates.
+
+    This intentionally excludes the integrated-OU translation chain, whose
+    one-step controllability Gramian is SPD but much more ill-conditioned.
+    It is useful as a verified Riccati seed/check, not as the final full-state
+    covariance floor.
+    """
+    vals=(dt_min_s,gyro_white_density,gyro_bias_rw_density,accel_bias_drive_density)
+    if not all(math.isfinite(x) for x in vals) or min(vals) <= 0:
+        raise ValueError("positive finite process-noise data required")
+    return min(gyro_white_density**2*dt_min_s,
+               gyro_bias_rw_density**2*dt_min_s,
+               accel_bias_drive_density**2*dt_min_s)
+
+def verified_interval_innovation_inverse(*, midpoint_min_eigenvalue: float,
+                                         spectral_radius_bound: float) -> dict:
+    """Residual/Krawczyk-style inverse enclosure for an SPD innovation box.
+
+    If S=S0+E, lambda_min(S0)>=a and ||E||_2<=r<a, every member is SPD.
+    The midpoint inverse is an approximate inverse with residual norm
+    ||I-S0^-1 S||<=r/a<1. Neumann/Krawczyk inclusion gives
+    ||S^-1||<=1/(a-r). This is the primitive needed by an interval Riccati
+    update; a floating-point LDLT alone is not a certificate.
+    """
+    vals=(midpoint_min_eigenvalue,spectral_radius_bound)
+    if not all(math.isfinite(x) for x in vals) or midpoint_min_eigenvalue <= 0 or spectral_radius_bound < 0:
+        raise ValueError("valid innovation enclosure required")
+    if spectral_radius_bound >= midpoint_min_eigenvalue:
+        return {"verified":False,"residual_norm_bound":math.inf,"inverse_norm_bound":math.inf}
+    residual=spectral_radius_bound/midpoint_min_eigenvalue
+    return {"verified":True,"residual_norm_bound":residual,
+            "inverse_norm_bound":1.0/(midpoint_min_eigenvalue-spectral_radius_bound)}
+
+def riccati_box_inclusion(*, proposed_lower: float, proposed_upper: float,
+                          image_lower: float, image_upper: float,
+                          outward_rounding_slack: float) -> dict:
+    """Scalar spectral inclusion test for a symmetric interval Riccati box.
+
+    Matrix midpoint-radius propagation must separately establish image_lower I
+    <= R(P,parameters) <= image_upper I for every P in the proposed box. This
+    helper only performs the final outward inclusion check.
+    """
+    vals=(proposed_lower,proposed_upper,image_lower,image_upper,outward_rounding_slack)
+    if not all(math.isfinite(x) for x in vals) or proposed_lower <= 0 or proposed_upper < proposed_lower or outward_rounding_slack < 0:
+        raise ValueError("valid Riccati box data required")
+    lo=image_lower-outward_rounding_slack
+    hi=image_upper+outward_rounding_slack
+    return {"verified":lo >= proposed_lower and hi <= proposed_upper,
+            "outward_image_lower":lo,"outward_image_upper":hi}
+
+def covariance_floor_to_rho(*, fixed_coordinate_mu: float,
+                            covariance_floor: float) -> dict:
+    """Complete normalized-information/rho chain once P_root floor is certified."""
+    mu=covariance_normalized_information_floor(fixed_coordinate_mu,covariance_floor)
+    rho=rho_from_covariance_normalized_mu(mu)
+    return {"mu_cov":mu,"rho0":rho,"norm_margin":1.0-math.sqrt(rho)}
