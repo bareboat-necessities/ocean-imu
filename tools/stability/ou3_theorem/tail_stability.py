@@ -59,45 +59,66 @@ def proof_route_status(*, reference_refinement_finite: bool, h18_bridge_retained
 
 @dataclass(frozen=True)
 class RefinementPremises:
-    """Sufficient conditions for MagAutoTuner refinement to finish."""
+    """Sufficient conditions for the deployed unweighted MagAutoTuner."""
     min_samples: int
     min_window_s: float
-    usable_sample_gap_s: float
-    field_norm_lower: float
-    field_norm_upper: float
+    accepted_dt_lower_s: float
+    accepted_dt_upper_s: float
+    true_field_norm_lower: float
+    true_field_norm_upper: float
+    measurement_residual_norm: float
+    true_horizontal_lower: float
+    tilt_error_upper_rad: float
     max_norm_ratio_from_mean: float
-    horizontal_mean_lower: float
     min_horizontal_fraction: float
     def __post_init__(self) -> None:
         if self.min_samples < 1: raise ValueError("positive sample count required")
-        vals=(self.min_window_s,self.usable_sample_gap_s,self.field_norm_lower,
-              self.field_norm_upper,self.max_norm_ratio_from_mean,
-              self.horizontal_mean_lower,self.min_horizontal_fraction)
+        vals=(self.min_window_s,self.accepted_dt_lower_s,self.accepted_dt_upper_s,
+              self.true_field_norm_lower,self.true_field_norm_upper,
+              self.measurement_residual_norm,self.true_horizontal_lower,
+              self.tilt_error_upper_rad,self.max_norm_ratio_from_mean,
+              self.min_horizontal_fraction)
         if not all(math.isfinite(x) for x in vals): raise ValueError("finite refinement premises required")
-        if self.min_window_s < 0 or self.usable_sample_gap_s <= 0 or self.field_norm_lower <= 0:
-            raise ValueError("positive refinement timing/field bounds required")
-        if self.field_norm_upper < self.field_norm_lower or self.max_norm_ratio_from_mean < 0:
-            raise ValueError("ordered field bounds required")
-        if self.horizontal_mean_lower <= 0 or not 0 < self.min_horizontal_fraction < 1:
-            raise ValueError("positive horizontal field requirement")
+        if self.min_window_s < 0 or self.accepted_dt_lower_s <= 0 or self.accepted_dt_upper_s < self.accepted_dt_lower_s:
+            raise ValueError("ordered positive accepted-sample timing required")
+        if self.true_field_norm_lower <= self.measurement_residual_norm or self.true_field_norm_upper < self.true_field_norm_lower:
+            raise ValueError("field must dominate residual")
+        if self.measurement_residual_norm < 0 or self.true_horizontal_lower <= 0 or self.tilt_error_upper_rad < 0:
+            raise ValueError("valid field/residual/tilt bounds required")
+        if self.max_norm_ratio_from_mean < 0 or not 0 < self.min_horizontal_fraction < 1:
+            raise ValueError("valid tuner gates required")
+
+def refinement_gate_margins(p: RefinementPremises) -> dict:
+    """Derive literal MagAutoTuner gates from physical field/residual bounds.
+
+    Rotation preserves the true field norm. With ||r||<=R, every corrected
+    sample norm lies in [B_min-R,B_max+R]. For one physical field magnitude the
+    sharper running-norm variation is 2R/(B_min-R), independent of attitude.
+    A tilt-frame error eps changes a vector by at most 2 B_max sin(eps/2);
+    adding the measurement residual gives a conservative horizontal-mean loss.
+    """
+    norm_ratio=2.0*p.measurement_residual_norm/(p.true_field_norm_lower-p.measurement_residual_norm)
+    rotation_loss=2.0*p.true_field_norm_upper*math.sin(min(math.pi,p.tilt_error_upper_rad)/2.0)
+    horizontal_lower=p.true_horizontal_lower-rotation_loss-p.measurement_residual_norm
+    sample_norm_upper=p.true_field_norm_upper+p.measurement_residual_norm
+    horizontal_fraction=horizontal_lower/sample_norm_upper
+    return {"norm_ratio_upper":norm_ratio,
+            "norm_ratio_margin":p.max_norm_ratio_from_mean-norm_ratio,
+            "horizontal_mean_lower":horizontal_lower,
+            "horizontal_fraction_lower":horizontal_fraction,
+            "horizontal_fraction_margin":horizontal_fraction-p.min_horizontal_fraction}
 
 def refinement_sample_gate_uniform(p: RefinementPremises) -> bool:
-    """Sufficient all-sample conditions for the unweighted MagAutoTuner gate.
+    m=refinement_gate_margins(p)
+    return m["norm_ratio_margin"] >= 0.0 and m["horizontal_fraction_margin"] >= 0.0
 
-    The running accepted mean norm remains in [field_norm_lower,field_norm_upper].
-    Hence every next norm differs from that mean by at most
-    (upper-lower)/lower.  The horizontal mean is also nondegenerate.
-    """
-    norm_ratio=(p.field_norm_upper-p.field_norm_lower)/p.field_norm_lower
-    horizontal_fraction=p.horizontal_mean_lower/p.field_norm_upper
-    return (norm_ratio <= p.max_norm_ratio_from_mean and
-            horizontal_fraction >= p.min_horizontal_fraction)
+def refinement_required_accepted_samples(p: RefinementPremises) -> int:
+    """Samples sufficient for both literal count and accepted-window gates."""
+    return max(p.min_samples, math.ceil(p.min_window_s/p.accepted_dt_lower_s))
 
 def refinement_completion_bound(start_s: float, p: RefinementPremises) -> float:
-    """Finite refinement time once recurring usable samples satisfy the gate."""
+    """Wall-clock completion bound under recurring accepted samples."""
     if not math.isfinite(start_s) or start_s < 0: raise ValueError("finite nonnegative start required")
     if not refinement_sample_gate_uniform(p):
-        raise ValueError("premises do not guarantee MagAutoTuner sample acceptance")
-    # One usable sample every gap. The accepted-window clock advances by the
-    # actual intersample time, so min_window and min_samples are both covered.
-    return start_s + max(p.min_window_s, p.min_samples*p.usable_sample_gap_s)
+        raise ValueError("physical bounds do not guarantee MagAutoTuner acceptance")
+    return start_s + refinement_required_accepted_samples(p)*p.accepted_dt_upper_s
