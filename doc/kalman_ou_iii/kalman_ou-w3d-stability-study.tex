@@ -321,10 +321,22 @@ is sufficient for finite-error contraction. Bounded physical, model and
 arithmetic forcing then gives the practical-stability recurrence once
 coercivity and every-prefix retention are certified.
 
-The remaining proof task is consequently source-uniform: derive $\rho_0$ from
-the literal A21 prediction/correction sequence together with magnetic service,
-and bound $\eta$ for the MEKF reset, projection, tuner and finite-precision
-operations. Finite-difference trajectory diagnostics are not used.
+The preferred linear route follows the covariance algebra rather than a
+trajectory fit. Prediction with positive-semidefinite process covariance is
+nonexpansive in the covariance metric, as is each linear Kalman correction in
+its updated metric. If the complete A21 word has normalized transported
+information bounded below by $\mu I$, the information-form comparison gives
+\begin{equation}
+ \rho_0\le(1+\mu)^{-1}.
+\end{equation}
+Magnetic service supplies only the heading/axial gyro-bias part of this floor;
+gravity/accelerometer and integral pseudo-updates must close the complementary
+directions. The accelerometer-bias projection is inactive on the inner domain
+$\norm{e_{b_a}}<R_b-B_a=0.1748334$~m/s$^2$, so release retention into that
+domain removes projection from the local A21 remainder. The remaining task is
+to certify the full information floor and bound the MEKF reset, tuner and
+finite-precision remainder $\eta$ below $1-\sqrt{\rho_0}$. Finite-difference
+trajectory diagnostics are not used.
 
 \balance
 \section{Declared constants}
