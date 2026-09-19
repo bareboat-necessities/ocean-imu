@@ -8,5 +8,18 @@
   "full_shipping_schedule_included": false,
   "float32_rounding_included": false,
   "certificate_complete": false,
-  "blocker": "outward-rounded full shipping Riccati image and verified innovation inverse enclosures have not yet been produced"
+  "blocker": "literal 21-state matrix kernels are implemented; remaining work is shipping-specific interval F/Q/H/R construction, verified gain/inverse enclosure, and recurring self-containing box iteration",
+  "kernel_status": {
+    "matrix_interval_arithmetic": true,
+    "prediction_21_state": true,
+    "joseph_21_state": true,
+    "all_cross_covariances": true,
+    "aw_covariance_floor_event": true,
+    "accel_bias_release_event": true,
+    "shipping_F_Q_interval_constructor": false,
+    "shipping_acc_H_R_interval_constructor": false,
+    "shipping_S_H_R_interval_constructor": false,
+    "shipping_mag_H_R_interval_constructor": false,
+    "recurring_box_iteration": false
+  }
 }
