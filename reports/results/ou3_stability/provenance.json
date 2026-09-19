@@ -68,7 +68,8 @@
     "psd_riccati_probe": "One-sample PSD-preserving feasibility: sigma_min(F)>=0.64408710396; covariance floors prediction 4.14848197e-7, after S 4.14825252e-7, after acc 3.01357721e-7, after mag 1.49402788e-7. Not promoted to recurring p_min until literal Q factors and multi-step controllability are enclosed.",
     "ou_controllability_probe": "Raw unscaled Gershgorin lower bound on the 0.156 s integrated-OU impulse Gramian is zero at tau .02,.2,2,12 despite structural SPD; q_floor=0 spectral recurrence decays 1e-6 to 1.46713e-19 in 32 maximal-correction samples. Classified as scaling/conditioning; one refinement is proof-coordinate-scaled factor/LDLT.",
     "block_factor_covariance_metric": "After two conditioning failures the entrywise Riccati box is retired. A21 covariance normalization uses AG(6)/LIN(12)/BA(3) factor floors plus cross-block operator bounds. Positive scaled block-Gershgorin margin gamma yields mu_cov>=gamma*min_i(mu_i ell_i^2), then rho0<=1/(1+mu_cov).",
-    "block_factor_next": "BA factor uses monotone active-OU prediction/correction recurrence from literal release floor. Cross-block proof starts from PSD ||Pij||<=sqrt(||Pii||||Pjj||); useful gamma requires tighter recurring cross bounds from literal Joseph/event dynamics."
+    "block_factor_next": "BA factor uses monotone active-OU prediction/correction recurrence from literal release floor. Cross-block proof starts from PSD ||Pij||<=sqrt(||Pii||||Pjj||); useful gamma requires tighter recurring cross bounds from literal Joseph/event dynamics.",
+    "block_factor_source_probe": "AG uses exact scaled one-second process Gramian; BA uses literal active-OU process variance and correction recurrence; LIN source-range probe evaluates scaled controllability pivots across tau. Generic PSD cross bounds are diagnostic only and may not promote gamma."
   },
   "operation_lemma_sources": [
     {
@@ -133,11 +134,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/block_factor_metric.py",
-      "git_blob_sha": "740c1562eb5978827f76db36ee6d534c7e3e189b"
+      "git_blob_sha": "029b384aa98feb0bfbe447e4f572a137bdbac167"
     },
     {
       "path": "tests/validation/test_ou3_block_factor_metric.py",
-      "git_blob_sha": "06c53976499845463554af0661191e8d5f651ae2"
+      "git_blob_sha": "99d0aac06c2e2ed49560f4480342fc135bd6fd90"
     }
   ]
 }
