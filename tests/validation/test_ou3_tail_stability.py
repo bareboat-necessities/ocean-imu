@@ -18,6 +18,9 @@ from tools.stability.ou3_theorem.tail_stability import (
     nonlinear_small_gain_exists_from_linear, nonlinear_tail_ratio,
     normalized_translation_information_floor, conservative_float32_kernel_error,
     bias_release_error_bound, projection_sector_retained_error_bound,
+    vector_attitude_information_floor, rotation_integral_singular_floor,
+    two_epoch_attitude_gyro_floor, explicit_neutral_information_floor,
+    rho_from_explicit_mu,
     practical_radius_bound, projection_sector_is_dissipative, proof_route_status,
     pseudo_decay_exponent_per_gap, release_can_guarantee_projection_inactive,
     small_gain_budget,
@@ -93,6 +96,27 @@ class QuantitativeCertificateTests(unittest.TestCase):
             S_scale=1100.0,S_noise_std_max=100.0)
         self.assertGreater(mu,.00204)
         self.assertLess(mu,.00205)
+
+    def test_explicit_conservative_mu_and_rho(self):
+        racc=math.hypot(.2,.75*.3)
+        j=vector_attitude_information_floor(
+            vertical_specific_force_floor=9.80665-8.8,
+            horizontal_specific_force_ceiling=8.8,
+            accel_noise_std_ceiling=racc,heading_information_floor=1.0)
+        self.assertGreater(j,.0129)
+        b=rotation_integral_singular_floor(1.0,.6108652381980153)
+        self.assertGreater(b,.8475)
+        mu_ag=two_epoch_attitude_gyro_floor(j,.02,b)
+        mu_t=normalized_translation_information_floor(
+            word_s=16.0,event_gap_max_s=.156,v_scale=5.5,p_scale=8.1,
+            S_scale=1100.0,S_noise_std_max=100.0)
+        mu=explicit_neutral_information_floor(mu_t,mu_ag)
+        self.assertGreater(mu,6.17e-7)
+        self.assertLess(mu,6.19e-7)
+        rho=rho_from_explicit_mu(mu)
+        self.assertGreater(rho,.9999993)
+        self.assertLess(rho,1.0)
+        self.assertLess(1-math.sqrt(rho),3.1e-7)
 
     def test_float32_kernel_gamma_bound(self):
         self.assertLess(conservative_float32_kernel_error(100,1.0),6e-6)
