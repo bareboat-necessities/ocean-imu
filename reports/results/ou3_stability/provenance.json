@@ -63,7 +63,8 @@
     "capture_bridge_release": "Finite bridge and release retention is composed as an explicit storage set inclusion against the eventual certified A21 radius; the composition exists but numerical premises remain open.",
     "interval_subdivision": "Wide H/parameter interval dependency is handled by finite outward-covering branch subdivision. Every cell must verify its innovation inverse; recurring covariance inclusion uses the hull of all branch images, never a favorable midpoint branch.",
     "interval_attitude_prediction": "Shipping attitude prediction interval uses Rodrigues near-identity bounds at Omega_max*dt_max, not an entrywise [-1,1] rotation box; gyro-bias injection retains near -dt I diagonal and O(Omega dt^2) off-diagonal structure.",
-    "interval_riccati_architecture_review": "Executed refined entrywise enclosure: predicted covariance spectral lower -18.7907040215, upper 2502.41441854; S innovation r/a=0.666663864 verifies, acc/mag do not. This is interval dependency, not pointwise PSD failure. AGENTS protocol forbids further subdivision; next representation must preserve PSD structure."
+    "interval_riccati_architecture_review": "Executed refined entrywise enclosure: predicted covariance spectral lower -18.7907040215, upper 2502.41441854; S innovation r/a=0.666663864 verifies, acc/mag do not. This is interval dependency, not pointwise PSD failure. AGENTS protocol forbids further subdivision; next representation must preserve PSD structure.",
+    "psd_riccati_review": "After entrywise interval dependency failure, covariance architecture review uses PSD-preserving spectral bounds: Weyl lower singular bound for F P F'+Q and information-form correction floor. This is a feasibility construction only until a recurring source-uniform box/factor certificate is run."
   },
   "operation_lemma_sources": [
     {
@@ -112,11 +113,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/interval_riccati_21.py",
-      "git_blob_sha": "16e2265dd3c961dbfa1ac3cf4785ff793fdb7150"
+      "git_blob_sha": "0314c46d59ad448a026a0324f89b7d209b8b103f"
     },
     {
       "path": "tests/validation/test_ou3_interval_riccati_21.py",
-      "git_blob_sha": "704f08844d5db5240e43ccb83fbf623ca6479e17"
+      "git_blob_sha": "8b374257ae75df7ada1955a9fb1799e018146e0d"
     },
     {
       "path": "tools/stability/ou3_theorem/physical_qualification.py",
