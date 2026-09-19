@@ -38,10 +38,7 @@ refinement is finite.
    gyro-bias component; gravity/accelerometer and integral pseudo-updates must
    close the remaining directions. A full floor mu gives the linear comparison
    rho0<=1/(1+mu).
-6. Retain A21 inside the inactive accelerometer-bias projection region
-   (bias-error radius <0.1748334 m/s^2), then bound the remaining nonlinear
-   reset/tuner/arithmetic remainder. Close finite-error contraction with
-   (sqrt(rho0)+eta)^2 < 1.
+6. Carry the literal dissipative accelerometer-bias projection sector; do not require projection-inactive release. Bound the remaining nonlinear reset/tuner remainder and close finite-error contraction with (sqrt(rho0)+eta)^2 < 1. Arithmetic remains a separate additive supply.
 7. Close every-prefix retention, recurring service, and finite-precision
    arithmetic.
 
