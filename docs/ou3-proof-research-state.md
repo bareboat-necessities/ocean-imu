@@ -421,3 +421,38 @@ The covariance-normalization architecture has moved to a block/factor metric aft
 After scaling by the factor floors, block Gershgorin/Schur coercivity requires gamma=1-max_i sum_(j!=i) ||P_ij||/(ell_i ell_j)>0. Only then can fixed-coordinate information be covariance-normalized. For block information floors mu_i, the certificate uses mu_cov >= gamma*min_i(mu_i ell_i^2), followed by rho0<=1/(1+mu_cov). This prevents a poorly conditioned global scalar covariance eigenvalue from destroying useful block information while still accounting for every cross-covariance.
 
 The old entrywise interval Riccati representation is retired and must not be subdivided again. A non-promoting scaled integrated-OU factor probe is now in CI. The next source-uniform certificate must enclose tau/process-noise variation and the within-slice controllability remainder, then establish AG and BA factor floors and recurring cross-block operator bounds under the literal shipping correction/event cadence.
+
+
+## Block/factor coercivity refinement
+
+The first block/factor implementation attempted to recover coercivity from
+absolute cross-block bounds through
+`1-max_i sum_j ||P_ij||/(ell_i ell_j)`.  The universal PSD cross bound is far
+too weak because the process-factor floors are small while covariance ceilings
+carry physical units and long-integrator scales.  This is a conditioning
+failure of that sufficient Gershgorin reduction, not a covariance failure.
+
+The literal shipping prediction supplies a stronger identity that does not
+discard cross structure:
+[
+ P^- = F P^+ F^T + Q,qquad
+ Q=operatorname{diag}(Q_{AG},Q_{LIN},Q_{BA}).
+]
+If source-uniform process factors satisfy
+`Q_i>=L_i L_i^T`, then exactly
+[
+ P^- - operatorname{diag}(L_iL_i^T)
+ = F P^+ F^T + (Q-operatorname{diag}(L_iL_i^T)) >=0.
+]
+Thus the post-prediction block metric has coercivity **gamma=1 independent of
+the carried cross covariance**.  Cross-block operator bounds remain required
+for finite-prefix magnitude/totality, but they do not need to establish root
+coercivity.
+
+For a correction, information form gives the exact sufficient recurrence
+`gamma^+=gamma^-/(1+gamma^- j_D)`, where `j_D` is an upper bound on the
+measurement information in the block-factor coordinates.  Finite measurement
+noise therefore preserves a strictly positive prefix metric margin.  The next
+controlling numeric task is consequently the source-uniform factorization of
+the three literal process blocks, especially Q_LIN; AG and BA have closed-form
+process factors.
