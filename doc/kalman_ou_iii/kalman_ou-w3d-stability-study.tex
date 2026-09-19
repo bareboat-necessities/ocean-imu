@@ -285,109 +285,46 @@ when $e_{b_g,\parallel}\ne0$. Hence strict coercive full-state contraction is
 not generally available during indefinite loss of informative heading service.
 This is a necessity result, not a second stability theorem.
 
-\section{Non-contraction of the held bias}
-On a held segment with a feasible bias estimate and no projection-changing,
-frame-change or relock event, the bias estimate is constant. Its gain rows
-vanish and its decoupled covariance block is unchanged. Absolute bias error
-still satisfies $e_b^+=e_b+w$; physical increments cancel only between
-executions on the same physical history. The incremental differential is
-\begin{equation}
- \Psi=\begin{bmatrix}A&B\\0&\Id\end{bmatrix}.
- \label{eq:held-bias-block}
-\end{equation}
-This is not a global linear formula for the nonlinear finite-error map.
+\section{Held-bias negative result and finite bridge}
+A held accelerometer-bias coordinate contains an identity block in the
+same-history incremental map while its covariance block is frozen and
+decoupled. Consequently a strict full-state H18 contraction argument in that
+metric is unavailable. This negative result eliminates that proof tactic; it
+is not itself a stability theorem.
 
-\begin{lemma}[Held bias blocks strict contraction]
-Under \eqref{eq:held-bias-block} with $P_{bb}$ unchanged and the bias
-cross-covariances zero, the incremental storage satisfies
-\begin{equation}
- \max_{e\ne0}\frac{V_{\rm end}(\Psi e)}{V_{\rm root}(e)}\ge1 .
- \label{eq:held-bias-obstruction}
-\end{equation}
-\end{lemma}
-\begin{proof}
-Take $e=(0,e_b)$. Block diagonality gives
-$V_{\rm root}(e)=e_b^\mathsf{T}P_{bb}^{-1}e_b$ and
-$V_{\rm end}(\Psi e)=(Be_b)^\mathsf{T}P_{oo,\rm end}^{-1}(Be_b)
-+e_b^\mathsf{T}P_{bb}^{-1}e_b$, since $P_{bb}$ is unchanged. The first term is
-nonnegative.
-\end{proof}
-Since $\Psi$ is block triangular with an identity block it also carries the
-eigenvalue one, so no time-invariant quadratic storage attains $\rho<1$ either.
-The obstruction holds whenever the stated segment premises hold. Hard events
-and release require their own retention analysis.
+The shipping architecture makes H18 a finite bridge. The external bias hold is
+released after magnetic-reference refinement, while the internal gate requires
+a finite accepted-update count and a one-second guard. Under
+\eqref{eq:mag-service}, at least one informative applied correction occurs in
+each service window. Thus, once reference refinement is proved finite, the
+count/guard portion of release is finite. H18 then requires finite retention,
+not asymptotic contraction.
 
-This is a necessity result, not an instability claim. Under the completed
-projection premises, $\norm{e_b}\le B_a+R_b$. The H18 leg therefore retains
-held bias as a bounded input on the complement; the actual release and A21
-analysis follow on the same proof path.
-
-\section{Complement storage and finite-error supply}
-For complement error $x$, retain the exact relation
+\section{A21 finite-error tail}
+Let a source-uniform linear A21 service word satisfy
 \begin{equation}
- x^+=Ax+Be_b+r,\qquad V=x^{\mathsf T}Wx,
- \label{eq:complement-map}
+ \norm{F e}_{W}\le\sqrt{\rho_0}\norm{e}_{W},\qquad \rho_0<1.
+ \label{eq:a21-linear}
 \end{equation}
-where $W=P_{oo}^{-1}$. For a chosen local surrogate $A,B$, this relation
-defines $r$; it does not bound it. Reference forcing, physical bias increments,
-nonlinear terms, auxiliary-state dependence, model mismatch and arithmetic
-remainders must remain represented in the supply.
-
-\begin{lemma}[Conditional complement supply]
-Suppose $A^{\mathsf T}W_+A\preceq\alpha W$ on a retained same-history domain,
-with $0\le\alpha<\rho<1$. Then
+Suppose the complete nonlinear shipping word has a same-history remainder
+whose incremental storage gain on the retained domain is $\eta$. Then
 \begin{equation}
- V_+\le\rho V+\frac{\rho}{\rho-\alpha}
-          \norm{Be_b+r}_{W_+}^2.
- \label{eq:held-supply}
+ \norm{F_{\rm nl}(e_1)-F_{\rm nl}(e_2)}_W
+ \le(\sqrt{\rho_0}+\eta)\norm{e_1-e_2}_W .
 \end{equation}
-\end{lemma}
-\begin{proof}
-Bound $\norm{Ax}_{W_+}^2$ by $\alpha V$ and apply weighted Young's inequality
-to the cross term with weight $(\rho-\alpha)/\alpha$.
-The case $\alpha=0$ follows directly.
-\end{proof}
-
-For the isolated linear bias input, write $P_{oo}=LL^{\mathsf T}$,
-$P_{oo,+}=L_+L_+^{\mathsf T}$, and set
-\begin{align}
- M&=L_+^{-1}AL,& N&=L_+^{-1}B,\nonumber\\
- Q&=\rho\Id-M^{\mathsf T}M\succ0.
-\end{align}
-Completing the square gives the sharp linear gain
+Therefore
 \begin{equation}
- \gamma_b=\lambda_{\max}\!\left(
- N^{\mathsf T}N+(M^{\mathsf T}N)^{\mathsf T}Q^{-1}(M^{\mathsf T}N)
- \right).
- \label{eq:bias-schur}
+ \boxed{\rho=(\sqrt{\rho_0}+\eta)^2<1}
+ \label{eq:a21-small-gain}
 \end{equation}
-This gain does not bound the unknown remainder in
-\eqref{eq:complement-map}. Every-prefix retention also needs all-direction
-operator and supply bounds at each prefix. Positive endpoint margin alone
-establishes neither condition.
+is sufficient for finite-error contraction. Bounded physical, model and
+arithmetic forcing then gives the practical-stability recurrence once
+coercivity and every-prefix retention are certified.
 
-\section{Conditional practical-stability statement}
-After capture, let $t_j$ be consecutive informative-service superword
-boundaries and $e_j$ the complete finite estimation-error coordinate. A
-completion certificate must establish, on one retained domain,
-\begin{align}
- m\norm{e_j}^2&\le V_j\le M\norm{e_j}^2,\nonumber\\
- V_{j+1}&\le\rho V_j+c_d\norm{d}_{[t_j,t_{j+1}]}^2,
- \qquad 0\le\rho<1,
- \label{eq:diss}
-\end{align}
-together with finite every-prefix bounds and forward retention under every
-implemented event. If $\norm d\le D$, iteration gives
-\begin{equation}
- \limsup_{j\to\infty}\norm{e_j}
- \le\sqrt{\frac{c_d}{m(1-\rho)}}D .
-\end{equation}
-Zero supply gives geometric decay at service boundaries. On the held-bias leg
-$e_j$ is the complement coordinate and $d$ retains $Be_b+r$, because
-\eqref{eq:held-bias-obstruction} rules out the full-state form. This
-implication is conditional until capture, held-bias finite-error dissipation in
-its restated form, the H18--A21 release, A21 dissipation, recurring service,
-retention, and implementation arithmetic are certified.
+The remaining proof task is consequently source-uniform: derive $\rho_0$ from
+the literal A21 prediction/correction sequence together with magnetic service,
+and bound $\eta$ for the MEKF reset, projection, tuner and finite-precision
+operations. Finite-difference trajectory diagnostics are not used.
 
 \balance
 \section{Declared constants}
@@ -431,25 +368,18 @@ constants likewise remain to be certified uniformly from actually applied
 shipping sensitivities.
 
 \section{Evidence boundary}
-Executable regressions verify the constant-displacement exclusion, sampled
-predecessor bias rule, mode-dependent prediction identity, separate
-correction/projection algebra, attempted-versus-applied magnetic distinction,
-rank-deficient frequent magnetic service, unipotent obstruction, exactness of
-the bias hold across a magnetically served window, and state inheritance across
-Live and bias release. A one-second shipping superword, rooted thirty
-seconds after Live, gives a complement covariance-metric ratio $0.999803$.
-The all-direction prefix maximum is $1.001024$. Magnetic sensitivities and
-transport are sampled before each applied correction; the measured information
-minimum is $1.707892$, above the declared floor of one.
+Executable regressions verify the physical-history contracts, mode-dependent
+bias prediction, correction/projection separation, magnetic-service
+accounting, heading-service necessity, and literal shipping handoff/release
+semantics. PR~\#557 additionally established that one full-state H18
+incremental contraction formulation is obstructed by the held-bias identity
+block. The numerical research machinery used to discover that obstruction is
+not part of the proof.
 
-These are local incremental measurements, not a finite-error certificate.
-The whitened fine/coarse sensitivity discrepancy is $0.014011$, whereas the
-available operator-norm margin is $9.846\times10^{-5}$. The discrepancy is not
-a rigorous uncertainty bound; the positive measured margin is not yet
-certified against sensitivity error. High-precision evaluation cannot recover
-precision lost in the shipping differences. Finite-error supply, recurring
-service, all-time motion membership, capture and retention remain open.
-Finite simulations do not establish these all-time properties.
+No source-uniform A21 contraction factor or nonlinear remainder bound is yet
+certified. Finite capture, reference-refinement completion, bridge retention,
+release retention, recurring service, physical qualification and arithmetic
+closure therefore remain open.
 
 \section{Conclusion}
 The stability problem is posed as one same-history theorem with continuing
