@@ -50,7 +50,8 @@
     "a21_quantitative_status": "Constructive translation floor is closed. Sparse two-epoch attitude/gyro number is diagnostic only and explicitly not promoted. Full mu_N must use PSD Schur composition of the actual transported 2-D MAGNETIC SERVICE Gramian with aggregate accelerometer information.",
     "a21_long_word_information": "Using 2048 disjoint one-second service roots, pure heading information extracted from J_hb>=I, root accelerometer samples, and one-second bounded-rotation bias increments gives mu_ag>2.1e-3. The 16 s translation subcertificate gives mu_trans>=2.04734e-3, so fixed-coordinate neutral mu_N>=2.04e-3.",
     "a21_covariance_normalization": "rho0<=1/(1+mu) may only consume covariance-whitened information. If P_root>=p_min I in the proof coordinates, mu_cov>=p_min*mu_N. The fixed-coordinate mu_N is not directly promoted to rho0.",
-    "a21_riccati_enclosure": "Corrected classical UCO/UCC P_min/P_max formulas are retained as a fail-closed cross-check. Primary constructive covariance normalization is a verified interval Riccati enclosure over bounded shipping schedule/hard events; midpoint trajectories cannot certify it without outward-rounded residual inclusion."
+    "a21_riccati_enclosure": "Corrected classical UCO/UCC P_min/P_max formulas are retained as a fail-closed cross-check. Primary constructive covariance normalization is a verified interval Riccati enclosure over bounded shipping schedule/hard events; midpoint trajectories cannot certify it without outward-rounded residual inclusion.",
+    "interval_riccati_certificate": "A midpoint covariance trajectory cannot promote p_min. Completion requires every innovation box to pass a strict residual/Krawczyk inverse test, the outward-rounded Riccati image to lie inside the proposed recurring spectral box, and explicit inclusion of shipping schedule, covariance hard events, and float32 rounding."
   },
   "operation_lemma_sources": [
     {
@@ -87,7 +88,15 @@
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
-      "git_blob_sha": "1fa5d3c8842b350d81e8a8a0cf42a3358305aadd"
+      "git_blob_sha": "37139c7dc9acadbf8af64a13520b06b74725737b"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/interval_riccati.py",
+      "git_blob_sha": "9ce5dedb0b745417d30f66455f18bfa13c49feff"
+    },
+    {
+      "path": "tests/validation/test_ou3_interval_riccati.py",
+      "git_blob_sha": "d4af0a7965de85dbd1374b34ff4f1069bca91e03"
     }
   ]
 }
