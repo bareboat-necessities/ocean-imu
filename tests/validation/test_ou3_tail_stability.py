@@ -125,7 +125,7 @@ class RiccatiAndNonlinearClosureTests(unittest.TestCase):
 
     def test_same_history_exogenous_schedule_leaves_smooth_local_remainder(self):
         smooth=smooth_a21_remainder_vanishes_locally(
-            projection_inactive=True,tuner_exogenous_same_history=True,
+            projection_sector_certified=True,tuner_exogenous_same_history=True,
             magnetic_reference_exogenous_same_history=True,
             finite_operation_domain=True)
         self.assertTrue(smooth)
