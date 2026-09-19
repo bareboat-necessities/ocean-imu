@@ -126,9 +126,9 @@ class NeutralQuotientDetectabilityTests(unittest.TestCase):
             strict_guard_margin=1e-6))
 
     def test_active_bias_is_strictly_stable_without_observability(self):
-        q=active_bias_homogeneous_ratio(1.0,5000.0)
-        self.assertLess(q,1.0)
-        self.assertGreater(detectable_tail_margin(1.0,1.0,5000.0),0.0)
+        q=active_bias_homogeneous_ratio(16.0,5000.0)
+        self.assertLess(q,.994)
+        self.assertGreater(detectable_tail_margin(1.0,16.0,5000.0),.003)
 
 class HybridInformationClosureTests(unittest.TestCase):
     def test_active_tilt_bias_stationary_minor_is_strict(self):
