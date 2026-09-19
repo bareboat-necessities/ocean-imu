@@ -8,7 +8,7 @@
   "full_shipping_schedule_included": false,
   "float32_rounding_included": false,
   "certificate_complete": false,
-  "blocker": "all generic 21-state interval kernels are implemented; remaining p_min work is to assemble the literal shipping event word/cadence into the interval map and obtain a nonempty self-containing box without dependency blow-up",
+  "blocker": "literal prediction->optional S->acc->optional mag event order is assembled. Before using the maximal-correction cadence for p_min, prove information-form monotonicity for replacing optional S/mag events by every-sample corrections; then obtain a self-containing box without interval dependency blow-up.",
   "kernel_status": {
     "matrix_interval_arithmetic": true,
     "prediction_21_state": true,
@@ -21,6 +21,8 @@
     "shipping_S_H_R_interval_constructor": true,
     "shipping_mag_H_R_interval_constructor": true,
     "recurring_box_iteration": true,
-    "verified_interval_gain": true
+    "verified_interval_gain": true,
+    "shipping_event_order_assembled": true,
+    "maximal_optional_correction_monotonicity_proved": false
   }
 }
