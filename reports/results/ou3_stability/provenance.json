@@ -41,7 +41,8 @@
     "a21_uniform_detectability": "Active accelerometer bias is a strictly stable OU mode in A21. On the neutral quotient, translation is uniformly observable from S recurrence, gravity observes tilt/transverse gyro bias with sensitivity >=g-A_max, and MAGNETIC SERVICE observes heading/axial gyro bias. Strict compact branch cells imply an existential uniform quotient information floor mu_N>0.",
     "a21_uniform_controllability": "Positive integrated-OU, gyro white-noise, gyro-bias RW and active accelerometer-bias OU driving densities on the compact timing/tau envelope imply uniform complete controllability. Default a_w covariance sync is a bounded PSD prediction increment; bias release is a bounded diagonal covariance floor.",
     "a21_local_nonlinear_closure": "On tilt<=6 deg and accelerometer-bias error<=0.15 m/s^2, projection is inactive; tuner and refined magnetic-reference schedules are same-history exogenous; smooth MEKF measurement/reset remainder has eta(r)->0. Thus source-uniform linear rho0<1 implies existence of r*>0 with sqrt(rho0)+eta(r*)<1. Roundoff remains additive supply.",
-    "a21_constructive_small_gain": "Once a certified linear rho0 and quadratic remainder slope L2 are enclosed, r*=min(r_guard,(1-sqrt(rho0))/L2). Additive physical/arithmetic supply then gives the practical radius separately."
+    "a21_constructive_small_gain": "Once a certified linear rho0 and quadratic remainder slope L2 are enclosed, r*=min(r_guard,(1-sqrt(rho0))/L2). Additive physical/arithmetic supply then gives the practical radius separately.",
+    "a21_attitude_diversity": "No extra excitation assumption: integral(f x B)=Delta v x B-T g x B. With Vmax=5.5 m/s, Bh>=15 uT, |B|<=75 uT, every T>5.60844 s window has positive vector diversity; T=8 s gives floor 43.97475 (m/s^2)uT. Two 8 s subwindows define the 16 s A21 word and, with recurring magnetic service, expose attitude and gyro bias."
   },
   "operation_lemma_sources": [
     {
@@ -74,11 +75,11 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "782484a303f52aa4cc8b655b9387949e6ca3daef"
+      "git_blob_sha": "c479ec89a2b3d7c3d99d729c0dc8016e3a8f103f"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
-      "git_blob_sha": "908731bb49cc78d40e550f7bfcc92cdd5deb6557"
+      "git_blob_sha": "64e3f07d4f35cd2586c2694a73a621007ef1716d"
     }
   ]
 }
