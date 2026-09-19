@@ -174,6 +174,31 @@ class IntervalRiccati21Tests(unittest.TestCase):
         self.assertTrue(m["innovation_verified"])
         self.assertAlmostEqual(m["covariance_spectral_lower"],1.0,places=14)
 
+    def test_refined_shipping_enclosure_probe(self):
+        # Non-promoting feasibility probe required by AGENTS.md.  This uses the
+        # shipping constructor covariance scales only to identify the first
+        # interval-conditioning margin; it does not certify p_min.
+        seed=exact_midpoint_seed((
+            5e-4,5e-4,5e-4,1e-6,1e-6,1e-6,
+            1.0,1.0,1.0,400.0,400.0,400.0,2500.0,2500.0,2500.0,
+            1.0,1.0,1.0,1.6e-5,1.6e-5,1.6e-5))
+        fp,qp=shipping_prediction_intervals(
+            dt_min=.004,dt_max=.006,tau_min=.02,tau_max=12.0,
+            omega_max=.6108652382,tau_bacc=5000.0,
+            gyro_white_density=.00157,gyro_bias_rw_density=1e-5,
+            aw_sigma_max=4.0,accel_bias_drive_density=5e-4)
+        pred=predict_covariance(seed,fp,qp)
+        hs,rs=shipping_integral_update_intervals(.15,100.0)
+        ha,ra=shipping_acc_update_intervals(18.7,.05,.30104)
+        hm,rm=shipping_mag_update_intervals(75.0,.1,2.0)
+        metrics={
+            "S":interval_failure_metrics(pred,hs,rs),
+            "acc":interval_failure_metrics(pred,ha,ra),
+            "mag":interval_failure_metrics(pred,hm,rm),
+        }
+        print("RICCATI_PROBE",metrics)
+        self.assertTrue(all("innovation_residual_ratio" in x for x in metrics.values()))
+
     def test_spectral_box_is_finite(self):
         lo,hi=spectral_box(diag(N,1.0))
         self.assertLessEqual(lo,1.0); self.assertGreaterEqual(hi,1.0)
