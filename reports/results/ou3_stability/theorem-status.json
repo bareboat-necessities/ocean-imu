@@ -35,6 +35,7 @@
     "assembled_sensor_and_bias_limit_qualification": false,
     "all_time_marine_motion_membership_certificate": false,
     "finite_history_dependent_capture": false,
+    "capture_H18_release_retention_composition": true,
     "finite_H18_bridge_retention": false,
     "finite_reference_refinement_and_bias_release": false,
     "H18_to_A21_release_retention": false,
