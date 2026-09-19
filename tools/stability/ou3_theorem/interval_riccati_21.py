@@ -255,7 +255,7 @@ def shipping_prediction_intervals(*, dt_min: float, dt_max: float,
     vals=(dt_min,dt_max,tau_min,tau_max,omega_max,tau_bacc,
           gyro_white_density,gyro_bias_rw_density,aw_sigma_max,
           accel_bias_drive_density)
-    if not all(math.isfinite(x) for x in vals) or min(vals)>0 is False:
+    if not all(math.isfinite(x) for x in vals) or min(vals) <= 0:
         raise ValueError("positive finite prediction bounds required")
     if dt_max<dt_min or tau_max<tau_min:
         raise ValueError("ordered timing/tau bounds required")
@@ -314,3 +314,51 @@ def shipping_prediction_intervals(*, dt_min: float, dt_max: float,
                 if i!=j: qr[i][j]=_out(math.sqrt(qdiag[i]*qdiag[j]))
     return IMat(tuple(tuple(x) for x in fm),tuple(tuple(x) for x in fr)), IMat(
         tuple(tuple(x) for x in qm),tuple(tuple(x) for x in qr))
+
+
+def _inverse3_exact(a: tuple[tuple[float,...],...]) -> tuple[tuple[float,...],...]:
+    if len(a)!=3 or any(len(r)!=3 for r in a): raise ValueError("3x3 required")
+    x=a
+    det=(x[0][0]*(x[1][1]*x[2][2]-x[1][2]*x[2][1])
+         -x[0][1]*(x[1][0]*x[2][2]-x[1][2]*x[2][0])
+         +x[0][2]*(x[1][0]*x[2][1]-x[1][1]*x[2][0]))
+    if not math.isfinite(det) or det==0: raise ValueError("singular midpoint")
+    adj=((x[1][1]*x[2][2]-x[1][2]*x[2][1],
+          x[0][2]*x[2][1]-x[0][1]*x[2][2],
+          x[0][1]*x[1][2]-x[0][2]*x[1][1]),
+         (x[1][2]*x[2][0]-x[1][0]*x[2][2],
+          x[0][0]*x[2][2]-x[0][2]*x[2][0],
+          x[0][2]*x[1][0]-x[0][0]*x[1][2]),
+         (x[1][0]*x[2][1]-x[1][1]*x[2][0],
+          x[0][1]*x[2][0]-x[0][0]*x[2][1],
+          x[0][0]*x[1][1]-x[0][1]*x[1][0]))
+    return tuple(tuple(v/det for v in row) for row in adj)
+
+
+def verified_inverse3_interval(s: IMat) -> tuple[IMat,dict]:
+    """Entrywise inverse enclosure after the strict spectral residual check."""
+    if s.shape!=(3,3): raise ValueError("3x3 innovation required")
+    cert=innovation_inverse_spectral_certificate(s)
+    if not cert["verified"]: raise ValueError("innovation inverse not verified")
+    inv0=_inverse3_exact(s.mid)
+    # ||S0^-1|| <= 1/a from the same certified midpoint eigen floor.
+    a=1.0/cert["inverse_norm_bound"] + max(sum(row) for row in s.rad)
+    er=max(sum(row) for row in s.rad)
+    residual=er/a
+    delta=(1.0/a)*residual/(1.0-residual)
+    rad=tuple(tuple(_out(delta) for _ in range(3)) for _ in range(3))
+    return IMat(inv0,rad),cert
+
+
+def verified_gain_interval(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
+    """K=P H' S^-1 with a verified interval inverse of S."""
+    s=innovation_covariance(p,h,r)
+    sinv,cert=verified_inverse3_interval(s)
+    pct=matmul(p,transpose(h))
+    return matmul(pct,sinv),cert
+
+
+def verified_joseph_update(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
+    """Complete verified 3-D shipping covariance correction."""
+    k,cert=verified_gain_interval(p,h,r)
+    return joseph_covariance(p,k,h,r),cert
