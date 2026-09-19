@@ -42,45 +42,26 @@ numerical rho is used.
 
 ## Current limiter
 
-Two implementation-linked results now control progress:
+The fixed-coordinate long-word information certificate is constructive:
+`mu_N >= 2.04e-3`. The controlling obligation is covariance normalization.
 
-1. prove finite completion of the shipping magnetic-reference refinement. A
-   sufficient lemma is now explicit: recurring usable samples close the literal
-   min-sample/min-window, norm-ratio and horizontal-field gates in finite time.
-   The deployed refinement has quality weighting disabled and hard-iron fitting
-   disabled, so these are the controlling gates. The gate is now closed analytically on the captured domain rather than by a
-   new assumption: rotation preserves the true field norm, so with true
-   |B|>=20 uT and residual <=2 uT the running norm-ratio is at most
-   4/(20-2)=0.222<0.35. With horizontal field >=15 uT, |B|<=75 uT and the same
-   residual, the tuner's 5% horizontal gate is guaranteed whenever captured
-   tilt-frame error is below about 7 degrees. MAGNETIC SERVICE then supplies at
-   least one usable event per 1 s window, so the 128-sample/30-s window finishes
-   within 128 s after refinement starts. The remaining release dependency is
-   therefore capture into this <=7 degree tilt domain, not a separate magnetic
-   norm-variation assumption. Then compose refinement with the internal
-   accepted-update/guard logic to obtain finite H18 release;
-2. establish a source-uniform **complete A21 information floor**. This is now
-   the preferred linear route because it follows the Kalman covariance algebra
-   instead of searching for a numerical rho. Prediction with Q>=0 is
-   covariance-metric nonexpansive, and each literal Kalman correction is
-   nonexpansive in its updated covariance metric. In normalized root
-   coordinates a certified complete-word information floor mu>0 gives the
-   comparison rho0<=1/(1+mu). The existing MAGNETIC SERVICE floor supplies the
-   heading/axial-gyro-bias part; gravity/accelerometer and integral
-   pseudo-measurements must supply the complementary directions. This **full
-   information floor**, not magnetic service alone, is the next linear
-   certificate. Then bound the nonlinear MEKF/reset/tuner remainder below
-   1-sqrt(rho0).
+The literal 21-state entrywise midpoint-radius Riccati enclosure has now been
+executed after its single permitted near-identity refinement. It failed by
+interval dependency: predicted covariance spectral enclosure
+`[-18.7907040215, 2502.41441854]`; S innovation `r/a=0.66666386445`
+verified, while accelerometer and magnetometer innovation boxes did not.
+Pointwise shipping covariance remains PSD.
 
-   The A21 accelerometer-bias estimate projection need not enter that local
-   nonlinear bound if the retained tail is kept inside its literal inactive
-   region. With projection radius 0.4 m/s^2 and physical bias bound
-   0.2251666 m/s^2, any bias-error norm below 0.1748334 m/s^2 keeps the estimate
-   strictly inside the projection ball. Release/capture retention must prove
-   entry into that inner domain.
+Accordingly the next covariance representation must preserve PSD structure.
+No further entrywise subdivision is permitted by the research protocol. Until
+a recurring positive root covariance floor `p_min` is certified,
+`mu_cov/rho0`, explicit nonlinear `r_*`, arithmetic practical radius,
+capture/release-to-tail, and every-prefix tail retention remain open.
 
-Finite H18 bridge retention, the release operation itself, every-prefix A21
-retention, physical qualification, capture and arithmetic closure remain open.
+Independently retained: finite magnetic-reference refinement follows once
+capture enters the <=7 degree tilt domain; H18 remains a finite bridge; the
+literal accelerometer-bias projection sector is dissipative and projection-
+inactive release is not required.
 
 ## Failed approaches / DEAD_ENDS
 
