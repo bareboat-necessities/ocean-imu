@@ -8,7 +8,7 @@
   "full_shipping_schedule_included": false,
   "float32_rounding_included": false,
   "certificate_complete": false,
-  "blocker": "literal prediction->optional S->acc->optional mag event order is assembled. Before using the maximal-correction cadence for p_min, prove information-form monotonicity for replacing optional S/mag events by every-sample corrections; then obtain a self-containing box without interval dependency blow-up.",
+  "blocker": "maximal optional S/mag correction cadence is now proved conservative for a covariance lower floor. Remaining p_min blocker is numerical interval dependency: obtain a verified self-containing 21-state box for that maximal-correction word (with parameter/attitude branch subdivision as needed).",
   "kernel_status": {
     "matrix_interval_arithmetic": true,
     "prediction_21_state": true,
@@ -23,6 +23,6 @@
     "recurring_box_iteration": true,
     "verified_interval_gain": true,
     "shipping_event_order_assembled": true,
-    "maximal_optional_correction_monotonicity_proved": false
+    "maximal_optional_correction_monotonicity_proved": true
   }
 }
