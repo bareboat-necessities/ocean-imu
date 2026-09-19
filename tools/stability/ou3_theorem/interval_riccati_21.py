@@ -722,3 +722,35 @@ def integrated_ou_window_controllability_floor(*, tau: float, sigma: float,
         scale=math.sqrt(qc*h)
         cols.append(tuple(scale*x for x in g))
     return gramian_floor_from_columns(tuple(cols))
+
+
+def ldlt_pivot_floor(a: tuple[tuple[float,...],...]) -> dict:
+    """No-pivot LDLT positivity certificate for a symmetric numeric matrix."""
+    n=len(a)
+    if n==0 or any(len(r)!=n for r in a): raise ValueError("square matrix required")
+    L=[[0.0]*n for _ in range(n)];D=[0.0]*n
+    for i in range(n):
+        L[i][i]=1.0
+        d=a[i][i]-sum(L[i][k]*L[i][k]*D[k] for k in range(i))
+        if not math.isfinite(d) or d<=0:
+            return {"verified":False,"pivots":tuple(D[:i]+[d]),"pivot_floor":0.0}
+        D[i]=d
+        for j in range(i+1,n):
+            L[j][i]=(a[j][i]-sum(L[j][k]*L[i][k]*D[k] for k in range(i)))/d
+    return {"verified":True,"pivots":tuple(D),"pivot_floor":min(D)}
+
+
+def integrated_ou_scaled_factor_probe(*, tau: float,sigma: float,window_s: float,
+                                      scales: tuple[float,float,float,float],
+                                      slices: int=64) -> dict:
+    """Scaled midpoint factor diagnostic for the allowed controllability refinement."""
+    if any(x<=0 or not math.isfinite(x) for x in scales): raise ValueError("positive scales required")
+    h=window_s/slices;qc=2.0*sigma*sigma/tau
+    gram=[[0.0]*4 for _ in range(4)]
+    for k in range(slices):
+        g=integrated_ou_impulse_column((k+.5)*h,tau)
+        z=[math.sqrt(qc*h)*g[i]/scales[i] for i in range(4)]
+        for i in range(4):
+            for j in range(4): gram[i][j]+=z[i]*z[j]
+    cert=ldlt_pivot_floor(tuple(tuple(x for x in row) for row in gram))
+    return {"tau":tau,"scaled_gramian":tuple(tuple(x for x in row) for row in gram),**cert}
