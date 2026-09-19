@@ -41,9 +41,9 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "fix/ci-document-parity-20260918",
-  "git_commit": "5390c774eb4e160133ea72c6ee3896786cc71092",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 32540 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1598 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   990 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   168 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1872 +-\n 6 files changed, 18893 insertions(+), 18895 deletions(-)",
+  "git_branch": "fix/ou-evidence-contract-after-architecture",
+  "git_commit": "1d992114cf79816a6d6c24ef087b0dbc15803eb8",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 25508 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1544 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   372 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   992 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   168 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1782 +-\n 6 files changed, 15182 insertions(+), 15184 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -90,8 +90,8 @@
       "sha256": "609e630d78747792e596a6d6e0b165fce2a47c000e31989e3781861a1a1ad8de"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-      "bytes": 95910,
-      "sha256": "bbc1586529f2f21144cb91e34f3248569178ab6e7a8bb7a1c8a0977d1b06c170"
+      "bytes": 95504,
+      "sha256": "e38e4caaafa68cc52bd4d35bdeffc652588a312e3757dd734ddae9e3d4a21fd2"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
       "bytes": 166498,
@@ -134,12 +134,12 @@
       "sha256": "91c15942f24e08f1c39fa131f632d0974e6ab536a93a29a5af7650024ee41b7e"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 102107,
-      "sha256": "15ca83312a997fe1908e11edff058f8446c0d002999183a5c2ec57f394535113"
+      "bytes": 102198,
+      "sha256": "7001bab67d89f76c93598e298f916d8011c522876d0386bcdaf14b66134d9488"
     },
     "src/util/W3dSimCommon.h": {
-      "bytes": 34659,
-      "sha256": "09d1729ff175d7bb1a1c712958d059fb024eb0369dd0704b8cdbca94dece69f7"
+      "bytes": 34673,
+      "sha256": "0bac78ad67b2c73d771a1f433b169ca2237e1e347f2a1333f5d654884405fdbe"
     },
     "src/util/WaveFilesSupport.h": {
       "bytes": 13244,
@@ -166,8 +166,8 @@
       "sha256": "d25550d481c3062100a9a136e3df06e3740c39af4aa5459425c7fd212edfd5a7"
     },
     "tests/kalman_ou_iii/Makefile": {
-      "bytes": 809,
-      "sha256": "4dcf49d7fb2376987501a4374d1b064920830735c9038422fc92322ef97be39b"
+      "bytes": 808,
+      "sha256": "66039c2ca256e51abe32e8339ad7724d2c4341101cf50c0a6c67a13edf6980f6"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
       "bytes": 61213,
@@ -297,8 +297,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-18T17:00:59+00:00",
-    "git_commit": "5390c774eb4e160133ea72c6ee3896786cc71092",
+    "generated_at": "2026-09-19T00:46:32+00:00",
+    "git_commit": "1d992114cf79816a6d6c24ef087b0dbc15803eb8",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -345,8 +345,8 @@
         "size_bytes": 16343
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-        "sha256": "bbc1586529f2f21144cb91e34f3248569178ab6e7a8bb7a1c8a0977d1b06c170",
-        "size_bytes": 95910
+        "sha256": "e38e4caaafa68cc52bd4d35bdeffc652588a312e3757dd734ddae9e3d4a21fd2",
+        "size_bytes": 95504
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
         "sha256": "72bffc539ea72f6320ae33feb970dd2ba9255f8e679c3e8415f7884566ca3be0",
@@ -389,12 +389,12 @@
         "size_bytes": 12253
       },
       "src/util/W3dSimCommon.cpp": {
-        "sha256": "15ca83312a997fe1908e11edff058f8446c0d002999183a5c2ec57f394535113",
-        "size_bytes": 102107
+        "sha256": "7001bab67d89f76c93598e298f916d8011c522876d0386bcdaf14b66134d9488",
+        "size_bytes": 102198
       },
       "src/util/W3dSimCommon.h": {
-        "sha256": "09d1729ff175d7bb1a1c712958d059fb024eb0369dd0704b8cdbca94dece69f7",
-        "size_bytes": 34659
+        "sha256": "0bac78ad67b2c73d771a1f433b169ca2237e1e347f2a1333f5d654884405fdbe",
+        "size_bytes": 34673
       },
       "src/util/WaveFilesSupport.h": {
         "sha256": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128",
@@ -421,8 +421,8 @@
         "size_bytes": 2717
       },
       "tests/kalman_ou_iii/Makefile": {
-        "sha256": "4dcf49d7fb2376987501a4374d1b064920830735c9038422fc92322ef97be39b",
-        "size_bytes": 809
+        "sha256": "66039c2ca256e51abe32e8339ad7724d2c4341101cf50c0a6c67a13edf6980f6",
+        "size_bytes": 808
       },
       "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
         "sha256": "d5b9ace6ba742e263b7b0d940800ecee9192f7e55b5dc698d155eb13ab07d5db",
@@ -448,47 +448,47 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "5aa314236b8ca3f4dd557915811a3f53fe29aef68178aadc57d18df2032c17d3",
-    "raw_rows_size_bytes": 210474,
+    "raw_rows_sha256": "ae5b058c888a2ff90e9ac9f230555154b48b29a31ed084b5fdbebbd7dde7c201",
+    "raw_rows_size_bytes": 210415,
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "35368348376",
+      "run_id": "35408962456",
       "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1578516,
-      "sha256": "dbe6562c348b2c195e00d8607dbba25261c89ba313b17cd5bc8183e1dcf3a086"
+      "bytes": 1577924,
+      "sha256": "0e9ecc0bfd88777372720c30b1076bd22c532cb635c7b7f9015592f97e21a165"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
       "sha256": "99f22f8777121aa1c4732e9638d1840ede9dccbaa513d80eca3e4778b1ff0175"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 165209,
-      "sha256": "2e1b6f591efcd1b58d0070e35e022483627a42076288d2fe8fdc0e3e3588c04e"
+      "bytes": 165221,
+      "sha256": "4bf8525008d46a0b6688878dfc0e238b0a331da616b86293de60c81b2c97f6bf"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2903,
       "sha256": "c407e23cb92f386351cd4c51efc5b105be0cae17045ae640c3170de58b0fd2b5"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 210474,
-      "sha256": "5aa314236b8ca3f4dd557915811a3f53fe29aef68178aadc57d18df2032c17d3"
+      "bytes": 210415,
+      "sha256": "ae5b058c888a2ff90e9ac9f230555154b48b29a31ed084b5fdbebbd7dde7c201"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 114750,
-      "sha256": "8a48844e0d2d3cf168aceef65ac964fe6e7c9a236c6fc96b3f664b4c92b66577"
+      "bytes": 114762,
+      "sha256": "86b0a59129cd948930c8c9372bc29b8fa2ac414d826978a3826353cb903aa0f7"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 44853,
-      "sha256": "1555a5218648d219007212f7444f398b4905c5c230ae7df708b6762740399a17"
+      "bytes": 44846,
+      "sha256": "5019bc46f73cd94d1316a9ea4243ed1149c526855d7885943e2f0f0d187f0e85"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 148234,
-      "sha256": "5c62454963bda000ab446027c9b93c9b84f78554d4490c8373408f9d7a935180"
+      "bytes": 147689,
+      "sha256": "479af08c1bd8d82bdbe99dbe33b81797620abf3378fb6d7270d4f9a1e92e225a"
     }
   },
   "schema_version": 2,

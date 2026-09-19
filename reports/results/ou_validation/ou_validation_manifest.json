@@ -167,9 +167,9 @@
       }
     }
   },
-  "git_branch": "fix/ci-document-parity-20260918",
-  "git_commit": "5390c774eb4e160133ea72c6ee3896786cc71092",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 76787 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   712 +-\n .../ou_validation/ou_validation_covsync.svg        |   736 +-\n .../ou_validation/ou_validation_displacement.svg   |   974 +-\n .../results/ou_validation/ou_validation_macros.tex |    18 +-\n .../ou_validation/ou_validation_paired_effects.csv |  4686 +-\n .../ou_validation/ou_validation_publication.tex    |     2 +-\n .../results/ou_validation/ou_validation_raw.csv    |   672 +-\n .../ou_validation/ou_validation_summary.csv        |  5026 +-\n .../ou_validation/ou_validation_vertical.svg       |   712 +-\n 10 files changed, 45162 insertions(+), 45163 deletions(-)",
+  "git_branch": "fix/ou-evidence-contract-after-architecture",
+  "git_commit": "1d992114cf79816a6d6c24ef087b0dbc15803eb8",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 33941 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   312 +-\n .../ou_validation/ou_validation_covsync.svg        |   732 +-\n .../ou_validation/ou_validation_displacement.svg   |   256 +-\n .../ou_validation/ou_validation_paired_effects.csv |  2240 +-\n .../ou_validation/ou_validation_publication.tex    |     2 +-\n .../results/ou_validation/ou_validation_raw.csv    |   296 +-\n .../ou_validation/ou_validation_summary.csv        |  2142 +-\n .../ou_validation/ou_validation_vertical.svg       |   692 +-\n 9 files changed, 20306 insertions(+), 20307 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -224,8 +224,8 @@
       "sha256": "0de928271e69dfc66bffd7e6356ad4090d2dc8a668179dd5d456e286d58d20d7"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-      "bytes": 95910,
-      "sha256": "bbc1586529f2f21144cb91e34f3248569178ab6e7a8bb7a1c8a0977d1b06c170"
+      "bytes": 95504,
+      "sha256": "e38e4caaafa68cc52bd4d35bdeffc652588a312e3757dd734ddae9e3d4a21fd2"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
       "bytes": 166498,
@@ -268,12 +268,12 @@
       "sha256": "91c15942f24e08f1c39fa131f632d0974e6ab536a93a29a5af7650024ee41b7e"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 102107,
-      "sha256": "15ca83312a997fe1908e11edff058f8446c0d002999183a5c2ec57f394535113"
+      "bytes": 102198,
+      "sha256": "7001bab67d89f76c93598e298f916d8011c522876d0386bcdaf14b66134d9488"
     },
     "src/util/W3dSimCommon.h": {
-      "bytes": 34659,
-      "sha256": "09d1729ff175d7bb1a1c712958d059fb024eb0369dd0704b8cdbca94dece69f7"
+      "bytes": 34673,
+      "sha256": "0bac78ad67b2c73d771a1f433b169ca2237e1e347f2a1333f5d654884405fdbe"
     },
     "src/util/WaveFilesSupport.h": {
       "bytes": 13244,
@@ -308,8 +308,8 @@
       "sha256": "0d44b76a0d7418b77f526032f2b7d48e7f02510b2d6f03e9af313c3b3135315b"
     },
     "tests/kalman_ou_iii/Makefile": {
-      "bytes": 809,
-      "sha256": "4dcf49d7fb2376987501a4374d1b064920830735c9038422fc92322ef97be39b"
+      "bytes": 808,
+      "sha256": "66039c2ca256e51abe32e8339ad7724d2c4341101cf50c0a6c67a13edf6980f6"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
       "bytes": 61213,
@@ -463,8 +463,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-18T17:00:59+00:00",
-    "git_commit": "5390c774eb4e160133ea72c6ee3896786cc71092",
+    "generated_at": "2026-09-19T00:46:32+00:00",
+    "git_commit": "1d992114cf79816a6d6c24ef087b0dbc15803eb8",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -519,8 +519,8 @@
         "size_bytes": 155149
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-        "sha256": "bbc1586529f2f21144cb91e34f3248569178ab6e7a8bb7a1c8a0977d1b06c170",
-        "size_bytes": 95910
+        "sha256": "e38e4caaafa68cc52bd4d35bdeffc652588a312e3757dd734ddae9e3d4a21fd2",
+        "size_bytes": 95504
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
         "sha256": "72bffc539ea72f6320ae33feb970dd2ba9255f8e679c3e8415f7884566ca3be0",
@@ -563,12 +563,12 @@
         "size_bytes": 12253
       },
       "src/util/W3dSimCommon.cpp": {
-        "sha256": "15ca83312a997fe1908e11edff058f8446c0d002999183a5c2ec57f394535113",
-        "size_bytes": 102107
+        "sha256": "7001bab67d89f76c93598e298f916d8011c522876d0386bcdaf14b66134d9488",
+        "size_bytes": 102198
       },
       "src/util/W3dSimCommon.h": {
-        "sha256": "09d1729ff175d7bb1a1c712958d059fb024eb0369dd0704b8cdbca94dece69f7",
-        "size_bytes": 34659
+        "sha256": "0bac78ad67b2c73d771a1f433b169ca2237e1e347f2a1333f5d654884405fdbe",
+        "size_bytes": 34673
       },
       "src/util/WaveFilesSupport.h": {
         "sha256": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128",
@@ -603,8 +603,8 @@
         "size_bytes": 55007
       },
       "tests/kalman_ou_iii/Makefile": {
-        "sha256": "4dcf49d7fb2376987501a4374d1b064920830735c9038422fc92322ef97be39b",
-        "size_bytes": 809
+        "sha256": "66039c2ca256e51abe32e8339ad7724d2c4341101cf50c0a6c67a13edf6980f6",
+        "size_bytes": 808
       },
       "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
         "sha256": "d5b9ace6ba742e263b7b0d940800ecee9192f7e55b5dc698d155eb13ab07d5db",
@@ -646,51 +646,51 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "1fc7acff51b0d0b85c9d932c8dc87cbe80f8121efae7153a56ffeda9945ff497",
-    "raw_rows_size_bytes": 613074,
+    "raw_rows_sha256": "32b799140ea8d12cb3e9a741a4cf4159c508423874bad6a2af4e110841d23ad3",
+    "raw_rows_size_bytes": 613054,
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "35368348376",
+      "run_id": "35408962456",
       "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
     "ou_validation.json": {
-      "bytes": 5377907,
-      "sha256": "3393d564d2d8c6c844e174d6d3811aa1481dca38bac5b207ceef43b207e0ce1c"
+      "bytes": 5377917,
+      "sha256": "51bd401d38eaabba45ebbb0c131e59cb642efbd960289902749e4d696cfc1b52"
     },
     "ou_validation_attitude.svg": {
-      "bytes": 82047,
-      "sha256": "2b9df8fa4394931ea4fa5c240b03ff73af35d65f35e3dcafbdcd2817a2e31fb2"
+      "bytes": 82033,
+      "sha256": "d55e057a15f382b30b6b13713af761caed8dae289eb4d1da6cb9032b9bcad9ed"
     },
     "ou_validation_covsync.svg": {
-      "bytes": 94110,
-      "sha256": "b985e7d921780d9558f883dce14b798becc17503968e9698b35eb6e64b6cd359"
+      "bytes": 94111,
+      "sha256": "474b5c88fdeb288aa20b49b651c9922f15fbf509fd5be1ea4b58bf420a2d89a9"
     },
     "ou_validation_displacement.svg": {
-      "bytes": 80003,
-      "sha256": "129ed7b38a9a179aba6da27d11d3afcdbac1c0bd397120e6d76dad9bd9fef3fa"
+      "bytes": 80001,
+      "sha256": "2aa7adb869664a910ce0c2bd0743bc2667d18300a2bd54e72278071a242ec603"
     },
     "ou_validation_macros.tex": {
       "bytes": 10607,
       "sha256": "ae7ed6495f1a7a1988d0e7f567c5b83455145cac1f0432f5cc3eb48c987ed153"
     },
     "ou_validation_paired_effects.csv": {
-      "bytes": 734907,
-      "sha256": "9f98a9560d569da7a1fe88cc2da5c48fb4faedba84c7b59eafb669a72770ed74"
+      "bytes": 734845,
+      "sha256": "8f249b5c64703b8893c92b1e7e2a8129698144b5de250131054d28d66d68110e"
     },
     "ou_validation_publication.tex": {
       "bytes": 13897,
       "sha256": "26d9286fae24318a60a42fcd123eb78b56aa61a2704b9f2dd575641f824dfe0b"
     },
     "ou_validation_raw.csv": {
-      "bytes": 613074,
-      "sha256": "1fc7acff51b0d0b85c9d932c8dc87cbe80f8121efae7153a56ffeda9945ff497"
+      "bytes": 613054,
+      "sha256": "32b799140ea8d12cb3e9a741a4cf4159c508423874bad6a2af4e110841d23ad3"
     },
     "ou_validation_summary.csv": {
-      "bytes": 794346,
-      "sha256": "057c68d044bd47bffd27ae760692fe76b13a0c67d74e0cccc80d943c6ea8da42"
+      "bytes": 794442,
+      "sha256": "e8532bebc4e5cce52300f5f5f618b95f66e0a703f7885afc786a6ec075e2198c"
     },
     "ou_validation_table.tex": {
       "bytes": 15630,
@@ -709,8 +709,8 @@
       "sha256": "5efa51f2fb0d5e728cf7d4c61b5a074734408319e3062c9ad97d99780d5145dc"
     },
     "ou_validation_vertical.svg": {
-      "bytes": 83535,
-      "sha256": "4b72f00f1db96428b530562d4d0b3e9b1c01df8e1c6aad9838893ae2eedd6f94"
+      "bytes": 83551,
+      "sha256": "311baa06669ce3a39164ee6bbc06bbba91161e922a2176ca03e58df439373164"
     }
   },
   "schema_version": 2,
@@ -750,11 +750,11 @@
   },
   "stationary_normalized_aggregate": {
     "OU_II": {
-      "bootstrap_ci95_high": 6.42968031476875,
-      "bootstrap_ci95_low": 6.236011013756251,
-      "mean": 6.33573603625,
+      "bootstrap_ci95_high": 6.4296807684,
+      "bootstrap_ci95_low": 6.236011500562499,
+      "mean": 6.33573638175,
       "n": 10,
-      "std": 0.16534852262003372
+      "std": 0.1653488370986754
     },
     "OU_III": {
       "bootstrap_ci95_high": 4.4123192812562495,
@@ -764,11 +764,11 @@
       "std": 0.10199687758302611
     },
     "OU_III_minus_OU_II": {
-      "bootstrap_ci95_high": -1.9147509923937498,
-      "bootstrap_ci95_low": -2.0523103632,
-      "cohen_dz": -16.930503729042528,
-      "hedges_gz": -15.47236226337214,
-      "mean_paired_difference": -1.9836779597499998,
+      "bootstrap_ci95_high": -1.91475235168125,
+      "bootstrap_ci95_low": -2.05231071481875,
+      "cohen_dz": -16.930506213671595,
+      "hedges_gz": -15.47236453401226,
+      "mean_paired_difference": -1.9836783052500002,
       "n_pairs": 10,
       "randomization_exact": true,
       "randomization_p_value": 0.001953125,
@@ -777,13 +777,13 @@
       "sign_p_value": 0.001953125,
       "sign_positive": 0,
       "sign_zero": 0,
-      "standard_error": 0.037051115533705194,
-      "std_paired_difference": 0.11716591493655357,
-      "t_ci95_high": -1.8998625133557647,
-      "t_ci95_low": -2.067493406144235,
+      "standard_error": 0.0370511165495292,
+      "std_paired_difference": 0.11716591814887113,
+      "t_ci95_high": -1.8998628565578117,
+      "t_ci95_low": -2.067493753942189,
       "t_critical_value": 2.2621571627982036,
-      "t_p_value": 1.3908239673072524e-12,
-      "t_statistic": -53.53895371774863
+      "t_p_value": 1.3908221355476952e-12,
+      "t_statistic": -53.538961574835625
     }
   },
   "transition_diagnostic": {
