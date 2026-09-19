@@ -11,6 +11,7 @@ from tools.stability.ou3_theorem.interval_riccati_21 import (
     shipping_acc_update_intervals,shipping_integral_update_intervals,
     shipping_mag_update_intervals,shipping_prediction_intervals,
     verified_gain_interval,verified_joseph_update,iterate_recurring_box,
+    shipping_max_correction_step,shipping_word_map,
 )
 
 
@@ -101,6 +102,21 @@ class IntervalRiccati21Tests(unittest.TestCase):
         self.assertEqual(ha.mid[0][18],1.0)
         self.assertEqual(ha.rad[0][15],1.0)
         self.assertGreater(ra.mid[0][0],0.0)
+
+    def test_literal_event_order_prediction_S_acc_mag(self):
+        p=diag(N,2.0);fmat=diag(N,1.0);q=diag(N,.01)
+        hsrows=[[0.0]*N for _ in range(3)]
+        harows=[[0.0]*N for _ in range(3)]
+        hmrows=[[0.0]*N for _ in range(3)]
+        for a in range(3):
+            hsrows[a][12+a]=1.0;harows[a][15+a]=1.0;hmrows[a][a]=1.0
+        out,certs=shipping_max_correction_step(
+            p,f=fmat,q=q,h_s=exact(hsrows),r_s=diag(3,1.0),
+            h_acc=exact(harows),r_acc=diag(3,1.0),
+            h_mag=exact(hmrows),r_mag=diag(3,1.0))
+        self.assertEqual([x["name"] for x in certs],["S","acc","mag"])
+        self.assertTrue(all(x["verified"] for x in certs))
+        self.assertLess(out.mid[0][0],p.mid[0][0])
 
     def test_recurring_box_requires_positive_self_inclusion(self):
         seed=diag(N,1.0)
