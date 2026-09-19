@@ -578,3 +578,21 @@ def recurring_box_over_cells(seed: IMat, word_maps: tuple, *,
     return {"verified":False,"reason":"iteration limit","iterations":max_iterations,
             "box":box,"spectral_lower":lo,"spectral_upper":hi,
             "branch_count":len(word_maps)}
+
+
+def exact_midpoint_seed(diagonal: tuple[float,...]) -> IMat:
+    """Positive diagonal proposal seed; never a certificate by itself."""
+    if len(diagonal)!=N or any((not math.isfinite(x) or x<=0) for x in diagonal):
+        raise ValueError("21 positive diagonal seed entries required")
+    return diagonal_interval(diagonal,diagonal)
+
+
+def interval_failure_metrics(p: IMat,h: IMat,r: IMat) -> dict:
+    """Non-promoting diagnostic required by the research protocol."""
+    s=innovation_covariance(p,h,r)
+    cert=innovation_inverse_spectral_certificate(s)
+    lo,hi=spectral_box(p)
+    return {"innovation_residual_ratio":cert["residual_norm_bound"],
+            "innovation_verified":cert["verified"],
+            "covariance_spectral_lower":lo,
+            "covariance_spectral_upper":hi}
