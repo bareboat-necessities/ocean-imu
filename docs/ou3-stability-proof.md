@@ -237,3 +237,34 @@ non-collinear gravity/specific-force and magnetic sensitivity. Recurring
 MAGNETIC SERVICE transports an applied magnetic sensitivity into that interval.
 Two 8 s subwindows form the 16 s A21 proof word and expose gyro bias through
 attitude propagation. No additional attitude-excitation assumption is used.
+
+
+## Quantitative enclosure status
+
+A first fully analytic normalized translation enclosure is now constructive.
+On the 16 s word, selecting S updates after times 0, 8 and 16 s with the
+literal maximum scheduler delay 0.156 s, state scales
+(V,p,S)=(5.5,8.1,1100), and worst declared S-noise standard deviation 100,
+the determinant/Frobenius certificate gives
+
+`mu_trans >= 2.04734e-3`.
+
+This is a real lower bound, not a sampled singular value.
+
+A deliberately sparse two-epoch attitude/gyro calculation gives a much weaker
+candidate scale (~6.18e-7) and therefore is **not promoted as the final
+shipping mu_N certificate**. The reason is important: MAGNETIC SERVICE is an
+already-transported two-coordinate heading/axial-bias Gramian over a window,
+not an instantaneous pure-heading row. A tight full certificate must compose
+that actual 2-D service Gramian directly with the many accelerometer rows in
+the same 16 s word; replacing it by a fictitious instantaneous attitude
+measurement would be an invalid shortcut. The next quantitative proof step is
+therefore the aggregate Schur/Gramian bound on the literal partition, using all
+recurring accelerometer and S information rather than two sparse rows.
+
+The float32 arithmetic path is likewise separated correctly. A straight-line
+kernel with n rounded operations has the standard gamma_n bound
+`gamma_n=n*u/(1-n*u)`, u=2^-24. This is implemented as a certificate
+primitive, but no whole-word arithmetic supply is claimed until literal kernel
+operation counts and magnitude envelopes are composed. Roundoff remains
+additive supply and is not allowed to consume the nonlinear derivative margin.
