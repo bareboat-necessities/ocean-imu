@@ -53,7 +53,7 @@
   },
   "a21_retained_domain": {
     "tilt_error_max_rad": 0.10471975511965977,
-    "accel_bias_error_max_mps2": 0.15,
-    "qualification": "strict inner proof domain: below the ~7 deg magnetic-refinement horizontal gate and below R_b-B_a=0.174833395 m/s^2 projection-inactive margin"
+    "accel_bias_post_projection_error_max_mps2": 0.625166604983954,
+    "qualification": "strict tilt proof domain plus universal literal projection-sector bias bound; projection-inactive release is not assumed"
   }
 }
