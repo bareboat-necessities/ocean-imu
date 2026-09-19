@@ -47,7 +47,9 @@
     "pseudo_update_tau_ratio": 0.013636363636363634,
     "pseudo_update_period_min_s": 0.005,
     "pseudo_update_period_max_s": 0.15,
-    "qualification": "literal shipping clamps/cadence; pseudo scheduler retargets elapsed progress when tau changes"
+    "qualification": "literal shipping clamps/cadence plus theorem word: 8 s marine/magnetic diversity subwindows, two per 16 s A21 word; pseudo scheduler retargets elapsed progress when tau changes",
+    "proof_word_s": 16,
+    "attitude_diversity_subwindow_s": 8
   },
   "a21_retained_domain": {
     "tilt_error_max_rad": 0.10471975511965977,
