@@ -31,7 +31,7 @@ class TailStabilityTests(unittest.TestCase):
 
 
 class TranslationalObservabilityTests(unittest.TestCase):
-    def test_exact_ou_minor_is_nonzero(self):
+    def test_exact_constant_parameter_ou_minor_is_nonzero(self):
         for dt in (.004,.005,.006):
             for tau in (.25,1.0,10.0):
                 self.assertTrue(translational_observability_nonsingular(dt,tau))
