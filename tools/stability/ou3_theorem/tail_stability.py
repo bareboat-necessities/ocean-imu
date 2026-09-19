@@ -818,3 +818,29 @@ def covariance_normalized_information_floor(proof_coordinate_floor: float,
 def rho_from_covariance_normalized_mu(mu_normalized: float) -> float:
     """Information-form contraction; input MUST already be covariance-whitened."""
     return information_contraction_ratio(mu_normalized)
+
+def classical_riccati_covariance_bounds(*, observability_lower: float,
+                                        observability_upper: float,
+                                        controllability_lower: float,
+                                        controllability_upper: float,
+                                        horizon_steps: int) -> dict:
+    """Corrected Deyst/Kamen-Su UCO/UCC covariance bounds.
+
+    For alpha1 I<=O<=alpha2 I and beta1 I<=C<=beta2 I on an N-step
+    uniformly observable/controllable discrete system, the corrected classical
+    bounds used by the Kalman-filter stability proof are
+      P <= (alpha1 + N alpha2^2 beta2)/alpha1^2 I,
+      P >= beta1^2/(beta1 + N alpha2 beta2^2) I.
+    They are rigorous but can be extremely conservative. They are retained as
+    an independent check on a tighter verified Riccati enclosure, not as a
+    reason to accept a numerically useless nonlinear margin.
+    """
+    vals=(observability_lower,observability_upper,
+          controllability_lower,controllability_upper)
+    if not all(math.isfinite(x) for x in vals) or min(vals) <= 0 or horizon_steps < 1:
+        raise ValueError("positive finite UCO/UCC constants required")
+    a1,a2,b1,b2=vals
+    if a2 < a1 or b2 < b1: raise ValueError("ordered Gramian bounds required")
+    upper=(a1+horizon_steps*a2*a2*b2)/(a1*a1)
+    lower=(b1*b1)/(b1+horizon_steps*a2*b2*b2)
+    return {"p_min":lower,"p_max":upper}
