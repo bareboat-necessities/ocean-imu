@@ -44,6 +44,8 @@ class RefinementTests(unittest.TestCase):
         self.assertLess(m["norm_ratio_upper"],.35)
         self.assertGreater(m["horizontal_fraction_lower"],.05)
         self.assertTrue(refinement_sample_gate_uniform(p))
+        self.assertGreater(math.degrees(refinement_tilt_limit_rad(p)),6.9)
+        self.assertLess(math.degrees(refinement_tilt_limit_rad(p)),7.1)
 
     def test_service_closes_count_and_window_gates(self):
         p=self.deployed_like()
