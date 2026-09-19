@@ -26,6 +26,8 @@ from tools.stability.ou3_theorem.tail_stability import (
     root_attitude_information_floor, attitude_gyro_information_floor_from_windows,
     full_neutral_information_floor, covariance_normalized_information_floor,
     rho_from_covariance_normalized_mu, classical_riccati_covariance_bounds,
+    one_step_noise_covariance_floor, verified_interval_innovation_inverse,
+    riccati_box_inclusion, covariance_floor_to_rho,
     practical_radius_bound, projection_sector_is_dissipative, proof_route_status,
     pseudo_decay_exponent_per_gap, release_can_guarantee_projection_inactive,
     small_gain_budget,
@@ -146,6 +148,36 @@ class QuantitativeCertificateTests(unittest.TestCase):
             translation_floor=mu_t,attitude_gyro_floor=mu_ag)
         self.assertGreater(mu,.00204)
         self.assertLess(mu,.00205)
+
+    def test_verified_interval_inverse_requires_strict_residual(self):
+        good=verified_interval_innovation_inverse(
+            midpoint_min_eigenvalue=.1,spectral_radius_bound=.01)
+        self.assertTrue(good["verified"])
+        self.assertLess(good["residual_norm_bound"],1.0)
+        bad=verified_interval_innovation_inverse(
+            midpoint_min_eigenvalue=.1,spectral_radius_bound=.1)
+        self.assertFalse(bad["verified"])
+
+    def test_riccati_box_requires_outward_inclusion(self):
+        good=riccati_box_inclusion(
+            proposed_lower=.01,proposed_upper=10.0,
+            image_lower=.02,image_upper=9.0,outward_rounding_slack=.001)
+        self.assertTrue(good["verified"])
+        bad=riccati_box_inclusion(
+            proposed_lower=.01,proposed_upper=10.0,
+            image_lower=.0105,image_upper=9.0,outward_rounding_slack=.001)
+        self.assertFalse(bad["verified"])
+
+    def test_covariance_floor_completes_rho_chain(self):
+        q=one_step_noise_covariance_floor(
+            dt_min_s=.004,gyro_white_density=.00157,
+            gyro_bias_rw_density=1e-5,accel_bias_drive_density=5e-4)
+        self.assertGreater(q,0)
+        r=covariance_floor_to_rho(
+            fixed_coordinate_mu=.00204,covariance_floor=.5)
+        self.assertAlmostEqual(r["mu_cov"],.00102)
+        self.assertLess(r["rho0"],1.0)
+        self.assertGreater(r["norm_margin"],0.0)
 
     def test_corrected_classical_riccati_bounds_are_fail_closed(self):
         b=classical_riccati_covariance_bounds(
