@@ -70,7 +70,8 @@
     "block_factor_covariance_metric": "After two conditioning failures the entrywise Riccati box is retired. A21 covariance normalization uses AG(6)/LIN(12)/BA(3) factor floors plus cross-block operator bounds. Positive scaled block-Gershgorin margin gamma yields mu_cov>=gamma*min_i(mu_i ell_i^2), then rho0<=1/(1+mu_cov).",
     "block_factor_next": "BA factor uses monotone active-OU prediction/correction recurrence from literal release floor. Cross-block proof starts from PSD ||Pij||<=sqrt(||Pii||||Pjj||); useful gamma requires tighter recurring cross bounds from literal Joseph/event dynamics.",
     "block_factor_source_probe": "AG uses exact scaled one-second process Gramian; BA uses literal active-OU process variance and correction recurrence; LIN source-range probe evaluates scaled controllability pivots across tau. Generic PSD cross bounds are diagnostic only and may not promote gamma.",
-    "block_factor_cross_result": "Executed generic PSD cross-ceiling diagnostic gives gamma=-5.122292072e8, a conditioning failure. Root coercivity instead uses exact additive process identity P-=F P+ F'+Q with block-diagonal Q: certified Q factors imply root block metric gamma=1 independent of carried cross covariance. Cross bounds remain prefix/totality obligations."
+    "block_factor_cross_result": "Executed generic PSD cross-ceiling diagnostic gives gamma=-5.122292072e8, a conditioning failure. Root coercivity instead uses exact additive process identity P-=F P+ F'+Q with block-diagonal Q: certified Q factors imply root block metric gamma=1 independent of carried cross covariance. Cross bounds remain prefix/totality obligations.",
+    "block_factor_root_certificate": "Source-uniform positivity/recurrence closes at post-prediction roots: exact AG/LIN/BA process covariances are SPD on the compact positive-noise shipping domain, Q is block diagonal, and P-=F P+ F'+Q gives factor-scaled gamma=1 independent of cross covariance. Existing covariance compactness gives finite cross-block bounds. Numeric factor minima for constructive rho0 remain separate."
   },
   "operation_lemma_sources": [
     {
@@ -135,11 +136,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/block_factor_metric.py",
-      "git_blob_sha": "394ae487616564c14fe6831cdb9e2150e4ceeb6f"
+      "git_blob_sha": "9d1f8892c67c891578e53770d58c86feb11fd44a"
     },
     {
       "path": "tests/validation/test_ou3_block_factor_metric.py",
-      "git_blob_sha": "83276908ba766030f0155dd2b28f7922e39a65fe"
+      "git_blob_sha": "2cfe10325678c4005c75239f836738028711d1db"
     }
   ]
 }
