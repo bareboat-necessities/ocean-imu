@@ -5,13 +5,13 @@ import unittest
 
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_theorem.interval_riccati_21 import (
-    IMat,N,accel_bias_release_event,add,aw_covariance_floor_event,
+    IMat,N,accel_bias_release_event,aw_covariance_floor_event,
     innovation_covariance,innovation_inverse_spectral_certificate,
-    joseph_covariance,matmul,predict_covariance,spectral_box,
+    joseph_covariance,predict_covariance,spectral_box,
     shipping_acc_update_intervals,shipping_integral_update_intervals,
     shipping_mag_update_intervals,shipping_prediction_intervals,
     verified_gain_interval,verified_joseph_update,iterate_recurring_box,
-    shipping_max_correction_step,shipping_word_map,split_interval_matrix,
+    shipping_max_correction_step,split_interval_matrix,
     adaptive_verified_update,recurring_box_over_cells,exact_midpoint_seed,
     interval_failure_metrics,psd_spectral_prediction_floor,
     psd_spectral_correction_floor,
