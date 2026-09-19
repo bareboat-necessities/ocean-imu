@@ -33,7 +33,9 @@
     "h18_role": "finite bridge until magnetic-reference refinement and implemented accelerometer-bias release; asymptotic contraction is not required on H18",
     "a21_tail": "recurring magnetically informed asymptotic tail; linear storage contraction plus a finite-error nonlinear small-gain remainder is the productive proof target",
     "pr557_negative_result": "held-bias identity obstructs one strict full-state H18 incremental contraction formulation; diagnostic scripts are not theorem machinery",
-    "mag_refinement_completion": "For deployed unweighted refinement, finite completion follows from recurring usable samples plus the literal min-sample/min-window, norm-ratio and horizontal-field gates; broad global field limits alone do not prove the running norm-ratio gate."
+    "mag_refinement_completion": "On the captured <=~7 degree tilt domain, existing |B|>=20 uT, |B|<=75 uT, horizontal>=15 uT and residual<=2 uT bounds imply the deployed unweighted MagAutoTuner 35% norm and 5% horizontal gates. MAGNETIC SERVICE then gives finite 128-sample/30-s completion and, with the internal 250-update/1-s guard, finite A21 entry.",
+    "a21_information_route": "Use the complete normalized transported information of all A21 gravity/accelerometer, integral pseudo-, and magnetic corrections. A full floor mu>0 yields the linear covariance-metric comparison rho0<=1/(1+mu); MAGNETIC SERVICE alone covers only the heading/axial gyro-bias component.",
+    "a21_projection_interior": "With estimate projection radius 0.4 m/s^2 and physical accelerometer-bias bound 0.22516660498395405 m/s^2, ||e_ba||<0.17483339501604597 m/s^2 keeps projection inactive on the local A21 tail."
   },
   "operation_lemma_sources": [
     {
@@ -66,11 +68,11 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "81c2a007a58fbc5b787612033fcd819792dfe94d"
+      "git_blob_sha": "247d1d6762ef1160ca6cca9fac2fa0130345348f"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
-      "git_blob_sha": "b0dc6b202a9eeacd8545cf7119dd2fe32f4d44c5"
+      "git_blob_sha": "0c90e4e30bf69eb56f7931ab8af329cd9f1a7331"
     }
   ]
 }
