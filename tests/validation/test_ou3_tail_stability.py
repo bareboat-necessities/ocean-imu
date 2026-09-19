@@ -26,6 +26,7 @@ from tools.stability.ou3_theorem.tail_stability import (
     root_attitude_information_floor, attitude_gyro_information_floor_from_windows,
     full_neutral_information_floor, covariance_normalized_information_floor,
     rho_from_covariance_normalized_mu, classical_riccati_covariance_bounds,
+    maximal_correction_cadence_is_lower_covariance_bound,
     one_step_noise_covariance_floor, verified_interval_innovation_inverse,
     riccati_box_inclusion, covariance_floor_to_rho,
     practical_radius_bound, projection_sector_is_dissipative, proof_route_status,
@@ -178,6 +179,12 @@ class QuantitativeCertificateTests(unittest.TestCase):
         self.assertAlmostEqual(r["mu_cov"],.00102)
         self.assertLess(r["rho0"],1.0)
         self.assertGreater(r["norm_margin"],0.0)
+
+    def test_maximal_optional_corrections_are_conservative_for_pmin(self):
+        self.assertTrue(maximal_correction_cadence_is_lower_covariance_bound(
+            joseph_updates_have_spd_noise=True,
+            prediction_is_affine_psd_monotone=True,
+            hard_events_are_psd_inflations=True))
 
     def test_corrected_classical_riccati_bounds_are_fail_closed(self):
         b=classical_riccati_covariance_bounds(
