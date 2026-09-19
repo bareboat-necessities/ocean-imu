@@ -107,6 +107,14 @@ def refinement_gate_margins(p: RefinementPremises) -> dict:
             "horizontal_fraction_lower":horizontal_fraction,
             "horizontal_fraction_margin":horizontal_fraction-p.min_horizontal_fraction}
 
+def refinement_tilt_limit_rad(p: RefinementPremises) -> float:
+    """Largest tilt-frame error allowed by the literal horizontal gate."""
+    required=p.min_horizontal_fraction*(p.true_field_norm_upper+p.measurement_residual_norm)
+    budget=p.true_horizontal_lower-p.measurement_residual_norm-required
+    if budget <= 0.0: return 0.0
+    x=min(1.0,budget/(2.0*p.true_field_norm_upper))
+    return 2.0*math.asin(x)
+
 def refinement_sample_gate_uniform(p: RefinementPremises) -> bool:
     m=refinement_gate_margins(p)
     return m["norm_ratio_margin"] >= 0.0 and m["horizontal_fraction_margin"] >= 0.0
