@@ -59,9 +59,25 @@ Two implementation-linked results now control progress:
    therefore capture into this <=7 degree tilt domain, not a separate magnetic
    norm-variation assumption. Then compose refinement with the internal
    accepted-update/guard logic to obtain finite H18 release;
-2. establish a source-uniform linear A21 contraction margin from the actual
-   prediction/correction sequence and MAGNETIC SERVICE, then bound the nonlinear
-   MEKF/reset/projection/tuner remainder below that margin.
+2. establish a source-uniform **complete A21 information floor**. This is now
+   the preferred linear route because it follows the Kalman covariance algebra
+   instead of searching for a numerical rho. Prediction with Q>=0 is
+   covariance-metric nonexpansive, and each literal Kalman correction is
+   nonexpansive in its updated covariance metric. In normalized root
+   coordinates a certified complete-word information floor mu>0 gives the
+   comparison rho0<=1/(1+mu). The existing MAGNETIC SERVICE floor supplies the
+   heading/axial-gyro-bias part; gravity/accelerometer and integral
+   pseudo-measurements must supply the complementary directions. This **full
+   information floor**, not magnetic service alone, is the next linear
+   certificate. Then bound the nonlinear MEKF/reset/tuner remainder below
+   1-sqrt(rho0).
+
+   The A21 accelerometer-bias estimate projection need not enter that local
+   nonlinear bound if the retained tail is kept inside its literal inactive
+   region. With projection radius 0.4 m/s^2 and physical bias bound
+   0.2251666 m/s^2, any bias-error norm below 0.1748334 m/s^2 keeps the estimate
+   strictly inside the projection ball. Release/capture retention must prove
+   entry into that inner domain.
 
 Finite H18 bridge retention, the release operation itself, every-prefix A21
 retention, physical qualification, capture and arithmetic closure remain open.
