@@ -44,8 +44,14 @@ numerical rho is used.
 
 Two implementation-linked results now control progress:
 
-1. prove finite completion of the shipping magnetic-reference refinement under
-   MAGNETIC SERVICE and the admitted sensor domain, then compose it with the
+1. prove finite completion of the shipping magnetic-reference refinement. A
+   sufficient lemma is now explicit: recurring usable samples close the literal
+   min-sample/min-window, norm-ratio and horizontal-field gates in finite time.
+   The deployed refinement has quality weighting disabled and hard-iron fitting
+   disabled, so these are the controlling gates. The broad global 20--75 uT
+   field envelope is not itself a per-history norm-variation bound and therefore
+   cannot be misused to close the 35% running norm-ratio gate; a same-history
+   residual/field bound must supply that step. Then compose refinement with the
    internal accepted-update/guard logic to obtain finite H18 release;
 2. establish a source-uniform linear A21 contraction margin from the actual
    prediction/correction sequence and MAGNETIC SERVICE, then bound the nonlinear
