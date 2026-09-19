@@ -164,8 +164,8 @@ def ag_one_second_factor_floor(*, gyro_white_density: float,
     b=q01/(attitude_scale*gyro_bias_scale)
     d=q11/(gyro_bias_scale**2)
     p1=a
-    p2=d-b*b/a
-    floor=min(p1,p2)
+    pivot_second=d-b*b/a
+    floor=min(p1,pivot_second)
     return {"scaled_gramian":((a,b),(b,d)),"pivot_floor":floor,
             "factor_floor":math.sqrt(floor),"verified":floor>0}
 
