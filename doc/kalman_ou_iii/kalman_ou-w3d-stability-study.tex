@@ -378,14 +378,34 @@ Positive process-noise densities provide uniform complete controllability, so
 the Riccati covariance is uniformly coercive and bounded and the linear A21
 word admits a source-uniform $\rho_0<1$.
 
-On the strict inner domain $\|e_{b_a}\|\le0.15$~m/s$^2$ and tilt error at
-most $6^\circ$, bias projection is inactive.  The tuner and refined magnetic
-reference are measurement-only and identical in a same-history comparison.
-The remaining MEKF measurement and reset maps are smooth, so
-$\eta(r)\rightarrow0$ as $r\rightarrow0$.  Therefore some $r_*>0$ satisfies
-$\sqrt{\rho_0}+\eta(r_*)<1$.  Roundoff is retained as additive supply.
-A numerical enclosure of $\mu_N$, an explicit $r_*$, and capture/retention
-into that domain remain to be certified.
+Projection-inactive entry is not assumed.  During H18 the bias estimate is
+held, while physical truth may attain $B_a=0.2251666$~m/s$^2$; this already
+exceeds $R_b-B_a=0.1748334$~m/s$^2$ even for a zero held estimate.  A universal
+release theorem must therefore retain the implemented projection sector
+\begin{equation}
+ \|e_{b_a}^{+}\|^2+\|d_b\|^2\le\|e_{b_a}^{\rm corr}\|^2 ,
+\end{equation}
+which is dissipative and gives
+$\|e_{b_a}^{+}\|\le B_a+R_b=0.6251666$~m/s$^2$.
+
+For the neutral translation block, a constructive bound is already available.
+Selecting integral updates after 0, 8 and 16~s, allowing the literal 0.156~s
+maximum event delay, normalizing $(v,p,S)$ by $(5.5,8.1,1100)$, and using the
+declared $r_S\le100$ gives
+\begin{equation}
+ \mu_{\rm trans}\ge2.04734\times10^{-3}.
+\end{equation}
+The full $\mu_N$ is not assigned this value: magnetic service is a transported
+heading/axial-bias Gramian over a window, not an instantaneous heading row.
+The remaining quantitative step must compose that actual two-coordinate
+Gramian with all recurring accelerometer rows.  A sparse two-epoch surrogate
+is intentionally not promoted.
+
+After a certified $\rho_0$ is obtained, smooth MEKF measurement/reset terms
+are bounded by $\eta(r)\le L_2r$ and one may take
+$r_*\le(1-\sqrt{\rho_0})/L_2$.  Float32 roundoff is retained as additive
+supply using kernelwise $\gamma_n=nu/(1-nu)$, $u=2^{-24}$; literal operation
+counts and magnitude envelopes remain to be composed.
 
 For a completed A21 word the target finite-error certificate is
 \begin{equation}
