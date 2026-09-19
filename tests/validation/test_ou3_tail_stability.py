@@ -30,6 +30,19 @@ class TailStabilityTests(unittest.TestCase):
 
 
 
+class A21InformationTests(unittest.TestCase):
+    def test_information_floor_gives_strict_linear_ratio(self):
+        self.assertAlmostEqual(information_contraction_ratio(1.0),.5)
+        self.assertAlmostEqual(nonlinear_margin_from_information(1.0),1-math.sqrt(.5))
+
+    def test_projection_inactive_on_inner_bias_domain(self):
+        margin=bias_projection_inactive_margin(.4,.22516660498395405)
+        self.assertGreater(margin,.174)
+        self.assertLess(margin,.175)
+
+    def test_zero_information_refused(self):
+        with self.assertRaises(ValueError): information_contraction_ratio(0)
+
 class RefinementTests(unittest.TestCase):
     def deployed_like(self, **kw):
         d=dict(min_samples=128,min_window_s=30.0,service_window_s=1.0,true_field_norm_lower=20.0,
