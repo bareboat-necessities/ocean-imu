@@ -22,7 +22,10 @@ from tools.stability.ou3_theorem.tail_stability import (
     two_epoch_attitude_gyro_floor, explicit_neutral_information_floor,
     rho_from_explicit_mu, psd_service_schur_floor,
     aggregate_repeated_row_information_floor, aggregate_translation_information_floor,
-    certified_rho_and_margin,
+    certified_rho_and_margin, vibration_inflated_accel_std_ceiling,
+    root_attitude_information_floor, attitude_gyro_information_floor_from_windows,
+    full_neutral_information_floor, covariance_normalized_information_floor,
+    rho_from_covariance_normalized_mu,
     practical_radius_bound, projection_sector_is_dissipative, proof_route_status,
     pseudo_decay_exponent_per_gap, release_can_guarantee_projection_inactive,
     small_gain_budget,
@@ -118,6 +121,36 @@ class QuantitativeCertificateTests(unittest.TestCase):
         c=certified_rho_and_margin(.002)
         self.assertLess(c["rho0"],.999)
         self.assertGreater(c["nonlinear_norm_margin"],.0009)
+
+    def test_long_word_closes_fixed_coordinate_neutral_floor(self):
+        racc=vibration_inflated_accel_std_ceiling(
+            nominal_std=.2,vibration_gain=.75,
+            detector_residual_rms_ceiling=.3)
+        self.assertLess(racc,.302)
+        j=root_attitude_information_floor(
+            vertical_specific_force_floor=9.80665-8.8,
+            horizontal_specific_force_ceiling=8.8,
+            accel_std_ceiling=racc,magnetic_heading_floor=1.0)
+        self.assertGreater(j,.0129)
+        b=rotation_integral_singular_floor(1.0,.6108652381980153)
+        self.assertGreater(b,.984)
+        mu_ag=attitude_gyro_information_floor_from_windows(
+            root_attitude_floor=j,service_windows=2048,
+            gyro_bias_coordinate_scale=.02,
+            one_window_rotation_integral_floor=b)
+        self.assertGreater(mu_ag,.0021)
+        mu_t=normalized_translation_information_floor(
+            word_s=16.0,event_gap_max_s=.156,v_scale=5.5,p_scale=8.1,
+            S_scale=1100.0,S_noise_std_max=100.0)
+        mu=full_neutral_information_floor(
+            translation_floor=mu_t,attitude_gyro_floor=mu_ag)
+        self.assertGreater(mu,.00204)
+        self.assertLess(mu,.00205)
+
+    def test_rho_requires_covariance_normalization(self):
+        mu=covariance_normalized_information_floor(.002, .5)
+        self.assertAlmostEqual(mu,.001)
+        self.assertAlmostEqual(rho_from_covariance_normalized_mu(mu),1/1.001)
 
     def test_transported_service_uses_schur_not_instantaneous_row(self):
         mu=psd_service_schur_floor(
