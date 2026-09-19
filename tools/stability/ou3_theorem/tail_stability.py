@@ -905,3 +905,25 @@ def covariance_floor_to_rho(*, fixed_coordinate_mu: float,
     mu=covariance_normalized_information_floor(fixed_coordinate_mu,covariance_floor)
     rho=rho_from_covariance_normalized_mu(mu)
     return {"mu_cov":mu,"rho0":rho,"norm_margin":1.0-math.sqrt(rho)}
+
+
+def maximal_correction_cadence_is_lower_covariance_bound(*,
+        joseph_updates_have_spd_noise: bool,
+        prediction_is_affine_psd_monotone: bool,
+        hard_events_are_psd_inflations: bool) -> bool:
+    """Order lemma for the Riccati lower-bound cadence.
+
+    A linear Kalman/Joseph correction with R>0 satisfies
+    P+ = P- - P-H'(HP-H'+R)^-1 H P- <= P- in Loewner order.
+    Prediction P->F P F'+Q is PSD-order monotone. The shipping AW sync and
+    bias-release covariance events only add PSD diagonal/block increments.
+    Induction therefore shows that inserting every optional S/mag correction
+    at every sample produces a covariance no larger than any admissible
+    shipping cadence. A positive lower floor certified for this maximal-
+    correction trajectory is consequently a valid floor for every sparser
+    admissible cadence.
+    """
+    flags=(joseph_updates_have_spd_noise,prediction_is_affine_psd_monotone,
+           hard_events_are_psd_inflations)
+    if any(type(x) is not bool for x in flags): raise ValueError("literal proof flags required")
+    return all(flags)
