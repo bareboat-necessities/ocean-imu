@@ -148,3 +148,28 @@ def a21_entry_bound(capture_s: float, refinement_not_before_s: float,
     return release_bound_from_service(accel_bias_unlock_updates,
                                       refinement.service_window_s,
                                       unlock_guard_s,refine_done)
+
+def bias_projection_inactive_margin(projection_radius: float, true_bias_bound: float) -> float:
+    """Error radius that keeps the A21 estimate strictly inside projection."""
+    if not all(math.isfinite(x) for x in (projection_radius,true_bias_bound)):
+        raise ValueError("finite bias radii required")
+    if projection_radius <= true_bias_bound or true_bias_bound < 0:
+        raise ValueError("projection radius must exceed physical bias bound")
+    return projection_radius-true_bias_bound
+
+def information_contraction_ratio(info_floor: float) -> float:
+    """Covariance-metric contraction from a normalized full-word information floor.
+
+    In root-whitened coordinates, prediction with Q>=0 is nonexpansive because
+    P- = F P F' + Q. A linear Kalman correction is likewise nonexpansive in its
+    updated covariance metric. If the complete transported information over a
+    word is bounded below by mu*I in the normalized root coordinates, the
+    information-form comparison gives rho0 <= 1/(1+mu).
+    """
+    if not math.isfinite(info_floor) or info_floor <= 0:
+        raise ValueError("positive finite information floor required")
+    return 1.0/(1.0+info_floor)
+
+def nonlinear_margin_from_information(info_floor: float) -> float:
+    """Largest remainder Lipschitz gain compatible with strict small gain."""
+    return 1.0-math.sqrt(information_contraction_ratio(info_floor))
