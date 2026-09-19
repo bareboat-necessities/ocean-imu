@@ -133,14 +133,6 @@
     {
       "path": "tests/validation/test_ou3_physical_qualification.py",
       "git_blob_sha": "94aba2bf37b7991ed6b0fb6218e1a16563d6d96c"
-    },
-    {
-      "path": "tools/stability/ou3_theorem/block_factor_metric.py",
-      "git_blob_sha": "9d1f8892c67c891578e53770d58c86feb11fd44a"
-    },
-    {
-      "path": "tests/validation/test_ou3_block_factor_metric.py",
-      "git_blob_sha": "2cfe10325678c4005c75239f836738028711d1db"
     }
   ]
 }
