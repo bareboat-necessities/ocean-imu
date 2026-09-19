@@ -57,5 +57,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"entrywise midpoint-radius 21-state Riccati enclosure failed after its one permitted refinement (spectral lower -18.7907040; S r/a=0.666663864; acc/mag inverse unverified). Replace only the covariance-enclosure representation with a PSD-structure-preserving spectral/square-root enclosure and run it; do not further subdivide the failed mechanism. p_min and all downstream rho/radius/retention obligations remain open.",
+        "next_controlling_obligation":"block/factor covariance metric: certify recurring source-uniform AG/LIN/BA factor floors and cross-block operator bounds. Entrywise midpoint-radius Riccati is retired after its second conditioning failure. Promote mu_cov/rho0 only after positive block Schur/Gershgorin coercivity.",
     }
