@@ -16,6 +16,8 @@ from tools.stability.ou3_theorem.tail_stability import (
     marine_magnetic_diversity_window_min, marine_magnetic_vector_diversity_floor,
     neutral_quotient_uniform_mu_exists, nonlinear_margin_from_information,
     nonlinear_small_gain_exists_from_linear, nonlinear_tail_ratio,
+    normalized_translation_information_floor, conservative_float32_kernel_error,
+    bias_release_error_bound, projection_sector_retained_error_bound,
     practical_radius_bound, projection_sector_is_dissipative, proof_route_status,
     pseudo_decay_exponent_per_gap, release_can_guarantee_projection_inactive,
     small_gain_budget,
@@ -83,6 +85,23 @@ class TimeVaryingShippingObservabilityTests(unittest.TestCase):
     def test_cross_coupling_must_fit_block_floors(self):
         self.assertGreater(coupled_information_floor(2.0,3.0,1.0),0)
         self.assertLessEqual(coupled_information_floor(1.0,1.0,1.0),0)
+
+class QuantitativeCertificateTests(unittest.TestCase):
+    def test_normalized_translation_floor_is_constructive(self):
+        mu=normalized_translation_information_floor(
+            word_s=16.0,event_gap_max_s=.156,v_scale=5.5,p_scale=8.1,
+            S_scale=1100.0,S_noise_std_max=100.0)
+        self.assertGreater(mu,.00204)
+        self.assertLess(mu,.00205)
+
+    def test_float32_kernel_gamma_bound(self):
+        self.assertLess(conservative_float32_kernel_error(100,1.0),6e-6)
+
+    def test_release_cannot_start_in_old_point_one_five_bias_ball(self):
+        e=bias_release_error_bound(.22516660498395405,0.0,.001,379.0)
+        self.assertGreater(e,.60)
+        self.assertAlmostEqual(projection_sector_retained_error_bound(
+            .22516660498395405,.4),.6251666049839541)
 
 class ProjectionReleaseTests(unittest.TestCase):
     def test_universal_release_is_not_projection_inactive(self):
