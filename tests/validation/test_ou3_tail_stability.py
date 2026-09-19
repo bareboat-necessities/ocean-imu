@@ -20,7 +20,7 @@ from tools.stability.ou3_theorem.tail_stability import (
     bias_release_error_bound, projection_sector_retained_error_bound,
     vector_attitude_information_floor, rotation_integral_singular_floor,
     two_epoch_attitude_gyro_floor, explicit_neutral_information_floor,
-    rho_from_explicit_mu,
+    rho_from_explicit_mu, psd_service_schur_floor,
     practical_radius_bound, projection_sector_is_dissipative, proof_route_status,
     pseudo_decay_exponent_per_gap, release_can_guarantee_projection_inactive,
     small_gain_budget,
@@ -117,6 +117,13 @@ class QuantitativeCertificateTests(unittest.TestCase):
         self.assertGreater(rho,.9999993)
         self.assertLess(rho,1.0)
         self.assertLess(1-math.sqrt(rho),3.1e-7)
+
+    def test_transported_service_uses_schur_not_instantaneous_row(self):
+        mu=psd_service_schur_floor(
+            controlled_block_floor=.1,controlled_block_ceiling=10.0,
+            nuisance_block_ceiling=10.0,service_floor=1.0)
+        self.assertGreater(mu,0.0)
+        self.assertLess(mu,.1)
 
     def test_float32_kernel_gamma_bound(self):
         self.assertLess(conservative_float32_kernel_error(100,1.0),6e-6)
