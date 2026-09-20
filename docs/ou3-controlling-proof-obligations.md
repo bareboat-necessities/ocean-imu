@@ -4,15 +4,22 @@ The exact status is reproduced by `theorem_status.py` and committed in
 `reports/results/ou3_stability/theorem-status.json`. Algebraic infrastructure
 is distinct from a shipping source-uniform theorem certificate.
 
+The declared universal six-degree physical capture claim is **refuted under
+the current point-sample assumptions**. See `ou3-sampled-capture-obstruction.md`:
+two nonzero continuous motions satisfy the envelopes and actual magnetic
+service but give the same level sample record with 53.13-degree true tilt.
+This is the controlling obstruction; the conditional tail results below do
+not establish capture. No physical assumption has been changed.
+
 | Obligation | Current state | Required certificate |
 |---|---|---|
 | Joint recurring lower covariance | CLOSED in real arithmetic at regular A21 post-prediction roots after a 16-s window | `root_covariance_certificate.py`: convex combination of fresh AG/BA injection and corrected LIN matrix action, with all cross covariance retained |
-| Full A21 information/loss and rho0 | OPEN; controlling gap | Bound the complete transported loss `D_word >= delta P_root^-1`, delta>0, in all 21 coordinates; restricted magnetic service cannot be lifted to independent heading information |
+| Full A21 information/loss and rho0 | OPEN for the conditional tail | Bound the complete transported loss `D_word >= delta P_root^-1`, delta>0, in all 21 coordinates; restricted magnetic service cannot be lifted to independent heading information |
 | LIN/BA nuisance covariance upper bound | CLOSED for the regular default A21 profile after 17 s | `nuisance_upper_certificate.py` and `ou3-nuisance-upper-proof.md`: cancel the neutral root with three actual S observations; bound OU forcing, source Q defects and actual PSD sync; retain all nuisance cross covariance |
 | Full covariance upper bound | OPEN: remaining AG6 block | Bound attitude/gyro covariance under varying realized coefficients and actual corrections/resets |
 | Explicit nonlinear retained radius | OPEN | Bound the complete nonlinear remainder, including projection/reset/tuner behavior, against the verified strict linear margin |
 | Whole-word float32 supply | Composition only | Literal operation counts, magnitude envelopes and certified prefix gains; real-arithmetic covariance positivity is not float32 totality |
-| Finite startup/capture | OPEN | History-dependent finite capture from construction into the retained domain; no common deadline is assumed |
+| Finite startup/capture | REFUTED for the declared six-degree region on the present domain | The sampling ambiguity prevents entry at every time, including after actual refinement/A21 release; a quantitative sampling premise or changed target is necessary |
 | Finite H18 retention | Composition only | Actual entry set, history-dependent bridge duration and supply/gain bounds |
 | Reference refinement and bias release | Conditional captured-domain completion only | Retain the actual refinement state machine, accepted-update count, one-second guard and covariance release |
 | Release into the A21 region | OPEN | Compare the certified release set with the nonlinear retained region/projection-sector bound |
@@ -27,11 +34,11 @@ Gramian. Local interval kernels remain available as conditional algebra; no
 recurring interval box is currently certified. The active construction retains
 matrix factors and the full covariance-energy loss identity.
 
-The complete stability theorem remains open. Consult `ou3-proof-research-state.md`
+The complete stability claim cannot hold as stated. Consult `ou3-proof-research-state.md`
 for the current failure classification and next falsifiable experiment.
 
 The stationary A21 detectability proof in `ou3-stationary-detectability.md`
 finds no nondecaying unobservable mode at rest with nonparallel gravity and
 magnetic field. It is not a uniform varying-history theorem. Quiet water is
-not excluded without a demonstrated obstruction and quantitative replacement
-motion condition.
+not excluded. The demonstrated sampling obstruction uses nonzero motion and
+cannot be repaired by deleting quiet water.

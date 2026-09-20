@@ -69,7 +69,8 @@
     "information_assembly_audit": "Removed positivity-only helper claims of compact full information, neutral quotient observability and marine-diversity-to-full-information lifting. Separate restricted minors do not prove full rank. Independent-block scalar margin algebra is explicitly conditional on a certified product metric.",
     "a21_factorized_loss": "Root-whitened measurement and orthogonal-complement process loss rows are compressed by QR, retaining all 21 columns. Exact dense reference parity and singular nuisance range elimination are verified; whole-word factor error and source-uniform singular margin remain open.",
     "a21_nuisance_upper": "After 17 s of default regular A21 operation, a causal three-S-observation trial cancels the arbitrary neutral root and bounds LIN/BA covariance above with all nuisance cross blocks. Same realized PSD-sync increments are used in the comparison. AG6 upper covariance and full loss remain open.",
-    "a21_stationary_detectability": "At the stationary A21 nominal solution, the only nondecaying prediction eigenvalue is 1; stable AW/BA components vanish in its eigenvectors, then S and nonparallel gravity/magnetic observations kill the remaining neutral vector. This is not a uniform varying-history or nonlinear stability theorem."
+    "a21_stationary_detectability": "At the stationary A21 nominal solution, the only nondecaying prediction eigenvalue is 1; stable AW/BA components vanish in its eigenvectors, then S and nonparallel gravity/magnetic observations kill the remaining neutral vector. This is not a uniform varying-history or nonlinear stability theorem.",
+    "sampled_physical_capture_obstruction": "Two nonzero continuous motions meet the current point-sample motion/bias domain and yield identical level input. Literal startup/refinement/A21 release preserves level means. Exact invariant heading covariance and root innovation information certify actual magnetic service on every real-arithmetic tail window (>1 even about true down). Physical tilt remains acos(3/5), refuting universal entry into the declared six-degree region. Conditional local A21 stability is not refuted; no new physical premise is adopted."
   },
   "operation_lemma_sources": [
     {
@@ -102,7 +103,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "dbca1c5df82f8e3b50928cec3df0a9975e248018"
+      "git_blob_sha": "23cbbd30a2519701015a2d425d59b5f3aa332d66"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -223,6 +224,34 @@
     {
       "path": "src/tuner/WavePeriodEstimator.h",
       "git_blob_sha": "91783dc4ff43471df1d5a2b570b4f4068b9fddc4"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/sampled_capture_obstruction.py",
+      "git_blob_sha": "80c172693061411214fe957ec4f57b7bf9b04780"
+    },
+    {
+      "path": "tests/validation/test_ou3_sampled_capture_obstruction.py",
+      "git_blob_sha": "6e5e4cd92bb73472e16b4300a1d01ca67ebb5332"
+    },
+    {
+      "path": "tests/kalman_ou_iii/sampled_capture-test.cpp",
+      "git_blob_sha": "6c3f759de6ea45ccbd0ba2a84c5100d5863c9057"
+    },
+    {
+      "path": "docs/ou3-sampled-capture-obstruction.md",
+      "git_blob_sha": "7236f2ac07326b7fd9a32472978808debec0a0dd"
+    },
+    {
+      "path": "src/tuner/MagAutoTuner.h",
+      "git_blob_sha": "52d9669434bb7377a33c78636feef51e42caa3e9"
+    },
+    {
+      "path": "src/tuner/ContinuousMagHardIronEstimator.h",
+      "git_blob_sha": "c5bdc9c1a20188a206997f66b6c3e8ded2491aef"
+    },
+    {
+      "path": "src/kalman_common/SeaStateFusionFilterCommon.h",
+      "git_blob_sha": "6c0fa159cfd168108bc217bc78c37b22243cefa6"
     }
   ]
 }

@@ -4,6 +4,15 @@
 
 The shipping estimator is the object being analyzed. One persistent execution must simultaneously satisfy MARINE MOTION, IMU BIAS, and MAGNETIC SERVICE. Vessel motion, attitude, measurements, physical biases, frontend, tuner, covariance, acceptance state, scheduler, and estimator states belong to that same execution.
 
+**The present point-sample assumptions do not imply the declared six-degree
+physical capture.** The exact counterexample in
+`ou3-sampled-capture-obstruction.md` consists of two nonzero continuous marine
+histories with zero residual bias/noise and identical stationary sensor
+samples. The literal estimator completes startup and A21 release, meets
+every-window actual magnetic service in real arithmetic, and remains level
+with 53.13-degree physical tilt error. Conditional local stability is not
+refuted. No quiet-water exclusion or new physical premise is adopted.
+
 ## MARINE MOTION
 
 The wave coordinate `p` is displacement about a local equilibrium/reference, with `v=dp/dt` and `a=dv/dt`. The same history supplies attitude and angular rate. In addition to pointwise limits, admission requires
@@ -238,14 +247,25 @@ For a constant world magnetic field, bounded marine velocity also gives
 The right side is 43.97475 (m/s^2) uT at T=8 s under the declared limits.
 This continuous-history diversity identity does not by itself establish the
 sampled, transported full-state information bound, including nuisance cross
-terms. Constant-frame observability minors likewise remain conditional algebra.
+terms. In fact, the sampling counterexample has constant sampled specific
+force despite this continuous-history inequality. A quantitative cell-integral
+sampling-fidelity condition is absent. Constant-frame observability minors
+likewise remain conditional algebra.
 Compactness can give a uniform positive minimum only after full rank is proved
 on every admissible cell; positivity of separate restricted minors is insufficient.
 
 ## Remaining theorem certificates
 
-The next certificate is a full transported loss bound, retaining all 21
-coordinates and cross terms, with a uniform covariance upper comparison.
+The universal capture claim must first be repaired or its domain changed:
+the current assumptions admit an all-time indistinguishable physical history
+outside the declared retained tilt region. The counterexample document derives
+a concrete cell-integral sampling-fidelity premise, but does not adopt or
+qualify it. Neither a larger numerical enclosure nor exclusion of quiet water
+repairs this information obstruction.
+
+For the conditional local tail, the missing certificate is a full transported
+loss bound, retaining all 21 coordinates and cross terms, with a uniform
+covariance upper comparison.
 A non-promoting high-precision feasibility calculation must precede rigorous
 enclosure. A positive LIN factor alone cannot promote rho.
 
@@ -253,4 +273,5 @@ After linear dissipativity, the same execution must satisfy an explicit
 nonlinear remainder/radius, bounded float32 supply, every-prefix retention,
 finite capture, finite H18/refinement/release retention, and release entry into
 the retained A21 region. Physical qualification and every-window applied
-magnetic service also remain required. The complete theorem is not claimed.
+magnetic service also remain required. The complete theorem is not claimed;
+the six-degree capture obligation is false on the currently declared domain.

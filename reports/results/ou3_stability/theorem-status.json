@@ -1,6 +1,15 @@
 {
-  "certified_capture_time": "history dependent T_c(h,x_0) < infinity; no common finite deadline is claimed",
-  "next_controlling_obligation": "Prove the remaining attitude/gyro covariance upper bound and the full transported A21 loss, retaining nuisance cancellation. The 15-coordinate LIN/BA upper comparison now holds after 17 s of regular default-profile A21 operation; the full 21-coordinate lower comparison holds at recurring prediction roots. Stationary A21 detectability does not require nonzero wave amplitude. Uniform full loss, nonlinear radius, float32 supply, finite capture and retention remain open.",
+  "capture_obstruction": {
+    "all_time_real_arithmetic_magnetic_service_verified": true,
+    "both_witness_histories_have_nonzero_motion": true,
+    "certificate": "sampled-capture-obstruction.json",
+    "conditional_local_A21_stability_refuted": false,
+    "declared_six_degree_capture_refuted": true,
+    "new_physical_assumption_adopted": false,
+    "shipping_divergence_claimed": false
+  },
+  "certified_capture_time": null,
+  "next_controlling_obligation": "The present point-sample motion domain does not imply finite capture into the declared six-degree region. Two nonzero bounded continuous motions produce identical stationary samples, meet all-time actual magnetic service, and retain 53.13-degree physical tilt error. Excluding quiet water cannot remove this witness. A quantitatively qualified sampling-fidelity premise or a changed target is necessary before continuing the positive end-to-end claim. Neither is adopted. Conditional full AG covariance/loss, nonlinear supply, retention and arithmetic remain unproved.",
   "no_heading_service_result_role": "necessity lemma only",
   "obligations": {
     "A21_covariance_hard_event_compactness": false,
@@ -69,6 +78,7 @@
   "qualification": "OU3_SINGLE_MARINE_IMU_MAGNETIC_STABILITY_ARCHITECTURE_V1",
   "quantifier": "one persistent physical execution belongs to all three assumption classes simultaneously",
   "regional_practical_stability_claimed": false,
+  "required_capture_time": "history dependent T_c(h,x_0) < infinity; refuted for the declared six-degree region under the current point-sample domain",
   "shipping_filter_changed_for_proof": false,
   "theorem_closed": false
 }

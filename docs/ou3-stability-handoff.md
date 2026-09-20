@@ -1,40 +1,42 @@
 # OU-III stability handoff
 
 Continue only in PR #560, branch `ou3-explicit-regional-practical-stability`.
-Read AGENTS.md and `ou3-proof-research-state.md`. Keep the one construction ->
-capture -> H18 -> release -> A21 theorem and its same-history semantics.
+Read AGENTS.md and `ou3-proof-research-state.md`. The same-history construction
+-> capture -> H18 -> release -> A21 architecture is retained.
 
-The exact complete-word energy identity, full-factor representation and
-singular nuisance range elimination are retained. The corrected LIN path
-supplies a full-state singular lower comparison; convex combination with
-fresh AG/BA injection closes the joint lower covariance at recurring regular
-prediction roots after 16 s. See `root_covariance_certificate.py`.
+**The declared universal six-degree physical capture is refuted on the current
+point-sample domain.** Read `ou3-sampled-capture-obstruction.md` before any new
+positive construction. Its two nonzero continuous histories have identical
+stationary measurements, meet all motion/bias bounds and all-time actual
+magnetic service, and retain 53.13-degree physical tilt error through literal
+startup and A21 release. Neither quiet-water exclusion nor tighter nominal
+covariance estimates can remove this sampling ambiguity.
 
-`ou3-nuisance-upper-proof.md` now proves a recurring upper comparison for the
-15 LIN/BA coordinates after 17 s of default regular A21 operation, including
-all nuisance cross covariance. Three actual S observations eliminate the
-unknown neutral root. The comparison keeps the same realized PSD-sync
-increments while omitting acc/mag corrections. Do not recompute sync from
-its auxiliary covariance. Constants are exact rational; no rho is inferred.
+The exact rational artifact includes all-time envelope bounds, an invariant
+source 2x2 Riccati comparison, and actual innovation service >1 for either
+nominal or true down-axis convention. The native `sampled_capture-test` checks
+the shipping float startup/refinement/release and stationary invariance;
+it is not used to extrapolate all-time service or float32 totality.
 
-The remaining upper-covariance block is AG6. Full transported loss,
-nonlinear radius, arithmetic supply, finite capture and retention remain
-open. A finite trace cannot close these obligations.
+A quantitative cell-integral sampling-fidelity condition is derived but is
+not adopted or physically qualified. AGENTS.md does not authorize silently
+changing physical assumptions. A positive end-to-end theorem needs a justified
+revised domain or a different capture target, as well as the remaining loss,
+nonlinear, retention and arithmetic work.
 
-`ou3-stationary-detectability.md` establishes stationary A21 detectability
-with nonparallel gravity/magnetic field and recurring applied observations.
-Do not exclude quiet water on an unproved assertion of instability. Any
-necessary motion restriction must provide quantitative window excitation,
-not merely nonzero amplitude. The active bias OU law must not be replaced
-by a held-bias identity when assessing this question.
+Retain the exact word energy and factor/range algebra, corrected LIN path
+lower comparison, joint full-state covariance floor after 16 s, nuisance
+covariance upper comparison after 17 s, and stationary A21 detectability.
+Their scopes are conditional and do not imply physical capture. Do not revive
+restricted-information lifting, endpoint-batch floors or entrywise Riccati
+subdivision. The applicability map and finite quiet-word diagnostic remain
+removed.
 
 Reproduce with:
 
 ```
 python3 -m unittest discover -s tests/validation -p 'test_ou3_*.py'
 python3 tools/stability/ou3_theorem/build_evidence.py
+make -C tests/kalman_ou_iii sampled_capture-test
+./tests/kalman_ou_iii/sampled_capture-test
 ```
-
-Passing these checks is not end-to-end theorem completion. Do not revive
-entrywise Riccati subdivision, endpoint-batch floors or restricted-information
-lifting. The literature map and finite quiet-word diagnostic are removed.

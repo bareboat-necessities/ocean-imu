@@ -52,6 +52,7 @@ jobs:
           python3 -m unittest discover -s tests/validation -p test_ou3_word_energy.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_factor_word.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_root_covariance_certificate.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_sampled_capture_obstruction.py -v
           python3 tools/stability/ou3_theorem/block_factor_numeric.py
           python3 -m unittest discover -s tests/validation -p test_ou3_block_factor_numeric.py -v
       - name: Preserve reproducible source and LIN certificate
@@ -76,9 +77,9 @@ jobs:
       - name: Validate provenance and fail-closed status
         run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
       - name: Build literal shipping regressions
-        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test
+        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test sampled_capture-test
       - name: Run literal shipping regressions
-        run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test
+        run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:

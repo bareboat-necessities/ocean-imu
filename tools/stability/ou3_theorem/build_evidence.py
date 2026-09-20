@@ -44,6 +44,7 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.root_covariance_certificate import certificate as root_certificate
     from tools.stability.ou3_theorem.factor_certificates import audit_certificate
     from tools.stability.ou3_theorem.nuisance_upper_certificate import certificate as nuisance_certificate
+    from tools.stability.ou3_theorem.sampled_capture_obstruction import witness_certificate
     for name, generate in (
         ("lin-matrix-certificate.json",matrix_certificate),
         ("word-energy-audit.json",restricted_service_counterexample),
@@ -51,6 +52,7 @@ def validate() -> dict:
         ("root-covariance-certificate.json",root_certificate),
         ("factor-nuisance-audit.json",audit_certificate),
         ("nuisance-upper-certificate.json",nuisance_certificate),
+        ("sampled-capture-obstruction.json",witness_certificate),
     ):
         artifact=STATUS.parent/name
         if not artifact.is_file() or json.loads(artifact.read_text())!=generate():

@@ -2,51 +2,56 @@
 
 ## Current hypothesis
 
-One path in PR #560: construction -> finite capture -> finite H18 bridge ->
-reference refinement/release -> recurring informed A21 -> regional practical
-stability. All stages carry the same physical execution and estimator state.
-The controlling identity is
-`M_end' P_end^-1 M_end + D_word = P_root^-1`.
-The required uniform inequality is `D_word >= delta P_root^-1`, delta>0,
-followed by nonlinear supply and every-prefix retention in the same storage.
+The current point-sample domain **does not imply the declared six-degree
+physical capture**, even with all-time actual magnetic service. The requested
+construction -> capture -> H18 -> release -> A21 theorem cannot be completed
+as stated. No motion/sensor assumption, estimator behavior or threshold has
+been changed. Conditional local A21 stability is not refuted.
 
 ## Evidence
 
-- Exact complete-word energy algebra and low-rank factors retain all 21
-  columns, actual correction/reset transport and singular nuisance ranges.
-  Dense rational adversarial checks verify the algebra, not a uniform margin.
-- The corrected Hermite endpoint path gives the singular full-state lower
-  comparison `P >= E_LIN A^-1 E_LIN'`, with the full rational 4x4 action,
-  interleaved corrections and source polynomial defects retained.
-- At recurring regular post-prediction roots after 16 s, combine that full
-  comparison with fresh AG/BA process injection using equal convex weights.
-  This closes the joint 21-coordinate lower covariance without adding
-  unrelated marginal floors (`root_covariance_certificate.py`).
-- `ou3-nuisance-upper-proof.md` proves the recurring 15-coordinate LIN/BA
-  upper comparison after 17 s in the same default regular A21 profile.
-  Three actual S observations eliminate the arbitrary neutral root exactly;
-  OU forcing, source Q defects and the actual PSD-sync increments have uniform
-  upper bounds. A comparison omitting acc/mag corrections uses the same
-  realized sync increments, not a recomputed positive-part map. Block Cauchy
-  retains all nuisance cross covariance. Rational constants are reproduced by
-  `nuisance_upper_certificate.py`. No full-state decay rate follows yet.
-- `ou3-stationary-detectability.md` proves that the stationary A21 lifted
-  linear pair has no unobservable nondecaying eigenmode with recurring S,
-  acc/mag observations and nonparallel gravity/field. Stable AW/BA components
-  vanish at eigenvalue 1; the remaining eigenvector is killed by S and the
-  two vector observations. This is not nonlinear quiet-water stability.
+`ou3-sampled-capture-obstruction.md` proves an all-time counterexample, with
+exact rational envelope and service constants in
+`sampled-capture-obstruction.json`. Two nonzero sinusoidal translations have
+constant true rolls +/-acos(3/5), zero bias/noise, and identical stationary
+200 Hz IMU / 25 Hz magnetic samples. Position, velocity, acceleration and the
+global displacement primitive satisfy all declared bounds. The actual wrapper
+completes startup, refinement and A21 release and stays level. Physical tilt
+error is always 53.13 degrees, so no finite six-degree capture time exists.
+
+The invariant source heading/bias block admits an exact all-prefix covariance
+upper comparison. Root observation information, with all process correlations
+and actual sequential innovations retained, exceeds 3.72037 per one-second
+window; even injection about the true down axis exceeds 1.33933 > mu_M=1.
+This is a real-arithmetic all-time service proof, not inference from packet
+cadence or a finite replay. The native `sampled_capture-test` separately checks
+the literal float startup/release path, applied corrections, level invariance
+and axis separation. Exact sequential-vs-batch root-information tests include
+interleaved process noise; they do not reuse the invalid endpoint comparison.
+
+Validation: the clean-checkout evidence/publication suite passes 449 tests
+with one existing data-dependent skip; exact artifact reproduction, ruff,
+Python compilation and all three literal shipping regressions pass. The
+sequential full `make all` is still running at this source checkpoint; it is
+not reported as passed.
 
 ## Current limiter
 
-The remaining six-coordinate AG upper comparison must control varying
-realized attitude, specific force, gyro transport, correction/reset and
-accepted magnetic events. Restricted heading service cannot be embedded as
-independent full-state information. The nuisance upper comparison removes
-one obstruction but does not close this AG step or the full transported loss.
-Finite nonlinear radius, float32 supply, capture, H18/release retention and
-every-prefix finite-error retention remain open. The theorem is not claimed.
+Classification: mathematical information obstruction to universal physical
+capture. Invalidated hypothesis: the current three physical contracts and
+point-sample sensor bounds force entry into the declared six-degree region.
+The witness defeats every finite deadline, including a history-dependent one.
+It does not demonstrate covariance divergence or failure of conditional local
+stability. Removing quiet water cannot repair it: both histories have motion.
+
+The missing connection is quantitative sampling fidelity between physical
+acceleration and velocity increments. The proof derives a concrete cell-error
+condition and its implied sampled force diversity, without adopting it. Real
+sensor integration or qualified physical bandwidth/jerk could provide such a
+condition. The current formal premises provide neither.
 
 ## Failed approaches / DEAD_ENDS
+
 
 - Entrywise midpoint-radius Riccati refinement failed twice by dependency:
   prediction enclosure [-18.7907040,2502.41442], failed acc/mag inverse boxes.
@@ -98,31 +103,57 @@ every-prefix finite-error retention remain open. The theorem is not claimed.
   in a temporary tool directory resolved that dependency; the unchanged
   repository ruff and Python-compilation gates then passed.
 
+- The continuous velocity-balance force-diversity identity is valid, but
+  transferring it to point samples without a quantitative cell-error bound
+  is invalid. The exact nonzero histories above falsify physical capture
+  even when the nominal sampled A21 linearization is detectable. Further
+  covariance tightening cannot repair that implication.
+- Local dependency recovery: `apt-get download libeigen3-dev` failed with
+  `Unable to locate package`; Eigen 3.3.7 then failed C++20 rewritten equality
+  candidates (return type is not bool). Official Eigen 3.4.0 in a temporary
+  dependency directory compiled the new native regression. The unchanged
+  required `make all -j2 EIGEN_DIR=/tmp/ou3-deps/eigen34` was then run.
+  These failures concern build dependencies, not a mathematical premise.
+- That parallel top-level invocation exposed the existing unordered
+  `all: build test` prerequisites: `tests/kalman_ou_ii/run_tests.sh` ran before
+  its executables existed (`kalman_ou_ii-sim` and `tuner_schedule-test`:
+  `No such file or directory`, exit 127). Build subsequently completed.
+  Rerun the required `make all EIGEN_DIR=/tmp/ou3-deps/eigen34` sequentially;
+  do not change the unrelated top-level Makefile or relax a gate.
+- An article patch failed exact-context matching before writing; applying
+  the correct source context fixed the authoring operation.
+- The first clean-checkout evidence run ran 449 tests with one failure and
+  one existing data-dependent skip: the publication contract required the
+  literal phrase `End-to-end regional practical stability remains`.
+  Restored it with the truthful predicate `unproved`, immediately followed
+  by the six-degree capture obstruction. The unchanged rerun passes.
+
 ## Retained facts
 
-The same-history physical contracts, bounded displacement primitive, exact
-bias mismatch, accepted-event service, projection sector, finite-bridge
-algebra and Joseph identity remain. No shipping instability is inferred from
-a failed sufficient certificate. Quiet water remains admissible: its exclusion
-is not justified by the stationary linear analysis. If excitation is needed
-for varying histories, require a quantitative window bound; excluding exactly
-zero amplitude cannot itself supply a uniform margin.
+The exact full-word identity
+`M_end' P_end^-1 M_end + D_word = P_root^-1`, low-rank loss factors, singular
+nuisance elimination, corrected 4x4 LIN endpoint action, joint 21-coordinate
+lower covariance after 16 s and 15-coordinate nuisance upper covariance after
+17 s remain valid in their stated regular default A21 scopes. Stationary A21
+detectability remains valid; nominal detectability is not physical capture.
+Same-history bias mismatch, projection-sector and finite-bridge identities
+are retained. Full AG upper covariance/loss, nonlinear supply, prefix retention
+and whole-implementation arithmetic remain unproved conditional obligations.
 
 ## Alternatives
 
-Within the same theorem, use full transported loss/Schur elimination or a
-joint covariance comparison. The new nuisance upper bound permits treating
-nuisance contributions as bounded covariance in an AG trial estimator, but
-its response to the actual varying measurement/transport geometry must still
-be proved. Do not replace that task with independent principal-block claims.
+For a physically justified revised domain, require and qualify the cell bound
+`||h_k a(t_k)-integral_cell a|| <= eta h_k`. Summing it gives sampled diversity
+`g B_h,min-(2 V_max/T+eta) B_max`. A quantitative jerk limit J suffices with
+`eta=J h_max/2`; J=100 and T=8 give 21.47475 > 0 as an **unadopted example**.
+This alone does not prove capture or the nonlinear retained radius. Enlarging
+the claimed region is a different target and also is not silently adopted.
 
 ## Next falsifiable experiment
 
-Derive an AG trial estimator whose root cancellation is uniform for the
-admitted realized event geometry. Test its complete loss construction before
-rigorous enclosure. If quiet motion is an obstruction, exhibit the full
-unobservable mode with the active BA predictor and actual applied events;
-then derive a quantitative physical excitation condition that removes it.
-The stationary detectability proof rules out claiming that every resting
-A21 trajectory lacks information. After AG/full loss closure, compose
-nonlinear supply and capture/release-to-retention.
+Qualify a quantitative physical/sensor sampling condition and test it against
+both the exact witness and the complete corrected shipping transport before
+claiming it repairs capture. The current AGENTS.md physical-history rules do
+not authorize silently changing the admitted domain. Preserve the proof of
+impossibility for the present six-degree target; do not return to a nominal
+covariance calculation as if it could establish the missing physical premise.
