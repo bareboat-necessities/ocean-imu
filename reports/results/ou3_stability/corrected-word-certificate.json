@@ -67,6 +67,7 @@
     "numerator": "248188600375173268173354737"
   },
   "independent_filter_trajectories_required": false,
+  "joint_prediction_measurement_input_action_proved": true,
   "matrix_implication": "D_AG,AG >= J > 0 implies P <= diag((1+eta)/alpha J^-1, (1+1/eta) U), eta > 0",
   "nuisance_upper_diagonal": [
     "580931106605/1024",

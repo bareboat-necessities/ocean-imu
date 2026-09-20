@@ -33,7 +33,11 @@ still open. This is not the invalid lifting of two-column magnetic service.
 
 The same document proves actual-gain finite-error word composition and an
 explicit finite-angle reset bound, including the real small-angle quaternion
-polynomial defect. The reset remainder has an injection-squared times error
+polynomial defect. The exact covariance recursion also bounds all prediction
+and measurement inputs jointly by the square root of their summed actions;
+reset/projection defects retain separate norm supplies. This avoids an
+unnecessary long-word factor from summing every individual input norm.
+The reset remainder has an injection-squared times error
 term; do not call it purely quadratic in error at a nonzero injection. No
 second filter with identical gains or event decisions is assumed.
 

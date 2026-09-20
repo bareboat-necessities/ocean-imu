@@ -175,6 +175,35 @@ additional forcing. Prediction mismatch uses the established joint metric
 action bound. Euclidean BA projection retains its separate sector/defect;
 it is not declared nonexpansive in the full covariance metric.
 
+There is a stronger accumulation bound for prediction and correction inputs.
+Write the exact comparison covariance recursion as
+
+`P_i=A_i P_(i-1) A_i' + B_i B_i'`,
+
+where B_i is a factor of Q_i at prediction, `K_i R_i^(1/2)` at correction,
+and zero at a congruent reset. Let the corresponding deterministic finite
+defect be `B_i u_i`; thus its action is `d_i' Q_i^-1 d_i` at prediction and
+`r_i' R_i^-1 r_i` at correction (use the least-norm factor input if singular).
+Expanding the recursion through the whole word gives the matrix identity
+
+`P_W = M P_0 M' + sum_i M_(W<-i) B_i B_i' M_(W<-i)'`.
+
+After whitening by the terminal covariance factor, the horizontally stacked
+input matrix has norm at most one. Hence the sharper finite-error inequality
+is
+
+`sqrt(V_W) <= sqrt(1-delta) sqrt(V_0) + sqrt(sum_i |u_i|^2)
+             + sum_(reset/projection i) ||d_i||_(P_i^-1)`.
+
+This is deterministic matrix algebra: the physical input terms need not be
+independent or obey Gaussian/OU laws. All correlations in Q, R and P remain.
+It replaces an unnecessary factor proportional to the square root of the
+number of operations in the bound obtained by summing individual prediction
+and correction norms. The actual inputs, which depend on the realized finite
+error, must still satisfy the action bounds on the retained region. The
+finite-angle reset and mean-only projection defects do not have Joseph noise
+channels; they are not included in this square-summed term.
+
 ## 4. Finite-angle remainder of the literal reset
 
 Let d be the actual requested attitude injection and `v=theta-d`, with

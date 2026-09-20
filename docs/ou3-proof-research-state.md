@@ -20,7 +20,9 @@ remain. General physical capture and the complete stability theorem are open.
   21-state contraction, retaining all cross covariance;
 - actual-gain variation of constants composes finite-error supplies without
   equating independently evolving filters; correction supply is bounded by
-  the R-whitened residual without a separate gain norm;
+  the R-whitened residual without a separate gain norm; the exact covariance
+  recursion bounds all prediction/measurement inputs jointly by the square
+  root of their summed actions, retaining process correlations;
 - an explicit finite-angle reset remainder includes both the injection-squared
   times error term and the real normalized quaternion polynomial defect.
 
@@ -57,7 +59,7 @@ all-time actual magnetic-service floor exceeds one. Its native regression
 checks literal finite float startup/release; all-time float totality was not
 claimed. Current status explicitly records that this witness is inadmissible.
 
-Validation for this continuation: 462 evidence/publication tests pass with
+Validation for this continuation: 463 evidence/publication tests pass with
 one existing data-dependent skip. Exact artifact reproduction, ruff and
 Python compilation pass. The normalized quaternion polynomial defect was
 also checked at 80 decimal digits. No C++ or shipping behavior changed.
@@ -134,6 +136,10 @@ are not evidence that the declared six-degree region is invariant.
   from loading. Installing matplotlib restored the unchanged suite: all 462
   tests pass with one existing skip. No publication files or gates were altered
   to accommodate that environment failure.
+
+- The first article render for the corrected-word result passed but reported
+  a 9.1585-pt overfull inline nuisance-block tuple. Expand the nonzero blocks
+  into two displayed rows; the covariance constants are unchanged.
 
 ## Retained facts
 

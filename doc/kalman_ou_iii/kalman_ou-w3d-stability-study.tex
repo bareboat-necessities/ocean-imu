@@ -866,9 +866,12 @@ including its positive-semidefinite limit, gives
  P\succeq E_nLE_n^{\mathsf T},\qquad
  L=(L_+^{-1}+\Lambda_n)^{-1},
 \end{equation}
-where $\Lambda_n$ has block diagonal
-$(0,0,\sigma_{S,\min}^{-2}I_3,
-2\sigma_{a,\min}^{-2}I_3,2\sigma_{a,\min}^{-2}I_3)$.
+where $\Lambda_n$ is block diagonal with nonzero blocks
+\begin{align}
+ (\Lambda_n)_{SS}&=\sigma_{S,\min}^{-2}I_3,\nonumber\\
+ (\Lambda_n)_{aw,aw}&=(\Lambda_n)_{ba,ba}
+ =2\sigma_{a,\min}^{-2}I_3.
+\end{align}
 Indeed, there is at most one S and one accelerometer correction between
 predictions, and the latter has nuisance row $[0,0,0,R_{wb},I]$.
 Magnetic corrections and attitude resets preserve an embedded nuisance
@@ -953,6 +956,26 @@ For the accelerometer, the curvature residual is bounded by
 $\norm{\hat f}\norm\theta^2/2+\norm\theta\norm{e_{aw}}$;
 magnetic curvature contributes $\norm{\hat B}\norm\theta^2/2$.
 Physical residuals and magnetic-reference error are additional forcing.
+
+Prediction and correction supplies admit a sharper joint bound. Write
+$P_i=A_iP_{i-1}A_i^{\mathsf T}+B_iB_i^{\mathsf T}$, with
+$B_i=Q_i^{1/2}$ at prediction, $B_i=K_iR_i^{1/2}$ at correction, and
+$B_i=0$ at reset. Expanding through the word yields
+\begin{equation}
+ P_W=MP_0M^{\mathsf T}
+ +\sum_i M_{W\leftarrow i}B_iB_i^{\mathsf T}M_{W\leftarrow i}^{\mathsf T}.
+\end{equation}
+Terminal whitening therefore bounds the stacked input operator by one.
+For actual prediction/correction defects $B_i u_i$,
+\begin{equation}
+ \sqrt{V_W}\le\sqrt{1-\delta}\sqrt{V_0}
+ +\left(\sum_i\norm{u_i}^2\right)^{1/2}+s_{\rm rp},
+ \label{eq:word-input-action}
+\end{equation}
+where $\norm{u_i}^2$ is the process action or $r_i^{\mathsf T}R_i^{-1}r_i$,
+and $s_{\rm rp}$ sums the reset/projection defect norms. No independence of
+the deterministic physical inputs is assumed. These latter defects have
+no Joseph noise channels and remain separate.
 
 The finite injection also needs an explicit comparison. Let $d$ be the
 requested injection, $v=\theta-d$, $\norm v\le r<2$, and

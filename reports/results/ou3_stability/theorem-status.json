@@ -45,6 +45,7 @@
     "interval_riccati_kernel_layer": true,
     "jerk_to_sampled_acceleration_fidelity": true,
     "joint_physical_vector_information": true,
+    "joint_word_prediction_measurement_input_action": true,
     "local_A21_nonlinear_small_gain_exists": false,
     "maximal_correction_covariance_order": true,
     "no_heading_service_obstruction": true,

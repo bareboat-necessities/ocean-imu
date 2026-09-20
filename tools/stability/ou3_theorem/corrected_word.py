@@ -147,6 +147,7 @@ def certificate():
         'remaining_uniform_premise': 'six AG columns of actual complete corrected word loss, in fixed raw coordinates, have a common SPD lower bound J',
         'exact_coupled_example': coupled_example(),
         'actual_gain_finite_error_word_composition_proved': True,
+        'joint_prediction_measurement_input_action_proved': True,
         'reset_comparison': 'exact finite-angle log reset, with normalized source small-angle polynomial defect',
         'independent_filter_trajectories_required': False,
         'six_column_source_uniform_loss_verified': False,

@@ -106,7 +106,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "6a487df05229aecfb610d614c08ca52bec55073b"
+      "git_blob_sha": "adab7fb8f0149f3ab6d0fdf8ec8654b7dfe86ac4"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -270,15 +270,15 @@
     },
     {
       "path": "tools/stability/ou3_theorem/corrected_word.py",
-      "git_blob_sha": "8a2b2c49daf3262a6f9415109bccb48662ca4864"
+      "git_blob_sha": "dd17904c2e405b0255829a672c93b587fddb98a9"
     },
     {
       "path": "tests/validation/test_ou3_corrected_word.py",
-      "git_blob_sha": "3968e2e22612b6f821b6eb6998e8e08937a45cd7"
+      "git_blob_sha": "89f866edbf54dbd78ae0a20dce3f8cf59b15f7be"
     },
     {
       "path": "docs/ou3-corrected-word-proof.md",
-      "git_blob_sha": "741fa877507b3c7f2750db30023c36532c212143"
+      "git_blob_sha": "873eda9afc7d51eb06359b8e21b18eed6cffa0be"
     }
   ]
 }

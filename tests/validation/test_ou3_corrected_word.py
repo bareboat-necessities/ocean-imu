@@ -15,6 +15,7 @@ from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import (
     add, congruence, identity, is_psd, matmul, transpose,
 )
+from tools.stability.ou3_theorem.word_energy import word_identity
 
 
 class CoupledCovarianceTests(unittest.TestCase):
@@ -71,6 +72,26 @@ class CoupledCovarianceTests(unittest.TestCase):
         a = add(identity(2), matmul(k, h), F(-1))
         post = add(congruence(p, transpose(a)), congruence(r, transpose(k)))
         self.assertTrue(is_psd(add(inverse(r), congruence(inverse(post), k), F(-1))))
+
+    def test_joint_input_gramian_with_correlated_noise_and_nonorthogonal_reset(self):
+        p = [[F(2), F(1)], [F(1), F(3)]]
+        f = [[F(1), F(1, 5)], [F(0), F(1)]]
+        q = [[F(1), F(1, 3)], [F(1, 3), F(1)]]
+        h, r = [[F(1), F(2)]], [[F(3, 2)]]
+        g = [[F(1), F(1, 10)], [F(-1, 10), F(1)]]
+        word = word_identity(p, [
+            {'kind': 'prediction', 'F': f, 'Q': q},
+            {'kind': 'correction', 'H': h, 'R': r},
+            {'kind': 'reset', 'G': g}])
+        pm = add(congruence(p, transpose(f)), q)
+        s = add(congruence(pm, transpose(h)), r)
+        k = matmul(matmul(pm, transpose(h)), inverse(s))
+        a = add(identity(2), matmul(k, h), F(-1))
+        accumulated = congruence(add(congruence(q, transpose(a)),
+                                    congruence(r, transpose(k))), transpose(g))
+        propagated_root = congruence(p, transpose(word['end_transport']))
+        self.assertEqual(add(propagated_root, accumulated), word['end_covariance'])
+        self.assertTrue(is_psd(add(word['end_covariance'], accumulated, F(-1))))
 
 
 class ResetRemainderTests(unittest.TestCase):

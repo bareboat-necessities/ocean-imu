@@ -39,6 +39,7 @@ def status_report() -> dict:
         "six_column_to_full_contraction_implication":True,
         "six_column_corrected_loss_uniform_bound":False,
         "actual_gain_finite_error_word_composition":True,
+        "joint_word_prediction_measurement_input_action":True,
         "finite_angle_source_reset_remainder":True,
         "full_21_covariance_upper":False,
         "complete_word_covariance_energy_identity":True,
