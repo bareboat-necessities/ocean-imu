@@ -46,11 +46,10 @@ To prove this, stack the transported columns `A_(t<-i) K_ui S_i^(1/2)`
 and the inputs `S_i^(-1/2) r_i`. Their Gram matrix is the displayed block.
 The mean identity uses the same realized coefficients throughout. The full
 6x6 D retains BG/AW cross terms; no independent coordinate disturbances or
-diagonal covariance replacement is made. In real arithmetic, its covariance
-funding is equivalently the unconditioned u covariance minus the actual u
-covariance, with all realized prediction and synchronization inputs retained.
-For the float transcript the action is accumulated directly, avoiding an
-unproved floating covariance-subtraction identity.
+diagonal covariance replacement is made. The action is accumulated directly
+from the actual gains. It does not require a covariance-subtraction identity
+across floating updates or hard covariance replacements, including events
+that preserve the means but clear cross covariance.
 
 This is a bound on nominal means, **not** the readout noise action B_W. An
 upper bound on its scalar input energy E alone says nothing about uniform
