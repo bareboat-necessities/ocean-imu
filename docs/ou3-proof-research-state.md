@@ -146,6 +146,12 @@ are not evidence that the declared six-degree region is invariant.
   the abstract and evidence boundary; retain all mathematical arguments and
   the disclosure. This is a publication-layout correction only.
 
+- Removing the duplicate conclusion triggered the unchanged publication
+  contract at `test_finite_error_statement_and_qualification_remain_conditional`:
+  its required explicit end-to-end status sentence disappeared. Restore that
+  sentence in the evidence boundary. The underlying proof status and test
+  remain unchanged; this is a document-contract failure.
+
 ## Retained facts
 
 The exact full-word identity
