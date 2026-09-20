@@ -185,6 +185,47 @@ corrections that could have moved `\hat b_g` from its construction value.
 A complete-turn value cannot simply be inserted as an independent nominal
 coefficient.
 
+The innovation elimination itself has a compatibility condition that must be
+proved, not assumed.  For the chronological affine recursion
+
+`u_{i+1}=A_i u_i+K_i r_i+d_i`,
+
+and signed physical-balance weights `W_i`, introduce matrix multipliers
+`Z_i`.  Exact summation by parts gives
+
+`sum W_i r_i = Z_N u_N-Z_0 u_0
+ +sum (Z_i-Z_(i+1)A_i)u_i
+ +sum (W_i-Z_(i+1)K_i)r_i
+ -sum Z_(i+1)d_i`.
+
+Therefore endpoint telescoping eliminates the interior nominal-state and
+innovation terms only if one constructs the same-history adjoint sequence
+
+`Z_i=Z_(i+1)A_i`,  `W_i=Z_(i+1)K_i`.
+
+Solving the second relation independently at each correction is insufficient:
+it must be compatible with the first relation through every intervening
+prediction and hard event.  If this exact compatibility cannot be obtained,
+the residual two sums must remain in the separation inequality and be bounded
+without unsigned innovation energy.  This is now an explicit prerequisite to
+any claimed `Delta_col` enclosure.
+
+Measurement corrections also jump the nominal integral chain.  For a smooth
+normalized nonnegative proof weight psi with psi=psi'=psi''=0 at both window
+endpoints, piecewise integration by parts gives
+
+`int psi a_hat dt = -int psi''' S_hat dt - C_psi - D_psi`,
+
+where
+
+`C_psi=sum_j (psi_j K_v,j-psi'_j K_p,j+psi''_j K_S,j) r_j`
+
+uses the three rows of the **same actual** correction `K_j r_j`, and
+`D_psi` retains source/interpolation, arithmetic and applicable hard-event
+defects.  Physical boundedness cannot be substituted for boundedness of
+`S_hat` or this signed correction charge.  This identity supplies a concrete
+whole-window target without inventing pseudo-observations between callbacks.
+
 This yields the correct contradiction target.  For every admitted carried
 window W define `Delta_col(W)` as the lower bound on the physical
 force/field term minus the sensor/bias, quadrature, mean-defect and signed
