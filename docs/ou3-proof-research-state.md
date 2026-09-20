@@ -235,6 +235,28 @@ are not evidence that the declared six-degree region is invariant.
 
 ## Failed approaches / DEAD_ENDS
 
+### CI integration evidence
+
+The main-merge provenance failure is an integration defect, not a failed
+mathematical certificate. The construction-mean-action document has Git blob
+`ee12d642b3249d599df41749cf5ef2a741c0dd4e`; the manifest still named
+`1e25ed8dc32c13d392b3ca690b52e665c7a0e0b2`. Separately, the merged validation
+bundle named pre-retuning OU-II source hashes and an inconsistent macro hash.
+This invalidates the hypothesis that passing branch evidence remains valid
+after combining independently changed source and generated results.
+
+The repair binds the reviewed document and restores the complete validation
+bundle from the first parent, retaining its original replay commit, hashes,
+inputs and environment. Its Git tree is exactly
+`98795c5cdf7ce37408d4b9c8e23149cf8b6c4344`; all replay dependencies match the
+unchanged shipping source. Publication mirrors are synchronized from that
+bundle. No source, tuning, quality gate, proof premise or theorem status changes.
+The exact provenance validator passes and the complete evidence/publication
+suite runs 488 tests successfully with one existing skip. The remaining
+integration experiment is the same unweakened CI against the repaired merge;
+the mathematical limiter above, including the common historical action
+ceiling and finite capture/retention, remains open.
+
 - A construction-linked cumulative mean-action ellipsoid fails the sufficient
   pointwise collinearity exclusion `E_col-E>0` with the exact interval margin
   [-817884.048495,-817884.048494]. Classification: mathematical relaxation
