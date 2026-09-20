@@ -49,6 +49,34 @@ def driver_source():
     return s
 
 
+def zero_true_bias_storage_audit(native):
+    """Exact endpoint obstruction to V<=36, not an all-history statement.
+
+    For every full error with e_ba=-b_hat_a, minimizing e'P^-1 e over the
+    other 18 coordinates gives e_ba' P_ba,ba^-1 e_ba. All full covariance
+    cross terms are retained by this Schur identity. Only a 3x3 inverse is
+    needed after verifying the literal full 21x21 matrix is SPD.
+    """
+    from fractions import Fraction as F
+    from .lin_path_certificate import inverse
+    from .matrix_certificates import ldlt, matmul, transpose
+    p = [[F(x) for x in row] for row in native['terminal_covariance']]
+    state = native['terminal_state']
+    if len(p) != 21 or any(len(row) != 21 for row in p) or len(state) != 21:
+        raise ValueError('literal full 21-state endpoint required')
+    ldlt(p)
+    error = [[-F(row[0])] for row in state[18:]]
+    marginal = [row[18:] for row in p[18:]]
+    lower = matmul(matmul(transpose(error), inverse(marginal)), error)[0][0]
+    return {'qualification': 'OU3_RECORDED_TERMINAL_BA_STORAGE_LOWER_V1',
+            'full_recorded_covariance_SPD_verified_exactly': True,
+            'physical_true_accelerometer_bias': 'zero on this constructed history',
+            'full_storage_lower': str(lower), 'candidate_squared_radius': '36',
+            'candidate_entry_margin_upper': str(F(36)-lower),
+            'recorded_endpoint_outside_candidate': lower > 36,
+            'source_uniform_verified': False, 'eventual_capture_refuted': False}
+
+
 def run(eigen):
     import hashlib
     import json
@@ -81,6 +109,7 @@ def run(eigen):
             'sampling': 'dt=.005f; physical time k*double(.005f); actual wrapper float clock retained',
             'tail_samples': 'steps 80001 through 120000',
             'native': observed,
+            'terminal_storage_certificate': zero_true_bias_storage_audit(observed),
             'all_time_magnetic_service_verified': False,
             'real_arithmetic_source_trajectory_enclosed': False,
             'six_degree_eventual_capture_refuted': False,

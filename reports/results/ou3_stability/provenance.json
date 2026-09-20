@@ -77,7 +77,8 @@
     "historical_AG_readout": "A backward six-column reader cancels the historical AG root exactly, retaining nuisance and process correlations. Optimal covariance comparison bounds terminal AG covariance by its matrix action. Uniform source rank/action and inherited entry linkage remain unproved; neither a supplied word nor the unbounded-prior relaxation is claimed shipping-reachable.",
     "source_readout_audit": "Native carried construction/refinement/release with observer/control parity. Quiet and moving exported words have exact full-matrix action enclosures. Complete sync/addition/symmetry defects use signed factors on all 21 coordinates, including the negative 2^-44 Rayleigh defect. Other float operations and source-uniform historical action remain open.",
     "projection_storage_guard": "Inherited P_ba,ba <= I/1600 implies actual projection inactive if pre-projection sqrt(V) <= 6, with .02483339501604595 m/s^2 slack; every-prefix retention and entry remain open.",
-    "construction_history_stress": "One continuous diagonal-wave history has exact physical envelopes and is run from begin through Live/refinement/release to 600 s without reseeding. Its finite tail tilt about 8.21 degrees and nominal acceleration 9.7764 do not certify all-time magnetic service or refute eventual capture. No nominal-state cap or six-degree entry is inferred."
+    "construction_history_stress": "One continuous diagonal-wave history has exact physical envelopes and is run from begin through Live/refinement/release to 600 s without reseeding. Its finite tail tilt about 8.21 degrees and nominal acceleration 9.7764 do not certify all-time magnetic service or refute eventual capture. No nominal-state cap or six-degree entry is inferred.",
+    "construction_endpoint_storage": "Recorded full 21x21 covariance is exactly SPD. Zero true BA gives V >= e_ba^T P_ba,ba^-1 e_ba >11492.6752, with all cross covariance retained, excluding V<=36 at this finite endpoint. This is not all-time service, eventual-capture refutation, or active-projection proof."
   },
   "operation_lemma_sources": [
     {
@@ -110,7 +111,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "fc04fadd38181dec98a177313d64f7e53f829b68"
+      "git_blob_sha": "0ed0779e8f69556e6866f532a2e01bbb1225a037"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -294,11 +295,11 @@
     },
     {
       "path": "tests/validation/test_ou3_ag_readout.py",
-      "git_blob_sha": "8be1257ba68da548ec8132255d74edd9f431dfd5"
+      "git_blob_sha": "e59df073b09407b00aa8e336747575256b5f5911"
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "33532f36a7c366fbe09575b17fc537987bf2ca18"
+      "git_blob_sha": "ec501f1779f6e7ff949d34abe88eb7173905696a"
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
@@ -314,11 +315,15 @@
     },
     {
       "path": "tools/stability/ou3_theorem/construction_history_diagnostic.py",
-      "git_blob_sha": "04b42c89a56a173847ab38348e2a7cae84fff299"
+      "git_blob_sha": "d380c7ff29cbb389e79bcad90ad6d9bae6088043"
     },
     {
       "path": "reports/results/ou3_stability/construction-history-feasibility.json",
-      "git_blob_sha": "b5d32f96c53905a044863957b077ed6f9eef25f0"
+      "git_blob_sha": "168fde66301d95e85d66276224183ab02ca335db"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/build_evidence.py",
+      "git_blob_sha": "eed806f6bdc365b5fd47e3406a2f1aa5e0b27779"
     }
   ]
 }

@@ -162,6 +162,35 @@ class HistoricalReadoutTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             completed_sync_increment({'before': before, 'after': after})
 
+    def test_constructed_endpoint_storage_lower_keeps_full_covariance_coupling(self):
+        from tools.stability.ou3_theorem.construction_history_diagnostic import zero_true_bias_storage_audit
+        factor = identity(21)
+        factor[0][18] = F(1, 2)
+        for i in range(18, 21):
+            factor[i][i] = F(1, 40)
+        p = matmul(factor, transpose(factor))
+        state = [[F(0)] for _ in range(21)]
+        state[18][0] = F(2, 5)
+        report = zero_true_bias_storage_audit({'terminal_covariance': p, 'terminal_state': state})
+        self.assertEqual(F(report['full_storage_lower']), 256)
+        self.assertEqual(F(report['candidate_entry_margin_upper']), -220)
+        self.assertTrue(report['recorded_endpoint_outside_candidate'])
+        self.assertFalse(report['eventual_capture_refuted'])
+        # Minimize over the other coordinates, retaining their actual cross
+        # covariance. The full inverse storage attains the stated lower bound.
+        error = [[F(0)] for _ in range(21)]
+        error[18][0] = -F(2, 5)
+        error[0][0] = -8
+        full = matmul(matmul(transpose(error), inverse(p)), error)[0][0]
+        self.assertEqual(full, 256)
+
+    def test_endpoint_storage_audit_rejects_indefinite_literal_covariance(self):
+        from tools.stability.ou3_theorem.construction_history_diagnostic import zero_true_bias_storage_audit
+        p = identity(21)
+        p[0][0] = -1
+        with self.assertRaises(ValueError):
+            zero_true_bias_storage_audit({'terminal_covariance': p, 'terminal_state': [[0] for _ in range(21)]})
+
     def test_zero_innovation_alias_requires_construction_linked_gyro_control(self):
         report = gyro_alias_obstruction()
         self.assertEqual(report['full_AG_array_rank'], 4)

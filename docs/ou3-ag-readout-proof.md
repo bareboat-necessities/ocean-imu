@@ -363,3 +363,19 @@ history-dependent eventual capture. The actual six-degree entry set, the
 uniform joint nominal-history bound, and the common B_* remain unproved.
 This construction attempt does not justify moving a free-root relaxation
 into the admitted set or promoting a sampled positive margin to a theorem.
+
+The finite endpoint admits a stronger **exact** storage check. Interpret the
+recorded float coefficients as rationals and verify the entire 21x21 P is
+SPD by exact elimination. For the known zero true BA, the covariance Schur
+identity gives, with all cross covariance retained,
+
+V=e'P^-1e >= e_ba' P_ba,ba^-1 e_ba
+  =41601169495079937572567/3619798568741048312 >11492.6752.
+
+Thus the candidate V<=36 has margin at most
+-41470856746605259833335/3619798568741048312 <-11456.6752 at that recorded
+endpoint. This is an exact failure to lie in the sufficient projection guard,
+not a claim that projection must be active, nor an all-time capture or
+magnetic-service counterexample. It needs only a three-coordinate inverse
+after checking full covariance positivity. The validator reproduces this
+certificate from the committed endpoint and binds its generated native driver.

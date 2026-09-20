@@ -156,3 +156,10 @@ magnetic-service certificate or a refutation of eventual capture. The nominal
 acceleration reaches 9.776391 despite physical norm <=sqrt(72)<8.8. Use the
 actual construction for the joint mean/covariance enclosure; no assumed
 nominal-state box or free-root family can replace it.
+
+The recorded terminal full covariance is also verified SPD exactly. The known
+zero true BA and its correlated 3x3 marginal give a full-storage lower bound
+>11492.6752, hence the candidate V<=36 guard has margin <-11456.6752 at that
+endpoint. `build_evidence.py` reproduces this exact certificate and the native
+driver fingerprint. This finite endpoint exclusion is not eventual-capture
+refutation and does not establish all-time magnetic service.

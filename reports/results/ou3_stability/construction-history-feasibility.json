@@ -1079,5 +1079,16 @@
   "six_degree_eventual_capture_refuted": false,
   "source_uniform_action_verified": false,
   "tail_samples": "steps 80001 through 120000",
+  "terminal_storage_certificate": {
+    "candidate_entry_margin_upper": "-41470856746605259833335/3619798568741048312",
+    "candidate_squared_radius": "36",
+    "eventual_capture_refuted": false,
+    "full_recorded_covariance_SPD_verified_exactly": true,
+    "full_storage_lower": "41601169495079937572567/3619798568741048312",
+    "physical_true_accelerometer_bias": "zero on this constructed history",
+    "qualification": "OU3_RECORDED_TERMINAL_BA_STORAGE_LOWER_V1",
+    "recorded_endpoint_outside_candidate": true,
+    "source_uniform_verified": false
+  },
   "theorem_closed": false
 }

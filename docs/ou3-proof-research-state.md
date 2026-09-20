@@ -70,6 +70,13 @@ This is not an eventual-capture refutation: all-time magnetic service and
 real-arithmetic reachability are not certified. Its small gyro estimate and
 force/field sine >=.4432715 are likewise finite, not source-uniform margins.
 
+Exact rational elimination of that recorded full SPD covariance now gives
+V>=41601169495079937572567/3619798568741048312 (>11492.6752) from the BA
+marginal and known zero true BA, retaining every cross covariance. Against
+the sufficient guard V<=36, the entry margin is at most -11456.6752. This
+checks the literal finite endpoint, not all-time magnetic service or eventual
+capture. Failing a sufficient projection guard does not imply active projection.
+
 Independently, the inherited BA marginal proves a source covariance guard:
 at every finite regular pre-projection boundary, sqrt(V)<=6 leaves
 .02483339501604595 m/s^2 inside the .4 projection ball. The literal projection
@@ -125,7 +132,7 @@ all-time actual magnetic-service floor exceeds one. Its native regression
 checks literal finite float startup/release; all-time float totality was not
 claimed. Current status explicitly records that this witness is inadmissible.
 
-Current local validation: 479 evidence/publication tests pass with one
+Current local validation: 481 evidence/publication tests pass with one
 existing data-dependent skip. Exact artifact reproduction, Ruff, carried
 observer/control parity, both exact exported-word enclosures and the full
 construction stress run pass. The nine-page article renders without overfull
