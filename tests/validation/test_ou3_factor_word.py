@@ -5,11 +5,10 @@ import unittest
 from unittest.mock import patch
 
 import numpy as np
-from scipy.linalg import solve_triangular
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.factor_word import FactorWord, run_word
-from tools.stability.ou3_theorem.factor_certificates import eliminate_nuisance, singular_floor
+from tools.stability.ou3_theorem.factor_certificates import eliminate_nuisance
 from tools.stability.ou3_theorem.matrix_certificates import identity
 from tools.stability.ou3_theorem.word_energy import word_identity
 
@@ -89,17 +88,6 @@ class FactorCertificateTests(unittest.TestCase):
         self.assertEqual(r['nuisance_rank'],2)
         self.assertEqual(r['reduced_information'],[[0]])
 
-    def test_residual_floor_requires_full_factor_error_budget(self):
-        b=np.array([[2.,1.],[0.,3.]])
-        x=solve_triangular(b,np.eye(2))
-        good=singular_floor(b,x,factor_error_norm_upper=F(1,100))
-        self.assertTrue(good['positive_floor'])
-        self.assertLess(float(F(good['sigma_lower'])),np.linalg.svd(b,compute_uv=False)[-1])
-        self.assertFalse(good['whole_word_error_verified'])
-        bad=singular_floor(b,x,factor_error_norm_upper=3)
-        self.assertFalse(bad['positive_floor'])
-        singular=singular_floor([[1,1],[0,0]],identity(2),factor_error_norm_upper=0)
-        self.assertFalse(singular['positive_floor'])
 
 
 if __name__=='__main__':

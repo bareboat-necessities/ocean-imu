@@ -1,11 +1,7 @@
-"""Exact factor residual certificates, including singular nuisance spaces.
-
-These prove implications for supplied rational matrices. A floating factor
-needs a separately certified error envelope before it certifies a true word.
+"""Exact nuisance range elimination, including singular nuisance spaces.
 """
 from fractions import Fraction as F
-from .matrix_certificates import add, encoded, identity, ldlt, matmul, transpose
-from .lin_path_certificate import sqrt_floor
+from .matrix_certificates import add, encoded, ldlt, matmul, transpose
 
 
 def _rational(a):
@@ -78,36 +74,6 @@ def eliminate_nuisance(factor,heading_columns):
             'residual_factor':residual,'reduced_information':matmul(transpose(residual),residual),
             'minimizer_map':minimizer,'full_factor_rank':len(_pivots(a)),
             'source_uniform_verified':False}
-
-
-def _sqrt_upper(x):
-    lo=sqrt_floor(x)
-    return lo if lo*lo==x else lo+F(1,10**24)
-
-
-def singular_floor(factor,right_inverse_candidate,*,factor_error_norm_upper):
-    """Residual lower singular bound for a square rational factor.
-
-    If ||B X-I|| <= e<1 then sigma_min(B)>=(1-e)/||X||.
-    Subtract the supplied operator error eta to cover ||B_true-B||<=eta.
-    Frobenius upper bounds and directed rational roots make this a verified
-    matrix implication. The caller must prove eta for the ENTIRE word.
-    """
-    b,x=_rational(factor),_rational(right_inverse_candidate)
-    n=len(b)
-    if len(b[0])!=n or len(x)!=n or len(x[0])!=n:
-        raise ValueError('square same-size factor and preconditioner required')
-    eta=F(factor_error_norm_upper)
-    if eta<0:
-        raise ValueError('nonnegative factor error required')
-    residual=add(matmul(b,x),identity(n),F(-1))
-    e=_sqrt_upper(sum((v*v for row in residual for v in row),F(0)))
-    xn=_sqrt_upper(sum((v*v for row in x for v in row),F(0)))
-    floor=max(F(0),(1-e)/xn-eta) if xn and e<1 else F(0)
-    return {'matrix_implication_verified':True,'positive_floor':floor>0,
-            'sigma_lower':str(floor),'delta_lower':str(floor*floor),
-            'residual_norm_upper':str(e),'factor_error_norm_upper':str(eta),
-            'whole_word_error_verified':False,'source_uniform_verified':False}
 
 
 def audit_certificate():

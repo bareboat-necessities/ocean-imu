@@ -8,7 +8,8 @@ is distinct from a shipping source-uniform theorem certificate.
 |---|---|---|
 | Joint recurring lower covariance | CLOSED in real arithmetic at regular A21 post-prediction roots after a 16-s window | `root_covariance_certificate.py`: convex combination of fresh AG/BA injection and corrected LIN matrix action, with all cross covariance retained |
 | Full A21 information/loss and rho0 | OPEN; controlling gap | Bound the complete transported loss `D_word >= delta P_root^-1`, delta>0, in all 21 coordinates; restricted magnetic service cannot be lifted to independent heading information |
-| Uniform covariance upper bound | OPEN | Joint source-uniform detectability/path-action comparison including literal corrections, resets and PSD sync |
+| LIN/BA nuisance covariance upper bound | CLOSED for the regular default A21 profile after 17 s | `nuisance_upper_certificate.py` and `ou3-nuisance-upper-proof.md`: cancel the neutral root with three actual S observations; bound OU forcing, source Q defects and actual PSD sync; retain all nuisance cross covariance |
+| Full covariance upper bound | OPEN: remaining AG6 block | Bound attitude/gyro covariance under varying realized coefficients and actual corrections/resets |
 | Explicit nonlinear retained radius | OPEN | Bound the complete nonlinear remainder, including projection/reset/tuner behavior, against the verified strict linear margin |
 | Whole-word float32 supply | Composition only | Literal operation counts, magnitude envelopes and certified prefix gains; real-arithmetic covariance positivity is not float32 totality |
 | Finite startup/capture | OPEN | History-dependent finite capture from construction into the retained domain; no common deadline is assumed |
@@ -29,8 +30,8 @@ matrix factors and the full covariance-energy loss identity.
 The complete stability theorem remains open. Consult `ou3-proof-research-state.md`
 for the current failure classification and next falsifiable experiment.
 
-The supporting [literature map](ou3-literature-applicability.md) identifies
-exact imported-result hypotheses and their remaining shipping gaps. The
-[factor construction](ou3-factor-loss.md) preserves three-row losses,
-process blocks and singular nuisance ranges. Its carried quiet-water full21
-rho≈.833 is diagnostic only; the full-state loss row above remains OPEN.
+The stationary A21 detectability proof in `ou3-stationary-detectability.md`
+finds no nondecaying unobservable mode at rest with nonparallel gravity and
+magnetic field. It is not a uniform varying-history theorem. Quiet water is
+not excluded without a demonstrated obstruction and quantitative replacement
+motion condition.

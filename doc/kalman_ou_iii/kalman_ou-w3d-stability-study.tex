@@ -336,30 +336,6 @@ A sufficient full-state certificate is
 \end{equation}
 This includes all 21 coordinates and the covariance carried into the word.
 
-\subsection{Literature hypotheses and the realized observer}
-The continuous-time contraction theorem of Bonnabel and
-Slotine~\cite{bonnabel-slotine}, Theorem~1 and Corollary~2, requires bounded
-positive covariance and a local differential inequality. Its auxiliary
-observer uses the realized gain. For a Euclidean correction, define
-$z^+=z^-+K_k(y_k-h_k(z^-))$ using the actual event record. The estimate is
-one trajectory and physical truth is a forced trajectory. This does not
-equate two independently evolving filter gains or event decisions.
-Quaternion retraction, projection and chart-reset defects still require a
-finite-error remainder bound; the continuous theorem does not supply it for
-the discrete implementation.
-
-The sampled-data linear criterion in Barrau and
-Bonnabel~\cite{barrau-bonnabel}, Theorem~3(i)--(v), requires full-window
-controllability and observability, positive noise and nonsingular transition
-bounds. Its full observability and upper-covariance hypotheses remain open
-here. Their invariant-observer Theorem~4 also requires the group identities
-of Theorems~1--2, which a quaternion MEKF alone does not establish.
-The almost-global result of Aslam et al.~\cite{aslam}, Theorem~1, uses modified
-curvature-dependent gain equations and matrix attitude measurements, so it
-does not establish capture for the unchanged observer. Factorized information
-updates~\cite{dsouza-zanetti} address numerical representation rather than
-observer convergence.
-
 \subsection{Loss factors with complete coupling}
 Let $P=CC^{\mathsf T}$, $P_0=C_0C_0^{\mathsf T}$ and $T=MC_0$.
 For $S=L_sL_s^{\mathsf T}$, a measurement contributes the factor
@@ -502,6 +478,122 @@ The bound recurs at regular A21 prediction roots after a complete 16-s
 A21 window. A uniform upper covariance bound, every-prefix retention, and
 float32 transfer remain separate obligations.
 
+\subsection{Recurring nuisance upper covariance}
+The upper comparison can be closed for the 15 coordinates
+$n=(v,p,S,a_w,b_a)$ independently of the still-open AG comparison.
+In the same default regular A21 profile, let $g_s=0.156$~s and $L=17$~s.
+Let $\epsilon_Q$ be the rational relative source process-covariance defect
+used in the LIN path action. Define
+\begin{align}
+ B&=16(1+\epsilon_Q)+16\left(1+{12\over2(0.004)}\right)<156^2,\nonumber\\
+ C^2&={(1+\epsilon_Q)1600(0.006)^2 L\over3}<1.
+\end{align}
+Put $W_v=4/8^2$, $W_{p0}=4(8+g_s)/8^2$,
+$W_p=W_{p0}+g_sW_v$, and
+$W_S=1+g_sW_{p0}+g_s^2W_v/2$. For $j=1,2,3$, set
+\begin{equation}
+ E_j={156 L^j\over j!}+{L^{j-1}\over(j-1)!},\qquad
+ b_j=E_j+W_j(E_3+100).
+\end{equation}
+\begin{lemma}[Nuisance upper comparison]
+At every operation boundary after 17~s of regular A21 operation,
+with inherited default construction/hold/release covariance and no
+frame/relock reconfiguration,
+\begin{equation}
+ P_{nn}\preceq5\operatorname{diag}
+ (b_1^2I_3,b_2^2I_3,b_3^2I_3,156^2I_3,I_3/1600).
+ \label{eq:nuisance-upper}
+\end{equation}
+\end{lemma}
+\begin{proof}
+The default clamps and convex tuner smoothing give
+$\Sigma_{aw}\preceq16I$ and $R_S\preceq10000I$.
+The adaptive bandpass noise-floor gain is at most four: for a frozen
+coefficient sequence, its first lowpass has unit-white-input standard
+deviation at most one, its highpass at most two, and the following lowpass
+at most two, by convexity from zero state. Thus the default $0.12$ noise
+floor cannot raise the OU standard deviation above four.
+The literal sync adds
+$\Delta=\Pi_+(\Sigma_{\rm target}-P_{aw})$, so
+$0\preceq\Delta\preceq16I$. There is at most one such addition per
+prediction. With $\phi=\exp(-h/\tau)$,
+\begin{equation}
+ \phi^2B+16(1+\epsilon_Q)(1-\phi^2)+16\le B,
+\end{equation}
+using $(1-e^{-x})^{-1}\le1+x^{-1}$ and
+$x=2h/\tau\ge2(0.004)/12$. Construction starts below this bound;
+optimal corrections decrease the marginal and attitude resets leave it
+unchanged. Likewise the BA variance starts at $0.004^2I$, stays unchanged
+while held, and its release floor is that same value. The active BA
+process has stationary covariance $I/1600$, which bounds its marginal.
+
+Freeze the realized coefficients and sync increments. Omit acc/mag
+corrections in a LIN comparison covariance, retaining S corrections and
+adding the \emph{same} realized $\Delta$. Monotonicity of prediction and
+S correction, and the decreasing effect of other optimal corrections,
+give domination of the actual LIN marginal. No monotonicity of the
+positive-part map is asserted. Realize this comparison as an auxiliary
+Gaussian linear model; this is matrix algebra, not an independence
+assumption about physical adaptive histories.
+
+At target time $T$ choose the latest S observation $t_2\le T$, then the
+latest $t_1\le t_2-8$, then the latest $t_0\le t_1-8$.
+The source scheduler gives gaps at most $g_s$; hence
+$a=t_1-t_0,b=t_2-t_1\in[8,8+g_s]$, $d=T-t_2\in[0,g_s]$,
+and $T-t_0<17$. Quadratic interpolation of the three S observations
+recovers the entire noise-free neutral state. At $t_2$ its first two rows are
+\begin{align}
+ L_v&=\left({2\over a(a+b)},-{2\over ab},{2\over b(a+b)}\right),\nonumber\\
+ L_p&=\left({b\over a(a+b)},-{a+b\over ab},{a+2b\over b(a+b)}\right),
+\end{align}
+and $L_S=(0,0,1)$. Propagation by the exact neutral transition to $T$
+gives row norms bounded by $W_v,W_p,W_S$. The resulting trial estimator
+cancels the arbitrary neutral root and all its cross covariance exactly.
+
+The literal OU input columns satisfy $0\le\Psi_j(h)\le h^j/j!$,
+including the small-argument polynomial branch. The neutral semigroup
+therefore bounds accumulated AW forcing standard deviation by
+$\sqrt B L^j/j!$. For independent fresh neutral process increments,
+the driving density is at most 1600 and the transported impulse within
+a step of age $s$ is at most $sL^{j-1}/(j-1)!$.
+The source comparison $Q_{\rm source}\preceq(1+\epsilon_Q)Q_{\rm ideal}$
+and $\sum h^3\le h_{\max}^2\sum h$ bound its standard deviation by
+$CL^{j-1}/(j-1)!$. Minkowski combines these contributions without dropping
+within-step AW/neutral correlation. Thus each neutral forcing term has
+standard deviation at most $E_j$. Interpolation error and observation
+noise have standard deviation at most $b_j$. Take AW trial estimate zero;
+optimal S-only estimation has no larger error covariance than this trial.
+Together with the BA bound, five-block Cauchy--Schwarz proves
+\eqref{eq:nuisance-upper}, retaining all nuisance cross terms.
+\end{proof}
+This is an upper principal-block comparison. It does not supply a full-state
+lower comparison or a decay rate. The remaining uniform upper block is AG.
+
+\subsection{Stationary A21 detectability}
+Quiet water does not by itself create an unobservable nondecaying mode in
+the stationary A21 linearization. To see this, take zero corrected angular
+rate, zero nominal wave acceleration, constant attitude and OU parameters,
+a fixed sample step $h>0$, and a periodic word of $N$ steps containing applied
+S, accelerometer and magnetic observations. Assume gravity and field are
+nonparallel. The only prediction eigenvalues are $1$, $e^{-h/\tau_{aw}}$
+and $e^{-h/5000}$. If $F^Nx=x$, the stable AW/BA components vanish,
+the attitude/gyro block forces $b_g=0$, and the neutral integrator block
+forces $v=p=0$. Thus $x=(\theta,0,0,0,S,0,0)$ is unchanged at every event.
+A zero S output forces $S=0$; zero acc/mag outputs force both
+$[g_b]_\times\theta=0$ and $[B_b]_\times\theta=0$, hence $\theta=0$.
+An unobservable generalized unit-eigenspace would contain such an
+eigenvector, so the lifted pair is detectable. A lever-arm gyro Jacobian
+cannot change this conclusion because $b_g=0$ already.
+
+This proof concerns the stationary linear comparison, not arbitrary
+quiet-driven nonlinear trajectories or capture. The physical bias remains
+independent of the estimator OU prior and contributes its exact mismatch.
+Replacing active BA decay by a held identity predictor would change the
+argument. There is no demonstrated quiet-water instability here warranting
+its exclusion. If varying histories require extra motion excitation, it
+must be a quantitative every-window condition: excluding only exactly zero
+amplitude does not yield a uniform information margin.
+
 \section{Finite-error regional theorem obligations}
 After \eqref{eq:full-loss} is certified uniformly, let the complete nonlinear
 word remainder have storage-norm Lipschitz bound $\eta(r)$ on a retained
@@ -592,10 +684,6 @@ For a factor partition $[B_h,B_n]$, exact nuisance elimination gives
 \end{equation}
 An independent-column range basis handles singular nuisance blocks; a
 positive reduced heading matrix still leaves any nuisance nullspace open.
-A carried 16-s quiet-water core word gives diagnostic full-state values
-$\delta\simeq0.16729$, $\rho_0\simeq0.83271$, with factor/dense and literal
-source-double parity checks. This finite word does not enclose all admitted
-histories, the adaptive frontend, or target arithmetic.
 Finite capture, magnetic-reference completion, H18 and release retention,
 recurring service, physical qualification, nonlinear storage and target
 arithmetic remain open. Numerical certificate reproduction does not imply
@@ -615,6 +703,4 @@ This work was prepared with supervised assistance from artificial intelligence
 tools for mathematical drafting, code development, and editorial preparation.
 The author is responsible for the conceptual development and final revisions,
 declares no conflicts of interest, and received no funding for this research.
-\bibliographystyle{IEEEtran}
-\bibliography{w3d-stability-references}
 \end{document}

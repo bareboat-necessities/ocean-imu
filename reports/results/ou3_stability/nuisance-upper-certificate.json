@@ -1,0 +1,40 @@
+{
+  "AW_unconditioned_variance_ceiling": "372786532553368826731826645263/15512089203000000000000000",
+  "applied_S_gap_ceiling_s": "0.156",
+  "coordinate_order": [
+    "v",
+    "p",
+    "S",
+    "a_w",
+    "b_a"
+  ],
+  "covariance_comparison": "P_nn <= diag(upper_diagonal tensor I_3), all nuisance cross blocks retained",
+  "fresh_neutral_noise_coefficient_squared": "4219370320054054441052969471/12926741002500000000000000000",
+  "full_21_covariance_upper_verified": false,
+  "interpolation_row_l1_ceilings": [
+    "1/16",
+    "1039/2000",
+    "2160563/2000000"
+  ],
+  "nuisance_dimension": 15,
+  "qualification": "OU3_RECURRING_NUISANCE_UPPER_V1",
+  "scope": "real-arithmetic default regular A21; every operation after 17 s of regular S service; inherited construction AW/BA bounds; no frame/relock reconfiguration",
+  "source_uniform_A21_linear_dissipativity": false,
+  "theorem_closed": false,
+  "trial_error_standard_deviation_ceilings": [
+    "340861/32",
+    "71236727/800",
+    "212911701659/800000",
+    "156",
+    "1/40"
+  ],
+  "upper_diagonal": [
+    "580931106605/1024",
+    "5074671273672529/128000",
+    "45331392703331023352281/128000000000",
+    "121680",
+    "1/320"
+  ],
+  "verified": true,
+  "window_s": "17"
+}

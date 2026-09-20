@@ -30,6 +30,8 @@ def status_report() -> dict:
         "source_uniform_block_factor_root_coercivity":True,
         "constructive_fixed_coordinate_A21_mu_enclosure":False,
         "LIN_endpoint_matrix_path_action":True,
+        "recurring_nuisance_covariance_upper":True,
+        "full_21_covariance_upper":False,
         "complete_word_covariance_energy_identity":True,
         "factorized_word_exact_reference_parity":True,
         "singular_nuisance_range_elimination":True,
@@ -63,5 +65,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"Certify the full transported A21 energy-loss matrix including nuisance cancellation, with a uniform covariance upper bound and every-prefix retention. The primary literature hypotheses are mapped explicitly. The factor engine and exact singular-range elimination pass reference checks; a carried 16-s source-core quiet-water word has diagnostic rho about 0.833, not a source-uniform margin. Whole-word factor error and the discrete realized-observer nonlinear remainder remain open. The joint post-prediction lower covariance is closed by a convex combination of corrected LIN action and fresh AG/BA process bounds. Restricted heading service cannot be lifted to independent full-state information. Finite-error radius, float32 supply, capture and retention remain open.",
+        "next_controlling_obligation":"Prove the remaining attitude/gyro covariance upper bound and the full transported A21 loss, retaining nuisance cancellation. The 15-coordinate LIN/BA upper comparison now holds after 17 s of regular default-profile A21 operation; the full 21-coordinate lower comparison holds at recurring prediction roots. Stationary A21 detectability does not require nonzero wave amplitude. Uniform full loss, nonlinear radius, float32 supply, finite capture and retention remain open.",
     }

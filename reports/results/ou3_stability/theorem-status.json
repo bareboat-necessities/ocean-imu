@@ -1,6 +1,6 @@
 {
   "certified_capture_time": "history dependent T_c(h,x_0) < infinity; no common finite deadline is claimed",
-  "next_controlling_obligation": "Certify the full transported A21 energy-loss matrix including nuisance cancellation, with a uniform covariance upper bound and every-prefix retention. The primary literature hypotheses are mapped explicitly. The factor engine and exact singular-range elimination pass reference checks; a carried 16-s source-core quiet-water word has diagnostic rho about 0.833, not a source-uniform margin. Whole-word factor error and the discrete realized-observer nonlinear remainder remain open. The joint post-prediction lower covariance is closed by a convex combination of corrected LIN action and fresh AG/BA process bounds. Restricted heading service cannot be lifted to independent full-state information. Finite-error radius, float32 supply, capture and retention remain open.",
+  "next_controlling_obligation": "Prove the remaining attitude/gyro covariance upper bound and the full transported A21 loss, retaining nuisance cancellation. The 15-coordinate LIN/BA upper comparison now holds after 17 s of regular default-profile A21 operation; the full 21-coordinate lower comparison holds at recurring prediction roots. Stationary A21 detectability does not require nonzero wave amplitude. Uniform full loss, nonlinear radius, float32 supply, finite capture and retention remain open.",
   "no_heading_service_result_role": "necessity lemma only",
   "obligations": {
     "A21_covariance_hard_event_compactness": false,
@@ -25,6 +25,7 @@
     "finite_error_A21_nonlinear_remainder": false,
     "finite_history_dependent_capture": false,
     "finite_reference_refinement_and_bias_release": false,
+    "full_21_covariance_upper": false,
     "full_state_magnetic_information_lifting": false,
     "implementation_and_arithmetic_totality": false,
     "interval_riccati_kernel_layer": true,
@@ -33,6 +34,7 @@
     "no_heading_service_obstruction": true,
     "physical_contract_formulation": true,
     "physical_qualification_composition": true,
+    "recurring_nuisance_covariance_upper": true,
     "same_execution_linkage": true,
     "same_history_bias_recurrence": true,
     "shipping_implementation_provenance": true,

@@ -68,8 +68,8 @@
     "a21_factor_scope": "At the same post-prediction root P>=diag(q_AG I,0,q_BA I) from fresh process and P>=E_LIN A^-1 E_LIN^T from the preceding corrected path imply their equal convex combination as a positive full 21-state lower bound. No marginal factors are substituted for Q.",
     "information_assembly_audit": "Removed positivity-only helper claims of compact full information, neutral quotient observability and marine-diversity-to-full-information lifting. Separate restricted minors do not prove full rank. Independent-block scalar margin algebra is explicitly conditional on a certified product metric.",
     "a21_factorized_loss": "Root-whitened measurement and orthogonal-complement process loss rows are compressed by QR, retaining all 21 columns. Exact dense reference parity and singular nuisance range elimination are verified; whole-word factor error and source-uniform singular margin remain open.",
-    "a21_realized_observer": "The auxiliary observer uses the actual gain and event record. It is not an independently evolving perturbed EKF; finite retraction, projection, reset and hybrid remainder bounds remain open.",
-    "a21_quiet_word_diagnostic": "One configured source-double quiet-water core trace after carried warmup gives full21 rho about .833, with 70-digit prefix and source-operation parity. This is neither a wrapper startup/adaptation certificate nor a uniform or float32 theorem."
+    "a21_nuisance_upper": "After 17 s of default regular A21 operation, a causal three-S-observation trial cancels the arbitrary neutral root and bounds LIN/BA covariance above with all nuisance cross blocks. Same realized PSD-sync increments are used in the comparison. AG6 upper covariance and full loss remain open.",
+    "a21_stationary_detectability": "At the stationary A21 nominal solution, the only nondecaying prediction eigenvalue is 1; stable AW/BA components vanish in its eigenvectors, then S and nonparallel gravity/magnetic observations kill the remaining neutral vector. This is not a uniform varying-history or nonlinear stability theorem."
   },
   "operation_lemma_sources": [
     {
@@ -102,7 +102,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "d9eed167399a94ca22007669d74af14906fd9a3b"
+      "git_blob_sha": "dbca1c5df82f8e3b50928cec3df0a9975e248018"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -190,31 +190,35 @@
     },
     {
       "path": "tools/stability/ou3_theorem/factor_certificates.py",
-      "git_blob_sha": "5e941479c1315cae239928bd4cdf45c8844ac20f"
-    },
-    {
-      "path": "tools/stability/ou3_theorem/factor_diagnostic.py",
-      "git_blob_sha": "f98a3b309ca9cd59eb685141022af7937b2b7552"
-    },
-    {
-      "path": "tools/stability/ou3_theorem/export_quiet_word.cpp",
-      "git_blob_sha": "768f9edcc0a04c98e5dbd4766b92291112fc6455"
+      "git_blob_sha": "62bc717e88f15c003b3ef755ca612e15335ad903"
     },
     {
       "path": "tests/validation/test_ou3_factor_word.py",
-      "git_blob_sha": "9a160207e9f456b2d578d4f5da1df28de42417a1"
-    },
-    {
-      "path": "docs/ou3-literature-applicability.md",
-      "git_blob_sha": "a0166ef499b759ae39a9b8fd9edbb388ae3ae282"
+      "git_blob_sha": "8040fc31f7ce43f21106580722495ea4d6226623"
     },
     {
       "path": "docs/ou3-factor-loss.md",
-      "git_blob_sha": "bba24cdc6a145173bfc1d87e58c0180a0e25cd85"
+      "git_blob_sha": "3567e7790ba55d299f3ab700bea3d29b92aea4ed"
     },
     {
-      "path": "doc/kalman_ou_iii/w3d-stability-references.bib",
-      "git_blob_sha": "158b3bfe8507d67873d65eb255898245a219f248"
+      "path": "src/tuner/AdaptiveWaveBandPass.h",
+      "git_blob_sha": "a6ff3087c7eb8af60e3c6df76a550ceac7e04a80"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/nuisance_upper_certificate.py",
+      "git_blob_sha": "344525fe61d45213c1f94575bed3c3b25d4b5825"
+    },
+    {
+      "path": "docs/ou3-nuisance-upper-proof.md",
+      "git_blob_sha": "4dd413729060b276dacf5df34ba93423a5d52d97"
+    },
+    {
+      "path": "docs/ou3-stationary-detectability.md",
+      "git_blob_sha": "ef1daae72c9df48ba16506f90966300f851ca828"
+    },
+    {
+      "path": "tests/validation/test_ou3_nuisance_upper_certificate.py",
+      "git_blob_sha": "8a8d232fc521943a61f46db7842d8c316d241f01"
     }
   ]
 }

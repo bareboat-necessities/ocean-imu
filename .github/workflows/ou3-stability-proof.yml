@@ -40,8 +40,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install factor diagnostic dependencies
-        run: python3 -m pip install numpy scipy mpmath
+      - name: Install factor algebra dependencies
+        run: python3 -m pip install numpy scipy
       - name: Compile theorem tooling
         run: python3 -m py_compile tools/stability/ou3_theorem/*.py
       - name: Execute rational LIN path certificate
@@ -79,17 +79,10 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test
       - name: Run literal shipping regressions
         run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test
-      - name: Replay carried full-state source word
-        run: |
-          g++ -std=c++17 -O2 -I src -I /usr/include/eigen3 tools/stability/ou3_theorem/export_quiet_word.cpp -o /tmp/ou3-export-quiet
-          /tmp/ou3-export-quiet 3200 3200 > /tmp/ou3-quiet-word.jsonl
-          OPENBLAS_NUM_THREADS=1 python3 -m tools.stability.ou3_theorem.factor_diagnostic /tmp/ou3-quiet-word.jsonl --output /tmp/ou3-factor-diagnostic.json
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
           name: ou3-stability-evidence
-          path: |
-            /tmp/ou3-stability-evidence.json
-            /tmp/ou3-factor-diagnostic.json
+          path: /tmp/ou3-stability-evidence.json
           retention-days: 7
           if-no-files-found: error
