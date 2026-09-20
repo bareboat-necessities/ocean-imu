@@ -137,10 +137,17 @@ service word satisfy
 
 `||F e||_W <= sqrt(rho_0) ||e||_W`,  `rho_0 < 1`.
 
-If the complete finite nonlinear shipping word differs from its linear word by
-a same-history remainder with Lipschitz storage gain `eta`, then
+Use the actual estimator's gains and event decisions as coefficients of one
+auxiliary linear comparison. If its exact finite-error word supply is bounded
+by `eta ||e_root||_W + b`, then
 
-`||F_nl(e_1)-F_nl(e_2)||_W <= (sqrt(rho_0)+eta)||e_1-e_2||_W`.
+`||e_end||_W <= (sqrt(rho_0)+eta)||e_root||_W + b`.
+
+No identical gains or decisions are assumed between independent filters.
+The source reset remainder includes a term proportional to the square of the
+actual injection times error; it is not automatically quadratic in error.
+See `ou3-corrected-word-proof.md` for the finite-angle bound, real polynomial
+injection defect, actual-gain supply and every-prefix composition.
 
 Hence the finite-error storage ratio is
 
@@ -162,6 +169,16 @@ measurement loss, transported through all preceding operations. A certified
 full-state comparison `D_word >= delta P_root^-1`, with delta>0, would give
 `rho0 <= 1-delta`. That source-uniform comparison remains open. It cannot be
 replaced by the restricted MAGNETIC SERVICE inequality or raw S information.
+
+There is now a valid covariance-coupled reduction to six corrected AG columns.
+At pre-prediction roots after 17 s, the existing nuisance comparisons imply
+`P >= E_n L E_n'`, `P_nn <= U`, `L >= alpha U`, `alpha>0`.
+If the complete loss satisfies `D_AG,AG >= J > 0` uniformly, its conditional
+covariance Schur complement gives
+`P <= diag((1+eta)J^-1/alpha,(1+1/eta)U)` for every eta>0.
+The first prediction's positive process covariance then gives strict full
+21-state contraction. This implication retains all cross covariance. Its
+six-column source-uniform J premise remains open.
 
 ## Finite-error operation lemmas
 

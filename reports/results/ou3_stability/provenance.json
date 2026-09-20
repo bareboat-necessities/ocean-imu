@@ -71,7 +71,9 @@
     "a21_nuisance_upper": "After 17 s of default regular A21 operation, a causal three-S-observation trial cancels the arbitrary neutral root and bounds LIN/BA covariance above with all nuisance cross blocks. Same realized PSD-sync increments are used in the comparison. AG6 upper covariance and full loss remain open.",
     "a21_stationary_detectability": "At the stationary A21 nominal solution, the only nondecaying prediction eigenvalue is 1; stable AW/BA components vanish in its eigenvectors, then S and nonparallel gravity/magnetic observations kill the remaining neutral vector. This is not a uniform varying-history or nonlinear stability theorem.",
     "sampled_physical_capture_obstruction": "The exact all-time witness refutes six-degree capture on the previous point-sample domain without a jerk bound. Its jerk exceeds 10500 m/s^3, so it is excluded by the adopted 100 m/s^3 bound. Conditional local A21 stability is not refuted.",
-    "jerk_sampling_fidelity": "Locally absolutely continuous physical acceleration with jerk <=100 gives sharp nonuniform sampled-mean control, excludes >=6-degree constant-attitude stationary-sample aliases over 32 s, and gives joint measured-vector 3-D information over 64 s. Both magnetic residual envelopes are charged. Physical LIN mismatch action enters the full prediction covariance metric. Full corrected 21-state loss, capture and retention remain open."
+    "jerk_sampling_fidelity": "Locally absolutely continuous physical acceleration with jerk <=100 gives sharp nonuniform sampled-mean control, excludes >=6-degree constant-attitude stationary-sample aliases over 32 s, and gives joint measured-vector 3-D information over 64 s. Both magnetic residual envelopes are charged. Physical LIN mismatch action enters the full prediction covariance metric. Full corrected 21-state loss, capture and retention remain open.",
+    "corrected_word_covariance_reduction": "Embedded nuisance floor passes to pre-prediction roots through actual corrections/resets. Together with its upper bound, a uniform six-column AG corrected loss J implies a full covariance upper bound and strict first-prediction loss by Schur comparison. J remains unproved; no full-state stability is promoted.",
+    "actual_gain_finite_error": "Actual estimator gains/events define one auxiliary linear comparison. Variation of constants composes operation supplies; Joseph covariance bounds correction supply by the R-whitened residual. Finite-angle reset has an injection-squared times error term and a real polynomial defect. Removed unsupported smoothness-to-vanishing-remainder promotion."
   },
   "operation_lemma_sources": [
     {
@@ -104,11 +106,11 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "3d917a02f2d372f44cf42747d618466fc0fe020a"
+      "git_blob_sha": "6a487df05229aecfb610d614c08ca52bec55073b"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
-      "git_blob_sha": "c0272ea995837d5874ceac905b82a784b8b3453e"
+      "git_blob_sha": "f87c1ae701a7619b077edcc13850d961578daa0b"
     },
     {
       "path": "tools/stability/ou3_theorem/interval_riccati.py",
@@ -176,7 +178,7 @@
     },
     {
       "path": "tests/validation/test_ou3_tail_stability.py",
-      "git_blob_sha": "27a11d742d6415dff9fc8d69d76433b5bfc438dd"
+      "git_blob_sha": "2205dd69a161270d6f45c85337393114fdb293f9"
     },
     {
       "path": "tools/stability/ou3_theorem/root_covariance_certificate.py",
@@ -265,6 +267,18 @@
     {
       "path": "docs/ou3-sampling-fidelity.md",
       "git_blob_sha": "8da3fa085bf4f2b2ed01b2072f83b9f380052f6e"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/corrected_word.py",
+      "git_blob_sha": "8a2b2c49daf3262a6f9415109bccb48662ca4864"
+    },
+    {
+      "path": "tests/validation/test_ou3_corrected_word.py",
+      "git_blob_sha": "3968e2e22612b6f821b6eb6998e8e08937a45cd7"
+    },
+    {
+      "path": "docs/ou3-corrected-word-proof.md",
+      "git_blob_sha": "741fa877507b3c7f2750db30023c36532c212143"
     }
   ]
 }

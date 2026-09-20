@@ -14,7 +14,7 @@ from tools.stability.ou3_theorem.tail_stability import (
     linear_kalman_tail_exponentially_stable, local_nonlinear_radius_exists,
     marine_magnetic_diversity_window_min, marine_magnetic_vector_diversity_floor,
     nonlinear_margin_from_information,
-    nonlinear_small_gain_exists_from_linear, nonlinear_tail_ratio,
+    nonlinear_tail_ratio,
     normalized_translation_information_floor, conservative_float32_kernel_error,
     bias_release_error_bound, projection_sector_retained_error_bound,
     vector_attitude_information_floor, rotation_integral_singular_floor,
@@ -36,7 +36,7 @@ from tools.stability.ou3_theorem.tail_stability import (
     refinement_completion_bound, refinement_gate_margins,
     refinement_sample_gate_uniform, refinement_tilt_limit_rad,
     release_bound_from_service, shipping_covariance_hard_events_retain_compactness,
-    smooth_a21_remainder_vanishes_locally, tilt_gyro_bias_quotient_minor,
+    tilt_gyro_bias_quotient_minor,
     time_varying_translation_minor_floor, translational_observability_determinant,
     translational_observability_nonsingular, uniform_controllability_exists,
 )
@@ -276,14 +276,6 @@ class RiccatiAndNonlinearClosureTests(unittest.TestCase):
         r=explicit_small_gain_radius(.81,2.0,.1)
         self.assertAlmostEqual(r,.05)
         self.assertTrue(math.isfinite(additive_supply_practical_radius(.81,.05,.5,1e-4)))
-
-    def test_same_history_exogenous_schedule_leaves_smooth_local_remainder(self):
-        smooth=smooth_a21_remainder_vanishes_locally(
-            projection_sector_certified=True,tuner_exogenous_same_history=True,
-            magnetic_reference_exogenous_same_history=True,
-            finite_operation_domain=True)
-        self.assertTrue(smooth)
-        self.assertTrue(nonlinear_small_gain_exists_from_linear(.99,smooth))
 
 class MarineMagneticDiversityTests(unittest.TestCase):
     def test_bounded_velocity_forces_vector_diversity(self):

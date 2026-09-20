@@ -46,7 +46,9 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.nuisance_upper_certificate import certificate as nuisance_certificate
     from tools.stability.ou3_theorem.sampled_capture_obstruction import witness_certificate
     from tools.stability.ou3_theorem.sampling_fidelity import certificate as sampling_certificate
+    from tools.stability.ou3_theorem.corrected_word import certificate as corrected_certificate
     for name, generate in (
+        ("corrected-word-certificate.json",corrected_certificate),
         ("sampling-fidelity.json",sampling_certificate),
         ("lin-matrix-certificate.json",matrix_certificate),
         ("word-energy-audit.json",restricted_service_counterexample),

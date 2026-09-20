@@ -365,34 +365,6 @@ def linear_kalman_tail_exponentially_stable(*, uniform_detectability: bool,
         if type(x) is not bool: raise ValueError("literal proof flags required")
     return uniform_detectability and uniform_controllability and covariance_hard_events_retained
 
-def smooth_a21_remainder_vanishes_locally(*, projection_inactive: bool = False,
-                                          projection_sector_certified: bool = False,
-                                          tuner_exogenous_same_history: bool,
-                                          magnetic_reference_exogenous_same_history: bool,
-                                          finite_operation_domain: bool) -> bool:
-    """Whether the multiplicative nonlinear remainder eta(r) tends to zero.
-
-    On the strict inner domain, quaternion exp/normalization, measurement maps
-    and reset Jacobians are smooth. The tuner and post-refinement magnetic
-    reference are measurement-only/exogenous, hence identical in a same-history
-    error comparison and belong to the LTV schedule rather than the nonlinear
-    remainder. Floating-point roundoff is additive supply, not eta.
-    """
-    flags=(projection_inactive,projection_sector_certified,tuner_exogenous_same_history,
-           magnetic_reference_exogenous_same_history,finite_operation_domain)
-    if any(type(x) is not bool for x in flags): raise ValueError("literal proof flags required")
-    projection_closed=projection_inactive or projection_sector_certified
-    return projection_closed and all(flags[2:])
-
-def nonlinear_small_gain_exists_from_linear(linear_rho0: float,
-                                            smooth_remainder_vanishes: bool) -> bool:
-    """Existential local closure: eta(r)->0 and rho0<1 imply some r*>0."""
-    if not math.isfinite(linear_rho0) or not 0 <= linear_rho0 < 1:
-        raise ValueError("strict finite linear ratio required")
-    if type(smooth_remainder_vanishes) is not bool:
-        raise ValueError("literal smoothness flag required")
-    return smooth_remainder_vanishes
-
 def shipping_covariance_hard_events_retain_compactness(*,
         aw_stationary_std_floor: float, aw_stationary_std_ceiling: float,
         release_bias_variance_ceiling: float) -> bool:

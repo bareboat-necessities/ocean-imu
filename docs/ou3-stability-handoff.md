@@ -24,10 +24,23 @@ not refute capture under the revised domain.
 Retain the exact complete-word loss/factor/range algebra, corrected LIN path
 lower comparison, joint full-state covariance floor after 16 s, nuisance
 covariance upper comparison after 17 s, and stationary A21 detectability.
-Next prove the full transported 21-state loss with nuisance cancellation,
-then actual capture/release into a retained nonlinear region and arithmetic
-transfer. General capture, AG covariance upper bounds and strict dissipativity
-remain open; no proof-completion percentage or full theorem claim is justified.
+Read `ou3-corrected-word-proof.md` next. The nuisance floor is now transported
+to roots immediately before prediction, without an injection or nominal AW
+bound. A Schur-complement argument proves that a uniform SPD bound J on the
+six AG columns of the actual complete loss implies a full covariance upper
+bound; the first prediction then supplies strict 21-state contraction. J is
+still open. This is not the invalid lifting of two-column magnetic service.
+
+The same document proves actual-gain finite-error word composition and an
+explicit finite-angle reset bound, including the real small-angle quaternion
+polynomial defect. The reset remainder has an injection-squared times error
+term; do not call it purely quadratic in error at a nonzero injection. No
+second filter with identical gains or event decisions is assumed.
+
+Next discharge the actual six-column J premise, then combine these supplies,
+projection sector and physical mismatch with capture/release and every-prefix
+retention. General capture, full AG upper covariance, strict uniform loss and
+arithmetic remain open. No completion percentage or full theorem is justified.
 
 Reproduce with:
 

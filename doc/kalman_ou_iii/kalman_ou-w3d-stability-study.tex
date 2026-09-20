@@ -42,7 +42,10 @@ limits. Physical acceleration mismatch contributes a certified supply to
 the literal OU prediction in the full covariance metric, without imposing an
 OU prior on truth. The complete covariance-energy identity, corrected LIN
 path action, joint lower covariance and nuisance upper covariance are
-retained. General capture, full corrected-state dissipativity, nonlinear
+retained. A coupled Schur comparison reduces a sufficient full-state
+contraction certificate to six corrected attitude/gyro-bias loss columns.
+Actual-gain finite-error composition includes an explicit injection-dependent
+reset remainder. The uniform six-column bound, general capture, nonlinear
 retention and arithmetic transfer remain unproved.
 \end{abstract}
 
@@ -854,6 +857,58 @@ Together with the BA bound, five-block Cauchy--Schwarz proves
 This is an upper principal-block comparison. It does not supply a full-state
 lower comparison or a decay rate. The remaining uniform upper block is AG.
 
+\subsection{Reduction to six corrected loss columns}
+Choose word roots immediately before prediction, after 17~s of regular
+A21 operation. Let $L_+$ be the embedded LIN/BA floor supplied by the
+preceding post-prediction comparison. Monotonicity of a Kalman correction,
+including its positive-semidefinite limit, gives
+\begin{equation}
+ P\succeq E_nLE_n^{\mathsf T},\qquad
+ L=(L_+^{-1}+\Lambda_n)^{-1},
+\end{equation}
+where $\Lambda_n$ has block diagonal
+$(0,0,\sigma_{S,\min}^{-2}I_3,
+2\sigma_{a,\min}^{-2}I_3,2\sigma_{a,\min}^{-2}I_3)$.
+Indeed, there is at most one S and one accelerometer correction between
+predictions, and the latter has nuisance row $[0,0,0,R_{wb},I]$.
+Magnetic corrections and attitude resets preserve an embedded nuisance
+floor. Write the upper bound in \eqref{eq:nuisance-upper} as $U$ and choose
+$0<\alpha<1$ with $L\succeq\alpha U$.
+
+\begin{lemma}[Coupled covariance reduction]
+If the six AG columns of the complete loss satisfy
+$(D_W)_{hh}\succeq J\succ0$, then, for every $\eta>0$,
+\begin{equation}
+ P\preceq C_\eta:=\operatorname{diag}\left(
+ {1+\eta\over\alpha}J^{-1},(1+\eta^{-1})U\right).
+ \label{eq:coupled-upper}
+\end{equation}
+\end{lemma}
+\begin{proof}
+Write $P=[\begin{smallmatrix}A&C\\C^{\mathsf T}&N\end{smallmatrix}]$.
+Since $L\succeq\alpha U\succeq\alpha N$, the embedded lower bound
+implies $CN^{-1}C^{\mathsf T}\preceq(1-\alpha)A$.
+Thus the conditional covariance satisfies
+\begin{equation}
+ \alpha A\preceq A-CN^{-1}C^{\mathsf T}
+ =((P^{-1})_{hh})^{-1}\preceq J^{-1},
+\end{equation}
+where the last step uses $D_W\preceq P^{-1}$ from
+\eqref{eq:word-energy}. Block Cauchy--Schwarz and Young's inequality
+give \eqref{eq:coupled-upper}, without discarding $C$.
+\end{proof}
+If the first prediction satisfies
+$Q\succeq\epsilon FC_\eta F^{\mathsf T}$, $\epsilon>0$, then
+\begin{equation}
+ D_W\succeq{\epsilon\over1+\epsilon}P^{-1},\qquad
+ \rho_0\le{1\over1+\epsilon}<1.
+\end{equation}
+The regular source has a positive full process floor and bounded $F$,
+so a uniform $J\succ0$ suffices. This is a conditional full-state
+implication. Establishing $J$ for the actual varying corrected transport
+remains open; neither two-column magnetic service nor the physical
+three-dimensional vector Gramian supplies it.
+
 \subsection{Stationary A21 detectability}
 Quiet water does not by itself create an unobservable nondecaying mode in
 the stationary A21 linearization. To see this, take zero corrected angular
@@ -880,15 +935,65 @@ must be a quantitative every-window condition: excluding only exactly zero
 amplitude does not yield a uniform information margin.
 
 \section{Finite-error regional theorem obligations}
-After \eqref{eq:full-loss} is certified uniformly, let the complete nonlinear
-word remainder have storage-norm Lipschitz bound $\eta(r)$ on a retained
-region. The sufficient finite-error condition is
+Use the gains, events and covariance of the actual estimator execution
+as coefficients of one auxiliary linear error comparison. If
+$e_i=A_ie_{i-1}+d_i$, each homogeneous operation obeys
+$A_i^{\mathsf T}P_i^{-1}A_i\preceq P_{i-1}^{-1}$. Variation of constants
+therefore gives the finite-error bound
+\begin{equation}
+ \sqrt{V_W}\le\sqrt{1-\delta}\sqrt{V_0}
+       +\sum_i\norm{d_i}_{P_i^{-1}}.
+ \label{eq:actual-gain-word}
+\end{equation}
+No equality of gains or event decisions between independent filters is
+required. For a correction residual $H e+r$, Joseph covariance gives
+$P^+\succeq KRK^{\mathsf T}$ and hence
+$\norm{Kr}_{(P^+)^{-1}}\le\norm r_{R^{-1}}$.
+For the accelerometer, the curvature residual is bounded by
+$\norm{\hat f}\norm\theta^2/2+\norm\theta\norm{e_{aw}}$;
+magnetic curvature contributes $\norm{\hat B}\norm\theta^2/2$.
+Physical residuals and magnetic-reference error are additional forcing.
+
+The finite injection also needs an explicit comparison. Let $d$ be the
+requested injection, $v=\theta-d$, $\norm v\le r<2$, and
+$G(d)=I+[d]_\times/2$. For ideal exponential injection,
+\begin{align}
+ u&=\log(\exp([\theta]_\times)\exp(-[d]_\times))^\vee,\nonumber\\
+ \norm{u-G(d)v}
+ &\le {\norm d^2\norm v\over6}
+ +\left({1\over2(2-r)}+{1\over4}\right)\norm v^2.
+ \label{eq:finite-reset-remainder}
+\end{align}
+To obtain this bound, follow $u(t)=\log(\exp([d+tv]_\times)
+\exp(-[d]_\times))^\vee$ and use
+$u'=J_l(u)^{-1}J_l(d+tv)v$, where
+$J_l(z)=\int_0^1\exp(s[z]_\times)\,ds$.
+Then $\norm{u(t)}\le t\norm v$,
+$\norm{J_l(z)-J_l(w)}\le\norm{z-w}/2$, and
+$\norm{J_l(d)-G(d)}\le\norm d^2/6$.
+Integration with the inverse Neumann bound proves
+\eqref{eq:finite-reset-remainder}.
+For $\norm d<0.01$, the normalized polynomial quaternion adds angular
+defect
+\begin{equation}
+ \varepsilon_p\le4\left({\norm d^6\over46080}
+                    +{\norm d^7\over645120}\right).
+\end{equation}
+Add $2\varepsilon_p/(2-r-\varepsilon_p)$ to
+\eqref{eq:finite-reset-remainder} when $r+\varepsilon_p<2$.
+This charges the real source polynomial; float32 remains separate.
+
+After \eqref{eq:full-loss} is certified uniformly, a word supply bounded
+by $\eta(r)\sqrt{V_0}+b$ gives the sufficient condition
 \begin{equation}
  \boxed{\rho=(\sqrt{\rho_0}+\eta(r))^2<1.}
  \label{eq:a21-small-gain}
 \end{equation}
-For a smooth remainder with $\eta(r)\le L_2r$, a strict radius must satisfy
-$r<(1-\sqrt{\rho_0})/L_2$. The bias projection sector
+The reset term proportional to $\norm d^2\norm v$ must be included;
+the remainder is not automatically quadratic in estimation error for a
+nonzero realized injection. A root radius additionally requires
+$b\le(1-\sqrt\rho)r$, with separate every-prefix bounds.
+The bias projection sector
 \eqref{eq:bias-projection-sector} must be composed in the same storage;
 Euclidean dissipation of one component does not control covariance cross
 terms. Projection-inactive release is not assumed.

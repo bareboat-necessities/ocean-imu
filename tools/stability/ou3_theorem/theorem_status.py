@@ -35,6 +35,11 @@ def status_report() -> dict:
         "constructive_fixed_coordinate_A21_mu_enclosure":False,
         "LIN_endpoint_matrix_path_action":True,
         "recurring_nuisance_covariance_upper":True,
+        "pre_prediction_embedded_nuisance_floor":True,
+        "six_column_to_full_contraction_implication":True,
+        "six_column_corrected_loss_uniform_bound":False,
+        "actual_gain_finite_error_word_composition":True,
+        "finite_angle_source_reset_remainder":True,
         "full_21_covariance_upper":False,
         "complete_word_covariance_energy_identity":True,
         "factorized_word_exact_reference_parity":True,
@@ -81,5 +86,5 @@ def status_report() -> dict:
             "sampling_certificate":"sampling-fidelity.json",
             "certificate":"sampled-capture-obstruction.json",
         },
-        "next_controlling_obligation":"The adopted locally absolutely continuous acceleration with jerk <=100 excludes the old sampling witness and all constant-attitude stationary-sample aliases of >=6 degrees over 32 s. Joint 3-D physical vector information and full-metric LIN prediction supply are proved. Transfer to actual nominal corrected 21-state transport, full AG covariance/loss, nonlinear capture and retention, and arithmetic remain open; these partial results are not full-state dissipativity.",
+        "next_controlling_obligation":"Prove a uniform SPD bound J for the six AG columns of the actual complete corrected word loss at pre-prediction roots. The embedded nuisance lower/upper comparisons then give a full covariance upper bound, and the first prediction gives strict 21-state contraction. This implication is proved but J is not. Compose the actual-gain finite-error supplies, injection-dependent reset remainder and projection sector to certify nonlinear capture, release, retention and arithmetic. The physical 3-D Gramian does not supply J.",
     }

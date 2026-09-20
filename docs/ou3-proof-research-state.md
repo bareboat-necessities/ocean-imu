@@ -10,6 +10,29 @@ remain. General physical capture and the complete stability theorem are open.
 
 ## Evidence
 
+`ou3-corrected-word-proof.md` proves the following complete implications:
+
+- the existing embedded nuisance floor passes through actual acc/S corrections
+  and arbitrary attitude resets to roots immediately before prediction;
+- with that floor and the existing nuisance upper bound, a uniform SPD bound J
+  on the six AG columns of the actual complete loss gives a full covariance
+  upper bound by a Schur complement; the first prediction then gives strict
+  21-state contraction, retaining all cross covariance;
+- actual-gain variation of constants composes finite-error supplies without
+  equating independently evolving filters; correction supply is bounded by
+  the R-whitened residual without a separate gain norm;
+- an explicit finite-angle reset remainder includes both the injection-squared
+  times error term and the real normalized quaternion polynomial defect.
+
+The six-column uniform J premise remains OPEN. The exact nuisance ratio is
+about 1.02976e-18 and the scalar full process floor about 2.49159e-26. These
+are valid existence ingredients, not a useful practical-radius margin; do not
+substitute this coarse prediction-only bound for a well-conditioned complete
+loss calculation. The 80-digit cross-coupled diagnostic gives rho about
+0.995037970315 and a conditional certified decrement about 2.64851e-5;
+its independent rational verification is a supplied-word check, not shipping
+history evidence. The new certificate remains fail-closed.
+
 `ou3-sampling-fidelity.md` proves:
 
 - sharp nonuniform trapezoidal acceleration mean error <=J h_max/4=.15;
@@ -34,19 +57,20 @@ all-time actual magnetic-service floor exceeds one. Its native regression
 checks literal finite float startup/release; all-time float totality was not
 claimed. Current status explicitly records that this witness is inadmissible.
 
-Validation: the clean-checkout evidence/publication suite passes 454 tests
-with one existing data-dependent skip. Exact artifact reproduction, targeted
-sampling/metric checks, ruff and Python compilation pass. No C++ source,
-estimator behavior or quality threshold changes are included.
+Validation for this continuation: 462 evidence/publication tests pass with
+one existing data-dependent skip. Exact artifact reproduction, ruff and
+Python compilation pass. The normalized quaternion polynomial defect was
+also checked at 80 decimal digits. No C++ or shipping behavior changed.
 
 ## Current limiter
 
-The positive physical Gramian uses true world transport and has dimension
-three. It does not establish the nominal corrected 21-state loss, eliminate
-nuisance adjustment, bound the remaining AG covariance, or prove general
-capture. The new physical prediction supply is finite; a finite supply does
-not imply that the declared six-degree region is invariant. It must be
-combined with strict full loss and quantitative nonlinear/prefix bounds.
+The six AG columns must be bounded for the actual nominal corrected transport,
+including realized gains and resets. The physical three-dimensional Gramian
+and two-dimensional magnetic-service restriction do not provide that bound.
+Once a useful full loss is certified, the actual-gain supplies and projection
+sector must close a retained region and startup/bridge/release must enter it.
+A finite source supply and a positive but extremely small comparison margin
+are not evidence that the declared six-degree region is invariant.
 
 ## Failed approaches / DEAD_ENDS
 
@@ -93,6 +117,24 @@ combined with strict full loss and quantitative nonlinear/prefix bounds.
   jerk row in the constants table. Restrict that sentence to omission of the
   jerk premise and include J_max=100 in the table; proof constants are unchanged.
 
+- The old smooth-remainder helper inferred eta(r)->0 from smooth operations,
+  a projection-sector flag and frozen schedules. That implication is invalid
+  for the shipping reset comparison G=I+[d]/2 at a nonzero injection: its
+  derivative is J_l(d), and J_l(d)-G generally is nonzero. Removed that helper,
+  its dependent Boolean small-gain promotion and the accepting test. The
+  explicit injection-dependent finite-error bound replaces them. Full theorem
+  status was already false; the controlling next check is the actual word
+  margin after this residual is charged.
+- The new high-precision diagnostic initially failed because mpmath was absent
+  (`ModuleNotFoundError`). An isolated environment with mpmath resolved it;
+  no repository dependency or quality threshold was changed.
+
+- The first broad evidence run in the new isolated environment failed with
+  missing matplotlib imports, which also prevented publication-test adapters
+  from loading. Installing matplotlib restored the unchanged suite: all 462
+  tests pass with one existing skip. No publication files or gates were altered
+  to accommodate that environment failure.
+
 ## Retained facts
 
 The exact full-word identity
@@ -112,8 +154,10 @@ only a finite supply ceiling, not evidence of a small retained radius.
 
 ## Next falsifiable experiment
 
-Check the full transported loss after nuisance elimination for the realized
-shipping dynamics on jerk-bounded histories, then prove a uniform positive
-margin or identify a genuine admissible cancellation. Bound the actual
-finite-error variation between the physical vector rows and those corrected
-shipping rows. Do not equate the physical 3-D Gram floor with full-state loss.
+Certify or falsify a uniform SPD bound on the six AG columns of the complete
+corrected loss under the admitted varying nominal coefficients. The coupled
+covariance reduction now handles the other fifteen coordinates analytically.
+For a useful nonlinear margin, retain full process/measurement factors rather
+than the coarse scalar prediction-only floor. Charge the actual injection
+term before asserting a vanishing nonlinear gain; then check the invariant
+root-radius and every-prefix inequalities on the same history.
