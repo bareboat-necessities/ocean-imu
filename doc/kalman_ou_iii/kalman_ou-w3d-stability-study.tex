@@ -931,6 +931,7 @@ Quantity & Value & Unit\\
 $P_{\max}$ & 8.10 & m\\
 $V_{\max}$ & 5.50 & m/s\\
 $A_{\max}$ & 8.80 & m/s$^2$\\
+$J_{\max}$ & 100 & m/s$^3$\\
 $\Omega_{\max}$ & 0.610865 & rad/s\\
 $P_{\rm AC}$ & 1100 & m\,s\\
 $B_a$ & 0.225167 & m/s$^2$\\
@@ -969,8 +970,9 @@ For a factor partition $[B_h,B_n]$, exact nuisance elimination gives
 \end{equation}
 An independent-column range basis handles singular nuisance blocks; a
 positive reduced heading matrix still leaves any nuisance nullspace open.
-Universal six-degree physical capture is refuted by
-Section~\ref{sec:capture-obstruction}. General magnetic-reference completion,
+Section~\ref{sec:capture-obstruction} refutes six-degree capture only when
+\eqref{eq:jerk} is omitted. Under the amended domain, general capture,
+magnetic-reference completion,
 H18 and release retention, recurring service, physical qualification,
 nonlinear storage and target arithmetic remain unproved. Numerical certificate reproduction does not imply
 end-to-end proof completion.

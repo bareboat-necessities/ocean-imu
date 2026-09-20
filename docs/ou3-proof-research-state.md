@@ -88,6 +88,11 @@ combined with strict full loss and quantitative nonlinear/prefix bounds.
   gate then correctly rejected the changed article hash; refresh its binding
   and rerun the unchanged gate.
 
+- Visual review of the rendered bde2d251 article caught an unqualified
+  old-domain capture-refutation sentence in the evidence section and a missing
+  jerk row in the constants table. Restrict that sentence to omission of the
+  jerk premise and include J_max=100 in the table; proof constants are unchanged.
+
 ## Retained facts
 
 The exact full-word identity
