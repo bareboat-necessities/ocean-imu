@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "c66b93152611253733c69a2620b080d5222a330bd94f9bd94798b036e22a8445",
-  "results_file_count": 383,
+  "replay_fingerprint": "5ce69a19f1a3e567fda726abb25fac99652db939e729e8e4582d7911b13bcf25",
+  "results_file_count": 381,
   "results_files": [
     {
       "kind": "file",
@@ -1715,16 +1715,6 @@
     },
     {
       "kind": "file",
-      "path": "reports/results/rao_parameter_tuning/tuning_report.md",
-      "sha256": "883d0196122dbc9700166e2f410dc9edf5fe50288f6b2faf6f69bff64155060b"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/rao_parameter_tuning/tuning_validation.tex",
-      "sha256": "cc6d112716b2c90bfe85377548fb35983293f77c9662d049d76c7af1c4e7dda9"
-    },
-    {
-      "kind": "file",
       "path": "reports/results/sigma_horizon/calm-check.json",
       "sha256": "b67c0307b7d2b33d7d630796ee9649155e1087a9de60a8edcdcd8b626844f829"
     },
@@ -1919,13 +1909,13 @@
       "sha256": "f14af5120661d9a5c28b46a6464c7b5285b2513ff1d50f8633ba2749c8987a80"
     }
   ],
-  "results_fingerprint": "bbd15e88d7b76232c8721d487cfa1d076b432fdeb509de60ae4b83ff029925d1",
+  "results_fingerprint": "d56082bdff7a912b959c55fb68582d312859d86ee040e1c3442593416395c095",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 328,
+  "tracked_replay_file_count": 327,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -3411,11 +3401,6 @@
       "mode": "100644",
       "path": "tools/rao_parameter_tuning.py",
       "sha256": "fe102306d80f66780993cb4285d1808d20ebc0d824bd078523ca6eaa28cebe9b"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/rao_tuning_report.py",
-      "sha256": "0915b119bfbf2e82ee5dc870fc840b73621294a2916cd8f627c58ba307fe6625"
     },
     {
       "mode": "100644",
