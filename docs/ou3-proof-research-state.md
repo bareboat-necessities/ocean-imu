@@ -178,6 +178,45 @@ finite 400--600 s audit is not substituted for either infimum.  Shipping
 behavior, physical assumptions, quality gates and the single proof path are
 unchanged.
 
+## Capture-region correction from an admitted quiet-bias history
+
+A separate exact obstruction now prevents using the convenient `V<=36`
+projection guard as a universal capture target.  Take constant true attitude
+`R=R_x(2 atan(1/100))`, quiet translation/rate, `B=(75,0,0)`, zero gyro
+bias, and constant physical accelerometer bias
+`b_a=g(R' e_z-e_z)`.  Its norm is about .1961232 m/s^2, below the unchanged
+physical bias limit, with zero bias rate, motion, jerk and primitive span.
+Its measured record is exactly the level/north record
+`f_m=-g e_z, gyro=0, mag=75 e_x`; hence the shipping nominal means follow
+the existing zero-innovation stationary construction while the true BA error
+remains `e_ba=b_a` under the literal bias-mismatch relation.
+
+Using the already proved regular marginal `P_ba,ba<=I/1600`, full covariance
+Cauchy--Schwarz gives on every applicable regular boundary
+
+`V >= e_ba' P_ba,ba^-1 e_ba >= 1600 |b_a|^2
+   = 38468153689/625062500 > 61.54289 > 36`.
+
+The stationary source magnetic-service induction still applies because the
+measured execution is identical; the true down axis has cosine 9999/10001,
+so the existing nominal-axis service floor remains above one after multiplying
+by its squared axial component.  This does **not** refute six-degree physical
+tilt capture (the true tilt is only about 1.146 degrees), practical stability,
+or the projection-sector route.  It proves only that universal eventual
+entry into the sufficient `sqrt(V)<=6` projection-inactive ball cannot be a
+completion strategy under the unchanged assumptions.  The local projection
+guard is retained; the nonlinear theorem must use a larger/shaped region or
+carry the literal projection sector/defect.
+
+The signed temporal route is also sharpened: eliminating a signed innovation
+functional `sum W_i r_i` through the affine mean recursion requires an exact
+same-history adjoint sequence satisfying both `Z_i=Z_(i+1)A_i` and
+`W_i=Z_(i+1)K_i`.  Without that compatibility the residual state/innovation
+sums stay in the inequality.  The nominal v/p/S correction jumps must be
+retained through the weighted integral identity documented in
+`ou3-construction-mean-action.md`.  Source-uniform existence/bounds for this
+adjoint construction remain open.
+
 ## Current limiter
 
 The six AG columns must be bounded for the actual nominal corrected transport,
