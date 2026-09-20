@@ -75,8 +75,9 @@
     "corrected_word_covariance_reduction": "Embedded nuisance floor passes to pre-prediction roots through actual corrections/resets. Together with its upper bound, a uniform six-column AG corrected loss J implies a full covariance upper bound and strict first-prediction loss by Schur comparison. J remains unproved; no full-state stability is promoted.",
     "actual_gain_finite_error": "Actual estimator gains/events define one auxiliary linear comparison. Variation of constants composes operation supplies; Joseph covariance bounds correction supply by the R-whitened residual. Finite-angle reset has an injection-squared times error term and a real polynomial defect. Removed unsupported smoothness-to-vanishing-remainder promotion.",
     "historical_AG_readout": "A backward six-column reader cancels the historical AG root exactly, retaining nuisance and process correlations. Optimal covariance comparison bounds terminal AG covariance by its matrix action. Uniform source rank/action and inherited entry linkage remain unproved; neither a supplied word nor the unbounded-prior relaxation is claimed shipping-reachable.",
-    "source_readout_audit": "Native carried construction/refinement/release, observer/control terminal parity, exact rational quiet exported-word action, non-promoting moving diagnostic. Independent coefficient uniformity fails at AG rank four; source nominal mean/innovation linkage is open. Moving sync asymmetry 2^-49 is not silently projected away.",
-    "projection_storage_guard": "Inherited P_ba,ba <= I/1600 implies actual projection inactive if pre-projection sqrt(V) <= 6, with .02483339501604595 m/s^2 slack; every-prefix retention and entry remain open."
+    "source_readout_audit": "Native carried construction/refinement/release with observer/control parity. Quiet and moving exported words have exact full-matrix action enclosures. Complete sync/addition/symmetry defects use signed factors on all 21 coordinates, including the negative 2^-44 Rayleigh defect. Other float operations and source-uniform historical action remain open.",
+    "projection_storage_guard": "Inherited P_ba,ba <= I/1600 implies actual projection inactive if pre-projection sqrt(V) <= 6, with .02483339501604595 m/s^2 slack; every-prefix retention and entry remain open.",
+    "construction_history_stress": "One continuous diagonal-wave history has exact physical envelopes and is run from begin through Live/refinement/release to 600 s without reseeding. Its finite tail tilt about 8.21 degrees and nominal acceleration 9.7764 do not certify all-time magnetic service or refute eventual capture. No nominal-state cap or six-degree entry is inferred."
   },
   "operation_lemma_sources": [
     {
@@ -109,7 +110,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "b206adf7f9acdc5924f2a88809026f189a3ed93f"
+      "git_blob_sha": "fc04fadd38181dec98a177313d64f7e53f829b68"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -285,19 +286,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout.py",
-      "git_blob_sha": "203f7bd8804f19e782cbe707668bfa360829071c"
+      "git_blob_sha": "095fc8936bc2e068e7a1228af79e55c3c14d77ba"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_diagnostic.py",
-      "git_blob_sha": "6ac1b705935cacae5fe1f6fd598fd6c1b7df2771"
+      "git_blob_sha": "1e9339cde6117968c9cf92259c9493bd555897d3"
     },
     {
       "path": "tests/validation/test_ou3_ag_readout.py",
-      "git_blob_sha": "2a916a448b8c8a91f72ad3695eef89cfa558c593"
+      "git_blob_sha": "8be1257ba68da548ec8132255d74edd9f431dfd5"
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "7e7409ff9968e81f4809bec9634ec69af7da4bae"
+      "git_blob_sha": "33532f36a7c366fbe09575b17fc537987bf2ca18"
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
@@ -305,11 +306,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py",
-      "git_blob_sha": "acf35b857a634eb38e23490137884c434a56cb3c"
+      "git_blob_sha": "dd4db2ff917475195ec750b2f0d23a5960ec9355"
     },
     {
       "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
-      "git_blob_sha": "2209f3c21f3cd9288a8f7cba0609115edc328902"
+      "git_blob_sha": "e272fe1e450529fdc649afcfd72dad4d68666955"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/construction_history_diagnostic.py",
+      "git_blob_sha": "04b42c89a56a173847ab38348e2a7cae84fff299"
+    },
+    {
+      "path": "reports/results/ou3_stability/construction-history-feasibility.json",
+      "git_blob_sha": "b5d32f96c53905a044863957b077ed6f9eef25f0"
     }
   ]
 }

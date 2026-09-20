@@ -156,6 +156,82 @@
   "conditional_algebra_verified": true,
   "conditional_delta": "1/10000000001",
   "full_21_covariance_upper_verified": false,
+  "nominal_gyro_alias_obstruction": {
+    "AG_null_columns": [
+      [
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0"
+      ],
+      [
+        "1",
+        "0"
+      ],
+      [
+        "0",
+        "1"
+      ],
+      [
+        "0",
+        "0"
+      ]
+    ],
+    "LO_equals_terminal_AG_map_possible": false,
+    "all_nominal_innovations": "zero",
+    "all_time_magnetic_service_verified": false,
+    "arbitrary_realized_gains_cannot_remove_annihilator": true,
+    "exact_bias_transport": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "1/200"
+      ]
+    ],
+    "full_AG_array_rank": 4,
+    "invalidated_method": "innovation bounds alone without construction-linked nominal gyro control",
+    "literal_float32_alias_claimed": false,
+    "magnetic_field": [
+      "75",
+      "0",
+      "0"
+    ],
+    "nominal_force": [
+      "0",
+      "0",
+      "-9.80665"
+    ],
+    "nominal_gyro_bias_rad_s": [
+      "0",
+      "0",
+      "-400*pi"
+    ],
+    "nominal_rotation_per_sample": "2*pi",
+    "null_Rayleigh_margin_against_I6": "-1",
+    "qualification": "OU3_NOMINAL_GYRO_ALIAS_RELAXATION_V1",
+    "quiet_physical_motion_and_true_bias_limits_satisfied": true,
+    "regular_nominal_mean_recursion_satisfied_real_arithmetic": true,
+    "shipping_construction_reachability_verified": false,
+    "shipping_stability_refuted": false,
+    "step_s": "1/200",
+    "true_gyro_and_bias": "zero"
+  },
   "prior_scale_obstruction": {
     "Rayleigh_margin_ceiling": "-999999/1000000000000",
     "candidate_J": "I6/1000000",

@@ -298,6 +298,63 @@ def coefficient_relaxation_obstruction():
             'invalidated_method': 'independent coefficient ranges without nominal-history linkage'}
 
 
+def gyro_alias_obstruction():
+    """Mean-recursion-compatible regular-root relaxation, not a carried root.
+
+    Quiet truth, zero residuals and the nominal bias -2*pi/h e_z give one
+    complete nominal turn per sample. Literal real-arithmetic Rodrigues and
+    B helpers give R=I and B=h e_z e_z'. Quaternion sign changes leave the
+    observations unchanged. Nonzero process noise and arbitrary realized
+    gains cannot reveal an exactly annihilated historical root column.
+    Construction reachability and all-time magnetic service are NOT proved.
+    """
+    h = F(1, 200)
+    transition = identity(21)
+    transition[2][5] = h
+    ha, hm = _zero(3, 21), _zero(3, 21)
+    g, field = F('9.80665'), F(75)
+    # -skew((0,0,-g)) and -skew((75,0,0)).
+    ha[0][1], ha[1][0] = -g, g
+    hm[1][2], hm[2][1] = field, -field
+    for i in range(3):
+        ha[i][15+i] = ha[i][18+i] = F(1)
+    hs = _zero(3, 21)
+    for i in range(3):
+        hs[i][12+i] = F(1)
+    events = []
+    for _ in range(2):
+        # Noise/nuisance placeholders are not source Q/FLIN certificates:
+        # neither enters the six root columns in this block structure.
+        events.append({'kind': 'prediction', 'F': transition, 'U': _zero(21, 1)})
+        for observation in (hs, ha, hm):
+            events.append({'kind': 'correction', 'H': observation, 'V': identity(3)})
+            events.append({'kind': 'reset', 'G': identity(21)})
+    rows, terminal = observation_array(events)
+    null = [[F(i == 3), F(i == 4)] for i in range(6)]
+    if any(any(row) for row in matmul(rows, null)) or len(factor_rows(rows)) != 4:
+        raise ArithmeticError('complete-turn annihilator failed')
+    if matmul(terminal, null) != null:
+        raise ArithmeticError('endpoint must preserve both hidden gyro columns')
+    return {'qualification': 'OU3_NOMINAL_GYRO_ALIAS_RELAXATION_V1',
+            'step_s': str(h), 'nominal_gyro_bias_rad_s': ['0', '0', '-400*pi'],
+            'true_gyro_and_bias': 'zero', 'nominal_force': ['0', '0', '-9.80665'],
+            'magnetic_field': ['75', '0', '0'],
+            'nominal_rotation_per_sample': '2*pi',
+            'exact_bias_transport': encoded([[0, 0, 0], [0, 0, 0], [0, 0, h]]),
+            'full_AG_array_rank': 4, 'AG_null_columns': encoded(null),
+            'null_Rayleigh_margin_against_I6': '-1',
+            'LO_equals_terminal_AG_map_possible': False,
+            'quiet_physical_motion_and_true_bias_limits_satisfied': True,
+            'regular_nominal_mean_recursion_satisfied_real_arithmetic': True,
+            'all_nominal_innovations': 'zero',
+            'arbitrary_realized_gains_cannot_remove_annihilator': True,
+            'shipping_construction_reachability_verified': False,
+            'all_time_magnetic_service_verified': False,
+            'literal_float32_alias_claimed': False,
+            'shipping_stability_refuted': False,
+            'invalidated_method': 'innovation bounds alone without construction-linked nominal gyro control'}
+
+
 def certificate():
     events, upper = supplied_fixture(), identity(15)
     reader = exact_readout(events)
@@ -313,6 +370,7 @@ def certificate():
             'rank_three_measurement_rows': True,
             'reader_selection': 'exact largest-residual factor pivot; all observation rows considered',
             'coefficient_relaxation_obstruction': coefficient_relaxation_obstruction(),
+            'nominal_gyro_alias_obstruction': gyro_alias_obstruction(),
             'prior_scale_obstruction': {
                 'family': 'P0 = diag(t I6, I15), t > 0',
                 'necessary_AG_loss_ceiling': '(D_word)_hh <= I6/t',

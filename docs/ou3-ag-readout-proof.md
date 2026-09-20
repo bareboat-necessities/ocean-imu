@@ -183,10 +183,30 @@ cancels the AG root **exactly**, and exact PSD elimination verifies a full
 sync increments are included. This supplied-sequence certificate does not
 cover a neighborhood, all windows, startup reachability in exact arithmetic,
 or accumulated float32 error.
-The moving export fails the symmetry precondition for a process factor:
-its largest sync skew entry is exactly 1/562949953421312 (2^-49). The
-diagnostic records this rejection. Enclosing the literal addition and final
-symmetry operation, rather than silently replacing its operand, remains open.
+The moving export has a raw sync skew of exactly 2^-49. The complete
+operation is now observed before inflation and after the shipping addition
+and full covariance symmetry pass. Write its literal boundaries as P_b,P_a,
+and form E=P_a-(P_b+P_b')/2 exactly. This is not generally PSD: at event 96,
+the normalized (e_0+e_2) direction has Rayleigh quotient -2^-44. The negative
+quantity is a rounding defect, not evidence that P_a is indefinite.
+
+Signed rank-one/two Schur elimination gives E=sum d_i v_i v_i'. Retaining
+only positive terms and rounding their square roots upward gives a rational
+factor U with U U' >= E, verified by exact full matrix PSD elimination.
+This establishes P_a <= sym(P_b)+U U' for **each recorded complete operation**.
+The antisymmetric part of the pre-state and the final averaging roundoff are
+therefore not silently discarded. All 21 coordinates are retained; symmetry
+roundoff is not confined to the three AW coordinates. Zero-diagonal,
+nonzero-off-diagonal defects use two-column pivots, not a diagonal norm bound.
+
+Both the quiet and moving exported words now have exact rational action
+ceilings, exact AG-root cancellation, and exact comparisons with their
+literal terminal AG covariance. This continues the factor calculation past
+the old operand-symmetry rejection. It does not enclose prediction, Joseph,
+solve, reset or state-update arithmetic, or provide a common all-history
+factor ceiling. Those separate operations remain open. The exact action is
+computed without rounding the reader or substituting a finite replay for
+source-uniform coverage.
 
 ### Why changing the minor is necessary but insufficient
 
@@ -253,3 +273,93 @@ transfer of the true-vector Gram bound must retain the actual innovation
 all-window bound on those defects here. Replacing them with the physical
 sensor/bias bounds would silently identify estimator innovations with sensor
 noise. This is the precise remaining source-uniform certificate gap.
+
+### Nominal mean recursion does not by itself exclude a gyro alias
+
+This test enters the controlling tail inequality through the still-required
+uniform historical AG action. Innovation bounds were the next candidate for
+excluding the previous rank-four coefficient relaxation. They are insufficient
+alone, even with nonparallel nominal force and field and zero innovations.
+
+In real arithmetic take h=1/200 s, quiet truth, zero physical gyro bias,
+measured gyro zero, nominal gyro bias -400 pi e_z, and zero nominal
+v,p,S,a_w,b_a. Let the nominal attitude initially agree with truth and let
+the committed field be (75,0,0). Use the source gravity constant in the quiet
+accelerometer sample (any representational discrepancy fits the existing
+sensor residual bound). The literal large-angle quaternion branch makes one
+complete turn at each prediction: its quaternion changes sign, but its
+rotation matrix returns to the same value. Every applied acc/S/mag innovation
+is zero, for any realized finite gain. The nuisance zero mean is preserved
+under arbitrary admitted OU coefficients; injection and projection are zero.
+Thus this is a regular-root **nominal-mean-compatible relaxation**, stronger
+than independent coefficient choices. It is not a constructed shipping root.
+
+The literal Rodrigues/integral helper gives
+
+R(h)=I,  B(h)=h e_z e_z',  F_AG=[[I,B(h)],[0,I]].
+
+Consequently the initial gyro-bias columns e_bg,x and e_bg,y never reach an
+attitude or nuisance column. Every observation annihilates them. Corrections
+with any realized gain also leave them unchanged, since (I-KH)v=v when Hv=0.
+Resets are identity. The full raw AG array has rank four, while T_h preserves
+both missing columns. Hence LO=T_h is impossible and the Gram-floor margin
+against mu I6 is exactly -mu. Correlated process factors cannot repair an
+exact deterministic root-column annihilator.
+
+For theta=|omega_hat|h, the two transverse singular values of B(h) are
+2|sin(theta/2)|/|omega_hat|. An 80-digit diagnostic at theta=2pi+delta gives
+7.9564805098e-7, 7.9577458881e-10 and 7.9577471533e-13 s for delta=10^-3,
+10^-6 and 10^-9 respectively. The exact complete-turn nullspace, rather than
+the numerical near-null values, certifies this failure.
+
+**No construction reachability, all-time magnetic service or literal float32
+alias is asserted.** The physical gyro-bias bound is not a bound on its
+estimate. The next proof must obtain construction-linked nominal gyro control
+as well as force/field diversity and bounded action. The starting bound must come from the literal construction and be propagated
+through its actual corrections and hard events. A freely chosen estimate cap
+is not an admissible replacement. Excluding the alias alone would still not
+bound the full nuisance/process readout action.
+
+### Construction and carried-entry attempt
+
+The construction starts the MEKF means at zero. Before Live, `updateFrontEnd`
+drives the proxy/tuner but leaves those means unchanged, and magnetic
+corrections are withheld from the MEKF. `goLive` writes the proxy attitude and
+its covariance; it does not import a proxy gyro-bias estimate. The initial
+MEKF gyro bias is therefore zero, with marginal covariance 10^-6 I3. Any
+magnetic corrections before the first prediction have zero gyro gain because
+the handoff clears attitude/gyro cross covariance. With the existing physical
+rate, bias and sensor envelopes, the first corrected angular increment is
+at most .006*(.6108652381980153+.02+.02)=.0039051914291880918 rad.
+This excludes a gyro alias at that first prediction. It is not an invariant
+bound after the subsequent, coupled acc/S/mag corrections.
+
+The attempted propagation must retain the true initial translation and
+primitive, the front end, clocks, references and tuning, rather than replace
+the reached root by a convenient mean/covariance box. The new reproducible
+`construction_history_diagnostic.py` executes that full path for
+
+p(t)=-(3/2)sin(2t)(1,0,1), R(t)=I, B=(45,0,45),
+
+with zero true biases. Its continuous squared envelopes are p:9/2, v:18,
+a:72, jerk:288, angular rate:0 and primitive span:9/2. All satisfy the
+unchanged physical limits; there is no displacement or acceleration DC.
+The native driver uses only `begin`, `update` and `updateMag`, with no reseed,
+and retains the shipping front end, reference refinement and BA release.
+
+It reaches Live at step 30002 and refinement/release at step 36008. On the
+400--600 s diagnostic tail, mean tilt error is 8.211611 degrees and maximum
+is 8.260681 degrees. The proposed six-degree entry comparison has negative
+mean margin -2.211611 degrees over that finite interval. The largest nominal
+acceleration from construction is 9.776391 m/s^2, so substituting the physical
+8.8 bound into the nominal coefficient domain is demonstrably invalid. The
+largest gyro estimate is .000161120 rad/s and the tail minimum normalized
+force/field cross magnitude is .4432715: this particular trajectory does not
+approach either raw-rank degeneracy.
+
+These are **finite float diagnostics**, not a proof of every-window magnetic
+service, a real-arithmetic reachable-set enclosure, or a refutation of
+history-dependent eventual capture. The actual six-degree entry set, the
+uniform joint nominal-history bound, and the common B_* remain unproved.
+This construction attempt does not justify moving a free-root relaxation
+into the admitted set or promoting a sampled positive margin to a theorem.

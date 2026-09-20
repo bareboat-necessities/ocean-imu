@@ -6,7 +6,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.ag_readout import (
     bootstrap, certificate, coefficient_relaxation_obstruction, exact_readout,
-    factor_rows, noise_action_lower, readout_action, supplied_fixture,
+    factor_rows, gyro_alias_obstruction, noise_action_lower, readout_action, supplied_fixture,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import (
@@ -136,6 +136,41 @@ class HistoricalReadoutTests(unittest.TestCase):
         self.assertFalse(report['LO_equals_terminal_AG_map_possible'])
         self.assertFalse(report['nominal_mean_recursion_satisfied'])
         self.assertFalse(report['shipping_counterexample'])
+
+    def test_signed_sync_factor_covers_indefinite_rounding_without_scalarizing(self):
+        from tools.stability.ou3_theorem.ag_readout_source_diagnostic import signed_upper_factor
+        for q in ([[0, F(1, 2**44)], [F(1, 2**44), 0]],
+                  [[-2, 1, 0], [1, 3, 2], [0, 2, 0]], [[0, 0], [0, 0]]):
+            u = signed_upper_factor(q)
+            upper = matmul(u, transpose(u))
+            self.assertTrue(is_psd(add(upper, q, -1)))
+        # The off-diagonal roundoff is retained in a positive rank-one factor.
+        u = signed_upper_factor([[0, 1], [1, 0]])
+        self.assertNotEqual(matmul(u, transpose(u))[0][1], 0)
+        with self.assertRaises(ValueError):
+            signed_upper_factor([[1, 1], [0, 1]])
+
+    def test_complete_sync_boundary_retains_prediction_asymmetry_and_rounding(self):
+        from tools.stability.ou3_theorem.ag_readout_source_diagnostic import completed_sync_increment
+        before, after = identity(21), identity(21)
+        before[0][2], before[2][0] = F(1, 2**40), F(1, 2**39)
+        after[0][2] = after[2][0] = F(3, 2**41)+F(1, 2**44)
+        q = completed_sync_increment({'before': before, 'after': after})
+        self.assertEqual(q[0][2], F(1, 2**44))
+        self.assertFalse(is_psd(q))
+        after[2][0] = 0
+        with self.assertRaises(ValueError):
+            completed_sync_increment({'before': before, 'after': after})
+
+    def test_zero_innovation_alias_requires_construction_linked_gyro_control(self):
+        report = gyro_alias_obstruction()
+        self.assertEqual(report['full_AG_array_rank'], 4)
+        self.assertEqual(report['all_nominal_innovations'], 'zero')
+        self.assertTrue(report['regular_nominal_mean_recursion_satisfied_real_arithmetic'])
+        self.assertFalse(report['LO_equals_terminal_AG_map_possible'])
+        self.assertFalse(report['shipping_construction_reachability_verified'])
+        self.assertFalse(report['all_time_magnetic_service_verified'])
+        self.assertFalse(report['shipping_stability_refuted'])
 
     def test_unreachable_prior_family_does_not_refute_shipping(self):
         report = certificate()

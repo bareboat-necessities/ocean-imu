@@ -75,7 +75,7 @@ The exact failed relaxation is `D_AG,AG >= 10^-6 I6` for unbounded priors:
 at `diag(10^12 I6,I15)` the Rayleigh margin is at most `-9.99999e-7`.
 No reachability or magnetic-service membership is claimed for that prior.
 Carried quiet and moving windows now have coefficient-dependent factor readers;
-the quiet exported coefficients have an exact full-matrix action enclosure.
+both exported coefficient sequences have exact full-matrix action enclosures.
 These checks are not source-uniform. Independent nominal coefficient ranges
 fail the all-row Schur test at rank four, with exact Rayleigh margin -1
 against I6. See the source-shaped annihilator in `ou3-ag-readout-proof.md`.
@@ -134,3 +134,25 @@ At the article handover, that suite passed 463 tests with one existing
 data-dependent skip. Recheck CI at the final PR/merge commit rather than
 assuming an earlier run covers later edits. Evidence validation must continue
 to report `theorem_closed: false` until the remaining obligations are proved.
+
+The complete moving sync/symmetry operation now has an exact signed-factor
+upper envelope, including its -2^-44 Rayleigh defect and all 21 coordinates.
+Quiet and moving exported words both pass exact action enclosure. Prediction,
+solve, Joseph, reset and state arithmetic are not thereby certified.
+The nominal-history attack also tests a zero-innovation full-turn gyro alias:
+h=.005, b_hat_g=-400 pi e_z, quiet inputs. It satisfies the regular nominal
+mean recursion in real arithmetic, but its AG array has rank four. Neither
+construction reachability nor magnetic service is certified. Next derive a
+construction-linked estimate gyro bound; a physical gyro bound or innovation
+bound alone does not supply it. All uniform and end-to-end claims stay false.
+
+The latest construction attempt is reproducible with
+`python -m tools.stability.ou3_theorem.construction_history_diagnostic --output /tmp/ou3-construction.json`.
+Its continuous physical profile obeys every marine/true-bias envelope and
+passes through the unchanged wrapper from begin to 600 s. The 400--600 s
+native tilt is about 8.21 degrees, so a six-degree entry set is not inherited
+merely from refinement/release. This finite observation is not an all-time
+magnetic-service certificate or a refutation of eventual capture. The nominal
+acceleration reaches 9.776391 despite physical norm <=sqrt(72)<8.8. Use the
+actual construction for the joint mean/covariance enclosure; no assumed
+nominal-state box or free-root family can replace it.

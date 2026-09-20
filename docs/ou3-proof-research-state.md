@@ -33,8 +33,11 @@ match bit-for-bit. Three quiet 225--225.32-s windows have action maxima
 1199.060967--1199.062222. A moving-vessel window has maximum 1450.252861,
 full-array minimum singular value 6.278224 and nonzero realized resets.
 These 80-digit values are non-promoting. Exact upward rational Q/R factors
-and PSD elimination certify the full action matrix for the exported quiet
-word, including nonzero sync; this does not enclose a real source trajectory.
+and PSD elimination certify full action matrices for the exported quiet
+and moving words. The complete literal sync/addition/symmetry operation is
+now bounded with signed factors on all 21 coordinates. Its -2^-44 Rayleigh
+defect is charged; raw-operand symmetry is not assumed. This does not enclose
+prediction, solve, Joseph, reset or state arithmetic, or a real source trajectory.
 
 The attempted independent-coefficient uniform certificate fails the all-row
 Schur test exactly: B=(45,0,45), a_hat=(-g/2,0,g/2) has |a_hat|<8.8 but
@@ -43,6 +46,29 @@ The Rayleigh margin against any mu I6 is -mu. The family is not certified
 compatible with the nominal mean recursion or all-time magnetic service.
 This is a failed relaxation, not a shipping counterexample. Refining a minor,
 precision or coefficient boxes cannot exclude its exact nullspace.
+
+The nominal-history follow-up invalidates an innovation-only exclusion:
+quiet inputs, h=.005 and nominal b_g=-400 pi e_z make one complete nominal
+turn per sample. All innovations are zero and the regular nominal mean
+recursion is satisfied in real arithmetic. The literal bias transport is
+h e_z e_z', leaving two exact hidden gyro columns; rank=4 and Gram-floor
+margin=-mu. This regular-root relaxation is not proved reachable from shipping
+construction or all-time magnetically serviced. A quantitative bound on the
+estimated gyro bias must be derived from that carried construction, not
+substituted from the physical bias assumption. Exact root cancellation and
+a common full matrix action still remain open on actual admitted histories.
+
+A full-construction stress run now uses p=-(3/2)sin(2t)(1,0,1), R=I,
+B=(45,0,45), zero true biases. Exact continuous squared bounds are
+p:4.5, v:18, a:72, jerk:288, primitive span:4.5, omega:0, all within the
+unchanged physical contract. No estimator state is reseeded. Live occurs at
+step 30002, refinement/release at 36008. The 400--600 s native tail has mean
+tilt 8.211611 degrees, max 8.260681, and nominal acceleration reaches
+9.776391 m/s^2. The six-degree finite-interval entry margin is -2.211611;
+the physical acceleration bound cannot be substituted for the nominal mean.
+This is not an eventual-capture refutation: all-time magnetic service and
+real-arithmetic reachability are not certified. Its small gyro estimate and
+force/field sine >=.4432715 are likewise finite, not source-uniform margins.
 
 Independently, the inherited BA marginal proves a source covariance guard:
 at every finite regular pre-projection boundary, sqrt(V)<=6 leaves
@@ -99,8 +125,13 @@ all-time actual magnetic-service floor exceeds one. Its native regression
 checks literal finite float startup/release; all-time float totality was not
 claimed. Current status explicitly records that this witness is inadmissible.
 
-Current validation: 476 evidence/publication tests pass in a clean worktree
-with one existing data-dependent skip. Exact artifact reproduction, ruff and
+Current local validation: 479 evidence/publication tests pass with one
+existing data-dependent skip. Exact artifact reproduction, Ruff, carried
+observer/control parity, both exact exported-word enclosures and the full
+construction stress run pass. The nine-page article renders without overfull
+boxes; affected pages 8--9 were visually checked. The preceding 2373d262 head
+passed all six CI workflows, including every quality-gate job; new-head CI is
+reported separately in PR metadata. Exact artifact reproduction, ruff and
 Python compilation pass. The nine-page study renders without overfull boxes;
 pages 2 and 7--9 were visually checked. Native observer/control parity passes.
 The shipping estimator and all physical constants remain unchanged. CI is
@@ -124,6 +155,10 @@ are not evidence that the declared six-degree region is invariant.
 
 ## Failed approaches / DEAD_ENDS
 
+- Added article material caused a 0.82014-pt overfull vbox in forced final-page
+  balancing. Removing that balancing directive restores a clean nine-page
+  render; the mathematical text and quality thresholds are unchanged.
+
 - The required `PATH=/tmp/ou3-proof-venv/bin:$PATH make all EIGEN_DIR=/tmp/ou3-article-tex-deps/usr/include/eigen3 SIM_DATA_ZIP=/tmp/ou3-article-sim-data.zip`
   compiled all native targets and passed suites through spike_filter, then
   stalled in `test_no_retired_architecture_survives_repository` scanning the
@@ -141,14 +176,26 @@ are not evidence that the declared six-degree region is invariant.
   Retained: the historical action and nuisance/Schur implications. Limiter:
   the source innovation/gyro/reset comparison. Change to source-linked nominal
   dynamics; do not repeat pivot/precision/subdivision refinement.
-- The first exact quiet export specialization wrongly required zero sync and
-  rejected an actual nonzero Delta. Keeping its full semidefinite factor fixed
-  the audit. The moving generalization then rejected a nonsymmetric exported
-  float sync operand (`symmetric square matrix required`). Do not silently
-  symmetrize/project it into a different operation. The exact maximum asymmetry is 1/562949953421312 (2^-49),
-  recorded in `ag-readout-source-feasibility.json`; its complete float addition
-  and final symmetry operation need an arithmetic enclosure. The quiet factor
-  result and all real-arithmetic implications are retained.
+- The raw moving sync operand has skew 2^-49 and cannot be a PSD process
+  factor. Recording the complete addition/symmetry operation exposes a second
+  failure: E=P_after-sym(P_before) has Rayleigh quotient -2^-44 at event 96,
+  in the normalized (e_0+e_2) direction. Thus even the complete increment is
+  not PSD. Classification: literal rounding, not physical loss of covariance
+  positivity. Changed technique to signed rank-one/two Schur elimination,
+  retaining positive factors and verifying U U'-E >=0 exactly. All recorded
+  quiet/moving sync boundaries and both full action ceilings pass. No further
+  operand symmetrization or PSD clipping is used. Other float operations and
+  a uniform bound on the resulting action remain separate obligations.
+- The innovation-only nominal-history tactic fails at the exact complete-turn
+  gyro alias described above: innovations=0, rank=4, margin=-1 against I6.
+  An 80-digit diagnostic has transverse bias transport singular values
+  7.95648051e-7, 7.95774589e-10 and 7.95774715e-13 for turn offsets 10^-3,
+  10^-6 and 10^-9. Exact Rodrigues/quaternion identities certify the nullspace;
+  more precision cannot remove it. Retained: all readout/Schur implications,
+  nuisance bounds and physical measured-vector diversity. Next change the
+  technique to a construction-linked nominal gyro estimate bound alongside
+  nominal force/field control. Reachability and magnetic service of the alias
+  are unknown, so it is not a shipping instability counterexample.
 - Factor pivoting changed the supplied reader's nuisance-sensitive coordinate
   from x to y. The old cross-covariance regression then compared two identical
   actions. Move its nonzero AW/BA cross term to the actually used y coordinate;
@@ -274,5 +321,15 @@ on the same window. They are not physical sensor noise bounds. Quantify this
 source-linked exclusion and test the complete six-column noise-action Schur
 condition before attempting a common action ceiling. Then enclose process and
 nuisance action, the full corrected loss, and the strict nonlinear/supply and
-every-prefix inequalities. The quiet exported-word enclosure is reproducible;
-the moving float sync needs the complete addition/symmetrization enclosure.
+every-prefix inequalities. Both exported-word enclosures now include the
+complete addition/symmetrization operation.
+
+The next falsifiable history experiment must propagate a joint nominal-mean
+and covariance bound from the actual zero-mean MEKF construction, through the
+proxy handoff, every correction, refinement and release. It must prove the
+quantitative force/field and gyro exclusions on that same history before
+bounding the full readout action. The first-prediction gyro increment is
+bounded by .0039051914291880918 rad from the true handoff state; extending
+this to an invariant history bound is open. An assumed nominal-state cap is
+not a substitute. For arithmetic, the completed sync factor is available;
+other operation defects and their prefix actions remain open.

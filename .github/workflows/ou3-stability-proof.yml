@@ -85,6 +85,8 @@ jobs:
         run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test
       - name: Audit carried source readout without promotion
         run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-readout.json
+      - name: Audit carried construction stress history without theorem promotion
+        run: python3 -m tools.stability.ou3_theorem.construction_history_diagnostic --output /tmp/ou3-construction.json
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
@@ -92,5 +94,6 @@ jobs:
           path: |
             /tmp/ou3-stability-evidence.json
             /tmp/ou3-source-readout.json
+            /tmp/ou3-construction.json
           retention-days: 7
           if-no-files-found: error

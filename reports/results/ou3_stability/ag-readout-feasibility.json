@@ -22,6 +22,20 @@
   ],
   "decimal_digits": 80,
   "fixture": "varying rational 21-state supplied word, correlated process factors and nonorthogonal resets",
+  "nominal_gyro_alias_nearby": [
+    {
+      "bias_transport_transverse_singular_value": "0.000000795648050981922077251851398081",
+      "turn_offset_rad": "0.001"
+    },
+    {
+      "bias_transport_transverse_singular_value": "7.95774588807984125853483475778e-10",
+      "turn_offset_rad": "0.000001"
+    },
+    {
+      "bias_transport_transverse_singular_value": "7.9577471533282519927849653177e-13",
+      "turn_offset_rad": "0.000000001"
+    }
+  ],
   "qualification": "OU3_AG_READOUT_FEASIBILITY_ONLY_V1",
   "shipping_history": false,
   "source_uniform_verified": false,

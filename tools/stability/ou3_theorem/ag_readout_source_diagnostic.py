@@ -32,6 +32,12 @@ def instrument(source):
         readout_prediction(F_AA, F_LL, Q_AA, Q_LL, trace_phi, (Q_bacc_*trace_qscale).eval());
     }
     apply_pending_aw_covariance_inflation_();''')
+    once('    apply_pending_aw_covariance_inflation_();\n    symmetrize_Pext_();   // Symmetry hygiene', '''    Eigen::Matrix<T,NX,NX> trace_before_sync;
+    if (recording) trace_before_sync = Pext;
+    apply_pending_aw_covariance_inflation_();
+    symmetrize_Pext_();   // Symmetry hygiene
+    if (recording) events.push_back(std::string("{\\"kind\\":\\"sync_completion\\",\\"before\\":")
+        +matrix_json(trace_before_sync)+",\\"after\\":"+matrix_json(Pext)+'}');''')
     once('        Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;',
          '        readout_sync(Delta);\n        Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;')
     once('    ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);',
@@ -82,6 +88,7 @@ def analyze(trace, dps=80):
         t = mp.eye(21)[:, :6]
         qmin, injection = mp.inf, mp.mpf(0)
         sync_skew = Fraction(0)
+        sync_rayleigh = Fraction(0)
         for e in trace['events']:
             kind = e['kind']
             if kind == 'prediction':
@@ -91,10 +98,15 @@ def analyze(trace, dps=80):
                 q[:6, :6], q[6:18, 6:18], q[18:, 18:] = mat(e['Q_AG']), mat(e['Q_LIN']), mat(e['Q_BA'])
                 qmin = min(qmin, min(mp.eigsy((q+q.T)/2, eigvals_only=True)))
             elif kind == 'sync':
-                f, q = mp.eye(21), mp.zeros(21)
-                q[15:18, 15:18] = mat(e['Q'])
                 sync_skew = max(sync_skew, max(abs(Fraction(e['Q'][i][j])-Fraction(e['Q'][j][i]))
                                                for i in range(3) for j in range(3)))
+                continue
+            elif kind == 'sync_completion':
+                exact_increment = completed_sync_increment(e)
+                sync_rayleigh = min(sync_rayleigh, min(
+                    (exact_increment[i][i]+exact_increment[j][j])/2-abs(exact_increment[i][j])
+                    for i in range(21) for j in range(i+1, 21)))
+                f, q = mp.eye(21), mat(exact_increment)
             elif kind == 'reset':
                 d = mat(e['d'])
                 x, y, z = d
@@ -147,6 +159,7 @@ def analyze(trace, dps=80):
                 'AG_action_minus_literal_covariance_lambda_min': fmt(min(mp.eigsy((action+action.T-p-p.T)/2, eigvals_only=True))),
                 'exported_Q_lambda_min': fmt(qmin), 'maximum_injection_rad': fmt(injection),
                 'exported_sync_asymmetry_exact': str(sync_skew),
+                'minimum_complete_sync_pair_Rayleigh_quotient_exact': str(sync_rayleigh),
                 'applied_rows': len(rows), 'events': len(sequence),
                 'source_uniform_verified': False, 'rigorous_enclosure': False}
 
@@ -184,11 +197,66 @@ def rational_upper_factor(matrix, bits=192):
     return [[v*roots[j] for j, v in enumerate(row)] for row in l]
 
 
+def completed_sync_increment(event):
+    """Exact change from symmetric pre-state through literal add/symmetry.
+
+    The pre-state may itself be asymmetric from prediction arithmetic.
+    Its antisymmetric part is recorded, not interpreted as a covariance.
+    No assertion about the prediction's rounding error follows here.
+    """
+    before = [[Fraction(x) for x in row] for row in event['before']]
+    after = [[Fraction(x) for x in row] for row in event['after']]
+    from .matrix_certificates import transpose
+    if len(before) != 21 or any(len(row) != 21 for row in before):
+        raise ValueError('full 21-state operation boundary required')
+    if len(after) != 21 or any(len(row) != 21 for row in after) or after != transpose(after):
+        raise ValueError('literal completed covariance must be symmetric')
+    return [[after[i][j]-(before[i][j]+before[j][i])/2
+             for j in range(21)] for i in range(21)]
+
+
+def signed_upper_factor(matrix):
+    """Congruence upper factor of an arbitrary exact symmetric defect.
+
+    Signed rank-one/two Schur elimination retains all off-diagonal terms.
+    Keep positive terms, drop negative terms, and round only positive square
+    roots upward. This is an arithmetic-defect envelope, never a scalar
+    contraction reduction or a repair of the shipping covariance.
+    """
+    from .matrix_certificates import add, is_psd, matmul, transpose
+    original = [[Fraction(x) for x in row] for row in matrix]
+    n = len(original)
+    if not n or any(len(row) != n for row in original) or original != transpose(original):
+        raise ValueError('symmetric square defect required')
+    a = [row[:] for row in original]
+    positive = []
+    while any(any(row) for row in a):
+        pivots = [i for i in range(n) if a[i][i]]
+        if pivots:
+            j = max(pivots, key=lambda i: abs(a[i][i]))
+            terms = [(a[j][j], [a[i][j]/a[j][j] for i in range(n)])]
+        else:
+            i, j = next((i, j) for i in range(n) for j in range(i+1, n) if a[i][j])
+            b = a[i][j]
+            sign = 1 if b > 0 else -1
+            terms = [(Fraction(1, 2)/abs(b), [a[k][i]+sign*a[k][j] for k in range(n)]),
+                     (-Fraction(1, 2)/abs(b), [a[k][i]-sign*a[k][j] for k in range(n)])]
+        for weight, column in terms:
+            if weight > 0:
+                root = rational_upper_factor([[weight]])[0][0]
+                positive.append([root*x for x in column])
+            a = [[a[i][j]-weight*column[i]*column[j] for j in range(n)] for i in range(n)]
+    factor = transpose(positive) if positive else [[Fraction(0)] for _ in range(n)]
+    if not is_psd(add(matmul(factor, transpose(factor)), original, -1)):
+        raise ArithmeticError('signed factor did not enclose literal operation')
+    return factor
+
+
 def enclose_exported_word(trace):
     """Exact frozen-coefficient audit after the high-precision feasibility run.
 
-    Every literal reset and sync is retained. Noise factors enclose
-    the exported Q/R operands upward, retaining the correlated LIN block.
+    Every literal reset is retained. Q/R factors retain the correlated LIN
+    block; complete literal sync/symmetry defects have signed upper factors.
     Float32 operation errors and coverage of real histories remain open.
     """
     from .ag_readout import exact_readout, readout_action
@@ -196,9 +264,14 @@ def enclose_exported_word(trace):
     from .nuisance_upper_certificate import bounds
     f = Fraction
     events = []
+    completed = 0
+    pending_prediction = False
     for e in trace['events']:
         kind = e['kind']
         if kind == 'prediction':
+            if pending_prediction:
+                raise ValueError('missing sync/symmetry boundary before next prediction')
+            pending_prediction = True
             transition, factor = identity(21), [[f(0)]*21 for _ in range(21)]
             for start, name in ((0, 'AG'), (6, 'LIN')):
                 block = e['F_'+name]
@@ -212,8 +285,12 @@ def enclose_exported_word(trace):
                     factor[start+i][start:start+len(row)] = row
             events.append({'kind': 'prediction', 'F': transition, 'U': factor})
         elif kind == 'correction':
+            if pending_prediction:
+                raise ValueError('missing sync/symmetry boundary before correction')
             events.append({'kind': kind, 'H': e['H'], 'V': rational_upper_factor(e['R'])})
         elif kind == 'reset':
+            if pending_prediction:
+                raise ValueError('missing sync/symmetry boundary before reset')
             x, y, z = [f(row[0]) for row in e['d']]
             reset = identity(21)
             cross = [[0, -z, y], [z, 0, -x], [-y, x, 0]]
@@ -222,12 +299,22 @@ def enclose_exported_word(trace):
                     reset[i][j] += cross[i][j]/2
             events.append({'kind': kind, 'G': reset})
         elif kind == 'sync':
-            block = rational_upper_factor(e['Q'])
-            factor = [[f(0)]*3 for _ in range(21)]
-            factor[15:18] = block
+            if not pending_prediction:
+                raise ValueError('sync operand outside a prediction boundary')
+            # Keep the raw operand in provenance, but charge the complete
+            # literal operation exactly once at its following boundary.
+            continue
+        elif kind == 'sync_completion':
+            if not pending_prediction:
+                raise ValueError('sync completion without a prediction')
+            pending_prediction = False
+            factor = signed_upper_factor(completed_sync_increment(e))
             events.append({'kind': 'prediction', 'F': identity(21), 'U': factor})
+            completed += 1
         else:
             raise ValueError('unrecorded source operation')
+    if pending_prediction or completed != sum(e['kind'] == 'prediction' for e in trace['events']):
+        raise ValueError('every prediction needs its complete sync/symmetry boundary')
     upper = [[f(0)]*15 for _ in range(15)]
     for i, value in enumerate(x for x in bounds()[-1] for _ in range(3)):
         upper[i][i] = value
@@ -250,6 +337,8 @@ def enclose_exported_word(trace):
             'exported_coefficients_sha256': hashlib.sha256(json.dumps(trace, sort_keys=True).encode()).hexdigest(),
             'AG_root_cancelled_exactly': True, 'correlated_Q_R_enclosed_by_rational_factors': True,
             'literal_root_nuisance_comparison_verified': True,
+            'complete_sync_operation_enclosed': True, 'sync_boundaries_verified': completed,
+            'all_other_float_operations_enclosed': False,
             'full_matrix_action_ceiling_verified': True, 'action_ceiling': encoded(ceiling),
             'literal_terminal_AG_covariance_below_ceiling': True,
             'scope': 'one exported float coefficient sequence interpreted as exact rationals',
@@ -281,19 +370,8 @@ def run(eigen, headings=('0', '0.001', '0.000001', 'wave')):
                           'live_step': observed['live_step'], 'refined_step': observed['refined_step'],
                           'active_step': observed['active_step'],
                           'literal_terminal_parity': True, **analyze(observed)})
-            if heading == '0':
+            if heading in ('0', 'wave'):
                 cases[-1]['exact_exported_word_enclosure'] = enclose_exported_word(observed)
-            elif heading == 'wave':
-                # The attempted generalization found nonsymmetric literal
-                # float sync operands. Do not silently symmetrize/project
-                # them into a different covariance operation for a proof.
-                cases[-1]['exact_exported_word_enclosure'] = {
-                    'verified': False,
-                    'failed_condition': ('exported sync Q must equal Q^T before PSD factor enclosure'
-                                         if cases[-1]['exported_sync_asymmetry_exact'] != '0' else None),
-                    'maximum_asymmetry_exact': cases[-1]['exported_sync_asymmetry_exact'],
-                    'requires': 'enclose the complete float addition/symmetrization operation',
-                    'source_uniform_verified': False}
     return {'qualification': 'OU3_CARRIED_SOURCE_READOUT_DIAGNOSTIC_V1',
             'shipping_header_sha256': hashlib.sha256(source.encode()).hexdigest(),
             'decimal_digits': 80, 'profile': 'construction through wrapper release; 225 to 225.32 s',

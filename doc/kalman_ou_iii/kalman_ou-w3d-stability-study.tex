@@ -24,7 +24,7 @@
 \AtBeginEnvironment{equation}{\small}
 \AtBeginEnvironment{align}{\small}
 
-\title{Stability Study of an Adaptive OU-Regularized Quaternion MEKF for Marine Inertial Wave Estimation}
+\title{Stability Study of an Adaptive OU-Regularized Quaternion MEKF for Marine Inertial Wave Estimation (draft)}
 \author{Mikhail S. Grushinskiy}
 
 \begin{document}
@@ -1008,13 +1008,37 @@ This coefficient family is not proved reachable or magnetically serviced.
 The missing uniform argument must use the carried nominal mean, innovation
 and reset recursion to exclude sustained near-null transport.
 
+Innovation bounds alone also fail on a regular-root relaxation: quiet
+truth, zero nominal nuisance means, $h=1/200$ s and
+$\hat b_g=-400\pi e_z$ produce one complete nominal turn per sample.
+All innovations vanish, while the literal integral helper gives
+$R(h)=I$ and $B(h)=h e_z e_z^{\mathsf T}$. Both transverse gyro columns
+are invisible and preserved by the endpoint map: rank four and margin
+$-\mu$ against $\mu I_6$. Construction reachability and all-time magnetic
+service are not proved, so this is not a shipping counterexample.
+The missing nominal gyro bound must follow from construction, not from
+the physical bias bound.
+
 Native observer/control audits carry quiet and moving samples through
 construction, refinement and release with identical terminal state and
-covariance. Their 80-digit action maxima range from approximately 1199.061
-to 1450.253. An exact rational factor enclosure verifies the exported quiet
-word's full action matrix, including covariance sync. Finite replay and
-exported floating coefficients do not enclose every admitted history or
-establish float32 transfer; all uniform stability claims remain open.
+covariance. Their 80-digit action maxima are about 1199.061--1450.253;
+exact rational factors enclose both exported words. The complete literal
+sync/addition/symmetry defect $E=P_a-\operatorname{sym}(P_b)$ has a
+Rayleigh quotient $-2^{-44}$. Signed rank-one/two Schur elimination and
+upward factors of its positive terms give $UU^{\mathsf T}\succeq E$,
+verified in all 21 coordinates. Other float operations and source-uniform
+coverage remain open.
+
+A construction-to-600-s stress run uses
+$p=-(3/2)\sin(2t)(1,0,1)$, constant attitude, field $(45,0,45)$ and zero
+true biases. Squared displacement, velocity, acceleration, jerk and
+primitive-span bounds are $9/2,18,72,288,9/2$, within the physical limits.
+The wrapper reaches refinement/release, but finite 400--600-s tilt averages
+$8.21^\circ$ and nominal acceleration reaches $9.7764\,\mathrm{m/s^2}$.
+Thus neither six-degree entry nor an $8.8\,\mathrm{m/s^2}$ nominal cap
+follows from stage flags or physical bounds. This finite record does not
+certify all-time magnetic service or refute eventual capture. A joint
+mean/covariance enclosure from construction remains necessary.
 
 \subsection{Stationary A21 detectability}
 Quiet water does not by itself create an unobservable nondecaying mode in
@@ -1145,7 +1169,6 @@ covariance coercivity, nonlinear radius, supply, capture, bridge/release, and
 prefix certificates close. Finite simulations do not establish these
 source-uniform inequalities.
 
-\balance
 \section{Declared constants}
 Symbolic assumptions are separated from current numerical certification limits
 in Table~\ref{tab:limits}. A declared value is a testable deployment

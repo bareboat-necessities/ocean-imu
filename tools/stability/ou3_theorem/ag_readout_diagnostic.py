@@ -59,6 +59,11 @@ def diagnostic(dps=80):
         return {'qualification': 'OU3_AG_READOUT_FEASIBILITY_ONLY_V1', 'decimal_digits': dps,
                 'fixture': 'varying rational 21-state supplied word, correlated process factors and nonorthogonal resets',
                 'AG_trial_ceiling_max': mp.nstr(max(mp.eigsy(bound, eigvals_only=True)), 24),
+                'nominal_gyro_alias_nearby': [
+                    {'turn_offset_rad': delta,
+                     'bias_transport_transverse_singular_value': mp.nstr(
+                         2*abs(mp.sin(mp.mpf(delta)/2))/((2*mp.pi+mp.mpf(delta))*200), 30)}
+                    for delta in ('0.001', '0.000001', '0.000000001')],
                 'cases': results, 'source_uniform_verified': False,
                 'shipping_history': False, 'theorem_closed': False}
 

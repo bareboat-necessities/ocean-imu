@@ -7,7 +7,7 @@
       "AG_root_residual_diagnostic": "2.20391090224091631615053e-80",
       "active_step": 24064,
       "applied_rows": 225,
-      "events": 217,
+      "events": 278,
       "exact_exported_word_enclosure": {
         "AG_root_cancelled_exactly": true,
         "action_ceiling": [
@@ -60,8 +60,10 @@
             "13/1000"
           ]
         ],
+        "all_other_float_operations_enclosed": false,
+        "complete_sync_operation_enclosed": true,
         "correlated_Q_R_enclosed_by_rational_factors": true,
-        "exported_coefficients_sha256": "c8dd7bf1c27b487fbf42c84d8ea7e33a80ad27c1c4ad67624562f58ebba2349d",
+        "exported_coefficients_sha256": "5afa751e2be232e4dfa65a27eb214b447fceb67afb93e59a7d046b01e707ffc7",
         "full_matrix_action_ceiling_verified": true,
         "literal_root_nuisance_comparison_verified": true,
         "literal_terminal_AG_covariance_below_ceiling": true,
@@ -69,6 +71,7 @@
         "real_arithmetic_shipping_trajectory_enclosed": false,
         "scope": "one exported float coefficient sequence interpreted as exact rationals",
         "source_uniform_verified": false,
+        "sync_boundaries_verified": 64,
         "theorem_closed": false
       },
       "exported_Q_lambda_min": "3.8760376117203192925657e-25",
@@ -85,18 +88,19 @@
       "literal_terminal_parity": true,
       "live_step": 18051,
       "maximum_injection_rad": "0.0",
+      "minimum_complete_sync_pair_Rayleigh_quotient_exact": "0",
       "raw_AG_array_sigma_min": "7.1517206581093855794008",
       "refined_step": 24064,
       "rigorous_enclosure": false,
       "source_uniform_verified": false
     },
     {
-      "AG_action_lambda_max": "1199.06222140196348559817",
+      "AG_action_lambda_max": "1199.06222140196348559763",
       "AG_action_minus_literal_covariance_lambda_min": "0.0000530817882176614140999911",
       "AG_root_residual_diagnostic": "2.45869600022635386275059e-80",
       "active_step": 24064,
       "applied_rows": 225,
-      "events": 217,
+      "events": 278,
       "exported_Q_lambda_min": "3.8760376117203192925657e-25",
       "exported_sync_asymmetry_exact": "0",
       "factor_selected_rows": [
@@ -111,6 +115,7 @@
       "literal_terminal_parity": true,
       "live_step": 18051,
       "maximum_injection_rad": "5.52129730824191256033373e-11",
+      "minimum_complete_sync_pair_Rayleigh_quotient_exact": "0",
       "raw_AG_array_sigma_min": "7.15172065810938557990398",
       "refined_step": 24064,
       "rigorous_enclosure": false,
@@ -122,7 +127,7 @@
       "AG_root_residual_diagnostic": "1.49899666080012950241163e-80",
       "active_step": 24064,
       "applied_rows": 225,
-      "events": 217,
+      "events": 278,
       "exported_Q_lambda_min": "3.8760376117203192925657e-25",
       "exported_sync_asymmetry_exact": "0",
       "factor_selected_rows": [
@@ -137,24 +142,84 @@
       "literal_terminal_parity": true,
       "live_step": 18051,
       "maximum_injection_rad": "5.41552784875335563308241e-14",
+      "minimum_complete_sync_pair_Rayleigh_quotient_exact": "0",
       "raw_AG_array_sigma_min": "7.1517206581093855794008",
       "refined_step": 24064,
       "rigorous_enclosure": false,
       "source_uniform_verified": false
     },
     {
-      "AG_action_lambda_max": "1450.25286111171149928534",
-      "AG_action_minus_literal_covariance_lambda_min": "0.0000667085936421980337740127",
+      "AG_action_lambda_max": "1450.25286111171170529768",
+      "AG_action_minus_literal_covariance_lambda_min": "0.0000667085936652326410230305",
       "AG_root_residual_diagnostic": "3.33702049455332223581893e-80",
       "active_step": 24016,
       "applied_rows": 228,
-      "events": 219,
+      "events": 280,
       "exact_exported_word_enclosure": {
-        "failed_condition": "exported sync Q must equal Q^T before PSD factor enclosure",
-        "maximum_asymmetry_exact": "1/562949953421312",
-        "requires": "enclose the complete float addition/symmetrization operation",
+        "AG_root_cancelled_exactly": true,
+        "action_ceiling": [
+          [
+            "1121419/1000",
+            "-4741/1000",
+            "140171/250",
+            "-104283/500",
+            "201/200",
+            "-52139/500"
+          ],
+          [
+            "-4741/1000",
+            "3/100",
+            "-237/100",
+            "441/500",
+            "-1/250",
+            "441/1000"
+          ],
+          [
+            "140171/250",
+            "-237/100",
+            "140171/500",
+            "-104279/1000",
+            "503/1000",
+            "-52137/1000"
+          ],
+          [
+            "-104283/500",
+            "441/500",
+            "-104279/1000",
+            "389/10",
+            "-187/1000",
+            "4861/250"
+          ],
+          [
+            "201/200",
+            "-1/250",
+            "503/1000",
+            "-187/1000",
+            "3/200",
+            "-47/500"
+          ],
+          [
+            "-52139/500",
+            "441/1000",
+            "-52137/1000",
+            "4861/250",
+            "-47/500",
+            "1217/125"
+          ]
+        ],
+        "all_other_float_operations_enclosed": false,
+        "complete_sync_operation_enclosed": true,
+        "correlated_Q_R_enclosed_by_rational_factors": true,
+        "exported_coefficients_sha256": "66e364e485ea8aa7e41e6b0d082a1f1d63427b99561f05e77d3ae0401ba6d8fb",
+        "full_matrix_action_ceiling_verified": true,
+        "literal_root_nuisance_comparison_verified": true,
+        "literal_terminal_AG_covariance_below_ceiling": true,
+        "qualification": "OU3_EXPORTED_WORD_ACTION_ENCLOSURE_V1",
+        "real_arithmetic_shipping_trajectory_enclosed": false,
+        "scope": "one exported float coefficient sequence interpreted as exact rationals",
         "source_uniform_verified": false,
-        "verified": false
+        "sync_boundaries_verified": 64,
+        "theorem_closed": false
       },
       "exported_Q_lambda_min": "7.3446428709622186857148e-25",
       "exported_sync_asymmetry_exact": "1/562949953421312",
@@ -170,6 +235,7 @@
       "literal_terminal_parity": true,
       "live_step": 6368,
       "maximum_injection_rad": "0.00000365716816678833804792225",
+      "minimum_complete_sync_pair_Rayleigh_quotient_exact": "-1/17592186044416",
       "raw_AG_array_sigma_min": "6.27822399715465130649022",
       "refined_step": 24016,
       "rigorous_enclosure": false,
