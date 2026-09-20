@@ -1,17 +1,11 @@
-# The stated motion domain does not imply six-degree physical capture
+# Why the acceleration-jerk condition is needed
 
-The controlling failure is now a proved obstruction to the **capture and
-retention** part of the requested theorem. It is not a failure of the nominal
-Kalman energy identity, a claim of divergence, or a quiet-water exclusion.
-Both histories below have nonzero motion. They satisfy the declared all-time
-motion, bias and point-sampled sensor bounds. The common regular
-real-arithmetic shipping execution also satisfies the actual one-second
-magnetic-service inequality, with its carried covariance and corrections.
-Nevertheless its physical tilt error stays at `acos(3/5)`, about 53.13 degrees.
-
-The six-degree target is the current
-`a21_retained_domain.tilt_error_max_rad` in `constants.json`. No physical
-assumption, shipping operation, or quality threshold is changed here.
+This is the exact obstruction for the **previous domain without a jerk
+bound**. The current MARINE MOTION condition excludes both witnesses because
+their jerk exceeds 10500 m/s^3. See `ou3-sampling-fidelity.md` for the adopted
+100 m/s^3 limit and its positive proof consequences. The unchanged shipping
+regression remains a check of the old-domain execution, not a current-domain
+capture counterexample. Conditional local stability was never refuted.
 
 ## 1. Two continuous physical histories, with identical sensor samples
 
@@ -57,7 +51,7 @@ unsaturated and have zero physical measurement residual in the stated
 point-sample model. Temperature can remain fixed at its compensation reference.
 
 A proven sensor integration/anti-alias model could exclude this construction.
-The present formal premises do not contain one. This is a counterexample to
+The previous formal premises contained neither such a model nor a jerk bound. This is a counterexample to
 that formal domain, not a claim that a vessel normally executes a 200 Hz wave
 or that an unmodelled real sensor has a flat frequency response at 200 Hz.
 
@@ -196,37 +190,18 @@ This information obstruction is independent of arithmetic precision.
 The source-uniform service certificate here is real arithmetic; no infinite
 float32 covariance/clock-totality claim is substituted for it.
 
-This **refutes the stated universal capture obligation** under the current
-point-sample assumptions. It does not refute conditional local A21 stability,
+This **refutes the stated universal capture obligation** under the previous
+point-sample assumptions without a jerk bound. It does not refute conditional local A21 stability,
 prove covariance divergence, or show that a practical bound of arbitrary size
 is impossible. The nominal filter can be contractive around its own level
 trajectory while the admitted physical truth remains far from it. The prior
 stationary detectability and nuisance covariance results remain valid.
 
-## 5. Concrete missing premise; not silently adopted
+## 5. Adopted repair and its scope
 
-Deleting exactly quiet motion does not remove these two nonzero histories.
-A quantitative connection between sampled acceleration and physical velocity
-increments is needed before continuous marine balance can prove sampled
-attitude diversity or capture. For example, on every IMU cell require
-
-`||h_k*a(t_k) - integral_[t_k,t_(k+1)] a(t) dt|| <= eta*h_k`.
-
-Then, for any window made of complete cells and a constant world field,
-
-`(1/T)||sum h_k*(a(t_k)-g) x B||`
-`>= g*B_horizontal_min - (2*V_max/T+eta)*B_max`.
-
-This follows directly by summing the cell errors and using
-`integral a = Delta v`. A physical bound `||a'||<=J` suffices with
-`eta=J*h_max/2`. As a concrete **unadopted** example, `J=100 m/s^3` gives
-`eta=.3 m/s^2`; the displayed diversity lower bound at T=8 s is 21.47475,
-strictly positive. The counterexample has cell error per unit time equal
-to `2g/sqrt(5)`, and is excluded by this condition.
-
-This repair still needs physical/sensor qualification and transfer from
-physical force to the retained shipping trajectory; it does not itself close
-AG loss, nonlinear retention, or the complete theorem. This premise would
-narrow the current physical-history contract and needs physical justification.
-Neither it nor its illustrative numerical value has been inserted into the
-admitted domain or claimed as qualified.
+The current contract requires locally absolutely continuous physical
+acceleration with jerk <=100 m/s^3. Both witnesses violate this condition.
+`ou3-sampling-fidelity.md` proves its quantitative consequences, including a
+sharper endpoint-weighted bound than left sampling alone. The remaining
+capture, full-state loss, nonlinear retention and arithmetic obligations
+are still open under that revised domain.

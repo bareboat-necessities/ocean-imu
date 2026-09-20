@@ -32,20 +32,18 @@
 
 \begin{abstract}
 This study analyzes deterministic stability of the shipping OU--III marine
-estimator. An exact sampling counterexample shows that the declared motion,
-bias and magnetic-service assumptions do not imply capture into the stated
-six-degree physical tilt region. Two nonzero continuous motions satisfy all
-motion envelopes, have zero bias and point-sample sensor error, and produce
-identical stationary measurements. The estimator completes startup and
-active-bias release but retains 53.13-degree physical tilt error. A rational
-invariant covariance comparison proves actual magnetic service on every tail
-window; missing magnetic corrections do not explain the obstruction.
-Excluding quiet water would not remove these histories. Conditional local
-results are retained: the complete covariance-energy identity, corrected LIN
-path action, joint lower covariance and nuisance upper covariance. These do
-not resolve physical capture. A quantitative physical-to-sampled acceleration
-condition is derived as a possible additional premise, without silently
-adopting it or claiming the remaining nonlinear and arithmetic theorem.
+estimator. The marine domain includes locally absolutely continuous physical
+acceleration with jerk bounded by $100\,\mathrm{m/s^3}$. A sharp nonuniform
+sampling estimate excludes the previously demonstrated 200-Hz ambiguity and
+all fixed-attitude stationary-sample aliases of at least six degrees over
+32-second windows. A joint three-dimensional vector-information bound
+retains accelerometer and magnetic coupling and both magnetic residual
+limits. Physical acceleration mismatch contributes a certified supply to
+the literal OU prediction in the full covariance metric, without imposing an
+OU prior on truth. The complete covariance-energy identity, corrected LIN
+path action, joint lower covariance and nuisance upper covariance are
+retained. General capture, full corrected-state dissipativity, nonlinear
+retention and arithmetic transfer remain unproved.
 \end{abstract}
 
 \section{Theorem scope}
@@ -70,6 +68,15 @@ body to world and satisfies $\dot R=R[\omega]_\times$ almost everywhere. Require
  \norm{a(t)}&\le A_{\max},& \norm{\omega(t)}&\le\Omega_{\max}.
  \label{eq:pointwise}
 \end{align}
+Require also local absolute continuity of $a$ and
+\begin{equation}
+ \norm{\dot a(t)}\le J_{\max}=100\,\mathrm{m/s^3}\quad\text{a.e.}
+ \label{eq:jerk}
+\end{equation}
+This is a selected continuous-history certification limit, not a claim that
+every installation is qualified. It caps acceleration change at
+$0.6\,\mathrm{m/s^2}$ over the longest admitted $0.006$-s sampling interval.
+It imposes no minimum motion amplitude or physical OU prior.
 Pointwise bounds are insufficient. Admission additionally requires
 \begin{equation}
  \boxed{\norm{\int_{t_1}^{t_2}p(\tau)\,d\tau}\le P_{\rm AC},
@@ -248,10 +255,10 @@ packets, rejected or invalid measurements, and saturation do not contribute.
 A maximum event gap alone is insufficient because frequent collinear
 sensitivities may remain rank deficient.
 
-\section{Sampling obstruction to physical capture}
+\section{Necessity of sampling regularity}
 \label{sec:capture-obstruction}
-\begin{theorem}[The declared six-degree capture does not follow]
-Under the present point-sample sensor model and numerical limits, there
+\begin{theorem}[Obstruction without the jerk condition]
+If \eqref{eq:jerk} is omitted from the point-sample domain, there
 are two nonzero continuous histories satisfying the motion and bias bounds
 and the actual real-arithmetic magnetic-service condition
 \eqref{eq:mag-service}, for which the shipping execution never enters the
@@ -279,7 +286,7 @@ The acceleration amplitude is $2g/\sqrt5<8.8$. Using only $\pi>3$ gives
  \norm v&<0.00732,& \norm p&<6.10\times10^{-6},\nonumber\\
  \norm{q(t_2)-q(t_1)}&<1.02\times10^{-8}.
 \end{align}
-These satisfy all declared limits for every time. Displacement has zero
+These satisfy the remaining motion limits for every time. Displacement has zero
 DC and no physical coordinate is restarted. At every IMU sample $t_k=kh$,
 \begin{equation}
  R_\epsilon^\mathsf T(A_\epsilon-ge_z)=-ge_z,
@@ -379,29 +386,152 @@ is independent of arithmetic precision. The all-time service comparison
 above concerns regular real arithmetic, not infinite float32 clock or
 covariance totality. It neither asserts covariance divergence nor refutes
 conditional local A21 stability or a practical radius of arbitrary size.
-It is a counterexample to the formal point-sample domain, not a claim that
+It is a counterexample to the domain without \eqref{eq:jerk}, not a claim that
 real vessels normally execute 200 Hz waves or that an actual unmodelled
 sensor has flat response at that frequency.
 
-\subsection{A missing quantitative sampling premise}
-Excluding quiet water cannot remove these two nonzero histories. A possible
-additional condition, not adopted here, is cell-integral fidelity
+The witness has jerk amplitude $400\pi\,2g/\sqrt5>10500\,\mathrm{m/s^3}$,
+so it is excluded by \eqref{eq:jerk}. The positive consequences of that
+condition enter physical disturbance supply and observability below.
+
+\section{Sampling fidelity and joint vector information}
+\begin{lemma}[Sharp nonuniform sampling bound]
+For complete cells of lengths $h_k\le h_{\max}$ and total length $T$,
+let $\alpha_i$ be the normalized trapezoidal endpoint weights. Then
 \begin{equation}
- \left\|h_k a(t_k)-\int_{t_k}^{t_{k+1}}a(t)\,dt\right\|\le\eta h_k.
- \label{eq:cell-fidelity}
+ \norm{\sum_i\alpha_i a(t_i)}
+ \le\frac{2V_{\max}}T+\frac{J_{\max}}{4T}\sum_k h_k^2
+ \le\frac{11}T+0.15.
+ \label{eq:sampled-mean}
 \end{equation}
-On a window of complete cells of total length $T$, summation and
-$\int a=\Delta v$ then give, for constant world field,
+\end{lemma}
+\begin{proof}
+Local absolute continuity permits integration by parts on each cell:
 \begin{equation}
- \fitcol{\frac1T\left\|\sum_kh_k(a(t_k)-ge_z)\times B\right\|
- \ge gB_{h,\min}-(2V_{\max}/T+\eta)B_{\max}.}
+ \frac h2(a(0)+a(h))-\int_0^h a(s)\,ds
+ =\int_0^h(s-h/2)\dot a(s)\,ds.
 \end{equation}
-A bound $\norm{\dot a}\le J$ implies \eqref{eq:cell-fidelity} with
-$\eta=Jh_{\max}/2$. The illustrative, unqualified value $J=100$ gives
-$\eta=0.3$ and a positive bound $21.47475$ at $T=8$ s. The witness instead
-has cell error per unit time $2g/\sqrt5$. Physical or sensor qualification
-of such a premise and transfer to nominal corrected transport remain
-necessary; this additional inequality alone is not an end-to-end proof.
+The norm is at most $J_{\max}h^2/4$, attained by a triangular tent.
+Sum cells, use $\int a=\Delta v$, and divide by $T$. The weights are
+$h_0/(2T)$, $(h_{i-1}+h_i)/(2T)$ and $h_{N-1}/(2T)$; they sum to one.
+These are proof weights on existing samples, not a replacement integrator.
+\end{proof}
+
+\begin{proposition}[Exclusion of stationary-looking fixed-tilt aliases]
+If true $R$ is constant and every measured accelerometer sample on a
+complete-cell window of length $T\ge32$ s equals $-ge_z$, then true tilt is
+strictly less than six degrees under the declared residual bounds.
+\end{proposition}
+\begin{proof}
+The physical sensor equation gives
+$a_i=g(e_z-Re_z)-R(b_{a,i}+n_{a,i})$. Weighted averaging and
+\eqref{eq:sampled-mean} imply
+\begin{equation}
+ 2g\sin(\theta/2)\le11/T+0.15+B_a+N_a.
+\end{equation}
+At $T=32$ the right side is below $1.018917$. Using $\pi>3.14159$
+and $\sin x\ge x-x^3/6$ gives $2g\sin(\pi/60)>1.0264$.
+Thus $\theta<\pi/30$. The full admitted accelerometer residuals are charged.
+\end{proof}
+This excludes the entire stated alias class. It does not establish capture
+for moving true attitude or for arbitrary records of the adaptive observer.
+
+For constant world field $B$, define $u_i$ as the measured accelerometer
+vector transported by true $R(t_i)$ and divided by $g$. Define $b_j$ from
+actually applied magnetic measurements similarly, divided by $75$.
+Use the preceding $\alpha_i$ and any nonnegative magnetic weights
+$\beta_j$ summing to one. True transport is an analytical coordinate, not
+an estimator input. With both magnetic residual limits charged,
+\begin{align}
+ \norm{\bar u+e_z}&\le\epsilon=(11/T+0.15+B_a+N_a)/g,\nonumber\\
+ \norm{\bar b-B/75}&\le r=(5+2)/75.
+\end{align}
+Assume the declared $\norm B\le75$ and horizontal component at least $15$.
+Consider the full joint matrix
+\begin{equation}
+ G=\sum_i\alpha_i[u_i]_\times^{\mathsf T}[u_i]_\times
+   +\sum_j\beta_j[b_j]_\times^{\mathsf T}[b_j]_\times.
+\end{equation}
+Variance positivity implies
+$G\succeq[\bar u]_\times^{\mathsf T}[\bar u]_\times+
+[\bar b]_\times^{\mathsf T}[\bar b]_\times$.
+For any vectors $u,b$, the two smaller eigenvalues of their joint matrix
+have sum $\norm u^2+\norm b^2$ and product $\norm{u\times b}^2$;
+the remaining eigenvalue equals that sum. Also
+\begin{equation}
+ \norm{\bar u\times\bar b}\ge1/5-\epsilon-r(1+\epsilon).
+\end{equation}
+Consequently, on every complete-cell window with $T\ge64$ s,
+\begin{equation}
+ \boxed{G\succeq\gamma I_3,\quad
+ \gamma=\frac{(1/5-\epsilon-r(1+\epsilon))^2}
+ {(1+\epsilon)^2+(1+r)^2}>6.29714\,10^{-5}.}
+ \label{eq:physical-joint-info}
+\end{equation}
+No attitude block or cross term is discarded. For a common finite rotation
+$Q$ of angle $\varphi$ and unit axis $z$, Rodrigues' formula gives exactly
+\begin{align}
+ &\sum_i\alpha_i\norm{(Q-I)u_i}^2+
+ \sum_j\beta_j\norm{(Q-I)b_j}^2\nonumber\\
+ &\qquad=4\sin^2(\varphi/2)z^{\mathsf T}Gz
+ \ge4\gamma\sin^2(\varphi/2).
+\end{align}
+For row-dependent $Q_i$, reverse triangle inequality subtracts the norm of
+the stacked variations $(Q_i-Q_{\rm root})u_i$ and their magnetic counterparts
+from $2\sqrt\gamma|\sin(\varphi_{\rm root}/2)|$.
+These variations and nuisance cancellation still require the actual observer
+dynamics. The physical matrix \eqref{eq:physical-joint-info} is not the
+nominal innovation-weighted corrected loss in 21 coordinates.
+
+\section{Physical LIN forcing in the covariance metric}
+This supplies physical prediction disturbance to the same finite-error
+storage; it does not impose an OU law on marine truth. On each cell use the
+realized $\lambda=1/\tau_k$ and put $u=\dot a+\lambda a$.
+For physical $z=(v,p,S,a)$ the exact identity is
+\begin{equation}
+ z_{k+1}=F_{\rm ideal}z_k+d_{\rm ideal},\quad
+ d_{\rm ideal}=\int_0^h e^{A(h-s)}E_a u(s)\,ds.
+\end{equation}
+With $W=2\lambda\Sigma_{aw}$, weighted Cauchy--Schwarz proves the
+endpoint action inequality
+\begin{equation}
+ d_{\rm ideal}^{\mathsf T}Q_{\rm ideal}^{-1}d_{\rm ideal}
+ \le\int_0^h u^{\mathsf T}W^{-1}u\,ds=:\mathcal A_k.
+\end{equation}
+The source polynomial branch changes the physical mismatch to
+$d=d_{\rm ideal}+(F_{\rm ideal}-F_{\rm src})z_k$.
+The existing kernel comparison gives
+$Q_{\rm src}\succeq(1-\epsilon_Q)Q_{\rm ideal}$ and
+$\norm{(F_{\rm ideal}-F_{\rm src})z_k}_{Q_{\rm ideal}^{-1}}^2
+\le A_{\max}^2c_F$; only the acceleration column differs.
+Thus, for any $\eta>0$,
+\begin{equation}
+ d^{\mathsf T}Q_{\rm src}^{-1}d
+ \le\frac{(1+\eta)\mathcal A_k+(1+1/\eta)A_{\max}^2c_F}
+ {1-\epsilon_Q}.
+ \label{eq:physical-action}
+\end{equation}
+The closed-form branch has zero transition defect. All process cross
+covariance is retained. A finite uniform action bound follows from
+$\Sigma_{aw}\succeq0.05^2I$, $\lambda\in[1/12,50]$ and
+$\norm u\le J_{\max}+\lambda A_{\max}$; convexity puts the maximum of
+$(J_{\max}+\lambda A_{\max})^2/\lambda$ at an endpoint.
+The certificate uses $\eta=1/100$ and $h\ge0.004$ when summing defect terms.
+
+For the full literal prediction covariance
+$P^-=FPF^{\mathsf T}+Q_{\rm total}$, including its actual PSD sync,
+the quadratic minimum-energy identity now gives
+\begin{equation}
+ \fitcol{\norm{Fe+E_{\rm LIN}d}_{(P^-)^{-1}}^2
+ \le\norm e_{P^{-1}}^2+d^{\mathsf T}Q_{\rm src}^{-1}d.}
+ \label{eq:physical-full-metric-supply}
+\end{equation}
+Indeed the covariance of a sum minimizes the total root/process quadratic
+energy over all decompositions of that sum; choose the displayed $e,d$ and
+zero other process inputs. This preserves full root cross covariance and is
+an algebraic comparison, not a stochastic hypothesis on the physical motion.
+Strict complete-word loss, nonlinear operations, prefix retention and target
+arithmetic must still be composed with this prediction supply.
 
 \section{Single shipping proof path}
 The requested theorem uses
@@ -417,9 +547,9 @@ capture argument would require, for each execution and initial state,
 \begin{equation}
  \boxed{T_c=T_c(h,x_0)<\infty.}
 \end{equation}
-No common finite startup deadline is assumed. Section~\ref{sec:capture-obstruction}
-shows that the present domain fails this requirement; the remaining tail
-arguments are conditional. Live intervals preceding the
+No common finite startup deadline is assumed. The jerk condition removes
+the obstruction of Section~\ref{sec:capture-obstruction}; general capture
+under the amended domain remains open, so the tail arguments are conditional. Live intervals preceding the
 required magnetic information remain part of the finite pre-certified prefix.
 At tail entry the proof inherits, without reseeding, the actual estimator
 state, full covariance, bias estimates, physical bias histories, frontend and
@@ -852,12 +982,11 @@ magnetic information. The formulation excludes permanent wave-coordinate
 offsets without excluding quiet water, treats total residual bias independently
 of estimator priors, and uses one prediction equation across held and active
 accelerometer-bias modes. End-to-end regional practical stability remains
-unproved. The present point-sample assumptions cannot support the declared
-six-degree capture: the indistinguishable nonzero histories prove a physical
-information obstruction even with informative magnetic service. Conditional
-local dissipativity remains a separate open task. A quantitatively qualified
-connection between continuous physical acceleration and its samples is needed
-before the positive construction-to-retention claim can proceed.
+unproved. The adopted physical jerk condition excludes the old sampling
+ambiguity and yields quantitative sampling fidelity, joint vector information
+and full-metric physical prediction supply. The remaining bridge is the
+actual corrected 21-state loss, followed by capture, nonlinear retention and
+arithmetic transfer on the same persistent shipping execution.
 
 \section*{Acknowledgments and disclosure}
 This work was prepared with supervised assistance from artificial intelligence

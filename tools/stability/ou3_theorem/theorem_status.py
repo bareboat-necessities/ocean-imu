@@ -4,6 +4,10 @@ from __future__ import annotations
 def status_report() -> dict:
     obligations={
         "physical_contract_formulation":True,
+        "jerk_to_sampled_acceleration_fidelity":True,
+        "constant_attitude_stationary_alias_exclusion":True,
+        "joint_physical_vector_information":True,
+        "physical_LIN_prediction_metric_supply":True,
         "same_execution_linkage":True,
         "shipping_implementation_provenance":True,
         "constant_nonzero_wave_displacement_rejection":True,
@@ -59,7 +63,7 @@ def status_report() -> dict:
                       "finite reference refinement","H18-to-A21 release",
                       "recurring magnetically informed A21 tail","regional practical stability"],
         "certified_capture_time":None,
-        "required_capture_time":"history dependent T_c(h,x_0) < infinity; refuted for the declared six-degree region under the current point-sample domain",
+        "required_capture_time":"history dependent T_c(h,x_0) < infinity; open under the amended acceleration-jerk domain",
         "parallel_no_magnetometer_stability_path":False,
         "no_heading_service_result_role":"necessity lemma only",
         "shipping_filter_changed_for_proof":False,
@@ -67,13 +71,15 @@ def status_report() -> dict:
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
         "capture_obstruction":{
-            "declared_six_degree_capture_refuted":True,
+            "old_domain_six_degree_capture_refuted":True,
+            "old_witness_admitted_by_current_contract":False,
             "both_witness_histories_have_nonzero_motion":True,
             "all_time_real_arithmetic_magnetic_service_verified":True,
             "conditional_local_A21_stability_refuted":False,
             "shipping_divergence_claimed":False,
-            "new_physical_assumption_adopted":False,
+            "new_physical_assumption_adopted":True,
+            "sampling_certificate":"sampling-fidelity.json",
             "certificate":"sampled-capture-obstruction.json",
         },
-        "next_controlling_obligation":"The present point-sample motion domain does not imply finite capture into the declared six-degree region. Two nonzero bounded continuous motions produce identical stationary samples, meet all-time actual magnetic service, and retain 53.13-degree physical tilt error. Excluding quiet water cannot remove this witness. A quantitatively qualified sampling-fidelity premise or a changed target is necessary before continuing the positive end-to-end claim. Neither is adopted. Conditional full AG covariance/loss, nonlinear supply, retention and arithmetic remain unproved.",
+        "next_controlling_obligation":"The adopted locally absolutely continuous acceleration with jerk <=100 excludes the old sampling witness and all constant-attitude stationary-sample aliases of >=6 degrees over 32 s. Joint 3-D physical vector information and full-metric LIN prediction supply are proved. Transfer to actual nominal corrected 21-state transport, full AG covariance/loss, nonlinear capture and retention, and arithmetic remain open; these partial results are not full-state dissipativity.",
     }

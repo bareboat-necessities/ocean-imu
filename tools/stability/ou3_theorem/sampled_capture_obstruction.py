@@ -1,4 +1,4 @@
-"""All-time sampling ambiguity obstructing the declared six-degree capture.
+"""All-time sampling ambiguity in the previous contract without a jerk bound.
 
 This is an analytic continuous-history construction, not a finite simulation.
 The 2x2 certificate discharges the actual magnetic-service premise on its
@@ -110,7 +110,7 @@ def witness_certificate():
     return {
         'qualification': 'OU3_SAMPLED_PHYSICAL_CAPTURE_OBSTRUCTION_V1',
         'verified': True,
-        'scope': 'declared six-degree physical tilt capture under regular real-arithmetic shipping execution',
+        'scope': 'previous contract without acceleration-jerk bound; regular real-arithmetic shipping execution',
         'sample_period_s': str(h),
         'physical_frequency_hz': '200',
         'body_to_world_rotation_plus': encoded(rotation),
@@ -125,8 +125,10 @@ def witness_certificate():
         'both_histories_nonzero_motion': True,
         'same_physical_history_across_all_words': True,
         'service': service_certificate(),
-        'declared_six_degree_eventual_capture_refuted': True,
+        'old_domain_six_degree_eventual_capture_refuted': True,
+        'admitted_by_current_jerk_contract': False,
+        'jerk_squared_lower': str(omega_lower**2*amplitude_squared),
         'conditional_local_A21_stability_refuted': False,
         'filter_divergence_claimed': False,
-        'new_physical_assumption_adopted': False,
+        'new_physical_assumption_adopted': True,
     }

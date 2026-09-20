@@ -31,6 +31,7 @@ A certified tail inherits the actual estimator state, covariance, bias estimates
 ### Physical-history rules
 
 - Vessel displacement is the wave coordinate about a local equilibrium/reference. Position, velocity, acceleration, attitude, and angular rate come from one continuous history.
+- Physical acceleration is locally absolutely continuous with `||da/dt|| <= 100 m/s^3` almost everywhere on the same history. This sampling-fidelity condition does not impose a minimum wave amplitude or replace the physical acceleration with the estimator OU prior.
 - The displacement primitive is globally bounded on every admitted continuation. A permanent nonzero displacement DC component is inadmissible; quiet water is admissible.
 - A local-equilibrium decomposition must not remove physical acceleration seen by the IMU.
 - Accelerometer and gyroscope residual biases are separate bounded, rate-bounded physical histories. Their sampled successors are constrained by their predecessors.

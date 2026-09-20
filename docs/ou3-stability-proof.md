@@ -4,18 +4,17 @@
 
 The shipping estimator is the object being analyzed. One persistent execution must simultaneously satisfy MARINE MOTION, IMU BIAS, and MAGNETIC SERVICE. Vessel motion, attitude, measurements, physical biases, frontend, tuner, covariance, acceptance state, scheduler, and estimator states belong to that same execution.
 
-**The present point-sample assumptions do not imply the declared six-degree
-physical capture.** The exact counterexample in
-`ou3-sampled-capture-obstruction.md` consists of two nonzero continuous marine
-histories with zero residual bias/noise and identical stationary sensor
-samples. The literal estimator completes startup and A21 release, meets
-every-window actual magnetic service in real arithmetic, and remains level
-with 53.13-degree physical tilt error. Conditional local stability is not
-refuted. No quiet-water exclusion or new physical premise is adopted.
+The adopted acceleration-jerk condition excludes the old point-sample capture
+obstruction. The quantitative sampling, constant-attitude alias exclusion,
+joint physical vector information and literal LIN prediction-supply proofs
+are in `ou3-sampling-fidelity.md`. They do not yet prove general physical
+capture or the complete corrected 21-state loss. The previous-domain
+counterexample is retained in `ou3-sampled-capture-obstruction.md` to show why
+the new assumption is necessary for this theorem path.
 
 ## MARINE MOTION
 
-The wave coordinate `p` is displacement about a local equilibrium/reference, with `v=dp/dt` and `a=dv/dt`. The same history supplies attitude and angular rate. In addition to pointwise limits, admission requires
+The wave coordinate `p` is displacement about a local equilibrium/reference, with `v=dp/dt` and `a=dv/dt`. The same history supplies attitude and angular rate. Physical acceleration is locally absolutely continuous and satisfies `||a_dot|| <= J_max = 100 m/s^3` almost everywhere. This is an all-time continuation requirement; finite sample differences do not certify it. In addition to pointwise limits, admission requires
 
 `|| integral_(t1)^(t2) p(tau) d tau || <= P_AC`
 

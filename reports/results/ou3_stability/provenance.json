@@ -70,7 +70,8 @@
     "a21_factorized_loss": "Root-whitened measurement and orthogonal-complement process loss rows are compressed by QR, retaining all 21 columns. Exact dense reference parity and singular nuisance range elimination are verified; whole-word factor error and source-uniform singular margin remain open.",
     "a21_nuisance_upper": "After 17 s of default regular A21 operation, a causal three-S-observation trial cancels the arbitrary neutral root and bounds LIN/BA covariance above with all nuisance cross blocks. Same realized PSD-sync increments are used in the comparison. AG6 upper covariance and full loss remain open.",
     "a21_stationary_detectability": "At the stationary A21 nominal solution, the only nondecaying prediction eigenvalue is 1; stable AW/BA components vanish in its eigenvectors, then S and nonparallel gravity/magnetic observations kill the remaining neutral vector. This is not a uniform varying-history or nonlinear stability theorem.",
-    "sampled_physical_capture_obstruction": "Two nonzero continuous motions meet the current point-sample motion/bias domain and yield identical level input. Literal startup/refinement/A21 release preserves level means. Exact invariant heading covariance and root innovation information certify actual magnetic service on every real-arithmetic tail window (>1 even about true down). Physical tilt remains acos(3/5), refuting universal entry into the declared six-degree region. Conditional local A21 stability is not refuted; no new physical premise is adopted."
+    "sampled_physical_capture_obstruction": "The exact all-time witness refutes six-degree capture on the previous point-sample domain without a jerk bound. Its jerk exceeds 10500 m/s^3, so it is excluded by the adopted 100 m/s^3 bound. Conditional local A21 stability is not refuted.",
+    "jerk_sampling_fidelity": "Locally absolutely continuous physical acceleration with jerk <=100 gives sharp nonuniform sampled-mean control, excludes >=6-degree constant-attitude stationary-sample aliases over 32 s, and gives joint measured-vector 3-D information over 64 s. Both magnetic residual envelopes are charged. Physical LIN mismatch action enters the full prediction covariance metric. Full corrected 21-state loss, capture and retention remain open."
   },
   "operation_lemma_sources": [
     {
@@ -79,7 +80,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/marine_motion.py",
-      "git_blob_sha": "522a85a5b2f02b1794849ede26f4b65be03d231c"
+      "git_blob_sha": "de8fc918eab09d88284d8fef1307e3f6217e32d7"
     },
     {
       "path": "tools/stability/ou3_theorem/magnetic_service.py",
@@ -91,7 +92,7 @@
     },
     {
       "path": "tests/validation/test_ou3_marine_motion.py",
-      "git_blob_sha": "634e1ee74838c8016de5ab9a16794097fcaa12e0"
+      "git_blob_sha": "9d9c2ef871c731490af4c56f3647665f1046cef6"
     },
     {
       "path": "tests/validation/test_ou3_magnetic_service.py",
@@ -103,7 +104,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "b02f104ded56827d3127f62564680a2f463b4803"
+      "git_blob_sha": "4532250707e908582618c0e511c2f65d4b2e9e0c"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -131,7 +132,7 @@
     },
     {
       "path": "tests/validation/test_ou3_physical_qualification.py",
-      "git_blob_sha": "94aba2bf37b7991ed6b0fb6218e1a16563d6d96c"
+      "git_blob_sha": "1473ab620e093abdd8079093fdb1ad278439eb06"
     },
     {
       "path": "src/kalman_ou_common/KalmanOUCoreMath.h",
@@ -227,7 +228,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/sampled_capture_obstruction.py",
-      "git_blob_sha": "62a37745ae86442a625aa4b511b0c2d2cf4f9c5a"
+      "git_blob_sha": "7d879a6a59c733dc88f11977e932c35212bea283"
     },
     {
       "path": "tests/validation/test_ou3_sampled_capture_obstruction.py",
@@ -239,7 +240,7 @@
     },
     {
       "path": "docs/ou3-sampled-capture-obstruction.md",
-      "git_blob_sha": "f8204674994879c49623a111e0df6b524866c917"
+      "git_blob_sha": "dff0678f768901b197b7193a33b6a5517759f2a6"
     },
     {
       "path": "src/tuner/MagAutoTuner.h",
@@ -252,6 +253,18 @@
     {
       "path": "src/kalman_common/SeaStateFusionFilterCommon.h",
       "git_blob_sha": "6c0fa159cfd168108bc217bc78c37b22243cefa6"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/sampling_fidelity.py",
+      "git_blob_sha": "0ff482023d489c6f0e8937e1765ac9912953be36"
+    },
+    {
+      "path": "tests/validation/test_ou3_sampling_fidelity.py",
+      "git_blob_sha": "b199e6fad07b9f20825039644a4a63e766f6a63d"
+    },
+    {
+      "path": "docs/ou3-sampling-fidelity.md",
+      "git_blob_sha": "8da3fa085bf4f2b2ed01b2072f83b9f380052f6e"
     }
   ]
 }

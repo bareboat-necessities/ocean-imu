@@ -1,5 +1,5 @@
 {
-  "qualification": "OU3_MARINE_IMU_MAGNETIC_CONTRACT_V1",
+  "qualification": "OU3_MARINE_IMU_MAGNETIC_CONTRACT_V2",
   "role": "Declared deterministic certification limits. A numeric limit is not a claim that every assembled device has been qualified to it.",
   "marine_motion": {
     "P_max_m": 8.1,
@@ -7,13 +7,14 @@
     "A_max_mps2": 8.8,
     "Omega_max_rad_s": 0.6108652381980153,
     "P_AC_max_m_s": 1100,
-    "qualification": "retained outward marine envelope; same-history all-time primitive membership must still be certified"
+    "qualification": "retained marine envelope plus selected acceleration-jerk limit; acceleration is locally absolutely continuous; same-history all-time primitive and jerk membership must be certified",
+    "J_max_mps3": 100
   },
   "imu_bias": {
     "B_a_mps2": 0.22516660498395405,
     "D_a_mps3": 0.001,
     "B_g_rad_s": 0.02,
-    "D_g_rad_s2": 0.00001,
+    "D_g_rad_s2": 1e-05,
     "qualification": {
       "B_a": "derived from the retained commissioned per-axis 0.13 m/s^2 residual envelope",
       "D_a": "selected deterministic deployment limit; assembled-history qualification is open",

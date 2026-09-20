@@ -15,7 +15,7 @@ from tools.stability.ou3_theorem.physical_qualification import (
 
 class PhysicalQualificationTests(unittest.TestCase):
     def test_same_history_all_time_composition(self):
-        m=MarineContinuationCertificate("h",1,1,1,.1,1,True,True,True,True,True)
+        m=MarineContinuationCertificate("h",1,1,1,.1,1,True,True,True,True,True,1.0,True)
         b=BiasContinuationCertificate("h",.1,.01,.01,.001,True,True,True)
         g=MagneticServiceContinuationCertificate("h",1,1,True,True,True,True)
         q=PhysicalQualification(m,b,g,True,True)
@@ -25,7 +25,7 @@ class PhysicalQualificationTests(unittest.TestCase):
         self.assertTrue(r["qualified"])
 
     def test_detached_history_fails(self):
-        m=MarineContinuationCertificate("m",1,1,1,.1,1,True,True,True,True,True)
+        m=MarineContinuationCertificate("m",1,1,1,.1,1,True,True,True,True,True,1.0,True)
         b=BiasContinuationCertificate("b",.1,.01,.01,.001,True,True,True)
         g=MagneticServiceContinuationCertificate("g",1,1,True,True,True,True)
         q=PhysicalQualification(m,b,g,True,True)
