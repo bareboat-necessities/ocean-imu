@@ -40,10 +40,10 @@
     "lever_arm_runs.csv": "4109712ded87a0aaeaf8eb975cb6664fdf77d2a25384d1ce17e389e14fb6103d",
     "lever_arm_summary.csv": "4c57817cabdf2be1950752356fb710d70b3561b17fc4bacd2d5d7cf0cfca2c52",
     "ou3_lever_arm_cutoff.svg": "641c8501448ec1e3176738759b74b4a04d2ff6841794a0bc45a97572ad7c5131",
-    "ou3_lever_arm_mechanism.svg": "6d116eb91e01c2c3f756ee77472c4cbff313aa238bcfbdd365692879adfaa49c",
-    "ou3_lever_arm_penalty.svg": "cca9b197e8330fe0624240926d48a40bb68705147e787deb9d201ca82db60caf",
-    "ou3_lever_arm_sea_state.svg": "b7b167b2ca9bc091249741d883be76ea9701dbe985c0a5dd7fece00c39fed765",
-    "ou3_lever_arm_tilt.svg": "72a04be9f999dbdd6029d5ccfb893db343c676bbdf603fb048eb0a1c73c8eebf"
+    "ou3_lever_arm_mechanism.svg": "65354e583117c7398a3bee70682085ca19291ead79324b081eb6803448168fd7",
+    "ou3_lever_arm_penalty.svg": "fd695bc528f7a310fd7e98d28d2681f219d8e74ca6fc1f9d128354db95b7030d",
+    "ou3_lever_arm_sea_state.svg": "faa2caf09c953f38351045c678253920b82883cbb44304c5618e352007e7c811",
+    "ou3_lever_arm_tilt.svg": "e566d7bb5ed74e304469d2505d39ccdb1be85dbba34745e06f2f8e19b188723d"
   },
   "gyro_arm": "deployable: two-pole low-pass on the measured rate followed by a causal second-order difference",
   "installation_stage": "simulator applies the rigid-body term to the accelerometer truth before sensor corruption (W3D_IMU_LEVER_ARM_M)",

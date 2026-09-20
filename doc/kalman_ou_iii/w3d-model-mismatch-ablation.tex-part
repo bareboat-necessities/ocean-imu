@@ -4,7 +4,7 @@
 A separate ablation removes simulated sensor corruption while leaving each
 estimator otherwise in its deployed configuration.  The eight stationary
 JONSWAP and PM--Stokes records are replayed through OU--II, OU--III, and TFG
-with the simulator's \texttt{--no-noise} option.  Accelerometer and gyroscope
+with sensor corruption disabled. Accelerometer and gyroscope
 white noise, initial bias, bias random walk, and magnetometer noise and
 calibration perturbations are therefore absent, while the physical wave and
 attitude motion are unchanged.  The estimators are \emph{not} retuned for ideal

@@ -3,6 +3,8 @@
 
 \subsection{Sea-state ensemble and reference motion}
 
+\input{../simulation-dataset.tex-part}
+
 The evaluation uses four stationary JONSWAP seas and four Pierson--Moskowitz
 incident seas, each filtered by the 28 ft sailboat RAO
 (Table~\ref{tab:scenarios}). Each
@@ -32,7 +34,7 @@ The records are directional rather than scalar heave inputs.  Figure~\ref{fig:in
 shows representative frequency--direction energy densities.  JONSWAP supplies
 the declared primary comparison; PM--Stokes is a separate predeclared family
 testing transfer to a different incident spectral shape. The retained
-PM--Stokes filename denotes the upstream family; its particle harmonics
+PM--Stokes designation denotes the upstream family; its particle harmonics
 are not applied to the vessel.
 
 \begin{figure}[t]
@@ -114,10 +116,9 @@ sign-flip tests provide companion checks for the single primary endpoint.
 Secondary comparisons retain paired intervals without additional confirmatory
 hypotheses.
 
-A full simulator generation records replay source commit, implementation/build
-hashes, input hashes, and normalized raw-row hash.  Statistical restatements are
-permitted only while this dependency closure and raw rows match; the source
-archive enforces equivalent file-hash guarantees when Git metadata is absent.
+The versioned evidence records the simulator configuration, input data, and
+individual results for each seed. Statistical summaries and figures are
+derived from these same paired observations.
 
 Metrics include $X$, $Y$, $Z$, and 3-D displacement RMS; roll, pitch, and yaw
 RMS; accelerometer and gyroscope bias error; direction diagnostics; and
