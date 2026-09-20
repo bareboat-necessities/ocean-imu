@@ -1,0 +1,51 @@
+[
+  {
+    "name": "joint_r105_ki0.75",
+    "env": {
+      "PII_R_SCALE": "1.05",
+      "PII_KI_SCALE": "0.75"
+    }
+  },
+  {
+    "name": "joint_r105_ki1.25",
+    "env": {
+      "PII_R_SCALE": "1.05",
+      "PII_KI_SCALE": "1.25"
+    }
+  },
+  {
+    "name": "joint_r105_kp0.9",
+    "env": {
+      "PII_R_SCALE": "1.05",
+      "PII_KP_SCALE": "0.9"
+    }
+  },
+  {
+    "name": "joint_r105_kp1.1",
+    "env": {
+      "PII_R_SCALE": "1.05",
+      "PII_KP_SCALE": "1.1"
+    }
+  },
+  {
+    "name": "r108_tau0.95",
+    "env": {
+      "PII_R_SCALE": "1.08",
+      "PII_TAU_A_SCALE": "0.95"
+    }
+  },
+  {
+    "name": "r108_tau1.05",
+    "env": {
+      "PII_R_SCALE": "1.08",
+      "PII_TAU_A_SCALE": "1.05"
+    }
+  },
+  {
+    "name": "joint_r105_ki05",
+    "env": {
+      "PII_R_SCALE": "1.05",
+      "PII_KI_SCALE": "0.5"
+    }
+  }
+]

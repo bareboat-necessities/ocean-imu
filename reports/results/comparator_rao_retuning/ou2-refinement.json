@@ -1,0 +1,21 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "gyro02",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.2"
+    }
+  },
+  {
+    "name": "gyro02_axes",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.2",
+      "OU_II_R_P0_X_FACTOR": "1.0",
+      "OU_II_R_P0_Y_FACTOR": "0.9",
+      "OU_II_SIGMA_COEFF": "0.7"
+    }
+  }
+]

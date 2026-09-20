@@ -1,0 +1,30 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "s12",
+    "env": {
+      "TFG_S_FACTOR": "1.2"
+    }
+  },
+  {
+    "name": "sigma08",
+    "env": {
+      "TFG_SIGMA_COEFF": "0.8"
+    }
+  },
+  {
+    "name": "gyro2",
+    "env": {
+      "SF_SIGMA_G_SCALE": "2.0"
+    }
+  },
+  {
+    "name": "gyro15",
+    "env": {
+      "SF_SIGMA_G_SCALE": "1.5"
+    }
+  }
+]

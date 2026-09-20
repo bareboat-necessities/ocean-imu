@@ -490,7 +490,7 @@ def write_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
     labels = [c.label for c in CONDITIONS]
     baseline = float(by_key[("engine off", "off")]["disp_3d_rms_m"])
 
-    figure, axes = plt.subplots(2, 1, figsize=(8.2, 6.4), sharex=True)
+    figure, axes = plt.subplots(1, 2, figsize=(3.5, 2.55), sharex=True)
 
     def panel(axis, extract, ylabel, title, log, reference) -> None:
         base = [float(index) for index in range(len(labels))]
@@ -508,8 +508,9 @@ def write_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
             )
         axis.axhline(reference, color="#444444", linewidth=0.9, linestyle=":")
         axis.set_xticks(base)
-        axis.set_ylabel(ylabel)
-        axis.set_title(title, fontsize=10)
+        axis.set_ylabel(ylabel, fontsize=6.5)
+        axis.set_title(title, fontsize=7)
+        axis.tick_params(labelsize=6, length=2, pad=1.5)
         axis.grid(axis="y", alpha=0.25)
         if log:
             axis.set_yscale("log")
@@ -517,27 +518,28 @@ def write_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
     panel(
         axes[0],
         lambda s: float(s["disp_3d_rms_m"]),
-        "pooled 3-D RMS error (m)",
-        "Displacement error across the three configurations",
+        "3-D RMS [m]",
+        "3-D displacement",
         True,
         baseline,
     )
     panel(
         axes[1],
         lambda s: abs(float(s["pitch_mean_deg"])),
-        "standing pitch offset (deg)",
-        "Standing tilt offset, the mechanism both stages target",
+        "Pitch offset [deg]",
+        "Standing pitch offset",
         True,
         abs(float(by_key[("engine off", "off")]["pitch_mean_deg"])),
     )
-    axes[1].set_xticklabels(labels, rotation=20, ha="right", fontsize=8)
+    for ax in axes:
+        ax.set_xticklabels(labels, rotation=90, ha="center", fontsize=6)
 
     handles, legend_labels = axes[0].get_legend_handles_labels()
     figure.legend(
-        handles, legend_labels, frameon=False, ncol=2, fontsize=9,
+        handles, legend_labels, frameon=False, ncol=3, fontsize=6.5,
         loc="upper center", bbox_to_anchor=(0.5, 1.0),
     )
-    figure.tight_layout(rect=(0.0, 0.0, 1.0, 0.95))
+    figure.subplots_adjust(left=0.15, right=0.99, bottom=0.45, top=0.80, wspace=0.65)
     path.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(path, format="svg", metadata={"Date": None})
     plt.close(figure)

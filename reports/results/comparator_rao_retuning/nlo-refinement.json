@@ -1,0 +1,19 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "smooth40",
+    "env": {
+      "NLO_THETA_TAU": "40"
+    }
+  },
+  {
+    "name": "gain0555_smooth40",
+    "env": {
+      "NLO_THETA_GAIN": "0.555",
+      "NLO_THETA_TAU": "40"
+    }
+  }
+]

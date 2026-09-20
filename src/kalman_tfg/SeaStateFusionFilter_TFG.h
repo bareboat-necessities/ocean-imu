@@ -1178,7 +1178,7 @@ private:
     // vertical and TFG wants a looser one.  Do not carry 0.72 here without
     // re-running that sweep.
     float tau_coeff_ = 1.0f;
-    float sigma_coeff_ = 1.0f;
+    float sigma_coeff_ = 0.8f;
     float R_S_coeff_ = 0.28f;
     float S_factor_ = 1.00f;
     float R_S_x_factor_ = 1.15f;

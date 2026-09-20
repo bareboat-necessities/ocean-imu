@@ -1,0 +1,35 @@
+[
+  {
+    "config": "baseline",
+    "failed_records": 16,
+    "violations": 26,
+    "worst_ratio": 3.182840557275542,
+    "yaw_rms_deg": 1.9449849508333334,
+    "roll_rms_deg": 0.33775461958333336,
+    "pitch_rms_deg": 0.12426337255416665,
+    "disp_3d_rms_m": 0.2973536116916667,
+    "accel_bias_3d_rms_mps2": 0.06028535263333334
+  },
+  {
+    "config": "axes10",
+    "failed_records": 16,
+    "violations": 26,
+    "worst_ratio": 3.2058513931888544,
+    "yaw_rms_deg": 1.944821666,
+    "roll_rms_deg": 0.3370459539583333,
+    "pitch_rms_deg": 0.124971680075,
+    "disp_3d_rms_m": 0.29817408964166664,
+    "accel_bias_3d_rms_mps2": 0.06041520399583333
+  },
+  {
+    "config": "axes095_sigma09",
+    "failed_records": 16,
+    "violations": 26,
+    "worst_ratio": 3.224078947368421,
+    "yaw_rms_deg": 1.9466726239166665,
+    "roll_rms_deg": 0.33773728275000003,
+    "pitch_rms_deg": 0.12443352050833334,
+    "disp_3d_rms_m": 0.299185528775,
+    "accel_bias_3d_rms_mps2": 0.060783700395833334
+  }
+]

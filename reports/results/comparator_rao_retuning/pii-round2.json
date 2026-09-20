@@ -1,0 +1,54 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "r_1.05",
+    "env": {
+      "PII_R_SCALE": "1.05"
+    }
+  },
+  {
+    "name": "r_1.1",
+    "env": {
+      "PII_R_SCALE": "1.1"
+    }
+  },
+  {
+    "name": "tau_0.6",
+    "env": {
+      "PII_TAU_A_SCALE": "0.6"
+    }
+  },
+  {
+    "name": "tau_0.8",
+    "env": {
+      "PII_TAU_A_SCALE": "0.8"
+    }
+  },
+  {
+    "name": "tau_1.2",
+    "env": {
+      "PII_TAU_A_SCALE": "1.2"
+    }
+  },
+  {
+    "name": "ki_0.5",
+    "env": {
+      "PII_KI_SCALE": "0.5"
+    }
+  },
+  {
+    "name": "ki_1.5",
+    "env": {
+      "PII_KI_SCALE": "1.5"
+    }
+  },
+  {
+    "name": "ki_2.0",
+    "env": {
+      "PII_KI_SCALE": "2.0"
+    }
+  }
+]

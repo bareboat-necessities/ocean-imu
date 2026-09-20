@@ -1,0 +1,48 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "gain_0.35",
+    "env": {
+      "NLO_THETA_GAIN": "0.35"
+    }
+  },
+  {
+    "name": "gain_0.45",
+    "env": {
+      "NLO_THETA_GAIN": "0.45"
+    }
+  },
+  {
+    "name": "gain_0.7",
+    "env": {
+      "NLO_THETA_GAIN": "0.7"
+    }
+  },
+  {
+    "name": "gain_0.9",
+    "env": {
+      "NLO_THETA_GAIN": "0.9"
+    }
+  },
+  {
+    "name": "smooth_10",
+    "env": {
+      "NLO_THETA_TAU": "10"
+    }
+  },
+  {
+    "name": "smooth_60",
+    "env": {
+      "NLO_THETA_TAU": "60"
+    }
+  },
+  {
+    "name": "smooth_120",
+    "env": {
+      "NLO_THETA_TAU": "120"
+    }
+  }
+]

@@ -402,13 +402,13 @@ constexpr float R_PSEUDO_MSE_COEFF_DEFAULT = 0.1116f;
 // because q_eff and the cadence normalization both cancel out of it:
 //     (r_p / r_v)^2 = (3/2) M_-2 / M_0,
 // hence r_p/r_v = C_P/C_V * tau for a fixed normalized sea shape.  The eight
-// vessel-CG spectra motivate a separate ratio diagnostic. The deployed 0.3
-// is a parameter choice validated on independent RAO sensor draws.
+// vessel-CG spectra motivate a separate ratio diagnostic. The deployed 0.5
+// matches the vessel-RAO replay profile and its paired sensor-draw validation.
 //
 // Applying the ratio rather than a second independent power is exact, not an
 // approximation: sigma^(4/5) tau^(7/5) = sigma^(4/5) tau^(12/5) / tau.  It is
 // also what keeps the whole schedule down to a single transcendental.
-constexpr float R_PSEUDO_MSE_RATIO_DEFAULT = 0.3f;
+constexpr float R_PSEUDO_MSE_RATIO_DEFAULT = 0.5f;
 
 // q_eff = 2 r_a with r_a = R_a * h, the density of the residual acceleration
 // error the integration chain actually sees.
@@ -1999,7 +1999,7 @@ private:
     float MAX_R_p0_std_           = MAX_R_p0_std;
     float MIN_R_v0_std_           = MIN_R_v0_std;
     float MAX_R_v0_std_           = MAX_R_v0_std;
-    float sigma_stillness_decay_sec_ = 1.0f;
+    float sigma_stillness_decay_sec_ = 5.0f;
     float adapt_tau_sec_              = ADAPT_TAU_SEC;
     float adapt_tau_sea_periods_      = ADAPT_TAU_SEA_PERIODS;
     float adapt_R_p0_mult_            = ADAPT_R_p0_MULT;
@@ -2121,7 +2121,7 @@ private:
     float pseudo_accel_noise_density_ = R_PSEUDO_ACCEL_NOISE_DENSITY_DEFAULT;
     float pseudo_qeff_pow_ =
         std::pow(2.0f * R_PSEUDO_ACCEL_NOISE_DENSITY_DEFAULT, 0.1f);
-    float tau_coeff_   = 1.0f;
+    float tau_coeff_   = 0.95f;
     float sigma_coeff_ = 0.85f;
 
     std::unique_ptr<Kalman3D_Wave_OU_II<float>> mekf_;
@@ -2207,6 +2207,10 @@ public:
 
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
+        // Empirical covariance weight, applied equally to supplied sensor
+        // specifications in simulations and firmware. This does not rescale
+        // measurements or claim a lower physical sensor-noise bound.
+        float gyro_noise_scale = 0.2f;
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
         // The remaining MEKF variances the Kalman3D_Wave_OU_II constructor
@@ -2449,7 +2453,7 @@ public:
         impl_.setSigmaWaveBandLimitsHz(cfg_.sigma_band_min_hz,
                                        cfg_.sigma_band_max_hz);
 
-        impl_.initialize_ext(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m,
+        impl_.initialize_ext(cfg_.sigma_a, cfg_.sigma_g * cfg_.gyro_noise_scale, cfg_.sigma_m,
                              cfg_.Pq0, cfg_.Pb0, cfg_.b0,
                              cfg_.R_p0_noise, cfg_.R_v0_noise,
                              cfg_.gravity_magnitude);

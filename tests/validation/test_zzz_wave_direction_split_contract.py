@@ -113,8 +113,9 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
     startup = self.read("w3d-init.tex-part")
     results = self.read_flat("w3d-results.tex-part")
 
-    self.assertIn("Parameters are frozen before evaluation", baseline)
-    self.assertIn("reference displacement is never used to select gains", baseline)
+    self.assertIn("then frozen for paired evaluation", baseline)
+    self.assertIn("Reference displacement is used for offline scoring", baseline)
+    self.assertIn("never for online gain scheduling", baseline)
     self.assertIn("same timestamped synthetic motion and inertial records", baseline)
     self.assertIn("tab:baseline-tuning-policy", baseline)
     self.assertIn("tab:implementation-gates", fusion)

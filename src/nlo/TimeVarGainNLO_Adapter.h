@@ -231,7 +231,7 @@ public:
               theta = theta_from_omega_gain * omega_peak
 
           which places omega_c at 0.4125 * theta_from_omega_gain * omega_peak.
-          The default 0.56 puts it a factor 4.3 below the peak, which is the
+          The default 0.5575 puts it a factor 4.3 below the peak, which is the
           flat optimum measured by a fixed-theta sweep across Hs = 0.27 m to
           8.5 m: the per-record optima came out at theta/omega_peak = 0.51,
           0.52, 0.53, 0.54, 0.58, 0.59, 0.61, 0.61.
@@ -253,7 +253,7 @@ public:
         */
         bool auto_theta_from_wave_freq = true;
 
-        R theta_from_omega_gain = R(0.56);
+        R theta_from_omega_gain = R(0.5575);
         R theta_min = R(0.15);
         R theta_max = R(1.60);
 
