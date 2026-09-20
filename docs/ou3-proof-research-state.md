@@ -141,6 +141,11 @@ are not evidence that the declared six-degree region is invariant.
   a 9.1585-pt overfull inline nuisance-block tuple. Expand the nonzero blocks
   into two displayed rows; the covariance constants are unchanged.
 
+- Visual review of the joint-input-action article found a nearly empty ninth
+  page containing only the disclosure. Remove the conclusion that repeats
+  the abstract and evidence boundary; retain all mathematical arguments and
+  the disclosure. This is a publication-layout correction only.
+
 ## Retained facts
 
 The exact full-word identity
