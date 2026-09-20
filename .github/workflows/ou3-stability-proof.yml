@@ -55,6 +55,7 @@ jobs:
           python3 -m unittest discover -s tests/validation -p test_ou3_sampled_capture_obstruction.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_sampling_fidelity.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_corrected_word.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_ag_readout.py -v
           python3 tools/stability/ou3_theorem/block_factor_numeric.py
           python3 -m unittest discover -s tests/validation -p test_ou3_block_factor_numeric.py -v
       - name: Preserve reproducible source and LIN certificate

@@ -11,7 +11,7 @@
     "shipping_divergence_claimed": false
   },
   "certified_capture_time": null,
-  "next_controlling_obligation": "Prove a uniform SPD bound J for the six AG columns of the actual complete corrected word loss at pre-prediction roots. The embedded nuisance lower/upper comparisons then give a full covariance upper bound, and the first prediction gives strict 21-state contraction. This implication is proved but J is not. Compose the actual-gain finite-error supplies, injection-dependent reset remainder and projection sector to certify nonlinear capture, release, retention and arithmetic. The physical 3-D Gramian does not supply J.",
+  "next_controlling_obligation": "Prove a uniform SPD bound J for the six AG columns of the actual complete corrected word loss. D_AG,AG <= (P_root^-1)_AG,AG prevents a forward-only absolute-loss certificate with unconstrained AG prior. The historical six-column readout action cancels that prior exactly and retains nuisance/process correlations, but uniform rank/action bounds over actual varying coefficients and resets are OPEN. Certify L(W) O(W)=T_h(W) and B_W <= B_* on every carried historical window, then enclose Q-epsilon F C_eta F^T >= 0 and the complete factor loss for a useful rho0. The existing nuisance/Schur implication remains valid; supplied-word checks do not close J. Nonlinear radius, finite capture, H18/refinement/release, every-prefix retention and arithmetic remain open.",
   "no_heading_service_result_role": "necessity lemma only",
   "obligations": {
     "A21_covariance_hard_event_compactness": false,
@@ -41,6 +41,7 @@
     "finite_reference_refinement_and_bias_release": false,
     "full_21_covariance_upper": false,
     "full_state_magnetic_information_lifting": false,
+    "historical_AG_readout_covariance_implication": true,
     "implementation_and_arithmetic_totality": false,
     "interval_riccati_kernel_layer": true,
     "jerk_to_sampled_acceleration_fidelity": true,
@@ -69,6 +70,7 @@
     "uniform_A21_controllability_exists": true,
     "uniform_A21_neutral_quotient_information_exists": false,
     "uniform_gravity_tilt_sensitivity": true,
+    "uniform_historical_AG_readout_action": false,
     "whole_word_float32_supply_bound": false,
     "whole_word_float32_supply_composition": true
   },

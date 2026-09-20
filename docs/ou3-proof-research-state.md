@@ -10,6 +10,22 @@ remain. General physical capture and the complete stability theorem are open.
 
 ## Evidence
 
+`ou3-ag-readout-proof.md` adds a historical six-column covariance action.
+An exact backward 6x21 residual cancels the unbounded AG root; the remaining
+6x6 action retains all nuisance cross covariance, correlated process factors,
+rank-three observations and literal reset maps. Optimal covariance comparison
+then bounds terminal AG covariance. A uniform bound on this action would
+bootstrap J via an exact matrix process comparison, retaining the existing
+nuisance/Schur implication. Uniform source rank/action are **not proved**.
+
+The 80-digit supplied 21-state audit has maximum trial-action eigenvalue
+34.456445624. Its minimum AG loss falls from .0281547113907 to
+9.99999999965e-13 when the supplied AG prior scale increases from one to
+10^12. Exact rational checks verify the conditional matrix bound, including
+nonzero AG/nuisance covariance and nonorthogonal resets, and conditional
+decrement 1/10000000001. Neither coefficients nor roots of this algebra audit
+are claimed to be a shipping history. The common source J remains open.
+
 `ou3-corrected-word-proof.md` proves the following complete implications:
 
 - the existing embedded nuisance floor passes through actual acc/S corrections
@@ -59,16 +75,22 @@ all-time actual magnetic-service floor exceeds one. Its native regression
 checks literal finite float startup/release; all-time float totality was not
 claimed. Current status explicitly records that this witness is inadmissible.
 
-Validation for this continuation: 463 evidence/publication tests pass with
-one existing data-dependent skip. Exact artifact reproduction, ruff and
-Python compilation pass. The normalized quaternion polynomial defect was
-also checked at 80 decimal digits. No C++ or shipping behavior changed.
+Validation is recorded for the exact PR head in PR metadata. The prior
+continuation passed 463 evidence/publication tests with one data-dependent
+skip. The present work adds exact readout/cross-covariance and rejection tests;
+the shipping estimator and all physical constants remain unchanged.
 
 ## Current limiter
 
 The six AG columns must be bounded for the actual nominal corrected transport,
 including realized gains and resets. The physical three-dimensional Gramian
 and two-dimensional magnetic-service restriction do not provide that bound.
+Since `D_AG,AG <= (P_root^-1)_AG,AG`, an absolute uniform J also requires
+control of the inherited conditional AG uncertainty. The historical reader
+must satisfy `L(W)O(W)=T_h(W)` exactly and `B_W <= B_*` uniformly. Those
+source inequalities remain unverified; numerical rank on one word is not
+their enclosure. A historical window must start after the nuisance bound
+applies and keep the same execution through its terminal A21 root.
 Once a useful full loss is certified, the actual-gain supplies and projection
 sector must close a retained region and startup/bridge/release must enter it.
 A finite source supply and a positive but extremely small comparison margin
@@ -76,6 +98,22 @@ are not evidence that the declared six-degree region is invariant.
 
 ## Failed approaches / DEAD_ENDS
 
+- The local article render initially failed with `pdfTeX error (font
+  expansion): auto expansion is only possible with scalable fonts` because
+  the extracted newtx font map was not loaded. Loading that installed map
+  fixed the environment; the unchanged article source then rendered in nine
+  pages without overfull boxes. The affected pages were visually checked.
+  No mathematical premise or publication gate changed.
+- Forward-only absolute AG-loss certification with an unrestricted AG prior
+  fails analytically: `P_root=diag(t I6,I15)` implies `D_AG,AG <= I6/t`.
+  At t=10^12, the candidate inequality `D_AG,AG-10^-6 I6 >=0` has Rayleigh
+  margin at most `-9.99999e-7`. Classification: missing historical covariance
+  control, not conditioning/enclosure failure or a reachable counterexample.
+  This invalidates future excitation alone as a proof of absolute J; it does
+  not invalidate the retained conditional Schur implication. The historical
+  readout removes the unknown prior exactly. A fixed reader fails under a
+  10^-6 transition perturbation; recomputing its exact six-column reader
+  restores cancellation but does not establish a uniform action ceiling.
 - Entrywise midpoint-radius Riccati refinement failed twice by dependency:
   prediction [-18.7907040,2502.41442] and failed acc/mag inverse boxes.
 - Cross-ceiling/Gershgorin reduction gave gamma=-5.1223e8. An LDL pivot is
@@ -171,10 +209,13 @@ only a finite supply ceiling, not evidence of a small retained radius.
 
 ## Next falsifiable experiment
 
-Certify or falsify a uniform SPD bound on the six AG columns of the complete
-corrected loss under the admitted varying nominal coefficients. The coupled
-covariance reduction now handles the other fifteen coordinates analytically.
-For a useful nonlinear margin, retain full process/measurement factors rather
-than the coarse scalar prediction-only floor. Charge the actual injection
-term before asserting a vanishing nonlinear gain; then check the invariant
-root-radius and every-prefix inequalities on the same history.
+Construct coefficient-dependent six-column historical readers on actual
+carried regular A21 windows. Certify or falsify uniform bounded action
+`B_W <= B_*`, retaining nominal AW/gyro variation, resets, full nuisance
+columns, actual accepted observations and correlated process factors. If a
+chosen minor fails, check the entire AG observation array before concluding
+rank loss. The physical Gramian does not substitute for these rows.
+An all-window enclosure and inherited entry linkage, rather than finite
+replay, are needed to promote J. Then check the matrix epsilon inequality
+and full corrected loss for a useful rho0, immediately followed by the actual
+injection/projection/float32 supply inequalities and every-prefix retention.

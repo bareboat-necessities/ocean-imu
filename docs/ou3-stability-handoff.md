@@ -1,8 +1,8 @@
 # OU-III stability handoff
 
-PR #560 integrates the proof work and main-article revisions. After its merge,
-start the next conversation from current `main` containing that merge, and keep
-subsequent continuation in one branch/PR. Do not restart from the older PR #558.
+This continuation starts from main `257dce56d195276bd6d237c0f8cd653c016eec24`
+and stays in one branch/PR. Continue from its current head until merged;
+afterward start from latest main. Do not restart an older proof branch.
 The theorem is **not closed**; merging this work does not certify stability.
 Keep the single same-history construction -> capture -> H18 -> release -> A21
 architecture and the unchanged shipping estimator.
@@ -17,6 +17,8 @@ Read in order, with paths relative to the repository root:
 4. `docs/ou3-corrected-word-proof.md`, `docs/ou3-sampling-fidelity.md`, and
    `docs/ou3-nuisance-upper-proof.md`, alongside their modules under
    `tools/stability/ou3_theorem/` and the shipping source operations they cite.
+5. `docs/ou3-ag-readout-proof.md` and `ag_readout.py`: the historical
+   six-column action and the exact forward-prior obstruction.
 
 MARINE MOTION now includes locally absolutely continuous physical acceleration
 with jerk <=100 m/s^3. The user authorized this domain revision. Quiet water,
@@ -59,6 +61,22 @@ Next discharge the actual six-column J premise, then combine these supplies,
 projection sector and physical mismatch with capture/release and every-prefix
 retention. General capture, full AG upper covariance, strict uniform loss and
 arithmetic remain open. No completion percentage or full theorem is justified.
+
+The latest addition proves a conditional historical AG covariance comparison.
+Backward factor action cancels an arbitrary AG root exactly, preserving all
+nuisance/process correlations and applied corrections/resets. A uniform
+action ceiling would supply J through a matrix first-prediction comparison.
+The implementation rejects even an arbitrarily small uncancelled AG root;
+one fixed numerical reader cannot be reused over varying coefficients.
+Uniform source rank/action and inherited entry linkage remain open. The
+supplied exact/80-digit examples are not shipping reachability evidence.
+
+The exact failed relaxation is `D_AG,AG >= 10^-6 I6` for unbounded priors:
+at `diag(10^12 I6,I15)` the Rayleigh margin is at most `-9.99999e-7`.
+No reachability or magnetic-service membership is claimed for that prior.
+Next test coefficient-dependent historical readers against actual varying
+source windows and enclose their 6x6 action; do not refine the invalid
+forward-only unrestricted-prior tactic or promote a finite replay.
 
 Specifically, at pre-prediction roots, establish a single positive-definite
 matrix J with `D_word[AG,AG] >= J` uniformly over admitted histories, where AG

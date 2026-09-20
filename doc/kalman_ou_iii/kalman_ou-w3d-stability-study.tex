@@ -44,6 +44,8 @@ OU prior on truth. The complete covariance-energy identity, corrected LIN
 path action, joint lower covariance and nuisance upper covariance are
 retained. A coupled Schur comparison reduces a sufficient full-state
 contraction certificate to six corrected attitude/gyro-bias loss columns.
+An exact historical readout action supplies a conditional route to their
+covariance bound while retaining nuisance and process correlations.
 Actual-gain finite-error composition includes an explicit injection-dependent
 reset remainder. The uniform six-column bound, general capture, nonlinear
 retention and arithmetic transfer remain unproved.
@@ -911,6 +913,68 @@ so a uniform $J\succ0$ suffices. This is a conditional full-state
 implication. Establishing $J$ for the actual varying corrected transport
 remains open; neither two-column magnetic service nor the physical
 three-dimensional vector Gramian supplies it.
+
+\subsection{Historical attitude and gyro-bias action}
+The absolute six-column loss necessarily satisfies
+\begin{equation}
+ 0\preceq(D_W)_{hh}\preceq(P_0^{-1})_{hh}.
+\end{equation}
+Thus positive future excitation alone cannot establish a uniform absolute
+bound for an unrestricted prior: $P_0=\operatorname{diag}(tI_6,I_{15})$
+implies $(D_W)_{hh}\preceq I_6/t$. This algebraic family is not asserted
+to be reachable from the deployed construction or to satisfy magnetic
+service. It identifies a necessary use of the inherited covariance history.
+
+Freeze the realized coefficients on a historical regular A21 window whose
+root already satisfies \eqref{eq:nuisance-upper}. Realize its covariance
+recursion as an auxiliary linear estimation problem, retaining every
+prediction, applied observation and reset. Let $O$ contain the six AG
+columns of the raw auxiliary observation maps and let $T_h$ be the AG
+root columns of the terminal AG map. A trial reader $L$ must satisfy
+\begin{equation}
+ LO=T_h.
+ \label{eq:ag-reader}
+\end{equation}
+These rows include prediction and reset transport; they are neither
+physical vector information nor corrected loss rows.
+
+The trial error action has a backward recursion. Initialize
+$Y=E_h^{\mathsf T}$ and $B=0$. For $Q_i=U_iU_i^{\mathsf T}$ and
+$R_i=V_iV_i^{\mathsf T}$, traverse the operations in reverse:
+\begin{align}
+ \text{prediction:}\quad
+ B&\gets B+(YU_i)(YU_i)^{\mathsf T},&Y&\gets YF_i,\nonumber\\
+ \text{observation:}\quad
+ B&\gets B+(L_iV_i)(L_iV_i)^{\mathsf T},&Y&\gets Y-L_iH_i,\nonumber\\
+ \text{reset:}\quad
+ B&\gets B,&Y&\gets YG_i.
+\end{align}
+Equation~\eqref{eq:ag-reader} gives $YE_h=0$ at the root. Writing
+$Y_n=YE_n$ and using the full nuisance upper bound $U_n$, define
+\begin{equation}
+ B_W=B+Y_nU_nY_n^{\mathsf T}.
+\end{equation}
+The actual terminal covariance satisfies $P_{hh}\preceq B_W$: the trial
+error cancels the unknown AG root and its cross covariance exactly, and
+optimal linear estimation has no larger covariance. Shared process factors
+retain their coordinate correlations. The auxiliary stochastic realization
+imposes no stochastic law on the physical execution. Effective observation
+noise includes the actual innovation safety increment.
+
+If $B_W\preceq B_*\succ0$ uniformly, block Cauchy--Schwarz gives
+\begin{equation}
+ P\preceq\widetilde C_\eta
+ =\operatorname{diag}((1+\eta)B_*,(1+\eta^{-1})U_n).
+\end{equation}
+The matrix comparison
+$Q\succeq\epsilon F\widetilde C_\eta F^{\mathsf T}$ then supplies
+\begin{equation}
+ J={\epsilon\over(1+\epsilon)(1+\eta)}B_*^{-1}\succ0.
+\end{equation}
+This is a conditional route to the same six-column premise. Uniform
+readout rank and action under the actual varying coefficients and resets
+remain unproved. Exact root cancellation cannot be replaced by a small
+numerical residual without a separate root covariance bound.
 
 \subsection{Stationary A21 detectability}
 Quiet water does not by itself create an unobservable nondecaying mode in

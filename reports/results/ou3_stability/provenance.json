@@ -1,6 +1,6 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "a27214ae06036904594a1f897f7aec9544a9764d",
+  "base_main_commit": "257dce56d195276bd6d237c0f8cd653c016eec24",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
@@ -73,7 +73,8 @@
     "sampled_physical_capture_obstruction": "The exact all-time witness refutes six-degree capture on the previous point-sample domain without a jerk bound. Its jerk exceeds 10500 m/s^3, so it is excluded by the adopted 100 m/s^3 bound. Conditional local A21 stability is not refuted.",
     "jerk_sampling_fidelity": "Locally absolutely continuous physical acceleration with jerk <=100 gives sharp nonuniform sampled-mean control, excludes >=6-degree constant-attitude stationary-sample aliases over 32 s, and gives joint measured-vector 3-D information over 64 s. Both magnetic residual envelopes are charged. Physical LIN mismatch action enters the full prediction covariance metric. Full corrected 21-state loss, capture and retention remain open.",
     "corrected_word_covariance_reduction": "Embedded nuisance floor passes to pre-prediction roots through actual corrections/resets. Together with its upper bound, a uniform six-column AG corrected loss J implies a full covariance upper bound and strict first-prediction loss by Schur comparison. J remains unproved; no full-state stability is promoted.",
-    "actual_gain_finite_error": "Actual estimator gains/events define one auxiliary linear comparison. Variation of constants composes operation supplies; Joseph covariance bounds correction supply by the R-whitened residual. Finite-angle reset has an injection-squared times error term and a real polynomial defect. Removed unsupported smoothness-to-vanishing-remainder promotion."
+    "actual_gain_finite_error": "Actual estimator gains/events define one auxiliary linear comparison. Variation of constants composes operation supplies; Joseph covariance bounds correction supply by the R-whitened residual. Finite-angle reset has an injection-squared times error term and a real polynomial defect. Removed unsupported smoothness-to-vanishing-remainder promotion.",
+    "historical_AG_readout": "A backward six-column reader cancels the historical AG root exactly, retaining nuisance and process correlations. Optimal covariance comparison bounds terminal AG covariance by its matrix action. Uniform source rank/action and inherited entry linkage remain unproved; neither a supplied word nor the unbounded-prior relaxation is claimed shipping-reachable."
   },
   "operation_lemma_sources": [
     {
@@ -106,7 +107,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "83e545d97cdab569b60183fe762ec42c55f555f2"
+      "git_blob_sha": "e5b6350234add1c238bef9a294187562f156e6fe"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -279,6 +280,22 @@
     {
       "path": "docs/ou3-corrected-word-proof.md",
       "git_blob_sha": "873eda9afc7d51eb06359b8e21b18eed6cffa0be"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/ag_readout.py",
+      "git_blob_sha": "aef33d7e27af1edd467da030e90640fe96e69438"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/ag_readout_diagnostic.py",
+      "git_blob_sha": "6ac1b705935cacae5fe1f6fd598fd6c1b7df2771"
+    },
+    {
+      "path": "tests/validation/test_ou3_ag_readout.py",
+      "git_blob_sha": "b91f40c4edcdb8371613861e4b41abd598fe9d40"
+    },
+    {
+      "path": "docs/ou3-ag-readout-proof.md",
+      "git_blob_sha": "1e99a8cbaffbddbf43e4d61b05395fc82ac35dc1"
     }
   ]
 }

@@ -38,6 +38,8 @@ def status_report() -> dict:
         "pre_prediction_embedded_nuisance_floor":True,
         "six_column_to_full_contraction_implication":True,
         "six_column_corrected_loss_uniform_bound":False,
+        "historical_AG_readout_covariance_implication":True,
+        "uniform_historical_AG_readout_action":False,
         "actual_gain_finite_error_word_composition":True,
         "joint_word_prediction_measurement_input_action":True,
         "finite_angle_source_reset_remainder":True,
@@ -87,5 +89,5 @@ def status_report() -> dict:
             "sampling_certificate":"sampling-fidelity.json",
             "certificate":"sampled-capture-obstruction.json",
         },
-        "next_controlling_obligation":"Prove a uniform SPD bound J for the six AG columns of the actual complete corrected word loss at pre-prediction roots. The embedded nuisance lower/upper comparisons then give a full covariance upper bound, and the first prediction gives strict 21-state contraction. This implication is proved but J is not. Compose the actual-gain finite-error supplies, injection-dependent reset remainder and projection sector to certify nonlinear capture, release, retention and arithmetic. The physical 3-D Gramian does not supply J.",
+        "next_controlling_obligation":"Prove a uniform SPD bound J for the six AG columns of the actual complete corrected word loss. D_AG,AG <= (P_root^-1)_AG,AG prevents a forward-only absolute-loss certificate with unconstrained AG prior. The historical six-column readout action cancels that prior exactly and retains nuisance/process correlations, but uniform rank/action bounds over actual varying coefficients and resets are OPEN. Certify L(W) O(W)=T_h(W) and B_W <= B_* on every carried historical window, then enclose Q-epsilon F C_eta F^T >= 0 and the complete factor loss for a useful rho0. The existing nuisance/Schur implication remains valid; supplied-word checks do not close J. Nonlinear radius, finite capture, H18/refinement/release, every-prefix retention and arithmetic remain open.",
     }
