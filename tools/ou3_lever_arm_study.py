@@ -593,9 +593,9 @@ def write_ratio_plot(
     field: str,
     ylabel: str,
 ) -> None:
-    """Stack canonical directions at legible single-column article width."""
+    """Place all three directions in one row at the final article column width."""
     plt = reproducible_pyplot()
-    fig, axarr = plt.subplots(3, 1, figsize=(4.0, 5.6), sharex=True, sharey=True)
+    fig, axarr = plt.subplots(1, 3, figsize=(3.5, 1.9), sharex=True, sharey=True)
     for ax, axis in zip(axarr, AXES):
         for mode, style in MODE_STYLE.items():
             xs = [0.0]
@@ -606,23 +606,26 @@ def write_ratio_plot(
                     continue
                 xs.append(100.0 * d)
                 ys.append(float(match[field]))
-            ax.plot(xs, ys, label=MODE_LABELS[mode], markersize=5, **style)
+            ax.plot(xs, ys, label=MODE_LABELS[mode], markersize=2.5, linewidth=0.9, **style)
         ax.axhline(1.0, color="#666666", linewidth=0.8)
-        ax.set_title(AXIS_LABEL[axis], fontsize=10)
+        ax.set_title(AXIS_LABEL[axis], fontsize=7)
         ax.grid(True, alpha=0.3)
-    axarr[-1].set_xlabel("IMU offset from CG [cm]")
-    fig.supylabel(ylabel, fontsize=10)
-    handles, labels = axarr[0].get_legend_handles_labels()
+        ax.set_xticks([0, 10, 20, 30])
+        ax.tick_params(labelsize=6, length=2, pad=1.5)
+    fig.supxlabel("IMU offset from CG [cm]", fontsize=6.5, y=0.15)
+    fig.supylabel(ylabel.removeprefix("Pooled "), fontsize=6.5, x=0.005, y=0.60)
+    handles, _ = axarr[0].get_legend_handles_labels()
+    labels = ["unmodeled", "gyro model", "exact model"]
     fig.legend(
         handles,
         labels,
         loc="lower center",
-        ncol=1,
-        fontsize=8,
+        ncol=3,
+        fontsize=6,
         frameon=False,
-        bbox_to_anchor=(0.55, 0.0),
+        bbox_to_anchor=(0.5, 0.0),
     )
-    fig.tight_layout(rect=(0.02, 0.10, 1.0, 1.0))
+    fig.subplots_adjust(left=0.16, right=0.99, bottom=0.34, top=0.86, wspace=0.13)
     _save(fig, path)
     plt.close(fig)
 
@@ -676,7 +679,7 @@ def write_sea_state_plot(
 ) -> None:
     """Per-sea penalty and its removal, for both channels the effect reaches."""
     plt = reproducible_pyplot()
-    fig, panels = plt.subplots(2, 1, figsize=(4.0, 5.2), sharex=True)
+    fig, panels = plt.subplots(1, 2, figsize=(3.5, 2.2), sharex=True)
     width = 0.26
     for panel, (field, axis, title) in zip(
         panels,
@@ -684,12 +687,12 @@ def write_sea_state_plot(
             (
                 "disp_3d_rms_m",
                 disp_axis,
-                f"3-D displacement, {AXIS_LABEL[disp_axis]} arm",
+                f"3-D displacement\n{AXIS_LABEL[disp_axis]} arm",
             ),
             (
                 "max_tilt_rms_deg",
                 tilt_axis,
-                f"Max roll/pitch, {AXIS_LABEL[tilt_axis]} arm",
+                f"Max roll/pitch\n{AXIS_LABEL[tilt_axis]} arm",
             ),
         ),
     ):
@@ -709,26 +712,28 @@ def write_sea_state_plot(
         panel.axhline(1.0, color="#666666", linewidth=0.8)
         panel.set_xticks(range(len(seas)))
         panel.set_xticklabels(
-            [f"{SPECTRUM_SHORT[spectrum]}\n{hs:g}" for hs, spectrum in seas],
-            fontsize=7,
+            [f"{SPECTRUM_SHORT[spectrum]} {hs:g}" for hs, spectrum in seas],
+            rotation=90, fontsize=6,
         )
-        panel.set_ylabel("RMS / CG baseline")
-        panel.set_title(title, fontsize=10)
+        panel.tick_params(labelsize=6, length=2, pad=1.5)
+        panel.set_title(title, fontsize=7)
         panel.grid(True, axis="y", alpha=0.3)
         # A ratio plot anchored at zero hides the very deviations it is for.
         panel.set_ylim(bottom=min(0.92, lowest - 0.02))
-    panels[-1].set_xlabel("Incident spectrum and $H_s$ [m]")
-    handles, labels = panels[0].get_legend_handles_labels()
+    fig.supxlabel("Incident spectrum and $H_s$ [m]", fontsize=6.5, y=0.15)
+    fig.supylabel("RMS / CG baseline", fontsize=6.5, x=0.005, y=0.61)
+    handles, _ = panels[0].get_legend_handles_labels()
+    labels = ["unmodeled", "gyro model", "exact model"]
     fig.legend(
         handles,
         labels,
         loc="lower center",
-        ncol=1,
-        fontsize=8,
+        ncol=3,
+        fontsize=6,
         frameon=False,
-        bbox_to_anchor=(0.55, 0.0),
+        bbox_to_anchor=(0.5, 0.0),
     )
-    fig.tight_layout(rect=(0.0, 0.12, 1.0, 1.0))
+    fig.subplots_adjust(left=0.16, right=0.99, bottom=0.39, top=0.80, wspace=0.36)
     _save(fig, path)
     plt.close(fig)
 
@@ -736,7 +741,7 @@ def write_sea_state_plot(
 def write_mechanism_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
     """What the installation injects, and what each model leaves behind."""
     plt = reproducible_pyplot()
-    fig, (left, right) = plt.subplots(2, 1, figsize=(4.0, 5.6))
+    fig, (left, right) = plt.subplots(1, 2, figsize=(3.5, 1.95))
 
     for axis in AXES:
         xs = [0.0]
@@ -747,12 +752,13 @@ def write_mechanism_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
                 continue
             xs.append(100.0 * d)
             ys.append(float(match["installed_rms_mps2"]))
-        left.plot(xs, ys, marker="o", markersize=5, label=AXIS_LABEL[axis])
-    left.set_xlabel("IMU offset from CG [cm]")
-    left.set_ylabel("Rotational acceleration RMS [m/s$^2$]", fontsize=9)
-    left.set_title("What the installation adds", fontsize=10)
+        left.plot(xs, ys, marker="o", markersize=2.5, linewidth=0.9, label=AXIS_LABEL[axis])
+    left.set_xlabel("IMU offset [cm]", fontsize=6.5)
+    left.set_xticks([0, 10, 20, 30])
+    left.set_ylabel("RMS [m/s$^2$]", fontsize=6.5)
+    left.set_title("Installed acceleration", fontsize=7)
     left.grid(True, alpha=0.3)
-    left.legend(fontsize=8)
+    left.legend(fontsize=5.5, frameon=False, handlelength=1.3, borderpad=0.2)
 
     # As a fraction of what was injected, not in absolute units: the exact
     # model's residual is identically zero, which no logarithmic axis can
@@ -787,22 +793,25 @@ def write_mechanism_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
                 xytext=(0, 2),
                 textcoords="offset points",
                 ha="center",
-                fontsize=7,
+                fontsize=5.5, rotation=90,
             )
     right.set_xticks(list(positions))
-    right.set_xticklabels([AXIS_LABEL[a] for a in axis_names], fontsize=9)
-    right.set_ylabel("Residual / installed acceleration", fontsize=9)
+    right.set_xticklabels([AXIS_LABEL[a] for a in axis_names], fontsize=6, rotation=20)
+    right.set_ylabel("Residual / installed", fontsize=6.5)
     right.set_ylim(0.0, 1.5)
     right.set_title(
-        f"What each model leaves at {100*DISTANCES_M[-1]:.0f} cm", fontsize=10
+        f"Model residual at {100*DISTANCES_M[-1]:.0f} cm", fontsize=7
     )
     right.grid(True, axis="y", alpha=0.3)
-    handles, labels = right.get_legend_handles_labels()
+    for ax in (left, right):
+        ax.tick_params(labelsize=6, length=2, pad=1.5)
+    handles, _ = right.get_legend_handles_labels()
+    labels = ["unmodeled", "gyro model", "exact model"]
     fig.legend(
-        handles, labels, loc="lower center", ncol=1, fontsize=8,
-        frameon=False, bbox_to_anchor=(0.55, 0.0),
+        handles, labels, loc="lower center", ncol=3, fontsize=6,
+        frameon=False, bbox_to_anchor=(0.5, 0.0),
     )
-    fig.tight_layout(rect=(0.0, 0.10, 1.0, 1.0))
+    fig.subplots_adjust(left=0.14, right=0.99, bottom=0.31, top=0.83, wspace=0.65)
     _save(fig, path)
     plt.close(fig)
 
