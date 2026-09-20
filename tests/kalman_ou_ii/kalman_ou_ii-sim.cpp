@@ -104,11 +104,8 @@ public:
             filter.enableTuner(true);
             filter.enableClamp(true);
 
-            // Vessel-RAO profile; paired fresh-seed evidence is retained in
-            // reports/results/sigma_horizon. Sensor injection and gates are fixed.
-            filter.setTauCoeff(0.95f);
-            filter.setPseudoMseRatio(0.5f);
-            filter.setSigmaStillnessDecaySec(5.0f);
+            // The vessel-RAO tuning point now comes from the library defaults;
+            // sweep overrides below remain explicit and leave gates unchanged.
 
             float v = 0.0f;
 

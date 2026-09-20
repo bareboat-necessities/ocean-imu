@@ -723,15 +723,13 @@
 % ---------------------------------------------------------------
     \section{Simulation-Backed Tuning Example}\label{sec:tuning}
 
-    The simulation driver \texttt{tests/pii\_observer/pii\_observer-adaptive.cpp}
-    defines \texttt{FusionAdapterAdaptivePIIMahony} around
-    \texttt{AdaptiveVerticalPIIMahony<float,\ true,\ TrackerType::PLL>}, so the
-    internal acceleration-frequency proxy there is the PLL tracker with the
-    shared default tracker configuration, even though the adaptive wrapper
-    itself remains generic. It sets the following values for the core observer:
+    The observer uses the same numerical defaults in the vessel-response
+    simulations and the deployed wrapper. Repeated coefficient sweeps use
+    complete records, with final assessment on additional paired sensor and
+    initialization draws. The selected core parameters are
     \begin{align}
-        r &= 0.08125,\\
-        \tau_a &= 0.40~\si{s},\\
+        r &= 0.08775,\\
+        \tau_a &= 0.42~\si{s},\\
         \tau_d &= 49.0~\si{s},\\
         k_b &= 2.5\times10^{-5},\\
         \lambda_b &= 3.0\times10^{-3}.
@@ -786,11 +784,11 @@
     The simulation-backed Mahony tuning uses
     \begin{align}
     (2K_p)_{\mathrm{base}} &= 1.70,\\
-    (2K_i)_{\mathrm{base}} &= 0.0225,\\
+    (2K_i)_{\mathrm{base}} &= 0.01125,\\
     (2K_p)_{\mathrm{calm}} &= 1.50,\\
     (2K_p)_{\mathrm{rough}} &= 1.20,\\
-    (2K_i)_{\mathrm{calm}} &= 0.025,\\
-    (2K_i)_{\mathrm{rough}} &= 0.0175.
+    (2K_i)_{\mathrm{calm}} &= 0.0125,\\
+    (2K_i)_{\mathrm{rough}} &= 0.00875.
     \end{align}
 
     The trust references are
@@ -893,8 +891,8 @@
             \toprule
             Parameter & Value & Role \\
             \midrule
-            \(r\) & 0.125 & base repeated pole rate \\
-            \(\tau_a\) & \SI{0.40}{s} & accel LPF time constant \\
+            \(r\) & 0.08775 & base repeated pole rate \\
+            \(\tau_a\) & \SI{0.42}{s} & accel LPF time constant \\
             \(\tau_d\) & \SI{49}{s} & slow trend time constant \\
             \(k_b\) & \(2.5\times10^{-5}\) & bias learning gain \\
             \(\lambda_b\) & \(3.0\times10^{-3}\) & bias leak \\
@@ -903,7 +901,7 @@
             \(\tau_{\mathrm{in}}\) & \SI{55}{s} & scheduling input smoothing \\
             \(\tau_{\mathrm{param}}\) & \SI{50}{s} & scheduled parameter smoothing \\
             \((2K_p)_{\mathrm{base}}\) & 1.70 & Mahony base proportional gain \\
-            \((2K_i)_{\mathrm{base}}\) & 0.090 & Mahony base integral gain \\
+            \((2K_i)_{\mathrm{base}}\) & 0.01125 & Mahony base integral gain \\
             \(\gamma_{\min}\) & 0.65 & minimum accelerometer trust \\
             \(g\) & \SI{9.80665}{m/s^2} & gravity magnitude \\
             \bottomrule

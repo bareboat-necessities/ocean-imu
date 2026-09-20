@@ -98,8 +98,8 @@ class VerticalPIIObserver {
 public:
     struct Config {
         // Base (reference) observer parameters
-        T r      = T(0.125); // repeated real pole rate for PII core [1/s]
-        T tau_a  = T(0.40);  // acceleration LPF time constant [s]
+        T r      = T(0.08775); // repeated real pole rate for PII core [1/s]
+        T tau_a  = T(0.42);  // acceleration LPF time constant [s]
 
         // Optional bias-trend channel
         T tau_d    = T(49.0);   // slow trend extractor time constant [s]
