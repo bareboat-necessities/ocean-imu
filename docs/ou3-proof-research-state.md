@@ -150,12 +150,13 @@ all-time actual magnetic-service floor exceeds one. Its native regression
 checks literal finite float startup/release; all-time float totality was not
 claimed. Current status explicitly records that this witness is inadmissible.
 
-Current local validation: 486 evidence/publication tests run, with 485 passed
+Pre-repair proof validation: 486 evidence/publication tests run, with 485 passed
 and one existing data-dependent skip. The full carried observer matches its
 untapped control; the 80-digit mean action, outward enclosure, independent
 rational factor checks and exact 40000-prefix force audit pass. The source
 estimator and physical constants are unchanged. All six workflows passed at
 0cc50ec5; CI for the new proof head is recorded separately in PR metadata.
+
 
 ## Signed temporal construction now fixed
 
@@ -234,6 +235,30 @@ A finite source supply and a positive but extremely small comparison margin
 are not evidence that the declared six-degree region is invariant.
 
 ## Failed approaches / DEAD_ENDS
+
+- CI integration rejected the merged tree at two independent gates. The
+  proof gate found a stale blob hash for `docs/ou3-construction-mean-action.md`
+  (`1e25ed8` recorded, `ee12d64` current). The shared evidence gate found that
+  paired OU validation rows were produced before the current OU-II header
+  and simulator tuning; its macro inventory also disagreed. Classification:
+  merge/provenance integration failure, not a new mathematical obstruction.
+  The invalidated hypothesis was that a proof-branch evidence bundle could
+  replace the already-retuned main-branch bundle without checking the replay
+  dependency closure. Restore the genuine retuned paired bundle with its
+  original immutable replay provenance, synchronize only its publication
+  mirrors, and refresh the reviewed proof-document hash. All simulator
+  sources, numerical thresholds, physical assumptions and theorem flags are
+  retained. The full evidence suite now also invokes the proof provenance
+  validator and tests rejection of a stale document hash. The first full
+  local check exposed a remaining macro-mirror mismatch; copying the matching
+  retuned macro file repairs it without modifying the consistency test. The
+  conservative global replay fingerprint is not restamped: full-tree replay
+  is still required. Local recovery validation passes all 490 tests (489
+  passed; one existing data-dependent skip), the strict current-analysis
+  replay contract, and the independent proof evidence validator. The next
+  falsifiable check is the combined evidence/proof CI gate
+  on the integrated tree; the mathematical limiter remains the source-uniform
+  signed temporal separation and historical action ceiling described above.
 
 - A construction-linked cumulative mean-action ellipsoid fails the sufficient
   pointwise collinearity exclusion `E_col-E>0` with the exact interval margin
