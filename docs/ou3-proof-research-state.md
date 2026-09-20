@@ -163,6 +163,15 @@ claimed. Physical qualification and recurring applied service remain required.
   access/HAL anti-bot responses. This is a literature-access limitation, not
   a failed theorem. No bound is imported from search excerpts. The audited
   primary sampled-data criterion remains the comparison target.
+- PR CI was blocked by 14 generated-evidence merge conflicts with main's
+  refresh 43d41dcc (source a27214ae). No estimator code changed on main.
+  Resolve the merge by retaining the complete PR refresh from 1e18e6ad
+  (source 02e65798), including its tables, plots, manifests and fingerprint;
+  do not splice numerical rows from the two runs. The next CI execution must
+  validate that coherent set and regenerate when its fingerprint requires it.
+  The initial ancestry command had no origin/main tracking ref; fetching an
+  explicit main ref exposed the actual conflicts. This is an integration
+  failure, not a mathematical counterexample or permission to relax gates.
 
 ## Retained facts
 
