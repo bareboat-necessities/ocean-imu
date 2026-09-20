@@ -41,8 +41,9 @@ class MarineLimits:
     a_max_mps2: float
     omega_max_rad_s: float
     p_ac_max_m_s: float
+    jerk_max_mps3: float = 100.0
     def __post_init__(self) -> None:
-        vals=(self.p_max_m,self.v_max_mps,self.a_max_mps2,self.omega_max_rad_s,self.p_ac_max_m_s)
+        vals=(self.p_max_m,self.v_max_mps,self.a_max_mps2,self.omega_max_rad_s,self.p_ac_max_m_s,self.jerk_max_mps3)
         if not all(math.isfinite(v) and v > 0.0 for v in vals):
             raise ValueError("marine limits must be positive and finite")
 
@@ -65,6 +66,8 @@ class MarineContinuationCertificate:
     persistent_primitive_state_certified: bool
     reference_acceleration_accounted: bool
     all_time_continuation_certified: bool
+    jerk_norm_upper_mps3: float | None = None
+    acceleration_locally_absolutely_continuous_certified: bool = False
 
     def __post_init__(self) -> None:
         if not self.history_id:
@@ -75,6 +78,10 @@ class MarineContinuationCertificate:
         )
         if not all(math.isfinite(v) and v>=0.0 for v in vals):
             raise ValueError("certificate bounds must be finite and nonnegative")
+        if self.jerk_norm_upper_mps3 is not None and not (
+            math.isfinite(self.jerk_norm_upper_mps3) and self.jerk_norm_upper_mps3 >= 0.0
+        ):
+            raise ValueError("jerk bound must be finite and nonnegative")
 
 
 def continuation_admitted(cert: MarineContinuationCertificate,
@@ -91,6 +98,9 @@ def continuation_admitted(cert: MarineContinuationCertificate,
         and cert.persistent_primitive_state_certified
         and cert.reference_acceleration_accounted
         and cert.all_time_continuation_certified
+        and cert.jerk_norm_upper_mps3 is not None
+        and cert.jerk_norm_upper_mps3 <= limits.jerk_max_mps3
+        and cert.acceleration_locally_absolutely_continuous_certified
     )
 
 
@@ -107,6 +117,8 @@ def quiet_water_continuation_certificate(history_id: str="quiet") -> MarineConti
         persistent_primitive_state_certified=True,
         reference_acceleration_accounted=True,
         all_time_continuation_certified=True,
+        jerk_norm_upper_mps3=0.0,
+        acceleration_locally_absolutely_continuous_certified=True,
     )
 
 
@@ -162,13 +174,15 @@ def audit_sampled_trace(samples: Sequence[MarineSample], limits: MarineLimits, *
         if not (math.isfinite(dt) and dt > 0.0):
             failures.append(f"sample {i}: non-increasing time")
             continue
+        if norm(sub(s.a_mps2,p.a_mps2)) > limits.jerk_max_mps3*dt:
+            failures.append(f"sample {i}: acceleration jerk bound")
         p_pred=add(p.p_m,scale(0.5*dt,add(p.v_mps,s.v_mps)))
         v_pred=add(p.v_mps,scale(0.5*dt,add(p.a_mps2,s.a_mps2)))
-        if norm(sub(s.p_m,p_pred)) > kinematic_tolerance: failures.append(f"sample {i}: p/v same-history enclosure")
-        if norm(sub(s.v_mps,v_pred)) > kinematic_tolerance: failures.append(f"sample {i}: v/a same-history enclosure")
+        if norm(sub(s.p_m,p_pred)) > limits.a_max_mps2*dt*dt/4+kinematic_tolerance: failures.append(f"sample {i}: p/v same-history enclosure")
+        if norm(sub(s.v_mps,v_pred)) > limits.jerk_max_mps3*dt*dt/4+kinematic_tolerance: failures.append(f"sample {i}: v/a same-history enclosure")
         if p.q_m_s is not None and s.q_m_s is not None:
             q_pred=add(p.q_m_s,scale(0.5*dt,add(p.p_m,s.p_m)))
-            if norm(sub(s.q_m_s,q_pred)) > primitive_tolerance: failures.append(f"sample {i}: q/p same-history enclosure")
+            if norm(sub(s.q_m_s,q_pred)) > limits.v_max_mps*dt*dt/4+primitive_tolerance: failures.append(f"sample {i}: q/p same-history enclosure")
     if q_values and primitive_span(q_values) > limits.p_ac_max_m_s + primitive_tolerance:
         failures.append("sampled primitive span")
     return {
@@ -176,6 +190,7 @@ def audit_sampled_trace(samples: Sequence[MarineSample], limits: MarineLimits, *
         "failures":failures,
         "one_history_id":hid,
         "all_time_primitive_required":True,
+        "all_time_acceleration_jerk_certificate_required":True,
         "all_time_membership_certified_by_finite_trace":False,
         "constant_nonzero_displacement_continuation_admitted":False,
         "quiet_water_admitted":True,

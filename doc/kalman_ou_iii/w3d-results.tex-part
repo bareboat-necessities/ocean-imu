@@ -104,6 +104,29 @@ this tuning path.
 
 \subsection{Bias tracking}
 
+Figure~\ref{fig:bias-tracking} compares the estimated accelerometer and
+gyroscope biases with their injected trajectories in the representative
+medium-JONSWAP record. The bias states share the measurement residuals with
+attitude and wave acceleration, so agreement with the injected bias is a
+separate diagnostic from displacement accuracy. In particular, a smooth bias
+estimate need not identify the physical sensor bias: persistent model error
+can also be absorbed into these states.
+
+For this sea, the ten-seed OU--III Adaptive ensemble gives a 3-D
+accelerometer-bias RMS error of $0.0632\pm0.0330$~\si{m.s^{-2}} and a 3-D
+gyroscope-bias RMS error of $(1.19\pm0.16)\times10^{-4}$~\si{rad.s^{-1}},
+reported as mean and standard deviation over the final \SI{900}{s}.
+
+The accelerometer comparison deliberately tests a mismatch between the
+random-walk truth and the estimator's slow, temperature-centered
+Gauss--Markov prior. Temperature is fixed, so these traces assess residual-bias
+tracking rather than thermal calibration. The noise-free ablation in
+Sec.~\ref{sec:model-mismatch-ablation} further shows nonzero estimated bias
+with zero true bias, demonstrating that the bias error includes a
+model-mismatch contribution. The representative trajectories therefore
+complement the reconstruction scores without establishing bias identifiability
+for arbitrary marine motion.
+
 \begin{figure}[t]
 \centering
 \begin{minipage}[t]{\columnwidth}
@@ -124,6 +147,14 @@ Gauss--Markov residual.}
 \end{figure}
 
 \subsection{Comparative results and adaptation ablations}
+
+The comparisons below separate the choice of estimator from the effect of
+online adaptation. Deterministic baselines place OU--III alongside OU--II,
+PII, and an adapted nonlinear observer; the ten-seed paired study then
+quantifies the OU--II/OU--III difference. Matched channel ablations attribute
+most of the off-nominal vertical improvement to the adaptive integral-state
+regularizer. Displacement and attitude scores are reported together so that
+the vertical comparison can be assessed against the full reconstruction.
 
 \input{w3d-baseline-comparison.tex-part}
 

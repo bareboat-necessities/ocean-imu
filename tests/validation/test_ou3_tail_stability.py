@@ -7,15 +7,14 @@ from tools.stability.ou3_theorem.tail_stability import (
     A21TailPremises, RefinementPremises, ShippingScheduleBounds,
     active_bias_homogeneous_ratio, active_tilt_bias_minor,
     additive_supply_practical_radius, a21_entry_bound,
-    attitude_gyro_quotient_uniformly_observable,
-    attitude_information_from_marine_diversity, bias_projection_inactive_margin,
-    compact_uniform_information_exists, coupled_information_floor,
-    detectable_tail_margin, explicit_small_gain_radius, finite_bridge_bound,
+    bias_projection_inactive_margin,
+    coupled_information_floor,
+    independent_block_tail_margin, explicit_small_gain_radius, finite_bridge_bound,
     gravity_tilt_sensitivity_floor, information_contraction_ratio,
     linear_kalman_tail_exponentially_stable, local_nonlinear_radius_exists,
     marine_magnetic_diversity_window_min, marine_magnetic_vector_diversity_floor,
-    neutral_quotient_uniform_mu_exists, nonlinear_margin_from_information,
-    nonlinear_small_gain_exists_from_linear, nonlinear_tail_ratio,
+    nonlinear_margin_from_information,
+    nonlinear_tail_ratio,
     normalized_translation_information_floor, conservative_float32_kernel_error,
     bias_release_error_bound, projection_sector_retained_error_bound,
     vector_attitude_information_floor, rotation_integral_singular_floor,
@@ -23,7 +22,7 @@ from tools.stability.ou3_theorem.tail_stability import (
      psd_service_schur_floor,
     aggregate_repeated_row_information_floor, aggregate_translation_information_floor,
     certified_rho_and_margin, vibration_inflated_accel_std_ceiling,
-    root_attitude_information_floor, attitude_gyro_information_floor_from_windows,
+    independent_heading_attitude_information_floor, attitude_gyro_information_floor_from_windows,
     full_neutral_information_floor, covariance_normalized_information_floor,
     rho_from_covariance_normalized_mu, classical_riccati_covariance_bounds,
     maximal_correction_cadence_is_lower_covariance_bound,
@@ -37,7 +36,7 @@ from tools.stability.ou3_theorem.tail_stability import (
     refinement_completion_bound, refinement_gate_margins,
     refinement_sample_gate_uniform, refinement_tilt_limit_rad,
     release_bound_from_service, shipping_covariance_hard_events_retain_compactness,
-    smooth_a21_remainder_vanishes_locally, tilt_gyro_bias_quotient_minor,
+    tilt_gyro_bias_quotient_minor,
     time_varying_translation_minor_floor, translational_observability_determinant,
     translational_observability_nonsingular, uniform_controllability_exists,
 )
@@ -137,12 +136,12 @@ class QuantitativeCertificateTests(unittest.TestCase):
         self.assertLess(c["rho0"],.999)
         self.assertGreater(c["nonlinear_norm_margin"],.0009)
 
-    def test_long_word_closes_fixed_coordinate_neutral_floor(self):
+    def test_conditional_independent_heading_geometry(self):
         racc=vibration_inflated_accel_std_ceiling(
             nominal_std=.2,vibration_gain=.75,
             detector_residual_rms_ceiling=.3)
         self.assertLess(racc,.302)
-        j=root_attitude_information_floor(
+        j=independent_heading_attitude_information_floor(
             vertical_specific_force_floor=9.80665-8.8,
             horizontal_specific_force_ceiling=8.8,
             accel_std_ceiling=racc,magnetic_heading_floor=1.0)
@@ -278,64 +277,32 @@ class RiccatiAndNonlinearClosureTests(unittest.TestCase):
         self.assertAlmostEqual(r,.05)
         self.assertTrue(math.isfinite(additive_supply_practical_radius(.81,.05,.5,1e-4)))
 
-    def test_same_history_exogenous_schedule_leaves_smooth_local_remainder(self):
-        smooth=smooth_a21_remainder_vanishes_locally(
-            projection_sector_certified=True,tuner_exogenous_same_history=True,
-            magnetic_reference_exogenous_same_history=True,
-            finite_operation_domain=True)
-        self.assertTrue(smooth)
-        self.assertTrue(nonlinear_small_gain_exists_from_linear(.99,smooth))
-
 class MarineMagneticDiversityTests(unittest.TestCase):
     def test_bounded_velocity_forces_vector_diversity(self):
         threshold=marine_magnetic_diversity_window_min(9.80665,15.0,75.0,5.5)
         self.assertGreater(threshold,5.6); self.assertLess(threshold,5.7)
         floor=marine_magnetic_vector_diversity_floor(8.0,9.80665,15.0,75.0,5.5)
         self.assertAlmostEqual(floor,43.97475)
-        self.assertTrue(attitude_information_from_marine_diversity(
-            diversity_floor=floor,magnetic_service_floor=1.0,
-            magnetic_service_window_s=1.0,angular_rate_ceiling=.6108652382))
 
     def test_too_short_window_does_not_claim_diversity(self):
         self.assertLess(marine_magnetic_vector_diversity_floor(
             5.0,9.80665,15.0,75.0,5.5),0.0)
 
-class NeutralQuotientDetectabilityTests(unittest.TestCase):
-    def test_tilt_gyro_bias_quotient_minor_is_uniform(self):
+class ConditionalBlockAlgebraTests(unittest.TestCase):
+    def test_constant_frame_tilt_gyro_bias_minor(self):
         self.assertAlmostEqual(abs(tilt_gyro_bias_quotient_minor(1.00665,.004)),
                                1.00665**2*.004)
-
-    def test_attitude_gyro_quotient_is_uniformly_observable(self):
-        self.assertTrue(attitude_gyro_quotient_uniformly_observable(
-            gravity_floor=1.00665,magnetic_floor=1.0,
-            sample_spacing_floor=.004,angular_rate_ceiling=.6108652382))
-
-    def test_neutral_quotient_has_uniform_mu_when_all_components_are_strict(self):
-        self.assertTrue(neutral_quotient_uniform_mu_exists(
-            translation_minor_floor=1e-15,gravity_tilt_floor=1.00665,
-            tilt_gyro_minor_abs_floor=1e-3,magnetic_information_floor=1.0,
-            strict_guard_margin=1e-6))
 
     def test_active_bias_is_strictly_stable_without_observability(self):
         q=active_bias_homogeneous_ratio(16.0,5000.0)
         self.assertLess(q,.994)
-        self.assertGreater(detectable_tail_margin(1.0,16.0,5000.0),.003)
+        self.assertGreater(independent_block_tail_margin(1.0,16.0,5000.0),.003)
 
-class HybridInformationClosureTests(unittest.TestCase):
+class ConditionalInformationAlgebraTests(unittest.TestCase):
     def test_active_tilt_bias_stationary_minor_is_strict(self):
         d=active_tilt_bias_minor(1.00665,.5,5000.0)
         self.assertLess(d,0)
         self.assertGreater(abs(d),4e-9)
-
-    def test_compactness_needs_every_strict_margin(self):
-        self.assertTrue(compact_uniform_information_exists(
-            translation_minor_floor=1e-15,gravity_tilt_floor=1.0,
-            magnetic_information_floor=1.0,active_bias_minor_abs_floor=1e-9,
-            strict_branch_guard_margin=1e-6))
-        self.assertFalse(compact_uniform_information_exists(
-            translation_minor_floor=1e-15,gravity_tilt_floor=1.0,
-            magnetic_information_floor=1.0,active_bias_minor_abs_floor=1e-9,
-            strict_branch_guard_margin=0.0))
 
     def test_positive_information_has_a_smooth_local_radius(self):
         self.assertTrue(local_nonlinear_radius_exists(.01,0.0))

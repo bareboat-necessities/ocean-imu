@@ -3,7 +3,6 @@
   \expandafter\endinput
 \fi
 
-\subsection{Comparative evaluation}
 \label{sec:observer-comparison}
 
 \subsubsection{Deterministic external and predecessor baselines}
@@ -35,9 +34,9 @@ integral-state schedule of Sec.~\ref{sec:adaptation}.
 \toprule
 Method & Tuning policy & Aiding and scored outputs \\
 \midrule
-OU--III & committed adaptive configuration & IMU+mag; vertical and tilt scored \\
-OU--II & committed predecessor configuration & same records and common outputs \\
-PII & committed PLL scheduler & same records; common outputs only \\
+OU--III & adaptive integral regularization & IMU+mag; vertical and tilt scored \\
+OU--II & adaptive dual regularization & same records and common outputs \\
+PII & PLL-based scheduling & same records; common outputs only \\
 TVG--NLO & fixed gains for vertical adaptation & IMU only; yaw/horizontal unscored \\
 \bottomrule
 \end{tabular}
@@ -75,17 +74,14 @@ baseline is included.
 }{}
 
 \subsubsection{Ten-seed OU-family and adaptation study}
-% Never fall back to the complete archived validation fragment here: that
-% archive intentionally retains the retired one-way transition protocol.
 \IfFileExists{w3d-ou-validation-results-publication.tex-part}{%
   \input{w3d-ou-validation-results-publication.tex-part}%
 }{}
 
 The three ensemble plots below are generated from the same ten paired seed
-triplets and the same current validation bundle. In particular, OU--III
+triplets. In particular, OU--III
 Adaptive uses the analytically derived SpectralMSE integral-state schedule of
-Sec.~\ref{sec:adaptation}; these figures do not restore any retired cubic-law
-comparison.
+Sec.~\ref{sec:adaptation}.
 
 \IfFileExists{ou_validation_vertical.svg}{%
   \begin{figure}[t]
@@ -147,16 +143,18 @@ It remains separate rather than pooled into the JONSWAP primary endpoint.
 \paragraph{Adaptation mechanism}
 Figure~\ref{fig:ou_mc_vertical} shows that online tuning reduces the penalty of
 using one FixedNominal point off nominal. At $H_s=\SI{1.5}{m}$, where
-FixedNominal and FixedOracle coincide, OU--III Adaptive is slightly worse by
+FixedNominal and FixedOracle coincide, the OU--III Adaptive-minus-FixedNominal
+difference is
 $\OUValidationIIIHsOneFiveNominalDifference$ percentage points
-($[\OUValidationIIIHsOneFiveNominalLow,\OUValidationIIIHsOneFiveNominalHigh]$),
-consistent with estimating the operating point from noisy signals.
+($[\OUValidationIIIHsOneFiveNominalLow,\OUValidationIIIHsOneFiveNominalHigh]$).
+The negative difference indicates a small improvement even at the calibration
+sea.
 
 Channel ablation identifies the mechanism without changing adaptation-law
 family: adaptive $r_S$ with frozen $(\tau,\sigma_{aw})$ closely tracks full
 SpectralMSE adaptation, whereas adapting the OU parameters with $r_S$ frozen at
 FixedNominal recovers essentially none of the off-nominal vertical improvement
-(Table~\ref{tab:ou_mc_channels}). No legacy regularizer law is an ablation arm.
+(Table~\ref{tab:ou_mc_channels}).
 
 \paragraph{Covariance control}
 The covariance-maintenance control changes normalized vertical error by at most

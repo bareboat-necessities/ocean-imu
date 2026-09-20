@@ -40,8 +40,38 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install factor algebra dependencies
+        run: python3 -m pip install numpy scipy
       - name: Compile theorem tooling
         run: python3 -m py_compile tools/stability/ou3_theorem/*.py
+      - name: Execute rational LIN path certificate
+        run: |
+          python3 tools/stability/ou3_theorem/lin_path_certificate.py --output /tmp/ou3-lin-path-certificate.json
+          python3 -m unittest discover -s tests/validation -p test_ou3_lin_path_certificate.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_lin_matrix_certificate.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_word_energy.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_factor_word.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_root_covariance_certificate.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_sampled_capture_obstruction.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_sampling_fidelity.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_corrected_word.py -v
+          python3 tools/stability/ou3_theorem/block_factor_numeric.py
+          python3 -m unittest discover -s tests/validation -p test_ou3_block_factor_numeric.py -v
+      - name: Preserve reproducible source and LIN certificate
+        if: ${{ !cancelled() }}
+        run: |
+          git rev-parse HEAD > /tmp/ou3-proof-source-commit.txt
+          git archive --format=tar HEAD | gzip > /tmp/ou3-proof-source.tar.gz
+      - uses: actions/upload-artifact@v6
+        if: ${{ !cancelled() }}
+        with:
+          name: ou3-proof-reproduction
+          path: |
+            /tmp/ou3-proof-source.tar.gz
+            /tmp/ou3-proof-source-commit.txt
+            /tmp/ou3-lin-path-certificate.json
+          retention-days: 7
+          if-no-files-found: error
       - name: Validate theorem contracts
         working-directory: tests/validation
         run: |
@@ -49,9 +79,9 @@ jobs:
       - name: Validate provenance and fail-closed status
         run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
       - name: Build literal shipping regressions
-        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test
+        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test sampled_capture-test
       - name: Run literal shipping regressions
-        run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test
+        run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:

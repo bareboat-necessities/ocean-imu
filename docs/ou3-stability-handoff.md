@@ -1,255 +1,102 @@
 # OU-III stability handoff
 
-## Architecture
-
-There is one theorem under simultaneous MARINE MOTION, IMU BIAS, and MAGNETIC
-SERVICE assumptions on one persistent physical execution. Shipping code is
-authoritative.
-
-The proof route is
-`construction -> capture -> finite H18 bridge -> finite reference refinement
-and bias release -> recurring magnetically informed A21 -> regional practical
-stability`.
-
-## Key correction in PR #558
-
-H18 is no longer asked to provide asymptotic contraction. PR #557 showed why a
-particular full-state held-bias contraction formulation cannot work. That
-negative result is retained in prose, while its experimental export and
-finite-difference scripts have been removed.
-
-The shipping wrapper itself supplies the reason to move on: accelerometer-bias
-learning is externally held while the magnetic reference is provisional, and
-the hold is released when refinement completes. The internal gate additionally
-requires its accepted-magnetometer-update threshold and a one-second guard.
-Under recurring MAGNETIC SERVICE the count/guard part is finite once reference
-refinement is finite.
-
-## Productive proof obligations
-
-1. Qualify the assembled sensor/bias limits and all-time marine-motion
-   membership.
-2. Prove finite history-dependent startup/capture.
-3. Prove finite magnetic-reference refinement and hence finite H18 release.
-4. Bound the finite H18 bridge and prove the literal release retains the A21
-   tail domain.
-5. Establish a source-uniform complete A21 information floor in normalized
-   covariance coordinates. MAGNETIC SERVICE supplies the heading/axial
-   gyro-bias component; gravity/accelerometer and integral pseudo-updates must
-   close the remaining directions. A full floor mu gives the linear comparison
-   rho0<=1/(1+mu).
-6. Carry the literal dissipative accelerometer-bias projection sector; do not require projection-inactive release. Bound the remaining nonlinear reset/tuner remainder and close finite-error contraction with (sqrt(rho0)+eta)^2 < 1. Arithmetic remains a separate additive supply.
-7. Close every-prefix retention, recurring service, and finite-precision
-   arithmetic.
-
-## Reproduction
-
-`cd tests/validation && python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_same_execution test_ou3_theorem_status test_ou3_tail_stability`
-
-`python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json`
-
-`make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test && ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test`
-
-No H18 numerical diagnostic is a proof gate. The next implementation work
-should target finite reference refinement/release and the analytic A21
-dissipativity inequality.
-
-
-## Latest analytic closure
-
-The A21 operating point is now handled as genuinely time varying. The
-tau-scaled, progress-preserving S scheduler plus compact dt/tau bounds yields a
-uniform positive translation observability minor through an extended-Chebyshev
-argument. Gravity supplies a uniform 1.00665 m/s^2 tilt sensitivity floor;
-MAGNETIC SERVICE supplies the missing heading/axial-gyro-bias information.
-After quotienting the strictly stable active accelerometer-bias OU mode, the
-neutral information Gramian is pointwise positive on strict compact hybrid
-cells, hence has an existential uniform floor mu_N>0.
-
-Positive process-noise densities give uniform complete controllability, and the
-shipping covariance sync/release operations preserve compactness. Therefore
-the linear A21 LTV Kalman error word has a source-uniform rho0<1. On the strict
-6-degree / 0.15 m/s^2 inner domain, projection is inactive and the same-history
-nonlinear remainder is smooth with eta(r)->0, so a positive local radius exists
-with sqrt(rho0)+eta<1. Arithmetic is additive supply.
-
-Next work is to make these existential margins constructive: enclose numerical
-mu_N/rho0, derive an explicit nonlinear radius, bound arithmetic supply, and
-prove capture/release retention into that radius.
-
-
-## Validation note
-
-The proof branch was rebuilt once on current main to remove stale generated
-evidence from the PR. Subsequent validation runs should compare ordinary
-descendant commits; the one synchronization run immediately following that
-history rewrite can fail its shallow before/after classifier because the old
-pre-rewrite object is intentionally no longer in branch history.
-
-
-## Marine-forced attitude diversity
-
-The attitude information floor follows from the existing physical contracts.
-For `f=a-g` and true field `B`,
-
-`integral_0^T f x B dt = Delta v x B - T g x B`.
-
-Thus
-`T^-1 ||integral f x B dt|| >= g B_h,min - 2 V_max B_max/T`.
-With the declared limits this becomes positive after 5.60844 s and is
-43.97475 (m/s^2) uT for T=8 s. Every 8 s marine history therefore contains
-non-collinear gravity/specific-force and magnetic sensitivity. Recurring
-MAGNETIC SERVICE transports an applied magnetic sensitivity into that interval.
-Two 8 s subwindows form the 16 s A21 proof word and expose gyro bias through
-attitude propagation. No additional attitude-excitation assumption is used.
-
-
-## Quantitative enclosure status
-
-A first fully analytic normalized translation enclosure is now constructive.
-On the 16 s word, selecting S updates after times 0, 8 and 16 s with the
-literal maximum scheduler delay 0.156 s, state scales
-(V,p,S)=(5.5,8.1,1100), and worst declared S-noise standard deviation 100,
-the determinant/Frobenius certificate gives
-
-`mu_trans >= 2.04734e-3`.
-
-This is a real lower bound, not a sampled singular value.
-
-A deliberately sparse two-epoch attitude/gyro calculation gives a much weaker
-candidate scale (~6.18e-7) and therefore is **not promoted as the final
-shipping mu_N certificate**. The reason is important: MAGNETIC SERVICE is an
-already-transported two-coordinate heading/axial-bias Gramian over a window,
-not an instantaneous pure-heading row. A tight full certificate must compose
-that actual 2-D service Gramian directly with the many accelerometer rows in
-the same 16 s word; replacing it by a fictitious instantaneous attitude
-measurement would be an invalid shortcut. The next quantitative proof step is
-therefore the aggregate Schur/Gramian bound on the literal partition, using all
-recurring accelerometer and S information rather than two sparse rows.
-
-The float32 arithmetic path is likewise separated correctly. A straight-line
-kernel with n rounded operations has the standard gamma_n bound
-`gamma_n=n*u/(1-n*u)`, u=2^-24. This is implemented as a certificate
-primitive, but no whole-word arithmetic supply is claimed until literal kernel
-operation counts and magnitude envelopes are composed. Roundoff remains
-additive supply and is not allowed to consume the nonlinear derivative margin.
-
-
-## Constructive long-word neutral information
-
-The weak gyro-bias scale is handled by accumulation, not by strengthening the
-physical assumptions. The proof word is now 2048 s. At every disjoint one-second
-MAGNETIC SERVICE root, the service inequality J_hb>=I permits extraction of one
-unit of **pure root-heading information** (subtract diag(1,0); the remainder is
-PSD). The simultaneous root accelerometer sample has no preceding gyro-bias
-transport. With the commissioned detector-band residual bound 0.3 m/s^2,
-shipping vibration gain 0.75, and nominal accelerometer std 0.2 m/s^2, the
-literal effective accelerometer std is bounded by
-
-`sigma_acc,eff <= hypot(0.2,0.75*0.3)=0.3010399 m/s^2`.
-
-Together with `|f_z|>=g-A_max=1.00665`, `|f_h|<=8.8`, and one unit of
-heading service, each service root supplies a pure attitude information floor
-greater than 0.0129 in the declared proof coordinates.
-
-Let `y_k=theta_0+C_k b_g` be those extracted root-attitude observations.
-Bounded angular rate gives
-
-`sigma_min(C_(k+1)-C_k) >=
-  s_bg * 2 sin(Omega_max/2)/Omega_max`
-
-with `s_bg=0.02`, so the normalized increment is at least about 0.01969.
-The path-graph inequality
-`sum |y_(k+1)-y_k|^2 <= 4 sum |y_k|^2`, combined with the root observation
-`y_0=theta_0`, gives the joint attitude/gyro-bias floor
-
-`mu_ag = j*c/(1+c),  c=(N-1) beta^2/4`.
-
-For N=2048 this exceeds 2.1e-3. The independent 16-s S certificate remains
-`mu_trans>=2.04734e-3`; therefore the complete **fixed-coordinate neutral
-Gramian** satisfies
-
-`mu_N >= 2.04e-3`.
-
-This construction never integrates attitude over 2048 s: it uses only
-one-second transport increments, so bounded rotations cannot cancel the
-gyro-bias information.
-
-### Important normalization correction
-
-The number above is not yet a covariance-metric contraction factor. The
-information-form identity `rho0<=1/(1+mu)` requires the Gramian to be whitened
-by the actual root covariance. If, in the same proof coordinates,
-`P_root>=p_min I`, then
-
-`mu_cov >= p_min mu_N`,
-`rho0 <= 1/(1+p_min mu_N)`.
-
-Using the fixed-coordinate 2.04e-3 directly in the latter formula would be a
-coordinate-dependent and invalid shortcut. The next quantitative certificate
-is therefore a recurring lower enclosure `p_min>0` for the shipping A21 root
-covariance. Only after that enclosure is established will rho0, the explicit
-L2/r* radius, and the arithmetic/practical-radius bounds be promoted.
-
-
-## Verified interval Riccati certificate implementation
-
-The covariance-normalization blocker now has executable fail-closed certificate
-machinery. A candidate covariance trajectory may propose a spectral box
-`p_min I <= P <= p_max I`, but it cannot promote it.
-
-For every accelerometer, integral, and magnetic innovation interval, write
-`S=S_0+E`. The certificate requires
-`lambda_min(S_0)>=a`, `||E||_2<=r<a`. Then the midpoint inverse residual is
-bounded by `r/a<1`, and Neumann/Krawczyk inclusion gives
-`||S^{-1}||<=1/(a-r)`. If this strict inequality fails, the certificate fails
-closed.
-
-The complete interval Riccati image must then satisfy, with outward-rounding
-slack included,
-
-`[R(P,parameters)] subseteq [p_min I,p_max I]`
-
-for every covariance in the proposed box and every admitted shipping parameter
-box. The certificate also requires explicit inclusion of the periodic
-`a_w` covariance synchronization, H18-to-A21 bias-release covariance floor,
-the complete bounded tuner/scheduler envelope, and float32 rounding. Only after
-all flags and inclusions verify does the machinery compute
-
-`mu_cov=p_min*mu_N`, `rho0=1/(1+mu_cov)`.
-
-A committed status artifact currently remains OPEN. This is deliberate: the
-residual/inclusion checker is now present, but the full outward-rounded shipping
-Riccati image has not yet been generated. No midpoint-only p_min is accepted.
-
-
-## Current covariance-normalization result
-
-The literal entrywise midpoint-radius 21-state Riccati enclosure was executed after its one permitted near-identity Rodrigues refinement. It failed as an interval-conditioning mechanism: the predicted covariance spectral enclosure was [-18.7907040, 2502.41442]. The S innovation still verified with r/a=0.666663864<1, but accelerometer and magnetometer innovation boxes did not admit strict inverse certificates. Pointwise shipping covariances remain PSD; the negative lower endpoint is interval dependency, not a physical covariance counterexample.
-
-Per the research protocol, do not subdivide this entrywise mechanism again. The next covariance-normalization construction must preserve PSD structure (spectral/square-root factor enclosure) and must itself be run before p_min is promoted. Until then constructive_root_covariance_floor, mu_cov/rho0, explicit r_*, arithmetic practical radius, capture/release-to-tail, and prefix retention remain open.
-
-
-## PSD-preserving covariance review result
-
-A one-sample source-range feasibility check of the replacement PSD-preserving representation is positive: sigma_min(F) >= 0.6440871, with covariance floor 4.14848e-7 after prediction and 1.49403e-7 after the maximal S/accelerometer/magnetometer correction sequence. These are non-promoting feasibility margins.
-
-The remaining recurring-covariance task is now the exact process-noise factor: certify a full-rank lower factor/floor for shipping Q_AA, integrated-OU Q_LL, and active-bias Q_BA, then iterate the PSD representation over the actual cadence. A one-step scalar Q eigenvalue is expected to be extremely conservative for the triple-integrated chain, so it must not be used to manufacture a useless rho0; the factor/block structure must retain multi-step controllability.
-
-
-## Block/factor covariance metric
-
-The covariance-normalization architecture has moved to a block/factor metric after the second conditioning failure of the entrywise midpoint-radius Riccati box. The state is partitioned as AG=(attitude,gyro bias), LIN=(v,p,S,a_w), and BA=(active accelerometer bias). Each diagonal covariance block is represented by a certified factor floor P_ii >= L_i L_i^T, while cross-block covariance is carried by operator-norm bounds.
-
-After scaling by the factor floors, block Gershgorin/Schur coercivity requires gamma=1-max_i sum_(j!=i) ||P_ij||/(ell_i ell_j)>0. Only then can fixed-coordinate information be covariance-normalized. For block information floors mu_i, the certificate uses mu_cov >= gamma*min_i(mu_i ell_i^2), followed by rho0<=1/(1+mu_cov). This prevents a poorly conditioned global scalar covariance eigenvalue from destroying useful block information while still accounting for every cross-covariance.
-
-The old entrywise interval Riccati representation is retired and must not be subdivided again. A non-promoting scaled integrated-OU factor probe is now in CI. The next source-uniform certificate must enclose tau/process-noise variation and the within-slice controllability remainder, then establish AG and BA factor floors and recurring cross-block operator bounds under the literal shipping correction/event cadence.
-
-
-## Block-factor coercivity result
-
-The generic absolute cross-ceiling/Gershgorin attempt was executed and is retired: normalized cross bounds (4.0922e8,2.0137e6,1.0301e8) gave gamma=-5.1223e8. This is conditioning of that sufficient reduction, not covariance loss.
-
-Root coercivity now uses the exact shipping additive-process identity. Since P-=F P+ F^T+Q and Q is block diagonal, certified process factors Q_i>=L_iL_i^T imply P->=diag(L_iL_i^T), hence root block-metric gamma=1 regardless of cross covariance. Corrections preserve positive metric margin by gamma+=gamma-/(1+gamma- j_D). Cross-block absolute bounds remain required for prefix magnitude/totality, but no longer establish root coercivity.
-
-AG and BA factor constructions are positive. The controlling numeric certificate is LIN: source-uniform continuous-tau enclosure of the useful scaled integrated-OU factor and its survival through intervening corrections.
+PR #560 integrates the proof work and main-article revisions. After its merge,
+start the next conversation from current `main` containing that merge, and keep
+subsequent continuation in one branch/PR. Do not restart from the older PR #558.
+The theorem is **not closed**; merging this work does not certify stability.
+Keep the single same-history construction -> capture -> H18 -> release -> A21
+architecture and the unchanged shipping estimator.
+
+Read in order, with paths relative to the repository root:
+
+1. `AGENTS.md`.
+2. `docs/ou3-proof-research-state.md` and
+   `docs/ou3-controlling-proof-obligations.md`.
+3. `reports/results/ou3_stability/theorem-status.json` for the machine-checked
+   distinction between established implications and undischarged premises.
+4. `docs/ou3-corrected-word-proof.md`, `docs/ou3-sampling-fidelity.md`, and
+   `docs/ou3-nuisance-upper-proof.md`, alongside their modules under
+   `tools/stability/ou3_theorem/` and the shipping source operations they cite.
+
+MARINE MOTION now includes locally absolutely continuous physical acceleration
+with jerk <=100 m/s^3. The user authorized this domain revision. Quiet water,
+all other physical limits and shipping behavior are retained.
+
+Read `ou3-sampling-fidelity.md`: it proves the sharp nonuniform trapezoidal
+mean bound, exclusion of every constant-attitude stationary-sample alias of
+at least six degrees over 32 s, a positive joint 3-D measured-vector Gramian
+after 64 s (both magnetic residual envelopes charged), finite-rotation
+coercivity, and physical LIN prediction supply in the full covariance metric.
+The exact constants are reproduced by `sampling_fidelity.py`. The physical
+Gramian uses true world transport; it is not the actual corrected full loss.
+
+The 200-Hz counterexample and native `sampled_capture-test` now have the
+explicit scope of the previous domain without a jerk bound. They explain why
+the new premise is necessary and remain useful regression checks. They do
+not refute capture under the revised domain.
+
+Retain the exact complete-word loss/factor/range algebra, corrected LIN path
+lower comparison, joint full-state covariance floor after 16 s, nuisance
+covariance upper comparison after 17 s, and stationary A21 detectability.
+Read `ou3-corrected-word-proof.md` next. The nuisance floor is now transported
+to roots immediately before prediction, without an injection or nominal AW
+bound. A Schur-complement argument proves that a uniform SPD bound J on the
+six AG columns of the actual complete loss implies a full covariance upper
+bound; the first prediction then supplies strict 21-state contraction. J is
+still open. This is not the invalid lifting of two-column magnetic service.
+
+The same document proves actual-gain finite-error word composition and an
+explicit finite-angle reset bound, including the real small-angle quaternion
+polynomial defect. The exact covariance recursion also bounds all prediction
+and measurement inputs jointly by the square root of their summed actions;
+reset/projection defects retain separate norm supplies. This avoids an
+unnecessary long-word factor from summing every individual input norm.
+The reset remainder has an injection-squared times error
+term; do not call it purely quadratic in error at a nonzero injection. No
+second filter with identical gains or event decisions is assumed.
+
+Next discharge the actual six-column J premise, then combine these supplies,
+projection sector and physical mismatch with capture/release and every-prefix
+retention. General capture, full AG upper covariance, strict uniform loss and
+arithmetic remain open. No completion percentage or full theorem is justified.
+
+Specifically, at pre-prediction roots, establish a single positive-definite
+matrix J with `D_word[AG,AG] >= J` uniformly over admitted histories, where AG
+contains all three attitude-error and three gyro-bias coordinates. This is a
+principal block of the **actual complete corrected-word loss**, including the
+realized gain and reset transports. A physical Gramian, stationary-system
+detectability, or a positive diagnostic on one supplied word does not discharge
+this premise. Preserve loss factors and nuisance coupling when seeking the
+bound. Then apply the existing Schur/first-prediction implication, quantify its
+margin, and charge the finite-error supplies in the same storage before claiming
+nonlinear capture, release, or retention. Capture may have a history-dependent
+finite time; no such time has yet been certified.
+
+The main article is `doc/kalman_ou_iii/kalman_ou-w3d.tex`; the stability study is
+a separate document. PR #560 moved the dataset description into evaluation
+methodology, added engine-noise prefiltering to the deployed-filter diagram,
+made the four requested lever-arm figures single-column, completed bias and
+comparative-results prose, and removed the identified implementation names.
+The revised main article compiled to 32 pages and its affected pages were
+visually checked. Two existing ensemble-table overflows and one existing
+full-state-equation overflow remain. These editorial changes are not proof
+milestones.
+
+Reproduce with:
+
+```
+python3 -m unittest discover -s tests/validation -p 'test_ou3_*.py'
+python3 tools/stability/ou3_theorem/build_evidence.py
+```
+
+Use a Python environment with NumPy and SciPy; diagnostics may also need
+mpmath. The broader publication/evidence suite uses Matplotlib and pandas:
+
+```
+make -C tests/validation evidence-test
+```
+
+At the article handover, that suite passed 463 tests with one existing
+data-dependent skip. Recheck CI at the final PR/merge commit rather than
+assuming an earlier run covers later edits. Evidence validation must continue
+to report `theorem_closed: false` until the remaining obligations are proved.

@@ -1,0 +1,129 @@
+{
+  "acceleration_cosine_amplitude_plus": [
+    "0",
+    "196133/25000",
+    "196133/50000"
+  ],
+  "admitted_by_current_jerk_contract": false,
+  "all_time_squared_envelope_upper": {
+    "acceleration": "38468153689/500000000",
+    "displacement": "38468153689/1036800000000000000000",
+    "primitive_difference": "38468153689/373248000000000000000000000",
+    "velocity": "38468153689/720000000000000"
+  },
+  "body_accelerometer_at_every_sample": [
+    "0",
+    "0",
+    "-196133/20000"
+  ],
+  "body_gyro_at_every_sample": [
+    "0",
+    "0",
+    "0"
+  ],
+  "body_magnetometer_uT": [
+    "75",
+    "0",
+    "0"
+  ],
+  "body_to_world_rotation_plus": [
+    [
+      "1",
+      "0",
+      "0"
+    ],
+    [
+      "0",
+      "3/5",
+      "-4/5"
+    ],
+    [
+      "0",
+      "4/5",
+      "3/5"
+    ]
+  ],
+  "both_histories_nonzero_motion": true,
+  "conditional_local_A21_stability_refuted": false,
+  "filter_divergence_claimed": false,
+  "jerk_squared_lower": "346213383201/3125",
+  "new_physical_assumption_adopted": true,
+  "old_domain_six_degree_eventual_capture_refuted": true,
+  "physical_bias_and_sensor_error": "zero",
+  "physical_frequency_hz": "200",
+  "qualification": "OU3_SAMPLED_PHYSICAL_CAPTURE_OBSTRUCTION_V1",
+  "same_physical_history_across_all_words": true,
+  "sample_period_s": "1/200",
+  "scope": "previous contract without acceleration-jerk bound; regular real-arithmetic shipping execution",
+  "service": {
+    "actual_innovation_service_lower": "4570312500000000/1228455181462133",
+    "all_phase_prefix_determinant_lower": "1562235468792229167/156250000000000000000000000",
+    "all_time_service_verified_in_real_arithmetic": true,
+    "every_prefix_covariance_upper": [
+      [
+        "9/1000",
+        "0"
+      ],
+      [
+        "0",
+        "3/100000"
+      ]
+    ],
+    "first_partial_cell_determinant_lower": "1279309558789229167/156250000000000000000000000",
+    "float32_all_time_service_verified": false,
+    "handoff_covariance": [
+      [
+        "7569/1000000",
+        "0"
+      ],
+      [
+        "0",
+        "1/1000000"
+      ]
+    ],
+    "invariant_residual": [
+      [
+        "1054701132902621/133712666198765625",
+        "-20000002/1782835549316875"
+      ],
+      [
+        "-20000002/1782835549316875",
+        "854359589937497/11410147515628000000000000"
+      ]
+    ],
+    "invariant_residual_ldlt_D": [
+      "1054701132902621/133712666198765625",
+      "315824848413561391/4218804531610484000000000000"
+    ],
+    "invariant_residual_ldlt_L": [
+      [
+        "1",
+        "0"
+      ],
+      [
+        "-1500000150/1054701132902621",
+        "1"
+      ]
+    ],
+    "normalized_root_covariance_upper": "3/40",
+    "observation_gram_determinant": "13/625",
+    "observation_gram_trace_upper": "390794/15625",
+    "observation_noise_operator_upper": "4532729489/28125000000000",
+    "post_mag_covariance_upper": [
+      [
+        "1/125",
+        "0"
+      ],
+      [
+        "0",
+        "1/50000"
+      ]
+    ],
+    "required_service_floor": "1",
+    "service_window_s": "1",
+    "true_heading_axis_service_lower": "1645312500000000/1228455181462133"
+  },
+  "tilt_angle_exact": "acos(3/5)",
+  "tilt_cosine": "3/5",
+  "verified": true
+}

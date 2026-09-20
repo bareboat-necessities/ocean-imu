@@ -33,17 +33,17 @@ class MarineMotionTests(unittest.TestCase):
         self.assertTrue(continuation_admitted(quiet,LIMITS))
 
         missing_attitude=MarineContinuationCertificate(
-            "h",0.0,0.0,0.0,0.0,0.0,True,False,True,True,True
+            "h",0.0,0.0,0.0,0.0,0.0,True,False,True,True,True,0.0,True
         )
         self.assertFalse(continuation_admitted(missing_attitude,LIMITS))
 
         hidden_reference_accel=MarineContinuationCertificate(
-            "h",0.0,0.0,0.0,0.0,0.0,True,True,True,False,True
+            "h",0.0,0.0,0.0,0.0,0.0,True,True,True,False,True,0.0,True
         )
         self.assertFalse(continuation_admitted(hidden_reference_accel,LIMITS))
 
         restarted_potential=MarineContinuationCertificate(
-            "h",0.0,0.0,0.0,0.0,0.0,True,True,False,True,True
+            "h",0.0,0.0,0.0,0.0,0.0,True,True,False,True,True,0.0,True
         )
         self.assertFalse(continuation_admitted(restarted_potential,LIMITS))
 

@@ -592,11 +592,10 @@ def write_ratio_plot(
     summaries: list[dict[str, Any]],
     field: str,
     ylabel: str,
-    title: str,
 ) -> None:
-    """One panel per canonical direction: penalty, then its two removals."""
+    """Stack canonical directions at legible single-column article width."""
     plt = reproducible_pyplot()
-    fig, axarr = plt.subplots(1, 3, figsize=(9.6, 3.6), sharey=True)
+    fig, axarr = plt.subplots(3, 1, figsize=(4.0, 5.6), sharex=True, sharey=True)
     for ax, axis in zip(axarr, AXES):
         for mode, style in MODE_STYLE.items():
             xs = [0.0]
@@ -610,21 +609,20 @@ def write_ratio_plot(
             ax.plot(xs, ys, label=MODE_LABELS[mode], markersize=5, **style)
         ax.axhline(1.0, color="#666666", linewidth=0.8)
         ax.set_title(AXIS_LABEL[axis], fontsize=10)
-        ax.set_xlabel("IMU offset from CG [cm]")
         ax.grid(True, alpha=0.3)
-    axarr[0].set_ylabel(ylabel)
+    axarr[-1].set_xlabel("IMU offset from CG [cm]")
+    fig.supylabel(ylabel, fontsize=10)
     handles, labels = axarr[0].get_legend_handles_labels()
     fig.legend(
         handles,
         labels,
         loc="lower center",
-        ncol=3,
+        ncol=1,
         fontsize=8,
         frameon=False,
-        bbox_to_anchor=(0.5, -0.02),
+        bbox_to_anchor=(0.55, 0.0),
     )
-    fig.suptitle(title, fontsize=11)
-    fig.tight_layout(rect=(0.0, 0.07, 1.0, 1.0))
+    fig.tight_layout(rect=(0.02, 0.10, 1.0, 1.0))
     _save(fig, path)
     plt.close(fig)
 
@@ -678,7 +676,7 @@ def write_sea_state_plot(
 ) -> None:
     """Per-sea penalty and its removal, for both channels the effect reaches."""
     plt = reproducible_pyplot()
-    fig, panels = plt.subplots(1, 2, figsize=(9.6, 3.8))
+    fig, panels = plt.subplots(2, 1, figsize=(4.0, 5.2), sharex=True)
     width = 0.26
     for panel, (field, axis, title) in zip(
         panels,
@@ -711,7 +709,7 @@ def write_sea_state_plot(
         panel.axhline(1.0, color="#666666", linewidth=0.8)
         panel.set_xticks(range(len(seas)))
         panel.set_xticklabels(
-            [f"{SPECTRUM_SHORT[spectrum]}\n$H_s$ {hs:g}" for hs, spectrum in seas],
+            [f"{SPECTRUM_SHORT[spectrum]}\n{hs:g}" for hs, spectrum in seas],
             fontsize=7,
         )
         panel.set_ylabel("RMS / CG baseline")
@@ -719,21 +717,18 @@ def write_sea_state_plot(
         panel.grid(True, axis="y", alpha=0.3)
         # A ratio plot anchored at zero hides the very deviations it is for.
         panel.set_ylim(bottom=min(0.92, lowest - 0.02))
+    panels[-1].set_xlabel("Incident spectrum and $H_s$ [m]")
     handles, labels = panels[0].get_legend_handles_labels()
     fig.legend(
         handles,
         labels,
         loc="lower center",
-        ncol=3,
+        ncol=1,
         fontsize=8,
         frameon=False,
-        bbox_to_anchor=(0.5, -0.02),
+        bbox_to_anchor=(0.55, 0.0),
     )
-    fig.suptitle(
-        f"Per-sea penalty with the IMU {100*distance:.0f} cm off the CG",
-        fontsize=11,
-    )
-    fig.tight_layout(rect=(0.0, 0.07, 1.0, 0.94))
+    fig.tight_layout(rect=(0.0, 0.12, 1.0, 1.0))
     _save(fig, path)
     plt.close(fig)
 
@@ -741,7 +736,7 @@ def write_sea_state_plot(
 def write_mechanism_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
     """What the installation injects, and what each model leaves behind."""
     plt = reproducible_pyplot()
-    fig, (left, right) = plt.subplots(1, 2, figsize=(9.6, 3.8))
+    fig, (left, right) = plt.subplots(2, 1, figsize=(4.0, 5.6))
 
     for axis in AXES:
         xs = [0.0]
@@ -754,7 +749,7 @@ def write_mechanism_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
             ys.append(float(match["installed_rms_mps2"]))
         left.plot(xs, ys, marker="o", markersize=5, label=AXIS_LABEL[axis])
     left.set_xlabel("IMU offset from CG [cm]")
-    left.set_ylabel("Injected specific force RMS [m/s$^2$]")
+    left.set_ylabel("Rotational acceleration RMS [m/s$^2$]", fontsize=9)
     left.set_title("What the installation adds", fontsize=10)
     left.grid(True, alpha=0.3)
     left.legend(fontsize=8)
@@ -796,15 +791,18 @@ def write_mechanism_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
             )
     right.set_xticks(list(positions))
     right.set_xticklabels([AXIS_LABEL[a] for a in axis_names], fontsize=9)
-    right.set_ylabel("Residual / injected specific force")
+    right.set_ylabel("Residual / installed acceleration", fontsize=9)
     right.set_ylim(0.0, 1.5)
     right.set_title(
         f"What each model leaves at {100*DISTANCES_M[-1]:.0f} cm", fontsize=10
     )
     right.grid(True, axis="y", alpha=0.3)
-    right.legend(fontsize=8, loc="upper center", ncol=1, framealpha=0.9)
-
-    fig.tight_layout()
+    handles, labels = right.get_legend_handles_labels()
+    fig.legend(
+        handles, labels, loc="lower center", ncol=1, fontsize=8,
+        frameon=False, bbox_to_anchor=(0.55, 0.0),
+    )
+    fig.tight_layout(rect=(0.0, 0.10, 1.0, 1.0))
     _save(fig, path)
     plt.close(fig)
 
@@ -1063,14 +1061,12 @@ def main() -> int:
             summaries,
             "disp_3d_ratio_to_baseline",
             "Pooled 3-D RMS / CG baseline",
-            "Displacement penalty of an off-CG IMU, and its removal",
         )
         write_ratio_plot(
             tilt,
             summaries,
             "tilt_ratio_to_baseline",
             "Pooled max tilt RMS / CG baseline",
-            "Attitude penalty of an off-CG IMU, and its removal",
         )
         write_sea_state_plot(
             sea_state, rows, worst_disp_axis, worst_tilt_axis, DISTANCES_M[-1]

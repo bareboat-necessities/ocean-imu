@@ -89,7 +89,7 @@ remaining spread shows that equal power does not make the inputs equivalent.
 
 \subsubsection{A front-end guard, and what it recovers}
 \label{sec:engine-noise-guard}
-\texttt{AccelVibrationGuard} conditions the accelerometer before the Mahony
+An engine-vibration prefilter conditions the accelerometer before the Mahony
 proxy, MEKF and tilt watchdog. Two low-pass poles at \SI{14}{Hz} engage
 using a separate two-pole \SI{25}{Hz} high-pass detector with
 \SIrange{0.03}{0.08}{m.s^{-2}} rails and a \SI{5}{s} engagement time scale.

@@ -4,16 +4,22 @@
 
 Figure~\ref{fig:ou3-architecture} is the block diagram of the deployed OU--III
 estimator.  It is read top to bottom.  Above the dashed barrier is the
-measurement-only front end: a Mahony complementary observer, the levelled
+measurement-only front end: an engine-vibration prefilter, a Mahony
+complementary observer, the levelled
 vertical-acceleration channel it feeds, the magnetic hard-iron tracker, the
 wave-period and acceleration-scale estimators, and the adaptation module that
 turns those two statistics into the OU schedule.  Below the barrier is the
 21-state quaternion MEKF of Eq.~\eqref{eq:nominal-state-vector}, whose
 recursion couples the attitude states, the OU-driven linear chain, and the
-residual accelerometer bias through three rank--3 correction channels.
+residual accelerometer bias through three-component correction channels.
+The prefilter conditions the specific force before both the Mahony observer
+and the MEKF; the gyroscope, magnetometer, and temperature channels pass
+through unchanged. Its vibration detector also schedules accelerometer
+measurement uncertainty as described in Sec.~\ref{sec:engine-noise-guard}.
 
 The barrier expresses one-way information flow. Every edge that crosses it
-points downward: raw inertial and magnetic samples, the gated startup handoff
+points downward: conditioned specific force and the other sensor channels,
+the vibration-dependent measurement uncertainty, the gated startup handoff
 of Sec.~\ref{sec:proxy-handoff}, the slewed hard-iron correction of
 Sec.~\ref{sec:mag-hi-apply}, and the staged parameter tuple
 $\vartheta_k=(\tau,\sigma_{aw},\vct r_S,T_S)$ of
@@ -56,10 +62,13 @@ without closing a loop through the estimator they schedule.
 ]
 
 % ---------------- sensors ----------------
-\node[sens] (imu) at (0,0.45)
+\node[sens] (imu) at (0,4.40)
   {IMU\\[1pt] $\vct\omega^B,\ \vct f^B,\ \vct m^B,\ T$};
 
 % ---------------- measurement-only front end ----------------
+\node[front] (guard) at (0,0.45)
+  {Engine-noise prefilter\\ specific force only;\\
+   other channels unchanged};
 \node[front] (proxy) at (3.4,1.35)
   {Mahony proxy\\ Eq.~\eqref{eq:proxy-mahony}};
 \node[front] (hi) at (3.4,-0.75)
@@ -77,9 +86,9 @@ without closing a loop through the estimator they schedule.
    Eq.~\eqref{eq:adapt-rs-axis-ratios}};
 
 \begin{scope}[on background layer]
-  \node[grp, fit=(proxy)(hi)(vacc)(per)(sig)(ad)] (feblk) {};
+  \node[grp, fit=(guard)(proxy)(hi)(vacc)(per)(sig)(ad)] (feblk) {};
 \end{scope}
-\node[glbl, anchor=south west] at ([yshift=2pt]feblk.north west)
+\node[glbl, anchor=south east] at ([yshift=2pt]feblk.north east)
   {Measurement-only front end (exogenous)};
 
 % ---------------- core QMEKF ----------------
@@ -88,7 +97,7 @@ without closing a loop through the estimator they schedule.
 \node[core] (au) at (6.8,-4.10)
   {Accelerometer update\\ rank 3, Eq.~\eqref{eq:acc-meas-jacobians}};
 \node[core] (mu) at (10.2,-4.10)
-  {Magnetometer update\\ rank 3, Eq.~\eqref{eq:mag-meas-jacobian}};
+  {Magnetometer update\\ rank 2, Eq.~\eqref{eq:mag-meas-jacobian}};
 \node[core] (pu) at (13.6,-4.10)
   {Integral pseudo-update\\ $\vct z_S=0$, Eq.~\eqref{eq:zero-pseudo}};
 \node[core] (rst) at (17.0,-4.10)
@@ -113,18 +122,20 @@ without closing a loop through the estimator they schedule.
    velocity $\hat{\vct v}$, period $\widehat T_z$, wave direction};
 
 % ---------------- measurement-only barrier ----------------
-\draw[densely dashed, black!60] (-1.9,-1.80) -- (18.9,-1.80);
+\draw[densely dashed, black!60] (-2.75,-1.80) -- (18.9,-1.80);
 \node[glbl, anchor=north east, text width=35mm, align=right] at (18.9,-1.92)
   {every edge crossing this line points downward; no MEKF state,
    covariance, or innovation returns to the front end};
 
 % ---------------- front-end signal flow ----------------
-\draw[sig] (imu.east) -- (proxy.west);
+\draw[sig] (imu.south) -- (guard.north);
+\draw[sig] (guard.east) --
+  node[lb,above,sloped]{$\vct\omega^B,\ \widetilde{\vct f}^B$} (proxy.west);
 \draw[sig] (proxy.south) --
   node[lb,right]{$\mat A_i$ yaw-stripped} (hi.north);
 \draw[sig] (proxy.east) -- node[lb,above]{$\hat q_P$ tilt} (vacc.west);
 
-\draw[wire] (imu.south) -- (0,-0.75);
+\draw[wire] (guard.south) -- (0,-0.75);
 \draw[sig] (0,-0.75) -- node[lb,above]{$\vct m^B$ raw} (hi.west);
 
 \draw[wire] (vacc.east) -- node[lb,above]{$a^P_\uparrow$} (8.60,1.35);
@@ -147,13 +158,13 @@ without closing a loop through the estimator they schedule.
 \draw[sig] (hi.east) -- node[lb,above,pos=0.60]{$\hat{\vct b}_m$, 45 s slew}
   (10.2,-0.75) -- (sum.north);
 
-% ---------------- raw sensor bus into the core ----------------
+% ---------------- conditioned sensor bus into the core ----------------
 \draw[wire] (0,-0.75) -- (0,-2.62) -- (sum.west);
 \node[jn] at (3.80,-2.62) {};
 \node[jn] at (6.80,-2.62) {};
 \draw[sig] (3.80,-2.62) -- node[lb,right,pos=0.35]{$\vct\omega^B$}
   (3.80,-3.50);
-\draw[sig] (6.80,-2.62) -- node[lb,right,pos=0.35]{$\vct f^B,T$}
+\draw[sig] (6.80,-2.62) -- node[lb,right,pos=0.35]{$\widetilde{\vct f}^B,T,\mat R_a$}
   (6.80,-3.50);
 \draw[sig] (sum.south) -- node[lb,right,pos=0.10]{corrected $\vct m^B$}
   (10.2,-3.50);
@@ -171,9 +182,9 @@ without closing a loop through the estimator they schedule.
   {staged schedule $\vartheta_k=(\tau,\sigma_{aw},\vct r_S,T_S)$};
 
 % ---------------- gated startup handoff ----------------
-\draw[handw] (proxy.north west) -- (-1.50,1.85);
-\draw[hand] (-1.50,1.85) -- (-1.50,-4.10) -- (tu.west);
-\node[lb, anchor=west, align=left, text width=17mm] at (-1.42,-3.20)
+\draw[handw] (proxy.north west) -- (-2.40,1.85);
+\draw[hand] (-2.40,1.85) -- (-2.40,-4.10) -- (tu.west);
+\node[lb, anchor=west, align=left, text width=17mm] at (-2.32,-3.20)
   {gated handoff, Sec.~\ref{sec:proxy-handoff}};
 
 % ---------------- core recursion ----------------
@@ -206,13 +217,17 @@ without closing a loop through the estimator they schedule.
 \caption{Deployed OU--III filter structure.  Solid edges carry signals, dashed
 edges the staged OU schedule, and the dash-dotted edge the one-time startup
 handoff.
-The measurement-only front end levels the specific force with a Mahony proxy,
+The engine-noise prefilter conditions the specific force before it reaches
+either the Mahony proxy or the MEKF and supplies vibration-dependent
+accelerometer uncertainty $\mat R_a$. Other sensor channels pass through
+unchanged. The measurement-only front end levels the filtered specific force
+with a Mahony proxy,
 derives the vertical wave channel, tracks the magnetic hard-iron offset, and
 estimates the wave period and the band-limited acceleration scale; the
 adaptation module maps those two statistics to
 $\vartheta_k=(\tau,\sigma_{aw},\vct r_S,T_S)$.  The core quaternion MEKF
 propagates and corrects the 21 states of
-Eq.~\eqref{eq:nominal-state-vector} through three rank--3 channels followed by
+Eq.~\eqref{eq:nominal-state-vector} through three-component channels followed by
 the MEKF reset.  Every edge crossing the barrier points downward, so the
 schedule is exogenous with respect to the recursion it configures.}
 \label{fig:ou3-architecture}

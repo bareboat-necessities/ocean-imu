@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "a27214ae06036904594a1f897f7aec9544a9764d",
+  "git_branch": "ou3-explicit-regional-practical-stability",
+  "git_commit": "02e657989b410b0a502e52ee4cfc07cd210712e2",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 19668 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1402 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   186 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   990 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   164 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1678 +-\n 6 files changed, 12043 insertions(+), 12045 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -297,8 +297,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-19T23:19:28+00:00",
-    "git_commit": "a27214ae06036904594a1f897f7aec9544a9764d",
+    "generated_at": "2026-09-20T00:55:15+00:00",
+    "git_commit": "02e657989b410b0a502e52ee4cfc07cd210712e2",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -453,8 +453,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "35474200636",
-      "workflow": "build"
+      "run_id": "35478819429",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {

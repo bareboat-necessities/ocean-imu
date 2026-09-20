@@ -1,0 +1,51 @@
+{
+  "acceleration_locally_absolutely_continuous_required": true,
+  "jerk_limit_mps3": "100",
+  "joint_vector_information": {
+    "accelerometer_residual_total_mps2": "10503332099679081/20000000000000000",
+    "accelerometer_world_transport_is_true_rotation": true,
+    "constant_world_magnetic_field_required": true,
+    "coordinate_dimension": 3,
+    "full_21_corrected_loss_certified": false,
+    "magnetometer_residual_total_uT": "7",
+    "magnetometer_rows_are_actually_applied_events": true,
+    "normalized_acceleration_mean_error_upper": "16940832099679081/196133000000000000",
+    "normalized_joint_gram_eigenvalue_lower": "32369683512532612519696242866668164/514037441236573552343608955438150655625",
+    "normalized_magnetic_mean_error_upper": "7/75",
+    "window_min_s": "64"
+  },
+  "left_sample_mean_sampling_defect_upper_mps2": "3/10",
+  "nonlinear_retention_certified": false,
+  "old_witness_excluded": true,
+  "old_witness_jerk_squared_lower": "346213383201/3125",
+  "per_cell_acceleration_change_upper_mps2": "3/5",
+  "physical_LIN_prediction_supply": {
+    "finite_error_prediction_metric_supply_verified": true,
+    "ideal_action_rate_upper": "73059872/3",
+    "input_identity": "u(t)=a_dot(t)+a(t)/tau_k on each physical cell",
+    "physical_OU_prior_assumed": false,
+    "scope": "regular real-arithmetic default A21; actual realized tau and covariance",
+    "source_action_rate_upper": "18314310169943788959631656419488000/744565801125519804520064211",
+    "source_small_x_relative_Q_defect_upper": "4826872826731826645263/248193427248000000000000000",
+    "source_transition_defect_action_per_acceleration_squared": "509917387/2160000000000000",
+    "whole_word_retained_radius_certified": false
+  },
+  "physical_left_taylor_defects": {
+    "displacement_m": "9/2500000",
+    "primitive_m_s": "27/5000000000",
+    "velocity_mps": "9/5000"
+  },
+  "qualification": "OU3_JERK_SAMPLING_FIDELITY_V1",
+  "quiet_water_admitted": true,
+  "sample_period_max_s": "3/500",
+  "shipping_capture_certified": false,
+  "stationary_sample_alias": {
+    "constant_true_attitude_required": true,
+    "hidden_specific_force_upper_mps2": "20378332099679081/20000000000000000",
+    "six_degree_chord_lower_mps2": "13303179245097949824932693/12960000000000000000000000",
+    "six_degree_or_larger_tilt_excluded": true,
+    "window_s": "32"
+  },
+  "trapezoidal_mean_sampling_defect_upper_mps2": "3/20",
+  "verified": true
+}

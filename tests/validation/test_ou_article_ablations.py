@@ -98,7 +98,7 @@ class OuArticleAblationContractTests(unittest.TestCase):
             encoding="utf-8"
         )
         normalized = " ".join(text.split())
-        self.assertIn(r"\texttt{--no-noise}", text)
+        self.assertIn("with sensor corruption disabled", text)
         self.assertIn("not pure plant-model mismatch", text)
 
         with MISMATCH_SUMMARY.open(encoding="utf-8", newline="") as stream:
