@@ -41,7 +41,7 @@ class ArticleHorizontalPanelTests(unittest.TestCase):
                 with self.subTest(function=function.__name__, metric=args[1] if function == lever.write_ratio_plot else ""):
                     figures = []
                     with patch.object(Figure, "savefig", autospec=True,
-                                      side_effect=lambda fig, *a, **kw: figures.append(fig)):
+                                      side_effect=lambda fig, *a, _figures=figures, **kw: _figures.append(fig)):
                         function(Path(directory) / "figure.svg", *args)
                     self.assertEqual(len(figures), 1)
                     fig = figures[0]

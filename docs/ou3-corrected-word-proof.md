@@ -265,3 +265,28 @@ If the summed word supplies are bounded by `a sqrt(V_root)+b`, define
 the region in which their bounds were established. Actual startup, finite
 H18 and release must enter that region. None of these numerical inequalities
 has yet been discharged for the declared disturbance envelopes.
+
+## Source covariance guard for the actual projection
+
+The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
+operation boundary (including the pre-projection boundary). It is sharper
+than the five-block nuisance comparison and is already proved in
+`ou3-nuisance-upper-proof.md`. For the full, cross-coupled covariance and
+`V=e'P^-1 e`, covariance Cauchy--Schwarz gives
+
+`|e_ba| <= sqrt(lambda_max(P_ba,ba)) sqrt(V) <= sqrt(V)/40`.
+
+With physical `B_a=.22516660498395405` and the literal projection radius .4,
+projection is therefore inactive whenever, **before that projection**,
+
+`sqrt(V) < 40(.4-B_a) = 6.993335800641838`.
+
+In particular `sqrt(V)<=6` leaves the strictly positive distance
+`.02483339501604595` from the projection boundary. The actual mean and full
+covariance are then unchanged by projection, so its finite-error defect is
+exactly zero. All covariance cross terms remain; Euclidean nonexpansiveness
+has not been promoted to metric nonexpansiveness. This guard is uniform in
+the retained source profile and independent of the missing AG upper bound.
+It must be proved at every pre-projection prefix. Neither invariant radius 6,
+entry into that radius, nor finite-injection/arithmetic totality follows.
+The reset's injection-dependent remainder remains separately chargeable.

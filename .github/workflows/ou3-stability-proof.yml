@@ -41,7 +41,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install factor algebra dependencies
-        run: python3 -m pip install numpy scipy
+        run: python3 -m pip install numpy scipy mpmath
       - name: Compile theorem tooling
         run: python3 -m py_compile tools/stability/ou3_theorem/*.py
       - name: Execute rational LIN path certificate
@@ -55,6 +55,8 @@ jobs:
           python3 -m unittest discover -s tests/validation -p test_ou3_sampled_capture_obstruction.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_sampling_fidelity.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_corrected_word.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_ag_readout.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_construction_mean_action.py -v
           python3 tools/stability/ou3_theorem/block_factor_numeric.py
           python3 -m unittest discover -s tests/validation -p test_ou3_block_factor_numeric.py -v
       - name: Preserve reproducible source and LIN certificate
@@ -82,10 +84,25 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test sampled_capture-test
       - name: Run literal shipping regressions
         run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test
+      - name: Audit carried source readout without promotion
+        run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-readout.json
+      - name: Audit carried construction stress history without theorem promotion
+        run: python3 -m tools.stability.ou3_theorem.construction_history_diagnostic --output /tmp/ou3-construction.json
+      - name: Enclose carried mean action and record the failed uniform separation attempt
+        run: |
+          python3 -m tools.stability.ou3_theorem.construction_mean_action --export --directory /tmp/ou3-mean --output /tmp/ou3-mean-diagnostic.json
+          python3 -m tools.stability.ou3_theorem.construction_mean_action --intervals --directory /tmp/ou3-mean --output /tmp/ou3-mean-enclosure.json
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
           name: ou3-stability-evidence
-          path: /tmp/ou3-stability-evidence.json
+          path: |
+            /tmp/ou3-stability-evidence.json
+            /tmp/ou3-source-readout.json
+            /tmp/ou3-construction.json
+            /tmp/ou3-mean-diagnostic.json
+            /tmp/ou3-mean-enclosure.json
+            /tmp/ou3-mean/export.json
+            /tmp/ou3-mean/mean-action.bin
           retention-days: 7
           if-no-files-found: error

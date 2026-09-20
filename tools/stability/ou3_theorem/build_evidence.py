@@ -47,7 +47,9 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.sampled_capture_obstruction import witness_certificate
     from tools.stability.ou3_theorem.sampling_fidelity import certificate as sampling_certificate
     from tools.stability.ou3_theorem.corrected_word import certificate as corrected_certificate
+    from tools.stability.ou3_theorem.ag_readout import certificate as readout_certificate
     for name, generate in (
+        ("ag-readout-certificate.json",readout_certificate),
         ("corrected-word-certificate.json",corrected_certificate),
         ("sampling-fidelity.json",sampling_certificate),
         ("lin-matrix-certificate.json",matrix_certificate),
@@ -61,6 +63,20 @@ def validate() -> dict:
         artifact=STATUS.parent/name
         if not artifact.is_file() or json.loads(artifact.read_text())!=generate():
             failures.append(f"committed {name} differs from exact reproduction")
+    from tools.stability.ou3_theorem.construction_history_diagnostic import driver_source, zero_true_bias_storage_audit
+    construction=json.loads((STATUS.parent/"construction-history-feasibility.json").read_text())
+    if construction.get("generated_driver_sha256") != hashlib.sha256(driver_source().encode()).hexdigest():
+        failures.append("construction native driver fingerprint changed")
+    if construction.get("terminal_storage_certificate") != zero_true_bias_storage_audit(construction["native"]):
+        failures.append("construction endpoint storage certificate differs from exact reproduction")
+    from tools.stability.ou3_theorem.construction_mean_action import observer_source, instrument, HEADER, verify_summary
+    mean=json.loads((STATUS.parent/"construction-mean-action.json").read_text())
+    if mean.get("observer_sha256") != hashlib.sha256(observer_source().encode()).hexdigest():
+        failures.append("construction mean observer fingerprint changed")
+    if mean.get("instrumented_header_sha256") != hashlib.sha256(instrument((REPO/HEADER).read_text()).encode()).hexdigest():
+        failures.append("construction mean header fingerprint changed")
+    if mean.get("exact_summary") != verify_summary(mean["enclosure"], mean["committed_field"]):
+        failures.append("construction mean action differs from rational factor reproduction")
     return {"validation_pass":not failures,"failures":failures,"base_main_commit":provenance["base_main_commit"],
             "shipping_behavior_authority":"source implementation","theorem_closed":expected["theorem_closed"]}
 

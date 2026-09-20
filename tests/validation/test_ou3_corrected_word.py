@@ -9,7 +9,8 @@ from scipy.spatial.transform import Rotation
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.corrected_word import (
     certificate, conditional_scalar_margin, coupled_example, nuisance_root_bounds,
-    polynomial_injection_defect, reset_remainder_bound, shipping_reset_remainder_bound,
+    polynomial_injection_defect, projection_storage_guard, reset_remainder_bound,
+    shipping_reset_remainder_bound,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import (
@@ -95,6 +96,21 @@ class CoupledCovarianceTests(unittest.TestCase):
 
 
 class ResetRemainderTests(unittest.TestCase):
+    def test_projection_guard_uses_carried_marginal_despite_cross_covariance(self):
+        report = projection_storage_guard()
+        self.assertGreater(F(report['sqrt_V_strict_ceiling']), F(6))
+        self.assertGreater(F(report['remaining_bias_distance_at_test_radius']), F(0))
+        # A coupled two-coordinate sentinel: scalar bias marginal alone bounds
+        # the component at V=36; no block-diagonal covariance assumption.
+        p = [[F(100), F(1, 10)], [F(1, 10), F(1, 1600)]]
+        e = [[F(2)], [F(1, 10)]]
+        v = congruence(inverse(p), e)[0][0]
+        self.assertLessEqual(e[1][0]**2, p[1][1]*v)
+        self.assertLess(v, 36)
+        self.assertLess(F(report['physical_bias_bound'])+abs(e[1][0]), F('.4'))
+        self.assertFalse(report['prefix_retention_proved'])
+        self.assertFalse(report['explicit_retained_region_proved'])
+
     def test_fixed_injection_remainder_is_not_quadratic_in_error(self):
         d = np.array([.3, 0, 0])
         direction = np.array([0, 1, 0])

@@ -1,0 +1,43 @@
+{
+  "AG_trial_ceiling_max": "34.4659867861096387183261",
+  "cases": [
+    {
+      "AG_loss_min": "0.0281547113907377041534174",
+      "AG_trial_slack_min": "4.75130811043523670525031e-8",
+      "rho": "0.999998293942889256883268",
+      "root_AG_scale": "1"
+    },
+    {
+      "AG_loss_min": "0.000000999965480478298797841191",
+      "AG_trial_slack_min": "7.49184498903608257442866e-14",
+      "rho": "0.999998150093203860564774",
+      "root_AG_scale": "1000000"
+    },
+    {
+      "AG_loss_min": "9.9999999996547928666133e-13",
+      "AG_trial_slack_min": "7.49185330842356343237353e-20",
+      "rho": "0.999998150092146413193156",
+      "root_AG_scale": "1000000000000"
+    }
+  ],
+  "decimal_digits": 80,
+  "fixture": "varying rational 21-state supplied word, correlated process factors and nonorthogonal resets",
+  "nominal_gyro_alias_nearby": [
+    {
+      "bias_transport_transverse_singular_value": "0.000000795648050981922077251851398081",
+      "turn_offset_rad": "0.001"
+    },
+    {
+      "bias_transport_transverse_singular_value": "7.95774588807984125853483475778e-10",
+      "turn_offset_rad": "0.000001"
+    },
+    {
+      "bias_transport_transverse_singular_value": "7.9577471533282519927849653177e-13",
+      "turn_offset_rad": "0.000000001"
+    }
+  ],
+  "qualification": "OU3_AG_READOUT_FEASIBILITY_ONLY_V1",
+  "shipping_history": false,
+  "source_uniform_verified": false,
+  "theorem_closed": false
+}

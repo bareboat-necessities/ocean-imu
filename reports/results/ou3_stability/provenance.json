@@ -1,6 +1,6 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "a27214ae06036904594a1f897f7aec9544a9764d",
+  "base_main_commit": "257dce56d195276bd6d237c0f8cd653c016eec24",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
@@ -73,7 +73,13 @@
     "sampled_physical_capture_obstruction": "The exact all-time witness refutes six-degree capture on the previous point-sample domain without a jerk bound. Its jerk exceeds 10500 m/s^3, so it is excluded by the adopted 100 m/s^3 bound. Conditional local A21 stability is not refuted.",
     "jerk_sampling_fidelity": "Locally absolutely continuous physical acceleration with jerk <=100 gives sharp nonuniform sampled-mean control, excludes >=6-degree constant-attitude stationary-sample aliases over 32 s, and gives joint measured-vector 3-D information over 64 s. Both magnetic residual envelopes are charged. Physical LIN mismatch action enters the full prediction covariance metric. Full corrected 21-state loss, capture and retention remain open.",
     "corrected_word_covariance_reduction": "Embedded nuisance floor passes to pre-prediction roots through actual corrections/resets. Together with its upper bound, a uniform six-column AG corrected loss J implies a full covariance upper bound and strict first-prediction loss by Schur comparison. J remains unproved; no full-state stability is promoted.",
-    "actual_gain_finite_error": "Actual estimator gains/events define one auxiliary linear comparison. Variation of constants composes operation supplies; Joseph covariance bounds correction supply by the R-whitened residual. Finite-angle reset has an injection-squared times error term and a real polynomial defect. Removed unsupported smoothness-to-vanishing-remainder promotion."
+    "actual_gain_finite_error": "Actual estimator gains/events define one auxiliary linear comparison. Variation of constants composes operation supplies; Joseph covariance bounds correction supply by the R-whitened residual. Finite-angle reset has an injection-squared times error term and a real polynomial defect. Removed unsupported smoothness-to-vanishing-remainder promotion.",
+    "historical_AG_readout": "A backward six-column reader cancels the historical AG root exactly, retaining nuisance and process correlations. Optimal covariance comparison bounds terminal AG covariance by its matrix action. Uniform source rank/action and inherited entry linkage remain unproved; neither a supplied word nor the unbounded-prior relaxation is claimed shipping-reachable.",
+    "source_readout_audit": "Native carried construction/refinement/release with observer/control parity. Quiet and moving exported words have exact full-matrix action enclosures. Complete sync/addition/symmetry defects use signed factors on all 21 coordinates, including the negative 2^-44 Rayleigh defect. Other float operations and source-uniform historical action remain open.",
+    "projection_storage_guard": "Inherited P_ba,ba <= I/1600 implies actual projection inactive if pre-projection sqrt(V) <= 6, with .02483339501604595 m/s^2 slack; every-prefix retention and entry remain open.",
+    "construction_history_stress": "One continuous diagonal-wave history has exact physical envelopes and is run from begin through Live/refinement/release to 600 s without reseeding. Its finite tail tilt about 8.21 degrees and nominal acceleration 9.7764 do not certify all-time magnetic service or refute eventual capture. No nominal-state cap or six-degree entry is inferred.",
+    "construction_endpoint_storage": "Recorded full 21x21 covariance is exactly SPD. Zero true BA gives V >= e_ba^T P_ba,ba^-1 e_ba >11492.6752, with all cross covariance retained, excluding V<=36 at this finite endpoint. This is not all-time service, eventual-capture refutation, or active-projection proof.",
+    "construction_mean_action": "The full carried BG/AW mean action retains actual six-row rank-three gains and innovation correlations, with explicit recorded mean rounding. Outward intervals and rational LDL certify gyro norm <1 at all recorded prefixes; exact binary checks give force/field sine >2/5 at 40000 tail acc observations. The energy-only pointwise uniform exclusion fails with margin [-817884.048495,-817884.048494]; this is an enclosure failure, not a reachable collinear history, source-uniform B_* or contraction."
   },
   "operation_lemma_sources": [
     {
@@ -106,7 +112,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "b5b69133cfafeda1ff852e2e7932230e9b7021eb"
+      "git_blob_sha": "f5620dd6add5214ec00c9dd2da4ef60d6d0f4e9e"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -270,15 +276,71 @@
     },
     {
       "path": "tools/stability/ou3_theorem/corrected_word.py",
-      "git_blob_sha": "dd17904c2e405b0255829a672c93b587fddb98a9"
+      "git_blob_sha": "65b28cda69aa17eb9f933d4214dc843b342232ea"
     },
     {
       "path": "tests/validation/test_ou3_corrected_word.py",
-      "git_blob_sha": "89f866edbf54dbd78ae0a20dce3f8cf59b15f7be"
+      "git_blob_sha": "93a3fae3289ab5c328b83fd210e2d0909e1d9658"
     },
     {
       "path": "docs/ou3-corrected-word-proof.md",
-      "git_blob_sha": "873eda9afc7d51eb06359b8e21b18eed6cffa0be"
+      "git_blob_sha": "8083253ace009e51356c732fd0210f242dd2c2a3"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/ag_readout.py",
+      "git_blob_sha": "095fc8936bc2e068e7a1228af79e55c3c14d77ba"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/ag_readout_diagnostic.py",
+      "git_blob_sha": "1e9339cde6117968c9cf92259c9493bd555897d3"
+    },
+    {
+      "path": "tests/validation/test_ou3_ag_readout.py",
+      "git_blob_sha": "e59df073b09407b00aa8e336747575256b5f5911"
+    },
+    {
+      "path": "docs/ou3-ag-readout-proof.md",
+      "git_blob_sha": "65419bbc0dcf8a5bf855868ce4b23c4e1c848817"
+    },
+    {
+      "path": "tools/stability/ag_readout_source.cpp",
+      "git_blob_sha": "cf3fbf38ac35db1cf458419425bbb26b85954ed4"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py",
+      "git_blob_sha": "dd4db2ff917475195ec750b2f0d23a5960ec9355"
+    },
+    {
+      "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
+      "git_blob_sha": "e272fe1e450529fdc649afcfd72dad4d68666955"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/construction_history_diagnostic.py",
+      "git_blob_sha": "d380c7ff29cbb389e79bcad90ad6d9bae6088043"
+    },
+    {
+      "path": "reports/results/ou3_stability/construction-history-feasibility.json",
+      "git_blob_sha": "168fde66301d95e85d66276224183ab02ca335db"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/build_evidence.py",
+      "git_blob_sha": "ca495aa0cccee5bef57a9aa49e82cfd92dc4cad8"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/construction_mean_action.py",
+      "git_blob_sha": "a13581ea6c9b4d3ab850038f4c3bc3d89aa2383b"
+    },
+    {
+      "path": "docs/ou3-construction-mean-action.md",
+      "git_blob_sha": "1e25ed8dc32c13d392b3ca690b52e665c7a0e0b2"
+    },
+    {
+      "path": "reports/results/ou3_stability/construction-mean-action.json",
+      "git_blob_sha": "817f1cb33af7154ce33a18f11f41e84aa9f4efb4"
+    },
+    {
+      "path": "tests/validation/test_ou3_construction_mean_action.py",
+      "git_blob_sha": "51526e4c4a7a8c1579304a10eb9cd28b3f7ef73c"
     }
   ]
 }
