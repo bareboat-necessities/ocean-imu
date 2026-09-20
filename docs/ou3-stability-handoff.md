@@ -1,8 +1,22 @@
 # OU-III stability handoff
 
-Continue only in PR #560, branch `ou3-explicit-regional-practical-stability`.
-Read AGENTS.md and `ou3-proof-research-state.md`. Keep the single same-history
-construction -> capture -> H18 -> release -> A21 architecture.
+PR #560 integrates the proof work and main-article revisions. After its merge,
+start the next conversation from current `main` containing that merge, and keep
+subsequent continuation in one branch/PR. Do not restart from the older PR #558.
+The theorem is **not closed**; merging this work does not certify stability.
+Keep the single same-history construction -> capture -> H18 -> release -> A21
+architecture and the unchanged shipping estimator.
+
+Read in order, with paths relative to the repository root:
+
+1. `AGENTS.md`.
+2. `docs/ou3-proof-research-state.md` and
+   `docs/ou3-controlling-proof-obligations.md`.
+3. `reports/results/ou3_stability/theorem-status.json` for the machine-checked
+   distinction between established implications and undischarged premises.
+4. `docs/ou3-corrected-word-proof.md`, `docs/ou3-sampling-fidelity.md`, and
+   `docs/ou3-nuisance-upper-proof.md`, alongside their modules under
+   `tools/stability/ou3_theorem/` and the shipping source operations they cite.
 
 MARINE MOTION now includes locally absolutely continuous physical acceleration
 with jerk <=100 m/s^3. The user authorized this domain revision. Quiet water,
@@ -46,9 +60,43 @@ projection sector and physical mismatch with capture/release and every-prefix
 retention. General capture, full AG upper covariance, strict uniform loss and
 arithmetic remain open. No completion percentage or full theorem is justified.
 
+Specifically, at pre-prediction roots, establish a single positive-definite
+matrix J with `D_word[AG,AG] >= J` uniformly over admitted histories, where AG
+contains all three attitude-error and three gyro-bias coordinates. This is a
+principal block of the **actual complete corrected-word loss**, including the
+realized gain and reset transports. A physical Gramian, stationary-system
+detectability, or a positive diagnostic on one supplied word does not discharge
+this premise. Preserve loss factors and nuisance coupling when seeking the
+bound. Then apply the existing Schur/first-prediction implication, quantify its
+margin, and charge the finite-error supplies in the same storage before claiming
+nonlinear capture, release, or retention. Capture may have a history-dependent
+finite time; no such time has yet been certified.
+
+The main article is `doc/kalman_ou_iii/kalman_ou-w3d.tex`; the stability study is
+a separate document. PR #560 moved the dataset description into evaluation
+methodology, added engine-noise prefiltering to the deployed-filter diagram,
+made the four requested lever-arm figures single-column, completed bias and
+comparative-results prose, and removed the identified implementation names.
+The revised main article compiled to 32 pages and its affected pages were
+visually checked. Two existing ensemble-table overflows and one existing
+full-state-equation overflow remain. These editorial changes are not proof
+milestones.
+
 Reproduce with:
 
 ```
 python3 -m unittest discover -s tests/validation -p 'test_ou3_*.py'
 python3 tools/stability/ou3_theorem/build_evidence.py
 ```
+
+Use a Python environment with NumPy and SciPy; diagnostics may also need
+mpmath. The broader publication/evidence suite uses Matplotlib and pandas:
+
+```
+make -C tests/validation evidence-test
+```
+
+At the article handover, that suite passed 463 tests with one existing
+data-dependent skip. Recheck CI at the final PR/merge commit rather than
+assuming an earlier run covers later edits. Evidence validation must continue
+to report `theorem_closed: false` until the remaining obligations are proved.
