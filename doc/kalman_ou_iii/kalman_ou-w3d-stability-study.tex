@@ -398,12 +398,12 @@ condition enter physical disturbance supply and observability below.
 \begin{lemma}[Sharp nonuniform sampling bound]
 For complete cells of lengths $h_k\le h_{\max}$ and total length $T$,
 let $\alpha_i$ be the normalized trapezoidal endpoint weights. Then
-\begin{equation}
+\begin{align}
  \norm{\sum_i\alpha_i a(t_i)}
- \le\frac{2V_{\max}}T+\frac{J_{\max}}{4T}\sum_k h_k^2
- \le\frac{11}T+0.15.
+ &\le\frac{2V_{\max}}T+\frac{J_{\max}}{4T}\sum_k h_k^2\nonumber\\
+ &\le\frac{11}T+0.15.
  \label{eq:sampled-mean}
-\end{equation}
+\end{align}
 \end{lemma}
 \begin{proof}
 Local absolute continuity permits integration by parts on each cell:
@@ -417,11 +417,11 @@ $h_0/(2T)$, $(h_{i-1}+h_i)/(2T)$ and $h_{N-1}/(2T)$; they sum to one.
 These are proof weights on existing samples, not a replacement integrator.
 \end{proof}
 
-\begin{proposition}[Exclusion of stationary-looking fixed-tilt aliases]
+\begin{lemma}[Exclusion of stationary-looking fixed-tilt aliases]
 If true $R$ is constant and every measured accelerometer sample on a
 complete-cell window of length $T\ge32$ s equals $-ge_z$, then true tilt is
 strictly less than six degrees under the declared residual bounds.
-\end{proposition}
+\end{lemma}
 \begin{proof}
 The physical sensor equation gives
 $a_i=g(e_z-Re_z)-R(b_{a,i}+n_{a,i})$. Weighted averaging and
@@ -462,12 +462,11 @@ the remaining eigenvalue equals that sum. Also
  \norm{\bar u\times\bar b}\ge1/5-\epsilon-r(1+\epsilon).
 \end{equation}
 Consequently, on every complete-cell window with $T\ge64$ s,
-\begin{equation}
- \boxed{G\succeq\gamma I_3,\quad
- \gamma=\frac{(1/5-\epsilon-r(1+\epsilon))^2}
- {(1+\epsilon)^2+(1+r)^2}>6.29714\,10^{-5}.}
+\begin{align}
+ &\boxed{G\succeq\gamma I_3},\qquad\gamma>6.29714\,10^{-5},\nonumber\\
+ &\gamma=\frac{(1/5-\epsilon-r(1+\epsilon))^2}{(1+\epsilon)^2+(1+r)^2}.
  \label{eq:physical-joint-info}
-\end{equation}
+\end{align}
 No attitude block or cross term is discarded. For a common finite rotation
 $Q$ of angle $\varphi$ and unit axis $z$, Rodrigues' formula gives exactly
 \begin{align}
@@ -488,10 +487,10 @@ This supplies physical prediction disturbance to the same finite-error
 storage; it does not impose an OU law on marine truth. On each cell use the
 realized $\lambda=1/\tau_k$ and put $u=\dot a+\lambda a$.
 For physical $z=(v,p,S,a)$ the exact identity is
-\begin{equation}
- z_{k+1}=F_{\rm ideal}z_k+d_{\rm ideal},\quad
- d_{\rm ideal}=\int_0^h e^{A(h-s)}E_a u(s)\,ds.
-\end{equation}
+\begin{align}
+ z_{k+1}&=F_{\rm ideal}z_k+d_{\rm ideal},\nonumber\\
+ d_{\rm ideal}&=\int_0^h e^{A(h-s)}E_a u(s)\,ds.
+\end{align}
 With $W=2\lambda\Sigma_{aw}$, weighted Cauchy--Schwarz proves the
 endpoint action inequality
 \begin{equation}

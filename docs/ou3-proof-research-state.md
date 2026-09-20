@@ -81,6 +81,13 @@ combined with strict full loss and quantitative nonlinear/prefix bounds.
   (exit 130). Run the unchanged evidence suite in the clean detached validation
   worktree; the targeted new tests and exact artifact reproduction pass.
 
+- CI article rendering at 5ba1e038 failed with `Environment proposition
+  undefined` at line 420. Reuse the declared lemma environment and split the
+  longer equations to fit the column. Mathematical certificates and literal
+  shipping CI passed; this was a publication-source failure. The provenance
+  gate then correctly rejected the changed article hash; refresh its binding
+  and rerun the unchanged gate.
+
 ## Retained facts
 
 The exact full-word identity
