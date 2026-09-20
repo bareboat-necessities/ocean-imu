@@ -102,7 +102,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "ace318f775f3d4ee8da8ea1d3a298dd2850356a9"
+      "git_blob_sha": "d9eed167399a94ca22007669d74af14906fd9a3b"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -211,6 +211,10 @@
     {
       "path": "docs/ou3-factor-loss.md",
       "git_blob_sha": "bba24cdc6a145173bfc1d87e58c0180a0e25cd85"
+    },
+    {
+      "path": "doc/kalman_ou_iii/w3d-stability-references.bib",
+      "git_blob_sha": "158b3bfe8507d67873d65eb255898245a219f248"
     }
   ]
 }

@@ -27,6 +27,8 @@ jobs:
         working-directory: doc/kalman_ou_iii
         run: |
           lualatex -interaction=nonstopmode -halt-on-error kalman_ou-w3d-stability-study.tex
+          bibtex kalman_ou-w3d-stability-study
+          lualatex -interaction=nonstopmode -halt-on-error kalman_ou-w3d-stability-study.tex
           lualatex -interaction=nonstopmode -halt-on-error kalman_ou-w3d-stability-study.tex
       - uses: actions/upload-artifact@v4
         with:

@@ -172,6 +172,16 @@ claimed. Physical qualification and recurring applied service remain required.
   The initial ancestry command had no origin/main tracking ref; fetching an
   explicit main ref exposed the actual conflicts. This is an integration
   failure, not a mathematical counterexample or permission to relax gates.
+- At 9fcc76b9, the evidence-contract workflow ran 444 tests and failed only
+  `StabilityStudyReferenceTests.test_every_reachable_citation_has_a_bibliography_entry`:
+  four inline bibitems were invisible to the repository's BibTeX database
+  audit, although LaTeX resolved them. Move those references to the manuscript's
+  BibTeX database and run BibTeX in the renderer. The citation gate is unchanged;
+  no mathematical claim is invalidated. Recheck citation reachability and the PDF.
+- PDF artifact retrieval through urllib returned HTTP 403/1010; the optional
+  requests module was unavailable. Curl downloaded the authorized signed
+  archive with the exact GitHub SHA-256. This transport failure changes no
+  source or mathematical premise.
 
 ## Retained facts
 
