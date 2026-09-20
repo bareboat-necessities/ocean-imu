@@ -143,10 +143,12 @@ It remains separate rather than pooled into the JONSWAP primary endpoint.
 \paragraph{Adaptation mechanism}
 Figure~\ref{fig:ou_mc_vertical} shows that online tuning reduces the penalty of
 using one FixedNominal point off nominal. At $H_s=\SI{1.5}{m}$, where
-FixedNominal and FixedOracle coincide, OU--III Adaptive is slightly worse by
+FixedNominal and FixedOracle coincide, the OU--III Adaptive-minus-FixedNominal
+difference is
 $\OUValidationIIIHsOneFiveNominalDifference$ percentage points
-($[\OUValidationIIIHsOneFiveNominalLow,\OUValidationIIIHsOneFiveNominalHigh]$),
-consistent with estimating the operating point from noisy signals.
+($[\OUValidationIIIHsOneFiveNominalLow,\OUValidationIIIHsOneFiveNominalHigh]$).
+The negative difference indicates a small improvement even at the calibration
+sea.
 
 Channel ablation identifies the mechanism without changing adaptation-law
 family: adaptive $r_S$ with frozen $(\tau,\sigma_{aw})$ closely tracks full
