@@ -103,7 +103,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "9250677f8058a0a965e3b8d21758b6d6c3bd517b"
+      "git_blob_sha": "b02f104ded56827d3127f62564680a2f463b4803"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -239,7 +239,7 @@
     },
     {
       "path": "docs/ou3-sampled-capture-obstruction.md",
-      "git_blob_sha": "9fa2aa80cad689084e18b76e6b509e47f4f2e0bc"
+      "git_blob_sha": "f8204674994879c49623a111e0df6b524866c917"
     },
     {
       "path": "src/tuner/MagAutoTuner.h",

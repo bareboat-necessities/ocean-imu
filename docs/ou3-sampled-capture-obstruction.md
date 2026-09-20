@@ -226,7 +226,7 @@ to `2g/sqrt(5)`, and is excluded by this condition.
 
 This repair still needs physical/sensor qualification and transfer from
 physical force to the retained shipping trajectory; it does not itself close
-AG loss, nonlinear retention, or the complete theorem. The current repository
-instruction forbids changing physical assumptions for the proof, so neither
-this new premise nor its illustrative numerical value has been inserted into
-the admitted domain or claimed as qualified.
+AG loss, nonlinear retention, or the complete theorem. This premise would
+narrow the current physical-history contract and needs physical justification.
+Neither it nor its illustrative numerical value has been inserted into the
+admitted domain or claimed as qualified.

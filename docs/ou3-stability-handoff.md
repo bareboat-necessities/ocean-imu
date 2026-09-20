@@ -19,8 +19,8 @@ the shipping float startup/refinement/release and stationary invariance;
 it is not used to extrapolate all-time service or float32 totality.
 
 A quantitative cell-integral sampling-fidelity condition is derived but is
-not adopted or physically qualified. AGENTS.md does not authorize silently
-changing physical assumptions. A positive end-to-end theorem needs a justified
+not adopted or physically qualified. It narrows the current physical-history
+contract. A positive end-to-end theorem needs a justified
 revised domain or a different capture target, as well as the remaining loss,
 nonlinear, retention and arithmetic work.
 

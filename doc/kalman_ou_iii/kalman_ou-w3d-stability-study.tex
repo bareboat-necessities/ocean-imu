@@ -404,7 +404,7 @@ of such a premise and transfer to nominal corrected transport remain
 necessary; this additional inequality alone is not an end-to-end proof.
 
 \section{Single shipping proof path}
-The theorem uses
+The requested theorem uses
 \begin{equation}
 \begin{aligned}
  &\text{construction}\to\text{capture}\to\text{informed H18}\\
@@ -412,12 +412,14 @@ The theorem uses
  &\quad\to\text{practical stability}.
 \end{aligned}
 \end{equation}
-The physical bias history is continuous through all modes. The capture time may
-depend on execution and initial state,
+The physical bias history is continuous through all modes. A successful
+capture argument would require, for each execution and initial state,
 \begin{equation}
  \boxed{T_c=T_c(h,x_0)<\infty.}
 \end{equation}
-No common finite startup deadline is assumed. Live intervals preceding the
+No common finite startup deadline is assumed. Section~\ref{sec:capture-obstruction}
+shows that the present domain fails this requirement; the remaining tail
+arguments are conditional. Live intervals preceding the
 required magnetic information remain part of the finite pre-certified prefix.
 At tail entry the proof inherits, without reseeding, the actual estimator
 state, full covariance, bias estimates, physical bias histories, frontend and

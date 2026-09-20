@@ -32,8 +32,13 @@ interleaved process noise; they do not reuse the invalid endpoint comparison.
 Validation: the clean-checkout evidence/publication suite passes 449 tests
 with one existing data-dependent skip; exact artifact reproduction, ruff,
 Python compilation and all three literal shipping regressions pass. The
-sequential full `make all` is still running at this source checkpoint; it is
-not reported as passed.
+sequential full `make all` compiled every target and passed the native suites
+through `tests/spike_filter`, then was interrupted in the repository-wide
+architecture text scan of generated simulation files. The identical validation
+suite passes in the clean checkout; its skipped record-convention test passes
+separately against the fetched data. The remaining wave-direction and wave-sim
+suites also pass separately. The interrupted aggregate command is not reported
+as passed.
 
 ## Current limiter
 
@@ -126,6 +131,12 @@ condition. The current formal premises provide neither.
   `No such file or directory`, exit 127). Build subsequently completed.
   Rerun the required `make all EIGEN_DIR=/tmp/ou3-deps/eigen34` sequentially;
   do not change the unrelated top-level Makefile or relax a gate.
+- The sequential aggregate and two redundant local validation invocations
+  remained in `ArchitectureCleanupTests.test_no_retired_architecture_survives_repository`
+  while scanning generated data. They were interrupted (exit 130); no failing
+  mathematical assertion was observed. The same unchanged gate passes in a
+  clean checkout. Remaining native suites and the data-dependent convention
+  check pass separately. No input or gate was removed to manufacture a pass.
 - An article patch failed exact-context matching before writing; applying
   the correct source context fixed the authoring operation.
 - The first clean-checkout evidence run ran 449 tests with one failure and
@@ -159,7 +170,7 @@ the claimed region is a different target and also is not silently adopted.
 
 Qualify a quantitative physical/sensor sampling condition and test it against
 both the exact witness and the complete corrected shipping transport before
-claiming it repairs capture. The current AGENTS.md physical-history rules do
-not authorize silently changing the admitted domain. Preserve the proof of
+claiming it repairs capture. This premise narrows the current physical-history
+domain and is not implied by its rules. Preserve the proof of
 impossibility for the present six-degree target; do not return to a nominal
 covariance calculation as if it could establish the missing physical premise.
