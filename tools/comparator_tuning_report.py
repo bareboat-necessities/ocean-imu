@@ -42,7 +42,7 @@ def main():
              "| Stage | Configuration | Records | Violations | Z, %Hs | 3-D, m | Roll, deg | Pitch, deg | Yaw, deg |",
              "|---|---|---:|---:|---:|---:|---:|---:|---:|"]
     for row in summaries:
-        def value(name):
+        def value(name, row=row):
             if name not in row or (row["study"].startswith("nlo-") and name == "yaw_rms_deg"):
                 return "—"
             return f"{row[name]:.6f}"

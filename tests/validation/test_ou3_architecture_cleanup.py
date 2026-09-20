@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import subprocess
 import unittest
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -27,7 +28,15 @@ def standalone(term: str,text: str) -> bool:
 class ArchitectureCleanupTests(unittest.TestCase):
     def test_no_retired_architecture_survives_repository(self):
         bad=[]
-        for path in ROOT.rglob("*"):
+        # Include tracked evidence and new source files, but not ignored replay
+        # products or the same 823 MB dataset through dozens of symlinks.
+        # Tracked CSV/text evidence remains subject to the exact same checks.
+        names = subprocess.check_output(
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+            cwd=ROOT,
+        ).decode().split("\0")
+        for name in sorted(set(filter(None, names))):
+            path = ROOT / name
             if not path.is_file(): continue
             rel_path=path.relative_to(ROOT)
             if rel_path.parts and rel_path.parts[0] in SKIP_TOP: continue
