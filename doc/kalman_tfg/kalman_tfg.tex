@@ -310,10 +310,15 @@ This is a single-realization deterministic protocol, not a multi-seed study,
 and it is reported for continuity with the corresponding OU-III table. The two
 are scored on the same records in the same order -- the record list is imported
 rather than duplicated -- but they remain separate measurements of separate
-implementations and should not be quoted as a controlled comparison. The paired parameter-validation study in
-\texttt{reports/results/rao\_parameter\_tuning/} supplies separate evidence
-across four held-out sensor/initialization draws; its gate failures and
-tradeoffs must not be replaced by this default-draw table.
+implementations and should not be quoted as a controlled comparison.
+Four successive coefficient sweeps retain an acceleration-model scale of
+$c_\sigma=0.8$. On two additional paired sensor and initialization draws,
+mean normalized heave error decreases from $3.841\%$ to $3.835\%$ of $H_s$,
+with two gate violations in both arms. Roll improves slightly, while
+pitch, yaw, and three-dimensional displacement have small adverse changes.
+The improvement is modest and does not establish dominance across channels.
+These draws use the same eight vessel-response histories; they do not test
+unseen hulls or independent sea realizations.
 
 Two features of the table are worth stating plainly rather than leaving for the
 reader to infer. Vertical error sits in the range expected of this filter

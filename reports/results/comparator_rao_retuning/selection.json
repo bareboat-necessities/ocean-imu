@@ -1,0 +1,48 @@
+{
+  "baseline_commit": "e4d8586e78070922e2782066330520e4f7b17423",
+  "training_seeds": [
+    "default",
+    "11",
+    "23"
+  ],
+  "families": {
+    "ou2": {
+      "env": {
+        "SF_SIGMA_G_SCALE": "0.2"
+      },
+      "heldout_seeds": [
+        "61001",
+        "62003"
+      ]
+    },
+    "tfg": {
+      "env": {
+        "TFG_SIGMA_COEFF": "0.8"
+      },
+      "heldout_seeds": [
+        "61001",
+        "62003"
+      ]
+    },
+    "pii": {
+      "env": {
+        "PII_R_SCALE": "1.08",
+        "PII_TAU_A_SCALE": "1.05",
+        "PII_KI_SCALE": "0.5"
+      },
+      "heldout_seeds": [
+        "61001",
+        "62003"
+      ]
+    },
+    "nlo": {
+      "env": {
+        "NLO_THETA_GAIN": "0.5575"
+      },
+      "heldout_seeds": [
+        "63001",
+        "64007"
+      ]
+    }
+  }
+}

@@ -1,0 +1,79 @@
+[
+  {
+    "config": "baseline",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.5926273278749999,
+    "roll_rms_deg": 0.195707863,
+    "pitch_rms_deg": 0.19251742962500001,
+    "disp_3d_rms_m": 0.371678832725,
+    "accel_bias_3d_rms_mps2": 0.0466627609
+  },
+  {
+    "config": "noise_0.08",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.592677336,
+    "roll_rms_deg": 0.19565328237500001,
+    "pitch_rms_deg": 0.192538291,
+    "disp_3d_rms_m": 0.3716799929625,
+    "accel_bias_3d_rms_mps2": 0.046656894025
+  },
+  {
+    "config": "noise_0.1",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.592654928625,
+    "roll_rms_deg": 0.19567780925,
+    "pitch_rms_deg": 0.192529196125,
+    "disp_3d_rms_m": 0.37167939432499997,
+    "accel_bias_3d_rms_mps2": 0.046659568312500004
+  },
+  {
+    "config": "noise_0.16",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.59254875025,
+    "roll_rms_deg": 0.195785217,
+    "pitch_rms_deg": 0.19248722675,
+    "disp_3d_rms_m": 0.3716779257875,
+    "accel_bias_3d_rms_mps2": 0.0466709779625
+  },
+  {
+    "config": "gyro_0.2",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.580815654125,
+    "roll_rms_deg": 0.18696055,
+    "pitch_rms_deg": 0.1778286455,
+    "disp_3d_rms_m": 0.3698193547625,
+    "accel_bias_3d_rms_mps2": 0.0434149867125
+  },
+  {
+    "config": "gyro_0.5",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.58541016275,
+    "roll_rms_deg": 0.189915966125,
+    "pitch_rms_deg": 0.183332068875,
+    "disp_3d_rms_m": 0.36880909555,
+    "accel_bias_3d_rms_mps2": 0.04459083825
+  },
+  {
+    "config": "gyro_2.0",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.598104912875,
+    "roll_rms_deg": 0.203289732375,
+    "pitch_rms_deg": 0.2003630995,
+    "disp_3d_rms_m": 0.38960553652499996,
+    "accel_bias_3d_rms_mps2": 0.048743159037500004
+  }
+]

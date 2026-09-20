@@ -1,0 +1,12 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{Comparator retuning on two additional paired sensor and initialization draws over eight fixed vessel-response records. Values are mean vertical RMS in percent of incident $H_s$; violations count all scored executable gates, whose sets differ between methods.}
+\label{tab:comparator-retuning}
+\begin{tabular}{@{}lrrrr@{}}\toprule
+& \multicolumn{2}{c}{Z RMS, \%$H_s$} & \multicolumn{2}{c}{Violations} \\
+Method & Before & After & Before & After \\\midrule
+OU--II & 5.997 & 5.996 & 21 & 21 \\
+TFG & 3.841 & 3.835 & 2 & 2 \\
+TVG--NLO & 7.095 & 7.093 & 5 & 4 \\
+PII & 5.788 & 5.744 & 3 & 2 \\
+\bottomrule\end{tabular}\end{table}

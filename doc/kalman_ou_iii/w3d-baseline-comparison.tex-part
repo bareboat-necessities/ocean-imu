@@ -26,6 +26,16 @@ share the same wave-band period input. OU--II uses the analytical PhysicalMSE
 dual pseudo-measurement schedule and OU--III uses the analytical SpectralMSE
 integral-state schedule of Sec.~\ref{sec:adaptation}.
 
+\IfFileExists{w3d-comparator-retuning-generated.tex-part}{%
+  \input{w3d-comparator-retuning-generated.tex-part}%
+}{}
+The retuning gains are modest. OU--II and PII improve several mean error
+channels; TFG and TVG--NLO improve normalized heave with small adverse
+changes in some attitude channels. NLO uses a fresh pair of evaluation draws
+after an earlier smoothing candidate failed its additional-draw check.
+OU--III is held fixed throughout coefficient selection. The retained
+record-level results include rejected candidates and remaining gate failures.
+
 \begin{table}[t]
 \centering
 \caption{Deterministic baseline tuning and aiding policy.}

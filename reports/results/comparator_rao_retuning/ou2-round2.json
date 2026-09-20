@@ -1,0 +1,51 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "tau_08",
+    "env": {
+      "OU_II_TAU_COEFF": "0.8"
+    }
+  },
+  {
+    "name": "tau_12",
+    "env": {
+      "OU_II_TAU_COEFF": "1.2"
+    }
+  },
+  {
+    "name": "cp_008",
+    "env": {
+      "OU_II_PSEUDO_MSE_COEFF": "0.08"
+    }
+  },
+  {
+    "name": "cp_016",
+    "env": {
+      "OU_II_PSEUDO_MSE_COEFF": "0.16"
+    }
+  },
+  {
+    "name": "axes_wide",
+    "env": {
+      "OU_II_R_P0_X_FACTOR": "1.0",
+      "OU_II_R_P0_Y_FACTOR": "1.0"
+    }
+  },
+  {
+    "name": "axes_xwide",
+    "env": {
+      "OU_II_R_P0_X_FACTOR": "1.0",
+      "OU_II_R_P0_Y_FACTOR": "0.72"
+    }
+  },
+  {
+    "name": "axes_ywide",
+    "env": {
+      "OU_II_R_P0_X_FACTOR": "0.72",
+      "OU_II_R_P0_Y_FACTOR": "1.0"
+    }
+  }
+]

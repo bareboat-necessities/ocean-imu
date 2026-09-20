@@ -1,0 +1,50 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "ou3_axes",
+    "env": {
+      "TFG_R_S_X_FACTOR": "0.72",
+      "TFG_R_S_Y_FACTOR": "0.5"
+    }
+  },
+  {
+    "name": "axes_09",
+    "env": {
+      "TFG_R_S_X_FACTOR": "0.9",
+      "TFG_R_S_Y_FACTOR": "0.9"
+    }
+  },
+  {
+    "name": "rs_02",
+    "env": {
+      "TFG_R_S_COEFF": "0.2"
+    }
+  },
+  {
+    "name": "rs_04",
+    "env": {
+      "TFG_R_S_COEFF": "0.4"
+    }
+  },
+  {
+    "name": "sigma_08",
+    "env": {
+      "TFG_SIGMA_COEFF": "0.8"
+    }
+  },
+  {
+    "name": "tau_08",
+    "env": {
+      "TFG_TAU_COEFF": "0.8"
+    }
+  },
+  {
+    "name": "tau_12",
+    "env": {
+      "TFG_TAU_COEFF": "1.2"
+    }
+  }
+]

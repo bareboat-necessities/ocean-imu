@@ -1,0 +1,35 @@
+[
+  {
+    "config": "baseline",
+    "failed_records": 16,
+    "violations": 33,
+    "worst_ratio": 4.114313160422671,
+    "yaw_rms_deg": 2.736124218125,
+    "roll_rms_deg": 0.3271061171875,
+    "pitch_rms_deg": 0.1493327837125,
+    "disp_3d_rms_m": 0.37045298165625,
+    "accel_bias_3d_rms_mps2": 0.05981238931875
+  },
+  {
+    "config": "gyro02",
+    "failed_records": 16,
+    "violations": 32,
+    "worst_ratio": 4.085686839577329,
+    "yaw_rms_deg": 2.734042368125,
+    "roll_rms_deg": 0.3241157783125,
+    "pitch_rms_deg": 0.1502875737375,
+    "disp_3d_rms_m": 0.36726664873125,
+    "accel_bias_3d_rms_mps2": 0.05955564486875
+  },
+  {
+    "config": "gyro02_axes",
+    "failed_records": 16,
+    "violations": 32,
+    "worst_ratio": 4.104390009606148,
+    "yaw_rms_deg": 2.738823315625,
+    "roll_rms_deg": 0.325608411875,
+    "pitch_rms_deg": 0.15122702300000002,
+    "disp_3d_rms_m": 0.3702809096875,
+    "accel_bias_3d_rms_mps2": 0.05970917361875
+  }
+]

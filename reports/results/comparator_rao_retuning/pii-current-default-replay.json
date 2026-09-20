@@ -1,0 +1,14 @@
+[
+  {
+    "name": "baseline",
+    "env": {
+      "PII_R_SCALE": "0.9259259259259258",
+      "PII_TAU_A_SCALE": "0.9523809523809523",
+      "PII_KI_SCALE": "2"
+    }
+  },
+  {
+    "name": "candidate",
+    "env": {}
+  }
+]

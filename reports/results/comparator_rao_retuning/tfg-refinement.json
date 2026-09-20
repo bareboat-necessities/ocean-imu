@@ -1,0 +1,21 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "axes10",
+    "env": {
+      "TFG_R_S_X_FACTOR": "1.0",
+      "TFG_R_S_Y_FACTOR": "1.0"
+    }
+  },
+  {
+    "name": "axes095_sigma09",
+    "env": {
+      "TFG_R_S_X_FACTOR": "0.95",
+      "TFG_R_S_Y_FACTOR": "0.95",
+      "TFG_SIGMA_COEFF": "0.9"
+    }
+  }
+]
