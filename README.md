@@ -19,7 +19,7 @@ The articles describing the math behind the methods:
 INS Filters:
 
 - [3D Wave Kalman with OU](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_ou-w3d.pdf)
-- [OU-III stability study (LaTeX source)](doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex): physical/sensor assumptions, Mahony-to-Live proof roadmap, independent proof tracks, and certificate status.
+- [OU-III stability study](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_ou-w3d-stability-study.pdf)
 
 - [Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_tfg.pdf)
 
