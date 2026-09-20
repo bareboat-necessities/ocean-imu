@@ -379,3 +379,10 @@ not a claim that projection must be active, nor an all-time capture or
 magnetic-service counterexample. It needs only a three-coordinate inverse
 after checking full covariance positivity. The validator reproduces this
 certificate from the committed endpoint and binds its generated native driver.
+
+The construction-linked joint mean action is now executed and enclosed in
+`ou3-construction-mean-action.md`. It proves finite recorded gyro and force
+separation but its proposed energy-only uniform exclusion fails by an exact
+margin in [-817884.048495,-817884.048494]. This is a deficient enclosure,
+not a new physical counterexample. The signed whole-window source relations
+and the common historical action ceiling remain unproved.

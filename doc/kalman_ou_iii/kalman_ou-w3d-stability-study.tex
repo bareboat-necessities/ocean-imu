@@ -1008,26 +1008,19 @@ This coefficient family is not proved reachable or magnetically serviced.
 The missing uniform argument must use the carried nominal mean, innovation
 and reset recursion to exclude sustained near-null transport.
 
-Innovation bounds alone also fail on a regular-root relaxation: quiet
-truth, zero nominal nuisance means, $h=1/200$ s and
-$\hat b_g=-400\pi e_z$ produce one complete nominal turn per sample.
-All innovations vanish, while the literal integral helper gives
-$R(h)=I$ and $B(h)=h e_z e_z^{\mathsf T}$. Both transverse gyro columns
-are invisible and preserved by the endpoint map: rank four and margin
-$-\mu$ against $\mu I_6$. Construction reachability and all-time magnetic
-service are not proved, so this is not a shipping counterexample.
-The missing nominal gyro bound must follow from construction, not from
-the physical bias bound.
+An innovation-only relaxation also fails: quiet truth, zero nuisance means,
+$h=1/200$ s and $\hat b_g=-400\pi e_z$ give zero innovations but
+$R(h)=I$, $B(h)=h e_z e_z^{\mathsf T}$. The invisible transverse gyro
+columns give rank four and margin $-\mu$ against $\mu I_6$.
+Construction reachability and magnetic service are unproved; this is not a
+shipping counterexample. Nominal gyro control must follow from construction.
 
-Native observer/control audits carry quiet and moving samples through
-construction, refinement and release with identical terminal state and
-covariance. Their 80-digit action maxima are about 1199.061--1450.253;
-exact rational factors enclose both exported words. The complete literal
-sync/addition/symmetry defect $E=P_a-\operatorname{sym}(P_b)$ has a
-Rayleigh quotient $-2^{-44}$. Signed rank-one/two Schur elimination and
-upward factors of its positive terms give $UU^{\mathsf T}\succeq E$,
-verified in all 21 coordinates. Other float operations and source-uniform
-coverage remain open.
+Carried quiet/moving audits have identical observer/control terminal states
+and covariances, with action maxima about 1199.061--1450.253.
+Exact factors enclose both exported words. The recorded sync/symmetry defect
+$E=P_a-\operatorname{sym}(P_b)$ has Rayleigh quotient $-2^{-44}$;
+signed rank-one/two Schur factors verify $UU^{\mathsf T}\succeq E$
+in all 21 coordinates. Other arithmetic and uniform coverage remain open.
 
 A construction-to-600-s stress run uses
 $p=-(3/2)\sin(2t)(1,0,1)$, constant attitude, field $(45,0,45)$ and zero
@@ -1041,6 +1034,22 @@ certify all-time magnetic service or refute eventual capture. Exact
 elimination of its recorded SPD covariance gives $V>11492.6752$ from the
 known zero true BA, outside the sufficient projection guard $V\le36$.
 A joint mean/covariance enclosure from construction remains necessary.
+
+A joint action for the nominal mean $u=(\hat b_g,\hat a_w)$ propagates
+its actual predictor and adds $K_uSK_u^{\mathsf T}$ at each correction.
+With $E=\sum r^{\mathsf T}S^{-1}r$ and recorded mean arithmetic defect
+$\eta$, the transported three-column factors give
+\begin{equation}
+ \begin{bmatrix}D&u-\eta\\(u-\eta)^{\mathsf T}&E\end{bmatrix}\succeq0,
+\end{equation}
+from zero construction means. Outward enclosure and rational factors prove
+$\norm{\hat b_g}<1$ at every recorded prefix of the 600-s run; exact checks
+give nominal world-frame force/field sine $>2/5$ at all 40000 tail
+accelerometer observations. These finite results are not uniform. The action
+ellipsoid admits instantaneous collinearity at energy $1.0138314$, compared
+with accumulated energy $817885.0623$: a certified separation deficit
+exceeding $817884$. This rejects the energy-only enclosure, not a physical
+trajectory. Signed temporal innovation and integral relations remain necessary.
 
 \subsection{Stationary A21 detectability}
 Quiet water does not by itself create an unobservable nondecaying mode in
@@ -1227,13 +1236,10 @@ For a factor partition $[B_h,B_n]$, exact nuisance elimination gives
 \end{equation}
 An independent-column range basis handles singular nuisance blocks; a
 positive reduced heading matrix still leaves any nuisance nullspace open.
-Section~\ref{sec:capture-obstruction} refutes six-degree capture only when
-\eqref{eq:jerk} is omitted. Under the amended domain, general capture,
-magnetic-reference completion,
-H18 and release retention, recurring service, physical qualification,
-nonlinear storage and target arithmetic remain unproved.
-End-to-end regional practical stability remains unproved. Numerical
-certificate reproduction does not establish it.
+Section~\ref{sec:capture-obstruction} refutes six-degree capture only without
+\eqref{eq:jerk}. Under the amended domain, capture, H18/release retention,
+recurring service, nonlinear storage and arithmetic remain open.
+End-to-end regional practical stability remains unproved.
 
 \section*{Acknowledgments and disclosure}
 This work was prepared with supervised assistance from artificial intelligence

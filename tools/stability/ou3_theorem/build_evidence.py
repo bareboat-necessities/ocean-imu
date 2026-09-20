@@ -69,6 +69,14 @@ def validate() -> dict:
         failures.append("construction native driver fingerprint changed")
     if construction.get("terminal_storage_certificate") != zero_true_bias_storage_audit(construction["native"]):
         failures.append("construction endpoint storage certificate differs from exact reproduction")
+    from tools.stability.ou3_theorem.construction_mean_action import observer_source, instrument, HEADER, verify_summary
+    mean=json.loads((STATUS.parent/"construction-mean-action.json").read_text())
+    if mean.get("observer_sha256") != hashlib.sha256(observer_source().encode()).hexdigest():
+        failures.append("construction mean observer fingerprint changed")
+    if mean.get("instrumented_header_sha256") != hashlib.sha256(instrument((REPO/HEADER).read_text()).encode()).hexdigest():
+        failures.append("construction mean header fingerprint changed")
+    if mean.get("exact_summary") != verify_summary(mean["enclosure"], mean["committed_field"]):
+        failures.append("construction mean action differs from rational factor reproduction")
     return {"validation_pass":not failures,"failures":failures,"base_main_commit":provenance["base_main_commit"],
             "shipping_behavior_authority":"source implementation","theorem_closed":expected["theorem_closed"]}
 

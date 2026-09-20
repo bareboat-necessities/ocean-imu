@@ -163,3 +163,21 @@ zero true BA and its correlated 3x3 marginal give a full-storage lower bound
 endpoint. `build_evidence.py` reproduces this exact certificate and the native
 driver fingerprint. This finite endpoint exclusion is not eventual-capture
 refutation and does not establish all-time magnetic service.
+
+The construction mean-action attempt is in `ou3-construction-mean-action.md`
+and `construction_mean_action.py`. It carries 89998 predictions and 122251
+accepted rank-three corrections from zero means, retains the full BG/AW
+matrix, and encloses actual mean rounding. Rational interval factors prove
+||b_hat_g||<1 at every recorded prefix; exact checks prove force/field sine
+>2/5 at each of the 40000 tail accelerometer observations. These finite
+closures are not a uniform exclusion or readout action ceiling.
+
+The energy-only enclosure itself fails `E_col-E>0` with exact margin in
+[-817884.048495,-817884.048494], even though the actual finite tail remains
+separated. No new physical counterexample follows. Retain the signed
+innovation relations and physical/nominal integral dynamics in the next
+whole-window argument; do not tighten this failed pointwise ellipsoid or
+substitute a nominal-state cap. The committed mean-action summary is checked
+with rational interval LDL, and CI reproduces the full binary transcript,
+80-digit diagnostic and outward enclosure. Uniform B_*, J and rho0 remain
+false. The source implementation and physical assumptions remain unchanged.

@@ -77,6 +77,24 @@ the sufficient guard V<=36, the entry margin is at most -11456.6752. This
 checks the literal finite endpoint, not all-time magnetic service or eventual
 capture. Failing a sufficient projection guard does not imply active projection.
 
+The construction-linked BG/AW mean action has now been executed on the whole
+same run: 89998 predictions and 122251 applied rank-three corrections. Its
+6x6 action retains all cross terms and its mean defect charges literal
+rounding. An 80-digit diagnostic followed by outward intervals and independent
+rational LDL proves ||b_hat_g||<1 at every recorded prefix; the resulting
+increment ceiling is .0099051914291880918 rad. Exact binary-operand checks
+also give force/field sine >2/5 at all 40000 pre-accelerometer states in the
+400--600 s tail. These are finite source audits, not all-history certificates.
+
+The attempted common mean enclosure nevertheless fails. Its cumulative
+innovation energy is 817885.0623259853, whereas the full correlated action
+ellipsoid admits instantaneous nominal collinearity at cost 1.0138313892.
+The exact rational interval separation margin lies in
+[-817884.048495,-817884.048494]. This diagnoses loss of signed innovation
+constraints in the enclosure; it is not a reachable collinear history or a
+physical counterexample. `ou3-construction-mean-action.md` gives the full
+derivation, source linkage, executed enclosure and rejected implication.
+
 Independently, the inherited BA marginal proves a source covariance guard:
 at every finite regular pre-projection boundary, sqrt(V)<=6 leaves
 .02483339501604595 m/s^2 inside the .4 projection ball. The literal projection
@@ -132,17 +150,12 @@ all-time actual magnetic-service floor exceeds one. Its native regression
 checks literal finite float startup/release; all-time float totality was not
 claimed. Current status explicitly records that this witness is inadmissible.
 
-Current local validation: 481 evidence/publication tests pass with one
-existing data-dependent skip. Exact artifact reproduction, Ruff, carried
-observer/control parity, both exact exported-word enclosures and the full
-construction stress run pass. The nine-page article renders without overfull
-boxes; affected pages 8--9 were visually checked. The preceding 2373d262 head
-passed all six CI workflows, including every quality-gate job; new-head CI is
-reported separately in PR metadata. Exact artifact reproduction, ruff and
-Python compilation pass. The nine-page study renders without overfull boxes;
-pages 2 and 7--9 were visually checked. Native observer/control parity passes.
-The shipping estimator and all physical constants remain unchanged. CI is
-recorded against the exact PR head in PR metadata.
+Current local validation: 486 evidence/publication tests run, with 485 passed
+and one existing data-dependent skip. The full carried observer matches its
+untapped control; the 80-digit mean action, outward enclosure, independent
+rational factor checks and exact 40000-prefix force audit pass. The source
+estimator and physical constants are unchanged. All six workflows passed at
+0cc50ec5; CI for the new proof head is recorded separately in PR metadata.
 
 ## Current limiter
 
@@ -161,6 +174,18 @@ A finite source supply and a positive but extremely small comparison margin
 are not evidence that the declared six-degree region is invariant.
 
 ## Failed approaches / DEAD_ENDS
+
+- A construction-linked cumulative mean-action ellipsoid fails the sufficient
+  pointwise collinearity exclusion `E_col-E>0` with the exact interval margin
+  [-817884.048495,-817884.048494]. Classification: mathematical relaxation
+  loses signed/time-linked innovations, not numerical conditioning or an
+  observed nonphysical source trajectory. The actual finite tail has positive
+  separation. Retained: the full matrix action and its certified finite gyro
+  barrier. Do not refine its energy ceiling into a common nominal box. The
+  next technique must retain `r_acc=f_measured-R(aw-g)-ba`, `r_mag=m-RB` and
+  `r_S=-S_hat` with the same nominal/physical dynamics over the entire window.
+  This failure does not rule out a temporal separation argument and does not
+  license a new physical assumption.
 
 - Added article material caused a 0.82014-pt overfull vbox in forced final-page
   balancing. Removing that balancing directive restores a clean nine-page
@@ -340,3 +365,12 @@ bounded by .0039051914291880918 rad from the true handoff state; extending
 this to an invariant history bound is open. An assumed nominal-state cap is
 not a substitute. For arithmetic, the completed sync factor is available;
 other operation defects and their prefix actions remain open.
+
+The executed joint energy propagation now rejects its own proposed pointwise
+separation step by an 8e5 deficit. Replace that relaxation with a signed
+whole-window identity coupling projected nominal acceleration, the actual
+velocity/integral corrections, and bounded physical velocity/primitive.
+The target is a positive temporal separation margin on actual histories,
+including gyro/reset transport; an instantaneous collinear point in a loose
+ellipsoid is not an admissible sustained-collinearity witness. Do not promote
+the positive finite source margins to a common historical action B_*.

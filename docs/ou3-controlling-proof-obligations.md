@@ -80,3 +80,12 @@ no six-degree entry certificate follows from those stage flags. All-time
 magnetic service, eventual capture and a uniform reachable-set enclosure
 remain unproved. Construction-linked joint bounds, not free nominal boxes,
 control the next step.
+
+The full construction mean-action attempt is now executed and enclosed:
+all recorded gyro prefixes have norm <1, and all 40000 pre-accelerometer
+states in its 400--600 s tail have force/field sine >2/5. This still does not
+cover all admitted histories. Its correlated cumulative-energy ellipsoid
+fails the sufficient pointwise exclusion `E_col-E>0` by a certified margin
+in [-817884.048495,-817884.048494]. No collinear source trajectory has been
+established. The missing ingredient is the signed, time-linked innovation
+recursion, not a new physical restriction or more numerical precision.
