@@ -171,7 +171,8 @@ FixedNominal recovers essentially none of the off-nominal vertical improvement
 (Table~\ref{tab:ou_mc_channels}).
 
 \paragraph{Covariance control}
-The covariance-maintenance control changes normalized vertical error by at most
+The covariance-maintenance control has a largest-magnitude paired change
+in normalized vertical error of
 $\OUValidationCovSyncWorstDifference$ percentage points
 ($[\OUValidationCovSyncWorstLow,\OUValidationCovSyncWorstHigh]$), indicating
 that periodic latent-acceleration covariance re-alignment is not the source of
