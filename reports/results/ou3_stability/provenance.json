@@ -66,7 +66,10 @@
     "a21_noise_binding": "The default SpectralMSE law has unit cadence renormalization, MIN_R_S=.15 and horizontal factors .72/.50, hence applied S std >=.075. Default S_factor=1 preserves sigma_aw>=.05. The deployed .12 accel nominal std and nonnegative inflation exceed the .05 lower bound. This bound is not universal over user setters.",
     "a21_raw_translation_normalization": "Matrix action gives at least 3.59e-11 for raw neutral S rows with actual event delays; this is not a full-state closed-loop loss or rho.",
     "a21_factor_scope": "At the same post-prediction root P>=diag(q_AG I,0,q_BA I) from fresh process and P>=E_LIN A^-1 E_LIN^T from the preceding corrected path imply their equal convex combination as a positive full 21-state lower bound. No marginal factors are substituted for Q.",
-    "information_assembly_audit": "Removed positivity-only helper claims of compact full information, neutral quotient observability and marine-diversity-to-full-information lifting. Separate restricted minors do not prove full rank. Independent-block scalar margin algebra is explicitly conditional on a certified product metric."
+    "information_assembly_audit": "Removed positivity-only helper claims of compact full information, neutral quotient observability and marine-diversity-to-full-information lifting. Separate restricted minors do not prove full rank. Independent-block scalar margin algebra is explicitly conditional on a certified product metric.",
+    "a21_factorized_loss": "Root-whitened measurement and orthogonal-complement process loss rows are compressed by QR, retaining all 21 columns. Exact dense reference parity and singular nuisance range elimination are verified; whole-word factor error and source-uniform singular margin remain open.",
+    "a21_realized_observer": "The auxiliary observer uses the actual gain and event record. It is not an independently evolving perturbed EKF; finite retraction, projection, reset and hybrid remainder bounds remain open.",
+    "a21_quiet_word_diagnostic": "One configured source-double quiet-water core trace after carried warmup gives full21 rho about .833, with 70-digit prefix and source-operation parity. This is neither a wrapper startup/adaptation certificate nor a uniform or float32 theorem."
   },
   "operation_lemma_sources": [
     {
@@ -99,7 +102,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "162a88a0e2716b57c2ad033690b9dc73942c5703"
+      "git_blob_sha": "ace318f775f3d4ee8da8ea1d3a298dd2850356a9"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -180,6 +183,34 @@
     {
       "path": "tests/validation/test_ou3_root_covariance_certificate.py",
       "git_blob_sha": "1a364c8cbad5773fb2a8e2f0b83057b6e606cb48"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/factor_word.py",
+      "git_blob_sha": "2c6bf7873f5bf1a1868a89f0dce7fd53e8cc8b35"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/factor_certificates.py",
+      "git_blob_sha": "5e941479c1315cae239928bd4cdf45c8844ac20f"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/factor_diagnostic.py",
+      "git_blob_sha": "f98a3b309ca9cd59eb685141022af7937b2b7552"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/export_quiet_word.cpp",
+      "git_blob_sha": "768f9edcc0a04c98e5dbd4766b92291112fc6455"
+    },
+    {
+      "path": "tests/validation/test_ou3_factor_word.py",
+      "git_blob_sha": "9a160207e9f456b2d578d4f5da1df28de42417a1"
+    },
+    {
+      "path": "docs/ou3-literature-applicability.md",
+      "git_blob_sha": "a0166ef499b759ae39a9b8fd9edbb388ae3ae282"
+    },
+    {
+      "path": "docs/ou3-factor-loss.md",
+      "git_blob_sha": "bba24cdc6a145173bfc1d87e58c0180a0e25cd85"
     }
   ]
 }

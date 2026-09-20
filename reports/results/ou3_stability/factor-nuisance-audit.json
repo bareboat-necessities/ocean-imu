@@ -1,0 +1,29 @@
+{
+  "cancelled_heading_information": [
+    [
+      "0",
+      "0"
+    ],
+    [
+      "0",
+      "1"
+    ]
+  ],
+  "full_state_dimension": 4,
+  "qualification": "OU3_EXACT_SINGULAR_NUISANCE_FACTOR_AUDIT_V1",
+  "separated_full_rank": 3,
+  "separated_heading_information": [
+    [
+      "1/2",
+      "0"
+    ],
+    [
+      "0",
+      "1"
+    ]
+  ],
+  "singular_nuisance_rank": 1,
+  "source_uniform_verified": false,
+  "theorem_closed": false,
+  "verified": true
+}

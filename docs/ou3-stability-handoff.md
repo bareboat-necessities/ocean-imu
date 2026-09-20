@@ -11,6 +11,20 @@ state through every boundary. No new common startup deadline is assumed.
 
 ## Current result
 
+Read `ou3-literature-applicability.md` for the primary theorem/hypothesis map
+and the realized-gain auxiliary-observer contract. Read `ou3-factor-loss.md`
+for the factor derivation, exact singular nuisance elimination and source
+export reproduction. Neither an IEKF theorem nor the 2025 modified SO(3)
+filter theorem is applied to unchanged OU-III.
+
+The complete root-whitened factor engine now agrees with the dense rational
+reference on coupled full21 and adversarial words. A carried 16-s quiet-water
+shipping-core export has diagnostic rho=.8327094089, with source-double parity
+below 5e-14 relative and a matching 70-digit prefix check. This establishes
+feasibility of the representation on that trace, not a uniform theorem margin.
+The rational residual bound on a stored floating QR matrix deliberately leaves
+whole-word factor error, source uniformity and float32 transfer unverified.
+
 The complete rational 4x4 LIN endpoint-action matrix is now certified for the
 bound default profile. The explicit comparison is
 `P_end >= E_LIN A^-1 E_LIN'`. Its singular full-state form is intentional.
@@ -41,8 +55,9 @@ attitude/gyro kinematic map.
 
 ## Required continuation
 
-1. Bound full loss and its cross blocks, or an equivalent joint full-state
-   path-action comparison. Include stable a_w/BA directions.
+1. Use the literature hypotheses and factor/range construction to bound full
+   loss and its cross blocks, or an equivalent joint full-state path-action
+   comparison. Include stable a_w/BA directions and complete varying histories.
 2. Use the new joint root lower bound and certify uniform upper covariance
    and every-prefix bounds through literal correction/reset cadence. A
    smallest LDL pivot is not an eigenvalue floor; the new lower bound uses

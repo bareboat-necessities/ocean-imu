@@ -302,7 +302,9 @@ $V_k=e_k^{\mathsf T}P_k^{-1}e_k$. Prediction and an applied correction obey
  S_k&=H_kP_k^-H_k^{\mathsf T}+R_k,\nonumber\\
  K_k&=P_k^-H_k^{\mathsf T}S_k^{-1}.
 \end{align}
-Here $S_k$ is the actual innovation covariance. The Joseph update and
+Here $S_k$ is the actual innovation covariance; a positive-semidefinite
+safety increment is included in the effective $R_k$ used by both gain and
+Joseph comparison. Frozen gain rows are not regular A21 updates. The update and
 $e_k^+=(I-K_kH_k)e_k^-$ give the exact identity
 \begin{equation}
  V_k^- - V_k^+
@@ -333,6 +335,61 @@ A sufficient full-state certificate is
  \label{eq:full-loss}
 \end{equation}
 This includes all 21 coordinates and the covariance carried into the word.
+
+\subsection{Literature hypotheses and the realized observer}
+The continuous-time contraction theorem of Bonnabel and
+Slotine~\cite{bonnabel-slotine}, Theorem~1 and Corollary~2, requires bounded
+positive covariance and a local differential inequality. Its auxiliary
+observer uses the realized gain. For a Euclidean correction, define
+$z^+=z^-+K_k(y_k-h_k(z^-))$ using the actual event record. The estimate is
+one trajectory and physical truth is a forced trajectory. This does not
+equate two independently evolving filter gains or event decisions.
+Quaternion retraction, projection and chart-reset defects still require a
+finite-error remainder bound; the continuous theorem does not supply it for
+the discrete implementation.
+
+The sampled-data linear criterion in Barrau and
+Bonnabel~\cite{barrau-bonnabel}, Theorem~3(i)--(v), requires full-window
+controllability and observability, positive noise and nonsingular transition
+bounds. Its full observability and upper-covariance hypotheses remain open
+here. Their invariant-observer Theorem~4 also requires the group identities
+of Theorems~1--2, which a quaternion MEKF alone does not establish.
+The almost-global result of Aslam et al.~\cite{aslam}, Theorem~1, uses modified
+curvature-dependent gain equations and matrix attitude measurements, so it
+does not establish capture for the unchanged observer. Factorized information
+updates~\cite{dsouza-zanetti} address numerical representation rather than
+observer convergence.
+
+\subsection{Loss factors with complete coupling}
+Let $P=CC^{\mathsf T}$, $P_0=C_0C_0^{\mathsf T}$ and $T=MC_0$.
+For $S=L_sL_s^{\mathsf T}$, a measurement contributes the factor
+\begin{equation}
+ \mathcal B_m=L_s^{-1}HT,\qquad T^+=T-K(HT).
+\end{equation}
+It has at most three rows. Orthogonal triangularization of
+$[\begin{smallmatrix}R^{1/2}&HC\\0&C\end{smallmatrix}]$ yields lower blocks
+$[\begin{smallmatrix}L_s&0\\KL_s&C^+\end{smallmatrix}]$, preserving the exact
+Joseph covariance in real arithmetic. This comparison does not replace the
+shipping float32 Joseph operation.
+
+For $Q=UU^{\mathsf T}$ with $r$ factor columns, write the full QR array
+\begin{equation}
+ [FC,U]^{\mathsf T}=[O_1,O_2]
+ \begin{bmatrix}L^{\mathsf T}\\0\end{bmatrix},\qquad
+ J=\begin{bmatrix}I_n\\0_{r\times n}\end{bmatrix}.
+\end{equation}
+Since $L^{-1}FC=O_1^{\mathsf T}J$, orthogonality gives the prediction
+factor $\mathcal B_p=O_2^{\mathsf T}JC^{-1}T$, without subtracting precision
+matrices. This admits singular $Q$ whenever the predicted covariance is
+positive definite. Stack and compress these factors by QR into $R_W$.
+Then, with $Z=C_W^{-1}T_W$,
+\begin{equation}
+ Z^{\mathsf T}Z+R_W^{\mathsf T}R_W=I,\qquad
+ \sigma_{\min}(R_W)^2\ge\delta\ \Longrightarrow\ \rho_0\le1-\delta.
+\end{equation}
+The magnetometer attitude block is skew-symmetric and has rank two for a
+nonzero field. The integrated OU process block can have rank four per axis;
+three measurement rows do not make the full covariance rank three.
 
 \subsection{Restricted service and cross terms}
 The service premise \eqref{eq:mag-service} controls a restriction to heading
@@ -528,6 +585,17 @@ Exact rational checks establish the LIN matrix action, the joint
 post-prediction lower covariance, the complete linear
 energy identity, and the failure of restricted-information lifting. These
 results do not establish a source-uniform full-state contraction factor.
+For a factor partition $[B_h,B_n]$, exact nuisance elimination gives
+\begin{equation}
+ \min_n\norm{B_hh+B_nn}^2
+ =\norm{(I-\Pi_{\operatorname{range}(B_n)})B_hh}^2.
+\end{equation}
+An independent-column range basis handles singular nuisance blocks; a
+positive reduced heading matrix still leaves any nuisance nullspace open.
+A carried 16-s quiet-water core word gives diagnostic full-state values
+$\delta\simeq0.16729$, $\rho_0\simeq0.83271$, with factor/dense and literal
+source-double parity checks. This finite word does not enclose all admitted
+histories, the adaptive frontend, or target arithmetic.
 Finite capture, magnetic-reference completion, H18 and release retention,
 recurring service, physical qualification, nonlinear storage and target
 arithmetic remain open. Numerical certificate reproduction does not imply
@@ -547,4 +615,23 @@ This work was prepared with supervised assistance from artificial intelligence
 tools for mathematical drafting, code development, and editorial preparation.
 The author is responsible for the conceptual development and final revisions,
 declares no conflicts of interest, and received no funding for this research.
+\begin{thebibliography}{4}
+\bibitem{bonnabel-slotine}
+S.~Bonnabel and J.-J.~Slotine, ``A contraction theory-based analysis of the
+stability of the Extended Kalman Filter,'' arXiv:1211.6624v2, 2012.
+\url{https://arxiv.org/abs/1211.6624v2}
+\bibitem{barrau-bonnabel}
+A.~Barrau and S.~Bonnabel, ``The invariant extended Kalman filter as a stable
+observer,'' arXiv:1410.1465v4, 2015.
+\url{https://arxiv.org/abs/1410.1465v4}
+\bibitem{aslam}
+F.~Aslam, M.~F.~Haydar, and S.~Akhtar, ``Geometric nonlinear filtering with
+almost global convergence for attitude and bias estimation on the special
+orthogonal group,'' arXiv:2503.08255, 2025.
+\url{https://arxiv.org/abs/2503.08255}
+\bibitem{dsouza-zanetti}
+C.~D'Souza and R.~Zanetti, ``Information formulation of the UDU Kalman
+filter,'' \emph{IEEE Trans. Aerosp. Electron. Syst.}, vol.~55, no.~1,
+pp.~493--498, 2019. \url{https://doi.org/10.1109/TAES.2018.2850379}
+\end{thebibliography}
 \end{document}

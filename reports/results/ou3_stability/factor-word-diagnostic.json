@@ -1,0 +1,64 @@
+{
+  "all_time_or_every_sliding_window_service_verified": false,
+  "computed_factor_matrix_only_bound": {
+    "delta_lower": "249999999999999887601325000000012633462141755625/7428110954741192833848230446976347601645378353936",
+    "factor_error_norm_upper": "0",
+    "matrix_implication_verified": true,
+    "positive_floor": true,
+    "residual_norm_upper": "4495947/20000000000000000000000",
+    "sigma_lower": "499999999999999887601325/2725456100314439633379044",
+    "source_uniform_verified": false,
+    "whole_word_error_verified": false
+  },
+  "disjoint_service_windows": 16,
+  "factor_matrix_bound_scope": "exact bound on the stored binary64 QR matrix only; whole-word factor error is not certified",
+  "float32_transfer_verified": false,
+  "heading_after_nuisance_min_diagnostic": 1246.0866238181263,
+  "high_precision_prefix": {
+    "absolute_parity_error": 1.2212453270876722e-15,
+    "binary64_rho_diagnostic": 0.9999887113430505,
+    "delta_diagnostic": "0.000011288656948275184747871433908723960182673478",
+    "digits": 70,
+    "events": 60,
+    "rho_diagnostic": "0.999988711343051724815252128566091276039817327",
+    "rigorous_enclosure": false
+  },
+  "nuisance_rank_diagnostic": 19,
+  "qualification": "OU3_SHIPPING_CORE_FACTORIZED_WORD_DIAGNOSTIC_V1",
+  "recorded_process_block_dimensions": [
+    6,
+    4,
+    4,
+    4,
+    3
+  ],
+  "recorded_process_blocks_spd_exact": true,
+  "restricted_service_min_diagnostic": 13.517258320050198,
+  "scope": "configured quiet-water shipping core; no wrapper capture, adaptive schedule or uniform claim",
+  "shipping_double_parity": {
+    "endpoint_covariance_relative": 1.0900168666341934e-14,
+    "gain_relative_max": 4.7427284055085346e-14,
+    "innovation_relative_max": 3.0959918870379457e-15
+  },
+  "shipping_header_sha256": "e38e4caaafa68cc52bd4d35bdeffc652588a312e3757dd734ddae9e3d4a21fd2",
+  "source_uniform_verified": false,
+  "theorem_closed": false,
+  "warmup_samples": 3200,
+  "word": {
+    "arithmetic_enclosure_verified": false,
+    "compressed_loss_rows": 21,
+    "delta_diagnostic": 0.1672905910741623,
+    "events": {
+      "correction": 4907,
+      "prediction": 3200,
+      "rejected": 0,
+      "reset": 0
+    },
+    "identity_residual_fro": 1.3607007649725752e-12,
+    "max_measurement_rows": 3,
+    "rho_diagnostic": 0.8327094089258031,
+    "source_uniform_verified": false,
+    "theorem_closed": false
+  },
+  "word_seconds": 16.0
+}

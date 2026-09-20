@@ -31,6 +31,8 @@ def status_report() -> dict:
         "constructive_fixed_coordinate_A21_mu_enclosure":False,
         "LIN_endpoint_matrix_path_action":True,
         "complete_word_covariance_energy_identity":True,
+        "factorized_word_exact_reference_parity":True,
+        "singular_nuisance_range_elimination":True,
         "full_state_magnetic_information_lifting":False,
         "interval_riccati_kernel_layer":True,
         "maximal_correction_covariance_order":True,
@@ -61,5 +63,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"Certify the full transported A21 energy-loss matrix including cross-coordinate cancellation, with a uniform covariance upper bound and every-prefix retention. The joint post-prediction lower covariance now follows from the convex combination of the corrected LIN path factor and fresh AG/BA process bounds. Restricted heading/bias service cannot be lifted to independent full-state heading information; the former mu_N and rho0 promotion is withdrawn. The exact matrix LIN endpoint-action certificate is positive, and raw neutral S normalization is at least 3.59e-11, but neither is a full-state word contraction. Finite-error radius, float32 supply, capture and retention remain open.",
+        "next_controlling_obligation":"Certify the full transported A21 energy-loss matrix including nuisance cancellation, with a uniform covariance upper bound and every-prefix retention. The primary literature hypotheses are mapped explicitly. The factor engine and exact singular-range elimination pass reference checks; a carried 16-s source-core quiet-water word has diagnostic rho about 0.833, not a source-uniform margin. Whole-word factor error and the discrete realized-observer nonlinear remainder remain open. The joint post-prediction lower covariance is closed by a convex combination of corrected LIN action and fresh AG/BA process bounds. Restricted heading service cannot be lifted to independent full-state information. Finite-error radius, float32 supply, capture and retention remain open.",
     }

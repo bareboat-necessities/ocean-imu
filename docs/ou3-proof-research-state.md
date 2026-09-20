@@ -24,6 +24,29 @@ verification, not source-uniform evidence.
 
 ## Evidence
 
+- `ou3-literature-applicability.md` maps exact primary-source theorems to
+  shipping hypotheses. The realized-gain auxiliary observer avoids assuming
+  equal gains/gates for independently perturbed filters. Its discrete
+  retraction/projection remainder and the full sampled-data observability
+  hypotheses remain open; no continuous or modified-filter theorem is imported.
+- `factor_word.py` retains root-whitened measurement rows, rectangular process
+  factors, actual transport and streaming QR. Prediction loss uses an
+  orthogonal complement rather than subtracting precision matrices. Nine
+  regressions include dense exact full21 parity, nonorthogonal resets,
+  effective innovation increments and singular nuisance cancellation.
+- `factor_certificates.py` eliminates nuisance columns through an exact range
+  basis, including singular Gramian cases. A positive heading Schur reduction
+  alone does not close a remaining nuisance nullspace. Its residual singular
+  bound requires a separately verified whole-word factor error.
+- A literal source-double core export after 16 s of carried warmup gives a
+  full21 16-s quiet-water diagnostic: delta=.1672905911, rho=.8327094089,
+  3200 predictions and 4907 corrections. Maximum source gain/covariance
+  discrepancy is below 5e-14 relative; energy identity residual is 1.37e-12.
+  An independent 70-digit 60-event prefix agrees with the factor engine.
+  The trace retains covariance/scheduler state. It does not exercise wrapper
+  capture, adaptive tuning, nonidentity reset or float32 arithmetic. Disjoint
+  one-second magnetic restrictions exceed 13.5; all sliding windows and
+  source-uniform service are not certified. See `ou3-factor-loss.md`.
 - `word_energy.py` proves the telescoping identity by exact rational matrix
   operations. Regression words include interleaved process noise, coupled
   measurements, a nonorthogonal reset, and singular PSD covariance inflation.
@@ -136,6 +159,10 @@ claimed. Physical qualification and recurring applied service remain required.
   with a non-forced update to the existing PR branch. A combined publication
   payload exceeded tool-output limits and JSON parsing failed before remote
   mutation; reading each changed file separately avoids that transport limit.
+- The Zhang--Zhang 2021 covariance paper's full text was blocked by publisher
+  access/HAL anti-bot responses. This is a literature-access limitation, not
+  a failed theorem. No bound is imported from search excerpts. The audited
+  primary sampled-data criterion remains the comparison target.
 
 ## Retained facts
 
@@ -154,11 +181,13 @@ principal-block restriction is insufficient in either construction.
 
 ## Next falsifiable experiment
 
-Construct the full same-history A21 loss with carried covariance and actual
-correction/reset transport, retaining all cross blocks and stable modes. Before
-rigorous enclosure, compute a non-promoting high-precision feasibility ratio
-for that construction. Show a positive normalized full-loss margin and a
-quantified path to source-uniform enclosure; otherwise analyze its failing
-mode. Do not report a new rho from the LIN matrix or the conditional raw S
-normalization alone. Then certify the finite nonlinear region and additive
-supply before attempting capture/release-to-tail composition.
+The complete carried quiet-water factor construction passes its first
+feasibility/parity gate. Next derive a full-state observability or coupled
+path-action comparison that bounds covariance above for admitted realized
+histories, using the exact theorem-hypothesis map. Test that construction on
+complete varying histories with the new factor engine before enclosing it.
+The current trace gives no worst-case history bound and no quantitative
+whole-word factor-error enclosure; the matrix-only rational residual is not
+one. Preserve nuisance range geometry throughout. A successful next milestone
+must be source-uniform full loss with coercivity, not another quiet-water
+number. Then certify nonlinear supply and capture/release-to-retention.

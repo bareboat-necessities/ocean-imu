@@ -42,11 +42,13 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.word_energy import restricted_service_counterexample
     from tools.stability.ou3_theorem.block_factor_numeric import certificate as block_certificate
     from tools.stability.ou3_theorem.root_covariance_certificate import certificate as root_certificate
+    from tools.stability.ou3_theorem.factor_certificates import audit_certificate
     for name, generate in (
         ("lin-matrix-certificate.json",matrix_certificate),
         ("word-energy-audit.json",restricted_service_counterexample),
         ("block-factor-status.json",block_certificate),
         ("root-covariance-certificate.json",root_certificate),
+        ("factor-nuisance-audit.json",audit_certificate),
     ):
         artifact=STATUS.parent/name
         if not artifact.is_file() or json.loads(artifact.read_text())!=generate():

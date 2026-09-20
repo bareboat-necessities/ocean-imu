@@ -28,3 +28,9 @@ matrix factors and the full covariance-energy loss identity.
 
 The complete stability theorem remains open. Consult `ou3-proof-research-state.md`
 for the current failure classification and next falsifiable experiment.
+
+The supporting [literature map](ou3-literature-applicability.md) identifies
+exact imported-result hypotheses and their remaining shipping gaps. The
+[factor construction](ou3-factor-loss.md) preserves three-row losses,
+process blocks and singular nuisance ranges. Its carried quiet-water full21
+rho≈.833 is diagnostic only; the full-state loss row above remains OPEN.
