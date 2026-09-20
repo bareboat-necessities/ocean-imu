@@ -1,0 +1,164 @@
+{
+  "source_commit": "02adc1b0d12b34ff91b1c30952aef2f53d68db4f",
+  "simulation_archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+  "ou3_filter_source_unchanged": true,
+  "gates_unchanged": true,
+  "coefficient_record_replays": 1576,
+  "sweep_stages": 25,
+  "commands": [
+    {
+      "command": [
+        "make",
+        "all"
+      ],
+      "exit_code": 0,
+      "validation_tests": 463
+    },
+    {
+      "command": [
+        "python3",
+        "tools/ou_validation.py",
+        "--mode",
+        "full",
+        "--jobs",
+        "3",
+        "--skip-build"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "tools/ou_robustness.py",
+        "--mode",
+        "full",
+        "--jobs",
+        "3",
+        "--skip-build",
+        "--sensitivity-scales",
+        "0.5,0.75,1.0,1.25,1.5"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "-u",
+        "tools/model_mismatch_ablation.py",
+        "--data-dir",
+        "plots/kalman_ou_ii",
+        "--jobs",
+        "2"
+      ],
+      "exit_code": 0,
+      "seconds": 52.431739263000054
+    },
+    {
+      "command": [
+        "python3",
+        "-u",
+        "tools/engine_noise_degradation.py",
+        "--data-dir",
+        "plots/kalman_ou_ii",
+        "--jobs",
+        "2"
+      ],
+      "exit_code": 0,
+      "seconds": 1070.6123542019996
+    },
+    {
+      "command": [
+        "python3",
+        "-u",
+        "tools/ou3_engine_noise_mitigation.py",
+        "--data-dir",
+        "plots/kalman_ou_ii",
+        "--jobs",
+        "2"
+      ],
+      "exit_code": 0,
+      "seconds": 329.0341002109999
+    },
+    {
+      "command": [
+        "python3",
+        "-u",
+        "tools/engine_noise_guard_families.py",
+        "--data-dir",
+        "plots/kalman_ou_ii",
+        "--jobs",
+        "2"
+      ],
+      "exit_code": 0,
+      "seconds": 178.20039111599908
+    },
+    {
+      "command": [
+        "python3",
+        "-u",
+        "tools/startup_ablation.py",
+        "--data-dir",
+        "plots/kalman_ou_ii",
+        "--jobs",
+        "2"
+      ],
+      "exit_code": 0,
+      "seconds": 288.18309277200024
+    },
+    {
+      "command": [
+        "python3",
+        "tools/startup_publication_sync.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.032320924001396634
+    },
+    {
+      "command": [
+        "python3",
+        "-u",
+        "tools/direction_rao_ablation.py",
+        "--data-dir",
+        "plots/kalman_ou_ii",
+        "--jobs",
+        "2"
+      ],
+      "exit_code": 0,
+      "seconds": 126.29935546299748
+    },
+    {
+      "command": [
+        "python3",
+        "tools/direction_rao_report.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.036084527000639355
+    },
+    {
+      "command": [
+        "python3",
+        "-u",
+        "tools/ou_roundtrip_transition.py"
+      ],
+      "exit_code": 0,
+      "seconds": 21.657518716001505
+    },
+    {
+      "command": [
+        "python3",
+        "tools/ou3_reduced_mse_study.py"
+      ],
+      "exit_code": 0,
+      "seconds": 3.0301261200002045
+    },
+    {
+      "command": [
+        "python3",
+        "tools/ou2_dual_mse_coefficients.py",
+        "--exact"
+      ],
+      "exit_code": 0,
+      "seconds": 2.0844765649999317
+    }
+  ]
+}

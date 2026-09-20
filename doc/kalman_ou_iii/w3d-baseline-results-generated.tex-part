@@ -1,0 +1,50 @@
+\begin{table*}[t]
+  \centering
+  \caption{Common-record deterministic vertical-displacement RMS error for the proposed OU--III estimator, its OU--II predecessor, the adaptive PII observer, and the adapted TVG--NLO baseline. All values use the same reference records and final \SI{900}{s} scoring window; this is not the ten-seed paired inferential comparison.}
+  \label{tab:multi_observer_scenario_comparison}
+  \footnotesize
+  \setlength{\tabcolsep}{4.0pt}
+  \begin{tabular}{@{}llrrrrrrrr@{}}
+    \toprule
+    Spectrum & $H_s$ & \multicolumn{4}{c}{Z RMS [m]} & \multicolumn{4}{c}{Z RMS [$\%H_s$]} \\
+    \cmidrule(lr){3-6}\cmidrule(lr){7-10}
+    & & Adaptive PII & TVG--NLO & OU--II & OU--III & Adaptive PII & TVG--NLO & OU--II & OU--III \\
+    \midrule
+    JONSWAP & 0.27 & 0.010 & 0.019 & 0.016 & 0.011 & 3.7 & 6.9 & 6.0 & 4.2 \\
+    JONSWAP & 1.50 & 0.083 & 0.103 & 0.099 & 0.061 & 5.6 & 6.9 & 6.6 & 4.1 \\
+    JONSWAP & 4.00 & 0.245 & 0.276 & 0.254 & 0.161 & 6.1 & 6.9 & 6.3 & 4.0 \\
+    JONSWAP & 8.50 & 0.641 & 0.585 & 0.514 & 0.315 & 7.5 & 6.9 & 6.0 & 3.7 \\
+    PM--Stokes & 0.27 & 0.010 & 0.020 & 0.016 & 0.011 & 3.8 & 7.3 & 5.8 & 4.2 \\
+    PM--Stokes & 1.50 & 0.083 & 0.102 & 0.096 & 0.060 & 5.5 & 6.8 & 6.4 & 4.0 \\
+    PM--Stokes & 4.00 & 0.244 & 0.275 & 0.248 & 0.158 & 6.1 & 6.9 & 6.2 & 4.0 \\
+    PM--Stokes & 8.50 & 0.744 & 0.602 & 0.508 & 0.315 & 8.7 & 7.1 & 6.0 & 3.7 \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+\providecommand{\OUBaselinePIIMeanVerticalPercent}{}
+\renewcommand{\OUBaselinePIIMeanVerticalPercent}{5.9}
+\providecommand{\OUBaselineTVGNLOMeanVerticalPercent}{}
+\renewcommand{\OUBaselineTVGNLOMeanVerticalPercent}{7.0}
+\providecommand{\OUBaselineOUIIMeanVerticalPercent}{}
+\renewcommand{\OUBaselineOUIIMeanVerticalPercent}{6.2}
+\providecommand{\OUBaselineOUIIIMeanVerticalPercent}{}
+\renewcommand{\OUBaselineOUIIIMeanVerticalPercent}{4.0}
+
+\begin{table}[t]
+  \centering
+  \caption{Aggregate deterministic comparison over all eight common-record wave cases.}
+  \label{tab:multi_observer_aggregate_comparison}
+  \footnotesize
+  \setlength{\tabcolsep}{3.0pt}
+  \begin{tabular}{@{}lrrrrr@{}}
+    \toprule
+    Method & Mean Z\%$H_s$ & Best & Worst & Mean roll & Mean pitch \\
+    \midrule
+    Adaptive PII & 5.9 & 3.7 & 8.7 & 2.21 & 1.94 \\
+    TVG--NLO & 7.0 & 6.8 & 7.3 & 0.28 & 0.15 \\
+    OU--II & 6.2 & 5.8 & 6.6 & 0.19 & 0.18 \\
+    \textbf{OU--III} & 4.0 & 3.7 & 4.2 & 0.25 & 0.13 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

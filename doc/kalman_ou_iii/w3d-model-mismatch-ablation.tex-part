@@ -28,17 +28,17 @@ RMS is the RMS obtained by concatenating the eight scored windows.
     \toprule
     Family & $X$ [m] & $Y$ [m] & $Z$ [m] & 3-D [m] & $Z/Z_{\rm ref}$ [\%] \\
     \midrule
-    OU--II & 0.328 & 0.205 & 0.258 & 0.465 & 21.19 \\
-    OU--III & 0.211 & 0.136 & 0.144 & 0.289 & 11.88 \\
-    TFG & 0.234 & 0.152 & 0.146 & 0.315 & 11.98 \\
+    OU--II & 0.308 & 0.192 & 0.249 & 0.440 & 20.46 \\
+    OU--III & 0.240 & 0.136 & 0.145 & 0.312 & 11.89 \\
+    TFG & 0.234 & 0.153 & 0.145 & 0.315 & 11.95 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 OU--III's pooled vertical and 3-D displacement RMS are
-\SI{0.144}{m} and \SI{0.289}{m}; OU--II gives
-\SI{0.258}{m} and \SI{0.465}{m}, and TFG gives
-\SI{0.146}{m} and \SI{0.315}{m}.
+\SI{0.145}{m} and \SI{0.312}{m}; OU--II gives
+\SI{0.249}{m} and \SI{0.440}{m}, and TFG gives
+\SI{0.145}{m} and \SI{0.315}{m}.
 The error remains nonzero with ideal sensors. Figure~\ref{fig:model-mismatch-floor}
 shows displacement, attitude and the bias states created by each estimator.
 The underlying motion is the estimated sailboat CG response; normalization
@@ -64,9 +64,9 @@ by $H_s$ uses incident wave height, not measured vessel heave height.
 
 Fig.~\ref{fig:model-mismatch-scaling} separates the per-record behavior.
 The observed vertical-error ranges, normalized by incident $H_s$, are
-\pct{5.39}--\pct{9.00} for OU--II,
+\pct{5.02}--\pct{5.37} for OU--II,
 \pct{2.94}--\pct{3.15} for OU--III,
-\pct{2.96}--\pct{3.18} for TFG.
+\pct{2.95}--\pct{3.17} for TFG.
 These are observed ranges over the prescribed ensemble, not uniform error bounds.
 
 The filters retain their deployed process and measurement covariance,

@@ -193,4 +193,9 @@ This establishes functional source portability only.  Processor load, memory,
 power, deadline margin, thermal behavior, and externally referenced
 reconstruction accuracy were not measured.
 
+\subsection{Historical RAO parameter screen}
+The following archived screen predates the comparator retuning in
+Table~\ref{tab:comparator-retuning}. Its baseline and selected settings
+refer to that earlier experiment, not the current shipping defaults.
+The archive is retained to expose the tuning history and rejected candidates.
 \input{w3d-rao-tuning-generated.tex-part}

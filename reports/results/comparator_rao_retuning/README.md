@@ -69,3 +69,19 @@ available during refinement. `selection.json` records this split.
 every record/seed metric and failure; redundant individual logs and JSON are
 omitted. Use `*-current-default-replay.json` to restore the previous simulation
 setting and compare it with the selected defaults in a newly built executable.
+
+## Integrated validation
+
+`validation-summary.json` records the complete rerun: ten-seed paired OU
+validation, full robustness with five sensitivity scales, model mismatch,
+engine degradation and mitigation, cross-family guard parity, startup, RAO
+direction, low-high-low transition, and both reduced-MSE studies. All study
+commands exited successfully. `make all` passed all simulator suites and 463
+validation tests with the retuned defaults. Individual Monte Carlo gate
+violations remain reported as measurements; successful study generation does
+not mean every stochastic draw passes every deterministic threshold.
+
+The replay manifests retain their actual producer revisions, implementation
+and input hashes. The article tables, figures, and provenance were regenerated
+from these runs. `guard-family-validation.txt` preserves the cross-family
+self-check output, including exact engine-off parity.
