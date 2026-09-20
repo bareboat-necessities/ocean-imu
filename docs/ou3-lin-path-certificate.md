@@ -1,18 +1,18 @@
-# LIN endpoint-path factor certificate
+# LIN endpoint-path matrix certificate
 
 ## Role in the single proof
 
-This is the constructive LIN covariance lemma within the AG/LIN/BA factor
-metric. It does not create a second theorem path. The long-word neutral
-information floor remains `mu_N >= 2.04e-3`; covariance normalization, finite
-error, arithmetic and capture remain separate fail-closed obligations.
+The exact-rational LIN comparison supplies a covariance factor for the
+complete-word energy inequality. It certifies the full 4x4 action matrix A and
+its inverse in coordinates (v,p,S,a_w) scaled by (2.4,18,132,4). The factor is
+not reduced to a smallest LDL pivot or an independently normalized scalar.
+The companion joint-root certificate combines this full Loewner comparison
+with fresh AG/BA process injection at the same post-prediction root.
 
-The executed rational comparison gives `ell_LIN >= 1.196007314542406680e-6`
-after the complete correction window, conditional on the stated shipping
-noise-floor binding and real-arithmetic covariance equations. It covers every
-piecewise-constant `tau(t) in [0.02,12]`, every mesh step in `[0.004,0.006]`, and
-every correction subset. No frozen-tau sampling or one-step scalar q_min is
-used. Float32 transfer is NOT claimed by this result.
+The result covers arbitrary piecewise-constant tau in [0.02,12], mesh steps in
+[0.004,0.006], all regular interleaved corrections, and default PSD covariance
+sync. The implementation comparison is real arithmetic; float32 transfer and
+full-state contraction remain open.
 
 ## Variational factor construction
 
@@ -53,14 +53,10 @@ use Cauchy-Schwarz and `(x+y)^2<=2x^2+2y^2`, and integrate. Apply this to both
 literal sparser scheduler history, and includes accelerometer corrections at
 every sample. Add the resulting measurement energies to the process action.
 The variational posterior precision is no greater than this trial action.
-Taking the trace of each PSD endpoint-energy matrix gives the certified
-precision ceiling and its reciprocal factor floor.
-
-The deployed integral standard deviation has the lateral factor 0.50, not
-0.72 on both axes. Hence the comparison uses `0.15*0.50=0.075`, not 0.108.
-The initial unbound calculation at 0.108 was conditional, not a deployment
-certificate. Noise-floor binding is kept open until the complete configuration
-and parameter-smoothing paths are audited.
+Retain the complete 4x4 endpoint-energy matrix A. The variational
+comparison gives E_LIN^T P^-1 E_LIN <= A and therefore the full-state
+Loewner lower bound P >= E_LIN A^-1 E_LIN^T. This conclusion includes
+carried cross covariance; it is stronger than a marginal P_LL bound.
 
 ## Literal small-argument polynomial defects
 
@@ -81,80 +77,47 @@ Their endpoint action is bounded using the same natural-step inverse and added
 to the process action via Young's inequality. This is a relative factor
 comparison, not a tiny raw one-step eigenvalue replacement.
 
-The resulting posterior precision ceiling is at most
-`6.990887744796e11`, with covariance floor greater than `1.4304334964e-12`
-in the retained `(5.5,8.1,1100,4)` LIN coordinates. All certificate arithmetic
-is rational; decimal endpoints and the square-root lower export are outward.
+## Matrix enclosure and exact verification
 
-## Remaining falsifiable transfer
+For each derivative order, the Hermite Gram matrix is evaluated at 16 s.
+Every entry is a constant times an integer power of the duration, so endpoint
+values at 16 and 16.006 s bound its variation. Adding the maximum absolute
+row sum of that variation times I gives a uniform Loewner upper matrix.
+Process, source-defect and measurement matrices are then combined before
+inversion. `lin_matrix_certificate.py` verifies exact positive LDL pivots and
+exports A and A^-1 in `lin-matrix-certificate.json`.
 
-Bind all source polynomial coefficients and deployed noise floors, including
-smoothing, hard events and anisotropy. Then enclose the literal float32
-covariance perturbation in this factor metric. A positive real-arithmetic
-factor is not permission to set constructive_root_covariance_floor or
-constructive_full_A21_mu_rho_enclosure true. No numerical cross-block ceiling,
-complete rho0, nonlinear radius, startup capture, or practical radius is
-claimed by this module.
+A 70-digit non-promoting diagnostic preceded the rational enclosure. Comparing
+the retained action matrix with raw neutral S rows at actual event boxes
+[0,.156], [8,8.156], [16,16.156] gives a lower normalization of
+3.5959862602014e-11. The adjugate/determinant comparison is rational and covers
+the full boxes. This is not the transported closed-loop loss matrix and does
+not yield a full A21 rho. No independent heading information is inferred from
+the restricted magnetic-service Gramian.
 
+## Bound shipping profile
 
-## Promotion audit
+The deployed default SpectralMSE law has unit cadence renormalization and
+S_factor=1. The a_w stationary standard deviation is floored at .05; S base
+standard deviation is clamped at .15 with smallest axis factor .50, giving
+.075. The deployed accelerometer nominal standard deviation is .12 before
+nonnegative inflation, so the .05 comparison floor is conservative. Periodic
+a_w synchronization queues a PSD increment inside prediction; omitting that
+increment reduces the comparison covariance. Alternate policies and arbitrary
+user setters are outside this binding.
 
-The interleaved-correction audit distinguishes this variational certificate from
-the retired generic endpoint helper.  The latter attempted to infer a posterior
-floor from only an accumulated endpoint process floor plus event information
-ceilings; that implication is false.  Here the comparison is instead an
-endpoint minimum-action problem: each trial path pays its process action and
-the measurement action at the literal event times.  The measurement mesh bound
-therefore applies before minimization and directly upper-bounds endpoint
-precision.  The two-dimensional counterexample to the generic helper is
-admitted by this formulation and does not contradict the action inequality.
+## Joint post-prediction lower bound
 
-Shipping bindings were checked against the authoritative implementation:
-`tau` is clamped to [0.02,12] s; the a_w stationary standard deviation is
-floored at 0.05 m/s^2; the deployed accelerometer standard deviation is 0.2
-m/s^2 before only nonnegative vibration/noise inflation, so the certificate's
-0.05 lower bound is conservative; the S base standard deviation is clamped at
-0.15 m*s and the smallest deployed axis factor is 0.50, giving the used 0.075
-floor.  The default periodic a_w synchronization is a queued PSD covariance
-inflation inside prediction, so omitting it can only reduce the comparison
-covariance.  The real-arithmetic shipping factor is therefore promoted as
-`ell_LIN >= 1.196007314542406680e-6`.
+At the same regular A21 root, fresh process noise gives
+`P >= X=diag(q_AG I_6,0,q_BA I_3)`, while the LIN comparison gives
+`P >= Y=diag(0,A^-1 tensor I_3,0)`. Hence `P >= (X+Y)/2 > 0`.
+The exact combined AG and BA diagonal floors are respectively 4.9991e-10 and
+at least 4.99999e-10; the LIN block stays A^-1/2. All 21 coordinates are covered.
+The comparisons retain cross covariance and do not add unrelated marginal floors.
+`root_covariance_certificate.py` binds the fresh AG/BA source constants and
+verifies the combined factors by exact rational arithmetic.
 
-Combining this with `ell_AG=4.999974644e-4`,
-`ell_BA=5.618273739e-4`, root `gamma=1`, and
-`mu_N>=2.04e-3` gives the conservative scalar normalization
-`mu_cov>=2.9180843327e-15` and
-`rho0<=0.9999999999999971`.  This closes positivity of the constructive
-real-arithmetic linear certificate, but the margin is extremely small.  The
-next falsifiable step is the explicit nonlinear remainder and float32 supply:
-they must fit inside this margin, or a sharper factor-coordinate normalization
-must be derived without weakening assumptions.
-
-
-## Matched factor-coordinate sharpening
-
-The previous normalization used the retained physical-envelope coordinate scales
-(5.5,8.1,1100,4) and then collapsed the complete LIN factor to its smallest
-singular value.  That collapse is coordinate dependent.  A fixed diagonal
-congruence is therefore allowed provided *both* covariance and information are
-recertified in the same coordinates; changing the estimator, motion contract,
-or measured data is not allowed.
-
-The declared proof coordinates are now tested at
-`(v,p,S,a_w)=(2.4,18,132,4)`.  These are proof coordinates only, not tighter
-physical bounds.  The exact-rational path-action certificate is rerun with that
-map, and the analytic three-S-row information certificate is independently
-rerun with the same map.  It gives `mu_trans > 2.1e-3`, while the LIN factor
-is about `8.91e-6`.  The resulting conservative neutral normalization is
-
-`mu_cov >= 1.66e-13`,
-`rho0 <= 0.9999999999998335`.
-
-This is more than fifty times the prior scalar-coordinate margin, without
-sampling trajectories or fitting rho.  It is nevertheless far too small to
-assume that nonlinear and float32 supplies will fit.  The remaining avoidable
-loss is the scalar collapse itself.  The next sharpening must retain the full
-LIN endpoint action/factor matrix and the compatible translation information
-matrix and certify `lambda_min(L^T J L)` directly.  No physical assumption or
-quality gate is to be tightened if that matrix certificate is still
-insufficient.
+This closes the constructive real-arithmetic lower covariance at the specified
+roots. It does not establish uniform upper covariance, every-prefix retention,
+full-state information/loss, a nonlinear radius, capture, or float32 stability.
+The full theorem and constructive_full_A21_mu_rho_enclosure remain open.

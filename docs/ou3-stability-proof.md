@@ -143,24 +143,17 @@ and strict contraction follows from the explicit small-gain condition
 usual practical-stability radius after coercivity and every-prefix retention
 are certified.
 
-For the linear A21 word, use the covariance/information structure directly.
-Prediction with positive-semidefinite process covariance is nonexpansive in the
-covariance metric, and literal linear Kalman corrections are nonexpansive in
-their updated metric. Define the **complete normalized A21 information floor**
-to include the transported information of all actual accelerometer/gravity,
-integral pseudo-, and magnetic corrections over the service word. If this full
-floor satisfies `J_A21 >= mu I`, `mu>0`, the information comparison gives
+For the complete linear comparison word, let M transport the root error
+through the literal predictions, corrections and congruent resets. Exact
+Kalman/Joseph algebra gives
 
-`rho_0 <= 1/(1+mu)`.
+`M_end^T P_end^-1 M_end + D_word = P_root^-1`.
 
-MAGNETIC SERVICE establishes only the heading/axial-gyro-bias component; it
-must not be substituted for the complete floor. On the inner bias domain
-`||e_ba|| < R_b-B_a = 0.1748334 m/s^2`, the shipping estimate projection is
-inactive and therefore does not contribute a local A21 nonlinearity. Release
-retention must place the execution in this domain.
-
-This is the controlling proof route. Finite-difference superwords and candidate
-point ratios are not proof evidence and are not retained.
+The loss D_word includes both prediction loss and every actual-innovation
+measurement loss, transported through all preceding operations. A certified
+full-state comparison `D_word >= delta P_root^-1`, with delta>0, would give
+`rho0 <= 1-delta`. That source-uniform comparison remains open. It cannot be
+replaced by the restricted MAGNETIC SERVICE inequality or raw S information.
 
 ## Finite-error operation lemmas
 
@@ -190,138 +183,74 @@ this does not replace the still-open source-qualified release map.
 Algebraic lemmas and native regression tests do not establish target arithmetic,
 source-uniform finite-error dissipativity, capture, or retention.
 
+## Certified covariance comparisons
 
-## Uniform time-varying A21 detectability
+The exact-rational 4x4 LIN action matrix A uses zero-root Hermite comparison
+paths for endpoint (v,p,S,a_w), with coordinate scales (2.4,18,132,4).
+The comparison pays process action and all interleaved measurement actions,
+including source polynomial defects. It gives
 
-The A21 proof does not freeze the adaptive operating point. The literal
-pseudo-update cadence and the compact bounds
-`dt in [0.004,0.006]`, `tau in [0.02,12]` imply a positive uniform
-time-varying OU translation observability minor. The proof uses the extended
-Chebyshev property of the four S-response functions, not a sampled rank test.
+`E_LIN^T P^-1 E_LIN <= A`, hence `P >= E_LIN A^-1 E_LIN^T`.
 
-Gravity has a uniform tilt sensitivity floor `g-A_max=1.00665 m/s^2`.
-After quotienting the strictly stable active accelerometer-bias OU mode, two
-gravity observations expose tilt/transverse gyro bias; MAGNETIC SERVICE covers
-heading/axial gyro bias. The neutral quotient information Gramian is continuous
-on the finite union of strict compact hybrid branch cells and pointwise
-positive definite. Therefore
+The comparison is full-state and retains the actual cross covariance. A zero
+trial root is a variational witness; it does not reset the estimator or the
+physical history. The window is [16,16.006] s with dt in [0.004,0.006] and
+arbitrary piecewise-constant tau in [0.02,12]. The certificate binds the default
+shipping noise and PSD-sync configuration; it does not cover arbitrary setters
+or transfer to float32. See `ou3-lin-path-certificate.md` for the derivation.
 
-`mu_N = min lambda_min(J_N) > 0`.
+At a regular A21 post-prediction root after this window, fresh AG/BA process
+injection independently gives `P >= X=diag(q_AG I_6,0,q_BA I_3)`.
+Set `Y=diag(0,A^-1 tensor I_3,0)` from the LIN comparison at the same root.
+Then
 
-Positive process-noise densities give uniform complete controllability. The
-Riccati covariance is consequently bounded above and below and the literal
-linear A21 error word has some source-uniform `rho_0<1`. This is an
-existence theorem; a constructive numerical enclosure of `mu_N` is still
-needed for an explicit capture radius.
+`P >= (X+Y)/2 > 0`.
 
-Inside the strict inner domain (tilt <=6 deg, `||e_ba||<=0.15 m/s^2`) the
-bias projection is inactive. Tuner and refined magnetic-reference schedules are
-same-history exogenous. The remaining MEKF measurement/reset maps are smooth,
-so their multiplicative remainder gain satisfies `eta(r)->0`. Hence some
-positive `r_*` satisfies `sqrt(rho_0)+eta(r_*)<1`. Floating-point error is
-an additive bounded supply and does not consume this derivative margin.
+This convex combination closes the joint 21-state real-arithmetic lower
+covariance bound at those recurring roots. The AG diagonal lower bound is
+4.9991e-10, BA is at least 4.99999e-10, and LIN retains A^-1/2. Both component
+comparisons hold for the full P; unrelated marginal floors are not added.
+Uniform upper covariance and every-prefix retention are separate obligations.
 
+## Information scope and controlling gap
 
-## Marine-forced attitude diversity
+Restricted service `E_hb^T J E_hb >= I_2` does not imply embedded pure-heading
+information. The exact positive-noise Kalman example in `word_energy.py` has
 
-The attitude information floor follows from the existing physical contracts.
-For `f=a-g` and true field `B`,
+`D=[[1,0,1],[0,1,0],[1,0,1]]`.
 
-`integral_0^T f x B dt = Delta v x B - T g x B`.
+Its restricted heading/bias block is I_2, but e=(1,0,-1) has zero full loss.
+Consequently no unconditional full-state mu_N or rho follows from the former
+restricted-block argument. This refutes that implication, not the shipping
+filter or the admitted marine histories. The current status leaves uniform
+neutral information existence and full A21 dissipativity open.
 
-Thus
-`T^-1 ||integral f x B dt|| >= g B_h,min - 2 V_max B_max/T`.
-With the declared limits this becomes positive after 5.60844 s and is
-43.97475 (m/s^2) uT for T=8 s. Every 8 s marine history therefore contains
-non-collinear gravity/specific-force and magnetic sensitivity. Recurring
-MAGNETIC SERVICE transports an applied magnetic sensitivity into that interval.
-Two 8 s subwindows form the 16 s A21 proof word and expose gyro bias through
-attitude propagation. No additional attitude-excitation assumption is used.
+The LIN matrix comparison yields at least 3.5959862602014e-11 against raw
+neutral S rows at events in [0,.156], [8,8.156], [16,16.156]. This is a
+conditional raw-information result, not a closed-loop loss margin. The actual
+root transport contains corrections and resets; replacing it by uncorrected
+kinematic attitude/gyro propagation does not establish the required bound.
 
+For a constant world magnetic field, bounded marine velocity also gives
 
-## Quantitative enclosure status
+`T^-1 ||integral (a-g) x B dt|| >= g B_h,min - 2 V_max B_max/T`.
 
-A first fully analytic normalized translation enclosure is now constructive.
-On the 16 s word, selecting S updates after times 0, 8 and 16 s with the
-literal maximum scheduler delay 0.156 s, state scales
-(V,p,S)=(5.5,8.1,1100), and worst declared S-noise standard deviation 100,
-the determinant/Frobenius certificate gives
+The right side is 43.97475 (m/s^2) uT at T=8 s under the declared limits.
+This continuous-history diversity identity does not by itself establish the
+sampled, transported full-state information bound, including nuisance cross
+terms. Constant-frame observability minors likewise remain conditional algebra.
+Compactness can give a uniform positive minimum only after full rank is proved
+on every admissible cell; positivity of separate restricted minors is insufficient.
 
-`mu_trans >= 2.04734e-3`.
+## Remaining theorem certificates
 
-This is a real lower bound, not a sampled singular value.
+The next certificate is a full transported loss bound, retaining all 21
+coordinates and cross terms, with a uniform covariance upper comparison.
+A non-promoting high-precision feasibility calculation must precede rigorous
+enclosure. A positive LIN factor alone cannot promote rho.
 
-A deliberately sparse two-epoch attitude/gyro calculation gives a much weaker
-candidate scale (~6.18e-7) and therefore is **not promoted as the final
-shipping mu_N certificate**. The reason is important: MAGNETIC SERVICE is an
-already-transported two-coordinate heading/axial-bias Gramian over a window,
-not an instantaneous pure-heading row. A tight full certificate must compose
-that actual 2-D service Gramian directly with the many accelerometer rows in
-the same 16 s word; replacing it by a fictitious instantaneous attitude
-measurement would be an invalid shortcut. The next quantitative proof step is
-therefore the aggregate Schur/Gramian bound on the literal partition, using all
-recurring accelerometer and S information rather than two sparse rows.
-
-The float32 arithmetic path is likewise separated correctly. A straight-line
-kernel with n rounded operations has the standard gamma_n bound
-`gamma_n=n*u/(1-n*u)`, u=2^-24. This is implemented as a certificate
-primitive, but no whole-word arithmetic supply is claimed until literal kernel
-operation counts and magnitude envelopes are composed. Roundoff remains
-additive supply and is not allowed to consume the nonlinear derivative margin.
-
-
-## Constructive long-word neutral information
-
-The weak gyro-bias scale is handled by accumulation, not by strengthening the
-physical assumptions. The proof word is now 2048 s. At every disjoint one-second
-MAGNETIC SERVICE root, the service inequality J_hb>=I permits extraction of one
-unit of **pure root-heading information** (subtract diag(1,0); the remainder is
-PSD). The simultaneous root accelerometer sample has no preceding gyro-bias
-transport. With the commissioned detector-band residual bound 0.3 m/s^2,
-shipping vibration gain 0.75, and nominal accelerometer std 0.2 m/s^2, the
-literal effective accelerometer std is bounded by
-
-`sigma_acc,eff <= hypot(0.2,0.75*0.3)=0.3010399 m/s^2`.
-
-Together with `|f_z|>=g-A_max=1.00665`, `|f_h|<=8.8`, and one unit of
-heading service, each service root supplies a pure attitude information floor
-greater than 0.0129 in the declared proof coordinates.
-
-Let `y_k=theta_0+C_k b_g` be those extracted root-attitude observations.
-Bounded angular rate gives
-
-`sigma_min(C_(k+1)-C_k) >=
-  s_bg * 2 sin(Omega_max/2)/Omega_max`
-
-with `s_bg=0.02`, so the normalized increment is at least about 0.01969.
-The path-graph inequality
-`sum |y_(k+1)-y_k|^2 <= 4 sum |y_k|^2`, combined with the root observation
-`y_0=theta_0`, gives the joint attitude/gyro-bias floor
-
-`mu_ag = j*c/(1+c),  c=(N-1) beta^2/4`.
-
-For N=2048 this exceeds 2.1e-3. The independent 16-s S certificate remains
-`mu_trans>=2.04734e-3`; therefore the complete **fixed-coordinate neutral
-Gramian** satisfies
-
-`mu_N >= 2.04e-3`.
-
-This construction never integrates attitude over 2048 s: it uses only
-one-second transport increments, so bounded rotations cannot cancel the
-gyro-bias information.
-
-### Important normalization correction
-
-The number above is not yet a covariance-metric contraction factor. The
-information-form identity `rho0<=1/(1+mu)` requires the Gramian to be whitened
-by the actual root covariance. If, in the same proof coordinates,
-`P_root>=p_min I`, then
-
-`mu_cov >= p_min mu_N`,
-`rho0 <= 1/(1+p_min mu_N)`.
-
-Using the fixed-coordinate 2.04e-3 directly in the latter formula would be a
-coordinate-dependent and invalid shortcut. The next quantitative certificate
-is therefore a recurring lower enclosure `p_min>0` for the shipping A21 root
-covariance. Only after that enclosure is established will rho0, the explicit
-L2/r* radius, and the arithmetic/practical-radius bounds be promoted.
+After linear dissipativity, the same execution must satisfy an explicit
+nonlinear remainder/radius, bounded float32 supply, every-prefix retention,
+finite capture, finite H18/refinement/release retention, and release entry into
+the retained A21 region. Physical qualification and every-window applied
+magnetic service also remain required. The complete theorem is not claimed.

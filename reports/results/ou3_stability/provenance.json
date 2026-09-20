@@ -35,40 +35,38 @@
     "pr557_negative_result": "held-bias identity obstructs one strict full-state H18 incremental contraction formulation; diagnostic scripts are not theorem machinery",
     "mag_refinement_completion": "On the captured <=~7 degree tilt domain, existing |B|>=20 uT, |B|<=75 uT, horizontal>=15 uT and residual<=2 uT bounds imply the deployed unweighted MagAutoTuner 35% norm and 5% horizontal gates. MAGNETIC SERVICE then gives finite 128-sample/30-s completion and, with the internal 250-update/1-s guard, finite A21 entry.",
     "a21_projection_interior": "With estimate projection radius 0.4 m/s^2 and physical accelerometer-bias bound 0.22516660498395405 m/s^2, ||e_ba||<0.17483339501604597 m/s^2 keeps projection inactive on the local A21 tail.",
-    "a21_translation_observability": "For constant-parameter scalar active-bias OU-III, the observability minor from four S rows and one attitude-normalized accel row has determinant -Delta^3 tau^3 (1-exp(-Delta/tau))^3, nonzero for positive finite Delta,tau. Time-varying shipping extension remains open.",
+    "a21_translation_observability": "Constant-parameter S/OU minors and the time-varying translation-only minor are conditional algebra. They do not establish full-state source-uniform observability with the carried corrected transport.",
     "a21_time_varying_observability": "The tau-scaled progress-preserving S scheduler plus dt in [0.004,0.006] s and tau in [0.02,12] s gives a uniform positive time-varying translation minor by the extended-Chebyshev property K'''=exp(-integral 1/tau)>0.",
     "a21_uniform_controllability": "Positive integrated-OU and IMU process densities provide local process excitation. Positive process covariance alone does not establish uniform Riccati upper bounds without a full detectability/information comparison.",
-    "a21_attitude_diversity": "No extra excitation assumption: integral(f x B)=Delta v x B-T g x B. With Vmax=5.5 m/s, Bh>=15 uT, |B|<=75 uT, every T>5.60844 s window has positive vector diversity; T=8 s gives floor 43.97475 (m/s^2)uT. Two 8 s subwindows define the 16 s A21 word and, with recurring magnetic service, expose attitude and gyro bias.",
+    "a21_attitude_diversity": "For a constant world field, the continuous-history identity integral(f x B)=Delta v x B-T g x B gives positive diversity for T>5.60844 s, and 43.97475 at T=8 s. It does not by itself prove the sampled, transported full-state information bound; cross terms and complete rank remain open.",
     "a21_projection_release": "Universal H18 release cannot guarantee projection-inactive bias error: B_a=0.2251666 exceeds R_b-B_a=0.1748334 even for zero held estimate. A21 therefore retains the literal dissipative projection sector and global post-projection error bound B_a+R_b=0.6251666 m/s^2.",
     "float32_supply": "Kernelwise arithmetic uses gamma_n=n*2^-24/(1-n*2^-24); no whole-word supply is promoted until literal operation counts and magnitude envelopes are composed.",
     "a21_riccati_enclosure": "The entrywise Riccati enclosure is retired after two dependency failures. Verified local inverse and conditional UCO/UCC algebra remain; recurring full-state bounds require the joint factor/loss certificate.",
-    "interval_riccati_certificate": "A midpoint covariance trajectory cannot promote p_min. Completion requires every innovation box to pass a strict residual/Krawczyk inverse test, the outward-rounded Riccati image to lie inside the proposed recurring spectral box, and explicit inclusion of shipping schedule, covariance hard events, and float32 rounding.",
+    "interval_riccati_certificate": "No recurring interval Riccati box is verified. Local inverse/enclosure kernels remain conditional algebra. The recurring lower covariance is instead closed by root_covariance_certificate.py; upper covariance remains open.",
     "interval_arithmetic": "Certificate interval arithmetic uses explicit midpoint-radius analytic radii plus nextafter outward expansion, independent of host BLAS rounding mode. Shipping float32 rounding is a separate gamma_n budget.",
-    "interval_riccati_21": "21-state midpoint-radius kernels now implement P-=F P F'+Q, 3-D innovation covariance, literal Joseph covariance update with all cross-covariances, AW covariance-floor event, and accelerometer-bias release floor. Shipping-specific interval F/Q/H/R constructors and the self-containing recurring box remain open.",
+    "interval_riccati_21": "Generic 21-state interval F/Q/H/R, Joseph and hard-event kernels are implemented. Their entrywise recurring enclosure failed by dependency and is retired; matrix factor/action comparisons now control the proof.",
     "interval_measurements": "Literal 3-D interval constructors cover S selector/R_S, magnetic J_att/Rmag, and active-A21 accelerometer J_att/J_aw/J_ba/Racc. They remain conservative entrywise boxes; innovation inverse verification is separate and fail-closed.",
-    "interval_riccati_kernel_completion": "Generic full 21-state interval layer now includes source-uniform F/Q, acc/S/mag H/R, verified gain/Joseph, AW/bias hard events, and self-containing box iteration. The actual shipping cadence/event-word assembly must still produce a verified recurring box before p_min is promoted.",
+    "interval_riccati_kernel_completion": "Generic interval algebra is available but does not supply a recurring covariance certificate. The exact joint lower bound uses the corrected LIN action and fresh AG/BA process comparisons.",
     "source_uniform_service_qualification": "All-time MAGNETIC SERVICE has a continuation certificate requiring every-window same-history applied-event semantics and actual transported innovation covariance. Finite replay cannot establish this certificate.",
     "physical_qualification": "MARINE MOTION, IMU BIAS and MAGNETIC SERVICE continuation certificates are composed only when they share one history_id and assembled sensor/mounting/calibration qualification is explicit.",
     "maximal_correction_order": "Kalman/Joseph corrections with SPD R are Loewner-decreasing, prediction is PSD-order monotone, and AW/bias covariance hard events are PSD inflations. Therefore inserting optional S/mag corrections at every sample gives a covariance no larger than any admissible sparser cadence; a positive floor for this maximal-correction word is conservative.",
     "float32_word_supply": "Float32 gamma_n is applied locally per straight-line kernel and propagated by certified remaining-prefix gains; no invalid whole-word gamma_N operation count is used.",
     "capture_bridge_release": "Finite bridge and release retention is composed as an explicit storage set inclusion against the eventual certified A21 radius; the composition exists but numerical premises remain open.",
-    "interval_subdivision": "Wide H/parameter interval dependency is handled by finite outward-covering branch subdivision. Every cell must verify its innovation inverse; recurring covariance inclusion uses the hull of all branch images, never a favorable midpoint branch.",
     "interval_attitude_prediction": "Shipping attitude prediction interval uses Rodrigues near-identity bounds at Omega_max*dt_max, not an entrywise [-1,1] rotation box; gyro-bias injection retains near -dt I diagonal and O(Omega dt^2) off-diagonal structure.",
     "interval_riccati_architecture_review": "Executed refined entrywise enclosure: predicted covariance spectral lower -18.7907040215, upper 2502.41441854; S innovation r/a=0.666663864 verifies, acc/mag do not. This is interval dependency, not pointwise PSD failure. AGENTS protocol forbids further subdivision; next representation must preserve PSD structure.",
     "psd_riccati_review": "After entrywise interval dependency failure, covariance architecture review uses PSD-preserving spectral bounds: Weyl lower singular bound for F P F'+Q and information-form correction floor. This is a feasibility construction only until a recurring source-uniform box/factor certificate is run.",
     "psd_riccati_probe": "One-sample PSD-preserving feasibility: sigma_min(F)>=0.64408710396; covariance floors prediction 4.14848197e-7, after S 4.14825252e-7, after acc 3.01357721e-7, after mag 1.49402788e-7. Not promoted to recurring p_min until literal Q factors and multi-step controllability are enclosed.",
     "ou_controllability_probe": "Raw unscaled Gershgorin lower bound on the 0.156 s integrated-OU impulse Gramian is zero at tau .02,.2,2,12 despite structural SPD; q_floor=0 spectral recurrence decays 1e-6 to 1.46713e-19 in 32 maximal-correction samples. Classified as scaling/conditioning; one refinement is proof-coordinate-scaled factor/LDLT.",
     "block_factor_covariance_metric": "AG/LIN/BA block factors are subordinate to full transported energy loss. Positive principal-block covariance or information floors alone do not establish full-state coercivity. Retain cross blocks and a joint comparison.",
-    "block_factor_next": "BA factor uses monotone active-OU prediction/correction recurrence from literal release floor. Cross-block proof starts from PSD ||Pij||<=sqrt(||Pii||||Pjj||); useful gamma requires tighter recurring cross bounds from literal Joseph/event dynamics.",
-    "block_factor_source_probe": "AG uses exact scaled one-second process Gramian; BA uses literal active-OU process variance and correction recurrence; LIN source-range probe evaluates scaled controllability pivots across tau. Generic PSD cross bounds are diagnostic only and may not promote gamma.",
-    "block_factor_cross_result": "Executed generic PSD cross-ceiling diagnostic gives gamma=-5.122292072e8, a conditioning failure. Root coercivity instead uses exact additive process identity P-=F P+ F'+Q with block-diagonal Q: certified Q factors imply root block metric gamma=1 independent of carried cross covariance. Cross bounds remain prefix/totality obligations.",
+    "block_factor_cross_result": "The generic PSD cross-ceiling diagnostic failed with gamma=-5.122292072e8. The current root certificate instead combines two full Loewner lower comparisons with equal convex weights; it does not substitute a multi-step LIN factor for one-step Q.",
     "block_factor_root_certificate": "Exact rational joint lower covariance is closed at regular A21 prediction roots after the 16-s LIN window. Full information loss, uniform upper covariance, prefixes and float32 transfer remain open.",
     "a21_complete_word_energy": "M_end^T P_end^-1 M_end + D_word = P_root^-1; D_word includes process and actual-innovation loss through the complete preceding correction/reset transport. Source-uniform D_word >= delta P_root^-1 is open.",
     "a21_restricted_service_scope": "E_hb^T J E_hb >= I_2 does not imply independent embedded full-state heading information. The exact positive-noise Kalman counterexample preserves energy in a nuisance-cancellation direction. Former full mu_N/rho0 promotion is withdrawn.",
     "a21_lin_matrix": "Zero-root Hermite endpoint paths give E_L^T P^-1 E_L <= A and the singular full-state comparison P >= E_L A^-1 E_L^T. Exact 4x4 rational action retains interleaved measurements, source polynomial defects and default PSD synchronization.",
     "a21_noise_binding": "The default SpectralMSE law has unit cadence renormalization, MIN_R_S=.15 and horizontal factors .72/.50, hence applied S std >=.075. Default S_factor=1 preserves sigma_aw>=.05. The deployed .12 accel nominal std and nonnegative inflation exceed the .05 lower bound. This bound is not universal over user setters.",
     "a21_raw_translation_normalization": "Matrix action gives at least 3.59e-11 for raw neutral S rows with actual event delays; this is not a full-state closed-loop loss or rho.",
-    "a21_factor_scope": "At the same post-prediction root P>=diag(q_AG I,0,q_BA I) from fresh process and P>=E_LIN A^-1 E_LIN^T from the preceding corrected path imply their equal convex combination as a positive full 21-state lower bound. No marginal factors are substituted for Q."
+    "a21_factor_scope": "At the same post-prediction root P>=diag(q_AG I,0,q_BA I) from fresh process and P>=E_LIN A^-1 E_LIN^T from the preceding corrected path imply their equal convex combination as a positive full 21-state lower bound. No marginal factors are substituted for Q.",
+    "information_assembly_audit": "Removed positivity-only helper claims of compact full information, neutral quotient observability and marine-diversity-to-full-information lifting. Separate restricted minors do not prove full rank. Independent-block scalar margin algebra is explicitly conditional on a certified product metric."
   },
   "operation_lemma_sources": [
     {
@@ -105,7 +103,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
-      "git_blob_sha": "b5b1cd9606c892d7e9aad87fd6e79a7927f78b76"
+      "git_blob_sha": "c0272ea995837d5874ceac905b82a784b8b3453e"
     },
     {
       "path": "tools/stability/ou3_theorem/interval_riccati.py",
@@ -173,7 +171,7 @@
     },
     {
       "path": "tests/validation/test_ou3_tail_stability.py",
-      "git_blob_sha": "dd60e1c82a1d6fde839dd5b0e79fdfc3e73ce31c"
+      "git_blob_sha": "27a11d742d6415dff9fc8d69d76433b5bfc438dd"
     },
     {
       "path": "tools/stability/ou3_theorem/root_covariance_certificate.py",

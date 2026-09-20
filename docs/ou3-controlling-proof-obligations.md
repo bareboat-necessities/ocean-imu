@@ -1,34 +1,30 @@
-# OU-III controlling proof obligations — PR #558
+# OU-III controlling proof obligations — PR #560
 
-This list is fail-closed. “Infrastructure closed” means the theorem machinery
-needed to attack the obligation exists; it does not mean the theorem obligation
-is discharged.
+The exact status is reproduced by `theorem_status.py` and committed in
+`reports/results/ou3_stability/theorem-status.json`. Algebraic infrastructure
+is distinct from a shipping source-uniform theorem certificate.
 
-| # | Obligation | Current state | Controlling next certificate |
-|---|---|---|---|
-| 1 | Root covariance floor p_min | OPEN; generic interval layer + event order + conservative maximal-correction order closed | Numerically verify a self-containing 21-state box; subdivide parameter/attitude branch cells if entrywise dependency prevents innovation inclusion |
-| 2 | Covariance-normalized mu/rho0 | BLOCKED by 1 | mu_cov=p_min*2.04e-3; rho0=1/(1+mu_cov) only after 1 |
-| 3 | Explicit nonlinear r_* | BLOCKED by 2 | Certified L2 on retained finite-error domain and r*=min(r_guard,(1-sqrt(rho0))/L2) |
-| 4 | Whole-word float32 supply | OPEN; local-kernel composition closed | Obtain magnitude/prefix-gain boxes from the verified Riccati/tail enclosure, then insert literal per-kernel operation counts using gamma_n |
-| 5 | Finite startup/capture | OPEN | History-dependent capture into the explicit retained domain; no common deadline is assumed |
-| 6 | Finite H18 bridge retention | OPEN; capture→bridge→release set-inclusion composition closed | Insert actual capture storage, history-dependent bridge length, supply/gain and release map bounds |
-| 7 | Actual refinement/release retention | OPEN | Compose captured-domain tuner completion, 250-update/1-s gate, covariance release and state continuity |
-| 8 | Capture/release into explicit A21 region | BLOCKED by 2–7 | Compare certified release set with explicit r_* / projection-sector retained set |
-| 9 | Every-prefix tail retention | OPEN; prefix-retention composition closed | Obtain certified prefix gains/additive bounds from the explicit tail enclosure |
-| 10 | Recurring source-uniform magnetic service | EXTERNAL/ALL-TIME; continuation schema closed and tested | Supply one-history every-window certificate using actual applied-event/innovation semantics; finite replay is insufficient |
-| 11 | Physical sensor/bias/marine qualification | EXTERNAL/ALL-TIME; same-history composition closed and tested | Supply MARINE MOTION + IMU BIAS + MAGNETIC SERVICE continuations plus assembled sensor/mount/calibration qualification |
-| 12 | Final implementation/arithmetic totality | OPEN | Close every finite branch, innovation solve, projection/reset, scheduler counter and arithmetic enclosure |
+| Obligation | Current state | Required certificate |
+|---|---|---|
+| Joint recurring lower covariance | CLOSED in real arithmetic at regular A21 post-prediction roots after a 16-s window | `root_covariance_certificate.py`: convex combination of fresh AG/BA injection and corrected LIN matrix action, with all cross covariance retained |
+| Full A21 information/loss and rho0 | OPEN; controlling gap | Bound the complete transported loss `D_word >= delta P_root^-1`, delta>0, in all 21 coordinates; restricted magnetic service cannot be lifted to independent heading information |
+| Uniform covariance upper bound | OPEN | Joint source-uniform detectability/path-action comparison including literal corrections, resets and PSD sync |
+| Explicit nonlinear retained radius | OPEN | Bound the complete nonlinear remainder, including projection/reset/tuner behavior, against the verified strict linear margin |
+| Whole-word float32 supply | Composition only | Literal operation counts, magnitude envelopes and certified prefix gains; real-arithmetic covariance positivity is not float32 totality |
+| Finite startup/capture | OPEN | History-dependent finite capture from construction into the retained domain; no common deadline is assumed |
+| Finite H18 retention | Composition only | Actual entry set, history-dependent bridge duration and supply/gain bounds |
+| Reference refinement and bias release | Conditional captured-domain completion only | Retain the actual refinement state machine, accepted-update count, one-second guard and covariance release |
+| Release into the A21 region | OPEN | Compare the certified release set with the nonlinear retained region/projection-sector bound |
+| Every-prefix tail retention | Composition only | Uniform bounds at every intermediate operation, including between recurring prediction roots |
+| Recurring magnetic service | Continuation schema only | One-history every-window certificate from actually applied informative corrections and actual innovation covariance |
+| Physical/sensor/bias qualification | Composition only | Simultaneous MARINE MOTION, IMU BIAS and MAGNETIC SERVICE continuations plus assembled sensor/mount/calibration qualification |
+| Implementation/arithmetic totality | OPEN | Every finite branch, innovation solve, projection/reset, scheduler and arithmetic enclosure |
 
-## Interval-Riccati progress
+Do not revive the retired entrywise Riccati subdivision, endpoint-batch floor,
+restricted-information lifting, or scalar normalization of an unproved full
+Gramian. Local interval kernels remain available as conditional algebra; no
+recurring interval box is currently certified. The active construction retains
+matrix factors and the full covariance-energy loss identity.
 
-The full generic 21-state interval layer now exists: source-uniform prediction
-F/Q boxes, accelerometer/S/magnetometer H/R boxes, verified innovation inverse
-and gain, literal Joseph update, all covariance cross terms, periodic a_w
-covariance-floor event, H18-to-A21 bias covariance-floor event, and
-self-containing recurring-box iteration.
-
-The remaining work for obligation 1 is not another algebraic kernel. It is the
-literal hybrid event-word assembly: encode the shipping sample/pseudo-update/
-magnetic-service cadence and branch cells tightly enough that interval
-dependency does not destroy the innovation inverse and recurring-box
-inclusions. The certificate remains OPEN until an actual box verifies.
+The complete stability theorem remains open. Consult `ou3-proof-research-state.md`
+for the current failure classification and next falsifiable experiment.

@@ -270,11 +270,10 @@ def active_tilt_bias_minor(gravity_sensitivity: float, spacing_s: float,
     """Three-row tilt/gyro-bias/accelerometer-bias separation minor.
 
     After the translational columns are eliminated, one fixed tilt axis has
-    rows [g,0,1], [g,-g*T,phi,], [g,-2g*T,phi^2] in the worst constant-frame
-    case, phi=exp(-T/tau_b). Its determinant is
-    -T*g^2*(1-phi)^2. Rotation of the measured gravity direction is handled by
-    the compact full-word argument; this minor excludes the stationary worst
-    case from carrying a hidden tilt/bias mode.
+    rows [g,0,1], [g,-g*T,phi], [g,-2g*T,phi^2] in a constant frame,
+    phi=exp(-T/tau_b). Its determinant is -T*g^2*(1-phi)^2.
+    This is a constant-frame minor only. A rotating, corrected full word
+    requires a separate joint argument; this minor does not provide it.
     """
     if not all(math.isfinite(x) for x in (gravity_sensitivity,spacing_s,bias_tau_s)):
         raise ValueError("finite tilt/bias data required")
@@ -282,27 +281,6 @@ def active_tilt_bias_minor(gravity_sensitivity: float, spacing_s: float,
         raise ValueError("positive tilt/bias data required")
     phi=math.exp(-spacing_s/bias_tau_s)
     return -spacing_s*(gravity_sensitivity**2)*((1.0-phi)**2)
-
-def compact_uniform_information_exists(*, translation_minor_floor: float,
-                                       gravity_tilt_floor: float,
-                                       magnetic_information_floor: float,
-                                       active_bias_minor_abs_floor: float,
-                                       strict_branch_guard_margin: float) -> bool:
-    """Compactness lemma for the finite A21 service word.
-
-    With dt bounded away from zero, a finite service horizon contains a bounded
-    number of hybrid operations. On each strict-guard branch cell the literal
-    shipping transition and measurement maps are continuous in the compact
-    tuner/sensor/state parameters. Positive structural minors for translation,
-    tilt/active bias and magnetic heading exclude a zero-output direction on
-    every cell. The normalized information Gramian is therefore positive
-    definite pointwise. A finite union of compact cells has a positive minimum
-    eigenvalue mu_A21>0.
-    """
-    vals=(translation_minor_floor,gravity_tilt_floor,magnetic_information_floor,
-          active_bias_minor_abs_floor,strict_branch_guard_margin)
-    if not all(math.isfinite(x) for x in vals): raise ValueError("finite compactness margins required")
-    return all(x > 0.0 for x in vals)
 
 def local_nonlinear_radius_exists(info_floor: float, derivative_remainder_at_zero: float = 0.0) -> bool:
     """Existence of a finite-error neighborhood satisfying the A21 small gain.
@@ -320,7 +298,7 @@ def local_nonlinear_radius_exists(info_floor: float, derivative_remainder_at_zer
     return derivative_remainder_at_zero < nonlinear_margin_from_information(info_floor)
 
 def tilt_gyro_bias_quotient_minor(gravity_sensitivity: float, spacing_s: float) -> float:
-    """Two-row neutral-quotient minor for one tilt/gyro-bias axis.
+    """Conditional two-row constant-frame minor for one tilt/gyro-bias axis.
 
     Accelerometer bias is excluded from this quotient because its active A21 OU
     predictor is strictly stable and its physical mismatch belongs to supply.
@@ -333,35 +311,19 @@ def tilt_gyro_bias_quotient_minor(gravity_sensitivity: float, spacing_s: float) 
         raise ValueError("positive quotient data required")
     return -(gravity_sensitivity**2)*spacing_s
 
-def neutral_quotient_uniform_mu_exists(*, translation_minor_floor: float,
-                                       gravity_tilt_floor: float,
-                                       tilt_gyro_minor_abs_floor: float,
-                                       magnetic_information_floor: float,
-                                       strict_guard_margin: float) -> bool:
-    """Uniform observability of the non-decaying A21 quotient.
-
-    The quotient contains attitude, gyro bias and (v,p,S,a_w); active
-    accelerometer bias is removed because phi_b<1. Translation is uniformly
-    observable from recurring S rows, tilt/gyro-bias from recurring gravity
-    rows after translation elimination, and heading/axial gyro-bias from
-    MAGNETIC SERVICE. Strict guard margins make each finite hybrid branch cell
-    compact and continuous. Pointwise full rank on the finite union therefore
-    gives a uniform normalized quotient Gramian floor mu_N>0.
-    """
-    vals=(translation_minor_floor,gravity_tilt_floor,tilt_gyro_minor_abs_floor,
-          magnetic_information_floor,strict_guard_margin)
-    if not all(math.isfinite(x) for x in vals): raise ValueError("finite quotient margins required")
-    return all(x > 0.0 for x in vals)
-
 def active_bias_homogeneous_ratio(word_s: float, bias_tau_s: float) -> float:
     """Squared homogeneous A21 accelerometer-bias ratio over a word."""
     if not all(math.isfinite(x) for x in (word_s,bias_tau_s)) or word_s <= 0 or bias_tau_s <= 0:
         raise ValueError("positive finite bias word required")
     return math.exp(-2.0*word_s/bias_tau_s)
 
-def detectable_tail_margin(quotient_information_floor: float,
+def independent_block_tail_margin(quotient_information_floor: float,
                            word_s: float, bias_tau_s: float) -> float:
-    """Strict norm margin from observable neutral quotient plus stable bias mode."""
+    """Margin only for independent blocks in the certified product metric.
+
+    Cross-coupled shipping dynamics require a joint storage comparison; separate
+    stable eigenvalues or restricted information do not justify this formula.
+    """
     q_obs=math.sqrt(information_contraction_ratio(quotient_information_floor))
     q_b=math.sqrt(active_bias_homogeneous_ratio(word_s,bias_tau_s))
     return 1.0-max(q_obs,q_b)
@@ -447,26 +409,6 @@ def shipping_covariance_hard_events_retain_compactness(*,
     return (0 < aw_stationary_std_floor <= aw_stationary_std_ceiling and
             release_bias_variance_ceiling > 0)
 
-def attitude_gyro_quotient_uniformly_observable(*, gravity_floor: float,
-                                                magnetic_floor: float,
-                                                sample_spacing_floor: float,
-                                                angular_rate_ceiling: float) -> bool:
-    """Uniform attitude/gyro-bias observability on the neutral quotient.
-
-    Known body rotation contributes skew/orthogonal transport and cannot change
-    singular values. Gravity supplies a rank-two attitude sensitivity with
-    nonzero singular values >=gravity_floor; two separated observations expose
-    the corresponding gyro-bias components. The sole instantaneous gravity
-    null direction is heading/axial gyro bias, exactly the two-coordinate
-    subspace controlled by MAGNETIC SERVICE. A changing gravity direction can
-    add information; the constant-direction case is the rank-minimal case.
-    Compact bounded angular transport and positive sample spacing make the
-    resulting quotient Gramian floor uniform.
-    """
-    vals=(gravity_floor,magnetic_floor,sample_spacing_floor,angular_rate_ceiling)
-    if not all(math.isfinite(x) for x in vals): raise ValueError("finite attitude bounds required")
-    return gravity_floor > 0 and magnetic_floor > 0 and sample_spacing_floor > 0 and angular_rate_ceiling >= 0
-
 def explicit_small_gain_radius(linear_rho0: float, quadratic_remainder_slope: float,
                                guard_radius: float) -> float:
     """Constructive radius when eta(r)<=L2*r on the strict inner domain."""
@@ -518,24 +460,6 @@ def marine_magnetic_diversity_window_min(gravity_mps2: float, horizontal_field_m
     if not all(math.isfinite(x) for x in vals) or min(gravity_mps2,horizontal_field_min,field_norm_max) <= 0 or velocity_bound_mps < 0:
         raise ValueError("valid physical diversity bounds required")
     return 2.0*velocity_bound_mps*field_norm_max/(gravity_mps2*horizontal_field_min)
-
-def attitude_information_from_marine_diversity(*, diversity_floor: float,
-                                               magnetic_service_floor: float,
-                                               magnetic_service_window_s: float,
-                                               angular_rate_ceiling: float) -> bool:
-    """Full attitude information over a diversity window.
-
-    A magnetic event from each service interval can be transported through the
-    known attitude transition to the diversity instant. Orthogonal attitude
-    transport preserves the magnetic sensitivity norm. Positive f x B
-    diversity makes the two rank-two vector sensitivities jointly full rank.
-    Recurrence over consecutive diversity windows then exposes gyro bias through
-    its attitude injection. Bounded angular rate keeps all finite transports
-    continuous on the compact branch cells.
-    """
-    vals=(diversity_floor,magnetic_service_floor,magnetic_service_window_s,angular_rate_ceiling)
-    if not all(math.isfinite(x) for x in vals): raise ValueError("finite attitude information bounds required")
-    return diversity_floor > 0 and magnetic_service_floor > 0 and magnetic_service_window_s > 0 and angular_rate_ceiling >= 0
 
 def release_can_guarantee_projection_inactive(*, physical_bias_bound: float,
                                                projection_radius: float,
@@ -711,8 +635,8 @@ def psd_service_schur_floor(*, controlled_block_floor: float,
       S=A-C(D+M)^-1 C' >= (m/(d+m)) A.
     Also ||C(D+M)^-1|| <= sqrt(q*d)/m. Block LDL congruence and
     ||[[I,-X],[0,I]]|| <= 1+||X|| give the explicit full floor below.
-    This is intentionally conservative but cannot mistake a transported
-    service Gramian for an instantaneous measurement row.
+    The embedded addition diag(0,M) is an explicit full-state premise.
+    A principal-block magnetic-service restriction does not supply it.
     """
     vals=(controlled_block_floor,controlled_block_ceiling,
           nuisance_block_ceiling,service_floor)

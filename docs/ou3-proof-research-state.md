@@ -111,6 +111,11 @@ claimed. Physical qualification and recurring applied service remain required.
 - Accumulated endpoint process noise plus per-event information ceilings does
   not survive arbitrary interleaved corrections; the exact 2-D counterexample
   is retained in the tests. Endpoint path action accounts for the sequence.
+- Positivity-only compactness/observability helper claims and stale proof notes
+  also inherited the restricted-information lifting error. Those implications
+  and their positive-result tests are removed; separate constant-frame minors
+  remain conditional algebra. A full-rank proof for every admissible cell is
+  required before compactness can promote a uniform positive minimum.
 - Restricted magnetic information cannot be embedded as independent full-state
   information. Tighter scalar factors or longer words cannot fix that logical
   implication. Review full-loss/Schur or coupled path-action constructions.
@@ -128,7 +133,9 @@ claimed. Physical qualification and recurring applied service remain required.
   invocation error.
 - Git transport can fetch but cannot push here (no HTTPS username credential).
   Publish the identical verified tree through the authorized GitHub connector
-  with a non-forced update to the existing PR branch.
+  with a non-forced update to the existing PR branch. A combined publication
+  payload exceeded tool-output limits and JSON parsing failed before remote
+  mutation; reading each changed file separately avoids that transport limit.
 
 ## Retained facts
 

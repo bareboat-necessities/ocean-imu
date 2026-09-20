@@ -7,14 +7,13 @@ from tools.stability.ou3_theorem.tail_stability import (
     A21TailPremises, RefinementPremises, ShippingScheduleBounds,
     active_bias_homogeneous_ratio, active_tilt_bias_minor,
     additive_supply_practical_radius, a21_entry_bound,
-    attitude_gyro_quotient_uniformly_observable,
-    attitude_information_from_marine_diversity, bias_projection_inactive_margin,
-    compact_uniform_information_exists, coupled_information_floor,
-    detectable_tail_margin, explicit_small_gain_radius, finite_bridge_bound,
+    bias_projection_inactive_margin,
+    coupled_information_floor,
+    independent_block_tail_margin, explicit_small_gain_radius, finite_bridge_bound,
     gravity_tilt_sensitivity_floor, information_contraction_ratio,
     linear_kalman_tail_exponentially_stable, local_nonlinear_radius_exists,
     marine_magnetic_diversity_window_min, marine_magnetic_vector_diversity_floor,
-    neutral_quotient_uniform_mu_exists, nonlinear_margin_from_information,
+    nonlinear_margin_from_information,
     nonlinear_small_gain_exists_from_linear, nonlinear_tail_ratio,
     normalized_translation_information_floor, conservative_float32_kernel_error,
     bias_release_error_bound, projection_sector_retained_error_bound,
@@ -292,50 +291,26 @@ class MarineMagneticDiversityTests(unittest.TestCase):
         self.assertGreater(threshold,5.6); self.assertLess(threshold,5.7)
         floor=marine_magnetic_vector_diversity_floor(8.0,9.80665,15.0,75.0,5.5)
         self.assertAlmostEqual(floor,43.97475)
-        self.assertTrue(attitude_information_from_marine_diversity(
-            diversity_floor=floor,magnetic_service_floor=1.0,
-            magnetic_service_window_s=1.0,angular_rate_ceiling=.6108652382))
 
     def test_too_short_window_does_not_claim_diversity(self):
         self.assertLess(marine_magnetic_vector_diversity_floor(
             5.0,9.80665,15.0,75.0,5.5),0.0)
 
-class NeutralQuotientDetectabilityTests(unittest.TestCase):
-    def test_tilt_gyro_bias_quotient_minor_is_uniform(self):
+class ConditionalBlockAlgebraTests(unittest.TestCase):
+    def test_constant_frame_tilt_gyro_bias_minor(self):
         self.assertAlmostEqual(abs(tilt_gyro_bias_quotient_minor(1.00665,.004)),
                                1.00665**2*.004)
-
-    def test_attitude_gyro_quotient_is_uniformly_observable(self):
-        self.assertTrue(attitude_gyro_quotient_uniformly_observable(
-            gravity_floor=1.00665,magnetic_floor=1.0,
-            sample_spacing_floor=.004,angular_rate_ceiling=.6108652382))
-
-    def test_neutral_quotient_has_uniform_mu_when_all_components_are_strict(self):
-        self.assertTrue(neutral_quotient_uniform_mu_exists(
-            translation_minor_floor=1e-15,gravity_tilt_floor=1.00665,
-            tilt_gyro_minor_abs_floor=1e-3,magnetic_information_floor=1.0,
-            strict_guard_margin=1e-6))
 
     def test_active_bias_is_strictly_stable_without_observability(self):
         q=active_bias_homogeneous_ratio(16.0,5000.0)
         self.assertLess(q,.994)
-        self.assertGreater(detectable_tail_margin(1.0,16.0,5000.0),.003)
+        self.assertGreater(independent_block_tail_margin(1.0,16.0,5000.0),.003)
 
-class HybridInformationClosureTests(unittest.TestCase):
+class ConditionalInformationAlgebraTests(unittest.TestCase):
     def test_active_tilt_bias_stationary_minor_is_strict(self):
         d=active_tilt_bias_minor(1.00665,.5,5000.0)
         self.assertLess(d,0)
         self.assertGreater(abs(d),4e-9)
-
-    def test_compactness_needs_every_strict_margin(self):
-        self.assertTrue(compact_uniform_information_exists(
-            translation_minor_floor=1e-15,gravity_tilt_floor=1.0,
-            magnetic_information_floor=1.0,active_bias_minor_abs_floor=1e-9,
-            strict_branch_guard_margin=1e-6))
-        self.assertFalse(compact_uniform_information_exists(
-            translation_minor_floor=1e-15,gravity_tilt_floor=1.0,
-            magnetic_information_floor=1.0,active_bias_minor_abs_floor=1e-9,
-            strict_branch_guard_margin=0.0))
 
     def test_positive_information_has_a_smooth_local_radius(self):
         self.assertTrue(local_nonlinear_radius_exists(.01,0.0))
