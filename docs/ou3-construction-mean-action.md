@@ -119,6 +119,100 @@ force/field sine stays above .443. It is the enclosure that fails, not a
 constructed sustained-collinearity trajectory. All-time magnetic service
 is still unproved for this run.
 
+## Signed time-linked exclusion construction
+
+The next construction is **not** an unsigned innovation-energy bound.  Fix one
+carried historical window and retain the chronological accepted acc/mag/S
+updates.  At accelerometer event i write the literal signed relation
+
+`r^a_i=f^m_i-R_i(\hat a_i-g)-\hat b_{a,i}`,
+
+and at an applied magnetic event j write
+
+`r^m_j=m^m_j-R_j B_j`.
+
+The measured quantities on the left come from the *same* physical history:
+`f^m_i=R^t_i(a_i-g)+b^t_{a,i}+n^a_i` and
+`m^m_j=R^t_j B^t+n^m_j`.  Consequently no innovation may be replaced by a
+free disturbance.  Substitution gives the signed defects
+
+`R_i(\hat a_i-g)=R^t_i(a_i-g)+(b^t_{a,i}-\hat b_{a,i})+n^a_i-r^a_i`,
+
+`R_i B_i=R^t_i B^t+n^m_i-r^m_i` at magnetic service events.
+
+For a complete nonuniform physical cell use the already proved trapezoidal
+weights alpha_i.  Since the displacement/velocity coordinates are carried
+without restart,
+
+`sum alpha_i a_i=(v_1-v_0)/T+q_a`,  `||q_a||<=J h_max/4`.
+
+This is the required signed physical integral relation: the acceleration
+samples cannot be chosen independently of their two endpoint velocities.
+Likewise the bias samples are one rate-bounded history, so for any zero-sum
+weights c_i, `||sum c_i b^t_{a,i}||` is bounded by the declared bias-rate
+constant times the corresponding first absolute moment.  The same rule is
+used for gyro bias.  No absolute values are taken before these cancellations.
+
+The nominal side must be telescoped with the literal mean recursion.  For
+`u=(\hat b_g,\hat a_w)`, predictions and corrections give, chronologically,
+
+`u^-_{k+1}=A_k u^+_k+d^p_k`,
+`u^+_k=u^-_k+K^u_k r_k+d^c_k`.
+
+Thus for any terminal selector Z,
+
+`Z u_N=Z Phi_{N,0}u_0 + sum_k Z Phi_{N,k+1}K^u_k r_k
+       + sum_k Z Phi_{N,k+1}d_k`.
+
+This identity keeps the **sign, time, sensor type, actual gain, OU transport
+and hard-event order** of every innovation.  It is the relation that the
+failed scalar energy ellipsoid discarded.  The same chronological products
+must be used to transport the two vector equations above to a common root.
+
+A sustained nominal force/field degeneracy over a service window means there
+are unit directions z_k, transported by the actual nominal attitude, for
+which both nominal cross products are small.  Contracting the two signed
+sensor identities with those transported z_k and summing with the physical
+cell weights gives one scalar/vector balance whose physical term contains
+`(v_1-v_0)/T` and the nonvertical magnetic component, while its remaining
+terms are exactly: physical sensor/bias residuals, the **signed** innovation
+functional `sum W^a_k r^a_k+sum W^m_k r^m_k`, and literal mean/reset/rounding
+defects.  The innovation functional is then eliminated with the telescoped
+mean identity above; it is not bounded by `sum r' S^-1 r`.  The gyro-alias
+case is treated in the same chronology: the Rodrigues bias-transport factor
+`B(h,omega_measured-\hat b_g)` is paired with the signed magnetic/accelerometer
+corrections that could have moved `\hat b_g` from its construction value.
+A complete-turn value cannot simply be inserted as an independent nominal
+coefficient.
+
+This yields the correct contradiction target.  For every admitted carried
+window W define `Delta_col(W)` as the lower bound on the physical
+force/field term minus the sensor/bias, quadrature, mean-defect and signed
+innovation-transfer remainders, and `Delta_gyr(W)` analogously for the two
+transverse singular values of the integrated gyro transport.  What is needed
+is
+
+`inf_W Delta_col(W)>0`,  `inf_W Delta_gyr(W)>0`.
+
+Only after those two **same-history** margins are certified may compactness of
+the remaining realized coefficient family be invoked.  On that separated
+family the six-column raw observation matrix has full AG rank; exact
+largest-residual factor pivoting is continuous on each pivot chart and a
+finite chart cover supplies a reader.  The already bounded nuisance/process
+factors and finite operation count then make its complete 6x6 action
+continuous.  Therefore the common ceiling is
+
+`B_* = sup_W lambda_max(B_W) < infinity`.
+
+This is the route from signed temporal separation to the historical action
+ceiling.  The supremum is **not yet numerically or rigorously enclosed** in
+this PR: the missing executable step is an outward enclosure of the two
+signed margins over the admitted same-history window family, followed by the
+finite pivot-chart action maximum.  Until that succeeds,
+`uniform_historical_AG_readout_action` remains false and no J/rho0 claim is
+promoted.  The existing 400--600 s positive finite margins remain diagnostics
+only.
+
 ## Architecture decision
 
 The roughly 8e5 deficit cannot be repaired by rounding precision, a smaller
