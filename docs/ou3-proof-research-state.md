@@ -94,6 +94,10 @@ every-prefix finite-error retention remain open. The theorem is not claimed.
   same-named tag; an explicit `refs/heads/` fetch synchronized the actual PR
   branch. Neither failure changed proof contents or the published branch.
 
+- The local Python quality command initially lacked `ruff`. Installing it
+  in a temporary tool directory resolved that dependency; the unchanged
+  repository ruff and Python-compilation gates then passed.
+
 ## Retained facts
 
 The same-history physical contracts, bounded displacement primitive, exact
