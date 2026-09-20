@@ -1,0 +1,48 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "tau095",
+    "env": {
+      "TFG_TAU_COEFF": "0.95"
+    }
+  },
+  {
+    "name": "tau1025",
+    "env": {
+      "TFG_TAU_COEFF": "1.025"
+    }
+  },
+  {
+    "name": "tau105",
+    "env": {
+      "TFG_TAU_COEFF": "1.05"
+    }
+  },
+  {
+    "name": "gyro02",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.2"
+    }
+  },
+  {
+    "name": "gyro05",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.5"
+    }
+  },
+  {
+    "name": "s08",
+    "env": {
+      "TFG_S_FACTOR": "0.8"
+    }
+  },
+  {
+    "name": "s12",
+    "env": {
+      "TFG_S_FACTOR": "1.2"
+    }
+  }
+]

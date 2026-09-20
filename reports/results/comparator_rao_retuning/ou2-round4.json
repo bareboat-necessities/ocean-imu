@@ -1,0 +1,42 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "noise_0.08",
+    "env": {
+      "OU_II_ACC_NOISE_FLOOR_SIGMA": "0.08"
+    }
+  },
+  {
+    "name": "noise_0.1",
+    "env": {
+      "OU_II_ACC_NOISE_FLOOR_SIGMA": "0.1"
+    }
+  },
+  {
+    "name": "noise_0.16",
+    "env": {
+      "OU_II_ACC_NOISE_FLOOR_SIGMA": "0.16"
+    }
+  },
+  {
+    "name": "gyro_0.2",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.2"
+    }
+  },
+  {
+    "name": "gyro_0.5",
+    "env": {
+      "SF_SIGMA_G_SCALE": "0.5"
+    }
+  },
+  {
+    "name": "gyro_2.0",
+    "env": {
+      "SF_SIGMA_G_SCALE": "2.0"
+    }
+  }
+]

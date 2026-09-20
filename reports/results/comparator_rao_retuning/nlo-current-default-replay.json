@@ -1,0 +1,12 @@
+[
+  {
+    "name": "baseline",
+    "env": {
+      "NLO_THETA_GAIN": "0.56"
+    }
+  },
+  {
+    "name": "candidate",
+    "env": {}
+  }
+]

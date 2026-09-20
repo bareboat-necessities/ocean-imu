@@ -1,0 +1,22 @@
+% Generated only from a robustness bundle using the deployed SpectralMSE coupling.
+
+\begin{table*}[t]
+  \centering
+  \caption{OU--III tuning sensitivity at the nominal $H_s=1.5$ m sea. Each entry is vertical-displacement RMS error in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=\OURobustnessPairs$ paired seed triplets). The first three columns hold the other two parameters fixed. The last two couple $r_S$ to the perturbed parameter through the deployed SpectralMSE law. A $\sigma_{aw}$ multiplier $c$ gives $r_S\to c^{6/7}r_S$; a $\tau$ perturbation uses $r_S\to c^{24/7}[T_S(\tau)/T_S(c\tau)]^{1/2}r_S$, which reduces to $c^{41/14}r_S$ away from cadence clamps. The $r_S$-only multiplier acts on the pseudo-measurement standard deviation, so its covariance scales quadratically.}
+  \label{tab:ou_robustness_sensitivity}
+  \footnotesize
+  \setlength{\tabcolsep}{7pt}
+  \begin{tabular}{@{}rrrrrr@{}}
+    \toprule
+    & \multicolumn{3}{c}{one factor at a time} & \multicolumn{2}{c}{coupled} \\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-6}
+    Multiplier & $\tau$ & $\sigma_{aw}$ & $r_S$ & $\sigma_{aw},r_S$ & $\tau,r_S$ (SpectralMSE) \\
+    \midrule
+    0.5 & 5.36 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.87 $\pm$ 0.15 & 5.70 $\pm$ 0.15 & 12.87 $\pm$ 0.34 \\
+    0.75 & 5.17 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.29 $\pm$ 0.14 & 5.25 $\pm$ 0.14 & 6.53 $\pm$ 0.17 \\
+    1 & 5.09 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.09 $\pm$ 0.14 & 5.09 $\pm$ 0.14 \\
+    1.25 & 5.05 $\pm$ 0.15 & 5.09 $\pm$ 0.14 & 5.05 $\pm$ 0.15 & 5.05 $\pm$ 0.15 & 5.38 $\pm$ 0.22 \\
+    1.5 & 5.04 $\pm$ 0.15 & 5.09 $\pm$ 0.14 & 5.09 $\pm$ 0.17 & 5.07 $\pm$ 0.16 & 6.65 $\pm$ 0.33 \\
+    \bottomrule
+  \end{tabular}
+\end{table*}

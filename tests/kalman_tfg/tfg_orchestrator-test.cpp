@@ -28,6 +28,7 @@ using Matrix3f = Eigen::Matrix3f;
 
 constexpr float kPi = 3.14159265358979f;
 constexpr float kRSCoeffLegacy = 0.28f;
+constexpr float kSigmaCoeff = 0.8f;
 constexpr float kRSMseCoeff = 0.0538f;
 constexpr float kRa = 0.0148f * 0.0148f * (1.0f / 200.0f);
 constexpr float kG = 9.80665f;
@@ -240,10 +241,11 @@ void test_tuning_laws() {
     check(near_rel(f.getTauApplied(), tau_want, 0.05f), "tau is not half the zero-crossing period");
 
     const float var_true = sea.a_amp * sea.a_amp * 0.5f;
-    const float sigma_want = std::sqrt(std::max(0.0f, var_true - 0.12f * 0.12f));
-    check(near_rel(f.getSigmaApplied(), sigma_want, 0.15f), "sigma does not match wave acceleration std");
+    const float sigma_want = kSigmaCoeff * std::sqrt(std::max(0.0f, var_true - 0.12f * 0.12f));
+    check(near_rel(f.getSigmaApplied(), sigma_want, 0.15f), "sigma does not match the scaled wave acceleration std");
 
-    const float rs_want = spectral_rs(f.getTauApplied(), f.getSigmaApplied());
+    // SpectralMSE uses measured band acceleration before the model scale.
+    const float rs_want = spectral_rs(f.getTauApplied(), f.getSigmaApplied() / kSigmaCoeff);
     if (!check(near_rel(f.getRSApplied(), rs_want, 0.05f),
                "SpectralMSE r_S does not match its closed form")) {
         std::cerr << "  RS=" << f.getRSApplied() << " want=" << rs_want << '\n';

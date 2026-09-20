@@ -1,0 +1,12 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "candidate",
+    "env": {
+      "TFG_SIGMA_COEFF": "0.8"
+    }
+  }
+]

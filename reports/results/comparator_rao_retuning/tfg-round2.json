@@ -1,0 +1,50 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "axes_10",
+    "env": {
+      "TFG_R_S_X_FACTOR": "1.0",
+      "TFG_R_S_Y_FACTOR": "1.0"
+    }
+  },
+  {
+    "name": "axes_14",
+    "env": {
+      "TFG_R_S_X_FACTOR": "1.4",
+      "TFG_R_S_Y_FACTOR": "1.4"
+    }
+  },
+  {
+    "name": "x09_y115",
+    "env": {
+      "TFG_R_S_X_FACTOR": "0.9"
+    }
+  },
+  {
+    "name": "x115_y09",
+    "env": {
+      "TFG_R_S_Y_FACTOR": "0.9"
+    }
+  },
+  {
+    "name": "tau09",
+    "env": {
+      "TFG_TAU_COEFF": "0.9"
+    }
+  },
+  {
+    "name": "tau11",
+    "env": {
+      "TFG_TAU_COEFF": "1.1"
+    }
+  },
+  {
+    "name": "sigma12",
+    "env": {
+      "TFG_SIGMA_COEFF": "1.2"
+    }
+  }
+]

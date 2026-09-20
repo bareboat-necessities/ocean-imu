@@ -1,0 +1,41 @@
+[
+  {
+    "name": "tau_09",
+    "env": {
+      "OU_II_TAU_COEFF": "0.9"
+    }
+  },
+  {
+    "name": "tau_10",
+    "env": {
+      "OU_II_TAU_COEFF": "1.0"
+    }
+  },
+  {
+    "name": "cp_010",
+    "env": {
+      "OU_II_PSEUDO_MSE_COEFF": "0.1"
+    }
+  },
+  {
+    "name": "cp_012",
+    "env": {
+      "OU_II_PSEUDO_MSE_COEFF": "0.12"
+    }
+  },
+  {
+    "name": "joint_axes",
+    "env": {
+      "OU_II_R_P0_X_FACTOR": "1.0",
+      "OU_II_R_P0_Y_FACTOR": "0.9",
+      "OU_II_SIGMA_COEFF": "0.7"
+    }
+  },
+  {
+    "name": "axis_2",
+    "env": {
+      "OU_II_R_P0_X_FACTOR": "1.2",
+      "OU_II_R_P0_Y_FACTOR": "1.2"
+    }
+  }
+]

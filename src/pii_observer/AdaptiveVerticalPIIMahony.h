@@ -34,55 +34,11 @@ public:
     };
 
     struct Config {
-        CoreConfig core = [] {
-            CoreConfig cfg{};
-            cfg.observer.r = T(0.125);
-            cfg.observer.tau_a = T(0.40);
-            cfg.observer.tau_d = T(49.0);
-            cfg.observer.kb = T(2.5e-5);
-            cfg.observer.lambda_b = T(3.0e-3);
-            cfg.observer.bias_limit = T(0.12);
-            cfg.observer.a_f_limit = T(50.0);
-            cfg.observer.v_limit = T(50.0);
-            cfg.observer.p_limit = T(20.0);
-            cfg.observer.S_limit = T(200.0);
-            cfg.observer.d_limit = T(20.0);
-            cfg.adaptation.enabled = true;
-            cfg.adaptation.min_confidence = T(0.22);
-            cfg.adaptation.f_disp_ref_hz = T(0.12);
-            cfg.adaptation.sigma_a_ref = T(1.10);
-            cfg.adaptation.input_smooth_tau = T(55.0);
-            cfg.adaptation.param_smooth_tau = T(50.0);
-            cfg.adaptation.r_freq_exp = T(0.23);
-            cfg.adaptation.r_sigma_exp = T(0.65);
-            cfg.adaptation.tau_a_freq_exp = T(-0.25);
-            cfg.adaptation.tau_a_sigma_exp = T(-1.20);
-            cfg.adaptation.tau_d_freq_exp = T(-0.03);
-            cfg.adaptation.tau_d_sigma_exp = T(-0.01);
-            cfg.adaptation.kb_freq_exp = T(0.02);
-            cfg.adaptation.kb_sigma_exp = T(0.08);
-            cfg.adaptation.r_min = T(0.06);
-            cfg.adaptation.r_max = T(0.26);
-            cfg.adaptation.tau_a_min = T(0.15);
-            cfg.adaptation.tau_a_max = T(0.90);
-            cfg.adaptation.tau_d_min = T(44.0);
-            cfg.adaptation.tau_d_max = T(58.0);
-            cfg.adaptation.kb_min = T(5e-6);
-            cfg.adaptation.kb_max = T(6e-5);
-            cfg.auto_schedule_from_accel_freq = true;
-            cfg.auto_schedule_period_s = T(0.50);
-            cfg.force_enable_adaptation_when_auto_schedule = true;
-            cfg.fallback_confidence_floor = T(0.52);
-            cfg.fallback_confidence_when_locked = T(0.82);
-            cfg.coarse_schedule_blend = T(0.48);
-            cfg.coarse_schedule_confidence_floor = T(0.62);
-            cfg.accel_freq_tracker =
-                detail::make_default_tracker_config<typename Core::AccelFreqTrackerConfig, T>();
-            return cfg;
-        }();
+        // Shared core defaults are also used by the simulation adapter.
+        CoreConfig core{};
 
-        T mahony_twoKp = static_cast<T>(1.40);
-        T mahony_twoKi = static_cast<T>(0.060);
+        T mahony_twoKp = static_cast<T>(1.70);
+        T mahony_twoKi = static_cast<T>(0.01125);
 
         T gravity_mps2 = static_cast<T>(9.80665);
 
@@ -90,19 +46,19 @@ public:
 
         bool adapt_mahony_gains = true;
 
-        T mahony_twoKp_calm  = static_cast<T>(0.90);
-        T mahony_twoKp_rough = static_cast<T>(0.35);
+        T mahony_twoKp_calm  = static_cast<T>(1.50);
+        T mahony_twoKp_rough = static_cast<T>(1.20);
 
-        T mahony_twoKi_calm  = static_cast<T>(0.025);
-        T mahony_twoKi_rough = static_cast<T>(0.010);
+        T mahony_twoKi_calm  = static_cast<T>(0.0125);
+        T mahony_twoKi_rough = static_cast<T>(0.00875);
 
-        T mahony_sigma_ref     = static_cast<T>(0.18);
-        T mahony_norm_err_ref  = static_cast<T>(0.08);
-        T mahony_innov_ref     = static_cast<T>(0.12);
+        T mahony_sigma_ref     = static_cast<T>(0.45);
+        T mahony_norm_err_ref  = static_cast<T>(0.12);
+        T mahony_innov_ref     = static_cast<T>(0.18);
 
-        T mahony_gain_smooth_tau_s = static_cast<T>(2.0);
+        T mahony_gain_smooth_tau_s = static_cast<T>(1.0);
 
-        T mahony_acc_trust_min = static_cast<T>(0.05);
+        T mahony_acc_trust_min = static_cast<T>(0.65);
     };
 
     struct Snapshot {
@@ -121,8 +77,8 @@ public:
 
         T vertical_world_accel_up = T(0);
 
-        T mahony_twoKp = static_cast<T>(1.40);
-        T mahony_twoKi = static_cast<T>(0.060);
+        T mahony_twoKp = static_cast<T>(1.70);
+        T mahony_twoKi = static_cast<T>(0.01125);
         T gravity_mps2 = static_cast<T>(9.80665);
 
         T mahony_accel_norm_err = T(0);
@@ -417,8 +373,8 @@ private:
             cfg.gravity_mps2 = static_cast<T>(9.80665);
         }
 
-        if (!std::isfinite(cfg.mahony_twoKp)) cfg.mahony_twoKp = static_cast<T>(1.40);
-        if (!std::isfinite(cfg.mahony_twoKi)) cfg.mahony_twoKi = static_cast<T>(0.060);
+        if (!std::isfinite(cfg.mahony_twoKp)) cfg.mahony_twoKp = static_cast<T>(1.70);
+        if (!std::isfinite(cfg.mahony_twoKi)) cfg.mahony_twoKi = static_cast<T>(0.01125);
 
         if (!std::isfinite(cfg.mahony_twoKp_calm))  cfg.mahony_twoKp_calm  = cfg.mahony_twoKp;
         if (!std::isfinite(cfg.mahony_twoKp_rough)) cfg.mahony_twoKp_rough = cfg.mahony_twoKp;

@@ -1,0 +1,37 @@
+[
+  {
+    "name": "baseline",
+    "env": {}
+  },
+  {
+    "name": "gain0555_smooth40",
+    "env": {
+      "NLO_THETA_GAIN": "0.555",
+      "NLO_THETA_TAU": "40"
+    }
+  },
+  {
+    "name": "hp25",
+    "env": {
+      "NLO_RHP_TAU": "25"
+    }
+  },
+  {
+    "name": "hp35",
+    "env": {
+      "NLO_RHP_TAU": "35"
+    }
+  },
+  {
+    "name": "hp70",
+    "env": {
+      "NLO_RHP_TAU": "70"
+    }
+  },
+  {
+    "name": "hp100",
+    "env": {
+      "NLO_RHP_TAU": "100"
+    }
+  }
+]

@@ -35,8 +35,8 @@ public:
     struct Config {
         ObserverConfig observer = [] {
             ObserverConfig cfg{};
-            cfg.r = T(0.125);
-            cfg.tau_a = T(0.40);
+            cfg.r = T(0.08775);
+            cfg.tau_a = T(0.42);
             cfg.tau_d = T(49.0);
             cfg.kb = T(2.5e-5);
             cfg.lambda_b = T(3.0e-3);

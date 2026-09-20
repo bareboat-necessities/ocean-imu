@@ -16,11 +16,25 @@ predecessor of OU--III.
 
 All methods replay the same timestamped synthetic motion and inertial records
 and use the final \SI{900}{s}. The common comparison is vertical displacement
-and tilt, available from every method. Parameters are frozen before evaluation
-and reference displacement is never used to select gains. OU--II and OU--III
+and tilt, available from every method. Comparator coefficients are selected
+offline by repeated sweeps on the vessel-response records and then frozen for
+paired evaluation on additional sensor and initialization draws. Reference
+displacement is used for offline scoring, never for online gain scheduling.
+These draws do not constitute independent seas or unseen vessel responses.
+OU--II and OU--III
 share the same wave-band period input. OU--II uses the analytical PhysicalMSE
 dual pseudo-measurement schedule and OU--III uses the analytical SpectralMSE
 integral-state schedule of Sec.~\ref{sec:adaptation}.
+
+\IfFileExists{w3d-comparator-retuning-generated.tex-part}{%
+  \input{w3d-comparator-retuning-generated.tex-part}%
+}{}
+The retuning gains are modest. OU--II and PII improve several mean error
+channels; TFG and TVG--NLO improve normalized heave with small adverse
+changes in some attitude channels. NLO uses a fresh pair of evaluation draws
+after an earlier smoothing candidate failed its additional-draw check.
+OU--III is held fixed throughout coefficient selection. The retained
+record-level results include rejected candidates and remaining gate failures.
 
 \begin{table}[t]
 \centering
@@ -37,7 +51,7 @@ Method & Tuning policy & Aiding and scored outputs \\
 OU--III & adaptive integral regularization & IMU+mag; vertical and tilt scored \\
 OU--II & adaptive dual regularization & same records and common outputs \\
 PII & PLL-based scheduling & same records; common outputs only \\
-TVG--NLO & fixed gains for vertical adaptation & IMU only; yaw/horizontal unscored \\
+TVG--NLO & wave-frequency gain schedule & IMU only; yaw/horizontal unscored \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -157,7 +171,8 @@ FixedNominal recovers essentially none of the off-nominal vertical improvement
 (Table~\ref{tab:ou_mc_channels}).
 
 \paragraph{Covariance control}
-The covariance-maintenance control changes normalized vertical error by at most
+The covariance-maintenance control has a largest-magnitude paired change
+in normalized vertical error of
 $\OUValidationCovSyncWorstDifference$ percentage points
 ($[\OUValidationCovSyncWorstLow,\OUValidationCovSyncWorstHigh]$), indicating
 that periodic latent-acceleration covariance re-alignment is not the source of

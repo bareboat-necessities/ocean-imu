@@ -1,0 +1,90 @@
+[
+  {
+    "config": "baseline",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.51829084,
+    "roll_rms_deg": 0.302405249375,
+    "pitch_rms_deg": 0.0824262210875,
+    "disp_3d_rms_m": 0.3035775932375,
+    "accel_bias_3d_rms_mps2": 0.0513625149625
+  },
+  {
+    "config": "axes_10",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.512844473,
+    "roll_rms_deg": 0.300697647125,
+    "pitch_rms_deg": 0.0807238966625,
+    "disp_3d_rms_m": 0.3027545077375,
+    "accel_bias_3d_rms_mps2": 0.0510857268375
+  },
+  {
+    "config": "axes_14",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.531126935125,
+    "roll_rms_deg": 0.306074280375,
+    "pitch_rms_deg": 0.08539437045,
+    "disp_3d_rms_m": 0.3105787594625,
+    "accel_bias_3d_rms_mps2": 0.0519284838875
+  },
+  {
+    "config": "x09_y115",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.52590920025,
+    "roll_rms_deg": 0.300147116,
+    "pitch_rms_deg": 0.0839429413875,
+    "disp_3d_rms_m": 0.3022964742125,
+    "accel_bias_3d_rms_mps2": 0.0511788712
+  },
+  {
+    "config": "x115_y09",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.503399871375,
+    "roll_rms_deg": 0.302234560125,
+    "pitch_rms_deg": 0.0777839883625,
+    "disp_3d_rms_m": 0.3054903810625,
+    "accel_bias_3d_rms_mps2": 0.0511343618875
+  },
+  {
+    "config": "tau09",
+    "failed_records": 1,
+    "violations": 1,
+    "worst_ratio": 1.0206001765225066,
+    "yaw_rms_deg": 0.506516143625,
+    "roll_rms_deg": 0.299936603875,
+    "pitch_rms_deg": 0.082760563175,
+    "disp_3d_rms_m": 0.3128461526375,
+    "accel_bias_3d_rms_mps2": 0.051166764
+  },
+  {
+    "config": "tau11",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.536125708375,
+    "roll_rms_deg": 0.30741830524999997,
+    "pitch_rms_deg": 0.080033544475,
+    "disp_3d_rms_m": 0.319163054075,
+    "accel_bias_3d_rms_mps2": 0.0517549570625
+  },
+  {
+    "config": "sigma12",
+    "failed_records": 0,
+    "violations": 0,
+    "worst_ratio": 1,
+    "yaw_rms_deg": 0.514427296875,
+    "roll_rms_deg": 0.2988991365,
+    "pitch_rms_deg": 0.09410293775,
+    "disp_3d_rms_m": 0.30353407935,
+    "accel_bias_3d_rms_mps2": 0.0515489578375
+  }
+]
