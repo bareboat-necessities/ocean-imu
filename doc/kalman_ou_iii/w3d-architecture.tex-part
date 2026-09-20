@@ -62,7 +62,7 @@ without closing a loop through the estimator they schedule.
 ]
 
 % ---------------- sensors ----------------
-\node[sens] (imu) at (0,3.50)
+\node[sens] (imu) at (0,4.40)
   {IMU\\[1pt] $\vct\omega^B,\ \vct f^B,\ \vct m^B,\ T$};
 
 % ---------------- measurement-only front end ----------------
@@ -88,7 +88,7 @@ without closing a loop through the estimator they schedule.
 \begin{scope}[on background layer]
   \node[grp, fit=(guard)(proxy)(hi)(vacc)(per)(sig)(ad)] (feblk) {};
 \end{scope}
-\node[glbl, anchor=south west] at ([yshift=2pt]feblk.north west)
+\node[glbl, anchor=south east] at ([yshift=2pt]feblk.north east)
   {Measurement-only front end (exogenous)};
 
 % ---------------- core QMEKF ----------------
