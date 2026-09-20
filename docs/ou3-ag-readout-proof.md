@@ -87,8 +87,8 @@ estimator, which proves the claim. All gains and resets belong to the same
 frozen actual execution. The inequality is between covariance matrices, not
 between two nonlinear estimator trajectories.
 
-The implementation selects independent rows of O and solves a 6x6 system
-exactly. It does not invert a 21-state covariance or an observation normal
+The implementation selects rows of O by exact largest-residual factor
+pivoting and solves a 6x6 system exactly. It does not invert a 21-state covariance or an observation normal
 matrix. For a uniform proof the reader may depend on the realized coefficients;
 one fixed reader is generally invalid under varying coefficients. Even a
 nonzero root residual of size `10^-60` is rejected without a separate AG
@@ -131,7 +131,7 @@ rank-three sensor updates, cross covariance, correlated process columns,
 and nonorthogonal literal-form attitude resets. Its weakest absolute AG
 loss decreases from `0.0281547113907` to `9.99999999965e-13` as the AG root
 scale goes from one to `10^12`. The reader's maximum action eigenvalue is
-`34.456445624`; the actual terminal covariance stays below that same matrix.
+`34.4659867861`; the actual terminal covariance stays below that same matrix.
 The exact rational checker verifies root cancellation and matrix dominance,
 and a conditional first-prediction decrement `1/10000000001`.
 These are algebra audits; their rational LIN/process coefficients are not
@@ -146,14 +146,110 @@ established for these nominal coefficients and injection transports. The
 physical 3-D Gramian cannot be substituted for O; the actual nominal AW,
 gyro estimate and resets still need their same-history comparison.
 
-The next falsifiable experiment is to construct coefficient-dependent
-six-row minors/readers on actual carried regular A21 windows, then enclose
-their *matrix action* over the admitted varying coefficients. A singular
-minor alone rejects that reader, not observability; check the rank of all
-available AG rows before declaring an information obstruction. A finite
-successful replay remains non-promoting. A source claim requires every
-window and startup-to-window linkage, followed by the matrix epsilon check
-and complete-loss enclosure. If uniform J closes, immediately test
-`sqrt(rho0)+a(r)<1`, `b <= (1-sqrt(rho0)-a(r))r` and every-prefix retention,
-with actual finite-angle reset, projection and float32 supplies. Those
-inequalities cannot yet be assigned certified numerical margins.
+
+## Executed source audit and the uniform-certificate failure
+
+`ag_readout_source_diagnostic.py` compiles a read-only observer and an untapped
+control from the shipping header. It carries construction, startup, reference
+refinement, release, tuning, covariance and means to 225 s without a reseed.
+The observed window ends at 225.32 s. Each control has exactly the same terminal
+state, quaternion, covariance, stage times and accepted magnetic count.
+
+The 80-digit results are:
+
+| Input | Applied rows | Minimum singular value of full raw AG array | Maximum action eigenvalue |
+|---|---:|---:|---:|
+| Quiet, body field heading 0 | 225 | 7.1517206581 | 1199.0609668 |
+| Quiet, heading .001 rad | 225 | 7.1517206581 | 1199.0622214 |
+| Quiet, heading .000001 rad | 225 | 7.1517206581 | 1199.0609668 |
+| Moving vessel | 228 | 6.2782239972 | 1450.2528611 |
+
+For the moving record, `p_z=.4 sin(.6t)`, `roll=.02 sin(.5t)` and
+`B_world=(60,0,30)`, with zero physical biases. These continuous truth formulas
+obey the displacement/primitive, rate, acceleration and jerk limits; the
+finite float samples and applied events do not certify all-time magnetic
+service or arithmetic totality. The largest realized injection in this
+window is about 3.65717e-6 rad. The diagnostic keeps actual time-varying
+coefficients, accepted acc/S/mag observations, resets and sync increments.
+It uses the established nuisance upper comparison, including all correlations.
+
+An exact audit of the exported quiet coefficients follows the diagnostic.
+Binary floating operands are interpreted as rational inputs, not as an
+enclosure of the underlying real-arithmetic shipping trajectory. For each
+correlated Q/R block, exact semidefinite LDL elimination gives `Q=L D L'`;
+upward rational square roots of D give `U U' >= Q` by congruence. The reader
+cancels the AG root **exactly**, and exact PSD elimination verifies a full
+6x6 action ceiling with its off-diagonal entries retained. Nonzero source
+sync increments are included. This supplied-sequence certificate does not
+cover a neighborhood, all windows, startup reachability in exact arithmetic,
+or accumulated float32 error.
+The moving export fails the symmetry precondition for a process factor:
+its largest sync skew entry is exactly 1/562949953421312 (2^-49). The
+diagnostic records this rejection. Enclosing the literal addition and final
+symmetry operation, rather than silently replacing its operand, remains open.
+
+### Why changing the minor is necessary but insufficient
+
+A first-independent-row rule can select a magnetic component
+`B_y` tending to zero while ignoring a strong `B_x`. In a quiet two-epoch
+heading/bias calculation its measurement-noise action alone is
+
+`(R_m/B_y^2) [[1, 1/h], [1/h, 2/h^2]]`.
+
+Thus no common finite ceiling exists for that selector as nonzero `B_y -> 0`,
+even though the full observation array retains rank. The replacement performs
+exact largest-residual factor pivoting across **all** rows, then solves a
+six-coordinate system. There is no normal-equation rank threshold, dense
+interval Riccati propagation, or scalar/Gershgorin contraction reduction.
+The selector alone does not prove its action bounded.
+
+To test uniform feasibility independently of any minor, retain the full
+rank-three observation blocks and form
+
+`I_W = sum_i O_i' R_i^-1 O_i`.
+
+For every reader with `L O=T_h`, completing the square gives
+
+`B_W >= L R L' >= T_h I_W^-1 T_h'`.
+
+Equivalently, a proposed common ceiling must satisfy the full Schur condition
+`[[B_*, T_h], [T_h', I_W]] >= 0`. If I_W is singular and T_h is invertible,
+no exact reader exists. This is a **necessary noise-action test**, not a lift
+of restricted information or an upper bound on nuisance/process action.
+
+The attempt to enclose all words using independent nominal coefficient ranges
+fails this test exactly. Put
+
+`B=(45,0,45), a_hat=(-g/2,0,g/2), f_hat=(-g/2,0,-g/2), g=9.80665`.
+
+Even `|a_hat|=g/sqrt(2)<8.8`; merely imposing the physical acceleration ceiling
+on the nominal acceleration would not fix this relaxation. With zero corrected
+rate and identity resets, the literal AG prediction is `[I,h I;0,I]` and both
+sensor attitude blocks are cross products with parallel vectors. The complete
+raw AG array has rank four. The two exact null columns are `(z,0)` and `(0,z)`,
+where `z=(1,0,1)`. The endpoint map does not kill either column. Hence
+`L O=T_h` is impossible, and the Rayleigh margin for any positive proposed
+Gram floor `mu I6` is exactly `-mu` (reported at mu=1 as -1).
+Nuisance columns and process correlations cannot repair this root cancellation.
+
+This is a failure of the **independent-coefficient relaxation**, not a
+shipping counterexample: the constant nominal AW values have not been linked
+to the actual OU mean, innovations, pseudo-observations and resets. No all-time
+MAGNETIC SERVICE or physical-history membership is asserted for that family.
+The refinement from a fragile minor to all-row factors fixes the selector;
+the all-row nullspace test then rules out further pivot, precision or interval
+refinement as a cure for the relaxed domain. The next technique must use
+same-history nominal dynamics to exclude sustained near-collinearity and
+sampled gyro aliasing quantitatively, before enclosing the residual matrix
+action. True-vector sampling fidelity alone does not establish this exclusion.
+
+In particular the literal accelerometer relation is
+
+`f_hat = f_measured - b_hat_a - r_acc`
+
+in this default, zero-lever-arm, reference-temperature profile. An attempted
+transfer of the true-vector Gram bound must retain the actual innovation
+`r_acc`, the nominal gyro-bias error and reset transport. There is no certified
+all-window bound on those defects here. Replacing them with the physical
+sensor/bias bounds would silently identify estimator innovations with sensor
+noise. This is the precise remaining source-uniform certificate gap.

@@ -19,12 +19,36 @@ bootstrap J via an exact matrix process comparison, retaining the existing
 nuisance/Schur implication. Uniform source rank/action are **not proved**.
 
 The 80-digit supplied 21-state audit has maximum trial-action eigenvalue
-34.456445624. Its minimum AG loss falls from .0281547113907 to
+34.4659867861. Its minimum AG loss falls from .0281547113907 to
 9.99999999965e-13 when the supplied AG prior scale increases from one to
 10^12. Exact rational checks verify the conditional matrix bound, including
 nonzero AG/nuisance covariance and nonorthogonal resets, and conditional
 decrement 1/10000000001. Neither coefficients nor roots of this algebra audit
 are claimed to be a shipping history. The common source J remains open.
+
+The reader now uses exact largest-residual factor pivots across all rows.
+A native observer/control pair carries construction through refinement and
+release without reseeding; all terminal means, quaternions and covariances
+match bit-for-bit. Three quiet 225--225.32-s windows have action maxima
+1199.060967--1199.062222. A moving-vessel window has maximum 1450.252861,
+full-array minimum singular value 6.278224 and nonzero realized resets.
+These 80-digit values are non-promoting. Exact upward rational Q/R factors
+and PSD elimination certify the full action matrix for the exported quiet
+word, including nonzero sync; this does not enclose a real source trajectory.
+
+The attempted independent-coefficient uniform certificate fails the all-row
+Schur test exactly: B=(45,0,45), a_hat=(-g/2,0,g/2) has |a_hat|<8.8 but
+parallel nominal force/field. The AG array has rank four; LO=T_h is impossible.
+The Rayleigh margin against any mu I6 is -mu. The family is not certified
+compatible with the nominal mean recursion or all-time magnetic service.
+This is a failed relaxation, not a shipping counterexample. Refining a minor,
+precision or coefficient boxes cannot exclude its exact nullspace.
+
+Independently, the inherited BA marginal proves a source covariance guard:
+at every finite regular pre-projection boundary, sqrt(V)<=6 leaves
+.02483339501604595 m/s^2 inside the .4 projection ball. The literal projection
+then has zero defect. Every-prefix invariance, entry and reset/arithmetic
+bounds remain separate, open obligations.
 
 `ou3-corrected-word-proof.md` proves the following complete implications:
 
@@ -75,10 +99,12 @@ all-time actual magnetic-service floor exceeds one. Its native regression
 checks literal finite float startup/release; all-time float totality was not
 claimed. Current status explicitly records that this witness is inadmissible.
 
-Validation is recorded for the exact PR head in PR metadata. The prior
-continuation passed 463 evidence/publication tests with one data-dependent
-skip. The present work adds exact readout/cross-covariance and rejection tests;
-the shipping estimator and all physical constants remain unchanged.
+Current validation: 476 evidence/publication tests pass in a clean worktree
+with one existing data-dependent skip. Exact artifact reproduction, ruff and
+Python compilation pass. The nine-page study renders without overfull boxes;
+pages 2 and 7--9 were visually checked. Native observer/control parity passes.
+The shipping estimator and all physical constants remain unchanged. CI is
+recorded against the exact PR head in PR metadata.
 
 ## Current limiter
 
@@ -97,6 +123,36 @@ A finite source supply and a positive but extremely small comparison margin
 are not evidence that the declared six-degree region is invariant.
 
 ## Failed approaches / DEAD_ENDS
+
+- The required `PATH=/tmp/ou3-proof-venv/bin:$PATH make all EIGEN_DIR=/tmp/ou3-article-tex-deps/usr/include/eigen3 SIM_DATA_ZIP=/tmp/ou3-article-sim-data.zip`
+  compiled all native targets and passed suites through spike_filter, then
+  stalled in `test_no_retired_architecture_survives_repository` scanning the
+  7.2-GB generated-data tree. It was interrupted (exit 130); do not report the
+  aggregate as passed. The unchanged 476-test evidence/publication suite passes
+  in a clean worktree; wave_dir and wave_sim are run separately. No gate or
+  threshold is weakened. This is a generated-data validation limitation.
+
+- The first independent-row reader has noise action proportional to 1/B_y^2
+  on a quiet heading pair even when another magnetic row is strong. Exact
+  largest-residual factor pivoting is the motivated refinement. The subsequent
+  all-row test still fails on the independent nominal-coefficient relaxation:
+  rank=4, candidate Gram I6, exact null Rayleigh margin=-1. Classification:
+  missing nominal-history reachability/separation, not numerical conditioning.
+  Retained: the historical action and nuisance/Schur implications. Limiter:
+  the source innovation/gyro/reset comparison. Change to source-linked nominal
+  dynamics; do not repeat pivot/precision/subdivision refinement.
+- The first exact quiet export specialization wrongly required zero sync and
+  rejected an actual nonzero Delta. Keeping its full semidefinite factor fixed
+  the audit. The moving generalization then rejected a nonsymmetric exported
+  float sync operand (`symmetric square matrix required`). Do not silently
+  symmetrize/project it into a different operation. The exact maximum asymmetry is 1/562949953421312 (2^-49),
+  recorded in `ag-readout-source-feasibility.json`; its complete float addition
+  and final symmetry operation need an arithmetic enclosure. The quiet factor
+  result and all real-arithmetic implications are retained.
+- Factor pivoting changed the supplied reader's nuisance-sensitive coordinate
+  from x to y. The old cross-covariance regression then compared two identical
+  actions. Move its nonzero AW/BA cross term to the actually used y coordinate;
+  the same strict full-matrix inequality check remains in force.
 
 - The local article render initially failed with `pdfTeX error (font
   expansion): auto expansion is only possible with scalable fonts` because
@@ -209,13 +265,14 @@ only a finite supply ceiling, not evidence of a small retained radius.
 
 ## Next falsifiable experiment
 
-Construct coefficient-dependent six-column historical readers on actual
-carried regular A21 windows. Certify or falsify uniform bounded action
-`B_W <= B_*`, retaining nominal AW/gyro variation, resets, full nuisance
-columns, actual accepted observations and correlated process factors. If a
-chosen minor fails, check the entire AG observation array before concluding
-rank loss. The physical Gramian does not substitute for these rows.
-An all-window enclosure and inherited entry linkage, rather than finite
-replay, are needed to promote J. Then check the matrix epsilon inequality
-and full corrected loss for a useful rho0, immediately followed by the actual
-injection/projection/float32 supply inequalities and every-prefix retention.
+Use the nominal mean/innovation recursion to exclude sustained near-null AG
+transport, rather than independent coefficient ranges. In the default
+reference-temperature, zero-lever-arm profile,
+`f_hat=f_measured-b_hat_a-r_acc`; true-vector sampling fidelity transfers only
+if the actual innovation and nominal gyro/reset transport defects are bounded
+on the same window. They are not physical sensor noise bounds. Quantify this
+source-linked exclusion and test the complete six-column noise-action Schur
+condition before attempting a common action ceiling. Then enclose process and
+nuisance action, the full corrected loss, and the strict nonlinear/supply and
+every-prefix inequalities. The quiet exported-word enclosure is reproducible;
+the moving float sync needs the complete addition/symmetrization enclosure.

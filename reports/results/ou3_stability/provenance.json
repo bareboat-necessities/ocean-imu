@@ -74,7 +74,9 @@
     "jerk_sampling_fidelity": "Locally absolutely continuous physical acceleration with jerk <=100 gives sharp nonuniform sampled-mean control, excludes >=6-degree constant-attitude stationary-sample aliases over 32 s, and gives joint measured-vector 3-D information over 64 s. Both magnetic residual envelopes are charged. Physical LIN mismatch action enters the full prediction covariance metric. Full corrected 21-state loss, capture and retention remain open.",
     "corrected_word_covariance_reduction": "Embedded nuisance floor passes to pre-prediction roots through actual corrections/resets. Together with its upper bound, a uniform six-column AG corrected loss J implies a full covariance upper bound and strict first-prediction loss by Schur comparison. J remains unproved; no full-state stability is promoted.",
     "actual_gain_finite_error": "Actual estimator gains/events define one auxiliary linear comparison. Variation of constants composes operation supplies; Joseph covariance bounds correction supply by the R-whitened residual. Finite-angle reset has an injection-squared times error term and a real polynomial defect. Removed unsupported smoothness-to-vanishing-remainder promotion.",
-    "historical_AG_readout": "A backward six-column reader cancels the historical AG root exactly, retaining nuisance and process correlations. Optimal covariance comparison bounds terminal AG covariance by its matrix action. Uniform source rank/action and inherited entry linkage remain unproved; neither a supplied word nor the unbounded-prior relaxation is claimed shipping-reachable."
+    "historical_AG_readout": "A backward six-column reader cancels the historical AG root exactly, retaining nuisance and process correlations. Optimal covariance comparison bounds terminal AG covariance by its matrix action. Uniform source rank/action and inherited entry linkage remain unproved; neither a supplied word nor the unbounded-prior relaxation is claimed shipping-reachable.",
+    "source_readout_audit": "Native carried construction/refinement/release, observer/control terminal parity, exact rational quiet exported-word action, non-promoting moving diagnostic. Independent coefficient uniformity fails at AG rank four; source nominal mean/innovation linkage is open. Moving sync asymmetry 2^-49 is not silently projected away.",
+    "projection_storage_guard": "Inherited P_ba,ba <= I/1600 implies actual projection inactive if pre-projection sqrt(V) <= 6, with .02483339501604595 m/s^2 slack; every-prefix retention and entry remain open."
   },
   "operation_lemma_sources": [
     {
@@ -107,7 +109,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "e5b6350234add1c238bef9a294187562f156e6fe"
+      "git_blob_sha": "b206adf7f9acdc5924f2a88809026f189a3ed93f"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -271,19 +273,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/corrected_word.py",
-      "git_blob_sha": "dd17904c2e405b0255829a672c93b587fddb98a9"
+      "git_blob_sha": "65b28cda69aa17eb9f933d4214dc843b342232ea"
     },
     {
       "path": "tests/validation/test_ou3_corrected_word.py",
-      "git_blob_sha": "89f866edbf54dbd78ae0a20dce3f8cf59b15f7be"
+      "git_blob_sha": "93a3fae3289ab5c328b83fd210e2d0909e1d9658"
     },
     {
       "path": "docs/ou3-corrected-word-proof.md",
-      "git_blob_sha": "873eda9afc7d51eb06359b8e21b18eed6cffa0be"
+      "git_blob_sha": "8083253ace009e51356c732fd0210f242dd2c2a3"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout.py",
-      "git_blob_sha": "aef33d7e27af1edd467da030e90640fe96e69438"
+      "git_blob_sha": "203f7bd8804f19e782cbe707668bfa360829071c"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_diagnostic.py",
@@ -291,11 +293,23 @@
     },
     {
       "path": "tests/validation/test_ou3_ag_readout.py",
-      "git_blob_sha": "b91f40c4edcdb8371613861e4b41abd598fe9d40"
+      "git_blob_sha": "2a916a448b8c8a91f72ad3695eef89cfa558c593"
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "1e99a8cbaffbddbf43e4d61b05395fc82ac35dc1"
+      "git_blob_sha": "7e7409ff9968e81f4809bec9634ec69af7da4bae"
+    },
+    {
+      "path": "tools/stability/ag_readout_source.cpp",
+      "git_blob_sha": "cf3fbf38ac35db1cf458419425bbb26b85954ed4"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py",
+      "git_blob_sha": "acf35b857a634eb38e23490137884c434a56cb3c"
+    },
+    {
+      "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
+      "git_blob_sha": "2209f3c21f3cd9288a8f7cba0609115edc328902"
     }
   ]
 }

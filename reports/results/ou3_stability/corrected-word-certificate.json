@@ -77,6 +77,18 @@
     "1/320"
   ],
   "prediction_operator_norm_ceiling": "1.012",
+  "projection_storage_guard": {
+    "BA_marginal_variance_ceiling": "1/1600",
+    "certified_test_radius": "6",
+    "explicit_retained_region_proved": false,
+    "literal_projection_radius": "2/5",
+    "physical_bias_bound": "4503332099679081/20000000000000000",
+    "pre_projection_prefix_required": true,
+    "prefix_retention_proved": false,
+    "projection_defect_under_guard": "0",
+    "remaining_bias_distance_at_test_radius": "496667900320919/20000000000000000",
+    "sqrt_V_strict_ceiling": "3496667900320919/500000000000000"
+  },
   "qualification": "OU3_CORRECTED_WORD_REDUCTION_V1",
   "remaining_uniform_premise": "six AG columns of actual complete corrected word loss, in fixed raw coordinates, have a common SPD lower bound J",
   "reset_comparison": "exact finite-angle log reset, with normalized source small-angle polynomial defect",

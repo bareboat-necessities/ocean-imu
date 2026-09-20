@@ -43,6 +43,7 @@ def status_report() -> dict:
         "actual_gain_finite_error_word_composition":True,
         "joint_word_prediction_measurement_input_action":True,
         "finite_angle_source_reset_remainder":True,
+        "source_covariance_projection_guard":True,
         "full_21_covariance_upper":False,
         "complete_word_covariance_energy_identity":True,
         "factorized_word_exact_reference_parity":True,
@@ -89,5 +90,5 @@ def status_report() -> dict:
             "sampling_certificate":"sampling-fidelity.json",
             "certificate":"sampled-capture-obstruction.json",
         },
-        "next_controlling_obligation":"Prove a uniform SPD bound J for the six AG columns of the actual complete corrected word loss. D_AG,AG <= (P_root^-1)_AG,AG prevents a forward-only absolute-loss certificate with unconstrained AG prior. The historical six-column readout action cancels that prior exactly and retains nuisance/process correlations, but uniform rank/action bounds over actual varying coefficients and resets are OPEN. Certify L(W) O(W)=T_h(W) and B_W <= B_* on every carried historical window, then enclose Q-epsilon F C_eta F^T >= 0 and the complete factor loss for a useful rho0. The existing nuisance/Schur implication remains valid; supplied-word checks do not close J. Nonlinear radius, finite capture, H18/refinement/release, every-prefix retention and arithmetic remain open.",
+        "next_controlling_obligation":"Prove a uniform SPD bound J for the six AG columns of the actual complete corrected word loss. D_AG,AG <= (P_root^-1)_AG,AG prevents a forward-only absolute-loss certificate with unconstrained AG prior. The historical six-column readout action cancels that prior exactly and retains nuisance/process correlations, but uniform rank/action bounds over actual varying coefficients and resets are OPEN. Independent nominal coefficient ranges contain a rank-four AG array: with B=(45,0,45) and a_hat=(-g/2,0,g/2), force and field are parallel and LO=T_h is impossible. This is a relaxed coefficient family, not a reachable-history counterexample. The source nominal mean/innovation/reset recursion must exclude its sustained near-null behavior. Certify L(W) O(W)=T_h(W) and B_W <= B_* on every carried historical window, then enclose Q-epsilon F C_eta F^T >= 0 and the complete factor loss for a useful rho0. The existing nuisance/Schur implication remains valid; supplied-word checks do not close J. Nonlinear radius, finite capture, H18/refinement/release, every-prefix retention and arithmetic remain open.",
     }

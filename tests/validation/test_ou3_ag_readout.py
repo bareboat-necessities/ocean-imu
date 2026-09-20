@@ -5,7 +5,8 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.ag_readout import (
-    bootstrap, certificate, exact_readout, readout_action, supplied_fixture,
+    bootstrap, certificate, coefficient_relaxation_obstruction, exact_readout,
+    factor_rows, noise_action_lower, readout_action, supplied_fixture,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import (
@@ -95,11 +96,46 @@ class HistoricalReadoutTests(unittest.TestCase):
     def test_nuisance_cross_correlation_is_not_replaced_by_diagonal(self):
         events = supplied_fixture()
         upper = identity(15)
-        upper[9][12] = upper[12][9] = F(1, 2)
+        # The factor reader uses the y-acceleration row in this fixture.
+        upper[10][13] = upper[13][10] = F(1, 2)
         full = readout_action(events, exact_readout(events), upper)['action']
         diagonal = readout_action(events, exact_readout(events), identity(15))['action']
         self.assertNotEqual(full, diagonal)
         self.assertTrue(is_psd(full))
+
+    def test_factor_pivot_does_not_invert_a_vanishing_first_component(self):
+        for small in (F(0), F(1, 10**60)):
+            rows = [[small, 0], [1, 0], [0, 1]]
+            self.assertEqual(factor_rows(rows), [1, 2])
+
+    def test_all_row_noise_lower_is_necessary_but_not_an_action_upper_bound(self):
+        events = supplied_fixture()
+        action = readout_action(events, exact_readout(events), identity(15))['action']
+        lower = noise_action_lower(events)
+        self.assertTrue(is_psd(add(action, lower, F(-1))))
+        self.assertFalse(is_psd(add(lower, action, F(-1))))
+
+    def test_exact_noise_enclosure_preserves_correlated_columns(self):
+        from tools.stability.ou3_theorem.ag_readout_source_diagnostic import rational_upper_factor
+        q = [[F(2), F(1, 3)], [F(1, 3), F(1)]]
+        u = rational_upper_factor(q)
+        self.assertTrue(u[1][0])
+        enclosed = matmul(u, transpose(u))
+        self.assertTrue(is_psd(add(enclosed, q, F(-1))))
+        with self.assertRaises(ValueError):
+            rational_upper_factor([[1, 2], [2, 1]])
+        singular = [[F(1), F(1)], [F(1), F(1)]]
+        factor = rational_upper_factor(singular)
+        self.assertEqual(matmul(factor, transpose(factor)), singular)
+
+    def test_coefficient_relaxation_is_singular_but_not_a_reachable_counterexample(self):
+        report = coefficient_relaxation_obstruction()
+        self.assertLess(F(report['nominal_aw_norm_squared']), F('8.8')**2)
+        self.assertEqual(report['full_AG_array_rank'], 4)
+        self.assertEqual(report['null_Rayleigh_margin'], '-1')
+        self.assertFalse(report['LO_equals_terminal_AG_map_possible'])
+        self.assertFalse(report['nominal_mean_recursion_satisfied'])
+        self.assertFalse(report['shipping_counterexample'])
 
     def test_unreachable_prior_family_does_not_refute_shipping(self):
         report = certificate()

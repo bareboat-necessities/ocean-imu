@@ -74,9 +74,25 @@ supplied exact/80-digit examples are not shipping reachability evidence.
 The exact failed relaxation is `D_AG,AG >= 10^-6 I6` for unbounded priors:
 at `diag(10^12 I6,I15)` the Rayleigh margin is at most `-9.99999e-7`.
 No reachability or magnetic-service membership is claimed for that prior.
-Next test coefficient-dependent historical readers against actual varying
-source windows and enclose their 6x6 action; do not refine the invalid
+Carried quiet and moving windows now have coefficient-dependent factor readers;
+the quiet exported coefficients have an exact full-matrix action enclosure.
+These checks are not source-uniform. Independent nominal coefficient ranges
+fail the all-row Schur test at rank four, with exact Rayleigh margin -1
+against I6. See the source-shaped annihilator in `ou3-ag-readout-proof.md`.
+The missing argument must use the carried nominal mean/innovation/reset
+recursion to exclude sustained near-null behavior; do not refine the invalid
 forward-only unrestricted-prior tactic or promote a finite replay.
+
+The inherited BA covariance bound independently gives a projection guard:
+pre-projection sqrt(V)<=6 makes the literal projection inactive, with
+.02483339501604595 m/s^2 interior slack. Every-prefix retention and entry
+into that guard remain open. The finite-angle reset defect is still present.
+
+Reproduce the optional source experiment with
+`python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-action.json`
+(`--eigen` selects an alternate Eigen path). It compiles an observer and an
+untapped control, checks exact terminal parity, runs 80-digit diagnostics and
+a rational exported-word action check. This is not float32 totality.
 
 Specifically, at pre-prediction roots, establish a single positive-definite
 matrix J with `D_word[AG,AG] >= J` uniformly over admitted histories, where AG

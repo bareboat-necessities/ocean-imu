@@ -224,6 +224,18 @@ obligation. The H18--A21 release preserves nominal bias states but applies
 its covariance floor. Any frame change must transport both physical bias and
 its estimate before the next prediction.
 
+The inherited regular-profile marginal bound
+$P_{b_ab_a}\preceq I_3/1600$ gives a stronger local guard without dropping
+covariance cross terms: covariance Cauchy--Schwarz yields
+$\|e_{b_a}\|\le\sqrt V/40$. Thus projection is inactive at a finite
+pre-projection boundary whenever
+\begin{equation}
+ \sqrt V<40(0.4-B_a)=6.993335800641838.
+\end{equation}
+At $\sqrt V\le6$ the interior slack is
+$0.02483339501604595\,\mathrm{m/s^2}$ and the projection defect is exactly
+zero. This is a prefix guard, not an invariant-region or entry certificate.
+
 Physical bias is unchanged by prediction mode, correction, hold/release, or
 projection. The shipping gyro-bias mean predictor is identity, giving
 $e_{b_g,k+1}^{-}=e_{b_g,k}^{+}+w_{g,k}$ before its actual correction.
@@ -975,6 +987,34 @@ This is a conditional route to the same six-column premise. Uniform
 readout rank and action under the actual varying coefficients and resets
 remain unproved. Exact root cancellation cannot be replaced by a small
 numerical residual without a separate root covariance bound.
+
+A first-independent-row reader can amplify a vanishing magnetic component
+despite full-array rank; the exact checker instead uses largest-residual
+factor pivots over all rows. Independently of that selection, every reader
+satisfies the necessary full-matrix noise-action condition
+\begin{equation}
+ B_W\succeq T_h I_W^{-1}T_h^{\mathsf T},\qquad
+ I_W=\sum_i O_i^{\mathsf T}R_i^{-1}O_i.
+\end{equation}
+It follows by completing the square in $LRL^{\mathsf T}$, with rank-at-most-
+three contributions to $I_W$. It is not an information-lifting argument.
+The independent-coefficient relaxation fails exactly: take
+$B=(45,0,45)$ and $\hat a_w=(-g/2,0,g/2)$. Although
+$\|\hat a_w\|=g/\sqrt2<8.8$, nominal force is parallel to the field.
+With zero corrected rate and identity resets the AG array has rank four;
+the attitude and bias columns along $(1,0,1)$ are annihilated.
+The endpoint map preserves them, so \eqref{eq:ag-reader} is impossible.
+This coefficient family is not proved reachable or magnetically serviced.
+The missing uniform argument must use the carried nominal mean, innovation
+and reset recursion to exclude sustained near-null transport.
+
+Native observer/control audits carry quiet and moving samples through
+construction, refinement and release with identical terminal state and
+covariance. Their 80-digit action maxima range from approximately 1199.061
+to 1450.253. An exact rational factor enclosure verifies the exported quiet
+word's full action matrix, including covariance sync. Finite replay and
+exported floating coefficients do not enclose every admitted history or
+establish float32 transfer; all uniform stability claims remain open.
 
 \subsection{Stationary A21 detectability}
 Quiet water does not by itself create an unobservable nondecaying mode in

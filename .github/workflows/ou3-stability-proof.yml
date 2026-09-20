@@ -41,7 +41,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install factor algebra dependencies
-        run: python3 -m pip install numpy scipy
+        run: python3 -m pip install numpy scipy mpmath
       - name: Compile theorem tooling
         run: python3 -m py_compile tools/stability/ou3_theorem/*.py
       - name: Execute rational LIN path certificate
@@ -83,10 +83,14 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test sampled_capture-test
       - name: Run literal shipping regressions
         run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test
+      - name: Audit carried source readout without promotion
+        run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-readout.json
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
           name: ou3-stability-evidence
-          path: /tmp/ou3-stability-evidence.json
+          path: |
+            /tmp/ou3-stability-evidence.json
+            /tmp/ou3-source-readout.json
           retention-days: 7
           if-no-files-found: error

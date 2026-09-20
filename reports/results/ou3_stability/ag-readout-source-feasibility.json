@@ -1,0 +1,186 @@
+{
+  "all_time_magnetic_service_certified": false,
+  "cases": [
+    {
+      "AG_action_lambda_max": "1199.0609667818814592953",
+      "AG_action_minus_literal_covariance_lambda_min": "0.0000530817757579292879470037",
+      "AG_root_residual_diagnostic": "2.20391090224091631615053e-80",
+      "active_step": 24064,
+      "applied_rows": 225,
+      "events": 217,
+      "exact_exported_word_enclosure": {
+        "AG_root_cancelled_exactly": true,
+        "action_ceiling": [
+          [
+            "1186821/1000",
+            "0",
+            "0",
+            "-120577/1000",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1/100",
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "1/100",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "-120577/1000",
+            "0",
+            "0",
+            "1533/125",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "0",
+            "13/1000",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "13/1000"
+          ]
+        ],
+        "correlated_Q_R_enclosed_by_rational_factors": true,
+        "exported_coefficients_sha256": "c8dd7bf1c27b487fbf42c84d8ea7e33a80ad27c1c4ad67624562f58ebba2349d",
+        "full_matrix_action_ceiling_verified": true,
+        "literal_root_nuisance_comparison_verified": true,
+        "literal_terminal_AG_covariance_below_ceiling": true,
+        "qualification": "OU3_EXPORTED_WORD_ACTION_ENCLOSURE_V1",
+        "real_arithmetic_shipping_trajectory_enclosed": false,
+        "scope": "one exported float coefficient sequence interpreted as exact rationals",
+        "source_uniform_verified": false,
+        "theorem_closed": false
+      },
+      "exported_Q_lambda_min": "3.8760376117203192925657e-25",
+      "exported_sync_asymmetry_exact": "0",
+      "factor_selected_rows": [
+        223,
+        224,
+        28,
+        29,
+        220,
+        1
+      ],
+      "input_profile": "0",
+      "literal_terminal_parity": true,
+      "live_step": 18051,
+      "maximum_injection_rad": "0.0",
+      "raw_AG_array_sigma_min": "7.1517206581093855794008",
+      "refined_step": 24064,
+      "rigorous_enclosure": false,
+      "source_uniform_verified": false
+    },
+    {
+      "AG_action_lambda_max": "1199.06222140196348559817",
+      "AG_action_minus_literal_covariance_lambda_min": "0.0000530817882176614140999911",
+      "AG_root_residual_diagnostic": "2.45869600022635386275059e-80",
+      "active_step": 24064,
+      "applied_rows": 225,
+      "events": 217,
+      "exported_Q_lambda_min": "3.8760376117203192925657e-25",
+      "exported_sync_asymmetry_exact": "0",
+      "factor_selected_rows": [
+        224,
+        223,
+        29,
+        28,
+        220,
+        1
+      ],
+      "input_profile": "0.001",
+      "literal_terminal_parity": true,
+      "live_step": 18051,
+      "maximum_injection_rad": "5.52129730824191256033373e-11",
+      "raw_AG_array_sigma_min": "7.15172065810938557990398",
+      "refined_step": 24064,
+      "rigorous_enclosure": false,
+      "source_uniform_verified": false
+    },
+    {
+      "AG_action_lambda_max": "1199.06096678427959106275",
+      "AG_action_minus_literal_covariance_lambda_min": "0.0000530817757579292879470037",
+      "AG_root_residual_diagnostic": "1.49899666080012950241163e-80",
+      "active_step": 24064,
+      "applied_rows": 225,
+      "events": 217,
+      "exported_Q_lambda_min": "3.8760376117203192925657e-25",
+      "exported_sync_asymmetry_exact": "0",
+      "factor_selected_rows": [
+        224,
+        223,
+        29,
+        28,
+        220,
+        1
+      ],
+      "input_profile": "0.000001",
+      "literal_terminal_parity": true,
+      "live_step": 18051,
+      "maximum_injection_rad": "5.41552784875335563308241e-14",
+      "raw_AG_array_sigma_min": "7.1517206581093855794008",
+      "refined_step": 24064,
+      "rigorous_enclosure": false,
+      "source_uniform_verified": false
+    },
+    {
+      "AG_action_lambda_max": "1450.25286111171149928534",
+      "AG_action_minus_literal_covariance_lambda_min": "0.0000667085936421980337740127",
+      "AG_root_residual_diagnostic": "3.33702049455332223581893e-80",
+      "active_step": 24016,
+      "applied_rows": 228,
+      "events": 219,
+      "exact_exported_word_enclosure": {
+        "failed_condition": "exported sync Q must equal Q^T before PSD factor enclosure",
+        "maximum_asymmetry_exact": "1/562949953421312",
+        "requires": "enclose the complete float addition/symmetrization operation",
+        "source_uniform_verified": false,
+        "verified": false
+      },
+      "exported_Q_lambda_min": "7.3446428709622186857148e-25",
+      "exported_sync_asymmetry_exact": "1/562949953421312",
+      "factor_selected_rows": [
+        226,
+        227,
+        25,
+        26,
+        223,
+        1
+      ],
+      "input_profile": "wave",
+      "literal_terminal_parity": true,
+      "live_step": 6368,
+      "maximum_injection_rad": "0.00000365716816678833804792225",
+      "raw_AG_array_sigma_min": "6.27822399715465130649022",
+      "refined_step": 24016,
+      "rigorous_enclosure": false,
+      "source_uniform_verified": false
+    }
+  ],
+  "decimal_digits": 80,
+  "profile": "construction through wrapper release; 225 to 225.32 s",
+  "qualification": "OU3_CARRIED_SOURCE_READOUT_DIAGNOSTIC_V1",
+  "shipping_header_sha256": "e38e4caaafa68cc52bd4d35bdeffc652588a312e3757dd734ddae9e3d4a21fd2",
+  "source_uniform_verified": false,
+  "theorem_closed": false,
+  "wave_truth": "p_z=.4 sin(.6t), roll=.02 sin(.5t), B_world=(60,0,30); zero physical biases"
+}

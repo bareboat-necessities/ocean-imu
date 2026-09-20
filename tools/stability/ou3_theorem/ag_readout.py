@@ -61,18 +61,41 @@ def observation_array(events, n=21, ag=6):
     """
     if not 0 < ag < n:
         raise ValueError('both AG and nuisance coordinates required')
-    t = identity(n)
+    t = [row[:ag] for row in identity(n)]
     rows = []
     for kind, b, _ in _events(events, n):
         if kind == 'correction':
-            rows.extend(row[:ag] for row in matmul(b, t))
+            rows.extend(matmul(b, t))
         else:
             t = matmul(b, t)
-    return rows, [row[:ag] for row in t[:ag]]
+    return rows, t[:ag]
+
+
+def factor_rows(rows):
+    """Exact row-pivoted orthogonalization; no normal equations or tiny pivots.
+
+    Select the largest remaining squared residual at each step. The old
+    first-independent-row rule can invert a vanishing component even when
+    the complete array remains well conditioned. This rule considers every
+    available row. Its action still requires a separate uniform certificate.
+    """
+    residuals = _matrix(rows)
+    selected = []
+    for _ in range(len(residuals[0])):
+        norms = [sum(x*x for x in row) for row in residuals]
+        pivot = max(range(len(norms)), key=norms.__getitem__)
+        if not norms[pivot]:
+            break
+        selected.append(pivot)
+        v = residuals[pivot][:]
+        for i, row in enumerate(residuals):
+            scale = sum(x*y for x, y in zip(row, v))/norms[pivot]
+            residuals[i] = [x-scale*y for x, y in zip(row, v)]
+    return selected
 
 
 def exact_readout(events, n=21, ag=6):
-    """Select independent rows and solve only the ag-by-ag system exactly.
+    """Select rows by factor pivoting and solve only the ag-by-ag system exactly.
 
     This is a witness constructor for a supplied word, not a uniform rank
     decision. No numerical rank threshold or normal-equation inversion.
@@ -82,7 +105,7 @@ def exact_readout(events, n=21, ag=6):
     rows, endpoint = observation_array(events, n, ag)
     if not rows:
         raise ValueError('no applied observations')
-    selected = _pivots(transpose(rows))
+    selected = factor_rows(rows)
     if len(selected) != ag:
         raise ValueError('raw AG observation array lacks full column rank')
     reader = _zero(ag, len(rows))
@@ -91,6 +114,27 @@ def exact_readout(events, n=21, ag=6):
         for j, index in enumerate(selected):
             reader[i][index] = reduced[i][j]
     return reader
+
+
+def noise_action_lower(events, n=21, ag=6):
+    """All-row necessary matrix test, independent of a selected minor.
+
+    Every exact reader's action is >= T (sum O_i' R_i^-1 O_i)^-1 T'.
+    Accumulate rank-at-most-three terms and solve only six coordinates. This
+    is a lower bound on readout noise, NOT a covariance/information lifting.
+    It neither upper-bounds the nuisance/process action nor certifies histories.
+    """
+    rows, terminal = observation_array(events, n, ag)
+    gram, offset = _zero(ag, ag), 0
+    for kind, h, v in _events(events, n):
+        if kind != 'correction':
+            continue
+        block = rows[offset:offset+len(h)]
+        offset += len(h)
+        ri = inverse(matmul(v, transpose(v)))
+        gram = add(gram, matmul(matmul(transpose(block), ri), block))
+    ldlt(gram)
+    return matmul(matmul(terminal, inverse(gram)), transpose(terminal))
 
 
 def readout_action(events, reader, nuisance_upper, ag=6):
@@ -203,6 +247,57 @@ def supplied_fixture():
     return events
 
 
+def coefficient_relaxation_obstruction():
+    """Source-shaped singular coefficient family, NOT an admitted history.
+
+    Even bounding nominal AW by the physical acceleration ceiling would not
+    repair this coefficient-only relaxation. The missing premise is its
+    compatibility with the carried nominal mean/innovation/reset recursion.
+    """
+    g = F('9.80665')
+    field = [F(45), F(0), F(45)]
+    aw = [-g/2, F(0), g/2]
+    force = [-g/2, F(0), -g/2]
+    def observation(v, acc=False):
+        x, y, z = v
+        h = _zero(3, 21)
+        h[0][:3], h[1][:3], h[2][:3] = [0, z, -y], [-z, 0, x], [y, -x, 0]
+        if acc:
+            for i in range(3):
+                h[i][15+i] = h[i][18+i] = F(1)
+        return h
+    transition = identity(21)
+    for i in range(3):
+        transition[i][3+i] = F(1, 25)
+    # Only the AG observation array is at issue: nuisance prediction/process
+    # coefficients do not enter these root columns for the regular source
+    # block structure. Identity on nuisance is not a claimed shipping step.
+    events = []
+    for _ in range(2):
+        events.extend([
+            {'kind': 'prediction', 'F': transition, 'U': [[0] for _ in range(21)]},
+            {'kind': 'correction', 'H': observation(force, True), 'V': identity(3)},
+            {'kind': 'correction', 'H': observation(field), 'V': identity(3)},
+            {'kind': 'reset', 'G': identity(21)},
+        ])
+    rows, endpoint = observation_array(events)
+    null = [[F(i in (0, 2)), F(i in (3, 5))] for i in range(6)]
+    if any(any(row) for row in matmul(rows, null)):
+        raise ArithmeticError('claimed annihilator is not exact')
+    if len(factor_rows(rows)) != 4 or not any(any(row) for row in matmul(endpoint, null)):
+        raise ArithmeticError('coefficient relaxation obstruction failed')
+    return {'qualification': 'OU3_NOMINAL_COEFFICIENT_RELAXATION_OBSTRUCTION_V1',
+            'nominal_aw': list(map(str, aw)), 'nominal_force': list(map(str, force)),
+            'magnetic_field': list(map(str, field)), 'nominal_aw_norm_squared': str(g*g/2),
+            'full_AG_array_rank': 4, 'AG_null_columns': encoded(null),
+            'candidate_Gram_floor': 'I6', 'null_Rayleigh_margin': '-1',
+            'LO_equals_terminal_AG_map_possible': False,
+            'nominal_mean_recursion_satisfied': False,
+            'same_history_magnetic_service_certified': False,
+            'shipping_counterexample': False,
+            'invalidated_method': 'independent coefficient ranges without nominal-history linkage'}
+
+
 def certificate():
     events, upper = supplied_fixture(), identity(15)
     reader = exact_readout(events)
@@ -216,6 +311,8 @@ def certificate():
             'conditional_AG_loss_lower': encoded(step['AG_loss_lower']),
             'conditional_delta': str(step['delta']),
             'rank_three_measurement_rows': True,
+            'reader_selection': 'exact largest-residual factor pivot; all observation rows considered',
+            'coefficient_relaxation_obstruction': coefficient_relaxation_obstruction(),
             'prior_scale_obstruction': {
                 'family': 'P0 = diag(t I6, I15), t > 0',
                 'necessary_AG_loss_ceiling': '(D_word)_hh <= I6/t',

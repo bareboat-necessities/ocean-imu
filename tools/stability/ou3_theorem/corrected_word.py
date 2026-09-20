@@ -108,6 +108,32 @@ def shipping_reset_remainder_bound(injection_norm, error_difference_norm, chart_
     return base+2*defect/(2-r-defect)
 
 
+def projection_storage_guard():
+    """Source BA marginal turns the existing Euclidean guard into a V guard.
+
+    At the literal pre-projection boundary, |e_ba| <= sqrt(P_ba,ba V)
+    <= sqrt(V)/40. This bound retains every cross covariance and uses the
+    inherited raw BA marginal, not the five-block Cauchy comparison. The
+    guard must hold at every such prefix; it is not an invariance assertion.
+    """
+    import json
+    from pathlib import Path
+    constants = json.loads(Path(__file__).with_name('constants.json').read_text())
+    # The contract stores physical and estimator bias bounds separately.
+    physical = F(str(constants['imu_bias']['B_a_mps2']))
+    radius = F('0.4')
+    gap = radius-physical
+    if gap <= 0:
+        raise ValueError('projection interior is empty')
+    return {'physical_bias_bound': str(physical), 'literal_projection_radius': str(radius),
+            'BA_marginal_variance_ceiling': '1/1600',
+            'sqrt_V_strict_ceiling': str(40*gap),
+            'certified_test_radius': '6', 'remaining_bias_distance_at_test_radius': str(gap-F(6, 40)),
+            'pre_projection_prefix_required': True,
+            'projection_defect_under_guard': '0',
+            'prefix_retention_proved': False, 'explicit_retained_region_proved': False}
+
+
 def coupled_example():
     """Exact adversarial cross-covariance check, not a shipping history."""
     p = [[F(100), F(0), F(10)], [F(0), F(2), F(0)], [F(10), F(0), F(3)]]
@@ -149,6 +175,7 @@ def certificate():
         'actual_gain_finite_error_word_composition_proved': True,
         'joint_prediction_measurement_input_action_proved': True,
         'reset_comparison': 'exact finite-angle log reset, with normalized source small-angle polynomial defect',
+        'projection_storage_guard': projection_storage_guard(),
         'independent_filter_trajectories_required': False,
         'six_column_source_uniform_loss_verified': False,
         'full_21_covariance_upper_verified': False,

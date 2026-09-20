@@ -20,6 +20,8 @@ class TheoremStatusTests(unittest.TestCase):
         self.assertTrue(o["complete_word_covariance_energy_identity"])
         self.assertTrue(o["historical_AG_readout_covariance_implication"])
         self.assertFalse(o["uniform_historical_AG_readout_action"])
+        self.assertTrue(o["source_covariance_projection_guard"])
+        self.assertFalse(o["certified_tail_prefix_retention"])
         for key in ("full_state_magnetic_information_lifting",
                     "constructive_full_A21_mu_rho_enclosure",
                     "source_uniform_A21_linear_dissipativity",
