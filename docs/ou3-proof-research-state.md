@@ -157,6 +157,27 @@ rational factor checks and exact 40000-prefix force audit pass. The source
 estimator and physical constants are unchanged. All six workflows passed at
 0cc50ec5; CI for the new proof head is recorded separately in PR metadata.
 
+## Signed temporal construction now fixed
+
+The continuation no longer uses an independent nominal box or an unsigned
+innovation-energy inequality.  The active construction substitutes the
+literal signed accelerometer and magnetic innovations into the same physical
+history, applies the proved nonuniform acceleration integral identity before
+absolute values, and telescopes the actual BG/AW mean recursion with its
+chronological gains, OU transports, resets and roundoff.  Sustained nominal
+force/field degeneracy and gyro aliasing are therefore reduced to two
+same-history signed margins, Delta_col and Delta_gyr.  A positive uniform
+lower bound for both makes the remaining coefficient family separated from
+rank loss; a finite pivot-chart cover then makes the historical reader action
+continuous and gives B_*=sup lambda_max(B_W)<infinity.
+
+This is a construction of the required implication, not theorem closure.  The
+outward source-uniform enclosure of Delta_col, Delta_gyr and the resulting
+pivot-chart action supremum has not yet been executed.  In particular the
+finite 400--600 s audit is not substituted for either infimum.  Shipping
+behavior, physical assumptions, quality gates and the single proof path are
+unchanged.
+
 ## Current limiter
 
 The six AG columns must be bounded for the actual nominal corrected transport,
