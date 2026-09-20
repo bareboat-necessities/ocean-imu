@@ -5,6 +5,8 @@ the end-to-end theorem.
 
 - `lin-matrix-certificate.json`: full rational LIN endpoint precision and
   covariance comparison, plus a raw neutral S normalization bound.
+- `root-covariance-certificate.json`: positive joint 21-state lower covariance
+  from a convex combination at the same post-prediction root.
 - `word-energy-audit.json`: exact counterexample to restricted-service lifting.
 - `block-factor-status.json`: assembly status with no promoted full-state rho.
 - `theorem-status.json`: controlling obligations and current next step.

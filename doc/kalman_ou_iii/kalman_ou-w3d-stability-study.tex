@@ -411,6 +411,40 @@ A determinant/adjugate bound encloses all these times with rational arithmetic.
 This is a raw translation comparison. It is not $D_W$ in
 \eqref{eq:word-energy} and is not assigned to $\rho_0$.
 
+\subsection{Joint post-prediction lower covariance}
+At the same endpoint, choose the root after prediction and before the first
+current-sample correction. The fresh process covariance gives
+\begin{equation}
+ P^-\succeq\operatorname{diag}(q_{AG}I_6,0,q_{BA}I_3).
+\end{equation}
+In attitude/gyro scales $(1,0.02)$, the isotropic gyro term and the
+attitude/bias cross-term bound give
+\begin{equation}
+ q_{AG}=\min\{\sigma_g^2h_{\min},q_gh_{\min}/s_g^2\}
+                  -q_gh_{\max}^2/s_g>0.
+\end{equation}
+The integrated rotation has norm at most $h^2/2$; the looser $h^2$ bound
+also covers the small-rate polynomial branch. The positive Simpson
+contribution to the attitude diagonal is retained. For active BA, in unit
+bias coordinates,
+\begin{equation}
+ q_{BA}\ge {q_ah_{\min}\over1+2h_{\min}/\tau_{b,e}}>0,
+\end{equation}
+using $e^{-x}\le(1+x)^{-1}$. Combining this full Loewner comparison with
+\eqref{eq:lin-path-factor} by equal convex weights yields
+\begin{equation}
+ \boxed{P^-\succeq\tfrac12\operatorname{diag}
+       (q_{AG}I_6,A^{-1}\otimes I_3,q_{BA}I_3)\succ0.}
+ \label{eq:joint-root-floor}
+\end{equation}
+Both comparisons concern the same carried covariance. No marginal block is
+substituted for a full-state inequality. The resulting AG and BA diagonal
+bounds are $4.9991\times10^{-10}$ and at least
+$4.99999\times10^{-10}$, respectively; the LIN matrix is retained in full.
+The bound recurs at regular A21 prediction roots after a complete 16-s
+A21 window. A uniform upper covariance bound, every-prefix retention, and
+float32 transfer remain separate obligations.
+
 \section{Finite-error regional theorem obligations}
 After \eqref{eq:full-loss} is certified uniformly, let the complete nonlinear
 word remainder have storage-norm Lipschitz bound $\eta(r)$ on a retained
@@ -471,6 +505,9 @@ $B_g$ & 0.020 & rad/s\\
 $D_g$ & $1.0\times10^{-5}$ & rad/s$^2$\\
 $R_b$ (estimate) & 0.4 & m/s$^2$\\
 $\tau_{b,e}$ (estimate) & 5000 & s\\
+$\sigma_g$ (process) & 0.00135 & rad/$\sqrt{\mathrm{s}}$\\
+$q_g$ (process) & $10^{-10}$ & rad$^2$/s$^3$\\
+$q_a$ (process) & $2.5\times10^{-7}$ & m$^2$/s$^5$\\
 $T_M$ & 1.0 & s\\
 $\mu_M$ & 1.0 & normalized\\
 $\norm B$ & 20--75 & $\mu$T\\
@@ -487,7 +524,8 @@ constants likewise remain to be certified uniformly from actually applied
 shipping sensitivities.
 
 \section{Evidence boundary}
-Exact rational checks establish the LIN matrix action, the complete linear
+Exact rational checks establish the LIN matrix action, the joint
+post-prediction lower covariance, the complete linear
 energy identity, and the failure of restricted-information lifting. These
 results do not establish a source-uniform full-state contraction factor.
 Finite capture, magnetic-reference completion, H18 and release retention,

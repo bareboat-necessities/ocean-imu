@@ -3,12 +3,13 @@
   "ell_LIN": "0.000001196007314542406680",
   "float32_whole_word_supply_closed": false,
   "full_word_energy_algebra_verified": true,
+  "joint_root_covariance_verified": true,
   "lin_matrix_verified": true,
   "lin_path_verified": true,
   "mu_cov": null,
   "open_obligations": [
     "source-uniform full transported loss including cross-coordinate cancellation",
-    "recurring AG and BA factors through literal corrections and resets",
+    "uniform upper covariance and every-prefix bounds through corrections/resets",
     "complete finite-error projection/reset/tuner composition",
     "float32 supply, coercivity and every-prefix retention"
   ],

@@ -18,6 +18,14 @@ bound default profile. The explicit comparison is
 S-information normalization is at least 3.59e-11 over the event-time boxes.
 This number is not a full-state rho.
 
+The constructive joint lower covariance is now closed at regular A21
+post-prediction roots after the 16-s window. Combine P>=diag(q_AG I,0,q_BA I)
+from fresh process injection with P>=E_LIN A^-1 E_LIN^T using equal convex
+weights. The resulting full 21-state matrix is strictly positive without
+discarding cross covariance. AG is 4.9991e-10; BA is at least 4.99999e-10;
+the LIN block remains the matrix A^-1/2. Uniform upper bounds, prefix
+retention and float32 transfer remain open.
+
 The earlier reported mu_N and rho0 were overpromoted: a restricted magnetic
 heading/bias Gramian cannot be lifted to independent full-state heading
 information. The exact counterexample in `word_energy.py` has restricted
@@ -35,9 +43,10 @@ attitude/gyro kinematic map.
 
 1. Bound full loss and its cross blocks, or an equivalent joint full-state
    path-action comparison. Include stable a_w/BA directions.
-2. Derive recurring AG/BA factors through the literal correction/reset cadence.
-   A smallest LDL pivot is not an eigenvalue floor; isolated marginal floors
-   cannot be added into a block-diagonal full-state lower bound.
+2. Use the new joint root lower bound and certify uniform upper covariance
+   and every-prefix bounds through literal correction/reset cadence. A
+   smallest LDL pivot is not an eigenvalue floor; the new lower bound uses
+   two full Loewner comparisons and their convex combination.
 3. Close the nonlinear projection/reset/tuner remainder and explicit radius.
 4. Compose float32 supply, covariance coercivity, every-prefix retention, and
    finite capture/H18/release entry into that radius.

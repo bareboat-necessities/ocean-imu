@@ -34,7 +34,7 @@ def status_report() -> dict:
         "full_state_magnetic_information_lifting":False,
         "interval_riccati_kernel_layer":True,
         "maximal_correction_covariance_order":True,
-        "constructive_root_covariance_floor":False,
+        "constructive_root_covariance_floor":True,
         "constructive_full_A21_mu_rho_enclosure":False,
         "explicit_A21_nonlinear_radius":False,
         "whole_word_float32_supply_composition":True,
@@ -61,5 +61,5 @@ def status_report() -> dict:
         "obligations":obligations,
         "theorem_closed":all(obligations.values()),
         "regional_practical_stability_claimed":False,
-        "next_controlling_obligation":"Certify the full transported A21 energy-loss matrix including cross-coordinate cancellation, with recurring AG/BA/LIN factors and every-prefix covariance coercivity. Restricted heading/bias service cannot be lifted to independent full-state heading information; the former mu_N and rho0 promotion is withdrawn. The exact matrix LIN endpoint-action certificate is positive, and raw neutral S normalization is at least 3.59e-11, but neither is a full-state word contraction. Finite-error radius, float32 supply, capture and retention remain open.",
+        "next_controlling_obligation":"Certify the full transported A21 energy-loss matrix including cross-coordinate cancellation, with a uniform covariance upper bound and every-prefix retention. The joint post-prediction lower covariance now follows from the convex combination of the corrected LIN path factor and fresh AG/BA process bounds. Restricted heading/bias service cannot be lifted to independent full-state heading information; the former mu_N and rho0 promotion is withdrawn. The exact matrix LIN endpoint-action certificate is positive, and raw neutral S normalization is at least 3.59e-11, but neither is a full-state word contraction. Finite-error radius, float32 supply, capture and retention remain open.",
     }

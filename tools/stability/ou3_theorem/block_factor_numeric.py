@@ -13,17 +13,20 @@ if __package__ in (None, ''):
 from tools.stability.ou3_theorem.lin_path_certificate import certificate as lin_certificate
 from tools.stability.ou3_theorem.lin_matrix_certificate import certificate as matrix_certificate
 from tools.stability.ou3_theorem.word_energy import restricted_service_counterexample
+from tools.stability.ou3_theorem.root_covariance_certificate import certificate as root_certificate
 
 
 def certificate() -> dict:
     lin=lin_certificate()
     matrix=matrix_certificate()
     audit=restricted_service_counterexample()
+    root=root_certificate()
     return {
         'qualification':'OU3_A21_BLOCK_FACTOR_ASSEMBLY_V2',
         'verified':False, 'mu_cov':None, 'rho0':None,
         'lin_path_verified':lin['verified'],
         'lin_matrix_verified':matrix['verified'],
+        'joint_root_covariance_verified':root['verified'],
         'ell_LIN':lin['factor_floor'],
         'raw_translation_normalization_lower':matrix['normalization_raw_translation_lower'],
         'full_word_energy_algebra_verified':audit['verified'],
@@ -31,7 +34,7 @@ def certificate() -> dict:
         'constructive_full_A21_mu_rho_enclosure':False,
         'open_obligations':[
             'source-uniform full transported loss including cross-coordinate cancellation',
-            'recurring AG and BA factors through literal corrections and resets',
+            'uniform upper covariance and every-prefix bounds through corrections/resets',
             'complete finite-error projection/reset/tuner composition',
             'float32 supply, coercivity and every-prefix retention',
         ],
@@ -43,7 +46,7 @@ def main() -> int:
     report=certificate()
     print(json.dumps(report,indent=2,sort_keys=True))
     # This command reproduces partial evidence. It is not a theorem gate.
-    return 0 if report['lin_matrix_verified'] and report['full_word_energy_algebra_verified'] else 1
+    return 0 if report['lin_matrix_verified'] and report['joint_root_covariance_verified'] and report['full_word_energy_algebra_verified'] else 1
 
 
 if __name__=='__main__':

@@ -53,6 +53,26 @@ verification, not source-uniform evidence.
   bound or a full A21 rho. A 70-digit feasibility calculation preceded the
   rational enclosure; nominal event times gave approximately 4.41917e-11.
 
+## Joint root covariance closure
+
+At a regular A21 post-prediction root, the literal fresh process injection gives
+`P >= X=diag(q_AG I_6,0,q_BA I_3)`. The preceding corrected LIN path action gives
+`P >= Y=diag(0,A^-1 tensor I_3,0)` at that same root. Convexity, not addition of
+marginal floors, gives `P >= (X+Y)/2 > 0` in all 21 coordinates.
+
+`root_covariance_certificate.py` proves exact rational fresh-process bounds
+using deployed gyro density .00135 (not the old .00157 simulation probe),
+gyro-bias diffusion 1e-10, active BA diffusion 2.5e-7 and prior tau 5000 s.
+The combined AG diagonal is 4.9991e-10; BA is at least 4.99999e-10; the full
+LIN block is A^-1/2. A 70-digit non-promoting check preceded the exact factor
+certificate and gave a LIN eigenminimum about 4.15920e-11. Exact LDL, not that
+floating spectrum, verifies the final matrix. No global scalar floor is used
+to replace its block structure or to infer rho.
+
+This closes the constructive real-arithmetic recurring lower covariance at
+post-prediction roots after the 16-s LIN window. It neither supplies a uniform
+upper covariance nor proves the full transported loss or prefix retention.
+
 ## Current limiter
 
 The former mu_N>=2.04e-3 and matched-coordinate rho0 promotion relied on lifting
@@ -66,13 +86,16 @@ kinematic theta_0+C_k b_g used by the former long-word accumulation argument.
 Positive information on a neutral restriction does not by itself supply the
 full 21-state finite-word margin for the stable a_w/BA modes.
 
-Recurring AG/BA factors through applied corrections and resets are not
-certified by one-second process probes or a scalar bias iteration. In
+One-second process probes and a scalar bias iteration do not certify
+recurring AG/BA factors through applied corrections and resets. The joint
+root certificate above instead uses fresh process bounds and the convex
+combination at a common post-prediction root. In
 particular, an LDL pivot is not a singular/eigenvalue floor. The additive
 single-prediction gamma=1 lemma remains valid for factors of that actual Q;
-it cannot substitute a corrected multi-step marginal factor for Q.
+the corrected LIN factor enters through the separate full comparison and
+convex combination, not by substitution for Q.
 
-Consequently full covariance coercivity, full transported loss, explicit
+Consequently a uniform upper covariance, full transported loss, explicit
 nonlinear radius, float32 practical radius, finite capture, H18/release
 retention and every-prefix tail retention remain open. The theorem is not
 claimed. Physical qualification and recurring applied service remain required.

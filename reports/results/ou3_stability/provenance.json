@@ -62,13 +62,13 @@
     "block_factor_next": "BA factor uses monotone active-OU prediction/correction recurrence from literal release floor. Cross-block proof starts from PSD ||Pij||<=sqrt(||Pii||||Pjj||); useful gamma requires tighter recurring cross bounds from literal Joseph/event dynamics.",
     "block_factor_source_probe": "AG uses exact scaled one-second process Gramian; BA uses literal active-OU process variance and correction recurrence; LIN source-range probe evaluates scaled controllability pivots across tau. Generic PSD cross bounds are diagnostic only and may not promote gamma.",
     "block_factor_cross_result": "Executed generic PSD cross-ceiling diagnostic gives gamma=-5.122292072e8, a conditioning failure. Root coercivity instead uses exact additive process identity P-=F P+ F'+Q with block-diagonal Q: certified Q factors imply root block metric gamma=1 independent of carried cross covariance. Cross bounds remain prefix/totality obligations.",
-    "block_factor_root_certificate": "At each post-prediction root, factors of the actual block-diagonal Q imply Pminus >= Q_factor with gamma=1. Numeric recurring factors through corrections/resets and a uniform upper covariance bound remain separate open obligations.",
+    "block_factor_root_certificate": "Exact rational joint lower covariance is closed at regular A21 prediction roots after the 16-s LIN window. Full information loss, uniform upper covariance, prefixes and float32 transfer remain open.",
     "a21_complete_word_energy": "M_end^T P_end^-1 M_end + D_word = P_root^-1; D_word includes process and actual-innovation loss through the complete preceding correction/reset transport. Source-uniform D_word >= delta P_root^-1 is open.",
     "a21_restricted_service_scope": "E_hb^T J E_hb >= I_2 does not imply independent embedded full-state heading information. The exact positive-noise Kalman counterexample preserves energy in a nuisance-cancellation direction. Former full mu_N/rho0 promotion is withdrawn.",
     "a21_lin_matrix": "Zero-root Hermite endpoint paths give E_L^T P^-1 E_L <= A and the singular full-state comparison P >= E_L A^-1 E_L^T. Exact 4x4 rational action retains interleaved measurements, source polynomial defects and default PSD synchronization.",
     "a21_noise_binding": "The default SpectralMSE law has unit cadence renormalization, MIN_R_S=.15 and horizontal factors .72/.50, hence applied S std >=.075. Default S_factor=1 preserves sigma_aw>=.05. The deployed .12 accel nominal std and nonnegative inflation exceed the .05 lower bound. This bound is not universal over user setters.",
     "a21_raw_translation_normalization": "Matrix action gives at least 3.59e-11 for raw neutral S rows with actual event delays; this is not a full-state closed-loop loss or rho.",
-    "a21_factor_scope": "The additive post-prediction gamma=1 identity requires factors of that actual Q. Corrected multi-step marginal factors and raw LDL pivots cannot substitute for it; recurring AG/BA factors remain open."
+    "a21_factor_scope": "At the same post-prediction root P>=diag(q_AG I,0,q_BA I) from fresh process and P>=E_LIN A^-1 E_LIN^T from the preceding corrected path imply their equal convex combination as a positive full 21-state lower bound. No marginal factors are substituted for Q."
   },
   "operation_lemma_sources": [
     {
@@ -101,7 +101,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "e5c94f02f31a0bb63886662abb92ecb084e86123"
+      "git_blob_sha": "162a88a0e2716b57c2ad033690b9dc73942c5703"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -153,7 +153,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/block_factor_numeric.py",
-      "git_blob_sha": "f9db01c2ee80f4dfecd46f717c3e8b056972d136"
+      "git_blob_sha": "fb4b153d0e8b6b7a3ced44f16996953a9c32c3d3"
     },
     {
       "path": "tests/validation/test_ou3_lin_path_certificate.py",
@@ -174,6 +174,14 @@
     {
       "path": "tests/validation/test_ou3_tail_stability.py",
       "git_blob_sha": "dd60e1c82a1d6fde839dd5b0e79fdfc3e73ce31c"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/root_covariance_certificate.py",
+      "git_blob_sha": "d5c7c45fa8f71aecce5fbbd90d6eda1799eae104"
+    },
+    {
+      "path": "tests/validation/test_ou3_root_covariance_certificate.py",
+      "git_blob_sha": "1a364c8cbad5773fb2a8e2f0b83057b6e606cb48"
     }
   ]
 }
