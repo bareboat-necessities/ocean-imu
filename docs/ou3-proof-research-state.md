@@ -88,6 +88,12 @@ every-prefix finite-error retention remain open. The theorem is not claimed.
   build dependency failure; no shipping source was changed. CI installs
   Eigen and must validate the literal shipping regression builds.
 
+- Publication tree verification caught a dropped executable bit on
+  `build_evidence.py`; preserving mode 100755 restored exact local/remote
+  tree equality before updating the branch. A short-name fetch selected a
+  same-named tag; an explicit `refs/heads/` fetch synchronized the actual PR
+  branch. Neither failure changed proof contents or the published branch.
+
 ## Retained facts
 
 The same-history physical contracts, bounded displacement primitive, exact

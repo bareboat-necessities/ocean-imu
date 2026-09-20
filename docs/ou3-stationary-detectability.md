@@ -65,3 +65,15 @@ nonzero motion is inadequate: amplitudes can tend to zero, and no uniform
 positive margin follows from strict nonzero amplitude. A physical excitation
 condition must be derived into the required full-state inequality; assuming
 that inequality outright would conceal the outstanding proof obligation.
+
+## Startup gate check
+
+Zero input from reset leaves the `WavePeriodEstimator` proxy states and
+variances zero. Its variance guards therefore prevent `hasUsablePeriod()`
+from becoming true, so the ordinary tuner-ready handoff cannot be inferred
+from elapsed time alone. This does not prove permanent startup failure:
+`maybeHandOffToMekf_()` has a separate `ready_by_timeout` branch requiring
+`proxy_ready`, the timeout, and `mag_gravity_aligned_branch_`, without
+requiring tuner readiness. Finite capture must prove these actual predicates
+and the subsequent magnetic refinement/release. Neither the wave-period gate
+alone nor the stationary tail proposition settles that capture obligation.

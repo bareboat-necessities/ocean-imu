@@ -214,11 +214,15 @@
     },
     {
       "path": "docs/ou3-stationary-detectability.md",
-      "git_blob_sha": "ef1daae72c9df48ba16506f90966300f851ca828"
+      "git_blob_sha": "e9e709f63c7bfa54a402ad2522f3debf133f0e38"
     },
     {
       "path": "tests/validation/test_ou3_nuisance_upper_certificate.py",
       "git_blob_sha": "8a8d232fc521943a61f46db7842d8c316d241f01"
+    },
+    {
+      "path": "src/tuner/WavePeriodEstimator.h",
+      "git_blob_sha": "91783dc4ff43471df1d5a2b570b4f4068b9fddc4"
     }
   ]
 }
