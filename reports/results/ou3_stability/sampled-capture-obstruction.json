@@ -67,7 +67,18 @@
         "3/100000"
       ]
     ],
+    "first_partial_cell_determinant_lower": "1279309558789229167/156250000000000000000000000",
     "float32_all_time_service_verified": false,
+    "handoff_covariance": [
+      [
+        "7569/1000000",
+        "0"
+      ],
+      [
+        "0",
+        "1/1000000"
+      ]
+    ],
     "invariant_residual": [
       [
         "1054701132902621/133712666198765625",

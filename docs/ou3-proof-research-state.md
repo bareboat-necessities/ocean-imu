@@ -108,6 +108,12 @@ condition. The current formal premises provide neither.
   is invalid. The exact nonzero histories above falsify physical capture
   even when the nominal sampled A21 linearization is detectable. Further
   covariance tightening cannot repair that implication.
+- Audit of the service induction found that a handoff can occur inside a
+  magnetic cell. A post-mag invariant alone does not initialize that induction.
+  The exact seed covariance's first partial-cell prediction is now certified
+  below U before the first correction, for every phase; the subsequent
+  periodic induction and loss floor are unchanged. No clock coincidence is
+  assumed and no service hypothesis is weakened.
 - Local dependency recovery: `apt-get download libeigen3-dev` failed with
   `Unable to locate package`; Eigen 3.3.7 then failed C++20 rewritten equality
   candidates (return type is not bool). Official Eigen 3.4.0 in a temporary

@@ -121,9 +121,15 @@ The eight IMU predictions between magnetic updates compose exactly to
 `U=diag(.008,.00002)`, `U_prefix=diag(.009,.00003)`.
 
 The gauged handoff gives `P_theta=.087^2<.008` and `P_bg=1e-6<.00002`,
-with zero cross covariance. Exact rational LDL verifies
+with zero cross covariance. First prove `P(t)<=U` throughout the first partial magnetic cell after handoff: bound
+the prediction of `diag(.087^2,1e-6)` by its endpoint diagonals and absolute
+cross term at `.04`, and check the positive residual diagonals and determinant.
+The first magnetic correction can only decrease this covariance. Thus no
+coincidence of the handoff and magnetic clocks is assumed. Thereafter,
 
-`U - Riccati_.04(U) > 0`.
+`U - Riccati_.04(U) > 0`
+
+by exact rational LDL.
 
 Monotonicity of the regular scalar-observation Riccati map proves this bound
 at every subsequent magnetic posterior. For every `0<=t<=.04`, bound the

@@ -36,6 +36,12 @@ def service_certificate():
     r = F('.8')**2/F(75)**2
     upper = [[F('.008'), F(0)], [F(0), F('.00002')]]
     prefix = [[F('.009'), F(0)], [F(0), F('.00003')]]
+    # Handoff need not coincide with the 25 Hz magnetic clock. Charge the
+    # entire first partial cell before using the periodic posterior invariant.
+    seed = [[F('.087')**2, F(0)], [F(0), F('1e-6')]]
+    first = predict(seed, spacing)
+    ia, ib, ic = upper[0][0]-first[0][0], upper[1][1]-first[1][1], first[0][1]
+    assert ia > 0 and ib > 0 and ia*ib > ic*ic
     pre = predict(upper, spacing)
     invariant = add(upper, correct(pre, r), F(-1))
     il, ip = ldlt(invariant)
@@ -62,6 +68,8 @@ def service_certificate():
     return {
         'post_mag_covariance_upper': encoded(upper),
         'every_prefix_covariance_upper': encoded(prefix),
+        'handoff_covariance': encoded(seed),
+        'first_partial_cell_determinant_lower': str(ia*ib-ic*ic),
         'invariant_residual': encoded(invariant),
         'invariant_residual_ldlt_L': encoded(il),
         'invariant_residual_ldlt_D': [str(x) for x in ip],

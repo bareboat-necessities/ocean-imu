@@ -321,7 +321,12 @@ floor. The eight predictions compose to $d=0.04$ s. Set
  U=\operatorname{diag}(0.008,0.00002),\quad
  U_p=\operatorname{diag}(0.009,0.00003).
 \end{equation}
-The gauged handoff covariance is below $U$. Exact rational LDL verifies
+The gauged handoff covariance is
+$\operatorname{diag}(0.087^2,10^{-6})$. Its prediction stays below $U$
+throughout the first partial magnetic cell: endpoint bounds on the diagonals
+and absolute cross term give a positive residual determinant and diagonals.
+The first correction decreases covariance, independently of handoff phase.
+Thereafter exact rational LDL verifies
 $U-\mathcal R_d(U)\succ0$ for the scalar-observation Riccati map.
 Monotonicity proves the same bound at every magnetic posterior.
 For $0\le t\le d$, bound each prediction diagonal and the absolute cross

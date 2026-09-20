@@ -35,6 +35,7 @@ class SampledCaptureTests(unittest.TestCase):
         self.assertGreater(F(c['actual_innovation_service_lower']),3)
         self.assertGreater(F(c['true_heading_axis_service_lower']),1)
         self.assertGreater(F(c['all_phase_prefix_determinant_lower']),0)
+        self.assertGreater(F(c['first_partial_cell_determinant_lower']),0)
         p=[[F(v) for v in row] for row in c['post_mag_covariance_upper']]
         self.assertTrue(is_psd(add(p,correct(predict(p,F('.04')),F('.8')**2/75**2),F(-1))))
 
