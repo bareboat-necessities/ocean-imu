@@ -221,6 +221,7 @@ def publication(summary: list[dict]) -> str:
 def source_hashes() -> dict[str, str]:
     roots = [ROOT / "src/util/W3dSimCommon.cpp"] + [b.with_suffix(".cpp") for b in BINARY.values()]
     files = set(provenance.implementation_closure(roots))
+    # Simulator-only experiment hooks must not invalidate committed shipping\n    # comparison evidence. The evidence hashes the shipping estimator closure;\n    # dedicated tuning studies hash their own instrumented simulator binary.\n    files.discard(ROOT / "tests/kalman_tfg/kalman_tfg-sim.cpp")
     files.update(b.parent / "Makefile" for b in BINARY.values())
     files.update(ROOT / n for n in ("tools/tfg_comparison.py", "tools/ou_validation.py",
         "tools/ou_evidence_provenance.py", "tools/sim_dataset.py"))
