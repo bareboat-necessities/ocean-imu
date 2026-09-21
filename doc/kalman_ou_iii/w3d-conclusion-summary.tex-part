@@ -43,6 +43,14 @@ stationary JONSWAP sea and in the controlled transition, with paired bootstrap
 intervals excluding zero.  These simulation results apply to the tested
 directional and spectral families, not to absolute navigation.
 
+The paired TFG companion in Tables~\ref{tab:tfg-paired} and
+\ref{tab:tfg-ensembles} extends the comparison beyond the OU predecessor.
+OU--III has a small stationary normalized-heave advantage, whereas TFG has
+lower mean gyroscope-bias error. The controlled transition does not resolve
+a heave advantage. These channel-dependent results concern complete estimators
+on the development vessel-response ensemble; neither filter uniformly
+dominates the other.
+
 The horizontal analysis separates the isotropic OU-acceleration prior from
 the axis-dependent integral regularization of
 Eq.~\eqref{eq:fus-rs-anisotropy}. The scalar spectral reduction identifies how
@@ -65,9 +73,10 @@ modify the reduced SpectralMSE exponents and coefficient.  This physical-error o
 questions developed in the companion study.
 
 The principal limitations remain the primarily simulation-based evidence,
-comparison centered on OU--II, controlled rather than general changing-sea
-cases, fixed-temperature study, lack of physical off-CoG lever-arm validation,
-and incomplete magnetic-distortion model.  The ESP32--S3 exercise
+comparisons restricted to the development vessel-response ensemble,
+controlled rather than general changing-sea cases, fixed-temperature study,
+lack of physical off-CoG lever-arm validation, and incomplete
+magnetic-distortion model.  The ESP32--S3 exercise
 establishes source portability but not processor, memory, power, or deadline
 margins.  Reported displacement remains bounded wave motion about a local
 reference; no global navigation position is claimed without external aiding.
