@@ -31,6 +31,15 @@ class SignedTemporalTests(unittest.TestCase):
         self.assertIsNone(a["Delta_col_lower"])
         self.assertFalse(a["new_physical_assumption_needed"])
 
+    def test_literal_adjoint_eliminates_innovation_energy(self):
+        b=forced_adjoint_source_bound()
+        self.assertFalse(b["innovation_energy_needed"])
+        self.assertTrue(b["BA_endpoint_bounded"])
+        self.assertFalse(b["BG_endpoint_bounded"])
+        self.assertFalse(b["AW_endpoint_bounded"])
+        self.assertIsNone(b["finite_numeric_ceiling"])
+        self.assertEqual(literal_signed_functional_bound(F(2),F(3),F(4),F(5)),F(32))
+
     def test_fail_closed(self):
         c=certificate()
         self.assertFalse(c["source_uniform_nominal_force_field_temporal_margin"])
