@@ -29,5 +29,12 @@
   "BA_estimator_endpoint_norm_ceiling": "0.4",
   "BG_estimator_endpoint_norm_ceiling": null,
   "AW_estimator_endpoint_norm_ceiling": null,
-  "forced_adjoint_endpoint_obstruction": true
+  "forced_adjoint_endpoint_obstruction": true,
+  "AW_endpoint_annihilated_by_spline_boundary_jets": true,
+  "BG_endpoint_annihilation_condition": "integral z_theta dt = 0 with z_b'=-z_theta and z_b endpoints zero",
+  "BG_absolute_estimate_bound_required": false,
+  "AW_absolute_estimate_bound_required": false,
+  "endpoint_cancelled_source_functional": "F_defect + sum z_b,k w_g,k",
+  "endpoint_cancelled_source_ceiling": "sum ||Z_(k+1)|| ||d_k|| + D_g sum ||z_b,k|| dt_k",
+  "next_unresolved_inequality": "positive physical/observation separation reserve exceeds zero-mean multiplier projection cost plus literal defect and gyro-increment supply"
 }
