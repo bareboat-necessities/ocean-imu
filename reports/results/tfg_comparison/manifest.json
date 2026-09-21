@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "b9d32872a8d4eb1b64fd04ebd0523ae8bad36f5fc2f294394a737479aa119fa9",
-    "TFG": "4004f070275ee518a154e28560e4e4ab124fdf9a74c549b3eaf65497c8740513"
+    "OU_III": "28ec6ac9219c25092776fa800ddc9502b23eb146d720d3f7ec08a8913b1b8733",
+    "TFG": "a722a9640691454e434b5674e1525c06764c9d3a4418ea9f05942eb7c6149320"
   },
   "build_environment": {
     "compiler": {
@@ -36,9 +36,9 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "generated_utc": "2026-09-21T17:18:01+00:00",
-  "git_commit": "e32f2fd26df08c662398182d23de3127361e8ed7",
-  "git_diff_stat": "",
+  "generated_utc": "2026-09-21T23:22:24+00:00",
+  "git_commit": "c3f1b9f5436a63b4682ae143063b97309ed167fe",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    4 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   24 +-\n reports/results/tfg_comparison/paired_summary.json | 4000 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3220 ++++++++--------\n 5 files changed, 3804 insertions(+), 3804 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -134,11 +134,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "325d86e58008f841aff93eddf402d040a129b409f11a901c55395b07f312fe52",
-    "gate_diagnostics.json": "1d65ab744532a97a0852d37521456223303be5221d9db8c99ca31abae001e7ae",
-    "paired_summary.json": "cd596883a51dafd2cd1c505a01d0679eee6f6f64eaa212b697ec890f1cfc51a2",
-    "raw_runs.csv": "bb8d0ce45c93358f0324e0eedc61a6d0fa6607bfd0120f4b9e22896b11c51009",
-    "raw_runs.json": "c07d422db8ac96c8df240497272c41f0e9565cbf3a1529791cdb142bbb2f84f8"
+    "comparison.tex": "bffddd75b06e10effc93462051e739d3e16ee9bd9262254b588c4680c6d024fd",
+    "gate_diagnostics.json": "98e25b2b199bba6af71a37a4fce1765a82706093a9148cec114ea77ebbc26c82",
+    "paired_summary.json": "97ba2b9389216815c4db98670cdc3e33e8c6a8a2426cd8d3f43c69826f3346b3",
+    "raw_runs.csv": "93958da2ec174ce38586a66af1aa881ef96020966c150f28bc29191cdf886c12",
+    "raw_runs.json": "8e61a767837ec108843d6b1ea702cec0df57dfea66f3a0c719dfbe1d7d4734cf"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -155,7 +155,7 @@
     "src/kalman_ou_common/KalmanOUCoreMath.h": "609e630d78747792e596a6d6e0b165fce2a47c000e31989e3781861a1a1ad8de",
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "e38e4caaafa68cc52bd4d35bdeffc652588a312e3757dd734ddae9e3d4a21fd2",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "72bffc539ea72f6320ae33feb970dd2ba9255f8e679c3e8415f7884566ca3be0",
-    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "ac8dca273addc8eebd78488c969614ef8c4579c2cf69181d0f90d5b6739bb803",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "97063a30f68bbc0dba165bf4694b0fcf91486176e03dc9017b4f99d807709cbb",
     "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "32586da9400e8ef8a9f437e7832435831b2e5af33dce3ddc50a8315022505ddc",
     "src/lie/SO3Jacobians.h": "d18671481a90114aa2ae8c49bd6bd60fa598c281b18a9f961a04a59e5690eb1a",
     "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
@@ -179,7 +179,7 @@
     "tests/kalman_ou_iii/Makefile": "a93fd27bbd498a3dd639ab1ed22780d39efcc8c07696024ecc0895c257247438",
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "d5b9ace6ba742e263b7b0d940800ecee9192f7e55b5dc698d155eb13ab07d5db",
     "tests/kalman_tfg/Makefile": "f98a1b48b8bd1eec1ce4a4c3ef51c2c92fbac0cd3d1495284956a0e28a316d17",
-    "tests/kalman_tfg/kalman_tfg-sim.cpp": "f1d7a5efa9bb39aac8c7ca2ea5567fcdb82b3d021cbb789510b69731d1dfe286",
+    "tests/kalman_tfg/kalman_tfg-sim.cpp": "f8134332d4fb370c9804c924f2a75282d5af2b4ec71c556c1708b11df671da68",
     "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
     "tools/ou_validation.py": "274a13b3443df30d9a64ddfd2925e8ad51ec9f0a8870d7da20752b21dbeaead1",
     "tools/sim_dataset.py": "9dc2556daa2eafde5de9860963e68c4449d722ab68b41823a44c138ac417dc30",
@@ -188,7 +188,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "35629493112",
+    "run_id": "35666747725",
     "workflow": "ou-full-evidence-branch"
   }
 }
