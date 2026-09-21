@@ -109,6 +109,40 @@ The implication is theorem-level algebra. Its premises are not yet promoted:
 the source-uniform outward enclosure of the two signed temporal margins remains
 the controlling numerical/analytic task.
 
+## Executed source-uniform margin attempt
+
+The enclosure attempt is now executed rather than deferred.  The physical
+collinearity reserve available to the signed balance is the exact rational
+
+27049050188592/625000000000000000
+ = 4.32784803017472e-5.
+
+To promote Delta_col this positive reserve must exceed the operator norm of
+the observation-forced signed innovation transfer plus the literal
+reset/transition/hard/arithmetic transfer on the same carried window.  The
+unchanged assumptions and currently proved covariance statements do not yet
+supply a source-uniform ceiling for that forced-adjoint functional.  Assigning
+one from the finite construction trace, NIS energy, or independent gain boxes
+would revive a forbidden relaxation.  The attempted inequality therefore
+stops exactly at
+
+physical reserve - signed forced-adjoint/reset transfer > 0,
+
+with the second term unbounded by the present theorem premises.
+
+The gyro balance reaches the same structural point. MAGNETIC SERVICE supplies
+normalized recurring root information, and physical gyro bias/rate increments
+are bounded, but conversion to a lower bound on the two transverse singular
+values of the literal integrated bias transport requires a source-uniform
+bound on the signed corrections that move b_hat_g and on reset transport.
+That bound is likewise not presently derivable from the retained lemmas
+without using unsigned innovation energy or an independent nominal box.
+
+Thus this PR has executed the requested enclosure attempt and identified the
+first failed inequality. No negative Delta margin is claimed: the missing
+quantity is a rigorous ceiling, not a constructed adverse history. No new
+physical assumption is introduced.
+
 ## Controlling unresolved implication
 
 The first unresolved mathematical implication is source-uniform control, on every admitted carried same-history window, of the remaining signed acc/mag/S innovation functional together with construction-linked gyro-bias evolution and literal transition/reset/hard/arithmetic defects, with enough strict margin to prove
