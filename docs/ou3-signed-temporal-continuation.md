@@ -143,6 +143,48 @@ first failed inequality. No negative Delta margin is claimed: the missing
 quantity is a rigorous ceiling, not a constructed adverse history. No new
 physical assumption is introduced.
 
+## Literal forced-adjoint source bound
+
+The observation-forced correction functional can be reduced further without
+an innovation-energy estimate.  For the literal affine mean recursion and a
+compatible adjoint,
+
+sum_i W_i r_i =
+ Z_N u_N - Z_0 u_0 - sum_i Z_(i+1) d_i.
+
+Hence, if zeta bounds the relevant endpoint multipliers, U bounds the
+corresponding nominal endpoint mean and D bounds the accumulated literal
+affine defects,
+
+|sum_i W_i r_i| <= 2 zeta U + sum_i ||Z_(i+1)|| ||d_i||.
+
+This is the requested source-uniform form: innovations and gains disappear
+through the signed chronological identity rather than being independently
+bounded.
+
+Applying it to the shipping source exposes a sharper obstruction.  The
+accelerometer-bias estimate has the literal global projection bound
+||b_hat_a||<=0.4.  In contrast, the gyro-bias estimate has identity mean
+prediction and no projection/saturation, and the latent AW mean has OU
+prediction/corrections but no mean saturation.  The physical bounds
+||b_g||<=0.02 and ||a||<=8.8 do not bound those two estimator means before the
+same-history error/capture result being proved.  Covariance/tuner clamps are
+not mean-state clamps.
+
+Therefore the exact telescoping derivation removes the previously missing
+innovation-functional ceiling, but replaces it by BG/AW endpoint terms for
+which the current theorem premises contain no absolute source-uniform bound.
+Using the finite 600-s mean audit (BG<1), or imposing a nominal AW box, would
+be circular/nonuniform and is not promoted.
+
+This is an analytical endpoint obstruction, not a numerical-conditioning
+failure: under the unchanged theorem premises the present forced-adjoint
+choice cannot yield a finite numeric source-uniform correction/reset ceiling.
+A successful next construction must choose multipliers/physical balances whose
+BG/AW endpoint coefficients vanish, or cancel those endpoint means against
+the gyro and integral physical identities. Adding an estimator-mean bound as
+a new physical assumption is not justified.
+
 ## Controlling unresolved implication
 
 The first unresolved mathematical implication is source-uniform control, on every admitted carried same-history window, of the remaining signed acc/mag/S innovation functional together with construction-linked gyro-bias evolution and literal transition/reset/hard/arithmetic defects, with enough strict margin to prove
