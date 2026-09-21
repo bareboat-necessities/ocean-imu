@@ -490,13 +490,13 @@ void process_one(const std::string& filename,
     // on pmstokes H8.5 against a bar of 155.6, so a gyro-bias regression has to
     // roughly double before this bar sees it.
     static constexpr W3dFailureLimits kRegressionBars{
-        .err_limit_percent_z_jonswap   = 4.698f,  // was 4.812, worst 4.6736 (jonswap H0.27)
-        .err_limit_percent_z_pmstokes  = 4.631f,  // was 4.71,  worst 4.6077 (pmstokes H0.27)
-        .err_limit_yaw_deg             = 1.292f,  // was 1.352, worst 1.2851 (jonswap H1.5)
-        .err_limit_percent_3d_jonswap  = 20.43f,  // unchanged, worst 20.3211 (jonswap H1.5)
-        .err_limit_percent_3d_pmstokes = 20.15f,  // was 19.64, worst 20.0469 (pmstokes H8.5)
-        .acc_z_bias_percent            = 4.532f,  // was 5.12,  worst 4.5086 (jonswap H8.5)
-        .bias_3d_percent               = 155.6f,  // was 164.9, worst 154.786 (pmstokes H4.0, accel)
+        .err_limit_percent_z_jonswap   = 4.405f,  // was 4.698; worst 4.38306 (jonswap H0.27)
+        .err_limit_percent_z_pmstokes  = 4.356f,  // was 4.631; worst 4.33397 (pmstokes H0.27)
+        .err_limit_yaw_deg             = 0.943f,  // was 1.292; worst 0.937382 (jonswap H4.0)
+        .err_limit_percent_3d_jonswap  = 9.83f,   // was 20.43; worst 9.77897 (jonswap H8.5)
+        .err_limit_percent_3d_pmstokes = 9.92f,   // was 20.15; worst 9.86933 (pmstokes H8.5)
+        .acc_z_bias_percent            = 4.494f,  // was 4.532; worst 4.47079 (pmstokes H8.5)
+        .bias_3d_percent               = 74.1f,   // was 155.6; worst 73.727 (pmstokes H8.5, accel)
     };
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };
