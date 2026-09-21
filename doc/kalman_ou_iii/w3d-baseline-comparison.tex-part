@@ -6,13 +6,16 @@
 \label{sec:observer-comparison}
 
 \subsubsection{Deterministic external and predecessor baselines}
-The deterministic comparison includes adaptive PII, OU--II, and an adapted
+The deterministic comparison includes adaptive PII, OU--II, the right-invariant two-frame Lie-group
+filter (TFG), and an adapted
 vertical-reference configuration of the time-varying-gain nonlinear observer
 (TVG--NLO) of Bryne, Fossen, and Johansen~\cite{BryneFossenJohansen2014_TVG_NLO}.
 The adapted TVG--NLO omits the horizontal GNSS and compass aiding of the
 published full observer, so horizontal position and yaw are unscored. PII
 provides a feedback-based heave reference; OU--II is the immediate stochastic
-predecessor of OU--III.
+predecessor of OU--III. TFG is the current two-frame Lie-group formulation,
+not the retained legacy implementation. It uses its own frozen tuned defaults
+and the same simulation and scoring harness as OU--III.
 
 All methods replay the same timestamped synthetic motion and inertial records
 and use the final \SI{900}{s}. The common comparison is vertical displacement
@@ -50,6 +53,7 @@ Method & Tuning policy & Aiding and scored outputs \\
 \midrule
 OU--III & adaptive integral regularization & IMU+mag; vertical and tilt scored \\
 OU--II & adaptive dual regularization & same records and common outputs \\
+TFG & adaptive integral regularization & IMU+mag; vertical and tilt scored \\
 PII & PLL-based scheduling & same records; common outputs only \\
 TVG--NLO & wave-frequency gain schedule & IMU only; yaw/horizontal unscored \\
 \bottomrule
@@ -59,24 +63,23 @@ TVG--NLO & wave-frequency gain schedule & IMU only; yaw/horizontal unscored \\
 \providecommand{\OUBaselinePIIMeanVerticalPercent}{--}
 \providecommand{\OUBaselineTVGNLOMeanVerticalPercent}{--}
 \providecommand{\OUBaselineOUIIMeanVerticalPercent}{--}
+\providecommand{\OUBaselineTFGMeanVerticalPercent}{--}
 \providecommand{\OUBaselineOUIIIMeanVerticalPercent}{--}
 \IfFileExists{w3d-baseline-results-generated.tex-part}{%
   \input{w3d-baseline-results-generated.tex-part}%
 }{}
 
-In this single-realization comparison, OU--III has the lowest mean normalized
-vertical-displacement RMS error: \pct{\OUBaselineOUIIIMeanVerticalPercent} of
-$H_s$, versus \pct{\OUBaselineOUIIMeanVerticalPercent} for OU--II,
+The mean normalized vertical-displacement RMS error is
+\pct{\OUBaselineOUIIIMeanVerticalPercent} of $H_s$ for OU--III,
+\pct{\OUBaselineTFGMeanVerticalPercent} for TFG,
+\pct{\OUBaselineOUIIMeanVerticalPercent} for OU--II,
 \pct{\OUBaselinePIIMeanVerticalPercent} for PII, and
-\pct{\OUBaselineTVGNLOMeanVerticalPercent} for adapted TVG--NLO. These values
-are reproducible external references, not ensemble estimates; inferential
-OU-family claims use the paired study below.
-
-Only OU--II is evaluated under the full paired protocol, so the strongest
-statistical comparison is with the predecessor rather than a ranking against
-published practice. Adapted TVG--NLO also differs from its GNSS/compass-aided
-published experiment, and no conventional frequency-domain double-integration
-baseline is included.
+\pct{\OUBaselineTVGNLOMeanVerticalPercent} for adapted TVG--NLO.
+These single-realization values are reproducible references, not ensemble
+estimates. TFG and OU--II also have paired evaluations below; PII and adapted
+TVG--NLO do not have ten-seed inferential comparisons here. The adapted NLO
+configuration differs from its published GNSS/compass-aided experiment, and no
+conventional frequency-domain double-integration baseline is included.
 
 \IfFileExists{w3d_multi_observer_jonswap_medium.pgf}{%
   \begin{figure}[!t]
@@ -85,6 +88,37 @@ baseline is included.
     \caption{Deterministic medium-JONSWAP vertical reconstruction.}
     \label{fig:multi-observer-medium}
   \end{figure}
+}{}
+
+\subsubsection{Paired TFG companion comparison}
+The OU--III--TFG companion uses the same ten wave-phase, IMU-noise, and
+initialization seed triplets as the OU-family protocol, four heights for each
+of JONSWAP and PM--Stokes, and the controlled low-to-high crossfade. Each
+\SI{1200}{s} replay is scored over its final \SI{900}{s}. Both filters retain
+their current adaptive settings, periodic wave-acceleration covariance
+synchronization, and magnetometer aiding; no coefficient is selected using
+these companion scores. Identical generated motion files are passed to both
+estimators. Complete finite replays are retained regardless of the separate
+deterministic regression-gate outcome.
+
+For each seed $i$, the JONSWAP contrast is
+\begin{equation}
+ d_i=\frac14\sum_{h=1}^{4}
+ \left(E_{Z,i,h}^{\mathrm{TFG}}-E_{Z,i,h}^{\mathrm{OU\text{-}III}}\right),
+ \quad E_Z=100\,\mathrm{RMS}(\hat z-z)/H_s.
+\end{equation}
+The bootstrap resamples the ten $d_i$, preserving within-seed dependence
+across heights. PM--Stokes and the controlled transition remain separate;
+the transition normalization uses the final incident height, \SI{4}{m}.
+The displacement, attitude, and bias channels are reported together. Other
+endpoint intervals are exploratory and not adjusted for multiple comparisons.
+TFG does not implement the wave-direction outputs, so those are not scored.
+The comparison concerns complete deployed estimators, not an isolated test of
+Lie-group coordinates. It uses the development vessel-response ensemble and
+does not establish universal superiority or out-of-sample vessel performance.
+
+\IfFileExists{w3d-tfg-comparison-generated.tex-part}{%
+  \input{w3d-tfg-comparison-generated.tex-part}%
 }{}
 
 \subsubsection{Ten-seed OU-family and adaptation study}

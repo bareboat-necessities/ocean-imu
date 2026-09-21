@@ -5,6 +5,8 @@ on:
     paths:
       - "src/kalman_ou_ii/**"
       - "src/kalman_ou_iii/**"
+      - "src/kalman_tfg/**"
+      - "src/lie/**"
       - "src/kalman_common/**"
       # Both OU families read the shared tuner, so a change confined to
       # src/tuner still moves every number this workflow gauges.
@@ -12,12 +14,15 @@ on:
       - "src/util/W3dSimCommon.*"
       - "tests/kalman_ou_ii/**"
       - "tests/kalman_ou_iii/**"
+      - "tests/kalman_tfg/**"
       - "tests/validation/**"
       - "tools/ou_validation.py"
+      - "tools/tfg_comparison.py"
       - "tools/ou_robustness.py"
       - "tools/ou_replay_fingerprint.py"
       - "tools/ou_publication_sync.py"
       - "plots/kalman_ou_iii/baseline-comparison.py"
+      - "plots/kalman_ou_iii/draw_plots.sh"
       - "reports/results/**"
       - "reports/ou_evidence_fingerprint.json"
       - "docs/ou-validation.md"
@@ -197,6 +202,14 @@ jobs:
       - name: Run validation unit tests
         run: make -C tests/validation test
 
+      - name: Check TFG publication provenance
+        run: python3 tools/tfg_comparison.py --check --require-ci
+
+      - name: Run TFG companion smoke
+        run: |
+          python3 -u tools/tfg_comparison.py --mode smoke \
+            --output-dir reports/results/tfg_comparison_smoke
+
       - name: Run paired validation
         run: |
           python3 -u tools/ou_validation.py \
@@ -220,6 +233,7 @@ jobs:
           path: |
             reports/results/ou_validation/**
             reports/results/ou_robustness/**
+            reports/results/tfg_comparison_smoke/**
           if-no-files-found: warn
 
   # A full build is keyed by scientific inputs rather than the enclosing Git
@@ -508,11 +522,46 @@ jobs:
           path: reports/results/ou_${{ matrix.study }}/**
           if-no-files-found: warn
 
-  # Lands both regenerated bundles together, but only after the manuscript and
+  # Same pinned archive as the OU studies; a separate adaptive head-to-head
+  # avoids imposing OU-II ablation controls on the TFG implementation.
+  tfg_companion:
+    needs: fingerprint
+    if: inputs.validation_mode == 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install companion study dependencies
+        run: |
+          sudo apt-get -o Acquire::Retries=3 update
+          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
+            g++ make libeigen3-dev python3-numpy
+      - uses: actions/download-artifact@v8
+        with:
+          name: ou-fingerprinted-simulation-data
+          path: .
+      - name: Verify and unpack the shared archive
+        run: |
+          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files-vessel-rao-28ft.zip -d plots/kalman_ou_ii >/dev/null
+      - name: Reuse verified full evidence or run paired TFG comparison
+        run: |
+          if ! python3 tools/tfg_comparison.py --check --require-ci; then
+            python3 -u tools/tfg_comparison.py --mode full --jobs "$(nproc)"
+          fi
+          python3 tools/tfg_comparison.py --check --require-ci --publish
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ou-tfg-full
+          path: reports/results/tfg_comparison/**
+          if-no-files-found: error
+
+  # Lands all regenerated bundles together, but only after the manuscript and
   # committed-evidence contract passes against the regenerated working tree.
   # A failed consistency check must never mutate the target branch.
   commit:
-    needs: combine
+    needs: [combine, tfg_companion]
     if: inputs.validation_mode == 'full'
     runs-on: ubuntu-24.04
     # The contract run below is the long step here, and it grows with the
@@ -628,6 +677,10 @@ jobs:
           mkdir -p reports/results/ou_validation reports/results/ou_robustness
           cp -a regenerated/ou-validation-full/. reports/results/ou_validation/
           cp -a regenerated/ou-robustness-full/. reports/results/ou_robustness/
+          rm -rf reports/results/tfg_comparison
+          mkdir -p reports/results/tfg_comparison
+          cp -a regenerated/ou-tfg-full/. reports/results/tfg_comparison/
+          python3 tools/tfg_comparison.py --check --require-ci --publish
           rm -rf regenerated
 
           # These publication inputs are mechanical mirrors of the regenerated
@@ -687,6 +740,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add reports/results/ou_validation reports/results/ou_robustness \
+                  reports/results/tfg_comparison \
                   reports/ou_evidence_fingerprint.json \
                   doc/kalman_ou_iii
           if git diff --cached --quiet; then

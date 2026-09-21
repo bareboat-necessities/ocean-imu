@@ -106,6 +106,7 @@ run_comparison() {
   find . -maxdepth 1 -type f -name '*.csv' \
     ! -name '*_fusion_ou3.csv' \
     ! -name '*_fusion_ou2.csv' \
+    ! -name '*_fusion_tfg.csv' \
     ! -name '*_nonkalman_fusion.csv' \
     ! -name '*_tvg_nlo_nomag_nognss.csv' \
     -exec cp -f {} "${test_dir}/" \;
@@ -123,7 +124,11 @@ run_comparison "../../tests/nlo" "*_tvg_nlo_nomag_nognss.csv"
 run_comparison "../../tests/kalman_ou_ii" "*_fusion_ou2.csv"
 run_comparison "../../tests/pii_observer" "*_nonkalman_fusion.csv"
 
+run_comparison "../../tests/kalman_tfg" "*_fusion_tfg.csv"
+
 python3 baseline-comparison.py
+
+python3 ../../tools/tfg_comparison.py --check --require-ci --publish
 
 DOC_DIR="../../doc/kalman_ou_iii"
 cp -f w3d-baseline-results-generated.tex-part "${DOC_DIR}/"
