@@ -738,8 +738,20 @@ def reproducible_pyplot():
 
 
 def _save_svg(figure: Any, path: Path) -> None:
+    # Rendered to a sibling temporary file and moved into place, so an
+    # interrupted run leaves the previous figure rather than a truncated one.
+    # A half-written SVG is not a build failure: the article guards the
+    # include with \IfFileExists, the file exists, and Inkscape converts the
+    # fragment into a blank rectangle in the PDF.
     path.parent.mkdir(parents=True, exist_ok=True)
-    figure.savefig(path, format="svg", metadata={"Date": None})
+    handle, staged = tempfile.mkstemp(dir=path.parent, prefix=path.name, suffix=".tmp")
+    os.close(handle)
+    try:
+        figure.savefig(staged, format="svg", metadata={"Date": None})
+        os.replace(staged, path)
+    except BaseException:
+        os.unlink(staged)
+        raise
 
 
 def _arm(summaries: list[dict[str, Any]], family: str, arm: str,
