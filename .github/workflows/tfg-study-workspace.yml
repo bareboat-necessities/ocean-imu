@@ -1,0 +1,21 @@
+name: tfg-study-workspace
+on:
+  push:
+    branches: [codex/ou3-tfg-comparison]
+    paths: [.github/workflows/tfg-study-workspace.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: Archive exact study sources
+        run: git archive --format=tar.gz HEAD > /tmp/ocean-imu-study-source.tar.gz
+      - uses: actions/upload-artifact@v6
+        with:
+          name: tfg-study-source
+          path: /tmp/ocean-imu-study-source.tar.gz
+          retention-days: 1
+          if-no-files-found: error
