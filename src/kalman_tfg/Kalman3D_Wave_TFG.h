@@ -578,6 +578,8 @@ class Kalman3D_Wave_TFG {
     struct MeasDiag3 {
         Vector3 r{Vector3::Zero()};
         Matrix3 S{Matrix3::Zero()};
+        Eigen::Matrix<T,NX,3> K{Eigen::Matrix<T,NX,3>::Zero()};
+        Eigen::Matrix<T,3,NX> H{Eigen::Matrix<T,3,NX>::Zero()};
         T nis{T(0)};
         bool accepted{false};
     };
@@ -791,6 +793,7 @@ class Kalman3D_Wave_TFG {
         Matrix3 S = H * PHt + Rw;
         S = T(0.5) * (S + S.transpose()).eval();
         diag.S = S;
+        diag.H = H;
 
         Eigen::LDLT<Matrix3> ldlt(S);
         if (ldlt.info() != Eigen::Success) return false;
@@ -801,6 +804,7 @@ class Kalman3D_Wave_TFG {
 
         const Eigen::Matrix<T,NX,3> K = ldlt.solve(PHt.transpose()).transpose();
         if (!K.allFinite()) return false;
+        diag.K = K;
 
         const Tangent correction = K * r;
         const MatrixNX IKH = MatrixNX::Identity() - K * H;
