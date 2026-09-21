@@ -150,6 +150,12 @@ public:
         if (float v = 0.0f; env_float("TFG_MAG_HI_RIDGE_REL", v)) cfg.mag_hi_model_ridge_relative = v;
         if (float v = 0.0f; env_float("TFG_MAG_HI_MIN_INFO", v)) cfg.mag_hi_min_information = v;
         if (float v = 0.0f; env_float("TFG_ACC_BIAS_UNLOCK_SEC", v)) cfg.acc_bias_unlock_sec = v;
+        if (float v = 0.0f; env_float("TFG_RACC_WARMUP_STD", v)) cfg.Racc_warmup_std = v;
+        if (float v = 0.0f; env_float("TFG_HANDOFF_ACC_BIAS_STD", v)) cfg.handoff_acc_bias_std = v;
+        if (float v = 0.0f; env_float("TFG_HANDOFF_TILT_SIGMA_RAD", v)) cfg.proxy_handoff_tilt_sigma_rad = v;
+        if (float v = 0.0f; env_float("TFG_PROXY_TWO_KP", v)) cfg.proxy_two_kp = v;
+        if (float v = 0.0f; env_float("TFG_PROXY_TWO_KI", v)) cfg.proxy_two_ki = v;
+        if (float v = 0.0f; env_float("TFG_PROXY_GRAVITY_LPF_SEC", v)) cfg.proxy_gravity_lpf_sec = v;
 
         // Out-of-band accelerometer guard ahead of the proxy and the MEKF.
         // Armed by default at the deployed corner; these override it, and a
