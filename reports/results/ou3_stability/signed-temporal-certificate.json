@@ -12,5 +12,8 @@
   "sampled_accel_mean_ceiling": "1050297/4840000",
   "source_uniform_nominal_force_field_temporal_margin": false,
   "source_uniform_nominal_gyro_alias_temporal_margin": false,
-  "uniform_historical_AG_readout_action": false
+  "uniform_historical_AG_readout_action": false,
+  "temporal_margins_imply_finite_B_star": true,
+  "temporal_margin_to_B_star_method": "finite largest-residual pivot-chart cover; adjugate/Hadamard inverse bound; finite backward rank<=3 factor action",
+  "B_star_instantiated": false
 }
