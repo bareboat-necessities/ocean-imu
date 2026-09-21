@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "5fc53a2a2e245ee8ae6359a8142d18d04958b336932b118be5db35e3368795b9",
+  "replay_fingerprint": "fa3662e3d53e3027700fc99dc0b469745529f300ab3c4c57ece31efd2af7857c",
   "results_file_count": 393,
   "results_files": [
     {
@@ -841,7 +841,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness.json",
-      "sha256": "c7a1053ecfd1890ae65919929aaee015e1e1a285a13fb10d8a7cdb83d507e54a"
+      "sha256": "0e9ecc0bfd88777372720c30b1076bd22c532cb635c7b7f9015592f97e21a165"
     },
     {
       "kind": "file",
@@ -851,12 +851,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "e42d5621fc75d42375f954a6261ea079c4104e5bddc0c8ab02092cf627568402"
+      "sha256": "e22fa3bd5e0a3bb235c845465d611232fa029a4875d037bf1d1c9a4e4b3c6732"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_paired_effects.csv",
-      "sha256": "f346044e593282b4c3446478f0f081f5d4fb30ada835616ed82acab6ef43decf"
+      "sha256": "4bf8525008d46a0b6688878dfc0e238b0a331da616b86293de60c81b2c97f6bf"
     },
     {
       "kind": "file",
@@ -866,22 +866,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_raw.csv",
-      "sha256": "fc5aa07113ea3dbf94ca319cd4791197aff1ffccb05dbd0c883d31b5a7418b90"
+      "sha256": "ae5b058c888a2ff90e9ac9f230555154b48b29a31ed084b5fdbebbd7dde7c201"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_sensitivity.svg",
-      "sha256": "56217ab352c89a495822a523afdf6c8e1ac07157eac76b5d515140dafd64c2b1"
+      "sha256": "86b0a59129cd948930c8c9372bc29b8fa2ac414d826978a3826353cb903aa0f7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_stress.svg",
-      "sha256": "87e7330ef61106560d3364dd241a7090e3439997e753bf0f8fb3c5463e2a96da"
+      "sha256": "5019bc46f73cd94d1316a9ea4243ed1149c526855d7885943e2f0f0d187f0e85"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_summary.csv",
-      "sha256": "2ae289b49f9f248f37790910f48f862b16ddf352404d54eef3dfba246f40ac77"
+      "sha256": "479af08c1bd8d82bdbe99dbe33b81797620abf3378fb6d7270d4f9a1e92e225a"
     },
     {
       "kind": "file",
@@ -921,22 +921,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "8b0b25cef4d6f986197379803f81266b74c59875640f5c7eadf67388a18ec2ce"
+      "sha256": "f1f9c6540b6ec67c5724cc1fb27a93359d462c33a5ad312847499634e35edeb4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "c4c72e1b77ccf485c75636244894bea929311a37fc965e7a8aa7abc09f0fa236"
+      "sha256": "17dcaf8292fbd7d55f96a60923e6e7295196af12411b31fa1451ab7e3c930d2f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "d161400c9f37266c59836ccc5ac53c8cb26b0e0d55fea872541a6f1eb7c994a8"
+      "sha256": "790a71df1a3231e5fe603cf403ea7f9164de6ce43bb2daaa23a9ad5060d276af"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "22b53234537338e7acc38e273e8f958b74a10694a8068e57f8ad656abab091b8"
+      "sha256": "02786a5f737e26df109ffcce3097762a0790f5f53d16dc8032a016848271f213"
     },
     {
       "kind": "file",
@@ -946,27 +946,27 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "96807e7db343a1c28a4a36eda67e1b03648a0333da5286483618450da56577d3"
+      "sha256": "83783ab90b84312d6ffbae71533853af40923c0daf33d90d92f2e76fbfb12ff5"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "fcf877bd06eceb87e573ca69d8f659fcd2430e03236957451a5e214b5d1b839a"
+      "sha256": "277a095dfabc5bb28d4d08715b28f47f80e642f92b283620784eb190815229e4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "20cec38e22551c30d37c5a5160c37ab95d374debb7d0397c9b8c5109df6b8b54"
+      "sha256": "52f92ca6be0738a25612837b3510919d4a89d766ae14e7573b722b584c6a4cc0"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "2028e7e07ebeeae5ce4f1c5564369d4639d98ce6797253fc05a447ade561d527"
+      "sha256": "b976a3d71adee4039944cdec2ac85b1372c7246c0ab842c4ae6ec02c96fa4814"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "3027c2f2a0cdea36aef3a4b799caf0abb7fda6aa4a48172642bc71d098022667"
+      "sha256": "493fae4a4d04ec027be7cb7a4cb504b0c3914de7adba9b9081a5e160bfd763f5"
     },
     {
       "kind": "file",
@@ -991,7 +991,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "58d43686fc8fea403bd3159b663a45c116fd3c0d730339f7ce3e9871e348b859"
+      "sha256": "e3ac9b193423fa75e524dc0ed03897c1e111f13cf1a03c758bc91986fd03cdbd"
     },
     {
       "kind": "file",
@@ -1969,13 +1969,13 @@
       "sha256": "c07d422db8ac96c8df240497272c41f0e9565cbf3a1529791cdb142bbb2f84f8"
     }
   ],
-  "results_fingerprint": "eed3b764388e502b868eebd81422ccc955e5fb651c2026188b4e4f4900c35bdd",
+  "results_fingerprint": "7ccbca5518ff0fac4c856ab1d402667a343a014304d409bd0a5326fa32c98238",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 341,
+  "tracked_replay_file_count": 342,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2005,7 +2005,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou-validation.yml",
-      "sha256": "8c8e823aff6be9bab8ebacbdfb1cf1c055dd282b8c797905dd202d65048daff1"
+      "sha256": "5ba35e6330d9065df07b12cf8def2b2ba76b62bc347e04bb040891d40bfa70a6"
     },
     {
       "mode": "100644",
@@ -2974,6 +2974,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ci_validation_dependencies.py",
+      "sha256": "a53068a96993a2cc33f57d4ba4a25581f39826c3db96bdd724396a5ffb8c5488"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_deterministic_baseline_contract.py",
       "sha256": "4367e080dacb2800eed1f679fbe3ffb65616b0d9bd6a7b65b4e85562d264e0f1"
     },
@@ -3115,7 +3120,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_signed_temporal.py",
-      "sha256": "ff18c854cc6bbcedda8b008fb1829e877b4cd815bd459aa6ddcf6ae4376b129f"
+      "sha256": "db5e71644f11d23e9794d5d3ded064d353e79e57802c195174b29b091a1d1a2d"
     },
     {
       "mode": "100644",
@@ -3645,7 +3650,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/signed_temporal.py",
-      "sha256": "326a66655970bbdfbf43b56bfe006eed4245f71a7589d50d840e4254f871b91d"
+      "sha256": "dd4aa9477abc4b97e22018442ec84efbb2f46d7e0f227f242d50029b0b101b4e"
     },
     {
       "mode": "100644",
