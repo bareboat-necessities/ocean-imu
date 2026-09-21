@@ -144,3 +144,53 @@ def source_margin_attempt():
       "classification":"missing source-uniform signed transfer bound",
       "new_physical_assumption_needed":False,
     }
+
+
+def literal_signed_functional_bound(weight_l1, endpoint_state_bound,
+                                    affine_defect_l1, affine_defect_bound):
+    """Source-uniform bound obtained by exact affine summation by parts.
+
+    For W_i=Z_{i+1}K_i and Z_i=Z_{i+1}A_i the innovation functional is
+      sum W_i r_i = Z_N u_N-Z_0 u_0-sum Z_{i+1}d_i.
+    The crucial point is that no innovation/NIS norm appears.  Once the
+    forced adjoint is represented by endpoint observations, the source bound
+    is an endpoint-state bound plus literal affine defects.
+    """
+    vals=(weight_l1,endpoint_state_bound,affine_defect_l1,affine_defect_bound)
+    if any(x<0 for x in vals): raise ValueError("nonnegative bounds required")
+    return 2*weight_l1*endpoint_state_bound + affine_defect_l1*affine_defect_bound
+
+
+def source_uniform_nominal_endpoint_bounds():
+    """Bounds already supplied by literal shipping projection/clamps.
+
+    BA is globally projected.  BG has no analogous projection. AW has a
+    covariance/tuner clamp but its *mean* has no shipping saturation. Thus the
+    present assumptions do not provide an absolute source-uniform endpoint
+    bound for u=(b_hat_g,a_hat_w).  This distinction is the exact reason the
+    endpoint telescoping cannot yet become a numeric Delta margin.
+    """
+    return {
+      "b_hat_a_norm":F(2,5),
+      "b_hat_g_norm":None,
+      "a_hat_w_norm":None,
+      "physical_b_g_norm":F(1,50),
+      "physical_a_norm":F(44,5),
+      "classification":"BG/AW estimator means have no source-uniform absolute clamp",
+    }
+
+
+def forced_adjoint_source_bound():
+    """Derive the strongest bound available from the literal same-history recursion."""
+    ep=source_uniform_nominal_endpoint_bounds()
+    return {
+      "identity":"sum W_i r_i = Z_N u_N-Z_0 u_0-sum Z_(i+1)d_i",
+      "innovation_energy_needed":False,
+      "independent_gain_box_needed":False,
+      "BA_endpoint_bounded":True,
+      "BG_endpoint_bounded":ep["b_hat_g_norm"] is not None,
+      "AW_endpoint_bounded":ep["a_hat_w_norm"] is not None,
+      "finite_numeric_ceiling":None,
+      "reason":"exact telescoping leaves BG/AW endpoint means; neither has an absolute shipping/source bound under the current theorem premises",
+      "consequence":"a source-uniform numeric correction/reset ceiling cannot be derived from the current premises alone by this adjoint",
+    }
