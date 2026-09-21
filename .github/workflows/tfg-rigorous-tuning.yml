@@ -7,6 +7,7 @@ on:
       - 'tools/tfg_rigorous_tuning.py'
       - 'tools/tfg_attitude_bias_tuning.py'
       - 'tools/tfg_attitude_bias_diagnostics.py'
+      - 'tools/tfg_rao_core_refit.py'
       - 'tools/rao_parameter_tuning.py'
       - '.github/workflows/tfg-rigorous-tuning.yml'
 permissions:
@@ -27,6 +28,8 @@ jobs:
           make -C tests/kalman_ou_iii kalman_ou_iii-sim
       - name: Run attitude-bias structural diagnostic
         run: python3 tools/tfg_attitude_bias_diagnostics.py
+      - name: Refit TFG core coefficients on RAO data
+        run: python3 tools/tfg_rao_core_refit.py --jobs 4
       - name: Upload complete campaign evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -36,4 +39,5 @@ jobs:
             reports/results/tfg_rigorous_tuning
             reports/results/tfg_attitude_bias_tuning
             reports/results/tfg_attitude_bias_diagnostics
+            reports/results/tfg_rao_core_refit
           retention-days: 14
