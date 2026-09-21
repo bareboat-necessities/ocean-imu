@@ -22,6 +22,12 @@
   "reset_transport_transfer_ceiling": null,
   "Delta_col_lower": null,
   "Delta_gyr_lower": null,
-  "first_failed_inequality": "physical reserve - signed forced-adjoint/reset transfer > 0",
-  "failure_classification": "missing source-uniform signed transfer bound; no new physical assumption introduced"
+  "first_failed_inequality": "endpoint-free/cancelled BG and AW coefficients are required before physical reserve - signed defect transfer > 0 can be enclosed",
+  "failure_classification": "missing source-uniform signed transfer bound; no new physical assumption introduced",
+  "forced_adjoint_identity": "sum W_i r_i = Z_N u_N - Z_0 u_0 - sum Z_(i+1) d_i",
+  "innovation_energy_needed_for_forced_adjoint": false,
+  "BA_estimator_endpoint_norm_ceiling": "0.4",
+  "BG_estimator_endpoint_norm_ceiling": null,
+  "AW_estimator_endpoint_norm_ceiling": null,
+  "forced_adjoint_endpoint_obstruction": true
 }
