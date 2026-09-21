@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """RAO-only refit of TFG c_tau, c_sigma and horizontal S regularization.\n
 
-This supersedes historical comments fitted before the vessel-RAO dataset.
+This supersedes historical comments fitted before the vessel-RAO dataset.\nExecution companion trigger for PR #571.
 It is deliberately narrow: shipping gyro-bias tuning is held fixed, no other
 filter coefficients move, and the old long generic campaigns are not rerun.
 """
