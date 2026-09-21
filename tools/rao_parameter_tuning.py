@@ -54,7 +54,7 @@ def main():
  summary=[]
  for c in configs:
   rr=[r for r in rows if r['config']==c['name']];vv=[v['ratio'] for r in rr for v in r['violations'] if v['ratio'] is not None]
-  summary.append(dict(config=c['name'],failed_records=sum(r['exit_code']!=0 for r in rr),violations=sum(len(r['violations']) for r in rr),worst_ratio=max(vv,default=1),**{k:sum(r['metrics'][k] for r in rr)/len(rr) for k in ['yaw_rms_deg','roll_rms_deg','pitch_rms_deg','disp_3d_rms_m','accel_bias_3d_rms_mps2']}))
+  summary.append(dict(config=c['name'],failed_records=sum(r['exit_code']!=0 for r in rr),violations=sum(len(r['violations']) for r in rr),worst_ratio=max(vv,default=1),**{k:sum(r['metrics'][k] for r in rr)/len(rr) for k in ['disp_z_pct_hs','disp_z_rms_m','disp_3d_rms_m','roll_rms_deg','pitch_rms_deg','yaw_rms_deg','accel_3d_rms_mps2','accel_bias_3d_rms_mps2','gyro_bias_3d_rms_radps']}))
  (a.output_dir/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
  print(json.dumps(sorted(summary,key=lambda r:(r['violations'],r['worst_ratio'])),indent=2))
 if __name__=='__main__':main()
