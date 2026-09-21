@@ -12,7 +12,6 @@ def atoms(knots):
 def jet(knots,t,order=0,side="right"):
     k=tuple(F(x) for x in knots); t=F(t); c=atoms(k)
     if order not in (0,1,2): raise ValueError("order")
-    fac=(2,1,1)[order]
     ans=F(0)
     for cj,tj in zip(c,k):
         active=t>tj or (t==tj and side=="right")
