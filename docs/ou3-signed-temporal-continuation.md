@@ -185,6 +185,66 @@ BG/AW endpoint coefficients vanish, or cancel those endpoint means against
 the gyro and integral physical identities. Adding an estimator-mean bound as
 a new physical assumption is not justified.
 
+## Endpoint-annihilating multipliers
+
+The uncontrolled nominal endpoint means can be removed analytically rather
+than bounded.
+
+For the translation/AW chain, repeated integration by parts leaves AW boundary
+coefficients proportional to psi, psi' and psi''.  The four-actual-S-event
+quadratic spline already satisfies
+
+psi=psi'=psi''=0
+
+at both ends of its support.  Consequently the signed physical v,p,S identity
+has no absolute a_hat_w endpoint term.  AW enters only through the chronological
+correction/source defects already retained by the identity.
+
+For the attitude/gyro-bias pair, let z_theta be the left temporal multiplier
+transported by the literal attitude adjoint. Introduce a companion multiplier
+
+dot z_b = -z_theta.
+
+Set z_b(t0)=0.  The terminal absolute gyro-bias coefficient also vanishes
+exactly iff
+
+integral_[t0,t1] z_theta(t) dt = 0.
+
+Thus the needed gyro construction is the zero-mean subspace of transported
+attitude multipliers.  On a discrete carried word, if q_k is the exact cell
+integral of z_theta, replace a candidate sequence by
+
+q_k^0 = q_k - (1/N) sum_j q_j.
+
+Then sum q_k^0=0 and the companion recursion
+z_b,k+1=z_b,k-q_k^0 starts and ends at zero.  Applying the signed physical
+gyro-bias recurrence leaves only
+
+sum_k z_b,k w_g,k,
+
+with ||w_g,k||<=D_g dt_k, plus the literal correction/reset/arithmetic defects.
+There is no absolute b_hat_g endpoint term.
+
+After both endpoint cancellations the source functional has the form
+
+F_signed = F_defect + sum_k z_b,k w_g,k,
+
+and therefore
+
+||F_signed|| <=
+ sum_k ||Z_(k+1)|| ||d_k||
+ + D_g sum_k ||z_b,k|| dt_k.
+
+This is source-uniform once the transported multiplier norms and literal
+defect magnitudes are enclosed; neither a nominal AW box nor an absolute BG
+estimate bound is required.
+
+The remaining issue is no longer endpoint boundedness.  The zero-mean
+projection must be composed with the actual magnetic/accelerometer observation
+forcing and shown to retain a strictly positive collinearity and gyro
+separation margin after the multiplier/defect norm cost.  That is the next
+quantitative inequality.
+
 ## Controlling unresolved implication
 
 The first unresolved mathematical implication is source-uniform control, on every admitted carried same-history window, of the remaining signed acc/mag/S innovation functional together with construction-linked gyro-bias evolution and literal transition/reset/hard/arithmetic defects, with enough strict margin to prove
