@@ -150,8 +150,8 @@ Gauss--Markov residual.}
 
 The comparisons below separate the choice of estimator from the effect of
 online adaptation. Deterministic baselines place OU--III alongside OU--II,
-PII, and an adapted nonlinear observer; the ten-seed paired study then
-quantifies the OU--II/OU--III difference. Matched channel ablations attribute
+TFG, PII, and an adapted nonlinear observer. Separate ten-seed paired
+comparisons quantify the OU--II/OU--III and TFG/OU--III differences. Matched channel ablations attribute
 most of the off-nominal vertical improvement to the adaptive integral-state
 regularizer. Displacement and attitude scores are reported together so that
 the vertical comparison can be assessed against the full reconstruction.

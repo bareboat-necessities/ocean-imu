@@ -15,6 +15,7 @@ class DeterministicBaselinePublicationContractTests(unittest.TestCase):
             "OUBaselinePIIMeanVerticalPercent",
             "OUBaselineTVGNLOMeanVerticalPercent",
             "OUBaselineOUIIMeanVerticalPercent",
+            "OUBaselineTFGMeanVerticalPercent",
             "OUBaselineOUIIIMeanVerticalPercent",
         )
         for macro in macros:
