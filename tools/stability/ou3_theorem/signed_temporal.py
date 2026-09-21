@@ -194,3 +194,75 @@ def forced_adjoint_source_bound():
       "reason":"exact telescoping leaves BG/AW endpoint means; neither has an absolute shipping/source bound under the current theorem premises",
       "consequence":"a source-uniform numeric correction/reset ceiling cannot be derived from the current premises alone by this adjoint",
     }
+
+
+def endpoint_annihilating_multiplier_constraints():
+    """Boundary conditions needed to remove uncontrolled BG/AW endpoint means.
+
+    For the translation chain S'=p, p'=v, v'=a_hat plus OU AW prediction,
+    three integrations by parts show that AW endpoint coefficients vanish when
+    psi and its first two derivatives vanish at both ends.  The four-S-event
+    quadratic spline already has exactly these six boundary conditions.
+
+    For gyro bias, theta'=-[omega_hat]x theta + b_hat_g at the differential
+    level.  A left adjoint z_theta satisfying z' = z[omega_hat]x has the bias
+    coefficient integral z_theta dt.  Cancelling absolute b_hat_g endpoints
+    through the signed physical bias recurrence requires a companion
+    multiplier z_b with z_b'=-z_theta and z_b=0 at both ends; equivalently
+    integral z_theta dt=0.  Thus the gyro multiplier must have zero temporal
+    mean in addition to zero boundary bias coefficient.
+    """
+    return {
+      "AW_endpoint_conditions":["psi(t0)=psi(t1)=0","psi'(t0)=psi'(t1)=0",
+                                "psi''(t0)=psi''(t1)=0"],
+      "four_S_spline_satisfies_AW_endpoint_conditions":True,
+      "BG_companion_equation":"z_b'=-z_theta",
+      "BG_endpoint_conditions":["z_b(t0)=0","z_b(t1)=0"],
+      "equivalent_BG_moment_condition":"integral z_theta dt = 0",
+      "physical_BG_increment_supply":"sum z_b,k w_g,k; ||w_g,k||<=D_g dt_k",
+    }
+
+
+def gyro_zero_mean_companion(z_theta_integrals):
+    """Exact discrete companion test for the signed gyro recurrence.
+
+    Inputs are exact cell integrals of the transported attitude multiplier.
+    z_b starts and ends at zero iff their signed sum is zero.  This removes
+    absolute b_hat_g endpoint dependence; only bounded physical increments and
+    correction/reset defects remain.
+    """
+    q=tuple(F(x) for x in z_theta_integrals)
+    zb=F(0); path=[zb]
+    for x in q:
+        zb-=x; path.append(zb)
+    return {"path":path,"endpoint_zero":zb==0,"zero_mean":sum(q)==0}
+
+
+def balanced_gyro_weights(cell_integrals):
+    """Project one scalar multiplier sequence onto the zero-mean subspace.
+
+    This is an algebraic construction, not a shipping certificate.  It shows
+    endpoint cancellation costs one temporal moment rather than an absolute
+    BG state bound.
+    """
+    q=[F(x) for x in cell_integrals]
+    if not q: raise ValueError("cells required")
+    mean=sum(q)/len(q)
+    b=[x-mean for x in q]
+    assert sum(b)==0
+    return b
+
+
+def endpoint_cancelled_source_bound(z_norm_l1, defect_bound,
+                                    gyro_companion_l1, gyro_bias_rate,
+                                    duration):
+    """Bound after AW/BG absolute endpoints have been annihilated.
+
+    Remaining terms are literal affine/reset defects plus physical gyro-bias
+    increments.  No absolute b_hat_g or a_hat_w endpoint bound appears.
+    """
+    vals=tuple(F(x) for x in (z_norm_l1,defect_bound,gyro_companion_l1,
+                              gyro_bias_rate,duration))
+    if any(x<0 for x in vals): raise ValueError("nonnegative bounds required")
+    z,d,zb,dg,T=vals
+    return z*d + zb*dg*T
