@@ -173,6 +173,8 @@ public:
         if (env_float("TFG_TAU_COEFF", v))      fusion_.setTauCoeff(v);
         if (env_float("TFG_SIGMA_COEFF", v))    fusion_.setSigmaCoeff(v);
         if (env_float("TFG_R_S_COEFF", v))      fusion_.setRSCoeff(v);
+        if (env_float("TFG_R_S_MSE_COEFF", v))  fusion_.setRSMseCoeff(v);
+        if (env_float("TFG_R_S_ACCEL_NOISE_DENSITY", v)) fusion_.setRSAccelNoiseDensity(v);
         if (env_float("TFG_S_FACTOR", v))       fusion_.setSFactor(v);
         if (env_float("TFG_R_S_X_FACTOR", v))   fusion_.setRSXFactor(v);
         if (env_float("TFG_R_S_Y_FACTOR", v))   fusion_.setRSYFactor(v);
@@ -180,6 +182,15 @@ public:
         if (env_float("TFG_ADAPT_RS_MULT", v))  fusion_.setRSAdaptMult(v);
         if (env_float("TFG_ADAPT_RS_SLEW_LOG", v)) fusion_.setRSAdaptSlewLog(v);
         if (env_float("TFG_ACC_NOISE_FLOOR", v))   fusion_.setAccNoiseFloorSigma(v);
+        {
+            float ba_std = 0.0f, ba_tau = 0.0f;
+            const bool have_std = env_float("TFG_ACC_BIAS_OU_STD", ba_std);
+            const bool have_tau = env_float("TFG_ACC_BIAS_OU_TAU", ba_tau);
+            if (have_std != have_tau) {
+                throw std::runtime_error("TFG_ACC_BIAS_OU_STD and TFG_ACC_BIAS_OU_TAU must be set together");
+            }
+            if (have_std) fusion_.mekf().set_acc_bias_ou_stationary_std(Eigen::Vector3f::Constant(ba_std), ba_tau);
+        }
         if (bool on = false; env_bool("TFG_AW_COV_SYNC", on)) fusion_.setPeriodicAwCovSync(on);
         {
             float lo = 0.0f, hi = 0.0f;
