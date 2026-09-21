@@ -1,0 +1,16 @@
+{
+  "actual_S_event_signed_temporal_identity": true,
+  "full_21_covariance_upper": false,
+  "homogeneous_zero_terminal_adjoint_closes": false,
+  "observation_forced_adjoint_required": true,
+  "physical_floor_margin": "27049050188592/625000000000000000",
+  "physical_joint_vector_floor": "152049050094296/625000000000000000",
+  "projection_sector_gap": "17483339501604595/100000000000000000",
+  "qualification": "OU3_SIGNED_TEMPORAL_V1",
+  "regular_A21_pre_projection_BA_precision_ceiling": 1000003000,
+  "rho0_certified": false,
+  "sampled_accel_mean_ceiling": "1050297/4840000",
+  "source_uniform_nominal_force_field_temporal_margin": false,
+  "source_uniform_nominal_gyro_alias_temporal_margin": false,
+  "uniform_historical_AG_readout_action": false
+}
