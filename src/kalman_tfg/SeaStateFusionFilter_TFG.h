@@ -136,7 +136,7 @@ public:
         Vector3f sigma_a{Vector3f::Constant(0.5f)};
         float    gyro_noise_density = 0.005f;
         Vector3f sigma_m{Vector3f::Constant(0.1f)};
-        float    gyro_bias_rw_var   = 1e-10f;
+        float    gyro_bias_rw_var   = 3.75e-10f;
         float    initial_covariance = 1e-4f;
         bool     with_mag = true;
         float    mag_delay_sec = MAG_DELAY_SEC;
