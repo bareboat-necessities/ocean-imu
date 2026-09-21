@@ -66,3 +66,55 @@ def certificate():
 if __name__=="__main__":
     import json
     print(json.dumps(certificate(),indent=2,sort_keys=True))
+
+
+def separated_reader_action_implication(delta_col, delta_gyr, coefficient_ceiling,
+                                        noise_factor_ceiling, nuisance_ceiling,
+                                        terminal_map_ceiling, operation_count):
+    """Quantitative implication from positive temporal margins to finite B_*.
+
+    This is not a margin certificate.  It proves the next logical step once
+    the same-history enclosure supplies strict delta_col and delta_gyr.
+
+    Let delta=min(delta_col,delta_gyr).  On every largest-residual pivot chart,
+    the six successive residual pivots of O are bounded below by delta after
+    the proof-coordinate normalization used by the temporal margins.  Hence
+    the selected 6x6 minor has ||O_I^{-1}||_2 <=
+    coefficient_ceiling**5 / delta**6 by adjugate/Hadamard.  The exact reader
+    L=T_h O_I^{-1} therefore has the displayed uniform norm ceiling.  The
+    backward action is a finite sum of transported rank<=3 noise/process
+    factors plus the nuisance-root residual.  Bounding each chronological
+    transport by coefficient_ceiling gives the explicit B_* below.
+
+    The deliberately coarse exponent is acceptable here: the result needed
+    is finiteness, not a practical contraction rate.  A useful J/rho still
+    requires the rigorous source margins and then a sharper action enclosure.
+    """
+    vals=(delta_col,delta_gyr,coefficient_ceiling,noise_factor_ceiling,
+          nuisance_ceiling,terminal_map_ceiling)
+    if any(x<=0 for x in vals) or operation_count<1:
+        raise ValueError("strict positive source bounds required")
+    delta=min(delta_col,delta_gyr)
+    inv_minor=coefficient_ceiling**5/delta**6
+    reader=terminal_map_ceiling*inv_minor
+    transport=max(1.0,coefficient_ceiling)**operation_count
+    # ||sum X_i X_i'|| <= sum ||X_i||^2.  The final term covers the
+    # nuisance-root residual in exactly the same backward reader recursion.
+    b_star=(operation_count*(reader*noise_factor_ceiling*transport)**2
+            +(reader*transport)**2*nuisance_ceiling)
+    return {"delta":delta,"inverse_minor_norm_ceiling":inv_minor,
+            "reader_norm_ceiling":reader,"B_star_scalar_ceiling":b_star,
+            "B_star_finite":True}
+
+
+def margin_to_Bstar_theorem():
+    """Machine-readable status of the controlling implication."""
+    return {
+      "premises":["inf_W Delta_col(W)>0","inf_W Delta_gyr(W)>0",
+                  "shipping coefficient/factor compactness on the fixed finite window"],
+      "conclusion":"exists finite B_* with B_W <= B_* I6 on every carried window",
+      "rank_structure":"successive largest-residual pivots; observation blocks have rank <=3",
+      "proof":"finite pivot-chart cover + adjugate/Hadamard inverse bound + finite backward factor action",
+      "implication_closed":True,
+      "premise_margins_source_uniformly_certified":False,
+    }
