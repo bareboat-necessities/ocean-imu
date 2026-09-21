@@ -6,6 +6,7 @@ on:
       - 'tests/kalman_tfg/**'
       - 'tools/tfg_rigorous_tuning.py'
       - 'tools/tfg_attitude_bias_tuning.py'
+      - 'tools/tfg_attitude_bias_diagnostics.py'
       - 'tools/rao_parameter_tuning.py'
       - '.github/workflows/tfg-rigorous-tuning.yml'
 permissions:
@@ -24,10 +25,8 @@ jobs:
         run: |
           make -C tests/kalman_tfg kalman_tfg-sim
           make -C tests/kalman_ou_iii kalman_ou_iii-sim
-      - name: Run sealed staged campaign
-        run: python3 tools/tfg_rigorous_tuning.py --jobs 4
-      - name: Run targeted attitude-bias campaign
-        run: python3 tools/tfg_attitude_bias_tuning.py --jobs 4
+      - name: Run attitude-bias structural diagnostic
+        run: python3 tools/tfg_attitude_bias_diagnostics.py
       - name: Upload complete campaign evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -36,4 +35,5 @@ jobs:
           path: |
             reports/results/tfg_rigorous_tuning
             reports/results/tfg_attitude_bias_tuning
+            reports/results/tfg_attitude_bias_diagnostics
           retention-days: 14
