@@ -1,0 +1,103 @@
+name: Repair README engine mechanism figure
+
+on:
+  push:
+    branches:
+      - fix/readme-engine-mechanism-svg
+    paths:
+      - .github/workflows/repair-readme-engine-figure.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the original SVG renderer version
+        run: python -m pip install matplotlib==3.10.8
+      - name: Regenerate from saved results and validate both copies
+        env:
+          PYTHONPATH: tools
+        run: |
+          python - <<'PY'
+          import csv
+          import hashlib
+          import re
+          import tempfile
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          import engine_noise_degradation as study
+
+          summary = Path('reports/results/engine_noise_degradation/engine_noise_summary.csv')
+          summary_hash = hashlib.sha256(summary.read_bytes()).hexdigest()
+          with summary.open(newline='', encoding='utf-8') as handle:
+              rows = list(csv.DictReader(handle))
+          assert len(rows) == 57, f'Unexpected study cell count: {len(rows)}'
+          assert {row['family'] for row in rows} == {'OU-II', 'OU-III', 'TFG'}
+
+          targets = [
+              Path('reports/results/engine_noise_degradation/ou_engine_noise_mechanism.svg'),
+              Path('doc/kalman_ou_iii/ou_engine_noise_mechanism.svg'),
+          ]
+          for target in targets:
+              try:
+                  ET.parse(target)
+              except ET.ParseError as error:
+                  print(f'Confirmed original invalid SVG: {target}: {error}', flush=True)
+              else:
+                  print(f'Original SVG already parses: {target}', flush=True)
+
+          original_save = study._save_svg
+          def save_with_preview(figure, path):
+              original_save(figure, path)
+              figure.savefig('/tmp/engine-mechanism-preview.png', dpi=160)
+          study._save_svg = save_with_preview
+          with tempfile.TemporaryDirectory() as directory:
+              generated = Path(directory) / targets[0].name
+              study.write_mechanism_plot(generated, rows)
+              data = generated.read_bytes()
+              root = ET.fromstring(data)
+              assert root.tag == '{http://www.w3.org/2000/svg}svg'
+              ids = {element.get('id') for element in root.iter() if element.get('id')}
+              assert {f'axes_{i}' for i in range(1, 5)} <= ids
+              for element in root.iter():
+                  for value in element.attrib.values():
+                      for reference in re.findall(r'url\(#([^)]*)\)', value):
+                          assert reference in ids, f'Missing SVG reference: {reference}'
+                  href = element.get('{http://www.w3.org/1999/xlink}href', '')
+                  if href.startswith('#'):
+                      assert href[1:] in ids, f'Missing SVG glyph: {href}'
+              assert data.rstrip().endswith(b'</svg>')
+              assert len(data) > 16618
+              for target in targets:
+                  target.write_bytes(data)
+                  ET.parse(target)
+              assert targets[0].read_bytes() == targets[1].read_bytes()
+              print(f'PASS: 4 panels, valid SVG references, {len(data)} bytes, identical publication copies', flush=True)
+              print(f'SVG SHA256: {hashlib.sha256(data).hexdigest()}', flush=True)
+
+          assert hashlib.sha256(summary.read_bytes()).hexdigest() == summary_hash
+          print(f'Unchanged source summary SHA256: {summary_hash}', flush=True)
+          PY
+      - name: Commit only the two regenerated figures to the repair branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add reports/results/engine_noise_degradation/ou_engine_noise_mechanism.svg doc/kalman_ou_iii/ou_engine_noise_mechanism.svg
+          git diff --cached --stat
+          git diff --cached --quiet || git commit -m 'Restore complete engine-mechanism SVGs from the recorded study summary'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+      - name: Retain visual review image
+        uses: actions/upload-artifact@v4
+        with:
+          name: readme-engine-mechanism-preview
+          path: /tmp/engine-mechanism-preview.png
+          retention-days: 3
