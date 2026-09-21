@@ -58,6 +58,8 @@ def certificate():
       "regular_A21_pre_projection_BA_precision_ceiling":1000003000,
       "source_uniform_nominal_force_field_temporal_margin":False,
       "source_uniform_nominal_gyro_alias_temporal_margin":False,
+      "temporal_margins_imply_finite_B_star":True,
+      "B_star_instantiated":False,
       "uniform_historical_AG_readout_action":False,
       "full_21_covariance_upper":False,
       "rho0_certified":False,
