@@ -16,6 +16,14 @@ class SignedTemporalTests(unittest.TestCase):
         self.assertGreater(b["physical_floor_margin"],0)
     def test_projection_gap_positive(self):
         self.assertGreater(projection_sector_gap(),0)
+    def test_margin_to_Bstar_implication(self):
+        t=margin_to_Bstar_theorem()
+        self.assertTrue(t["implication_closed"])
+        self.assertFalse(t["premise_margins_source_uniformly_certified"])
+        b=separated_reader_action_implication(F(1,100),F(1,200),F(2),F(3),F(5),F(7),10)
+        self.assertTrue(b["B_star_finite"])
+        self.assertGreater(b["B_star_scalar_ceiling"],0)
+
     def test_fail_closed(self):
         c=certificate()
         self.assertFalse(c["source_uniform_nominal_force_field_temporal_margin"])
