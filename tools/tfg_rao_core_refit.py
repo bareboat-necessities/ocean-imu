@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""RAO-only refit of TFG c_tau, c_sigma and horizontal S regularization.
+"""RAO-only refit of TFG c_tau, c_sigma and horizontal S regularization.\n
 
 This supersedes historical comments fitted before the vessel-RAO dataset.
 It is deliberately narrow: shipping gyro-bias tuning is held fixed, no other
