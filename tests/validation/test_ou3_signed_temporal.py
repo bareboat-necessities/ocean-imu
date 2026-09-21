@@ -40,6 +40,16 @@ class SignedTemporalTests(unittest.TestCase):
         self.assertIsNone(b["finite_numeric_ceiling"])
         self.assertEqual(literal_signed_functional_bound(F(2),F(3),F(4),F(5)),F(32))
 
+    def test_endpoint_annihilation(self):
+        a=endpoint_annihilating_multiplier_constraints()
+        self.assertTrue(a["four_S_spline_satisfies_AW_endpoint_conditions"])
+        b=balanced_gyro_weights([1,2,4,8])
+        self.assertEqual(sum(b),0)
+        g=gyro_zero_mean_companion(b)
+        self.assertTrue(g["endpoint_zero"])
+        self.assertEqual(endpoint_cancelled_source_bound(2,3,4,F(1,100000),64),
+                         F(6)+F(256,100000))
+
     def test_fail_closed(self):
         c=certificate()
         self.assertFalse(c["source_uniform_nominal_force_field_temporal_margin"])
