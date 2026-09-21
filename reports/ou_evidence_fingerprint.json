@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "fa3662e3d53e3027700fc99dc0b469745529f300ab3c4c57ece31efd2af7857c",
+  "replay_fingerprint": "f1ff4232d5456ef8ef787628dd1b7a8ae4ff801a0cb6bc879a29caff3cdf2b74",
   "results_file_count": 393,
   "results_files": [
     {
@@ -851,7 +851,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "e22fa3bd5e0a3bb235c845465d611232fa029a4875d037bf1d1c9a4e4b3c6732"
+      "sha256": "9c70afdfa25eb549195de84b0438f6561b89830fb1dccfe7cead14b24a1d16b7"
     },
     {
       "kind": "file",
@@ -921,37 +921,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "f1f9c6540b6ec67c5724cc1fb27a93359d462c33a5ad312847499634e35edeb4"
+      "sha256": "db93da5ce2f6d3482e069918cbdc9dbcc42ac983558040437f243389cdb01897"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "17dcaf8292fbd7d55f96a60923e6e7295196af12411b31fa1451ab7e3c930d2f"
+      "sha256": "35720c4f2b62ffcc783baaea568788762d3be0d84da07c45516cc6e0f04859e5"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "790a71df1a3231e5fe603cf403ea7f9164de6ce43bb2daaa23a9ad5060d276af"
+      "sha256": "94abe854445329a262ddd2d920633caf4d52edc30b4aadff5206217cc5cbab45"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "02786a5f737e26df109ffcce3097762a0790f5f53d16dc8032a016848271f213"
+      "sha256": "0c7ee75d9bae69625edf9cba3178c7bc1c794b74b8681e93b7705285ea59a855"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "159ec3376e5659d4ebef74d0199a5c35adb4b73eab51141c24066958bbc22e69"
+      "sha256": "a7bef16cf902c53088be6e2827eb9ab63b5c57d1a14f4e7fc0952f4bb70b3ec5"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "83783ab90b84312d6ffbae71533853af40923c0daf33d90d92f2e76fbfb12ff5"
+      "sha256": "1c44b6a9d6726cecadd04f68c21c0ff3e7dd79d7e16dba8158357709402dade0"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "277a095dfabc5bb28d4d08715b28f47f80e642f92b283620784eb190815229e4"
+      "sha256": "bb2d3542a67df267741901c280bdc8bd50c2d16202ad446271b55d47026f4902"
     },
     {
       "kind": "file",
@@ -961,22 +961,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "b976a3d71adee4039944cdec2ac85b1372c7246c0ab842c4ae6ec02c96fa4814"
+      "sha256": "01610ab5ff552a4a29b455d3cc54a8376ed3983cb4708a83f2c9cb48a1640f98"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "493fae4a4d04ec027be7cb7a4cb504b0c3914de7adba9b9081a5e160bfd763f5"
+      "sha256": "f33e4a49689b38873753afbcb94046f81a12caaba97c778c8a2b2409adeb99c1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "218f982c23601eca865b352527959fd6da32c8b0f7ff4b8f6b0f552085bf42bf"
+      "sha256": "9f6eb9280e124d317a9bd1732b898a69d0a4b9a30f91e51f9360d5fe178533e8"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "d9795996bf59fccd094470094646152c0a1ce892d58fa5f8427dbef5bfff1abb"
+      "sha256": "cdc7569f5e43968b9fab7ac414b90787595e5913feefabf06d3892a350c49c7f"
     },
     {
       "kind": "file",
@@ -991,7 +991,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "e3ac9b193423fa75e524dc0ed03897c1e111f13cf1a03c758bc91986fd03cdbd"
+      "sha256": "b2fbe0bcd2117a72e6d30d924bf806ea6a991fc5ca6c2d8d3832e5c6a7e3fe90"
     },
     {
       "kind": "file",
@@ -1951,7 +1951,7 @@
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/manifest.json",
-      "sha256": "f6fe53d90733a9eb815914b8a67bcf8505678cffe54aa6c6a2b9da48725d784d"
+      "sha256": "c1e774397acb80bd928d14a4209811bca4a9d1ce953d7df4efa7df1a0fbb6baf"
     },
     {
       "kind": "file",
@@ -1969,13 +1969,13 @@
       "sha256": "c07d422db8ac96c8df240497272c41f0e9565cbf3a1529791cdb142bbb2f84f8"
     }
   ],
-  "results_fingerprint": "7ccbca5518ff0fac4c856ab1d402667a343a014304d409bd0a5326fa32c98238",
+  "results_fingerprint": "26f6727d5cad1b0e840fe563a38880521482ac378247ea4cf1110399aeafd711",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 342,
+  "tracked_replay_file_count": 344,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2036,6 +2036,11 @@
       "mode": "100644",
       "path": ".github/workflows/simulation-studies.yml",
       "sha256": "da49e61254d716d3bf63e5ef2659863a0c0449b2edf4b10d094ed511a66f602f"
+    },
+    {
+      "mode": "100644",
+      "path": ".github/workflows/tfg-rigorous-tuning.yml",
+      "sha256": "3956457d59427ff3d0bd7a37bcc128b10c729983ddedac0f401792c8e106c937"
     },
     {
       "mode": "100644",
@@ -2840,7 +2845,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_tfg/kalman_tfg-sim.cpp",
-      "sha256": "48c440f298b21cfdde353ecddf6e0bc6842bfdbfa3e37269a2b4e9dd1e590fd8"
+      "sha256": "f1d7a5efa9bb39aac8c7ca2ea5567fcdb82b3d021cbb789510b69731d1dfe286"
     },
     {
       "mode": "100644",
@@ -3495,7 +3500,7 @@
     {
       "mode": "100644",
       "path": "tools/rao_parameter_tuning.py",
-      "sha256": "fe102306d80f66780993cb4285d1808d20ebc0d824bd078523ca6eaa28cebe9b"
+      "sha256": "3195f1a41fc9ab12b8504ad23ab781289cd97308f48b667ce54c74ff287535be"
     },
     {
       "mode": "100644",
@@ -3680,7 +3685,12 @@
     {
       "mode": "100644",
       "path": "tools/tfg_comparison.py",
-      "sha256": "fc334121afd0385606c336a1e5145bf07e8ba63b3427672d7b905dd89016f302"
+      "sha256": "64ef8e95e3c2dc6456affc006cdbff8ff21f32a6444269dc4ed4c5a3f0b0bc70"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/tfg_rigorous_tuning.py",
+      "sha256": "ea9c9e953c3c35f9cce2dfbd5a0970874458f7486535a16f4ada014231f78b1d"
     },
     {
       "mode": "100644",

@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
     "OU_III": "b9d32872a8d4eb1b64fd04ebd0523ae8bad36f5fc2f294394a737479aa119fa9",
-    "TFG": "98b595a028ce6073f88a1fa06a00cb0bcb84011b2067a5c18916bc14c3286bb7"
+    "TFG": "4004f070275ee518a154e28560e4e4ab124fdf9a74c549b3eaf65497c8740513"
   },
   "build_environment": {
     "compiler": {
@@ -36,8 +36,8 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "generated_utc": "2026-09-21T06:08:13+00:00",
-  "git_commit": "a29c3d969eb699894f4e9118e4034d992ab65c3f",
+  "generated_utc": "2026-09-21T17:18:01+00:00",
+  "git_commit": "e32f2fd26df08c662398182d23de3127361e8ed7",
   "git_diff_stat": "",
   "protocol": {
     "bootstrap_resamples": 10000,
@@ -179,16 +179,16 @@
     "tests/kalman_ou_iii/Makefile": "a93fd27bbd498a3dd639ab1ed22780d39efcc8c07696024ecc0895c257247438",
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "d5b9ace6ba742e263b7b0d940800ecee9192f7e55b5dc698d155eb13ab07d5db",
     "tests/kalman_tfg/Makefile": "f98a1b48b8bd1eec1ce4a4c3ef51c2c92fbac0cd3d1495284956a0e28a316d17",
-    "tests/kalman_tfg/kalman_tfg-sim.cpp": "48c440f298b21cfdde353ecddf6e0bc6842bfdbfa3e37269a2b4e9dd1e590fd8",
+    "tests/kalman_tfg/kalman_tfg-sim.cpp": "f1d7a5efa9bb39aac8c7ca2ea5567fcdb82b3d021cbb789510b69731d1dfe286",
     "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
     "tools/ou_validation.py": "274a13b3443df30d9a64ddfd2925e8ad51ec9f0a8870d7da20752b21dbeaead1",
     "tools/sim_dataset.py": "9dc2556daa2eafde5de9860963e68c4449d722ab68b41823a44c138ac417dc30",
-    "tools/tfg_comparison.py": "fc334121afd0385606c336a1e5145bf07e8ba63b3427672d7b905dd89016f302"
+    "tools/tfg_comparison.py": "64ef8e95e3c2dc6456affc006cdbff8ff21f32a6444269dc4ed4c5a3f0b0bc70"
   },
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "35566492377",
+    "run_id": "35629493112",
     "workflow": "ou-full-evidence-branch"
   }
 }
