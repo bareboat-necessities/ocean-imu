@@ -4,17 +4,17 @@
 \label{tab:tfg-paired}\setlength{\tabcolsep}{3pt}
 \begin{tabular}{@{}lrrr@{}}\toprule
 Metric & OU--III & TFG & Difference\\\midrule
-Z RMS [$\%H_s$] & 4.423 & 4.459 & +0.0362\\
+Z RMS [$\%H_s$] & 4.423 & 4.459 & +0.0361\\
 Z RMS [m] & 0.1565 & 0.1569 & +0.000394\\
-3-D RMS [m] & 0.3262 & 0.333 & +0.00676\\
-Roll RMS [deg] & 0.2456 & 0.2878 & +0.0422\\
-Pitch RMS [deg] & 0.2602 & 0.3111 & +0.0509\\
-Yaw RMS [deg] & 1.852 & 1.911 & +0.0584\\
-Accel. RMS [m/s$^2$] & 0.02736 & 0.02873 & +0.00137\\
-Accel. bias [m/s$^2$] & 0.06175 & 0.07596 & +0.0142\\
-Gyro bias [rad/s] & 0.0001216 & 0.0001126 & -9.02e-06\\
+3-D RMS [m] & 0.3262 & 0.3309 & +0.00467\\
+Roll RMS [deg] & 0.2456 & 0.2911 & +0.0455\\
+Pitch RMS [deg] & 0.2602 & 0.3318 & +0.0716\\
+Yaw RMS [deg] & 1.852 & 1.928 & +0.0756\\
+Accel. RMS [m/s$^2$] & 0.02736 & 0.02925 & +0.0019\\
+Accel. bias [m/s$^2$] & 0.06175 & 0.07922 & +0.0175\\
+Gyro bias [rad/s] & 0.0001216 & 0.0001039 & -1.77e-05\\
 \bottomrule\end{tabular}\end{table}
-The companion JONSWAP heave difference is +0.036 percentage points of $H_s$ (paired-bootstrap 95\% interval [+0.031, +0.042]; paired Student-$t$ interval [+0.030, +0.043]). The exact sign and sign-flip $p$-values are 0.0020 and 0.0020, respectively. OU--III has lower mean normalized heave error in this ensemble.
+The companion JONSWAP heave difference is +0.036 percentage points of $H_s$ (paired-bootstrap 95\% interval [+0.030, +0.042]; paired Student-$t$ interval [+0.029, +0.043]). The exact sign and sign-flip $p$-values are 0.0020 and 0.0020, respectively. OU--III has lower mean normalized heave error in this ensemble.
 These are ten paired seed differences, not forty independent seas.
 \begin{table}[t]\centering\footnotesize
 \caption{Companion heave contrasts by declared ensemble. The transition is a controlled crossfade, not an evolving random sea. Intervals are paired-bootstrap 95\%.}
@@ -22,6 +22,6 @@ These are ten paired seed differences, not forty independent seas.
 \begin{tabular}{@{}lrrl@{}}\toprule
 Ensemble & OU--III & TFG & Difference [CI]\\\midrule
 JONSWAP & 4.42 & 4.46 & +0.04 [+0.03, +0.04]\\
-PM--Stokes & 4.30 & 4.34 & +0.04 [+0.04, +0.05]\\
+PM--Stokes & 4.30 & 4.34 & +0.04 [+0.03, +0.05]\\
 Crossfade & 4.71 & 4.70 & -0.00 [-0.02, +0.02]\\
 \bottomrule\end{tabular}\end{table}
