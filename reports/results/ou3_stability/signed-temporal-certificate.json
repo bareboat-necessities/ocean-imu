@@ -15,5 +15,13 @@
   "uniform_historical_AG_readout_action": false,
   "temporal_margins_imply_finite_B_star": true,
   "temporal_margin_to_B_star_method": "finite largest-residual pivot-chart cover; adjugate/Hadamard inverse bound; finite backward rank<=3 factor action",
-  "B_star_instantiated": false
+  "B_star_instantiated": false,
+  "source_uniform_enclosure_attempt_executed": true,
+  "physical_collinearity_reserve": "27049050188592/625000000000000000",
+  "forced_adjoint_signed_transfer_ceiling": null,
+  "reset_transport_transfer_ceiling": null,
+  "Delta_col_lower": null,
+  "Delta_gyr_lower": null,
+  "first_failed_inequality": "physical reserve - signed forced-adjoint/reset transfer > 0",
+  "failure_classification": "missing source-uniform signed transfer bound; no new physical assumption introduced"
 }
