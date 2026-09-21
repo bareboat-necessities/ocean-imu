@@ -24,6 +24,13 @@ class SignedTemporalTests(unittest.TestCase):
         self.assertTrue(b["B_star_finite"])
         self.assertGreater(b["B_star_scalar_ceiling"],0)
 
+    def test_source_margin_attempt_records_exact_gap(self):
+        a=source_margin_attempt()
+        self.assertGreater(a["physical_collinearity_reserve"],0)
+        self.assertIsNone(a["forced_adjoint_signed_transfer_ceiling"])
+        self.assertIsNone(a["Delta_col_lower"])
+        self.assertFalse(a["new_physical_assumption_needed"])
+
     def test_fail_closed(self):
         c=certificate()
         self.assertFalse(c["source_uniform_nominal_force_field_temporal_margin"])
