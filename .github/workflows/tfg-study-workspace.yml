@@ -13,19 +13,20 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Apply reviewed study changes
+      - name: Apply tested source blobs
         env:
-          PATCH_B64: >-
-            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
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 - <<'PY'
-          import base64, hashlib, os, subprocess, zlib
-          patch = zlib.decompress(base64.b64decode(os.environ['PATCH_B64']))
-          expected = 'a7b19626f0c227d08c162efb7c6d908d54ade164d6e7c2a84f1106a4a5c4b3cb'
-          if hashlib.sha256(patch).hexdigest() != expected:
-              raise SystemExit('patch integrity check failed')
-          subprocess.run(['git', 'apply', '--index', '-'], input=patch, check=True)
-          PY
+          set -euo pipefail
+          blob() {
+            gh api "repos/${{ github.repository }}/git/blobs/$1" --jq .content | base64 --decode > "$2"
+            test "$(git hash-object "$2")" = "$1"
+          }
+          blob 397ac7138ad6feb12e939820be6383d8f118bad5 tools/tfg_comparison.py
+          blob 7c244397a0c6571f6c8b36a167f110b8309c6516 tests/validation/test_tfg_comparison.py
+          blob d8a627c9e63d8472d98c6c28f76e9c6814fb1b24 /tmp/tfg-existing.patch
+          git apply --index /tmp/tfg-existing.patch
+          git add tools/tfg_comparison.py tests/validation/test_tfg_comparison.py
           git rm .github/workflows/tfg-study-workspace.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -42,7 +43,7 @@ jobs:
       - name: Execute paired and deterministic studies
         run: |
           set -euo pipefail
-          python3 -u tools/tfg_comparison.py --mode full --jobs 2
+          python3 -u tools/tfg_comparison.py --mode full --jobs "$(nproc)"
           python3 tools/tfg_comparison.py --check --require-ci --publish
           for entry in kalman_ou_iii:kalman_ou_iii-sim kalman_tfg:kalman_tfg-sim kalman_ou_ii:kalman_ou_ii-sim pii_observer:pii_observer-adaptive nlo:nlo-sim; do
             directory="${entry%:*}"
@@ -60,11 +61,13 @@ jobs:
           cp plots/kalman_ou_iii/w3d_multi_observer_jonswap_medium.svg doc/kalman_ou_iii/
           python3 -m unittest discover -s tests/validation -p 'test_tfg_comparison.py' -v
           python3 -m unittest discover -s tests/validation -p 'test_deterministic_baseline_contract.py' -v
-      - name: Publish the retained CI evidence on this branch
+      - name: Publish retained CI evidence on this branch
         run: |
           git add reports/results/tfg_comparison reports/results/baseline_comparison doc/kalman_ou_iii
           git commit -m 'Record CI-paired TFG comparison and five-filter article results'
           git push origin HEAD:refs/heads/codex/ou3-tfg-comparison
+      - name: Validate complete repository
+        run: make all
       - uses: actions/upload-artifact@v6
         if: always()
         with:
