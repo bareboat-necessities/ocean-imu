@@ -236,6 +236,33 @@ are not evidence that the declared six-degree region is invariant.
 
 ## Failed approaches / DEAD_ENDS
 
+- 2026-09-21 main CI repair at `4ba4a21b`: build run `35603196590`
+  failed in `ou-evidence / fingerprint` during `make -C tests/validation
+  evidence-test`. Of 505 tests, the only error was the five-method TFG plotting
+  regression importing pandas in a job that did not install `python3-pandas`;
+  one existing test was skipped. Quality run `35603196278` independently
+  failed Ruff F403 on the signed-temporal wildcard import and F841 on the
+  unused `fac` local. Classification: dependency/lint integration failures,
+  not estimator regressions or mathematical obstructions. The invalidated
+  hypothesis is that passing smoke or standalone evidence CI covers the
+  reusable full-study job's separate dependency installation. Install pandas
+  there, name the test imports explicitly, and remove only the unused local.
+  A standard-library regression checks the dependencies before tests in all
+  three reusable validation jobs and rejects cross-job/comment-only coverage.
+  It fails on the original missing pandas package and passes after repair;
+  all nine signed-temporal tests and exact certificate-output parity pass.
+  Retained: shipping sources, proof constants/flags, numerical quality gates,
+  genuine replay evidence and every provenance/fingerprint check. The proof
+  limiter remains source-uniform signed separation and the historical B_*
+  ceiling; this CI repair does not advance or promote the theorem. Local
+  source reconstruction was checked against Git blob hashes after HTTPS git
+  clone failed with `Could not resolve host: github.com`; Ruff installation
+  was also unavailable (`No matching distribution found for ruff`). Full
+  repository validation and actual Ruff results must come from PR CI, not
+  be inferred from the 11 focused local tests. Next falsifiable check: run
+  the unmodified full evidence/proof and quality gates on the repair head,
+  including the dependency regression for the otherwise main-only reuse path.
+
 - CI integration rejected the merged tree at two independent gates. The
   proof gate found a stale blob hash for `docs/ou3-construction-mean-action.md`
   (`1e25ed8` recorded, `ee12d64` current). The shared evidence gate found that
