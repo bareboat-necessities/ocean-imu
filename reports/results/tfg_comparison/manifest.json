@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "c5cf96492ddf6071f2e27f643fb16421a5ac838e710a4704ff43fbc6368cacc8",
-    "TFG": "a8c71f819597f5665850f464329c15d70ace164fefc9aa04b6b93a45a0521e39"
+    "OU_III": "b9d32872a8d4eb1b64fd04ebd0523ae8bad36f5fc2f294394a737479aa119fa9",
+    "TFG": "2da92b685a06a641027b4e7943af7e4f6dde75677096a7f4499e39dc415a466e"
   },
   "build_environment": {
     "compiler": {
@@ -36,9 +36,9 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "generated_utc": "2026-09-21T21:38:50+00:00",
-  "git_commit": "2e69d6cd77bac91f361d4730c077fdfde908139d",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   20 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   28 +-\n reports/results/tfg_comparison/paired_summary.json | 4348 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3222 +++++++--------\n 5 files changed, 3989 insertions(+), 3989 deletions(-)",
+  "generated_utc": "2026-09-22T00:04:36+00:00",
+  "git_commit": "7e2324964d46ef5650495a6f0453cb50c3dd45d9",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    2 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   88 +-\n reports/results/tfg_comparison/paired_summary.json | 4000 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3218 ++++++++--------\n 5 files changed, 3834 insertions(+), 3834 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -134,11 +134,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "3182d3fcc7d8e1c4fe8d3c2c4d8050e92834eb4f4ab95bca6fcd431babcdc258",
-    "gate_diagnostics.json": "6d5271e3e41b2e413e21afa668c32c225ac497458cc9bb419ce941595f05f08b",
-    "paired_summary.json": "5b46a0e7178752a190de59b6967c3bd52f3649adcbb9c9a760ccd56c63adb85c",
-    "raw_runs.csv": "be115f6eeee2824c7241ba3929d5b32c0065e9a6180dfb40893298c8d5522df7",
-    "raw_runs.json": "6b47e84c19da8393f412b1cf5238a075a1226ff12416f813ba44fca30a6f1e05"
+    "comparison.tex": "74aeff7e02c3b71df3312a18a6d2ca509f6da3f84fde5e97af46a286d46e2c6f",
+    "gate_diagnostics.json": "67f5970a57cc2ad28dbc1f262791e458c3eb1655e677260eaa7832aba263a521",
+    "paired_summary.json": "917f47dc84e8930df8f32486d321b4fded0f204cd88e19e80740646ee8680868",
+    "raw_runs.csv": "09ffc9864746c723968c9db5c0a8b3ef6cdebf1736c511141cac96bd5f87be14",
+    "raw_runs.json": "628f2e8e9dc7714af0a0ecdc1840e09073895c3f0058193b7e8cc202c7c534dd"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -179,7 +179,7 @@
     "tests/kalman_ou_iii/Makefile": "a93fd27bbd498a3dd639ab1ed22780d39efcc8c07696024ecc0895c257247438",
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "d5b9ace6ba742e263b7b0d940800ecee9192f7e55b5dc698d155eb13ab07d5db",
     "tests/kalman_tfg/Makefile": "f98a1b48b8bd1eec1ce4a4c3ef51c2c92fbac0cd3d1495284956a0e28a316d17",
-    "tests/kalman_tfg/kalman_tfg-sim.cpp": "48c440f298b21cfdde353ecddf6e0bc6842bfdbfa3e37269a2b4e9dd1e590fd8",
+    "tests/kalman_tfg/kalman_tfg-sim.cpp": "2a427cebc69bf4d612468c983e3e1235e6b4bdfb4422c7d6055feb10f2896ec8",
     "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
     "tools/ou_validation.py": "274a13b3443df30d9a64ddfd2925e8ad51ec9f0a8870d7da20752b21dbeaead1",
     "tools/sim_dataset.py": "9dc2556daa2eafde5de9860963e68c4449d722ab68b41823a44c138ac417dc30",
@@ -188,7 +188,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "35657232547",
+    "run_id": "35669114347",
     "workflow": "build"
   }
 }
