@@ -10,6 +10,7 @@ WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou-validation.yml"
 BRANCH_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou-full-evidence-branch.yml"
 BUILD_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "build.yml"
 PROOF_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou3-stability-proof.yml"
+EVIDENCE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "evidence-contract.yml"
 VALIDATION_MAKEFILE = REPO_ROOT / "tests" / "validation" / "Makefile"
 
 
@@ -199,9 +200,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("make -C tests/validation test", smoke)
 
     def test_evidence_workflow_independently_checks_full_contract(self):
-        workflow = (REPO_ROOT / ".github/workflows/evidence-contract.yml").read_text(
-            encoding="utf-8"
-        )
+        workflow = EVIDENCE_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("pull_request:", workflow)
         for path in ("doc/**", "docs/**", "tests/**", "reports/**"):
             self.assertIn(f'- "{path}"', workflow)
@@ -210,6 +209,49 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("contents: read", workflow)
         self.assertNotIn("needs: classify", workflow)
         self.assertNotIn("continue-on-error", workflow)
+
+    def test_evidence_workflow_checks_main_after_evidence_is_published(self):
+        """On main the contract holds only once regeneration has committed.
+
+        A push that touches the replay provenance closure lands source whose
+        committed bundles are one regeneration behind, and the same push starts
+        the build that regenerates them. Validating that pushed tree reported a
+        stale bundle as a contract failure every time, and the bot's
+        regeneration commit raises no push event to clear it. So main is
+        validated from the completed build, against the published tip.
+        """
+        workflow = EVIDENCE_WORKFLOW.read_text(encoding="utf-8")
+        self.assertEqual(
+            {"pull_request", "workflow_run", "workflow_dispatch"},
+            _mapping_child_keys(workflow, "on"),
+        )
+        trigger = workflow[workflow.index("  workflow_run:") : workflow.index("jobs:")]
+        self.assertEqual(["build"], _inline_sequence(trigger, "workflows"))
+        self.assertEqual(["completed"], _inline_sequence(trigger, "types"))
+        self.assertEqual(["main"], _inline_sequence(trigger, "branches"))
+
+        job = workflow[workflow.index("  evidence-contract:") :]
+        gate = _compact(_folded_scalar(job, "if"))
+        self.assertIn(_compact("github.event_name != 'workflow_run'"), gate)
+        self.assertIn(_compact("github.event.workflow_run.conclusion == 'success'"), gate)
+        self.assertIn(_compact("github.event.workflow_run.head_branch == 'main'"), gate)
+
+        # The published tip carries the regenerated bundle; the commit that
+        # started the build does not.
+        self.assertIn(
+            "ref: ${{ github.event_name == 'workflow_run' "
+            "&& 'refs/heads/main' || '' }}",
+            job,
+        )
+        # A newer source commit is one regeneration behind again, so its own
+        # build owns that tree and this run must stand down rather than fail.
+        scope = job.index("- name: Confirm this build still owns the published main tip")
+        validate = job.index("make -C tests/validation evidence-test")
+        self.assertLess(scope, validate)
+        self.assertIn("git merge-base --is-ancestor", job)
+        self.assertEqual(
+            2, job.count("if: steps.scope.outputs.validate != 'false'"), job
+        )
 
     def test_single_stability_workflow_covers_contracts_without_promoting_status(self):
         proof = PROOF_WORKFLOW.read_text(encoding="utf-8")

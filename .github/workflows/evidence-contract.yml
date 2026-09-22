@@ -3,6 +3,18 @@ name: evidence-contract
 # This is the same non-simulation gate used before publishing regenerated
 # evidence on main. Run it even when the simulation smoke classifier skips a
 # proof-only change: deleted article inputs can break publication independently.
+#
+# On main the gate runs *after* the evidence pipeline, not on the push that
+# starts it. Regeneration is a main-only, hour-long step: a push that changes
+# anything in the replay provenance closure lands source whose committed
+# bundles are by construction one run behind, so the same push also started the
+# build that regenerates and commits them. Validating the pushed tree therefore
+# reported a stale bundle as a contract failure on every estimator change --
+# permanently red, because the bot's regeneration commit uses GITHUB_TOKEN and
+# raises no push event to clear it. The workflow_run trigger below checks the
+# published main tip once that pipeline has succeeded, which is the first
+# moment the contract can hold; ou-validation still enforces the identical
+# `evidence-test` before it commits or pushes anything.
 on:
   pull_request:
     paths:
@@ -16,7 +28,13 @@ on:
       - "reports/**"
       - "Makefile"
       - ".github/workflows/**"
-  push:
+  workflow_run:
+    workflows: [build]
+    types: [completed]
+    # Trigger-level branch filter, matching readme-results-publish: build runs
+    # on every push and pull request, and without this each one would create a
+    # run that exists only to skip. conclusion and event are still checked in
+    # the job, because workflow_run has no trigger-level filter for either.
     branches: [main]
   workflow_dispatch:
 
@@ -29,18 +47,59 @@ concurrency:
 
 jobs:
   evidence-contract:
+    # A failed, cancelled or pull-request build publishes no evidence, so there
+    # is no new published state to validate.
+    if: >-
+      ${{ github.event_name != 'workflow_run'
+          || (github.event.workflow_run.conclusion == 'success'
+              && github.event.workflow_run.head_branch == 'main'
+              && (github.event.workflow_run.event == 'push'
+                  || github.event.workflow_run.event == 'workflow_dispatch')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
         with:
+          # After a workflow_run the interesting tree is the published branch
+          # tip, which carries the bundle the pipeline just committed, not the
+          # source commit that started it.
+          ref: ${{ github.event_name == 'workflow_run' && 'refs/heads/main' || '' }}
           fetch-depth: 0
+      - name: Confirm this build still owns the published main tip
+        id: scope
+        if: github.event_name == 'workflow_run'
+        shell: bash
+        env:
+          BUILD_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          BOT_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
+        run: |
+          set -euo pipefail
+          tip="$(git rev-parse HEAD)"
+          skip() {
+            echo "$1"
+            echo "validate=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          if ! git merge-base --is-ancestor "$BUILD_HEAD_SHA" "$tip"; then
+            skip "main no longer contains ${BUILD_HEAD_SHA}; its history was replaced."
+          fi
+          # Only this pipeline's own publication commits may sit on top. A newer
+          # source commit is one regeneration behind again, exactly as this
+          # build's source commit was, and its own build validates that tree.
+          for sha in $(git rev-list "${BUILD_HEAD_SHA}..${tip}"); do
+            if [ "$(git log -1 --format=%ae "$sha")" != "$BOT_EMAIL" ]; then
+              skip "main advanced to ${tip} with new source; leaving validation to its build."
+            fi
+          done
+          echo "validate=true" >> "$GITHUB_OUTPUT"
       - name: Install evidence-test dependencies
+        if: steps.scope.outputs.validate != 'false'
         run: |
           sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
           sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y --no-install-recommends \
             python3-numpy python3-matplotlib python3-pandas python3-scipy
       - name: Validate complete committed evidence and publication contracts
+        if: steps.scope.outputs.validate != 'false'
         shell: bash
         run: |
           set -euo pipefail

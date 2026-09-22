@@ -236,6 +236,37 @@ are not evidence that the declared six-degree region is invariant.
 
 ## Failed approaches / DEAD_ENDS
 
+- 2026-09-22 main CI repair at `3b7fb5b4`: `evidence-contract` run
+  `35756581751` failed in `make -C tests/validation evidence-test` at
+  `tools/tfg_comparison.py --check --require-ci` with `ValueError: TFG
+  comparison source provenance is stale`. The exact failed quantity is one
+  manifest entry: `src/kalman_tfg/Kalman3D_Wave_TFG.h` recorded
+  `ac8dca273addc8ee` against the current `abd29a57022dcd1f`. The declared full
+  protocol, dataset pins, result digests, reproduced paired statistics and
+  every other recorded source hash matched. Classification: publication
+  ordering failure, not an estimator regression or a mathematical obstruction
+  -- the covariance-scratch change that moved the hash is verified
+  bit-identical, and build run `35756582203` regenerated and committed the
+  bundle from the same push. The invalidated hypothesis is that a
+  push-triggered contract run on main observes a tree whose evidence matches
+  its source: regeneration is main-only and runs after the push, so any change
+  inside the replay provenance closure is red at push time by construction,
+  and the bot's regeneration commit is pushed with `GITHUB_TOKEN` and raises no
+  push event that could clear it. The green contract runs on regenerated heads
+  such as `bc89c1c4` were manual `workflow_dispatch`. Repair: main is validated
+  from `workflow_run` on a successful `build`, against `refs/heads/main`,
+  standing down when a newer source commit has landed, because that commit's
+  own build owns its tree. The `pull_request` trigger, path filters,
+  `contents: read` and the identical `evidence-test` command are unchanged, and
+  `ou-validation` still runs that gate before it commits or pushes. Retained:
+  shipping sources, estimator tuning, proof constants and flags, every replay
+  bundle, and all provenance and fingerprint checks. The proof limiter remains
+  source-uniform signed separation and the historical B_* ceiling; this CI
+  repair does not advance or promote the theorem. Next falsifiable check: the
+  first main build after this lands is followed by exactly one
+  `evidence-contract` `workflow_run` on the published tip that passes
+  `evidence-test`, and by no push-triggered run on the source commit.
+
 - 2026-09-21 main CI repair at `4ba4a21b`: build run `35603196590`
   failed in `ou-evidence / fingerprint` during `make -C tests/validation
   evidence-test`. Of 505 tests, the only error was the five-method TFG plotting
