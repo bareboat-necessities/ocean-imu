@@ -1,0 +1,51 @@
+name: diagnose-live-heading
+on:
+  push:
+    branches: [fix/immediate-device-magnetic-heading]
+    paths: [.github/workflows/diagnose-live-heading.yml]
+permissions:
+  contents: read
+jobs:
+  heading-reproduction:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Prepare the same reproduction with the required host configuration
+        run: |
+          git fetch --depth=1 origin 4ff6509270e4d1d253aeee4112951ca90bfae05d
+          python3 - <<'PY'
+          import subprocess, textwrap
+          from pathlib import Path
+          source = subprocess.check_output(['git','show','4ff6509270e4d1d253aeee4112951ca90bfae05d:.github/workflows/correct-device-compass.yml'], text=True)
+          cpp = source.split("cat > /tmp/heading-probe.cpp <<'CPP'\n",1)[1].split('\n          CPP\n',1)[0]
+          cpp = textwrap.dedent(cpp).replace('SeaStateFusion_OU_III<>', 'SeaStateFusion_OU_III<TrackerType::KALMANF>')
+          Path('/tmp/heading-probe.cpp').write_text(cpp)
+          PY
+          tar -czf /tmp/ocean-heading-source.tar.gz src tests/kalman_tfg tests/kalman_ou_iii tests/validation sensors/full_marine_ins/atomS3R_ins_tfg sensors/full_marine_ins/atomS3R_ins_kalman_ou3 -C /usr/include eigen3
+      - name: Compile and run the live heading reproduction
+        run: |
+          g++ -std=c++20 -O2 -I/usr/include/eigen3 -Isrc /tmp/heading-probe.cpp -o /tmp/heading-probe.bin
+          /tmp/heading-probe.bin | tee /tmp/heading-probe.log
+      - name: Retain actual source and results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: live-heading-reproduction
+          path: |
+            /tmp/heading-probe.*
+            /tmp/ocean-heading-source.tar.gz
+          if-no-files-found: error
+  primary-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Repository primary validation
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make all
