@@ -1,0 +1,15 @@
+{
+  "config": "near_moderate_sigma",
+  "coefficients": {
+    "TFG_TAU_COEFF": 1.0,
+    "TFG_SIGMA_COEFF": 0.9,
+    "TFG_R_S_X_FACTOR": 1.05,
+    "TFG_R_S_Y_FACTOR": 1.2
+  },
+  "coefficient_sha256": "206cab6cef27cd3f5c09d7dc181fc3013eac205507f6666f7ebb112478783496",
+  "selection_runs_sha256": "08639b9eb6e28ca0ff4c04040cc83cf2c7745116f63310aed62bbdd447b7e8d6",
+  "source_commit": "acb4660c5051ccc8e838871b8f70b28e700ecb5b",
+  "selected_on": "training/refinement only",
+  "refinement_score": 0.04682253857391491,
+  "holdout_seeds_used_for_selection": false
+}
