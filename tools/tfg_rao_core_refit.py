@@ -23,6 +23,7 @@ LEGACY = (1., .8, 1.15, 1.15)
 BASEENV = {'TFG_TUNING':'adaptive', 'TFG_AW_COV_SYNC':'1',
            'SF_GYRO_BIAS_RW_VAR':'3.75e-10'}
 SEEDS = {'screen':PROTOCOL['training_seeds'], 'extend':PROTOCOL['training_seeds'],
+         'split':PROTOCOL['training_seeds'],
          'refine':PROTOCOL['refinement_seeds'], 'holdout':PROTOCOL['sealed_holdout_seeds']}
 
 
@@ -122,6 +123,33 @@ def extension(plan):
     return configs
 
 
+def split(plan):
+    """Independent horizontal split, searched where OU-III's own split lives.
+
+    TFG applies this knob exactly as OU-III does, set_RS_noise(rs*k_Sx, rs*k_Sy,
+    rs), and still carries k_Sx = k_Sy = 1.15. Deployed OU-III carries 0.72 and
+    0.50 on these same eight records, for a reason that belongs to the dataset
+    rather than to that filter: yaw is pinned at 0 in every record, so world x
+    and y are the vessel's surge and sway, and the dataset's keel damps sway but
+    not surge. R_S is applied in world NED in both filters, so the reason
+    transfers unchanged.
+
+    The screen moves both horizontal axes together and so averages two axes that
+    may disagree, and the refinement box reaches only 0.85. The pre-RAO note
+    rejecting 0.72 for TFG tested x = y = 0.72; an isotropic rejection is not
+    evidence about a split, which is the distinction OU-III had to draw when its
+    own isotropic 0.5 sweep was rejected and the split was not. This grid
+    therefore reaches well below the pre-RAO point on both axes independently.
+    """
+    spec = plan['split']
+    configs = [arm('baseline')]
+    for x,y in itertools.product(spec['TFG_R_S_X_FACTOR'],spec['TFG_R_S_Y_FACTOR']):
+        if coeffs(arm('probe',spec['tau'],spec['sigma'],x,y)['env'])==LEGACY:
+            continue
+        configs.append(arm(f'split_x{x}_y{y}',spec['tau'],spec['sigma'],x,y))
+    return configs
+
+
 def refinement(plan):
     configs = [arm('baseline')]
     for t,s,x,y in itertools.product(*(plan['refinement'][k] for k in KEYS)):
@@ -130,7 +158,8 @@ def refinement(plan):
 
 
 def configs_for(phase,plan):
-    configs = {'screen':screen,'extend':lambda:extension(plan),'refine':lambda:refinement(plan)}[phase]()
+    configs = {'screen':screen,'extend':lambda:extension(plan),'split':lambda:split(plan),
+               'refine':lambda:refinement(plan)}[phase]()
     values = [coeffs(c['env']) for c in configs]
     if len(set(values))!=len(values):
         raise ValueError('duplicate coefficient tuples in phase plan')
@@ -160,7 +189,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir',type=Path,default=ROOT/'reports/results/tfg_rao_core_refit')
     parser.add_argument('--jobs',type=int,default=4)
-    parser.add_argument('--phase',choices=('screen','extend','refine','freeze','holdout'),default='screen')
+    parser.add_argument('--phase',choices=('screen','extend','split','refine','freeze','holdout'),default='screen')
     parser.add_argument('--plan',type=Path,default=ROOT/'tools/tfg_rao_refit_plan.json')
     parser.add_argument('--selection-runs',type=Path)
     parser.add_argument('--candidate-config')

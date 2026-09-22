@@ -7,22 +7,81 @@
     "The legacy baseline is best after paired gate penalties; the best unpenalized balanced gain is only 0.039 percent.",
     "Tau and horizontal regularization have a strong interaction. A coarse joint-grid optimum on a face is not sufficient evidence of a global optimum.",
     "Some secondary metrics continue improving at the upper sigma boundary, so that direction is extended jointly with tau and regularization.",
-    "The final refinement is four-dimensional: X and Y are independent, with 54 asymmetric combinations and 27 symmetric combinations plus the baseline."
+    "The final refinement is four-dimensional: X and Y are independent, with 54 asymmetric combinations and 27 symmetric combinations plus the baseline.",
+    "The broad screen and the planned refinement both move the two horizontal axes together or inside a symmetric 0.85-1.45 box, so neither can reach the region deployed OU-III occupies on these same records (x 0.72, y 0.50). The split is therefore searched on its own wide grid before the four-dimensional refinement."
   ],
   "extension": {
-    "ridge_tau": [0.95, 1.025, 1.10],
-    "ridge_sigma": [1.8, 2.5, 3.5],
-    "face_sigma": [0.75, 1.25],
-    "upper_xy": [2.2, 2.7],
-    "lower_xy": [0.45, 0.30],
-    "coupled_sigma": [1.8, 2.5],
-    "coupled_xy": [0.95, 1.2]
+    "ridge_tau": [
+      0.95,
+      1.025,
+      1.1
+    ],
+    "ridge_sigma": [
+      1.8,
+      2.5,
+      3.5
+    ],
+    "face_sigma": [
+      0.75,
+      1.25
+    ],
+    "upper_xy": [
+      2.2,
+      2.7
+    ],
+    "lower_xy": [
+      0.45,
+      0.3
+    ],
+    "coupled_sigma": [
+      1.8,
+      2.5
+    ],
+    "coupled_xy": [
+      0.95,
+      1.2
+    ]
   },
   "refinement": {
-    "TFG_TAU_COEFF": [0.975, 1.025, 1.075],
-    "TFG_SIGMA_COEFF": [0.8, 1.05, 1.3],
-    "TFG_R_S_X_FACTOR": [0.85, 1.15, 1.45],
-    "TFG_R_S_Y_FACTOR": [0.85, 1.15, 1.45]
+    "TFG_TAU_COEFF": [
+      0.975,
+      1.025,
+      1.075
+    ],
+    "TFG_SIGMA_COEFF": [
+      0.8,
+      1.05,
+      1.3
+    ],
+    "TFG_R_S_X_FACTOR": [
+      0.85,
+      1.15,
+      1.45
+    ],
+    "TFG_R_S_Y_FACTOR": [
+      0.85,
+      1.15,
+      1.45
+    ]
   },
-  "holdout_evaluated": false
+  "holdout_evaluated": false,
+  "split": {
+    "tau": 1.0,
+    "sigma": 0.8,
+    "TFG_R_S_X_FACTOR": [
+      0.5,
+      0.72,
+      0.9,
+      1.15,
+      1.45
+    ],
+    "TFG_R_S_Y_FACTOR": [
+      0.4,
+      0.5,
+      0.65,
+      0.85,
+      1.15,
+      1.45
+    ]
+  }
 }
