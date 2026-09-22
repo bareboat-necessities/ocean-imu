@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import hashlib
 import math
 import re
 from itertools import product
@@ -65,20 +66,26 @@ def analyse(rows: list[dict]) -> dict:
         changes = {}
         for j,m in enumerate(METRICS):
             record_changes = {}
+            record_mean_changes = {}
             seed_changes = {}
             for input_name in sorted({k[0] for k in cases}):
                 idx=[i for i,k in enumerate(cases) if k[0]==input_name]
-                record_changes[input_name]=float(100*(current[idx,j].mean()/reference[idx,j].mean()-1))
+                record_mean_changes[input_name]=float(100*(current[idx,j].mean()/reference[idx,j].mean()-1))
+                record_changes[input_name]=float(100*(np.sqrt(np.mean(current[idx,j]**2))/np.sqrt(np.mean(reference[idx,j]**2))-1))
             for seed in sorted({k[1] for k in cases}):
                 idx=[i for i,k in enumerate(cases) if k[1]==seed]
-                seed_changes[seed]=float(100*(current[idx,j].mean()/reference[idx,j].mean()-1))
+                seed_changes[seed]=float(100*(np.sqrt(np.mean(current[idx,j]**2))/np.sqrt(np.mean(reference[idx,j]**2))-1))
             changes[m]=dict(
                 baseline_mean=float(reference[:,j].mean()), candidate_mean=float(current[:,j].mean()),
-                pooled_change_pct=float(100*(current[:,j].mean()/reference[:,j].mean()-1)),
+                mean_rms_change_pct=float(100*(current[:,j].mean()/reference[:,j].mean()-1)),
+                pooled_change_pct=float(100*(np.sqrt(np.mean(current[:,j]**2))/np.sqrt(np.mean(reference[:,j]**2))-1)),
+                candidate_pooled_rms=float(np.sqrt(np.mean(current[:,j]**2))),
+                baseline_pooled_rms=float(np.sqrt(np.mean(reference[:,j]**2))),
                 balanced_geomean_change_pct=float(100*np.expm1(logratios[:,j].mean())),
                 paired_wins=int((ratios[:,j]<1-1e-9).sum()), paired_cases=len(cases),
                 record_wins=sum(v<-1e-7 for v in record_changes.values()), records=8,
-                per_record_change_pct=record_changes, per_seed_change_pct=seed_changes,
+                per_record_change_pct=record_changes, per_record_mean_rms_change_pct=record_mean_changes,
+                mean_rms_record_wins=sum(v<-1e-7 for v in record_mean_changes.values()), per_seed_change_pct=seed_changes,
                 worst_paired_change_pct=float(100*(ratios[:,j].max()-1)))
         regime_scores={}
         for label,lo,hi in [('low',0,1.5),('high',4,9)]:
@@ -139,7 +146,11 @@ def analyse(rows: list[dict]) -> dict:
     coefficients,_,rank,singular=np.linalg.lstsq(design,responses,rcond=None)
     predicted=design@coefficients
     r2=1-float(np.sum((predicted-responses)**2))/max(float(np.sum((responses-responses.mean())**2)),1e-15)
-    return dict(ranking=output,pareto=pareto,bounds=bounds,top_boundary_contacts=boundary,coarse_joint_face_contacts=joint_contacts,
+    return dict(analysis_producer_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                aggregation={'pooled_change_pct':'sqrt(mean(case_RMS**2)) ratio',
+                    'mean_rms_change_pct':'mean(case_RMS) ratio',
+                    'balanced_geomean_change_pct':'equal-case geometric mean of paired ratios'},
+                ranking=output,pareto=pareto,bounds=bounds,top_boundary_contacts=boundary,coarse_joint_face_contacts=joint_contacts,
                 regime_winners={g:min(valid,key=lambda r:r['regime_scores'][g])['config'] for g in ('low','high')},
                 surface_diagnostic=dict(feature_names=['log_tau','log_sigma','log_geometric_xy','log_x_over_y'],
                     active_features=active,normalization_mean=mu.tolist(),normalization_scale=scale.tolist(),
