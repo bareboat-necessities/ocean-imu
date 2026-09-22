@@ -1,4 +1,4 @@
-name: TFG rigorous tuning
+name: TFG refit closeout validation
 on:
   push:
     branches: [tfg-rigorous-tuning]
@@ -6,113 +6,99 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  actions: read
 concurrency:
   group: tfg-rao-core-refit-571
   cancel-in-progress: false
 jobs:
-  fine:
+  validate-retained-defaults:
     if: github.ref == 'refs/heads/tfg-rigorous-tuning'
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Reuse the identical completed-refinement executable
-        uses: actions/download-artifact@v4
-        with:
-          github-token: ${{ github.token }}
-          run-id: 35672004933
-          name: tfg-refit-binary-35672004933
-          path: tests/kalman_tfg
-      - name: Reuse checksum-verified baseline cases instead of rerunning them
-        uses: actions/download-artifact@v4
-        with:
-          github-token: ${{ github.token }}
-          run-id: 35672004933
-          name: tfg-refine-35672004933-0
-          path: previous-control
-      - name: Prepare pinned RAO records and verify binary identity
-        run: |
-          sudo apt-get update && sudo apt-get install -y python3-numpy
-          echo '214b746ed8eb89ff1c5b9713a834e6cb243eae0f6a261e35b876224db989b8e9  tests/kalman_tfg/kalman_tfg-sim' | sha256sum -c -
-          chmod +x tests/kalman_tfg/kalman_tfg-sim
-          make ensure-sim-data
-      - name: Execute tools/tfg_rao_core_refit.py in the extended asymmetric basin
-        run: >-
-          python3 tools/tfg_rao_core_refit.py --phase refine --jobs 4
-          --plan tools/tfg_rao_refit_fine_plan.json
-          --shard-index ${{ matrix.shard }} --shard-count 8
-          --cache-dir previous-control/cache
-          --output-dir reports/results/tfg_rao_core_refit/fine-${{ matrix.shard }}
-      - name: Retain every fine-search case, failed gates and reusable cache
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfg-fine-${{ github.run_id }}-${{ matrix.shard }}
-          path: |
-            reports/results/tfg_rao_core_refit/fine-${{ matrix.shard }}
-            previous-control/cache
-          retention-days: 14
-  aggregate:
-    needs: fine
-    runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y python3-numpy
-      - uses: actions/download-artifact@v4
         with:
-          pattern: tfg-fine-${{ github.run_id }}-*
-          path: artifacts
-      - name: Verify and analyze the full extended four-dimensional surface
-        run: |
-          python3 - <<'PY'
-          import json,sys,os
-          from pathlib import Path
-          sys.path.insert(0,'tools')
-          from tfg_rao_refit_analysis import analyse
-          from tfg_rao_refit_replay import write_json
-          directories=sorted(Path('artifacts').glob('*/reports/results/tfg_rao_core_refit/fine-*/refine'))
-          assert len(directories)==8, (len(directories),list(Path('artifacts').glob('**/manifest.json')))
-          merged={k:[] for k in ('runs','configs','summary','manifests')}
-          for d in directories:
-              for key in ('runs','configs','summary'):
-                  merged[key].extend(json.loads((d/(key+'.json')).read_text()))
-              merged['manifests'].append(json.loads((d/'manifest.json').read_text()))
-          assert len(merged['configs'])==55
-          assert len(merged['runs'])==55*8*3
-          assert len({(r['config'],r['input'],r['seed']) for r in merged['runs']})==55*8*3
-          baseline=[r for r in merged['runs'] if r['config']=='baseline']
-          assert len(baseline)==24 and all(r['reused'] for r in baseline), 'Baseline must be reused'
-          out=Path('reports/results/tfg_rao_core_refit/fine');out.mkdir(parents=True,exist_ok=True)
-          for key,value in merged.items():write_json(out/(key+'.json'),value)
-          result=analyse(merged['runs']);write_json(out/'analysis.json',result)
-          write_json(out/'execution.json',{'workflow_run':int(os.environ['GITHUB_RUN_ID']),
-              'source_commit':os.environ['GITHUB_SHA'],'binary_source_run':35672004933,
-              'cases':len(merged['runs']),'reused_baseline_cases':24,'new_replays':1296,
-              'holdout_evaluated':False})
-          print([(r['config'],r['score']) for r in result['ranking'][:12]])
-          PY
-      - uses: actions/upload-artifact@v4
-        with:
-          name: tfg-rao-fine-evidence-${{ github.run_id }}
-          path: reports/results/tfg_rao_core_refit/fine
-          retention-days: 14
-      - name: Carry generated evidence into existing PR 571 without changing source
+          ref: tfg-rigorous-tuning
+          fetch-depth: 0
+      - name: Apply completed-study comments and passive test-only readout
+        shell: bash
         run: |
           set -euo pipefail
-          cp -a reports/results/tfg_rao_core_refit/fine /tmp/fine-evidence
-          git fetch origin tfg-rigorous-tuning
-          git checkout -B tfg-rigorous-tuning origin/tfg-rigorous-tuning
-          mkdir -p reports/results/tfg_rao_core_refit/fine
-          cp /tmp/fine-evidence/*.json reports/results/tfg_rao_core_refit/fine/
-          git add -f reports/results/tfg_rao_core_refit/fine/*.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git diff --cached --quiet || git commit -m 'Retain executed finer asymmetric RAO surface with untouched holdout'
+          git fetch origin main
+          # Main's new commit contains freshly regenerated generic evidence;
+          # preserve that evidence rather than replacing it with older copies.
+          git merge --no-edit -X theirs origin/main
+          if [ -f tools/tfg_rao_closeout.patch ]; then
+            git apply --check tools/tfg_rao_closeout.patch
+            git apply tools/tfg_rao_closeout.patch
+            git rm tools/tfg_rao_closeout.patch
+          fi
+          if [ -f .github/workflows/tfg-replay-export.yml ]; then
+            git rm .github/workflows/tfg-replay-export.yml
+          fi
+          python3 - <<'PY'
+          import re,subprocess
+          from pathlib import Path
+          header='src/kalman_tfg/SeaStateFusionFilter_TFG.h'
+          old=subprocess.check_output(['git','show','origin/main:'+header],text=True)
+          new=Path(header).read_text()
+          def without_comments(text):
+              return re.sub(r'/\*.*?\*/|//[^\n]*','',text,flags=re.S)
+          assert without_comments(old)==without_comments(new), 'Shipping TFG code changed beyond comments'
+          p='tests/kalman_tfg/kalman_tfg-sim.cpp'
+          a=subprocess.check_output(['git','show','origin/main:'+p],text=True)
+          b=Path(p).read_text()
+          pattern=r'static constexpr W3dFailureLimits kRegressionBars\{.*?\n    \};'
+          assert re.search(pattern,a,re.S).group()==re.search(pattern,b,re.S).group(), 'Quality bars changed'
+          assert 'gyro_bias_rw_var   = 3.75e-10f' in new
+          assert 'TfgInformationAllocation' in b
+          PY
+          git diff --exit-code origin/main -- src/kalman_ou_iii
+          git add src/kalman_tfg/SeaStateFusionFilter_TFG.h tests/kalman_tfg/kalman_tfg-sim.cpp
+          git diff --cached --quiet || git commit -m 'Retain RAO control coefficients, remove obsolete fitting claims and install passive allocation reader'
+          git push origin HEAD:tfg-rigorous-tuning
+          git rev-parse HEAD > /tmp/tfg-closeout-source.txt
+      - name: Install validation dependencies
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev python3-numpy
+      - name: Verify selection, freeze and failed-case retention contracts
+        run: python3 -m unittest discover -s tests/validation -p test_tfg_rao_core_refit.py -v
+      - name: Compile and validate unchanged shipping TFG defaults on all eight records
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C tests/kalman_tfg all 'CXXFLAGS=$(BASEFLAGS) -march=x86-64' 2>&1 | tee /tmp/tfg-closeout-validation.log
+      - name: Retain validation provenance and output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfg-retained-default-validation-${{ github.run_id }}
+          path: |
+            /tmp/tfg-closeout-source.txt
+            /tmp/tfg-closeout-validation.log
+          retention-days: 14
+      - name: Record passed validation in the same PR
+        shell: bash
+        run: |
+          set -euo pipefail
+          source=$(cat /tmp/tfg-closeout-source.txt)
+          git fetch origin tfg-rigorous-tuning
+          git checkout -B tfg-rigorous-tuning origin/tfg-rigorous-tuning
+          mkdir -p reports/results/tfg_rao_core_refit/validation
+          cp /tmp/tfg-closeout-validation.log reports/results/tfg_rao_core_refit/validation/retained-defaults.log
+          python3 - "$source" <<'PY'
+          import hashlib,json,os,sys
+          from pathlib import Path
+          d=Path('reports/results/tfg_rao_core_refit/validation')
+          log=(d/'retained-defaults.log').read_bytes()
+          (d/'provenance.json').write_text(json.dumps({'source_commit':sys.argv[1],
+              'workflow_run':int(os.environ['GITHUB_RUN_ID']),'command':'make -C tests/kalman_tfg all CXXFLAGS=BASEFLAGS+-march=x86-64',
+              'exit_code':0,'shipping_coefficients':[1.0,0.8,1.15,1.15],'gyro_bias_rw_var':3.75e-10,
+              'quality_limits_unchanged':True,'ou3_shipping_unchanged':True,
+              'validation_log_sha256':hashlib.sha256(log).hexdigest()},indent=2)+'\n')
+          PY
+          git add -f reports/results/tfg_rao_core_refit/validation
+          git commit -m 'Retain passing unchanged-default TFG validation after completed RAO refit'
           git push origin HEAD:tfg-rigorous-tuning
