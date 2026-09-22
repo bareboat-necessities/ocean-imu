@@ -120,26 +120,31 @@ static constexpr float ACC_VIBRATION_GUARD_HZ =
 // ---------------------------------------------------------------------------
 // Loop-task stack.
 //
-// This is not a safety margin, it is a requirement.  Kalman3D_Wave_TFG builds
-// its 21x21 transition and process-noise matrices as locals and forms the
-// covariance products from Eigen temporaries, where OU-III's MEKF keeps
-// member scratch buffers for the same work.  Measured peak stack through one
-// live fusion step (host build, -O2, painted-stack high-water mark over a
-// 200 s run):
+// This is not a safety margin, it is a requirement.  Kalman3D_Wave_TFG runs a
+// 21-state covariance through Phi P Phi^T and a Joseph update, and Eigen
+// builds each of those triple products through full NX x NX temporaries --
+// 1764 bytes apiece at NX = 21.  The named locals that used to sit alongside
+// them are now member scratch buffers (see src/kalman_tfg/Kalman3D_Wave_TFG.h),
+// which took one live fusion step from ~27 kB of stack down to ~19 kB, but the
+// expression temporaries remain: removing those would change Eigen's GEMM path
+// and with it the filter's arithmetic, which is not something a stack budget
+// gets to decide.
 //
-//     OU-III  update() + updateMag()   ~7.8 kB
-//     TFG     update()                ~21   kB
-//     TFG     update() + updateMag()  ~27   kB
+// Measured peak, painted-stack high-water mark over a 400 s host run of the
+// whole sketch-level step (filter + detrender + direction chain):
 //
-// The Arduino-ESP32 loop task gets 8 kB by default, so the TFG filter
-// overflows it the moment it leaves Cold and starts running the MEKF -- which
-// is tens of seconds after boot, not at startup, so it would not look like a
-// stack problem.  48 kB covers the measurement with room for the sketch's own
-// frames, the UI and the NMEA formatting above it.
+//                       -O2        -Os
+//     before          27.2 kB    27.2 kB
+//     after           18.9 kB    15.3 kB
 //
-// Lower this only against a fresh measurement on the device.
+// The Arduino-ESP32 loop task gets 8 kB by default, so this still has to be
+// raised.  32 kB leaves ~13 kB over the worst measurement for the sketch's own
+// frames, the UI and the NMEA formatting, and for the xtensa/-funroll-loops
+// build differing from the host one.
+//
+// Lower it only against a fresh measurement on the device.
 // ---------------------------------------------------------------------------
-SET_LOOP_TASK_STACK_SIZE(48 * 1024);
+SET_LOOP_TASK_STACK_SIZE(32 * 1024);
 
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;

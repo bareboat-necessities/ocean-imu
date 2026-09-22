@@ -431,7 +431,9 @@ class Kalman3D_Wave_TFG {
                 }
                 Lg.template block<3,3>(OFF_V + 3*i, 0) = M;
             }
-            Qd.noalias() += wq * (Lg * Q_gyro_ * Lg.transpose());
+            q_scratch_nx3_.noalias() = Lg * Q_gyro_;
+            q_scratch_nn_.noalias() = q_scratch_nx3_ * Lg.transpose();
+            Qd.noalias() += wq * q_scratch_nn_;
 
             Eigen::Matrix<T,NX,3> Lb = Eigen::Matrix<T,NX,3>::Zero();
             const Matrix3 Fs =
@@ -444,7 +446,9 @@ class Kalman3D_Wave_TFG {
             Eigen::Matrix<T,12,3> D;
             integrate_world_bias_impulse_(s, Ts, omega, D);
             Lb.template block<12,3>(OFF_V, 0) = -D;
-            Qd.noalias() += wq * (Lb * Q_bg_ * Lb.transpose());
+            q_scratch_nx3_.noalias() = Lb * Q_bg_;
+            q_scratch_nn_.noalias() = q_scratch_nx3_ * Lb.transpose();
+            Qd.noalias() += wq * q_scratch_nn_;
         }
 
         // The OU acceleration driving noise is already available in exact
@@ -463,7 +467,7 @@ class Kalman3D_Wave_TFG {
             }
         }
 
-        Qd = T(0.5) * (Qd + Qd.transpose()).eval();
+        symmetrize_in_place_(Qd);
         ou_detail::project_psd_ou_iii<T,NX>(Qd);
     }
 
@@ -494,14 +498,15 @@ class Kalman3D_Wave_TFG {
 
     void time_update(const Vector3& gyro_meas, T Ts) {
         if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
-        MatrixNX Phi, Qd;
+        MatrixNX& Phi = scratch_a_;
+        MatrixNX& Qd  = scratch_b_;
         build_transition(Ts, gyro_meas, Phi);
         build_process_noise(Ts, gyro_meas, Qd);
         propagate_mean(gyro_meas, Ts);
         P_ = (Phi * P_ * Phi.transpose()).eval();
         P_ += Qd;
         apply_pending_aw_covariance_inflation_();
-        P_ = T(0.5) * (P_ + P_.transpose()).eval();
+        symmetrize_in_place_(P_);
     }
 
     void inject(const Tangent& xi) {
@@ -559,7 +564,8 @@ class Kalman3D_Wave_TFG {
         X_.X = (Q * X_.X).eval();
         reorthonormalize_();
 
-        MatrixNX G = MatrixNX::Identity();
+        MatrixNX& G = scratch_a_;
+        G.setIdentity();
         G.template block<3,3>(OFF_PHI, OFF_PHI) = Q;
         for (int c = 0; c < 4; ++c)
             G.template block<3,3>(OFF_V + 3*c, OFF_V + 3*c) = Q;
@@ -568,7 +574,7 @@ class Kalman3D_Wave_TFG {
             if constexpr (with_accel_bias) G.template block<3,3>(OFF_BA, OFF_BA) = Q;
         }
         P_ = (G * P_ * G.transpose()).eval();
-        P_ = T(0.5) * (P_ + P_.transpose()).eval();
+        symmetrize_in_place_(P_);
 
         Sigma_aw_ = (Q * Sigma_aw_ * Q.transpose()).eval();
         R_S_ = (Q * R_S_ * Q.transpose()).eval();
@@ -774,6 +780,28 @@ class Kalman3D_Wave_TFG {
         return Q;
     }
 
+    // In-place form of  M = T(0.5) * (M + M.transpose()).eval().
+    //
+    // Bit-identical to the expression rather than merely equivalent: the
+    // expression gives (i,j) the value 0.5*(M(i,j)+M(j,i)) and (j,i) the value
+    // 0.5*(M(j,i)+M(i,j)), and IEEE addition is commutative, so both triangles
+    // get the same number either way.  The diagonal is written through the
+    // same expression instead of being skipped, so a diagonal that overflows
+    // on doubling behaves as it did before.
+    //
+    // The point is the temporary: the expression has to evaluate M + M^T into
+    // a full NX x NX before it can assign back over M.
+    static void symmetrize_in_place_(MatrixNX& M) {
+        for (int i = 0; i < NX; ++i) {
+            for (int j = i + 1; j < NX; ++j) {
+                const T m = T(0.5) * (M(i,j) + M(j,i));
+                M(i,j) = m;
+                M(j,i) = m;
+            }
+            M(i,i) = T(0.5) * (M(i,i) + M(i,i));
+        }
+    }
+
     static void set_reset_vector_block_(MatrixNX& J, int off,
                                         const Vector3& phi, const Vector3& z,
                                         const Matrix3& Jr) {
@@ -787,7 +815,8 @@ class Kalman3D_Wave_TFG {
         diag.r = r;
         if (!r.allFinite() || !H.allFinite() || !Rw.allFinite()) return false;
 
-        const Eigen::Matrix<T,NX,3> PHt = P_ * H.transpose();
+        Eigen::Matrix<T,NX,3>& PHt = scratch_nx3_a_;
+        PHt.noalias() = P_ * H.transpose();
         Matrix3 S = H * PHt + Rw;
         S = T(0.5) * (S + S.transpose()).eval();
         diag.S = S;
@@ -799,19 +828,29 @@ class Kalman3D_Wave_TFG {
         diag.nis = r.dot(Sinv_r);
         if (nis_gate_ > T(0) && !(diag.nis <= nis_gate_)) return false;
 
-        const Eigen::Matrix<T,NX,3> K = ldlt.solve(PHt.transpose()).transpose();
+        // Plain assignment rather than noalias(): the right-hand side is a
+        // solve expression, which Eigen routes through its own temporary
+        // either way, exactly as it did when K was a local.
+        Eigen::Matrix<T,NX,3>& K = scratch_nx3_b_;
+        K = ldlt.solve(PHt.transpose()).transpose();
         if (!K.allFinite()) return false;
 
         const Tangent correction = K * r;
-        const MatrixNX IKH = MatrixNX::Identity() - K * H;
-        const MatrixNX Pj =
-            (IKH * P_ * IKH.transpose() + K * Rw * K.transpose()).eval();
+        // I - K H, accumulated in place.  Eigen folds the -1 into the packed
+        // operand, and negation is exact, so this matches the expression form
+        // coefficient for coefficient.
+        MatrixNX& IKH = scratch_a_;
+        IKH.setIdentity();
+        IKH.noalias() -= K * H;
 
-        MatrixNX Jreset;
+        MatrixNX& Pj = scratch_b_;
+        Pj = (IKH * P_ * IKH.transpose() + K * Rw * K.transpose()).eval();
+
+        MatrixNX& Jreset = scratch_c_;
         build_reset_jacobian(correction, Jreset);
         inject(Tangent(-correction));
         P_ = (Jreset * Pj * Jreset.transpose()).eval();
-        P_ = T(0.5) * (P_ + P_.transpose()).eval();
+        symmetrize_in_place_(P_);
 
         diag.accepted = true;
         return true;
@@ -875,6 +914,48 @@ class Kalman3D_Wave_TFG {
         return off.cwiseAbs().maxCoeff() <=
                T(1e-12) * std::max(T(1), M.cwiseAbs().maxCoeff());
     }
+
+    // ---------------------------------------------------------------------
+    // Covariance-algebra scratch.
+    //
+    // These were locals until the AtomS3R sketch went to measure its stack.
+    // Every NX x NX here is 1764 bytes at NX = 21, and time_update() and
+    // apply_update3_() between them named five of those, on top of the
+    // temporaries Eigen builds for the triple products.  One live fusion step
+    // peaked near 21 kB of stack against the 8 kB an Arduino-ESP32 loop task
+    // gets by default, so the filter overflowed it the moment it left the
+    // startup stage.  OU-III has always kept its equivalents as members.
+    //
+    // The pool is shared because its consumers never overlap: time_update()
+    // does not call apply_update3_(), and neither is reachable from
+    // apply_world_yaw_gauge().  Each binds a readable reference to the slot it
+    // needs, so the algebra below reads the way it did as locals.
+    //
+    //     slot     time_update()   apply_update3_()   apply_world_yaw_gauge()
+    //     a        Phi             IKH                G
+    //     b        Qd              Pj                 --
+    //     c        --              Jreset             --
+    //
+    // WHAT IS DELIBERATELY NOT DONE HERE.  The triple products stay written as
+    // single expressions.  Splitting P = Phi P Phi^T into two assignments
+    // through a third slot would save another temporary, but it is not
+    // bit-identical: Eigen picks a different GEMM path for the outer product
+    // when its right operand is a Transpose<> of a named matrix than when the
+    // same product is a nested node, and the summation order changes with it.
+    // Measured on a 200-step direct MEKF replay, every split form drifts from
+    // the committed one; every rewrite kept below reproduces it exactly.
+    // ---------------------------------------------------------------------
+    MatrixNX scratch_a_{MatrixNX::Zero()};
+    MatrixNX scratch_b_{MatrixNX::Zero()};
+    MatrixNX scratch_c_{MatrixNX::Zero()};
+    Eigen::Matrix<T,NX,3> scratch_nx3_a_{Eigen::Matrix<T,NX,3>::Zero()};
+    Eigen::Matrix<T,NX,3> scratch_nx3_b_{Eigen::Matrix<T,NX,3>::Zero()};
+
+    // build_process_noise() is const and runs inside time_update() while slots
+    // a and b are live, so its quadrature temporaries get their own mutable
+    // slots rather than sharing the pool.
+    mutable MatrixNX q_scratch_nn_{MatrixNX::Zero()};
+    mutable Eigen::Matrix<T,NX,3> q_scratch_nx3_{Eigen::Matrix<T,NX,3>::Zero()};
 
     T gravity_magnitude_;
     Group X_{};

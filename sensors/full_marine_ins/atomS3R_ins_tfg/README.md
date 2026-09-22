@@ -42,15 +42,14 @@ Every value the application publishes therefore means what it means in the OU-II
 - **No IMU lever-arm knob.** `Kalman3D_Wave_TFG` has no off-centre-of-gravity correction, so there is no `IMU_LEVER_ARM_*_M` block. Mount the device as close to the vessel centre of gravity as the installation allows, or use [OU-III](../atomS3R_ins_kalman_ou3/README.md) where the offset is large enough to matter.
 - **Gyroscope noise is a density, not a per-axis sigma.** `Config::gyro_noise_density` replaces OU-III's `sigma_g` vector, and the sample-rate scaling the accelerometer and magnetometer get must not be applied to it a second time.
 - **One frequency tracker.** TFG reports a wave period from the canonical estimator; there is no `TrackerType` choice and no `ZERO_CROSSINGS_*` tuning block.
-- **It needs a bigger loop-task stack.** `Kalman3D_Wave_TFG` builds its 21×21 transition and process-noise matrices as locals and forms the covariance products from Eigen temporaries, where OU-III's MEKF keeps member scratch buffers for the same work. Measured peak stack through one live fusion step (host build, `-O2`, painted-stack high-water mark):
+- **It needs a bigger loop-task stack.** `Kalman3D_Wave_TFG` runs a 21-state covariance through `Phi P Phi^T` and a Joseph update, and Eigen builds each triple product through full 21×21 temporaries. The named locals are member scratch buffers, which cuts one live fusion step from ~27 kB of stack to ~19 kB without changing a single output bit, but the expression temporaries stay: removing them would change Eigen's GEMM path and with it the filter's arithmetic. Painted-stack high-water mark over a 400 s host run of the whole sketch-level step:
 
-  | Filter | Peak stack |
-  | --- | --- |
-  | OU-III, `update()` + `updateMag()` | ~7.8 kB |
-  | TFG, `update()` | ~21 kB |
-  | TFG, `update()` + `updateMag()` | ~27 kB |
+  | | `-O2` | `-Os` |
+  | --- | --- | --- |
+  | before | 27.2 kB | 27.2 kB |
+  | after | 18.9 kB | 15.3 kB |
 
-  The Arduino-ESP32 loop task gets 8 kB by default, so the sketch raises it with `SET_LOOP_TASK_STACK_SIZE(48 * 1024)`. Without that the filter overflows the stack the moment it leaves `Cold` and starts running the MEKF — tens of seconds after boot, not at startup, so it would not look like a stack problem. Lower the value only against a fresh measurement on the device.
+  The Arduino-ESP32 loop task gets 8 kB by default, so the sketch still raises it, with `SET_LOOP_TASK_STACK_SIZE(32 * 1024)`. Without that the filter overflows the stack the moment it leaves `Cold` and starts running the MEKF — tens of seconds after boot, not at startup, so it would not look like a stack problem. Lower the value only against a fresh measurement on the device.
 - **Vibration guard is exposed instead of the OU clamp knobs.** `ACC_VIBRATION_GUARD_HZ` near the top of the sketch sets the front-end corner; zero removes the guard and restores the unconditioned measurement path.
 
 ## Install and upload
