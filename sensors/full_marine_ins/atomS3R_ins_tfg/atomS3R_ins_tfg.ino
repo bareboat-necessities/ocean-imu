@@ -1067,6 +1067,11 @@ private:
 // frames, the UI and the NMEA formatting, and for the xtensa/-funroll-loops
 // build differing from the host one.
 //
+// On the device this is affordable: the build-MCU job reports 40,540 bytes of
+// globals for this sketch and 287,140 bytes left for locals, against 30,828
+// and 296,852 for the OU-III sketch.  The extra globals are the filter's
+// scratch pool; the loop stack comes out of what is left.
+//
 // Lower it only against a fresh measurement on the device.
 //
 // WHY THIS IS AT THE BOTTOM OF THE FILE.  SET_LOOP_TASK_STACK_SIZE expands to

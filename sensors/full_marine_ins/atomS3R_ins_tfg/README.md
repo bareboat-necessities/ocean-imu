@@ -52,6 +52,18 @@ Every value the application publishes therefore means what it means in the OU-II
   The Arduino-ESP32 loop task gets 8 kB by default, so the sketch still raises it, with `SET_LOOP_TASK_STACK_SIZE(32 * 1024)`. Without that the filter overflows the stack the moment it leaves `Cold` and starts running the MEKF — tens of seconds after boot, not at startup, so it would not look like a stack problem. Lower the value only against a fresh measurement on the device.
 - **Vibration guard is exposed instead of the OU clamp knobs.** `ACC_VIBRATION_GUARD_HZ` near the top of the sketch sets the front-end corner; zero removes the guard and restores the unconditioned measurement path.
 
+## Footprint on the device
+
+Measured by the `build-MCU` job for the `esp32:esp32:m5stack_atoms3` target, compiled with `-funroll-loops -fno-finite-math-only` as CI builds it:
+
+| Sketch | Program storage | Global variables | Free for locals |
+| --- | --- | --- | --- |
+| `atomS3R_ins_tfg` | 873,615 B (66%) | 40,540 B (12%) | 287,140 B |
+| `atomS3R_ins_kalman_ou3` | 897,759 B (68%) | 30,828 B (9%) | 296,852 B |
+| `atomS3R_ins_pii_observer` | 623,359 B (47%) | 29,644 B (9%) | 298,036 B |
+
+TFG is the smaller of the two full Kalman sketches in flash and the larger in RAM: its filter is less code than OU-III's, and the ~9.7 kB of extra globals is the covariance scratch pool that keeps the same work off the stack. The 32 kB loop-task stack is taken from the 287 kB left for locals, so both fit with room to spare.
+
 ## Install and upload
 
 1. Complete the common [`sensors/` Arduino setup](../../README.md#arduino-installation).
