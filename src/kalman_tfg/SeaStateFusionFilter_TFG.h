@@ -566,6 +566,17 @@ public:
     [[nodiscard]] bool  wavePeriodReady() const noexcept { return wave_period_.isReady(); }
     [[nodiscard]] float getAccelVariance() const noexcept { return tuner_.getAccelVariance(); }
     [[nodiscard]] Eigen::Quaternionf quaternion() const { return mekf_.quaternion(); }
+
+    // Read-only startup tilt for application compass output. The core state
+    // remains untouched until the existing handoff gates admit Live. This
+    // quaternion has no magnetic yaw; callers must not publish its yaw as HDG.
+    [[nodiscard]] bool startupTiltQuaternion(Eigen::Quaternionf& q_bw) const {
+        if (stage_ != StartupStage::Cold || !usingProxyInit_() ||
+            !vertical_complementary_.isInitialized()) return false;
+        q_bw = vertical_complementary_.tiltQuaternion();
+        return q_bw.coeffs().allFinite() && q_bw.squaredNorm() > 1.0e-12f;
+    }
+
     [[nodiscard]] Vector3f get_velocity() const { return mekf_.get_velocity(); }
     [[nodiscard]] Vector3f get_position() const { return mekf_.get_position(); }
     [[nodiscard]] Vector3f get_world_accel() const { return mekf_.get_world_accel(); }
