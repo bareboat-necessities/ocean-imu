@@ -2,119 +2,158 @@ name: TFG rigorous tuning
 on:
   push:
     branches: [tfg-rigorous-tuning]
-    paths:
-      - '.github/workflows/tfg-rigorous-tuning.yml'
+    paths: ['.github/workflows/tfg-rigorous-tuning.yml']
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: tfg-rao-core-refit-571
   cancel-in-progress: false
 jobs:
-  prepare:
+  build-replay:
     if: github.ref == 'refs/heads/tfg-rigorous-tuning'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      sha: ${{ steps.source.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: tfg-rigorous-tuning
-          fetch-depth: 0
-      - name: Incorporate current shipping baseline without replacing PR 571
-        id: source
-        shell: bash
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev python3-numpy
+      - name: Verify unchanged OU-III and quality gates
         run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git fetch origin main
-          # Main owns the newer generated evidence and tighter regression bars.
-          # The PR's study scripts and disjoint simulation overrides are retained.
-          git merge --no-edit -X theirs origin/main
+          git fetch --depth=1 origin main
           git diff --exit-code origin/main -- src/kalman_ou_iii
           python3 - <<'PY'
-          import re, subprocess
+          import re,subprocess
           from pathlib import Path
-          path='tests/kalman_tfg/kalman_tfg-sim.cpp'
-          main=subprocess.check_output(['git','show','origin/main:'+path],text=True)
-          local=Path(path).read_text()
+          p='tests/kalman_tfg/kalman_tfg-sim.cpp'
+          a=subprocess.check_output(['git','show','origin/main:'+p],text=True)
+          b=Path(p).read_text()
           pattern=r'static constexpr W3dFailureLimits kRegressionBars\{.*?\n    \};'
-          assert re.search(pattern,main,re.S).group()==re.search(pattern,local,re.S).group(), 'Regression bars differ from main'
-          assert 'TFG_TAU_COEFF' in local and 'TFG_R_S_Y_FACTOR' in local
+          assert re.search(pattern,a,re.S).group()==re.search(pattern,b,re.S).group()
+          h=Path('src/kalman_tfg/SeaStateFusionFilter_TFG.h').read_text()
+          assert 'gyro_bias_rw_var   = 3.75e-10f' in h
           PY
-          git push origin HEAD:tfg-rigorous-tuning
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-  screen:
-    needs: prepare
+      - name: Build one identical portable executable for every refinement shard
+        run: make -C tests/kalman_tfg kalman_tfg-sim 'CXXFLAGS=$(BASEFLAGS) -march=x86-64'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tfg-refit-binary-${{ github.run_id }}
+          path: tests/kalman_tfg/kalman_tfg-sim
+          retention-days: 14
+  replay:
+    needs: build-replay
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+        include:
+          - {phase: extend, shard: 0, count: 4}
+          - {phase: extend, shard: 1, count: 4}
+          - {phase: extend, shard: 2, count: 4}
+          - {phase: extend, shard: 3, count: 4}
+          - {phase: refine, shard: 0, count: 8}
+          - {phase: refine, shard: 1, count: 8}
+          - {phase: refine, shard: 2, count: 8}
+          - {phase: refine, shard: 3, count: 8}
+          - {phase: refine, shard: 4, count: 8}
+          - {phase: refine, shard: 5, count: 8}
+          - {phase: refine, shard: 6, count: 8}
+          - {phase: refine, shard: 7, count: 8}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
-          ref: ${{ needs.prepare.outputs.sha }}
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev python3-numpy
-      - name: Fetch pinned RAO data
-        run: make ensure-sim-data
-      - name: Build TFG simulator
-        run: make -C tests/kalman_tfg kalman_tfg-sim
-      - name: Execute tools/tfg_rao_core_refit.py on all eight RAO records
+          name: tfg-refit-binary-${{ github.run_id }}
+          path: tests/kalman_tfg
+      - name: Prepare verified pinned records and replay dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y python3-numpy
+          chmod +x tests/kalman_tfg/kalman_tfg-sim
+          make ensure-sim-data
+      - name: Execute tools/tfg_rao_core_refit.py without opening holdout
         run: >-
-          python3 tools/tfg_rao_core_refit.py --phase screen --jobs 4
-          --shard-index ${{ matrix.shard }} --shard-count 8
-          --output-dir reports/results/tfg_rao_core_refit/shard-${{ matrix.shard }}
-      - name: Upload all successful and failed candidate evidence
+          python3 tools/tfg_rao_core_refit.py --phase ${{ matrix.phase }} --jobs 4
+          --shard-index ${{ matrix.shard }} --shard-count ${{ matrix.count }}
+          --output-dir reports/results/tfg_rao_core_refit/phase-${{ matrix.phase }}-${{ matrix.shard }}
+      - name: Retain successful and failed cases with checksum-verified replay cache
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tfg-rao-screen-${{ github.run_id }}-${{ matrix.shard }}
-          path: reports/results/tfg_rao_core_refit/shard-${{ matrix.shard }}
+          name: tfg-${{ matrix.phase }}-${{ github.run_id }}-${{ matrix.shard }}
+          path: reports/results/tfg_rao_core_refit/phase-${{ matrix.phase }}-${{ matrix.shard }}
           retention-days: 14
-  aggregate-screen:
-    needs: [prepare, screen]
+  aggregate:
+    needs: replay
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.prepare.outputs.sha }}
+      - name: Install analysis dependency
+        run: sudo apt-get update && sudo apt-get install -y python3-numpy
       - uses: actions/download-artifact@v4
         with:
-          pattern: tfg-rao-screen-${{ github.run_id }}-*
-          path: artifacts
-      - name: Retain the full broad response surface without opening holdout
+          pattern: tfg-extend-${{ github.run_id }}-*
+          path: artifacts/extend
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tfg-refine-${{ github.run_id }}-*
+          path: artifacts/refine
+      - name: Reuse the completed broad screen instead of rerunning it
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 35669711189
+          pattern: tfg-rao-screen-35669711189-*
+          path: artifacts/broad
+      - name: Analyze complete response surfaces, boundaries, interactions and regimes
         run: |
           python3 - <<'PY'
-          import json,sys
+          import json,sys,os
           from pathlib import Path
           sys.path.insert(0,'tools')
-          from tfg_rao_core_refit import rank,screen
-          directories=sorted(Path('artifacts').glob('tfg-rao-screen-*/screen'))
-          assert len(directories)==8, len(directories)
-          merged={name:[] for name in ('summary','runs','configs','manifests')}
-          for directory in directories:
-              for name in ('summary','runs','configs'):
-                  merged[name].extend(json.loads((directory/(name+'.json')).read_text()))
-              merged['manifests'].append(json.loads((directory/'manifest.json').read_text()))
-          assert len(merged['configs'])==len(screen())==87
-          assert len(merged['runs'])==87*8*3
-          assert len({(r['config'],r['input'],r['seed']) for r in merged['runs']})==87*8*3
-          out=Path('reports/results/tfg_rao_core_refit/broad');out.mkdir(parents=True)
-          for name,rows in merged.items():
-              (out/(name+'.json')).write_text(json.dumps(rows,indent=2)+'\n')
-          ranking=rank(merged['summary'])
-          (out/'ranking.json').write_text(json.dumps(ranking,indent=2)+'\n')
-          (out/'protocol.json').write_text(json.dumps({'phase':'broad screen only','holdout_evaluated':False,'records':8,'seeds':['default','11','23'],'shipping_gyro_bias_rw_var':3.75e-10},indent=2)+'\n')
-          print(json.dumps(ranking[:10],indent=2))
+          from tfg_rao_refit_analysis import analyse
+          from tfg_rao_refit_replay import write_json
+          for phase,count,nconfigs,source_phase in [('broad',8,87,'screen'),('extend',4,22,'extend'),('refine',8,82,'refine')]:
+              directories=sorted(Path('artifacts',phase).glob('*/'+source_phase))
+              assert len(directories)==count,(phase,len(directories))
+              merged={name:[] for name in ('summary','runs','configs','manifests')}
+              for d in directories:
+                  for name in ('summary','runs','configs'):
+                      merged[name].extend(json.loads((d/(name+'.json')).read_text()))
+                  merged['manifests'].append(json.loads((d/'manifest.json').read_text()))
+              assert len(merged['configs'])==nconfigs
+              assert len(merged['runs'])==nconfigs*8*3
+              assert len({(r['config'],r['input'],r['seed']) for r in merged['runs']})==nconfigs*8*3
+              out=Path('reports/results/tfg_rao_core_refit',phase);out.mkdir(parents=True,exist_ok=True)
+              for name,rows in merged.items():write_json(out/(name+'.json'),rows)
+              analysis=analyse(merged['runs']);write_json(out/'analysis.json',analysis)
+              print(phase,[(r['config'],r['score']) for r in analysis['ranking'][:10]])
+              write_json(out/'execution.json',{'workflow_run':35669711189 if phase=='broad' else int(os.environ['GITHUB_RUN_ID']),
+                  'analysis_commit':os.environ['GITHUB_SHA'],'holdout_evaluated':False,'cases':len(merged['runs'])})
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: tfg-rao-broad-${{ github.run_id }}
-          path: reports/results/tfg_rao_core_refit/broad
+          name: tfg-rao-selection-evidence-${{ github.run_id }}
+          path: reports/results/tfg_rao_core_refit
           retention-days: 14
+      - name: Carry completed evidence into existing PR 571 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Generated files are the only writes here. Newer concurrent source
+          # commits stay intact, and a push conflict fails rather than forces.
+          cp -a reports/results/tfg_rao_core_refit /tmp/selection-evidence
+          git fetch origin tfg-rigorous-tuning
+          git checkout -B tfg-rigorous-tuning origin/tfg-rigorous-tuning
+          for phase in broad extend refine; do
+            mkdir -p reports/results/tfg_rao_core_refit/$phase
+            cp /tmp/selection-evidence/$phase/*.json reports/results/tfg_rao_core_refit/$phase/
+            git add -f reports/results/tfg_rao_core_refit/$phase/*.json
+          done
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git diff --cached --quiet || git commit -m 'Retain completed broad, boundary and joint four-axis RAO evidence'
+          git push origin HEAD:tfg-rigorous-tuning
