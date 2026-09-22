@@ -33,8 +33,8 @@ def replace_between(text: str, start: str, end: str, new: str, label: str) -> st
 
 
 def patch_joseph_only(text: str) -> str:
-    old = """        MatrixNX Jreset;\n        build_reset_jacobian(correction, Jreset);\n        inject(Tangent(-correction));\n        P_ = (Jreset * Pj * Jreset.transpose()).eval();\n        P_ = T(0.5) * (P_ + P_.transpose()).eval();\n"""
-    new = """        // Ablation: old Joseph-only covariance handling.  The nominal\n        // state is still retracted, but P is intentionally left in the\n        // pre-reset tangent coordinates.\n        inject(Tangent(-correction));\n        P_ = Pj;\n        P_ = T(0.5) * (P_ + P_.transpose()).eval();\n"""
+    old = """        MatrixNX& Jreset = scratch_c_;\n        build_reset_jacobian(correction, Jreset);\n        inject(Tangent(-correction));\n        P_ = (Jreset * Pj * Jreset.transpose()).eval();\n        symmetrize_in_place_(P_);\n"""
+    new = """        // Ablation: old Joseph-only covariance handling.  The nominal\n        // state is still retracted, but P is intentionally left in the\n        // pre-reset tangent coordinates.\n        inject(Tangent(-correction));\n        P_ = Pj;\n        symmetrize_in_place_(P_);\n"""
     return replace_once(text, old, new, "Joseph-only reset ablation")
 
 

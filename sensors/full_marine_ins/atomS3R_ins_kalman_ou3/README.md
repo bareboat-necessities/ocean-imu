@@ -39,6 +39,7 @@ The root [project README](../../../README.md) links the OU-III paper, startup/st
 ## Compare
 
 - [OU-II marine INS](../atomS3R_ins_kalman_ou2/README.md) — more direct integral drift correction
+- [TFG marine INS](../atomS3R_ins_tfg/README.md) — same state and wave model on a two-frame Lie group
 - [PII observer](../atomS3R_ins_pii_observer/README.md) — much lighter observer-based alternative
 
 [Back to Full marine INS](../README.md) · [All sensor examples](../../README.md)
