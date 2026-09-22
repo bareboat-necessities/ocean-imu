@@ -1,4 +1,4 @@
-name: TFG refit closeout validation
+name: TFG anisotropic split sweep
 on:
   push:
     branches: [tfg-rigorous-tuning]
@@ -7,97 +7,36 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: tfg-rao-core-refit-571
+  group: tfg-rao-split-571
   cancel-in-progress: false
 jobs:
-  validate-retained-defaults:
+  split:
     if: github.ref == 'refs/heads/tfg-rigorous-tuning'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    permissions:
-      contents: write
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0,1,2,3,4,5]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: tfg-rigorous-tuning
-          fetch-depth: 0
-      - name: Apply completed-study comments and passive test-only readout
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git fetch origin main
-          git merge --no-edit -X theirs origin/main
-          if [ -f tools/tfg_rao_closeout.patch ]; then
-            git apply --check tools/tfg_rao_closeout.patch
-            git apply tools/tfg_rao_closeout.patch
-            git rm tools/tfg_rao_closeout.patch
-          fi
-          if [ -f .github/workflows/tfg-replay-export.yml ]; then
-            git rm .github/workflows/tfg-replay-export.yml
-          fi
-          python3 - <<'PY'
-          import re,subprocess
-          from pathlib import Path
-          header='src/kalman_tfg/SeaStateFusionFilter_TFG.h'
-          old=subprocess.check_output(['git','show','origin/main:'+header],text=True)
-          new=Path(header).read_text()
-          def code_tokens(text):
-              text=re.sub(r'/\*.*?\*/|//[^\n]*','',text,flags=re.S)
-              return re.findall(r'\w+|[^\w\s]',text)
-          assert code_tokens(old)==code_tokens(new), 'Shipping TFG code changed beyond comments'
-          p='tests/kalman_tfg/kalman_tfg-sim.cpp'
-          a=subprocess.check_output(['git','show','origin/main:'+p],text=True)
-          b=Path(p).read_text()
-          pattern=r'static constexpr W3dFailureLimits kRegressionBars\{.*?\n    \};'
-          assert re.search(pattern,a,re.S).group()==re.search(pattern,b,re.S).group(), 'Quality bars changed'
-          assert 'gyro_bias_rw_var   = 3.75e-10f' in new
-          assert 'TfgInformationAllocation' in b
-          PY
-          git diff --exit-code origin/main -- src/kalman_ou_iii
-          git add src/kalman_tfg/SeaStateFusionFilter_TFG.h tests/kalman_tfg/kalman_tfg-sim.cpp
-          git diff --cached --quiet || git commit -m 'Retain RAO control coefficients, remove obsolete fitting claims and install passive allocation reader'
-          git push origin HEAD:tfg-rigorous-tuning
-          git rev-parse HEAD > /tmp/tfg-closeout-source.txt
-      - name: Install validation dependencies
+      - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y libeigen3-dev python3-numpy
-      - name: Verify selection, freeze and failed-case retention contracts
-        run: python3 -m unittest discover -s tests/validation -p test_tfg_rao_core_refit.py -v
-      - name: Compile and validate unchanged shipping TFG defaults on all eight records
-        shell: bash
-        run: |
-          set -euo pipefail
-          make -C tests/kalman_tfg all 'CXXFLAGS=$(BASEFLAGS) -march=x86-64' 2>&1 | tee /tmp/tfg-closeout-validation.log
-      - name: Retain validation provenance and output
+      - name: Fetch pinned RAO data
+        run: make ensure-sim-data
+      - name: Build TFG simulator
+        run: make -C tests/kalman_tfg kalman_tfg-sim 'CXXFLAGS=$(BASEFLAGS) -march=x86-64'
+      - name: Execute X/Y anisotropic split sweep on all eight RAO records
+        run: >
+          python3 tools/tfg_rao_core_refit.py --phase split --jobs 4
+          --shard-index ${{ matrix.shard }} --shard-count 6
+          --output-dir reports/results/tfg_rao_split/shard-${{ matrix.shard }}
+      - name: Upload split evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tfg-retained-default-validation-${{ github.run_id }}
-          path: |
-            /tmp/tfg-closeout-source.txt
-            /tmp/tfg-closeout-validation.log
+          name: tfg-rao-split-${{ github.run_id }}-${{ matrix.shard }}
+          path: reports/results/tfg_rao_split/shard-${{ matrix.shard }}
           retention-days: 14
-      - name: Record passed validation in the same PR
-        shell: bash
-        run: |
-          set -euo pipefail
-          source=$(cat /tmp/tfg-closeout-source.txt)
-          git fetch origin tfg-rigorous-tuning
-          git checkout -B tfg-rigorous-tuning origin/tfg-rigorous-tuning
-          mkdir -p reports/results/tfg_rao_core_refit/validation
-          cp /tmp/tfg-closeout-validation.log reports/results/tfg_rao_core_refit/validation/retained-defaults.log
-          python3 - "$source" <<'PY'
-          import hashlib,json,os,sys
-          from pathlib import Path
-          d=Path('reports/results/tfg_rao_core_refit/validation')
-          log=(d/'retained-defaults.log').read_bytes()
-          (d/'provenance.json').write_text(json.dumps({'source_commit':sys.argv[1],
-              'workflow_run':int(os.environ['GITHUB_RUN_ID']),'command':'make -C tests/kalman_tfg all CXXFLAGS=BASEFLAGS+-march=x86-64',
-              'exit_code':0,'shipping_coefficients':[1.0,0.8,1.15,1.15],'gyro_bias_rw_var':3.75e-10,
-              'quality_limits_unchanged':True,'ou3_shipping_unchanged':True,
-              'validation_log_sha256':hashlib.sha256(log).hexdigest()},indent=2)+'\n')
-          PY
-          git add -f reports/results/tfg_rao_core_refit/validation
-          git commit -m 'Retain passing unchanged-default TFG validation after completed RAO refit'
-          git push origin HEAD:tfg-rigorous-tuning
