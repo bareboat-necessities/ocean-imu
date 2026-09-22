@@ -1,0 +1,180 @@
+name: Apply TFG startup compass patch
+on:
+  push:
+    branches: [fix/tfg-startup-compass]
+    paths: [.github/workflows/apply-tfg-compass-patch.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/tfg-startup-compass
+      - name: Apply the reviewed two-file patch
+        shell: bash
+        run: |
+          cat > /tmp/tfg-startup-compass.patch <<'PATCH'
+          --- a/src/kalman_tfg/SeaStateFusionFilter_TFG.h
+          +++ b/src/kalman_tfg/SeaStateFusionFilter_TFG.h
+          @@ -568,4 +568,15 @@
+               [[nodiscard]] Eigen::Quaternionf quaternion() const { return mekf_.quaternion(); }
+          +
+          +    // Read-only startup tilt for application compass output. The core state
+          +    // remains untouched until the existing handoff gates admit Live. This
+          +    // quaternion has no magnetic yaw; callers must not publish its yaw as HDG.
+          +    [[nodiscard]] bool startupTiltQuaternion(Eigen::Quaternionf& q_bw) const {
+          +        if (stage_ != StartupStage::Cold || !usingProxyInit_() ||
+          +            !vertical_complementary_.isInitialized()) return false;
+          +        q_bw = vertical_complementary_.tiltQuaternion();
+          +        return q_bw.coeffs().allFinite() && q_bw.squaredNorm() > 1.0e-12f;
+          +    }
+          +
+               [[nodiscard]] Vector3f get_velocity() const { return mekf_.get_velocity(); }
+               [[nodiscard]] Vector3f get_position() const { return mekf_.get_position(); }
+               [[nodiscard]] Vector3f get_world_accel() const { return mekf_.get_world_accel(); }
+          --- a/sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino
+          +++ b/sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino
+          @@ -8,3 +8,4 @@
+               - one-shot magnetic north lock inside SeaStateFusionFilter_TFG
+          -    - filter yaw is the primary heading output after north-lock
+          -    - tilt-compensated magnetic heading is kept only for diagnostics
+          +    - startup compass uses private-proxy tilt plus calibrated magnetic heading
+          +    - filter yaw takes over only after Live and core magnetic-reference setup
+          +    - tilt-compensated magnetic heading remains available for diagnostics
+          @@ -371,3 +372,4 @@
+             float heading_deg_      = 0.0f;
+             bool  heading_valid_    = false;
+          +  bool  heading_fused_    = false;
+             float heave_m_          = 0.0f;
+          @@ -628,4 +630,5 @@
+               heading_deg_   = 0.0f;
+               heading_valid_ = false;
+          +    heading_fused_ = false;
+           
+               mag_gate_last_ms_ = 0;
+          @@ -784,32 +787,50 @@
+          -    heading_valid_ = fusion_.magReferenceLearned();
+          -
+          +    // Magnetic acquisition can finish while Cold, before the core receives
+          +    // any attitude prediction. Its identity quaternion is not a valid HDG.
+               Eigen::Quaternionf q_bw = fusion_.mekf().quaternion();
+          -    q_bw.normalize();
+          +    bool have_attitude = true;
+          +    if (fusion_.stage() == Fusion::StartupStage::Cold &&
+          +        fusion_.startupInitPolicy() == Fusion::StartupInitPolicy::MahonyProxy) {
+          +      have_attitude = fusion_.startupTiltQuaternion(q_bw);
+          +    }
+           
+               float roll_est_deg = roll_deg_;
+               float pitch_est_deg = pitch_deg_;
+               float heading_est_deg = heading_deg_;
+          -
+          -    if (rollPitchHeadingFromQuatBw_(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg)) {
+          +    const bool attitude_ok = have_attitude &&
+          +        rollPitchHeadingFromQuatBw_(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg);
+          +    if (attitude_ok) {
+          +      q_bw.normalize();
+                 roll_deg_  = roll_est_deg;
+                 pitch_deg_ = pitch_est_deg;
+          -      heading_deg_ = heading_est_deg;
+               }
+           
+               heading_mag_ok_ = false;
+               heading_mag_deg_ = NAN;
+          -    if (mag_ok_) {
+          +    if (mag_ok_ && attitude_ok) {
+                 const Vector3f down_w(0.0f, 0.0f, 1.0f);
+                 Vector3f down_b = quatRotate_(q_bw.conjugate(), down_w);
+                 const float dn = down_b.norm();
+          -      if (dn > 1e-6f) {
+          +      if (std::isfinite(dn) && dn > 1e-6f) {
+                   down_b /= dn;
+                   float hdg_mag = NAN;
+          -        if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg_mag)) {
+          +        if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg_mag) &&
+          +            std::isfinite(hdg_mag)) {
+                     heading_mag_ok_ = true;
+                     heading_mag_deg_ = hdg_mag;
+                   }
+                 }
+               }
+           
+          +    // Keep compass availability separate from INS readiness. Before handoff,
+          +    // use measured magnetic heading with the active proxy's tilt, not the
+          +    // yaw-free proxy yaw or the inactive core. Once Live, retain TFG yaw.
+          +    heading_fused_ = attitude_ok && fusion_.isLive() &&
+          +        fusion_.mekf().has_magnetic_reference();
+          +    heading_valid_ = heading_fused_ || heading_mag_ok_;
+          +    if (heading_fused_) {
+          +      heading_deg_ = heading_est_deg;
+          +    } else if (heading_mag_ok_) {
+          +      heading_deg_ = heading_mag_deg_;
+          +    }
+          +
+               gyro_bias_learning_ = still;
+          @@ -969,4 +990,5 @@
+           #if SEA_STATE_SERIAL_NMEA
+          -    const bool valid = fusion_.isLive() && heading_valid_;
+          +    // A startup magnetic compass is usable HDM, but is not a ready INS.
+          +    const bool valid = fusion_.isLive() && heading_fused_;
+               if (heading_valid_) {
+                 nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
+          PATCH
+          git apply --check /tmp/tfg-startup-compass.patch
+          git apply /tmp/tfg-startup-compass.patch
+          git diff --check
+          git diff --stat
+      - name: Compile and run startup compass regression
+        shell: bash
+        run: |
+          cat > /tmp/tfg-compass-smoke.cpp <<'CPP'
+          #define EIGEN_NON_ARDUINO
+          #include "kalman_tfg/SeaStateFusionFilter_TFG.h"
+          #include <cassert>
+          #include <cmath>
+          #include <iostream>
+          using Fusion = ocean_imu::tfg::SeaStateFusionFilter_TFG<>;
+          int main() {
+            Fusion f;
+            Fusion::Config cfg;
+            cfg.mag_delay_sec = 0.0f;
+            f.begin(cfg);
+            Eigen::Quaternionf q = Eigen::Quaternionf::Identity();
+            assert(!f.startupTiltQuaternion(q));
+            for (int i = 0; i < 200; ++i) {
+              f.update(0.005f, Eigen::Vector3f::Zero(), Eigen::Vector3f(0, 0, -9.80665f));
+            }
+            assert(f.stage() == Fusion::StartupStage::Cold);
+            const auto core_before = f.mekf().quaternion();
+            const auto covariance_before = f.mekf().covariance_full().eval();
+            assert(f.startupTiltQuaternion(q));
+            assert(q.coeffs().allFinite());
+            assert(std::abs(q.norm() - 1.0f) < 1e-5f);
+            assert((f.mekf().quaternion().coeffs().array() == core_before.coeffs().array()).all());
+            assert((f.mekf().covariance_full().array() == covariance_before.array()).all());
+            cfg.startup_init_policy = Fusion::StartupInitPolicy::StagedMekf;
+            f.begin(cfg);
+            assert(!f.startupTiltQuaternion(q));
+            std::cout << "TFG startup tilt accessor: PASS\n";
+          }
+          CPP
+          g++ -O1 -std=c++20 -I src -isystem third_party/eigen -isystem /usr/include/eigen3 /tmp/tfg-compass-smoke.cpp -o /tmp/tfg-compass-smoke
+          /tmp/tfg-compass-smoke
+          make -C tests/kalman_tfg tfg_orchestrator-test
+          tests/kalman_tfg/tfg_orchestrator-test
+      - name: Publish only the requested patch files
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/kalman_tfg/SeaStateFusionFilter_TFG.h sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino
+          git commit -m 'Fix frozen TFG startup compass heading'
+          git push origin HEAD:fix/tfg-startup-compass
+          git rev-parse HEAD
+      - name: Run repository validation
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make all
