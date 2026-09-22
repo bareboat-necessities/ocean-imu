@@ -1,0 +1,39 @@
+{
+  "study": "TFG core-coefficient refit on the pinned 28-ft vessel RAO records",
+  "record_indices": [0, 1, 2, 3, 4, 5, 6, 7],
+  "training_seeds": ["default", "11", "23"],
+  "refinement_seeds": ["31", "47", "59"],
+  "sealed_holdout_seeds": ["104729", "130363", "155921", "196613"],
+  "fixed_gyro_bias_rw_var": 3.75e-10,
+  "coefficient_keys": ["TFG_TAU_COEFF", "TFG_SIGMA_COEFF", "TFG_R_S_X_FACTOR", "TFG_R_S_Y_FACTOR"],
+  "physical_metric_weights": {
+    "disp_z_pct_hs": 2.0,
+    "disp_3d_rms_m": 2.0,
+    "roll_rms_deg": 0.5,
+    "pitch_rms_deg": 0.5,
+    "yaw_rms_deg": 0.25,
+    "accel_bias_3d_rms_mps2": 0.75,
+    "gyro_bias_3d_rms_radps": 0.5
+  },
+  "selection": {
+    "primary_score": "Equal-case mean of weighted log metric ratios against the paired TFG baseline; all eight records and every phase seed have equal weight.",
+    "gate_penalty": "Add 0.025 per additional gate violation relative to the paired baseline case; retain unpenalized physical scores separately.",
+    "surface_checks": ["Full per-metric response surface", "Boundary contacts including the coarse joint-grid faces", "Pairwise log-coefficient interactions", "Per-record and per-seed changes", "Low/high sea-state regime optima", "Independent X/Y refinement"],
+    "incomplete_or_nonfinite_candidate": "Retain evidence and mark ineligible, never treat missing metrics as zero.",
+    "holdout_use": "Freeze exactly one candidate and its coefficient hash before executing any sealed holdout case. Never select or refine candidates using holdout results."
+  },
+  "holdout_comparators": ["Current TFG baseline", "Frozen TFG candidate", "Unmodified shipping OU-III"],
+  "promotion_checks": {
+    "all_cases_complete_and_finite": true,
+    "new_gate_failure_cases_vs_tfg_baseline": 0,
+    "additional_gate_violations_vs_tfg_baseline": 0,
+    "maximum_pooled_primary_metric_regression_pct": 0.0,
+    "minimum_record_wins_for_each_primary_metric": 5,
+    "minimum_balanced_composite_improvement_pct": 1.0,
+    "maximum_pooled_secondary_metric_regression_pct": 5.0,
+    "primary_metrics": ["disp_z_pct_hs", "disp_3d_rms_m"],
+    "secondary_metrics": ["roll_rms_deg", "pitch_rms_deg", "yaw_rms_deg", "accel_bias_3d_rms_mps2", "gyro_bias_3d_rms_radps"],
+    "additional_validation": "The compiled shipping-default candidate must also pass the unchanged deterministic regression suite before promotion."
+  },
+  "constraints": ["Do not change OU-III", "Do not retune WavePeriodEstimator", "Do not loosen quality gates", "Do not repeat the completed generic or attitude/bias campaigns", "Do not claim global optimality from a finite search", "A failed holdout does not authorize trying another candidate on the same holdout seeds"]
+}
