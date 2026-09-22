@@ -36,6 +36,7 @@ The top-of-file switches control the calibration wizard, graphics UI, NMEA outpu
 ## Compare
 
 - [OU-III marine INS](../atomS3R_ins_kalman_ou3/README.md) — higher-order integral regularization and the main 3-D navigation implementation
+- [TFG marine INS](../atomS3R_ins_tfg/README.md) — same state and wave model on a two-frame Lie group
 - [PII observer](../atomS3R_ins_pii_observer/README.md) — lighter observer-based alternative
 
 [Back to Full marine INS](../README.md) · [All sensor examples](../../README.md)

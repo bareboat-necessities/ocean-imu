@@ -32,6 +32,6 @@ The calibration wizard is enabled by default. Graphics/NMEA behavior and true-ve
 
 ## When to use it
 
-Choose this example when you want a computationally light embedded marine motion solution and primarily care about attitude plus vertical/heave behavior. For the repository’s full covariance-based 3-D estimators, use [OU-II](../atomS3R_ins_kalman_ou2/README.md) or [OU-III](../atomS3R_ins_kalman_ou3/README.md).
+Choose this example when you want a computationally light embedded marine motion solution and primarily care about attitude plus vertical/heave behavior. For the repository’s full covariance-based 3-D estimators, use [OU-II](../atomS3R_ins_kalman_ou2/README.md), [OU-III](../atomS3R_ins_kalman_ou3/README.md) or [TFG](../atomS3R_ins_tfg/README.md).
 
 [Back to Full marine INS](../README.md) · [All sensor examples](../../README.md)

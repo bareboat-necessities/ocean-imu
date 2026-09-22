@@ -16,7 +16,7 @@ The examples intentionally form a progression. Start with the basic IMU sketch t
 | --- | --- | --- |
 | [IMU basics](imu_basic/README.md) | M5Unified IMU access, body-to-NED mapping, saved calibration, serial diagnostics | First hardware bring-up |
 | [Compass / AHRS](compass_ahrs/README.md) | Tilt-compensated heading with Mahony or quaternion MEKF, display UI, NMEA output | Heading and attitude |
-| [Full marine INS](full_marine_ins/README.md) | Adaptive marine motion estimation with OU-II, OU-III, or PII observer | Vessel motion / wave estimation |
+| [Full marine INS](full_marine_ins/README.md) | Adaptive marine motion estimation with OU-II, OU-III, TFG, or PII observer | Vessel motion / wave estimation |
 
 ## Hardware
 
@@ -38,7 +38,7 @@ If you are bringing up a new board or a new installation, use [`imu_basic/atomS3
 
 1. [Basic AtomS3R IMU](imu_basic/atomS3R_imu_m5_basic/README.md)
 2. [Mahony compass](compass_ahrs/atomS3R_compass_mahony/README.md) or [qMEKF compass](compass_ahrs/atomS3R_compass_qmekf/README.md)
-3. [OU-II marine INS](full_marine_ins/atomS3R_ins_kalman_ou2/README.md), [OU-III marine INS](full_marine_ins/atomS3R_ins_kalman_ou3/README.md), or [PII observer](full_marine_ins/atomS3R_ins_pii_observer/README.md)
+3. [OU-II marine INS](full_marine_ins/atomS3R_ins_kalman_ou2/README.md), [OU-III marine INS](full_marine_ins/atomS3R_ins_kalman_ou3/README.md), [TFG marine INS](full_marine_ins/atomS3R_ins_tfg/README.md), or [PII observer](full_marine_ins/atomS3R_ins_pii_observer/README.md)
 
 ## Coordinate convention
 
@@ -50,5 +50,6 @@ The AtomS3R helper layer converts device readings into the project body/NED-orie
 - [`../src/ahrs/`](../src/ahrs/) — attitude filters
 - [`../src/kalman_ou_ii/`](../src/kalman_ou_ii/) — OU-II marine Kalman filter
 - [`../src/kalman_ou_iii/`](../src/kalman_ou_iii/) — OU-III marine Kalman filter
+- [`../src/kalman_tfg/`](../src/kalman_tfg/) — two-frame Lie-group marine filter
 - [`../src/pii_observer/`](../src/pii_observer/) — lightweight PII observer
 - [Project README](../README.md) — algorithms, publications, tests, and repository-wide build information
