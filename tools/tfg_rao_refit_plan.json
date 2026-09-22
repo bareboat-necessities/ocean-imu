@@ -1,0 +1,28 @@
+{
+  "source_broad_run": 35669711189,
+  "source_broad_commit": "85f2637f901ff6db9cc3e49ca4253717554afd1f",
+  "source_broad_analysis_sha256": "4f9e6a191d9ae88a961459eafef71af59d9a1fc95c04fc3e359dac2ed976beee",
+  "findings": [
+    "All 87 broad configurations completed all eight pinned records and all three training seeds.",
+    "The legacy baseline is best after paired gate penalties; the best unpenalized balanced gain is only 0.039 percent.",
+    "Tau and horizontal regularization have a strong interaction. A coarse joint-grid optimum on a face is not sufficient evidence of a global optimum.",
+    "Some secondary metrics continue improving at the upper sigma boundary, so that direction is extended jointly with tau and regularization.",
+    "The final refinement is four-dimensional: X and Y are independent, with 54 asymmetric combinations and 27 symmetric combinations plus the baseline."
+  ],
+  "extension": {
+    "ridge_tau": [0.95, 1.025, 1.10],
+    "ridge_sigma": [1.8, 2.5, 3.5],
+    "face_sigma": [0.75, 1.25],
+    "upper_xy": [2.2, 2.7],
+    "lower_xy": [0.45, 0.30],
+    "coupled_sigma": [1.8, 2.5],
+    "coupled_xy": [0.95, 1.2]
+  },
+  "refinement": {
+    "TFG_TAU_COEFF": [0.975, 1.025, 1.075],
+    "TFG_SIGMA_COEFF": [0.8, 1.05, 1.3],
+    "TFG_R_S_X_FACTOR": [0.85, 1.15, 1.45],
+    "TFG_R_S_Y_FACTOR": [0.85, 1.15, 1.45]
+  },
+  "holdout_evaluated": false
+}
