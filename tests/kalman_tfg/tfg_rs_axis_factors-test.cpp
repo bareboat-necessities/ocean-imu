@@ -5,11 +5,6 @@
 #include <cmath>
 #include <iostream>
 
-// Pin the deployed horizontal operating point and prove that X and Y
-// regularization are independently overridable. The default stays (1.15, 1.15,
-// 1.0): unlike OU-II and OU-III, which both retuned their horizontal
-// regularizer down to 0.72, TFG measures 1.15 as its own interior minimum and
-// moves the other way.
 namespace {
 
 using Fusion = ocean_imu::tfg::SeaStateFusionFilter_TFG<>;
@@ -44,14 +39,15 @@ void test_default_horizontal_factors_without_changing_rs_law() {
 
     check(f.getRSLaw() == Fusion::RSLaw::SpectralMSE,
           "axis-factor API changed the deployed adaptation law");
-    check(near(f.getRSXFactor(), 1.15f), "default X R_S factor is not 1.15");
+    check(near(f.getRSXFactor(), 1.08f), "default X R_S factor is not 1.08");
     check(near(f.getRSYFactor(), 1.15f), "default Y R_S factor is not 1.15");
 
     check(f.setFixedTuning(2.0f, 0.5f, 3.0f), "fixed tuning rejected");
     const Matrix3f R = integral_R(f);
-    const float horizontal_var = (3.0f * 1.15f) * (3.0f * 1.15f);
-    check(near(R(0,0), horizontal_var), "default X R_S is not rho_x^2 times Z");
-    check(near(R(1,1), horizontal_var), "default Y R_S is not rho_y^2 times Z");
+    const float x_var = (3.0f * 1.08f) * (3.0f * 1.08f);
+    const float y_var = (3.0f * 1.15f) * (3.0f * 1.15f);
+    check(near(R(0,0), x_var), "default X R_S is not rho_x^2 times Z");
+    check(near(R(1,1), y_var), "default Y R_S is not rho_y^2 times Z");
     check(near(R(2,2), 9.0f), "default Z R_S changed");
 }
 
