@@ -117,34 +117,9 @@ static constexpr float ONLINE_TUNE_WARMUP_SEC = 10.0f;
 static constexpr float ACC_VIBRATION_GUARD_HZ =
     ocean_imu::tfg::ACC_VIBRATION_GUARD_HZ_DEFAULT;
 
-// ---------------------------------------------------------------------------
-// Loop-task stack.
-//
-// This is not a safety margin, it is a requirement.  Kalman3D_Wave_TFG runs a
-// 21-state covariance through Phi P Phi^T and a Joseph update, and Eigen
-// builds each of those triple products through full NX x NX temporaries --
-// 1764 bytes apiece at NX = 21.  The named locals that used to sit alongside
-// them are now member scratch buffers (see src/kalman_tfg/Kalman3D_Wave_TFG.h),
-// which took one live fusion step from ~27 kB of stack down to ~19 kB, but the
-// expression temporaries remain: removing those would change Eigen's GEMM path
-// and with it the filter's arithmetic, which is not something a stack budget
-// gets to decide.
-//
-// Measured peak, painted-stack high-water mark over a 400 s host run of the
-// whole sketch-level step (filter + detrender + direction chain):
-//
-//                       -O2        -Os
-//     before          27.2 kB    27.2 kB
-//     after           18.9 kB    15.3 kB
-//
-// The Arduino-ESP32 loop task gets 8 kB by default, so this still has to be
-// raised.  32 kB leaves ~13 kB over the worst measurement for the sketch's own
-// frames, the UI and the NMEA formatting, and for the xtensa/-funroll-loops
-// build differing from the host one.
-//
-// Lower it only against a fresh measurement on the device.
-// ---------------------------------------------------------------------------
-SET_LOOP_TASK_STACK_SIZE(32 * 1024);
+// The loop-task stack size is the other compile-time knob this sketch sets.
+// It lives at the bottom of the file, next to setup(); see the comment there
+// for why it is not here.
 
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
@@ -1066,6 +1041,46 @@ private:
 #endif
   }
 };
+
+// ---------------------------------------------------------------------------
+// Loop-task stack.
+//
+// This is not a safety margin, it is a requirement.  Kalman3D_Wave_TFG runs a
+// 21-state covariance through Phi P Phi^T and a Joseph update, and Eigen
+// builds each of those triple products through full NX x NX temporaries --
+// 1764 bytes apiece at NX = 21.  The named locals that used to sit alongside
+// them are now member scratch buffers (see src/kalman_tfg/Kalman3D_Wave_TFG.h),
+// which took one live fusion step from ~27 kB of stack down to ~19 kB, but the
+// expression temporaries remain: removing those would change Eigen's GEMM path
+// and with it the filter's arithmetic, which is not something a stack budget
+// gets to decide.
+//
+// Measured peak, painted-stack high-water mark over a 400 s host run of the
+// whole sketch-level step (filter + detrender + direction chain):
+//
+//                       -O2        -Os
+//     before          27.2 kB    27.2 kB
+//     after           18.9 kB    15.3 kB
+//
+// The Arduino-ESP32 loop task gets 8 kB by default, so this still has to be
+// raised.  32 kB leaves ~13 kB over the worst measurement for the sketch's own
+// frames, the UI and the NMEA formatting, and for the xtensa/-funroll-loops
+// build differing from the host one.
+//
+// Lower it only against a fresh measurement on the device.
+//
+// WHY THIS IS AT THE BOTTOM OF THE FILE.  SET_LOOP_TASK_STACK_SIZE expands to
+// a definition of getArduinoLoopTaskStackSize(), so it is a function
+// definition like any other.  The Arduino builder inserts its generated
+// prototypes immediately before the FIRST function definition in the sketch,
+// and those prototypes name Vector3f -- so with the macro up among the
+// configuration constants, the prototypes landed above the
+// `using Vector3f = Eigen::Vector3f;` alias and the sketch failed to compile
+// with "'Vector3f' does not name a type".  Down here the first function is
+// clampf_(), exactly as in the OU sketches, and the prototypes land where
+// they do there.
+// ---------------------------------------------------------------------------
+SET_LOOP_TASK_STACK_SIZE(32 * 1024);
 
 static FusionApp g_app;
 
