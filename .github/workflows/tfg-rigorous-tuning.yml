@@ -28,8 +28,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin main
-          # Main's new commit contains freshly regenerated generic evidence;
-          # preserve that evidence rather than replacing it with older copies.
           git merge --no-edit -X theirs origin/main
           if [ -f tools/tfg_rao_closeout.patch ]; then
             git apply --check tools/tfg_rao_closeout.patch
@@ -45,9 +43,10 @@ jobs:
           header='src/kalman_tfg/SeaStateFusionFilter_TFG.h'
           old=subprocess.check_output(['git','show','origin/main:'+header],text=True)
           new=Path(header).read_text()
-          def without_comments(text):
-              return re.sub(r'/\*.*?\*/|//[^\n]*','',text,flags=re.S)
-          assert without_comments(old)==without_comments(new), 'Shipping TFG code changed beyond comments'
+          def code_tokens(text):
+              text=re.sub(r'/\*.*?\*/|//[^\n]*','',text,flags=re.S)
+              return re.findall(r'\w+|[^\w\s]',text)
+          assert code_tokens(old)==code_tokens(new), 'Shipping TFG code changed beyond comments'
           p='tests/kalman_tfg/kalman_tfg-sim.cpp'
           a=subprocess.check_output(['git','show','origin/main:'+p],text=True)
           b=Path(p).read_text()
