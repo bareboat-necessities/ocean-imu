@@ -1,0 +1,292 @@
+make: Entering directory '/home/runner/work/ocean-imu/ocean-imu/tests/kalman_tfg'
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c lie_group-test.cpp -o lie_group-test.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -o lie_group-test lie_group-test.o 
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c convention-test.cpp -o convention-test.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -o convention-test convention-test.o 
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c ou_chain_identity-test.cpp -o ou_chain_identity-test.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -o ou_chain_identity-test ou_chain_identity-test.o 
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c tfg_propagation-test.cpp -o tfg_propagation-test.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -o tfg_propagation-test tfg_propagation-test.o 
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c tfg_jacobians-test.cpp -o tfg_jacobians-test.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -o tfg_jacobians-test tfg_jacobians-test.o 
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c covariance_transport-test.cpp -o covariance_transport-test.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -o covariance_transport-test covariance_transport-test.o 
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c tfg_process_covariance-test.cpp -o tfg_process_covariance-test.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -o tfg_process_covariance-test tfg_process_covariance-test.o 
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c tfg_orchestrator-test.cpp -o tfg_orchestrator-test.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -o tfg_orchestrator-test tfg_orchestrator-test.o 
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c tfg_rs_axis_factors-test.cpp -o tfg_rs_axis_factors-test.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -o tfg_rs_axis_factors-test tfg_rs_axis_factors-test.o 
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c kalman_tfg-sim.cpp -o kalman_tfg-sim.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c /home/runner/work/ocean-imu/ocean-imu/src/util/W3dSimCommon.cpp -o W3dSimCommon.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -o kalman_tfg-sim kalman_tfg-sim.o W3dSimCommon.o 
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -MMD -MP -c kalman_tfg-legacy-sim.cpp -o kalman_tfg-legacy-sim.o
+g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/home/runner/work/ocean-imu/ocean-imu/src -isystem /usr/include/eigen3 -isystem /home/runner/work/ocean-imu/ocean-imu/third_party/Lie-plusplus/include  -march=x86-64 -o kalman_tfg-legacy-sim kalman_tfg-legacy-sim.o W3dSimCommon.o 
+make[1]: Entering directory '/home/runner/work/ocean-imu/ocean-imu'
+python3 "/home/runner/work/ocean-imu/ocean-imu/tools/sim_dataset.py" --archive "/home/runner/work/ocean-imu/ocean-imu/sim-data-files-vessel-rao-28ft.zip" \
+	--dest /home/runner/work/ocean-imu/ocean-imu/tests/ahrs /home/runner/work/ocean-imu/ocean-imu/tests/detrend /home/runner/work/ocean-imu/ocean-imu/tests/freq /home/runner/work/ocean-imu/ocean-imu/tests/imu_calibrate /home/runner/work/ocean-imu/ocean-imu/tests/kalman_ou_ii /home/runner/work/ocean-imu/ocean-imu/tests/kalman_ou_iii /home/runner/work/ocean-imu/ocean-imu/tests/kalman_tfg /home/runner/work/ocean-imu/ocean-imu/tests/nlo /home/runner/work/ocean-imu/ocean-imu/tests/pii_observer /home/runner/work/ocean-imu/ocean-imu/tests/spectrum /home/runner/work/ocean-imu/ocean-imu/tests/spike_filter /home/runner/work/ocean-imu/ocean-imu/tests/validation /home/runner/work/ocean-imu/ocean-imu/tests/wave_dir /home/runner/work/ocean-imu/ocean-imu/tests/wave_sim /home/runner/work/ocean-imu/ocean-imu/plots/ahrs /home/runner/work/ocean-imu/ocean-imu/plots/detrend /home/runner/work/ocean-imu/ocean-imu/plots/freq /home/runner/work/ocean-imu/ocean-imu/plots/imu_calibrate /home/runner/work/ocean-imu/ocean-imu/plots/kalman_ou_ii /home/runner/work/ocean-imu/ocean-imu/plots/kalman_ou_iii /home/runner/work/ocean-imu/ocean-imu/plots/kalman_tfg /home/runner/work/ocean-imu/ocean-imu/plots/nlo /home/runner/work/ocean-imu/ocean-imu/plots/pii_observer /home/runner/work/ocean-imu/ocean-imu/plots/spectrum /home/runner/work/ocean-imu/ocean-imu/plots/spike_filter /home/runner/work/ocean-imu/ocean-imu/plots/validation /home/runner/work/ocean-imu/ocean-imu/plots/wave_dir /home/runner/work/ocean-imu/ocean-imu/plots/wave_sim
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+ 35  286M   35  101M    0     0  80.4M      0  0:00:03  0:00:01  0:00:02 80.4M 80  286M   80  230M    0     0  99.6M      0  0:00:02  0:00:02 --:--:--  122M100  286M  100  286M    0     0   105M      0  0:00:02  0:00:02 --:--:--  126M
+Verified oceanography-waves-lib v1.2.1, estimated 28 ft fin-keel sailboat RAO at CG: 30 inputs in 28 directories
+6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60  /home/runner/work/ocean-imu/ocean-imu/sim-data-files-vessel-rao-28ft.zip
+make[1]: Leaving directory '/home/runner/work/ocean-imu/ocean-imu'
+bash ./run_tests.sh
+lie_group-test: all checks passed
+convention-test: all checks passed
+ou_chain_identity-test: all checks passed
+  Rbar factor: |Phi_phi,bg - FD| = 8.38703e-11 with J_l, 0.000215026 without
+tfg_propagation-test: all checks passed
+tfg_jacobians-test: all checks passed
+covariance_transport-test: all checks passed
+  heave RMS error 0.230245 m against 0.955265 m of signal (24.1028%)
+  hard-iron yaw error: 8.49255 deg uncorrected, 2.52422 deg corrected
+tfg_orchestrator-test: all checks passed
+TFG simulation starting with_mag=true, mag_delay=7 sec, noise=true
+RANDOM_SEEDS accel_noise=1234 gyro_noise=5678 mag_noise=9012 accel_initialization=1234 gyro_initialization=5678 mag_initialization=9012
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+Processing ./wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv (type=jonswap)
+Wrote ./w3d_jonswap_H0.270_L14.047_A30.00_P60.00_fusion_tfg.csv
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795514 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+=== Last 900 s RMS summary for ./w3d_jonswap_H0.270_L14.047_A30.00_P60.00_fusion_tfg.csv ===
+XYZ RMS (m): X=0.00961723 Y=0.00908303 Z=0.0118341
+XYZ RMS (%Hs): X=3.56194% Y=3.36409% Z=4.38299% (Hs=0.27)
+3D RMS (m): 0.0177493 (3D % of max |disp_ref|_3D = 8.87086%, max |disp_ref|_3D = 0.200086 m)
+Angles RMS (deg): Roll=0.302802 Pitch=0.0546472 Yaw=0.546345
+Bias error RMS (acc, m/s^2): X=0.051432 Y=0.00920443 Z=0.00147082 |3D|=0.0522699
+Bias error RMS (gyro, rad/s): X=3.88825e-05 Y=4.21717e-05 Z=7.8459e-05 |3D|=9.71912e-05
+Bias error RMS (gyro, deg/s): X=0.0022278 Y=0.00241626 Z=0.00449537 |3D|=0.00556864
+Bias error RMS (mag, uT): X=0.532585 Y=0.554475 Z=0.848766 |3D|=1.1452
+Max TRUE bias in window (acc, m/s^2): X=0.0477427 Y=0.0460493 Z=0.0592575 |3D|=0.0843692
+Max TRUE bias in window (gyro, rad/s): X=0.000620161 Y=0.000914597 Z=0.000323954 |3D|=0.00106918
+Bias error RMS (% of max TRUE bias) (acc): X=107.728% Y=19.9882% Z=2.48208% |3D|=61.9537%
+Bias error RMS (% of max TRUE bias) (gyro): X=6.26975% Y=4.61096% Z=24.2192% |3D|=9.09025%
+tau_target=1.52824, sigma_target=0.139792, RS_target=0.15
+tau_applied=1.53015, sigma_applied=0.142301, RS_applied=0.152252
+f_hz=nan, Tp_tuner=nan, accel_var=0.0307959
+=== Direction Report (last 900 s only) for ./w3d_jonswap_H0.270_L14.047_A30.00_P60.00_fusion_tfg.csv ===
+window_s: 900 samples: 180000
+freq_hz: mean=nan median=nan p05=nan p95=nan
+dir_deg_gen ([-90,90], 0=+Y CW): mean_circ=nan circ_std≈nan deg
+uncert_deg: mean=nan median=nan p95=nan
+confidence: mean=nan >20 count=0 (0%)
+sense: +AXIS=0 (0%) -AXIS=0 (0%) UNCERTAIN=180000 (100%)
+=============================================
+
+QUALITY_GATE: PASS=1 REASON=ok
+Processing ./wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv (type=jonswap)
+Wrote ./w3d_jonswap_H1.500_L50.710_A-30.00_P120.00_fusion_tfg.csv
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795527 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+=== Last 900 s RMS summary for ./w3d_jonswap_H1.500_L50.710_A-30.00_P120.00_fusion_tfg.csv ===
+XYZ RMS (m): X=0.0677405 Y=0.0505517 Z=0.0628121
+XYZ RMS (%Hs): X=4.51604% Y=3.37011% Z=4.18747% (Hs=1.5)
+3D RMS (m): 0.105307 (3D % of max |disp_ref|_3D = 7.94598%, max |disp_ref|_3D = 1.32529 m)
+Angles RMS (deg): Roll=0.27564 Pitch=0.0722622 Yaw=0.414948
+Bias error RMS (acc, m/s^2): X=0.0457987 Y=0.011823 Z=0.00192893 |3D|=0.0473394
+Bias error RMS (gyro, rad/s): X=4.33873e-05 Y=4.72901e-05 Z=7.91682e-05 |3D|=0.000101914
+Bias error RMS (gyro, deg/s): X=0.00248591 Y=0.00270952 Z=0.004536 |3D|=0.00583923
+Bias error RMS (mag, uT): X=0.532585 Y=0.554475 Z=0.848766 |3D|=1.1452
+Max TRUE bias in window (acc, m/s^2): X=0.0477427 Y=0.0460493 Z=0.0592575 |3D|=0.0843692
+Max TRUE bias in window (gyro, rad/s): X=0.000620161 Y=0.000914597 Z=0.000323954 |3D|=0.00106918
+Bias error RMS (% of max TRUE bias) (acc): X=95.9282% Y=25.6747% Z=3.25516% |3D|=56.1098%
+Bias error RMS (% of max TRUE bias) (gyro): X=6.99614% Y=5.1706% Z=24.4381% |3D|=9.53195%
+tau_target=2.49453, sigma_target=0.406065, RS_target=1.47697
+tau_applied=2.50608, sigma_applied=0.413172, RS_applied=1.60177
+f_hz=nan, Tp_tuner=nan, accel_var=0.2578
+=== Direction Report (last 900 s only) for ./w3d_jonswap_H1.500_L50.710_A-30.00_P120.00_fusion_tfg.csv ===
+window_s: 900 samples: 180000
+freq_hz: mean=nan median=nan p05=nan p95=nan
+dir_deg_gen ([-90,90], 0=+Y CW): mean_circ=nan circ_std≈nan deg
+uncert_deg: mean=nan median=nan p95=nan
+confidence: mean=nan >20 count=0 (0%)
+sense: +AXIS=0 (0%) -AXIS=0 (0%) UNCERTAIN=180000 (100%)
+=============================================
+
+QUALITY_GATE: PASS=1 REASON=ok
+Processing ./wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv (type=jonswap)
+Wrote ./w3d_jonswap_H4.000_L112.766_A30.00_P30.00_fusion_tfg.csv
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795531 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+=== Last 900 s RMS summary for ./w3d_jonswap_H4.000_L112.766_A30.00_P30.00_fusion_tfg.csv ===
+XYZ RMS (m): X=0.232948 Y=0.152027 Z=0.161415
+XYZ RMS (%Hs): X=5.82371% Y=3.80068% Z=4.03537% (Hs=4)
+3D RMS (m): 0.321608 (3D % of max |disp_ref|_3D = 7.79626%, max |disp_ref|_3D = 4.12516 m)
+Angles RMS (deg): Roll=0.292679 Pitch=0.0757774 Yaw=0.936899
+Bias error RMS (acc, m/s^2): X=0.0485499 Y=0.0110264 Z=0.00233738 |3D|=0.0498411
+Bias error RMS (gyro, rad/s): X=4.9332e-05 Y=5.09338e-05 Z=8.1532e-05 |3D|=0.000108053
+Bias error RMS (gyro, deg/s): X=0.00282652 Y=0.00291829 Z=0.00467144 |3D|=0.00619096
+Bias error RMS (mag, uT): X=0.532585 Y=0.554475 Z=0.848766 |3D|=1.1452
+Max TRUE bias in window (acc, m/s^2): X=0.0477427 Y=0.0460493 Z=0.0592575 |3D|=0.0843692
+Max TRUE bias in window (gyro, rad/s): X=0.000620161 Y=0.000914597 Z=0.000323954 |3D|=0.00106918
+Bias error RMS (% of max TRUE bias) (acc): X=101.691% Y=23.9448% Z=3.94444% |3D|=59.075%
+Bias error RMS (% of max TRUE bias) (gyro): X=7.95471% Y=5.56899% Z=25.1678% |3D|=10.1061%
+tau_target=3.91672, sigma_target=0.741668, RS_target=9.27722
+tau_applied=3.93713, sigma_applied=0.751516, RS_applied=9.10772
+f_hz=nan, Tp_tuner=nan, accel_var=0.859588
+=== Direction Report (last 900 s only) for ./w3d_jonswap_H4.000_L112.766_A30.00_P30.00_fusion_tfg.csv ===
+window_s: 900 samples: 180000
+freq_hz: mean=nan median=nan p05=nan p95=nan
+dir_deg_gen ([-90,90], 0=+Y CW): mean_circ=nan circ_std≈nan deg
+uncert_deg: mean=nan median=nan p95=nan
+confidence: mean=nan >20 count=0 (0%)
+sense: +AXIS=0 (0%) -AXIS=0 (0%) UNCERTAIN=180000 (100%)
+=============================================
+
+QUALITY_GATE: PASS=1 REASON=ok
+Processing ./wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv (type=jonswap)
+Wrote ./w3d_jonswap_H8.500_L202.839_A-30.00_P72.00_fusion_tfg.csv
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795556 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+=== Last 900 s RMS summary for ./w3d_jonswap_H8.500_L202.839_A-30.00_P72.00_fusion_tfg.csv ===
+XYZ RMS (m): X=0.531168 Y=0.411278 Z=0.31694
+XYZ RMS (%Hs): X=6.24903% Y=4.83856% Z=3.7287% (Hs=8.5)
+3D RMS (m): 0.742792 (3D % of max |disp_ref|_3D = 9.77891%, max |disp_ref|_3D = 7.59586 m)
+Angles RMS (deg): Roll=0.33543 Pitch=0.0663959 Yaw=0.27891
+Bias error RMS (acc, m/s^2): X=0.0529396 Y=0.00588862 Z=0.0026059 |3D|=0.0533298
+Bias error RMS (gyro, rad/s): X=5.40954e-05 Y=5.70198e-05 Z=7.84112e-05 |3D|=0.000111022
+Bias error RMS (gyro, deg/s): X=0.00309944 Y=0.00326699 Z=0.00449263 |3D|=0.00636109
+Bias error RMS (mag, uT): X=0.532585 Y=0.554475 Z=0.848766 |3D|=1.1452
+Max TRUE bias in window (acc, m/s^2): X=0.0477427 Y=0.0460493 Z=0.0592575 |3D|=0.0843692
+Max TRUE bias in window (gyro, rad/s): X=0.000620161 Y=0.000914597 Z=0.000323954 |3D|=0.00106918
+Bias error RMS (% of max TRUE bias) (acc): X=110.885% Y=12.7876% Z=4.39759% |3D|=63.2101%
+Bias error RMS (% of max TRUE bias) (gyro): X=8.7228% Y=6.23442% Z=24.2044% |3D|=10.3838%
+tau_target=4.56298, sigma_target=0.978793, RS_target=18.4047
+tau_applied=4.49695, sigma_applied=0.990856, RS_applied=16.7864
+f_hz=nan, Tp_tuner=nan, accel_var=1.49702
+=== Direction Report (last 900 s only) for ./w3d_jonswap_H8.500_L202.839_A-30.00_P72.00_fusion_tfg.csv ===
+window_s: 900 samples: 180000
+freq_hz: mean=nan median=nan p05=nan p95=nan
+dir_deg_gen ([-90,90], 0=+Y CW): mean_circ=nan circ_std≈nan deg
+uncert_deg: mean=nan median=nan p95=nan
+confidence: mean=nan >20 count=0 (0%)
+sense: +AXIS=0 (0%) -AXIS=0 (0%) UNCERTAIN=180000 (100%)
+=============================================
+
+QUALITY_GATE: PASS=1 REASON=ok
+Processing ./wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv (type=pmstokes)
+Wrote ./w3d_pmstokes_H0.270_L14.047_A30.00_P60.00_fusion_tfg.csv
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795515 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+=== Last 900 s RMS summary for ./w3d_pmstokes_H0.270_L14.047_A30.00_P60.00_fusion_tfg.csv ===
+XYZ RMS (m): X=0.0095494 Y=0.00897665 Z=0.0117014
+XYZ RMS (%Hs): X=3.53682% Y=3.32468% Z=4.33386% (Hs=0.27)
+3D RMS (m): 0.0175697 (3D % of max |disp_ref|_3D = 9.08067%, max |disp_ref|_3D = 0.193485 m)
+Angles RMS (deg): Roll=0.300639 Pitch=0.0558221 Yaw=0.654089
+Bias error RMS (acc, m/s^2): X=0.0510622 Y=0.00947017 Z=0.00146706 |3D|=0.0519537
+Bias error RMS (gyro, rad/s): X=3.88655e-05 Y=4.21239e-05 Z=7.48099e-05 |3D|=9.42416e-05
+Bias error RMS (gyro, deg/s): X=0.00222683 Y=0.00241352 Z=0.00428629 |3D|=0.00539964
+Bias error RMS (mag, uT): X=0.532585 Y=0.554475 Z=0.848766 |3D|=1.1452
+Max TRUE bias in window (acc, m/s^2): X=0.0477427 Y=0.0460493 Z=0.0592575 |3D|=0.0843692
+Max TRUE bias in window (gyro, rad/s): X=0.000620161 Y=0.000914597 Z=0.000323954 |3D|=0.00106918
+Bias error RMS (% of max TRUE bias) (acc): X=106.953% Y=20.5653% Z=2.47573% |3D|=61.5789%
+Bias error RMS (% of max TRUE bias) (gyro): X=6.26701% Y=4.60574% Z=23.0928% |3D|=8.81437%
+tau_target=1.51221, sigma_target=0.140467, RS_target=0.15
+tau_applied=1.51921, sigma_applied=0.141018, RS_applied=0.150495
+f_hz=nan, Tp_tuner=nan, accel_var=0.0310941
+=== Direction Report (last 900 s only) for ./w3d_pmstokes_H0.270_L14.047_A30.00_P60.00_fusion_tfg.csv ===
+window_s: 900 samples: 180000
+freq_hz: mean=nan median=nan p05=nan p95=nan
+dir_deg_gen ([-90,90], 0=+Y CW): mean_circ=nan circ_std≈nan deg
+uncert_deg: mean=nan median=nan p95=nan
+confidence: mean=nan >20 count=0 (0%)
+sense: +AXIS=0 (0%) -AXIS=0 (0%) UNCERTAIN=180000 (100%)
+=============================================
+
+QUALITY_GATE: PASS=1 REASON=ok
+Processing ./wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv (type=pmstokes)
+Wrote ./w3d_pmstokes_H1.500_L50.710_A-30.00_P120.00_fusion_tfg.csv
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795521 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+=== Last 900 s RMS summary for ./w3d_pmstokes_H1.500_L50.710_A-30.00_P120.00_fusion_tfg.csv ===
+XYZ RMS (m): X=0.0659361 Y=0.0487498 Z=0.0613649
+XYZ RMS (%Hs): X=4.39574% Y=3.24999% Z=4.09099% (Hs=1.5)
+3D RMS (m): 0.10242 (3D % of max |disp_ref|_3D = 7.65514%, max |disp_ref|_3D = 1.33792 m)
+Angles RMS (deg): Roll=0.273375 Pitch=0.055622 Yaw=0.261739
+Bias error RMS (acc, m/s^2): X=0.0453811 Y=0.00810718 Z=0.00191595 |3D|=0.0461394
+Bias error RMS (gyro, rad/s): X=4.31715e-05 Y=4.70253e-05 Z=7.89295e-05 |3D|=0.000101514
+Bias error RMS (gyro, deg/s): X=0.00247355 Y=0.00269435 Z=0.00452233 |3D|=0.00581631
+Bias error RMS (mag, uT): X=0.532585 Y=0.554475 Z=0.848766 |3D|=1.1452
+Max TRUE bias in window (acc, m/s^2): X=0.0477427 Y=0.0460493 Z=0.0592575 |3D|=0.0843692
+Max TRUE bias in window (gyro, rad/s): X=0.000620161 Y=0.000914597 Z=0.000323954 |3D|=0.00106918
+Bias error RMS (% of max TRUE bias) (acc): X=95.0536% Y=17.6054% Z=3.23327% |3D|=54.6875%
+Bias error RMS (% of max TRUE bias) (gyro): X=6.96135% Y=5.14164% Z=24.3644% |3D|=9.49453%
+tau_target=2.31781, sigma_target=0.437138, RS_target=1.26873
+tau_applied=2.32572, sigma_applied=0.443329, RS_applied=1.36636
+f_hz=nan, Tp_tuner=nan, accel_var=0.298751
+=== Direction Report (last 900 s only) for ./w3d_pmstokes_H1.500_L50.710_A-30.00_P120.00_fusion_tfg.csv ===
+window_s: 900 samples: 180000
+freq_hz: mean=nan median=nan p05=nan p95=nan
+dir_deg_gen ([-90,90], 0=+Y CW): mean_circ=nan circ_std≈nan deg
+uncert_deg: mean=nan median=nan p95=nan
+confidence: mean=nan >20 count=0 (0%)
+sense: +AXIS=0 (0%) -AXIS=0 (0%) UNCERTAIN=180000 (100%)
+=============================================
+
+QUALITY_GATE: PASS=1 REASON=ok
+Processing ./wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv (type=pmstokes)
+Wrote ./w3d_pmstokes_H4.000_L112.766_A30.00_P30.00_fusion_tfg.csv
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795583 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+=== Last 900 s RMS summary for ./w3d_pmstokes_H4.000_L112.766_A30.00_P30.00_fusion_tfg.csv ===
+XYZ RMS (m): X=0.229131 Y=0.152542 Z=0.159118
+XYZ RMS (%Hs): X=5.72827% Y=3.81356% Z=3.97794% (Hs=4)
+3D RMS (m): 0.317944 (3D % of max |disp_ref|_3D = 7.85841%, max |disp_ref|_3D = 4.04591 m)
+Angles RMS (deg): Roll=0.310227 Pitch=0.0600314 Yaw=0.89396
+Bias error RMS (acc, m/s^2): X=0.0517045 Y=0.00578818 Z=0.00234411 |3D|=0.0520802
+Bias error RMS (gyro, rad/s): X=4.95237e-05 Y=5.09364e-05 Z=7.87895e-05 |3D|=0.000106089
+Bias error RMS (gyro, deg/s): X=0.0028375 Y=0.00291844 Z=0.00451431 |3D|=0.00607846
+Bias error RMS (mag, uT): X=0.532585 Y=0.554475 Z=0.848766 |3D|=1.1452
+Max TRUE bias in window (acc, m/s^2): X=0.0477427 Y=0.0460493 Z=0.0592575 |3D|=0.0843692
+Max TRUE bias in window (gyro, rad/s): X=0.000620161 Y=0.000914597 Z=0.000323954 |3D|=0.00106918
+Bias error RMS (% of max TRUE bias) (acc): X=108.298% Y=12.5695% Z=3.95581% |3D|=61.7289%
+Bias error RMS (% of max TRUE bias) (gyro): X=7.98562% Y=5.56927% Z=24.3212% |3D|=9.92247%
+tau_target=3.66268, sigma_target=0.799575, RS_target=8.13044
+tau_applied=3.67533, sigma_applied=0.812267, RS_applied=7.94515
+f_hz=nan, Tp_tuner=nan, accel_var=0.999046
+=== Direction Report (last 900 s only) for ./w3d_pmstokes_H4.000_L112.766_A30.00_P30.00_fusion_tfg.csv ===
+window_s: 900 samples: 180000
+freq_hz: mean=nan median=nan p05=nan p95=nan
+dir_deg_gen ([-90,90], 0=+Y CW): mean_circ=nan circ_std≈nan deg
+uncert_deg: mean=nan median=nan p95=nan
+confidence: mean=nan >20 count=0 (0%)
+sense: +AXIS=0 (0%) -AXIS=0 (0%) UNCERTAIN=180000 (100%)
+=============================================
+
+QUALITY_GATE: PASS=1 REASON=ok
+Processing ./wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv (type=pmstokes)
+Wrote ./w3d_pmstokes_H8.500_L202.839_A-30.00_P72.00_fusion_tfg.csv
+ACC_GUARD cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.0079553 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+=== Last 900 s RMS summary for ./w3d_pmstokes_H8.500_L202.839_A-30.00_P72.00_fusion_tfg.csv ===
+XYZ RMS (m): X=0.538618 Y=0.402634 Z=0.317414
+XYZ RMS (%Hs): X=6.33668% Y=4.73687% Z=3.73429% (Hs=8.5)
+3D RMS (m): 0.743623 (3D % of max |disp_ref|_3D = 9.8703%, max |disp_ref|_3D = 7.53395 m)
+Angles RMS (deg): Roll=0.380083 Pitch=0.109762 Yaw=0.421257
+Bias error RMS (acc, m/s^2): X=0.0605995 Y=0.0138863 Z=0.0026493 |3D|=0.0622265
+Bias error RMS (gyro, rad/s): X=5.43605e-05 Y=5.64401e-05 Z=7.88705e-05 |3D|=0.00011118
+Bias error RMS (gyro, deg/s): X=0.00311463 Y=0.00323378 Z=0.00451895 |3D|=0.00637017
+Bias error RMS (mag, uT): X=0.532585 Y=0.554475 Z=0.848766 |3D|=1.1452
+Max TRUE bias in window (acc, m/s^2): X=0.0477427 Y=0.0460493 Z=0.0592575 |3D|=0.0843692
+Max TRUE bias in window (gyro, rad/s): X=0.000620161 Y=0.000914597 Z=0.000323954 |3D|=0.00106918
+Bias error RMS (% of max TRUE bias) (acc): X=126.929% Y=30.1553% Z=4.47082% |3D|=73.755%
+Bias error RMS (% of max TRUE bias) (gyro): X=8.76555% Y=6.17103% Z=24.3462% |3D|=10.3987%
+tau_target=4.38909, sigma_target=1.16129, RS_target=19.0176
+tau_applied=4.32274, sigma_applied=1.17689, RS_applied=16.8483
+f_hz=nan, Tp_tuner=nan, accel_var=2.10727
+=== Direction Report (last 900 s only) for ./w3d_pmstokes_H8.500_L202.839_A-30.00_P72.00_fusion_tfg.csv ===
+window_s: 900 samples: 180000
+freq_hz: mean=nan median=nan p05=nan p95=nan
+dir_deg_gen ([-90,90], 0=+Y CW): mean_circ=nan circ_std≈nan deg
+uncert_deg: mean=nan median=nan p95=nan
+confidence: mean=nan >20 count=0 (0%)
+sense: +AXIS=0 (0%) -AXIS=0 (0%) UNCERTAIN=180000 (100%)
+=============================================
+
+QUALITY_GATE: PASS=1 REASON=ok
+make: Leaving directory '/home/runner/work/ocean-imu/ocean-imu/tests/kalman_tfg'

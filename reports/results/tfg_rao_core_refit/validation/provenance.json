@@ -1,0 +1,16 @@
+{
+  "source_commit": "b3759d88fab53a708e2d3b2e18e171f75057f10e",
+  "workflow_run": 35676809258,
+  "command": "make -C tests/kalman_tfg all CXXFLAGS=BASEFLAGS+-march=x86-64",
+  "exit_code": 0,
+  "shipping_coefficients": [
+    1.0,
+    0.8,
+    1.15,
+    1.15
+  ],
+  "gyro_bias_rw_var": 3.75e-10,
+  "quality_limits_unchanged": true,
+  "ou3_shipping_unchanged": true,
+  "validation_log_sha256": "05da32392f617c9f1d86ed29e9004a68df5c6f219bdbc5165cca4ede7f4255bb"
+}
