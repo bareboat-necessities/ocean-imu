@@ -611,8 +611,8 @@ private:
         mag_reference_learned_ = false;
         mag_world_ref_valid_ = false;
         mag_world_ref_uT_.setZero();
-        mag_yaw_anchor_rad_ = 0.0f;
-        have_mag_yaw_anchor_ = false;
+        mag_proxy_yaw_offset_rad_ = 0.0f;
+        have_mag_proxy_gauge_ = false;
         mag_hard_iron_body_uT_.setZero();
         mag_hi_startup_body_uT_.setZero();
         mag_hi_applied_body_uT_.setZero();
@@ -838,10 +838,14 @@ private:
             if (cfg_.with_mag && !mag_reference_learned_) return;
         }
 
-        const Eigen::Quaternionf q_tilt = vertical_complementary_.tiltQuaternion();
-        const Eigen::Quaternionf q_bw = have_mag_yaw_anchor_
-            ? Eigen::Quaternionf(Eigen::AngleAxisf(mag_yaw_anchor_rad_, Eigen::Vector3f::UnitZ()) * q_tilt)
-            : q_tilt;
+        // The learned angle aligns the proxy's WORLD frame with magnetic
+        // north; it is not an absolute boat heading to freeze at acquisition.
+        // Carry every subsequent gyro-observed turn into the actual handoff.
+        const Eigen::Quaternionf q_bw = have_mag_proxy_gauge_
+            ? Eigen::Quaternionf(
+                  Eigen::AngleAxisf(mag_proxy_yaw_offset_rad_, Vector3f::UnitZ()) *
+                  vertical_complementary_.quaternion())
+            : vertical_complementary_.tiltQuaternion();
 
         mekf_.initialize_from_truth(q_bw.normalized(), Vector3f::Zero(), Vector3f::Zero(),
                                     Vector3f::Zero(), Vector3f::Zero(),
@@ -882,20 +886,33 @@ private:
             ? (elapsed_sec_ - last_mag_sample_t_) : cfg_.mag_sample_dt_sec;
         last_mag_sample_t_ = elapsed_sec_;
 
-        if (!mag_auto_tuner_.addSampleWithTiltQuatDt(
-                dt_mag, vertical_complementary_.tiltQuaternion(),
+        // All samples must share one gyro-propagated accumulation frame.
+        // Removing yaw separately from each sample makes a turn rotate the
+        // field inside that frame, shrinking its horizontal mean and storing
+        // a historical average heading. The proxy never reads the MEKF, so
+        // retaining its relative yaw does not create estimator feedback.
+        if (!mag_auto_tuner_.addSampleWithWorldQuatDt(
+                dt_mag, vertical_complementary_.quaternion(),
                 last_acc_body_, last_gyro_body_, mag_body)) return;
 
         Vector3f ref;
         if (!mag_auto_tuner_.getMagWorldRef(ref) || !ref.allFinite() ||
             !(ref.norm() > cfg_.mag_init_min_mag_norm)) return;
-        setMagWorldRef_(ref);
-
         const float gauge = mag_auto_tuner_.getYawGaugeCorrectionRad();
-        if (std::isfinite(gauge)) {
-            mag_yaw_anchor_rad_ = wrapPi_(-gauge);
-            have_mag_yaw_anchor_ = true;
+        if (!std::isfinite(gauge)) return; // no horizontal field, no north lock
+        mag_proxy_yaw_offset_rad_ = wrapPi_(-gauge);
+        have_mag_proxy_gauge_ = true;
+
+        // A missing magnetometer can let the existing timeout enter Live
+        // before the first north lock. That first alignment is a frame choice:
+        // rotate all world states/covariance, then install the north-frame
+        // reference (apply_world_yaw_gauge also rotates any old reference).
+        if (stage_ == StartupStage::Live) {
+            const Eigen::Matrix3f R = mekf_.R_bw();
+            const float yaw_core = std::atan2(R(1, 0), R(0, 0));
+            mekf_.apply_world_yaw_gauge(wrapPi_(proxyMagneticYaw_(gauge) - yaw_core));
         }
+        setMagWorldRef_(ref);
 
         Vector3f hard_iron;
         mag_hi_startup_body_uT_ = mag_auto_tuner_.getHardIronBodyUT(hard_iron)
@@ -924,20 +941,30 @@ private:
             ? (elapsed_sec_ - last_mag_sample_t_) : cfg_.mag_sample_dt_sec;
         last_mag_sample_t_ = elapsed_sec_;
         const Vector3f mag_corrected = mag_body - mag_hard_iron_body_uT_;
-        if (!mag_auto_tuner_.addSampleWithTiltQuatDt(
-                dt_mag, vertical_complementary_.tiltQuaternion(),
+        // Refinement can also overlap a real turn. Use the same independent
+        // proxy world frame, not yaw-stripped samples or the core that has
+        // already been corrected toward the provisional magnetic reference.
+        if (!mag_auto_tuner_.addSampleWithWorldQuatDt(
+                dt_mag, vertical_complementary_.quaternion(),
                 last_acc_body_, last_gyro_body_, mag_corrected)) return;
 
         Vector3f ref;
         if (!mag_auto_tuner_.getMagWorldRef(ref) || !ref.allFinite() ||
             !(ref.norm() > cfg_.mag_init_min_mag_norm)) return;
-        setMagWorldRef_(ref);
-
         const float gauge = mag_auto_tuner_.getYawGaugeCorrectionRad();
-        if (std::isfinite(gauge)) mekf_.set_attitude_yaw_absolute(wrapPi_(-gauge));
+        if (!std::isfinite(gauge)) return;
+        setMagWorldRef_(ref);
+        // The accumulated gauge removes only the proxy's arbitrary world yaw.
+        // Compose it with NOW's proxy yaw, keeping the core's wave-aware tilt.
+        mekf_.set_attitude_yaw_absolute(proxyMagneticYaw_(gauge));
         mag_refine_done_ = true;
         mag_refine_time_sec_ = elapsed_sec_;
         maybeUnlockAccBias_();
+    }
+
+    [[nodiscard]] float proxyMagneticYaw_(float gauge) const {
+        const Eigen::Matrix3f R = vertical_complementary_.quaternion().toRotationMatrix();
+        return wrapPi_(std::atan2(R(1, 0), R(0, 0)) - gauge);
     }
 
     void setMagWorldRef_(const Vector3f& ref) {
@@ -1048,7 +1075,7 @@ private:
     void seedHandoffAttitudeCovariance_() {
         auto& P = mekf_.covariance_full();
         const float st = std::max(1e-6f, cfg_.proxy_handoff_tilt_sigma_rad);
-        const float sy = have_mag_yaw_anchor_
+        const float sy = have_mag_proxy_gauge_
             ? std::max(1e-6f, cfg_.proxy_handoff_yaw_sigma_rad)
             : std::max(1e-6f, cfg_.proxy_handoff_yaw_sigma_free_rad);
         constexpr int PHI = Mekf::OFF_PHI;
@@ -1252,8 +1279,8 @@ private:
     bool periodic_aw_cov_sync_ = true;
     float aw_sync_elapsed_sec_ = 0.0f;
 
-    float mag_yaw_anchor_rad_ = 0.0f;
-    bool have_mag_yaw_anchor_ = false;
+    float mag_proxy_yaw_offset_rad_ = 0.0f;
+    bool have_mag_proxy_gauge_ = false;
     Vector3f mag_world_ref_uT_{Vector3f::Zero()};
     bool mag_world_ref_valid_ = false;
     float mag_init_eligible_t0_ = NAN;

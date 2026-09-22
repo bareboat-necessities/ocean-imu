@@ -7,7 +7,7 @@
     - one-shot magnetic north lock inside SeaStateFusion_OU_III
     - measured magnetic heading is available from the first valid IMU/mag sample
     - startup tilt comes from the private proxy, then from the live filter
-    - compass output never waits for wave startup or switches to filter yaw
+    - startup compass does not wait for INS; fused filter yaw takes over once Live
 
   Assumptions:
     - fusion_.raw().mekf().quaternion_boat() returns BODY->WORLD quaternion (q_bw), world frame is NED (+Z down).
