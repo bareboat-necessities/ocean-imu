@@ -1181,7 +1181,7 @@ private:
     float sigma_coeff_ = 0.8f;
     float R_S_coeff_ = 0.28f;
     float S_factor_ = 1.00f;
-    float R_S_x_factor_ = 1.15f;
+    float R_S_x_factor_ = 1.08f;
     float R_S_y_factor_ = 1.15f;
     float noise_floor_sigma_ = 0.12f;
 
