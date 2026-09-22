@@ -342,9 +342,5 @@ python3 tools/ou_validation.py --mode full
 ```
 
 Full mode produces raw and summary CSV, JSON, LaTeX, paired-effect, manifest,
-and SVG plot artifacts under `reports/results/ou_validation/`. The versioned
-ten-seed study contains **840 simulator replays** across the declared stationary,
-transition, comparison, covariance-policy, and channel-ablation configurations;
-paired seed-level aggregates, not 840 independent samples, are used for the
-primary inference. See [`docs/ou-validation.md`](docs/ou-validation.md) for the
+and SVG plot artifacts under `reports/results/ou_validation/`. See [`docs/ou-validation.md`](docs/ou-validation.md) for the
 protocol, provenance contract, seed controls, and interpretation.
