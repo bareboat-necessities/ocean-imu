@@ -65,12 +65,13 @@ Autopilot Use Cases:
 
 - [Algorithmic Methods in Open Source Marine Autopilots](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/autopilots-methods.pdf)
 
-There are two versions of Kalman INS filters and one filter (PII observer) based on control theory:
+There are two versions of Kalman INS filters and two filters (PII observer and NLO) based on control theory:
 
 - OU_III uses higher-order integral drift correction. It is a 21-dimensional-state Kalman filter and is the OU variant used for the main 3-D navigation study.
 - TFG is a right-invariant two-frame Lie-group error-state EKF. Same 21 dimensional state and the same OU wave model as OU_III, but attitude, the world-frame kinematic states and the body-frame biases live on one group, so an attitude correction rotates velocity, position, integral displacement and wave acceleration coherently instead of leaving them behind.
 - OU_II uses more direct integral drift correction and is more responsive to sea-state changes. It is an 18-dimensional-state Kalman filter.
 - PII observer is based on control theory. It is very computationally light-weight with no matrix operations. It's less accurate than Kalman filters.
+- NLO is a time-varying-gain nonlinear observer. It uses explicit attitude and translational injection terms with the gains published by Bryne/Fossen/Johansen instead of a propagated covariance, and its translational loop is scheduled on the tracked wave frequency.
 - All above filters are adaptive.
 - All filters tested to run on esp32s3.
 - All filters tested to run on Windows and Linux as well.
@@ -80,6 +81,7 @@ Arduino .ino sketches for esp32s3 (on atomS3R):
 - Kalman OU_II: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_kalman_ou2
 - Kalman OU_III: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_kalman_ou3
 - PII observer: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_pii_observer
+- Non-Linear Observer NLO: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_nlo
 
 ## Overview
 

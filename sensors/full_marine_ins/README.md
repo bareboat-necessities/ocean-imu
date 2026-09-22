@@ -17,8 +17,9 @@ They are intended for **marine motion estimation**, where accelerometer measurem
 | [atomS3R_ins_kalman_ou2](atomS3R_ins_kalman_ou2/README.md) | Adaptive OU-II Kalman INS | More direct integral-drift correction; responsive sea-state adaptation |
 | [atomS3R_ins_kalman_ou3](atomS3R_ins_kalman_ou3/README.md) | Adaptive OU-III Kalman INS | Higher-order integral regularization; main 3-D navigation implementation |
 | [atomS3R_ins_pii_observer](atomS3R_ins_pii_observer/README.md) | Adaptive PII observer + Mahony | Much lighter computation; primarily vertical/heave-oriented motion estimation |
+| [atomS3R_ins_nlo](atomS3R_ins_nlo/README.md) | Time-varying-gain nonlinear observer | Observer-based 3-D estimator with published gains; no covariance propagation |
 
-The OU-II and OU-III sketches learn tilt during startup, perform a one-shot magnetic north lock in the sea-state fusion filter, and then use filter yaw as the primary heading output. The PII application uses Mahony attitude with a lightweight adaptive vertical observer.
+The OU-II and OU-III sketches learn tilt during startup, perform a one-shot magnetic north lock in the sea-state fusion filter, and then use filter yaw as the primary heading output. The PII application uses Mahony attitude with a lightweight adaptive vertical observer. The NLO application bootstraps attitude with a Mahony startup stage, hands over to the nonlinear observer, and takes the magnetometer as a continuous yaw-only magnetic reference.
 
 ## Installation and bring-up
 
@@ -28,10 +29,10 @@ The full sketches enable the shared IMU calibration wizard by default through `S
 
 ## Which should I use?
 
-Start with **OU-III** if you want the project’s primary full 3-D marine navigation estimator. Try **OU-II** when you prefer its more direct drift regularization and adaptation response. Use the **PII observer** when MCU cost and simplicity matter more than the full Kalman-state solution.
+Start with **OU-III** if you want the project’s primary full 3-D marine navigation estimator. Try **OU-II** when you prefer its more direct drift regularization and adaptation response. Use the **PII observer** when MCU cost and simplicity matter more than the full Kalman-state solution. Use the **NLO** when you want the observer-based alternative to the Kalman filters: explicit injection terms with published, frequency-scheduled gains rather than a propagated covariance.
 
 ## Related material
 
-The mathematical descriptions and validation links are collected in the [project README](../../README.md). Source implementations live under [`../../src/kalman_ou_ii/`](../../src/kalman_ou_ii/), [`../../src/kalman_ou_iii/`](../../src/kalman_ou_iii/), and [`../../src/pii_observer/`](../../src/pii_observer/).
+The mathematical descriptions and validation links are collected in the [project README](../../README.md). Source implementations live under [`../../src/kalman_ou_ii/`](../../src/kalman_ou_ii/), [`../../src/kalman_ou_iii/`](../../src/kalman_ou_iii/), [`../../src/pii_observer/`](../../src/pii_observer/), and [`../../src/nlo/`](../../src/nlo/).
 
 [Back to all sensor examples](../README.md)
