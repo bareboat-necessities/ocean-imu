@@ -273,12 +273,17 @@ public:
 
     reloadBlobAndRuntime_();
 
-    if (!have_blob_) {
-      Serial.println("[BOOT] No saved calibration: magnetic heading is UNCALIBRATED.");
 #if SEA_STATE_ENABLE_WIZARD
-      Serial.println("[BOOT] Tap to calibrate; compass startup is not blocked.");
-#endif
+    if (!have_blob_) {
+      Serial.println("[BOOT] No saved calibration. Starting wizard...");
+      const bool saved = runWizardFlow_(true);
+      if (saved) {
+        Serial.println("[BOOT] Wizard saved calibration.");
+      } else {
+        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
+      }
     }
+#endif
 
     reinitImu_();
     resetFusion_();
@@ -379,6 +384,7 @@ private:
   float pitch_deg_        = 0.0f;
   float heading_deg_      = NAN;
   bool  heading_valid_    = false;
+  bool  heading_fused_    = false;
   float heave_m_          = 0.0f;
   float heave_speed_mps_  = 0.0f;
   float wave_envelope_m_  = 0.0f;
@@ -627,6 +633,7 @@ private:
 
     heading_deg_   = NAN;
     heading_valid_ = false;
+    heading_fused_ = false;
 
     mag_gate_last_ms_ = 0;
     mag_ok_           = false;
@@ -752,19 +759,22 @@ private:
         displacement_detrender_.update(displacement_up_m_, dt, wave_hz_, ext_freq_valid);
   }
 
-  // A measured compass is independent of north-reference learning and INS
-// readiness. The attitude supplies tilt only; its yaw cancels out.
-void updateCompassHeading_(const Eigen::Quaternionf& q_bw, bool attitude_ok) {
-  heading_mag_ok_ = false;
-  heading_mag_deg_ = NAN;
-  if (mag_ok_ && attitude_ok) {
-    const Vector3f down_b = quatRotate_(q_bw.conjugate(), Vector3f::UnitZ());
-    heading_mag_ok_ = magneticHeadingFromDownAndMagBody_(
-        down_b, m_cal_, heading_mag_deg_);
+  // Before INS readiness, report the measured compass using startup tilt.
+  // Once the magnetically informed filter is Live, publish its fused yaw.
+  void updateCompassHeading_(const Eigen::Quaternionf& q_bw, bool attitude_ok,
+                               bool fused_ready = false, float fused_heading_deg = NAN) {
+    heading_mag_ok_ = false;
+    heading_mag_deg_ = NAN;
+    if (mag_ok_ && attitude_ok) {
+      const Vector3f down_b = quatRotate_(q_bw.conjugate(), Vector3f::UnitZ());
+      heading_mag_ok_ = magneticHeadingFromDownAndMagBody_(
+          down_b, m_cal_, heading_mag_deg_);
+    }
+    heading_fused_ = fused_ready && attitude_ok && std::isfinite(fused_heading_deg);
+    heading_valid_ = heading_fused_ || heading_mag_ok_;
+    heading_deg_ = heading_fused_ ? wrap360_(fused_heading_deg)
+        : (heading_mag_ok_ ? heading_mag_deg_ : NAN);
   }
-  heading_valid_ = heading_mag_ok_;
-  heading_deg_ = heading_valid_ ? heading_mag_deg_ : NAN;
-}
 
   void updateFilter_(const ImuSample& s) {
     dt_ = computeFusionDtFromSampleTimestamp_(s);
@@ -815,7 +825,8 @@ void updateCompassHeading_(const Eigen::Quaternionf& q_bw, bool attitude_ok) {
       pitch_deg_ = pitch_est_deg;
     }
 
-    updateCompassHeading_(q_bw, attitude_ok);
+    updateCompassHeading_(q_bw, attitude_ok,
+        fusion_.isLive() && fusion_.mekf().has_magnetic_reference(), heading_est_deg);
 
     gyro_bias_learning_ = still;
 
@@ -968,8 +979,7 @@ void updateCompassHeading_(const Eigen::Quaternionf& q_bw, bool attitude_ok) {
 
 #if SEA_STATE_SERIAL_NMEA
     // A startup magnetic compass is usable HDM, but is not a ready INS.
-    const bool valid = fusion_.isLive() && heading_valid_ &&
-      fusion_.mekf().has_magnetic_reference();
+    const bool valid = fusion_.isLive() && heading_fused_;
     if (heading_valid_) {
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
     }

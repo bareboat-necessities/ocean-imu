@@ -36,7 +36,7 @@ def function(source: str, name: str) -> str:
 
 
 class DeviceCompassStartupTest(unittest.TestCase):
-    def test_output_is_magnetic_and_not_live_gated(self):
+    def test_startup_compass_then_fused_live_output(self):
         for path in SKETCHES:
             with self.subTest(sketch=path.name):
                 source = path.read_text()
@@ -44,15 +44,16 @@ class DeviceCompassStartupTest(unittest.TestCase):
                 compass = function(source, "updateCompassHeading_")
                 serial = function(source, "streamSerial_")
                 self.assertIn("m_cal_ = runtime_.applyMag(s.m);", update)
-                self.assertIn("updateCompassHeading_(q_bw, attitude_ok);", update)
+                self.assertIn("updateCompassHeading_(q_bw, attitude_ok,", update)
                 self.assertNotIn("heading_deg_ = heading_est_deg", update)
                 self.assertNotIn("fusion_", compass)
-                self.assertIn("heading_valid_ = heading_mag_ok_;", compass)
-                self.assertIn("heading_deg_ = heading_valid_ ? heading_mag_deg_ : NAN;", compass)
+                self.assertIn("heading_valid_ = heading_fused_ || heading_mag_ok_;", compass)
+                self.assertIn("heading_deg_ = heading_fused_ ? wrap360_(fused_heading_deg)", compass)
                 self.assertIn("if (heading_valid_) {\n      nmea_hdm", serial)
                 self.assertIn("fusion_.isLive()", serial)
-                self.assertNotIn("heading_fused_", source)
-                self.assertNotIn("runWizardFlow_(true)", function(source, "begin"))
+                self.assertIn("fusion_.isLive() &&", update)
+                self.assertIn("runWizardFlow_(true)", function(source, "begin"))
+                self.assertIn("if (!have_blob_)", function(source, "begin"))
                 if "kalman_ou3" in path.name:
                     self.assertIn("fusion_.attitudeQuat()", update)
                     self.assertIn("startupProxyInitialized()", update)
@@ -91,6 +92,7 @@ struct Compass {
     bool heading_mag_ok_ = false;
     float heading_mag_deg_ = NAN;
     bool heading_valid_ = false;
+    bool heading_fused_ = false;
     float heading_deg_ = NAN;
 ''' + function(source, "updateCompassHeading_") + r'''
 };
@@ -139,6 +141,16 @@ int main() {
     require(!c.heading_valid_, "missing tilt reported valid");
     c.updateCompassHeading_(q, true);
     require(c.heading_valid_ && std::abs(c.heading_deg_) < 0.01f, "north is not valid zero");
+    c.updateCompassHeading_(q, true, true, 137.0f);
+    require(c.heading_valid_ && c.heading_fused_ && std::abs(c.heading_deg_ - 137.0f) < 0.01f,
+            "ready filter yaw was replaced by direct magnetic heading");
+    c.mag_ok_ = false;
+    c.updateCompassHeading_(q, true, true, 138.0f);
+    require(c.heading_valid_ && c.heading_fused_, "ready gyro-propagated yaw lost between mag samples");
+    c.mag_ok_ = true;
+    c.updateCompassHeading_(q, true, true, NAN);
+    require(c.heading_valid_ && !c.heading_fused_ && std::abs(c.heading_deg_) < 0.01f,
+            "nonfinite fused yaw did not fall back to measured heading");
     const Vector3f bad_fields[] = {Vector3f::Zero(), Vector3f(0, 0, 40),
                                   Vector3f(NAN, 0, 1), Vector3f(INFINITY, 0, 1)};
     for (const Vector3f& bad : bad_fields) {
