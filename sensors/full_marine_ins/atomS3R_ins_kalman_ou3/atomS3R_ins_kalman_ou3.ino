@@ -5,8 +5,9 @@
 
     - filter learns tilt during startup
     - one-shot magnetic north lock inside SeaStateFusion_OU_III
-    - filter yaw is the primary heading output after north-lock
-    - tilt-compensated magnetic heading is kept only for diagnostics
+    - measured magnetic heading is available from the first valid IMU/mag sample
+    - startup tilt comes from the private proxy, then from the live filter
+    - compass output never waits for wave startup or switches to filter yaw
 
   Assumptions:
     - fusion_.raw().mekf().quaternion_boat() returns BODY->WORLD quaternion (q_bw), world frame is NED (+Z down).
@@ -213,32 +214,35 @@ static inline bool magneticHeadingFromDownAndMagBody_(
     const Vector3f& mag_b_uT,
     float& heading_deg_out)
 {
+  heading_deg_out = NAN;
+  if (!down_b_unit.allFinite() || !mag_b_uT.allFinite()) return false;
   const Vector3f FWD_B(1.0f, 0.0f, 0.0f);
 
   Vector3f d = down_b_unit;
   const float dn = d.norm();
-  if (dn < 1e-6f) return false;
+  if (!std::isfinite(dn) || !(dn > 1e-6f)) return false;
   d /= dn;
 
   Vector3f m = mag_b_uT;
   const float mn = m.norm();
-  if (mn < 1e-6f) return false;
+  if (!std::isfinite(mn) || !(mn > 1e-6f)) return false;
   m /= mn;
 
   Vector3f east_b = d.cross(m);
   const float en = east_b.norm();
-  if (en < 1e-6f) return false;
+  if (!std::isfinite(en) || !(en > 1e-6f)) return false;
   east_b /= en;
 
   Vector3f north_b = east_b.cross(d);
   const float nn = north_b.norm();
-  if (nn < 1e-6f) return false;
+  if (!std::isfinite(nn) || !(nn > 1e-6f)) return false;
   north_b /= nn;
 
   const float e = east_b.dot(FWD_B);
   const float n = north_b.dot(FWD_B);
+  if (!(std::hypot(e, n) > 1e-6f)) return false;
   heading_deg_out = wrap360_(atan2f(e, n) * RAD_TO_DEG);
-  return true;
+  return std::isfinite(heading_deg_out);
 }
 
 class FusionApp {
@@ -265,17 +269,12 @@ public:
 
     reloadBlobAndRuntime_();
 
-#if SEA_STATE_ENABLE_WIZARD
     if (!have_blob_) {
-      Serial.println("[BOOT] No saved calibration. Starting wizard...");
-      const bool saved = runWizardFlow_(true);
-      if (saved) {
-        Serial.println("[BOOT] Wizard saved calibration.");
-      } else {
-        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
-      }
-    }
+      Serial.println("[BOOT] No saved calibration: magnetic heading is UNCALIBRATED.");
+#if SEA_STATE_ENABLE_WIZARD
+      Serial.println("[BOOT] Tap to calibrate; compass startup is not blocked.");
 #endif
+    }
 
     reinitImu_();
     resetFusion_();
@@ -364,7 +363,7 @@ private:
   float dt_               = 0.0f;
   float roll_deg_         = 0.0f;
   float pitch_deg_        = 0.0f;
-  float heading_deg_      = 0.0f;
+  float heading_deg_      = NAN;
   bool  heading_valid_    = false;
   float heave_m_          = 0.0f;
   float heave_speed_mps_  = 0.0f;
@@ -591,7 +590,7 @@ private:
     acc_bias_estimating_ = false;
     gyro_bias_ema_.setZero();
 
-    heading_deg_   = 0.0f;
+    heading_deg_   = NAN;
     heading_valid_ = false;
 
     mag_gate_last_ms_ = 0;
@@ -664,6 +663,20 @@ private:
   }
 #endif
 
+  // A measured compass is independent of north-reference learning and INS
+// readiness. The attitude supplies tilt only; its yaw cancels out.
+void updateCompassHeading_(const Eigen::Quaternionf& q_bw, bool attitude_ok) {
+  heading_mag_ok_ = false;
+  heading_mag_deg_ = NAN;
+  if (mag_ok_ && attitude_ok) {
+    const Vector3f down_b = quatRotate_(q_bw.conjugate(), Vector3f::UnitZ());
+    heading_mag_ok_ = magneticHeadingFromDownAndMagBody_(
+        down_b, m_cal_, heading_mag_deg_);
+  }
+  heading_valid_ = heading_mag_ok_;
+  heading_deg_ = heading_valid_ ? heading_mag_deg_ : NAN;
+}
+
   void updateFilter_(const ImuSample& s) {
     dt_ = computeFusionDtFromSampleTimestamp_(s);
     const float tempC = std::isfinite(s.tempC) ? s.tempC : 35.0f;
@@ -693,36 +706,22 @@ private:
       fusion_.updateMag(m_cal_);
     }
 
-    heading_valid_ = fusion_.hasMagNorthLock();
-
-    Eigen::Quaternionf q_bw = fusion_.raw().mekf().quaternion_boat();
-    q_bw.normalize();
-
+    // The core is held during bootstrap. Read the active attitude owner,
+    // which is seeded from the first sample, not the inactive identity.
+    Eigen::Quaternionf q_bw = fusion_.attitudeQuat();
+    const bool have_attitude = fusion_.isLive() ||
+        fusion_.raw().startupProxyInitialized();
     float roll_est_deg = roll_deg_;
     float pitch_est_deg = pitch_deg_;
     float heading_est_deg = heading_deg_;
-
-    if (rollPitchHeadingFromQuatBw_(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg)) {
-      roll_deg_  = roll_est_deg;
+    const bool attitude_ok = have_attitude &&
+        rollPitchHeadingFromQuatBw_(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg);
+    if (attitude_ok) {
+      q_bw.normalize();
+      roll_deg_ = roll_est_deg;
       pitch_deg_ = pitch_est_deg;
-      heading_deg_ = heading_est_deg;
     }
-
-    heading_mag_ok_ = false;
-    heading_mag_deg_ = NAN;
-    if (mag_ok_) {
-      const Vector3f down_w(0.0f, 0.0f, 1.0f);
-      Vector3f down_b = quatRotate_(q_bw.conjugate(), down_w);
-      const float dn = down_b.norm();
-      if (dn > 1e-6f) {
-        down_b /= dn;
-        float hdg_mag = NAN;
-        if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg_mag)) {
-          heading_mag_ok_ = true;
-          heading_mag_deg_ = hdg_mag;
-        }
-      }
-    }
+    updateCompassHeading_(q_bw, attitude_ok);
 
     gyro_bias_learning_ = still;
 
@@ -874,7 +873,8 @@ private:
     last_serial_ms_ = now_ms;
 
 #if SEA_STATE_SERIAL_NMEA
-    const bool valid = fusion_.isLive() && heading_valid_;
+    const bool valid = fusion_.isLive() && heading_valid_ &&
+      fusion_.hasMagNorthLock();
     if (heading_valid_) {
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
     }
@@ -921,7 +921,7 @@ private:
       wave_sign_raw_);
   #else
     Serial.printf(
-      "hdg_filt=%s%.2f | hdg_mag=%s%.2f | wav_axis=%.2f | wav_dir=%s%.2f | wav_sign=%d pol=%d"
+      "hdg=%s%.2f | hdg_mag=%s%.2f | wav_axis=%.2f | wav_dir=%s%.2f | wav_sign=%d pol=%d"
       " | dt_imu_ms=%.2f | mag_ok=%u | mag_fresh=%u | |m|=%.2f"
       " | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f"
       " | gyro_ned[rad/s] N=%.3f E=%.3f D=%.3f"
