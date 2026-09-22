@@ -83,5 +83,6 @@ The convention contract — rotation direction, error definition and correction 
 - [OU-III marine INS](../atomS3R_ins_kalman_ou3/README.md) — same state and wave model, quaternion-MEKF geometry, plus the lever-arm correction
 - [OU-II marine INS](../atomS3R_ins_kalman_ou2/README.md) — more direct integral drift correction
 - [PII observer](../atomS3R_ins_pii_observer/README.md) — much lighter observer-based alternative
+- [Time-varying-gain NLO](../atomS3R_ins_nlo/README.md) — observer-based 3-D estimator with published gains, no covariance propagation
 
 [Back to Full marine INS](../README.md) · [All sensor examples](../../README.md)
