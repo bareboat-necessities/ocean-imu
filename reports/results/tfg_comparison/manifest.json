@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "6490d0471fab141178cb551b1dbe953b8a23d892eec2c378448d87d36957858f",
-    "TFG": "65f1be5efcace9e7c7c5cc696d24c2453feecb00383ebff64a43fb258ff60f75"
+    "OU_III": "9c0919ae6fa36ca711fb6f74c00ac91214e4205c02141d1607515c0235c8f56a",
+    "TFG": "5c1f94148c11ca88475b82a3ac661579270e7450b32064afb4fe84f2398b1fe3"
   },
   "build_environment": {
     "compiler": {
@@ -36,9 +36,9 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "generated_utc": "2026-09-22T17:07:33+00:00",
-  "git_commit": "3b7fb5b46f0b1ac0ba85b727f0b6139ab0cb3fc9",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    4 +-\n reports/results/tfg_comparison/paired_summary.json | 3986 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3204 ++++++++--------\n 4 files changed, 3777 insertions(+), 3777 deletions(-)",
+  "generated_utc": "2026-09-22T22:13:24+00:00",
+  "git_commit": "1785edca5d793d074baaf2a0f9e4d9c1d12bd70b",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   10 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   24 +-\n reports/results/tfg_comparison/paired_summary.json | 3950 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  234 +-\n reports/results/tfg_comparison/raw_runs.json       | 2044 +++++-----\n 5 files changed, 3131 insertions(+), 3131 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -134,11 +134,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "f51a4bf7c16e1bdc2678d9c848dc650517d30e4e4159fb509d3768776b2d3597",
-    "gate_diagnostics.json": "967fff2c3cf80f2c4f32e2c5c9fc0a8602a08ede4522f431d9fde85abdddcdb9",
-    "paired_summary.json": "f217bda3f75356b221128e8a934bcbd0798a96c9ec45af4d4514e516c7ce75fb",
-    "raw_runs.csv": "c422b16ee248a90cfa3d6dd13ecaf601516b393a6e399f2ee461f3720ca7dd05",
-    "raw_runs.json": "7ba48ae2274c6d104388b7cafd76cf278ca6ba055fa4d197e7adff1434aaafda"
+    "comparison.tex": "8f298a53952f6c1771ea3046211cc4d2047116d74cbdb143096fd509d1afd9c6",
+    "gate_diagnostics.json": "c8d769b9389a0f8f4debce3a0c7ddc1f1c01cca79793486d8dd4013fe047e741",
+    "paired_summary.json": "8ac2742c56bc0b11bb5dc3f5a6ee1769b0e7be2387d23e18ccac0107277bd6ea",
+    "raw_runs.csv": "e956ac74d33494b082df8999cc04f16809250bf3a66e6f255950eb59b81a0907",
+    "raw_runs.json": "11f3846c50dcaa0a30b95a3599b41f329900f49f30a9a329009c6d4dc38d680e"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -156,7 +156,7 @@
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "e38e4caaafa68cc52bd4d35bdeffc652588a312e3757dd734ddae9e3d4a21fd2",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "72bffc539ea72f6320ae33feb970dd2ba9255f8e679c3e8415f7884566ca3be0",
     "src/kalman_tfg/Kalman3D_Wave_TFG.h": "abd29a57022dcd1f6fd5c50bee41a509cc99ab021810a3eb84eac27aac341532",
-    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "ed4a3e4460cd983f145e3a6f9bed86bb4e67d104f9a2301234f81d64b9f3aef7",
+    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "19db0bae53dff5b484cabfe9202118b09472d7b1ac9aef3b9cb8b05d27ab7151",
     "src/lie/SO3Jacobians.h": "d18671481a90114aa2ae8c49bd6bd60fa598c281b18a9f961a04a59e5690eb1a",
     "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
     "src/tuner/AccelVibrationGuard.h": "09ec79b607a4c7e2cc7961930813a3c0cf66d6f82c7bddde4b7dc4084a01398e",
@@ -188,7 +188,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "35756582203",
+    "run_id": "35789742367",
     "workflow": "build"
   }
 }
