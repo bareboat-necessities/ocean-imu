@@ -1,0 +1,8 @@
+# Per-case replay artifacts are reproducible working files: runs.json already
+# carries every case's environment, metrics, exit code and gate violations, and
+# manifest.json carries the provenance. Same granularity as the other studies
+# under reports/results.
+*/*.log
+*/*.json
+!*/manifest.json
+!*/runs.json
