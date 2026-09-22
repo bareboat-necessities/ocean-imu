@@ -1,0 +1,247 @@
+name: apply-tfg-heading-fix
+on:
+  push:
+    branches: [fix/immediate-device-magnetic-heading]
+    paths: [.github/workflows/apply-tfg-heading-fix.yml]
+permissions:
+  contents: write
+jobs:
+  regression-and-publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/immediate-device-magnetic-heading
+      - name: Install Eigen
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Add turning-acquisition regressions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('tests/kalman_tfg/tfg_orchestrator-test.cpp')
+          s = p.read_text()
+          assert 'test_turning_magnetic_acquisition' not in s
+          code = r'''
+          // Device-faithful 200 Hz IMU / 25 Hz magnetic service. The input has a known
+          // nonzero heading and periodic heave; no truth attitude is injected into the
+          // filter. Turns overlap acquisition, its handoff gap, and Live refinement.
+          void test_turning_magnetic_acquisition() {
+              constexpr float dt = 0.005f;
+              constexpr float deg = kPi / 180.0f;
+              const Vector3f field(20.0f, 0.0f, 43.0f);
+              auto yaw_deg = [&](const Eigen::Quaternionf& q) {
+                  const Matrix3f R = q.toRotationMatrix();
+                  return std::atan2(R(1, 0), R(0, 0)) / deg;
+              };
+              for (int scenario = 0; scenario < 5; ++scenario) {
+                  Fusion f;
+                  Fusion::Config cfg;
+                  cfg.sigma_a = Vector3f::Constant(0.12f);
+                  cfg.gyro_noise_density = 0.00135f;
+                  cfg.sigma_m = Vector3f::Constant(0.8f);
+                  cfg.mag_delay_sec = 0.0f;
+                  cfg.mag_init_min_mag_norm = 5.0f;
+                  f.begin(cfg);
+                  float max_error = 0.0f, handoff_error = NAN;
+                  double tail_sq = 0.0;
+                  int tail_count = 0;
+                  bool finite = true;
+                  for (int i = 0; i < 44000; ++i) {
+                      const float t = static_cast<float>(i) * dt;
+                      float psi = 123.0f * deg, psi_dot = 0.0f;
+                      float start = 12.0f, end = 42.0f, speed = 10.0f * deg;
+                      if (scenario == 2) { start = 40.0f; end = 80.0f; speed = 6.0f * deg; }
+                      if (scenario == 3) { start = 25.0f; end = 30.0f; speed = 15.0f * deg; }
+                      if (scenario == 4) { start = 150.0f; end = 200.0f; speed = 3.0f * deg; }
+                      if (scenario != 0) {
+                          psi += std::clamp(t - start, 0.0f, end - start) * speed;
+                          if (t >= start && t < end) psi_dot = speed;
+                      }
+                      const float r = 0.1f * std::sin(2.0f * kPi * 0.17f * t);
+                      const float p = 0.06f * std::sin(2.0f * kPi * 0.13f * t);
+                      const float rd = 0.1f * 2.0f * kPi * 0.17f * std::cos(2.0f * kPi * 0.17f * t);
+                      const float pd = 0.06f * 2.0f * kPi * 0.13f * std::cos(2.0f * kPi * 0.13f * t);
+                      const Eigen::Quaternionf truth =
+                          Eigen::AngleAxisf(psi, Vector3f::UnitZ()) *
+                          Eigen::AngleAxisf(p, Vector3f::UnitY()) *
+                          Eigen::AngleAxisf(r, Vector3f::UnitX());
+                      const Vector3f gyro(rd - psi_dot * std::sin(p),
+                          pd * std::cos(r) + psi_dot * std::sin(r) * std::cos(p),
+                          -pd * std::sin(r) + psi_dot * std::cos(r) * std::cos(p));
+                      const Vector3f a_world(0.0f, 0.0f, 0.6f * std::sin(2.0f * kPi * 0.2f * t));
+                      const Vector3f acc = truth.conjugate() * (a_world - Vector3f(0, 0, kG));
+                      const bool was_live = f.isLive();
+                      f.update(dt, gyro, acc);
+                      if (!was_live && f.isLive() && f.magReferenceLearned()) {
+                          handoff_error = std::abs(std::remainder(yaw_deg(f.quaternion()) - yaw_deg(truth), 360.0f));
+                      }
+                      if (i % 8 == 0 && (scenario != 4 || t >= 165.0f)) {
+                          f.updateMag(truth.conjugate() * field);
+                      }
+                      if (f.isLive() && f.magReferenceLearned()) {
+                          const float error = std::abs(std::remainder(yaw_deg(f.quaternion()) - yaw_deg(truth), 360.0f));
+                          finite = finite && std::isfinite(error) && f.mekf().covariance_full().allFinite();
+                          max_error = std::max(max_error, error);
+                          if (t >= 200.0f) { tail_sq += static_cast<double>(error) * error; ++tail_count; }
+                      }
+                  }
+                  const std::string label = "turning magnetic acquisition scenario " + std::to_string(scenario);
+                  check(f.isLive() && f.magReferenceLearned() && f.magReferenceRefined(), label + " did not complete acquisition");
+                  check(finite && max_error < 0.3f, label + " lost current fused heading");
+                  check(tail_count > 0 && std::sqrt(tail_sq / std::max(1, tail_count)) < 0.1,
+                        label + " retained a standing yaw error");
+                  check((f.mekf().magnetic_reference_world() - field).norm() < 0.1f,
+                        label + " attenuated the field during a turn");
+                  if (scenario != 4) check(std::isfinite(handoff_error) && handoff_error < 0.3f,
+                                           label + " handed off a stale absolute yaw");
+                  if (scenario == 3) check(f.magNorthLockTimeSec() < 25.0f,
+                                           "handoff-gap case did not acquire north before the turn");
+                  if (scenario == 4) check(f.handoffTimedOut() && f.magNorthLockTimeSec() > 165.0f,
+                                           "late-magnetometer case did not exercise the timeout path");
+                  std::cout << "  " << label << ": max=" << max_error
+                            << " deg, tail RMS=" << std::sqrt(tail_sq / std::max(1, tail_count)) << " deg\n";
+              }
+          }
+
+          void test_vertical_field_is_not_a_north_lock() {
+              Fusion f;
+              auto cfg = default_config();
+              cfg.mag_delay_sec = 0.0f;
+              f.begin(cfg);
+              for (int i = 0; i < 6000; ++i) {
+                  f.update(0.005f, Vector3f::Zero(), Vector3f(0, 0, -kG));
+                  if (i % 8 == 0) f.updateMag(Vector3f(0, 0, 43.0f));
+              }
+              check(!f.magReferenceLearned() && !f.mekf().has_magnetic_reference(),
+                    "a vertical field was labelled a magnetic north lock");
+          }
+
+          '''
+          needle = '} // namespace\n\nint main() {'
+          assert s.count(needle) == 1
+          s = s.replace(needle, code + needle)
+          s = s.replace('    test_initialize_from_acc();', '    test_turning_magnetic_acquisition();\n    test_vertical_field_is_not_a_north_lock();\n    test_initialize_from_acc();')
+          p.write_text(s)
+          PY
+      - name: Confirm the regression fails against the old acquisition
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Wshadow -Wconversion -Werror -isystem /usr/include/eigen3 -Isrc tests/kalman_tfg/tfg_orchestrator-test.cpp -o /tmp/tfg-old
+          set +e
+          /tmp/tfg-old > /tmp/tfg-before.log 2>&1
+          rc=$?
+          set -e
+          cat /tmp/tfg-before.log
+          test "$rc" -ne 0
+          grep -q 'lost current fused heading' /tmp/tfg-before.log
+      - name: Apply the frame-consistent TFG acquisition correction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/kalman_tfg/SeaStateFusionFilter_TFG.h')
+          s = p.read_text()
+          s = s.replace('mag_yaw_anchor_rad_', 'mag_proxy_yaw_offset_rad_').replace('have_mag_yaw_anchor_', 'have_mag_proxy_gauge_')
+          def replace(old, new):
+              global s
+              assert s.count(old) == 1, old
+              s = s.replace(old, new)
+          replace('''        const Eigen::Quaternionf q_tilt = vertical_complementary_.tiltQuaternion();
+                  const Eigen::Quaternionf q_bw = have_mag_proxy_gauge_
+                      ? Eigen::Quaternionf(Eigen::AngleAxisf(mag_proxy_yaw_offset_rad_, Eigen::Vector3f::UnitZ()) * q_tilt)
+                      : q_tilt;''', '''        // The learned angle aligns the proxy's WORLD frame with magnetic
+                  // north; it is not an absolute boat heading to freeze at acquisition.
+                  // Carry every subsequent gyro-observed turn into the actual handoff.
+                  const Eigen::Quaternionf q_bw = have_mag_proxy_gauge_
+                      ? Eigen::Quaternionf(
+                            Eigen::AngleAxisf(mag_proxy_yaw_offset_rad_, Vector3f::UnitZ()) *
+                            vertical_complementary_.quaternion())
+                      : vertical_complementary_.tiltQuaternion();''')
+          replace('''        if (!mag_auto_tuner_.addSampleWithTiltQuatDt(
+                          dt_mag, vertical_complementary_.tiltQuaternion(),
+                          last_acc_body_, last_gyro_body_, mag_body)) return;''', '''        // All samples must share one gyro-propagated accumulation frame.
+                  // Removing yaw separately from each sample makes a turn rotate the
+                  // field inside that frame, shrinking its horizontal mean and storing
+                  // a historical average heading. The proxy never reads the MEKF, so
+                  // retaining its relative yaw does not create estimator feedback.
+                  if (!mag_auto_tuner_.addSampleWithWorldQuatDt(
+                          dt_mag, vertical_complementary_.quaternion(),
+                          last_acc_body_, last_gyro_body_, mag_body)) return;''')
+          replace('''        setMagWorldRef_(ref);
+
+                  const float gauge = mag_auto_tuner_.getYawGaugeCorrectionRad();
+                  if (std::isfinite(gauge)) {
+                      mag_proxy_yaw_offset_rad_ = wrapPi_(-gauge);
+                      have_mag_proxy_gauge_ = true;
+                  }
+          ''', '''        const float gauge = mag_auto_tuner_.getYawGaugeCorrectionRad();
+                  if (!std::isfinite(gauge)) return; // no horizontal field, no north lock
+                  mag_proxy_yaw_offset_rad_ = wrapPi_(-gauge);
+                  have_mag_proxy_gauge_ = true;
+
+                  // A missing magnetometer can let the existing timeout enter Live
+                  // before the first north lock. That first alignment is a frame choice:
+                  // rotate all world states/covariance, then install the north-frame
+                  // reference (apply_world_yaw_gauge also rotates any old reference).
+                  if (stage_ == StartupStage::Live) {
+                      const Eigen::Matrix3f R = mekf_.R_bw();
+                      const float yaw_core = std::atan2(R(1, 0), R(0, 0));
+                      mekf_.apply_world_yaw_gauge(wrapPi_(proxyMagneticYaw_(gauge) - yaw_core));
+                  }
+                  setMagWorldRef_(ref);
+          ''')
+          replace('''        const Vector3f mag_corrected = mag_body - mag_hard_iron_body_uT_;
+                  if (!mag_auto_tuner_.addSampleWithTiltQuatDt(
+                          dt_mag, vertical_complementary_.tiltQuaternion(),''', '''        const Vector3f mag_corrected = mag_body - mag_hard_iron_body_uT_;
+                  // Refinement can also overlap a real turn. Use the same independent
+                  // proxy world frame, not yaw-stripped samples or the core that has
+                  // already been corrected toward the provisional magnetic reference.
+                  if (!mag_auto_tuner_.addSampleWithWorldQuatDt(
+                          dt_mag, vertical_complementary_.quaternion(),''')
+          replace('''        setMagWorldRef_(ref);
+
+                  const float gauge = mag_auto_tuner_.getYawGaugeCorrectionRad();
+                  if (std::isfinite(gauge)) mekf_.set_attitude_yaw_absolute(wrapPi_(-gauge));''', '''        const float gauge = mag_auto_tuner_.getYawGaugeCorrectionRad();
+                  if (!std::isfinite(gauge)) return;
+                  setMagWorldRef_(ref);
+                  // The accumulated gauge removes only the proxy's arbitrary world yaw.
+                  // Compose it with NOW's proxy yaw, keeping the core's wave-aware tilt.
+                  mekf_.set_attitude_yaw_absolute(proxyMagneticYaw_(gauge));''')
+          replace('''    void setMagWorldRef_(const Vector3f& ref) {''', '''    [[nodiscard]] float proxyMagneticYaw_(float gauge) const {
+                  const Eigen::Matrix3f R = vertical_complementary_.quaternion().toRotationMatrix();
+                  return wrapPi_(std::atan2(R(1, 0), R(0, 0)) - gauge);
+              }
+
+              void setMagWorldRef_(const Vector3f& ref) {''')
+          p.write_text(s)
+          for name in ['atomS3R_ins_tfg', 'atomS3R_ins_kalman_ou3']:
+              p = Path('sensors/full_marine_ins') / name / (name + '.ino')
+              s = p.read_text()
+              s = s.replace('    - compass output never waits for wave startup or switches to filter yaw',
+                  '    - startup compass does not wait for INS; fused filter yaw takes over once Live')
+              p.write_text(s)
+          PY
+          git diff --check
+      - name: Validate corrected acquisition and both device output paths
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Wshadow -Wconversion -Werror -isystem /usr/include/eigen3 -Isrc tests/kalman_tfg/tfg_orchestrator-test.cpp -o /tmp/tfg-after
+          /tmp/tfg-after | tee /tmp/tfg-after.log
+          python3 tests/validation/test_device_compass_startup.py -v
+      - name: Publish validated fix and remove temporary workflows
+        run: |
+          rm .github/workflows/apply-tfg-heading-fix.yml .github/workflows/diagnose-live-heading.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/kalman_tfg/SeaStateFusionFilter_TFG.h tests/kalman_tfg/tfg_orchestrator-test.cpp sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino .github/workflows/apply-tfg-heading-fix.yml .github/workflows/diagnose-live-heading.yml
+          git commit -m 'Keep TFG magnetic acquisition and handoff in a gyro-propagated frame'
+          git push origin HEAD:fix/immediate-device-magnetic-heading
+      - name: Retain before and after results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tfg-heading-regressions
+          path: /tmp/tfg-*.log
+          if-no-files-found: warn
+      - name: Repository primary validation
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make all
