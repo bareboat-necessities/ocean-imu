@@ -1,0 +1,13 @@
+{
+  "phase": "screen",
+  "shard_index": 0,
+  "shard_count": 1,
+  "configurations": 87,
+  "records": 8,
+  "seeds": [
+    "default",
+    "11",
+    "23"
+  ],
+  "holdout_evaluated": false
+}
