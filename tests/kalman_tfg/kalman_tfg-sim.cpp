@@ -43,6 +43,7 @@
 
 #include "util/W3dSimCommon.h"
 #include "kalman_tfg/SeaStateFusionFilter_TFG.h"
+#include "TfgInformationAllocation.h"
 
 using Eigen::Quaternionf;
 using Eigen::Vector3f;
@@ -223,6 +224,7 @@ public:
     // runner owns the adapter, so end-of-record is the destructor; silent
     // unless a cutoff was configured, which keeps an unguarded run unchanged.
     ~FusionAdapter_TFG() override {
+        allocation_.finish();
         if (!(fusion_.accelVibrationGuardCutoffHz() > 0.0f)) return;
         std::cout << "ACC_GUARD cutoff_hz=" << fusion_.accelVibrationGuardCutoffHz()
                   << " poles=" << fusion_.accelVibrationGuardPoles()
@@ -244,6 +246,7 @@ public:
                 float temperature_c) override
     {
         fusion_.update(dt, gyr_meas_ned, acc_meas_ned, temperature_c);
+        allocation_.observe(dt, fusion_);
 
         // Fixed and frozen arms are applied once the tuner is Live, so the
         // filter reaches its operating point the same way the adaptive arm
@@ -302,6 +305,7 @@ public:
 
 private:
     using Fusion = ocean_imu::tfg::SeaStateFusionFilter_TFG<>;
+    TfgInformationAllocation allocation_{};
 
     void load_fixed_tuning_() {
         if (tuning_ == TuningMode::Adaptive) return;

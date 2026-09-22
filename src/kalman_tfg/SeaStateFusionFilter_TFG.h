@@ -58,8 +58,8 @@ constexpr float ADAPT_RS_MULT_DEFAULT          = 1.5f;
 constexpr float TUNER_SIGMA_VAR_K_PERIODS_DEFAULT = 4.0f;
 
 // Same strong-observation sensor point and analytical spectral coefficient as
-// deployed OU-III.  The physical wave RMS is recovered from sigma_aw below, so
-// TFG's independently fitted sigma_coeff does not alter the distortion cost.
+// deployed OU-III. Recover sigma_aB from sigma_aw/c_sigma below; the modeled
+// OU acceleration RMS must not replace the physical-wave distortion scale.
 constexpr float TFG_NOMINAL_DT = 1.0f / 200.0f;
 constexpr float R_S_ACCEL_NOISE_DENSITY_DEFAULT =
     0.0148f * 0.0148f * TFG_NOMINAL_DT;
@@ -1162,21 +1162,12 @@ private:
     float sigma_target_ = 1e-2f;
     float RS_target_ = 0.5f;
 
-    // TFG-specific physical OU prior coefficients remain independently fitted.
-    // X and Y have always been independent knobs here, and 1.15 was carried
-    // from the historical horizontal operating point rather than measured.  It
-    // has now been measured, and it is right: swept over the eight scored
-    // records and three IMU seed triplets against OU-II's and OU-III's
-    // retuned 0.72, TFG moves the *other* way.  Paired 3D displacement RMS
-    // against 1.15 is +1.03 percent at 1.4, +2.23 at 0.9 and +7.31 at 0.72,
-    // the last with the same sign in all 24 record x seed cells, and 0.72 also
-    // costs 0.55 percent of vertical RMS unanimously and 17.45 percent of x.
-    // 1.15 is the interior minimum.
-    //
-    // So the horizontal anisotropy is NOT a shared constant across the three
-    // families: the two OU wrappers want a tighter horizontal anchor than
-    // vertical and TFG wants a looser one.  Do not carry 0.72 here without
-    // re-running that sweep.
+    // Legacy control retained by the current pinned 28-ft RAO refit. Broad,
+    // joint asymmetric and boundary-refined trials found physical tradeoffs,
+    // but no tested replacement satisfied all unchanged promotion/regression
+    // requirements. This is not a claim of global optimality. The pre-RAO
+    // sweeps do not establish these coefficients as RAO-fitted optima.
+    // Evidence and the sealed decision: docs/tfg-rao-core-refit.md.
     float tau_coeff_ = 1.0f;
     float sigma_coeff_ = 0.8f;
     float R_S_coeff_ = 0.28f;
