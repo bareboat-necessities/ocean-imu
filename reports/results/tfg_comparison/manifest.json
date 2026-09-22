@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "b9d32872a8d4eb1b64fd04ebd0523ae8bad36f5fc2f294394a737479aa119fa9",
-    "TFG": "0db965e1b0bb3d7496f257a556d3194f6c092ff1503fbaa28c5c37238592fb32"
+    "OU_III": "a1c18ad89f11416fd684371fbc6f710431082d3571adc109bc0993b62ac92cbc",
+    "TFG": "1a7897f536ed0151844c57a61292606be0be10f2c375595ef77757c49ede84c8"
   },
   "build_environment": {
     "compiler": {
@@ -18,7 +18,7 @@
     },
     "numpy": "1.26.4",
     "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
-    "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]"
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "dataset": {
     "archive": "sim-data-files-vessel-rao-28ft.zip",
@@ -36,9 +36,9 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "generated_utc": "2026-09-22T05:03:02+00:00",
-  "git_commit": "948d0230042f4c72ff820c83299a6ed587a06771",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   14 +-\n .../results/tfg_comparison/gate_diagnostics.json   |    4 +-\n reports/results/tfg_comparison/paired_summary.json | 3898 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  180 +-\n reports/results/tfg_comparison/raw_runs.json       | 1620 ++++----\n 5 files changed, 2858 insertions(+), 2858 deletions(-)",
+  "generated_utc": "2026-09-22T14:28:01+00:00",
+  "git_commit": "eab2557675a28bf6dc59748927a5e066ff7d2d96",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    8 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   24 +-\n reports/results/tfg_comparison/paired_summary.json | 3994 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3214 ++++++++--------\n 5 files changed, 3800 insertions(+), 3800 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -134,11 +134,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "8f298a53952f6c1771ea3046211cc4d2047116d74cbdb143096fd509d1afd9c6",
-    "gate_diagnostics.json": "c8d769b9389a0f8f4debce3a0c7ddc1f1c01cca79793486d8dd4013fe047e741",
-    "paired_summary.json": "8ac2742c56bc0b11bb5dc3f5a6ee1769b0e7be2387d23e18ccac0107277bd6ea",
-    "raw_runs.csv": "e956ac74d33494b082df8999cc04f16809250bf3a66e6f255950eb59b81a0907",
-    "raw_runs.json": "11f3846c50dcaa0a30b95a3599b41f329900f49f30a9a329009c6d4dc38d680e"
+    "comparison.tex": "b2bfd6ae34d87da42c3f257661beb09672144b7af850b1616533ed75fe6f09a7",
+    "gate_diagnostics.json": "967fff2c3cf80f2c4f32e2c5c9fc0a8602a08ede4522f431d9fde85abdddcdb9",
+    "paired_summary.json": "7f877a57baa4deedccb6d05e111e5d6d8e11f614e86b78e91c9f3e90b2748be4",
+    "raw_runs.csv": "e48a48aaca9444fbbbb7ed32e19eb99a4388987653e3e94cfaae36619bb5c7d3",
+    "raw_runs.json": "f07ee2b84ff4b1e3276be672240d271c6e26ffcb07b592208e9e5548c0607630"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -177,9 +177,9 @@
     "src/wave_dir/WaveDirectionDetector.h": "4c80e90daf9279280e165529177e0a7056184cd04086e1b8c9ac5b91fa961a8b",
     "src/wave_dir/WaveDirectionFrame.h": "d25550d481c3062100a9a136e3df06e3740c39af4aa5459425c7fd212edfd5a7",
     "tests/kalman_ou_iii/Makefile": "a93fd27bbd498a3dd639ab1ed22780d39efcc8c07696024ecc0895c257247438",
-    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "d5b9ace6ba742e263b7b0d940800ecee9192f7e55b5dc698d155eb13ab07d5db",
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "6dbc870b94f687ca4f0f93ae654db0e9045c0e03b6aa755965ac640c9b985600",
     "tests/kalman_tfg/Makefile": "f98a1b48b8bd1eec1ce4a4c3ef51c2c92fbac0cd3d1495284956a0e28a316d17",
-    "tests/kalman_tfg/kalman_tfg-sim.cpp": "2a427cebc69bf4d612468c983e3e1235e6b4bdfb4422c7d6055feb10f2896ec8",
+    "tests/kalman_tfg/kalman_tfg-sim.cpp": "32f4f8d63bf12e2e73b457285073bd69827bd2615c26f6719c809233fc40e841",
     "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
     "tools/ou_validation.py": "274a13b3443df30d9a64ddfd2925e8ad51ec9f0a8870d7da20752b21dbeaead1",
     "tools/sim_dataset.py": "9dc2556daa2eafde5de9860963e68c4449d722ab68b41823a44c138ac417dc30",
@@ -188,7 +188,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "35688473909",
+    "run_id": "35739353889",
     "workflow": "build"
   }
 }
