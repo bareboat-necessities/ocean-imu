@@ -5,8 +5,8 @@
 \begin{tabular}{@{}lrrr@{}}\toprule
 Metric & OU--III & TFG & Difference\\\midrule
 Z RMS [$\%H_s$] & 4.423 & 4.459 & +0.0361\\
-Z RMS [m] & 0.1565 & 0.1568 & +0.000388\\
-3-D RMS [m] & 0.3262 & 0.3306 & +0.00439\\
+Z RMS [m] & 0.1565 & 0.1568 & +0.000389\\
+3-D RMS [m] & 0.3262 & 0.3306 & +0.00438\\
 Roll RMS [deg] & 0.2456 & 0.2912 & +0.0456\\
 Pitch RMS [deg] & 0.2602 & 0.3328 & +0.0726\\
 Yaw RMS [deg] & 1.852 & 1.93 & +0.0778\\
