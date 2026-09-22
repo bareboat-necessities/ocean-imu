@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "a1c18ad89f11416fd684371fbc6f710431082d3571adc109bc0993b62ac92cbc",
-    "TFG": "1a7897f536ed0151844c57a61292606be0be10f2c375595ef77757c49ede84c8"
+    "OU_III": "9c0919ae6fa36ca711fb6f74c00ac91214e4205c02141d1607515c0235c8f56a",
+    "TFG": "5c1f94148c11ca88475b82a3ac661579270e7450b32064afb4fe84f2398b1fe3"
   },
   "build_environment": {
     "compiler": {
@@ -18,7 +18,7 @@
     },
     "numpy": "1.26.4",
     "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
-    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
+    "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]"
   },
   "dataset": {
     "archive": "sim-data-files-vessel-rao-28ft.zip",
@@ -36,8 +36,8 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "generated_utc": "2026-09-22T14:28:01+00:00",
-  "git_commit": "eab2557675a28bf6dc59748927a5e066ff7d2d96",
+  "generated_utc": "2026-09-22T17:14:47+00:00",
+  "git_commit": "a1c73dbfb4cc5ce8b330f4eab0db25ae49dd27c3",
   "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    8 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   24 +-\n reports/results/tfg_comparison/paired_summary.json | 3994 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3214 ++++++++--------\n 5 files changed, 3800 insertions(+), 3800 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
@@ -134,11 +134,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "b2bfd6ae34d87da42c3f257661beb09672144b7af850b1616533ed75fe6f09a7",
-    "gate_diagnostics.json": "967fff2c3cf80f2c4f32e2c5c9fc0a8602a08ede4522f431d9fde85abdddcdb9",
-    "paired_summary.json": "7f877a57baa4deedccb6d05e111e5d6d8e11f614e86b78e91c9f3e90b2748be4",
-    "raw_runs.csv": "e48a48aaca9444fbbbb7ed32e19eb99a4388987653e3e94cfaae36619bb5c7d3",
-    "raw_runs.json": "f07ee2b84ff4b1e3276be672240d271c6e26ffcb07b592208e9e5548c0607630"
+    "comparison.tex": "8f298a53952f6c1771ea3046211cc4d2047116d74cbdb143096fd509d1afd9c6",
+    "gate_diagnostics.json": "c8d769b9389a0f8f4debce3a0c7ddc1f1c01cca79793486d8dd4013fe047e741",
+    "paired_summary.json": "8ac2742c56bc0b11bb5dc3f5a6ee1769b0e7be2387d23e18ccac0107277bd6ea",
+    "raw_runs.csv": "e956ac74d33494b082df8999cc04f16809250bf3a66e6f255950eb59b81a0907",
+    "raw_runs.json": "11f3846c50dcaa0a30b95a3599b41f329900f49f30a9a329009c6d4dc38d680e"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -155,7 +155,7 @@
     "src/kalman_ou_common/KalmanOUCoreMath.h": "609e630d78747792e596a6d6e0b165fce2a47c000e31989e3781861a1a1ad8de",
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "e38e4caaafa68cc52bd4d35bdeffc652588a312e3757dd734ddae9e3d4a21fd2",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "72bffc539ea72f6320ae33feb970dd2ba9255f8e679c3e8415f7884566ca3be0",
-    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "ac8dca273addc8eebd78488c969614ef8c4579c2cf69181d0f90d5b6739bb803",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "abd29a57022dcd1f6fd5c50bee41a509cc99ab021810a3eb84eac27aac341532",
     "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "ed4a3e4460cd983f145e3a6f9bed86bb4e67d104f9a2301234f81d64b9f3aef7",
     "src/lie/SO3Jacobians.h": "d18671481a90114aa2ae8c49bd6bd60fa598c281b18a9f961a04a59e5690eb1a",
     "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
@@ -188,7 +188,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "35739353889",
-    "workflow": "build"
+    "run_id": "35758281936",
+    "workflow": "ou-full-evidence-branch"
   }
 }
