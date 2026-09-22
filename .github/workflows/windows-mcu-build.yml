@@ -1,0 +1,63 @@
+name: Windows MCU compile
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Windows regression coverage for the Arduino sketches. This deliberately pins
+# the tool/library versions used by the long-standing Windows development
+# environment so template-heavy Eigen changes cannot silently make a previously
+# buildable sketch exhaust cc1plus.exe.
+jobs:
+  windows-mcu:
+    name: Windows Arduino (${{ matrix.ino_dir }})
+    runs-on: windows-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        ino_dir: [full_marine_ins, compass_ahrs, imu_basic]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install ESP32 platform and libraries
+        shell: pwsh
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32@3.3.5
+          arduino-cli lib install "M5Unified@0.2.11"
+          arduino-cli lib install "M5GFX@0.2.18"
+          arduino-cli lib install "Eigen@0.3.2"
+
+      - name: Compile sketches on Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sketches = Get-ChildItem -Path "sensors/${{ matrix.ino_dir }}" -Filter *.ino -Recurse
+          if (-not $sketches) {
+            throw "No .ino sketches found under sensors/${{ matrix.ino_dir }}"
+          }
+
+          foreach ($sketch in $sketches) {
+            $sketchDir = $sketch.Directory.FullName
+            Write-Host "::group::Compiling $($sketch.FullName)"
+            arduino-cli compile `
+              --fqbn "esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc" `
+              --warnings default `
+              --library "$env:GITHUB_WORKSPACE" `
+              --build-property "compiler.cpp.extra_flags=-funroll-loops -fno-finite-math-only" `
+              "$sketchDir"
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "::endgroup::"
+              exit $LASTEXITCODE
+            }
+            Write-Host "::endgroup::"
+          }
