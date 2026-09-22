@@ -1,0 +1,211 @@
+name: correct-device-compass
+on:
+  push:
+    branches: [fix/immediate-device-magnetic-heading]
+    paths: [.github/workflows/correct-device-compass.yml]
+permissions:
+  contents: write
+jobs:
+  correct-and-diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/immediate-device-magnetic-heading
+      - name: Install host dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Restore calibration screens and fused live heading
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import importlib.util
+          spec = importlib.util.spec_from_file_location('compass_test', 'tests/validation/test_device_compass_startup.py')
+          mod = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(mod)
+          old_boot = '''    if (!have_blob_) {
+                Serial.println("[BOOT] No saved calibration: magnetic heading is UNCALIBRATED.");
+          #if SEA_STATE_ENABLE_WIZARD
+                Serial.println("[BOOT] Tap to calibrate; compass startup is not blocked.");
+          #endif
+              }'''
+          new_boot = '''#if SEA_STATE_ENABLE_WIZARD
+              if (!have_blob_) {
+                Serial.println("[BOOT] No saved calibration. Starting wizard...");
+                const bool saved = runWizardFlow_(true);
+                if (saved) {
+                  Serial.println("[BOOT] Wizard saved calibration.");
+                } else {
+                  Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
+                }
+              }
+          #endif'''
+          method = '''  void updateCompassHeading_(const Eigen::Quaternionf& q_bw, bool attitude_ok,
+                                         bool fused_ready = false, float fused_heading_deg = NAN) {
+              heading_mag_ok_ = false;
+              heading_mag_deg_ = NAN;
+              if (mag_ok_ && attitude_ok) {
+                const Vector3f down_b = quatRotate_(q_bw.conjugate(), Vector3f::UnitZ());
+                heading_mag_ok_ = magneticHeadingFromDownAndMagBody_(
+                    down_b, m_cal_, heading_mag_deg_);
+              }
+              heading_fused_ = fused_ready && attitude_ok && std::isfinite(fused_heading_deg);
+              heading_valid_ = heading_fused_ || heading_mag_ok_;
+              heading_deg_ = heading_fused_ ? wrap360_(fused_heading_deg)
+                  : (heading_mag_ok_ ? heading_mag_deg_ : NAN);
+            }'''
+          for p in mod.SKETCHES:
+              text = p.read_text()
+              assert text.count(old_boot) == 1, (p, 'boot block')
+              text = text.replace(old_boot, new_boot)
+              old = mod.function(text, 'updateCompassHeading_')
+              text = text.replace(old, method)
+              text = text.replace('  // A measured compass is independent of north-reference learning and INS\n// readiness. The attitude supplies tilt only; its yaw cancels out.',
+                                  '  // Before INS readiness, report the measured compass using startup tilt.\n  // Once the magnetically informed filter is Live, publish its fused yaw.')
+              assert text.count('  bool  heading_valid_    = false;') == 1
+              text = text.replace('  bool  heading_valid_    = false;', '  bool  heading_valid_    = false;\n  bool  heading_fused_    = false;')
+              assert text.count('    heading_valid_ = false;') == 1
+              text = text.replace('    heading_valid_ = false;', '    heading_valid_ = false;\n    heading_fused_ = false;')
+              ready = ('fusion_.hasMagNorthLock()' if 'kalman_ou3' in p.name
+                       else 'fusion_.mekf().has_magnetic_reference()')
+              old_call = '    updateCompassHeading_(q_bw, attitude_ok);'
+              assert text.count(old_call) == 1
+              text = text.replace(old_call,
+                  '    updateCompassHeading_(q_bw, attitude_ok,\n'
+                  '        fusion_.isLive() && ' + ready + ', heading_est_deg);')
+              import re
+              text, count = re.subn(r'    const bool valid = fusion_\.isLive\(\)[^;]+;',
+                                   '    const bool valid = fusion_.isLive() && heading_fused_;', text)
+              assert count == 1
+              text = text.replace('measured magnetic heading remains the compass output after Live',
+                                  'fused filter heading takes over after magnetically informed Live')
+              text = text.replace('    - tilt-compensated magnetic heading is the display and NMEA HDM output',
+                                  '    - measured startup magnetic heading; fused filter heading once Live')
+              p.write_text(text)
+          p = Path('tests/validation/test_device_compass_startup.py')
+          text = p.read_text()
+          text = text.replace('def test_output_is_magnetic_and_not_live_gated(self):',
+                              'def test_startup_compass_then_fused_live_output(self):')
+          text = text.replace('self.assertIn("updateCompassHeading_(q_bw, attitude_ok);", update)',
+                              'self.assertIn("updateCompassHeading_(q_bw, attitude_ok,", update)')
+          text = text.replace('self.assertIn("heading_valid_ = heading_mag_ok_;", compass)',
+                              'self.assertIn("heading_valid_ = heading_fused_ || heading_mag_ok_;", compass)')
+          text = text.replace('self.assertIn("heading_deg_ = heading_valid_ ? heading_mag_deg_ : NAN;", compass)',
+                              'self.assertIn("heading_deg_ = heading_fused_ ? wrap360_(fused_heading_deg)", compass)')
+          text = text.replace('self.assertNotIn("heading_fused_", source)',
+                              'self.assertIn("fusion_.isLive() &&", update)')
+          text = text.replace('self.assertNotIn("runWizardFlow_(true)", function(source, "begin"))',
+                              'self.assertIn("runWizardFlow_(true)", function(source, "begin"))\n                self.assertIn("if (!have_blob_)", function(source, "begin"))')
+          text = text.replace('    bool heading_valid_ = false;',
+                              '    bool heading_valid_ = false;\n    bool heading_fused_ = false;')
+          needle = '    const Vector3f bad_fields[] ='
+          assert text.count(needle) == 1
+          additions = '''    c.updateCompassHeading_(q, true, true, 137.0f);
+              require(c.heading_valid_ && c.heading_fused_ && std::abs(c.heading_deg_ - 137.0f) < 0.01f,
+                      "ready filter yaw was replaced by direct magnetic heading");
+              c.mag_ok_ = false;
+              c.updateCompassHeading_(q, true, true, 138.0f);
+              require(c.heading_valid_ && c.heading_fused_, "ready gyro-propagated yaw lost between mag samples");
+              c.mag_ok_ = true;
+              c.updateCompassHeading_(q, true, true, NAN);
+              require(c.heading_valid_ && !c.heading_fused_ && std::abs(c.heading_deg_) < 0.01f,
+                      "nonfinite fused yaw did not fall back to measured heading");
+          '''
+          text = text.replace(needle, additions + needle)
+          p.write_text(text)
+          PY
+          git diff --check
+          python3 tests/validation/test_device_compass_startup.py -v
+      - name: Commit the corrected sketch behavior
+        run: |
+          rm .github/workflows/correct-device-compass.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino tests/validation/test_device_compass_startup.py .github/workflows/correct-device-compass.yml
+          git commit -m 'Restore automatic calibration and fused live heading in both device sketches'
+          git push origin HEAD:fix/immediate-device-magnetic-heading
+      - name: Diagnose the literal TFG and OU3 live heading paths
+        shell: bash
+        run: |
+          cat > /tmp/heading-probe.cpp <<'CPP'
+          #define EIGEN_NON_ARDUINO
+          #include <cmath>
+          #include <iostream>
+          #include <algorithm>
+          #include "kalman_tfg/SeaStateFusionFilter_TFG.h"
+          constexpr float g_std = 9.80665f;
+          constexpr float FREQ_GUESS = 0.3f;
+          #define ZERO_CROSSINGS_SCALE 1.0f
+          #define ZERO_CROSSINGS_DEBOUNCE_TIME 0.12f
+          #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
+          #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+          using V = Eigen::Vector3f;
+          using Q = Eigen::Quaternionf;
+          using Tfg = ocean_imu::tfg::SeaStateFusionFilter_TFG<>;
+          using Ou = SeaStateFusion_OU_III<>;
+          constexpr float pi = 3.14159265358979f, d2r = pi / 180.0f;
+          float yaw(const Q& q) { auto r = q.toRotationMatrix(); return std::atan2(r(1,0), r(0,0)) / d2r; }
+          struct Data { Q q; V gyro, acc, mag; };
+          Data sample(int scenario, float t) {
+              float y = 123*d2r, yd = 0, r=0, rd=0, p=0, pd=0;
+              if (scenario==1 || scenario==3) {
+                  y += std::clamp(t-12.0f, 0.0f, 30.0f)*10*d2r;
+                  if (t>=12 && t<42) yd=10*d2r;
+              }
+              if (scenario==2) {
+                  y += std::clamp(t-80.0f, 0.0f, 30.0f)*6*d2r;
+                  if (t>=80 && t<110) yd=6*d2r;
+              }
+              if (scenario==3 || scenario==4) {
+                  r=0.1f*std::sin(2*pi*0.17f*t); rd=0.1f*2*pi*0.17f*std::cos(2*pi*0.17f*t);
+                  p=0.06f*std::sin(2*pi*0.13f*t); pd=0.06f*2*pi*0.13f*std::cos(2*pi*0.13f*t);
+              }
+              Data s;
+              s.q=Eigen::AngleAxisf(y,V::UnitZ())*Eigen::AngleAxisf(p,V::UnitY())*Eigen::AngleAxisf(r,V::UnitX());
+              s.gyro=V(rd-yd*std::sin(p), pd*std::cos(r)+yd*std::sin(r)*std::cos(p), -pd*std::sin(r)+yd*std::cos(r)*std::cos(p));
+              V a(0,0,0.6f*std::sin(2*pi*0.2f*t));
+              if (scenario==4) a.x()=0.4f*std::cos(2*pi*0.2f*t);
+              s.acc=s.q.conjugate()*(a-V(0,0,g_std));
+              s.mag=s.q.conjugate()*V(20,0,43);
+              return s;
+          }
+          int main() {
+            std::cout.setf(std::ios::unitbuf);
+            for (int scenario=0; scenario<5; ++scenario) {
+              Tfg tfg; Tfg::Config tc;
+              tc.sigma_a=V::Constant(.12f); tc.gyro_noise_density=.00135f; tc.sigma_m=V::Constant(.8f);
+              tc.mag_delay_sec=0; tc.mag_init_min_mag_norm=5;
+              tfg.begin(tc);
+              Ou ou; Ou::Config oc;
+              oc.sigma_a=V::Constant(.12f); oc.sigma_g=V::Constant(.00135f); oc.sigma_m=V::Constant(.8f);
+              oc.mag_delay_sec=0; oc.mag_init_min_mag_norm=5; ou.begin(oc);
+              double st=0,so=0; int n=0; float lt=-1,lo=-1,mt=0,mo=0;
+              for (int i=0;i<44000;++i) {
+                const float t=i*.005f; auto s=sample(scenario,t);
+                bool was=tfg.isLive(); tfg.update(.005f,s.gyro,s.acc);
+                if (!was && tfg.isLive()) {lt=t; std::cout<<"TFG handoff case="<<scenario<<" t="<<t<<" yaw_error="<<std::remainder(yaw(tfg.quaternion())-yaw(s.q),360.0f)<<'\n';}
+                was=ou.isLive(); ou.update(.005f,s.gyro,s.acc);
+                if (!was && ou.isLive()) {lo=t; std::cout<<"OU3 handoff case="<<scenario<<" t="<<t<<" yaw_error="<<std::remainder(yaw(ou.attitudeQuat())-yaw(s.q),360.0f)<<'\n';}
+                if (i%8==0) {tfg.updateMag(s.mag);ou.updateMag(s.mag);}
+                const float et=std::abs(std::remainder(yaw(tfg.quaternion())-yaw(s.q),360.0f));
+                const float eo=std::abs(std::remainder(yaw(ou.attitudeQuat())-yaw(s.q),360.0f));
+                if (tfg.isLive()) mt=std::max(mt,et); if (ou.isLive()) mo=std::max(mo,eo);
+                if (t>=170) {st+=et*et;so+=eo*eo;++n;}
+                if (i%4000==0) std::cout<<"case="<<scenario<<" t="<<t<<" TFG_err="<<et<<" OU3_err="<<eo<<" TFG_ref="<<tfg.mekf().magnetic_reference_world().transpose()<<" mag_ok="<<tfg.mekf().lastMagDiag().accepted<<'\n';
+              }
+              std::cout<<"RESULT case="<<scenario<<" live_TFG="<<lt<<" live_OU3="<<lo<<" max_TFG="<<mt<<" max_OU3="<<mo<<" tail_rms_TFG="<<std::sqrt(st/n)<<" tail_rms_OU3="<<std::sqrt(so/n)<<" refined="<<tfg.magReferenceRefined()<<'\n';
+            }
+          }
+          CPP
+          g++ -std=c++17 -O2 -I/usr/include/eigen3 -Isrc /tmp/heading-probe.cpp -o /tmp/heading-probe
+          /tmp/heading-probe | tee /tmp/heading-probe.log
+      - name: Upload heading diagnosis
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: device-heading-diagnosis
+          path: /tmp/heading-probe.*
+          if-no-files-found: warn
+      - name: Repository primary validation
+        run: make all
