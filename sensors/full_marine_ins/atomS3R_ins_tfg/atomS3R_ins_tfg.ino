@@ -6,8 +6,9 @@
     - right-invariant two-frame Lie-group INS
     - filter learns tilt during startup through the private Mahony proxy
     - one-shot magnetic north lock inside SeaStateFusionFilter_TFG
-    - filter yaw is the primary heading output after north-lock
-    - tilt-compensated magnetic heading is kept only for diagnostics
+    - startup compass uses private-proxy tilt plus calibrated magnetic heading
+    - filter yaw takes over only after Live and core magnetic-reference setup
+    - tilt-compensated magnetic heading remains available for diagnostics
 
   Assumptions:
     - fusion_.mekf().quaternion() returns BODY->WORLD rotation (q_bw), world frame is NED (+Z down).
@@ -380,6 +381,7 @@ private:
   float pitch_deg_        = 0.0f;
   float heading_deg_      = 0.0f;
   bool  heading_valid_    = false;
+  bool  heading_fused_    = false;
   float heave_m_          = 0.0f;
   float heave_speed_mps_  = 0.0f;
   float wave_envelope_m_  = 0.0f;
@@ -628,6 +630,7 @@ private:
 
     heading_deg_   = 0.0f;
     heading_valid_ = false;
+    heading_fused_ = false;
 
     mag_gate_last_ms_ = 0;
     mag_ok_           = false;
@@ -782,35 +785,53 @@ private:
       fusion_.updateMag(m_cal_);
     }
 
-    heading_valid_ = fusion_.magReferenceLearned();
-
+    // Magnetic acquisition can finish while Cold, before the core receives
+    // any attitude prediction. Its identity quaternion is not a valid HDG.
     Eigen::Quaternionf q_bw = fusion_.mekf().quaternion();
-    q_bw.normalize();
+    bool have_attitude = true;
+    if (fusion_.stage() == Fusion::StartupStage::Cold &&
+        fusion_.startupInitPolicy() == Fusion::StartupInitPolicy::MahonyProxy) {
+      have_attitude = fusion_.startupTiltQuaternion(q_bw);
+    }
 
     float roll_est_deg = roll_deg_;
     float pitch_est_deg = pitch_deg_;
     float heading_est_deg = heading_deg_;
-
-    if (rollPitchHeadingFromQuatBw_(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg)) {
+    const bool attitude_ok = have_attitude &&
+        rollPitchHeadingFromQuatBw_(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg);
+    if (attitude_ok) {
+      q_bw.normalize();
       roll_deg_  = roll_est_deg;
       pitch_deg_ = pitch_est_deg;
-      heading_deg_ = heading_est_deg;
     }
 
     heading_mag_ok_ = false;
     heading_mag_deg_ = NAN;
-    if (mag_ok_) {
+    if (mag_ok_ && attitude_ok) {
       const Vector3f down_w(0.0f, 0.0f, 1.0f);
       Vector3f down_b = quatRotate_(q_bw.conjugate(), down_w);
       const float dn = down_b.norm();
-      if (dn > 1e-6f) {
+      if (std::isfinite(dn) && dn > 1e-6f) {
         down_b /= dn;
         float hdg_mag = NAN;
-        if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg_mag)) {
+        if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg_mag) &&
+            std::isfinite(hdg_mag)) {
           heading_mag_ok_ = true;
           heading_mag_deg_ = hdg_mag;
         }
       }
+    }
+
+    // Keep compass availability separate from INS readiness. Before handoff,
+    // use measured magnetic heading with the active proxy's tilt, not the
+    // yaw-free proxy yaw or the inactive core. Once Live, retain TFG yaw.
+    heading_fused_ = attitude_ok && fusion_.isLive() &&
+        fusion_.mekf().has_magnetic_reference();
+    heading_valid_ = heading_fused_ || heading_mag_ok_;
+    if (heading_fused_) {
+      heading_deg_ = heading_est_deg;
+    } else if (heading_mag_ok_) {
+      heading_deg_ = heading_mag_deg_;
     }
 
     gyro_bias_learning_ = still;
@@ -963,7 +984,8 @@ private:
     last_serial_ms_ = now_ms;
 
 #if SEA_STATE_SERIAL_NMEA
-    const bool valid = fusion_.isLive() && heading_valid_;
+    // A startup magnetic compass is usable HDM, but is not a ready INS.
+    const bool valid = fusion_.isLive() && heading_fused_;
     if (heading_valid_) {
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
     }
