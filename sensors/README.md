@@ -38,7 +38,7 @@ If you are bringing up a new board or a new installation, use [`imu_basic/atomS3
 
 1. [Basic AtomS3R IMU](imu_basic/atomS3R_imu_m5_basic/README.md)
 2. [Mahony compass](compass_ahrs/atomS3R_compass_mahony/README.md) or [qMEKF compass](compass_ahrs/atomS3R_compass_qmekf/README.md)
-3. [OU-II marine INS](full_marine_ins/atomS3R_ins_kalman_ou2/README.md), [OU-III marine INS](full_marine_ins/atomS3R_ins_kalman_ou3/README.md), or [PII observer](full_marine_ins/atomS3R_ins_pii_observer/README.md)
+3. [OU-II marine INS](full_marine_ins/atomS3R_ins_kalman_ou2/README.md), [OU-III marine INS](full_marine_ins/atomS3R_ins_kalman_ou3/README.md), [PII observer](full_marine_ins/atomS3R_ins_pii_observer/README.md), or [time-varying-gain NLO](full_marine_ins/atomS3R_ins_nlo/README.md)
 
 ## Coordinate convention
 
@@ -51,4 +51,5 @@ The AtomS3R helper layer converts device readings into the project body/NED-orie
 - [`../src/kalman_ou_ii/`](../src/kalman_ou_ii/) — OU-II marine Kalman filter
 - [`../src/kalman_ou_iii/`](../src/kalman_ou_iii/) — OU-III marine Kalman filter
 - [`../src/pii_observer/`](../src/pii_observer/) — lightweight PII observer
+- [`../src/nlo/`](../src/nlo/) — time-varying-gain nonlinear observer
 - [Project README](../README.md) — algorithms, publications, tests, and repository-wide build information
