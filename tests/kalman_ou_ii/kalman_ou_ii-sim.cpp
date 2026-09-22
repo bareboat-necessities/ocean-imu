@@ -26,8 +26,7 @@ bool add_noise = true;
 
 namespace {
 
-bool env_float(const char* name, float& out)
-{
+bool env_float(const char* name, float& out) {
     if (const char* s = std::getenv(name)) {
         out = static_cast<float>(std::atof(s));
         return true;
@@ -35,8 +34,7 @@ bool env_float(const char* name, float& out)
     return false;
 }
 
-bool env_int(const char* name, int& out)
-{
+bool env_int(const char* name, int& out) {
     if (const char* s = std::getenv(name)) {
         out = std::atoi(s);
         return true;
@@ -100,27 +98,16 @@ public:
             env_float("SF_LOW_WAVE_RACC_SNR", low_wave_noise.transition_snr);
             filter.setLowWaveNoiseWeighting(low_wave_noise);
 
-
             filter.enableTuner(true);
             filter.enableClamp(true);
 
-            // The vessel-RAO tuning point now comes from the library defaults;
-            // sweep overrides below remain explicit and leave gates unchanged.
-
             float v = 0.0f;
-
-            // Generic OU_* names are accepted for compatibility.
-            // OU_II_* names are applied afterward and win if both are set.
-
             if (env_float("OU_P_FACTOR", v)) {
                 filter.setPFactor(v);
             }
             if (env_float("OU_II_P_FACTOR", v)) {
                 filter.setPFactor(v);
             }
-
-            // X and Y are independent; there is deliberately no combined knob,
-            // so a sweep that means to move both has to say so twice.
             if (env_float("OU_R_P0_X_FACTOR", v)) {
                 filter.setR_p0_XFactor(v);
             }
@@ -184,11 +171,7 @@ public:
                 filter.setPseudoAccelNoiseDensity(v);
             }
 
-            // Clamps on the two drift-band regularizers.  Exposed because
-            // OU-III found that its equivalent floor, not the schedule, was
-            // setting the operating point in every low-motion sea, and the
-            // only way to notice that is to move the floor and watch whether
-            // anything responds.
+            // Clamps on the two drift-band regularizers.
             {
                 float lo = MIN_R_p0_std, hi = MAX_R_p0_std;
                 const bool got_lo = env_float("OU_II_R_P0_MIN", lo);
@@ -285,10 +268,7 @@ public:
                 filter.setFreqInputCutoffHz(v);
             }
 
-            // Accelerometer-bias random walk.  The bias competes with the OU
-            // acceleration for the low-frequency content, and the wave-band
-            // operating point moves the OU corner down toward it, so this is
-            // the knob that prices that competition.
+            // Accelerometer-bias random walk.
             Eigen::Vector3f bias_rw(0.00015f, 0.00015f, 0.0004f);
             if (env_float("OU_II_ACC_BIAS_RW", v)) bias_rw.setConstant(v);
             env_float("OU_II_ACC_BIAS_RW_X", bias_rw.x());
@@ -298,23 +278,6 @@ public:
             float bias_tau_sec = 20000.0f;
             env_float("OU_II_ACC_BIAS_TAU_SEC", bias_tau_sec);
             filter.mekf().set_acc_bias_time_constant(bias_tau_sec);
-
-            // Knobs that no longer exist.  tau and the sigma band are
-            // wave-band quantities at every instant of the run, and every
-            // consumer of a vertical acceleration reads the private Mahony
-            // observer.  A stale sweep script must fail here rather than
-            // silently reporting the deployed configuration as an ablation.
-            for (const char* removed : {"W3D_TUNER_FREQ_SOURCE",
-                                        "W3D_TUNING_BAND",
-                                        "W3D_FREQ_TRACKER_INPUT"}) {
-                if (std::getenv(removed) != nullptr) {
-                    throw std::runtime_error(
-                        std::string(removed) +
-                        " was removed: the tuning frequency is always the wave"
-                        " band and the frequency tracker always runs on the"
-                        " complementary observer");
-                }
-            }
 
             // Wave-band prior used until the period estimator has a value.
             if (env_float("OU_TUNE_FREQ_PRIOR_HZ", v)) {
@@ -339,9 +302,7 @@ public:
             }
 
             // Ablate the wave-period estimator's input away from the
-            // complementary-levelled default.  "leveled" restores the older
-            // behaviour, which levels with the attitude solution and so closes
-            // the tuner coupling.
+            // complementary-levelled default.
             if (const char* src = std::getenv("W3D_WAVE_PERIOD_INPUT")) {
                 const std::string value = src;
                 if (value == "complementary") {
@@ -558,21 +519,21 @@ public:
         s.vel_est_zu  = ned_to_zu(filter.mekf().get_velocity());
         s.acc_est_zu  = ned_to_zu(filter.mekf().get_world_accel());
 
-// Filter attitude is BODY->WORLD in NED.
-//
-// In IMU-only mode, after mag lock this is BODY->WORLD in the learned
-// magnetic-NED frame, not true-north NED.
-//
-// Do not apply WMM/declination correction here. A real IMU does not know true
-// north unless an external declination/location model is explicitly supplied.
-const Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
+        // Filter attitude is BODY->WORLD in NED.
+        //
+        // In IMU-only mode, after mag lock this is BODY->WORLD in the learned
+        // magnetic-NED frame, not true-north NED.
+        //
+        // Do not apply WMM/declination correction here. A real IMU does not know true
+        // north unless an external declination/location model is explicitly supplied.
+        const Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
 
-float roll_deg  = 0.0f;
-float pitch_deg = 0.0f;
-float yaw_deg   = 0.0f;
-quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
+        float roll_deg  = 0.0f;
+        float pitch_deg = 0.0f;
+        float yaw_deg   = 0.0f;
+        quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
 
-s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
+        s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
        
         s.acc_bias_est_ned    = filter.mekf().get_acc_bias();
         s.gyro_bias_est_ned   = filter.mekf().gyroscope_bias();
@@ -696,337 +657,17 @@ private:
 // Regression sentinels for the deterministic single-realization protocol, not
 // targets.  Each is the worst value the current filter produces across the
 // scored records plus about half a percent, rounded up in the last digit the
-// channel is quoted in -- a tenth for the percentage channels, a hundredth for
-// yaw, which at about two degrees would otherwise be handed several times the
-// margin the rule asks for.
-//
-// That margin is deliberately small because the metrics are deterministic, and
-// how deterministic is measured rather than assumed: rebuilding at
-// -march=x86-64 instead of the host's native cascadelake moves the gated
-// numbers here by at most 4.4e-4 relative (accelerometer bias 3D, jonswap
-// H8.5), and yaw by 2.4e-4.  The 6e-6 this comment used to claim still holds
-// for the simpler observers -- NLO and the PII observer are within 1.5e-6 --
-// but not for a filter carrying this many matrix solves.  Half a percent
-// leaves better than a factor of ten on every gate below, which is the check
-// to redo before cutting one finer.
-//
-// Setting one below what the filter currently achieves makes it fail every run
-// rather than catching a regression.
-//
-// Re-derived for the 900 s scoring window: a sentinel fitted to the previous
-// 60 s window is not a sentinel for this one, it is just a number the filter
-// passes by a wide margin.
-//
-// bias_3d_percent re-derived again when the r_p0 and r_v0 smoothing horizons
-// were shortened from 5 to 3 wave-period-halves.  The binding record moves from
-// pmstokes H0.27 to jonswap H1.5, where the horizontal accelerometer bias is
-// already unobservable -- the error exceeds the true bias with either horizon
-// -- and the displacement error on that record is unchanged.
-//
-// bias_3d_percent re-derived once more when the frequency tracker moved onto
-// the complementary-levelled vertical acceleration.  It is the only sentinel
-// that moved: 81.75 -> 84.97 on the same binding record, jonswap H1.5.  Worth
-// being explicit that this is a re-derivation and not a relaxation, because
-// raising a sentinel to admit one's own change is exactly how these stop
-// meaning anything.
-//
-// The quantity did not get worse; the realization moved.  Replaying that record
-// under six seeds gives a mean of 74.2% on the old input and 74.1% on the new
-// one, and the per-seed spread reaches 89% either way -- the distribution is
-// unchanged and this sentinel samples one point of it.  The record is also the
-// one where, as noted above, the horizontal accelerometer bias is unobservable
-// to begin with: an error already larger than the true bias is not measuring
-// estimation quality, which is why a 3 pp move in it costs no displacement
-// accuracy (3D RMS 20.77% -> 20.78%, vertical unchanged to four figures).
-// Re-derived once more for the OU-III parity change: the period-scaled sigma
-// band, the tau-scaled pseudo-update cadence and the Mahony-proxy startup
-// policy.  Five of the seven move.  Three tighten and two loosen, and the two
-// that loosen need saying out loud, because raising a sentinel to admit one's
-// own change is exactly how these stop meaning anything.
-//
-// Both loosened limits are realization moves, not quality regressions, and the
-// paired ensemble is what establishes that.  Five IMU noise seeds across the
-// eight scored records (n = 40 paired records per metric), deployed
-// configuration against the pre-change filter:
-//
-//     3D RMS % of max |disp|    18.997 -> 19.042    +0.24% +/- 0.26%   n.s.
-//     accel-bias 3D % of true   82.94  -> 70.14     -15.4% +/- 7.2%    better
-//
-// So the aggregate accelerometer-bias error improves by 15% while this
-// single-realization sentinel gets 8% worse, and the 3D displacement error
-// does not move at all.  The binding record for bias_3d_percent is again one
-// where the horizontal accelerometer bias is unobservable -- the error exceeds
-// the true bias either way -- which is the same property the previous
-// re-derivation of this sentinel noted, and the reason a several-percent move
-// in it costs no displacement accuracy.
-//
-// The three that tighten are where the improvement is deterministic enough to
-// show up in one realization as well as in the ensemble.
-//
-// Yaw re-cut to hundredths, 2.2 -> 2.18.  The filter did not move; the tenth
-// was worth 1.8 percent of slack against a rule that asks for half of one.
-// The six percentage-channel gates are already inside a point of the rule at
-// the precision they are quoted in and keep their values.
-//
-// Re-derived once more for the continuous hard-iron correction, which this
-// family now carries on the same defaults as OU-III.  Four of the seven move,
-// and they move the same way and for the same reasons they did there.
-//
-// Yaw halves -- 1.887 to 0.813 deg mean over the eight records, worst 2.161 to
-// 1.089 -- because the standing heading error was never a tracking error.  It
-// was the hard-iron offset absorbed into the world reference at acquisition,
-// which is a gauge, and correcting the stream while moving the reference by a
-// delta walks the filter off it.  That gate has to come down with the error or
-// it stops being a sentinel: 2.18 -> 1.10, which lands within three hundredths
-// of OU-III's own 1.07.
-//
-// Three go up, and saying so is the point of writing this down, because
-// raising a sentinel to admit one's own change is exactly how these stop
-// meaning anything:
-//
-//   acc Z bias %      5.33 -> 5.41   (jonswap H8.5)
-//   acc 3D bias %    91.66 -> 93.90  (jonswap H4.0)
-//   3D % PM-Stokes   21.02 -> 21.19  (pmstokes H8.5)
-//
-// The correction walks the heading onto the corrected field during the run,
-// and the horizontal accelerometer bias absorbs part of that motion.  It is
-// the least observable quantity scored here -- an error above 90 percent of
-// the true bias means the error exceeds the thing being estimated, under every
-// configuration this family has shipped -- so a two-point move in it is not a
-// measurable loss of bias accuracy.  What it is not allowed to be is hidden,
-// hence the numbers above.  The displacement channels are flat: vertical mean
-// 6.454 -> 6.461 percent of Hs, 3D mean 18.90 -> 19.03 percent, and pitch
-// improves (0.289 -> 0.255 deg) for the same reason yaw does.
-//
-// SF_MAG_CONT_HI=0 is the matched ablation and reproduces the pre-correction
-// filter to within 2.6e-4 relative, which is the noise a rebuild of this
-// family produces anyway.  It exceeds the
-// yaw gate, as it should -- these are fitted to the filter that ships.  Score
-// it with W3D_COLLECT_ALL_GATES.
-// Then cut to the rule, which the tenth-quantum was not delivering on the two
-// single-digit percentage channels.  A tenth is 1.5 percent of a 6.8 and 1.9
-// percent of a 5.4, so rounding a half-percent margin up to one hands back
-// three times what the rule asks for; a hundredth costs nothing to write and
-// gives it back.  Yaw goes to a thousandth for the same reason -- 1.0949
-// rounded to 1.10 is a 0.96 percent bar on a 0.5 percent rule.
-//
-//   Z %Hs PM-Stokes   6.9  -> 6.85    worst 6.8061, margin 1.38% -> 0.65%
-//   yaw deg           1.10 -> 1.095   worst 1.0895, margin 0.96% -> 0.50%
-//   acc Z bias %      5.5  -> 5.44    worst 5.4059, margin 1.74% -> 0.63%
-//
-// The other four were already inside the rule at the precision they are quoted
-// in and are left alone.  These three are checked against the drift measured
-// for this family rather than against the rule alone: the binding records move
-// by 9.4e-5, 1.7e-4 and 3.0e-4 relative between a native and an -march=x86-64
-// build, so the smallest of the three margins is still 21 times the spread it
-// has to survive.  Repeating that cross-build comparison is the check to run
-// before cutting any of these finer.
-//
-// Then tightened twice more, with the filter standing still for both -- the
-// same two passes OU-III took, since the two families are gated by one rule
-// and one script.
-//
-// First the quantum.  Cutting a tenth to a hundredth, above, fixed the two
-// channels where a tenth was worth over a percent, but a fixed absolute step
-// still cannot deliver one margin across values from 1 to 94: a hundredth is
-// 0.15 percent of a 6.8 and 0.01 percent of a 94.  Quoting every channel to
-// four significant figures instead -- so the quantum is a thousandth of the
-// value everywhere -- puts all seven between 0.50 and 0.54 percent:
-//
-//   Z %Hs JONSWAP    6.9  -> 6.899    worst 6.8644   0.52% -> 0.50%
-//   Z %Hs PM-Stokes  6.85 -> 6.841    worst 6.8062   0.64% -> 0.51%
-//   acc Z bias %     5.44 -> 5.435    worst 5.4073   0.61% -> 0.51%
-//   bias 3D %        94.4 -> 94.37    worst 93.8979  0.53% -> 0.50%
-//
-// Then roll and pitch, which this simulator has measured every run and gated
-// never.  What this family has taken on over its last several changes -- the
-// OU-III parity work, the Mahony-proxy startup policy, and the continuous
-// hard-iron correction, which improved pitch from 0.289 to 0.255 deg mean --
-// is largely attitude work, and yaw was the only attitude channel carrying a
-// sentinel.  Roll and pitch run 0.2511 to 0.4753 and 0.1801 to 0.3620 deg
-// across the eight records, well clear of the bars fitted to them.
-//
-// They are gated like yaw, on the magnetometer-on protocol only, and for the
-// same reason: without it worst-case roll goes to 0.5382 and worst-case pitch
-// to 0.7113 deg, both past the bars below.  That is the largest IMU-only
-// attitude penalty of the two OU families -- OU-III loses 18 percent of
-// worst-case pitch and gains on roll -- and it is a fact about the filter, not
-// about the gates, which is why the gates decline to score it.
-//
-// All nine limits are the re-gauged bars for the filter that ships.  They are
-// checked against this family's own build
-// drift rather than against the rule alone, and this family is the noisier of
-// the two: the binding records move by 8.0e-6 to 5.6e-4 relative between a
-// native and an -march=x86-64 build, and both builds pass all nine.  The
-// thinnest margin-to-drift ratio in the set is pitch at 9.3x -- the tightest
-// anywhere in the five families, and the first bar to re-measure rather than
-// re-cut if a rebuild ever breaches it.
-//
-// Re-derived for the (r_p0, r_v0) coefficient re-fit.
-// Every one of the nine still passed on
-// its previous value, so this pass is the rule following a filter that moved,
-// not a breach being papered over -- but pitch had come down to 0.0001 deg of
-// margin against a channel whose measured -march rebuild drift is about 2e-4
-// deg, so leaving the set alone would have shipped a bar that a rebuild
-// decides, and not the filter.  Reverting both coefficients through
-// OU_R_P0_COEFF/OU_R_V0_COEFF puts all nine back at the rule to the digit,
-// which is the check that this set moved for the re-fit and for nothing else.
-//
-// Five tighten and four loosen:
-//
-//   Z %Hs JONSWAP    6.899 -> 6.865   worst 6.8644 -> 6.8300 (jonswap H0.27)
-//   Z %Hs PM-Stokes  6.841 -> 6.848   worst 6.8062 -> 6.8139 (pmstokes H0.27)
-//   yaw deg          1.095 -> 1.089   worst 1.0895 -> 1.0833 (jonswap H1.5)
-//   roll deg        0.4778 -> 0.4792  worst 0.4753 -> 0.4768 (jonswap H4.0)
-//   pitch deg       0.3639 -> 0.3657  worst 0.3620 -> 0.3638 (jonswap H8.5)
-//   3D % JONSWAP      21.1 -> 20.92   worst 20.9867 -> 20.8140 (jonswap H1.5)
-//   3D % PM-Stokes    21.3 -> 21.03   worst 21.1935 -> 20.9203 (pmstokes H8.5)
-//   acc Z bias %     5.435 -> 5.324   worst 5.4073 -> 5.2969 (jonswap H8.5)
-//   bias 3D %        94.37 -> 94.47   worst 93.8979 -> 93.9911 (jonswap H4.0)
-//
-// Both displacement gates come down, by 0.9 and 1.3 percent, which is where a
-// change to the translational regularizer is supposed to show up.
-//
-// Of the four that loosen, three are single-realization moves against an
-// ensemble that goes the other way.  Pooled over the eight records at six IMU
-// seed triplets the re-fit reads 0.9958 vertical, 0.9796 pitch, 1.0003 roll and
-// 1.0006 accelerometer-bias 3D, so pitch improves 2 percent while its
-// deterministic worst record moves up 0.0018 deg, and roll is flat within its
-// own realization noise.  The vertical one is not noise: it is the small-sea
-// end of the position-coefficient trade, and holding the per-record mean
-// vertical error where it is -- seven of eight records improve and the eighth
-// is 1.0003 -- is what bounded R_p0_coeff at 0.65.  The bias one is the least
-// observable quantity scored here, with an error above 90 percent of the true
-// bias on the binding record under every configuration this family has shipped.
-// Then all nine at once, and all nine downward, when the MEKF sensor
-// variances were swept for the first time.
-// The gyro term of that sweep is a units correction -- the harness was
-// handing a per-sample standard deviation to an argument the filter
-// integrates as a noise density -- so the filter that ships now is a
-// materially better one rather than the same one re-drawn, and no channel
-// moved the wrong way.  OU-III took the identical correction in the same
-// round; the two families share the harness that supplied the argument.
-//
-//   Z %Hs JONSWAP    6.865  -> 6.776    worst 6.8300 -> 6.7420
-//   Z %Hs PM-Stokes  6.848  -> 6.803    worst 6.8139 -> 6.7688
-//   yaw deg          1.089  -> 1.074    worst 1.0833 -> 1.0681
-//   roll deg         0.4792 -> 0.4352   worst 0.4768 -> 0.4330
-//   pitch deg        0.3657 -> 0.279    worst 0.3638 -> 0.2775
-//   3D % JONSWAP     20.92  -> 16.54    worst 20.8140 -> 16.4569
-//   3D % PM-Stokes   21.03  -> 17.67    worst 20.9203 -> 17.5728
-//   acc Z bias %     5.324  -> 4.802    worst 5.2969 -> 4.7776
-//   acc 3D bias %    94.47  -> 92.35    worst 93.9911 -> 91.8873
-//
-// Everything here is re-gauged for the filter as it now stands, cut to the
-// same rule as every line above it.
-//
-// Then all nine again for the deployed physical-MSE pseudo-measurement law.
-// This is the first regauge in a while
-// where bars move in both directions, and the split is the change's own shape
-// rather than realization noise:
-//
-//   Z %Hs JONSWAP    6.776  -> 6.707    worst 6.7420 -> 6.6736 (jonswap H0.27)
-//   Z %Hs PM-Stokes  6.803  -> 6.649    worst 6.7688 -> 6.6152 (pmstokes H0.27)
-//   yaw deg          1.074  -> 1.073    worst 1.0681 -> 1.0668 (jonswap H0.27)
-//   roll deg         0.4352 -> 0.4357   worst 0.4330 -> 0.4335 (jonswap H4.0)
-//   pitch deg        0.279  -> 0.2833   worst 0.2775 -> 0.2819 (jonswap H8.5)
-//   3D % JONSWAP     16.54  -> 16.84    worst 16.4569 -> 16.7559 (jonswap H8.5)
-//   3D % PM-Stokes   17.67  -> 18.27    worst 17.5728 -> 18.1773 (pmstokes H8.5)
-//   acc Z bias %     4.802  -> 4.791    worst 4.7776 -> 4.7668 (jonswap H8.5)
-//   bias 3D %        92.35  -> 92.33    worst 91.8873 -> 91.8692 (jonswap H4.0)
-//
-// Both vertical bars come down, by 1.0 and 2.3 percent, and the binding record
-// for each is the smallest sea -- which is where the derived law differs most
-// from the empirical one it replaced and where the paired multi-seed
-// comparison puts its whole gain (-0.063 and -0.104 %Hs at Hs = 0.27 m against
-// ties inside their intervals at Hs = 8.5 m).  Yaw and both bias bars come down
-// slightly with them.
-//
-// Three bars loosen, and unlike the usual single-realization moves these are
-// real.  Both 3D bars and the pitch bar are bound by the *largest* sea, which
-// is the end where the derived law regularizes more loosely than the empirical
-// one, and the paired comparison sees the same thing at the same place:
-// +0.053 m and +0.026 m of 3D RMS on the two Hs = 8.5 m scenarios, with all
-// four small and medium seas improving.  That is the reduced model's stated
-// limitation -- one scalar residual-acceleration intensity for all three axes,
-// when only the vertical carries gravity leakage -- and it is the accepted cost
-// of a law whose primary endpoint improves by 0.0254 +/- 0.0173 %Hs.  Pitch
-// moves 1.6 percent on a channel the paired comparison puts at
-// +0.0004 +/- 0.0004 deg, i.e. detectable and not meaningful.
-//
-// Everything here is re-gauged for the filter as it now stands, cut to the
-// same rule as every line above it.
-//
-// Then for the continuous hard-iron re-tune, which cut the estimator's
-// absolute ridge floor from 4e-3 to 5e-4.  OU-II takes that calibration
-// unchanged from OU-III, for the reason the shared table has always given: a
-// sweep that moved one family and not the other would be comparing two
-// calibrations rather than two filters.  See docs/continuous-mag-hard-iron.md.
-//
-// Per record, old ridge -> new: 1.0668 -> 0.6437, 1.0397 -> 0.6533,
-// 0.8316 -> 1.0779, 0.3907 -> 0.4910, 0.6896 -> 0.7121, 0.9773 -> 0.5648,
-// 0.4867 -> 0.7194, 0.5278 -> 0.4287.  Mean yaw 0.7513 -> 0.6614, five of
-// eight records improve.
-//
-// The yaw bar goes *up*, by one percent, and it is the one number here that
-// has to be argued rather than reported.  The worst record changes identity --
-// jonswap H0.27 at 1.0668 was the binding one and is now 0.6437, while jonswap
-// H4.0 goes 0.8316 -> 1.0779 and takes its place.  What the re-tune does is
-// hand back most of the fit on the poorly excited records and a little more on
-// the well excited ones; H4.0 is a well excited record on a draw where the
-// extra fit is partly aliased distortion, so it pays.  Pooled over five
-// magnetometer-calibration draws the same change takes OU-III's yaw down 11
-// percent with its own worst record down 10, so this is one record on one
-// draw, not the correction over-applying in general.  The bar is re-cut to it
-// because a sentinel is fitted to what the filter produces.
-//
-// Everything else moves in the third digit or better and is re-cut to the
-// rule.  All nine are re-gauged for the filter that ships.
-// Then all nine again when the startup gravity gate moved into the world
-// frame.  The gate is what certifies the
-// tilt the magnetic reference is framed in and the MEKF is seeded with, and
-// in waves it was measuring the sea rather than the levelling error, so it
-// only closed by luck: time to a live filter ran 22 s in the calm records and
-// 76 to 150 s in the big ones, the worst of them by timeout.  It now closes on
-// quality in 22 to 33 s everywhere.
-//
-// Five records are untouched to four significant figures -- the two calm ones
-// are bit-identical, because there the old gate already closed on the first
-// quiet stretch -- and the four big-sea records re-mix:
-//
-//   jonswap  H4.0   roll 0.4345 -> 0.3876, acc 3D bias 91.83 -> 83.77,
-//                   yaw 1.0678 -> 1.0419, gyro 3D bias 15.37 -> 14.47
-//   pmstokes H8.5   roll 0.2774 -> 0.1667, pitch 0.1772 -> 0.1276,
-//                   acc 3D bias 62.42 -> 34.49, gyro 3D bias 19.01 -> 13.70
-//   jonswap  H8.5   roll 0.3665 -> 0.1933, acc 3D bias 81.71 -> 64.19,
-//                   but pitch 0.2804 -> 0.3280 and 3D 16.7113 -> 17.0920
-//
-// The two bars that go up are jonswap H8.5's, and its pitch is the one number
-// here that is a systematic move rather than a re-draw: paired over six IMU
-// seeds it is +12% on every one of them (ratios 1.087 to 1.155).  It is not
-// re-cut to hide a regression, it is re-cut because that record is a genuine
-// loser in a trade the other three big-sea records win by more -- pooled over
-// all eight records and six seeds, pitch is 1.0112 [0.9900, 1.0327], i.e. no
-// effect, while vertical error is 0.9966 [0.9940, 0.9992] and gyro bias
-// 0.9628 [0.9374, 0.9889], both better at 95%.  Seven of the nine bars come
-// down, one of them (the accelerometer bias aggregate) by 9%.
-//
-// Re-cut for R_p0_x_factor = R_p0_y_factor 1 -> 0.72, the horizontal
-// position-regularizer retune that came with the per-axis split.  Every bar
-// holds or comes
-// down, and the two the retune aims at come down hard: 3D JONSWAP
-// 17.18 -> 15.54 and PM-Stokes 17.94 -> 16.62, 9.6% and 7.4% tighter.  Nothing
-// here is a loosening.
+// channel is quoted in
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 6.674f,  // was 6.672,  worst 6.6408 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 6.605f,  // was 6.605,  worst 6.5717 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.041f,  // was 1.048,  worst 1.0357 (jonswap H4.0)
-    .err_limit_roll_deg            = 0.3866f, // was 0.3896, worst 0.3846 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.3237f, // was 0.3296, worst 0.3221 (jonswap H8.5)
-    .err_limit_percent_3d_jonswap  = 15.54f,  // was 17.18,  worst 15.4571 (jonswap H8.5)
-    .err_limit_percent_3d_pmstokes = 16.62f,  // was 17.94,  worst 16.5347 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.663f,  // was 4.67,   worst 4.6391 (jonswap H8.5)
-    .bias_3d_percent               = 83.97f,  // was 84.2,   worst 83.5458 (jonswap H4.0, accel)
+    .err_limit_percent_z_jonswap   = 6.674f,  // worst 6.6408 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 6.605f,  // worst 6.5717 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.041f,  // worst 1.0357 (jonswap H4.0)
+    .err_limit_roll_deg            = 0.3866f, // worst 0.3846 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.3237f, // worst 0.3221 (jonswap H8.5)
+    .err_limit_percent_3d_jonswap  = 15.54f,  // worst 15.4571 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 16.62f,  // worst 16.5347 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.663f,  // worst 4.6391 (jonswap H8.5)
+    .bias_3d_percent               = 83.97f,  // worst 83.5458 (jonswap H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
