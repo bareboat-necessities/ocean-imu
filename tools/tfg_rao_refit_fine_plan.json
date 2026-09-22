@@ -1,0 +1,22 @@
+{
+  "source_broad_run": 35669711189,
+  "source_refinement_run": 35672004933,
+  "source_refinement_commit": "5167aa6d218dbb19c0baf69c1f75cb71eb9bfa5a",
+  "observed_best": [1.025, 1.05, 0.85, 1.45],
+  "observed_best_score": -0.008796990834,
+  "selection_only_findings": [
+    "All 1968 independent-seed refinement cases are complete and finite; all failed quality-gate cases are retained.",
+    "The best symmetric arm scores -0.003770 while the best asymmetric arm scores approximately -0.008797, both without extra paired gate violations.",
+    "The promising basin touches the lower X and upper Y refinement faces. Extend both while refining tau and sigma jointly.",
+    "The exploratory quadratic fit predicts a basin near (1.032,1.143,0.743,1.271); this prediction is not simulation evidence or a validated optimum.",
+    "The new 54-point Cartesian grid is finer in tau and X, extends X to 0.60 and Y to 1.70, and changes all four coefficients jointly. None duplicates the completed 81-point grid."
+  ],
+  "refinement": {
+    "TFG_TAU_COEFF": [1.01, 1.025, 1.04],
+    "TFG_SIGMA_COEFF": [1.0, 1.2],
+    "TFG_R_S_X_FACTOR": [0.60, 0.75, 0.90],
+    "TFG_R_S_Y_FACTOR": [1.20, 1.40, 1.70]
+  },
+  "baseline_reuse": "The new phase reuses the verified baseline cases and executable from run 35672004933; no completed expensive campaign is restarted.",
+  "holdout_evaluated": false
+}
