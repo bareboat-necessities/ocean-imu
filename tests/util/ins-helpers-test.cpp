@@ -315,12 +315,14 @@ static void testQuaternions(std::mt19937& rng) {
     const Vector3f b = ref::quatRotate_(q, v);
     for (int k = 0; k < 3; ++k) CHECK(same(a[k], b[k]), "quatRotate %d", i);
 
-    float r1 = 1.0f, p1 = 2.0f, h1 = 3.0f, r2 = 1.0f, p2 = 2.0f, h2 = 3.0f;
-    const bool ok1 = ins::rollPitchHeadingFromQuatBw(q, r1, p1, h1);
-    const bool ok2 = ref::rollPitchHeadingFromQuatBw_(q, r2, p2, h2);
-    CHECK(ok1 == ok2 && same(r1, r2) && same(p1, p2) && same(h1, h2),
+    float roll_lib = 1.0f, pitch_lib = 2.0f, hdg_lib = 3.0f;
+    float roll_ref = 1.0f, pitch_ref = 2.0f, hdg_ref = 3.0f;
+    const bool ok_lib = ins::rollPitchHeadingFromQuatBw(q, roll_lib, pitch_lib, hdg_lib);
+    const bool ok_ref = ref::rollPitchHeadingFromQuatBw_(q, roll_ref, pitch_ref, hdg_ref);
+    CHECK(ok_lib == ok_ref && same(roll_lib, roll_ref) && same(pitch_lib, pitch_ref) &&
+          same(hdg_lib, hdg_ref),
           "rollPitchHeading %d: %d/%d %.9g %.9g %.9g vs %.9g %.9g %.9g",
-          i, ok1, ok2, r1, p1, h1, r2, p2, h2);
+          i, ok_lib, ok_ref, roll_lib, pitch_lib, hdg_lib, roll_ref, pitch_ref, hdg_ref);
   }
 }
 
