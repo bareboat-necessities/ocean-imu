@@ -805,13 +805,16 @@ private:
       fusion_.updateMag(m_cal_);
     }
 
-    // Magnetic acquisition can finish while Cold, before the core receives
-    // any attitude prediction. Its identity quaternion is not a valid HDG.
-    Eigen::Quaternionf q_bw = fusion_.mekf().quaternion();
-    bool have_attitude = true;
-    if (fusion_.stage() == Fusion::StartupStage::Cold &&
+    // During startup the MEKF is deliberately held. Publish the Mahony proxy
+    // attitude instead; switch atomically to the fused attitude at Live.
+    Eigen::Quaternionf q_bw;
+    bool have_attitude = false;
+    if (!fusion_.isLive() &&
         fusion_.startupInitPolicy() == Fusion::StartupInitPolicy::MahonyProxy) {
       have_attitude = fusion_.startupTiltQuaternion(q_bw);
+    } else {
+      q_bw = fusion_.mekf().quaternion();
+      have_attitude = q_bw.coeffs().allFinite();
     }
 
     float roll_est_deg = roll_deg_;
@@ -865,7 +868,10 @@ private:
     updateWaveDirection_(q_bw, tempC, dt_);
     updateDisplacement_(dt_);
 
-    heave_m_ = displacement_up_m_.z();
+    // Raw integrated position can carry a large DC/random-walk component.
+    // The device HEV channel is wave heave, matching the NMEA output and OU
+    // sketches; retain raw position only in the diagnostic heave_raw_m_ field.
+    heave_m_ = displacement_det_out_.wave_clean.z();
 
     wave_axis_deg_ = dir_filter_.getAxisDegrees();
     wave_axis_ok_  = fusion_.isLive() && std::isfinite(wave_axis_deg_);
@@ -895,7 +901,7 @@ private:
       rate_window_ms_ = now_ms;
     }
 
-    heave_raw_m_        = heave_m_;
+    heave_raw_m_        = displacement_up_m_.z();
     heave_baseline_m_   = displacement_det_out_.baseline_slow.z();
     heave_wave_raw_m_   = displacement_det_out_.wave_raw.z();
     heave_wave_clean_m_ = displacement_det_out_.wave_clean.z();
@@ -983,7 +989,7 @@ private:
     if (heading_valid_) {
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
     }
-    nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
+    nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_); // startup proxy attitude until Live
     nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
     nmea_xdr_heave_speed(SEA_STATE_NMEA_TALKER, heave_speed_mps_);
 
