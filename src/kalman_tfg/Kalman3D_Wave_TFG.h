@@ -208,6 +208,32 @@ class Kalman3D_Wave_TFG {
         return true;
     }
 
+    // Emergency tilt re-lock used by the sea-state wrapper.  This mirrors the
+    // deployed OU watchdog semantics: gravity is allowed to repair roll/pitch
+    // after a sustained catastrophic tilt excursion, while magnetic/world yaw
+    // and all translational states remain in their existing frame.
+    bool initialize_from_acc_preserve_yaw(const Vector3& acc_body,
+                                          T tilt_sigma_rad = T(0.035)) {
+        const T yaw_old = std::atan2(X_.R(1,0), X_.R(0,0));
+        if (!std::isfinite(yaw_old) || !initialize_from_acc(acc_body)) return false;
+        set_attitude_yaw_absolute(yaw_old);
+
+        const T yaw_var = std::max(T(0), P_(OFF_PHI+2, OFF_PHI+2));
+        const T st = (std::isfinite(tilt_sigma_rad) && tilt_sigma_rad > T(0))
+            ? tilt_sigma_rad : T(0.035);
+        for (int i=0; i<3; ++i) {
+            for (int j=0; j<NX; ++j) {
+                P_(OFF_PHI+i,j)=T(0);
+                P_(j,OFF_PHI+i)=T(0);
+            }
+        }
+        P_(OFF_PHI,OFF_PHI)=st*st;
+        P_(OFF_PHI+1,OFF_PHI+1)=st*st;
+        P_(OFF_PHI+2,OFF_PHI+2)=std::max(yaw_var,st*st);
+        symmetrize_in_place_(P_);
+        return true;
+    }
+
     void set_linear_block_enabled(bool on) { linear_block_enabled_ = on; }
     [[nodiscard]] bool linear_block_enabled() const { return linear_block_enabled_; }
 
