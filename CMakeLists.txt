@@ -60,5 +60,5 @@ add_executable(kalman_tfg-sim "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/kalman_tfg-sim.
 add_executable(tfg_process_covariance-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_process_covariance-test.cpp")
 add_executable(tfg_rs_axis_factors-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_rs_axis_factors-test.cpp")
 add_executable(tfg_handoff_heave-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_handoff_heave-test.cpp")
-add_executable(tfg_device_heave-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_device_heave-test.cpp")
+add_executable(tfg_device_heave-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_device_heave-test.cpp")\nadd_executable(tfg_device_tempcomp-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_device_tempcomp-test.cpp")
 add_executable(detrend-log-frequency-test "${OCEAN_IMU_TESTS_DIR}/detrend/detrend-log-frequency-test.cpp")
