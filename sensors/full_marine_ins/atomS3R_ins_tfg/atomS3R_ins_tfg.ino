@@ -604,7 +604,7 @@ private:
     fusion_.begin(fcfg);
 
     fusion_.enableTuner(true);
-    // The tuner coefficients (S_factor, tau, sigma, r_S, r_S XY) are
+    // Use the same fixed virtual-constraint cadence as the deployed OU sketches.\n    // This avoids sparse correction teeth; the existing noise law accounts for cadence.\n    fusion_.setTauScaledPseudoCadence(false);\n    // The tuner coefficients (S_factor, tau, sigma, r_S, r_S XY) are
     // deliberately not overridden here.  The header defaults are the operating
     // point the committed TFG study was run at; overriding them puts the device
     // at an operating point no evidence covers.  Override only alongside a
