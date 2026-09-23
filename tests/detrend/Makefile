@@ -23,7 +23,7 @@ endif
 LDFLAGS  =
 
 # Targets
-TARGETS = detrend-basic-test detrend-wave-test detrend-wave3d-test
+TARGETS = detrend-basic-test detrend-wave-test detrend-wave3d-test detrend-log-frequency-test
 
 all: build test
 
@@ -35,12 +35,17 @@ test: ensure-sim-data $(TARGETS)
 ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
 
+detrend-log-frequency-test: detrend-log-frequency-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
 detrend-basic-test: detrend-basic-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
-	$(CC) $(CXXFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+-include $(wildcard *.d)
 
 clean:
 	find . -maxdepth 1 -type f -name '*.csv' ! -name '*detrend*.csv' -delete
-	rm -f *.o $(TARGETS) *.exe
+	rm -f *.o *.d $(TARGETS) *.exe
