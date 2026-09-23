@@ -15,7 +15,7 @@ set -e
 ./tfg_orchestrator-test
 ./tfg_rs_axis_factors-test
 ./tfg_handoff_heave-test
-./tfg_device_heave-test
+./tfg_device_heave-test\n./tfg_device_tempcomp-test
 sim_status=0
 W3D_COLLECT_ALL_GATES=1 ./kalman_tfg-sim || sim_status=$?
 
