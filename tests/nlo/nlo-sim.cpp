@@ -458,6 +458,10 @@ process_wave_file_for_tvg_nlo_nomag_nognss(const std::string& filename,
         seeds.gyro_noise, seeds.gyro_initialization
     );
 
+    // Optional inboard-diesel vibration, identical to the other families.
+    // Absent unless W3D_ENGINE_RPM is set.
+    w3d_install_engine_vibration_from_env(noise_models, dt);
+
     const Vector3f sigma_a_init(
         2.8f * acc_sigma,
         2.8f * acc_sigma,
