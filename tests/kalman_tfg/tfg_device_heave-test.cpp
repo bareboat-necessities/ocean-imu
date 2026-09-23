@@ -120,6 +120,34 @@ bool run(const Case& c) {
     // This is a regression bound, not output saturation in the estimator.
     return finite && first_live>=0 && peak_p<=2.0f;
 }
+
+bool run_watchdog_stress() {
+    Fusion f;
+    Fusion::Config cfg;
+    cfg.sigma_a=V::Constant(0.12f); cfg.sigma_m=V::Constant(0.80f);
+    cfg.gyro_noise_density=0.00135f; cfg.mag_delay_sec=0.0f;
+    cfg.mag_init_min_mag_norm=5.0f; cfg.online_tune_warmup_sec=10.0f;
+    f.begin(cfg);
+    constexpr float dt=0.005f;
+    const M R=(Eigen::AngleAxisf(0.5f,V::UnitZ())*
+               Eigen::AngleAxisf(0.4f,V::UnitY())*
+               Eigen::AngleAxisf(0.2f,V::UnitX())).toRotationMatrix();
+    const V acc=R.transpose()*V(0,0,-g+0.05f);
+    const V gyro(0.2f,-0.1f,0.06f);
+    const V mag=R.transpose()*V(20,0,43);
+    float peak=0, mag_clock=0;
+    bool ever_live=false;
+    for(int k=0;k<120000;++k) {
+        f.update(dt,gyro,acc,35.0f);
+        mag_clock+=dt;
+        if(mag_clock>=0.04f){mag_clock=0; f.updateMag(mag);}
+        if(f.isLive()){ever_live=true; peak=std::max(peak,std::abs(f.get_position().z()));}
+        if(!f.get_position().allFinite() || !f.mekf().covariance_full().allFinite()) return false;
+    }
+    std::cout<<"WATCHDOG_STRESS maxp="<<peak<<" resets="<<f.tiltResetCount()
+             <<" live="<<ever_live<<" pz="<<f.get_position().z()<<'\\n';
+    return ever_live && f.tiltResetCount()>0 && peak<20.0f;
+}
 } // namespace
 int main() {
     std::cout << std::unitbuf;
@@ -139,7 +167,7 @@ int main() {
         {"moving-noisy",0.05f,0.005f,true,false,false,true,true,true},
     };
     bool ok=true;
-    try { for (const auto& c: cases) ok=run(c) && ok; }
+    try { for (const auto& c: cases) ok=run(c) && ok; ok=run_watchdog_stress() && ok; }
     catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 2; }
     return ok ? 0 : 1;
 }
