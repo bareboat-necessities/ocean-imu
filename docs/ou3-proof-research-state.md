@@ -10,6 +10,26 @@ remain. General physical capture and the complete stability theorem are open.
 
 ## Evidence
 
+### CI/source-contract boundary
+
+The evidence commit job failed at `test_first_sample_geometry_and_invalid_inputs`
+because Eigen was not installed; Python-only dependencies no longer cover this
+host-compiling suite. The scalar detrender reference also used an obsolete
+cutoff/averaging contract: baseline error was 4.23696 against tolerance 0.001.
+Classification: CI dependency and reference drift, not a stability counterexample.
+A separate binary64 scalar oracle and explicit native-dependency guards preserve
+the existing numerical tolerances. The OU-II magnetic residual's redundant vector
+copy is replaced by a const reference without changing its equations. The TFG
+stationary replay also reproduces a >90-degree handoff error: the retained
+historical proxy-yaw alignment is invalid under axial gyro bias. Fresh sensor-only
+magnetic alignment repairs that acquisition/refinement path without changing
+OU-II/III, TFG cadence, or numerical tolerances. The native north regression uses
+each sketch's deployed cadence; fixed-cadence TFG comparisons remain explicitly
+labelled ablations. A literal backslash-n joining two TFG test commands is a
+separate test-runner defect. None of these findings advances the proof. The next
+check is the complete host build and a genuine regenerated OU/TFG evidence bundle,
+followed by the unchanged validation/sanitizer/static-analysis gates.
+
 ### Stationary device diagnostic boundary
 
 The 200 Hz/25 Hz stationary device replay exposes two implementation failures:

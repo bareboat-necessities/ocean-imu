@@ -1,6 +1,7 @@
 /* Copyright (c) 2026 Mikhail Grushinskiy */
 #define EIGEN_NON_ARDUINO
 #include "detrend/AdaptiveWaveDetrender3D.h"
+#include "detrend/AdaptiveWaveDetrender.h"
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -118,6 +119,62 @@ double learned_period_return(float initial, float target) {
     require(t90>0 && t90<50, "learned-period transition did not settle promptly");
     return t90;
 }
+// The scalar fixture must not be the only guard of the 1D frequency law:
+// check that implementation independently against the closed-form log EMA.
+AdaptiveWaveDetrender::Config scalar_config(float period) {
+    AdaptiveWaveDetrender::Config c;
+    c.init_wave_freq_hz = 1.0f / period;
+    c.freq_smooth_tau_s = 12.0f;
+    c.startup_hold_s = 0.0f;
+    c.slope_lpf_tau_s = 1e-6f;
+    c.min_slope_threshold_abs = c.max_slope_threshold_abs = 0.25f;
+    return c;
+}
+void scalar_frequency_laws() {
+    AdaptiveWaveDetrender longer(scalar_config(4)), shorter(scalar_config(16));
+    longer.reset(0); shorter.reset(0);
+    constexpr float dt = 0.0625f;
+    double max_external_error = 0;
+    for (int k = 1; k <= 960; ++k) {
+        const auto a = longer.update(0, dt, 1.0f / 16, true);
+        const auto b = shorter.update(0, dt, 1.0f / 4, true);
+        const double expected = std::exp(-double(k) * dt / 12.0);
+        max_external_error = std::max(max_external_error,
+            std::max(std::abs(normalized_error(a.wave_period_s, 4, 16) - expected),
+                     std::abs(normalized_error(b.wave_period_s, 16, 4) - expected)));
+        require(a.wave_clean == 0 && b.wave_clean == 0, "scalar guidance invented heave");
+        if (k >= 2) require(a.freq_valid && b.freq_valid, "scalar guidance is not fresh");
+    }
+    require(max_external_error < 0.002, "scalar external frequency violates the log EMA");
+    for (float initial : {4.0f, 16.0f}) {
+        const float target = initial == 4.0f ? 16.0f : 4.0f;
+        AdaptiveWaveDetrender d(scalar_config(initial));
+        d.reset(0);
+        const int samples = static_cast<int>(target / dt);
+        float input = 0, previous = d.currentWaveFreqHz();
+        double measurement_time = 0, max_error = 0;
+        int accepted = 0;
+        for (int k = 0; k < 8 * samples; ++k) {
+            const float slope = k % samples < samples / 2 ? 1.0f : -1.0f;
+            // 1D learns from raw input slope, not the 3D baseline residual.
+            input += dt * (k == 0 ? 0.4f : slope);
+            const auto out = d.update(input, dt);
+            if (out.wave_freq_hz != previous) {
+                measurement_time += target;
+                ++accepted;
+                max_error = std::max(max_error,
+                    std::abs(normalized_error(out.wave_period_s, initial, target)
+                             - std::exp(-measurement_time / 12.0)));
+                previous = out.wave_freq_hz;
+            }
+        }
+        require(accepted >= 6 && d.frequencyValid(), "scalar accepted-period fixture is inactive");
+        require(max_error < 0.0005, "scalar internal frequency violates measured-interval log EMA");
+        std::cout << "scalar internal " << initial << "->" << target
+                  << ": accepted=" << accepted << " max_log_law_error=" << max_error << '\n';
+    }
+    std::cout << "scalar external max_log_law_error=" << max_external_error << '\n';
+}
 void invalid_guidance() {
     D d(config(8)); d.reset(V::Zero());
     for(float bad : {0.f,-1.f,NAN,INFINITY}) {
@@ -130,6 +187,7 @@ void invalid_guidance() {
 }
 int main() {
     try {
+        scalar_frequency_laws();
         external_reciprocal_steps();
         internal_measurement_law(4,16);
         internal_measurement_law(16,4);

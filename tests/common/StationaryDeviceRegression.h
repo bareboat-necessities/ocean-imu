@@ -22,7 +22,9 @@ using V = Eigen::Vector3f;
 #if defined(STATIONARY_DEVICE_TFG)
 using Fusion = ocean_imu::tfg::SeaStateFusionFilter_TFG<>;
 constexpr const char* name = "TFG";
+constexpr bool deployed_fixed_cadence = false;
 #else
+constexpr bool deployed_fixed_cadence = true;
 #if defined(STATIONARY_DEVICE_OU2)
 using Fusion = SeaStateFusion_OU_II<TrackerType::KALMANF>;
 constexpr const char* name = "OU-II";
@@ -53,7 +55,7 @@ float period(Fusion& f) {
     return f.raw().mekf().get_pseudo_update_period_s();
 #endif
 }
-void begin(Fusion& f, bool device_cadence) {
+void begin(Fusion& f, bool fixed_cadence) {
     Fusion::Config cfg;
     cfg.sigma_a = V::Constant(0.12f);
     cfg.sigma_m = V::Constant(0.8f);
@@ -68,13 +70,13 @@ void begin(Fusion& f, bool device_cadence) {
     f.begin(cfg);
     raw(f).enableTuner(true);
     raw(f).setAccNoiseFloorSigma(0.12f);
-    // device_cadence selects the fixed 15 ms cadence the OU-II/OU-III sketches
+    // fixed_cadence selects the fixed 15 ms cadence the OU-II/OU-III sketches
     // deploy.  The TFG sketch deploys the tau-scaled cadence, so for TFG the
     // dense/sparse comparison below is an ablation of the fixed option.
 #if defined(STATIONARY_DEVICE_TFG)
-    raw(f).setTauScaledPseudoCadence(!device_cadence);
+    raw(f).setTauScaledPseudoCadence(!fixed_cadence);
 #else
-    raw(f).setTauScaledPseudoUpdateCadence(!device_cadence);
+    raw(f).setTauScaledPseudoUpdateCadence(!fixed_cadence);
 #endif
 }
 struct Metrics {
@@ -172,7 +174,7 @@ int run() {
     auto check = [&](bool ok, const char* text) {
         if (!ok) { std::cerr << "FAIL: " << name << ' ' << text << '\n'; ++failures; }
     };
-    const auto north = replay(true,0.03f,0.025f,0.0f,false);
+    const auto north = replay(deployed_fixed_cadence,0.03f,0.025f,0.0f,false);
     print("stationary-north",north);
     check(north.finite && north.live_time >= 0.0f,"stationary north replay did not stay finite/enter Live");
     check(north.handoff_yaw_deg < 3.0f,"stationary handoff lost magnetic north");
@@ -187,14 +189,14 @@ int run() {
 #endif
     const auto sparse = replay(false,0.2f,0.01f,0.12f,false);
     const auto dense = replay(true,0.2f,0.01f,0.12f,false);
-    print("stationary-sparse-control",sparse); print("stationary-device",dense);
+    print("stationary-tau-scaled",sparse); print("stationary-fixed-cadence",dense);
     check(sparse.finite && dense.finite && dense.live_time >= 0.0f,"stationary heave replay failed");
-    check(std::abs(dense.final_period_s-0.015f)<1e-6f,"device pseudo cadence is not fixed at 15 ms");
+    check(std::abs(dense.final_period_s-0.015f)<1e-6f,"fixed pseudo cadence is not 15 ms");
     check(dense.max_step_m < 0.05f,"device still has a large stationary raw-position tooth");
     check(dense.max_step_m <= 0.25f*sparse.max_step_m + 0.001f,"frequent virtual constraints did not reduce stationary teeth");
     const auto wave_sparse = replay(false,0.03f,0.001f,0.0148f,true);
     const auto wave_dense = replay(true,0.03f,0.001f,0.0148f,true);
-    print("rest-wave-rest-sparse-control",wave_sparse); print("rest-wave-rest-device",wave_dense);
+    print("rest-wave-rest-tau-scaled",wave_sparse); print("rest-wave-rest-fixed-cadence",wave_dense);
     check(wave_sparse.finite && wave_dense.finite && wave_dense.wave_n > 0 && wave_dense.quiet_n > 0,
           "uninterrupted rest-wave-rest replay failed");
     check(wave_dense.wave_rms() <= 1.10*wave_sparse.wave_rms()+0.001,
