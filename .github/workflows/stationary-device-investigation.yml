@@ -1,0 +1,62 @@
+name: stationary-device integration
+on:
+  push:
+    branches: [fix/stationary-heave-ripple-heading]
+permissions:
+  contents: write
+jobs:
+  integrate-and-test:
+    if: github.repository == 'bareboat-necessities/ocean-imu' && github.ref == 'refs/heads/fix/stationary-heave-ripple-heading'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 12
+      - name: Apply integrity-checked test-integration patch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/device-integration-results
+          gh api repos/bareboat-necessities/ocean-imu/git/blobs/e0be8495cd179aa007ecf4566d5f1bbc042fb09b --jq .content | base64 -d | gzip -d > /tmp/device-integration.patch
+          echo '1104defaf16a7d3071c768642ffe01f1fb179d840300fb91c78383e066a42ec8  /tmp/device-integration.patch' | sha256sum -c -
+          git apply --check /tmp/device-integration.patch
+          git apply --index /tmp/device-integration.patch
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'test: isolate stationary regressions from scientific replay build recipes'
+          git push origin HEAD:refs/heads/fix/stationary-heave-ripple-heading
+          git rev-parse HEAD | tee /tmp/device-integration-results/source-sha.txt
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev
+      - name: Verify scientific replay build recipes are unchanged
+        run: |
+          set -euo pipefail
+          for family in kalman_ou_ii kalman_ou_iii kalman_tfg; do
+            git show 934d11bf0cc880d917e112adc67a59080ed73b21:tests/$family/Makefile | cmp - tests/$family/Makefile
+          done
+          git show 934d11bf0cc880d917e112adc67a59080ed73b21:src/detrend/AdaptiveWaveDetrender3D.h | cmp - src/detrend/AdaptiveWaveDetrender3D.h
+          echo 'All three scientific replay Makefiles and the detrender are byte-identical to the PR base.' | tee /tmp/device-integration-results/unchanged-build-inputs.log
+      - name: Build through the actual additive native make rules and execute regressions
+        run: |
+          set -euo pipefail
+          status=0
+          for family in kalman_ou_ii kalman_ou_iii kalman_tfg; do
+            if make -C tests/$family -f Makefile -f ../common/StationaryDeviceRegression.mk stationary_device-test > /tmp/device-integration-results/$family-build.log 2>&1; then
+              tests/$family/stationary_device-test 2>&1 | tee /tmp/device-integration-results/$family.log || status=1
+            else
+              cat /tmp/device-integration-results/$family-build.log
+              status=1
+            fi
+          done
+          python3 -m unittest discover -s tests/validation -p test_stationary_device_contract.py -v 2>&1 | tee /tmp/device-integration-results/sketch-contract.log || status=1
+          exit "$status"
+      - name: Preserve actual source identity and numerical results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: stationary-device-integration-results
+          path: /tmp/device-integration-results/
+          if-no-files-found: error
