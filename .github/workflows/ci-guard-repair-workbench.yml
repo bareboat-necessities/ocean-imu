@@ -1,0 +1,32 @@
+name: CI guard repair workbench
+
+on:
+  push:
+    branches: [fix/ci-current-code-guards]
+    paths: [.github/workflows/ci-guard-repair-workbench.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install test headers
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Pack source and test headers
+        run: |
+          mkdir -p /tmp/ci-guard-repair
+          tar --exclude='./.git' -czf /tmp/ci-guard-repair/source.tar.gz .
+          tar -czf /tmp/ci-guard-repair/eigen.tar.gz -C /usr/include eigen3
+          git rev-parse HEAD > /tmp/ci-guard-repair/commit.txt
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ci-guard-repair-source
+          path: /tmp/ci-guard-repair
+          retention-days: 1
+          if-no-files-found: error
