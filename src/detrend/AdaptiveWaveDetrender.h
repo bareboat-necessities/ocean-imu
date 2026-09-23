@@ -371,7 +371,7 @@ private:
 
     const float dt_f = maxf_(meas_interval_s, cfg_.min_dt_s);
     const float a_f = expAlphaFromTau_(dt_f, cfg_.freq_smooth_tau_s);
-    f_used_hz_ = a_f * f_used_hz_ + (1.0f - a_f) * f_meas_hz;
+    f_used_hz_ = expf(a_f * logf(f_used_hz_) + (1.0f - a_f) * logf(f_meas_hz));
 
     last_valid_freq_t_ = time_s_;
     if (valid_period_count_ < 1000000) ++valid_period_count_;
@@ -382,7 +382,7 @@ private:
 
     f_ext_hz = clampf_(f_ext_hz, cfg_.min_wave_freq_hz, cfg_.max_wave_freq_hz);
     const float a_f = expAlphaFromTau_(dt_s, cfg_.freq_smooth_tau_s);
-    f_used_hz_ = a_f * f_used_hz_ + (1.0f - a_f) * f_ext_hz;
+    f_used_hz_ = expf(a_f * logf(f_used_hz_) + (1.0f - a_f) * logf(f_ext_hz));
 
     last_valid_freq_t_ = time_s_;
     if (valid_period_count_ < 1000000) ++valid_period_count_;
