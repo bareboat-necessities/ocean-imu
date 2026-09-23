@@ -21,17 +21,29 @@ int main() {
     f.set_linear_block_enabled(true);
     f.set_acc_bias_updates_enabled(false);
     f.reset_aw_covariance_to_stationary();
-    float maxp=0, maxv=0;
+    float maxp=0, maxv=0, maxS=0;
     for(int k=0;k<120000;k++){
       f.time_update(V::Zero(),dt);
       f.measurement_update_acc_only(V(0,0,-g+bias),35);
       if ((k%3)==0) f.applyIntegralZeroPseudoMeas();
+      if (!f.get_position().allFinite() || !f.get_velocity().allFinite() ||
+          !f.get_integral_displacement().allFinite() || !f.get_world_accel().allFinite() ||
+          !f.get_acc_bias().allFinite() || !f.covariance_full().allFinite()) {
+        std::cerr << "nonfinite state/covariance: bias=" << bias << " sample=" << k << '\n';
+        return 2;
+      }
+      if (!(f.get_acc_bias().array() == 0.0f).all()) {
+        std::cerr << "frozen accelerometer bias changed\n";
+        return 2;
+      }
+      maxS=std::max(maxS,std::abs(f.get_integral_displacement().z()));
       maxp=std::max(maxp,std::abs(f.get_position().z()));
       maxv=std::max(maxv,std::abs(f.get_velocity().z()));
     }
     std::cout<<"bias="<<bias<<" pz="<<f.get_position().z()<<" maxp="<<maxp
              <<" vz="<<f.get_velocity().z()<<" maxv="<<maxv<<" awz="<<f.get_world_accel().z()
+             <<" Sz="<<f.get_integral_displacement().z()<<" maxS="<<maxS
              <<" baz="<<f.get_acc_bias().z()<<"\n";
-    if (!std::isfinite(maxp) || maxp>20.0f) return 2;
+    if (!std::isfinite(maxp) || maxp>0.5f) return 2;
   }
 }

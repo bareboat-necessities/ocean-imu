@@ -40,6 +40,8 @@ jobs:
           set -o pipefail
           ./tests/kalman_tfg/tfg_handoff_heave-test | tee tfg-handoff-results.txt
       - name: Execute device startup and Live histories
+        env:
+          OCEAN_IMU_TRACE_DIR: .
         id: device
         continue-on-error: true
         run: |

@@ -55,3 +55,10 @@ add_executable(tfg_jacobians-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_jacobia
 add_executable(covariance_transport-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/covariance_transport-test.cpp")
 add_executable(tfg_orchestrator-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_orchestrator-test.cpp")
 add_executable(kalman_tfg-sim "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/kalman_tfg-sim.cpp" ${W3D_SIM_COMMON})
+
+# Device and covariance regressions must be built by both supported build routes.
+add_executable(tfg_process_covariance-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_process_covariance-test.cpp")
+add_executable(tfg_rs_axis_factors-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_rs_axis_factors-test.cpp")
+add_executable(tfg_handoff_heave-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_handoff_heave-test.cpp")
+add_executable(tfg_device_heave-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_device_heave-test.cpp")
+add_executable(detrend-log-frequency-test "${OCEAN_IMU_TESTS_DIR}/detrend/detrend-log-frequency-test.cpp")

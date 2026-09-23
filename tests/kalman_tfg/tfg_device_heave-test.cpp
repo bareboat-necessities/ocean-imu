@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <stdexcept>
@@ -45,8 +46,14 @@ bool run(const Case& c) {
     const M Rbase = (Eigen::AngleAxisf(c.tilted ? 2.9670597f : 0.0f, V::UnitZ()) *
                      Eigen::AngleAxisf(c.tilted ? 0.4363323f : 0.0f, V::UnitY()) *
                      Eigen::AngleAxisf(c.tilted ? 1.0471976f : 0.0f, V::UnitX())).toRotationMatrix();
-    std::ofstream csv(std::string("tfg-device-")+c.name+".csv");
-    csv << "t,live,bias_enabled,pz,vz,Sz,awz,baz,tau,sigma,rs,tilt_error_deg\n";
+    // Normal test runs must not put diagnostics among simulator input CSVs.
+    // A focused replay may opt in to traces in an existing directory.
+    std::ofstream csv;
+    if (const char* directory = std::getenv("OCEAN_IMU_TRACE_DIR")) {
+        csv.open(std::string(directory)+"/tfg-device-"+c.name+".csv");
+        if (!csv) throw std::runtime_error("cannot open device trace");
+    }
+    if (csv.is_open()) csv << "t,live,bias_enabled,pz,vz,Sz,awz,baz,tau,sigma,rs,tilt_error_deg\n";
     float peak_p=0, peak_v=0, peak_S=0, peak_aw=0, peak_ba=0, peak_tilt=0;
     float first_live=-1, first_bias=-1, mag_clock=0, log_clock=0;
     bool finite=true;
@@ -94,7 +101,7 @@ bool run(const Case& c) {
             peak_ba=std::max(peak_ba,ba.norm()); peak_tilt=std::max(peak_tilt,tilt);
         }
         log_clock+=c.dt;
-        if (log_clock>=1.0f) {
+        if (log_clock>=1.0f && csv.is_open()) {
             log_clock=0;
             csv << std::setprecision(9) << t << ',' << f.isLive() << ',' << core.acc_bias_updates_enabled()
                 << ',' << p.z() << ',' << v.z() << ',' << S.z() << ',' << a.z() << ',' << ba.z()
@@ -109,7 +116,9 @@ bool run(const Case& c) {
               << " pz=" << f.get_position().z() << " tau=" << f.getTauApplied()
               << " sigma=" << f.getSigmaApplied() << " rs=" << f.getRSFilterInput()
               << " finite=" << finite << '\n';
-    return finite && first_live>=0 && peak_p<=20.0f;
+    // These bounded, small-disturbance histories have peaks below 1.20 m.
+    // This is a regression bound, not output saturation in the estimator.
+    return finite && first_live>=0 && peak_p<=2.0f;
 }
 } // namespace
 int main() {
