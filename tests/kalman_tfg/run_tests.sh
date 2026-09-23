@@ -5,6 +5,9 @@
 # actually fails the build.
 set -e
 
+make -f Makefile -f ../common/StationaryDeviceRegression.mk stationary_device-test
+./stationary_device-test
+
 ./lie_group-test
 ./convention-test
 ./ou_chain_identity-test
