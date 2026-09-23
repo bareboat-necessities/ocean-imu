@@ -17,3 +17,17 @@ expected columns with `python3 tools/detrend_reference.py --write`. CI never
 uses this write mode. Validation pins the original input-pair SHA-256, and
 `detrend-log-frequency-test` separately checks both scalar and 3D frequency
 updates against the closed-form log EMA for internal and external guidance.
+
+## Fixed wave-accuracy benchmarks
+
+The scalar wave benchmark explicitly uses a 0.25 baseline cutoff fraction and
+one cleanup stage. The 3D benchmark uses 0.18 without cleanup. Both preserve
+the 16%-of-height RMS ceiling and must improve over the drift-contaminated input.
+The scalar summary records its cutoff and stage count; these are benchmark
+operating points, not claims about every configurable setting or the default.
+
+The current scalar default uses a stronger 0.35 cutoff fraction. On the supplied
+medium/large/extreme records its unaligned wave errors are approximately 16.7%,
+17.7%, and 18.1% of height. The 16% ceiling therefore remains attached to the
+explicit 0.25 benchmark. The independent golden fixture checks the current
+default's full response without changing its tolerances or the estimator.

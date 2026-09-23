@@ -33,6 +33,15 @@ class DetrendReferenceTests(unittest.TestCase):
         # 0.35 is the current scalar default; the old fixture used 0.25.
         self.assertAlmostEqual(regenerated[0]["baseline_cutoff_hz"], 0.35 * 0.12)
 
+    def test_wave_accuracy_benchmark_has_an_explicit_operating_point(self):
+        source = (ROOT / "tests/detrend/detrend-wave-test.cpp").read_text()
+        self.assertIn("kRmsGateFractionOfHeight = 0.16;", source)
+        self.assertIn("cfg.baseline_cutoff_fraction = 0.25f;", source)
+        self.assertIn("cfg.enable_wave_cleanup = true;", source)
+        self.assertIn("cfg.cleanup_stages = 1;", source)
+        self.assertIn("AdaptiveWaveDetrender detrender(cfg);", source)
+        self.assertIn("improvement_ratio,baseline_cutoff_fraction,cleanup_stages", source)
+
     def test_invalid_input_is_not_silently_rebaselined(self):
         for rows in ([], [{"x_axis": "0", "original_cm": "nan"}],
                      [{"x_axis": "0", "original_cm": "1"}] * 2):
