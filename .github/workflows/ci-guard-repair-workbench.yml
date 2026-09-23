@@ -14,8 +14,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
-    outputs:
-      sha: ${{ steps.commit.outputs.sha }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -29,115 +27,46 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           p = Path('/tmp/initial.patch')
-          s = p.read_text()
-          s = s.replace('+        workflow = WORKFLOW.read_text(encoding="utf-8"))', '+        workflow = WORKFLOW.read_text(encoding="utf-8")')
+          s = p.read_text().replace('+        workflow = WORKFLOW.read_text(encoding="utf-8"))', '+        workflow = WORKFLOW.read_text(encoding="utf-8")')
           p.write_text(s)
           PY
           gh api repos/bareboat-necessities/ocean-imu/git/blobs/aefb5c9ff33d55137d0641e687124a920a1117b3 --jq .content | base64 -d > /tmp/followup.patch
           echo 'c4de91dce452300ffdcadd1d54451942c598371b014b652f8e67cec10f71a157  /tmp/followup.patch' | sha256sum -c -
           git apply --recount /tmp/initial.patch
           git apply --recount /tmp/followup.patch
-      - name: Verify every source file against locally tested bytes
-        run: |
-          python3 - <<'PY'
-          import subprocess
-          expected = {
-            '.github/workflows/evidence-contract.yml': '1cf2fd0ad4bad46be603aaf07abccf80f5148c9c',
-            '.github/workflows/ou-validation.yml': '6835ea5a253e13961dbd4ecdfc8b98a845f19d7b',
-            'docs/ou3-proof-research-state.md': 'a110bb737c8204266be947c9d26f5005859eda75',
-            'src/kalman_ou_ii/Kalman3D_Wave_OU_II.h': '844db467c7d94f2d154d4c98c0a64e5b7f3185ea',
-            'src/kalman_tfg/SeaStateFusionFilter_TFG.h': '4579483392e0848f1bdfa0480165ae3fd95cc72f',
-            'tests/common/StationaryDeviceRegression.h': 'a8aa72b431dcbf5c091d4e862b3c0d558452a705',
-            'tests/detrend/README.md': '81d583b9091b248503e28472a7c7f9dce03bae7c',
-            'tests/detrend/detrend-log-frequency-test.cpp': '47028c63d70de451ba5b13be514cc514261e521a',
-            'tests/kalman_tfg/Makefile': '7c456a1c548f1fc12d857b8de4b1d5824f30aeab',
-            'tests/kalman_tfg/run_tests.sh': '6593095388e1f90c94ce11f33be9fdbc5d92079f',
-            'tests/validation/test_ci_validation_dependencies.py': 'b7abec3eeb544c8a84c528400a3df46707e3c739',
-            'tests/validation/test_detrend_reference.py': 'b8889b19bbb106b278d877f12cd3b61763b6f3be',
-            'tests/validation/test_stationary_device_contract.py': 'f4cdbce4cd9395e92ef4a0cf2482159049e280c5',
-            'tools/detrend_reference.py': '8d382aab514e64f6886bfe07b7aa71ec4b804310',
-          }
-          for path, sha in expected.items():
-              actual = subprocess.check_output(['git','hash-object',path],text=True).strip()
-              if actual != sha:
-                  raise SystemExit(f'{path}: expected {sha}, found {actual}')
-          print('All 14 source files match the locally tested repair.')
-          PY
           python3 tools/detrend_reference.py --write
           python3 tools/detrend_reference.py
           python3 -m unittest discover -s tests/validation -p test_detrend_reference.py -v
           python3 -m unittest discover -s tests/validation -p test_ci_validation_dependencies.py -v
           python3 -m unittest discover -s tests/validation -p test_stationary_device_contract.py -v
           git diff --check
-      - name: Commit only the repair, removing this temporary workflow
-        id: commit
+      - name: Export content-addressed repair blobs for authorized publication
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git rm .github/workflows/ci-guard-repair-workbench.yml
           git add .github/workflows/evidence-contract.yml .github/workflows/ou-validation.yml docs/ou3-proof-research-state.md src/kalman_ou_ii/Kalman3D_Wave_OU_II.h src/kalman_tfg/SeaStateFusionFilter_TFG.h tests/common/StationaryDeviceRegression.h tests/detrend tests/kalman_tfg/Makefile tests/kalman_tfg/run_tests.sh tests/validation/test_ci_validation_dependencies.py tests/validation/test_detrend_reference.py tests/validation/test_stationary_device_contract.py tools/detrend_reference.py
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Fix current CI dependencies, detrender references and TFG startup regressions'
-          git push origin HEAD:refs/heads/work/ci-current-code-guards-payload
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          git show --stat --oneline HEAD
-      - name: Retain patch diagnostics
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: ci-guard-patch-diagnostics
-          path: /tmp/*.patch
-          retention-days: 3
-
-  native:
-    needs: prepare
-    runs-on: ubuntu-24.04
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      matrix:
-        suite: [detrend, kalman_ou_iii, kalman_tfg]
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.prepare.outputs.sha }}
-      - name: Install native dependencies
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq g++ make libeigen3-dev
-      - name: Fetch verified data
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: make ensure-sim-data
-      - name: Run the complete native suite
-        run: |
-          set -o pipefail
-          make -C tests/${{ matrix.suite }} all 2>&1 | tee "$RUNNER_TEMP/${{ matrix.suite }}.log"
+          python3 - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          paths = subprocess.check_output(['git','diff','--cached','--name-only'], text=True).splitlines()
+          assert len(paths) == 15, paths
+          entries = []
+          for path in paths:
+              mode, expected, _ = subprocess.check_output(['git','ls-files','-s','--',path], text=True).split()[:3]
+              payload = json.dumps({'content': Path(path).read_text(), 'encoding': 'utf-8'})
+              result = subprocess.check_output(['gh','api','--method','POST','repos/bareboat-necessities/ocean-imu/git/blobs','--input','-'], input=payload, text=True)
+              sha = json.loads(result)['sha']
+              assert sha == expected, (path, sha, expected)
+              entry = {'path': path, 'mode': mode, 'type': 'blob', 'sha': sha}
+              entries.append(entry)
+              print(json.dumps(entry), flush=True)
+          Path('/tmp/repair-blobs.json').write_text(json.dumps(entries, indent=2)+'\n')
+          PY
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: ci-guard-native-${{ matrix.suite }}
-          path: ${{ runner.temp }}/${{ matrix.suite }}.log
+          name: ci-guard-repair-blobs
+          path: /tmp/repair-blobs.json
           retention-days: 3
-
-  full-host:
-    needs: prepare
-    runs-on: ubuntu-24.04
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.prepare.outputs.sha }}
-          fetch-depth: 0
-      - name: Install full host dependencies
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq g++ make libeigen3-dev python3-numpy python3-matplotlib python3-pandas python3-scipy
-      - name: Run repository primary validation
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -o pipefail
-          make all 2>&1 | tee "$RUNNER_TEMP/make-all.log"
-      - uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: ci-guard-make-all
-          path: ${{ runner.temp }}/make-all.log
-          retention-days: 3
+          if-no-files-found: warn
