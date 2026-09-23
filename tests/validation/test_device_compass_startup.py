@@ -59,6 +59,9 @@ class DeviceCompassStartupTest(unittest.TestCase):
                     self.assertIn("startupProxyInitialized()", update)
                 else:
                     self.assertIn("fusion_.startupTiltQuaternion(q_bw)", update)
+                    self.assertIn("if (!fusion_.isLive()", update)
+                    self.assertIn("heave_m_ = displacement_det_out_.wave_clean.z();", update)
+                    self.assertIn("heave_raw_m_        = displacement_up_m_.z();", update)
 
     def test_first_sample_geometry_and_invalid_inputs(self):
         candidates = [Path(os.environ.get("EIGEN_INCLUDE_DIR", "/usr/include/eigen3")),
