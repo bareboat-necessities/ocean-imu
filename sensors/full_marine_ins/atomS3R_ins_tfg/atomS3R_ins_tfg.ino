@@ -6,9 +6,9 @@
     - right-invariant two-frame Lie-group INS
     - filter learns tilt during startup through the private Mahony proxy
     - one-shot magnetic north lock inside SeaStateFusionFilter_TFG
-    - startup compass uses private-proxy tilt plus calibrated magnetic heading
-    - filter yaw takes over only after Live and core magnetic-reference setup
-    - tilt-compensated magnetic heading remains available for diagnostics
+    - measured magnetic heading is available from the first valid IMU/mag sample
+    - startup tilt comes from the private proxy, then from the live filter
+    - startup compass does not wait for INS; fused filter yaw takes over once Live
 
   Assumptions:
     - fusion_.mekf().quaternion() returns BODY->WORLD rotation (q_bw), world frame is NED (+Z down).
@@ -218,32 +218,35 @@ static inline bool magneticHeadingFromDownAndMagBody_(
     const Vector3f& mag_b_uT,
     float& heading_deg_out)
 {
+  heading_deg_out = NAN;
+  if (!down_b_unit.allFinite() || !mag_b_uT.allFinite()) return false;
   const Vector3f FWD_B(1.0f, 0.0f, 0.0f);
 
   Vector3f d = down_b_unit;
   const float dn = d.norm();
-  if (dn < 1e-6f) return false;
+  if (!std::isfinite(dn) || !(dn > 1e-6f)) return false;
   d /= dn;
 
   Vector3f m = mag_b_uT;
   const float mn = m.norm();
-  if (mn < 1e-6f) return false;
+  if (!std::isfinite(mn) || !(mn > 1e-6f)) return false;
   m /= mn;
 
   Vector3f east_b = d.cross(m);
   const float en = east_b.norm();
-  if (en < 1e-6f) return false;
+  if (!std::isfinite(en) || !(en > 1e-6f)) return false;
   east_b /= en;
 
   Vector3f north_b = east_b.cross(d);
   const float nn = north_b.norm();
-  if (nn < 1e-6f) return false;
+  if (!std::isfinite(nn) || !(nn > 1e-6f)) return false;
   north_b /= nn;
 
   const float e = east_b.dot(FWD_B);
   const float n = north_b.dot(FWD_B);
+  if (!(std::hypot(e, n) > 1e-6f)) return false;
   heading_deg_out = wrap360_(atan2f(e, n) * RAD_TO_DEG);
-  return true;
+  return std::isfinite(heading_deg_out);
 }
 
 class FusionApp {
@@ -379,7 +382,7 @@ private:
   float dt_               = 0.0f;
   float roll_deg_         = 0.0f;
   float pitch_deg_        = 0.0f;
-  float heading_deg_      = 0.0f;
+  float heading_deg_      = NAN;
   bool  heading_valid_    = false;
   bool  heading_fused_    = false;
   float heave_m_          = 0.0f;
@@ -628,7 +631,7 @@ private:
     acc_bias_estimating_ = false;
     gyro_bias_ema_.setZero();
 
-    heading_deg_   = 0.0f;
+    heading_deg_   = NAN;
     heading_valid_ = false;
     heading_fused_ = false;
 
@@ -756,6 +759,23 @@ private:
         displacement_detrender_.update(displacement_up_m_, dt, wave_hz_, ext_freq_valid);
   }
 
+  // Before INS readiness, report the measured compass using startup tilt.
+  // Once the magnetically informed filter is Live, publish its fused yaw.
+  void updateCompassHeading_(const Eigen::Quaternionf& q_bw, bool attitude_ok,
+                               bool fused_ready = false, float fused_heading_deg = NAN) {
+    heading_mag_ok_ = false;
+    heading_mag_deg_ = NAN;
+    if (mag_ok_ && attitude_ok) {
+      const Vector3f down_b = quatRotate_(q_bw.conjugate(), Vector3f::UnitZ());
+      heading_mag_ok_ = magneticHeadingFromDownAndMagBody_(
+          down_b, m_cal_, heading_mag_deg_);
+    }
+    heading_fused_ = fused_ready && attitude_ok && std::isfinite(fused_heading_deg);
+    heading_valid_ = heading_fused_ || heading_mag_ok_;
+    heading_deg_ = heading_fused_ ? wrap360_(fused_heading_deg)
+        : (heading_mag_ok_ ? heading_mag_deg_ : NAN);
+  }
+
   void updateFilter_(const ImuSample& s) {
     dt_ = computeFusionDtFromSampleTimestamp_(s);
     const float tempC = std::isfinite(s.tempC) ? s.tempC : 35.0f;
@@ -805,34 +825,8 @@ private:
       pitch_deg_ = pitch_est_deg;
     }
 
-    heading_mag_ok_ = false;
-    heading_mag_deg_ = NAN;
-    if (mag_ok_ && attitude_ok) {
-      const Vector3f down_w(0.0f, 0.0f, 1.0f);
-      Vector3f down_b = quatRotate_(q_bw.conjugate(), down_w);
-      const float dn = down_b.norm();
-      if (std::isfinite(dn) && dn > 1e-6f) {
-        down_b /= dn;
-        float hdg_mag = NAN;
-        if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg_mag) &&
-            std::isfinite(hdg_mag)) {
-          heading_mag_ok_ = true;
-          heading_mag_deg_ = hdg_mag;
-        }
-      }
-    }
-
-    // Keep compass availability separate from INS readiness. Before handoff,
-    // use measured magnetic heading with the active proxy's tilt, not the
-    // yaw-free proxy yaw or the inactive core. Once Live, retain TFG yaw.
-    heading_fused_ = attitude_ok && fusion_.isLive() &&
-        fusion_.mekf().has_magnetic_reference();
-    heading_valid_ = heading_fused_ || heading_mag_ok_;
-    if (heading_fused_) {
-      heading_deg_ = heading_est_deg;
-    } else if (heading_mag_ok_) {
-      heading_deg_ = heading_mag_deg_;
-    }
+    updateCompassHeading_(q_bw, attitude_ok,
+        fusion_.isLive() && fusion_.mekf().has_magnetic_reference(), heading_est_deg);
 
     gyro_bias_learning_ = still;
 
@@ -1032,7 +1026,7 @@ private:
       wave_sign_raw_);
   #else
     Serial.printf(
-      "hdg_filt=%s%.2f | hdg_mag=%s%.2f | wav_axis=%.2f | wav_dir=%s%.2f | wav_sign=%d pol=%d"
+      "hdg=%s%.2f | hdg_mag=%s%.2f | wav_axis=%.2f | wav_dir=%s%.2f | wav_sign=%d pol=%d"
       " | dt_imu_ms=%.2f | mag_ok=%u | mag_fresh=%u | |m|=%.2f"
       " | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f"
       " | gyro_ned[rad/s] N=%.3f E=%.3f D=%.3f"

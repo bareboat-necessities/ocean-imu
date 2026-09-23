@@ -699,9 +699,106 @@ void test_linear_block_gate() {
     check(!m.applyIntegralZeroPseudoMeas(), "integral pseudo update active while block frozen");
 }
 
+
+// Device-faithful 200 Hz IMU / 25 Hz magnetic service. The input has a known
+// nonzero heading and periodic heave; no truth attitude is injected into the
+// filter. Turns overlap acquisition, its handoff gap, and Live refinement.
+void test_turning_magnetic_acquisition() {
+    constexpr float dt = 0.005f;
+    constexpr float deg = kPi / 180.0f;
+    const Vector3f field(20.0f, 0.0f, 43.0f);
+    auto yaw_deg = [&](const Eigen::Quaternionf& q) {
+        const Matrix3f R = q.toRotationMatrix();
+        return std::atan2(R(1, 0), R(0, 0)) / deg;
+    };
+    for (int scenario = 0; scenario < 5; ++scenario) {
+        Fusion f;
+        Fusion::Config cfg;
+        cfg.sigma_a = Vector3f::Constant(0.12f);
+        cfg.gyro_noise_density = 0.00135f;
+        cfg.sigma_m = Vector3f::Constant(0.8f);
+        cfg.mag_delay_sec = 0.0f;
+        cfg.mag_init_min_mag_norm = 5.0f;
+        f.begin(cfg);
+        float max_error = 0.0f, handoff_error = NAN;
+        double tail_sq = 0.0;
+        int tail_count = 0;
+        bool finite = true;
+        for (int i = 0; i < 44000; ++i) {
+            const float t = static_cast<float>(i) * dt;
+            float psi = 123.0f * deg, psi_dot = 0.0f;
+            float start = 12.0f, end = 42.0f, speed = 10.0f * deg;
+            if (scenario == 2) { start = 40.0f; end = 80.0f; speed = 6.0f * deg; }
+            if (scenario == 3) { start = 25.0f; end = 30.0f; speed = 15.0f * deg; }
+            if (scenario == 4) { start = 150.0f; end = 200.0f; speed = 3.0f * deg; }
+            if (scenario != 0) {
+                psi += std::clamp(t - start, 0.0f, end - start) * speed;
+                if (t >= start && t < end) psi_dot = speed;
+            }
+            const float r = 0.1f * std::sin(2.0f * kPi * 0.17f * t);
+            const float p = 0.06f * std::sin(2.0f * kPi * 0.13f * t);
+            const float rd = 0.1f * 2.0f * kPi * 0.17f * std::cos(2.0f * kPi * 0.17f * t);
+            const float pd = 0.06f * 2.0f * kPi * 0.13f * std::cos(2.0f * kPi * 0.13f * t);
+            const Eigen::Quaternionf truth =
+                Eigen::AngleAxisf(psi, Vector3f::UnitZ()) *
+                Eigen::AngleAxisf(p, Vector3f::UnitY()) *
+                Eigen::AngleAxisf(r, Vector3f::UnitX());
+            const Vector3f gyro(rd - psi_dot * std::sin(p),
+                pd * std::cos(r) + psi_dot * std::sin(r) * std::cos(p),
+                -pd * std::sin(r) + psi_dot * std::cos(r) * std::cos(p));
+            const Vector3f a_world(0.0f, 0.0f, 0.6f * std::sin(2.0f * kPi * 0.2f * t));
+            const Vector3f acc = truth.conjugate() * (a_world - Vector3f(0, 0, kG));
+            const bool was_live = f.isLive();
+            f.update(dt, gyro, acc);
+            if (!was_live && f.isLive() && f.magReferenceLearned()) {
+                handoff_error = std::abs(std::remainder(yaw_deg(f.quaternion()) - yaw_deg(truth), 360.0f));
+            }
+            if (i % 8 == 0 && (scenario != 4 || t >= 165.0f)) {
+                f.updateMag(truth.conjugate() * field);
+            }
+            if (f.isLive() && f.magReferenceLearned()) {
+                const float error = std::abs(std::remainder(yaw_deg(f.quaternion()) - yaw_deg(truth), 360.0f));
+                finite = finite && std::isfinite(error) && f.mekf().covariance_full().allFinite();
+                max_error = std::max(max_error, error);
+                if (t >= 200.0f) { tail_sq += static_cast<double>(error) * error; ++tail_count; }
+            }
+        }
+        const std::string label = "turning magnetic acquisition scenario " + std::to_string(scenario);
+        check(f.isLive() && f.magReferenceLearned() && f.magReferenceRefined(), label + " did not complete acquisition");
+        check(finite && max_error < 0.3f, label + " lost current fused heading");
+        check(tail_count > 0 && std::sqrt(tail_sq / std::max(1, tail_count)) < 0.1,
+              label + " retained a standing yaw error");
+        check((f.mekf().magnetic_reference_world() - field).norm() < 0.1f,
+              label + " attenuated the field during a turn");
+        if (scenario != 4) check(std::isfinite(handoff_error) && handoff_error < 0.3f,
+                                 label + " handed off a stale absolute yaw");
+        if (scenario == 3) check(f.magNorthLockTimeSec() < 25.0f,
+                                 "handoff-gap case did not acquire north before the turn");
+        if (scenario == 4) check(f.handoffTimedOut() && f.magNorthLockTimeSec() > 165.0f,
+                                 "late-magnetometer case did not exercise the timeout path");
+        std::cout << "  " << label << ": max=" << max_error
+                  << " deg, tail RMS=" << std::sqrt(tail_sq / std::max(1, tail_count)) << " deg\n";
+    }
+}
+
+void test_vertical_field_is_not_a_north_lock() {
+    Fusion f;
+    auto cfg = default_config();
+    cfg.mag_delay_sec = 0.0f;
+    f.begin(cfg);
+    for (int i = 0; i < 6000; ++i) {
+        f.update(0.005f, Vector3f::Zero(), Vector3f(0, 0, -kG));
+        if (i % 8 == 0) f.updateMag(Vector3f(0, 0, 43.0f));
+    }
+    check(!f.magReferenceLearned() && !f.mekf().has_magnetic_reference(),
+          "a vertical field was labelled a magnetic north lock");
+}
+
 } // namespace
 
 int main() {
+    test_turning_magnetic_acquisition();
+    test_vertical_field_is_not_a_north_lock();
     test_initialize_from_acc();
     test_aw_stationary_covariance_is_model_only();
     test_linear_block_gate();

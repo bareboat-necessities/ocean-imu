@@ -1,0 +1,43 @@
+name: device-compass
+
+on:
+  pull_request:
+    paths:
+      - sensors/full_marine_ins/atomS3R_ins_tfg/**
+      - sensors/full_marine_ins/atomS3R_ins_kalman_ou3/**
+      - sensors/full_marine_ins/atomS3R_ins_kalman_ou2/**
+      - src/**
+      - tests/kalman_tfg/tfg_orchestrator-test.cpp
+      - tests/kalman_tfg/Makefile
+      - tests/validation/test_device_compass_startup.py
+      - .github/workflows/device-compass.yml
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  first-sample:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Test calibration and startup-to-fused output in OU2, OU3 and TFG
+        run: python3 tests/validation/test_device_compass_startup.py -v
+      - name: Build the fused-heading and magnetic-acquisition regressions
+        run: make -C tests/kalman_tfg tfg_orchestrator-test
+      - name: Test fused heading during acquisition, handoff, refinement and late magnetic service
+        shell: bash
+        run: |
+          set -euo pipefail
+          tests/kalman_tfg/tfg_orchestrator-test | tee tfg-heading-regression.log
+      - name: Retain fused-heading regression results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: device-compass-fused-heading
+          path: tfg-heading-regression.log
+          if-no-files-found: ignore
