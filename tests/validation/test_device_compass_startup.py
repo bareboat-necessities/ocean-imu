@@ -44,7 +44,7 @@ class DeviceCompassStartupTest(unittest.TestCase):
                 compass = function(source, "updateCompassHeading_")
                 serial = function(source, "streamSerial_")
                 self.assertIn("m_cal_ = runtime_.applyMag(s.m);", update)
-                self.assertIn("updateCompassHeading_(q_bw, attitude_ok,", update)
+                self.assertIn("updateCompassHeading_(", update)
                 self.assertNotIn("heading_deg_ = heading_est_deg", update)
                 self.assertNotIn("fusion_", compass)
                 self.assertIn("heading_valid_ = heading_fused_ || heading_mag_ok_;", compass)
@@ -59,6 +59,7 @@ class DeviceCompassStartupTest(unittest.TestCase):
                     self.assertIn("startupProxyQuat()", update)
                     self.assertIn("startupProxyTiltQuat()", update)
                     self.assertIn("q_compass_tilt", update)
+                    self.assertIn("updateCompassHeading_(q_compass_tilt, attitude_ok,", update)
                     self.assertIn("startupProxyInitialized()", update)
                     self.assertIn("const bool live = fusion_.isLive();", update)
                 else:
