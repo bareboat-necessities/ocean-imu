@@ -1,0 +1,46 @@
+name: tfg-device-regression
+on:
+  push:
+    branches: [fix-tfg-device-heave-and-ci]
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/kalman_tfg/**'
+      - 'tests/detrend/**'
+      - '.github/workflows/tfg-device-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: tfg-device-regression-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  handoff:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install C++ build dependencies
+        run: sudo apt-get update && sudo apt-get install -y g++ make libeigen3-dev
+      - name: Compile the committed handoff regression
+        run: make -C tests/kalman_tfg tfg_handoff_heave-test
+      - name: Execute ten-minute handoff histories
+        run: |
+          set -o pipefail
+          ./tests/kalman_tfg/tfg_handoff_heave-test | tee tfg-handoff-results.txt
+      - name: Retain numerical results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tfg-handoff-results
+          path: tfg-handoff-results.txt
+          if-no-files-found: warn
+      - name: Retain source snapshot for offline reproduction
+        if: always()
+        run: git archive --format=tar.gz --output=tfg-source-snapshot.tar.gz HEAD
+      - name: Upload source snapshot
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tfg-source-snapshot
+          path: tfg-source-snapshot.tar.gz
