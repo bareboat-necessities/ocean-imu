@@ -92,6 +92,11 @@ constexpr float FREQ_GUESS = 0.3f;
 #include "wave_dir/VesselRaoEqualizer.h"
 #include "wave_dir/WaveDirectionDetector.h"
 #include "wave_dir/WaveDirectionFrame.h"
+#include "wave_dir/WaveDirectionReport.h"
+#include "util/AngleUtils.h"
+#include "util/ImuLoopHelpers.h"
+#include "util/MagneticHeading.h"
+#include "util/QuaternionUtils.h"
 
 static constexpr float    LOOP_HZ        = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LOOP_HZ);
@@ -125,129 +130,8 @@ static constexpr float ACC_VIBRATION_GUARD_HZ =
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
 
-static inline float clampf_(float x, float lo, float hi) {
-  return x < lo ? lo : (x > hi ? hi : x);
-}
-
-static inline float wrap360_(float deg) {
-  while (deg < 0.0f) deg += 360.0f;
-  while (deg >= 360.0f) deg -= 360.0f;
-  return deg;
-}
-
-static inline float wrap180_(float deg) {
-  while (deg <= -180.0f) deg += 360.0f;
-  while (deg >   180.0f) deg -= 360.0f;
-  return deg;
-}
-
-static inline Vector3f quatRotate_(const Eigen::Quaternionf& q, const Vector3f& v) {
-  const Vector3f qv(q.x(), q.y(), q.z());
-  const Vector3f t = 2.0f * qv.cross(v);
-  return v + q.w() * t + qv.cross(t);
-}
-
-// Generic mapper.
-// If your WaveDirection enum does not use negative/positive numeric polarity,
-// replace only this function.
-static inline int waveDirectionSignPolarity_(WaveDirection s) {
-  if (s == UNCERTAIN) {
-    return 0;
-  }
-
-  const int raw = static_cast<int>(s);
-
-  if (raw < 0) return -1;  // opposite axis, add 180 deg
-  if (raw > 0) return +1;  // same axis
-
-  return 0;
-}
-
-static inline int waveDirectionSignRaw_(WaveDirection s) {
-  return static_cast<int>(s);
-}
-
-static inline bool signedWaveDirectionDeg_(float axis_deg,
-                                           int sign_polarity,
-                                           float& signed_deg_out)
-{
-  if (!std::isfinite(axis_deg) || sign_polarity == 0) {
-    signed_deg_out = NAN;
-    return false;
-  }
-
-  signed_deg_out = wrap360_(axis_deg + (sign_polarity < 0 ? 180.0f : 0.0f));
-  return true;
-}
-
-static inline bool rollPitchHeadingFromQuatBw_(
-    const Eigen::Quaternionf& q_bw,
-    float& roll_deg_out,
-    float& pitch_deg_out,
-    float& heading_deg_out) {
-  Eigen::Quaternionf q = q_bw;
-  const float nq = q.norm();
-  if (!(nq > 1e-6f) || !std::isfinite(nq)) return false;
-  q.normalize();
-
-  const float x = q.x();
-  const float y = q.y();
-  const float z = q.z();
-  const float w = q.w();
-
-  const float siny_cosp = 2.0f * (w * z + x * y);
-  const float cosy_cosp = 1.0f - 2.0f * (y * y + z * z);
-  const float yaw = atan2f(siny_cosp, cosy_cosp);
-
-  float sinp = 2.0f * (w * y - z * x);
-  sinp = clampf_(sinp, -1.0f, 1.0f);
-  const float pitch = asinf(sinp);
-
-  const float sinr_cosp = 2.0f * (w * x + y * z);
-  const float cosr_cosp = 1.0f - 2.0f * (x * x + y * y);
-  const float roll = atan2f(sinr_cosp, cosr_cosp);
-
-  roll_deg_out    = wrap180_(roll * RAD_TO_DEG);
-  pitch_deg_out   = wrap180_(pitch * RAD_TO_DEG);
-  heading_deg_out = wrap360_(yaw * RAD_TO_DEG);
-  return true;
-}
-
-static inline bool magneticHeadingFromDownAndMagBody_(
-    const Vector3f& down_b_unit,
-    const Vector3f& mag_b_uT,
-    float& heading_deg_out)
-{
-  heading_deg_out = NAN;
-  if (!down_b_unit.allFinite() || !mag_b_uT.allFinite()) return false;
-  const Vector3f FWD_B(1.0f, 0.0f, 0.0f);
-
-  Vector3f d = down_b_unit;
-  const float dn = d.norm();
-  if (!std::isfinite(dn) || !(dn > 1e-6f)) return false;
-  d /= dn;
-
-  Vector3f m = mag_b_uT;
-  const float mn = m.norm();
-  if (!std::isfinite(mn) || !(mn > 1e-6f)) return false;
-  m /= mn;
-
-  Vector3f east_b = d.cross(m);
-  const float en = east_b.norm();
-  if (!std::isfinite(en) || !(en > 1e-6f)) return false;
-  east_b /= en;
-
-  Vector3f north_b = east_b.cross(d);
-  const float nn = north_b.norm();
-  if (!std::isfinite(nn) || !(nn > 1e-6f)) return false;
-  north_b /= nn;
-
-  const float e = east_b.dot(FWD_B);
-  const float n = north_b.dot(FWD_B);
-  if (!(std::hypot(e, n) > 1e-6f)) return false;
-  heading_deg_out = wrap360_(atan2f(e, n) * RAD_TO_DEG);
-  return std::isfinite(heading_deg_out);
-}
+namespace ins = ocean_imu::ins;
+using wave_direction::WaveDirectionReport;
 
 class FusionApp {
 public:
@@ -372,7 +256,7 @@ private:
   KalmanWaveDirection                dir_filter_{2.0f * static_cast<float>(M_PI) * FREQ_GUESS};
   WaveDirectionDetector<float>       dir_sign_{0.002f, 0.005f};
 
-  uint32_t mag_gate_last_ms_ = 0;
+  ins::MagFreshGate mag_gate_{};
 
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
@@ -390,15 +274,8 @@ private:
   float wave_envelope_m_  = 0.0f;
   float wave_hz_          = FREQ_GUESS;
 
-  float wave_axis_deg_       = NAN;
-  bool  wave_axis_ok_        = false;
-  WaveDirection wave_sign_   = UNCERTAIN;
-  int   wave_sign_raw_       = 0;
-  int   wave_sign_polarity_  = 0;
-  bool  wave_sign_ok_        = false;
-  float wave_dir_deg_        = NAN;
-  bool  wave_dir_ok_         = false;
-  float wave_dir_conf_pct_   = 0.0f;
+  WaveDirection       wave_sign_ = UNCERTAIN;  // held by updateWaveDirection_()
+  WaveDirectionReport wave_{};
 
   float heave_raw_m_        = 0.0f;
   float heave_baseline_m_   = 0.0f;
@@ -413,22 +290,12 @@ private:
   bool  heading_mag_ok_  = false;
 
   uint16_t stale_frame_count_ = 0;
-  uint32_t last_skipped_total_ = 0;
-  bool     have_last_sample_us_ = false;
-  uint32_t last_sample_us_      = 0;
+  ins::SampleDtTracker sample_dt_{1.0f / LOOP_HZ};
+  ins::SampleRateMeter rates_{};
 
-  bool     rot_inited_    = false;
-  float    rot_dpm_filt_  = 0.0f;
-  bool     gyro_bias_ok_       = false;
-  bool     gyro_bias_learning_ = false;
-  bool     acc_bias_estimating_ = false;
-  Vector3f gyro_bias_ema_      = Vector3f::Zero();
-
-  uint32_t rate_window_ms_   = 0;
-  uint32_t imu_sample_count_ = 0;
-  uint32_t mag_sample_count_ = 0;
-  float    imu_sample_hz_    = 0.0f;
-  float    mag_sample_hz_    = 0.0f;
+  ins::StillGyroBiasEma gyro_bias_{ROT_BIAS_TAU_S, ROT_STILL_G_TOL_FRAC, ROT_STILL_GYRO_RAD_S};
+  ins::RateOfTurnFilter rot_{};
+  bool acc_bias_estimating_ = false;
 
 private:
   static void waitForNextLoopTick_(uint32_t loop_start_us) {
@@ -436,10 +303,6 @@ private:
     if (elapsed_us < LOOP_PERIOD_US) {
       delayMicroseconds(LOOP_PERIOD_US - elapsed_us);
     }
-  }
-
-  float nominalFusionDt_() const {
-    return 1.0f / LOOP_HZ;
   }
 
   // The filter reports the wave period, not a frequency.  Everything
@@ -467,42 +330,6 @@ private:
     if (!std::isfinite(sigma) || !std::isfinite(tau)) return NAN;
     constexpr float C_HS = 2.0f * 1.41421356237f / (3.14159265359f * 3.14159265359f);
     return C_HS * sigma * tau * tau / 2.0f;
-  }
-
-  bool updateMagFreshGate_(bool mag_ok, uint32_t now_ms) {
-    constexpr uint32_t kSampleSpacingMs = 35u;
-
-    if (!mag_ok) {
-      mag_gate_last_ms_ = 0;
-      return false;
-    }
-
-    if (mag_gate_last_ms_ == 0) {
-      mag_gate_last_ms_ = now_ms;
-      return true;
-    }
-
-    if ((now_ms - mag_gate_last_ms_) < kSampleSpacingMs) {
-      return false;
-    }
-
-    mag_gate_last_ms_ = now_ms;
-    return true;
-  }
-
-  float computeFusionDtFromSampleTimestamp_(const ImuSample& s) {
-    const float dt_nom = nominalFusionDt_();
-    if (!have_last_sample_us_) {
-      have_last_sample_us_ = true;
-      last_sample_us_ = s.sample_us;
-      return dt_nom;
-    }
-
-    const uint32_t dt_us = s.sample_us - last_sample_us_;
-    last_sample_us_ = s.sample_us;
-    const float dt_s = static_cast<float>(dt_us) * 1.0e-6f;
-    if (!(dt_s > 0.0f) || !std::isfinite(dt_s)) return dt_nom;
-    return dt_s;
   }
 
   uint32_t magPollMs_() const {
@@ -552,16 +379,9 @@ private:
       while (true) delay(100);
     }
 
-    mag_gate_last_ms_ = 0;
-
-    last_skipped_total_ = 0;
-    rate_window_ms_ = millis();
-    imu_sample_count_ = 0;
-    mag_sample_count_ = 0;
-    imu_sample_hz_ = 0.0f;
-    mag_sample_hz_ = 0.0f;
-    have_last_sample_us_ = false;
-    last_sample_us_      = 0;
+    mag_gate_.reset();
+    rates_.reset(millis());
+    sample_dt_.reset();
   }
 
   void resetFusion_() {
@@ -628,18 +448,15 @@ private:
     dir_filter_ = KalmanWaveDirection(2.0f * static_cast<float>(M_PI) * FREQ_GUESS);
     dir_sign_.reset();
 
-    rot_inited_   = false;
-    rot_dpm_filt_ = 0.0f;
-    gyro_bias_ok_ = false;
-    gyro_bias_learning_ = false;
+    rot_.reset();
+    gyro_bias_.reset();
     acc_bias_estimating_ = false;
-    gyro_bias_ema_.setZero();
 
     heading_deg_   = NAN;
     heading_valid_ = false;
     heading_fused_ = false;
 
-    mag_gate_last_ms_ = 0;
+    mag_gate_.reset();
     mag_ok_           = false;
     mag_fresh_        = false;
     mag_norm_uT_      = NAN;
@@ -648,8 +465,7 @@ private:
     heading_mag_ok_   = false;
 
     stale_frame_count_ = 0;
-    have_last_sample_us_ = false;
-    last_sample_us_      = 0;
+    sample_dt_.reset();
     heave_speed_mps_     = 0.0f;
     heave_raw_m_         = 0.0f;
     heave_baseline_m_    = 0.0f;
@@ -658,15 +474,8 @@ private:
     wave_envelope_m_     = 0.0f;
     wave_hz_             = FREQ_GUESS;
 
-    wave_axis_deg_      = NAN;
-    wave_axis_ok_       = false;
-    wave_sign_          = UNCERTAIN;
-    wave_sign_raw_      = 0;
-    wave_sign_polarity_ = 0;
-    wave_sign_ok_       = false;
-    wave_dir_deg_       = NAN;
-    wave_dir_ok_        = false;
-    wave_dir_conf_pct_  = 0.0f;
+    wave_sign_ = UNCERTAIN;
+    wave_      = WaveDirectionReport{};
   }
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -770,21 +579,21 @@ private:
     heading_mag_ok_ = false;
     heading_mag_deg_ = NAN;
     if (mag_ok_ && attitude_ok) {
-      const Vector3f down_b = quatRotate_(q_bw.conjugate(), Vector3f::UnitZ());
-      heading_mag_ok_ = magneticHeadingFromDownAndMagBody_(
+      const Vector3f down_b = ins::quatRotate(q_bw.conjugate(), Vector3f::UnitZ());
+      heading_mag_ok_ = ins::magneticHeadingFromDownAndMagBody(
           down_b, m_cal_, heading_mag_deg_);
     }
     heading_fused_ = fused_ready && attitude_ok && std::isfinite(fused_heading_deg);
     heading_valid_ = heading_fused_ || heading_mag_ok_;
-    heading_deg_ = heading_fused_ ? wrap360_(fused_heading_deg)
+    heading_deg_ = heading_fused_ ? ins::wrap360Deg(fused_heading_deg)
         : (heading_mag_ok_ ? heading_mag_deg_ : NAN);
   }
 
   void updateFilter_(const ImuSample& s) {
-    dt_ = computeFusionDtFromSampleTimestamp_(s);
+    dt_ = sample_dt_.update(s.sample_us);
     const float tempC = std::isfinite(s.tempC) ? s.tempC : 35.0f;
     imu_temp_c_ = tempC;
-    ++imu_sample_count_;
+    rates_.countImu();
 
     const Vector3f a_raw = s.a;
     const Vector3f w_raw = s.w;
@@ -797,12 +606,8 @@ private:
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
-    mag_fresh_ = updateMagFreshGate_(mag_ok_, millis());
-    if (mag_fresh_) ++mag_sample_count_;
-
-    const bool still =
-        (fabsf(a_cal_.norm() - g_std) < ROT_STILL_G_TOL_FRAC * g_std) &&
-        (w_cal_.norm() < ROT_STILL_GYRO_RAD_S);
+    mag_fresh_ = mag_gate_.update(mag_ok_, millis());
+    if (mag_fresh_) rates_.countMag();
 
     // runtime_.applyAccel() has already applied the saved sensor temperature
     // calibration.  The TFG MEKF also has an optional internal k_a*(T-35 C)
@@ -832,7 +637,7 @@ private:
     float pitch_est_deg = pitch_deg_;
     float heading_est_deg = heading_deg_;
     const bool attitude_ok = have_attitude &&
-        rollPitchHeadingFromQuatBw_(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg);
+        ins::rollPitchHeadingFromQuatBw(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg);
     if (attitude_ok) {
       q_bw.normalize();
       roll_deg_  = roll_est_deg;
@@ -842,33 +647,9 @@ private:
     updateCompassHeading_(q_bw, attitude_ok,
         fusion_.isLive() && fusion_.mekf().has_magnetic_reference(), heading_est_deg);
 
-    gyro_bias_learning_ = still;
-
-    if (still) {
-      const float alpha_b = 1.0f - expf(-dt_ / ROT_BIAS_TAU_S);
-      if (!gyro_bias_ok_) {
-        gyro_bias_ok_  = true;
-        gyro_bias_ema_ = w_cal_;
-      } else {
-        gyro_bias_ema_ += alpha_b * (w_cal_ - gyro_bias_ema_);
-      }
-    }
-
-    Vector3f w_use = w_cal_;
-    if (gyro_bias_ok_) w_use -= gyro_bias_ema_;
-
-    const Vector3f w_world = quatRotate_(q_bw, w_use);
-    float rot_dpm_meas = w_world.z() * RAD_TO_DEG * 60.0f;
-    rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
-
-    const float tau_rot = 0.1f;
-    const float alpha_r = 1.0f - expf(-dt_ / tau_rot);
-    if (!rot_inited_) {
-      rot_inited_ = true;
-      rot_dpm_filt_ = rot_dpm_meas;
-    } else {
-      rot_dpm_filt_ += alpha_r * (rot_dpm_meas - rot_dpm_filt_);
-    }
+    gyro_bias_.update(w_cal_, a_cal_, g_std, dt_);
+    const Vector3f w_world = ins::quatRotate(q_bw, gyro_bias_.corrected(w_cal_));
+    rot_.update(w_world.z(), dt_);
 
     const Vector3f velocity_ned_mps = fusion_.mekf().get_velocity();
     heave_speed_mps_ = -velocity_ned_mps.z();
@@ -886,33 +667,10 @@ private:
     // sketches; retain raw position only in the diagnostic heave_raw_m_ field.
     heave_m_ = displacement_det_out_.wave_clean.z();
 
-    wave_axis_deg_ = dir_filter_.getAxisDegrees();
-    wave_axis_ok_  = fusion_.isLive() && std::isfinite(wave_axis_deg_);
-
-    wave_sign_raw_      = waveDirectionSignRaw_(wave_sign_);
-    wave_sign_polarity_ = waveDirectionSignPolarity_(wave_sign_);
-    wave_sign_ok_       = fusion_.isLive() && (wave_sign_ != UNCERTAIN);
-
-    wave_dir_ok_ = signedWaveDirectionDeg_(
-        wave_axis_deg_,
-        wave_sign_polarity_,
-        wave_dir_deg_);
-
-    wave_dir_ok_ = wave_dir_ok_ && fusion_.isLive();
-    wave_dir_conf_pct_ = wave_dir_ok_ ? 100.0f : (wave_axis_ok_ ? 50.0f : 0.0f);
+    wave_ = WaveDirectionReport::from(dir_filter_.getAxisDegrees(), wave_sign_, fusion_.isLive());
     acc_bias_estimating_ = fusion_.isLive();
 
-    const uint32_t now_ms = millis();
-    if (rate_window_ms_ == 0) rate_window_ms_ = now_ms;
-    const uint32_t rate_elapsed_ms = now_ms - rate_window_ms_;
-    if (rate_elapsed_ms >= 1000u) {
-      const float scale = 1000.0f / static_cast<float>(rate_elapsed_ms);
-      imu_sample_hz_ = static_cast<float>(imu_sample_count_) * scale;
-      mag_sample_hz_ = static_cast<float>(mag_sample_count_) * scale;
-      imu_sample_count_ = 0;
-      mag_sample_count_ = 0;
-      rate_window_ms_ = now_ms;
-    }
+    rates_.update(millis());
 
     heave_raw_m_        = displacement_up_m_.z();
     heave_baseline_m_   = displacement_det_out_.baseline_slow.z();
@@ -976,8 +734,8 @@ private:
     M5.Display.printf("PIT: %6.1f deg\n", static_cast<double>(pitch_deg_));
     M5.Display.printf("HEV: %6.3f m\n", static_cast<double>(heave_m_));
     M5.Display.printf("WAV: %6.1f s=%d\n",
-                      static_cast<double>(wave_dir_ok_ ? wave_dir_deg_ : wave_axis_deg_),
-                      wave_sign_raw_);
+                      static_cast<double>(wave_.dir_ok ? wave_.dir_deg : wave_.axis_deg),
+                      wave_.sign_raw);
     M5.Display.printf("MAG: %s %s\n", mag_ok_ ? "OK " : "BAD", mag_fresh_ ? "NEW" : "OLD");
     M5.Display.printf("|m|: %6.1f uT\n", static_cast<double>(mag_norm_uT_));
     M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n",
@@ -1008,10 +766,10 @@ private:
 
     if (now_ms - last_wave_nmea_ms_ >= NMEA_WAVE_MS) {
       last_wave_nmea_ms_ = now_ms;
-      nmea_xdr_wave_axis_rel(SEA_STATE_NMEA_TALKER, wave_axis_deg_, wave_axis_ok_);
-      nmea_xdr_wave_direction_rel(SEA_STATE_NMEA_TALKER, wave_dir_deg_, wave_dir_ok_);
-      nmea_txt_wave_direction_sign(SEA_STATE_NMEA_TALKER, wave_sign_raw_, wave_sign_polarity_, wave_sign_ok_);
-      nmea_txt_wave_direction_confidence(SEA_STATE_NMEA_TALKER, wave_dir_conf_pct_, fusion_.isLive());
+      nmea_xdr_wave_axis_rel(SEA_STATE_NMEA_TALKER, wave_.axis_deg, wave_.axis_ok);
+      nmea_xdr_wave_direction_rel(SEA_STATE_NMEA_TALKER, wave_.dir_deg, wave_.dir_ok);
+      nmea_txt_wave_direction_sign(SEA_STATE_NMEA_TALKER, wave_.sign_raw, wave_.sign_polarity, wave_.sign_ok);
+      nmea_txt_wave_direction_confidence(SEA_STATE_NMEA_TALKER, wave_.conf_pct, fusion_.isLive());
     }
 
     if (now_ms - last_temp_nmea_ms_ >= NMEA_TEMP_MS) {
@@ -1025,14 +783,14 @@ private:
                           valid,
                           fusion_.isLive() && std::isfinite(heave_wave_clean_m_),
                           fusion_.magReferenceLearned(),
-                          gyro_bias_learning_,
+                          gyro_bias_.learning(),
                           acc_bias_estimating_,
-                          imu_sample_hz_,
-                          mag_sample_hz_);
+                          rates_.imuHz(),
+                          rates_.magHz());
     }
 
     //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
-    nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, valid);
+    nmea_rot(SEA_STATE_NMEA_TALKER, rot_.dpm(), valid);
 #else
   #if ARDUINO_PLOTTER
     Serial.printf(
@@ -1040,9 +798,9 @@ private:
       static_cast<double>(heave_raw_m_ * 100.0f),
       static_cast<double>(wave_envelope_m_ * 100.0f),
       static_cast<double>(heave_wave_clean_m_ * 100.0f),
-      static_cast<double>(wave_axis_deg_),
-      static_cast<double>(wave_dir_deg_),
-      wave_sign_raw_);
+      static_cast<double>(wave_.axis_deg),
+      static_cast<double>(wave_.dir_deg),
+      wave_.sign_raw);
   #else
     Serial.printf(
       "hdg=%s%.2f | hdg_mag=%s%.2f | wav_axis=%.2f | wav_dir=%s%.2f | wav_sign=%d pol=%d"
@@ -1054,11 +812,11 @@ private:
       static_cast<double>(heading_deg_),
       heading_mag_ok_ ? "" : "~",
       static_cast<double>(heading_mag_deg_),
-      static_cast<double>(wave_axis_deg_),
-      wave_dir_ok_ ? "" : "~",
-      static_cast<double>(wave_dir_deg_),
-      wave_sign_raw_,
-      wave_sign_polarity_,
+      static_cast<double>(wave_.axis_deg),
+      wave_.dir_ok ? "" : "~",
+      static_cast<double>(wave_.dir_deg),
+      wave_.sign_raw,
+      wave_.sign_polarity,
       static_cast<double>(dt_ * 1000.0f),
       mag_ok_ ? 1U : 0U,
       mag_fresh_ ? 1U : 0U,
@@ -1112,13 +870,13 @@ private:
 // WHY THIS IS AT THE BOTTOM OF THE FILE.  SET_LOOP_TASK_STACK_SIZE expands to
 // a definition of getArduinoLoopTaskStackSize(), so it is a function
 // definition like any other.  The Arduino builder inserts its generated
-// prototypes immediately before the FIRST function definition in the sketch,
-// and those prototypes name Vector3f -- so with the macro up among the
-// configuration constants, the prototypes landed above the
-// `using Vector3f = Eigen::Vector3f;` alias and the sketch failed to compile
-// with "'Vector3f' does not name a type".  Down here the first function is
-// clampf_(), exactly as in the OU sketches, and the prototypes land where
-// they do there.
+// prototypes immediately before the FIRST function definition in the sketch.
+// When this sketch still defined its own free helpers, those prototypes named
+// Vector3f, and with the macro up among the configuration constants they
+// landed above the `using Vector3f = Eigen::Vector3f;` alias and the sketch
+// failed to compile with "'Vector3f' does not name a type".  The helpers now
+// live in the library (src/util, src/wave_dir); keep any free function that
+// is added back below the aliases, and keep this macro next to setup().
 // ---------------------------------------------------------------------------
 SET_LOOP_TASK_STACK_SIZE(32 * 1024);
 
