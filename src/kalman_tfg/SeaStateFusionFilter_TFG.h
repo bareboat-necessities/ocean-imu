@@ -247,7 +247,7 @@ public:
         live_sec_ = 0.0f;
         mag_elapsed_sec_ = 0.0f;
         tuner_warm_sec_ = 0.0f;
-        pseudo_elapsed_ = 0.0f;
+        pseudo_elapsed_ = 0.0f;\n        tilt_over_limit_sec_ = 0.0f;\n        tilt_reset_cooldown_sec_ = 0.0f;\n        tilt_reset_count_ = 0;
         adapt_elapsed_sec_ = 0.0f;
         stage_ = StartupStage::Cold;
         beginMagAcquisition_();
@@ -319,6 +319,39 @@ public:
         mekf_.time_update(gyro, dt);
         mekf_.measurement_update_acc_only(acc_in, tempC);
 
+        // Match the deployed OU-II/OU-III catastrophic-tilt watchdog. TFG
+        // previously had no equivalent, so an attitude excursion could leak
+        // gravity into a_w and then integrate through v/p/S for minutes.
+        // This is deliberately a recovery path, not normal tuning: it requires
+        // >70 deg tilt continuously for 0.35 s and has a 3 s cooldown.
+        {
+            Eigen::Quaternionf q_bw = mekf_.quaternion();
+            q_bw.normalize();
+            const Vector3f body_down_world = q_bw * Vector3f::UnitZ();
+            float cos_tilt = body_down_world.normalized().dot(Vector3f::UnitZ());
+            cos_tilt = std::max(-1.0f, std::min(1.0f, cos_tilt));
+            const float tilt_deg = std::acos(cos_tilt) * 57.295779513f;
+            constexpr float TILT_RESET_DEG = 70.0f;
+            constexpr float TILT_RESET_HOLD_SEC = 0.35f;
+            constexpr float TILT_RESET_COOLDOWN_SEC = 3.0f;
+            if (tilt_reset_cooldown_sec_ > 0.0f)
+                tilt_reset_cooldown_sec_ = std::max(0.0f, tilt_reset_cooldown_sec_ - dt);
+            if (tilt_deg > TILT_RESET_DEG)
+                tilt_over_limit_sec_ += dt;
+            else
+                tilt_over_limit_sec_ = std::max(0.0f, tilt_over_limit_sec_ - 2.0f*dt);
+            if (tilt_over_limit_sec_ >= TILT_RESET_HOLD_SEC &&
+                tilt_reset_cooldown_sec_ <= 0.0f) {
+                if (stage_ == StartupStage::Live)
+                    mekf_.initialize_from_acc_preserve_yaw(acc_in);
+                else
+                    mekf_.initialize_from_acc(acc_in);
+                tilt_over_limit_sec_ = 0.0f;
+                tilt_reset_cooldown_sec_ = TILT_RESET_COOLDOWN_SEC;
+                ++tilt_reset_count_;
+            }
+        }
+
         pseudo_elapsed_ += dt;
         if (pseudo_elapsed_ >= pseudo_period_sec_) {
             pseudo_elapsed_ = 0.0f;
@@ -375,7 +408,7 @@ public:
     }
     [[nodiscard]] float pseudoUpdatePeriodSec() const noexcept { return pseudo_period_sec_; }
     [[nodiscard]] bool handoffTimedOut() const noexcept { return handoff_timed_out_; }
-    [[nodiscard]] float getRSFilterInput() const noexcept { return RS_filter_input_; }
+    [[nodiscard]] float getRSFilterInput() const noexcept { return RS_filter_input_; }\n    [[nodiscard]] unsigned tiltResetCount() const noexcept { return tilt_reset_count_; }
 
     // Out-of-band accelerometer guard, ahead of the proxy and the MEKF.
     //
@@ -1257,7 +1290,7 @@ private:
     float elapsed_sec_ = 0.0f;
     float live_sec_ = 0.0f;
     float mag_elapsed_sec_ = 0.0f;
-    float pseudo_elapsed_ = 0.0f;
+    float pseudo_elapsed_ = 0.0f;\n    float tilt_over_limit_sec_ = 0.0f;\n    float tilt_reset_cooldown_sec_ = 0.0f;\n    unsigned tilt_reset_count_ = 0;
     float pseudo_period_sec_ = kPseudoPeriodNominalS;
     float adapt_every_secs_ = 0.1f;
     float adapt_elapsed_sec_ = 0.0f;
