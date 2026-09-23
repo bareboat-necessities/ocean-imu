@@ -561,6 +561,10 @@ private:
 
     auto& ff = fusion_.raw();
     ff.enableTuner(true);
+    // Avoid sparse 4--8 Hz virtual-constraint kicks in reported heave at rest.
+    // The existing noise law accounts for the selected correction cadence;
+    // this changes estimator scheduling, not the output detrender or limits.
+    ff.setTauScaledPseudoUpdateCadence(false);
     ff.setWithMag(true);
     // The tuner coefficients (S_factor, tau, sigma, r_S, r_S XY) are
     // deliberately not overridden here.  The header defaults are the operating

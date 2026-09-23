@@ -10,6 +10,30 @@ remain. General physical capture and the complete stability theorem are open.
 
 ## Evidence
 
+### Stationary device diagnostic boundary
+
+The 200 Hz/25 Hz stationary device replay exposes two implementation failures:
+a gyro-only TFG acquisition gauge can give a 90.56-degree handoff error, and
+sparse virtual corrections can give 0.32 m raw-position jumps near 7 Hz.
+Classification: startup yaw observability/reference handling and discrete
+correction scheduling, not a detrender defect. The hypothesis that quiet wave
+input alone preserves a learned gyro-world yaw gauge is invalidated. A fresh
+magnetic alignment and the supported 15 ms device cadence reduce these errors;
+existing physical assumptions, quality gates and the single proof path remain.
+The large-bias TFG replay retains an approximately 11.5 m slow startup position
+excursion. It is not an absolute-heave or stability certificate. OU-II/III
+heading code is unchanged; its short bias-learning transient is measured
+separately from handoff and final-minute error.
+
+Local infrastructure: concurrent Eigen compilation exhausted the container's
+memory; serial compilation is retained. A GitHub source artifact supplies the
+repository/Eigen headers because direct container GitHub DNS access failed.
+These limits are not numerical estimator failures. The next device experiment
+is an uninterrupted rest/wave/rest capture of raw and detrended displacement,
+magnetic and fused heading, fresh-packet timing, applied tuning and loop dt.
+It must distinguish residual low-frequency drift from correction-rate teeth.
+The common same-history covariance action and end-to-end proof remain open.
+
 `ou3-ag-readout-proof.md` adds a historical six-column covariance action.
 An exact backward 6x21 residual cancels the unbounded AG root; the remaining
 6x6 action retains all nuisance cross covariance, correlated process factors,

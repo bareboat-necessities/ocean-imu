@@ -5,6 +5,8 @@
 # actually fails the build.
 set -e
 
+./stationary_device-test
+
 ./lie_group-test
 ./convention-test
 ./ou_chain_identity-test

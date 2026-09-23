@@ -24,7 +24,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = lie_group-test convention-test ou_chain_identity-test tfg_propagation-test tfg_jacobians-test covariance_transport-test tfg_process_covariance-test tfg_orchestrator-test tfg_rs_axis_factors-test tfg_handoff_heave-test kalman_tfg-sim kalman_tfg-legacy-sim
+TARGETS = stationary_device-test lie_group-test convention-test ou_chain_identity-test tfg_propagation-test tfg_jacobians-test covariance_transport-test tfg_process_covariance-test tfg_orchestrator-test tfg_rs_axis_factors-test tfg_handoff_heave-test kalman_tfg-sim kalman_tfg-legacy-sim
 
 all: build test
 
@@ -82,3 +82,6 @@ kalman_tfg-legacy-sim: kalman_tfg-legacy-sim.o W3dSimCommon.o
 
 clean:
 	rm -f *.o *.d $(TARGETS) *.exe *.csv
+
+stationary_device-test: stationary_device-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
