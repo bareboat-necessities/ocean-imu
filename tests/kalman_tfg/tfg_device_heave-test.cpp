@@ -145,7 +145,7 @@ bool run_watchdog_stress() {
         if(!f.get_position().allFinite() || !f.mekf().covariance_full().allFinite()) return false;
     }
     std::cout<<"WATCHDOG_STRESS maxp="<<peak<<" resets="<<f.tiltResetCount()
-             <<" live="<<ever_live<<" pz="<<f.get_position().z()<<'\\n';
+             <<" live="<<ever_live<<" pz="<<f.get_position().z()<<'\n';
     return ever_live && f.tiltResetCount()>0 && peak<20.0f;
 }
 } // namespace
