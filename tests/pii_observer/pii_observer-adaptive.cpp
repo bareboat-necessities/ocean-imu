@@ -405,6 +405,10 @@ process_wave_file_for_adaptive_pii_mahony(const std::string& filename,
                                                     0.015f, 0.010f, 1.0f,
                                                     seeds.mag_noise, seeds.mag_initialization);
 
+    // Optional inboard-diesel vibration, identical to the other families.
+    // Absent unless W3D_ENGINE_RPM is set.
+    w3d_install_engine_vibration_from_env(noise_models, dt);
+
     const Vector3f sigma_a_init(2.8f * acc_sigma, 2.8f * acc_sigma, 2.8f * acc_sigma);
     const Vector3f sigma_g(2.0f * gyr_sigma, 2.0f * gyr_sigma, 2.0f * gyr_sigma);
     const float sigma_m_uT = 1.2f * mag_sigma_uT;

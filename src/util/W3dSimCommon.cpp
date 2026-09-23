@@ -1101,6 +1101,16 @@ std::string TvgNloSimulationRunner::make_output_name(const std::string& filename
     return outname;
 }
 
+// The scored protocol replays the irregular JONSWAP and PM-Stokes seas only.
+// W3D_ALL_WAVE_TYPES=1 also admits the regular Gerstner, cnoidal, and Fenton
+// records, for studies that want every record in the dataset.
+static bool w3d_wave_type_enabled(WaveType type)
+{
+    if (type == WaveType::JONSWAP || type == WaveType::PMSTOKES) return true;
+    const char* all = std::getenv("W3D_ALL_WAVE_TYPES");
+    return all != nullptr && std::string(all) != "0";
+}
+
 std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string& filename)
 {
     auto parsed = WaveFileNaming::parse_to_params(filename);
@@ -1108,7 +1118,7 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
 
     auto [kind, type, wp] = *parsed;
     if (kind != FileKind::Data) return std::nullopt;
-    if (!(type == WaveType::JONSWAP || type == WaveType::PMSTOKES)) return std::nullopt;
+    if (!w3d_wave_type_enabled(type)) return std::nullopt;
 
     W3dSimulationRunResult result;
     result.input_name = filename;
@@ -1409,7 +1419,7 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
 
     auto [kind, type, wp] = *parsed;
     if (kind != FileKind::Data) return std::nullopt;
-    if (!(type == WaveType::JONSWAP || type == WaveType::PMSTOKES)) return std::nullopt;
+    if (!w3d_wave_type_enabled(type)) return std::nullopt;
 
     TvgNloSimulationRunResult result;
     result.input_name = filename;
