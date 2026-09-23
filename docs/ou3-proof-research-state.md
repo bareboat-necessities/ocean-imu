@@ -34,6 +34,23 @@ magnetic and fused heading, fresh-packet timing, applied tuning and loop dt.
 It must distinguish residual low-frequency drift from correction-rate teeth.
 The common same-history covariance action and end-to-end proof remain open.
 
+The evidence-contract run additionally rejects the changed OU-II test
+Makefile and the already-stale AdaptiveWaveDetrender3D replay dependency.
+Classification: build-scope/provenance, not a failed stationary experiment.
+Restore all three original simulation Makefiles and add only the device-test
+rule through a separate included makefile at test execution. No contract or
+recorded hash is relaxed. The detrender hash is identical to the PR base but
+differs from both committed OU replay manifests; those studies still require
+a genuine replay regeneration. The focused CI stationary tests, existing TFG
+turning tests and expected-failure check on the old heading code pass.
+The independent TFG comparison check also reports stale source provenance;
+its published comparison must be regenerated after the startup change rather
+than restamped. Native compilation under `make all` completed, but the full
+test command cannot fetch the pinned RAO archive in this environment
+(`curl: (6) Could not resolve host: github.com`). Classification: local
+infrastructure, not a numerical pass or failure of the wave replay. The next
+full-replay experiment must use a runner with the pinned archive available.
+
 `ou3-ag-readout-proof.md` adds a historical six-column covariance action.
 An exact backward 6x21 residual cancels the unbounded AG root; the remaining
 6x6 action retains all nuisance cross covariance, correlated process factors,

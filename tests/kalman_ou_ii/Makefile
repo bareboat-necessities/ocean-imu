@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = stationary_device-test kalman_ou_ii-sim tuner_schedule-test iss_contract-test startup_init-test regularizer_floor-test pseudo_law-test
+TARGETS = kalman_ou_ii-sim tuner_schedule-test iss_contract-test startup_init-test regularizer_floor-test pseudo_law-test
 
 all: build test
 
@@ -60,6 +60,3 @@ regularizer_floor-test: regularizer_floor-test.o
 
 clean:
 	rm -f *.o *.d $(TARGETS) *.exe *.csv
-
-stationary_device-test: stationary_device-test.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)

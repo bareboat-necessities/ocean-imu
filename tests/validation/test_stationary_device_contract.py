@@ -15,11 +15,17 @@ class StationaryDeviceContract(unittest.TestCase):
             with self.subTest(family=family):
                 self.assertEqual(text.count(call), 1)
 
+    def test_shared_regression_rules_preserve_native_build_flags(self):
+        text = (ROOT / "tests/common/StationaryDeviceRegression.mk").read_text()
+        self.assertIn("stationary_device-test: stationary_device-test.o", text)
+        self.assertIn("$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)", text)
+
     def test_all_three_native_suites_run_the_regression(self):
         for family in ("kalman_ou_ii", "kalman_ou_iii", "kalman_tfg"):
             path = ROOT / "tests" / family
             with self.subTest(family=family):
-                self.assertIn("stationary_device-test", (path / "Makefile").read_text())
+                self.assertIn("../common/StationaryDeviceRegression.mk stationary_device-test",
+                              (path / "run_tests.sh").read_text())
                 self.assertIn("./stationary_device-test", (path / "run_tests.sh").read_text())
 
 

@@ -49,7 +49,9 @@ are unchanged.
 `stationary_device-test` in each of `tests/kalman_ou_ii`,
 `tests/kalman_ou_iii` and `tests/kalman_tfg` exercises the full startup and live
 orchestrator at 200 Hz IMU and 25 Hz magnetic sampling. It is run by each
-existing native suite. Sensors are generated from truth; no truth state is
+existing native suite. Its additive makefile is included only for the device
+regression; the original simulation build recipes remain byte-for-byte intact.
+Sensors are generated from truth; no truth state is
 injected into the estimator.
 
 The tests cover stationary heading with axial gyro bias, large biased/noisy
