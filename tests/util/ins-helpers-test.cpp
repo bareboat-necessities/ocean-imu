@@ -266,9 +266,15 @@ struct App {
 static int failures = 0;
 static long checks = 0;
 
+// Bit-exact equality (distinguishes -0.0f from 0.0f); any two NaNs match.
 static bool same(float a, float b) {
   if (std::isnan(a) && std::isnan(b)) return true;
-  return std::memcmp(&a, &b, sizeof a) == 0;
+  static_assert(sizeof(float) == sizeof(std::uint32_t), "float is not 32-bit");
+  std::uint32_t bits_a = 0;
+  std::uint32_t bits_b = 0;
+  std::memcpy(&bits_a, &a, sizeof a);
+  std::memcpy(&bits_b, &b, sizeof b);
+  return bits_a == bits_b;
 }
 
 #define CHECK(cond, ...)                                  \
