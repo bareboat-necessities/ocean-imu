@@ -56,7 +56,9 @@ class DeviceCompassStartupTest(unittest.TestCase):
                 self.assertIn("if (!have_blob_)", function(source, "begin"))
                 if "kalman_ou" in path.name:
                     self.assertIn("fusion_.attitudeQuat()", update)
+                    self.assertIn("startupProxyTiltQuat()", update)
                     self.assertIn("startupProxyInitialized()", update)
+                    self.assertIn("const bool live = fusion_.isLive();", update)
                 else:
                     self.assertIn("fusion_.startupTiltQuaternion(q_bw)", update)
                     self.assertIn("if (!fusion_.isLive()", update)
