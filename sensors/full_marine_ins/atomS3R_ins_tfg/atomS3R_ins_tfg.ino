@@ -800,7 +800,14 @@ private:
         (fabsf(a_cal_.norm() - g_std) < ROT_STILL_G_TOL_FRAC * g_std) &&
         (w_cal_.norm() < ROT_STILL_GYRO_RAD_S);
 
-    fusion_.update(dt_, w_cal_, a_cal_, tempC);
+    // runtime_.applyAccel() has already applied the saved sensor temperature
+    // calibration.  The TFG MEKF also has an optional internal k_a*(T-35 C)
+    // residual-bias model; feeding the physical temperature here applied a
+    // second, unrelated 0.002 m/s^2/C correction that OU-II/OU-III device
+    // paths do not apply.  Use the MEKF reference temperature for calibrated
+    // device samples; simulation/raw-sensor callers can still use update(...,
+    // tempC) when they intentionally model an internal temperature bias.
+    fusion_.update(dt_, w_cal_, a_cal_, 35.0f);
     if (mag_ok_ && mag_fresh_) {
       fusion_.updateMag(m_cal_);
     }
@@ -865,7 +872,9 @@ private:
     wave_hz_         = waveFrequencyHz_();
     wave_envelope_m_ = displacementScaleM_();
 
-    updateWaveDirection_(q_bw, tempC, dt_);
+    // Direction uses the same calibrated accelerometer, so query only the
+    // residual bias at the MEKF reference temperature as well.
+    updateWaveDirection_(q_bw, 35.0f, dt_);
     updateDisplacement_(dt_);
 
     // Raw integrated position can carry a large DC/random-walk component.
