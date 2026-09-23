@@ -716,11 +716,14 @@ private:
       fusion_.updateMag(m_cal_);
     }
 
-    // The core is held during bootstrap. Read the active attitude owner,
-    // which is seeded from the first sample, not the inactive identity.
-    Eigen::Quaternionf q_bw = fusion_.attitudeQuat();
-    const bool have_attitude = fusion_.isLive() ||
-        fusion_.raw().startupProxyInitialized();
+    // Keep startup attitude and startup compass tilt explicitly on the
+    // yaw-free Mahony proxy. Its yaw is unobservable and must never become a
+    // user-facing heading. Once Live, switch to the fused MEKF attitude.
+    const bool live = fusion_.isLive();
+    Eigen::Quaternionf q_bw = live
+        ? fusion_.attitudeQuat()
+        : fusion_.raw().startupProxyTiltQuat();
+    const bool have_attitude = live || fusion_.raw().startupProxyInitialized();
     float roll_est_deg = roll_deg_;
     float pitch_est_deg = pitch_deg_;
     float heading_est_deg = heading_deg_;
