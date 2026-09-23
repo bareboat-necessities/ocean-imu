@@ -247,7 +247,10 @@ public:
         live_sec_ = 0.0f;
         mag_elapsed_sec_ = 0.0f;
         tuner_warm_sec_ = 0.0f;
-        pseudo_elapsed_ = 0.0f;\n        tilt_over_limit_sec_ = 0.0f;\n        tilt_reset_cooldown_sec_ = 0.0f;\n        tilt_reset_count_ = 0;
+        pseudo_elapsed_ = 0.0f;
+        tilt_over_limit_sec_ = 0.0f;
+        tilt_reset_cooldown_sec_ = 0.0f;
+        tilt_reset_count_ = 0;
         adapt_elapsed_sec_ = 0.0f;
         stage_ = StartupStage::Cold;
         beginMagAcquisition_();
@@ -408,7 +411,8 @@ public:
     }
     [[nodiscard]] float pseudoUpdatePeriodSec() const noexcept { return pseudo_period_sec_; }
     [[nodiscard]] bool handoffTimedOut() const noexcept { return handoff_timed_out_; }
-    [[nodiscard]] float getRSFilterInput() const noexcept { return RS_filter_input_; }\n    [[nodiscard]] unsigned tiltResetCount() const noexcept { return tilt_reset_count_; }
+    [[nodiscard]] float getRSFilterInput() const noexcept { return RS_filter_input_; }
+    [[nodiscard]] unsigned tiltResetCount() const noexcept { return tilt_reset_count_; }
 
     // Out-of-band accelerometer guard, ahead of the proxy and the MEKF.
     //
@@ -1290,7 +1294,10 @@ private:
     float elapsed_sec_ = 0.0f;
     float live_sec_ = 0.0f;
     float mag_elapsed_sec_ = 0.0f;
-    float pseudo_elapsed_ = 0.0f;\n    float tilt_over_limit_sec_ = 0.0f;\n    float tilt_reset_cooldown_sec_ = 0.0f;\n    unsigned tilt_reset_count_ = 0;
+    float pseudo_elapsed_ = 0.0f;
+    float tilt_over_limit_sec_ = 0.0f;
+    float tilt_reset_cooldown_sec_ = 0.0f;
+    unsigned tilt_reset_count_ = 0;
     float pseudo_period_sec_ = kPseudoPeriodNominalS;
     float adapt_every_secs_ = 0.1f;
     float adapt_elapsed_sec_ = 0.0f;
