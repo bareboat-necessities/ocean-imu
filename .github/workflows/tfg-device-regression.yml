@@ -1,31 +1,69 @@
-name: tfg-validated-patch
+name: tfg-device-regression
 on:
   push:
     branches: [fix-tfg-device-heave-and-ci]
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/kalman_tfg/**'
+      - 'tests/detrend/**'
+      - '.github/workflows/tfg-device-regression.yml'
+  workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
+concurrency:
+  group: tfg-device-regression-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
-  apply:
-    if: github.repository == 'bareboat-necessities/ocean-imu'
+  handoff:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: fix-tfg-device-heave-and-ci
-      - name: Apply the hash-verified locally tested patch
+      - name: Install C++ build dependencies
+        run: sudo apt-get update && sudo apt-get install -y g++ make libeigen3-dev
+      - name: Compile handoff, device and shared detrender regressions
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import base64, gzip, hashlib, os, pathlib, subprocess
-          encoded = '''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'''
-          # The payload is checked before touching the checkout.
-          patch = gzip.decompress(base64.b64decode(encoded))
-          assert hashlib.sha256(patch).hexdigest() == '5c79dcc3ab9047ae00069f250da52b20cf1b0b67e518ddb1c201379e995a6494'
-          path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'validated-device.patch'
-          path.write_bytes(patch)
-          subprocess.run(['git', 'apply', '--check', str(path)], check=True)
-          subprocess.run(['git', 'apply', '--index', str(path)], check=True)
-          PY
-          git diff --cached --check
+          make -C tests/kalman_tfg tfg_handoff_heave-test
+          eigen=third_party/eigen
+          if [[ ! -f "$eigen/Eigen/Dense" ]]; then eigen=/usr/include/eigen3; fi
+          g++ -O3 -std=c++20 -Wall -Wextra -fno-finite-math-only -Isrc -isystem "$eigen" \
+            tests/kalman_tfg/tfg_device_heave-test.cpp -o tests/kalman_tfg/tfg_device_heave-test
+          g++ -O3 -std=c++20 -Wall -Wextra -fno-finite-math-only -Isrc -isystem "$eigen" \
+            tests/detrend/detrend-log-frequency-test.cpp -o tests/detrend/detrend-log-frequency-test
+      - name: Execute ten-minute handoff histories
+        id: handoff
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ./tests/kalman_tfg/tfg_handoff_heave-test | tee tfg-handoff-results.txt
+      - name: Execute device startup and Live histories
+        id: device
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ./tests/kalman_tfg/tfg_device_heave-test | tee tfg-device-results.txt
+      - name: Execute shared log-frequency symmetry regression
+        id: detrend
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ./tests/detrend/detrend-log-frequency-test | tee detrend-log-frequency-results.txt
+      - name: Retain numerical results and traces
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tfg-device-regression-results
+          path: |
+            tfg-*-results.txt
+            tfg-device-*.csv
+            detrend-log-frequency-results.txt
+          if-no-files-found: warn
+      - name: Preserve every regression gate
+        if: always()
+        run: |
+          test '${{ steps.handoff.outcome }}' = success
+          test '${{ steps.device.outcome }}' = success
+          test '${{ steps.detrend.outcome }}' = success
