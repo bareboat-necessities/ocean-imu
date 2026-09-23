@@ -66,7 +66,7 @@ class DeviceCompassStartupTest(unittest.TestCase):
                     self.assertIn("fusion_.startupTiltQuaternion(q_bw)", update)
                     self.assertIn("if (!fusion_.isLive()", update)
                     self.assertIn("heave_m_ = displacement_det_out_.wave_clean.z();", update)
-                    self.assertIn("heave_raw_m_        = displacement_up_m_.z();", update)
+                    self.assertIn("heave_raw_m_        = displacement_up_m_.z();", update)\n                    self.assertIn("fusion_.update(dt_, w_cal_, a_cal_, 35.0f);", update)\n                    self.assertIn("updateWaveDirection_(q_bw, 35.0f, dt_);", update)\n                    self.assertNotIn("fusion_.update(dt_, w_cal_, a_cal_, tempC);", update)
 
     def test_first_sample_geometry_and_invalid_inputs(self):
         candidates = [Path(os.environ.get("EIGEN_INCLUDE_DIR", "/usr/include/eigen3")),
