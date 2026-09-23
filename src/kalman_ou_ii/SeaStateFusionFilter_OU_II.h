@@ -570,6 +570,13 @@ public:
         return vertical_accel_comp_.quaternion();
     }
 
+    // Startup attitude for user-facing roll/pitch and magnetic tilt
+    // compensation. Remove the proxy's unobservable gyro-integrated yaw:
+    // heading comes from the calibrated magnetometer until the MEKF is Live.
+    Eigen::Quaternionf startupProxyTiltQuat() const noexcept {
+        return vertical_accel_comp_.tiltQuaternion();
+    }
+
     // Tilt-only form of the same attitude, safe to use as a magnetometer
     // accumulation frame because no heading can leak through it.
     Eigen::Quaternionf startupProxyTiltQuat() const noexcept {
