@@ -39,7 +39,9 @@ jobs:
         run: |
           set -o pipefail
           ./tests/kalman_tfg/tfg_handoff_heave-test | tee tfg-handoff-results.txt
-      - name: Reproduce calibrated-device temperature boundary\n        run: ./tests/kalman_tfg/tfg_device_tempcomp-test | tee tfg-device-tempcomp-results.txt\n      - name: Execute device startup and Live histories
+      - name: Reproduce calibrated-device temperature boundary
+        run: ./tests/kalman_tfg/tfg_device_tempcomp-test | tee tfg-device-tempcomp-results.txt
+      - name: Execute device startup and Live histories
         env:
           OCEAN_IMU_TRACE_DIR: .
         id: device
