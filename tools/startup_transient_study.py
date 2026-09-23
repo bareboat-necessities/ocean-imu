@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Startup transient of NLO, TFG, PII, OU-II, and OU-III under engine noise.
 
+The truth is vessel motion, not the sea surface: every record is the pinned
+oceanography-waves-lib v1.2.1 wave field passed through the estimated 28 ft
+fin-keel sailboat RAO at the CG (``tools/sim_dataset.py``), and that motion is
+what the simulated IMU measures.
+
 Replays the first three minutes of every versioned wave record (Gerstner,
 cnoidal, Fenton, JONSWAP, and PM-Stokes at the four pinned heights) through
 each filter family with the nominal inboard-diesel vibration of
@@ -205,9 +210,10 @@ def plot_record(record: str, series: dict[str, dict[str, np.ndarray]], out: Path
     axs[2, 0].set_xlabel("time (s)")
     axs[2, 1].set_xlabel("time (s)")
     axs[2, 0].set_xlim(0, WINDOW_S)
-    fig.suptitle(f"{record}: first {WINDOW_S:.0f} s with engine noise "
-                 f"(2400 rpm, 0.60 m/s^2); startup excursions are clipped "
-                 f"(PII is vertical only)")
+    fig.suptitle(f"28 ft sailboat RAO at CG, {record.replace('wave_data_', '')}: "
+                 f"first {WINDOW_S:.0f} s with engine noise (2400 rpm, 0.60 m/s^2)\n"
+                 f"truth = vessel motion; startup excursions are clipped; "
+                 f"PII is vertical only")
     fig.tight_layout()
     fig.savefig(out, dpi=90)
     plt.close(fig)
@@ -239,7 +245,7 @@ def plot_settle(rows: list[dict], metric: str, title: str, out: Path) -> None:
         ax.set_ylim(0, WINDOW_S * 1.05)
         ax.grid(axis="y", alpha=0.3)
     axs[0].legend(ncol=6, loc="upper left", fontsize=9)
-    axs[0].set_title(title)
+    axs[0].set_title(f"28 ft sailboat RAO at CG. {title}")
     axs[-1].set_xticks(x)
     axs[-1].set_xticklabels([r.replace("wave_data_", "").split("_L")[0] for r in records],
                             rotation=45, ha="right")
