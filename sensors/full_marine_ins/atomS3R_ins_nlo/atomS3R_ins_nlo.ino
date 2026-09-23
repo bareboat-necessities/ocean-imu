@@ -89,6 +89,10 @@
 #include "detrend/AdaptiveWaveDetrender.h"
 #include "nlo/TimeVarGainNLO_Adapter.h"
 #include "nmea/NmeaCompass.h"
+#include "util/AngleUtils.h"
+#include "util/ImuLoopHelpers.h"
+#include "util/MagneticHeading.h"
+#include "util/QuaternionUtils.h"
 
 #ifndef SEA_STATE_UI_DEFAULT_GRAPHICS
   #define SEA_STATE_UI_DEFAULT_GRAPHICS 1
@@ -153,37 +157,8 @@ static constexpr float ROT_TAU_S = 0.1f;
 
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
-using Quaternionf = Eigen::Quaternionf;
 
-static inline float clampf_(float x, float lo, float hi) {
-  return x < lo ? lo : (x > hi ? hi : x);
-}
-
-static inline float wrap360_(float deg) {
-  while (deg < 0.0f) deg += 360.0f;
-  while (deg >= 360.0f) deg -= 360.0f;
-  return deg;
-}
-
-static inline float wrap180_(float deg) {
-  while (deg <= -180.0f) deg += 360.0f;
-  while (deg >   180.0f) deg -= 360.0f;
-  return deg;
-}
-
-static inline float outputHeadingFromMagnetic_(float magnetic_deg) {
-#if SEA_STATE_OUTPUT_TRUE_HEADING
-  return wrap360_(magnetic_deg + SEA_STATE_MAG_DECLINATION_DEG);
-#else
-  return magnetic_deg;
-#endif
-}
-
-static inline Vector3f quatRotate_(const Quaternionf& q, const Vector3f& v) {
-  const Vector3f qv(q.x(), q.y(), q.z());
-  const Vector3f t = 2.0f * qv.cross(v);
-  return v + q.w() * t + qv.cross(t);
-}
+namespace ins = ocean_imu::ins;
 
 class FusionApp {
  public:
@@ -301,7 +276,7 @@ class FusionApp {
 
   Fusion fusion_{};
 
-  uint32_t mag_gate_last_ms_ = 0;
+  ins::MagFreshGate mag_gate_{MAG_UPDATE_SPACING_MS};
   uint32_t last_mag_correction_ms_ = 0;
 
   Vector3f a_cal_ = Vector3f::Zero();
@@ -345,17 +320,11 @@ class FusionApp {
   float imu_temp_c_ = NAN;
 
   uint16_t stale_frame_count_ = 0;
-  bool have_last_sample_us_ = false;
-  uint32_t last_sample_us_ = 0;
+  ins::SampleDtTracker sample_dt_{1.0f / LOOP_HZ, 0.05f};
 
-  bool rot_inited_ = false;
-  float rot_dpm_filt_ = 0.0f;
+  ins::RateOfTurnFilter rot_{ROT_TAU_S};
 
-  uint32_t rate_window_ms_ = 0;
-  uint32_t imu_sample_count_ = 0;
-  uint32_t mag_sample_count_ = 0;
-  float imu_sample_hz_ = 0.0f;
-  float mag_sample_hz_ = 0.0f;
+  ins::SampleRateMeter rates_{};
 
   AdaptiveWaveDetrender z_detrender_{};
 
@@ -365,48 +334,6 @@ class FusionApp {
     if (elapsed_us < LOOP_PERIOD_US) {
       delayMicroseconds(LOOP_PERIOD_US - elapsed_us);
     }
-  }
-
-  float nominalFusionDt_() const {
-    return 1.0f / LOOP_HZ;
-  }
-
-  bool updateMagFreshGate_(bool mag_candidate_ok, uint32_t now_ms) {
-    if (!mag_candidate_ok) {
-      mag_gate_last_ms_ = 0;
-      return false;
-    }
-
-    if (mag_gate_last_ms_ == 0) {
-      mag_gate_last_ms_ = now_ms;
-      return true;
-    }
-
-    if ((now_ms - mag_gate_last_ms_) < MAG_UPDATE_SPACING_MS) {
-      return false;
-    }
-
-    mag_gate_last_ms_ = now_ms;
-    return true;
-  }
-
-  float computeFusionDtFromSampleTimestamp_(const ImuSample& s) {
-    const float dt_nom = nominalFusionDt_();
-
-    if (!have_last_sample_us_) {
-      have_last_sample_us_ = true;
-      last_sample_us_ = s.sample_us;
-      return dt_nom;
-    }
-
-    const uint32_t dt_us = s.sample_us - last_sample_us_;
-    last_sample_us_ = s.sample_us;
-
-    const float dt_s = static_cast<float>(dt_us) * 1.0e-6f;
-    if (!(dt_s > 0.0f) || !std::isfinite(dt_s)) return dt_nom;
-    if (dt_s > 0.05f) return dt_nom;
-
-    return dt_s;
   }
 
   void reloadBlobAndRuntime_() {
@@ -444,17 +371,10 @@ class FusionApp {
       while (true) delay(100);
     }
 
-    mag_gate_last_ms_ = 0;
+    mag_gate_.reset();
     last_mag_correction_ms_ = 0;
-
-    rate_window_ms_ = millis();
-    imu_sample_count_ = 0;
-    mag_sample_count_ = 0;
-    imu_sample_hz_ = 0.0f;
-    mag_sample_hz_ = 0.0f;
-
-    have_last_sample_us_ = false;
-    last_sample_us_ = 0;
+    rates_.reset(millis());
+    sample_dt_.reset();
   }
 
   void resetFusion_() {
@@ -513,8 +433,7 @@ class FusionApp {
     // this same directory do expose the knob and show it set explicitly to
     // zero with instructions for entering a real offset.
 
-    rot_inited_ = false;
-    rot_dpm_filt_ = 0.0f;
+    rot_.reset();
 
     roll_deg_ = 0.0f;
     pitch_deg_ = 0.0f;
@@ -527,7 +446,7 @@ class FusionApp {
     nlo_initialized_ = false;
     nlo_bootstrapping_ = false;
 
-    mag_gate_last_ms_ = 0;
+    mag_gate_.reset();
     last_mag_correction_ms_ = 0;
 
     mag_present_ = false;
@@ -538,8 +457,7 @@ class FusionApp {
     imu_temp_c_ = NAN;
 
     stale_frame_count_ = 0;
-    have_last_sample_us_ = false;
-    last_sample_us_ = 0;
+    sample_dt_.reset();
 
     heave_m_ = 0.0f;
     heave_speed_mps_ = 0.0f;
@@ -555,37 +473,7 @@ class FusionApp {
     heave_wave_raw_m_ = 0.0f;
     heave_wave_clean_m_ = 0.0f;
 
-    AdaptiveWaveDetrender::Config dcfg{};
-    dcfg.init_wave_freq_hz = APP_FREQ_GUESS;
-    dcfg.min_wave_freq_hz  = 0.02f;
-    dcfg.max_wave_freq_hz  = 1.20f;
-
-    dcfg.baseline_cutoff_fraction = 0.25f;
-    dcfg.min_baseline_cutoff_hz   = 0.003f;
-    dcfg.max_baseline_cutoff_hz   = 0.25f;
-
-    dcfg.freq_smooth_tau_s = 12.0f;
-    dcfg.slope_lpf_tau_s   = 0.20f;
-    dcfg.slope_rms_tau_s   = 8.0f;
-
-    dcfg.threshold_rms_fraction  = 0.15f;
-    dcfg.min_slope_threshold_abs = 0.002f;
-    dcfg.max_slope_threshold_abs = 1.0e9f;
-
-    dcfg.startup_hold_s      = 2.0f;
-    dcfg.freq_timeout_cycles = 3.0f;
-
-    dcfg.enable_wave_cleanup     = true;
-    dcfg.cleanup_cutoff_fraction = 1.0f;
-    dcfg.min_cleanup_cutoff_hz   = 0.003f;
-    dcfg.max_cleanup_cutoff_hz   = 0.50f;
-    dcfg.cleanup_stages          = 2;
-
-    dcfg.min_dt_s = 1.0e-4f;
-    dcfg.max_dt_s = 0.25f;
-    dcfg.output_abs_limit = 0.0f;
-
-    z_detrender_.setConfig(dcfg);
+    z_detrender_.setConfig(defaultHeaveDetrenderConfig(APP_FREQ_GUESS));
     z_detrender_.reset(0.0f);
   }
 
@@ -637,10 +525,10 @@ class FusionApp {
   void updateFilter_(const ImuSample& s) {
     const uint32_t now_ms = millis();
 
-    dt_ = computeFusionDtFromSampleTimestamp_(s);
+    dt_ = sample_dt_.update(s.sample_us);
     const float tempC = std::isfinite(s.tempC) ? s.tempC : 35.0f;
     imu_temp_c_ = tempC;
-    ++imu_sample_count_;
+    rates_.countImu();
 
     a_raw_norm_ = s.a.norm();
 
@@ -660,8 +548,8 @@ class FusionApp {
         mag_norm_uT_ >= MAG_FIELD_MIN_UT &&
         mag_norm_uT_ <= MAG_FIELD_MAX_UT;
 
-    mag_fresh_ = updateMagFreshGate_(mag_present_, now_ms);
-    if (mag_fresh_) ++mag_sample_count_;
+    mag_fresh_ = mag_gate_.update(mag_present_, now_ms);
+    if (mag_fresh_) rates_.countMag();
 
 #if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
     const bool mag_usable = mag_present_ && mag_field_sane_;
@@ -694,13 +582,17 @@ class FusionApp {
     nlo_initialized_ = snap.initialized;
     nlo_bootstrapping_ = snap.mahony_bootstrap_active;
 
-    roll_deg_ = wrap180_(snap.euler_rad.x() * RAD_TO_DEG);
-    pitch_deg_ = wrap180_(snap.euler_rad.y() * RAD_TO_DEG);
-    yaw_deg_ = wrap360_(snap.euler_rad.z() * RAD_TO_DEG);
+    roll_deg_ = ins::wrap180Deg(ins::radToDeg(snap.euler_rad.x()));
+    pitch_deg_ = ins::wrap180Deg(ins::radToDeg(snap.euler_rad.y()));
+    yaw_deg_ = ins::wrap360Deg(ins::radToDeg(snap.euler_rad.z()));
 
     heading_mag_deg_ =
-        wrap360_(yaw_deg_ + SEA_STATE_MAG_HEADING_USER_OFFSET_DEG);
-    heading_deg_ = outputHeadingFromMagnetic_(heading_mag_deg_);
+        ins::wrap360Deg(yaw_deg_ + SEA_STATE_MAG_HEADING_USER_OFFSET_DEG);
+#if SEA_STATE_OUTPUT_TRUE_HEADING
+    heading_deg_ = ins::wrap360Deg(heading_mag_deg_ + SEA_STATE_MAG_DECLINATION_DEG);
+#else
+    heading_deg_ = heading_mag_deg_;
+#endif
 
     heading_valid_ =
         nlo_initialized_ &&
@@ -714,18 +606,8 @@ class FusionApp {
     gyro_bias_norm_ = snap.tvg.gyro_bias_norm;
 
     const Vector3f w_use = w_cal_ - snap.tvg.gyro_bias_b;
-    const Vector3f w_ned = quatRotate_(snap.q_nb, w_use);
-
-    float rot_dpm_meas = w_ned.z() * RAD_TO_DEG * 60.0f;
-    rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
-
-    const float alpha_r = 1.0f - expf(-dt_ / ROT_TAU_S);
-    if (!rot_inited_) {
-      rot_inited_ = true;
-      rot_dpm_filt_ = rot_dpm_meas;
-    } else {
-      rot_dpm_filt_ += alpha_r * (rot_dpm_meas - rot_dpm_filt_);
-    }
+    const Vector3f w_ned = ins::quatRotate(snap.q_nb, w_use);
+    rot_.update(w_ned.z(), dt_);
 
     /*
       disp_zu / vel_zu / acc_zu are the Z-up convenience outputs. Position
@@ -753,16 +635,7 @@ class FusionApp {
     heave_wave_raw_m_ = z_det.wave_raw;
     heave_wave_clean_m_ = z_det.wave_clean;
 
-    if (rate_window_ms_ == 0) rate_window_ms_ = now_ms;
-    const uint32_t rate_elapsed_ms = now_ms - rate_window_ms_;
-    if (rate_elapsed_ms >= 1000u) {
-      const float scale = 1000.0f / static_cast<float>(rate_elapsed_ms);
-      imu_sample_hz_ = static_cast<float>(imu_sample_count_) * scale;
-      mag_sample_hz_ = static_cast<float>(mag_sample_count_) * scale;
-      imu_sample_count_ = 0;
-      mag_sample_count_ = 0;
-      rate_window_ms_ = now_ms;
-    }
+    rates_.update(now_ms);
   }
 
   void drawHomeStatic_() {
@@ -912,12 +785,12 @@ class FusionApp {
                           // TimeVaryingGainNLO carries no accelerometer-bias
                           // state.
                           false,
-                          imu_sample_hz_,
-                          mag_sample_hz_);
+                          rates_.imuHz(),
+                          rates_.magHz());
     }
 
     //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
-    nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, heading_valid_);
+    nmea_rot(SEA_STATE_NMEA_TALKER, rot_.dpm(), heading_valid_);
 
 #else
 

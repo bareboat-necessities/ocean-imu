@@ -48,10 +48,12 @@ class DeviceCompassStartupTest(unittest.TestCase):
                 self.assertNotIn("heading_deg_ = heading_est_deg", update)
                 self.assertNotIn("fusion_", compass)
                 self.assertIn("heading_valid_ = heading_fused_ || heading_mag_ok_;", compass)
-                self.assertIn("heading_deg_ = heading_fused_ ? wrap360_(fused_heading_deg)", compass)
+                self.assertIn("heading_deg_ = heading_fused_ ? ins::wrap360Deg(fused_heading_deg)", compass)
+                self.assertIn("ins::magneticHeadingFromDownAndMagBody(", compass)
+                self.assertIn('#include "util/MagneticHeading.h"', source)
                 self.assertIn("if (heading_valid_) {\n      nmea_hdm", serial)
                 self.assertIn("fusion_.isLive()", serial)
-                self.assertIn("fusion_.isLive() &&", update)
+                self.assertRegex(update, r"WaveDirectionReport::from\([^;]*fusion_\.isLive\(\)\);")
                 self.assertIn("runWizardFlow_(true)", function(source, "begin"))
                 self.assertIn("if (!have_blob_)", function(source, "begin"))
                 if "kalman_ou" in path.name:
@@ -79,9 +81,6 @@ class DeviceCompassStartupTest(unittest.TestCase):
         for path in SKETCHES:
             with self.subTest(sketch=path.name), tempfile.TemporaryDirectory() as tmp:
                 source = path.read_text()
-                helpers = "\n\n".join(function(source, name) for name in (
-                    "wrap360_", "quatRotate_", "magneticHeadingFromDownAndMagBody_",
-                ))
                 cpp = r'''
 #include <algorithm>
 #include <cmath>
@@ -90,13 +89,16 @@ class DeviceCompassStartupTest(unittest.TestCase):
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include "tuner/VerticalAccelComplementary.h"
+#include "util/AngleUtils.h"
+#include "util/MagneticHeading.h"
+#include "util/QuaternionUtils.h"
 using Vector3f = Eigen::Vector3f;
+namespace ins = ocean_imu::ins;
 constexpr float RAD_TO_DEG = 57.29577951308232f;
 constexpr float D2R = 1.0f / RAD_TO_DEG;
 void require(bool ok, const char* message) {
     if (!ok) { std::cerr << message << '\n'; std::exit(1); }
 }
-''' + helpers + r'''
 struct Compass {
     Vector3f m_cal_ = Vector3f::Zero();
     bool mag_ok_ = false;
@@ -170,10 +172,10 @@ int main() {
         require(!c.heading_valid_ && std::isnan(c.heading_deg_), "bad mag reported valid");
     }
     float out = 123.0f;
-    require(!magneticHeadingFromDownAndMagBody_(Vector3f::Zero(), field, out), "zero down accepted");
+    require(!ins::magneticHeadingFromDownAndMagBody(Vector3f::Zero(), field, out), "zero down accepted");
     require(std::isnan(out), "invalid geometry retained old heading");
-    require(!magneticHeadingFromDownAndMagBody_(Vector3f(NAN, 0, 1), field, out), "NaN down accepted");
-    require(!magneticHeadingFromDownAndMagBody_(Vector3f::UnitX(), field, out), "vertical bow accepted");
+    require(!ins::magneticHeadingFromDownAndMagBody(Vector3f(NAN, 0, 1), field, out), "NaN down accepted");
+    require(!ins::magneticHeadingFromDownAndMagBody(Vector3f::UnitX(), field, out), "vertical bow accepted");
     std::cout << "first-sample compass: " << cases << " orientations PASS; max error="
               << worst << " deg; invalid inputs and yaw independence PASS\n";
 }

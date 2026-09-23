@@ -10,10 +10,14 @@ class StationaryDeviceContract(unittest.TestCase):
         for family in ("ou2", "ou3", "tfg"):
             directory = f"atomS3R_ins_kalman_{family}" if family != "tfg" else "atomS3R_ins_tfg"
             text = (ROOT / "sensors/full_marine_ins" / directory / f"{directory}.ino").read_text()
+            # OU sketches use the fixed 15 ms cadence; TFG keeps the tau-scaled one.
             call = ("ff.setTauScaledPseudoUpdateCadence(false);" if family != "tfg"
-                    else "fusion_.setTauScaledPseudoCadence(false);")
+                    else "fusion_.setTauScaledPseudoCadence(true);")
             with self.subTest(family=family):
                 self.assertEqual(text.count(call), 1)
+                # The call must be live code, not swallowed by a comment.
+                line = next(l for l in text.splitlines() if call in l)
+                self.assertTrue(line.strip().startswith(call), line)
 
     def test_shared_regression_rules_preserve_native_build_flags(self):
         text = (ROOT / "tests/common/StationaryDeviceRegression.mk").read_text()

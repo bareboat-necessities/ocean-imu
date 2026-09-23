@@ -68,7 +68,9 @@ void begin(Fusion& f, bool device_cadence) {
     f.begin(cfg);
     raw(f).enableTuner(true);
     raw(f).setAccNoiseFloorSigma(0.12f);
-    // Same supported scheduling option selected by the three AtomS3R sketches.
+    // device_cadence selects the fixed 15 ms cadence the OU-II/OU-III sketches
+    // deploy.  The TFG sketch deploys the tau-scaled cadence, so for TFG the
+    // dense/sparse comparison below is an ablation of the fixed option.
 #if defined(STATIONARY_DEVICE_TFG)
     raw(f).setTauScaledPseudoCadence(!device_cadence);
 #else

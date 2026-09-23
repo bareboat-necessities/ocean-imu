@@ -538,3 +538,39 @@ private:
     return out;
   }
 };
+
+// Heave detrender operating point shared by the NLO and PII device sketches.
+// Same values as seastate::tuner::common::defaultDisplacementDetrenderConfig()
+// uses for the 3D displacement detrender, less the 3D-only learning axis.
+inline AdaptiveWaveDetrender::Config defaultHeaveDetrenderConfig(float freq_guess_hz) {
+  AdaptiveWaveDetrender::Config dcfg{};
+  dcfg.init_wave_freq_hz = freq_guess_hz;
+  dcfg.min_wave_freq_hz  = 0.02f;
+  dcfg.max_wave_freq_hz  = 1.20f;
+
+  dcfg.baseline_cutoff_fraction = 0.25f;
+  dcfg.min_baseline_cutoff_hz   = 0.003f;
+  dcfg.max_baseline_cutoff_hz   = 0.25f;
+
+  dcfg.freq_smooth_tau_s = 12.0f;
+  dcfg.slope_lpf_tau_s   = 0.20f;
+  dcfg.slope_rms_tau_s   = 8.0f;
+
+  dcfg.threshold_rms_fraction  = 0.15f;
+  dcfg.min_slope_threshold_abs = 0.002f;
+  dcfg.max_slope_threshold_abs = 1.0e9f;
+
+  dcfg.startup_hold_s      = 2.0f;
+  dcfg.freq_timeout_cycles = 3.0f;
+
+  dcfg.enable_wave_cleanup     = true;
+  dcfg.cleanup_cutoff_fraction = 1.0f;
+  dcfg.min_cleanup_cutoff_hz   = 0.003f;
+  dcfg.max_cleanup_cutoff_hz   = 0.50f;
+  dcfg.cleanup_stages          = 2;
+
+  dcfg.min_dt_s = 1.0e-4f;
+  dcfg.max_dt_s = 0.25f;
+  dcfg.output_abs_limit = 0.0f;
+  return dcfg;
+}
