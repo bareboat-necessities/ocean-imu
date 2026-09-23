@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          make -C tests/kalman_tfg tfg_handoff_heave-test
+          make -C tests/kalman_tfg tfg_handoff_heave-test tfg_device_tempcomp-test
           eigen=third_party/eigen
           if [[ ! -f "$eigen/Eigen/Dense" ]]; then eigen=/usr/include/eigen3; fi
           g++ -O3 -std=c++20 -Wall -Wextra -fno-finite-math-only -Isrc -isystem "$eigen" \
@@ -39,7 +39,7 @@ jobs:
         run: |
           set -o pipefail
           ./tests/kalman_tfg/tfg_handoff_heave-test | tee tfg-handoff-results.txt
-      - name: Execute device startup and Live histories
+      - name: Reproduce calibrated-device temperature boundary\n        run: ./tests/kalman_tfg/tfg_device_tempcomp-test | tee tfg-device-tempcomp-results.txt\n      - name: Execute device startup and Live histories
         env:
           OCEAN_IMU_TRACE_DIR: .
         id: device
