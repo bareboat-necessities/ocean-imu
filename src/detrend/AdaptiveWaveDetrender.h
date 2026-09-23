@@ -22,12 +22,12 @@ public:
     //                      max_baseline_cutoff_hz)
     //
     // Larger fraction => stronger drift removal, more risk of eating the wave.
-    float baseline_cutoff_fraction = 0.25f;
+    float baseline_cutoff_fraction = 0.35f;
     float min_baseline_cutoff_hz   = 0.003f;
     float max_baseline_cutoff_hz   = 0.25f;
 
     // Smoothing time constant for learned frequency [s].
-    float freq_smooth_tau_s = 12.0f;
+    float freq_smooth_tau_s = 13.0f;
 
     // Internal slope/velocity-proxy processing.
     // Slope is computed as dx/dt and used only for frequency learning.
