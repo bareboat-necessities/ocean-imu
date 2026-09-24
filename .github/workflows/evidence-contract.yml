@@ -1,8 +1,10 @@
 name: evidence-contract
 
-# This is the same non-simulation gate used before publishing regenerated
-# evidence on main. Run it even when the simulation smoke classifier skips a
-# proof-only change: deleted article inputs can break publication independently.
+# Check PRs independently of the simulation smoke classifier: deleted article
+# inputs can break publication even in a proof-only change. On main, build.yml
+# calls this gate after ou-evidence has validated/published the current replay.
+# A parallel push trigger would check old rows against new source, then remain
+# red because the evidence bot push does not trigger another workflow run.
 on:
   pull_request:
     paths:
@@ -16,15 +18,20 @@ on:
       - "reports/**"
       - "Makefile"
       - ".github/workflows/**"
-  push:
-    branches: [main]
+  workflow_call:
+    inputs:
+      checkout_ref:
+        description: Post-publication ref; empty keeps the triggering PR or manual ref
+        required: false
+        type: string
+        default: ""
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: evidence-contract-${{ github.event.pull_request.number || github.ref }}
+  group: evidence-contract-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -34,6 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.checkout_ref || '' }}
           fetch-depth: 0
       - name: Install evidence-test dependencies
         run: |

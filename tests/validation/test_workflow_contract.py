@@ -211,6 +211,38 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertNotIn("needs: classify", workflow)
         self.assertNotIn("continue-on-error", workflow)
 
+    def test_main_evidence_contract_cannot_race_full_regeneration(self):
+        workflow = (REPO_ROOT / ".github/workflows/evidence-contract.yml").read_text(
+            encoding="utf-8"
+        )
+        # An autonomous main push checks the source commit before build.yml
+        # publishes its new replay rows. The bot's later evidence push does not
+        # trigger another run, so main must call this gate after ou-evidence.
+        self.assertEqual(
+            _mapping_child_keys(workflow, "on"),
+            {"pull_request", "workflow_dispatch", "workflow_call"},
+        )
+        self.assertIn("checkout_ref:", workflow)
+        self.assertIn('default: ""', workflow)
+        self.assertIn("ref: ${{ inputs.checkout_ref || '' }}", workflow)
+        self.assertIn("fetch-depth: 0", workflow)
+        # Manual and reusable calls must not cancel one another (nor build).
+        self.assertIn("group: evidence-contract-${{ github.workflow }}-", workflow)
+
+    def test_main_calls_evidence_contract_only_after_successful_publication(self):
+        workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
+        stage = _job_block(workflow, "evidence-contract", "build")
+        self.assertIn("needs: ou-evidence", stage)
+        self.assertEqual(
+            _compact(_folded_scalar(stage, "if")),
+            "${{!cancelled()&&github.ref=='refs/heads/main'&&"
+            "needs['ou-evidence'].result=='success'}}",
+        )
+        self.assertIn("uses: ./.github/workflows/evidence-contract.yml", stage)
+        self.assertIn("checkout_ref: refs/heads/main", stage)
+        self.assertIn("contents: read", stage)
+        self.assertNotIn("continue-on-error", stage)
+
     def test_single_stability_workflow_covers_contracts_without_promoting_status(self):
         proof = PROOF_WORKFLOW.read_text(encoding="utf-8")
         for module in (
@@ -304,7 +336,10 @@ class WorkflowContractTests(unittest.TestCase):
     def test_main_pdf_build_uses_post_evidence_head_and_compiles_ou_iii(self):
         workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
         stage = _job_block(workflow, "build", "release")
-        self.assertIn("needs: [ou-evidence, classify]", stage)
+        self.assertEqual(
+            _inline_sequence(stage, "needs"),
+            ["ou-evidence", "evidence-contract", "classify"],
+        )
         self.assertIn("kalman_ou_iii", _inline_sequence(stage, "dir"))
         self.assertIn(
             "ref: ${{ github.ref == 'refs/heads/main' && 'refs/heads/main' || '' }}",
@@ -320,7 +355,8 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertEqual(
             condition,
             "${{!cancelled()&&needs.classify.outputs.run_build=='true'&&"
-            "(github.ref!='refs/heads/main'||needs['ou-evidence'].result=='success')}}",
+            "(github.ref!='refs/heads/main'||(needs['ou-evidence'].result=='success'&&"
+            "needs['evidence-contract'].result=='success'))}}",
         )
 
 
