@@ -23,7 +23,7 @@ endif
 LDFLAGS  =
 
 # Targets
-TARGETS = imu_calibrate-test
+TARGETS = imu_calibrate-test accel_cal-test accel_cal-replay
 
 all: build test
 
@@ -38,9 +38,19 @@ ensure-sim-data:
 imu_calibrate-test: imu_calibrate-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+accel_cal-test: accel_cal-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+accel_cal-replay: accel_cal-replay.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+accel_cal-test.o: accel_cal_sim.h accel_cal_replay.h
+accel_cal-replay.o: accel_cal_replay.h
+
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	find . -maxdepth 1 -type f -name '*.csv' ! -name 'calibrate*.csv' -delete
+	rm -f calibrate_accel_replay_sample.log
 	rm -f *.o $(TARGETS) *.exe

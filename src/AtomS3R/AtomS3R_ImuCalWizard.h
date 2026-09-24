@@ -6,6 +6,14 @@
   AtomS3R IMU calibration wizard UI (Accel + Gyro + Mag) using imu_cal::* calibrators.
 
   Uses M5Unified IMU API as the IMU sample source.
+
+  Accelerometer: ten guided static holds (six faces + four screen-up corners),
+  bounded targeted extra holds, three later rechecks, and a full-matrix fit
+  with thermal-slope qualification (imu_cal::AccelCalProcedure). In the full
+  wizard the rechecks follow the gyro and magnetometer stages; the
+  accelerometer-only mode keeps the saved gyro and magnetometer calibration.
+  Nothing is saved unless the complete candidate validates; the previous
+  calibration is kept otherwise.
 */
 
 #include <Arduino.h>
@@ -23,20 +31,29 @@
 #include "AtomS3R/AtomS3R_ImuCal.h"         // ImuSample, axis mapping conventions, blob/store/runtime helpers
 #include "AtomS3R/AtomS3R_M5Ui.h"           // UI + Input + clamp01_
 #include "imu_calibrate/CalibrateIMU.h"     // imu_cal::* + FitFail
+#include "imu_calibrate/AccelCalCapture.h"  // accelerometer procedure (host-tested)
+
+// Set to 1 to stream every raw accel/gyro sample as [ACCRAW] lines for
+// tests/imu_calibrate/accel_cal-replay.
+#ifndef ATOMS3R_ICAL_RAW_LOG
+#define ATOMS3R_ICAL_RAW_LOG 0
+#endif
 
 namespace atoms3r_ical {
 
 // Wizard configuration
 struct ImuCalWizardCfg {
-  // Step pacing
+  // Step pacing (accelerometer holds: imu_cal::AccelCaptureCfg)
   static constexpr uint32_t PLACE_TIME_MS       = 6500;
-  static constexpr uint32_t ACCEL_TIMEOUT_MS    = 90000;
   static constexpr uint32_t GYRO_TIMEOUT_MS     = 70000;
   static constexpr uint32_t MAG_TIMEOUT_MS      = 220000;
   static constexpr uint32_t STUCK_MS            = 12000;
 
+  // Accelerometer observation capacity (blocks) and hold capacity
+  static constexpr int ACCEL_MAX_OBS            = 340;
+  static constexpr int ACCEL_MAX_HOLDS          = 24;
+
   // Sample goals (Mag buffer capacity is 400 below)
-  static constexpr int ACCEL_NEED_PER_POSE      = 60;
   static constexpr int GYRO_NEED                = 220;
 
   // MAG: target near-buffer-full, but spread over time
@@ -44,7 +61,6 @@ struct ImuCalWizardCfg {
   static constexpr int MAG_MIN_TO_FIT           = 220;
 
   // Minimums before fitting
-  static constexpr int ACCEL_MIN_TO_FIT         = 220;
   static constexpr int GYRO_MIN_TO_FIT          = 120;
 
   // MAG timing / downsample:
@@ -124,21 +140,15 @@ static inline float unit_dir_cov_det_(const Vector3f* x, int n) {
   return detC;
 }
 
-// Wizard pose descriptor
-struct Pose {
-  const char* short_name;
-  const char* instruction;
-  uint8_t rot_capture;
-};
-
 class ImuCalWizard {
 public:
   ImuCalWizard(M5Ui& ui, ImuCalStoreNvs& store)
   : ui_(ui), store_(store) {}
 
-  // Runs full wizard and saves to NVS. Returns true only if saved successfully.
-  // out_saved is filled with the saved blob (readback-validated).
-  bool runAndSave(ImuCalBlobV2& out_saved) {
+  // Runs the wizard and saves to NVS. Returns true only if saved successfully.
+  // out_saved is filled with the saved blob (readback-validated). On any
+  // failure or abort nothing is written and the previous calibration stays.
+  bool runAndSave(ImuCalBlobV3& out_saved) {
     Serial.println("[WIZ] start");
 
     for (;;) {
@@ -147,164 +157,312 @@ public:
       // Prevent "stacking" with any M5Unified offsets
       clearM5UnifiedImuCalibration();
 
-      accelCal_.clear();
       gyroCal_.clear();
       magCal_.clear();
       configureCalibrators_();
 
-      acc_out_ = imu_cal::AccelCalibration<float>{};
       gyr_out_ = imu_cal::GyroCalibration<float>{};
       mag_out_ = imu_cal::MagCalibration<float>{};
 
-      ui_.waitTap("IMU CAL", "Tap to begin");
+      // Previous calibration: kept on failure, source of the preserved gyro/mag
+      // (accelerometer-only mode), a compatible thermal slope, and the
+      // stationary gyro level used by the rotation gate.
+      ImuCalBlobV3 prev{};
+      const bool have_prev = store_.load(prev);
+      const bool can_accel_only = have_prev && prev.gyro_ok;
 
-      const uint8_t R = M5UiCfg::ROT_READ;
-      const Pose poses[6] = {
-        {"1/6 SCREEN UP",    "Screen faces up",      R},
-        {"2/6 SCREEN DOWN",  "Screen faces table",   R},
-        {"3/6 USB UP",       "USB points up",        rot_add_(R, 2)},
-        {"4/6 USB DOWN",     "USB points down",      R},
-        {"5/6 LEFT DOWN",    "Left edge down",       rot_add_(R, 1)},
-        {"6/6 RIGHT DOWN",   "Right edge down",      rot_add_(R, -1)},
-      };
-
-      for (int i = 0; i < 6; ++i) {
-        if (!captureAccelPose_(poses[i])) return false;
-      }
-
-      Serial.printf("[ACC] accepted=%d\n", accelCal_.buf.n);
-      if (accelCal_.buf.n < ImuCalWizardCfg::ACCEL_MIN_TO_FIT) {
-        ui_.fail("ACCEL", "Too few accepted");
+      const M5Ui::StartAction start = ui_.startMenu(can_accel_only);
+      if (start == M5Ui::StartAction::CANCEL) {
+        Serial.println("[WIZ] cancelled; previous calibration kept");
         return false;
       }
-      if (!runFitTask_(FitKind::ACCEL, "ACCEL", true)) return false;
+      const bool accel_only = (start == M5Ui::StartAction::ACCEL_ONLY);
+      Serial.printf("[WIZ] mode=%s have_prev=%d\n", accel_only ? "accel_only" : "full", (int)have_prev);
 
-      if (!captureGyro_()) return false;
-      if (gyroCal_.buf.n < ImuCalWizardCfg::GYRO_MIN_TO_FIT) {
-        ui_.fail("GYRO", "Too few accepted");
-        return false;
-      }
-      if (!runFitTask_(FitKind::GYRO, "GYRO", true)) return false;
+      sensorIdentity_();
+      const imu_cal::AccelThermalPrior prior =
+          have_prev ? accelThermalPriorFrom(prev, sensor_id_lo_, sensor_id_hi_, imu_type_) : imu_cal::AccelThermalPrior{};
+      Serial.printf("[ACC] thermal prior: %s\n", prior.valid ? "compatible slope available" : "none");
+      const Vector3f gyro_level = have_prev && prev.gyro_ok
+          ? Vector3f(prev.gyro_b0[0], prev.gyro_b0[1], prev.gyro_b0[2]) : Vector3f::Zero();
+      // Replay context (tests/imu_calibrate/accel_cal-replay).
+      Serial.printf("[ACCMODE] %s\n", accel_only ? "accel_only" : "full");
+      Serial.printf("[ACCPRIOR] %d,%.7f,%.7f,%.7f,%.2f,%.2f,%.2f,%.2f\n", (int)prior.valid, prior.k[0], prior.k[1],
+                    prior.k[2], prior.k_temp_lo, prior.k_temp_hi, prior.clamp_lo, prior.clamp_hi);
+      Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,%d\n", (double)gyro_level.x(), (double)gyro_level.y(),
+                    (double)gyro_level.z(), (int)(have_prev && prev.gyro_ok));
 
-      // If mag is unavailable, skip MAG stage cleanly.
-      if (!magAvailable_()) {
-        Serial.println("[MAG] unavailable -> skipping mag calibration");
-        mag_out_.ok = false;
-        // Build + save blob (accel+gyro only)
-        ImuCalBlobV2 blob{};
-        fillBlob_(blob);
-        blob.mag_ok = 0;
+      accel_.begin(accel_ccfg_, accel_fcfg_, prior, gyro_level, have_prev && prev.gyro_ok);
+      AccelIo io(*this);
 
-        ui_.setReadRotation();
-        ui_.title("SAVE");
-        ui_.line("Writing...");
-        const bool wrote = store_.save(blob);
+      if (!accel_.runMainStage(io)) return accelFail_();
 
-        ImuCalBlobV2 rb{};
-        const bool okrb = store_.load(rb);
-
-        Serial.printf("[SAVE] wrote=%d readback=%d\n", (int)wrote, (int)okrb);
-        if (!wrote || !okrb) {
-          ui_.fail("SAVE", "Write/readback fail");
+      if (!accel_only) {
+        if (!captureGyro_()) return false;
+        if (gyroCal_.buf.n < ImuCalWizardCfg::GYRO_MIN_TO_FIT) {
+          ui_.fail("GYRO", "Too few accepted");
           return false;
         }
+        if (!runFitTask_(FitKind::GYRO, "GYRO", true)) return false;
+        accel_.setGyroReference(gyr_out_.biasT.b0);
+        Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,1\n", (double)gyr_out_.biasT.b0.x(), (double)gyr_out_.biasT.b0.y(),
+                      (double)gyr_out_.biasT.b0.z());
 
-        out_saved = rb;
-
-        ui_.title("DONE");
-        M5.Display.printf("A:%d G:%d M:%d\n", (int)rb.accel_ok, (int)rb.gyro_ok, (int)rb.mag_ok);
-        ui_.line("Saved OK");
-        ui_.line("");
-        ui_.line("Tap BtnA");
-        while (true) { Input::update(); if (Input::tapPressed()) break; delay(10); }
-
-        Serial.println("[WIZ] done");
-        return true;
-      }
-
-      // MAG stage with retry loop
-      while (true) {
-        magCal_.clear();
-
-        const char* cap_why = nullptr;
-        if (!captureMag_(cap_why)) {
-          auto act = ui_.magFailMenu(cap_why ? cap_why : "Capture failed", "Flip + roll + pitch");
-          if (act == M5Ui::MagFailAction::RETRY_MAG) continue;
-          if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; break; }
-          return false;
-        }
-
-        if (magCal_.buf.n < ImuCalWizardCfg::MAG_MIN_TO_FIT) {
-          auto act = ui_.magFailMenu("Too few accepted", "Rotate longer / slower");
-          if (act == M5Ui::MagFailAction::RETRY_MAG) continue;
-          if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; break; }
-          return false;
-        }
-
-        if (!runFitTask_(FitKind::MAG, "MAG", false)) {
-          const char* why = imu_cal::fitFailStr(fit_.reason);
-          const char* hint = "Try bigger 3D motion";
-
-          if (why && (strstr(why, "NONPOSITIVE") || strstr(why, "NON POSITIVE") || strstr(why, "MODEL_S"))) {
-            hint = "Too planar: flip all faces";
+        // If mag is unavailable, skip MAG stage cleanly.
+        if (!magAvailable_()) {
+          Serial.println("[MAG] unavailable -> skipping mag calibration");
+          mag_out_.ok = false;
+        } else if (!runMagStage_(redo_all)) {
+          if (redo_all) {
+            Serial.println("[WIZ] redo all requested");
+            continue;
           }
-
-          auto act = ui_.magFailMenu(why ? why : "Fit failed", hint);
-          if (act == M5Ui::MagFailAction::RETRY_MAG) continue;
-          if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; break; }
           return false;
         }
-        break; // MAG succeeded
       }
 
-      if (redo_all) {
-        Serial.println("[WIZ] redo all requested");
-        continue;
-      }
+      // Later rechecks (thermal evidence + held-out verification), final fit.
+      if (!accel_.runRecheckStage(io)) return accelFail_();
+      if (!accel_.runFinalFit(io)) return accelFail_();
 
-      // Build blob from fitted calibrations
-      ImuCalBlobV2 blob{};
-      fillBlob_(blob);
+      // Candidate: new accelerometer set; gyro/mag from this run, or carried
+      // unchanged from the previous calibration in accelerometer-only mode.
+      ImuCalBlobV3 blob;
+      memset((void*)&blob, 0, sizeof(blob));
+      if (accel_only) blob = prev;
+      else fillGyroMag_(blob);
+      imu_cal::AccelCalibration<float> fc;
+      AccelProc::Fitter::toFloat(accel_.result(), accel_fcfg_.g, fc);
+      fillAccelFromFit(blob, accel_.result(), fc, accel_.totalHoldMs() / 1000u);
+      blob.sensor_id_lo = sensor_id_lo_;
+      blob.sensor_id_hi = sensor_id_hi_;
+      blob.imu_type = imu_type_;
+
+      // The stored float set, rebuilt through the runtime path, must reproduce
+      // the fit before it is written...
+      if (!validateStored_(blob, "candidate")) {
+        ui_.fail("SAVE", "Float check failed");
+        return false;
+      }
 
       ui_.setReadRotation();
       ui_.title("SAVE");
       ui_.line("Writing...");
-      const bool wrote = store_.save(blob);
-
-      // Readback validation (also ensures CRC correctness)
-      ImuCalBlobV2 rb{};
-      const bool okrb = store_.load(rb);
-
-      Serial.printf("[SAVE] wrote=%d readback=%d\n", (int)wrote, (int)okrb);
-
-      if (!wrote || !okrb) {
+      ImuCalBlobV3 rb{};
+      const bool saved = store_.saveVerified(blob, rb);
+      // ...and again after the read-back, which must be byte-identical to it.
+      const bool rb_ok = saved && validateStored_(rb, "readback");
+      Serial.printf("[SAVE] verified=%d readback_valid=%d\n", (int)saved, (int)rb_ok);
+      if (!saved || !rb_ok) {
         ui_.fail("SAVE", "Write/readback fail");
         return false;
       }
 
       out_saved = rb;
-
-      ui_.title("DONE");
-      M5.Display.printf("A:%d G:%d M:%d\n", (int)rb.accel_ok, (int)rb.gyro_ok, (int)rb.mag_ok);
-      ui_.line("Saved OK");
-      ui_.line("");
-      ui_.line("Tap BtnA");
-      while (true) { Input::update(); if (Input::tapPressed()) break; delay(10); }
-
+      showDone_(rb);
       Serial.println("[WIZ] done");
       return true;
     }
   }
 
 private:
+  using AccelProc = imu_cal::AccelCalProcedure<ImuCalWizardCfg::ACCEL_MAX_OBS, ImuCalWizardCfg::ACCEL_MAX_HOLDS>;
+
+  // Screens, samples and the fit task for the accelerometer procedure.
+  class AccelIo : public imu_cal::AccelCalIo {
+  public:
+    explicit AccelIo(ImuCalWizard& w) : w_(w) {}
+
+    bool prep(const imu_cal::AccelStepView& v) override {
+      M5Ui& ui = w_.ui_;
+      ui.setReadRotation();
+      ui.title(v.title);
+      ui.line(v.label);
+      for (int j = 0; j < 3; ++j) if (v.lines[j]) ui.line(v.lines[j]);
+      if (v.note[0]) ui.line(v.note);
+      ui.line("");
+      ui.line("Tap then place");
+      ui.line("Tap BtnA");
+      while (true) {
+        Input::update();
+        if (Input::tapPressed()) break;
+        delay(10);
+      }
+      drawn_ = false;
+      Serial.printf("[ACCPREP] %d,%d,%d\n", (int)v.kind, (int)v.pose, (int)v.attempt);
+      return true;
+    }
+
+    bool sample(imu_cal::AccelRawSample& s) override {
+      ImuSample ims;
+      if (!w_.readSample_(ims)) return false;
+      s.t_us = ims.sample_us;
+      s.a = ims.a;
+      s.w = ims.w;
+      s.tempC = ims.tempC;
+#if ATOMS3R_ICAL_RAW_LOG
+      Serial.printf("[ACCRAW] %lu,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.4f\n", (unsigned long)s.t_us,
+                    (double)s.a.x(), (double)s.a.y(), (double)s.a.z(),
+                    (double)s.w.x(), (double)s.w.y(), (double)s.w.z(), (double)s.tempC);
+#endif
+      return true;
+    }
+
+    uint32_t nowMs() override { return millis(); }
+
+    // Capture screen in the pose's display rotation; keeps the placement
+    // guidance on screen and only redraws the hint row and the bar.
+    void capture(const imu_cal::AccelStepView& v, const imu_cal::AccelHoldView& h) override {
+      M5Ui& ui = w_.ui_;
+      const uint32_t now = millis();
+      if (!drawn_) {
+        ui.setRotation(rot_add_(M5UiCfg::ROT_READ, v.rot_delta));
+        ui.title(v.title);
+        ui.line(v.label);
+        for (int j = 0; j < 3; ++j) if (v.lines[j]) ui.line(v.lines[j]);
+        ui.line("");
+        hint_row_ = ui.cursorY();
+        ui.line(h.hint_text);
+        last_hint_ = h.hint;
+        drawn_ = true;
+        last_bar_ms_ = 0;
+      }
+      Input::update();
+      if (h.hint != last_hint_) {
+        ui.lineAt(hint_row_, h.hint_text);
+        last_hint_ = h.hint;
+      }
+      if ((uint32_t)(now - last_bar_ms_) >= 100) {
+        ui.bar01(h.progress01);
+        last_bar_ms_ = now;
+      }
+    }
+
+    void holdOk(const imu_cal::AccelStepView& v) override {
+      w_.ui_.showOkAuto(v.label, "Captured");
+      delay(80);
+    }
+
+    bool holdRetry(const imu_cal::AccelStepView& v, const char* why) override {
+      return w_.ui_.retryMenu(v.label, why, "Hold still, same pose");
+    }
+
+    bool runFit(imu_cal::AccelFitJob& job, const char* what) override {
+      w_.fit_.job = &job;
+      const bool ok = w_.runFitTask_(FitKind::ACCEL_JOB, what, false);
+      w_.fit_.job = nullptr;
+      return ok;
+    }
+
+    void log(const char* line) override { Serial.println(line); }
+    void idle() override { delay(2); }
+
+  private:
+    ImuCalWizard& w_;
+    bool drawn_ = false;
+    int hint_row_ = 0;
+    imu_cal::AccelHoldHint last_hint_ = imu_cal::AccelHoldHint::PLACE;
+    uint32_t last_bar_ms_ = 0;
+  };
+
+  bool accelFail_() {
+    char l1[22], l2[22];
+    accel_.failLines(l1, l2);
+    Serial.printf("[ACC] failed: %s | %s (%s); previous calibration kept\n", l1, l2, accel_.failureDetail());
+    ui_.failLines("ACCEL", l1, l2, "Previous cal kept");
+    return false;
+  }
+
+  void sensorIdentity_() {
+    const uint64_t mac = ESP.getEfuseMac();
+    sensor_id_lo_ = (uint32_t)(mac & 0xFFFFFFFFu);
+    sensor_id_hi_ = (uint32_t)(mac >> 32);
+    imu_type_ = (uint8_t)M5.Imu.getType();
+  }
+
+  // Rebuilds RuntimeCals from `b` and re-validates the accelerometer set on
+  // the retained observations (float, exactly as applied at runtime).
+  bool validateStored_(const ImuCalBlobV3& b, const char* what) {
+    RuntimeCals rc;
+    rc.rebuildFromBlob(b);
+    imu_cal::AccelFullFitResult r = accel_.result();
+    const bool ok = rc.acc.ok && AccelProc::Fitter::validateFloat(accel_.obs(), accel_.nObs(), rc.acc, accel_fcfg_, r) &&
+                    accelMetaBound(b);
+    Serial.printf("[SAVE] %s float check=%d hold_rms double=%.5f float=%.5f\n", what, (int)ok,
+                  r.ref_hold_rms, r.float_hold_rms);
+    return ok;
+  }
+
+  void showDone_(const ImuCalBlobV3& rb) {
+    ui_.setReadRotation();
+    ui_.title("DONE");
+    M5.Display.printf("A:%d G:%d M:%d\n", (int)rb.accel_ok, (int)rb.gyro_ok, (int)rb.mag_ok);
+    ui_.line("Saved OK");
+    char l[22];
+    float bs = rb.accel_bias_sigma[0];
+    if (rb.accel_bias_sigma[1] > bs) bs = rb.accel_bias_sigma[1];
+    if (rb.accel_bias_sigma[2] > bs) bs = rb.accel_bias_sigma[2];
+    snprintf(l, sizeof(l), "Bias sd %.4f m/s2", (double)bs);
+    ui_.line(l);
+    switch ((imu_cal::AccelThermal)rb.accel_thermal) {
+      case imu_cal::AccelThermal::LEARNED: ui_.line("Temp slope: learned"); break;
+      case imu_cal::AccelThermal::PRESERVED: ui_.line("Temp slope: kept"); break;
+      default: ui_.line("Temp slope: none"); break;
+    }
+    ui_.line("");
+    ui_.line("Tap BtnA");
+    while (true) { Input::update(); if (Input::tapPressed()) break; delay(10); }
+  }
+
+  // MAG stage with retry loop. Returns true on success; false with redo_all
+  // set when the user asked to restart, false otherwise on abort.
+  bool runMagStage_(bool& redo_all) {
+    redo_all = false;
+    while (true) {
+      magCal_.clear();
+
+      const char* cap_why = nullptr;
+      if (!captureMag_(cap_why)) {
+        auto act = ui_.magFailMenu(cap_why ? cap_why : "Capture failed", "Flip + roll + pitch");
+        if (act == M5Ui::MagFailAction::RETRY_MAG) continue;
+        if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; return false; }
+        return false;
+      }
+
+      if (magCal_.buf.n < ImuCalWizardCfg::MAG_MIN_TO_FIT) {
+        auto act = ui_.magFailMenu("Too few accepted", "Rotate longer / slower");
+        if (act == M5Ui::MagFailAction::RETRY_MAG) continue;
+        if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; return false; }
+        return false;
+      }
+
+      if (!runFitTask_(FitKind::MAG, "MAG", false)) {
+        const char* why = imu_cal::fitFailStr(fit_.reason);
+        const char* hint = "Try bigger 3D motion";
+
+        if (why && (strstr(why, "NONPOSITIVE") || strstr(why, "NON POSITIVE") || strstr(why, "MODEL_S"))) {
+          hint = "Too planar: flip all faces";
+        }
+
+        auto act = ui_.magFailMenu(why ? why : "Fit failed", hint);
+        if (act == M5Ui::MagFailAction::RETRY_MAG) continue;
+        if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; return false; }
+        return false;
+      }
+      return true;  // MAG succeeded
+    }
+  }
+
+private:
   // FIT task machinery
-  enum class FitKind : uint8_t { ACCEL=0, GYRO=1, MAG=2 };
+  enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2 };
 
   struct FitCtx {
     volatile bool done = false;
     volatile bool ok   = false;
     imu_cal::FitFail reason = imu_cal::FitFail::BAD_ARG;
-    FitKind kind = FitKind::ACCEL;
+    FitKind kind = FitKind::GYRO;
+    imu_cal::AccelFitJob* job = nullptr;
 
     ImuCalWizard* wiz = nullptr;
     TaskHandle_t  task = nullptr;
@@ -315,17 +473,12 @@ private:
     return words * (uint32_t)sizeof(StackType_t);
   }
 
-  static void fitTaskAccel_(void* p) {
+  // Accelerometer procedure fit (preliminary or final) on the large-stack task.
+  static void fitTaskAccelJob_(void* p) {
     FitCtx* ctx = (FitCtx*)p;
-    ImuCalWizard* self = ctx->wiz;
-
-    ctx->reason = imu_cal::FitFail::BAD_ARG;
-    const bool ok = self->accelCal_.fit(self->acc_out_, 3, 0.15f, &ctx->reason);
-
-    Serial.printf("[ACC] fit=%d out.ok=%d reason=%s\n",
-                  (int)ok, (int)self->acc_out_.ok, imu_cal::fitFailStr(ctx->reason));
-
-    ctx->ok = ok && self->acc_out_.ok;
+    ctx->reason = imu_cal::FitFail::OK;
+    if (ctx->job) ctx->job->run();
+    ctx->ok = (ctx->job != nullptr);
     Serial.printf("[ACC] stack_hwm=%luB\n", (unsigned long)hwmBytes_());
     ctx->done = true;
     vTaskDelete(nullptr);
@@ -401,7 +554,7 @@ private:
 
     TaskFunction_t fn = nullptr;
     switch (kind) {
-      case FitKind::ACCEL: fn = &ImuCalWizard::fitTaskAccel_; break;
+      case FitKind::ACCEL_JOB: fn = &ImuCalWizard::fitTaskAccelJob_; break;
       case FitKind::GYRO:  fn = &ImuCalWizard::fitTaskGyro_;  break;
       case FitKind::MAG:   fn = &ImuCalWizard::fitTaskMag_;   break;
       default:             fn = &ImuCalWizard::fitTaskGyro_;  break;
@@ -497,89 +650,24 @@ private:
   void configureCalibrators_() {
     const float g = ImuCalCfg::g_std;
 
-    accelCal_.g = g;
     gyroCal_.g  = g;
 
     // Gates
-    accelCal_.accel_mag_tol       = 0.8f;   // m/s^2
-    accelCal_.max_gyro_for_static = 0.12f;  // rad/s
-
     gyroCal_.max_accel_dev = 0.8f;          // m/s^2
     gyroCal_.max_gyro_norm = 0.12f;         // rad/s
 
-    // Symmetric cross-axis correction
-    using AC = imu_cal::AccelCalibrator<float, 400, 1>;
-    accelCal_.accel_S_mode = AC::AccelSMode::PolarSPD;
-
-    // Plausibility gates
-    accelCal_.accel_diag_lo = 0.80f;
-    accelCal_.accel_diag_hi = 1.25f;
-    accelCal_.accel_max_cond = 6.0f;
-    accelCal_.accel_max_offdiag_rms = 0.10f;
-  }
-
-  bool captureAccelPose_(const Pose& p) {
-    ui_.waitTap("ACCEL", p.short_name, "Tap then place");
-
-    ui_.setRotation(p.rot_capture);
-    ui_.title("ACCEL");
-    ui_.line(p.short_name);
-    ui_.line(p.instruction);
-    ui_.line("");
-    ui_.line("Place now");
-    ui_.line("Hold still");
-
-    const uint32_t t0 = millis();
-    while ((uint32_t)(millis() - t0) < ImuCalWizardCfg::PLACE_TIME_MS) {
-      Input::update();
-      ui_.bar01((float)(millis() - t0) / (float)ImuCalWizardCfg::PLACE_TIME_MS);
-      delay(40);
-    }
-
-    const int start_n  = accelCal_.buf.n;
-    const int target_n = start_n + ImuCalWizardCfg::ACCEL_NEED_PER_POSE;
-
-    ui_.title("ACCEL");
-    ui_.line(p.short_name);
-    ui_.line("Capturing...");
-
-    const uint32_t tcap0 = millis();
-    uint32_t last_change = millis();
-    int last_n = accelCal_.buf.n;
-
-    while ((uint32_t)(millis() - tcap0) < ImuCalWizardCfg::ACCEL_TIMEOUT_MS) {
-      Input::update();
-
-      ImuSample s;
-      if (!readSample_(s)) { delay(2); continue; }
-
-      accelCal_.addSample(s.a, s.w, s.tempC);
-
-      const int n = accelCal_.buf.n;
-      if (n != last_n) { last_n = n; last_change = millis(); }
-
-      if ((uint32_t)(millis() - last_change) > ImuCalWizardCfg::STUCK_MS) {
-        Serial.printf("[ACC] stuck pose='%s' got=%d\n", p.short_name, n - start_n);
-        ui_.setReadRotation();
-        ui_.fail("ACCEL", "No samples accepted");
-        return false;
-      }
-
-      ui_.bar01((float)(n - start_n) / (float)ImuCalWizardCfg::ACCEL_NEED_PER_POSE);
-
-      if (n >= target_n) {
-        ui_.showOkAuto(p.short_name, "Captured");
-        delay(80);
-        return true;
-      }
-
-      delay(5);
-    }
-
-    Serial.printf("[ACC] timeout pose='%s' got=%d\n", p.short_name, accelCal_.buf.n - start_n);
-    ui_.setReadRotation();
-    ui_.fail("ACCEL", "Timeout");
-    return false;
+    // Accelerometer: full symmetric (PolarSPD) matrix with the existing
+    // plausibility gates; see imu_cal::AccelFitCfg for the remaining gates.
+    accel_ccfg_ = imu_cal::AccelCaptureCfg{};
+    accel_ccfg_.g = g;
+    accel_ccfg_.place_ms = ImuCalWizardCfg::PLACE_TIME_MS;
+    accel_ccfg_.stuck_ms = ImuCalWizardCfg::STUCK_MS;
+    accel_fcfg_ = imu_cal::AccelFitCfg{};
+    accel_fcfg_.g = g;
+    accel_fcfg_.diag_lo = 0.80;
+    accel_fcfg_.diag_hi = 1.25;
+    accel_fcfg_.max_cond = 6.0;
+    accel_fcfg_.max_offdiag_rms = 0.10;
   }
 
   bool captureGyro_() {
@@ -807,19 +895,13 @@ private:
     return false;
   }
 
-  void fillBlob_(ImuCalBlobV2& blob) {
-    memset(&blob, 0, sizeof(blob));
-    blob.magic = ImuCalBlobV2::IMU_CAL_MAGIC;
-    blob.version = ImuCalBlobV2::IMU_CAL_VERSION;
-    blob.size_bytes = sizeof(ImuCalBlobV2);
-
-    blob.accel_ok = acc_out_.ok ? 1 : 0;
-    blob.accel_g  = acc_out_.g;
-    mat_to_rowmajor9_(acc_out_.S, blob.accel_S);
-    blob.accel_T0 = acc_out_.biasT.T0;
-    blob.accel_b0[0]=acc_out_.biasT.b0.x(); blob.accel_b0[1]=acc_out_.biasT.b0.y(); blob.accel_b0[2]=acc_out_.biasT.b0.z();
-    blob.accel_k[0]=acc_out_.biasT.k.x();   blob.accel_k[1]=acc_out_.biasT.k.y();   blob.accel_k[2]=acc_out_.biasT.k.z();
-    blob.accel_rms_mag = acc_out_.rms_mag;
+  // Gyro and magnetometer fields of a full-wizard candidate (the accelerometer
+  // set is filled by fillAccelFromFit()).
+  void fillGyroMag_(ImuCalBlobV3& blob) {
+    memset((void*)&blob, 0, sizeof(blob));
+    blob.magic = ImuCalBlobV3::IMU_CAL_MAGIC;
+    blob.version = ImuCalBlobV3::IMU_CAL_VERSION;
+    blob.size_bytes = sizeof(ImuCalBlobV3);
 
     blob.gyro_ok = gyr_out_.ok ? 1 : 0;
     blob.gyro_T0 = gyr_out_.biasT.T0;
@@ -839,13 +921,17 @@ private:
 
 public:
   // Stored inside wizard => not on stack
-  imu_cal::AccelCalibrator<float, 400, 1> accelCal_{};
+  AccelProc accel_{};
+  imu_cal::AccelCaptureCfg accel_ccfg_{};
+  imu_cal::AccelFitCfg accel_fcfg_{};
   imu_cal::GyroCalibrator<float,  400, 8> gyroCal_{};
   imu_cal::MagCalibrator<float,   400>    magCal_{};
 
-  imu_cal::AccelCalibration<float> acc_out_{};
   imu_cal::GyroCalibration<float>  gyr_out_{};
   imu_cal::MagCalibration<float>   mag_out_{};
+
+  uint32_t sensor_id_lo_ = 0, sensor_id_hi_ = 0;
+  uint8_t imu_type_ = 0;
 };
 
 } // namespace atoms3r_ical

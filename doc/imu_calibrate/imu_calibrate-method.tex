@@ -48,25 +48,25 @@ and Robust Estimation in C\texttt{++}/Eigen}
 
 % -----------------------------------------------------------------------
     \begin{abstract}
-        This note documents \texttt{imu\_cal}, a modern, header-only C\texttt{++}
-        library for in-situ calibration of the three sensor axes of an Inertial
-        Measurement Unit (IMU): accelerometer, magnetometer, and gyroscope.
-        The library is designed for Arduino-class embedded targets using the
-        Eigen linear-algebra library.
-        It fits each sensor to an ellipsoidal model via a robust algebraic
-        10-parameter least-squares solver, applies trimmed iterative reweighting
-        to suppress outliers, enforces positive-definiteness of the recovered
-        shape matrix, and optionally compensates for temperature-dependent
-        bias drift.
-        Accelerometer calibration additionally enforces axis alignment and
-        gravity renormalization.
-        Magnetometer calibration works in a numerically scaled coordinate
-        frame to maintain well-conditioned matrices at microtesla magnitudes.
-        All calibrators require a minimum of 80 samples and enforce
-        geometric coverage checks before fitting.
-        The public API is a small collection of typed structs and two-line
-        \texttt{fit()} calls; the complete implementation is contained
-        in a single \texttt{.h} file of under 900 lines.
+        This note documents \texttt{imu\_cal}, a header-only C\texttt{++}
+        library for in-situ calibration of the three sensors of an Inertial
+        Measurement Unit (IMU): accelerometer, magnetometer, and gyroscope,
+        for Arduino-class targets using the Eigen linear-algebra library.
+        The magnetometer and the library accelerometer calibrator fit an
+        ellipsoid with a robust algebraic 10-parameter least-squares solver,
+        trimmed iterative reweighting and positive-definite projection.
+        The AtomS3R wizard calibrates the accelerometer with a guided manual
+        procedure: ten static holds (six faces and four tilted corners chosen
+        from an information study), bounded targeted extra holds, and three
+        later rechecks. A geometric, double-precision Levenberg--Marquardt fit
+        keeps the full symmetric positive-definite scale/cross-axis matrix,
+        estimates the bias from measured vectors and the gravity magnitude
+        only, and fits a linear thermal bias slope jointly when the data
+        determine it after the static parameters. Every result is checked on
+        held-out holds and re-validated as the stored float coefficients.
+        A deterministic simulation campaign compares the deployed procedure,
+        the new capture with the old fitter, and the new procedure against
+        known truth.
     \end{abstract}
 
     \begin{IEEEkeywords}
@@ -98,8 +98,11 @@ and Robust Estimation in C\texttt{++}/Eigen}
     the ellipsoid and inverting the distortion yields the calibration map.
 
     \texttt{imu\_cal} implements this approach for all three sensor axes
-    in a self-contained, dependency-light C\texttt{++} header suitable
+    in dependency-light C\texttt{++} headers suitable
     for deployment on Arduino-class hardware.
+    For the accelerometer the manual AtomS3R procedure of
+    Section~\ref{sec:manual} replaces free rotation by guided static holds,
+    because gravity is only a reference while the device is at rest.
     The library uses Eigen \cite{Eigen} for all matrix operations
     and exposes a minimal, typed API.
 
@@ -150,8 +153,13 @@ and Robust Estimation in C\texttt{++}/Eigen}
         \label{eq:tempbias}
     \end{equation}
     with intercept $\mathbf{b}_0 \in \mathbb{R}^3$ and slope
-    $\mathbf{k} \in \mathbb{R}^3$ estimated by least squares from
-    per-temperature-bin calibration centers (Section~\ref{sec:accel_fit}).
+    $\mathbf{k} \in \mathbb{R}^3$. The gyroscope and the library
+    accelerometer calibrator estimate them from per-temperature-bin centers;
+    the manual accelerometer procedure fits them through the measurement
+    model (Section~\ref{sec:thermal}).
+    At runtime $T$ is clamped to $[T_\text{lo}, T_\text{hi}]$ (unbounded by
+    default) and a missing (non-finite) temperature evaluates
+    $\mathbf{b}_0$.
 
 % -----------------------------------------------------------------------
     \section{Ellipsoid Fitting}
@@ -328,8 +336,14 @@ and Robust Estimation in C\texttt{++}/Eigen}
     Failure in any condition produces \texttt{DEGENERATE\_COVERAGE}.
 
 % -----------------------------------------------------------------------
-    \section{Accelerometer Calibration}
+    \section{Library Accelerometer Calibrator}
     \label{sec:accel_fit}
+
+    \texttt{AccelCalibrator} fits the ellipsoid of
+    Section~\ref{sec:ellipsoid} to accelerometer samples.
+    The AtomS3R wizard no longer uses it for the accelerometer
+    (Section~\ref{sec:manual}); it remains available in the library and
+    serves as the old fitter in the validation campaign.
 
     \subsection{Static Sample Gating}
 
@@ -382,6 +396,9 @@ and Robust Estimation in C\texttt{++}/Eigen}
     \end{itemize}
     These thresholds reject numerically or physically implausible fits
     (\texttt{ACCEL\_S\_UNPHYSICAL}).
+    A bin contributes a bias center only after its matrix passed every
+    gate, and a failed fit leaves \texttt{ok} false; an all-rejected fit
+    therefore fails rather than returning the identity default.
 
     \subsection{Gravity Renormalisation}
 
@@ -395,6 +412,317 @@ and Robust Estimation in C\texttt{++}/Eigen}
     $[0.90,\,1.10]$ on fallback).
     This step corrects for any remaining uniform scale error without
     rotating the axes.
+
+% -----------------------------------------------------------------------
+    \section{Manual Accelerometer Calibration}
+    \label{sec:manual}
+
+    The AtomS3R wizard (\texttt{AtomS3R\_ImuCalWizard.h}) runs the
+    host-tested procedure in \texttt{imu\_calibrate/AccelCalCapture.h} and
+    the fitter in \texttt{imu\_calibrate/AccelCalFit.h}.
+    The procedure is manual: angles and opposite orientations are only
+    approximate, modest hand motion is expected, and no fixture, rate table,
+    heating or thermal waiting stage is used.
+
+    \subsection{Model}
+
+    \begin{equation}
+        \mathbf{a}_\text{cal} = \mathbf{S}\bigl(\mathbf{a}_\text{raw}
+        - \mathbf{b}_\text{ref} - \mathbf{k}\,(T - T_\text{ref})\bigr),
+        \quad \mathbf{S} = \mathbf{S}^\top \succ 0.
+        \label{eq:accel_full}
+    \end{equation}
+    $\mathbf{S}$ keeps its six independent entries: three scales and three
+    symmetric cross-axis terms. A gravity-magnitude fit determines the
+    inverse gain matrix only up to a rotation; the symmetric solution is its
+    polar-SPD factor, the same convention as \texttt{PolarSPD}
+    (Section~\ref{sec:polar}), so no frame rotation is introduced.
+    At a fixed temperature nine parameters are estimated
+    ($\mathbf{S}$, $\mathbf{b}_\text{ref}$); the three slopes $\mathbf{k}$
+    are added only when the data determine them (Section~\ref{sec:thermal}).
+
+    \subsection{Pose Design}
+
+    Linearized at $\mathbf{S}=\mathbf{I}$, $\mathbf{b}=\mathbf{0}$, a hold
+    whose measured up-direction is $\mathbf{u}$ observes
+    $g\,\mathbf{u}^\top\delta\mathbf{S}\,\mathbf{u} - \mathbf{u}^\top\delta\mathbf{b}$.
+    The six faces ($\mathbf{u}=\pm\mathbf{e}_i$) have no cross-axis
+    regressors, so with faces alone the cross terms are determined only by
+    in-hold wobble. Four extra directions were chosen by exhaustive search
+    over the 12 edge and 8 corner directions, ranking the worst bias and
+    cross-term standard deviations of the information matrix under ideal
+    geometry and under random placement errors ($5^\circ$ on faces,
+    $15^\circ$ on tilts). Corner sets constrain the cross terms best; the
+    four screen-up corners are within a few percent of the best corner set
+    and keep the screen readable during capture, so they were chosen
+    (Table~\ref{tab:poses}).
+
+    The test suite recomputes the information matrix of the shipped design
+    with the fitter itself: per unit hold error the worst bias standard
+    deviation is $0.71$ and the worst cross-term deviation $0.97$
+    (ideal geometry), and the 95th percentiles under manual placement
+    errors are $0.85$ and $1.43$. Six faces plus repeated faces are
+    reported as undetermined (\texttt{INFO\_CROSS}).
+
+    \begin{table*}[t]
+        \centering
+        \caption{Accelerometer holds. Up is the measured specific-force
+        direction at rest in the device frame (top = end opposite the USB
+        connector, right = right edge, out = out of the screen); documented
+        body mapping: top $=+x$, right $=+y$, out $=-z$. Rotation is the
+        display rotation relative to the reading rotation (text up on the
+        highest edge).}
+        \label{tab:poses}
+        \renewcommand{\arraystretch}{1.1}
+        \begin{tabular}{@{}rllll@{}}
+            \toprule
+            \# & Label & Instructions & Up (top, right, out) & Rotation \\
+            \midrule
+            1 & SCREEN UP & Screen faces up / Flat on the table & $(0,0,1)$ & 0 \\
+            2 & SCREEN DOWN & Screen faces table / Flat on the table & $(0,0,-1)$ & 0 \\
+            3 & USB UP & USB points up / Screen vertical & $(-1,0,0)$ & 2 \\
+            4 & USB DOWN & USB points down / Screen vertical & $(1,0,0)$ & 0 \\
+            5 & LEFT DOWN & Left edge down / Screen vertical & $(0,1,0)$ & 1 \\
+            6 & RIGHT DOWN & Right edge down / Screen vertical & $(0,-1,0)$ & 3 \\
+            7 & USB DN+LEFT DN & Screen up, $\sim$45 deg / USB end DOWN / Left edge DOWN & $(1,1,1)/\sqrt3$ & 0 \\
+            8 & USB DN+RIGHT DN & Screen up, $\sim$45 deg / USB end DOWN / Right edge DOWN & $(1,-1,1)/\sqrt3$ & 0 \\
+            9 & USB UP+LEFT DN & Screen up, $\sim$45 deg / USB end UP / Left edge DOWN & $(-1,1,1)/\sqrt3$ & 2 \\
+            10 & USB UP+RIGHT DN & Screen up, $\sim$45 deg / USB end UP / Right edge DOWN & $(-1,-1,1)/\sqrt3$ & 2 \\
+            \midrule
+            C1--C3 & SCREEN UP, USB UP, LEFT DOWN & later rechecks (as poses 1, 3, 5) & & \\
+            \bottomrule
+        \end{tabular}
+    \end{table*}
+
+    Pose regions are broad: $35^\circ$ cones. Only the screen-up direction
+    is taken from the documented mapping. Later regions use directions
+    measured in the same session: screen down opposite pose 1, USB up
+    screen-vertical and edge-aligned, left down along
+    $\mathbf{u}_1\times\mathbf{u}_3$, and the corners and rechecks from the
+    measured frame. An error in the assumed $x/y$ edge mapping therefore
+    cannot reject correct placements. The measured frame is logged against
+    the documented mapping for hardware confirmation.
+
+    \subsection{Screen Sequence}
+
+    \begin{enumerate}
+        \item \texttt{IMU CAL}: with a saved calibration that includes the
+        gyroscope, ``Tap: full calib / Tap x2: accel only / Tap x3: cancel'';
+        otherwise ``Tap to begin''.
+        \item For each hold, the preparation screen (reading rotation):
+        title \texttt{ACCEL} (\texttt{EXTRA i/2} or \texttt{CHECK i/3}),
+        the label (e.g.\ \texttt{7/10 USB DN+LEFT DN}), the full
+        instructions, an optional reason (\texttt{Weak bias: USB axis},
+        \texttt{Redo: inconsistent}), then ``Tap then place / Tap BtnA''.
+        \item Capture screen in the pose rotation: title, label,
+        instructions retained, a hint (\texttt{Place now}, \texttt{Hold
+        still...}, \texttt{Hold still}, \texttt{Moving - hold still},
+        \texttt{Check the pose}) and a bar that shows the 6.5\,s placement
+        guidance until the device settles, then capture progress.
+        \item \texttt{OK} ``label / Captured''; after a failed hold,
+        \texttt{RETRY?} ``label / reason / Hold still, same pose / Tap:
+        retry / Tap x3: abort'' (at most two retries per hold).
+        \item \texttt{FIT} ``ACCEL / Working...'' (preliminary fit), then
+        at most two \texttt{EXTRA} holds.
+        \item Full wizard only: the existing \texttt{GYRO} and \texttt{MAG}
+        stages.
+        \item \texttt{CHECK 1/3}--\texttt{3/3}: SCREEN UP, USB UP, LEFT DOWN.
+        \item \texttt{FIT} (final), \texttt{SAVE} ``Writing...'', then
+        \texttt{DONE} ``A:1 G:1 M:1 / Saved OK / Bias sd 0.0025 m/s2 /
+        Temp slope: learned|kept|none / Tap BtnA''.
+    \end{enumerate}
+    Any failure shows \texttt{FAILED} ``ACCEL / two reason lines /
+    Previous cal kept''; nothing is written. All strings fit 21 columns (10
+    for titles) of the $128\times128$ display at every rotation, which the
+    tests check.
+
+    \subsection{Hold Qualification}
+
+    Samples carry \texttt{micros()} timestamps; exact repeats of the
+    accelerometer and gyroscope words (stale data), non-increasing times and
+    samples with $\bigl|\|\mathbf{a}\|-g\bigr| > 2\,$m/s$^2$ are skipped (a
+    broad gate that keeps the bias being calibrated). Each 0.25\,s block is
+    retained as its own gravity observation if it has at least five
+    samples covering 60\,\% of the block without a 60\,ms gap, an RMS
+    deviation below 0.25\,m/s$^2$, a per-axis range below 1.6\,m/s$^2$
+    (shocks), a mean angular rate within 0.15\,rad/s of the stationary gyro
+    level (the saved gyroscope bias, the gyro stage result, or the median of
+    completed holds; 0.20\,rad/s before one is known), a within-block rate
+    deviation below 0.30\,rad/s, and an up-direction inside the pose region.
+    A 0.25\,s block smeared by 0.15\,rad/s shrinks its mean norm by about
+    0.5\,mg, so these gates bound physical error without demanding
+    stillness. The 6.5\,s placement interval is guidance, not a wait: after
+    1\,s, three consecutive qualified blocks whose means differ by less than
+    0.30\,m/s$^2$ settle the hold, and they are retained immediately.
+    While capturing, a block whose mean jumps by more than 0.5\,m/s$^2$ or
+    whose norm jumps by more than 0.12\,m/s$^2$ from the last retained block
+    is rejected locally; four rejections in a row require settling again.
+    A hold ends after 5\,s of retained blocks (rechecks: 5\,s fit plus
+    2\,s verification-only), fails after 30\,s, and a sensor that delivers
+    no fresh sample for 12\,s fails it at once. Blocks of one hold are never
+    merged into one vector, so a slowly drifting hold keeps its spread.
+
+    \subsection{Fit}
+
+    Vectors are normalized by $g$ and temperatures by $10\,^\circ$C;
+    $\mathbf{S} = \mathbf{L}\mathbf{L}^\top$ with a log-diagonal lower
+    Cholesky factor, so every iterate is SPD. The residual of a block is
+    $\|\mathbf{S}(\mathbf{x}_i - \boldsymbol\beta - \boldsymbol\kappa\tau_i)\| - 1$.
+    Each hold carries total weight one, split equally over its fit blocks,
+    so correlated blocks and longer holds do not count as extra geometry.
+    Levenberg--Marquardt runs in double precision inside six IRLS passes
+    with Huber weights (knee 2 robust sigmas, MAD scale floored at
+    2\,mm/s$^2$); a block beyond $\max(8\sigma, 0.08\,\text{m/s}^2)$ gets zero
+    weight, but every hold keeps its best block. The start is
+    $\mathbf{S} = s\mathbf{I}$, $\mathbf{b}=\mathbf{0}$ with $s$ from the
+    mean norm; no simpler model replaces the full-matrix result.
+
+    The information matrix uses the physical parameters (six entries of
+    $\mathbf{S}$, $\mathbf{b}$, and $\boldsymbol\kappa$ when fitted) with
+    hold-normalized weights; no prior, regularization or SPD repair enters
+    it. The hold-level error is
+    $\sigma_\text{obs}^2 = \overline{d_h^2/4} + (3\,\text{mm/s}^2)^2$, where
+    $d_h$ is the difference of the two half-hold mean residuals. Its first
+    term is measured, and the floor stands for effects a static hold cannot
+    reveal. Parameter sigmas are $\sigma_\text{obs}$ times the square roots of
+    the diagonal of the inverse information.
+
+    A result is accepted only if the existing coverage/planarity check
+    passes on the fit blocks. It also needs the existing PolarSPD gates
+    (diagonal in $[0.80, 1.25]$, $\kappa(\mathbf{S})\le 6$, off-diagonal RMS
+    $\le 0.10$) and every bias below 1.5\,m/s$^2$. The bias sigmas must be
+    at most 15\,mm/s$^2$ and the cross-term sigmas at most 0.004. The RMS
+    of hold-mean norm errors must be at most 50\,mm/s$^2$, and the held-out
+    checks below must pass. No gravity rescaling follows the fit. A
+    preliminary static fit after the ten holds runs the same geometry,
+    plausibility and held-out checks. If a bias or cross term is
+    undetermined, the procedure asks for the main pose that most reduces
+    that parameter's variance (rank-one update). If a hold disagrees, it
+    recaptures that hold. At most two such holds are added; after that the
+    calibration fails with the deficient direction named. A diagonal-only
+    fallback is never used.
+
+    \subsection{Thermal Bias}
+    \label{sec:thermal}
+
+    Every retained block carries the mean of its valid temperatures.
+    $T_\text{ref}$ is the mean of the hold-mean temperatures (rounded to
+    0.1\,$^\circ$C). The three rechecks follow the gyroscope and
+    magnetometer stages in the full wizard, so their temperatures differ by
+    whatever the device warmed in normal use. In accelerometer-only mode
+    they follow immediately and no wait is inserted. The slope is fitted
+    jointly with the nine static parameters, from the rechecks' measured
+    vectors, never by subtracting repeated poses. It is kept
+    (\texttt{LEARNED}) only if every fit block has a valid temperature, the
+    hold temperatures span at least 2\,$^\circ$C, each slope sigma after the
+    static parameters (the thermal block of the inverse information, i.e.\
+    the inverse Schur complement) is at most 1.5\,mm/s$^2$/K, and each
+    slope is at most 20\,mm/s$^2$/K. Its runtime clamp is the evidence range
+    widened by 5\,$^\circ$C. A single later direction or a span alone does
+    not qualify (tests). Otherwise a compatible earlier slope is kept
+    (\texttt{PRESERVED}): it must have been learned or preserved by this
+    fitter, with bound metadata, for the same ESP32 MAC and IMU type. Only
+    the bias is refitted then, so a power-cycle offset is never read as a
+    temperature effect. Failing that, $\mathbf{k}=\mathbf{0}$
+    (\texttt{UNLEARNED}). Blocks without a temperature are used at
+    $T_\text{ref}$. The fit never uses vessel motion or an estimator's
+    online bias.
+
+    The model has no thermal scale term. Because the rechecks are
+    one-sided, a real thermal scale change aliases into $\mathbf{k}$ along
+    the rechecked directions. The campaign reports this case.
+
+    \subsection{Held-Out Checks}
+
+    Leave-one-hold-out: each hold is predicted by a refit without it (frozen
+    robust weights), scored only when that refit still determines the model
+    (sigmas within three times the gates). The studentized error
+    $|e_h| / \sqrt{\max(\sigma_\text{obs}, \sigma_h)^2 +
+    \sigma_\text{obs}^2 \mathbf{f}_h^\top \mathbf{C}_{-h}\mathbf{f}_h}$ must
+    be at most 6 and $|e_h|$ at most 0.15\,m/s$^2$, where $\sigma_h$ is the
+    hold's own split-half scatter and $\mathbf{f}_h$ its regressor. Tilted
+    holds carry unique information, so raw hold-out errors mostly measure
+    leverage; the studentized form measures consistency. The last 2\,s of
+    each recheck never enter the fit or the thermal decision. Their mean
+    calibrated norm error, computed with the stored float coefficients, must
+    be at most 0.08\,m/s$^2$. It measures repeatability at the recheck, not
+    placement independence. On device only norm consistency and model-based
+    sigmas are available; three-axis bias accuracy is known only in
+    simulation.
+
+    \subsection{Persistence and Runtime}
+
+    Blob v3 keeps every v2 field in order and adds the accelerometer
+    runtime clamp, qualification metadata and the sensor identity (key
+    \texttt{blob\_m5v3}). v2 blobs (\texttt{blob\_m5}, \texttt{blob}) load
+    and migrate with unchanged runtime output and \texttt{LEGACY} thermal
+    status. \texttt{accel\_coeff\_crc} binds the metadata to the
+    coefficient set it describes. The float coefficients are validated after
+    the double-to-float conversion, after serialization, and after the
+    read-back: finite, exactly symmetric, SPD, within the gates, and
+    reproducing the double hold RMS within 0.2\,mm/s$^2$. The save succeeds
+    only if the read-back of the v3 key validates and equals the candidate
+    byte for byte, so an older blob can never pass as the new one;
+    superseded v2 keys are then removed. Accelerometer-only recalibration
+    copies the saved gyroscope and magnetometer fields unchanged. On any
+    failure or abort nothing is written. \texttt{RuntimeCals} applies the
+    calibration once, upstream of every estimator, after
+    \texttt{clearM5UnifiedImuCalibration()}.
+
+    \subsection{Validation Campaign}
+
+    \texttt{tests/imu\_calibrate/accel\_cal-test} simulates complete
+    sessions for 30 seeds per scenario. It draws a sensor truth: bias
+    $\sigma=0.15$\,m/s$^2$, scale 1\,\%, symmetric cross 0.4\,\%, slopes
+    2\,mm/s$^2$/K, white and correlated noise, gyro bias. It adds a user who
+    reacts, moves with minimum-jerk rotations and places with 2--15$^\circ$
+    errors, sometimes first tilting only one axis. A hand-held hold wobbles
+    by 0.2--0.6$^\circ$ per mode at 0.2--1.2\,Hz, with drift, 8--12\,Hz
+    tremor, 0.5--2\,mm sway and occasional regrips. It also models table
+    knocks, stale samples, dropouts and timestamp jitter, and temperature
+    histories. The deployed procedure is reproduced: six faces, 6.5\,s wait,
+    the first 60 gated samples, \texttt{AccelCalibrator<float,400,1>}
+    PolarSPD with its gates, and the pre-fix identity acceptance. Its blocks
+    are also fed to the old fitter, and the new procedure runs through the
+    same \texttt{AccelCalIo} interface as the wizard. Every result is scored
+    through the float runtime on 400 unseen orientations against the truth
+    (Table~\ref{tab:campaign}).
+
+    The deployed fit is ill-posed for six clustered poses: its ten-parameter
+    quadric takes the cross terms, and through them the centre, from
+    in-cluster noise. When its gates rejected the matrix the deployed code
+    saved $\mathbf{S}=\mathbf{I}$, $\mathbf{b}=\mathbf{0}$ and reported
+    success (column ident.). The new capture alone removes most of the bias
+    error; the new fitter adds the determined cross terms, the thermal
+    slope, hold balancing and the checks. A design-time sweep of the useful
+    hold length (3, 4, 5, 6.5, 8, 10\,s) found lower success at 3--4\,s and
+    little accuracy gain beyond 5\,s for 20--40\,s of extra user time, so
+    5\,s is used.
+
+    \begin{table*}[t]
+        \centering
+        \caption{Simulated accelerometer calibration (30 sessions per
+        scenario; regenerated by CI from
+        \texttt{calibrate\_accel\_campaign\_summary.csv}). Errors at the
+        mean capture temperature on unseen orientations through the float
+        runtime; cross is the largest symmetric cross-term error; time is
+        the user time of the accelerometer holds.}
+        \label{tab:campaign}
+        \footnotesize
+        \IfFileExists{calibrate_accel_campaign_table.pgf}{\input{calibrate_accel_campaign_table.pgf}}{(table generated by the imu\_calibrate CI job)}
+    \end{table*}
+
+    \subsection{Limitations}
+
+    All accuracy figures come from simulation; no hardware session or
+    recorded log has been evaluated. The raw-sample replay
+    (\texttt{accel\_cal-replay}, firmware built with
+    \texttt{ATOMS3R\_ICAL\_RAW\_LOG=1}) and the block replay are the route
+    for real recordings. The hand, placement and temperature models, the
+    documented $x/y$ edge mapping, the sample rate, and the fit time and
+    stack use on the ESP32-S3 are unverified on hardware. A learned slope
+    describes only its narrow evidence range (typically a few kelvin), not
+    full-range thermal behaviour. Thermal scale changes are not modelled.
 
 % -----------------------------------------------------------------------
     \section{Magnetometer Calibration}
@@ -476,6 +804,9 @@ enum class FitFail : uint8_t {
   MAG_FIELD_OUT_OF_RANGE,
   TEMP_BINS_EMPTY,
   ACCEL_S_UNPHYSICAL,
+  ACCEL_INFO_LOW,
+  ACCEL_CROSSCHECK_FAIL,
+  ACCEL_FLOAT_CHECK_FAIL,
 };
     \end{lstlisting}
     The helper \texttt{fitFailStr()} converts any code to a printable
@@ -589,6 +920,9 @@ Eigen::Vector3f m_cal = result.apply(m_raw);
 
     All internal arrays (residuals, inlier mask, sorted quantile buffer)
     are declared at fixed size \texttt{IMU\_CAL\_MAX\_SAMPLES}.
+    The full-matrix accelerometer fitter keeps its per-block workspace in the
+    fitter object and solves one fixed-size $12\times12$ LDLT; parameters
+    that are not free are pinned by identity rows.
     The AccelCalibrator keeps its per-bin index arrays in a mutable
     \texttt{Workspace} member to reduce stack pressure inside \texttt{fit()}.
 
@@ -633,6 +967,9 @@ Eigen::Vector3f m_cal = result.apply(m_raw);
             \texttt{MAG\_FIELD\_OUT\_OF\_RANGE} & Keep away from strong magnets; recheck sensor \\
             \texttt{TEMP\_BINS\_EMPTY}      & Too few samples per temperature bin; slow down cooling \\
             \texttt{ACCEL\_S\_UNPHYSICAL}   & Diagonal or condition check failed; check gates \\
+            \texttt{ACCEL\_INFO\_LOW}      & Holds do not determine a bias or cross term; extra hold \\
+            \texttt{ACCEL\_CROSSCHECK}     & A held-out hold disagrees; recapture it \\
+            \texttt{ACCEL\_FLOAT\_CHECK}   & Stored float coefficients failed re-validation \\
             \bottomrule
         \end{tabular}
     \end{table}
@@ -640,19 +977,13 @@ Eigen::Vector3f m_cal = result.apply(m_raw);
 % -----------------------------------------------------------------------
     \section{Conclusion}
 
-    \texttt{imu\_cal} provides a complete, self-contained in-situ IMU
-    calibration pipeline in fewer than 900 lines of C\texttt{++}/Eigen.
-    The core algorithm is a 10-parameter ellipsoid fit solved by LDLT
-    with iterative trimmed reweighting and MAD-based robust scaling.
-    Accelerometer calibration adds temperature binning, polar-SPD
-    axis-alignment enforcement, and gravity renormalisation.
-    Magnetometer calibration applies a coordinate scaling step to improve
-    conditioning at microtesla magnitudes.
-    Gyroscope calibration extracts a linear temperature-bias model from
-    quiet-stationary data.
-    The library is header-only, allocation-free, and configurable via
-    template parameters, making it directly deployable on
-    Arduino-compatible embedded targets.
+    \texttt{imu\_cal} provides in-situ IMU calibration in C\texttt{++}/Eigen
+    headers. Magnetometer and library accelerometer calibration use a
+    robust 10-parameter ellipsoid fit; gyroscope calibration fits a linear
+    temperature-bias model from stationary data. The AtomS3R accelerometer
+    procedure uses guided static holds chosen for observability, a geometric
+    full-matrix fit with a qualified thermal slope, held-out checks,
+    re-validated float coefficients and verified persistence.
 
 % -----------------------------------------------------------------------
     \begin{thebibliography}{9}

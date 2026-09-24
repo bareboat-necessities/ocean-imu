@@ -4,8 +4,9 @@
 
   Copyright 2026, Mikhail Grushinskiy
 
-  AtomS3R reusable IMU calibration plumbing (NVS blob + CRC, runtime apply, axis mapping,
-  and M5Unified-calibration clearing).
+  AtomS3R reusable IMU calibration plumbing (NVS store, axis mapping, serial
+  printers and M5Unified-calibration clearing). Blob layouts, CRC, migration and
+  runtime application live in AtomS3R_ImuCalBlob.h.
 
   This header is intentionally UI-agnostic: you can reuse it in:
     - the calibration wizard sketch
@@ -17,7 +18,7 @@
     #include "AtomS3R/AtomS3R_ImuCal.h"
 
     atoms3r_ical::ImuCalStoreNvs store;
-    atoms3r_ical::ImuCalBlobV2   blob;
+    atoms3r_ical::ImuCalBlobV3   blob;
     atoms3r_ical::RuntimeCals    cals;
 
     void setup() {
@@ -88,19 +89,11 @@
 #endif
 #include <ArduinoEigenDense.h>
 
-// Requires existing calibration types (imu_cal::AccelCalibration, etc.)
-#include "imu_calibrate/CalibrateIMU.h"
+// Blob layouts, CRC, v2 migration, runtime application and the generic store
+// (host-testable, no Arduino dependency).
+#include "AtomS3R/AtomS3R_ImuCalBlob.h"
 
 namespace atoms3r_ical {
-
-using Vector3f = Eigen::Matrix<float,3,1>;
-using Matrix3f = Eigen::Matrix<float,3,3>;
-
-// Config/constants (shared)
-struct ImuCalCfg {
-  static constexpr float g_std   = 9.80665f;
-  static constexpr float DEG2RAD = 3.14159265358979323846f / 180.0f;
-};
 
 // Axis mapping (AtomS3R)
 //
@@ -127,177 +120,44 @@ static inline Vector3f map_mag_to_body_uT_(const m5::imu_3d_t& m_raw) {
   return map_sensor_xyz_to_body_ned_(m_raw.x, m_raw.y, m_raw.z, 0.1f);
 }
 
-// Blob + CRC utilities
-struct ImuCalBlobV2 {
-  static constexpr uint32_t IMU_CAL_MAGIC   = 0x434C554D; // 'MULC'
-  static constexpr uint16_t IMU_CAL_VERSION = 2;
-  static constexpr uint8_t  IMU_CAL_MODE_M5_IMU_API = 1;
-
-  uint32_t magic = IMU_CAL_MAGIC;
-  uint16_t version = IMU_CAL_VERSION;
-  uint16_t size_bytes = sizeof(ImuCalBlobV2);
-  uint8_t  build_mode = 0;
-
-  uint8_t  accel_ok = 0;
-  float    accel_g = ImuCalCfg::g_std;
-  float    accel_S[9]{};
-  float    accel_T0 = 25.0f;
-  float    accel_b0[3]{};
-  float    accel_k[3]{};
-  float    accel_rms_mag = 0.0f;
-
-  uint8_t  gyro_ok = 0;
-  float    gyro_T0 = 25.0f;
-  float    gyro_b0[3]{};
-  float    gyro_k[3]{};
-
-  uint8_t  mag_ok = 0;
-  float    mag_A[9]{};
-  float    mag_b[3]{};
-  float    mag_field_uT = 0.0f;
-  float    mag_rms = 0.0f;
-
-  uint32_t crc = 0;
-};
-static constexpr size_t IMU_CAL_CRC_LEN = offsetof(ImuCalBlobV2, crc);
-
-static inline uint32_t crc32_ieee_(const uint8_t* data, size_t n) {
-  uint32_t crc = 0xFFFFFFFFu;
-  for (size_t i = 0; i < n; ++i) {
-    crc ^= (uint32_t)data[i];
-    for (int k = 0; k < 8; ++k) {
-      uint32_t mask = -(crc & 1u);
-      crc = (crc >> 1) ^ (0xEDB88320u & mask);
-    }
-  }
-  return ~crc;
-}
-
-static inline Matrix3f mat_from_rowmajor9_(const float a[9]) {
-  Matrix3f M;
-  M(0,0)=a[0]; M(0,1)=a[1]; M(0,2)=a[2];
-  M(1,0)=a[3]; M(1,1)=a[4]; M(1,2)=a[5];
-  M(2,0)=a[6]; M(2,1)=a[7]; M(2,2)=a[8];
-  return M;
-}
-
-static inline void mat_to_rowmajor9_(const Matrix3f& M, float a[9]) {
-  a[0]=M(0,0); a[1]=M(0,1); a[2]=M(0,2);
-  a[3]=M(1,0); a[4]=M(1,1); a[5]=M(1,2);
-  a[6]=M(2,0); a[7]=M(2,1); a[8]=M(2,2);
-}
-
-static inline uint32_t computeBlobCrc(const ImuCalBlobV2& in) {
-  ImuCalBlobV2 tmp = in;
-  tmp.crc = 0;
-  return crc32_ieee_((const uint8_t*)&tmp, IMU_CAL_CRC_LEN);
-}
-
-static inline bool validateBlob(const ImuCalBlobV2& b) {
-  if (b.magic != ImuCalBlobV2::IMU_CAL_MAGIC) return false;
-  if (b.version != ImuCalBlobV2::IMU_CAL_VERSION) return false;
-  if (b.size_bytes != sizeof(ImuCalBlobV2)) return false;
-  const uint8_t expected_mode = ImuCalBlobV2::IMU_CAL_MODE_M5_IMU_API;
-  if (b.build_mode != expected_mode) return false;
-  const uint32_t want = b.crc;
-  return (computeBlobCrc(b) == want);
-}
-
-// NVS store (Preferences)
-class ImuCalStoreNvs {
+// Preferences byte API for ImuCalStoreT; one short open/close per operation.
+class PrefsKv {
 public:
   // Namespace kept stable so different sketches share saved cals.
   static constexpr const char* kNamespace = "imu_cal";
-  static constexpr const char* kKeyLegacy = "blob";
-  static constexpr const char* kKeyM5ImuApi = "blob_m5";
 
-  static constexpr const char* modeKey() {
-    return kKeyM5ImuApi;
-  }
-
-  bool loadByKey_(Preferences& prefs, const char* key, ImuCalBlobV2& out) {
-    size_t n = prefs.getBytesLength(key);
-    if (n != sizeof(ImuCalBlobV2)) return false;
-
-    ImuCalBlobV2 tmp;
-    size_t got = prefs.getBytes(key, &tmp, sizeof(tmp));
-    if (got != sizeof(tmp)) return false;
-    if (!validateBlob(tmp)) return false;
-
-    out = tmp;
-    return true;
-  }
-
-  bool load(ImuCalBlobV2& out) {
+  size_t getBytesLength(const char* key) {
     Preferences prefs;
-    prefs.begin(kNamespace, true);
-    const bool ok = loadByKey_(prefs, modeKey(), out) || loadByKey_(prefs, kKeyLegacy, out);
+    if (!prefs.begin(kNamespace, true)) return 0;
+    const size_t n = prefs.isKey(key) ? prefs.getBytesLength(key) : 0;
+    prefs.end();
+    return n;
+  }
+  size_t getBytes(const char* key, void* buf, size_t len) {
+    Preferences prefs;
+    if (!prefs.begin(kNamespace, true)) return 0;
+    const size_t n = prefs.getBytes(key, buf, len);
+    prefs.end();
+    return n;
+  }
+  size_t putBytes(const char* key, const void* buf, size_t len) {
+    Preferences prefs;
+    if (!prefs.begin(kNamespace, false)) return 0;
+    const size_t n = prefs.putBytes(key, buf, len);
+    prefs.end();
+    return n;
+  }
+  bool remove(const char* key) {
+    Preferences prefs;
+    if (!prefs.begin(kNamespace, false)) return false;
+    const bool ok = prefs.isKey(key) ? prefs.remove(key) : true;
     prefs.end();
     return ok;
   }
-
-  bool save(const ImuCalBlobV2& in) {
-    ImuCalBlobV2 tmp = in;
-    tmp.magic = ImuCalBlobV2::IMU_CAL_MAGIC;
-    tmp.version = ImuCalBlobV2::IMU_CAL_VERSION;
-    tmp.size_bytes = sizeof(ImuCalBlobV2);
-    tmp.build_mode = ImuCalBlobV2::IMU_CAL_MODE_M5_IMU_API;
-    tmp.crc = 0;
-    tmp.crc = computeBlobCrc(tmp);
-
-    Preferences prefs;
-    prefs.begin(kNamespace, false);
-    size_t wrote = prefs.putBytes(modeKey(), &tmp, sizeof(tmp));
-    prefs.end();
-    return (wrote == sizeof(tmp));
-  }
-
-  void erase() {
-    Preferences prefs;
-    prefs.begin(kNamespace, false);
-    prefs.remove(modeKey());
-    prefs.end();
-  }
 };
 
-// Runtime calibration objects
-struct RuntimeCals {
-  imu_cal::AccelCalibration<float> acc{};
-  imu_cal::GyroCalibration<float>  gyr{};
-  imu_cal::MagCalibration<float>   mag{};
-
-  void rebuildFromBlob(const ImuCalBlobV2& b) {
-    acc.ok = (b.accel_ok != 0);
-    acc.g  = b.accel_g;
-    acc.S  = mat_from_rowmajor9_(b.accel_S);
-    acc.biasT.ok = acc.ok;
-    acc.biasT.T0 = b.accel_T0;
-    acc.biasT.b0 = Vector3f(b.accel_b0[0], b.accel_b0[1], b.accel_b0[2]);
-    acc.biasT.k  = Vector3f(b.accel_k[0],  b.accel_k[1],  b.accel_k[2]);
-    acc.rms_mag  = b.accel_rms_mag;
-
-    gyr.ok = (b.gyro_ok != 0);
-    gyr.S  = Matrix3f::Identity();
-    gyr.biasT.ok = gyr.ok;
-    gyr.biasT.T0 = b.gyro_T0;
-    gyr.biasT.b0 = Vector3f(b.gyro_b0[0], b.gyro_b0[1], b.gyro_b0[2]);
-    gyr.biasT.k  = Vector3f(b.gyro_k[0],  b.gyro_k[1],  b.gyro_k[2]);
-
-    mag.ok = (b.mag_ok != 0);
-    mag.A  = mat_from_rowmajor9_(b.mag_A);
-    mag.b  = Vector3f(b.mag_b[0], b.mag_b[1], b.mag_b[2]);
-    mag.field_uT = b.mag_field_uT;
-    mag.rms      = b.mag_rms;
-  }
-
-  Vector3f applyAccel(const Vector3f& a_raw, float tempC) const { return acc.ok ? acc.apply(a_raw, tempC) : a_raw; }
-  Vector3f applyGyro (const Vector3f& w_raw, float tempC) const { return gyr.ok ? gyr.apply(w_raw, tempC) : w_raw; }
-  Vector3f applyMag  (const Vector3f& m_raw) const {
-    if (!mag.ok) return m_raw;
-    const Vector3f m_cal = mag.apply(m_raw);
-    return m_cal.allFinite() ? m_cal : m_raw;
-  }
-};
+// NVS store (Preferences)
+class ImuCalStoreNvs : public ImuCalStoreT<PrefsKv> {};
 
 // Pretty 3x3 print from row-major float[9].
 static inline void printMat3RowMajor(Print& out, const float a[9], int prec = 9) {
@@ -341,22 +201,42 @@ static inline void printMatHeader(Print& out, const char* name, const char* mean
 }
 
 // Print helpers (startup serial)
-static inline void printBlobSummary(Print& out, const ImuCalBlobV2& b) {
+static inline void printBlobSummary(Print& out, const ImuCalBlobV3& b) {
   const char* mode = "unknown";
-  if (b.build_mode == ImuCalBlobV2::IMU_CAL_MODE_M5_IMU_API) mode = "m5_imu_api";
+  if (b.build_mode == IMU_CAL_MODE_M5_IMU_API) mode = "m5_imu_api";
   out.printf("  build_mode: %s\n", mode);
   out.printf("  ok: A=%d G=%d M=%d\n", (int)b.accel_ok, (int)b.gyro_ok, (int)b.mag_ok);
 }
 
-static inline void printBlobDetail(Print& out, const ImuCalBlobV2& b) {
+static inline void printBlobDetail(Print& out, const ImuCalBlobV3& b) {
   // ACCEL
   out.printf("  accel: g=%.6f T0=%.2f rms_mag=%.4f\n", (double)b.accel_g, (double)b.accel_T0, (double)b.accel_rms_mag);
   out.printf("    b0=[%.5f %.5f %.5f]\n", (double)b.accel_b0[0], (double)b.accel_b0[1], (double)b.accel_b0[2]);
-  out.printf("    k =[%.6f %.6f %.6f]\n", (double)b.accel_k[0], (double)b.accel_k[1], (double)b.accel_k[2]);
+  out.printf("    k =[%.6f %.6f %.6f] clamp T=[%.1f %.1f]\n", (double)b.accel_k[0], (double)b.accel_k[1],
+             (double)b.accel_k[2], (double)b.accel_T_lo, (double)b.accel_T_hi);
 
   printMatHeader(out, "S", "a_cal = S*(a_raw - bias(T))");
   printMat3RowMajor(out, b.accel_S, 9);
   printMatDiagOffDiagRms(out, b.accel_S);
+
+  const bool full = (b.accel_fit_method == (uint8_t)AccelFitMethod::FULL_MATRIX);
+  out.printf("    fit=%s thermal=%s/%s meta=%s\n", full ? "full_matrix" : "legacy",
+             imu_cal::accelThermalStr((imu_cal::AccelThermal)b.accel_thermal),
+             imu_cal::accelThermalReasonStr((imu_cal::AccelThermalReason)b.accel_thermal_reason),
+             accelMetaBound(b) ? "bound" : "UNBOUND");
+  if (full) {
+    out.printf("    holds=%u blocks=%u capture=%us T_seen=[%.2f %.2f] k_range=[%.2f %.2f]\n",
+               (unsigned)b.accel_n_holds, (unsigned)b.accel_n_blocks, (unsigned)b.accel_capture_s,
+               (double)b.accel_cal_temp_lo, (double)b.accel_cal_temp_hi,
+               (double)b.accel_k_temp_lo, (double)b.accel_k_temp_hi);
+    out.printf("    bias_sd=[%.4f %.4f %.4f] cross_sd=[%.5f %.5f %.5f] k_sd=[%.5f %.5f %.5f]\n",
+               (double)b.accel_bias_sigma[0], (double)b.accel_bias_sigma[1], (double)b.accel_bias_sigma[2],
+               (double)b.accel_cross_sigma[0], (double)b.accel_cross_sigma[1], (double)b.accel_cross_sigma[2],
+               (double)b.accel_k_sigma[0], (double)b.accel_k_sigma[1], (double)b.accel_k_sigma[2]);
+    out.printf("    sigma_obs=%.4f heldout_cv rms/max=%.4f/%.4f verify rms/max=%.4f/%.4f\n",
+               (double)b.accel_sigma_obs, (double)b.accel_cv_rms, (double)b.accel_cv_max,
+               (double)b.accel_verify_rms, (double)b.accel_verify_max);
+  }
 
   // GYRO
   out.printf("  gyro:  T0=%.2f\n", (double)b.gyro_T0);

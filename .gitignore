@@ -77,12 +77,16 @@ freq_track_*.csv
 adaptive_wave_detrender*_output.csv
 adaptive_wave_detrender*_summary.csv
 calibrate_imu_test_*.csv
+calibrate_accel_*.csv
+tests/imu_calibrate/calibrate_accel_report.txt
+tests/imu_calibrate/calibrate_accel_replay_sample.log
 vertical_accel_drift_*.csv
 
 # Compiled test executables (extensionless, so not covered by the rules above)
 tests/*/*-sim
 tests/*/*-test
 tests/freq/freq-track
+tests/imu_calibrate/accel_cal-replay
 tests/pii_observer/pii_observer-adaptive
 tests/wave_sim/wave-convention-check
 
