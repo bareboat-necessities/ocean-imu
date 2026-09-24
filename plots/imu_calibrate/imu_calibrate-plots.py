@@ -17,6 +17,7 @@ SCENARIO_LABELS = {
     "thermal_scale_mismatch": "scale drift $10^{-4}$/K",
     "thermal_scale_stress": "scale drift $3{\\times}10^{-4}$/K",
     "accel_only": "accel only",
+    "local_g": "local $g = 9.780$",
     "temp_nan": "no temperature",
     "temp_confounded": "confounded T",
 }

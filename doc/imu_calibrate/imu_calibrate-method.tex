@@ -610,7 +610,9 @@ and Robust Estimation in C\texttt{++}/Eigen}
     0.1\,$^\circ$C). The three rechecks follow the gyroscope and
     magnetometer stages in the full wizard, so their temperatures differ by
     whatever the device warmed in normal use. In accelerometer-only mode
-    they follow immediately and no wait is inserted. The slope is fitted
+    they follow immediately and no wait is inserted. The gyroscope hold is
+    not reused as a recheck: the unchanged gyro stage ends after 220
+    samples, short of the 5\,s accelerometer hold. The slope is fitted
     jointly with the nine static parameters, from the rechecks' measured
     vectors, never by subtracting repeated poses. It is kept
     (\texttt{LEARNED}) only if every fit block has a valid temperature, the

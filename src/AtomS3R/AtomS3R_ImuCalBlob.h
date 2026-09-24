@@ -285,6 +285,22 @@ static inline void fillAccelFromFit(ImuCalBlobV3& b, const imu_cal::AccelFullFit
   b.accel_coeff_crc = accelCoeffCrc(b);
 }
 
+// Candidate of an accelerometer-only recalibration: the previous blob with
+// its gyro and magnetometer fields carried unchanged and a new, bound
+// accelerometer set and sensor identity.
+static inline ImuCalBlobV3 accelOnlyCandidate(const ImuCalBlobV3& prev, const imu_cal::AccelFullFitResult& r,
+                                              const imu_cal::AccelCalibration<float>& fc, uint32_t capture_s,
+                                              uint32_t id_lo, uint32_t id_hi, uint8_t imu_type)
+{
+  ImuCalBlobV3 b;
+  memcpy((void*)&b, &prev, sizeof(b));
+  fillAccelFromFit(b, r, fc, capture_s);
+  b.sensor_id_lo = id_lo;
+  b.sensor_id_hi = id_hi;
+  b.imu_type = imu_type;
+  return b;
+}
+
 // Thermal slope usable in a new session of `sensor_id`/`imu_type`: only a
 // slope this firmware validated (LEARNED, or PRESERVED from one), with bound
 // metadata, for the same sensor and IMU. Bias offsets are never carried: they

@@ -227,16 +227,19 @@ public:
 
       // Candidate: new accelerometer set; gyro/mag from this run, or carried
       // unchanged from the previous calibration in accelerometer-only mode.
-      ImuCalBlobV3 blob;
-      memset((void*)&blob, 0, sizeof(blob));
-      if (accel_only) blob = prev;
-      else fillGyroMag_(blob);
       imu_cal::AccelCalibration<float> fc;
       AccelProc::Fitter::toFloat(accel_.result(), accel_fcfg_.g, fc);
-      fillAccelFromFit(blob, accel_.result(), fc, accel_.totalHoldMs() / 1000u);
-      blob.sensor_id_lo = sensor_id_lo_;
-      blob.sensor_id_hi = sensor_id_hi_;
-      blob.imu_type = imu_type_;
+      const uint32_t capture_s = accel_.totalHoldMs() / 1000u;
+      ImuCalBlobV3 blob;
+      if (accel_only) {
+        blob = accelOnlyCandidate(prev, accel_.result(), fc, capture_s, sensor_id_lo_, sensor_id_hi_, imu_type_);
+      } else {
+        fillGyroMag_(blob);
+        fillAccelFromFit(blob, accel_.result(), fc, capture_s);
+        blob.sensor_id_lo = sensor_id_lo_;
+        blob.sensor_id_hi = sensor_id_hi_;
+        blob.imu_type = imu_type_;
+      }
 
       // The stored float set, rebuilt through the runtime path, must reproduce
       // the fit before it is written...
@@ -430,7 +433,7 @@ private:
       }
 
       if (magCal_.buf.n < ImuCalWizardCfg::MAG_MIN_TO_FIT) {
-        auto act = ui_.magFailMenu("Too few accepted", "Rotate longer / slower");
+        auto act = ui_.magFailMenu("Too few accepted", "Rotate longer, slower");
         if (act == M5Ui::MagFailAction::RETRY_MAG) continue;
         if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; return false; }
         return false;

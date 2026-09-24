@@ -21,6 +21,8 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstddef>
+#include <regex>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -659,6 +661,38 @@ void testScreenText() {
   delete p;
 }
 
+// Fixed wizard screen strings (AtomS3R headers are Arduino-only, so they are
+// checked at source level): titles <= 10 columns, other text <= 21 columns.
+void testWizardScreenStrings() {
+  std::string dir = __FILE__;
+  const size_t slash = dir.find_last_of('/');
+  dir = (slash == std::string::npos) ? std::string(".") : dir.substr(0, slash);
+  int checked = 0;
+  for (const char* rel : {"/../../src/AtomS3R/AtomS3R_M5Ui.h", "/../../src/AtomS3R/AtomS3R_ImuCalWizard.h"}) {
+    std::ifstream f(dir + rel);
+    check(f.good(), std::string("screen-string source readable: ") + rel);
+    std::stringstream ss; ss << f.rdbuf();
+    const std::string src = ss.str();
+    // Titles: title("...") and the first argument of waitTap("...").
+    const std::regex title_re(R"re(\b(?:title|waitTap)\s*\(\s*"([^"]*)")re");
+    for (auto it = std::sregex_iterator(src.begin(), src.end(), title_re); it != std::sregex_iterator(); ++it) {
+      check((*it)[1].length() <= 10, "title fits 10 columns: " + (*it)[1].str());
+      ++checked;
+    }
+    // Every literal inside a display call on one line.
+    const std::regex call_re(R"re(\b(?:line|lineAt|fail|failLines|retryMenu|showOkAuto|magFailMenu|waitTap|notSavedNotice)\s*\(([^;]*)\);)re");
+    const std::regex lit_re(R"re("([^"]*)")re");
+    for (auto it = std::sregex_iterator(src.begin(), src.end(), call_re); it != std::sregex_iterator(); ++it) {
+      const std::string args = (*it)[1].str();
+      for (auto jt = std::sregex_iterator(args.begin(), args.end(), lit_re); jt != std::sregex_iterator(); ++jt) {
+        check((*jt)[1].length() <= 21, "screen text fits 21 columns: " + (*jt)[1].str());
+        ++checked;
+      }
+    }
+  }
+  check(checked > 40, "screen-string scan found the wizard text");
+}
+
 // Instruction <-> device edges <-> display rotation <-> measured direction.
 void testPoseMapping() {
   // Deployed face rotations (relative to ROT_READ) must be preserved.
@@ -947,6 +981,12 @@ std::vector<Scenario> scenarios() {
     s.temp.T_start = 30.0; s.temp.dT = 0.6; s.temp.tau_s = 500; s.wizard_start_s = 900;
     v.push_back(s);
   }
+  {  // local gravity differs from the standard value (equator, sea level)
+    Scenario s = baseScenario("local_g");
+    s.temp.T_start = 31.0; s.temp.dT = 0.8; s.temp.tau_s = 400; s.wizard_start_s = 600;
+    s.g_local = 9.7803;
+    v.push_back(s);
+  }
   {  // temperature sensor missing
     Scenario s = baseScenario("temp_nan");
     s.temp.all_nan = true; s.wizard_start_s = 600;
@@ -1128,6 +1168,9 @@ void runCampaign(int seeds, std::ostream& csv, std::ostream& sum, std::ostream& 
   for (const Row* r : groups[{"accel_only", "RICH+NEW"}]) check(!r->ok || r->thermal != "LEARNED" || r->k_err < 0.003, "accel-only: no spurious slope");
   for (const Row* r : groups[{"temp_confounded", "RICH+NEW"}]) check(!r->ok || r->thermal != "LEARNED" || r->k_err < 0.003, "confounded: no spurious slope");
   check(stat("temp_nan", "RICH+NEW", bias).second >= 0.9, "NaN temperature: calibration still succeeds");
+  // Only |g| is used: a local g of 9.78 rescales S but leaves the bias intact.
+  check(median(stat("local_g", "RICH+NEW", bias).first) < 0.5 * median(stat("local_g", "OLD", bias).first) &&
+        median(stat("local_g", "RICH+NEW", bias).first) < 0.006, "local g: bias unaffected by the gravity magnitude");
 }
 
 // Power-cycle offset: the second session re-measures the bias and keeps the
@@ -1145,6 +1188,24 @@ void testPowerCycle(std::ostream& rep) {
   if (!a.ok) return;
   imu_cal::AccelThermalPrior pr = atoms3r_ical::accelThermalPriorFrom(a.blob, 0x1234, 0x5678, 3);
   check(pr.valid, "power-cycle: first session provides a prior");
+  {
+    // Accelerometer-only candidate: gyro and magnetometer carried byte for byte.
+    atoms3r_ical::ImuCalBlobV3 prev;
+    atoms3r_ical::migrateV2(makeV2(), prev);
+    imu_cal::AccelCalibration<float> fc;
+    Proc::Fitter::toFloat(a.fit, kGStd, fc);
+    const atoms3r_ical::ImuCalBlobV3 c = atoms3r_ical::accelOnlyCandidate(prev, a.fit, fc, 150, 0x1234, 0x5678, 3);
+    const size_t g0 = offsetof(atoms3r_ical::ImuCalBlobV3, gyro_ok);
+    const size_t g1 = offsetof(atoms3r_ical::ImuCalBlobV3, accel_T_lo);
+    check(memcmp((const uint8_t*)&c + g0, (const uint8_t*)&prev + g0, g1 - g0) == 0,
+          "accel-only candidate keeps gyro and magnetometer fields byte for byte");
+    check(c.accel_ok == 1 && c.accel_b0[0] == fc.biasT.b0(0) && atoms3r_ical::accelMetaBound(c),
+          "accel-only candidate carries the new bound accelerometer set");
+    MemStore st;
+    atoms3r_ical::ImuCalBlobV3 rb;
+    check(st.saveVerified(c, rb) && rb.gyro_b0[0] == prev.gyro_b0[0] && rb.mag_b[0] == prev.mag_b[0],
+          "accel-only candidate saves with gyro/mag unchanged");
+  }
   // second session: warm and flat temperature, bias shifted at power-up
   Scenario sc2 = scenarioByName("typical");
   SensorTruth t2 = truth;
@@ -1261,6 +1322,7 @@ int main(int argc, char** argv) {
     testTempBias();
     testBlobAndStore();
     testScreenText();
+    testWizardScreenStrings();
     testPoseMapping();
     testInformation(rep);
     testThermalInformation();
