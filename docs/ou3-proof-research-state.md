@@ -297,6 +297,28 @@ are not evidence that the declared six-degree region is invariant.
 
 ## Failed approaches / DEAD_ENDS
 
+- 2026-09-24 startup vertical accelerometer-bias seed (commit `110fa93`,
+  reverted; evidence in `reports/results/startup_bias_seed/`). Hypothesis: the
+  ~1-3 m one-sided heave offset between go-live (~32 s) and the
+  refinement-gated bias release (~120 s) comes from the unestimated vertical
+  bias. That part holds: with bias learning from go-live, the offset largely
+  goes away. The tactic was to seed only the world-down bias mean at go-live
+  from a PII observer on the startup Mahony proxy. It failed twice. The shipping
+  adaptive PII (r ~ 0.09 rad/s) settles in ~75 s, longer than the available
+  window. The one refinement, a fixed r = 0.3 rad/s observer averaged over 8 s,
+  has an error of +0.034 m/s² median against a 0.049 m/s² bias, positive in
+  all 400 seeded runs. Classification: measurement-model failure of the proxy,
+  not an estimator regression. Its tilt error leaks -g(1-cos eps) into the
+  up-acceleration, and 25 s of data leaves a Dv/T wave residual of the same
+  order as the bias. Seed off keeps the shipping filters and gates unchanged.
+  Seed on cuts median startup heave RMS by ~25%, leaves pooled scored metrics
+  and yaw unchanged, and fails 3 of 8 OU-III scored gates (JONSWAP 4 m yaw;
+  PM-Stokes 8.5 m roll; 3D gyro bias on three records). Retained: the offset's
+  cause, and that seeding position, velocity or acceleration is pointless
+  (heave error at go-live is 0.1-0.2 m). Mechanism closed; any retry needs a
+  bias measurement that the proxy's tilt error cannot bias. This does not touch
+  the proof path's premises.
+
 - 2026-09-21 main CI repair at `4ba4a21b`: build run `35603196590`
   failed in `ou-evidence / fingerprint` during `make -C tests/validation
   evidence-test`. Of 505 tests, the only error was the five-method TFG plotting
