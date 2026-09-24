@@ -70,6 +70,7 @@
 #include "tuner/SeaStateAutoTuner.h"
 #include "tuner/WavePeriodEstimator.h"
 #include "tuner/VerticalAccelComplementary.h"
+#include "tuner/StartupVerticalBiasSeed.h"
 #include "tuner/AccelVibrationGuard.h"
 #include "tuner/MagAutoTuner.h"
 #include "tuner/ContinuousMagHardIronEstimator.h"
@@ -616,6 +617,14 @@ public:
         vertical_accel_comp_.setGains(two_kp, two_ki);
     }
 
+    // Seed the vertical accelerometer bias at go-live from a PII observer run
+    // on the startup proxy.  Off by default, which is the deployed hand-over.
+    void setStartupVerticalBiasSeed(bool on) { startup_bias_seed_.setEnabled(on); }
+    void setStartupVerticalBiasSeedPoleRate(float r) { startup_bias_seed_.setPoleRate(r); }
+    bool startupVerticalBiasSeedEnabled() const noexcept { return startup_bias_seed_.enabled(); }
+    // World-down bias applied at go-live [m/s^2]; NaN if none was applied.
+    float startupVerticalBiasSeedMps2() const noexcept { return startup_bias_seed_applied_mps2_; }
+
     // Hand the attitude over and start the MEKF live.
     //
     // q_bw is the bootstrap solution: proxy tilt, carrying the magnetometer's
@@ -638,6 +647,7 @@ public:
         if (!(q_bw.norm() > 1e-8f)) return;
 
         mekf_->initialize_from_attitude(q_bw, tilt_sigma_rad, yaw_sigma_rad);
+        if (startup_bias_seed_.enabled()) seedVerticalAccBias_();
 
         if (allow_acc_bias) {
             accel_bias_locked_ = false;
@@ -676,6 +686,11 @@ private:
         // sees them, so its levelled vertical acceleration remains a pure
         // function of the measurements.
         vertical_accel_comp_.update(dt, gyro, acc_in, g_std);
+
+        // Startup-only vertical bias observer on the same proxy output; it
+        // stops at Live, where its value has been handed to the MEKF.  Inert
+        // unless enabled; see StartupVerticalBiasSeed.
+        if (startup_bias_seed_.enabled()) updateStartupBiasSeed_(dt, tempC);
 
         // Tell the MEKF how much it should trust that sample before it uses
         // it, so the covariance and the measurement describe the same
@@ -1906,6 +1921,7 @@ private:
         tracker_policy_       = TrackingPolicy{};
         wave_period_          = WavePeriodEstimator{};
         vertical_accel_comp_.reset();
+        startup_bias_seed_.reset();
         sigma_wave_band_.reset();
         freq_input_lpf_       = FreqInputLPF{};
         freq_stillness_       = StillnessAdapter(g_std, min_freq_hz_, FREQ_GUESS);
@@ -1985,6 +2001,34 @@ private:
         mekf_->set_Racc_std(effective);
         racc_effective_ = effective;
         racc_inflated_ = true;
+    }
+
+    // Replace only the world-down component of the accelerometer-bias mean,
+    // in the MEKF's stored (un-heeled body) frame and net of its temperature
+    // term, so the bias the measurement model subtracts has the observed
+    // vertical component.  Horizontal components and all covariances are left
+    // as initialize_from_attitude() set them.
+    // Out of line, and only reached when the seed is enabled, so the
+    // disabled build keeps the deployed code generation of the hot path.
+    [[gnu::noinline]] void updateStartupBiasSeed_(float dt, float tempC) {
+        if (startup_stage_ != StartupStage::Live) {
+            startup_bias_seed_.update(vertical_accel_comp_.verticalAccelUpMs2(), dt);
+        }
+        last_tempC_ = tempC;
+    }
+
+    [[gnu::noinline]] void seedVerticalAccBias_() {
+        startup_bias_seed_applied_mps2_ = NAN;
+        const float d = startup_bias_seed_.downBiasMps2();
+        if (!mekf_ || !std::isfinite(d)) return;
+        const Eigen::Vector3f down_b =
+            mekf_->quaternion().conjugate() * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+        const Eigen::Vector3f beta = mekf_->get_acc_bias();
+        const Eigen::Vector3f total = mekf_->get_acc_bias_at_temperature(last_tempC_);
+        const Eigen::Vector3f seeded = beta + (d - down_b.dot(total)) * down_b;
+        if (!seeded.allFinite()) return;
+        mekf_->set_initial_acc_bias(seeded);
+        startup_bias_seed_applied_mps2_ = d;
     }
 
     void enterLive_() {
@@ -2279,6 +2323,12 @@ private:
     wave_direction::VesselRaoNoiseWeighting low_wave_noise_{};
     WaveDirectionDetector<float> dir_sign_{0.002f, 0.005f};
     WaveDirection                dir_sign_state_ = UNCERTAIN;
+
+    // Startup vertical-bias seed (off by default).  Kept last so the layout
+    // of every member above is unchanged by it.
+    StartupVerticalBiasSeed startup_bias_seed_{};
+    float startup_bias_seed_applied_mps2_ = NAN;
+    float last_tempC_ = 35.0f;
 };
 
 template<TrackerType trackerT>
@@ -2329,6 +2379,11 @@ public:
         float proxy_mag_settle_sec = 0.0f;
 
         bool  mag_refine_enabled    = true;
+
+        // Seed the vertical accelerometer bias at go-live from a PII observer
+        // on the startup proxy (StartupVerticalBiasSeed).  Off by default.
+        bool  startup_vertical_bias_seed = false;
+        float startup_vertical_bias_seed_pole_rate = StartupVerticalBiasSeed::POLE_RATE_DEFAULT;
         float mag_refine_start_sec  = 90.0f;
         float mag_refine_window_sec = 30.0f;
 
@@ -2586,6 +2641,8 @@ public:
         // accelerometer bias must not be allowed to fit itself to it; see
         // SeaStateFusionFilter_OU_III::setAccBiasHold().
         impl_.setAccBiasHold(cfg_.with_mag && cfg_.mag_refine_enabled);
+        impl_.setStartupVerticalBiasSeed(cfg_.startup_vertical_bias_seed);
+        impl_.setStartupVerticalBiasSeedPoleRate(cfg_.startup_vertical_bias_seed_pole_rate);
         impl_.setMagDelaySec(0.0f); // outer wrapper owns mag delay
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
         impl_.setSigmaWaveBandRatios(cfg_.sigma_band_low_ratio,
@@ -2969,6 +3026,9 @@ public:
     // time-to-first-fix rather than steady-state accuracy.
     float magNorthLockTimeSec() const noexcept { return mag_north_lock_time_sec_; }
     float liveTimeSec() const noexcept { return live_time_sec_; }
+    float startupVerticalBiasSeedMps2() const noexcept {
+        return impl_.startupVerticalBiasSeedMps2();
+    }
 
     // Body-frame hard-iron offset removed from the magnetometer stream.  Zero
     // unless Config::mag_estimate_hard_iron asked for it and the startup window

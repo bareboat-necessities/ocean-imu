@@ -442,6 +442,8 @@ public:
         if (env_float("SF_MAG_REFINE_START_SEC", vf)) cfg_.mag_refine_start_sec = vf;
         if (env_float("SF_MAG_REFINE_WINDOW_SEC", vf)) cfg_.mag_refine_window_sec = vf;
         if (const char* r = std::getenv("SF_MAG_REFINE")) cfg_.mag_refine_enabled = (std::string(r) != "0");
+        if (const char* r = std::getenv("SF_STARTUP_BIAS_SEED")) cfg_.startup_vertical_bias_seed = (std::string(r) != "0");
+        if (env_float("SF_STARTUP_BIAS_SEED_R", vf)) cfg_.startup_vertical_bias_seed_pole_rate = vf;
         // Continuous exogenous hard-iron estimation.  Same names as OU-III's,
         // so a paired study can set one environment and run both families.
         if (const char* h = std::getenv("SF_MAG_CONT_HI")) cfg_.mag_continuous_hard_iron = (std::string(h) != "0");
@@ -476,6 +478,7 @@ public:
         if (!reported_live_ && fusion_.isLive()) {
             reported_live_ = true;
             std::cerr << "STARTUP live_s=" << fusion_.liveTimeSec() << "\n";
+            std::cerr << "STARTUP vertical_bias_seed_mps2=" << fusion_.startupVerticalBiasSeedMps2() << "\n";
         }
         if (!reported_refine_ && fusion_.hasRefinedMagReference()) {
             reported_refine_ = true;
