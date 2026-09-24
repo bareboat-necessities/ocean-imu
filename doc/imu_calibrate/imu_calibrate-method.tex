@@ -654,18 +654,17 @@ and Robust Estimation in C\texttt{++}/Eigen}
 
     \subsection{Persistence and Runtime}
 
-    Blob v3 keeps every v2 field in order and adds the accelerometer
-    runtime clamp, qualification metadata and the sensor identity (key
-    \texttt{blob\_m5v3}). v2 blobs (\texttt{blob\_m5}, \texttt{blob}) load
-    and migrate with unchanged runtime output and \texttt{LEGACY} thermal
-    status. \texttt{accel\_coeff\_crc} binds the metadata to the
+    The blob (version 3, key \texttt{blob\_m5v3}) holds the accelerometer,
+    gyroscope and magnetometer coefficients, the accelerometer runtime
+    clamp, qualification metadata and the sensor identity. Only this layout
+    and key are read; calibrations saved by earlier firmware are not loaded,
+    so such a device runs the wizard again. \texttt{accel\_coeff\_crc} binds the metadata to the
     coefficient set it describes. The float coefficients are validated after
     the double-to-float conversion, after serialization, and after the
     read-back: finite, exactly symmetric, SPD, within the gates, and
     reproducing the double hold RMS within 0.2\,mm/s$^2$. The save succeeds
-    only if the read-back of the v3 key validates and equals the candidate
-    byte for byte, so an older blob can never pass as the new one;
-    superseded v2 keys are then removed. Accelerometer-only recalibration
+    only if the read-back validates and equals the candidate byte for byte,
+    so an older blob can never pass as the new one. Accelerometer-only recalibration
     copies the saved gyroscope and magnetometer fields unchanged. On any
     failure or abort nothing is written. \texttt{RuntimeCals} applies the
     calibration once, upstream of every estimator, after

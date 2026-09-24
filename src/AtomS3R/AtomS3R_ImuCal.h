@@ -5,8 +5,8 @@
   Copyright 2026, Mikhail Grushinskiy
 
   AtomS3R reusable IMU calibration plumbing (NVS store, axis mapping, serial
-  printers and M5Unified-calibration clearing). Blob layouts, CRC, migration and
-  runtime application live in AtomS3R_ImuCalBlob.h.
+  printers and M5Unified-calibration clearing). The blob layout, CRC and runtime
+  application live in AtomS3R_ImuCalBlob.h.
 
   This header is intentionally UI-agnostic: you can reuse it in:
     - the calibration wizard sketch
@@ -89,7 +89,7 @@
 #endif
 #include <ArduinoEigenDense.h>
 
-// Blob layouts, CRC, v2 migration, runtime application and the generic store
+// Blob layout, CRC, runtime application and the generic store
 // (host-testable, no Arduino dependency).
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
 
@@ -219,12 +219,11 @@ static inline void printBlobDetail(Print& out, const ImuCalBlobV3& b) {
   printMat3RowMajor(out, b.accel_S, 9);
   printMatDiagOffDiagRms(out, b.accel_S);
 
-  const bool full = (b.accel_fit_method == (uint8_t)AccelFitMethod::FULL_MATRIX);
-  out.printf("    fit=%s thermal=%s/%s meta=%s\n", full ? "full_matrix" : "legacy",
+  out.printf("    thermal=%s/%s meta=%s\n",
              imu_cal::accelThermalStr((imu_cal::AccelThermal)b.accel_thermal),
              imu_cal::accelThermalReasonStr((imu_cal::AccelThermalReason)b.accel_thermal_reason),
              accelMetaBound(b) ? "bound" : "UNBOUND");
-  if (full) {
+  {
     out.printf("    holds=%u blocks=%u capture=%us T_seen=[%.2f %.2f] k_range=[%.2f %.2f]\n",
                (unsigned)b.accel_n_holds, (unsigned)b.accel_n_blocks, (unsigned)b.accel_capture_s,
                (double)b.accel_cal_temp_lo, (double)b.accel_cal_temp_hi,

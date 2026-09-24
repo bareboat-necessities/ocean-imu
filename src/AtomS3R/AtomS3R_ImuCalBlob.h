@@ -7,10 +7,8 @@
   dependencies (host-testable). AtomS3R_ImuCal.h adds the NVS backend, the M5
   sensor mapping and the serial printers.
 
-  Blob versions
-    v2  original layout (key "blob_m5", older "blob"); loaded and migrated.
-    v3  v2 fields in the same order, plus accelerometer qualification metadata,
-        the runtime temperature clamp and the sensor identity (key "blob_m5v3").
+  Only the current layout (version 3, key "blob_m5v3") is read or written.
+  Blobs of earlier versions are not loaded; the device runs the wizard again.
 
   The accelerometer metadata describes one coefficient set; accel_coeff_crc
   binds it to that set. A thermal slope is only carried into a later session
@@ -38,41 +36,6 @@ struct ImuCalCfg {
 // Blob + CRC utilities
 static constexpr uint32_t IMU_CAL_MAGIC = 0x434C554D; // 'MULC'
 static constexpr uint8_t  IMU_CAL_MODE_M5_IMU_API = 1;
-
-// Legacy v2 layout (read and migrated; never written).
-struct ImuCalBlobV2 {
-  static constexpr uint32_t IMU_CAL_MAGIC   = atoms3r_ical::IMU_CAL_MAGIC;
-  static constexpr uint16_t IMU_CAL_VERSION = 2;
-  static constexpr uint8_t  IMU_CAL_MODE_M5_IMU_API = atoms3r_ical::IMU_CAL_MODE_M5_IMU_API;
-
-  uint32_t magic = IMU_CAL_MAGIC;
-  uint16_t version = IMU_CAL_VERSION;
-  uint16_t size_bytes = sizeof(ImuCalBlobV2);
-  uint8_t  build_mode = 0;
-
-  uint8_t  accel_ok = 0;
-  float    accel_g = ImuCalCfg::g_std;
-  float    accel_S[9]{};
-  float    accel_T0 = 25.0f;
-  float    accel_b0[3]{};
-  float    accel_k[3]{};
-  float    accel_rms_mag = 0.0f;
-
-  uint8_t  gyro_ok = 0;
-  float    gyro_T0 = 25.0f;
-  float    gyro_b0[3]{};
-  float    gyro_k[3]{};
-
-  uint8_t  mag_ok = 0;
-  float    mag_A[9]{};
-  float    mag_b[3]{};
-  float    mag_field_uT = 0.0f;
-  float    mag_rms = 0.0f;
-
-  uint32_t crc = 0;
-};
-
-enum class AccelFitMethod : uint8_t { LEGACY_ELLIPSOID = 0, FULL_MATRIX = 1 };
 
 struct ImuCalBlobV3 {
   static constexpr uint32_t IMU_CAL_MAGIC   = atoms3r_ical::IMU_CAL_MAGIC;
@@ -103,15 +66,15 @@ struct ImuCalBlobV3 {
   float    mag_field_uT = 0.0f;
   float    mag_rms = 0.0f;
 
-  // ---- v3: accelerometer runtime clamp (part of the coefficient set) ----
+  // ---- accelerometer runtime clamp (part of the coefficient set) ----
   float    accel_T_lo = -1000.0f;
   float    accel_T_hi = 1000.0f;
 
-  // ---- v3: accelerometer qualification (bound by accel_coeff_crc) ----
-  uint8_t  accel_fit_method = 0;      // AccelFitMethod
+  // ---- accelerometer qualification (bound by accel_coeff_crc) ----
   uint8_t  accel_thermal = 0;         // imu_cal::AccelThermal
   uint8_t  accel_thermal_reason = 0;  // imu_cal::AccelThermalReason
   uint8_t  accel_n_holds = 0;
+  uint8_t  reserved0 = 0;
   uint16_t accel_n_blocks = 0;
   uint16_t accel_capture_s = 0;       // total qualified hold time
   float    accel_k_temp_lo = 0.0f;    // temperature evidence range of accel_k
@@ -126,7 +89,7 @@ struct ImuCalBlobV3 {
   float    accel_verify_rms = -1.0f, accel_verify_max = -1.0f;
   uint32_t accel_coeff_crc = 0;
 
-  // ---- v3: identity of the sensor the coefficients belong to ----
+  // ---- identity of the sensor the coefficients belong to ----
   uint32_t sensor_id_lo = 0;          // ESP32 eFuse MAC
   uint32_t sensor_id_hi = 0;
   uint8_t  imu_type = 0;              // M5Unified imu_t
@@ -134,7 +97,6 @@ struct ImuCalBlobV3 {
 
   uint32_t crc = 0;
 };
-static constexpr size_t IMU_CAL_CRC_LEN_V2 = offsetof(ImuCalBlobV2, crc);
 static constexpr size_t IMU_CAL_CRC_LEN_V3 = offsetof(ImuCalBlobV3, crc);
 
 // Current layout.
@@ -172,7 +134,6 @@ static inline uint32_t computeBlobCrcT_(const Blob& in, size_t len) {
   return ~crc32_ieee_(tmp, len);
 }
 
-static inline uint32_t computeBlobCrc(const ImuCalBlobV2& in) { return computeBlobCrcT_(in, IMU_CAL_CRC_LEN_V2); }
 static inline uint32_t computeBlobCrc(const ImuCalBlobV3& in) { return computeBlobCrcT_(in, IMU_CAL_CRC_LEN_V3); }
 
 // CRC of the accelerometer coefficient set (everything the runtime applies).
@@ -196,14 +157,6 @@ static inline bool allFinite_(const float* a, int n) {
   return true;
 }
 
-static inline bool validateBlob(const ImuCalBlobV2& b) {
-  if (b.magic != ImuCalBlobV2::IMU_CAL_MAGIC) return false;
-  if (b.version != ImuCalBlobV2::IMU_CAL_VERSION) return false;
-  if (b.size_bytes != sizeof(ImuCalBlobV2)) return false;
-  if (b.build_mode != IMU_CAL_MODE_M5_IMU_API) return false;
-  return computeBlobCrc(b) == b.crc;
-}
-
 static inline bool validateBlob(const ImuCalBlobV3& b) {
   if (b.magic != ImuCalBlobV3::IMU_CAL_MAGIC) return false;
   if (b.version != ImuCalBlobV3::IMU_CAL_VERSION) return false;
@@ -215,39 +168,6 @@ static inline bool validateBlob(const ImuCalBlobV3& b) {
                       isfinite(b.accel_T0) && isfinite(b.accel_T_lo) && isfinite(b.accel_T_hi) &&
                       b.accel_T_lo <= b.accel_T_hi)) return false;
   return true;
-}
-
-// v2 -> v3: identical coefficients and runtime behaviour (no clamp), legacy
-// provenance. The metadata is bound so the migrated set is self-consistent,
-// but LEGACY thermal status is never carried into a new session.
-static inline void migrateV2(const ImuCalBlobV2& v2, ImuCalBlobV3& out) {
-  ImuCalBlobV3 b;
-  memset((void*)&b, 0, sizeof(b));
-  b.magic = IMU_CAL_MAGIC;
-  b.version = ImuCalBlobV3::IMU_CAL_VERSION;
-  b.size_bytes = sizeof(ImuCalBlobV3);
-  b.build_mode = v2.build_mode;
-  b.accel_ok = v2.accel_ok; b.accel_g = v2.accel_g;
-  memcpy(b.accel_S, v2.accel_S, sizeof(b.accel_S));
-  b.accel_T0 = v2.accel_T0;
-  memcpy(b.accel_b0, v2.accel_b0, sizeof(b.accel_b0));
-  memcpy(b.accel_k, v2.accel_k, sizeof(b.accel_k));
-  b.accel_rms_mag = v2.accel_rms_mag;
-  b.gyro_ok = v2.gyro_ok; b.gyro_T0 = v2.gyro_T0;
-  memcpy(b.gyro_b0, v2.gyro_b0, sizeof(b.gyro_b0));
-  memcpy(b.gyro_k, v2.gyro_k, sizeof(b.gyro_k));
-  b.mag_ok = v2.mag_ok;
-  memcpy(b.mag_A, v2.mag_A, sizeof(b.mag_A));
-  memcpy(b.mag_b, v2.mag_b, sizeof(b.mag_b));
-  b.mag_field_uT = v2.mag_field_uT; b.mag_rms = v2.mag_rms;
-  b.accel_T_lo = -1000.0f; b.accel_T_hi = 1000.0f;
-  b.accel_fit_method = (uint8_t)AccelFitMethod::LEGACY_ELLIPSOID;
-  b.accel_thermal = (uint8_t)imu_cal::AccelThermal::LEGACY;
-  for (int j = 0; j < 3; ++j) { b.accel_bias_sigma[j] = b.accel_cross_sigma[j] = b.accel_k_sigma[j] = -1.0f; }
-  b.accel_sigma_obs = b.accel_cv_rms = b.accel_cv_max = b.accel_verify_rms = b.accel_verify_max = -1.0f;
-  b.accel_coeff_crc = accelCoeffCrc(b);
-  b.crc = computeBlobCrc(b);
-  out = b;
 }
 
 // Fills the accelerometer coefficient set and its metadata from a full fit,
@@ -264,7 +184,6 @@ static inline void fillAccelFromFit(ImuCalBlobV3& b, const imu_cal::AccelFullFit
   b.accel_T_hi = fc.biasT.T_hi;
   b.accel_rms_mag = fc.rms_mag;
 
-  b.accel_fit_method = (uint8_t)AccelFitMethod::FULL_MATRIX;
   b.accel_thermal = (uint8_t)r.thermal;
   b.accel_thermal_reason = (uint8_t)r.thermal_reason;
   b.accel_n_holds = (uint8_t)r.n_fit_holds;
@@ -311,7 +230,6 @@ static inline imu_cal::AccelThermalPrior accelThermalPriorFrom(const ImuCalBlobV
 {
   imu_cal::AccelThermalPrior p;
   if (!validateBlob(b) || !b.accel_ok) return p;
-  if (b.accel_fit_method != (uint8_t)AccelFitMethod::FULL_MATRIX) return p;
   const auto th = (imu_cal::AccelThermal)b.accel_thermal;
   if (th != imu_cal::AccelThermal::LEARNED && th != imu_cal::AccelThermal::PRESERVED) return p;
   if (!accelMetaBound(b)) return p;
@@ -375,21 +293,10 @@ template <class KV>
 class ImuCalStoreT {
 public:
   static constexpr const char* kKeyV3 = "blob_m5v3";
-  static constexpr const char* kKeyM5ImuApi = "blob_m5";   // v2
-  static constexpr const char* kKeyLegacy = "blob";        // v2, older sketches
 
   KV kv;
 
-  // Current v3 blob, else a migrated v2 blob.
-  bool load(ImuCalBlobV3& out) {
-    if (loadV3_(out)) return true;
-    ImuCalBlobV2 v2;
-    if (loadV2_(kKeyM5ImuApi, v2) || loadV2_(kKeyLegacy, v2)) {
-      migrateV2(v2, out);
-      return true;
-    }
-    return false;
-  }
+  bool load(ImuCalBlobV3& out) { return loadV3_(out); }
 
   // Writes the v3 key only; true when the bytes were accepted.
   bool save(const ImuCalBlobV3& in) {
@@ -397,27 +304,20 @@ public:
     return kv.putBytes(kKeyV3, &tmp, sizeof(tmp)) == sizeof(tmp);
   }
 
-  // Writes the candidate and reads back the v3 key only. Succeeds only when the
-  // stored bytes validate and equal the sealed candidate, so an older blob can
-  // never pass as the new one. Superseded v2 keys are then removed so a later
-  // v3 failure cannot silently fall back to them.
+  // Writes the candidate and reads the key back. Succeeds only when the stored
+  // bytes validate and equal the sealed candidate, so an older blob can never
+  // pass as the new one.
   bool saveVerified(const ImuCalBlobV3& in, ImuCalBlobV3& readback) {
     const ImuCalBlobV3 cand = sealed_(in);
     if (kv.putBytes(kKeyV3, &cand, sizeof(cand)) != sizeof(cand)) return false;
     ImuCalBlobV3 rb;
     if (!loadV3_(rb)) return false;
     if (!sameBytes(rb, cand)) return false;
-    kv.remove(kKeyM5ImuApi);
-    kv.remove(kKeyLegacy);
     readback = rb;
     return true;
   }
 
-  void erase() {
-    kv.remove(kKeyV3);
-    kv.remove(kKeyM5ImuApi);
-    kv.remove(kKeyLegacy);
-  }
+  void erase() { kv.remove(kKeyV3); }
 
   // Byte-for-byte equality of two stored blobs (padding included: both sides
   // are byte copies of what was written).
@@ -445,15 +345,6 @@ private:
     if (kv.getBytesLength(kKeyV3) != sizeof(ImuCalBlobV3)) return false;
     ImuCalBlobV3 tmp;
     if (kv.getBytes(kKeyV3, &tmp, sizeof(tmp)) != sizeof(tmp)) return false;
-    if (!validateBlob(tmp)) return false;
-    out = tmp;
-    return true;
-  }
-
-  bool loadV2_(const char* key, ImuCalBlobV2& out) {
-    if (kv.getBytesLength(key) != sizeof(ImuCalBlobV2)) return false;
-    ImuCalBlobV2 tmp;
-    if (kv.getBytes(key, &tmp, sizeof(tmp)) != sizeof(tmp)) return false;
     if (!validateBlob(tmp)) return false;
     out = tmp;
     return true;

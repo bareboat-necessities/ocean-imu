@@ -71,7 +71,6 @@ enum class AccelThermalReason : uint8_t {
 
 inline const char* accelThermalStr(AccelThermal t) {
   switch (t) {
-    case AccelThermal::LEGACY: return "LEGACY";
     case AccelThermal::UNLEARNED: return "UNLEARNED";
     case AccelThermal::LEARNED: return "LEARNED";
     case AccelThermal::PRESERVED: return "PRESERVED";

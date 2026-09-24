@@ -364,7 +364,7 @@ OldRun runOld(World& w, Stream& st, const Scenario& sc) {
     if (!deployedIdentityAcceptance(*cal, acc)) { out.reason = imu_cal::fitFailStr(why); return out; }
     out.identity = true;
   }
-  // Runtime path: legacy wizard blob fields -> v3 blob -> RuntimeCals.
+  // Runtime path: blob -> RuntimeCals, as the deployed wizard applied it.
   atoms3r_ical::ImuCalBlobV3 b{};
   memset((void*)&b, 0, sizeof(b));
   b.accel_ok = 1; b.accel_g = acc.g;
@@ -536,82 +536,67 @@ void testTempBias() {
   check(std::fabs(tb.bias(10).x() - 0.05f) < 1e-6f, "clamp bounds extrapolation below");
 }
 
-atoms3r_ical::ImuCalBlobV2 makeV2() {
-  atoms3r_ical::ImuCalBlobV2 b{};
+// A complete stored calibration (gyro/mag set, accelerometer set bound).
+atoms3r_ical::ImuCalBlobV3 makeBlob() {
+  atoms3r_ical::ImuCalBlobV3 b{};
   memset((void*)&b, 0, sizeof(b));
-  b.magic = atoms3r_ical::IMU_CAL_MAGIC; b.version = 2; b.size_bytes = sizeof(b); b.build_mode = 1;
   b.accel_ok = 1; b.accel_g = 9.80665f;
   const float S[9] = {1.01f, 0.003f, -0.002f, 0.003f, 0.99f, 0.001f, -0.002f, 0.001f, 1.005f};
   memcpy(b.accel_S, S, sizeof(S));
   b.accel_T0 = 25; b.accel_b0[0] = 0.1f; b.accel_b0[1] = -0.2f; b.accel_b0[2] = 0.05f;
+  b.accel_T_lo = -1000; b.accel_T_hi = 1000;
+  b.accel_thermal = (uint8_t)AccelThermal::UNLEARNED;
   b.gyro_ok = 1; b.gyro_b0[0] = 0.01f;
   b.mag_ok = 1; b.mag_A[0] = b.mag_A[4] = b.mag_A[8] = 1; b.mag_b[0] = 5; b.mag_field_uT = 45;
-  b.crc = atoms3r_ical::computeBlobCrc(b);
-  return b;
+  b.accel_coeff_crc = atoms3r_ical::accelCoeffCrc(b);
+  return MemStore::sealed_(b);
 }
 
 void testBlobAndStore() {
   using namespace atoms3r_ical;
-  // Legacy v2 loads, migrates, and applies identically.
+  // Only the current layout and key are read: bytes under the keys of earlier
+  // firmware (any size) are ignored.
   {
     MemStore store;
-    const ImuCalBlobV2 v2 = makeV2();
-    store.kv.putBytes("blob_m5", &v2, sizeof(v2));
-    ImuCalBlobV3 b;
-    check(store.load(b), "v2 blob loads through migration");
-    check(b.accel_thermal == (uint8_t)AccelThermal::LEGACY, "migrated blob is LEGACY");
-    check(accelMetaBound(b), "migrated metadata is bound");
-    RuntimeCals rc; rc.rebuildFromBlob(b);
-    imu_cal::AccelCalibration<float> ref;
-    ref.ok = true; ref.S = mat_from_rowmajor9_(v2.accel_S); ref.biasT.T0 = v2.accel_T0;
-    ref.biasT.b0 = Vector3f(v2.accel_b0[0], v2.accel_b0[1], v2.accel_b0[2]);
-    const Vector3f a(1.0f, -2.0f, -9.5f);
-    check((rc.applyAccel(a, 31.0f) - ref.apply(a, 31.0f)).norm() == 0.0f, "v2 runtime output unchanged");
-    check(!accelThermalPriorFrom(b, 0x1234, 0x5678, 3).valid, "legacy slope is never carried");
-    // legacy key also loads
-    MemStore s2; s2.kv.putBytes("blob", &v2, sizeof(v2));
-    ImuCalBlobV3 b2; check(s2.load(b2), "legacy key loads");
-    // corrupted v2 rejected
-    ImuCalBlobV2 bad = v2; bad.accel_b0[0] += 1.0f;
-    MemStore s3; s3.kv.putBytes("blob_m5", &bad, sizeof(bad));
-    ImuCalBlobV3 b3; check(!s3.load(b3), "v2 CRC mismatch rejected");
+    const ImuCalBlobV3 b = makeBlob();
+    store.kv.putBytes("blob_m5", &b, sizeof(b));
+    store.kv.putBytes("blob", &b, sizeof(b));
+    uint8_t old[124] = {0x4D, 0x55, 0x4C, 0x43, 2, 0};
+    store.kv.putBytes("blob_m5v3", old, sizeof(old));
+    ImuCalBlobV3 ld;
+    check(!store.load(ld), "earlier keys and layouts are not loaded");
+    ImuCalBlobV3 wrongver = b; wrongver.version = 2; wrongver.crc = computeBlobCrc(wrongver);
+    check(!validateBlob(wrongver), "other versions do not validate");
+    ImuCalBlobV3 bad = b; bad.accel_b0[0] += 1.0f;
+    check(!validateBlob(bad), "CRC mismatch rejected");
   }
-  // v3 save/readback validates the candidate, never an older fallback.
+  // Save/readback validates the candidate, never an older blob.
   {
     MemStore store;
-    const ImuCalBlobV2 v2 = makeV2();
-    store.kv.putBytes("blob_m5", &v2, sizeof(v2));
-    ImuCalBlobV3 old;
-    migrateV2(v2, old);
+    const ImuCalBlobV3 old = makeBlob();
+    ImuCalBlobV3 rb0;
+    check(store.saveVerified(old, rb0), "first verified save succeeds");
     ImuCalBlobV3 cand = old;
     cand.accel_b0[0] = 0.123f;
-    cand.accel_fit_method = 1; cand.accel_thermal = (uint8_t)AccelThermal::UNLEARNED;
     cand.accel_coeff_crc = accelCoeffCrc(cand);
     store.kv.st->drop_writes = true;
     ImuCalBlobV3 rb;
-    check(!store.saveVerified(cand, rb), "dropped write is not reported as saved");
-    ImuCalBlobV3 after; check(store.load(after) && after.accel_b0[0] == v2.accel_b0[0], "previous calibration retained after failed save");
+    check(!store.saveVerified(cand, rb), "dropped write (stale blob under the key) is not reported as saved");
+    ImuCalBlobV3 after; check(store.load(after) && after.accel_b0[0] == old.accel_b0[0], "previous calibration retained after failed save");
     store.kv.st->drop_writes = false;
     store.kv.st->corrupt_writes = true;
     check(!store.saveVerified(cand, rb), "corrupted write is not reported as saved");
     store.kv.st->corrupt_writes = false;
-    // A stale v3 blob already under the key must not pass for the candidate.
-    ImuCalBlobV3 stale = MemStore::sealed_(old);
-    store.kv.putBytes("blob_m5v3", &stale, sizeof(stale));
-    store.kv.st->drop_writes = true;
-    check(!store.saveVerified(cand, rb), "stale v3 blob does not validate a new candidate");
-    store.kv.st->drop_writes = false;
     check(store.saveVerified(cand, rb), "verified save succeeds");
     check(rb.accel_b0[0] == 0.123f, "read-back is the candidate");
-    check(store.kv.getBytesLength("blob_m5") == 0, "superseded v2 key removed after verified save");
     ImuCalBlobV3 ld; check(store.load(ld) && MemStore::sameBytes(ld, rb), "load returns the verified blob");
     store.erase();
-    check(!store.load(ld), "erase removes every calibration key");
+    check(!store.load(ld), "erase removes the calibration");
   }
   // Metadata binding and prior compatibility.
   {
-    ImuCalBlobV3 b; migrateV2(makeV2(), b);
-    b.accel_fit_method = 1; b.accel_thermal = (uint8_t)AccelThermal::LEARNED;
+    ImuCalBlobV3 b = makeBlob();
+    b.accel_thermal = (uint8_t)AccelThermal::LEARNED;
     b.accel_k[0] = 0.003f; b.accel_k_temp_lo = 24; b.accel_k_temp_hi = 30; b.accel_T_lo = 19; b.accel_T_hi = 35;
     b.sensor_id_lo = 0x1234; b.sensor_id_hi = 0x5678; b.imu_type = 3;
     b.accel_coeff_crc = accelCoeffCrc(b);
@@ -619,6 +604,8 @@ void testBlobAndStore() {
     check(accelThermalPriorFrom(b, 0x1234, 0x5678, 3).valid, "bound learned slope of the same sensor is a prior");
     check(!accelThermalPriorFrom(b, 0x9999, 0x5678, 3).valid, "other sensor: no prior");
     check(!accelThermalPriorFrom(b, 0x1234, 0x5678, 4).valid, "other IMU type: no prior");
+    ImuCalBlobV3 u = b; u.accel_thermal = (uint8_t)AccelThermal::UNLEARNED; u = MemStore::sealed_(u);
+    check(!accelThermalPriorFrom(u, 0x1234, 0x5678, 3).valid, "unlearned slope is never carried");
     ImuCalBlobV3 t = b; t.accel_k[0] = 0.004f;  // coefficient changed, metadata not re-bound
     t = MemStore::sealed_(t);
     check(validateBlob(t) && !accelMetaBound(t), "unbound metadata detected");
@@ -1190,8 +1177,7 @@ void testPowerCycle(std::ostream& rep) {
   check(pr.valid, "power-cycle: first session provides a prior");
   {
     // Accelerometer-only candidate: gyro and magnetometer carried byte for byte.
-    atoms3r_ical::ImuCalBlobV3 prev;
-    atoms3r_ical::migrateV2(makeV2(), prev);
+    const atoms3r_ical::ImuCalBlobV3 prev = makeBlob();
     imu_cal::AccelCalibration<float> fc;
     Proc::Fitter::toFloat(a.fit, kGStd, fc);
     const atoms3r_ical::ImuCalBlobV3 c = atoms3r_ical::accelOnlyCandidate(prev, a.fit, fc, 150, 0x1234, 0x5678, 3);
