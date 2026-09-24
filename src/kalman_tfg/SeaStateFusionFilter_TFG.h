@@ -874,6 +874,16 @@ private:
             learnMagReferenceWindowed_(mag_body);
         }
 
+        // The gravity-only proxy cannot observe axial gyro bias. Keep its
+        // pre-handoff yaw alignment attached to fresh magnetic observations,
+        // rather than integrating that bias after a one-time north lock.
+        if (mag_reference_learned_ && stage_ != StartupStage::Live) {
+            Eigen::Quaternionf q_north;
+            float gauge;
+            if (northFrameForMag_(mag_body - mag_hard_iron_body_uT_, q_north, gauge)) {
+                mag_proxy_yaw_offset_rad_ = wrapPi_(-gauge);
+            }
+        }
         maybeRefineMagReference_(mag_body);
         maybeApplyContinuousHardIron_();
         if (mag_reference_learned_ && stage_ == StartupStage::Live) {
@@ -886,19 +896,23 @@ private:
             ? (elapsed_sec_ - last_mag_sample_t_) : cfg_.mag_sample_dt_sec;
         last_mag_sample_t_ = elapsed_sec_;
 
-        // All samples must share one gyro-propagated accumulation frame.
-        // Removing yaw separately from each sample makes a turn rotate the
-        // field inside that frame, shrinking its horizontal mean and storing
-        // a historical average heading. The proxy never reads the MEKF, so
-        // retaining its relative yaw does not create estimator feedback.
+        Eigen::Quaternionf q_north;
+        float sample_gauge;
+        if (!northFrameForMag_(mag_body, q_north, sample_gauge)) return;
+        // With no joint hard-iron fit, average field strength/dip in magnetic
+        // north: each sample is (horizontal magnitude, 0, down). This frame
+        // is invariant to both real turns and unobservable proxy yaw drift.
+        // The optional joint bias solve retains its independent world frame.
+        const Eigen::Quaternionf q_accum = cfg_.mag_estimate_hard_iron
+            ? vertical_complementary_.quaternion() : q_north;
         if (!mag_auto_tuner_.addSampleWithWorldQuatDt(
-                dt_mag, vertical_complementary_.quaternion(),
-                last_acc_body_, last_gyro_body_, mag_body)) return;
+                dt_mag, q_accum, last_acc_body_, last_gyro_body_, mag_body)) return;
 
         Vector3f ref;
         if (!mag_auto_tuner_.getMagWorldRef(ref) || !ref.allFinite() ||
             !(ref.norm() > cfg_.mag_init_min_mag_norm)) return;
-        const float gauge = mag_auto_tuner_.getYawGaugeCorrectionRad();
+        const float gauge = cfg_.mag_estimate_hard_iron
+            ? mag_auto_tuner_.getYawGaugeCorrectionRad() : sample_gauge;
         if (!std::isfinite(gauge)) return; // no horizontal field, no north lock
         mag_proxy_yaw_offset_rad_ = wrapPi_(-gauge);
         have_mag_proxy_gauge_ = true;
@@ -941,25 +955,45 @@ private:
             ? (elapsed_sec_ - last_mag_sample_t_) : cfg_.mag_sample_dt_sec;
         last_mag_sample_t_ = elapsed_sec_;
         const Vector3f mag_corrected = mag_body - mag_hard_iron_body_uT_;
-        // Refinement can also overlap a real turn. Use the same independent
-        // proxy world frame, not yaw-stripped samples or the core that has
-        // already been corrected toward the provisional magnetic reference.
+        Eigen::Quaternionf q_north;
+        float sample_gauge;
+        if (!northFrameForMag_(mag_corrected, q_north, sample_gauge)) return;
+        const Eigen::Quaternionf q_accum = cfg_.mag_estimate_hard_iron
+            ? vertical_complementary_.quaternion() : q_north;
         if (!mag_auto_tuner_.addSampleWithWorldQuatDt(
-                dt_mag, vertical_complementary_.quaternion(),
-                last_acc_body_, last_gyro_body_, mag_corrected)) return;
+                dt_mag, q_accum, last_acc_body_, last_gyro_body_, mag_corrected)) return;
 
         Vector3f ref;
         if (!mag_auto_tuner_.getMagWorldRef(ref) || !ref.allFinite() ||
             !(ref.norm() > cfg_.mag_init_min_mag_norm)) return;
-        const float gauge = mag_auto_tuner_.getYawGaugeCorrectionRad();
+        const float gauge = cfg_.mag_estimate_hard_iron
+            ? mag_auto_tuner_.getYawGaugeCorrectionRad() : sample_gauge;
         if (!std::isfinite(gauge)) return;
         setMagWorldRef_(ref);
-        // The accumulated gauge removes only the proxy's arbitrary world yaw.
-        // Compose it with NOW's proxy yaw, keeping the core's wave-aware tilt.
+        // Use the current magnetic heading, retaining the core's wave-aware
+        // tilt. A window-mean proxy gauge would lag by gyro_bias * window/2.
         mekf_.set_attitude_yaw_absolute(proxyMagneticYaw_(gauge));
         mag_refine_done_ = true;
         mag_refine_time_sec_ = elapsed_sec_;
         maybeUnlockAccBias_();
+    }
+
+    // Sensor-only north frame. No main-filter state or wave-amplitude gate
+    // participates; vertical/invalid fields cannot manufacture a north lock.
+    bool northFrameForMag_(const Vector3f& mag_body, Eigen::Quaternionf& q_north,
+                           float& gauge) const {
+        if (!mag_body.allFinite()) return false;
+        const Eigen::Quaternionf q_proxy = vertical_complementary_.quaternion();
+        const Vector3f field = q_proxy * mag_body;
+        const float norm = field.norm();
+        const float horizontal = field.head<2>().norm();
+        const auto& config = mag_auto_tuner_.config();
+        if (!(norm > cfg_.mag_init_min_mag_norm) || !std::isfinite(horizontal) ||
+            !(horizontal > config.min_horizontal_fraction * norm)) return false;
+        gauge = std::atan2(field.y(), field.x());
+        q_north = Eigen::AngleAxisf(-gauge, Vector3f::UnitZ()) * q_proxy;
+        q_north.normalize();
+        return q_north.coeffs().allFinite();
     }
 
     [[nodiscard]] float proxyMagneticYaw_(float gauge) const {

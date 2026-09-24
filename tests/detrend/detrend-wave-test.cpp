@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
     samples_ofs << "scenario,height_m,period_s,wave_freq_hz,time_s,reference_z_m,drift_m,drifted_z_m,detrended_z_m,baseline_slow_m,error_z_m\n";
     samples_ofs << std::fixed << std::setprecision(9);
 
-    summary_ofs << "scenario,height_m,period_s,wave_freq_hz,warmup_s,drift_rms_m,detrended_rms_m,gate_rms_m,improvement_ratio\n";
+    summary_ofs << "scenario,height_m,period_s,wave_freq_hz,warmup_s,drift_rms_m,detrended_rms_m,gate_rms_m,improvement_ratio,baseline_cutoff_fraction,cleanup_stages\n";
     summary_ofs << std::fixed << std::setprecision(9);
 
     bool all_ok = true;
@@ -185,7 +185,15 @@ int main(int argc, char* argv[]) {
       const double gate_rms_m = kRmsGateFractionOfHeight * scenario.height_m;
       const double duration_s = wave_rows.back().time_s;
 
-      AdaptiveWaveDetrender detrender;
+      // This fixed accuracy benchmark uses a 0.25 cutoff fraction and one
+      // cleanup stage, just as the 3D benchmark pins its own operating point.
+      // The shipping defaults are tested separately by the independent golden
+      // fixture; a default retune must not silently redefine this 16%-Hs test.
+      AdaptiveWaveDetrender::Config cfg;
+      cfg.baseline_cutoff_fraction = 0.25f;
+      cfg.enable_wave_cleanup = true;
+      cfg.cleanup_stages = 1;
+      AdaptiveWaveDetrender detrender(cfg);
       RMSAccumulator drift_rms;
       RMSAccumulator detrended_rms;
 
@@ -250,7 +258,9 @@ int main(int argc, char* argv[]) {
                   << drift_rms_m << ','
                   << detrended_rms_m << ','
                   << gate_rms_m << ','
-                  << improvement_ratio << '\n';
+                  << improvement_ratio << ','
+                  << cfg.baseline_cutoff_fraction << ','
+                  << static_cast<int>(cfg.cleanup_stages) << '\n';
 
       std::cout << scenario.tag
                 << ": drift RMS=" << drift_rms_m

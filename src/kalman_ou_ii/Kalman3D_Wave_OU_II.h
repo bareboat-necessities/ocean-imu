@@ -2115,7 +2115,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     // So the predicted BODY' magnetometer measurement is +R_wb() * v2ref.
     const Vector3 v2hat = R_wb() * v2ref;
 
-    const Vector3 zhat = v2hat;
+    const Vector3& zhat = v2hat;
     const Vector3 r = mag_meas - zhat;
     last_mag_diag_.r = r;
 

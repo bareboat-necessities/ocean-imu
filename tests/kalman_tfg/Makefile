@@ -69,6 +69,9 @@ tfg_handoff_heave-test: tfg_handoff_heave-test.o
 tfg_device_heave-test: tfg_device_heave-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+tfg_device_tempcomp-test: tfg_device_tempcomp-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
 # Need W3dSimCommon for the shared runner, scoring and record loading.
 kalman_tfg-sim: kalman_tfg-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
