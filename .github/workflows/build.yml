@@ -94,17 +94,33 @@ jobs:
     with:
       validation_mode: full
 
+  # Validate the published evidence, not the stale rows at the source push
+  # that started this run. PRs retain their independent evidence-contract gate.
+  evidence-contract:
+    needs: ou-evidence
+    if: >-
+      ${{ !cancelled()
+          && github.ref == 'refs/heads/main'
+          && needs['ou-evidence'].result == 'success' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/evidence-contract.yml
+    with:
+      checkout_ref: refs/heads/main
+
   build:
-    needs: [ou-evidence, classify]
+    needs: [ou-evidence, evidence-contract, classify]
     # Off main ou-evidence is skipped and ordinary branch/PR builds should use
     # the committed evidence. On main, however, publication must not proceed
-    # after a failed full-evidence run: the PDF would otherwise be cut from a
-    # tree whose numerical evidence was not validated for that source state.
+    # after a failed full-evidence run or post-publication contract: the PDF
+    # would otherwise use a tree whose numerical evidence was not validated
+    # for that source state.
     if: >-
       ${{ !cancelled()
           && needs.classify.outputs.run_build == 'true'
           && (github.ref != 'refs/heads/main'
-              || needs['ou-evidence'].result == 'success') }}
+              || (needs['ou-evidence'].result == 'success'
+                  && needs['evidence-contract'].result == 'success')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
