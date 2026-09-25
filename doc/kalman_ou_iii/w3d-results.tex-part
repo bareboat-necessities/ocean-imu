@@ -1,12 +1,10 @@
-\section{Results and Empirical Observations}
+\section{Results}
 \label{sec:results}
 
-Representative traces illustrate 3-D behavior; they are deterministic examples
-from the same simulation family, not independent experiments.  Statistical
-claims use the versioned ten-seed evidence below.
-
-\subsection{Representative three-dimensional reconstruction}
-
+\subsection{Three-dimensional reconstruction and attitude}
+Figures~\ref{fig:representative-3d-kinematics}--\ref{fig:bias-tracking}
+show a representative medium-JONSWAP replay. These deterministic traces
+complement, rather than enlarge, the paired ensembles below.
 \begin{figure*}[t]
 \centering
 \begin{minipage}[t]{0.49\textwidth}
@@ -22,60 +20,6 @@ claims use the versioned ten-seed evidence below.
 \caption{Representative 3-D JONSWAP reconstruction, $H_s=\SI{1.5}{m}$.}
 \label{fig:representative-3d-kinematics}
 \end{figure*}
-
-\paragraph{Horizontal drift and directional regularization}
-\label{sec:riccati-per-axis-limits}
-After attitude compensation, small tilt errors leak gravity into horizontal
-acceleration approximately as
-\begin{equation}
-\boxed{
-\vct\varepsilon_{a,H}
-\simeq
-\begin{bmatrix}
-g\,\delta\theta_y\\-g\,\delta\theta_x
-\end{bmatrix}
-+\vct b_{a,H}+\vct n_H .}
-\label{eq:riccati-axis-tilt-leak}
-\end{equation}
-The vertical channel has no corresponding first-order term, and horizontal bias
-is less observable without an external kinematic reference.  The magnitude of this coupling depends on the vessel response, attitude
-solution and sensor realization; it must be measured for the current source.
-
-These ratios do not by themselves determine separate horizontal
-pseudo-measurement covariances.  The scalar spectral reduction of
-Sec.~\ref{sec:adaptation-regularizer-transfer} identifies the mechanism by
-which $q_{\mathrm{eff}}$, $R_S$, and update cadence set a correction corner, but
-it omits attitude-error coupling, axis-dependent bias observability, and the
-directional desired-motion spectrum.  In particular, horizontal desired motion
-is a heading-dependent projection of the same orbital field, so a fixed world
-$x/y$ multiplier would not be invariant to vessel heading.  The supported
-full-filter result is therefore narrower, but it is not isotropic. The pinned
-vessel records are generated from an estimated fin-keel sailboat response, and
-that hull resists sway while leaving surge comparatively free. A fixed
-$\pm30^\circ$ heading projection would put the same horizontal RMS ratio
-$\cos30^\circ/\sin30^\circ=1.732$ in every record; the records instead run
-from $2.33$ at $H_s=\SI{1.5}{m}$ down to $1.61$ at $H_s=\SI{8.5}{m}$, falling
-with wavelength and approaching the geometric value only in the longest waves.
-A heading projection cannot vary with period, so the anisotropy is a hull
-response rather than a property of the record geometry, and every record holds
-yaw at zero, so the world horizontal axes coincide with surge and sway here.
-The deployed factors are accordingly $\rho_x=0.72$ on the free axis and
-$\rho_y=0.50$ on the keel-damped one, with the vertical factor one. Pooled
-over four fresh IMU draws this lowers mean pitch by \SI{17}{\percent} and the
-lateral accelerometer-bias error by \SI{21}{\percent} at a cost of
-\SI{4}{\percent} in roll, leaving yaw and both vertical channels unchanged. An
-isotropic sweep to $0.5$ remains rejected on the same draws: it costs
-\SI{5}{\percent} of yaw, which the anisotropic split does not. Because the
-keel's anisotropy is a body-frame property while $r_S$ is applied in the world
-frame, the two coincide only while the vessel holds the heading these records
-hold; rotating the split by the estimated heading is the deployment-general
-form and is not claimed here, since records that pin yaw cannot measure the
-rotation. Further horizontal improvement should target the
-disturbance itself---tilt error, accelerometer-bias observability, GNSS, or
-another horizontal reference.  No fixed horizontal-to-vertical noise-intensity ratio is inferred from
-the incident wave spectrum.
-
-\input{w3d-low-wave-noise.tex-part}
 
 \subsection{Attitude and adaptation behavior}
 
@@ -97,36 +41,29 @@ frequency is $f_{\mathrm{wave,appl}}=1/(2\tau_{\mathrm{appl}})$.}
 \label{fig:attitude-and-tuning}
 \end{figure}
 
-The plotted quantities are the smoothed parameters applied to the MEKF from the
-measurement-only wave-period and acceleration-variance estimates of
-Sec.~\ref{sec:adaptation}; the separate wave-direction carrier is not part of
-this tuning path.
+\paragraph{Horizontal coupling}
+\label{sec:riccati-per-axis-limits}
+Small tilt errors leak gravity into horizontal acceleration as
+\begin{equation}
+ \vct\varepsilon_{a,H}\simeq
+ \begin{bmatrix}g\,\delta\theta_y\\-g\,\delta\theta_x\end{bmatrix}
+ +\vct b_{a,H}+\vct n_H.
+ \label{eq:riccati-axis-tilt-leak}
+\end{equation}
+There is no corresponding first-order vertical term. The scalar SpectralMSE
+reduction omits this coupling and cannot alone determine horizontal tuning.
+The factors in \eqref{eq:fus-rs-anisotropy} are applied in world NED;
+their surge/sway interpretation is restricted to the zero-yaw records.
 
 \subsection{Bias tracking}
-
-Figure~\ref{fig:bias-tracking} compares the estimated accelerometer and
-gyroscope biases with their injected trajectories in the representative
-medium-JONSWAP record. The bias states share the measurement residuals with
-attitude and wave acceleration, so agreement with the injected bias is a
-separate diagnostic from displacement accuracy. In particular, a smooth bias
-estimate need not identify the physical sensor bias: persistent model error
-can also be absorbed into these states.
-
-For this sea, the ten-seed OU--III Adaptive ensemble gives a 3-D
-accelerometer-bias RMS error of $0.0632\pm0.0330$~\si{m.s^{-2}} and a 3-D
-gyroscope-bias RMS error of $(1.19\pm0.16)\times10^{-4}$~\si{rad.s^{-1}},
-reported as mean and standard deviation over the final \SI{900}{s}.
-
-The accelerometer comparison deliberately tests a mismatch between the
-random-walk truth and the estimator's slow, temperature-centered
-Gauss--Markov prior. Temperature is fixed, so these traces assess residual-bias
-tracking rather than thermal calibration. The noise-free ablation in
-Sec.~\ref{sec:model-mismatch-ablation} further shows nonzero estimated bias
-with zero true bias, demonstrating that the bias error includes a
-model-mismatch contribution. The representative trajectories therefore
-complement the reconstruction scores without establishing bias identifiability
-for arbitrary marine motion.
-
+For the medium JONSWAP sea, ten-seed OU--III accelerometer-bias RMS is
+$0.0632\pm0.0330$~\si{m.s^{-2}} and gyroscope-bias RMS is
+$(1.19\pm0.16)\times10^{-4}$~\si{rad.s^{-1}} over the final \SI{900}{s}.
+Bias states also absorb model error; smooth estimates therefore do not
+establish physical bias identifiability. The fixed-temperature, random-walk
+truth deliberately differs from the slow Gauss--Markov estimator prior.
+The ideal-sensor ablation in Sec.~\ref{sec:model-mismatch-ablation}
+isolates the resulting deterministic residual.
 \begin{figure}[t]
 \centering
 \begin{minipage}[t]{\columnwidth}
@@ -146,49 +83,33 @@ Gauss--Markov residual.}
 \label{fig:bias-tracking}
 \end{figure}
 
+\input{w3d-low-wave-noise.tex-part}
+
 \subsection{Comparative results and adaptation ablations}
-
-The comparisons below separate the choice of estimator from the effect of
-online adaptation. Deterministic baselines place OU--III alongside OU--II,
-TFG, PII, and an adapted nonlinear observer. Separate ten-seed paired
-comparisons quantify the OU--II/OU--III and TFG/OU--III differences. Matched channel ablations attribute
-most of the off-nominal vertical improvement to the adaptive integral-state
-regularizer. Displacement and attitude scores are reported together so that
-the vertical comparison can be assessed against the full reconstruction.
-
 \input{w3d-baseline-comparison.tex-part}
 
-\subsection{Hard-iron correction result}
+\subsection{Hard-iron correction}
 \label{sec:mag-hi-results}
-
-The current paired hard-iron ablation uses the default sensor-error draw
-on each v1.2.1 RAO record and scores the final \SI{900}{s}.
-Table~\ref{tab:mag-hi-yaw} reports every record. Arithmetic mean yaw RMS
-falls from \SI{2.048}{\degree} to \SI{0.989}{\degree}; the worst-record
-RMS falls from \SI{2.112}{\degree} to \SI{1.631}{\degree}.
-The matched OU--II comparison uses the same magnetic correction.
+The matched on/off ablation uses one sensor-error draw on each of the eight
+RAO records, scored over the final \SI{900}{s}
+(Table~\ref{tab:mag-hi-yaw}). Arithmetic mean yaw RMS falls from
+\SI{1.945}{\degree} to \SI{0.479}{\degree}; the worst-record RMS falls from
+\SI{2.064}{\degree} to \SI{0.815}{\degree}. OU--II uses the same correction.
+Misalignment-dominated draws can regress: unmodeled distortions may alias
+into the additive fit while passing its residual gate. This is not a
+complete magnetometer calibration.
 
 \input{w3d-hard-iron-results-generated.tex-part}
 
-This result is conditional on the reported calibration draw.  Additional
-misalignment-dominated draws can regress because soft-iron and misalignment
-terms alias into the additive fit while satisfying its residual gate.  The
-correction is therefore not claimed as a complete magnetometer calibration;
-full distortion identification requires multi-heading excitation.
-
 \subsection{Embedded portability}
 \label{sec:real-hardware-platform}
-
-The same estimator source compiles and executes on an M5Stack AtomS3R
-(ESP32--S3) with calibrated MEMS input (Fig.~\ref{fig:atoms3r-platform}).
-
+The estimator compiles and executes on the M5Stack AtomS3R (ESP32--S3)
+with calibrated MEMS input (Fig.~\ref{fig:atoms3r-platform}). This establishes
+source portability. Processor load, memory, power, deadline margin, thermal
+performance, and externally referenced displacement accuracy were not measured.
 \begin{figure}[!t]
   \centering
   \includesvg[width=0.25\columnwidth,inkscapelatex=false]{AtomS3R_device}
   \caption{M5Stack AtomS3R embedded validation target.}
   \label{fig:atoms3r-platform}
 \end{figure}
-
-This establishes functional source portability only.  Processor load, memory,
-power, deadline margin, thermal behavior, and externally referenced
-reconstruction accuracy were not measured.

@@ -1,9 +1,11 @@
-\section{Measurement Update and MEKF Reset}
+\subsection{Measurement Update and MEKF Reset}
 \label{sec:meas-update-structure}
 
-At each IMU step, the gyroscope propagates the nominal quaternion and process
-covariance; accelerometer, magnetometer, and integral-drift channels provide
-rank--3 corrections.  For
+Each IMU step propagates the nominal quaternion and covariance, applies a
+due integral pseudo-update, then corrects with the accelerometer. Magnetic
+updates are asynchronous. Each accepted correction includes injection/reset.
+All three channels have three-component innovations; the magnetic Jacobian
+has rank two, while the accelerometer and integral selectors have rank three.  For
 \[
 \vct{z}=h(\vct{x})+\vct{\nu},
 \qquad
@@ -28,7 +30,7 @@ The error-state and Joseph covariance updates are
 \label{eq:joseph-update}
 \end{equation}
 
-\subsection{Rank--3 block structure}
+\subsubsection{Three-component correction structure}
 Partition
 \[
 \delta\vct{x}=[\vct{A}^{\top},\vct{L}^{\top},\vct{B}^{\top}]^{\top},
@@ -44,7 +46,7 @@ Eqs.~\eqref{eq:acc-meas-jacobians}, \eqref{eq:mag-meas-jacobian}, and
 \eqref{eq:HS-selector}, respectively, with columns ordered as in
 \eqref{eq:state-vector}.
 
-\subsection{Nominal-state injection and quaternion reset}
+\subsubsection{Nominal-state injection and quaternion reset}
 After an accepted correction, additive states are injected as
 \begin{align}
 \hat{\vct{b}}_g &\leftarrow \hat{\vct{b}}_g+\delta\hat{\vct{b}}_g,&
@@ -84,7 +86,7 @@ followed by
 This transformation applies to the attitude marginal and all attitude
 cross-covariances whenever a correction induces nonzero attitude error.
 
-\subsection{Numerical invariants}
+\subsubsection{Numerical invariants}
 The innovation matrix uses an LDL$^{\top}$ solve with a scale-dependent diagonal
 safeguard only when needed.  The Joseph update, covariance symmetrization, and
 MEKF reset preserve $\mat P=\mat P^\top$, $\mat P\succeq0$, unit quaternion

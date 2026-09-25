@@ -1,4 +1,6 @@
-\documentclass[conference]{IEEEtran}
+\RequirePackage[T1]{fontenc}
+\documentclass[10pt,journal]{IEEEtran}
+\usepackage[letterpaper,top=1in,bottom=1in,left=0.7in,right=0.7in,columnsep=0.2in]{geometry}
 
 \usepackage{iftex}
 \ifPDFTeX
@@ -24,7 +26,7 @@
 \usepackage{mathtools}
 \usepackage{nccmath, relsize}
 \usepackage{enumitem}
-\usepackage{balance}
+\usepackage{flushend}
 \usepackage{flafter}
 \usepackage{siunitx}
 \usepackage[final]{microtype}
@@ -144,20 +146,17 @@
 \emergencystretch=2em
 \allowdisplaybreaks
 
-\title{Adaptive OU-Regularized Quaternion MEKF for 3-D Marine Inertial Wave Motion Estimation (draft)}
-\author{%
-    \IEEEauthorblockN{Mikhail S. Grushinskiy}
-    \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
-    Bareboat Necessities GitHub Project\\
-    Email: mgrouch@users.github.com}%
-}
+\title{Adaptive OU-Regularized Quaternion MEKF for Marine Wave-Motion Estimation}
+\author{Mikhail S. Grushinskiy\thanks{M. S. Grushinskiy is an independent
+researcher with the Bareboat Necessities project, Fair Lawn, NJ, USA
+(e-mail: mgrouch@users.github.com).}}
 \pgfplotsset{compat=1.18}
+
+\input{w3d-editorial-tables.tex-part}
 
 \begin{document}
 
-% Generated result macros are defined before any section so that the protocol
-% description can quote the same values as the results tables.  Default values
-% keep the document compilable before the studies have been regenerated.
+% Result macros share the authoritative generated evidence with the tables.
 \IfFileExists{w3d-ou-validation-macros-generated.tex-part}{%
   \input{w3d-ou-validation-macros-generated.tex-part}%
 }{}
@@ -189,34 +188,34 @@
 \maketitle
 
 \begin{abstract}
-We present an adaptive quaternion multiplicative EKF for three-dimensional
-marine inertial wave-motion estimation.  The 21-state estimator couples attitude
-and sensor biases with an OU-driven translational chain comprising velocity,
-oscillatory displacement, integral displacement, and latent world acceleration.
-A zero pseudo-measurement on the integral state provides low-frequency
-regularization. Displacement denotes oscillatory vessel motion about a local
-reference rather than an absolute navigation position. A companion stability
-study states the admissibility assumptions and separates analytical results,
-validated certificates, and unresolved end-to-end proof obligations.
-Sea-state adaptation is an
-exogenous measurement-only layer that estimates wave period and band-limited
-acceleration variance and schedules the OU prior and integral regularizer.  A
-paired ten-seed study spans four stationary JONSWAP seas, four PM--Stokes seas,
-and a controlled transition.  For the stationary JONSWAP primary endpoint,
-normalized vertical RMS error is
+Low-cost inertial wave-motion reconstruction must suppress drift without
+attenuating the desired vessel displacement. We develop OU--III, a
+21-state quaternion multiplicative extended Kalman filter coupling attitude
+and sensor biases to an Ornstein--Uhlenbeck-driven velocity, displacement,
+integral-displacement, and acceleration chain. A zero pseudo-measurement on
+the integral state regularizes low frequencies. Measurement-only estimates
+of wave period and band-limited acceleration schedule the OU prior and a
+SpectralMSE regularizer derived from a physical drift--distortion balance,
+including pseudo-update cadence. In a paired ten-seed study, stationary
+JONSWAP vertical RMS is
 $\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
-$H_s$ for OU--III versus
+incident significant wave height for OU--III versus
 $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
-OU--II, with a paired difference of $\OUValidationNormalizedDifference$
-percentage points and bootstrap 95\% interval
+OU--II. The paired difference is $\OUValidationNormalizedDifference$
+percentage points, with bootstrap 95\% interval
 $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$.
-Ablations attribute most of the adaptive benefit to integral-state
-regularization.  Results remain simulation based and do not establish global
-navigation, thermal-calibration, or embedded resource performance.
+A four-arm ablation attributes most off-nominal improvement to adaptive
+integral regularization rather than OU-prior adaptation alone. Comparisons,
+changing-sea tests, and vibration failure/mitigation studies characterize
+tradeoffs. Evidence is limited to synthetic fixed-heading motion from one
+estimated vessel response; displacement is relative wave motion, not
+absolute navigation position.
 \end{abstract}
 
 \begin{IEEEkeywords}
-extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, MRU, Ornstein--Uhlenbeck process, Heave Reference System, HRS, heave sensor, wave height estimation, wave measurement buoy\end{IEEEkeywords}
+Attitude estimation, heave, inertial sensors, Kalman filtering, marine motion,
+Ornstein--Uhlenbeck process.
+\end{IEEEkeywords}
 
 \input{w3d-intro.tex-part}
 \input{w3d-related-work-modern.tex-part}
@@ -248,8 +247,17 @@ extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, 
 \input{w3d-conclusion-summary.tex-part}
 
 \FloatBarrier
+\appendices
+\section{Detailed Numerical Results}
+\label{sec:detailed-numerical-results}
+The following tables retain the exact numerical results accompanying the
+main-text charts. They use the original scoring windows and aggregation;
+no numerical entries are removed or recomputed.
+\OUPrintAppendixTables
+\FloatBarrier
+
 \section*{Acknowledgments}
-This work was prepared with the supervised assistance of artificial intelligence tools, such as ChatGPT and Claude, which were employed to aid in code generation, mathematical drafting, and editorial preparation. All conceptual development, validation of results, and final revisions were conducted independently by the author.
+ChatGPT and Claude assisted with code generation, mathematical drafting, and editorial preparation under author supervision. The author is responsible for the method, validation, and final manuscript.
 
 \section*{Disclosure Statement}
 The author declares no conflicts of interest and received no funding for this research.
@@ -257,5 +265,4 @@ The author declares no conflicts of interest and received no funding for this re
 \nocite{Kalman1960_Filtering,Jazwinski1970_Filtering,Maybeck1979_StochasticModels,Markley2003AttitudeError,UhlenbeckOrnstein1930_OU}
 \bibliographystyle{IEEEtran}
 \bibliography{w3d,w3d-modern,w3d-iss,w3d-baselines}
-\balance
 \end{document}

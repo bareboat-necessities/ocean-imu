@@ -40,6 +40,12 @@ adaptation lag cannot cancel in a pooled transition number.
   \input{w3d-roundtrip-transition-scores-generated.tex-part}%
 }{}
 
-This protocol tests only the deployed SpectralMSE configuration. No historical
-regularizer law is an arm of the transition study, and no one-way-transition
-chart or score is used in the article.
+
+The low-start, high, and low-return vertical RMS values are $0.077$, $0.255$,
+and $0.066$~m. Recovery scores are $0.275$~m after the rise and $0.070$~m
+after the fall. These single-seed segments diagnose response asymmetry, not
+ensemble recovery guarantees. The table's normalized column uses the fixed
+high-sea reference $H_s=\SI{4}{m}$ for every segment.
+
+No one-way-transition chart or score is pooled into this bidirectional diagnostic.
+% No historical regularizer-law arm is an input to this experiment.

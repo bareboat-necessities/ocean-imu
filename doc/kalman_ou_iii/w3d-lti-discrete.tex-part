@@ -46,7 +46,7 @@ For the temperature-centered residual accelerometer-bias OU state,
 The scalar covariance factor is evaluated as
 $-\frac{\tau_b}{2}\operatorname{expm1}(-2h/\tau_b)$ for numerical accuracy
 when $h/\tau_b\ll1$.  Hence
-$\matg Q_{d,b}=h\matg Q_{ba}+O(h^2/\tau_b)$, preserving the former random-walk
+$\matg Q_{d,b}=h\matg Q_{ba}+O(h^2/\tau_b)$, agreeing with random-walk
 process covariance to first order on short IMU steps.
 
 \paragraph{Discrete Kalman prediction (time update)}

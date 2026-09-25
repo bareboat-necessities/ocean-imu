@@ -1,4 +1,4 @@
-\section{State Definition}
+\subsection{State and Error Convention}
 \label{sec:state}
 
 The nominal quaternion is stored separately from the additive navigation and
@@ -32,28 +32,14 @@ The covariance is defined for the local error state
 \delta\vct{b}_a^{\top}
 \end{bmatrix}^{\!\top},
 \end{equation}
-where
-\begin{itemize}
-  \item $\delta\vct{\theta}\in\mathbb{R}^3$ is the small
-        left-multiplicative attitude error used by the MEKF
-        \cite{Shuster1993_AttitudeRepresentations,MarkleyCrassidis2014_Attitude};
-  \item $\vct{b}_g\in\mathbb{R}^3$ is gyroscope bias, modeled as a random walk;
-  \item $\vct{v}\in\mathbb{R}^3$ is velocity in the world NED frame;
-  \item $\vct{p}\in\mathbb{R}^3$ is position or displacement in the world frame;
-  \item $\vct{S}\in\mathbb{R}^3$ is the displacement integral
-        $\vct{S}(t)=\int_0^t\vct{p}(s)\,ds$ used by the drift-control
-        pseudo-measurement;
-  \item $\vct{a}_w\in\mathbb{R}^3$ is latent world-frame acceleration with an
-        OU prior;
-  \item $\vct{b}_a\in\mathbb{R}^3$ is residual accelerometer bias about the
-        deterministic temperature-calibration curve, modeled as a slow
-        first-order Gauss--Markov/OU process; the total bias is defined by
-        Eq.~\eqref{eq:acc-bias-temperature-model}.
-\end{itemize}
-
-With both bias states enabled, $N_X=21$ and
-$\mat{P}=\E[\delta\vct{x}\,\delta\vct{x}^{\top}]$.  The residual
-accelerometer-bias correlation time is $\tau_b$.
+with left-multiplicative attitude error $\delta\vct\theta$
+\cite{Shuster1993_AttitudeRepresentations,MarkleyCrassidis2014_Attitude}.
+The world-NED quantities $\vct v$, $\vct p$, and
+$\vct S=\int\vct p\,dt$ denote velocity, oscillatory displacement, and its
+integral; $\vct a_w$ is latent OU acceleration. Gyroscope bias $\vct b_g$
+is a random walk, and $\vct b_a$ is a slow OU residual about the calibrated
+temperature curve. With both bias blocks enabled, the covariance
+$\mat P=\E[\delta\vct x\delta\vct x^\top]$ has dimension $N_X=21$.
 
 Two acceleration covariances must be distinguished.
 $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ is the prescribed stationary covariance
@@ -63,3 +49,4 @@ $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ does not overwrite
 $\mat{P}_{a_wa_w}$.  Hard initialization may reset this posterior block and its
 cross-covariances; default online maintenance only adds the positive-semidefinite
 covariance required to reach the current stationary floor.
+

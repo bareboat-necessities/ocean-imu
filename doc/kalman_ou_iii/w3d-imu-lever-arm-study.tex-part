@@ -1,12 +1,7 @@
-\subsection{Sensitivity to IMU Lever-Arm Installation}
+\subsection{IMU lever-arm installation}
 \label{sec:imu-lever-arm-study}
-
-The preceding validation places the IMU at the vessel center of gravity (CG).
-A real installation may instead be displaced by several decimeters, in which
-case rotation produces a translational acceleration at the sensor even when
-the CG acceleration is unchanged.  For a body-fixed lever arm $r$ the rigid-
-body relation is
-%
+The eight CG-reference records are replayed with \SIlist{10;20;30}{cm} offsets
+along body forward, port, and up axes. The installation adds
 \begin{equation}
   a_{\mathrm{IMU}}
   = a_{\mathrm{CG}}
@@ -14,48 +9,16 @@ body relation is
   + \omega\times(\omega\times r),
   \label{eq:imu-lever-arm}
 \end{equation}
-%
-where $\omega$ and $\dot{\omega}$ are expressed in the body frame.  The first
-extra term is tangential acceleration and the second is centripetal
-acceleration.  Treating $a_{\mathrm{IMU}}$ as $a_{\mathrm{CG}}$ therefore
-injects a deterministic, attitude-correlated model error into the same
-accelerometer channel used for both attitude and wave acceleration.
+to acceleration truth before sensor corruption, leaving CG motion and all
+other inputs unchanged. Three matched arms then either retain this term
+(unmodeled), remove it using exact angular kinematics (exact-model oracle bound), or estimate
+it from corrupted gyroscope data (gyro-model). The latter uses a two-pole
+\SI{15}{Hz} low-pass and causal second-order backward difference.
+Compensation is applied after sensor corruption, immediately before fusion.
+This external compensation experiment is distinct from the optional internal
+MEKF lever-arm Jacobian in Sec.~\ref{sec:measurement_model}.
 
-To measure this effect without changing any other part of the estimator, the
-standard eight JONSWAP and PM--Stokes records are replayed with the IMU moved
-\SIlist{10;20;30}{cm} along each canonical body direction: forward ($x$),
-port ($y$), and up ($z$), matching the RAO generator.  The record's CG motion, attitude, gyroscope,
-magnetometer, stochastic sensor realization, OU adaptation, covariance,
-pseudo-measurements, startup logic, and vibration guard are unchanged.
-
-The installation and the estimator's model of it sit on opposite sides of the
-sensor, and the harness implements them there rather than by pre-processing
-records.  The \emph{installation stage} applies \eqref{eq:imu-lever-arm} to the
-accelerometer truth before sensor corruption, which is what a sensor at $r$
-physically measures; the \emph{model stage} removes the estimator's own
-reconstruction of the same term after corruption, immediately before fusion,
-which is the stage a firmware implementation owns.  Nothing downstream of that
-point knows the IMU is off the CG, so any difference in the scored error is
-attributable to the lever arm alone.
-
-Three matched modeling arms share one installation.  In the \emph{unmodeled}
-arm no lever-arm model runs and the installation error stands.  In the
-\emph{exact-model} arm the lever vector and the record's own angular kinematics
-are supplied to the measurement model, so both rotational terms are removed
-exactly.  In the \emph{gyro-model} arm the estimator has only what it would
-have on hardware: it reconstructs $\dot{\omega}$ from the corrupted rate by a
-two-pole low-pass at \SI{15}{Hz} followed by a causal second-order backward
-difference, and evaluates \eqref{eq:imu-lever-arm} on the result.  The
-exact-model arm is intentionally an oracle bound --- it measures the error
-recoverable from correct lever-arm modeling --- while the gyro-model arm
-measures what a deployable implementation actually recovers.
-
-\IfFileExists{w3d-imu-lever-arm-results.tex-part}{%
-  \input{w3d-imu-lever-arm-results.tex-part}
-}{%
-  Numerical results are obtained from the versioned simulation records.
-}
-
+\input{w3d-imu-lever-arm-results.tex-part}
 \IfFileExists{ou3_lever_arm_penalty.svg}{%
 \begin{figure}[t]\centering
 \includesvg[width=\columnwidth,inkscapelatex=false]{ou3_lever_arm_penalty}
@@ -90,13 +53,8 @@ measures what a deployable implementation actually recovers.
 \caption{Derivative-band sweep for the 30 cm port arm. Narrow-band phase lag and wide-band differentiated noise compete. The deployed 15 Hz point remains close to the best measured 3-D score; it is not refitted.}\label{fig:imu-lever-arm-cutoff}
 \end{figure}
 }{}
-
-The installed force is measurable even when the pooled reconstruction
-penalty is small or negative. The generated results report all three axes at each offset.
-A lower score can arise when the injected term opposes an existing residual;
-it is not a reason to choose an incorrect sensor model.
-The exact-model arm recovers the CG baseline to numerical precision.
-The measured-gyro arm removes most of the installed acceleration, but its
-remaining differentiated noise and lag do not guarantee a better score
-for every record. The lever vector and body convention must therefore be
-specified explicitly when interpreting an installation study.
+An installed rotational term can partly cancel an existing estimator residual,
+so a smaller pooled error is not evidence for an incorrect sensor location.
+The oracle recovers the CG baseline; the gyro model leaves differentiated
+noise and lag. These prescribed offsets do not replace a surveyed physical
+installation test.

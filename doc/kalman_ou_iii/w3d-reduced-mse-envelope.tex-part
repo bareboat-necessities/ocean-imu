@@ -1,57 +1,30 @@
-\subsection{Reduced physical-MSE scaling}
+\subsection{Reduced physical-MSE optimization}
 \label{sec:adaptation-reduced-mse-envelope}
-
-The pole-placement result in Eq.~\eqref{eq:adapt-rs-strong-law} preserves a
-chosen normalized regularization corner, but it does not minimize the physical
-displacement error.  A complementary reduced calculation includes both the
-low-frequency drift suppressed by the regularizer and the distortion that the
-nonphysical $S=0$ update introduces into real wave displacement.  For the
-triple-integrator reduction, the leading terms are
-\begin{equation}
-J_{\rm red}(\omega_R)
-\simeq
-\frac{3q_{\rm eff}}{2\omega_R^3}
-+4m_{-4}\omega_R^4,
-\label{eq:adapt-reduced-physical-mse}
-\end{equation}
-where $m_{-4}$ is the negative fourth spectral moment associated with the
-physical displacement signal.  Minimization gives
-\begin{equation}
-\boxed{
-(\omega_R^\star)^7
-=\frac{9}{32}\frac{q_{\rm eff}}{m_{-4}}.}
+For $\omega\gg\omega_R$, the reconstruction error in
+\eqref{eq:adapt-G-error} is approximately $4(\omega_R/\omega)^4$.
+Writing
+$m_{-4}=(2\pi)^{-1}\int\omega^{-4}S_\eta^{(2)}(\omega)\,d\omega$,
+the reduced physical objective and minimizer are
+\begin{align}
+J_{\rm red}(\omega_R)&\simeq
+\frac{3q_{\rm eff}}{2\omega_R^3}+4m_{-4}\omega_R^4,
+\label{eq:adapt-reduced-physical-mse}\\
+(\omega_R^\star)^7&=\frac{9q_{\rm eff}}{32m_{-4}}.
 \label{eq:adapt-reduced-mse-pole}
-\end{equation}
-Combining Eq.~\eqref{eq:adapt-reduced-mse-pole} with
-$\omega_R=(q_{\rm eff}/R_ST_S)^{1/6}$ yields
+\end{align}
+The first term is integration drift; the second is physical wave distortion.
+Substitution into \eqref{eq:adapt-omegaR} gives
 \begin{equation}
-\boxed{
-r_S^\star
-\propto
-q_{\rm eff}^{1/14}m_{-4}^{3/7}T_S^{-1/2}.}
+r_S^\star=\left(\frac{32}{9}\right)^{3/7}
+q_{\rm eff}^{1/14}m_{-4}^{3/7}T_S^{-1/2}.
 \label{eq:adapt-reduced-mse-rs}
 \end{equation}
-
-For a fixed-shape, period-scaled sea,
+For a fixed-shape dilation of the physical acceleration spectrum,
 \begin{equation}
-m_{-4}\propto \sigma_a^2\tau^8,
+m_{-4}=A\widehat\sigma_{a,B}^2\tau^8,
+\qquad C_J=(32A/9)^{3/7},
 \label{eq:adapt-mminus4-similarity}
 \end{equation}
-where $\sigma_a$ denotes a physical acceleration-amplitude scale.  With the
-strong-observation approximation that $q_{\rm eff}$ is independent of sea
-amplitude to leading order and with $T_S\propto\tau$,
-Eq.~\eqref{eq:adapt-reduced-mse-rs} becomes
-\begin{equation}
-\boxed{
-r_{S,\rm MSE}^\star
-\propto
-\sigma_a^{6/7}\tau^{41/14}.}
-\label{eq:adapt-reduced-mse-law}
-\end{equation}
-Thus the physical-MSE calculation predicts an acceleration exponent
-$6/7\simeq0.857$ and a period exponent $41/14\simeq2.929$ for the deployed
-SpectralMSE schedule.  These exponents follow from the reduced drift--distortion
-objective itself; no historical regularizer schedule is needed to define or
-interpret them.  Section~\ref{sec:adaptation-reduced-mse-validation} checks the
-reduction directly against the measured reference spectra and determines the
-associated spectral coefficient.
+where dimensionless $A$ includes the normalized spectral shape and band
+normalization. The physical amplitude, not the OU-prior scale, controls this
+distortion term.

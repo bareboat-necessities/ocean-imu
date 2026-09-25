@@ -3,42 +3,95 @@
   \expandafter\endinput
 \fi
 
+
 \label{sec:observer-comparison}
+\subsubsection{Ten-seed OU-family comparison}
+The stationary JONSWAP primary endpoint is
+$\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
+$H_s$ for OU--III versus
+$\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
+OU--II. The paired difference is
+$\OUValidationNormalizedDifference$ percentage points, with bootstrap 95\%
+interval $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$
+and exact sign-flip $p=\OUValidationNormalizedRandomizationP$.
+Figure~\ref{fig:ou_mc_vertical} shows lower OU--III vertical error in all
+four stationary seas. Full 3-D RMS is also lower, with paired intervals
+excluding zero (Fig.~\ref{fig:ou_mc_displacement}); individual horizontal
+channels need not improve. Pitch is shown in Fig.~\ref{fig:ou_mc_pitch}.
+Exact per-scenario displacement and attitude statistics are retained in
+Appendix~\ref{sec:detailed-numerical-results},
+Tables~\ref{tab:ou_mc_family} and \ref{tab:ou_mc_axes}.
 
-\subsubsection{Deterministic external and predecessor baselines}
-The deterministic comparison includes adaptive PII, OU--II, the right-invariant two-frame Lie-group
-filter (TFG), and an adapted
-vertical-reference configuration of the time-varying-gain nonlinear observer
-(TVG--NLO) of Bryne, Fossen, and Johansen~\cite{BryneFossenJohansen2014_TVG_NLO}.
-The adapted TVG--NLO omits the horizontal GNSS and compass aiding of the
-published full observer, so horizontal position and yaw are unscored. PII
-provides a feedback-based heave reference; OU--II is the immediate stochastic
-predecessor of OU--III. TFG is the current two-frame Lie-group formulation,
-not the retained legacy implementation. It uses its own frozen tuned defaults
-and the same simulation and scoring harness as OU--III.
+PM--Stokes is analyzed separately rather than pooled with JONSWAP.
+Its ensemble gives a normalized vertical difference of
+$\OUValidationPMStokesDifference$ percentage points with interval
+$[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$
+(Table~\ref{tab:ou_mc_pmstokes}). This supports transfer between the two
+prescribed spectral families, not uncertainty over other hulls or headings.
 
-All methods replay the same timestamped synthetic motion and inertial records
-and use the final \SI{900}{s}. The common comparison is vertical displacement
-and tilt, available from every method. Comparator coefficients are selected
-offline by repeated sweeps on the vessel-response records and then frozen for
-paired evaluation on additional sensor and initialization draws. Reference
-displacement is used for offline scoring, never for online gain scheduling.
-These draws do not constitute independent seas or unseen vessel responses.
-OU--II and OU--III
-share the same wave-band period input. OU--II uses the analytical PhysicalMSE
-dual pseudo-measurement schedule and OU--III uses the analytical SpectralMSE
-integral-state schedule of Sec.~\ref{sec:adaptation}.
-
-\IfFileExists{w3d-comparator-retuning-generated.tex-part}{%
-  \input{w3d-comparator-retuning-generated.tex-part}%
+\input{w3d-ou-validation-results-publication.tex-part}
+\IfFileExists{ou_validation_vertical.svg}{%
+\begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_vertical}
+    \caption{Ten-seed normalized vertical-displacement RMS; paired-bootstrap
+    95\% intervals.}
+    \label{fig:ou_mc_vertical}
+  \end{figure}
 }{}
-The retuning gains are modest. OU--II and PII improve several mean error
-channels; TFG and TVG--NLO improve normalized heave with small adverse
-changes in some attitude channels. NLO uses a fresh pair of evaluation draws
-after an earlier smoothing candidate failed its additional-draw check.
-OU--III is held fixed throughout coefficient selection. The retained
-record-level results include rejected candidates and remaining gate failures.
 
+\IfFileExists{ou_validation_displacement.svg}{%
+\begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_displacement}
+    \caption{Ten-seed full three-dimensional displacement RMS; paired-bootstrap
+    95\% intervals.}
+    \label{fig:ou_mc_displacement}
+  \end{figure}
+}{}
+
+\IfFileExists{ou_validation_attitude.svg}{%
+\begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_attitude}
+    \caption{Ten-seed pitch RMS; paired-bootstrap 95\% intervals.}
+    \label{fig:ou_mc_pitch}
+  \end{figure}
+}{}
+
+\subsubsection{Adaptation mechanism}
+Table~\ref{tab:ou_mc_channels} retains all four channel-ablation arms in the
+main text. At $H_s=\SI{8.5}{m}$, full adaptation, $r_S$ only, OU only, and
+FixedNominal yield $3.95$, $4.09$, $11.52$, and $13.26\%$ of $H_s$,
+respectively. Adaptive $r_S$ captures most of the off-nominal benefit;
+OU-only adaptation helps less, rather than not at all. At the nominal sea,
+Adaptive minus FixedNominal is
+$\OUValidationIIIHsOneFiveNominalDifference$ percentage points
+($[\OUValidationIIIHsOneFiveNominalLow,\OUValidationIIIHsOneFiveNominalHigh]$).
+
+Disabling periodic latent-acceleration covariance re-alignment produces a
+largest-magnitude paired change of
+$\OUValidationCovSyncWorstDifference$ percentage points
+($[\OUValidationCovSyncWorstLow,\OUValidationCovSyncWorstHigh]$).
+That maintenance policy does not explain the substantially larger
+adaptation-channel effects.
+
+\subsubsection{Deterministic baselines}
+Adaptive PII, OU--II, the two-frame Lie-group filter (TFG), and the adapted
+time-varying-gain nonlinear observer (TVG--NLO)
+\cite{BryneFossenJohansen2014_TVG_NLO} replay identical timestamped synthetic motion and inertial records.
+The TVG--NLO configuration omits the published observer's horizontal GNSS
+and compass aiding; its horizontal position and yaw are unscored.
+The common endpoints are vertical displacement and tilt
+(Table~\ref{tab:baseline-tuning-policy}). Comparator coefficients are
+selected offline on the vessel-response records, then held as frozen parameters for evaluation on additional
+sensor/initialization draws; reference displacement never enters online
+scheduling or gains. OU--III is fixed during comparator selection. These are development
+ensemble comparisons, not unseen-vessel tests.
+OU--II and OU--III share the wave-band period input but use PhysicalMSE dual
+and SpectralMSE integral regularization, respectively.
+
+\input{w3d-comparator-retuning-generated.tex-part}
 \begin{table}[t]
 \centering
 \caption{Deterministic baseline tuning and aiding policy.}
@@ -59,164 +112,47 @@ TVG--NLO & wave-frequency gain schedule & IMU only; yaw/horizontal unscored \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\providecommand{\OUBaselinePIIMeanVerticalPercent}{--}
-\providecommand{\OUBaselineTVGNLOMeanVerticalPercent}{--}
-\providecommand{\OUBaselineOUIIMeanVerticalPercent}{--}
-\providecommand{\OUBaselineTFGMeanVerticalPercent}{--}
-\providecommand{\OUBaselineOUIIIMeanVerticalPercent}{--}
-\IfFileExists{w3d-baseline-results-generated.tex-part}{%
-  \input{w3d-baseline-results-generated.tex-part}%
-}{}
-
-The mean normalized vertical-displacement RMS error is
-\pct{\OUBaselineOUIIIMeanVerticalPercent} of $H_s$ for OU--III,
+\input{w3d-baseline-results-generated.tex-part}
+The deterministic normalized vertical RMS is
+\pct{\OUBaselineOUIIIMeanVerticalPercent} for OU--III,
 \pct{\OUBaselineTFGMeanVerticalPercent} for TFG,
 \pct{\OUBaselineOUIIMeanVerticalPercent} for OU--II,
 \pct{\OUBaselinePIIMeanVerticalPercent} for PII, and
 \pct{\OUBaselineTVGNLOMeanVerticalPercent} for adapted TVG--NLO.
-These single-realization values are reproducible references, not ensemble
-estimates. TFG and OU--II also have paired evaluations below; PII and adapted
-TVG--NLO do not have ten-seed inferential comparisons here. The adapted NLO
-configuration differs from its published GNSS/compass-aided experiment, and no
-conventional frequency-domain double-integration baseline is included.
-
-\IfFileExists{w3d_multi_observer_jonswap_medium.pgf}{%
-  \begin{figure}[!t]
+These single-realization scores are distinct from the paired inferential results. PII and TVG--NLO have no ten-seed paired comparison here; a conventional
+frequency-domain double-integration baseline is not included.
+\begin{figure}[!t]
     \centering
     \IncludePGF{w3d_multi_observer_jonswap_medium.pgf}
     \caption{Deterministic medium-JONSWAP vertical reconstruction.}
     \label{fig:multi-observer-medium}
   \end{figure}
-}{}
 
-\subsubsection{Paired TFG companion comparison}
-The OU--III--TFG companion uses the same ten wave-phase, IMU-noise, and
-initialization seed triplets as the OU-family protocol, four heights for each
-of JONSWAP and PM--Stokes, and the controlled low-to-high crossfade. Each
-\SI{1200}{s} replay is scored over its final \SI{900}{s}. Both filters retain
-their current adaptive settings, periodic wave-acceleration covariance
-synchronization, and magnetometer aiding; no coefficient is selected using
-these companion scores. Identical generated motion files are passed to both
-estimators. Complete finite replays are retained regardless of the separate
-deterministic regression-gate outcome.
-
-For each seed $i$, the JONSWAP contrast is
+\subsubsection{Paired TFG comparison}
+The TFG study uses the same ten seed triplets, eight stationary records, and
+controlled crossfade, with both estimators' settings frozen. Its generated
+``JONSWAP'' aggregate includes the four stationary seas \emph{and the
+crossfade}. For seed $i$, the actual reported contrast is
 \begin{equation}
- d_i=\frac14\sum_{h=1}^{4}
- \left(E_{Z,i,h}^{\mathrm{TFG}}-E_{Z,i,h}^{\mathrm{OU\text{-}III}}\right),
- \quad E_Z=100\,\mathrm{RMS}(\hat z-z)/H_s.
+ d_i=\frac{1}{5}\left(\sum_{h=1}^{4}\Delta E_{Z,i,h}
+                  +\Delta E_{Z,i,\mathrm{crossfade}}\right),
+ \qquad \Delta E_Z=E_Z^{\mathrm{TFG}}-E_Z^{\mathrm{OU\text{-}III}}.
+ \label{eq:tfg-reported-aggregate}
 \end{equation}
-The bootstrap resamples the ten $d_i$, preserving within-seed dependence
-across heights. PM--Stokes and the controlled transition remain separate;
-the transition normalization uses the final incident height, \SI{4}{m}.
-The displacement, attitude, and bias channels are reported together. Other
-endpoint intervals are exploratory and not adjusted for multiple comparisons.
-TFG does not implement the wave-direction outputs, so those are not scored.
-The comparison concerns complete deployed estimators, not an isolated test of
-Lie-group coordinates. It uses the development vessel-response ensemble and
-does not establish universal superiority or out-of-sample vessel performance.
+Here $E_Z=100\,\mathrm{RMS}(\hat z-z)/H_s$; the crossfade uses the final
+$H_s=\SI{4}{m}$. This five-condition pooling explains the OU--III baseline
+$4.423\%$, versus $4.35\%$ in the four-stationary-sea primary endpoint;
+the underlying OU--III replay results are identical. The bootstrap resamples
+ten seed-level differences, not the individual conditions.
 
-\IfFileExists{w3d-tfg-comparison-generated.tex-part}{%
-  \input{w3d-tfg-comparison-generated.tex-part}%
-}{}
+\input{w3d-tfg-comparison-generated.tex-part}
+Tables~\ref{tab:tfg-paired} and \ref{tab:tfg-ensembles} show a small
+OU--III heave advantage in the mixed aggregate and the separate PM--Stokes
+ensemble, lower gyroscope-bias error for TFG, and no resolved crossfade
+heave advantage. Other channels are exploratory without multiplicity
+adjustment. This comparison tests complete estimators, not Lie-group
+coordinates in isolation; TFG wave-direction outputs are not scored.
 
-\subsubsection{Ten-seed OU-family and adaptation study}
-\IfFileExists{w3d-ou-validation-results-publication.tex-part}{%
-  \input{w3d-ou-validation-results-publication.tex-part}%
-}{}
-
-The three ensemble plots below are generated from the same ten paired seed
-triplets. In particular, OU--III
-Adaptive uses the analytically derived SpectralMSE integral-state schedule of
-Sec.~\ref{sec:adaptation}.
-
-\IfFileExists{ou_validation_vertical.svg}{%
-  \begin{figure}[t]
-    \centering
-    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_vertical}
-    \caption{Ten-seed normalized vertical-displacement RMS; paired-bootstrap
-    95\% intervals.}
-    \label{fig:ou_mc_vertical}
-  \end{figure}
-}{}
-
-\IfFileExists{ou_validation_displacement.svg}{%
-  \begin{figure}[t]
-    \centering
-    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_displacement}
-    \caption{Ten-seed full three-dimensional displacement RMS; paired-bootstrap
-    95\% intervals.}
-    \label{fig:ou_mc_displacement}
-  \end{figure}
-}{}
-
-\IfFileExists{ou_validation_attitude.svg}{%
-  \begin{figure}[t]
-    \centering
-    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_attitude}
-    \caption{Ten-seed pitch RMS; paired-bootstrap 95\% intervals.}
-    \label{fig:ou_mc_pitch}
-  \end{figure}
-}{}
-
-Across the four stationary JONSWAP seas, seed-wise mean normalized vertical
-error is
-$\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
-$H_s$ for OU--III and
-$\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
-OU--II. The paired difference is
-$\OUValidationNormalizedDifference$ percentage points with bootstrap 95\%
-interval
-$[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$;
-the exact paired sign-flip check gives
-$p=\OUValidationNormalizedRandomizationP$. The ten pairs establish
-repeatability within the stated simulator and sensor model, not uncertainty over
-alternative simulators, vessels, spectra, or cadences.
-
-\paragraph{Vertical and three-dimensional displacement}
-OU--III has lower vertical error in every stationary JONSWAP sea. The stationary
-rows of Table~\ref{tab:ou_mc_axes} likewise report the paired three-dimensional
-RMS comparison, shown directly in Fig.~\ref{fig:ou_mc_displacement}. This does
-not imply universal horizontal-axis tuning because the $X/Y$ decomposition is
-heading dependent and the directional ensemble is limited. Pitch sensitivity
-across the same paired seeds is reported in Fig.~\ref{fig:ou_mc_pitch}.
-
-\paragraph{Second spectrum}
-The paired PM--Stokes ensemble reproduces the vertical advantage, with seed-level
-mean difference $\OUValidationPMStokesDifference$ percentage points
-($[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$).
-It remains separate rather than pooled into the JONSWAP primary endpoint.
-
-\paragraph{Adaptation mechanism}
-Figure~\ref{fig:ou_mc_vertical} shows that online tuning reduces the penalty of
-using one FixedNominal point off nominal. At $H_s=\SI{1.5}{m}$, where
-FixedNominal and FixedOracle coincide, the OU--III Adaptive-minus-FixedNominal
-difference is
-$\OUValidationIIIHsOneFiveNominalDifference$ percentage points
-($[\OUValidationIIIHsOneFiveNominalLow,\OUValidationIIIHsOneFiveNominalHigh]$).
-The negative difference indicates a small improvement even at the calibration
-sea.
-
-Channel ablation identifies the mechanism without changing adaptation-law
-family: adaptive $r_S$ with frozen $(\tau,\sigma_{aw})$ closely tracks full
-SpectralMSE adaptation, whereas adapting the OU parameters with $r_S$ frozen at
-FixedNominal recovers essentially none of the off-nominal vertical improvement
-(Table~\ref{tab:ou_mc_channels}).
-
-\paragraph{Covariance control}
-The covariance-maintenance control has a largest-magnitude paired change
-in normalized vertical error of
-$\OUValidationCovSyncWorstDifference$ percentage points
-($[\OUValidationCovSyncWorstLow,\OUValidationCovSyncWorstHigh]$), indicating
-that periodic latent-acceleration covariance re-alignment is not the source of
-the adaptation differences.
-
-The bidirectional low--high--low protocol of
-Sec.~\ref{sec:roundtrip-transition-ablation} remains the main transient
-diagnostic because it scores both crossfade directions and the recovery/settled
-intervals. The robustness stress study below additionally retains the controlled
-and rapid one-way ramps as explicit degradation cases rather than using them to
-derive or select the adaptation law.
+The bidirectional transient diagnostic is reported in Sec.~\ref{sec:roundtrip-transition-ablation}.
 
 \input{w3d-ou-robustness.tex-part}

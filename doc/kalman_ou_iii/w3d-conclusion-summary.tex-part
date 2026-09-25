@@ -1,123 +1,18 @@
-\section{Conclusion and Future Work}
+\section{Conclusion}
 \label{sec:future-work}
+OU--III combines a 21-state quaternion MEKF, an exactly discretized OU chain,
+and measurement-driven SpectralMSE integral regularization. The ten-seed
+stationary JONSWAP comparison reduces normalized vertical RMS from
+$\OUValidationOUIINormalizedMean\%$ to $\OUValidationOUIIINormalizedMean\%$
+of incident $H_s$. The four-arm ablation attributes most of the off-nominal
+benefit to adaptive $r_S$, rather than OU scheduling alone. PM--Stokes and
+3-D results support the axis-dependent OU--III configuration within the
+prescribed vessel-response ensemble; TFG differences remain channel dependent.
 
-This work develops a three-dimensional quaternion MEKF in which a latent
-Ornstein--Uhlenbeck acceleration prior drives velocity, oscillatory displacement,
-and an integral-displacement state. Its zero pseudo-measurement provides
-low-frequency drift control without claiming absolute navigation position.
-The \href{kalman_ou-w3d-stability-study.pdf}{companion stability study}
-contains the admissible-source definitions, conditional theorems and outstanding
-proof obligations; the results here are performance evidence, not a substitute
-for that certification.
-
-The adaptation layer separates sea time scale, OU-prior amplitude, and integral
-regularization.  The measured sea period sets $\tau$, the physical band-limited
-acceleration RMS is mapped to $\sigma_{aw}$, and the $S=0$ pseudo-measurement is
-set independently by the reduced physical-MSE balance
-\begin{equation}
-r_S^\star\propto
-q_{\mathrm{eff}}^{1/14}m_{-4}^{3/7}T_S^{-1/2}.
-\end{equation}
-For a fixed-shape sea with
-$m_{-4}\propto\sigma_a^2\tau^8$, strong-observation
-$q_{\mathrm{eff}}$ independent of sea amplitude to leading order, and
-$T_S\propto\tau$, this becomes
-\begin{equation}
-\boxed{r_S^\star\propto\sigma_a^{6/7}\tau^{41/14}.}
-\end{equation}
-The exact spectral evaluation reproduces these exponents over the reference
-spectra and gives the deployed coefficient $C_J\simeq0.0538$.
-
-Under the paired ten-seed stationary JONSWAP protocol, normalized vertical RMS
-displacement error is
-$\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
-$H_s$ for OU--III versus
-$\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
-OU--II, with a paired difference of
-$\OUValidationNormalizedDifference$ percentage points and bootstrap 95\%
-interval
-$[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$.
-PM--Stokes gives the same qualitative vertical result.  Mean 3-D displacement
-RMS is also lower for the current axis-dependent OU--III configuration in each
-stationary JONSWAP sea and in the controlled transition, with paired bootstrap
-intervals excluding zero.  These simulation results apply to the tested
-directional and spectral families, not to absolute navigation.
-
-The paired TFG companion in Tables~\ref{tab:tfg-paired} and
-\ref{tab:tfg-ensembles} extends the comparison beyond the OU predecessor.
-OU--III has a small stationary normalized-heave advantage, whereas TFG has
-lower mean gyroscope-bias error. The controlled transition does not resolve
-a heave advantage. These channel-dependent results concern complete estimators
-on the development vessel-response ensemble; neither filter uniformly
-dominates the other.
-
-The horizontal analysis separates the isotropic OU-acceleration prior from
-the axis-dependent integral regularization of
-Eq.~\eqref{eq:fus-rs-anisotropy}. The scalar spectral reduction identifies how
-posterior acceleration-error intensity, pseudo-measurement covariance, and
-cadence jointly place the low-frequency correction corner, but it does not
-replace the full attitude and bias coupling. The deployed horizontal factors
-are applied in world NED, without heading rotation. Their surge/sway
-interpretation is therefore restricted to the zero-yaw vessel-response records
-used here; general heading changes require additional validation. Reducing
-tilt error, improving accelerometer-bias observability, and adding horizontal
-aiding remain direct routes to reducing the horizontal disturbance.
-
-The remaining analytical gap in the adaptation study is the complete 21-state
-physical error $H_2$ problem.  The reduced performance model does not retain
-attitude/gravity leakage, gyroscope and accelerometer bias paths, OU-model
-mismatch, cross-covariance coupling, or the full periodic update sequence.
-Section~\ref{sec:adaptation-full-state-h2} formulates that physical displacement
-objective and provides the natural next step for assessing how those couplings
-modify the reduced SpectralMSE exponents and coefficient.  This physical-error optimization problem is separate from the stability
-questions developed in the companion study.
-
-The principal limitations remain the primarily simulation-based evidence,
-comparisons restricted to the development vessel-response ensemble,
-controlled rather than general changing-sea cases, fixed-temperature study,
-lack of physical off-CoG lever-arm validation, and incomplete
-magnetic-distortion model.  The ESP32--S3 exercise
-establishes source portability but not processor, memory, power, or deadline
-margins.  Reported displacement remains bounded wave motion about a local
-reference; no global navigation position is claimed without external aiding.
-
-\subsection*{Future work}
-\begin{itemize}[leftmargin=1.25em]
-  \item \textbf{Full-state physical $H_2$ analysis.}  Solve the periodic
-        21-state Riccati and physical-error recursions of
-        Sec.~\ref{sec:adaptation-full-state-h2} at the calibrated sea states and
-        compare their predicted minimizing amplitudes and local exponents with
-        the deployed SpectralMSE $6/7,41/14$ law and complete-estimator behavior.
-  \item \textbf{Transition-aware regularizer amplitude.}  If the full-state
-        model predicts a stationary--transition conflict outside the currently
-        tested transition, preserve the steady-state regularizer mapping and
-        test asymmetric or rate-limited response during changing seas.
-  \item \textbf{Reference-point and GNSS validation.}  Validate the lever-arm
-        model at a surveyed nonzero offset and add GNSS-aided separation of slow
-        absolute trajectory from bounded wave motion, including asynchronous
-        timing, outages, and reacquisition.
-  \item \textbf{Horizontal observability.}  Quantify how GNSS aiding, improved
-        tilt information, and accelerometer-bias observability reduce the
-        low-frequency horizontal acceleration-error density identified in
-        Sec.~\ref{sec:riccati-per-axis-limits}.
-  \item \textbf{Vessel-response generalization.}  Extend the present
-        vessel-response dataset to additional hulls and changing headings,
-        and validate off-CoG rotational acceleration against a surveyed
-        sensor reference point.
-  \item \textbf{Multimodal and multidirectional seas.}  Test crossing seas,
-        independent swell and wind-sea components, multiple peaks, heading
-        changes, and time-varying directional spectra.
-  \item \textbf{Wind-heel separation.}  Validate the companion slow-equilibrium
-        heel model with apparent wind and vessel motion, including long swell,
-        asymmetric loading, sensor lever-arm motion, and gust transients.
-  \item \textbf{Temperature-dependent bias.}  Evaluate temperature variation,
-        calibration error, thermal lag, hysteresis, and residual-bias
-        correlation time against measured temperature histories.
-  \item \textbf{Magnetic calibration under heading excitation.}  Use
-        multi-heading data to identify soft-iron and sensor-misalignment terms
-        beyond the present additive hard-iron model.
-  \item \textbf{Independent physical validation and embedded margins.}  Repeat
-        the paired protocol against an external displacement reference or
-        commercial MRU and measure execution time, memory, power, and deadline
-        margin across update rates and sensor configurations.
-\end{itemize}
+Low-motion noise floors, bias ambiguity, and severe unmitigated vibration
+limit performance. Vibration filtering and covariance inflation reduce,
+but do not eliminate, reconstruction error. The output is oscillatory
+motion about a local reference, not absolute navigation position.
+Externally referenced trials across hulls and headings, thermal and magnetic
+calibration, and evaluation of the full-state physical MSE remain priorities.
+Embedded execution establishes portability, not measured resource or deadline margins.
