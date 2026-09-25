@@ -28,7 +28,7 @@ LDFLAGS =
 # Look for W3dSimCommon.cpp in src/util.
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = nlo-sim local_gravity-test
+TARGETS = nlo-sim local_gravity-test mag_turns-test
 
 all: build test
 
@@ -41,6 +41,9 @@ ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
 
 nlo-sim: nlo-sim.o W3dSimCommon.o
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+mag_turns-test: mag_turns-test.o
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 local_gravity-test: local_gravity-test.o

@@ -56,8 +56,10 @@
     Not estimated in this sketch. The observer carries its own gyro-bias
     state driven by the integral gain kI, and snapshot().tvg.gyro_bias_b is
     that estimate; it is what the rate-of-turn output below is corrected
-    with. A separate stillness-gated bias average, as used by the Kalman and
-    PII sketches, would fight it.
+    with. The adapter seeds it from the mean gyro rate if the device is still
+    during the startup bootstrap, so boot the device still where practical.
+    A separate stillness-gated bias average during operation, as used by the
+    Kalman and PII sketches, would fight it.
 */
 
 #include <Arduino.h>

@@ -171,6 +171,39 @@ public:
         R mahony_bias_limit_rad_s = R(0.03);
 
         /*
+          Gyro-bias seed from a still startup.
+
+          The observer's gyro-bias state is driven only by the injection term
+          through kI = 0.01. Without GNSS the roll/pitch part of that term
+          comes from the slow virtual-position aiding loop, so an unseeded
+          bias is learned over minutes, and it is learned in body axes at the
+          current heading. If the body yaws before it has converged, the
+          partly learned bias is wrong in the new heading and the estimate can
+          walk away instead of converging, taking roll/pitch, heading and
+          heave with it. On a real MEMS gyro a residual of 0.1 deg/s after
+          calibration is normal and is enough for this.
+
+          So while the bootstrap runs, samples whose rate is below
+          boot_bias_seed_gyro_max_rad_s (and whose specific force passes the
+          bootstrap gate) are averaged. At initialization the mean is written
+          into the observer's bias state if at least
+          boot_bias_seed_min_still_s of them were seen and their per-axis
+          standard deviation is below boot_bias_seed_max_std_rad_s. The
+          integral loop still runs afterwards and tracks drift from there.
+
+          The standard-deviation gate is what separates a still device from
+          a small sea. Wave rotation in light conditions stays under any
+          useful rate threshold, and its mean over a few seconds is not zero,
+          so averaging it would seed a wrong bias; its spread, however, is
+          well above white gyro noise. A startup that fails either test
+          leaves the seed at the bootstrap's own estimate, as before. Set
+          boot_bias_seed_min_still_s <= 0 to disable.
+        */
+        R boot_bias_seed_gyro_max_rad_s = R(0.03);
+        R boot_bias_seed_min_still_s = R(1.0);
+        R boot_bias_seed_max_std_rad_s = R(0.004);
+
+        /*
           Optional roll/pitch-only tilt trim after NLO init.
 
           Default is OFF because in waves, accelerometer tilt trim can chase
@@ -247,6 +280,10 @@ public:
           Theorem 1, where a large theta is what dominates the nonlinear
           coupling term; it is sufficient, not necessary, and the linear
           aiding loop is Hurwitz for any theta > 0 at these gains.
+
+          The schedule sets the vertical corner. Horizontal axes aided by the
+          virtual measurement are held at or above
+          Config::filter.virtual_horizontal_theta_min; see there.
 
           Set auto_theta_from_wave_freq = false to run a fixed
           Config::filter.theta, e.g. the paper's 1.0.
@@ -507,6 +544,11 @@ public:
         boot_have_down_lpf_ = false;
         boot_time_s_ = R(0);
         boot_good_time_s_ = R(0);
+
+        boot_still_gyro_sum_.setZero();
+        boot_still_gyro_sq_sum_.setZero();
+        boot_still_count_ = 0;
+        boot_still_time_s_ = R(0);
     }
 
     bool initialized() const { return initialized_; }
@@ -799,6 +841,11 @@ private:
     bool boot_have_down_lpf_ = false;
     R boot_time_s_ = R(0);
     R boot_good_time_s_ = R(0);
+
+    Vec3 boot_still_gyro_sum_ = Vec3::Zero();
+    Vec3 boot_still_gyro_sq_sum_ = Vec3::Zero();
+    int boot_still_count_ = 0;
+    R boot_still_time_s_ = R(0);
 
     void resetAuxValidity_() {
         if constexpr (Mag == NloMagType::Compass) {
@@ -1209,6 +1256,11 @@ private:
         boot_time_s_ = R(0);
         boot_good_time_s_ = R(0);
 
+        boot_still_gyro_sum_.setZero();
+        boot_still_gyro_sq_sum_.setZero();
+        boot_still_count_ = 0;
+        boot_still_time_s_ = R(0);
+
         return true;
     }
 
@@ -1292,6 +1344,13 @@ private:
                 boot_good_time_s_ += dt;
                 init_good_time_s_ = boot_good_time_s_;
             }
+
+            if (gyroOk_(gyro_b_rad_s, cfg_.boot_bias_seed_gyro_max_rad_s)) {
+                boot_still_gyro_sum_ += gyro_b_rad_s;
+                boot_still_gyro_sq_sum_ += gyro_b_rad_s.cwiseProduct(gyro_b_rad_s);
+                ++boot_still_count_;
+                boot_still_time_s_ += dt;
+            }
         }
 
         Vec3 omega_b = gyro_b_rad_s - boot_bias_b_ + correction_b;
@@ -1315,6 +1374,10 @@ private:
             filter_.setQuaternionBodyToNED(boot_q_nb_);
 
             Vec3 b0 = boot_bias_b_;
+            Vec3 still_mean;
+            if (stillGyroBiasSeed_(still_mean)) {
+                b0 = still_mean;
+            }
             if constexpr (Mag == NloMagType::None) {
                 b0.z() = R(0);
             }
@@ -1326,6 +1389,25 @@ private:
             time_since_init_s_ = R(0);
             have_down_lpf_ = false;
         }
+    }
+
+    // See Config::boot_bias_seed_min_still_s.
+    bool stillGyroBiasSeed_(Vec3& mean) const {
+        if (!(cfg_.boot_bias_seed_min_still_s > R(0)) ||
+            boot_still_time_s_ < cfg_.boot_bias_seed_min_still_s ||
+            boot_still_count_ <= 0) {
+            return false;
+        }
+
+        const R n = static_cast<R>(boot_still_count_);
+        mean = boot_still_gyro_sum_ / n;
+        const Vec3 var =
+            (boot_still_gyro_sq_sum_ / n - mean.cwiseProduct(mean))
+                .cwiseMax(R(0));
+        const R max_std = std::sqrt(var.maxCoeff());
+
+        return isFinite_(max_std) &&
+               max_std <= cfg_.boot_bias_seed_max_std_rad_s;
     }
 
     void integrateBootQuatRight_(R dt, const Vec3& omega_b)

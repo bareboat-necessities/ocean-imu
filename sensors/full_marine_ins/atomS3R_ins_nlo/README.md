@@ -17,7 +17,7 @@ Open the sketch: [`atomS3R_ins_nlo.ino`](atomS3R_ins_nlo.ino).
 - bootstraps attitude with the adapter's Mahony startup stage, then seeds and hands over to the observer;
 - uses the calibrated 3-D magnetometer as a yaw-only magnetic reference, so heading is observable;
 - aids all three translational axes with the paper's virtual zero-mean integrated-position measurement, since the device carries no position reference;
-- schedules the observer's scalar translational tuning parameter `theta` on the tracked dominant wave frequency, which keeps the aiding loop's high-pass corner below the wave band;
+- schedules the observer's scalar translational tuning parameter `theta` on the tracked dominant wave frequency, which keeps the vertical aiding loop's high-pass corner below the wave band, while the horizontal axes, which carry the tilt reference, keep `theta >= 0.7`;
 - reports heave, heave speed, roll, pitch and heading;
 - provides on-device graphics and serial/NMEA output;
 - enables the shared IMU calibration wizard by default.
@@ -44,7 +44,7 @@ Use the vertical channel as the navigation product. Horizontal position and velo
 
 Reported position and velocity have the unobservable DC component removed by the adapter's report high-pass, so heave is wave-band motion about the mean sea surface. The sketch additionally runs the shared [`AdaptiveWaveDetrender`](../../../src/detrend/AdaptiveWaveDetrender.h) on heave, and it is the detrended value that is sent as the NMEA heave transducer sentence, matching the other sketches in this directory.
 
-Gyro bias is the observer's own state, driven by its integral gain. Unlike the Kalman and PII sketches, this sketch runs no separate stillness-gated bias average, and the rate-of-turn output is corrected with the observer's estimate. There is no accelerometer-bias state, and no lever-arm input: `TimeVaryingGainNLO` takes none, so mount the device as close to the vessel centre of gravity as practical.
+Gyro bias is the observer's own state, driven by its integral gain. If the device lies still while the startup bootstrap runs, the adapter seeds that state with the mean gyro rate; boot it still where practical, because without GNSS the observer learns roll/pitch bias only over minutes, and a residual of a few tenths of a degree per second makes tilt, heading and heave drift until it has. Unlike the Kalman and PII sketches, the sketch runs no separate stillness-gated bias average during operation, and the rate-of-turn output is corrected with the observer's estimate. There is no accelerometer-bias state, and no lever-arm input: `TimeVaryingGainNLO` takes none, so mount the device as close to the vessel centre of gravity as practical.
 
 ## Install and upload
 
