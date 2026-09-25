@@ -18,16 +18,13 @@ Figure~\ref{fig:ou_mc_vertical} shows lower OU--III vertical error in all
 four stationary seas. Full 3-D RMS is also lower, with paired intervals
 excluding zero (Fig.~\ref{fig:ou_mc_displacement}); individual horizontal
 channels need not improve. Pitch is shown in Fig.~\ref{fig:ou_mc_pitch}.
-Exact per-scenario displacement and attitude statistics are retained in
-Appendix~\ref{sec:detailed-numerical-results},
-Tables~\ref{tab:ou_mc_family} and \ref{tab:ou_mc_axes}.
 
 PM--Stokes is analyzed separately rather than pooled with JONSWAP.
 Its ensemble gives a normalized vertical difference of
 $\OUValidationPMStokesDifference$ percentage points with interval
-$[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$
-(Table~\ref{tab:ou_mc_pmstokes}). This supports transfer between the two
-prescribed spectral families, not uncertainty over other hulls or headings.
+$[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$.
+This supports transfer between the two prescribed spectral families, not
+uncertainty over other hulls or headings.
 
 \input{w3d-ou-validation-results-publication.tex-part}
 \IfFileExists{ou_validation_vertical.svg}{%

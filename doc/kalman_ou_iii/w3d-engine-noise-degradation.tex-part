@@ -30,7 +30,7 @@ unchanged; encounter-frequency and propulsion-induced motion are outside
 this experiment.
 
 \subsubsection{Nominal cruise and sensor attribution}
-Table~\ref{tab:engine-noise-cruise} reports the current paired measurements.
+Figure~\ref{fig:engine-noise-speed} places the nominal-cruise results in the speed sweep.
 ``Offset'' is the norm of the pooled per-axis mean-error magnitudes.
 \begin{table}[t]
 \centering

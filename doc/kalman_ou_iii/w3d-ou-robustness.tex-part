@@ -17,8 +17,7 @@ SpectralMSE coupling:
  \label{eq:robustness-tau-coupling}
 \end{align}
 For unclamped cadence, the second ratio is $c^{41/14}$.
-Figure~\ref{fig:ou_robustness_sensitivity} and
-Table~\ref{tab:ou_robustness_sensitivity} report all five sweeps. Direct
+Figure~\ref{fig:ou_robustness_sensitivity} reports all five sweeps. Direct
 OU-amplitude sensitivity is nearly flat, whereas regularizer perturbation
 has a larger effect. Coupling a halved $\tau$ into the regularizer raises
 normalized vertical error from $5.09$ to $12.87\%$; the corresponding OFAT

@@ -1,85 +1,47 @@
-% Publication-only placement. Generated tables remain authoritative and unchanged.
-% Capture selected complete floats, then typeset them in the numerical appendix.
+% Publication-only selection. Generated numerical evidence remains unchanged.
+% Omit chart-duplicating tables from the article, without executing their bodies.
 \usepackage{environ}
 \newcommand{\OUCaptionOverride}[2]{\caption{#1}}
-\newcommand{\OUAppendixBegin}[1]{%
- \ifstrequal{#1}{tabular}{\begin{adjustbox}{max width=\linewidth}\begin{tabular}}{\begin{#1}}}
-\newcommand{\OUAppendixEnd}[1]{%
- \ifstrequal{#1}{tabular}{\end{tabular}\end{adjustbox}}{\end{#1}}}
 \ExplSyntaxOn
 \cs_generate_variant:Nn \str_if_in:nnT {ee}
 \cs_new_eq:NN \ou_table_start: \table
 \cs_new_eq:NN \ou_table_end: \endtable
 \cs_new_eq:Nc \ou_wide_start: {table*}
 \cs_new_eq:Nc \ou_wide_end: {endtable*}
-\seq_new:N \g_ou_appendix_wide_seq
-\seq_new:N \g_ou_appendix_narrow_seq
 \tl_new:N \l_ou_table_body_tl
-\bool_new:N \l_ou_defer_table_bool
+\bool_new:N \l_ou_omit_table_bool
 \cs_new_protected:Npn \ou_render_table:nnn #1#2#3
  {
   \str_if_eq:nnTF {#1}{wide}
    {\ou_wide_start:[#2] #3 \ou_wide_end:}
    {\ou_table_start:[#2] #3 \ou_table_end:}
  }
-\cs_new_protected:Npn \ou_queue_table:nnn #1#2#3
- {
-  \str_if_eq:nnTF {#1}{wide}
-   {\seq_gput_right:Nn \g_ou_appendix_wide_seq {#3}}
-   {\seq_gput_right:Nn \g_ou_appendix_narrow_seq {#3}}
- }
 \cs_new_protected:Npn \ou_handle_table:nnn #1#2#3
  {
   \tl_set:Nn \l_ou_table_body_tl {#3}
-  \bool_set_false:N \l_ou_defer_table_bool
+  \bool_set_false:N \l_ou_omit_table_bool
   \clist_map_inline:nn
    {tab:ou_mc_family,tab:ou_mc_axes,tab:ou_mc_pmstokes,
     tab:ou_robustness_sensitivity,tab:ou-roundtrip-scores,
     tab:model-mismatch-floor,tab:imu-lever-arm,
     tab:engine-noise-cruise,tab:engine-noise-guard}
-   {\str_if_in:eeT {\tl_to_str:n {#3}}{##1}{\bool_set_true:N \l_ou_defer_table_bool}}
-  % Caption-only corrections describe the actual retained aggregation/units.
-  \str_if_in:eeT {\tl_to_str:n {#3}}{tab:tfg-paired}
-   {\tl_replace_once:Nnn \l_ou_table_body_tl {\caption}
-     {\OUCaptionOverride{Ten-seed~TFG~comparison:~each~seed~averages~four~stationary~JONSWAP~seas~and~the~controlled~crossfade.~Differences~are~TFG~minus~OU--III;~negative~favors~TFG.~Other~channels~are~exploratory.}}}
-  \str_if_in:eeT {\tl_to_str:n {#3}}{tab:tfg-ensembles}
-   {\tl_replace_once:Nnn \l_ou_table_body_tl {\caption}
-     {\OUCaptionOverride{TFG~heave~contrasts~in~\%~of~incident~$H_s$.~The~JONSWAP~row~includes~the~four~stationary~seas~and~crossfade;~PM--Stokes~uses~four~stationary~seas.~The~crossfade~is~also~reported~separately.~Intervals~are~paired-bootstrap~95\%.}}}
-  \str_if_in:eeT {\tl_to_str:n {#3}}{tab:ou_mc_channels}
-   {\tl_replace_once:Nnn \l_ou_table_body_tl {\caption}
-     {\OUCaptionOverride{OU--III~adaptation-channel~ablation:~vertical~RMS~in~\%~of~incident~$H_s$,~mean~$\pm$~standard~deviation~over~ten~seeds,~final~\SI{900}{s}.}}}
-  \str_if_in:eeT {\tl_to_str:n {#3}}{tab:ou-roundtrip-scores}
-   {\tl_replace_once:Nnn \l_ou_table_body_tl {\caption}
-     {\OUCaptionOverride{Bidirectional~transition~segment~scores.~All~normalized~vertical~errors~use~the~same~high-sea~reference~$H_s=\SI{4}{m}$,~including~low-sea~segments.}}}
-  \bool_if:NT \l_ou_defer_table_bool
+   {\str_if_in:eeT {\tl_to_str:n {#3}}{##1}{\bool_set_true:N \l_ou_omit_table_bool}}
+  \bool_if:NF \l_ou_omit_table_bool
    {
-    \tl_replace_all:Nnn \l_ou_table_body_tl {\begin}{\OUAppendixBegin}
-    \tl_replace_all:Nnn \l_ou_table_body_tl {\end}{\OUAppendixEnd}
+    % Caption-only corrections describe the retained aggregation/units.
+    \str_if_in:eeT {\tl_to_str:n {#3}}{tab:tfg-paired}
+     {\tl_replace_once:Nnn \l_ou_table_body_tl {\caption}
+       {\OUCaptionOverride{Ten-seed~TFG~comparison:~each~seed~averages~four~stationary~JONSWAP~seas~and~the~controlled~crossfade.~Differences~are~TFG~minus~OU--III;~negative~favors~TFG.~Other~channels~are~exploratory.}}}
+    \str_if_in:eeT {\tl_to_str:n {#3}}{tab:tfg-ensembles}
+     {\tl_replace_once:Nnn \l_ou_table_body_tl {\caption}
+       {\OUCaptionOverride{TFG~heave~contrasts~in~\%~of~incident~$H_s$.~The~JONSWAP~row~includes~the~four~stationary~seas~and~crossfade;~PM--Stokes~uses~four~stationary~seas.~The~crossfade~is~also~reported~separately.~Intervals~are~paired-bootstrap~95\%.}}}
+    \str_if_in:eeT {\tl_to_str:n {#3}}{tab:ou_mc_channels}
+     {\tl_replace_once:Nnn \l_ou_table_body_tl {\caption}
+       {\OUCaptionOverride{OU--III~adaptation-channel~ablation:~vertical~RMS~in~\%~of~incident~$H_s$,~mean~$\pm$~standard~deviation~over~ten~seeds,~final~\SI{900}{s}.}}}
+    \exp_args:NnnV \ou_render_table:nnn {#1}{#2}\l_ou_table_body_tl
    }
-  \bool_if:NTF \l_ou_defer_table_bool
-   {\exp_args:NnnV \ou_queue_table:nnn {#1}{t}\l_ou_table_body_tl}
-   {\exp_args:NnnV \ou_render_table:nnn {#1}{#2}\l_ou_table_body_tl}
  }
 \NewDocumentCommand{\OUHandleTable}{mmm}{\ou_handle_table:nnn {#2}{#3}{#1}}
-% Narrow tables flow with the appendix text; the four wide tables share a
-% float. This avoids empty columns caused by a queue of one-column floats.
-\NewDocumentCommand{\OUPrintAppendixTables}{}{
- \seq_map_inline:Nn \g_ou_appendix_narrow_seq
-  {
-   \par\medskip\noindent
-   \begin{minipage}{\columnwidth}
-    \cs_set_nopar:cpn {@captype}{table}
-    ##1
-   \end{minipage}\par
-  }
- \group_begin:
- \ou_wide_start:[!tp]
- \centering
- \seq_map_inline:Nn \g_ou_appendix_wide_seq
-  {\begin{minipage}{\textwidth} ##1 \end{minipage}\par\medskip}
- \ou_wide_end:
- \group_end:
-}
 \ExplSyntaxOff
 \RenewEnviron{table}[1][t]{\expandafter\OUHandleTable\expandafter{\BODY}{normal}{#1}}
 \RenewEnviron{table*}[1][t]{\expandafter\OUHandleTable\expandafter{\BODY}{wide}{#1}}

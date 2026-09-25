@@ -32,9 +32,9 @@ The scored \SI{900}{s} window is partitioned as
 \emph{low-start} (300--400~s), \emph{rise} (400--520~s),
 \emph{high-recovery} (520--640~s), \emph{high} (640--800~s),
 \emph{fall} (800--920~s), \emph{low-recovery} (920--1040~s), and
-\emph{low-return} (1040--1200~s). The complete segment scores are reported,
-with the rise and fall crossfade scores kept separate so opposite-direction
-adaptation lag cannot cancel in a pooled transition number.
+\emph{low-return} (1040--1200~s). Separating the rise and fall crossfades
+prevents opposite-direction adaptation lag from cancelling in a pooled
+transition score.
 
 \IfFileExists{w3d-roundtrip-transition-scores-generated.tex-part}{%
   \input{w3d-roundtrip-transition-scores-generated.tex-part}%
@@ -44,8 +44,7 @@ adaptation lag cannot cancel in a pooled transition number.
 The low-start, high, and low-return vertical RMS values are $0.077$, $0.255$,
 and $0.066$~m. Recovery scores are $0.275$~m after the rise and $0.070$~m
 after the fall. These single-seed segments diagnose response asymmetry, not
-ensemble recovery guarantees. The table's normalized column uses the fixed
-high-sea reference $H_s=\SI{4}{m}$ for every segment.
+ensemble recovery guarantees.
 
 No one-way-transition chart or score is pooled into this bidirectional diagnostic.
 % No historical regularizer-law arm is an input to this experiment.

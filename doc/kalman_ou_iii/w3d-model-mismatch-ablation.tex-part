@@ -7,9 +7,9 @@ are pooled over their final \SI{900}{s}.
 
 OU--III vertical and 3-D RMS are $0.145$ and $0.312$~m, versus $0.249$ and
 $0.440$~m for OU--II and $0.145$ and $0.315$~m for TFG
-(Table~\ref{tab:model-mismatch-floor}). Nonzero estimated bias with zero
-true bias demonstrates absorption of model residuals
-(Fig.~\ref{fig:model-mismatch-floor}). Fig.~\ref{fig:model-mismatch-scaling}
+(Fig.~\ref{fig:model-mismatch-floor}). Nonzero estimated bias with zero
+true bias demonstrates absorption of model residuals.
+Fig.~\ref{fig:model-mismatch-scaling}
 shows near-proportional residual growth over the prescribed seas; its
 slope-one line is a reference, not a fitted law. Incident $H_s$ is not the
 vessel's heave height.
