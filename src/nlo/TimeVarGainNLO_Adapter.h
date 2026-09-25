@@ -1419,9 +1419,9 @@ private:
                 b0 = still_mean;
             }
 
-            Vec3 acc_bias0;
-            if (still && stillAccelBiasSeed_(acc_bias0)) {
-                filter_.setAccelBiasBody(acc_bias0);
+            Vec3 acc_seed_b;
+            if (still && stillAccelBiasSeed_(acc_seed_b)) {
+                filter_.setAccelBiasBody(acc_seed_b);
             }
             if constexpr (Mag == NloMagType::None) {
                 b0.z() = R(0);
