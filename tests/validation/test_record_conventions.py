@@ -107,7 +107,12 @@ class DeployedLawMirrorTests(unittest.TestCase):
     def _value_from(self, header, pattern: str) -> float:
         import re
 
-        text = header.read_text(encoding="utf-8")
+        from wrapper_sources import wrapper_source
+
+        # The filter together with the shared kalman_common headers it is
+        # built from: shared defaults are defined there once.
+        family = "ou2" if header == self.HEADER_OU_II else "ou3"
+        text = wrapper_source(family)
         match = re.search(pattern, text)
         self.assertIsNotNone(match, f"{pattern} not found in {header.name}")
         return self._resolve(text, match.group(1), header)
@@ -120,19 +125,17 @@ class DeployedLawMirrorTests(unittest.TestCase):
         cannot simply float() what it matched.  Resolve the name against the
         same header rather than forcing the constant back into a literal.
         """
-        import re
+        from wrapper_sources import resolved_value
 
         try:
             return float(token)
         except ValueError:
             pass
-        named = re.search(
-            rf"\b{re.escape(token)}\s*=\s*([0-9.eE+-]+)f?\s*;", text
-        )
+        named = resolved_value(text, token.split("::")[-1])
         self.assertIsNotNone(
             named, f"{token} is not a float constant defined in {header.name}"
         )
-        return float(named.group(1))
+        return named
 
     def test_rs_coefficient_matches_the_filter_default(self):
         import ou_validation as validation
@@ -210,7 +213,7 @@ class DeployedLawMirrorTests(unittest.TestCase):
             with self.subTest(header=header.name):
                 # The floor is the IMU schedule itself, written as a rate.
                 rate = self._value_from(
-                    header, r"FREQ_SMOOTHER_DT\s*=\s*1\.0f\s*/\s*([0-9.]+)f"
+                    header, r"NOMINAL_IMU_DT_S\s*=\s*1\.0f\s*/\s*([0-9.]+)f"
                 )
                 self.assertAlmostEqual(bounds[0], 1.0 / rate, places=9)
                 self.assertAlmostEqual(
@@ -283,7 +286,7 @@ class DeployedLawMirrorTests(unittest.TestCase):
         self.assertAlmostEqual(
             sigma_a,
             self._value_from(self.HEADER_OU_II,
-                             r"ACC_NOISE_FLOOR_SIGMA_DEFAULT\s*=\s*([0-9.]+)f"),
+                             r"\bACC_NOISE_FLOOR_SIGMA_DEFAULT\s*=\s*([A-Za-z0-9_:.]+?)f?\s*;"),
             places=6,
         )
 

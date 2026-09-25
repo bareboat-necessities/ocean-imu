@@ -4,6 +4,8 @@ import re
 import unittest
 from pathlib import Path
 
+from wrapper_sources import resolved_value, wrapper_source
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
@@ -24,9 +26,11 @@ class InsStartupPaperTests(unittest.TestCase):
     def setUpClass(cls):
         cls.paper = PAPER.read_text(encoding="utf-8")
         cls.flat = compact(cls.paper)
-        cls.ou3 = OU3.read_text(encoding="utf-8")
-        cls.ou2 = OU2.read_text(encoding="utf-8")
-        cls.tfg = TFG.read_text(encoding="utf-8")
+        # Each wrapper together with the shared kalman_common headers it is
+        # built from.
+        cls.ou3 = wrapper_source("ou3")
+        cls.ou2 = wrapper_source("ou2")
+        cls.tfg = wrapper_source("tfg")
         cls.hi = HI.read_text(encoding="utf-8")
         cls.hi_doc = HI_DOC.read_text(encoding="utf-8")
 
@@ -74,7 +78,7 @@ class InsStartupPaperTests(unittest.TestCase):
             self.assertRegex(source, re.compile(r"mag_refine_enabled\s*=\s*true"))
             start = "30" if source == self.tfg else "90"
             self.assertRegex(source, re.compile(rf"mag_refine_start_sec\s*=\s*{start}\.0f"))
-            self.assertRegex(source, re.compile(r"mag_refine_window_sec\s*=\s*30\.0f"))
+            self.assertEqual(resolved_value(source, "mag_refine_window_sec"), 30.0)
             self.assertRegex(
                 source, re.compile(r"mag_continuous_hard_iron\s*=\s*true")
             )
@@ -82,22 +86,15 @@ class InsStartupPaperTests(unittest.TestCase):
     def test_proxy_integral_term_and_handoff_numbers_are_current(self):
         # The OU wrappers expose their shared proxy gains through named constants;
         # TFG carries the same values directly in Config.
+        # All three read the one shared definition; see SeaStateFusionDefaults.h.
         for source in (self.ou3, self.ou2):
-            self.assertRegex(
-                source,
-                re.compile(r"STARTUP_PROXY_TWO_KP_DEFAULT\s*=\s*0\.2f"),
-            )
-            self.assertRegex(
-                source,
-                re.compile(r"STARTUP_PROXY_TWO_KI_DEFAULT\s*=\s*0\.02f"),
-            )
-        self.assertRegex(self.tfg, re.compile(r"proxy_two_kp\s*=\s*0\.2f"))
-        self.assertRegex(self.tfg, re.compile(r"proxy_two_ki\s*=\s*0\.02f"))
+            self.assertEqual(resolved_value(source, "STARTUP_PROXY_TWO_KP_DEFAULT"), 0.2)
+            self.assertEqual(resolved_value(source, "STARTUP_PROXY_TWO_KI_DEFAULT"), 0.02)
+        self.assertEqual(resolved_value(self.tfg, "proxy_two_kp"), 0.2)
+        self.assertEqual(resolved_value(self.tfg, "proxy_two_ki"), 0.02)
 
         for source in (self.ou3, self.ou2, self.tfg):
-            self.assertRegex(
-                source, re.compile(r"proxy_startup_timeout_sec\s*=\s*150\.0f")
-            )
+            self.assertEqual(resolved_value(source, "proxy_startup_timeout_sec"), 150.0)
 
         self.assertIn("0.711 deg", self.flat)
         self.assertIn("0.05 deg/s", self.flat)

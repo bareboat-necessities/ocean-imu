@@ -11,6 +11,8 @@ from pathlib import Path
 import re
 import unittest
 
+from wrapper_sources import estimator_layer, wrapper_source
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -23,9 +25,13 @@ class OUPaperCodeParityTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ou3_core = text("src/kalman_ou_iii/Kalman3D_Wave_OU_III.h")
-        cls.ou3_wrap = text("src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h")
+        # The deployed implementation unit: the estimator layer together with
+        # the shared kalman_common headers it is built from.
+        cls.ou3_wrap = wrapper_source("ou3")
+        cls.ou3_layer = estimator_layer("ou3")
         cls.ou2_core = text("src/kalman_ou_ii/Kalman3D_Wave_OU_II.h")
-        cls.ou2_wrap = text("src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h")
+        cls.ou2_wrap = wrapper_source("ou2")
+        cls.ou2_layer = estimator_layer("ou2")
         cls.tuner = text("src/tuner/SeaStateAutoTuner.h")
         cls.period = text("src/tuner/WavePeriodEstimator.h")
         cls.limits = text("src/tuner/SeaStateAdaptationLimits.h")
@@ -176,11 +182,11 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn(r"\label{tab:implementation-gates}", self.ou3_impl)
 
     def test_ou3_candidate_emas_and_activation_hold_match_source(self):
+        self.assertRegex(self.ou3_wrap, r"ADAPT_TAU_SEA_PERIODS\s*=\s*0\.40f")
+        self.assertRegex(self.ou3_wrap, r"ADAPT_EVERY_SECS\s*=\s*0\.1f")
         for token in (
-            "ADAPT_TAU_SEA_PERIODS          = 0.40f",
             "ADAPT_RS_MULT              = 1.5f",
             "ADAPT_RS_SLEW_LOG          = 0.0f",
-            "ADAPT_EVERY_SECS           = 0.1f",
             "if (time_ - last_adapt_time_sec_ > adapt_every_secs_)",
             "online_tune_apply_pending_ = true;",
             "apply_pending_online_tune_();",
@@ -203,15 +209,18 @@ class OUPaperCodeParityTests(unittest.TestCase):
     def test_ou3_startup_gravity_ema_matches_source(self):
         self.assertRegex(
             self.ou3_wrap,
-            r"float\s+mag_gravity_align_world_tau_sec\s*=\s*12\.0f;",
+            r"float\s+mag_gravity_align_world_tau_sec\s*=\s*defaults::GRAVITY_GATE_LPF_SEC;",
         )
+        self.assertRegex(self.ou3_wrap, r"GRAVITY_GATE_LPF_SEC\s*=\s*12\.0f;")
         self.assertRegex(
             self.ou3_wrap,
-            r"float\s+mag_gravity_align_world_warmup_sec\s*=\s*5\.0f;",
+            r"float\s+mag_gravity_align_world_warmup_sec\s*=\s*defaults::GRAVITY_GATE_WARMUP_SEC;",
         )
+        self.assertRegex(self.ou3_wrap, r"GRAVITY_GATE_WARMUP_SEC\s*=\s*5\.0f;")
         self.assertIn("const float alpha = 1.0f - std::exp(-dt / tau);", self.ou3_wrap)
-        self.assertIn("state = x;\n                initialized = true;", self.ou3_wrap)
-        self.assertIn("gravity_gate_acc_world_lpf_.reset();", self.ou3_wrap)
+        self.assertRegex(self.ou3_wrap, r"state = x;\s*initialized = true;")
+        self.assertIn("acc_world_lpf.reset();", self.ou3_wrap)
+        self.assertIn("gravity_gate_.reset();", self.ou3_wrap)
         self.assertIn(r"\alpha_{g,k}=1-e^{-\Delta t_k/\SI{12}{s}}", self.ou3_init)
         self.assertIn("first valid sample initializes the EMA state directly", self.ou3_init)
         self.assertRegex(
@@ -220,18 +229,20 @@ class OUPaperCodeParityTests(unittest.TestCase):
         )
 
     def test_ou3_cadence_bias_and_outer_warmup_match_paper(self):
-        for token in (
-            "PSEUDO_UPDATE_PERIOD_NOMINAL_S = 0.015f",
-            "PSEUDO_UPDATE_TAU_NOMINAL_S = 1.1f",
-            "PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT = FREQ_SMOOTHER_DT",
-            "PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f",
+        for pattern in (
+            r"PSEUDO_UPDATE_PERIOD_NOMINAL_S\s*=\s*0\.015f",
+            r"PSEUDO_UPDATE_TAU_NOMINAL_S\s*=\s*1\.1f",
+            r"PSEUDO_UPDATE_PERIOD_MIN_S\s*=\s*NOMINAL_IMU_DT_S",
+            r"NOMINAL_IMU_DT_S\s*=\s*1\.0f / 200\.0f",
         ):
-            self.assertIn(token, self.ou3_wrap)
+            self.assertRegex(self.ou3_wrap, pattern)
+        self.assertIn("PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f", self.ou3_layer)
         self.assertIn(r"c_T=\frac{\SI{15}{ms}}{\SI{1.1}{s}}", self.ou3_impl)
         self.assertIn(r"T_{S,\min}=\SI{5}{ms}", self.ou3_impl)
         self.assertIn(r"T_{S,\max}=\SI{150}{ms}", self.ou3_impl)
         self.assertIn(r"\tau_b=\SI{5000}{s}", self.ou3_impl)
-        self.assertIn("float online_tune_warmup_sec = 10.0f;", self.ou3_wrap)
+        self.assertIn("float online_tune_warmup_sec = defaults::STARTUP_ONLINE_TUNE_WARMUP_SEC;", self.ou3_wrap)
+        self.assertRegex(self.ou3_wrap, r"STARTUP_ONLINE_TUNE_WARMUP_SEC\s*=\s*10\.0f;")
         self.assertIn("impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);", self.ou3_wrap)
         self.assertIn("online tuning warmup / magnetometer delay & $10/7$ s", self.ou3_impl)
 
@@ -239,7 +250,8 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("float memory_sec = 600.0f;", self.mag_hi)
         self.assertIn("std::exp(-double(dt) / double(cfg_.memory_sec))", self.mag_hi)
         self.assertIn("float solve_period_sec = 1.0f;", self.mag_hi)
-        self.assertIn("float mag_hi_slew_tau_sec             = 45.0f;", self.ou3_wrap)
+        self.assertRegex(self.ou3_wrap, r"float\s+mag_hi_slew_tau_sec\s*=\s*defaults::MAG_HI_SLEW_TAU_SEC;")
+        self.assertRegex(self.ou3_wrap, r"MAG_HI_SLEW_TAU_SEC\s*=\s*45\.0f;")
         self.assertIn("1.0f - std::exp(-dt_apply / tau)", self.ou3_wrap)
         self.assertIn(r"\SI{600}{s} memory", self.ou3_mag)
         self.assertIn(r"\SI{45}{s} time", self.ou3_mag)
@@ -280,12 +292,12 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("no additional historical\ncadence renormalization is applied", self.ou2_paper)
 
     def test_ou2_candidate_emas_and_activation_hold_match_source(self):
+        self.assertRegex(self.ou2_wrap, r"ADAPT_TAU_SEA_PERIODS\s*=\s*0\.40f")
+        self.assertRegex(self.ou2_wrap, r"ADAPT_EVERY_SECS\s*=\s*0\.1f")
         for token in (
-            "ADAPT_TAU_SEA_PERIODS          = 0.40f",
             "ADAPT_R_p0_MULT            = 3.0f",
             "ADAPT_R_v0_MULT            = 3.0f",
             "ADAPT_R_SLEW_LOG           = 0.0f",
-            "ADAPT_EVERY_SECS               = 0.1f",
             "if (time_ - last_adapt_time_sec_ > adapt_every_secs_)",
             "online_tune_apply_pending_ = true;",
             "apply_pending_online_tune_();",
@@ -299,14 +311,14 @@ class OUPaperCodeParityTests(unittest.TestCase):
         # OU-II uses the same tau-scaled pseudo cadence as OU-III, not a fixed
         # 15 ms schedule.  The paper must describe the source scheduler.
         self.assertIn("PSEUDO_UPDATE_TAU_RATIO_DEFAULT", self.ou2_wrap)
-        self.assertIn("PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT = FREQ_SMOOTHER_DT", self.ou2_wrap)
-        self.assertIn("PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f", self.ou2_wrap)
+        self.assertRegex(self.ou2_wrap, r"PSEUDO_UPDATE_PERIOD_MIN_S\s*=\s*NOMINAL_IMU_DT_S")
+        self.assertIn("PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f", self.ou2_layer)
         self.assertIn(r"\label{eq:ou2-iss-pseudo-cadence-source}", self.ou2_iss)
         self.assertIn(r"\SI{5}{ms},\SI{250}{ms}", self.ou2_iss)
         self.assertNotIn("OU--II retains the fixed pseudo-update period", self.ou2_iss)
 
     def test_ou2_residual_noise_parameter_is_not_a_live_tuner_alias(self):
-        self.assertIn("float acc_noise_floor_sigma_ = ACC_NOISE_FLOOR_SIGMA_DEFAULT;", self.ou2_wrap)
+        self.assertIn("float acc_noise_floor_sigma_ = defaults::ACC_NOISE_FLOOR_SIGMA;", self.ou2_wrap)
         self.assertIn("float pseudo_accel_noise_density_ = R_PSEUDO_ACCEL_NOISE_DENSITY_DEFAULT;", self.ou2_wrap)
         self.assertIn("setPseudoAccelNoiseDensity", self.ou2_wrap)
         self.assertIn("stored as a separate scheduler parameter", self.ou2_paper)

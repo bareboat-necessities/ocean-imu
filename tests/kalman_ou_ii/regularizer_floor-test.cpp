@@ -5,8 +5,10 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #define private public
+#define protected public
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
 #undef private
+#undef protected
 
 using Filter = SeaStateFusionFilter_OU_II<TrackerType::KALMANF>;
 
