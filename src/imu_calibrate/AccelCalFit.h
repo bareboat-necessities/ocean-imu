@@ -207,7 +207,7 @@ struct AccelFullFitResult {
 
   // Held-out checks
   double cv_rms = 0, cv_max = 0, cv_tmax = 0; int n_cv = 0, n_cv_skipped = 0;
-  int cv_worst_hold = -1;        // hold with the largest studentized error
+  int cv_worst_hold = -1;        // hold that exceeds its CV limit the most
   double ver_rms = 0, ver_max = 0; int n_ver = 0;
   int ver_worst_hold = -1;
 
@@ -940,7 +940,7 @@ private:
 
   void crossval_(const Theta& th, int mode, const Vec3& kfix, AccelFullFitResult& out) {
     const Vec3 kfix_n = kfix * (cfg_->T_scale / cfg_->g);
-    double sse = 0, mx = 0, tmx = 0; int ncv = 0, nskip = 0;
+    double sse = 0, mx = 0, tmx = 0, worst = -1; int ncv = 0, nskip = 0;
     for (int h = 0; h < MAXH; ++h) {
       if (hold_n_[h] == 0) continue;
       // Determinacy of the refit without hold h.
@@ -989,8 +989,11 @@ private:
       const double own = std::sqrt(hold_var_[h] * cfg_->g * cfg_->g + fl * fl);
       const double sd = std::sqrt(std::pow(std::max(out.sigma_obs, own), 2) + out.sigma_obs * out.sigma_obs * std::max(0.0, lev));
       const double tval = (sd > 0) ? std::fabs(e) / sd : 0.0;
-      sse += e * e; mx = std::max(mx, std::fabs(e)); ++ncv;
-      if (tval > tmx) { tmx = tval; out.cv_worst_hold = h; }
+      sse += e * e; mx = std::max(mx, std::fabs(e)); tmx = std::max(tmx, tval); ++ncv;
+      // The gate fails on either limit, so the hold to redo is the one that
+      // exceeds its limit the most.
+      const double sev = std::max(tval / cfg_->max_cv_t, std::fabs(e) / cfg_->max_cv);
+      if (sev > worst) { worst = sev; out.cv_worst_hold = h; }
     }
     out.n_cv = ncv; out.n_cv_skipped = nskip;
     out.cv_rms = ncv ? std::sqrt(sse / ncv) : 0.0;

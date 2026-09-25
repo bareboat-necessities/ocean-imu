@@ -719,23 +719,26 @@ void testPoseMapping() {
     sc.user.p_first_wrong_tilt = 0; sc.user.shock_rate_per_s = 0;
     Rng r(77 + perm);
     SensorTruth t = SensorTruth::random(r);
+    // perm 1: the sensor's x/y axes are turned 90 deg about the screen normal
+    // relative to the documentation, so its x/y edges are swapped. The
+    // simulated user still follows the instructions physically.
+    if (perm == 1) t.R_mis << 0, -1, 0, 1, 0, 0, 0, 0, 1;
     World w(t, sc, 1000 + perm);
     Stream st(w, sc.stream);
-    // perm 1: the device's x/y edges are swapped relative to the documentation
-    // (the simulated user still follows the instructions physically).
-    struct PermIo : public SimIo {
-      using SimIo::SimIo;
-    };
     auto proc = std::make_unique<Proc>();
     imu_cal::AccelCaptureCfg ccfg; imu_cal::AccelFitCfg fcfg; imu_cal::AccelThermalPrior pr;
     proc->begin(ccfg, fcfg, pr, Eigen::Vector3f::Zero(), false);
+    SimIo io(w, st, sc);
+    const char* what = perm ? " (x/y swapped)" : " (documented)";
+    check(proc->runMainStage(io), std::string("main stage completes") + what);
+    Eigen::Vector3f top, right, out;
+    check(proc->frame(top, right, out), std::string("measured frame available") + what);
     if (perm == 0) {
-      SimIo io(w, st, sc);
-      check(proc->runMainStage(io), "main stage completes with the documented mapping");
-      Eigen::Vector3f top, right, out;
-      check(proc->frame(top, right, out), "measured frame available");
       check(top.dot(imu_cal::accelDocTop()) > 0.97f && right.dot(imu_cal::accelDocRight()) > 0.97f &&
             out.dot(imu_cal::accelDocOut()) > 0.99f, "measured frame matches documented mapping");
+    } else {
+      check(std::fabs(top.dot(imu_cal::accelDocRight())) > 0.97f && std::fabs(right.dot(imu_cal::accelDocTop())) > 0.97f &&
+            out.dot(imu_cal::accelDocOut()) > 0.99f, "measured frame follows the swapped x/y edges");
     }
   }
 }
@@ -1006,7 +1009,9 @@ void runCampaign(int seeds, std::ostream& csv, std::ostream& sum, std::ostream& 
   for (const Scenario& sc0 : scenarios()) {
     for (int seed = 1; seed <= seeds; ++seed) {
       Scenario sc = sc0;
-      const uint64_t base = 1000003ull * (uint64_t)seed + std::hash<std::string>{}(sc.name) % 100000ull;
+      uint64_t name_hash = 1469598103934665603ull;  // FNV-1a: the same on every toolchain
+      for (unsigned char ch : sc.name) { name_hash ^= ch; name_hash *= 1099511628211ull; }
+      const uint64_t base = 1000003ull * (uint64_t)seed + name_hash % 100000ull;
       Rng tr(base);
       SensorTruth truth = SensorTruth::random(tr, sc.bias_sd, sc.scale_sd, sc.cross_sd, sc.k_sd);
       if (std::isfinite(sc.k_override(0))) truth.k = sc.k_override;

@@ -588,7 +588,7 @@ and Robust Estimation in C\texttt{++}/Eigen}
     the diagonal of the inverse information.
 
     A result is accepted only if the existing coverage/planarity check
-    passes on the fit blocks. It also needs the existing PolarSPD gates
+    passes on the fit blocks. It also needs the wizard's PolarSPD limits
     (diagonal in $[0.80, 1.25]$, $\kappa(\mathbf{S})\le 6$, off-diagonal RMS
     $\le 0.10$) and every bias below 1.5\,m/s$^2$. The bias sigmas must be
     at most 15\,mm/s$^2$ and the cross-term sigmas at most 0.004. The RMS
@@ -597,8 +597,12 @@ and Robust Estimation in C\texttt{++}/Eigen}
     preliminary static fit after the ten holds runs the same geometry,
     plausibility and held-out checks. If a bias or cross term is
     undetermined, the procedure asks for the main pose that most reduces
-    that parameter's variance (rank-one update). If a hold disagrees, it
-    recaptures that hold. At most two such holds are added; after that the
+    that parameter's variance (rank-one update). If a hold disagrees (its
+    studentized hold-out error is over the limit), it recaptures that hold.
+    If only the raw hold-out error is over its limit, the other holds
+    predict that hold poorly (high leverage), so the procedure adds the pose
+    that most reduces the variance of the weakest term instead of repeating
+    one. At most two such holds are added; after that the
     calibration fails with the deficient direction named. A diagonal-only
     fallback is never used.
 
@@ -969,7 +973,7 @@ Eigen::Vector3f m_cal = result.apply(m_raw);
             \texttt{TEMP\_BINS\_EMPTY}      & Too few samples per temperature bin; slow down cooling \\
             \texttt{ACCEL\_S\_UNPHYSICAL}   & Diagonal or condition check failed; check gates \\
             \texttt{ACCEL\_INFO\_LOW}      & Holds do not determine a bias or cross term; extra hold \\
-            \texttt{ACCEL\_CROSSCHECK}     & A held-out hold disagrees; recapture it \\
+            \texttt{ACCEL\_CROSSCHECK}     & A held-out hold disagrees; recapture it (raw-only: extra hold) \\
             \texttt{ACCEL\_FLOAT\_CHECK}   & Stored float coefficients failed re-validation \\
             \bottomrule
         \end{tabular}

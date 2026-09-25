@@ -615,10 +615,17 @@ public:
       if (!io.runFit(job, "ACCEL")) return setFail_(AccelProcFail::FIT_TASK, "Fit task failed");
       logFit_(io, "prelim", prelim_);
       if (prelim_.ok) return true;
-      const bool geometric = (prelim_.gate == AccelGate::INFO_BIAS || prelim_.gate == AccelGate::INFO_CROSS);
+      bool geometric = (prelim_.gate == AccelGate::INFO_BIAS || prelim_.gate == AccelGate::INFO_CROSS);
       if (prelim_.gate == AccelGate::CROSSVAL) {
-        if (!recapture_(io, prelim_.cv_worst_hold)) return false;
-        continue;
+        // A studentized error over its limit means a hold disagrees with the
+        // rest: redo it. A raw-only exceedance means the other holds predict
+        // that hold poorly (high leverage): add the pose that best constrains
+        // the weakest term instead of repeating one.
+        if (prelim_.cv_tmax > fcfg_.max_cv_t || prelim_.weak_param < 0) {
+          if (!recapture_(io, prelim_.cv_worst_hold)) return false;
+          continue;
+        }
+        geometric = true;
       }
       if (!geometric || prelim_.weak_param < 0) return setFail_(AccelProcFail::FIT_FAILED, gateText_(prelim_.gate));
       if (n_extra_ >= ccfg_.max_extra_holds) return setFail_(AccelProcFail::WEAK_GEOMETRY, weakText_(prelim_.weak_param));

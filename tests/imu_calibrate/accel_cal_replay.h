@@ -5,7 +5,7 @@
 // The wizard prints:
 //   [ACCMODE] full|accel_only
 //   [ACCPRIOR] valid,k0,k1,k2,k_lo,k_hi,clamp_lo,clamp_hi
-//   [ACCGYRO] wx,wy,wz               stationary gyro level (start / after the gyro stage)
+//   [ACCGYRO] wx,wy,wz,valid         stationary gyro level and its validity (start / after the gyro stage)
 //   [ACCPREP] kind,pose,attempt      a hold's preparation screen
 //   [ACCRAW] t_us,ax,ay,az,wx,wy,wz,T   every raw sample (ATOMS3R_ICAL_RAW_LOG=1)
 //   [ACCBLK] hold,role,t_ms,n,ax,ay,az,wx,wy,wz,T,a_std   every retained block

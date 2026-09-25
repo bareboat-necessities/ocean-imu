@@ -48,6 +48,7 @@ struct ImuCalBlobV3 {
   uint8_t  build_mode = 0;
 
   uint8_t  accel_ok = 0;
+  uint8_t  pad_a[2]{};               // explicit padding: CRC and readback compare every byte
   float    accel_g = ImuCalCfg::g_std;
   float    accel_S[9]{};            // a_cal = S*(a_raw - b0 - k*(clamp(T) - T0)), row-major
   float    accel_T0 = 25.0f;
@@ -56,11 +57,13 @@ struct ImuCalBlobV3 {
   float    accel_rms_mag = 0.0f;
 
   uint8_t  gyro_ok = 0;
+  uint8_t  pad_g[3]{};
   float    gyro_T0 = 25.0f;
   float    gyro_b0[3]{};
   float    gyro_k[3]{};
 
   uint8_t  mag_ok = 0;
+  uint8_t  pad_m[3]{};
   float    mag_A[9]{};
   float    mag_b[3]{};
   float    mag_field_uT = 0.0f;
@@ -98,6 +101,9 @@ struct ImuCalBlobV3 {
   uint32_t crc = 0;
 };
 static constexpr size_t IMU_CAL_CRC_LEN_V3 = offsetof(ImuCalBlobV3, crc);
+// No implicit padding: 284 is the sum of the field sizes, so every byte is a
+// named field and struct copies preserve what the CRC and readback compare.
+static_assert(sizeof(ImuCalBlobV3) == 284, "ImuCalBlobV3: implicit padding");
 
 // Current layout.
 using ImuCalBlob = ImuCalBlobV3;
@@ -335,6 +341,9 @@ public:
     tmp.version = ImuCalBlobV3::IMU_CAL_VERSION;
     tmp.size_bytes = sizeof(ImuCalBlobV3);
     tmp.build_mode = IMU_CAL_MODE_M5_IMU_API;
+    memset(tmp.pad_a, 0, sizeof(tmp.pad_a));
+    memset(tmp.pad_g, 0, sizeof(tmp.pad_g));
+    memset(tmp.pad_m, 0, sizeof(tmp.pad_m));
     tmp.crc = 0;
     tmp.crc = computeBlobCrc(tmp);
     return tmp;
