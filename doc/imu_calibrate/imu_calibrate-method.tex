@@ -751,7 +751,8 @@ and Robust Estimation in C\texttt{++}/Eigen}
     read-back: finite, exactly symmetric, SPD, within the gates, and
     reproducing the double hold RMS within 0.2\,mm/s$^2$. The save succeeds
     only if the read-back validates and equals the candidate byte for byte,
-    so an older blob can never pass as the new one. Accelerometer-only recalibration
+    so an older blob can never pass as the new one; after a failed write the
+    previous valid blob is written back. Accelerometer-only recalibration
     copies the saved gyroscope and magnetometer fields unchanged. On any
     failure or abort nothing is written. \texttt{RuntimeCals} applies the
     calibration once, upstream of every estimator, after
@@ -1064,7 +1065,7 @@ Eigen::Vector3f m_cal = result.apply(m_raw);
             \texttt{TEMP\_BINS\_EMPTY}      & Too few samples per temperature bin; slow down cooling \\
             \texttt{ACCEL\_S\_UNPHYSICAL}   & Diagonal or condition check failed; check gates \\
             \texttt{ACCEL\_INFO\_LOW}      & Holds do not determine a bias or cross term; extra hold \\
-            \texttt{ACCEL\_CROSSCHECK}     & A held-out hold disagrees; recapture it (raw-only: extra hold) \\
+            \texttt{ACCEL\_CROSSCHECK}     & A held-out hold disagrees; recapture it (preliminary fit, raw-only: extra hold) \\
             \texttt{ACCEL\_FLOAT\_CHECK}   & Stored float coefficients failed re-validation \\
             \bottomrule
         \end{tabular}

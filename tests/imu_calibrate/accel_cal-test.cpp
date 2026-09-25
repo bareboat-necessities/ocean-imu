@@ -93,6 +93,7 @@ struct MemKv {
     std::map<std::string, std::vector<uint8_t>> m;
     bool drop_writes = false;      // putBytes reports success but stores nothing
     bool corrupt_writes = false;   // flips one stored byte
+    int corrupt_next = 0;          // corrupts only the next N writes
     int puts = 0;
   };
   std::shared_ptr<State> st = std::make_shared<State>();
@@ -107,7 +108,9 @@ struct MemKv {
     ++st->puts;
     if (st->drop_writes) return len;
     std::vector<uint8_t> v((const uint8_t*)buf, (const uint8_t*)buf + len);
-    if (st->corrupt_writes && len > 40) v[40] ^= 0x5A;
+    const bool corrupt = st->corrupt_writes || st->corrupt_next > 0;
+    if (st->corrupt_next > 0) --st->corrupt_next;
+    if (corrupt && len > 40) v[40] ^= 0x5A;
     st->m[k] = v;
     return len;
   }
@@ -600,14 +603,22 @@ void testBlobAndStore() {
     check(!store.saveVerified(cand, rb), "dropped write (stale blob under the key) is not reported as saved");
     ImuCalBlobV3 after; check(store.load(after) && after.accel_b0[0] == old.accel_b0[0], "previous calibration retained after failed save");
     store.kv.st->drop_writes = false;
-    store.kv.st->corrupt_writes = true;
+    store.kv.st->corrupt_next = 1;
     check(!store.saveVerified(cand, rb), "corrupted write is not reported as saved");
+    ImuCalBlobV3 kept;
+    check(store.load(kept) && MemStore::sameBytes(kept, MemStore::sealed_(old)),
+          "corrupted write: the previous calibration is written back intact");
+    store.kv.st->corrupt_writes = true;
+    check(!store.saveVerified(cand, rb), "persistently corrupting store is not reported as saved");
     store.kv.st->corrupt_writes = false;
     check(store.saveVerified(cand, rb), "verified save succeeds");
     check(rb.accel_b0[0] == 0.123f, "read-back is the candidate");
     ImuCalBlobV3 ld; check(store.load(ld) && MemStore::sameBytes(ld, rb), "load returns the verified blob");
     store.erase();
     check(!store.load(ld), "erase removes the calibration");
+    store.kv.st->corrupt_next = 1;
+    check(!store.saveVerified(cand, rb) && store.kv.getBytesLength("blob_m5v3") == 0,
+          "corrupted first save with nothing to restore leaves no blob behind");
   }
   // Metadata binding and prior compatibility.
   {

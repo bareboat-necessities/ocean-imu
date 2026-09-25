@@ -331,14 +331,21 @@ public:
   // Writes the candidate and reads the key back. Succeeds only when the stored
   // bytes validate and equal the sealed candidate, so an older blob can never
   // pass as the new one.
+  // On failure the previous valid calibration is written back (or the key
+  // removed when there was none), so a failed or partial write never leaves
+  // a corrupt blob in its place.
   bool saveVerified(const ImuCalBlobV3& in, ImuCalBlobV3& readback) {
     const ImuCalBlobV3 cand = sealed_(in);
-    if (kv.putBytes(kKeyV3, &cand, sizeof(cand)) != sizeof(cand)) return false;
+    ImuCalBlobV3 prev;
+    const bool had_prev = loadV3_(prev);
     ImuCalBlobV3 rb;
-    if (!loadV3_(rb)) return false;
-    if (!sameBytes(rb, cand)) return false;
-    readback = rb;
-    return true;
+    if (kv.putBytes(kKeyV3, &cand, sizeof(cand)) == sizeof(cand) && loadV3_(rb) && sameBytes(rb, cand)) {
+      readback = rb;
+      return true;
+    }
+    if (had_prev) kv.putBytes(kKeyV3, &prev, sizeof(prev));
+    else kv.remove(kKeyV3);
+    return false;
   }
 
   void erase() { kv.remove(kKeyV3); }
