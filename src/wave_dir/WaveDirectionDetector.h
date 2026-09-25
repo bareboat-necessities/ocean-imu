@@ -47,8 +47,8 @@ public:
     Real convention_sign = Real(-1);
   };
 
-  // Backward-compatible constructor. The old smoothing argument was an EMA
-  // coefficient tuned for 200 Hz. Convert it to an elapsed-time constant so
+  // Compatibility constructor: smoothing is an EMA coefficient at 200 Hz.
+  // Convert it to an elapsed-time constant so
   // behavior remains invariant when the sample rate changes.
   WaveDirectionDetector(Real smoothing = Real(0.002),
                         Real sensitivity = Real(0.005)) {
@@ -141,7 +141,7 @@ public:
     filtered_vertical_slope_ +=
         slope_alpha * (raw_vertical_slope - filtered_vertical_slope_);
 
-    // +infinity is the legacy overload's explicit "no confidence gate" value.
+    // +infinity is the fixed-Y overload's explicit "no confidence gate" value.
     // NaN, -infinity, and finite values below the configured threshold fail
     // closed and discard old phase evidence.
     const Real positive_infinity =
@@ -202,7 +202,7 @@ public:
     return state_;
   }
 
-  // Legacy fixed-Y overload retained only for source compatibility. New code
+  // Fixed-Y overload for source compatibility. Axis-aware callers
   // must pass the independently estimated propagation axis to the overload
   // above.
   WaveDirection update(Real accelX,

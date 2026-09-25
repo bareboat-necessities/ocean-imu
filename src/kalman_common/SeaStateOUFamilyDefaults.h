@@ -1,7 +1,11 @@
 #pragma once
 
-// Global-scope names of the shared defaults, as SeaStateFusionFilter_OU_II.h
-// and SeaStateFusionFilter_OU_III.h have always exported them.  The two OU
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
+// Global-scope names of the shared defaults exported by
+// SeaStateFusionFilter_OU_II.h and SeaStateFusionFilter_OU_III.h.  The two OU
 // headers are never included in the same translation unit (their estimator
 // constants and TuneState share names), so each includes this once; the TFG
 // orchestrator reads seastate::common::defaults directly and keeps the global

@@ -63,8 +63,8 @@ public:
     }
 
     // Full state reset: identity quaternion, zero integral accumulators.
-    // Gains are preserved unless positive values are passed.
-    // Pass twoKp_in <= 0 to leave gains unchanged.
+    // twoKp changes only for positive inputs; twoKi also accepts zero.
+    // Pass twoKp_in <= 0 and twoKi_in < 0 to preserve both gains.
     void reset(T twoKp_in = T(-1), T twoKi_in = T(-1)) {
         if (twoKp_in > T(0))  twoKp = twoKp_in;
         if (twoKi_in >= T(0)) twoKi = twoKi_in;
@@ -110,7 +110,7 @@ public:
             halfvy = q0 * q1 + q2 * q3;
             halfvz = T(0.5) * (q0q0 - q1q1 - q2q2 + q3q3);   // unified with updateMag
 
-            // Error is cross product between estimated and measured gravity.
+            // Error is measured gravity crossed with the estimated half-gravity vector.
             halfex = (ay * halfvz - az * halfvy);
             halfey = (az * halfvx - ax * halfvz);
             halfez = (ax * halfvy - ay * halfvx);
@@ -231,7 +231,7 @@ public:
             const T halfwy = bx * (q1q2 - q0q3)           + bz * (q0q1 + q2q3);
             const T halfwz = bx * (q0q2 + q1q3)           + bz * (T(0.5) - q1q1 - q2q2);
 
-            // Error = cross product between estimated and measured field vectors.
+            // Error sums measured vectors crossed with their estimated half-vectors.
             halfex = (ay * halfvz - az * halfvy) + (my * halfwz - mz * halfwy);
             halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
             halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);

@@ -1,6 +1,10 @@
 #ifndef NmeaChecksum_h
 #define NmeaChecksum_h
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 #include <stdint.h>
 
 #define NMEA_END_CHAR_1    '\r'
@@ -12,7 +16,7 @@
 inline uint8_t nmea0183_checksum(const char *sentence) {
   const char *n = sentence + 1;
   uint8_t chk = 0;
-  /* While current char isn't '*' or sentence ending (newline) */
+  /* Stop at '*', carriage return, or the string terminator. */
   while ('*' != *n && NMEA_END_CHAR_1 != *n && '\0' != *n) {
     chk ^= (uint8_t) *n;
     n++;

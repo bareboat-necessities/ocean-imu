@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 #include <Arduino.h>
 #include <M5Unified.h>
 #include <math.h>
@@ -180,7 +184,7 @@ public:
   }
 
   // Start of the calibration wizard. Without a previous calibration only the
-  // full wizard is offered (single tap, as before).
+  // full wizard is offered (single tap).
   enum class StartAction : uint8_t { FULL = 0, ACCEL_ONLY = 1, CANCEL = 2 };
 
   StartAction startMenu(bool accel_only_available) {

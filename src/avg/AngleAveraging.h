@@ -127,7 +127,7 @@ public:
         return sqrtf(x * x + y * y);
     }
 
-    // Get last angle estimate (raw)
+    // Get last filtered angle estimate
     float get_angle() const { return angle_prev; }
 
     // Get last variance estimate

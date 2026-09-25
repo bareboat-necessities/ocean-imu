@@ -253,7 +253,7 @@ public:
                            gyro_body_ned);
   }
 
-  // Legacy helper. Kept for compatibility, but the OU3 wrapper should not use
+  // Compatibility helper.  The OU3 wrapper should not use
   // this for startup mag reference because it creates a different level frame
   // from the MEKF world frame.
   bool addSampleWithGravityDirDt(float dt,

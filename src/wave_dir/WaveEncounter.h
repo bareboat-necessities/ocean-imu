@@ -1,6 +1,10 @@
 #pragma once
 
 /*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
+/*
   Apparent/intrinsic wave encounter helpers.
 
   The IMU phase detector reports an apparent propagation sense along a measured
@@ -63,9 +67,8 @@ inline int apparent_sense(int intrinsic_sense,
 // branch in following seas, where encounter-frequency inversion can be
 // non-unique.
 //
-// `scan_intervals` is retained for source compatibility with the previous
-// numerical implementation. The solution is now analytic and does not depend
-// on a scan resolution.
+// `scan_intervals` is ignored for source compatibility.  The analytic
+// solution does not depend on a scan resolution.
 template <typename Real>
 inline std::vector<DeepWaterSolution<Real>> solve_deep_water(
     Real encounter_omega_abs_rad_s,

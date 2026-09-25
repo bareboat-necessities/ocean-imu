@@ -1,6 +1,10 @@
 #ifndef MinMaxLemire_h
 #define MinMaxLemire_h
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 #include "discrete/MonoWedge.h"
 
 #include <deque>

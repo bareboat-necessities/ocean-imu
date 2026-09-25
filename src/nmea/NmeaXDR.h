@@ -2,6 +2,10 @@
 #define NmeaXDR_h
 
 /*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
+/*
   XDR - Transducer Measurement
   https://gpsd.gitlab.io/gpsd/NMEA.html#_xdr_transducer_measurement
   https://www.eye4software.com/hydromagic/documentation/articles-and-howtos/handling-nmea0183-xdr/

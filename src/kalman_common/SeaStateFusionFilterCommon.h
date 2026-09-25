@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 #ifdef EIGEN_NON_ARDUINO
 #include <Eigen/Dense>
 #else
@@ -347,10 +351,9 @@ inline bool runStartupGravityInit(const Eigen::Vector3f& gyro_body_ned,
     // that actually seeds the filter.  The hold counter alone is not that
     // certificate: it can still stand above the hold time for one sample after
     // the branch flips.  A forced handoff is still a handoff -- the timeout may
-    // bound how long startup takes, but it may not hand over an attitude that
-    // is upside down with respect to the measurement it is derived from.  The
-    // antipodal set is not attracting for the accel-corrected observer, so this
-    // is a bounded extra wait rather than a stall.
+    // relax its dwell requirements, but it may not hand over an attitude that
+    // is upside down with respect to the measured specific force.  The branch
+    // check remains mandatory even after timeout.
     if (!aligned_branch) return false;
 
     Eigen::Vector3f g_init_dir = s_obs;
@@ -376,7 +379,7 @@ inline DetrenderConfig defaultDisplacementDetrenderConfig(float freq_guess_hz) {
 // Smoothing horizon for a drift-correction channel whose target is a power law
 // in the OU operating point (deployed: OU-III/TFG SpectralMSE
 // r_S ~ sigma_a^(6/7) tau^(24/7) T_S^(-1/2) and OU-II PhysicalMSE
-// r_p ~ sigma_a^(4/5) tau^(12/5) T_S^(-1/2), r_v = r_p/(ratio tau); legacy:
+// r_p ~ sigma_a^(4/5) tau^(12/5) T_S^(-1/2), r_v = r_p/(ratio tau); alternatives:
 // cubic r_S ~ tau^3 and empirical r_p0 ~ sigma_aw tau^2, r_v0 ~ sigma_aw tau).
 // Those targets are rebuilt every step from the raw
 // tuner estimates, so the channel needs an exponential smoother that its

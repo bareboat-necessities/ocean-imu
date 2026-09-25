@@ -228,7 +228,7 @@ void setup() {
 
   ui.begin();
 
-  // IMU (BMI270 + BMM150 on AtomS3R)  [oai_citation:4‡M5Stack Docs](https://docs.m5stack.com/en/core/AtomS3R)
+  // IMU (BMI270 + BMM150 on AtomS3R)  https://docs.m5stack.com/en/core/AtomS3R
   M5.Imu.begin();
 }
 
@@ -237,7 +237,7 @@ void loop() {
 
   if (M5.Imu.update()) {
     // getImuData includes accel/gyro/mag
-    // [oai_citation:5‡m5stack.oss-cn-shenzhen.aliyuncs.com](https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/docs/static/pdf/static/en/arduino/m5unified/imu_class.pdf)
+    // https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/docs/static/pdf/static/en/arduino/m5unified/imu_class.pdf
     auto d = M5.Imu.getImuData();
 
     // Very basic “flat” heading (no tilt compensation):

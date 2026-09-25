@@ -1,15 +1,18 @@
 #pragma once
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 // Defaults shared by the OU-II, OU-III and TFG sea-state orchestrators.
 //
 // Only one kind of constant belongs here: a property of the marine front end,
 // the sensor, the startup/magnetic machinery or the adaptation *mechanics*
 // that is the same physical or procedural quantity for every estimator
-// behind it.  Each value below had been written out separately in two or
-// three wrappers with identical numbers; it is defined once here so the
-// wrappers cannot drift apart silently.
+// behind it.  Each value is defined once here so the wrappers cannot drift
+// apart silently.
 //
-// Constants that merely happen to share a value today but belong to an
+// Constants that merely happen to share a value but belong to an
 // estimator's model (OU prior bounds, regularizer bounds and coefficients,
 // horizontal anisotropy, the r_S/r_p0/r_v0 smoothing multipliers) stay in the
 // estimator's own wrapper, and so do the ones that are intentionally
@@ -51,9 +54,8 @@ inline constexpr float MIN_TUNE_FREQ_HZ = 0.03f;
 // part of the adaptation path reads the acceleration-band tracker, and a
 // constant is trivially exogenous.  0.2 Hz is a 5 s zero-crossing period, and
 // the estimator reports 2.3-8.4 s across the reference family, so the prior is
-// never worse than a factor of two off; the estimator replaces it after about
-// 50 s in any case.  It is the constant SeaStateFusionFilter_TFG has always
-// used for this, which is where the value comes from rather than a fit.
+// within roughly a factor of two across those records.  The prior remains
+// active until the wave-period estimator provides a valid estimate.
 // Sensitivity to it was measured by sweeping it over 0.1-0.4 Hz, which leaves
 // every scored 900 s metric unchanged to four decimal places in both OU
 // families, because the estimator has replaced it 250 s before the window
@@ -76,10 +78,9 @@ inline constexpr float SIGMA_BAND_MAX_HZ     = 6.0f;
 // of magnitude below the wave band, or the observer levels itself against the
 // orbital specific force instead of gravity.
 //
-// two_ki estimates the gyro bias.  The vertical channel ran at zero for years
-// because everything downstream of it is high-passed, but an attitude seed
-// keeps whatever static tilt the bias leaves -- about 2b/two_kp, i.e. 0.71 deg
-// at 0.05 deg/s -- so the observer that serves both has to estimate it.
+// two_ki estimates the gyro bias.  An attitude seed keeps whatever static
+// tilt the bias leaves, even when the downstream vertical channel is
+// high-passed, so the observer that serves both estimates that bias.
 inline constexpr float STARTUP_PROXY_TWO_KP = 0.2f;
 inline constexpr float STARTUP_PROXY_TWO_KI = 0.02f;
 
@@ -143,7 +144,7 @@ inline constexpr float ACC_VIBRATION_RACC_GAIN = 0.75f;
 // self-similar:
 //     tau_ema = ADAPT_TAU_SEA_PERIODS * T_sea,  T_sea = T_z/2.
 // The measured default 0.40 is the 0.20*T_z winner from the paired OU-III
-// sweep.  Zero selects the legacy fixed-second ADAPT_TAU_SEC path, retained
+// sweep.  Zero selects the fixed-second ADAPT_TAU_SEC path, available
 // for controlled ablations.
 inline constexpr float ADAPT_TAU_SEC         = 1.8f;
 inline constexpr float ADAPT_TAU_SEA_PERIODS = 0.40f;
@@ -154,10 +155,8 @@ inline constexpr float ADAPT_TAU_SEA_PERIODS = 0.40f;
 inline constexpr float ADAPT_EVERY_SECS = 0.1f;
 
 // Self-similar drift-regularizer pseudo-measurement cadence
-// T_S = (T_0/tau_0) tau.  Every orchestrator historically ran its zero
-// pseudo-measurements at T_0 = 15 ms with an initial applied OU time constant
-// of tau_0 = 1.1 s, so this ratio preserves that exact operating point and
-// scales the cadence with tau thereafter.  A pseudo update cannot occur more
+// T_S = (T_0/tau_0) tau, with the nominal point T_0 = 15 ms at tau_0 = 1.1 s.
+// The ratio scales the cadence with tau.  A pseudo update cannot occur more
 // often than the nominal 200 Hz IMU schedule.  The upper cadence clamp is
 // estimator-specific and stays with each wrapper.
 inline constexpr float PSEUDO_UPDATE_PERIOD_NOMINAL_S = 0.015f;

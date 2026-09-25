@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 // Accelerometer vibration conditioning shared by the OU-II, OU-III and TFG
 // orchestrators: the out-of-band vibration guard ahead of the attitude loop,
 // and the vibration-aware accelerometer measurement covariance it drives.

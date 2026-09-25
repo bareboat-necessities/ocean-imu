@@ -21,7 +21,7 @@ namespace seastate::tuner {
   Motivation.  A sea-state estimator reads the accelerometer for two purposes at
   once: it is the gravity reference that fixes tilt, and it is the only
   measurement of wave acceleration.  Both live below about 1 Hz.  Machinery
-  vibration -- an inboard auxiliary diesel is the case this was built for --
+  vibration -- for example, from an inboard auxiliary diesel --
   arrives one to two decades higher, and on a sensor sampled at a few hundred Hz
   a good part of it arrives folded, because the crank orders run past Nyquist.
 

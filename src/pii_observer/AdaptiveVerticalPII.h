@@ -103,17 +103,14 @@ public:
 
             // Dynamic variance horizon, tau_var ~= K_periods / f.
             //
-            // This envelope was modelled on SeaStateAutoTuner but is now an
-            // independent estimator: the tuner dropped the second EWMA stage
-            // and retuned K_periods to 4, while this observer still cascades
-            // mean/square and variance at K_periods = 2 (same ~4/f effective
-            // memory, different shape).  Changing either value here is a PII
-            // retune scored on the PII gates, not a parity fix.
+            // This observer cascades mean/square and variance EWMAs at
+            // K_periods = 2: about 4/f effective memory, with a different shape
+            // from SeaStateAutoTuner's single moment stage at K_periods = 4.
+            // These are independent estimator settings, not shared defaults.
             T tuner_K_periods = T(2.0);
 
             // Retained for source compatibility only.  It is range-checked and
-            // never read: this observer has no frequency EMA, and neither does
-            // SeaStateAutoTuner any more.
+            // never read: this observer has no frequency EMA.
             T tuner_tau_freq_s = T(1.0);
 
             // OU-style mapping:
@@ -244,7 +241,7 @@ public:
 
     /*
       Caller supplies displacement frequency.
-      The core now uses the OU-style envelope sigma when ready.
+      The core uses the OU-style envelope sigma when ready.
       Frequency remains caller-provided.
     */
     void updateAdaptationFromDisplacementFrequency(

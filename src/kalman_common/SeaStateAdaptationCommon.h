@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 // Adaptation mechanics shared by the OU-II and OU-III orchestrators.
 //
 // What is common is the *measurement* of the OU operating point and the
@@ -146,10 +150,8 @@ public:
     }
     float getAdaptationSeaPeriods() const noexcept { return adapt_tau_sea_periods_; }
 
-    // No-ops kept so existing ablation scripts still compile and run.  The
-    // tuner's second frequency EMA was removed when WavePeriodEstimator took
-    // ownership of the canonical log-period state, and there is nothing left
-    // here to smooth.
+    // Compatibility no-ops: frequency smoothing belongs to
+    // WavePeriodEstimator's canonical log-period state, not this tuner.
     void setTunerFreqSmoothingSeaPeriods(float /*periods*/) {}
     void setTunerFreqSmoothingTimeConstant(float /*tau_sec*/) {}
     float getTunerFreqSmoothingSeaPeriods() const noexcept {
@@ -165,15 +167,13 @@ public:
     }
 
     // sigma_a averaging horizon, in periods of the tuning frequency, and its
-    // absolute clamps in seconds.  The horizon moved with the operating point
-    // when tuning moved to the wave band -- the same K is now 5-17 s instead of
-    // about 4 -- so it is a tuning surface.
+    // absolute clamps in seconds.  The requested horizon is K/f_tune.
     void setSigmaVarianceKPeriods(float k) { tuner_.setKPeriods(k); }
     float getSigmaVarianceKPeriods() const noexcept { return tuner_.getKPeriods(); }
     void setSigmaVarianceHorizonBounds(float min_s, float max_s) {
         tuner_.setVarianceHorizonBounds(min_s, max_s);
     }
-    // Horizon currently in force [s]; the variance is a two-stage EWMA at it.
+    // Horizon currently in force [s] for the first- and second-moment EWMAs.
     float getSigmaVarianceHorizonSec() const noexcept {
         return tuner_.getVarianceHorizonSec();
     }
@@ -338,7 +338,7 @@ protected:
     }
 
     // EMA factor of the common tau/sigma_aw channel: 0.40 T_sea by default, a
-    // fixed number of seconds in the legacy ablation.
+    // fixed number of seconds in the fixed-horizon ablation.
     float tauSigmaSmoothingAlpha_(float dt, float sea_time_sec) const {
         float adapt_sec = adapt_tau_sec_;
         if (adapt_tau_sea_periods_ > 0.0f &&
@@ -393,7 +393,7 @@ protected:
     // One pseudo update has covariance r^2; with updates every T_S seconds the
     // continuous-equivalent information rate is proportional to 1/(r^2 T_S).
     // A law whose base target does not contain the realized cadence preserves
-    // the historical 15 ms information rate by renormalizing the filter-input
+    // the nominal 15 ms information rate by renormalizing the filter-input
     // standard deviation, r_filter = r_base sqrt(T_0/T_S).  Not re-clamped
     // afterwards: the smallest-sea operating point may already sit on a base
     // floor and must be allowed below it when T_S > T_0.

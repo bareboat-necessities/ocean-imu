@@ -40,7 +40,7 @@ class Kalman3D_Wave_OU_III {
     // Base (att_err + optional gyro bias)
     static constexpr int BASE_N = with_gyro_bias ? 6 : 3;
 
-    // Extended added states: v(3), p(3), S(3), a_w(3) [+ b_acc(3)]
+    // Extended states: v(3), p(3), S(3), a_w(3) [+ b_acc(3)]
     static constexpr int EXT_ADD = 12
         + (with_accel_bias ? 3 : 0);
 
@@ -304,10 +304,10 @@ class Kalman3D_Wave_OU_III {
         symmetrize_Pext_();
     }
 
-    // Select the pre-PSD-inflation covariance policy. false (default) keeps
+    // Select the a_w covariance synchronization policy. false (default) keeps
     // synchronization inside the next Kalman prediction as a positive-
-    // semidefinite process-covariance increment. true restores the historical
-    // immediate P_awaw block replacement exactly.
+    // semidefinite process-covariance increment. true selects immediate
+    // P_awaw block replacement.
     void set_legacy_aw_covariance_replacement(bool on) {
         legacy_aw_covariance_replacement_ = on;
         if (on) aw_covariance_floor_pending_ = false;
@@ -320,8 +320,8 @@ class Kalman3D_Wave_OU_III {
     // The default path queues the request and applies it inside the next
     // prediction as Delta = Pi_+(Sigma_aw_stat - P_awaw^-). Because the full
     // covariance increment is E_a Delta E_a^T >= 0, PSD and all existing cross-
-    // covariances are preserved. The legacy flag restores the previous raw
-    // posterior block replacement for exact rollback/regression comparisons.
+    // covariances are preserved. With legacy_aw_covariance_replacement_
+    // enabled, the posterior block is replaced immediately instead.
     void synchronize_aw_covariance_to_stationary() {
         if (legacy_aw_covariance_replacement_) {
             aw_covariance_floor_pending_ = false;
@@ -433,7 +433,7 @@ class Kalman3D_Wave_OU_III {
         }
     }
 
-    // Backward-compatible name: the supplied quantity is now interpreted as
+    // Despite the method name, the supplied quantity is interpreted as
     // the continuous driving-noise density of the residual accelerometer-bias
     // OU process. For h << tau_b this preserves the former random-walk
     // covariance increment Q_bacc_ * h.
@@ -616,22 +616,11 @@ class Kalman3D_Wave_OU_III {
     Vector3 last_gyr_bias_corrected{};  // Last gyro
 
     T sigma_bacc0_ = T(0.004);          // initial accel bias std
-    // Accelerometer-bias random walk, as a variance per second: (5e-4)^2, i.e.
-    // 5e-4 m/s^2 per sqrt(s), which is exactly what the reference simulation
-    // generates (acc_bias_rw in util/W3dSimCommon.h, applied as sigma*sqrt(dt)).
-    // The previous 1e-6 was twice the true process noise with nothing
-    // justifying the excess.
-    //
-    // What this does *not* fix is worth recording, because it was investigated
-    // and it changes how the accelerometer-bias regression gate should be read.
-    // That gate is not measuring bias observability against the latent OU
-    // acceleration: at H_s = 8.5 m the mean roll error of -1.14 deg accounts for
-    // -0.1945 m/s^2 of apparent specific force against a mean bias error of
-    // +0.1954 m/s^2, a 0.5 percent match, and the same tilt error is present in
-    // the pre-change build.  The bias state is absorbing a persistent tilt
-    // error, which is what a bias state is for.  Any choice of this prior only
-    // moves that absorbed constant between states; the 1.1 deg static roll bias
-    // in steep seas is a separate, pre-existing problem.
+    // Continuous driving-noise covariance of the residual accelerometer-bias
+    // OU process: (5e-4)^2 (m/s^2)^2/s.  The driving standard deviation matches
+    // acc_bias_rw in util/W3dSimCommon.h, applied there as sigma*sqrt(dt).
+    // Bias and tilt can share low-frequency specific-force errors; this prior
+    // does not by itself establish bias observability.
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);
     T tau_bacc_ = T(5000.0);             // residual accel-bias OU correlation time [s]
 
@@ -657,8 +646,8 @@ class Kalman3D_Wave_OU_III {
 
     bool acc_bias_updates_enabled_ = true;
 
-    // false is the default shipping policy. true restores the old
-    // immediate marginal replacement for exact regression comparisons.
+    // false queues a PSD increment at prediction; true replaces the marginal
+    // immediately without changing its cross-covariances.
     bool legacy_aw_covariance_replacement_ = false;
     bool aw_covariance_floor_pending_ = false;
     Matrix3 aw_covariance_floor_target_ = Matrix3::Zero();

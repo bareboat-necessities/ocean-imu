@@ -607,7 +607,7 @@ static EllipsoidSphereFit<T> ellipsoid_to_sphere_robust(
 // A missing (non-finite) temperature evaluates the reference bias b0, so a
 // NaN temperature can never turn a calibrated vector into NaN. The optional
 // clamp bounds extrapolation of a slope learned over a narrow range; the
-// defaults leave the historical unclamped behaviour unchanged.
+// default bounds span [-1000, 1000] degrees C.
 template <typename T>
 struct TempBias3 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -973,8 +973,6 @@ struct AccelCalibrator {
       }
 
       // Only a bin whose matrix passed every gate contributes a bias center.
-      // Counting it earlier let an all-rejected fit return the identity
-      // default S with an unvalidated center.
       centers[nb] = fitk.b;
       temps[nb]   = tmean;
       nb++;
