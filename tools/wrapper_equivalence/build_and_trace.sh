@@ -18,8 +18,12 @@ if [ -f "$EIGEN_DIR/Eigen/Dense" ]; then EIGEN="-isystem $EIGEN_DIR"; else EIGEN
 # deployed flags through CXXFLAGS to measure contraction drift separately.
 CXXFLAGS="${CXXFLAGS:--O3 -std=c++20 -march=native -funroll-loops -fno-finite-math-only -ffp-contract=off}"
 build() { g++ $CXXFLAGS $EIGEN -I"$HERE" -I"$SRC" "$@"; }
-build -DOU_FAMILY=2 "$HERE/ou_wrapper_trace.cpp" -o "$OUT/ou2_trace" &
-build -DOU_FAMILY=3 "$HERE/ou_wrapper_trace.cpp" -o "$OUT/ou3_trace" &
-build "$HERE/tfg_wrapper_trace.cpp" -o "$OUT/tfg_trace" &
-wait
+# Never trace with a binary or a trace left over from an earlier build: a
+# failed compile must fail the script, not compare stale output.
+rm -f "$OUT"/ou2_trace "$OUT"/ou3_trace "$OUT"/tfg_trace "$OUT"/*.bin
+pids=()
+build -DOU_FAMILY=2 "$HERE/ou_wrapper_trace.cpp" -o "$OUT/ou2_trace" & pids+=($!)
+build -DOU_FAMILY=3 "$HERE/ou_wrapper_trace.cpp" -o "$OUT/ou3_trace" & pids+=($!)
+build "$HERE/tfg_wrapper_trace.cpp" -o "$OUT/tfg_trace" & pids+=($!)
+for p in "${pids[@]}"; do wait "$p"; done
 for t in ou2 ou3 tfg; do "$OUT/${t}_trace" "$OUT"; done
