@@ -10,6 +10,15 @@
     intentionally kept at coefficient parity with deployed OU-III: canonical
     log-period statistics, period-scaled acceleration variance, self-scaled
     parameter EMAs, startup tilt/magnetic acquisition and continuous hard iron.
+    Where that parity is a shared constant or a shared mechanism it is the
+    same code as OU-II/OU-III (src/kalman_common/): the category-A defaults,
+    the accelerometer vibration conditioning, the world-frame gravity gate and
+    the continuous hard-iron slew.  What stays here is what TFG does
+    differently: its own staged/proxy startup state machine and elapsed-time
+    scheduling, the per-sample north-frame magnetic acquisition that tracks
+    proxy yaw drift, the Lie-group handoff and covariance seed, and its
+    adaptation, which smooths channel targets that are only formed after the
+    tuner warmup and commits them on an accumulated-time cadence.
 
     r_S defaults to the same reduced spectral-MSE law as current OU-III,
 
@@ -35,9 +44,11 @@
 #include <cmath>
 #include <cstdint>
 
+#include "kalman_common/AccelVibrationConditioning.h"
+#include "kalman_common/MagneticStartupCommon.h"
+#include "kalman_common/SeaStateFusionDefaults.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 #include "kalman_tfg/Kalman3D_Wave_TFG.h"
-#include "tuner/AccelVibrationGuard.h"
 #include "tuner/AdaptiveWaveBandPass.h"
 #include "tuner/ContinuousMagHardIronEstimator.h"
 #include "tuner/MagAutoTuner.h"
@@ -47,68 +58,40 @@
 
 namespace ocean_imu::tfg {
 
-constexpr float MAG_DELAY_SEC = 7.0f;
-constexpr float SIGMA_BAND_LOW_RATIO_DEFAULT  = 0.5f;
-constexpr float SIGMA_BAND_HIGH_RATIO_DEFAULT = 4.0f;
-constexpr float SIGMA_BAND_MIN_HZ_DEFAULT     = 0.01f;
-constexpr float SIGMA_BAND_MAX_HZ_DEFAULT     = 6.0f;
-constexpr float ADAPT_TAU_SEC_DEFAULT          = 1.8f;
-constexpr float ADAPT_TAU_SEA_PERIODS_DEFAULT  = 0.40f;
+// Shared front-end, adaptation-mechanics and startup defaults; values and
+// provenance in kalman_common/SeaStateFusionDefaults.h.
+namespace defaults = ::seastate::common::defaults;
+
+constexpr float MAG_DELAY_SEC = defaults::MAG_DELAY_SEC;
+constexpr float SIGMA_BAND_LOW_RATIO_DEFAULT  = defaults::SIGMA_BAND_LOW_RATIO;
+constexpr float SIGMA_BAND_HIGH_RATIO_DEFAULT = defaults::SIGMA_BAND_HIGH_RATIO;
+constexpr float SIGMA_BAND_MIN_HZ_DEFAULT     = defaults::SIGMA_BAND_MIN_HZ;
+constexpr float SIGMA_BAND_MAX_HZ_DEFAULT     = defaults::SIGMA_BAND_MAX_HZ;
+constexpr float ADAPT_TAU_SEC_DEFAULT          = defaults::ADAPT_TAU_SEC;
+constexpr float ADAPT_TAU_SEA_PERIODS_DEFAULT  = defaults::ADAPT_TAU_SEA_PERIODS;
+// Same r_S smoothing multiplier as deployed OU-III.  A property of the r_S
+// law rather than of the front end, so it is TFG's own constant.
 constexpr float ADAPT_RS_MULT_DEFAULT          = 1.5f;
 constexpr float TUNER_SIGMA_VAR_K_PERIODS_DEFAULT = 4.0f;
 
 // Same strong-observation sensor point and analytical spectral coefficient as
 // deployed OU-III.  The physical wave RMS is recovered from sigma_aw below, so
 // TFG's independently fitted sigma_coeff does not alter the distortion cost.
-constexpr float TFG_NOMINAL_DT = 1.0f / 200.0f;
+// Both are coefficients of the r_S law, so they stay TFG's own constants.
+constexpr float TFG_NOMINAL_DT = defaults::NOMINAL_IMU_DT_S;
 constexpr float R_S_ACCEL_NOISE_DENSITY_DEFAULT =
     0.0148f * 0.0148f * TFG_NOMINAL_DT;
 constexpr float R_S_MSE_COEFF_DEFAULT = 0.0538f;
 
-// Front-end accelerometer vibration guard, armed by default, at deployed
-// OU-III's operating point.
-//
-// docs/engine-noise-degradation.md is the measurement.  Machinery vibration
-// rectifies into a standing tilt error and from there into a displacement
-// offset, and at a routine cruise condition that costs a factor of eight in
-// pooled 3-D error; the guard holds every engine condition swept inside a
-// factor of 1.6 of the engine-off baseline.
-//
-// The defect is in the attitude loop, not in the translational state: the
-// accelerometer is both the gravity reference and the wave measurement, the
-// attitude correction wobbles at the vibration frequencies, and the
-// nonlinearity of the measurement model rectifies that wobble into a static
-// tilt.  TFG levels from the same private Mahony observer at the same gains
-// and feeds the same accelerometer to its own MEKF, so it inherits both the
-// defect and the remedy, and the front end stays at coefficient parity with
-// OU-III by carrying the same corner.
-//
-// Arming it costs nothing when there is no machinery, because the guard is
-// gated on its own detector and returns its input unchanged below the lower
-// rail.  Across the eight stationary records the clean detector reading is
-// 0.00796 to 0.00805 m/s^2 against a 0.03 rail, and the replays are
-// bit-identical to the unguarded ones.
-//
-// Two poles at 14 Hz sits in the gap between the wave band and the lowest
-// crank order a small auxiliary diesel puts on the hull, and costs 22.7 ms of
-// group delay at full engagement.  Set the cutoff to zero to remove the guard
-// entirely and restore the unconditioned measurement path.
-constexpr float ACC_VIBRATION_GUARD_HZ_DEFAULT    = 14.0f;
-constexpr int   ACC_VIBRATION_GUARD_POLES_DEFAULT = 2;
-
-// Vibration-aware accelerometer measurement covariance, on by default.
-//
-// Conditioning removes the machinery the guard can reach; what survives its
-// stopband still arrives as measurement error the MEKF does not know about.
-// This raises the commanded accelerometer sigma by the guard's own gated
-// excess, so the covariance and the measurement describe the same conditions.
-// 0.75 is the displacement optimum of the OU-III sweep, with margin below the
-// point where de-weighting the only wave measurement there is starts to cost
-// more than the vibration does.
-//
-// Zero disables it.  Like the guard, it is driven by a gated excess that is
-// identically zero on a quiet installation, so it is bit-transparent there.
-constexpr float ACC_VIBRATION_RACC_GAIN_DEFAULT = 0.75f;
+// Front-end accelerometer vibration guard and vibration-aware accelerometer
+// covariance, armed by default at the shared operating point.  The defect is
+// in the attitude loop, not in the translational state: TFG levels from the
+// same private Mahony observer at the same gains and feeds the same
+// accelerometer to its own MEKF, so it inherits both the defect and the
+// remedy.  See defaults::ACC_VIBRATION_GUARD_HZ for the measurement.
+constexpr float ACC_VIBRATION_GUARD_HZ_DEFAULT    = defaults::ACC_VIBRATION_GUARD_HZ;
+constexpr int   ACC_VIBRATION_GUARD_POLES_DEFAULT = defaults::ACC_VIBRATION_GUARD_POLES;
+constexpr float ACC_VIBRATION_RACC_GAIN_DEFAULT   = defaults::ACC_VIBRATION_RACC_GAIN;
 
 enum class RSAdaptationLaw : uint8_t {
     LegacyCubic = 0,
@@ -122,7 +105,7 @@ struct TfgTuneState {
 };
 
 template <typename MekfT = ocean_imu::kalman::Kalman3D_Wave_TFG<float>>
-class SeaStateFusionFilter_TFG {
+class SeaStateFusionFilter_TFG : public ::seastate::common::AccelVibrationConditioning {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -144,20 +127,20 @@ public:
         float    Racc_warmup_std = 0.5f;
         float    gravity_magnitude = 9.80665f;
 
-        // Deployed OU-III wrapper value.  The underlying low-level OU class has
-        // a 5 s compatibility default, but the deployed front end sets 10 s.
-        float    online_tune_warmup_sec = 10.0f;
+        // Deployed OU wrapper value.  The underlying low-level OU classes have
+        // a 5 s compatibility default, but the deployed front ends set 10 s.
+        float    online_tune_warmup_sec = defaults::STARTUP_ONLINE_TUNE_WARMUP_SEC;
         StartupInitPolicy startup_init_policy = StartupInitPolicy::MahonyProxy;
 
-        float proxy_startup_min_sec     = 8.0f;
-        float proxy_startup_timeout_sec = 150.0f;
-        float proxy_handoff_tilt_sigma_rad = 0.035f;
-        float proxy_handoff_yaw_sigma_rad  = 0.087f;
-        float proxy_handoff_yaw_sigma_free_rad = 1.5708f;
+        float proxy_startup_min_sec     = defaults::PROXY_STARTUP_MIN_SEC;
+        float proxy_startup_timeout_sec = defaults::PROXY_STARTUP_TIMEOUT_SEC;
+        float proxy_handoff_tilt_sigma_rad = defaults::PROXY_HANDOFF_TILT_SIGMA_RAD;
+        float proxy_handoff_yaw_sigma_rad  = defaults::PROXY_HANDOFF_YAW_SIGMA_RAD;
+        float proxy_handoff_yaw_sigma_free_rad = defaults::PROXY_HANDOFF_YAW_SIGMA_FREE_RAD;
 
-        // Same private Mahony gains as deployed OU-III.
-        float proxy_two_kp = 0.2f;
-        float proxy_two_ki = 0.02f;
+        // Same private Mahony gains as the OU front ends.
+        float proxy_two_kp = defaults::STARTUP_PROXY_TWO_KP;
+        float proxy_two_ki = defaults::STARTUP_PROXY_TWO_KI;
 
         // Compatibility field retained for existing TFG studies.  At the
         // reference 25 Hz mag ODR, 10 s corresponds to OU-III's 250 updates.
@@ -167,40 +150,43 @@ public:
         // The actual deployed OU-III magnetic gravity gate is in WORLD frame.
         // Keep the historical TFG field names so source compatibility is not
         // broken, but give them the deployed OU values and interpretation.
-        float proxy_gravity_align_sin = 0.075f;
-        float proxy_gravity_lpf_sec   = 12.0f;
-        float proxy_gravity_hold_sec  = 2.0f;
-        float proxy_gravity_warmup_sec = 5.0f;
-        float mag_extreme_gyro_dps    = 30.0f;
-        float mag_tilt_fallback_sec   = 30.0f;
-        float mag_init_min_mag_norm   = 1e-3f;
+        float proxy_gravity_align_sin = defaults::GRAVITY_GATE_MAX_SIN;
+        float proxy_gravity_lpf_sec   = defaults::GRAVITY_GATE_LPF_SEC;
+        float proxy_gravity_hold_sec  = defaults::GRAVITY_GATE_HOLD_SEC;
+        float proxy_gravity_warmup_sec = defaults::GRAVITY_GATE_WARMUP_SEC;
+        float mag_extreme_gyro_dps    = defaults::MAG_EXTREME_GYRO_DPS;
+        float mag_tilt_fallback_sec   = defaults::MAG_TILT_FALLBACK_SEC;
+        float mag_init_min_mag_norm   = defaults::MAG_INIT_MIN_MAG_NORM;
 
-        int   mag_min_samples    = 128;
-        float mag_min_window_sec = 15.0f;
-        float mag_max_window_sec = 0.0f;
-        float mag_sample_dt_sec  = 1.0f / 200.0f;
-        float proxy_mag_settle_sec = 0.0f;
+        int   mag_min_samples    = defaults::MAG_MIN_SAMPLES;
+        float mag_min_window_sec = defaults::MAG_MIN_WINDOW_SEC;
+        float mag_max_window_sec = defaults::MAG_MAX_WINDOW_SEC;
+        float mag_sample_dt_sec  = defaults::MAG_SAMPLE_DT_SEC;
+        float proxy_mag_settle_sec = defaults::PROXY_MAG_SETTLE_SEC;
 
+        // TFG refines at 30 s where the OU front ends wait 90 s: its proxy
+        // yaw offset is re-gauged on every magnetometer sample before
+        // handoff, so the provisional reference is less of a liability.
         bool  mag_refine_enabled    = true;
         float mag_refine_start_sec  = 30.0f;
-        float mag_refine_window_sec = 30.0f;
+        float mag_refine_window_sec = defaults::MAG_REFINE_WINDOW_SEC;
 
         bool  mag_enable_quality_weighting = false;
         float mag_min_effective_weight     = 0.0f;
-        float mag_acc_norm_rel_soft        = 0.22f;
-        float mag_gyro_soft_dps            = 45.0f;
+        float mag_acc_norm_rel_soft        = defaults::MAG_ACC_NORM_REL_SOFT;
+        float mag_gyro_soft_dps            = defaults::MAG_GYRO_SOFT_DPS;
         bool  mag_estimate_hard_iron       = false;
 
         bool  mag_continuous_hard_iron        = true;
-        float mag_hi_memory_sec               = 600.0f;
-        float mag_hi_model_ridge              = 5.0e-4f;
-        float mag_hi_model_ridge_relative     = 0.25f;
-        float mag_hi_min_information          = 0.1f;
-        float mag_hi_min_effective_weight     = 500.0f;
-        float mag_hi_max_residual_rms_uT      = 3.0f;
-        float mag_hi_max_bias_fraction        = 0.35f;
-        float mag_hi_apply_fraction           = 1.0f;
-        float mag_hi_slew_tau_sec             = 45.0f;
+        float mag_hi_memory_sec               = defaults::MAG_HI_MEMORY_SEC;
+        float mag_hi_model_ridge              = defaults::MAG_HI_MODEL_RIDGE;
+        float mag_hi_model_ridge_relative     = defaults::MAG_HI_MODEL_RIDGE_RELATIVE;
+        float mag_hi_min_information          = defaults::MAG_HI_MIN_INFORMATION;
+        float mag_hi_min_effective_weight     = defaults::MAG_HI_MIN_EFFECTIVE_WEIGHT;
+        float mag_hi_max_residual_rms_uT      = defaults::MAG_HI_MAX_RESIDUAL_RMS_UT;
+        float mag_hi_max_bias_fraction        = defaults::MAG_HI_MAX_BIAS_FRACTION;
+        float mag_hi_apply_fraction           = defaults::MAG_HI_APPLY_FRACTION;
+        float mag_hi_slew_tau_sec             = defaults::MAG_HI_SLEW_TAU_SEC;
 
         // Front-end accelerometer vibration guard and the vibration-aware
         // accelerometer covariance it drives; see the defaults above.  A zero
@@ -279,7 +265,7 @@ public:
         //
         // Armed by default, and transparent below its detector's lower rail,
         // in which case acc_in is acc unchanged.
-        const Vector3f acc_in = accel_guard_.step(acc, dt);
+        const Vector3f acc_in = conditionAccel_(acc, dt);
 
         vertical_complementary_.update(dt, gyro, acc_in, cfg_.gravity_magnitude);
         last_acc_body_ = acc;
@@ -366,8 +352,8 @@ public:
     [[nodiscard]] float magRefineTimeSec() const noexcept { return mag_refine_time_sec_; }
     [[nodiscard]] float magNorthLockTimeSec() const noexcept { return mag_north_lock_time_sec_; }
     [[nodiscard]] const Vector3f& magHardIronBodyUT() const noexcept { return mag_hard_iron_body_uT_; }
-    [[nodiscard]] const Vector3f& magContinuousHardIronAppliedUT() const noexcept { return mag_hi_applied_body_uT_; }
-    [[nodiscard]] const ContinuousMagHardIronEstimator& magContinuousHardIron() const noexcept { return mag_hi_estimator_; }
+    [[nodiscard]] const Vector3f& magContinuousHardIronAppliedUT() const noexcept { return hard_iron_.applied_body_uT; }
+    [[nodiscard]] const ContinuousMagHardIronEstimator& magContinuousHardIron() const noexcept { return hard_iron_.estimator; }
     [[nodiscard]] StartupInitPolicy startupInitPolicy() const noexcept { return cfg_.startup_init_policy; }
     [[nodiscard]] bool isTunerReady() const noexcept {
         return wave_period_.hasUsablePeriod() &&
@@ -377,77 +363,8 @@ public:
     [[nodiscard]] bool handoffTimedOut() const noexcept { return handoff_timed_out_; }
     [[nodiscard]] float getRSFilterInput() const noexcept { return RS_filter_input_; }
 
-    // Out-of-band accelerometer guard, ahead of the proxy and the MEKF.
-    //
-    // The cutoff sits in the gap between the wave band and the machinery band
-    // and stops vibration reaching the attitude loop, where it rectifies into a
-    // standing tilt error.  Armed by default; pass zero to remove it and
-    // restore the unconditioned measurement path exactly.  The cost is group
-    // delay, accelVibrationGuardDelaySec(), which appears in displacement as
-    // amplitude * 2 pi f * delay -- so prefer the highest corner that removes
-    // the machinery, not the lowest corner that fits above the waves.
-    void setAccelVibrationGuard(float cutoff_hz, int poles = ACC_VIBRATION_GUARD_POLES_DEFAULT) {
-        accel_guard_.setPoles(poles);
-        accel_guard_.setCutoffHz(cutoff_hz);
-    }
-
-    // Engagement band of the guard's detector.  Exposed mainly so a study can
-    // force the guard on over a quiet input and separate the delay it costs
-    // from the vibration it removes.
-    void setAccelVibrationEngagement(float lo_mps2, float hi_mps2,
-                                     float slew_tau_sec) noexcept {
-        accel_guard_.setEngagement(lo_mps2, hi_mps2, slew_tau_sec);
-    }
-
-    [[nodiscard]] float accelVibrationGuardDelaySec() const noexcept {
-        return accel_guard_.groupDelaySec();
-    }
-
-    // Vibration-aware accelerometer measurement covariance.
-    //
-    // The guard removes the machinery it can, but what survives its stopband
-    // still reaches the MEKF as measurement error the filter does not know
-    // about.  This tells it: the commanded accelerometer standard deviation
-    // becomes sqrt(sigma_base^2 + (gain * excess)^2), where excess is the
-    // guard's detector reading above its engagement floor.
-    //
-    // Zero disables it and leaves the commanded covariance exactly as the
-    // startup and stage logic set it.  Because the drive is the guard's own
-    // gated excess, it is identically zero on a quiet installation, so an
-    // enabled gain is still bit-transparent there.
-    void setAccelVibrationRaccGain(float gain) noexcept {
-        if (std::isfinite(gain) && gain >= 0.0f) racc_vibration_gain_ = gain;
-    }
-
-    [[nodiscard]] float accelVibrationRaccGain() const noexcept {
-        return racc_vibration_gain_;
-    }
-
-    // Accelerometer sigma currently commanded to the MEKF, m/s^2 per axis.
-    [[nodiscard]] Vector3f accelVibrationRaccStd() const noexcept {
-        return racc_effective_;
-    }
-
-    [[nodiscard]] float accelVibrationGuardCutoffHz() const noexcept {
-        return accel_guard_.cutoffHz();
-    }
-
-    [[nodiscard]] int accelVibrationGuardPoles() const noexcept {
-        return accel_guard_.poles();
-    }
-
-    // How far the guard is currently engaged, in [0, 1].  Zero means the
-    // measurement path is the unconditioned one.
-    [[nodiscard]] float accelVibrationGuardEngagement() const noexcept {
-        return accel_guard_.engagement();
-    }
-
-    // Smoothed RMS of the out-of-band content the guard is removing, m/s^2.
-    // Zero when the guard is disabled, so it reads as a health signal only
-    // where it is actually measuring something.
-    [[nodiscard]] float accelVibrationRms() const noexcept {
-        return accel_guard_.removedRms();
-    }
+    // Accelerometer vibration guard and vibration-aware covariance: the
+    // shared seastate::common::AccelVibrationConditioning API.
 
     void setAdaptEverySecs(float s) { if (s >= 0.0f && std::isfinite(s)) adapt_every_secs_ = s; }
     void setTauScaledPseudoCadence(bool on) { tau_scaled_pseudo_cadence_ = on; applyPseudoCadence_(); }
@@ -583,30 +500,8 @@ public:
 
 private:
     void beginMagAcquisition_() {
-        ::MagAutoTuner::Config mag_cfg;
-        mag_cfg.mag_norm_min             = cfg_.mag_init_min_mag_norm;
-        mag_cfg.min_samples              = cfg_.mag_min_samples;
-        mag_cfg.min_window_sec           = cfg_.mag_min_window_sec;
-        mag_cfg.max_window_sec           = cfg_.mag_max_window_sec;
-        mag_cfg.sample_dt_sec            = cfg_.mag_sample_dt_sec;
-        mag_cfg.gravity_ref              = cfg_.gravity_magnitude;
-        mag_cfg.enable_quality_weighting = cfg_.mag_enable_quality_weighting;
-        mag_cfg.estimate_hard_iron       = cfg_.mag_estimate_hard_iron;
-        mag_cfg.min_effective_weight     = cfg_.mag_min_effective_weight;
-        mag_cfg.acc_norm_rel_soft        = cfg_.mag_acc_norm_rel_soft;
-        mag_cfg.gyro_soft_dps            = cfg_.mag_gyro_soft_dps;
-        mag_auto_tuner_.setConfig(mag_cfg);
-
-        ContinuousMagHardIronEstimator::Config hi_cfg;
-        hi_cfg.memory_sec           = cfg_.mag_hi_memory_sec;
-        hi_cfg.model_ridge          = cfg_.mag_hi_model_ridge;
-        hi_cfg.model_ridge_relative = cfg_.mag_hi_model_ridge_relative;
-        hi_cfg.min_information      = cfg_.mag_hi_min_information;
-        hi_cfg.min_effective_weight = cfg_.mag_hi_min_effective_weight;
-        hi_cfg.max_residual_rms_uT  = cfg_.mag_hi_max_residual_rms_uT;
-        hi_cfg.max_bias_fraction    = cfg_.mag_hi_max_bias_fraction;
-        hi_cfg.min_mag_norm_uT      = cfg_.mag_init_min_mag_norm;
-        mag_hi_estimator_.setConfig(hi_cfg);
+        mag_auto_tuner_.setConfig(::seastate::common::magAutoTunerConfig(cfg_));
+        hard_iron_.configure(cfg_);
 
         mag_reference_learned_ = false;
         mag_world_ref_valid_ = false;
@@ -614,23 +509,14 @@ private:
         mag_proxy_yaw_offset_rad_ = 0.0f;
         have_mag_proxy_gauge_ = false;
         mag_hard_iron_body_uT_.setZero();
-        mag_hi_startup_body_uT_.setZero();
-        mag_hi_applied_body_uT_.setZero();
-        mag_hi_anchor_bias_body_uT_.setZero();
-        mag_hi_anchor_world_ref_uT_.setZero();
-        mag_hi_anchored_ = false;
+        hard_iron_.resetApplied();
         mag_refine_started_ = false;
         mag_refine_done_ = false;
         mag_refine_time_sec_ = NAN;
         mag_north_lock_time_sec_ = NAN;
         mag_init_eligible_t0_ = NAN;
         last_mag_sample_t_ = NAN;
-        last_hi_sample_t_ = NAN;
-        last_hi_apply_t_ = NAN;
-        gravity_gate_acc_world_lpf_.reset();
-        gravity_gate_world_elapsed_sec_ = 0.0f;
-        proxy_gravity_good_sec_ = 0.0f;
-        proxy_gravity_aligned_branch_ = false;
+        gravity_gate_.reset();
         last_acc_body_.setZero();
         last_gyro_body_.setZero();
         have_last_imu_ = false;
@@ -660,30 +546,15 @@ private:
         return Vector3f::Zero();
     }
 
+    // Vibration inflation of the stage base.  No low-wave noise weighting
+    // here (unlike the OU wrappers), and nothing runs with a zero gain.
     void applyRaccVibrationInflation_() {
         if (!(racc_vibration_gain_ > 0.0f)) return;
 
         const Vector3f base = raccBaseStd_();
         if (!(base.minCoeff() > 0.0f)) return;
 
-        const float excess = accel_guard_.excessRms();
-        if (!(excess > 0.0f)) {
-            // Hand the base back once on the way down, then stay quiet, so a
-            // dormant guard leaves the stage logic's covariance untouched.
-            if (racc_inflated_) {
-                mekf_.set_Racc_std(base);
-                racc_effective_ = base;
-                racc_inflated_ = false;
-            }
-            return;
-        }
-
-        const float added = racc_vibration_gain_ * excess;
-        const Vector3f effective =
-            (base.array().square() + added * added).sqrt().matrix();
-        mekf_.set_Racc_std(effective);
-        racc_effective_ = effective;
-        racc_inflated_ = true;
+        commandRaccStd_(mekf_, base, Vector3f::Ones());
     }
 
     void enterLive_() {
@@ -829,7 +700,7 @@ private:
                   + cfg_.mag_tilt_fallback_sec
             : 0.0f;
         const float timeout_sec = std::max(cfg_.proxy_startup_timeout_sec, mag_acquire_deadline);
-        const bool timed_out = (elapsed_sec_ >= timeout_sec) && proxy_gravity_aligned_branch_;
+        const bool timed_out = (elapsed_sec_ >= timeout_sec) && gravity_gate_.aligned_branch;
 
         if (!timed_out) {
             if (!vertical_complementary_.isReady()) return;
@@ -881,7 +752,7 @@ private:
             Eigen::Quaternionf q_north;
             float gauge;
             if (northFrameForMag_(mag_body - mag_hard_iron_body_uT_, q_north, gauge)) {
-                mag_proxy_yaw_offset_rad_ = wrapPi_(-gauge);
+                mag_proxy_yaw_offset_rad_ = ::seastate::common::wrapPi(-gauge);
             }
         }
         maybeRefineMagReference_(mag_body);
@@ -892,9 +763,8 @@ private:
     }
 
     void learnMagReferenceWindowed_(const Vector3f& mag_body) {
-        const float dt_mag = (std::isfinite(last_mag_sample_t_) && elapsed_sec_ > last_mag_sample_t_)
-            ? (elapsed_sec_ - last_mag_sample_t_) : cfg_.mag_sample_dt_sec;
-        last_mag_sample_t_ = elapsed_sec_;
+        const float dt_mag = ::seastate::common::advanceSampleClock(
+            last_mag_sample_t_, elapsed_sec_, cfg_.mag_sample_dt_sec);
 
         Eigen::Quaternionf q_north;
         float sample_gauge;
@@ -914,7 +784,7 @@ private:
         const float gauge = cfg_.mag_estimate_hard_iron
             ? mag_auto_tuner_.getYawGaugeCorrectionRad() : sample_gauge;
         if (!std::isfinite(gauge)) return; // no horizontal field, no north lock
-        mag_proxy_yaw_offset_rad_ = wrapPi_(-gauge);
+        mag_proxy_yaw_offset_rad_ = ::seastate::common::wrapPi(-gauge);
         have_mag_proxy_gauge_ = true;
 
         // A missing magnetometer can let the existing timeout enter Live
@@ -924,14 +794,14 @@ private:
         if (stage_ == StartupStage::Live) {
             const Eigen::Matrix3f R = mekf_.R_bw();
             const float yaw_core = std::atan2(R(1, 0), R(0, 0));
-            mekf_.apply_world_yaw_gauge(wrapPi_(proxyMagneticYaw_(gauge) - yaw_core));
+            mekf_.apply_world_yaw_gauge(::seastate::common::wrapPi(proxyMagneticYaw_(gauge) - yaw_core));
         }
         setMagWorldRef_(ref);
 
         Vector3f hard_iron;
-        mag_hi_startup_body_uT_ = mag_auto_tuner_.getHardIronBodyUT(hard_iron)
+        hard_iron_.startup_body_uT = mag_auto_tuner_.getHardIronBodyUT(hard_iron)
             ? hard_iron : Vector3f::Zero();
-        mag_hard_iron_body_uT_ = mag_hi_startup_body_uT_ + mag_hi_applied_body_uT_;
+        mag_hard_iron_body_uT_ = hard_iron_.startup_body_uT + hard_iron_.applied_body_uT;
         mag_reference_learned_ = true;
         mag_north_lock_time_sec_ = elapsed_sec_;
     }
@@ -942,18 +812,14 @@ private:
         if (elapsed_sec_ < cfg_.mag_refine_start_sec || !have_last_imu_) return;
 
         if (!mag_refine_started_) {
-            ::MagAutoTuner::Config refine_cfg = mag_auto_tuner_.config();
-            refine_cfg.min_window_sec = cfg_.mag_refine_window_sec;
-            refine_cfg.min_samples = cfg_.mag_min_samples;
-            mag_auto_tuner_.setConfig(refine_cfg);
-            mag_auto_tuner_.reset();
+            ::seastate::common::beginMagRefinement(
+                mag_auto_tuner_, cfg_.mag_refine_window_sec, cfg_.mag_min_samples);
             mag_refine_started_ = true;
             last_mag_sample_t_ = NAN;
         }
 
-        const float dt_mag = (std::isfinite(last_mag_sample_t_) && elapsed_sec_ > last_mag_sample_t_)
-            ? (elapsed_sec_ - last_mag_sample_t_) : cfg_.mag_sample_dt_sec;
-        last_mag_sample_t_ = elapsed_sec_;
+        const float dt_mag = ::seastate::common::advanceSampleClock(
+            last_mag_sample_t_, elapsed_sec_, cfg_.mag_sample_dt_sec);
         const Vector3f mag_corrected = mag_body - mag_hard_iron_body_uT_;
         Eigen::Quaternionf q_north;
         float sample_gauge;
@@ -998,7 +864,7 @@ private:
 
     [[nodiscard]] float proxyMagneticYaw_(float gauge) const {
         const Eigen::Matrix3f R = vertical_complementary_.quaternion().toRotationMatrix();
-        return wrapPi_(std::atan2(R(1, 0), R(0, 0)) - gauge);
+        return ::seastate::common::wrapPi(std::atan2(R(1, 0), R(0, 0)) - gauge);
     }
 
     void setMagWorldRef_(const Vector3f& ref) {
@@ -1009,13 +875,13 @@ private:
         }
     }
 
+    // Raw magnetometer in the proxy's tilt frame; see
+    // ::seastate::common::ContinuousHardIronTracker::accumulate().
     void accumulateContinuousHardIron_(const Vector3f& mag_body) {
         if (!cfg_.mag_continuous_hard_iron || !usingProxyInit_()) return;
         if (!vertical_complementary_.isInitialized()) return;
-        const float dt_mag = (std::isfinite(last_hi_sample_t_) && elapsed_sec_ > last_hi_sample_t_)
-            ? (elapsed_sec_ - last_hi_sample_t_) : cfg_.mag_sample_dt_sec;
-        last_hi_sample_t_ = elapsed_sec_;
-        mag_hi_estimator_.update(dt_mag, vertical_complementary_.tiltQuaternion(), mag_body);
+        hard_iron_.accumulate(elapsed_sec_, cfg_.mag_sample_dt_sec,
+                              vertical_complementary_.tiltQuaternion(), mag_body);
     }
 
     void maybeApplyContinuousHardIron_() {
@@ -1023,87 +889,38 @@ private:
         if (!mag_reference_learned_ || stage_ != StartupStage::Live) return;
         if (cfg_.mag_refine_enabled && !mag_refine_done_) return;
         if (!mag_world_ref_valid_) return;
-        const auto& est = mag_hi_estimator_.estimate();
-        if (!est.valid) return;
 
-        if (!mag_hi_anchored_) {
-            mag_hi_anchor_bias_body_uT_ = mag_hi_applied_body_uT_;
-            mag_hi_anchor_world_ref_uT_ = mag_world_ref_uT_;
-            mag_hi_anchored_ = true;
-        }
-        const Vector3f target = cfg_.mag_hi_apply_fraction * est.bias_body_uT;
-        if (!target.allFinite()) return;
+        Vector3f ref;
+        if (!hard_iron_.slewTowardEstimate(elapsed_sec_, cfg_.mag_sample_dt_sec,
+                                           mag_world_ref_uT_,
+                                           cfg_.mag_hi_apply_fraction,
+                                           cfg_.mag_hi_slew_tau_sec,
+                                           cfg_.mag_init_min_mag_norm,
+                                           ref)) return;
 
-        const float dt_apply = (std::isfinite(last_hi_apply_t_) && elapsed_sec_ > last_hi_apply_t_)
-            ? (elapsed_sec_ - last_hi_apply_t_) : cfg_.mag_sample_dt_sec;
-        last_hi_apply_t_ = elapsed_sec_;
-        const float tau = cfg_.mag_hi_slew_tau_sec;
-        const float alpha = (std::isfinite(tau) && tau > 1.0e-3f)
-            ? (1.0f - std::exp(-dt_apply / tau)) : 1.0f;
-        const Vector3f applied = mag_hi_applied_body_uT_ + alpha * (target - mag_hi_applied_body_uT_);
-        if (!applied.allFinite()) return;
-
-        Vector3f level_new, level_anchor;
-        if (!mag_hi_estimator_.levelReferenceForBias(applied, level_new) ||
-            !mag_hi_estimator_.levelReferenceForBias(mag_hi_anchor_bias_body_uT_, level_anchor)) return;
-
-        const float h_new = level_new.head<2>().norm();
-        const float h_anchor = level_anchor.head<2>().norm();
-        if (!std::isfinite(h_new) || !std::isfinite(h_anchor)) return;
-        const float h = mag_hi_anchor_world_ref_uT_.x() + (h_new - h_anchor);
-        const float z = mag_hi_anchor_world_ref_uT_.z() + (level_new.z() - level_anchor.z());
-        if (!(h > cfg_.mag_init_min_mag_norm) || !std::isfinite(h) || !std::isfinite(z)) return;
-
-        mag_hi_applied_body_uT_ = applied;
-        mag_hard_iron_body_uT_ = mag_hi_startup_body_uT_ + applied;
-        setMagWorldRef_(Vector3f(h, 0.0f, z));
-    }
-
-    static float wrapPi_(float a) {
-        constexpr float PI_F = 3.14159265358979323846f;
-        if (!std::isfinite(a)) return NAN;
-        while (a > PI_F) a -= 2.0f * PI_F;
-        while (a <= -PI_F) a += 2.0f * PI_F;
-        return a;
+        mag_hard_iron_body_uT_ = hard_iron_.startup_body_uT + hard_iron_.applied_body_uT;
+        setMagWorldRef_(ref);
     }
 
     void updateProxyGravityQuality_(float dt, const Vector3f& gyro, const Vector3f& acc) {
         if (!vertical_complementary_.isInitialized()) {
-            proxy_gravity_good_sec_ = 0.0f;
-            proxy_gravity_aligned_branch_ = false;
+            gravity_gate_.good_sec = 0.0f;
+            gravity_gate_.aligned_branch = false;
             return;
         }
 
-        // Match OU-III: rotate into the attitude's world frame first, then
-        // average over the wave band.  Averaging body-frame specific force
-        // makes hull roll/pitch smear the zero-mean orbital term into the gate.
-        gravity_gate_acc_world_lpf_.step(
-            ::seastate::common::accWorldFromBody(vertical_complementary_.quaternion(), acc),
-            dt, cfg_.proxy_gravity_lpf_sec);
-        gravity_gate_world_elapsed_sec_ += dt;
-
-        const Vector3f acc_world_lp = gravity_gate_acc_world_lpf_.state;
-        const bool average_warm = gravity_gate_world_elapsed_sec_ >= cfg_.proxy_gravity_warmup_sec;
-        const float sin_res = average_warm
-            ? ::seastate::common::gravityAlignResidualSinWorld(acc_world_lp)
-            : 1.0f;
-        const bool aligned_branch =
-            ::seastate::common::gravityAlignedBranchWorld(acc_world_lp);
-        proxy_gravity_aligned_branch_ = aligned_branch;
-
-        const float gyro_dps = gyro.norm() * 57.295779513f;
-        const bool extreme_motion = !std::isfinite(gyro_dps) ||
-                                    (gyro_dps > cfg_.mag_extreme_gyro_dps);
-        const bool good_now = std::isfinite(sin_res) &&
-                              (sin_res <= cfg_.proxy_gravity_align_sin) &&
-                              aligned_branch && !extreme_motion;
-        if (good_now) proxy_gravity_good_sec_ = std::min(10.0f, proxy_gravity_good_sec_ + dt);
-        else proxy_gravity_good_sec_ = std::max(0.0f, proxy_gravity_good_sec_ - 2.0f * dt);
+        // As in the OU front ends: rotate into the attitude's world frame
+        // first, then average over the wave band.  Unlike them, the attitude
+        // judged is always the proxy's, before and after handoff.
+        gravity_gate_.step(vertical_complementary_.quaternion(), acc, gyro, dt,
+                           cfg_.proxy_gravity_lpf_sec,
+                           cfg_.proxy_gravity_warmup_sec,
+                           cfg_.proxy_gravity_align_sin,
+                           cfg_.mag_extreme_gyro_dps);
     }
 
     [[nodiscard]] bool proxyGravityTrusted_() const {
-        return proxy_gravity_aligned_branch_ &&
-               (proxy_gravity_good_sec_ >= cfg_.proxy_gravity_hold_sec);
+        return gravity_gate_.trusted(cfg_.proxy_gravity_hold_sec);
     }
 
     void seedHandoffAttitudeCovariance_() {
@@ -1190,27 +1007,17 @@ private:
         mekf_.set_RS_noise(Vector3f(rs * R_S_x_factor_, rs * R_S_y_factor_, rs));
     }
 
-    struct Vec3LPF {
-        Eigen::Vector3f state = Eigen::Vector3f::Zero();
-        bool initialized = false;
-        void reset() { state.setZero(); initialized = false; }
-        Eigen::Vector3f step(const Eigen::Vector3f& x, float dt, float tau_sec) {
-            if (!x.allFinite()) return state;
-            const float tau = std::max(1.0e-3f, tau_sec);
-            const float alpha = 1.0f - std::exp(-dt / tau);
-            if (!initialized) { state = x; initialized = true; return state; }
-            state += alpha * (x - state);
-            return state;
-        }
-    };
+    using Vec3LPF = ::seastate::common::Vec3LPF;
 
-    static constexpr float kTuneFreqPriorHz = 0.2f;
-    static constexpr float kMinTuneFreqHz = 0.03f;
+    static constexpr float kTuneFreqPriorHz = defaults::TUNE_FREQ_PRIOR_HZ;
+    static constexpr float kMinTuneFreqHz = defaults::MIN_TUNE_FREQ_HZ;
+    // TFG-specific: OU-II also uses 1.5 Hz, OU-III lowered its own to 1.2 Hz.
     static constexpr float kMaxTuneFreqHz = 1.5f;
-    static constexpr float kPseudoPeriodNominalS = 0.015f;
-    static constexpr float kPseudoTauNominalS = 1.1f;
+    static constexpr float kPseudoPeriodNominalS = defaults::PSEUDO_UPDATE_PERIOD_NOMINAL_S;
+    static constexpr float kPseudoTauNominalS = defaults::PSEUDO_UPDATE_TAU_NOMINAL_S;
     static constexpr float kPseudoTauRatio = kPseudoPeriodNominalS / kPseudoTauNominalS;
-    static constexpr float kPseudoPeriodMinS = 0.005f;
+    static constexpr float kPseudoPeriodMinS = defaults::PSEUDO_UPDATE_PERIOD_MIN_S;
+    // TFG-specific upper cadence clamp (OU-II 250 ms, OU-III 150 ms).
     static constexpr float kPseudoPeriodMaxS = 0.25f;
 
     Config cfg_{};
@@ -1224,7 +1031,7 @@ private:
                                             SIGMA_BAND_MIN_HZ_DEFAULT,
                                             SIGMA_BAND_MAX_HZ_DEFAULT};
     ::MagAutoTuner mag_auto_tuner_{};
-    ContinuousMagHardIronEstimator mag_hi_estimator_{};
+    ::seastate::common::ContinuousHardIronTracker hard_iron_{};
     ::seastate::common::StartupTiltObserver bootstrap_tilt_obs_{};
     Vec3LPF bootstrap_gravity_slow_lpf_{};
     float bootstrap_gravity_good_sec_ = 0.0f;
@@ -1255,7 +1062,7 @@ private:
     float S_factor_ = 1.00f;
     float R_S_x_factor_ = 1.08f;
     float R_S_y_factor_ = 1.15f;
-    float noise_floor_sigma_ = 0.12f;
+    float noise_floor_sigma_ = defaults::ACC_NOISE_FLOOR_SIGMA;
 
     RSLaw rs_law_ = RSLaw::SpectralMSE;
     float rs_accel_noise_density_ = R_S_ACCEL_NOISE_DENSITY_DEFAULT;
@@ -1278,22 +1085,12 @@ private:
     Vector3f Racc_nominal_{Vector3f::Constant(0.5f)};
     bool     warmup_Racc_active_ = false;
 
-    // Armed in begin() at ACC_VIBRATION_GUARD_HZ_DEFAULT, and dormant until
-    // its own detector sees machinery, so an unconditioned replay is
-    // bit-identical to a guarded one.
-    seastate::tuner::AccelVibrationGuard accel_guard_{};
-    // Vibration-aware measurement covariance, armed in begin() at
-    // ACC_VIBRATION_RACC_GAIN_DEFAULT and inert until the guard sees machinery.
-    float    racc_vibration_gain_ = 0.0f;
-    bool     racc_inflated_ = false;
-    Vector3f racc_effective_{Vector3f::Zero()};
-
     float elapsed_sec_ = 0.0f;
     float live_sec_ = 0.0f;
     float mag_elapsed_sec_ = 0.0f;
     float pseudo_elapsed_ = 0.0f;
     float pseudo_period_sec_ = kPseudoPeriodNominalS;
-    float adapt_every_secs_ = 0.1f;
+    float adapt_every_secs_ = defaults::ADAPT_EVERY_SECS;
     float adapt_elapsed_sec_ = 0.0f;
     bool tune_apply_pending_ = false;
     bool tau_scaled_pseudo_cadence_ = true;
@@ -1305,10 +1102,7 @@ private:
     bool acc_bias_unlocked_ = false;
     bool acc_bias_hold_ = false;
     float live_since_sec_ = 0.0f;
-    float proxy_gravity_good_sec_ = 0.0f;
-    bool proxy_gravity_aligned_branch_ = false;
-    Vec3LPF gravity_gate_acc_world_lpf_{};
-    float gravity_gate_world_elapsed_sec_ = 0.0f;
+    ::seastate::common::WorldGravityGate gravity_gate_{};
 
     bool periodic_aw_cov_sync_ = true;
     float aw_sync_elapsed_sec_ = 0.0f;
@@ -1325,13 +1119,6 @@ private:
     float mag_refine_time_sec_ = NAN;
 
     Vector3f mag_hard_iron_body_uT_{Vector3f::Zero()};
-    Vector3f mag_hi_startup_body_uT_{Vector3f::Zero()};
-    Vector3f mag_hi_applied_body_uT_{Vector3f::Zero()};
-    Vector3f mag_hi_anchor_bias_body_uT_{Vector3f::Zero()};
-    Vector3f mag_hi_anchor_world_ref_uT_{Vector3f::Zero()};
-    bool mag_hi_anchored_ = false;
-    float last_hi_sample_t_ = NAN;
-    float last_hi_apply_t_ = NAN;
 
     Vector3f last_acc_body_{Vector3f::Zero()};
     Vector3f last_gyro_body_{Vector3f::Zero()};

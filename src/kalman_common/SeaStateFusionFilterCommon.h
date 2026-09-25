@@ -420,6 +420,51 @@ inline float adaptiveSmoothingHorizonSec(float mult,
     return seastate::tuner::limits::clampDynamicEmaHorizonSec(horizon, dt);
 }
 
+// Tilt watchdog of the OU wrappers.  It reads the MEKF attitude, so it only
+// has meaning while the MEKF is the one propagating it: past 70 deg of tilt
+// for 0.35 s it asks for a re-lock, then stays quiet for a 3 s cooldown.  The
+// over-limit timer decays at twice the rate it grows, so brief transients do
+// not trigger resets.  What a re-lock does is the wrapper's decision.
+struct TiltResetWatchdog {
+    static constexpr float TILT_RESET_DEG = 70.0f;
+    static constexpr float TILT_RESET_HOLD_SEC = 0.35f;
+    static constexpr float TILT_RESET_COOLDOWN_SEC = 3.0f;
+
+    float over_limit_sec = 0.0f;
+    float cooldown_sec   = 0.0f;
+
+    // True when a re-lock is due; the timers are already re-armed.
+    bool step(const Eigen::Quaternionf& q_bw_in, float dt) {
+        Eigen::Quaternionf q_bw = q_bw_in;
+        q_bw.normalize();
+
+        const Eigen::Vector3f z_body_down_world = q_bw * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+        const Eigen::Vector3f z_world_down(0.0f, 0.0f, 1.0f);
+
+        float cos_tilt = z_body_down_world.normalized().dot(z_world_down);
+        cos_tilt = std::max(-1.0f, std::min(1.0f, cos_tilt));
+        const float tilt_deg = std::acos(cos_tilt) * 57.295779513f;
+
+        if (cooldown_sec > 0.0f) {
+            cooldown_sec = std::max(0.0f, cooldown_sec - dt);
+        }
+
+        if (tilt_deg > TILT_RESET_DEG) {
+            over_limit_sec += dt;
+        } else {
+            // decay quickly on recovery so brief transients do not trigger resets
+            over_limit_sec = std::max(0.0f, over_limit_sec - 2.0f * dt);
+        }
+
+        if (over_limit_sec >= TILT_RESET_HOLD_SEC && cooldown_sec <= 0.0f) {
+            over_limit_sec = 0.0f;
+            cooldown_sec = TILT_RESET_COOLDOWN_SEC;
+            return true;
+        }
+        return false;
+    }
+};
+
 template<typename MekfPtr, typename EnterColdFn, typename ApplyTuneFn>
 inline void finalizeInitialization(MekfPtr& mekf, EnterColdFn&& enterCold, ApplyTuneFn&& applyTune) {
     enterCold();
