@@ -1,6 +1,6 @@
 {
   "binary_sha256": {
-    "OU_III": "e6d80467403fba8245ee4525ade1870c701a2a983a350d1ffc45e7b775420de7",
+    "OU_III": "396fdaccf47cebd6df98ad4be9922ce4d71ce2021041fbb78e992482f6d84b26",
     "TFG": "aafc419953a31cc5faafd2879365c8b06db4d00fff4e5b2630b891e4d05db31c"
   },
   "build_environment": {
@@ -18,7 +18,7 @@
     },
     "numpy": "1.26.4",
     "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
-    "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]"
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "dataset": {
     "archive": "sim-data-files-vessel-rao-28ft.zip",
@@ -36,9 +36,9 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "generated_utc": "2026-09-24T00:33:56+00:00",
-  "git_commit": "c90918eda5d6f82ec6a059064765c17aa21e1edd",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   20 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   20 +-\n reports/results/tfg_comparison/paired_summary.json | 4164 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  180 +-\n reports/results/tfg_comparison/raw_runs.json       | 1620 ++++----\n 5 files changed, 3002 insertions(+), 3002 deletions(-)",
+  "generated_utc": "2026-09-25T04:29:55+00:00",
+  "git_commit": "3b0e5529712197817b4c34986cbd6fbbde118605",
+  "git_diff_stat": "",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -154,7 +154,7 @@
     "src/kalman_common/SeaStateFusionFilterCommon.h": "f76b6266ab4f403d2cce61058a79f1fdb5bb55aab1355c62ce2adaf516d7ea9f",
     "src/kalman_ou_common/KalmanOUCoreMath.h": "609e630d78747792e596a6d6e0b165fce2a47c000e31989e3781861a1a1ad8de",
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "e38e4caaafa68cc52bd4d35bdeffc652588a312e3757dd734ddae9e3d4a21fd2",
-    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "72bffc539ea72f6320ae33feb970dd2ba9255f8e679c3e8415f7884566ca3be0",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "acd5af4864329e6c77688134d1de275a3e49acd1bd0aeefec7c0cffed209ab94",
     "src/kalman_tfg/Kalman3D_Wave_TFG.h": "abd29a57022dcd1f6fd5c50bee41a509cc99ab021810a3eb84eac27aac341532",
     "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "e7cbf48b0d0090a5e875619af8d976a0ee94fa4a4b30ba082da4fa9f7461b3a6",
     "src/lie/SO3Jacobians.h": "d18671481a90114aa2ae8c49bd6bd60fa598c281b18a9f961a04a59e5690eb1a",
@@ -188,7 +188,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "35938136030",
+    "run_id": "36092597998",
     "workflow": "build"
   }
 }
