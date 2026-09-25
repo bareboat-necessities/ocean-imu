@@ -318,8 +318,7 @@ public:
     explicit SeaStateFusionFilter_OU_II(bool with_mag = true)
         : Adaptation(Adaptation::EstimatorBounds{
               MAX_TUNE_FREQ_HZ, MIN_TAU_S, MAX_TAU_S, MAX_SIGMA_A,
-              PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT,
-              /*tau_coeff=*/0.95f, /*sigma_coeff=*/0.85f}),
+              PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT}),
           with_mag_(with_mag)
     {
         setAccelVibrationGuard(ACC_VIBRATION_GUARD_HZ_DEFAULT,
@@ -576,6 +575,14 @@ public:
         if (std::isfinite(k)) {
             R_p0_y_factor_ = std::min(std::max(k, 0.0f), 4.0f);
         }
+    }
+
+    // tau = tau_coeff * T_z/2 and sigma_aw = sigma_coeff * sigma_a,B.
+    void setTauCoeff(float c) {
+        if (std::isfinite(c) && c > 0.0f) tau_coeff_ = c;
+    }
+    void setSigmaCoeff(float c) {
+        if (std::isfinite(c) && c > 0.0f) sigma_coeff_ = c;
     }
 
     // c_p of the Empirical law.  The in-place rescale of the staged and applied
@@ -1013,7 +1020,8 @@ private:
         // This attenuation follows the statistical variance EMA.  Its horizon
         // must preserve wave energy across brief quiet intervals.
         const float sea_time_sec = measureOperatingPoint_(
-            frontEndStill_(), frontEndStillTimeSec_(), sigma_stillness_decay_sec_);
+            frontEndStill_(), frontEndStillTimeSec_(), sigma_stillness_decay_sec_,
+            tau_coeff_, sigma_coeff_);
 
         float R_p0_raw = NAN;
         float R_v0_raw = NAN;
@@ -1217,8 +1225,8 @@ private:
     float pseudo_accel_noise_density_ = R_PSEUDO_ACCEL_NOISE_DENSITY_DEFAULT;
     float pseudo_qeff_pow_ =
         std::pow(2.0f * R_PSEUDO_ACCEL_NOISE_DENSITY_DEFAULT, 0.1f);
-    // tau_coeff = 0.95 and sigma_coeff = 0.85 are passed to the shared
-    // adaptation mechanics in the constructor.
+    float tau_coeff_   = 0.95f;
+    float sigma_coeff_ = 0.85f;
 
     std::unique_ptr<Kalman3D_Wave_OU_II<float>> mekf_;
 };

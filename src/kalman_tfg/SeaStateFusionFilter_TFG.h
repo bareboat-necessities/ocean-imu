@@ -305,6 +305,10 @@ public:
         mekf_.time_update(gyro, dt);
         mekf_.measurement_update_acc_only(acc_in, tempC);
 
+        // Unlike the OU wrappers, whose MEKFs fire their own zero
+        // pseudo-measurements on set_pseudo_update_period_s(), TFG fires the
+        // S = 0 pseudo-measurement from here on an accumulated-time timer.
+        // The period is the same tau-scaled cadence (pseudoUpdatePeriodFor_).
         pseudo_elapsed_ += dt;
         if (pseudo_elapsed_ >= pseudo_period_sec_) {
             pseudo_elapsed_ = 0.0f;
@@ -941,6 +945,12 @@ private:
         P(PHI + 2, PHI + 2) = sy * sy;
     }
 
+    // TFG's own adaptation schedule: channel targets are formed from the
+    // first tuner sample (there is no Cold warmup gate on the targets), EMAs
+    // run only once Live, and the smoothed candidate is committed when an
+    // accumulated-time counter reaches adapt_every_secs_ -- where the OU
+    // wrappers compare wall time against the last commit.  Both stage the
+    // commit to the start of the next sample.
     void adaptMekf_(float dt) {
         if (!enable_tuner_ || fixed_tuning_) return;
 

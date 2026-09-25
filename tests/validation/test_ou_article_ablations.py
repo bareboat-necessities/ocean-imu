@@ -6,6 +6,8 @@ import re
 import unittest
 from pathlib import Path
 
+from wrapper_sources import estimator_layer, resolved_value, wrapper_source
+
 ROOT = Path(__file__).resolve().parents[2]
 DOC = ROOT / "doc" / "kalman_ou_iii"
 MISMATCH_RESULTS = ROOT / "reports" / "results" / "model_mismatch_ablation"
@@ -453,21 +455,23 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
         self.assertIn("float cutoff_hz_ = 0.0f;", header)
         self.assertIn("if (!enabled()", header)
 
-        filt = (ROOT / "src" / "kalman_ou_iii"
-                / "SeaStateFusionFilter_OU_III.h").read_text(encoding="utf-8")
-        self.assertIn("constexpr float ACC_VIBRATION_GUARD_HZ_DEFAULT = 14.0f;", filt)
-        self.assertIn("constexpr int   ACC_VIBRATION_GUARD_POLES_DEFAULT = 2;", filt)
-        self.assertIn("setAccelVibrationGuard(ACC_VIBRATION_GUARD_HZ_DEFAULT,", filt)
+        # The OU-III filter together with the shared headers it is built from;
+        # the arming values are one shared definition.
+        filt = wrapper_source("ou3")
+        layer = estimator_layer("ou3")
+        self.assertEqual(resolved_value(filt, "ACC_VIBRATION_GUARD_HZ_DEFAULT"), 14.0)
+        self.assertEqual(resolved_value(filt, "ACC_VIBRATION_GUARD_POLES_DEFAULT"), 2.0)
+        self.assertIn("setAccelVibrationGuard(ACC_VIBRATION_GUARD_HZ_DEFAULT,", layer)
+        self.assertEqual(resolved_value(filt, "ACC_VIBRATION_RACC_GAIN_DEFAULT"), 0.75)
         self.assertIn(
-            "constexpr float ACC_VIBRATION_RACC_GAIN_DEFAULT = 0.75f;", filt)
-        self.assertIn(
-            "setAccelVibrationRaccGain(ACC_VIBRATION_RACC_GAIN_DEFAULT);", filt)
+            "setAccelVibrationRaccGain(ACC_VIBRATION_RACC_GAIN_DEFAULT);", layer)
         # The covariance inflation must be driven by the guard's gated excess,
         # which is what keeps it inert on a quiet installation.
         self.assertIn("accel_guard_.excessRms()", filt)
 
         # One conditioning point, feeding every consumer.
-        self.assertIn("const Eigen::Vector3f acc_in = accel_guard_.step(acc, dt);", filt)
+        self.assertIn("const Eigen::Vector3f acc_in = conditionAccel_(acc, dt);", layer)
+        self.assertIn("return accel_guard_.step(acc, dt);", filt)
         self.assertIn("vertical_accel_comp_.update(dt, gyro, acc_in, gravity_mps2_);", filt)
         self.assertIn("mekf_->measurement_update_acc_only(acc_in, tempC);", filt)
         self.assertNotIn("measurement_update_acc_only(acc,", filt)
@@ -482,23 +486,24 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
         only one of them would leave the other two shipping the defect.
         """
 
-        for family, path, mekf, gravity in (
-            ("OU-II",
-             ROOT / "src" / "kalman_ou_ii" / "SeaStateFusionFilter_OU_II.h",
+        for family, key, mekf, gravity in (
+            ("OU-II", "ou2",
              "mekf_->measurement_update_acc_only(acc_in, tempC);",
              "vertical_accel_comp_.update(dt, gyro, acc_in, gravity_mps2_);"),
-            ("TFG",
-             ROOT / "src" / "kalman_tfg" / "SeaStateFusionFilter_TFG.h",
+            ("TFG", "tfg",
              "mekf_.measurement_update_acc_only(acc_in, tempC);",
              "vertical_complementary_.update(dt, gyro, acc_in, cfg_.gravity_magnitude);"),
         ):
             with self.subTest(family=family):
-                filt = path.read_text(encoding="utf-8")
-                # Same corner, same cascade, same covariance gain as OU-III.
-                for name, value in (("ACC_VIBRATION_GUARD_HZ_DEFAULT", "14.0f"),
-                                    ("ACC_VIBRATION_GUARD_POLES_DEFAULT", "2"),
-                                    ("ACC_VIBRATION_RACC_GAIN_DEFAULT", "0.75f")):
-                    self.assertRegex(filt, rf"constexpr \S+ +{name} +=  *{re.escape(value)};")
+                filt = wrapper_source(key)
+                # Same corner, same cascade, same covariance gain as OU-III:
+                # every family reads the one shared definition.
+                for name, shared, value in (
+                        ("ACC_VIBRATION_GUARD_HZ_DEFAULT", "ACC_VIBRATION_GUARD_HZ", 14.0),
+                        ("ACC_VIBRATION_GUARD_POLES_DEFAULT", "ACC_VIBRATION_GUARD_POLES", 2.0),
+                        ("ACC_VIBRATION_RACC_GAIN_DEFAULT", "ACC_VIBRATION_RACC_GAIN", 0.75)):
+                    self.assertRegex(filt, rf"{name}\s*=\s*(::)?(seastate::common::)?defaults::{shared};")
+                    self.assertEqual(resolved_value(filt, name), value)
                 # Armed rather than merely available.
                 self.assertIn("setAccelVibrationGuard(", filt)
                 self.assertIn("setAccelVibrationRaccGain(", filt)
@@ -506,6 +511,7 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
                 # it inert on a quiet installation.
                 self.assertIn("accel_guard_.excessRms()", filt)
                 # One conditioning point ahead of the whole attitude loop.
+                self.assertIn("conditionAccel_(acc, dt);", filt)
                 self.assertIn("accel_guard_.step(acc, dt);", filt)
                 self.assertIn(gravity, filt)
                 self.assertIn(mekf, filt)

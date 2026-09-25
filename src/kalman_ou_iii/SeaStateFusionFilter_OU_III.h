@@ -304,8 +304,7 @@ public:
     explicit SeaStateFusionFilter_OU_III(bool with_mag = true)
         : Adaptation(Adaptation::EstimatorBounds{
               MAX_TUNE_FREQ_HZ, MIN_TAU_S, MAX_TAU_S, MAX_SIGMA_A,
-              PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT,
-              /*tau_coeff=*/1.0f, /*sigma_coeff=*/0.9f}),
+              PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT}),
           with_mag_(with_mag)
     {
         setAccelVibrationGuard(ACC_VIBRATION_GUARD_HZ_DEFAULT,
@@ -574,6 +573,14 @@ public:
         if (std::isfinite(k)) {
             R_S_y_factor_ = std::min(std::max(k, 0.0f), 4.0f);
         }
+    }
+
+    // tau = tau_coeff * T_z/2 and sigma_aw = sigma_coeff * sigma_a,B.
+    void setTauCoeff(float c) {
+        if (std::isfinite(c) && c > 0.0f) tau_coeff_ = c;
+    }
+    void setSigmaCoeff(float c) {
+        if (std::isfinite(c) && c > 0.0f) sigma_coeff_ = c;
     }
 
     // C_R of the Cubic law.  The in-place rescale keeps the staged and applied
@@ -1106,7 +1113,8 @@ private:
         // the stillness detector reports still water.
         constexpr float STILL_VAR_DECAY_SEC = 1.0f;
         const float sea_time_sec = measureOperatingPoint_(
-            frontEndStill_(), frontEndStillTimeSec_(), STILL_VAR_DECAY_SEC);
+            frontEndStill_(), frontEndStillTimeSec_(), STILL_VAR_DECAY_SEC,
+            tau_coeff_, sigma_coeff_);
 
         // r_S is derived from the *live* tau and sigma_a estimates, before any
         // channel freeze is applied below.  Deriving it from frozen values
@@ -1362,9 +1370,11 @@ private:
     // The three adaptation coefficients of Eq. (adapt-three-layer-summary):
     //     tau      = tau_coeff * T_z / 2
     //     sigma_aw = sigma_coeff * sigma_a,B
-    //     r_S,base = R_S_coeff * sqrt(R_a) * tau^3
+    //     r_S,base = R_S_coeff * sqrt(R_a) * tau^3        (Cubic law)
     // tau_coeff = 1 is the documented intent, tau equal to half the
-    // zero-crossing period.
+    // zero-crossing period.  R_S_coeff is the coefficient of the Cubic law
+    // (and the anchor of the Riccati tilt); the deployed SpectralMSE law uses
+    // C_J = rs_mse_coeff_ instead.
     //
     // R_S_coeff is C_R, and it is not a bare gain: by Eq. (adapt-cR-kappa) it
     // places the normalized regularizer corner, kappa = omega_R tau =
@@ -1385,8 +1395,8 @@ private:
     // of pitch; the band-matching prediction c_sigma = F_OU^(-1/2) ~ 1.80 is
     // significantly worse on the vertical endpoint, if only by 0.037 %Hs.
     float R_S_coeff_    = R_S_COEFF_ANALYTICAL_REFERENCE;
-    // tau_coeff = 1.0 and sigma_coeff = 0.9 are passed to the shared
-    // adaptation mechanics in the constructor.
+    float tau_coeff_    = 1.0f;
+    float sigma_coeff_  = 0.9f;
 
     std::unique_ptr<Kalman3D_Wave_OU_III<float>>  mekf_;
 };

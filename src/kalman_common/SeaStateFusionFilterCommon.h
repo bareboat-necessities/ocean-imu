@@ -374,8 +374,11 @@ inline DetrenderConfig defaultDisplacementDetrenderConfig(float freq_guess_hz) {
 }
 
 // Smoothing horizon for a drift-correction channel whose target is a power law
-// in the OU operating point (r_S ~ sigma_aw tau^3, r_p0 ~ sigma_aw tau^2,
-// r_v0 ~ sigma_aw tau).  Those targets are rebuilt every step from the raw
+// in the OU operating point (deployed: OU-III/TFG SpectralMSE
+// r_S ~ sigma_a^(6/7) tau^(24/7) T_S^(-1/2) and OU-II PhysicalMSE
+// r_p ~ sigma_a^(4/5) tau^(12/5) T_S^(-1/2), r_v = r_p/(ratio tau); legacy:
+// cubic r_S ~ tau^3 and empirical r_p0 ~ sigma_aw tau^2, r_v0 ~ sigma_aw tau).
+// Those targets are rebuilt every step from the raw
 // tuner estimates, so the channel needs an exponential smoother that its
 // inputs do not already provide.
 //

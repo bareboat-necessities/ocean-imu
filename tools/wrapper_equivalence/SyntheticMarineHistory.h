@@ -34,7 +34,7 @@ struct Lcg {
     explicit Lcg(uint64_t seed) : s(seed) {}
     double uniform() {
         s = s * 6364136223846793005ULL + 1442695040888963407ULL;
-        return (double)((s >> 11) + 1) / 9007199254740994.0;
+        return static_cast<double>((s >> 11) + 1) / 9007199254740994.0;
     }
     double gauss() {
         const double u1 = uniform(), u2 = uniform();
@@ -68,8 +68,8 @@ public:
     }
 
     bool next(Sample& out) {
-        if (k_ * cfg_.dt > cfg_.duration_sec) return false;
-        const double t = (k_ + 1) * cfg_.dt;
+        if (static_cast<double>(k_) * cfg_.dt > cfg_.duration_sec) return false;
+        const double t = static_cast<double>(k_ + 1) * cfg_.dt;
         const Eigen::Quaterniond q = attitude_(t);
         // Body rate from consecutive attitudes: q_{k+1} = q_k * exp(w dt / 2).
         const Eigen::Quaterniond dq = q_prev_.conjugate() * q;

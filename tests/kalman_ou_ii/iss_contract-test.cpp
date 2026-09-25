@@ -7,8 +7,10 @@
 #include <Eigen/Geometry>
 
 #define private public
+#define protected public
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
 #undef private
+#undef protected
 
 const float g_std = 9.80665f;
 

@@ -57,8 +57,6 @@ public:
         float max_tau_s;
         float max_sigma_a;
         float pseudo_update_period_max_s;
-        float tau_coeff;
-        float sigma_coeff;
     };
 
     explicit SeaStateAdaptationCommon(const EstimatorBounds& b)
@@ -66,9 +64,7 @@ public:
           min_tau_s_(b.min_tau_s),
           max_tau_s_(b.max_tau_s),
           max_sigma_a_(b.max_sigma_a),
-          pseudo_update_period_max_s_(b.pseudo_update_period_max_s),
-          tau_coeff_(b.tau_coeff),
-          sigma_coeff_(b.sigma_coeff) {}
+          pseudo_update_period_max_s_(b.pseudo_update_period_max_s) {}
 
     StartupStage getStartupStage() const noexcept { return startup_stage_; }
     bool isAdaptiveLive() const noexcept { return startup_stage_ == StartupStage::Live; }
@@ -79,13 +75,6 @@ public:
     bool isTunerReady() const noexcept {
         return startup_stage_ == StartupStage::TunerReady ||
                startup_stage_ == StartupStage::Live;
-    }
-
-    void setTauCoeff(float c) {
-        if (std::isfinite(c) && c > 0.0f) tau_coeff_ = c;
-    }
-    void setSigmaCoeff(float c) {
-        if (std::isfinite(c) && c > 0.0f) sigma_coeff_ = c;
     }
 
     void setAccNoiseFloorSigma(float s) {
@@ -147,8 +136,8 @@ public:
     }
 
     // Common tau/sigma EMA horizon as a fraction/multiple of measured
-    // T_sea = T_z/2.  This changes only averaging memory; tau_coeff_,
-    // sigma_coeff_, the sigma variance K-period horizon, and the estimator's
+    // T_sea = T_z/2.  This changes only averaging memory; the operating-point
+    // coefficients, the sigma variance K-period horizon, and the estimator's
     // own regularizer horizons are untouched.
     void setAdaptationSeaPeriods(float periods) {
         if (std::isfinite(periods) && periods > 0.0f) {
@@ -291,14 +280,17 @@ protected:
         return true;
     }
 
-    // Operating-point targets tau_target_ and sigma_target_ from the tuner.
+    // Operating-point targets tau_target_ = tau_coeff T_z/2 and
+    // sigma_target_ = sigma_coeff sigma_a,B from the tuner.
     //
-    // still_decay_sec is the time constant with which the wave variance is
-    // attenuated while the stillness detector reports still water; it is an
-    // estimator-specific choice.  Returns the measured sea time
-    // T_sea = T_z/2 the tau/sigma EMA is scaled by.
+    // The two coefficients and still_decay_sec -- the time constant with
+    // which the wave variance is attenuated while the stillness detector
+    // reports still water -- are estimator-specific fits and are passed in by
+    // each wrapper.  Returns the measured sea time T_sea = T_z/2 the tau/sigma
+    // EMA is scaled by.
     float measureOperatingPoint_(bool is_still, float still_time_sec,
-                                 float still_decay_sec) {
+                                 float still_decay_sec,
+                                 float tau_coeff, float sigma_coeff) {
         // The tuning frequency is a wave-band quantity and is bounded by the
         // wave band, not by the tracker's bounds: a developed sea has
         // T_z = 8.6 s, i.e. 0.12 Hz, well under the 0.2 Hz the tracker is
@@ -328,11 +320,11 @@ protected:
 
         var_wave = std::max(var_wave, 1e-6f);
         float sigma_wave = std::sqrt(var_wave);
-        float tau_raw = tau_coeff_ * 0.5f / f_tune;
+        float tau_raw = tau_coeff * 0.5f / f_tune;
 
         if (enable_clamp_) {
             tau_target_   = std::min(std::max(tau_raw, min_tau_s_), max_tau_s_);
-            sigma_target_ = std::min(sigma_wave * sigma_coeff_, max_sigma_a_);
+            sigma_target_ = std::min(sigma_wave * sigma_coeff, max_sigma_a_);
         } else {
             tau_target_   = tau_raw;
             sigma_target_ = sigma_wave;
@@ -469,11 +461,6 @@ protected:
     float sigma_target_ = NAN;
 
     float acc_noise_floor_sigma_ = defaults::ACC_NOISE_FLOOR_SIGMA;
-
-    // tau = tau_coeff * T_z/2 and sigma_aw = sigma_coeff * sigma_a,B; the
-    // values are estimator-specific fits documented in each wrapper.
-    float tau_coeff_;
-    float sigma_coeff_;
 };
 
 }  // namespace seastate::common

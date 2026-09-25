@@ -46,8 +46,10 @@
 // including ones with no public setter, so that no dependence can hide in the
 // states the public API happens not to expose.
 #define private public
+#define protected public
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 #undef private
+#undef protected
 
 namespace {
 
@@ -202,7 +204,7 @@ bool test_leveled_ablation_coupling_stays_bounded() {
     run(nominal, SETTLE, AFTER);
     run(displaced, SETTLE, AFTER);
 
-    ok &= check(displaced.tilt_over_limit_sec_ == 0.0f,
+    ok &= check(displaced.tilt_watchdog_.over_limit_sec == 0.0f,
                 "the tilt gate must not arm, or this measures the gate not the loop");
 
     const float ratio = displaced.getTauTarget() / nominal.getTauTarget();

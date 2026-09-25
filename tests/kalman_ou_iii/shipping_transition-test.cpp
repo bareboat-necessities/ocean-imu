@@ -6,8 +6,10 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #define private public
+#define protected public
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 #undef private
+#undef protected
 
 const float g_std=9.80665f;
 using Filter=SeaStateFusionFilter_OU_III<TrackerType::KALMANF>;
