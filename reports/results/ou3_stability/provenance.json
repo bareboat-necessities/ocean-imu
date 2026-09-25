@@ -5,39 +5,39 @@
   "authoritative_shipping_sources": [
     {
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "git_blob_sha": "f7aaefdbcdc683fc4d82eda0726380e4e90010f5"
+      "git_blob_sha": "2d34d8f27741a50021a8d596391107a73ac58bc0"
     },
     {
       "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
-      "git_blob_sha": "d69363ddddd2a6d7c0fd8c8c27008d192d3ba446"
+      "git_blob_sha": "91b8260b23ab19f0c25fe0c8d90a7f34ced16d07"
     },
     {
       "path": "src/kalman_common/SeaStateFusionDefaults.h",
-      "git_blob_sha": "d13271d5afcd87c6641c4f25f8f6bf794e2fd938"
+      "git_blob_sha": "fee003cf975ad1fbcc33fd9bc094bd0ee640d932"
     },
     {
       "path": "src/kalman_common/SeaStateOUFamilyDefaults.h",
-      "git_blob_sha": "e450506a3d72db986c772f3f44ebf7202bf5c9bf"
+      "git_blob_sha": "a5eafeeaab2e3ae47b6cc979a6ff4ceafb2dd9d3"
     },
     {
       "path": "src/kalman_common/AccelVibrationConditioning.h",
-      "git_blob_sha": "0f8a88fa3533e22a4b5a38679e5a9333b70ba2f4"
+      "git_blob_sha": "858ebe7de22dd73cec42c1778523b828046fd342"
     },
     {
       "path": "src/kalman_common/MarineWaveFrontEnd.h",
-      "git_blob_sha": "7771c37a0304c1c3bb29d7bd89e56751ca3031c2"
+      "git_blob_sha": "9bdb44c2a6b00466e528b714153884e4426f7bbf"
     },
     {
       "path": "src/kalman_common/SeaStateAdaptationCommon.h",
-      "git_blob_sha": "1f8b0a009ffd60cd5f5c5b0515ca04a085d4bd6f"
+      "git_blob_sha": "2c756c457bae810b4f82b412eb6f31334097a903"
     },
     {
       "path": "src/kalman_common/ProxyStartupFusion.h",
-      "git_blob_sha": "b8a9dd68aa05973507eb40a31efcdef36f6427a0"
+      "git_blob_sha": "742843dc47a916cdd77b154fc05574bdcb2859c7"
     },
     {
       "path": "src/kalman_common/MagneticStartupCommon.h",
-      "git_blob_sha": "5f4632c931f3490174a40c2e1e8a6b03f1301b55"
+      "git_blob_sha": "da00c8831719b80026321605965fbbc6f26bc1aa"
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
@@ -172,7 +172,7 @@
     },
     {
       "path": "src/kalman_ou_common/KalmanOUCoreMath.h",
-      "git_blob_sha": "1f1983f3639b4db63c12a3504ff05a9f48eafded"
+      "git_blob_sha": "69076042082137ab922378081566635ec17c12c7"
     },
     {
       "path": "tools/stability/ou3_theorem/lin_path_certificate.py",
@@ -260,7 +260,7 @@
     },
     {
       "path": "src/tuner/WavePeriodEstimator.h",
-      "git_blob_sha": "91783dc4ff43471df1d5a2b570b4f4068b9fddc4"
+      "git_blob_sha": "e507994faacb3de69ac8069013067cf9b35d8127"
     },
     {
       "path": "tools/stability/ou3_theorem/sampled_capture_obstruction.py",
@@ -280,15 +280,15 @@
     },
     {
       "path": "src/tuner/MagAutoTuner.h",
-      "git_blob_sha": "52d9669434bb7377a33c78636feef51e42caa3e9"
+      "git_blob_sha": "a1ccc503d3ae0623545e8e005e790d1f90f62a42"
     },
     {
       "path": "src/tuner/ContinuousMagHardIronEstimator.h",
-      "git_blob_sha": "c5bdc9c1a20188a206997f66b6c3e8ded2491aef"
+      "git_blob_sha": "8c53e63344e3532a7231195f51fc0e75549abcff"
     },
     {
       "path": "src/kalman_common/SeaStateFusionFilterCommon.h",
-      "git_blob_sha": "0a96e48c07880de75f83b1bb6d029954037dc277"
+      "git_blob_sha": "c8650e4314c1109bf75f99eb1c5e23d39141fc43"
     },
     {
       "path": "tools/stability/ou3_theorem/sampling_fidelity.py",
@@ -364,7 +364,7 @@
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "git_blob_sha": "817f1cb33af7154ce33a18f11f41e84aa9f4efb4"
+      "git_blob_sha": "a69f9c3f1baa2708c97c197016dffdca34cd7357"
     },
     {
       "path": "tests/validation/test_ou3_construction_mean_action.py",

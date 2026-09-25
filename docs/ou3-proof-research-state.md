@@ -10,6 +10,27 @@ remain. General physical capture and the complete stability theorem are open.
 
 ## Evidence
 
+### Byte-exact proof provenance
+
+The standalone provenance gate and shared evidence suite report the same
+15 failures: 14 shipping-source Git blob bindings and the construction mean
+action's instrumented-header SHA-256. Classification: stale byte-exact
+provenance after comment/copyright edits, not a numerical or mathematical
+failure. The hypothesis that comment-only edits preserve file fingerprints is
+invalid. Comparing the pre-edit and post-edit sources verifies identical
+non-comment C++ token streams in all 54 changed source files, including the
+instrumented header. Native pre-edit and post-edit observer traces also match
+byte-for-byte under the same local toolchain; they do not replace the original
+CI trace. Refresh only the affected bindings and the containing
+mean-action artifact's Git blob hash. Retain the original replay trace hash,
+observer hash, exact enclosure, numerical certificates, historical base commit,
+quality gates and open theorem status. Regression tests require stale shipping,
+helper, document, artifact and instrumented-header bindings to fail closed.
+The current limiter is fresh CI validation of both consumers; source equivalence
+does not close the same-history covariance action or end-to-end theorem. The
+next falsifiable check is the unchanged standalone provenance gate plus the
+complete shared evidence suite against genuinely regenerated CI replay bundles.
+
 ### CI/source-contract boundary
 
 The evidence commit job failed at `test_first_sample_geometry_and_invalid_inputs`
