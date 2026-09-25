@@ -56,8 +56,11 @@
     Not estimated in this sketch. The observer carries its own gyro-bias
     state driven by the integral gain kI, and snapshot().tvg.gyro_bias_b is
     that estimate; it is what the rate-of-turn output below is corrected
-    with. The adapter seeds it from the mean gyro rate if the device is still
-    during the startup bootstrap, so boot the device still where practical.
+    with. The adapter seeds it from the mean gyro rate, and the observer's
+    fixed accelerometer bias from the residual along gravity, if the device
+    is still during the startup bootstrap; without those seeds the first
+    minutes of heave swing by metres, so boot the device still where
+    practical.
     A separate stillness-gated bias average during operation, as used by the
     Kalman and PII sketches, would fight it.
 */
@@ -786,7 +789,8 @@ class FusionApp {
                           // stillness-gated learning phase to report.
                           nlo_initialized_,
                           // TimeVaryingGainNLO carries no accelerometer-bias
-                          // state.
+                          // state; the adapter only seeds a fixed value at a
+                          // still startup.
                           false,
                           rates_.imuHz(),
                           rates_.magHz());
