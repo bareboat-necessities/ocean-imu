@@ -29,7 +29,7 @@ MEKF lever-arm Jacobian in Sec.~\ref{sec:measurement_model}.
 \IfFileExists{ou3_lever_arm_tilt.svg}{%
 \begin{figure}[t]\centering
 \includesvg[width=\columnwidth,inkscapelatex=false]{ou3_lever_arm_tilt}
-\caption{Pooled maximum roll/pitch RMS normalized by the CG baseline. The generated table reports the measured ratios; small or negative changes can reflect interaction with existing residuals.}\label{fig:imu-lever-arm-tilt}
+\caption{Pooled maximum roll/pitch RMS normalized by the CG baseline. Small or negative changes can reflect interaction with existing residuals.}\label{fig:imu-lever-arm-tilt}
 \end{figure}
 }{}
 
