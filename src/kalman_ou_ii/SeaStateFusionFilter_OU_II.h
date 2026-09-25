@@ -33,11 +33,11 @@
           r_p = C_P q_eff^(1/10) σ_a,B^(4/5) τ^(12/5) / sqrt(T_S),
           r_v = r_p / (ratio · τ),
       with T_S = c_T τ the self-similar pseudo-measurement cadence.  The
-      historical Empirical law r_p0 ~ σ_aw τ², r_v0 ~ σ_aw τ remains
+      Empirical law r_p0 ~ σ_aw τ², r_v0 ~ σ_aw τ is also
       selectable.
 
   Where
-  – τ (tau):  OU process time constant = ½ · T_z, half the zero-crossing period
+  – τ (tau):  OU process time constant = c_τ · T_z/2, scaled from the zero-crossing period
               of the surface elevation as estimated by WavePeriodEstimator.
               It is deliberately *not* half the dominant period of acceleration:
               an ocean acceleration spectrum is the elevation spectrum weighted
@@ -69,12 +69,12 @@
   and in everything that follows from it, which is what this header contains:
   the dual-channel PhysicalMSE law and its covariance commits, the p/v
   smoothing horizons, and the estimator-specific bounds (T_S,max = 250 ms here
-  against OU-III's 150 ms, τ-ceiling of the tuning frequency 1.5 Hz against
+  against OU-III's 150 ms, tuning-frequency ceiling 1.5 Hz against
   1.2 Hz, σ_aw ceiling 6 against 4, a configurable 5 s still-water decay
   against OU-III's fixed 1 s).
 
   Only the Empirical law is renormalized by sqrt(T_0/T_S) to hold the
-  historical 15 ms information rate; PhysicalMSE is derived on the continuous
+  nominal 15 ms information rate; PhysicalMSE is derived on the continuous
   densities ρ = r² T_S and already contains the realized cadence.
 
   Features
@@ -109,29 +109,17 @@
 // not move the OU operating point.  Neither bound binds on any reference
 // record -- the wave band spans 0.12 to 0.40 Hz -- so this is a safety limit,
 // not a tuning surface.  1.5 Hz is a 0.67 s zero-crossing period, shorter than
-// any sea a hull responds to.  OU-III lowered its own ceiling to 1.2 Hz.
+// the periods in the reference records.  OU-III uses a 1.2 Hz ceiling.
 constexpr float MAX_TUNE_FREQ_HZ = 1.5f;
 
 constexpr float MIN_TAU_S     = 0.02f;  // sec
-// tau now scales with the zero-crossing wave period rather than with an
-// acceleration-band frequency, so the ceiling has to admit a developed sea:
-// T_z reaches 8.6 s at H_s = 8.5 m and a long swell goes further.  The old
-// 3.0 s ceiling was reached at H_s = 8.5 m, which clipped the operating point
-// exactly where the filter was losing.
+// The tau ceiling admits developed seas and long swell when tuning from
+// the zero-crossing wave period.
 constexpr float MAX_TAU_S     = 12.0f;  // sec
 constexpr float MAX_SIGMA_A   = 6.0f;
-// r_p0 ~ sigma_aw * tau^2 and r_v0 ~ sigma_aw * tau inherit that range.  The
-// old 18 m ceiling on r_p0 was the binding constraint at H_s = 8.5 m: the
-// calibrated point sat exactly on it.  At the wave-band operating point the
-// largest deployed values on the reference records are r_p0 = 20 m and
-// r_v0 = 8.6 m/s at H_s = 8.5 m, so these ceilings sit five to seven times
-// above the working range and act as saturation safeguards, not as tuning.
-//
-// regularizer_floor-test asks the *deployed* law whether these still hold.
-// Under PhysicalMSE the near-still stress case asks for r_p0 = 0.070 m against
-// this 0.05 floor, where the Empirical schedule asked 0.058 m, so the deployed
-// law clears the floor by more than the one it replaced and the clamps are
-// unchanged.
+// Saturation safeguards for the position and velocity pseudo-measurement
+// standard deviations, in m and m/s respectively.  regularizer_floor-test
+// checks that the deployed law stays clear of the floors on its stress cases.
 constexpr float MIN_R_p0_std  = 0.05f;
 constexpr float MAX_R_p0_std  = 150.0f;
 constexpr float MIN_R_v0_std  = 0.01f;
@@ -260,8 +248,7 @@ constexpr float R_PSEUDO_MSE_RATIO_DEFAULT = 0.5f;
 // the reduced model that drops all three from its *dynamics* still needs their
 // intensity here.  OU-III's SpectralMSE law uses the bench figure legitimately,
 // because its strong-observation branch is a statement about the sensor; the
-// OU-II objective is not, and using the bench figure here was a
-// misidentification the calibration sweep caught.
+// OU-II objective instead includes the additional residual-error sources.
 //
 // The filter already carries a measured estimate of the right quantity:
 // ACC_NOISE_FLOOR_SIGMA_DEFAULT, the pre-band vertical acceleration noise
@@ -269,7 +256,7 @@ constexpr float R_PSEUDO_MSE_RATIO_DEFAULT = 0.5f;
 // the bench 0.0148 m/s^2.  Referring the law to it moves the schedule by
 // (0.12/0.0148)^(1/5) = 1.52, and the eight-record scale sweep puts the
 // complete-MEKF vertical optimum within 3 % of exactly that.  So the
-// analytical C_P is deployed as derived, and this constant is what changed.
+// noise density and C_P serve distinct roles in the deployed law.
 //
 // It is a separate knob rather than a live read of acc_noise_floor_sigma_, so
 // that the sweep axis stays clean and so that q stays sea-state independent,
@@ -669,7 +656,7 @@ public:
 
     // Self-similar drift-regularizer pseudo-measurement cadence
     // T_S = c_T * tau_applied.  Enabled by default; disabling restores the
-    // historical fixed 15 ms cadence for direct old-versus-new ablation.
+    // fixed 15 ms cadence for ablation.
     // Whenever the cadence changes while Live, reapply r_p0 and r_v0 so their
     // per-update covariances stay information-rate matched.
     void setTauScaledPseudoUpdateCadence(bool flag) {
@@ -925,7 +912,7 @@ private:
     // set_Rp0_noise_std()/set_Rv0_noise_std() accept standard deviations, so one
     // pseudo update has covariance r^2.  With updates every T_S seconds, the
     // continuous-equivalent information rate is proportional to 1/(r^2 T_S).
-    // The Empirical law preserves the historical 15 ms information rate by
+    // The Empirical law preserves the nominal 15 ms information rate by
     // normalizing the filter-input standard deviations:
     //     r_filter = r_base * sqrt(T_0/T_S).
     // The base tuner values remain clamped to their configured bounds.  Do not
@@ -1154,17 +1141,7 @@ private:
 
 
     // Per-axis horizontal p-regularization scale, against the vertical one.
-    // These were a single scalar until the split; the history below is that
-    // scalar's, and both axes start from the same value.
-    //
-    // 0.31 was fitted against the acceleration-band operating point, where it
-    // made the horizontal high-pass 3.2x stronger than the vertical one.  That
-    // was a small-sea optimum applied to every sea state; with tau tied to the
-    // wave band, 1.0 took about 10 percent off the mean 3D RMS across the four
-    // stationary records while leaving normalized vertical error flat to within
-    // 0.03 percentage points, and 1.0 is what shipped.
-    //
-    // Nothing between 0.31 and 1.0 was scored at that time.  Swept there over
+    // In a sweep over
     // the eight scored records and three IMU seed triplets, 3D displacement RMS
     // has an interior minimum at 0.65 -- -3.56 percent against 1, with the same
     // sign in all 24 record x seed cells -- and 0.8 and 0.55 bracket it at
@@ -1174,12 +1151,11 @@ private:
     // family offers that the effect is structural rather than a fit to one
     // wrapper.
     //
-    // The deployed 0.72 is OU-III's measured optimum, carried here so the three
-    // families share one horizontal-anisotropy constant.  It is not this
+    // Both axes use 0.72.  This is not the OU-II
     // family's own argmin -- 0.65 is -- but the basin is flat enough that the
     // difference does not matter: measured on the same 24 cells, 0.72 scores
-    // -3.50 percent of 3D RMS against 1 where 0.65 scores -3.56, so the shared
-    // constant gives up six hundredths of a point.
+    // -3.50 percent of 3D RMS against 1 where 0.65 scores -3.56, a difference
+    // of six hundredths of a point.
     float R_p0_x_factor_ = 0.72f;
     float R_p0_y_factor_ = 0.72f;
     float P_factor_       = 1.5f;
@@ -1189,29 +1165,10 @@ private:
     float R_p0_std_target_ = NAN;
     float R_v0_std_target_ = NAN;
 
-    // r_p0 = R_p0_coeff * sigma_aw * tau^2, r_v0 = R_v0_coeff * sigma_aw * tau,
-    // and tau = tau_coeff * T_z / 2.  All are re-fitted for the wave-band period
-    // on the four stationary JONSWAP records, jointly with the corrected
-    // accelerometer-bias prior in Kalman3D_Wave_OU_II.h: tau_coeff = 1 is both
-    // the documented intent, tau equal to half the zero-crossing period, and the
-    // optimum of the scan, while R_p0_coeff fell from 1.6 to 0.6 because the
-    // same law now sees a tau two to three times longer.  Along the good ridge
-    // the conserved quantity is R_p0_coeff * tau_coeff^2, so the two must be
-    // re-fitted together rather than one at a time.
-    //
-    // The two regularizer coefficients were then re-fitted again, because that
-    // fit predates the parity change: the sigma channel moved behind
-    // AdaptiveWaveBandPass and now reads lower, so r = c * sigma_aw * tau^k came
-    // out below what the records want, and the estimator was over-regularized.
-    // R_v0_coeff 1.1 -> 1.3 and R_p0_coeff 0.6 -> 0.65, measured on all eight
-    // stationary records at six IMU seeds and on synthesized sea-state
-    // transitions.  0.65 is where it stops rather than at the 3D optimum near
-    // 0.70: it is the largest position coefficient at which no record's mean
-    // vertical error degrades -- seven of the eight improve and the eighth is
-    // 1.0003 of the shipped one -- and at 0.70 three records lose, two of them
-    // by half a percent.
-    // c_p and c_v of the Empirical law.  Retained under PhysicalMSE so that
-    // switching laws at runtime restores the calibrated empirical schedule.
+    // Empirical law: r_p0 = R_p0_coeff * sigma_aw * tau^2 and
+    // r_v0 = R_v0_coeff * sigma_aw * tau, before cadence normalization.
+    // The time scale is tau = tau_coeff * T_z / 2.  These coefficients apply
+    // only when Empirical is selected, not to the deployed PhysicalMSE law.
     float R_p0_coeff_  = 0.65f;
     float R_v0_coeff_  = 1.3f;
 

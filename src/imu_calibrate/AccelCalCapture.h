@@ -62,9 +62,9 @@ struct AccelPoseDef {
 static constexpr int kAccelMainPoses = 10;
 static constexpr int kAccelRecheckPoses = 3;
 
-// The first six are the deployed faces (same instructions and display
-// rotations). The four tilts are the screen-up corners: with the faces they
-// make all six symmetric cross-axis terms observable while keeping the screen
+// The first six are the guided faces. The four tilts are the screen-up
+// corners: with the faces they make all six independent symmetric-matrix
+// terms observable while keeping the screen
 // readable during capture (see doc/imu_calibrate for the information study).
 static const AccelPoseDef kAccelPoses[kAccelMainPoses] = {
   {"SCREEN UP",      {"Screen faces up", "Flat on the table", nullptr},     0,  0,  1, 0, AccelRegion::SCREEN_UP_DOC, -1, -1},
@@ -143,8 +143,8 @@ struct AccelCaptureCfg {
   float block_max_std = 0.25f;        // m/s^2 RMS about the block mean (hand-held OK)
   float block_max_range = 1.6f;       // m/s^2 per-axis peak-to-peak (shock)
   // Rotation gates. A 0.25 s block smeared by a steady 0.15 rad/s turn spans
-  // 2.1 deg: its mean norm shrinks by ~0.5 mg and the centripetal term at a
-  // 5 cm lever arm is ~1 mg. Hand wobble does not average inside one block,
+  // 2.1 deg: its mean norm shrinks by up to ~0.06 mg and the centripetal term at a
+  // 5 cm lever arm is ~0.11 mg. Hand wobble does not average inside one block,
   // so these bound physical error rather than demand stillness; placement
   // motion (> 0.5 rad/s) is still rejected.
   float gyro_dev_max = 0.15f;         // rad/s block mean about the stationary gyro level

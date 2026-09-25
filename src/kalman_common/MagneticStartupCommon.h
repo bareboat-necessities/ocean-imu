@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 // Startup-attitude and magnetic-acquisition primitives shared by the OU-II,
 // OU-III and TFG orchestrators.
 //
@@ -124,13 +128,9 @@ inline float advanceSampleClock(float& last_t, float t, float nominal_dt) {
 // body frame.  A body-frame average of the specific force is not gravity under
 // way: the hull rolls and pitches through the window, so the orbital term the
 // average is there to remove is smeared across it instead of cancelling.  What
-// a body-frame gate then reports is the sea state, not the levelling error --
-// on the 8.5 m reference record its residual sits between 0.03 and 0.45 for the
-// whole run against a 0.075 threshold, so the gate never closes and startup
-// falls through to its timeout.  Rotating first fixes the frame the average is
-// taken in, orbital acceleration is zero mean there, and the residual becomes
-// the tilt error it was always meant to be: on that same record it settles
-// below 0.05 within about twenty seconds.  See gravityAlignResidualSinWorld().
+// a body-frame gate then reports can be dominated by the sea state rather than
+// the levelling error.  Rotating before averaging keeps the residual in a
+// fixed frame.  See gravityAlignResidualSinWorld().
 //
 // The warmup exists because the average and the observer are seeded from the
 // *same* accelerometer sample.  Until the average has moved off that seed, a

@@ -196,7 +196,7 @@ public:
           useful rate threshold, and its mean over a few seconds is not zero,
           so averaging it would seed a wrong bias; its spread, however, is
           well above white gyro noise. A startup that fails either test
-          leaves the seed at the bootstrap's own estimate, as before. Set
+          leaves the seed at the bootstrap's own estimate. Set
           boot_bias_seed_min_still_s <= 0 to disable.
         */
         R boot_bias_seed_gyro_max_rad_s = R(0.03);
@@ -351,7 +351,7 @@ public:
           -0.012 m/s^2 at that sea state, and the aiding loop maps that into
           velocity and position through its own time constants. The bias
           scales with sea state, and the position offset it produces scales
-          with 1/theta^2, so it grew when theta was moved below the wave band.
+          with 1/theta^2, so lowering theta increases the offset.
 
           Removing the acceleration bias at its source would be the better
           fix and is not done here. What is done is to report position and
@@ -388,14 +388,14 @@ public:
         R report_highpass_tau_s = R(50.0);
 
         /*
-          Same tracker the adaptive PII observer uses, with three settings
-          changed because this one is driven by a displacement-shaped
+          Same tracker the adaptive PII observer uses, with settings chosen
+          because this one is driven by a displacement-shaped
           reference channel rather than by acceleration:
 
-            f_max_hz     0.35 -> 0.50, so short wind seas near a 2.5 s period
+            f_max_hz     0.50, so short wind seas near a 2.5 s period
                                  are still inside the search band
-            pre_lp_hz    0.45 -> 0.60, to match the widened band
-            lock_rms_min 0.012 -> 5e-4, because the policy normalizes its
+            pre_lp_hz    0.60, to match the search band
+            lock_rms_min 5e-4, because the policy normalizes its
                                  input by g and a displacement of a few
                                  centimetres would otherwise never lock
         */
@@ -406,7 +406,7 @@ public:
             if constexpr (requires { c.pre_lp_hz; })    c.pre_lp_hz = R(0.60);
             if constexpr (requires { c.lock_rms_min; }) c.lock_rms_min = R(5e-4);
             // Average crossing periods over many waves in this broadband
-            // displacement channel. The coarse smoother now advances on its
+            // displacement channel. The coarse smoother advances on its
             // physical event clock; a short acquisition horizon makes the
             // NLO gain schedule follow individual irregular-wave crossings.
             if constexpr (requires { c.coarse_smooth_tau_s; }) c.coarse_smooth_tau_s = R(120.0);

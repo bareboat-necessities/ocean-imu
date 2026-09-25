@@ -1,6 +1,10 @@
 #pragma once
 
 /*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
+/*
   Convert body-frame specific force into a leveled frame whose horizontal axes
   remain aligned with boat heading:
 

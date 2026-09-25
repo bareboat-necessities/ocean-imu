@@ -25,13 +25,12 @@
         r_S = C_J q_eff^(1/14) sigma_a,B^(6/7) tau^(24/7) / sqrt(T_S),
 
     with T_S proportional to tau away from cadence clamps, giving the effective
-    tau^(41/14) dependence.  The previously shipped TFG law
+    tau^(41/14) dependence.  The selectable LegacyCubic law is
 
         r_S,base = C_R sigma_aw tau^3,
         r_S,filter = r_S,base sqrt(T_0/T_S)
 
-    remains available as LegacyCubic for embedded targets and exact historical
-    comparisons.
+    It provides a lower-cost alternative for embedded targets.
 */
 
 #ifdef EIGEN_NON_ARDUINO
@@ -76,7 +75,7 @@ constexpr float TUNER_SIGMA_VAR_K_PERIODS_DEFAULT = 4.0f;
 
 // Same strong-observation sensor point and analytical spectral coefficient as
 // deployed OU-III.  The physical wave RMS is recovered from sigma_aw below, so
-// TFG's independently fitted sigma_coeff does not alter the distortion cost.
+// TFG's sigma_coeff does not alter the distortion cost.
 // Both are coefficients of the r_S law, so they stay TFG's own constants.
 constexpr float TFG_NOMINAL_DT = defaults::NOMINAL_IMU_DT_S;
 constexpr float R_S_ACCEL_NOISE_DENSITY_DEFAULT =
@@ -148,8 +147,7 @@ public:
         float handoff_acc_bias_std = 0.03f;
 
         // The actual deployed OU-III magnetic gravity gate is in WORLD frame.
-        // Keep the historical TFG field names so source compatibility is not
-        // broken, but give them the deployed OU values and interpretation.
+        // These fields use the shared world-frame gate thresholds and timing.
         float proxy_gravity_align_sin = defaults::GRAVITY_GATE_MAX_SIN;
         float proxy_gravity_lpf_sec   = defaults::GRAVITY_GATE_LPF_SEC;
         float proxy_gravity_hold_sec  = defaults::GRAVITY_GATE_HOLD_SEC;
@@ -680,8 +678,8 @@ private:
     }
 
     void stagedColdStep_(const Vector3f& gyro, const Vector3f& acc, float dt) {
-        // StagedMekf is a legacy ablation.  Keep its historical TFG bootstrap;
-        // the deployed MahonyProxy path below is the parity path.
+        // StagedMekf is a selectable bootstrap ablation; the deployed default
+        // uses the MahonyProxy path below.
         const bool levelled = ::seastate::common::runStartupGravityInit(
             gyro, acc, dt, elapsed_sec_, cfg_.gravity_magnitude,
             0.5f, 1.0f, 0.12f, 0.5f, 0.5f, 8.0f, 0.15f,
@@ -1006,8 +1004,8 @@ private:
         const float sZ = tune_.sigma_applied;
         mekf_.set_aw_stationary_std(Vector3f(sZ * S_factor_, sZ * S_factor_, sZ));
 
-        // SpectralMSE already contains the realized target T_S.  The historical
-        // cubic target does not, so only LegacyCubic receives the old
+        // SpectralMSE already contains the realized target T_S.  The
+        // LegacyCubic target does not, so only that law receives the
         // information-rate normalization here.
         float rs = tune_.RS_applied;
         if (rs_law_ == RSLaw::LegacyCubic && tau_scaled_pseudo_cadence_ && pseudo_period_sec_ > 0.0f) {
@@ -1021,7 +1019,7 @@ private:
 
     static constexpr float kTuneFreqPriorHz = defaults::TUNE_FREQ_PRIOR_HZ;
     static constexpr float kMinTuneFreqHz = defaults::MIN_TUNE_FREQ_HZ;
-    // TFG-specific: OU-II also uses 1.5 Hz, OU-III lowered its own to 1.2 Hz.
+    // TFG-specific: OU-II also uses 1.5 Hz; OU-III uses 1.2 Hz.
     static constexpr float kMaxTuneFreqHz = 1.5f;
     static constexpr float kPseudoPeriodNominalS = defaults::PSEUDO_UPDATE_PERIOD_NOMINAL_S;
     static constexpr float kPseudoTauNominalS = defaults::PSEUDO_UPDATE_TAU_NOMINAL_S;
@@ -1051,21 +1049,9 @@ private:
     float sigma_target_ = 1e-2f;
     float RS_target_ = 0.5f;
 
-    // TFG-specific physical OU prior coefficients remain independently fitted.
-    // X and Y have always been independent knobs here, and 1.15 was carried
-    // from the historical horizontal operating point rather than measured.  It
-    // has now been measured, and it is right: swept over the eight scored
-    // records and three IMU seed triplets against OU-II's and OU-III's
-    // retuned 0.72, TFG moves the *other* way.  Paired 3D displacement RMS
-    // against 1.15 is +1.03 percent at 1.4, +2.23 at 0.9 and +7.31 at 0.72,
-    // the last with the same sign in all 24 record x seed cells, and 0.72 also
-    // costs 0.55 percent of vertical RMS unanimously and 17.45 percent of x.
-    // 1.15 is the interior minimum.
-    //
-    // So the horizontal anisotropy is NOT a shared constant across the three
-    // families: the two OU wrappers want a tighter horizontal anchor than
-    // vertical and TFG wants a looser one.  Do not carry 0.72 here without
-    // re-running that sweep.
+    // TFG-specific OU prior and regularizer coefficients.  R_S_coeff applies
+    // only to LegacyCubic; SpectralMSE uses rs_mse_coeff_.  The horizontal
+    // factors are independent: X = 1.08, Y = 1.15, with an isotropic a_w prior.
     float tau_coeff_ = 1.0f;
     float sigma_coeff_ = 0.8f;
     float R_S_coeff_ = 0.28f;

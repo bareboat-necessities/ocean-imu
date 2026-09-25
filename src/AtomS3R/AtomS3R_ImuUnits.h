@@ -69,7 +69,8 @@ struct CalibrationSite {
 
 // Axis mapping (AtomS3R)
 //
-// Internal convention in this library is BODY-NED (x=north, y=east, z=down).
+// Body axes are NED-compatible: x=forward, y=starboard, z=down.
+// Geographic north/east/down are world axes, not fixed sensor directions.
 // End-user "nautical Z-up" is therefore z_up = -z_down.
 //
 // With the board lying still, screen facing up:

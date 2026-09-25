@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 #include <algorithm>
 #include <cmath>
 
@@ -20,14 +24,9 @@ inline constexpr float kDynamicEmaTimeScaleMaxSec = 6.0f;
 // sample-to-sample pass-through and a nearly frozen adaptation after an
 // estimator excursion.
 //
-// This ceiling used to be inactive on every calibration sea: the longest
-// deployed horizon was the sigma_a variance EMA at 2*T_z, i.e. about 16.8 s on
-// the largest reference sea.  Since the period-statistics retune raised
-// K_periods to 4 that horizon requests 4*T_z, about 33.6 s there.  The 35 s
-// ceiling leaves the largest of the eight reference seas interior.
-// Every other deployed horizon (about 0.12..12.7 s, the slowest being the
-// OU-II/TFG drift smoother) is still comfortably interior.  Treat a change to
-// K_periods or to this ceiling as a retune that needs a re-gauge, not a tweak.
+// With K_periods = 4, the acceleration-moment EMA requests 4*T_z, about
+// 33.6 s on the longest reference sea.  The 35 s ceiling leaves that request
+// interior.  Changes to K_periods or these limits alter adaptation memory.
 inline constexpr float kDynamicEmaHorizonMinSec = 0.05f;
 inline constexpr float kDynamicEmaHorizonMaxSec = 35.0f;
 

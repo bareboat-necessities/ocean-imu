@@ -18,15 +18,14 @@
     * the moment horizon is expressed in wave periods, so that as the sea grows
       the estimator keeps averaging over a comparable number of cycles rather
       than a fixed wall-clock window.  The absolute floor below still wins on
-      short seas: at the retuned default of 4 periods, min_horizon_sec = 20 s
+      short seas: at the default of 4 periods, min_horizon_sec = 20 s
       binds for every T_z under 5 s, so across the eight reference seas
       (T_z ~= 2.3..8.4 s) the realized horizon runs about 8 periods on the
-      shortest chop down to 4 on the longest swell.  The retuning sweep scored
-      the period counts with this floor in place, so moving the floor is itself
-      a retune and needs a re-gauge, not a tweak;
+      shortest chop down to 4 on the longest swell.  Changing this floor alters
+      the effective averaging memory and requires validation;
     * a canonical log-period state smooths the nonlinear moment-ratio output.
       The moment horizon follows this slowly moving positive state, not the raw
-      instantaneous ratio, avoiding the old direct self-modulation of estimator
+      instantaneous ratio, avoiding direct self-modulation of estimator
       bandwidth by its noisiest output.
 
   Because log(f) = -log(T), the canonical state is invariant to whether a

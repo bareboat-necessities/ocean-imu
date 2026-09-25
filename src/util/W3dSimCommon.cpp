@@ -45,7 +45,7 @@ ImuNoiseModel make_imu_noise_model(float sigma_white,
                                    unsigned noise_seed,
                                    unsigned initialization_seed)
 {
-    // Preserve the original draw order for the historical single-seed path.
+    // Preserve deterministic draw ordering for the single-seed path.
     if (noise_seed == initialization_seed) {
         return make_imu_noise_model(
             sigma_white, bias_half_range, sigma_bias_rw, noise_seed);
@@ -151,7 +151,7 @@ MagNoiseModel make_mag_noise_model(float sigma_white_uT,
                                    unsigned noise_seed,
                                    unsigned initialization_seed)
 {
-    // Preserve the original draw order for the historical single-seed path.
+    // Preserve deterministic draw ordering for the single-seed path.
     if (noise_seed == initialization_seed) {
         return make_mag_noise_model(
             sigma_white_uT,
@@ -862,8 +862,8 @@ std::optional<W3dLeverArmConfig> w3d_lever_arm_config_from_env()
             cfg.model = w3d_lever_arm_model_from_text(model);
         }
     }
-    // Shares the engine model's numeric env reader; the name is historical,
-    // the parsing and the error text are not engine specific.
+    // Shares the engine model's numeric environment reader; parsing and error
+    // text are not engine specific.
     (void)w3d_engine_float_from_env("W3D_IMU_LEVER_ARM_CUTOFF_HZ",
                                     cfg.derivative_cutoff_hz);
     if (!(cfg.derivative_cutoff_hz > 0.0f)) {
@@ -1346,9 +1346,7 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         result.freq_hist.push_back(snap.freq_hz);
         result.dir_phase_hist.push_back(snap.direction.phase);
         // The axis arrives in the boat frame; adding the vessel heading puts it
-        // in the generator frame the record azimuth lives in.  Every shipped
-        // record has heading 0, which is why this was invisible until a
-        // heading-rotated record was scored.
+        // in the generator frame the record azimuth lives in.
         result.dir_deg_hist.push_back(wrapAxialDeg90(
             snap.direction.direction_deg_generator_signed + heading_ref_deg));
         result.dir_unc_hist.push_back(snap.direction.uncertainty_deg);
@@ -1642,9 +1640,7 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
         result.freq_hist.push_back(NAN);
         result.dir_phase_hist.push_back(snap.direction.phase);
         // The axis arrives in the boat frame; adding the vessel heading puts it
-        // in the generator frame the record azimuth lives in.  Every shipped
-        // record has heading 0, which is why this was invisible until a
-        // heading-rotated record was scored.
+        // in the generator frame the record azimuth lives in.
         result.dir_deg_hist.push_back(wrapAxialDeg90(
             snap.direction.direction_deg_generator_signed + heading_ref_deg));
         result.dir_unc_hist.push_back(snap.direction.uncertainty_deg);

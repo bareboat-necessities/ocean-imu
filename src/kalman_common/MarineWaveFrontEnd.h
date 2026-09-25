@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 // Measurement-only marine front end of the OU-II and OU-III orchestrators.
 //
 //     accelerometer (vibration-conditioned) + gyro
@@ -257,31 +261,19 @@ protected:
     // replacing it: the tracker supplies the acceleration-band carrier the
     // direction demodulator needs, while the OU operating point needs the
     // wave band.  Its input must be levelled and must not read estimator
-    // state, and those two requirements pulled against each other for a
-    // while.
+    // state.
     //
     // Levelled, because double integration weights a spectrum by 1/omega^4,
-    // so the sub-band gravity leakage a tilting platform puts into a raw
-    // body-Z residual dominates the elevation proxy.  Fed that residual the
-    // estimator reports 6.8-10.0 s whatever the sea does, against a truth of
-    // 2.4-8.7 s, and vertical RMS degrades 2.5x.  That is why no body-Z path
-    // is left in the filter.
+    // so sub-band gravity leakage in a raw body-Z residual can dominate the
+    // elevation proxy.
     //
     // Exogenous, because levelling with the filter's own attitude closes a
-    // loop: a 0.25 rad attitude displacement moved the reported period
-    // 8.05 -> 10.1 s and tau by 1.25x, and it reached the linear block too,
-    // since displacing the translational states perturbs attitude through the
-    // filter's cross-covariances.  The stability appendix carried that as its
-    // open interconnection.
-    //
-    // VerticalAccelComplementary satisfies both: it levels, but with a private
-    // Mahony observer reading only the raw gyro and accelerometer, so it is a
-    // pure function of the measurements.  It costs nothing -- over the eight
-    // reference records it matches the old attitude-levelled input to within
-    // 0.2% of vertical RMS -- and it is the default.  setWavePeriodInput()
-    // still reaches the attitude-levelled one for ablation;
-    // tests/kalman_ou_iii/tuner_coupling-test.cpp asserts the default is
-    // exogenous bit-for-bit and bounds the Leveled path's gain.
+    // feedback loop through the tuner and the filter's cross-covariances.
+    // VerticalAccelComplementary instead levels with a private Mahony observer
+    // driven only by sensor measurements.  setWavePeriodInput() selects the
+    // main-filter attitude-levelled input for ablation;
+    // tests/kalman_ou_iii/tuner_coupling-test.cpp checks the default's independence
+    // from MEKF state and bounds the Leveled path's gain.
     //
     // Direction is resolved in a leveled frame aligned with boat heading.
     // This removes roll/pitch mixing while preserving 0 deg = bow and positive
@@ -389,26 +381,10 @@ protected:
     // One private Mahony observer, serving both the vertical channel and the
     // startup attitude.
     //
-    // These were briefly two instances, because the two jobs disagree about
-    // the integral term.  The vertical channel had always run at two_ki = 0
-    // and accepted the ~2b/two_kp static tilt a gyro bias leaves, on the
-    // grounds that its two high-pass stages reject anything static.  Nothing
-    // high-passes an *attitude seed*: the same error is a standing roll and
-    // pitch bias for the whole run, and seeding from a zero-integral observer
-    // measurably costs 0.17 deg of roll RMS on jonswap H1.5 (OU-III).
-    //
-    // Turning the integral term on for both settles that disagreement in the
-    // only way that leaves one observer.  It does change the vertical channel,
-    // which is why it was checked rather than assumed: over the eight
-    // reference records the wave-period, sigma and regularizer channels are
-    // unmoved and every scored metric is at least as good.  Estimating the
-    // bias is also the better answer for the vertical channel on its own terms
-    // -- the static tilt it used to tolerate was leaking gravity into the
-    // levelled acceleration, it was simply being high-passed away afterwards.
-    //
-    // two_kp stays at 0.2 for the reason it always did: the correction corner
-    // must sit an order of magnitude below the wave band, or the observer
-    // levels itself against the orbital specific force instead of gravity.
+    // Integral feedback estimates gyro bias so it does not remain as a static
+    // tilt error in the startup attitude or levelled acceleration.
+    // two_kp keeps the correction corner below the wave band, so the observer
+    // does not level itself against orbital specific force instead of gravity.
     VerticalAccelComplementary   vertical_accel_comp_{
         defaults::STARTUP_PROXY_TWO_KP,
         defaults::STARTUP_PROXY_TWO_KI};

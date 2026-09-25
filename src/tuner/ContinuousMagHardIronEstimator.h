@@ -99,7 +99,7 @@ public:
     // window with almost no excitation at all, and it only does that job while
     // it stays below the excitation a working hull produces.  Above that it
     // stops being a floor and becomes the whole regularisation, which is the
-    // fixed-ridge behaviour the relative term below was introduced to replace.
+    // fixed-ridge behaviour the relative term below is intended to avoid.
     //
     // What sets the scale is the information gate above: at the saturated
     // weight of an exponential window -- memory_sec over the magnetometer

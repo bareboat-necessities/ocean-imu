@@ -20,13 +20,14 @@
   it is not usable: double integration weights a spectrum by 1/omega^4, so the
   gravity a tilting platform leaks into body Z swamps the elevation proxy.  Fed
   the body-Z proxy the estimator reports 6.8-10.0 s whatever the sea does,
-  against a truth of 2.4-8.7 s.  That is why it was removed rather than kept
-  as a fallback: the filters have no body-Z path left.
+  against a truth of 2.4-8.7 s.  The body-Z residual is therefore not a
+  selectable wave-period input.
 
   This class is the option the filters run on: level with an attitude
   solution that is also a pure function of the measurements.  It runs its own
-  Mahony observer on the raw gyro and accelerometer - never the calibrated or
-  bias-corrected values, never any filter state - and reports
+  Mahony observer on the supplied gyro and accelerometer - which may be
+  calibrated and vibration-conditioned upstream, but do not depend on any
+  MEKF state - and reports
 
       up = -( (R f)_z + g ),   R = body -> NED from the private quaternion.
 
@@ -49,8 +50,9 @@
   With two_ki = 0 a constant gyro bias b leaves a static tilt error of about
   2b/two_kp.  At the reference bias range (0.05 deg/s) that is ~0.5 deg, and it
   is static, so the estimator's two high-pass stages reject it.  Bias is
-  deliberately not estimated here: an integral term is another slow state that
-  can wind up against a sustained horizontal acceleration.
+  not estimated with that setting.  A positive two_ki enables integral bias
+  feedback; the shared marine front ends use 0.02 for their startup attitude.
+  An integral term can wind up against sustained horizontal acceleration.
 
   Yaw is unobservable without a magnetometer and is left to drift.  It does not
   matter: only the vertical component is used, and that depends on tilt alone.
@@ -69,9 +71,8 @@
 
 // Which vertical acceleration the wave-period estimator is driven by.
 // Complementary is the default and the only measurement-only choice; Leveled
-// is kept for ablation.  The raw body-Z proxy -(acc.z + g) is no longer an
-// option anywhere in the filters: every consumer of a vertical acceleration
-// now reads this observer, for the reasons in the note above.
+// is selectable for ablation.  The raw body-Z proxy -(acc.z + g) is not a
+// wave-period input option.
 enum class WavePeriodInputSource {
     Leveled,        // heading-frame up from the main filter's attitude
     Complementary,  // private Mahony observer; levelled and measurement-only
@@ -106,8 +107,8 @@ public:
         ahrs_.init(two_kp_, two_ki_);
     }
 
-    // gyro : body angular rate [rad/s], raw.
-    // acc  : body specific force [m/s^2], raw.  acc.z ~ -g at rest, matching
+    // gyro : body angular rate [rad/s], independent of the MEKF state.
+    // acc  : body specific force [m/s^2].  acc.z ~ -g at rest, matching
     //        the z-down body frame the rest of the filter uses.
     void update(float dt_sec,
                 const Eigen::Vector3f& gyro,

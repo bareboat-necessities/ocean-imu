@@ -2,6 +2,10 @@
 #define Monotonic_Wedge_h
 
 /*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
+/*
   This code is available under the MIT license:
 
     Copyright (c) 2016 Evan Balster

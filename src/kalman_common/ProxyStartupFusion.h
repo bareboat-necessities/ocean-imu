@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 // Proxy-bootstrap startup, magnetic acquisition and output pipeline shared by
 // the deployed OU-II and OU-III front ends (SeaStateFusion_OU_II and
 // SeaStateFusion_OU_III).
@@ -85,7 +89,7 @@ struct ProxyStartupFusionConfig {
     //
     // proxy_mag_settle_sec holds the provisional stage off; 0 means "as soon
     // as the gravity gate is happy" and is the default, because the refinement
-    // is what carries the accuracy now.
+    // corrects the provisional reference.
     float proxy_mag_settle_sec = defaults::PROXY_MAG_SETTLE_SEC;
 
     bool  mag_refine_enabled    = true;
@@ -119,12 +123,8 @@ struct ProxyStartupFusionConfig {
     Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
     Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-    // MEKF variances common to both OU constructors.  They were reachable only
-    // through initialize_ext(), which the wrappers once never called, so every
-    // deployment ran on the header defaults, which a dedicated MEKF-variance
-    // sweep gauged (OU-III).  The values here reproduce those defaults
-    // exactly.  The pseudo-measurement variances are family-specific and live
-    // in each family's Config.
+    // MEKF variances common to both OU constructors.  The pseudo-measurement
+    // variances are family-specific and live in each family's Config.
     //
     //   Pq0      initial attitude-error variance, rad^2.  The proxy handoff
     //            overwrites the attitude block, so this only ever seeds the
@@ -748,10 +748,8 @@ private:
         // tilt looks like the better frame.  It is not usable: the MEKF has
         // been steering to the provisional reference this pass exists to
         // replace, so its tilt carries that reference's error, and averaging
-        // the field in it re-derives the error it was meant to remove.  Tried
-        // that way the refinement is self-confirming -- reference and yaw come
-        // back within 1e-3 deg of the provisional ones, and the standing roll
-        // bias is untouched.
+        // the field in it makes the refinement self-confirming rather than
+        // providing an independent reference correction.
         //
         // The observer never saw the reference, so its tilt is independent of
         // it, and by refinement time it has long since converged.

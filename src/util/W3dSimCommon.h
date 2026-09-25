@@ -513,8 +513,7 @@ void apply_engine_vibration(Vector3f& acc_body_zu,
                             float dt);
 
 // Reads W3D_ENGINE_RPM and the optional W3D_ENGINE_* overrides.  Returns
-// nullopt when no engine is configured, which is the default and reproduces
-// the historical noise realization bit for bit.
+// nullopt when no engine is configured (the default).
 std::optional<EngineVibrationConfig> w3d_engine_vibration_from_env();
 
 // Builds the model from the environment, prints an ENGINE_VIBRATION banner
@@ -522,7 +521,7 @@ std::optional<EngineVibrationConfig> w3d_engine_vibration_from_env();
 // A no-op when no engine is configured.
 void w3d_install_engine_vibration_from_env(SimulationNoiseModels& noise_models, float dt);
 
-// Default values preserve the historical deterministic validation realization.
+// Default seeds define the deterministic validation realization.
 // When W3D_SEED, W3D_IMU_SEED, or W3D_INIT_SEED is supplied, the simulator
 // expands the corresponding base seed into independent sensor streams.
 struct W3dRandomSeeds {
@@ -662,8 +661,7 @@ private:
 
 // Reads W3D_IMU_LEVER_ARM_M ("x,y,z" in metres, body z-up) and the optional
 // W3D_IMU_LEVER_ARM_MODEL (none|exact|gyro) and W3D_IMU_LEVER_ARM_CUTOFF_HZ.
-// Returns nullopt when no lever arm is configured, which is the default and
-// reproduces the historical realization bit for bit.
+// Returns nullopt when no lever arm is configured (the default).
 std::optional<W3dLeverArmConfig> w3d_lever_arm_config_from_env();
 
 // Builds the stage from the environment and prints an IMU_LEVER_ARM banner
@@ -753,8 +751,8 @@ struct W3dFailureLimits {
     // single bar over both channels is therefore the accelerometer's bar, and
     // the gyro rides four times below it, catching nothing.
     float bias_3d_percent = 0.0f;
-    // The gyro's own 3D bias bar.  Zero keeps the shared behaviour above, so a
-    // family that has not fitted one is gated exactly as before.
+    // The gyro's own 3D bias bar.  Zero selects the shared bias_3d_percent
+    // threshold above.
     float gyro_bias_3d_percent = 0.0f;
 };
 
@@ -842,7 +840,7 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
 
     // Optional inboard-diesel vibration, on top of the sensor noise models
     // and identical for every filter family.  Absent unless W3D_ENGINE_RPM is
-    // set, so the historical realization is untouched by default.
+    // set.
     w3d_install_engine_vibration_from_env(noise_models, dt);
 
     const Vector3f sigma_a_init(2.8f * acc_sigma, 2.8f * acc_sigma, 2.8f * acc_sigma);
@@ -862,8 +860,7 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
     options.output_suffix_no_mag = std::move(output_suffix_no_mag);
 
     // Optional IMU installation lever arm and its filter-side model.  Absent
-    // unless W3D_IMU_LEVER_ARM_M is set, so the historical realization is
-    // untouched by default.  The runner copies the options but shares this
+    // unless W3D_IMU_LEVER_ARM_M is set.  The runner copies the options but shares this
     // stage, so the diagnostics it accumulates are readable here once the
     // record is done.
     options.lever_arm = w3d_lever_arm_from_env(dt);

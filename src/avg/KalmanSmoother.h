@@ -1,6 +1,10 @@
 #ifndef KalmanSmoother_h
 #define KalmanSmoother_h
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 #include <cmath>
 
 /*
@@ -9,7 +13,7 @@
    The variables are:
 
    x for the filtered value,
-   q for the process noise,
+   q for the estimate-change covariance scaling factor,
    r for the measurement (sensor) uncertainty,
    p for the estimation uncertainty,
    k for the Kalman gain.
@@ -19,8 +23,8 @@
    The initial values for p is not very important since it is adjusted
    during the process. It must be just high enough to narrow down.
 
-   q - usually a small number between 0.001 and 1 - how fast your measurement moves.
-   Recommended 0.01. Should be tunned to your needs.
+   q scales covariance growth by the absolute change in the estimate.
+   Recommended 0.01. Should be tuned to your needs.
 
    But tweaking the values for the process noise and sensor noise
    is essential to get clear readouts.
@@ -49,7 +53,7 @@
 
 typedef struct kalman_smoother_vars {
   /* Kalman filter variables */
-  double q; // process noise covariance
+  double q; // scale of covariance growth per absolute estimate change
   double r; // measurement uncertainty
   double p; // estimation uncertainty
   double k; // kalman gain

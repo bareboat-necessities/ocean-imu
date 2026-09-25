@@ -35,7 +35,7 @@
       law (RSAdaptationLaw below),
           r_S = C_J q_eff^(1/14) σ_a,B^(6/7) τ^(24/7) / sqrt(T_S),
       with T_S = c_T τ the self-similar pseudo-measurement cadence.  The
-      historical cubic base r_S,base = C_R sqrt(R_a) τ³ remains selectable
+      cubic base r_S,base = C_R sqrt(R_a) τ³ is selectable
       as RSAdaptationLaw::Cubic.
 
   Where
@@ -93,40 +93,22 @@
 constexpr float MAX_TUNE_FREQ_HZ = 1.2f;
 
 constexpr float MIN_TAU_S   = 0.02f;
-// tau now scales with the zero-crossing wave period rather than with an
-// acceleration-band frequency, so the ceiling has to admit a developed sea:
-// T_z reaches 8.6 s at H_s = 8.5 m and a long swell goes further.  The old
-// 3.0 s ceiling was reached at H_s = 8.5 m, which clipped the operating point
-// exactly where the filter was losing.
+// The tau ceiling admits developed seas and long swell when tuning from
+// the zero-crossing wave period.
 constexpr float MAX_TAU_S   = 12.0f;
 constexpr float MAX_SIGMA_A = 4.0f;
-// The old 0.4 floor was not a safety limit in practice, it was the binding
-// constraint on every low-motion sea.  The schedule asks for 0.24 m*s at the
-// calibrated H_s = 0.27 m point, so the floor clipped it and pinned both
-// low-motion scenarios at an error the tuner multipliers could not move: a
-// full sweep of c_tau, c_sigma and c_R left J0.27 and P0.27 constant to three
-// decimals.  Dropping the floor below the schedule's own demand recovers
-// -8.3 % on the worst sea, -9.5 % on PM-Stokes 0.27 m and -2.5 % on the
-// eight-sea mean, and cuts the near-still H_s = 0.05 m stress case from
-// 27.0 to 17.6 percent of H_s (13.5 mm to 8.8 mm absolute).  The gain saturates below ~0.25; 0.15 keeps a
-// real guard against r_S collapsing toward zero while staying clear of the
-// calibrated envelope.
+// Lower guard against r_S collapsing toward zero in low-motion seas.
 constexpr float MIN_R_S     = 0.15f;
-// The Cubic base r_S ~ sqrt(R_a) tau^3 inherits that range (SpectralMSE
-// grows as tau^(24/7) before the cadence).  The old 35 m*s ceiling was the
-// binding constraint at H_s = 8.5 m: the calibrated fixed-oracle point sat at
-// 34.66 and the error was still falling monotonically against it.
+// Upper saturation guard for the integral-displacement measurement sigma.
+// The Cubic base grows as tau^3; SpectralMSE grows as tau^(24/7) before
+// cadence normalization, at fixed acceleration scale.
 constexpr float MAX_R_S     = 100.0f;
 
 // Smoothing horizon of the r_S channel, in units of tau_target.  Measured on
 // the versioned records against synthesized sea-state transitions: the error
 // during a transition falls monotonically as this shortens while the worst
 // single realization degrades monotonically the other way, and the value is
-// where the mean gain and the worst-record loss cross.  That crossing sat at
-// 3.0 while the transition instrument was a 360 s crossfade; re-measured on
-// the 120 s crossfade the study now uses -- fast enough for the horizon to
-// actually lag it -- it sits at 1.5, and 1.5 also wins on the stationary
-// ensemble, on attitude and on the accelerometer bias.  r_S grows at least as
+// where the mean gain and the worst-record loss cross.  r_S grows at least as
 // fast as tau^3 (tau^3 under Cubic, tau^(24/7) under SpectralMSE, before the
 // cadence), so it amplifies tau noise by at least the third power, which is
 // why this stays above the horizon a tau^1 channel would want.  The common
@@ -144,7 +126,7 @@ constexpr float ADAPT_RS_SLEW_LOG          = 0.0f;   // ln units
 constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f;
 
 
-// Integral-regularizer adaptation laws.  All three place the drift-band
+// Integral-regularizer adaptation laws.  The first three place the drift-band
 // regularization pole of the reduced Riccati model; they differ in which
 // asymptotic branch of the posterior acceleration-noise intensity
 //     q_eff = 2 r_a (1 - 1/sqrt(1+zeta)),   zeta = 2 sigma_aw^2 tau / r_a
@@ -158,8 +140,9 @@ constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f;
 //                    with no leading-order sigma_aw dependence.  At the
 //                    analytical C_R this is the *same schedule* as Cubic, not
 //                    merely the same shape; see below.
-//   PosteriorRiccati the full transition law, reducing to a sigma_aw tau^3
-//                    schedule as zeta -> 0 and to StrongRiccati as
+//   PosteriorRiccati the full transition law, reducing to
+//                    r_S ~ sigma_aw tau^(7/2) / sqrt(T_S) as zeta -> 0
+//                    and to StrongRiccati as
 //                    zeta -> infinity.
 //
 // The deployed envelope has zeta ~ 1e5..1e7 against the bench sensor floor, so
@@ -168,7 +151,8 @@ constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f;
 // schedule takes its acceleration scale accordingly: R_a is the accelerometer
 // measurement-noise variance, and sqrt(R_a) tau^3 carries the required units of
 // m*s.  The wave amplitude still enters the filter through the OU prior,
-// sigma_aw = c_sigma sigma_a,B; it no longer sets pseudo-measurement strength.
+// sigma_aw = c_sigma sigma_a,B.  SpectralMSE also uses the physical wave
+// amplitude in its displacement-distortion cost.
 //
 // Writing the base this way makes C_R a pole placement rather than a gain.
 // With r_a = R_a h, the cadence-normalized base is
@@ -180,11 +164,9 @@ constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f;
 // against it, because the scalar reduction omits attitude/gravity leakage,
 // residual bias, three-axis covariance coupling and the cadence clamps.
 //
-// The amplitude tilt of the Riccati laws spans the removed multiplier as a
-// one-parameter family: p = 0 is the deployed schedule and p = 1 restores the
-// sigma_aw factor, so that ablation still measures exactly that one degree of
-// freedom.  The non-Cubic laws exist for it, not as
-// candidate defaults.
+// The amplitude tilt of the Riccati laws is a one-parameter ablation:
+// p = 0 leaves the Riccati schedule unchanged; p = 1 adds a normalized
+// sigma_aw factor.  This tilt does not apply to SpectralMSE.
 //   SpectralMSE      the bias-variance law.  The three above all answer "what
 //                    r_S holds a chosen normalized pole?"; none answers "what
 //                    pole minimizes displacement error for a sea of amplitude
@@ -233,17 +215,15 @@ enum class RSAdaptationLaw : uint8_t {
 
 // Normalized regularization pole omega_R*tau targeted by the Riccati laws.
 //
-// The ratio between the tilted (p = 1) and deployed (p = 0) members of the
+// The ratio between the tilted (p = 1) and untilted (p = 0) members of the
 // Riccati family is independent of tau,
 //     r_S,p=1 / r_S,p=0 = sigma_aw / sigma_ref,
-//     sigma_ref = sqrt(2 r_a) / (kappa^3 c_R sqrt(T_0)),
+//     sigma_ref = sqrt(2 r_a) / (kappa^3 C_R sqrt(R_a T_0)),
 // because the tau^3/sqrt(T_S) factor is common to both.  sigma_ref is the
 // amplitude at which the two members cross, so the ablation measures only the
 // sigma_aw dependence of the schedule rather than an overall change of
-// regularizer gain.  kappa was calibrated when the deployed base still carried
-// sigma_aw, so that sigma_ref matched the sigma_aw of the Hs = 1.5 m nominal
-// sea; it is left as it was, and the anchor now sits wherever the re-fitted
-// c_R puts it.  Nothing in the ablation depends on where that anchor is.
+// regularizer gain.  The anchor is set by kappa and c_R; the ablation varies
+// the amplitude dependence at that anchor.
 constexpr float R_S_POLE_KAPPA_DEFAULT = 0.3627f;
 // r_a = R_a * dt for the reduced scalar acceleration observation.  The default
 // is the bench accelerometer noise of the validated configuration
@@ -554,16 +534,10 @@ public:
         }
     }
 
-    // The upper bound is 4, not 1.  A ceiling of 1 encoded the assumption that
-    // the horizontal integral anchor can only ever be tighter than the vertical
-    // one, which silently excluded the value the similarity law asks for: with
-    // sigma_aw,H = S_factor * sigma_aw,Z the natural scale of the horizontal S
-    // state is S_factor times the vertical one (Theorem "Nondimensional
-    // similarity of the OU-III chain", sigma_S ~ sigma_aw tau^3), so the
-    // dimensionless regularizer r_S/(sigma_aw tau^3) is equal on all three axes
-    // only at R_S_x_factor = R_S_y_factor = S_factor > 1.  Under the old clamp
-    // that configuration was accepted and then silently reduced to 1, so an
-    // ablation of it measured nothing and looked like a null result.
+    // Horizontal integral-noise factors are clamped to [0, 4].  Values above
+    // one permit a looser horizontal anchor.  With sigma_aw,H = S_factor *
+    // sigma_aw,Z, the similarity law sigma_S ~ sigma_aw tau^3 gives equal
+    // dimensionless regularization on all axes when both factors equal S_factor.
     void setRSXFactor(float k) {
         if (std::isfinite(k)) {
             R_S_x_factor_ = std::min(std::max(k, 0.0f), 4.0f);
@@ -619,8 +593,8 @@ public:
     bool awCovarianceSyncCongruent() const noexcept { return congruent_aw_cov_sync_; }
 
     // Self-similar integral pseudo-measurement cadence T_S = c_T * tau_applied.
-    // Enabled by default; disabling restores the historical fixed 15 ms cadence
-    // for direct old-versus-new ablation. Whenever cadence changes while Live,
+    // Enabled by default; disabling selects a fixed 15 ms cadence.
+    // Whenever cadence changes while Live,
     // reapply R_S so its per-update covariance stays information-rate matched.
     void setTauScaledPseudoUpdateCadence(bool flag) {
         tau_scaled_pseudo_cadence_ = flag;
@@ -958,7 +932,7 @@ private:
     // set_RS_noise() accepts a standard deviation, so one S=0 update has
     // covariance r_S^2. With updates every T_S seconds, the continuous-equivalent
     // information rate is proportional to 1/(r_S^2 T_S).  The Cubic base
-    // preserves the historical 15 ms information rate by normalizing the
+    // preserves the nominal 15 ms information rate by normalizing the
     // filter-input standard deviation:
     //     r_S,filter = r_S,base * sqrt(T_0/T_S).
     // The base tuner value remains clamped to [min_R_S_, max_R_S_].  Do not
@@ -1069,9 +1043,8 @@ private:
         // Optional amplitude tilt (sigma/sigma_ref)^p about the anchor
         // amplitude sigma_ref = sqrt(2 r_a) / (kappa^3 C_R sqrt(R_a T_0)), the
         // sigma at which the p = 0 and p = 1 members cross for every tau.
-        // p = 0 is the pure strong-observation law, which is the deployed
-        // Cubic schedule up to the constant gain sigma_ref; p = 1 restores the
-        // sigma_aw multiplier the deployed base no longer carries.  At the
+        // p = 0 leaves the selected Riccati law unchanged; p = 1 adds the
+        // normalized sigma_aw multiplier.  In the strong-observation case, at the
         // analytical C_R of Eq. (adapt-cR-kappa) the two coincide exactly,
         // sigma_ref = 1, because that C_R is by construction the one that makes
         // the cadence-normalized cubic base equal to the strong-observation
@@ -1268,44 +1241,8 @@ private:
     float adapt_RS_slew_log_      = ADAPT_RS_SLEW_LOG;
 
     // Per-axis horizontal integral-regularization scale, against the vertical
-    // one.  These were a single scalar rho_xy until the split; the history
-    // below is that scalar's, and both axes start from the value it carried.
-    //
-    // 0.36 made the horizontal high-pass 2.8x stronger than the vertical one,
-    // which was a small-sea optimum applied to every sea state: with the
-    // operating point now tied to the wave band, every stationary record scored
-    // better at 1 than at 0.36, by 7 to 27 percent of 3D RMS in the two largest
-    // seas.  Nothing in between was measured at the time, and the two-knob
-    // anisotropy study that followed only reached below 1 at S_factor = 1.87,
-    // where the inflated horizontal prior already supplied a 23 percent
-    // stronger horizontal corner and further tightening lost.  S_factor is now
-    // 1, so that implicit tightening is gone, and the interval is open again.
-    //
-    // Swept there over the eight scored records and three IMU seed triplets,
-    // 3D displacement RMS has an interior
-    // minimum at 0.72: -3.33 percent against 1, with the same sign in all 24
-    // record x seed cells, and 0.8 and 0.6 bracketing it at -2.90 and -2.72.
-    // Both horizontal axes gain there -- x by 1.1 percent and y by 7.8 percent,
-    // y unanimously -- which is what stops the sweep at 0.72 rather than at the
-    // pooled minimum: below it x turns over (+1.2 percent at 0.6, +5.3 at 0.5)
-    // and the parameter goes back to trading the two horizontal axes against
-    // each other, which is the failure mode of the old 0.36.
-    //
-    // Vertical is untouched (-0.01 percent), so this is not a vertical-versus-
-    // horizontal trade; attitude moves under a half percent in either
-    // direction.  0.72 sits below the reduced-model reference of 0.86 -- the
-    // per-axis MSE optimum (q_h/q_z)^(1/14) (m_h/m_z)^(3/7) evaluated on the
-    // records, with m_h/m_z = 1/2 from the
-    // deep-water orbit -- for the reason the C_R calibration also sits off its
-    // analytical reference: the scalar reduction omits the tilt-leakage and
-    // residual-bias drift the horizontal channels actually reject.
-    //
-    // The two axes are separate knobs because the same measurement says they
-    // do not want the same number: the per-axis MSE optimum is 1.004 (x) and
-    // 0.685 (y) on these records.  They were equal by default on the reading
-    // that the split is a property of the record set rather than of the hull,
-    // every record being generated at +/-30 degrees.  On the pinned vessel-RAO
-    // records that reading does not survive its own arithmetic.
+    // one.  The factors are independent because surge and sway have different
+    // vessel responses; the calibrated defaults are 0.72 for X and 0.50 for Y.
     //
     // A fixed +/-30 degree projection puts the same ratio in every record:
     // cos30/sin30 = 1.732 in RMS, independent of sea state.  The records do not
@@ -1326,16 +1263,15 @@ private:
     // Every record also holds yaw at exactly 0 -- mean 0.000, sd 0.000, all
     // eight -- so world x and y ARE the vessel's surge and sway here, and this
     // knob pair is the surge/sway split rather than a world-frame accident.
-    // rho_y therefore comes down to 0.50, the keel-damped axis taking the
+    // rho_y = 0.50 gives the keel-damped axis the
     // tighter integral anchor.  Pooled over four fresh IMU draws and the eight
     // records: pitch -17 percent, y accelerometer bias -21 percent, 3D
     // accelerometer bias -2 percent, yaw unchanged at 1.003, against roll +4
     // percent and x bias +5 percent.  The vertical channels do not move at all
-    // (1.000).  The isotropic 0.5 sweep that was rejected earlier is confirmed
-    // rejected on the same draws for the same reason it was: it costs yaw 5
-    // percent, which the split does not.
+    // (1.000).  An isotropic 0.5 costs yaw 5 percent on the same draws,
+    // which the split does not.
     //
-    // What stays true from the old reading is the frame.  The keel's anisotropy
+    // The frame matters: the keel's anisotropy
     // is a body-frame property and R_S is applied in world NED, so these two
     // numbers only coincide with surge/sway while the vessel heads north, as it
     // does in every record here.  Rotating the anisotropy into the body frame
@@ -1345,23 +1281,8 @@ private:
     float R_S_x_factor_ = 0.72f;
     float R_S_y_factor_ = 0.50f;
     // Horizontal stationary acceleration scale relative to the vertical one.
-    // 1.87 was carried from the acceleration-band operating point and never
-    // re-measured against the records, which put it at 0.81 (x) and 0.55 (y)
-    // of vertical per axis -- 0.99 combined, as deep-water theory requires.
-    // Swept at the deployed isotropic r_S over the eight scored records and
-    // five seeds, 3D displacement RMS has a
-    // flat minimum exactly at 1: -1.28 percent pooled against 1.87, -7.7
-    // percent on JONSWAP Hs = 8.5 m and -2.5 percent on Hs = 4.0 m with every
-    // seed agreeing, PM-Stokes flat to 0.15 percent, vertical unchanged at
-    // +0.16 percent pooled, and no record worse than +0.14 percent.  0.9 and
-    // 1.1 both score -1.19 percent, so the minimum is genuinely here and not a
-    // fitted edge.
-    //
-    // Note that 1 is also the axis-consistent value: with sigma_aw isotropic,
-    // an isotropic r_S is what the similarity law sigma_S ~ sigma_aw tau^3
-    // asks for.  Closing that gap the other way -- keeping 1.87 and setting
-    // the R_S horizontal factors to match -- was measured and is 13.7 percent
-    // worse.
+    // S_factor = 1 gives an isotropic stationary acceleration prior.  For
+    // isotropic r_S this also equalizes r_S/(sigma_aw tau^3) across axes.
     float S_factor_      = 1.0f;
 
     TuneState tune_;
@@ -1387,13 +1308,8 @@ private:
     // attitude/gravity leakage, residual bias, three-axis covariance coupling
     // and the cadence clamps, so this agreement was checked, not assumed.
     //
-    // sigma_coeff no longer enters r_S at all, and the filter is correspondingly
-    // insensitive to it: the whole axis from 0.27 to 1.8 spans 3 % of the
-    // vertical endpoint at the optimal C_R.  It stays at the 0.9 that shipped
-    // with the old law.  The deterministic sweep prefers ~0.32, but that
-    // preference does not survive the multi-seed protocol and costs 0.027 deg
-    // of pitch; the band-matching prediction c_sigma = F_OU^(-1/2) ~ 1.80 is
-    // significantly worse on the vertical endpoint, if only by 0.037 %Hs.
+    // sigma_coeff sets the OU prior scale.  SpectralMSE divides that coefficient
+    // back out when recovering physical wave RMS for its distortion cost.
     float R_S_coeff_    = R_S_COEFF_ANALYTICAL_REFERENCE;
     float tau_coeff_    = 1.0f;
     float sigma_coeff_  = 0.9f;

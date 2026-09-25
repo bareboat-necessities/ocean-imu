@@ -1,6 +1,10 @@
 #pragma once
 
 /*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
+/*
   Based on: https://github.com/thomaspasser/q-mekf
   MIT License, Copyright (c) 2023 Thomas Passer
 

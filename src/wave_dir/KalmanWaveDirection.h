@@ -82,7 +82,7 @@ public:
 
         // z = C cos(phi) + S sin(phi), where C and S are two-dimensional
         // horizontal coefficient vectors. Estimating both quadratures removes
-        // the carrier-phase singularity of the previous cosine-only model.
+        // a carrier-phase singularity that arises with a cosine-only model.
         Eigen::Matrix<float, 2, 4> H;
         H << c, 0.0f, s, 0.0f,
              0.0f, c, 0.0f, s;
@@ -126,7 +126,7 @@ public:
         return Eigen::Vector2f::Zero();
     }
 
-    // Historical representative retained for plots/diagnostics even while the
+    // Last accepted representative retained for plots/diagnostics even while the
     // current validity gate is closed.
     Eigen::Vector2f getLastStableAxis() const { return lastStableDir; }
 
@@ -181,7 +181,7 @@ public:
         return getAxisUncertaintyDegrees();
     }
 
-    // Kept under the original API name, but reports whether the retained axis
+    // Reports whether the retained axis
     // is valid for the current sample rather than holding stale confidence.
     float getLastStableConfidence() const { return confidence; }
     float getHistoricalStableConfidence() const {

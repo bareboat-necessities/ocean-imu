@@ -16,8 +16,7 @@
 
       sigma_a^2 = E_w[a^2] - E_w[a]^2,
 
-  with identical weights for the first and second raw moments.  The previous
-  second EMA of this already-smoothed variance has been removed; any desired
+  with identical weights for the first and second raw moments.  Any desired
   downstream parameter slew belongs to the filter scheduler, not to the
   statistical variance estimator.
 */
@@ -46,8 +45,8 @@ public:
     // K_periods: dimensionless time constant of the acceleration-moment EMA in
     // periods of the canonical wave-frequency input.
     //
-    // The second constructor argument is retained only for source compatibility
-    // with older call sites; frequency smoothing no longer occurs here.
+    // The second constructor argument is ignored for source compatibility;
+    // this class does not smooth frequency.
     explicit SeaStateAutoTuner(float K_periods_ = 4.0f,
                                float /*legacy_tau_freq_sec*/ = 1.0f)
         : K_periods(std::max(1e-3f, K_periods_)) {
@@ -109,8 +108,7 @@ public:
     }
     inline bool isVarReady() const { return A_mean.isReady() && A_sq.isReady(); }
 
-    // The requested horizon is now the actual first/second-moment time constant;
-    // there is no hidden second variance EMA doubling its memory.
+    // Actual first/second-moment time constant after the horizon guards.
     inline float getVarianceHorizonSec() const { return tau_var_sec; }
 
     inline void setKPeriods(float k) {
@@ -134,9 +132,8 @@ public:
         f_max_hz = max_hz;
     }
 
-    // Compatibility shims for older wrappers/ablation code.  Frequency
-    // smoothing has intentionally moved upstream into WavePeriodEstimator's
-    // canonical log-period state, so these knobs no longer alter the tuner.
+    // Compatibility no-ops: frequency smoothing belongs to
+    // WavePeriodEstimator's canonical log-period state.
     inline void setTauFreq(float) {}
     inline void setFrequencySmoothingSeaPeriods(float) {}
     inline float getFrequencySmoothingSeaPeriods() const { return 0.0f; }

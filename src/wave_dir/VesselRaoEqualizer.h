@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+*/
+
 #include "wave_dir/WaveDirectionFrame.h"
 #include <algorithm>
 #include <array>

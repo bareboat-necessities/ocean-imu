@@ -134,8 +134,7 @@ class Kalman3D_Wave_TFG {
         P_ *= T(1e-4);
     }
 
-    // The seed is an argument so it can be swept; the default is the value
-    // this filter has always used.
+    // Seed the identity state with a nonnegative isotropic covariance.
     void initialize_identity(T initial_covariance = T(1e-4)) {
         X_ = Group::Identity();
         P_.setIdentity();
@@ -272,8 +271,8 @@ class Kalman3D_Wave_TFG {
         Q_bg_ = var_per_s.cwiseAbs().asDiagonal();
     }
 
-    // Same API and semantics as current OU-III: the argument is a continuous
-    // driving-noise standard deviation, despite the historical method name.
+    // Same semantics as OU-III: the argument is a continuous driving-noise
+    // standard deviation, in m/s^2 per sqrt(s), despite the method name.
     void set_Q_bacc_rw(const Vector3& driving_std_per_sqrt_s) {
         if constexpr (with_accel_bias)
             Q_ba_ = driving_std_per_sqrt_s.array().square().matrix().asDiagonal();
@@ -830,7 +829,7 @@ class Kalman3D_Wave_TFG {
 
         // Plain assignment rather than noalias(): the right-hand side is a
         // solve expression, which Eigen routes through its own temporary
-        // either way, exactly as it did when K was a local.
+        // either way.
         Eigen::Matrix<T,NX,3>& K = scratch_nx3_b_;
         K = ldlt.solve(PHt.transpose()).transpose();
         if (!K.allFinite()) return false;
@@ -918,18 +917,13 @@ class Kalman3D_Wave_TFG {
     // ---------------------------------------------------------------------
     // Covariance-algebra scratch.
     //
-    // These were locals until the AtomS3R sketch went to measure its stack.
-    // Every NX x NX here is 1764 bytes at NX = 21, and time_update() and
-    // apply_update3_() between them named five of those, on top of the
-    // temporaries Eigen builds for the triple products.  One live fusion step
-    // peaked near 21 kB of stack against the 8 kB an Arduino-ESP32 loop task
-    // gets by default, so the filter overflowed it the moment it left the
-    // startup stage.  OU-III has always kept its equivalents as members.
+    // Fixed-size workspaces are members to keep covariance algebra off the
+    // task stack.  Each NX x NX float matrix is 1764 bytes at NX = 21.
     //
     // The pool is shared because its consumers never overlap: time_update()
     // does not call apply_update3_(), and neither is reachable from
     // apply_world_yaw_gauge().  Each binds a readable reference to the slot it
-    // needs, so the algebra below reads the way it did as locals.
+    // needs.
     //
     //     slot     time_update()   apply_update3_()   apply_world_yaw_gauge()
     //     a        Phi             IKH                G
@@ -942,8 +936,8 @@ class Kalman3D_Wave_TFG {
     // bit-identical: Eigen picks a different GEMM path for the outer product
     // when its right operand is a Transpose<> of a named matrix than when the
     // same product is a nested node, and the summation order changes with it.
-    // Measured on a 200-step direct MEKF replay, every split form drifts from
-    // the committed one; every rewrite kept below reproduces it exactly.
+    // Preserve the expression structure to retain the floating-point
+    // evaluation order.
     // ---------------------------------------------------------------------
     MatrixNX scratch_a_{MatrixNX::Zero()};
     MatrixNX scratch_b_{MatrixNX::Zero()};
