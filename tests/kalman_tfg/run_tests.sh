@@ -7,6 +7,8 @@ set -e
 
 make -f Makefile -f ../common/StationaryDeviceRegression.mk stationary_device-test
 ./stationary_device-test
+make -f Makefile -f ../common/LocalGravityRegression.mk local_gravity-test
+./local_gravity-test
 
 ./lie_group-test
 ./convention-test

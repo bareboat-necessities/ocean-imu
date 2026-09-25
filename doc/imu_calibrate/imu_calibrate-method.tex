@@ -441,6 +441,82 @@ and Robust Estimation in C\texttt{++}/Eigen}
     ($\mathbf{S}$, $\mathbf{b}_\text{ref}$); the three slopes $\mathbf{k}$
     are added only when the data determine them (Section~\ref{sec:thermal}).
 
+    \subsection{Gravity Convention}
+    \label{sec:gravity}
+
+    Two gravity values are used, and they are kept apart.
+
+    \emph{Standard gravity} $g_\text{std} = 9.80665$\,m/s$^2$ is the exact
+    conventional value of one standard $g$. M5Unified reports the BMI270
+    acceleration in nominal $g$; multiplying by $g_\text{std}$ converts that
+    unit to m/s$^2$. The chain is: BMI270 counts, M5Unified acceleration in
+    nominal $g$, $\times g_\text{std}$, SI acceleration, axis mapping,
+    then Eq.~\eqref{eq:accel_full}. This is a unit conversion only. It does
+    not mean that the static gravity where the device is calibrated is
+    9.80665\,m/s$^2$ (\texttt{ImuCalCfg::g\_std}).
+
+    \emph{Calibration gravity} $g_\text{cal}$ is the physical gravity assumed
+    at the calibration site (\texttt{ImuCalCfg::g\_cal\_local}). The fit
+    enforces, for every static hold,
+    \begin{equation}
+        \bigl\|\mathbf{S}\bigl(\mathbf{a}_\text{SI} - \mathbf{b}_\text{ref}
+        - \mathbf{k}(T - T_\text{ref})\bigr)\bigr\| = g_\text{cal}.
+        \label{eq:gravity_constraint}
+    \end{equation}
+    Its default is WGS84 normal gravity (NGA.STND.0036, formerly TR8350.2)
+    at the project's default calibration site, Fair Lawn, New Jersey 07410:
+    geodetic latitude $\varphi = 40.935833^\circ$\,N, longitude
+    $74.117504^\circ$\,W, orthometric elevation about $+25$\,m above mean
+    sea level, WGS84 ellipsoidal height about $h = -9$\,m. The Somigliana
+    closed form gives normal gravity on the ellipsoid,
+    \begin{equation}
+        \gamma_0(\varphi) = \gamma_e\,
+        \frac{1 + k\sin^2\varphi}{\sqrt{1 - e^2\sin^2\varphi}},
+        \qquad k = \frac{b\,\gamma_p}{a\,\gamma_e} - 1,
+    \end{equation}
+    and the second-order height correction (TR8350.2 eq.~4-3) moves it to
+    height $h$ above the ellipsoid:
+    \begin{equation}
+        \gamma(\varphi, h) = \gamma_0\Bigl[1 - \frac{2}{a}
+        \bigl(1 + f + m - 2f\sin^2\varphi\bigr)h + \frac{3}{a^2}h^2\Bigr],
+    \end{equation}
+    with $a = 6378137$\,m, $f = 1/298.257223563$, $e^2 = 6.69437999\times
+    10^{-3}$, $\gamma_e = 9.7803253359$, $\gamma_p = 9.8321849378$\,m/s$^2$,
+    $m = \omega^2a^2b/GM = 0.00344978650684$. Longitude does not enter:
+    normal gravity depends only on latitude and height, and no local
+    gravity-field model is used. The height correction is defined in
+    ellipsoidal height, so $h = -9$\,m is used, not the $+25$\,m
+    orthometric elevation (which would give $1.05\times10^{-4}$\,m/s$^2$
+    less). Hence $\gamma_0 = 9.8025327$ and
+    \[
+        g_\text{cal} = \gamma(40.935833^\circ, -9\,\text{m})
+        = 9.8025605\ \text{m/s}^2,
+    \]
+    $4.09$\,mm/s$^2$ below $g_\text{std}$ (the GRS80 formula agrees to
+    $1.5\times10^{-6}$). This is a model value, not a measurement. The
+    formula is exact to $10^{-7}$\,m/s$^2$ for its inputs; $\pm5$\,m of
+    height and $\pm0.001^\circ$ of latitude move it by $1.5\times10^{-5}$
+    and $9\times10^{-7}$\,m/s$^2$. The real gravity differs from normal
+    gravity by the local gravity disturbance, typically of order
+    $10^{-4}$\,m/s$^2$, which is not modelled. Another site is configured
+    with \texttt{-DATOMS3R\_CALIBRATION\_GRAVITY\_MPS2=<value>}.
+
+    Only the gravity magnitude constrains the scale. If the fit assumes
+    $g_a$ while the site has $g_t$, the fitted matrix is
+    $(g_a/g_t)\,\mathbf{S}_\text{true}$ and the bias is unchanged. Forcing
+    Fair Lawn gravity onto $g_\text{std}$ would therefore apply the common
+    scale factor $g_\text{std}/g_\text{cal} = 1.000417$ to every calibrated
+    acceleration, dynamic ones included. The estimators remove gravity from
+    the calibrated specific force, $\mathbf{a}_w = \mathbf{R}\mathbf{a}_\text{cal}
+    + g_e\hat{\mathbf{z}}$ (NED). For a still device
+    $\|\mathbf{a}_\text{cal}\| = g_\text{cal}$, so the vertical residual is
+    $g_e - g_\text{cal}$. The AtomS3R sketches therefore configure every
+    estimator (OU-II, OU-III, TFG, PII, NLO, their startup proxies and
+    still-detection gates) with the same $g_\text{cal}$: SI scale is kept
+    and an ideal still sensor has zero translational acceleration. The
+    library defaults stay at 9.80665\,m/s$^2$; the simulations use it as
+    their world gravity.
+
     \subsection{Pose Design}
 
     Linearized at $\mathbf{S}=\mathbf{I}$, $\mathbf{b}=\mathbf{0}$, a hold
@@ -564,7 +640,8 @@ and Robust Estimation in C\texttt{++}/Eigen}
 
     \subsection{Fit}
 
-    Vectors are normalized by $g$ and temperatures by $10\,^\circ$C;
+    Vectors are normalized by $g_\text{cal}$ (Eq.~\eqref{eq:gravity_constraint})
+    and temperatures by $10\,^\circ$C;
     $\mathbf{S} = \mathbf{L}\mathbf{L}^\top$ with a log-diagonal lower
     Cholesky factor, so every iterate is SPD. The residual of a block is
     $\|\mathbf{S}(\mathbf{x}_i - \boldsymbol\beta - \boldsymbol\kappa\tau_i)\| - 1$.
@@ -663,7 +740,13 @@ and Robust Estimation in C\texttt{++}/Eigen}
     clamp, qualification metadata and the sensor identity. Only this layout
     and key are read; calibrations saved by earlier firmware are not loaded,
     so such a device runs the wizard again. \texttt{accel\_coeff\_crc} binds the metadata to the
-    coefficient set it describes. The float coefficients are validated after
+    coefficient set it describes, including \texttt{accel\_g}, the gravity
+    the scale was fitted against. The runtime applies an accelerometer
+    calibration only when \texttt{accel\_g} equals the firmware's
+    $g_\text{cal}$ (to $10^{-5}$\,m/s$^2$); a set fitted against another
+    gravity, for example 9.80665\,m/s$^2$, is reported at boot and not
+    applied, never rescaled or reinterpreted, while its gyroscope and
+    magnetometer calibrations stay in use. The float coefficients are validated after
     the double-to-float conversion, after serialization, and after the
     read-back: finite, exactly symmetric, SPD, within the gates, and
     reproducing the double hold RMS within 0.2\,mm/s$^2$. The save succeeds
@@ -685,10 +768,18 @@ and Robust Estimation in C\texttt{++}/Eigen}
     by 0.2--0.6$^\circ$ per mode at 0.2--1.2\,Hz, with drift, 8--12\,Hz
     tremor, 0.5--2\,mm sway and occasional regrips. It also models table
     knocks, stale samples, dropouts and timestamp jitter, and temperature
-    histories. The deployed procedure is reproduced: six faces, 6.5\,s wait,
+    histories. The simulated site has the Fair Lawn gravity and the new
+    procedure is configured with it, as the wizard is; results are scored
+    against the physical truth (a correct calibration maps the site's
+    specific force to itself). Scenario \texttt{local\_g} is a
+    9.7803\,m/s$^2$ site with a firmware built for it; \texttt{g\_mismatch}
+    is the same site with the default Fair Lawn value, and shows the
+    expected common scale $g_\text{cal}/9.7803 = 1.00228$ with the bias
+    unaffected. The deployed procedure is reproduced: six faces, 6.5\,s wait,
     the first 60 gated samples, \texttt{AccelCalibrator<float,400,1>}
-    PolarSPD with its gates, and the pre-fix identity acceptance. Its blocks
-    are also fed to the old fitter, and the new procedure runs through the
+    PolarSPD with its gates and its 9.80665\,m/s$^2$, and the pre-fix
+    identity acceptance. The new blocks are also fed to the old fitter
+    (with $g_\text{cal}$), and the new procedure runs through the
     same \texttt{AccelCalIo} interface as the wizard. Every result is scored
     through the float runtime on 400 unseen orientations against the truth
     (Table~\ref{tab:campaign}).

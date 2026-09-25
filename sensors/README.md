@@ -52,6 +52,8 @@ The compass and INS sketches share one on-device calibration wizard (single tap 
 - **Gyro and magnetometer:** unchanged (full wizard only).
 - **Rechecks:** three short holds (screen up, USB up, left edge down) give temperature evidence and a held-out check.
 
+**Gravity.** M5Unified reports acceleration in nominal g, converted to m/s² with the exact standard value 9.80665 (`ImuCalCfg::g_std`). That is only a unit. The physical gravity at the calibration site is `ImuCalCfg::g_cal_local`; the default is WGS84 normal gravity at Fair Lawn, NJ 07410 (40.935833° N, ellipsoidal height −9 m), 9.8025605 m/s². The accelerometer is calibrated to that static norm, and every sketch's estimator removes the same value, so a still device reads zero translational acceleration. Elsewhere, build with `-DATOMS3R_CALIBRATION_GRAVITY_MPS2=<your gravity>` and recalibrate. A saved accelerometer calibration fitted against a different gravity is reported at boot and not applied; gyro and magnetometer calibrations stay in use.
+
 The accelerometer part takes about 2.5–3 minutes in simulation. Nothing is saved unless the whole result validates; otherwise, or after a cancel, the previous calibration stays. The method, pose design and validation are in [`doc/imu_calibrate/imu_calibrate-method.tex`](../doc/imu_calibrate/imu_calibrate-method.tex).
 
 ## Related repository areas

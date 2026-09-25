@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "imu_calibrate/AccelCalCapture.h"
+#include "AtomS3R/AtomS3R_ImuUnits.h"
 
 namespace accel_sim {
 
@@ -22,7 +23,10 @@ using Vec3 = Eigen::Vector3d;
 using Mat3 = Eigen::Matrix3d;
 constexpr double kPi = 3.14159265358979323846;
 constexpr double kDeg = kPi / 180.0;
-constexpr double kGStd = 9.80665;
+constexpr double kGStd = 9.80665;  // standard g (nominal-g unit; generic default)
+// Physical gravity of the simulated site: the firmware's default calibration
+// site (Fair Lawn NJ, WGS84 normal gravity), where the device is calibrated.
+constexpr double kGSite = (double)atoms3r_ical::ImuCalCfg::g_cal_local;
 
 // Deterministic RNG (splitmix64 seeded xorshift) with explicit transforms.
 struct Rng {
@@ -65,7 +69,7 @@ struct SensorTruth {
   Vec3 k = Vec3::Zero();            // bias slope, m/s^2/degC
   Mat3 dS_dT = Mat3::Zero();        // thermal scale change (model mismatch)
   double T0 = 25.0;
-  double g_local = kGStd;
+  double g_local = kGSite;         // physical gravity at the site
   double noise = 0.010;             // white, per axis, m/s^2
   double ar_sd = 0.003, ar_rho = 0.995;  // correlated noise
   Vec3 gyro_bias = Vec3::Zero();
@@ -158,7 +162,8 @@ struct Scenario {
   double bias_sd = 0.15, scale_sd = 0.01, cross_sd = 0.004, k_sd = 0.002;
   double mis_deg = 0.0;           // non-symmetric misalignment magnitude
   double dSdT = 0.0;              // thermal scale coefficient (diag), 1/degC
-  double g_local = kGStd;
+  double g_local = kGSite;        // physical gravity at the site
+  double g_cal = 0.0;             // firmware g_cal_local (0: default, Fair Lawn)
   Vec3 k_override = Vec3::Constant(NAN);
   Vec3 bias_offset = Vec3::Zero();  // power-cycle offset added to the truth bias
 };

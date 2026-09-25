@@ -23,7 +23,7 @@ endif
 LDFLAGS  =
 
 # Targets
-TARGETS = imu_calibrate-test accel_cal-test accel_cal-replay
+TARGETS = imu_calibrate-test accel_cal-test accel_cal-replay accel_cal_gravity_override-test
 
 all: build test
 
@@ -44,14 +44,19 @@ accel_cal-test: accel_cal-test.o
 accel_cal-replay: accel_cal-replay.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+accel_cal_gravity_override-test: accel_cal_gravity_override-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
 # The library headers under test (header-only), so edits there rebuild the tests.
 SRC_DIR = ../../src
 CAL_HEADERS = $(SRC_DIR)/imu_calibrate/CalibrateIMU.h $(SRC_DIR)/imu_calibrate/AccelCalFit.h \
-              $(SRC_DIR)/imu_calibrate/AccelCalCapture.h $(SRC_DIR)/AtomS3R/AtomS3R_ImuCalBlob.h
+              $(SRC_DIR)/imu_calibrate/AccelCalCapture.h $(SRC_DIR)/AtomS3R/AtomS3R_ImuCalBlob.h \
+              $(SRC_DIR)/AtomS3R/AtomS3R_ImuUnits.h
 
 imu_calibrate-test.o: $(CAL_HEADERS)
-accel_cal-test.o: accel_cal_sim.h accel_cal_replay.h $(CAL_HEADERS)
+accel_cal-test.o: accel_cal_sim.h accel_cal_replay.h ../common/GravityChain.h $(CAL_HEADERS)
 accel_cal-replay.o: accel_cal_replay.h $(CAL_HEADERS)
+accel_cal_gravity_override-test.o: ../common/GravityChain.h $(CAL_HEADERS)
 
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -c $< -o $@

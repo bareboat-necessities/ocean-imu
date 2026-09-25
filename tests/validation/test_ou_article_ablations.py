@@ -468,7 +468,7 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
 
         # One conditioning point, feeding every consumer.
         self.assertIn("const Eigen::Vector3f acc_in = accel_guard_.step(acc, dt);", filt)
-        self.assertIn("vertical_accel_comp_.update(dt, gyro, acc_in, g_std);", filt)
+        self.assertIn("vertical_accel_comp_.update(dt, gyro, acc_in, gravity_mps2_);", filt)
         self.assertIn("mekf_->measurement_update_acc_only(acc_in, tempC);", filt)
         self.assertNotIn("measurement_update_acc_only(acc,", filt)
 
@@ -486,7 +486,7 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
             ("OU-II",
              ROOT / "src" / "kalman_ou_ii" / "SeaStateFusionFilter_OU_II.h",
              "mekf_->measurement_update_acc_only(acc_in, tempC);",
-             "vertical_accel_comp_.update(dt, gyro, acc_in, g_std);"),
+             "vertical_accel_comp_.update(dt, gyro, acc_in, gravity_mps2_);"),
             ("TFG",
              ROOT / "src" / "kalman_tfg" / "SeaStateFusionFilter_TFG.h",
              "mekf_.measurement_update_acc_only(acc_in, tempC);",

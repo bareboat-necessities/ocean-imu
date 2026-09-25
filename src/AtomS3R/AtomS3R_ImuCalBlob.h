@@ -13,6 +13,14 @@
   The accelerometer metadata describes one coefficient set; accel_coeff_crc
   binds it to that set. A thermal slope is only carried into a later session
   when the metadata is bound and the sensor identity matches.
+
+  accel_g is the physical gravity the accelerometer scale was fitted against
+  (ImuCalCfg::g_cal_local of the firmware that ran the wizard; bound by
+  accel_coeff_crc). The runtime applies an accelerometer calibration only when
+  accel_g equals this firmware's g_cal_local: a set fitted against another
+  gravity (for example 9.80665) is reported and not applied, never rescaled or
+  reinterpreted. Gyro and magnetometer calibrations do not depend on gravity
+  and stay in use.
 */
 
 #include <stdint.h>
@@ -21,17 +29,12 @@
 #include <math.h>
 
 #include "imu_calibrate/AccelCalFit.h"
+#include "AtomS3R/AtomS3R_ImuUnits.h"
 
 namespace atoms3r_ical {
 
 using Vector3f = Eigen::Matrix<float,3,1>;
 using Matrix3f = Eigen::Matrix<float,3,3>;
-
-// Config/constants (shared)
-struct ImuCalCfg {
-  static constexpr float g_std   = 9.80665f;
-  static constexpr float DEG2RAD = 3.14159265358979323846f / 180.0f;
-};
 
 // Blob + CRC utilities
 static constexpr uint32_t IMU_CAL_MAGIC = 0x434C554D; // 'MULC'
@@ -49,7 +52,7 @@ struct ImuCalBlobV3 {
 
   uint8_t  accel_ok = 0;
   uint8_t  pad_a[2]{};               // explicit padding: CRC and readback compare every byte
-  float    accel_g = ImuCalCfg::g_std;
+  float    accel_g = ImuCalCfg::g_cal_local;  // physical gravity the scale was fitted against
   float    accel_S[9]{};            // a_cal = S*(a_raw - b0 - k*(clamp(T) - T0)), row-major
   float    accel_T0 = 25.0f;
   float    accel_b0[3]{};
@@ -158,6 +161,16 @@ static inline uint32_t accelCoeffCrc(const ImuCalBlobV3& b) {
 
 static inline bool accelMetaBound(const ImuCalBlobV3& b) { return b.accel_coeff_crc == accelCoeffCrc(b); }
 
+// Largest |accel_g - g_cal_local| treated as the same gravity: float rounding
+// only (a height-datum mix-up is ~1e-4, 9.80665 vs local ~4e-3 m/s^2).
+static constexpr float kAccelGravityMatchTol = 1.0e-5f;
+
+// True when the accelerometer set was fitted against `g_cfg` (the physical
+// gravity this firmware calibrates to and its estimators remove).
+static inline bool accelGravityMatches(const ImuCalBlobV3& b, float g_cfg = ImuCalCfg::g_cal_local) {
+  return isfinite(b.accel_g) && fabsf(b.accel_g - g_cfg) <= kAccelGravityMatchTol;
+}
+
 static inline bool allFinite_(const float* a, int n) {
   for (int i = 0; i < n; ++i) if (!isfinite(a[i])) return false;
   return true;
@@ -257,8 +270,13 @@ struct RuntimeCals {
   imu_cal::GyroCalibration<float>  gyr{};
   imu_cal::MagCalibration<float>   mag{};
 
-  void rebuildFromBlob(const ImuCalBlobV3& b) {
-    acc.ok = (b.accel_ok != 0);
+  // Set when the blob holds an accelerometer calibration fitted against a
+  // different gravity than this firmware's g_cal_local; it is then not applied.
+  bool accel_gravity_mismatch = false;
+
+  void rebuildFromBlob(const ImuCalBlobV3& b, float g_cfg = ImuCalCfg::g_cal_local) {
+    accel_gravity_mismatch = (b.accel_ok != 0) && !accelGravityMatches(b, g_cfg);
+    acc.ok = (b.accel_ok != 0) && !accel_gravity_mismatch;
     acc.g  = b.accel_g;
     acc.S  = mat_from_rowmajor9_(b.accel_S);
     acc.biasT.ok = acc.ok;

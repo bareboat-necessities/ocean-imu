@@ -18,6 +18,7 @@
 
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
 #include "accel_cal_replay.h"
+#include "../common/GravityChain.h"
 
 #include <algorithm>
 #include <chrono>
@@ -75,8 +76,8 @@ using Proc = AccelCalProcedure<kMaxObs, kMaxHolds>;
 
 // Wizard configuration of the legacy accel calibrator (configureCalibrators_()).
 template <typename Cal>
-void configureLegacy(Cal& c) {
-  c.g = 9.80665f;
+void configureLegacy(Cal& c, float g = 9.80665f) {
+  c.g = g;
   c.accel_mag_tol = 0.8f;
   c.max_gyro_for_static = 0.12f;
   c.accel_S_mode = Cal::AccelSMode::PolarSPD;
@@ -120,9 +121,14 @@ struct CalFloat {
   imu_cal::AccelCalibration<float> acc;
 };
 
-CalFloat calFromBlob(const atoms3r_ical::ImuCalBlobV3& b) {
+// Firmware g_cal_local of a scenario (0 = the default, Fair Lawn).
+float gCal(const Scenario& sc) { return sc.g_cal > 0 ? (float)sc.g_cal : atoms3r_ical::ImuCalCfg::g_cal_local; }
+
+// g_runtime: the gravity of the firmware applying the blob (it refuses a set
+// fitted against another gravity).
+CalFloat calFromBlob(const atoms3r_ical::ImuCalBlobV3& b, float g_runtime = atoms3r_ical::ImuCalCfg::g_cal_local) {
   atoms3r_ical::RuntimeCals rc;
-  rc.rebuildFromBlob(b);
+  rc.rebuildFromBlob(b, g_runtime);
   CalFloat c;
   c.ok = rc.acc.ok;
   c.acc = rc.acc;
@@ -137,6 +143,7 @@ struct Accuracy {
   double diag_err = NAN;       // max |S_fit - S_true| diagonal
   double vec_rms = NAN, vec_max = NAN;   // || a_cal - f_true || over unseen orientations
   double norm_rms = NAN;       // | ||a_cal|| - g | over unseen orientations
+  double scale = NAN;          // trace(S_fit S_true^-1)/3: common scale vs physical truth
 };
 
 const std::vector<Vec3>& unseenDirections() {
@@ -155,7 +162,10 @@ Accuracy score(const CalFloat& c, const SensorTruth& t, double T) {
   const Vec3 bf = c.acc.biasT.bias((float)T).cast<double>();
   a.bias_err = (bf - bt).norm();
   a.bias_axis_max = (bf - bt).cwiseAbs().maxCoeff();
-  const Mat3 St = t.S_polar_at(T) * (kGStd / t.g_local);
+  // Physical truth: a correct calibration maps the site's specific force to
+  // itself in m/s^2 (its static norm is the site gravity).
+  const Mat3 St = t.S_polar_at(T);
+  a.scale = (c.acc.S.cast<double>() * St.inverse()).trace() / 3.0;
   const Mat3 Sf = c.acc.S.cast<double>();
   double ce = 0, de = 0;
   for (int i = 0; i < 3; ++i)
@@ -171,10 +181,10 @@ Accuracy score(const CalFloat& c, const SensorTruth& t, double T) {
     const Vec3 f = t.g_local * u;
     const Vec3 raw = Ainv * f + bt;
     const Vec3 ac = c.acc.apply(raw.cast<float>(), (float)T).cast<double>();
-    const Vec3 ref = t.R_mis * f * (kGStd / t.g_local);
+    const Vec3 ref = t.R_mis * f;
     const double ev = (ac - ref).norm();
     sv += ev * ev; mx = std::max(mx, ev);
-    const double en = ac.norm() - kGStd;
+    const double en = ac.norm() - t.g_local;
     sn += en * en;
   }
   const double n = (double)unseenDirections().size();
@@ -372,15 +382,18 @@ OldRun runOld(World& w, Stream& st, const Scenario& sc) {
   b.accel_T0 = acc.biasT.T0;
   for (int j = 0; j < 3; ++j) { b.accel_b0[j] = acc.biasT.b0(j); b.accel_k[j] = acc.biasT.k(j); }
   b.accel_T_lo = -1000; b.accel_T_hi = 1000;
-  out.cal = calFromBlob(b);
+  // The deployed firmware used 9.80665 for fit and runtime alike.
+  out.cal = calFromBlob(b, acc.g);
   out.ok = true;
   out.reason = out.identity ? "OK_IDENTITY" : "OK";
   return out;
 }
 
-CalFloat fitOldOnBlocks(const AccelObs* obs, int n, std::string& reason) {
+// The old fitter on the new blocks, given the same gravity as the new fitter
+// (a fitter comparison, not a gravity comparison).
+CalFloat fitOldOnBlocks(const AccelObs* obs, int n, std::string& reason, float g) {
   auto cal = std::make_unique<imu_cal::AccelCalibrator<float, 400, 1>>();
-  configureLegacy(*cal);
+  configureLegacy(*cal, g);
   for (int i = 0; i < n; ++i) {
     if (obs[i].role != (uint8_t)imu_cal::AccelObsRole::FIT) continue;
     cal->addSample(Eigen::Vector3f(obs[i].a[0], obs[i].a[1], obs[i].a[2]),
@@ -422,6 +435,9 @@ NewRun runNew(World& w, Stream& st, const Scenario& sc, const imu_cal::AccelTher
   auto proc = std::make_unique<Proc>();
   imu_cal::AccelCaptureCfg ccfg;
   imu_cal::AccelFitCfg fcfg;
+  const float g_cal = gCal(sc);  // as configureCalibrators_() in the wizard
+  ccfg.g = g_cal;
+  fcfg.g = g_cal;
   if (const char* e = getenv("ACCEL_CAL_HOLD_MS")) ccfg.hold_useful_ms = (uint32_t)strtoul(e, nullptr, 10);  // sensitivity sweeps
   proc->begin(ccfg, fcfg, prior, Eigen::Vector3f::Zero(), false);
   SimIo io(w, st, sc);
@@ -429,7 +445,7 @@ NewRun runNew(World& w, Stream& st, const Scenario& sc, const imu_cal::AccelTher
   io.raw_log = raw_log;
   if (logs) {
     char b[160];
-    snprintf(b, sizeof(b), "[ACCMODE] %s", sc.accel_only ? "accel_only" : "full");
+    snprintf(b, sizeof(b), "[ACCMODE] %s g=%.7f", sc.accel_only ? "accel_only" : "full", (double)fcfg.g);
     logs->push_back(b);
     snprintf(b, sizeof(b), "[ACCPRIOR] %d,%.7f,%.7f,%.7f,%.2f,%.2f,%.2f,%.2f", (int)prior.valid, prior.k[0], prior.k[1],
              prior.k[2], prior.k_temp_lo, prior.k_temp_hi, prior.clamp_lo, prior.clamp_hi);
@@ -487,15 +503,15 @@ NewRun runNew(World& w, Stream& st, const Scenario& sc, const imu_cal::AccelTher
     atoms3r_ical::ImuCalBlobV3 rb{};
     if (!store.saveVerified(b, rb)) { out.reason = "save"; return out; }
     atoms3r_ical::RuntimeCals rc;
-    rc.rebuildFromBlob(rb);
+    rc.rebuildFromBlob(rb, g_cal);
     imu_cal::AccelFullFitResult rv = out.fit;
     if (!Proc::Fitter::validateFloat(proc->obs(), proc->nObs(), rc.acc, fcfg, rv)) { out.reason = "float_readback"; return out; }
     out.blob = rb;
-    out.cal = calFromBlob(rb);
+    out.cal = calFromBlob(rb, g_cal);
     out.ok = true;
     out.reason = "OK";
   }
-  out.rich_old = fitOldOnBlocks(proc->obs(), proc->nObs(), out.rich_old_reason);
+  out.rich_old = fitOldOnBlocks(proc->obs(), proc->nObs(), out.rich_old_reason, g_cal);
   return out;
 }
 
@@ -971,8 +987,15 @@ std::vector<Scenario> scenarios() {
     s.temp.T_start = 30.0; s.temp.dT = 0.6; s.temp.tau_s = 500; s.wizard_start_s = 900;
     v.push_back(s);
   }
-  {  // local gravity differs from the standard value (equator, sea level)
+  {  // another site (equator, sea level), firmware built for its gravity
     Scenario s = baseScenario("local_g");
+    s.temp.T_start = 31.0; s.temp.dT = 0.8; s.temp.tau_s = 400; s.wizard_start_s = 600;
+    s.g_local = 9.7803; s.g_cal = 9.7803;
+    v.push_back(s);
+  }
+  {  // the same site with the default (Fair Lawn) g_cal_local: expected common
+     // scale error g_cal_local / 9.7803, bias unaffected
+    Scenario s = baseScenario("g_mismatch");
     s.temp.T_start = 31.0; s.temp.dT = 0.8; s.temp.tau_s = 400; s.wizard_start_s = 600;
     s.g_local = 9.7803;
     v.push_back(s);
@@ -1004,7 +1027,7 @@ std::string fmt(double v, int p = 5) {
 
 void runCampaign(int seeds, std::ostream& csv, std::ostream& sum, std::ostream& rep) {
   csv << "scenario,seed,method,ok,reason,bias_err,bias_axis_max,cross_err,diag_err,vec_rms,vec_max,norm_rms,"
-         "bias_err_hot,vec_rms_hot,time_s,retries,extras,thermal,k_err,cpu_s\n";
+         "bias_err_hot,vec_rms_hot,time_s,retries,extras,thermal,k_err,cpu_s,scale\n";
   std::vector<Row> rows;
   for (const Scenario& sc0 : scenarios()) {
     for (int seed = 1; seed <= seeds; ++seed) {
@@ -1068,7 +1091,7 @@ void runCampaign(int seeds, std::ostream& csv, std::ostream& sum, std::ostream& 
         << fmt(r.acc.diag_err) << ',' << fmt(r.acc.vec_rms) << ',' << fmt(r.acc.vec_max) << ','
         << fmt(r.acc.norm_rms) << ',' << fmt(r.acc_hot.bias_err) << ',' << fmt(r.acc_hot.vec_rms) << ','
         << fmt(r.time_s, 1) << ',' << r.retries << ',' << r.extras << ',' << r.thermal << ','
-        << fmt(r.k_err, 6) << ',' << fmt(r.cpu_s, 4) << '\n';
+        << fmt(r.k_err, 6) << ',' << fmt(r.cpu_s, 4) << ',' << fmt(r.acc.scale, 7) << '\n';
   }
 
   // Summary
@@ -1160,9 +1183,24 @@ void runCampaign(int seeds, std::ostream& csv, std::ostream& sum, std::ostream& 
   for (const Row* r : groups[{"accel_only", "RICH+NEW"}]) check(!r->ok || r->thermal != "LEARNED" || r->k_err < 0.003, "accel-only: no spurious slope");
   for (const Row* r : groups[{"temp_confounded", "RICH+NEW"}]) check(!r->ok || r->thermal != "LEARNED" || r->k_err < 0.003, "confounded: no spurious slope");
   check(stat("temp_nan", "RICH+NEW", bias).second >= 0.9, "NaN temperature: calibration still succeeds");
-  // Only |g| is used: a local g of 9.78 rescales S but leaves the bias intact.
+  // Gravity convention. Configured for the site's gravity, the fitted scale is
+  // physical (common scale 1); configured for another gravity it is
+  // g_cal/g_site, and only |g| enters the fit, so the bias is unaffected.
+  auto scale = [](const Row& r) { return r.acc.scale; };
+  const double ratio_mismatch = (double)atoms3r_ical::ImuCalCfg::g_cal_local / 9.7803;
+  for (const char* scn : {"typical", "adverse", "cold_start_thermal", "accel_only", "local_g", "temp_nan"}) {
+    const double sm = median(stat(scn, "RICH+NEW", scale).first);
+    rep << "gravity_campaign," << scn << ",scale_median," << std::setprecision(8) << sm << std::setprecision(6) << "\n";
+    check(std::fabs(sm - 1.0) < 5e-4, std::string(scn) + ": fitted scale is physical (site gravity configured)");
+  }
+  const double sm_mis = median(stat("g_mismatch", "RICH+NEW", scale).first);
+  rep << "gravity_campaign,g_mismatch,scale_median," << std::setprecision(8) << sm_mis << ",expected," << ratio_mismatch
+      << std::setprecision(6) << "\n";
+  check(std::fabs(sm_mis - ratio_mismatch) < 5e-4, "g_mismatch: common scale error is g_cal_local / g_site");
   check(median(stat("local_g", "RICH+NEW", bias).first) < 0.5 * median(stat("local_g", "OLD", bias).first) &&
         median(stat("local_g", "RICH+NEW", bias).first) < 0.006, "local g: bias unaffected by the gravity magnitude");
+  check(median(stat("g_mismatch", "RICH+NEW", bias).first) < 0.006 &&
+        stat("g_mismatch", "RICH+NEW", bias).second >= 0.9, "g_mismatch: bias unaffected, calibration still accepted");
 }
 
 // Power-cycle offset: the second session re-measures the bias and keeps the
@@ -1184,7 +1222,7 @@ void testPowerCycle(std::ostream& rep) {
     // Accelerometer-only candidate: gyro and magnetometer carried byte for byte.
     const atoms3r_ical::ImuCalBlobV3 prev = makeBlob();
     imu_cal::AccelCalibration<float> fc;
-    Proc::Fitter::toFloat(a.fit, kGStd, fc);
+    Proc::Fitter::toFloat(a.fit, gCal(sc), fc);
     const atoms3r_ical::ImuCalBlobV3 c = atoms3r_ical::accelOnlyCandidate(prev, a.fit, fc, 150, 0x1234, 0x5678, 3);
     const size_t g0 = offsetof(atoms3r_ical::ImuCalBlobV3, gyro_ok);
     const size_t g1 = offsetof(atoms3r_ical::ImuCalBlobV3, accel_T_lo);
@@ -1293,6 +1331,198 @@ void testReplay() {
 
 }  // namespace
 
+// ---------------------------------------------------------------------------
+// Gravity convention: g_std (nominal g -> m/s^2) versus the physical gravity
+// the calibration is fitted to and the estimators remove (g_cal_local).
+
+// WGS84 normal gravity, NGA.STND.0036 / TR8350.2: Somigliana on the ellipsoid
+// (eq. 4-1) and the second-order correction in ellipsoidal height h (eq. 4-3).
+double wgs84NormalGravity(double lat_deg, double h_ellipsoidal_m) {
+  const double a = 6378137.0, f = 1.0 / 298.257223563, GM = 3.986004418e14, w = 7.292115e-5;
+  const double b = a * (1.0 - f), e2 = f * (2.0 - f);
+  const double ge = 9.7803253359, gp = 9.8321849378;
+  const double k = (b * gp) / (a * ge) - 1.0;       // 0.00193185265241
+  const double m = w * w * a * a * b / GM;          // 0.00344978650684
+  const double s2 = std::pow(std::sin(lat_deg * kDeg), 2);
+  const double g0 = ge * (1.0 + k * s2) / std::sqrt(1.0 - e2 * s2);
+  const double h = h_ellipsoidal_m;
+  return g0 * (1.0 - 2.0 / a * (1.0 + f + m - 2.0 * f * s2) * h + 3.0 / (a * a) * h * h);
+}
+
+// GRS80 closed form (Moritz 1980) with the linear free-air term, as a
+// cross-check of the WGS84 value (the ellipsoids differ by 1e-7 m/s^2 here).
+double grs80NormalGravity(double lat_deg, double h_m) {
+  const double s2 = std::pow(std::sin(lat_deg * kDeg), 2);
+  return 9.7803267715 * (1.0 + 0.001931851353 * s2) / std::sqrt(1.0 - 0.00669438002290 * s2) - 3.0877e-6 * h_m;
+}
+
+void testGravityConvention(std::ostream& rep) {
+  using namespace atoms3r_ical;
+  namespace gc = gravity_chain;
+  const double g_local = ImuCalCfg::g_cal_local;
+
+  // (1) g_std is exact and is the only factor of the nominal-g conversion.
+  check(ImuCalCfg::g_std == 9.80665f, "g_std is exactly 9.80665");
+  {
+    const Eigen::Vector3f a = accel_nominal_g_to_body_ned_si_(0.1f, -0.2f, 1.01f);
+    check(a.x() == -0.2f * ImuCalCfg::g_std && a.y() == 0.1f * ImuCalCfg::g_std && a.z() == -1.01f * ImuCalCfg::g_std,
+          "nominal g -> body NED m/s^2 is (gy, gx, -gz) * g_std");
+  }
+  {
+    // In the AtomS3R path g_std may appear only as the unit conversion, the
+    // extern default the filter headers declare, or noise given in nominal g.
+    std::string dir = __FILE__;
+    const size_t slash = dir.find_last_of('/');
+    dir = (slash == std::string::npos) ? std::string(".") : dir.substr(0, slash);
+    const std::vector<std::regex> allowed = {
+        std::regex(R"(^\s*static constexpr float g_std = 9\.80665f;$)"),
+        std::regex(R"(^\s*return map_sensor_xyz_to_body_ned_\(gx, gy, gz, ImuCalCfg::g_std\);$)"),
+        std::regex(R"(^\s*constexpr float g_std\s+= atoms3r_ical::ImuCalCfg::g_std;$)"),
+        std::regex(R"(^\s*const float g = ImuCalCfg::g_std;$)"),  // qmekf: sigma in nominal g
+    };
+    int uses = 0, bad = 0;
+    for (const char* rel : {"/../../src/AtomS3R/AtomS3R_ImuUnits.h", "/../../src/AtomS3R/AtomS3R_ImuCalBlob.h",
+                            "/../../src/AtomS3R/AtomS3R_ImuCal.h", "/../../src/AtomS3R/AtomS3R_ImuCalWizard.h",
+                            "/../../src/AtomS3R/AtomS3R_CompassAppBase.h", "/../../src/AtomS3R/ImuCalWizardRunner.h",
+                            "/../../sensors/compass_ahrs/atomS3R_compass_mahony/atomS3R_compass_mahony.ino",
+                            "/../../sensors/compass_ahrs/atomS3R_compass_qmekf/atomS3R_compass_qmekf.ino",
+                            "/../../sensors/full_marine_ins/atomS3R_ins_kalman_ou2/atomS3R_ins_kalman_ou2.ino",
+                            "/../../sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
+                            "/../../sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino",
+                            "/../../sensors/full_marine_ins/atomS3R_ins_nlo/atomS3R_ins_nlo.ino",
+                            "/../../sensors/full_marine_ins/atomS3R_ins_pii_observer/atomS3R_ins_pii_observer.ino",
+                            "/../../sensors/imu_basic/atomS3R_imu_m5_basic/atomS3R_imu_m5_basic.ino"}) {
+      std::ifstream f(dir + rel);
+      check(f.good(), std::string("gravity scan source readable: ") + rel);
+      std::string line;
+      bool in_block = false;
+      while (std::getline(f, line)) {
+        // Drop comments (block comments hold the documentation of g_std).
+        std::string code;
+        for (size_t i = 0; i < line.size(); ++i) {
+          if (in_block) { if (line.compare(i, 2, "*/") == 0) { in_block = false; ++i; } continue; }
+          if (line.compare(i, 2, "/*") == 0) { in_block = true; ++i; continue; }
+          if (line.compare(i, 2, "//") == 0) break;
+          code += line[i];
+        }
+        while (!code.empty() && std::isspace((unsigned char)code.back())) code.pop_back();
+        if (!std::regex_search(code, std::regex(R"(\bg_std\b)"))) continue;
+        ++uses;
+        bool ok = false;
+        for (const auto& re : allowed) ok = ok || std::regex_match(code, re);
+        if (!ok) { ++bad; check(false, std::string("g_std outside unit conversion: ") + rel + ": " + code); }
+      }
+    }
+    check(uses >= 6 && bad == 0, "g_std in the AtomS3R path is unit conversion only");
+  }
+
+  // (2) The default physical gravity is the documented model value.
+  {
+    const double lat = CalibrationSite::latitude_deg;
+    const double g_model = wgs84NormalGravity(lat, CalibrationSite::ellipsoidal_height_m);
+    const double g_ortho = wgs84NormalGravity(lat, CalibrationSite::orthometric_height_m);
+    rep << std::setprecision(9) << "gravity,wgs84_normal_h_ellipsoidal_-9m," << g_model << "\n";
+    rep << "gravity,wgs84_normal_h_+25m_(wrong_datum)," << g_ortho << "\n";
+    rep << "gravity,grs80_normal_h_-9m," << grs80NormalGravity(lat, -9.0) << "\n";
+    rep << "gravity,g_cal_local_float," << (double)ImuCalCfg::g_cal_local << "\n";
+    rep << "gravity,g_cal_local_minus_g_std," << g_local - (double)ImuCalCfg::g_std << std::setprecision(6) << "\n";
+    check(std::fabs(g_local - g_model) < 1e-6, "g_cal_local is WGS84 normal gravity at Fair Lawn, h = -9 m ellipsoidal");
+    check(std::fabs(g_local - g_ortho) > 9e-5, "g_cal_local does not use the +25 m orthometric height");
+    check(std::fabs(grs80NormalGravity(lat, -9.0) - g_model) < 3e-6, "GRS80 cross-check agrees");
+    check(std::fabs(g_local - 9.80665 - (-4.0895e-3)) < 2e-6, "local gravity is 4.09 mm/s^2 below g_std");
+    check(CalibrationSite::longitude_deg == -74.117504, "site longitude documented (not used by the model)");
+  }
+
+  // (3) Perfect sensor at g_local -> identity S and zero bias.
+  {
+    const auto c = gc::calibrate(gc::Sensor::perfect(), g_local, g_local);
+    const double se = (c.fc.S.cast<double>() - Mat3::Identity()).cwiseAbs().maxCoeff();
+    const double be = c.fc.biasT.b0.cast<double>().norm();
+    rep << "gravity,perfect_sensor,S_minus_I_max," << se << ",bias_norm," << be << "\n";
+    check(c.ok && c.rt.acc.ok, "perfect sensor at g_local calibrates");
+    check(se < 2e-6 && be < 5e-5, "perfect sensor at g_local: S = I, b = 0");
+  }
+
+  // (4) A wrong calibration gravity gives the common scale g_assumed/g_true.
+  {
+    const auto s = gc::Sensor::typical();
+    struct Case { const char* name; double g_true, g_assumed; };
+    for (const Case& k : {Case{"fairlawn_fit_to_g_std", g_local, (double)ImuCalCfg::g_std},
+                          Case{"low_latitude_site_fit_to_fairlawn", 9.7803, g_local}}) {
+      const auto c = gc::calibrate(s, k.g_true, k.g_assumed, (float)k.g_assumed);
+      const double ratio = k.g_assumed / k.g_true;
+      const Mat3 Sfit = c.fc.S.cast<double>();
+      const double se = (Sfit - ratio * s.A).cwiseAbs().maxCoeff();
+      const double scale = (Sfit * s.A.inverse()).trace() / 3.0;
+      const double be = (c.fc.biasT.b0.cast<double>() - s.b).norm();
+      rep << "gravity," << k.name << ",expected_scale," << std::setprecision(9) << ratio << ",fitted_scale," << scale
+          << std::setprecision(6) << ",bias_err," << be << "\n";
+      check(c.ok, std::string("wrong-g fit completes: ") + k.name);
+      check(se < 3e-6 && std::fabs(scale - ratio) < 1e-6, std::string("wrong g scales S by g_assumed/g_true: ") + k.name);
+      check(be < 5e-5, std::string("wrong g leaves the bias unchanged: ") + k.name);
+    }
+  }
+
+  // (5) Dynamic acceleration keeps its SI scale with the correct gravity.
+  {
+    const auto s = gc::Sensor::typical();
+    const auto good = gc::calibrate(s, g_local, g_local);
+    const auto bad = gc::calibrate(s, g_local, (double)ImuCalCfg::g_std, ImuCalCfg::g_std);
+    const Eigen::Quaterniond q = Eigen::AngleAxisd(0.7, Vec3::UnitZ()) * Eigen::AngleAxisd(0.2, Vec3::UnitY()) *
+                                 Eigen::AngleAxisd(-0.3, Vec3::UnitX());
+    const Vec3 a_world(1.5, -0.8, 2.0);  // translational acceleration, NED
+    const Vec3 f = q.conjugate() * (a_world - Vec3(0, 0, g_local));
+    const Vec3 ag = good.rt.applyAccel(gc::readingSI(s, f), 25.0f).cast<double>();
+    const Vec3 ab = bad.rt.applyAccel(gc::readingSI(s, f), 25.0f).cast<double>();
+    const double ratio = ImuCalCfg::g_std / g_local;
+    const Vec3 aw_good = q * ag + Vec3(0, 0, g_local);   // gravity removal with g_local
+    rep << "gravity,dynamic,err_correct_g," << (ag - f).norm() << ",err_g_std," << (ab - f).norm()
+        << ",expected_err_g_std," << (ratio - 1.0) * f.norm() << ",a_world_err," << (aw_good - a_world).norm() << "\n";
+    check(good.ok && (ag - f).norm() < 3e-5, "correct gravity: dynamic specific force in m/s^2");
+    check((aw_good - a_world).norm() < 3e-5, "correct gravity: translational acceleration recovered");
+    check(bad.ok && (ab - ratio * f).norm() < 3e-5, "g_std-fitted scale: dynamic force scaled by g_std/g_local");
+  }
+
+  // (8) Blob, float cast, storage and runtime keep the gravity convention.
+  {
+    const auto c = gc::calibrate(gc::Sensor::typical(), g_local, g_local);
+    check(c.fc.g == ImuCalCfg::g_cal_local && c.blob.accel_g == ImuCalCfg::g_cal_local,
+          "fit gravity carried into the float calibration and the blob");
+    check(accelMetaBound(c.blob), "accel_g is bound by accel_coeff_crc");
+    ImuCalBlobV3 moved = c.blob; moved.accel_g = ImuCalCfg::g_std;
+    check(!accelMetaBound(moved), "changing accel_g unbinds the coefficient metadata");
+    MemStore store;
+    ImuCalBlobV3 rb;
+    check(store.saveVerified(c.blob, rb), "blob with local gravity saves and verifies");
+    ImuCalBlobV3 ld;
+    check(store.load(ld) && ld.accel_g == ImuCalCfg::g_cal_local && accelGravityMatches(ld),
+          "loaded blob keeps accel_g = g_cal_local");
+    RuntimeCals rt; rt.rebuildFromBlob(ld);
+    check(rt.acc.ok && !rt.accel_gravity_mismatch && rt.acc.g == ImuCalCfg::g_cal_local, "runtime applies it");
+    const Eigen::Vector3f probe(0.3f, -9.7f, 0.4f);
+    check(rt.applyAccel(probe, 25.0f) == c.rt.applyAccel(probe, 25.0f), "stored and fitted runtime identical");
+  }
+
+  // (9) A calibration fitted against another gravity is never reinterpreted.
+  {
+    auto c = gc::calibrate(gc::Sensor::typical(), g_local, (double)ImuCalCfg::g_std, ImuCalCfg::g_std);
+    ImuCalBlobV3 b = c.blob;
+    b.gyro_ok = 1; b.gyro_b0[0] = 0.01f;
+    b.mag_ok = 1; b.mag_A[0] = b.mag_A[4] = b.mag_A[8] = 1.0f; b.mag_b[0] = 3.0f;
+    MemStore store;
+    ImuCalBlobV3 rb, ld;
+    check(store.saveVerified(b, rb) && store.load(ld), "a v3 record fitted against 9.80665 is a valid record");
+    check(ld.accel_ok && !accelGravityMatches(ld), "its gravity is recognised as not g_cal_local");
+    RuntimeCals rt; rt.rebuildFromBlob(ld);
+    check(!rt.acc.ok && rt.accel_gravity_mismatch, "its accelerometer calibration is not applied");
+    check(rt.gyr.ok && rt.mag.ok, "gyro and magnetometer calibrations stay in use");
+    const Eigen::Vector3f probe(0.3f, -9.7f, 0.4f);
+    check(rt.applyAccel(probe, 25.0f) == probe, "accelerometer passes raw, not rescaled");
+    RuntimeCals same; same.rebuildFromBlob(ld, ImuCalCfg::g_std);
+    check(same.acc.ok, "a firmware configured with that gravity applies it");
+  }
+}
+
 int main(int argc, char** argv) {
   int seeds = 30;
   if (argc > 1) seeds = std::max(1, (int)strtol(argv[1], nullptr, 10));
@@ -1312,6 +1542,7 @@ int main(int argc, char** argv) {
     testLegacyFitterSuccessPaths();
     testTempBias();
     testBlobAndStore();
+    testGravityConvention(rep);
     testScreenText();
     testWizardScreenStrings();
     testPoseMapping();

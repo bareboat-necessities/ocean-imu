@@ -95,23 +95,11 @@
 
 namespace atoms3r_ical {
 
-// Axis mapping (AtomS3R)
-//
-// Internal convention in this library is BODY-NED (x=north, y=east, z=down).
-// End-user "nautical Z-up" is therefore z_up = -z_down.
-//
-// With the board lying still, screen facing up:
-//   - accelerometer body Z (down) is expected near -g specific force
-//   - user-facing Z-up value is the opposite sign.
-// acc_body = ( ay, ax, -az ) * g
-// gyr_body = ( gy, gx, -gz ) * deg2rad
-// mag_body = ( my, mx, -mz ) * (1/10)
-static inline Vector3f map_sensor_xyz_to_body_ned_(float sx, float sy, float sz, float scale = 1.0f) {
-  return Vector3f(sy * scale, sx * scale, -sz * scale);
-}
+// Axis mapping and units: AtomS3R_ImuUnits.h (map_sensor_xyz_to_body_ned_).
 
+// Nominal g -> m/s^2 with g_std (unit conversion only), then body NED.
 static inline Vector3f map_acc_to_body_ned_(const m5::imu_3d_t& a_g) {
-  return map_sensor_xyz_to_body_ned_(a_g.x, a_g.y, a_g.z, ImuCalCfg::g_std);
+  return accel_nominal_g_to_body_ned_si_(a_g.x, a_g.y, a_g.z);
 }
 static inline Vector3f map_gyr_to_body_ned_(const m5::imu_3d_t& w_deg_s) {
   return map_sensor_xyz_to_body_ned_(w_deg_s.x, w_deg_s.y, w_deg_s.z, ImuCalCfg::DEG2RAD);
@@ -206,11 +194,17 @@ static inline void printBlobSummary(Print& out, const ImuCalBlobV3& b) {
   if (b.build_mode == IMU_CAL_MODE_M5_IMU_API) mode = "m5_imu_api";
   out.printf("  build_mode: %s\n", mode);
   out.printf("  ok: A=%d G=%d M=%d\n", (int)b.accel_ok, (int)b.gyro_ok, (int)b.mag_ok);
+  if (b.accel_ok && !accelGravityMatches(b)) {
+    out.printf("  accel: fitted for g=%.7f, firmware g_cal_local=%.7f m/s^2: NOT applied, recalibrate\n",
+               (double)b.accel_g, (double)ImuCalCfg::g_cal_local);
+  }
 }
 
 static inline void printBlobDetail(Print& out, const ImuCalBlobV3& b) {
   // ACCEL
-  out.printf("  accel: g=%.6f T0=%.2f rms_mag=%.4f\n", (double)b.accel_g, (double)b.accel_T0, (double)b.accel_rms_mag);
+  out.printf("  accel: g=%.7f (%s) T0=%.2f rms_mag=%.4f\n", (double)b.accel_g,
+             accelGravityMatches(b) ? "matches g_cal_local" : "differs from g_cal_local",
+             (double)b.accel_T0, (double)b.accel_rms_mag);
   out.printf("    b0=[%.5f %.5f %.5f]\n", (double)b.accel_b0[0], (double)b.accel_b0[1], (double)b.accel_b0[2]);
   out.printf("    k =[%.6f %.6f %.6f] clamp T=[%.1f %.1f]\n", (double)b.accel_k[0], (double)b.accel_k[1],
              (double)b.accel_k[2], (double)b.accel_T_lo, (double)b.accel_T_hi);

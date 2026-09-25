@@ -103,7 +103,8 @@
   #define SEA_STATE_USE_STRICT_MAG_FIELD_GATE 0
 #endif
 
-static constexpr float APP_G_STD = atoms3r_ical::ImuCalCfg::g_std;
+// Physical gravity: the calibration target and the gravity the observer removes.
+static constexpr float APP_G_LOCAL = atoms3r_ical::ImuCalCfg::g_cal_local;
 static constexpr float APP_FREQ_GUESS = 0.30f;
 
 static constexpr float LOOP_HZ = 200.0f;
@@ -414,7 +415,7 @@ class FusionApp {
       Keep filter settings at AdaptiveVerticalPIIMahony defaults.
       Only app/hardware-specific fields are set here.
     */
-    cfg.gravity_mps2 = APP_G_STD;
+    cfg.gravity_mps2 = APP_G_LOCAL;
     cfg.use_mag = true;
 
     /*
@@ -568,7 +569,7 @@ class FusionApp {
       const float a_norm = a_cal_.norm();
       const bool accel_seed_ok =
           std::isfinite(a_norm) &&
-          fabsf(a_norm - APP_G_STD) < MAHONY_SEED_G_TOL_FRAC * APP_G_STD;
+          fabsf(a_norm - APP_G_LOCAL) < MAHONY_SEED_G_TOL_FRAC * APP_G_LOCAL;
 
       if (accel_seed_ok) {
         mahony_seeded_ = seedMahonyFromAccelMag_(acc_body_m, mag_body_m);
@@ -606,7 +607,7 @@ class FusionApp {
         last_mag_correction_ms_ != 0 &&
         (now_ms - last_mag_correction_ms_) <= HEADING_MAG_TIMEOUT_MS;
 
-    gyro_bias_.update(w_cal_, a_cal_, APP_G_STD, dt_);
+    gyro_bias_.update(w_cal_, a_cal_, APP_G_LOCAL, dt_);
     rot_.update(gyro_bias_.corrected(w_cal_).z(), dt_);
 
     const auto hs = fusion_.snapshot();

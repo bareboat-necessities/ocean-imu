@@ -186,7 +186,7 @@ public:
       const Vector3f gyro_level = have_prev && prev.gyro_ok
           ? Vector3f(prev.gyro_b0[0], prev.gyro_b0[1], prev.gyro_b0[2]) : Vector3f::Zero();
       // Replay context (tests/imu_calibrate/accel_cal-replay).
-      Serial.printf("[ACCMODE] %s\n", accel_only ? "accel_only" : "full");
+      Serial.printf("[ACCMODE] %s g=%.7f\n", accel_only ? "accel_only" : "full", (double)accel_fcfg_.g);
       Serial.printf("[ACCPRIOR] %d,%.7f,%.7f,%.7f,%.2f,%.2f,%.2f,%.2f\n", (int)prior.valid, prior.k[0], prior.k[1],
                     prior.k[2], prior.k_temp_lo, prior.k_temp_hi, prior.clamp_lo, prior.clamp_hi);
       Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,%d\n", (double)gyro_level.x(), (double)gyro_level.y(),
@@ -651,7 +651,10 @@ private:
   }
 
   void configureCalibrators_() {
-    const float g = ImuCalCfg::g_std;
+    // Physical gravity at the calibration site: the static norm the
+    // accelerometer is fitted to and the level the still gates compare with.
+    // (ImuCalCfg::g_std is only the nominal-g -> m/s^2 unit.)
+    const float g = ImuCalCfg::g_cal_local;
 
     gyroCal_.g  = g;
 

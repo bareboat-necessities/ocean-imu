@@ -3,7 +3,7 @@
 // Replay of logged accelerometer calibration sessions (AtomS3R serial logs).
 //
 // The wizard prints:
-//   [ACCMODE] full|accel_only
+//   [ACCMODE] full|accel_only g=G     G: the gravity the device fitted against (absent: 9.80665)
 //   [ACCPRIOR] valid,k0,k1,k2,k_lo,k_hi,clamp_lo,clamp_hi
 //   [ACCGYRO] wx,wy,wz,valid         stationary gyro level and its validity (start / after the gyro stage)
 //   [ACCPREP] kind,pose,attempt      a hold's preparation screen
@@ -32,6 +32,7 @@ struct Log {
   std::vector<std::string> lines;
   bool has_raw = false, has_blocks = false;
   bool accel_only = false;
+  double g_fit = 9.80665;   // [ACCMODE] g=; logs of earlier firmware fitted against 9.80665
   imu_cal::AccelThermalPrior prior;
   bool have_device_fit = false;
   double dev_b[3] = {0, 0, 0};
@@ -51,7 +52,11 @@ inline Log parse(const std::vector<std::string>& raw) {
     while (!l.empty() && (l.back() == '\r' || l.back() == '\n')) l.pop_back();
     if (startsWith(l, "[ACCRAW]")) L.has_raw = true;
     if (startsWith(l, "[ACCBLK]")) L.has_blocks = true;
-    if (startsWith(l, "[ACCMODE]")) L.accel_only = (l.find("accel_only") != std::string::npos);
+    if (startsWith(l, "[ACCMODE]")) {
+      L.accel_only = (l.find("accel_only") != std::string::npos);
+      const size_t gp = l.find("g=");
+      if (gp != std::string::npos) L.g_fit = strtod(l.c_str() + gp + 2, nullptr);
+    }
     if (startsWith(l, "[ACCPRIOR]")) {
       int v = 0; double k[3], a, b, c, d;
       if (sscanf(l.c_str() + 10, "%d,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &v, &k[0], &k[1], &k[2], &a, &b, &c, &d) == 8) {
@@ -106,6 +111,7 @@ inline bool fitBlocks(const Log& L, imu_cal::AccelFullFitResult& out, int* n_obs
   if (n_obs) *n_obs = (int)obs.size();
   auto fitter = std::make_unique<Proc::Fitter>();
   imu_cal::AccelFitCfg cfg;
+  cfg.g = L.g_fit;
   return fitter->fit(obs.data(), (int)obs.size(), cfg, L.prior, out, false);
 }
 
@@ -203,7 +209,11 @@ inline bool replayRaw(const Log& L, imu_cal::AccelFullFitResult& out, int& diver
       g0_valid = (v != 0);
     }
   }
-  proc->begin(imu_cal::AccelCaptureCfg{}, imu_cal::AccelFitCfg{}, L.prior, g0, g0_valid);
+  imu_cal::AccelCaptureCfg ccfg;
+  imu_cal::AccelFitCfg fcfg;
+  ccfg.g = (float)L.g_fit;
+  fcfg.g = L.g_fit;
+  proc->begin(ccfg, fcfg, L.prior, g0, g0_valid);
   io.advanceContext();
   io.gyro_pending = false;
   bool ok = proc->runMainStage(io);

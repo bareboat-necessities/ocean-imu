@@ -32,7 +32,7 @@ using namespace atoms3r_compass;
 class QmekfBackend : public IAttitudeBackend {
  public:
   void reset() override {
-    const float g = ImuCalCfg::g_std;
+    const float g = ImuCalCfg::g_std;  // noise below is specified in nominal g (unit conversion)
 
     Vector3f sigma_a; sigma_a <<  0.06f * g,  0.06f * g,   0.06f * g;
     Vector3f sigma_g; sigma_g <<    0.0030f,    0.0030f,     0.0030f;
@@ -51,7 +51,7 @@ class QmekfBackend : public IAttitudeBackend {
     if (!inited_) {
       Vector3f a_init = s.a_cal;
       const float an0 = a_init.norm();
-      if (an0 > 1e-6f) a_init *= (ImuCalCfg::g_std / an0);
+      if (an0 > 1e-6f) a_init *= (ImuCalCfg::g_cal_local / an0);  // reference at the physical static norm
 
       if (s.mag_ok)
         mekf_->initialize_from_acc_mag(a_init, s.m_unit);
@@ -65,7 +65,7 @@ class QmekfBackend : public IAttitudeBackend {
 
     Vector3f a_att = s.a_cal;
     const float an = a_att.norm();
-    if (an > 1e-6f) a_att *= (ImuCalCfg::g_std / an);
+    if (an > 1e-6f) a_att *= (ImuCalCfg::g_cal_local / an);
     mekf_->measurement_update_acc_only(a_att);
 
     if (s.mag_ok && s.mag_fresh) mekf_->measurement_update_mag_only(s.m_unit);

@@ -213,7 +213,7 @@ class RotEstimator {
   float update(float dt, const Vector3f& a_cal, const Vector3f& w_cal, const AttitudeSolution& att) {
     if (!att.valid) return filt_dpm_;
 
-    const float g = ImuCalCfg::g_std;
+    const float g = ImuCalCfg::g_cal_local;  // physical gravity: a still sensor reads this norm
     const float a_err = fabsf(a_cal.norm() - g);
     const bool still = (a_err < ROT_STILL_G_TOL_FRAC * g) && (w_cal.norm() < ROT_STILL_GYRO_RAD_S);
 

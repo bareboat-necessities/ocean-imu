@@ -47,7 +47,7 @@ class MahonyBackend : public IAttitudeBackend {
   void step(const CalibratedSample& s, AttitudeSolution& out) override {
     Vector3f a_att = -s.a_cal;
     const float an = a_att.norm();
-    if (an > 1e-6f) a_att *= (ImuCalCfg::g_std / an);
+    if (an > 1e-6f) a_att *= (ImuCalCfg::g_cal_local / an);  // direction only, at the physical static norm
 
     float pd = 0.0f, rd = 0.0f, yd = 0.0f;
     // Feed the latest healthy calibrated magnetometer whenever it is valid.

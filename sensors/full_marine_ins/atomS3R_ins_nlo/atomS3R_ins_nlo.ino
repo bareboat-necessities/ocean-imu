@@ -132,7 +132,8 @@
   #define SEA_STATE_NLO_FIXED_THETA 0
 #endif
 
-static constexpr float APP_G_STD = atoms3r_ical::ImuCalCfg::g_std;
+// Physical gravity: the calibration target and the gravity the NLO removes.
+static constexpr float APP_G_LOCAL = atoms3r_ical::ImuCalCfg::g_cal_local;
 static constexpr float APP_FREQ_GUESS = 0.30f;
 
 static constexpr float LOOP_HZ = 200.0f;
@@ -388,8 +389,8 @@ class FusionApp {
       wave frequency; see TimeVarGainNloAdapter::Config. Only the
       app/hardware-specific fields are touched here.
     */
-    cfg.gravity_mps2 = APP_G_STD;
-    cfg.filter.gravity_mps2 = APP_G_STD;
+    cfg.gravity_mps2 = APP_G_LOCAL;
+    cfg.filter.gravity_mps2 = APP_G_LOCAL;
 
 #if SEA_STATE_NLO_FIXED_THETA
     cfg.auto_theta_from_wave_freq = false;

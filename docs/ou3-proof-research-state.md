@@ -508,6 +508,12 @@ valid in their stated regular default A21 scopes. Same-history physical bias
 mismatch, projection-sector and finite-bridge identities remain. Stationary
 A21 detectability does not imply capture of the nonlinear physical observer.
 
+Gravity is a constant model parameter. The certificates and simulations use
+9.80665 m/s^2; the AtomS3R shipping path configures the calibration-site
+gravity `ImuCalCfg::g_cal_local` (default 9.8025605 m/s^2, relative change
+4.2e-4) for both the accelerometer calibration and `gravity_magnitude`.
+Certified numbers have not been re-enclosed at that value.
+
 ## Alternatives
 
 Use the sharp sampled mean and finite-angle vector identity with actual
