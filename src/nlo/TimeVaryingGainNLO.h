@@ -96,6 +96,7 @@
   #include <Eigen/Geometry>
 #endif
 
+#include <algorithm>
 #include <cstdint>
 
 enum class NloMagType : std::uint8_t {
@@ -191,6 +192,35 @@ public:
         R K_xip_scalar = R(0.0354);
 
         R theta = R(1);
+
+        /*
+          Lower bound on theta for the horizontal axes when they are aided by
+          the virtual zero-mean measurement (use_virtual_horizontal_position).
+          The vertical axis always runs at theta.
+
+          Without a position reference the horizontal aiding loop is the only
+          thing that observes tilt: a roll/pitch error puts g*sin(err) into
+          horizontal specific force, and only that loop turns it into a
+          correction of xi and hence of the attitude reference f_hat_n. Its
+          bandwidth scales with theta, and theta is scheduled below 1 to keep
+          the vertical corner under the wave band. At the scheduled values
+          (0.15..0.45) the horizontal loop is too slow to hold tilt against a
+          realistic 0.1 deg/s gyro bias once the body yaws: the body-frame
+          bias estimate is learned in one heading and is wrong in the next,
+          and roll/pitch, heading, horizontal position and heave run away.
+
+          Horizontal displacement is not a product of this observer, so its
+          corner can sit higher than the vertical one. It cannot go all the
+          way to the paper's theta = 1: with the corner at 0.41 rad/s the
+          horizontal loop starts treating real horizontal wave acceleration in
+          long seas as tilt, and heave error on the Hs = 8.5 m records rises
+          from 6.9 % to 9.7 %. At 0.7 heave error stays within 0.1 % of Hs of
+          the all-axes value on every simulator record, roll/pitch RMS improves
+          slightly in the larger seas, and the
+          bench histories in tests/nlo/mag_turns-test.cpp stay bounded. Set
+          to 0 to use theta on all three axes.
+        */
+        R virtual_horizontal_theta_min = R(0.7);
 
         bool use_time_varying_tmo_gain = true;
         R vartheta0 = R(0.5);
@@ -346,13 +376,16 @@ public:
             return;
         }
 
-        const R theta_old = cfg_.theta;
+        const Vec3 theta_old = axisTheta_();
         cfg_.theta = theta_new;
+        const Vec3 theta_new_axis = axisTheta_();
 
-        if (theta_old > R(0)) {
-            const R scale = theta_old / theta_new;
-            p0_n_ *= scale;
-            p0_hp_state_ *= scale;
+        for (int i = 0; i < 3; ++i) {
+            if (theta_old(i) > R(0)) {
+                const R scale = theta_old(i) / theta_new_axis(i);
+                p0_n_(i) *= scale;
+                p0_hp_state_(i) *= scale;
+            }
         }
     }
 
@@ -451,24 +484,32 @@ public:
         const R th3 = th2 * th;
         const R th4 = th2 * th2;
 
-        const R s1 = vartheta_ * th;
         const R s2 = vartheta_ * th2;
         const R s3 = vartheta_ * th3;
         const R s4 = vartheta_ * th4;
+
+        // Per-axis scaling of the virtual-measurement column. See
+        // Config::virtual_horizontal_theta_min.
+        const Vec3 tv = axisTheta_();
+        const Vec3 tv2 = tv.cwiseProduct(tv);
+        const Vec3 sv1 = vartheta_ * tv;
+        const Vec3 sv2 = vartheta_ * tv2;
+        const Vec3 sv3 = vartheta_ * tv2.cwiseProduct(tv);
+        const Vec3 sv4 = vartheta_ * tv2.cwiseProduct(tv2);
 
         const Mat2 Kpp  = cfg_.K_pp_scalar  * Mat2::Identity();
         const Mat2 Kvp  = cfg_.K_vp_scalar  * Mat2::Identity();
         const Mat2 Kxip = cfg_.K_xip_scalar * Mat2::Identity();
 
         // (9a)
-        Vec3 p0_dot = p_n_ + s1 * cfg_.K_p0z_p0z * p0_err;
+        Vec3 p0_dot = p_n_ + cfg_.K_p0z_p0z * sv1.cwiseProduct(p0_err);
         if (!virtual_xy) {
             p0_dot.x() = R(0);
             p0_dot.y() = R(0);
         }
 
         // (9b)
-        Vec3 p_dot = v_n_ + s2 * cfg_.K_pz_p0z * p0_err;
+        Vec3 p_dot = v_n_ + cfg_.K_pz_p0z * sv2.cwiseProduct(p0_err);
         if (have_gnss) {
             p_dot.template head<2>() += s2 * (Kpp * pxy_err);
         }
@@ -477,7 +518,7 @@ public:
         gravity_n << R(0), R(0), cfg_.gravity_mps2;
 
         // (9c)
-        Vec3 v_dot = fhat_n_ + gravity_n + s3 * cfg_.K_vz_p0z * p0_err;
+        Vec3 v_dot = fhat_n_ + gravity_n + cfg_.K_vz_p0z * sv3.cwiseProduct(p0_err);
         if (have_gnss) {
             v_dot.template head<2>() += s3 * (Kvp * pxy_err);
         }
@@ -490,7 +531,7 @@ public:
           destabilizes the vertical loop.
         */
         Vec3 xi_dot = -R_nb * (skew(sigma_tmo_b) * f_b)
-                      + s4 * cfg_.K_xiz_p0z * p0_err;
+                      + cfg_.K_xiz_p0z * sv4.cwiseProduct(p0_err);
 
         if (have_gnss) {
             xi_dot.template head<2>() += s4 * (Kxip * pxy_err);
@@ -591,6 +632,15 @@ private:
     */
     bool usesVirtualHorizontal_(bool have_gnss) const {
         return !have_gnss && cfg_.use_virtual_horizontal_position;
+    }
+
+    Vec3 axisTheta_() const {
+        Vec3 t = Vec3::Constant(cfg_.theta);
+        if (cfg_.use_virtual_horizontal_position) {
+            t.x() = std::max(t.x(), cfg_.virtual_horizontal_theta_min);
+            t.y() = std::max(t.y(), cfg_.virtual_horizontal_theta_min);
+        }
+        return t;
     }
 
     void lockUnobservableStates_() {

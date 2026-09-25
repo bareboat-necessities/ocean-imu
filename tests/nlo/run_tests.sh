@@ -2,3 +2,4 @@
 
 ./nlo-sim
 ./local_gravity-test
+./mag_turns-test

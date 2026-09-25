@@ -171,6 +171,65 @@ public:
         R mahony_bias_limit_rad_s = R(0.03);
 
         /*
+          Gyro-bias seed from a still startup.
+
+          The observer's gyro-bias state is driven only by the injection term
+          through kI = 0.01. Without GNSS the roll/pitch part of that term
+          comes from the slow virtual-position aiding loop, so an unseeded
+          bias is learned over minutes, and it is learned in body axes at the
+          current heading. If the body yaws before it has converged, the
+          partly learned bias is wrong in the new heading and the estimate can
+          walk away instead of converging, taking roll/pitch, heading and
+          heave with it. On a real MEMS gyro a residual of 0.1 deg/s after
+          calibration is normal and is enough for this.
+
+          So while the bootstrap runs, samples whose rate is below
+          boot_bias_seed_gyro_max_rad_s (and whose specific force passes the
+          bootstrap gate) are averaged. At initialization the mean is written
+          into the observer's bias state if at least
+          boot_bias_seed_min_still_s of them were seen and their per-axis
+          standard deviation is below boot_bias_seed_max_std_rad_s. The
+          integral loop still runs afterwards and tracks drift from there.
+
+          The standard-deviation gate is what separates a still device from
+          a small sea. Wave rotation in light conditions stays under any
+          useful rate threshold, and its mean over a few seconds is not zero,
+          so averaging it would seed a wrong bias; its spread, however, is
+          well above white gyro noise. A startup that fails either test
+          leaves the seed at the bootstrap's own estimate, as before. Set
+          boot_bias_seed_min_still_s <= 0 to disable.
+        */
+        R boot_bias_seed_gyro_max_rad_s = R(0.03);
+        R boot_bias_seed_min_still_s = R(1.0);
+        R boot_bias_seed_max_std_rad_s = R(0.004);
+
+        /*
+          Accelerometer-bias seed from the same still startup.
+
+          The observer has no accelerometer-bias state. A bias along gravity
+          is absorbed only by xi_z, whose gain is vartheta*theta^4*K_xiz_p0z,
+          so it is learned over minutes, and until then it is integrated
+          twice into heave. On a still bench a vertical residual of
+          0.03 m/s^2 (3 mg, ordinary after calibration and warm-up) swings
+          reported heave by -1.3 m within 25 s, and 0.1 m/s^2 by -4.4 m,
+          decaying over about three minutes.
+
+          The component of the bias along gravity is observable from a still
+          device: it is |f| - g along the measured direction of f. If the
+          gyro seed above is accepted and the specific-force norm has a
+          standard deviation below boot_accel_bias_seed_max_std_mps2, that
+          component is written into the observer's fixed body-frame
+          accelerometer bias. The horizontal components are indistinguishable
+          from tilt and are left to the observer. A seed larger than
+          boot_accel_bias_seed_max_mps2 is taken to be something other than a
+          sensor residual (wrong gravity, uncalibrated sensor) and skipped.
+          Set boot_accel_bias_seed_enabled = false to disable.
+        */
+        bool boot_accel_bias_seed_enabled = true;
+        R boot_accel_bias_seed_max_std_mps2 = R(0.05);
+        R boot_accel_bias_seed_max_mps2 = R(0.5);
+
+        /*
           Optional roll/pitch-only tilt trim after NLO init.
 
           Default is OFF because in waves, accelerometer tilt trim can chase
@@ -247,6 +306,10 @@ public:
           Theorem 1, where a large theta is what dominates the nonlinear
           coupling term; it is sufficient, not necessary, and the linear
           aiding loop is Hurwitz for any theta > 0 at these gains.
+
+          The schedule sets the vertical corner. Horizontal axes aided by the
+          virtual measurement are held at or above
+          Config::filter.virtual_horizontal_theta_min; see there.
 
           Set auto_theta_from_wave_freq = false to run a fixed
           Config::filter.theta, e.g. the paper's 1.0.
@@ -507,6 +570,14 @@ public:
         boot_have_down_lpf_ = false;
         boot_time_s_ = R(0);
         boot_good_time_s_ = R(0);
+
+        boot_still_gyro_sum_.setZero();
+        boot_still_gyro_sq_sum_.setZero();
+        boot_still_acc_sum_.setZero();
+        boot_still_acc_norm_sum_ = R(0);
+        boot_still_acc_norm_sq_sum_ = R(0);
+        boot_still_count_ = 0;
+        boot_still_time_s_ = R(0);
     }
 
     bool initialized() const { return initialized_; }
@@ -799,6 +870,14 @@ private:
     bool boot_have_down_lpf_ = false;
     R boot_time_s_ = R(0);
     R boot_good_time_s_ = R(0);
+
+    Vec3 boot_still_gyro_sum_ = Vec3::Zero();
+    Vec3 boot_still_gyro_sq_sum_ = Vec3::Zero();
+    Vec3 boot_still_acc_sum_ = Vec3::Zero();
+    R boot_still_acc_norm_sum_ = R(0);
+    R boot_still_acc_norm_sq_sum_ = R(0);
+    int boot_still_count_ = 0;
+    R boot_still_time_s_ = R(0);
 
     void resetAuxValidity_() {
         if constexpr (Mag == NloMagType::Compass) {
@@ -1209,6 +1288,14 @@ private:
         boot_time_s_ = R(0);
         boot_good_time_s_ = R(0);
 
+        boot_still_gyro_sum_.setZero();
+        boot_still_gyro_sq_sum_.setZero();
+        boot_still_acc_sum_.setZero();
+        boot_still_acc_norm_sum_ = R(0);
+        boot_still_acc_norm_sq_sum_ = R(0);
+        boot_still_count_ = 0;
+        boot_still_time_s_ = R(0);
+
         return true;
     }
 
@@ -1292,6 +1379,17 @@ private:
                 boot_good_time_s_ += dt;
                 init_good_time_s_ = boot_good_time_s_;
             }
+
+            if (gyroOk_(gyro_b_rad_s, cfg_.boot_bias_seed_gyro_max_rad_s)) {
+                boot_still_gyro_sum_ += gyro_b_rad_s;
+                boot_still_gyro_sq_sum_ += gyro_b_rad_s.cwiseProduct(gyro_b_rad_s);
+                const R fn_still = specific_force_b_mps2.norm();
+                boot_still_acc_sum_ += specific_force_b_mps2;
+                boot_still_acc_norm_sum_ += fn_still;
+                boot_still_acc_norm_sq_sum_ += fn_still * fn_still;
+                ++boot_still_count_;
+                boot_still_time_s_ += dt;
+            }
         }
 
         Vec3 omega_b = gyro_b_rad_s - boot_bias_b_ + correction_b;
@@ -1315,6 +1413,16 @@ private:
             filter_.setQuaternionBodyToNED(boot_q_nb_);
 
             Vec3 b0 = boot_bias_b_;
+            Vec3 still_mean;
+            const bool still = stillGyroBiasSeed_(still_mean);
+            if (still) {
+                b0 = still_mean;
+            }
+
+            Vec3 acc_seed_b;
+            if (still && stillAccelBiasSeed_(acc_seed_b)) {
+                filter_.setAccelBiasBody(acc_seed_b);
+            }
             if constexpr (Mag == NloMagType::None) {
                 b0.z() = R(0);
             }
@@ -1326,6 +1434,53 @@ private:
             time_since_init_s_ = R(0);
             have_down_lpf_ = false;
         }
+    }
+
+    // See Config::boot_bias_seed_min_still_s.
+    bool stillGyroBiasSeed_(Vec3& mean) const {
+        if (!(cfg_.boot_bias_seed_min_still_s > R(0)) ||
+            boot_still_time_s_ < cfg_.boot_bias_seed_min_still_s ||
+            boot_still_count_ <= 0) {
+            return false;
+        }
+
+        const R n = static_cast<R>(boot_still_count_);
+        mean = boot_still_gyro_sum_ / n;
+        const Vec3 var =
+            (boot_still_gyro_sq_sum_ / n - mean.cwiseProduct(mean))
+                .cwiseMax(R(0));
+        const R max_std = std::sqrt(var.maxCoeff());
+
+        return isFinite_(max_std) &&
+               max_std <= cfg_.boot_bias_seed_max_std_rad_s;
+    }
+
+    // See Config::boot_accel_bias_seed_enabled. Call only after
+    // stillGyroBiasSeed_() accepted the same still window.
+    bool stillAccelBiasSeed_(Vec3& bias) const {
+        if (!cfg_.boot_accel_bias_seed_enabled || boot_still_count_ <= 0) {
+            return false;
+        }
+
+        const R n = static_cast<R>(boot_still_count_);
+        const Vec3 f_mean = boot_still_acc_sum_ / n;
+        const R norm_mean = boot_still_acc_norm_sum_ / n;
+        const R norm_std = std::sqrt(std::max(
+            boot_still_acc_norm_sq_sum_ / n - norm_mean * norm_mean, R(0)));
+        const R fn = f_mean.norm();
+
+        if (!isFinite_(norm_std) || !isFinite_(fn) || !(fn > R(1e-6)) ||
+            norm_std > cfg_.boot_accel_bias_seed_max_std_mps2) {
+            return false;
+        }
+
+        const R along = fn - cfg_.gravity_mps2;
+        if (!(std::abs(along) <= cfg_.boot_accel_bias_seed_max_mps2)) {
+            return false;
+        }
+
+        bias = (along / fn) * f_mean;
+        return true;
     }
 
     void integrateBootQuatRight_(R dt, const Vec3& omega_b)
