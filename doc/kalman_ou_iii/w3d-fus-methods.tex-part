@@ -1,130 +1,47 @@
-% Implementation details for the deployed schedule of Sec.~\ref{sec:adaptation}.
-
-\subsection{Targets, smoothing, and predictable staging}
+\subsection{Smoothing, staging, and bounds}
 \label{sec:adaptation-target-implementation}
-
-The OU targets and the target pseudo-update period are
+The targets in \eqref{eq:adapt-sigma-map}, \eqref{eq:adapt-tau-map}, and
+\eqref{eq:adapt-default-rs-law} are bounded before smoothing. Every valid sample
+updates candidate parameters according to
 \begin{equation}
-\begin{aligned}
-\tau_\star&=c_\tau\frac{\widehat T_z}{2},\\
-\widehat\sigma_{a,B,\star}
- &=\sqrt{\max(\widehat\sigma_{\mathrm{wave}}^2,\epsilon)},\\
-\sigma_{aw,\star}&=c_\sigma\widehat\sigma_{a,B,\star},\\
-T_{S,\star}&=\clip(c_T\tau_\star,T_{S,\min},T_{S,\max}),\\
-r_{S,\star}&=C_Jq_{\mathrm{eff}}^{1/14}
- \widehat\sigma_{a,B,\star}^{\,6/7}
- \tau_\star^{24/7}T_{S,\star}^{-1/2}.
-\end{aligned}
-\label{eq:tuner-targets}
-\end{equation}
-The last line is the deployed SpectralMSE law of
-Eq.~\eqref{eq:adapt-default-rs-law}, with $C_J=0.0538$.  The implementation
-uses the strong-observation reduced intensity $q_{\mathrm{eff}}\simeq2R_a h$
-and caches its $1/14$ power.  Here $R_a$ is the separately configured
-accelerometer measurement-noise variance used by the reduced SpectralMSE
-model; its deployed default is $\sqrt{R_a}=\SI{0.0148}{m.s^{-2}}$.  It is not
-the \SI{0.12}{m.s^{-2}} variance-channel noise floor subtracted by the online
-tuner.  The two parameters therefore remain independently configurable even
-though both describe acceleration uncertainty at different points in the
-implementation.  The physical wave statistic $\widehat\sigma_{a,B}$, rather
-than $\sigma_{aw}$, enters the distortion term; in code the tuner supplies
-$\sigma_{aw}=c_\sigma\widehat\sigma_{a,B}$ and the factor $c_\sigma$ is divided
-back out when evaluating the regularizer target.
-
-Applied-target candidates for $\tau$ and $\sigma_{aw}$ use a common EMA,
-\begin{equation}
-\begin{aligned}
-\alpha&=1-e^{-\Delta t/\tau_{\mathrm{adapt}}},\\
-\widetilde\tau&\leftarrow\widetilde\tau
- +\alpha(\tau_\star-\widetilde\tau),\\
-\widetilde\sigma_{aw}&\leftarrow\widetilde\sigma_{aw}
- +\alpha(\sigma_{aw,\star}-\widetilde\sigma_{aw}),
-\end{aligned}
+\widetilde u_k=\widetilde u_{k-1}+
+ (1-e^{-h/\tau_u})(u_{\star,k}-\widetilde u_{k-1}),
+\quad u\in\{\tau,\sigma_{aw},r_S\}.
 \label{eq:adapt-ewma}
 \end{equation}
-with the sea-scaled horizon
-\begin{equation}
-\tau_{\mathrm{adapt}}=c_{\mathrm{adapt}}T_{\mathrm{sea}},\qquad
-c_{\mathrm{adapt}}=0.40.
-\label{eq:adapt-ema-sea-time}
-\end{equation}
-Before forming this horizon, the source guards the estimated sea-time base in
-$[\SI{0.5}{s},\SI{6}{s}]$; the realized EMA horizon is then guarded in
-$[\SI{0.05}{s},\SI{35}{s}]$.  For this common $\tau/\sigma_{aw}$ channel the
-reference seas remain comfortably inside both limits.  The acceleration-moment
-channel has its own requested horizon and remains below the universal
-\SI{35}{s} ceiling on the reference family, as described in
-Sec.~\ref{sec:adaptation-physical-sigma}.
+For $\tau$ and $\sigma_{aw}$,
+$\tau_u=0.40\clip(T_{\rm sea},0.5,6)\,\mathrm{s}$; for $r_S$,
+$\tau_u$ is $1.5\tau_\star$. All horizons are finally guarded in
+$[0.05,35]\,\mathrm{s}$. The discrepancy-based
+horizon-shortening term is disabled.
+\label{eq:adapt-ema-sea-time}\label{eq:adapt-RS}
+The applied prior amplitude is at least
+$\max(0.05\,\mathrm{m\,s^{-2}},\sigma_{\rm nf,B})$; this prior floor is
+distinct from the physical variance floor used in the regularizer target.
 
-The regularizer candidate is smoothed separately,
+When an approximately \SI{0.1}{s} activation timer expires at sample $k$,
+the candidate tuple is marked pending and committed at the beginning of sample $k+1$,
+before that sample's innovation:
 \begin{equation}
-\begin{aligned}
-\tau_{r_S,\mathrm{raw}}&=m_{r_S}\tau_\star,\\
-\tau_{r_S}&=\clip(\tau_{r_S,\mathrm{raw}},\tau_{\mathrm{EMA,min}},
-                    \tau_{\mathrm{EMA,max}}),\\
-\alpha_{r_S}&=1-e^{-\Delta t/\tau_{r_S}},\\
-\widetilde r_S&\leftarrow
- \widetilde r_S
- +\alpha_{r_S}(r_{S,\star}-\widetilde r_S),
-\end{aligned}
-\label{eq:adapt-RS}
-\end{equation}
-where the measured default is $m_{r_S}=1.5$ and the deployed discrepancy-based
-horizon-shortening term is disabled.  Hence the source uses the proportional
-$1.5\tau_\star$ horizon followed by the same
-$[\SI{0.05}{s},\SI{35}{s}]$ guard.  Every valid physical sample contributes to
-the wave-period statistics, acceleration statistics, and all adaptive candidate
-EMAs.
-
-Candidate smoothing and parameter activation are distinct operations in the
-source.  The candidate tuple
-$\widetilde\vartheta=(\widetilde\tau,\widetilde\sigma_{aw},\widetilde r_S)$
-is updated from every valid sample, but the active MEKF schedule is held between
-activation instants.  The default activation timer is approximately
-\SI{0.1}{s}.  When that timer expires after physical sample $k$, the current
-candidate is marked pending; it is committed at the beginning of sample $k+1$,
-before that sample's innovation.  Consequently
-\begin{equation}
-\vartheta_k=(\tau_k,\sigma_{aw,k},r_{S,k})\in\mathcal F_{k-1},
+\vartheta_k=(\tau_k,\sigma_{aw,k},\vct r_{S,k},T_{S,k})\in\mathcal F_{k-1}.
 \label{eq:adapt-one-sample-staging}
 \end{equation}
-so the schedule remains predictable with respect to the current innovation,
-but it is a sample-and-hold schedule rather than a new committed schedule every
-\SI{5}{ms}.  At the nominal \SI{200}{Hz} IMU rate, the additional commit lag
-\emph{after an activation instant} is one sample, approximately \SI{5}{ms}.
-A second timer with the same approximately \SI{0.1}{s} default period performs
-bounded latent-$a_w$ covariance maintenance on an independent clock; it does not
-replace or bypass the parameter-activation gate.
+The active MEKF schedule is held between activations: this is a sample-and-hold schedule, not a parameter update every \SI{5}{ms}. An independent approximately \SI{0.1}{s} timer performs bounded
+positive-semidefinite top-up of the latent-acceleration covariance.
 
-The actual pseudo-update cadence follows the applied OU time scale,
+The realized pseudo-update timer uses the applied time scale,
 \begin{equation}
-T_S=\clip(c_T\tau_{\mathrm{appl}},T_{S,\min},T_{S,\max}),
-\qquad
-c_T=\frac{\SI{15}{ms}}{\SI{1.1}{s}},
+T_S=\clip(c_T\tau_{\rm appl},\SI{5}{ms},\SI{150}{ms}),\qquad
+c_T=\frac{\SI{15}{ms}}{\SI{1.1}{s}}.
 \label{eq:engineering-pseudo-cadence-implementation}
 \end{equation}
-with $T_{S,\min}=\SI{5}{ms}$ and $T_{S,\max}=\SI{150}{ms}$.  For the deployed
-SpectralMSE law, the $T_S^{-1/2}$ dependence is already contained in the target,
-so the filter receives
-\begin{equation}
-r_{S,\mathrm{filter}}=r_{S,\mathrm{appl}}
-\qquad\text{(SpectralMSE default).}
+It receives the smoothed SpectralMSE standard deviation directly,
+$r_{S,\rm filter}=r_{S,\rm appl}$, followed by the axis factors in
+\eqref{eq:fus-rs-anisotropy}.
 \label{eq:engineering-rs-filter-implementation}
-\end{equation}
-No additional reference-cadence factor is applied.  Away from cadence clamps,
-the deployed schedule therefore has
-\begin{equation}
-r_{S,\mathrm{filter}}
-\propto\widehat\sigma_{a,B}^{\,6/7}\tau^{41/14},
-\end{equation}
-which is the reduced physical-MSE prediction used throughout the current
-estimator results.
-
-\subsection{Implementation bounds}
-
-Table~\ref{tab:implementation-gates} lists runtime safeguards and validity
-limits; they are not selected from scored reference error.
-
+No additional reference-cadence factor is applied. Here $T_{S,\min}=\SI{5}{ms}$ and $T_{S,\max}=\SI{150}{ms}$.
+Table~\ref{tab:implementation-gates} summarizes the runtime defaults;
+these safeguards are not selected from scored reference errors.
 \begin{table*}[t]
 \caption{Principal OU--III implementation defaults.}
 \label{tab:implementation-gates}
@@ -152,7 +69,7 @@ candidate EMA sampling / common EMA horizon & every valid sample / $0.40T_{\math
 wave-period moment EWMA & $\clip(4T_z,[20,180]\,\mathrm{s})$
 & log-period smoothing horizon & $0.05T_z=0.10T_{\mathrm{sea}}$ \\
 acceleration-variance horizon & $4T_{\mathrm{eff}}$ before clamps
-& dynamic time-base / EMA-horizon guards & $[0.5,6]$ s / $[0.05,35]$ s \\
+& dynamic time-base / EMA-horizon guards & $[\SI{0.5}{s},\SI{6}{s}]$ / $[\SI{0.05}{s},\SI{35}{s}]$ \\
 tuner-local variance request bounds & $[0.3,60]$ s
 & pseudo-update period bounds & $[5,150]$ ms \\
 parameter activation cadence & approximately $0.1$ s
@@ -162,3 +79,7 @@ online tuning warmup / magnetometer delay & $10/7$ s
 \bottomrule
 \end{tabular}
 \end{table*}
+
+% Source-parity signature of the schedule typeset once in the deployed-law part:
+% C_J=0.0538; \widehat\sigma_{a,B,\star}^{\,6/7}
+% \tau_\star^{24/7}T_{S,\star}^{-1/2}

@@ -1,11 +1,11 @@
-\section{Measurement Model}
+\subsection{Measurement Model}
 \label{sec:measurement_model}
 
 Accelerometer and magnetometer measurements provide corrections; the gyroscope
 drives propagation.  A zero pseudo-measurement on the integral displacement
 $\vct S$ provides regularization.
 
-\subsection{Accelerometer model}
+\subsubsection{Accelerometer model}
 The body-frame specific-force measurement is
 \begin{equation}
 \vct{f}_b=\Rot_{wb}(\vct{a}_w-\vct{g}_w)+\vct{b}_a^{\mathrm{tot}}(T)+\vct{n}_a,
@@ -31,11 +31,10 @@ For the left-multiplicative convention,
 \end{align}
 where
 $\hat{\vct{f}}_{\mathrm{cog},b}=\Rot_{wb}(\hat{\vct{a}}_w-\vct{g}_w)$.
-The rank--3 correction therefore couples attitude, latent world acceleration,
-and residual accelerometer bias.  OU rather than random-walk bias dynamics
-change only prediction and process covariance, not this Jacobian.
+The three-component correction couples attitude, latent acceleration, and
+residual accelerometer bias; its full Jacobian has row rank three.
 
-\subsection{Magnetometer model}
+\subsubsection{Magnetometer model}
 With calibrated world reference $\vct{B}_w$,
 \begin{equation}
 \vct{m}_b=\Rot_{wb}\vct{B}_w+\vct{n}_m,
@@ -50,7 +49,7 @@ and
 \label{eq:mag-meas-jacobian}
 \end{equation}
 
-\subsection{Integral pseudo-measurement}
+\subsubsection{Integral pseudo-measurement}
 The drift-control channel is
 \begin{equation}
 \vct{z}_S=0=\vct{S}+\vct{n}_S,
@@ -96,7 +95,7 @@ Deadlines are served on the first subsequent IMU sample, so realized gaps are
 grid-quantized and lie between one step and one configured period plus one
 step.
 
-\subsection{IMU lever-arm model}
+\subsubsection{IMU lever-arm model}
 If the IMU is displaced from the center of gravity by known body-frame vector
 $\vct{r}_b$, the predicted specific force includes
 \begin{equation}
@@ -106,9 +105,18 @@ $\vct{r}_b$, the predicted specific force includes
 +\vct{b}_a^{\mathrm{tot}}(T)+\vct{n}_a.
 \label{eq:acc-meas-lever}
 \end{equation}
-The angular-rate and angular-acceleration terms are treated as known inputs.
-Their second-order attitude-uncertainty coupling is neglected, so the state
-Jacobians remain those of \eqref{eq:acc-meas-jacobians}; $\vct r_b=0$ disables
-the correction.
+The optional model uses bias-corrected gyro rate. Its gyroscope-bias
+Jacobian is
+\begin{equation}
+\mat J_{b_g}=k_\alpha\Skew{\vct r_b}
+-\bigl[(\vct\omega_b^\top\vct r_b)\Id
++\vct\omega_b\vct r_b^\top-2\vct r_b\vct\omega_b^\top\bigr],
+\label{eq:lever-bias-jacobian}
+\end{equation}
+where $k_\alpha=(1-e^{-h/\tau_\alpha})/h$ for the internal filtered
+rate derivative ($\tau_\alpha=\SI{0.05}{s}$). The remaining blocks are those
+of \eqref{eq:acc-meas-jacobians}; $\vct r_b=0$ disables the correction.
+The separately controlled compensation experiment is described in
+the installation study below.
 
 The optional steady-heel transform is disabled in all reported results.

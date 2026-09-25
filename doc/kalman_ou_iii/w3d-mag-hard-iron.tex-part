@@ -1,24 +1,13 @@
-% =======================================================
-\section{Continuous Magnetic Hard-Iron Correction}
+\subsection{Continuous magnetic hard-iron correction}
 \label{sec:mag-hard-iron}
-
-The startup alignment of Sec.~\ref{sec:mag-two-stage} fixes the yaw gauge from a
-magnetic world reference; a body-fixed magnetometer offset therefore biases yaw
-even with stable attitude tracking.  The measurement-only estimator
-continuously updates the additive magnetic offset without writing attitude state
-or resetting Kalman covariance.
-
-\subsection{Why the standing error is a gauge error}
 \label{sec:mag-gauge}
-
-Let $\mat A_i$ be the yaw-stripped body-to-level rotation from the
-Mahony proxy, $\vct B_\ell$ the level-frame field, and $\vct b_m$ a body-fixed
-additive offset.  The raw measurement is
+Startup averaging cannot separate a body-fixed offset from the field at a
+single attitude. With yaw-stripped body-to-level proxy rotation $\mat A_i$,
+level field $\vct B_\ell$, and additive offset $\vct b_m$,
 \begin{equation}
 \vct m_i=\mat A_i^{\top}\vct B_\ell+\vct b_m+\vct n_i .
 \label{eq:mag-offset-model}
 \end{equation}
-Startup averaging gives
 \begin{equation}
 \bar{\vct w}
 =\frac{1}{N}\sum_i\mat A_i\vct m_i
@@ -27,79 +16,40 @@ Startup averaging gives
 \bar{\mat A}=\frac{1}{N}\sum_i\mat A_i .
 \label{eq:mag-ref-average}
 \end{equation}
-At nearly constant heading, $\bar{\mat A}\approx\mat I$, so the learned
-reference follows $\vct B_\ell+\vct b_m$ rather than the true field.  Once this
-direction defines north, internally consistent attitude updates preserve the
-gauge error; longer averaging reduces noise but cannot separate field and
-offset at one attitude.
-
-Eliminating $\vct B_\ell$ gives
+Eliminating the unknown field gives
 \begin{equation}
 \underbrace{(\mat I-\bar{\mat A}^{\top}\bar{\mat A})}_{\mat M}\vct b_m
 =\bar{\vct m}-\bar{\mat A}^{\top}\bar{\vct w} .
 \label{eq:mag-normal}
 \end{equation}
-Small roll/pitch excitation makes $\mat M$ nonzero but poorly conditioned; the
-limitation is excitation geometry rather than sample count, motivating
-continued estimation after startup.
+Small roll/pitch motion supplies information but leaves weakly excited
+components poorly conditioned.
 
-\subsection{Exogenous continuous offset estimator}
 \label{sec:mag-hi-estimator}
-
-Exponentially weighted statistics of $(\mat A_i,\vct m_i)$ use an effective
-\SI{600}{s} memory, with offset updates once per second.  Rotations come from
-the yaw-stripped proxy and magnetic input is raw, before offset subtraction, so
-neither MEKF state nor corrected measurements feed back into the fit.
-
-Because Eq.~\eqref{eq:mag-offset-model} omits scale, cross-axis, and misalignment
-errors, weak excitation can alias them into the hard-iron estimate.  The solve
-therefore uses an excitation-scaled ridge,
+An exponentially weighted fit with \SI{600}{s} memory uses raw magnetometer samples and
+the independent proxy rotations, updating once per second. The regularized
+solve is
 \begin{equation}
 \left[\mat M+\left(\rho_0+\rho_1\frac{\operatorname{tr}\mat M}{3}\right)
 \mat I\right]\hat{\vct b}_m
 =\bar{\vct m}-\bar{\mat A}^{\top}\bar{\vct w},
 \label{eq:mag-ridge}
 \end{equation}
-with $\rho_0=5\times10^{-4}$ and $\rho_1=0.25$.  The excitation-dependent term
-limits misspecification when larger motion increases both geometric information
-and unmodeled distortion.  The absolute floor $\rho_0$ is set by the admission
-gate below rather than by a sweep: at the saturated weight of the \SI{600}{s}
-window the information gate already declines directions of eigenvalue below
-about $1.3\times10^{-4}$, so a floor above that band would shrink hardest in
-the calm seas where the standing gauge error is largest, which is the failure
-mode the excitation-scaled term exists to avoid.
+with fixed $\rho_0=5\times10^{-4}$ and $\rho_1=0.25$.
+Acceptance requires at least 500 effective samples,
+$N\lambda_{\min}(\mat M)\ge2$, offset norm below 35\% of the field, and
+level-frame residual at most \SI{3}{\micro\tesla} RMS.
+The ridge limits both ill-conditioning and distortion aliased into the
+additive model; its absolute floor is not inferred from the information gate.
 
-An estimate is accepted only after at least \num{500} effective samples, with
-$N\lambda_{\min}(\mat M)\ge2$, fitted offset below \pct{35} of field norm, and
-level-frame residual no greater than \SI{3}{\micro\tesla} RMS.  These gates
-reject insufficient excitation and gross model failure but cannot identify
-soft-iron or misalignment components that the additive model can fit.
-
-\subsection{Application without an attitude reset}
 \label{sec:mag-hi-apply}
+Accepted offsets are subtracted from the raw stream with a \SI{45}{s} time
+constant. The learned reference retains its horizontal direction while its
+magnitude and dip adjust, allowing ordinary magnetic corrections to remove
+yaw bias without an attitude or covariance reset. Without an accepted fit,
+measurement and reference remain unchanged.
 
-Subtracting the same offset from measurement and learned reference would leave
-the existing innovation, and hence the yaw error, unchanged.  Instead, offset
-subtraction is slewed into the raw magnetometer stream with a \SI{45}{s} time
-constant while the acquired reference direction is retained; only its magnitude
-and dip are adjusted.  The ordinary magnetometer update then corrects yaw.
-
-No attitude state or covariance reset is applied.  After startup, the correction
-is a bounded measurement-model change within the normal Live recursion.  If the
-offset estimator never validates, measurement and reference remain unchanged.
-
-\subsection{Limitations of the additive model}
 \label{sec:mag-hi-limits}
-
-The model identifies only a body-fixed additive offset.  Fixed-heading records
-cannot generally separate hard iron from soft-iron scale/cross-axis error or
-sensor misalignment, and aliased distortions may still satisfy the residual
-gate.  Full distortion identification requires multi-heading excitation; the
-current implementation instead stands down when turning violates its residual
-assumptions.
-
-Additional calibration draws include misalignment-dominated cases in which the
-additive correction degrades performance, despite strong offset dominance in
-the reported draw.  The ridge in Eq.~\eqref{eq:mag-ridge} therefore limits model
-misspecification as well as numerical ill-conditioning.  Section~\ref{sec:mag-hi-results}
-reports the deterministic result for the evaluated draw.
+Fixed-heading data cannot generally identify soft iron or sensor misalignment.
+Those terms may pass the additive residual gate and can degrade correction;
+Sec.~\ref{sec:mag-hi-results} reports the evaluated draw.

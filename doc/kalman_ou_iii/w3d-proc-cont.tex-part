@@ -1,11 +1,11 @@
-\section{Process Model (Continuous Time)}
+\subsection{Process Model (Continuous Time)}
 \label{sec:proc}
 
 The nominal quaternion is propagated on the manifold, while covariance evolves
 for the additive error state of \eqref{eq:state-vector}; the translational
 subsystem is an OU-driven linear chain.
 
-\subsection{Attitude subsystem}
+\subsubsection{Attitude subsystem}
 Let $\vct{\omega}_m$ be measured body angular rate and $\vct{b}_g$ the nominal
 gyroscope bias.  The world-to-body quaternion obeys
 \begin{equation}
@@ -55,7 +55,7 @@ $\vct{\sigma}_{g,\mathrm{samp}}$ at interval $h$, the continuous density is
 \end{equation}
 This conversion preserves process covariance under sample-rate changes.
 
-\subsection{Linear kinematic chain with OU acceleration}
+\subsubsection{Linear kinematic chain with OU acceleration}
 The world-frame chain is
 \begin{equation}
 \dot{\vct{v}}=\vct{a}_w,
@@ -90,7 +90,7 @@ S_{a_w}(\omega)=\frac{2\sigma_{aw}^2\tau}{1+\omega^2\tau^2}.
 The spectrum is zero-centered and nonresonant; relating $\tau$ to wave period is
 therefore a tuning rule for the prior, not a spectral identity.
 
-\subsection{Temperature-centered accelerometer-bias OU process}
+\subsubsection{Temperature-centered accelerometer-bias OU process}
 The physical bias is decomposed into calibrated temperature mean and stochastic
 residual by Eq.~\eqref{eq:acc-bias-temperature-model}.  The residual state
 follows
@@ -110,11 +110,9 @@ with stationary covariance
 Temperature-sensor error, calibration error, lag, and hysteresis remain model
 mismatch. During warmup/frozen-bias mode, the estimated residual state and
 covariance are frozen rather than propagated by the OU transition; the physical
-sensor bias does not freeze. The
-\href{kalman_ou-w3d-stability-study.pdf}{companion stability study} specifies
-its physical history and the separate assumptions used to bound that mismatch.
+sensor bias does not freeze.
 
-\subsection{Unified local-error SDE}
+\subsubsection{Unified local-error SDE}
 Over one sample, $\hat{\vct{\omega}}$ is treated as constant.  With ordering
 $[\delta\vct{\theta},\delta\vct{b}_g,\delta\vct{v},
 \delta\vct{p},\delta\vct{S},\delta\vct{a}_w,\delta\vct{b}_a]$,

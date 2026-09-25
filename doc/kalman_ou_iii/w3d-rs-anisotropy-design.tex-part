@@ -1,78 +1,23 @@
-\subsection{Per-axis regularizer optimum and deployed anisotropy}
+\subsection{Axis-dependent regularization}
 \label{sec:adaptation-rs-anisotropy}
-
-The reduced-MSE optimum is scalar but applies independently to each axis.  Let
-$q_i$ be the low-frequency posterior acceleration-error intensity and
-$m_{-4,i}$ the negative fourth moment of the \emph{true} displacement spectrum
-for axis $i\in\{x,y,z\}$.  From
-Eq.~\eqref{eq:adapt-reduced-mse-pole},
+Applying the scalar objective to axis $i$ gives the diagnostic ratio
 \begin{equation}
- r_{S,i}^{\star}
- \propto q_i^{1/14}m_{-4,i}^{3/7}T_S^{-1/2},
-\end{equation}
-and therefore the anisotropic ratios relative to the vertical channel are
-\begin{equation}
-\boxed{\begin{aligned}
-\rho_x^{\star}&:=\frac{r_{S,x}^{\star}}{r_{S,z}^{\star}}
-=\left(\frac{q_x}{q_z}\right)^{1/14}
- \left(\frac{m_{-4,x}}{m_{-4,z}}\right)^{3/7},
-\\[2pt]
-\rho_y^{\star}&:=\frac{r_{S,y}^{\star}}{r_{S,z}^{\star}}
-=\left(\frac{q_y}{q_z}\right)^{1/14}
- \left(\frac{m_{-4,y}}{m_{-4,z}}\right)^{3/7}.
-\end{aligned}}
+\rho_i^\star=\frac{r_{S,i}^\star}{r_{S,z}^\star}
+=\left(\frac{q_i}{q_z}\right)^{1/14}
+ \left(\frac{m_{-4,i}}{m_{-4,z}}\right)^{3/7},\qquad i=x,y.
 \label{eq:adapt-rs-axis-ratios}
 \end{equation}
-This expression explains why anisotropy cannot be chosen from drift intensity
-alone.  Horizontal tilt/gravity leakage can make $q_x$ and $q_y$ much larger
-than $q_z$, but the exponent is only $1/14$.  The desired-motion term carries
-exponent $3/7$ and therefore has six times the logarithmic weight.  The
-amplitudes and spectra of surge and sway enter through $m_{-4,x}$ and
-$m_{-4,y}$: a channel containing more genuine low-frequency displacement is
-penalized more strongly for a tight $S=0$ anchor.
-
-That dependence also makes fixed world-axis factors problematic for marine
-motion.  Surge and sway are projections of the directional orbital field into
-the vessel/world frame, so their amplitudes change with heading and encounter
-direction.  A pair of constants $(\rho_x,\rho_y)$ inferred from one heading
-would generally not remain the same after rotating the vessel relative to the
-same sea.  A common horizontal multiplier cannot remove this issue; it merely
-forces two different desired-motion spectra to share one compromise.
-
-The scalar ratios are diagnostics, not a complete-estimator tuning law. The
-current vessel-response study retains separate horizontal regularization
-factors, while the stationary OU-acceleration prior remains isotropic. The
-implemented default is
+Desired-motion spectra therefore matter more logarithmically than drift
+intensity alone. The implemented empirical factors are
 \begin{equation}
-\boxed{\begin{aligned}
-\vct r_S
- &=r_{S,\mathrm{filter}}
-   \begin{bmatrix}\rho_x&\rho_y&\rho_z\end{bmatrix}^{\top},\\
-\rho_x&=0.72,\qquad \rho_y=0.50,\qquad \rho_z=1,\\
-\mat R_S
- &=r_{S,\mathrm{filter}}^2
-   \diag\!\left(\rho_x^2,\rho_y^2,1\right).
-\end{aligned}}
+\begin{aligned}
+\vct r_S&=r_{S,\mathrm{appl}}[\rho_x,\rho_y,1]^\top,\\
+\mat R_S&=r_{S,\mathrm{appl}}^2\diag(\rho_x^2,\rho_y^2,1).
+\end{aligned}
 \label{eq:fus-rs-anisotropy}
 \end{equation}
-The factors multiply standard deviations, not covariance entries. The scalar
-$r_{S,\mathrm{filter}}$ is the applied vertical value after the common clamp
-and cadence conversion in
-Sec.~\ref{sec:adaptation-target-implementation}. The independent OU-prior
-setting is
-\begin{equation}
- (\matg{\Sigma}_{aw}^{\mathrm{stat}})^{1/2}
- =\sigma_{aw,\mathrm{appl}}\mat I_3 .
-\end{equation}
-Thus an isotropic acceleration prior does not imply an isotropic integral
-pseudo-measurement covariance.
-
-These factors are applied in world NED coordinates and are not rotated with
-heading. The reference vessel-response records hold yaw at zero, so the two
-horizontal axes coincide with surge and sway only in that validation setting.
-Section~\ref{sec:results} discusses the observed axis-dependent response and
-the complete-estimator comparisons. The selected factors are empirical for
-that ensemble; they are neither the exact scalar optima
-$\rho_x^{\star},\rho_y^{\star}$ nor a heading-invariant hull model.
-Heading-dependent rotation of the regularization covariance and validation
-under changing encounter directions remain separate extensions.
+Here $\rho_x=0.72$, $\rho_y=0.50$, and $\rho_z=1.0$ multiply standard deviations, not covariance entries. The stationary OU
+prior remains isotropic, with stationary standard-deviation matrix $\sigma_{aw,\mathrm{appl}}\mat I_3$.
+These regularizer factors are fixed in world NED and are not rotated with heading;
+zero-yaw reference records align the horizontal axes with surge and sway.
+They are neither the exact scalar optima nor a heading-invariant vessel model.

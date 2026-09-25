@@ -1,37 +1,12 @@
-% =======================================================
-\section{Filter Architecture}
+\section{Estimator Formulation}
 \label{sec:architecture}
-
-Figure~\ref{fig:ou3-architecture} is the block diagram of the deployed OU--III
-estimator.  It is read top to bottom.  Above the dashed barrier is the
-measurement-only front end: an engine-vibration prefilter, a Mahony
-complementary observer, the levelled
-vertical-acceleration channel it feeds, the magnetic hard-iron tracker, the
-wave-period and acceleration-scale estimators, and the adaptation module that
-turns those two statistics into the OU schedule.  Below the barrier is the
-21-state quaternion MEKF of Eq.~\eqref{eq:nominal-state-vector}, whose
-recursion couples the attitude states, the OU-driven linear chain, and the
-residual accelerometer bias through three-component correction channels.
-The prefilter conditions the specific force before both the Mahony observer
-and the MEKF; the gyroscope, magnetometer, and temperature channels pass
-through unchanged. Its vibration detector also schedules accelerometer
-measurement uncertainty as described in Sec.~\ref{sec:engine-noise-guard}.
-
-The barrier expresses one-way information flow. Every edge that crosses it
-points downward: conditioned specific force and the other sensor channels,
-the vibration-dependent measurement uncertainty, the gated startup handoff
-of Sec.~\ref{sec:proxy-handoff}, the slewed hard-iron correction of
-Sec.~\ref{sec:mag-hi-apply}, and the staged parameter tuple
-$\vartheta_k=(\tau,\sigma_{aw},\vct r_S,T_S)$ of
-Eq.~\eqref{eq:adapt-one-sample-staging}. No MEKF state, covariance, or innovation
-returns to the front end. Parameters are produced from the carried measurement
-history and applied with the one-sample staging described in
-Sec.~\ref{sec:adaptation}; they are not fitted from the MEKF's own residuals.
-The Mahony proxy is therefore not a
-redundant attitude solution retained for convenience: it exists so that
-levelling, hard-iron geometry, and the sea-state observables can be produced
-without closing a loop through the estimator they schedule.
-
+Figure~\ref{fig:ou3-architecture} separates the measurement-only front end from
+the 21-state MEKF. The vibration guard conditions specific force before both
+the Mahony proxy and the MEKF and supplies accelerometer uncertainty. Proxy
+tilt supports sea observables, magnetic hard-iron estimation, and startup.
+The parameter tuple $(\tau,\sigma_{aw},\vct r_S,T_S)$ is held between
+activations and committed before the next sample is processed. No MEKF state,
+covariance, or innovation feeds the scheduler.
 \begin{figure*}[t]
 \centering
 \resizebox{\textwidth}{!}{%
@@ -81,7 +56,7 @@ without closing a loop through the estimator they schedule.
   {$\sigma$ estimator: scaled band,\\ noise floor removed,
    Eq.~\eqref{eq:sigma-noise-subtraction}};
 \node[adapt] (ad) at (15.2,1.35)
-  {Adaptation module\\ targets Eq.~\eqref{eq:tuner-targets},
+  {Adaptation module\\ targets Eq.~\eqref{eq:adapt-default-rs-law},
    EMA Eq.~\eqref{eq:adapt-ewma},\\ anisotropy
    Eq.~\eqref{eq:adapt-rs-axis-ratios}};
 
@@ -95,14 +70,13 @@ without closing a loop through the estimator they schedule.
 \node[core] (tu) at (3.4,-4.10)
   {Time update\\ $q$ propagation, $\matg\Phi$, $\matg Q_d$};
 \node[core] (au) at (6.8,-4.10)
-  {Accelerometer update\\ rank 3, Eq.~\eqref{eq:acc-meas-jacobians}};
+  {Integral pseudo-update\\ $S=0$, if due;\\ injection/reset};
 \node[core] (mu) at (10.2,-4.10)
-  {Magnetometer update\\ rank 2, Eq.~\eqref{eq:mag-meas-jacobian}};
+  {Accelerometer update\\ three components;\\ injection/reset};
 \node[core] (pu) at (13.6,-4.10)
-  {Integral pseudo-update\\ $\vct z_S=0$, Eq.~\eqref{eq:zero-pseudo}};
+  {Magnetometer update\\ asynchronous, rank 2;\\ injection/reset};
 \node[core] (rst) at (17.0,-4.10)
-  {Injection and MEKF reset\\ Eqs.~\eqref{eq:joseph-update},
-   \eqref{eq:mekf-reset-covariance}};
+  {Numerical safeguards\\ covariance symmetry;\\ quaternion normalization};
 
 \node[stateb] (att) at (4.5,-6.20)
   {Attitude states\\ $\delta\vct\theta,\ \delta\vct b_g$};
@@ -153,31 +127,31 @@ without closing a loop through the estimator they schedule.
   node[lb,above]{$\widehat T_z,\ \widehat\sigma_{a,B}$} (ad.west);
 
 % ---------------- hard-iron correction of the raw magnetic stream ----------
-\node[draw, circle, inner sep=1pt, minimum size=4.6mm] (sum) at (10.2,-2.62)
+\node[draw, circle, inner sep=1pt, minimum size=4.6mm] (sum) at (13.6,-2.62)
   {\tiny$-$};
 \draw[sig] (hi.east) -- node[lb,above,pos=0.60]{$\hat{\vct b}_m$, 45 s slew}
-  (10.2,-0.75) -- (sum.north);
+  (13.6,-0.75) -- (sum.north);
 
 % ---------------- conditioned sensor bus into the core ----------------
 \draw[wire] (0,-0.75) -- (0,-2.62) -- (sum.west);
 \node[jn] at (3.80,-2.62) {};
-\node[jn] at (6.80,-2.62) {};
+\node[jn] at (10.2,-2.62) {};
 \draw[sig] (3.80,-2.62) -- node[lb,right,pos=0.35]{$\vct\omega^B$}
   (3.80,-3.50);
-\draw[sig] (6.80,-2.62) -- node[lb,right,pos=0.35]{$\widetilde{\vct f}^B,T,\mat R_a$}
-  (6.80,-3.50);
-\draw[sig] (sum.south) -- node[lb,right,pos=0.10]{corrected $\vct m^B$}
+\draw[sig] (10.2,-2.62) -- node[lb,right,pos=0.35]{$\widetilde{\vct f}^B,T,\mat R_a$}
   (10.2,-3.50);
+\draw[sig] (sum.south) -- node[lb,right,pos=0.10]{corrected $\vct m^B$}
+  (13.6,-3.50);
 
 % ---------------- staged OU schedule ----------------
 \draw[schedw] (ad.south) -- (15.2,-2.25);
 \draw[schedw] (15.2,-2.25) -- (3.00,-2.25);
 \node[jn] at (3.00,-2.25) {};
-\node[jn] at (14.4,-2.25) {};
+\node[jn] at (7.5,-2.25) {};
 \draw[sched] (3.00,-2.25) -- node[lb,left,pos=0.45]{$\tau,\sigma_{aw}$}
   (3.00,-3.50);
-\draw[sched] (14.4,-2.25) -- node[lb,left,pos=0.45]{$\vct r_S,T_S$}
-  (14.4,-3.50);
+\draw[sched] (7.5,-2.25) -- node[lb,left,pos=0.45]{$\vct r_S,T_S$}
+  (7.5,-3.50);
 \node[lb, anchor=south] at (6.00,-2.23)
   {staged schedule $\vartheta_k=(\tau,\sigma_{aw},\vct r_S,T_S)$};
 
@@ -214,21 +188,10 @@ without closing a loop through the estimator they schedule.
 \draw[sig] (att.south) |- (out.west);
 \draw[sig] (lin.south) -- (out.north);
 \end{tikzpicture}}
-\caption{Deployed OU--III filter structure.  Solid edges carry signals, dashed
-edges the staged OU schedule, and the dash-dotted edge the one-time startup
-handoff.
-The engine-noise prefilter conditions the specific force before it reaches
-either the Mahony proxy or the MEKF and supplies vibration-dependent
-accelerometer uncertainty $\mat R_a$. Other sensor channels pass through
-unchanged. The measurement-only front end levels the filtered specific force
-with a Mahony proxy,
-derives the vertical wave channel, tracks the magnetic hard-iron offset, and
-estimates the wave period and the band-limited acceleration scale; the
-adaptation module maps those two statistics to
-$\vartheta_k=(\tau,\sigma_{aw},\vct r_S,T_S)$.  The core quaternion MEKF
-propagates and corrects the 21 states of
-Eq.~\eqref{eq:nominal-state-vector} through three-component channels followed by
-the MEKF reset.  Every edge crossing the barrier points downward, so the
-schedule is exogenous with respect to the recursion it configures.}
+\caption{OU--III information flow. Solid edges carry signals, dashed edges
+carry the held parameter schedule, and the dash-dotted edge denotes startup
+handoff. A due integral correction precedes the accelerometer correction;
+magnetic corrections occur when available. Each correction includes Joseph
+covariance updating and injection/reset.}
 \label{fig:ou3-architecture}
 \end{figure*}
