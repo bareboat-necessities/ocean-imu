@@ -467,6 +467,7 @@ public:
                         float b0, float R_S_noise,
                         float gravity_magnitude)
     {
+        gravity_mps2_ = gravity_magnitude;
         mekf_ = std::make_unique<Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise, gravity_magnitude);
         seastate::common::finalizeInitialization(
             mekf_,
@@ -675,7 +676,7 @@ private:
         // sigma channel. It is fed gyro and accelerometer before the MEKF
         // sees them, so its levelled vertical acceleration remains a pure
         // function of the measurements.
-        vertical_accel_comp_.update(dt, gyro, acc_in, g_std);
+        vertical_accel_comp_.update(dt, gyro, acc_in, gravity_mps2_);
 
         // Tell the MEKF how much it should trust that sample before it uses
         // it, so the covariance and the measurement describe the same
@@ -791,7 +792,7 @@ private:
         // axis and is therefore invariant under q -> Rz(psi) q, so only the
         // tilt of whichever quaternion is supplied can reach the result.
         const auto direction_accel = wave_direction::heading_frame_acceleration<float>(
-            drive_mekf ? mekf_->quaternion_boat() : startupProxyQuat(), acc_in, g_std);
+            drive_mekf ? mekf_->quaternion_boat() : startupProxyQuat(), acc_in, gravity_mps2_);
 
         // Stage 1 estimates the apparent propagation plane as an unsigned axis
         // relative to boat heading.  Stage 2 resolves propagation sense along
@@ -836,7 +837,7 @@ private:
         if (drive_mekf) {
             const Eigen::Vector3f corrected = acc_in - mekf_->get_acc_bias_body_at_temperature(tempC);
             direction_input = wave_direction::heading_frame_acceleration<float>(
-                mekf_->quaternion_boat(), corrected, g_std);
+                mekf_->quaternion_boat(), corrected, gravity_mps2_);
         }
         const auto direction_matched = direction_rao_.step(direction_input, dt);
         dir_filter_.update(direction_matched.forward_ms2,
@@ -2222,6 +2223,11 @@ private:
         STARTUP_PROXY_TWO_KP_DEFAULT,
         STARTUP_PROXY_TWO_KI_DEFAULT};
 
+    // Physical gravity removed from the specific force: the MEKF's gravity
+    // (set by initialize_ext; initialize() keeps the MEKF default, the
+    // standard gravity of Kalman3D_Wave_OU_III).
+    float gravity_mps2_ = 9.80665f;
+
     // Armed in the constructor at ACC_VIBRATION_GUARD_HZ_DEFAULT, and dormant
     // until its own detector sees machinery, so an unconditioned replay is
     // bit-identical to a guarded one.
@@ -2535,7 +2541,7 @@ public:
         mag_cfg.max_window_sec = cfg_.mag_max_window_sec;
         mag_cfg.sample_dt_sec  = cfg_.mag_sample_dt_sec;
 
-        mag_cfg.gravity_ref = g_std;
+        mag_cfg.gravity_ref = cfg_.gravity_magnitude;
         mag_cfg.enable_quality_weighting = cfg_.mag_enable_quality_weighting;
         mag_cfg.estimate_hard_iron       = cfg_.mag_estimate_hard_iron;
         mag_cfg.min_effective_weight     = cfg_.mag_min_effective_weight;

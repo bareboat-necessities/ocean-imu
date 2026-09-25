@@ -10,7 +10,7 @@
 
 namespace atoms3r_ical {
 
-inline bool runImuCalWizard(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV2& out_saved) {
+inline bool runImuCalWizard(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV3& out_saved) {
   // Keep the large wizard object off the caller task stack.
   // This avoids stack pressure in sketches that invoke calibration from loop()
   // with smaller stack budgets than CompassAppBase.

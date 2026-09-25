@@ -54,7 +54,11 @@
   #define SEA_STATE_NMEA_TALKER "II"
 #endif
 
+// Nominal-g unit (also the generic default the filter headers declare as
+// extern g_std). Physical gravity is g_local: the calibration target, and the
+// gravity the fusion filter removes (Fusion::Config::gravity_magnitude).
 constexpr float g_std      = atoms3r_ical::ImuCalCfg::g_std;
+constexpr float g_local    = atoms3r_ical::ImuCalCfg::g_cal_local;
 constexpr float FREQ_GUESS = 0.3f;
 
 #define ZERO_CROSSINGS_SCALE          1.0f
@@ -226,7 +230,7 @@ private:
 
   ImuCalStoreNvs store_{};
   bool           have_blob_ = false;
-  ImuCalBlobV2   blob_{};
+  ImuCalBlobV3   blob_{};
   RuntimeCals    runtime_{};
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -314,7 +318,7 @@ private:
 
     clearM5UnifiedImuCalibration();
 
-    ImuCalBlobV2 saved{};
+    ImuCalBlobV3 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
 
     if (did_save) {
@@ -373,6 +377,8 @@ private:
 
     fcfg.mag_delay_sec = 0.0f;
     fcfg.mag_init_min_mag_norm = 5.0f;
+
+    fcfg.gravity_magnitude = g_local;
 
     fcfg.enable_displacement_detrend = true;
 
@@ -550,7 +556,7 @@ private:
     updateCompassHeading_(q_compass_tilt, attitude_ok,
         live && fusion_.hasMagNorthLock(), heading_est_deg);
 
-    gyro_bias_.update(w_cal_, a_cal_, g_std, dt_);
+    gyro_bias_.update(w_cal_, a_cal_, g_local, dt_);
     const Vector3f w_world = ins::quatRotate(q_bw, gyro_bias_.corrected(w_cal_));
     rot_.update(w_world.z(), dt_);
 

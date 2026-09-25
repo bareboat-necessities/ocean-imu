@@ -57,6 +57,11 @@ enum class FitFail : uint8_t {
 
   // Accel-specific: fitted S would rotate axes / be unphysical
   ACCEL_S_UNPHYSICAL,
+
+  // Accel full-matrix fit (AccelCalFit.h)
+  ACCEL_INFO_LOW,          // measured geometry does not determine bias/cross terms
+  ACCEL_CROSSCHECK_FAIL,   // held-out holds disagree with the fitted model
+  ACCEL_FLOAT_CHECK_FAIL,  // stored float coefficients failed re-validation
 };
 
 static inline const char* fitFailStr(FitFail f) {
@@ -75,6 +80,9 @@ static inline const char* fitFailStr(FitFail f) {
     case FitFail::MAG_FIELD_OUT_OF_RANGE: return "MAG_FIELD_OUT_OF_RANGE";
     case FitFail::TEMP_BINS_EMPTY: return "TEMP_BINS_EMPTY";
     case FitFail::ACCEL_S_UNPHYSICAL: return "ACCEL_S_UNPHYSICAL";
+    case FitFail::ACCEL_INFO_LOW: return "ACCEL_INFO_LOW";
+    case FitFail::ACCEL_CROSSCHECK_FAIL: return "ACCEL_CROSSCHECK";
+    case FitFail::ACCEL_FLOAT_CHECK_FAIL: return "ACCEL_FLOAT_CHECK";
     default: return "UNKNOWN";
   }
 }
@@ -594,7 +602,12 @@ static EllipsoidSphereFit<T> ellipsoid_to_sphere_robust(
   return out;
 }
 
-// Temperature model: bias(T) = b0 + k*(T - T0)
+// Temperature model: bias(T) = b0 + k*(clamp(T, T_lo, T_hi) - T0)
+//
+// A missing (non-finite) temperature evaluates the reference bias b0, so a
+// NaN temperature can never turn a calibrated vector into NaN. The optional
+// clamp bounds extrapolation of a slope learned over a narrow range; the
+// defaults leave the historical unclamped behaviour unchanged.
 template <typename T>
 struct TempBias3 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -603,8 +616,14 @@ struct TempBias3 {
   T T0 = T(25);
   Eigen::Matrix<T,3,1> b0 = Eigen::Matrix<T,3,1>::Zero();
   Eigen::Matrix<T,3,1> k  = Eigen::Matrix<T,3,1>::Zero();
+  T T_lo = T(-1000);
+  T T_hi = T(1000);
 
-  Eigen::Matrix<T,3,1> bias(T tempC) const { return b0 + k * (tempC - T0); }
+  Eigen::Matrix<T,3,1> bias(T tempC) const {
+    if (!finiteT(tempC)) return b0;
+    const T tc = clamp<T>(tempC, T_lo, T_hi);
+    return b0 + k * (tc - T0);
+  }
 };
 
 template <typename T, int N>
@@ -909,10 +928,6 @@ struct AccelCalibrator {
 
       if (!fitk.ok) { worst_bin_reason = fitk.reason; continue; }
 
-      centers[nb] = fitk.b;
-      temps[nb]   = tmean;
-      nb++;
-
       // convert fit matrix to axis-safe S
       // 1) Strip rotation using polar SPD factor
       Eigen::Matrix<T,3,3> S_spd;
@@ -956,6 +971,13 @@ struct AccelCalibrator {
       if (accel_S_mode != AccelSMode::DiagonalOnly) {
         score += T(0.15) * offdiag_rms_3x3<T>(S_use);
       }
+
+      // Only a bin whose matrix passed every gate contributes a bias center.
+      // Counting it earlier let an all-rejected fit return the identity
+      // default S with an unvalidated center.
+      centers[nb] = fitk.b;
+      temps[nb]   = tmean;
+      nb++;
 
       if (score < best_score) {
         best_score = score;
@@ -1016,6 +1038,7 @@ struct AccelCalibrator {
     }
 
     if (!did_scale) {
+      out.ok = false;
       last_fail_ = FitFail::ACCEL_S_UNPHYSICAL;
       if (reason_out) *reason_out = last_fail_;
       return false;

@@ -213,7 +213,7 @@ class RotEstimator {
   float update(float dt, const Vector3f& a_cal, const Vector3f& w_cal, const AttitudeSolution& att) {
     if (!att.valid) return filt_dpm_;
 
-    const float g = ImuCalCfg::g_std;
+    const float g = ImuCalCfg::g_cal_local;  // physical gravity: a still sensor reads this norm
     const float a_err = fabsf(a_cal.norm() - g);
     const bool still = (a_err < ROT_STILL_G_TOL_FRAC * g) && (w_cal.norm() < ROT_STILL_GYRO_RAD_S);
 
@@ -298,7 +298,7 @@ class CompassAppBase {
 
     if (!have_blob_) {
       Serial.println("[BOOT] No saved calibration. Starting wizard...");
-      ImuCalBlobV2 saved{};
+      ImuCalBlobV3 saved{};
       if (wizard_.runAndSave(saved)) {
         Serial.println("[BOOT] Wizard saved calibration. Loaded:");
         printBlobSummary(Serial, saved);
@@ -397,7 +397,7 @@ class CompassAppBase {
   void handleRunWizard_() {
     Serial.println("[HOME] single tap => RUN WIZARD");
 
-    ImuCalBlobV2 saved{};
+    ImuCalBlobV3 saved{};
     if (!wizard_.runAndSave(saved)) {
       ui_.notSavedNotice();
       return;
@@ -546,7 +546,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   RotEstimator rot_;
 
   bool have_blob_ = false;
-  ImuCalBlobV2 blob_{};
+  ImuCalBlobV3 blob_{};
 
   bool use_graphics_ = (COMPASS_UI_DEFAULT_GRAPHICS != 0);
   bool compass_ui_ready_ = false;

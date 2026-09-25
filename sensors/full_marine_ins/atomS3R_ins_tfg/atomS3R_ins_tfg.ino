@@ -83,7 +83,10 @@
   #define SEA_STATE_NMEA_TALKER "II"
 #endif
 
+// Nominal-g unit (and the generic default of the shared headers). Physical
+// gravity is g_local: the calibration target and the gravity TFG removes.
 constexpr float g_std      = atoms3r_ical::ImuCalCfg::g_std;
+constexpr float g_local    = atoms3r_ical::ImuCalCfg::g_cal_local;
 constexpr float FREQ_GUESS = 0.3f;
 
 #include "kalman_tfg/SeaStateFusionFilter_TFG.h"
@@ -230,7 +233,7 @@ private:
 
   ImuCalStoreNvs store_{};
   bool           have_blob_ = false;
-  ImuCalBlobV2   blob_{};
+  ImuCalBlobV3   blob_{};
   RuntimeCals    runtime_{};
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -356,7 +359,7 @@ private:
 
     clearM5UnifiedImuCalibration();
 
-    ImuCalBlobV2 saved{};
+    ImuCalBlobV3 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
 
     if (did_save) {
@@ -417,7 +420,7 @@ private:
     fcfg.mag_delay_sec = 0.0f;
     fcfg.mag_init_min_mag_norm = 5.0f;
 
-    fcfg.gravity_magnitude = g_std;
+    fcfg.gravity_magnitude = g_local;
 
     fcfg.acc_vibration_guard_hz = ACC_VIBRATION_GUARD_HZ;
 
@@ -536,7 +539,7 @@ private:
 
     const Vector3f corrected = a_cal_ - fusion_.mekf().get_acc_bias_at_temperature(tempC);
     const auto direction_input =
-        wave_direction::heading_frame_acceleration<float>(q_bw, corrected, g_std);
+        wave_direction::heading_frame_acceleration<float>(q_bw, corrected, g_local);
     if (!direction_input.heading_valid) return;
 
     const auto direction_matched = direction_rao_.step(direction_input, dt);
@@ -648,7 +651,7 @@ private:
     updateCompassHeading_(q_bw, attitude_ok,
         fusion_.isLive() && fusion_.mekf().has_magnetic_reference(), heading_est_deg);
 
-    gyro_bias_.update(w_cal_, a_cal_, g_std, dt_);
+    gyro_bias_.update(w_cal_, a_cal_, g_local, dt_);
     const Vector3f w_world = ins::quatRotate(q_bw, gyro_bias_.corrected(w_cal_));
     rot_.update(w_world.z(), dt_);
 

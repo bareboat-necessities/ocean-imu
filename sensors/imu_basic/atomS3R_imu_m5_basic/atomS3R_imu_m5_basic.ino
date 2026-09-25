@@ -15,7 +15,7 @@ constexpr float kMagDtMs = 40.0f;
 constexpr uint32_t kMagCadenceDiv = (kMagPeriodUs / kLoopPeriodUs);
 
 ImuCalStoreNvs calStore;
-ImuCalBlobV2 calBlob;
+ImuCalBlobV3 calBlob;
 RuntimeCals runtimeCals;
 bool hasSavedCalibration = false;
 

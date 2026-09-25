@@ -162,6 +162,74 @@ public:
     return MagFailAction::RETRY_MAG;
   }
 
+  // Failure screen with up to three short lines.
+  void failLines(const char* where, const char* why1, const char* why2 = nullptr, const char* why3 = nullptr) {
+    setReadRotation();
+    title("FAILED");
+    line(where);
+    if (why1) line(why1);
+    if (why2) line(why2);
+    if (why3) line(why3);
+    line("");
+    line("Tap BtnA");
+    while (true) {
+      Input::update();
+      if (Input::tapPressed()) break;
+      delay(10);
+    }
+  }
+
+  // Start of the calibration wizard. Without a previous calibration only the
+  // full wizard is offered (single tap, as before).
+  enum class StartAction : uint8_t { FULL = 0, ACCEL_ONLY = 1, CANCEL = 2 };
+
+  StartAction startMenu(bool accel_only_available) {
+    setReadRotation();
+    title("IMU CAL");
+    if (!accel_only_available) {
+      line("Tap to begin");
+      line("");
+      line("Tap BtnA");
+      while (true) {
+        Input::update();
+        if (Input::tapPressed()) break;
+        delay(10);
+      }
+      return StartAction::FULL;
+    }
+    line("Tap: full calib");
+    line("Tap x2: accel only");
+    line("Tap x3: cancel");
+    const uint8_t taps = waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+    if (taps >= 3) return StartAction::CANCEL;
+    if (taps == 2) return StartAction::ACCEL_ONLY;
+    return StartAction::FULL;
+  }
+
+  // Retry prompt for one hold; false = abort (previous calibration kept).
+  bool retryMenu(const char* what, const char* why1, const char* why2 = nullptr) {
+    setReadRotation();
+    title("RETRY?");
+    if (what) line(what);
+    if (why1) line(why1);
+    if (why2) line(why2);
+    line("");
+    line("Tap: retry");
+    line("Tap x3: abort");
+    const uint8_t taps = waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+    return taps < 3;
+  }
+
+  // Overwrites one text row (size-1 font) at the current rotation.
+  void lineAt(int row_px, const char* s) {
+    M5.Display.fillRect(0, row_px, M5.Display.width(), 8, TFT_BLACK);
+    M5.Display.setCursor(0, row_px);
+    M5.Display.setTextColor(TFT_WHITE, TFT_BLACK);
+    M5.Display.print(s);
+  }
+
+  int cursorY() const { return M5.Display.getCursorY(); }
+
   void notSavedNotice() {
     setReadRotation();
     title("NOT SAVED");

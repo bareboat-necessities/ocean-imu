@@ -175,11 +175,11 @@ public:
 
         R k1_initial = R(20);
         R k2_initial = R(20);
-        R kI_initial = R(1);
+        R kI_initial = R(1);  // NOLINT(misc-confusable-identifiers): integral gain, not k1
 
         R k1_nominal = R(0.55);
         R k2_nominal = R(1.0);
-        R kI_nominal = R(0.01);
+        R kI_nominal = R(0.01);  // NOLINT(misc-confusable-identifiers): integral gain, not k1
 
         R K_p0z_p0z = R(5.4295);
         R K_pz_p0z  = R(2.2396);
@@ -543,7 +543,7 @@ public:
 
     R gainK1() const { return k1_; }
     R gainK2() const { return k2_; }
-    R gainKI() const { return kI_; }
+    R gainKI() const { return kI_; }  // NOLINT(misc-confusable-identifiers): integral gain, not k1
     R gainVartheta() const { return vartheta_; }
     R timeSeconds() const { return t_s_; }
 
@@ -577,7 +577,7 @@ private:
 
     R k1_ = R(0.55);
     R k2_ = R(1.0);
-    R kI_ = R(0.01);
+    R kI_ = R(0.01);  // NOLINT(misc-confusable-identifiers): integral gain, not k1
 
     R gnss_rms_lpf_ = R(1);
     R vartheta2_ = R(1);

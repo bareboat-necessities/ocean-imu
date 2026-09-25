@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = pii_observer-adaptive
+TARGETS = pii_observer-adaptive local_gravity-test
 
 all: build test
 
@@ -34,6 +34,9 @@ ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
 
 pii_observer-adaptive: pii_observer-adaptive.o W3dSimCommon.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+local_gravity-test: local_gravity-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
