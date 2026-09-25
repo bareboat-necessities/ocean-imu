@@ -50,22 +50,18 @@ TFG & on & 9.541 & 7.917 & 7.410 & 104.88 \\
 \bottomrule\end{tabular}\end{table}
 
 OU--III's 3-D RMS rises from \SI{0.405}{m} to \SI{19.753}{m}, a factor of \num{48.81}.
-Across families the offset fractions are OU--II: \pct{25.7}, OU--III: \pct{22.2}, TFG: \pct{83.0}.
-Static offset does not dominate both OU families.
+The 3-D offset fractions are OU--II: \pct{25.7}, OU--III: \pct{22.2}, TFG: \pct{83.0}.
 Pitch RMS and pitch offset are \SI{1.924}{\degree} and \SI{1.390}{\degree}.
 The accelerometer update shares its residual between attitude, bias and
 wave acceleration; a standing tilt can therefore leak gravity into the
-horizontal reconstruction. This is a mechanism interpretation of the
-paired ablations, not a source-uniform theorem.
+horizontal reconstruction. 
 
 Removing the modeled gyroscope perturbation changes nominal 3-D RMS by
 at most \pct{0.037} across the families. The measured degradation is dominated
 by the accelerometer path in this experiment.
 
 \subsubsection{Speed, level and bandwidth}
-The speed sweep is not monotone: all three families have local reversals.
-The level and bandwidth controls should therefore be read directly from
-Figs.~\ref{fig:engine-noise-speed} and \ref{fig:engine-noise-mechanism}.
+The speed sweep is nonmonotone (Fig.~\ref{fig:engine-noise-speed}).
 The matched-power sweep holds recorded RMS at \SI{0.4543}{m.s^{-2}}
 while changing bandwidth and folded order locations.
  For OU--II, the maximum/minimum 3-D spread falls from \num{17.77} to \num{7.87}.
@@ -118,14 +114,11 @@ Engine bed & 127.937 & 0.964 & 0.492 & 25.594 & 1.414 & 0.554 & 1.216 \\
 Wide sensor & 21.012 & 0.457 & 0.443 & 1.157 & 0.662 & 0.058 & 1.095 \\
 \bottomrule\end{tabular}\end{table}
 
-The table reports conditioning and covariance inflation separately.
-Their relative benefit depends on the engine condition; these measurements
-do not imply uniform improvement from covariance inflation.
+At nominal cruise, the guard reduces OU--III 3-D RMS to \SI{0.500}{m}; adding covariance inflation reduces it to \SI{0.451}{m}, still 11.3\% above the \SI{0.405}{m} engine-off baseline. Improvement is not uniform:
 At \SI{800}{rpm}, pitch offset rises from \SI{1.514}{\degree} to \SI{1.519}{\degree} with covariance inflation.
 For all eight engine-off records the detector stays below its rail and
 engagement is zero. Their guarded and unguarded scores are identical.
-This finite-record transparency result does not establish transparency
-for arbitrary seas, sensor noise levels or machinery spectra.
+
 
 \IfFileExists{ou_engine_noise_guard.svg}{%
 \begin{figure}[t]\centering

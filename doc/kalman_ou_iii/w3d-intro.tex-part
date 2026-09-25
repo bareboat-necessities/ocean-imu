@@ -1,54 +1,30 @@
 \section{Introduction}
 \label{sec:intro}
+Marine inertial wave-motion estimation must reject low-frequency integration
+drift without suppressing genuine oscillatory displacement. Accelerometer bias
+and attitude error are particularly troublesome horizontally, where gravity
+leakage competes with surge and sway. A regularizer appropriate for one sea
+can distort another as the dominant period and acceleration level change.
 
-Marine inertial wave-motion estimation is more difficult than attitude
-estimation because accelerometer bias, attitude error, and low-frequency model
-mismatch integrate into velocity and displacement, whereas the motion
-is itself oscillatory.  The difficulty is strongest horizontally, where
-tilt-induced gravity leakage competes with real surge and sway, and must be
-controlled across sea states with widely varying periods and acceleration
-levels.
-
-Recent heave estimators include discrete Kalman reconstruction, adaptive IMU
-filtering, nonlinear observers, and spectral approaches
+Recent approaches include discrete Kalman reconstruction, adaptive IMU
+filtering, nonlinear observers, and spectral methods
 \cite{Reis2023_DiscreteKalmanHeave,Lu2023_AdaptiveDelayFreeHeave,
-Li2025_HeaveCKF,YurovskyKudinov2025_IMUwaves,Hope2025_SFY}.  First-order
-Gauss--Markov acceleration models, including the Ornstein--Uhlenbeck process itself,
-are classical \cite{UhlenbeckOrnstein1930_OU,Singer1970_ManeuverModel}.  This work
-embeds such a prior in a fully specified three-dimensional quaternion MEKF with an
-integral-displacement state, covariance-consistent regularization, and an
-exogenous sea-state adaptation layer whose contribution is isolated by
-controlled ablation.
+Li2025_HeaveCKF,YurovskyKudinov2025_IMUwaves,Hope2025_SFY}.
+The Ornstein--Uhlenbeck process itself and Singer-type acceleration priors are classical
+\cite{UhlenbeckOrnstein1930_OU,Singer1970_ManeuverModel}; the contribution here
+is their integration with a fully specified three-dimensional quaternion MEKF,
+integral-displacement regularization, and measurement-driven adaptation.
 
-\subsection{Main contributions}
-The contributions are:
-\begin{itemize}[leftmargin=1.25em]
-  \item a 21-state left-multiplicative quaternion MEKF coupling attitude,
-        gyro and residual accelerometer bias, and three exact OU-driven
-        $[v,p,S,a_w]$ chains, with $S$ providing soft low-frequency drift
-        control;
-  \item an exogenous adaptation architecture that estimates wave time scale and
-        acceleration level from measurement-only signals and schedules the OU
-        prior and integral regularizer.  Sea-similarity arguments determine the
-        OU amplitude/time mappings and averaging horizons, while reduced
-        physical-MSE optimization and spectral-moment evaluation provide the
-        deployed SpectralMSE regularizer law and its analytical default
-        coefficient; complete-filter experiments then validate those choices;
-  \item a versioned paired evaluation of vertical and horizontal displacement,
-        attitude, bias tracking, stationary and changing seas, and adaptation
-        channels.  With the current isotropic configuration, OU--III reduces
-        paired mean 3-D displacement RMS relative to matched OU--II in all four
-        stationary JONSWAP cases and the controlled transition, while ablation
-        identifies integral-state regularization as the principal source of
-        the adaptive benefit.
-\end{itemize}
+The 21-state estimator couples attitude and sensor biases to exact OU-driven
+$[v,p,S,a_w]$ chains. A zero pseudo-measurement on $S$ suppresses slow drift.
+A separate measurement-only front end estimates period and physical
+band-limited acceleration, schedules the OU prior, and sets the integral
+regularizer through a reduced physical drift--distortion objective
+(SpectralMSE). Paired comparisons and a four-arm adaptation ablation isolate
+the contribution of this regularizer from that of OU scheduling.
 
-Here, $\vct p$ denotes bounded wave-induced motion about a local reference, not
-geodetic position; GNSS-aided absolute trajectory estimation is not evaluated.
-The evidence is primarily synthetic, and the ESP32--S3 exercise establishes
-source portability only. Thermal-calibration performance is not evaluated.
-The separate \href{kalman_ou-w3d-stability-study.pdf}{OU--III stability study}
-states the simultaneous MARINE MOTION, IMU BIAS, and MAGNETIC SERVICE
-assumptions, the single startup-to-certified-tail proof path, and the remaining
-finite-error, retention, and implementation-arithmetic obligations. This
-article does not claim a completed end-to-end stability certificate.
+The displacement is oscillatory vessel motion about a local reference, not
+geodetic position. Evaluation uses synthetic vessel-response records at one
+fixed heading; it does not establish independent-vessel, sea-trial, thermal
+calibration, or embedded resource performance. The OU prior is isotropic,
+whereas the deployed integral regularizer uses distinct horizontal factors.

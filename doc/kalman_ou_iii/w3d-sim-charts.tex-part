@@ -73,7 +73,7 @@ The generic filters leave that optional hull-specific policy disabled.
   \centering
   \caption{Simulation timing and sensor-error levels.}
   \label{tab:sim_constants}
-  \setlength{\tabcolsep}{3pt}
+  \setlength{\tabcolsep}{2.8pt}
   \begin{tabular}{@{}lll@{}}
     \toprule
     Quantity & Value & Notes \\
@@ -97,10 +97,7 @@ finite-$\tau_b$ residual is an estimator model choice, while the empirical
 test concerns robustness to the injected random-walk mismatch. These
 simulations do not qualify a universal physical bias law.
 
-The principal study also uses the committed reference-point configuration, so
-the implemented lever-arm model is not physically validated off-CoG.  The
-records represent the estimated sailboat response at its centre of gravity.
-The separate lever-arm study tests 10--30 cm installation offsets.
+The principal records represent the vessel center of gravity (CG); the separate lever-arm experiment tests 10--30 cm offsets without physical off-CoG validation.
 
 \subsection{Paired Monte Carlo protocol}
 
@@ -116,9 +113,7 @@ sign-flip tests provide companion checks for the single primary endpoint.
 Secondary comparisons retain paired intervals without additional confirmatory
 hypotheses.
 
-The versioned evidence records the simulator configuration, input data, and
-individual results for each seed. Statistical summaries and figures are
-derived from these same paired observations.
+The percentile bootstrap uses 10,000 resamples of the ten paired seed summaries (PCG64, seed 20260317); the four heights within each seed are not independent replicates. Finite replays are retained regardless of separate regression-gate outcomes.
 
 Metrics include $X$, $Y$, $Z$, and 3-D displacement RMS; roll, pitch, and yaw
 RMS; accelerometer and gyroscope bias error; direction diagnostics; and

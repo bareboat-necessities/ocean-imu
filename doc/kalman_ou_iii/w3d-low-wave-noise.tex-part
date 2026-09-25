@@ -45,8 +45,7 @@ OU--III & Response/SNR & 0.006370 & 0.006081 & 0.2128 & 0.3308 & 1.9334 & 80\\
 OU--II still fails 30 of 32 cases and OU--III all 32. Mean pitch and yaw
 increase slightly; the improvement is principally acceleration noise, with
 OU--III low-wave 3-D displacement RMS decreasing from \SI{0.02121}{m} to
-\SI{0.01753}{m}. New-angle and rotated-heading paired checks add no
-violations but retain small attitude tradeoffs.
+\SI{0.01753}{m}.
 
 The direction input subtracts the estimated temperature-dependent
 accelerometer bias in physical sensor axes before levelling and response
@@ -54,6 +53,4 @@ matching. The separate wave-period/tuning input remains measurement-only.
 An unavailable zero axis produces no angular score. At the default lowest
 waves, corrected axis availability averages about one percent and travel direction
 is unresolved more than 99 percent of the time. Conditional angular accuracy
-therefore does not establish usable low-wave direction. Static tilt/bias
-ambiguity and incomplete magnetic calibration remain limiting mechanisms;
-no new yaw or $R_S$ default is justified by the tuning screens.
+therefore does not establish usable low-wave direction. Static tilt/bias ambiguity and incomplete magnetic calibration remain limiting mechanisms.

@@ -1,223 +1,95 @@
 \subsection{Measurement-only vertical acceleration}
 \label{sec:vertical-proxy}
-
-The adaptive parameters must be driven by sea motion without feeding the MEKF
-state back into its own scheduler.  The implementation therefore extracts a
-levelled vertical acceleration with a lightweight Mahony complementary observer
-\cite{Mahony2008NonlinearComplementary} driven only by raw gyro and
-accelerometer measurements,
+A Mahony complementary observer \cite{Mahony2008NonlinearComplementary}
+uses gyro rate and conditioned specific force, independently of the MEKF:
 \begin{equation}
 \begin{aligned}
-\vct\varepsilon&=\hat{\vct d}_{\mathrm{meas}}\times\hat{\vct d}(\hat q),
-\qquad
-\hat{\vct d}_{\mathrm{meas}}=-\vct f^{B}/\lVert\vct f^{B}\rVert,\\
-\dot{\hat q}&=\tfrac12\,\hat q\otimes
-\bigl(\vct\omega^{B}+\vct\beta+k_P\vct\varepsilon\bigr),
-\qquad
-\dot{\vct\beta}=k_I\vct\varepsilon .
+\vct\varepsilon&=\hat{\vct d}_{\rm meas}\times\hat{\vct d}(\hat q_P),
+&\hat{\vct d}_{\rm meas}&=-\vct f^B/\|\vct f^B\|,\\
+\dot{\hat q}_P&=\tfrac12\hat q_P\otimes
+ (\vct\omega^B+\vct\beta+k_P\vct\varepsilon),
+&\dot{\vct\beta}&=k_I\vct\varepsilon .
 \end{aligned}
 \label{eq:proxy-mahony}
 \end{equation}
-The resulting up-positive acceleration is
+The gains are $k_P=\SI{0.1}{s^{-1}}$ and $k_I=\SI{0.01}{s^{-2}}$.
+Proxy tilt, but not yaw, determines the up-positive channel
 \begin{equation}
-a^{P}_{\uparrow,k}
-=-\!\left(\left[\mat{R}_{NB}(\hat q_k)\vct f^{B}_k\right]_{D}+g\right).
+a^P_{\uparrow,k}=-\bigl([\mat R_{NB}(\hat q_{P,k})\vct f^B_k]_D+g\bigr).
 \label{eq:proxy-vertical}
 \end{equation}
-Only proxy tilt is used; yaw is irrelevant to the vertical channel.  The
-default gains are $k_P=\SI{0.1}{\per\second}$ and
-$k_I=\SI{0.01}{\per\second\squared}$ (the source stores $2k_P,2k_I$).  Its
-correction corner lies below the wave band, so gyro propagation carries
-wave-frequency attitude while accelerometer feedback trims slow tilt and the
-integral term removes standing gyro-bias tilt.  The same observer later
-supplies startup tilt and the yaw-stripped magnetic-reference frame in
-Sec.~\ref{sec:startup-policy}.
-
-MEKF-based levelling would close a loop from attitude error through the tuner;
-unlevelled body-$Z$ remains exogenous but suffers strongly integrated gravity
-leakage.  The proxy therefore provides both levelling and the one-way
-measurement-only information flow of the adaptation architecture.  The MEKF-levelled alternative is
-retained only for ablation.
 
 \subsection{Noise-corrected vertical acceleration scale}
 \label{sec:adaptation-physical-sigma}
-
-The same vertical channel supplies the physical wave-band acceleration
-statistic $\widehat\sigma_{a,B}$.  The point of the statistic is to estimate the
-amplitude of physical wave excitation, not the electronics-noise amplitude and
-not the OU-prior variance.  Before its variance is accumulated,
-$a^{P}_{\uparrow}$ passes through a period-scaled wave band whose corners are
-fixed relative to the lagged tuning frequency.  The period estimator defining
-that frequency is given next; using the lagged value keeps the current sample
-from selecting its own band.
-
-The implementation first clips the supplied tuning frequency to the tuner's
-local frequency bounds, then forms a sea-time base and applies the common
-dynamic-time guard,
+A two-state wave-band filter uses the lagged tuning frequency to set
+\begin{equation}
+f_L=0.5f_{\rm tune},\qquad f_H=4f_{\rm tune},
+\label{eq:implemented-scaled-band}
+\end{equation}
+subject to \SI{0.01}{Hz}, \SI{6}{Hz}, and Nyquist bounds. The band-limited
+first and second raw moments use debiased exponential accumulators:
+$n_k=(1-\alpha)n_{k-1}+\alpha u_k$,
+$w_k=(1-\alpha)w_{k-1}+\alpha$, with moment $n_k/w_k$.
+Their common weight is $\alpha=1-e^{-h/\tau_{\rm var}}$, where
 \begin{equation}
 \begin{aligned}
-f_{\mathrm{eff}}&=\clip(f_{\mathrm{tune}},\SI{0.05}{Hz},\SI{5}{Hz}),\\
-T_{\mathrm{sea,var}}&=\clip\!\left(\frac{1}{2f_{\mathrm{eff}}},
- \SI{0.5}{s},\SI{6}{s}\right),\\
-T_{\mathrm{eff}}&=2T_{\mathrm{sea,var}},\\
-\tau_{\mathrm{var,req}}&=\clip\!\left(K_{\mathrm{periods}}T_{\mathrm{eff}},
- \SI{0.3}{s},\SI{60}{s}\right),\\
-\tau_{\mathrm{var}}&=\clip\!\left(\tau_{\mathrm{var,req}},
- \SI{0.05}{s},\SI{35}{s}\right),\\
-\alpha_{\mathrm{var}}&=1-e^{-\Delta t/\tau_{\mathrm{var}}}.
+f_{\rm eff}&=\clip(f_{\rm tune},0.05,5)\ \mathrm{Hz},\\
+T_{\rm eff}&=2\clip\bigl((2f_{\rm eff})^{-1},0.5,6\bigr)\ \mathrm{s},\\
+\tau_{\rm var}&=\clip\bigl(\clip(4T_{\rm eff},0.3,60),0.05,35\bigr)\ \mathrm{s}.
 \end{aligned}
 \label{eq:sigma-variance-horizon}
 \end{equation}
-The implementation uses $K_{\mathrm{periods}}=4$, shared by all three filter
-families.  Across the eight scored seas $T_z$ spans about
-\SIrange{2.3}{8.4}{s}, so the requested horizon spans about
-\SIrange{9}{34}{s}; the final \SI{35}{s} guard leaves the largest reference
-sea interior.  This is an implementation guard, not an asymptotic approximation.
-
-The band-limited first and second raw moments are maintained by two identically
-weighted, debiased exponential accumulators.  For either raw moment $u_k$ the
-stored numerator and weight obey
+There is no second EWMA of the already-smoothed variance. Here $K_{\mathrm{periods}}=4$; the \SI{35}{s} guard leaves the largest reference sea's requested window clipped, rather than leaving this limit inactive. To refer the nominal input noise floor
+$\sigma_{\rm nf}=\SI{0.12}{m.s^{-2}}$ to the changing band, propagate
 \begin{equation}
- n_k=(1-\alpha_{\mathrm{var}})n_{k-1}+\alpha_{\mathrm{var}}u_k,
- \qquad
- w_k=(1-\alpha_{\mathrm{var}})w_{k-1}+\alpha_{\mathrm{var}},
-\end{equation}
-and the reported moment is $n_k/w_k$.  The variance is the difference between
-the debiased second raw moment and the square of the debiased first moment.
-There is no second EWMA of the already-smoothed variance, so
-$\tau_{\mathrm{var}}$ is the complete variance-memory time constant.
-
-Because a variance estimate from the measured signal contains both physical
-wave energy and sensor noise, using it directly would impose a nonzero apparent
-sea amplitude even in still water and would make the adaptive amplitude depend
-on the sensor rather than on the sea.  The band-referred sensor floor is
-therefore removed in variance units before taking a square root,
-\begin{equation}
-\widehat\sigma_{\mathrm{wave}}^2
-=\max\!\left(0,
- \widehat\sigma_{\mathrm{tot}}^2-\sigma_{\mathrm{nf,band}}^2\right),
-\qquad
-\widehat\sigma_{a,B}:=\sqrt{\widehat\sigma_{\mathrm{wave}}^2}.
-\label{eq:sigma-noise-subtraction}
-\end{equation}
-This subtraction is necessary because independent variances add; subtracting
-standard deviations would not be statistically consistent.
-
-The shared low-motion detector adds one implementation-specific exponential
-path that is deliberately separate from the sea-scaled estimator and scheduler
-EMAs above.  On the low-pass acceleration-band tracker input it maintains
-\begin{equation}
- E_k=0.95E_{k-1}+0.05\left(a_{\uparrow,k}^{\rm LP}/g\right)^2,
- \label{eq:stillness-energy-ema}
-\end{equation}
-and declares stillness while $E_k<8\times10^{-4}$.  This is a fixed-gain
-sample-domain EMA; it is not parameterized by $T_{\rm sea}$ and should not be
-confused with Eqs.~\eqref{eq:sigma-variance-horizon} or
-\eqref{eq:adapt-ewma}.  Once still, the code attenuates the noise-corrected wave
-variance by the time-domain envelope
-\begin{equation}
- \widehat\sigma_{\mathrm{wave}}^2
- \leftarrow
- e^{-t_{\rm still}/\SI{1}{s}}\widehat\sigma_{\mathrm{wave}}^2
- \label{eq:stillness-wave-variance-decay}
-\end{equation}
-before the nonnegative floor and square root are applied.  The same detector
-also relaxes the separate acceleration-band carrier toward its target after
-\SI{2}{s} of stillness with a \SI{1}{s} time constant.  That relaxed carrier is
-used for direction/reporting; it is not the wave-period tuning frequency, which
-continues to come from the canonical estimator below.  OU--II uses the same
-shared detector and variance attenuation path.
-
-The nominal band corners are
-\begin{equation}
-f_L=0.5f_{\mathrm{tune}},
-\qquad
-f_H=4f_{\mathrm{tune}},
-\label{eq:implemented-scaled-band}
-\end{equation}
-with absolute safety clamps of \SI{0.01}{Hz} and \SI{6}{Hz}, plus a Nyquist
-guard.  Away from the clamps, the band shape is fixed in normalized frequency.
-For the corresponding two-state time-varying band filter, the implementation
-propagates the unit-input covariance
-\begin{equation}
-\mat P_{B,k}
-=\mat A_{B,k}\mat P_{B,k-1}\mat A_{B,k}^{\top}
- +\vct b_{B,k}\vct b_{B,k}^{\top},
+\mat P_{B,k}=\mat A_{B,k}\mat P_{B,k-1}\mat A_{B,k}^\top
++\vct b_{B,k}\vct b_{B,k}^\top,\qquad
+\sigma_{\rm nf,B,k}^2=\sigma_{\rm nf}^2[\mat P_{B,k}]_{22}.
 \label{eq:sigma-band-noise-covariance}
 \end{equation}
-and uses
+The physical statistic is then
 \begin{equation}
-\sigma_{\mathrm{nf},B,k}^2
-=\sigma_{\mathrm{nf}}^2[\mat P_{B,k}]_{22}
-\label{eq:sigma-band-noise-floor}
+\widehat\sigma_{\rm wave}^2
+=\max(\widehat\sigma_{\rm tot}^2-\sigma_{\rm nf,B}^2,0),\qquad
+\widehat\sigma_{a,B}=\sqrt{\widehat\sigma_{\rm wave}^2}.
+\label{eq:sigma-noise-subtraction}
 \end{equation}
-as the band-referred sensor floor.
+The low-motion detector uses
+$E_k=0.95E_{k-1}+0.05(a^{\rm LP}_{\uparrow,k}/g)^2$.
+For $E_k<8\times10^{-4}$, wave variance is attenuated by
+$e^{-t_{\rm still}/\SI{1}{s}}$ before a $10^{-6}\,\mathrm{m^2s^{-4}}$
+variance floor is applied. This fixed-gain detector is separate from the
+sea-scaled moment and scheduling horizons.
+\label{eq:stillness-energy-ema}\label{eq:stillness-wave-variance-decay}
 
 \subsection{Wave-period estimate and sea time scale}
 \label{sec:wave-band-period}
-
-The wave-direction acceleration carrier is not the tuning frequency.  Because
-acceleration weights elevation spectra by $\omega^4$, that carrier remains near
-the upper energetic band as sea period grows.  The tuner instead estimates the
-elevation zero-crossing period $T_z=2\pi\sqrt{m_0/m_2}$ from the same exogenous
-vertical channel.
-
-The levelled acceleration $a^{P}_{\uparrow}$ passes through two high-pass stages
-and two leaky integrators with common corner $\lambda$, producing velocity and
-elevation proxies $v_p$ and $\eta_p$.  Their common filtering cancels in the
-ratio, so for a narrow band
+The acceleration carrier used for direction is not the tuning frequency:
+acceleration overweights the upper elevation spectrum. Instead, two high-pass
+stages and two leaky integrators, with $\lambda=2\pi(0.02)\,\mathrm{s^{-1}}$,
+form velocity and elevation proxies $v_p,\eta_p$. Their narrow-band ratio gives
 \begin{equation}
-\frac{\sigma_{v_p}}{\sigma_{\eta_p}}=\sqrt{\omega^{2}+\lambda^{2}},
-\qquad
-\widehat{\omega}^{2}
-=\frac{\sigma_{v_p}^{2}}{\sigma_{\eta_p}^{2}}-\lambda^{2},
-\qquad
-\widehat{T}_{z,\mathrm{raw}}=\frac{2\pi}{\widehat{\omega}} .
+\widehat\omega^2=\frac{\sigma_{v_p}^2}{\sigma_{\eta_p}^2}-\lambda^2,
+\qquad \widehat T_{z,\rm raw}=2\pi/\widehat\omega.
 \label{eq:wave-band-period}
 \end{equation}
-The high-pass stages suppress very-low-frequency strapdown leakage without
-changing this ratio; no MEKF position, velocity, attitude, or covariance is
-used.
-
-The two proxy variances in this ratio are themselves exponentially weighted
-statistics.  After the leaky-integrator settling interval $6/\lambda$, the
-velocity and elevation first and second moments use the same debiased EWMA
-weight with
+For a broadband sea this is an approximate elevation zero-crossing period.
+After settling for $6/\lambda$, debiased moments use
 \begin{equation}
-\tau_{\mathrm{mom}}
- =\clip\!\left(4T_{z,\mathrm{can}},\SI{20}{s},\SI{180}{s}\right),
-\qquad
-\alpha_{\mathrm{mom}}=1-e^{-\Delta t/\tau_{\mathrm{mom}}}.
+\tau_{\mathrm{mom}}=\clip\!\left(4T_{z,\mathrm{can}},\SI{20}{s},\SI{180}{s}\right),
+\qquad \alpha_{\rm mom}=1-e^{-h/\tau_{\mathrm{mom}}}.
 \label{eq:wave-period-moment-horizon}
 \end{equation}
-Before a canonical period exists, the source uses a \SI{6}{s} period fallback,
-so the initial requested moment horizon is \SI{24}{s}.  As in the acceleration
-variance channel, the stored first and second moments are debiased by a common
-EW weight; there is no second smoothing stage on either resulting variance.
-
-The canonical period is not an arithmetic EMA of frequency.  The first valid
-raw period initializes the canonical log-period directly.  Subsequent samples
-update
+A \SI{6}{s} fallback period initializes the moment horizon. The first valid
+raw estimate initializes $\ell=\log T_z$; subsequent samples use
 \begin{equation}
 \begin{aligned}
-\ell_k&:=\log T_{z,k},\\
-\tau_{\ell,k}&=\clip\!\left(0.05e^{\ell_{k-1}},
- \SI{0.05}{s},\SI{35}{s}\right),\\
-\alpha_{\ell,k}&=1-e^{-\Delta t/\tau_{\ell,k}},\\
-\ell_k&=\ell_{k-1}
- +\alpha_{\ell,k}\left(\log \widehat T_{z,\mathrm{raw},k}-\ell_{k-1}\right).
+\tau_{\ell,k}&=\clip(0.05e^{\ell_{k-1}},0.05,35)\ \mathrm{s},\\
+\ell_k&=\ell_{k-1}+(1-e^{-h/\tau_{\ell,k}})
+ (\log\widehat T_{z,\rm raw,k}-\ell_{k-1}),\\
+\widehat T_z&=e^\ell,\qquad f_{\mathrm{tune}}=e^{-\ell}.
 \end{aligned}
 \label{eq:tuning-log-period-horizon}
 \end{equation}
-The reported period and tuning frequency are exact reciprocals of this one
-canonical state,
-\begin{equation}
-\widehat T_z=e^{\ell},\qquad f_{\mathrm{tune}}=e^{-\ell}.
-\label{eq:tuning-period-reciprocal}
-\end{equation}
-Thus the numerical horizon equals $0.05T_z=0.10T_{\mathrm{sea}}$, but the
-implemented state is log period, not a bounded EMA of $1/T_z$.  This smoother
-uses the universal final horizon guard only; the separate
-$[\SI{0.5}{s},\SI{6}{s}]$ dynamic time-base guard is applied later when a
-consumer turns the estimated sea time into its own EMA horizon.  Before the period state passes the startup-usable gate, the scheduler uses the
-fixed bounded wave-band prior; strict diagnostic readiness remains separate.
+The canonical period is not an arithmetic EMA of frequency: period and frequency are reciprocals of one log-period state. Before its
+startup-usable gate passes, scheduling uses the bounded wave-band prior.

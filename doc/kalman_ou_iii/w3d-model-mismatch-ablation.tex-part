@@ -1,22 +1,18 @@
-\subsection{Noise-Free Model-Mismatch Floor}
+\subsection{Noise-free mismatch floor}
 \label{sec:model-mismatch-ablation}
+Replaying the records with sensor corruption disabled while retaining the estimators' ordinary covariances,
+regularization, adaptation, and startup isolates a \emph{deployed-estimator}
+residual, not pure plant-model mismatch. Eight equal-length stationary records
+are pooled over their final \SI{900}{s}.
 
-A separate ablation removes simulated sensor corruption while leaving each
-estimator otherwise in its deployed configuration.  The eight stationary
-JONSWAP and PM--Stokes records are replayed through OU--II, OU--III, and TFG
-with sensor corruption disabled. Accelerometer and gyroscope
-white noise, initial bias, bias random walk, and magnetometer noise and
-calibration perturbations are therefore absent, while the physical wave and
-attitude motion are unchanged.  The estimators are \emph{not} retuned for ideal
-measurements: their process/measurement covariances, pseudo-measurements,
-adaptation, startup logic, and regularization remain those used in normal
-operation.  The experiment consequently measures a deployed
-estimator/model-mismatch floor, not pure plant-model mismatch.
-
-All values in Table~\ref{tab:model-mismatch-floor} pool the final \SI{900}{s}
-of the eight equal-length records.  With identical window lengths, the pooled
-RMS is the RMS obtained by concatenating the eight scored windows.
-
+OU--III vertical and 3-D RMS are $0.145$ and $0.312$~m, versus $0.249$ and
+$0.440$~m for OU--II and $0.145$ and $0.315$~m for TFG
+(Table~\ref{tab:model-mismatch-floor}). Nonzero estimated bias with zero
+true bias demonstrates absorption of model residuals
+(Fig.~\ref{fig:model-mismatch-floor}). Fig.~\ref{fig:model-mismatch-scaling}
+shows near-proportional residual growth over the prescribed seas; its
+slope-one line is a reference, not a fitted law. Incident $H_s$ is not the
+vessel's heave height.
 \begin{table}[t]
   \centering
   \caption{Noise-free deployed-estimator mismatch floor over eight stationary
@@ -35,17 +31,8 @@ RMS is the RMS obtained by concatenating the eight scored windows.
   \end{tabular}
 \end{table}
 
-OU--III's pooled vertical and 3-D displacement RMS are
-\SI{0.145}{m} and \SI{0.312}{m}; OU--II gives
-\SI{0.249}{m} and \SI{0.440}{m}, and TFG gives
-\SI{0.145}{m} and \SI{0.315}{m}.
-The error remains nonzero with ideal sensors. Figure~\ref{fig:model-mismatch-floor}
-shows displacement, attitude and the bias states created by each estimator.
-The underlying motion is the estimated sailboat CG response; normalization
-by $H_s$ uses incident wave height, not measured vessel heave height.
-
 \IfFileExists{ou_model_mismatch_floor.svg}{%
-  \begin{figure}[t]
+\begin{figure}[t]
     \centering
     \includesvg[width=\columnwidth,inkscapelatex=false]{ou_model_mismatch_floor}
     \caption{Pooled noise-free mismatch over eight vessel-response records. The gyro-bias panel uses a logarithmic scale. True sensor biases are zero, so nonzero bias states are estimator-generated errors.}
@@ -54,22 +41,10 @@ by $H_s$ uses incident wave height, not measured vessel heave height.
 }{}
 
 \IfFileExists{ou_model_mismatch_scaling.svg}{%
-  \begin{figure}[t]
+\begin{figure}[t]
     \centering
     \includesvg[width=\columnwidth,inkscapelatex=false]{ou_model_mismatch_scaling}
     \caption{Noise-free residual against incident significant wave height. Solid lines are JONSWAP and dashed lines are PM. The dotted slope-one guide is a reference, not a fitted scaling law; the middle panel divides by incident $H_s$.}
     \label{fig:model-mismatch-scaling}
   \end{figure}
 }{}
-
-Fig.~\ref{fig:model-mismatch-scaling} separates the per-record behavior.
-The observed vertical-error ranges, normalized by incident $H_s$, are
-\pct{5.02}--\pct{5.37} for OU--II,
-\pct{2.94}--\pct{3.15} for OU--III,
-\pct{2.95}--\pct{3.17} for TFG.
-These are observed ranges over the prescribed ensemble, not uniform error bounds.
-
-The filters retain their deployed process and measurement covariance,
-pseudo-measurements, adaptation and startup logic. This ablation therefore
-measures their combined deterministic residual under ideal measurements; it
-does not isolate one stochastic prior, one regularizer or a hull-model error.

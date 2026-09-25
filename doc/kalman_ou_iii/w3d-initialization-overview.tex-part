@@ -1,44 +1,29 @@
-\section{Initialization and Live Operation}
-\label{sec:init_alignment}
+\section{Initialization and Magnetic Calibration}
 \label{sec:startup-policy}
-
-A private measurement-only Mahony observer runs during startup and continues
-in Live to supply the levelling and sea-state front end. The main MEKF is not
-used to produce its own startup signal or adaptation statistics. Startup
-carries the observer, gravity-direction average, wave-period estimate,
-band/statistics state and staged tuner through the Cold and TunerWarm stages.
-
-The gravity-alignment gate averages world-frame specific force with
-\begin{equation}
-\alpha_{g,k}=1-e^{-\Delta t_k/\SI{12}{s}}.
-\end{equation}
-The first valid sample initializes the EMA state directly. The averaged
-alignment residual is ignored until this world-frame average has run for
-\SI{5}{s}; the separate upright-branch check remains active during warmup.
-
 \subsection{One-time handoff}
 \label{sec:proxy-handoff}
-The ordinary handoff checks elapsed warmup, sustained gravity alignment,
-angular-rate and tuner-readiness conditions, together with heading availability.
-The configured timeout is an alternative guarded path, not an unconditional
-guarantee of entry at that time. On an actual handoff the wrapper initializes
-the MEKF attitude and covariance, commits the current motion parameters and
-integral regularizer, and starts Live with accelerometer-bias learning held.
-The held and active configurations both retain the full 21-state covariance.
-The conditional capture and retained-state requirements are formulated in the
-\href{kalman_ou-w3d-stability-study.pdf}{companion stability study}.
+The measurement-only Mahony proxy runs during Cold and TunerWarm startup while
+period and acceleration statistics settle. Normal handoff requires initialized
+proxy tilt, the minimum startup interval, a trusted gravity branch, usable sea
+statistics, and a magnetic reference when magnetic aiding is enabled.
+A timeout relaxes readiness but still requires the upright gravity branch;
+it is not an unconditional transition to Live.
 
-\subsection{Magnetic acquisition and subsequent changes}
+The gravity check uses a world-frame acceleration EMA with
+$\alpha_{g,k}=1-e^{-\Delta t_k/\SI{12}{s}}$; the first valid sample initializes the EMA state directly. Its gate is ignored until this world-frame average has run for
+\SI{5}{s}. At handoff the MEKF receives proxy tilt and the
+available yaw reference, initializes its translational states, and activates
+the current OU schedule. Accelerometer-bias learning remains held during
+magnetic acquisition/refinement. A sustained tilt exceeding $70^\circ$ for
+\SI{0.35}{s} invokes a guarded reinitialization, with a \SI{3}{s} cooldown.
+
+\subsection{Magnetic acquisition and refinement}
+Magnetic acquisition uses proxy tilt rather than the MEKF. A yaw-stripped proxy frame supplies the initial reference; later
+independent acquisition refines that reference. Following
+initial acquisition, a \SI{30}{s} refinement window begins no earlier than
+\SI{90}{s}; completing it releases the additional bias hold. These discrete
+reference-setting operations are distinct from the continuous offset
+correction below, which slews the measurement correction without resetting
+attitude.
+
 \label{sec:mag-two-stage}
-Magnetic acquisition uses proxy tilt rather than the MEKF.
-A usable initial magnetic reference supplies heading, and later
-independent acquisition refines that reference; an ungauged handoff can
-acquire heading later. Reference refinement, continuous hard-iron correction,
-internal bias unlock and an external hold request have distinct effects. In
-particular, attempted magnetic calls are counted separately from accepted
-innovation updates, and an external hold can keep bias learning disabled.
-Section~\ref{sec:mag-hi-apply} describes the continuous hard-iron path. A Live
-tilt watchdog may also perform an accelerometer-based tilt reinitialization
-while preserving yaw: its threshold is $70^\circ$, sustained for \SI{0.35}{s},
-with a \SI{3}{s} cooldown. The companion study treats all these events as explicit
-hybrid maps rather than assuming an uninterrupted fixed-mode Kalman recursion.

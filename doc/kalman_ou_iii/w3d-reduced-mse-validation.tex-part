@@ -1,71 +1,22 @@
-\subsection{Exact spectral evaluation of the reduced physical-MSE law}
+\subsection{Exact reduced spectral evaluation}
 \label{sec:adaptation-reduced-mse-validation}
-
-Section~\ref{sec:adaptation-reduced-mse-envelope} derives the reduced
-physical-MSE schedule of Eq.~\eqref{eq:adapt-reduced-mse-law}.  This subsection
-checks that reduction directly on the vessel-CG spectra. It replaces
-the high-frequency asymptote used in Eq.~\eqref{eq:adapt-reduced-physical-mse}
-with the exact reconstruction integral and diagnoses its spectral coefficient.
-
-\subsubsection{Exact reconstruction integral}
-
-The asymptote $|G(j\omega)-1|^2\simeq4(\omega_R/\omega)^4$ used to obtain
-Eq.~\eqref{eq:adapt-reduced-physical-mse} is valid only for
-$\omega\gg\omega_R$. Retaining the exact reconstruction error of
-Eq.~\eqref{eq:adapt-G-error} gives the wave-distortion cost without that
-restriction,
+The reduction is checked using periodograms of the eight vessel-CG heave
+records and the exact reconstruction cost
 \begin{equation}
-J_{\rm wave}(\omega_R)
-=\frac{1}{2\pi}\int_{-\infty}^{\infty}
-\frac{1+4x^2}{1+x^6}\,S_\eta^{(2)}(\omega)\,d\omega,
-\qquad x=\frac{\omega}{\omega_R},
+J_{\rm wave}(\omega_R)=\frac{1}{2\pi}\int_{-\infty}^{\infty}
+\frac{1+4x^2}{1+x^6}S_\eta^{(2)}(\omega)\,d\omega,
+\qquad x=\omega/\omega_R.
 \label{eq:adapt-exact-wave-cost}
 \end{equation}
-so that $J=3q_{\rm eff}/(2\omega_R^3)+J_{\rm wave}$. Writing
-$\kappa_\star=F(\rho)$ with $\rho=q_{\rm eff}/(\sigma_a^2\tau)$ and
-$s=\partial\log\kappa_\star/\partial\log\rho$, the local exponents of
-$r_S^\star=\sqrt{q_{\rm eff}/c_T}\,\tau^{5/2}\kappa_\star^{-3}$ are
+Minimizing $3q_{\rm eff}/(2\omega_R^3)+J_{\rm wave}$ removes the high-frequency
+approximation. For $\kappa_\star=F(\rho)$,
+$\rho=q_{\rm eff}/(\widehat\sigma_{a,B}^2\tau)$ and
+$s=\partial\log\kappa_\star/\partial\log\rho$, the local exponents are
 \begin{equation}
-p_a=6s,
-\qquad
-p_\tau=\tfrac{5}{2}+3s.
+p_a=6s,\qquad p_\tau=5/2+3s.
 \label{eq:adapt-exponents-from-s}
 \end{equation}
-The asymptotic branch corresponds to $s=1/7$ and reproduces
-$(p_a,p_\tau)=(6/7,41/14)$.
-
-Equation~\eqref{eq:adapt-exact-wave-cost} is evaluated using periodograms
-of the eight vessel-CG heave records, rather than incident surface spectra.
-The normalized coordinates use the paired five-draw operating points of the
-current OU-III simulator. Local derivatives hold the normalized spectrum fixed;
-they do not assert universality across hulls or sea states.
+Table~\ref{tab:adapt-exact-mse-exponents} reports the numerical minima using
+five-draw operating points. These are conditional, record-wise spectral
+diagnostics, not independently fitted complete-filter optima.
 \input{w3d-reduced-mse-results-generated.tex-part}
-
-\subsubsection{Analytical schedule coefficient}
-
-Because Eq.~\eqref{eq:adapt-exact-wave-cost} is evaluated rather than replaced
-by a fitted regularizer-law comparison, the deployed SpectralMSE form is written
-as
-\begin{equation}
-\boxed{
-r_{S,\rm MSE}^\star
-=C_J\,q_{\rm eff}^{1/14}\,
-\widehat\sigma_{a,B}^{\,6/7}\,\tau^{24/7}\,T_S^{-1/2},}
-\label{eq:adapt-mse-applied-form}
-\end{equation}
-where $C_J$ collects the normalized spectral moment
-$\left(\int x^{-8}\Phi_a(x)\,dx\right)^{3/7}$ and the constants of the reduced
-optimization. The currently configured coefficient is
-\begin{equation}
-\boxed{C_J\simeq0.0538.}
-\label{eq:adapt-mse-coefficient}
-\end{equation}
-The physical band-limited amplitude $\widehat\sigma_{a,B}$ appears in
-Eq.~\eqref{eq:adapt-mse-applied-form} rather than the OU-prior scale
-$\sigma_{aw}$ because the distortion penalty is a property of the physical sea,
-not of the prior.  The implementation therefore keeps $c_\sigma$ and $C_J$
-separate: $c_\sigma$ maps the measured acceleration statistic into the OU prior,
-whereas $C_J$ sets the independent integral-state regularizer.
-
-The record-dependent optimum is reported separately in the generated table.
-The fixed coefficient is a filter setting, not a universal hull-RAO identity.
