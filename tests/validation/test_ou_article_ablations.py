@@ -2,7 +2,6 @@
 
 import csv
 import math
-import re
 import unittest
 from pathlib import Path
 
