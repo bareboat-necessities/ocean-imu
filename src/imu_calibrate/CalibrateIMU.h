@@ -1279,9 +1279,13 @@ struct GyroCalibrator {
       cross += dt * (means[k] - mean);
     }
     out.temperature_information = T(information);
-    if (temps[nb-1] - temps[0] < Limits::min_span) {
+    // Qualify the exact precision that will be persisted and revalidated.
+    // This avoids a double-precision boundary pass becoming a V4 save failure.
+    const double stored_span = double(T(temps[nb-1])) - double(T(temps[0]));
+    const double stored_information = double(out.temperature_information);
+    if (stored_span < Limits::min_span) {
       out.thermal_reason = GyroThermalReason::SPAN_SMALL;
-    } else if (nb < Limits::min_bins || information < Limits::min_information) {
+    } else if (nb < Limits::min_bins || stored_information < Limits::min_information) {
       out.thermal_reason = GyroThermalReason::INFORMATION_LOW;
     } else {
       const DVec slope = cross / information;
@@ -1305,9 +1309,12 @@ struct GyroCalibrator {
         variance = std::fmax(variance, sample_error[j] / used);
         const double sigma = std::sqrt(variance / information);
         out.slope_sigma[j] = T(sigma);
-        informative = informative && std::isfinite(sigma) && sigma <= Limits::max_slope_sigma;
-        plausible = plausible && std::isfinite(slope[j]) &&
-                    std::fabs(slope[j]) + 3 * sigma <= Limits::max_slope;
+        const T stored_slope = T(slope[j]);
+        const T stored_sigma = out.slope_sigma[j];
+        informative = informative && std::isfinite(double(stored_sigma)) &&
+                      double(stored_sigma) <= Limits::max_slope_sigma;
+        plausible = plausible && std::isfinite(double(stored_slope)) &&
+                    std::fabs(double(stored_slope)) + 3 * double(stored_sigma) <= Limits::max_slope;
       }
       if (!plausible) out.thermal_reason = GyroThermalReason::SLOPE_IMPLAUSIBLE;
       else if (!informative) out.thermal_reason = GyroThermalReason::INFORMATION_LOW;
@@ -1321,11 +1328,23 @@ struct GyroCalibrator {
         out.biasT.T_lo = T(temps[0] - Limits::extrapolation_margin);
         out.biasT.T_hi = T(temps[nb-1] + Limits::extrapolation_margin);
         // Recheck the stored precision over the complete permitted interval.
+        // If float storage cannot faithfully represent this learned model, keep
+        // the valid stationary bias rather than failing the whole calibration.
+        bool stored_model_ok = true;
         for (int end = 0; end < 2; ++end) {
           const T t = end ? out.biasT.T_hi : out.biasT.T_lo;
           const DVec expected = mean + slope * (double(t) - reference);
-          if ((out.biasT.bias(t).template cast<double>() - expected).cwiseAbs().maxCoeff() > 1e-6)
-            return fail(FitFail::NON_FINITE_INPUT);
+          stored_model_ok = stored_model_ok &&
+              (out.biasT.bias(t).template cast<double>() - expected).cwiseAbs().maxCoeff() <= 1e-6;
+        }
+        if (!stored_model_ok) {
+          out.thermal = GyroThermal::UNLEARNED;
+          out.thermal_reason = GyroThermalReason::INFORMATION_LOW;
+          out.biasT.T0 = T(sum_temp / buf.n);
+          out.biasT.b0 = (sum / buf.n).template cast<T>();
+          out.biasT.k.setZero();
+          out.biasT.T_lo = out.biasT.T_hi = out.biasT.T0;
+          out.temp_lo = T(tmin); out.temp_hi = T(tmax);
         }
       }
     }
