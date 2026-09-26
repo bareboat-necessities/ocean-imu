@@ -1,0 +1,33 @@
+name: calibration validation
+on:
+  push:
+    branches: [fix/calibration-thermal-magnetic-safety]
+  pull_request:
+    paths:
+      - 'src/imu_calibrate/**'
+      - 'src/AtomS3R/**'
+      - 'tests/imu_calibrate/**'
+      - '.github/workflows/calibration-validation.yml'
+permissions:
+  contents: read
+concurrency:
+  group: calibration-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  source-bundle:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Prepare host source and Eigen for offline calibration validation
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev
+          git archive --format=tar HEAD | gzip > calibration-source.tar.gz
+          tar -czf calibration-eigen.tar.gz -C /usr/include eigen3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: calibration-source-bundle
+          path: |
+            calibration-source.tar.gz
+            calibration-eigen.tar.gz
+          retention-days: 3
