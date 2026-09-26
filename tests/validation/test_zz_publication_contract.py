@@ -94,9 +94,13 @@ def _three_dimensional_and_channel_results_are_reported(self):
     protocol = _read("w3d-sim-charts.tex-part")
     results = _read("w3d-baseline-comparison.tex-part")
     generated = _read("w3d-ou-validation-results-generated.tex-part")
-    self.assertIn("tab:ou_mc_axes", results)
+    # The article presents 3-D results as a chart; the full axes table
+    # remains in the generated evidence, not in the narrative.
+    self.assertIn(r"\ref{fig:ou_mc_displacement}", results)
+    self.assertIn(r"\label{tab:ou_mc_axes}", generated)
     self.assertIn(r"\label{par:channel-ablation}", protocol)
-    self.assertIn("tab:ou_mc_channels", generated)
+    self.assertIn(r"\ref{tab:ou_mc_channels}", results)
+    self.assertIn(r"\label{tab:ou_mc_channels}", generated)
 
 
 def _transition_and_secondary_ensembles_are_rescored(self):
@@ -105,7 +109,11 @@ def _transition_and_secondary_ensembles_are_rescored(self):
     roundtrip = _read("w3d-roundtrip-transition-ablation.tex-part")
     self.assertNotIn("tab:ou_transition_segments", results)
     self.assertIn("w3d-roundtrip-transition-scores-generated.tex-part", roundtrip)
-    self.assertIn("rise and fall crossfade scores kept separate", roundtrip)
+    _assert_any(
+        self, " ".join(roundtrip.split()),
+        "rise and fall crossfade scores kept separate",
+        "separating the rise and fall crossfades",
+    )
     self.assertIn("tab:ou_mc_pmstokes", generated)
     self.assertIn("tab:ou_mc_direction", generated)
 
@@ -231,7 +239,18 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
             "w3d_ou3_jonswap_medium_gyro_bias.pgf",
         ):
             self.assertIn(asset, methodology + figures)
-        self.assertIn("tab:ou_mc_axes", results)
+        for asset, label in (
+            ("ou_validation_vertical", "fig:ou_mc_vertical"),
+            ("ou_validation_displacement", "fig:ou_mc_displacement"),
+            ("ou_validation_attitude", "fig:ou_mc_pitch"),
+        ):
+            with self.subTest(asset=asset):
+                self.assertIn(rf"\ref{{{label}}}", results)
+                self.assertIn(rf"\label{{{label}}}", results)
+                self.assertRegex(
+                    results, rf"\\includesvg\[[^]]*\]\{{{asset}\}}"
+                )
+                self.assertTrue((DOC / f"{asset}.svg").is_file())
         self.assertIn("ou_rs_roundtrip_transition", roundtrip)
         self.assertIn("w3d-roundtrip-transition-scores-generated.tex-part", roundtrip)
         self.assertNotIn("ou_validation_transition", results + roundtrip)
