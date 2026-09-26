@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "c2741802f7155199351d209cb7565e0fd1953ae0c25b92826a2949df5ab60787",
+  "replay_fingerprint": "082b33b93111dad3d67547602e7a6492f5575f99d6a2aa60d82b53b8011f67d8",
   "results_file_count": 417,
   "results_files": [
     {
@@ -851,7 +851,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "115b8f4a2eef51e7d86d3d83bdaaab952e99044f2c2d322ef3602656df13368a"
+      "sha256": "e0aa37eee4f84dfc53d5a14146347f44e2becf4f79d1d0f068255a7d6fbf2619"
     },
     {
       "kind": "file",
@@ -921,57 +921,57 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "f979a7885485181f4531deb5a1ee992fdc7f159257bcab92651a606d8ea49ef0"
+      "sha256": "210e5ecd4ef50d60627586434abbc2b3e37fc9076da17a326d9c5956f137f355"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "6c6771c38e43a407f88a5b7b374a6786adcd7e9bc26d41ccc3725f4f8d0fb32d"
+      "sha256": "5d51689e297dfe48de12500c84ac746a5e31b6cb70f2c38726fe76e686c23bc0"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "e385330d5b6fabcbf7160e8d9dec125c9fb4005d7675e0e8ff8c8bd9a601d050"
+      "sha256": "d5e776ffc2292defe129b68b51d6317bea3ceb0aaf71188b48659073a24eaa4b"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "d271b9aadcb243b68b0740fd94ac1fee35b7f2e3615d6ae24489458e3c495c0a"
+      "sha256": "78afef43e01cb5e1331f30eecb206a0faa4a9f7f356f65003eb763e59150e7ba"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "ccef13f38ff378301afd228fc62bc755b941c78a2163accdfab909dd2028c533"
+      "sha256": "718d01d9227547600f6d08bc3a22f0868b9428cf6470db7283671249fd409079"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "93b09692203acb42581451060f123f9fcb5fc251c9e68e65dc78f73f53d09ee3"
+      "sha256": "4f7269845febe599b7b4bb8e9c411b3c6376b3cfec91ddc390c28fc3f79afa9a"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "f4ea7aad65e6c045c655bb7f1ac1c86c56b08248c3f9f6de42981e7e68c867bc"
+      "sha256": "4f4f5ecf4eb7a120fa0d0794c385af487ceca71baf31791b145c37632a877749"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "500e838fedafc6e6ae0dae18856d65d0b4b72ffb58a452b6648f44f6d21f2ed1"
+      "sha256": "52f92ca6be0738a25612837b3510919d4a89d766ae14e7573b722b584c6a4cc0"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "ae95a26d82e59580c0140e66f40b03cc83889c4b44e322e1cde0b935da4b68fa"
+      "sha256": "e3ebdff57100eca4aff83652a14ce23fa4b4ba3b184fb8bb9ec7f797a6f70790"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "d19727f41215ededabe1e8dac022a89f6778db005b7181dae24af3a0cd22b2f3"
+      "sha256": "b92f083e50bd903bae05db80ac64b0dab5728f4082e5dd60a07dfa325b6d907f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "c898238ce17ff0b2b03da894043d20f14c2b9c6ccd2995104c62f9c3e048d7ef"
+      "sha256": "9f6eb9280e124d317a9bd1732b898a69d0a4b9a30f91e51f9360d5fe178533e8"
     },
     {
       "kind": "file",
@@ -991,7 +991,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "40c51751a0c2aa01137f9f6a889e85e48e034535a985fbe1f13e1073fb9a1381"
+      "sha256": "bf84eaf752891076c2e603dfb7ceafeddff67716e605c9884b606d7daf20cd2c"
     },
     {
       "kind": "file",
@@ -2089,7 +2089,7 @@
       "sha256": "61d282cce175faf6d77e9e4a9fa091beb64b8e298cd3328d585f039a050d82a9"
     }
   ],
-  "results_fingerprint": "982577bd596005d690a4b8cb8b5467acd6e128c5ffb4e0caea53b405732ae9e0",
+  "results_fingerprint": "03161463216ff5bf4a55f15f2d9437b3ea912f4b464d520d1a0d8328061f0bda",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
@@ -3655,7 +3655,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_zz_publication_contract.py",
-      "sha256": "96d3cec8e1a9b33d5cc309278592a32b6925af4f9badddef1973ca7b273e9385"
+      "sha256": "4849e2bc62366a35f66e4d511dc96de4f1b04ae95694ad98fd75f6c33db0ea3b"
     },
     {
       "mode": "100644",
