@@ -18,7 +18,7 @@
     #include "AtomS3R/AtomS3R_ImuCal.h"
 
     atoms3r_ical::ImuCalStoreNvs store;
-    atoms3r_ical::ImuCalBlobV3   blob;
+    atoms3r_ical::ImuCalBlobV4   blob;
     atoms3r_ical::RuntimeCals    cals;
 
     void setup() {
@@ -189,7 +189,7 @@ static inline void printMatHeader(Print& out, const char* name, const char* mean
 }
 
 // Print helpers (startup serial)
-static inline void printBlobSummary(Print& out, const ImuCalBlobV3& b) {
+static inline void printBlobSummary(Print& out, const ImuCalBlobV4& b) {
   const char* mode = "unknown";
   if (b.build_mode == IMU_CAL_MODE_M5_IMU_API) mode = "m5_imu_api";
   out.printf("  build_mode: %s\n", mode);
@@ -200,7 +200,7 @@ static inline void printBlobSummary(Print& out, const ImuCalBlobV3& b) {
   }
 }
 
-static inline void printBlobDetail(Print& out, const ImuCalBlobV3& b) {
+static inline void printBlobDetail(Print& out, const ImuCalBlobV4& b) {
   // ACCEL
   out.printf("  accel: g=%.7f (%s) T0=%.2f rms_mag=%.4f\n", (double)b.accel_g,
              accelGravityMatches(b) ? "matches g_cal_local" : "differs from g_cal_local",
@@ -241,6 +241,14 @@ static inline void printBlobDetail(Print& out, const ImuCalBlobV3& b) {
   const float* I = mat3_identity_rowmajor_();
   printMat3RowMajor(out, I, 3);
   printMatDiagOffDiagRms(out, I);
+
+  out.printf("    thermal=%s reason=%u bins=%u evidence T=[%.2f %.2f] clamp T=[%.2f %.2f]\n",
+             b.gyro_thermal == (uint8_t)imu_cal::GyroThermal::LEARNED ? "LEARNED" : "BIAS_ONLY",
+             (unsigned)b.gyro_thermal_reason, (unsigned)b.gyro_thermal_bins,
+             (double)b.gyro_temp_lo, (double)b.gyro_temp_hi, (double)b.gyro_T_lo, (double)b.gyro_T_hi);
+  out.printf("    k_sigma=[%.7f %.7f %.7f] information=%.3f meta=%s\n",
+             (double)b.gyro_k_sigma[0], (double)b.gyro_k_sigma[1], (double)b.gyro_k_sigma[2],
+             (double)b.gyro_temperature_information, gyroSetValid(b) ? "bound" : "INVALID");
 
   // MAG
   out.printf("  mag: field_uT=%.3f rms=%.4f\n", (double)b.mag_field_uT, (double)b.mag_rms);

@@ -12,8 +12,8 @@
   with thermal-slope qualification (imu_cal::AccelCalProcedure). In the full
   wizard the rechecks follow the gyro and magnetometer stages; the
   accelerometer-only mode keeps the saved gyro and magnetometer calibration.
-  Nothing is saved unless the complete candidate validates; the previous
-  calibration is kept otherwise.
+  Nothing is saved unless the complete candidate validates. Failed writes
+  attempt recovery and report whether the previous bytes were verified.
 */
 
 #include <Arduino.h>
@@ -32,6 +32,7 @@
 #include "AtomS3R/AtomS3R_M5Ui.h"           // UI + Input + clamp01_
 #include "imu_calibrate/CalibrateIMU.h"     // imu_cal::* + FitFail
 #include "imu_calibrate/AccelCalCapture.h"  // accelerometer procedure (host-tested)
+#include "imu_calibrate/MagCalCapture.h"    // bounded capture and independent freshness
 
 // Set to 1 to stream every raw accel/gyro sample as [ACCRAW] lines for
 // tests/imu_calibrate/accel_cal-replay.
@@ -92,52 +93,8 @@ static inline uint8_t rot_add_(uint8_t base, int delta) {
   return (uint8_t)r;
 }
 
-static inline float second_smallest3_(float a, float b, float c) {
-  // median of 3 (2nd smallest)
-  if (a > b) { float t=a; a=b; b=t; }
-  if (b > c) { float t=b; b=c; c=t; }
-  if (a > b) { float t=a; a=b; b=t; }
-  return b;
-}
-
 static inline bool finite3_(const Vector3f& v) {
   return isfinite(v.x()) && isfinite(v.y()) && isfinite(v.z());
-}
-
-// "Planarity" coverage measure for MAG capture (determinant of unit-direction covariance).
-static inline float unit_dir_cov_det_(const Vector3f* x, int n) {
-  if (!x || n < 20) return 0.0f;
-
-  // Mean-center
-  Vector3f mu = Vector3f::Zero();
-  int n_mu = 0;
-  for (int i = 0; i < n; ++i) {
-    if (!finite3_(x[i])) continue;
-    mu += x[i];
-    ++n_mu;
-  }
-  if (n_mu < 20) return 0.0f;
-  mu *= 1.0f / (float)n_mu;
-
-  // C = mean(u u^T), u = (x-mu)/||x-mu||
-  Matrix3f C = Matrix3f::Zero();
-  int m = 0;
-  for (int i = 0; i < n; ++i) {
-    if (!finite3_(x[i])) continue;
-    Vector3f d = x[i] - mu;
-    float dn = d.norm();
-    if (!(dn > 1e-6f)) continue;
-    Vector3f u = d / dn;
-    if (!finite3_(u)) continue;
-    C.noalias() += u * u.transpose();
-    ++m;
-  }
-  if (m < 20) return 0.0f;
-
-  C *= 1.0f / (float)m;
-  float detC = C.determinant();
-  if (!isfinite(detC)) return 0.0f;
-  return detC;
 }
 
 class ImuCalWizard {
@@ -147,8 +104,9 @@ public:
 
   // Runs the wizard and saves to NVS. Returns true only if saved successfully.
   // out_saved is filled with the saved blob (readback-validated). On any
-  // failure or abort nothing is written and the previous calibration stays.
-  bool runAndSave(ImuCalBlobV3& out_saved) {
+  // abort before SAVE leaves storage untouched. Failed writes report whether
+  // recovery was actually verified; storage failure can also prevent rollback.
+  bool runAndSave(ImuCalBlobV4& out_saved) {
     Serial.println("[WIZ] start");
 
     for (;;) {
@@ -164,10 +122,10 @@ public:
       gyr_out_ = imu_cal::GyroCalibration<float>{};
       mag_out_ = imu_cal::MagCalibration<float>{};
 
-      // Previous calibration: kept on failure, source of the preserved gyro/mag
+      // Previous calibration: source of the preserved gyro/mag
       // (accelerometer-only mode), a compatible thermal slope, and the
       // stationary gyro level used by the rotation gate.
-      ImuCalBlobV3 prev{};
+      ImuCalBlobV4 prev{};
       const bool have_prev = store_.load(prev);
       const bool can_accel_only = have_prev && prev.gyro_ok;
 
@@ -230,7 +188,7 @@ public:
       imu_cal::AccelCalibration<float> fc;
       AccelProc::Fitter::toFloat(accel_.result(), accel_fcfg_.g, fc);
       const uint32_t capture_s = accel_.totalHoldMs() / 1000u;
-      ImuCalBlobV3 blob;
+      ImuCalBlobV4 blob;
       if (accel_only) {
         blob = accelOnlyCandidate(prev, accel_.result(), fc, capture_s, sensor_id_lo_, sensor_id_hi_, imu_type_);
       } else {
@@ -251,13 +209,19 @@ public:
       ui_.setReadRotation();
       ui_.title("SAVE");
       ui_.line("Writing...");
-      ImuCalBlobV3 rb{};
+      ImuCalBlobV4 rb{};
       const bool saved = store_.saveVerified(blob, rb);
       // ...and again after the read-back, which must be byte-identical to it.
       const bool rb_ok = saved && validateStored_(rb, "readback");
       Serial.printf("[SAVE] verified=%d readback_valid=%d\n", (int)saved, (int)rb_ok);
       if (!saved || !rb_ok) {
-        ui_.fail("SAVE", "Write/readback fail");
+        if (store_.lastSaveStatus() == ImuCalStoreNvs::SaveStatus::RECOVERY_FAILED) {
+          Serial.println("[CAL] save failed; rollback/cleanup NOT verified; storage uncertain");
+          ui_.fail("SAVE", "Recovery failed");
+        } else {
+          Serial.printf("[CAL] save failed; storage status=%u\n", (unsigned)store_.lastSaveStatus());
+          ui_.fail("SAVE", "Write/readback fail");
+        }
         return false;
       }
 
@@ -385,7 +349,7 @@ private:
 
   // Rebuilds RuntimeCals from `b` and re-validates the accelerometer set on
   // the retained observations (float, exactly as applied at runtime).
-  bool validateStored_(const ImuCalBlobV3& b, const char* what) {
+  bool validateStored_(const ImuCalBlobV4& b, const char* what) {
     RuntimeCals rc;
     rc.rebuildFromBlob(b);
     imu_cal::AccelFullFitResult r = accel_.result();
@@ -396,7 +360,7 @@ private:
     return ok;
   }
 
-  void showDone_(const ImuCalBlobV3& rb) {
+  void showDone_(const ImuCalBlobV4& rb) {
     ui_.setReadRotation();
     ui_.title("DONE");
     M5.Display.printf("A:%d G:%d M:%d\n", (int)rb.accel_ok, (int)rb.gyro_ok, (int)rb.mag_ok);
@@ -745,155 +709,52 @@ private:
 
     ui_.waitTap("MAG", "Rotate ~45 sec", "Tap to start");
 
-    const int start_n  = magCal_.buf.n;
-    const int target_n = start_n + ImuCalWizardCfg::MAG_NEED;
-
     ui_.setReadRotation();
     ui_.title("MAG");
     ui_.line("Rotate now");
     ui_.line("Flip all faces");
     ui_.line("Avoid metal");
 
+    imu_cal::MagCaptureCfg cfg;
+    cfg.spacing_ms = ImuCalWizardCfg::MAG_SAMPLE_SPACING_MS;
+    cfg.min_time_ms = ImuCalWizardCfg::MAG_MIN_TIME_MS;
+    cfg.timeout_ms = ImuCalWizardCfg::MAG_TIMEOUT_MS;
+    cfg.stuck_ms = ImuCalWizardCfg::STUCK_MS;
+    cfg.required_samples = ImuCalWizardCfg::MAG_NEED;
+    cfg.min_delta_uT = ImuCalWizardCfg::MAG_MIN_DELTA_uT;
+    cfg.span_min_frac = ImuCalWizardCfg::MAG_SPAN_MIN_FRAC;
+    cfg.span_mid_frac = ImuCalWizardCfg::MAG_SPAN_MID_FRAC;
+    cfg.urange_target = ImuCalWizardCfg::MAG_URANGE_TARGET;
+    imu_cal::MagCapture<float,400> capture(magCal_, cfg);
     const uint32_t tcap0 = millis();
-    uint32_t last_change = millis();
-    int last_n = magCal_.buf.n;
-
-    uint32_t last_add_ms = 0;
-    Vector3f last_added(NAN, NAN, NAN);
-
-    // Raw bounds
-    Vector3f vmin(+1e9f, +1e9f, +1e9f);
-    Vector3f vmax(-1e9f, -1e9f, -1e9f);
-
-    // Direction coverage using a stable-ish center (midpoint of bounds)
-    Vector3f umin(+1e9f, +1e9f, +1e9f);
-    Vector3f umax(-1e9f, -1e9f, -1e9f);
-    Vector3f center = Vector3f::Zero();
-
-    while ((uint32_t)(millis() - tcap0) < ImuCalWizardCfg::MAG_TIMEOUT_MS) {
+    capture.begin(tcap0);
+    uint32_t last_draw = tcap0;
+    while (true) {
       Input::update();
-
       Vector3f m;
-      if (!readMagSample_(m)) {
-        // During startup/recovery the mag path may briefly report NaN/Inf.
-        // Treat this as "no usable sample yet" rather than a hard failure.
-        delay(2);
-        continue;
-      }
-
+      const bool valid = readMagSample_(m);
       const uint32_t now = millis();
-
-      // downsample accepted samples
-      if (last_add_ms == 0 || (uint32_t)(now - last_add_ms) >= ImuCalWizardCfg::MAG_SAMPLE_SPACING_MS) {
-        // reject stale repeats
-        bool accept = true;
-        if (isfinite(last_added.x())) {
-          const Vector3f d = m - last_added;
-          if (d.norm() < ImuCalWizardCfg::MAG_MIN_DELTA_uT) accept = false;
-        }
-
-        if (accept) {
-          const int before = magCal_.buf.n;
-          magCal_.addSample(m);
-          const int after = magCal_.buf.n;
-
-          if (after > before) {
-            last_add_ms = now;
-            last_added = m;
-
-            vmin = vmin.cwiseMin(m);
-            vmax = vmax.cwiseMax(m);
-
-            center = 0.5f * (vmin + vmax);
-
-            Vector3f c = m - center;
-            const float cn = c.norm();
-            if (cn > 1e-6f) {
-              const Vector3f u = c / cn;
-              umin = umin.cwiseMin(u);
-              umax = umax.cwiseMax(u);
-            }
-          }
-        }
+      // Missing/invalid reads still advance the no-fresh-data timer.
+      const auto status = capture.update(now, valid ? &m : nullptr);
+      if (uint32_t(now - last_draw) >= 250) {
+        ui_.bar01(capture.progress(now));
+        last_draw = now;
       }
-
-      const int n = magCal_.buf.n;
-      if (n != last_n) { last_n = n; last_change = millis(); }
-
-      if ((uint32_t)(millis() - last_change) > ImuCalWizardCfg::STUCK_MS) {
-        Serial.printf("[MAG] stuck n=%d (no accepted samples)\n", n - start_n);
-        out_why = "No MAG samples";
-        return false;
-      }
-
-      const uint32_t elapsed = (uint32_t)(millis() - tcap0);
-
-      // progress
-      const float pS = (float)(n - start_n) / (float)ImuCalWizardCfg::MAG_NEED;
-      const float pT = (float)elapsed / (float)ImuCalWizardCfg::MAG_MIN_TIME_MS;
-
-      const Vector3f ur = umax - umin; // 0..2
-      float pC = 0.f;
-      if (isfinite(ur.x()) && isfinite(ur.y()) && isfinite(ur.z())) {
-        const float px = clamp01_(ur.x() / ImuCalWizardCfg::MAG_URANGE_TARGET);
-        const float py = clamp01_(ur.y() / ImuCalWizardCfg::MAG_URANGE_TARGET);
-        const float pz = clamp01_(ur.z() / ImuCalWizardCfg::MAG_URANGE_TARGET);
-        pC = second_smallest3_(px, py, pz);
-      }
-
-      float p = pS;
-      if (pT < p) p = pT;
-      if (pC < p) p = pC;
-      ui_.bar01(p);
-
-      // finish gate
-      if (n >= target_n && elapsed >= ImuCalWizardCfg::MAG_MIN_TIME_MS) {
-        const Vector3f span = vmax - vmin;
-
-        float a = span.x(), b = span.y(), c = span.z();
-        float smin = a, smid = b, smax = c;
-        if (smin > smid) { float t=smin; smin=smid; smid=t; }
-        if (smid > smax) { float t=smid; smid=smax; smax=t; }
-        if (smin > smid) { float t=smin; smin=smid; smid=t; }
-
-        const float rmin = (smax > 1e-6f) ? (smin / smax) : 0.f;
-        const float rmid = (smax > 1e-6f) ? (smid / smax) : 0.f;
-
-        Serial.printf("[MAG] n=%d elapsed=%.1fs span=(%.3f,%.3f,%.3f) ratios=(%.2f,%.2f) urange=(%.2f,%.2f,%.2f)\n",
-                      n - start_n, (double)(elapsed / 1000.0f),
-                      (double)span.x(), (double)span.y(), (double)span.z(),
-                      (double)rmin, (double)rmid,
-                      (double)ur.x(), (double)ur.y(), (double)ur.z());
-
-        if (rmin < ImuCalWizardCfg::MAG_SPAN_MIN_FRAC ||
-            rmid < ImuCalWizardCfg::MAG_SPAN_MID_FRAC) {
-          out_why = "Span ratios too low";
-          return false;
-        }
-
-        int ok_axes = 0;
-        ok_axes += (ur.x() >= ImuCalWizardCfg::MAG_URANGE_TARGET) ? 1 : 0;
-        ok_axes += (ur.y() >= ImuCalWizardCfg::MAG_URANGE_TARGET) ? 1 : 0;
-        ok_axes += (ur.z() >= ImuCalWizardCfg::MAG_URANGE_TARGET) ? 1 : 0;
-        if (ok_axes < 2) {
-          out_why = "Direction range too small";
-          return false;
-        }
-
-        if (smax < 1e-3f) { out_why = "MAG not changing"; return false; }
-
-        const float detC = unit_dir_cov_det_(magCal_.buf.v, n);
-        Serial.printf("[MAG] detC=%.6f\n", (double)detC);
-
-        if (detC < 2.0e-4f) {
+      if (status == imu_cal::MagCaptureStatus::READY || status == imu_cal::MagCaptureStatus::COVERAGE_LOW) {
+        const auto c = capture.coverage();
+        Serial.printf("[MAG] n=%d observations=%lu elapsed=%.1fs ratios=(%.2f,%.2f) detC=%.6f\n",
+                      magCal_.buf.n, (unsigned long)capture.observations(), double(uint32_t(now-tcap0))/1000,
+                      double(c.min_ratio), double(c.mid_ratio), double(c.determinant));
+        if (status == imu_cal::MagCaptureStatus::COVERAGE_LOW) {
           out_why = "Coverage too flat";
           return false;
         }
-
         ui_.showOkAuto("MAG", "Captured");
         return true;
       }
-
+      if (status == imu_cal::MagCaptureStatus::STALE) { out_why = "No MAG samples"; return false; }
+      if (status == imu_cal::MagCaptureStatus::TIMEOUT) break;
+      if (status == imu_cal::MagCaptureStatus::BAD_CONFIG) { out_why = "Bad capture config"; return false; }
       delay(5);
     }
 
@@ -903,16 +764,13 @@ private:
 
   // Gyro and magnetometer fields of a full-wizard candidate (the accelerometer
   // set is filled by fillAccelFromFit()).
-  void fillGyroMag_(ImuCalBlobV3& blob) {
+  void fillGyroMag_(ImuCalBlobV4& blob) {
     memset((void*)&blob, 0, sizeof(blob));
-    blob.magic = ImuCalBlobV3::IMU_CAL_MAGIC;
-    blob.version = ImuCalBlobV3::IMU_CAL_VERSION;
-    blob.size_bytes = sizeof(ImuCalBlobV3);
+    blob.magic = ImuCalBlobV4::IMU_CAL_MAGIC;
+    blob.version = ImuCalBlobV4::IMU_CAL_VERSION;
+    blob.size_bytes = sizeof(ImuCalBlobV4);
 
-    blob.gyro_ok = gyr_out_.ok ? 1 : 0;
-    blob.gyro_T0 = gyr_out_.biasT.T0;
-    blob.gyro_b0[0]=gyr_out_.biasT.b0.x(); blob.gyro_b0[1]=gyr_out_.biasT.b0.y(); blob.gyro_b0[2]=gyr_out_.biasT.b0.z();
-    blob.gyro_k[0]=gyr_out_.biasT.k.x();   blob.gyro_k[1]=gyr_out_.biasT.k.y();   blob.gyro_k[2]=gyr_out_.biasT.k.z();
+    fillGyroFromFit(blob, gyr_out_);
 
     blob.mag_ok = mag_out_.ok ? 1 : 0;
     mat_to_rowmajor9_(mag_out_.A, blob.mag_A);

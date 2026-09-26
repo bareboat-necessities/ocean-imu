@@ -7,7 +7,7 @@
   dependencies (host-testable). AtomS3R_ImuCal.h adds the NVS backend, the M5
   sensor mapping and the serial printers.
 
-  Only the current layout (version 3, key "blob_m5v3") is read or written.
+  Only the current layout (version 4, key "blob_m5v4") is read or written.
   Blobs of earlier versions are not loaded; the device runs the wizard again.
 
   The accelerometer metadata describes one coefficient set; accel_coeff_crc
@@ -40,14 +40,14 @@ using Matrix3f = Eigen::Matrix<float,3,3>;
 static constexpr uint32_t IMU_CAL_MAGIC = 0x434C554D; // 'MULC'
 static constexpr uint8_t  IMU_CAL_MODE_M5_IMU_API = 1;
 
-struct ImuCalBlobV3 {
+struct ImuCalBlobV4 {
   static constexpr uint32_t IMU_CAL_MAGIC   = atoms3r_ical::IMU_CAL_MAGIC;
-  static constexpr uint16_t IMU_CAL_VERSION = 3;
+  static constexpr uint16_t IMU_CAL_VERSION = 4;
   static constexpr uint8_t  IMU_CAL_MODE_M5_IMU_API = atoms3r_ical::IMU_CAL_MODE_M5_IMU_API;
 
   uint32_t magic = IMU_CAL_MAGIC;
   uint16_t version = IMU_CAL_VERSION;
-  uint16_t size_bytes = sizeof(ImuCalBlobV3);
+  uint16_t size_bytes = sizeof(ImuCalBlobV4);
   uint8_t  build_mode = 0;
 
   uint8_t  accel_ok = 0;
@@ -101,15 +101,26 @@ struct ImuCalBlobV3 {
   uint8_t  imu_type = 0;              // M5Unified imu_t
   uint8_t  reserved[3]{};
 
+  // ---- gyro qualification and runtime clamp (bound by gyro_coeff_crc) ----
+  float gyro_T_lo = 25.0f, gyro_T_hi = 25.0f;
+  float gyro_temp_lo = 25.0f, gyro_temp_hi = 25.0f;
+  float gyro_k_sigma[3] = {-1.0f, -1.0f, -1.0f};
+  float gyro_temperature_information = 0.0f;
+  uint8_t gyro_thermal = 0;        // imu_cal::GyroThermal
+  uint8_t gyro_thermal_reason = 0; // imu_cal::GyroThermalReason
+  uint8_t gyro_thermal_bins = 0;
+  uint8_t gyro_reserved = 0;
+  uint32_t gyro_coeff_crc = 0;
+
   uint32_t crc = 0;
 };
-static constexpr size_t IMU_CAL_CRC_LEN_V3 = offsetof(ImuCalBlobV3, crc);
-// No implicit padding: 284 is the sum of the field sizes, so every byte is a
+static constexpr size_t IMU_CAL_CRC_LEN_V4 = offsetof(ImuCalBlobV4, crc);
+// No implicit padding: 324 is the sum of the field sizes, so every byte is a
 // named field and struct copies preserve what the CRC and readback compare.
-static_assert(sizeof(ImuCalBlobV3) == 284, "ImuCalBlobV3: implicit padding");
+static_assert(sizeof(ImuCalBlobV4) == 324, "ImuCalBlobV4: implicit padding");
 
 // Current layout.
-using ImuCalBlob = ImuCalBlobV3;
+using ImuCalBlob = ImuCalBlobV4;
 
 static inline uint32_t crc32_ieee_(const uint8_t* data, size_t n, uint32_t crc = 0xFFFFFFFFu) {
   for (size_t i = 0; i < n; ++i) {
@@ -143,10 +154,10 @@ static inline uint32_t computeBlobCrcT_(const Blob& in, size_t len) {
   return ~crc32_ieee_(tmp, len);
 }
 
-static inline uint32_t computeBlobCrc(const ImuCalBlobV3& in) { return computeBlobCrcT_(in, IMU_CAL_CRC_LEN_V3); }
+static inline uint32_t computeBlobCrc(const ImuCalBlobV4& in) { return computeBlobCrcT_(in, IMU_CAL_CRC_LEN_V4); }
 
 // CRC of the accelerometer coefficient set (everything the runtime applies).
-static inline uint32_t accelCoeffCrc(const ImuCalBlobV3& b) {
+static inline uint32_t accelCoeffCrc(const ImuCalBlobV4& b) {
   uint32_t c = 0xFFFFFFFFu;
   c = crc32_ieee_((const uint8_t*)&b.accel_ok, sizeof(b.accel_ok), c);
   c = crc32_ieee_((const uint8_t*)&b.accel_g, sizeof(b.accel_g), c);
@@ -159,7 +170,7 @@ static inline uint32_t accelCoeffCrc(const ImuCalBlobV3& b) {
   return ~c;
 }
 
-static inline bool accelMetaBound(const ImuCalBlobV3& b) { return b.accel_coeff_crc == accelCoeffCrc(b); }
+static inline bool accelMetaBound(const ImuCalBlobV4& b) { return b.accel_coeff_crc == accelCoeffCrc(b); }
 
 // Largest |accel_g - g_cal_local| treated as the same gravity: float rounding
 // only (a height-datum mix-up is ~1e-4, 9.80665 vs local ~4e-3 m/s^2).
@@ -167,7 +178,7 @@ static constexpr float kAccelGravityMatchTol = 1.0e-5f;
 
 // True when the accelerometer set was fitted against `g_cfg` (the physical
 // gravity this firmware calibrates to and its estimators remove).
-static inline bool accelGravityMatches(const ImuCalBlobV3& b, float g_cfg = ImuCalCfg::g_cal_local) {
+static inline bool accelGravityMatches(const ImuCalBlobV4& b, float g_cfg = ImuCalCfg::g_cal_local) {
   return isfinite(b.accel_g) && fabsf(b.accel_g - g_cfg) <= kAccelGravityMatchTol;
 }
 
@@ -176,12 +187,82 @@ static inline bool allFinite_(const float* a, int n) {
   return true;
 }
 
-static inline bool validateBlob(const ImuCalBlobV3& b) {
-  if (b.magic != ImuCalBlobV3::IMU_CAL_MAGIC) return false;
-  if (b.version != ImuCalBlobV3::IMU_CAL_VERSION) return false;
-  if (b.size_bytes != sizeof(ImuCalBlobV3)) return false;
+// Unlike an unqualified legacy coefficient, every gyro thermal model has its
+// coefficients, evidence, uncertainty and permitted runtime interval bound
+// together. The outer blob CRC also binds these bytes and sensor identity.
+static inline uint32_t gyroCoeffCrc(const ImuCalBlobV4& b) {
+  uint32_t c = 0xFFFFFFFFu;
+  c = crc32_ieee_((const uint8_t*)&b.gyro_ok, sizeof(b.gyro_ok), c);
+  c = crc32_ieee_((const uint8_t*)&b.gyro_T0, sizeof(b.gyro_T0), c);
+  c = crc32_ieee_((const uint8_t*)b.gyro_b0, sizeof(b.gyro_b0), c);
+  c = crc32_ieee_((const uint8_t*)b.gyro_k, sizeof(b.gyro_k), c);
+  c = crc32_ieee_((const uint8_t*)&b.gyro_T_lo,
+                 offsetof(ImuCalBlobV4, gyro_coeff_crc) - offsetof(ImuCalBlobV4, gyro_T_lo), c);
+  return ~c;
+}
+
+static inline bool gyroSetValid(const ImuCalBlobV4& b) {
+  using L = imu_cal::GyroThermalLimits;
+  if (!b.gyro_ok || b.gyro_coeff_crc != gyroCoeffCrc(b)) return false;
+  if (!allFinite_(b.gyro_b0, 3) || !allFinite_(b.gyro_k, 3) || !allFinite_(b.gyro_k_sigma, 3) ||
+      !isfinite(b.gyro_T0) || !isfinite(b.gyro_T_lo) || !isfinite(b.gyro_T_hi) ||
+      !isfinite(b.gyro_temp_lo) || !isfinite(b.gyro_temp_hi) ||
+      !isfinite(b.gyro_temperature_information) || b.gyro_temperature_information < 0 ||
+      b.gyro_temp_lo > b.gyro_T0 || b.gyro_T0 > b.gyro_temp_hi ||
+      b.gyro_T_lo > b.gyro_T0 || b.gyro_T0 > b.gyro_T_hi || b.gyro_thermal_bins > 16) return false;
+  if (b.gyro_thermal == (uint8_t)imu_cal::GyroThermal::UNLEARNED) {
+    return b.gyro_thermal_reason <= (uint8_t)imu_cal::GyroThermalReason::SLOPE_IMPLAUSIBLE &&
+           b.gyro_k[0] == 0 && b.gyro_k[1] == 0 && b.gyro_k[2] == 0 &&
+           b.gyro_T_lo == b.gyro_T0 && b.gyro_T_hi == b.gyro_T0;
+  }
+  if (b.gyro_thermal != (uint8_t)imu_cal::GyroThermal::LEARNED ||
+      b.gyro_thermal_reason != (uint8_t)imu_cal::GyroThermalReason::QUALIFIED ||
+      b.gyro_thermal_bins < L::min_bins ||
+      double(b.gyro_temp_hi) - b.gyro_temp_lo < L::min_span ||
+      b.gyro_temperature_information < L::min_information ||
+      fabs(double(b.gyro_T_lo) - (double(b.gyro_temp_lo) - L::extrapolation_margin)) > 1e-5 ||
+      fabs(double(b.gyro_T_hi) - (double(b.gyro_temp_hi) + L::extrapolation_margin)) > 1e-5) return false;
+  for (int j = 0; j < 3; ++j) {
+    if (b.gyro_k_sigma[j] < 0 || double(b.gyro_k_sigma[j]) > L::max_slope_sigma ||
+        fabs(double(b.gyro_k[j])) + 3 * double(b.gyro_k_sigma[j]) > L::max_slope) return false;
+  }
+  return true;
+}
+
+static inline void fillGyroFromFit(ImuCalBlobV4& b, const imu_cal::GyroCalibration<float>& g) {
+  b.gyro_ok = g.ok ? 1 : 0;
+  b.gyro_T0 = g.biasT.T0;
+  for (int j = 0; j < 3; ++j) {
+    b.gyro_b0[j] = g.biasT.b0[j]; b.gyro_k[j] = g.biasT.k[j]; b.gyro_k_sigma[j] = g.slope_sigma[j];
+  }
+  b.gyro_T_lo = g.biasT.T_lo; b.gyro_T_hi = g.biasT.T_hi;
+  b.gyro_temp_lo = g.temp_lo; b.gyro_temp_hi = g.temp_hi;
+  b.gyro_temperature_information = g.temperature_information;
+  b.gyro_thermal = (uint8_t)g.thermal;
+  b.gyro_thermal_reason = (uint8_t)g.thermal_reason;
+  b.gyro_thermal_bins = g.thermal_bins;
+  b.gyro_reserved = 0;
+  b.gyro_coeff_crc = gyroCoeffCrc(b);
+}
+
+static inline bool magSetValid(const ImuCalBlobV4& b) {
+  if (!b.mag_ok || !allFinite_(b.mag_A, 9) || !allFinite_(b.mag_b, 3) ||
+      !isfinite(b.mag_field_uT) || b.mag_field_uT < 12 || b.mag_field_uT > 120 ||
+      !isfinite(b.mag_rms) || b.mag_rms < 0) return false;
+  const Matrix3f A = mat_from_rowmajor9_(b.mag_A);
+  if ((A - A.transpose()).norm() > 1e-5f * A.norm()) return false;
+  Eigen::LLT<Matrix3f> llt(A);
+  return llt.info() == Eigen::Success;
+}
+
+static inline bool validateBlob(const ImuCalBlobV4& b) {
+  if (b.magic != ImuCalBlobV4::IMU_CAL_MAGIC) return false;
+  if (b.version != ImuCalBlobV4::IMU_CAL_VERSION) return false;
+  if (b.size_bytes != sizeof(ImuCalBlobV4)) return false;
   if (b.build_mode != IMU_CAL_MODE_M5_IMU_API) return false;
   if (computeBlobCrc(b) != b.crc) return false;
+  if (b.gyro_ok && !gyroSetValid(b)) return false;
+  if (b.mag_ok && !magSetValid(b)) return false;
   // Coefficients the runtime will apply must be finite.
   if (b.accel_ok && !(allFinite_(b.accel_S, 9) && allFinite_(b.accel_b0, 3) && allFinite_(b.accel_k, 3) &&
                       isfinite(b.accel_T0) && isfinite(b.accel_T_lo) && isfinite(b.accel_T_hi) &&
@@ -191,7 +272,7 @@ static inline bool validateBlob(const ImuCalBlobV3& b) {
 
 // Fills the accelerometer coefficient set and its metadata from a full fit,
 // then binds the metadata. Gyro/mag fields are left untouched.
-static inline void fillAccelFromFit(ImuCalBlobV3& b, const imu_cal::AccelFullFitResult& r,
+static inline void fillAccelFromFit(ImuCalBlobV4& b, const imu_cal::AccelFullFitResult& r,
                                     const imu_cal::AccelCalibration<float>& fc, uint32_t capture_s)
 {
   b.accel_ok = fc.ok ? 1 : 0;
@@ -226,11 +307,11 @@ static inline void fillAccelFromFit(ImuCalBlobV3& b, const imu_cal::AccelFullFit
 // Candidate of an accelerometer-only recalibration: the previous blob with
 // its gyro and magnetometer fields carried unchanged and a new, bound
 // accelerometer set and sensor identity.
-static inline ImuCalBlobV3 accelOnlyCandidate(const ImuCalBlobV3& prev, const imu_cal::AccelFullFitResult& r,
+static inline ImuCalBlobV4 accelOnlyCandidate(const ImuCalBlobV4& prev, const imu_cal::AccelFullFitResult& r,
                                               const imu_cal::AccelCalibration<float>& fc, uint32_t capture_s,
                                               uint32_t id_lo, uint32_t id_hi, uint8_t imu_type)
 {
-  ImuCalBlobV3 b;
+  ImuCalBlobV4 b;
   memcpy((void*)&b, &prev, sizeof(b));
   fillAccelFromFit(b, r, fc, capture_s);
   b.sensor_id_lo = id_lo;
@@ -243,7 +324,7 @@ static inline ImuCalBlobV3 accelOnlyCandidate(const ImuCalBlobV3& prev, const im
 // slope this firmware validated (LEARNED, or PRESERVED from one), with bound
 // metadata, for the same sensor and IMU. Bias offsets are never carried: they
 // can change at every power cycle and are re-measured each session.
-static inline imu_cal::AccelThermalPrior accelThermalPriorFrom(const ImuCalBlobV3& b, uint32_t id_lo,
+static inline imu_cal::AccelThermalPrior accelThermalPriorFrom(const ImuCalBlobV4& b, uint32_t id_lo,
                                                                 uint32_t id_hi, uint8_t imu_type,
                                                                 double max_k_abs = 0.02)
 {
@@ -274,7 +355,7 @@ struct RuntimeCals {
   // different gravity than this firmware's g_cal_local; it is then not applied.
   bool accel_gravity_mismatch = false;
 
-  void rebuildFromBlob(const ImuCalBlobV3& b, float g_cfg = ImuCalCfg::g_cal_local) {
+  void rebuildFromBlob(const ImuCalBlobV4& b, float g_cfg = ImuCalCfg::g_cal_local) {
     accel_gravity_mismatch = (b.accel_ok != 0) && !accelGravityMatches(b, g_cfg);
     acc.ok = (b.accel_ok != 0) && !accel_gravity_mismatch;
     acc.g  = b.accel_g;
@@ -287,14 +368,23 @@ struct RuntimeCals {
     acc.biasT.T_hi = b.accel_T_hi;
     acc.rms_mag  = b.accel_rms_mag;
 
-    gyr.ok = (b.gyro_ok != 0);
+    gyr = imu_cal::GyroCalibration<float>{};
+    gyr.ok = gyroSetValid(b);
     gyr.S  = Matrix3f::Identity();
     gyr.biasT.ok = gyr.ok;
     gyr.biasT.T0 = b.gyro_T0;
     gyr.biasT.b0 = Vector3f(b.gyro_b0[0], b.gyro_b0[1], b.gyro_b0[2]);
     gyr.biasT.k  = Vector3f(b.gyro_k[0],  b.gyro_k[1],  b.gyro_k[2]);
 
-    mag.ok = (b.mag_ok != 0);
+    gyr.biasT.T_lo = b.gyro_T_lo; gyr.biasT.T_hi = b.gyro_T_hi;
+    gyr.thermal = (imu_cal::GyroThermal)b.gyro_thermal;
+    gyr.thermal_reason = (imu_cal::GyroThermalReason)b.gyro_thermal_reason;
+    gyr.thermal_bins = b.gyro_thermal_bins;
+    gyr.temp_lo = b.gyro_temp_lo; gyr.temp_hi = b.gyro_temp_hi;
+    gyr.temperature_information = b.gyro_temperature_information;
+    gyr.slope_sigma = Vector3f(b.gyro_k_sigma[0], b.gyro_k_sigma[1], b.gyro_k_sigma[2]);
+
+    mag.ok = magSetValid(b);
     mag.A  = mat_from_rowmajor9_(b.mag_A);
     mag.b  = Vector3f(b.mag_b[0], b.mag_b[1], b.mag_b[2]);
     mag.field_uT = b.mag_field_uT;
@@ -316,55 +406,77 @@ struct RuntimeCals {
 template <class KV>
 class ImuCalStoreT {
 public:
-  static constexpr const char* kKeyV3 = "blob_m5v3";
+  static constexpr const char* kKeyV4 = "blob_m5v4";
 
   KV kv;
 
-  bool load(ImuCalBlobV3& out) { return loadV3_(out); }
+  bool load(ImuCalBlobV4& out) { return loadV4_(out); }
 
-  // Writes the v3 key only; true when the bytes were accepted.
-  bool save(const ImuCalBlobV3& in) {
-    ImuCalBlobV3 tmp = sealed_(in);
-    return kv.putBytes(kKeyV3, &tmp, sizeof(tmp)) == sizeof(tmp);
+  // Writes the v4 key only; true when the bytes were accepted.
+  bool save(const ImuCalBlobV4& in) {
+    ImuCalBlobV4 tmp = sealed_(in);
+    return validateBlob(tmp) && kv.putBytes(kKeyV4, &tmp, sizeof(tmp)) == sizeof(tmp);
   }
 
   // Writes the candidate and reads the key back. Succeeds only when the stored
   // bytes validate and equal the sealed candidate, so an older blob can never
   // pass as the new one.
-  // On failure the previous valid calibration is written back (or the key
-  // removed when there was none), so a failed or partial write never leaves
-  // a corrupt blob in its place.
-  bool saveVerified(const ImuCalBlobV3& in, ImuCalBlobV3& readback) {
-    const ImuCalBlobV3 cand = sealed_(in);
-    ImuCalBlobV3 prev;
-    const bool had_prev = loadV3_(prev);
-    ImuCalBlobV3 rb;
-    if (kv.putBytes(kKeyV3, &cand, sizeof(cand)) == sizeof(cand) && loadV3_(rb) && sameBytes(rb, cand)) {
+  // Recovery is verified too. Hardware can fail during rollback: callers must
+  // inspect lastSaveStatus(), never claim a previous calibration was restored
+  // merely because its write was attempted.
+  enum class SaveStatus : uint8_t {
+    OK, INVALID_CANDIDATE, PREVIOUS_UNREADABLE, PREVIOUS_RETAINED, FAILED_EMPTY, RECOVERY_FAILED
+  };
+  SaveStatus lastSaveStatus() const { return last_save_status_; }
+
+  bool saveVerified(const ImuCalBlobV4& in, ImuCalBlobV4& readback) {
+    const ImuCalBlobV4 cand = sealed_(in);
+    if (!validateBlob(cand)) { last_save_status_ = SaveStatus::INVALID_CANDIDATE; return false; }
+    ImuCalBlobV4 prev;
+    bool read_failed = false;
+    const bool had_prev = loadV4_(prev, &read_failed);
+    // Do not confuse a failed read of a possibly valid record with absence.
+    if (read_failed) { last_save_status_ = SaveStatus::PREVIOUS_UNREADABLE; return false; }
+    ImuCalBlobV4 rb;
+    if (kv.putBytes(kKeyV4, &cand, sizeof(cand)) == sizeof(cand) && loadV4_(rb) && sameBytes(rb, cand)) {
       readback = rb;
+      last_save_status_ = SaveStatus::OK;
       return true;
     }
-    if (had_prev) kv.putBytes(kKeyV3, &prev, sizeof(prev));
-    else kv.remove(kKeyV3);
+    if (had_prev) {
+      // A dropped write may already have left the previous bytes intact.
+      if (loadV4_(rb) && sameBytes(rb, prev)) {
+        last_save_status_ = SaveStatus::PREVIOUS_RETAINED;
+      } else {
+        const bool wrote = kv.putBytes(kKeyV4, &prev, sizeof(prev)) == sizeof(prev);
+        const bool restored = loadV4_(rb) && sameBytes(rb, prev);
+        last_save_status_ = wrote && restored ? SaveStatus::PREVIOUS_RETAINED : SaveStatus::RECOVERY_FAILED;
+      }
+    } else {
+      const bool removed = kv.remove(kKeyV4);
+      last_save_status_ = removed && kv.getBytesLength(kKeyV4) == 0 ?
+                          SaveStatus::FAILED_EMPTY : SaveStatus::RECOVERY_FAILED;
+    }
     return false;
   }
 
-  void erase() { kv.remove(kKeyV3); }
+  void erase() { kv.remove(kKeyV4); }
 
   // Byte-for-byte equality of two stored blobs (padding included: both sides
   // are byte copies of what was written).
-  static bool sameBytes(const ImuCalBlobV3& a, const ImuCalBlobV3& b) {
-    uint8_t ba[sizeof(ImuCalBlobV3)], bb[sizeof(ImuCalBlobV3)];
+  static bool sameBytes(const ImuCalBlobV4& a, const ImuCalBlobV4& b) {
+    uint8_t ba[sizeof(ImuCalBlobV4)], bb[sizeof(ImuCalBlobV4)];
     memcpy(ba, &a, sizeof(ba));
     memcpy(bb, &b, sizeof(bb));
     return memcmp(ba, bb, sizeof(ba)) == 0;
   }
 
-  static ImuCalBlobV3 sealed_(const ImuCalBlobV3& in) {
-    ImuCalBlobV3 tmp;
+  static ImuCalBlobV4 sealed_(const ImuCalBlobV4& in) {
+    ImuCalBlobV4 tmp;
     memcpy(&tmp, &in, sizeof(tmp));
-    tmp.magic = ImuCalBlobV3::IMU_CAL_MAGIC;
-    tmp.version = ImuCalBlobV3::IMU_CAL_VERSION;
-    tmp.size_bytes = sizeof(ImuCalBlobV3);
+    tmp.magic = ImuCalBlobV4::IMU_CAL_MAGIC;
+    tmp.version = ImuCalBlobV4::IMU_CAL_VERSION;
+    tmp.size_bytes = sizeof(ImuCalBlobV4);
     tmp.build_mode = IMU_CAL_MODE_M5_IMU_API;
     memset(tmp.pad_a, 0, sizeof(tmp.pad_a));
     memset(tmp.pad_g, 0, sizeof(tmp.pad_g));
@@ -375,10 +487,15 @@ public:
   }
 
 private:
-  bool loadV3_(ImuCalBlobV3& out) {
-    if (kv.getBytesLength(kKeyV3) != sizeof(ImuCalBlobV3)) return false;
-    ImuCalBlobV3 tmp;
-    if (kv.getBytes(kKeyV3, &tmp, sizeof(tmp)) != sizeof(tmp)) return false;
+  SaveStatus last_save_status_ = SaveStatus::OK;
+  bool loadV4_(ImuCalBlobV4& out, bool* read_failed = nullptr) {
+    if (read_failed) *read_failed = false;
+    if (kv.getBytesLength(kKeyV4) != sizeof(ImuCalBlobV4)) return false;
+    ImuCalBlobV4 tmp;
+    if (kv.getBytes(kKeyV4, &tmp, sizeof(tmp)) != sizeof(tmp)) {
+      if (read_failed) *read_failed = true;
+      return false;
+    }
     if (!validateBlob(tmp)) return false;
     out = tmp;
     return true;
