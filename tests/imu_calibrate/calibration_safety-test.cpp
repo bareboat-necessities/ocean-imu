@@ -44,7 +44,7 @@ struct FaultKv {
 using Store = ImuCalStoreT<FaultKv>;
 using GC = imu_cal::GyroCalibration<float>;
 
-static GC gyro(float lo, float span, V slope, float noise = 0, int count = 320) {
+static GC gyro(float lo, float span, const V& slope, float noise = 0, int count = 320) {
   imu_cal::GyroCalibrator<float,400> cal;
   std::mt19937 rng(734);
   std::normal_distribution<float> normal(0, noise);
