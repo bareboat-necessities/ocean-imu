@@ -37,8 +37,24 @@ After all estimator and 535 validation/proof tests passed, `make all` stopped at
 (exit 126). The generated ELF had mode 0644. Classification: local build-artifact
 permission failure; this does not invalidate numerical tests already completed.
 Rebuilding that unchanged target restored its executable mode and all four
-wave-direction targets passed. The complete `make all` is rerun with the repaired
-artifact; no source, build recipe or test gate is changed for this failure.
+wave-direction targets passed. The complete `make all` then passed with exit 0;
+no source, build recipe or test gate was changed for this failure.
+
+Review found that paired audit aggregation was only a local script, so the
+documented CLI could not reproduce the reported comparisons. Classification:
+engineering-evidence reproducibility gap, not a numerical discrepancy. The
+checked-in `--compare` operation now reads retained audit directories, verifies
+stdout/input integrity, matches physical inputs and reference metrics, and
+reports all deltas and projection activity. Validate it against the completed
+full studies and test rejection of changed/unverified inputs before publication.
+The comparison CLI reproduces every committed full-study comparison field and
+both deterministic metric comparisons exactly; all six integrity regressions
+pass. The local Python gate initially reported `ruff not installed`; installing
+the missing linter in an isolated scratch directory restores that gate without
+changing repository dependencies or lint rules.
+That gate then caught B023 in the new regression's loop callback; explicitly
+binding its `row` argument fixes the test-only closure. Classification: test
+lint failure, with paired numerical results and shipping behavior unchanged.
 
 Main's concurrent evidence-only commit 68c645c2 caused 14 generated-file merge
 conflicts and prevented pull-request CI from starting. Classification: evidence

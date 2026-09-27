@@ -188,3 +188,14 @@ The committed paired report records numerical metric differences
 and projection engagement. New regression targets run from both existing
 `run_tests.sh` scripts; the ordinary suites and all publication gates remain
 required. Finite replays do not establish an all-history stability theorem.
+
+Reproduce the comparisons from retained audit directories with
+`python3 tools/ou_gyro_bias_audit.py --compare BASELINE_DIR CANDIDATE_DIR --output-dir COMPARISON_DIR`.
+This writes `COMPARISON_DIR/paired-audit.json`, including metric deltas, observation
+maxima, projection activity, paired input hashes and measured frozen tuning
+points. Run it for each standalone family and each full study; use
+`--compare-part standalone` to compare only the native suite in a directory
+that also contains replays. The command verifies retained stdout and rejects
+incomplete/unverified replays, differing physical inputs, reference metrics or
+protocols. Projection activity is reported even when nonzero, so an unexpected
+activation cannot disappear from the diagnostic.

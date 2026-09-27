@@ -96,6 +96,8 @@ def compare_metrics(before, after, key="run_id"):
     """
     left = {row[key]: row for row in before}
     right = {row[key]: row for row in after}
+    if len(left) != len(before) or len(right) != len(after):
+        raise ValueError("duplicate replay identity")
     if left.keys() != right.keys():
         raise ValueError("before/after replay identities differ")
     maxima = {}
@@ -137,10 +139,98 @@ def summarize_observations(records):
     return result
 
 
+def compare_audit_directories(before_dir, after_dir, part="all"):
+    """Reproduce paired evidence from retained audit files, without replays."""
+    directories = [Path(before_dir), Path(after_dir)]
+    audits = [json.loads((directory/"audit.json").read_text()) for directory in directories]
+    if audits[0]["observer_sha256"] != audits[1]["observer_sha256"]:
+        raise ValueError("before/after observers differ")
+    if audits[0]["candidate_radii_rad_s"] != audits[1]["candidate_radii_rad_s"]:
+        raise ValueError("before/after candidate radii differ")
+    result = {"candidate_radii_rad_s": audits[0]["candidate_radii_rad_s"],
+              "observer_sha256": audits[0]["observer_sha256"],
+              "source_sha256": [audit["source_sha256"] for audit in audits]}
+    targets = [{row["target"]: row for row in audit["runs"]} if part != "replay" else {}
+               for audit in audits]
+    if targets[0].keys() != targets[1].keys():
+        raise ValueError("before/after standalone targets differ")
+    if targets[0]:
+        metrics = []
+        identical = {}
+        for name in targets[0]:
+            rows = [target[name] for target in targets]
+            if any(row["exit_code"] for row in rows):
+                raise ValueError(f"failed standalone target: {name}")
+            if rows[0]["test_source_sha256"] != rows[1]["test_source_sha256"]:
+                raise ValueError(f"standalone test inputs differ: {name}")
+            outputs = [directory/(name+".stdout") for directory in directories]
+            for path, row in zip(outputs, rows):
+                if hashlib.sha256(path.read_bytes()).hexdigest() != row["stdout_sha256"]:
+                    raise ValueError(f"standalone stdout changed: {path}")
+            identical[name] = rows[0]["stdout_sha256"] == rows[1]["stdout_sha256"]
+            metrics.append({"target": name, **compare_metrics(
+                *[deterministic_metrics(path) for path in outputs], key="input")})
+        result["standalone"] = {
+            "baseline": summarize_observations(audits[0]["runs"]),
+            "modified": summarize_observations(audits[1]["runs"]),
+            "metrics": metrics, "stdout_identical": identical}
+    if part != "standalone" and any("validation_replays" in audit for audit in audits):
+        study = audits[0].get("replay_study", "validation")
+        if study != audits[1].get("replay_study", "validation"):
+            raise ValueError("before/after replay studies differ")
+        records = [audit["validation_replays"] for audit in audits]
+        if any(audit.get("validation_exit_code") != 0 for audit in audits):
+            raise ValueError("incomplete replay study")
+        if any(not row.get("input_immutable_verified") for rows in records for row in rows):
+            raise ValueError("replay input immutability was not verified")
+        def identities(rows):
+            # Frozen tuning points are measured in each build and are retained
+            # below. Pair the physical input, seeds and update mode exactly.
+            return sorted(json.dumps([row["input_identity"], row["input_sha256"],
+                row["input_rows"], {k:v for k,v in row["environment"].items()
+                                    if not k.startswith("W3D_FIXED_")}], sort_keys=True)
+                for row in rows)
+        left, right = map(identities, records)
+        if left != right:
+            raise ValueError("paired physical inputs/settings differ")
+        studies = [json.loads((directory/study/f"ou_{study}.json").read_text())
+                   for directory in directories]
+        if studies[0]["protocol"] != studies[1]["protocol"]:
+            raise ValueError("before/after replay protocols differ")
+        metrics = compare_metrics(*[data["raw_runs"] for data in studies])
+        rows_by_id = [{row["run_id"]: row for row in data["raw_runs"]} for data in studies]
+        for identity, row in rows_by_id[0].items():
+            for name, value in row.items():
+                if name in ("samples", "window_s", "start_s") or "disp_z_ref_rms_m" in name:
+                    other = rows_by_id[1][identity][name]
+                    if value != other and not (isinstance(value, float) and
+                            isinstance(other, float) and math.isnan(value) and math.isnan(other)):
+                        raise ValueError(f"reference motion differs: {identity} {name}")
+        summaries = [summarize_observations(rows) for rows in records]
+        for summary, rows in zip(summaries, records):
+            for family, row in summary.items():
+                row["candidate_exceedances"] = [sum(observation["candidate_exceedances"][i]
+                    for record in rows for observation in record["observations"]
+                    if str(observation["family"]) == family) for i in range(4)]
+        result["replay"] = {"baseline": summaries[0], "modified": summaries[1],
+            "metrics": metrics, "input_records_identical": True,
+            "input_immutability_verified": True, "reference_motion_metrics_identical": True,
+            "paired_input_records_sha256": hashlib.sha256(json.dumps(left).encode()).hexdigest(),
+            "paired_replay_count": len(left), "protocol": studies[0]["protocol"],
+            "frozen_tuning_points": [data.get("fixed_tuning_points", data.get("nominal_tuning_point"))
+                                     for data in studies]}
+    if not targets[0] and "replay" not in result:
+        raise ValueError("no paired observations")
+    return result
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--output-dir", type=Path, required=True)
-    p.add_argument("--family", choices=("ii", "iii"), required=True)
+    p.add_argument("--family", choices=("ii", "iii"))
+    p.add_argument("--compare", nargs=2, type=Path, metavar=("BASELINE_DIR", "CANDIDATE_DIR"),
+                   help="Compare retained audits and write paired-audit.json; does not build or replay")
+    p.add_argument("--compare-part", choices=("all", "standalone", "replay"), default="all")
     p.add_argument("--targets", nargs="+", default=["sim", "startup_init-test", "stationary_device-test"])
     p.add_argument("--eigen-dir", type=Path, default=REPO/"third_party/eigen")
     p.add_argument("--no-build", action="store_true")
@@ -153,6 +243,13 @@ def main():
     args = p.parse_args()
     out = args.output_dir.resolve()
     out.mkdir(parents=True, exist_ok=True)
+    if args.compare:
+        result = compare_audit_directories(*args.compare, part=args.compare_part)
+        (out/"paired-audit.json").write_text(json.dumps(result, indent=2, sort_keys=True)+"\n")
+        print(f"Wrote {out/'paired-audit.json'}", flush=True)
+        return
+    if args.family is None:
+        p.error("--family is required unless --compare is used")
     src = out/"src"
     family = 2 if args.family == "ii" else 3
     folder = "kalman_ou_"+args.family
