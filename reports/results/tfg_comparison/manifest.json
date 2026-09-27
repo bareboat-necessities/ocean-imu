@@ -1,6 +1,6 @@
 {
   "binary_sha256": {
-    "OU_III": "c29ef4b7bdf1d4d5b7e363afc460366bf581815c645e66af9067cf4875f7f9a2",
+    "OU_III": "1819ee6840ea1753669c8787e7fe8784d714da5a4fd98ec59a26354356a90858",
     "TFG": "cf35633a8adf4274da7ad96f1b3a823cf432cab24f3984164e8ff2c65528c1be"
   },
   "build_environment": {
@@ -36,8 +36,8 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "generated_utc": "2026-09-25T20:54:23+00:00",
-  "git_commit": "cc370b2c001654a92175ad335822feee747feb34",
+  "generated_utc": "2026-09-27T16:07:14+00:00",
+  "git_commit": "9bf2ec899c4d404360ad91192cba91fd7ec0cf78",
   "git_diff_stat": "",
   "protocol": {
     "bootstrap_resamples": 10000,
@@ -159,8 +159,8 @@
     "src/kalman_common/SeaStateFusionDefaults.h": "37831f74a5a69ca4514d4f180c79cae235794d49afee8370719fc7be86b711c1",
     "src/kalman_common/SeaStateFusionFilterCommon.h": "a753702b3ceae1ca529d6b71cc1b6c1ab5b6542740059e87975aab5ae95cdddd",
     "src/kalman_common/SeaStateOUFamilyDefaults.h": "8c23ee6f8147977cd0a137b62568c66c95820c6327a44bb0ebbd90c56370b567",
-    "src/kalman_ou_common/KalmanOUCoreMath.h": "7b3a0c89e467120cfc7e7cda30d66967e1f518afa642d0058198b2d7af94cb05",
-    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "5b44791224ed468608482f853369694f3bf6ad44646a17019efa0f28348ac291",
+    "src/kalman_ou_common/KalmanOUCoreMath.h": "05558d7d60968e63f3d1ac393e1abe13b26fead4329f7aea3282d3e43e521a21",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "a5d00d557843dee246bf5bcb5cc1823097db7f66f0aa3f62852bfae2e9c7c6f9",
     "src/kalman_tfg/Kalman3D_Wave_TFG.h": "33d937422f8672ad117a542e76d92e5134f558d41ab15c5e130cb79e0050dc59",
     "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "42bc3dd373913ac6022d98f498e5c74d830c5761c92762055a7bdea052015255",
@@ -195,7 +195,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "36187572167",
-    "workflow": "build"
+    "run_id": "36330428389",
+    "workflow": "ou-full-evidence-branch"
   }
 }

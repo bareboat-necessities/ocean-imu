@@ -41,9 +41,9 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "fix/calibration-guided-mag-gyro",
-  "git_commit": "17c8d7efb25f21e8df4eb7c1cbf9993324364dba",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 11404 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1274 +--\n .../results/ou_robustness/ou_robustness_raw.csv    |    44 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   324 +-\n .../results/ou_robustness/ou_robustness_stress.svg |    36 +-\n .../ou_robustness/ou_robustness_summary.csv        |   848 +-\n 6 files changed, 6964 insertions(+), 6966 deletions(-)",
+  "git_branch": "fix/ou-gyro-bias-projection",
+  "git_commit": "9bf2ec899c4d404360ad91192cba91fd7ec0cf78",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -114,12 +114,12 @@
       "sha256": "8c23ee6f8147977cd0a137b62568c66c95820c6327a44bb0ebbd90c56370b567"
     },
     "src/kalman_ou_common/KalmanOUCoreMath.h": {
-      "bytes": 16391,
-      "sha256": "7b3a0c89e467120cfc7e7cda30d66967e1f518afa642d0058198b2d7af94cb05"
+      "bytes": 18311,
+      "sha256": "05558d7d60968e63f3d1ac393e1abe13b26fead4329f7aea3282d3e43e521a21"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-      "bytes": 94708,
-      "sha256": "5b44791224ed468608482f853369694f3bf6ad44646a17019efa0f28348ac291"
+      "bytes": 95379,
+      "sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
       "bytes": 63445,
@@ -325,8 +325,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-27T06:24:34+00:00",
-    "git_commit": "17c8d7efb25f21e8df4eb7c1cbf9993324364dba",
+    "generated_at": "2026-09-27T16:33:45+00:00",
+    "git_commit": "9bf2ec899c4d404360ad91192cba91fd7ec0cf78",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -397,12 +397,12 @@
         "size_bytes": 3307
       },
       "src/kalman_ou_common/KalmanOUCoreMath.h": {
-        "sha256": "7b3a0c89e467120cfc7e7cda30d66967e1f518afa642d0058198b2d7af94cb05",
-        "size_bytes": 16391
+        "sha256": "05558d7d60968e63f3d1ac393e1abe13b26fead4329f7aea3282d3e43e521a21",
+        "size_bytes": 18311
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-        "sha256": "5b44791224ed468608482f853369694f3bf6ad44646a17019efa0f28348ac291",
-        "size_bytes": 94708
+        "sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
+        "size_bytes": 95379
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
         "sha256": "a5d00d557843dee246bf5bcb5cc1823097db7f66f0aa3f62852bfae2e9c7c6f9",
@@ -509,7 +509,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "36298680938",
+      "run_id": "36330428389",
       "workflow": "ou-full-evidence-branch"
     }
   },
