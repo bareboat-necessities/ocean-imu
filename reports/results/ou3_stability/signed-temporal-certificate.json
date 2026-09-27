@@ -4,6 +4,8 @@
   "carried_adjoint_compatibility_criterion": true,
   "compatible_adjoint_or_residual_bounds_required": true,
   "construction_uniform_gyro_alias_exclusion": false,
+  "forced_data_adjoint_identity": true,
+  "forced_data_adjoint_source_uniform_action_bound": false,
   "full_21_covariance_upper": false,
   "homogeneous_zero_terminal_adjoint_closes": false,
   "physical_floor_margin": "3381131261787/78125000000000000",

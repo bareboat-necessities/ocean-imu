@@ -1,0 +1,113 @@
+{
+  "Delta_col_certified": false,
+  "Delta_gyr_certified": false,
+  "S_interval_acceleration_margin_before_other_supplies": "-19.039107901153770755459714856528",
+  "all_time_magnetic_service_certified": false,
+  "balance_time_interval_s": [
+    "11253/50",
+    "7224/25"
+  ],
+  "conditional_supplies": {
+    "S_interval_jerk": "3.8223828053166119031158351218053",
+    "S_interval_velocity": "23.98805965312396779872070628833",
+    "accel_fast_residual": "0.47809468023442277559248039981873",
+    "gravity_representation": "0.00000025776182100854906317547059316399",
+    "jerk_quadrature": "0.39841223352868564632706699984894",
+    "magnetic_residual": "0.41577867608792241600818474176032",
+    "physical_accel_bias_Abel": "0.29559396167703466521443007173539",
+    "physical_velocity": "239.57211796185370933057644577901",
+    "rotation_triangle": "39.225652726374558615739907424579"
+  },
+  "decimal_digits": 80,
+  "direct_signed_functional": [
+    "0.0000004890070440211045959135117161764",
+    "0.000031962419931212877469270372170005",
+    "-0.000005454022589408815608629336369432"
+  ],
+  "driver_sha256": "126bf18838b444d6c5332b35590a9631113bd76c7d5de1e670231b804c1e1326",
+  "identity_residual_norm": "3.3844665174967977296938822290301e-82",
+  "instrumented_header_sha256": "d86ffa43b851dcbc5f48bc66cfb8d55a859866521edc8eb4411461a889150c0e",
+  "knots_s": [
+    "13/200",
+    "4273/200",
+    "8533/200",
+    "1599/25"
+  ],
+  "literal_float_gravity": "9.8066501617431640625",
+  "literal_terminal_parity": true,
+  "operation_counts_prediction_acc_mag_S_projection": [
+    12780,
+    12780,
+    1598,
+    892,
+    15270
+  ],
+  "physical_gravity": "9.80665",
+  "profile": "roll .02 sin(t/2), vertical displacement .4 sin(.6t); construction to 289 s",
+  "qualification": "OU3_CARRIED_FORCED_DATA_ADJOINT_DIAGNOSTIC_V1",
+  "recorded_nominal_projected_gravity_threshold": "8.7713345572868089463768265536078",
+  "root_multiplier_block_frobenius_norms": [
+    "0.0",
+    "0.01746149956881146997196928266997",
+    "0.0034286855213869796452869707299421",
+    "0.0010833224796961359563222497508769",
+    "0.000085789870331343110891090949048064",
+    "1.1175788519011838940602511648901"
+  ],
+  "root_multiplier_blocks": [
+    "BG",
+    "V",
+    "P",
+    "S",
+    "AW",
+    "BA"
+  ],
+  "root_term": [
+    "-0.000000086339607792613248537703944299539",
+    "-0.0027134667131646350917058592672479",
+    "0.0031120625441225610679323795199812"
+  ],
+  "rotation_triangle_margin_before_other_supplies": "-30.454318169087749669363080870971",
+  "shipping_header_sha256": "5b44791224ed468608482f853369694f3bf6ad44646a17019efa0f28348ac291",
+  "signed_terms": {
+    "acceleration": [
+      "0.00000097762573362221219579461077951105",
+      "0.003905275616431768510333412576436",
+      "-0.0031177792811576435881741086306034"
+    ],
+    "gravity_representation": [
+      "-1.784111469597445696010168682515e-13",
+      "-0.0000000024964693974911244526780575064734",
+      "0.000000036477690894190972781462753413365"
+    ],
+    "innovation_arithmetic": [
+      "-0.000000012140416499232471703218369678667",
+      "0.0000000017376156998220682557184030293104",
+      "0.0000000018546812964181637364143605068868"
+    ],
+    "joint_rotation": [
+      "-0.00000039073044401842187272774101443155",
+      "-0.0011599847553386288237156027819376",
+      "0.00000026933052352195568275580814839578"
+    ],
+    "mean_arithmetic": [
+      "1.5094405170707323889538660382053e-11",
+      "0.00000013674738938374196576755093460709",
+      "-0.0000000097072935554318031661183679032308"
+    ],
+    "measurement": [
+      "5.7686271513624550824432743158662e-10",
+      "0.0000000022834670222096477492536394469624",
+      "-0.000000035241156483428383007792641607135"
+    ],
+    "projection": [
+      "0.0",
+      "0.0",
+      "0.0"
+    ]
+  },
+  "source_uniform_verified": false,
+  "symbolic_attitude_excitation_parameters_qualified": false,
+  "theorem_closed": false,
+  "trace_sha256": "e054bbc0ec664f3c87062136ebbb4f0cb0bddd675ba315dbca9a961db9091d09"
+}

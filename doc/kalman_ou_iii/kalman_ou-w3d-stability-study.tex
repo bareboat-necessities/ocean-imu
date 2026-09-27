@@ -1230,6 +1230,53 @@ $(-1/2,1/2)$ does not vanish on $\ker C$. Spline endpoint jets alone
 also do not solve the coupled mean adjoint. The two residual sums must
 remain until bounded on the same history.
 
+\subsection{Forced data adjoint and its limits}
+Use all 18 Euclidean means and write the literal sensor identity as
+$r_i=y_i-\bar H_i u_i+\epsilon_i$. Here $\bar H_i$ is the mean observation
+map, not the full EKF Jacobian: its acc blocks are $R_i$ at AW and $I$ at
+BA, its S block selects S, and its magnetic map is zero. Thus
+\begin{align}
+ y_i^a&=f_i^m+gR_i e_z,&y_i^S&=0,\nonumber\\
+ y_i^m&=m_i^m-R_i B_i.
+\end{align}
+Actual attitude/reference, gains, mode-dependent predictions, innovation
+arithmetic $\epsilon_i$ and separate mean/projection defects $d_i$ remain.
+\begin{lemma}[Forced data identity]
+For arbitrary desired weights $W_i$, set $Z_N=0$ and propagate
+\begin{align}
+ L_i&=W_i+Z_{i+1}K_i,\nonumber\\
+ Z_i&=Z_{i+1}A_i-L_i\bar H_i.
+\end{align}
+Then, without a homogeneous compatibility assumption,
+\begin{equation}
+ \sum_iW_i r_i=Z_0u_0+\sum_iL_i(y_i+\epsilon_i)+\sum_iZ_{i+1}d_i.
+ \label{eq:forced-data}
+\end{equation}
+\end{lemma}
+\begin{proof}
+Substitute both literal recurrences. The adjacent terms
+$Z_i u_i-Z_{i+1}u_{i+1}$ telescope. The root term remains.
+\end{proof}
+With true world-to-body rotation $Q_i$, the physical acceleration term is
+$\sum_aL_iQ_i a_i$. The rotation/reference terms must remain jointly signed:
+\begin{equation}
+ g\sum_aL_i(R_i-Q_i)e_z+
+ \sum_mL_i(Q_iB_i^{\rm true}-R_iB_i).
+\end{equation}
+The physical bias and residual terms are separate. Equation
+\eqref{eq:forced-data} rewrites both compatibility residual sums; it does
+not bound the root action, these joint terms or multiplier variation.
+It enters \eqref{eq:word-energy} only through the still-open signed
+separation and historical-reader steps.
+
+In the default fixed-frame Euclidean mean recurrence with lever arm
+disabled, $A_iE_{\rm BG}=E_{\rm BG}$ and $\bar H_iE_{\rm BG}=0$.
+Hence $(A_i-K_i\bar H_i)E_{\rm BG}=E_{\rm BG}$ and
+$Z_iE_{\rm BG}=0$. This removes the BG root coefficient of the functional
+but provides no restoring feedback for the BG mean itself. It is a
+limitation of frozen-attitude algebra, not an unstable mode of the coupled
+estimator. Gyro alias exclusion still needs the actual attitude dynamics.
+
 \subsection{Signed physical supplies and gyro level}
 For matrix weights $C_i$ and one physical bias sequence,
 \begin{align}
@@ -1250,6 +1297,32 @@ The supply uses physical velocity and signed weight variation. These
 bounds do not remove nominal acceleration, S, bias means or reference
 terms from the residual innovations. Their multiplier norms and remaining
 signed nominal action still need source-uniform control.
+
+One refinement first sums signed coefficients inside a physical interval
+$[a,b]$, with $H=b-a$, $D=\sum_iC_i$ and $t_i\in[a,b]$. Then
+\begin{align}
+ \sum_i C_i a(t_i)&=\frac{D}{H}(v(b)-v(a))+\epsilon,\nonumber\\
+ \norm\epsilon&\le\frac{J_{\max}}{2H}\sum_i\norm{C_i}
+       \big[(t_i-a)^2+(b-t_i)^2\big].
+\end{align}
+This follows by integrating $\norm{a(t_i)-a(s)}\le J_{\max}|t_i-s|$;
+the signed $D$ is formed before applying the velocity bound. Actual S
+intervals are a partition of physical time, not extra observations.
+
+A carried moving diagnostic starts at construction and observes the
+225--289-s tail with roll $0.02\sin(t/2)$ and displacement
+$0.4\sin(0.6t)e_z$. Its four actual S knots, relative to 225 s, are
+$(0.065,21.365,42.665,63.96)$ s. The full signed identity has 80-digit
+residual below $10^{-75}$ and observer/control parity. This does
+not qualify numerical $T_E,\theta_E$ or all-time magnetic service.
+The recorded projected-gravity threshold is $8.77133456$. A rotation
+triangle charge is $39.22565273$, already giving margin $-30.45431817$.
+The velocity/jerk charge is $239.97053020$; summing within actual S
+intervals reduces it to $27.81044246$, still giving margin $-19.03910790$
+before other supplies. These failed norm bounds are not negative actual
+$\Delta_{\rm col}$ certificates. Further precision or refinement of the
+same relaxation is stopped. Root action, joint rotation/reference action
+and their same-history coupling remain the controlling gaps.
 
 Construction gives $\hat b_g=0$ at the first prediction and angular
 increment at most $0.0039051914291880918$ rad. Subsequently a complete

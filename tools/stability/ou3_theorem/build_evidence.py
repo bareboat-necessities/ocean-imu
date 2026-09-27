@@ -84,6 +84,11 @@ def validate() -> dict:
         verify_diagnostic(json.loads((STATUS.parent/"signed-adjoint-diagnostic.json").read_text()))
     except (ValueError, KeyError, OSError) as error:
         failures.append("signed adjoint diagnostic verification failed: "+str(error))
+    from tools.stability.ou3_theorem.signed_temporal_balance import verify_diagnostic as verify_balance
+    try:
+        verify_balance(json.loads((STATUS.parent/"signed-balance-diagnostic.json").read_text()))
+    except (ValueError, KeyError, OSError) as error:
+        failures.append("signed balance diagnostic verification failed: "+str(error))
     return {"validation_pass":not failures,"failures":failures,"base_main_commit":provenance["base_main_commit"],
             "shipping_behavior_authority":"source implementation","theorem_closed":expected["theorem_closed"]}
 

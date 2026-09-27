@@ -62,6 +62,8 @@ def certificate():
       "carried_adjoint_compatibility_criterion":True,
       "zero_mean_projection_preserves_adjoint":False,
       "signed_physical_bias_summation_by_parts":True,
+      "forced_data_adjoint_identity":True,
+      "forced_data_adjoint_source_uniform_action_bound":False,
       "physical_span_to_sampled_span":True,
       "construction_uniform_gyro_alias_exclusion":False,
       "B_star_instantiated":False,
@@ -196,7 +198,8 @@ def forced_adjoint_source_bound():
       "BG_endpoint_bounded":ep["b_hat_g_norm"] is not None,
       "AW_endpoint_bounded":ep["a_hat_w_norm"] is not None,
       "finite_numeric_ceiling":None,
-      "reason":"compatibility residuals remain; even compatible endpoint telescoping needs derived BG/AW endpoint bounds or justified cancellation",
+      "forced_data_identity_available":True,
+      "reason":"homogeneous compatibility residuals can be rewritten by the forced data adjoint, but its root, joint rotation/reference action and literal defects remain unbounded source-uniformly",
       "consequence":"no finite numeric source-uniform ceiling follows from the currently proved lemmas; insufficiency of the physical assumptions is not proved",
     }
 
@@ -326,6 +329,41 @@ def signed_bias_terms(weights, biases):
             "tail_weights":tails}
 
 
+def forced_data_adjoint(operations, weights):
+    """Exact residual-retaining rewrite, not homogeneous compatibility.
+
+    On ONE actual word, r_i=y_i-H_i u_i+epsilon_i and
+    u_(i+1)=A_i u_i+K_i r_i+d_i. For Z_N=0 set
+      L_i=W_i+Z_(i+1)K_i,
+      Z_i=Z_(i+1)A_i-L_i H_i.
+    Then sum W_i r_i=Z_0 u_0+sum L_i(y_i+epsilon_i)
+                       +sum Z_(i+1)d_i.
+    H is the literal mean observation map, NOT the full EKF Jacobian.
+    Rotation/reference dependence, root action and defects remain. This
+    enters the tail inequality only through the still-open signed margin.
+    """
+    from .matrix_certificates import add, matmul
+    if not operations or len(operations)!=len(weights):
+        raise ValueError("matching nonempty operations and weights required")
+    n,p=len(operations[0]['A']),len(weights[0])
+    if not n or not p: raise ValueError("nonempty state and output required")
+    def cast(a,rows,cols):
+        if len(a)!=rows or any(len(row)!=cols for row in a):
+            raise ValueError("invalid forced adjoint matrix shape")
+        return [[F(x) for x in row] for row in a]
+    z=[[F(0) for _ in range(n)] for _ in range(p)]
+    states=[z]; inputs=[]
+    for op,w in reversed(list(zip(operations,weights))):
+        m=len(op['H'])
+        if not m: raise ValueError("nonempty innovation coordinates required")
+        a=cast(op['A'],n,n); k=cast(op['K'],n,m)
+        h=cast(op['H'],m,n); w=cast(w,p,m)
+        ell=add(w,matmul(z,k))
+        z=add(matmul(z,a),matmul(ell,h),F(-1))
+        states.append(z); inputs.append(ell)
+    return {"Z":list(reversed(states)),"L":list(reversed(inputs))}
+
+
 def sampled_tilt_span_lower(theta_e, omega_max, fill_distance):
     """Angular span >= theta_E-2 Omega eta on samples covering the window.
 
@@ -352,6 +390,26 @@ def signed_acceleration_supply(endpoint_weight_norm_sum, weight_variation,
                           weighted_cell_square_sum,velocity_bound,jerk_bound))
     if min(e,var,cells,v,j)<0: raise ValueError("nonnegative source bounds required")
     return v*(e+var)+j*cells/2
+
+
+def physical_interval_sampling_error(weight_norms, times, left, right, jerk_bound):
+    """Jerk remainder after signed weights are summed within one interval.
+
+    D=sum C_i, H=right-left. The exact physical relation is
+      sum C_i a(t_i)=(D/H)(v(right)-v(left))+epsilon.
+    Integrating ||a(t_i)-a(s)||<=J|t_i-s| bounds epsilon by
+      J sum ||C_i|| ((t_i-left)^2+(right-t_i)^2)/(2H).
+    D MUST be summed with signs before its operator norm is bounded. The
+    intervals use one carried physical velocity history; no restart or
+    synthetic estimator update is involved.
+    """
+    weights=tuple(map(F,weight_norms)); times=tuple(map(F,times))
+    left,right,jerk=map(F,(left,right,jerk_bound))
+    if (not weights or len(weights)!=len(times) or left>=right or jerk<0
+            or any(w<0 for w in weights) or any(t<left or t>right for t in times)):
+        raise ValueError("valid physical interval, samples and norms required")
+    return jerk*sum((w*((t-left)**2+(right-t)**2)/(2*(right-left))
+                     for w,t in zip(weights,times)),F(0))
 
 
 def gyro_construction_barrier():

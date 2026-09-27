@@ -185,6 +185,137 @@ compatible, but `W-mean(W)=(-1/2,1/2)` is nonzero on ker C. The former claim
 boundary jets likewise do not solve the coupled mean adjoint. No estimator
 BG or AW endpoint bound follows from either cancellation.
 
+## Forced data adjoint on the same carried word
+
+There is an exact alternative to assuming homogeneous compatibility. It
+rewrites, rather than discards, both residual sums. In the default fixed
+deployment frame use all 18 Euclidean means
+`u=(bhat_g,vhat,phat,Shat,ahat,bhat_a)`. At a correction write
+
+`r_i=y_i-Hbar_i u_i+epsilon_i`,
+`u_(i+1)=A_i u_i+K_i r_i+d_i`.
+
+Here Hbar is the **literal mean observation map**, not the full EKF Jacobian.
+Its acc blocks are R_i at AW and I at BA; its S block is I at S; its magnetic
+map is zero because actual attitude and reference remain in y. Consequently
+
+`y_i^a=f_i^m+g R_i e_z`, `y_i^S=0`, `y_i^m=m_i^m-R_i B_i`.
+
+The innovation arithmetic epsilon, additive mean arithmetic d, and separate
+post-injection BA projection are retained. Predictions use the literal LIN
+transport, BG identity and the mode-dependent BA predictor. Quaternion
+corrections/resets affect subsequent actual R_i and K_i; no surrogate gains
+or reset-free coefficient history is substituted. If additional configured
+sensor-model terms or frame changes are present, their literal terms must
+also be carried; they cannot be charged as independent sensor noise.
+
+**Forced data identity.** For the existing desired innovation weights W_i,
+set Z_N=0 and, in reverse chronological order,
+
+`L_i=W_i+Z_(i+1)K_i`,
+`Z_i=Z_(i+1)A_i-L_i Hbar_i`.
+
+Then, with no rank or compatibility assumption,
+
+`sum_i W_i r_i=Z_0 u_0+sum_i L_i(y_i+epsilon_i)+sum_i Z_(i+1)d_i`.
+
+To prove it, put F_i=A_i-K_i Hbar_i. Then
+`Z_i=Z_(i+1)F_i-W_i Hbar_i`; substitute the two literal recurrences and
+sum the resulting adjacent state differences. The terminal term is zero
+because Z_N=0; the root term generally is not. This is an inhomogeneous
+adjoint. It does not repair the failed homogeneous equations or establish a
+bound on its own action.
+
+Using the same physical history, the acc and mag contributions become
+
+`sum_acc L_i Q_i a_i`
+`+sum_acc g L_i(R_i-Q_i)e_z`
+`+sum_mag L_i(Q_i B_i^true-R_i B_i)`
+`+sum_acc L_i(b_a,i+n_a,i)+sum_mag L_i(b_m,i+n_m,i)`.
+
+Keep the two rotation/reference sums jointly signed. Apply the physical
+velocity/primitive and bias-rate Abel identities to their respective
+physical terms before taking norms. This identifies the missing quantities
+precisely: root action, signed joint rotation/reference action, actual
+multiplier norm/variation, and literal defects. Physical tilt span and
+two-column magnetic information have not yet bounded them uniformly.
+No independent nominal coefficient box is used. This lemma enters
+`V_(j+1)<=rho V_j+c_d||d||^2` only through the unresolved signed separation,
+six historical pivots and complete corrected-word matrix comparison.
+
+**Gyro limitation of this identity.** In the default fixed-frame Euclidean
+recurrence, `A_i E_BG=E_BG` and `Hbar_i E_BG=0`, hence
+`F_i E_BG=E_BG`. Induction gives `Z_i E_BG=0` for the zero-terminal forced
+innovation functional, regardless of the BG rows of the actual gains.
+Thus this identity removes its BG root coefficient but supplies no restoring
+feedback for the BG mean itself. This unit column is a property of the
+frozen-attitude algebra, not an unstable mode of the coupled nonlinear
+estimator. An all-time BG barrier must use the actual attitude recurrence
+and magnetic/tilt constraints together; it cannot follow from this
+Euclidean feedback matrix alone.
+
+**Moving carried diagnostic and one refinement.** The observer runs the
+existing smooth source from construction: roll `0.02 sin(t/2)` and vertical
+displacement `0.4 sin(0.6t)`. Its physical bounds are satisfied; every window
+of length at least `4 pi` has gravity span `0.04`, so its attitude premise
+is conditional on `T_E>=4 pi`, `0<theta_E<=0.04`. This is not a numerical
+qualification of the symbolic deployment parameters. All-time actual
+MAGNETIC SERVICE remains unverified for this finite diagnostic.
+
+The 225--289-s carried tail uses four actual S knots
+`(0.065,21.365,42.665,63.96)` s relative to the root. The balance includes
+the inherited mean at 225.06 s through the last correction at 288.96 s;
+the 225-s origin is used only to label the spline knots. There is no reset.
+The balance includes
+12780 predictions, 12780 acc, 1598 mag and 892 S corrections, and 15270
+post-injection projection observations. All 18 means have consecutive
+operation-boundary continuity. The observer and untapped control have
+identical terminal means, quaternion, covariance, stages and magnetic count.
+The actual reference is checked constant on this particular word.
+The declared physical gravity 9.80665 and its shipping float representation
+are kept separately; their difference is an explicit model/arithmetic term.
+At 80 digits the forced identity residual norm is approximately
+`3.38446651750e-82`; this is a finite decimal diagnostic, not an interval
+enclosure or a source-uniform certificate. The root multiplier is not zero:
+its block Frobenius norms for BG,V,P,S,AW,BA are approximately
+`(0,.01746150,.003428686,.001083322,.00008578987,1.117579)`.
+Only its BG cancellation is the structural identity proved above.
+
+The recorded reference gives projected gravity `g||Pi_B e_z||=8.77133455729`.
+This is a diagnostic necessary budget for the normalized actual-S average
+under nominal collinearity; the spline defect and all other supplies still
+have to be charged. It is not a source-uniform nominal field floor. The
+rotation triangle bound costs `39.22565272637`, giving margin
+`-30.45431816909` before all other charges. This invalidates that norm
+relaxation, not the actual signed rotation term (whose norm is about .00116)
+or the original separation target. No interval enclosure of it is attempted.
+
+The cellwise signed-velocity/jerk bound costs
+`239.57211796185 + .39841223353 = 239.97053019538`. One refinement combines
+signed coefficients C_i inside each actual S interval [a,b] first. Put
+H=b-a and D=sum C_i. The exact physical identity and remainder are
+
+`sum C_i a(t_i)=(D/H)(v(b)-v(a))+epsilon`,
+`||epsilon||<=J sum ||C_i||[(t_i-a)^2+(b-t_i)^2]/(2H)`.
+
+Proof: compare each a(t_i) with `H^-1 integral_a^b a(s) ds` and integrate
+`||a(t_i)-a(s)||<=J|t_i-s|`. The velocity endpoints are shared across
+intervals, so sum by parts again with the signed D/H before taking norms.
+For C=(1,-1), sample times (0,1), a(t)=t, the total D vanishes but the
+remainder is exactly -1, attaining the bound; it cannot be discarded.
+
+On this word the refined velocity charge is `23.98805965312`, jerk charge
+`3.82238280532`, total `27.81044245844`, still `19.03910790115` above the
+recorded threshold before root, sensor, bias or spline defects. The signed
+physical acceleration action itself has norm about .005, but that value
+cannot be used as an upper bound for other histories. After this second
+failure, stop the variation-norm relaxation. The architecture review retains
+the same construction-to-H18-to-A21 path: the missing step is a joint bound
+on physical integral action, rotation/reference action and chronological
+gains, together with the attitude recurrence for BG level. Neither a nominal
+box nor a new proof track supplies it. Finite diagnostics alone cannot test
+the universal implication or justify strengthening MAGNETIC SERVICE.
+
 ## Construction and gyro complete turns
 
 The MEKF gyro-bias mean begins at zero; Live handoff imports no proxy bias,

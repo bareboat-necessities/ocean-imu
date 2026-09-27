@@ -32,6 +32,19 @@ Both targets remain OPEN; neither has a current-domain counterexample.
 - Physical sampled span is >=max(0,theta_E-2 Omega_max eta). The literal signed
   accelerometer pair identity retains physical acceleration, nominal force,
   bias updates and innovations. It does not assume R_hat follows R_true.
+- The forced data adjoint now rewrites both compatibility residual sums
+  exactly: with r=y-Hbar u+epsilon, L=W+Z_next K and
+  Z=Z_next A-L Hbar, sum W r=Z0 u0+sum L(y+epsilon)+sum Z_next d.
+  All 18 Euclidean means, literal gains/OU, reference, resets and projection
+  defects remain. No homogeneous compatibility is assumed. Its source-uniform
+  root/rotation/multiplier action remains open.
+- A moving construction-to-289-s observer/control pair has identical terminal
+  outputs. Four actual S knots in the tail are (.065,21.365,42.665,63.96) s;
+  the 80-digit forced-balance residual is about 3.38446651750e-82. This is a
+  finite diagnostic, not an interval or all-time magnetic-service certificate.
+  The exact frozen-attitude Euclidean map has F E_BG=E_BG and Z E_BG=0:
+  removal of this functional's root BG coefficient supplies no gyro restoring
+  feedback. Alias exclusion must include the actual attitude recurrence.
 - Exact adjoint criterion: for C_i=Phi_(N,i+1)K_i, compatibility is equivalent
   to ker C subset ker W. Otherwise the state and innovation residual sums
   remain. Zero terminal multipliers are impossible for the first nonsingular
@@ -72,7 +85,10 @@ and field remain separated, so it does not falsify either target margin.
 The physical span does not yet control the nominal force/field or gyro
 transport on every carried execution. Compatible adjoint norms, or useful
 bounds on both residual sums when incompatible, must be derived without
-independent nominal boxes or unsigned innovation energy. Then a quantitative
+independent nominal boxes or unsigned innovation energy. The forced data
+identity retains root action and joint signed rotation/reference action;
+cellwise and actual-S-interval norm relaxations failed as quantified below.
+Then a quantitative
 six-pivot bridge and coefficient compactness are needed. No uniform historical
 B_*, J_AG>0, full covariance upper bound or rho_0<1 is instantiated.
 
@@ -148,6 +164,25 @@ required high-precision feasibility check must precede any future one.
     injection d, the reset derivative J_l(d) differs from I+[d]/2. Smoothness
     alone does not prove eta(r)->0 for that comparison. Retain the explicit
     injection-dependent remainder and require a complete strict word margin.
+13. **Forced-data rotation triangle: failed relaxation.** On the carried
+    moving word, charge 39.22565272637 exceeds recorded projected gravity
+    8.77133455729: margin -30.45431816909 before other supplies. Invalidated:
+    separately norming the two rotations can close this budget. Retain the
+    exact jointly signed rotation/reference action and actual magnetic gains.
+    This does not falsify Delta_col or the physical assumptions. Current
+    limiter: no uniform coupled rotation/reference bound. Next: include
+    actual attitude dynamics and magnetic information before taking norms.
+14. **Physical acceleration variation norm: stop after one refinement.**
+    The cellwise velocity+jerk charge is 239.97053019538. Summing signed
+    weights over actual S intervals first gives 23.98805965312+3.82238280532
+    =27.81044245844, still margin -19.03910790115 against the same recorded
+    threshold. Invalidated: either variation-norm bound closes the budget;
+    no precision/subdivision retry is justified. Retain both exact integral
+    identities, bias-rate Abel supply and the actual signed acceleration
+    action (norm about .005 on this word). Architecture review: the single
+    construction/H18/A21 path remains; the missing joint physical-integral,
+    rotation/reference and gain bound cannot be replaced by separate norms.
+    Finite small actions do not supply source-uniform ceilings.
 
 ## Retained facts
 
@@ -188,11 +223,14 @@ the literal projection sector pending a shaped-region proof.
 
 ## Next falsifiable experiment
 
-Construct the forced balance for a carried moving word and compute the signed
-residual coefficient action before taking norms. Test whether physical
-velocity/primitive and bias-rate tail sums absorb it while preserving the
-sampled tilt chord and actual two-column magnetic information. If not, record
-the failed residual coefficient; do not refine the failed pairwise or energy
+Couple the forced data balance to the literal attitude and BG recurrences.
+Derive a joint supply for the rotation/reference and physical integral terms
+using sampled tilt and actual two-column magnetic information before separate
+norms. First test that proposed coupling on a carried moving word, including
+the construction-origin gyro level; its frozen Euclidean map alone has an
+identity BG column. A source-uniform action bound must then control root
+action and coefficient variation, with a quantitative margin that exceeds
+the recorded failed budgets. Do not refine the failed variation, pairwise or energy
 relaxations. Only a source-uniform positive margin and quantitative six-pivot
 bridge justify a common historical action enclosure. Before any new contraction
 enclosure evaluate the complete matrix ratio at high precision and stop if
@@ -200,55 +238,51 @@ it exceeds one.
 
 ## Validation and infrastructure
 
-- Serial `make all` passed using the installed Eigen 3.4.0 headers and the
-  normal verified pinned release archive; all 535 shared validation tests
-  passed. No shipping sources, physical constants, simulation inputs or
-  quality thresholds changed.
-- All 246 OU-III proof tests, 39 focused publication/workflow/provenance-shape
-  tests, the exact LIN path generator, and the standalone proof evidence gate
-  passed. The latter reproduces the signed certificate and verifies the exact
-  carried incompatibility witness and source/observer fingerprints.
-- The final shared evidence/publication suite passed all 535 tests after the
-  proof changes. Repository-wide Ruff and `git diff --check` passed.
-- Historical AG source diagnostics reproduced observer/control parity for all
-  four cases. The 80-digit action maxima range from 1199.060966781881 to
-  1450.252861111712; exact root cancellation and full correlated exported-word
-  enclosures pass for the quiet and moving words. Uniform coverage remains false.
-- LuaLaTeX completed two passes; the 11-page article was rendered and all pages
-  visually inspected, with the new mathematics inspected at full page size.
-  No overfull boxes or undefined references remain. Initial IEEE class font
-  substitutions and its existing amsmath `over` warning are nonfatal; final
-  body/math fonts render correctly.
-- Native construction diagnostics reproduced the existing storage and
-  historical-domain results. The unchanged mean-action diagnostic reproduced
-  89998 predictions and 122251 corrections at 80 digits; the 40-digit outward
-  enclosure and exact recorded-force audit passed. Its collinearity margin is
-  still in `[-817884.048495, -817884.048494]`, so these regressions do not reopen
-  the failed energy tactic or certify current-domain source-uniform coverage.
-- The follow-up PR initially had six overlapping proof-file conflicts because
-  #602's already-merged changes were not ancestors of the retained branch.
-  This was a repository-history failure, not a proof failure. The existing
-  changes on main are disjoint from this continuation's 21 proof paths;
-  reconciliation preserves both sets. Final validation ran on that combined
-  tree before the continuation was left for review.
-  `git diff --check HEAD` included pre-existing generated SVG whitespace from
-  those incoming main changes; the actual continuation diff against main
-  passes. The existing simulation/publication artifacts are preserved.
-- The reconciled `make all` passed all native stages and 531 shared tests,
-  then four `SourceArchiveProvenanceTests` failed in `shutil.copytree` with
-  `[Errno 28] No space left on device`. Classification: infrastructure
-  capacity, not a source/proof assertion failure. The remaining filesystem
-  capacity was 508 MiB; the two copied simulator trees alone require about
-  2.4 GiB. Removing this task's 3.6-GiB temporary TeX dependency cache after
-  PDF completion restored capacity. Resuming the same complete shared gate
-  with `make -C tests/validation test` passed all 535 tests. Retain the native
-  results; fixture logic and quality gates are unchanged. The root directory
-  has no `evidence-test` target; that target belongs to `tests/validation`.
+Current forced-data continuation:
 
-The first apt command failed with setgroups/setegid/seteuid errors in the
-container. Existing runtime Eigen headers resolved native builds. The first
-article compile failed on missing IEEEtran/luaotfload; matching local TeX
-packages, newtx fonts/maps and the generic binhex dependency resolved it.
-The CTAN redirect returned HTTP 502 and a guessed binhex path returned 404;
-verified Ubuntu package extraction supplied the dependencies instead. No
-article-format or quality-gate change was used to hide these environment errors.
+- The exact signed tests pass (18), including inhomogeneous adjoint root,
+  innovation/mean arithmetic, projection, the unit BG column, sharp interval
+  jerk remainder and diagnostic promotion/tamper rejection. The complete
+  OU-III proof suite passes 250 tests. The final shared evidence/proof/
+  publication gate, `make -C tests/validation test`, passes all 539 tests.
+  `build_evidence.py`, Ruff and `git diff --check` pass; theorem_closed=false.
+- The moving native observer/control parity and 80-digit signed balance pass.
+  Physical g=9.80665 and literal float g=9.8066501617431640625 are separated
+  by an explicit signed representation defect; no physical constant changes.
+- The initial native export had zero bytes and was rejected by the terminal
+  mean-continuity check. Classification: export/infrastructure failure, with
+  no numerical result accepted. A direct rerun produced the complete trace;
+  an explicit stream-flush/write check and full observer/control rerun now
+  guard export. The retained report concerns only that complete trace.
+- The first full-build session disappeared before returning status
+  (`write_stdin`: unknown process id 4731); its log ended in the frequency
+  stage. No pass was inferred. Re-running the same `make all` command with
+  continuous session polling returned exit 0. Its copied log was incomplete,
+  so the complete shared gate was additionally captured through stdout and
+  returned exit 0 with all 539 tests. Quality gates and fixtures are unchanged.
+- LuaLaTeX completed two passes for the final 12-page article. All pages
+  were rendered/decoded and visually inspected, with the new mathematics
+  checked at full resolution. No overfull boxes or unresolved references
+  remain. An intermediate PDF/PNG copy was truncated (PNG at 262144 bytes;
+  PDF had an invalid xref); it was not delivered. Fresh output, completed
+  rendering and decoding of every final PNG resolved the artifact failure.
+  Existing class-font/amsmath warnings remain nonfatal. The article is saved.
+
+Retained earlier validation evidence:
+
+- Native historical-reader observer/control parity passed in all four cases;
+  80-digit action maxima were 1199.060966781881--1450.252861111712. Exact root
+  cancellation and correlated exported-word enclosures passed for quiet and
+  moving words. Construction/mean-action regressions reproduced 89998
+  predictions and 122251 corrections at 80 digits, with a 40-digit outward
+  enclosure and exact recorded-force audit. None is source-uniform coverage.
+- The earlier reconciled build passed native stages but four archive-copy
+  tests hit `[Errno 28] No space left on device`: 508 MiB was free while the
+  copied simulator trees required about 2.4 GiB. Removing this task's 3.6-GiB
+  temporary TeX cache restored capacity, and all 535 then-current shared
+  tests passed. This was infrastructure capacity, not a proof failure;
+  fixture logic and quality gates remained unchanged.
+- Container apt operations failed on setgroups/setegid/seteuid; a CTAN
+  redirect and guessed binhex path also failed. Runtime Eigen and verified
+  local Ubuntu/CTAN package extraction supplied the needed build/TeX inputs.
+  No article format or source requirement was changed to hide those failures.

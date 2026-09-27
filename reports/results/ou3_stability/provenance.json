@@ -141,7 +141,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "dd7b3ffff789e3ee832a21835542addce81924fc"
+      "git_blob_sha": "1f340c80c8fb5e7507f50ecb2194a6e57eedf0c9"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -353,7 +353,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "581fdb41b20409768cdd35d4091ed21aaf2bb2af"
+      "git_blob_sha": "faa6b579526ad62b1b063cc1f8e9487b39d4a372"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
@@ -373,7 +373,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal.py",
-      "git_blob_sha": "475d272180665f70c66c20aafed7f4da874d3405"
+      "git_blob_sha": "77d7c64e448b85a94d0fb994e1aae4c10eaee384"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal_diagnostic.py",
@@ -381,11 +381,11 @@
     },
     {
       "path": "docs/ou3-signed-temporal-continuation.md",
-      "git_blob_sha": "8fdd38c01a82d7387fe6ec2a62d7d3f8bd472644"
+      "git_blob_sha": "9288f0aaaef6446a633e3ef8f83441e34c7a359f"
     },
     {
       "path": "reports/results/ou3_stability/signed-temporal-certificate.json",
-      "git_blob_sha": "174b7f8a2cdb8974bbcfe2877b2f1327ffc615ed"
+      "git_blob_sha": "17cfb0c5b38341392693785d80bc77bcc213be16"
     },
     {
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
@@ -393,7 +393,15 @@
     },
     {
       "path": "tests/validation/test_ou3_signed_temporal.py",
-      "git_blob_sha": "54c6bc34a48667a35b1e6633ea423106cc004036"
+      "git_blob_sha": "72701093c549d3ee858232e81b4cbb0b75f68634"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/signed_temporal_balance.py",
+      "git_blob_sha": "72c96bbb09c0f29b44018aeb0061156638ab5e54"
+    },
+    {
+      "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
+      "git_blob_sha": "6d8560536517f544e14a4f6d73ebe67f27b91b15"
     }
   ]
 }

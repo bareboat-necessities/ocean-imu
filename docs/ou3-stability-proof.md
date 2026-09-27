@@ -297,5 +297,9 @@ general six-degree capture remains open on the currently declared domain.
 The next signed-temporal step is detailed in
 `ou3-signed-temporal-continuation.md`: physical sampled tilt span and exact
 adjoint compatibility are established, but their transfer to positive
-Delta_col/Delta_gyr and all six historical pivots is not. Both compatibility
-residual sums and construction-linked gyro-bias evolution must remain.
+Delta_col/Delta_gyr and all six historical pivots is not. The forced data
+adjoint rewrites both residual sums into a root action, joint signed
+rotation/reference action and literal defects. Its moving-word identity is
+validated, but the tested norm supplies fail and no uniform action is proved.
+Construction-linked gyro-bias evolution must include the attitude recurrence;
+the frozen-attitude Euclidean map has an identity BG column.
