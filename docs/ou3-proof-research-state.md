@@ -355,3 +355,9 @@ Resolved findings and remaining validation limit:
   OOM/session loss was addressed with the memory options above; both Eigen
   variables are required by the separate Python-compiled device test.
   None of those interrupted runs was counted as a successful full gate.
+- **Publication reference resolution:** the named branch fetch returned
+  main's tree `04ab4912` instead of the published tree `4d4c65ef`; the
+  verification assertion stopped checkout synchronization without altering
+  the validated index. Fetching immutable commit `3009b003` returned the
+  exact expected tree. This was a ref-resolution failure, not changed proof
+  inputs. Use the published commit ID for subsequent synchronization checks.
