@@ -91,11 +91,16 @@ calibration. Short captures normally remain bias-only.
 
 ## Magnetometer direction and capture
 
-On AtomS3R, both magnetic capture and independent verification use the BMM150
+On AtomS3R, magnetic capture and independent verification attempt to use the BMM150
 high-accuracy preset: 47 XY repetitions, 83 Z repetitions, and 20 Hz output.
 The wizard checks register writes and restores the original repetition counts
-and output rate on completion, cancellation, or failure. Setup/restore errors
-stop the calibration without saving a candidate. Other IMU types retain their
+and output rate on completion, cancellation, or failure. If the optional preset
+is unavailable, capture continues through the existing M5Unified driver, provided
+no registers changed or rollback has been verified. An unverified restoration
+stops calibration without saving. Missing/frozen magnetic samples still fail the
+normal capture checks, and all fit/verification quality limits apply to fallback
+samples. Best-effort `[MAGCFG]` diagnostics identify the failed setup check and
+whether the preset or driver settings are used. Other IMU types retain their
 driver settings. The 45-second capture minimum and all magnetic quality limits
 remain unchanged; independent verification still needs at least 12 seconds
 and 140 spaced samples.

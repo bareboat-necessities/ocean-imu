@@ -30,14 +30,18 @@ static const V offset(8,-5,3);
 // Register fake also models a write whose acknowledgement is lost.
 struct MagDevice {
   uint8_t reg[256]{};
-  int operations=0, fail_at=0, writes=0;
+  int operations=0, fail_at=0, fail_from=0, writes=0;
+  bool bad_preset_readback=false;
   MagDevice() {reg[0x40]=0x32;reg[0x4B]=1;reg[0x4C]=0x38;reg[0x51]=1;reg[0x52]=2;}
   bool readRegister(uint8_t r,uint8_t* out,size_t n) {
-    if(++operations==fail_at)return false;
-    std::memcpy(out,reg+r,n);return true;
+    ++operations;
+    if(operations==fail_at || (fail_from && operations>=fail_from))return false;
+    std::memcpy(out,reg+r,n);
+    if(bad_preset_readback && r==0x51 && reg[r]==23)*out=22;
+    return true;
   }
   bool writeRegister8(uint8_t r,uint8_t v) {
-    ++writes;reg[r]=v;return ++operations!=fail_at;
+    ++writes;reg[r]=v;++operations;return operations!=fail_at && (!fail_from || operations<fail_from);
   }
   bool original() const {return reg[0x4C]==0x38 && reg[0x51]==1 && reg[0x52]==2;}
 };
@@ -67,6 +71,52 @@ static void testMagSensorMode() {
   dev.reg[0x40]=0;dev.writes=0;
   {Mode mode(&dev,magWait);check(!mode.begin() && dev.writes==0,"wrong chip is never configured");}
   Mode other(nullptr,magWait);check(other.begin() && other.restore(),"other IMU drivers are untouched");
+}
+
+static void testMagSetupFallback() {
+  using Mode=atoms3r_ical::MagCalMode<MagDevice>;
+  for(int fault=1;fault<=12;++fault) {
+    MagDevice d;d.fail_at=fault;
+    Mode mode(&d,magWait);
+    check(mode.prepare() && !mode.highAccuracy(),"optional preset failure does not block restored driver capture");
+    check(d.original(),"fallback starts only with original sensor settings");
+    check(std::strcmp(mode.setupFailure(),"none")!=0,"failed setup check is retained for diagnostics");
+  }
+  MagDevice d;
+  {
+    Mode mode(&d,magWait);
+    check(mode.prepare() && mode.highAccuracy(),"supported preset remains enabled through capture and verification");
+  }
+  check(d.original(),"successful preset restores after calibration");
+  d.bad_preset_readback=true;
+  {
+    Mode mode(&d,magWait);
+    check(mode.prepare() && !mode.highAccuracy() && d.original(),"preset readback mismatch safely rolls back");
+  }
+  d.bad_preset_readback=false;d.operations=0;d.fail_from=7;
+  {
+    Mode mode(&d,magWait);
+    check(!mode.prepare(),"persistent bus failure after a write cannot enter fallback capture");
+    d.fail_from=0;
+  }
+  check(d.original(),"restoration remains retryable after a bus failure");
+  for(uint8_t driver_mode : {0x3A,0x3E}) {
+    d.reg[0x4C]=driver_mode;d.writes=0;
+    Mode mode(&d,magWait);
+    check(mode.prepare() && !mode.highAccuracy() && d.writes==0 && d.reg[0x4C]==driver_mode,
+          "other driver modes can capture without raw-register reconfiguration");
+  }
+  d.reg[0x40]=0;d.writes=0;
+  Mode mode(&d,magWait);
+  check(mode.prepare() && !mode.highAccuracy() && d.writes==0,"unrecognized register interface remains driver-owned");
+  // The same capture/fit path must still qualify observations, not just setup.
+  MC cal;imu_cal::MagCapture<float,400> cap(cal);cap.begin(0);
+  MS status=MS::CAPTURING;
+  for(int i=0;i<=563;++i) {V m=50*distortion()*direction(i)+offset;status=cap.update(80*i,&m);}
+  imu_cal::MagCalibration<float> out;
+  check(status==MS::READY && cal.fit(out),"driver fallback reaches and passes ordinary capture/fit gates");
+  Mode absent(nullptr,magWait);
+  check(absent.prepare() && !absent.highAccuracy(),"missing register interface is left to the normal availability probe");
 }
 
 static void testMagSensorNoise() {
@@ -427,7 +477,7 @@ static void testAccelCompletionLogging() {
 }
 
 int main() {
-  testMagSensorMode();testMagSensorNoise();testMagneticQuality();testGuidance();testGyroCapture();testGyroMagneticNoise();testGyroMagneticInterruptions();
+  testMagSensorMode();testMagSetupFallback();testMagSensorNoise();testMagneticQuality();testGuidance();testGyroCapture();testGyroMagneticNoise();testGyroMagneticInterruptions();
   testAccelPoseProgress();testAccelCompletionLogging();
   std::printf("calibration_workflow-test: %d/%d checks passed\n",checks-failures,checks);
   return failures?1:0;

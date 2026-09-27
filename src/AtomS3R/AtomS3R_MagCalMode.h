@@ -17,21 +17,46 @@ class MagCalMode {
   MagCalMode& operator=(const MagCalMode&) = delete;
   ~MagCalMode() { restore(); }
 
+  // The precision preset is an optimization, not a prerequisite for capture.
+  // A partial transaction must be rolled back before using driver settings.
+  bool prepare() {
+    high_accuracy_=begin() && device_;
+    return high_accuracy_ || restore();
+  }
+  bool highAccuracy() const { return high_accuracy_; }
+  const char* setupFailure() const { return failure_; }
+
   bool begin() {
     if (!device_) return true; // Other IMUs keep their driver settings.
     if (changed_) return false;
     uint8_t id=0, power=0;
-    if (!read(0x40,id) || id!=0x32 || !read(0x4B,power) || !(power&1) ||
-        !read(0x4C,mode_) || (mode_&0xC7) ||
-        !read(0x51,xy_) || !read(0x52,z_)) return false;
+    failure_="chip ID read";
+    if (!read(0x40,id)) return false;
+    failure_="chip ID mismatch";
+    if (id!=0x32) return false;
+    failure_="power read";
+    if (!read(0x4B,power)) return false;
+    failure_="sensor suspended";
+    if (!(power&1)) return false;
+    failure_="mode read";
+    if (!read(0x4C,mode_)) return false;
+    failure_="driver mode incompatible";
+    if (mode_&0xC7) return false;
+    failure_="repetitions read";
+    if (!read(0x51,xy_) || !read(0x52,z_)) return false;
     // Enter sleep before changing repetitions. Finish any in-flight conversion.
     changed_=true; // Even a failed acknowledgement may have changed hardware.
+    failure_="sleep write";
     if (!device_->writeRegister8(0x4C,mode_|0x06)) return false;
     wait_(50);
     // 47 XY and 83 Z repetitions; 20 Hz is the maximum for this preset.
+    failure_="preset write";
     if (!device_->writeRegister8(0x51,23) || !device_->writeRegister8(0x52,82) ||
-        !device_->writeRegister8(0x4C,0x28) || !matches(0x28,23,82)) return false;
+        !device_->writeRegister8(0x4C,0x28)) return false;
     wait_(50);
+    failure_="preset readback";
+    if (!matches(0x28,23,82)) return false;
+    failure_="none";
     return true;
   }
 
@@ -57,7 +82,8 @@ class MagCalMode {
   Device* device_;
   void (*wait_)(uint32_t);
   uint8_t mode_=0,xy_=0,z_=0;
-  bool changed_=false;
+  bool changed_=false,high_accuracy_=false;
+  const char* failure_="preset unavailable";
 };
 
 } // namespace atoms3r_ical

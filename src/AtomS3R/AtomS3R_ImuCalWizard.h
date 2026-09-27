@@ -404,12 +404,19 @@ private:
                    M5.Imu.getImuInstancePtr(1) : nullptr;
     MagCalMode<m5::IMU_Base> mode(sensor, [](uint32_t ms) { delay(ms); });
     redo_all = false;
-    const bool configured = (M5.Imu.getType() != m5::imu_bmi270 || sensor) && mode.begin();
-    const bool ok = configured && runMagCaptureStage_(redo_all);
+    // Failed optional setup must not prevent capture through a working driver.
+    // prepare() permits fallback only before writes or after verified rollback.
+    const bool prepared = mode.prepare();
+    char diagnostic[128];
+    snprintf(diagnostic, sizeof(diagnostic), "[MAGCFG] %s; setup=%s",
+             mode.highAccuracy() ? "high accuracy" : (prepared ? "driver settings" : "restore failed"),
+             mode.setupFailure());
+    tryCalLogLine(Serial, diagnostic);
+    const bool ok = prepared && runMagCaptureStage_(redo_all);
     const bool restored = mode.restore();
-    if (!configured || !restored) {
+    if (!prepared || !restored) {
       mag_verified_ = false;
-      ui_.fail("MAG", configured ? "Sensor restore failed" : "Sensor setup failed");
+      ui_.fail("MAG", "Sensor restore failed");
       return false;
     }
     return ok;
