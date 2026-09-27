@@ -108,9 +108,12 @@
     "construction_history_stress": "One continuous diagonal-wave history has exact physical envelopes and is run from begin through Live/refinement/release to 600 s without reseeding. Its finite tail tilt about 8.21 degrees and nominal acceleration 9.7764 do not certify all-time magnetic service or refute eventual capture. No nominal-state cap or six-degree entry is inferred.",
     "construction_endpoint_storage": "Recorded full 21x21 covariance is exactly SPD. Zero true BA gives V >= e_ba^T P_ba,ba^-1 e_ba >11492.6752, with all cross covariance retained, excluding V<=36 at this finite endpoint. This is not all-time service, eventual-capture refutation, or active-projection proof.",
     "construction_mean_action": "The full carried BG/AW mean action retains actual six-row rank-three gains and innovation correlations, with explicit recorded mean rounding. Outward intervals and rational LDL certify gyro norm <1 at all recorded prefixes; exact binary checks give force/field sine >2/5 at 40000 tail acc observations. The energy-only pointwise uniform exclusion fails with margin [-817884.048495,-817884.048494]; this is an enclosure failure, not a reachable collinear history, source-uniform B_* or contraction. Fresh observer checks every actual gyro projection is inactive; only then is the affine unprojected mean replay analyzed.",
-    "marine_stillness_or_attitude_excitation": "Every physical window W=[t,t+T_E] is either completely still in physical truth or has gravity-direction tilt span at least theta_E. T_E and theta_E are symbolic until numerical qualification; yaw is not required by this premise.",
     "gyro_bias_estimator_invariant": "Implemented residual-bias ball R_g=.5 rad/s, separate from physical B_g=.02. Qualified rate includes Omega_max+B_g+N_g+R_g=1.1508652381980153; h in [.004,.006] gives argument .0069051914291880918 and real-source angle <.007. The API does not enforce dt_max.",
-    "one_prediction_gyro_transport": "Real-source Rodrigues and small-rate polynomial branches have transverse singular floor .003999991833333333... s. Complete-turn nominal bias relaxation excluded. Full signed temporal Delta_gyr, force/field separation and word float32 totality remain open."
+    "one_prediction_gyro_transport": "Real-source Rodrigues and small-rate polynomial branches have transverse singular floor .003999991833333333... s. Complete-turn nominal bias relaxation excluded. Full signed temporal Delta_gyr, force/field separation and word float32 totality remain open.",
+    "marine_complete_moving_window_excitation": "Every complete T_E window contained in one maximal physical moving episode has gravity span >=theta_E>0. Nondegenerate rest intervals define episode boundaries; isolated zero-rate instants do not restart them. Boundary-crossing windows require transition retention, not immediate excitation. Numerical qualification remains open.",
+    "stationary_information_and_detector": "True zero rate supplies direct gyro-bias information up to deterministic noise and bias drift. Gravity/magnetic observations retain physical attitude/BA ambiguity. Smooth rest/motion/rest histories have identical sensor inputs inside unchanged bias/rate/service limits. A finite-entry, universally finite-exit exact-rest detector is impossible on the admitted parameter family. The necessary-evidence monitor never certifies physical STILL and changes no shipping behavior.",
+    "regime_transition_composition": "Actual operation prefix gains and supplies compose conditionally, retaining covariance, projections/resets, clocks, physical S/bias histories and magnetic state. Finite detection/retention and a recurring cumulative product/supply budget are open; finite bridges alone are insufficient.",
+    "chronological_six_pivot_implication": "A chronological bound on |B-tI| plus two actual sensor-row groups and their reset/asynchrony/reference defect gives conditional sigma_min(O)>=s. Every greedy residual pivot is then >=s/sqrt(m). Source-uniform premises, B_*, J_AG and rho_0 are not certified; the two-temporal-margin implication remains open."
   },
   "operation_lemma_sources": [
     {
@@ -119,7 +122,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/marine_motion.py",
-      "git_blob_sha": "fd7b72a6b268db0cc08405d397f5a9ebb0adc06b"
+      "git_blob_sha": "cfc7494c875a12c56ea5b415e38a915962aa0a04"
     },
     {
       "path": "tools/stability/ou3_theorem/magnetic_service.py",
@@ -131,7 +134,7 @@
     },
     {
       "path": "tests/validation/test_ou3_marine_motion.py",
-      "git_blob_sha": "2557724ab6481e6f8e45c2bb5e1b48204d94859b"
+      "git_blob_sha": "9d9c2ef871c731490af4c56f3647665f1046cef6"
     },
     {
       "path": "tests/validation/test_ou3_magnetic_service.py",
@@ -143,7 +146,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "1ab5e56474aa4a4d9197ca3fa991db1fa7be3441"
+      "git_blob_sha": "03d883b0b82b3d48f27e2269dedd469b96984798"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -255,7 +258,7 @@
     },
     {
       "path": "docs/ou3-stationary-detectability.md",
-      "git_blob_sha": "e9e709f63c7bfa54a402ad2522f3debf133f0e38"
+      "git_blob_sha": "4099dde1eda977c073c9b4064b85901fd1bd7fe3"
     },
     {
       "path": "tests/validation/test_ou3_nuisance_upper_certificate.py",
@@ -315,7 +318,7 @@
     },
     {
       "path": "docs/ou3-corrected-word-proof.md",
-      "git_blob_sha": "38318b44884054b1017ea63283d3e90debcf5dd8"
+      "git_blob_sha": "0524e9255ae4918d1dfd4a9960cb19faa3a7b722"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout.py",
@@ -331,7 +334,7 @@
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "bd6aa0a2e128921eecba0ea60e815f1903caa611"
+      "git_blob_sha": "d19143361d19cdc0dd9ffc1bc6e45e48ebe6d887"
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
@@ -355,7 +358,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "0f148afea921d07d29f1ecafa964ecfbf42ab0c6"
+      "git_blob_sha": "09d5bd7d236d5262993cf736e77c6f0e128c84a7"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
@@ -363,7 +366,7 @@
     },
     {
       "path": "docs/ou3-construction-mean-action.md",
-      "git_blob_sha": "3a028369c461e29e3b23df68791747b647cac7bd"
+      "git_blob_sha": "f5a5e844b51cb18c87bc303696d0899683bc3d49"
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
@@ -403,7 +406,7 @@
     },
     {
       "path": "docs/ou3-signed-temporal-continuation.md",
-      "git_blob_sha": "783d60dab8086a1c19bfc3e4304b9038568d6390"
+      "git_blob_sha": "ec31239985c988d8b81ae8659beb741aa04cef9d"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal_diagnostic.py",
@@ -424,6 +427,59 @@
     {
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
       "git_blob_sha": "8eb20f1a00ca77b79ac35d947881d9a16b1fef52"
+    },
+    {
+      "path": "docs/ou3-regime-design.md",
+      "git_blob_sha": "a4292eed69bfa523fc2c2543f0d1ea4070deb4e8"
+    },
+    {
+      "path": "docs/ou3-moving-six-pivots.md",
+      "git_blob_sha": "dafd586ae4883ddc10361cb0db584aeaab92f7c9"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/regimes.py",
+      "git_blob_sha": "35445902e84dda56749e13c1da28a91f15ee3ba7"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/moving_pivots.py",
+      "git_blob_sha": "7b75d0e72c4931760aed9383ce5cb4fbc2444265"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/theorem_status.py",
+      "git_blob_sha": "844dedda6387546a0d16330157abff4a0e6a95be"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/constants.json",
+      "git_blob_sha": "5c6cd642ece49ba3b074ea534ea4f3e43e41ffdb"
+    },
+    {
+      "path": "tests/validation/test_ou3_regimes.py",
+      "git_blob_sha": "1673a7d2af5e32be711499c8a20825fcb527fc2e"
+    },
+    {
+      "path": "tests/validation/test_ou3_moving_pivots.py",
+      "git_blob_sha": "d1e8c8cabf778d937ff022cb6ac9575e75110e26"
+    },
+    {
+      "path": "tests/validation/test_ou3_theorem_status.py",
+      "git_blob_sha": "56ed007f7fe71c71a8a9a2c52df0581d17d5f97c"
+    },
+    {
+      "path": "tests/kalman_ou_iii/regime_ambiguity-test.cpp",
+      "git_blob_sha": "cce1ae5f80aba9419b85ec74e7b3547a681dca2f"
+    },
+    {
+      "path": "reports/results/ou3_stability/regime-certificate.json",
+      "git_blob_sha": "5d179ace3601f7a0cbdf2e6120ef24cbbdbcb362"
+    },
+    {
+      "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
+      "git_blob_sha": "aa9f5da7190f1f362fb087e2574c828c6f03cc19"
+    },
+    {
+      "path": "tests/kalman_ou_iii/RegimeRegression.mk",
+      "git_blob_sha": "006d4057061f282dfd03df20949ce02e4f91fb6b"
     }
-  ]
+  ],
+  "regime_continuation_base_main_commit": "ed5c020e36935df09e19d12b7e8210fff00006a7"
 }

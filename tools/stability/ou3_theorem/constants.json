@@ -1,5 +1,5 @@
 {
-  "qualification": "OU3_MARINE_IMU_MAGNETIC_CONTRACT_V2",
+  "qualification": "OU3_MARINE_IMU_MAGNETIC_CONTRACT_V3",
   "role": "Declared deterministic certification limits. A numeric limit is not a claim that every assembled device has been qualified to it.",
   "marine_motion": {
     "P_max_m": 8.1,
@@ -13,8 +13,9 @@
       "T_E_s": null,
       "theta_E_rad": null,
       "metric": "gravity-direction tilt span",
-      "rule": "on every T_E window: complete physical stillness OR tilt span >= theta_E",
-      "numerical_qualification": "OPEN; pinned 28-ft RAO evidence does not presently certify a theorem-grade source-uniform rolling minimum"
+      "rule": "for every physical moving episode I and every complete window W of duration T_E contained in closure(I): gravity-direction span(W) >= theta_E; windows crossing physical rest boundaries belong to transition; isolated zero-rate instants do not split moving episodes",
+      "numerical_qualification": "OPEN; pinned 28-ft RAO evidence does not presently certify a theorem-grade source-uniform rolling minimum",
+      "transition_scope": "one carried physical episode; no boundary reselection at proof words; finite detector delay and recurring bridge retention remain OPEN"
     }
   },
   "imu_bias": {

@@ -2,258 +2,102 @@
 
 ## Current hypothesis
 
-One persistent physical execution follows construction -> startup/capture ->
-magnetically informed H18 -> refinement/release -> recurring magnetically
-informed A21 -> regional practical stability. OU-II/III implement a separate
-residual gyro-bias mean ball of radius .5 rad/s. Tuning, physical constants,
-covariance and quality gates are unchanged by that hardening.
+One persistent MARINE MOTION / IMU BIAS / MAGNETIC SERVICE execution follows
+construction -> capture -> informed H18 -> refinement/release -> recurring
+A21 -> regional practical stability. STILL / TRANSITION / MOVING qualify
+portions of this same route. No shipping mode switch is enabled.
 
-On every physical T_E window, MARINE MOTION requires complete stillness or
-complete-interval gravity-direction span >=theta_E>0. T_E/theta_E remain
-symbolic; no pinned RAO qualification supplies their numerical values.
-The diagonal-wave p=-(3/2)sin(2t)(1,0,1), R=I is now inadmissible. Quiet water
-and quiet-bias ambiguity remain admissible. MAGNETIC SERVICE is still actual
-applied normalized heading/axial-bias information, not cadence or six-state
-observability. Its assumptions have not been strengthened.
+Excitation means Delta_g([t,t+T_E])>=theta_E on **every complete window
+contained in one maximal physical moving episode**, between nondegenerate
+rest intervals. Isolated zero-rate instants do not split an episode. Crossing
+windows do not owe excitation. T_E/theta_E remain symbolic. The old global
+rolling stillness-or-span rule is removed, not repaired by more assumptions.
 
-The controlling moving-history targets remain positive source-uniform
-Delta_col and Delta_gyr, using signed sensor identities and actual chronological
-gains, OU transport, resets, S corrections, references and physical bias history.
-Both targets remain OPEN; neither has a current-domain counterexample.
+The stationary target must allow physical attitude/BA ambiguity and cover
+all measurement-compatible histories before quiet evidence changes estimator
+behavior. The existing assumptions admit exact rest/motion indistinguishability;
+a sound exact-rest detector with finite entry and universal finite exit is
+impossible on that admitted parameter family. This does not establish that
+no estimator change is needed. Full stationary practical boundedness is OPEN.
+The moving signed margins Delta_col/Delta_gyr, six-pivot uniform premises,
+B_*, J_AG, rho_0 and nonlinear every-prefix retention remain OPEN.
 
 ## Evidence
 
-### Gyro-bias projection investigation
-
-While preparing the authorized merge, main advanced through PRs #605 and #607
-to 1f5db4fc. Eight proof/evidence files conflicted; no estimator projection
-code conflicted. Classification: concurrent proof integration. Preserve the
-new exact compatibility/forced-balance results and the withdrawal of the
-unsupported two-margin-to-six-pivot implication. Combine those results with
-the implemented gyro mean invariant, without promoting the complete temporal
-margin. Regenerate both newly introduced native signed diagnostics against
-the projected estimator; observe the gyro projection as well as the existing
-accelerometer projection. Calibration changes remain exactly as merged on main.
-Rerun proof/publication contracts, the full build and CI on this combined tree.
-
-The verified full before/after validation now compares 840 scored cases plus
-18 calibration replays, and full OU-III robustness compares 310 scored cases
-plus one calibration replay. Protected temporary inputs pass row-count and
-before/after hash checks; paired physical inputs, reference metrics and operation
-counts agree exactly. No projection activates. Baseline full-validation maxima
-are .01652885530/.03682743654 rad/s for OU-II/III, and the largest prediction
-argument is .00545307943 rad. Robustness reaches .01538185207 rad/s. Maximum
-validation RMS differences are .000044 m displacement and .000431 degrees
-attitude. These verified runs replace the invalid local comparison below.
-
-After all estimator and 535 validation/proof tests passed, `make all` stopped at
-`tests/wave_dir/run_tests.sh` with `./wave-direction-iq-test: Permission denied`
-(exit 126). The generated ELF had mode 0644. Classification: local build-artifact
-permission failure; this does not invalidate numerical tests already completed.
-Rebuilding that unchanged target restored its executable mode and all four
-wave-direction targets passed. The complete `make all` then passed with exit 0;
-no source, build recipe or test gate was changed for this failure.
-
-Review found that paired audit aggregation was only a local script, so the
-documented CLI could not reproduce the reported comparisons. Classification:
-engineering-evidence reproducibility gap, not a numerical discrepancy. The
-checked-in `--compare` operation now reads retained audit directories, verifies
-stdout/input integrity, matches physical inputs and reference metrics, and
-reports all deltas and projection activity. Validate it against the completed
-full studies and test rejection of changed/unverified inputs before publication.
-The comparison CLI reproduces every committed full-study comparison field and
-both deterministic metric comparisons exactly; all six integrity regressions
-pass. The local Python gate initially reported `ruff not installed`; installing
-the missing linter in an isolated scratch directory restores that gate without
-changing repository dependencies or lint rules.
-That gate then caught B023 in the new regression's loop callback; explicitly
-binding its `row` argument fixes the test-only closure. Classification: test
-lint failure, with paired numerical results and shipping behavior unchanged.
-
-Main's concurrent evidence-only commit 68c645c2 caused 14 generated-file merge
-conflicts and prevented pull-request CI from starting. Classification: evidence
-integration, with no shipping source conflict. Resolve the generated bundle
-coherently to this branch's fresh full replay (5e4957b9), rather than combining
-rows from distinct source executions; retain the new instrumented comparison.
-The integrated branch must pass another full replay/fingerprint gate before
-publication is accepted. This invalidates no completed native or paired audit.
-
-The first completed full paired audit is invalid: the reference displacement
-RMS differs by up to .05722934 m between paired executions, and 6 baseline / 5
-modified generated input paths have different byte hashes between tuning-mode
-replays. Classification: local temporary-input integrity failure, not an
-estimator regression. Scalar simulator exit status was insufficient to detect
-the changing inputs. Retain the separate deterministic/smoke runs and source
-proof; discard this full comparison and its unverified replay cache. Rerun
-with temporary inputs in shared memory, check generated row counts and every
-input hash before/after execution, and require identical paired input records
-before accepting any performance difference. The projection remains inactive
-in the observations, but these corrupted-input runs cannot establish the
-validated-scenario range.
-The initial integrity guard also rejected the robustness calibration's pinned
-release input with `KeyError`, because it assumed every input was generated.
-Classification: diagnostic input classification. Permit only the enumerated
-release records as that alternate input class and verify their before/after
-hashes too; keep generated-input row-count and hash checks strict.
-
-The first PR evidence-contract job (36330449969) and validation unit-test
-prerequisite (36330449922, `make -C tests/validation test`) correctly rejected the old
-publication replays: `replay dependency differs from replay provenance` for
-the common OU math header and OU-II/III headers. Classification: stale
-publication evidence after the authorized source change. The separate proof
-provenance is clean. The initial broad builds (36330450308 and 36330428399)
-also rejected plot generation with `ValueError: TFG comparison source
-provenance is stale`; their native OU regressions passed. Full branch run
-36330428389 regenerated validation, robustness and the paired TFG comparison
-successfully, publishing commit 5e4957b9. Only those fresh runs replace the
-publication manifests; no old replay data was restamped. Local long-running
-replay/build processes were also interrupted
-before completion; the audit now checkpoints scalar replays by exact binary,
-input, seed and settings hashes, so completed executions survive a restart.
-
-
-The parallel full replay/build attempt exhausted local scratch space. The
-modified full audit failed `OSError: [Errno 28] No space left on device`;
-`make all` failed assembling `shipping_contract-test.o` with the same error.
-Classification: storage exhaustion, invalidating completion of those runs.
-Removed only this checkout's reproducible ignored simulation time-series CSVs
-(2.36 GB), retained all metrics/logs and source evidence, and removed the failed
-object. Retry with optional time-series writing disabled; all scenarios and
-quality gates remain unchanged. Completed baseline and smoke evidence remain
-valid. Direct HTTPS push also lacked credentials (`could not read Username`);
-use the authorized GitHub connector to publish the identical reviewed tree.
-
-
-The first `make all` stopped while compiling OU-III `kalman_ou_iii-sim.cpp`:
-`g++: fatal error: Killed signal terminated program cc1plus`, followed by
-`Makefile:62: kalman_ou_iii-sim.o Error 1`. Classification: local resource
-exhaustion during concurrent Eigen-heavy diagnostic builds, not a source
-compile diagnostic. Retain completed focused tests and replays. Retry the
-unchanged full build after the diagnostic compilers finish, without lowering
-optimization, disabling tests or changing quality gates.
-
-
-The validation audit initially used the runner's single-family option, but
-`stationary_normalized_aggregate` rejected it with `stationary normalized
-aggregate is not paired`. Classification: diagnostic protocol mismatch; the
-paired publication runner requires both families for its aggregate. Retain
-all completed standalone audits. Run both frozen instrumented binaries in
-one unchanged paired protocol and retain every observed replay; do not alter
-the aggregation gate or estimator to accommodate the audit.
-
-
-The first post-edit OU-III proof suite correctly failed seven provenance/status
-checks while native source evidence was still bound to the old headers. No
-mathematical test failed. Classification: expected stale evidence, invalidating
-reuse of the old source-bound transcript. Retained: exact algebra and the
-new one-cell lemma. Regenerate the native readout, construction and mean-action
-traces, then bind their newly generated hashes and rerun the full proof suite;
-do not restamp the previous evidence.
-
-
-Completed baseline normal/stress audits observed maxima .00453739418/.00625276338
-rad/s in OU-II/III ordinary simulations and .02499966138/.02478606482 in
-stationary-device stress. The chosen .5 radius leaves 20x the largest observed
-stress and 25x the physical qualification. All candidate radii .1,.2,.5,1
-were inactive. Paired replays, the new common-helper regressions and the
-source-uniform one-prediction certificate are described in
-`ou-gyro-bias-projection.md`. Covariance and filter tuning are unchanged.
-
-
-The first read-only bias audit compiled and passed the full OU-II simulator,
-then its OU-II startup diagnostic failed to link: `multiple definition of
-g_std`. The diagnostic incorrectly linked W3dSimCommon.cpp to the standalone
-OU-II startup target. Classification: diagnostic build recipe, not estimator
-behavior or a mathematical failure. The regular target's standalone link is
-retained; only the OU-III startup target needs W3dSimCommon. The completed
-OU-II observations remain valid. The corrected observer and both baseline families now pass; the original
-completed observations are retained in the paired report. No stability result is promoted by this diagnostic.
-
-The first adversarial native regression then failed `invalid sensor packet
-changed gyro estimate`: both OU accelerometer APIs allowed a NaN sample to
-enter the coupled correction, after which the gyro recovery correctly zeroed
-the contaminated estimate. Classification: invalid-input handling gap. The
-invalidated expectation was that accelerometer updates shared the magnetic
-finite-input rejection. Reject non-finite acceleration/temperature before the
-correction, preserving state/covariance; keep the central gyro recovery for
-non-finite computed corrections. Next check: repeat the adversarial tests and
-unchanged valid-input replays. No numerical gate or covariance reset changes.
-
-### Carried proof continuation
-
-- The retained compatibility and forced-balance work reached main through
-  PR #605 and is preserved with the projection invariant.
-- Threshold hygiene: theta_E is checked finite and strictly positive before
-  stillness and excitation. Tests cover zero, negative, NaN and both infinities
-  under both branches, including invalid span. Initial focused validation: 11
-  tests passed; expanded signed-temporal/physical validation: 25 passed.
-- Physical sampled span is >=max(0,theta_E-2 Omega_max eta). The literal signed
-  accelerometer pair identity retains physical acceleration, nominal force,
-  bias updates and innovations. It does not assume R_hat follows R_true.
-- The forced data adjoint now rewrites both compatibility residual sums
-  exactly: with r=y-Hbar u+epsilon, L=W+Z_next K and
-  Z=Z_next A-L Hbar, sum W r=Z0 u0+sum L(y+epsilon)+sum Z_next d.
-  All 18 Euclidean means, literal gains/OU, reference, resets and projection
-  defects remain. No homogeneous compatibility is assumed. Its source-uniform
-  root/rotation/multiplier action remains open.
-- A moving construction-to-289-s observer/control pair has identical terminal
-  outputs. Four actual S knots in the tail are (.065,21.365,42.665,63.96) s;
-  the 80-digit forced-balance residual is about 3.38446651750e-82. This is a
-  finite diagnostic, not an interval or all-time magnetic-service certificate.
-  The exact frozen-attitude Euclidean map has F E_BG=E_BG and Z E_BG=0:
-  removal of this functional's root BG coefficient supplies no gyro restoring
-  feedback. The full signed gyro margin must include actual attitude transport.
-- Exact adjoint criterion: for C_i=Phi_(N,i+1)K_i, compatibility is equivalent
-  to ker C subset ker W. Otherwise the state and innovation residual sums
-  remain. Zero terminal multipliers are impossible for the first nonsingular
-  regular S atom c0(I-K_SS).
-- An actual quiet construction-to-release observer/control run has identical
-  terminal outputs. Four actual S knots are (0.025,0.160,0.295,0.430) s relative
-  to the 225-s root. Its exported rational full-mean functional has a
-  seven-column witness ||v||_infinity=1, Cv=0 and
-  |Wv|>754573637/5000000000000000. The 80-digit value is approximately
-  3.0182945480072294e-7. This is exact incompatibility of that coefficient
-  word, not an enclosure of all real-arithmetic histories or all-time service.
-  The actual quiet innovations vanish; no instability follows.
-- Signed physical bias summation uses the total and tail sums of weights,
-  then bounds physical rate. Signed physical acceleration summation uses the
-  same velocity integral, weight variation and the existing jerk sampling
-  error. These are useful residual supplies conditional on actual multiplier
-  bounds, not nominal mean clamps or separation certificates.
-- Construction BG mean is zero and the first prediction increment is
-  <=0.0039051914291880918 rad. A later complete turn requires nominal bias
-  norm >1046.5466859583 rad/s for allowed h. The implemented .5 rad/s gyro
-  ball excludes this barrier on every qualified prediction and supplies a
-  one-step transport floor; the complete signed temporal margin remains open.
-- The historical implication is corrected: SIX uniform residual-pivot floors
-  plus operator/factor bounds imply exact L O=T_h and finite B_*. The former
-  claim that two proposed temporal margins automatically supply these six
-  floors was unproved and has been withdrawn. The backward action bound now
-  includes its terminal selector and all observation subtractions.
-
-A conditional smooth moving family also disproves mandatory nominal tilt
-response: phi=(theta_E/2)sin(2pi t/T_E), p=0, b_g=-omega,
-b_a=g(R'e_z-e_z), B=75e_x produces exactly quiet measurements. The sufficient
-symbolic bias/rate/service conditions are proved in the signed-temporal note;
-no numerical T_E/theta_E is selected. This family meets physical tilt span
-when those conditions hold, yet nominal attitude is fixed. Its nominal force
-and field remain separated, so it does not falsify either target margin.
+- `ou3-regime-design.md` states observable stationary information, required
+  practical theorem, detector obligations, carried transition state and the
+  obstruction before any shipping change. Terminal gyro-bias averaging has
+  exact supply N_g+Omega_tube+D_g sum(weight*sample_age); coherent deterministic
+  noise does not average away. Gravity/BA retain a one-dimensional kernel
+  about the known magnetic axis. Existing projections alone do not close it.
+- The sin-cubed rest/motion/rest witness uses alpha=1/1000, nu=1/40,
+  p=v=a=0, B=75e_x, b_g=-phi' e_x and b_a=g(R'e_z-e_z). Its bias/rate
+  upper bounds are .00980665, .00073549875, .000075 and .000005625 in
+  their respective SI units. All lie strictly inside unchanged limits;
+  joins are C2, jerk/primitive vanish and complete 80*pi windows have span
+  .002. The measured packets are exactly level/north for arbitrary duration.
+  Existing actually-applied stationary service retains a floor >1 after
+  the exact rational lower factor (1-alpha^2/2)^2. This is a witness parameter
+  instance, not a deployment qualification of symbolic T_E/theta_E.
+- `regimes.py` implements complete-window requirements, exact conditional
+  every-prefix bridge composition and deterministic stationary gyro supply.
+  Its constant-memory necessary-evidence monitor uses physical/noise bounds,
+  a supplied continuous dwell and immediate evidence-failure exit. Invalid
+  packets/gaps restart dwell. It never returns a physical-STILL certificate.
+  Estimated wave states cannot distinguish identical input histories.
+- `ou3-moving-six-pivots.md` continues the same-history reader: chronological
+  prediction/reset recursion bounds |B-tI|, then the actual two-group row
+  budget gives s=c/[1+(a+1)/b0]-epsilon. If s>0, every one of six greedy
+  row pivots is >=s/sqrt(m). All asynchronous/reset/reference defects remain.
+  Source-uniform c,b0,epsilon and factor/count bounds have not been obtained.
+  The exact supplied matrix audit has s=19/100; its 80-digit singular value
+  is .35070823886858529042926658460119746953531050023679. This is algebraic
+  feasibility, not a contraction construction or a shipping certificate.
+- The exact zero-residual quiet nominal record supplies a special two-group
+  floor: actually applied acc/mag pairs eight qualified predictions apart
+  have C'C>=81 I, A=I, B=(sum h_i)I with sum h_i>=4/125, and E=0.
+  Thus s=18/127 and six pivots >=9/254. This is a
+  nominal row theorem, compatible with physical tilt/BA ambiguity. It is
+  not a full stationary covariance/noise-action or nonlinear theorem.
+- The current excited moving forced-balance word already has roll
+  .02 sin(t/2) and displacement .4 sin(.6t)e_z. It satisfies the moving span
+  premise for T_E>=4*pi, 0<theta_E<=.04. Its 80-digit balance residual is
+  about 3.38446651750e-82, with exact observer/control terminal parity.
+  Its failed rotation and variation budgets remain failed after removing
+  indefinite stillness; see DEAD_ENDS 13--14. No scalar refinement is retried.
+- The exact carried-adjoint compatibility criterion is ker C subset ker W.
+  Otherwise both residual sums remain. The forced-data identity retains
+  root action, joint signed rotation/reference, literal gains, all Euclidean
+  means and reset/projection/rounding defects. In the frozen-attitude map,
+  F E_BG=E_BG and Z E_BG=0; that cancellation is not gyro feedback.
+  The quiet word's exact seven-column null witness has |Wv|>
+  754573637/5000000000000000, while its actual quiet innovations vanish.
+- Existing shipping projection evidence is retained unchanged: residual
+  gyro-bias <=.5 rad/s, qualified prediction angle <.007, one-step transport
+  floor .003999991833333333 s. A complete turn would require bias norm
+  >1046.5466859583 rad/s on the qualified 4--6 ms family. None of these is
+  a complete signed temporal gyro margin. No projection was active in the
+  verified 840-case validation plus 18 calibration and 310-case robustness
+  plus one calibration paired studies; those source/input-bound replays
+  are not regenerated or restamped by this proof-only continuation.
 
 ## Current limiter
 
-The physical span does not yet control the nominal force/field or complete
-signed gyro transport on every carried execution. Compatible adjoint norms, or useful
-bounds on both residual sums when incompatible, must be derived without
-independent nominal boxes or unsigned innovation energy. The forced data
-identity retains root action and joint signed rotation/reference action;
-cellwise and actual-S-interval norm relaxations failed as quantified below.
-Then a quantitative
-six-pivot bridge and coefficient compactness are needed. No uniform historical
-B_*, J_AG>0, full covariance upper bound or rho_0<1 is instantiated.
+Exact physical rest is not identifiable from the current sensor/bias model.
+A stationary practical theorem for the entire compatible class is required
+before shipping detector/state/covariance changes can be justified. Conditional
+finite bridge algebra does not supply detection liveness, a retained set or a
+budget for arbitrarily repeated switches. These are explicit OPEN obligations.
 
-All new lemmas enter V_(j+1)<=rho V_j+c_d||d||^2 only through these unresolved
-steps. No new contraction enclosure is attempted with missing inputs; the
-required high-precision feasibility check must precede any future one.
+On MOVING windows, physical span still does not control the nominal force,
+reference and complete signed gyro transport. The new six-pivot lemma supplies
+a quantitative sufficient budget, not its source-uniform premises. Preserve
+actual chronological gains, resets, OU and bias histories. No independent
+nominal boxes, unsigned energy, sampled Gramian or finite replay closes B_*.
+Every new lemma's role in V_next<=rho V+c_d|d|^2 is stated in the design:
+stationary information sets a supply/ambiguity radius, bridge products and
+supplies compose rho/c_d, and six pivots feed the historical covariance/loss
+comparison. Source-uniform numerical contraction enclosure is not yet justified.
 
 ## Failed approaches / DEAD_ENDS
 
@@ -345,6 +189,24 @@ required high-precision feasibility check must precede any future one.
     rotation/reference and gain bound cannot be replaced by separate norms.
     Finite small actions do not supply source-uniform ceilings.
 
+15. **Exact-STILL entry/exit detection: analytic identifiability failure.**
+    The new sin-cubed witness has exactly the same full IMU/magnetic record
+    as true rest, including across C2 joins. Any causal detector entering on
+    rest follows the identical state sequence through arbitrarily long hidden
+    motion. Invalidated: finite dwell, gyro/acc variation or estimated v/aw
+    alone guarantee both sound exact-rest entry and finite exit. Retain the
+    stationary gyro information and physical ambiguity tube; no instability
+    or failure of signed nominal margins follows. Limiter: no practical
+    theorem for the whole compatible class. Next: derive that quotient/set
+    storage before considering stationary mean or covariance changes.
+16. **Finite bridges alone: switching-composition failure.** A moving norm
+    gain 1/2 and finite bridge norm gain 3 give repeated gain (3/2)^n.
+    Invalidated: individual finite retention establishes recurring stability.
+    Retain exact every-prefix product/supply composition. Limiter: uniform
+    product and transported-supply control through all switches. Next: derive
+    that budget from actual operations or prove eventual regime retention;
+    do not add a convenient physical switching/dwell assumption.
+
 ## Retained facts
 
 The sampled acceleration mean bound, constant-field joint physical vector
@@ -374,76 +236,90 @@ replay promotion is substituted for the retained proof path.
 
 ## Alternatives
 
-Use observation-forced multipliers with explicit state/innovation residuals,
-then exploit their actual signed temporal weights against physical velocity,
-primitive and bias histories. A homogeneous compatible terminal map is allowed
-only if its kernel condition and norms are proved. Gyro control must retain
-the implemented level bound and actual attitude transport; a one-step transport
-floor alone does not control the signed word. Stillness keeps
-the literal projection sector pending a shaped-region proof.
+For stationary operation, pursue a set/quotient practical storage retaining
+physical tilt/BA ambiguity separately from estimator covariance. A gyro-only
+observation must charge the entire compatible physical-rate tube. Do not hold
+BA, force zero velocity, or shrink covariance solely from quiet-looking data.
+
+For MOVING, couple the signed forced-data identity to actual attitude/BG
+transport and magnetic reference action before taking norms. Use the explicit
+chronological two-group budget, or a sharper same-history row factorization,
+to prove all six pivots. The source-uniform row/defect margin must exceed the
+recorded failed budgets; a convenient supplied example cannot select it.
 
 ## Next falsifiable experiment
 
-Couple the forced data balance to the literal attitude and BG recurrences.
-Derive a joint supply for the rotation/reference and physical integral terms
-using sampled tilt and actual two-column magnetic information before separate
-norms. First test that proposed coupling on a carried moving word, including
-the implemented gyro level bound; its frozen Euclidean map alone has an
-identity BG column. A source-uniform action bound must then control root
-action and coefficient variation, with a quantitative margin that exceeds
-the recorded failed budgets. Do not refine the failed variation, pairwise or energy
-relaxations. Only a source-uniform positive margin and quantitative six-pivot
-bridge justify a common historical action enclosure. Before any new contraction
-enclosure evaluate the complete matrix ratio at high precision and stop if
-it exceeds one.
+Derive a proposed stationary compatible-class storage and a moving joint
+rotation/reference/physical-integral budget with all supplied constants
+explicit. Evaluate their full finite-error ratios at high precision on the
+carried quiet and already-excited moving words before any rigorous contraction
+enclosure. Reject a proposed contraction construction if its worst tested
+ratio exceeds one; a passing finite test remains non-promoting. Establish
+uniform reset and actual-row budgets before instantiating six pivots and B_*.
+Do not repeat the failed pairwise, unsigned-energy or variation-norm tactics.
 
 ## Validation and infrastructure
 
-Current forced-data continuation:
+Based on main ed5c020e36935df09e19d12b7e8210fff00006a7, including both
+concurrent calibration fixes. The final complete command
+`EIGEN_INCLUDE_DIR=<Eigen-3.4.0> W3D_WRITE_TIMESERIES=0 make all
+EIGEN_DIR=<Eigen-3.4.0>` returns **exit 0**, including all **571 shared tests**
+and every native suite. Inputs, scenarios, gates and source are unchanged.
+Only reproducible ignored CSV outputs are discarded after scoring to keep
+workspace capacity available; scalar logs and evidence are retained.
 
-- The exact signed tests pass (18), including inhomogeneous adjoint root,
-  innovation/mean arithmetic, projection, the unit BG column, sharp interval
-  jerk remainder and diagnostic promotion/tamper rejection. The complete
-  OU-III proof suite passes 250 tests. The final shared evidence/proof/
-  publication gate, `make -C tests/validation test`, passes all 539 tests.
-  `build_evidence.py`, Ruff and `git diff --check` pass; theorem_closed=false.
-- The moving native observer/control parity and 80-digit signed balance pass.
-  Physical g=9.80665 and literal float g=9.8066501617431640625 are separated
-  by an explicit signed representation defect; no physical constant changes.
-- The initial native export had zero bytes and was rejected by the terminal
-  mean-continuity check. Classification: export/infrastructure failure, with
-  no numerical result accepted. A direct rerun produced the complete trace;
-  an explicit stream-flush/write check and full observer/control rerun now
-  guard export. The retained report concerns only that complete trace.
-- The first full-build session disappeared before returning status
-  (`write_stdin`: unknown process id 4731); its log ended in the frequency
-  stage. No pass was inferred. Re-running the same `make all` command with
-  continuous session polling returned exit 0. Its copied log was incomplete,
-  so the complete shared gate was additionally captured through stdout and
-  returned exit 0 with all 539 tests. Quality gates and fixtures are unchanged.
-- LuaLaTeX completed two passes for the final 12-page article. All pages
-  were rendered/decoded and visually inspected, with the new mathematics
-  checked at full resolution. No overfull boxes or unresolved references
-  remain. An intermediate PDF/PNG copy was truncated (PNG at 262144 bytes;
-  PDF had an invalid xref); it was not delivered. Fresh output, completed
-  rendering and decoding of every final PNG resolved the artifact failure.
-  Existing class-font/amsmath warnings remain nonfatal. The article is saved.
+The focused new suites pass 21 tests, and the OU-III proof suite passes 276.
+The native 900-s persistent construction/rest/hidden-rocking/rest regression
+passes: Live sample 15843, reference refinement/BA release sample 24016,
+20520 actually applied magnetic corrections, hidden tilt .001 rad. Physical
+bias/rate bounds, zero nominal means, covariance positivity and no reseeding
+are checked. Existing stationary/rest-wave-rest and gyro-projection regressions
+also pass. These finite checks do not establish an all-time stability theorem.
 
-Retained earlier validation evidence:
+Exact evidence reproduction, the unchanged TFG publication manifest, Ruff
+and `git diff --check` pass. Shipping-source bytes and prior finite replay
+artifacts are unchanged; new exact certificates and genuinely changed proof
+bindings are reproduced from their current inputs. Source-fidelity review
+charges the native gravity representation residual 1.617431640625e-7 m/s^2
+and uses eight qualified prediction intervals, at least 4/125 s, for the
+quiet nominal row floor rather than equating .005f with exact .005.
 
-- Native historical-reader observer/control parity passed in all four cases;
-  80-digit action maxima were 1199.060966781881--1450.252861111712. Exact root
-  cancellation and correlated exported-word enclosures passed for quiet and
-  moving words. Construction/mean-action regressions reproduced 89998
-  predictions and 122251 corrections at 80 digits, with a 40-digit outward
-  enclosure and exact recorded-force audit. None is source-uniform coverage.
-- The earlier reconciled build passed native stages but four archive-copy
-  tests hit `[Errno 28] No space left on device`: 508 MiB was free while the
-  copied simulator trees required about 2.4 GiB. Removing this task's 3.6-GiB
-  temporary TeX cache restored capacity, and all 535 then-current shared
-  tests passed. This was infrastructure capacity, not a proof failure;
-  fixture logic and quality gates remained unchanged.
-- Container apt operations failed on setgroups/setegid/seteuid; a CTAN
-  redirect and guessed binhex path also failed. Runtime Eigen and verified
-  local Ubuntu/CTAN package extraction supplied the needed build/TeX inputs.
-  No article format or source requirement was changed to hide those failures.
+The final IEEE article completes two LuaLaTeX passes; all 14 pages are
+rendered/decoded and visually inspected. No overfull box, unresolved reference
+or balancing warning remains. Its source hash matches the verified PDF run.
+
+Resolved failures and retained scope:
+
+- **Publication fingerprint:** the first full run failed at
+  `python3 ../../tools/tfg_comparison.py --check --require-ci` with
+  `ValueError: TFG comparison source provenance is stale` (make exit 2).
+  Exactly one recorded input differed: the OU-III simulator Makefile acquired
+  the new auxiliary target. Restore that Makefile byte-for-byte and use the
+  existing supplemental-Makefile pattern for the regression. The original
+  manifest passes without restamping or changing its gate; native results
+  and simulator behavior remain valid.
+- **Execution/resources:** an updated-main retry lost handle 40461; an
+  awaited retry then failed with `exec-server transport disconnected;
+  executor key changed during session recovery` during calibration compilation.
+  The local cgroup reported limit 8,589,934,592 bytes, peak 8,592,605,184
+  bytes and an OOM kill. Neither interrupted run is counted as complete.
+  Automatic command review rejected an `rm -f` cache-removal attempt;
+  recovery instead forced the calibration target through Make, using GCC
+  `ggc-min-expand=10` and `ggc-min-heapsize=4096`. O3 and all numerical gates
+  remain unchanged. That rebuild and the final supervised full run pass;
+  a durable exit-status record matches the complete log hash.
+- **Eigen discovery:** the next full run passed 570/571 shared tests but
+  `test_device_compass_startup.py:80` failed with `Install Eigen or set
+  EIGEN_INCLUDE_DIR`. Make's EIGEN_DIR does not configure that Python-compiled
+  device test. Point both variables to the same Eigen tree. The focused
+  1800-orientation checks in all three variants and the final full run pass;
+  no assertion or dependency requirement is relaxed.
+- **Article output:** the initial command using only TEXMFHOME failed with
+  `font txmiaX at 438 not found`; the existing extracted font maps via
+  TEXMFVAR resolve it without changing IEEE/newtx. An unused alignment
+  column caused a 4.27032pt overflow and was removed. Optional balancing
+  then produced a second-column warning and a 16.61555pt page-13 overflow;
+  restore standard IEEE flow with all equations retained. Generated native
+  CSVs also filled scratch during an intermediate TeX run; its partial log
+  is not accepted. Capacity cleanup, two complete passes, rendering and the
+  source-hash check establish the final article result.

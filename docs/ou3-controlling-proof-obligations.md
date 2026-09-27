@@ -4,10 +4,16 @@ The exact status is reproduced by `theorem_status.py` and committed in
 `reports/results/ou3_stability/theorem-status.json`. Algebraic infrastructure
 is distinct from a shipping source-uniform theorem certificate.
 
-The amended MARINE MOTION contract adopts locally absolutely continuous
-acceleration with jerk <=100 m/s^3 and, on every physical T_E window, complete
-stillness or gravity-direction span >=theta_E>0. The latter parameters remain
-symbolic. Both restrictions exclude the old constant-attitude moving witness.
+MARINE MOTION retains acceleration jerk <=100 m/s^3. Excitation is required only on every complete T_E window contained in one
+maximal physical moving episode between nondegenerate rest intervals. Isolated
+zero-rate instants do not restart an episode. T_E/theta_E remain symbolic.
+Windows crossing rest boundaries carry finite-transition obligations; no
+arbitrarily short departure window owes a full positive span. Read
+`ou3-regime-design.md` for the exact quantifiers, stationary observability,
+indistinguishable rest/motion histories and detector requirements. Quiet
+packets cannot certify physical STILL with both finite entry and guaranteed
+finite exit under the existing bias bounds. The shipping estimator is unchanged;
+stationary practical robustness and certified transition retention remain OPEN.
 `ou3-sampling-fidelity.md` proves the resulting sharp sampled-mean bound,
 32-s exclusion of fixed-attitude stationary-sample aliases, joint 3-D vector
 information and physical LIN prediction supply in the full covariance metric.
@@ -15,6 +21,10 @@ The full corrected state loss and general capture remain open.
 
 | Obligation | Current state | Required certificate |
 |---|---|---|
+| Stationary physical observability | Partial information and ambiguity CLOSED; practical stability OPEN | Direct stationary gyro information has a deterministic noise/bias-rate supply; gravity/BA retain an irreducible ambiguity. A21 nominal detectability is not physical attitude/BA separation |
+| Certified STILL detector | Exact-rest entry plus universal finite exit impossible under current bounds | `regimes.py` gives smooth rest/motion/rest identical inputs; prove a practical theorem for the entire compatible class before enabling behavior changes |
+| Regime transitions | Complete-window quantifiers and conditional every-prefix composition CLOSED; duration/retention OPEN | Carry the entire execution through both directions, including startup/H18/refinement/release; derive a cumulative storage budget for recurring bridges |
+| Six historical pivots | Conditional chronological transport/two-group implication CLOSED; source budget OPEN | `ou3-moving-six-pivots.md`: s=c/(1+(a+1)/b0)-epsilon>0 implies every greedy row pivot >=s/sqrt(m). Actual reset/asynchrony/reference bounds must be supplied uniformly |
 | Joint recurring lower covariance | CLOSED in real arithmetic at regular A21 post-prediction roots after a 16-s window | `root_covariance_certificate.py`: convex combination of fresh AG/BA injection and corrected LIN matrix action, with all cross covariance retained |
 | Full A21 information/loss and rho0 | OPEN; reduced to a six-column sufficient premise | `ou3-corrected-word-proof.md` proves that a uniform `D_AG,AG >= J > 0` for the actual corrected word, combined with existing nuisance comparisons and the first prediction, implies strict full 21-state contraction. J remains unproved |
 | Estimated gyro bias / one-step gyro transport | CLOSED in real arithmetic on the qualified 4--6 ms family | Implemented norm <=.5 rad/s; angle <.007; transverse singular floor .003999991833333333 s. The API itself has no maximum positive dt; whole-word float32 and signed Delta_gyr are not closed |

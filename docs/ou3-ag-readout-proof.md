@@ -1,5 +1,13 @@
 # Historical six-column action for the corrected AG loss
 
+Regime scope: `ou3-regime-design.md` separates stationary observability and
+finite transitions from complete excited moving windows on this same carried
+proof path. `ou3-moving-six-pivots.md` supplies a conditional all-six-pivot
+bound with chronological reset and actual-row defects. Its uniform premises
+remain OPEN; neither this reduction nor the mode split certifies B_*, J_AG,
+rho_0, a nonlinear retained radius or every-prefix retention.
+
+
 This result enters the existing finite-error inequality through a source-uniform
 `J > 0`, then a matrix bound on `rho0`, in
 `sqrt(V_next) <= sqrt(rho0) sqrt(V_root) + supply`.

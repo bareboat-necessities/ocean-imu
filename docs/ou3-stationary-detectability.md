@@ -58,13 +58,21 @@ current admissible histories. It does establish that zero wave amplitude is
 not automatically an unobservable nondecaying mode of A21. There is therefore
 no proven quiet-water instability here that would justify excluding it.
 
-If the varying-history proof needs motion excitation, the added marine-motion premise
-must state a positive lower information bound over every finite window, with
-actual sample/event timing and nuisance cancellation included. Merely requiring
-nonzero motion is inadequate: amplitudes can tend to zero, and no uniform
-positive margin follows from strict nonzero amplitude. A physical excitation
-condition must be derived into the required full-state inequality; assuming
-that inequality outright would conceal the outstanding proof obligation.
+The moving proof uses complete excited windows inside a physical moving episode,
+with finite-transition obligations at its boundaries (`ou3-regime-design.md`).
+It does not impose a positive span on indefinite physical rest. Nor does this
+nominal detectability proposition independently identify physical tilt and
+accelerometer bias: BA OU decay is an estimator prior, not physical evidence.
+The stationary sensor map has an attitude/BA ambiguity even with known magnetic
+field. Direct gyro-bias information has a bounded-noise/rate supply. A full
+stationary practical theorem for all compatible physical histories remains open;
+its deterministic ambiguity must not disappear through nominal covariance decay.
+
+The exact smooth rest/motion/rest construction has identical IMU and magnetic
+packets throughout, with unchanged physical bias bounds and applied magnetic
+service. Any detector's entire internal history is identical on both truths.
+No finite dwell or estimated-wave-state threshold repairs that identifiability
+obstruction. No stationary estimator change is enabled by this proposition.
 
 ## Startup gate check
 

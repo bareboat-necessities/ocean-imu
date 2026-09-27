@@ -11,7 +11,6 @@ from tools.stability.ou3_theorem.marine_motion import (
     MarineContinuationCertificate,MarineLimits,MarineSample,audit_sampled_trace,
     constant_displacement_continuation_admitted,continuation_admitted,
     quiet_water_admitted,quiet_water_continuation_certificate,
-    stillness_or_attitude_excitation_admitted,
 )
 
 LIMITS=MarineLimits(8.1,5.5,8.8,math.radians(35.0),1100.0)
@@ -47,36 +46,6 @@ class MarineMotionTests(unittest.TestCase):
             "h",0.0,0.0,0.0,0.0,0.0,True,True,False,True,True,0.0,True
         )
         self.assertFalse(continuation_admitted(restarted_potential,LIMITS))
-
-    def test_stillness_or_attitude_excitation_window(self):
-        theta=math.radians(1.0)
-        # Indefinite quiet water is admitted through the truth-side stillness branch.
-        self.assertTrue(stillness_or_attitude_excitation_admitted(
-            complete_physical_stillness=True,tilt_span_rad=0.0,theta_e_rad=theta))
-        # Non-still rocking may return to its starting attitude; span is what matters.
-        self.assertTrue(stillness_or_attitude_excitation_admitted(
-            complete_physical_stillness=False,tilt_span_rad=math.radians(1.2),theta_e_rad=theta))
-        # Sustained nonzero translation with exactly constant attitude is inadmissible.
-        self.assertFalse(stillness_or_attitude_excitation_admitted(
-            complete_physical_stillness=False,tilt_span_rad=0.0,theta_e_rad=theta))
-        # The smooth diagonal wave p=-(3/2)sin(2t)(1,0,1), R=I is likewise non-still
-        # with zero tilt span and is rejected by every positive theta_E.
-        self.assertFalse(stillness_or_attitude_excitation_admitted(
-            complete_physical_stillness=False,tilt_span_rad=0.0,theta_e_rad=theta))
-        self.assertFalse(stillness_or_attitude_excitation_admitted(
-            complete_physical_stillness=False,tilt_span_rad=math.nextafter(theta,0.0),theta_e_rad=theta))
-        self.assertTrue(stillness_or_attitude_excitation_admitted(
-            complete_physical_stillness=False,tilt_span_rad=theta,theta_e_rad=theta))
-
-    def test_invalid_excitation_threshold_rejected_before_either_branch(self):
-        for theta in (0.0, -1.0, math.nan, math.inf, -math.inf):
-            for stillness in (False, True):
-                for span in (0.0, 1.0, math.nan):
-                    with self.subTest(theta=theta, stillness=stillness, span=span):
-                        with self.assertRaisesRegex(ValueError, "theta_E must be positive and finite"):
-                            stillness_or_attitude_excitation_admitted(
-                                complete_physical_stillness=stillness,
-                                tilt_span_rad=span, theta_e_rad=theta)
 
     def test_detached_coordinates_fail(self):
         s=[

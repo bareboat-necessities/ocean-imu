@@ -50,7 +50,11 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.ag_readout import certificate as readout_certificate
     from tools.stability.ou3_theorem.signed_temporal import certificate as signed_certificate
     from tools.stability.ou3_theorem.gyro_bias_projection import certificate as gyro_certificate
+    from tools.stability.ou3_theorem.regimes import certificate as regime_certificate
+    from tools.stability.ou3_theorem.moving_pivots import certificate as moving_certificate
     for name, generate in (
+        ("regime-certificate.json",regime_certificate),
+        ("moving-pivots-certificate.json",moving_certificate),
         ("gyro-bias-projection.json",gyro_certificate),
         ("ag-readout-certificate.json",readout_certificate),
         ("signed-temporal-certificate.json",signed_certificate),

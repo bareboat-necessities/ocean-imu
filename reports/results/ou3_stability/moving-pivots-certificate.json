@@ -1,0 +1,27 @@
+{
+  "actual_chronological_resets_may_be_dropped": false,
+  "conditional_chronological_gyro_floor": true,
+  "conditional_two_group_six_column_floor": true,
+  "physical_span_supplies_uniform_row_and_defect_budget": false,
+  "qualification": "OU3_CHRONOLOGICAL_SIX_PIVOT_IMPLICATION_V1",
+  "quiet_nominal_all_six_pivot_floor": "9/254",
+  "quiet_nominal_floor_identifies_physical_attitude_and_bias": false,
+  "quiet_nominal_scope": "zero-residual regular nominal source history, g>=9 and B>=9, actually applied acc/mag groups eight qualified predictions apart, raw AG scaling",
+  "quiet_nominal_two_group_singular_floor": "18/127",
+  "rho0_certified": false,
+  "singular_floor_to_all_six_greedy_pivots": true,
+  "supplied_example_all_six_pivot_floor": "19/300",
+  "supplied_example_exact_gram_residual_pivots": [
+    "248/125",
+    "248/125",
+    "248/125",
+    "46079/496000",
+    "46079/496000",
+    "46079/496000"
+  ],
+  "supplied_example_singular_floor": "19/100",
+  "supplied_failed_defect_margin": "-1/20",
+  "supplied_reset_sequence_gyro_floor": "19/40",
+  "two_temporal_margins_imply_six_pivots": false,
+  "uniform_historical_AG_readout_action": false
+}

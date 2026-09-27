@@ -18,11 +18,20 @@ Read in order, with paths relative to the repository root:
    `tools/stability/ou3_theorem/` and the shipping source operations they cite.
 5. `docs/ou3-ag-readout-proof.md` and `ag_readout.py`: the historical
    six-column action and the exact forward-prior obstruction.
+6. `docs/ou3-regime-design.md`, `docs/ou3-moving-six-pivots.md`, and the
+   retained `docs/ou3-signed-temporal-continuation.md`.
 
-MARINE MOTION now includes locally absolutely continuous physical acceleration
-with jerk <=100 m/s^3, and on every T_E physical window either complete
-stillness or gravity-direction span >=theta_E>0. T_E/theta_E remain symbolic.
-Quiet water, the other physical limits and shipping behavior are retained.
+MARINE MOTION retains locally absolutely continuous physical acceleration
+with jerk <=100 m/s^3. Excitation is required only on every complete T_E window contained in one
+maximal physical moving episode between nondegenerate rest intervals. Isolated
+zero-rate instants do not restart an episode. T_E/theta_E remain symbolic.
+Windows crossing rest boundaries carry finite-transition obligations; no
+arbitrarily short departure window owes a full positive span. Read
+`ou3-regime-design.md` for the exact quantifiers, stationary observability,
+indistinguishable rest/motion histories and detector requirements. Quiet
+packets cannot certify physical STILL with both finite entry and guaranteed
+finite exit under the existing bias bounds. The shipping estimator is unchanged;
+stationary practical robustness and certified transition retention remain OPEN.
 
 Read `ou3-sampling-fidelity.md`: it proves the sharp nonuniform trapezoidal
 mean bound, exclusion of every constant-attitude stationary-sample alias of
@@ -192,3 +201,12 @@ remain open. The implemented .5 rad/s gyro ball excludes complete-turn bias
 aliases and gives a one-step transport floor on qualified 4--6 ms predictions;
 it does not close the signed temporal gyro margin. Preserve both
 compatibility residual sums and the quiet-bias stillness ambiguity.
+
+The chronological two-group lemma gives a sufficient actual-row defect budget
+for all six historical pivots. Its uniform reset/rotation/reference/asynchrony
+premises remain open. The excited moving diagnostic already fails the recorded
+signed norm relaxations; deleting indefinite stillness cannot make those bounds
+positive. Prove the coupled budget, then finite B_*, J_AG and strict full loss.
+Do not enable a quiet-packet bias hold or zero-motion observation before a
+stationary theorem covers the entire measurement-compatible class. Repeated
+finite bridges also require a proved cumulative storage budget.

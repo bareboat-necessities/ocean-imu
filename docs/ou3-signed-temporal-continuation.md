@@ -1,5 +1,15 @@
 # OU-III signed temporal continuation
 
+Scope: apply moving excitation only to complete windows contained in a physical
+moving episode, as defined in `ou3-regime-design.md`. No physical-STILL detector
+is inferred. The smooth sin-cubed rest/motion/rest extension preserves the
+quiet-input obstruction across transitions. `ou3-moving-six-pivots.md` adds a
+conditional chronological transport/actual-row budget for all six pivots;
+the source-uniform budget and the two-temporal-margin implication remain OPEN.
+Removing indefinite rest does not improve the failed bounds on the already
+excited moving diagnostic below.
+
+
 This continues the existing construction-linked proof. Each lemma below is
 subordinate to `V_(j+1)<=rho V_j+c_d||d||^2, rho<1`: span and signed-balance
 lemmas target the nominal temporal margins; a six-pivot lemma then supplies a
