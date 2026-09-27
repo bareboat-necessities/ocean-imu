@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "8ea0dbc882e50c4520819d972a9d33f576533e73b7d51d712bd21757a9cf4565",
+  "replay_fingerprint": "efcc734118ffe0ee15bda543ed1f1ae406affdf018edb56d2281204da531cd7c",
   "results_file_count": 421,
   "results_files": [
     {
@@ -871,7 +871,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "9922bb231b0219288ce2a5b090554f6c91fa43c82c35d5d49d9ea4fd009c13e5"
+      "sha256": "50d85999f4c308c614e4a63fd75a920b393c71739a7ea96ee4b92b9379c57207"
     },
     {
       "kind": "file",
@@ -941,62 +941,62 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "2df7ddcd2d9b0dfa0ad1233a3f4ca42138d8a57f490a6f2fea1e9fd5a4b941a9"
+      "sha256": "7dd6eb4f5d374c79abd1e7d0af4ce69306b0b0cf057c403370e0d1a8d09f09b1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "bca26275e9fa731699f376714efc1bfec5cb2fb86fcac9632b5d3e83d77f9793"
+      "sha256": "a9fb9ddac74d7c40d8b8d6dcedd72db05090d727574c1defcce588f6f5e3c1d8"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "fe4c36b178ba38b5af98e258b2c29fc421efac3688ab5fca12c394afe40654f4"
+      "sha256": "209d3b17e706234ffa8ec033e833e54a01132f3948c6693da77073b1b062df60"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "2a0b45f12f81ecfebe57cd4c33f29fd518b7f65a7fbc4d6abb55c74e01ebcd59"
+      "sha256": "b2331d5363543e1123c5294f15b32d0d336b0cfdd5f94eceaea34f989e1b19ff"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
+      "sha256": "49fac3d17349eb620f7b8dfcc2bcf46db58929a73314c5d120588095d3affffa"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "f0f900916858d1a51c59d8874b47d23c8b9edd331866908f26b65fa809006fa0"
+      "sha256": "ba7a4c0554ec06c940f4499aff9fd11396b2933303af6251e71dd5bf52a54cea"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "a28f2e363ea7881d904d0a7ac585b51526526d786d60c9e4842d61724827b069"
+      "sha256": "d37fbe477dab757cbbdbfa7038922ed022d1dd3967063712e6e9c0cb3a7bce03"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "bffabcaf390778b6550b01fe5be72a2b2bc5c87e825dbd998380353a97e02abd"
+      "sha256": "500e838fedafc6e6ae0dae18856d65d0b4b72ffb58a452b6648f44f6d21f2ed1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "c3b2887fcd1f5b7cf76cfe877cfd9a5c3ecce4b1d4ac9ffb81750ce485265866"
+      "sha256": "16d6b1bd789f3759c25c3d0252b66274b76c7c3d44bd95f0865256390c204aa8"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "768d0423be162ec89f0f0548dc7c7c8d11d680dea9024228d720041094e740a4"
+      "sha256": "b6a493a461db6310d71e022dafce9411e2d857eb23a1c7aa3de4bf4c9b48df77"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "3804dc62163d811550a4b12ae23e7fb6b59138dbdc73df3b00da91cccaa22ceb"
+      "sha256": "24396135a876674a919f5303924b841aeffe6fb5f2ded04dd9d5daa1f4efb478"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "cdc7569f5e43968b9fab7ac414b90787595e5913feefabf06d3892a350c49c7f"
+      "sha256": "d9795996bf59fccd094470094646152c0a1ce892d58fa5f8427dbef5bfff1abb"
     },
     {
       "kind": "file",
@@ -1011,7 +1011,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "475ce8c6ceab986ac5e0da33d1e6e6ef342f4e1ab71d265334fc8fb5ddff932e"
+      "sha256": "7a73507d829927977f7f0af448ffa1f0d2cdff3e02d35a4f9478a1b091ce316a"
     },
     {
       "kind": "file",
@@ -2109,13 +2109,13 @@
       "sha256": "61d282cce175faf6d77e9e4a9fa091beb64b8e298cd3328d585f039a050d82a9"
     }
   ],
-  "results_fingerprint": "d89fca2005ec44007cd7977b77bd6f481185c86ef0f4b170cc1809cac7efed82",
+  "results_fingerprint": "41a99b0b248524d9243ff6dfc19d6f81be9cb1cca67e62e50fce6c9f07b5a665",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 421,
+  "tracked_replay_file_count": 422,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2465,7 +2465,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCalWizard.h",
-      "sha256": "5b0496c5c3fefa7c42206d0d6527d34f15ba86465f8a661cfe9051c6d35442b6"
+      "sha256": "00f19d96a85999b132f1a42de3bb70561055210014e83052676544dec4f0270c"
     },
     {
       "mode": "100644",
@@ -2481,6 +2481,11 @@
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_M5Ui.h",
       "sha256": "9840fc37dae82f6fe889a46eda23fbba58aa4148019667ffeeb70eb1ea6e3c09"
+    },
+    {
+      "mode": "100644",
+      "path": "src/AtomS3R/AtomS3R_MagCalMode.h",
+      "sha256": "a6d71368c8f5b04ceb4873f6fcb4a0dd7e0a653e82d86cadfe421a1b733ea7bb"
     },
     {
       "mode": "100644",
@@ -2610,7 +2615,7 @@
     {
       "mode": "100644",
       "path": "src/imu_calibrate/MagCalFit.h",
-      "sha256": "816817dc9cdc1ffaf6274f6fa3cce031a0878e41029debade557e580a7cb99f5"
+      "sha256": "f78a4112242f3111dd50af7e4940f8ed2de4294be28054ed03a05bc8c9272adf"
     },
     {
       "mode": "100644",
@@ -2975,7 +2980,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/Makefile",
-      "sha256": "a00dedac5edecc336f68811b98488eecae1ff80c3511bead4940dfd34b8af860"
+      "sha256": "2cc963184f20242e360ed2587c45dcd982422565e171f478caeda3abb03caf17"
     },
     {
       "mode": "100644",
@@ -3010,7 +3015,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/calibration_workflow-test.cpp",
-      "sha256": "a9a5311dafa175b2993077b9eb70bc33025fed0e760dac50a99ba0ee7d0d5847"
+      "sha256": "7353f937c4b92bf920e414880b50f5999469342e4f891997107827747486e860"
     },
     {
       "mode": "100644",

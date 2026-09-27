@@ -260,13 +260,17 @@ Do not repeat the failed pairwise, unsigned-energy or variation-norm tactics.
 
 ## Validation and infrastructure
 
-Based on main ed5c020e36935df09e19d12b7e8210fff00006a7, including both
-concurrent calibration fixes. The final complete command
+Based on main a7178192fd6dee7af0c0a554453e6e4390158634, including both
+concurrent calibration fixes and their evidence refresh. On its identical
+source predecessor ed5c020e36935df09e19d12b7e8210fff00006a7, the complete command
 `EIGEN_INCLUDE_DIR=<Eigen-3.4.0> W3D_WRITE_TIMESERIES=0 make all
 EIGEN_DIR=<Eigen-3.4.0>` returns **exit 0**, including all **571 shared tests**
 and every native suite. Inputs, scenarios, gates and source are unchanged.
 Only reproducible ignored CSV outputs are discarded after scoring to keep
 workspace capacity available; scalar logs and evidence are retained.
+After incorporating the evidence-only main refresh, publication/evidence
+gates and all 571 shared tests pass again. No estimator source or
+stability-article input changed.
 
 The focused new suites pass 21 tests, and the OU-III proof suite passes 276.
 The native 900-s persistent construction/rest/hidden-rocking/rest regression
