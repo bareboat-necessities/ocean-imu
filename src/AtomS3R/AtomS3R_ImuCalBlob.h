@@ -248,11 +248,10 @@ static inline void fillGyroFromFit(ImuCalBlobV4& b, const imu_cal::GyroCalibrati
 static inline bool magSetValid(const ImuCalBlobV4& b) {
   if (!b.mag_ok || !allFinite_(b.mag_A, 9) || !allFinite_(b.mag_b, 3) ||
       !isfinite(b.mag_field_uT) || b.mag_field_uT < 12 || b.mag_field_uT > 120 ||
-      !isfinite(b.mag_rms) || b.mag_rms < 0) return false;
+      !isfinite(b.mag_rms) || b.mag_rms < 0 || b.mag_rms > imu_cal::MagFitLimits::rmsLimit(b.mag_field_uT)) return false;
   const Matrix3f A = mat_from_rowmajor9_(b.mag_A);
-  if ((A - A.transpose()).norm() > 1e-5f * A.norm()) return false;
-  Eigen::LLT<Matrix3f> llt(A);
-  return llt.info() == Eigen::Success;
+  const Vector3f bias(b.mag_b[0],b.mag_b[1],b.mag_b[2]);
+  return imu_cal::MagGeometricFit<1>::matrixValid(A,bias);
 }
 
 static inline bool validateBlob(const ImuCalBlobV4& b) {

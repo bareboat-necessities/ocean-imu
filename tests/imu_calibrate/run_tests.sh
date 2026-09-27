@@ -1,5 +1,8 @@
 #!/bin/bash -e
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
+./calibration_workflow-test
 ./calibration_safety-test
 python3 test_sketch_temperature.py
 ./imu_calibrate-test
