@@ -7,6 +7,7 @@
 #include "imu_calibrate/AccelCalCapture.h"
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
 #include "AtomS3R/AtomS3R_CalLog.h"
+#include "AtomS3R/AtomS3R_MagCalMode.h"
 #include <cstdio>
 #include <cstring>
 #include <random>
@@ -25,6 +26,85 @@ static V direction(float i) {
 }
 static M distortion() {M d;d<<1.2,.18,.09,.18,.9,.12,.09,.12,1.05;return d;}
 static const V offset(8,-5,3);
+
+// Register fake also models a write whose acknowledgement is lost.
+struct MagDevice {
+  uint8_t reg[256]{};
+  int operations=0, fail_at=0, writes=0;
+  MagDevice() {reg[0x40]=0x32;reg[0x4B]=1;reg[0x4C]=0x38;reg[0x51]=1;reg[0x52]=2;}
+  bool readRegister(uint8_t r,uint8_t* out,size_t n) {
+    if(++operations==fail_at)return false;
+    std::memcpy(out,reg+r,n);return true;
+  }
+  bool writeRegister8(uint8_t r,uint8_t v) {
+    ++writes;reg[r]=v;return ++operations!=fail_at;
+  }
+  bool original() const {return reg[0x4C]==0x38 && reg[0x51]==1 && reg[0x52]==2;}
+};
+static void magWait(uint32_t ms) {check(ms>=50,"allow the previous magnetic conversion to finish");}
+static void testMagSensorMode() {
+  using Mode=atoms3r_ical::MagCalMode<MagDevice>;
+  MagDevice dev;
+  {
+    Mode mode(&dev,magWait);
+    check(mode.begin(),"high-accuracy magnetic preset configures");
+    check(dev.reg[0x4C]==0x28 && dev.reg[0x51]==23 && dev.reg[0x52]==82,
+          "47/83 repetitions run at compatible 20 Hz");
+  }
+  check(dev.original(),"normal exit or abort restores the original magnetic preset");
+  for(int fault=1;fault<=12;++fault) {
+    MagDevice d;d.fail_at=fault;
+    {Mode mode(&d,magWait);check(!mode.begin(),"failed setup/readback cannot proceed to capture");}
+    check(d.original(),"partial setup and lost acknowledgements restore original registers");
+  }
+  {
+    Mode mode(&dev,magWait);check(mode.begin(),"preset can be entered again");
+    dev.fail_at=dev.operations+2;
+    check(!mode.restore(),"restore errors are reported");
+    check(dev.reg[0x4C]==0x2E,"incomplete restoration does not resume an incompatible ODR");
+  }
+  check(dev.original(),"scope exit retries restoration after a transient bus failure");
+  dev.reg[0x40]=0;dev.writes=0;
+  {Mode mode(&dev,magWait);check(!mode.begin() && dev.writes==0,"wrong chip is never configured");}
+  Mode other(nullptr,magWait);check(other.begin() && other.restore(),"other IMU drivers are untouched");
+}
+
+static void testMagSensorNoise() {
+  int low_power_rejected=0;
+  for(int seed=0;seed<20;++seed) for(int high_accuracy=0;high_accuracy<2;++high_accuracy) {
+    MC cal;imu_cal::MagCapture<float,400> cap(cal);cap.begin(0);
+    std::mt19937 rng(3000+seed);std::normal_distribution<float> noise(0,1);
+    MS status=MS::CAPTURING;V m=V::Zero();
+    // Bosch table 3 noise levels, not metal or a changing ambient field.
+    const V sigma=high_accuracy?V(.3f,.3f,.3f):V(1,1,1.4f);
+    for(int ms=0;ms<=45000;ms+=5) {
+      if(ms%50==0) m=50*distortion()*direction(ms*.002f+seed*14.3f)+offset+
+          sigma.cwiseProduct(V(noise(rng),noise(rng),noise(rng)));
+      status=cap.update(ms,&m); // repeated 200 Hz polls of 20 Hz data
+    }
+    check(status==MS::READY,"20 Hz magnetic readings retain the 45 second capture target");
+    imu_cal::MagCalibration<float> out;
+    const bool ok=cal.fit(out);
+    if(!high_accuracy) {if(!ok && cal.quality.gate==imu_cal::MagFitGate::INLIERS)++low_power_rejected;continue;}
+    check(ok,"high-accuracy sensor noise passes unchanged fit limits");
+    if(!ok)continue;
+    const M A=out.A;const V b=out.b;
+    imu_cal::MagCaptureCfg cfg;cfg.min_time_ms=12000;cfg.timeout_ms=60000;cfg.required_samples=140;
+    imu_cal::MagCapture<float,400> verify(cal,cfg,&out);verify.begin(100000);
+    for(int ms=0;ms<=16000;ms+=5) {
+      if(ms%50==0)m=50*distortion()*direction(ms*.007f+seed*14.3f+300)+offset+
+          sigma.cwiseProduct(V(noise(rng),noise(rng),noise(rng)));
+      status=verify.update(100000+ms,&m);
+    }
+    check(status==MS::READY,"independent 20 Hz verification completes within 16 seconds");
+    imu_cal::MagFitQuality quality;
+    check(cal.geometric.check(cal.buf.v,cal.buf.n,out.field_uT,out.A,out.b,quality,cal.sample_ms),
+          "independent noisy verification passes with frozen coefficients");
+    check(out.A==A && out.b==b,"verification does not refit coefficients");
+  }
+  check(low_power_rejected>=18,"ordinary low-power sensor noise reproduces the interference rejection");
+  std::printf("mag low-power noise: %d/20 rejected as residual outliers\n",low_power_rejected);
+}
 
 static void testMagneticQuality() {
   for(int mode=0;mode<5;++mode) {
@@ -347,7 +427,7 @@ static void testAccelCompletionLogging() {
 }
 
 int main() {
-  testMagneticQuality();testGuidance();testGyroCapture();testGyroMagneticNoise();testGyroMagneticInterruptions();
+  testMagSensorMode();testMagSensorNoise();testMagneticQuality();testGuidance();testGyroCapture();testGyroMagneticNoise();testGyroMagneticInterruptions();
   testAccelPoseProgress();testAccelCompletionLogging();
   std::printf("calibration_workflow-test: %d/%d checks passed\n",checks-failures,checks);
   return failures?1:0;
