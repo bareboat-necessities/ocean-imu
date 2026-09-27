@@ -167,9 +167,9 @@
       }
     }
   },
-  "git_branch": "main",
-  "git_commit": "2da0b1a5dc4152f2290cf690e5b51d595a02ef2a",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 59289 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   704 +-\n .../ou_validation/ou_validation_covsync.svg        |  1134 +-\n .../ou_validation/ou_validation_displacement.svg   |   862 +-\n .../results/ou_validation/ou_validation_macros.tex |    18 +-\n .../ou_validation/ou_validation_paired_effects.csv |  4064 +-\n .../ou_validation/ou_validation_publication.tex    |     6 +-\n .../results/ou_validation/ou_validation_raw.csv    |   408 +-\n .../ou_validation/ou_validation_summary.csv        |  4024 +-\n .../results/ou_validation/ou_validation_table.tex  |     2 +-\n .../ou_validation/ou_validation_vertical.svg       |  1026 +-\n 11 files changed, 35768 insertions(+), 35769 deletions(-)",
+  "git_branch": "fix/calibration-guided-mag-gyro",
+  "git_commit": "17c8d7efb25f21e8df4eb7c1cbf9993324364dba",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   |   3 +-\n .../ou_validation/ou_validation_publication.tex    |   2 +-\n .../ou_validation/ou_validation_transition.csv     | 564 ++++++++++-----------\n 3 files changed, 284 insertions(+), 285 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -491,8 +491,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-27T04:38:20+00:00",
-    "git_commit": "2da0b1a5dc4152f2290cf690e5b51d595a02ef2a",
+    "generated_at": "2026-09-27T06:24:34+00:00",
+    "git_commit": "17c8d7efb25f21e8df4eb7c1cbf9993324364dba",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -707,8 +707,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "36293468502",
-      "workflow": "build"
+      "run_id": "36298680938",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
@@ -753,8 +753,8 @@
       "sha256": "3804dc62163d811550a4b12ae23e7fb6b59138dbdc73df3b00da91cccaa22ceb"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1243523,
-      "sha256": "d9795996bf59fccd094470094646152c0a1ce892d58fa5f8427dbef5bfff1abb"
+      "bytes": 1243545,
+      "sha256": "cdc7569f5e43968b9fab7ac414b90787595e5913feefabf06d3892a350c49c7f"
     },
     "ou_validation_transition.svg": {
       "bytes": 355600,
