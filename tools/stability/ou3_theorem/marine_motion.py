@@ -68,6 +68,7 @@ class MarineContinuationCertificate:
     all_time_continuation_certified: bool
     jerk_norm_upper_mps3: float | None = None
     acceleration_locally_absolutely_continuous_certified: bool = False
+    stillness_or_attitude_excitation_certified: bool = False
 
     def __post_init__(self) -> None:
         if not self.history_id:
@@ -101,6 +102,7 @@ def continuation_admitted(cert: MarineContinuationCertificate,
         and cert.jerk_norm_upper_mps3 is not None
         and cert.jerk_norm_upper_mps3 <= limits.jerk_max_mps3
         and cert.acceleration_locally_absolutely_continuous_certified
+        and cert.stillness_or_attitude_excitation_certified
     )
 
 
@@ -119,6 +121,7 @@ def quiet_water_continuation_certificate(history_id: str="quiet") -> MarineConti
         all_time_continuation_certified=True,
         jerk_norm_upper_mps3=0.0,
         acceleration_locally_absolutely_continuous_certified=True,
+        stillness_or_attitude_excitation_certified=True,
     )
 
 
@@ -144,6 +147,18 @@ def constant_displacement_continuation_admitted(p0_m: Sequence[float]) -> bool:
 
 def quiet_water_admitted() -> bool:
     return constant_displacement_continuation_admitted((0.0,0.0,0.0))
+
+def stillness_or_attitude_excitation_admitted(*, complete_physical_stillness: bool,
+                                              tilt_span_rad: float,
+                                              theta_e_rad: float) -> bool:
+    """Check one physical window using gravity-direction tilt span, not endpoints."""
+    if complete_physical_stillness:
+        return True
+    if not (math.isfinite(tilt_span_rad) and tilt_span_rad >= 0.0):
+        return False
+    if not (math.isfinite(theta_e_rad) and theta_e_rad > 0.0):
+        raise ValueError("theta_E must be positive and finite")
+    return tilt_span_rad >= theta_e_rad
 
 def primitive_span(q_values: Iterable[Sequence[float]]) -> float:
     q=[_vec3(v) for v in q_values]
@@ -194,6 +209,7 @@ def audit_sampled_trace(samples: Sequence[MarineSample], limits: MarineLimits, *
         "all_time_membership_certified_by_finite_trace":False,
         "constant_nonzero_displacement_continuation_admitted":False,
         "quiet_water_admitted":True,
+        "stillness_or_attitude_excitation_all_time_certificate_required":True,
     }
 
 
