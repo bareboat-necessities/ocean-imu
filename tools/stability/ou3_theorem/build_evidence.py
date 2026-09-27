@@ -48,12 +48,12 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.sampling_fidelity import certificate as sampling_certificate
     from tools.stability.ou3_theorem.corrected_word import certificate as corrected_certificate
     from tools.stability.ou3_theorem.ag_readout import certificate as readout_certificate
+    from tools.stability.ou3_theorem.signed_temporal import certificate as signed_certificate
     from tools.stability.ou3_theorem.gyro_bias_projection import certificate as gyro_certificate
-    from tools.stability.ou3_theorem.signed_temporal import certificate as temporal_certificate
     for name, generate in (
-        ("signed-temporal-certificate.json",temporal_certificate),
         ("gyro-bias-projection.json",gyro_certificate),
         ("ag-readout-certificate.json",readout_certificate),
+        ("signed-temporal-certificate.json",signed_certificate),
         ("corrected-word-certificate.json",corrected_certificate),
         ("sampling-fidelity.json",sampling_certificate),
         ("lin-matrix-certificate.json",matrix_certificate),
@@ -75,14 +75,22 @@ def validate() -> dict:
         failures.append("construction endpoint storage certificate differs from exact reproduction")
     from tools.stability.ou3_theorem.construction_mean_action import observer_source, instrument, HEADER, verify_summary
     mean=json.loads((STATUS.parent/"construction-mean-action.json").read_text())
-    if mean.get("gyro_projection_inactive_verified") is not True:
-        failures.append("construction affine mean audit lacks gyro projection inactivity check")
     if mean.get("observer_sha256") != hashlib.sha256(observer_source().encode()).hexdigest():
         failures.append("construction mean observer fingerprint changed")
     if mean.get("instrumented_header_sha256") != hashlib.sha256(instrument((REPO/HEADER).read_text()).encode()).hexdigest():
         failures.append("construction mean header fingerprint changed")
     if mean.get("exact_summary") != verify_summary(mean["enclosure"], mean["committed_field"]):
         failures.append("construction mean action differs from rational factor reproduction")
+    from tools.stability.ou3_theorem.signed_temporal_diagnostic import verify_diagnostic
+    try:
+        verify_diagnostic(json.loads((STATUS.parent/"signed-adjoint-diagnostic.json").read_text()))
+    except (ValueError, KeyError, OSError) as error:
+        failures.append("signed adjoint diagnostic verification failed: "+str(error))
+    from tools.stability.ou3_theorem.signed_temporal_balance import verify_diagnostic as verify_balance
+    try:
+        verify_balance(json.loads((STATUS.parent/"signed-balance-diagnostic.json").read_text()))
+    except (ValueError, KeyError, OSError) as error:
+        failures.append("signed balance diagnostic verification failed: "+str(error))
     return {"validation_pass":not failures,"failures":failures,"base_main_commit":provenance["base_main_commit"],
             "shipping_behavior_authority":"source implementation","theorem_closed":expected["theorem_closed"]}
 

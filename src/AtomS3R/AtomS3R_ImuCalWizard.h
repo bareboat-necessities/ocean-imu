@@ -674,6 +674,7 @@ private:
     imu_cal::GyroCapture<float,400,8> capture(gyroCal_, cfg);
     capture.begin(millis());
     uint32_t last_draw = millis();
+    uint32_t last_resets = 0;
     while (true) {
       Input::update();
       ImuSample s;
@@ -681,6 +682,10 @@ private:
       const uint32_t now = millis();
       const auto status = capture.update(now, valid ? &s.a : nullptr, valid ? &s.w : nullptr,
                                          valid ? s.tempC : NAN, valid ? &s.m : nullptr);
+      if (capture.resets() != last_resets) {
+        last_resets = capture.resets();
+        Serial.printf("[GYR] restart=%lu reason=%s\n", (unsigned long)last_resets, capture.resetReason());
+      }
       if (uint32_t(now-last_draw) >= 100) {
         ui_.lineAt(hint_row, status == imu_cal::GyroCaptureStatus::MOVING ? "Moving - hold still" :
             (status == imu_cal::GyroCaptureStatus::SETTLING ? "Settling..." : "Hold still"));
@@ -696,6 +701,7 @@ private:
         if (ui_.retryMenu("GYRO", status == imu_cal::GyroCaptureStatus::STALE ? "No fresh samples" : "Stillness not reached",
                           "Keep on the table")) {
           capture.begin(millis());
+          last_resets = 0;
           ui_.title("GYRO"); ui_.line("Keep on the table"); ui_.line("Settling..."); ui_.line("About 7 quiet sec");
           continue;
         }

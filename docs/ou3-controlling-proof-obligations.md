@@ -5,7 +5,9 @@ The exact status is reproduced by `theorem_status.py` and committed in
 is distinct from a shipping source-uniform theorem certificate.
 
 The amended MARINE MOTION contract adopts locally absolutely continuous
-acceleration with jerk <=100 m/s^3. This excludes the old 200-Hz witness.
+acceleration with jerk <=100 m/s^3 and, on every physical T_E window, complete
+stillness or gravity-direction span >=theta_E>0. The latter parameters remain
+symbolic. Both restrictions exclude the old constant-attitude moving witness.
 `ou3-sampling-fidelity.md` proves the resulting sharp sampled-mean bound,
 32-s exclusion of fixed-attitude stationary-sample aliases, joint 3-D vector
 information and physical LIN prediction supply in the full covariance metric.
@@ -24,7 +26,7 @@ The full corrected state loss and general capture remain open.
 | Explicit nonlinear retained radius | OPEN | Bound the complete nonlinear remainder, including projection/reset/tuner behavior, against the verified strict linear margin |
 | Projection in the covariance storage | Prefix guard CLOSED; retention OPEN | The inherited BA marginal gives projection defect zero when the actual pre-projection sqrt(V)<=6; source margin is .02483339501604595 m/s^2. No entry or prefix invariance is inferred |
 | Whole-word float32 supply | Composition and recorded sync-operation enclosure only | Literal operation counts, magnitude envelopes and certified prefix gains; real-arithmetic covariance positivity is not float32 totality |
-| Finite startup/capture | OPEN under the jerk-bounded domain | Fixed-attitude stationary-looking aliases >=6 degrees are excluded; prove actual moving-attitude capture and retention through the shipping proxy, reference refinement and release |
+| Finite startup/capture | OPEN under the jerk/tilt-span domain | Fixed-attitude stationary-looking aliases >=6 degrees are excluded; prove actual moving-attitude capture and retention through the shipping proxy, reference refinement and release |
 | Finite H18 retention | Composition only | Actual entry set, history-dependent bridge duration and supply/gain bounds |
 | Reference refinement and bias release | Conditional captured-domain completion only | Retain the actual refinement state machine, accepted-update count, one-second guard and covariance release |
 | Release into the A21 region | OPEN | Compare the certified release set with the nonlinear retained region/projection-sector bound |
@@ -78,7 +80,8 @@ its indefinite -2^-44 defect is charged, not treated as PSD process noise.
 This local finite-word closure does not close whole-word float32 supply.
 
 The full-construction stress history in `construction-history-feasibility.json`
-obeys the unchanged continuous motion/bias envelopes and reaches the literal
+obeys the older motion/bias envelopes, violates the current tilt-span
+condition because R=I, and reaches the literal
 refinement/release. Its finite 400--600 s tilt remains about 8.21 degrees;
 no six-degree entry certificate follows from those stage flags. All-time
 magnetic service, eventual capture and a uniform reachable-set enclosure
@@ -93,3 +96,10 @@ fails the sufficient pointwise exclusion `E_col-E>0` by a certified margin
 in [-817884.048495,-817884.048494]. No collinear source trajectory has been
 established. The missing ingredient is the signed, time-linked innovation
 recursion, not a new physical restriction or more numerical precision.
+
+The current signed-temporal note proves the carried compatibility criterion
+ker C subset ker W, retains both compatibility residual sums, and gives
+physical tilt sampling and signed bias/velocity summation bounds. It does
+not prove either temporal margin. The former assertion that two positive
+margins automatically supply all six historical pivots is withdrawn; that
+quantitative bridge and coefficient compactness remain open.

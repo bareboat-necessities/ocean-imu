@@ -1,256 +1,397 @@
 # OU-III signed temporal continuation
 
-This note records the active source-uniform construction for the single shipping-faithful stability proof. It does not change estimator behavior, physical assumptions, quality gates, or theorem architecture.
+This continues the existing construction-linked proof. Each lemma below is
+subordinate to `V_(j+1)<=rho V_j+c_d||d||^2, rho<1`: span and signed-balance
+lemmas target the nominal temporal margins; a six-pivot lemma then supplies a
+conditional historical-reader bound for the complete matrix process comparison.
+None of these lemmas by itself supplies contraction, capture or retention.
 
-## Signed temporal identity
+## Physical span and the literal signed relations
 
-Choose four strictly increasing times t0<t1<t2<t3 at actually applied integral corrections and define
+Write Q(t) for true world-to-body rotation, R_i for the estimator rotation,
+and d(t)=Q(t)e_z. Angular distance satisfies
+`dist(d(s),d(t))<=Omega_max |s-t|`. Choose points attaining the diameter of
+the complete physical window and a nearest sample to each. If the sample
+coverage distance is eta, the spherical triangle inequality proves
 
-c_j = -6 / product_{l != j}(t_j-t_l),
-psi(t) = 1/2 sum_j c_j (t-t_j)_+^2.
+`Delta_g(samples)>=alpha:=max(0,theta_E-2 Omega_max eta)`.
 
-Then D^3 psi = sum_j c_j delta(t-t_j), with psi, psi', psi'' vanishing outside [t0,t3]. Piecewise integration by parts against the literal nominal chain, retaining every correction jump, gives
+Some sampled pair therefore has chord at least `2 sin(alpha/2)`. In-window
+samples give eta<=h_max when both ends are covered; eta<=h_max/2 requires the
+corresponding endpoint or padded-cell coverage. T_E and theta_E remain
+symbolic. This estimate is not strictly positive when theta_E<=2 Omega_max eta.
+It never identifies nominal attitude with true attitude.
 
-int psi a_hat dt
- = sum_j c_j r_S,j
- - sum_k (psi_k K_v,k - psi'_k K_p,k + psi''_k K_S,k) r_k
- - d_psi.
+At actual accelerometer events retain exactly
 
-Here r_k is the chronological innovation of the actual applied accelerometer, magnetic, or integral correction, and d_psi retains source-transition, hard-event, reset/interpolation, and arithmetic defects. The identity does not manufacture pseudo-observations between callbacks and does not drop the actual v,p,S jumps.
+`r_i^a=f_i^m-R_i(ahat_i-g e_z)-bhat_a,i`,
+`f_i^m=Q_i(a_i-g e_z)+b_a,i+n_a,i`.
 
-For the affine mean recursion u_{i+1}=A_i u_i+K_i r_i+d_i, summation by parts gives
+Writing fhat_i=R_i(ahat_i-g e_z), subtraction on the same physical history gives
 
-sum_i W_i r_i =
- Z_N u_N-Z_0 u_0
- +sum_i (Z_i-Z_{i+1}A_i)u_i
- +sum_i (W_i-Z_{i+1}K_i)r_i
- -sum_i Z_{i+1}d_i.
+`g(d_j-d_i)=Delta(Qa)-Delta fhat+Delta b_a-Delta bhat_a+Delta n_a-Delta r^a`.
+
+Thus the sampled pair satisfies
 
-Exact endpoint elimination therefore requires both Z_i=Z_{i+1}A_i and W_i=Z_{i+1}K_i. A zero-terminal homogeneous adjoint cannot represent the first nonzero integral atom: Z_N=0 forces all Z_i and W_i to zero, while c_0(I-K_SS) is nonsingular at a regular applied S correction. The proof must therefore use an observation-forced adjoint and retain any remaining signed innovation functional explicitly. This is a failed multiplier specialization, not a physical counterexample.
+`||Delta fhat+Delta bhat_a+Delta r^a-Delta(Qa)||
+ >=2g sin(alpha/2)-min(2B_a,D_a |t_j-t_i|)-2N_a`.
+
+This constrains a signed combination. It does not lower bound nominal
+force/field angle: physical acceleration, actual bias updates and innovations
+cannot be deleted. The magnetic relation remains
+
+`r_i^m=m_i^m-R_i B_i`, `m_i^m=Q_i B_i^true+b_m,i+n_m,i`.
+
+B_i is the actual nominal reference, including adaptation/refinement and hard
+events. MAGNETIC SERVICE remains the actual normalized heading/axial-bias
+information sum with its preceding corrected transport, sensitivity and
+innovation covariance. It is neither packet cadence nor six-state information.
+
+**Failed pairwise relaxation.** Taking Delta(Qa) independently in norm costs
+`min(2A_max,(J_max+Omega_max A_max)T_E)`. For every feasible theta_E<=pi/2,
+both terms exceed `2g sin(theta_E/2)`: use theta_E<=Omega_max T_E,
+`J_max+Omega_max A_max>g Omega_max` and `2A_max>sqrt(2)g`. Even before charging
+bias and residual terms, this lower-margin estimate is nonpositive. This
+invalidates the unsigned pairwise tactic, not the physical domain or the
+signed whole-window target. Precision or independent boxes cannot repair it.
+
+## A moving-history limitation of the physical span premise
+
+The stronger intermediate claim that physical tilt span must produce changing
+nominal attitude or nonzero innovations is false for some symbolic parameter
+ranges. Let alpha=theta_E/2 in (0,pi/2), nu=2pi/T_E and
+phi(t)=alpha sin(nu t). Take true body-to-world R(t)=Rx(phi(t)), p=v=a=0,
+B=75e_x, physical gyro bias b_g=-omega and accelerometer bias
+b_a=g(R(t)'e_z-e_z), with zero fast residuals. All measured values are exactly
+level/north: f_m=-g e_z, gyro=0, mag=75e_x. The same deterministic shipping
+execution is the quiet construction, with its actual references/gains/covariance.
+
+Every T_E interval spans a full roll period and has gravity span 2alpha=theta_E;
+it is not completely still. The physical biases are smooth and obey the
+unchanged bounds under these sufficient symbolic conditions:
+
+`g alpha<=B_a`, `g alpha nu<=D_a`,
+`alpha nu<=min(B_g,Omega_max)`, `alpha nu^2<=D_g`.
 
-## Physical temporal enclosure
-
-Under the unchanged regular timing and MARINE MOTION bounds, the four-event weight yields the exact rational sampled-acceleration mean ceiling
-
-1050297/4840000 = 0.217003512396694... m/s^2.
-
-Combining the same-history acceleration balance with the existing magnetic residual limits gives a physical joint-vector information floor
-
-gamma_phys > 2.432784801508736e-4,
-
-with margin >4.32784801508736e-5 above 1/5000. This is physical measured-vector information only; it is not promoted to nominal AG information or historical-reader rank.
-
-## Projection sector
-
-For the literal radial accelerometer-bias projection, d_b=b_hat_corr-Proj(b_hat_corr), physical ||b_a||<=B_a and projection radius R_b>B_a imply
-
-(e_b_corr)^T d_b + ||d_b||^2 + (R_b-B_a)||d_b|| <= 0.
-
-For H=P^{-1}, choose lambda>0 and D_b=2 lambda I-E_b^T H E_b positive definite. With h_b=(E_b^T H-lambda E_b^T)e, completing the square gives
-
-V(e+E_b d_b)-V(e)
- <= (h_b-y)^T D_b^{-1}(h_b-y)
-
-for every ||y||<=lambda(R_b-B_a). Thus ||h_b||<=lambda(R_b-B_a) is an explicit shaped projection-nonexpansion condition retaining all covariance cross terms. Outside it the projection defect remains a signed supply. Universal entry into V<=36 is neither required nor asserted.
-
-The unchanged bias constants give R_b-B_a > 0.1748333950160459 m/s^2. A regular-A21 pre-projection BA precision ceiling 1000003000 I3 is available after charging the binary32 driving coefficient; this is an operation bound, not an invariant-region certificate.
-
-## Positive temporal margins imply a common historical action ceiling
-
-The next implication is now closed analytically. Normalize the six AG root
-coordinates as in the temporal margins and put
-
-delta = min(inf_W Delta_col(W), inf_W Delta_gyr(W)) > 0.
-
-On the separated same-history coefficient family, use the existing
-largest-residual factor pivot rule on the complete six-column raw observation
-array O(W). The two temporal exclusions rule out the only sustained AG rank-loss
-mechanisms in this temporal construction: force/field collinearity and loss
-of chronological gyro sensitivity. The gyro-bias invariant excludes the
-complete-turn single-step obstruction but does not bound the full signed
-word margin. Under the two positive-margin premises, each W has a full-rank
-six-row pivot chart. Strict delta separation and compact shipping
-coefficient/factor bounds make the residual pivot functions continuous and
-bounded away from zero on a finite chart cover.
-
-More quantitatively, if C bounds the normalized observation coefficients and
-each of the six successive residual pivots is at least delta, the selected
-minor O_I obeys, by the determinant product and adjugate/Hadamard bound,
-
-||O_I^{-1}||_2 <= C^5 / delta^6.
-
-For H bounding the terminal AG map, the exact reader L=T_h O_I^{-1} therefore
-satisfies
-
-||L||_2 <= H C^5 / delta^6.
-
-The historical backward recursion contains a fixed finite number N of
-prediction/reset transports and rank-at-most-three observation/process
-factors. If C also bounds each chronological transport coefficient, E bounds
-the corresponding noise/process factors, and U bounds the inherited nuisance
-covariance, then the exact matrix action satisfies the explicit conservative
-ceiling
-
-B_W <= B_* I_6,
-
-B_* = N (H C^5 delta^-6 E C^N)^2
-      + (H C^5 delta^-6 C^N)^2 U < infinity.
-
-This keeps the coefficient-dependent rank-three reader/factor structure and
-does not invoke a scalar information lifting or Riccati box. The scalar display
-is only an operator-norm ceiling on the already full matrix backward action;
-the implementation retains the exact matrix action for the later J/rho
-enclosure.
-
-Hence
-
-inf_W Delta_col(W)>0 and inf_W Delta_gyr(W)>0
-  ==> L(W)O(W)=T_h(W), B_W <= B_* I_6 < infinity.
-
-The implication is theorem-level algebra. Its premises are not yet promoted:
-the source-uniform outward enclosure of the two signed temporal margins remains
-the controlling numerical/analytic task.
-
-## Executed source-uniform margin attempt
-
-The enclosure attempt is now executed rather than deferred.  The physical
-collinearity reserve available to the signed balance is the exact rational
-
-27049050188592/625000000000000000
- = 4.32784803017472e-5.
-
-To promote Delta_col this positive reserve must exceed the operator norm of
-the observation-forced signed innovation transfer plus the literal
-reset/transition/hard/arithmetic transfer on the same carried window.  The
-unchanged assumptions and currently proved covariance statements do not yet
-supply a source-uniform ceiling for that forced-adjoint functional.  Assigning
-one from the finite construction trace, NIS energy, or independent gain boxes
-would revive a forbidden relaxation.  The attempted inequality therefore
-stops exactly at
-
-physical reserve - signed forced-adjoint/reset transfer > 0,
-
-with the second term unbounded by the present theorem premises.
-
-The gyro balance reaches the same structural point. MAGNETIC SERVICE supplies
-normalized recurring root information, and physical gyro bias/rate increments
-are bounded, but conversion to a lower bound on the two transverse singular
-values of the literal integrated bias transport requires a source-uniform
-bound on the signed corrections that move b_hat_g and on reset transport.
-That bound is likewise not presently derivable from the retained lemmas
-without using unsigned innovation energy or an independent nominal box.
-
-Thus this PR has executed the requested enclosure attempt and identified the
-first failed inequality. No negative Delta margin is claimed: the missing
-quantity is a rigorous ceiling, not a constructed adverse history. No new
-physical assumption is introduced.
-
-## Literal forced-adjoint source bound
-
-The observation-forced correction functional can be reduced further without
-an innovation-energy estimate.  For the literal affine mean recursion and a
-compatible adjoint,
-
-sum_i W_i r_i =
- Z_N u_N - Z_0 u_0 - sum_i Z_(i+1) d_i.
-
-Hence, if zeta bounds the relevant endpoint multipliers, U bounds the
-corresponding nominal endpoint mean and D bounds the accumulated literal
-affine defects,
-
-|sum_i W_i r_i| <= 2 zeta U + sum_i ||Z_(i+1)|| ||d_i||.
-
-This is the requested source-uniform form: innovations and gains disappear
-through the signed chronological identity rather than being independently
-bounded.
-
-The shipping source bounds the accelerometer-bias estimate by 0.4 m/s^2
-and now bounds the gyro-bias estimate by 0.5 rad/s. These are implemented
-mean projections, separate from the physical bias assumptions. The latent AW
-mean still has no absolute saturation. Covariance/tuner clamps do not supply
-an AW mean bound.
-
-Exact telescoping therefore leaves a bounded BG endpoint and an uncontrolled
-AW endpoint, together with literal correction, reset and projection defects.
-The gyro projection contributes `-E_g d_g` to the mean recurrence and its
-opposite to the error recurrence. Its component sector has radius gap .48
-rad/s; full covariance cross terms and inward-rounding supply remain.
-The finite 600-s mean audit verifies gyro projection inactive and cannot
-replace an all-window AW or signed-transfer enclosure.
-
-The one-prediction gyro transport is uniformly nonsingular in the qualified
-4--6 ms family, with floor `.003999991833333333 s`; see
-[the implemented invariant](ou-gyro-bias-projection.md). This is not the full
-`Delta_gyr(W)` of the forced, reset-transported temporal operator. Both full
-source-uniform temporal margin fields remain unproved. The endpoint-cancelled
-construction below remains subordinate to the same single proof architecture.
-
-## Endpoint-annihilating multipliers
-
-The uncontrolled nominal endpoint means can be removed analytically rather
-than bounded.
-
-For the translation/AW chain, repeated integration by parts leaves AW boundary
-coefficients proportional to psi, psi' and psi''.  The four-actual-S-event
-quadratic spline already satisfies
-
-psi=psi'=psi''=0
-
-at both ends of its support.  Consequently the signed physical v,p,S identity
-has no absolute a_hat_w endpoint term.  AW enters only through the chronological
-correction/source defects already retained by the identity.
-
-For the attitude/gyro-bias pair, let z_theta be the left temporal multiplier
-transported by the literal attitude adjoint. Introduce a companion multiplier
-
-dot z_b = -z_theta.
-
-Set z_b(t0)=0.  The terminal absolute gyro-bias coefficient also vanishes
-exactly iff
-
-integral_[t0,t1] z_theta(t) dt = 0.
-
-Thus the needed gyro construction is the zero-mean subspace of transported
-attitude multipliers.  On a discrete carried word, if q_k is the exact cell
-integral of z_theta, replace a candidate sequence by
-
-q_k^0 = q_k - (1/N) sum_j q_j.
-
-Then sum q_k^0=0 and the companion recursion
-z_b,k+1=z_b,k-q_k^0 starts and ends at zero.  Applying the signed physical
-gyro-bias recurrence leaves only
-
-sum_k z_b,k w_g,k,
-
-with ||w_g,k||<=D_g dt_k, plus the literal correction/reset/arithmetic defects.
-There is no absolute b_hat_g endpoint term.
-
-After both endpoint cancellations the source functional has the form
-
-F_signed = F_defect + sum_k z_b,k w_g,k,
-
-and therefore
-
-||F_signed|| <=
- sum_k ||Z_(k+1)|| ||d_k||
- + D_g sum_k ||z_b,k|| dt_k.
-
-This is source-uniform once the transported multiplier norms and literal
-defect magnitudes are enclosed; neither a nominal AW box nor an absolute BG
-estimate bound is required.
-
-The remaining issue is no longer endpoint boundedness.  The zero-mean
-projection must be composed with the actual magnetic/accelerometer observation
-forcing and shown to retain a strictly positive collinearity and gyro
-separation margin after the multiplier/defect norm cost.  That is the next
-quantitative inequality.
+Indeed ||b_a||=2g|sin(phi/2)|<=g alpha, ||dot b_a||<=g alpha nu,
+||b_g||<=alpha nu and ||dot b_g||<=alpha nu^2. Translation, jerk and primitive
+bounds hold exactly. The stationary actual-service lower bound applies at
+each root multiplied by at least cos(alpha)^2 for the true heading/axial-bias
+axis; require this remaining floor >1. These conditions have a nonempty
+small-alpha, small-nu subfamily. They do not assign or qualify T_E/theta_E.
+
+This exact conditional construction is not a counterexample to either
+Delta_col or Delta_gyr: nominal force and field are nonparallel and nominal
+gyro increment is zero. It invalidates only transfer through a mandatory
+nominal tilt response, and shows why physical bias rates and signed identities
+must remain even in the moving branch. It does not strengthen MAGNETIC SERVICE.
+
+## Actual-S spline and chronological adjoint
+
+For four actually applied S times t0<t1<t2<t3, put
+
+`c_j=-6/product_(l!=j)(t_j-t_l)`,
+`psi(t)=1/2 sum_j c_j (t-t_j)_+^2`.
+
+The exterior jets psi, psi', psi'' vanish. Piecewise integration by parts
+against the actual nominal v,p,S chain gives
+
+`integral psi ahat dt=sum_j c_j r_S,j
+ -sum_i (psi_i K_v,i-psi'_i K_p,i+psi''_i K_S,i)r_i-d_psi`.
+
+At a spline atom the S correction uses the right psi'' and its pre-correction
+S innovation. Same-time corrections before that S event use the left value;
+later ones use the right value. The defect retains OU/source interpolation,
+resets, frame changes, projection and arithmetic. No synthetic S observations
+or independent innovation noise are introduced.
+
+For `u_(i+1)=A_i u_i+K_i r_i+d_i`, arbitrary multipliers satisfy exactly
+
+`sum W_i r_i=Z_N u_N-Z_0 u_0
+ +sum (Z_i-Z_(i+1)A_i)u_i
+ +sum (W_i-Z_(i+1)K_i)r_i-sum Z_(i+1)d_i`.
+
+Use all needed mean coordinates; selecting BG/AW does not delete LIN/BA
+coupling. Define chronological products
+
+`Phi_(N,i+1)=A_(N-1)...A_(i+1)`, `C=[Phi_(N,i+1)K_i]_i`, `W=[W_i]_i`.
+
+**Compatibility lemma.** The desired homogeneous adjoint exists iff
+`ker C subset ker W`, equivalently one terminal multiplier satisfies `Z_N C=W`.
+Backward propagation forces `Z_i=Z_N Phi_(N,i)`, proving necessity.
+Conversely the map `Cx -> Wx` is well-defined on range C by the kernel
+condition; extend it linearly and propagate backwards. No invertibility of
+A_i is required. This retains actual rank-three gains and coordinate changes.
+The exact rational checker returns either the multiplier or a witness
+`Cv=0, Wv!=0`; a numerical rank tolerance never proves exact zero.
+
+If Z_N=0, all Z_i=0. The first regular S atom has desired weight
+`c_0(I-K_SS)`, nonsingular since `I-K_SS=R_eff(P_SS+R_eff)^-1` and R_eff>0.
+The zero-terminal homogeneous specialization is therefore impossible on this
+literal word. A forced adjoint moves forcing into the state residual sum;
+it does not make that sum vanish.
+
+`signed_temporal_diagnostic.py` tests the unrestricted terminal multiplier on
+a quiet construction-to-release word, all 18 Euclidean mean coordinates and
+four actual S events. Observer/control terminal parity is required. An exact
+witness for exported rational coefficients concerns that carried word only,
+not all-time magnetic service or a real-arithmetic trajectory enclosure.
+The committed quiet word has knots (0.025,0.160,0.295,0.430) s relative to
+its root and a seven-column witness with ||v||_infinity=1, Cv=0 exactly, and
+|Wv|>754573637/5000000000000000. Its 80-digit value is approximately
+3.0182945480072294e-7. This rejects exact homogeneous telescoping on that
+exported word even with a free terminal multiplier. The actual quiet
+innovations are zero; failure of the coefficient identity is not instability.
+
+## Signed residual bounds and the remaining terms
+
+Keep both compatibility residual sums. For example propagate Z backwards
+homogeneously, leaving `E_i=W_i-Z_(i+1)K_i`, and substitute the literal acc,
+mag and S identities into `sum E_i r_i`. Terms containing R_i ahat_i,
+estimator biases, S means, the magnetic reference and literal defects remain.
+Bound physical truth only after its temporal cancellations.
+
+For matrix weights C_i and one physical bias history, exact finite summation
+by parts gives
+
+`sum_i C_i b_i=(sum_i C_i)b_0
+ +sum_(j=0)^(N-2) (sum_(i>j) C_i)w_j`.
+
+Its useful bound is
+
+`B||sum C_i||+D sum_j ||sum_(i>j)C_i|| dt_j`.
+
+This follows by substituting `b_i=b_0+sum_(j<i)w_j`. It charges only physical
+rate when the signed total weight vanishes. It can be much smaller than
+`B sum||C_i||`. It does not impose an estimator OU prior on physical truth.
+
+For physical acceleration at cell starts, let C_i include the actual signed
+weight and true rotation. The same-history velocity integral and jerk bound give
+
+`sum_i h_i C_i a(t_i)
+ =C_last v_N-C_0 v_0+sum_(i=1)^(N-1)(C_(i-1)-C_i)v_i+epsilon`,
+`||epsilon||<=(J_max/2)sum_i ||C_i||h_i^2`.
+
+Thus V_max multiplies endpoint norms plus signed weight variation; the
+sampling error is charged afterwards. Nonuniform quadrature and the physical
+displacement primitive retain their corresponding endpoint/difference terms.
+The helper bounds require actual multiplier norm/variation ceilings. They do
+not bound the remaining nominal terms or their correction action.
+
+Zero-mean projection only cancels a constant physical bias in this Abel
+identity. It generally destroys compatibility: `C=(1,2), W=(1,2)` is
+compatible, but `W-mean(W)=(-1/2,1/2)` is nonzero on ker C. The former claim
+`F_signed=F_defect+sum z_b w_g` without residual sums is withdrawn. Spline
+boundary jets likewise do not solve the coupled mean adjoint. No estimator
+BG or AW endpoint bound follows from either cancellation.
+
+## Forced data adjoint on the same carried word
+
+There is an exact alternative to assuming homogeneous compatibility. It
+rewrites, rather than discards, both residual sums. In the default fixed
+deployment frame use all 18 Euclidean means
+`u=(bhat_g,vhat,phat,Shat,ahat,bhat_a)`. At a correction write
+
+`r_i=y_i-Hbar_i u_i+epsilon_i`,
+`u_(i+1)=A_i u_i+K_i r_i+d_i`.
+
+Here Hbar is the **literal mean observation map**, not the full EKF Jacobian.
+Its acc blocks are R_i at AW and I at BA; its S block is I at S; its magnetic
+map is zero because actual attitude and reference remain in y. Consequently
+
+`y_i^a=f_i^m+g R_i e_z`, `y_i^S=0`, `y_i^m=m_i^m-R_i B_i`.
+
+The innovation arithmetic epsilon, additive mean arithmetic d, and separate
+post-injection BA projection are retained. Predictions use the literal LIN
+transport, BG identity and the mode-dependent BA predictor. Quaternion
+corrections/resets affect subsequent actual R_i and K_i; no surrogate gains
+or reset-free coefficient history is substituted. If additional configured
+sensor-model terms or frame changes are present, their literal terms must
+also be carried; they cannot be charged as independent sensor noise.
+
+**Forced data identity.** For the existing desired innovation weights W_i,
+set Z_N=0 and, in reverse chronological order,
+
+`L_i=W_i+Z_(i+1)K_i`,
+`Z_i=Z_(i+1)A_i-L_i Hbar_i`.
+
+Then, with no rank or compatibility assumption,
+
+`sum_i W_i r_i=Z_0 u_0+sum_i L_i(y_i+epsilon_i)+sum_i Z_(i+1)d_i`.
+
+To prove it, put F_i=A_i-K_i Hbar_i. Then
+`Z_i=Z_(i+1)F_i-W_i Hbar_i`; substitute the two literal recurrences and
+sum the resulting adjacent state differences. The terminal term is zero
+because Z_N=0; the root term generally is not. This is an inhomogeneous
+adjoint. It does not repair the failed homogeneous equations or establish a
+bound on its own action.
+
+Using the same physical history, the acc and mag contributions become
+
+`sum_acc L_i Q_i a_i`
+`+sum_acc g L_i(R_i-Q_i)e_z`
+`+sum_mag L_i(Q_i B_i^true-R_i B_i)`
+`+sum_acc L_i(b_a,i+n_a,i)+sum_mag L_i(b_m,i+n_m,i)`.
+
+Keep the two rotation/reference sums jointly signed. Apply the physical
+velocity/primitive and bias-rate Abel identities to their respective
+physical terms before taking norms. This identifies the missing quantities
+precisely: root action, signed joint rotation/reference action, actual
+multiplier norm/variation, and literal defects. Physical tilt span and
+two-column magnetic information have not yet bounded them uniformly.
+No independent nominal coefficient box is used. This lemma enters
+`V_(j+1)<=rho V_j+c_d||d||^2` only through the unresolved signed separation,
+six historical pivots and complete corrected-word matrix comparison.
+
+**Gyro limitation of this identity.** In the default fixed-frame Euclidean
+recurrence, `A_i E_BG=E_BG` and `Hbar_i E_BG=0`, hence
+`F_i E_BG=E_BG`. Induction gives `Z_i E_BG=0` for the zero-terminal forced
+innovation functional, regardless of the BG rows of the actual gains.
+Thus this identity removes its BG root coefficient but supplies no restoring
+feedback for the BG mean itself. This unit column is a property of the
+frozen-attitude algebra, not an unstable mode of the coupled nonlinear
+estimator. The shipping projection independently supplies the BG level bound.
+The full signed gyro margin still needs actual attitude recurrence and
+magnetic/tilt constraints; it cannot follow from this Euclidean matrix alone.
+
+**Moving carried diagnostic and one refinement.** The observer runs the
+existing smooth source from construction: roll `0.02 sin(t/2)` and vertical
+displacement `0.4 sin(0.6t)`. Its physical bounds are satisfied; every window
+of length at least `4 pi` has gravity span `0.04`, so its attitude premise
+is conditional on `T_E>=4 pi`, `0<theta_E<=0.04`. This is not a numerical
+qualification of the symbolic deployment parameters. All-time actual
+MAGNETIC SERVICE remains unverified for this finite diagnostic.
+
+The 225--289-s carried tail uses four actual S knots
+`(0.065,21.365,42.665,63.96)` s relative to the root. The balance includes
+the inherited mean at 225.06 s through the last correction at 288.96 s;
+the 225-s origin is used only to label the spline knots. There is no reset.
+The balance includes
+12780 predictions, 12780 acc, 1598 mag and 892 S corrections, and 15270
+post-injection projection observations. All 18 means have consecutive
+operation-boundary continuity. The observer and untapped control have
+identical terminal means, quaternion, covariance, stages and magnetic count.
+The actual reference is checked constant on this particular word.
+The declared physical gravity 9.80665 and its shipping float representation
+are kept separately; their difference is an explicit model/arithmetic term.
+At 80 digits the forced identity residual norm is approximately
+`3.38446651750e-82`; this is a finite decimal diagnostic, not an interval
+enclosure or a source-uniform certificate. The root multiplier is not zero:
+its block Frobenius norms for BG,V,P,S,AW,BA are approximately
+`(0,.01746150,.003428686,.001083322,.00008578987,1.117579)`.
+Only its BG cancellation is the structural identity proved above.
+
+The recorded reference gives projected gravity `g||Pi_B e_z||=8.77133455729`.
+This is a diagnostic necessary budget for the normalized actual-S average
+under nominal collinearity; the spline defect and all other supplies still
+have to be charged. It is not a source-uniform nominal field floor. The
+rotation triangle bound costs `39.22565272637`, giving margin
+`-30.45431816909` before all other charges. This invalidates that norm
+relaxation, not the actual signed rotation term (whose norm is about .00116)
+or the original separation target. No interval enclosure of it is attempted.
+
+The cellwise signed-velocity/jerk bound costs
+`239.57211796185 + .39841223353 = 239.97053019538`. One refinement combines
+signed coefficients C_i inside each actual S interval [a,b] first. Put
+H=b-a and D=sum C_i. The exact physical identity and remainder are
+
+`sum C_i a(t_i)=(D/H)(v(b)-v(a))+epsilon`,
+`||epsilon||<=J sum ||C_i||[(t_i-a)^2+(b-t_i)^2]/(2H)`.
+
+Proof: compare each a(t_i) with `H^-1 integral_a^b a(s) ds` and integrate
+`||a(t_i)-a(s)||<=J|t_i-s|`. The velocity endpoints are shared across
+intervals, so sum by parts again with the signed D/H before taking norms.
+For C=(1,-1), sample times (0,1), a(t)=t, the total D vanishes but the
+remainder is exactly -1, attaining the bound; it cannot be discarded.
+
+On this word the refined velocity charge is `23.98805965312`, jerk charge
+`3.82238280532`, total `27.81044245844`, still `19.03910790115` above the
+recorded threshold before root, sensor, bias or spline defects. The signed
+physical acceleration action itself has norm about .005, but that value
+cannot be used as an upper bound for other histories. After this second
+failure, stop the variation-norm relaxation. The architecture review retains
+the same construction-to-H18-to-A21 path: the missing step is a joint bound
+on physical integral action, rotation/reference action and chronological
+gains, together with the attitude recurrence for BG level. Neither a nominal
+box nor a new proof track supplies it. Finite diagnostics alone cannot test
+the universal implication or justify strengthening MAGNETIC SERVICE.
+
+## Construction and gyro complete turns
+
+The MEKF gyro-bias mean begins at zero; Live handoff imports no proxy bias,
+and pre-prediction magnetic updates have zero BG gain. The first increment is
+at most `.006*(.6108652381980153+.02+.02)=.0039051914291880918` rad.
+
+Rodrigues integrated bias transport has transverse singular values
+`h |sinc(theta/2)|`, vanishing at nonzero complete turns. Subsequently
+`omega_hat=omega+b_g+n_g-bhat_g`; a complete turn at any allowed step requires
+
+`||bhat_g||>=2pi/h_max-(Omega_max+B_g+N_g)>1046.5466859583 rad/s`.
+
+The shipping residual gyro-bias mean now has the implemented Euclidean bound
+`||bhat_g||<=.5 rad/s`, independently of the physical `.02 rad/s` bias bound.
+This excludes that barrier from construction and every subsequent qualified
+prediction. The complete rate envelope gives `h||omega_hat||<=.0069051914291880918`
+rad; including the normalized quaternion polynomial remainder gives `.007` rad.
+Both source branches have a transport singular floor `.003999991833333333 s`.
+See `ou-gyro-bias-projection.md` for the exact rational certificate and the
+limitation to qualified 4--6 ms steps, rather than arbitrary API-admitted stalls.
+
+The historical `h=.005, bhat_g=-400pi e_z` example violates the implemented
+invariant. This does not close the full signed `Delta_gyr(W)` or a historical
+six-pivot bound: actual chronological observations, resets and projection
+defects still require their joint enclosure. The projection changes only
+the mean. Its ideal component sector has gap `R_g-B_g=.48 rad/s`; covariance
+cross terms and inward floating-point rounding remain separate signed supplies.
+The forced balance observes both gyro and accelerometer mean projections.
+
+## Historical reader: the corrected conditional implication
+
+The previous assertion that Delta_col/Delta_gyr exclude every six-column
+rank-loss mechanism, with pivots >=min(Delta_col,Delta_gyr), lacked a proof
+and is withdrawn. Coefficient compactness also needs a derived nominal-history
+bound. The physical 3-D vector Gramian is not the historical observation array.
+
+The valid conditional algebra starts with all SIX unsquared Gram--Schmidt
+residual norms of the existing largest-residual selected minor O_I bounded
+below by p>0. The selector compares their squares, which has the same order.
+If C>=1
+bounds operator norms of that minor, transports and H_i, and H>=1 bounds
+both the terminal selector and T_h, determinant/singular-value comparison gives
+
+`||O_I^-1||<=C^5/p^6`, `||L||<=ell:=H C^5/p^6`, `L O=T_h`.
+
+For at most N operations the backward recursion, including its nonzero
+terminal selector and all `Y<-Y-L_i H_i` updates, gives
+
+`||Y_i||<=Ymax:=C^N(H+N ell C)`.
+
+If E bounds complete correlated process/measurement factors and U bounds the
+inherited nuisance covariance, exact AG root cancellation gives
+
+`B_W<=[N E^2(Ymax^2+ell^2)+U Ymax^2]I_6`.
+
+This coarse finiteness lemma does not replace the full matrix process
+comparison by a scalar contraction bound. No uniform p,C,H,E,U,N is asserted
+for the actual history family. The margins must first be proved and linked
+to the six pivots. Only then can the established implication
+`B_* -> AG upper -> J_AG>0 -> full upper -> rho_0<1` be instantiated.
+No new contraction enclosure is attempted without feasible full-matrix input.
 
 ## Controlling unresolved implication
 
-The first unresolved mathematical implication is source-uniform control, on every admitted carried same-history window, of the remaining signed acc/mag/S innovation functional together with construction-linked gyro-bias evolution and literal transition/reset/hard/arithmetic defects, with enough strict margin to prove
+The retained physical reserve is exactly
+`27049050188592/625000000000000000=4.32784803017472e-5`, under the constant
+physical field hypotheses of its sampling lemma. Its nominal transfer is
+not bounded by physical tilt span alone. The unresolved quantity is that
+reserve minus compatible signed transfer, compatibility residuals and
+literal defects over every carried history. Neither Delta_col nor Delta_gyr
+has a positive certified uniform bound; neither has been rigorously falsified
+under all current assumptions.
 
-inf_W Delta_col(W)>0,  inf_W Delta_gyr(W)>0.
-
-The implication from those two margins to L(W)O(W)=T_h(W) and a common finite B_* is now proved above. What remains unproved is the source-uniform positivity of the two premises themselves; B_* therefore remains uninstantiated and is not promoted as a shipping certificate. Consequently J_AG, the full 21-state covariance upper bound, rho_0<1, the complete nonlinear retained region, capture/release entry, every-prefix retention, recurring source-qualified magnetic service, and float32 totality remain open.
-
-Do not replace this obligation with independent nominal boxes, unsigned innovation energy, restricted-information lifting, Riccati subdivision, scalar/Gershgorin reductions, or finite-history diagnostics.
+The smooth diagonal-wave R=I diagnostic is outside the strengthened moving
+domain. Quiet water and quiet-bias ambiguity remain inside; retain the literal
+bias-projection sector rather than universal V<=36 entry. The nonlinear
+radius, capture, H18/release, magnetic-service qualification, every-prefix
+retention and float32 bounds remain open. The unsigned cumulative-energy
+ellipsoid's approximately 8e5 deficit is a DEAD_END and is not revisited.

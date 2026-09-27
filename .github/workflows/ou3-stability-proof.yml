@@ -90,6 +90,10 @@ jobs:
         run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test && ./tests/kalman_ou_iii/gyro_bias_projection-test
       - name: Audit carried source readout without promotion
         run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-readout.json
+      - name: Check signed adjoint compatibility on the carried word
+        run: python3 -m tools.stability.ou3_theorem.signed_temporal_diagnostic --output /tmp/ou3-signed-adjoint.json
+      - name: Check the forced signed balance on a carried moving word
+        run: python3 -m tools.stability.ou3_theorem.signed_temporal_balance --export --directory /tmp/ou3-signed-balance --output /tmp/ou3-signed-balance.json
       - name: Audit carried construction stress history without theorem promotion
         run: python3 -m tools.stability.ou3_theorem.construction_history_diagnostic --output /tmp/ou3-construction.json
       - name: Enclose carried mean action and record the failed uniform separation attempt
@@ -103,6 +107,10 @@ jobs:
           path: |
             /tmp/ou3-stability-evidence.json
             /tmp/ou3-source-readout.json
+            /tmp/ou3-signed-adjoint.json
+            /tmp/ou3-signed-balance.json
+            /tmp/ou3-signed-balance/export.json
+            /tmp/ou3-signed-balance/balance.bin
             /tmp/ou3-construction.json
             /tmp/ou3-mean-diagnostic.json
             /tmp/ou3-mean-enclosure.json

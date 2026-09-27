@@ -1,8 +1,7 @@
 # OU-III stability handoff
 
-This continuation starts from main `257dce56d195276bd6d237c0f8cd653c016eec24`
-and stays in one branch/PR. Continue from its current head until merged;
-afterward start from latest main. Do not restart an older proof branch.
+Continue from the latest head of the requested active PR branch and retain
+one proof path. A merged historical proof commit is not a stability certificate.
 The theorem is **not closed**; merging this work does not certify stability.
 Keep the single same-history construction -> capture -> H18 -> release -> A21
 architecture and the shipping estimator, including its residual gyro-bias protection.
@@ -21,8 +20,9 @@ Read in order, with paths relative to the repository root:
    six-column action and the exact forward-prior obstruction.
 
 MARINE MOTION now includes locally absolutely continuous physical acceleration
-with jerk <=100 m/s^3. The user authorized this domain revision. Quiet water,
-all other physical limits and shipping behavior are retained.
+with jerk <=100 m/s^3, and on every T_E physical window either complete
+stillness or gravity-direction span >=theta_E>0. T_E/theta_E remain symbolic.
+Quiet water, the other physical limits and shipping behavior are retained.
 
 Read `ou3-sampling-fidelity.md`: it proves the sharp nonuniform trapezoidal
 mean bound, exclusion of every constant-attitude stationary-sample alias of
@@ -33,8 +33,8 @@ The exact constants are reproduced by `sampling_fidelity.py`. The physical
 Gramian uses true world transport; it is not the actual corrected full loss.
 
 The 200-Hz counterexample and native `sampled_capture-test` now have the
-explicit scope of the previous domain without a jerk bound. They explain why
-the new premise is necessary and remain useful regression checks. They do
+explicit scope of the previous domain without jerk or tilt-span requirements.
+They remain useful historical regression checks. They do
 not refute capture under the revised domain.
 
 Retain the exact complete-word loss/factor/range algebra, corrected LIN path
@@ -139,17 +139,17 @@ The complete moving sync/symmetry operation now has an exact signed-factor
 upper envelope, including its -2^-44 Rayleigh defect and all 21 coordinates.
 Quiet and moving exported words both pass exact action enclosure. Prediction,
 solve, Joseph, reset and state arithmetic are not thereby certified.
-The historical zero-innovation full-turn relaxation (`h=.005`,
-`b_hat_g=-400*pi*e_z`) has rank four in its unprojected real model. It is
-excluded by the implemented .5 rad/s gyro-bias ball. The qualified 4--6 ms
-source family has angle below .007 rad and a one-step gyro transport singular
-floor `.003999991833333333 s`. See `ou-gyro-bias-projection.md` for every input
-term, API timing limitations and projection storage defects. The full signed
-`Delta_gyr`, force/field separation and historical action remain open.
+The nominal-history attack also tests a zero-innovation full-turn gyro alias:
+h=.005, b_hat_g=-400 pi e_z, quiet inputs. It satisfies the regular nominal
+mean recursion in real arithmetic, but its AG array has rank four. Neither
+construction reachability nor magnetic service is certified. Next derive a
+construction-linked estimate gyro bound; a physical gyro bound or innovation
+bound alone does not supply it. All uniform and end-to-end claims stay false.
 
 The latest construction attempt is reproducible with
 `python -m tools.stability.ou3_theorem.construction_history_diagnostic --output /tmp/ou3-construction.json`.
-Its continuous physical profile obeys every marine/true-bias envelope and
+Its R=I translation fails the current tilt-span assumption; it is retained
+only as an old-domain diagnostic. It obeys the other motion/bias envelopes and
 passes through the unchanged wrapper from begin to 600 s. The 400--600 s
 native tilt is about 8.21 degrees, so a six-degree entry set is not inherited
 merely from refinement/release. This finite observation is not an all-time
@@ -181,5 +181,14 @@ whole-window argument; do not tighten this failed pointwise ellipsoid or
 substitute a nominal-state cap. The committed mean-action summary is checked
 with rational interval LDL, and CI reproduces the full binary transcript,
 80-digit diagnostic and outward enclosure. Uniform B_*, J and rho0 remain
-false. The physical assumptions are unchanged; the separate gyro mean invariant
-is implemented in both OU filters without covariance or tuning changes.
+false. The newer MARINE MOTION tilt-span
+restriction excludes this particular moving diagnostic.
+
+Read `ou3-signed-temporal-continuation.md` before continuing. The exact carried
+adjoint criterion and signed physical bias/velocity identities are established.
+Zero-mean weights do not preserve adjoint compatibility. Positive temporal
+margins, their quantitative six-pivot implication and coefficient compactness
+remain open. The implemented .5 rad/s gyro ball excludes complete-turn bias
+aliases and gives a one-step transport floor on qualified 4--6 ms predictions;
+it does not close the signed temporal gyro margin. Preserve both
+compatibility residual sums and the quiet-bias stillness ambiguity.

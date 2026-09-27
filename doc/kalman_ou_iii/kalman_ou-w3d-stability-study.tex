@@ -351,8 +351,9 @@ sensitivities may remain rank deficient.
 
 \section{Necessity of sampling regularity}
 \label{sec:capture-obstruction}
-\begin{theorem}[Obstruction without the jerk condition]
-If \eqref{eq:jerk} is omitted from the point-sample domain, there
+\begin{theorem}[Obstruction in the former point-sample domain]
+If both the jerk condition \eqref{eq:jerk} and the stillness-or-tilt-span
+condition are omitted from the point-sample domain, there
 are two nonzero continuous histories satisfying the motion and bias bounds
 and the actual real-arithmetic magnetic-service condition
 \eqref{eq:mag-service}, for which the shipping execution never enters the
@@ -1103,11 +1104,14 @@ in all 21 coordinates. Other arithmetic and uniform coverage remain open.
 A construction-to-600-s stress run uses
 $p=-(3/2)\sin(2t)(1,0,1)$, constant attitude, field $(45,0,45)$ and zero
 true biases. Squared displacement, velocity, acceleration, jerk and
-primitive-span bounds are $9/2,18,72,288,9/2$, within the physical limits.
+primitive-span bounds are $9/2,18,72,288,9/2$, within the older limits.
+This moving constant-attitude history violates the current tilt-span rule
+and is retained only as an old-domain diagnostic.
 The wrapper reaches refinement/release, but finite 400--600-s tilt averages
 $8.21^\circ$ and nominal acceleration reaches $9.7764\,\mathrm{m/s^2}$.
-Thus neither six-degree entry nor an $8.8\,\mathrm{m/s^2}$ nominal cap
-follows from stage flags or physical bounds. This finite record does not
+In that older domain, neither six-degree entry nor an
+$8.8\,\mathrm{m/s^2}$ nominal cap followed from stage flags or physical bounds.
+The current domain requires its own construction-linked proof. This finite record does not
 certify all-time magnetic service or refute eventual capture. Exact
 elimination of its recorded SPD covariance gives $V>11492.6752$ from the
 known zero true BA, outside the sufficient projection guard $V\le36$.
@@ -1150,9 +1154,285 @@ quiet-driven nonlinear trajectories or capture. The physical bias remains
 independent of the estimator OU prior and contributes its exact mismatch.
 Replacing active BA decay by a held identity predictor would change the
 argument. There is no demonstrated quiet-water instability here warranting
-its exclusion. If varying histories require extra motion excitation, it
-must be a quantitative every-window condition: excluding only exactly zero
-amplitude does not yield a uniform information margin.
+its exclusion. The current every-window physical tilt-span rule restricts
+moving histories; its quantitative nominal-information consequence remains
+unproved.
+
+
+\section{Signed temporal separation: established steps and gaps}
+The following lemmas enter \eqref{eq:diss} only through the missing
+nominal temporal margins, historical AG readout and complete matrix process
+comparison. They do not certify a contraction factor or finite capture.
+
+\subsection{Physical span at sample times}
+Let $Q(t)$ be true world-to-body rotation, $R_i$ the nominal rotation,
+and $d(t)=Q(t)e_z$. These are distinct states. Spherical distance obeys
+$\operatorname{dist}(d(s),d(t))\le\Omega_{\max}|s-t|$.
+For samples covering the complete window with fill distance $\eta$, the
+triangle inequality at a pair attaining the physical diameter gives
+\begin{equation}
+ \Delta_g(\text{samples})\ge
+ \alpha:=\max(0,\theta_E-2\Omega_{\max}\eta).
+ \label{eq:tilt-sampling}
+\end{equation}
+Thus some sampled pair has chord at least $2\sin(\alpha/2)$.
+In-window samples permit $\eta\le h_{\max}$ with endpoint coverage;
+$h_{\max}/2$ requires the corresponding stronger coverage.
+No numerical $T_E$ or $\theta_E$ is assigned.
+
+Retain the signed accelerometer relations
+\begin{align}
+ r_i^a&=f_i^m-R_i(\hat a_i-ge_z)-\hat b_{a,i},\nonumber\\
+ f_i^m&=Q_i(a_i-ge_z)+b_{a,i}+n_{a,i}.
+\end{align}
+With $\hat f_i=R_i(\hat a_i-ge_z)$, subtraction gives
+\begin{align}
+ g(d_j-d_i)={}&\Delta(Qa)-\Delta\hat f+\Delta b_a\nonumber\\
+ &-\Delta\hat b_a+\Delta n_a-\Delta r^a.
+ \label{eq:signed-tilt-pair}
+\end{align}
+For that pair, therefore,
+\begin{align}
+ &\norm{\Delta\hat f+\Delta\hat b_a+\Delta r^a-\Delta(Qa)}\nonumber\\
+ &\quad\ge 2g\sin(\alpha/2)-\min(2B_a,D_a|t_j-t_i|)-2N_a.
+\end{align}
+This constrains a signed combination, not nominal force/field angle.
+The magnetic identity remains $r_i^m=m_i^m-R_iB_i$, with the actual
+carried reference $B_i$, physical field and both magnetic residual terms.
+Condition~\eqref{eq:mag-service} supplies only its stated two root columns.
+
+An unsigned pairwise estimate already fails before nominal terms are
+charged. It replaces $\Delta(Qa)$ by
+$\min(2A_{\max},(J_{\max}+\Omega_{\max}A_{\max})T_E)$.
+For feasible $\theta_E\le\pi/2$, both quantities exceed
+$2g\sin(\theta_E/2)$: use $\theta_E\le\Omega_{\max}T_E$,
+$J_{\max}+\Omega_{\max}A_{\max}>g\Omega_{\max}$ and
+$2A_{\max}>\sqrt2g$. This fails as a proof tactic; it is not a physical
+counterexample. Whole-window signed cancellation remains necessary.
+
+\paragraph{Tilt need not appear in the nominal attitude}
+Let $\alpha=\theta_E/2\in(0,\pi/2)$, $\nu=2\pi/T_E$ and
+$\phi(t)=\alpha\sin(\nu t)$. True body-to-world attitude $R_x(\phi)$,
+zero translation, $B=75e_x$, $b_g=-\omega$ and
+$b_a=g(R^{\mathsf T}e_z-e_z)$ produce the exact level/north sensor record.
+Every $T_E$ interval has physical span $\theta_E$ and is non-still.
+The smooth biases satisfy the existing limits under the sufficient conditions
+\begin{align}
+ g\alpha&\le B_a,&g\alpha\nu&\le D_a,\nonumber\\
+ \alpha\nu&\le\min(B_g,\Omega_{\max}),&\alpha\nu^2&\le D_g.
+\end{align}
+The nominal execution is the quiet construction. Its actual magnetic-service
+floor transfers with factor at least $\cos^2\alpha$; require the resulting
+floor to exceed one. This nonempty small-amplitude, slow-motion parameter
+family assigns no numerical $T_E,\theta_E$. It disproves mandatory nominal
+tilt response, not positive nominal separation: the quiet nominal force and
+field are nonparallel and the corrected nominal gyro rate is zero.
+
+\subsection{The compatibility requirement}
+For four actual S events $t_0<t_1<t_2<t_3$, define
+$c_j=-6/\prod_{l\ne j}(t_j-t_l)$ and
+$\psi(t)=\frac12\sum_j c_j(t-t_j)_+^2$.
+Its exterior jets through order two vanish. Integration by parts in the
+literal nominal chain, including all correction jumps, gives
+\begin{align}
+ \int\psi\hat a\,dt={}&\sum_j c_jr_{S,j}-d_\psi\nonumber\\
+ &-\sum_i(\psi_iK_{v,i}-\psi'_iK_{p,i}+\psi''_iK_{S,i})r_i.
+\end{align}
+The S atom uses the right $\psi''$ and pre-correction S innovation.
+Earlier same-time corrections use its left value. OU interpolation,
+resets, projection, frame and arithmetic defects remain in $d_\psi$.
+
+For the carried affine mean recursion
+$u_{i+1}=A_i u_i+K_i r_i+d_i$, arbitrary multipliers give exactly
+\begin{align}
+ \sum_iW_i r_i={}&Z_Nu_N-Z_0u_0-\sum_iZ_{i+1}d_i\nonumber\\
+ &+\sum_i(Z_i-Z_{i+1}A_i)u_i\nonumber\\
+ &+\sum_i(W_i-Z_{i+1}K_i)r_i.
+ \label{eq:adjoint-residual}
+\end{align}
+Put $\Phi_{N,i+1}=A_{N-1}\cdots A_{i+1}$,
+$C=[\Phi_{N,i+1}K_i]_i$ and $W=[W_i]_i$.
+\begin{lemma}[Carried adjoint compatibility]
+An exact homogeneous adjoint with the desired innovation weights exists
+if and only if $\ker C\subseteq\ker W$, equivalently $Z_NC=W$ for a
+single terminal multiplier.
+\end{lemma}
+\begin{proof}
+Backward propagation forces $Z_i=Z_N\Phi_{N,i}$. Conversely the map
+$Cx\mapsto Wx$ is well-defined on range $C$ by the kernel condition;
+extend it linearly and propagate backwards. Invertible transitions are
+not required.
+\end{proof}
+With $Z_N=0$ all multipliers vanish. At the first regular S atom the
+required weight $c_0(I-K_{SS})$ is nonsingular since
+$I-K_{SS}=R_{\rm eff}(P_{SS}+R_{\rm eff})^{-1}$.
+This rules out the zero-terminal homogeneous specialization. A forced
+adjoint retains the corresponding state residual in
+\eqref{eq:adjoint-residual}.
+
+An observer/control quiet construction-to-release run gives identical
+terminal outputs. For its four-S exported coefficient word an exact
+seven-column witness has $\norm v_\infty=1$, $Cv=0$ and
+$|Wv|>754573637/5000000000000000$ (about $3.0183\times10^{-7}$).
+Thus even a free terminal multiplier cannot telescope that exported word.
+This is not a real-arithmetic trajectory enclosure or all-time service
+certificate, and its zero actual innovations do not imply instability.
+
+Zero-mean projection is not a compatibility proof. For example
+$C=(1,2), W=(1,2)$ is compatible, but its mean-subtracted weight
+$(-1/2,1/2)$ does not vanish on $\ker C$. Spline endpoint jets alone
+also do not solve the coupled mean adjoint. The two residual sums must
+remain until bounded on the same history.
+
+\subsection{Forced data adjoint and its limits}
+Use all 18 Euclidean means and write the literal sensor identity as
+$r_i=y_i-\bar H_i u_i+\epsilon_i$. Here $\bar H_i$ is the mean observation
+map, not the full EKF Jacobian: its acc blocks are $R_i$ at AW and $I$ at
+BA, its S block selects S, and its magnetic map is zero. Thus
+\begin{align}
+ y_i^a&=f_i^m+gR_i e_z,&y_i^S&=0,\nonumber\\
+ y_i^m&=m_i^m-R_i B_i.
+\end{align}
+Actual attitude/reference, gains, mode-dependent predictions, innovation
+arithmetic $\epsilon_i$ and separate mean/projection defects $d_i$ remain.
+\begin{lemma}[Forced data identity]
+For arbitrary desired weights $W_i$, set $Z_N=0$ and propagate
+\begin{align}
+ L_i&=W_i+Z_{i+1}K_i,\nonumber\\
+ Z_i&=Z_{i+1}A_i-L_i\bar H_i.
+\end{align}
+Then, without a homogeneous compatibility assumption,
+\begin{equation}
+ \sum_iW_i r_i=Z_0u_0+\sum_iL_i(y_i+\epsilon_i)+\sum_iZ_{i+1}d_i.
+ \label{eq:forced-data}
+\end{equation}
+\end{lemma}
+\begin{proof}
+Substitute both literal recurrences. The adjacent terms
+$Z_i u_i-Z_{i+1}u_{i+1}$ telescope. The root term remains.
+\end{proof}
+With true world-to-body rotation $Q_i$, the physical acceleration term is
+$\sum_aL_iQ_i a_i$. The rotation/reference terms must remain jointly signed:
+\begin{equation}
+ g\sum_aL_i(R_i-Q_i)e_z+
+ \sum_mL_i(Q_iB_i^{\rm true}-R_iB_i).
+\end{equation}
+The physical bias and residual terms are separate. Equation
+\eqref{eq:forced-data} rewrites both compatibility residual sums; it does
+not bound the root action, these joint terms or multiplier variation.
+It enters \eqref{eq:word-energy} only through the still-open signed
+separation and historical-reader steps.
+
+In the default fixed-frame Euclidean mean recurrence with lever arm
+disabled, $A_iE_{\rm BG}=E_{\rm BG}$ and $\bar H_iE_{\rm BG}=0$.
+Hence $(A_i-K_i\bar H_i)E_{\rm BG}=E_{\rm BG}$ and
+$Z_iE_{\rm BG}=0$. This removes the BG root coefficient of the functional
+but provides no restoring feedback for the BG mean itself. It is a
+limitation of frozen-attitude algebra, not an unstable mode of the coupled
+estimator. The complete signed gyro margin still needs the actual attitude dynamics.
+
+\subsection{Signed physical supplies and gyro level}
+For matrix weights $C_i$ and one physical bias sequence,
+\begin{align}
+ \sum_iC_i b_i={}&\Big(\sum_iC_i\Big)b_0
+    +\sum_j\Big(\sum_{i>j}C_i\Big)w_j,\nonumber\\
+ \norm{\sum_iC_i b_i}\le{}&B\norm{\sum_iC_i}
+    +D\sum_j\norm{\sum_{i>j}C_i}\,\Delta t_j.
+ \label{eq:signed-bias-supply}
+\end{align}
+This is exact summation by parts before norms, not an independent bias
+box per sample. Likewise $v'=a$ and the jerk limit give
+\begin{align}
+ \sum_i h_i C_i a(t_i)={}&C_{N-1}v_N-C_0v_0\nonumber\\
+ &+\sum_{i=1}^{N-1}(C_{i-1}-C_i)v_i+\epsilon,\nonumber\\
+ \norm\epsilon\le{}&\frac{J_{\max}}2\sum_i\norm{C_i}h_i^2.
+\end{align}
+The supply uses physical velocity and signed weight variation. These
+bounds do not remove nominal acceleration, S, bias means or reference
+terms from the residual innovations. Their multiplier norms and remaining
+signed nominal action still need source-uniform control.
+
+One refinement first sums signed coefficients inside a physical interval
+$[a,b]$, with $H=b-a$, $D=\sum_iC_i$ and $t_i\in[a,b]$. Then
+\begin{align}
+ \sum_i C_i a(t_i)&=\frac{D}{H}(v(b)-v(a))+\epsilon,\nonumber\\
+ \norm\epsilon&\le\frac{J_{\max}}{2H}\sum_i\norm{C_i}
+       \big[(t_i-a)^2+(b-t_i)^2\big].
+\end{align}
+This follows by integrating $\norm{a(t_i)-a(s)}\le J_{\max}|t_i-s|$;
+the signed $D$ is formed before applying the velocity bound. Actual S
+intervals are a partition of physical time, not extra observations.
+
+A carried moving diagnostic starts at construction and observes the
+225--289-s tail with roll $0.02\sin(t/2)$ and displacement
+$0.4\sin(0.6t)e_z$. Its four actual S knots, relative to 225 s, are
+$(0.065,21.365,42.665,63.96)$ s. The full signed identity has 80-digit
+residual below $10^{-75}$ and observer/control parity. This does
+not qualify numerical $T_E,\theta_E$ or all-time magnetic service.
+The recorded projected-gravity threshold is $8.77133456$. A rotation
+triangle charge is $39.22565273$, already giving margin $-30.45431817$.
+The velocity/jerk charge is $239.97053020$; summing within actual S
+intervals reduces it to $27.81044246$, still giving margin $-19.03910790$
+before other supplies. These failed norm bounds are not negative actual
+$\Delta_{\rm col}$ certificates. Further precision or refinement of the
+same relaxation is stopped. Root action, joint rotation/reference action
+and their same-history coupling remain the controlling gaps.
+
+Construction gives $\hat b_g=0$ at the first prediction and angular
+increment at most $0.0039051914291880918$ rad. Subsequently a complete
+turn requires
+\begin{equation}
+ \norm{\hat b_g}\ge\frac{2\pi}{h_{\max}}-(\Omega_{\max}+B_g+N_g)
+ >1046.5466859583\ \mathrm{rad/s}.
+\end{equation}
+The implemented residual gyro-bias projection gives
+$\norm{\hat b_g}\le0.5\,\mathrm{rad/s}$ at every prediction, excluding
+this barrier throughout the qualified timing/input domain. As derived above,
+the real-source rotation is below $0.007$ rad and both gyro-transport
+branches have singular floor $0.003999991833333333\,\mathrm{s}$.
+This closes complete-turn bias-alias exclusion, not the signed temporal
+$\Delta_{\rm gyr}$ or its six-pivot implication. The actual chronological
+observation/reset transport and mean-projection defects remain in the
+same-history action. Arbitrary API-admitted timestep stalls are outside
+this timing certificate.
+
+\subsection{Six pivots are still required}
+No proof currently converts the two proposed positive temporal margins
+into a uniform lower bound on all six historical pivots. Coefficient
+compactness is also unproved. The valid conditional statement starts with
+six unsquared Gram--Schmidt residual norms at least $p>0$, and operator bounds $C\ge1$ on the
+selected minor, observations and transports and $H\ge1$ on the terminal
+selector and map. Determinant comparison gives
+$\norm{O_I^{-1}}\le C^5/p^6$ and $\norm L\le\ell=HC^5/p^6$.
+For at most $N$ operations the backward action, including its nonzero
+terminal selector, has
+\begin{align}
+ \norm{Y_i}&\le Y_{\max}=C^N(H+N\ell C),\nonumber\\
+ B_W&\preceq\big[N E^2(Y_{\max}^2+\ell^2)+U Y_{\max}^2\big]I_6,
+\end{align}
+conditional on complete correlated factor bound $E$ and nuisance bound
+$U$, after exact AG root cancellation. This proves finiteness only;
+the later contraction comparison remains fully matrix-valued.
+Neither temporal margin, a uniform historical $B_*$, $J_{\rm AG}>0$
+nor $\rho_0<1$ is certified by these lemmas.
+
+\subsection{Admitted stillness ambiguity}
+Quiet truth with constant body-to-world attitude
+$R_x(2\arctan(1/100))$, field $75e_x$, zero gyro bias and
+$b_a=g(R^{\mathsf T}e_z-e_z)$ gives exactly the level/north measured
+record. Its constant bias norm is about $0.1961232<B_a$ and it satisfies
+the stillness branch indefinitely. The stationary magnetic-service proof
+retains a floor above one after the true-axis factor $(9999/10001)^2$.
+The actual estimator follows the zero-innovation stationary construction.
+At the regular boundaries where $P_{ba,ba}\preceq I/1600$,
+\begin{equation}
+ V\ge1600\norm{b_a}^2
+   =\frac{38468153689}{625062500}>61.54289>36.
+\end{equation}
+Thus the convenient projection-inactive ball is not a universal capture
+target. Retain the literal bias-projection sector; a larger or shaped
+invariant region requires its own proof. Exact attitude/bias convergence
+under indefinite stillness is not claimed.
 
 \section{Finite-error regional theorem obligations}
 Use the gains, events and covariance of the actual estimator execution
@@ -1314,8 +1594,8 @@ For a factor partition $[B_h,B_n]$, exact nuisance elimination gives
 \end{equation}
 An independent-column range basis handles singular nuisance blocks; a
 positive reduced heading matrix still leaves any nuisance nullspace open.
-Section~\ref{sec:capture-obstruction} refutes six-degree capture only without
-\eqref{eq:jerk}. Under the amended domain, capture, H18/release retention,
+Section~\ref{sec:capture-obstruction} refutes six-degree capture only in the
+former domain without jerk and tilt-span conditions. Under the amended domain, capture, H18/release retention,
 recurring service, nonlinear storage and arithmetic remain open.
 End-to-end regional practical stability remains unproved.
 

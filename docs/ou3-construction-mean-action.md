@@ -64,8 +64,10 @@ observability. In particular, the innovations are not physical sensor noise.
 
 ## Executed construction and enclosure
 
-The observer runs the existing diagonal-wave history from begin to 600 s,
-through the actual frontend, handoff, H18, reference refinement and release.
+The observer runs the existing diagonal-wave history from begin to 600 s.
+It is an old-domain diagnostic: sustained translation with R=I violates the
+current stillness-or-tilt-span condition. It retains the other envelopes and
+passes through the actual frontend, handoff, H18, refinement and release.
 All terminal means, quaternion, covariance, stage times and magnetic counts
 are identical to the untapped control. It records 89998 predictions and
 122251 actually applied rank-three corrections; it does not resample the
@@ -243,24 +245,15 @@ is
 
 `inf_W Delta_col(W)>0`,  `inf_W Delta_gyr(W)>0`.
 
-Only after those two **same-history** margins are certified may compactness of
-the remaining realized coefficient family be invoked.  On that separated
-family the six-column raw observation matrix has full AG rank; exact
-largest-residual factor pivoting is continuous on each pivot chart and a
-finite chart cover supplies a reader.  The already bounded nuisance/process
-factors and finite operation count then make its complete 6x6 action
-continuous.  Therefore the common ceiling is
-
-`B_* = sup_W lambda_max(B_W) < infinity`.
-
-This is the route from signed temporal separation to the historical action
-ceiling.  The supremum is **not yet numerically or rigorously enclosed** in
-this PR: the missing executable step is an outward enclosure of the two
-signed margins over the admitted same-history window family, followed by the
-finite pivot-chart action maximum.  Until that succeeds,
-`uniform_historical_AG_readout_action` remains false and no J/rho0 claim is
-promoted.  The existing 400--600 s positive finite margins remain diagnostics
-only.
+The margins are necessary targets, but a quantitative implication from them
+to all six residual pivots has not been proved. The former compactness argument
+assumed both full rank on every carried word and compactness of the nominal
+coefficient family. Neither follows from the physical 3-D vector Gramian.
+`ou3-signed-temporal-continuation.md` gives the valid conditional implication
+from six uniform pivot floors to exact root cancellation and finite full
+historical action, including the terminal selector in its backward bound.
+Until the signed-margin and six-pivot bridge close, uniform B_*, J and rho0
+remain unproved. The finite 400--600 s margins are only old-domain diagnostics.
 
 ## Architecture decision
 

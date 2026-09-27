@@ -159,7 +159,7 @@ This closes the **one-prediction real-source gyro-transport separation**.
 It does **not** close `inf_W Delta_gyr(W)>0` for the full signed temporal word:
 chronological observation forcing, actual reset transport and projection
 defects still need their joint uniform enclosure. Force/field collinearity,
-historical action, full covariance upper bound, strict contraction, finite
+the quantitative six-pivot implication, historical action, full covariance upper bound, strict contraction, finite
 capture/release, retention and whole-word float32 totality remain open.
 
 For ideal Euclidean projection let `d_g=b_corr-Proj(b_corr)`. Since physical
