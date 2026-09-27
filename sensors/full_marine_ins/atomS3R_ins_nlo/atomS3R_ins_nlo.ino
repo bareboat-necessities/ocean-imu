@@ -531,6 +531,8 @@ class FusionApp {
   void updateFilter_(const ImuSample& s) {
     const uint32_t now_ms = millis();
 
+    // Pass elapsed sample time through: the NLO integrates delayed samples
+    // in bounded steps so its startup feedback remains numerically stable.
     dt_ = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
     imu_temp_c_ = tempC;

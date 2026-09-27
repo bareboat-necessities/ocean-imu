@@ -41,9 +41,9 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "21b24748c45542bebcae858823abe0f0481dcf98",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
+  "git_branch": "fix/calibration-guided-mag-gyro",
+  "git_commit": "17c8d7efb25f21e8df4eb7c1cbf9993324364dba",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 11404 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1274 +--\n .../results/ou_robustness/ou_robustness_raw.csv    |    44 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   324 +-\n .../results/ou_robustness/ou_robustness_stress.svg |    36 +-\n .../ou_robustness/ou_robustness_summary.csv        |   848 +-\n 6 files changed, 6964 insertions(+), 6966 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -325,8 +325,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-26T03:13:27+00:00",
-    "git_commit": "21b24748c45542bebcae858823abe0f0481dcf98",
+    "generated_at": "2026-09-27T06:24:34+00:00",
+    "git_commit": "17c8d7efb25f21e8df4eb7c1cbf9993324364dba",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -509,8 +509,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "36212565974",
-      "workflow": "build"
+      "run_id": "36298680938",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {

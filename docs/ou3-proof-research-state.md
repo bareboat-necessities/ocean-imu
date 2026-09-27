@@ -225,6 +225,25 @@ it exceeds one.
   enclosure and exact recorded-force audit passed. Its collinearity margin is
   still in `[-817884.048495, -817884.048494]`, so these regressions do not reopen
   the failed energy tactic or certify current-domain source-uniform coverage.
+- The follow-up PR initially had six overlapping proof-file conflicts because
+  #602's already-merged changes were not ancestors of the retained branch.
+  This was a repository-history failure, not a proof failure. The existing
+  changes on main are disjoint from this continuation's 21 proof paths;
+  reconciliation preserves both sets. Final validation ran on that combined
+  tree before the continuation was left for review.
+  `git diff --check HEAD` included pre-existing generated SVG whitespace from
+  those incoming main changes; the actual continuation diff against main
+  passes. The existing simulation/publication artifacts are preserved.
+- The reconciled `make all` passed all native stages and 531 shared tests,
+  then four `SourceArchiveProvenanceTests` failed in `shutil.copytree` with
+  `[Errno 28] No space left on device`. Classification: infrastructure
+  capacity, not a source/proof assertion failure. The remaining filesystem
+  capacity was 508 MiB; the two copied simulator trees alone require about
+  2.4 GiB. Removing this task's 3.6-GiB temporary TeX dependency cache after
+  PDF completion restored capacity. Resuming the same complete shared gate
+  with `make -C tests/validation test` passed all 535 tests. Retain the native
+  results; fixture logic and quality gates are unchanged. The root directory
+  has no `evidence-test` target; that target belongs to `tests/validation`.
 
 The first apt command failed with setgroups/setegid/seteuid errors in the
 container. Existing runtime Eigen headers resolved native builds. The first

@@ -24,6 +24,8 @@
 #include <ArduinoEigenDense.h>
 #endif
 
+#include "imu_calibrate/MagCalFit.h"
+
 namespace imu_cal {
 
 // Config / limits
@@ -62,6 +64,9 @@ enum class FitFail : uint8_t {
   ACCEL_INFO_LOW,          // measured geometry does not determine bias/cross terms
   ACCEL_CROSSCHECK_FAIL,   // held-out holds disagree with the fitted model
   ACCEL_FLOAT_CHECK_FAIL,  // stored float coefficients failed re-validation
+  MAG_QUALITY_FAIL,
+  MAG_VERIFY_FAIL,
+  GYRO_NOT_STILL,
 };
 
 static inline const char* fitFailStr(FitFail f) {
@@ -83,6 +88,9 @@ static inline const char* fitFailStr(FitFail f) {
     case FitFail::ACCEL_INFO_LOW: return "ACCEL_INFO_LOW";
     case FitFail::ACCEL_CROSSCHECK_FAIL: return "ACCEL_CROSSCHECK";
     case FitFail::ACCEL_FLOAT_CHECK_FAIL: return "ACCEL_FLOAT_CHECK";
+    case FitFail::MAG_QUALITY_FAIL: return "MAG_QUALITY_FAIL";
+    case FitFail::MAG_VERIFY_FAIL: return "MAG_VERIFY_FAIL";
+    case FitFail::GYRO_NOT_STILL: return "GYRO_NOT_STILL";
     default: return "UNKNOWN";
   }
 }
@@ -681,7 +689,8 @@ struct MagCalibration {
   Eigen::Matrix<T,3,3> A = Eigen::Matrix<T,3,3>::Identity(); // m_cal = A*(m_raw - b)
   Eigen::Matrix<T,3,1> b = Eigen::Matrix<T,3,1>::Zero();
   T field_uT = T(0);
-  T rms = T(0);
+  T rms = T(0); // legacy trimmed report; fit acceptance uses quality.rms and tails
+  MagFitQuality quality{};
 
   Eigen::Matrix<T,3,1> apply(const Eigen::Matrix<T,3,1>& m_raw) const {
     return A * (m_raw - b);
@@ -1088,6 +1097,10 @@ struct MagCalibrator {
   using Vec3 = Eigen::Matrix<T,3,1>;
   SampleBuffer3<T, N> buf;
   mutable Vec3 xs_[IMU_CAL_MAX_SAMPLES]; // scaled samples workspace
+  uint32_t sample_ms[N]{}; // elapsed capture time, independent of reservoir slot
+  bool timed = false;
+  mutable MagGeometricFit<N> geometric;
+  mutable MagFitQuality quality;
 
   // sanity gates
   T min_norm_uT = T(5);
@@ -1096,13 +1109,17 @@ struct MagCalibrator {
   mutable FitFail last_fail_ = FitFail::OK;
   FitFail lastFail() const { return last_fail_; }
 
-  void clear() { buf.clear(); }
+  void clear() { buf.clear(); timed = false; quality = MagFitQuality{}; }
 
-  bool addSample(const Vec3& m_raw_uT) {
+  bool addSample(const Vec3& m_raw_uT, uint32_t elapsed_ms = UINT32_MAX) {
     if (!isfinite3(m_raw_uT)) return false;
     const T nrm = m_raw_uT.norm();
     if (nrm < min_norm_uT || nrm > max_norm_uT) return false;
-    return buf.push(m_raw_uT, T(0));
+    const int slot = buf.n;
+    if (!buf.push(m_raw_uT, T(0))) return false;
+    sample_ms[slot] = elapsed_ms == UINT32_MAX ? 0 : elapsed_ms;
+    if (elapsed_ms != UINT32_MAX) timed = true;
+    return true;
   }
 
   bool fit(MagCalibration<T>& out,
@@ -1112,7 +1129,8 @@ struct MagCalibrator {
            FitFail* reason_out = nullptr) const
   {
     last_fail_ = FitFail::OK;
-    out.ok = false;
+    out = MagCalibration<T>{};
+    quality = MagFitQuality{};
 
     if (buf.n < 80) {
       last_fail_ = FitFail::TOO_FEW_SAMPLES;
@@ -1171,11 +1189,19 @@ struct MagCalibrator {
       return false;
     }
 
-    out.ok = true;
     out.b = b_uT;
     out.A = A_unit_uTinv * B_med;  // calibrated output ~uT magnitude
     out.field_uT = B_med;
-    out.rms = fit0.rms * B_med;
+    if (!geometric.refine(buf.v, buf.n, B_med, out.A, out.b, quality) ||
+        !geometric.check(buf.v, buf.n, B_med, out.A, out.b, quality, timed ? sample_ms : nullptr, double(trim_frac))) {
+      out.quality = quality;
+      last_fail_ = FitFail::MAG_QUALITY_FAIL;
+      if (reason_out) *reason_out = last_fail_;
+      return false;
+    }
+    out.rms = T(quality.trimmed_rms);
+    out.quality = quality;
+    out.ok = true;
 
     last_fail_ = FitFail::OK;
     if (reason_out) *reason_out = FitFail::OK;
@@ -1235,6 +1261,18 @@ struct GyroCalibrator {
       sum += buf.v[i].template cast<double>();
     }
     const double range = tmax - tmin;
+    // A narrow-temperature hold cannot explain large scatter as thermal
+    // drift. Capture also checks continuous stillness using accel and mag;
+    // this protects direct callers against averaging a movement into bias.
+    if (range < GyroThermalLimits::min_span) {
+      DVec scatter = DVec::Zero();
+      const DVec mean_rate = sum / buf.n;
+      for (int i = 0; i < buf.n; ++i) {
+        const DVec e = buf.v[i].template cast<double>() - mean_rate;
+        scatter += e.cwiseProduct(e);
+      }
+      if ((scatter / buf.n).maxCoeff() > 0.006 * 0.006) return fail(FitFail::GYRO_NOT_STILL);
+    }
     DVec bin_sum[K_TBINS];
     double bin_temp[K_TBINS]{};
     int count[K_TBINS]{};
