@@ -137,23 +137,27 @@ immediate restart. Progress includes elapsed time, sample count and coverage.
 
 The wizard observes freshness independently of sample retention. Meaningful
 changes reset the stale timer even after the buffer is full; missing, invalid
-or frozen data do not. The wizard averages distinct readings in non-overlapping 400 ms windows before
-retaining observations in its 400-entry buffer. A window requires at least eight
-distinct magnetic readings and a fresh gyro stream; repeated polls add no weight.
-The bias-corrected gyro bounds accumulated rotation to 0.30 rad per window to
-limit rotational smearing. Faster motion discards that window and shows
-**Turn more slowly** while the raw stream continues to establish liveness.
-Missing/invalid input or an IMU polling gap longer than 60 ms voids the window.
+or frozen data do not. Each non-overlapping window retains the mean and
+within-window covariance of at least twelve distinct readings over at least
+400 ms. Slower sampling extends the window until enough readings arrive;
+repeated polls add no weight. Ordinary display/I2C pauses retain partial data.
+Invalid magnetic input or over 500 ms without a fresh magnetic reading clears
+the partial window. Magnetic capture needs no gyro rate gate: the second
+moment accounts for motion within each window instead of rejecting hand turns.
 This averaging also applies when the optional sensor preset is unavailable. When full, observations in sparse direction cells
 replace observations in the most crowded cell; otherwise fixed-seed reservoir
 replacement retains later data. The 26 broad cells use centered raw directions
 during collection and corrected directions during verification. Retention is
-deterministic for a given stream, without requiring a second sample array.
+deterministic for a given stream. Mean, covariance and timestamp are replaced
+together. The covariance workspace uses 14.4 KB on the wizard heap.
 
 Collection requires at least 45 seconds, 160 averaged observations, span ratios
 0.35/0.55, two-axis direction range 1.05, unit-direction covariance determinant
 0.0002, and at least 12 direction cells with three observations each. Capture
-is bounded to 220 seconds; the normal guided sweep takes about 70 seconds.
+is bounded to 220 seconds; a 20–30 Hz sweep normally takes about 70–100 seconds.
+The display shows accepted sample counts and requests more directions when
+coverage is the remaining limitation. Periodic diagnostics do not wait for USB
+output space, including while the capture has too few samples.
 Missing or frozen data fail after 12 seconds without
 meaningful change. Coverage calculations update only when retained data change.
 
@@ -161,7 +165,14 @@ meaningful change. Coverage calculations update only when retained data change.
 
 The normalized robust algebraic ellipsoid fit initializes a bounded
 35-iteration double-precision Levenberg-Marquardt refinement of the geometric
-residual `norm(A * (m - b)) - B`. A log-Cholesky parameterization keeps `A`
+residual `sqrt(norm(A * (m - b))² + trace(A * C * Aᵀ)) - B`.
+Here `m` is the mean and `C` is the population covariance within a window.
+The expression inside the square root equals the mean of `norm(A * (x - b))²`
+over its raw readings, including arbitrary motion. `C` is not divided by the
+sample count again: it describes variation within the window, rather than
+uncertainty of its mean. Individual-reading callers use `C = 0`.
+The refinement Jacobian and information matrix include the covariance term.
+A log-Cholesky parameterization keeps `A`
 positive definite; the applied matrix is `L * L^T`, not a rotating whitening
 factor. The field scale `B` stays fixed at the initial raw-radius estimate to
 remove the scale ambiguity. Direction-balanced Huber weights prevent a long
@@ -197,10 +208,12 @@ report cannot make a poor fit qualify.
 After refinement, a new turn-and-tilt sweep checks frozen coefficients. None of
 these observations enter a refit. Verification requires at least 56 seconds,
 140 averaged observations, full corrected coverage, and the same residual, plausibility,
-information and temporal gates; its timeout is 120 seconds. A changed magnetic
+information and temporal gates; its timeout is 180 seconds to accommodate
+twelve-reading windows even at 10 Hz. A changed magnetic
 environment or failed check offers a MAG retry before any write. Final candidate
 and read-back coefficients are rebuilt through the runtime path and checked
-again against this independent sweep. Stored matrix plausibility and RMS are
+again against this independent sweep, including its retained covariances.
+Stored matrix plausibility and RMS are
 also checked on ordinary load; the blob layout remains unchanged.
 
 ## Persistence and failure reporting

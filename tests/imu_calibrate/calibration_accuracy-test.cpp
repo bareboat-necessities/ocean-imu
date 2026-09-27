@@ -53,9 +53,8 @@ int main(){
 #endif
    imu_cal::MagCapture<float,400> cap(mag,cfg);cap.begin(0);
    V raw=V::Zero(),correlated=V::Zero();int next=0;int elapsed=0;
-   for(int ms=0;ms<=90000;ms+=5){
+   for(int ms=0;ms<=int(cfg.timeout_ms);ms+=5){
     float t=ms*.001f+seed*3.17f;const V u=direction(t);
-    V rate=u.cross((direction(t+.005f)-u)/.005f);
     if(ms>=next){
      next+=scenario==2?50:33;
      correlated=.8f*correlated+.06f*mr.noise();
@@ -65,8 +64,8 @@ int main(){
 #ifdef CAL_BASELINE_V232
     auto status=cap.update(ms,&raw);
 #else
-    V mean;bool ready=window.update(ms,&raw,&rate,mean);
-    auto status=cap.update(ms,ready?&mean:nullptr,&raw);
+    V mean;M covariance;bool ready=window.update(ms,&raw,mean,covariance);
+    auto status=cap.update(ms,ready?&mean:nullptr,&raw,ready?&covariance:nullptr);
 #endif
     if(status==imu_cal::MagCaptureStatus::READY){elapsed=ms;break;}
    }
@@ -84,22 +83,21 @@ int main(){
     bool complete=false;
     for(int ms=0;ms<=120000;ms+=5) {
      float t=ms*.001f+seed*3.17f+117;const V u=direction(t);
-     V rate=u.cross((direction(t+.005f)-u)/.005f);
      if(ms>=next) {
       next+=scenario==2?50:33;correlated=.8f*correlated+.06f*vr.noise();
       raw=field*distortion()*u+offset+sd.cwiseProduct(vr.noise())+correlated;
       raw=(raw.array()/.3f).round().matrix()*.3f;
      }
-     V mean;bool ready=window.update(200000+ms,&raw,&rate,mean);
-     if(verify.update(200000+ms,ready?&mean:nullptr,&raw)==imu_cal::MagCaptureStatus::READY){complete=true;break;}
+     V mean;M covariance;bool ready=window.update(200000+ms,&raw,mean,covariance);
+     if(verify.update(200000+ms,ready?&mean:nullptr,&raw,ready?&covariance:nullptr)==imu_cal::MagCaptureStatus::READY){complete=true;break;}
     }
     imu_cal::MagFitQuality q;
-    mok=complete && mag.geometric.check(mag.buf.v,mag.buf.n,m.field_uT,m.A,m.b,q,mag.sample_ms);
+    mok=complete && mag.check(m,q);
     if(!mok)std::fprintf(stderr,"verification seed=%d scenario=%d gate=%s n=%d rms=%g\n",seed,scenario,imu_cal::magFitGateText(q.gate),mag.buf.n,q.rms);
     failures+=(m.A!=saved_A || m.b!=saved_b);
     if(mok && seed==0) {
      for(int i=mag.buf.n/2;i<mag.buf.n;++i)mag.buf.v[i]+=V(15,0,0);
-     failures+=mag.geometric.check(mag.buf.v,mag.buf.n,m.field_uT,m.A,m.b,q,mag.sample_ms);
+     failures+=mag.check(m,q);
     }
    }
 #endif

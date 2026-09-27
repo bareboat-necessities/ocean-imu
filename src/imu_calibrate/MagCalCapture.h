@@ -47,7 +47,8 @@ public:
   // Call even when the driver returns no measurement (m == nullptr). A fresh
   // but frozen register is not movement; changes smaller than the threshold
   // accumulate relative to the last meaningful change, not the last poll.
-  MagCaptureStatus update(uint32_t now, const Vec3* m, const Vec3* raw = nullptr) {
+  MagCaptureStatus update(uint32_t now, const Vec3* m, const Vec3* raw = nullptr,
+                          const Mat3* covariance = nullptr) {
     if (cfg_.required_samples > N || cfg_.required_samples < 20 || !cfg_.spacing_ms ||
         cfg_.min_time_ms >= cfg_.timeout_ms) return MagCaptureStatus::BAD_CONFIG;
     if (uint32_t(now - last_change_) > cfg_.stuck_ms) return MagCaptureStatus::STALE;
@@ -67,13 +68,15 @@ public:
           last_observation_ = now; last_observed_ = *m; have_observation_ = true;
           ++seen_;
           if (cal_.buf.n < N) {
-            coverage_dirty_ = cal_.addSample(*m, uint32_t(now-start_)) || coverage_dirty_;
+            coverage_dirty_ = cal_.addSample(*m, uint32_t(now-start_), covariance) || coverage_dirty_;
           } else {
             random_ ^= random_ << 13; random_ ^= random_ >> 17; random_ ^= random_ << 5;
             const int slot = replacement_(*m);
             if (slot >= 0) {
               cal_.buf.v[slot] = *m; cal_.buf.tempC[slot] = T(0);
               cal_.sample_ms[slot] = uint32_t(now-start_);
+              if(covariance)cal_.sample_cov[slot]=*covariance;
+              else cal_.sample_cov[slot].setZero();
               coverage_dirty_ = true;
             }
           }

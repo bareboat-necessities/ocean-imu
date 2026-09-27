@@ -23,7 +23,7 @@ endif
 LDFLAGS  =
 
 # Targets
-TARGETS = calibration_accuracy-test calibration_workflow-test calibration_safety-test imu_calibrate-test accel_cal-test accel_cal-replay accel_cal_gravity_override-test
+TARGETS = calibration_accuracy-test mag_hand_motion-test calibration_workflow-test calibration_safety-test imu_calibrate-test accel_cal-test accel_cal-replay accel_cal_gravity_override-test
 
 all: build test
 
@@ -36,6 +36,9 @@ ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
 
 calibration_accuracy-test: calibration_accuracy-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+mag_hand_motion-test: mag_hand_motion-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 calibration_safety-test: calibration_safety-test.o
@@ -64,6 +67,7 @@ CAL_HEADERS = $(SRC_DIR)/imu_calibrate/CalibrateIMU.h $(SRC_DIR)/imu_calibrate/M
               $(SRC_DIR)/AtomS3R/AtomS3R_ImuUnits.h
 
 calibration_accuracy-test.o: $(CAL_HEADERS)
+mag_hand_motion-test.o: $(CAL_HEADERS)
 calibration_safety-test.o: $(SRC_DIR)/imu_calibrate/MagCalCapture.h $(CAL_HEADERS)
 calibration_workflow-test.o: $(CAL_HEADERS) $(SRC_DIR)/AtomS3R/AtomS3R_CalLog.h $(SRC_DIR)/AtomS3R/AtomS3R_MagCalMode.h
 imu_calibrate-test.o: $(CAL_HEADERS)
