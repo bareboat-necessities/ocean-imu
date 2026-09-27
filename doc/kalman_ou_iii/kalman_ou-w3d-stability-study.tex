@@ -35,8 +35,9 @@ This study analyzes deterministic stability of the shipping OU--III marine
 estimator. The marine domain includes locally absolutely continuous physical
 acceleration with jerk bounded by $100\,\mathrm{m/s^3}$. A sharp nonuniform
 sampling estimate excludes the previously demonstrated 200-Hz ambiguity and
-all fixed-attitude stationary-sample aliases of at least six degrees over
-32-second windows. A joint three-dimensional vector-information bound
+the previously demonstrated sampled alias.  A separate physical-domain rule
+admits indefinite complete stillness but requires non-still histories to have
+positive gravity-direction attitude span on every fixed window. A joint three-dimensional vector-information bound
 retains accelerometer and magnetic coupling and both magnetic residual
 limits. Physical acceleration mismatch contributes a certified supply to
 the literal OU prediction in the full covariance metric, without imposing an
@@ -82,6 +83,29 @@ This is a selected continuous-history certification limit, not a claim that
 every installation is qualified. It caps acceleration change at
 $0.6\,\mathrm{m/s^2}$ over the longest admitted $0.006$-s sampling interval.
 It imposes no minimum motion amplitude or physical OU prior.
+Admission also has a simple stillness-or-attitude-excitation branch.  For a
+physical-history window $W=[t,t+T_E]$, let the body gravity direction be
+$g_b(s)=R(s)^\mathsf T e_z$ and define its tilt span
+\begin{equation}
+ \Delta_g(W)=\sup_{s,u\in W}\arccos\!\bigl(g_b(s)^\mathsf T g_b(u)\bigr).
+ \label{eq:attitude-span}
+\end{equation}
+Every such window must satisfy
+\begin{equation}
+ \boxed{\text{complete physical stillness on }W
+ \quad\lor\quad \Delta_g(W)\ge\theta_E.}
+ \label{eq:still-or-excite}
+\end{equation}
+Complete stillness is a statement about physical truth, not an IMU sample,
+innovation, or estimator state, so genuinely quiet water may persist for
+arbitrary duration.  The alternate branch deliberately uses roll/pitch
+(gravity-direction) span rather than yaw; heading excitation is supplied
+separately by MAGNETIC SERVICE.  Span rather than endpoint difference is used
+because ordinary periodic rocking may return to its initial attitude.
+$T_E>0$ and $\theta_E>0$ remain theorem parameters: the current pinned
+28-ft-vessel evidence has not yet established a source-uniform numerical
+qualification for the rolling minimum, so no convenient numerical pair is
+asserted here.
 Pointwise bounds are insufficient. Admission additionally requires
 \begin{equation}
  \boxed{\norm{\int_{t_1}^{t_2}p(\tau)\,d\tau}\le P_{\rm AC},
