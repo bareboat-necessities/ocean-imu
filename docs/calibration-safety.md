@@ -15,10 +15,17 @@ The device asks the user to put it on a table. It waits for three quiet
 Progress resets automatically after motion or a sample gap over 60 ms; samples
 from the interrupted interval are discarded. This uses gyro and accelerometer
 scatter and changes in their block means, not just small angular-rate magnitude.
-Once magnetic readings are available, changes in their block means also reject
-slow yaw. Losing or freezing that magnetic stream cannot disable the check
+Once magnetic readings are available, changes in their one-second means also
+reject slow yaw. Only distinct magnetic register readings enter those means;
+polling a slower magnetometer at the IMU rate does not create new observations.
+The first full magnetic mean remains the reference for the entire hold, and
+capture waits for it before retaining gyro samples. This averages stationary
+magnetic noise without letting a rolling reference follow slow rotation.
+Losing or freezing that magnetic stream cannot disable the check
 mid-hold. Repeated IMU register values cannot qualify a hold. The stage times
 out after 70 seconds and offers a retry without repeating the other stages.
+Each restart logs its cause over serial as `[GYR] restart=... reason=...` so a
+sample gap, sensor scatter, field change, or actual motion can be distinguished.
 
 The default block limits are 0.005 rad/s total gyro standard deviation,
 0.004 rad/s change in mean gyro, 0.08 m/s^2 total acceleration standard
@@ -186,5 +193,9 @@ and tilted-vector accuracy, magnetic field changes, frozen-coefficient
 verification, and rejection of poor stored fits. Gyro cases include continuous
 quiet capture, steady yaw/roll, the half-moving bias regression, movement after
 progress, missing samples, late/frozen magnetic references, and clock rollover.
+Stationary magnetic-noise cases use a 200 Hz IMU with 10, 20 and 100 Hz magnetic
+readings (0.35 uT per-axis noise) over 30 seeds each, checking uninterrupted
+completion and bias accuracy. Separate noisy 10 Hz cases require a new quiet
+hold after slow yaw, a field step, or loss/freezing of the magnetic stream.
 These are deterministic host regressions; physical device timing, noise and
 interaction still require an on-device check.
