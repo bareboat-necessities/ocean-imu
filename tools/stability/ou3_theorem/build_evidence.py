@@ -54,7 +54,9 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.moving_pivots import certificate as moving_certificate
     from tools.stability.ou3_theorem.stationary_covariance import certificate as stationary_certificate
     from tools.stability.ou3_theorem.regime_continuation_diagnostic import diagnostic as regime_diagnostic
+    from tools.stability.ou3_theorem.world_frame import certificate as world_certificate
     for name, generate in (
+        ("world-frame-certificate.json",world_certificate),
         ("stationary-covariance-certificate.json",stationary_certificate),
         ("regime-continuation-feasibility.json",regime_diagnostic),
         ("regime-certificate.json",regime_certificate),
@@ -104,6 +106,11 @@ def validate() -> dict:
         verify_groups(json.loads((STATUS.parent/"moving-transport-source-feasibility.json").read_text()))
     except (ValueError, KeyError, OSError) as error:
         failures.append("same-cell diagnostic verification failed: "+str(error))
+    from tools.stability.ou3_theorem.world_frame_source_diagnostic import verify_diagnostic as verify_world
+    try:
+        verify_world(json.loads((STATUS.parent/"world-frame-source-feasibility.json").read_text()))
+    except (ValueError, KeyError, OSError) as error:
+        failures.append("world-frame diagnostic verification failed: "+str(error))
     return {"validation_pass":not failures,"failures":failures,"base_main_commit":provenance["base_main_commit"],
             "shipping_behavior_authority":"source implementation","theorem_closed":expected["theorem_closed"]}
 

@@ -41,6 +41,12 @@ C=A^-1 B to retain resets without erasing accumulated gyro action, and
 actual acc/mag groups within one prediction cell factor exactly with E=0.
 Uniform geometry, injection/action bounds and nonlinear retention remain OPEN.
 
+In world coordinates the historical AG rows are attitude-free apart from
+world injections and the nominal rotation integral (`ou3-world-frame-rows.md`).
+Same-cell geometry also depends on the applied magnetic cadence. The
+aggregate attitude columns transfer from physical transverse force given an
+AW tracking bound, which together with the gyro columns remains OPEN.
+
 Physical regimes qualify the single construction/H18/release/A21 route. All
 estimator states, covariance, biases, physical S and bias histories, clocks,
 frontend/tuner and magnetic-reference state continue across regime boundaries.

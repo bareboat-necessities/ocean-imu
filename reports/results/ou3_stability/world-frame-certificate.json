@@ -1,0 +1,75 @@
+{
+  "aggregate_rows_retain_transverse_force_on_witness": true,
+  "attitude_error_enters_nominal_geometry_transfer": false,
+  "attitude_estimate_enters_six_column_geometry": false,
+  "collinear_same_cell_witness": {
+    "acceleration_amplitude_mps2": "1372931/500000",
+    "acceleration_amplitude_vector_mps2": [
+      "-4118793/1562500",
+      "0",
+      "9610517/12500000"
+    ],
+    "acceleration_upper": true,
+    "attitude_rate_upper": true,
+    "displacement_upper": true,
+    "excited_windows": "complete T_E>=4 pi windows have gravity span 1/50",
+    "field_norm_uT": true,
+    "field_world_uT": [
+      "21",
+      "0",
+      "72"
+    ],
+    "half_integer_transverse_force_mps2": "1372931/250000",
+    "half_integer_transverse_force_squared": true,
+    "horizontal_fraction_admitted": true,
+    "ideal_same_cell_kernel_along_field": true,
+    "integer_time_force_parallel_field": true,
+    "jerk_upper": true,
+    "jerk_upper_mps3": "5391500037/312500000",
+    "magnetic_service_admission_claimed": false,
+    "marine_motion_and_imu_bias_admitted": true,
+    "primitive_upper": true,
+    "roll_amplitude_rad": "1/100",
+    "roll_frequency_rad_s": "1/2",
+    "velocity_upper": true
+  },
+  "injection_budget_gain_action": true,
+  "injection_budget_prior_attitude_covariance": true,
+  "injection_budget_supplied_NIS": "1097942445/505419448",
+  "jerk_limited_collinear_cadence": {
+    "horizontal_fraction": "1/5",
+    "length_weighted_mean_gap_floor_s": "127383/2500000",
+    "regular_25Hz_all_collinear_excluded": true,
+    "window_s": "16"
+  },
+  "nominal_attitude_column_transfer": {
+    "aw_error_threshold_16s_mps2": "112383/100000",
+    "aw_error_threshold_long_window_mps2": "1811319/1000000",
+    "gyro_columns_certified": false,
+    "inherited_aw_standard_deviation_ceiling_mps2": "156",
+    "normalized_gram_floor_zero_aw_error": "12629938689/2094683134450",
+    "retained_sqrt_V_upper_for_positive_16s_transfer": "37461/5200000",
+    "window_s": "16"
+  },
+  "predictions_world_neutral_when_covariance_rotation_matches_mean": true,
+  "qualification": "OU3_WORLD_FRAME_HISTORICAL_ROWS_V1",
+  "quiet_any_attitude_any_admitted_reference": {
+    "all_six_pivot_floor_12_rows": "4/635",
+    "covariance_action_generalized": false,
+    "group_singular_floor_squared": "1296/481",
+    "group_singular_floor_used": "8/5",
+    "scope": "zero-residual quiet nominal record, any constant nominal attitude, committed reference |B|>=20 uT with horizontal fraction>=1/5, g>=9, acc/mag groups eight qualified predictions apart",
+    "two_group_six_column_floor": "16/635"
+  },
+  "reset_discrepancy_gram_identity": true,
+  "reset_discrepancy_sigma_min_at_least_one": true,
+  "rho0_certified": false,
+  "same_cell_floor_from_motion_and_bias_bounds_alone": false,
+  "same_cell_route_refuted_under_three_assumptions": false,
+  "same_cell_supplied_world_floor": "7585431157189/1000000000000",
+  "scope": "real-arithmetic regular A21: fixed deployment frame, zero lever arm, constant committed reference; supplied exact words audit algebra only",
+  "source_uniform_six_pivots": false,
+  "theorem_closed": false,
+  "uniform_historical_AG_readout_action": false,
+  "world_row_factorization_exact_residual": "0"
+}

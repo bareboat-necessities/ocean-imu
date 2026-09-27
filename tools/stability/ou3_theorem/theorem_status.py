@@ -22,6 +22,13 @@ def status_report() -> dict:
         "same_cell_reset_pulled_field_geometry_implication":True,
         "conditional_two_group_six_column_bound":True,
         "singular_floor_to_all_six_historical_pivots":True,
+        "world_frame_historical_row_factorization":True,
+        "attitude_invariant_same_cell_geometry":True,
+        "literal_injection_covariance_NIS_budget":True,
+        "quiet_nominal_six_column_floor_any_attitude_admitted_reference":True,
+        "nominal_attitude_column_physical_transfer_given_AW_tracking":True,
+        "uniform_AW_tracking_error_bound":False,
+        "aggregate_world_frame_six_column_floor":False,
         "marine_attitude_excitation_numeric_qualification":False,
         "marine_attitude_excitation_implies_signed_temporal_separation":False,
         "physical_tilt_span_sampling_implication":True,
@@ -120,6 +127,19 @@ def status_report() -> dict:
             "stationary_robustness_of_compatible_class_refuted":False,
             "certificate":"regime-certificate.json",
         },
+        "world_frame_rows":{
+            "certificate":"world-frame-certificate.json",
+            "source_diagnostic":"world-frame-source-feasibility.json",
+            "attitude_estimate_or_error_in_six_column_geometry":False,
+            "remaining_attitude_dependence":"reset discrepancies N=R_next' G R and the nominal rotation integral of R_hat' in the gyro columns",
+            "same_cell_floor_from_motion_and_bias_bounds_alone":False,
+            "collinear_1Hz_witness_magnetic_service_admitted":False,
+            "same_cell_floor_requires_magnetic_cadence_coupling":True,
+            "same_cell_two_group_uniform_floor_established":False,
+            "signed_world_injection_transport_budget":False,
+            "aggregate_rows_avoid_magnetic_phase_premise":True,
+            "controlling_transfer_quantity":"nominal AW tracking error |a_hat-a| in the estimator world frame",
+        },
         "shipping_residual_gyro_bias_hardening":True,
         "implemented_gyro_bias_norm_invariant":True,
         "complete_turn_nominal_gyro_bias_alias_excluded":True,
@@ -153,6 +173,12 @@ def status_report() -> dict:
             "Literal reset inverses are nonexpansive, and C=A^-1 B cancels each reset while retaining its effect on later injections; an exact relaxed reset sequence still cancels the inter-anchor gyro block, without proving shipping reachability or all-row rank loss. "
             "Applied acc/mag rows in one prediction cell factor exactly with E=0 after retaining every intervening reset. Uniform group geometry and inter-anchor transport remain open. "
             "Its reset/asynchrony/reference defect budget is not yet bounded uniformly; two temporal margins alone still do not imply six pivots. "
+            "In world coordinates every historical AG row is -R_k[f_k]x[A_tilde_k R_0',B_tilde_k]: predictions leave A_tilde invariant, resets multiply it by N=R_next' G R with N'N=I+(|x|^2 I-xx')/4, and B_tilde integrates the nominal R_hat'. "
+            "Same-cell geometry therefore depends only on world nominal force, committed reference and the local injection, never on attitude error. "
+            "Literal injections satisfy dd'<=NIS K S K'<=NIS P_theta,theta. A 1-Hz collinear history obeys MARINE MOTION and IMU BIAS and degenerates every same-cell group while aggregate rows stay full rank; its single correction per 1-s window has nearly rank-one service information, so MAGNETIC SERVICE excludes that cadence. "
+            "Jerk forbids collinearity at every instant of a cadence whose length-weighted mean gap is below 4(g h-2V/L)/J, about .051 s at h=1/5 and L=16 s. A same-cell floor therefore needs a magnetic-cadence coupling, which aggregate rows avoid. "
+            "The nominal attitude columns transfer from physical transverse force on 16-s windows when the AW tracking error is below 1.12383 m/s^2; the inherited 156 m/s^2 AW ceiling would restrict sqrt(V) below about .0072. "
+            "Next bound the AW tracking error and the signed world injection sum, then prove the aggregate gyro-column floor. "
             "The .5 rad/s invariant, qualified complete-turn exclusion and one-step gyro floor remain proved, not the complete signed Delta_gyr. "
             "Positive source-uniform signed margins, B_*, J_AG, full covariance upper, rho_0<1, capture/H18/release, nonlinear radius, every-prefix retention, applied magnetic-service qualification and float32 totality remain open."
         ),

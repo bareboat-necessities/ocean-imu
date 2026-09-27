@@ -19,7 +19,7 @@
     "stationary_robustness_of_compatible_class_refuted": false
   },
   "implemented_gyro_bias_norm_invariant": true,
-  "next_controlling_obligation": "Excitation quantifies only over complete T_E windows within one physical moving episode. No excitation is demanded immediately after rest or across rest boundaries; isolated zero-rate instants do not restart an episode. T_E/theta_E remain symbolic. Exact rest/motion sensor indistinguishability blocks a sound exact-STILL detector with both finite entry and universal finite exit under the existing assumptions. Prove stationary practical stability for the whole measurement-compatible class before enabling estimator changes; the quiet attitude/accelerometer-bias ambiguity prevents exact separation and universal V<=36 capture. The exact zero-residual quiet nominal subcase now has a root-independent historical AG action, every-operation full covariance upper comparison and qualitative homogeneous linear loss, without a nonlinear physical stability conclusion. Bridge prefix composition is proved conditionally, but finite detection time, source-uniform retention and the cumulative budget across recurring switches remain open. On complete excited moving windows continue the actual signed forced adjoint with root, rotation/reference, gains, physical bias and OU history retained. Removing indefinite stillness does not repair the already-excited moving diagnostic's failed rotation and velocity-variation budgets. Chronological gyro transport plus two actual sensor-row groups now gives a conditional six-column singular floor and all six greedy pivot floors. Literal reset inverses are nonexpansive, and C=A^-1 B cancels each reset while retaining its effect on later injections; an exact relaxed reset sequence still cancels the inter-anchor gyro block, without proving shipping reachability or all-row rank loss. Applied acc/mag rows in one prediction cell factor exactly with E=0 after retaining every intervening reset. Uniform group geometry and inter-anchor transport remain open. Its reset/asynchrony/reference defect budget is not yet bounded uniformly; two temporal margins alone still do not imply six pivots. The .5 rad/s invariant, qualified complete-turn exclusion and one-step gyro floor remain proved, not the complete signed Delta_gyr. Positive source-uniform signed margins, B_*, J_AG, full covariance upper, rho_0<1, capture/H18/release, nonlinear radius, every-prefix retention, applied magnetic-service qualification and float32 totality remain open.",
+  "next_controlling_obligation": "Excitation quantifies only over complete T_E windows within one physical moving episode. No excitation is demanded immediately after rest or across rest boundaries; isolated zero-rate instants do not restart an episode. T_E/theta_E remain symbolic. Exact rest/motion sensor indistinguishability blocks a sound exact-STILL detector with both finite entry and universal finite exit under the existing assumptions. Prove stationary practical stability for the whole measurement-compatible class before enabling estimator changes; the quiet attitude/accelerometer-bias ambiguity prevents exact separation and universal V<=36 capture. The exact zero-residual quiet nominal subcase now has a root-independent historical AG action, every-operation full covariance upper comparison and qualitative homogeneous linear loss, without a nonlinear physical stability conclusion. Bridge prefix composition is proved conditionally, but finite detection time, source-uniform retention and the cumulative budget across recurring switches remain open. On complete excited moving windows continue the actual signed forced adjoint with root, rotation/reference, gains, physical bias and OU history retained. Removing indefinite stillness does not repair the already-excited moving diagnostic's failed rotation and velocity-variation budgets. Chronological gyro transport plus two actual sensor-row groups now gives a conditional six-column singular floor and all six greedy pivot floors. Literal reset inverses are nonexpansive, and C=A^-1 B cancels each reset while retaining its effect on later injections; an exact relaxed reset sequence still cancels the inter-anchor gyro block, without proving shipping reachability or all-row rank loss. Applied acc/mag rows in one prediction cell factor exactly with E=0 after retaining every intervening reset. Uniform group geometry and inter-anchor transport remain open. Its reset/asynchrony/reference defect budget is not yet bounded uniformly; two temporal margins alone still do not imply six pivots. In world coordinates every historical AG row is -R_k[f_k]x[A_tilde_k R_0',B_tilde_k]: predictions leave A_tilde invariant, resets multiply it by N=R_next' G R with N'N=I+(|x|^2 I-xx')/4, and B_tilde integrates the nominal R_hat'. Same-cell geometry therefore depends only on world nominal force, committed reference and the local injection, never on attitude error. Literal injections satisfy dd'<=NIS K S K'<=NIS P_theta,theta. A 1-Hz collinear history obeys MARINE MOTION and IMU BIAS and degenerates every same-cell group while aggregate rows stay full rank; its single correction per 1-s window has nearly rank-one service information, so MAGNETIC SERVICE excludes that cadence. Jerk forbids collinearity at every instant of a cadence whose length-weighted mean gap is below 4(g h-2V/L)/J, about .051 s at h=1/5 and L=16 s. A same-cell floor therefore needs a magnetic-cadence coupling, which aggregate rows avoid. The nominal attitude columns transfer from physical transverse force on 16-s windows when the AW tracking error is below 1.12383 m/s^2; the inherited 156 m/s^2 AW ceiling would restrict sqrt(V) below about .0072. Next bound the AW tracking error and the signed world injection sum, then prove the aggregate gyro-column floor. The .5 rad/s invariant, qualified complete-turn exclusion and one-step gyro floor remain proved, not the complete signed Delta_gyr. Positive source-uniform signed margins, B_*, J_AG, full covariance upper, rho_0<1, capture/H18/release, nonlinear radius, every-prefix retention, applied magnetic-service qualification and float32 totality remain open.",
   "no_heading_service_result_role": "necessity lemma only",
   "obligations": {
     "A21_covariance_hard_event_compactness": false,
@@ -27,8 +27,10 @@
     "LIN_endpoint_matrix_path_action": true,
     "accepted_magnetic_information_definition": true,
     "actual_gain_finite_error_word_composition": true,
+    "aggregate_world_frame_six_column_floor": false,
     "all_time_marine_motion_membership_certificate": false,
     "assembled_sensor_and_bias_limit_qualification": false,
+    "attitude_invariant_same_cell_geometry": true,
     "capture_H18_release_retention_composition": true,
     "capture_release_into_explicit_A21_region": false,
     "captured_domain_implies_finite_A21_entry": true,
@@ -64,6 +66,7 @@
     "jerk_to_sampled_acceleration_fidelity": true,
     "joint_physical_vector_information": true,
     "joint_word_prediction_measurement_input_action": true,
+    "literal_injection_covariance_NIS_budget": true,
     "literal_reset_inverse_nonexpansion": true,
     "local_A21_nonlinear_small_gain_exists": false,
     "marine_attitude_excitation_implies_signed_temporal_separation": false,
@@ -71,11 +74,13 @@
     "marine_regime_complete_window_contract": true,
     "maximal_correction_covariance_order": true,
     "no_heading_service_obstruction": true,
+    "nominal_attitude_column_physical_transfer_given_AW_tracking": true,
     "physical_LIN_prediction_metric_supply": true,
     "physical_contract_formulation": true,
     "physical_qualification_composition": true,
     "physical_tilt_span_sampling_implication": true,
     "pre_prediction_embedded_nuisance_floor": true,
+    "quiet_nominal_six_column_floor_any_attitude_admitted_reference": true,
     "quiet_zero_residual_nominal_historical_covariance_upper": true,
     "quiet_zero_residual_nominal_homogeneous_linear_loss_exists": true,
     "quiet_zero_residual_nominal_six_column_floor": true,
@@ -105,10 +110,12 @@
     "time_varying_A21_translation_observability": true,
     "uniform_A21_controllability_exists": true,
     "uniform_A21_neutral_quotient_information_exists": false,
+    "uniform_AW_tracking_error_bound": false,
     "uniform_gravity_tilt_sensitivity": true,
     "uniform_historical_AG_readout_action": false,
     "whole_word_float32_supply_bound": false,
-    "whole_word_float32_supply_composition": true
+    "whole_word_float32_supply_composition": true,
+    "world_frame_historical_row_factorization": true
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
@@ -149,5 +156,18 @@
   "shipping_residual_gyro_bias_hardening": true,
   "signed_temporal_Delta_gyr_closed": false,
   "theorem_closed": false,
-  "unrestricted_device_timestep_alias_exclusion": false
+  "unrestricted_device_timestep_alias_exclusion": false,
+  "world_frame_rows": {
+    "aggregate_rows_avoid_magnetic_phase_premise": true,
+    "attitude_estimate_or_error_in_six_column_geometry": false,
+    "certificate": "world-frame-certificate.json",
+    "collinear_1Hz_witness_magnetic_service_admitted": false,
+    "controlling_transfer_quantity": "nominal AW tracking error |a_hat-a| in the estimator world frame",
+    "remaining_attitude_dependence": "reset discrepancies N=R_next' G R and the nominal rotation integral of R_hat' in the gyro columns",
+    "same_cell_floor_from_motion_and_bias_bounds_alone": false,
+    "same_cell_floor_requires_magnetic_cadence_coupling": true,
+    "same_cell_two_group_uniform_floor_established": false,
+    "signed_world_injection_transport_budget": false,
+    "source_diagnostic": "world-frame-source-feasibility.json"
+  }
 }

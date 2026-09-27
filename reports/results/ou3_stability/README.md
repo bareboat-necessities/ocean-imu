@@ -57,6 +57,23 @@ python3 -m tools.stability.ou3_theorem.moving_transport_source_diagnostic \
   --eigen /usr/include/eigen3 --output /tmp/ou3-moving-transport.json
 ```
 
+`world-frame-certificate.json` exactly checks the world-frame row
+factorization on a rational word, the reset Gram identity, attitude-invariant
+same-cell geometry, the literal injection Loewner budget, the generalized quiet
+floor, Corollary A's AW threshold, the jerk-limited collinear cadence and the
+1-Hz collinear motion/bias witness (no MAGNETIC SERVICE admission claimed).
+`world-frame-source-feasibility.json` replays quiet, wave and collinear source
+words through a derived observer with untapped control parity. It records
+floor/actual ratios <=1, injection bound ratios, the collinear same-cell
+collapse (.0301) beside aggregate sigma 28.50, the failed one-correction
+service information (2.05e-5) and the signed injection sum.
+These are non-promoting finite audits:
+
+```
+python3 -m tools.stability.ou3_theorem.world_frame_source_diagnostic \
+  --eigen /usr/include/eigen3 --output /tmp/ou3-world-frame.json
+```
+
 The proof-side quiet-evidence monitor never certifies physical STILL. No
 shipping mode switch, noise, cadence, magnetic semantics or quality gate is
 changed. The native `regime_ambiguity-test` carries one 900-second construction/

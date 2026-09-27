@@ -20,6 +20,8 @@ Read in order, with paths relative to the repository root:
    six-column action and the exact forward-prior obstruction.
 6. `docs/ou3-regime-design.md`, `docs/ou3-moving-six-pivots.md`, and the
    retained `docs/ou3-signed-temporal-continuation.md`.
+7. `docs/ou3-world-frame-rows.md`: attitude-free historical rows, the literal
+   injection budget, the same-cell collinear witness and the AW transfer.
 
 MARINE MOTION retains locally absolutely continuous physical acceleration
 with jerk <=100 m/s^3. Excitation is required only on every complete T_E window contained in one
@@ -40,6 +42,16 @@ physical compatible-class or nonlinear results. The moving reader uses
 C=A^-1 B to retain resets without erasing accumulated gyro action, and
 actual acc/mag groups within one prediction cell factor exactly with E=0.
 Uniform geometry, injection/action bounds and nonlinear retention remain OPEN.
+
+The moving six-column premise is now an aggregate world-frame statement.
+Every historical row is `-R_k[f_k]x[A~_k R_0',B~_k]`, so the attitude estimate
+enters only through world injections and the nominal rotation integral. A
+1-Hz collinear motion/bias history degenerates same-cell groups, although its
+cadence fails MAGNETIC SERVICE; a jerk lemma ties same-cell geometry to the
+applied magnetic cadence. Corollary A transfers the physical transverse force
+to the attitude columns at the cost of the AW tracking error
+(<1.12383 m/s^2 on 16-s windows). Bound that error and the aggregate gyro
+columns next; charge injections by their signed world sum.
 
 Read `ou3-sampling-fidelity.md`: it proves the sharp nonuniform trapezoidal
 mean bound, exclusion of every constant-attitude stationary-sample alias of
