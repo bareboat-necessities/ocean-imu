@@ -40,6 +40,14 @@ Rebuilding that unchanged target restored its executable mode and all four
 wave-direction targets passed. The complete `make all` is rerun with the repaired
 artifact; no source, build recipe or test gate is changed for this failure.
 
+Main's concurrent evidence-only commit 68c645c2 caused 14 generated-file merge
+conflicts and prevented pull-request CI from starting. Classification: evidence
+integration, with no shipping source conflict. Resolve the generated bundle
+coherently to this branch's fresh full replay (5e4957b9), rather than combining
+rows from distinct source executions; retain the new instrumented comparison.
+The integrated branch must pass another full replay/fingerprint gate before
+publication is accepted. This invalidates no completed native or paired audit.
+
 The first completed full paired audit is invalid: the reference displacement
 RMS differs by up to .05722934 m between paired executions, and 6 baseline / 5
 modified generated input paths have different byte hashes between tuning-mode
