@@ -593,8 +593,9 @@ and Robust Estimation in C\texttt{++}/Eigen}
         \item Capture screen in the pose rotation: title, label,
         instructions retained, a hint (\texttt{Place now}, \texttt{Hold
         still...}, \texttt{Hold still}, \texttt{Moving - hold still},
-        \texttt{Check the pose}) and a bar that shows the 6.5\,s placement
-        guidance until the device settles, then capture progress.
+        \texttt{Check the pose}) and a bar that counts retained blocks,
+        including verification blocks on rechecks. Placement time does not
+        fill the bar; 100\,\% means the hold is complete.
         \item \texttt{OK} ``label / Captured''; after a failed hold,
         \texttt{RETRY?} ``label / reason / Hold still, same pose / Tap:
         retry / Tap x3: abort'' (at most two retries per hold).
@@ -627,8 +628,7 @@ and Robust Estimation in C\texttt{++}/Eigen}
     deviation below 0.30\,rad/s, and an up-direction inside the pose region.
     A 0.25\,s block smeared by 0.15\,rad/s shrinks its mean norm by about
     0.5\,mg, so these gates bound physical error without demanding
-    stillness. The 6.5\,s placement interval is guidance, not a wait: after
-    1\,s, three consecutive qualified blocks whose means differ by less than
+    stillness. After 1\,s, three consecutive qualified blocks whose means differ by less than
     0.30\,m/s$^2$ settle the hold, and they are retained immediately.
     While capturing, a block whose mean jumps by more than 0.5\,m/s$^2$ or
     whose norm jumps by more than 0.12\,m/s$^2$ from the last retained block
@@ -815,7 +815,9 @@ and Robust Estimation in C\texttt{++}/Eigen}
     recorded log has been evaluated. The raw-sample replay
     (\texttt{accel\_cal-replay}, firmware built with
     \texttt{ATOMS3R\_ICAL\_RAW\_LOG=1}) and the block replay are the route
-    for real recordings. The hand, placement and temperature models, the
+    for real recordings. Normal diagnostics skip lines when serial transmit
+    space is unavailable; complete raw/block recording requires this explicit
+    logging mode and a serial host that keeps reading. The hand, placement and temperature models, the
     documented $x/y$ edge mapping, the sample rate, and the fit time and
     stack use on the ESP32-S3 are unverified on hardware. A learned slope
     describes only its narrow evidence range (typically a few kelvin), not
@@ -1111,4 +1113,3 @@ Eigen::Vector3f m_cal = result.apply(m_raw);
     \end{thebibliography}
 
 \end{document}
-

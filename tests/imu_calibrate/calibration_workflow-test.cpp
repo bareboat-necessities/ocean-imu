@@ -4,10 +4,13 @@
 #define INPUT 0x01
 #include "imu_calibrate/MagCalCapture.h"
 #include "imu_calibrate/GyroCalCapture.h"
+#include "imu_calibrate/AccelCalCapture.h"
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
+#include "AtomS3R/AtomS3R_CalLog.h"
 #include <cstdio>
 #include <cstring>
 #include <random>
+#include <string>
 
 using V=Eigen::Vector3f;
 using M=Eigen::Matrix3f;
@@ -240,8 +243,112 @@ static void testGyroMagneticInterruptions() {
   }
 }
 
+static void testAccelPoseProgress() {
+  using Phase=imu_cal::AccelHoldPhase;
+  imu_cal::AccelCaptureCfg cfg;
+  imu_cal::AccelRegionSpec region;region.expected=V(0,0,-1);
+  // A slow placement used to fill the bar at 6.5 s with no accepted data,
+  // leaving a full bar until the 30 s timeout or the user found the pose.
+  for(const bool recheck : {false,true}) {
+    imu_cal::AccelObs obs[40];int n=0;
+    imu_cal::AccelHoldEngine<40> cap;
+    cap.begin(cfg,region,obs,&n,0,cfg.hold_useful_ms,recheck?cfg.recheck_verify_ms:0,V::Zero(),true);
+    uint32_t t=0;
+    auto feed=[&](bool right_pose, bool moving=false) {
+      imu_cal::AccelRawSample s;s.t_us=t*1000;s.tempC=25;
+      s.a=V(.002f*std::sin(.07f*t),0,right_pose?-cfg.g:cfg.g);
+      s.w=V(moving?.4f:.0002f*std::cos(.03f*t),0,0);
+      cap.feed(s);t+=5;
+    };
+    while(t<8000)feed(false);
+    check(n==0 && cap.phase()==Phase::PLACING && cap.view().progress01==0,
+          "eight-second placement never looks like a completed pose");
+    check(cap.view().hint==imu_cal::AccelHoldHint::CHECK_POSE,"wrong pose has actionable guidance");
+    while(t<15000 && n<19)feed(true);
+    const float before=cap.view().progress01;
+    check(n==19 && before<1,"nearly complete pose still needs accepted data");
+    const uint32_t disturbance_end=t+1500;
+    while(t<disturbance_end)feed(true,true);
+    check(n==19 && cap.phase()==Phase::PLACING && cap.view().progress01==before,
+          "late motion preserves accepted progress without claiming completion");
+    bool honest=true;
+    while(t<22000 && cap.phase()!=Phase::DONE && cap.phase()!=Phase::FAILED) {
+      feed(true);
+      honest=honest && (cap.view().progress01<1 || cap.phase()==Phase::DONE);
+    }
+    const int expected=recheck?28:20;
+    check(cap.phase()==Phase::DONE && n==expected && honest && cap.view().progress01==1,
+          "100 percent coincides with completion including verification blocks");
+    int verify=0;
+    for(int i=0;i<n;++i)verify+=obs[i].role==(uint8_t)imu_cal::AccelObsRole::VERIFY;
+    check(verify==(recheck?8:0),"five useful seconds and independent verification are retained");
+  }
+}
+
+struct CalSerial {
+  bool connected=true;
+  int room=256,writes=0,waits=0;
+  std::string output;
+  explicit operator bool() const {return connected;}
+  int availableForWrite() const {return room;}
+  size_t write(const uint8_t* data,size_t n) {
+    ++writes;
+    if(room<0 || n>(size_t)room) {++waits;return 0;}
+    room-=(int)n;output.append((const char*)data,n);return n;
+  }
+};
+
+static void testAccelCompletionLogging() {
+  using atoms3r_ical::tryCalLogLine;
+  CalSerial serial;
+  check(tryCalLogLine(serial,"[ACC] OK") && serial.output=="[ACC] OK\r\n",
+        "available serial output keeps complete diagnostic lines");
+  serial.room=0;
+  for(int i=0;i<28;++i)tryCalLogLine(serial,"[ACCBLK] retained observation");
+  check(serial.writes==1 && serial.waits==0,"pose-end burst never writes into a full USB buffer");
+  serial.room=100;serial.connected=false;
+  check(!tryCalLogLine(serial,"[ACC] OK") && serial.writes==1,"disconnected USB does not delay the wizard");
+  serial.connected=true;serial.room=9;
+  check(!tryCalLogLine(serial,"[ACC] OK") && serial.writes==1,"capacity check includes the line terminator");
+  serial.room=10;
+  check(tryCalLogLine(serial,"[ACC] OK"),"an exactly fitting line is delivered");
+  serial.room=-1;
+  check(!tryCalLogLine(serial,"[ACC] OK"),"serial error cannot become an unsigned capacity");
+
+  // Run a real first pose with a serial host that never drains its buffer.
+  // The next preparation screen must follow the final accepted block, with
+  // no fit or diagnostic transport wait in between.
+  struct Io : imu_cal::AccelCalIo {
+    uint32_t t=0,done_at=0,ok_at=0,next_at=0;int preps=0;
+    CalSerial serial;
+    Io(){serial.room=0;}
+    bool prep(const imu_cal::AccelStepView&) override {if(++preps==1)return true;next_at=t;return false;}
+    bool sample(imu_cal::AccelRawSample& s) override {
+      s.t_us=t*1000;s.a=V(.002f*std::sin(.07f*t),0,-9.80665f);
+      s.w=V(.0002f*std::cos(.03f*t),0,0);s.tempC=25;return true;
+    }
+    uint32_t nowMs() override {return t;}
+    void capture(const imu_cal::AccelStepView&,const imu_cal::AccelHoldView& h) override {
+      if(h.phase==imu_cal::AccelHoldPhase::DONE)done_at=t;
+    }
+    void holdOk(const imu_cal::AccelStepView&) override {ok_at=t;t+=980;}
+    bool holdRetry(const imu_cal::AccelStepView&,const char*) override {return false;}
+    bool runFit(imu_cal::AccelFitJob&,const char*) override {check(false,"no fit between individual poses");return false;}
+    void log(const char* line) override {tryCalLogLine(serial,line);}
+    void idle() override {t+=5;}
+  } io;
+  imu_cal::AccelCalProcedure<> proc;
+  proc.begin(imu_cal::AccelCaptureCfg{},imu_cal::AccelFitCfg{},imu_cal::AccelThermalPrior{},V::Zero(),true);
+  check(!proc.runMainStage(io) && io.preps==2,"timing probe reaches the next pose");
+  check(proc.nObs()==20 && io.done_at<7000 && io.ok_at-io.done_at<=5,
+        "quiet pose finishes promptly with every required block");
+  check(io.next_at-io.done_at<=985 && io.serial.writes==0 && io.serial.waits==0,
+        "full USB buffer cannot add a pause before the next pose");
+}
+
 int main() {
   testMagneticQuality();testGuidance();testGyroCapture();testGyroMagneticNoise();testGyroMagneticInterruptions();
+  testAccelPoseProgress();testAccelCompletionLogging();
   std::printf("calibration_workflow-test: %d/%d checks passed\n",checks-failures,checks);
   return failures?1:0;
 }

@@ -8,6 +8,26 @@ time blocks, a robust full symmetric SPD fit, information and held-out gates,
 three later verification holds, float/runtime revalidation, and qualified
 compatible thermal-prior handling. No exact right-angle poses are assumed.
 
+## Accelerometer pose progress
+
+The bar counts accepted 250 ms blocks from the start of a pose. Placement,
+motion and rejected samples do not fill it. A full bar means that all five
+useful seconds have been retained, plus the two independent verification
+seconds for a later recheck. Previously retained progress stays visible while
+the device settles again after a disturbance. The hints indicate placement,
+motion or a pose that needs correcting; an unsuccessful hold still times out
+after 30 seconds. A successful hold shows `Captured` and advances after the
+brief acknowledgement (about one second).
+
+Normal accelerometer diagnostics are best effort: whole lines are skipped
+when they do not fit in the available serial transmit buffer. The burst of
+block records at pose completion therefore cannot wait for USB buffer space.
+For a complete raw/block replay capture, build with `ATOMS3R_ICAL_RAW_LOG=1`
+and keep the serial host reading. That explicit diagnostic mode uses blocking
+output and can affect capture timing; ordinary calibration does not require
+a serial host. Calibration observations and quality gates do not depend on
+whether diagnostics are delivered.
+
 ## Gyroscope stillness and temperature qualification
 
 The device asks the user to put it on a table. It waits for three quiet

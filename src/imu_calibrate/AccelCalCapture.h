@@ -22,8 +22,8 @@
   error in the assumed x/y edge mapping cannot lock the user out. The measured
   frame is logged for hardware confirmation of the mapping.
 
-  Hold qualification. The 6.5 s placement interval is guidance, not a wait:
-  once the device has settled (consecutive quiet, consistent, in-region blocks)
+  Hold qualification. Once the device has settled (consecutive quiet,
+  consistent, in-region blocks)
   qualified blocks are retained immediately. A hold completes after
   hold_useful_ms of retained blocks (not after a sample count). Each block is a
   short-window mean (block_ms), kept as its own gravity observation so a
@@ -122,7 +122,6 @@ struct AccelCaptureCfg {
   // Timing (session clock from sample timestamps)
   uint32_t block_ms = 250;            // one retained observation
   uint32_t min_after_start_ms = 1000; // ignore settling right after the tap
-  uint32_t place_ms = 6500;           // placement guidance shown on the bar
   uint32_t hold_useful_ms = 5000;     // retained observation needed per hold
   uint32_t recheck_verify_ms = 2000;  // extra verification-only time per recheck
   uint32_t hold_timeout_ms = 30000;   // from the first sample of the hold
@@ -211,7 +210,7 @@ struct AccelHoldView {
   AccelHoldPhase phase = AccelHoldPhase::PLACING;
   AccelHoldHint hint = AccelHoldHint::PLACE;
   const char* hint_text = "";  // accelHoldHintStr(hint)
-  float progress01 = 0;        // placement bar while placing, capture bar after
+  float progress01 = 0;        // retained useful blocks, including verification
   uint32_t elapsed_ms = 0;
 };
 
@@ -331,11 +330,10 @@ public:
     v.hint_text = accelHoldHintStr(hint_);
     v.elapsed_ms = t_ms_;
     const uint32_t need = fit_need_ + ver_need_;
-    if (phase_ == AccelHoldPhase::PLACING && n_fit_ + n_ver_ == 0) {
-      v.progress01 = std::min(1.0f, (float)t_ms_ / (float)cfg_->place_ms);
-    } else {
-      v.progress01 = need ? std::min(1.0f, (float)(n_fit_ + n_ver_) / (float)need) : 1.0f;
-    }
+    // Elapsed placement time is not capture progress. Filling the bar while
+    // still waiting to settle made it appear stuck at 100% until timeout.
+    // Retained blocks also remain visible while re-settling after motion.
+    v.progress01 = need ? std::min(1.0f, (float)(n_fit_ + n_ver_) / (float)need) : 0.0f;
     return v;
   }
 
