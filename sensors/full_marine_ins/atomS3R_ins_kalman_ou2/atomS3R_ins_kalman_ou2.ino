@@ -230,7 +230,7 @@ private:
 
   ImuCalStoreNvs store_{};
   bool           have_blob_ = false;
-  ImuCalBlobV3   blob_{};
+  ImuCalBlobV4   blob_{};
   RuntimeCals    runtime_{};
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -318,7 +318,7 @@ private:
 
     clearM5UnifiedImuCalibration();
 
-    ImuCalBlobV3 saved{};
+    ImuCalBlobV4 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
 
     if (did_save) {
@@ -506,7 +506,7 @@ private:
 
   void updateFilter_(const ImuSample& s) {
     dt_ = sample_dt_.update(s.sample_us);
-    const float tempC = std::isfinite(s.tempC) ? s.tempC : 35.0f;
+    const float tempC = s.tempC;
     imu_temp_c_ = tempC;
     rates_.countImu();
 

@@ -33,7 +33,7 @@
 
   Build with -DATOMS3R_CALIBRATION_GRAVITY_MPS2=<value> to calibrate and run
   elsewhere. A saved accelerometer calibration records the gravity it was
-  fitted against (ImuCalBlobV3::accel_g) and is not applied when that differs
+  fitted against (ImuCalBlobV4::accel_g) and is not applied when that differs
   from g_cal_local.
 */
 

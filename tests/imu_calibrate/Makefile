@@ -23,7 +23,7 @@ endif
 LDFLAGS  =
 
 # Targets
-TARGETS = imu_calibrate-test accel_cal-test accel_cal-replay accel_cal_gravity_override-test
+TARGETS = calibration_safety-test imu_calibrate-test accel_cal-test accel_cal-replay accel_cal_gravity_override-test
 
 all: build test
 
@@ -34,6 +34,9 @@ test: ensure-sim-data $(TARGETS)
 
 ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
+
+calibration_safety-test: calibration_safety-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 imu_calibrate-test: imu_calibrate-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
@@ -53,6 +56,7 @@ CAL_HEADERS = $(SRC_DIR)/imu_calibrate/CalibrateIMU.h $(SRC_DIR)/imu_calibrate/A
               $(SRC_DIR)/imu_calibrate/AccelCalCapture.h $(SRC_DIR)/AtomS3R/AtomS3R_ImuCalBlob.h \
               $(SRC_DIR)/AtomS3R/AtomS3R_ImuUnits.h
 
+calibration_safety-test.o: $(SRC_DIR)/imu_calibrate/MagCalCapture.h $(CAL_HEADERS)
 imu_calibrate-test.o: $(CAL_HEADERS)
 accel_cal-test.o: accel_cal_sim.h accel_cal_replay.h ../common/GravityChain.h $(CAL_HEADERS)
 accel_cal-replay.o: accel_cal_replay.h $(CAL_HEADERS)

@@ -81,7 +81,7 @@ struct Calibration {
   bool ok = false;
   imu_cal::AccelFullFitResult r;
   imu_cal::AccelCalibration<float> fc;
-  atoms3r_ical::ImuCalBlobV3 blob;
+  atoms3r_ical::ImuCalBlobV4 blob;
   atoms3r_ical::RuntimeCals rt;
 };
 

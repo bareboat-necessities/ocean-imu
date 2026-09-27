@@ -491,13 +491,18 @@ static EllipsoidSphereFit<T> ellipsoid_to_sphere_robust(
     Eigen::Matrix<T,3,3> M = Q / s;
     M = T(0.5) * (M + M.transpose());
 
-    // project to SPD to avoid borderline LLT failures
+    // Project small numerical defects before taking the rotation-free root.
     if (!project_spd_3x3<T>(M, T(1e-5), T(1e-7))) return FitFail::MODEL_SPD_PROJECT_FAIL;
 
-    // Cholesky: M = U^T U
-    Eigen::LLT<Eigen::Matrix<T,3,3>> llt(M);
-    if (llt.info() != Eigen::Success) return FitFail::MODEL_CHOLESKY_FAIL;
-    A_unit = llt.matrixU();
+    // Magnitudes determine M = A^T A, not an arbitrary sensor/body rotation.
+    // The unique SPD square root preserves the registered axes. A Cholesky
+    // whitening factor has the same norms but generally rotates directions.
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix<T,3,3>> es(M);
+    if (es.info() != Eigen::Success || !es.eigenvalues().allFinite() ||
+        es.eigenvalues().minCoeff() <= T(0)) return FitFail::MODEL_SPD_PROJECT_FAIL;
+    A_unit = es.eigenvectors() * es.eigenvalues().cwiseSqrt().asDiagonal() * es.eigenvectors().transpose();
+    A_unit = (T(0.5) * (A_unit + A_unit.transpose())).eval();
+    if (!A_unit.allFinite()) return FitFail::NON_FINITE_INPUT;
     return FitFail::OK;
   };
 
@@ -683,6 +688,26 @@ struct MagCalibration {
   }
 };
 
+// Thermal identification policy for stationary gyroscope captures. Bin means
+// are the independent temperature observations, not hundreds of correlated
+// samples collected during a short hold. All limits use rad/s and degrees C.
+// max_slope is a conservative acceptance ceiling, not a device specification:
+// BMI270's published typical TCO is +/-0.02 deg/s/K (~0.000349 rad/s/K).
+// https://www.bosch-sensortec.com/en/products/motion-sensors/imus/bmi270
+struct GyroThermalLimits {
+  static constexpr double min_span = 5.0;
+  static constexpr int min_bins = 4;
+  static constexpr int min_per_bin = 20;
+  static constexpr double min_information = 25.0; // sum (T_bin - mean T_bin)^2
+  static constexpr double noise_floor = 0.0002;  // does not shrink with raw sample count
+  static constexpr double max_slope_sigma = 0.00005;
+  static constexpr double max_slope = 0.001;
+  static constexpr double extrapolation_margin = 2.0;
+};
+
+enum class GyroThermal : uint8_t { UNLEARNED = 0, LEARNED = 1 };
+enum class GyroThermalReason : uint8_t { SPAN_SMALL = 0, INFORMATION_LOW, SLOPE_IMPLAUSIBLE, QUALIFIED };
+
 template <typename T>
 struct GyroCalibration {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -690,6 +715,12 @@ struct GyroCalibration {
   bool ok = false;
   Eigen::Matrix<T,3,3> S = Eigen::Matrix<T,3,3>::Identity(); // keep identity unless you have a known-rate rig
   TempBias3<T> biasT;
+  GyroThermal thermal = GyroThermal::UNLEARNED;
+  GyroThermalReason thermal_reason = GyroThermalReason::SPAN_SMALL;
+  uint8_t thermal_bins = 0;
+  T temp_lo = T(25), temp_hi = T(25); // populated-bin evidence interval when learned
+  T temperature_information = T(0);
+  Eigen::Matrix<T,3,1> slope_sigma = Eigen::Matrix<T,3,1>::Constant(T(-1));
 
   Eigen::Matrix<T,3,1> apply(const Eigen::Matrix<T,3,1>& w_raw, T tempC) const {
     return S * (w_raw - biasT.bias(tempC));
@@ -1163,7 +1194,7 @@ struct GyroCalibrator {
   using Vec3 = Eigen::Matrix<T,3,1>;
   SampleBuffer3<T, N> buf;
 
-  T T0 = T(25);
+  T T0 = T(25); // source compatibility only; fit() uses its measured reference
 
   // stationary gate thresholds
   T max_gyro_norm = T(0.07);    // rad/s
@@ -1183,73 +1214,141 @@ struct GyroCalibrator {
   }
 
   bool fit(GyroCalibration<T>& out, FitFail* reason_out = nullptr) const {
+    using DVec = Eigen::Matrix<double,3,1>;
+    using Limits = GyroThermalLimits;
     last_fail_ = FitFail::OK;
-    out.ok = false;
+    out = GyroCalibration<T>{}; // a failed/reused fit must not retain an old slope
+    auto fail = [&](FitFail why) {
+      last_fail_ = why;
+      if (reason_out) *reason_out = why;
+      return false;
+    };
+    if (buf.n < 80) return fail(FitFail::TOO_FEW_SAMPLES);
 
-    if (buf.n < 80) { last_fail_ = FitFail::TOO_FEW_SAMPLES; if (reason_out) *reason_out = last_fail_; return false; }
-
-    // Temperature range
-    T tmin = buf.tempC[0], tmax = buf.tempC[0];
-    for (int i = 1; i < buf.n; ++i) {
-      tmin = (buf.tempC[i] < tmin ? buf.tempC[i] : tmin);
-      tmax = (buf.tempC[i] > tmax ? buf.tempC[i] : tmax);
-    }
-    const T trange = tmax - tmin;
-    const T binW = (trange > T(1e-3)) ? (trange / (T)K_TBINS) : T(1);
-
-    Eigen::Matrix<T,3,1> sumB[K_TBINS];
-    T sumT[K_TBINS];
-    int cnt[K_TBINS];
-    for (int k = 0; k < K_TBINS; ++k) { sumB[k].setZero(); sumT[k]=T(0); cnt[k]=0; }
-
+    double tmin = buf.tempC[0], tmax = tmin, sum_temp = 0;
+    DVec sum = DVec::Zero();
     for (int i = 0; i < buf.n; ++i) {
-      int k = 0;
-      if (trange > T(1e-3)) {
-        k = (int)floor((double)((buf.tempC[i] - tmin) / binW));
-        k = clamp<int>(k, 0, K_TBINS - 1);
-      }
-      sumB[k] += buf.v[i];
-      sumT[k] += buf.tempC[i];
-      cnt[k]  += 1;
+      if (!finiteT(buf.tempC[i]) || !isfinite3(buf.v[i])) return fail(FitFail::NON_FINITE_INPUT);
+      const double t = buf.tempC[i];
+      tmin = t < tmin ? t : tmin; tmax = t > tmax ? t : tmax;
+      sum_temp += t;
+      sum += buf.v[i].template cast<double>();
     }
-
-    Eigen::Matrix<T,3,1> bcenters[K_TBINS];
-    T tcenters[K_TBINS];
+    const double range = tmax - tmin;
+    DVec bin_sum[K_TBINS];
+    double bin_temp[K_TBINS]{};
+    int count[K_TBINS]{};
+    for (int k = 0; k < K_TBINS; ++k) bin_sum[k].setZero();
+    auto bin = [&](double t) {
+      return range > 1e-3 ? clamp<int>((int)((t - tmin) * K_TBINS / range), 0, K_TBINS - 1) : 0;
+    };
+    for (int i = 0; i < buf.n; ++i) {
+      const int k = bin(buf.tempC[i]);
+      bin_sum[k] += buf.v[i].template cast<double>();
+      bin_temp[k] += double(buf.tempC[i]);
+      ++count[k];
+    }
+    DVec means[K_TBINS], mean = DVec::Zero();
+    double temps[K_TBINS]{}, reference = 0;
     int nb = 0;
     for (int k = 0; k < K_TBINS; ++k) {
-      if (cnt[k] < 20) continue;
-      bcenters[nb] = sumB[k] / (T)cnt[k];
-      tcenters[nb] = sumT[k] / (T)cnt[k];
-      nb++;
+      if (count[k] < Limits::min_per_bin) continue;
+      means[nb] = bin_sum[k] / count[k];
+      temps[nb] = bin_temp[k] / count[k];
+      mean += means[nb]; reference += temps[nb]; ++nb;
     }
-    if (nb < 1) {
-      last_fail_ = FitFail::TEMP_BINS_EMPTY;
-      if (reason_out) *reason_out = last_fail_;
-      return false;
-    }
+    // Retain the existing populated-bin quality gate even for bias-only fits.
+    if (!nb) return fail(FitFail::TEMP_BINS_EMPTY);
 
-    TempBias3<T> biasT;
-    if (nb >= 2) {
-      biasT = fit_temp_bias3<T, K_TBINS>(bcenters, tcenters, nb, T0);
-      if (!biasT.ok) {
-        // fallback: still succeed with constant bias
-        biasT.ok = true;
-        biasT.T0 = T0;
-        biasT.b0 = bcenters[0];
-        biasT.k.setZero();
-      }
+    // An ordinary short hold estimates the current stationary bias from ALL
+    // accepted samples. T0 is measured, never an arbitrary remote temperature.
+    out.biasT.ok = true;
+    out.biasT.T0 = T(sum_temp / buf.n);
+    out.biasT.b0 = (sum / buf.n).template cast<T>();
+    out.biasT.k.setZero();
+    out.biasT.T_lo = out.biasT.T_hi = out.biasT.T0;
+    out.temp_lo = T(tmin); out.temp_hi = T(tmax);
+    out.thermal_bins = uint8_t(nb);
+
+    mean /= nb; reference /= nb;
+    double information = 0;
+    DVec cross = DVec::Zero();
+    for (int k = 0; k < nb; ++k) {
+      const double dt = temps[k] - reference;
+      information += dt * dt;
+      cross += dt * (means[k] - mean);
+    }
+    out.temperature_information = T(information);
+    // Qualify the exact precision that will be persisted and revalidated.
+    // This avoids a double-precision boundary pass becoming a V4 save failure.
+    const double stored_span = double(T(temps[nb-1])) - double(T(temps[0]));
+    const double stored_information = double(out.temperature_information);
+    if (stored_span < Limits::min_span) {
+      out.thermal_reason = GyroThermalReason::SPAN_SMALL;
+    } else if (nb < Limits::min_bins || stored_information < Limits::min_information) {
+      out.thermal_reason = GyroThermalReason::INFORMATION_LOW;
     } else {
-      biasT.ok = true;
-      biasT.T0 = T0;
-      biasT.b0 = bcenters[0];
-      biasT.k.setZero();
+      const DVec slope = cross / information;
+      DVec bin_error = DVec::Zero(), sample_error = DVec::Zero();
+      int used = 0;
+      for (int k = 0; k < nb; ++k) {
+        const DVec e = means[k] - mean - slope * (temps[k] - reference);
+        bin_error += e.cwiseProduct(e);
+      }
+      for (int i = 0; i < buf.n; ++i) {
+        if (count[bin(buf.tempC[i])] < Limits::min_per_bin) continue;
+        const DVec e = buf.v[i].template cast<double>() - mean - slope * (double(buf.tempC[i]) - reference);
+        sample_error += e.cwiseProduct(e); ++used;
+      }
+      bool informative = true, plausible = true;
+      for (int j = 0; j < 3; ++j) {
+        // Conservative scatter: no 1/sqrt(raw count) gain for serially
+        // correlated stationary noise or drift. Bin lack-of-fit also counts.
+        double variance = Limits::noise_floor * Limits::noise_floor;
+        variance = std::fmax(variance, bin_error[j] / (nb - 2));
+        variance = std::fmax(variance, sample_error[j] / used);
+        const double sigma = std::sqrt(variance / information);
+        out.slope_sigma[j] = T(sigma);
+        const T stored_slope = T(slope[j]);
+        const T stored_sigma = out.slope_sigma[j];
+        informative = informative && std::isfinite(double(stored_sigma)) &&
+                      double(stored_sigma) <= Limits::max_slope_sigma;
+        plausible = plausible && std::isfinite(double(stored_slope)) &&
+                    std::fabs(double(stored_slope)) + 3 * double(stored_sigma) <= Limits::max_slope;
+      }
+      if (!plausible) out.thermal_reason = GyroThermalReason::SLOPE_IMPLAUSIBLE;
+      else if (!informative) out.thermal_reason = GyroThermalReason::INFORMATION_LOW;
+      else {
+        out.thermal = GyroThermal::LEARNED;
+        out.thermal_reason = GyroThermalReason::QUALIFIED;
+        out.temp_lo = T(temps[0]); out.temp_hi = T(temps[nb-1]);
+        out.biasT.T0 = T(reference);
+        out.biasT.b0 = mean.template cast<T>();
+        out.biasT.k = slope.template cast<T>();
+        out.biasT.T_lo = T(temps[0] - Limits::extrapolation_margin);
+        out.biasT.T_hi = T(temps[nb-1] + Limits::extrapolation_margin);
+        // Recheck the stored precision over the complete permitted interval.
+        // If float storage cannot faithfully represent this learned model, keep
+        // the valid stationary bias rather than failing the whole calibration.
+        bool stored_model_ok = true;
+        for (int end = 0; end < 2; ++end) {
+          const T t = end ? out.biasT.T_hi : out.biasT.T_lo;
+          const DVec expected = mean + slope * (double(t) - reference);
+          stored_model_ok = stored_model_ok &&
+              (out.biasT.bias(t).template cast<double>() - expected).cwiseAbs().maxCoeff() <= 1e-6;
+        }
+        if (!stored_model_ok) {
+          out.thermal = GyroThermal::UNLEARNED;
+          out.thermal_reason = GyroThermalReason::INFORMATION_LOW;
+          out.biasT.T0 = T(sum_temp / buf.n);
+          out.biasT.b0 = (sum / buf.n).template cast<T>();
+          out.biasT.k.setZero();
+          out.biasT.T_lo = out.biasT.T_hi = out.biasT.T0;
+          out.temp_lo = T(tmin); out.temp_hi = T(tmax);
+        }
+      }
     }
-
     out.ok = true;
-    out.S = Eigen::Matrix<T,3,3>::Identity();
-    out.biasT = biasT;
-
-    last_fail_ = FitFail::OK;
     if (reason_out) *reason_out = FitFail::OK;
     return true;
   }
