@@ -260,8 +260,10 @@ The refinement from a fragile minor to all-row factors fixes the selector;
 the all-row nullspace test then rules out further pivot, precision or interval
 refinement as a cure for the relaxed domain. The next technique must use
 same-history nominal dynamics to exclude sustained near-collinearity and
-sampled gyro aliasing quantitatively, before enclosing the residual matrix
-action. True-vector sampling fidelity alone does not establish this exclusion.
+control the full signed temporal gyro margin before enclosing the residual
+matrix action. The implemented bias ball supplies the separate one-prediction
+gyro-transport floor below; true-vector sampling fidelity alone does not
+establish the remaining historical reader.
 
 In particular the literal accelerometer relation is
 
@@ -338,8 +340,9 @@ magnetic corrections before the first prediction have zero gyro gain because
 the handoff clears attitude/gyro cross covariance. With the existing physical
 rate, bias and sensor envelopes, the first corrected angular increment is
 at most .006*(.6108652381980153+.02+.02)=.0039051914291880918 rad.
-This excludes a gyro alias at that first prediction. It is not an invariant
-bound after the subsequent, coupled acc/S/mag corrections.
+This tighter construction bound applies at the first prediction. After the
+subsequent coupled acc/S/mag corrections, the implemented .5 rad/s bias ball
+provides the uniform qualified angle bound below .007 rad described above.
 
 The attempted propagation must retain the true initial translation and
 primitive, the front end, clocks, references and tuning, rather than replace

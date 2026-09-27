@@ -26,6 +26,9 @@ clipped. The release dataset is v1.2.1, SHA-256
 | OU-III stationary-device stress | 0.02478606482 | 0.00049177997 |
 | OU-II paired smoke validation (12 replays) | 0.00305672180 | 0.00207509899 |
 | OU-III paired smoke validation (16 replays) | 0.00416276962 | 0.00207519865 |
+| OU-II full paired validation | 0.01652885530 | 0.00545292124 |
+| OU-III full paired validation | 0.03682743654 | 0.00545307943 |
+| OU-III full robustness study | 0.01538185207 | 0.00283334343 |
 
 The standalone suites and paired smoke replays have zero projection activations
 and zero nonfinite observations after the change. The deterministic suites
@@ -35,13 +38,27 @@ at most .000101 degrees. Paired smoke changes displacement RMS by at most
 floating-point differences; the inactive helper itself leaves the stored
 bias bit-for-bit unchanged. Existing simulator gates pass.
 
+The full validation compares 840 scored rows plus 18 calibration replays.
+Every generated input has its row count checked and its SHA-256 verified
+before and after execution; paired input records and reference-motion metrics
+match exactly. Prediction and correction counts also match. The largest
+displacement RMS change is .000044 m and the largest attitude RMS change is
+.000431 degrees, with zero projection activations or nonfinite observations.
+The full OU-III robustness protocol adds 310 scored cases and one calibration
+replay, including 72,631,734 prediction steps in each build. Its paired inputs,
+reference metrics and operation counts also match exactly. Projection remains
+inactive, with maximum changes of .000002861 m in 3D displacement RMS and
+.0000716 degrees in attitude RMS. The unchanged study protocol retains
+individual stress-case quality outcomes; these comparisons do not relax gates.
+
 The stationary-device tests include a 0.025 rad/s imposed sensor offset,
 rest/wave/rest transitions and fixed/adaptive pseudo cadence. Startup tests
 include large heading transitions, magnetic acquisition and proxy handoff.
 All four investigated radii, 0.1, 0.2, 0.5 and 1 rad/s, were inactive in these
 baseline runs. The selected 0.5 radius leaves 25 times the qualified physical
-residual, 20 times the largest stress estimate, and about 80 times the largest
-ordinary OU-III estimate. Smaller radii offer no needed alias benefit; 1 rad/s
+residual, 20 times the largest stationary-device stress estimate, and about 80 times the largest
+ordinary OU-III estimate in the deterministic suite. The broader full validation
+still leaves over 13 times headroom. Smaller radii offer no needed alias benefit; 1 rad/s
 offers extra headroom with no observed engineering need.
 
 The physical **total post-calibration residual** qualification remains
@@ -101,6 +118,14 @@ with margins exceeding **3.13459 rad from pi** and **6.27618 rad from 2*pi**.
 The exact `h=.005, b_hat_g=-400*pi*e_z` bias witness and its near-alias family
 are outside the implemented estimator-state ball.
 
+The polynomial allowance follows directly from the shipping fourth-order
+cosine and fifth-order sine terms. Their Taylor remainders have combined
+Euclidean norm at most `epsilon = phi^6/46080 + phi^7/645120`. Normalization
+changes direction by at most `asin(epsilon/(1-epsilon))`; the corresponding
+rotation-angle error is at most twice that value, hence below `4 epsilon`
+for this domain (`epsilon < 1/4`). This is a real-source bound; finite-precision
+word totality remains a separate proof obligation.
+
 **The shipping device API does not enforce a maximum positive timestep.**
 `SampleDtTracker` is constructed without `max_dt_s` in these sketches; the
 fusion wrapper accepts any finite positive `dt`. Therefore no finite global
@@ -153,6 +178,12 @@ hashes. Add `--source-ref b0beb9c88737ffeb2c6f6eeefcbeb4bd22121524` for the
 baseline. To include the existing paired validation protocol, first build both
 families, then pass `--validation-mode smoke --validation-peer-dir /tmp/ou2-audit`
 on the OU-III command. The official aggregate requires both families.
+For complete studies use `--validation-mode full`; add
+`--validation-study robustness` for the existing robustness protocol.
+`--no-build --replay-only` reuses the frozen binaries. Scalar replay checkpoints
+are keyed by binary bytes, input bytes/name, arguments and all W3D/SF settings;
+time-series diagnostics always execute again. A changed or incomplete generated
+input fails the audit. `TMPDIR` can select storage for the large temporary inputs.
 The committed paired report records numerical metric differences
 and projection engagement. New regression targets run from both existing
 `run_tests.sh` scripts; the ordinary suites and all publication gates remain

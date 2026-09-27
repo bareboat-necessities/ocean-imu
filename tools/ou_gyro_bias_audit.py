@@ -17,6 +17,7 @@ import io
 import tarfile
 import sys
 import math
+import threading
 
 REPO = Path(__file__).resolve().parents[1]
 OBSERVER = r'''#pragma once
@@ -147,6 +148,8 @@ def main():
     p.add_argument("--validation-mode", choices=("smoke", "full"), help="Also observe the existing paired validation replay protocol")
     p.add_argument("--validation-peer-dir", type=Path, help="Audit build directory for the other OU family; validation requires the pair")
     p.add_argument("--validation-jobs", type=int, default=2)
+    p.add_argument("--validation-study", choices=("validation", "robustness"), default="validation")
+    p.add_argument("--replay-only", action="store_true", help="Reuse built audit binaries and run only the requested replay study")
     args = p.parse_args()
     out = args.output_dir.resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -170,7 +173,7 @@ def main():
               "source_sha256": json.loads((out/"source-sha256.json").read_text()),
               "observer_sha256": hashlib.sha256(OBSERVER.encode()).hexdigest(),
               "candidate_radii_rad_s": [0.1,0.2,0.5,1.0], "runs": []}
-    for target in args.targets:
+    for target in ([] if args.replay_only else args.targets):
         name = folder+"-sim" if target == "sim" else target
         binary = out/name
         if not args.no_build:
@@ -206,27 +209,94 @@ def main():
         validation.FAMILY_BINARY["OU_"+peer.upper()] = peer_dir/("kalman_ou_"+peer+"-sim")
         result["validation_peer_source_sha256"] = json.loads((peer_dir/"source-sha256.json").read_text())
         binaries = {str(value) for value in validation.FAMILY_BINARY.values()}
+        fingerprints = {name: hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in binaries}
+        cache = out/"replay-cache"
+        cache.mkdir(exist_ok=True)
+        lock = threading.Lock()
         original_run = validation.subprocess.run
+        original_write = validation.write_wave_csv
+        inputs = {}
+        released_inputs = {path.resolve() for path in (REPO/"tests"/folder).glob("wave_data_*.csv")}
         replays = []
+        def checked_write(path, columns, data):
+            original_write(path, columns, data)
+            payload = path.read_bytes()
+            rows = payload.count(b"\n")-1
+            if rows != len(data):
+                raise RuntimeError(f"incomplete generated input: {path}: {rows} != {len(data)} rows")
+            with lock:
+                inputs[str(path.resolve())] = (hashlib.sha256(payload).hexdigest(), rows)
+
         def observed_run(command, *a, **kw):
-            completed = original_run(command, *a, **kw)
-            if command and command[0] in binaries:
+            is_replay = command and command[0] in binaries
+            cache_file = None
+            if is_replay:
+                input_path = Path(command[-1])
+                payload = input_path.read_bytes()
+                input_hash = hashlib.sha256(payload).hexdigest()
+                resolved = input_path.resolve()
+                if str(resolved) not in inputs and resolved in released_inputs:
+                    # Robustness calibrates on the pinned release record itself.
+                    inputs[str(resolved)] = (input_hash, payload.count(b"\n")-1)
+                expected_hash, input_rows = inputs[str(resolved)]
+                if input_hash != expected_hash:
+                    raise RuntimeError(f"generated input changed before replay: {input_path}")
+                parts = input_path.parts
+                temporary_index = next((i for i, part in enumerate(parts) if part.startswith("ocean-imu-ou-")), None)
+                input_identity = ("dataset/"+input_path.name if temporary_index is None
+                                  else "/".join(parts[temporary_index+1:]))
+                environment = {k:v for k,v in kw["env"].items() if k.startswith(("W3D_", "SF_"))}
+                # Only reuse complete scalar-output replays from these exact
+                # binary bytes, input bytes, seeds and settings. A diagnostic
+                # needing time-series files must execute again.
+                if environment.get("W3D_WRITE_TIMESERIES") == "0":
+                    key_data = ["immutable-input-v2", fingerprints[command[0]], input_hash,
+                                input_path.name, environment, command[1:-1]]
+                    key_hash = hashlib.sha256(json.dumps(key_data, sort_keys=True).encode()).hexdigest()
+                    cache_file = cache/(key_hash+".json")
+            if cache_file is not None and cache_file.exists():
+                saved = json.loads(cache_file.read_text())
+                completed = subprocess.CompletedProcess(command, saved["returncode"], saved["stdout"], saved["stderr"])
+            else:
+                completed = original_run(command, *a, **kw)
+                if is_replay and hashlib.sha256(input_path.read_bytes()).hexdigest() != expected_hash:
+                    raise RuntimeError(f"generated input changed during replay: {input_path}")
+                if cache_file is not None and "OU_GYRO_AUDIT " in completed.stdout:
+                    with lock:
+                        temporary = cache_file.with_suffix(".tmp")
+                        temporary.write_text(json.dumps({"returncode": completed.returncode,
+                            "stdout": completed.stdout, "stderr": completed.stderr})+"\n")
+                        temporary.replace(cache_file)
+            if is_replay:
                 observations = [json.loads(line.removeprefix("OU_GYRO_AUDIT "))
                     for line in completed.stdout.splitlines() if line.startswith("OU_GYRO_AUDIT ")]
-                replays.append({"observations": observations, "exit_code": completed.returncode,
-                    "input_sha256": hashlib.sha256(Path(command[-1]).read_bytes()).hexdigest(),
-                    "environment": {k:v for k,v in kw["env"].items() if k.startswith("W3D_")}})
+                record = {"observations": observations, "exit_code": completed.returncode,
+                    "input_sha256": input_hash, "input_identity": input_identity,
+                    "input_rows": input_rows, "input_immutable_verified": True,
+                    "binary_sha256": fingerprints[command[0]], "environment": environment}
+                with lock:
+                    replays.append(record)
+                    with (out/"replay-progress.jsonl").open("a") as log:
+                        log.write(json.dumps(record)+"\n")
             return completed
         validation.subprocess.run = observed_run
+        validation.write_wave_csv = checked_write
         try:
-            code = validation.main(["--mode", args.validation_mode, "--families", "both",
-                "--data-dir", str(REPO/"tests"/folder), "--output-dir", str(out/"validation"),
+            study = validation
+            study_args = ["--families", "both"]
+            if args.validation_study == "robustness":
+                import ou_robustness as study
+                study_args = []
+            code = study.main(["--mode", args.validation_mode, *study_args,
+                "--data-dir", str(REPO/"tests"/folder), "--output-dir", str(out/args.validation_study),
                 "--jobs", str(args.validation_jobs), "--skip-build", "--no-plots"])
         finally:
             validation.subprocess.run = original_run
+            validation.write_wave_csv = original_write
             result["validation_replays"] = replays
             (out/"audit.json").write_text(json.dumps(result, indent=2)+"\n")
         result["validation_replays"] = replays
+        result["replay_study"] = args.validation_study
         result["validation_exit_code"] = code
         (out/"audit.json").write_text(json.dumps(result, indent=2)+"\n")
         if code:

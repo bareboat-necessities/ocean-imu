@@ -22,6 +22,58 @@ physical capture and the complete stability theorem are open.
 
 ### Gyro-bias projection investigation
 
+The verified full before/after validation now compares 840 scored cases plus
+18 calibration replays, and full OU-III robustness compares 310 scored cases
+plus one calibration replay. Protected temporary inputs pass row-count and
+before/after hash checks; paired physical inputs, reference metrics and operation
+counts agree exactly. No projection activates. Baseline full-validation maxima
+are .01652885530/.03682743654 rad/s for OU-II/III, and the largest prediction
+argument is .00545307943 rad. Robustness reaches .01538185207 rad/s. Maximum
+validation RMS differences are .000044 m displacement and .000431 degrees
+attitude. These verified runs replace the invalid local comparison below.
+
+After all estimator and 535 validation/proof tests passed, `make all` stopped at
+`tests/wave_dir/run_tests.sh` with `./wave-direction-iq-test: Permission denied`
+(exit 126). The generated ELF had mode 0644. Classification: local build-artifact
+permission failure; this does not invalidate numerical tests already completed.
+Rebuilding that unchanged target restored its executable mode and all four
+wave-direction targets passed. The complete `make all` is rerun with the repaired
+artifact; no source, build recipe or test gate is changed for this failure.
+
+The first completed full paired audit is invalid: the reference displacement
+RMS differs by up to .05722934 m between paired executions, and 6 baseline / 5
+modified generated input paths have different byte hashes between tuning-mode
+replays. Classification: local temporary-input integrity failure, not an
+estimator regression. Scalar simulator exit status was insufficient to detect
+the changing inputs. Retain the separate deterministic/smoke runs and source
+proof; discard this full comparison and its unverified replay cache. Rerun
+with temporary inputs in shared memory, check generated row counts and every
+input hash before/after execution, and require identical paired input records
+before accepting any performance difference. The projection remains inactive
+in the observations, but these corrupted-input runs cannot establish the
+validated-scenario range.
+The initial integrity guard also rejected the robustness calibration's pinned
+release input with `KeyError`, because it assumed every input was generated.
+Classification: diagnostic input classification. Permit only the enumerated
+release records as that alternate input class and verify their before/after
+hashes too; keep generated-input row-count and hash checks strict.
+
+The first PR evidence-contract job (36330449969) and validation unit-test
+prerequisite (36330449922, `make -C tests/validation test`) correctly rejected the old
+publication replays: `replay dependency differs from replay provenance` for
+the common OU math header and OU-II/III headers. Classification: stale
+publication evidence after the authorized source change. The separate proof
+provenance is clean. The initial broad builds (36330450308 and 36330428399)
+also rejected plot generation with `ValueError: TFG comparison source
+provenance is stale`; their native OU regressions passed. Full branch run
+36330428389 regenerated validation, robustness and the paired TFG comparison
+successfully, publishing commit 5e4957b9. Only those fresh runs replace the
+publication manifests; no old replay data was restamped. Local long-running
+replay/build processes were also interrupted
+before completion; the audit now checkpoints scalar replays by exact binary,
+input, seed and settings hashes, so completed executions survive a restart.
+
+
 The parallel full replay/build attempt exhausted local scratch space. The
 modified full audit failed `OSError: [Errno 28] No space left on device`;
 `make all` failed assembling `shipping_contract-test.o` with the same error.
@@ -350,7 +402,7 @@ literal signed accelerometer and magnetic innovations into the same physical
 history, applies the proved nonuniform acceleration integral identity before
 absolute values, and telescopes the actual BG/AW mean recursion with its
 chronological gains, OU transports, resets and roundoff.  Sustained nominal
-force/field degeneracy and gyro aliasing are therefore reduced to two
+force/field degeneracy and chronological gyro sensitivity are reduced to two
 same-history signed margins, Delta_col and Delta_gyr.  A positive uniform
 lower bound for both makes the remaining coefficient family separated from
 rank loss; a finite pivot-chart cover then makes the historical reader action
@@ -526,10 +578,11 @@ are not evidence that the declared six-degree region is invariant.
   7.95648051e-7, 7.95774589e-10 and 7.95774715e-13 for turn offsets 10^-3,
   10^-6 and 10^-9. Exact Rodrigues/quaternion identities certify the nullspace;
   more precision cannot remove it. Retained: all readout/Schur implications,
-  nuisance bounds and physical measured-vector diversity. Next change the
-  technique to a construction-linked nominal gyro estimate bound alongside
-  nominal force/field control. Reachability and magnetic service of the alias
-  are unknown, so it is not a shipping instability counterexample.
+  nuisance bounds and physical measured-vector diversity. The implemented
+  gyro estimate projection now excludes this relaxed state and supplies a
+  positive single-step transport floor. Nominal force/field control and the
+  full signed gyro word remain open. The old unprojected witness never proved
+  construction reachability or magnetic service.
 - Factor pivoting changed the supplied reader's nuisance-sensitive coordinate
   from x to y. The old cross-covariance regression then compared two identical
   actions. Move its nonzero AW/BA cross term to the actually used y coordinate;

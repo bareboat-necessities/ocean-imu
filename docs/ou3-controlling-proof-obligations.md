@@ -61,15 +61,18 @@ relaxation: B=(45,0,45), nominal a=(-g/2,0,g/2) gives AG rank four and
 Rayleigh margin -1 against I6. This family has no proved nominal-mean or
 magnetic-service reachability. The missing certificate is a quantitative
 same-history exclusion of sustained nominal force/field collinearity and
-gyro aliasing, followed by the common full matrix-action ceiling. Finer
+positive signed temporal gyro margin, followed by the common full
+matrix-action ceiling. The implemented gyro-bias ball already excludes
+complete-turn bias aliases on the qualified prediction domain. Finer
 pivots, precision or coefficient subdivision cannot remove an exact nullspace.
 
-A second, mean-recursion-compatible regular-root relaxation has quiet truth,
+A historical, unprojected regular-root relaxation has quiet truth,
 h=.005 s and nominal gyro bias -400 pi e_z. All innovations vanish, but the
 literal full-turn bias transport is h e_z e_z': two gyro columns are invisible
-and the Gram-floor margin is -mu. Construction reachability and all-time
-magnetic service are not established. Innovation bounds alone therefore
-cannot replace a construction-linked nominal gyro bound. The moving word's
+and the Gram-floor margin is -mu. It violates the shipping .5 rad/s gyro-bias
+invariant and is no longer an admissible nominal state. The one-prediction
+transport floor is certified in `ou-gyro-bias-projection.md`; this does not
+close the full chronological signed margin. The moving word's
 complete sync/symmetry arithmetic is now enclosed with signed matrix factors;
 its indefinite -2^-44 defect is charged, not treated as PSD process noise.
 This local finite-word closure does not close whole-word float32 supply.

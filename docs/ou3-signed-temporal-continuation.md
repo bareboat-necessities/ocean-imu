@@ -65,8 +65,10 @@ delta = min(inf_W Delta_col(W), inf_W Delta_gyr(W)) > 0.
 On the separated same-history coefficient family, use the existing
 largest-residual factor pivot rule on the complete six-column raw observation
 array O(W). The two temporal exclusions rule out the only sustained AG rank-loss
-mechanisms left by the literal attitude/bias transport: force/field
-collinearity and complete-turn gyro aliasing. Therefore each W has a full-rank
+mechanisms in this temporal construction: force/field collinearity and loss
+of chronological gyro sensitivity. The gyro-bias invariant excludes the
+complete-turn single-step obstruction but does not bound the full signed
+word margin. Under the two positive-margin premises, each W has a full-rank
 six-row pivot chart. Strict delta separation and compact shipping
 coefficient/factor bounds make the residual pivot functions continuous and
 bounded away from zero on a finite chart cover.

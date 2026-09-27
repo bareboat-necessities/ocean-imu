@@ -3,13 +3,14 @@
 This attempt enters the one finite-error tail inequality through the required
 source-uniform historical AG reader. Before an action ceiling B_* can be
 certified, the construction and subsequent nominal recursion must exclude
-sustained force/field collinearity and gyro aliasing. The following is an
+sustained force/field collinearity and control the full signed gyro margin.
+The following is an
 executed necessary separation test, not a replacement contraction argument.
 The implemented 0.5 rad/s gyro invariant now supplies the all-history mean
 bound (see `ou-gyro-bias-projection.md`); this audit remains useful for the
 force/field and full action questions. It closes a finite recorded gyro barrier
-and rejects an energy-only route to
-the simultaneous uniform exclusion. All source-uniform claims remain open.
+and rejects an energy-only route to the historical reader. The one-prediction
+gyro floor is closed; the source-uniform historical action remains open.
 
 ## Exact joint recurrence
 
@@ -184,12 +185,13 @@ cell weights gives one scalar/vector balance whose physical term contains
 terms are exactly: physical sensor/bias residuals, the **signed** innovation
 functional `sum W^a_k r^a_k+sum W^m_k r^m_k`, and literal mean/reset/rounding
 defects.  The innovation functional is then eliminated with the telescoped
-mean identity above; it is not bounded by `sum r' S^-1 r`.  The gyro-alias
-case is treated in the same chronology: the Rodrigues bias-transport factor
+mean identity above; it is not bounded by `sum r' S^-1 r`. The remaining
+signed gyro margin is treated in the same chronology: the Rodrigues factor
 `B(h,omega_measured-\hat b_g)` is paired with the signed magnetic/accelerometer
-corrections that could have moved `\hat b_g` from its construction value.
-A complete-turn value cannot simply be inserted as an independent nominal
-coefficient.
+corrections and projection defects that move `\hat b_g` from its construction
+value. The implemented bias ball excludes complete-turn values throughout
+the qualified source domain; the positive single-factor floor alone does
+not bound those chronological signed terms.
 
 The innovation elimination itself has a compatibility condition that must be
 proved, not assumed.  For the chronological affine recursion
