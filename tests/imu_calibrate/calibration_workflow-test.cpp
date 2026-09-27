@@ -176,8 +176,72 @@ static void testGyroCapture() {
   cap.begin(0);check(cap.update(12001,nullptr,nullptr,NAN)==GS::STALE,"missing gyro data reaches stale failure");
 }
 
+static void testGyroMagneticNoise() {
+  // The IMU is polled at 200 Hz, but magnetic registers change more slowly.
+  // Repeated magnetic words are one observation, not independent noise draws.
+  // A stationary device must complete without waiting for a lucky quiet run.
+  int completed=0,first_hold=0;
+  for(const int mag_ms : {10,50,100}) for(int seed=0;seed<30;++seed) {
+    imu_cal::GyroCalibrator<float,400> cal;cal.max_gyro_norm=.12f;cal.max_accel_dev=.8f;
+    imu_cal::GyroCapture<float,400> capture(cal);capture.begin(0);
+    std::mt19937 rng(27100+seed);std::normal_distribution<float> noise(0,1);
+    const V bias(.002f,-.003f,.001f);
+    V m=V::Zero();GS status=GS::SETTLING;
+    for(int ms=0;ms<=8500 && status!=GS::READY;ms+=5) {
+      V a=V(0,0,-cal.g)+.01f*V(noise(rng),noise(rng),noise(rng));
+      V w=bias+.0023f*V(noise(rng),noise(rng),noise(rng));
+      if(ms%mag_ms==0)m=V(20,0,42)+.35f*V(noise(rng),noise(rng),noise(rng));
+      status=capture.update(uint32_t(ms),&a,&w,31,&m);
+    }
+    completed+=status==GS::READY;
+    first_hold+=status==GS::READY && capture.resets()==0;
+    check(status==GS::READY && capture.resets()==0,"stationary multi-rate magnetic noise does not restart gyro hold");
+    imu_cal::GyroCalibration<float> out;
+    check(cal.fit(out) && (out.biasT.b0-bias).norm()<.0007f,"noisy magnetic qualification retains gyro bias accuracy");
+  }
+  std::printf("gyro magnetic noise: %d/90 ready, %d/90 uninterrupted\n",completed,first_hold);
+}
+
+static void testGyroMagneticInterruptions() {
+  // Longer magnetic averaging must still detect a fixed-reference drift and
+  // must not treat a lost/frozen yaw reference as an absent sensor.
+  for(int mode=0;mode<4;++mode) for(int seed=0;seed<10;++seed) {
+    imu_cal::GyroCalibrator<float,400> cal;cal.max_gyro_norm=.12f;cal.max_accel_dev=.8f;
+    imu_cal::GyroCapture<float,400> capture(cal);capture.begin(0);
+    std::mt19937 rng(49100+seed);std::normal_distribution<float> noise(0,1);
+    const V bias(.002f,-.003f,.001f);
+    V m=V::Zero();GS status=GS::SETTLING;
+    float angle=0;int ready_ms=-1;bool magnetic_restart=false;
+    for(int ms=0;ms<25000;ms+=5) {
+      const float rate=mode==0 && ms<12000 ? .015f : 0;
+      angle+=rate*.005f;
+      V a=V(0,0,-cal.g)+.01f*V(noise(rng),noise(rng),noise(rng));
+      V w=bias+V(0,0,rate)+.0015f*V(noise(rng),noise(rng),noise(rng));
+      const bool interrupted=ms>=3000 && ms<12000;
+      if(ms%100==0 && !(mode==2 && interrupted)) {
+        m=Eigen::AngleAxisf(-angle,V::UnitZ())*V(20,0,42)+.35f*V(noise(rng),noise(rng),noise(rng));
+        if(mode==1 && interrupted)m+=V(6,0,0);
+      }
+      status=capture.update(uint32_t(ms),&a,&w,31,(mode==3 && interrupted)?nullptr:&m);
+      magnetic_restart=magnetic_restart || std::strcmp(capture.resetReason(),"magnetic change")==0 ||
+          std::strcmp(capture.resetReason(),"magnetic stream lost")==0;
+      if(status==GS::READY) {ready_ms=ms;break;}
+    }
+    // After the field step it is legitimate to capture in the new stable
+    // field, but samples from before the step must not contribute.
+    const int earliest_ready=mode==1?9000:18000;
+    if(status!=GS::READY || ready_ms<earliest_ready || !magnetic_restart)
+      std::printf("gyro magnetic interruption mode=%d seed=%d ready=%d restarts=%u reason=%s\n",
+                  mode,seed,ready_ms,capture.resets(),capture.resetReason());
+    check(status==GS::READY && ready_ms>=earliest_ready && magnetic_restart,
+          "slow yaw, field change and lost/frozen magnetic stream require a new quiet hold");
+    imu_cal::GyroCalibration<float> out;
+    check(cal.fit(out) && (out.biasT.b0-bias).norm()<.0007f,"interrupted hold never contaminates saved gyro bias");
+  }
+}
+
 int main() {
-  testMagneticQuality();testGuidance();testGyroCapture();
+  testMagneticQuality();testGuidance();testGyroCapture();testGyroMagneticNoise();testGyroMagneticInterruptions();
   std::printf("calibration_workflow-test: %d/%d checks passed\n",checks-failures,checks);
   return failures?1:0;
 }
