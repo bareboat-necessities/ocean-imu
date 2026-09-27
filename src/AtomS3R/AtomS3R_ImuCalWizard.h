@@ -31,13 +31,15 @@
 
 #include "AtomS3R/AtomS3R_ImuCal.h"         // ImuSample, axis mapping conventions, blob/store/runtime helpers
 #include "AtomS3R/AtomS3R_M5Ui.h"           // UI + Input + clamp01_
+#include "AtomS3R/AtomS3R_CalLog.h"         // best-effort pose diagnostics
 #include "imu_calibrate/CalibrateIMU.h"     // imu_cal::* + FitFail
 #include "imu_calibrate/AccelCalCapture.h"  // accelerometer procedure (host-tested)
 #include "imu_calibrate/MagCalCapture.h"    // bounded capture and independent freshness
 #include "imu_calibrate/GyroCalCapture.h"   // continuous quiet hold
 
 // Set to 1 to stream every raw accel/gyro sample as [ACCRAW] lines for
-// tests/imu_calibrate/accel_cal-replay.
+// tests/imu_calibrate/accel_cal-replay. This diagnostic mode also preserves
+// complete block logs and may wait for serial output; keep the host reading.
 #ifndef ATOMS3R_ICAL_RAW_LOG
 #define ATOMS3R_ICAL_RAW_LOG 0
 #endif
@@ -321,7 +323,14 @@ private:
       return ok;
     }
 
-    void log(const char* line) override { Serial.println(line); }
+    void log(const char* line) override {
+#if ATOMS3R_ICAL_RAW_LOG
+      Serial.println(line);
+#else
+      // A completed pose must not wait for a host to drain USB diagnostics.
+      tryCalLogLine(Serial, line);
+#endif
+    }
     void idle() override { delay(2); }
 
   private:
@@ -636,7 +645,6 @@ private:
     // plausibility gates; see imu_cal::AccelFitCfg for the remaining gates.
     accel_ccfg_ = imu_cal::AccelCaptureCfg{};
     accel_ccfg_.g = g;
-    accel_ccfg_.place_ms = ImuCalWizardCfg::PLACE_TIME_MS;
     accel_ccfg_.stuck_ms = ImuCalWizardCfg::STUCK_MS;
     accel_fcfg_ = imu_cal::AccelFitCfg{};
     accel_fcfg_.g = g;
