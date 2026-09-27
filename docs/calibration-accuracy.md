@@ -24,10 +24,13 @@ check a fixed yaw reference with the existing displacement threshold. Sixty
 simulated low-power BMM150 noise histories complete an uninterrupted hold
 within eight seconds. Thermal fitting remains separately qualified.
 
-Magnetic capture averages distinct readings over 400 ms, rejects excessive
-rotation within a window, and retains 160 averaged observations. Independent
-verification uses 140 new means with frozen coefficients. Normal guided
-collection takes about 70 seconds, followed by about one minute of verification;
+Magnetic capture retains the mean and population covariance of at least twelve
+distinct readings over at least 400 ms, and keeps 160 such observations.
+The covariance preserves the corrected field energy through motion inside each
+window; hand turns require no angular-rate cutoff. Slow sampling extends the
+window rather than discarding partial data. Independent verification uses
+140 new observations with frozen coefficients. At 20–30 Hz, guided collection
+takes about 70–100 seconds, followed by about 60–85 seconds of verification;
 the display continues to show data and coverage progress throughout.
 This is an accuracy/usability tradeoff: the extra time measures new data.
 Hardware precision settings are optional; software averaging is also used
@@ -44,9 +47,9 @@ clean field directions, including appreciable pitch and roll.
 | Metric | v2.3.2 | Current |
 | --- | ---: | ---: |
 | Gyro bias RMS error, rad/s | 0.000284 | 0.000105 |
-| Magnetic direction RMS, 30 µT noisy field | 1.067° | 0.293° |
-| Magnetic direction RMS, 50 µT noisy field | 0.545° | 0.172° |
-| Magnetic direction RMS, 50 µT quiet field | 0.150° | 0.095° |
+| Magnetic direction RMS, 30 µT noisy field | 1.067° | 0.292° |
+| Magnetic direction RMS, 50 µT noisy field | 0.545° | 0.167° |
+| Magnetic direction RMS, 50 µT quiet field | 0.150° | 0.062° |
 | Successful magnetic fits | 90/90 | 90/90 |
 | Successful independent magnetic checks | Not present | 90/90 |
 
@@ -60,8 +63,19 @@ for all three magnetic noise/field groups and gyro bias. It also verifies
 that a later field step is rejected and that verification never changes fitted
 coefficients. `test_release_accuracy.py` checks the deployed accelerometer
 against the committed release reference. `calibration_workflow-test` covers
-repeated and frozen registers, rapid turns, lost gyro input, realistic magnetic
-noise during gyro holds, and optional-preset rollback.
+repeated and frozen registers, rapid turns, display pauses, realistic magnetic
+noise during gyro holds, and optional-preset rollback. An algebraic regression
+checks that window moments give the same corrected field energy as the raw
+readings, including an off-diagonal calibration matrix and nonzero bias.
+
+`mag_hand_motion-test` exercises 120 noisy/quiet sessions with continuous and
+stop/start hand motion, 75 ms display pauses every 250 ms, and 10/20/30/100 Hz
+magnetic sampling. All complete fitting and frozen independent verification,
+and all reject a subsequent field step. Held-out direction RMS is 0.322° in the
+noisy 30 µT group and 0.057° in the quiet 50 µT group. The slowest 10 Hz case
+takes 195 seconds for capture and 170 seconds for verification, within the
+220/180-second limits. These worst-case durations are not the normal 20–30 Hz
+guidance times.
 
 Run `make -C tests/imu_calibrate test` for the current checks. To reproduce the
 reference from the Git tag, run `bash tests/imu_calibrate/compare_release.sh`

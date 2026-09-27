@@ -122,33 +122,48 @@ static void testMagSetupFallback() {
 
 static void testMagSampleWindows() {
   imu_cal::MagSampleWindow window;window.begin();
-  V rate=V::Zero(),raw(20,0,42),mean;int emitted=0;
+  V raw(20,0,42),mean;M covariance;int emitted=0;
   for(int ms=0;ms<=400;ms+=5) {
-    raw.x()=20+.01f*(ms/50);
-    if(window.update(ms,&raw,&rate,mean))++emitted;
+    raw.x()=20+.01f*(ms/25);
+    if(window.update(ms,&raw,mean,covariance))++emitted;
   }
-  check(emitted==1 && std::fabs(mean.x()-20.04f)<2e-6f,
-        "magnetic mean counts nine distinct readings, not 81 repeated polls");
+  check(emitted==1 && std::fabs(mean.x()-20.08f)<2e-6f && std::fabs(covariance(0,0)-.0024f)<1e-6f,
+        "magnetic moments count 17 distinct readings, not 81 repeated polls");
   window.begin();emitted=0;
-  for(int ms=0;ms<2000;ms+=5)emitted+=window.update(ms,&raw,&rate,mean);
+  for(int ms=0;ms<2000;ms+=5)emitted+=window.update(ms,&raw,mean,covariance);
   check(emitted==0,"frozen magnetic words cannot fill an averaging window");
-  window.begin();emitted=0;rate=V(0,0,2);
+  window.begin();emitted=0;
   MC cal;auto cfg=imu_cal::MagSampleWindow::captureCfg();
   imu_cal::MagCapture<float,400> cap(cal,cfg);cap.begin(0);
-  MS status=MS::CAPTURING;int fast=0;
+  MS status=MS::CAPTURING;
+  M correction;correction<<1.1f,.1f,.05f,.1f,.9f,.07f,.05f,.07f,1.2f;
+  const V offset(8,-5,3);double raw_energy=0;int raw_count=0;
   for(int ms=0;ms<=15000;ms+=5) {
     raw=V(30*std::cos(ms*.002f),30*std::sin(ms*.002f),25);
-    const bool ready=window.update(ms,&raw,&rate,mean);emitted+=ready;fast+=window.tooFast();
-    status=cap.update(ms,ready?&mean:nullptr,&raw);
+    raw_energy+=(correction*(raw-offset)).cast<double>().squaredNorm();++raw_count;
+    const bool ready=window.update(ms,&raw,mean,covariance);emitted+=ready;
+    status=cap.update(ms,ready?&mean:nullptr,&raw,ready?&covariance:nullptr);
+    if(ready)check(std::fabs(mean.squaredNorm()+covariance.trace()-1525.f)<.002f,
+                   "window moments preserve field magnitude during a 115 degree/s turn");
+    if(ready) {
+      const double energy=(correction*(mean-offset)).cast<double>().squaredNorm()+
+        (correction.cast<double>()*covariance.cast<double>()*correction.cast<double>().transpose()).trace();
+      check(std::fabs(energy-raw_energy/raw_count)<.002,
+            "window energy equals raw corrected RMS for off-diagonal calibration and nonzero bias");
+      raw_energy=0;raw_count=0;
+    }
   }
-  check(emitted==0 && fast>0,"fast turns cannot smear a magnetic observation");
-  check(status==MS::CAPTURING && cal.buf.n==0,"fast but fresh motion asks for slower turns, not a missing device");
-  window.begin();rate.setZero();emitted=0;
-  for(int ms=0;ms<1000;ms+=5) {
-    raw.x()=20+ms*.0001f;
-    emitted+=window.update(ms,&raw,ms%200==0?nullptr:&rate,mean);
+  check(emitted>=30 && status==MS::CAPTURING && cal.buf.n>=30,"normal hand turns retain useful magnetic observations");
+  for(int scenario=0;scenario<2;++scenario) {
+    window.begin();emitted=0;int next=0;
+    for(int ms=0;ms<15000;ms+=5) {
+      if(scenario==0 && ms%250>=175)continue;
+      if(ms>=next){next=ms+(scenario==0?50:100);raw.x()=20+ms*.0001f;}
+      emitted+=window.update(ms,&raw,mean,covariance);
+    }
+    check(emitted>=12,scenario==0?"75 ms display pauses do not starve magnetic capture":
+                                 "10 Hz magnetic data extends each window until enough readings arrive");
   }
-  check(emitted==0,"missing gyro readings void motion-unqualified means");
 }
 
 static void testGyroBmmNoise() {

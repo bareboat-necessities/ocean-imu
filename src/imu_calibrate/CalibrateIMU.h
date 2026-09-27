@@ -1095,7 +1095,9 @@ struct MagCalibrator {
 
   static_assert(N <= IMU_CAL_MAX_SAMPLES, "N exceeds IMU_CAL_MAX_SAMPLES (400)");
   using Vec3 = Eigen::Matrix<T,3,1>;
+  using Mat3 = Eigen::Matrix<T,3,3>;
   SampleBuffer3<T, N> buf;
+  Mat3 sample_cov[N]; // within-window covariance; zero for individual readings
   mutable Vec3 xs_[IMU_CAL_MAX_SAMPLES]; // scaled samples workspace
   uint32_t sample_ms[N]{}; // elapsed capture time, independent of reservoir slot
   bool timed = false;
@@ -1109,17 +1111,30 @@ struct MagCalibrator {
   mutable FitFail last_fail_ = FitFail::OK;
   FitFail lastFail() const { return last_fail_; }
 
-  void clear() { buf.clear(); timed = false; quality = MagFitQuality{}; }
+  MagCalibrator() { clear(); }
+  void clear() {
+    buf.clear(); timed = false; quality = MagFitQuality{};
+    for(auto& covariance:sample_cov)covariance.setZero();
+  }
 
-  bool addSample(const Vec3& m_raw_uT, uint32_t elapsed_ms = UINT32_MAX) {
+  bool addSample(const Vec3& m_raw_uT, uint32_t elapsed_ms = UINT32_MAX,
+                 const Mat3* covariance = nullptr) {
     if (!isfinite3(m_raw_uT)) return false;
+    if(covariance && !covariance->allFinite())return false;
     const T nrm = m_raw_uT.norm();
     if (nrm < min_norm_uT || nrm > max_norm_uT) return false;
     const int slot = buf.n;
     if (!buf.push(m_raw_uT, T(0))) return false;
     sample_ms[slot] = elapsed_ms == UINT32_MAX ? 0 : elapsed_ms;
+    if(covariance)sample_cov[slot]=*covariance;
+    else sample_cov[slot].setZero();
     if (elapsed_ms != UINT32_MAX) timed = true;
     return true;
+  }
+
+  bool check(const MagCalibration<T>& out,MagFitQuality& q) const {
+    return geometric.check(buf.v,buf.n,out.field_uT,out.A,out.b,q,
+                           timed?sample_ms:nullptr,0.15,sample_cov);
   }
 
   bool fit(MagCalibration<T>& out,
@@ -1192,8 +1207,8 @@ struct MagCalibrator {
     out.b = b_uT;
     out.A = A_unit_uTinv * B_med;  // calibrated output ~uT magnitude
     out.field_uT = B_med;
-    if (!geometric.refine(buf.v, buf.n, B_med, out.A, out.b, quality) ||
-        !geometric.check(buf.v, buf.n, B_med, out.A, out.b, quality, timed ? sample_ms : nullptr, double(trim_frac))) {
+    if (!geometric.refine(buf.v, buf.n, B_med, out.A, out.b, quality, sample_cov) ||
+        !geometric.check(buf.v, buf.n, B_med, out.A, out.b, quality, timed ? sample_ms : nullptr, double(trim_frac), sample_cov)) {
       out.quality = quality;
       last_fail_ = FitFail::MAG_QUALITY_FAIL;
       if (reason_out) *reason_out = last_fail_;

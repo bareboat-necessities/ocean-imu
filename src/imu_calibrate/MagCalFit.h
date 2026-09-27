@@ -72,7 +72,8 @@ class MagGeometricFit {
 public:
   template<typename T>
   bool refine(const Eigen::Matrix<T,3,1>* x, int n, T field,
-              Eigen::Matrix<T,3,3>& A, Eigen::Matrix<T,3,1>& bias, MagFitQuality& q) {
+              Eigen::Matrix<T,3,3>& A, Eigen::Matrix<T,3,1>& bias, MagFitQuality& q,
+              const Eigen::Matrix<T,3,3>* sample_cov = nullptr) {
     q = MagFitQuality{};
     if (!x || n > N) return false;
     if (n < 80 || !(field >= T(12) && field <= T(120))) return false;
@@ -95,7 +96,9 @@ public:
       const M l = chol_(p), s = l * l.transpose();
       double c = 0;
       for (int i = 0; i < n; ++i) {
-        const double a = std::fabs((s * (x[i].template cast<double>() / double(field) - p.template tail<3>())).norm() - 1);
+        const V v=s*(x[i].template cast<double>()/double(field)-p.template tail<3>());
+        const M cov=sampleCov_(sample_cov,i,double(field));
+        const double a=std::fabs(std::sqrt(v.squaredNorm()+(s*cov*s.transpose()).trace())-1);
         if (!std::isfinite(a)) return double(INFINITY);
         c += base_[i] * (a <= knee ? 0.5*a*a : knee*(a-0.5*knee));
       }
@@ -110,10 +113,11 @@ public:
       for (int i = 0; i < n; ++i) {
         const V u = x[i].template cast<double>() / double(field) - th.template tail<3>();
         const V v = s*u;
-        const double r = v.norm();
+        const M cov=sampleCov_(sample_cov,i,double(field));
+        const double r=std::sqrt(v.squaredNorm()+(s*cov*s.transpose()).trace());
         if (!(r > 1e-9)) return false;
         const double e = r-1, w = base_[i] * std::min(1.0, knee/std::max(std::fabs(e),1e-15));
-        const M G = v*u.transpose()/r, d = (G+G.transpose())*l;
+        const M G = (v*u.transpose()+s*cov)/r, d = (G+G.transpose())*l;
         P j;
         j << d(0,0)*l(0,0), d(1,0), d(1,1)*l(1,1), d(2,0), d(2,1), d(2,2)*l(2,2), 0,0,0;
         j.template tail<3>() = -s*v/r;
@@ -142,13 +146,14 @@ public:
     bias = (th.template tail<3>() * double(field)).template cast<T>();
     q.refined_cost = c;
     // Check exactly the precision the runtime will apply, including its matrix.
-    return check(x,n,field,A,bias,q);
+    return check(x,n,field,A,bias,q,nullptr,0.15,sample_cov);
   }
 
   template<typename T>
   bool check(const Eigen::Matrix<T,3,1>* x, int n, T field,
              const Eigen::Matrix<T,3,3>& A, const Eigen::Matrix<T,3,1>& bias,
-             MagFitQuality& q, const uint32_t* elapsed_ms = nullptr, double report_trim = 0.15) {
+             MagFitQuality& q, const uint32_t* elapsed_ms = nullptr, double report_trim = 0.15,
+             const Eigen::Matrix<T,3,3>* sample_cov = nullptr) {
     q.gate = MagFitGate::BAD_DATA; q.samples = n; q.inliers = q.cells = 0;
     q.rms = q.trimmed_rms = q.p95 = q.time_drift = q.max_bias_sigma = q.max_matrix_sigma = 0;
     if (!x || n > N) return false;
@@ -164,14 +169,17 @@ public:
       // Force evaluation in T, as in MagCalibration<T>::apply().
       const Eigen::Matrix<T,3,1> corrected = A*(x[i]-bias);
       const V& v = corrected.template cast<double>();
-      const double radius = v.norm();
-      if (!std::isfinite(radius) || !(radius > 1e-9)) return false;
+      // Covariance here describes actual within-window motion/noise, not
+      // uncertainty of the mean. This is exactly RMS |A(raw-b)| for the group.
+      const M cov=sampleCov_(sample_cov,i,1.0);
+      const double radius=std::sqrt(v.squaredNorm()+(s*cov*s.transpose()).trace());
+      if (!std::isfinite(radius) || !(radius > 1e-9) || !(v.norm()>1e-9)) return false;
       errors_[i] = radius-double(field);
       scratch_[i] = std::fabs(errors_[i]);
       cells_[i] = uint8_t(magDirectionCell(v));
       if (scratch_[i] > limit) continue;
       ++q.inliers; ++count[cells_[i]]; sum2 += errors_[i]*errors_[i];
-      const V u = v/radius;
+      const V u = v.normalized();
       coverage.noalias() += u*u.transpose();
       for (int j = 0; j < 3; ++j) { positive[j] += u[j]>0; negative[j] += u[j]<0; }
     }
@@ -199,8 +207,9 @@ public:
     for (int i = 0; i < n; ++i) {
       if (std::fabs(errors_[i]) > limit) continue;
       const V u = (x[i].template cast<double>()-bias.template cast<double>())/double(field), v = s*u;
-      const double r = v.norm();
-      const M G = v*u.transpose()/r;
+      const M cov=sampleCov_(sample_cov,i,double(field));
+      const double r=std::sqrt(v.squaredNorm()+(s*cov*s.transpose()).trace());
+      const M G = (v*u.transpose()+s*cov)/r;
       P j;
       j << G(0,0),G(1,1),G(2,2),G(0,1)+G(1,0),G(0,2)+G(2,0),G(1,2)+G(2,1),0,0,0;
       j.template tail<3>() = -s*v/r;
@@ -257,6 +266,11 @@ public:
            e.maxCoeff()/e.minCoeff()<=MagFitLimits::max_condition;
   }
 private:
+  template<typename T>
+  static M sampleCov_(const Eigen::Matrix<T,3,3>* covariance,int i,double scale) {
+    if(!covariance)return M::Zero();
+    return covariance[i].template cast<double>()/(scale*scale);
+  }
   static M chol_(const P& p) {
     M l=M::Zero(); l(0,0)=std::exp(p[0]);l(1,0)=p[1];l(1,1)=std::exp(p[2]);
     l(2,0)=p[3];l(2,1)=p[4];l(2,2)=std::exp(p[5]);return l;
