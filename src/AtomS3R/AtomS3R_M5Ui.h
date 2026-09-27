@@ -91,6 +91,8 @@ public:
     M5.Display.drawRect(x, y, w, h, TFT_DARKGREY);
     const int fillw = (int)((w - 2) * t01);
     M5.Display.fillRect(x + 1, y + 1, fillw, h - 2, TFT_GREEN);
+    // Motion can reset capture progress; erase the previous longer fill.
+    M5.Display.fillRect(x + 1 + fillw, y + 1, w - 2 - fillw, h - 2, TFT_BLACK);
   }
 
   void waitTap(const char* t, const char* l1 = nullptr, const char* l2 = nullptr) {
