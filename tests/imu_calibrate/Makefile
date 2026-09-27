@@ -23,7 +23,7 @@ endif
 LDFLAGS  =
 
 # Targets
-TARGETS = calibration_workflow-test calibration_safety-test imu_calibrate-test accel_cal-test accel_cal-replay accel_cal_gravity_override-test
+TARGETS = calibration_accuracy-test calibration_workflow-test calibration_safety-test imu_calibrate-test accel_cal-test accel_cal-replay accel_cal_gravity_override-test
 
 all: build test
 
@@ -34,6 +34,9 @@ test: ensure-sim-data $(TARGETS)
 
 ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
+
+calibration_accuracy-test: calibration_accuracy-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 calibration_safety-test: calibration_safety-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
@@ -56,10 +59,11 @@ accel_cal_gravity_override-test: accel_cal_gravity_override-test.o
 # The library headers under test (header-only), so edits there rebuild the tests.
 SRC_DIR = ../../src
 CAL_HEADERS = $(SRC_DIR)/imu_calibrate/CalibrateIMU.h $(SRC_DIR)/imu_calibrate/MagCalFit.h \
-              $(SRC_DIR)/imu_calibrate/MagCalCapture.h $(SRC_DIR)/imu_calibrate/GyroCalCapture.h $(SRC_DIR)/imu_calibrate/AccelCalFit.h \
+              $(SRC_DIR)/imu_calibrate/MagCalCapture.h $(SRC_DIR)/imu_calibrate/MagCalSampling.h $(SRC_DIR)/imu_calibrate/GyroCalCapture.h $(SRC_DIR)/imu_calibrate/AccelCalFit.h \
               $(SRC_DIR)/imu_calibrate/AccelCalCapture.h $(SRC_DIR)/AtomS3R/AtomS3R_ImuCalBlob.h \
               $(SRC_DIR)/AtomS3R/AtomS3R_ImuUnits.h
 
+calibration_accuracy-test.o: $(CAL_HEADERS)
 calibration_safety-test.o: $(SRC_DIR)/imu_calibrate/MagCalCapture.h $(CAL_HEADERS)
 calibration_workflow-test.o: $(CAL_HEADERS) $(SRC_DIR)/AtomS3R/AtomS3R_CalLog.h $(SRC_DIR)/AtomS3R/AtomS3R_MagCalMode.h
 imu_calibrate-test.o: $(CAL_HEADERS)
