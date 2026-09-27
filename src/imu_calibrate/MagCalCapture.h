@@ -47,17 +47,21 @@ public:
   // Call even when the driver returns no measurement (m == nullptr). A fresh
   // but frozen register is not movement; changes smaller than the threshold
   // accumulate relative to the last meaningful change, not the last poll.
-  MagCaptureStatus update(uint32_t now, const Vec3* m) {
+  MagCaptureStatus update(uint32_t now, const Vec3* m, const Vec3* raw = nullptr) {
     if (cfg_.required_samples > N || cfg_.required_samples < 20 || !cfg_.spacing_ms ||
         cfg_.min_time_ms >= cfg_.timeout_ms) return MagCaptureStatus::BAD_CONFIG;
     if (uint32_t(now - last_change_) > cfg_.stuck_ms) return MagCaptureStatus::STALE;
     if (uint32_t(now - start_) >= cfg_.timeout_ms) return MagCaptureStatus::TIMEOUT;
+    // Raw-stream freshness is independent of whether a motion-qualified mean
+    // was emitted. Turning too fast calls for guidance, not "no sensor data".
+    const Vec3* fresh = raw ? raw : m;
+    if (fresh && isfinite3(*fresh) && fresh->norm() >= cal_.min_norm_uT && fresh->norm() <= cal_.max_norm_uT &&
+        (!have_change_ || (*fresh-last_changed_).norm() >= T(cfg_.min_delta_uT))) {
+      last_changed_=*fresh;last_change_=now;have_change_=true;
+    }
     if (m && isfinite3(*m)) {
       const T norm = m->norm();
       if (norm >= cal_.min_norm_uT && norm <= cal_.max_norm_uT) {
-        if (!have_change_ || (*m - last_changed_).norm() >= T(cfg_.min_delta_uT)) {
-          last_changed_ = *m; last_change_ = now; have_change_ = true;
-        }
         if ((!have_observation_ || uint32_t(now - last_observation_) >= cfg_.spacing_ms) &&
             (!have_observation_ || (*m - last_observed_).norm() >= T(cfg_.min_delta_uT))) {
           last_observation_ = now; last_observed_ = *m; have_observation_ = true;

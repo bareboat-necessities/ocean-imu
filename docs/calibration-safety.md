@@ -35,7 +35,7 @@ The device asks the user to put it on a table. It waits for three quiet
 Progress resets automatically after motion or a sample gap over 60 ms; samples
 from the interrupted interval are discarded. This uses gyro and accelerometer
 scatter and changes in their block means, not just small angular-rate magnitude.
-Once magnetic readings are available, changes in their one-second means also
+Once magnetic readings are available, changes in their two-second means also
 reject slow yaw. Only distinct magnetic register readings enter those means;
 polling a slower magnetometer at the IMU rate does not create new observations.
 The first full magnetic mean remains the reference for the entire hold, and
@@ -46,6 +46,12 @@ mid-hold. Repeated IMU register values cannot qualify a hold. The stage times
 out after 70 seconds and offers a retry without repeating the other stages.
 Each restart logs its cause over serial as `[GYR] restart=... reason=...` so a
 sample gap, sensor scatter, field change, or actual motion can be distinguished.
+
+Each retained gyro observation is a 25 ms mean of fresh readings, rather than
+one selected raw sample. Stillness gates continue to see every raw reading.
+This retains the noise-reduction benefit of the entire six-second qualified
+hold within the fixed buffer. With a magnetic reference, allow about eight
+quiet seconds including settling.
 
 The default block limits are 0.005 rad/s total gyro standard deviation,
 0.004 rad/s change in mean gyro, 0.08 m/s^2 total acceleration standard
@@ -102,8 +108,8 @@ normal capture checks, and all fit/verification quality limits apply to fallback
 samples. Best-effort `[MAGCFG]` diagnostics identify the failed setup check and
 whether the preset or driver settings are used. Other IMU types retain their
 driver settings. The 45-second capture minimum and all magnetic quality limits
-remain unchanged; independent verification still needs at least 12 seconds
-and 140 spaced samples.
+remain unchanged; independent verification still needs at least 56 seconds
+and 140 independent averaged observations.
 
 M5Unified 0.2.13 sets the BMM150 output rate without configuring repetitions.
 Ordinary sensor noise can therefore fail the residual-inlier gate even in a
@@ -131,17 +137,24 @@ immediate restart. Progress includes elapsed time, sample count and coverage.
 
 The wizard observes freshness independently of sample retention. Meaningful
 changes reset the stale timer even after the buffer is full; missing, invalid
-or frozen data do not. At most one eligible observation per 80 ms enters the
-existing 400-sample buffer. When full, observations in sparse direction cells
+or frozen data do not. The wizard averages distinct readings in non-overlapping 400 ms windows before
+retaining observations in its 400-entry buffer. A window requires at least eight
+distinct magnetic readings and a fresh gyro stream; repeated polls add no weight.
+The bias-corrected gyro bounds accumulated rotation to 0.30 rad per window to
+limit rotational smearing. Faster motion discards that window and shows
+**Turn more slowly** while the raw stream continues to establish liveness.
+Missing/invalid input or an IMU polling gap longer than 60 ms voids the window.
+This averaging also applies when the optional sensor preset is unavailable. When full, observations in sparse direction cells
 replace observations in the most crowded cell; otherwise fixed-seed reservoir
 replacement retains later data. The 26 broad cells use centered raw directions
 during collection and corrected directions during verification. Retention is
 deterministic for a given stream, without requiring a second sample array.
 
-Collection requires at least 45 seconds, 360 retained samples, span ratios
+Collection requires at least 45 seconds, 160 averaged observations, span ratios
 0.35/0.55, two-axis direction range 1.05, unit-direction covariance determinant
 0.0002, and at least 12 direction cells with three observations each. Capture
-is bounded to 220 seconds. Missing or frozen data fail after 12 seconds without
+is bounded to 220 seconds; the normal guided sweep takes about 70 seconds.
+Missing or frozen data fail after 12 seconds without
 meaningful change. Coverage calculations update only when retained data change.
 
 ### Geometric refinement and acceptance
@@ -182,9 +195,9 @@ report cannot make a poor fit qualify.
 ### Independent verification
 
 After refinement, a new turn-and-tilt sweep checks frozen coefficients. None of
-these observations enter a refit. Verification requires at least 12 seconds,
-140 samples, full corrected coverage, and the same residual, plausibility,
-information and temporal gates; its timeout is 60 seconds. A changed magnetic
+these observations enter a refit. Verification requires at least 56 seconds,
+140 averaged observations, full corrected coverage, and the same residual, plausibility,
+information and temporal gates; its timeout is 120 seconds. A changed magnetic
 environment or failed check offers a MAG retry before any write. Final candidate
 and read-back coefficients are rebuilt through the runtime path and checked
 again against this independent sweep. Stored matrix plausibility and RMS are

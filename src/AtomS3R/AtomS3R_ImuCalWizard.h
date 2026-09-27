@@ -35,7 +35,7 @@
 #include "AtomS3R/AtomS3R_MagCalMode.h"     // lower sensor noise during MAG calibration
 #include "imu_calibrate/CalibrateIMU.h"     // imu_cal::* + FitFail
 #include "imu_calibrate/AccelCalCapture.h"  // accelerometer procedure (host-tested)
-#include "imu_calibrate/MagCalCapture.h"    // bounded capture and independent freshness
+#include "imu_calibrate/MagCalSampling.h"   // motion-bounded means and capture
 #include "imu_calibrate/GyroCalCapture.h"   // continuous quiet hold
 
 // Set to 1 to stream every raw accel/gyro sample as [ACCRAW] lines for
@@ -50,25 +50,18 @@ namespace atoms3r_ical {
 // Wizard configuration
 struct ImuCalWizardCfg {
   // Step pacing (accelerometer holds: imu_cal::AccelCaptureCfg)
-  static constexpr uint32_t PLACE_TIME_MS       = 6500;
   static constexpr uint32_t GYRO_TIMEOUT_MS     = 70000;
-  static constexpr uint32_t MAG_TIMEOUT_MS      = 220000;
   static constexpr uint32_t STUCK_MS            = 12000;
 
   // Accelerometer observation capacity (blocks) and hold capacity
   static constexpr int ACCEL_MAX_OBS            = 340;
   static constexpr int ACCEL_MAX_HOLDS          = 24;
 
-  // MAG: target near-buffer-full, but spread over time
-  static constexpr int MAG_NEED                 = 360;   // <= 400
-  static constexpr int MAG_MIN_TO_FIT           = 220;
+  // Magnetic fit/verification use independent, motion-bounded sample means.
+  static constexpr int MAG_MIN_TO_FIT           = 80;
 
   // Minimums before fitting
   static constexpr int GYRO_MIN_TO_FIT          = 120;
-
-  // MAG timing / downsample:
-  static constexpr uint32_t MAG_SAMPLE_SPACING_MS = 80;     // accepted max ~12.5 Hz
-  static constexpr uint32_t MAG_MIN_TIME_MS       = 45000;  // require >= 45 seconds of motion
 
   // MAG stale-repeat reject
   static constexpr float MAG_MIN_DELTA_uT       = 0.03f;
@@ -647,11 +640,15 @@ private:
     return readImuMapped(M5.Imu, s);
   }
 
-  bool readMagSample_(Vector3f& m_out) {
-    (void)M5.Imu.update();
+  bool readMagSample_(Vector3f& m_out, Vector3f* rate = nullptr) {
+    const uint32_t updated=(uint32_t)M5.Imu.update();
+    const uint32_t now=millis();
+    if(updated & ATOMS3R_IMU_MASK_GYRO) {mag_gyro_seen_=true;mag_gyro_fresh_ms_=now;}
+    if(rate && (!mag_gyro_seen_ || uint32_t(now-mag_gyro_fresh_ms_)>60)) return false;
     const auto data = M5.Imu.getImuData();
     m_out = map_mag_to_body_uT_(data.mag);
-    return finite3_(m_out);
+    if (rate) *rate = map_gyr_to_body_ned_(data.gyro) - gyr_out_.biasT.b0;
+    return finite3_(m_out) && (!rate || finite3_(*rate));
   }
 
   void configureCalibrators_() {
@@ -700,7 +697,7 @@ private:
     ui_.line("Keep on the table");
     const int hint_row = ui_.cursorY();
     ui_.line("Settling...");
-    ui_.line("About 7 quiet sec");
+    ui_.line("About 8 quiet sec");
     imu_cal::GyroCaptureCfg cfg;
     cfg.timeout_ms = ImuCalWizardCfg::GYRO_TIMEOUT_MS;
     cfg.stuck_ms = ImuCalWizardCfg::STUCK_MS;
@@ -735,7 +732,7 @@ private:
                           "Keep on the table")) {
           capture.begin(millis());
           last_resets = 0;
-          ui_.title("GYRO"); ui_.line("Keep on the table"); ui_.line("Settling..."); ui_.line("About 7 quiet sec");
+          ui_.title("GYRO"); ui_.line("Keep on the table"); ui_.line("Settling..."); ui_.line("About 8 quiet sec");
           continue;
         }
         return false;
@@ -744,7 +741,7 @@ private:
     }
   }
 
-  // MAG capture: downsample + min time + reject stale repeats + 3D coverage tests
+  // MAG capture: distinct-reading means + bounded motion + 3D coverage.
   bool captureMag_(const char*& out_why, bool verify = false) {
     out_why = nullptr;
 
@@ -753,8 +750,8 @@ private:
       return false;
     }
 
-    ui_.waitTap(verify ? "CHECK MAG" : "MAG", verify ? "Turn and tilt again" : "Rotate ~45 sec",
-                verify ? "About 12 sec" : "No exact angles");
+    ui_.waitTap(verify ? "CHECK MAG" : "MAG", verify ? "Turn and tilt again" : "Rotate ~70 sec",
+                verify ? "About 1 min" : "No exact angles");
 
     ui_.setReadRotation();
     ui_.title(verify ? "CHECK MAG" : "MAG");
@@ -765,12 +762,8 @@ private:
     ui_.line(verify ? "Checking new motion" : "Collecting");
     ui_.line("No exact angles");
 
-    imu_cal::MagCaptureCfg cfg;
-    cfg.spacing_ms = ImuCalWizardCfg::MAG_SAMPLE_SPACING_MS;
-    cfg.min_time_ms = verify ? 12000u : ImuCalWizardCfg::MAG_MIN_TIME_MS;
-    cfg.timeout_ms = verify ? 60000u : ImuCalWizardCfg::MAG_TIMEOUT_MS;
+    auto cfg = imu_cal::MagSampleWindow::captureCfg(verify);
     cfg.stuck_ms = ImuCalWizardCfg::STUCK_MS;
-    cfg.required_samples = verify ? 140 : ImuCalWizardCfg::MAG_NEED;
     cfg.min_delta_uT = ImuCalWizardCfg::MAG_MIN_DELTA_uT;
     cfg.span_min_frac = ImuCalWizardCfg::MAG_SPAN_MIN_FRAC;
     cfg.span_mid_frac = ImuCalWizardCfg::MAG_SPAN_MID_FRAC;
@@ -778,18 +771,24 @@ private:
     imu_cal::MagCapture<float,400> capture(magCal_, cfg, verify ? &mag_out_ : nullptr);
     const uint32_t tcap0 = millis();
     capture.begin(tcap0);
+    imu_cal::MagSampleWindow window;window.begin();
+    mag_gyro_seen_=false;
+    uint32_t fast_until=tcap0;
     uint32_t last_draw = tcap0;
     uint32_t last_log = tcap0;
     while (true) {
       Input::update();
-      Vector3f m;
-      const bool valid = readMagSample_(m);
+      Vector3f m, rate, mean;
+      const bool valid = readMagSample_(m, &rate);
       const uint32_t now = millis();
-      // Missing/invalid reads still advance the no-fresh-data timer.
-      const auto status = capture.update(now, valid ? &m : nullptr);
+      const bool averaged=window.update(now,valid?&m:nullptr,valid?&rate:nullptr,mean);
+      if(window.tooFast())fast_until=now+1500;
+      // Fresh raw words keep the liveness clock moving even if fast motion
+      // prevents a usable mean. They never enter the fit directly.
+      const auto status = capture.update(now, averaged?&mean:nullptr,valid?&m:nullptr);
       if (uint32_t(now - last_draw) >= 250) {
         ui_.bar01(capture.progress(now));
-        ui_.lineAt(hint_row, capture.hint(now));
+        ui_.lineAt(hint_row, int32_t(fast_until-now)>0 ? "Turn more slowly" : capture.hint(now));
         ui_.lineAt(state_row, status == imu_cal::MagCaptureStatus::COVERAGE_LOW ? "More directions" :
                    (verify ? "Checking new motion" : "Collecting"));
         last_draw = now;
@@ -838,6 +837,8 @@ private:
   }
 
 private:
+  uint32_t mag_gyro_fresh_ms_=0;
+  bool mag_gyro_seen_=false;
   M5Ui& ui_;
   ImuCalStoreNvs& store_;
 

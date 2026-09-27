@@ -3,6 +3,7 @@
 // Arduino's GPIO macro must coexist with the host-tested calibration headers.
 #define INPUT 0x01
 #include "imu_calibrate/MagCalCapture.h"
+#include "imu_calibrate/MagCalSampling.h"
 #include "imu_calibrate/GyroCalCapture.h"
 #include "imu_calibrate/AccelCalCapture.h"
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
@@ -117,6 +118,54 @@ static void testMagSetupFallback() {
   check(status==MS::READY && cal.fit(out),"driver fallback reaches and passes ordinary capture/fit gates");
   Mode absent(nullptr,magWait);
   check(absent.prepare() && !absent.highAccuracy(),"missing register interface is left to the normal availability probe");
+}
+
+static void testMagSampleWindows() {
+  imu_cal::MagSampleWindow window;window.begin();
+  V rate=V::Zero(),raw(20,0,42),mean;int emitted=0;
+  for(int ms=0;ms<=400;ms+=5) {
+    raw.x()=20+.01f*(ms/50);
+    if(window.update(ms,&raw,&rate,mean))++emitted;
+  }
+  check(emitted==1 && std::fabs(mean.x()-20.04f)<2e-6f,
+        "magnetic mean counts nine distinct readings, not 81 repeated polls");
+  window.begin();emitted=0;
+  for(int ms=0;ms<2000;ms+=5)emitted+=window.update(ms,&raw,&rate,mean);
+  check(emitted==0,"frozen magnetic words cannot fill an averaging window");
+  window.begin();emitted=0;rate=V(0,0,2);
+  MC cal;auto cfg=imu_cal::MagSampleWindow::captureCfg();
+  imu_cal::MagCapture<float,400> cap(cal,cfg);cap.begin(0);
+  MS status=MS::CAPTURING;int fast=0;
+  for(int ms=0;ms<=15000;ms+=5) {
+    raw=V(30*std::cos(ms*.002f),30*std::sin(ms*.002f),25);
+    const bool ready=window.update(ms,&raw,&rate,mean);emitted+=ready;fast+=window.tooFast();
+    status=cap.update(ms,ready?&mean:nullptr,&raw);
+  }
+  check(emitted==0 && fast>0,"fast turns cannot smear a magnetic observation");
+  check(status==MS::CAPTURING && cal.buf.n==0,"fast but fresh motion asks for slower turns, not a missing device");
+  window.begin();rate.setZero();emitted=0;
+  for(int ms=0;ms<1000;ms+=5) {
+    raw.x()=20+ms*.0001f;
+    emitted+=window.update(ms,&raw,ms%200==0?nullptr:&rate,mean);
+  }
+  check(emitted==0,"missing gyro readings void motion-unqualified means");
+}
+
+static void testGyroBmmNoise() {
+  for(int seed=0;seed<60;++seed) {
+    std::mt19937 rng(411+seed);std::normal_distribution<float> noise(0,1);
+    imu_cal::GyroCalibrator<float,400,8> cal;
+    imu_cal::GyroCapture<float,400,8> cap(cal);cap.begin(0);
+    V mag(20,0,42);int next=0;GS status=GS::SETTLING;
+    for(int ms=0;ms<10000;ms+=5) {
+      V a=V(0,0,-cal.g)+.01f*V(noise(rng),noise(rng),noise(rng));
+      V w=V(.01f,-.01f,.01f)+.0023f*V(noise(rng),noise(rng),noise(rng));
+      if(ms>=next) {next+=33;mag=V(20,0,42)+V(noise(rng),noise(rng),1.4f*noise(rng));}
+      status=cap.update(ms,&a,&w,25,&mag);
+      if(status==GS::READY)break;
+    }
+    check(status==GS::READY && cap.resets()==0,"BMM150 low-power noise qualifies one uninterrupted gyro hold");
+  }
 }
 
 static void testMagSensorNoise() {
@@ -477,7 +526,7 @@ static void testAccelCompletionLogging() {
 }
 
 int main() {
-  testMagSensorMode();testMagSetupFallback();testMagSensorNoise();testMagneticQuality();testGuidance();testGyroCapture();testGyroMagneticNoise();testGyroMagneticInterruptions();
+  testMagSensorMode();testMagSetupFallback();testMagSampleWindows();testGyroBmmNoise();testMagSensorNoise();testMagneticQuality();testGuidance();testGyroCapture();testGyroMagneticNoise();testGyroMagneticInterruptions();
   testAccelPoseProgress();testAccelCompletionLogging();
   std::printf("calibration_workflow-test: %d/%d checks passed\n",checks-failures,checks);
   return failures?1:0;
