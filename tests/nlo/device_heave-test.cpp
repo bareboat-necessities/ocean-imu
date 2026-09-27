@@ -154,6 +154,47 @@ static bool replay(const char* name, bool delayed, bool jittered, bool waves,
     return ok;
 }
 
+// A level vessel can heave throughout bootstrap while every gyro sample is
+// consistent with stillness. Its acceleration must still permit wave tracking.
+static bool heavingStartup(float noise_std, float phase) {
+    Fusion f;
+    f.config().gravity_mps2 = gravity;
+    f.config().filter.gravity_mps2 = gravity;
+    f.reset();
+    std::mt19937 rng(17);
+    std::normal_distribution<float> normal(0.0f, 1.0f);
+    constexpr float dt = 0.005f, w = 2.0f*pi*0.2f;
+    Eigen::Matrix4d gram = Eigen::Matrix4d::Zero();
+    Eigen::Vector4d rhs = Eigen::Vector4d::Zero();
+    float min_theta = 1.0f;
+    for (int k = 0; k < 19000; ++k) {
+        const float angle = w*(k*dt) + phase;
+        const float az = -0.3f*w*w*std::sin(angle);
+        f.setMagBody(Vec3(20.0f, 0.0f, 45.0f), true);
+        f.update(dt, Vec3(0.005f, -0.005f, 0.005f),
+                 Vec3(0.0f, 0.0f, az-gravity+0.08f+noise_std*normal(rng)));
+        const auto s = f.snapshot();
+        if (k >= 8000 && k < 18000) {
+            min_theta = std::min(min_theta, s.tvg.theta);
+            // Fit the wave alongside the startup offset/trend, so residual
+            // bias capture is not mistaken for a change in wave amplitude.
+            const Eigen::Vector4d basis(1.0, k*dt-65.0f,
+                                       std::sin(angle), std::cos(angle));
+            gram += basis*basis.transpose();
+            rhs += basis*s.position_ned.z();
+        }
+    }
+    const Eigen::Vector4d fit = gram.ldlt().solve(rhs);
+    const double sin_amplitude = fit(2), cos_amplitude = fit(3);
+    std::printf("NLO heaving startup noise=%.2f phase=%.2f theta=%.3f "
+                "wave_sin/cos=%.3f/%.3f m\n", noise_std, phase, min_theta,
+                sin_amplitude, cos_amplitude);
+    return check(min_theta < 0.8f, "heaving startup retained the still capture hold")
+        && check(std::abs(sin_amplitude-0.3) < 0.05
+                 && std::abs(cos_amplitude) < 0.08,
+                 "heaving startup lost wave amplitude/phase");
+}
+
 int main() {
     bool ok = forceCorrection();
     ok &= replay("200 Hz still", false, false, false);
@@ -161,5 +202,8 @@ int main() {
     ok &= replay("jittered still", true, true, false);
     ok &= replay("jittered waves", true, true, true);
     ok &= replay("200 Hz 0.3 bias", false, false, false, 0.3f);
+    ok &= heavingStartup(0.0f, 0.0f);
+    ok &= heavingStartup(0.18f, 0.0f);
+    ok &= heavingStartup(0.18f, pi*0.5f);
     return ok ? 0 : 1;
 }

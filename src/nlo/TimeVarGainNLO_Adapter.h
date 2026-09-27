@@ -227,8 +227,9 @@ public:
 
           If the gyro seed is accepted but this accelerometer seed is not,
           keep the configured theta through the TMO startup-gain interval
-          so xi can learn the residual before wave-frequency scheduling
-          weakens its correction.
+          only when force-norm variation is consistent with a stationary
+          residual plus sensor noise. This lets xi learn that residual
+          without holding the capture gain on a level, heaving vessel.
         */
         bool boot_accel_bias_seed_enabled = true;
         R boot_accel_bias_seed_max_std_mps2 = R(0.05);
@@ -582,6 +583,8 @@ public:
         boot_still_acc_sum_.setZero();
         boot_still_acc_norm_sum_ = R(0);
         boot_still_acc_norm_sq_sum_ = R(0);
+        boot_still_acc_norm_delta_sq_sum_ = R(0);
+        boot_still_acc_norm_last_ = R(0);
         boot_still_count_ = 0;
         boot_still_time_s_ = R(0);
     }
@@ -883,6 +886,8 @@ private:
     Vec3 boot_still_acc_sum_ = Vec3::Zero();
     R boot_still_acc_norm_sum_ = R(0);
     R boot_still_acc_norm_sq_sum_ = R(0);
+    R boot_still_acc_norm_delta_sq_sum_ = R(0);
+    R boot_still_acc_norm_last_ = R(0);
     int boot_still_count_ = 0;
     R boot_still_time_s_ = R(0);
 
@@ -978,7 +983,7 @@ private:
             return;
         }
 
-        // A quiet gyro startup without an accepted accelerometer-bias seed
+        // A stationary startup without an accepted accelerometer-bias seed
         // needs the configured capture bandwidth while xi learns the
         // residual. Reducing theta to a wave-band value weakens that
         // correction by theta^4. Moving startups retain their wave schedule.
@@ -1310,6 +1315,8 @@ private:
         boot_still_acc_sum_.setZero();
         boot_still_acc_norm_sum_ = R(0);
         boot_still_acc_norm_sq_sum_ = R(0);
+        boot_still_acc_norm_delta_sq_sum_ = R(0);
+        boot_still_acc_norm_last_ = R(0);
         boot_still_count_ = 0;
         boot_still_time_s_ = R(0);
 
@@ -1404,6 +1411,11 @@ private:
                 boot_still_acc_sum_ += specific_force_b_mps2;
                 boot_still_acc_norm_sum_ += fn_still;
                 boot_still_acc_norm_sq_sum_ += fn_still * fn_still;
+                if (boot_still_count_ > 0) {
+                    const R delta = fn_still - boot_still_acc_norm_last_;
+                    boot_still_acc_norm_delta_sq_sum_ += delta * delta;
+                }
+                boot_still_acc_norm_last_ = fn_still;
                 ++boot_still_count_;
                 boot_still_time_s_ += dt;
             }
@@ -1442,7 +1454,7 @@ private:
                 filter_.setAccelBiasBody(acc_seed_b);
             }
             boot_theta_capture_hold_ = still && cfg_.boot_accel_bias_seed_enabled
-                                       && !have_accel_seed;
+                                       && !have_accel_seed && stationaryAccelResidual_();
             if constexpr (Mag == NloMagType::None) {
                 b0.z() = R(0);
             }
@@ -1473,6 +1485,26 @@ private:
 
         return isFinite_(max_std) &&
                max_std <= cfg_.boot_bias_seed_max_std_rad_s;
+    }
+
+    // Compare force-norm variation with the noise estimated from adjacent
+    // differences: independent noise of variance s^2 gives E[delta^2]=2*s^2.
+    // A constant sensor residual cancels in both statistics; coherent wave
+    // acceleration adds excess variance. Allow finite-sample noise spread
+    // without relaxing the separate, stricter accelerometer-bias seed gate.
+    bool stationaryAccelResidual_() const {
+        if (boot_still_count_ < 2) {
+            return false;
+        }
+        const R n = static_cast<R>(boot_still_count_);
+        const R mean = boot_still_acc_norm_sum_ / n;
+        const R variance = std::max(
+            boot_still_acc_norm_sq_sum_ / n - mean * mean, R(0));
+        const R noise_variance = boot_still_acc_norm_delta_sq_sum_ / (R(2)*(n-R(1)));
+        const R tolerance = cfg_.boot_accel_bias_seed_max_std_mps2;
+        return isFinite_(variance) && isFinite_(noise_variance)
+            && variance <= tolerance*tolerance
+                         + noise_variance*(R(1) + R(4)/std::sqrt(n));
     }
 
     // See Config::boot_accel_bias_seed_enabled. Call only after
