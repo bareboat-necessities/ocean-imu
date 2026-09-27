@@ -33,6 +33,14 @@ packets cannot certify physical STILL with both finite entry and guaranteed
 finite exit under the existing bias bounds. The shipping estimator is unchanged;
 stationary practical robustness and certified transition retention remain OPEN.
 
+The precise zero-residual quiet nominal subcase now has a root-independent
+historical action, every-operation full covariance ceiling and qualitative
+homogeneous linear loss; see `ou3-stationary-detectability.md`. These are not
+physical compatible-class or nonlinear results. The moving reader uses
+C=A^-1 B to retain resets without erasing accumulated gyro action, and
+actual acc/mag groups within one prediction cell factor exactly with E=0.
+Uniform geometry, injection/action bounds and nonlinear retention remain OPEN.
+
 Physical regimes qualify the single construction/H18/release/A21 route. All
 estimator states, covariance, biases, physical S and bias histories, clocks,
 frontend/tuner and magnetic-reference state continue across regime boundaries.

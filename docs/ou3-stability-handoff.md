@@ -33,6 +33,14 @@ packets cannot certify physical STILL with both finite entry and guaranteed
 finite exit under the existing bias bounds. The shipping estimator is unchanged;
 stationary practical robustness and certified transition retention remain OPEN.
 
+The precise zero-residual quiet nominal subcase now has a root-independent
+historical action, every-operation full covariance ceiling and qualitative
+homogeneous linear loss; see `ou3-stationary-detectability.md`. These are not
+physical compatible-class or nonlinear results. The moving reader uses
+C=A^-1 B to retain resets without erasing accumulated gyro action, and
+actual acc/mag groups within one prediction cell factor exactly with E=0.
+Uniform geometry, injection/action bounds and nonlinear retention remain OPEN.
+
 Read `ou3-sampling-fidelity.md`: it proves the sharp nonuniform trapezoidal
 mean bound, exclusion of every constant-attitude stationary-sample alias of
 at least six degrees over 32 s, a positive joint 3-D measured-vector Gramian

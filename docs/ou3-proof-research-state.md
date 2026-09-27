@@ -21,6 +21,11 @@ impossible on that admitted parameter family. This does not establish that
 no estimator change is needed. Full stationary practical boundedness is OPEN.
 The moving signed margins Delta_col/Delta_gyr, six-pivot uniform premises,
 B_*, J_AG, rho_0 and nonlinear every-prefix retention remain OPEN.
+The exact zero-residual quiet nominal subfamily now has a root-independent
+historical action/full covariance ceiling and qualitative homogeneous linear
+loss. For MOVING, inverse-frame transport and exact same-prediction-cell
+groups sharpen the existing reader's sufficient premises; they do not supply
+uniform positive geometry, injection or action bounds.
 
 ## Evidence
 
@@ -49,7 +54,9 @@ B_*, J_AG, rho_0 and nonlinear every-prefix retention remain OPEN.
   prediction/reset recursion bounds |B-tI|, then the actual two-group row
   budget gives s=c/[1+(a+1)/b0]-epsilon. If s>0, every one of six greedy
   row pivots is >=s/sqrt(m). All asynchronous/reset/reference defects remain.
-  Source-uniform c,b0,epsilon and factor/count bounds have not been obtained.
+  Applied acc/mag groups within a prediction cell now give E=0 exactly by
+  retaining every intervening reset in C_i. No simultaneous-event assumption
+  is made. Source-uniform c,b0 and factor/count bounds remain unproved.
   The exact supplied matrix audit has s=19/100; its 80-digit singular value
   is .35070823886858529042926658460119746953531050023679. This is algebraic
   feasibility, not a contraction construction or a shipping certificate.
@@ -58,7 +65,32 @@ B_*, J_AG, rho_0 and nonlinear every-prefix retention remain OPEN.
   have C'C>=81 I, A=I, B=(sum h_i)I with sum h_i>=4/125, and E=0.
   Thus s=18/127 and six pivots >=9/254. This is a
   nominal row theorem, compatible with physical tilt/BA ambiguity. It is
-  not a full stationary covariance/noise-action or nonlinear theorem.
+  not a physical identifiability or nonlinear theorem. The same historical
+  reader theta_read=z1, bg_read=(z1-z0)/T now cancels arbitrary AG root and
+  cross covariance. Inherited AW/BA, correlated process and actual observation
+  bounds give B_q, an every-operation full upper C_q, and qualitative
+  homogeneous linear loss on this exact subcase. The full compatible-class
+  nonlinear theorem remains OPEN; covariance retention is not state retention.
+- Literal reset G=I+[d]/2 and both prediction R branches have inverse norm
+  <=1. C=A^-1 B is unchanged by resets; later gyro injections retain A^-1.
+  Exact prefix recurrences bound |C-tI| without amplifying its past defect
+  by every reset. A terminal d=4e_x no longer erases an earlier .005-s floor.
+  The 80-digit supplied noncommuting audit has floor .0396561974478783
+  versus singular value .0399999504651045. The quiet correlated-root action
+  audit ratio is .413929501952256 at root scales 1 and 10^12. These algebra
+  audits precede enclosure and are non-promoting.
+- A fresh carried-source audit reuses the existing read-only observer and
+  unchanged driver, with exact untapped terminal parity on quiet and moving
+  inputs. Each has eight complete same-cell groups. First/last group E=0
+  is exact over exported rational operators; 80-digit six-column budgets
+  are 1.204325434846729 and 1.074485913647320, below actual singular values
+  1.922502992341225 and 1.717587283388896. These finite numbers are neither
+  uniform certificates nor real-trajectory or magnetic-service enclosures.
+- Same-cell geometry obeys c^2>=min(|f|^2,|b|^2)(1-|u'k|), where u=f/|f|
+  and k is the normalized G_local^-1 b. Literal reset noncontraction proves
+  the two magnetic nonzero singular values are >=|b|. This enters c in the
+  same six-pivot inequality. The supplied 80-digit floor 8.54167423631316
+  is below singular value 8.80825850549787; no physical uniformity is inferred.
 - The current excited moving forced-balance word already has roll
   .02 sin(t/2) and displacement .4 sin(.6t)e_z. It satisfies the moving span
   premise for T_E>=4*pi, 0<theta_E<=.04. Its 80-digit balance residual is
@@ -90,8 +122,11 @@ finite bridge algebra does not supply detection liveness, a retained set or a
 budget for arbitrarily repeated switches. These are explicit OPEN obligations.
 
 On MOVING windows, physical span still does not control the nominal force,
-reference and complete signed gyro transport. The new six-pivot lemma supplies
-a quantitative sufficient budget, not its source-uniform premises. Preserve
+reference and complete signed gyro transport. The six-pivot lemma supplies
+a quantitative sufficient budget, not its source-uniform premises. Same-cell
+grouping removes E for this selection rule; the inverse-frame formula still
+needs actual injection control to give b0. Quiet-subcase homogeneous decay
+does not control compatible physical mismatch. Preserve
 actual chronological gains, resets, OU and bias histories. No independent
 nominal boxes, unsigned energy, sampled Gramian or finite replay closes B_*.
 Every new lemma's role in V_next<=rho V+c_d|d|^2 is stated in the design:
@@ -206,6 +241,20 @@ comparison. Source-uniform numerical contraction enclosure is not yet justified.
     product and transported-supply control through all switches. Next: derive
     that budget from actual operations or prove eventual regime retention;
     do not add a convenient physical switching/dwell assumption.
+17. **Unrestricted reset inverse nonexpansion: exact algebraic obstruction.**
+    With zero corrected rate, predict h0=3/625, apply d=4e_z,4e_z,(8/3)e_z,
+    then eight h=1/200 predictions. Every literal reset is nonsingular with
+    inverse norm <=1, yet B=diag(0,0,28/625). Invalidated: inverse nonexpansion
+    and each one-prediction floor alone force full inter-anchor gyro rank.
+    Retain exact inverse-frame recurrence and same-cell rows. This relaxed
+    sequence has no shipping reachability or magnetic-service proof, and
+    intermediate rows could restore full historical rank. Limiter: actual
+    injection/geometry bounds. Next: bound those coupled to applied service,
+    not by deleting resets or shrinking independent nominal boxes.
+    Likewise the relaxed same-cell f=(1,0,1), b=e_x, d=2e_y gives Cf=0
+    although raw f,b are nonparallel. The pulled-back field direction,
+    not raw simultaneous separation, is the required geometry. Neither
+    relaxed witness establishes source reachability or complete-row rank loss.
 
 ## Retained facts
 
@@ -243,87 +292,66 @@ BA, force zero velocity, or shrink covariance solely from quiet-looking data.
 
 For MOVING, couple the signed forced-data identity to actual attitude/BG
 transport and magnetic reference action before taking norms. Use the explicit
-chronological two-group budget, or a sharper same-history row factorization,
+inverse-frame budget and exact same-cell row factorization
 to prove all six pivots. The source-uniform row/defect margin must exceed the
 recorded failed budgets; a convenient supplied example cannot select it.
 
 ## Next falsifiable experiment
 
-Derive a proposed stationary compatible-class storage and a moving joint
-rotation/reference/physical-integral budget with all supplied constants
-explicit. Evaluate their full finite-error ratios at high precision on the
-carried quiet and already-excited moving words before any rigorous contraction
-enclosure. Reject a proposed contraction construction if its worst tested
-ratio exceeds one; a passing finite test remains non-promoting. Establish
-uniform reset and actual-row budgets before instantiating six pivots and B_*.
+Extend the quiet-subcase reader to a rigorously delimited compatible tube,
+charging physical tilt/BA ambiguity and actual nonlinear supplies. On MOVING,
+derive coupled bounds for sigma_min([C_acc;C_mag G_local]) and inverse-frame
+gyro transport from actual gains, innovations and applied service. The E=0
+identity permits testing these two budgets directly on carried histories.
+Evaluate any resulting complete finite-error ratio at high precision before
+rigorous contraction enclosure; reject a construction if its tested ratio
+exceeds one. Passing finite tests remain non-promoting. Uniform bounds are
+required before instantiating B_*, J_AG, rho and nonlinear retained radius.
 Do not repeat the failed pairwise, unsigned-energy or variation-norm tactics.
 
 ## Validation and infrastructure
 
-Based on main a7178192fd6dee7af0c0a554453e6e4390158634, including both
-concurrent calibration fixes and their evidence refresh. On its identical
-source predecessor ed5c020e36935df09e19d12b7e8210fff00006a7, the complete command
-`EIGEN_INCLUDE_DIR=<Eigen-3.4.0> W3D_WRITE_TIMESERIES=0 make all
-EIGEN_DIR=<Eigen-3.4.0>` returns **exit 0**, including all **571 shared tests**
-and every native suite. Inputs, scenarios, gates and source are unchanged.
-Only reproducible ignored CSV outputs are discarded after scoring to keep
-workspace capacity available; scalar logs and evidence are retained.
-After incorporating the evidence-only main refresh, publication/evidence
-gates and all 571 shared tests pass again. No estimator source or
-stability-article input changed.
+Based on main `1c8776e7`, including the latest calibration fixes. The complete
+command `EIGEN_INCLUDE_DIR=<Eigen-3.4.0> W3D_WRITE_TIMESERIES=0 make all
+EIGEN_DIR=<Eigen-3.4.0>` returns **exit 0**, with all **589 shared tests**
+and every native suite. GCC memory-management options
+`--param ggc-min-expand=10 --param ggc-min-heapsize=4096` preserve O3 and
+numerical behavior while compiling the updated-main calibration sources.
+Only completed, ignored generated CSV outputs are discarded after scoring;
+inputs, scenarios, gates and scalar logs are preserved.
 
-The focused new suites pass 21 tests, and the OU-III proof suite passes 276.
-The native 900-s persistent construction/rest/hidden-rocking/rest regression
-passes: Live sample 15843, reference refinement/BA release sample 24016,
-20520 actually applied magnetic corrections, hidden tilt .001 rad. Physical
-bias/rate bounds, zero nominal means, covariance positivity and no reseeding
-are checked. Existing stationary/rest-wave-rest and gyro-projection regressions
-also pass. These finite checks do not establish an all-time stability theorem.
+The focused OU-III suite passes **294 tests**, including 18 new inverse-frame,
+same-cell geometry/grouping, covariance and fail-closed scope regressions.
+The fresh two-profile carried-source audit preserves observer/control terminal
+parity and verifies E=0 over exported rational operators. The persistent
+900-second construction/rest/hidden-rocking/rest regression, existing
+stationary/rest-wave-rest and gyro-projection regressions pass in `make all`.
+These finite checks do not establish an all-time stability theorem.
 
 Exact evidence reproduction, the unchanged TFG publication manifest, Ruff
-and `git diff --check` pass. Shipping-source bytes and prior finite replay
-artifacts are unchanged; new exact certificates and genuinely changed proof
-bindings are reproduced from their current inputs. Source-fidelity review
-charges the native gravity representation residual 1.617431640625e-7 m/s^2
-and uses eight qualified prediction intervals, at least 4/125 s, for the
-quiet nominal row floor rather than equating .005f with exact .005.
+and `git diff --check` pass. OU-III estimator bytes and previous source replay
+artifacts are unchanged. New/changed proof artifacts are generated from their
+actual current inputs. The final IEEE article passes two LuaLaTeX runs and
+all 15 pages render and are visually inspected, with no overfull box,
+unresolved reference or balancing warning. The reported source hash matches
+the verified PDF run.
 
-The final IEEE article completes two LuaLaTeX passes; all 14 pages are
-rendered/decoded and visually inspected. No overfull box, unresolved reference
-or balancing warning remains. Its source hash matches the verified PDF run.
+Resolved findings and remaining validation limit:
 
-Resolved failures and retained scope:
-
-- **Publication fingerprint:** the first full run failed at
-  `python3 ../../tools/tfg_comparison.py --check --require-ci` with
-  `ValueError: TFG comparison source provenance is stale` (make exit 2).
-  Exactly one recorded input differed: the OU-III simulator Makefile acquired
-  the new auxiliary target. Restore that Makefile byte-for-byte and use the
-  existing supplemental-Makefile pattern for the regression. The original
-  manifest passes without restamping or changing its gate; native results
-  and simulator behavior remain valid.
-- **Execution/resources:** an updated-main retry lost handle 40461; an
-  awaited retry then failed with `exec-server transport disconnected;
-  executor key changed during session recovery` during calibration compilation.
-  The local cgroup reported limit 8,589,934,592 bytes, peak 8,592,605,184
-  bytes and an OOM kill. Neither interrupted run is counted as complete.
-  Automatic command review rejected an `rm -f` cache-removal attempt;
-  recovery instead forced the calibration target through Make, using GCC
-  `ggc-min-expand=10` and `ggc-min-heapsize=4096`. O3 and all numerical gates
-  remain unchanged. That rebuild and the final supervised full run pass;
-  a durable exit-status record matches the complete log hash.
-- **Eigen discovery:** the next full run passed 570/571 shared tests but
-  `test_device_compass_startup.py:80` failed with `Install Eigen or set
-  EIGEN_INCLUDE_DIR`. Make's EIGEN_DIR does not configure that Python-compiled
-  device test. Point both variables to the same Eigen tree. The focused
-  1800-orientation checks in all three variants and the final full run pass;
-  no assertion or dependency requirement is relaxed.
-- **Article output:** the initial command using only TEXMFHOME failed with
-  `font txmiaX at 438 not found`; the existing extracted font maps via
-  TEXMFVAR resolve it without changing IEEE/newtx. An unused alignment
-  column caused a 4.27032pt overflow and was removed. Optional balancing
-  then produced a second-column warning and a 16.61555pt page-13 overflow;
-  restore standard IEEE flow with all equations retained. Generated native
-  CSVs also filled scratch during an intermediate TeX run; its partial log
-  is not accepted. Capacity cleanup, two complete passes, rendering and the
-  source-hash check establish the final article result.
+- **Article review:** a literal tab had replaced the backslash in theta_E.
+  Restore `\theta_E`; the new render displays the intended excited range.
+- **CI clang-tidy on inherited calibration logging:**
+  `tools/quality_gates.sh clang-tidy` failed at `AtomS3R_CalLog.h:23` with
+  `bugprone-not-null-terminated-result`. The binary CRLF packet is consumed
+  only by `write(pointer,len+2)`. A narrowly scoped annotation documents that
+  intentional non-string use; no runtime operation or global gate changes.
+  The full rebuilt native calibration/logging tests pass. Local clang-tidy
+  installation failed with `Could not open file /var/cache/apt/archives/partial/
+  ... - open (13: Permission denied)` (exit 100), so its rerun remains a CI
+  obligation, not a claimed local success.
+- **Prior resolved infrastructure:** a stale TFG fingerprint was fixed by
+  restoring the original simulator Makefile and using the supplemental
+  regression Makefile, without restamping the manifest. Earlier compiler
+  OOM/session loss was addressed with the memory options above; both Eigen
+  variables are required by the separate Python-compiled device test.
+  None of those interrupted runs was counted as a successful full gate.

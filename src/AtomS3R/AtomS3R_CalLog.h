@@ -20,6 +20,8 @@ bool tryCalLogLine(SerialT& serial, const char* line) {
   if (len + 2 > sizeof(packet)) return false;
   const int room = serial.availableForWrite();
   if (room < 0 || (size_t)room < len + 2) return false;
+  // Binary CRLF packet: write consumes an explicit length, never a C string.
+  // NOLINTNEXTLINE(bugprone-not-null-terminated-result)
   memcpy(packet, line, len);
   packet[len] = '\r';
   packet[len + 1] = '\n';

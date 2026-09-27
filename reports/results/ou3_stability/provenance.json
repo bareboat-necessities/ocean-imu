@@ -113,7 +113,8 @@
     "marine_complete_moving_window_excitation": "Every complete T_E window contained in one maximal physical moving episode has gravity span >=theta_E>0. Nondegenerate rest intervals define episode boundaries; isolated zero-rate instants do not restart them. Boundary-crossing windows require transition retention, not immediate excitation. Numerical qualification remains open.",
     "stationary_information_and_detector": "True zero rate supplies direct gyro-bias information up to deterministic noise and bias drift. Gravity/magnetic observations retain physical attitude/BA ambiguity. Smooth rest/motion/rest histories have identical sensor inputs inside unchanged bias/rate/service limits. A finite-entry, universally finite-exit exact-rest detector is impossible on the admitted parameter family. The necessary-evidence monitor never certifies physical STILL and changes no shipping behavior.",
     "regime_transition_composition": "Actual operation prefix gains and supplies compose conditionally, retaining covariance, projections/resets, clocks, physical S/bias histories and magnetic state. Finite detection/retention and a recurring cumulative product/supply budget are open; finite bridges alone are insufficient.",
-    "chronological_six_pivot_implication": "A chronological bound on |B-tI| plus two actual sensor-row groups and their reset/asynchrony/reference defect gives conditional sigma_min(O)>=s. Every greedy residual pivot is then >=s/sqrt(m). Source-uniform premises, B_*, J_AG and rho_0 are not certified; the two-temporal-margin implication remains open."
+    "chronological_six_pivot_implication": "Literal reset and prediction inverses are nonexpansive in real arithmetic. C=A^-1 B is unchanged by reset, whose influence remains in subsequent injections. Actual acc/mag groups with no intervening prediction have E=0 after retaining every reset. Positive uniform group geometry and inter-anchor gyro transport imply all six pivots; source-uniform premises, B_*, J_AG and rho remain open. An exact relaxed reset cancellation is neither source reachability nor loss of all historical row rank.",
+    "quiet_nominal_historical_covariance": "Exact zero-residual regular quiet nominal subfamily: two normalized actual acc/mag groups cancel arbitrary AG root/cross covariance; inherited nuisance and full correlated process bounds give every-operation full covariance upper and qualitative homogeneous linear loss. No compatible-class nonlinear stationary theorem, useful numerical rho, or physical attitude/BA separation is claimed."
   },
   "operation_lemma_sources": [
     {
@@ -146,7 +147,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "03d883b0b82b3d48f27e2269dedd469b96984798"
+      "git_blob_sha": "278d865b93e7a96fc5c74a18035c7c7561f62891"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -258,7 +259,7 @@
     },
     {
       "path": "docs/ou3-stationary-detectability.md",
-      "git_blob_sha": "4099dde1eda977c073c9b4064b85901fd1bd7fe3"
+      "git_blob_sha": "9e4f02d4341025f014e94856534e53e5e4cbbd7f"
     },
     {
       "path": "tests/validation/test_ou3_nuisance_upper_certificate.py",
@@ -334,7 +335,7 @@
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "d19143361d19cdc0dd9ffc1bc6e45e48ebe6d887"
+      "git_blob_sha": "535d79a782862dff3267efb765bbd89070c56b3b"
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
@@ -358,7 +359,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "09d5bd7d236d5262993cf736e77c6f0e128c84a7"
+      "git_blob_sha": "67bc29e2686e94f7cbfdcc707a7a40520ba4aea1"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
@@ -406,7 +407,7 @@
     },
     {
       "path": "docs/ou3-signed-temporal-continuation.md",
-      "git_blob_sha": "ec31239985c988d8b81ae8659beb741aa04cef9d"
+      "git_blob_sha": "8b6967b59f2b3e6aea7f69c78e3a36587a30b153"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal_diagnostic.py",
@@ -430,11 +431,11 @@
     },
     {
       "path": "docs/ou3-regime-design.md",
-      "git_blob_sha": "a4292eed69bfa523fc2c2543f0d1ea4070deb4e8"
+      "git_blob_sha": "a40ec3a45fb99010e657c2b79728af5a0a44c482"
     },
     {
       "path": "docs/ou3-moving-six-pivots.md",
-      "git_blob_sha": "dafd586ae4883ddc10361cb0db584aeaab92f7c9"
+      "git_blob_sha": "8e30f8b4303ac2c071717dccfa9e850ee11457b5"
     },
     {
       "path": "tools/stability/ou3_theorem/regimes.py",
@@ -442,11 +443,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/moving_pivots.py",
-      "git_blob_sha": "7b75d0e72c4931760aed9383ce5cb4fbc2444265"
+      "git_blob_sha": "2326d917c33a561a4966b6a6d968e60914be186c"
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "844dedda6387546a0d16330157abff4a0e6a95be"
+      "git_blob_sha": "60adfaff9eaaff0056b572f1a2c921fe1263465b"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
@@ -462,7 +463,7 @@
     },
     {
       "path": "tests/validation/test_ou3_theorem_status.py",
-      "git_blob_sha": "56ed007f7fe71c71a8a9a2c52df0581d17d5f97c"
+      "git_blob_sha": "761cb5d04fe91d327377240a2dc8482924af3425"
     },
     {
       "path": "tests/kalman_ou_iii/regime_ambiguity-test.cpp",
@@ -474,12 +475,48 @@
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
-      "git_blob_sha": "aa9f5da7190f1f362fb087e2574c828c6f03cc19"
+      "git_blob_sha": "afb4607bbf6a7e19b139eebb20bdedb13c8cb42d"
     },
     {
       "path": "tests/kalman_ou_iii/RegimeRegression.mk",
       "git_blob_sha": "006d4057061f282dfd03df20949ce02e4f91fb6b"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/stationary_covariance.py",
+      "git_blob_sha": "10a1b4ced40fb493429d709c1c0de0241220344b"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/regime_continuation_diagnostic.py",
+      "git_blob_sha": "12b523772351d03c97b42fad42ee4fa71183dc9a"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/moving_transport_source_diagnostic.py",
+      "git_blob_sha": "747f9e2ad8c34ffeb2aff11b81294f3385a08ef5"
+    },
+    {
+      "path": "tests/validation/test_ou3_inverse_transport.py",
+      "git_blob_sha": "23c2951792b58d436df0cbcbf36d0a9724c0c2a0"
+    },
+    {
+      "path": "tests/validation/test_ou3_stationary_covariance.py",
+      "git_blob_sha": "b854c2f272162e5bd9782006b7a7882e62b422df"
+    },
+    {
+      "path": "tests/validation/test_ou3_same_cell_groups.py",
+      "git_blob_sha": "2949a8a20c43b4d03991ea244cf70bf44bbdf836"
+    },
+    {
+      "path": "reports/results/ou3_stability/stationary-covariance-certificate.json",
+      "git_blob_sha": "4b958d34b3430b3820d71bbfc0b741a2b0827377"
+    },
+    {
+      "path": "reports/results/ou3_stability/regime-continuation-feasibility.json",
+      "git_blob_sha": "326fc43c3e6fbd214bfdd698635392e2f70aaa5a"
+    },
+    {
+      "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
+      "git_blob_sha": "06f0f9598cd9a046c8621e0e1549645ea6c9f91b"
     }
   ],
-  "regime_continuation_base_main_commit": "a7178192fd6dee7af0c0a554453e6e4390158634"
+  "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f"
 }

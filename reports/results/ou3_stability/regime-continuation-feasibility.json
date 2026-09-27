@@ -1,0 +1,28 @@
+{
+  "decimal_digits": 80,
+  "noncommuting_transport": {
+    "gyro_floor": "0.039656197447878311999505896460470399363326165756742402107304456841",
+    "gyro_singular_value": "0.039999950465104468488853491595778857936743534497493094074258424174",
+    "inverse_A_norm": "0.9999999999875312776558305840520258589657434524157807746628325129"
+  },
+  "qualification": "OU3_REGIME_CONTINUATION_FEASIBILITY_V1",
+  "quiet_action_upper_comparison_ratios": [
+    "0.4139295019522563174689833418186188968188859584284427278095692479",
+    "0.4139295019522563174689833418186188968188859584284427278095692479"
+  ],
+  "quiet_reader_AG_root_residual": "0.0",
+  "role": "supplied algebra feasibility only",
+  "same_cell_geometry": {
+    "actual_singular_value": "8.8082585054978743342110028764276234584189093741107126877294480959",
+    "conditional_floor": "8.541674236313162031453092105989817223449866001080680482664091444",
+    "reset_pulled_field_cosine": "0.099256805440789632004806574981725511589252836682649842419155238508"
+  },
+  "shipping_reachability_certified": false,
+  "source_uniform_verified": false,
+  "terminal_large_reset": {
+    "gyro_floor": "0.005",
+    "gyro_singular_value": "0.005",
+    "inverse_A_norm": "1.0"
+  },
+  "theorem_closed": false
+}

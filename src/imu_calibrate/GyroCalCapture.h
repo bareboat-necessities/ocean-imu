@@ -3,7 +3,7 @@
 
    Gyro bias capture from a continuous quiet interval. Sample magnitude is only
    a sanity check: block scatter, changes in block means, gravity direction and
-   (when available) changes in one-second magnetic means qualify stillness.
+   (when available) changes in two-second magnetic means qualify stillness.
    Magnetic register repeats are not independent observations. A disturbed interval is
    discarded, never averaged into the bias. Constant yaw without a magnetic or
    other independent reference is intrinsically indistinguishable from bias.
@@ -14,7 +14,7 @@ namespace imu_cal {
 struct GyroCaptureCfg {
   uint32_t block_ms=250, useful_ms=6000, timeout_ms=70000, stuck_ms=12000;
   uint32_t spacing_ms=25, max_gap_ms=60, mag_stale_ms=1000;
-  uint32_t mag_window_ms=1000;
+  uint32_t mag_window_ms=2000;
   double max_gyro_std=0.005, max_gyro_change=0.004;
   double max_accel_std=0.08, max_accel_change=0.06;
   double max_mag_change=0.6; // uT, with an additional 1.5% raw-field allowance
@@ -29,7 +29,7 @@ public:
   explicit GyroCapture(GyroCalibrator<T,N,BINS>& cal,const GyroCaptureCfg& cfg={}) : cal_(cal),cfg_(cfg) {}
   void begin(uint32_t now) {
     cal_.clear();start_=last_fresh_=last_input_=last_kept_=now;
-    have_input_=have_words_=have_mag_words_=have_kept_=false;quiet_=kept_blocks_=resets_=0;reference_=false;
+    have_input_=have_words_=have_mag_words_=false;quiet_=kept_blocks_=resets_=0;reference_=false;
     status_=GyroCaptureStatus::SETTLING;reset_reason_="none";resetBlock_();resetMag_();
   }
   GyroCaptureStatus update(uint32_t now,const V* a,const V* w,T tempC,const V* mag=nullptr) {
@@ -53,7 +53,7 @@ public:
     if(have_input_ && (uint32_t(now-last_input_)==0 || uint32_t(now-last_input_)>0x7fffffffu)) return status_;
     if(have_input_ && uint32_t(now-last_input_)>cfg_.max_gap_ms) disturb_("sample gap");
     last_input_=last_fresh_=now;have_input_=true;
-    if(n_==0) {block_start_=now;ar_=a->template cast<double>();wr_=w->template cast<double>();}
+    if(n_==0) {block_start_=last_kept_=now;ar_=a->template cast<double>();wr_=w->template cast<double>();}
     const D da=a->template cast<double>()-ar_,dw=w->template cast<double>()-wr_;
     sa_+=da;aa_+=da.cwiseProduct(da);sw_+=dw;ww_+=dw.cwiseProduct(dw);++n_;
     if(mag && mag->allFinite() && mag->norm()>=T(5) && mag->norm()<=T(200)) {
@@ -67,8 +67,8 @@ public:
     }
     // A short IMU block may contain only two or three independent magnetic
     // readings. Comparing those noisy means repeatedly against the first
-    // short block can restart a stationary hold. Give both magnetic means a
-    // full second of distinct readings; retain the same displacement limit
+    // short block can restart a stationary hold. Give both magnetic means
+    // two full seconds of distinct readings; retain the same displacement limit
     // and keep the reference fixed so slow yaw cannot follow a rolling mean.
     if(nm_>=3 && uint32_t(now-mag_start_)>=cfg_.mag_window_ms) {
       const D mm=sm_/nm_;
@@ -78,9 +78,14 @@ public:
       if(!mag_reference_) {ref_m_=mm;mag_reference_=true;}
       nm_=0;sm_.setZero();
     }
-    // Retain at most 40 Hz, so six seconds fit the existing 400 entries.
-    if(nb_<kBlockSamples && (!have_kept_ || uint32_t(now-last_kept_)>=cfg_.spacing_ms)) {
-      block_w_[nb_]=*w;block_a_[nb_]=*a;block_t_[nb_]=tempC;++nb_;last_kept_=now;have_kept_=true;
+    // Average every fresh reading before reducing to 40 Hz. Picking one raw
+    // reading per interval discarded most of the qualified six-second hold.
+    keep_w_+=w->template cast<double>();keep_a_+=a->template cast<double>();keep_t_+=double(tempC);++keep_n_;
+    if(nb_<kBlockSamples && uint32_t(now-last_kept_)>=cfg_.spacing_ms) {
+      block_w_[nb_]=(keep_w_/keep_n_).template cast<T>();
+      block_a_[nb_]=(keep_a_/keep_n_).template cast<T>();block_t_[nb_]=T(keep_t_/keep_n_);
+      ++nb_;last_kept_=now;
+      keep_n_=0;keep_w_.setZero();keep_a_.setZero();keep_t_=0;
     }
     if(uint32_t(now-block_start_)<cfg_.block_ms) return status_;
     const D ma=ar_+sa_/n_,mw=wr_+sw_/n_;
@@ -119,12 +124,12 @@ public:
   uint32_t resets() const {return resets_;}
   const char* resetReason() const {return reset_reason_;}
 private:
-  void resetBlock_() {n_=nb_=mag_seen_=0;sa_.setZero();aa_.setZero();sw_.setZero();ww_.setZero();}
+  void resetBlock_() {n_=nb_=mag_seen_=keep_n_=0;sa_.setZero();aa_.setZero();sw_.setZero();ww_.setZero();keep_w_.setZero();keep_a_.setZero();keep_t_=0;}
   void resetMag_() {nm_=0;sm_.setZero();mag_reference_=false;}
   void disturb_(const char* reason) {
     if(quiet_ || kept_blocks_ || n_) ++resets_;
     reset_reason_=reason;
-    cal_.clear();quiet_=kept_blocks_=0;reference_=have_kept_=false;status_=GyroCaptureStatus::MOVING;
+    cal_.clear();quiet_=kept_blocks_=0;reference_=false;status_=GyroCaptureStatus::MOVING;
     resetBlock_();resetMag_();
   }
   static constexpr int kBlockSamples=16;
@@ -134,10 +139,11 @@ private:
   const char* reset_reason_="none";
   uint32_t start_=0,last_fresh_=0,last_input_=0,last_kept_=0,block_start_=0,last_mag_change_=0,mag_start_=0;
   uint32_t quiet_=0,kept_blocks_=0,resets_=0;
-  bool have_input_=false,have_words_=false,have_mag_words_=false,have_kept_=false,reference_=false,ref_mag_=false;
+  bool have_input_=false,have_words_=false,have_mag_words_=false,reference_=false,ref_mag_=false;
   bool mag_reference_=false;
   V last_a_=V::Zero(),last_w_=V::Zero(),last_mag_=V::Zero();
-  D ar_,wr_,sa_,aa_,sw_,ww_,sm_,ref_a_,ref_w_,ref_m_;
+  D ar_,wr_,sa_,aa_,sw_,ww_,sm_,ref_a_,ref_w_,ref_m_,keep_w_,keep_a_;
+  int keep_n_=0;double keep_t_=0;
   int n_=0,nm_=0,nb_=0,mag_seen_=0;
   V block_a_[kBlockSamples],block_w_[kBlockSamples];T block_t_[kBlockSamples]{};
 };

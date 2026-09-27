@@ -201,5 +201,13 @@ The same reader also has an explicit quiet nominal subcase: two actual
 coincident acc/mag groups eight qualified predictions apart at the zero-residual
 stationary nominal solution give six-column floor 18/127 and all-six-pivot
 floor 9/254 in raw AG
-scaling. This analytic result reinforces the distinction from physical
-attitude/BA ambiguity; it does not prove stationary nonlinear robustness.
+scaling. The same explicit reader now yields a root-independent covariance
+action, every-operation full upper comparison and qualitative homogeneous
+linear loss on that exact quiet nominal subcase; see
+`ou3-stationary-detectability.md`. These results reinforce the distinction from
+physical attitude/BA ambiguity; they do not prove stationary nonlinear robustness.
+On MOVING, the inverse-frame identity C=A^-1 B cancels a reset exactly while
+retaining its effect on future gyro injections. Actual acc/mag groups within
+one prediction cell have E=0 exactly with all resets retained. Their geometry
+uses the field pulled back through those resets. Uniform positive geometry,
+injection and complete historical-action bounds remain OPEN.

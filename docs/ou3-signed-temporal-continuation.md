@@ -9,6 +9,17 @@ the source-uniform budget and the two-temporal-margin implication remain OPEN.
 Removing indefinite rest does not improve the failed bounds on the already
 excited moving diagnostic below.
 
+The chronological continuation now also uses C=A^-1 B: literal reset inverses
+have norm at most one, and resets leave C unchanged while altering later gyro
+injections. The conditional prefix budget does not certify a signed temporal
+margin. An exact relaxed reset sequence gives B=diag(0,0,28/625), without
+proving shipping reachability or loss of all historical rows. The exact quiet
+nominal subcase now has uniform historical covariance action and qualitative
+homogeneous linear loss; physical stationary robustness remains open.
+Actual acc/mag row groups within one prediction cell now factor with E=0.
+Their geometry depends on the field pulled back through the local resets;
+the signed physical-to-nominal transfer of a positive margin is still OPEN.
+
 
 This continues the existing construction-linked proof. Each lemma below is
 subordinate to `V_(j+1)<=rho V_j+c_d||d||^2, rho<1`: span and signed-balance
