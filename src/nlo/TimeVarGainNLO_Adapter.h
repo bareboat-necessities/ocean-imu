@@ -224,6 +224,11 @@ public:
           boot_accel_bias_seed_max_mps2 is taken to be something other than a
           sensor residual (wrong gravity, uncalibrated sensor) and skipped.
           Set boot_accel_bias_seed_enabled = false to disable.
+
+          If the gyro seed is accepted but this accelerometer seed is not,
+          keep the configured theta through the TMO startup-gain interval
+          so xi can learn the residual before wave-frequency scheduling
+          weakens its correction.
         */
         bool boot_accel_bias_seed_enabled = true;
         R boot_accel_bias_seed_max_std_mps2 = R(0.05);
@@ -526,6 +531,7 @@ public:
         theta_ = cfg_.filter.theta;
         theta_sched_accum_s_ = R(0);
         theta_acquired_ = false;
+        boot_theta_capture_hold_ = false;
         report_lpf_p_.setZero();
         report_lpf_v_.setZero();
         report_hp_primed_ = false;
@@ -827,6 +833,7 @@ private:
     R theta_ = R(1);
     R theta_sched_accum_s_ = R(0);
     bool theta_acquired_ = false;
+    bool boot_theta_capture_hold_ = false;
     Vec3 report_lpf_p_ = Vec3::Zero();
     Vec3 report_lpf_v_ = Vec3::Zero();
     bool report_hp_primed_ = false;
@@ -968,6 +975,16 @@ private:
             return;
         }
         if (!(last_wave_freq_conf_ >= cfg_.theta_min_confidence)) {
+            return;
+        }
+
+        // A quiet gyro startup without an accepted accelerometer-bias seed
+        // needs the configured capture bandwidth while xi learns the
+        // residual. Reducing theta to a wave-band value weakens that
+        // correction by theta^4. Moving startups retain their wave schedule.
+        // Frequency acquisition continues above during this hold.
+        if (boot_theta_capture_hold_ && filter_.config().use_time_varying_tmo_gain &&
+            filter_.timeSeconds() < filter_.config().vartheta2_switch_s) {
             return;
         }
 
@@ -1420,9 +1437,12 @@ private:
             }
 
             Vec3 acc_seed_b;
-            if (still && stillAccelBiasSeed_(acc_seed_b)) {
+            const bool have_accel_seed = still && stillAccelBiasSeed_(acc_seed_b);
+            if (have_accel_seed) {
                 filter_.setAccelBiasBody(acc_seed_b);
             }
+            boot_theta_capture_hold_ = still && cfg_.boot_accel_bias_seed_enabled
+                                       && !have_accel_seed;
             if constexpr (Mag == NloMagType::None) {
                 b0.z() = R(0);
             }

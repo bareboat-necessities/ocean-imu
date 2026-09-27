@@ -65,7 +65,8 @@ static Ramp ramp(float t, float start, float duration) {
             60.0f*u*(1.0f-3.0f*u+2.0f*u*u)/(duration*duration)};
 }
 
-static bool replay(const char* name, bool delayed, bool jittered, bool waves) {
+static bool replay(const char* name, bool delayed, bool jittered, bool waves,
+                   float vertical_bias = 0.08f) {
     Fusion f;
     f.config().gravity_mps2 = gravity;
     f.config().filter.gravity_mps2 = gravity;
@@ -82,6 +83,7 @@ static bool replay(const char* name, bool delayed, bool jittered, bool waves) {
     };
     float max_raw = 0.0f, max_report = 0.0f, max_display = 0.0f;
     float max_xi = 0.0f, max_tilt_error = 0.0f;
+    float max_startup_heave = 0.0f;
     double wave_sq = 0.0, wave_time = 0.0, wave_sin = 0.0, wave_cos = 0.0;
     float freq = 0.30f;
     std::uint32_t sample_us = 0;
@@ -102,7 +104,7 @@ static bool replay(const char* name, bool delayed, bool jittered, bool waves) {
         const Vec3 mag = q.conjugate()*Vec3(20.0f, 0.0f, 45.0f) + noise(0.4f);
         const Vec3 gyro = Vec3(0.005f, pitch_rate-0.005f, 0.005f) + noise(0.0016f);
         const Vec3 acc = q.conjugate()*Vec3(0.0f, 0.0f, az-gravity)
-                         + Vec3(0.05f, -0.05f, 0.08f) + noise(0.18f);
+                         + Vec3(0.05f, -0.05f, vertical_bias) + noise(0.18f);
         f.setMagBody(mag, true);
         f.update(dt, gyro, acc);
         const auto s = f.snapshot();
@@ -113,6 +115,7 @@ static bool replay(const char* name, bool delayed, bool jittered, bool waves) {
         const auto display = detrender.update(s.disp_zu.z(), dt, freq, freq > 1e-6f);
         max_raw = std::max(max_raw, std::abs(f.filter().positionNED().z()));
         max_report = std::max(max_report, std::abs(s.disp_zu.z()));
+        if (t < 150.0f) max_startup_heave = std::max(max_startup_heave, std::abs(s.disp_zu.z()));
         max_display = std::max(max_display, std::abs(display.wave_clean));
         max_xi = std::max(max_xi, s.tvg.xi_norm);
         max_tilt_error = std::max(max_tilt_error,
@@ -131,13 +134,16 @@ static bool replay(const char* name, bool delayed, bool jittered, bool waves) {
     const double sin_amplitude = 2.0*wave_sin/std::max(wave_time, 1.0);
     const double cos_amplitude = 2.0*wave_cos/std::max(wave_time, 1.0);
     std::printf("NLO device %-15s raw=%.3f report=%.3f display=%.3f m "
-                "xi=%.3f tilt_error=%.3f deg wave_rms=%.3f m wave_sin/cos=%.3f/%.3f m\n",
+                "xi=%.3f tilt_error=%.3f deg startup=%.3f m "
+                "wave_rms=%.3f m wave_sin/cos=%.3f/%.3f m\n",
                 name, max_raw, max_report, max_display, max_xi, max_tilt_error,
-                wave_rms, sin_amplitude, cos_amplitude);
+                max_startup_heave, wave_rms, sin_amplitude, cos_amplitude);
     bool ok = check(f.initialized(), "device replay never initialized");
     ok &= check(max_raw < 10.0f && max_report < 8.0f && max_display < 2.0f,
                 "device heave drifted by metres beyond the noise/bias transient");
-    ok &= check(max_xi < 0.3f && max_tilt_error < 5.0f,
+    ok &= check(max_startup_heave < 4.0f,
+                "wave scheduling weakened capture before the residual was learned");
+    ok &= check(max_xi < std::abs(vertical_bias)+0.22f && max_tilt_error < 5.0f,
                 "delayed updates destabilized attitude/force feedback");
     // The noisy low-frequency residual is included in the printed raw RMS.
     // Check the response at the injected wave frequency independently, so
@@ -154,5 +160,6 @@ int main() {
     ok &= replay("20 Hz still", true, false, false);
     ok &= replay("jittered still", true, true, false);
     ok &= replay("jittered waves", true, true, true);
+    ok &= replay("200 Hz 0.3 bias", false, false, false, 0.3f);
     return ok ? 0 : 1;
 }
