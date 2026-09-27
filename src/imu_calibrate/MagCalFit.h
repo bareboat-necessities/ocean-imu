@@ -34,7 +34,7 @@ inline const char* magFitGateText(MagFitGate gate) {
   switch (gate) {
     case MagFitGate::MATRIX: return "Correction too large";
     case MagFitGate::RESIDUAL: return "Field inconsistent";
-    case MagFitGate::INLIERS: return "Too much interference";
+    case MagFitGate::INLIERS: return "MAG samples noisy";
     case MagFitGate::COVERAGE: return "Need more 3D motion";
     case MagFitGate::INFORMATION: return "Need more directions";
     case MagFitGate::FIELD_CHANGED: return "Field changed";

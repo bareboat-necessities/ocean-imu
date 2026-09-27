@@ -32,6 +32,7 @@
 #include "AtomS3R/AtomS3R_ImuCal.h"         // ImuSample, axis mapping conventions, blob/store/runtime helpers
 #include "AtomS3R/AtomS3R_M5Ui.h"           // UI + Input + clamp01_
 #include "AtomS3R/AtomS3R_CalLog.h"         // best-effort pose diagnostics
+#include "AtomS3R/AtomS3R_MagCalMode.h"     // lower sensor noise during MAG calibration
 #include "imu_calibrate/CalibrateIMU.h"     // imu_cal::* + FitFail
 #include "imu_calibrate/AccelCalCapture.h"  // accelerometer procedure (host-tested)
 #include "imu_calibrate/MagCalCapture.h"    // bounded capture and independent freshness
@@ -398,6 +399,23 @@ private:
   // MAG stage with retry loop. Returns true on success; false with redo_all
   // set when the user asked to restart, false otherwise on abort.
   bool runMagStage_(bool& redo_all) {
+    // The AtomS3R's BMI270 is paired with a BMM150 in sensor slot 1.
+    auto* sensor = M5.Imu.getType() == m5::imu_bmi270 ?
+                   M5.Imu.getImuInstancePtr(1) : nullptr;
+    MagCalMode<m5::IMU_Base> mode(sensor, [](uint32_t ms) { delay(ms); });
+    redo_all = false;
+    const bool configured = (M5.Imu.getType() != m5::imu_bmi270 || sensor) && mode.begin();
+    const bool ok = configured && runMagCaptureStage_(redo_all);
+    const bool restored = mode.restore();
+    if (!configured || !restored) {
+      mag_verified_ = false;
+      ui_.fail("MAG", configured ? "Sensor restore failed" : "Sensor setup failed");
+      return false;
+    }
+    return ok;
+  }
+
+  bool runMagCaptureStage_(bool& redo_all) {
     redo_all = false;
     while (true) {
       magCal_.clear();
@@ -429,7 +447,7 @@ private:
         why = fit_.reason == imu_cal::FitFail::BAD_ARG ? "Check task failed" :
               imu_cal::magFitGateText(mag_verify_quality_.gate);
       }
-      const auto act = ui_.magFailMenu(why ? why : "Check failed", "Move away from metal");
+      const auto act = ui_.magFailMenu(why ? why : "Check failed", "Turn slowly; retry");
       if (act == M5Ui::MagFailAction::RETRY_MAG) continue;
       if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; return false; }
       return false;

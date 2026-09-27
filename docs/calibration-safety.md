@@ -91,6 +91,21 @@ calibration. Short captures normally remain bias-only.
 
 ## Magnetometer direction and capture
 
+On AtomS3R, both magnetic capture and independent verification use the BMM150
+high-accuracy preset: 47 XY repetitions, 83 Z repetitions, and 20 Hz output.
+The wizard checks register writes and restores the original repetition counts
+and output rate on completion, cancellation, or failure. Setup/restore errors
+stop the calibration without saving a candidate. Other IMU types retain their
+driver settings. The 45-second capture minimum and all magnetic quality limits
+remain unchanged; independent verification still needs at least 12 seconds
+and 140 spaced samples.
+
+M5Unified 0.2.13 sets the BMM150 output rate without configuring repetitions.
+Ordinary sensor noise can therefore fail the residual-inlier gate even in a
+stable field. The UI reports noisy samples rather than claiming that this gate
+detects external interference. The preset and its 20 Hz limit come from the
+[Bosch BMM150 datasheet, table 3 and sections 5.6/5.8](https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmm150-ds001.pdf).
+
 The ellipsoid metric determines `A^T A`, not an arbitrary sensor-to-body
 rotation. The correction uses the SPD square root as an initializer, then
 refines a symmetric positive-definite matrix with the fitted hard-iron offset
