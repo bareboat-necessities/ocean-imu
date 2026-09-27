@@ -168,8 +168,8 @@
     }
   },
   "git_branch": "main",
-  "git_commit": "0512a1ae0134600a2fe83234f6fad6c2df1adba5",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 48513 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   324 +-\n .../ou_validation/ou_validation_covsync.svg        |  1134 +-\n .../ou_validation/ou_validation_displacement.svg   |   324 +-\n .../results/ou_validation/ou_validation_macros.tex |     8 +-\n .../ou_validation/ou_validation_paired_effects.csv |  2374 +-\n .../ou_validation/ou_validation_publication.tex    |     8 +-\n .../results/ou_validation/ou_validation_raw.csv    |   740 +-\n .../ou_validation/ou_validation_summary.csv        |  2352 +-\n .../results/ou_validation/ou_validation_table.tex  |     2 +-\n .../ou_validation/ou_validation_vertical.svg       |  1026 +-\n 11 files changed, 28402 insertions(+), 28403 deletions(-)",
+  "git_commit": "06c41d4914349b1083e68924e3b74cebc97cf13f",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json            | 3 +--\n reports/results/ou_validation/ou_validation_publication.tex | 2 +-\n 2 files changed, 2 insertions(+), 3 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -491,8 +491,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-27T18:28:29+00:00",
-    "git_commit": "0512a1ae0134600a2fe83234f6fad6c2df1adba5",
+    "generated_at": "2026-09-27T19:47:03+00:00",
+    "git_commit": "06c41d4914349b1083e68924e3b74cebc97cf13f",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -707,7 +707,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "36337186902",
+      "run_id": "36343424500",
       "workflow": "build"
     }
   },

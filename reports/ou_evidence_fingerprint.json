@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "8fcbc3c7e53a130e7483c16973056f245558c832e463b515743de1b524f0f48c",
+  "replay_fingerprint": "8ea0dbc882e50c4520819d972a9d33f576533e73b7d51d712bd21757a9cf4565",
   "results_file_count": 421,
   "results_files": [
     {
@@ -871,7 +871,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "41c0a8aa552f8253e674eb8ccce7729f91866bfec2930a1d47165481899fe349"
+      "sha256": "9922bb231b0219288ce2a5b090554f6c91fa43c82c35d5d49d9ea4fd009c13e5"
     },
     {
       "kind": "file",
@@ -966,7 +966,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "40adc5b4e88c14f09afdd2d00825c847de54910c9b21792bcd262bd313037b35"
+      "sha256": "f0f900916858d1a51c59d8874b47d23c8b9edd331866908f26b65fa809006fa0"
     },
     {
       "kind": "file",
@@ -2109,13 +2109,13 @@
       "sha256": "61d282cce175faf6d77e9e4a9fa091beb64b8e298cd3328d585f039a050d82a9"
     }
   ],
-  "results_fingerprint": "d7876b4def0265eb06d3f78091e6903bc7314445e31baa7e3e7f246cd4ff2785",
+  "results_fingerprint": "d89fca2005ec44007cd7977b77bd6f481185c86ef0f4b170cc1809cac7efed82",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 420,
+  "tracked_replay_file_count": 421,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2439,6 +2439,11 @@
     },
     {
       "mode": "100644",
+      "path": "src/AtomS3R/AtomS3R_CalLog.h",
+      "sha256": "ae1e1473ebf2f619f52595a6149065ff74a381b85a131731cdcd8151c449771e"
+    },
+    {
+      "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_CompassAppBase.h",
       "sha256": "cc9aed0157ffdef221945040a4935dea430ab1b819ecab2b66bdf96ef4895130"
     },
@@ -2460,7 +2465,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCalWizard.h",
-      "sha256": "46e72debe60c8a354d8be411e086410b8eb309c3e37a524c56c914154a24c7bf"
+      "sha256": "5b0496c5c3fefa7c42206d0d6527d34f15ba86465f8a661cfe9051c6d35442b6"
     },
     {
       "mode": "100644",
@@ -2580,7 +2585,7 @@
     {
       "mode": "100644",
       "path": "src/imu_calibrate/AccelCalCapture.h",
-      "sha256": "796837cce4611be970ca40c78366966ad02af599244eea1b69f73effa4057b3e"
+      "sha256": "53308224b335e5b428098ba820835a2183a53775e467ca47ffa6b19095edd999"
     },
     {
       "mode": "100644",
@@ -2970,7 +2975,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/Makefile",
-      "sha256": "d2f11abc2b458ec57851277e971776342577f912982877f21e81f4acb06466dd"
+      "sha256": "a00dedac5edecc336f68811b98488eecae1ff80c3511bead4940dfd34b8af860"
     },
     {
       "mode": "100644",
@@ -3005,7 +3010,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/calibration_workflow-test.cpp",
-      "sha256": "112ed23289e58e5c6bb0847973eb1f6934f9252f0196858f13a1e524c12fa2b6"
+      "sha256": "a9a5311dafa175b2993077b9eb70bc33025fed0e760dac50a99ba0ee7d0d5847"
     },
     {
       "mode": "100644",
