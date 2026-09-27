@@ -264,20 +264,22 @@ The right side is 43.97475 (m/s^2) uT at T=8 s under the declared limits.
 This continuous-history diversity identity does not by itself establish the
 sampled, transported full-state information bound, including nuisance cross
 terms. In fact, the sampling counterexample has constant sampled specific
-force despite this continuous-history inequality. A quantitative cell-integral
-sampling-fidelity condition is absent. Constant-frame observability minors
+force despite this continuous-history inequality. The jerk condition now
+supplies quantitative cell-integral sampling fidelity,
+and the strengthened tilt-span condition also excludes that constant-attitude
+moving witness. Neither statement identifies the physical vector Gramian
+with the nominal historical observation array. Constant-frame observability minors
 likewise remain conditional algebra.
 Compactness can give a uniform positive minimum only after full rank is proved
 on every admissible cell; positivity of separate restricted minors is insufficient.
 
 ## Remaining theorem certificates
 
-The universal capture claim must first be repaired or its domain changed:
-the current assumptions admit an all-time indistinguishable physical history
-outside the declared retained tilt region. The counterexample document derives
-a concrete cell-integral sampling-fidelity premise, but does not adopt or
-qualify it. Neither a larger numerical enclosure nor exclusion of quiet water
-repairs this information obstruction.
+The old constant-attitude moving capture obstruction is outside the current
+jerk/tilt-span domain. General finite capture remains open. The admitted
+quiet-bias construction still prevents universal entry into V<=36; retain
+the literal projection sector or derive a larger/shaped region. Do not
+exclude quiet water or claim exact attitude/bias convergence there.
 
 For the conditional local tail, the missing certificate is a full transported
 loss bound, retaining all 21 coordinates and cross terms, with a uniform
@@ -290,4 +292,10 @@ nonlinear remainder/radius, bounded float32 supply, every-prefix retention,
 finite capture, finite H18/refinement/release retention, and release entry into
 the retained A21 region. Physical qualification and every-window applied
 magnetic service also remain required. The complete theorem is not claimed;
-the six-degree capture obligation is false on the currently declared domain.
+general six-degree capture remains open on the currently declared domain.
+
+The next signed-temporal step is detailed in
+`ou3-signed-temporal-continuation.md`: physical sampled tilt span and exact
+adjoint compatibility are established, but their transfer to positive
+Delta_col/Delta_gyr and all six historical pivots is not. Both compatibility
+residual sums and construction-linked gyro-bias evolution must remain.

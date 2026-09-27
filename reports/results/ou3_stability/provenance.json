@@ -117,7 +117,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/marine_motion.py",
-      "git_blob_sha": "14e4258a8338ccedc65fd8a251054837b064ec90"
+      "git_blob_sha": "fd7b72a6b268db0cc08405d397f5a9ebb0adc06b"
     },
     {
       "path": "tools/stability/ou3_theorem/magnetic_service.py",
@@ -129,7 +129,7 @@
     },
     {
       "path": "tests/validation/test_ou3_marine_motion.py",
-      "git_blob_sha": "ec0516a1f46ba9248f00f64038deb9775206cc96"
+      "git_blob_sha": "2557724ab6481e6f8e45c2bb5e1b48204d94859b"
     },
     {
       "path": "tests/validation/test_ou3_magnetic_service.py",
@@ -141,7 +141,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "072b86ed85d59029aaa7f7ef922cc93decca0d49"
+      "git_blob_sha": "dd7b3ffff789e3ee832a21835542addce81924fc"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -277,7 +277,7 @@
     },
     {
       "path": "docs/ou3-sampled-capture-obstruction.md",
-      "git_blob_sha": "dff0678f768901b197b7193a33b6a5517759f2a6"
+      "git_blob_sha": "80f935f1eeb171e4647c5f90d016a7a2390e4870"
     },
     {
       "path": "src/tuner/MagAutoTuner.h",
@@ -329,7 +329,7 @@
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "65419bbc0dcf8a5bf855868ce4b23c4e1c848817"
+      "git_blob_sha": "861d86b3e317c76d8c8ccf5050049f4f24f89e23"
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
@@ -353,7 +353,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "ca495aa0cccee5bef57a9aa49e82cfd92dc4cad8"
+      "git_blob_sha": "581fdb41b20409768cdd35d4091ed21aaf2bb2af"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
@@ -361,7 +361,7 @@
     },
     {
       "path": "docs/ou3-construction-mean-action.md",
-      "git_blob_sha": "ee12d642b3249d599df41749cf5ef2a741c0dd4e"
+      "git_blob_sha": "56eb793d28e7428554e1d59d6b675e61975914ca"
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
@@ -370,6 +370,30 @@
     {
       "path": "tests/validation/test_ou3_construction_mean_action.py",
       "git_blob_sha": "51526e4c4a7a8c1579304a10eb9cd28b3f7ef73c"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/signed_temporal.py",
+      "git_blob_sha": "475d272180665f70c66c20aafed7f4da874d3405"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/signed_temporal_diagnostic.py",
+      "git_blob_sha": "39076cbc96857b33bc637d1709af980fc3706c3e"
+    },
+    {
+      "path": "docs/ou3-signed-temporal-continuation.md",
+      "git_blob_sha": "8fdd38c01a82d7387fe6ec2a62d7d3f8bd472644"
+    },
+    {
+      "path": "reports/results/ou3_stability/signed-temporal-certificate.json",
+      "git_blob_sha": "174b7f8a2cdb8974bbcfe2877b2f1327ffc615ed"
+    },
+    {
+      "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
+      "git_blob_sha": "68019a0e9a3f9d0cdfb89b04c61ffccc4613ce20"
+    },
+    {
+      "path": "tests/validation/test_ou3_signed_temporal.py",
+      "git_blob_sha": "54c6bc34a48667a35b1e6633ea423106cc004036"
     }
   ]
 }

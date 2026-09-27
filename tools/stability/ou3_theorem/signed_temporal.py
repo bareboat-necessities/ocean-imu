@@ -49,7 +49,7 @@ def certificate():
       "qualification":"OU3_SIGNED_TEMPORAL_V1",
       "actual_S_event_signed_temporal_identity":True,
       "homogeneous_zero_terminal_adjoint_closes":False,
-      "observation_forced_adjoint_required":True,
+      "compatible_adjoint_or_residual_bounds_required":True,
       "sampled_accel_mean_ceiling":str(p["sampled_accel_mean_ceiling"]),
       "physical_joint_vector_floor":str(p["physical_joint_vector_floor"]),
       "physical_floor_margin":str(p["physical_floor_margin"]),
@@ -57,7 +57,13 @@ def certificate():
       "regular_A21_pre_projection_BA_precision_ceiling":1000003000,
       "source_uniform_nominal_force_field_temporal_margin":False,
       "source_uniform_nominal_gyro_alias_temporal_margin":False,
-      "temporal_margins_imply_finite_B_star":True,
+      "temporal_margins_imply_finite_B_star":False,
+      "six_pivot_floor_implies_finite_B_star":True,
+      "carried_adjoint_compatibility_criterion":True,
+      "zero_mean_projection_preserves_adjoint":False,
+      "signed_physical_bias_summation_by_parts":True,
+      "physical_span_to_sampled_span":True,
+      "construction_uniform_gyro_alias_exclusion":False,
       "B_star_instantiated":False,
       "uniform_historical_AG_readout_action":False,
       "full_21_covariance_upper":False,
@@ -69,42 +75,40 @@ if __name__=="__main__":
     print(json.dumps(certificate(),indent=2,sort_keys=True))
 
 
-def separated_reader_action_implication(delta_col, delta_gyr, coefficient_ceiling,
+def separated_reader_action_implication(pivot_floor, coefficient_ceiling,
                                         noise_factor_ceiling, nuisance_ceiling,
                                         terminal_map_ceiling, operation_count):
-    """Quantitative implication from positive temporal margins to finite B_*.
+    """Conditional finiteness from SIX actual residual-norm lower bounds.
 
-    This is not a margin certificate.  It proves the next logical step once
-    the same-history enclosure supplies strict delta_col and delta_gyr.
-
-    Let delta=min(delta_col,delta_gyr).  On every largest-residual pivot chart,
-    the six successive residual pivots of O are bounded below by delta after
-    the proof-coordinate normalization used by the temporal margins.  Hence
-    the selected 6x6 minor has ||O_I^{-1}||_2 <=
-    coefficient_ceiling**5 / delta**6 by adjugate/Hadamard.  The exact reader
-    L=T_h O_I^{-1} therefore has the displayed uniform norm ceiling.  The
-    backward action is a finite sum of transported rank<=3 noise/process
-    factors plus the nuisance-root residual.  Bounding each chronological
-    transport by coefficient_ceiling gives the explicit B_* below.
-
-    The deliberately coarse exponent is acceptable here: the result needed
-    is finiteness, not a practical contraction rate.  A useful J/rho still
-    requires the rigorous source margins and then a sharper action enclosure.
+    C bounds operator norms of the selected minor, all transports and H_i;
+    H bounds the terminal selector and terminal AG map. Both are at least 1.
+    p bounds unsquared Gram--Schmidt residual norms; the selector compares
+    their squares, which gives the same largest-residual ordering.
+    No theorem currently turns Delta_col/Delta_gyr into this pivot premise.
+    For six pivots >=p, |det O_I|>=p^6 and ||O_I^-1||<=C^5/p^6.
+    The backward recursion starts at the terminal selector, not at zero:
+    Y<-Y F or Y<-Y-L_i H_i. Thus ||Y||<=C^N(H+N||L||C).
+    Bound complete process/observation factors and the nuisance root only
+    AFTER exact AG root cancellation. This coarse scalar ceiling proves
+    finiteness; it is not the matrix process comparison used to certify rho.
     """
-    vals=(delta_col,delta_gyr,coefficient_ceiling,noise_factor_ceiling,
-          nuisance_ceiling,terminal_map_ceiling)
-    if any(x<=0 for x in vals) or operation_count<1:
+    from operator import index
+    vals=tuple(F(x) for x in (pivot_floor,coefficient_ceiling,noise_factor_ceiling,
+                             nuisance_ceiling,terminal_map_ceiling))
+    pivot_floor,coefficient_ceiling,noise_factor_ceiling,nuisance_ceiling,terminal_map_ceiling=vals
+    operation_count=index(operation_count)
+    if (any(x<=0 for x in vals) or coefficient_ceiling<1
+            or terminal_map_ceiling<1 or operation_count<1):
         raise ValueError("strict positive source bounds required")
-    delta=min(delta_col,delta_gyr)
-    inv_minor=coefficient_ceiling**5/delta**6
+    inv_minor=coefficient_ceiling**5/pivot_floor**6
     reader=terminal_map_ceiling*inv_minor
-    transport=max(1.0,coefficient_ceiling)**operation_count
-    # ||sum X_i X_i'|| <= sum ||X_i||^2.  The final term covers the
-    # nuisance-root residual in exactly the same backward reader recursion.
-    b_star=(operation_count*(reader*noise_factor_ceiling*transport)**2
-            +(reader*transport)**2*nuisance_ceiling)
-    return {"delta":delta,"inverse_minor_norm_ceiling":inv_minor,
+    y=coefficient_ceiling**operation_count*(terminal_map_ceiling+
+                                          operation_count*reader*coefficient_ceiling)
+    b_star=(operation_count*noise_factor_ceiling**2*(y**2+reader**2)
+            +y**2*nuisance_ceiling)
+    return {"pivot_floor":pivot_floor,"inverse_minor_norm_ceiling":inv_minor,
             "reader_norm_ceiling":reader,"B_star_scalar_ceiling":b_star,
+            "backward_map_norm_ceiling":y,
             "B_star_finite":True}
 
 
@@ -115,8 +119,9 @@ def margin_to_Bstar_theorem():
                   "shipping coefficient/factor compactness on the fixed finite window"],
       "conclusion":"exists finite B_* with B_W <= B_* I6 on every carried window",
       "rank_structure":"successive largest-residual pivots; observation blocks have rank <=3",
-      "proof":"finite pivot-chart cover + adjugate/Hadamard inverse bound + finite backward factor action",
-      "implication_closed":True,
+      "proof_gap":"no quantitative six-column pivot bound from the two proposed temporal margins; coefficient compactness is also unproved",
+      "implication_closed":False,
+      "six_pivot_floor_conditional_implication_closed":True,
       "premise_margins_source_uniformly_certified":False,
     }
 
@@ -151,9 +156,8 @@ def literal_signed_functional_bound(weight_l1, endpoint_state_bound,
 
     For W_i=Z_{i+1}K_i and Z_i=Z_{i+1}A_i the innovation functional is
       sum W_i r_i = Z_N u_N-Z_0 u_0-sum Z_{i+1}d_i.
-    The crucial point is that no innovation/NIS norm appears.  Once the
-    forced adjoint is represented by endpoint observations, the source bound
-    is an endpoint-state bound plus literal affine defects.
+    CONDITIONAL on both compatibility equations and the stated endpoint and
+    defect bounds. Without compatibility the two residual sums remain.
     """
     vals=(weight_l1,endpoint_state_bound,affine_defect_l1,affine_defect_bound)
     if any(x<0 for x in vals): raise ValueError("nonnegative bounds required")
@@ -165,7 +169,7 @@ def source_uniform_nominal_endpoint_bounds():
 
     BA is globally projected.  BG has no analogous projection. AW has a
     covariance/tuner clamp but its *mean* has no shipping saturation. Thus the
-    present assumptions do not provide an absolute source-uniform endpoint
+    presently proved lemmas do not provide an absolute source-uniform endpoint
     bound for u=(b_hat_g,a_hat_w).  This distinction is the exact reason the
     endpoint telescoping cannot yet become a numeric Delta margin.
     """
@@ -183,38 +187,33 @@ def forced_adjoint_source_bound():
     """Derive the strongest bound available from the literal same-history recursion."""
     ep=source_uniform_nominal_endpoint_bounds()
     return {
-      "identity":"sum W_i r_i = Z_N u_N-Z_0 u_0-sum Z_(i+1)d_i",
+      "identity":"sum W_i r_i = Z_N u_N-Z_0 u_0 + sum (Z_i-Z_(i+1)A_i)u_i + sum (W_i-Z_(i+1)K_i)r_i - sum Z_(i+1)d_i",
+      "endpoint_only_identity_requires_compatibility":True,
+      "compatibility_source_uniformly_verified":False,
       "innovation_energy_needed":False,
       "independent_gain_box_needed":False,
       "BA_endpoint_bounded":True,
       "BG_endpoint_bounded":ep["b_hat_g_norm"] is not None,
       "AW_endpoint_bounded":ep["a_hat_w_norm"] is not None,
       "finite_numeric_ceiling":None,
-      "reason":"exact telescoping leaves BG/AW endpoint means; neither has an absolute shipping/source bound under the current theorem premises",
-      "consequence":"a source-uniform numeric correction/reset ceiling cannot be derived from the current premises alone by this adjoint",
+      "reason":"compatibility residuals remain; even compatible endpoint telescoping needs derived BG/AW endpoint bounds or justified cancellation",
+      "consequence":"no finite numeric source-uniform ceiling follows from the currently proved lemmas; insufficiency of the physical assumptions is not proved",
     }
 
 
 def endpoint_annihilating_multiplier_constraints():
-    """Boundary conditions needed to remove uncontrolled BG/AW endpoint means.
+    """Candidate boundary conditions, not a carried estimator cancellation.
 
-    For the translation chain S'=p, p'=v, v'=a_hat plus OU AW prediction,
-    three integrations by parts show that AW endpoint coefficients vanish when
-    psi and its first two derivatives vanish at both ends.  The four-S-event
-    quadratic spline already has exactly these six boundary conditions.
-
-    For gyro bias, theta'=-[omega_hat]x theta + b_hat_g at the differential
-    level.  A left adjoint z_theta satisfying z' = z[omega_hat]x has the bias
-    coefficient integral z_theta dt.  Cancelling absolute b_hat_g endpoints
-    through the signed physical bias recurrence requires a companion
-    multiplier z_b with z_b'=-z_theta and z_b=0 at both ends; equivalently
-    integral z_theta dt=0.  Thus the gyro multiplier must have zero temporal
-    mean in addition to zero boundary bias coefficient.
+    The spline jets remove v,p,S boundary terms in integration by parts.
+    A continuum gyro companion z_b'=-z_theta has zero end values iff the
+    multiplier integral is zero. Neither fact supplies observation forcing
+    compatibility or eliminates the discrete residual sums automatically.
     """
     return {
       "AW_endpoint_conditions":["psi(t0)=psi(t1)=0","psi'(t0)=psi'(t1)=0",
                                 "psi''(t0)=psi''(t1)=0"],
-      "four_S_spline_satisfies_AW_endpoint_conditions":True,
+      "four_S_spline_satisfies_boundary_jets":True,
+      "coupled_estimator_endpoint_cancellation_certified":False,
       "BG_companion_equation":"z_b'=-z_theta",
       "BG_endpoint_conditions":["z_b(t0)=0","z_b(t1)=0"],
       "equivalent_BG_moment_condition":"integral z_theta dt = 0",
@@ -225,10 +224,11 @@ def endpoint_annihilating_multiplier_constraints():
 def gyro_zero_mean_companion(z_theta_integrals):
     """Exact discrete companion test for the signed gyro recurrence.
 
-    Inputs are exact cell integrals of the transported attitude multiplier.
+    Inputs are candidate exact cell integrals of an attitude multiplier.
     z_b starts and ends at zero iff their signed sum is zero.  This removes
-    absolute b_hat_g endpoint dependence; only bounded physical increments and
-    correction/reset defects remain.
+    a constant component of a physical bias sequence. Compatibility with the
+    actual adjoint/observation equations is a separate obligation; it does not
+    remove the estimator's constant gyro-bias offset or its alias risk.
     """
     q=tuple(F(x) for x in z_theta_integrals)
     zb=F(0); path=[zb]
@@ -241,8 +241,8 @@ def balanced_gyro_weights(cell_integrals):
     """Project one scalar multiplier sequence onto the zero-mean subspace.
 
     This is an algebraic construction, not a shipping certificate.  It shows
-    endpoint cancellation costs one temporal moment rather than an absolute
-    BG state bound.
+    only that the signed sum vanishes. It generally destroys the carried
+    adjoint equations and cannot certify estimator endpoint cancellation.
     """
     q=[F(x) for x in cell_integrals]
     if not q: raise ValueError("cells required")
@@ -254,14 +254,116 @@ def balanced_gyro_weights(cell_integrals):
 
 def endpoint_cancelled_source_bound(z_norm_l1, defect_bound,
                                     gyro_companion_l1, gyro_bias_rate,
-                                    duration):
-    """Bound after AW/BG absolute endpoints have been annihilated.
+                                    duration, *, state_residual_bound,
+                                    innovation_residual_bound):
+    """Conditional bound retaining BOTH compatibility residual supplies.
 
-    Remaining terms are literal affine/reset defects plus physical gyro-bias
-    increments.  No absolute b_hat_g or a_hat_w endpoint bound appears.
+    Endpoint cancellation, each supplied norm ceiling and its same-history
+    interpretation must be proved separately. Neither residual defaults to 0.
     """
     vals=tuple(F(x) for x in (z_norm_l1,defect_bound,gyro_companion_l1,
-                              gyro_bias_rate,duration))
+                              gyro_bias_rate,duration,state_residual_bound,
+                              innovation_residual_bound))
     if any(x<0 for x in vals): raise ValueError("nonnegative bounds required")
-    z,d,zb,dg,T=vals
-    return z*d + zb*dg*T
+    z,d,zb,dg,T,rs,ri=vals
+    return z*d + zb*dg*T + rs + ri
+
+
+def adjoint_compatibility(carried_gains, weights):
+    """Exact test for Z_N C=W, C_i=A_(N-1)...A_(i+1)K_i.
+
+    Returns a compatible terminal multiplier, or an exact witness v with
+    C v=0 and W v!=0. No rank tolerance or normal equations are used.
+    All exported-float operands must be converted to their exact rationals;
+    such a test then concerns that exported word, not every source history.
+    """
+    from .matrix_certificates import matmul
+    c=[[F(x) for x in row] for row in carried_gains]
+    w=[[F(x) for x in row] for row in weights]
+    if not c or not w or not c[0] or any(len(r)!=len(c[0]) for r in c+w):
+        raise ValueError("nonempty C and W with equal column count required")
+    n,m,p=len(c),len(c[0]),len(w)
+    basis=[]
+    for j in range(m):
+        x=[c[i][j] for i in range(n)]
+        y=[w[i][j] for i in range(p)]
+        v=[F(i==j) for i in range(m)]
+        for pivot,b,d,q in basis:
+            a=x[pivot]
+            if not a: continue
+            x=[s-a*t for s,t in zip(x,b)]
+            y=[s-a*t for s,t in zip(y,d)]
+            v=[s-a*t for s,t in zip(v,q)]
+        pivot=next((i for i,a in enumerate(x) if a),None)
+        if pivot is None:
+            if any(y):
+                assert all(a==[0] for a in matmul(c,[[a] for a in v]))
+                assert matmul(w,[[a] for a in v])==[[a] for a in y]
+                return {"compatible":False,"kernel_witness":v,
+                        "weight_residual":y,"carried_rank_at_failure":len(basis)}
+        else:
+            a=x[pivot]
+            basis.append((pivot,[s/a for s in x],[s/a for s in y],[s/a for s in v]))
+    z=[[F(0) for _ in range(n)] for _ in range(p)]
+    for pivot,b,d,_ in reversed(basis):
+        for i in range(p):
+            z[i][pivot]=d[i]-sum(z[i][k]*b[k] for k in range(n) if k!=pivot)
+    assert matmul(z,c)==w
+    return {"compatible":True,"terminal_multiplier":z,"carried_rank":len(basis)}
+
+
+def signed_bias_terms(weights, biases):
+    """Signed Abel identity for one scalar physical bias history.
+
+    Matrix weights follow componentwise. Sum c_i b_i=(sum c_i)b_0
+    +sum_j (sum_(i>j)c_i)(b_(j+1)-b_j). Take norms only after these sums.
+    """
+    c,b=tuple(map(F,weights)),tuple(map(F,biases))
+    if not c or len(c)!=len(b): raise ValueError("matching nonempty history required")
+    tails=[sum(c[j+1:],F(0)) for j in range(len(c)-1)]
+    return {"boundary":sum(c)*b[0],
+            "increments":sum((a*(b[j+1]-b[j]) for j,a in enumerate(tails)),F(0)),
+            "tail_weights":tails}
+
+
+def sampled_tilt_span_lower(theta_e, omega_max, fill_distance):
+    """Angular span >= theta_E-2 Omega eta on samples covering the window.
+
+    eta is the physical-time fill distance, not automatically half a step:
+    use h_max for in-window samples unless endpoint coverage proves better.
+    This is a physical-direction statement, never an estimator-attitude one.
+    """
+    theta,omega,eta=map(F,(theta_e,omega_max,fill_distance))
+    if theta<=0 or omega<0 or eta<0: raise ValueError("invalid span/coverage bounds")
+    return max(F(0),theta-2*omega*eta)
+
+
+def signed_acceleration_supply(endpoint_weight_norm_sum, weight_variation,
+                               weighted_cell_square_sum, velocity_bound, jerk_bound):
+    """Conditional physical bound on sum h_i C_i a(t_i).
+
+    C_i can be the actual signed accelerometer residual multiplier times the
+    true body-to-world inverse. First sum by parts against physical velocity:
+    C_last v_N-C_first v_0+sum (C_(i-1)-C_i)v_i. Left-cell sampling adds
+    at most (J/2)sum ||C_i||h_i^2. No estimator mean or innovation is bounded
+    by this lemma. Norms are taken after signed temporal weight differences.
+    """
+    e,var,cells,v,j=map(F,(endpoint_weight_norm_sum,weight_variation,
+                          weighted_cell_square_sum,velocity_bound,jerk_bound))
+    if min(e,var,cells,v,j)<0: raise ValueError("nonnegative source bounds required")
+    return v*(e+var)+j*cells/2
+
+
+def gyro_construction_barrier():
+    """Necessary bias-mean magnitude for a first complete turn; not exclusion."""
+    import json
+    from pathlib import Path
+    c=json.loads(Path(__file__).with_name('constants.json').read_text(),parse_float=F)
+    omega=c['marine_motion']['Omega_max_rad_s']; bg=c['imu_bias']['B_g_rad_s']
+    ng=c['sensor_model']['gyro_fast_residual_norm_max_rad_s']
+    hmax=c['sensor_model']['sample_period_max_s']; pi_lower=F('3.14159265358979323846')
+    return {"first_prediction_increment_ceiling":hmax*(omega+bg+ng),
+            "complete_turn_requires_bias_norm_at_least":2*pi_lower/hmax-omega-bg-ng,
+            "initial_bias_mean":F(0),
+            "all_time_signed_gain_innovation_sum_ceiling":None,
+            "construction_unreachable_certified":False}

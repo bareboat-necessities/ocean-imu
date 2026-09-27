@@ -57,6 +57,7 @@ jobs:
           python3 -m unittest discover -s tests/validation -p test_ou3_corrected_word.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_ag_readout.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_construction_mean_action.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_signed_temporal.py -v
           python3 tools/stability/ou3_theorem/block_factor_numeric.py
           python3 -m unittest discover -s tests/validation -p test_ou3_block_factor_numeric.py -v
       - name: Preserve reproducible source and LIN certificate
@@ -86,6 +87,8 @@ jobs:
         run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test
       - name: Audit carried source readout without promotion
         run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-readout.json
+      - name: Check signed adjoint compatibility on the carried word
+        run: python3 -m tools.stability.ou3_theorem.signed_temporal_diagnostic --output /tmp/ou3-signed-adjoint.json
       - name: Audit carried construction stress history without theorem promotion
         run: python3 -m tools.stability.ou3_theorem.construction_history_diagnostic --output /tmp/ou3-construction.json
       - name: Enclose carried mean action and record the failed uniform separation attempt
@@ -99,6 +102,7 @@ jobs:
           path: |
             /tmp/ou3-stability-evidence.json
             /tmp/ou3-source-readout.json
+            /tmp/ou3-signed-adjoint.json
             /tmp/ou3-construction.json
             /tmp/ou3-mean-diagnostic.json
             /tmp/ou3-mean-enclosure.json

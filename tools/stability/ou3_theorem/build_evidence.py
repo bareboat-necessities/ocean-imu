@@ -48,8 +48,10 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.sampling_fidelity import certificate as sampling_certificate
     from tools.stability.ou3_theorem.corrected_word import certificate as corrected_certificate
     from tools.stability.ou3_theorem.ag_readout import certificate as readout_certificate
+    from tools.stability.ou3_theorem.signed_temporal import certificate as signed_certificate
     for name, generate in (
         ("ag-readout-certificate.json",readout_certificate),
+        ("signed-temporal-certificate.json",signed_certificate),
         ("corrected-word-certificate.json",corrected_certificate),
         ("sampling-fidelity.json",sampling_certificate),
         ("lin-matrix-certificate.json",matrix_certificate),
@@ -77,6 +79,11 @@ def validate() -> dict:
         failures.append("construction mean header fingerprint changed")
     if mean.get("exact_summary") != verify_summary(mean["enclosure"], mean["committed_field"]):
         failures.append("construction mean action differs from rational factor reproduction")
+    from tools.stability.ou3_theorem.signed_temporal_diagnostic import verify_diagnostic
+    try:
+        verify_diagnostic(json.loads((STATUS.parent/"signed-adjoint-diagnostic.json").read_text()))
+    except (ValueError, KeyError, OSError) as error:
+        failures.append("signed adjoint diagnostic verification failed: "+str(error))
     return {"validation_pass":not failures,"failures":failures,"base_main_commit":provenance["base_main_commit"],
             "shipping_behavior_authority":"source implementation","theorem_closed":expected["theorem_closed"]}
 
