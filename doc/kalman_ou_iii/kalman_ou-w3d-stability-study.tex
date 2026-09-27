@@ -264,6 +264,59 @@ Physical bias is unchanged by prediction mode, correction, hold/release, or
 projection. The shipping gyro-bias mean predictor is identity, giving
 $e_{b_g,k+1}^{-}=e_{b_g,k}^{+}+w_{g,k}$ before its actual correction.
 
+\subsection{Implemented residual gyro-bias invariant}
+Both OU-II and OU-III constrain the residual sensor-bias estimate to the
+Euclidean ball $\|\hat b_g\|\le R_g=0.5\,\mathrm{rad/s}$. This deliberately
+generous estimator radius is distinct from the physical residual qualification
+$B_g=0.02\,\mathrm{rad/s}$. It is enforced before prediction, after every
+coupled correction, at initialization/handoff and after frame retargeting.
+The common correction guard precedes the invalid-attitude return. The mean
+alone is projected; covariance is preserved. Non-finite bias recovers to zero.
+The finite implementation scales safely and uses an inward allowance of eight
+scalar epsilons; its rounding defect is carried separately.
+
+For the already qualified $h\in[0.004,0.006]$ s family, the literal calibrated
+gyro input includes physical rate, total post-calibration residual bias and
+fast measurement residual. With $N_g=0.02\,\mathrm{rad/s}$,
+\begin{align}
+ \phi&=h\|\omega_m-\hat b_g\|\nonumber\\
+ &\le 0.006(0.6108652381980153+0.02+0.02+0.5)\nonumber\\
+ &=0.0069051914291880918\ \mathrm{rad}.
+\end{align}
+The normalized quaternion polynomial adds at most
+$4(\phi^6/46080+\phi^7/645120)$ to its real-source angle. Hence a conservative
+angle cap is $\bar\phi=0.007$ rad, with margins exceeding $3.13459$ rad from
+$\pi$ and $6.27618$ rad from $2\pi$. Calibration and temperature residuals
+are included in $B_g$. The device API itself admits arbitrary positive finite
+timesteps; this certificate does not cover device stalls outside the qualified
+range or unqualified gyro spikes.
+
+\begin{lemma}[One-prediction gyro-transport separation]
+On this qualified real-source family, each transverse singular value of the
+shipping integrated gyro transport satisfies
+\begin{align}
+ \sigma_\perp(B)&=\frac{2|\sin(\phi/2)|}{\|\omega\|}
+ =h\,\operatorname{sinc}(\phi/2)\nonumber\\
+ &\ge h(1-\bar\phi^2/24)\nonumber\\
+ &\ge0.003999991833333333\ldots\ \mathrm{s}>0.
+\end{align}
+\end{lemma}
+\begin{proof}
+Use $\sin x\ge x-x^3/6$ for $0\le x\le0.0035$. The zero-rate limit is
+$hI$. The separate $\|\omega\|<10^{-7}$ source polynomial has transverse
+symmetric part $h(1-\phi^2/6)I$, whose lower bound is larger.
+\end{proof}
+This excludes the complete-turn nominal bias alias but does not close the
+full signed temporal $\inf_W\Delta_{\rm gyr}(W)>0$: chronological observation
+forcing, resets and projection defects still require a uniform word bound.
+Nominal force/field collinearity remains a separate obstruction. For ideal
+projection $d_g=\hat b_g^{\rm corr}-\operatorname{Proj}_{R_g}(\hat b_g^{\rm corr})$,
+$(e_g^+)^{\mathsf T}d_g\le-(R_g-B_g)\|d_g\|$, with radius gap $0.48$.
+As for accelerometer bias, this component sector is not full covariance-metric
+contraction: all cross terms and the rounding supply remain in the same
+finite-error inequality. No covariance reset or OU-II stability project is
+introduced.
+
 \section{Magnetic service}
 For a certified service window rooted at $s$, let $\Phi_{k\leftarrow s}$ be
 the ordered differential of the complete preceding same-history shipping
@@ -1032,12 +1085,13 @@ This coefficient family is not proved reachable or magnetically serviced.
 The missing uniform argument must use the carried nominal mean, innovation
 and reset recursion to exclude sustained near-null transport.
 
-An innovation-only relaxation also fails: quiet truth, zero nuisance means,
+The historical unprojected relaxation fails: quiet truth, zero nuisance means,
 $h=1/200$ s and $\hat b_g=-400\pi e_z$ give zero innovations but
 $R(h)=I$, $B(h)=h e_z e_z^{\mathsf T}$. The invisible transverse gyro
 columns give rank four and margin $-\mu$ against $\mu I_6$.
-Construction reachability and magnetic service are unproved; this is not a
-shipping counterexample. Nominal gyro control must follow from construction.
+This bias is outside the implemented $R_g=0.5$ ball, so the relaxation is no
+longer an admissible shipping nominal state. The one-step separation above
+does not supply the complete historical reader action or force/field margin.
 
 Carried quiet/moving audits have identical observer/control terminal states
 and covariances, with action maxima about 1199.061--1450.253.

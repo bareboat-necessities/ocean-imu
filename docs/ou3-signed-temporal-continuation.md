@@ -162,28 +162,26 @@ This is the requested source-uniform form: innovations and gains disappear
 through the signed chronological identity rather than being independently
 bounded.
 
-Applying it to the shipping source exposes a sharper obstruction.  The
-accelerometer-bias estimate has the literal global projection bound
-||b_hat_a||<=0.4.  In contrast, the gyro-bias estimate has identity mean
-prediction and no projection/saturation, and the latent AW mean has OU
-prediction/corrections but no mean saturation.  The physical bounds
-||b_g||<=0.02 and ||a||<=8.8 do not bound those two estimator means before the
-same-history error/capture result being proved.  Covariance/tuner clamps are
-not mean-state clamps.
+The shipping source bounds the accelerometer-bias estimate by 0.4 m/s^2
+and now bounds the gyro-bias estimate by 0.5 rad/s. These are implemented
+mean projections, separate from the physical bias assumptions. The latent AW
+mean still has no absolute saturation. Covariance/tuner clamps do not supply
+an AW mean bound.
 
-Therefore the exact telescoping derivation removes the previously missing
-innovation-functional ceiling, but replaces it by BG/AW endpoint terms for
-which the current theorem premises contain no absolute source-uniform bound.
-Using the finite 600-s mean audit (BG<1), or imposing a nominal AW box, would
-be circular/nonuniform and is not promoted.
+Exact telescoping therefore leaves a bounded BG endpoint and an uncontrolled
+AW endpoint, together with literal correction, reset and projection defects.
+The gyro projection contributes `-E_g d_g` to the mean recurrence and its
+opposite to the error recurrence. Its component sector has radius gap .48
+rad/s; full covariance cross terms and inward-rounding supply remain.
+The finite 600-s mean audit verifies gyro projection inactive and cannot
+replace an all-window AW or signed-transfer enclosure.
 
-This is an analytical endpoint obstruction, not a numerical-conditioning
-failure: under the unchanged theorem premises the present forced-adjoint
-choice cannot yield a finite numeric source-uniform correction/reset ceiling.
-A successful next construction must choose multipliers/physical balances whose
-BG/AW endpoint coefficients vanish, or cancel those endpoint means against
-the gyro and integral physical identities. Adding an estimator-mean bound as
-a new physical assumption is not justified.
+The one-prediction gyro transport is uniformly nonsingular in the qualified
+4--6 ms family, with floor `.003999991833333333 s`; see
+[the implemented invariant](ou-gyro-bias-projection.md). This is not the full
+`Delta_gyr(W)` of the forced, reset-transported temporal operator. Both full
+source-uniform temporal margin fields remain unproved. The endpoint-cancelled
+construction below remains subordinate to the same single proof architecture.
 
 ## Endpoint-annihilating multipliers
 

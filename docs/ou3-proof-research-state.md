@@ -11,10 +11,83 @@ The smooth diagonal-wave construction with R=I and other sustained non-still
 constant-attitude translations are therefore inadmissible. The retained
 quiet-bias stillness construction remains admissible, so V<=36 is not a
 universal capture target. The same-history construction -> capture -> H18 ->
-release -> A21 architecture and shipping behavior remain unchanged. General
+release -> A21 architecture is unchanged. OU-II/III now implement a separate
+residual gyro-bias estimate ball of radius .5 rad/s. This excludes the old
+full-turn bias relaxation and closes one-step gyro transport separation on
+the qualified 4--6 ms source domain, not the full signed temporal Delta_gyr.
+General
 physical capture and the complete stability theorem are open.
 
 ## Evidence
+
+### Gyro-bias projection investigation
+
+The parallel full replay/build attempt exhausted local scratch space. The
+modified full audit failed `OSError: [Errno 28] No space left on device`;
+`make all` failed assembling `shipping_contract-test.o` with the same error.
+Classification: storage exhaustion, invalidating completion of those runs.
+Removed only this checkout's reproducible ignored simulation time-series CSVs
+(2.36 GB), retained all metrics/logs and source evidence, and removed the failed
+object. Retry with optional time-series writing disabled; all scenarios and
+quality gates remain unchanged. Completed baseline and smoke evidence remain
+valid. Direct HTTPS push also lacked credentials (`could not read Username`);
+use the authorized GitHub connector to publish the identical reviewed tree.
+
+
+The first `make all` stopped while compiling OU-III `kalman_ou_iii-sim.cpp`:
+`g++: fatal error: Killed signal terminated program cc1plus`, followed by
+`Makefile:62: kalman_ou_iii-sim.o Error 1`. Classification: local resource
+exhaustion during concurrent Eigen-heavy diagnostic builds, not a source
+compile diagnostic. Retain completed focused tests and replays. Retry the
+unchanged full build after the diagnostic compilers finish, without lowering
+optimization, disabling tests or changing quality gates.
+
+
+The validation audit initially used the runner's single-family option, but
+`stationary_normalized_aggregate` rejected it with `stationary normalized
+aggregate is not paired`. Classification: diagnostic protocol mismatch; the
+paired publication runner requires both families for its aggregate. Retain
+all completed standalone audits. Run both frozen instrumented binaries in
+one unchanged paired protocol and retain every observed replay; do not alter
+the aggregation gate or estimator to accommodate the audit.
+
+
+The first post-edit OU-III proof suite correctly failed seven provenance/status
+checks while native source evidence was still bound to the old headers. No
+mathematical test failed. Classification: expected stale evidence, invalidating
+reuse of the old source-bound transcript. Retained: exact algebra and the
+new one-cell lemma. Regenerate the native readout, construction and mean-action
+traces, then bind their newly generated hashes and rerun the full proof suite;
+do not restamp the previous evidence.
+
+
+Completed baseline normal/stress audits observed maxima .00453739418/.00625276338
+rad/s in OU-II/III ordinary simulations and .02499966138/.02478606482 in
+stationary-device stress. The chosen .5 radius leaves 20x the largest observed
+stress and 25x the physical qualification. All candidate radii .1,.2,.5,1
+were inactive. Paired replays, the new common-helper regressions and the
+source-uniform one-prediction certificate are described in
+`ou-gyro-bias-projection.md`. Covariance and filter tuning are unchanged.
+
+
+The first read-only bias audit compiled and passed the full OU-II simulator,
+then its OU-II startup diagnostic failed to link: `multiple definition of
+g_std`. The diagnostic incorrectly linked W3dSimCommon.cpp to the standalone
+OU-II startup target. Classification: diagnostic build recipe, not estimator
+behavior or a mathematical failure. The regular target's standalone link is
+retained; only the OU-III startup target needs W3dSimCommon. The completed
+OU-II observations remain valid. The corrected observer and both baseline families now pass; the original
+completed observations are retained in the paired report. No stability result is promoted by this diagnostic.
+
+The first adversarial native regression then failed `invalid sensor packet
+changed gyro estimate`: both OU accelerometer APIs allowed a NaN sample to
+enter the coupled correction, after which the gyro recovery correctly zeroed
+the contaminated estimate. Classification: invalid-input handling gap. The
+invalidated expectation was that accelerometer updates shared the magnetic
+finite-input rejection. Reject non-finite acceleration/temperature before the
+correction, preserving state/covariance; keep the central gyro recovery for
+non-finite computed corrections. Next check: repeat the adversarial tests and
+unchanged valid-input replays. No numerical gate or covariance reset changes.
 
 ### Stillness-or-attitude excitation propagation
 
@@ -157,16 +230,17 @@ compatible with the nominal mean recursion or all-time magnetic service.
 This is a failed relaxation, not a shipping counterexample. Refining a minor,
 precision or coefficient boxes cannot exclude its exact nullspace.
 
-The nominal-history follow-up invalidates an innovation-only exclusion:
-quiet inputs, h=.005 and nominal b_g=-400 pi e_z make one complete nominal
-turn per sample. All innovations are zero and the regular nominal mean
-recursion is satisfied in real arithmetic. The literal bias transport is
-h e_z e_z', leaving two exact hidden gyro columns; rank=4 and Gram-floor
-margin=-mu. This regular-root relaxation is not proved reachable from shipping
-construction or all-time magnetically serviced. A quantitative bound on the
-estimated gyro bias must be derived from that carried construction, not
-substituted from the physical bias assumption. Exact root cancellation and
-a common full matrix action still remain open on actual admitted histories.
+The historical innovation-only relaxation at h=.005 and b_hat_g=-400*pi*e_z
+has zero innovations, real unprojected rank four and Gram-floor margin -mu.
+It is excluded by the implemented .5 rad/s residual-bias sphere. The literal
+qualified prediction argument is at most .0069051914291880918 rad, including
+physical angular rate, both gyro residual envelopes and the estimator radius;
+the real-source angle is below .007 and the transverse B singular floor is
+.003999991833333333 s. This is an implemented estimator invariant, not a new
+physical assumption or a finite-replay promotion. The full signed temporal
+Delta_gyr still needs the chronological observation/reset/projection transfer
+bound. Nominal force/field collinearity remains separate. The device API has
+no enforced maximum positive timestep, so arbitrary stalls are not covered.
 
 A full-construction stress run now uses p=-(3/2)sin(2t)(1,0,1), R=I,
 B=(45,0,45), zero true biases. Exact continuous squared bounds are
@@ -329,6 +403,12 @@ retained through the weighted integral identity documented in
 adjoint construction remain open.
 
 ## Current limiter
+
+The gyro mean ball and one-step real-source transport floor are closed on the
+qualified timing/sensor family. Full signed Delta_gyr and Delta_col, the
+historical action ceiling, capture/release and retention remain open. Arbitrary
+positive API timesteps and whole-word float32 totality are not certified.
+
 
 The six AG columns must be bounded for the actual nominal corrected transport,
 including realized gains and resets. The physical three-dimensional Gramian
@@ -584,15 +664,14 @@ nuisance action, the full corrected loss, and the strict nonlinear/supply and
 every-prefix inequalities. Both exported-word enclosures now include the
 complete addition/symmetrization operation.
 
-The next falsifiable history experiment must propagate a joint nominal-mean
-and covariance bound from the actual zero-mean MEKF construction, through the
-proxy handoff, every correction, refinement and release. It must prove the
-quantitative force/field and gyro exclusions on that same history before
-bounding the full readout action. The first-prediction gyro increment is
-bounded by .0039051914291880918 rad from the true handoff state; extending
-this to an invariant history bound is open. An assumed nominal-state cap is
-not a substitute. For arithmetic, the completed sync factor is available;
-other operation defects and their prefix actions remain open.
+The next falsifiable history experiment must propagate the joint nominal
+force and covariance bounds through actual corrections, refinement and release.
+The implemented .5 rad/s gyro invariant now gives the all-history qualified
+one-prediction .007-rad cap; a one-cell floor does not complete the chronological
+signed gyro margin. Combine that floor with observation forcing, resets and
+mean projection defects while testing the remaining force/field separation.
+For arithmetic the sync factor is available; other operation defects and
+prefix actions remain open.
 
 The executed joint energy propagation now rejects its own proposed pointwise
 separation step by an 8e5 deficit. Replace that relaxation with a signed

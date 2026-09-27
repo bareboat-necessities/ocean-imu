@@ -11,6 +11,8 @@
     "shipping_divergence_claimed": false
   },
   "certified_capture_time": null,
+  "complete_turn_nominal_gyro_bias_alias_excluded": true,
+  "implemented_gyro_bias_norm_invariant": true,
   "next_controlling_obligation": "Under the strengthened MARINE MOTION domain, the smooth diagonal-wave history p=-(3/2)sin(2t)(1,0,1), R=I and every sustained non-still constant-attitude translation are inadmissible. Complete physical stillness remains admissible, including the retained quiet-bias ambiguity, so universal capture into V<=36 is still unavailable. T_E and theta_E remain symbolic because current pinned 28-ft RAO evidence does not certify a source-uniform rolling tilt-span minimum. The controlling proof obligation remains a same-history derivation from physical tilt span plus MAGNETIC SERVICE and the literal gains/resets/OU/bias recursions to positive source-uniform Delta_col and Delta_gyr. The implication from positive temporal margins to L(W)O(W)=T_h(W) and finite B_* is retained, but its premises are not proved. Therefore uniform historical AG action, J_AG, full 21-state covariance upper bound, rho_0<1, finite capture/release, nonlinear retained-region entry/retention, source-qualified recurring magnetic service, and float32 totality remain open.",
   "no_heading_service_result_role": "necessity lemma only",
   "obligations": {
@@ -48,6 +50,9 @@
     "joint_physical_vector_information": true,
     "joint_word_prediction_measurement_input_action": true,
     "local_A21_nonlinear_small_gain_exists": false,
+    "marine_attitude_excitation_implies_signed_temporal_separation": false,
+    "marine_attitude_excitation_numeric_qualification": false,
+    "marine_stillness_or_attitude_excitation_contract": true,
     "maximal_correction_covariance_order": true,
     "no_heading_service_obstruction": true,
     "physical_LIN_prediction_metric_supply": true,
@@ -73,11 +78,9 @@
     "uniform_gravity_tilt_sensitivity": true,
     "uniform_historical_AG_readout_action": false,
     "whole_word_float32_supply_bound": false,
-    "whole_word_float32_supply_composition": true,
-    "marine_stillness_or_attitude_excitation_contract": true,
-    "marine_attitude_excitation_numeric_qualification": false,
-    "marine_attitude_excitation_implies_signed_temporal_separation": false
+    "whole_word_float32_supply_composition": true
   },
+  "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
   "principal_assumptions": [
     "MARINE MOTION",
@@ -98,5 +101,8 @@
   "regional_practical_stability_claimed": false,
   "required_capture_time": "history dependent T_c(h,x_0) < infinity; open under the amended marine-motion domain",
   "shipping_filter_changed_for_proof": false,
-  "theorem_closed": false
+  "shipping_residual_gyro_bias_hardening": true,
+  "signed_temporal_Delta_gyr_closed": false,
+  "theorem_closed": false,
+  "unrestricted_device_timestep_alias_exclusion": false
 }

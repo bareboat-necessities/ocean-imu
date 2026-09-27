@@ -191,11 +191,13 @@ class HistoricalReadoutTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             zero_true_bias_storage_audit({'terminal_covariance': p, 'terminal_state': [[0] for _ in range(21)]})
 
-    def test_zero_innovation_alias_requires_construction_linked_gyro_control(self):
+    def test_zero_innovation_alias_is_outside_implemented_estimator_family(self):
         report = gyro_alias_obstruction()
         self.assertEqual(report['full_AG_array_rank'], 4)
         self.assertEqual(report['all_nominal_innovations'], 'zero')
-        self.assertTrue(report['regular_nominal_mean_recursion_satisfied_real_arithmetic'])
+        self.assertTrue(report['unprojected_nominal_mean_recursion_satisfied_real_arithmetic'])
+        self.assertFalse(report['regular_nominal_mean_recursion_satisfied_real_arithmetic'])
+        self.assertTrue(report['excluded_by_shipping_gyro_projection'])
         self.assertFalse(report['LO_equals_terminal_AG_map_possible'])
         self.assertFalse(report['shipping_construction_reachability_verified'])
         self.assertFalse(report['all_time_magnetic_service_verified'])

@@ -245,7 +245,7 @@
   "decimal_digits": 80,
   "profile": "construction through wrapper release; 225 to 225.32 s",
   "qualification": "OU3_CARRIED_SOURCE_READOUT_DIAGNOSTIC_V1",
-  "shipping_header_sha256": "e38e4caaafa68cc52bd4d35bdeffc652588a312e3757dd734ddae9e3d4a21fd2",
+  "shipping_header_sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
   "source_uniform_verified": false,
   "theorem_closed": false,
   "wave_truth": "p_z=.4 sin(.6t), roll=.02 sin(.5t), B_world=(60,0,30); zero physical biases"

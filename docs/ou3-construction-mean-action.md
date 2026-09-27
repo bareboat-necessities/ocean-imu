@@ -5,7 +5,10 @@ source-uniform historical AG reader. Before an action ceiling B_* can be
 certified, the construction and subsequent nominal recursion must exclude
 sustained force/field collinearity and gyro aliasing. The following is an
 executed necessary separation test, not a replacement contraction argument.
-It closes a finite recorded gyro barrier and rejects an energy-only route to
+The implemented 0.5 rad/s gyro invariant now supplies the all-history mean
+bound (see `ou-gyro-bias-projection.md`); this audit remains useful for the
+force/field and full action questions. It closes a finite recorded gyro barrier
+and rejects an energy-only route to
 the simultaneous uniform exclusion. All source-uniform claims remain open.
 
 ## Exact joint recurrence
@@ -20,7 +23,10 @@ At an accepted rank-three correction it is `u^+=u^-+K_u r`. Here K_u contains
 the actual six rows of the full gain. In particular, nuisance cross covariance,
 correlated process noise, varying parameters and previous resets remain in
 K_u and the actual innovation covariance S. The attitude reset acts as the
-identity on u. Bias projection changes BA only. A frame or other hard event
+identity on u. Gyro projection contributes a separate `-E_g d_g` mean defect;
+accelerometer-bias projection acts on BA. The recorded observer fails if any
+gyro projection engages, so the affine audit below applies only to its
+verified inactive replay. A frame or other hard event
 that changes u must be included explicitly; the recorded construction checks
 every seam and fails on any unrecorded change. No estimator or physical state
 is restarted at an audit boundary.

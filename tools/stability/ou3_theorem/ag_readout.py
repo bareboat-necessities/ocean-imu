@@ -299,7 +299,7 @@ def coefficient_relaxation_obstruction():
 
 
 def gyro_alias_obstruction():
-    """Mean-recursion-compatible regular-root relaxation, not a carried root.
+    """Unprojected historical relaxation, excluded by the shipping invariant.
 
     Quiet truth, zero residuals and the nominal bias -2*pi/h e_z give one
     complete nominal turn per sample. Literal real-arithmetic Rodrigues and
@@ -345,14 +345,16 @@ def gyro_alias_obstruction():
             'null_Rayleigh_margin_against_I6': '-1',
             'LO_equals_terminal_AG_map_possible': False,
             'quiet_physical_motion_and_true_bias_limits_satisfied': True,
-            'regular_nominal_mean_recursion_satisfied_real_arithmetic': True,
+            'unprojected_nominal_mean_recursion_satisfied_real_arithmetic': True,
+            'regular_nominal_mean_recursion_satisfied_real_arithmetic': False,
+            'excluded_by_shipping_gyro_projection': True,
             'all_nominal_innovations': 'zero',
             'arbitrary_realized_gains_cannot_remove_annihilator': True,
             'shipping_construction_reachability_verified': False,
             'all_time_magnetic_service_verified': False,
             'literal_float32_alias_claimed': False,
             'shipping_stability_refuted': False,
-            'invalidated_method': 'innovation bounds alone without construction-linked nominal gyro control'}
+            'invalidated_method': 'unprojected relaxation with unconstrained estimated gyro bias'}
 
 
 def certificate():

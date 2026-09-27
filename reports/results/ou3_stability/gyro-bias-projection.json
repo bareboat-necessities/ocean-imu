@@ -1,0 +1,30 @@
+{
+  "actual_real_source_rotation_angle_upper_rad": "7/1000",
+  "admitted_step_s": [
+    "1/250",
+    "3/500"
+  ],
+  "all_positive_device_timesteps_covered": false,
+  "complete_turn_nominal_bias_alias_excluded": true,
+  "corrected_rate_norm_upper_rad_s": "11508652381980153/10000000000000000",
+  "estimator_radius_rad_s": "1/2",
+  "fast_measurement_residual_rad_s": "1/50",
+  "float32_word_totality_certified": false,
+  "force_field_collinearity_excluded": false,
+  "gyro_transport_relative_singular_floor": "23999951/24000000",
+  "gyro_transport_singular_floor_s": "23999951/6000000000",
+  "margin_from_pi_lower_rad": "313459/100000",
+  "margin_from_two_pi_lower_rad": "313809/50000",
+  "mean_only_covariance_preserved": true,
+  "physical_angular_rate_rad_s": "6108652381980153/10000000000000000",
+  "physical_assumptions_changed": false,
+  "physical_residual_bias_rad_s": "1/50",
+  "prediction_argument_upper_rad": "34525957145940459/5000000000000000000",
+  "qualification": "OU3_IMPLEMENTED_GYRO_BIAS_INVARIANT_V1",
+  "quaternion_polynomial_angle_defect_upper_rad": "13180869093452772019125852226077360904759796379551944279094185586922200655786892179060479099340384822821186555401233291/1400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+  "remaining_scope": "The full signed temporal margin includes chronological reset/observation forcing and projection defects; a one-cell singular floor does not bound that word operator.",
+  "signed_temporal_Delta_gyr_closed": false,
+  "single_prediction_transport_source_uniform_real_arithmetic": true,
+  "small_rate_polynomial_singular_floor_s": "49999999999999999997/12500000000000000000000",
+  "uniform_historical_AG_action_closed": false
+}

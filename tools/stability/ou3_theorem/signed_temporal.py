@@ -45,6 +45,10 @@ def projection_sector_gap():
 
 def certificate():
     p=physical_bounds()
+    from .gyro_bias_projection import certificate as gyro_certificate
+    gyro = gyro_certificate()
+    endpoints = source_uniform_nominal_endpoint_bounds()
+    attempt = source_margin_attempt()
     return {
       "qualification":"OU3_SIGNED_TEMPORAL_V1",
       "actual_S_event_signed_temporal_identity":True,
@@ -57,16 +61,37 @@ def certificate():
       "regular_A21_pre_projection_BA_precision_ceiling":1000003000,
       "source_uniform_nominal_force_field_temporal_margin":False,
       "source_uniform_nominal_gyro_alias_temporal_margin":False,
+      "implemented_BG_norm_bound_rad_s":gyro["estimator_radius_rad_s"],
+      "one_prediction_gyro_transport_floor_s":gyro["gyro_transport_singular_floor_s"],
+      "complete_turn_bias_relaxation_excluded":True,
       "temporal_margins_imply_finite_B_star":True,
       "B_star_instantiated":False,
       "uniform_historical_AG_readout_action":False,
       "full_21_covariance_upper":False,
       "rho0_certified":False,
+      "temporal_margin_to_B_star_method":"finite largest-residual pivot-chart cover; adjugate/Hadamard inverse bound; finite backward rank<=3 factor action",
+      "source_uniform_enclosure_attempt_executed":True,
+      "physical_collinearity_reserve":str(attempt["physical_collinearity_reserve"]),
+      "forced_adjoint_signed_transfer_ceiling":attempt["forced_adjoint_signed_transfer_ceiling"],
+      "reset_transport_transfer_ceiling":attempt["reset_transport_transfer_ceiling"],
+      "Delta_col_lower":attempt["Delta_col_lower"],
+      "Delta_gyr_lower":attempt["Delta_gyr_lower"],
+      "first_failed_inequality":"AW endpoint control and the complete signed correction/reset/projection transfer must be enclosed before the physical reserve can give a strict temporal margin",
+      "failure_classification":"missing source-uniform signed transfer bound; no new physical assumption introduced",
+      "forced_adjoint_identity":"sum W_i r_i = Z_N u_N - Z_0 u_0 - sum Z_(i+1) d_i",
+      "innovation_energy_needed_for_forced_adjoint":False,
+      "BA_estimator_endpoint_norm_ceiling":str(endpoints["b_hat_a_norm"]),
+      "BG_estimator_endpoint_norm_ceiling":str(endpoints["b_hat_g_norm"]),
+      "AW_estimator_endpoint_norm_ceiling":endpoints["a_hat_w_norm"],
+      "forced_adjoint_endpoint_obstruction":True,
+      "AW_endpoint_annihilated_by_spline_boundary_jets":True,
+      "BG_endpoint_annihilation_condition":"integral z_theta dt = 0 with z_b'=-z_theta and z_b endpoints zero",
+      "BG_absolute_estimate_bound_required":False,
+      "AW_absolute_estimate_bound_required":False,
+      "endpoint_cancelled_source_functional":"F_defect + sum z_b,k w_g,k",
+      "endpoint_cancelled_source_ceiling":"sum ||Z_(k+1)|| ||d_k|| + D_g sum ||z_b,k|| dt_k",
+      "next_unresolved_inequality":"positive physical/observation separation reserve exceeds zero-mean multiplier projection cost plus literal defect and gyro-increment supply",
     }
-
-if __name__=="__main__":
-    import json
-    print(json.dumps(certificate(),indent=2,sort_keys=True))
 
 
 def separated_reader_action_implication(delta_col, delta_gyr, coefficient_ceiling,
@@ -163,19 +188,20 @@ def literal_signed_functional_bound(weight_l1, endpoint_state_bound,
 def source_uniform_nominal_endpoint_bounds():
     """Bounds already supplied by literal shipping projection/clamps.
 
-    BA is globally projected.  BG has no analogous projection. AW has a
-    covariance/tuner clamp but its *mean* has no shipping saturation. Thus the
+    BA and BG are projected. AW has a covariance/tuner clamp but its *mean*
+    has no shipping saturation. Thus the
     present assumptions do not provide an absolute source-uniform endpoint
     bound for u=(b_hat_g,a_hat_w).  This distinction is the exact reason the
     endpoint telescoping cannot yet become a numeric Delta margin.
     """
+    from .gyro_bias_projection import source_radius
     return {
       "b_hat_a_norm":F(2,5),
-      "b_hat_g_norm":None,
+      "b_hat_g_norm":source_radius(),
       "a_hat_w_norm":None,
       "physical_b_g_norm":F(1,50),
       "physical_a_norm":F(44,5),
-      "classification":"BG/AW estimator means have no source-uniform absolute clamp",
+      "classification":"BG endpoint is bounded; AW mean has no source-uniform absolute clamp",
     }
 
 
@@ -190,7 +216,7 @@ def forced_adjoint_source_bound():
       "BG_endpoint_bounded":ep["b_hat_g_norm"] is not None,
       "AW_endpoint_bounded":ep["a_hat_w_norm"] is not None,
       "finite_numeric_ceiling":None,
-      "reason":"exact telescoping leaves BG/AW endpoint means; neither has an absolute shipping/source bound under the current theorem premises",
+      "reason":"exact telescoping leaves bounded BG and unbounded AW endpoints plus correction/reset/projection defects; their full signed transfer ceiling remains open",
       "consequence":"a source-uniform numeric correction/reset ceiling cannot be derived from the current premises alone by this adjoint",
     }
 
@@ -265,3 +291,8 @@ def endpoint_cancelled_source_bound(z_norm_l1, defect_bound,
     if any(x<0 for x in vals): raise ValueError("nonnegative bounds required")
     z,d,zb,dg,T=vals
     return z*d + zb*dg*T
+
+
+if __name__ == "__main__":
+    import json
+    print(json.dumps(certificate(), indent=2, sort_keys=True))

@@ -17,6 +17,45 @@
 
 namespace ocean_imu::kalman::ou_detail {
 
+// The estimated state is residual sensor bias, not vessel angular rate.
+// This deliberately generous fixed ball is separate from the commissioned
+// physical residual-bias bound (0.02 rad/s). See docs/ou-gyro-bias-projection.md.
+inline constexpr double gyro_bias_radius_rad_s = 0.5;
+
+template<typename T, class Derived>
+inline void project_gyro_bias(Eigen::MatrixBase<Derived>& bias) {
+    const T radius = T(gyro_bias_radius_rad_s);
+    if (!bias.allFinite()) { bias.setZero(); return; }
+    const T largest = bias.cwiseAbs().maxCoeff();
+    if (largest == T(0)) return;
+
+    // The ordinary path is bit-for-bit unchanged. Bound the rounding of the
+    // three squared components before accepting a point close to the sphere.
+    if (largest <= radius) {
+        if (bias.squaredNorm() < radius*radius*(T(1)-T(8)*std::numeric_limits<T>::epsilon())) return;
+        // Exact axial boundary points must remain unchanged.
+        if (largest == radius && (bias.array() != T(0)).count() == 1) return;
+        const double infinity = std::numeric_limits<double>::infinity();
+        double upper = 0;
+        for (int i = 0; i < 3; ++i) {
+            const double x = static_cast<double>(bias(i));
+            if (x != 0) {
+                const double square = std::nextafter(x*x, infinity);
+                upper = std::nextafter(upper+square, infinity);
+            }
+        }
+        if (upper <= double(radius)*double(radius)) return;
+    }
+
+    // Scale first: even finite near-FLT_MAX/DBL_MAX vectors must retain their
+    // direction rather than overflow their norm. The tiny inward rounding
+    // allowance keeps the stored vector inside the Euclidean sphere.
+    const Eigen::Matrix<T,3,1> unit = bias / largest;
+    const T inward = radius*(T(1)-T(8)*std::numeric_limits<T>::epsilon());
+    bias = unit * (inward / unit.norm());
+    // Mean only. In particular, no covariance clipping, scaling or reset.
+}
+
 template<typename T>
 inline T safe_inv_tau(T tau) {
     return T(1) / ((std::abs(tau) >= T(1e-8)) ? tau : std::copysign(T(1e-8), tau));

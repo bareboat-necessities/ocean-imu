@@ -51,7 +51,7 @@ class SignedTemporalTests(unittest.TestCase):
         b=forced_adjoint_source_bound()
         self.assertFalse(b["innovation_energy_needed"])
         self.assertTrue(b["BA_endpoint_bounded"])
-        self.assertFalse(b["BG_endpoint_bounded"])
+        self.assertTrue(b["BG_endpoint_bounded"])
         self.assertFalse(b["AW_endpoint_bounded"])
         self.assertIsNone(b["finite_numeric_ceiling"])
         self.assertEqual(literal_signed_functional_bound(F(2),F(3),F(4),F(5)),F(32))

@@ -5,7 +5,7 @@ and stays in one branch/PR. Continue from its current head until merged;
 afterward start from latest main. Do not restart an older proof branch.
 The theorem is **not closed**; merging this work does not certify stability.
 Keep the single same-history construction -> capture -> H18 -> release -> A21
-architecture and the unchanged shipping estimator.
+architecture and the shipping estimator, including its residual gyro-bias protection.
 
 Read in order, with paths relative to the repository root:
 
@@ -139,12 +139,13 @@ The complete moving sync/symmetry operation now has an exact signed-factor
 upper envelope, including its -2^-44 Rayleigh defect and all 21 coordinates.
 Quiet and moving exported words both pass exact action enclosure. Prediction,
 solve, Joseph, reset and state arithmetic are not thereby certified.
-The nominal-history attack also tests a zero-innovation full-turn gyro alias:
-h=.005, b_hat_g=-400 pi e_z, quiet inputs. It satisfies the regular nominal
-mean recursion in real arithmetic, but its AG array has rank four. Neither
-construction reachability nor magnetic service is certified. Next derive a
-construction-linked estimate gyro bound; a physical gyro bound or innovation
-bound alone does not supply it. All uniform and end-to-end claims stay false.
+The historical zero-innovation full-turn relaxation (`h=.005`,
+`b_hat_g=-400*pi*e_z`) has rank four in its unprojected real model. It is
+excluded by the implemented .5 rad/s gyro-bias ball. The qualified 4--6 ms
+source family has angle below .007 rad and a one-step gyro transport singular
+floor `.003999991833333333 s`. See `ou-gyro-bias-projection.md` for every input
+term, API timing limitations and projection storage defects. The full signed
+`Delta_gyr`, force/field separation and historical action remain open.
 
 The latest construction attempt is reproducible with
 `python -m tools.stability.ou3_theorem.construction_history_diagnostic --output /tmp/ou3-construction.json`.
@@ -180,4 +181,5 @@ whole-window argument; do not tighten this failed pointwise ellipsoid or
 substitute a nominal-state cap. The committed mean-action summary is checked
 with rational interval LDL, and CI reproduces the full binary transcript,
 80-digit diagnostic and outward enclosure. Uniform B_*, J and rho0 remain
-false. The source implementation and physical assumptions remain unchanged.
+false. The physical assumptions are unchanged; the separate gyro mean invariant
+is implemented in both OU filters without covariance or tuning changes.
