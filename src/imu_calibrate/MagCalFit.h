@@ -74,7 +74,8 @@ public:
   bool refine(const Eigen::Matrix<T,3,1>* x, int n, T field,
               Eigen::Matrix<T,3,3>& A, Eigen::Matrix<T,3,1>& bias, MagFitQuality& q) {
     q = MagFitQuality{};
-    if (!x || n < 80 || n > N || !(field >= T(12) && field <= T(120))) return false;
+    if (!x || n > N) return false;
+    if (n < 80 || !(field >= T(12) && field <= T(120))) return false;
     const M initial = A.template cast<double>();
     Eigen::LLT<M> llt(initial);
     if (llt.info() != Eigen::Success) { q.gate = MagFitGate::MATRIX; return false; }
@@ -150,10 +151,11 @@ public:
              MagFitQuality& q, const uint32_t* elapsed_ms = nullptr, double report_trim = 0.15) {
     q.gate = MagFitGate::BAD_DATA; q.samples = n; q.inliers = q.cells = 0;
     q.rms = q.trimmed_rms = q.p95 = q.time_drift = q.max_bias_sigma = q.max_matrix_sigma = 0;
-    if (!x || n < 80 || n > N || !std::isfinite(double(field)) || field < T(12) || field > T(120) ||
+    if (!x || n > N) return false;
+    if (n < 80 || !std::isfinite(double(field)) || field < T(12) || field > T(120) ||
         !std::isfinite(report_trim)) return false;
     if (!matrixValid(A,bias)) { q.gate = MagFitGate::MATRIX; return false; }
-    const M s = A.template cast<double>();
+    const M& s = A.template cast<double>();
     const double limit = MagFitLimits::inlierLimit(field);
     int count[27]{}, positive[3]{}, negative[3]{};
     double sum2 = 0;
@@ -161,7 +163,7 @@ public:
     for (int i = 0; i < n; ++i) {
       // Force evaluation in T, as in MagCalibration<T>::apply().
       const Eigen::Matrix<T,3,1> corrected = A*(x[i]-bias);
-      const V v = corrected.template cast<double>();
+      const V& v = corrected.template cast<double>();
       const double radius = v.norm();
       if (!std::isfinite(radius) || !(radius > 1e-9)) return false;
       errors_[i] = radius-double(field);
@@ -247,10 +249,10 @@ public:
   static bool matrixValid(const Eigen::Matrix<T,3,3>& A, const Eigen::Matrix<T,3,1>& b) {
     if (!A.allFinite() || !b.allFinite() || b.norm()>MagFitLimits::max_bias_uT ||
         (A-A.transpose()).norm()>1e-5*A.norm()) return false;
-    const M s = A.template cast<double>();
+    const M& s = A.template cast<double>();
     Eigen::SelfAdjointEigenSolver<M> es(s);
     if(es.info()!=Eigen::Success) return false;
-    const auto e = es.eigenvalues();
+    const auto& e = es.eigenvalues();
     return e.minCoeff()>=MagFitLimits::min_gain && e.maxCoeff()<=MagFitLimits::max_gain &&
            e.maxCoeff()/e.minCoeff()<=MagFitLimits::max_condition;
   }

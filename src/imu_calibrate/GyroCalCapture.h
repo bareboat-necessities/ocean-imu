@@ -110,6 +110,6 @@ private:
   V last_a_=V::Zero(),last_w_=V::Zero(),last_mag_=V::Zero();
   D ar_,wr_,sa_,aa_,sw_,ww_,sm_,ref_a_,ref_w_,ref_m_;
   int n_=0,nm_=0,nb_=0;
-  V block_a_[kBlockSamples],block_w_[kBlockSamples];T block_t_[kBlockSamples];
+  V block_a_[kBlockSamples],block_w_[kBlockSamples];T block_t_[kBlockSamples]{};
 };
 } // namespace imu_cal
