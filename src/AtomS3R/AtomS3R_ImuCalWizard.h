@@ -50,6 +50,7 @@ namespace atoms3r_ical {
 // Wizard configuration
 struct ImuCalWizardCfg {
   // Step pacing (accelerometer holds: imu_cal::AccelCaptureCfg)
+  static constexpr uint32_t PLACE_TIME_MS       = 6500;  // Gyro placement countdown only.
   static constexpr uint32_t GYRO_TIMEOUT_MS     = 70000;
   static constexpr uint32_t STUCK_MS            = 12000;
 
