@@ -2,6 +2,7 @@
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
+python3 test_wizard_config.py
 ./calibration_accuracy-test
 ./calibration_workflow-test
 ./calibration_safety-test
