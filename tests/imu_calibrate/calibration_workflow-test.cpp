@@ -45,6 +45,8 @@ static void testMagneticQuality() {
       continue;
     }
     check(ok,"clean/noisy/outlier magnetic captures qualify");
+    check(out.rms<=out.quality.rms+1e-7 && std::fabs(out.rms-out.quality.trimmed_rms)<1e-6,
+          "legacy trimmed report is distinct from full-inlier acceptance RMS");
     check(out.quality.iterations>0 && out.quality.refined_cost<=out.quality.initial_cost,"geometric refinement decreases robust objective");
     if(!ok) {std::printf("mag unexpected gate=%s inliers=%d rms=%g cells=%d\n",imu_cal::magFitGateText(cal.quality.gate),cal.quality.inliers,cal.quality.rms,cal.quality.cells);continue;}
     float heading=0;
@@ -152,6 +154,7 @@ static void testGyroCapture() {
       if(status==GS::READY){ready_ms=ms;break;}
     }
     check(status==GS::READY,"gyro completes after a sustained quiet interval");
+    check(cal.buf.n>=220 && cal.buf.n<=245,"retained gyro samples respect spacing across block boundaries");
     if(mode==1 || mode==4)check(ready_ms>=18000,"steady yaw/roll is not saved as bias");
     if(mode==2)check(ready_ms>=6500,"half-moving capture is discarded before still hold");
     if(mode==3)check(ready_ms>=12000 && capture.resets()>0,"movement resets accumulated quiet capture");

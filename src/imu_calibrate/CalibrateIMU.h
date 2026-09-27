@@ -689,7 +689,7 @@ struct MagCalibration {
   Eigen::Matrix<T,3,3> A = Eigen::Matrix<T,3,3>::Identity(); // m_cal = A*(m_raw - b)
   Eigen::Matrix<T,3,1> b = Eigen::Matrix<T,3,1>::Zero();
   T field_uT = T(0);
-  T rms = T(0);
+  T rms = T(0); // legacy trimmed report; fit acceptance uses quality.rms and tails
   MagFitQuality quality{};
 
   Eigen::Matrix<T,3,1> apply(const Eigen::Matrix<T,3,1>& m_raw) const {
@@ -1193,13 +1193,13 @@ struct MagCalibrator {
     out.A = A_unit_uTinv * B_med;  // calibrated output ~uT magnitude
     out.field_uT = B_med;
     if (!geometric.refine(buf.v, buf.n, B_med, out.A, out.b, quality) ||
-        !geometric.check(buf.v, buf.n, B_med, out.A, out.b, quality, timed ? sample_ms : nullptr)) {
+        !geometric.check(buf.v, buf.n, B_med, out.A, out.b, quality, timed ? sample_ms : nullptr, double(trim_frac))) {
       out.quality = quality;
       last_fail_ = FitFail::MAG_QUALITY_FAIL;
       if (reason_out) *reason_out = last_fail_;
       return false;
     }
-    out.rms = T(quality.rms);
+    out.rms = T(quality.trimmed_rms);
     out.quality = quality;
     out.ok = true;
 

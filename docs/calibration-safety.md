@@ -127,6 +127,10 @@ noise floor. Its SD values are conservative identification proxies, not a
 traceable accuracy or absolute heading certificate. Time checks use observation
 timestamps, not reservoir slot order. Failure reasons identify inadequate
 directions, interference, a changing field, or an implausible correction.
+`MagCalibration::rms` and the blob's `mag_rms` retain their trimmed-RMS reporting
+convention, recomputed from the refined correction. Acceptance uses the separate
+full-inlier `quality.rms`, tail, fraction and time gates; the smaller trimmed
+report cannot make a poor fit qualify.
 
 ### Independent verification
 

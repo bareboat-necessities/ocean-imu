@@ -27,7 +27,7 @@ public:
   explicit GyroCapture(GyroCalibrator<T,N,BINS>& cal,const GyroCaptureCfg& cfg={}) : cal_(cal),cfg_(cfg) {}
   void begin(uint32_t now) {
     cal_.clear();start_=last_fresh_=last_input_=last_kept_=now;
-    have_input_=have_words_=have_mag_words_=false;quiet_=kept_blocks_=resets_=0;reference_=false;
+    have_input_=have_words_=have_mag_words_=have_kept_=false;quiet_=kept_blocks_=resets_=0;reference_=false;
     status_=GyroCaptureStatus::SETTLING;resetBlock_();
   }
   GyroCaptureStatus update(uint32_t now,const V* a,const V* w,T tempC,const V* mag=nullptr) {
@@ -60,8 +60,8 @@ public:
       sm_+=mag->template cast<double>();++nm_;
     }
     // Retain at most 40 Hz, so six seconds fit the existing 400 entries.
-    if(nb_<kBlockSamples && (nb_==0 || uint32_t(now-last_kept_)>=cfg_.spacing_ms)) {
-      block_w_[nb_]=*w;block_a_[nb_]=*a;block_t_[nb_]=tempC;++nb_;last_kept_=now;
+    if(nb_<kBlockSamples && (!have_kept_ || uint32_t(now-last_kept_)>=cfg_.spacing_ms)) {
+      block_w_[nb_]=*w;block_a_[nb_]=*a;block_t_[nb_]=tempC;++nb_;last_kept_=now;have_kept_=true;
     }
     if(uint32_t(now-block_start_)<cfg_.block_ms) return status_;
     const D ma=ar_+sa_/n_,mw=wr_+sw_/n_;
@@ -98,7 +98,7 @@ private:
   void resetBlock_() {n_=nm_=nb_=0;sa_.setZero();aa_.setZero();sw_.setZero();ww_.setZero();sm_.setZero();}
   void disturb_() {
     if(quiet_ || kept_blocks_ || n_) ++resets_;
-    cal_.clear();quiet_=kept_blocks_=0;reference_=false;status_=GyroCaptureStatus::MOVING;resetBlock_();
+    cal_.clear();quiet_=kept_blocks_=0;reference_=have_kept_=false;status_=GyroCaptureStatus::MOVING;resetBlock_();
   }
   static constexpr int kBlockSamples=16;
   GyroCalibrator<T,N,BINS>& cal_;
@@ -106,7 +106,7 @@ private:
   GyroCaptureStatus status_=GyroCaptureStatus::SETTLING;
   uint32_t start_=0,last_fresh_=0,last_input_=0,last_kept_=0,block_start_=0,last_mag_change_=0;
   uint32_t quiet_=0,kept_blocks_=0,resets_=0;
-  bool have_input_=false,have_words_=false,have_mag_words_=false,reference_=false,ref_mag_=false;
+  bool have_input_=false,have_words_=false,have_mag_words_=false,have_kept_=false,reference_=false,ref_mag_=false;
   V last_a_=V::Zero(),last_w_=V::Zero(),last_mag_=V::Zero();
   D ar_,wr_,sa_,aa_,sw_,ww_,sm_,ref_a_,ref_w_,ref_m_;
   int n_=0,nm_=0,nb_=0;

@@ -46,7 +46,7 @@ inline const char* magFitGateText(MagFitGate gate) {
 struct MagFitQuality {
   MagFitGate gate = MagFitGate::BAD_DATA;
   int samples = 0, inliers = 0, cells = 0, iterations = 0;
-  double rms = 0, p95 = 0, max_bias_sigma = 0, max_matrix_sigma = 0, time_drift = 0;
+  double rms = 0, trimmed_rms = 0, p95 = 0, max_bias_sigma = 0, max_matrix_sigma = 0, time_drift = 0;
   double initial_cost = 0, refined_cost = 0;
 };
 
@@ -147,10 +147,11 @@ public:
   template<typename T>
   bool check(const Eigen::Matrix<T,3,1>* x, int n, T field,
              const Eigen::Matrix<T,3,3>& A, const Eigen::Matrix<T,3,1>& bias,
-             MagFitQuality& q, const uint32_t* elapsed_ms = nullptr) {
+             MagFitQuality& q, const uint32_t* elapsed_ms = nullptr, double report_trim = 0.15) {
     q.gate = MagFitGate::BAD_DATA; q.samples = n; q.inliers = q.cells = 0;
-    q.rms = q.p95 = q.time_drift = q.max_bias_sigma = q.max_matrix_sigma = 0;
-    if (!x || n < 80 || n > N || !std::isfinite(double(field)) || field < T(12) || field > T(120)) return false;
+    q.rms = q.trimmed_rms = q.p95 = q.time_drift = q.max_bias_sigma = q.max_matrix_sigma = 0;
+    if (!x || n < 80 || n > N || !std::isfinite(double(field)) || field < T(12) || field > T(120) ||
+        !std::isfinite(report_trim)) return false;
     if (!matrixValid(A,bias)) { q.gate = MagFitGate::MATRIX; return false; }
     const M s = A.template cast<double>();
     const double limit = MagFitLimits::inlierLimit(field);
@@ -173,6 +174,11 @@ public:
       for (int j = 0; j < 3; ++j) { positive[j] += u[j]>0; negative[j] += u[j]<0; }
     }
     std::sort(scratch_,scratch_+n);
+    // Preserve the public trimmed-RMS report, evaluated on the refined model.
+    // It is never used to relax acceptance: all inliers and tails qualify below.
+    const int kept = std::max(10,int(std::floor(n*(1-std::max(0.0,std::min(0.45,report_trim))))));
+    for(int i=0;i<kept;++i) q.trimmed_rms += scratch_[i]*scratch_[i];
+    q.trimmed_rms = std::sqrt(q.trimmed_rms/kept);
     q.p95 = scratch_[std::max(0,int(std::ceil(0.95*n))-1)];
     q.rms = q.inliers ? std::sqrt(sum2/q.inliers) : INFINITY;
     if (q.inliers < int(std::ceil(MagFitLimits::min_inlier_fraction*n))) { q.gate = MagFitGate::INLIERS; return false; }
