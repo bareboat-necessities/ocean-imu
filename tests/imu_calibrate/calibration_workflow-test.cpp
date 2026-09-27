@@ -1,5 +1,7 @@
 // Copyright 2026, Mikhail Grushinskiy
 #define EIGEN_NON_ARDUINO
+// Arduino's GPIO macro must coexist with the host-tested calibration headers.
+#define INPUT 0x01
 #include "imu_calibrate/MagCalCapture.h"
 #include "imu_calibrate/GyroCalCapture.h"
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"

@@ -29,7 +29,7 @@ struct MagFitLimits {
   static double driftLimit(double field) { return std::max(0.35, 0.01 * field); }
 };
 
-enum class MagFitGate : uint8_t { NONE, INPUT, MATRIX, RESIDUAL, INLIERS, COVERAGE, INFORMATION, FIELD_CHANGED };
+enum class MagFitGate : uint8_t { NONE, BAD_DATA, MATRIX, RESIDUAL, INLIERS, COVERAGE, INFORMATION, FIELD_CHANGED };
 inline const char* magFitGateText(MagFitGate gate) {
   switch (gate) {
     case MagFitGate::MATRIX: return "Correction too large";
@@ -38,13 +38,13 @@ inline const char* magFitGateText(MagFitGate gate) {
     case MagFitGate::COVERAGE: return "Need more 3D motion";
     case MagFitGate::INFORMATION: return "Need more directions";
     case MagFitGate::FIELD_CHANGED: return "Field changed";
-    case MagFitGate::INPUT: return "No usable MAG data";
+    case MagFitGate::BAD_DATA: return "No usable MAG data";
     default: return "OK";
   }
 }
 
 struct MagFitQuality {
-  MagFitGate gate = MagFitGate::INPUT;
+  MagFitGate gate = MagFitGate::BAD_DATA;
   int samples = 0, inliers = 0, cells = 0, iterations = 0;
   double rms = 0, p95 = 0, max_bias_sigma = 0, max_matrix_sigma = 0, time_drift = 0;
   double initial_cost = 0, refined_cost = 0;
@@ -148,7 +148,7 @@ public:
   bool check(const Eigen::Matrix<T,3,1>* x, int n, T field,
              const Eigen::Matrix<T,3,3>& A, const Eigen::Matrix<T,3,1>& bias,
              MagFitQuality& q, const uint32_t* elapsed_ms = nullptr) {
-    q.gate = MagFitGate::INPUT; q.samples = n; q.inliers = q.cells = 0;
+    q.gate = MagFitGate::BAD_DATA; q.samples = n; q.inliers = q.cells = 0;
     q.rms = q.p95 = q.time_drift = q.max_bias_sigma = q.max_matrix_sigma = 0;
     if (!x || n < 80 || n > N || !std::isfinite(double(field)) || field < T(12) || field > T(120)) return false;
     if (!matrixValid(A,bias)) { q.gate = MagFitGate::MATRIX; return false; }
@@ -186,7 +186,8 @@ public:
     }
     // Information counts one observation per direction cell, not every highly
     // correlated raw reading. Physical parameter order: diag, cross, bias/B.
-    H9 h = H9::Zero();
+    H9& h = information_;
+    h.setZero();
     for (int i = 0; i < n; ++i) {
       if (std::fabs(errors_[i]) > limit) continue;
       const V u = (x[i].template cast<double>()-bias.template cast<double>())/double(field), v = s*u;
@@ -197,11 +198,13 @@ public:
       j.template tail<3>() = -s*v/r;
       h.noalias() += j*j.transpose()/double(count[cells_[i]]);
     }
-    Eigen::LDLT<H9> info(h);
+    auto& info = information_solve_;
+    info.compute(h);
     if (info.info()!=Eigen::Success || info.vectorD().minCoeff() <= 1e-6*std::max(1.0,h.trace())) {
       q.gate = MagFitGate::INFORMATION; return false;
     }
-    const H9 covariance = info.solve(H9::Identity());
+    covariance_ = info.solve(H9::Identity());
+    const H9& covariance = covariance_;
     const double noise = std::max(0.2,q.rms);
     for (int j=0;j<9;++j) {
       const double sd = noise*std::sqrt(std::max(0.0,covariance(j,j)));
@@ -252,5 +255,9 @@ private:
   }
   double base_[N], errors_[N], scratch_[N];
   uint8_t cells_[N];
+  // Save/read-back validation also runs on the small caller task stack.
+  // Keep its largest matrices with the sample workspace on the wizard heap.
+  H9 information_, covariance_;
+  Eigen::LDLT<H9> information_solve_;
 };
 } // namespace imu_cal

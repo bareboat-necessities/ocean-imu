@@ -24,6 +24,7 @@
 #include <math.h>
 #include <limits>
 #include <algorithm>
+#include <atomic>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -431,7 +432,8 @@ private:
   enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2, MAG_VERIFY=3 };
 
   struct FitCtx {
-    volatile bool done = false;
+    // Publish fitted coefficients across cores before the UI consumes them.
+    std::atomic<bool> done{false};
     volatile bool ok   = false;
     imu_cal::FitFail reason = imu_cal::FitFail::BAD_ARG;
     FitKind kind = FitKind::GYRO;
