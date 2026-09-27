@@ -4,7 +4,7 @@ Continue from the latest head of the requested active PR branch and retain
 one proof path. A merged historical proof commit is not a stability certificate.
 The theorem is **not closed**; merging this work does not certify stability.
 Keep the single same-history construction -> capture -> H18 -> release -> A21
-architecture and the unchanged shipping estimator.
+architecture and the shipping estimator, including its residual gyro-bias protection.
 
 Read in order, with paths relative to the repository root:
 
@@ -181,12 +181,14 @@ whole-window argument; do not tighten this failed pointwise ellipsoid or
 substitute a nominal-state cap. The committed mean-action summary is checked
 with rational interval LDL, and CI reproduces the full binary transcript,
 80-digit diagnostic and outward enclosure. Uniform B_*, J and rho0 remain
-false. The source implementation is unchanged; the newer MARINE MOTION tilt-span
+false. The newer MARINE MOTION tilt-span
 restriction excludes this particular moving diagnostic.
 
 Read `ou3-signed-temporal-continuation.md` before continuing. The exact carried
 adjoint criterion and signed physical bias/velocity identities are established.
 Zero-mean weights do not preserve adjoint compatibility. Positive temporal
-margins, their quantitative six-pivot implication, coefficient compactness,
-and construction-wide gyro-alias exclusion remain open. Preserve both
+margins, their quantitative six-pivot implication and coefficient compactness
+remain open. The implemented .5 rad/s gyro ball excludes complete-turn bias
+aliases and gives a one-step transport floor on qualified 4--6 ms predictions;
+it does not close the signed temporal gyro margin. Preserve both
 compatibility residual sums and the quiet-bias stillness ambiguity.

@@ -17,7 +17,8 @@ The full corrected state loss and general capture remain open.
 |---|---|---|
 | Joint recurring lower covariance | CLOSED in real arithmetic at regular A21 post-prediction roots after a 16-s window | `root_covariance_certificate.py`: convex combination of fresh AG/BA injection and corrected LIN matrix action, with all cross covariance retained |
 | Full A21 information/loss and rho0 | OPEN; reduced to a six-column sufficient premise | `ou3-corrected-word-proof.md` proves that a uniform `D_AG,AG >= J > 0` for the actual corrected word, combined with existing nuisance comparisons and the first prediction, implies strict full 21-state contraction. J remains unproved |
-| Historical AG readout action | Conditional matrix implication CLOSED; source-uniform action OPEN | `ou3-ag-readout-proof.md`: cancel the historical AG root exactly using a six-column reader, retain every process/nuisance correlation, and bound its 6x6 action uniformly over actual varying coefficients/resets. Carried quiet/moving probes and an exact exported-word enclosure do not provide this uniform bound; independent nominal ranges and a zero-innovation complete-turn nominal gyro relaxation fail at exact rank-four arrays |
+| Estimated gyro bias / one-step gyro transport | CLOSED in real arithmetic on the qualified 4--6 ms family | Implemented norm <=.5 rad/s; angle <.007; transverse singular floor .003999991833333333 s. The API itself has no maximum positive dt; whole-word float32 and signed Delta_gyr are not closed |
+| Historical AG readout action | Conditional matrix implication CLOSED; source-uniform action OPEN | `ou3-ag-readout-proof.md`: cancel the historical AG root exactly using a six-column reader, retain every process/nuisance correlation, and bound its 6x6 action uniformly over actual varying coefficients/resets. Carried quiet/moving probes and an exact exported-word enclosure do not provide this uniform bound; independent nominal force/field ranges still fail at rank-four arrays; the historical full-turn bias relaxation is excluded by the implemented gyro invariant |
 | LIN/BA nuisance covariance upper bound | CLOSED for the regular default A21 profile after 17 s | `nuisance_upper_certificate.py` and `ou3-nuisance-upper-proof.md`: cancel the neutral root with three actual S observations; bound OU forcing, source Q defects and actual PSD sync; retain all nuisance cross covariance |
 | Pre-prediction nuisance floor and coupled upper implication | CLOSED as stated algebra and source nuisance bounds | Propagate the embedded full nuisance floor through actual acc/S corrections and resets; Schur complement retains all cross covariance. The full upper bound still requires the open six-column J premise |
 | Full covariance upper bound | OPEN: remaining AG6 loss premise | Certify J under varying realized coefficients and actual corrections/resets. The historical readout gives a noncircular conditional bootstrap; raw future loss alone cannot bound an unrestricted AG prior |
@@ -62,15 +63,18 @@ relaxation: B=(45,0,45), nominal a=(-g/2,0,g/2) gives AG rank four and
 Rayleigh margin -1 against I6. This family has no proved nominal-mean or
 magnetic-service reachability. The missing certificate is a quantitative
 same-history exclusion of sustained nominal force/field collinearity and
-gyro aliasing, followed by the common full matrix-action ceiling. Finer
+positive signed temporal gyro margin, followed by the common full
+matrix-action ceiling. The implemented gyro-bias ball already excludes
+complete-turn bias aliases on the qualified prediction domain. Finer
 pivots, precision or coefficient subdivision cannot remove an exact nullspace.
 
-A second, mean-recursion-compatible regular-root relaxation has quiet truth,
+A historical, unprojected regular-root relaxation has quiet truth,
 h=.005 s and nominal gyro bias -400 pi e_z. All innovations vanish, but the
 literal full-turn bias transport is h e_z e_z': two gyro columns are invisible
-and the Gram-floor margin is -mu. Construction reachability and all-time
-magnetic service are not established. Innovation bounds alone therefore
-cannot replace a construction-linked nominal gyro bound. The moving word's
+and the Gram-floor margin is -mu. It violates the shipping .5 rad/s gyro-bias
+invariant and is no longer an admissible nominal state. The one-prediction
+transport floor is certified in `ou-gyro-bias-projection.md`; this does not
+close the full chronological signed margin. The moving word's
 complete sync/symmetry arithmetic is now enclosed with signed matrix factors;
 its indefinite -2^-44 defect is charged, not treated as PSD process noise.
 This local finite-word closure does not close whole-word float32 supply.

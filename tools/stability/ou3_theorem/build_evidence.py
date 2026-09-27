@@ -49,7 +49,9 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.corrected_word import certificate as corrected_certificate
     from tools.stability.ou3_theorem.ag_readout import certificate as readout_certificate
     from tools.stability.ou3_theorem.signed_temporal import certificate as signed_certificate
+    from tools.stability.ou3_theorem.gyro_bias_projection import certificate as gyro_certificate
     for name, generate in (
+        ("gyro-bias-projection.json",gyro_certificate),
         ("ag-readout-certificate.json",readout_certificate),
         ("signed-temporal-certificate.json",signed_certificate),
         ("corrected-word-certificate.json",corrected_certificate),

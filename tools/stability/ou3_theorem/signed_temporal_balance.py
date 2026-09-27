@@ -51,8 +51,10 @@ def instrument(source):
                               f'\n    balance_correction({kind}, K, S_mat, r, '
                               f'R_wb(), v2ref, {measured}, balance_before, xext);')
         source = source[:a]+chunk+source[b:]
-    once('    project_acc_bias_();', '''    const auto balance_before_projection = xext.eval();
-    project_acc_bias_();
+    once('::applyQuaternionCorrectionFromErrorState()\n{',
+         '::applyQuaternionCorrectionFromErrorState()\n{\n'
+         '    const auto balance_before_projection = xext.eval();')
+    once('    project_acc_bias_();', '''    project_acc_bias_();
     balance_projection(dtheta, balance_before_projection, xext);''')
     return source
 

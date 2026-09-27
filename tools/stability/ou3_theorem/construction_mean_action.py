@@ -1,7 +1,8 @@
 """Carried six-mean action: a construction-linked exclusion attempt.
 
-The controlling use is to exclude gyro aliases and nominal force/field
-collinearity before constructing a uniform historical AG reader. This is
+The controlling use is to bound nominal force/field degeneracy and signed
+mean action before constructing a uniform historical AG reader. The shipping
+gyro-bias projection now supplies the separate nominal norm bound. This is
 not the reader noise action B_W. No source-uniform theorem is promoted.
 
 Only a temporary header is instrumented. Binary float operands, actual
@@ -190,6 +191,13 @@ def instrument(source):
         chunk = chunk.replace(anchor, '    const auto action_before = xext.eval();\n'+anchor+
                               f'\n    mean_correction(K, S_mat, r, action_before, xext, {is_acc});')
         source = source[:a]+chunk+source[b:]
+    anchor = '        ocean_imu::kalman::ou_detail::project_gyro_bias<T>(bias);'
+    if source.count(anchor) != 1:
+        raise ValueError('gyro projection observer anchor changed')
+    # This diagnostic uses the unprojected affine mean recursion only on a
+    # replay where every actual projection is independently checked inactive.
+    source = source.replace(anchor, '        const auto projection_before = bias.eval();\n'+anchor+
+        '\n        if (!(bias.array() == projection_before.array()).all()) std::abort();')
     return source
 
 
@@ -253,6 +261,7 @@ def export(directory, eigen):
     with trace.open('rb') as stream:
         trace_hash = hashlib.file_digest(stream, 'sha256').hexdigest()
     meta = {'native': native, 'observer_control_parity': True,
+            'gyro_projection_inactive_verified': True,
             'observer_sha256': hashlib.sha256(source.encode()).hexdigest(),
             'instrumented_header_sha256': hashlib.sha256(header.encode()).hexdigest(),
             'trace_sha256': trace_hash}

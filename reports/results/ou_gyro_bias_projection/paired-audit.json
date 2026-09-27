@@ -1,0 +1,1783 @@
+{
+  "audit_integrity": "Full studies use immutable generated inputs with checked row counts and before/after SHA-256 hashes. Earlier changing-input local attempts and their caches are excluded.",
+  "baseline_commit": "b0beb9c88737ffeb2c6f6eeefcbeb4bd22121524",
+  "dataset_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+  "families": {
+    "OU_II": {
+      "baseline_runs": [
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 2683722,
+              "family": 2,
+              "max_bias_rad_s": 0.004537394177781825,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.005322376809653075,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 1869056,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "2141607c33494c01637f986c8a01b434b2cb4cd2dae73e95c418457b5afbc891",
+          "target": "kalman_ou_ii-sim",
+          "test_source_sha256": "c749449f3416d3e7c767d9072d635ba056fd4c908c958efb5f1d099024b4223a"
+        },
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 87656,
+              "family": 2,
+              "max_bias_rad_s": 0.002321406413032453,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.0014534470797284789,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 73632,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "0f48491491d32a33970243a55066a6274b4fa22c36de21446a5cfa54e8b8dca5",
+          "target": "startup_init-test",
+          "test_source_sha256": "7a66bcbc6cfd35558f899feaf1de8835104fbdbcf4563cc62fcd551e49ddbc42"
+        },
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 654995,
+              "family": 2,
+              "max_bias_rad_s": 0.02499966137945842,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.0004917354227834036,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 414446,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "aa913c0cdf362b7c6d2e2c2ede7d49582f6f7ed560eecf7874445a8c4116d0e6",
+          "target": "stationary_device-test",
+          "test_source_sha256": "4a2bf97d6c1d5f2ac91915d570fd8835a724ca2d4a9695cf7e186354cce3b2c7"
+        }
+      ],
+      "baseline_source_sha256": {
+        "ArduinoOceanImu.h": "6a5739ec013cff9f2e538356a1afe064e8dee822ee2be3ca776d258303a69cfb",
+        "AtomS3R/AtomS3R_CompassAppBase.h": "cc9aed0157ffdef221945040a4935dea430ab1b819ecab2b66bdf96ef4895130",
+        "AtomS3R/AtomS3R_CompassUI.h": "e222498552e1b5f6b9db0a49ae8414a81cba2799c55507c5282b31f7352aca08",
+        "AtomS3R/AtomS3R_ImuCal.h": "28f2f27879619ad8995550138c809e21a305adc8de0184cd19ac9a6ccf945a70",
+        "AtomS3R/AtomS3R_ImuCalBlob.h": "3d99ff8ad2d4e9b69059b522e16b8b6f3c6aa35eaa5e4f6f5464cee69b0be480",
+        "AtomS3R/AtomS3R_ImuCalWizard.h": "43492574fd57eb606bfe6a5e715337571cdf7a71f945a01a5e9dc8d69e48eca5",
+        "AtomS3R/AtomS3R_ImuCommon.h": "1d822f5311fe7091ca840df5ec958d437ec3524d5b93ba808b6b6d9926d02097",
+        "AtomS3R/AtomS3R_ImuUnits.h": "6c5c8c5c07afd5aeba66042f460702b634ce1994a40d37b71f07b77baa4ff29f",
+        "AtomS3R/AtomS3R_M5Ui.h": "9840fc37dae82f6fe889a46eda23fbba58aa4148019667ffeeb70eb1ea6e3c09",
+        "AtomS3R/ImuCalWizardRunner.cpp": "8e251d0aaf11017539ee3dfb9b4b8ecf6f8203ef85ef85f7a5f0010b822652a8",
+        "AtomS3R/ImuCalWizardRunner.h": "be9f11dc9028380a383a2920fb5ae29abacc70b138fb203574d77a35e0910b7d",
+        "ahrs/FrameConversions.h": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+        "ahrs/KalmanQMEKF.h": "f0108e104cb5779fca965ce083287a9658e9d2cf40646ff5bbeebcf36a5dae90",
+        "ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+        "avg/AngleAveraging.h": "4e5d127274948156d6c2a9e9da0cd4ba101883db1b205b559c5d63a0ddb9ac10",
+        "avg/KalmanSmoother.h": "0cc500713daddc6f6a7acfd9e262b4d818bc52450644091f4967647f0aadb45f",
+        "avg/TimeAwareSpikeFilter.h": "054ce21cfa73377592bbe80584465516637e2d8de80599f1af59deda05714c23",
+        "detrend/AdaptiveWaveDetrender.h": "f890df8905568f611db6bf02cf377023b36ff6b13dd8171e362f0023276e7881",
+        "detrend/AdaptiveWaveDetrender3D.h": "3a09bb3dd470744b5e5e440269741266d60ea97ae3fea4a302f9d91ced2cdfc8",
+        "discrete/MinMaxLemire.h": "72e0b762ea31a98493c6d1b0bd0e6674d9e7ae50cb263d1a7b5b336cb87c669b",
+        "discrete/MonoWedge.h": "86849ae47d931dfd7189353e19dec3ae9a22dda6deb671113ca1306efd06e6f7",
+        "discrete/STL_RingBuffer.h": "f30e6432a81a1235c3d43379a346798cf1a9a5bc4bc4c06b72f8de0cb5b70e05",
+        "freq/AranovskiyFreqTracker.h": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125",
+        "freq/FirstOrderIIRSmoother.h": "b7f05229ca3bfccc4d6b2fda87c58d2eef45e1489f999ada70dcdd7dcc4ce7a2",
+        "freq/FrequencySmoother.h": "70505f2180ef086f2ad80175f3eb6e7a82c51581422e6ed4eea3d00beb056500",
+        "freq/FrequencyTrackerPolicy.h": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3",
+        "freq/KalmANFFreqTracker.h": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc",
+        "freq/PLLFreqTracker.h": "5199262b5dc37ee68c51b6acdc55d4f08bc8e9561349cb87d8e4adbd2165a76e",
+        "freq/SchmittTriggerZCFreqTracker.h": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
+        "imu_calibrate/AccelCalCapture.h": "796837cce4611be970ca40c78366966ad02af599244eea1b69f73effa4057b3e",
+        "imu_calibrate/AccelCalFit.h": "0908b304579301fd5d830ed93a154a77e6de5f998a51f811f75541ad7c65e202",
+        "imu_calibrate/CalibrateIMU.h": "dd9cd0bf5cf4f0b9d90d2e67b89f26dca666d01cd201250e72860117631bb855",
+        "imu_calibrate/GyroCalCapture.h": "0f067dc9e88a663feec4540ab30dd4c6bcbd8e8b556a6aa7d4dca31347022bef",
+        "imu_calibrate/MagCalCapture.h": "371c5b30e98d34e9262926cd69bd4f0adcda1dbfe65b76f1a5b8289841a68284",
+        "imu_calibrate/MagCalFit.h": "816817dc9cdc1ffaf6274f6fa3cce031a0878e41029debade557e580a7cb99f5",
+        "kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+        "kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+        "kalman_common/MarineWaveFrontEnd.h": "52a20e03b14f22d438050eb9b9b3c36ddf9dd39e9f43ab0b6692baf64e453943",
+        "kalman_common/ProxyStartupFusion.h": "078b1d08259f94e58a31356e9936a9c3b52db8651c2f4b2b1ccfb48876a8c11b",
+        "kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
+        "kalman_common/SeaStateFusionDefaults.h": "37831f74a5a69ca4514d4f180c79cae235794d49afee8370719fc7be86b711c1",
+        "kalman_common/SeaStateFusionFilterCommon.h": "a753702b3ceae1ca529d6b71cc1b6c1ab5b6542740059e87975aab5ae95cdddd",
+        "kalman_common/SeaStateOUFamilyDefaults.h": "8c23ee6f8147977cd0a137b62568c66c95820c6327a44bb0ebbd90c56370b567",
+        "kalman_ou_common/KalmanOUCoreMath.h": "7b3a0c89e467120cfc7e7cda30d66967e1f518afa642d0058198b2d7af94cb05",
+        "kalman_ou_ii/Kalman3D_Wave_OU_II.h": "13ebd97379cc4e47b844d37e75609b8df2623f3097eb7db21113a70422909f05",
+        "kalman_ou_ii/SeaStateFusionFilter_OU_II.h": "c8988219dd63e8512e4447e4f9e18ce60ad6fa0b763d9114c1bb9978c14b7f9b",
+        "kalman_ou_iii/Kalman3D_Wave_OU_III.h": "5b44791224ed468608482f853369694f3bf6ad44646a17019efa0f28348ac291",
+        "kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "a5d00d557843dee246bf5bcb5cc1823097db7f66f0aa3f62852bfae2e9c7c6f9",
+        "kalman_tfg/Kalman3D_Wave_TFG.h": "33d937422f8672ad117a542e76d92e5134f558d41ab15c5e130cb79e0050dc59",
+        "kalman_tfg/SeaStateFusionFilter_TFG.h": "42bc3dd373913ac6022d98f498e5c74d830c5761c92762055a7bdea052015255",
+        "lie/SO3Jacobians.h": "d18671481a90114aa2ae8c49bd6bd60fa598c281b18a9f961a04a59e5690eb1a",
+        "lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
+        "nlo/TimeVarGainNLO_Adapter.h": "2b4724ac195e85581e3034153352ffc84ad1cb61c20bccae0e2831813f58bbe4",
+        "nlo/TimeVaryingGainNLO.h": "fe5610a5e6ae762a6b0fc612eed5344f8703526625e49f67f0b282db9f46ae5a",
+        "nmea/NmeaChecksum.h": "d550cd07d431d9e83239e1f283768dfac56baabfc0d607601128eeb511697b10",
+        "nmea/NmeaCompass.h": "99aa0ba66d27c1d54766c8374652374c7634cb5f60a8439efc2b950be314ed26",
+        "nmea/NmeaXDR.h": "b97d5f003b7eb3b56b6d9ee049daad335973d18510393467672a9a0d3397541d",
+        "pii_observer/AdaptiveVerticalPII.h": "e21e8ae0cb35b384462a4ee3c6beec54c23c8b8bb3be1bbceb6e246c6d010bde",
+        "pii_observer/AdaptiveVerticalPIIMahony.h": "16e6d79b6d3391a03551e38471ff4dff334a61c4b3680ee3152b4c88dda5f1e3",
+        "pii_observer/VerticalPIIObserver.h": "01e6df6b4f2a412620a1489228966b9050ff922b79328c03346d179d02d1e6f3",
+        "tuner/AccelVibrationGuard.h": "ab541742bbd539bbad295a7be2b3022ed8aee9c2718fa9544e506902a3454a43",
+        "tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+        "tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+        "tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+        "tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+        "tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+        "tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+        "tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+        "tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+        "util/AngleUtils.h": "bf8905ba9cb7b87e30b2c7d4a7839d0e738fa3f1a788450249895df0b94d0307",
+        "util/GPS_to_INS.h": "bdaf27d11e69d6b2482b74c5fb54e4cfff823f0cb89b41cdf27dbfc930590fd9",
+        "util/ImuLoopHelpers.h": "c256e204d273a6dea7cb4820ec564152476fe0b5f449163df4a7e100c8eaad52",
+        "util/MagneticHeading.h": "9dd6ea56b56628318899a134bbc54f0970d9f3f834d8381eaf3ac1b23c856cde",
+        "util/QuaternionUtils.h": "83ddaa7468c99e12f77cbd539db1544134c009fa7ca8cee156b89d940cd7e298",
+        "util/W3dSimCommon.cpp": "67295d71862932c6ebba34c761715043a855cbe9aa663159209b8bdb70578b45",
+        "util/W3dSimCommon.h": "c77405168b00581f7fa66ea7d59159576ec3e98b1f8b5f9645d939e587b143b2",
+        "util/WaveFilesSupport.h": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128",
+        "wave_dir/KalmanWaveDirection.h": "efa51d7b1ca1da5d5894bdb19ce227203d92882e564ab52345cbd39f0d9ca5eb",
+        "wave_dir/VesselRaoEqualizer.h": "11b77b3af39488cd0f038bfe070c53ee815f000a090051a85dbb955546f1fa07",
+        "wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
+        "wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+        "wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
+        "wave_dir/WaveDirectionReport.h": "abd1b0d45320d79096bc61eec7ea284ff0501d74d568a17c0deadcaea166c06a",
+        "wave_dir/WaveEncounter.h": "61b7e882f0b2dd338954994465c493746cfd89b3672879ed5f4798b1031301a6"
+      },
+      "metrics": {
+        "max_absolute_metric_differences": {
+          "OU_II": {
+            "accel_3d_rms_mps2": 2.9799999999927107e-07,
+            "accel_bias_3d_rms_mps2": 1.1794299999999536e-05,
+            "accel_variance_m2ps4": 0,
+            "accel_x_rms_mps2": 1.2289999999984258e-07,
+            "accel_y_rms_mps2": 1.750999999994285e-07,
+            "accel_z_rms_mps2": 3.0829999999974766e-07,
+            "dir_axis_available_pct": 0.0005569000000065216,
+            "dir_axis_circ_std_deg": 0.0002632000000026835,
+            "dir_axis_error_deg": 0.00028991000000000433,
+            "dir_axis_mean_deg": 0.0002899000000020635,
+            "dir_axis_rmse_deg": 0.0003910000000004743,
+            "dir_axis_truth_deg": 0,
+            "dir_sense_dominant_pct": 0,
+            "dir_sense_forward_pct": 0.0005559900000005058,
+            "dir_sense_reverse_pct": 0,
+            "dir_sense_uncertain_pct": 0.0005555099999998703,
+            "dir_travel_correct_pct": 0.0005569000000065216,
+            "dir_travel_error_deg": 0.00046133999999997677,
+            "dir_travel_rmse_deg": 0.0035972000000015214,
+            "dir_travel_unresolved_pct": 0.0005555099999998703,
+            "dir_travel_wrong_pct": 0.0011111199999999932,
+            "disp_3d_pct_refmax": 9.63199999990394e-05,
+            "disp_3d_rms_m": 2.1460000000361745e-06,
+            "disp_x_pct_hs": 4.672999999977279e-05,
+            "disp_x_rms_m": 3.51700000000843e-06,
+            "disp_y_pct_hs": 0.0001115800000004441,
+            "disp_y_rms_m": 4.469999999978658e-06,
+            "disp_z_pct_hs": 5.9600000000159525e-05,
+            "disp_z_pct_refrms": 0.0002345999999988635,
+            "disp_z_ref_rms_m": 0,
+            "disp_z_rms_m": 5.0669999999142235e-06,
+            "frequency_hz": 0,
+            "gyro_bias_3d_rms_radps": 1.8260000000084762e-09,
+            "period_s": 0,
+            "pitch_rms_deg": 3.2053000000004106e-05,
+            "roll_rms_deg": 0.00010068799999998768,
+            "samples": 0,
+            "sigma_applied_mps2": 0,
+            "start_s": 0,
+            "tau_applied_s": 0,
+            "tuning_applied": 0,
+            "wave_period_s": 0,
+            "window_s": 0,
+            "yaw_rms_deg": 9.232799999991936e-05
+          }
+        },
+        "paired_runs": 8
+      },
+      "modified_runs": [
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 2683722,
+              "family": 2,
+              "max_bias_rad_s": 0.004537395732917468,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.005322376809467706,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 1869056,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "c38e340aba7744c5bf17f73fbd6075024e9588d50b416ddf0fbe97089d0f16b7",
+          "target": "kalman_ou_ii-sim",
+          "test_source_sha256": "c749449f3416d3e7c767d9072d635ba056fd4c908c958efb5f1d099024b4223a"
+        },
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 87656,
+              "family": 2,
+              "max_bias_rad_s": 0.002321517708677989,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.0014534470797284789,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 73632,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "0f48491491d32a33970243a55066a6274b4fa22c36de21446a5cfa54e8b8dca5",
+          "target": "startup_init-test",
+          "test_source_sha256": "7a66bcbc6cfd35558f899feaf1de8835104fbdbcf4563cc62fcd551e49ddbc42"
+        },
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 654995,
+              "family": 2,
+              "max_bias_rad_s": 0.02499966137945842,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.0004917354227834036,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 414446,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "aa913c0cdf362b7c6d2e2c2ede7d49582f6f7ed560eecf7874445a8c4116d0e6",
+          "target": "stationary_device-test",
+          "test_source_sha256": "4a2bf97d6c1d5f2ac91915d570fd8835a724ca2d4a9695cf7e186354cce3b2c7"
+        }
+      ],
+      "modified_source_sha256": {
+        "ArduinoOceanImu.h": "6a5739ec013cff9f2e538356a1afe064e8dee822ee2be3ca776d258303a69cfb",
+        "AtomS3R/AtomS3R_CompassAppBase.h": "cc9aed0157ffdef221945040a4935dea430ab1b819ecab2b66bdf96ef4895130",
+        "AtomS3R/AtomS3R_CompassUI.h": "e222498552e1b5f6b9db0a49ae8414a81cba2799c55507c5282b31f7352aca08",
+        "AtomS3R/AtomS3R_ImuCal.h": "28f2f27879619ad8995550138c809e21a305adc8de0184cd19ac9a6ccf945a70",
+        "AtomS3R/AtomS3R_ImuCalBlob.h": "3d99ff8ad2d4e9b69059b522e16b8b6f3c6aa35eaa5e4f6f5464cee69b0be480",
+        "AtomS3R/AtomS3R_ImuCalWizard.h": "43492574fd57eb606bfe6a5e715337571cdf7a71f945a01a5e9dc8d69e48eca5",
+        "AtomS3R/AtomS3R_ImuCommon.h": "1d822f5311fe7091ca840df5ec958d437ec3524d5b93ba808b6b6d9926d02097",
+        "AtomS3R/AtomS3R_ImuUnits.h": "6c5c8c5c07afd5aeba66042f460702b634ce1994a40d37b71f07b77baa4ff29f",
+        "AtomS3R/AtomS3R_M5Ui.h": "9840fc37dae82f6fe889a46eda23fbba58aa4148019667ffeeb70eb1ea6e3c09",
+        "AtomS3R/ImuCalWizardRunner.cpp": "8e251d0aaf11017539ee3dfb9b4b8ecf6f8203ef85ef85f7a5f0010b822652a8",
+        "AtomS3R/ImuCalWizardRunner.h": "be9f11dc9028380a383a2920fb5ae29abacc70b138fb203574d77a35e0910b7d",
+        "ahrs/FrameConversions.h": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+        "ahrs/KalmanQMEKF.h": "f0108e104cb5779fca965ce083287a9658e9d2cf40646ff5bbeebcf36a5dae90",
+        "ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+        "avg/AngleAveraging.h": "4e5d127274948156d6c2a9e9da0cd4ba101883db1b205b559c5d63a0ddb9ac10",
+        "avg/KalmanSmoother.h": "0cc500713daddc6f6a7acfd9e262b4d818bc52450644091f4967647f0aadb45f",
+        "avg/TimeAwareSpikeFilter.h": "054ce21cfa73377592bbe80584465516637e2d8de80599f1af59deda05714c23",
+        "detrend/AdaptiveWaveDetrender.h": "f890df8905568f611db6bf02cf377023b36ff6b13dd8171e362f0023276e7881",
+        "detrend/AdaptiveWaveDetrender3D.h": "3a09bb3dd470744b5e5e440269741266d60ea97ae3fea4a302f9d91ced2cdfc8",
+        "discrete/MinMaxLemire.h": "72e0b762ea31a98493c6d1b0bd0e6674d9e7ae50cb263d1a7b5b336cb87c669b",
+        "discrete/MonoWedge.h": "86849ae47d931dfd7189353e19dec3ae9a22dda6deb671113ca1306efd06e6f7",
+        "discrete/STL_RingBuffer.h": "f30e6432a81a1235c3d43379a346798cf1a9a5bc4bc4c06b72f8de0cb5b70e05",
+        "freq/AranovskiyFreqTracker.h": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125",
+        "freq/FirstOrderIIRSmoother.h": "b7f05229ca3bfccc4d6b2fda87c58d2eef45e1489f999ada70dcdd7dcc4ce7a2",
+        "freq/FrequencySmoother.h": "70505f2180ef086f2ad80175f3eb6e7a82c51581422e6ed4eea3d00beb056500",
+        "freq/FrequencyTrackerPolicy.h": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3",
+        "freq/KalmANFFreqTracker.h": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc",
+        "freq/PLLFreqTracker.h": "5199262b5dc37ee68c51b6acdc55d4f08bc8e9561349cb87d8e4adbd2165a76e",
+        "freq/SchmittTriggerZCFreqTracker.h": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
+        "imu_calibrate/AccelCalCapture.h": "796837cce4611be970ca40c78366966ad02af599244eea1b69f73effa4057b3e",
+        "imu_calibrate/AccelCalFit.h": "0908b304579301fd5d830ed93a154a77e6de5f998a51f811f75541ad7c65e202",
+        "imu_calibrate/CalibrateIMU.h": "dd9cd0bf5cf4f0b9d90d2e67b89f26dca666d01cd201250e72860117631bb855",
+        "imu_calibrate/GyroCalCapture.h": "0f067dc9e88a663feec4540ab30dd4c6bcbd8e8b556a6aa7d4dca31347022bef",
+        "imu_calibrate/MagCalCapture.h": "371c5b30e98d34e9262926cd69bd4f0adcda1dbfe65b76f1a5b8289841a68284",
+        "imu_calibrate/MagCalFit.h": "816817dc9cdc1ffaf6274f6fa3cce031a0878e41029debade557e580a7cb99f5",
+        "kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+        "kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+        "kalman_common/MarineWaveFrontEnd.h": "52a20e03b14f22d438050eb9b9b3c36ddf9dd39e9f43ab0b6692baf64e453943",
+        "kalman_common/ProxyStartupFusion.h": "078b1d08259f94e58a31356e9936a9c3b52db8651c2f4b2b1ccfb48876a8c11b",
+        "kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
+        "kalman_common/SeaStateFusionDefaults.h": "37831f74a5a69ca4514d4f180c79cae235794d49afee8370719fc7be86b711c1",
+        "kalman_common/SeaStateFusionFilterCommon.h": "a753702b3ceae1ca529d6b71cc1b6c1ab5b6542740059e87975aab5ae95cdddd",
+        "kalman_common/SeaStateOUFamilyDefaults.h": "8c23ee6f8147977cd0a137b62568c66c95820c6327a44bb0ebbd90c56370b567",
+        "kalman_ou_common/KalmanOUCoreMath.h": "05558d7d60968e63f3d1ac393e1abe13b26fead4329f7aea3282d3e43e521a21",
+        "kalman_ou_ii/Kalman3D_Wave_OU_II.h": "482bf99aabf6d2999a8254f337a07d4f80765d42e3074490c82b9c7b947bb57a",
+        "kalman_ou_ii/SeaStateFusionFilter_OU_II.h": "c8988219dd63e8512e4447e4f9e18ce60ad6fa0b763d9114c1bb9978c14b7f9b",
+        "kalman_ou_iii/Kalman3D_Wave_OU_III.h": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
+        "kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "a5d00d557843dee246bf5bcb5cc1823097db7f66f0aa3f62852bfae2e9c7c6f9",
+        "kalman_tfg/Kalman3D_Wave_TFG.h": "33d937422f8672ad117a542e76d92e5134f558d41ab15c5e130cb79e0050dc59",
+        "kalman_tfg/SeaStateFusionFilter_TFG.h": "42bc3dd373913ac6022d98f498e5c74d830c5761c92762055a7bdea052015255",
+        "lie/SO3Jacobians.h": "d18671481a90114aa2ae8c49bd6bd60fa598c281b18a9f961a04a59e5690eb1a",
+        "lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
+        "nlo/TimeVarGainNLO_Adapter.h": "2b4724ac195e85581e3034153352ffc84ad1cb61c20bccae0e2831813f58bbe4",
+        "nlo/TimeVaryingGainNLO.h": "fe5610a5e6ae762a6b0fc612eed5344f8703526625e49f67f0b282db9f46ae5a",
+        "nmea/NmeaChecksum.h": "d550cd07d431d9e83239e1f283768dfac56baabfc0d607601128eeb511697b10",
+        "nmea/NmeaCompass.h": "99aa0ba66d27c1d54766c8374652374c7634cb5f60a8439efc2b950be314ed26",
+        "nmea/NmeaXDR.h": "b97d5f003b7eb3b56b6d9ee049daad335973d18510393467672a9a0d3397541d",
+        "ou_gyro_audit_observer.h": "de06ba5a42adb4505f0266977013f2e067a5732120fd8ce1a3920bec7d4362e7",
+        "pii_observer/AdaptiveVerticalPII.h": "e21e8ae0cb35b384462a4ee3c6beec54c23c8b8bb3be1bbceb6e246c6d010bde",
+        "pii_observer/AdaptiveVerticalPIIMahony.h": "16e6d79b6d3391a03551e38471ff4dff334a61c4b3680ee3152b4c88dda5f1e3",
+        "pii_observer/VerticalPIIObserver.h": "01e6df6b4f2a412620a1489228966b9050ff922b79328c03346d179d02d1e6f3",
+        "tuner/AccelVibrationGuard.h": "ab541742bbd539bbad295a7be2b3022ed8aee9c2718fa9544e506902a3454a43",
+        "tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+        "tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+        "tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+        "tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+        "tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+        "tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+        "tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+        "tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+        "util/AngleUtils.h": "bf8905ba9cb7b87e30b2c7d4a7839d0e738fa3f1a788450249895df0b94d0307",
+        "util/GPS_to_INS.h": "bdaf27d11e69d6b2482b74c5fb54e4cfff823f0cb89b41cdf27dbfc930590fd9",
+        "util/ImuLoopHelpers.h": "c256e204d273a6dea7cb4820ec564152476fe0b5f449163df4a7e100c8eaad52",
+        "util/MagneticHeading.h": "9dd6ea56b56628318899a134bbc54f0970d9f3f834d8381eaf3ac1b23c856cde",
+        "util/QuaternionUtils.h": "83ddaa7468c99e12f77cbd539db1544134c009fa7ca8cee156b89d940cd7e298",
+        "util/W3dSimCommon.cpp": "67295d71862932c6ebba34c761715043a855cbe9aa663159209b8bdb70578b45",
+        "util/W3dSimCommon.h": "c77405168b00581f7fa66ea7d59159576ec3e98b1f8b5f9645d939e587b143b2",
+        "util/WaveFilesSupport.h": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128",
+        "wave_dir/KalmanWaveDirection.h": "efa51d7b1ca1da5d5894bdb19ce227203d92882e564ab52345cbd39f0d9ca5eb",
+        "wave_dir/VesselRaoEqualizer.h": "11b77b3af39488cd0f038bfe070c53ee815f000a090051a85dbb955546f1fa07",
+        "wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
+        "wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+        "wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
+        "wave_dir/WaveDirectionReport.h": "abd1b0d45320d79096bc61eec7ea284ff0501d74d568a17c0deadcaea166c06a",
+        "wave_dir/WaveEncounter.h": "61b7e882f0b2dd338954994465c493746cfd89b3672879ed5f4798b1031301a6"
+      },
+      "observer_sha256": "de06ba5a42adb4505f0266977013f2e067a5732120fd8ce1a3920bec7d4362e7"
+    },
+    "OU_III": {
+      "baseline_runs": [
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 2378711,
+              "family": 3,
+              "max_bias_rad_s": 0.0062527633835247265,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.005322582433559319,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 1869056,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "e19472e617daea0991cea75e90ad21571d0ec685b6aa73a956e2408bc4455f78",
+          "target": "kalman_ou_iii-sim",
+          "test_source_sha256": "6dbc870b94f687ca4f0f93ae654db0e9045c0e03b6aa755965ac640c9b985600"
+        },
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 80295,
+              "family": 3,
+              "max_bias_rad_s": 0.0020208063987900223,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.0014513238424768325,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 73632,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "0f48491491d32a33970243a55066a6274b4fa22c36de21446a5cfa54e8b8dca5",
+          "target": "startup_init-test",
+          "test_source_sha256": "cdd4d166d5a12de54e4542be081b7e483e16ee5de7f2d4f4cbd87e9354984bd5"
+        },
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 559714,
+              "family": 3,
+              "max_bias_rad_s": 0.024786064818082508,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.0004917799693400486,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 414446,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "33844614632063856a4de28f7cfe7f11952b5ede913cfe63a45f729afebb7d9f",
+          "target": "stationary_device-test",
+          "test_source_sha256": "08517a2ab005b6943ec0c27d6a0f707c85c8069748fa01ccc1f306243b8b0897"
+        }
+      ],
+      "baseline_source_sha256": {
+        "ArduinoOceanImu.h": "6a5739ec013cff9f2e538356a1afe064e8dee822ee2be3ca776d258303a69cfb",
+        "AtomS3R/AtomS3R_CompassAppBase.h": "cc9aed0157ffdef221945040a4935dea430ab1b819ecab2b66bdf96ef4895130",
+        "AtomS3R/AtomS3R_CompassUI.h": "e222498552e1b5f6b9db0a49ae8414a81cba2799c55507c5282b31f7352aca08",
+        "AtomS3R/AtomS3R_ImuCal.h": "28f2f27879619ad8995550138c809e21a305adc8de0184cd19ac9a6ccf945a70",
+        "AtomS3R/AtomS3R_ImuCalBlob.h": "3d99ff8ad2d4e9b69059b522e16b8b6f3c6aa35eaa5e4f6f5464cee69b0be480",
+        "AtomS3R/AtomS3R_ImuCalWizard.h": "43492574fd57eb606bfe6a5e715337571cdf7a71f945a01a5e9dc8d69e48eca5",
+        "AtomS3R/AtomS3R_ImuCommon.h": "1d822f5311fe7091ca840df5ec958d437ec3524d5b93ba808b6b6d9926d02097",
+        "AtomS3R/AtomS3R_ImuUnits.h": "6c5c8c5c07afd5aeba66042f460702b634ce1994a40d37b71f07b77baa4ff29f",
+        "AtomS3R/AtomS3R_M5Ui.h": "9840fc37dae82f6fe889a46eda23fbba58aa4148019667ffeeb70eb1ea6e3c09",
+        "AtomS3R/ImuCalWizardRunner.cpp": "8e251d0aaf11017539ee3dfb9b4b8ecf6f8203ef85ef85f7a5f0010b822652a8",
+        "AtomS3R/ImuCalWizardRunner.h": "be9f11dc9028380a383a2920fb5ae29abacc70b138fb203574d77a35e0910b7d",
+        "ahrs/FrameConversions.h": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+        "ahrs/KalmanQMEKF.h": "f0108e104cb5779fca965ce083287a9658e9d2cf40646ff5bbeebcf36a5dae90",
+        "ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+        "avg/AngleAveraging.h": "4e5d127274948156d6c2a9e9da0cd4ba101883db1b205b559c5d63a0ddb9ac10",
+        "avg/KalmanSmoother.h": "0cc500713daddc6f6a7acfd9e262b4d818bc52450644091f4967647f0aadb45f",
+        "avg/TimeAwareSpikeFilter.h": "054ce21cfa73377592bbe80584465516637e2d8de80599f1af59deda05714c23",
+        "detrend/AdaptiveWaveDetrender.h": "f890df8905568f611db6bf02cf377023b36ff6b13dd8171e362f0023276e7881",
+        "detrend/AdaptiveWaveDetrender3D.h": "3a09bb3dd470744b5e5e440269741266d60ea97ae3fea4a302f9d91ced2cdfc8",
+        "discrete/MinMaxLemire.h": "72e0b762ea31a98493c6d1b0bd0e6674d9e7ae50cb263d1a7b5b336cb87c669b",
+        "discrete/MonoWedge.h": "86849ae47d931dfd7189353e19dec3ae9a22dda6deb671113ca1306efd06e6f7",
+        "discrete/STL_RingBuffer.h": "f30e6432a81a1235c3d43379a346798cf1a9a5bc4bc4c06b72f8de0cb5b70e05",
+        "freq/AranovskiyFreqTracker.h": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125",
+        "freq/FirstOrderIIRSmoother.h": "b7f05229ca3bfccc4d6b2fda87c58d2eef45e1489f999ada70dcdd7dcc4ce7a2",
+        "freq/FrequencySmoother.h": "70505f2180ef086f2ad80175f3eb6e7a82c51581422e6ed4eea3d00beb056500",
+        "freq/FrequencyTrackerPolicy.h": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3",
+        "freq/KalmANFFreqTracker.h": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc",
+        "freq/PLLFreqTracker.h": "5199262b5dc37ee68c51b6acdc55d4f08bc8e9561349cb87d8e4adbd2165a76e",
+        "freq/SchmittTriggerZCFreqTracker.h": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
+        "imu_calibrate/AccelCalCapture.h": "796837cce4611be970ca40c78366966ad02af599244eea1b69f73effa4057b3e",
+        "imu_calibrate/AccelCalFit.h": "0908b304579301fd5d830ed93a154a77e6de5f998a51f811f75541ad7c65e202",
+        "imu_calibrate/CalibrateIMU.h": "dd9cd0bf5cf4f0b9d90d2e67b89f26dca666d01cd201250e72860117631bb855",
+        "imu_calibrate/GyroCalCapture.h": "0f067dc9e88a663feec4540ab30dd4c6bcbd8e8b556a6aa7d4dca31347022bef",
+        "imu_calibrate/MagCalCapture.h": "371c5b30e98d34e9262926cd69bd4f0adcda1dbfe65b76f1a5b8289841a68284",
+        "imu_calibrate/MagCalFit.h": "816817dc9cdc1ffaf6274f6fa3cce031a0878e41029debade557e580a7cb99f5",
+        "kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+        "kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+        "kalman_common/MarineWaveFrontEnd.h": "52a20e03b14f22d438050eb9b9b3c36ddf9dd39e9f43ab0b6692baf64e453943",
+        "kalman_common/ProxyStartupFusion.h": "078b1d08259f94e58a31356e9936a9c3b52db8651c2f4b2b1ccfb48876a8c11b",
+        "kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
+        "kalman_common/SeaStateFusionDefaults.h": "37831f74a5a69ca4514d4f180c79cae235794d49afee8370719fc7be86b711c1",
+        "kalman_common/SeaStateFusionFilterCommon.h": "a753702b3ceae1ca529d6b71cc1b6c1ab5b6542740059e87975aab5ae95cdddd",
+        "kalman_common/SeaStateOUFamilyDefaults.h": "8c23ee6f8147977cd0a137b62568c66c95820c6327a44bb0ebbd90c56370b567",
+        "kalman_ou_common/KalmanOUCoreMath.h": "7b3a0c89e467120cfc7e7cda30d66967e1f518afa642d0058198b2d7af94cb05",
+        "kalman_ou_ii/Kalman3D_Wave_OU_II.h": "13ebd97379cc4e47b844d37e75609b8df2623f3097eb7db21113a70422909f05",
+        "kalman_ou_ii/SeaStateFusionFilter_OU_II.h": "c8988219dd63e8512e4447e4f9e18ce60ad6fa0b763d9114c1bb9978c14b7f9b",
+        "kalman_ou_iii/Kalman3D_Wave_OU_III.h": "5b44791224ed468608482f853369694f3bf6ad44646a17019efa0f28348ac291",
+        "kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "a5d00d557843dee246bf5bcb5cc1823097db7f66f0aa3f62852bfae2e9c7c6f9",
+        "kalman_tfg/Kalman3D_Wave_TFG.h": "33d937422f8672ad117a542e76d92e5134f558d41ab15c5e130cb79e0050dc59",
+        "kalman_tfg/SeaStateFusionFilter_TFG.h": "42bc3dd373913ac6022d98f498e5c74d830c5761c92762055a7bdea052015255",
+        "lie/SO3Jacobians.h": "d18671481a90114aa2ae8c49bd6bd60fa598c281b18a9f961a04a59e5690eb1a",
+        "lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
+        "nlo/TimeVarGainNLO_Adapter.h": "2b4724ac195e85581e3034153352ffc84ad1cb61c20bccae0e2831813f58bbe4",
+        "nlo/TimeVaryingGainNLO.h": "fe5610a5e6ae762a6b0fc612eed5344f8703526625e49f67f0b282db9f46ae5a",
+        "nmea/NmeaChecksum.h": "d550cd07d431d9e83239e1f283768dfac56baabfc0d607601128eeb511697b10",
+        "nmea/NmeaCompass.h": "99aa0ba66d27c1d54766c8374652374c7634cb5f60a8439efc2b950be314ed26",
+        "nmea/NmeaXDR.h": "b97d5f003b7eb3b56b6d9ee049daad335973d18510393467672a9a0d3397541d",
+        "pii_observer/AdaptiveVerticalPII.h": "e21e8ae0cb35b384462a4ee3c6beec54c23c8b8bb3be1bbceb6e246c6d010bde",
+        "pii_observer/AdaptiveVerticalPIIMahony.h": "16e6d79b6d3391a03551e38471ff4dff334a61c4b3680ee3152b4c88dda5f1e3",
+        "pii_observer/VerticalPIIObserver.h": "01e6df6b4f2a412620a1489228966b9050ff922b79328c03346d179d02d1e6f3",
+        "tuner/AccelVibrationGuard.h": "ab541742bbd539bbad295a7be2b3022ed8aee9c2718fa9544e506902a3454a43",
+        "tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+        "tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+        "tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+        "tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+        "tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+        "tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+        "tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+        "tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+        "util/AngleUtils.h": "bf8905ba9cb7b87e30b2c7d4a7839d0e738fa3f1a788450249895df0b94d0307",
+        "util/GPS_to_INS.h": "bdaf27d11e69d6b2482b74c5fb54e4cfff823f0cb89b41cdf27dbfc930590fd9",
+        "util/ImuLoopHelpers.h": "c256e204d273a6dea7cb4820ec564152476fe0b5f449163df4a7e100c8eaad52",
+        "util/MagneticHeading.h": "9dd6ea56b56628318899a134bbc54f0970d9f3f834d8381eaf3ac1b23c856cde",
+        "util/QuaternionUtils.h": "83ddaa7468c99e12f77cbd539db1544134c009fa7ca8cee156b89d940cd7e298",
+        "util/W3dSimCommon.cpp": "67295d71862932c6ebba34c761715043a855cbe9aa663159209b8bdb70578b45",
+        "util/W3dSimCommon.h": "c77405168b00581f7fa66ea7d59159576ec3e98b1f8b5f9645d939e587b143b2",
+        "util/WaveFilesSupport.h": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128",
+        "wave_dir/KalmanWaveDirection.h": "efa51d7b1ca1da5d5894bdb19ce227203d92882e564ab52345cbd39f0d9ca5eb",
+        "wave_dir/VesselRaoEqualizer.h": "11b77b3af39488cd0f038bfe070c53ee815f000a090051a85dbb955546f1fa07",
+        "wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
+        "wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+        "wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
+        "wave_dir/WaveDirectionReport.h": "abd1b0d45320d79096bc61eec7ea284ff0501d74d568a17c0deadcaea166c06a",
+        "wave_dir/WaveEncounter.h": "61b7e882f0b2dd338954994465c493746cfd89b3672879ed5f4798b1031301a6"
+      },
+      "metrics": {
+        "max_absolute_metric_differences": {
+          "OU_III": {
+            "accel_3d_rms_mps2": 9.310000000095631e-08,
+            "accel_bias_3d_rms_mps2": 4.2089999999911365e-07,
+            "accel_variance_m2ps4": 0,
+            "accel_x_rms_mps2": 9.030000000000149e-08,
+            "accel_y_rms_mps2": 1.937000000014344e-07,
+            "accel_z_rms_mps2": 2.519999999991973e-08,
+            "dir_axis_available_pct": 0,
+            "dir_axis_circ_std_deg": 0.00010869999999840729,
+            "dir_axis_error_deg": 6.103999999984566e-05,
+            "dir_axis_mean_deg": 6.099999999875649e-05,
+            "dir_axis_rmse_deg": 0.0001831000000009908,
+            "dir_axis_truth_deg": 0,
+            "dir_sense_dominant_pct": 0,
+            "dir_sense_forward_pct": 0,
+            "dir_sense_reverse_pct": 0,
+            "dir_sense_uncertain_pct": 0,
+            "dir_travel_correct_pct": 0,
+            "dir_travel_error_deg": 3.2189999999987506e-05,
+            "dir_travel_rmse_deg": 9.73000000001889e-05,
+            "dir_travel_unresolved_pct": 0,
+            "dir_travel_wrong_pct": 0,
+            "disp_3d_pct_refmax": 3.7189999998687995e-05,
+            "disp_3d_rms_m": 2.622999999979392e-06,
+            "disp_x_pct_hs": 7.153000000048593e-05,
+            "disp_x_rms_m": 2.860999999992897e-06,
+            "disp_y_pct_hs": 8.72599999999224e-05,
+            "disp_y_rms_m": 7.41999999998022e-06,
+            "disp_z_pct_hs": 1.525999999962835e-05,
+            "disp_z_pct_refrms": 5.81999999997862e-05,
+            "disp_z_ref_rms_m": 0,
+            "disp_z_rms_m": 1.222000000022927e-06,
+            "frequency_hz": 0,
+            "gyro_bias_3d_rms_radps": 1.1640000000109549e-09,
+            "period_s": 0,
+            "pitch_rms_deg": 6.303000000013048e-06,
+            "roll_rms_deg": 1.9669999999916143e-06,
+            "samples": 0,
+            "sigma_applied_mps2": 0,
+            "start_s": 0,
+            "tau_applied_s": 0,
+            "tuning_applied": 0,
+            "wave_period_s": 0,
+            "window_s": 0,
+            "yaw_rms_deg": 1.1623000000016148e-05
+          }
+        },
+        "paired_runs": 8
+      },
+      "modified_runs": [
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 2378711,
+              "family": 3,
+              "max_bias_rad_s": 0.006252764473475926,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.005322582433458173,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 1869056,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "e93023d68edace44acf7e9b189a0b3ceab1cfa93762e2919ffdaeec1ba4bd5b3",
+          "target": "kalman_ou_iii-sim",
+          "test_source_sha256": "6dbc870b94f687ca4f0f93ae654db0e9045c0e03b6aa755965ac640c9b985600"
+        },
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 80295,
+              "family": 3,
+              "max_bias_rad_s": 0.002020959248303222,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.001451323842477889,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 73632,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "0f48491491d32a33970243a55066a6274b4fa22c36de21446a5cfa54e8b8dca5",
+          "target": "startup_init-test",
+          "test_source_sha256": "cdd4d166d5a12de54e4542be081b7e483e16ee5de7f2d4f4cbd87e9354984bd5"
+        },
+        {
+          "exit_code": 0,
+          "observations": [
+            {
+              "candidate_exceedances": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "corrections": 559714,
+              "family": 3,
+              "max_bias_rad_s": 0.024786064818082508,
+              "max_dt_s": 0.004999999888241291,
+              "max_prediction_angle_rad": 0.0004917799693400486,
+              "max_projection_rad_s": 0,
+              "nonfinite": 0,
+              "predictions": 414446,
+              "projection_count": 0
+            }
+          ],
+          "stdout_sha256": "33844614632063856a4de28f7cfe7f11952b5ede913cfe63a45f729afebb7d9f",
+          "target": "stationary_device-test",
+          "test_source_sha256": "08517a2ab005b6943ec0c27d6a0f707c85c8069748fa01ccc1f306243b8b0897"
+        }
+      ],
+      "modified_source_sha256": {
+        "ArduinoOceanImu.h": "6a5739ec013cff9f2e538356a1afe064e8dee822ee2be3ca776d258303a69cfb",
+        "AtomS3R/AtomS3R_CompassAppBase.h": "cc9aed0157ffdef221945040a4935dea430ab1b819ecab2b66bdf96ef4895130",
+        "AtomS3R/AtomS3R_CompassUI.h": "e222498552e1b5f6b9db0a49ae8414a81cba2799c55507c5282b31f7352aca08",
+        "AtomS3R/AtomS3R_ImuCal.h": "28f2f27879619ad8995550138c809e21a305adc8de0184cd19ac9a6ccf945a70",
+        "AtomS3R/AtomS3R_ImuCalBlob.h": "3d99ff8ad2d4e9b69059b522e16b8b6f3c6aa35eaa5e4f6f5464cee69b0be480",
+        "AtomS3R/AtomS3R_ImuCalWizard.h": "43492574fd57eb606bfe6a5e715337571cdf7a71f945a01a5e9dc8d69e48eca5",
+        "AtomS3R/AtomS3R_ImuCommon.h": "1d822f5311fe7091ca840df5ec958d437ec3524d5b93ba808b6b6d9926d02097",
+        "AtomS3R/AtomS3R_ImuUnits.h": "6c5c8c5c07afd5aeba66042f460702b634ce1994a40d37b71f07b77baa4ff29f",
+        "AtomS3R/AtomS3R_M5Ui.h": "9840fc37dae82f6fe889a46eda23fbba58aa4148019667ffeeb70eb1ea6e3c09",
+        "AtomS3R/ImuCalWizardRunner.cpp": "8e251d0aaf11017539ee3dfb9b4b8ecf6f8203ef85ef85f7a5f0010b822652a8",
+        "AtomS3R/ImuCalWizardRunner.h": "be9f11dc9028380a383a2920fb5ae29abacc70b138fb203574d77a35e0910b7d",
+        "ahrs/FrameConversions.h": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+        "ahrs/KalmanQMEKF.h": "f0108e104cb5779fca965ce083287a9658e9d2cf40646ff5bbeebcf36a5dae90",
+        "ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+        "avg/AngleAveraging.h": "4e5d127274948156d6c2a9e9da0cd4ba101883db1b205b559c5d63a0ddb9ac10",
+        "avg/KalmanSmoother.h": "0cc500713daddc6f6a7acfd9e262b4d818bc52450644091f4967647f0aadb45f",
+        "avg/TimeAwareSpikeFilter.h": "054ce21cfa73377592bbe80584465516637e2d8de80599f1af59deda05714c23",
+        "detrend/AdaptiveWaveDetrender.h": "f890df8905568f611db6bf02cf377023b36ff6b13dd8171e362f0023276e7881",
+        "detrend/AdaptiveWaveDetrender3D.h": "3a09bb3dd470744b5e5e440269741266d60ea97ae3fea4a302f9d91ced2cdfc8",
+        "discrete/MinMaxLemire.h": "72e0b762ea31a98493c6d1b0bd0e6674d9e7ae50cb263d1a7b5b336cb87c669b",
+        "discrete/MonoWedge.h": "86849ae47d931dfd7189353e19dec3ae9a22dda6deb671113ca1306efd06e6f7",
+        "discrete/STL_RingBuffer.h": "f30e6432a81a1235c3d43379a346798cf1a9a5bc4bc4c06b72f8de0cb5b70e05",
+        "freq/AranovskiyFreqTracker.h": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125",
+        "freq/FirstOrderIIRSmoother.h": "b7f05229ca3bfccc4d6b2fda87c58d2eef45e1489f999ada70dcdd7dcc4ce7a2",
+        "freq/FrequencySmoother.h": "70505f2180ef086f2ad80175f3eb6e7a82c51581422e6ed4eea3d00beb056500",
+        "freq/FrequencyTrackerPolicy.h": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3",
+        "freq/KalmANFFreqTracker.h": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc",
+        "freq/PLLFreqTracker.h": "5199262b5dc37ee68c51b6acdc55d4f08bc8e9561349cb87d8e4adbd2165a76e",
+        "freq/SchmittTriggerZCFreqTracker.h": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
+        "imu_calibrate/AccelCalCapture.h": "796837cce4611be970ca40c78366966ad02af599244eea1b69f73effa4057b3e",
+        "imu_calibrate/AccelCalFit.h": "0908b304579301fd5d830ed93a154a77e6de5f998a51f811f75541ad7c65e202",
+        "imu_calibrate/CalibrateIMU.h": "dd9cd0bf5cf4f0b9d90d2e67b89f26dca666d01cd201250e72860117631bb855",
+        "imu_calibrate/GyroCalCapture.h": "0f067dc9e88a663feec4540ab30dd4c6bcbd8e8b556a6aa7d4dca31347022bef",
+        "imu_calibrate/MagCalCapture.h": "371c5b30e98d34e9262926cd69bd4f0adcda1dbfe65b76f1a5b8289841a68284",
+        "imu_calibrate/MagCalFit.h": "816817dc9cdc1ffaf6274f6fa3cce031a0878e41029debade557e580a7cb99f5",
+        "kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+        "kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+        "kalman_common/MarineWaveFrontEnd.h": "52a20e03b14f22d438050eb9b9b3c36ddf9dd39e9f43ab0b6692baf64e453943",
+        "kalman_common/ProxyStartupFusion.h": "078b1d08259f94e58a31356e9936a9c3b52db8651c2f4b2b1ccfb48876a8c11b",
+        "kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
+        "kalman_common/SeaStateFusionDefaults.h": "37831f74a5a69ca4514d4f180c79cae235794d49afee8370719fc7be86b711c1",
+        "kalman_common/SeaStateFusionFilterCommon.h": "a753702b3ceae1ca529d6b71cc1b6c1ab5b6542740059e87975aab5ae95cdddd",
+        "kalman_common/SeaStateOUFamilyDefaults.h": "8c23ee6f8147977cd0a137b62568c66c95820c6327a44bb0ebbd90c56370b567",
+        "kalman_ou_common/KalmanOUCoreMath.h": "05558d7d60968e63f3d1ac393e1abe13b26fead4329f7aea3282d3e43e521a21",
+        "kalman_ou_ii/Kalman3D_Wave_OU_II.h": "482bf99aabf6d2999a8254f337a07d4f80765d42e3074490c82b9c7b947bb57a",
+        "kalman_ou_ii/SeaStateFusionFilter_OU_II.h": "c8988219dd63e8512e4447e4f9e18ce60ad6fa0b763d9114c1bb9978c14b7f9b",
+        "kalman_ou_iii/Kalman3D_Wave_OU_III.h": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
+        "kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "a5d00d557843dee246bf5bcb5cc1823097db7f66f0aa3f62852bfae2e9c7c6f9",
+        "kalman_tfg/Kalman3D_Wave_TFG.h": "33d937422f8672ad117a542e76d92e5134f558d41ab15c5e130cb79e0050dc59",
+        "kalman_tfg/SeaStateFusionFilter_TFG.h": "42bc3dd373913ac6022d98f498e5c74d830c5761c92762055a7bdea052015255",
+        "lie/SO3Jacobians.h": "d18671481a90114aa2ae8c49bd6bd60fa598c281b18a9f961a04a59e5690eb1a",
+        "lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
+        "nlo/TimeVarGainNLO_Adapter.h": "2b4724ac195e85581e3034153352ffc84ad1cb61c20bccae0e2831813f58bbe4",
+        "nlo/TimeVaryingGainNLO.h": "fe5610a5e6ae762a6b0fc612eed5344f8703526625e49f67f0b282db9f46ae5a",
+        "nmea/NmeaChecksum.h": "d550cd07d431d9e83239e1f283768dfac56baabfc0d607601128eeb511697b10",
+        "nmea/NmeaCompass.h": "99aa0ba66d27c1d54766c8374652374c7634cb5f60a8439efc2b950be314ed26",
+        "nmea/NmeaXDR.h": "b97d5f003b7eb3b56b6d9ee049daad335973d18510393467672a9a0d3397541d",
+        "ou_gyro_audit_observer.h": "de06ba5a42adb4505f0266977013f2e067a5732120fd8ce1a3920bec7d4362e7",
+        "pii_observer/AdaptiveVerticalPII.h": "e21e8ae0cb35b384462a4ee3c6beec54c23c8b8bb3be1bbceb6e246c6d010bde",
+        "pii_observer/AdaptiveVerticalPIIMahony.h": "16e6d79b6d3391a03551e38471ff4dff334a61c4b3680ee3152b4c88dda5f1e3",
+        "pii_observer/VerticalPIIObserver.h": "01e6df6b4f2a412620a1489228966b9050ff922b79328c03346d179d02d1e6f3",
+        "tuner/AccelVibrationGuard.h": "ab541742bbd539bbad295a7be2b3022ed8aee9c2718fa9544e506902a3454a43",
+        "tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+        "tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+        "tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+        "tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+        "tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+        "tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+        "tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+        "tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+        "util/AngleUtils.h": "bf8905ba9cb7b87e30b2c7d4a7839d0e738fa3f1a788450249895df0b94d0307",
+        "util/GPS_to_INS.h": "bdaf27d11e69d6b2482b74c5fb54e4cfff823f0cb89b41cdf27dbfc930590fd9",
+        "util/ImuLoopHelpers.h": "c256e204d273a6dea7cb4820ec564152476fe0b5f449163df4a7e100c8eaad52",
+        "util/MagneticHeading.h": "9dd6ea56b56628318899a134bbc54f0970d9f3f834d8381eaf3ac1b23c856cde",
+        "util/QuaternionUtils.h": "83ddaa7468c99e12f77cbd539db1544134c009fa7ca8cee156b89d940cd7e298",
+        "util/W3dSimCommon.cpp": "67295d71862932c6ebba34c761715043a855cbe9aa663159209b8bdb70578b45",
+        "util/W3dSimCommon.h": "c77405168b00581f7fa66ea7d59159576ec3e98b1f8b5f9645d939e587b143b2",
+        "util/WaveFilesSupport.h": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128",
+        "wave_dir/KalmanWaveDirection.h": "efa51d7b1ca1da5d5894bdb19ce227203d92882e564ab52345cbd39f0d9ca5eb",
+        "wave_dir/VesselRaoEqualizer.h": "11b77b3af39488cd0f038bfe070c53ee815f000a090051a85dbb955546f1fa07",
+        "wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
+        "wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+        "wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
+        "wave_dir/WaveDirectionReport.h": "abd1b0d45320d79096bc61eec7ea284ff0501d74d568a17c0deadcaea166c06a",
+        "wave_dir/WaveEncounter.h": "61b7e882f0b2dd338954994465c493746cfd89b3672879ed5f4798b1031301a6"
+      },
+      "observer_sha256": "de06ba5a42adb4505f0266977013f2e067a5732120fd8ce1a3920bec7d4362e7"
+    }
+  },
+  "full_robustness": {
+    "baseline": {
+      "3": {
+        "candidate_exceedances": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "corrections": 92918167,
+        "max_bias_rad_s": 0.015381852061195151,
+        "max_dt_s": 0.004999999888241291,
+        "max_prediction_angle_rad": 0.0028333434292867788,
+        "max_projection_rad_s": 0,
+        "nonfinite": 0,
+        "predictions": 72631734,
+        "projection_count": 0,
+        "runs": 311
+      }
+    },
+    "frozen_tuning_points": [
+      {
+        "RS_ms": 1.326771751559308,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.397530764,
+        "tau_s": 2.50470543
+      },
+      {
+        "RS_ms": 1.326771751559308,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.397530764,
+        "tau_s": 2.50470543
+      }
+    ],
+    "input_immutability_verified": true,
+    "input_records_identical": true,
+    "metrics": {
+      "max_absolute_metric_differences": {
+        "OU_III": {
+          "accel_3d_rms_mps2": 2.2350000000725956e-07,
+          "accel_bias_3d_rms_mps2": 9.647999999959356e-07,
+          "accel_variance_m2ps4": 0,
+          "accel_x_rms_mps2": 1.4149999999490959e-07,
+          "accel_y_rms_mps2": 2.830999999980932e-07,
+          "accel_z_rms_mps2": 4.839999999915745e-08,
+          "configured_r_s_ms": 0,
+          "configured_sigma_aw_mps2": 0,
+          "configured_tau_s": 0,
+          "dir_axis_abs_error_deg": 0.006378170000000072,
+          "dir_axis_available_pct": 0.0005570000000005848,
+          "dir_axis_circ_std_deg": 0.006923600000000363,
+          "dir_axis_error_deg": 0.006378170000000072,
+          "dir_axis_mean_deg": 0.006378200000000334,
+          "dir_axis_rmse_deg": 0.0086422000000006,
+          "dir_axis_truth_deg": 0,
+          "dir_sense_dominant_pct": 0.0022239999999982274,
+          "dir_sense_forward_pct": 0.022777599999997733,
+          "dir_sense_reverse_pct": 0.0022239999999982274,
+          "dir_sense_uncertain_pct": 0.022778500000001145,
+          "dir_travel_abs_error_deg": 0.013207200000000086,
+          "dir_travel_correct_pct": 0.02277380000001017,
+          "dir_travel_error_deg": 0.013207200000000086,
+          "dir_travel_rmse_deg": 0.012994800000001305,
+          "dir_travel_unresolved_pct": 0.022778500000001145,
+          "dir_travel_wrong_pct": 0.0005555749999999193,
+          "disp_3d_pct_refmax": 0.00020310000000023365,
+          "disp_3d_rms_m": 2.860999999992897e-06,
+          "disp_x_pct_hs": 0.00019837000000055838,
+          "disp_x_rms_m": 2.9720000000038604e-06,
+          "disp_y_pct_hs": 0.00022459000000019103,
+          "disp_y_rms_m": 3.3680000000035903e-06,
+          "disp_z_pct_hs": 3.81000000011511e-05,
+          "disp_z_pct_refrms": 0.0001831000000009908,
+          "disp_z_ref_rms_m": 0,
+          "disp_z_rms_m": 7.900000000005125e-07,
+          "frequency_hz": 0,
+          "gyro_bias_3d_rms_radps": 1.1466999999933461e-08,
+          "imu_noise_seed": 0,
+          "initialization_seed": 0,
+          "period_s": 0,
+          "pitch_rms_deg": 5.692999999973303e-06,
+          "repetition": 0,
+          "roll_rms_deg": 5.393999999991905e-06,
+          "samples": 0,
+          "scale_label": 0,
+          "scale_multiplier": 0,
+          "score_window_sec": 0,
+          "sigma_applied_mps2": 0,
+          "tau_applied_s": 0,
+          "transition_duration_sec": 0,
+          "true_hs_m": 0,
+          "tuning_applied": 0,
+          "wave_period_s": 0,
+          "wave_phase_seed": 0,
+          "window_s": 0,
+          "yaw_rms_deg": 7.16000000000605e-05
+        }
+      },
+      "paired_runs": 310
+    },
+    "modified": {
+      "3": {
+        "candidate_exceedances": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "corrections": 92918167,
+        "max_bias_rad_s": 0.0153817373426971,
+        "max_dt_s": 0.004999999888241291,
+        "max_prediction_angle_rad": 0.0028333434277035335,
+        "max_projection_rad_s": 0,
+        "nonfinite": 0,
+        "predictions": 72631734,
+        "projection_count": 0,
+        "runs": 311
+      }
+    },
+    "paired_input_records_sha256": "86064930e70f5b4e79d420026022eafe841cc72b81f3854510a4f14a27f93a9e",
+    "paired_replay_count": 311,
+    "protocol": {
+      "bootstrap_resamples": 10000,
+      "duration_sec": 1200.0,
+      "low_motion_heights_m": [
+        0.27,
+        0.05
+      ],
+      "mode": "full",
+      "pairing": "identical wave-realization, IMU-noise, and initialization seeds",
+      "r_s_semantics": "standard deviation; R_S = diag(r_S^2)",
+      "score_window_sec": 900.0,
+      "seed_triplets": [
+        {
+          "imu_noise_seed": 101,
+          "initialization_seed": 1009,
+          "wave_phase_seed": 11
+        },
+        {
+          "imu_noise_seed": 211,
+          "initialization_seed": 1103,
+          "wave_phase_seed": 29
+        },
+        {
+          "imu_noise_seed": 307,
+          "initialization_seed": 1201,
+          "wave_phase_seed": 47
+        },
+        {
+          "imu_noise_seed": 401,
+          "initialization_seed": 1301,
+          "wave_phase_seed": 71
+        },
+        {
+          "imu_noise_seed": 503,
+          "initialization_seed": 1409,
+          "wave_phase_seed": 97
+        },
+        {
+          "imu_noise_seed": 601,
+          "initialization_seed": 1511,
+          "wave_phase_seed": 131
+        },
+        {
+          "imu_noise_seed": 701,
+          "initialization_seed": 1601,
+          "wave_phase_seed": 173
+        },
+        {
+          "imu_noise_seed": 809,
+          "initialization_seed": 1709,
+          "wave_phase_seed": 211
+        },
+        {
+          "imu_noise_seed": 907,
+          "initialization_seed": 1801,
+          "wave_phase_seed": 257
+        },
+        {
+          "imu_noise_seed": 1009,
+          "initialization_seed": 1901,
+          "wave_phase_seed": 307
+        }
+      ],
+      "sensitivity_design": "one factor at a time around one frozen nominal OU-III point",
+      "sensitivity_parameters": [
+        "tau",
+        "sigma_aw",
+        "r_s",
+        "sigma_aw_rs",
+        "tau_rs"
+      ],
+      "sensitivity_scales": [
+        0.5,
+        0.75,
+        1.0,
+        1.25,
+        1.5
+      ],
+      "stats_seed": 20260329,
+      "transition_cases": [
+        {
+          "end_sec": 660.0,
+          "name": "controlled",
+          "start_sec": 540.0
+        },
+        {
+          "end_sec": 615.0,
+          "name": "rapid",
+          "start_sec": 585.0
+        }
+      ],
+      "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
+      "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
+    },
+    "reference_motion_metrics_identical": true,
+    "scope": "Full unchanged paired study; native return codes 0/1 are retained by the official study protocol. This diagnostic does not alter quality gates or promote a stability theorem."
+  },
+  "full_validation": {
+    "baseline": {
+      "2": {
+        "candidate_exceedances": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "corrections": 125300289,
+        "max_bias_rad_s": 0.01652885529432746,
+        "max_dt_s": 0.004999999888241291,
+        "max_prediction_angle_rad": 0.005452921231260686,
+        "max_projection_rad_s": 0,
+        "nonfinite": 0,
+        "predictions": 87829762,
+        "projection_count": 0,
+        "runs": 376
+      },
+      "3": {
+        "candidate_exceedances": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "corrections": 141861289,
+        "max_bias_rad_s": 0.036827436534647255,
+        "max_dt_s": 0.004999999888241291,
+        "max_prediction_angle_rad": 0.005453079420798337,
+        "max_projection_rad_s": 0,
+        "nonfinite": 0,
+        "predictions": 111889034,
+        "projection_count": 0,
+        "runs": 479
+      }
+    },
+    "frozen_tuning_points": [
+      {
+        "OU_II": {
+          "nonstationary_endpoint_H4_0_Tp11_4": {
+            "RS_ms": null,
+            "R_p0_std_m": 3.996651433024663,
+            "R_v0_std_mps": 1.870578981617208,
+            "sigma_a_mps2": 0.48788622,
+            "tau_s": 4.27317047
+          },
+          "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 0.11382118758392959,
+            "R_v0_std_mps": 0.16447209910510974,
+            "sigma_a_mps2": 0.0830332041,
+            "tau_s": 1.38407898
+          },
+          "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 1.1705042275547963,
+            "R_v0_std_mps": 0.9838361412450214,
+            "sigma_a_mps2": 0.422236443,
+            "tau_s": 2.37946987
+          },
+          "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 4.601429833859754,
+            "R_v0_std_mps": 2.4608007271715553,
+            "sigma_a_mps2": 0.798612118,
+            "tau_s": 3.73978257
+          },
+          "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 7.39076509978367,
+            "R_v0_std_mps": 3.4595914481553494,
+            "sigma_a_mps2": 1.05242729,
+            "tau_s": 4.27262306
+          },
+          "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 0.10947381979165453,
+            "R_v0_std_mps": 0.1608078801655932,
+            "sigma_a_mps2": 0.08223176,
+            "tau_s": 1.36154795
+          },
+          "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 1.0799423371446488,
+            "R_v0_std_mps": 0.9782464793120904,
+            "sigma_a_mps2": 0.456060857,
+            "tau_s": 2.20791459
+          },
+          "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 4.296589181452606,
+            "R_v0_std_mps": 2.4615282021212526,
+            "sigma_a_mps2": 0.863238633,
+            "tau_s": 3.49099326
+          },
+          "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 7.875400149090748,
+            "R_v0_std_mps": 3.8351185442432714,
+            "sigma_a_mps2": 1.25155997,
+            "tau_s": 4.10699177
+          }
+        },
+        "OU_III": {
+          "nonstationary_endpoint_H4_0_Tp11_4": {
+            "RS_ms": 8.744975552262504,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.485370368,
+            "tau_s": 4.49806786
+          },
+          "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
+            "RS_ms": 0.15,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.0500000007,
+            "tau_s": 1.45692492
+          },
+          "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
+            "RS_ms": 1.326771751559308,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.397530764,
+            "tau_s": 2.50470543
+          },
+          "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
+            "RS_ms": 9.4848961620994,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.841515899,
+            "tau_s": 3.93661332
+          },
+          "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
+            "RS_ms": 17.708932725404082,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 1.10603309,
+            "tau_s": 4.49749565
+          },
+          "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
+            "RS_ms": 0.15,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.0500000007,
+            "tau_s": 1.43320906
+          },
+          "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00": {
+            "RS_ms": 1.162158311709755,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.439831376,
+            "tau_s": 2.32412052
+          },
+          "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": {
+            "RS_ms": 8.286110800706068,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.909388244,
+            "tau_s": 3.67473006
+          },
+          "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
+            "RS_ms": 18.37138369252903,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 1.32143033,
+            "tau_s": 4.32314205
+          }
+        }
+      },
+      {
+        "OU_II": {
+          "nonstationary_endpoint_H4_0_Tp11_4": {
+            "RS_ms": null,
+            "R_p0_std_m": 3.996651433024663,
+            "R_v0_std_mps": 1.870578981617208,
+            "sigma_a_mps2": 0.48788622,
+            "tau_s": 4.27317047
+          },
+          "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 0.11382118758392959,
+            "R_v0_std_mps": 0.16447209910510974,
+            "sigma_a_mps2": 0.0830332041,
+            "tau_s": 1.38407898
+          },
+          "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 1.1705042275547963,
+            "R_v0_std_mps": 0.9838361412450214,
+            "sigma_a_mps2": 0.422236443,
+            "tau_s": 2.37946987
+          },
+          "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 4.601429833859754,
+            "R_v0_std_mps": 2.4608007271715553,
+            "sigma_a_mps2": 0.798612118,
+            "tau_s": 3.73978257
+          },
+          "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 7.39076509978367,
+            "R_v0_std_mps": 3.4595914481553494,
+            "sigma_a_mps2": 1.05242729,
+            "tau_s": 4.27262306
+          },
+          "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 0.10947381979165453,
+            "R_v0_std_mps": 0.1608078801655932,
+            "sigma_a_mps2": 0.08223176,
+            "tau_s": 1.36154795
+          },
+          "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 1.0799423371446488,
+            "R_v0_std_mps": 0.9782464793120904,
+            "sigma_a_mps2": 0.456060857,
+            "tau_s": 2.20791459
+          },
+          "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 4.296589181452606,
+            "R_v0_std_mps": 2.4615282021212526,
+            "sigma_a_mps2": 0.863238633,
+            "tau_s": 3.49099326
+          },
+          "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
+            "RS_ms": null,
+            "R_p0_std_m": 7.875400149090748,
+            "R_v0_std_mps": 3.8351185442432714,
+            "sigma_a_mps2": 1.25155997,
+            "tau_s": 4.10699177
+          }
+        },
+        "OU_III": {
+          "nonstationary_endpoint_H4_0_Tp11_4": {
+            "RS_ms": 8.744975552262504,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.485370368,
+            "tau_s": 4.49806786
+          },
+          "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
+            "RS_ms": 0.15,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.0500000007,
+            "tau_s": 1.45692492
+          },
+          "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
+            "RS_ms": 1.326771751559308,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.397530764,
+            "tau_s": 2.50470543
+          },
+          "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
+            "RS_ms": 9.4848961620994,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.841515899,
+            "tau_s": 3.93661332
+          },
+          "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
+            "RS_ms": 17.708932725404082,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 1.10603309,
+            "tau_s": 4.49749565
+          },
+          "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
+            "RS_ms": 0.15,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.0500000007,
+            "tau_s": 1.43320906
+          },
+          "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00": {
+            "RS_ms": 1.162158311709755,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.439831376,
+            "tau_s": 2.32412052
+          },
+          "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": {
+            "RS_ms": 8.286110800706068,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 0.909388244,
+            "tau_s": 3.67473006
+          },
+          "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
+            "RS_ms": 18.37138369252903,
+            "R_p0_std_m": null,
+            "R_v0_std_mps": null,
+            "sigma_a_mps2": 1.32143033,
+            "tau_s": 4.32314205
+          }
+        }
+      }
+    ],
+    "input_immutability_verified": true,
+    "input_records_identical": true,
+    "metrics": {
+      "max_absolute_metric_differences": {
+        "OU_II": {
+          "accel_3d_rms_mps2": 6.738999999998663e-06,
+          "accel_bias_3d_rms_mps2": 4.6856700000000306e-05,
+          "accel_variance_m2ps4": 0,
+          "accel_x_rms_mps2": 4.895000000004757e-06,
+          "accel_y_rms_mps2": 2.7661000000026026e-06,
+          "accel_z_rms_mps2": 5.4911000000011645e-06,
+          "dir_axis_abs_error_deg": 0.00798034999999997,
+          "dir_axis_available_pct": 0.001663199999995868,
+          "dir_axis_circ_std_deg": 0.0060698999999999614,
+          "dir_axis_error_deg": 0.00798034999999997,
+          "dir_axis_mean_deg": 0.007980400000000998,
+          "dir_axis_rmse_deg": 0.009994029999999654,
+          "dir_axis_truth_deg": 0,
+          "dir_sense_dominant_pct": 0.003887200000001201,
+          "dir_sense_forward_pct": 0.003887200000001201,
+          "dir_sense_reverse_pct": 0.005555199999999871,
+          "dir_sense_uncertain_pct": 0.005555390000000049,
+          "dir_travel_abs_error_deg": 0.003813700000000253,
+          "dir_travel_correct_pct": 0.005554200000005949,
+          "dir_travel_error_deg": 0.003813700000000253,
+          "dir_travel_rmse_deg": 0.0039052999999995563,
+          "dir_travel_unresolved_pct": 0.005555390000000049,
+          "dir_travel_wrong_pct": 0.001111149000000089,
+          "disp_3d_pct_refmax": 0.0018959000000009496,
+          "disp_3d_rms_m": 2.3335000000013206e-05,
+          "disp_x_pct_hs": 0.0006351999999978375,
+          "disp_x_rms_m": 1.4179999999974768e-05,
+          "disp_y_pct_hs": 0.0005684000000023559,
+          "disp_y_rms_m": 1.3411999999990432e-05,
+          "disp_z_pct_hs": 0.002513900000000291,
+          "disp_z_pct_refrms": 0.013748000000006755,
+          "disp_z_ref_rms_m": 0,
+          "disp_z_rms_m": 4.398900000002204e-05,
+          "frequency_hz": 0,
+          "gyro_bias_3d_rms_radps": 9.152999999991135e-09,
+          "imu_noise_seed": 0,
+          "initialization_seed": 0,
+          "period_s": 0,
+          "pitch_rms_deg": 0.00021189500000001749,
+          "repetition": 0,
+          "roll_rms_deg": 0.00023602000000000345,
+          "samples": 0,
+          "score_window_sec": 0,
+          "seg_blend_disp_3d_rms_m": 9.478000000062714e-06,
+          "seg_blend_disp_z_pct_hs": 0.0003881500000009197,
+          "seg_blend_disp_z_pct_refrms": 0.0018614999999968518,
+          "seg_blend_disp_z_ref_rms_m": 0,
+          "seg_blend_disp_z_rms_m": 1.5526999999959656e-05,
+          "seg_end_disp_3d_rms_m": 9.774999999989653e-06,
+          "seg_end_disp_z_pct_hs": 0.0004977999999997706,
+          "seg_end_disp_z_pct_refrms": 0.0018615000000039572,
+          "seg_end_disp_z_ref_rms_m": 0,
+          "seg_end_disp_z_rms_m": 1.9908000000012915e-05,
+          "seg_recover_disp_3d_rms_m": 1.6451000000028415e-05,
+          "seg_recover_disp_z_pct_hs": 0.0006331999999993343,
+          "seg_recover_disp_z_pct_refrms": 0.002189600000001235,
+          "seg_recover_disp_z_ref_rms_m": 0,
+          "seg_recover_disp_z_rms_m": 2.5332000000100052e-05,
+          "seg_start_disp_3d_rms_m": 5.542999999996745e-06,
+          "seg_start_disp_z_pct_hs": 8.964000000011296e-05,
+          "seg_start_disp_z_pct_refrms": 0.0009441000000016686,
+          "seg_start_disp_z_ref_rms_m": 0,
+          "seg_start_disp_z_rms_m": 3.5909999999972353e-06,
+          "sigma_applied_mps2": 0,
+          "tau_applied_s": 0,
+          "tuning_applied": 0,
+          "wave_period_s": 0,
+          "wave_phase_seed": 0,
+          "window_s": 0,
+          "yaw_rms_deg": 0.0004304699999999606
+        },
+        "OU_III": {
+          "accel_3d_rms_mps2": 2.176000000020384e-06,
+          "accel_bias_3d_rms_mps2": 3.0323999999984363e-06,
+          "accel_variance_m2ps4": 0,
+          "accel_x_rms_mps2": 2.0860000000122447e-06,
+          "accel_y_rms_mps2": 1.0129999999941575e-06,
+          "accel_z_rms_mps2": 2.869000000002564e-07,
+          "dir_axis_abs_error_deg": 0.02635192999999969,
+          "dir_axis_available_pct": 0.0005570000000005848,
+          "dir_axis_circ_std_deg": 0.03182029999999969,
+          "dir_axis_error_deg": 0.02635192999999969,
+          "dir_axis_mean_deg": 0.02635190000000165,
+          "dir_axis_rmse_deg": 0.032365799999997336,
+          "dir_axis_truth_deg": 0,
+          "dir_sense_dominant_pct": 0.008335100000003592,
+          "dir_sense_forward_pct": 0.003333999999995285,
+          "dir_sense_reverse_pct": 0.008335100000003592,
+          "dir_sense_uncertain_pct": 0.008333300000000321,
+          "dir_travel_abs_error_deg": 0.03734159000000048,
+          "dir_travel_correct_pct": 0.008331300000008923,
+          "dir_travel_error_deg": 0.03734159000000048,
+          "dir_travel_rmse_deg": 0.026359499999998093,
+          "dir_travel_unresolved_pct": 0.008333300000000321,
+          "dir_travel_wrong_pct": 0.0033333300000000232,
+          "disp_3d_pct_refmax": 0.0003108999999987816,
+          "disp_3d_rms_m": 1.4722999999938757e-05,
+          "disp_x_pct_hs": 0.00018644000000023198,
+          "disp_x_rms_m": 1.4483999999925778e-05,
+          "disp_y_pct_hs": 0.0003423700000002583,
+          "disp_y_rms_m": 1.6032999999970876e-05,
+          "disp_z_pct_hs": 4.00999999996543e-05,
+          "disp_z_pct_refrms": 0.00020599999999149077,
+          "disp_z_ref_rms_m": 0,
+          "disp_z_rms_m": 1.937000000007405e-06,
+          "frequency_hz": 0,
+          "gyro_bias_3d_rms_radps": 2.2817999999896754e-08,
+          "imu_noise_seed": 0,
+          "initialization_seed": 0,
+          "period_s": 0,
+          "pitch_rms_deg": 1.820899999999126e-05,
+          "repetition": 0,
+          "roll_rms_deg": 2.473599999996967e-05,
+          "samples": 0,
+          "score_window_sec": 0,
+          "seg_blend_disp_3d_rms_m": 6.437000000025783e-06,
+          "seg_blend_disp_z_pct_hs": 4.4339999999643e-05,
+          "seg_blend_disp_z_pct_refrms": 0.00029750000000206,
+          "seg_blend_disp_z_ref_rms_m": 0,
+          "seg_blend_disp_z_rms_m": 1.7579999999906004e-06,
+          "seg_end_disp_3d_rms_m": 4.8870000000089675e-06,
+          "seg_end_disp_z_pct_hs": 2.5270000000077175e-05,
+          "seg_end_disp_z_pct_refrms": 9.90999999999076e-05,
+          "seg_end_disp_z_ref_rms_m": 0,
+          "seg_end_disp_z_rms_m": 1.013000000021913e-06,
+          "seg_recover_disp_3d_rms_m": 1.5438000000034258e-05,
+          "seg_recover_disp_z_pct_hs": 7.200000000029405e-05,
+          "seg_recover_disp_z_pct_refrms": 0.0002689999999994086,
+          "seg_recover_disp_z_ref_rms_m": 0,
+          "seg_recover_disp_z_rms_m": 2.8760000000127572e-06,
+          "seg_start_disp_3d_rms_m": 8.284999999996767e-06,
+          "seg_start_disp_z_pct_hs": 4.2439999999643874e-05,
+          "seg_start_disp_z_pct_refrms": 0.0004271999999971854,
+          "seg_start_disp_z_ref_rms_m": 0,
+          "seg_start_disp_z_rms_m": 1.6979999999944262e-06,
+          "sigma_applied_mps2": 0,
+          "tau_applied_s": 0,
+          "tuning_applied": 0,
+          "wave_period_s": 0,
+          "wave_phase_seed": 0,
+          "window_s": 0,
+          "yaw_rms_deg": 0.0001983999999985997
+        }
+      },
+      "paired_runs": 840
+    },
+    "modified": {
+      "2": {
+        "candidate_exceedances": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "corrections": 125300289,
+        "max_bias_rad_s": 0.01652890024762509,
+        "max_dt_s": 0.004999999888241291,
+        "max_prediction_angle_rad": 0.005452921232094867,
+        "max_projection_rad_s": 0,
+        "nonfinite": 0,
+        "predictions": 87829762,
+        "projection_count": 0,
+        "runs": 376
+      },
+      "3": {
+        "candidate_exceedances": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "corrections": 141861289,
+        "max_bias_rad_s": 0.03682734444845513,
+        "max_dt_s": 0.004999999888241291,
+        "max_prediction_angle_rad": 0.0054530791951518595,
+        "max_projection_rad_s": 0,
+        "nonfinite": 0,
+        "predictions": 111889034,
+        "projection_count": 0,
+        "runs": 479
+      }
+    },
+    "paired_input_records_sha256": "602b0d8952f235f073e66de023c3063b81bde86ceb06a76ad5cbd9d9340ac1d3",
+    "paired_replay_count": 858,
+    "protocol": {
+      "adaptation_modes": [
+        "Adaptive",
+        "FixedNominal",
+        "FixedOracle",
+        "AdaptiveHeldCovariance",
+        "FixedNominalHeldCovariance",
+        "AdaptiveRSOnly",
+        "AdaptiveOUOnly"
+      ],
+      "aw_covariance_sync_policies": {
+        "Adaptive": "periodic",
+        "AdaptiveHeldCovariance": "reconfigure",
+        "AdaptiveOUOnly": "periodic",
+        "AdaptiveRSOnly": "periodic",
+        "FixedNominal": "periodic",
+        "FixedNominalHeldCovariance": "reconfigure",
+        "FixedOracle": "periodic"
+      },
+      "bootstrap_method": "nonparametric percentile bootstrap of the mean; paired comparisons resample the seed-level differences with replacement",
+      "bootstrap_resamples": 10000,
+      "bootstrap_rng": "numpy.random.default_rng (PCG64)",
+      "duration_sec": 1200.0,
+      "fixed_nominal_definition": "noise-free full-trace operating point from Hs=1.5 m, L=50.710 m",
+      "fixed_oracle_definition": "scenario-calibrated fixed reference: the noise-free full-trace operating point of the stationary sea being scored, and the known final Hs=4.0 m/Tp=11.4 s point for the transition; it is selected from knowledge of the sea, not optimized against displacement error",
+      "mode": "full",
+      "multiplicity": "intervals are per-comparison and are not adjusted for multiplicity; only the primary endpoint is confirmatory and every other interval is descriptive",
+      "pairing": "identical wave, IMU-noise, and initialization seeds",
+      "partial_adaptation_definition": "AdaptiveRSOnly freezes tau and sigma_aw at the FixedNominal point while r_S keeps adapting; AdaptiveOUOnly freezes r_S at the FixedNominal point while tau and sigma_aw keep adapting.  r_S is derived from the live tau and sigma_aw estimates in both cases, so freezing the OU channel does not implicitly freeze r_S through the coupled law.  OU-III only",
+      "pmstokes_modes": [
+        "Adaptive",
+        "FixedNominal",
+        "FixedOracle"
+      ],
+      "pmstokes_pooling": "PM-Stokes is a separate declared ensemble and is not pooled into the primary JONSWAP aggregate",
+      "primary_endpoint": "seed-level mean normalized vertical displacement RMS error over the four stationary JONSWAP seas, OU-III Adaptive minus OU-II Adaptive",
+      "primary_endpoint_inference": "the confirmatory endpoint carries four companion statements on the same paired seed-level differences: the percentile bootstrap interval, a Student-t interval, an exact sign test, and an exact paired randomization (sign-flip) test enumerated over all 2^n sign patterns.  They are companions, not independent confirmations: all four read the same n paired differences, and none of them widens the ensemble.",
+      "quality_gate_window_sec": 900.0,
+      "score_window_sec": 900.0,
+      "seed_triplets": [
+        {
+          "imu_noise_seed": 101,
+          "initialization_seed": 1009,
+          "wave_phase_seed": 11
+        },
+        {
+          "imu_noise_seed": 211,
+          "initialization_seed": 1103,
+          "wave_phase_seed": 29
+        },
+        {
+          "imu_noise_seed": 307,
+          "initialization_seed": 1201,
+          "wave_phase_seed": 47
+        },
+        {
+          "imu_noise_seed": 401,
+          "initialization_seed": 1301,
+          "wave_phase_seed": 71
+        },
+        {
+          "imu_noise_seed": 503,
+          "initialization_seed": 1409,
+          "wave_phase_seed": 97
+        },
+        {
+          "imu_noise_seed": 601,
+          "initialization_seed": 1511,
+          "wave_phase_seed": 131
+        },
+        {
+          "imu_noise_seed": 701,
+          "initialization_seed": 1601,
+          "wave_phase_seed": 173
+        },
+        {
+          "imu_noise_seed": 809,
+          "initialization_seed": 1709,
+          "wave_phase_seed": 211
+        },
+        {
+          "imu_noise_seed": 907,
+          "initialization_seed": 1801,
+          "wave_phase_seed": 257
+        },
+        {
+          "imu_noise_seed": 1009,
+          "initialization_seed": 1901,
+          "wave_phase_seed": 307
+        }
+      ],
+      "stats_seed": 20260317,
+      "transition_end_sec": 660.0,
+      "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
+      "transition_midpoint_linear_hs_m": 2.75,
+      "transition_midpoint_mixture_hs_m": 2.1360009363293826,
+      "transition_segments_sec": {
+        "blend": [
+          540.0,
+          660.0
+        ],
+        "end": [
+          780.0,
+          1200.0
+        ],
+        "recover": [
+          660.0,
+          780.0
+        ],
+        "start": [
+          300.0,
+          540.0
+        ]
+      },
+      "transition_start_sec": 540.0,
+      "transition_window_composition_sec": {
+        "blended_sec": 120.0,
+        "pure_end_sea_sec": 540.0,
+        "pure_start_sea_sec": 240.0,
+        "recovery_sec": 120.0,
+        "settled_end_sea_sec": 420.0,
+        "window_end_sec": 1200.0,
+        "window_start_sec": 300.0
+      },
+      "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
+    },
+    "reference_motion_metrics_identical": true,
+    "scope": "Full unchanged paired study; native return codes 0/1 are retained by the official study protocol. This diagnostic does not alter quality gates or promote a stability theorem."
+  },
+  "qualification": "OU_RESIDUAL_GYRO_BIAS_PAIRED_AUDIT_V1",
+  "radius_rad_s": 0.5,
+  "scope": "Finite executed evidence. Source hashes identify the actual baseline and modified builds; full source-uniform stability is not promoted.",
+  "smoke_validation": {
+    "baseline": {
+      "2": {
+        "corrections": 502748,
+        "max_bias_rad_s": 0.0030567217939326003,
+        "max_dt_s": 0.004999999888241291,
+        "max_prediction_angle_rad": 0.002075098981108359,
+        "max_projection_rad_s": 0,
+        "nonfinite": 0,
+        "predictions": 355584,
+        "projection_count": 0,
+        "runs": 12
+      },
+      "3": {
+        "corrections": 599187,
+        "max_bias_rad_s": 0.004162769619809435,
+        "max_dt_s": 0.004999999888241291,
+        "max_prediction_angle_rad": 0.00207519864985055,
+        "max_projection_rad_s": 0,
+        "nonfinite": 0,
+        "predictions": 474112,
+        "projection_count": 0,
+        "runs": 16
+      }
+    },
+    "input_records_identical": true,
+    "metrics": {
+      "max_absolute_metric_differences": {
+        "OU_II": {
+          "accel_3d_rms_mps2": 4.0240000000191234e-07,
+          "accel_bias_3d_rms_mps2": 3.9500000000025626e-07,
+          "accel_variance_m2ps4": 0,
+          "accel_x_rms_mps2": 1.52800000000064e-07,
+          "accel_y_rms_mps2": 1.0799999999866472e-07,
+          "accel_z_rms_mps2": 5.066000000053528e-07,
+          "dir_axis_abs_error_deg": 1.5300000001161607e-05,
+          "dir_axis_available_pct": 0,
+          "dir_axis_circ_std_deg": 3.240000000026555e-05,
+          "dir_axis_error_deg": 1.5300000001161607e-05,
+          "dir_axis_mean_deg": 1.529999999938525e-05,
+          "dir_axis_rmse_deg": 2.5700000000128398e-05,
+          "dir_axis_truth_deg": 0,
+          "dir_sense_dominant_pct": 0,
+          "dir_sense_forward_pct": 0,
+          "dir_sense_reverse_pct": 0,
+          "dir_sense_uncertain_pct": 0,
+          "dir_travel_abs_error_deg": 2.1000000000270802e-05,
+          "dir_travel_correct_pct": 0,
+          "dir_travel_error_deg": 2.1000000000270802e-05,
+          "dir_travel_rmse_deg": 2.86000000002673e-05,
+          "dir_travel_unresolved_pct": 0,
+          "dir_travel_wrong_pct": 0,
+          "disp_3d_pct_refmax": 0.003478999999970256,
+          "disp_3d_rms_m": 6.29399999994007e-05,
+          "disp_x_pct_hs": 0.00014018999999976245,
+          "disp_x_rms_m": 3.1890000000145413e-06,
+          "disp_y_pct_hs": 0.0001618900000002199,
+          "disp_y_rms_m": 2.951000000001036e-06,
+          "disp_z_pct_hs": 0.0015719999999816991,
+          "disp_z_pct_refrms": 0.008299999999962893,
+          "disp_z_ref_rms_m": 0,
+          "disp_z_rms_m": 6.29399999994007e-05,
+          "frequency_hz": 0,
+          "gyro_bias_3d_rms_radps": 1.1321000000001852e-08,
+          "imu_noise_seed": 0,
+          "initialization_seed": 0,
+          "period_s": 0,
+          "pitch_rms_deg": 3.7549999999941797e-06,
+          "repetition": 0,
+          "roll_rms_deg": 2.563000000010973e-06,
+          "samples": 0,
+          "score_window_sec": 0,
+          "seg_end_disp_3d_rms_m": 6.29399999994007e-05,
+          "seg_end_disp_z_pct_hs": 0.0015719999999816991,
+          "seg_end_disp_z_pct_refrms": 0.008299999999962893,
+          "seg_end_disp_z_ref_rms_m": 0,
+          "seg_end_disp_z_rms_m": 6.29399999994007e-05,
+          "sigma_applied_mps2": 0,
+          "tau_applied_s": 0,
+          "tuning_applied": 0,
+          "wave_period_s": 0,
+          "wave_phase_seed": 0,
+          "window_s": 0,
+          "yaw_rms_deg": 3.91000000004027e-05
+        },
+        "OU_III": {
+          "accel_3d_rms_mps2": 1.6390000000254812e-07,
+          "accel_bias_3d_rms_mps2": 5.51299999998478e-07,
+          "accel_variance_m2ps4": 0,
+          "accel_x_rms_mps2": 8.940000000012827e-08,
+          "accel_y_rms_mps2": 1.6759999999643727e-07,
+          "accel_z_rms_mps2": 6.329999999860059e-08,
+          "dir_axis_abs_error_deg": 4.5780000000217314e-05,
+          "dir_axis_available_pct": 0,
+          "dir_axis_circ_std_deg": 8.200000000258001e-05,
+          "dir_axis_error_deg": 4.5780000000217314e-05,
+          "dir_axis_mean_deg": 4.579999999521078e-05,
+          "dir_axis_rmse_deg": 5.1500000001425406e-05,
+          "dir_axis_truth_deg": 0,
+          "dir_sense_dominant_pct": 0,
+          "dir_sense_forward_pct": 0,
+          "dir_sense_reverse_pct": 0,
+          "dir_sense_uncertain_pct": 0,
+          "dir_travel_abs_error_deg": 4.74499999998379e-05,
+          "dir_travel_correct_pct": 0,
+          "dir_travel_error_deg": 4.74499999998379e-05,
+          "dir_travel_rmse_deg": 5.52999999996473e-05,
+          "dir_travel_unresolved_pct": 0,
+          "dir_travel_wrong_pct": 0,
+          "disp_3d_pct_refmax": 0.0001907999999986032,
+          "disp_3d_rms_m": 2.3900000001297883e-06,
+          "disp_x_pct_hs": 0.00020551999999973702,
+          "disp_x_rms_m": 3.0845000000001566e-06,
+          "disp_y_pct_hs": 0.00022363999999974737,
+          "disp_y_rms_m": 8.940999999984545e-06,
+          "disp_z_pct_hs": 0.00013350000000400541,
+          "disp_z_pct_refrms": 0.0005340000000160217,
+          "disp_z_ref_rms_m": 0,
+          "disp_z_rms_m": 2.6200000000642376e-06,
+          "frequency_hz": 0,
+          "gyro_bias_3d_rms_radps": 3.3352999999976436e-08,
+          "imu_noise_seed": 0,
+          "initialization_seed": 0,
+          "period_s": 0,
+          "pitch_rms_deg": 3.7260000000371996e-06,
+          "repetition": 0,
+          "roll_rms_deg": 7.62900000000899e-06,
+          "samples": 0,
+          "score_window_sec": 0,
+          "seg_end_disp_3d_rms_m": 2.3900000001297883e-06,
+          "seg_end_disp_z_pct_hs": 6.110000001058324e-05,
+          "seg_end_disp_z_pct_refrms": 0.00033600000000433283,
+          "seg_end_disp_z_ref_rms_m": 0,
+          "seg_end_disp_z_rms_m": 2.6200000000642376e-06,
+          "sigma_applied_mps2": 0,
+          "tau_applied_s": 0,
+          "tuning_applied": 0,
+          "wave_period_s": 0,
+          "wave_phase_seed": 0,
+          "window_s": 0,
+          "yaw_rms_deg": 4.67299999993287e-05
+        }
+      },
+      "paired_runs": 24
+    },
+    "modified": {
+      "2": {
+        "corrections": 502748,
+        "max_bias_rad_s": 0.0030567199630852173,
+        "max_dt_s": 0.004999999888241291,
+        "max_prediction_angle_rad": 0.0020750989806079833,
+        "max_projection_rad_s": 0,
+        "nonfinite": 0,
+        "predictions": 355584,
+        "projection_count": 0,
+        "runs": 12
+      },
+      "3": {
+        "corrections": 599187,
+        "max_bias_rad_s": 0.004162771142708636,
+        "max_dt_s": 0.004999999888241291,
+        "max_prediction_angle_rad": 0.002075198650851151,
+        "max_projection_rad_s": 0,
+        "nonfinite": 0,
+        "predictions": 474112,
+        "projection_count": 0,
+        "runs": 16
+      }
+    }
+  }
+}

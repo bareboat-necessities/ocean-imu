@@ -204,8 +204,9 @@
         "1/200"
       ]
     ],
+    "excluded_by_shipping_gyro_projection": true,
     "full_AG_array_rank": 4,
-    "invalidated_method": "innovation bounds alone without construction-linked nominal gyro control",
+    "invalidated_method": "unprojected relaxation with unconstrained estimated gyro bias",
     "literal_float32_alias_claimed": false,
     "magnetic_field": [
       "75",
@@ -226,11 +227,12 @@
     "null_Rayleigh_margin_against_I6": "-1",
     "qualification": "OU3_NOMINAL_GYRO_ALIAS_RELAXATION_V1",
     "quiet_physical_motion_and_true_bias_limits_satisfied": true,
-    "regular_nominal_mean_recursion_satisfied_real_arithmetic": true,
+    "regular_nominal_mean_recursion_satisfied_real_arithmetic": false,
     "shipping_construction_reachability_verified": false,
     "shipping_stability_refuted": false,
     "step_s": "1/200",
-    "true_gyro_and_bias": "zero"
+    "true_gyro_and_bias": "zero",
+    "unprojected_nominal_mean_recursion_satisfied_real_arithmetic": true
   },
   "prior_scale_obstruction": {
     "Rayleigh_margin_ceiling": "-999999/1000000000000",

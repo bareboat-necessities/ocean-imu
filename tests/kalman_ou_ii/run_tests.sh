@@ -1,5 +1,7 @@
 #!/bin/bash -e
 set -e
+make -f Makefile -f ../common/GyroBiasProjectionRegression.mk gyro_bias_projection-test
+./gyro_bias_projection-test
 make -f Makefile -f ../common/StationaryDeviceRegression.mk stationary_device-test
 ./stationary_device-test
 make -f Makefile -f ../common/LocalGravityRegression.mk local_gravity-test

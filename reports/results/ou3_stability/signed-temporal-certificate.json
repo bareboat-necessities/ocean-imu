@@ -3,11 +3,14 @@
   "actual_S_event_signed_temporal_identity": true,
   "carried_adjoint_compatibility_criterion": true,
   "compatible_adjoint_or_residual_bounds_required": true,
-  "construction_uniform_gyro_alias_exclusion": false,
+  "complete_turn_bias_relaxation_excluded": true,
+  "construction_uniform_gyro_alias_exclusion": true,
   "forced_data_adjoint_identity": true,
   "forced_data_adjoint_source_uniform_action_bound": false,
   "full_21_covariance_upper": false,
   "homogeneous_zero_terminal_adjoint_closes": false,
+  "implemented_BG_norm_bound_rad_s": "1/2",
+  "one_prediction_gyro_transport_floor_s": "23999951/6000000000",
   "physical_floor_margin": "3381131261787/78125000000000000",
   "physical_joint_vector_floor": "19006131261787/78125000000000000",
   "physical_span_to_sampled_span": true,
@@ -22,5 +25,6 @@
   "source_uniform_nominal_gyro_alias_temporal_margin": false,
   "temporal_margins_imply_finite_B_star": false,
   "uniform_historical_AG_readout_action": false,
+  "unrestricted_device_timestep_alias_exclusion": false,
   "zero_mean_projection_preserves_adjoint": false
 }

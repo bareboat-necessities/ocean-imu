@@ -44,6 +44,8 @@ def projection_sector_gap():
     return F(2,5)-F(22516660498395405,10**17)
 
 def certificate():
+    from .gyro_bias_projection import certificate as gyro_certificate
+    gyro=gyro_certificate()
     p=physical_bounds()
     return {
       "qualification":"OU3_SIGNED_TEMPORAL_V1",
@@ -57,6 +59,9 @@ def certificate():
       "regular_A21_pre_projection_BA_precision_ceiling":1000003000,
       "source_uniform_nominal_force_field_temporal_margin":False,
       "source_uniform_nominal_gyro_alias_temporal_margin":False,
+      "implemented_BG_norm_bound_rad_s":gyro["estimator_radius_rad_s"],
+      "one_prediction_gyro_transport_floor_s":gyro["gyro_transport_singular_floor_s"],
+      "complete_turn_bias_relaxation_excluded":True,
       "temporal_margins_imply_finite_B_star":False,
       "six_pivot_floor_implies_finite_B_star":True,
       "carried_adjoint_compatibility_criterion":True,
@@ -65,7 +70,8 @@ def certificate():
       "forced_data_adjoint_identity":True,
       "forced_data_adjoint_source_uniform_action_bound":False,
       "physical_span_to_sampled_span":True,
-      "construction_uniform_gyro_alias_exclusion":False,
+      "construction_uniform_gyro_alias_exclusion":True,
+      "unrestricted_device_timestep_alias_exclusion":False,
       "B_star_instantiated":False,
       "uniform_historical_AG_readout_action":False,
       "full_21_covariance_upper":False,
@@ -169,19 +175,18 @@ def literal_signed_functional_bound(weight_l1, endpoint_state_bound,
 def source_uniform_nominal_endpoint_bounds():
     """Bounds already supplied by literal shipping projection/clamps.
 
-    BA is globally projected.  BG has no analogous projection. AW has a
-    covariance/tuner clamp but its *mean* has no shipping saturation. Thus the
-    presently proved lemmas do not provide an absolute source-uniform endpoint
-    bound for u=(b_hat_g,a_hat_w).  This distinction is the exact reason the
-    endpoint telescoping cannot yet become a numeric Delta margin.
+    BA and BG are projected. AW has a covariance/tuner clamp but its *mean*
+    has no shipping saturation. Its endpoint and the complete signed
+    compatibility/reset/projection supply still need a uniform bound.
     """
+    from .gyro_bias_projection import source_radius
     return {
       "b_hat_a_norm":F(2,5),
-      "b_hat_g_norm":None,
+      "b_hat_g_norm":source_radius(),
       "a_hat_w_norm":None,
       "physical_b_g_norm":F(1,50),
       "physical_a_norm":F(44,5),
-      "classification":"BG/AW estimator means have no source-uniform absolute clamp",
+      "classification":"BG is projected; AW mean and complete signed temporal action remain unbounded by current lemmas",
     }
 
 
@@ -413,9 +418,11 @@ def physical_interval_sampling_error(weight_norms, times, left, right, jerk_boun
 
 
 def gyro_construction_barrier():
-    """Necessary bias-mean magnitude for a first complete turn; not exclusion."""
+    """The implemented mean ball excludes this barrier on qualified steps."""
     import json
     from pathlib import Path
+    from .gyro_bias_projection import certificate as gyro_certificate
+    gyro=gyro_certificate()
     c=json.loads(Path(__file__).with_name('constants.json').read_text(),parse_float=F)
     omega=c['marine_motion']['Omega_max_rad_s']; bg=c['imu_bias']['B_g_rad_s']
     ng=c['sensor_model']['gyro_fast_residual_norm_max_rad_s']
@@ -423,5 +430,9 @@ def gyro_construction_barrier():
     return {"first_prediction_increment_ceiling":hmax*(omega+bg+ng),
             "complete_turn_requires_bias_norm_at_least":2*pi_lower/hmax-omega-bg-ng,
             "initial_bias_mean":F(0),
+            "implemented_bias_norm_ceiling":F(gyro["estimator_radius_rad_s"]),
+            "all_time_qualified_prediction_argument_ceiling":F(gyro["prediction_argument_upper_rad"]),
             "all_time_signed_gain_innovation_sum_ceiling":None,
-            "construction_unreachable_certified":False}
+            "construction_unreachable_certified":True,
+            "unrestricted_device_timesteps_covered":False,
+            "signed_temporal_Delta_gyr_closed":False}

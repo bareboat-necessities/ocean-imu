@@ -1,11 +1,11 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "257dce56d195276bd6d237c0f8cd653c016eec24",
+  "base_main_commit": "b0beb9c88737ffeb2c6f6eeefcbeb4bd22121524",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "git_blob_sha": "2d34d8f27741a50021a8d596391107a73ac58bc0"
+      "git_blob_sha": "7ac767209ad3a48918b4e2acc86062ce268784fa"
     },
     {
       "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
@@ -53,7 +53,7 @@
     "accel_bias_release": "release enables estimator bias dynamics and does not reset physical accelerometer bias",
     "magnetic_information_covariance": "lastMagDiag().S records the actual innovation covariance factored by an applied shipping magnetometer correction and is the covariance used by MAGNETIC SERVICE whitening",
     "joint_bias_prediction": "z=[e_b;b_true] uses [[phi_e I,(1-phi_e) I],[0,I]] with one shared physical-increment column [I;I]. Corrections and projection are separate operations.",
-    "projection_scope": "Positive radius after a finite completed injection; nonpositive radius disables projection; projection changes the estimate but not covariance; invalid attitude injection may bypass projection.",
+    "projection_scope": "Accelerometer estimate projection is configurable and may be bypassed by an invalid attitude injection. Fixed .5 rad/s gyro mean projection executes before that return, every prediction, initialization/handoff and frame retargeting; nonfinite bias recovers to zero. Both projections preserve covariance; retain separate mean and rounding defects.",
     "integral_innovation": "With a single fixed capture origin S_true=q(t)-q(T_c), shipping r_S=-S_hat=e_S-S_true retains the physical potential forcing.",
     "magnetic_coordinate_transport": "The complete preceding transport may be rectangular between error charts. Dimension compatibility and finite audits do not certify a release map or source-uniform information.",
     "point_audit_scope": "Supplied finite-error values and structural flags are diagnostic assertions, not a verified source-uniform certificate. Missing bounds, vacuous prefixes and overflow cannot promote completion.",
@@ -80,7 +80,7 @@
     "maximal_correction_order": "Kalman/Joseph corrections with SPD R are Loewner-decreasing, prediction is PSD-order monotone, and AW/bias covariance hard events are PSD inflations. Therefore inserting optional S/mag corrections at every sample gives a covariance no larger than any admissible sparser cadence; a positive floor for this maximal-correction word is conservative.",
     "float32_word_supply": "Float32 gamma_n is applied locally per straight-line kernel and propagated by certified remaining-prefix gains; no invalid whole-word gamma_N operation count is used.",
     "capture_bridge_release": "Finite bridge and release retention is composed as an explicit storage set inclusion against the eventual certified A21 radius; the composition exists but numerical premises remain open.",
-    "interval_attitude_prediction": "Shipping attitude prediction interval uses Rodrigues near-identity bounds at Omega_max*dt_max, not an entrywise [-1,1] rotation box; gyro-bias injection retains near -dt I diagonal and O(Omega dt^2) off-diagonal structure.",
+    "interval_attitude_prediction": "The retired conditional interval kernel takes a supplied nominal corrected-rate ceiling, not merely physical Omega_max. The implemented gyro invariant supplies 1.1508652381980153 on the qualified domain; no retired interval covariance box is promoted.",
     "interval_riccati_architecture_review": "Executed refined entrywise enclosure: predicted covariance spectral lower -18.7907040215, upper 2502.41441854; S innovation r/a=0.666663864 verifies, acc/mag do not. This is interval dependency, not pointwise PSD failure. AGENTS protocol forbids further subdivision; next representation must preserve PSD structure.",
     "psd_riccati_review": "After entrywise interval dependency failure, covariance architecture review uses PSD-preserving spectral bounds: Weyl lower singular bound for F P F'+Q and information-form correction floor. This is a feasibility construction only until a recurring source-uniform box/factor certificate is run.",
     "psd_riccati_probe": "One-sample PSD-preserving feasibility: sigma_min(F)>=0.64408710396; covariance floors prediction 4.14848197e-7, after S 4.14825252e-7, after acc 3.01357721e-7, after mag 1.49402788e-7. Not promoted to recurring p_min until literal Q factors and multi-step controllability are enclosed.",
@@ -107,8 +107,10 @@
     "projection_storage_guard": "Inherited P_ba,ba <= I/1600 implies actual projection inactive if pre-projection sqrt(V) <= 6, with .02483339501604595 m/s^2 slack; every-prefix retention and entry remain open.",
     "construction_history_stress": "One continuous diagonal-wave history has exact physical envelopes and is run from begin through Live/refinement/release to 600 s without reseeding. Its finite tail tilt about 8.21 degrees and nominal acceleration 9.7764 do not certify all-time magnetic service or refute eventual capture. No nominal-state cap or six-degree entry is inferred.",
     "construction_endpoint_storage": "Recorded full 21x21 covariance is exactly SPD. Zero true BA gives V >= e_ba^T P_ba,ba^-1 e_ba >11492.6752, with all cross covariance retained, excluding V<=36 at this finite endpoint. This is not all-time service, eventual-capture refutation, or active-projection proof.",
-    "construction_mean_action": "The full carried BG/AW mean action retains actual six-row rank-three gains and innovation correlations, with explicit recorded mean rounding. Outward intervals and rational LDL certify gyro norm <1 at all recorded prefixes; exact binary checks give force/field sine >2/5 at 40000 tail acc observations. The energy-only pointwise uniform exclusion fails with margin [-817884.048495,-817884.048494]; this is an enclosure failure, not a reachable collinear history, source-uniform B_* or contraction.",
-    "marine_stillness_or_attitude_excitation": "Every physical window W=[t,t+T_E] is either completely still in physical truth or has gravity-direction tilt span at least theta_E. T_E and theta_E are symbolic until numerical qualification; yaw is not required by this premise."
+    "construction_mean_action": "The full carried BG/AW mean action retains actual six-row rank-three gains and innovation correlations, with explicit recorded mean rounding. Outward intervals and rational LDL certify gyro norm <1 at all recorded prefixes; exact binary checks give force/field sine >2/5 at 40000 tail acc observations. The energy-only pointwise uniform exclusion fails with margin [-817884.048495,-817884.048494]; this is an enclosure failure, not a reachable collinear history, source-uniform B_* or contraction. Fresh observer checks every actual gyro projection is inactive; only then is the affine unprojected mean replay analyzed.",
+    "marine_stillness_or_attitude_excitation": "Every physical window W=[t,t+T_E] is either completely still in physical truth or has gravity-direction tilt span at least theta_E. T_E and theta_E are symbolic until numerical qualification; yaw is not required by this premise.",
+    "gyro_bias_estimator_invariant": "Implemented residual-bias ball R_g=.5 rad/s, separate from physical B_g=.02. Qualified rate includes Omega_max+B_g+N_g+R_g=1.1508652381980153; h in [.004,.006] gives argument .0069051914291880918 and real-source angle <.007. The API does not enforce dt_max.",
+    "one_prediction_gyro_transport": "Real-source Rodrigues and small-rate polynomial branches have transverse singular floor .003999991833333333... s. Complete-turn nominal bias relaxation excluded. Full signed temporal Delta_gyr, force/field separation and word float32 totality remain open."
   },
   "operation_lemma_sources": [
     {
@@ -141,7 +143,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "1f340c80c8fb5e7507f50ecb2194a6e57eedf0c9"
+      "git_blob_sha": "1ab5e56474aa4a4d9197ca3fa991db1fa7be3441"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -173,7 +175,7 @@
     },
     {
       "path": "src/kalman_ou_common/KalmanOUCoreMath.h",
-      "git_blob_sha": "69076042082137ab922378081566635ec17c12c7"
+      "git_blob_sha": "87ac93af808fe7f54e485e29e499cd6ae34f1714"
     },
     {
       "path": "tools/stability/ou3_theorem/lin_path_certificate.py",
@@ -313,11 +315,11 @@
     },
     {
       "path": "docs/ou3-corrected-word-proof.md",
-      "git_blob_sha": "8083253ace009e51356c732fd0210f242dd2c2a3"
+      "git_blob_sha": "38318b44884054b1017ea63283d3e90debcf5dd8"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout.py",
-      "git_blob_sha": "095fc8936bc2e068e7a1228af79e55c3c14d77ba"
+      "git_blob_sha": "43f6ec0c9aa0c34144df5f54eea1771e89238656"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_diagnostic.py",
@@ -325,11 +327,11 @@
     },
     {
       "path": "tests/validation/test_ou3_ag_readout.py",
-      "git_blob_sha": "e59df073b09407b00aa8e336747575256b5f5911"
+      "git_blob_sha": "3b726d9bfdded8885ed8851a0e6172b8a5ee2a2a"
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "861d86b3e317c76d8c8ccf5050049f4f24f89e23"
+      "git_blob_sha": "bd6aa0a2e128921eecba0ea60e815f1903caa611"
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
@@ -341,7 +343,7 @@
     },
     {
       "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
-      "git_blob_sha": "e272fe1e450529fdc649afcfd72dad4d68666955"
+      "git_blob_sha": "dc30dfe7a76fc377981ee05b86c471e6abe2fc5c"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_history_diagnostic.py",
@@ -353,55 +355,75 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "faa6b579526ad62b1b063cc1f8e9487b39d4a372"
+      "git_blob_sha": "0f148afea921d07d29f1ecafa964ecfbf42ab0c6"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
-      "git_blob_sha": "a13581ea6c9b4d3ab850038f4c3bc3d89aa2383b"
+      "git_blob_sha": "d623ca8cfc40816fdb376d0a8ed60ef600ff324e"
     },
     {
       "path": "docs/ou3-construction-mean-action.md",
-      "git_blob_sha": "56eb793d28e7428554e1d59d6b675e61975914ca"
+      "git_blob_sha": "3a028369c461e29e3b23df68791747b647cac7bd"
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "git_blob_sha": "a69f9c3f1baa2708c97c197016dffdca34cd7357"
+      "git_blob_sha": "b5bcf0104979652237a810beb5a3eddebb8989c9"
     },
     {
       "path": "tests/validation/test_ou3_construction_mean_action.py",
       "git_blob_sha": "51526e4c4a7a8c1579304a10eb9cd28b3f7ef73c"
     },
     {
+      "path": "tools/stability/ou3_theorem/gyro_bias_projection.py",
+      "git_blob_sha": "c6abdb24ae5a2e2cf6edb6b38b6890fc0d4c86c2"
+    },
+    {
+      "path": "tests/validation/test_ou3_gyro_bias_projection.py",
+      "git_blob_sha": "1e5efcffb9d82f27a9d935086ea588d4463ac457"
+    },
+    {
+      "path": "docs/ou-gyro-bias-projection.md",
+      "git_blob_sha": "d7d738fccd1c9e73d998ef8785c589d291d28a97"
+    },
+    {
+      "path": "tests/common/GyroBiasProjectionRegression.h",
+      "git_blob_sha": "815fffff2184dc88b6405d20597c0a94b02f2295"
+    },
+    {
+      "path": "tests/kalman_ou_iii/gyro_bias_projection-test.cpp",
+      "git_blob_sha": "cdec10a674dcea0b757911bfbe7da8f275f9f7be"
+    },
+    {
       "path": "tools/stability/ou3_theorem/signed_temporal.py",
-      "git_blob_sha": "77d7c64e448b85a94d0fb994e1aae4c10eaee384"
+      "git_blob_sha": "d164ef74f1cfdadf9aadc42224129a4b6f1838ee"
+    },
+    {
+      "path": "tests/validation/test_ou3_signed_temporal.py",
+      "git_blob_sha": "ddd3cbb236b04d9440a89e9f973da7ca58f7164d"
+    },
+    {
+      "path": "docs/ou3-signed-temporal-continuation.md",
+      "git_blob_sha": "783d60dab8086a1c19bfc3e4304b9038568d6390"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal_diagnostic.py",
       "git_blob_sha": "39076cbc96857b33bc637d1709af980fc3706c3e"
     },
     {
-      "path": "docs/ou3-signed-temporal-continuation.md",
-      "git_blob_sha": "9288f0aaaef6446a633e3ef8f83441e34c7a359f"
-    },
-    {
       "path": "reports/results/ou3_stability/signed-temporal-certificate.json",
-      "git_blob_sha": "17cfb0c5b38341392693785d80bc77bcc213be16"
+      "git_blob_sha": "2cd4cbb8056c8d97dbe90127aea48ebe0015e313"
     },
     {
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "git_blob_sha": "68019a0e9a3f9d0cdfb89b04c61ffccc4613ce20"
-    },
-    {
-      "path": "tests/validation/test_ou3_signed_temporal.py",
-      "git_blob_sha": "72701093c549d3ee858232e81b4cbb0b75f68634"
+      "git_blob_sha": "9fc98561d7669d2ed5d2ab676c42c03c308572dd"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal_balance.py",
-      "git_blob_sha": "72c96bbb09c0f29b44018aeb0061156638ab5e54"
+      "git_blob_sha": "89c72d9a8484fbcc250471fbe968e4544db9a302"
     },
     {
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "git_blob_sha": "6d8560536517f544e14a4f6d73ebe67f27b91b15"
+      "git_blob_sha": "8eb20f1a00ca77b79ac35d947881d9a16b1fef52"
     }
   ]
 }

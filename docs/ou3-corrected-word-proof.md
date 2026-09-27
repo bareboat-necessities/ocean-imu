@@ -172,7 +172,7 @@ This follows from `||exp([theta])-I-[theta]|| <= |theta|^2/2` and
 `||exp([theta])-I|| <= |theta|`. The analogous magnetic curvature term is
 `|B_hat| |theta|^2/2`; reference error and physical magnetic residuals remain
 additional forcing. Prediction mismatch uses the established joint metric
-action bound. Euclidean BA projection retains its separate sector/defect;
+action bound. Euclidean BA and BG projections retain separate sectors/defects;
 it is not declared nonexpansive in the full covariance metric.
 
 There is a stronger accumulation bound for prediction and correction inputs.
@@ -265,6 +265,13 @@ If the summed word supplies are bounded by `a sqrt(V_root)+b`, define
 the region in which their bounds were established. Actual startup, finite
 H18 and release must enter that region. None of these numerical inequalities
 has yet been discharged for the declared disturbance envelopes.
+
+The added gyro mean projection has radius .5 rad/s and physical radius .02,
+so its ideal Euclidean sector gap is .48 rad/s. Carry its signed defect and
+inward-rounding supply in the same sum. No inherited AG covariance ceiling or
+all-prefix gyro-projection inactivity is inferred from the BA guard below.
+`ou-gyro-bias-projection.md` supplies the one-prediction transport result and
+states why the full signed temporal margin is still open.
 
 ## Source covariance guard for the actual projection
 

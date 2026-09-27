@@ -142,6 +142,7 @@ class Kalman3D_Wave_OU_II {
     }
 
     void set_quaternion_boat(const Eigen::Quaternion<T>& q_bw) {
+        project_gyro_bias_();
         Eigen::Quaternion<T> q = q_bw;
         const T nq = q.norm();
         if (!(nq > T(1e-8))) return;
@@ -801,6 +802,15 @@ class Kalman3D_Wave_OU_II {
     }
 
     // Helpers
+    // Every coupled correction and every prediction passes this guard.
+    // It also precedes the invalid-attitude-injection early return.
+    void project_gyro_bias_() {
+        if constexpr (with_gyro_bias) {
+            auto bias = xext.template segment<3>(3);
+            ocean_imu::kalman::ou_detail::project_gyro_bias<T>(bias);
+        }
+    }
+
     Matrix3 skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const;
     Vector3 accelerometer_measurement_func(T tempC) const;
 
@@ -975,6 +985,7 @@ class Kalman3D_Wave_OU_II {
 
         if constexpr (with_gyro_bias) {
             xext.template segment<3>(3) = R * xext.template segment<3>(3); // b_g
+	        project_gyro_bias_();
         }
         if constexpr (with_accel_bias) {
             xext.template segment<3>(OFF_BA) = R * xext.template segment<3>(OFF_BA); // b_a (as stored)
@@ -1282,6 +1293,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_ac
     Vector3 const& acc_body,
     Vector3 const& mag_body)
 {
+    project_gyro_bias_();
     const Vector3 acc = deheel_vector_(acc_body);
     const Vector3 mag = deheel_vector_(mag_body);
     if (!acc.allFinite() || !mag.allFinite()) {
@@ -1394,6 +1406,7 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_acc(
     Vector3 const& acc_body)
 {
+    project_gyro_bias_();
     const Vector3 acc = deheel_vector_(acc_body);
 
     const T anorm = acc.norm();
@@ -1595,6 +1608,7 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
     Vector3 const& gyr_body, T Ts)
 {
+    project_gyro_bias_();
     last_dt_ = Ts;   // Remember last dt
 
     // Commanded parameters random-walk prediction (updates Racc, R_p0, R_v0, tau_aw smoothly)
@@ -1875,6 +1889,9 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
 {
     last_acc_diag_ = MeasDiag3{};
     last_acc_diag_.accepted = false;
+
+    // Reject invalid corrections before they can contaminate any mean/cross term.
+    if (!acc_meas_body.allFinite() || !std::isfinite(tempC)) return;
 
     [[maybe_unused]] const bool use_ba = (with_accel_bias && acc_bias_updates_enabled_);
 
@@ -2202,6 +2219,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::apply_error_state_
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::applyQuaternionCorrectionFromErrorState()
 {
+    project_gyro_bias_();
     const Vector3 dtheta = xext.template segment<3>(0);
 
     if (!dtheta.allFinite()) {

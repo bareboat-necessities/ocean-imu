@@ -11,7 +11,9 @@
     "shipping_divergence_claimed": false
   },
   "certified_capture_time": null,
-  "next_controlling_obligation": "Under the strengthened MARINE MOTION domain, the smooth diagonal-wave history p=-(3/2)sin(2t)(1,0,1), R=I and every sustained non-still constant-attitude translation are inadmissible. Complete physical stillness remains admissible, including the retained quiet-bias ambiguity, so universal capture into V<=36 is still unavailable. T_E and theta_E remain symbolic because current pinned 28-ft RAO evidence does not certify a source-uniform rolling tilt-span minimum. The controlling proof obligation remains a same-history derivation from physical tilt span plus MAGNETIC SERVICE and the literal gains/resets/OU/bias recursions to positive source-uniform Delta_col and Delta_gyr. The exact carried-adjoint kernel criterion, forced data-adjoint identity and signed physical bias/velocity summation bounds are proved. The forced identity retains a root action, joint signed rotation/reference action and literal defects. A carried moving-word diagnostic verifies its finite balance; cellwise and S-interval velocity variation bounds and a rotation triangle bound fail their recorded exclusion budgets. Their source-uniform action is not bounded. In the frozen-attitude Euclidean recurrence the BG column is identity, so a gyro barrier must also use the actual attitude dynamics. The former implication from two temporal margins to six historical pivot floors is withdrawn as unproved. The conditional six-pivot-floor to finite B_* lemma is retained; its actual-history premises and coefficient compactness are open. The first construction prediction excludes a complete turn, but its all-time gyro-bias barrier has not been propagated. Therefore uniform historical AG action, J_AG, full 21-state covariance upper bound, rho_0<1, finite capture/release, nonlinear retained-region entry/retention, source-qualified recurring magnetic service, and float32 totality remain open.",
+  "complete_turn_nominal_gyro_bias_alias_excluded": true,
+  "implemented_gyro_bias_norm_invariant": true,
+  "next_controlling_obligation": "Under the strengthened MARINE MOTION domain, the smooth diagonal-wave history p=-(3/2)sin(2t)(1,0,1), R=I and every sustained non-still constant-attitude translation are inadmissible. Complete physical stillness remains admissible, including the retained quiet-bias ambiguity, so universal capture into V<=36 is still unavailable. T_E and theta_E remain symbolic because current pinned 28-ft RAO evidence does not certify a source-uniform rolling tilt-span minimum. The controlling proof obligation remains a same-history derivation from physical tilt span plus MAGNETIC SERVICE and the literal gains/resets/OU/bias recursions to positive source-uniform Delta_col and Delta_gyr. The exact carried-adjoint kernel criterion, forced data-adjoint identity and signed physical bias/velocity summation bounds are proved. The forced identity retains a root action, joint signed rotation/reference action and literal defects. A carried moving-word diagnostic verifies its finite balance; cellwise and S-interval velocity variation bounds and a rotation triangle bound fail their recorded exclusion budgets. Their source-uniform action is not bounded. In the frozen-attitude Euclidean recurrence the BG column is identity, so the complete signed gyro margin must also use the actual attitude dynamics. The former implication from two temporal margins to six historical pivot floors is withdrawn as unproved. The conditional six-pivot-floor to finite B_* lemma is retained; its actual-history premises and coefficient compactness are open. The implemented .5 rad/s gyro-bias invariant excludes complete turns on all qualified 4--6 ms predictions and gives a positive one-step transport floor; the complete signed temporal gyro margin remains open. Therefore uniform historical AG action, J_AG, full 21-state covariance upper bound, rho_0<1, finite capture/release, nonlinear retained-region entry/retention, source-qualified recurring magnetic service, and float32 totality remain open.",
   "no_heading_service_result_role": "necessity lemma only",
   "obligations": {
     "A21_covariance_hard_event_compactness": false,
@@ -30,7 +32,7 @@
     "complete_word_covariance_energy_identity": true,
     "constant_attitude_stationary_alias_exclusion": true,
     "constant_nonzero_wave_displacement_rejection": true,
-    "construction_uniform_gyro_alias_exclusion": false,
+    "construction_uniform_gyro_alias_exclusion": true,
     "constructive_fixed_coordinate_A21_mu_enclosure": false,
     "constructive_full_A21_mu_rho_enclosure": false,
     "constructive_root_covariance_floor": true,
@@ -85,6 +87,7 @@
     "whole_word_float32_supply_bound": false,
     "whole_word_float32_supply_composition": true
   },
+  "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
   "principal_assumptions": [
     "MARINE MOTION",
@@ -105,5 +108,8 @@
   "regional_practical_stability_claimed": false,
   "required_capture_time": "history dependent T_c(h,x_0) < infinity; open under the amended marine-motion domain",
   "shipping_filter_changed_for_proof": false,
-  "theorem_closed": false
+  "shipping_residual_gyro_bias_hardening": true,
+  "signed_temporal_Delta_gyr_closed": false,
+  "theorem_closed": false,
+  "unrestricted_device_timestep_alias_exclusion": false
 }

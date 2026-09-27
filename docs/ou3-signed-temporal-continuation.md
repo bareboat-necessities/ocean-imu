@@ -250,9 +250,9 @@ innovation functional, regardless of the BG rows of the actual gains.
 Thus this identity removes its BG root coefficient but supplies no restoring
 feedback for the BG mean itself. This unit column is a property of the
 frozen-attitude algebra, not an unstable mode of the coupled nonlinear
-estimator. An all-time BG barrier must use the actual attitude recurrence
-and magnetic/tilt constraints together; it cannot follow from this
-Euclidean feedback matrix alone.
+estimator. The shipping projection independently supplies the BG level bound.
+The full signed gyro margin still needs actual attitude recurrence and
+magnetic/tilt constraints; it cannot follow from this Euclidean matrix alone.
 
 **Moving carried diagnostic and one refinement.** The observer runs the
 existing smooth source from construction: roll `0.02 sin(t/2)` and vertical
@@ -328,19 +328,22 @@ Rodrigues integrated bias transport has transverse singular values
 
 `||bhat_g||>=2pi/h_max-(Omega_max+B_g+N_g)>1046.5466859583 rad/s`.
 
-This is a necessary barrier, not an invariant bound. In fixed coordinates
-`bhat_g=sum K_g,i r_i+sum d_g,i` from construction; frame changes insert their
-actual ordered transports. The signed sum includes all acc/S/mag corrections
-and arithmetic. To exclude approach requires a uniform bound below the
-barrier with a reserve. Zero-mean functionals lose precisely this DC level.
-Covariance bounds and physical gyro bounds do not by themselves bound the
-indefinitely accumulated estimator mean. The two-dimensional magnetic
-information premise has not supplied this missing signed inequality.
+The shipping residual gyro-bias mean now has the implemented Euclidean bound
+`||bhat_g||<=.5 rad/s`, independently of the physical `.02 rad/s` bias bound.
+This excludes that barrier from construction and every subsequent qualified
+prediction. The complete rate envelope gives `h||omega_hat||<=.0069051914291880918`
+rad; including the normalized quaternion polynomial remainder gives `.007` rad.
+Both source branches have a transport singular floor `.003999991833333333 s`.
+See `ou-gyro-bias-projection.md` for the exact rational certificate and the
+limitation to qualified 4--6 ms steps, rather than arbitrary API-admitted stalls.
 
-The nominal `h=.005, bhat_g=-400pi e_z` example remains a counterexample to a
-free-root relaxation. Neither reachability from shipping construction nor
-construction-unreachability on every admitted history is proved. No mean cap
-or additional physical assumption is imposed.
+The historical `h=.005, bhat_g=-400pi e_z` example violates the implemented
+invariant. This does not close the full signed `Delta_gyr(W)` or a historical
+six-pivot bound: actual chronological observations, resets and projection
+defects still require their joint enclosure. The projection changes only
+the mean. Its ideal component sector has gap `R_g-B_g=.48 rad/s`; covariance
+cross terms and inward floating-point rounding remain separate signed supplies.
+The forced balance observes both gyro and accelerometer mean projections.
 
 ## Historical reader: the corrected conditional implication
 

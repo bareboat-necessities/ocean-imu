@@ -50,6 +50,17 @@ Projection is then carried separately with the shipping Euclidean estimate proje
 
 `bhat_plus=Proj_R(bhat_corr)`, `e_plus=b_true-Proj_R(bhat_corr)`.
 
+OU-II/III additionally implement the fixed residual gyro-bias invariant
+`|b_hat_g|<=R_g=.5 rad/s`, separate from physical `B_g=.02`. It is enforced
+before prediction and immediately after coupled corrections, including before
+the invalid-attitude return. Its covariance is unchanged. The ideal radial
+sector has gap `R_g-B_g=.48`; its mean defect and inward-rounding allowance
+must remain in the full covariance storage, not be discarded as a contraction.
+On the qualified 4--6 ms source family the prediction angle is below .007 rad
+and the one-cell transverse gyro transport floor is .003999991833333333 s.
+See [the engineering design and scope](ou-gyro-bias-projection.md); the full
+signed temporal margin and force/field exclusion remain open.
+
 Estimator hold, release, correction, and projection never reset physical truth. The shipping gyro-bias mean predictor is identity, so its prediction error is `e_g_minus=e_g_plus+w_g`.
 
 ## MAGNETIC SERVICE
@@ -197,7 +208,8 @@ When the true bias is inside the projection ball,
 `|e_plus|^2+|d|^2<=|e_corr|^2`. This is a Euclidean component lemma, not a
 full-state weighted-metric or covariance contraction result. Nonpositive
 radius disables projection. The shipping invalid-attitude-injection return
-bypasses projection and remains outside these finite-domain lemmas.
+bypasses accelerometer-bias projection and remains outside those finite-domain
+lemmas; gyro projection executes before that return.
 
 The persistent marine potential gives `S_true=q(t)-q(T_c)` with one fixed
 origin, hence the actual integral innovation is `-S_hat=e_S-S_true`. The

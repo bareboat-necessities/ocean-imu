@@ -260,8 +260,10 @@ The refinement from a fragile minor to all-row factors fixes the selector;
 the all-row nullspace test then rules out further pivot, precision or interval
 refinement as a cure for the relaxed domain. The next technique must use
 same-history nominal dynamics to exclude sustained near-collinearity and
-sampled gyro aliasing quantitatively, before enclosing the residual matrix
-action. True-vector sampling fidelity alone does not establish this exclusion.
+control the full signed temporal gyro margin before enclosing the residual
+matrix action. The implemented bias ball supplies the separate one-prediction
+gyro-transport floor below; true-vector sampling fidelity alone does not
+establish the remaining historical reader.
 
 In particular the literal accelerometer relation is
 
@@ -274,7 +276,7 @@ all-window bound on those defects here. Replacing them with the physical
 sensor/bias bounds would silently identify estimator innovations with sensor
 noise. This is the precise remaining source-uniform certificate gap.
 
-### Nominal mean recursion does not by itself exclude a gyro alias
+### Historical unprojected alias and implemented exclusion
 
 This test enters the controlling tail inequality through the still-required
 uniform historical AG action. Innovation bounds were the next candidate for
@@ -290,9 +292,9 @@ sensor residual bound). The literal large-angle quaternion branch makes one
 complete turn at each prediction: its quaternion changes sign, but its
 rotation matrix returns to the same value. Every applied acc/S/mag innovation
 is zero, for any realized finite gain. The nuisance zero mean is preserved
-under arbitrary admitted OU coefficients; injection and projection are zero.
-Thus this is a regular-root **nominal-mean-compatible relaxation**, stronger
-than independent coefficient choices. It is not a constructed shipping root.
+under arbitrary admitted OU coefficients in the unprojected relaxation.
+The shipping gyro projection changes this bias immediately, so this is no
+longer compatible with the implemented nominal mean recursion.
 
 The literal Rodrigues/integral helper gives
 
@@ -312,13 +314,20 @@ For theta=|omega_hat|h, the two transverse singular values of B(h) are
 10^-6 and 10^-9 respectively. The exact complete-turn nullspace, rather than
 the numerical near-null values, certifies this failure.
 
-**No construction reachability, all-time magnetic service or literal float32
-alias is asserted.** The physical gyro-bias bound is not a bound on its
-estimate. The next proof must obtain construction-linked nominal gyro control
-as well as force/field diversity and bounded action. The starting bound must come from the literal construction and be propagated
-through its actual corrections and hard events. A freely chosen estimate cap
-is not an admissible replacement. Excluding the alias alone would still not
-bound the full nuisance/process readout action.
+**The historical relaxation is outside the implemented estimator family.**
+OU-II/III now enforce `|b_hat_g|<=0.5 rad/s` as residual-bias protection;
+this is separate from the unchanged physical `|b_g|<=0.02` qualification.
+[The source-bound certificate](ou-gyro-bias-projection.md) charges physical
+rate, calibrated residual, fast measurement residual and estimated bias.
+On the qualified 4--6 ms family, the prediction angle is below .007 rad and
+every transverse real-source transport singular value is at least
+`.003999991833333333 s`. Both Rodrigues and small-rate polynomial branches
+are included. This removes the exact and near-complete-turn bias relaxation.
+It does not close the full signed temporal margin or the historical action:
+actual chronological observations, resets and mean-projection defects still
+need joint source-uniform bounds. Nominal force/field collinearity remains.
+The device API's unrestricted positive timesteps are outside this timing
+certificate. No all-history float32 totality is inferred.
 
 ### Construction and carried-entry attempt
 
@@ -331,8 +340,9 @@ magnetic corrections before the first prediction have zero gyro gain because
 the handoff clears attitude/gyro cross covariance. With the existing physical
 rate, bias and sensor envelopes, the first corrected angular increment is
 at most .006*(.6108652381980153+.02+.02)=.0039051914291880918 rad.
-This excludes a gyro alias at that first prediction. It is not an invariant
-bound after the subsequent, coupled acc/S/mag corrections.
+This tighter construction bound applies at the first prediction. After the
+subsequent coupled acc/S/mag corrections, the implemented .5 rad/s bias ball
+provides the uniform qualified angle bound below .007 rad described above.
 
 The attempted propagation must retain the true initial translation and
 primitive, the front end, clocks, references and tuning, rather than replace

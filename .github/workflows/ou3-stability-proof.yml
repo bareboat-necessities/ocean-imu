@@ -5,6 +5,7 @@ on:
     paths:
       - "AGENTS.md"
       - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
       - "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/**"
       - "tools/stability/**"
       - "tests/validation/test_ou3_*.py"
@@ -17,6 +18,7 @@ on:
     branches: [main]
     paths:
       - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
       - "tools/stability/**"
       - "tests/validation/test_ou3_*.py"
       - "tests/kalman_ou_iii/**"
@@ -56,8 +58,9 @@ jobs:
           python3 -m unittest discover -s tests/validation -p test_ou3_sampling_fidelity.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_corrected_word.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_ag_readout.py -v
-          python3 -m unittest discover -s tests/validation -p test_ou3_construction_mean_action.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_gyro_bias_projection.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_signed_temporal.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_construction_mean_action.py -v
           python3 tools/stability/ou3_theorem/block_factor_numeric.py
           python3 -m unittest discover -s tests/validation -p test_ou3_block_factor_numeric.py -v
       - name: Preserve reproducible source and LIN certificate
@@ -82,9 +85,9 @@ jobs:
       - name: Validate provenance and fail-closed status
         run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
       - name: Build literal shipping regressions
-        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test sampled_capture-test
+        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test sampled_capture-test && make -C tests/kalman_ou_iii -f Makefile -f ../common/GyroBiasProjectionRegression.mk gyro_bias_projection-test
       - name: Run literal shipping regressions
-        run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test
+        run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test && ./tests/kalman_ou_iii/gyro_bias_projection-test
       - name: Audit carried source readout without promotion
         run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-readout.json
       - name: Check signed adjoint compatibility on the carried word

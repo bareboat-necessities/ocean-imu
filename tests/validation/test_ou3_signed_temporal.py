@@ -64,7 +64,7 @@ class SignedTemporalTests(unittest.TestCase):
         b=forced_adjoint_source_bound()
         self.assertFalse(b["innovation_energy_needed"])
         self.assertTrue(b["BA_endpoint_bounded"])
-        self.assertFalse(b["BG_endpoint_bounded"])
+        self.assertTrue(b["BG_endpoint_bounded"])
         self.assertFalse(b["AW_endpoint_bounded"])
         self.assertIsNone(b["finite_numeric_ceiling"])
         self.assertEqual(literal_signed_functional_bound(F(2),F(3),F(4),F(5)),F(32))
@@ -153,7 +153,11 @@ class SignedTemporalTests(unittest.TestCase):
         self.assertLess(g['first_prediction_increment_ceiling'],F(391,100000))
         self.assertGreater(g['complete_turn_requires_bias_norm_at_least'],1046)
         self.assertIsNone(g['all_time_signed_gain_innovation_sum_ceiling'])
-        self.assertFalse(g['construction_unreachable_certified'])
+        self.assertTrue(g['construction_unreachable_certified'])
+        self.assertEqual(g['implemented_bias_norm_ceiling'],F(1,2))
+        self.assertLess(g['all_time_qualified_prediction_argument_ceiling'],F(7,1000))
+        self.assertFalse(g['unrestricted_device_timesteps_covered'])
+        self.assertFalse(g['signed_temporal_Delta_gyr_closed'])
 
     def test_signed_acceleration_supply_against_integrated_linear_history(self):
         # a(t)=2t, v=t^2 on [0,2]; C=(1,-1), h=1.
