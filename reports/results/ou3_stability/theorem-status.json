@@ -96,7 +96,7 @@
   "qualification": "OU3_SINGLE_MARINE_IMU_MAGNETIC_STABILITY_ARCHITECTURE_V1",
   "quantifier": "one persistent physical execution belongs to all three assumption classes simultaneously",
   "regional_practical_stability_claimed": false,
-  "required_capture_time": "history dependent T_c(h,x_0) < infinity; open under the amended acceleration-jerk domain",
+  "required_capture_time": "history dependent T_c(h,x_0) < infinity; open under the amended marine-motion domain",
   "shipping_filter_changed_for_proof": false,
   "theorem_closed": false
 }
