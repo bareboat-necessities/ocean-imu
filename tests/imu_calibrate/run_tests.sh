@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
+./calibration_workflow-test
 ./calibration_safety-test
 python3 test_sketch_temperature.py
 ./imu_calibrate-test
