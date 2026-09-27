@@ -2,13 +2,41 @@
 
 ## Current hypothesis
 
-The user-authorized MARINE MOTION revision requires locally absolutely
-continuous acceleration with jerk <=100 m/s^3. The old sampled ambiguity is
-excluded. The same-history construction -> capture -> H18 -> release -> A21
-architecture, quiet-water admission, all other limits and shipping behavior
-remain. General physical capture and the complete stability theorem are open.
+MARINE MOTION now additionally requires, on every physical window
+W=[t,t+T_E], either complete physical stillness or gravity-direction tilt span
+Delta_g(W)>=theta_E. Complete stillness is truth-side and may persist
+indefinitely. T_E and theta_E remain symbolic: current pinned 28-ft RAO
+evidence does not certify a theorem-grade source-uniform rolling minimum.
+The smooth diagonal-wave construction with R=I and other sustained non-still
+constant-attitude translations are therefore inadmissible. The retained
+quiet-bias stillness construction remains admissible, so V<=36 is not a
+universal capture target. The same-history construction -> capture -> H18 ->
+release -> A21 architecture and shipping behavior remain unchanged. General
+physical capture and the complete stability theorem are open.
 
 ## Evidence
+
+### Stillness-or-attitude excitation propagation
+
+The new domain restriction removes the smooth diagonal-wave constant-attitude
+construction and any other non-still window with zero gravity-direction span.
+It does not by itself prove nominal AG observability.  In particular, the
+signed temporal construction must still carry actual accelerometer/magnetic/S
+corrections, OU transport, resets, nuisance coupling and physical bias history.
+No derivation presently shows that Delta_g(W)>=theta_E forces positive
+source-uniform Delta_col and Delta_gyr after those literal terms are charged.
+The already-proved conditional implication
+
+inf Delta_col>0 and inf Delta_gyr>0 => L(W)O(W)=T_h(W), B_W<=B_*<infinity
+
+is retained, but its premises remain OPEN.  Quiet water follows a separate
+branch: physical attitude/accelerometer-bias ambiguity remains, including the
+approximately 1.146-degree tilted quiet construction, so exact attitude/bias
+convergence and universal V<=36 capture are not claimed.  The next falsifiable
+step is a source-uniform signed-temporal inequality that uses the physical
+gravity-direction span without replacing it by estimator-state or independent
+coefficient boxes.
+
 
 ### Byte-exact proof provenance
 

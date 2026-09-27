@@ -107,7 +107,8 @@
     "projection_storage_guard": "Inherited P_ba,ba <= I/1600 implies actual projection inactive if pre-projection sqrt(V) <= 6, with .02483339501604595 m/s^2 slack; every-prefix retention and entry remain open.",
     "construction_history_stress": "One continuous diagonal-wave history has exact physical envelopes and is run from begin through Live/refinement/release to 600 s without reseeding. Its finite tail tilt about 8.21 degrees and nominal acceleration 9.7764 do not certify all-time magnetic service or refute eventual capture. No nominal-state cap or six-degree entry is inferred.",
     "construction_endpoint_storage": "Recorded full 21x21 covariance is exactly SPD. Zero true BA gives V >= e_ba^T P_ba,ba^-1 e_ba >11492.6752, with all cross covariance retained, excluding V<=36 at this finite endpoint. This is not all-time service, eventual-capture refutation, or active-projection proof.",
-    "construction_mean_action": "The full carried BG/AW mean action retains actual six-row rank-three gains and innovation correlations, with explicit recorded mean rounding. Outward intervals and rational LDL certify gyro norm <1 at all recorded prefixes; exact binary checks give force/field sine >2/5 at 40000 tail acc observations. The energy-only pointwise uniform exclusion fails with margin [-817884.048495,-817884.048494]; this is an enclosure failure, not a reachable collinear history, source-uniform B_* or contraction."
+    "construction_mean_action": "The full carried BG/AW mean action retains actual six-row rank-three gains and innovation correlations, with explicit recorded mean rounding. Outward intervals and rational LDL certify gyro norm <1 at all recorded prefixes; exact binary checks give force/field sine >2/5 at 40000 tail acc observations. The energy-only pointwise uniform exclusion fails with margin [-817884.048495,-817884.048494]; this is an enclosure failure, not a reachable collinear history, source-uniform B_* or contraction.",
+    "marine_stillness_or_attitude_excitation": "Every physical window W=[t,t+T_E] is either completely still in physical truth or has gravity-direction tilt span at least theta_E. T_E and theta_E are symbolic until numerical qualification; yaw is not required by this premise."
   },
   "operation_lemma_sources": [
     {
@@ -116,7 +117,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/marine_motion.py",
-      "git_blob_sha": "de8fc918eab09d88284d8fef1307e3f6217e32d7"
+      "git_blob_sha": "14e4258a8338ccedc65fd8a251054837b064ec90"
     },
     {
       "path": "tools/stability/ou3_theorem/magnetic_service.py",
@@ -128,7 +129,7 @@
     },
     {
       "path": "tests/validation/test_ou3_marine_motion.py",
-      "git_blob_sha": "9d9c2ef871c731490af4c56f3647665f1046cef6"
+      "git_blob_sha": "ec0516a1f46ba9248f00f64038deb9775206cc96"
     },
     {
       "path": "tests/validation/test_ou3_magnetic_service.py",
@@ -140,7 +141,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "f5620dd6add5214ec00c9dd2da4ef60d6d0f4e9e"
+      "git_blob_sha": "072b86ed85d59029aaa7f7ef922cc93decca0d49"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -168,7 +169,7 @@
     },
     {
       "path": "tests/validation/test_ou3_physical_qualification.py",
-      "git_blob_sha": "1473ab620e093abdd8079093fdb1ad278439eb06"
+      "git_blob_sha": "70f4a2649a772c6051e893b9447c10de63d95fad"
     },
     {
       "path": "src/kalman_ou_common/KalmanOUCoreMath.h",
