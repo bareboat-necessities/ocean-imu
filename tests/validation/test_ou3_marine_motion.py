@@ -68,6 +68,16 @@ class MarineMotionTests(unittest.TestCase):
         self.assertTrue(stillness_or_attitude_excitation_admitted(
             complete_physical_stillness=False,tilt_span_rad=theta,theta_e_rad=theta))
 
+    def test_invalid_excitation_threshold_rejected_before_either_branch(self):
+        for theta in (0.0, -1.0, math.nan, math.inf, -math.inf):
+            for stillness in (False, True):
+                for span in (0.0, 1.0, math.nan):
+                    with self.subTest(theta=theta, stillness=stillness, span=span):
+                        with self.assertRaisesRegex(ValueError, "theta_E must be positive and finite"):
+                            stillness_or_attitude_excitation_admitted(
+                                complete_physical_stillness=stillness,
+                                tilt_span_rad=span, theta_e_rad=theta)
+
     def test_detached_coordinates_fail(self):
         s=[
           MarineSample("a",0.0,(0,0,0),(0,0,0),(0,0,0),(0,0,0),(0,0,0)),

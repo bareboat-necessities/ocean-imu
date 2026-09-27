@@ -2,603 +2,287 @@
 
 ## Current hypothesis
 
-MARINE MOTION now additionally requires, on every physical window
-W=[t,t+T_E], either complete physical stillness or gravity-direction tilt span
-Delta_g(W)>=theta_E. Complete stillness is truth-side and may persist
-indefinitely. T_E and theta_E remain symbolic: current pinned 28-ft RAO
-evidence does not certify a theorem-grade source-uniform rolling minimum.
-The smooth diagonal-wave construction with R=I and other sustained non-still
-constant-attitude translations are therefore inadmissible. The retained
-quiet-bias stillness construction remains admissible, so V<=36 is not a
-universal capture target. The same-history construction -> capture -> H18 ->
-release -> A21 architecture and shipping behavior remain unchanged. General
-physical capture and the complete stability theorem are open.
+One persistent physical execution follows construction -> startup/capture ->
+magnetically informed H18 -> refinement/release -> recurring magnetically
+informed A21 -> regional practical stability. Shipping behavior, tuning,
+simulations, physical constants and quality gates are unchanged.
+
+On every physical T_E window, MARINE MOTION requires complete stillness or
+complete-interval gravity-direction span >=theta_E>0. T_E/theta_E remain
+symbolic; no pinned RAO qualification supplies their numerical values.
+The diagonal-wave p=-(3/2)sin(2t)(1,0,1), R=I is now inadmissible. Quiet water
+and quiet-bias ambiguity remain admissible. MAGNETIC SERVICE is still actual
+applied normalized heading/axial-bias information, not cadence or six-state
+observability. Its assumptions have not been strengthened.
+
+The controlling moving-history targets remain positive source-uniform
+Delta_col and Delta_gyr, using signed sensor identities and actual chronological
+gains, OU transport, resets, S corrections, references and physical bias history.
+Both targets remain OPEN; neither has a current-domain counterexample.
 
 ## Evidence
 
-### Stillness-or-attitude excitation propagation
+- PR #602's retained branch started at bad0ef86823f94f2a660ea25dc7748c7a888005e.
+  GitHub already marked #602 merged before this continuation; this work does
+  not merge anything or change main.
+- Threshold hygiene: theta_E is checked finite and strictly positive before
+  stillness and excitation. Tests cover zero, negative, NaN and both infinities
+  under both branches, including invalid span. Initial focused validation: 11
+  tests passed; expanded signed-temporal/physical validation: 25 passed.
+- Physical sampled span is >=max(0,theta_E-2 Omega_max eta). The literal signed
+  accelerometer pair identity retains physical acceleration, nominal force,
+  bias updates and innovations. It does not assume R_hat follows R_true.
+- The forced data adjoint now rewrites both compatibility residual sums
+  exactly: with r=y-Hbar u+epsilon, L=W+Z_next K and
+  Z=Z_next A-L Hbar, sum W r=Z0 u0+sum L(y+epsilon)+sum Z_next d.
+  All 18 Euclidean means, literal gains/OU, reference, resets and projection
+  defects remain. No homogeneous compatibility is assumed. Its source-uniform
+  root/rotation/multiplier action remains open.
+- A moving construction-to-289-s observer/control pair has identical terminal
+  outputs. Four actual S knots in the tail are (.065,21.365,42.665,63.96) s;
+  the 80-digit forced-balance residual is about 3.38446651750e-82. This is a
+  finite diagnostic, not an interval or all-time magnetic-service certificate.
+  The exact frozen-attitude Euclidean map has F E_BG=E_BG and Z E_BG=0:
+  removal of this functional's root BG coefficient supplies no gyro restoring
+  feedback. Alias exclusion must include the actual attitude recurrence.
+- Exact adjoint criterion: for C_i=Phi_(N,i+1)K_i, compatibility is equivalent
+  to ker C subset ker W. Otherwise the state and innovation residual sums
+  remain. Zero terminal multipliers are impossible for the first nonsingular
+  regular S atom c0(I-K_SS).
+- An actual quiet construction-to-release observer/control run has identical
+  terminal outputs. Four actual S knots are (0.025,0.160,0.295,0.430) s relative
+  to the 225-s root. Its exported rational full-mean functional has a
+  seven-column witness ||v||_infinity=1, Cv=0 and
+  |Wv|>754573637/5000000000000000. The 80-digit value is approximately
+  3.0182945480072294e-7. This is exact incompatibility of that coefficient
+  word, not an enclosure of all real-arithmetic histories or all-time service.
+  The actual quiet innovations vanish; no instability follows.
+- Signed physical bias summation uses the total and tail sums of weights,
+  then bounds physical rate. Signed physical acceleration summation uses the
+  same velocity integral, weight variation and the existing jerk sampling
+  error. These are useful residual supplies conditional on actual multiplier
+  bounds, not nominal mean clamps or separation certificates.
+- Construction BG mean is zero and the first prediction increment is
+  <=0.0039051914291880918 rad. A later complete turn requires nominal bias
+  norm >1046.5466859583 rad/s for allowed h. A bound on the signed cumulative
+  gain/innovation sum excluding approach to this barrier is still missing.
+- The historical implication is corrected: SIX uniform residual-pivot floors
+  plus operator/factor bounds imply exact L O=T_h and finite B_*. The former
+  claim that two proposed temporal margins automatically supply these six
+  floors was unproved and has been withdrawn. The backward action bound now
+  includes its terminal selector and all observation subtractions.
 
-The new domain restriction removes the smooth diagonal-wave constant-attitude
-construction and any other non-still window with zero gravity-direction span.
-It does not by itself prove nominal AG observability.  In particular, the
-signed temporal construction must still carry actual accelerometer/magnetic/S
-corrections, OU transport, resets, nuisance coupling and physical bias history.
-No derivation presently shows that Delta_g(W)>=theta_E forces positive
-source-uniform Delta_col and Delta_gyr after those literal terms are charged.
-The already-proved conditional implication
-
-inf Delta_col>0 and inf Delta_gyr>0 => L(W)O(W)=T_h(W), B_W<=B_*<infinity
-
-is retained, but its premises remain OPEN.  Quiet water follows a separate
-branch: physical attitude/accelerometer-bias ambiguity remains, including the
-approximately 1.146-degree tilted quiet construction, so exact attitude/bias
-convergence and universal V<=36 capture are not claimed.  The next falsifiable
-step is a source-uniform signed-temporal inequality that uses the physical
-gravity-direction span without replacing it by estimator-state or independent
-coefficient boxes.
-
-
-### Byte-exact proof provenance
-
-The standalone provenance gate and shared evidence suite report the same
-15 failures: 14 shipping-source Git blob bindings and the construction mean
-action's instrumented-header SHA-256. Classification: stale byte-exact
-provenance after comment/copyright edits, not a numerical or mathematical
-failure. The hypothesis that comment-only edits preserve file fingerprints is
-invalid. Comparing the pre-edit and post-edit sources verifies identical
-non-comment C++ token streams in all 54 changed source files, including the
-instrumented header. Native pre-edit and post-edit observer traces also match
-byte-for-byte under the same local toolchain; they do not replace the original
-CI trace. Refresh only the affected bindings and the containing
-mean-action artifact's Git blob hash. Retain the original replay trace hash,
-observer hash, exact enclosure, numerical certificates, historical base commit,
-quality gates and open theorem status. Regression tests require stale shipping,
-helper, document, artifact and instrumented-header bindings to fail closed.
-The current limiter is fresh CI validation of both consumers; source equivalence
-does not close the same-history covariance action or end-to-end theorem. The
-next falsifiable check is the unchanged standalone provenance gate plus the
-complete shared evidence suite against genuinely regenerated CI replay bundles.
-
-### CI/source-contract boundary
-
-The evidence commit job failed at `test_first_sample_geometry_and_invalid_inputs`
-because Eigen was not installed; Python-only dependencies no longer cover this
-host-compiling suite. The scalar detrender reference also used an obsolete
-cutoff/averaging contract: baseline error was 4.23696 against tolerance 0.001.
-Classification: CI dependency and reference drift, not a stability counterexample.
-A separate binary64 scalar oracle and explicit native-dependency guards preserve
-the existing numerical tolerances. The OU-II magnetic residual's redundant vector
-copy is replaced by a const reference without changing its equations. The TFG
-stationary replay also reproduces a >90-degree handoff error: the retained
-historical proxy-yaw alignment is invalid under axial gyro bias. Fresh sensor-only
-magnetic alignment repairs that acquisition/refinement path without changing
-OU-II/III, TFG cadence, or numerical tolerances. The native north regression uses
-each sketch's deployed cadence; fixed-cadence TFG comparisons remain explicitly
-labelled ablations. A literal backslash-n joining two TFG test commands is a
-separate test-runner defect. None of these findings advances the proof. The next
-check is the complete host build and a genuine regenerated OU/TFG evidence bundle,
-followed by the unchanged validation/sanitizer/static-analysis gates.
-
-### Stationary device diagnostic boundary
-
-The 200 Hz/25 Hz stationary device replay exposes two implementation failures:
-a gyro-only TFG acquisition gauge can give a 90.56-degree handoff error, and
-sparse virtual corrections can give 0.32 m raw-position jumps near 7 Hz.
-Classification: startup yaw observability/reference handling and discrete
-correction scheduling, not a detrender defect. The hypothesis that quiet wave
-input alone preserves a learned gyro-world yaw gauge is invalidated. A fresh
-magnetic alignment and the supported 15 ms device cadence reduce these errors;
-existing physical assumptions, quality gates and the single proof path remain.
-The large-bias TFG replay retains an approximately 11.5 m slow startup position
-excursion. It is not an absolute-heave or stability certificate. OU-II/III
-heading code is unchanged; its short bias-learning transient is measured
-separately from handoff and final-minute error.
-
-Local infrastructure: concurrent Eigen compilation exhausted the container's
-memory; serial compilation is retained. A GitHub source artifact supplies the
-repository/Eigen headers because direct container GitHub DNS access failed.
-These limits are not numerical estimator failures. The next device experiment
-is an uninterrupted rest/wave/rest capture of raw and detrended displacement,
-magnetic and fused heading, fresh-packet timing, applied tuning and loop dt.
-It must distinguish residual low-frequency drift from correction-rate teeth.
-The common same-history covariance action and end-to-end proof remain open.
-
-The evidence-contract run additionally rejects the changed OU-II test
-Makefile and the already-stale AdaptiveWaveDetrender3D replay dependency.
-Classification: build-scope/provenance, not a failed stationary experiment.
-Restore all three original simulation Makefiles and add only the device-test
-rule through a separate included makefile at test execution. No contract or
-recorded hash is relaxed. The detrender hash is identical to the PR base but
-differs from both committed OU replay manifests; those studies still require
-a genuine replay regeneration. The focused CI stationary tests, existing TFG
-turning tests and expected-failure check on the old heading code pass.
-The independent TFG comparison check also reports stale source provenance;
-its published comparison must be regenerated after the startup change rather
-than restamped. Native compilation under `make all` completed, but the full
-test command cannot fetch the pinned RAO archive in this environment
-(`curl: (6) Could not resolve host: github.com`). Classification: local
-infrastructure, not a numerical pass or failure of the wave replay. The next
-full-replay experiment must use a runner with the pinned archive available.
-
-`ou3-ag-readout-proof.md` adds a historical six-column covariance action.
-An exact backward 6x21 residual cancels the unbounded AG root; the remaining
-6x6 action retains all nuisance cross covariance, correlated process factors,
-rank-three observations and literal reset maps. Optimal covariance comparison
-then bounds terminal AG covariance. A uniform bound on this action would
-bootstrap J via an exact matrix process comparison, retaining the existing
-nuisance/Schur implication. Uniform source rank/action are **not proved**.
-
-The 80-digit supplied 21-state audit has maximum trial-action eigenvalue
-34.4659867861. Its minimum AG loss falls from .0281547113907 to
-9.99999999965e-13 when the supplied AG prior scale increases from one to
-10^12. Exact rational checks verify the conditional matrix bound, including
-nonzero AG/nuisance covariance and nonorthogonal resets, and conditional
-decrement 1/10000000001. Neither coefficients nor roots of this algebra audit
-are claimed to be a shipping history. The common source J remains open.
-
-The reader now uses exact largest-residual factor pivots across all rows.
-A native observer/control pair carries construction through refinement and
-release without reseeding; all terminal means, quaternions and covariances
-match bit-for-bit. Three quiet 225--225.32-s windows have action maxima
-1199.060967--1199.062222. A moving-vessel window has maximum 1450.252861,
-full-array minimum singular value 6.278224 and nonzero realized resets.
-These 80-digit values are non-promoting. Exact upward rational Q/R factors
-and PSD elimination certify full action matrices for the exported quiet
-and moving words. The complete literal sync/addition/symmetry operation is
-now bounded with signed factors on all 21 coordinates. Its -2^-44 Rayleigh
-defect is charged; raw-operand symmetry is not assumed. This does not enclose
-prediction, solve, Joseph, reset or state arithmetic, or a real source trajectory.
-
-The attempted independent-coefficient uniform certificate fails the all-row
-Schur test exactly: B=(45,0,45), a_hat=(-g/2,0,g/2) has |a_hat|<8.8 but
-parallel nominal force/field. The AG array has rank four; LO=T_h is impossible.
-The Rayleigh margin against any mu I6 is -mu. The family is not certified
-compatible with the nominal mean recursion or all-time magnetic service.
-This is a failed relaxation, not a shipping counterexample. Refining a minor,
-precision or coefficient boxes cannot exclude its exact nullspace.
-
-The nominal-history follow-up invalidates an innovation-only exclusion:
-quiet inputs, h=.005 and nominal b_g=-400 pi e_z make one complete nominal
-turn per sample. All innovations are zero and the regular nominal mean
-recursion is satisfied in real arithmetic. The literal bias transport is
-h e_z e_z', leaving two exact hidden gyro columns; rank=4 and Gram-floor
-margin=-mu. This regular-root relaxation is not proved reachable from shipping
-construction or all-time magnetically serviced. A quantitative bound on the
-estimated gyro bias must be derived from that carried construction, not
-substituted from the physical bias assumption. Exact root cancellation and
-a common full matrix action still remain open on actual admitted histories.
-
-A full-construction stress run now uses p=-(3/2)sin(2t)(1,0,1), R=I,
-B=(45,0,45), zero true biases. Exact continuous squared bounds are
-p:4.5, v:18, a:72, jerk:288, primitive span:4.5, omega:0, all within the
-unchanged physical contract. No estimator state is reseeded. Live occurs at
-step 30002, refinement/release at 36008. The 400--600 s native tail has mean
-tilt 8.211611 degrees, max 8.260681, and nominal acceleration reaches
-9.776391 m/s^2. The six-degree finite-interval entry margin is -2.211611;
-the physical acceleration bound cannot be substituted for the nominal mean.
-This is not an eventual-capture refutation: all-time magnetic service and
-real-arithmetic reachability are not certified. Its small gyro estimate and
-force/field sine >=.4432715 are likewise finite, not source-uniform margins.
-
-Exact rational elimination of that recorded full SPD covariance now gives
-V>=41601169495079937572567/3619798568741048312 (>11492.6752) from the BA
-marginal and known zero true BA, retaining every cross covariance. Against
-the sufficient guard V<=36, the entry margin is at most -11456.6752. This
-checks the literal finite endpoint, not all-time magnetic service or eventual
-capture. Failing a sufficient projection guard does not imply active projection.
-
-The construction-linked BG/AW mean action has now been executed on the whole
-same run: 89998 predictions and 122251 applied rank-three corrections. Its
-6x6 action retains all cross terms and its mean defect charges literal
-rounding. An 80-digit diagnostic followed by outward intervals and independent
-rational LDL proves ||b_hat_g||<1 at every recorded prefix; the resulting
-increment ceiling is .0099051914291880918 rad. Exact binary-operand checks
-also give force/field sine >2/5 at all 40000 pre-accelerometer states in the
-400--600 s tail. These are finite source audits, not all-history certificates.
-
-The attempted common mean enclosure nevertheless fails. Its cumulative
-innovation energy is 817885.0623259853, whereas the full correlated action
-ellipsoid admits instantaneous nominal collinearity at cost 1.0138313892.
-The exact rational interval separation margin lies in
-[-817884.048495,-817884.048494]. This diagnoses loss of signed innovation
-constraints in the enclosure; it is not a reachable collinear history or a
-physical counterexample. `ou3-construction-mean-action.md` gives the full
-derivation, source linkage, executed enclosure and rejected implication.
-
-Independently, the inherited BA marginal proves a source covariance guard:
-at every finite regular pre-projection boundary, sqrt(V)<=6 leaves
-.02483339501604595 m/s^2 inside the .4 projection ball. The literal projection
-then has zero defect. Every-prefix invariance, entry and reset/arithmetic
-bounds remain separate, open obligations.
-
-`ou3-corrected-word-proof.md` proves the following complete implications:
-
-- the existing embedded nuisance floor passes through actual acc/S corrections
-  and arbitrary attitude resets to roots immediately before prediction;
-- with that floor and the existing nuisance upper bound, a uniform SPD bound J
-  on the six AG columns of the actual complete loss gives a full covariance
-  upper bound by a Schur complement; the first prediction then gives strict
-  21-state contraction, retaining all cross covariance;
-- actual-gain variation of constants composes finite-error supplies without
-  equating independently evolving filters; correction supply is bounded by
-  the R-whitened residual without a separate gain norm; the exact covariance
-  recursion bounds all prediction/measurement inputs jointly by the square
-  root of their summed actions, retaining process correlations;
-- an explicit finite-angle reset remainder includes both the injection-squared
-  times error term and the real normalized quaternion polynomial defect.
-
-The six-column uniform J premise remains OPEN. The exact nuisance ratio is
-about 1.02976e-18 and the scalar full process floor about 2.49159e-26. These
-are valid existence ingredients, not a useful practical-radius margin; do not
-substitute this coarse prediction-only bound for a well-conditioned complete
-loss calculation. The 80-digit cross-coupled diagnostic gives rho about
-0.995037970315 and a conditional certified decrement about 2.64851e-5;
-its independent rational verification is a supplied-word check, not shipping
-history evidence. The new certificate remains fail-closed.
-
-`ou3-sampling-fidelity.md` proves:
-
-- sharp nonuniform trapezoidal acceleration mean error <=J h_max/4=.15;
-- exclusion of every constant-attitude stationary-accelerometer alias of
-  >=6 degrees over 32 s, including full accelerometer residuals;
-- a joint 3-D measured-vector Gram floor >6.29714e-5 over 64 s for constant
-  world field, charging both 5-uT hard-iron and 2-uT measurement residuals;
-- finite-angle rotation coercivity of that same full 3-D Gram matrix;
-- physical LIN mismatch action and prediction supply in the full carried
-  covariance metric, with source transition defects and process correlations.
-
-`sampling-fidelity.json` reproduces exact rational constants. The all-time
-continuation schema fails closed without both a jerk bound and acceleration
-absolute continuity. Finite traces still do not certify all-time membership.
-Reference-generator coefficient screening gives maximum harmonic jerk envelope
-about 29.1126 m/s^3 across its 20 scenarios; it supports the selected 100 limit
-but is not measured-vessel qualification or a numerical step in the proof.
-
-The prior counterexample remains exact on the domain without the new bound:
-its jerk exceeds 10500, its physical tilt is 53.13 degrees, and the source
-all-time actual magnetic-service floor exceeds one. Its native regression
-checks literal finite float startup/release; all-time float totality was not
-claimed. Current status explicitly records that this witness is inadmissible.
-
-Pre-repair proof validation: 486 evidence/publication tests run, with 485 passed
-and one existing data-dependent skip. The full carried observer matches its
-untapped control; the 80-digit mean action, outward enclosure, independent
-rational factor checks and exact 40000-prefix force audit pass. The source
-estimator and physical constants are unchanged. All six workflows passed at
-0cc50ec5; CI for the new proof head is recorded separately in PR metadata.
-
-
-## Signed temporal construction now fixed
-
-The continuation no longer uses an independent nominal box or an unsigned
-innovation-energy inequality.  The active construction substitutes the
-literal signed accelerometer and magnetic innovations into the same physical
-history, applies the proved nonuniform acceleration integral identity before
-absolute values, and telescopes the actual BG/AW mean recursion with its
-chronological gains, OU transports, resets and roundoff.  Sustained nominal
-force/field degeneracy and gyro aliasing are therefore reduced to two
-same-history signed margins, Delta_col and Delta_gyr.  A positive uniform
-lower bound for both makes the remaining coefficient family separated from
-rank loss; a finite pivot-chart cover then makes the historical reader action
-continuous and gives B_*=sup lambda_max(B_W)<infinity.
-
-This is a construction of the required implication, not theorem closure.  The
-outward source-uniform enclosure of Delta_col, Delta_gyr and the resulting
-pivot-chart action supremum has not yet been executed.  In particular the
-finite 400--600 s audit is not substituted for either infimum.  Shipping
-behavior, physical assumptions, quality gates and the single proof path are
-unchanged.
-
-## Capture-region correction from an admitted quiet-bias history
-
-A separate exact obstruction now prevents using the convenient `V<=36`
-projection guard as a universal capture target.  Take constant true attitude
-`R=R_x(2 atan(1/100))`, quiet translation/rate, `B=(75,0,0)`, zero gyro
-bias, and constant physical accelerometer bias
-`b_a=g(R' e_z-e_z)`.  Its norm is about .1961232 m/s^2, below the unchanged
-physical bias limit, with zero bias rate, motion, jerk and primitive span.
-Its measured record is exactly the level/north record
-`f_m=-g e_z, gyro=0, mag=75 e_x`; hence the shipping nominal means follow
-the existing zero-innovation stationary construction while the true BA error
-remains `e_ba=b_a` under the literal bias-mismatch relation.
-
-Using the already proved regular marginal `P_ba,ba<=I/1600`, full covariance
-Cauchy--Schwarz gives on every applicable regular boundary
-
-`V >= e_ba' P_ba,ba^-1 e_ba >= 1600 |b_a|^2
-   = 38468153689/625062500 > 61.54289 > 36`.
-
-The stationary source magnetic-service induction still applies because the
-measured execution is identical; the true down axis has cosine 9999/10001,
-so the existing nominal-axis service floor remains above one after multiplying
-by its squared axial component.  This does **not** refute six-degree physical
-tilt capture (the true tilt is only about 1.146 degrees), practical stability,
-or the projection-sector route.  It proves only that universal eventual
-entry into the sufficient `sqrt(V)<=6` projection-inactive ball cannot be a
-completion strategy under the unchanged assumptions.  The local projection
-guard is retained; the nonlinear theorem must use a larger/shaped region or
-carry the literal projection sector/defect.
-
-The signed temporal route is also sharpened: eliminating a signed innovation
-functional `sum W_i r_i` through the affine mean recursion requires an exact
-same-history adjoint sequence satisfying both `Z_i=Z_(i+1)A_i` and
-`W_i=Z_(i+1)K_i`.  Without that compatibility the residual state/innovation
-sums stay in the inequality.  The nominal v/p/S correction jumps must be
-retained through the weighted integral identity documented in
-`ou3-construction-mean-action.md`.  Source-uniform existence/bounds for this
-adjoint construction remain open.
+A conditional smooth moving family also disproves mandatory nominal tilt
+response: phi=(theta_E/2)sin(2pi t/T_E), p=0, b_g=-omega,
+b_a=g(R'e_z-e_z), B=75e_x produces exactly quiet measurements. The sufficient
+symbolic bias/rate/service conditions are proved in the signed-temporal note;
+no numerical T_E/theta_E is selected. This family meets physical tilt span
+when those conditions hold, yet nominal attitude is fixed. Its nominal force
+and field remain separated, so it does not falsify either target margin.
 
 ## Current limiter
 
-The six AG columns must be bounded for the actual nominal corrected transport,
-including realized gains and resets. The physical three-dimensional Gramian
-and two-dimensional magnetic-service restriction do not provide that bound.
-Since `D_AG,AG <= (P_root^-1)_AG,AG`, an absolute uniform J also requires
-control of the inherited conditional AG uncertainty. The historical reader
-must satisfy `L(W)O(W)=T_h(W)` exactly and `B_W <= B_*` uniformly. Those
-source inequalities remain unverified; numerical rank on one word is not
-their enclosure. A historical window must start after the nuisance bound
-applies and keep the same execution through its terminal A21 root.
-Once a useful full loss is certified, the actual-gain supplies and projection
-sector must close a retained region and startup/bridge/release must enter it.
-A finite source supply and a positive but extremely small comparison margin
-are not evidence that the declared six-degree region is invariant.
+The physical span does not yet control the nominal force/field or gyro
+transport on every carried execution. Compatible adjoint norms, or useful
+bounds on both residual sums when incompatible, must be derived without
+independent nominal boxes or unsigned innovation energy. The forced data
+identity retains root action and joint signed rotation/reference action;
+cellwise and actual-S-interval norm relaxations failed as quantified below.
+Then a quantitative
+six-pivot bridge and coefficient compactness are needed. No uniform historical
+B_*, J_AG>0, full covariance upper bound or rho_0<1 is instantiated.
+
+All new lemmas enter V_(j+1)<=rho V_j+c_d||d||^2 only through these unresolved
+steps. No new contraction enclosure is attempted with missing inputs; the
+required high-precision feasibility check must precede any future one.
 
 ## Failed approaches / DEAD_ENDS
 
-- 2026-09-21 main CI repair at `4ba4a21b`: build run `35603196590`
-  failed in `ou-evidence / fingerprint` during `make -C tests/validation
-  evidence-test`. Of 505 tests, the only error was the five-method TFG plotting
-  regression importing pandas in a job that did not install `python3-pandas`;
-  one existing test was skipped. Quality run `35603196278` independently
-  failed Ruff F403 on the signed-temporal wildcard import and F841 on the
-  unused `fac` local. Classification: dependency/lint integration failures,
-  not estimator regressions or mathematical obstructions. The invalidated
-  hypothesis is that passing smoke or standalone evidence CI covers the
-  reusable full-study job's separate dependency installation. Install pandas
-  there, name the test imports explicitly, and remove only the unused local.
-  A standard-library regression checks the dependencies before tests in all
-  three reusable validation jobs and rejects cross-job/comment-only coverage.
-  It fails on the original missing pandas package and passes after repair;
-  all nine signed-temporal tests and exact certificate-output parity pass.
-  Retained: shipping sources, proof constants/flags, numerical quality gates,
-  genuine replay evidence and every provenance/fingerprint check. The proof
-  limiter remains source-uniform signed separation and the historical B_*
-  ceiling; this CI repair does not advance or promote the theorem. Local
-  source reconstruction was checked against Git blob hashes after HTTPS git
-  clone failed with `Could not resolve host: github.com`; Ruff installation
-  was also unavailable (`No matching distribution found for ruff`). Full
-  repository validation and actual Ruff results must come from PR CI, not
-  be inferred from the 11 focused local tests. Next falsifiable check: run
-  the unmodified full evidence/proof and quality gates on the repair head,
-  including the dependency regression for the otherwise main-only reuse path.
+1. **Unsigned cumulative mean-action energy: DEAD_END.** E=817885.0623259853
+   while collinearity cost is about 1.0138313892; exact E_col-E lies in
+   [-817884.048495,-817884.048494]. Invalidated: the correlated energy
+   ellipsoid separates all nominal forces from the field. Retain its finite
+   old-domain BG<1 and force/field sine>2/5 certificates, actual factors and
+   arithmetic bounds. Do not refine precision/subdivision of this relaxation.
+2. **Independent nominal coefficients: exact nullspace.** f parallel B gives
+   historical AG rank four; the complete-turn nominal h=.005,
+   bhat_g=-400pi e_z example also has rank four and information-floor margin
+   -mu. Invalidated: physical bounds or innovation bounds alone control a
+   free nominal root. Construction reachability and all-time service for
+   these relaxed examples are unproved. Retain actual-history linkage.
+3. **Endpoint-free forced adjoint: missing compatibility.** The exact failed
+   equations are Z_i=Z_(i+1)A_i and W_i=Z_(i+1)K_i together. Zero-mean
+   projection generally destroys them; the finite carried witness above
+   also fails with unrestricted terminal multiplier. Invalidated: zero mean
+   or spline jets alone leave only physical bias increments and defects.
+   Retain both residual sums and signed physical Abel/velocity supplies.
+4. **Pairwise unsigned tilt transfer: nonpositive margin.** The subtraction
+   min(2A_max,(J_max+Omega_max A_max)T_E) already exceeds the maximum available
+   gravity chord for every feasible theta_E<=pi/2. Invalidated: a pairwise
+   triangle bound excludes nominal collinearity. Retain complete-window span
+   and the exact signed pair relation; use whole-window physical integrals.
+5. **Two margins to six pivots: unsupported implication.** No rank theorem
+   proves that force/field separation and nonaliasing exhaust all varying
+   six-column loss mechanisms. Coefficient compactness is also missing.
+   Invalidated: simply taking p=min(Delta_col,Delta_gyr). Retain exact
+   historical factor pivoting, root cancellation and the conditional p>0 bound.
+6. **Universal V<=36 capture: refuted by admitted stillness.** For true
+   R=Rx(2 atan(1/100)), p=v=a=omega=0, B=75e_x and
+   b_a=g(R' e_z-e_z), ||b_a|| approximately .1961232<B_a, the measured record
+   is level/north. The stationary service floor remains >1 after multiplying
+   by (9999/10001)^2. At applicable regular boundaries P_ba,ba<=I/1600 gives
+   V>=38468153689/625062500>61.54289>36. Invalidated: universal entry into
+   the convenient projection-inactive ball or exact attitude/bias convergence
+   in indefinite stillness. Retain the literal bias-projection sector;
+   no larger/shaped invariant region has yet been proved.
+7. **Old constant-attitude moving diagnostics: domain exclusion.** The smooth
+   diagonal wave has finite 400--600-s mean tilt 8.211611 degrees, nominal
+   acceleration 9.776391 and endpoint V>11492.6752 (guard margin <-11456.6752).
+   These numbers are retained as diagnostics of the older domain, not current
+   physical counterexamples. The 200-Hz stationary-looking moving witness is
+   also excluded by jerk and tilt span. Its old-domain service proof remains.
+8. **Local arithmetic factors: signed defect, not PSD noise.** The exported
+   complete sync/symmetry defect has Rayleigh quotient -2^-44. Retain the
+   full signed rank-one/two factor enclosure. Invalidated: treating that
+   defect as a PSD process increment or restricting it to three AW coordinates.
 
-- CI integration rejected the merged tree at two independent gates. The
-  proof gate found a stale blob hash for `docs/ou3-construction-mean-action.md`
-  (`1e25ed8` recorded, `ee12d64` current). The shared evidence gate found that
-  paired OU validation rows were produced before the current OU-II header
-  and simulator tuning; its macro inventory also disagreed. Classification:
-  merge/provenance integration failure, not a new mathematical obstruction.
-  The invalidated hypothesis was that a proof-branch evidence bundle could
-  replace the already-retuned main-branch bundle without checking the replay
-  dependency closure. Restore the genuine retuned paired bundle with its
-  original immutable replay provenance, synchronize only its publication
-  mirrors, and refresh the reviewed proof-document hash. All simulator
-  sources, numerical thresholds, physical assumptions and theorem flags are
-  retained. The full evidence suite now also invokes the proof provenance
-  validator and tests rejection of a stale document hash. The first full
-  local check exposed a remaining macro-mirror mismatch; copying the matching
-  retuned macro file repairs it without modifying the consistency test. The
-  conservative global replay fingerprint is not restamped: full-tree replay
-  is still required. Local recovery validation passes all 490 tests (489
-  passed; one existing data-dependent skip), the strict current-analysis
-  replay contract, and the independent proof evidence validator. The next
-  falsifiable check is the combined evidence/proof CI gate
-  on the integrated tree; the mathematical limiter remains the source-uniform
-  signed temporal separation and historical action ceiling described above.
-
-- A construction-linked cumulative mean-action ellipsoid fails the sufficient
-  pointwise collinearity exclusion `E_col-E>0` with the exact interval margin
-  [-817884.048495,-817884.048494]. Classification: mathematical relaxation
-  loses signed/time-linked innovations, not numerical conditioning or an
-  observed nonphysical source trajectory. The actual finite tail has positive
-  separation. Retained: the full matrix action and its certified finite gyro
-  barrier. Do not refine its energy ceiling into a common nominal box. The
-  next technique must retain `r_acc=f_measured-R(aw-g)-ba`, `r_mag=m-RB` and
-  `r_S=-S_hat` with the same nominal/physical dynamics over the entire window.
-  This failure does not rule out a temporal separation argument and does not
-  license a new physical assumption.
-
-- Added article material caused a 0.82014-pt overfull vbox in forced final-page
-  balancing. Removing that balancing directive restores a clean nine-page
-  render; the mathematical text and quality thresholds are unchanged.
-
-- The required `PATH=/tmp/ou3-proof-venv/bin:$PATH make all EIGEN_DIR=/tmp/ou3-article-tex-deps/usr/include/eigen3 SIM_DATA_ZIP=/tmp/ou3-article-sim-data.zip`
-  compiled all native targets and passed suites through spike_filter, then
-  stalled in `test_no_retired_architecture_survives_repository` scanning the
-  7.2-GB generated-data tree. It was interrupted (exit 130); do not report the
-  aggregate as passed. The unchanged 476-test evidence/publication suite passes
-  in a clean worktree; wave_dir and wave_sim are run separately. No gate or
-  threshold is weakened. This is a generated-data validation limitation.
-
-- The first independent-row reader has noise action proportional to 1/B_y^2
-  on a quiet heading pair even when another magnetic row is strong. Exact
-  largest-residual factor pivoting is the motivated refinement. The subsequent
-  all-row test still fails on the independent nominal-coefficient relaxation:
-  rank=4, candidate Gram I6, exact null Rayleigh margin=-1. Classification:
-  missing nominal-history reachability/separation, not numerical conditioning.
-  Retained: the historical action and nuisance/Schur implications. Limiter:
-  the source innovation/gyro/reset comparison. Change to source-linked nominal
-  dynamics; do not repeat pivot/precision/subdivision refinement.
-- The raw moving sync operand has skew 2^-49 and cannot be a PSD process
-  factor. Recording the complete addition/symmetry operation exposes a second
-  failure: E=P_after-sym(P_before) has Rayleigh quotient -2^-44 at event 96,
-  in the normalized (e_0+e_2) direction. Thus even the complete increment is
-  not PSD. Classification: literal rounding, not physical loss of covariance
-  positivity. Changed technique to signed rank-one/two Schur elimination,
-  retaining positive factors and verifying U U'-E >=0 exactly. All recorded
-  quiet/moving sync boundaries and both full action ceilings pass. No further
-  operand symmetrization or PSD clipping is used. Other float operations and
-  a uniform bound on the resulting action remain separate obligations.
-- The innovation-only nominal-history tactic fails at the exact complete-turn
-  gyro alias described above: innovations=0, rank=4, margin=-1 against I6.
-  An 80-digit diagnostic has transverse bias transport singular values
-  7.95648051e-7, 7.95774589e-10 and 7.95774715e-13 for turn offsets 10^-3,
-  10^-6 and 10^-9. Exact Rodrigues/quaternion identities certify the nullspace;
-  more precision cannot remove it. Retained: all readout/Schur implications,
-  nuisance bounds and physical measured-vector diversity. Next change the
-  technique to a construction-linked nominal gyro estimate bound alongside
-  nominal force/field control. Reachability and magnetic service of the alias
-  are unknown, so it is not a shipping instability counterexample.
-- Factor pivoting changed the supplied reader's nuisance-sensitive coordinate
-  from x to y. The old cross-covariance regression then compared two identical
-  actions. Move its nonzero AW/BA cross term to the actually used y coordinate;
-  the same strict full-matrix inequality check remains in force.
-
-- The local article render initially failed with `pdfTeX error (font
-  expansion): auto expansion is only possible with scalable fonts` because
-  the extracted newtx font map was not loaded. Loading that installed map
-  fixed the environment; the unchanged article source then rendered in nine
-  pages without overfull boxes. The affected pages were visually checked.
-  No mathematical premise or publication gate changed.
-- Forward-only absolute AG-loss certification with an unrestricted AG prior
-  fails analytically: `P_root=diag(t I6,I15)` implies `D_AG,AG <= I6/t`.
-  At t=10^12, the candidate inequality `D_AG,AG-10^-6 I6 >=0` has Rayleigh
-  margin at most `-9.99999e-7`. Classification: missing historical covariance
-  control, not conditioning/enclosure failure or a reachable counterexample.
-  This invalidates future excitation alone as a proof of absolute J; it does
-  not invalidate the retained conditional Schur implication. The historical
-  readout removes the unknown prior exactly. A fixed reader fails under a
-  10^-6 transition perturbation; recomputing its exact six-column reader
-  restores cancellation but does not establish a uniform action ceiling.
-- Entrywise midpoint-radius Riccati refinement failed twice by dependency:
-  prediction [-18.7907040,2502.41442] and failed acc/mag inverse boxes.
-- Cross-ceiling/Gershgorin reduction gave gamma=-5.1223e8. An LDL pivot is
-  not an eigenvalue floor; keep matrix action and factors.
-- Accumulated process noise plus endpoint information ceilings fails with
-  interleaved corrections. The corrected endpoint path action is retained.
-- Restricted heading/bias loss I_2 can coexist with full loss
-  `[[1,0,1],[0,1,0],[1,0,1]]`; nuisance cancellation (1,0,-1) defeats lifting.
-- Finite replay, QR positivity alone, and a literature map did not discharge
-  uniform stability. They are not substitutes for the full loss implication.
-- Continuous velocity balance could not be transferred to point samples
-  without sampling fidelity. The old all-time witness refuted six-degree
-  capture. The newly adopted jerk assumption now closes that specific gap.
-- Service induction must initialize the first partial magnetic cell, not
-  assume handoff/clock coincidence. Its exact seed/prefix comparison is fixed.
-- Previous local infrastructure failures: missing Eigen; Eigen 3.3.7 C++20
-  equality incompatibility; unordered `make all -j2` build/test prerequisites;
-  generated-data architecture scan interrupted (exit 130). Eigen 3.4 and
-  clean-checkout validation resolve the dependencies/scanning issue. The last
-  sequential `make all` compiled all targets and passed through spike_filter
-  before interruption; remaining native suites passed separately. Do not
-  report that interrupted aggregate as passed.
-- Local TeX lacks IEEEtran/luaotfload; use the unchanged CI renderer. HTTPS
-  push lacks credentials; use identical Git trees through the connector,
-  preserving executable bits and fetching the explicit branch ref.
-
-- The first broad test invocation in the generated-data checkout again
-  stalled after its first test in the architecture scan and was interrupted
-  (exit 130). Run the unchanged evidence suite in the clean detached validation
-  worktree; the targeted new tests and exact artifact reproduction pass.
-
-- CI article rendering at 5ba1e038 failed with `Environment proposition
-  undefined` at line 420. Reuse the declared lemma environment and split the
-  longer equations to fit the column. Mathematical certificates and literal
-  shipping CI passed; this was a publication-source failure. The provenance
-  gate then correctly rejected the changed article hash; refresh its binding
-  and rerun the unchanged gate.
-
-- Visual review of the rendered bde2d251 article caught an unqualified
-  old-domain capture-refutation sentence in the evidence section and a missing
-  jerk row in the constants table. Restrict that sentence to omission of the
-  jerk premise and include J_max=100 in the table; proof constants are unchanged.
-
-- The old smooth-remainder helper inferred eta(r)->0 from smooth operations,
-  a projection-sector flag and frozen schedules. That implication is invalid
-  for the shipping reset comparison G=I+[d]/2 at a nonzero injection: its
-  derivative is J_l(d), and J_l(d)-G generally is nonzero. Removed that helper,
-  its dependent Boolean small-gain promotion and the accepting test. The
-  explicit injection-dependent finite-error bound replaces them. Full theorem
-  status was already false; the controlling next check is the actual word
-  margin after this residual is charged.
-- The new high-precision diagnostic initially failed because mpmath was absent
-  (`ModuleNotFoundError`). An isolated environment with mpmath resolved it;
-  no repository dependency or quality threshold was changed.
-
-- The first broad evidence run in the new isolated environment failed with
-  missing matplotlib imports, which also prevented publication-test adapters
-  from loading. Installing matplotlib restored the unchanged suite: all 462
-  tests pass with one existing skip. No publication files or gates were altered
-  to accommodate that environment failure.
-
-- The first article render for the corrected-word result passed but reported
-  a 9.1585-pt overfull inline nuisance-block tuple. Expand the nonzero blocks
-  into two displayed rows; the covariance constants are unchanged.
-
-- Visual review of the joint-input-action article found a nearly empty ninth
-  page containing only the disclosure. Remove the conclusion that repeats
-  the abstract and evidence boundary; retain all mathematical arguments and
-  the disclosure. This is a publication-layout correction only.
-
-- Removing the duplicate conclusion triggered the unchanged publication
-  contract at `test_finite_error_statement_and_qualification_remain_conditional`:
-  its required explicit end-to-end status sentence disappeared. Restore that
-  sentence in the evidence boundary. The underlying proof status and test
-  remain unchanged; this is a document-contract failure.
+9. **Future-only AG loss with a free prior: analytic obstruction.**
+   P_root=diag(t I6,I15) gives D_AG,AG<=I6/t. At t=10^12 the margin against
+   10^-6 I6 is <=-9.99999e-7. Retain historical root cancellation; future
+   excitation alone cannot establish absolute J for that relaxed prior.
+10. **Entrywise Riccati and cross ceilings: DEAD_END.** The former prediction
+    enclosure [-18.7907040,2502.41442] loses acc/mag inverse verification;
+    the cross-ceiling/Gershgorin margin is about -5.1223e8. Retain full matrix
+    factors. LDL pivots are not eigenvalue floors and more entrywise
+    subdivision is not the active approach.
+11. **Restricted information lifting and endpoint process sums: invalid.**
+    Heading/bias restriction I2 can coexist with full loss
+    [[1,0,1],[0,1,0],[1,0,1]], cancelled by nuisance vector (1,0,-1).
+    Interleaved corrections also defeat uncorrected accumulated-process
+    lower bounds. Retain nuisance elimination and corrected endpoint paths.
+12. **Automatic vanishing reset remainder: invalid.** At fixed nonzero
+    injection d, the reset derivative J_l(d) differs from I+[d]/2. Smoothness
+    alone does not prove eta(r)->0 for that comparison. Retain the explicit
+    injection-dependent remainder and require a complete strict word margin.
+13. **Forced-data rotation triangle: failed relaxation.** On the carried
+    moving word, charge 39.22565272637 exceeds recorded projected gravity
+    8.77133455729: margin -30.45431816909 before other supplies. Invalidated:
+    separately norming the two rotations can close this budget. Retain the
+    exact jointly signed rotation/reference action and actual magnetic gains.
+    This does not falsify Delta_col or the physical assumptions. Current
+    limiter: no uniform coupled rotation/reference bound. Next: include
+    actual attitude dynamics and magnetic information before taking norms.
+14. **Physical acceleration variation norm: stop after one refinement.**
+    The cellwise velocity+jerk charge is 239.97053019538. Summing signed
+    weights over actual S intervals first gives 23.98805965312+3.82238280532
+    =27.81044245844, still margin -19.03910790115 against the same recorded
+    threshold. Invalidated: either variation-norm bound closes the budget;
+    no precision/subdivision retry is justified. Retain both exact integral
+    identities, bias-rate Abel supply and the actual signed acceleration
+    action (norm about .005 on this word). Architecture review: the single
+    construction/H18/A21 path remains; the missing joint physical-integral,
+    rotation/reference and gain bound cannot be replaced by separate norms.
+    Finite small actions do not supply source-uniform ceilings.
 
 ## Retained facts
 
-The exact full-word identity
-`M_end' P_end^-1 M_end + D_word = P_root^-1`, low-rank loss factors, singular
-nuisance elimination, corrected 4x4 LIN endpoint action, joint 21-coordinate
-lower covariance after 16 s and nuisance upper covariance after 17 s remain
-valid in their stated regular default A21 scopes. Same-history physical bias
-mismatch, projection-sector and finite-bridge identities remain. Stationary
-A21 detectability does not imply capture of the nonlinear physical observer.
+The sampled acceleration mean bound, constant-field joint physical vector
+floor, full covariance-energy identity, LIN path action, full nuisance floor,
+recurring nuisance upper covariance, historical reader factor/root algebra,
+complete corrected-word matrix bootstrap, actual-gain finite-error composition,
+reset remainder and projection-sector relations remain available.
+The physical signed reserve is 27049050188592/625000000000000000, approximately
+4.32784803017472e-5, under its stated physical field hypotheses. Its nominal
+transfer ceiling remains unknown. The six-column-to-full contraction lemma
+is conditional, not a certified numerical contraction for shipping histories.
 
-Gravity is a constant model parameter. The certificates and simulations use
-9.80665 m/s^2; the AtomS3R shipping path configures the calibration-site
-gravity `ImuCalCfg::g_cal_local` (default 9.8025605 m/s^2, relative change
-4.2e-4) for both the accelerometer calibration and `gravity_magnitude`.
-Certified numbers have not been re-enclosed at that value.
+The retained supplied-word 80-digit comparison has rho approximately
+0.995037970315 and conditional decrement approximately 2.64851e-5; it is not
+a source-uniform shipping result. Coarse existence quantities (nuisance ratio
+approximately 1.02976e-18, scalar process floor approximately 2.49159e-26)
+are not practical-radius certificates.
+
+The theorem default profile uses g=9.80665, whereas the AtomS3R calibration-site
+configuration uses default g=9.8025605 and its deployed S cadence. Other
+configured profiles require their own source enclosure. No constants or
+deployment behavior are changed to align them with the proof.
+
+No H18 full-state contraction, independent nominal boxes, fitted/sampled rho,
+scalar information lifting, scalar/Gershgorin process comparison, or finite
+replay promotion is substituted for the retained proof path.
 
 ## Alternatives
 
-Use the sharp sampled mean and finite-angle vector identity with actual
-transport, preserving nuisance columns and the realized schedule. The exact
-physical OU action retains the full process matrix; its scalar box bound is
-only a finite supply ceiling, not evidence of a small retained radius.
+Use observation-forced multipliers with explicit state/innovation residuals,
+then exploit their actual signed temporal weights against physical velocity,
+primitive and bias histories. A homogeneous compatible terminal map is allowed
+only if its kernel condition and norms are proved. Gyro control must retain
+construction-origin level information; zero-mean projection alone cannot
+exclude the constant bias offset needed for a complete turn. Stillness keeps
+the literal projection sector pending a shaped-region proof.
 
 ## Next falsifiable experiment
 
-Use the nominal mean/innovation recursion to exclude sustained near-null AG
-transport, rather than independent coefficient ranges. In the default
-reference-temperature, zero-lever-arm profile,
-`f_hat=f_measured-b_hat_a-r_acc`; true-vector sampling fidelity transfers only
-if the actual innovation and nominal gyro/reset transport defects are bounded
-on the same window. They are not physical sensor noise bounds. Quantify this
-source-linked exclusion and test the complete six-column noise-action Schur
-condition before attempting a common action ceiling. Then enclose process and
-nuisance action, the full corrected loss, and the strict nonlinear/supply and
-every-prefix inequalities. Both exported-word enclosures now include the
-complete addition/symmetrization operation.
+Couple the forced data balance to the literal attitude and BG recurrences.
+Derive a joint supply for the rotation/reference and physical integral terms
+using sampled tilt and actual two-column magnetic information before separate
+norms. First test that proposed coupling on a carried moving word, including
+the construction-origin gyro level; its frozen Euclidean map alone has an
+identity BG column. A source-uniform action bound must then control root
+action and coefficient variation, with a quantitative margin that exceeds
+the recorded failed budgets. Do not refine the failed variation, pairwise or energy
+relaxations. Only a source-uniform positive margin and quantitative six-pivot
+bridge justify a common historical action enclosure. Before any new contraction
+enclosure evaluate the complete matrix ratio at high precision and stop if
+it exceeds one.
 
-The next falsifiable history experiment must propagate a joint nominal-mean
-and covariance bound from the actual zero-mean MEKF construction, through the
-proxy handoff, every correction, refinement and release. It must prove the
-quantitative force/field and gyro exclusions on that same history before
-bounding the full readout action. The first-prediction gyro increment is
-bounded by .0039051914291880918 rad from the true handoff state; extending
-this to an invariant history bound is open. An assumed nominal-state cap is
-not a substitute. For arithmetic, the completed sync factor is available;
-other operation defects and their prefix actions remain open.
+## Validation and infrastructure
 
-The executed joint energy propagation now rejects its own proposed pointwise
-separation step by an 8e5 deficit. Replace that relaxation with a signed
-whole-window identity coupling projected nominal acceleration, the actual
-velocity/integral corrections, and bounded physical velocity/primitive.
-The target is a positive temporal separation margin on actual histories,
-including gyro/reset transport; an instantaneous collinear point in a loose
-ellipsoid is not an admissible sustained-collinearity witness. Do not promote
-the positive finite source margins to a common historical action B_*.
+Current forced-data continuation:
+
+- The exact signed tests pass (18), including inhomogeneous adjoint root,
+  innovation/mean arithmetic, projection, the unit BG column, sharp interval
+  jerk remainder and diagnostic promotion/tamper rejection. The complete
+  OU-III proof suite passes 250 tests. The final shared evidence/proof/
+  publication gate, `make -C tests/validation test`, passes all 539 tests.
+  `build_evidence.py`, Ruff and `git diff --check` pass; theorem_closed=false.
+- The moving native observer/control parity and 80-digit signed balance pass.
+  Physical g=9.80665 and literal float g=9.8066501617431640625 are separated
+  by an explicit signed representation defect; no physical constant changes.
+- The initial native export had zero bytes and was rejected by the terminal
+  mean-continuity check. Classification: export/infrastructure failure, with
+  no numerical result accepted. A direct rerun produced the complete trace;
+  an explicit stream-flush/write check and full observer/control rerun now
+  guard export. The retained report concerns only that complete trace.
+- The first full-build session disappeared before returning status
+  (`write_stdin`: unknown process id 4731); its log ended in the frequency
+  stage. No pass was inferred. Re-running the same `make all` command with
+  continuous session polling returned exit 0. Its copied log was incomplete,
+  so the complete shared gate was additionally captured through stdout and
+  returned exit 0 with all 539 tests. Quality gates and fixtures are unchanged.
+- LuaLaTeX completed two passes for the final 12-page article. All pages
+  were rendered/decoded and visually inspected, with the new mathematics
+  checked at full resolution. No overfull boxes or unresolved references
+  remain. An intermediate PDF/PNG copy was truncated (PNG at 262144 bytes;
+  PDF had an invalid xref); it was not delivered. Fresh output, completed
+  rendering and decoding of every final PNG resolved the artifact failure.
+  Existing class-font/amsmath warnings remain nonfatal. The article is saved.
+
+Retained earlier validation evidence:
+
+- Native historical-reader observer/control parity passed in all four cases;
+  80-digit action maxima were 1199.060966781881--1450.252861111712. Exact root
+  cancellation and correlated exported-word enclosures passed for quiet and
+  moving words. Construction/mean-action regressions reproduced 89998
+  predictions and 122251 corrections at 80 digits, with a 40-digit outward
+  enclosure and exact recorded-force audit. None is source-uniform coverage.
+- The earlier reconciled build passed native stages but four archive-copy
+  tests hit `[Errno 28] No space left on device`: 508 MiB was free while the
+  copied simulator trees required about 2.4 GiB. Removing this task's 3.6-GiB
+  temporary TeX cache restored capacity, and all 535 then-current shared
+  tests passed. This was infrastructure capacity, not a proof failure;
+  fixture logic and quality gates remained unchanged.
+- Container apt operations failed on setgroups/setegid/seteuid; a CTAN
+  redirect and guessed binhex path also failed. Runtime Eigen and verified
+  local Ubuntu/CTAN package extraction supplied the needed build/TeX inputs.
+  No article format or source requirement was changed to hide those failures.

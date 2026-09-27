@@ -342,8 +342,9 @@ the reached root by a convenient mean/covariance box. The new reproducible
 p(t)=-(3/2)sin(2t)(1,0,1), R(t)=I, B=(45,0,45),
 
 with zero true biases. Its continuous squared envelopes are p:9/2, v:18,
-a:72, jerk:288, angular rate:0 and primitive span:9/2. All satisfy the
-unchanged physical limits; there is no displacement or acceleration DC.
+a:72, jerk:288, angular rate:0 and primitive span:9/2. These satisfy the older pointwise/jerk limits and have no displacement or
+acceleration DC, but fail the current MARINE MOTION tilt-span condition.
+This is an old-domain diagnostic, not an admitted moving history.
 The native driver uses only `begin`, `update` and `updateMag`, with no reseed,
 and retains the shipping front end, reference refinement and BA release.
 
@@ -351,8 +352,9 @@ It reaches Live at step 30002 and refinement/release at step 36008. On the
 400--600 s diagnostic tail, mean tilt error is 8.211611 degrees and maximum
 is 8.260681 degrees. The proposed six-degree entry comparison has negative
 mean margin -2.211611 degrees over that finite interval. The largest nominal
-acceleration from construction is 9.776391 m/s^2, so substituting the physical
-8.8 bound into the nominal coefficient domain is demonstrably invalid. The
+acceleration from construction is 9.776391 m/s^2, illustrating why the old-domain proof could not substitute the physical
+8.8 bound for a nominal coefficient bound. The current moving domain still
+requires its own construction-linked derivation. The
 largest gyro estimate is .000161120 rad/s and the tail minimum normalized
 force/field cross magnitude is .4432715: this particular trajectory does not
 approach either raw-rank degeneracy.

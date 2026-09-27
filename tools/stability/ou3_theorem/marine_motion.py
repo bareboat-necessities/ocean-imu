@@ -152,12 +152,12 @@ def stillness_or_attitude_excitation_admitted(*, complete_physical_stillness: bo
                                               tilt_span_rad: float,
                                               theta_e_rad: float) -> bool:
     """Check one physical window using gravity-direction tilt span, not endpoints."""
+    if not (math.isfinite(theta_e_rad) and theta_e_rad > 0.0):
+        raise ValueError("theta_E must be positive and finite")
     if complete_physical_stillness:
         return True
     if not (math.isfinite(tilt_span_rad) and tilt_span_rad >= 0.0):
         return False
-    if not (math.isfinite(theta_e_rad) and theta_e_rad > 0.0):
-        raise ValueError("theta_E must be positive and finite")
     return tilt_span_rad >= theta_e_rad
 
 def primitive_span(q_values: Iterable[Sequence[float]]) -> float:

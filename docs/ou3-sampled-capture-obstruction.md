@@ -1,8 +1,11 @@
-# Why the acceleration-jerk condition is needed
+# Historical point-sample capture obstruction
 
-This is the exact obstruction for the **previous domain without a jerk
-bound**. The current MARINE MOTION condition excludes both witnesses because
-their jerk exceeds 10500 m/s^3. See `ou3-sampling-fidelity.md` for the adopted
+This is the exact obstruction for the **previous domain without jerk
+or stillness/tilt-span requirements**. The current MARINE MOTION condition
+excludes both witnesses because
+their jerk exceeds 10500 m/s^3; their non-still translation with constant
+attitude also violates the newer tilt-span rule. See
+`ou3-sampling-fidelity.md` for the adopted
 100 m/s^3 limit and its positive proof consequences. The unchanged shipping
 regression remains a check of the old-domain execution, not a current-domain
 capture counterexample. Conditional local stability was never refuted.
@@ -190,8 +193,9 @@ This information obstruction is independent of arithmetic precision.
 The source-uniform service certificate here is real arithmetic; no infinite
 float32 covariance/clock-totality claim is substituted for it.
 
-This **refutes the stated universal capture obligation** under the previous
-point-sample assumptions without a jerk bound. It does not refute conditional local A21 stability,
+This **refutes the stated universal capture obligation** under the former
+point-sample assumptions without jerk or tilt-span requirements. It does not
+refute conditional local A21 stability,
 prove covariance divergence, or show that a practical bound of arbitrary size
 is impossible. The nominal filter can be contractive around its own level
 trajectory while the admitted physical truth remains far from it. The prior
