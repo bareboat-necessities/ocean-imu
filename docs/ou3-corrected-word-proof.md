@@ -1,5 +1,13 @@
 # Corrected-word covariance reduction and finite-error composition
 
+Regime scope: `ou3-regime-design.md` separates stationary observability and
+finite transitions from complete excited moving windows on this same carried
+proof path. `ou3-moving-six-pivots.md` supplies a conditional all-six-pivot
+bound with chronological reset and actual-row defects. Its uniform premises
+remain OPEN; neither this reduction nor the mode split certifies B_*, J_AG,
+rho_0, a nonlinear retained radius or every-prefix retention.
+
+
 These results enter the single tail inequality through
 
 `sqrt(V_end) <= sqrt(1-delta) sqrt(V_root) + sum_i s_i`.

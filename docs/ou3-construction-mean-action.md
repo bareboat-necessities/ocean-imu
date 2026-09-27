@@ -66,7 +66,7 @@ observability. In particular, the innovations are not physical sensor noise.
 
 The observer runs the existing diagonal-wave history from begin to 600 s.
 It is an old-domain diagnostic: sustained translation with R=I violates the
-current stillness-or-tilt-span condition. It retains the other envelopes and
+current complete-window moving-excitation condition. It retains the other envelopes and
 passes through the actual frontend, handoff, H18, refinement and release.
 All terminal means, quaternion, covariance, stage times and magnetic counts
 are identical to the untapped control. It records 89998 predictions and

@@ -1,0 +1,37 @@
+{
+  "boundary_crossing_window_requires_excitation": false,
+  "exact_identical_IMU_history": true,
+  "excitation_quantifier": "every complete T_E window contained in one physical moving episode",
+  "finite_bridge_algebra": true,
+  "finite_bridges_alone_imply_recurring_stability": false,
+  "finite_exit_delay_from_existing_assumptions": false,
+  "native_gravity_representation_residual_mps2": "53/327680000",
+  "qualification": "OU3_REGIME_CONTRACT_V1",
+  "rest_motion_joins_C2": true,
+  "shipping_mode_switch_enabled": false,
+  "source_uniform_transition_retention": false,
+  "stationary_attitude_BA_separation": false,
+  "stationary_gyro_noise_does_not_average_away": true,
+  "stationary_observable_quotient_boundedness": false,
+  "switching_counterexample_norm_cycle_gain": "3/2",
+  "theorem_closed": false,
+  "universal_sound_exact_rest_detector_with_entry_and_exit_liveness": false,
+  "witness_T_E_s": "80*pi",
+  "witness_actual_service_lower": "292499707500073125/78621131613576512",
+  "witness_alpha_rad": "1/1000",
+  "witness_bias_global_upper": {
+    "B_a_mps2": "196133/20000000",
+    "B_g_rad_s": "3/40000",
+    "D_a_mps3": "588399/800000000",
+    "D_g_rad_s2": "9/1600000"
+  },
+  "witness_bias_margin": {
+    "B_a_mps2": "4307199099679081/20000000000000000",
+    "B_g_rad_s": "797/40000",
+    "D_a_mps3": "211601/800000000",
+    "D_g_rad_s2": "7/1600000"
+  },
+  "witness_nu_rad_s": "1/40",
+  "witness_theta_E_rad": "1/500",
+  "witness_translation_jerk_primitive": "identically zero"
+}

@@ -36,8 +36,12 @@ estimator. The marine domain includes locally absolutely continuous physical
 acceleration with jerk bounded by $100\,\mathrm{m/s^3}$. A sharp nonuniform
 sampling estimate excludes the previously demonstrated 200-Hz ambiguity and
 the previously demonstrated sampled alias.  A separate physical-domain rule
-admits indefinite complete stillness but requires non-still histories to have
-positive gravity-direction attitude span on every fixed window. A joint three-dimensional vector-information bound
+separates stationary observability, finite transitions and excited marine
+motion. Positive gravity-direction span is required only on complete windows
+inside a physical moving episode, not immediately after departure from rest.
+An exact rest/motion sensor ambiguity prevents certifying physical stillness
+from quiet packets with both finite entry and universal finite exit. No
+stationary estimator switch is enabled. A joint three-dimensional vector-information bound
 retains accelerometer and magnetic coupling and both magnetic residual
 limits. Physical acceleration mismatch contributes a certified supply to
 the literal OU prediction in the full covariance metric, without imposing an
@@ -48,8 +52,14 @@ contraction certificate to six corrected attitude/gyro-bias loss columns.
 An exact historical readout action supplies a conditional route to their
 covariance bound while retaining nuisance and process correlations.
 Actual-gain finite-error composition includes an explicit injection-dependent
-reset remainder. The uniform six-column bound, general capture, nonlinear
-retention and arithmetic transfer remain unproved.
+reset remainder. Inverse-frame gyro transport retains literal resets; actual
+acc/mag groups within one prediction cell have an exact row factorization.
+These give a conditional bound on all six historical pivots. A root-cancelling
+reader also proves a full covariance ceiling and qualitative homogeneous
+linear loss on the exact zero-residual quiet nominal subcase. Its extension,
+the moving branch's uniform
+premises, stationary practical boundedness, transition retention, general
+capture, nonlinear retention and arithmetic transfer remain unproved.
 \end{abstract}
 
 \section{Theorem scope}
@@ -83,29 +93,31 @@ This is a selected continuous-history certification limit, not a claim that
 every installation is qualified. It caps acceleration change at
 $0.6\,\mathrm{m/s^2}$ over the longest admitted $0.006$-s sampling interval.
 It imposes no minimum motion amplitude or physical OU prior.
-Admission also has a simple stillness-or-attitude-excitation branch.  For a
-physical-history window $W=[t,t+T_E]$, let the body gravity direction be
-$g_b(s)=R(s)^\mathsf T e_z$ and define its tilt span
+Admission separates complete physical rest from moving episodes. A rest
+episode is a nondegenerate interval of zero physical velocity, acceleration
+and angular rate. Moving episodes $I=(a,b)$ are the maximal intervals between
+such rest episodes, including an initial or final episode. Isolated zero-rate
+instants do not split an episode. These are properties of one physical history,
+not intervals selected anew at proof-word boundaries. For
+$W=[t,t+T_E]$, define body gravity direction $g_b(s)=R(s)^{\mathsf T}e_z$ and
 \begin{equation}
- \Delta_g(W)=\sup_{s,u\in W}\arccos\!\bigl(g_b(s)^\mathsf T g_b(u)\bigr).
+ \Delta_g(W)=\sup_{s,u\in W}\arccos\!\bigl(g_b(s)^{\mathsf T}g_b(u)\bigr).
  \label{eq:attitude-span}
 \end{equation}
-Every such window must satisfy
+The moving requirement is precisely
 \begin{equation}
- \boxed{\text{complete physical stillness on }W
- \quad\lor\quad \Delta_g(W)\ge\theta_E.}
- \label{eq:still-or-excite}
+ \fitcol{\boxed{\forall I,\ \forall t:\ [t,t+T_E]\subset\overline I
+       \ \Longrightarrow\ \Delta_g([t,t+T_E])\ge\theta_E>0.}}
+ \label{eq:episode-excite}
 \end{equation}
-Complete stillness is a statement about physical truth, not an IMU sample,
-innovation, or estimator state, so genuinely quiet water may persist for
-arbitrary duration.  The alternate branch deliberately uses roll/pitch
-(gravity-direction) span rather than yaw; heading excitation is supplied
-separately by MAGNETIC SERVICE.  Span rather than endpoint difference is used
-because ordinary periodic rocking may return to its initial attitude.
-$T_E>0$ and $\theta_E>0$ remain theorem parameters: the current pinned
-28-ft-vessel evidence has not yet established a source-uniform numerical
-qualification for the rolling minimum, so no convenient numerical pair is
-asserted here.
+No span condition is imposed on a window crossing a rest boundary. A departure
+at $a$ first allows a complete excited window at $a+T_E$; a shorter moving
+episode is wholly transition for this proof. Sustained constant-attitude
+translation cannot evade the condition by relabeling successive transitions.
+Indefinite physical rest remains admissible. The span uses roll/pitch rather
+than yaw, and is not an endpoint difference: periodic rocking can return to
+its initial attitude. $T_E,\theta_E$ remain symbolic; pinned vessel evidence
+does not yet qualify their all-time complete-window minimum.
 Pointwise bounds are insufficient. Admission additionally requires
 \begin{equation}
  \boxed{\norm{\int_{t_1}^{t_2}p(\tau)\,d\tau}\le P_{\rm AC},
@@ -352,7 +364,7 @@ sensitivities may remain rank deficient.
 \section{Necessity of sampling regularity}
 \label{sec:capture-obstruction}
 \begin{theorem}[Obstruction in the former point-sample domain]
-If both the jerk condition \eqref{eq:jerk} and the stillness-or-tilt-span
+If both the jerk condition \eqref{eq:jerk} and the complete-window moving-excitation
 condition are omitted from the point-sample domain, there
 are two nonzero continuous histories satisfying the motion and bias bounds
 and the actual real-arithmetic magnetic-service condition
@@ -673,6 +685,133 @@ a finite accepted-update count and a one-second guard. Under
 each service window. Thus, once reference refinement is proved finite, the
 count/guard portion of release is finite. H18 then requires finite retention,
 not asymptotic contraction.
+
+
+\section{Stationary observability and physical transitions}
+\label{sec:regimes}
+STILL, TRANSITION and MOVING qualify portions of the single shipping proof
+path. They are not independent filter initializations, and physical labels
+are distinct from runtime evidence. All estimator states, covariance,
+physical bias and primitive histories, magnetic reference, tuner and clocks
+continue through both directions
+\begin{equation}
+ \begin{aligned}
+ \text{MOVING}&\to\text{TRANSITION}\to\text{STILL},\\
+ \text{STILL}&\to\text{TRANSITION}\to\text{MOVING}.
+ \end{aligned}
+\end{equation}
+The 17-s regular-A21 covariance clock is not reset at a physical boundary.
+H18, reference refinement and release can occur during physical rest; a
+STILL label does not authorize an external accelerometer-bias hold.
+
+\subsection{Observable stationary information}
+At true rest, with $Q=R^{\mathsf T}$ and residual magnetic terms suppressed
+only for this identifiability calculation,
+\begin{equation}
+ y_g=b_g+n_g,\qquad f=-gQe_z+b_a+n_a,\qquad m=QB.
+\end{equation}
+Known zero physical rate gives direct gyro-bias information. For nonnegative
+weights $w_i$ summing to one and sample ages $d_i$ from the dwell endpoint,
+\begin{equation}
+ \norm{\sum_i w_i y_{g,i}-b_g(t_{\rm end})}
+       \le N_g+D_g\sum_i w_i d_i.
+ \label{eq:stationary-gyro-supply}
+\end{equation}
+A certified residual physical rate bound $\varepsilon_\omega$ adds that
+amount, including on false entry. Uniform continuous averaging over duration
+$D$ gives $N_g+D_gD/2$. Deterministic bounded noise does not decay as
+$1/\sqrt N$. This is a possible stationary observation supply in $c_d$, not
+a proof that quiet samples certify zero rate.
+
+Even with known nonvertical $B$, rotation about $B$ can be traded against
+accelerometer bias. The local $(\theta,b_a)$ sensor map has a one-dimensional
+kernel with $\theta\parallel QB$ and $\delta b_a=g\delta(Qe_z)$.
+Additional reference/residual uncertainty does not remove that kernel.
+Thus the required stationary theorem is practical boundedness relative to a
+measurement-consistency class, with an explicit physical ambiguity radius.
+The estimator BA prior cannot make that deterministic ambiguity shrink.
+The existing mean projections bound gyro and BA error by $.52$ and
+$B_a+.4$, respectively, after their prescribed operations; they do not prove
+bounded wave states, covariance or a nonlinear stationary retained region.
+The all-time bounded primitive implies $p=0$ on an indefinite rest tail,
+while the inherited physical $S$ remains constant and need not be zero.
+Zero velocity/acceleration observations, holds or covariance changes require
+a certified premise or a theorem covering their entire compatible class.
+
+\subsection{A detector obstruction that survives dwell}
+Let $\alpha=1/1000$, $\nu=1/40$. On a moving episode starting at $a$ and
+lasting an integer number of periods, take
+\begin{align}
+ \phi(t)&=\alpha\sin^3(\nu(t-a)),& R&=R_x(\phi),\nonumber\\
+ p=v=a_{\rm phys}&=0,& B&=75e_x,\nonumber\\
+ b_g&=-\dot\phi e_x,& b_a&=g(R^{\mathsf T}e_z-e_z).
+\end{align}
+Set $\phi=0$ outside the episode and use zero fast residuals. Both derivatives
+$\dot\phi,\ddot\phi$ vanish at the joins. Global bounds are
+\begin{align}
+ \norm{b_a}&\le g\alpha,&\norm{\dot b_a}&\le3g\alpha\nu,\nonumber\\
+ \norm{b_g}&\le3\alpha\nu,&\norm{\dot b_g}&\le9\alpha\nu^2.
+\end{align}
+Each lies strictly inside the unchanged IMU BIAS limits. Translation, jerk
+and primitive vanish. Every complete $T_E=80\pi$ window inside the moving
+episode has span $2\alpha=.002$. This is an admissible parameter instance,
+not a numerical qualification of the deployment. The native regression
+charges the additional constant gravity-representation residual of norm
+$1.617431640625\times10^{-7}\,\mathrm{m/s^2}$; physical gravity is unchanged.
+In real arithmetic the observations are identically $(y_g,f,m)=(0,-ge_z,75e_x)$ before, during and after motion.
+The existing actual stationary magnetic-service lower bound remains above
+one after multiplication by $\cos^2\alpha\ge(1-\alpha^2/2)^2$.
+
+For identical input prefixes and initial state, any deterministic causal
+detector has identical state by induction, including dwell, hysteresis,
+estimated velocity, covariance and magnetic reference. Motion can begin after
+any finite rest-entry time and remain invisible for arbitrarily long. Thus,
+under the present symbolic qualification, finite rest entry and guaranteed
+finite exit on every physical departure cannot both be certified. This does
+not refute boundedness on the whole compatible class, or either proposed
+signed nominal margin.
+
+Necessary quiet evidence follows from the physical/noise envelopes:
+\begin{align}
+ \norm{y_{g,i}}&\le B_g+N_g,\quad |\norm{f_i}-g|\le B_a+N_a,\nonumber\\
+ \norm{y_{g,j}-y_{g,i}}&\le\min(2B_g,D_g|t_j-t_i|)+2N_g,\nonumber\\
+ \norm{f_j-f_i}&\le\min(2B_a,D_a|t_j-t_i|)+2N_a.
+\end{align}
+The proof-side monitor tests a continuous dwell against an anchor, invalidates
+it on bad packets/gaps, delays entry and immediately exits on inconsistent
+evidence. It returns only quiet compatibility, never certified physical
+STILL. No shipping detector or stationary state/covariance modification is
+enabled. This is not a proof that none is needed: stationary robustness for
+the entire measurement-compatible class remains open.
+
+\subsection{Finite bridges and their recurring budget}
+Suppose each actual bridge operation, including a storage-coordinate change,
+has a proved retained-domain bound
+$\sqrt{V_i}\le g_i\sqrt{V_{i-1}}+s_i$. Then at every prefix $k$,
+\begin{align}
+ G_k&=\prod_{i=1}^k g_i,&
+ S_k&=\sum_{i=1}^k\left(\prod_{j=i+1}^k g_j\right)s_i,\nonumber\\
+ \sqrt{V_k}&\le G_k\sqrt{V_0}+S_k.
+ \label{eq:regime-prefix}
+\end{align}
+For $\eta>0$, the endpoint obeys
+\begin{equation}
+ V_k\le(1+\eta)G_k^2V_0+(1+1/\eta)S_k^2.
+\end{equation}
+These terms enter $\rho$ and the supply of the common finite-error target.
+No contraction during the bridge is assumed, but each prefix must stay in
+the domain on which its coefficients were bounded. A finite detector delay
+and uniform bridge bounds are not supplied by this algebra.
+
+Even finite retained bridges do not by themselves establish a recurring
+stability theorem: a moving norm factor $1/2$ followed by a bridge factor
+$3$ yields cycle factor $3/2$. One must derive a cumulative storage-product
+and transported-supply budget, or establish eventual retention in a single
+regime. This is an open proof obligation, not a new physical dwell assumption.
+MOVING entry additionally needs A21 release, a complete excited window,
+applied magnetic information, the historical-reader horizon and retained
+region/covariance premises. Arbitrarily many short episodes cannot simply
+be discarded as harmless transition time.
 
 \section{Complete A21 covariance energy}
 Consider the linear comparison along one carried execution and write
@@ -1154,9 +1293,71 @@ quiet-driven nonlinear trajectories or capture. The physical bias remains
 independent of the estimator OU prior and contributes its exact mismatch.
 Replacing active BA decay by a held identity predictor would change the
 argument. There is no demonstrated quiet-water instability here warranting
-its exclusion. The current every-window physical tilt-span rule restricts
-moving histories; its quantitative nominal-information consequence remains
-unproved.
+its exclusion. The complete-window moving-episode rule restricts moving histories and
+retains explicit transition obligations (Section~\ref{sec:regimes}); its
+quantitative nominal-information consequence remains unproved. Stationary
+nominal detectability does not remove the physical attitude/BA ambiguity.
+
+\subsection{Quiet nominal historical covariance ceiling}
+On the exact zero-residual regular A21 subcase, take identity attitude,
+zero corrected rate and AW, fixed reference $Be_x$ with $g,B\ge9$,
+and actually applied coincident acc/mag groups every eight qualified
+predictions. There are no frame/relock/reference events; all resets are
+identity and mean projections are inactive. Keep the default bounded process
+profile and S service. This is a subcase of the same historical reader,
+not a physical stillness certificate.
+
+Normalize actual acc-y, negative acc-x and mag-y rows by $g,g,B$. The
+auxiliary observations are $z_i=\theta_i+\eta_i$. Inherited unconditioned
+AW/BA standard deviations are bounded by $156$ and $1/40$, even with
+observations omitted and the actual frozen sync additions retained.
+Analytic ceilings $\sigma_a\le1/3$, $\sigma_m\le1$ give
+\begin{equation}
+ \operatorname{Cov}(\eta_i)\preceq D
+ =\operatorname{diag}\left(\frac{(156+1/40+1/3)^2}{81}I_2,\frac1{81}\right).
+\end{equation}
+These are bounds, not changed noise settings. AW/BA correlations remain;
+fresh magnetic noise is independent only in the auxiliary covariance model.
+For anchors separated by $T$, the trial reader
+\begin{equation}
+ \theta_{\rm read}=z_1,\qquad b_{g,\rm read}=(z_1-z_0)/T
+\end{equation}
+cancels every AG root column and its nuisance cross covariance exactly.
+Full correlated AG process composition gives
+$\operatorname{Cov}(\theta_1-\theta_0-Tb_{g,1})
+\preceq(q_\theta T+q_bT^3/3)I$.
+At zero rate the source Simpson integral is exact; nonuniform steps compose
+to this integral. Use $q_\theta\le2\cdot10^{-6}$, $q_b\le10^{-9}$,
+$T_- =4/125$, $T_+=6/125$. The two $\eta$ epochs can be fully correlated,
+so $\operatorname{Cov}(\eta_1-\eta_0)\preceq4D$.
+Optimal conditioning by all actual observations then gives
+\begin{equation}
+ P_{hh}\preceq B_q=2\operatorname{diag}\left(
+ D,\frac{4D}{T_-^2}+\left(\frac{q_\theta}{T_-}+\frac{q_bT_+}{3}\right)I\right).
+ \label{eq:quiet-covariance}
+\end{equation}
+The factor two retains every attitude/gyro cross term. Zero reader weights
+do not delete actual corrections. For $B_q=\operatorname{diag}(D_\theta,D_b)$
+and delay $d\le d_+=T_+$ since the latest group, define
+\begin{align}
+ A_\theta&=D_\theta+d_+^2D_b+(q_\theta d_++q_bd_+^3/3)I,\\
+ A_b&=D_b+q_bd_+I,\qquad
+ B_{\rm pre}=2\operatorname{diag}(A_\theta,A_b).
+\end{align}
+Then $P_{hh}\preceq B_{\rm pre}$ at every operation after the second group.
+After the existing 17-second nuisance comparison,
+$P\preceq C_q=2\operatorname{diag}(B_{\rm pre},U_n)$, with all AG/nuisance
+cross covariance retained.
+
+The positive uniform full process floor and bounded source $F$ imply
+existence of $\epsilon>0$ with $Q\succeq\epsilon F C_qF^{\mathsf T}$.
+The covariance-energy identity consequently gives homogeneous linear
+$V^+\le V/(1+\epsilon)$ at predictions; optimal corrections and identity
+resets cannot increase it. In \eqref{eq:diss}, this result supplies only
+subcase covariance coercivity and homogeneous loss. No useful numerical
+$\rho$, physical disturbance radius, capture or nonlinear retention follows
+from the coarse bounds. In particular, the identical-input hidden-motion
+witness has the same nominal covariance but retains physical ambiguity.
 
 
 \section{Signed temporal separation: established steps and gaps}
@@ -1369,7 +1570,9 @@ $0.4\sin(0.6t)e_z$. Its four actual S knots, relative to 225 s, are
 $(0.065,21.365,42.665,63.96)$ s. The full signed identity has 80-digit
 residual below $10^{-75}$ and observer/control parity. This does
 not qualify numerical $T_E,\theta_E$ or all-time magnetic service.
-The recorded projected-gravity threshold is $8.77133456$. A rotation
+This history is already excited for $T_E\ge4\pi$ and
+$0<\theta_E\le.04$, so removing indefinite stillness does not repair the
+following bounds. The recorded projected-gravity threshold is $8.77133456$. A rotation
 triangle charge is $39.22565273$, already giving margin $-30.45431817$.
 The velocity/jerk charge is $239.97053020$; summing within actual S
 intervals reduces it to $27.81044246$, still giving margin $-19.03910790$
@@ -1415,6 +1618,133 @@ $U$, after exact AG root cancellation. This proves finiteness only;
 the later contraction comparison remains fully matrix-valued.
 Neither temporal margin, a uniform historical $B_*$, $J_{\rm AG}>0$
 nor $\rho_0<1$ is certified by these lemmas.
+
+
+\subsection{A conditional chronological six-pivot budget}
+The historical auxiliary AG transition has form
+$T=\left[\begin{smallmatrix}A&B\\0&I\end{smallmatrix}\right]$.
+Applied observations retain their actual gains in the covariance comparison;
+the latent observation array itself propagates predictions and resets.
+In one fixed gyro scaling, maintain
+$\norm A\le a$, $\norm{B-tI}\le b$, initially $(a,b,t)=(1,0,0)$.
+For a prediction with literal blocks $(R,D)$ and bounds
+$\norm R\le r$, $\norm{R-I}\le u$, $\norm{D-hI}\le v$,
+\begin{equation}
+ (a,b,t)\longmapsto(ra,\ rb+ut+v,\ t+h).
+ \label{eq:chronological-gyro}
+\end{equation}
+A reset uses $h=v=0$ and its literal nonorthogonal $R=G$.
+Expansion of $RB+D-(t+h)I$ proves the recurrence, hence
+$\sigma_{\min}(B)\ge\max(0,t-b)$. The one-prediction gyro floor does not
+bound the signed sum or the intervening reset injections.
+
+A complementary recurrence avoids charging terminal resets against gyro
+information already accumulated. Literal $G=I+[d]_\times/2$ obeys
+\begin{equation}
+ G^{\mathsf T}G=I+(\norm d^2I-dd^{\mathsf T})/4\succeq I.
+\end{equation}
+Both source prediction branches also have $\norm{R^{-1}}\le1$:
+Rodrigues is orthogonal; the small-rate polynomial has transverse singular
+value $\sqrt{1+\vartheta^4/4}$, $\vartheta=h\norm{\widehat\omega}$.
+Thus $\sigma_{\min}(A)\ge1$. For $C=A^{-1}B$, the exact updates are
+\begin{equation}
+ C^+=C+A^{-1}R^{-1}D\quad\text{(prediction)},\qquad C^+=C\quad\text{(reset)}.
+\end{equation}
+Resets still change $A^{-1}$ and every later injection. Starting at zero,
+maintain $\norm{A^{-1}-I}\le\beta$, $\norm{C-tI}\le e$. Prediction gives
+\begin{align}
+ e^+&=e+h\beta+h(\vartheta/2+\vartheta^2/3),&t^+&=t+h,\\
+ \beta^+&=\min(2,\beta+\vartheta+\vartheta^2/2).
+\end{align}
+A reset with $\norm d\le s_d$ leaves $e,t$ fixed and uses
+$\beta^+=\min(2,\beta+\min(1,s_d/2))$.
+The integral Rodrigues defect is at most $h\vartheta/2$; the polynomial
+identity $D-hR=h^2W/2-h^3W^2/3$ gives the common bound. Therefore
+$\sigma_{\min}(B)\ge\max(0,t-e)$ at every prefix.
+This supplies the same six-pivot premise, not a separate stability path.
+
+Inverse nonexpansion alone is insufficient: one zero-rate prediction
+$h_0=3/625$, resets $d=4e_z,4e_z,(8/3)e_z$, then eight zero-rate
+predictions $h=1/200$ give exactly $B=\operatorname{diag}(0,0,28/625)$.
+The transverse reset product is $(1+2i)^2(1+4i/3)=-25/3$.
+This is a relaxed algebraic witness, not shipping reachability, applied
+magnetic service or loss of rank of all intermediate observation rows.
+Uniform actual injection/row bounds remain required.
+
+Suppose two groups of actual historical sensor rows admit
+\begin{equation}
+ O=\operatorname{diag}(C_0,C_1)
+       \begin{bmatrix}I&0\\A&B\end{bmatrix}+E,
+ \label{eq:two-group}
+\end{equation}
+where $\sigma_{\min}(C_i)\ge c>0$, $\norm A\le a$,
+$\sigma_{\min}(B)\ge b_0>0$, and $\norm E\le\epsilon$.
+The row defect includes all asynchronous sampling, within-group gyro
+transport, reset, nominal force and magnetic-reference variation not already
+retained in the displayed factors. No simultaneous-event or physical-to-nominal
+force substitution is made. The block inverse has norm at most
+$K=1+(a+1)/b_0$, giving
+\begin{equation}
+ \sigma_{\min}(O)\ge s=c/K-\epsilon.
+ \label{eq:two-group-floor}
+\end{equation}
+There is an exact $E=0$ selection rule in regular zero-lever-arm operation.
+An applied acc row block followed by an applied mag block without an
+intervening prediction gives
+$C_i=[C_{a,i}^{\mathsf T},(C_{m,i}G_{{\rm local},i})^{\mathsf T}]^{\mathsf T}$,
+where $G_{{\rm local},i}$ retains every intervening reset in order.
+The direct gyro columns are zero and the raw historical rows equal
+$C_i[A_i,B_i]$ exactly. Thus two such groups satisfy
+\eqref{eq:two-group} with $E=0$, even with nonzero injections.
+The wrapper's prediction/acc then mag ordering permits this rule;
+rejected packets do not count. Predictions split cells, and hard events
+need separate retained maps. This removes a row-defect charge without
+proving uniform positive $c,b_0$ or the full readout action.
+For literal $C=[ [f]_\times^{\mathsf T},([b]_\times G)^{\mathsf T}]^{\mathsf T}$,
+put $u=f/\norm f$ and $k=G^{-1}b/\norm{G^{-1}b}$.
+Since $\sigma_{\min}(G)\ge1$, the magnetic block's two nonzero singular
+values are at least $\norm b$ and its kernel is $\operatorname{span}(k)$.
+The two complementary rank-two projectors therefore give
+\begin{equation}
+ \sigma_{\min}(C)^2\ge
+ \min(\norm f^2,\norm b^2)(1-|u^{\mathsf T}k|).
+\end{equation}
+This supplies the conditional geometry premise $c$, not its uniform
+physical-to-nominal transfer. Raw force/field separation alone is insufficient:
+the relaxed $f=(1,0,1)$, $b=e_x$, $d=2e_y$ gives $Cf=0$ because $Gf=2e_x$.
+No shipping reachability or full-history rank loss is claimed for this group.
+If $s>0$ and $O$ has $m$ rows, every one of the six largest-residual row
+pivots is at least $s/\sqrt m$. Indeed, for projection $\Pi$ onto the
+remaining row-space complement of dimension $d\ge1$,
+\begin{equation}
+ \sum_i\norm{\Pi O_i^{\mathsf T}}^2
+   =\operatorname{tr}(\Pi O^{\mathsf T}O\Pi)\ge d s^2.
+\end{equation}
+One row has residual squared at least $d s^2/m$; previously selected rows
+have zero residual. This proves the bound at every stage. The resulting
+$p$ enters the conditional $B_*$ action above, then $J_{\rm AG}$ and
+$\rho_0$ in the common tail inequality. Physical span has not yet supplied
+uniform $c,b_0,\epsilon$ or the remaining factor/count bounds.
+A supplied rational matrix audit and an 80-digit feasibility calculation
+verify the implication only. No source-uniform contraction is promoted.
+
+On the exact zero-residual quiet nominal subcase, actually applied coincident
+acc/mag pairs separated by eight qualified predictions give an explicit
+example of the same lemma.
+With zero corrected rate, AW and identity attitude, reference $Be_x$, and
+$g,B\ge9$, each row group has
+$C^{\mathsf T}C=\operatorname{diag}(g^2,g^2+B^2,B^2)\succeq81I$.
+Zero corrections give identity resets, so $A=I$,
+$B=(\sum_i h_i)I$ with $\sum_i h_i\ge4/125$, $E=0$ and
+\begin{equation}
+ s=18/127,\qquad p=9/254\quad(m=12).
+\end{equation}
+These analytic raw-row bounds apply to that precise regular nominal history,
+including the identical-input hidden-motion witness. They do not independently
+identify physical attitude and BA, or bound the full correlated action and
+nonlinear stationary response by themselves. Equation~\eqref{eq:quiet-covariance}
+supplies the separate subcase historical-action argument. This is the same
+reader, not a parallel stability theorem.
 
 \subsection{Admitted stillness ambiguity}
 Quiet truth with constant body-to-world attitude
@@ -1595,8 +1925,18 @@ For a factor partition $[B_h,B_n]$, exact nuisance elimination gives
 An independent-column range basis handles singular nuisance blocks; a
 positive reduced heading matrix still leaves any nuisance nullspace open.
 Section~\ref{sec:capture-obstruction} refutes six-degree capture only in the
-former domain without jerk and tilt-span conditions. Under the amended domain, capture, H18/release retention,
-recurring service, nonlinear storage and arithmetic remain open.
+former domain without jerk and tilt-span conditions. The new exact
+rest/motion witness obstructs guaranteed exact-STILL entry/exit detection;
+it does not prove instability. Complete-window quantifiers, conditional
+bridge composition and the chronological six-pivot implication are available.
+The inverse-frame identity and exact same-prediction-cell row grouping
+sharpen its conditional premises. The quiet nominal subcase now has a
+root-independent full covariance ceiling and qualitative homogeneous linear
+loss, without a physical stationary robustness conclusion.
+Stationary practical robustness, runtime certification, finite transition
+retention and the recurring switching budget remain open, alongside the
+uniform signed margins, capture, H18/release retention, recurring service,
+nonlinear storage and arithmetic.
 End-to-end regional practical stability remains unproved.
 
 \section*{Acknowledgments and disclosure}

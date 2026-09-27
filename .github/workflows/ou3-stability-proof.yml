@@ -81,15 +81,17 @@ jobs:
       - name: Validate theorem contracts
         working-directory: tests/validation
         run: |
-          python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_same_execution test_ou3_theorem_status test_ou3_tail_stability test_ou3_interval_riccati test_ou3_interval_riccati_21 test_ou3_block_factor_metric test_ou3_physical_qualification test_workflow_contract test_ou_replay_fingerprint
+          python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_same_execution test_ou3_theorem_status test_ou3_regimes test_ou3_moving_pivots test_ou3_inverse_transport test_ou3_same_cell_groups test_ou3_stationary_covariance test_ou3_tail_stability test_ou3_interval_riccati test_ou3_interval_riccati_21 test_ou3_block_factor_metric test_ou3_physical_qualification test_workflow_contract test_ou_replay_fingerprint
       - name: Validate provenance and fail-closed status
         run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
       - name: Build literal shipping regressions
-        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test sampled_capture-test && make -C tests/kalman_ou_iii -f Makefile -f ../common/GyroBiasProjectionRegression.mk gyro_bias_projection-test
+        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test sampled_capture-test && make -C tests/kalman_ou_iii -f Makefile -f RegimeRegression.mk regime_ambiguity-test && make -C tests/kalman_ou_iii -f Makefile -f ../common/GyroBiasProjectionRegression.mk gyro_bias_projection-test
       - name: Run literal shipping regressions
-        run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test && ./tests/kalman_ou_iii/gyro_bias_projection-test
+        run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test && ./tests/kalman_ou_iii/regime_ambiguity-test && ./tests/kalman_ou_iii/gyro_bias_projection-test
       - name: Audit carried source readout without promotion
         run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-readout.json
+      - name: Audit exact same-cell moving row groups without promotion
+        run: python3 -m tools.stability.ou3_theorem.moving_transport_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-moving-transport.json
       - name: Check signed adjoint compatibility on the carried word
         run: python3 -m tools.stability.ou3_theorem.signed_temporal_diagnostic --output /tmp/ou3-signed-adjoint.json
       - name: Check the forced signed balance on a carried moving word
@@ -107,6 +109,7 @@ jobs:
           path: |
             /tmp/ou3-stability-evidence.json
             /tmp/ou3-source-readout.json
+            /tmp/ou3-moving-transport.json
             /tmp/ou3-signed-adjoint.json
             /tmp/ou3-signed-balance.json
             /tmp/ou3-signed-balance/export.json

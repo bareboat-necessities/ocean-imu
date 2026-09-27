@@ -1,5 +1,24 @@
 # Historical six-column action for the corrected AG loss
 
+Regime scope: `ou3-regime-design.md` separates stationary observability and
+finite transitions from complete excited moving windows on this same carried
+proof path. `ou3-moving-six-pivots.md` supplies a conditional all-six-pivot
+bound with chronological reset and actual-row defects. Its uniform premises
+remain OPEN; neither this reduction nor the mode split certifies B_*, J_AG,
+rho_0, a nonlinear retained radius or every-prefix retention.
+
+The exact zero-residual quiet nominal subcase is now instantiated in
+`ou3-stationary-detectability.md`: the same reader cancels arbitrary AG root
+and cross covariance, yielding a uniform action, every-operation full upper
+comparison and qualitative homogeneous linear loss on that restricted class.
+General stationary physical robustness and the moving source-uniform bound
+remain OPEN. Reset inverses and C=A^-1 B give a complementary chronological
+transport budget without deleting any reset.
+Actual acc/mag groups in one prediction cell factor with E=0. A conditional
+geometry bound uses the magnetic direction pulled back through their resets;
+its source-uniform positive premise remains OPEN.
+
+
 This result enters the existing finite-error inequality through a source-uniform
 `J > 0`, then a matrix bound on `rho0`, in
 `sqrt(V_next) <= sqrt(rho0) sqrt(V_root) + supply`.

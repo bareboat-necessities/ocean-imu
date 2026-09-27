@@ -22,6 +22,33 @@ for every continuation. Equivalently, `qdot=p` has uniformly bounded potential d
 
 Physical translation is `p_CoG=p_eq+p`. Global origin, current, propulsion, leeway, and secular reference motion may be represented in `p_eq`, but nonzero `ddot(p_eq)` remains actual specific force/model disturbance unless the shipping implementation explicitly compensates it.
 
+Excitation is required only on every complete T_E window contained in one
+maximal physical moving episode between nondegenerate rest intervals. Isolated
+zero-rate instants do not restart an episode. T_E/theta_E remain symbolic.
+Windows crossing rest boundaries carry finite-transition obligations; no
+arbitrarily short departure window owes a full positive span. Read
+`ou3-regime-design.md` for the exact quantifiers, stationary observability,
+indistinguishable rest/motion histories and detector requirements. Quiet
+packets cannot certify physical STILL with both finite entry and guaranteed
+finite exit under the existing bias bounds. The shipping estimator is unchanged;
+stationary practical robustness and certified transition retention remain OPEN.
+
+The precise zero-residual quiet nominal subcase now has a root-independent
+historical action, every-operation full covariance ceiling and qualitative
+homogeneous linear loss; see `ou3-stationary-detectability.md`. These are not
+physical compatible-class or nonlinear results. The moving reader uses
+C=A^-1 B to retain resets without erasing accumulated gyro action, and
+actual acc/mag groups within one prediction cell factor exactly with E=0.
+Uniform geometry, injection/action bounds and nonlinear retention remain OPEN.
+
+Physical regimes qualify the single construction/H18/release/A21 route. All
+estimator states, covariance, biases, physical S and bias histories, clocks,
+frontend/tuner and magnetic-reference state continue across regime boundaries.
+The conditional bridge norm product contributes to rho and its propagated
+supplies to c_d; every prefix must remain inside the bounds' domain. No
+asymptotic contraction is required on a finite bridge, but finiteness alone
+cannot control infinitely repeated switches.
+
 ## IMU BIAS
 
 One deterministic physical assumption covers total residual accelerometer and gyro bias after actual calibration:

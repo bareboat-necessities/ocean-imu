@@ -4,7 +4,24 @@ from __future__ import annotations
 def status_report() -> dict:
     obligations={
         "physical_contract_formulation":True,
-        "marine_stillness_or_attitude_excitation_contract":True,
+        "marine_regime_complete_window_contract":True,
+        "stationary_observability_structure":True,
+        "stationary_gyro_information_bound":True,
+        "quiet_zero_residual_nominal_six_column_floor":True,
+        "quiet_zero_residual_nominal_historical_covariance_upper":True,
+        "quiet_zero_residual_nominal_homogeneous_linear_loss_exists":True,
+        "stationary_compatible_class_practical_stability":False,
+        "sound_runtime_regime_certification":False,
+        "finite_transition_prefix_composition":True,
+        "finite_regime_detection_and_transition_retention":False,
+        "recurring_regime_storage_budget":False,
+        "conditional_chronological_gyro_transport_bound":True,
+        "literal_reset_inverse_nonexpansion":True,
+        "conditional_inverse_frame_gyro_transport_bound":True,
+        "same_prediction_cell_actual_row_factorization":True,
+        "same_cell_reset_pulled_field_geometry_implication":True,
+        "conditional_two_group_six_column_bound":True,
+        "singular_floor_to_all_six_historical_pivots":True,
         "marine_attitude_excitation_numeric_qualification":False,
         "marine_attitude_excitation_implies_signed_temporal_separation":False,
         "physical_tilt_span_sampling_implication":True,
@@ -75,7 +92,7 @@ def status_report() -> dict:
         "implementation_and_arithmetic_totality":False,
     }
     return {
-        "qualification":"OU3_SINGLE_MARINE_IMU_MAGNETIC_STABILITY_ARCHITECTURE_V1",
+        "qualification":"OU3_SINGLE_MARINE_IMU_MAGNETIC_STABILITY_ARCHITECTURE_V2",
         "principal_assumptions":["MARINE MOTION","IMU BIAS","MAGNETIC SERVICE"],
         "quantifier":"one persistent physical execution belongs to all three assumption classes simultaneously",
         "proof_path":["construction","startup/capture","finite magnetically informed Live/H18 bridge",
@@ -86,6 +103,23 @@ def status_report() -> dict:
         "parallel_no_magnetometer_stability_path":False,
         "no_heading_service_result_role":"necessity lemma only",
         "shipping_filter_changed_for_proof":False,
+        "physical_regimes":["STILL","TRANSITION","MOVING"],
+        "regime_role":"qualification of portions of the single carried proof path, not independent estimator restarts",
+        "shipping_mode_switch_enabled":False,
+        "quiet_nominal_covariance_subcase":{
+            "certificate":"stationary-covariance-certificate.json",
+            "historical_root_independent_full_upper":True,
+            "every_operation_covariance_upper":True,
+            "homogeneous_linear_loss_exists":True,
+            "physical_compatible_class_practical_stability":False,
+            "general_moving_uniform_bound":False,
+        },
+        "exact_rest_detector_obstruction":{
+            "identical_rest_motion_IMU_histories":True,
+            "finite_entry_and_universal_finite_exit_simultaneously_possible":False,
+            "stationary_robustness_of_compatible_class_refuted":False,
+            "certificate":"regime-certificate.json",
+        },
         "shipping_residual_gyro_bias_hardening":True,
         "implemented_gyro_bias_norm_invariant":True,
         "complete_turn_nominal_gyro_bias_alias_excluded":True,
@@ -106,5 +140,20 @@ def status_report() -> dict:
             "sampling_certificate":"sampling-fidelity.json",
             "certificate":"sampled-capture-obstruction.json",
         },
-        "next_controlling_obligation":"Under the strengthened MARINE MOTION domain, the smooth diagonal-wave history p=-(3/2)sin(2t)(1,0,1), R=I and every sustained non-still constant-attitude translation are inadmissible. Complete physical stillness remains admissible, including the retained quiet-bias ambiguity, so universal capture into V<=36 is still unavailable. T_E and theta_E remain symbolic because current pinned 28-ft RAO evidence does not certify a source-uniform rolling tilt-span minimum. The controlling proof obligation remains a same-history derivation from physical tilt span plus MAGNETIC SERVICE and the literal gains/resets/OU/bias recursions to positive source-uniform Delta_col and Delta_gyr. The exact carried-adjoint kernel criterion, forced data-adjoint identity and signed physical bias/velocity summation bounds are proved. The forced identity retains a root action, joint signed rotation/reference action and literal defects. A carried moving-word diagnostic verifies its finite balance; cellwise and S-interval velocity variation bounds and a rotation triangle bound fail their recorded exclusion budgets. Their source-uniform action is not bounded. In the frozen-attitude Euclidean recurrence the BG column is identity, so the complete signed gyro margin must also use the actual attitude dynamics. The former implication from two temporal margins to six historical pivot floors is withdrawn as unproved. The conditional six-pivot-floor to finite B_* lemma is retained; its actual-history premises and coefficient compactness are open. The implemented .5 rad/s gyro-bias invariant excludes complete turns on all qualified 4--6 ms predictions and gives a positive one-step transport floor; the complete signed temporal gyro margin remains open. Therefore uniform historical AG action, J_AG, full 21-state covariance upper bound, rho_0<1, finite capture/release, nonlinear retained-region entry/retention, source-qualified recurring magnetic service, and float32 totality remain open.",
+        "next_controlling_obligation":(
+            "Excitation quantifies only over complete T_E windows within one physical moving episode. "
+            "No excitation is demanded immediately after rest or across rest boundaries; isolated zero-rate instants do not restart an episode. "
+            "T_E/theta_E remain symbolic. Exact rest/motion sensor indistinguishability blocks a sound exact-STILL detector with both finite entry and universal finite exit under the existing assumptions. "
+            "Prove stationary practical stability for the whole measurement-compatible class before enabling estimator changes; the quiet attitude/accelerometer-bias ambiguity prevents exact separation and universal V<=36 capture. "
+            "The exact zero-residual quiet nominal subcase now has a root-independent historical AG action, every-operation full covariance upper comparison and qualitative homogeneous linear loss, without a nonlinear physical stability conclusion. "
+            "Bridge prefix composition is proved conditionally, but finite detection time, source-uniform retention and the cumulative budget across recurring switches remain open. "
+            "On complete excited moving windows continue the actual signed forced adjoint with root, rotation/reference, gains, physical bias and OU history retained. "
+            "Removing indefinite stillness does not repair the already-excited moving diagnostic's failed rotation and velocity-variation budgets. "
+            "Chronological gyro transport plus two actual sensor-row groups now gives a conditional six-column singular floor and all six greedy pivot floors. "
+            "Literal reset inverses are nonexpansive, and C=A^-1 B cancels each reset while retaining its effect on later injections; an exact relaxed reset sequence still cancels the inter-anchor gyro block, without proving shipping reachability or all-row rank loss. "
+            "Applied acc/mag rows in one prediction cell factor exactly with E=0 after retaining every intervening reset. Uniform group geometry and inter-anchor transport remain open. "
+            "Its reset/asynchrony/reference defect budget is not yet bounded uniformly; two temporal margins alone still do not imply six pivots. "
+            "The .5 rad/s invariant, qualified complete-turn exclusion and one-step gyro floor remain proved, not the complete signed Delta_gyr. "
+            "Positive source-uniform signed margins, B_*, J_AG, full covariance upper, rho_0<1, capture/H18/release, nonlinear radius, every-prefix retention, applied magnetic-service qualification and float32 totality remain open."
+        ),
     }

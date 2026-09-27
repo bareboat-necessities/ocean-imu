@@ -1,0 +1,70 @@
+{
+  "all_AG_root_and_cross_covariance_cancelled": true,
+  "every_prefix_AG_upper_diagonal": [
+    "1074371853706039082183/88989257812500000",
+    "1074371853706039082183/88989257812500000",
+    "4882820093752187/9887695312500000",
+    "21487437073892969479/4556250000000",
+    "21487437073892969479/4556250000000",
+    "97656376562581/506250000000"
+  ],
+  "float32_totality": false,
+  "full_21_upper_diagonal": [
+    "1074371853706039082183/44494628906250000",
+    "1074371853706039082183/44494628906250000",
+    "4882820093752187/4943847656250000",
+    "21487437073892969479/2278125000000",
+    "21487437073892969479/2278125000000",
+    "97656376562581/253125000000",
+    "580931106605/512",
+    "580931106605/512",
+    "580931106605/512",
+    "5074671273672529/64000",
+    "5074671273672529/64000",
+    "5074671273672529/64000",
+    "45331392703331023352281/64000000000",
+    "45331392703331023352281/64000000000",
+    "45331392703331023352281/64000000000",
+    "243360",
+    "243360",
+    "243360",
+    "1/160",
+    "1/160",
+    "1/160"
+  ],
+  "historical_AG_action_upper_diagonal": [
+    "352050169/583200",
+    "352050169/583200",
+    "2/81",
+    "13429648171183105651/5695312500000",
+    "13429648171183105651/5695312500000",
+    "244140941406331/2531250000000"
+  ],
+  "nonlinear_every_prefix_retention": false,
+  "normalized_observation_error_upper": [
+    "352050169/1166400",
+    "352050169/1166400",
+    "1/81"
+  ],
+  "numerical_useful_rho_certified": false,
+  "process_lower_profile": "existing corrected_word.prediction_floor default theorem profile; positive process densities retained",
+  "profile": {
+    "acc_std_max": "1/3",
+    "field_min": "9",
+    "gravity_min": "9",
+    "gyro_bias_covariance_density_max": "1/1000000000",
+    "gyro_covariance_density_max": "1/500000",
+    "mag_std_max": "1",
+    "sample_gap_max_s": ".006",
+    "sample_gap_min_s": ".004"
+  },
+  "qualification": "OU3_QUIET_NOMINAL_HISTORICAL_COVARIANCE_V1",
+  "quiet_nominal_every_operation_covariance_upper": true,
+  "quiet_nominal_homogeneous_linear_loss_exists": true,
+  "scope": "real-arithmetic regular A21, zero corrected rate/AW/injections, identity attitude, fixed B e_x; actual coincident acc/mag groups eight qualified predictions apart; inherited AW/BA bounds and 17-second nuisance comparison",
+  "source_uniform_moving_A21_covariance_upper": false,
+  "stationary_compatible_class_practical_stability": false,
+  "theorem_closed": false,
+  "uniform_quiet_nominal_full_covariance_upper": true,
+  "uniform_quiet_nominal_historical_action": true
+}
