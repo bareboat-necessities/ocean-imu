@@ -17,7 +17,7 @@ seconds for a later recheck. Previously retained progress stays visible while
 the device settles again after a disturbance. The hints indicate placement,
 motion or a pose that needs correcting; an unsuccessful hold still times out
 after 30 seconds. A successful hold shows `Captured` and advances after the
-brief acknowledgement (at most 980 ms).
+brief acknowledgement (about one second).
 
 Normal accelerometer diagnostics are best effort: whole lines are skipped
 when they do not fit in the available serial transmit buffer. The burst of
