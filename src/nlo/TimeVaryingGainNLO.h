@@ -397,6 +397,32 @@ public:
             return;
         }
 
+        // The startup attitude gains reach k1+k2 = 40/s. A single 50 ms
+        // Euler step is at their stability boundary and the coupled xi
+        // correction can inject a large fictitious vertical force. Preserve
+        // elapsed time, holding the input sample over bounded integration
+        // steps, including when UI/serial work delays a device update.
+        constexpr R max_step_s = R(0.005);
+        if (dt <= max_step_s) {
+            updateStep_(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
+            return;
+        }
+        const R steps_real = std::ceil(dt / max_step_s);
+        if (!(steps_real < R(UINT32_MAX))) {
+            return;
+        }
+        const std::uint32_t steps = static_cast<std::uint32_t>(steps_real);
+        const R step_dt = dt / R(steps);
+        for (std::uint32_t i = 0; i < steps; ++i) {
+            updateStep_(step_dt, gyro_b_rad_s, specific_force_b_mps2, aux);
+        }
+    }
+
+private:
+    void updateStep_(R dt,
+                     const Vec3& gyro_b_rad_s,
+                     const Vec3& specific_force_b_mps2,
+                     const Aux& aux) {
         t_s_ += dt;
 
         lockUnobservableStates_();
@@ -461,6 +487,13 @@ public:
         integrateQuaternionRight(dt, omega_corr_b);
 
         const Mat3 R_nb = q_nb_.toRotationMatrix();
+
+        // Force-feedback part of (9d). For a pure attitude correction,
+        // R_after * Exp(-dt*sigma_tmo_b) == R_before: this cancels the
+        // artificial change in R*f_b before it can accelerate the TMO.
+        // Its first-order term is -dt*R_after*S(sigma_tmo_b)*f_b.
+        const Quat undo_correction = quaternionIncrement_(dt, sigma_tmo_b).conjugate();
+        xi_n_ += R_nb * (undo_correction * f_b - f_b);
         fhat_n_ = R_nb * f_b + xi_n_;
 
         /*
@@ -524,14 +557,11 @@ public:
         }
 
         /*
-          (9d). Use sigma_tmo_b here, not sigma_b_.
-
-          sigma_b_ may be the degraded vertical-reference attitude leak used
-          when the horizontal axes are unaided. Feeding that into xi_dot
-          destabilizes the vertical loop.
+          Linear aiding part of (9d). The force-feedback part above uses
+          sigma_tmo_b, including when sigma_b_ is the degraded attitude leak
+          for unaided horizontal axes.
         */
-        Vec3 xi_dot = -R_nb * (skew(sigma_tmo_b) * f_b)
-                      + cfg_.K_xiz_p0z * sv4.cwiseProduct(p0_err);
+        Vec3 xi_dot = cfg_.K_xiz_p0z * sv4.cwiseProduct(p0_err);
 
         if (have_gnss) {
             xi_dot.template head<2>() += s4 * (Kxip * pxy_err);
@@ -565,6 +595,7 @@ public:
         fhat_n_ = q_nb_.toRotationMatrix() * f_b + xi_n_;
     }
 
+public:
     const Config& config() const { return cfg_; }
     Config& config() { return cfg_; }
 
@@ -691,14 +722,6 @@ private:
         return v;
     }
 
-    static Mat3 skew(const Vec3& x) {
-        Mat3 S;
-        S << R(0),   -x.z(),  x.y(),
-             x.z(),  R(0),   -x.x(),
-            -x.y(),  x.x(),  R(0);
-        return S;
-    }
-
     static Vec3 clampNorm(const Vec3& v, R max_norm) {
         const R n = v.norm();
         if (!(max_norm > R(0)) || n <= max_norm || n <= R(1e-12)) {
@@ -790,7 +813,7 @@ private:
         return true;
     }
 
-    void integrateQuaternionRight(R dt, const Vec3& omega_b) {
+    static Quat quaternionIncrement_(R dt, const Vec3& omega_b) {
         const R omega_norm = omega_b.norm();
         const R angle = omega_norm * dt;
 
@@ -808,7 +831,11 @@ private:
                       s * axis.z());
         }
 
-        q_nb_ = q_nb_ * dq;
+        return dq;
+    }
+
+    void integrateQuaternionRight(R dt, const Vec3& omega_b) {
+        q_nb_ = q_nb_ * quaternionIncrement_(dt, omega_b);
         q_nb_.normalize();
     }
 
