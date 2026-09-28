@@ -54,7 +54,8 @@ class TheoremStatusTests(unittest.TestCase):
         for key in ("world_frame_historical_row_factorization", "attitude_invariant_same_cell_geometry",
                     "literal_injection_covariance_NIS_budget",
                     "quiet_nominal_six_column_floor_any_attitude_admitted_reference",
-                    "nominal_attitude_column_physical_transfer_given_AW_tracking"):
+                    "nominal_attitude_column_physical_transfer_given_AW_tracking",
+                    "sharp_isotropic_sync_AW_covariance_ceiling"):
             self.assertTrue(o[key])
         for key in ("uniform_AW_tracking_error_bound", "aggregate_world_frame_six_column_floor",
                     "uniform_historical_AG_readout_action"):
@@ -63,6 +64,8 @@ class TheoremStatusTests(unittest.TestCase):
         self.assertFalse(w["attitude_estimate_or_error_in_six_column_geometry"])
         self.assertTrue(w["aggregate_rows_avoid_magnetic_phase_premise"])
         self.assertTrue(w["same_cell_floor_requires_magnetic_cadence_coupling"])
+        self.assertTrue(w["aw_covariance_ceiling_tight_at_sync"])
+        self.assertTrue(w["uniform_storage_route_ratio_above_one_on_carried_collinear_words"])
         for key in ("same_cell_floor_from_motion_and_bias_bounds_alone",
                     "collinear_1Hz_witness_magnetic_service_admitted",
                     "same_cell_two_group_uniform_floor_established",

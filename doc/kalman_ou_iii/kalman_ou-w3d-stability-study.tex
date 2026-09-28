@@ -1835,9 +1835,30 @@ Gram is at least
  e=\frac{2V_{\max}/T+J_{\max}h_{\max}/4+\epsilon_a}{g}.
 \end{equation}
 No attitude-error or magnetic-residual term appears. For $T=16$\,s and
-$\sigma_w=1/5$ it is positive iff $\epsilon_a<1.12383\,\mathrm{m/s^2}$; the
-inherited $156\,\mathrm{m/s^2}$ AW ceiling would confine $\sqrt V<0.0072$.
-The AW tracking bound and the aggregate gyro columns remain open.
+$\sigma_w=1/5$ it is positive iff $\epsilon_a<1.12383\,\mathrm{m/s^2}$.
+
+In the storage the AW error obeys $\norm{e_{aw}}^2\le\lambda_{\max}(P_{aw})V$, and
+in the default profile the pending synchronization adds
+$\Pi_+(\sigma^2I-P_{aw})$ to an isotropic target, so it replaces each
+eigenvalue $\beta_i$ of $P_{aw}$ by $\max(\beta_i,\sigma^2)$; prediction gives
+$\phi^2P_{aw}+Q_{aa}$ with $Q_{aa}\preceq(1+\epsilon_Q)(1-\phi^2)\sigma^2I$, and
+every applied correction subtracts $K_aSK_a^{\mathsf T}$. Hence
+\begin{equation}
+ \lambda_{\max}(P_{aw})\le\max\bigl(2.2^2,\,16(1+\epsilon_Q)\bigr)=16(1+\epsilon_Q),
+\end{equation}
+with the excess above any admissible level decaying as $e^{-t/6}$. The
+bound is tight: every applied synchronization leaves $P_{aw}\succeq\sigma^2I$,
+and isotropy is necessary (an exact witness with $S$-factor $2$ exceeds both
+operands). The storage radius for the corollary rises from $0.0072$ to
+$0.28095$ at the $4\,\mathrm{m/s^2}$ clamp. It cannot be made uniform, however.
+On the carried collinear motion, accelerometer corrections collapse
+$\lambda_{\max}(P_{aw})$ to $0.0026$ between synchronizations while the lag
+error stays near $0.56\,\mathrm{m/s^2}$, so
+$\sup_t(\norm{e_{aw}}^2/\lambda_{\max})\,\sup_t\lambda_{\max}/1.12383^2$
+equals $6.68$ with 1-Hz and $6.91$ with 25-Hz magnetic corrections,
+although the actual AW error $0.562\,\mathrm{m/s^2}$ satisfies the corollary.
+The AW tracking bound must therefore be physical, from the literal
+correction loop; it and the aggregate gyro columns remain open.
 
 \subsection{Admitted stillness ambiguity}
 Quiet truth with constant body-to-world attitude

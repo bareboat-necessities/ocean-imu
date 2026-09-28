@@ -4,8 +4,11 @@ These results enter `V_next <= rho V + c_d |d|^2` only through the historical
 reader: the six-column floor (c, a, b0) feeds B_*, J_AG, the full covariance
 upper bound and rho_0<1. The injection budget also bounds the injection-squared
 term of the finite-angle reset remainder in the nonlinear supply eta. None of
-them supplies a source-uniform premise by itself. Exact checks are in
-`world_frame.py`; the carried audit is `world_frame_source_diagnostic.py`.
+them supplies a source-uniform premise by itself. The AW covariance ceiling
+(section 7) enters through Corollary A's AW tracking premise and the
+coercivity bound `|e_aw|^2<=lambda_max(P_aw) V`. Exact checks are in
+`world_frame.py` and `aw_covariance_ceiling.py`; the carried audit is
+`world_frame_source_diagnostic.py`.
 
 ## 1. World-frame factorization
 
@@ -113,10 +116,11 @@ No attitude, attitude-error or magnetic-residual term appears: the nominal
 magnetic rows use B_w exactly. Injections lower `sqrt(gamma)` by at most
 `beta sqrt(u_max^2+1)`, `beta>=|A~-I|`. At T=16 s and `sigma_w=1/5`, positivity
 needs `epsilon_a<1.12383 m/s^2` (1.811319 as T grows);
-`gamma(0)=12629938689/2094683134450`, about .00603. With only the inherited
-156 m/s^2 AW ceiling, `|e_aw|<=156 sqrt(V)` would need `sqrt(V)<.0072`.
-This supplies attitude columns of the aggregate premise; the gyro columns
-need the time structure of Gamma and are open.
+`gamma(0)=12629938689/2094683134450`, about .00603. Through the covariance,
+`|e_aw|^2<=lambda_max(P_aw) V`; section 7 bounds `lambda_max(P_aw)` sharply
+and shows why that route cannot be uniform. This supplies attitude columns
+of the aggregate premise; the gyro columns need the time structure of Gamma
+and are open.
 
 ## 5. Same-cell geometry depends on magnetic cadence
 
@@ -156,35 +160,100 @@ magnetic row and avoids that coupling.
 
 The observer and driver are derived at run time from the existing ones; an
 untapped control reproduces the terminal state exactly. Floors use the
-exported row operands. Quiet and wave reuse the existing .32-s windows; the
-collinear word applies magnetic corrections at 25 Hz through startup and at
-integer seconds during 225--229 s.
+exported row operands and charge each reset's float mean-injection angle
+delta (the rotation between the exported post-reset attitude and the exact
+`Exp([d]x)` injection, at most 1.6e-9 rad) on top of psi(theta). Quiet and
+wave reuse the existing .32-s windows. Both collinear words apply magnetic
+corrections at 25 Hz through startup; during 225--229 s the first applies
+them only at integer seconds, the second keeps 25 Hz.
 
-| Quantity | Quiet | Wave | Collinear |
-|---|---:|---:|---:|
-| same-cell sigma_min (actual) | 9.80665 | 8.74939 | .030129 |
-| world floor / actual, max | 1.0 | .99999999978 | .99999999 |
-| nominal force/field sine, min | 1 | .894 | .00322 |
-| injection / NIS P_theta bound, max | 0 | .108 | .134 |
-| inter-anchor gyro sigma: actual / NIS budget | .28 / .28 | .28 / .2774 | 3.0 / 0 |
-| injection sum: actual / NIS bound (rad) | 0 / 0 | 1.4e-5 / .0317 | .0108 / 4.98 |
-| two-group s: actual / world+NIS budget | 1.9225 / 1.2043 | 1.7176 / 1.0656 | .0289 / 0 |
-| aggregate six-column sigma_min | 7.152 | 6.278 | 28.50 |
-| AW tracking error max (m/s^2) | 0 | .0136 | .563 |
-| one-correction service lambda_min | 1.6e-83 | 1.8e-10 | 2.05e-5 |
+| Quantity | Quiet | Wave | Collinear 1 Hz | Collinear 25 Hz |
+|---|---:|---:|---:|---:|
+| same-cell sigma_min (actual) | 9.80665 | 8.74939 | .030129 | .00037063 |
+| world floor / actual, max | 1.0 | .99999999975 | .99999997 | .99999999999 |
+| nominal force/field sine, min | 1 | .894 | .00322 | 4.0e-5 |
+| injection / NIS P_theta bound, max | 0 | .108 | .134 | .061 |
+| inter-anchor gyro sigma: actual / NIS budget | .28 / .28 | .28 / .2774 | 3.0 / 0 | 3.96 / 0 |
+| injection sum: actual / NIS bound (rad) | 0 / 0 | 1.4e-5 / .0317 | .0108 / 4.98 | .0099 / 6.52 |
+| two-group s: actual / world+NIS budget | 1.9225 / 1.2043 | 1.7176 / 1.0656 | .0289 / 0 | .0189 / 0 |
+| aggregate six-column sigma_min | 7.152 | 6.278 | 28.50 | 40.62 |
+| AW tracking error max (m/s^2) | 0 | .0136 | .563 | .562 |
+| lambda_max(P_aw): at syncs / min at acc rows | .0025 / .0012 | .0025 / .0010 | .0791 / .0026 | .0791 / .0026 |
+| AW storage route ratio | 0 | .00035 | 6.68 | 6.91 |
+| one-correction service lambda_min | 1.6e-83 | 1.8e-10 | 2.05e-5 | 6.9e-11 |
 
 Prediction world discrepancy is at most 2.1e-9 (float branch), the reset Gram
-identity holds to 4.3e-81 and row factorization to 8.5e-78. `|A~-I|` matches
+identity holds to 4.3e-81 and row factorization to 9.9e-78. `|A~-I|` matches
 half the signed world injection sum: .00112 on the collinear word versus a
-norm sum of .0135. The one-correction service value transports from just
-after the previous applied magnetic correction: 40 ms for quiet and wave, the
-whole 1-s window for the collinear word. These finite values audit algebra
-on one run; they are neither enclosures nor all-time service certificates.
+norm sum of .0135. The AW block is reconstructed through every correction
+(`P_aw-K_a S K_a'`) and prediction to 1.7e-6 relative; applied syncs are the
+isotropic spectral max to 8.2e-7, the Lemma B step ratio is at most
+1+8.2e-7, the ceiling ratio at most .999982, and each post-sync least
+eigenvalue is at least .99998 sigma^2 (38 syncs per 4 s). The one-correction
+service value transports from just after the previous applied magnetic
+correction: 40 ms at 25 Hz, the whole 1-s window for the 1-Hz word. These
+finite values audit algebra on one run; they are neither enclosures nor
+all-time service certificates. The committed record is reproduced exactly
+in CI (`--expect`), and `verify_diagnostic` checks every reported metric.
 
-## 7. What remains
+## 7. Sharp AW covariance ceiling and the storage route
 
-1. A uniform AW tracking bound `epsilon_a<1.12383 m/s^2` on 16-s windows, or a
-   measurement-aware AW covariance ceiling far below 156 m/s^2.
+**Lemma B.** In the default profile of `ou3-nuisance-upper-proof.md` (real
+arithmetic, S_factor=1 so `Sigma_aw=sigma^2 I`, `sigma<=4`, `tau<=12` s,
+additive pending sync, no frame/relock reconfiguration), every operation
+from construction on keeps
+
+`lambda_max(P_aw)<=max(2.2^2,(1+epsilon)16)=(1+epsilon)16`,
+
+epsilon the process-covariance defect of `small_x_source_defect()`. For any
+level `s>=(1+epsilon)sigma_j^2` covering the predictions and applied sync
+targets after `t_0`,
+
+`(lambda_max(P_aw(t))-s)_+<=exp(-(t-t_0)/6)(lambda_max(P_aw(t_0))-s)_+`.
+
+*Proof.* The AW rows of the LIN transition are `phi e_a`, so prediction maps
+the block to `phi^2 P_aw+Q_aa` with `Q_aa<=(1+epsilon)(1-phi^2)sigma^2 I`;
+hence `m'<=phi^2 m+(1+epsilon)(1-phi^2)sigma^2` and `m'-s<=phi^2(m-s)`. The
+pending sync adds `Pi_+(sigma_t^2 I-P_aw)`; for an isotropic target the
+result has the eigenvectors of P_aw and eigenvalues `max(beta_i,sigma_t^2)`,
+so `m'=max(m,sigma_t^2)`. Every applied acc, magnetic or S correction uses
+`K=PC'S^-1` on the AW rows with the same, possibly bumped, S that the
+Joseph update receives, so its AW block is `P_aw-K_a S K_a'<=P_aw`, whether or
+not BA rows are frozen. Attitude resets, heel reframing, gyro-bias
+projection and AG/LIN cross-block zeroing leave the block unchanged, and
+entering Live seats it at Sigma.
+
+*Tightness.* After every applied isotropic sync each eigenvalue of P_aw is
+at least `sigma_t^2`, and syncs run at the .1-s adaptation cadence. No
+covariance ceiling below the stationary variance therefore exists, whatever
+the acc/S rows do between syncs. Isotropy is necessary: with S_factor=2,
+`Sigma=diag(16,16,4)` and `P=Sigma+q_1q_1'-2q_2q_2'`, `q_1=(3,0,4)/5`,
+`q_2=(-4,0,3)/5`, satisfy `0<=P<=16 I`, yet the synchronized block has
+(1,1) entry 16+9/25. `aw_covariance_ceiling.py` reproduces these exactly.
+
+*Entry into the tail.* With `|e_aw|^2<=lambda_max(P_aw) V`, Corollary A holds
+when `sqrt(V)<1.12383/sqrt((1+epsilon)sigma_max^2)`: at least .280954 at the
+4 m/s^2 clamp, against .0072 from the inherited 156 m/s^2, and at least 1
+when `sigma_max<=1.1238`. The ceiling is not propagated into the nuisance
+upper comparison, where it does not control any threshold.
+
+**The uniform storage route fails on carried words.** A uniform retained
+radius r must contain `V(t)>=|e_aw(t)|^2/lambda_max(P_aw(t))` along the
+history, while the route needs `r^2 sup_t lambda_max(P_aw)<1.12383^2`. On the
+carried collinear motion, 200-Hz accelerometer corrections collapse
+`lambda_max(P_aw)` to .0026 between syncs while the jerk-driven lag error
+stays near .56 m/s^2, and syncs restore .0791. The ratio
+`sup(|e_aw|^2/lambda_max) sup lambda_max/1.12383^2` is 6.68 with 1-Hz
+magnetic corrections and 6.91 with the 25-Hz cadence of the quiet and
+wave words, although the actual AW error .562 m/s^2 satisfies Corollary A.
+The AW error must be bounded in physical units from the literal correction
+loop, not through covariance-normalized storage.
+
+## 8. What remains
+
+1. A physical AW tracking bound `epsilon_a<1.12383 m/s^2` on 16-s windows
+   from the literal acc/S correction loop driven by jerk, bias and attitude
+   error. No covariance ceiling can supply it uniformly (section 7).
 2. The aggregate gyro-column floor from transverse-force and magnetic rows at
    separated times, with nominal rotation up to 1.15 rad/s in Gamma.
 3. The signed world injection sum in place of norm-summed per-correction

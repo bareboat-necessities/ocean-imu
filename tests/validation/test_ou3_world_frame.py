@@ -165,6 +165,18 @@ class WorldFrameRowsTest(unittest.TestCase):
         # One applied correction per 1-s window: far below mu_M=1, so the
         # 1-Hz cadence is excluded by MAGNETIC SERVICE.
         self.assertLess(float(collinear['one_correction_window_service_lambda_min_max']), 1e-3)
+        # Lemma B on the literal AW blocks; the uniform storage route fails on
+        # both collinear cadences although the actual AW error passes.
+        for case in record['cases']:
+            self.assertLessEqual(float(case['aw_lemma_step_ratio_max']), 1+1e-5)
+            self.assertLess(float(case['aw_ceiling_ratio_max']), 1)
+            self.assertGreater(float(case['aw_post_sync_floor_ratio_min']), 1-1e-4)
+        service = record['cases'][3]
+        self.assertEqual(service['input_profile'], 'collinear-service')
+        for case in (collinear, service):
+            self.assertGreater(float(case['aw_uniform_storage_route_ratio']), 6)
+            self.assertLess(float(case['aw_tracking_error_max_mps2']), 1.12383)
+        self.assertLess(float(record['cases'][1]['aw_uniform_storage_route_ratio']), 1e-3)
         for key, value in [('driver_sha256', '0'*64), ('source_uniform_verified', True),
                            ('theorem_closed', True)]:
             changed = copy.deepcopy(record)
@@ -175,6 +187,49 @@ class WorldFrameRowsTest(unittest.TestCase):
         changed['cases'][1]['same_cell_floor_to_actual_ratio_max'] = '1.5'
         with self.assertRaises(ValueError):
             verify_diagnostic(changed)
+
+    def test_every_reported_metric_is_validated_or_reproduced(self):
+        from tools.stability.ou3_theorem.world_frame_source_diagnostic import (
+            METRICS, reproduction_differences, verify_diagnostic)
+        record = json.loads((ROOT/'reports/results/ou3_stability/world-frame-source-feasibility.json').read_text())
+        # Values the research conclusions use cannot be replaced arbitrarily.
+        for case, key, value in [(0, 'row_factorization_defect_max', '1e-3'),
+                                 (1, 'reset_gram_identity_defect_max', '1e-9'),
+                                 (2, 'aggregate_six_column_singular', '0.5'),
+                                 (2, 'one_correction_window_service_lambda_min_max', '2.0'),
+                                 (2, 'interanchor_gyro_NIS_budget_floor', '0.1'),
+                                 (1, 'two_group_budget_from_world_and_NIS', '2.0'),
+                                 (1, 'aw_tracking_error_max_mps2', '1.2'),
+                                 (0, 'NIS_max', 'nan'),
+                                 (1, 'aggregate_attitude_column_singular', '1.0'),
+                                 (2, 'window_world_attitude_transport_distance', '0.001'),
+                                 (3, 'aw_uniform_storage_route_ratio', '0.5'),
+                                 (2, 'aw_lemma_step_ratio_max', '1.1'),
+                                 (1, 'aw_post_sync_floor_ratio_min', '0.5'),
+                                 (0, 'reset_injection_float_angle_max', '1e-3')]:
+            changed = copy.deepcopy(record)
+            changed['cases'][case][key] = value
+            with self.assertRaises(ValueError, msg=key):
+                verify_diagnostic(changed)
+        for drop in ('aggregate_six_column_singular', 'exported_trace_sha256'):
+            changed = copy.deepcopy(record)
+            del changed['cases'][1][drop]
+            with self.assertRaises(ValueError):
+                verify_diagnostic(changed)
+        # Exact reproduction binds the rest: any change beyond mpmath rounding
+        # of a metric, or any change of a trace hash, is reported.
+        self.assertEqual(reproduction_differences(record, record), [])
+        for key in METRICS:
+            changed = copy.deepcopy(record)
+            value = changed['cases'][1][key]
+            changed['cases'][1][key] = str(float(value)*(1+1e-12)+1e-12)
+            self.assertEqual(reproduction_differences(changed, record), ['/cases/1/'+key])
+        noise = copy.deepcopy(record)
+        noise['cases'][1]['row_factorization_defect_max'] = '9e-70'
+        self.assertEqual(reproduction_differences(noise, record), [])
+        changed = copy.deepcopy(record)
+        changed['cases'][2]['exported_trace_sha256'] = '0'*64
+        self.assertEqual(reproduction_differences(changed, record), ['/cases/2/exported_trace_sha256'])
 
 
 if __name__ == '__main__':

@@ -27,6 +27,7 @@ def status_report() -> dict:
         "literal_injection_covariance_NIS_budget":True,
         "quiet_nominal_six_column_floor_any_attitude_admitted_reference":True,
         "nominal_attitude_column_physical_transfer_given_AW_tracking":True,
+        "sharp_isotropic_sync_AW_covariance_ceiling":True,
         "uniform_AW_tracking_error_bound":False,
         "aggregate_world_frame_six_column_floor":False,
         "marine_attitude_excitation_numeric_qualification":False,
@@ -138,7 +139,10 @@ def status_report() -> dict:
             "same_cell_two_group_uniform_floor_established":False,
             "signed_world_injection_transport_budget":False,
             "aggregate_rows_avoid_magnetic_phase_premise":True,
-            "controlling_transfer_quantity":"nominal AW tracking error |a_hat-a| in the estimator world frame",
+            "aw_covariance_certificate":"aw-covariance-ceiling-certificate.json",
+            "aw_covariance_ceiling_tight_at_sync":True,
+            "uniform_storage_route_ratio_above_one_on_carried_collinear_words":True,
+            "controlling_transfer_quantity":"physical AW tracking error |a_hat-a| of the literal acc/S correction loop, not covariance-normalized storage",
         },
         "shipping_residual_gyro_bias_hardening":True,
         "implemented_gyro_bias_norm_invariant":True,
@@ -177,8 +181,10 @@ def status_report() -> dict:
             "Same-cell geometry therefore depends only on world nominal force, committed reference and the local injection, never on attitude error. "
             "Literal injections satisfy dd'<=NIS K S K'<=NIS P_theta,theta. A 1-Hz collinear history obeys MARINE MOTION and IMU BIAS and degenerates every same-cell group while aggregate rows stay full rank; its single correction per 1-s window has nearly rank-one service information, so MAGNETIC SERVICE excludes that cadence. "
             "Jerk forbids collinearity at every instant of a cadence whose length-weighted mean gap is below 4(g h-2V/L)/J, about .051 s at h=1/5 and L=16 s. A same-cell floor therefore needs a magnetic-cadence coupling, which aggregate rows avoid. "
-            "The nominal attitude columns transfer from physical transverse force on 16-s windows when the AW tracking error is below 1.12383 m/s^2; the inherited 156 m/s^2 AW ceiling would restrict sqrt(V) below about .0072. "
-            "Next bound the AW tracking error and the signed world injection sum, then prove the aggregate gyro-column floor. "
+            "The nominal attitude columns transfer from physical transverse force on 16-s windows when the AW tracking error is below 1.12383 m/s^2. "
+            "The isotropic stationary sync keeps lambda_max(P_aw)<=(1+eps)16 and floors P_aw at sigma^2 I at every applied sync, so the covariance route needs sqrt(V)<.28095 at the 4 m/s^2 clamp; "
+            "on the carried collinear motion the uniform storage route fails by 6.7-6.9 although the actual AW error .562 m/s^2 passes. "
+            "Next bound the physical AW tracking error of the literal acc/S correction loop and the signed world injection sum, then prove the aggregate gyro-column floor. "
             "The .5 rad/s invariant, qualified complete-turn exclusion and one-step gyro floor remain proved, not the complete signed Delta_gyr. "
             "Positive source-uniform signed margins, B_*, J_AG, full covariance upper, rho_0<1, capture/H18/release, nonlinear radius, every-prefix retention, applied magnetic-service qualification and float32 totality remain open."
         ),

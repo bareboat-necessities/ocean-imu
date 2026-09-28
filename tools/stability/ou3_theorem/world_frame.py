@@ -334,11 +334,13 @@ def certificate():
     column = nominal_attitude_column_floor(16, 0, F(1, 5))
     threshold16 = column['aw_error_threshold']
     long_window = nominal_attitude_column_floor(10**6, 0, F(1, 5))['aw_error_threshold']
+    from .aw_covariance_ceiling import INHERITED_STD, ceiling, storage_radius
+    from .lin_path_certificate import small_x_source_defect
     from .nuisance_upper_certificate import bounds as nuisance_bounds
-    # Principal AW standard-deviation ceiling. With |e_aw|<=156 sqrt(V),
-    # positivity of the transfer needs sqrt(V)<threshold/156.
-    aw_ceiling = nuisance_bounds()[3][3]
-    assert aw_ceiling == 156
+    # |e_aw|^2<=lambda_max(P_aw) V. The isotropic-sync ceiling
+    # lambda_max(P_aw)<=(1+eps)16 replaces the inherited 156^2 (still bound here).
+    assert nuisance_bounds()[3][3] == INHERITED_STD
+    eps = small_x_source_defect()[0]
     witness = collinear_same_cell_witness()
     cadence = collinear_cadence_floor(F(1, 5), 16)
     assert cadence > F(1, 25)
@@ -368,8 +370,9 @@ def certificate():
             'normalized_gram_floor_zero_aw_error': str(column['normalized_gram_floor_without_injection']),
             'aw_error_threshold_16s_mps2': str(threshold16),
             'aw_error_threshold_long_window_mps2': str(long_window),
-            'inherited_aw_standard_deviation_ceiling_mps2': str(aw_ceiling),
-            'retained_sqrt_V_upper_for_positive_16s_transfer': str(threshold16/aw_ceiling),
+            'aw_variance_ceiling': str(ceiling(eps)),
+            'retained_sqrt_V_upper_for_positive_16s_transfer': str(decimal_lower(storage_radius(threshold16, eps, 16))),
+            'inherited_156_retained_sqrt_V_upper': str(threshold16/INHERITED_STD),
             'gyro_columns_certified': False,
         },
         'collinear_same_cell_witness': witness,

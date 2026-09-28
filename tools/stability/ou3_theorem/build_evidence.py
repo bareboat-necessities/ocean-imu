@@ -55,8 +55,10 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.stationary_covariance import certificate as stationary_certificate
     from tools.stability.ou3_theorem.regime_continuation_diagnostic import diagnostic as regime_diagnostic
     from tools.stability.ou3_theorem.world_frame import certificate as world_certificate
+    from tools.stability.ou3_theorem.aw_covariance_ceiling import certificate as aw_ceiling_certificate
     for name, generate in (
         ("world-frame-certificate.json",world_certificate),
+        ("aw-covariance-ceiling-certificate.json",aw_ceiling_certificate),
         ("stationary-covariance-certificate.json",stationary_certificate),
         ("regime-continuation-feasibility.json",regime_diagnostic),
         ("regime-certificate.json",regime_certificate),

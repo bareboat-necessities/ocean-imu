@@ -45,10 +45,11 @@
   "nominal_attitude_column_transfer": {
     "aw_error_threshold_16s_mps2": "112383/100000",
     "aw_error_threshold_long_window_mps2": "1811319/1000000",
+    "aw_variance_ceiling": "248198254120826731826645263/15512089203000000000000000",
     "gyro_columns_certified": false,
-    "inherited_aw_standard_deviation_ceiling_mps2": "156",
+    "inherited_156_retained_sqrt_V_upper": "37461/5200000",
     "normalized_gram_floor_zero_aw_error": "12629938689/2094683134450",
-    "retained_sqrt_V_upper_for_positive_16s_transfer": "37461/5200000",
+    "retained_sqrt_V_upper_for_positive_16s_transfer": "280954767991/1000000000000",
     "window_s": "16"
   },
   "predictions_world_neutral_when_covariance_rotation_matches_mean": true,

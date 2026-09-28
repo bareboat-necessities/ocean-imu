@@ -115,7 +115,8 @@
     "regime_transition_composition": "Actual operation prefix gains and supplies compose conditionally, retaining covariance, projections/resets, clocks, physical S/bias histories and magnetic state. Finite detection/retention and a recurring cumulative product/supply budget are open; finite bridges alone are insufficient.",
     "chronological_six_pivot_implication": "Literal reset and prediction inverses are nonexpansive in real arithmetic. C=A^-1 B is unchanged by reset, whose influence remains in subsequent injections. Actual acc/mag groups with no intervening prediction have E=0 after retaining every reset. Positive uniform group geometry and inter-anchor gyro transport imply all six pivots; source-uniform premises, B_*, J_AG and rho remain open. An exact relaxed reset cancellation is neither source reachability nor loss of all historical row rank.",
     "quiet_nominal_historical_covariance": "Exact zero-residual regular quiet nominal subfamily: two normalized actual acc/mag groups cancel arbitrary AG root/cross covariance; inherited nuisance and full correlated process bounds give every-operation full covariance upper and qualitative homogeneous linear loss. No compatible-class nonlinear stationary theorem, useful numerical rho, or physical attitude/BA separation is claimed.",
-    "world_frame_historical_rows": "Every regular historical AG row is -R_k[f_k]x[A~_k R_0',B~_k]: predictions leave A~ invariant when the covariance rotation equals the mean increment, resets multiply it by N=R_next' G R with N'N=I+(|x|^2 I-xx')/4, and B~ integrates the nominal R_hat'. Same-cell geometry depends only on world nominal force, committed reference and local injection. Literal injections obey dd'<=NIS K S K'<=NIS P_theta,theta. A 1-Hz collinear MARINE MOTION/IMU BIAS history degenerates every same-cell group while aggregate rows keep rank; its one-correction windows fail MAGNETIC SERVICE, and jerk forbids all-collinear cadences with length-weighted mean gap below 4(g h-2V/L)/J. Attitude columns transfer from physical transverse force given AW tracking <1.12383 m/s^2 on 16-s windows. Aggregate gyro columns, AW tracking, B_*, J_AG and rho remain open."
+    "world_frame_historical_rows": "Every regular historical AG row is -R_k[f_k]x[A~_k R_0',B~_k]: predictions leave A~ invariant when the covariance rotation equals the mean increment, resets multiply it by N=R_next' G R with N'N=I+(|x|^2 I-xx')/4, and B~ integrates the nominal R_hat'. Same-cell geometry depends only on world nominal force, committed reference and local injection. Literal injections obey dd'<=NIS K S K'<=NIS P_theta,theta. A 1-Hz collinear MARINE MOTION/IMU BIAS history degenerates every same-cell group while aggregate rows keep rank; its one-correction windows fail MAGNETIC SERVICE, and jerk forbids all-collinear cadences with length-weighted mean gap below 4(g h-2V/L)/J. Attitude columns transfer from physical transverse force given AW tracking <1.12383 m/s^2 on 16-s windows. Aggregate gyro columns, AW tracking, B_*, J_AG and rho remain open.",
+    "aw_covariance_ceiling": "Default profile, real arithmetic: the isotropic pending sync is the spectral max of P_aw and sigma^2 I, prediction maps the AW block to phi^2 P_aw+Q_aa with Q_aa<=(1+eps)(1-phi^2)sigma^2 I, and applied corrections subtract K_a S K_a', so lambda_max(P_aw)<=(1+eps)16 with excess decaying as exp(-t/6). Every applied sync floors P_aw at sigma^2 I, so the ceiling is tight; S_factor!=1 breaks it. Covariance-normalized storage cannot carry the AW error uniformly (carried collinear ratios 6.68 and 6.91); the physical AW tracking bound remains open."
   },
   "operation_lemma_sources": [
     {
@@ -148,7 +149,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "fc58798ab0906748e38887e021419da87456455d"
+      "git_blob_sha": "c35682ead83a88d4d0fd6c9313163a4745400059"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -256,7 +257,7 @@
     },
     {
       "path": "docs/ou3-nuisance-upper-proof.md",
-      "git_blob_sha": "4dd413729060b276dacf5df34ba93423a5d52d97"
+      "git_blob_sha": "e1ede2ccbd5d7dd81caa89abac9451ad8cec21d9"
     },
     {
       "path": "docs/ou3-stationary-detectability.md",
@@ -360,7 +361,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "055153e110f7f3c16c79201ad5eefa77a9a8e0d2"
+      "git_blob_sha": "e62748286d1b3b720b7e2c94c680d2a373bf5cbf"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
@@ -448,7 +449,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "914746beabe81202602c8549af864e3c83150fe1"
+      "git_blob_sha": "766d7e75ad26be7b613f2449903e1481a1e5c93d"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
@@ -464,7 +465,7 @@
     },
     {
       "path": "tests/validation/test_ou3_theorem_status.py",
-      "git_blob_sha": "6a8e68080b4db0e9b4672b9f957de65e5aba104d"
+      "git_blob_sha": "9f12dbd1028aa0e4dd5dc6fe0fac307beace5bcd"
     },
     {
       "path": "tests/kalman_ou_iii/regime_ambiguity-test.cpp",
@@ -520,27 +521,39 @@
     },
     {
       "path": "docs/ou3-world-frame-rows.md",
-      "git_blob_sha": "52dc42e8a6079369e90bbc04f5bfb7cd3525fb80"
+      "git_blob_sha": "d8e091fd68a9428e6320870257c63cf55f08f6c5"
     },
     {
       "path": "tools/stability/ou3_theorem/world_frame.py",
-      "git_blob_sha": "d68330659dc24f10408979c387068d98bfad0dfb"
+      "git_blob_sha": "525db2ec3e8be36845c91d02a999af2a261f4a28"
     },
     {
       "path": "tools/stability/ou3_theorem/world_frame_source_diagnostic.py",
-      "git_blob_sha": "0b0359e293758bcc3a7a0c555f3f4079b8572db0"
+      "git_blob_sha": "4f7ec948ddd0ac26ef577fd038d34d6544f8f4f1"
     },
     {
       "path": "tests/validation/test_ou3_world_frame.py",
-      "git_blob_sha": "381802c6338403661b9644714368d2b879b9e53e"
+      "git_blob_sha": "5a55746024e496493cc0581671c8b061a904d5fc"
     },
     {
       "path": "reports/results/ou3_stability/world-frame-certificate.json",
-      "git_blob_sha": "140da41a51511856ca89ed3028346120608d4811"
+      "git_blob_sha": "e563bca440acd646fd61d93a8557f1a4bab2ceb1"
     },
     {
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "git_blob_sha": "1f2505776dfbc8654368452432cedd0d08ce163c"
+      "git_blob_sha": "0131a26b27b8fa34c4e75d4f7d2741ceef4fa24f"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/aw_covariance_ceiling.py",
+      "git_blob_sha": "0de3e24e6a3ec52c5d1f7f29f0056e546a312bfe"
+    },
+    {
+      "path": "tests/validation/test_ou3_aw_covariance_ceiling.py",
+      "git_blob_sha": "e39951f4fa1856715e7acf0003712b13c69e131a"
+    },
+    {
+      "path": "reports/results/ou3_stability/aw-covariance-ceiling-certificate.json",
+      "git_blob_sha": "7ac26ca15d6fe64d68fcc345d553f6b4e07dfb5b"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",

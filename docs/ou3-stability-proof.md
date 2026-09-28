@@ -45,7 +45,9 @@ In world coordinates the historical AG rows are attitude-free apart from
 world injections and the nominal rotation integral (`ou3-world-frame-rows.md`).
 Same-cell geometry also depends on the applied magnetic cadence. The
 aggregate attitude columns transfer from physical transverse force given an
-AW tracking bound, which together with the gyro columns remains OPEN.
+AW tracking bound in physical units; the isotropic-sync AW covariance ceiling
+is sharp and tight, so no covariance route supplies it uniformly. That bound
+and the gyro columns remain OPEN.
 
 Physical regimes qualify the single construction/H18/release/A21 route. All
 estimator states, covariance, biases, physical S and bias histories, clocks,

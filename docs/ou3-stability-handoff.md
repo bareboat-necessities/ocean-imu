@@ -50,8 +50,11 @@ enters only through world injections and the nominal rotation integral. A
 cadence fails MAGNETIC SERVICE; a jerk lemma ties same-cell geometry to the
 applied magnetic cadence. Corollary A transfers the physical transverse force
 to the attitude columns at the cost of the AW tracking error
-(<1.12383 m/s^2 on 16-s windows). Bound that error and the aggregate gyro
-columns next; charge injections by their signed world sum.
+(<1.12383 m/s^2 on 16-s windows). The AW covariance ceiling `(1+eps)16` is
+tight at every sync and covariance-normalized storage fails on the carried
+collinear motion, so bound that error physically from the literal
+correction loop, then the aggregate gyro columns; charge injections by their
+signed world sum.
 
 Read `ou3-sampling-fidelity.md`: it proves the sharp nonuniform trapezoidal
 mean bound, exclusion of every constant-attitude stationary-sample alias of
