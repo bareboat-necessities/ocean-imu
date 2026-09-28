@@ -226,12 +226,21 @@ and Robust Estimation in C\texttt{++}/Eigen}
         \mathbf{M} &= \mathbf{Q}/s.
     \end{align}
     The matrix $\mathbf{M}$ is projected to symmetric positive definite (SPD)
-    via eigenvalue clamping (Section~\ref{sec:spd}), then Cholesky-factored
-    $\mathbf{M} = \mathbf{U}^\top\mathbf{U}$ to obtain the unit-sphere
-    whitening matrix $\mathbf{A}_\text{unit} = \mathbf{U}$.
-    The final calibration matrix scaled to the target radius $R$ is
+    via eigenvalue clamping (Section~\ref{sec:spd}).  The implementation then
+    uses its unique symmetric positive-definite square root,
     \begin{equation}
-        \mathbf{A} = \mathbf{A}_\text{unit}\,R.
+        \mathbf{A}_\text{unit}
+        = \mathbf{M}^{1/2}
+        = \mathbf{V}\,\mathrm{diag}(\sqrt{\lambda_i})\,\mathbf{V}^\top .
+    \end{equation}
+    Thus $\mathbf{A}_\text{unit}^\top\mathbf{A}_\text{unit}=\mathbf{M}$
+    while the correction remains symmetric and does not introduce the
+    arbitrary rotation associated with a triangular whitening factor.  The
+    final calibration matrix mapping the bias-corrected fitted ellipsoid into
+    the calibrated magnetic vector is
+    \begin{equation}
+        \mathbf{A} = R\,\mathbf{M}^{1/2},\qquad
+        \mathbf{m}_\text{cal}=\mathbf{A}(\mathbf{m}_\text{raw}-\mathbf{b}).
     \end{equation}
 
 % -----------------------------------------------------------------------
@@ -288,17 +297,16 @@ and Robust Estimation in C\texttt{++}/Eigen}
     \section{SPD Projection}
     \label{sec:spd}
 
-    Numerical noise can cause the recovered matrix $\mathbf{M}$ to have
-    small negative eigenvalues, which would break the subsequent Cholesky
-    factorisation.
-    The library projects any symmetric matrix to the nearest SPD matrix
-    by clamping its eigenvalues:
+    Numerical noise can cause the recovered symmetric matrix $\mathbf{M}$ to
+    have non-positive eigenvalues, which would prevent the SPD square-root
+    construction.  The implementation eigendecomposes the symmetrized matrix
+    and floors each eigenvalue:
     \begin{equation}
         \mathbf{M} \leftarrow \mathbf{V}\,
-        \mathrm{diag}\!\left(\max(|\lambda_i|,\,\epsilon)\right)\,
-        \mathbf{V}^\top,
+        \mathrm{diag}\!\left(\max(\lambda_i,\,\epsilon)\right)\,
+        \mathbf{V}^\top ,
     \end{equation}
-    where $\mathbf{V}$ are the eigenvectors of $\mathbf{M}$ and
+    where $\mathbf{V}$ contains the eigenvectors and
     \begin{equation}
         \epsilon = \max\!\bigl(\epsilon_\text{rel}\,\lambda_\text{max},\;
         \epsilon_\text{abs}\bigr),
@@ -306,8 +314,10 @@ and Robust Estimation in C\texttt{++}/Eigen}
         \epsilon_\text{rel} = 10^{-5},\;
         \epsilon_\text{abs} = 10^{-7}.
     \end{equation}
-    This is the nearest-SPD projection under the Frobenius norm for
-    symmetric matrices \cite{Higham1988}.
+    Negative eigenvalues are therefore clamped to the positive floor; they are
+    not reflected through an absolute value.  This is the implemented
+    eigenvalue-floor regularization.  No stronger nearest-SPD optimality claim
+    is required for, or made about, this operation.
 
 % -----------------------------------------------------------------------
     \section{Coverage and Degeneracy Checks}
@@ -865,11 +875,34 @@ and Robust Estimation in C\texttt{++}/Eigen}
         \bigl|\|\mathbf{a}_\text{raw}\| - g\bigr| &< \SI{0.25}{\meter\per\second\squared}.
     \end{align}
 
-    Samples are binned by temperature (same $K=8$ scheme as the accelerometer).
-    Within each bin, the mean reading is taken as the bias estimate.
-    If at least two bins are populated, a linear temperature model
-    \eqref{eq:tempbias} is fitted by ordinary least squares.
-    Otherwise a constant bias ($\mathbf{k}=\mathbf{0}$) is used.
+    The stationary samples are divided into $K=8$ temperature bins.  A bin
+    contributes to thermal identification only when it contains at least 20
+    samples.  All accepted samples still contribute to the stationary-bias
+    fallback.  The measured populated-bin span must be at least
+    $2.0\,{}^\circ$C before a thermal slope is even eligible for
+    qualification; this span threshold alone does not qualify a slope.
+
+    Regression is performed in double precision on the populated-bin means
+    after centering their temperatures about the mean populated-bin
+    temperature.  At least four populated bins are required and the centered
+    temperature information
+    $\sum_j(T_j-\bar T)^2$ must be at least
+    $25\,{}^\circ\mathrm{C}^2$.  The fitted slope is then checked using
+    conservative residual scatter (including a $2\times10^{-4}$ rad/s noise
+    floor): every axis must have one-sigma slope uncertainty no larger than
+    $5\times10^{-5}$ rad/s/$^\circ$C, and
+    $|k_i|+3\sigma_{k_i}$ must not exceed $10^{-3}$ rad/s/$^\circ$C.
+    Consequently a clean capture above the span threshold may learn a slope,
+    while a noisy, sparse, or poorly conditioned capture remains bias-only.
+
+    When qualification fails, the result remains a valid stationary
+    calibration with $\mathbf{k}=\mathbf{0}$, reference temperature equal
+    to the mean accepted-sample temperature, and bias equal to the mean
+    accepted angular rate.  A qualified model instead uses the centered
+    populated-bin reference and clamps runtime extrapolation to the populated
+    temperature interval widened by $2\,{}^\circ$C at each end.  Stored
+    float coefficients are rechecked over that interval; failure of that
+    precision check also falls back to the stationary bias.
 
 % -----------------------------------------------------------------------
     \section{Software Architecture}
@@ -906,6 +939,9 @@ enum class FitFail : uint8_t {
   ACCEL_INFO_LOW,
   ACCEL_CROSSCHECK_FAIL,
   ACCEL_FLOAT_CHECK_FAIL,
+  MAG_QUALITY_FAIL,
+  MAG_VERIFY_FAIL,
+  GYRO_NOT_STILL,
 };
     \end{lstlisting}
     The helper \texttt{fitFailStr()} converts any code to a printable
@@ -913,7 +949,7 @@ enum class FitFail : uint8_t {
 
     \subsection{Sample Buffer}
 
-    \texttt{SampleBuffer3<T,N>} is a fixed-capacity ring buffer for
+    \texttt{SampleBuffer3<T,N>} is a fixed-capacity sample buffer for
     3-D vectors with associated temperature readings:
     \begin{lstlisting}
 template <typename T, int N>
