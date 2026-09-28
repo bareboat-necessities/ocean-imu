@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "f266c7dc602edf23450960c5218939a3cf5719cee4217922931c20c9e0597335",
-    "TFG": "3e41b2223326a506454c4980e3621594bc9c256234cfae9ddc467d82c77ed299"
+    "OU_III": "f530fb3328eeca39d6661822af2a75e017d878872ba84d09e9a56309a04ef145",
+    "TFG": "eea0cc0d6ee5f8cf0a796384045723e146935b28ad82fe1a20225428022ebbf2"
   },
   "build_environment": {
     "compiler": {
@@ -36,9 +36,9 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "generated_utc": "2026-09-28T04:49:33+00:00",
-  "git_commit": "2a5b33545255adbcb8d1fe8c682c6b8bd173b865",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    8 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   24 +-\n reports/results/tfg_comparison/paired_summary.json | 3986 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3250 ++++++++--------\n 5 files changed, 3814 insertions(+), 3814 deletions(-)",
+  "generated_utc": "2026-09-28T20:17:22+00:00",
+  "git_commit": "2924e7374c3754ddd551fe1a424d5da3eb2afc23",
+  "git_diff_stat": "",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -159,7 +159,7 @@
     "src/kalman_common/SeaStateFusionDefaults.h": "37831f74a5a69ca4514d4f180c79cae235794d49afee8370719fc7be86b711c1",
     "src/kalman_common/SeaStateFusionFilterCommon.h": "a753702b3ceae1ca529d6b71cc1b6c1ab5b6542740059e87975aab5ae95cdddd",
     "src/kalman_common/SeaStateOUFamilyDefaults.h": "8c23ee6f8147977cd0a137b62568c66c95820c6327a44bb0ebbd90c56370b567",
-    "src/kalman_ou_common/KalmanOUCoreMath.h": "9f22c2cbf06a92e0c757b1967d31268511a3b61a7f8e4a2a0699e9822d5a82ca",
+    "src/kalman_ou_common/KalmanOUCoreMath.h": "e923d24e69765c415e42bc5fdc480c1ca8cc545287197ccdddce220affa45842",
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "a5d00d557843dee246bf5bcb5cc1823097db7f66f0aa3f62852bfae2e9c7c6f9",
     "src/kalman_tfg/Kalman3D_Wave_TFG.h": "33d937422f8672ad117a542e76d92e5134f558d41ab15c5e130cb79e0050dc59",
@@ -195,7 +195,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "36377641450",
-    "workflow": "ou-full-evidence-branch"
+    "run_id": "36476493538",
+    "workflow": "build"
   }
 }

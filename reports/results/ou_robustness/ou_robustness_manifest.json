@@ -41,9 +41,9 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/ocean-imu-fixes-akk4k0",
-  "git_commit": "2a5b33545255adbcb8d1fe8c682c6b8bd173b865",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 32676 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1574 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   972 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   164 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1860 +-\n 6 files changed, 18932 insertions(+), 18934 deletions(-)",
+  "git_branch": "main",
+  "git_commit": "2924e7374c3754ddd551fe1a424d5da3eb2afc23",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -114,8 +114,8 @@
       "sha256": "8c23ee6f8147977cd0a137b62568c66c95820c6327a44bb0ebbd90c56370b567"
     },
     "src/kalman_ou_common/KalmanOUCoreMath.h": {
-      "bytes": 21987,
-      "sha256": "9f22c2cbf06a92e0c757b1967d31268511a3b61a7f8e4a2a0699e9822d5a82ca"
+      "bytes": 22193,
+      "sha256": "e923d24e69765c415e42bc5fdc480c1ca8cc545287197ccdddce220affa45842"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
       "bytes": 95379,
@@ -325,8 +325,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-28T05:19:39+00:00",
-    "git_commit": "2a5b33545255adbcb8d1fe8c682c6b8bd173b865",
+    "generated_at": "2026-09-28T20:44:10+00:00",
+    "git_commit": "2924e7374c3754ddd551fe1a424d5da3eb2afc23",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -397,8 +397,8 @@
         "size_bytes": 3307
       },
       "src/kalman_ou_common/KalmanOUCoreMath.h": {
-        "sha256": "9f22c2cbf06a92e0c757b1967d31268511a3b61a7f8e4a2a0699e9822d5a82ca",
-        "size_bytes": 21987
+        "sha256": "e923d24e69765c415e42bc5fdc480c1ca8cc545287197ccdddce220affa45842",
+        "size_bytes": 22193
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
         "sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
@@ -509,8 +509,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "36377641450",
-      "workflow": "ou-full-evidence-branch"
+      "run_id": "36476493538",
+      "workflow": "build"
     }
   },
   "result_files": {
