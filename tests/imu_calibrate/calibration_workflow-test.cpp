@@ -124,7 +124,9 @@ static void testMagSampleWindows() {
   imu_cal::MagSampleWindow window;window.begin();
   V raw(20,0,42),mean;M covariance;int emitted=0;
   for(int ms=0;ms<=400;ms+=5) {
-    raw.x()=20+.01f*(ms/25);
+    // Keep each sensor reading unchanged across five 5 ms polls.
+    const int sample_index=ms/25;
+    raw.x()=20+.01f*static_cast<float>(sample_index);
     if(window.update(ms,&raw,mean,covariance))++emitted;
   }
   check(emitted==1 && std::fabs(mean.x()-20.08f)<2e-6f && std::fabs(covariance(0,0)-.0024f)<1e-6f,
