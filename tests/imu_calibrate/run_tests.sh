@@ -4,6 +4,7 @@ cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 python3 test_wizard_config.py
 ./calibration_accuracy-test
+./mag_field_consistency-test
 ./mag_hand_motion-test
 ./calibration_workflow-test
 ./calibration_safety-test
