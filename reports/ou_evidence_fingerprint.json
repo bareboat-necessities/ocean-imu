@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "0545d622ccb4d06259f24e3f944582870eee941cf05d02e63a11920b84e14b3b",
+  "replay_fingerprint": "471c9327702d9eb19103819d852af0494c9c5dde27d03de5be5c1d7ad372ee44",
   "results_file_count": 426,
   "results_files": [
     {
@@ -896,7 +896,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "bb925da1c492cb632b4441b303c58123623b0b041d3365af6a4204acf07ae0a1"
+      "sha256": "c719bc637376b5fd0c8551bbbffe1e677a5d8db21574244411eb328357e0ad16"
     },
     {
       "kind": "file",
@@ -966,62 +966,62 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "c41490161775e4f2ee7204d8b5dc839fba077624de7280a4b243c04361e98c53"
+      "sha256": "2df7ddcd2d9b0dfa0ad1233a3f4ca42138d8a57f490a6f2fea1e9fd5a4b941a9"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "1e01f5532925b6f19568d47eb0ad389a5db0d6af6ad73851333995a7b0999664"
+      "sha256": "bca26275e9fa731699f376714efc1bfec5cb2fb86fcac9632b5d3e83d77f9793"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "bd3efd2161c4e03e35440e97872c640ce5ac3e9ea5886b3c405f22f614813edf"
+      "sha256": "fe4c36b178ba38b5af98e258b2c29fc421efac3688ab5fca12c394afe40654f4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "d9c00e28d8fe85322174fed37696888d40e9e0f384310be6204506e37776aa3d"
+      "sha256": "2a0b45f12f81ecfebe57cd4c33f29fd518b7f65a7fbc4d6abb55c74e01ebcd59"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "ec68dc502964057d27d68e47ed1d9c56dcca29bfc4e54f2cf6fdc2ec8b12c798"
+      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "b2743c48d45b4fdf602b83cdaf328272cc59bc5c8b212d2f267b0db2395c5963"
+      "sha256": "c09f47de2f09c6007a21bbc038e7e641a9f508b25980fd1bb63b4d3ebb7496ef"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "577a7eeedf08f12cf5937b7fa010dcac5df50ea27eb47fea41c48b055a0aeaf6"
+      "sha256": "a28f2e363ea7881d904d0a7ac585b51526526d786d60c9e4842d61724827b069"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "52f92ca6be0738a25612837b3510919d4a89d766ae14e7573b722b584c6a4cc0"
+      "sha256": "bffabcaf390778b6550b01fe5be72a2b2bc5c87e825dbd998380353a97e02abd"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "078dd21b903612cd174abf7820fb07ff2fec0ad4e40ced68b7d653478da7999e"
+      "sha256": "c3b2887fcd1f5b7cf76cfe877cfd9a5c3ecce4b1d4ac9ffb81750ce485265866"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "5ec77ac16b0fb18190b863e73d740dc578b3c7d8b27c2c3b2856efd058c2cf1d"
+      "sha256": "768d0423be162ec89f0f0548dc7c7c8d11d680dea9024228d720041094e740a4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "7175ccedc25ceb82ff821a7bcd79b769c03e73383fcd0f5309859f722537a795"
+      "sha256": "3804dc62163d811550a4b12ae23e7fb6b59138dbdc73df3b00da91cccaa22ceb"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "d9795996bf59fccd094470094646152c0a1ce892d58fa5f8427dbef5bfff1abb"
+      "sha256": "cdc7569f5e43968b9fab7ac414b90787595e5913feefabf06d3892a350c49c7f"
     },
     {
       "kind": "file",
@@ -1036,7 +1036,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "e282f4c2ca11a173182d8ff5bc9cfa80118116737f5ce4fcccdfcaa3dd4c019e"
+      "sha256": "475ce8c6ceab986ac5e0da33d1e6e6ef342f4e1ab71d265334fc8fb5ddff932e"
     },
     {
       "kind": "file",
@@ -2134,13 +2134,13 @@
       "sha256": "61d282cce175faf6d77e9e4a9fa091beb64b8e298cd3328d585f039a050d82a9"
     }
   ],
-  "results_fingerprint": "858f71f9186d9bec99141e79d0c864cc5cc48d1c71d50edfaae41ad8516305e5",
+  "results_fingerprint": "d279a8aa4cea2d8bed63494ef0c6e1c9aacb5c5e4338390c069c58cb5c5f45bd",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 441,
+  "tracked_replay_file_count": 442,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2640,7 +2640,7 @@
     {
       "mode": "100644",
       "path": "src/imu_calibrate/MagCalFit.h",
-      "sha256": "02130694a49d9df7bd5e26e8d6b53eb315bdfa2c5fb282686ea5a6f5ae56b41a"
+      "sha256": "a2ec040e828f712fc9c2be1a972257c0ac948739043b7c469225145250944898"
     },
     {
       "mode": "100644",
@@ -3010,7 +3010,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/Makefile",
-      "sha256": "b9aebb6af42befc5206d3b5f1d654bd448c09abba0c61d885fb433f58c320b15"
+      "sha256": "7b24684381ba62a71f444edbc2651f35a24893659fda5b9be8f5459d2a9abd66"
     },
     {
       "mode": "100644",
@@ -3069,13 +3069,18 @@
     },
     {
       "mode": "100644",
+      "path": "tests/imu_calibrate/mag_field_consistency-test.cpp",
+      "sha256": "566f4fce285f831a590fb5e9091e41e9d2af92f72e4997d016256ea7f207a7a7"
+    },
+    {
+      "mode": "100644",
       "path": "tests/imu_calibrate/mag_hand_motion-test.cpp",
       "sha256": "7a83027baa07d1dc8af5fe0bd5c0fb10b447d45f21b044d85a1fd148e2001bc1"
     },
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/run_tests.sh",
-      "sha256": "f97c93a854ff3a2eb9838fcf41dd98072ed4aa05fe980569856f350e9684b8e3"
+      "sha256": "bacc9ac5a060394e20a30b7d1b766afe27ae4bc4d95951459963493a5b4aaa61"
     },
     {
       "mode": "100644",
