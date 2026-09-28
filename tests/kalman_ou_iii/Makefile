@@ -15,7 +15,7 @@ else
 endif
 LDFLAGS =
 VPATH = $(REPO_ROOT)/src/util
-TARGETS = kalman_ou_iii-sim accel_vibration_guard-test imu_lever_arm-test kalman_ou_common-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test shipping_contract-test shipping_transition-test rs_law-test startup_init-test sampled_capture-test
+TARGETS = kalman_ou_iii-sim accel_vibration_guard-test imu_lever_arm-test kalman_ou_common-test ou_core_numerics-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test shipping_contract-test shipping_transition-test rs_law-test startup_init-test sampled_capture-test
 all: build test
 build: $(TARGETS)
 test: ensure-sim-data $(TARGETS)
@@ -29,6 +29,8 @@ accel_vibration_guard-test: accel_vibration_guard-test.o
 imu_lever_arm-test: imu_lever_arm-test.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 kalman_ou_common-test: kalman_ou_common-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+ou_core_numerics-test: ou_core_numerics-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 aw_covariance_policy-test: aw_covariance_policy-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)

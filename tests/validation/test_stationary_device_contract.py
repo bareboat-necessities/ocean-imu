@@ -19,6 +19,18 @@ class StationaryDeviceContract(unittest.TestCase):
                 line = next(l for l in text.splitlines() if call in l)
                 self.assertTrue(line.strip().startswith(call), line)
 
+    def test_documentation_names_each_sketchs_deployed_cadence(self):
+        text = (ROOT / "docs/stationary-device-behavior.md").read_text()
+        rows = {
+            "atomS3R_ins_kalman_ou2": ("ff.setTauScaledPseudoUpdateCadence(false)", "fixed 15 ms"),
+            "atomS3R_ins_kalman_ou3": ("ff.setTauScaledPseudoUpdateCadence(false)", "fixed 15 ms"),
+            "atomS3R_ins_tfg": ("fusion_.setTauScaledPseudoCadence(true)", "tau-scaled"),
+        }
+        for sketch, (call, cadence) in rows.items():
+            with self.subTest(sketch=sketch):
+                self.assertIn(f"| `{sketch}` | `{call}` | {cadence} |", text)
+        self.assertNotIn("OU-II, OU-III and TFG full marine INS sketches select", text)
+
     def test_tfg_device_tests_are_separate_executed_commands(self):
         directory = ROOT / "tests/kalman_tfg"
         commands = [line.strip() for line in (directory / "run_tests.sh").read_text().splitlines()]

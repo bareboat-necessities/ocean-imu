@@ -593,7 +593,8 @@ public:
     bool awCovarianceSyncCongruent() const noexcept { return congruent_aw_cov_sync_; }
 
     // Self-similar integral pseudo-measurement cadence T_S = c_T * tau_applied.
-    // Enabled by default; disabling selects a fixed 15 ms cadence.
+    // Enabled by default; disabling selects a fixed 15 ms cadence, which the
+    // OU-III device sketch deploys.
     // Whenever cadence changes while Live,
     // reapply R_S so its per-update covariance stays information-rate matched.
     void setTauScaledPseudoUpdateCadence(bool flag) {
