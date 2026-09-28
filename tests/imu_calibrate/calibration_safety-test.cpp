@@ -75,6 +75,21 @@ static void testGyro() {
     for (float t : {-100.f, 35.f, 100.f, std::numeric_limits<float>::quiet_NaN()})
       check((rc.applyGyro(V::Zero(), t) + c.biasT.b0).norm() < 1e-8, "narrow session never fabricates thermal rate");
   }
+  // The authoritative 2 C span is an eligibility boundary, not a promise
+  // that a slope is identifiable. Just below it remains SPAN_SMALL; at the
+  // boundary the fit proceeds to the independent information/bin gates.
+  GC edge = gyro(24, 1.99f, V::Zero(), .00003f);
+  check(edge.thermal == imu_cal::GyroThermal::UNLEARNED &&
+        edge.thermal_reason == imu_cal::GyroThermalReason::SPAN_SMALL,
+        "span below 2 C is not eligible for gyro thermal fit");
+  edge = gyro(24, 2.0f, V::Zero(), .00003f);
+  check(edge.thermal == imu_cal::GyroThermal::UNLEARNED &&
+        edge.thermal_reason == imu_cal::GyroThermalReason::INFORMATION_LOW,
+        "2 C boundary passes span eligibility and remains subject to information gate");
+  check(edge.biasT.k.isZero(0) &&
+        (edge.biasT.b0 - V(.01f,-.008f,.003f)).norm() < 1e-5,
+        "rejected 2 C thermal fit retains stationary gyro bias");
+
   const V slope(.00035f,-.00021f,.00017f);
   GC c = gyro(5, 40, slope, .0002f);
   check(c.thermal == imu_cal::GyroThermal::LEARNED, "wide-temperature slope qualifies");
