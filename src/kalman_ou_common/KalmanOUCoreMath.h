@@ -193,9 +193,10 @@ inline void project_psd_impl(Eigen::Matrix<T,N,N>& S, T eps) {
     } else if constexpr (regularize_large || N <= 6) {
         const T tol = psd_roundoff_tol<T,N>(S);
         Eigen::LDLT<Eigen::Matrix<T,N,N>> ldlt(S);
-        if (ldlt.info() == Eigen::Success) {
-            if (!(ldlt.vectorD().minCoeff() >= -tol)) clamp_eigenvalues_to_floor<T,N>(S, eps);
-        } else {
+        // Congruence preserves inertia, not eigenvalue magnitudes. A small
+        // negative D pivot can correspond to an eigenvalue below -tol, so
+        // apply the roundoff tolerance to S's eigenvalues, not to its pivots.
+        if (ldlt.info() != Eigen::Success || !(ldlt.vectorD().minCoeff() >= T(0))) {
             clamp_eigenvalues_to_floor<T,N>(S, eps, true, tol);
         }
     }
@@ -391,7 +392,7 @@ inline void regularize_psd_if_needed(Eigen::Matrix<T,N,N>& S) {
     }
 
     Eigen::LDLT<Eigen::Matrix<T,N,N>> ldlt(S);
-    if (ldlt.info() == Eigen::Success && ldlt.vectorD().minCoeff() >= -tol) return;
+    if (ldlt.info() == Eigen::Success && ldlt.vectorD().minCoeff() >= T(0)) return;
 
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix<T,N,N>> es(S);
     if (es.info() != Eigen::Success) {
@@ -401,6 +402,7 @@ inline void regularize_psd_if_needed(Eigen::Matrix<T,N,N>& S) {
     }
 
     Eigen::Matrix<T,N,1> eigenvalues = es.eigenvalues();
+    if (eigenvalues.minCoeff() >= -tol) return;
     for (int i = 0; i < N; ++i) eigenvalues(i) = std::max(T(0), eigenvalues(i));
     S = es.eigenvectors() * eigenvalues.asDiagonal() * es.eigenvectors().transpose();
     symmetrize<T,N>(S);

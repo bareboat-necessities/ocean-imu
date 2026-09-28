@@ -1,3 +1,4 @@
+// Copyright 2026, Mikhail Grushinskiy
 #define EIGEN_NON_ARDUINO
 
 // Numerical contracts of the shared OU-II/OU-III core math:
@@ -293,6 +294,27 @@ void test_psd_projection(const char* label) {
         returned_psd<T,N>(S, "positive-diagonal indefinite result");
     }
 
+    // LDLT preserves inertia, not eigenvalue magnitudes. The correlated
+    // negative block has one eigenvalue -(N-1)*amount*tol but a first pivot
+    // of only -amount*tol; comparing D with -tol incorrectly accepts it.
+    if constexpr (N > 4) {
+        for (T scale : {T(1e-4), T(1), T(1e4)}) {
+            const T tol = T(4*N)*std::numeric_limits<T>::epsilon()*scale;
+            for (T amount : {T(0.25)/T(N-1), T(0.75)}) {
+                Matrix S = Matrix::Zero();
+                S(0,0) = scale;
+                S.template bottomRightCorner<N-1,N-1>().setConstant(-amount*tol);
+                const Matrix before = S;
+                Eigen::LDLT<Matrix> ldlt(S);
+                check(ldlt.info() == Eigen::Success && ldlt.vectorD().minCoeff() >= -tol,
+                      "correlated negative block reproduces pivot-tolerance shortcut");
+                project<T,N,ou_iii>(S, eps);
+                returned_psd<T,N>(S, "correlated negative block result");
+                if (amount < T(0.5)) check(S == before, "harmless correlated roundoff changed");
+            }
+        }
+    }
+
     // Asymmetric input is symmetrised.
     {
         Matrix S = spd;
@@ -314,6 +336,26 @@ void test_psd_projection(const char* label) {
     }
 }
 
+// The same invariant applies to the shared OU-chain regularizer. Exercise
+// the three- and four-state sizes used by the shipping OU process blocks.
+template<typename T, int N>
+void test_psd_regularizer() {
+    using Matrix = Eigen::Matrix<T,N,N>;
+    for (T scale : {T(1e-4), T(1), T(1e4)}) {
+        const T tol = T(64)*std::numeric_limits<T>::epsilon()*std::max(T(1),scale);
+        for (T amount : {T(0.25)/T(N-1), T(0.75)}) {
+            Matrix S = Matrix::Zero();
+            S(0,0) = scale;
+            S.template bottomRightCorner<N-1,N-1>().setConstant(-amount*tol);
+            const Matrix before = S;
+            detail::regularize_psd_if_needed<T,N>(S);
+            check(S.allFinite() && S == S.transpose(), "regularizer finite and symmetric");
+            check(min_eigenvalue<T,N>(S) >= -tol, "regularizer correlated negative block");
+            if (amount < T(0.5)) check(S == before, "regularizer harmless roundoff changed");
+        }
+    }
+}
+
 } // namespace
 
 int main() {
@@ -326,6 +368,11 @@ int main() {
     test_psd_projection<double,6,true>("OU-III double 6x6");
     test_psd_projection<float,3,false>("OU-II float 3x3");
     test_psd_projection<double,3,true>("OU-III double 3x3");
+
+    test_psd_regularizer<float,3>();
+    test_psd_regularizer<double,3>();
+    test_psd_regularizer<float,4>();
+    test_psd_regularizer<double,4>();
 
     if (failures) {
         std::cerr << failures << " OU core numerics check(s) failed\n";
