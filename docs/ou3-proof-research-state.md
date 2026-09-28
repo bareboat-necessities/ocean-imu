@@ -349,6 +349,20 @@ Resolved findings and remaining validation limit:
   installation failed with `Could not open file /var/cache/apt/archives/partial/
   ... - open (13: Permission denied)` (exit 100), so its rerun remains a CI
   obligation, not a claimed local success.
+- **Shared OU core arithmetic (implementation/finite-precision failure):**
+  in float, `integral_B_ds` returned IB(0,0)=0 instead of 1.25e-5 s^2 for
+  omega=(0,0,0.01) rad/s, dt=5 ms (angle 5e-5): its small-angle switch tested
+  |omega|, not |omega|*dt, and the closed form cancelled. The six-state
+  `project_psd_ou_iii/ii` accepted diag(-1,1,1,1,1,1) because a pivoted LDLT
+  succeeds on indefinite input, and its `(S+S^T)/2` aliased and was not
+  symmetric. Invalidated premise: that the shipping float Q_AA transport and
+  its PSD guard are accurate/PSD to working precision. Now the coefficients are
+  functions of the angle (series below 1 rad), and the guard checks the LDLT
+  inertia and repairs only indefinite matrices. Retained facts and the current
+  limiter are unchanged: the lemmas bound to this header read only
+  `gyro_bias_radius_rad_s` and `apply_left_error_reset`, both unchanged, so
+  only its provenance hash is updated. Next check: `ou_core_numerics-test`
+  (float and double) and the regenerated branch evidence.
 - **Prior resolved infrastructure:** a stale TFG fingerprint was fixed by
   restoring the original simulator Makefile and using the supplemental
   regression Makefile, without restamping the manifest. Earlier compiler
