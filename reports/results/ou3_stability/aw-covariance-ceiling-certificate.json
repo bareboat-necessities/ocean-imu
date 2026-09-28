@@ -1,0 +1,39 @@
+{
+  "anisotropic_sync_counterexample": {
+    "S_factor": "2",
+    "after_x_diagonal": "409/25",
+    "isotropy_required": true,
+    "lambda_max_operands_upper": "16",
+    "sigma_diagonal": [
+      "16",
+      "16",
+      "4"
+    ]
+  },
+  "aw_standard_deviation_ceiling_upper_mps2": "496391681368826731826645263/124096713624000000000000000",
+  "aw_variance_ceiling": "248198254120826731826645263/15512089203000000000000000",
+  "corollary_A_storage_radius_lower_at_sigma_clamp": "280954767991/1000000000000",
+  "corollary_A_storage_radius_lower_at_unit_sigma": "1123819071967/1000000000000",
+  "corollary_A_threshold_16s_mps2": "112383/100000",
+  "corrections_decrease_aw_marginal": true,
+  "covariance_ceiling_below_stationary_variance_possible": false,
+  "excess_contraction_rate_per_s": "1/6",
+  "inherited_aw_standard_deviation_ceiling_mps2": "156",
+  "inherited_storage_radius": "37461/5200000",
+  "isotropic_sync_witness": {
+    "lambda_max_after": "20",
+    "lambda_max_before": "20",
+    "post_sync_floor_sigma2": true,
+    "sigma2": "4"
+  },
+  "post_sync_floor_makes_ceiling_tight": true,
+  "prediction_step_invariant": true,
+  "process_covariance_relative_defect": "4826872826731826645263/248193427248000000000000000",
+  "propagated_to_nuisance_upper_comparison": false,
+  "qualification": "OU3_AW_COVARIANCE_CEILING_V1",
+  "resets_and_projections_leave_aw_block": true,
+  "scope": "real-arithmetic default regular profile: S_factor=1, additive pending sync, tau<=12 s, Sigma_aw=sigma^2 I<=16 I, no frame/relock reconfiguration",
+  "standard_deviation_improvement_factor_lower": "38999620767133/1000000000000",
+  "theorem_closed": false,
+  "uniform_AW_tracking_bound": false
+}

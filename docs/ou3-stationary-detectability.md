@@ -161,6 +161,9 @@ prior. A supplied 80-digit correlated-root audit has normalized action ratio
 about .4139295 at AG root scales 1 and 10^12, with zero root residual; exact
 rational audits independently check cancellation and matrix dominance. These
 finite calculations audit algebra and are not the proof of uniformity above.
+By `ou3-world-frame-rows.md` the six-column floor of this subcase holds for any
+constant nominal attitude and any admitted committed reference (s=16/635); the
+covariance action above is stated only for the identity/B e_x record.
 
 ### What linear loss now follows, and what does not
 

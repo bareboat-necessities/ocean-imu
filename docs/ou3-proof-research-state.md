@@ -23,9 +23,20 @@ The moving signed margins Delta_col/Delta_gyr, six-pivot uniform premises,
 B_*, J_AG, rho_0 and nonlinear every-prefix retention remain OPEN.
 The exact zero-residual quiet nominal subfamily now has a root-independent
 historical action/full covariance ceiling and qualitative homogeneous linear
-loss. For MOVING, inverse-frame transport and exact same-prediction-cell
-groups sharpen the existing reader's sufficient premises; they do not supply
-uniform positive geometry, injection or action bounds.
+loss.
+
+In world coordinates every historical AG row is `-R_k[f_k]x[A~_k R_0',B~_k]`
+(`ou3-world-frame-rows.md`): the attitude estimate and its error leave the
+six-column geometry, except through world injections and the nominal
+rotation integral of the gyro columns. Same-cell geometry also depends on the
+applied magnetic cadence, so the MOVING premise is pursued as an **aggregate
+world-frame** row statement. Its attitude columns transfer from physical
+transverse force at the sole cost of the AW tracking error (plus reference,
+gravity mismatch and injections). That error must be bounded in physical
+units from the literal acc/S correction loop: the AW covariance ceiling is
+sharp and tight at every sync, yet covariance-normalized storage cannot
+carry the AW error uniformly. The AW tracking bound and the aggregate gyro
+columns are OPEN.
 
 ## Evidence
 
@@ -86,11 +97,50 @@ uniform positive geometry, injection or action bounds.
   are 1.204325434846729 and 1.074485913647320, below actual singular values
   1.922502992341225 and 1.717587283388896. These finite numbers are neither
   uniform certificates nor real-trajectory or magnetic-service enclosures.
-- Same-cell geometry obeys c^2>=min(|f|^2,|b|^2)(1-|u'k|), where u=f/|f|
-  and k is the normalized G_local^-1 b. Literal reset noncontraction proves
-  the two magnetic nonzero singular values are >=|b|. This enters c in the
-  same six-pivot inequality. The supplied 80-digit floor 8.54167423631316
-  is below singular value 8.80825850549787; no physical uniformity is inferred.
+- World-frame factorization (`world_frame.py`): predictions leave
+  `A~=R'AR_0` invariant when the covariance rotation matches the mean
+  increment, resets multiply it by `N=R+'GR` with
+  `N'N=I+(|x|^2 I-xx')/4`, and `B~` integrates the nominal R_hat'. Exact on
+  supplied rational words. Same-cell sigma(C) equals that of
+  `[[f]x;[B_w]x N]`: world nominal force, reference and local injection only.
+  The exact projector eigenvalue `(F+B)/2-sqrt((F-B)^2/4+FB kappa^2)` and the
+  rational reset-angle bound `theta/2+theta^3/24+theta^2/(16-theta^2)` give c.
+  The quiet floor extends to any constant attitude and admitted reference:
+  `c^2>=1296/481`, s=16/635, six pivots >=4/635.
+- Literal injections obey `dd'<=NIS K_theta S K_theta'<=NIS P_theta,theta`
+  (Cauchy--Schwarz, then Joseph with `S-HPH'>=0`). The bound enters a, b0 and
+  the `|d|^2|v|/6` reset supply.
+- Exact collinear MARINE MOTION/IMU BIAS history: `a=c cos(2 pi t)`,
+  `c=g(e_z-(e_z.b)b)`, `B=(21,0,72)` uT, makes force parallel to B at every
+  integer second. With magnetic corrections only then, a carried shipping run
+  gives same-cell sigma .0301--.0356 and sine >=.0032 but aggregate
+  six-column sigma 28.50 over 4 s; AW tracking error reached .563 m/s^2. That
+  cadence fails MAGNETIC SERVICE: one-correction 1-s windows have least
+  service eigenvalue 2.05e-5 against mu_M=1. Jerk forbids force/field
+  collinearity at every instant of a cadence with length-weighted mean gap
+  below `4(g h-2V/L)/J` (.051 s at h=1/5, L=16 s); tent dips attain it.
+- Carried world-frame audit (quiet, wave, collinear at 1 Hz and at 25 Hz;
+  control parity): row factorization 9.9e-78, reset Gram 4.3e-81, prediction
+  branch 2.1e-9. World floors/actual <=1 (quiet 1.0) once each reset charges
+  its float mean-injection angle (<=1.6e-9 rad) on top of psi(theta); without
+  that charge the 25-Hz word's near-collinear group exceeded its actual value
+  by 1.7e-7 relative. Injection/NIS-prior ratios <=.134. Wave two-group
+  budget 1.0656 versus actual 1.7176. `|A~-I|` matches half the signed world
+  injection sum (.00112 versus norm sum .0135, collinear word). CI reproduces
+  the committed record exactly and verifies every reported metric.
+- AW covariance ceiling (`aw_covariance_ceiling.py`, Lemma B): with S_factor=1
+  the pending sync is the spectral max of P_aw and sigma^2 I, predictions keep
+  `(1+eps)16`, and corrections subtract `K_a S K_a'`, so
+  `lambda_max(P_aw)<=(1+eps)16` (156^2 before) with excess decaying as
+  `exp(-t/6)`. Every applied sync floors P_aw at sigma^2 I, so the ceiling is
+  tight; an exact S_factor=2 witness shows isotropy is necessary. Corollary
+  A's storage radius becomes .280954 at the clamp (.0072 before), >=1 for
+  `sigma_max<=1.1238`. Carried: AW reconstruction 1.7e-6, sync isotropy
+  8.2e-7, step ratio <=1+8.2e-7, ceiling ratio <=.999982.
+- Corollary A: on 16-s windows the normalized nominal attitude-column Gram is
+  `>=(1/5-e)^2/((1+e)^2+1)`, `e=(11/16+.15+epsilon_a)/g`, positive iff
+  `epsilon_a<1.12383 m/s^2`; `gamma(0)` is about .00603. No attitude error or
+  magnetic residual is charged.
 - The current excited moving forced-balance word already has roll
   .02 sin(t/2) and displacement .4 sin(.6t)e_z. It satisfies the moving span
   premise for T_E>=4*pi, 0<theta_E<=.04. Its 80-digit balance residual is
@@ -121,14 +171,19 @@ before shipping detector/state/covariance changes can be justified. Conditional
 finite bridge algebra does not supply detection liveness, a retained set or a
 budget for arbitrarily repeated switches. These are explicit OPEN obligations.
 
-On MOVING windows, physical span still does not control the nominal force,
-reference and complete signed gyro transport. The six-pivot lemma supplies
-a quantitative sufficient budget, not its source-uniform premises. Same-cell
-grouping removes E for this selection rule; the inverse-frame formula still
-needs actual injection control to give b0. Quiet-subcase homogeneous decay
-does not control compatible physical mismatch. Preserve
-actual chronological gains, resets, OU and bias histories. No independent
-nominal boxes, unsigned energy, sampled Gramian or finite replay closes B_*.
+On MOVING windows the six-column geometry is attitude-free. A same-cell
+floor would need a coupling between applied magnetic cadence and the jerk
+lemma; the aggregate premise avoids it. The attitude columns need the
+nominal AW tracking error below 1.12383 m/s^2 on 16-s windows, bounded in
+physical units: covariance-normalized storage fails by 6.7--6.9 on the
+carried collinear motion (DEAD_END 19). The gyro columns need
+time-separated transverse-force and magnetic rows through the nominal
+rotation integral.
+Norm-summed NIS/covariance injection bounds overcharge multi-second transport.
+Quiet-subcase homogeneous decay does not control compatible physical mismatch.
+Preserve actual chronological gains, resets, OU and bias histories. No
+independent nominal boxes, unsigned energy, sampled Gramian or finite replay
+closes B_*.
 Every new lemma's role in V_next<=rho V+c_d|d|^2 is stated in the design:
 stationary information sets a supply/ambiguity radius, bridge products and
 supplies compose rho/c_d, and six pivots feed the historical covariance/loss
@@ -255,9 +310,34 @@ comparison. Source-uniform numerical contraction enclosure is not yet justified.
     although raw f,b are nonparallel. The pulled-back field direction,
     not raw simultaneous separation, is the required geometry. Neither
     relaxed witness establishes source reachability or complete-row rank loss.
+18. **Norm-summed NIS/covariance injection budget: overcharge.** Failed
+    quantity: inverse-frame gyro floor over the 3-s inter-anchor interval of
+    the collinear word. Summing `sqrt(NIS lambda_max(P_theta,theta))` gives
+    4.98 rad against actual .0108 rad, so beta saturates and the budget is 0
+    against actual 3.0. Classification: valid but quantitatively loose
+    enclosure (per-correction ratio <=.134, typical far smaller). Invalidated:
+    per-correction covariance/NIS norms, summed, control multi-second
+    transport. Retained: the Loewner lemma and its use on short words (wave
+    .2774 versus .28). One motivated refinement remains: `A~-I` is first
+    order in the **signed** world injection sum (12 times below its norm sum).
+19. **Covariance-normalized AW tracking: formulation failure.** Failed
+    quantity: `sup_t(|e_aw|^2/lambda_max(P_aw)) sup_t lambda_max(P_aw)/1.12383^2`,
+    6.68 on the carried 1-Hz collinear word and 6.91 at 25 Hz. A uniform
+    retained radius must hold V>=106.6 (110.3) from the AW block alone, yet
+    the storage route to Corollary A needs `r^2<1.12383^2/.0791`.
+    Classification: high-precision feasibility ratio above one, structural:
+    200-Hz acc corrections collapse lambda_max(P_aw) about 30 times between
+    syncs while the jerk-driven lag error stays near .56 m/s^2, and every sync
+    restores sigma^2. Invalidated: any AW covariance ceiling, measurement-aware
+    or not, supplies `epsilon_a<1.12383` at a uniform retained radius.
+    Retained: Lemma B and its tightness; the actual AW error .562 satisfies
+    Corollary A on both words.
 
 ## Retained facts
 
+World-frame row factorization, the reset Gram identity, attitude-invariant
+same-cell geometry, the literal injection Loewner budget and the
+isotropic-sync AW covariance ceiling are exact in real arithmetic.
 The sampled acceleration mean bound, constant-field joint physical vector
 floor, full covariance-energy identity, LIN path action, full nuisance floor,
 recurring nuisance upper covariance, historical reader factor/root algebra,
@@ -290,88 +370,60 @@ physical tilt/BA ambiguity separately from estimator covariance. A gyro-only
 observation must charge the entire compatible physical-rate tube. Do not hold
 BA, force zero velocity, or shrink covariance solely from quiet-looking data.
 
-For MOVING, couple the signed forced-data identity to actual attitude/BG
-transport and magnetic reference action before taking norms. Use the explicit
-inverse-frame budget and exact same-cell row factorization
-to prove all six pivots. The source-uniform row/defect margin must exceed the
-recorded failed budgets; a convenient supplied example cannot select it.
+For MOVING, work with the aggregate world-frame array: dense accelerometer
+rows carry transverse force on average, applied magnetic rows fix the
+components normal to B_w, and the gyro columns follow the nominal rotation
+integral. The physical transfer then needs only AW tracking (in physical
+units, from the correction loop), reference and gravity mismatch, and
+injections; the body-frame rotation/reference action
+of DEAD_END 13 does not arise. A same-cell route would instead have to derive
+cadence from MAGNETIC SERVICE and couple it to the jerk lemma. A convenient
+supplied example cannot select the uniform margins.
 
 ## Next falsifiable experiment
 
-Extend the quiet-subcase reader to a rigorously delimited compatible tube,
-charging physical tilt/BA ambiguity and actual nonlinear supplies. On MOVING,
-derive coupled bounds for sigma_min([C_acc;C_mag G_local]) and inverse-frame
-gyro transport from actual gains, innovations and applied service. The E=0
-identity permits testing these two budgets directly on carried histories.
-Evaluate any resulting complete finite-error ratio at high precision before
-rigorous contraction enclosure; reject a construction if its tested ratio
-exceeds one. Passing finite tests remain non-promoting. Uniform bounds are
-required before instantiating B_*, J_AG, rho and nonlinear retained radius.
-Do not repeat the failed pairwise, unsigned-energy or variation-norm tactics.
+State a candidate aggregate world-frame six-column floor: Corollary A for
+the attitude columns, applied magnetic rows at separated times, gyro columns
+through the nominal rotation integral (rate <=1.15 rad/s), and injections
+charged by their signed world sum. Evaluate it at 80 digits on adversarial
+admitted constructions (transverse-force bursts between long collinear
+phases, steady turns, the collinear witness) and on carried words; reject it
+if it is nonpositive or exceeds an actual value. Separately bound the
+physical AW tracking error: write `e_aw` as the output of the literal
+time-varying acc/S correction loop (actual gains, OU decay, syncs) driven by
+physical jerk (<=100 m/s^3), IMU bias and attitude error, and evaluate its
+worst lag at 80 digits on admitted transverse-acceleration histories at the
+MARINE MOTION limits and on both carried collinear words (actual .562). If
+the worst admitted ratio `epsilon_a/1.12383` exceeds one, weaken Corollary A
+(longer windows reach 1.811319) rather than sharpen covariance bounds.
+The stationary tube reader
+remains the quiet-side experiment. Passing finite tests remain
+non-promoting. Do not repeat pairwise, unsigned-energy, variation-norm or
+norm-summed injection tactics.
 
 ## Validation and infrastructure
 
-Based on main `1c8776e7`, including the latest calibration fixes. The complete
-command `EIGEN_INCLUDE_DIR=<Eigen-3.4.0> W3D_WRITE_TIMESERIES=0 make all
-EIGEN_DIR=<Eigen-3.4.0>` returns **exit 0**, with all **589 shared tests**
-and every native suite. GCC memory-management options
-`--param ggc-min-expand=10 --param ggc-min-heapsize=4096` preserve O3 and
-numerical behavior while compiling the updated-main calibration sources.
-Only completed, ignored generated CSV outputs are discarded after scoring;
-inputs, scenarios, gates and scalar logs are preserved.
+Based on main `028406b`. This continuation changes proof tooling, evidence,
+documentation, the proof workflow and the stability article only; no C/C++
+source, Makefile or deployed estimator behavior changes, so `make all` is not
+required by the repository rule and was not run. The OU-III estimator bytes
+and earlier source-replay artifacts are unchanged.
 
-The focused OU-III suite passes **294 tests**, including 18 new inverse-frame,
-same-cell geometry/grouping, covariance and fail-closed scope regressions.
-The fresh two-profile carried-source audit preserves observer/control terminal
-parity and verifies E=0 over exported rational operators. The persistent
-900-second construction/rest/hidden-rocking/rest regression, existing
-stationary/rest-wave-rest and gyro-projection regressions pass in `make all`.
-These finite checks do not establish an all-time stability theorem.
-
-Exact evidence reproduction, the unchanged TFG publication manifest, Ruff
-and `git diff --check` pass. OU-III estimator bytes and previous source replay
-artifacts are unchanged. New/changed proof artifacts are generated from their
-actual current inputs. The final IEEE article passes two LuaLaTeX runs and
-all 15 pages render and are visually inspected, with no overfull box,
-unresolved reference or balancing warning. The reported source hash matches
-the verified PDF run.
-
-Resolved findings and remaining validation limit:
-
-- **Article review:** a literal tab had replaced the backslash in theta_E.
-  Restore `\theta_E`; the new render displays the intended excited range.
-- **CI clang-tidy on inherited calibration logging:**
-  `tools/quality_gates.sh clang-tidy` failed at `AtomS3R_CalLog.h:23` with
-  `bugprone-not-null-terminated-result`. The binary CRLF packet is consumed
-  only by `write(pointer,len+2)`. A narrowly scoped annotation documents that
-  intentional non-string use; no runtime operation or global gate changes.
-  The full rebuilt native calibration/logging tests pass. Local clang-tidy
-  installation failed with `Could not open file /var/cache/apt/archives/partial/
-  ... - open (13: Permission denied)` (exit 100), so its rerun remains a CI
-  obligation, not a claimed local success.
-- **Shared OU core arithmetic (implementation/finite-precision failure):**
-  in float, `integral_B_ds` returned IB(0,0)=0 instead of 1.25e-5 s^2 for
-  omega=(0,0,0.01) rad/s, dt=5 ms (angle 5e-5): its small-angle switch tested
-  |omega|, not |omega|*dt, and the closed form cancelled. The six-state
-  `project_psd_ou_iii/ii` accepted diag(-1,1,1,1,1,1) because a pivoted LDLT
-  succeeds on indefinite input, and its `(S+S^T)/2` aliased and was not
-  symmetric. Invalidated premise: that the shipping float Q_AA transport and
-  its PSD guard are accurate/PSD to working precision. Now the coefficients are
-  functions of the angle (series below 1 rad), and the guard checks the LDLT
-  inertia and repairs only indefinite matrices. Retained facts and the current
-  limiter are unchanged: the lemmas bound to this header read only
-  `gyro_bias_radius_rad_s` and `apply_left_error_reset`, both unchanged, so
-  only its provenance hash is updated. Next check: `ou_core_numerics-test`
-  (float and double) and the regenerated branch evidence.
-- **Prior resolved infrastructure:** a stale TFG fingerprint was fixed by
-  restoring the original simulator Makefile and using the supplemental
-  regression Makefile, without restamping the manifest. Earlier compiler
-  OOM/session loss was addressed with the memory options above; both Eigen
-  variables are required by the separate Python-compiled device test.
-  None of those interrupted runs was counted as a successful full gate.
-- **Publication reference resolution:** the named branch fetch returned
-  main's tree `04ab4912` instead of the published tree `4d4c65ef`; the
-  verification assertion stopped checkout synchronization without altering
-  the validated index. Fetching immutable commit `3009b003` returned the
-  exact expected tree. This was a ref-resolution failure, not changed proof
-  inputs. Use the published commit ID for subsequent synchronization checks.
+- Focused OU-III suite: **313 tests** pass (`test_ou3_*.py`).
+- Shared validation suite (`make -C tests/validation test`, including the
+  evidence contract and TFG check): **608 tests** pass, with one
+  existing data-dependent skip.
+- `build_evidence.py` reproduces every exact certificate, including
+  `world-frame-certificate.json` and `aw-covariance-ceiling-certificate.json`,
+  verifies all diagnostic provenance and checks every reported world-frame
+  metric.
+- The native proof regressions of the proof workflow (shipping contract and
+  transition, sampled capture, 900-s regime ambiguity, gyro projection) pass
+  against Eigen 3.4.0.
+- `world_frame_source_diagnostic.py --expect` recompiles the derived observer
+  and an untapped control and reproduces the committed four-profile record
+  byte for byte in about three minutes; CI runs the same comparison.
+- Ruff (`tools/quality_gates.sh python`) and `git diff --check` pass.
+- The stability article passes two LuaLaTeX runs: 16 pages, no overfull box,
+  no unresolved reference, and the same six underfull warnings as its base.
+  The new AW paragraph was rendered and inspected.

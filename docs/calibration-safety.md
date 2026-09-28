@@ -191,7 +191,7 @@ The final stored-float correction must pass all of these policies:
 | 95th-percentile absolute residual | At most twice the inlier residual limit |
 | Corrected 3D coverage | At least 12 populated cells, both signs on every axis, direction-moment determinant at least 0.001 |
 | Information | Positive, conditioned nine-parameter information matrix; bias SD proxy at most `max(0.5 uT, 0.02 * B)`, matrix SD proxy at most 0.05 |
-| Field consistency in time | Mean inlier residual range across populated time quarters at most `max(0.35 uT, 0.01 * B)` |
+| Field consistency in time | Direction-separated temporal drift, after its three-sigma uncertainty allowance, at most `max(0.35 uT, 0.01 * B)` |
 
 Information is weighted as one observation per direction cell with a 0.2 uT
 noise floor. Its SD values are conservative identification proxies, not a
@@ -202,6 +202,39 @@ directions, interference, a changing field, or an implausible correction.
 convention, recomputed from the refined correction. Acceptance uses the separate
 full-inlier `quality.rms`, tail, fraction and time gates; the smaller trimmed
 report cannot make a poor fit qualify.
+
+A time quarter can contain mostly one side of a turn while another contains
+mostly the other side. Even with a constant physical field, a small fixed
+hard/soft-iron residual then changes the quarter's mean radial error. Raw
+quarter-mean differences alone are not evidence of a changed environment.
+
+The temporal diagnostic jointly models inlier radial errors as a fixed
+nine-Jacobian direction/moment pattern plus time-quarter offsets. It eliminates
+the fixed pattern with a Schur complement before comparing those offsets.
+The Jacobians include each window's covariance, just as the geometric check
+does. Joint estimation avoids the attenuation of real temporal offsets that
+would result from subtracting an independently fitted direction pattern first.
+The largest quarter is the reference; at most three temporal offsets are solved.
+
+The uncertainty proxy uses the joint-regression residual variance, with a
+0.2 uT noise floor and `inliers - 9 - number_of_offsets` residual degrees of
+freedom. Each compared offset contrast must exceed the unchanged physical drift
+limit by three of its estimated standard deviations to report **Field changed**.
+Only quarters with at least ten inliers are compared. If time offsets cannot
+be separated from fixed directional error, the diagnostic does not claim a
+field change; this is not proof that the environment was constant. Numerical
+failures still reject through the information gate. These uncertainty values
+are proxies, not traceable confidence guarantees.
+
+All absolute residual, coverage, information, and per-quarter inlier-fraction
+gates run independently of this diagnostic and are unchanged. In particular,
+a short contaminated quarter still fails even when the global inlier fraction
+passes. The nuisance regression never changes the candidate matrix, bias,
+field scale, raw observations, stored RMS, or stored calibration. Verification
+remains independent: no calibration coefficients are refitted from the new sweep.
+`quality.time_drift` (also printed as `drift` in device logs) retains the raw
+quarter-mean range; `quality.time_drift_lower` is the direction-separated,
+uncertainty-adjusted temporal diagnostic used for the drift-limit decision.
 
 ### Independent verification
 
@@ -265,3 +298,10 @@ completion and bias accuracy. Separate noisy 10 Hz cases require a new quiet
 hold after slow yaw, a field step, or loss/freezing of the magnetic stream.
 These are deterministic host regressions; physical device timing, noise and
 interaction still require an on-device check.
+
+`mag_field_consistency-test.cpp` reproduces false field-change rejections from
+fixed hard/soft-iron errors under ordered orientation sweeps, checks noisy
+moving-window moments, and verifies unchanged coefficient/data ownership and
+timestamp/reservoir semantics. It also requires rejection of small real field
+steps with both repeated and ordered directions, short disturbed quarters,
+large field shifts, and excessive calibration errors.

@@ -24,6 +24,10 @@ Open the sketch: [`atomS3R_ins_kalman_ou3.ino`](atomS3R_ins_kalman_ou3.ino).
 
 ## Install and upload
 
+Install a prebuilt release without compiling using the
+[AtomS3R command-line flashing guide](../../../docs/atoms3r-release-flashing.md).
+Select `atomS3R_ins_kalman_ou3`. For an Arduino IDE source build, follow the steps below.
+
 1. Complete the common [`sensors/` Arduino setup](../../README.md#arduino-installation).
 2. Verify [Basic IMU](../../imu_basic/atomS3R_imu_m5_basic/README.md) and a [Compass / AHRS](../../compass_ahrs/README.md) example first when commissioning new hardware.
 3. Open `atomS3R_ins_kalman_ou3.ino`.
