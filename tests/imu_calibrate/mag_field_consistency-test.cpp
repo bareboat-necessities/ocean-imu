@@ -34,8 +34,7 @@ static void testFixedResidual() {
   for (float field : {25.f,50.f,65.f}) for (float error : {.45f,.6f,1.2f}) {
     if (field==25.f && error>0.6f) continue;
     Sweep sweep;
-    const V bias(error,0,0), saved_bias=bias;
-    const M saved_A=A;
+    const V bias(error,0,0);
     for (int i=0;i<N;++i) sweep.x[i]=field*direction(i,N);
     const auto saved_x=sweep.x;
     Quality q;
@@ -46,7 +45,9 @@ static void testFixedResidual() {
     // fixed hard-iron error is seen from different directions.
     require(q.time_drift>imu_cal::MagFitLimits::driftLimit(field),"reproduction exceeds the old point-estimate drift gate");
     require(q.time_drift_lower<=imu_cal::MagFitLimits::driftLimit(field),"unresolved apparent drift is not reported as a field change");
-    require(A==saved_A && bias==saved_bias && sweep.x==saved_x,"temporal check never refits coefficients or edits observations");
+    // Independent expected values preserve this mutation check without
+    // snapshot copies or references that would alias the tested inputs.
+    require(A==M::Identity() && bias==V(error,0,0) && sweep.x==saved_x,"temporal check never refits coefficients or edits observations");
     std::printf("constant field=%.0f rms=%.6f raw_drift=%.6f lower=%.6f limit=%.6f\n",
                 field,q.rms,q.time_drift,q.time_drift_lower,imu_cal::MagFitLimits::driftLimit(field));
     const Quality ordered=q;

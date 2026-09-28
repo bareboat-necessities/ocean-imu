@@ -40,6 +40,16 @@ columns are OPEN.
 
 ## Evidence
 
+- Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
+  coefficients and alias-safe covariance symmetrization. The PSD checks use
+  LDLT only for nonnegative-pivot acceptance; negative or failed pivots defer
+  to the eigenvalues before applying the existing roundoff tolerance. The
+  float/double regression retains zero-rate and branch-boundary checks,
+  singular PSD invariance, indefinite repair and correlated negative blocks
+  across three scales. These are implementation checks, not a finite-error
+  contraction certificate. Real-arithmetic gyro-radius and reset lemmas are
+  unchanged; native source diagnostics must be regenerated, not restamped.
+
 - `ou3-regime-design.md` states observable stationary information, required
   practical theorem, detector obligations, carried transition state and the
   obstruction before any shipping change. Terminal gyro-bias averaging has
@@ -82,8 +92,9 @@ columns are OPEN.
   bounds give B_q, an every-operation full upper C_q, and qualitative
   homogeneous linear loss on this exact subcase. The full compatible-class
   nonlinear theorem remains OPEN; covariance retention is not state retention.
-- Literal reset G=I+[d]/2 and both prediction R branches have inverse norm
-  <=1. C=A^-1 B is unchanged by resets; later gyro injections retain A^-1.
+- Literal reset G=I+[d]/2 and ideal Rodrigues prediction have inverse norm
+  <=1; the shipping coefficient-series transfer remains qualified by
+  DEAD_END 21. C=A^-1 B is unchanged by resets; later gyro injections retain A^-1.
   Exact prefix recurrences bound |C-tI| without amplifying its past defect
   by every reset. A terminal d=4e_x no longer erases an earlier .005-s floor.
   The 80-digit supplied noncommuting audit has floor .0396561974478783
@@ -116,13 +127,13 @@ columns are OPEN.
   gives same-cell sigma .0301--.0356 and sine >=.0032 but aggregate
   six-column sigma 28.50 over 4 s; AW tracking error reached .563 m/s^2. That
   cadence fails MAGNETIC SERVICE: one-correction 1-s windows have least
-  service eigenvalue 2.05e-5 against mu_M=1. Jerk forbids force/field
+  service eigenvalue 2.03e-5 against mu_M=1. Jerk forbids force/field
   collinearity at every instant of a cadence with length-weighted mean gap
   below `4(g h-2V/L)/J` (.051 s at h=1/5, L=16 s); tent dips attain it.
 - Carried world-frame audit (quiet, wave, collinear at 1 Hz and at 25 Hz;
-  control parity): row factorization 9.9e-78, reset Gram 4.3e-81, prediction
+  control parity): row factorization 1.7e-77, reset Gram 6.4e-81, prediction
   branch 2.1e-9. World floors/actual <=1 (quiet 1.0) once each reset charges
-  its float mean-injection angle (<=1.6e-9 rad) on top of psi(theta); without
+  its float mean-injection angle (<=1.8e-9 rad) on top of psi(theta); without
   that charge the 25-Hz word's near-collinear group exceeded its actual value
   by 1.7e-7 relative. Injection/NIS-prior ratios <=.134. Wave two-group
   budget 1.0656 versus actual 1.7176. `|A~-I|` matches half the signed world
@@ -160,8 +171,9 @@ columns are OPEN.
   >1046.5466859583 rad/s on the qualified 4--6 ms family. None of these is
   a complete signed temporal gyro margin. No projection was active in the
   verified 840-case validation plus 18 calibration and 310-case robustness
-  plus one calibration paired studies; those source/input-bound replays
-  are not regenerated or restamped by this proof-only continuation.
+  plus one calibration paired studies. Those prior source/input-bound
+  replays do not certify the changed core; the existing full-evidence
+  pipeline must regenerate the affected evidence, not restamp it.
 
 ## Current limiter
 
@@ -333,6 +345,32 @@ comparison. Source-uniform numerical contraction enclosure is not yet justified.
     Retained: Lemma B and its tightness; the actual AW error .562 satisfies
     Corollary A on both words.
 
+20. **LDLT pivot tolerance is not an eigenvalue tolerance: implementation
+    failure.** For `N=6`, `tol=24*epsilon`, the symmetric matrix with
+    `S_00=1` and lower `5x5` block `-(tol/2) ones` has an LDLT negative pivot
+    `-tol/2` but eigenvalue `-5tol/2`. The accepted float result was
+    -7.15256e-6 against tolerance 2.86102e-6; double was -1.33227e-14 against
+    5.32907e-15. Invalidated: `min(D)>=-tol` guarantees
+    `lambda_min(S)>=-tol`. Congruence preserves inertia, not eigenvalue
+    magnitudes. Retained: the nonnegative-pivot fast path, the same numerical
+    tolerance and unchanged harmless roundoff. Both the six-state projector
+    and three/four-state OU regularizer now apply tolerance to eigenvalues.
+    New scaled float/double regression checks pass. This does not supply a
+    source-uniform arithmetic bound or close nonlinear retention.
+
+21. **Ideal rotation identities are not a source-rounding certificate.** The
+    shared SO(3) coefficients now switch on `x=|w|h` and use degree-18 Taylor
+    series for |x|<1; the old `|w|<1e-7` branch description is invalid. Exact
+    historical row factorization still uses actual Rs and Bs in W and Gamma.
+    Simplifying `Rs^-1 Bs` to the exact rotation integral, or using a norm-one
+    ideal rotation inverse, requires charging the finite Taylor remainder as
+    well as mean-quaternion and floating-point defects. Classification:
+    implementation-transfer obligation. Retained: the conditional ideal
+    algebra, conservative root certificate and regenerated finite source
+    audit; no source-uniform arithmetic transfer or theorem is promoted.
+    The next falsifiable test is a directed remainder enclosure under the
+    existing nominal-rate/step bounds, not changing the estimator for proof.
+
 ## Retained facts
 
 World-frame row factorization, the reset Gram identity, attitude-invariant
@@ -403,27 +441,36 @@ norm-summed injection tactics.
 
 ## Validation and infrastructure
 
-Based on main `028406b`. This continuation changes proof tooling, evidence,
-documentation, the proof workflow and the stability article only; no C/C++
-source, Makefile or deployed estimator behavior changes, so `make all` is not
-required by the repository rule and was not run. The OU-III estimator bytes
-and earlier source-replay artifacts are unchanged.
+The numerical-core integration is not proof-only: C++ arithmetic and its
+regressions change. `make all` is therefore required, in addition to the
+source/provenance checks below; final native/CI outcomes belong to PR #617.
+No filter tuning, physical assumptions or quality thresholds are relaxed.
 
-- Focused OU-III suite: **313 tests** pass (`test_ou3_*.py`).
-- Shared validation suite (`make -C tests/validation test`, including the
-  evidence contract and TFG check): **608 tests** pass, with one
-  existing data-dependent skip.
-- `build_evidence.py` reproduces every exact certificate, including
-  `world-frame-certificate.json` and `aw-covariance-ceiling-certificate.json`,
-  verifies all diagnostic provenance and checks every reported world-frame
-  metric.
-- The native proof regressions of the proof workflow (shipping contract and
-  transition, sampled capture, 900-s regime ambiguity, gyro projection) pass
-  against Eigen 3.4.0.
-- `world_frame_source_diagnostic.py --expect` recompiles the derived observer
-  and an untapped control and reproduces the committed four-profile record
-  byte for byte in about three minutes; CI runs the same comparison.
-- Ruff (`tools/quality_gates.sh python`) and `git diff --check` pass.
-- The stability article passes two LuaLaTeX runs: 16 pages, no overfull box,
-  no unresolved reference, and the same six underfull warnings as its base.
-  The new AW paragraph was rendered and inspected.
+- `ou_core_numerics-test` passes with the native `-O3` build in float and
+  double, including the new correlated-negative-block cases. Concurrent
+  Eigen-heavy compiles initially exceeded this worker's 4 GiB memory limit
+  (`cc1plus: Killed signal`); the same command passes serially with unchanged
+  flags. This is an infrastructure failure, not evidence against the math.
+- The linked main run `36376443792` failed `clang-tidy` on two coefficient
+  snapshot copies in `mag_field_consistency-test.cpp`. Independent expected
+  values replace those copies; observation snapshots and every acceptance,
+  rejection and mutation assertion remain. No lint check is disabled.
+- The integrated proof/evidence gate rejected the stale common-header hash
+  (`87ac93a` versus `9b92691`). Simply rebinding it would miss changed native
+  arithmetic: the old world-frame record also fails exact reproduction on
+  the moving profiles, while the quiet profile remains unchanged. Regenerate
+  the four-profile record from the corrected source and update its binding.
+  Observer/control terminal parity and every metric check pass; rounded
+  diagnostic bounds above and in `ou3-world-frame-rows.md` match that record.
+- `build_evidence.py` passes and `test_ou3_*.py` passes all **313 tests** after
+  the source/record update. The committed theorem remains OPEN/false and
+  every rational certificate is unchanged. Full validation/robustness and
+  TFG evidence must be regenerated by the existing full-evidence pipeline,
+  never certified by editing only their fingerprints.
+
+Current integration limiter: exact replay and full CI against the final
+source tree, not older green runs. The falsifiable checks are the unchanged
+world-frame `--expect` comparison, `make all`, CMake build, warnings/lint,
+calibration and stationary-device regressions, and the full publication
+pipeline. A failed diagnostic or replay must retain its real failed metric;
+none can promote the still-open finite-error theorem.

@@ -85,6 +85,9 @@ struct Metrics {
     float max_yaw_deg = 0.0f, max_step_m = 0.0f, max_position_m = 0.0f;
     float final_period_s = 0.0f, quiet_max_step_m = 0.0f;
     float handoff_yaw_deg = 0.0f, tail_yaw_deg = 0.0f;
+    // Raw |p_z| after the startup bias-hold transient (stationary, t >= 240 s)
+    // and during the final quiet interval of rest-wave-rest (t >= 650 s).
+    float tail_max_position_m = 0.0f, quiet_max_position_m = 0.0f;
     double wave_sq = 0.0, quiet_sq = 0.0;
     int wave_n = 0, quiet_n = 0;
     double wave_rms() const { return std::sqrt(wave_sq / std::max(1, wave_n)); }
@@ -145,7 +148,10 @@ Metrics replay(bool dense, float bias, float gyro_bias, float noise_std, bool wa
             raw(f).mekf().covariance_full().allFinite();
         m.max_yaw_deg = std::max(m.max_yaw_deg,yaw_error);
         if (first_live) m.handoff_yaw_deg = yaw_error;
-        if (!waves && t >= 240.0f) m.tail_yaw_deg = std::max(m.tail_yaw_deg,yaw_error);
+        if (!waves && t >= 240.0f) {
+            m.tail_yaw_deg = std::max(m.tail_yaw_deg,yaw_error);
+            m.tail_max_position_m = std::max(m.tail_max_position_m,std::abs(position));
+        }
         m.max_step_m = std::max(m.max_step_m,step);
         m.max_position_m = std::max(m.max_position_m,std::abs(position));
         if (waves && t >= 270.0f && t < 430.0f) {
@@ -155,6 +161,7 @@ Metrics replay(bool dense, float bias, float gyro_bias, float noise_std, bool wa
         if (waves && t >= 650.0f) {
             m.quiet_sq += static_cast<double>(position)*position; ++m.quiet_n;
             m.quiet_max_step_m = std::max(m.quiet_max_step_m,step);
+            m.quiet_max_position_m = std::max(m.quiet_max_position_m,std::abs(position));
         }
         if (!m.finite) break;
     }
@@ -167,7 +174,9 @@ void print(const char* label, const Metrics& m) {
               << " max_position_m=" << m.max_position_m << " period_s=" << m.final_period_s
               << " handoff_yaw_deg=" << m.handoff_yaw_deg << " tail_yaw_deg=" << m.tail_yaw_deg
               << " wave_rms_m=" << m.wave_rms() << " quiet_rms_m=" << m.quiet_rms()
-              << " quiet_max_step_m=" << m.quiet_max_step_m << '\n';
+              << " quiet_max_step_m=" << m.quiet_max_step_m
+              << " tail_max_position_m=" << m.tail_max_position_m
+              << " quiet_max_position_m=" << m.quiet_max_position_m << '\n';
 }
 int run() {
     int failures = 0;
@@ -187,13 +196,49 @@ int run() {
 #else
     check(north.max_yaw_deg < 6.0f,"OU stationary heading transient grew unexpectedly");
 #endif
+    // Supported operating envelope (acceptance). After a successful
+    // calibration the simulated accelerometer bias error is 0.0023 m/s^2
+    // median / 0.0056 m/s^2 p90 and the gyro bias error 1e-4 rad/s RMS
+    // (docs/calibration-accuracy.md). These replays allow about twice the
+    // accelerometer p90 (+/-0.01 m/s^2 vertical, either sign) and twenty times
+    // the gyro RMS (0.002 rad/s axial), with 0.0148 m/s^2 accelerometer noise,
+    // at each family's deployed cadence. They prove bounded absolute raw heave
+    // on these synthetic histories: the startup transient while the
+    // accelerometer-bias state is still held after handoff, the settled
+    // stationary tail, and the return to rest after waves. They do not prove
+    // hardware accuracy, thermal behaviour or larger residuals.
+    for (const float residual : {0.01f, -0.01f}) {
+        const auto rest = replay(deployed_fixed_cadence,residual,0.002f,0.0148f,false);
+        print(residual > 0.0f ? "supported-stationary+" : "supported-stationary-",rest);
+        check(rest.finite && rest.live_time >= 0.0f,"supported stationary replay failed");
+        check(rest.max_position_m < 0.3f,"supported residual: startup raw heave excursion exceeds 0.3 m");
+        check(rest.tail_max_position_m < 0.05f,"supported residual: settled stationary raw heave exceeds 5 cm");
+        check(rest.max_step_m < 0.02f,"supported residual: raw heave correction step exceeds 2 cm");
+        check(rest.tail_yaw_deg < 0.5f,"supported residual: stationary heading did not settle");
+        const auto wave = replay(deployed_fixed_cadence,residual,0.002f,0.0148f,true);
+        print(residual > 0.0f ? "supported-rest-wave-rest+" : "supported-rest-wave-rest-",wave);
+        check(wave.finite && wave.wave_n > 0 && wave.quiet_n > 0,"supported rest-wave-rest replay failed");
+        check(wave.wave_rms() < 0.1,"supported residual: raw heave error exceeds 0.1 m RMS on a 0.3 m wave");
+        check(wave.quiet_max_position_m < 0.02f,"supported residual: raw heave did not return within 2 cm of rest");
+        check(wave.quiet_rms() < 0.01,"supported residual: raw heave at rest exceeds 1 cm RMS");
+        check(wave.quiet_max_step_m < 0.01f,"supported residual: return to rest retained large raw-position teeth");
+    }
+
+    // Extreme stress, outside the supported envelope: 0.2 m/s^2 vertical
+    // accelerometer residual (beyond the commissioned 0.13 m/s^2 per-axis
+    // envelope), 0.01 rad/s axial gyro residual and 0.12 m/s^2 noise. The
+    // startup excursion here is a stress response, not a device result: TFG
+    // reaches about 12 m raw while the accelerometer bias is held. These
+    // checks cover finiteness, cadence teeth and eventual recovery only.
     const auto sparse = replay(false,0.2f,0.01f,0.12f,false);
     const auto dense = replay(true,0.2f,0.01f,0.12f,false);
-    print("stationary-tau-scaled",sparse); print("stationary-fixed-cadence",dense);
+    print("stress-stationary-tau-scaled",sparse); print("stress-stationary-fixed-cadence",dense);
     check(sparse.finite && dense.finite && dense.live_time >= 0.0f,"stationary heave replay failed");
     check(std::abs(dense.final_period_s-0.015f)<1e-6f,"fixed pseudo cadence is not 15 ms");
     check(dense.max_step_m < 0.05f,"device still has a large stationary raw-position tooth");
     check(dense.max_step_m <= 0.25f*sparse.max_step_m + 0.001f,"frequent virtual constraints did not reduce stationary teeth");
+    check(sparse.tail_max_position_m < 0.3f && dense.tail_max_position_m < 0.3f,
+          "stress residual: raw heave did not recover after the accelerometer bias was learned");
     const auto wave_sparse = replay(false,0.03f,0.001f,0.0148f,true);
     const auto wave_dense = replay(true,0.03f,0.001f,0.0148f,true);
     print("rest-wave-rest-tau-scaled",wave_sparse); print("rest-wave-rest-fixed-cadence",wave_dense);
