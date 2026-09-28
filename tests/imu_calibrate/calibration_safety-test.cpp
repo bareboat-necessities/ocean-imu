@@ -75,20 +75,44 @@ static void testGyro() {
     for (float t : {-100.f, 35.f, 100.f, std::numeric_limits<float>::quiet_NaN()})
       check((rc.applyGyro(V::Zero(), t) + c.biasT.b0).norm() < 1e-8, "narrow session never fabricates thermal rate");
   }
-  // The authoritative 2 C span is an eligibility boundary, not a promise
-  // that a slope is identifiable. Just below it remains SPAN_SMALL; at the
-  // boundary the fit proceeds to the independent information/bin gates.
+  // The span gate uses populated-bin centroids, not raw capture extrema.
+  // A continuous 2 C ramp has a smaller centroid span and is still ineligible.
   GC edge = gyro(24, 1.99f, V::Zero(), .00003f);
   check(edge.thermal == imu_cal::GyroThermal::UNLEARNED &&
         edge.thermal_reason == imu_cal::GyroThermalReason::SPAN_SMALL,
-        "span below 2 C is not eligible for gyro thermal fit");
+        "raw span below 2 C is not eligible for gyro thermal fit");
   edge = gyro(24, 2.0f, V::Zero(), .00003f);
   check(edge.thermal == imu_cal::GyroThermal::UNLEARNED &&
-        edge.thermal_reason == imu_cal::GyroThermalReason::INFORMATION_LOW,
-        "2 C boundary passes span eligibility and remains subject to information gate");
+        edge.thermal_reason == imu_cal::GyroThermalReason::SPAN_SMALL,
+        "2 C raw ramp remains below the populated-bin centroid span gate");
   check(edge.biasT.k.isZero(0) &&
         (edge.biasT.b0 - V(.01f,-.008f,.003f)).norm() < 1e-5,
-        "rejected 2 C thermal fit retains stationary gyro bias");
+        "rejected 2 C raw ramp retains stationary gyro bias");
+
+  // Repeated temperature holds put each centroid at its fixture temperature.
+  // At 2 C the endpoint centroids are exactly 24 and 26 in stored float
+  // precision. Span eligibility must not bypass the independent information gate.
+  for (float span : {1.99f, 2.0f, 2.01f}) {
+    imu_cal::GyroCalibrator<float,400> held;
+    for (int bin = 0; bin < 8; ++bin) {
+      const float t = 24.f + span * bin / 7.f;
+      for (int i = 0; i < 40; ++i)
+        check(held.addSample(V(.01f,-.008f,.003f), V(0,0,held.g), t),
+              "gyro temperature hold sample accepted");
+    }
+    check(held.fit(edge) && edge.ok, "temperature hold bias fit succeeds");
+    check(edge.thermal_bins == 8 &&
+          std::fabs(edge.temperature_information - span*span*6.f/7.f) < 1e-5f,
+          "temperature holds populate all bins with the expected centroid information");
+    const auto expected = span < 2.f ? imu_cal::GyroThermalReason::SPAN_SMALL
+                                    : imu_cal::GyroThermalReason::INFORMATION_LOW;
+    check(edge.thermal == imu_cal::GyroThermal::UNLEARNED &&
+          edge.thermal_reason == expected,
+          "centroid span below 2 C is ineligible; at and above 2 C information still gates learning");
+    check(edge.biasT.k.isZero(0) &&
+          (edge.biasT.b0 - V(.01f,-.008f,.003f)).norm() < 1e-5,
+          "rejected boundary thermal fit retains stationary gyro bias and exact zero slope");
+  }
 
   const V slope(.00035f,-.00021f,.00017f);
   GC c = gyro(5, 40, slope, .0002f);
