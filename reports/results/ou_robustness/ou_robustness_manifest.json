@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "ed5c020e36935df09e19d12b7e8210fff00006a7",
+  "git_branch": "claude/ou3-stability-proof-3hg0ie",
+  "git_commit": "3b17fdf19ba999d549855df6283225787f1083cb",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -325,8 +325,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-27T20:22:20+00:00",
-    "git_commit": "ed5c020e36935df09e19d12b7e8210fff00006a7",
+    "generated_at": "2026-09-28T00:26:11+00:00",
+    "git_commit": "3b17fdf19ba999d549855df6283225787f1083cb",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -509,8 +509,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "36345804213",
-      "workflow": "build"
+      "run_id": "36360321200",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
