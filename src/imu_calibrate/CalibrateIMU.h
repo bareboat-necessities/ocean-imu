@@ -708,7 +708,7 @@ struct GyroThermalLimits {
   static constexpr double stationary_scatter_span = 5.0; // raw capture span; stillness protection
   static constexpr int min_bins = 4;
   static constexpr int min_per_bin = 20;
-  static constexpr double min_information = 25.0; // sum (T_bin - mean T_bin)^2
+  static constexpr double min_information = 8.0; // sum (T_bin - mean T_bin)^2
   static constexpr double noise_floor = 0.0002;  // does not shrink with raw sample count
   static constexpr double max_slope_sigma = 0.00005;
   static constexpr double max_slope = 0.001;
