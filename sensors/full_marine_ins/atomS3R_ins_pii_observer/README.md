@@ -23,6 +23,10 @@ The sketch explicitly maps the calibrated device/body NED convention into the Z-
 
 ## Install and upload
 
+Install a prebuilt release without compiling using the
+[AtomS3R command-line flashing guide](../../../docs/atoms3r-release-flashing.md).
+Select `atomS3R_ins_pii_observer`. For an Arduino IDE source build, follow the steps below.
+
 1. Complete the common [`sensors/` Arduino setup](../../README.md#arduino-installation).
 2. Verify [Basic IMU](../../imu_basic/atomS3R_imu_m5_basic/README.md) first on new hardware.
 3. Open `atomS3R_ins_pii_observer.ino`, select the AtomS3R-compatible board and USB port, then compile and upload.

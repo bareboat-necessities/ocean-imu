@@ -22,6 +22,10 @@ The Mahony backend is a good embedded baseline when you want a small and respons
 
 ## Install and upload
 
+Install a prebuilt release without compiling using the
+[AtomS3R command-line flashing guide](../../../docs/atoms3r-release-flashing.md).
+Select `atomS3R_compass_mahony`. For an Arduino IDE source build, follow the steps below.
+
 1. Complete the common [`sensors/` Arduino setup](../../README.md#arduino-installation).
 2. If the board has not been checked yet, run the [basic IMU example](../../imu_basic/atomS3R_imu_m5_basic/README.md) first.
 3. Open `atomS3R_compass_mahony.ino`, select the AtomS3R-compatible board/port, compile, and upload.

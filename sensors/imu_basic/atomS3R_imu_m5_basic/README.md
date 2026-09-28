@@ -23,6 +23,10 @@ Open the sketch here: [`atomS3R_imu_m5_basic.ino`](atomS3R_imu_m5_basic.ino).
 
 ## Install and upload
 
+Install a prebuilt release without compiling using the
+[AtomS3R command-line flashing guide](../../../docs/atoms3r-release-flashing.md).
+Select `atomS3R_imu_m5_basic`. For an Arduino IDE source build, follow the steps below.
+
 1. Complete the common [`sensors/` Arduino setup](../../README.md#arduino-installation).
 2. Open `atomS3R_imu_m5_basic.ino` in Arduino IDE.
 3. Select the AtomS3R-compatible ESP32-S3 board profile and the USB serial port.

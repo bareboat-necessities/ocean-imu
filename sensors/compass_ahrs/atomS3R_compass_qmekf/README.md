@@ -23,6 +23,10 @@ Use this version when you want the attitude solution to be expressed as a probab
 
 ## Install and upload
 
+Install a prebuilt release without compiling using the
+[AtomS3R command-line flashing guide](../../../docs/atoms3r-release-flashing.md).
+Select `atomS3R_compass_qmekf`. For an Arduino IDE source build, follow the steps below.
+
 1. Complete the common [`sensors/` Arduino setup](../../README.md#arduino-installation).
 2. Verify the device first with [Basic IMU](../../imu_basic/atomS3R_imu_m5_basic/README.md) if this is a new setup.
 3. Open `atomS3R_compass_qmekf.ino`, select the AtomS3R-compatible board/port, compile, and upload.
