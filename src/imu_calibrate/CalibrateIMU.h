@@ -704,7 +704,7 @@ struct MagCalibration {
 // BMI270's published typical TCO is +/-0.02 deg/s/K (~0.000349 rad/s/K).
 // https://www.bosch-sensortec.com/en/products/motion-sensors/imus/bmi270
 struct GyroThermalLimits {
-  static constexpr double min_span = 5.0;
+  static constexpr double min_span = 2.0;
   static constexpr int min_bins = 4;
   static constexpr int min_per_bin = 20;
   static constexpr double min_information = 25.0; // sum (T_bin - mean T_bin)^2
