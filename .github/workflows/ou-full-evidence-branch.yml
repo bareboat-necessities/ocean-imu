@@ -8,6 +8,9 @@ on:
       - "tools/**"
       - "docs/tfg-comparison.md"
       - "tests/validation/**"
+      # The publisher validates and fingerprints the proof records too.
+      # A source-bound proof refresh must supersede an older in-flight run.
+      - "reports/results/ou3_stability/**"
       - "Makefile"
       - "tools/startup_ablation.py"
       - "tools/ou3_lever_arm_study.py"
