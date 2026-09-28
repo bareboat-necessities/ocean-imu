@@ -3,6 +3,7 @@
 #define EIGEN_NON_ARDUINO
 #include "imu_calibrate/MagCalCapture.h"
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
+#include <algorithm>
 #include <cstdio>
 #include <map>
 #include <string>
@@ -43,6 +44,10 @@ struct FaultKv {
 };
 using Store = ImuCalStoreT<FaultKv>;
 using GC = imu_cal::GyroCalibration<float>;
+using GL = imu_cal::GyroThermalLimits;
+constexpr int kHeldBins = 8;
+// Sum of squared, centered coordinates for equally spaced bin centroids on [0, 1].
+constexpr double kHeldInformationFactor = double(kHeldBins) * (kHeldBins + 1) / (12 * (kHeldBins - 1));
 
 static GC gyro(float lo, float span, const V& slope, float noise = 0, int count = 320) {
   imu_cal::GyroCalibrator<float,400> cal;
@@ -55,6 +60,22 @@ static GC gyro(float lo, float span, const V& slope, float noise = 0, int count 
   }
   GC out;
   check(cal.fit(out) && out.ok, "gyro bias fit succeeds");
+  return out;
+}
+// Repeated holds put each populated-bin centroid at its fixture temperature.
+static GC gyroHeld(float span, const V& slope = V::Zero()) {
+  imu_cal::GyroCalibrator<float,400,kHeldBins> held;
+  for (int bin = 0; bin < kHeldBins; ++bin) {
+    const float t = 24.f + span * bin / (kHeldBins - 1);
+    const V w = V(.01f,-.008f,.003f) + slope * (t - (24.f + span/2));
+    for (int i = 0; i < 40; ++i)
+      check(held.addSample(w, V(0,0,held.g), t), "gyro temperature hold sample accepted");
+  }
+  GC out;
+  check(held.fit(out) && out.ok, "temperature hold bias fit succeeds");
+  check(out.thermal_bins == kHeldBins &&
+        std::fabs(out.temperature_information - span*span*kHeldInformationFactor) < 1e-4,
+        "temperature holds populate all bins with the expected centroid information");
   return out;
 }
 static ImuCalBlobV4 gyroBlob(const GC& g) {
@@ -76,51 +97,91 @@ static void testGyro() {
       check((rc.applyGyro(V::Zero(), t) + c.biasT.b0).norm() < 1e-8, "narrow session never fabricates thermal rate");
   }
   // The span gate uses populated-bin centroids, not raw capture extrema.
-  // A continuous 2 C ramp has a smaller centroid span and is still ineligible.
-  GC edge = gyro(24, 1.99f, V::Zero(), .00003f);
+  // A continuous ramp at the policy minimum still has a smaller centroid span.
+  const float min_span = float(GL::min_span);
+  GC edge = gyro(24, min_span * .995f, V::Zero(), .00003f);
   check(edge.thermal == imu_cal::GyroThermal::UNLEARNED &&
         edge.thermal_reason == imu_cal::GyroThermalReason::SPAN_SMALL,
-        "raw span below 2 C is not eligible for gyro thermal fit");
-  edge = gyro(24, 2.0f, V::Zero(), .00003f);
+        "raw span below min_span is not eligible for gyro thermal fit");
+  edge = gyro(24, min_span, V::Zero(), .00003f);
   check(edge.thermal == imu_cal::GyroThermal::UNLEARNED &&
         edge.thermal_reason == imu_cal::GyroThermalReason::SPAN_SMALL,
-        "2 C raw ramp remains below the populated-bin centroid span gate");
+        "raw ramp at min_span remains below the populated-bin centroid span gate");
   check(edge.biasT.k.isZero(0) &&
         (edge.biasT.b0 - V(.01f,-.008f,.003f)).norm() < 1e-5,
-        "rejected 2 C raw ramp retains stationary gyro bias");
+        "rejected raw ramp retains stationary gyro bias");
 
-  // Repeated temperature holds put each centroid at its fixture temperature.
-  // At 2 C the endpoint centroids are exactly 24 and 26 in stored float
-  // precision. Span eligibility must not bypass the independent information gate.
-  for (float span : {1.99f, 2.0f, 2.01f}) {
-    imu_cal::GyroCalibrator<float,400> held;
-    for (int bin = 0; bin < 8; ++bin) {
-      const float t = 24.f + span * bin / 7.f;
-      for (int i = 0; i < 40; ++i)
-        check(held.addSample(V(.01f,-.008f,.003f), V(0,0,held.g), t),
-              "gyro temperature hold sample accepted");
-    }
-    check(held.fit(edge) && edge.ok, "temperature hold bias fit succeeds");
-    check(edge.thermal_bins == 8 &&
-          std::fabs(edge.temperature_information - span*span*6.f/7.f) < 1e-5f,
-          "temperature holds populate all bins with the expected centroid information");
-    const auto expected = span < 2.f ? imu_cal::GyroThermalReason::SPAN_SMALL
-                                    : imu_cal::GyroThermalReason::INFORMATION_LOW;
+  // Span eligibility must not bypass the independent information/uncertainty gates.
+  for (float span : {min_span * .995f, min_span, min_span * 1.005f}) {
+    edge = gyroHeld(span);
+    const auto expected = span < GL::min_span ? imu_cal::GyroThermalReason::SPAN_SMALL
+                                            : imu_cal::GyroThermalReason::INFORMATION_LOW;
     check(edge.thermal == imu_cal::GyroThermal::UNLEARNED &&
           edge.thermal_reason == expected,
-          "centroid span below 2 C is ineligible; at and above 2 C information still gates learning");
+          "centroid span eligibility does not guarantee enough information for a slope");
     check(edge.biasT.k.isZero(0) &&
           (edge.biasT.b0 - V(.01f,-.008f,.003f)).norm() < 1e-5,
           "rejected boundary thermal fit retains stationary gyro bias and exact zero slope");
   }
+
+  // Test the information gate independently of the span gate. A small offset
+  // keeps fixture rounding from deciding which side of min_information is tested.
+  for (double factor : {.99, 1.01}) {
+    const double target_information = factor * GL::min_information;
+    const float span = float(std::sqrt(target_information / kHeldInformationFactor));
+    edge = gyroHeld(span);
+    check(double(edge.temp_hi) - edge.temp_lo >= GL::min_span,
+          "information fixture clears the independent centroid span gate");
+    const bool enough_information = factor > 1;
+    check((edge.temperature_information >= GL::min_information) == enough_information,
+          "fixture information straddles the header's min_information");
+    if (!enough_information) {
+      check(edge.thermal == imu_cal::GyroThermal::UNLEARNED &&
+            edge.thermal_reason == imu_cal::GyroThermalReason::INFORMATION_LOW &&
+            edge.slope_sigma.maxCoeff() < 0,
+            "below min_information rejects before slope regression");
+      check(edge.biasT.k.isZero(0) &&
+            (edge.biasT.b0 - V(.01f,-.008f,.003f)).norm() < 1e-5,
+            "insufficient information keeps the stationary bias and exact zero slope");
+    } else {
+      check(edge.slope_sigma.minCoeff() > 0,
+            "above min_information proceeds to the independent uncertainty gate");
+      const double floor_sigma = GL::noise_floor / std::sqrt(double(edge.temperature_information));
+      check(std::fabs(double(edge.slope_sigma.minCoeff()) - floor_sigma) < 1e-8 &&
+            std::fabs(double(edge.slope_sigma.maxCoeff()) - floor_sigma) < 1e-8,
+            "clean fixture uncertainty retains the header's bin-level noise floor");
+      if (floor_sigma > GL::max_slope_sigma) {
+        check(edge.thermal == imu_cal::GyroThermal::UNLEARNED &&
+              edge.thermal_reason == imu_cal::GyroThermalReason::INFORMATION_LOW &&
+              edge.biasT.k.isZero(0),
+              "passing min_information cannot bypass the noise-floor uncertainty limit");
+      }
+    }
+  }
+
+  // Enough information for both the explicit gate and the noise-floor sigma
+  // gate must still learn a clean, plausible slope. No acceptance limit is relaxed.
+  const double sigma_information = std::pow(GL::noise_floor / GL::max_slope_sigma, 2);
+  const double qualified_information = 1.1 * std::max({GL::min_information, sigma_information,
+                                                      kHeldInformationFactor * GL::min_span * GL::min_span});
+  const V held_slope = float(GL::max_slope) * V(.2f,-.1f,.05f);
+  edge = gyroHeld(float(std::sqrt(qualified_information / kHeldInformationFactor)), held_slope);
+  check(edge.thermal == imu_cal::GyroThermal::LEARNED &&
+        edge.temperature_information >= GL::min_information &&
+        edge.slope_sigma.maxCoeff() <= GL::max_slope_sigma &&
+        (edge.biasT.k - held_slope).cwiseAbs().maxCoeff() < 3e-6,
+        "constant-derived informative capture learns the slope with all gates intact");
+  Store held_store; ImuCalBlobV4 held_blob;
+  check(held_store.saveVerified(gyroBlob(edge), held_blob) && validateBlob(held_blob),
+        "constant-derived qualified fit survives persisted-float validation");
 
   const V slope(.00035f,-.00021f,.00017f);
   GC c = gyro(5, 40, slope, .0002f);
   check(c.thermal == imu_cal::GyroThermal::LEARNED, "wide-temperature slope qualifies");
   check((c.biasT.k-slope).cwiseAbs().maxCoeff() < 3e-6, "wide-temperature slope accuracy");
   check(c.biasT.T0 > 24.99f && c.biasT.T0 < 25.01f, "regression centered on measured bin temperatures");
-  check(c.slope_sigma.maxCoeff() < imu_cal::GyroThermalLimits::max_slope_sigma, "slope uncertainty is qualified");
-  check(c.temperature_information >= imu_cal::GyroThermalLimits::min_information, "temperature information qualified");
+  check(c.slope_sigma.maxCoeff() < GL::max_slope_sigma, "slope uncertainty is qualified");
+  check(c.temperature_information >= GL::min_information, "temperature information qualified");
   Store store; ImuCalBlobV4 rb;
   check(store.saveVerified(gyroBlob(c), rb) && validateBlob(rb), "learned float blob save/readback");
   RuntimeCals rc; rc.rebuildFromBlob(rb);
@@ -128,8 +189,31 @@ static void testGyro() {
     check((rc.applyGyro(V(.01f,0,0),t) - c.apply(V(.01f,0,0),t)).norm() < 1e-8, "runtime matches fitted float coefficients");
   check((rc.applyGyro(V::Zero(),100)-rc.applyGyro(V::Zero(),c.biasT.T_hi)).norm() < 1e-8, "upper extrapolation clamped");
   check((rc.applyGyro(V::Zero(),-100)-rc.applyGyro(V::Zero(),c.biasT.T_lo)).norm() < 1e-8, "lower extrapolation clamped");
-  check(std::fabs((c.temp_lo-c.biasT.T_lo)-2) < 1e-5 && std::fabs((c.biasT.T_hi-c.temp_hi)-2) < 1e-5,
-        "extrapolation margin is two degrees");
+  check(std::fabs((c.temp_lo-c.biasT.T_lo)-GL::extrapolation_margin) < 1e-5 &&
+        std::fabs((c.biasT.T_hi-c.temp_hi)-GL::extrapolation_margin) < 1e-5,
+        "extrapolation margin matches the header policy");
+
+  // Isolate the persisted information boundary using otherwise qualified
+  // metadata. Rebind both CRCs so checksum failures cannot mask a stale limit.
+  float boundary = float(GL::min_information);
+  if (double(boundary) < GL::min_information)
+    boundary = std::nextafter(boundary, std::numeric_limits<float>::infinity());
+  for (float information : {std::nextafter(boundary, 0.f), boundary,
+                            std::nextafter(boundary, std::numeric_limits<float>::infinity())}) {
+    ImuCalBlobV4 candidate = rb;
+    candidate.gyro_temperature_information = information;
+    candidate.gyro_coeff_crc = gyroCoeffCrc(candidate);
+    candidate = Store::sealed_(candidate);
+    const bool expected = double(information) >= GL::min_information;
+    check(gyroSetValid(candidate) == expected && validateBlob(candidate) == expected,
+          "stored information uses the inclusive header threshold at adjacent float values");
+    Store boundary_store; ImuCalBlobV4 readback;
+    check(boundary_store.saveVerified(candidate, readback) == expected,
+          "save/readback applies the same information boundary");
+    RuntimeCals boundary_runtime; boundary_runtime.rebuildFromBlob(candidate);
+    check(boundary_runtime.gyr.ok == expected,
+          "runtime reconstruction applies the same information boundary");
+  }
   ImuCalBlobV4 corrupt = rb;
   corrupt.gyro_T_hi += 10; corrupt = Store::sealed_(corrupt);
   check(!validateBlob(corrupt), "outer CRC cannot bless unbound gyro metadata");
@@ -137,7 +221,7 @@ static void testGyro() {
   check(!validateBlob(corrupt), "even re-bound oversized extrapolation rejected");
   rc.rebuildFromBlob(corrupt);
   check(!rc.gyr.ok && rc.applyGyro(V::Ones(),100).isApprox(V::Ones()), "runtime rejects invalid gyro metadata");
-  corrupt = rb; corrupt.gyro_k_sigma[0] = .002f; corrupt.gyro_coeff_crc = gyroCoeffCrc(corrupt);
+  corrupt = rb; corrupt.gyro_k_sigma[0] = float(2 * GL::max_slope_sigma); corrupt.gyro_coeff_crc = gyroCoeffCrc(corrupt);
   check(!validateBlob(Store::sealed_(corrupt)), "unqualified stored slope uncertainty rejected");
   corrupt = rb; corrupt.version = 3; corrupt.crc = computeBlobCrc(corrupt);
   check(!validateBlob(corrupt), "old version never silently reinterpreted");
