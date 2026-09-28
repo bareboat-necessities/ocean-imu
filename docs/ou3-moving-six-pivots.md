@@ -180,6 +180,21 @@ The independent 80-digit noncommuting example gives conditional floor
 8.54167423631316 below actual singular value 8.80825850549787; exact rational
 tests audit the matrix inequality and the relaxed null vector separately.
 
+### World-frame form and the limit of same-cell groups
+
+`ou3-world-frame-rows.md` proves that each group satisfies
+`C R=diag(-R,-R_2)[[f]x;[B_w]x N]`, with f the world nominal force, B_w the
+committed reference and `N=R_2' G_local R`. The geometry is therefore
+attitude-free, and the projector bound above sharpens to the exact least
+eigenvalue `(F+B)/2-sqrt((F-B)^2/4+FB kappa^2)`. Literal injections obey
+`dd'<=NIS P_theta,theta`, which bounds a and the inverse-frame b0 on short
+words. A 1-Hz collinear MARINE MOTION/IMU BIAS history degenerates every
+same-cell group while the aggregate array stays full rank; its cadence fails
+MAGNETIC SERVICE. A jerk lemma excludes collinearity at every instant of a
+cadence whose length-weighted mean gap is below about .051 s (h=1/5, 16-s
+windows). A uniform c for this selection rule therefore needs a
+magnetic-cadence coupling; the aggregate world-frame rows do not.
+
 ## 3. Quantitative bridge to the existing factor selector
 
 If an m-by-6 array has `sigma_min(O)>=s>0`, then at each of its six
@@ -233,6 +248,10 @@ nonidentifiability. Removing physical stillness from MOVING does not, by
 itself, improve that nominal floor or repair the failed signed-action bounds.
 This subcase enters the common target only through the historical-reader
 premise; it supplies no physical ambiguity removal or numerical rho.
+By the world-frame form its six-column floor does not need identity attitude
+or a horizontal field: any constant attitude and any committed reference with
+|B|>=20 uT and horizontal fraction >=1/5 give `c^2>=1296/481`, s=16/635 and
+six pivots >=4/635. Its covariance action is not regenerated for that class.
 
 ## Scope of the executable certificate
 

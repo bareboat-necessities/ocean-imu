@@ -209,5 +209,7 @@ physical attitude/BA ambiguity; they do not prove stationary nonlinear robustnes
 On MOVING, the inverse-frame identity C=A^-1 B cancels a reset exactly while
 retaining its effect on future gyro injections. Actual acc/mag groups within
 one prediction cell have E=0 exactly with all resets retained. Their geometry
-uses the field pulled back through those resets. Uniform positive geometry,
-injection and complete historical-action bounds remain OPEN.
+uses the field pulled back through those resets and is attitude-free in world
+coordinates (`ou3-world-frame-rows.md`). Same-cell geometry additionally
+depends on the applied magnetic cadence; aggregate rows avoid that. The AW
+tracking bound, gyro columns and historical action remain OPEN.

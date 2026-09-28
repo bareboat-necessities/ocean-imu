@@ -54,7 +54,11 @@ The scalar recursion
 follows from `1/(1-exp(-x)) <= 1+1/x` and `x=2h/tau >= 2*.004/12`.
 Initial AW covariance is 2.2^2 I; pre-live sync sets it to Sigma, and regular
 optimal corrections only decrease its marginal. Attitude resets leave it
-unchanged. Hence `P_aw <= B I` is inherited from construction.
+unchanged. Hence `P_aw <= B I` is inherited from construction. With the
+isotropic target the sync is a spectral max rather than an addition, which
+gives the sharper principal ceiling `(1+epsilon)16` of
+`ou3-world-frame-rows.md` section 7; it is not propagated here because it
+does not control this comparison.
 
 For BA, the initial variance is .004^2. Holding leaves that decoupled block
 unchanged; the single release floor is the same initial variance. In A21,

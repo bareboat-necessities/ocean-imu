@@ -114,7 +114,9 @@
     "stationary_information_and_detector": "True zero rate supplies direct gyro-bias information up to deterministic noise and bias drift. Gravity/magnetic observations retain physical attitude/BA ambiguity. Smooth rest/motion/rest histories have identical sensor inputs inside unchanged bias/rate/service limits. A finite-entry, universally finite-exit exact-rest detector is impossible on the admitted parameter family. The necessary-evidence monitor never certifies physical STILL and changes no shipping behavior.",
     "regime_transition_composition": "Actual operation prefix gains and supplies compose conditionally, retaining covariance, projections/resets, clocks, physical S/bias histories and magnetic state. Finite detection/retention and a recurring cumulative product/supply budget are open; finite bridges alone are insufficient.",
     "chronological_six_pivot_implication": "Literal reset and prediction inverses are nonexpansive in real arithmetic. C=A^-1 B is unchanged by reset, whose influence remains in subsequent injections. Actual acc/mag groups with no intervening prediction have E=0 after retaining every reset. Positive uniform group geometry and inter-anchor gyro transport imply all six pivots; source-uniform premises, B_*, J_AG and rho remain open. An exact relaxed reset cancellation is neither source reachability nor loss of all historical row rank.",
-    "quiet_nominal_historical_covariance": "Exact zero-residual regular quiet nominal subfamily: two normalized actual acc/mag groups cancel arbitrary AG root/cross covariance; inherited nuisance and full correlated process bounds give every-operation full covariance upper and qualitative homogeneous linear loss. No compatible-class nonlinear stationary theorem, useful numerical rho, or physical attitude/BA separation is claimed."
+    "quiet_nominal_historical_covariance": "Exact zero-residual regular quiet nominal subfamily: two normalized actual acc/mag groups cancel arbitrary AG root/cross covariance; inherited nuisance and full correlated process bounds give every-operation full covariance upper and qualitative homogeneous linear loss. No compatible-class nonlinear stationary theorem, useful numerical rho, or physical attitude/BA separation is claimed.",
+    "world_frame_historical_rows": "Every regular historical AG row is -R_k[f_k]x[A~_k R_0',B~_k]: predictions leave A~ invariant when the covariance rotation equals the mean increment, resets multiply it by N=R_next' G R with N'N=I+(|x|^2 I-xx')/4, and B~ integrates the nominal R_hat'. Same-cell geometry depends only on world nominal force, committed reference and local injection. Literal injections obey dd'<=NIS K S K'<=NIS P_theta,theta. A 1-Hz collinear MARINE MOTION/IMU BIAS history degenerates every same-cell group while aggregate rows keep rank; its one-correction windows fail MAGNETIC SERVICE, and jerk forbids all-collinear cadences with length-weighted mean gap below 4(g h-2V/L)/J. Attitude columns transfer from physical transverse force given AW tracking <1.12383 m/s^2 on 16-s windows. Aggregate gyro columns, AW tracking, B_*, J_AG and rho remain open.",
+    "aw_covariance_ceiling": "Default profile, real arithmetic: the isotropic pending sync is the spectral max of P_aw and sigma^2 I, prediction maps the AW block to phi^2 P_aw+Q_aa with Q_aa<=(1+eps)(1-phi^2)sigma^2 I, and applied corrections subtract K_a S K_a', so lambda_max(P_aw)<=(1+eps)16 with excess decaying as exp(-t/6). Every applied sync floors P_aw at sigma^2 I, so the ceiling is tight; S_factor!=1 breaks it. Covariance-normalized storage cannot carry the AW error uniformly (carried collinear ratios 6.68 and 6.91); the physical AW tracking bound remains open."
   },
   "operation_lemma_sources": [
     {
@@ -147,7 +149,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "278d865b93e7a96fc5c74a18035c7c7561f62891"
+      "git_blob_sha": "c35682ead83a88d4d0fd6c9313163a4745400059"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -255,11 +257,11 @@
     },
     {
       "path": "docs/ou3-nuisance-upper-proof.md",
-      "git_blob_sha": "4dd413729060b276dacf5df34ba93423a5d52d97"
+      "git_blob_sha": "e1ede2ccbd5d7dd81caa89abac9451ad8cec21d9"
     },
     {
       "path": "docs/ou3-stationary-detectability.md",
-      "git_blob_sha": "9e4f02d4341025f014e94856534e53e5e4cbbd7f"
+      "git_blob_sha": "19a1e63e497a19dd6917811c04240100e47de375"
     },
     {
       "path": "tests/validation/test_ou3_nuisance_upper_certificate.py",
@@ -335,7 +337,7 @@
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "535d79a782862dff3267efb765bbd89070c56b3b"
+      "git_blob_sha": "d0b02bcb3b9ecd47e48856e0f43f8fa2af59c5e2"
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
@@ -359,7 +361,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "67bc29e2686e94f7cbfdcc707a7a40520ba4aea1"
+      "git_blob_sha": "e62748286d1b3b720b7e2c94c680d2a373bf5cbf"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
@@ -407,7 +409,7 @@
     },
     {
       "path": "docs/ou3-signed-temporal-continuation.md",
-      "git_blob_sha": "8b6967b59f2b3e6aea7f69c78e3a36587a30b153"
+      "git_blob_sha": "8ce73a1b838808d713c801de3d27144f2b381be1"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal_diagnostic.py",
@@ -431,11 +433,11 @@
     },
     {
       "path": "docs/ou3-regime-design.md",
-      "git_blob_sha": "a40ec3a45fb99010e657c2b79728af5a0a44c482"
+      "git_blob_sha": "9aa891e6f0dadcec1daee44c966af44b56e23193"
     },
     {
       "path": "docs/ou3-moving-six-pivots.md",
-      "git_blob_sha": "8e30f8b4303ac2c071717dccfa9e850ee11457b5"
+      "git_blob_sha": "7a4686d26be2a7a8e37e8ee76c349209063f9933"
     },
     {
       "path": "tools/stability/ou3_theorem/regimes.py",
@@ -447,7 +449,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "60adfaff9eaaff0056b572f1a2c921fe1263465b"
+      "git_blob_sha": "766d7e75ad26be7b613f2449903e1481a1e5c93d"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
@@ -463,7 +465,7 @@
     },
     {
       "path": "tests/validation/test_ou3_theorem_status.py",
-      "git_blob_sha": "761cb5d04fe91d327377240a2dc8482924af3425"
+      "git_blob_sha": "9f12dbd1028aa0e4dd5dc6fe0fac307beace5bcd"
     },
     {
       "path": "tests/kalman_ou_iii/regime_ambiguity-test.cpp",
@@ -516,7 +518,44 @@
     {
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
       "git_blob_sha": "06f0f9598cd9a046c8621e0e1549645ea6c9f91b"
+    },
+    {
+      "path": "docs/ou3-world-frame-rows.md",
+      "git_blob_sha": "d8e091fd68a9428e6320870257c63cf55f08f6c5"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/world_frame.py",
+      "git_blob_sha": "525db2ec3e8be36845c91d02a999af2a261f4a28"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/world_frame_source_diagnostic.py",
+      "git_blob_sha": "4f7ec948ddd0ac26ef577fd038d34d6544f8f4f1"
+    },
+    {
+      "path": "tests/validation/test_ou3_world_frame.py",
+      "git_blob_sha": "5a55746024e496493cc0581671c8b061a904d5fc"
+    },
+    {
+      "path": "reports/results/ou3_stability/world-frame-certificate.json",
+      "git_blob_sha": "e563bca440acd646fd61d93a8557f1a4bab2ceb1"
+    },
+    {
+      "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
+      "git_blob_sha": "0131a26b27b8fa34c4e75d4f7d2741ceef4fa24f"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/aw_covariance_ceiling.py",
+      "git_blob_sha": "0de3e24e6a3ec52c5d1f7f29f0056e546a312bfe"
+    },
+    {
+      "path": "tests/validation/test_ou3_aw_covariance_ceiling.py",
+      "git_blob_sha": "e39951f4fa1856715e7acf0003712b13c69e131a"
+    },
+    {
+      "path": "reports/results/ou3_stability/aw-covariance-ceiling-certificate.json",
+      "git_blob_sha": "7ac26ca15d6fe64d68fcc345d553f6b4e07dfb5b"
     }
   ],
-  "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f"
+  "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
+  "world_frame_continuation_base_main_commit": "7beb63902d3ec0231a08516c3e06580570cbe90e"
 }

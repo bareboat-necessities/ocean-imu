@@ -57,6 +57,31 @@ python3 -m tools.stability.ou3_theorem.moving_transport_source_diagnostic \
   --eigen /usr/include/eigen3 --output /tmp/ou3-moving-transport.json
 ```
 
+`world-frame-certificate.json` exactly checks the world-frame row
+factorization on a rational word, the reset Gram identity, attitude-invariant
+same-cell geometry, the literal injection Loewner budget, the generalized quiet
+floor, Corollary A's AW threshold, the jerk-limited collinear cadence and the
+1-Hz collinear motion/bias witness (no MAGNETIC SERVICE admission claimed).
+`aw-covariance-ceiling-certificate.json` exactly checks Lemma B: the
+isotropic-sync AW ceiling `(1+eps)16`, its prediction invariance and excess
+decay, the spectral-max sync witness, the S_factor=2 counterexample and the
+Corollary A storage radii (.280954 at the clamp).
+`world-frame-source-feasibility.json` replays quiet, wave and collinear source
+words (1-Hz and 25-Hz magnetic cadence) through a derived observer with
+untapped control parity. It records floor/actual ratios <=1 after the float
+mean-injection charge, injection bound ratios, the collinear same-cell
+collapse (.0301) beside aggregate sigma 28.50, the failed one-correction
+service information (2.05e-5), the signed injection sum, the literal AW
+block reconstruction and the failed uniform storage route (6.68 and 6.91).
+CI reproduces the committed record exactly. These are non-promoting finite
+audits:
+
+```
+python3 -m tools.stability.ou3_theorem.world_frame_source_diagnostic \
+  --eigen /usr/include/eigen3 --output /tmp/ou3-world-frame.json \
+  --expect reports/results/ou3_stability/world-frame-source-feasibility.json
+```
+
 The proof-side quiet-evidence monitor never certifies physical STILL. No
 shipping mode switch, noise, cadence, magnetic semantics or quality gate is
 changed. The native `regime_ambiguity-test` carries one 900-second construction/

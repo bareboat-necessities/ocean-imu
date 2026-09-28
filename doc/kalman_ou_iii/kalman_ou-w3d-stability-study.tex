@@ -54,7 +54,11 @@ covariance bound while retaining nuisance and process correlations.
 Actual-gain finite-error composition includes an explicit injection-dependent
 reset remainder. Inverse-frame gyro transport retains literal resets; actual
 acc/mag groups within one prediction cell have an exact row factorization.
-These give a conditional bound on all six historical pivots. A root-cancelling
+These give a conditional bound on all six historical pivots. In world
+coordinates those rows depend on the attitude estimate only through
+injections and the nominal rotation integral. Same-cell geometry also
+depends on the applied magnetic cadence; aggregate attitude columns transfer
+from physical transverse force given an AW tracking bound. A root-cancelling
 reader also proves a full covariance ceiling and qualitative homogeneous
 linear loss on the exact zero-residual quiet nominal subcase. Its extension,
 the moving branch's uniform
@@ -1746,6 +1750,116 @@ nonlinear stationary response by themselves. Equation~\eqref{eq:quiet-covariance
 supplies the separate subcase historical-action argument. This is the same
 reader, not a parallel stability theorem.
 
+\subsection{World-frame historical rows}
+\label{sec:world-frame}
+Let $R_k$ be the mean world-to-body rotation after operation $k$ and
+$\left[\begin{smallmatrix}A_k&B_k\\0&I\end{smallmatrix}\right]$ the literal
+chronological attitude/gyro-bias transport from the root. Put
+$\tilde A_k=R_k^{\mathsf T}A_kR_0$ and $\tilde B_k=R_k^{\mathsf T}B_k$.
+Since $[Rv]_\times=R[v]_\times R^{\mathsf T}$ on ${\rm SO}(3)$, every
+accelerometer or magnetic row block with world nominal vector $f_k$, namely
+$\hat a_{w,k}-ge_z$ or the committed reference $B_w$, satisfies
+\begin{equation}
+ H_k[A_k,B_k]=-R_k[f_k]_\times[\tilde A_kR_0^{\mathsf T},\tilde B_k].
+ \label{eq:world-rows}
+\end{equation}
+The historical array and every reader action are therefore congruent, by
+orthogonal factors, to the stack of $[f_k]_\times[\tilde A_k,\tilde B_k]$.
+A prediction maps $\tilde A\mapsto W\tilde A$ and
+$\tilde B\mapsto W(\tilde B+\Gamma)$ with $W=R^{+\mathsf T}R_sR$ and
+$\Gamma=R^{\mathsf T}R_s^{-1}B_s$. When the covariance rotation equals the
+mean increment, $W=I$ and $\Gamma$ integrates the nominal body-to-world
+rotation. A reset multiplies both by $N=R^{+\mathsf T}GR$; for any orthogonal
+mean injection,
+\begin{equation}
+ N^{\mathsf T}N=I+(\norm x^2I-xx^{\mathsf T})/4,\qquad x=R^{\mathsf T}d.
+\end{equation}
+The attitude estimate and its error thus enter the six-column geometry only
+through world injections and the nominal rotation integral.
+
+For a same-cell group,
+$CR=\operatorname{diag}(-R,-R_2)\left[\begin{smallmatrix}[f]_\times\\
+[B_w]_\times N\end{smallmatrix}\right]$. With $u=f/\norm f$,
+$k=N^{-1}B_w/\norm{N^{-1}B_w}$, $\kappa=|u^{\mathsf T}k|$, $F=\norm f^2$ and
+$B=\norm{B_w}^2$, the projector comparison has least eigenvalue
+\begin{equation}
+ c^2\ge\tfrac12(F+B)-\sqrt{\tfrac14(F-B)^2+FB\kappa^2}
+     \ge\frac{FB(1-\kappa^2)}{F+B}.
+\end{equation}
+The line angle between $N^{-1}B_w$ and $B_w$ is at most
+$\theta/2+\theta^3/24+\theta^2/(16-\theta^2)$ for $\theta=\norm d<4$.
+On the zero-residual quiet record this removes the identity-attitude and
+horizontal-field restrictions: for $\norm{B_w}\ge20\,\mu$T, horizontal
+fraction at least $1/5$ and $g\ge9$, $c^2\ge1296/481$, $s=16/635$ and all six
+pivots are at least $4/635$.
+
+The literal injection $d=K_\theta r$ of an applied correction satisfies
+\begin{equation}
+ dd^{\mathsf T}\preceq(r^{\mathsf T}S^{-1}r)K_\theta SK_\theta^{\mathsf T}
+ \preceq(r^{\mathsf T}S^{-1}r)P_{\theta\theta},
+\end{equation}
+the second step by the Joseph identity when $S-HPH^{\mathsf T}\succeq0$.
+It bounds $a$, $b_0$ and the injection-squared reset supply. To first order
+$\tilde A-I$ is half the signed world injection sum; summing per-correction
+norms instead overcharges multi-second transport.
+
+These identities do not by themselves supply a uniform same-cell floor.
+Take $B=(21,0,72)\,\mu$T, $b=B/75$, $\bar a=g(e_z-(e_z^{\mathsf T}b)b)$ and
+$a(t)=\bar a\cos2\pi t$, with zero biases and roll $\sin(t/2)/100$. Then
+$\norm a\le7g/25$, the jerk is below $17.26\,\mathrm{m/s^3}$, velocity,
+displacement and primitive are bounded with zero means, and
+$a-ge_z=-(24/25)gb$ at every integer second. With magnetic corrections only
+at those instants every ideal same-cell group has kernel $b$; a carried
+shipping run gives same-cell singular values $0.0301$--$0.0356$ beside an
+aggregate six-column value $28.50$. That cadence fails magnetic service:
+one correction per 1-s window leaves the heading and axial-bias columns
+nearly parallel, with least service eigenvalue $2.05\times10^{-5}<\mu_M$.
+Conversely, if the force is parallel to $b$ at instants with gaps $D_k$
+covering a window of length $L$, the jerk bound and $\norm{v}\le V_{\max}$
+give
+\begin{equation}
+ \frac{\sum D_k^2}{\sum D_k}\ge\frac{4(g\,h-2V_{\max}/L)}{J_{\max}},
+ \qquad h=\norm{e_z\times b},
+\end{equation}
+about $0.051$\,s for $h=1/5$ and $L=16$\,s. A same-cell floor thus needs a
+coupling between applied magnetic cadence and this lemma; aggregate rows
+avoid it.
+
+For those rows the sampling mean bound transfers physical transverse force
+to the nominal attitude columns. With trapezoidal accelerometer weights, one
+magnetic row, reference horizontal fraction $\sigma_w$ and
+$\norm{\hat a_{w,i}-a(t_i)}\le\epsilon_a$, the normalized attitude-column
+Gram is at least
+\begin{equation}
+ \gamma=\frac{(\sigma_w-e)_+^2}{(1+e)^2+1},\quad
+ e=\frac{2V_{\max}/T+J_{\max}h_{\max}/4+\epsilon_a}{g}.
+\end{equation}
+No attitude-error or magnetic-residual term appears. For $T=16$\,s and
+$\sigma_w=1/5$ it is positive iff $\epsilon_a<1.12383\,\mathrm{m/s^2}$.
+
+In the storage the AW error obeys $\norm{e_{aw}}^2\le\lambda_{\max}(P_{aw})V$, and
+in the default profile the pending synchronization adds
+$\Pi_+(\sigma^2I-P_{aw})$ to an isotropic target, so it replaces each
+eigenvalue $\beta_i$ of $P_{aw}$ by $\max(\beta_i,\sigma^2)$; prediction gives
+$\phi^2P_{aw}+Q_{aa}$ with $Q_{aa}\preceq(1+\epsilon_Q)(1-\phi^2)\sigma^2I$, and
+every applied correction subtracts $K_aSK_a^{\mathsf T}$. Hence
+\begin{equation}
+ \lambda_{\max}(P_{aw})\le\max\bigl(2.2^2,\,16(1+\epsilon_Q)\bigr)=16(1+\epsilon_Q),
+\end{equation}
+with the excess above any admissible level decaying as $e^{-t/6}$. The
+bound is tight: every applied synchronization leaves $P_{aw}\succeq\sigma^2I$,
+and isotropy is necessary (an exact witness with $S$-factor $2$ exceeds both
+operands). The storage radius for the corollary rises from $0.0072$ to
+$0.28095$ at the $4\,\mathrm{m/s^2}$ clamp. It cannot be made uniform, however.
+On the carried collinear motion, accelerometer corrections collapse
+$\lambda_{\max}(P_{aw})$ to $0.0026$ between synchronizations while the lag
+error stays near $0.56\,\mathrm{m/s^2}$, so
+$\sup_t(\norm{e_{aw}}^2/\lambda_{\max})\,\sup_t\lambda_{\max}/1.12383^2$
+equals $6.68$ with 1-Hz and $6.91$ with 25-Hz magnetic corrections,
+although the actual AW error $0.562\,\mathrm{m/s^2}$ satisfies the corollary.
+The AW tracking bound must therefore be physical, from the literal
+correction loop; it and the aggregate gyro columns remain open.
+
 \subsection{Admitted stillness ambiguity}
 Quiet truth with constant body-to-world attitude
 $R_x(2\arctan(1/100))$, field $75e_x$, zero gyro bias and
@@ -1930,7 +2044,10 @@ rest/motion witness obstructs guaranteed exact-STILL entry/exit detection;
 it does not prove instability. Complete-window quantifiers, conditional
 bridge composition and the chronological six-pivot implication are available.
 The inverse-frame identity and exact same-prediction-cell row grouping
-sharpen its conditional premises. The quiet nominal subcase now has a
+sharpen its conditional premises. Section~\ref{sec:world-frame} removes the
+attitude estimate from the row geometry, ties same-cell geometry to the
+applied magnetic cadence and reduces the aggregate attitude columns to an AW
+tracking bound. The quiet nominal subcase now has a
 root-independent full covariance ceiling and qualitative homogeneous linear
 loss, without a physical stationary robustness conclusion.
 Stationary practical robustness, runtime certification, finite transition
