@@ -47,6 +47,9 @@ struct MagFitQuality {
   MagFitGate gate = MagFitGate::BAD_DATA;
   int samples = 0, inliers = 0, cells = 0, iterations = 0;
   double rms = 0, trimmed_rms = 0, p95 = 0, max_bias_sigma = 0, max_matrix_sigma = 0, time_drift = 0;
+  // Raw quarter-mean range and a direction-separated temporal lower bound are
+  // separate diagnostics; neither changes the absolute residual gates.
+  double time_drift_lower = 0;
   double initial_cost = 0, refined_cost = 0;
 };
 
@@ -155,7 +158,7 @@ public:
              MagFitQuality& q, const uint32_t* elapsed_ms = nullptr, double report_trim = 0.15,
              const Eigen::Matrix<T,3,3>* sample_cov = nullptr) {
     q.gate = MagFitGate::BAD_DATA; q.samples = n; q.inliers = q.cells = 0;
-    q.rms = q.trimmed_rms = q.p95 = q.time_drift = q.max_bias_sigma = q.max_matrix_sigma = 0;
+    q.rms = q.trimmed_rms = q.p95 = q.time_drift = q.time_drift_lower = q.max_bias_sigma = q.max_matrix_sigma = 0;
     if (!x || n > N) return false;
     if (n < 80 || !std::isfinite(double(field)) || field < T(12) || field > T(120) ||
         !std::isfinite(report_trim)) return false;
@@ -202,10 +205,15 @@ public:
     }
     // Information counts one observation per direction cell, not every highly
     // correlated raw reading. Physical parameter order: diag, cross, bias/B.
-    H9& h = information_;
-    h.setZero();
-    for (int i = 0; i < n; ++i) {
-      if (std::fabs(errors_[i]) > limit) continue;
+    uint32_t lo = 0, hi = 0;
+    if (elapsed_ms) {
+      lo = hi = elapsed_ms[0];
+      for (int i = 1; i < n; ++i) { lo = std::min(lo,elapsed_ms[i]); hi = std::max(hi,elapsed_ms[i]); }
+    }
+    auto timeBin = [&](int i) {
+      return std::min(3,int(uint64_t(elapsed_ms[i]-lo)*4/(uint64_t(hi-lo)+1)));
+    };
+    auto jacobian = [&](int i) {
       const V u = (x[i].template cast<double>()-bias.template cast<double>())/double(field), v = s*u;
       const M cov=sampleCov_(sample_cov,i,double(field));
       const double r=std::sqrt(v.squaredNorm()+(s*cov*s.transpose()).trace());
@@ -213,6 +221,13 @@ public:
       P j;
       j << G(0,0),G(1,1),G(2,2),G(0,1)+G(1,0),G(0,2)+G(2,0),G(1,2)+G(2,1),0,0,0;
       j.template tail<3>() = -s*v/r;
+      return j;
+    };
+    H9& h = information_;
+    h.setZero();
+    for (int i = 0; i < n; ++i) {
+      if (std::fabs(errors_[i]) > limit) continue;
+      const P j = jacobian(i);
       h.noalias() += j*j.transpose()/double(count[cells_[i]]);
     }
     auto& info = information_solve_;
@@ -232,23 +247,92 @@ public:
       q.gate = MagFitGate::INFORMATION; return false;
     }
     if (elapsed_ms) {
-      uint32_t lo=elapsed_ms[0],hi=lo;
-      for(int i=1;i<n;++i) {lo=std::min(lo,elapsed_ms[i]);hi=std::max(hi,elapsed_ms[i]);}
-      double sums[4]{}; int counts[4]{}, total[4]{};
+      double sums[4]{}, means[4]{};
+      int counts[4]{}, total[4]{};
       for(int i=0;i<n;++i) {
-        const int bin = std::min(3,int(uint64_t(elapsed_ms[i]-lo)*4/(uint64_t(hi-lo)+1)));
+        const int bin = timeBin(i);
         ++total[bin];
         if(std::fabs(errors_[i])>limit) continue;
-        sums[bin]+=errors_[i];++counts[bin];
+        sums[bin]+=errors_[i]; ++counts[bin];
       }
-      double low=INFINITY,high=-INFINITY; int populated=0;
       // A short disturbed interval must not disappear into the global trim.
       for(int j=0;j<4;++j) if(total[j]>=10 && counts[j]<MagFitLimits::min_inlier_fraction*total[j]) {
         q.gate=MagFitGate::FIELD_CHANGED;return false;
       }
-      for(int j=0;j<4;++j) if(counts[j]>=10) {++populated;low=std::min(low,sums[j]/counts[j]);high=std::max(high,sums[j]/counts[j]);}
-      q.time_drift = populated>=2 ? high-low : 0;
-      if(q.time_drift>MagFitLimits::driftLimit(field)) {q.gate=MagFitGate::FIELD_CHANGED;return false;}
+      int reference=0;
+      for (int j=0;j<4;++j) {
+        if (counts[j]) means[j]=sums[j]/counts[j];
+        if (counts[j]>counts[reference]) reference=j;
+      }
+      for (int a=0;a<4;++a) for (int b=a+1;b<4;++b) if (counts[a]>=10 && counts[b]>=10)
+        q.time_drift=std::max(q.time_drift,std::fabs(means[a]-means[b]));
+
+      // Joint diagnostic regression: radial error = a fixed direction/moment
+      // pattern (the nine calibration Jacobians) + a time-quarter offset.
+      // Eliminate the fixed pattern before testing time contrasts. This does
+      // NOT update A/bias, refit the calibration or relax any absolute gate.
+      // Joint fitting is important: simply detrending errors first would also
+      // attenuate real drift when time and attitude are correlated.
+      int slot[4]={-1,-1,-1,-1}, k=0;
+      for (int j=0;j<4;++j) if (j!=reference && counts[j]) slot[j]=k++;
+      if (k) {
+        h.setZero(); time_cross_.setZero();
+        P gradient=P::Zero();
+        M temporal=M::Identity(); V rhs=V::Zero();
+        for (int j=0;j<4;++j) if (slot[j]>=0) temporal(slot[j],slot[j])=counts[j];
+        double squared_error=0;
+        for (int i=0;i<n;++i) {
+          if (std::fabs(errors_[i])>limit) continue;
+          const P j=jacobian(i);
+          h.noalias()+=j*j.transpose(); gradient.noalias()+=errors_[i]*j;
+          squared_error+=errors_[i]*errors_[i];
+          const int t=slot[timeBin(i)];
+          if (t>=0) { time_cross_.col(t)+=j; rhs[t]+=errors_[i]; }
+        }
+        // Reuse the qualification workspace only after its gates have passed.
+        // Here observations are non-overlapping retained windows. The separate
+        // calibration information gate above remains direction-balanced.
+        info.compute(h);
+        if (info.info()!=Eigen::Success || info.vectorD().minCoeff()<=0) {
+          q.gate=MagFitGate::INFORMATION; return false;
+        }
+        covariance_=info.solve(H9::Identity());
+        const P baseline=covariance_*gradient;
+        temporal-=time_cross_.transpose()*covariance_*time_cross_;
+        rhs-=time_cross_.transpose()*baseline;
+        temporal=(0.5*(temporal+temporal.transpose())).eval();
+        if (!covariance_.allFinite() || !temporal.allFinite() || !rhs.allFinite()) {
+          q.gate=MagFitGate::INFORMATION; return false;
+        }
+        Eigen::SelfAdjointEigenSolver<M> spectrum(temporal);
+        if (spectrum.info()!=Eigen::Success) { q.gate=MagFitGate::INFORMATION; return false; }
+        // Without enough within-quarter direction diversity, temporal and
+        // fixed errors can be indistinguishable. That is not evidence that
+        // the field changed; the unchanged absolute/local gates still apply.
+        if (spectrum.eigenvalues().minCoeff()>1e-8*std::max(1.0,temporal.trace())) {
+          Eigen::LDLT<M> solve(temporal);
+          const V offsets=solve.solve(rhs);
+          const M offset_covariance=solve.solve(M::Identity());
+          const P fixed=baseline-covariance_*time_cross_*offsets;
+          V raw_rhs=V::Zero();
+          for (int j=0;j<4;++j) if (slot[j]>=0) raw_rhs[slot[j]]=sums[j];
+          const double residual=std::max(0.0,squared_error-gradient.dot(fixed)-raw_rhs.dot(offsets));
+          const double variance=std::max(0.2*0.2,residual/(q.inliers-9-k));
+          if (!offsets.allFinite() || !offset_covariance.allFinite() || !std::isfinite(variance)) {
+            q.gate=MagFitGate::INFORMATION; return false;
+          }
+          for (int a=0;a<4;++a) for (int b=a+1;b<4;++b) if (counts[a]>=10 && counts[b]>=10) {
+            V contrast=V::Zero();
+            if (slot[a]>=0) contrast[slot[a]]=1;
+            if (slot[b]>=0) contrast[slot[b]]=-1;
+            const double drift=std::fabs(contrast.dot(offsets));
+            const double sigma=std::sqrt(variance*std::max(0.0,contrast.dot(offset_covariance*contrast)));
+            q.time_drift_lower=std::max(q.time_drift_lower,drift-3*sigma);
+          }
+        }
+      }
+      // This uncertainty proxy is not a traceable confidence certificate.
+      if(q.time_drift_lower>MagFitLimits::driftLimit(field)) {q.gate=MagFitGate::FIELD_CHANGED;return false;}
     }
     q.gate = MagFitGate::NONE;
     return true;
@@ -280,6 +364,7 @@ private:
   // Save/read-back validation also runs on the small caller task stack.
   // Keep its largest matrices with the sample workspace on the wizard heap.
   H9 information_, covariance_;
+  Eigen::Matrix<double,9,3> time_cross_;
   Eigen::LDLT<H9> information_solve_;
 };
 } // namespace imu_cal
