@@ -878,16 +878,24 @@ and Robust Estimation in C\texttt{++}/Eigen}
     The stationary samples are divided into $K=8$ temperature bins.  A bin
     contributes to thermal identification only when it contains at least 20
     samples.  All accepted samples still contribute to the stationary-bias
-    fallback.  The measured populated-bin span must be at least
-    $2.0\,{}^\circ$C before a thermal slope is even eligible for
-    qualification; this span threshold alone does not qualify a slope.
+    fallback.  The measured populated-bin centroid span must meet
+    \texttt{GyroThermalLimits::min\_span}, in degrees Celsius, before a
+    thermal slope is even eligible for qualification; this span threshold
+    alone does not qualify a slope.
 
     Regression is performed in double precision on the populated-bin means
     after centering their temperatures about the mean populated-bin
     temperature.  At least four populated bins are required and the centered
-    temperature information
-    $\sum_j(T_j-\bar T)^2$ must be at least
-    $25\,{}^\circ\mathrm{C}^2$.  The fitted slope is then checked using
+    temperature information must satisfy
+    \begin{equation}
+        I_T = \sum_j(T_j-\bar T)^2 \ge I_{T,\min}.
+    \end{equation}
+    Here $I_{T,\min}$ is the compile-time member \texttt{min\_information}
+    of \texttt{imu\_cal::GyroThermalLimits}, defined in
+    \texttt{CalibrateIMU.h}, with units ${}^\circ\mathrm{C}^2$.
+    This shared constant also governs persisted-coefficient validation and
+    the regression tests; it is distinct from the centroid-span limit
+    \texttt{min\_span}.  The fitted slope is then checked using
     conservative residual scatter (including a $2\times10^{-4}$ rad/s noise
     floor): every axis must have one-sigma slope uncertainty no larger than
     $5\times10^{-5}$ rad/s/$^\circ$C, and
