@@ -656,28 +656,36 @@ excitation only shrinks `kappa_nu`. G0, the nominal AW statistics, magnetic
 service, the S-chain and the injection frame are the geometric inputs to
 observability off the kernel. The joint reader remains the coercivity route.
 
-## Next falsifiable experiment
+## Next analytical step
 
-Kernel-bounded observability certificate (O1, O2). Construct explicit
-bounds before any enclosure.
+Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
+bounds before any new source run or enclosure.
 
-1. **Upper bound on `P_nu`.** Build a terminal reader that cancels every root
-   direction except `nu`:
+1. **O1 reader.** Build a terminal reader that cancels every root direction
+   except `nu`:
    - the `(v,p,S,a_w)` root through the S-chain identity;
    - the tilt/BA combination from S-chain accelerometer windows;
    - heading and tilt normal to the field from applied magnetic rows at
      service gaps;
    - the field-axis gyro bias from Lemma T with two separated windows (G0).
 
-   The kernel coordinate itself comes from the prior `c_nu`.
-2. **Lower bound on `Pi`.** Reveal the LIN and attitude paths to the
-   known-root word; the remaining bias and BA tracking are then explicit.
-3. **Test.** Evaluate `lambda_max(Pi_lower^-1 P_nu,upper)` and the implied
-   tilt ceiling on the carried 64-s words: quiet at 5064 s, wave,
-   collinear and sync-locked. The actual `kappa_nu` is 49.2, 45.9, 35.3 and
-   15.7 at `tau=10^-3`.
-4. **Kill criterion.** Reject the reader if its diameter exceeds the actual
-   one by more than 10×, or if the tilt ceiling exceeds `10^-2 rad^2`.
+   Preserve the same-history signed coefficients. The kernel coordinate is
+   supplied only by the fictitious precision `mu=1/c`.
+2. **Known-root scalar action.** Bound directly
+   `d_j=nu_(j+1)' Pi_j nu_(j+1)`; do not first seek a full 21-state ceiling.
+   The S-chain should cancel the neutral/AW root and syncs before bounding
+   process action.
+3. **Close O2 as a fixed point.** From
+   `P_end<=P_nu<=kappa_nu Pi`, prove linked bounds
+   `kappa_nu(1/c)<=K(c)`, `d_j<=d_bar` and exhibit
+   `d_bar K(c_bar)<=c_bar`. Prefer the sharper scalar Schur recursion
+   `c_next<=d+a c/(1+b c)` if it exposes BA decay/kernel information without
+   an independent attitude/BA split.
+4. **Only then falsify constants.** If the symbolic reader produces explicit
+   constants, evaluate the resulting `K(c)`, `d_bar` and fixed-point margin
+   on the existing carried 64-s words as a non-promoting check. Reject the
+   construction if its diameter is more than 10× the actual carried diameter
+   or if no positive fixed-point margin exists.
 
 The G0 extensions below remain the geometric inputs to these floors.
 
