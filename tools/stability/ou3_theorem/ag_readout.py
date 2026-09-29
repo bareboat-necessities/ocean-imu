@@ -176,6 +176,47 @@ def readout_action(events, reader, nuisance_upper, ag=6):
             'AG_root_cancelled_exactly': True, 'source_uniform_verified': False}
 
 
+
+def structured_root_upper(ag_upper, nuisance_upper, eta):
+    """Full root covariance upper from AG/nuisance marginals, cross retained.
+
+    If P_hh<=B and P_nn<=U, PSD block Cauchy and Young give for every eta>0
+      P <= diag((1+eta)B,(1+1/eta)U).
+    This does not bound or delete P_hn; it is a full-matrix domination valid
+    for arbitrary admissible cross covariance.  Eta is free and should be
+    optimized jointly with the pulled-back process comparison.
+    """
+    b,u=_matrix(ag_upper),_matrix(nuisance_upper); ldlt(b); ldlt(u)
+    eta=F(eta)
+    if eta<=0: raise ValueError('positive Young parameter required')
+    nh,nn=len(b),len(u)
+    c=[[F(0) for _ in range(nh+nn)] for _ in range(nh+nn)]
+    for i,row in enumerate(b):
+        for j,v in enumerate(row): c[i][j]=(1+eta)*v
+    for i,row in enumerate(u):
+        for j,v in enumerate(row): c[nh+i][nh+j]=(1+1/eta)*v
+    return c
+
+
+def process_relative_to_structured_root(ag_upper, nuisance_upper, transition,
+                                        process_factor, epsilon, eta=1):
+    """Exact source target Q >= epsilon F C_eta F' for structured root upper.
+
+    When the historical reader proves P_root<=C_eta, this implies
+    F^-1 Q F^-T >= epsilon P_root and therefore direct relative prediction
+    loss delta=epsilon/(1+epsilon).  This is the matrix route to useful rho0;
+    no scalar Q floor or root precision ceiling occurs.
+    """
+    c=structured_root_upper(ag_upper,nuisance_upper,eta)
+    f=_matrix(transition,len(c),len(c)); u=_matrix(process_factor,len(c))
+    q=matmul(u,transpose(u)); eps=F(epsilon)
+    if eps<=0: raise ValueError('positive epsilon required')
+    margin=add(q,matmul(matmul(f,c),transpose(f)),-eps)
+    return {'verified':is_psd(margin),'epsilon':str(eps),
+            'delta':str(eps/(1+eps)),'structured_root_upper':c,
+            'scalar_covariance_ceiling_used':False}
+
+
 def bootstrap(ag_upper, nuisance_upper, transition, process_factor, epsilon, eta=1):
     """Verify the matrix first-prediction implication, conditional on upper bounds.
 
