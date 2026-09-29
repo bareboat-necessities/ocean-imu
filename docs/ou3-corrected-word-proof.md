@@ -2669,6 +2669,60 @@ A source-uniform invariant exists if one can find c with
 under the soft-kernel stratum construction. The next task is to study its
 large-c slope using the exact least-information spectral component, not a
 coordinate-dependent Euclidean norm.
+## Exact large-c soft-kernel persistence coefficient
+
+Diagonalize one word's nuisance-reduced slow information as
+`J=sum_i lambda_i e_i e_i'`, choose the soft direction `n_W=e_1`, and put
+`mu=1/c`. Then exactly
+
+`(J+mu n_W n_W')^-1
+ =(lambda_1+mu)^-1 n_W n_W'
+  +sum_(i>=2) lambda_i^-1 e_i e_i'`.                        (AL-1)
+
+For next-root soft functional n_+, set
+`a_i=n_+' Phi_tilde e_i`. Therefore
+
+`g_W(c)=a_1^2/(lambda_1+1/c)
+       +sum_(i>=2) a_i^2/lambda_i`.                         (AL-2)
+
+If lambda_1>0, g_W(c) remains bounded and its large-c linear coefficient is
+zero. If lambda_1=0, the formula is exact:
+
+`g_W(c)=c |n_+' Phi_tilde n_W|^2 + beta_W`,
+`beta_W=sum_(i>=2) a_i^2/lambda_i`.                          (AL-3)
+
+Hence
+
+`alpha_W=0` when lambda_1>0,
+`alpha_W=|n_+' Phi_tilde n_W|^2` when lambda_1=0.            (AL-4)
+
+There is no asymptotic remainder on an exact-kernel word.
+
+However AL-4 must be interpreted with the same kernel-functional
+normalization used to define the scalar ceiling c. Euclidean unit
+eigenvectors mix attitude and BA coordinates with different physical units;
+under a rescaling of root coordinates the numerical comparison
+`alpha_W<1` changes. The earlier physical kernel formulation implicitly fixed
+a functional nu and bounded `nu'Pnu`; the soft spectral construction must
+likewise declare a root metric/dual functional normalization.
+
+After fixing a positive root metric M, normalize the soft functional in the
+corresponding dual metric and insert the matching M factors in AL-4. The
+source-uniform large-c slope is then the squared induced transfer of the
+current exact data-null functional into the next normalized soft functional.
+
+The existing theorem set does not prove this normalized transfer is strictly
+below one. MAGNETIC SERVICE and four-S control directions transverse to the
+exact compatibility kernel; on an exact data-null line they supply no
+measurement loss. BA decay helps its BA component, but the attitude component
+is transported nearly neutrally. Therefore lambda2_bar>0 does not imply
+`sup alpha_W<1`.
+
+Conclusion: alpha_W is now derived exactly, but O2 remains an independent
+kernel-persistence obligation. The next valid step is to restore the
+physically declared kernel functional/metric (rather than arbitrary Euclidean
+soft eigenvector normalization) and analyze its exact one-word transfer using
+BA decay plus attitude/reset chronology.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
