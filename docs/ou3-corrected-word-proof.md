@@ -793,6 +793,48 @@ but regional practical stability still additionally requires startup/H18
 entry, regime transitions, recurring magnetic-service qualification and
 implementation/float32 totality.
 
+## Explicit coupled coefficient system
+
+For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
+on the quotient of the physical kernel.  Together with
+`nu'Pnu<=c` and the proved nuisance bounds, block Cauchy--Schwarz gives a
+radius-local Euclidean ceiling `P<=C(c,r)I`.  Hence
+`|theta|<=sqrt(C(c,r))r`, while the proved marginals give
+`|e_aw|<=4r` and `|e_ba|<=r/40`.
+
+Parameterize the two radius-dependent geometry terms by proved reader/source
+constants:
+`m_perp(c,r)<=A0+A1 sqrt(C(c,r)) r`, and
+`delta_Q(c,r)<=Q0+Q1 sqrt(C(c,r)) r+Q2 C(c,r)r^2+Q3 C(c,r)^(3/2)r^3`.
+Insert these in the local-tube G0 formulas.  With
+`mu=sigma_w-m_perp/g` and `gamma=mu_+^2/(u1^2+1)`, let `s(c,r)` be the
+resulting quotient singular floor.  If `R_q(c,r)` is the transported
+quotient-reader action and `R_d(c,r)` the action of the same coefficients
+on the terminal kernel functional, take
+
+`K(c,r)=R_q(c,r)/s(c,r)^2`,  `D(c,r)=R_d(c,r)`.
+
+The finite-error composition has polynomial form
+
+`E(c,r)<=e0
+ +Racc[(Fmax/2)C(c,r)r^2+4 sqrt(C(c,r))r^2]
+ +Rmag[(Bmax/2)C(c,r)r^2]
+ +Rreset[z1 sqrt(C(c,r))r+z2 C(c,r)r^2+z3 C(c,r)^(3/2)r^3]`.
+
+Projection contributes zero whenever the proved projection-inactive prefix
+guard applies.  The coupled certification problem is therefore exactly
+
+`D(c,r)<=c`,
+`[1-sqrt(1-1/K(c,r))]r>E(c,r)`.
+
+A positive solution certifies
+`1-rho_0(c,r)>=1/K(c,r)>0` on that invariant region.  This is currently a
+symbolic reduction, not a numerical certificate: finite source-uniform
+values for `A0,A1,Q0..Q3,R_q,R_d` and the associated action constants
+remain OPEN.  Carried-word fitted values must not be substituted for them.
+No positive `(r,c)` or numerical `rho_0` is claimed until those constants
+are proved.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
