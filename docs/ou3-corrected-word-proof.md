@@ -876,6 +876,105 @@ source/radius-uniform evaluation of these signed suprema and of the exact
 actions (LR-2),(LR-4).  Until those are bounded analytically, replacing them
 by carried-word values would be fitted rather than rigorous.
 
+## Signed factor-space bounds for R_q and R_d
+
+The actions (LR-2),(LR-4) admit a nonmultiplicative analytic bound after the
+S-chain reduction.  Index the independent fresh source blocks by `a` and
+write the reduced record and terminal maps as
+
+`A_mu=[A_a]_a`, `T_q=[T_qa]_a`, `T_s=[T_sa]_a`.
+
+The same source block may enter many rows; it is represented once.  For the
+canonical reader define the signed factor coefficients
+
+`Z_qa=T_qa-L_q A_a`,
+`z_da=q'T_sa-l_d A_a`.                                      (FA-1)
+
+Because the whitened fresh factors are mutually independent by construction,
+
+`R_q=sum_a Z_qa Z_qa'`,
+`R_d=sum_a z_da z_da'`.                                     (FA-2)
+
+No cross-factor absolute-value bound is needed.  Correlations within one
+prediction factor, including attitude/gyro-bias and LIN/AW cross terms, stay
+inside its matrix block `A_a,T_a` and are squared only after the signed
+cancellation in (FA-1).
+
+For an S-chain spanning steps k, the AW/root/sync columns are exactly zero.
+Its remaining LIN factor coefficient is
+`-g_k'(n_v,n_p,n_S)_k`; hence its contribution to the reduced-record
+covariance is bounded by
+
+`V_S <= (1+eps) sum_k q_k |g_k|^2
+               (h_k^3/3+h_k^5/20+h_k^7/252)`,               (FA-3)
+
+with `q_k<=2 sigma_k^2/tau_k`.  Measurement factors contribute their actual
+bounded `R_acc,R_mag,R_S` after the same signed row weights.  BA and AG
+prediction factors remain chronological blocks and are not split into
+independent scalar boxes.
+
+Now partition the word into anchored tubes r.  Let `C_r` be the exact
+invertible quotient coordinate map from tube r to a common terminal anchor.
+Transport the local reader coefficient, not its norm:
+
+`L_(q,r)^term=C_r L_(q,r)`,
+`l_(d,r)^term=l_(d,r) C_r^-1`.                               (FA-4)
+
+For each physical source block a, sum all of its transported occurrences
+before squaring:
+
+`Xi_qa=T_qa-sum_r L_(q,r)^term A_(r,a)`,
+`xi_da=q'T_sa-sum_r l_(d,r)^term A_(r,a)`.                   (FA-5)
+
+Then the complete-word actions are exactly
+
+`R_q=sum_a Xi_qa Xi_qa'`,
+`R_d=sum_a xi_da xi_da'`.                                   (FA-6)
+
+This is the desired signed tube-to-tube action formula.  It cannot exhibit
+the exponential operation-count growth of the retired pivot bound: the
+number of terms is the number of fresh source blocks, and cancellation across
+all rows/tubes sharing a block occurs in `Xi` before its norm is taken.
+
+A rigorous scalar ceiling follows from per-family energy bounds without
+destroying temporal signs.  If source blocks are grouped into disjoint
+families `F` (AG process, BA process, S-chain LIN, acc noise, magnetic
+noise, S noise, implementation defect), define
+
+`B_(q,F)=sum_(a in F) Xi_qa Xi_qa'`,
+`b_(d,F)=sum_(a in F) xi_da xi_da'`.                         (FA-7)
+
+Then
+
+`R_q=sum_F B_(q,F)`, `R_d=sum_F b_(d,F)`,                 (FA-8)
+
+and it is sufficient to prove matrix/scalar ceilings
+`B_(q,F)<=bar B_(q,F)`, `b_(d,F)<=bar b_(d,F)`.
+The already proved S-chain bound (FA-3) closes the LIN family.  The BA family
+has total fresh variance bounded by its literal OU/RW recursion and the
+proved marginal `P_ba<=I/1600`.  Measurement families have fixed shipping
+noise ceilings.  The remaining unclosed family is AG process plus its
+signed injected transport: its `Xi` contains the same local-tube
+`Q_k,D_k` coefficients that determine G0.  Thus the action problem has been
+reduced to one matrix-energy bound on that family; AW/root/sync and nuisance
+families no longer obstruct it.
+
+Consequently define
+
+`R_q^bar(c,r)=sum_F bar B_(q,F)(c,r)`,
+`R_d^bar(c,r)=sum_F bar b_(d,F)(c,r)`.                       (FA-9)
+
+Then the rigorous coupled coefficients are
+
+`K(c,r)=lambda_max(Pi_lower^-1 R_q^bar(c,r))`,
+`D(c,r)=R_d^bar(c,r)`.                                      (FA-10)
+
+Here `Pi_lower` is the already proved regular-root lower covariance, with
+the same coordinates.  The only new bound still required for numerical
+closure is the AG-family signed energy in (FA-7); replacing it by
+`||C_r||||L_r||||A_a||` separately would destroy the cancellation and
+recreate DEAD_END 22.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
