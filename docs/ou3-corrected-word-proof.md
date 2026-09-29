@@ -4539,6 +4539,47 @@ theorem. Locally, where D_perp stays nonsingular and margins are strict, the
 zero manifold is viable and the remaining longitudinal input can maintain
 bounded integral states. Global existence still depends on preventing loss of
 D_perp rank/margins, but there is no intrinsic S-chain escape mechanism.
+## Global controlled-invariance test for the reduced zero dynamics
+
+After transverse elimination the local compatibility dynamics are
+`m_+=A_z(m,H)m+B_z(m,H)u_parallel+d_z(m,H)`, with the actual covariance/
+gain/history variables H carried in the augmented state. Let K be a compact
+strict-margin subset on which D_perp is nonsingular and all shipping branches
+are fixed.
+
+A forward-complete invariant zero exists if K contains a nonempty controlled
+viability kernel: for every state in that kernel there is an admissible
+longitudinal input with the next augmented state again in the kernel. Finite
+escape follows if every candidate compact K has a boundary point whose
+outward normal n satisfies `n'B_z=0` and `n'(A_zm+d_z-m)>0` uniformly (or the
+corresponding discrete tangent-cone condition).
+
+The literal shipping structure supplies neither condition source-uniformly.
+`B_z` is one-dimensional and cannot control arbitrary normals of the full
+augmented mean/covariance/tuner state, so a generic controlled-invariance
+theorem is unavailable. Conversely, covariance/tuner evolution is autonomous
+given the event/mean history and is bounded by existing guards; no proved
+boundary normal has an unavoidable outward drift. S, AW and BA mean dynamics
+are dissipative/bounded rather than sign-definitely escaping.
+
+Most importantly, D_perp depends on covariance cross blocks and the next
+accelerometer Jacobian. Previous analysis proved neither a positive reachable
+lower bound on sigma_min(D_perp) nor inevitable approach to zero. MAGNETIC
+SERVICE likewise has a closed lower floor for admissible words but no theorem
+that its strict margin monotonically decreases along constrained zero
+dynamics.
+
+Therefore the global question cannot be decided by controlled-invariance
+geometry from the current invariants: there is no certified compact viable
+set and no certified escape boundary. The exact undecided quantities are now
+`sigma_min(D_perp)` and the strict gate/service margins along the constrained
+trajectory.
+
+This is a genuine assumption/theorem gap, not a missing algebraic manipulation.
+To prove O2 under current assumptions one must derive an additional invariant
+from shipping showing finite-time loss of one of those quantities. To refute
+O2 one must construct a forward-complete constrained trajectory with their
+positive infima. Neither follows from the presently proved bounds.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
