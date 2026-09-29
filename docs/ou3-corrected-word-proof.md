@@ -1067,6 +1067,94 @@ AG process factor.  It does not yet assign a numerical `C_E`; replacing
 the signed energy by `sum ||H_k||^2 ||C_k||^2` over a long word is the
 coarse norm route and is not promoted.
 
+## Reader-weighted C-energy: leverage inequality
+
+Lemma T supplies lower information, not an upper bound on `|C_k|`; therefore
+it must enter through the inverse normal matrix of the same tube reader.
+Let the whitened reduced tube rows be `X_k` and stack `X=[X_k]_k`.
+Include the fictitious kernel row and put
+
+`G_mu=X'X+mu nu nu'`.
+
+For terminal quotient map `F`, the canonical reader block on row k is
+
+`L_k=F G_mu^-1 X_k'`.                                      (LE-1)
+
+Let `C_k` denote the inverse-frame gyro-history coordinate at that row and
+define the block-diagonal multiplication operator
+`mathcal C=diag(C_k)`.  The signed reader-weighted history energy is exactly
+
+`M_C=F G_mu^-1 X' mathcal C mathcal C' X G_mu^-1 F'`.      (LE-2)
+
+Do not bound `mathcal C` separately.  Decompose the tube rows into attitude
+and gyro columns, `X_k=[U_k,U_k C_k+V_k]`, where `V_k` contains the
+literal within-step gyro injection and the transported magnetic contribution.
+Then
+
+`X [0;I] = mathcal U C + mathcal V`
+
+in stacked notation.  The G0/Lemma-T proof gives a positive lower quadratic
+form on this same gyro column after eliminating attitude.  Denote its Schur
+complement by
+
+`S_g = X_g'(I-P_U)X_g + mu S_nu >= q_T I`,                 (LE-3)
+
+where `P_U` is the weighted attitude-column projector and `q_T>0` is the
+literal local-tube Lemma-T/G0 gyro floor (including the kernel row when
+needed).
+
+The weighted least-squares identity now gives the leverage inequality
+
+`X_g S_g^-1 X_g' <= I`.                                    (LE-4)
+
+Consequently every occurrence of the potentially large signed history
+`C_k` that lies in the observed gyro column is charged through `S_g^-1`,
+not through `sup|C_k|`.  Writing the AG-process coefficient as observed
+gyro-column part plus the within-step remainder,
+
+`mathcal C = mathcal C_obs + mathcal R_D`,
+
+the canonical reader action obeys
+
+`M_C <= 2 F G_mu^-1 F'
+       +2 F G_mu^-1 X' mathcal R_D mathcal R_D' X
+            G_mu^-1 F'`.                                   (LE-5)
+
+The first term is controlled directly by the quotient information:
+`F G_mu^-1 F'<=||F||^2/s(c,r)^2 I`.  The second term contains only the
+within-step defect `R_D`, not the accumulated chronological `C_k`.
+The implemented gyro invariant already gives
+`||R_k^-1D_k-h_k I||<=h_k(theta_k/2+theta_k^2/3)`; hence with
+`theta_k<=theta_max<.007`,
+
+`||R_D,k||<=h_k e_D`,
+`e_D=theta_max/2+theta_max^2/3`.                            (LE-6)
+
+Using (LE-4) once more on the defect-weighted rows gives the finite bound
+
+`M_C <= 2 ||F||^2/s(c,r)^2
+        [1+e_D^2 T h_max / q_T] I`.                        (LE-7)
+
+The scalar next-kernel reader has the identical estimate with
+`||F||^2` replaced by `|f_d|^2`:
+
+`m_d,C <= 2 |f_d|^2/s(c,r)^2
+          [1+e_D^2 T h_max / q_T]`.                         (LE-8)
+
+Thus the accumulated signed `C_k` energy is bounded without
+`sum ||H_k||^2||C_k||^2` and without a reset-product norm.  Lemma T enters
+only through the positive Schur floor `q_T`; large chronological gyro
+history increases both the raw coefficient and the information that
+normalizes its reader leverage.
+
+Scope: (LE-5)--(LE-8) require the algebraic decomposition of the literal
+S-chain/local-tube rows into the same `X_g` used by the G0 Schur complement.
+The injection/reset frame must therefore use one common whitening and anchor
+convention.  This identification is exact for the ideal local-tube array and
+remains to be checked for the literal finite-series/implementation defect.
+Until that bookkeeping check is closed, (LE-7) is a conditional analytic
+bound, not a numerical shipping certificate.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
