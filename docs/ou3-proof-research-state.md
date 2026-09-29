@@ -1443,6 +1443,33 @@ reachability construction: prove the finite closed-stratum compactness and
 nullity<=1 on every stratum closure. If it closes, the first legitimate
 source-uniform positive spectral modulus follows nonconstructively as
 `lambda_2,bar=inf lambda_2>0`; quantitative extraction can follow afterward.
+## Controlling proof order after PR #625 consolidation
+
+The controlling path is now:
+
+`complete-word nullspace (Theorem A)`
+` -> uniform qualitative O1 via fixed-factor lower semicontinuity`
+` -> constructive g_under(c,r)`
+` -> K(c,r)`
+` -> same-history D(c,r)<=c`
+` -> rho_0<1`
+` -> nonlinear retained-radius inequality`
+` -> every-prefix retention / H18-release entry / regime transitions / float32`.
+
+The observation-only closed-range lemma is false across nuisance rank loss
+(e.g. diag(1,epsilon)); it is not an obligation. The fixed-factor
+nuisance+process variational operator is controlling because proved action
+floors bound nuisance minimizers and provide lower semicontinuity.
+
+Theorem A and the compactness contradiction now give a qualitative uniform
+`g_mu>0` for every finite mu=1/c. This supersedes the need to use the
+detectability, AW-gain reachability, determinant-sign, or soft-kernel routes
+for O1. Those sections remain research history unless separately needed.
+
+Next mathematical obligation: extract a constructive positive lower enclosure
+`g_under(c,r)` from the literal zero-action implications while preserving
+same-history correlations. Do not return to observation-only pseudoinverses
+or the retracted unprojected leverage inequalities.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
