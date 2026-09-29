@@ -5556,6 +5556,52 @@ nominal AW equilibrium. The required innovation is the reciprocal lifted DC
 gain times g_perp. A persistent counterexample would have to realize the
 time-varying analogue of SDC-5 with zero long-time physical acceleration mean.
 
+## Physical realizability of the time-varying required innovation
+
+The lifted control u_j in SDC-5 is an accelerometer **innovation**, not physical
+acceleration. On the compatibility manifold its projected value has the exact
+form
+`u_j = H_j a_phys,j^W - H_j a_w,j^W - H_b bhat_a,j + d_g,j`, (PRDC-1)
+with the literal frame/lever terms included in H_j,d_g,j. Because persistent
+compatibility pins the relevant nominal AW component near the fixed d0, a
+nonzero mean innovation is naturally produced even when physical acceleration
+has zero long-time mean.
+
+Let `u_req,j` be the innovation required by the time-varying lifted
+compatibility recurrence (the analogue of g_perp/G_DC). Solving PRDC-1 gives
+the required physical acceleration component
+`H_j a_phys,j^W = u_req,j + H_j a_w,j^W + H_b bhat_a,j-d_g,j`. (PRDC-2)
+
+Therefore zero-mean physical acceleration is feasible iff the long-time mean
+of the right side of PRDC-2 vanishes (with the full vector equations and
+moment constraints), not iff mean(u_req)=0. The fixed nominal AW term can
+cancel a nonzero innovation mean.
+
+Amplitude and jerk feasibility follow locally from bounded/invertible lifted
+coefficients as in PA-2/PA-3. Recurring gravity-direction span can be imposed
+independently through a smooth periodic/aperiodic attitude history; it changes
+the coefficients in PRDC-2 but does not by itself force a nonzero physical
+acceleration mean.
+
+Thus outcome B is **physically possible in principle** under the present
+assumptions: nothing requires the time-varying innovation needed to sustain
+the biased nominal AW to correspond to a DC physical acceleration. A
+zero-mean, bounded, jerk-limited physical acceleration can generate a
+nonzero-mean innovation because the nominal prediction itself is biased by
+the gravity-sized compatibility offset.
+
+This is not yet an explicit global shipping trajectory, because the same
+history must also make the covariance/gain sequence generate u_req and satisfy
+all higher moment/service conditions. But the proposed physical-realizability
+obstruction (zero mean acceleration versus nonzero required innovation) is
+not valid.
+
+Consequently current MARINE MOTION does not exclude outcome B at the level of
+physical kinematics. A rigorous counterexample now requires solving the
+self-consistent covariance/gain recurrence; a proof of O2 would require an
+additional invariant showing PRDC-2 cannot be self-consistent, not merely
+bounded-motion kinematics.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
