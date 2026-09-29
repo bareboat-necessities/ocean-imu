@@ -3128,6 +3128,80 @@ Thus the variational augmented information has a source-uniform positive
 existence floor `g_*(c,r)>0`. This is nonconstructive: it does not yet supply
 a numerical value. It supersedes the older unproved DI-6 assertion only at
 the existence level and does not revive LE-5--LE-8.
+## Diameter and scalar return from the single variational floor
+
+Let `J_aug(W,c)` be the symmetric matrix representing
+`Q_red,W(x)+(1/c)(nu_W'x)^2`. Lemma VC gives
+
+`J_aug(W,c)>=g_*(c,r) I` uniformly.                          (VK-1)
+
+Use the same fixed-factor joint model for the terminal state. After optimal
+nuisance/source elimination, write the conditional root-to-terminal map as
+`Phi_tilde_W` and the known-root terminal covariance as `Pi_W`. The exact
+fictitious-kernel covariance is
+
+`P_nu,W=Pi_W+Phi_tilde_W J_aug(W,c)^-1 Phi_tilde_W'`.       (VK-2)
+
+Define the compact terminal-action constant
+
+`L_T(r):=sup_W ||Pi_W^-1/2 Phi_tilde_W||_2^2 < infinity`.   (VK-3)
+
+Finiteness follows from compactness/continuity of the literal fixed-factor
+word and the known-root process floor for Pi. No AG leverage estimate is
+used.
+
+Then VK-1--VK-3 give
+
+`P_nu,W <= [1+L_T(r)/g_*(c,r)] Pi_W`.
+
+Therefore a usable existence-level diameter is
+
+`K(c,r):=1+L_T(r)/g_*(c,r) < infinity`.                     (VK-4)
+
+Corollary K consequently gives the recurring linear bound
+`rho_0(c,r)<=1-1/K(c,r)` whenever the scalar kernel ceiling c is invariant.
+
+### Exact linked scalar return
+
+Do not multiply K by a separately maximized terminal kernel variance. For the
+next-root physical compatibility functional nu_+, define directly
+
+`D_W(c):=nu_+' P_nu,W nu_+`
+
+`=nu_+'Pi_W nu_+
+ +nu_+'Phi_tilde_W J_aug(W,c)^-1 Phi_tilde_W'nu_+`.         (VK-5)
+
+and
+
+`D(c,r):=sup_W D_W(c)`.                                     (VK-6)
+
+Compactness plus VK-1 makes D finite and attained. The scalar invariant is
+exactly
+
+`D(c,r)<=c`.                                                (VK-7)
+
+A coarse usable upper bound follows from the same variational floor:
+
+`D(c,r) <= d0(r)+L_nu(r)/g_*(c,r)`,                         (VK-8)
+
+where
+`d0(r)=sup_W nu_+'Pi_W nu_+` and
+`L_nu(r)=sup_W ||Phi_tilde_W'nu_+||^2`
+with the physical kernel-functional normalization fixed consistently.
+Both constants are finite by compactness.
+
+Existence of positive g_* alone does **not** imply VK-7 for some c. As c
+increases, the kernel penalty 1/c weakens, so g_*(c,r) can decrease and the
+second term can grow proportionally to c on an exact persistent kernel.
+The earlier physical-persistence analysis shows that this is a real possible
+obstruction, not a defect of VK-8.
+
+Thus O1 is now closed at the existence level by VK-4. O2 is exactly the
+one-dimensional fixed-point problem VK-7. The next mathematical task is to
+study `D(c,r)/c` using the physical compatibility-line transfer, not to
+improve the transverse information floor. If exact unit-persistent kernels
+are admissible, `limsup_(c->infinity)D(c,r)/c>=1`; if every admissible chain
+breaks compatibility with recurring loss, a strict fixed point may exist.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
