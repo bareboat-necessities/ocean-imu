@@ -975,6 +975,98 @@ closure is the AG-family signed energy in (FA-7); replacing it by
 `||C_r||||L_r||||A_a||` separately would destroy the cancellation and
 recreate DEAD_END 22.
 
+## AG-process signed energy: inverse-frame inequality
+
+The remaining family in (FA-7) can be bounded without forward products of
+reset norms.  Work in the local anchor inverse frame.  Let the chronological
+AG map be `T_k=[[A_k,B_k],[0,I]]` and put `C_k=A_k^-1 B_k`.  A literal
+reset `G=I+[d]/2` sends `A,B` to `GA,GB`, hence leaves `C` unchanged
+exactly.  Moreover `sigma_min(G)>=1`, so `||A_k^-1||<=1` for a word
+started at an anchor with `A=I`; Rodrigues predictions are orthogonal and
+the qualified small-rate branch has the same inverse nonexpansion already
+proved in the chronological-transport lemma.
+
+For prediction k write the full correlated AG process factor as
+`U_k=[U_theta,k;U_b,k]`, `Q_k=U_k U_k'`.  In inverse-frame quotient
+coordinates its fresh contribution is
+
+`W_k=[[A_(k+1)^-1, -C_(k+1)],[0,I]] U_k`.                  (AG-1)
+
+The minus sign is essential: attitude and gyro-bias process columns are not
+split.  The complete signed reader coefficient for this fresh block is
+
+`Xi_(q,k)=H_(q,k) W_k`, `xi_(d,k)=h_(d,k) W_k`,           (AG-2)
+
+where `H_(q,k)`, `h_(d,k)` are the already transported residual-reader
+maps from the injection time to the terminal anchor after all row
+cancellations.  Therefore
+
+`B_(q,AG)=sum_k H_(q,k) W_k W_k' H_(q,k)'`,
+`b_(d,AG)=sum_k h_(d,k) W_k W_k' h_(d,k)'`.                (AG-3)
+
+This is exact factor-space energy.
+
+A source-uniform Loewner bound follows directly from the literal Q blocks.
+Let
+`Q_tt,k<=q_theta,k I`, `Q_bb,k=q_b h_k I`, and
+`||Q_tb,k||<=q_x,k`.  Since `||A^-1||<=1`,
+
+`W_k W_k' <= E_k(C_(k+1))`,                                (AG-4)
+
+with the explicit 6x6 block majorant
+
+`E_k(C) =
+ [[q_theta,k I + q_b h_k C C' + q_x,k( C+C')_abs,  *],
+  [*, q_b h_k I]]`.
+
+For a scalar safe form, completing the square with any `eta_k>0` gives
+
+`W_k W_k' <= diag(
+ (1+eta_k) q_theta,k I
+ +(1+1/eta_k) q_b h_k C C'
+ +(1+eta_k) 2 q_x,k I,
+ (q_b h_k+2 q_x,k/eta_k) I )`.                              (AG-5)
+
+The useful bound keeps the matrix `C C'` and optimizes `eta_k` only after
+the signed reader coefficient `H_(q,k)` is applied.
+
+The inverse-frame recurrence supplies
+
+`C_(k+1)=C_k+A_k^-1 R_k^-1 D_k` at predictions and no change at resets.
+Hence for any anchor interval
+
+`C_k=C_0+sum_(j<k) A_j^-1 R_j^-1 D_j`.                     (AG-6)
+
+Every summand has norm at most `h_j(1+e_D)` on the qualified prediction
+domain.  More importantly, (AG-6) is a signed chronological sum; it is the
+same `D_k` history used by the local-tube G0 reader.  Substitute (AG-6)
+into (AG-3) before taking norms.  Define the tube energy matrices
+
+`M_(q,theta)=sum_k H_(q,k)H_(q,k)'`,
+`M_(q,C)=sum_k H_(q,k) C_(k+1)C_(k+1)' H_(q,k)'`,          (AG-7)
+
+and analogously `m_(d,theta),m_(d,C)`.  Then (AG-5) gives
+
+`B_(q,AG) <= a_theta M_(q,theta)+a_C M_(q,C)+a_b M_(q,b)`, (AG-8)
+`b_(d,AG) <= a_theta m_(d,theta)+a_C m_(d,C)+a_b m_(d,b)`, (AG-9)
+
+where the coefficients are explicit sums/maxima of the shipping
+`q_theta,k,q_b h_k,q_x,k` and the chosen Young parameters.  No reset-product
+factor appears.
+
+Equations (AG-6)--(AG-9) are the controlling matrix-energy inequality.  The
+only remaining quantity is the signed reader-weighted chronological energy
+`M_(q,C)` (and its scalar d analogue).  It is not an independent new
+premise: `C_k` is exactly the gyro-history coordinate already constrained
+by the local-tube G0/Lemma-T construction.  A tube bound
+`sum_k H_k C_k C_k' H_k'<=C_E(c,r)` therefore closes the last source family
+and yields finite `R_q^bar,R_d^bar`.
+
+This result removes literal reset amplification and preserves the correlated
+AG process factor.  It does not yet assign a numerical `C_E`; replacing
+the signed energy by `sum ||H_k||^2 ||C_k||^2` over a long word is the
+coarse norm route and is not promoted.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
