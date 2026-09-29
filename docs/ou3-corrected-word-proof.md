@@ -5068,6 +5068,67 @@ manifold. To exclude it one must use the literal mean adaptation dynamics
 over successive words; it cannot be excluded from a single-word homogeneous
 information matrix.
 
+## Multi-word mean-dynamic invariance equation for the q=0 manifold
+
+Let `P_B` be the fixed world projection perpendicular to the near-constant
+geomagnetic direction and define the compatibility-manifold coordinate
+`c_k=P_B(a_w,k-g)` immediately after an accepted accelerometer update.
+Persistent q=0 compatibility requires `c_k=0` at every such epoch (up to the
+explicit eps_B/lever defect tube).
+
+Propagate from one accelerometer epoch to the next using the literal shipping
+order. Write `F_k` for all predictions and any scheduled S pseudo-update
+before the next accelerometer correction, and let `L_k` select its world-AW
+component. Then before the accelerometer update
+`c_(k+1)^-=P_B[L_k F_k x_k-g]`.
+The accepted accelerometer update gives
+`c_(k+1)^+=c_(k+1)^-+P_B L_k K_a,k r_a,k` (with the literal reset/frame
+transport included in L_k). Exact manifold invariance is therefore
+
+`P_B L_k K_a,k r_a,k = -c_(k+1)^-`.                       (MI-1)
+
+Substitute the exact physical residual
+`r_a,k=f_phys,k-fhat_k-bhat_a,k`. On the manifold the nominal force has
+`P_B(a_w-g)=0`, so MI-1 becomes a linear constraint on the actual varying
+physical acceleration plus the endogenous estimator states:
+
+`P_B L_k K_a,k R_wb,k P_B a_phys,k^W
+ = -c_(k+1)^- + known BA/parallel/lever terms`.             (MI-2)
+
+Thus an infinite q=0 compatible execution is equivalent to satisfying MI-2 at
+every accepted accelerometer epoch together with the S/BA/attitude mean
+recursions.
+
+The important point is dimensional. MI-2 is a two-component transverse
+constraint on the three-component physical acceleration sample. MARINE MOTION
+currently imposes bounds, jerk regularity, bounded velocity/displacement/
+potential, and gravity-direction attitude span, but it does not prescribe the
+two transverse translational-acceleration components. Therefore MI-2 can in
+principle select those components while leaving one physical acceleration
+degree of freedom.
+
+The time-varying attitude requirement does not change this count: it changes
+the coefficients in MI-2 and the body measurement, but physical translation
+remains an independent admissible history. Without a lower excitation
+condition on translational acceleration relative to this two-dimensional
+constraint, the existing MARINE MOTION class does not algebraically forbid
+solutions of MI-2.
+
+Hence the desired theorem
+`no infinite execution on P_B(a_w-g)=0`
+cannot be derived from the current assumptions by the mean recursion alone.
+The recursion instead gives the exact construction equation MI-2 for a
+candidate persistent execution. To exclude it one needs either (a) prove that
+solutions of MI-2 necessarily violate the all-time velocity/displacement/
+potential constraints, or (b) add a physical excitation condition that makes
+the transverse physical acceleration incompatible with MI-2 on recurring
+windows.
+
+The earlier long-horizon analysis shows MI-2 forcing may be oscillatory and
+zero-mean, so (a) is not presently established. Thus the remaining gap is now
+an explicit physical-admissibility question for the MI-2-selected acceleration
+history, not an estimator observability question.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
