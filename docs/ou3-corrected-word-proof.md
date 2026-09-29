@@ -5190,6 +5190,50 @@ long-horizon reachable moment set of the scalar longitudinal channel
 lie inside for one forward-complete strict-service history, that history is
 the admissible persistent-zero counterexample.
 
+## Fixed-world gravity/geomagnetic mean mismatch
+
+Use the LOCAL GRAVITY reference `g_0^W` and MAGNETIC SERVICE reference
+`b_0^W`, and set
+`d_0=P_(b_0)^perp g_0^W`.
+Then
+`||d_0||>=g_min cos(80 deg)`.
+
+For an infinite q->0 compatible execution, the exact accelerometer geometry
+implies at every applied epoch
+`P_(b_0)^perp a_w,k^W = d_0 + delta_k`,                   (FG-1)
+where
+`||delta_k|| <= C_g eps_g+C_B eps_B+C_L`.
+If the total defect is smaller than `||d_0||`, the nominal AW therefore has
+a persistent nonzero fixed-world mean component.
+
+By contrast, physical acceleration satisfies
+`integral_0^T a_phys^W dt = v^W(T)-v^W(0)`.
+The MARINE MOTION bounded-velocity continuation gives
+`(1/T) integral_0^T a_phys^W dt -> 0`.                    (FG-2)
+Bounded displacement supplies the corresponding zero long-time mean velocity,
+and the bounded-potential condition prevents secular displacement hidden by
+finite-window reanchoring.
+
+Hence every persistent compatibility counterexample must realize the strict
+mean mismatch
+`mean P_(b_0)^perp a_w^W = d_0+O(eps_g+eps_B+C_L) != 0`,
+`mean a_phys^W = 0`.                                      (FG-3)
+
+Substituting the exact residual identity into the AW mean recursion shows that
+this mismatch must be sustained entirely by the long-time mean of Kalman
+measurement corrections:
+`mean[Delta a_w,acc + Delta a_w,S + Delta a_w,mag/reset]
+ = mean OU loss of d_0 + defects`.                          (FG-4)
+The physical acceleration itself cannot supply a DC term.
+
+FG-4 is now the controlling mean-dynamic identity. To exclude infinite
+compatibility it remains to prove that, on the q->0 manifold, the literal
+measurement-correction sum has zero (or insufficient) fixed-world DC after
+all bounded estimator states are telescoped. If that identity holds, the
+positive OU loss of d_0 gives an immediate contradiction. If not, the
+nonzero correction term identifies the exact mechanism supporting the
+persistent invariant zero.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
