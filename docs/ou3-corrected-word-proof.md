@@ -1400,6 +1400,88 @@ The exact reset factors and literal nominal AW values remain inside
 prove existence of `g_*>0`, but a usable `K,D,E` requires explicit
 moduli for the magnetic, nuisance-projected accelerometer and Lemma-T steps.
 
+## Closed-loop null invariance and radius-local reachability target
+
+Actual optimal gains cannot repair an exact raw Jacobian null direction.  At
+any correction,
+
+`e_plus=(I-KH)e_minus`.
+
+Hence `H v=0` implies `(I-KH)v=v` for every realized gain `K`; Joseph
+conditioning changes covariance but not this deterministic homogeneous
+direction.  Interleaved gains can help only after prediction/reset transport
+moves the direction out of the next row nullspace.  Therefore the missing
+physical-to-nominal bridge cannot be obtained from gain magnitude or NIS
+alone.
+
+The remaining viable mechanism is radius-local reachability.  Let the true
+world inertial acceleration be `a(t)`, true residual accelerometer bias
+`b_a(t)`, nominal states `a_hat(t),b_hat_a(t)`, and attitude error
+`R_hat=R_err R_true`.  On `V<=r^2`, covariance coercivity gives
+
+`|delta theta|<=c_theta(r) r`,
+`|a_hat-a|<=c_aw(r) r`,
+`|b_hat_a-b_a|<=c_ba(r) r`,                                (RE-1)
+
+**only if** the corresponding covariance upper bounds are available on the
+candidate set.  The AW marginal ceiling gives the one-sided error estimate
+`|e_aw|<=4r`; the BA marginal gives `|e_ba|<=r/40`.  Thus the nominal
+world force differs from the true world force by at most `4r` in the AW
+coordinate, without invoking pointwise AW tracking as a physical premise:
+it is a consequence of being inside the candidate storage ball.
+
+For any unit field direction `b` and any normalized convex window weights,
+
+`| (sum alpha a_hat) x b |
+ <= |(sum alpha a) x b| + 4r`.                              (RE-2)
+
+More importantly for a lower separation, if the physical window supplies
+
+`| (sum alpha a) x b | >= m_phys`,
+
+then
+
+`| (sum alpha a_hat) x b | >= m_phys-4r`.                  (RE-3)
+
+This is a radius-local reachability exclusion of nominal collinearity whenever
+`r<m_phys/4`.  It uses the proved AW covariance marginal and the definition
+of storage, not an independent source assumption.
+
+However MARINE MOTION's current attitude-span premise does **not** imply a
+positive `m_phys` for the signed acceleration mean.  A vessel may change
+attitude while its translational inertial acceleration has zero or
+field-parallel weighted mean.  Therefore (RE-3) alone does not close the
+moving information floor.
+
+The correct reachability target must use gravity direction in the body-frame
+measurement rather than inertial-acceleration mean.  For two times whose true
+attitudes differ by at least `Delta_R`, the body gravity directions differ
+by at least `2 sin(Delta_R/2)`.  Candidate attitude error perturbs each by at
+most `2 sin(c_theta(r)r/2)`.  Thus the nominal body gravity directions retain
+separation
+
+`Delta_g,nom(r) >=
+ 2 sin(Delta_R/2)-4 sin(c_theta(r)r/2)`.                    (RE-4)
+
+If positive, two literal accelerometer attitude Jacobians cannot share the
+same gravity-axis kernel after nuisance projection **unless** AW/BA nuisance
+columns mimic their difference.  Bounding that mimic is now a finite
+two-epoch Schur problem using the proved AW/BA covariance/action bounds, not a
+pointwise AW tracking statement.
+
+So the new quantitative target is the two-epoch nuisance Schur inequality
+
+`Q_acc,red(theta,ba)
+ >= a_2(r) dist((theta,ba),K_phys)^2`, `a_2(r)>0`,         (RE-5)
+
+with `a_2(r)` derived from (RE-4), Racc, the AW/BA nuisance action, and the
+literal two-epoch transition.  Magnetic service then intersects `K_phys`
+with the field-axis line, Lemma T handles gyro bias, and the fictitious kernel
+row removes the remaining one-dimensional compatibility class.
+
+This route uses the existing MARINE MOTION attitude-span assumption directly
+and avoids requiring a physical acceleration mean.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
