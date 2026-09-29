@@ -793,6 +793,23 @@ remainder is needed, and by constructing the S-chain reader from literal
 rows without first requiring a separate bound on the nominal AW mean.
 No new physical assumption is implied by this diagnosis.
 
+## Direct-information replacement of A_i/Q_i route
+
+The A0/A1 and Q0..Q3 scalar route is retired.  The S-chain is now applied
+directly to the raw auxiliary record, followed by whitening with its full
+reduced covariance.  All literal nominal AW coefficients and all exact reset
+factors N_l remain inside the reduced information matrix.  The new controlling
+obligation is a same-history Loewner floor
+`G_red(c;history)>=G_*(c,r)>0` on the quotient/kernel-augmented slow
+coordinates.  Its quotient and gyro Schur eigenvalues are the `s(c,r)^2`
+and `q_T(c,r)` needed by the already derived leverage/action bounds.
+
+The exact identity `N_l'N_l>=I` guarantees inverse nonexpansion but does not
+alone preserve force/field kernel angle, so it is not promoted to a G0 floor.
+The proof must lower-bound the complete linked reduced matrix using MARINE
+MOTION, MAGNETIC SERVICE and chronological gyro transport.  This avoids both
+AW gain-variation and reset-product cumulative-action circularities.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
