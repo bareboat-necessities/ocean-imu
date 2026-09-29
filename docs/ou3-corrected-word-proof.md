@@ -2139,6 +2139,76 @@ extends continuously over the compact moving-kernel word family. Its maximum
 is then finite, giving `K_MW(c,r)<infinity` without any uniform
 `sigma_min^+` or principal-angle floor.
 
+## Exact range/shorting test for the moving quotient
+
+The joint minimum-action identity decides (RQ-1) exactly.  After nuisance and
+kernel-line elimination, write the reduced auxiliary model as
+
+`y=O_q q+A s`,
+`x_N=T_q q+T s`,
+`Sigma=A A'>0`.
+
+Define
+
+`J_q=O_q' Sigma^-1 O_q`,
+`Ttilde_q=T_q-T A' Sigma^-1 O_q`.                          (RS-1)
+
+The known-root terminal covariance is
+
+`Pi=T(I-A'Sigma^-1 A)T'`,
+
+and the diffuse quotient terminal covariance is
+
+`Pi+Ttilde_q J_q^dagger Ttilde_q'`
+
+whenever the Moore-Penrose expression is finite on the information range.
+For any v in Null(J_q), positivity of Sigma gives
+
+`O_q v=0`.                                                  (RS-2)
+
+The desired range condition is therefore exactly
+
+`O_q v=0 => Ttilde_q v=0`.                                 (RS-3)
+
+But (RS-3) is **not an algebraic consequence** of the joint Gaussian model.
+If `O_q v=0`, then the source least-squares mimic is zero and
+`Ttilde_q v=T_q v`.  Thus (RS-3) reduces to
+
+`Null(O_q) subset Null(T_q)`.                              (RS-4)
+
+In words: every complete-word data-null quotient root direction must also
+have zero deterministic terminal image.  A root mode can be invisible to all
+measurements yet survive to the terminal state; process noise in Pi does not
+make its deterministic image disappear.  This is precisely why information-
+only contraction and raw observability were insufficient earlier.
+
+For the literal complete-word zero-action classification, data-null directions
+are contained in the one-dimensional compatibility family before the kernel
+prior.  After quotienting by the **exact same** compatibility line nu_W, the
+qualitative result gives Null(O_q)={0} for each fixed nondegenerate word.
+At a rank-changing limit, however, a new quotient data-null direction may
+appear as the compatibility line changes/disappears.  To obtain a continuous
+diameter extension one must show its terminal image tends to zero at the same
+rate; pointwise nullity does not establish that.
+
+Therefore (RQ-1) is not yet closed.  It is equivalent to a quantitative
+forgetting statement for the near-null quotient direction, not merely to the
+zero-action nullspace theorem.  The existing complete-word machinery contains
+the right quantity: the pair `(O_q,T_q)` or, equivalently, the generalized
+ratio
+
+`sup_v |Ttilde_q v|_Pi^-1^2 / |O_q v|_Sigma^-1^2`.         (RS-5)
+
+A finite bound on (RS-5) is exactly the kernel-bounded Riccati diameter sought;
+using (RQ-1) to prove it would be circular unless (RS-4) is established
+uniformly at limiting words by an independent terminal-retention argument.
+
+This closes the proposed automatic shorting route as a dead end.  The next
+valid target is to bound the generalized pair (Ttilde_q,O_q) directly using
+the literal prediction/process structure -- a detectability/finite-horizon
+observability inequality -- rather than seeking a separate information floor
+or assuming the null inclusion.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
