@@ -4580,6 +4580,44 @@ To prove O2 under current assumptions one must derive an additional invariant
 from shipping showing finite-time loss of one of those quantities. To refute
 O2 one must construct a forward-complete constrained trajectory with their
 positive infima. Neither follows from the presently proved bounds.
+## Compatibility at the exact MAGNETIC SERVICE boundary
+
+MAGNETIC SERVICE is the closed condition
+`lambda_min(G_M)>=mu_M`, with `mu_M>0`, formed from actually applied
+transported magnetic rows on the service sector. At the boundary
+`lambda_min(G_M)=mu_M`, the service Gram remains strictly positive definite
+on that sector. No magnetic information direction is lost merely because the
+surplus above mu_M vanishes.
+
+The surviving physical compatibility line is not a null direction of this
+service Gram in the same coordinate space. Magnetic rows first restrict the
+attitude/gyro root to the transported field-axis compatibility class; the
+one-dimensional tilt/BA line survives only after combining that magnetic
+restriction with accelerometer/BA compatibility. Thus service equality does
+not force the physical compatibility generator to disappear.
+
+All literal magnetic Joseph updates and chronological transports are
+continuous at `lambda_min(G_M)=mu_M`; their innovation covariances retain the
+positive Rmag floor. Therefore a same-history compatible sequence can converge
+to a service-boundary word while retaining well-defined magnetic corrections
+and the one-dimensional compatibility relation.
+
+Consequently there is no analytical escape mechanism at the exact service
+boundary. Compatibility can persist **at the level of the theorem
+constraints** when service equals mu_M; the assumption intentionally admits
+that boundary. A global continuation proof does not need a strict service
+surplus if it can remain on/inside the closed service set.
+
+This removes magnetic-service surplus as an intrinsic O2 blocker. What remains
+is whether the constrained shipping dynamics can keep the actual service
+inequality >=mu_M while maintaining compatibility; equality itself is not a
+singularity. No current invariant forces crossing below mu_M.
+
+Hence the only local viability quantity capable of destroying compatibility
+before violating an explicit physical assumption is the transverse
+compatibility-control rank `sigma_min(D_perp)`. The O2 global problem reduces
+to whether D_perp can remain nonsingular along an admissible constrained
+trajectory (with service allowed to sit on its closed boundary).
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
