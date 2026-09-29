@@ -5344,6 +5344,61 @@ geomagnetic AW replenishment from the correction range. Persistent-zero
 exclusion, if true, must come from temporal moment constraints rather than
 instantaneous/mean correction rank.
 
+## Temporal-moment constraints from bounded physical motion
+
+For one world component, physical kinematics satisfy
+`a=dv/dt`, `v=dp/dt`. Bounded velocity gives the zeroth acceleration
+moment
+`A_0(T)=integral_0^T a(t)dt=v(T)-v(0)=O(1)`, so `A_0(T)/T->0`.
+
+Integration by parts gives the first acceleration moment
+`A_1(T)=integral_0^T (T-t)a(t)dt
+       =p(T)-p(0)-T v(0)`.                                 (TM-1)
+Thus bounded displacement does **not** make A_1 bounded unless the initial
+velocity is zero; it fixes its secular part exactly. Equivalently, after
+subtracting the boundary velocity term, the centered first moment is O(1).
+
+The proof's stronger bounded-potential condition
+`|integral_(t1)^(t2) p(t)dt|<=P_AC`
+controls the next integrated displacement moment and prevents repeated
+reanchoring/secular offsets. These are boundary/moment identities, not a rule
+that every finite-window acceleration mean is zero.
+
+Apply the same moment operators to the MI-2-selected acceleration law
+`M a_perp=h+N a_parallel`. The zeroth and centered-first moment constraints
+become
+`integral M^-1 h + integral M^-1 N a_parallel = O(1)`,     (TM-2)
+and
+`integral (T-t)[M^-1 h+M^-1N a_parallel]
+   = prescribed boundary term + O(1)`.                     (TM-3)
+The bounded-potential condition adds the corresponding second integrated
+constraint.
+
+Because the control direction `M^-1N` is time varying under MARINE MOTION,
+one scalar function a_parallel(t) has infinitely many temporal degrees of
+freedom and can, in principle, satisfy finitely many vector moment constraints
+over successive windows. There is no dimensional contradiction analogous to
+a single scalar constant trying to cancel two fixed vectors.
+
+Most importantly, the fixed nominal AW offset d0 does not appear directly as
+a physical acceleration DC term in TM-2/TM-3; it enters h through the Kalman
+correction requirement. The static range test already showed those correction
+columns can algebraically supply that offset. Time weighting alone does not
+create a sign-definite invariant.
+
+Therefore bounded displacement and bounded potential strengthen the admissible
+source constraints but still do not, from the current identities, force an
+uncancelable secular moment. A contradiction would require a source-uniform
+moment-separation theorem for the rotating scalar channel `M^-1N` (for
+example, a nonzero left functional annihilating all admissible control moments
+but not the forced h moments). No such functional follows from the current
+MARINE MOTION assumptions.
+
+This resolves the naive first-moment route: it supplies exact boundary
+conditions but not yet O2 exclusion. The remaining question is a temporal
+controllability/moment problem for the MI-2 law, not a missing integration-by-
+parts identity.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
