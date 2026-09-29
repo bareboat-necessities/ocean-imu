@@ -220,6 +220,52 @@ def relative_schur_contraction_certificate(root_precision, loss, split, delta):
             'equivalent_full_margin':is_psd(e)}
 
 
+
+def prediction_relative_identity(root_covariance, transition, process_covariance):
+    """Exact relative form of one prediction decrement.
+
+    For P>0, nonsingular F and Q>=0, let P-=F P F'+Q and
+      Dp=P^-1-F' P-^-1 F.
+    Put C=F^-1 Q F^-T. Then P-=F(P+C)F' and therefore
+      Dp=P^-1-(P+C)^-1
+        =P^-1 C (P+C)^-1.
+    More importantly, after root-energy congruence,
+      P^(1/2) Dp P^(1/2)=I-(I+P^-1/2 C P^-1/2)^-1.
+    Thus a useful relative prediction margin needs a LOWER bound on C
+    relative to P, equivalently C>=epsilon P. A positive absolute Q floor
+    alone cannot give source-uniform relative contraction when P is unbounded.
+    """
+    p,f,q=_matrix(root_covariance),_matrix(transition),_matrix(process_covariance)
+    ldlt(p); fi=inverse(f)
+    c=congruence(q,fi)
+    pplus=add(p,c)
+    decrement=add(inverse(p),inverse(pplus),F(-1))
+    # Original-coordinate prediction gives the same decrement.
+    pred=add(congruence(p,transpose(f)),q)
+    original=add(inverse(p),congruence(inverse(pred),f),F(-1))
+    if decrement!=original:
+        raise ArithmeticError('prediction relative identity failed')
+    return {'verified':True,'pulled_back_process':c,'decrement':decrement,
+            'relative_margin_requires':'F^-1 Q F^-T >= epsilon P_root',
+            'absolute_process_floor_sufficient_without_P_upper':False}
+
+
+def prediction_relative_margin(root_covariance, transition, process_covariance, epsilon):
+    """Exact finite-word implication C>=epsilon P => Dp>=eps/(1+eps) P^-1."""
+    p,f,q=_matrix(root_covariance),_matrix(transition),_matrix(process_covariance)
+    eps=F(epsilon)
+    if eps<=0: raise ValueError('positive epsilon required')
+    c=congruence(q,inverse(f))
+    premise=is_psd(add(c,p,-eps))
+    d=prediction_relative_identity(p,f,q)['decrement']
+    delta=eps/(1+eps)
+    conclusion=is_psd(add(d,inverse(p),-delta))
+    if premise and not conclusion:
+        raise ArithmeticError('relative prediction implication failed')
+    return {'premise_verified':premise,'delta':str(delta),
+            'conclusion_verified':conclusion}
+
+
 def restricted_service_counterexample():
     # A genuine positive-noise Kalman correction with S=4 I. Its restricted
     # heading/bias loss is I_2, but the full loss has a cancellation direction.
