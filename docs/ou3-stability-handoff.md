@@ -16,6 +16,8 @@ Read in order, with paths relative to the repository root:
 4. `docs/ou3-corrected-word-proof.md`, `docs/ou3-sampling-fidelity.md`, and
    `docs/ou3-nuisance-upper-proof.md`, alongside their modules under
    `tools/stability/ou3_theorem/` and the shipping source operations they cite.
+   Its section 7 (`word_diameter.py`) reduces the word contraction to the
+   kernel-bounded Riccati diameter; that is the current controlling target.
 5. `docs/ou3-ag-readout-proof.md` and `ag_readout.py`: the historical
    six-column action and the exact forward-prior obstruction.
 6. `docs/ou3-regime-design.md`, `docs/ou3-moving-six-pivots.md`, and the
@@ -89,9 +91,10 @@ The reset remainder has an injection-squared times error
 term; do not call it purely quadratic in error at a nonzero injection. No
 second filter with identical gains or event decisions is assumed.
 
-Next discharge the actual six-column J premise, then combine these supplies,
-projection sector and physical mismatch with capture/release and every-prefix
-retention. General capture, full AG upper covariance, strict uniform loss and
+Next bound the kernel-bounded word diameter of `ou3-corrected-word-proof.md`
+section 7 source-uniformly, then combine these supplies, projection sector
+and physical mismatch with capture/release and every-prefix retention.
+General capture, full AG upper covariance, strict uniform loss and
 arithmetic remain open. No completion percentage or full theorem is justified.
 
 The latest addition proves a conditional historical AG covariance comparison.
@@ -126,15 +129,15 @@ Reproduce the optional source experiment with
 untapped control, checks exact terminal parity, runs 80-digit diagnostics and
 a rational exported-word action check. This is not float32 totality.
 
-Specifically, at pre-prediction roots, establish a single positive-definite
-matrix J with `D_word[AG,AG] >= J` uniformly over admitted histories, where AG
-contains all three attitude-error and three gyro-bias coordinates. This is a
-principal block of the **actual complete corrected-word loss**, including the
-realized gain and reset transports. A physical Gramian, stationary-system
-detectability, or a positive diagnostic on one supplied word does not discharge
-this premise. Preserve loss factors and nuisance coupling when seeking the
-bound. Then apply the existing Schur/first-prediction implication, quantify its
-margin, and charge the finite-error supplies in the same storage before claiming
+Specifically, bound `kappa_nu=lambda_max(Pi^-1 P_nu)` uniformly over admitted
+words. Here `Pi` is the known-root terminal covariance and `P_nu` the terminal
+covariance started with information only along the physical tilt/BA kernel
+`nu`. Bound it with the realized gains and resets, and keep the scalar kernel
+ceiling invariant. The first-prediction route is capped (DEAD_END 25) and a
+full root covariance ceiling is not needed for `rho_0` (DEAD_END 27). A physical
+Gramian, stationary-system detectability, or a positive diagnostic on one
+supplied word does not discharge this premise. Then quantify the margin, and
+charge the finite-error supplies in the same storage before claiming
 nonlinear capture, release, or retention. Capture may have a history-dependent
 finite time; no such time has yet been certified.
 

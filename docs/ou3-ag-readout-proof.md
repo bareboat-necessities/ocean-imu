@@ -171,6 +171,11 @@ Consequences:
   process/measurement source. A source-uniform `B_*` follows from a
   source-uniform floor `I_eff >= mu` together with the explicit process
   Gramian and a bound on `|T_h|`.
+- **Role.** `B_*` and the full bound serve coercivity (`P <= C` in the
+  nonlinear supplies). They are not needed for `rho_0`: on carried MOVING
+  words the information-ratio bound with this `C` is attained at `k = 0`,
+  and the word diameter of `ou3-corrected-word-proof.md` section 7 needs at
+  most the scalar kernel variance `nu' P_0 nu`.
 - **Measurement-only special case.** The earlier all-row noise reader
   (`minimum_noise_reader`) is the case with no process or nuisance sources.
 - **Verification.** `joint_reader_audit` checks items 1–5 exactly on the
@@ -243,8 +248,8 @@ covariance is `2e-23` (quiet) and `4e-22` (wave), and the best structured
 chain from `(B*, U_n)` is about `1e-36`.
 
 The implication itself stays valid algebra. The contraction is recast in
-`ou3-corrected-word-proof.md` §6 as one information-ratio inequality in which
-`B*` supplies the upper comparison.
+`ou3-corrected-word-proof.md` §6 as one information-ratio inequality and in
+§7 as a word Riccati diameter, where no root covariance matrix enters.
 
 ## Executed checks and unresolved source inequality
 

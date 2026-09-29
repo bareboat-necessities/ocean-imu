@@ -39,18 +39,25 @@ nominal-rate bound make the field-axis coordinate of the gyro curve monotone
 (Theorem G0) from two separated nominal accelerometer windows. OPEN: a
 source bound on the nominal window statistics and G0 with injections.
 
-**Historical reader.** It is now the exact joint minimum-action reader
-`B*=Pi+Tt I_eff^-1 Tt'`, the diffuse-AG-root Riccati limit with a full 21×21
-domination. `B_*` therefore reduces to one source-uniform floor on the
-marginalized AG information `I_eff`. Carried windows of 16–64 s make it
-commensurate (≤12× the actual AG covariance, ≤5× at 64 s).
-
 **Contraction.** The complete A21 word contraction is one
-information-ratio inequality. It uses the word's data information `J`, the
-data-plus-terminal information `A`, and the joint-reader upper bound `C` only
-in the directions the data miss. Every first-prediction relative process
-comparison is capped at `3.3741e-10` per prediction and is abandoned
-(DEAD_END 25).
+information-ratio inequality. Its `k=0` form is the word's own Riccati
+diameter `kappa_W=lambda_max(J^-1 A)=lambda_max(Pi^-1 P_diff)`, where `Pi` and
+`P_diff` are the known-root and diffuse-root terminal covariances. It gives
+`rho_W<=tanh(log(kappa_W)/4)` for every root covariance, and the bound is
+sharp. On every carried word the only direction the data miss is the
+one-dimensional physical tilt/BA kernel `nu` (tilt about the body field axis
+with compensating BA). Along it Corollary K needs only the scalar
+`nu'P_0 nu`, whose BA part is the proved `P_ba<=I/1600`. The remaining
+source-uniform obligations (O1, O2 in `ou3-corrected-word-proof.md` §7)
+therefore need no `B_*`, `I_eff` or excitation premise; `B_*`/`I_eff` remain
+for coercivity.
+Every first-prediction relative process comparison is capped at
+`3.3741e-10` per prediction and is abandoned (DEAD_END 25).
+
+**Historical reader.** It is the exact joint minimum-action reader
+`B*=Pi+Tt I_eff^-1 Tt'`, the diffuse-AG-root Riccati limit with a full 21×21
+domination. Carried windows of 16–64 s make it commensurate (≤12× the actual
+AG covariance, ≤5× at 64 s). It now serves coercivity only (DEAD_END 27).
 
 ## Evidence
 
@@ -241,6 +248,31 @@ comparison is capped at `3.3741e-10` per prediction and is abandoned
     4/16/64 s.
   - **Separated bounds fail.** The information-only and forgetting-only
     bounds stay at 3e-26–3e-3 and 2e-10–6.6e-3 respectively.
+- Word Riccati diameter (`word_diameter.py`, section 7 of
+  `ou3-corrected-word-proof.md`):
+  - **Exact.** Theorem D, the closed-form supremum and the sharp scalar word
+    (`sup rho=3-2 sqrt2` at `p=1/sqrt2`) are checked exactly, as are
+    composition, slow/fast factorization, compression/reader duals,
+    Corollary K with invariance and the S-chain cancellation.
+  - **Source-uniform cap.** Gyro-bias persistence gives
+    `kappa_W>=sigma_g^2/(b0 T^2)` up to `1e-9` relative: 71.19, 17.80 and
+    4.449 at 16, 32 and 64 s. No `k=0` certificate beats margin .212, .383
+    or .643 there.
+- Carried information-ratio feasibility (`information-ratio-source-feasibility.json`;
+  float64 optimal-gain replays, 64-s history, 16/64-s words):
+  - **Kill criterion.** The ideal `C=P_0` loses ≤1.3×. The joint-reader `C`
+    loses at most 4.9× on MOVING words, so the criterion passes. On quiet
+    words it loses 51.7× at the 289-s root, whose BA marginal is still an
+    order of magnitude below its 5064-s level, but 5.7× at 5064 s.
+  - **Diameter.** On MOVING words the joint-reader optimum is `k=0`. `kappa_W`
+    is 19380/509 (wave), 570/37.5 (collinear) and 436/20.1 (sync-locked) at
+    16/64 s; it is infinite on quiet words. The controlling direction is
+    tilt/BA (67–93% BA share), except gyro bias on the 16-s sync-locked word.
+    The fast-given-slow factor is ≤1.078.
+  - **Kernel.** With the exact `nu'P_0 nu` the rank-one bound loses ≤1.9×. The
+    ceiling `(sqrt(tau)+|nu_ba|/40)^2` with the actual tilt loses 1.2× on
+    steady quiet words, and 1.5× with `tau=10^-3 rad^2`. The kernel set is
+    invariant on every word, using the next root's kernel.
 - Existing shipping projection evidence is retained unchanged: residual
   gyro-bias <=.5 rad/s, qualified prediction angle <.007, one-step transport
   floor .003999991833333333 s. A complete turn would require bias norm
@@ -269,21 +301,23 @@ the L1 nominal force (carried 1.091). Controlling quantities, in order:
 whose average is gain-weighted and rectifies at the 21-sample sync cycle;
 (ii) the injection frame `Q'b`, which the .02 rad/s gyro residual can rotate
 by ~1 rad over a 100-s word, beyond the global fixed-b tube of G0;
-(iii) the three information bounds of the information-ratio contraction on
-MOVING words:
-- a floor on the word's root information `J` (full-root identifiability of
-  the future augmented design);
-- a ceiling on `A-kappa J` in the joint-reader metric;
-- the joint-reader floor `I_eff>=mu` on the preceding >=16-s window.
+(iii) the contraction factor, now one diameter of the word itself:
+- **(O1)** a source-uniform ceiling on the kernel-bounded diameter
+  `kappa_nu=lambda_max(Pi^-1 P_nu)`, i.e. observability of every root
+  direction except the physical tilt/BA kernel;
+- **(O2)** the scalar kernel ceiling `c_nu` and its invariance
+  `nu_next'P_nu nu_next<=c_next`; the BA part is proved and a tilt ceiling
+  about the body field axis of order `10^-3 rad^2` remains.
 
 On carried 0.32-s words the slowest direction is translational, not AG.
 Quiet water leaves the tilt/BA kernel about the magnetic axis outside `J`;
-there contraction comes only through the upper comparison.
+there contraction comes only through the scalar kernel variance and BA decay.
 Norm-summed NIS/covariance injection bounds overcharge multi-second transport.
 Quiet-subcase homogeneous decay does not control compatible physical mismatch.
 Preserve actual chronological gains, resets, OU and bias histories. No
 independent nominal boxes, unsigned energy, sampled Gramian, selected minor
-or finite replay closes B_*; its exact remaining premise is `I_eff>=mu`.
+or finite replay closes B_*; its exact remaining premise is `I_eff>=mu`, which
+serves coercivity, not `rho_0`.
 Every new lemma's role in V_next<=rho V+c_d|d|^2 is stated in the design:
 stationary information sets a supply/ambiguity radius, bridge products and
 supplies compose rho/c_d, and six pivots feed the historical covariance/loss
@@ -530,6 +564,25 @@ comparison. Source-uniform numerical contraction enclosure is not yet justified.
       information-ratio lemma, which keeps both mechanisms in one matrix
       inequality.
 
+27. **Root covariance matrix ceiling as the contraction input: redundant.**
+    - **Failed quantity.** The joint-reader `C` loss (exact margin over
+      certified margin) is 51.7× on the 16-s quiet word at 289 s, failing the
+      10× kill criterion. On every MOVING word the optimum over `kappa` sits
+      at `k=0`, where `C` does not enter.
+    - **Young split.** The `U_n`-based `diag((1+eta)B*,(1+1/eta)U_n)`
+      dominates the full joint `C` (λ_min 1.06–1.78). It cannot improve on
+      `k=0`; its ~10^15 dynamic range also corrupts float64 values of `k`.
+    - **Classification.** Formulation redundancy plus a transient. The quiet
+      loss falls to 5.7× at 5064 s: the 289-s root's BA marginal (5.5e-5) is
+      an order of magnitude below its 5064-s level, so its exact margin is
+      transient.
+    - **Invalidated.** That `I_eff>=mu`, `B_*` or a full 21×21 ceiling is on
+      the critical path of `rho_0`. The lemma needs `P_0` only where `A-kappa J`
+      is positive; on carried words that is the physical kernel `nu`
+      (rank-one loss ≤1.9×).
+    - **Retained.** The joint-reader identities (coercivity) and the lemma.
+    - **Limiter.** The kernel-bounded diameter (O1, O2).
+
 ## Retained facts
 
 World-frame row factorization, the reset Gram identity, attitude-invariant
@@ -550,7 +603,15 @@ Also exact in real arithmetic:
 - the information-ratio word lemma;
 - the relative-Schur characterization of `D>=delta J_root`;
 - the first-prediction identity `D_pred=P^-1-(P+C)^-1`;
-- the first-prediction ceiling.
+- the first-prediction ceiling;
+- Theorem D (`kappa_W=lambda_max(J^-1 A)=lambda_max(Pi^-1 P_diff)`,
+  `rho_W<=tanh(log(kappa_W)/4)`, sharp) and the closed-form supremum;
+- composition (`kappa` shrinks under prefixing; `rho` multiplies), slow/fast
+  factorization and the compression/reader duals;
+- Corollary K and the invariance of `{P:nu'P nu<=c}` under `nu'P_nu nu<=c`;
+- the S-chain cancellation of the `(v,p,S,a_w)` root, AW noise and syncs;
+- the scalar kernel ceiling from `P_ba<=I/1600`;
+- the source-uniform gyro-bias persistence cap on `kappa_W`.
 
 The physical signed reserve is 27049050188592/625000000000000000, approximately
 4.32784803017472e-5, under its stated physical field hypotheses. Its nominal
@@ -588,28 +649,35 @@ needed for the geometry; the body-frame rotation/reference action of
 DEAD_END 13 does not arise. A same-cell route would instead have to derive
 cadence from MAGNETIC SERVICE and couple it to the jerk lemma.
 
-Downstream, certify the contraction of whole MOVING words (16 s or longer)
-through the information-ratio lemma, not per prediction. The joint reader
-over the preceding window supplies the upper comparison `C`. The word's
-future augmented design supplies `J` and `A`. G0, the nominal AW statistics
-and the injection frame are the geometric inputs to both information floors.
+Downstream, certify the contraction of whole words (64 s or longer; the
+persistence cap limits shorter words) through the kernel-bounded diameter,
+not per prediction. The same formulation covers quiet and MOVING words, and
+excitation only shrinks `kappa_nu`. G0, the nominal AW statistics, magnetic
+service, the S-chain and the injection frame are the geometric inputs to
+observability off the kernel. The joint reader remains the coercivity route.
 
 ## Next falsifiable experiment
 
-Run the non-promoting feasibility test of the information-ratio lemma
-(`ou3-corrected-word-proof.md` §6) before any enclosure.
+Kernel-bounded observability certificate (O1, O2). Construct explicit
+bounds before any enclosure.
 
-1. **Carried words.** On carried MOVING words of 16–64 s (wave, the 25-Hz
-   collinear history, the sync-locked triangle), compute `J`, `A` and two
-   choices of `C`: the joint-reader upper bound over the preceding window,
-   and the ideal `C=P_0`. Report the best information-ratio margin against
-   the exact word margin.
-2. **Kill criterion.** Reject the formulation if the joint-reader `C` loses
-   more than one order of magnitude.
-3. **If it survives.** Construct an explicit future root reader from G0's two
-   accelerometer windows, the applied magnetic rows at service gaps and the
-   three-S interpolation rows of the nuisance upper proof. Compare its
-   action with `J^-1` on the same words.
+1. **Upper bound on `P_nu`.** Build a terminal reader that cancels every root
+   direction except `nu`:
+   - the `(v,p,S,a_w)` root through the S-chain identity;
+   - the tilt/BA combination from S-chain accelerometer windows;
+   - heading and tilt normal to the field from applied magnetic rows at
+     service gaps;
+   - the field-axis gyro bias from Lemma T with two separated windows (G0).
+
+   The kernel coordinate itself comes from the prior `c_nu`.
+2. **Lower bound on `Pi`.** Reveal the LIN and attitude paths to the
+   known-root word; the remaining bias and BA tracking are then explicit.
+3. **Test.** Evaluate `lambda_max(Pi_lower^-1 P_nu,upper)` and the implied
+   tilt ceiling on the carried 64-s words: quiet at 5064 s, wave,
+   collinear and sync-locked. The actual `kappa_nu` is 49.2, 45.9, 35.3 and
+   15.7 at `tau=10^-3`.
+4. **Kill criterion.** Reject the reader if its diameter exceeds the actual
+   one by more than 10×, or if the tilt ceiling exceeds `10^-2 rad^2`.
 
 The G0 extensions below remain the geometric inputs to these floors.
 
@@ -634,38 +702,33 @@ norm-summed or perturbative injection tactics.
 
 ## Validation and infrastructure
 
-Based on main `c0f9dd0` merged with the PR 621 continuation (base `50ec893`).
-Main's numerical-core integration (PR #617) changed shared C++ arithmetic:
-`KalmanOUCoreMath.h` now evaluates the SO(3) integral coefficients as
-functions of the angle and repairs only genuinely indefinite matrices. The
-proof continuation adds proof tooling, evidence, documentation, the proof
-workflow and the stability article; its only C++ file is the proof-diagnostic
-driver `tools/stability/aw_tracking_source.cpp`. No estimator source, tuning,
-gate or assumption is changed for the proof.
+Based on main `ee0d46d`. This continuation adds proof tooling, evidence and
+documentation only:
 
-- Native carried-source records bound to the common header are regenerated
-  from the corrected source, never restamped: the world-frame record on main,
-  and the AW tracking record after this merge. Observer/control terminal
-  parity and every metric check must pass on the regenerated records.
-- `build_evidence.py` must reproduce every exact certificate and verify every
-  diagnostic record; the focused `test_ou3_*.py` suite, ruff and
-  `git diff --check` must pass; `make all` is required because main's merge
-  brings C++ arithmetic and regression changes.
-- Full validation/robustness and TFG evidence are regenerated by the existing
-  full-evidence pipeline, never certified by editing only their fingerprints.
-- Local results on the merged tree:
-  - **`make all`.** Every native build and test directory passed. Its
-    `tests/validation` step failed 7 of 650 tests, all stale proof bindings
-    of in-progress edits: the provenance hashes and the committed theorem
-    status.
-  - **After regeneration.** `make -C tests/validation test` passes 650/650,
-    `build_evidence.py` passes, and ruff and `git diff --check` are clean.
-  - **AW record.** `aw_tracking_source_diagnostic.py --expect` reproduces the
-    regenerated record.
-  - **Still to do.** The carried readout record
-    (`ag-readout-source-feasibility.json`) predates the core fix and the new
-    `contraction_feasibility` fields; it is regenerated before merge.
+- `word_diameter.py` (exact) with `word-diameter-certificate.json`;
+- `information_ratio_source_diagnostic.py` with its native driver
+  `tools/stability/information_ratio_source.cpp` and
+  `information-ratio-source-feasibility.json`.
 
+No estimator source, tuning, gate or assumption is changed for the proof.
+
+- **Native records.** They are generated from the shipping header through
+  read-only taps with observer/control terminal parity. The
+  information-ratio record keeps four significant digits of well-posed
+  quantities only; unobservable quiet diameters are recorded as infinite,
+  not as float64 values. CI reproduces it with `--expect` at relative
+  tolerance `5e-3`, because float32 native replays differ at about `1e-6`
+  between toolchains (below).
+- **Checks.** `build_evidence.py` must reproduce every exact certificate and
+  verify every diagnostic record. The focused `test_ou3_*.py` suite, ruff and
+  `git diff --check` must pass, and `make all` is the primary validation.
+- **Full evidence.** Full validation/robustness and TFG evidence are
+  regenerated by the existing full-evidence pipeline, never certified by
+  editing only their fingerprints.
+- **Still to do.** The carried readout record
+  (`ag-readout-source-feasibility.json`) predates the core fix and lacks the
+  `contraction_feasibility` fields. A canonical record must come from the
+  Ubuntu workflow artifact, which this environment cannot download.
 
 ### CI native replay binding (2026-09-29)
 

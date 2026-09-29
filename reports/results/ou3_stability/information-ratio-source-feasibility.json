@@ -1,0 +1,949 @@
+{
+  "cases": [
+    {
+      "active_step": 24064,
+      "literal_terminal_parity": true,
+      "live_step": 18051,
+      "moving": false,
+      "profile": "quiet",
+      "record_start_s": 225.0,
+      "refined_step": 24064,
+      "words": [
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "ba": 0.934,
+              "theta": 0.066
+            },
+            "fast_given_slow": 1.078,
+            "finite_kernel_observable": false,
+            "gyro_persistence_cap": 71.19,
+            "k0_margin": 0.0,
+            "kappa_covariance": null,
+            "kappa_information": null,
+            "kappa_information_exceeds": 1000000.0,
+            "relative_difference": null,
+            "slow_marginal": null
+          },
+          "exact_margin": 0.0676,
+          "ideal_C": {
+            "k": 13.83,
+            "kappa": 14.68,
+            "margin": 0.06743
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 763.8,
+            "kappa": 746.3,
+            "loss_factor": 51.7,
+            "margin": 0.001308,
+            "over_P0_lambda_max": 55.37
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.07661,
+            "kappa_nu": 195.8,
+            "kernel_rotation_rad": 0.0,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.005108,
+            "next_root_kernel_ceiling": 0.07661,
+            "propagated_next_kernel_variance": 0.07654,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 5.534e-05,
+            "ceiling_actual_tilt": {
+              "c_nu": 0.06151,
+              "margin": 0.006351
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.07661,
+                "margin": 0.005108
+              },
+              "1e-4": {
+                "c_nu": 0.06511,
+                "margin": 0.006003
+              }
+            },
+            "k": 14.11,
+            "kappa": 144.0,
+            "margin_exact_nu_variance": 0.03573,
+            "nu_P0_nu": 0.005441,
+            "nu_ba_norm": 9.807,
+            "tilt_variance_along_theta_hat": 8.142e-06
+          },
+          "root_time_s": 289.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.934,
+            "theta": 0.066
+          },
+          "word_s": 16
+        },
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "ba": 0.934,
+              "theta": 0.066
+            },
+            "fast_given_slow": 1.002,
+            "finite_kernel_observable": false,
+            "gyro_persistence_cap": 4.449,
+            "k0_margin": 0.0,
+            "kappa_covariance": null,
+            "kappa_information": null,
+            "kappa_information_exceeds": 1000000.0,
+            "relative_difference": null,
+            "slow_marginal": null
+          },
+          "exact_margin": 0.2265,
+          "ideal_C": {
+            "k": 3.421,
+            "kappa": 4.382,
+            "margin": 0.2262
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 189.1,
+            "kappa": 188.4,
+            "loss_factor": 43.06,
+            "margin": 0.005261,
+            "over_P0_lambda_max": 55.37
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.07661,
+            "kappa_nu": 49.21,
+            "kernel_rotation_rad": 0.0,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.02032,
+            "next_root_kernel_ceiling": 0.07661,
+            "propagated_next_kernel_variance": 0.07622,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 5.534e-05,
+            "ceiling_actual_tilt": {
+              "c_nu": 0.06151,
+              "margin": 0.02518
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.07661,
+                "margin": 0.02032
+              },
+              "1e-4": {
+                "c_nu": 0.06511,
+                "margin": 0.02382
+              }
+            },
+            "k": 3.457,
+            "kappa": 5.929,
+            "margin_exact_nu_variance": 0.2196,
+            "nu_P0_nu": 0.005441,
+            "nu_ba_norm": 9.807,
+            "tilt_variance_along_theta_hat": 8.142e-06
+          },
+          "root_time_s": 289.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.934,
+            "theta": 0.066
+          },
+          "word_s": 64
+        }
+      ]
+    },
+    {
+      "active_step": 24016,
+      "literal_terminal_parity": true,
+      "live_step": 6368,
+      "moving": true,
+      "profile": "wave",
+      "record_start_s": 225.0,
+      "refined_step": 24016,
+      "words": [
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "ba": 0.88,
+              "theta": 0.119
+            },
+            "fast_given_slow": 1.002,
+            "finite_kernel_observable": true,
+            "gyro_persistence_cap": 71.19,
+            "k0_margin": 0.01426,
+            "kappa_covariance": 19380.0,
+            "kappa_information": 19380.0,
+            "kappa_information_exceeds": null,
+            "relative_difference": 1.735e-06,
+            "slow_marginal": 19380.0
+          },
+          "exact_margin": 0.06967,
+          "ideal_C": {
+            "k": 13.66,
+            "kappa": 14.68,
+            "margin": 0.06821
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 0.0,
+            "kappa": 19390.0,
+            "loss_factor": 4.885,
+            "margin": 0.01426,
+            "over_P0_lambda_max": 40.56
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.0621,
+            "kappa_nu": 198.3,
+            "kernel_rotation_rad": 0.008794,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.005042,
+            "next_root_kernel_ceiling": 0.06405,
+            "propagated_next_kernel_variance": 0.06353,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 5.476e-05,
+            "ceiling_actual_tilt": {
+              "c_nu": 0.04847,
+              "margin": 0.01426
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.0621,
+                "margin": 0.01426
+              },
+              "1e-4": {
+                "c_nu": 0.05179,
+                "margin": 0.01426
+              }
+            },
+            "k": 13.64,
+            "kappa": 125.9,
+            "margin_exact_nu_variance": 0.03841,
+            "nu_P0_nu": 0.004262,
+            "nu_ba_norm": 8.703,
+            "tilt_variance_along_theta_hat": 6.69e-06
+          },
+          "root_time_s": 289.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.88,
+            "theta": 0.119
+          },
+          "word_s": 16
+        },
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "ba": 0.879,
+              "theta": 0.119
+            },
+            "fast_given_slow": 1.0,
+            "finite_kernel_observable": true,
+            "gyro_persistence_cap": 4.449,
+            "k0_margin": 0.08486,
+            "kappa_covariance": 509.3,
+            "kappa_information": 509.3,
+            "kappa_information_exceeds": null,
+            "relative_difference": 2.073e-07,
+            "slow_marginal": 509.3
+          },
+          "exact_margin": 0.2355,
+          "ideal_C": {
+            "k": 3.355,
+            "kappa": 4.382,
+            "margin": 0.2296
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 0.0,
+            "kappa": 515.9,
+            "loss_factor": 2.792,
+            "margin": 0.08434,
+            "over_P0_lambda_max": 40.56
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.0621,
+            "kappa_nu": 45.92,
+            "kernel_rotation_rad": 0.004768,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.02178,
+            "next_root_kernel_ceiling": 0.06138,
+            "propagated_next_kernel_variance": 0.0555,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 5.476e-05,
+            "ceiling_actual_tilt": {
+              "c_nu": 0.04847,
+              "margin": 0.08434
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.0621,
+                "margin": 0.08434
+              },
+              "1e-4": {
+                "c_nu": 0.05179,
+                "margin": 0.08434
+              }
+            },
+            "k": 3.363,
+            "kappa": 5.929,
+            "margin_exact_nu_variance": 0.2236,
+            "nu_P0_nu": 0.004262,
+            "nu_ba_norm": 8.703,
+            "tilt_variance_along_theta_hat": 6.69e-06
+          },
+          "root_time_s": 289.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.881,
+            "theta": 0.119
+          },
+          "word_s": 64
+        }
+      ]
+    },
+    {
+      "active_step": 24016,
+      "literal_terminal_parity": true,
+      "live_step": 6368,
+      "moving": true,
+      "profile": "collinear-service",
+      "record_start_s": 225.0,
+      "refined_step": 24016,
+      "words": [
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "ba": 0.705,
+              "theta": 0.29
+            },
+            "fast_given_slow": 1.001,
+            "finite_kernel_observable": true,
+            "gyro_persistence_cap": 71.19,
+            "k0_margin": 0.08037,
+            "kappa_covariance": 570.5,
+            "kappa_information": 570.5,
+            "kappa_information_exceeds": null,
+            "relative_difference": 1.033e-05,
+            "slow_marginal": 570.5
+          },
+          "exact_margin": 0.1056,
+          "ideal_C": {
+            "k": 10.62,
+            "kappa": 12.41,
+            "margin": 0.08598
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 0.0,
+            "kappa": 570.5,
+            "loss_factor": 1.315,
+            "margin": 0.08037,
+            "over_P0_lambda_max": 7.005
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.001046,
+            "kappa_nu": 461.7,
+            "kernel_rotation_rad": 0.00944,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.002166,
+            "next_root_kernel_ceiling": 0.001012,
+            "propagated_next_kernel_variance": 0.000289,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 4.138e-05,
+            "ceiling_actual_tilt": {
+              "c_nu": 2.601e-05,
+              "margin": 0.08037
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.001046,
+                "margin": 0.08037
+              },
+              "1e-4": {
+                "c_nu": 0.0001149,
+                "margin": 0.08037
+              }
+            },
+            "k": 0.0,
+            "kappa": 570.5,
+            "margin_exact_nu_variance": 0.08037,
+            "nu_P0_nu": 1.836e-05,
+            "nu_ba_norm": 0.02876,
+            "tilt_variance_along_theta_hat": 1.919e-05
+          },
+          "root_time_s": 289.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.698,
+            "theta": 0.29
+          },
+          "word_s": 16
+        },
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "ba": 0.705,
+              "theta": 0.29
+            },
+            "fast_given_slow": 1.0,
+            "finite_kernel_observable": true,
+            "gyro_persistence_cap": 4.449,
+            "k0_margin": 0.2807,
+            "kappa_covariance": 37.52,
+            "kappa_information": 37.52,
+            "kappa_information_exceeds": null,
+            "relative_difference": 2.652e-06,
+            "slow_marginal": 37.52
+          },
+          "exact_margin": 0.3432,
+          "ideal_C": {
+            "k": 2.375,
+            "kappa": 3.962,
+            "margin": 0.2939
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 0.0,
+            "kappa": 37.59,
+            "loss_factor": 1.224,
+            "margin": 0.2805,
+            "over_P0_lambda_max": 7.005
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.001046,
+            "kappa_nu": 35.31,
+            "kernel_rotation_rad": 0.005118,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.02832,
+            "next_root_kernel_ceiling": 0.001019,
+            "propagated_next_kernel_variance": 9.396e-05,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 4.138e-05,
+            "ceiling_actual_tilt": {
+              "c_nu": 2.601e-05,
+              "margin": 0.2805
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.001046,
+                "margin": 0.2805
+              },
+              "1e-4": {
+                "c_nu": 0.0001149,
+                "margin": 0.2805
+              }
+            },
+            "k": 0.0,
+            "kappa": 37.59,
+            "margin_exact_nu_variance": 0.2805,
+            "nu_P0_nu": 1.836e-05,
+            "nu_ba_norm": 0.02876,
+            "tilt_variance_along_theta_hat": 1.919e-05
+          },
+          "root_time_s": 289.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.701,
+            "theta": 0.29
+          },
+          "word_s": 64
+        }
+      ]
+    },
+    {
+      "active_step": 24016,
+      "literal_terminal_parity": true,
+      "live_step": 15866,
+      "moving": true,
+      "profile": "sync-locked",
+      "record_start_s": 225.0,
+      "refined_step": 24016,
+      "words": [
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "bg": 0.926,
+              "p": 0.01,
+              "theta": 0.04,
+              "v": 0.015
+            },
+            "fast_given_slow": 1.071,
+            "finite_kernel_observable": true,
+            "gyro_persistence_cap": 71.19,
+            "k0_margin": 0.09139,
+            "kappa_covariance": 436.2,
+            "kappa_information": 436.2,
+            "kappa_information_exceeds": null,
+            "relative_difference": 9.655e-06,
+            "slow_marginal": 436.2
+          },
+          "exact_margin": 0.1159,
+          "ideal_C": {
+            "k": 0.0003545,
+            "kappa": 436.1,
+            "margin": 0.09138
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 0.000455,
+            "kappa": 436.1,
+            "loss_factor": 1.268,
+            "margin": 0.09137,
+            "over_P0_lambda_max": 6.19
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.01049,
+            "kappa_nu": 436.1,
+            "kernel_rotation_rad": 0.009406,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.002293,
+            "next_root_kernel_ceiling": 0.01239,
+            "propagated_next_kernel_variance": 0.00711,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 4.591e-05,
+            "ceiling_actual_tilt": {
+              "c_nu": 0.005663,
+              "margin": 0.08994
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.01049,
+                "margin": 0.08994
+              },
+              "1e-4": {
+                "c_nu": 0.006531,
+                "margin": 0.08994
+              }
+            },
+            "k": 0.0,
+            "kappa": 451.0,
+            "margin_exact_nu_variance": 0.08994,
+            "nu_P0_nu": 0.0004684,
+            "nu_ba_norm": 2.833,
+            "tilt_variance_along_theta_hat": 1.971e-05
+          },
+          "root_time_s": 289.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.754,
+            "theta": 0.243
+          },
+          "word_s": 16
+        },
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "ba": 0.763,
+              "theta": 0.236
+            },
+            "fast_given_slow": 1.0,
+            "finite_kernel_observable": true,
+            "gyro_persistence_cap": 4.449,
+            "k0_margin": 0.3647,
+            "kappa_covariance": 20.1,
+            "kappa_information": 20.1,
+            "kappa_information_exceeds": null,
+            "relative_difference": 3.918e-06,
+            "slow_marginal": 20.1
+          },
+          "exact_margin": 0.3838,
+          "ideal_C": {
+            "k": 0.0,
+            "kappa": 20.54,
+            "margin": 0.3615
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 0.0,
+            "kappa": 20.54,
+            "loss_factor": 1.061,
+            "margin": 0.3615,
+            "over_P0_lambda_max": 6.19
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.01049,
+            "kappa_nu": 15.73,
+            "kernel_rotation_rad": 0.005107,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.06358,
+            "next_root_kernel_ceiling": 0.01339,
+            "propagated_next_kernel_variance": 0.003273,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 4.591e-05,
+            "ceiling_actual_tilt": {
+              "c_nu": 0.005663,
+              "margin": 0.3615
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.01049,
+                "margin": 0.3615
+              },
+              "1e-4": {
+                "c_nu": 0.006531,
+                "margin": 0.3615
+              }
+            },
+            "k": 0.0,
+            "kappa": 20.54,
+            "margin_exact_nu_variance": 0.3615,
+            "nu_P0_nu": 0.0004684,
+            "nu_ba_norm": 2.833,
+            "tilt_variance_along_theta_hat": 1.971e-05
+          },
+          "root_time_s": 289.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.754,
+            "theta": 0.244
+          },
+          "word_s": 64
+        }
+      ]
+    },
+    {
+      "active_step": 24064,
+      "literal_terminal_parity": true,
+      "live_step": 18051,
+      "moving": false,
+      "profile": "quiet",
+      "record_start_s": 5000.0,
+      "refined_step": 24064,
+      "words": [
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "ba": 0.705,
+              "theta": 0.295
+            },
+            "fast_given_slow": 1.077,
+            "finite_kernel_observable": false,
+            "gyro_persistence_cap": 71.19,
+            "k0_margin": 0.0,
+            "kappa_covariance": null,
+            "kappa_information": null,
+            "kappa_information_exceeds": 1000000.0,
+            "relative_difference": null,
+            "slow_marginal": null
+          },
+          "exact_margin": 0.007485,
+          "ideal_C": {
+            "k": 132.7,
+            "kappa": 130.2,
+            "margin": 0.00748
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 763.8,
+            "kappa": 746.3,
+            "loss_factor": 5.725,
+            "margin": 0.001307,
+            "over_P0_lambda_max": 5.757
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.07661,
+            "kappa_nu": 195.8,
+            "kernel_rotation_rad": 0.0,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.005108,
+            "next_root_kernel_ceiling": 0.07661,
+            "propagated_next_kernel_variance": 0.07653,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 0.0005317,
+            "ceiling_actual_tilt": {
+              "c_nu": 0.0619,
+              "margin": 0.006312
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.07661,
+                "margin": 0.005108
+              },
+              "1e-4": {
+                "c_nu": 0.06511,
+                "margin": 0.006004
+              }
+            },
+            "k": 132.9,
+            "kappa": 148.9,
+            "margin_exact_nu_variance": 0.007449,
+            "nu_P0_nu": 0.05221,
+            "nu_ba_norm": 9.807,
+            "tilt_variance_along_theta_hat": 1.319e-05
+          },
+          "root_time_s": 5064.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.705,
+            "theta": 0.295
+          },
+          "word_s": 16
+        },
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "ba": 0.705,
+              "theta": 0.295
+            },
+            "fast_given_slow": 1.002,
+            "finite_kernel_observable": false,
+            "gyro_persistence_cap": 4.449,
+            "k0_margin": 0.0,
+            "kappa_covariance": null,
+            "kappa_information": null,
+            "kappa_information_exceeds": 1000000.0,
+            "relative_difference": null,
+            "slow_marginal": null
+          },
+          "exact_margin": 0.02956,
+          "ideal_C": {
+            "k": 32.85,
+            "kappa": 32.86,
+            "margin": 0.02954
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 189.1,
+            "kappa": 188.4,
+            "loss_factor": 5.62,
+            "margin": 0.00526,
+            "over_P0_lambda_max": 5.757
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.07661,
+            "kappa_nu": 49.21,
+            "kernel_rotation_rad": 0.0,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.02032,
+            "next_root_kernel_ceiling": 0.07661,
+            "propagated_next_kernel_variance": 0.07621,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 0.0005317,
+            "ceiling_actual_tilt": {
+              "c_nu": 0.0619,
+              "margin": 0.02503
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.07661,
+                "margin": 0.02032
+              },
+              "1e-4": {
+                "c_nu": 0.06511,
+                "margin": 0.02382
+              }
+            },
+            "k": 32.86,
+            "kappa": 33.98,
+            "margin_exact_nu_variance": 0.02953,
+            "nu_P0_nu": 0.05221,
+            "nu_ba_norm": 9.807,
+            "tilt_variance_along_theta_hat": 1.319e-05
+          },
+          "root_time_s": 5064.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.705,
+            "theta": 0.295
+          },
+          "word_s": 64
+        }
+      ]
+    },
+    {
+      "active_step": 24016,
+      "literal_terminal_parity": true,
+      "live_step": 6368,
+      "moving": true,
+      "profile": "wave",
+      "record_start_s": 5000.0,
+      "refined_step": 24016,
+      "words": [
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "ba": 0.668,
+              "theta": 0.327
+            },
+            "fast_given_slow": 1.002,
+            "finite_kernel_observable": true,
+            "gyro_persistence_cap": 71.19,
+            "k0_margin": 0.01446,
+            "kappa_covariance": 18850.0,
+            "kappa_information": 18850.0,
+            "kappa_information_exceeds": null,
+            "relative_difference": 1.366e-06,
+            "slow_marginal": 18850.0
+          },
+          "exact_margin": 0.022,
+          "ideal_C": {
+            "k": 62.62,
+            "kappa": 64.32,
+            "margin": 0.01572
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 0.0,
+            "kappa": 19390.0,
+            "loss_factor": 1.543,
+            "margin": 0.01426,
+            "over_P0_lambda_max": 8.744
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.06229,
+            "kappa_nu": 198.2,
+            "kernel_rotation_rad": 0.009857,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.005045,
+            "next_root_kernel_ceiling": 0.06387,
+            "propagated_next_kernel_variance": 0.0633,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 0.0002532,
+            "ceiling_actual_tilt": {
+              "c_nu": 0.04884,
+              "margin": 0.01426
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.06229,
+                "margin": 0.01426
+              },
+              "1e-4": {
+                "c_nu": 0.05197,
+                "margin": 0.01426
+              }
+            },
+            "k": 62.95,
+            "kappa": 125.9,
+            "margin_exact_nu_variance": 0.01434,
+            "nu_P0_nu": 0.01975,
+            "nu_ba_norm": 8.719,
+            "tilt_variance_along_theta_hat": 9.171e-06
+          },
+          "root_time_s": 5064.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.672,
+            "theta": 0.327
+          },
+          "word_s": 16
+        },
+        {
+          "diameter": {
+            "controlling_direction_block_shares": {
+              "ba": 0.668,
+              "theta": 0.329
+            },
+            "fast_given_slow": 1.0,
+            "finite_kernel_observable": true,
+            "gyro_persistence_cap": 4.449,
+            "k0_margin": 0.08514,
+            "kappa_covariance": 505.9,
+            "kappa_information": 505.9,
+            "kappa_information_exceeds": null,
+            "relative_difference": 1.541e-07,
+            "slow_marginal": 505.9
+          },
+          "exact_margin": 0.09301,
+          "ideal_C": {
+            "k": 0.0,
+            "kappa": 515.9,
+            "margin": 0.08434
+          },
+          "joint_reader_C": {
+            "diffuse_scale_converged_1e-6": true,
+            "dominates_P0_within_1e-3": true,
+            "k": 0.0,
+            "kappa": 515.9,
+            "loss_factor": 1.103,
+            "margin": 0.08434,
+            "over_P0_lambda_max": 8.744
+          },
+          "kernel_bounded_diameter": {
+            "c_nu": 0.06229,
+            "kappa_nu": 45.88,
+            "kernel_rotation_rad": 0.004896,
+            "kernel_set_invariant": true,
+            "margin_mu_equals_inverse_c": 0.02179,
+            "next_root_kernel_ceiling": 0.06147,
+            "propagated_next_kernel_variance": 0.05555,
+            "tilt_premise_rad2": "1e-3"
+          },
+          "rank_one_kernel": {
+            "BA_marginal_lambda_max": 0.0002532,
+            "ceiling_actual_tilt": {
+              "c_nu": 0.04884,
+              "margin": 0.08434
+            },
+            "ceiling_tilt_premise": {
+              "1e-3": {
+                "c_nu": 0.06229,
+                "margin": 0.08434
+              },
+              "1e-4": {
+                "c_nu": 0.05197,
+                "margin": 0.08434
+              }
+            },
+            "k": 0.0,
+            "kappa": 515.9,
+            "margin_exact_nu_variance": 0.08434,
+            "nu_P0_nu": 0.01975,
+            "nu_ba_norm": 8.719,
+            "tilt_variance_along_theta_hat": 9.171e-06
+          },
+          "root_time_s": 5064.0,
+          "slowest_direction_block_shares": {
+            "ba": 0.673,
+            "theta": 0.327
+          },
+          "word_s": 64
+        }
+      ]
+    }
+  ],
+  "driver_sha256": "ef3e961053be3602b1377c8ae6376ff8fd8b03520889a1e2753e11b56bda5f76",
+  "header_sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
+  "history_s": 64,
+  "kernel_set_invariant_on_every_word": true,
+  "kill_criterion": {
+    "applies_to": "MOVING words (wave, collinear 25 Hz, sync-locked)",
+    "factor": 10,
+    "passed": true,
+    "quiet_joint_reader_loss_by_record_start_s": {
+      "225.0": 51.7,
+      "5000.0": 5.725
+    },
+    "worst_moving_joint_reader_loss": 4.885
+  },
+  "qualification": "OU3_INFORMATION_RATIO_SOURCE_FEASIBILITY_V1",
+  "replay": "float64 optimal-gain replay of literal exported coefficients",
+  "rigorous_enclosure": false,
+  "role": "non-promoting carried feasibility of the information-ratio word contraction",
+  "source_uniform_verified": false,
+  "theorem_closed": false,
+  "words_s": [
+    16,
+    64
+  ],
+  "worst_rank_one_kernel_loss": 1.892
+}

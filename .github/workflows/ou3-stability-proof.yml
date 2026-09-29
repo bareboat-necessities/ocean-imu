@@ -61,6 +61,7 @@ jobs:
           python3 -m unittest discover -s tests/validation -p test_ou3_sampling_fidelity.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_corrected_word.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_ag_readout.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_word_diameter.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_gyro_bias_projection.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_signed_temporal.py -v
           python3 -m unittest discover -s tests/validation -p test_ou3_construction_mean_action.py -v
@@ -99,6 +100,8 @@ jobs:
         run: python3 -m tools.stability.ou3_theorem.world_frame_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-world-frame.json --expect reports/results/ou3_stability/world-frame-source-feasibility.json
       - name: Reproduce the committed AW tracking audit without promotion
         run: python3 -m tools.stability.ou3_theorem.aw_tracking_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-aw-tracking.json --expect reports/results/ou3_stability/aw-tracking-source-feasibility.json
+      - name: Reproduce the committed information-ratio audit without promotion
+        run: python3 -m tools.stability.ou3_theorem.information_ratio_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-information-ratio.json --expect reports/results/ou3_stability/information-ratio-source-feasibility.json
       - name: Check signed adjoint compatibility on the carried word
         run: python3 -m tools.stability.ou3_theorem.signed_temporal_diagnostic --output /tmp/ou3-signed-adjoint.json
       - name: Check the forced signed balance on a carried moving word
@@ -119,6 +122,7 @@ jobs:
             /tmp/ou3-moving-transport.json
             /tmp/ou3-world-frame.json
             /tmp/ou3-aw-tracking.json
+            /tmp/ou3-information-ratio.json
             /tmp/ou3-signed-adjoint.json
             /tmp/ou3-signed-balance.json
             /tmp/ou3-signed-balance/export.json
