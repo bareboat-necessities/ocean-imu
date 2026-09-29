@@ -3548,6 +3548,79 @@ uniformly over all admissible complete A21 words.
 This is qualitative only. The next obligation is a constructive enclosure
 `g_mu>=g_under(c,r)>0`; only after that should K(c,r), the same-history scalar
 return D(c,r), rho_0, and the nonlinear retained radius be developed.
+## Constructive enclosure for the variational augmented floor
+
+Quantify Theorem A's implication chain in the same fixed-factor action. Let
+`E` denote total variational action including the kernel row. Introduce
+sector amplitudes u=(u_N,u_L,u_G,u_K), where u_N is penalized nuisance/source
+amplitude, u_L the homogeneous LIN/AW root amplitude, u_G the magnetic/gyro
+quotient amplitude, and u_K the physical tilt/BA compatibility amplitude.
+Use the literal same-history maps; these amplitudes are bookkeeping
+coordinates, not independent worst-case boxes.
+
+1. **Nuisance/process coercivity.** Existing process/noise floors give
+`E >= a_N^2 u_N^2`, with constructive `a_N>0` from the minimum whitened
+fresh-factor/root-action floor on the retained class.
+
+2. **Four-S LIN/AW implication.** Four scheduled S rows give
+`|R_S4 x| >= a_L u_L - b_L u_N`.                            (CG-1)
+The qualitative Chebyshev argument makes a_L positive; constructively one
+may use the generalized-Vandermonde determinant with the correct tau_min
+dependence plus explicit row-norm ceilings, or interval-enclose the analytic
+minimum. The previous false >6.82e4 bound is not used.
+
+3. **Magnetic/gyro implication.** MAGNETIC SERVICE + Lemma T give
+`|R_MG x| >= a_G u_G - b_G,L u_L - b_G,N u_N`,              (CG-2)
+where a_G is built from mu_M and the chronological transport modulus.
+
+4. **Accelerometer tilt/BA implication.** After the preceding sectors are
+charged, all literal accelerometer rows give
+`|R_A x| >= a_K dist(x_K,span nu_W)
+              -b_K,G u_G-b_K,L u_L-b_K,N u_N`.             (CG-3)
+The constructive coefficient a_K is the only genuinely new quantitative
+modulus: it is the minimum nonzero singular value of the complete
+same-history magnetic-compatible accelerometer/BA map on the compact
+retained class, **after allowing the physical line nu_W**. It is not the
+retired absolute principal-angle floor; the line is retained explicitly.
+
+5. **Kernel row.** With mu=1/c,
+`sqrt(E) >= sqrt(mu) |nu_W' x|`.                            (CG-4)
+Together with CG-3 this controls the full tilt/BA sector.
+
+Collect the inequalities before applying triangle/Cauchy into the lower
+triangular implication matrix
+
+`M_imp = [[a_N,0,0,0],
+          [-b_L,a_L,0,0],
+          [-b_GN,-b_GL,a_G,0],
+          [-b_KN,-b_KL,-b_KG,a_K]]`,
+
+and append the kernel functional row `sqrt(mu) k_W'` on the final physical
+sector. Let `H_imp(c,r,W)` be the resulting small Gram matrix. Then
+
+`E >= u' H_imp u`,
+`g_under(c,r):= inf_W lambda_min(H_imp(c,r,W))`.             (CG-5)
+
+If the coefficients have source-uniform bounds with positive diagonal
+`a_N,a_L,a_G,a_K`, compactness gives an explicit computable
+`g_under>0`. This is a constructive enclosure of g_mu and uses no
+observation pseudoinverse or unprojected gyro leverage.
+
+**Current quantitative status.** a_N and the magnetic-service part of a_G
+come from existing explicit floors. a_L is analytically extractable from the
+correct four-S determinant/norm bounds (with tau_min, not tau_max). The
+remaining coefficient a_K has not yet been numerically/analytically
+lower-bounded in the current proof. Qualitative Theorem A proves it cannot
+vanish in the full augmented implication chain, but a separate positive
+minimum for CG-3 alone may fail near rotation of the physical compatibility
+line. Therefore CG-5 must, if necessary, keep the combined accelerometer +
+kernel rows as one block rather than require a_K>0 separately.
+
+The safe constructive target is thus the minimum singular value of that
+**combined literal block** on the compact class. It is an analytic
+finite-dimensional continuous minimization with the physical line retained;
+extracting a certified lower enclosure for it is the remaining numerical-
+constant task before K(c,r) can be evaluated.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
