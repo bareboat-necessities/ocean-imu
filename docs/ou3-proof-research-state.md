@@ -967,6 +967,26 @@ tilt/BA detectability without a uniform ratio, or an additional quantitative
 physical/service condition that excites that sector. Adding such a condition
 would strengthen the assumptions and is outside the current task unless
 explicitly authorized.
+## Corrections to PR #625 analytical claims
+
+Three earlier claims are corrected fail-closed:
+
+1. The explicit four-S determinant/singular-value floor is RETRACTED. The
+   inequality using tau<=12 had the exponential monotonicity reversed.
+   Qualitative four-S injectivity remains valid; no quantitative four-S
+   modulus is currently certified.
+2. LE-4 must use the residualized gyro operator
+   `(I-P_U)X_g`. The unprojected inequality was false. Consequently
+   LE-5--LE-8 and the AG-process energy ceiling derived from them are
+   RETRACTED pending a residualized rederivation.
+3. Trivial pointwise augmented nullspace plus compactness does not imply a
+   uniform positive g_MW across rank-changing/tangent kernel histories.
+   The uniform-coercivity existence claim is RETRACTED. The later
+   finite-horizon detectability/relative-action formulation is controlling.
+
+Implication: K_MW(c,r), D(c,r), a strict recurring contraction margin and the
+final invariant solve remain OPEN. No downstream certificate may cite the
+retracted claims.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
