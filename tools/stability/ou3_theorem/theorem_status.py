@@ -103,6 +103,7 @@ def status_report() -> dict:
         "source_uniform_gyro_bias_persistence_diameter_cap":True,
         "source_uniform_kernel_bounded_word_diameter":False,
         "source_uniform_tilt_about_field_axis_covariance_ceiling":False,
+        "kernel_scalar_fixed_point_reduction":True,
         "actual_gain_finite_error_word_composition":True,
         "joint_word_prediction_measurement_input_action":True,
         "finite_angle_source_reset_remainder":True,
@@ -196,7 +197,7 @@ def status_report() -> dict:
             "physical_kernel":"nu=(theta_hat,0,...,0,-J_att theta_hat), theta_hat the body field axis",
             "joint_reader_C_needed_for_rho0":False,
             "open_source_premises":["uniform ceiling on the kernel-bounded word diameter kappa_nu (observability off the tilt/BA kernel)",
-                                    "tilt covariance ceiling about the body field axis for the scalar kernel ceiling c_nu"],
+                                    "linked scalar invariant d_bar K(c_bar)<=c_bar, with d=nu_next' Pi nu_next; an independent tilt ceiling is sufficient but no longer required"],
         },
         "shipping_residual_gyro_bias_hardening":True,
         "implemented_gyro_bias_norm_invariant":True,
@@ -245,7 +246,7 @@ def status_report() -> dict:
             "The word contraction is one information-ratio inequality rho_W<=sup_y[1/(1+y)-1/((1+k)(1+kappa y))], k=lambda_max^+(C^1/2(A-kappa J)C^1/2). "
             "Its k=0 form is the word Riccati diameter kappa_W=lambda_max(J^-1 A)=lambda_max(Pi^-1 P_diff), valid for every root covariance; on every carried MOVING word the joint-reader C adds nothing beyond k=0. "
             "The only positive part of A-kappa J on carried words lies along the physical tilt/BA kernel nu, so one scalar ceiling nu'P_0 nu<=c replaces every root covariance bound, and its BA part is the proved P_ba<=I/1600. "
-            "Next prove a source-uniform ceiling on the kernel-bounded diameter kappa_nu (observability off the kernel, from the G0 gyro geometry, nominal attitude columns, magnetic service and S-chain AW cancellation, with the literal injection frame) and a tilt ceiling about the body field axis. "
+            "O2 reduces further by Riccati monotonicity: P_end<=P_nu<=kappa_nu Pi, so prove the linked scalar fixed point d_bar K(c_bar)<=c_bar with d=nu_next'Pi nu_next (or c_next<=d+a c/(1+b c)); an independent field-axis tilt ceiling is sufficient but not required. Next prove O1 and explicit same-word constants for that scalar invariant using G0 geometry, magnetic service, S-chain cancellation and the literal injection frame. "
             "The .5 rad/s invariant, qualified complete-turn exclusion and one-step gyro floor remain proved, not the complete signed Delta_gyr. "
             "Positive source-uniform signed margins, B_*, J_AG, full covariance upper, rho_0<1, capture/H18/release, nonlinear radius, every-prefix retention, applied magnetic-service qualification and float32 totality remain open."
         ),
