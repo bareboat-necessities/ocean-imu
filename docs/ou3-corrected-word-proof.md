@@ -5129,6 +5129,67 @@ zero-mean, so (a) is not presently established. Thus the remaining gap is now
 an explicit physical-admissibility question for the MI-2-selected acceleration
 history, not an estimator observability question.
 
+## Physical admissibility of the MI-2-selected acceleration law
+
+Write MI-2 as
+`M_k a_phys,perp,k = h_k + N_k a_phys,parallel,k`,          (PA-1)
+where M_k is the literal 2x2 transverse authority obtained from
+`P_B L_k K_a,k R_wb,k P_B`, h_k contains the predicted departure from the
+compatibility manifold plus BA/lever terms, and the remaining longitudinal
+physical acceleration is the free scalar input.
+
+Whenever `sigma_min(M_k)>=d_0>0`,
+`a_phys,perp,k=M_k^-1 h_k+M_k^-1 N_k a_phys,parallel,k`.   (PA-2)
+Hence the required transverse acceleration is finite and obeys the amplitude
+bound
+`|a_phys,perp,k| <= d_0^-1(|h_k|+|N_k||a_parallel,k|)`.
+On a compact retained history all coefficients are bounded, so MI-2 does not
+force acceleration blow-up while transverse authority stays nonsingular.
+
+For jerk, subtract PA-2 at consecutive epochs. With bounded derivatives/
+increments of the gains, attitude, BA, lever terms and compatibility departure,
+`|Delta a_perp| <= C_M |Delta M| + C_h |Delta h|
+                    +C_N |Delta N|+C_u |Delta a_parallel|`. (PA-3)
+Thus the physical jerk limit can be met on a sufficiently regular constrained
+trajectory; there is no structural lower bound forcing jerk above J_max.
+Conversely current assumptions do not guarantee such regularity globally.
+
+For mean and integrated motion, PA-2 is an affine time-varying function of the
+free scalar a_parallel. Over a window,
+`bar a_perp = bar(M^-1 h)+bar(M^-1 N a_parallel)`.          (PA-4)
+One scalar free input cannot generically prescribe both components of the
+transverse mean on a single finite window, so zero mean acceleration is not
+automatic. But MARINE MOTION does not require zero acceleration mean on every
+window; it requires all-time bounded velocity/displacement/potential. Those
+conditions require cancellation over longer histories, and a time-varying
+scalar input can in principle shape the accumulated vector through the rotating
+coefficient `M^-1 N`.
+
+Therefore MI-2 does not structurally violate the current amplitude, jerk, or
+finite-window kinematic conditions. The only possible all-time obstruction is
+whether its forced transverse component has a nonzero secular mean that cannot
+be canceled by the rotating longitudinal channel while respecting the bounds.
+
+Define the long-horizon forced mean
+`A_F(T)=integral_0^T M(t)^-1 h(t) dt`
+and controllable mean direction
+`A_U(T)=integral_0^T M(t)^-1 N(t) u_parallel(t) dt`.
+Bounded velocity requires `A_F(T)+A_U(T)=O(1)` as T grows; bounded
+displacement/potential impose the corresponding first/second moment
+conditions. The current MARINE MOTION and shipping invariants provide no
+source-uniform separation of A_F from the reachable set of A_U.
+
+Hence the current assumptions do not exclude the MI-2-selected physical
+trajectory. Nor does this prove one exists globally: existence requires a
+bounded longitudinal control satisfying the hierarchy of moment conditions
+while D_perp remains nonsingular.
+
+This identifies the exact remaining physical theorem: characterize the
+long-horizon reachable moment set of the scalar longitudinal channel
+`M^-1N`. If the forced moments lie outside it uniformly, O2 closes; if they
+lie inside for one forward-complete strict-service history, that history is
+the admissible persistent-zero counterexample.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
