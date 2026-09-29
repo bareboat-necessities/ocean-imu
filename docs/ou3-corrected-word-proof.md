@@ -2625,96 +2625,50 @@ Using `J_soft>=m I` gives
 Thus the scalar invariant does not actually require the full operator H_W.
 Define the same-word terminal coupling
 
-`g_W:=||Phi_tilde_W' n_+||^2`,
-`gbar_soft(r):=sup_W g_W<infinity`.                         (LK-5)
+`g_W(c):=n_+' Phi_tilde_W J_soft(W,c)^-1 Phi_tilde_W' n_+`,
+`gbar_soft(c,r):=sup_W g_W(c)<infinity`.                    (LK-5)
 
 Then exactly
 
-`n_+' P_soft n_+ <= d_W + g_W/m(c,r)`,                      (LK-6)
+`n_+' P_soft n_+ = d_W + g_W(c)`.                          (LK-6)
 
 and the source-uniform scalar return can be taken as
 
-`D_soft(c,r)=sup_W [d_W+g_W/min(1/c,lambda2_bar)]`.         (LK-7)
+`D_soft(c,r)=sup_W [d_W+g_W(c)]`.                          (LK-7)
 
 This dominates neither factor separately and preserves the linked word.
 
-In the large-c branch (`1/c<=lambda2_bar`),
+The previously stated large-c criterion based on
+`||Phi_tilde' n_+||^2<1` is RETRACTED: that Euclidean quantity is not
+coordinate/units invariant and the factor `1/m` was already an upper bound,
+not an exact scalar recurrence coefficient.
 
-`D_soft(c,r)=sup_W [d_W+c g_W]`.
+The invariant condition is simply
 
-A finite invariant c exists iff
+`sup_W [d_W+g_W(c)] <= c`,                                  (LK-8 corrected)
 
-`sup_W g_W <1`                                              (LK-8)
+with
+`g_W(c)=n_+' Phi_tilde (J+mu n_W n_W')^-1 Phi_tilde' n_+`
+and `mu=1/c`. This is dimensionally and geometrically correct.
 
-and then it suffices to choose
+Equivalently normalize terminal directions by Pi: put
+`z_+=Pi^(1/2)n_+/sqrt(d_W)` when d_W>0. Then
 
-`c >= sup_W d_W/(1-g_W)`                                   (LK-9)
+`g_W(c)/d_W = z_+' Pi^-1/2 Phi_tilde J_soft^-1
+               Phi_tilde' Pi^-1/2 z_+`,                    (LK-9)
 
-with the supremum taken **jointly word by word**, more sharply
-`c >= sup_W d_W/(1-g_W)` over words with g_W<1.
+which is bounded by `kappa_soft-1` and is dimensionless. But requiring this
+ratio `<1` is sufficient, not necessary; the exact fixed-point inequality
+above is controlling.
 
-So the true linked dimensionless quantity is not
-`d_W ||Pi^-1/2 Phi_tilde||^2`; it is
-
-`g_W=||Phi_tilde' n_+||^2`,                                 (LK-10)
-
-the squared deterministic root-to-terminal excess coupling into the next
-soft direction. This is already dimensionless in the normalized root
-coordinates used by the information matrix.
-
-Compactness proves `gbar_soft<infinity` but not `<1`. The existing theorem
-set has no analytical upper bound below one for this terminal coupling.
-Process forgetting and BA decay can make it small, but attitude transport is
-nearly neutral and the next soft direction may align with that persistent
-component. Therefore `gbar_soft<1` is a new quantitative obligation, not a
-consequence of lambda2_bar>0.
-
-Crucially, this obligation is much narrower than the previous Hbar*dbar
-product and can be attacked with the literal terminal map alone. A proof
-should decompose `Phi_tilde' n_+` into attitude, gyro-bias and BA root
-components, use BA OU decay and magnetic-service gyro forgetting, and retain
-the soft-direction attitude/BA correlation. No separate Pi inverse or full
-operator norm is needed.
-For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
-on the quotient of the physical kernel.  Together with
-`nu'Pnu<=c` and the proved nuisance bounds, block Cauchy--Schwarz gives a
-radius-local Euclidean ceiling `P<=C(c,r)I`.  Hence
-`|theta|<=sqrt(C(c,r))r`, while the proved marginals give
-`|e_aw|<=4r` and `|e_ba|<=r/40`.
-
-Parameterize the two radius-dependent geometry terms by proved reader/source
-constants:
-`m_perp(c,r)<=A0+A1 sqrt(C(c,r)) r`, and
-`delta_Q(c,r)<=Q0+Q1 sqrt(C(c,r)) r+Q2 C(c,r)r^2+Q3 C(c,r)^(3/2)r^3`.
-Insert these in the local-tube G0 formulas.  With
-`mu=sigma_w-m_perp/g` and `gamma=mu_+^2/(u1^2+1)`, let `s(c,r)` be the
-resulting quotient singular floor.  If `R_q(c,r)` is the transported
-quotient-reader action and `R_d(c,r)` the action of the same coefficients
-on the terminal kernel functional, take
-
-`K(c,r)=R_q(c,r)/s(c,r)^2`,  `D(c,r)=R_d(c,r)`.
-
-The finite-error composition has polynomial form
-
-`E(c,r)<=e0
- +Racc[(Fmax/2)C(c,r)r^2+4 sqrt(C(c,r))r^2]
- +Rmag[(Bmax/2)C(c,r)r^2]
- +Rreset[z1 sqrt(C(c,r))r+z2 C(c,r)r^2+z3 C(c,r)^(3/2)r^3]`.
-
-Projection contributes zero whenever the proved projection-inactive prefix
-guard applies.  The coupled certification problem is therefore exactly
-
-`D(c,r)<=c`,
-`[1-sqrt(1-1/K(c,r))]r>E(c,r)`.
-
-A positive solution certifies
-`1-rho_0(c,r)>=1/K(c,r)>0` on that invariant region.  This is currently a
-symbolic reduction, not a numerical certificate: finite source-uniform
-values for `A0,A1,Q0..Q3,R_q,R_d` and the associated action constants
-remain OPEN.  Carried-word fitted values must not be substituted for them.
-No positive `(r,c)` or numerical `rho_0` is claimed until those constants
-are proved.
-
+Thus O2 should now be attacked by the exact linked scalar function
+`F_W(c)=d_W+g_W(c)-c`. For each word, `g_W(c)` is continuous and
+nondecreasing in c (because mu=1/c decreases and inverse information grows).
+A source-uniform invariant exists if one can find c with
+`sup_W F_W(c)<=0`. Compactness makes the supremum attained and continuous
+under the soft-kernel stratum construction. The next task is to study its
+large-c slope using the exact least-information spectral component, not a
+coordinate-dependent Euclidean norm.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
