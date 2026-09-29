@@ -5399,6 +5399,58 @@ conditions but not yet O2 exclusion. The remaining question is a temporal
 controllability/moment problem for the MI-2 law, not a missing integration-by-
 parts identity.
 
+## Temporal controllability of the rotating scalar MI-2 channel
+
+Set
+`f(t)=M(t)^-1 h(t)` and `g(t)=M(t)^-1 N(t) in R^2`, so the selected
+transverse physical acceleration is
+`a_perp(t)=f(t)+g(t)u(t)`.                                 (TC-1)
+
+Consider a linear time-local functional
+`L_w[a]=integral w(t)'a(t)dt`.
+For L_w to annihilate the contribution of **every** admissible scalar control
+u with compact support inside a regular interval, the fundamental lemma of
+the calculus of variations requires
+`w(t)'g(t)=0` almost everywhere.                            (TC-2)
+In two transverse dimensions, where g(t) is nonzero, every such annihilator is
+`w(t)=lambda(t) J g(t)`, with J the 90-degree rotation.
+
+Therefore the uncontrollable instantaneous component of the MI-2 law is
+exactly
+`f_perp_ctrl(t)=P_(g(t))^perp f(t)`, or equivalently the scalar
+`chi(t)=(Jg(t))' f(t)`.                                   (TC-3)
+
+This resolves the abstract static/moment controllability question: arbitrary
+time variation of the scalar longitudinal input can generate only the
+pointwise line span{g(t)}; it can never alter chi(t). Time weighting and
+higher moments do not change this local annihilator.
+
+A source-uniform exclusion theorem would follow if persistent compatibility
+forced a sign-definite/nonzero long-horizon moment of chi, for example
+`liminf_(T->infinity) |integral_0^T chi(t)dt|/T >= chi_0>0`,
+because bounded physical velocity requires every fixed-world acceleration
+component to have zero long-time mean.
+
+However chi is expressed through the same-history Kalman gains/cross
+covariances in M,N,h. The fixed gravity/geomagnetic vector d0 enters h, but
+nothing presently proved fixes the sign of its projection on Jg(t).
+MARINE MOTION gravity span rotates the coefficients and can make chi change
+sign. Hence no positive chi_0 follows from the current assumptions.
+
+Conversely, if `chi(t)=0` identically along a compatible history, then the
+forced transverse acceleration lies pointwise in the controllable line and a
+scalar u(t) can cancel it exactly at the acceleration level. More generally,
+zero long-time moments of chi remove the velocity obstruction, though
+displacement/potential still impose integrated conditions.
+
+Thus the temporal controllability problem has a precise invariant:
+`chi(t)=det[g(t),f(t)]`.                                   (TC-4)
+The current theorem assumptions neither bound chi away from zero nor force a
+nonzero secular moment. This is the remaining physical-to-estimator linkage
+needed for O2. Any additional assumption, if ultimately required, should be
+stated physically so that it implies a nonzero recurring chi-action; it should
+not directly constrain Kalman gains.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
