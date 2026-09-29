@@ -1212,6 +1212,99 @@ reachability question remains open. To close it one needs a per-operation
 distance-to-singularity inequality for prediction + S + magnetic operations,
 or an invariant sign/determinant property of the 2x2 transverse numerator.
 No such invariant is currently proved.
+## Per-operation distance-to-singularity inequalities for the AW gain numerator
+
+Fix the future accepted accelerometer row C_a and define its AW gain numerator
+`N_a=(P C_a')_aw`. Let `d_a=sigma_min(P_b N_a|_bperp)`.
+
+For any covariance correction with row H, innovation covariance
+`S_H=H P H'+R_H`, the exact update is
+
+`P+=P-P H' S_H^-1 H P`.
+
+Against the future accelerometer row this gives
+
+`N_a+=N_a- (P H')_aw S_H^-1 H P C_a'`.                    (OP-1)
+
+Hence Weyl gives the exact safe inequality
+
+`d_a+ >= d_a- - ||P_b(PH')_aw||
+                    ||S_H^-1/2 H P C_a'||
+                    ||S_H^-1/2||`.                          (OP-2)
+
+Equivalently retain the linked correction matrix itself for a sharper bound:
+
+`d_a+ >= d_a- - ||P_b(PH')_aw S_H^-1 H P C_a'||`.          (OP-3)
+
+For H=C_a (the accelerometer's own row), the special identity proved above
+replaces this subtraction: the AW row block is right-multiplied by an
+invertible matrix, so exact rank is preserved.
+
+For an S correction, H=E_S'. Therefore
+
+`Delta N_a,S= -P_aw,S (P_SS+R_S)^-1 P_S,* C_a'`.            (OP-S)
+
+For a magnetic correction,
+
+`Delta N_a,M= -(P H_m')_aw S_m^-1 H_m P C_a'`.             (OP-M)
+
+Strict MAGNETIC SERVICE lower-bounds cumulative magnetic information in its
+heading/axial-bias root coordinates, but it gives no upper bound making
+`||Delta N_a,M||<d_a`. Thus service alone does not prevent crossing.
+
+Prediction has
+
+`P-=F P+ F'+Q`.
+
+For the future row C_a^- its AW numerator is
+
+`N_a-= (F P+ F' C_a^-')_aw + (Q C_a^-')_aw`.               (OP-P)
+
+The second term contains the favorable fresh AW block
+`Q_aa R_wb'`, but Q also has correlated LIN/AW blocks and the first term
+contains transported inherited cross covariance. Therefore
+
+`d_a- >= sigma_min(P_b Q_aa R_wb'|_bperp)
+       - ||P_b R_P||`,                                      (OP-P2)
+
+where R_P is the exact sum of all other transported/process contributions.
+Current bounds do not make the right side positive.
+
+AW covariance sync on the default path is an AW-only PSD increment Delta.
+Against a fixed future accelerometer row it changes
+
+`N_a -> N_a + Delta R_wb'`,                                 (OP-AW)
+
+so
+
+`d_new >= sigma_min(P_b Delta R_wb'|_bperp)-||P_b N_a||`
+
+or, locally, `d_new>=d_old-||P_b Delta R_wb'||`; neither
+inequality forbids a determinant crossing because adding a positive matrix
+before an unrelated rotation/cross term is not sign preserving for the
+2x2 transverse determinant.
+
+A literal reset is an invertible covariance congruence, but the next
+accelerometer row changes with the reset/mean attitude. For a fixed physical
+row this is a coordinate transformation and preserves rank. The dangerous
+piece is the change in nominal specific force, hence in J_att. If
+`C_a,new=C_a,old+Delta C`, then
+
+`N_new=N_old+(P Delta C')_aw`,
+`d_new>=d_old-||(P Delta C')_aw||`.                         (OP-C)
+
+These identities settle the structural question: none of prediction, S
+correction, magnetic correction, AW sync, or Jacobian change has a
+sign/determinant invariant that follows from PSD and strict MAGNETIC SERVICE
+alone. Each can alter the transverse numerator by an additive matrix, and
+the current assumptions provide no bound smaller than the incoming distance
+`d_a`.
+
+This does not yet exhibit a reachable crossing, but it rules out proving the
+AW-gain entry lemma from per-operation rank preservation. A source-uniform
+rank invariant would require a new quantitative dominance estimate on the
+linked OP-S/OP-M/OP-P/OP-C terms. No such estimate is present in the current
+proof assumptions.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
