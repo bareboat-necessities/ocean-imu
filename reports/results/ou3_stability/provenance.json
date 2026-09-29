@@ -197,7 +197,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/word_energy.py",
-      "git_blob_sha": "9ee33bbfc5a1babae872dbca958f49bb8208092f"
+      "git_blob_sha": "69e67d786fafd51caf3bc36c50880a46c5a7e4a0"
     },
     {
       "path": "tools/stability/ou3_theorem/block_factor_numeric.py",
@@ -213,7 +213,7 @@
     },
     {
       "path": "tests/validation/test_ou3_word_energy.py",
-      "git_blob_sha": "88801303018c07bb4d2bde31fb5d82f508582e73"
+      "git_blob_sha": "6d2ce1a4c180d96240c524f035a7f25f74efa51e"
     },
     {
       "path": "tests/validation/test_ou3_block_factor_numeric.py",
@@ -325,7 +325,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout.py",
-      "git_blob_sha": "43f6ec0c9aa0c34144df5f54eea1771e89238656"
+      "git_blob_sha": "aeafd7ccf54a100d63e895d1f2422c258ab25abe"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_diagnostic.py",
@@ -333,7 +333,7 @@
     },
     {
       "path": "tests/validation/test_ou3_ag_readout.py",
-      "git_blob_sha": "3b726d9bfdded8885ed8851a0e6172b8a5ee2a2a"
+      "git_blob_sha": "f33205d1ab706ccf8e2f2afbab386af82a05a0ad"
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
