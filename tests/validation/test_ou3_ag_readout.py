@@ -5,7 +5,8 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.ag_readout import (
-    bootstrap, structured_root_upper, process_relative_to_structured_root, certificate, coefficient_relaxation_obstruction, exact_readout,
+    bootstrap, structured_root_upper, process_relative_to_structured_root,
+    minimum_noise_reader, minimum_noise_action_from_information, certificate, coefficient_relaxation_obstruction, exact_readout,
     factor_rows, gyro_alias_obstruction, noise_action_lower, readout_action, supplied_fixture,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
@@ -34,6 +35,13 @@ def posterior(p, events):
 
 
 class HistoricalReadoutTests(unittest.TestCase):
+    def test_all_row_minimum_noise_reader(self):
+        o=[[1,0],[0,1],[1,1]]; t=[[1,0],[0,1]]
+        r=[[2,0,0],[0,3,0],[0,0,4]]
+        x=minimum_noise_reader(o,t,r)
+        self.assertEqual(x['measurement_action'],minimum_noise_action_from_information(x['information'],t))
+        self.assertFalse(x['minor_selection_required'])
+
     def test_structured_root_upper_feeds_relative_prediction(self):
         b=[[F(1),0],[0,F(1)]]; u=[[F(1)]]
         c=structured_root_upper(b,u,F(1))
