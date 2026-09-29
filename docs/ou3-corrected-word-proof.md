@@ -1215,21 +1215,22 @@ in the Schur complement (LE-3).  The fictitious kernel row is appended after
 this reduction with independent variance one, so it adds exactly
 `mu nu nu'`.
 
-Consequently the leverage identity
+Consequently the **residualized** leverage identity
 
-`X_g S_g^-1 X_g'<=I`
+`Xg_perp S_g^-1 Xg_perp'<=I`,  `Xg_perp=(I-P_U)X_g`,
 
-and the reader action use one common whitening and anchor convention.  The
-literal reset transport is retained exactly; finite-series prediction error
-is isolated in `R_D`; S-chain shared-source correlations are retained in
+uses the same literal whitening and anchor convention as the reader action.
+The unprojected statement `X_g S_g^-1 X_g'<=I` is false, as already noted
+above, and is not restored by this bookkeeping identification.  The literal
+reset transport is retained exactly; finite-series prediction error is
+isolated in `R_D`; S-chain shared-source correlations are retained in
 `Sigma_z`.
 
-**Result.**  The bookkeeping identification required by the signed
-`C_k`-energy bound passes in real arithmetic.  The AG-process family is
-therefore bounded conditionally on the already stated positive local-tube
-Schur floor `q_T(c,r)>0` and quotient floor `s(c,r)>0`.  This does not
-prove those radius-dependent floors numerically; it removes the separate
-whitening/anchor obstruction.
+**Result.**  The whitening/anchor identification passes only for the
+residualized operator.  It does **not** establish the former signed
+`C_k`-energy bound.  The missing `P_U X_g` component must be charged
+separately, so LE-5--LE-8 and the claimed AG-process family bound remain
+RETRACTED.
 
 ## Direct literal reduced-information formulation
 
