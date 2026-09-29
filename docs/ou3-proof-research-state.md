@@ -1722,6 +1722,42 @@ invariant submanifold is now the only route to a genuinely lower-dimensional
 periodic covariance construction; otherwise full covariance recurrence is
 unavoidable.
 
+## Symmetric covariance-submanifold test
+
+Test the strongest natural symmetry: choose world axes so gravity and the
+geomagnetic field lie in a coordinate plane, use diagonal/isotropic AW process
+covariance, diagonal sensor-noise matrices, and a periodic principal-axis
+rocking attitude. Start from block/axis-decoupled covariance.
+
+LIN prediction and its process covariance preserve per-axis block structure.
+BA OU prediction and the S=0 pseudo-update also preserve it when their gains
+inherit the same diagonal axis symmetry.
+
+The symmetry fails generically at the attitude measurements. The accelerometer
+attitude Jacobian is `J_att=-[f_cog]x`; for a nonzero field-parallel
+compatible specific force its skew matrix couples the two axes perpendicular
+to f_cog. The magnetic Jacobian likewise contains a skew matrix of the body
+magnetic vector. With gravity and magnetic field noncollinear, no fixed
+coordinate basis diagonalizes both skew-induced measurement geometries over a
+nontrivial rocking cycle. Joseph updates therefore create cross-axis
+attitude/AW/BA covariance blocks even from a diagonal starting P.
+
+Quaternion reset/attitude transport then propagates those cross blocks. Thus
+the axis-decoupled/block-diagonal covariance family is not invariant under the
+complete shipping word except in degenerate constant-attitude or collinear
+gravity/magnetic geometries, both excluded by MOVING/nonvertical-field
+premises.
+
+No useful exact symmetric covariance submanifold was found from the physical
+rotational symmetries. Consequently the lower-dimensional periodic
+counterexample shortcut is unavailable for the nondegenerate theorem class.
+
+The remaining exact periodic construction must use the full covariance
+Poincare map. Any fixed-point existence argument must therefore be on the
+full finite-dimensional PSD covariance together with compatible mean/tuner
+variables; symmetry cannot be used to reduce it without leaving the admitted
+MOVING geometry.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
