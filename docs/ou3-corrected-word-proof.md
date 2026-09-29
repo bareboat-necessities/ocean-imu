@@ -5451,6 +5451,54 @@ needed for O2. Any additional assumption, if ultimately required, should be
 stated physically so that it implies a nonzero recurring chi-action; it should
 not directly constrain Kalman gains.
 
+## Determinant reduction of the temporal uncontrollable component
+
+For the 2x2 invertible transverse authority M,
+`chi=det(M^-1 N,M^-1 h)=det(N,h)/det(M)`.                  (CH-1)
+Therefore M cannot create or remove the zero of chi; it only scales and
+orients it. The decisive geometry is the pair (N,h) before transverse
+inversion.
+
+N is the effect of the one remaining longitudinal physical-acceleration
+component on the two compatibility-maintenance equations. h is the forced
+departure produced by OU decay, scheduled S pseudo-updates, BA/lever terms,
+and the fixed gravity/geomagnetic offset d0.
+
+There is no shipping identity forcing N and h to be nonparallel. In
+particular, h contains gain-weighted estimator-state terms, not just d0.
+Those terms evolve with the same covariance/attitude history that determines
+N. The fixed world vectors g0,b0 constrain one component of h but do not fix
+its direction in the two-dimensional compatibility-equation space.
+
+Recurring gravity-direction span changes N and h continuously but likewise
+does not prohibit repeated or persistent collinearity. A rotating pair of
+vectors may remain parallel for all time. Thus
+`Delta_g>=theta_E` plus fixed noncollinear g0,b0 does not imply
+`|det(N,h)|>=chi0` or a nonzero signed average.
+
+Consequently the literal shipping structure and current physical assumptions
+do **not** force a nonzero recurring chi-action. The possibility
+`det(N,h)=0` is an exact codimension-one compatibility condition that the
+remaining physical/estimator history can in principle satisfy; no existing
+invariant excludes it.
+
+This answers the temporal-controllability fork negatively as an exclusion
+route: chi need not be separated from zero by the present assumptions.
+A zero-moment chi is likewise not excluded because no sign law is available.
+
+The pathological mechanism is now explicit: a correlated marine translation
+history can choose its longitudinal component so that the forced departure h
+lies in the instantaneous longitudinal-control image N, while the two
+transverse acceleration components are fixed by MI-2. If this condition is
+maintained with bounded moments, the q=0 compatibility manifold can persist.
+
+This is still not a constructed global execution, but it shows that no theorem
+based only on gravity span, fixed local gravity, near-constant nonvertical
+geomagnetism, and the existing bounded-motion conditions can derive a
+source-uniform chi floor without an additional physical restriction linking
+translation to attitude. Any such added restriction should target this
+correlated-translation degeneracy, not generic acceleration magnitude.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
