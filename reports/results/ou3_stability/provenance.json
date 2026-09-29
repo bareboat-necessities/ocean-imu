@@ -198,7 +198,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/word_energy.py",
-      "git_blob_sha": "c0c1bc1cee4025b9396c3e880fc1231ba6764c4d"
+      "git_blob_sha": "2fae4bbc3d5774e26c47769a7791ff3621920e6c"
     },
     {
       "path": "tools/stability/ou3_theorem/block_factor_numeric.py",
@@ -214,7 +214,7 @@
     },
     {
       "path": "tests/validation/test_ou3_word_energy.py",
-      "git_blob_sha": "6d2ce1a4c180d96240c524f035a7f25f74efa51e"
+      "git_blob_sha": "778da83e4b13bf5d9a428b5668ee75d5b84ba897"
     },
     {
       "path": "tests/validation/test_ou3_block_factor_numeric.py",
@@ -314,19 +314,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/corrected_word.py",
-      "git_blob_sha": "168e32f920214cd1c8d1056a784c0e89d5a6801d"
+      "git_blob_sha": "4f9f4ea575815cfc0a63bbc6af5bb0b846afe461"
     },
     {
       "path": "tests/validation/test_ou3_corrected_word.py",
-      "git_blob_sha": "93a3fae3289ab5c328b83fd210e2d0909e1d9658"
+      "git_blob_sha": "da63a96434e7c2c22921a4ae6de19248d43a65ec"
     },
     {
       "path": "docs/ou3-corrected-word-proof.md",
-      "git_blob_sha": "0524e9255ae4918d1dfd4a9960cb19faa3a7b722"
+      "git_blob_sha": "0762b245dc6153ff56bacff03f3d8ea02d8a1600"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout.py",
-      "git_blob_sha": "b3b11d67f87315a692caec3c17665e7d00a5db3d"
+      "git_blob_sha": "c92794a9731a581ac5bae142b51fe4415728b768"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_diagnostic.py",
@@ -334,11 +334,11 @@
     },
     {
       "path": "tests/validation/test_ou3_ag_readout.py",
-      "git_blob_sha": "89ec949d6bc16d83e6ca748c4b02cdeb47bd407f"
+      "git_blob_sha": "93d819259a163dd84c58b585a54ef017341d9349"
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "79745bfe1ebed15b64ca26cbf35e3fd1f0ca4ca9"
+      "git_blob_sha": "18e1d7f9e2cc6b474595a4c57e9e9b24b8986357"
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
@@ -346,7 +346,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py",
-      "git_blob_sha": "bcecdd499799c730d317e4f5b467da2f46fa1f6e"
+      "git_blob_sha": "c1aeadb632d390099818e36db3f6f3b3e90b2cfe"
     },
     {
       "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
@@ -450,7 +450,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "fe47c627b72233c1a675d66ba343c28400207bf1"
+      "git_blob_sha": "978983c5b00d617b5f2b3b8cc41ecc711bad6370"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
@@ -466,7 +466,7 @@
     },
     {
       "path": "tests/validation/test_ou3_theorem_status.py",
-      "git_blob_sha": "a7008c83cacf1edf4539087cd821162c64ef0d27"
+      "git_blob_sha": "b733001ee05cfac6e1df51158452fe3f769a3958"
     },
     {
       "path": "tests/kalman_ou_iii/regime_ambiguity-test.cpp",

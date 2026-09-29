@@ -83,7 +83,16 @@ def status_report() -> dict:
         "six_column_to_full_contraction_implication":True,
         "six_column_corrected_loss_uniform_bound":False,
         "historical_AG_readout_covariance_implication":True,
+        "joint_minimum_action_historical_reader_identity":True,
+        "joint_reader_diffuse_limit_full_covariance_domination":True,
+        "joint_reader_coercivity_action_reduction":True,
+        "source_uniform_joint_reader_AG_information_floor":False,
         "uniform_historical_AG_readout_action":False,
+        "first_prediction_relative_process_ceiling":True,
+        "word_contraction_smoother_identity":True,
+        "separated_information_or_forgetting_bounds_insufficient":True,
+        "information_ratio_word_contraction_lemma":True,
+        "source_uniform_word_information_ratio_bounds":False,
         "actual_gain_finite_error_word_composition":True,
         "joint_word_prediction_measurement_input_action":True,
         "finite_angle_source_reset_remainder":True,
@@ -162,6 +171,18 @@ def status_report() -> dict:
             "injection_free_floor_premises":["nominal transverse AW mean <= 2/5 m/s^2 on two separated 16-s windows","nominal L1 force mean <= 6/5","A_tilde=I"],
             "controlling_transfer_quantity":"source bound on the nominal AW window statistics of the literal loop, and the injection frame in Theorem G0",
         },
+        "a21_contraction_route":{
+            "reader_certificate":"ag-readout-certificate.json",
+            "contraction_certificate":"corrected-word-certificate.json",
+            "carried_diagnostic":"ag-readout-source-feasibility.json",
+            "joint_reader":"B*=Pi+Tt I_eff^-1 Tt^T, the diffuse-AG-root Riccati limit; B* <= (1+1/g)TT^T+(1+g)T_h I_eff^-1 T_h^T",
+            "first_prediction_epsilon_ceiling":"3.3741e-10 per prediction (S coordinate), independent of B_*, U_n and eta",
+            "word_contraction":"rho_W <= sup_y [1/(1+y)-1/((1+k)(1+kappa y))], k=lambda_max^+(C^1/2 (A-kappa J) C^1/2), C>=P_0",
+            "carried_slowest_short_word_direction":"translation (velocity/position) with accelerometer-bias share",
+            "open_source_premises":["floor on the word root information J on MOVING windows",
+                                    "ceiling on A-kappa J in the joint-reader metric",
+                                    "floor I_eff>=mu for the preceding-window joint reader"],
+        },
         "shipping_residual_gyro_bias_hardening":True,
         "implemented_gyro_bias_norm_invariant":True,
         "complete_turn_nominal_gyro_bias_alias_excluded":True,
@@ -204,7 +225,10 @@ def status_report() -> dict:
             "Corollary A* needs only the nominal signed AW mean: transverse mean below 1.96133 m/s^2 (carried worst .348, including sync-locked rectification). "
             "Lemma I* bounds the ordered injection rotation by endpoint attitude errors plus the integrated rate error without norm sums; perturbative charging of A~ over 16-s windows is infeasible. "
             "MAGNETIC SERVICE on every 1-s interval and the nominal-rate bound make the field-axis gyro coordinate monotone (Lemma T); with two separated nominal accelerometer windows the injection-free world array has s^2>=1.486786e-3. "
-            "Next bound the nominal AW window statistics from the literal loop, extend G0 to the literal injection frame with local tubes, and replace the process-noise-limited contraction route (margin <=4.2e-9 per 100-s word from G0) by a blockwise, measurement-loss route. "
+            "The historical AG reader is now the exact joint minimum-action reader B*=Pi+Tt I_eff^-1 Tt' (the diffuse-AG-root Riccati limit, with a full 21x21 domination), so B_* reduces to a source-uniform floor on the marginalized AG information I_eff; carried 16-64 s windows bound the actual AG covariance within 12x (5x at 64 s). "
+            "Every first-prediction relative process comparison Q>=epsilon F C F' is capped at epsilon<=3.3741e-10 per prediction by the one-step S coordinate, whatever B_*, U_n or eta, and separated information-only or forgetting-only word bounds also fail on carried words. "
+            "The word contraction is one information-ratio inequality rho_W<=sup_y[1/(1+y)-1/((1+k)(1+kappa y))], k=lambda_max^+(C^1/2(A-kappa J)C^1/2), with C the joint-reader upper bound. "
+            "Next prove source-uniform floors on the word root information J and on I_eff over MOVING windows and a ceiling on A-kappa J; the nominal AW window statistics and the literal injection frame of G0 remain their geometric inputs. "
             "The .5 rad/s invariant, qualified complete-turn exclusion and one-step gyro floor remain proved, not the complete signed Delta_gyr. "
             "Positive source-uniform signed margins, B_*, J_AG, full covariance upper, rho_0<1, capture/H18/release, nonlinear radius, every-prefix retention, applied magnetic-service qualification and float32 totality remain open."
         ),

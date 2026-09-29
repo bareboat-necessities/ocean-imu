@@ -8,11 +8,40 @@ from tools.stability.ou3_theorem.matrix_certificates import congruence, identity
 from tools.stability.ou3_theorem.word_energy import (
     block_generalized_loss_implication, block_schur_self_test, relative_schur_contraction_certificate,
     prediction_relative_identity, prediction_relative_margin,
-    full_loss_margin, restricted_service_counterexample, word_identity,
+    full_loss_margin, mixed_mechanism_example, restricted_service_counterexample,
+    smoother_margin_tests, word_identity, word_smoother_identity,
 )
 
 
 class WordEnergyTests(unittest.TestCase):
+    def test_smoother_identity_matches_complete_word_energy(self):
+        p = [[F(3), F(1), 0], [F(1), F(2), F(1, 2)], [0, F(1, 2), F(1)]]
+        events = [
+            {'kind': 'prediction', 'F': [[1, F(1, 5), 0], [0, 1, F(1, 5)], [0, 0, F(9, 10)]],
+             'Q': [[F(1, 100), 0, 0], [0, 0, 0], [0, 0, F(1, 10)]]},
+            {'kind': 'correction', 'H': [[1, 0, 0]], 'R': [[F(1, 2)]]},
+            {'kind': 'reset', 'G': [[1, F(1, 7), 0], [0, 1, 0], [0, 0, 1]]},
+            {'kind': 'prediction', 'F': identity(3), 'Q': [[0, 0, 0], [0, F(1, 20), 0], [0, 0, 0]]},
+            {'kind': 'correction', 'H': [[0, 1, 1]], 'R': [[1]]},
+        ]
+        word = word_smoother_identity(p, events)
+        energy = word_identity(p, events)['endpoint_energy']
+        from tools.stability.ou3_theorem.lin_path_certificate import inverse
+        self.assertEqual(energy, congruence(word['explained_root_covariance'], inverse(p)))
+        self.assertTrue(is_psd(word['terminal_conditioned_root_covariance']))
+
+    def test_separated_contraction_bounds_miss_a_mixed_word(self):
+        r = mixed_mechanism_example()
+        self.assertTrue(r['verified'])
+        self.assertEqual(r['rho'], '1/2')
+        self.assertTrue(r['joint_matrix_inequality_required'])
+        # A pure-information word is certified by the information test alone.
+        word = word_smoother_identity(identity(1), [{'kind': 'correction', 'H': [[1]], 'R': [[1]]}])
+        self.assertEqual(smoother_margin_tests(word, F(1, 2)),
+                         {'full': True, 'information_only': True, 'forgetting_only': False})
+        with self.assertRaises(ValueError):
+            smoother_margin_tests(word, 1)
+
     def test_block_schur_retains_nuisance_cancellation(self):
         r=block_schur_self_test()
         self.assertTrue(r['verified'])

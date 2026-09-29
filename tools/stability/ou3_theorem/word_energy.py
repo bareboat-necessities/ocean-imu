@@ -136,53 +136,6 @@ def block_schur_self_test():
 
 
 
-def source_uniform_block_loss_target(root_precision_upper, nuisance_loss_floor,
-                                     ag_schur_floor, cross_transform_norm):
-    """Sufficient blockwise target for source-uniform complete-word loss.
-
-    With D=T' diag(S,N) T from the completed-square factorization, suppose
-    S>=s I6, N>=n I15 and ||T^-1||<=k. Then
-        D >= min(s,n)/k^2 I.
-    If J_root=P_root^-1 <= j I, this gives
-        D >= delta J_root, delta=min(s,n)/(k^2 j).
-    This is intentionally matrix/blockwise: no covariance ceiling or
-    independent principal-block lifting is used.
-    """
-    j,n,s,k=map(F,(root_precision_upper,nuisance_loss_floor,
-                   ag_schur_floor,cross_transform_norm))
-    if min(j,n,s,k)<=0:
-        raise ValueError('strict positive block premises required')
-    delta=min(s,n)/(k*k*j)
-    return {'delta':str(delta),'rho0_upper':str(1-delta),
-            'strict':0<delta<1,
-            'required_source_bounds':[
-                'root precision spectral upper',
-                'nuisance loss floor',
-                'AG Schur loss floor after nuisance cancellation',
-                'completed-square inverse transform norm']}
-
-
-
-def block_relative_loss_target(root_precision, loss, split):
-    """Exact source target in the root metric, avoiding a scalar precision cap.
-
-    Congruence by a root-precision Cholesky factor is the natural generalized
-    comparison D >= delta J_root.  This helper keeps the complete matrices and
-    reports the exact logical target; source proofs should enclose the
-    root-whitened completed-square blocks/cross transform directly rather than
-    multiply a Euclidean loss floor by the worst coordinate precision.
-    """
-    j,d=_matrix(root_precision),_matrix(loss)
-    ldlt(j)
-    cert=block_schur_loss_certificate(d,split)
-    return {'verified_algebra':True,'AG_schur':cert['schur'],
-            'nuisance_loss':cert['nuisance'],
-            'target':'lambda_min(J_root^-1/2 D J_root^-1/2) > 0',
-            'scalar_root_precision_ceiling_required':False,
-            'source_uniform_verified':False}
-
-
-
 def relative_schur_contraction_certificate(root_precision, loss, split, delta):
     """Exact block-Schur characterization of D >= delta J in relative metric.
 
@@ -264,6 +217,106 @@ def prediction_relative_margin(root_covariance, transition, process_covariance, 
         raise ArithmeticError('relative prediction implication failed')
     return {'premise_verified':premise,'delta':str(delta),
             'conclusion_verified':conclusion}
+
+
+def word_smoother_identity(root_covariance, events):
+    """Exact fixed-point-smoother form of the complete-word contraction.
+
+    For the optimal-gain frozen word, with C=Cov(x_0,x_k|y) propagated by
+    C<-C F', C<-C (I-KH)', C<-C G' and Sigma_00 reduced by C H' S^-1 H C',
+      M = C_end' P_0^-1   (exactly),
+      M' P_end^-1 M = P_0^-1 (Sigma_00|y - Sigma_00|y,x_end) P_0^-1,
+    with Sigma_00|y,x_end = Sigma_00|y - C_end P_end^-1 C_end'. Hence
+    rho=lambda_max(P_0^-1/2 (Sigma_00|y - Sigma_00|y,x_end) P_0^-1/2).
+    Sigma_00|y is the root covariance after the word's data (information
+    mechanism); Sigma_00|y,x_end is what the terminal state leaves unknown
+    (forgetting mechanism). Neither alone controls a mixed word.
+    """
+    p0 = _matrix(root_covariance)
+    ldlt(p0)
+    p, c, s00, m = p0, p0, p0, identity(len(p0))
+    for event in events:
+        kind = event['kind']
+        if kind == 'prediction':
+            f, q = _matrix(event['F']), _matrix(event['Q'])
+            if not is_psd(q):
+                raise ValueError('process increment must be PSD')
+            p, c, m = add(congruence(p, transpose(f)), q), matmul(c, transpose(f)), matmul(f, m)
+        elif kind == 'correction':
+            h, r = _matrix(event['H']), _matrix(event['R'])
+            ldlt(r)
+            s = add(congruence(p, transpose(h)), r)
+            si = inverse(s)
+            k = matmul(matmul(p, transpose(h)), si)
+            a = add(identity(len(p)), matmul(k, h), F(-1))
+            ch = matmul(c, transpose(h))
+            s00 = add(s00, matmul(matmul(ch, si), transpose(ch)), F(-1))
+            c = matmul(c, transpose(a))
+            p = add(congruence(p, transpose(a)), congruence(r, transpose(k)))
+            m = matmul(a, m)
+        elif kind == 'reset':
+            g = _matrix(event['G'])
+            inverse(g)
+            p, c, m = congruence(p, transpose(g)), matmul(c, transpose(g)), matmul(g, m)
+        else:
+            raise ValueError('unknown energy event')
+    p0i = inverse(p0)
+    if m != matmul(transpose(c), p0i):
+        raise ArithmeticError('closed-loop map is not the smoother cross covariance')
+    forgetting = add(s00, matmul(matmul(c, inverse(p)), transpose(c)), F(-1))
+    explained = add(s00, forgetting, F(-1))
+    if congruence(inverse(p), m) != congruence(explained, p0i):
+        raise ArithmeticError('smoother contraction identity failed')
+    return {'algebra_verified': True, 'root_covariance': p0,
+            'smoothed_root_covariance': s00, 'terminal_conditioned_root_covariance': forgetting,
+            'explained_root_covariance': explained, 'end_covariance': p,
+            'source_uniform_verified': False}
+
+
+def smoother_margin_tests(word, delta):
+    """Exact checks of the full and the two separated sufficient conditions.
+
+    full:        Sigma_00|y - Sigma_00|y,x_end <= (1-delta) P_0  (<=> rho<=1-delta)
+    information: Sigma_00|y <= (1-delta) P_0
+    forgetting:  Sigma_00|y,x_end >= delta P_0
+    Either separated test implies the full one; the converse fails.
+    """
+    delta = F(delta)
+    if not 0 < delta < 1:
+        raise ValueError('delta in (0,1) required')
+    p0 = word['root_covariance']
+    full = is_psd(add([[(1-delta)*v for v in row] for row in p0], word['explained_root_covariance'], F(-1)))
+    info = is_psd(add([[(1-delta)*v for v in row] for row in p0], word['smoothed_root_covariance'], F(-1)))
+    forget = is_psd(add(word['terminal_conditioned_root_covariance'], p0, -delta))
+    if (info or forget) and not full:
+        raise ArithmeticError('separated sufficient condition failed to imply the full test')
+    return {'full': full, 'information_only': info, 'forgetting_only': forget}
+
+
+def mixed_mechanism_example():
+    """Exact two-state word: separated bounds certify nothing, the word gives 1/2.
+
+    State 1 is observed with no process noise (information), state 2 is
+    unobserved with process noise (forgetting). Carried 0.32-s shipping words
+    show the same split: translation contracts by forgetting and slow bias
+    directions by information, so any source-uniform contraction certificate
+    must be one joint matrix inequality, not two scalar ones.
+    """
+    word = word_smoother_identity(identity(2), [
+        {'kind': 'prediction', 'F': identity(2), 'Q': [[0, 0], [0, 1]]},
+        {'kind': 'correction', 'H': [[1, 0]], 'R': [[1]]}])
+    energy = word_identity(identity(2), [
+        {'kind': 'prediction', 'F': identity(2), 'Q': [[0, 0], [0, 1]]},
+        {'kind': 'correction', 'H': [[1, 0]], 'R': [[1]]}])['endpoint_energy']
+    tests = smoother_margin_tests(word, F(1, 2))
+    if energy != [[F(1, 2), 0], [0, F(1, 2)]] or tests != {'full': True, 'information_only': False, 'forgetting_only': False}:
+        raise ArithmeticError('mixed-mechanism example failed')
+    for delta in (F(1, 10**6),):
+        weak = smoother_margin_tests(word, delta)
+        if weak['information_only'] or weak['forgetting_only']:
+            raise ArithmeticError('a separated bound unexpectedly certified the mixed word')
+    return {'verified': True, 'rho': '1/2', 'information_only_margin': '0',
+            'forgetting_only_margin': '0', 'joint_matrix_inequality_required': True}
 
 
 def restricted_service_counterexample():

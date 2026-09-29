@@ -91,6 +91,27 @@ class TheoremStatusTests(unittest.TestCase):
         self.assertTrue(w["attitude_columns_need_only_nominal_signed_mean"])
         self.assertIn("A_tilde=I", w["injection_free_floor_premises"])
 
+    def test_contraction_route_keeps_source_premises_open(self):
+        r=status_report()
+        o=r["obligations"]
+        for key in ("joint_minimum_action_historical_reader_identity",
+                    "joint_reader_diffuse_limit_full_covariance_domination",
+                    "joint_reader_coercivity_action_reduction",
+                    "first_prediction_relative_process_ceiling",
+                    "word_contraction_smoother_identity",
+                    "separated_information_or_forgetting_bounds_insufficient",
+                    "information_ratio_word_contraction_lemma"):
+            self.assertTrue(o[key])
+        for key in ("source_uniform_joint_reader_AG_information_floor",
+                    "uniform_historical_AG_readout_action",
+                    "source_uniform_word_information_ratio_bounds",
+                    "full_21_covariance_upper",
+                    "practical_rho0_margin_from_six_column_floor"):
+            self.assertFalse(o[key])
+        route=r["a21_contraction_route"]
+        self.assertEqual(len(route["open_source_premises"]),3)
+        self.assertIn("independent of B_*", route["first_prediction_epsilon_ceiling"])
+
     def test_committed_status_matches_code(self):
         p=ROOT/"reports/results/ou3_stability/theorem-status.json"
         self.assertEqual(json.loads(p.read_text()),status_report())

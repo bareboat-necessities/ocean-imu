@@ -5,6 +5,8 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.ag_readout import (
+    augmented_design, coercivity_action_bound, diffuse_prior_posterior, joint_minimum_action_reader,
+    joint_reader_audit, reader_action_of,
     bootstrap, structured_root_upper, process_relative_to_structured_root,
     minimum_noise_reader, minimum_noise_action_from_information, certificate, coefficient_relaxation_obstruction, exact_readout,
     factor_rows, gyro_alias_obstruction, noise_action_lower, readout_action, supplied_fixture,
@@ -41,6 +43,63 @@ class HistoricalReadoutTests(unittest.TestCase):
         x=minimum_noise_reader(o,t,r)
         self.assertEqual(x['measurement_action'],minimum_noise_action_from_information(x['information'],t))
         self.assertFalse(x['minor_selection_required'])
+
+    def test_joint_reader_is_loewner_minimal_over_every_feasible_reader(self):
+        events = supplied_fixture()
+        design = augmented_design(events, identity(15))
+        joint = joint_minimum_action_reader(design)
+        pivot = exact_readout(events)
+        pivot_action = readout_action(events, pivot, identity(15))['action']
+        # The augmented design reproduces the chronological backward recursion.
+        self.assertEqual(reader_action_of(design, pivot), pivot_action)
+        self.assertTrue(is_psd(add(pivot_action, joint['action'], F(-1))))
+        self.assertNotEqual(pivot_action, joint['action'])
+        delta = add(pivot, joint['reader'], F(-1))
+        self.assertEqual(pivot_action, add(joint['action'], matmul(
+            matmul(delta, joint['observation_covariance']), transpose(delta))))
+        self.assertFalse(joint['minor_selection_required'])
+        self.assertFalse(joint['source_uniform_verified'])
+
+    def test_joint_reader_is_the_diffuse_ag_root_riccati_limit(self):
+        events = supplied_fixture()
+        audit = joint_reader_audit(events, identity(15))
+        self.assertEqual(audit['scales'], ['1000', '1000000000'])
+        design = augmented_design(events, identity(15))
+        small, large = (diffuse_prior_posterior(design, t) for t in (F(1), F(10)**6))
+        self.assertTrue(is_psd(add(large, small, F(-1))))
+        with self.assertRaises(ValueError):
+            diffuse_prior_posterior(design, 0)
+
+    def test_joint_reader_dominates_literal_ag_covariance_with_cross_terms(self):
+        events = supplied_fixture()
+        action = joint_minimum_action_reader(augmented_design(events, identity(15)))['action']
+        for root_scale in (1, 10**6):
+            c = identity(21)
+            for i in range(6):
+                c[i][i] = F(root_scale)
+                c[i][6+i] = F(1, 4)
+            end = posterior(matmul(c, transpose(c)), events)
+            self.assertTrue(is_psd(add(action, [row[:6] for row in end[:6]], F(-1))))
+
+    def test_coercivity_reduction_and_unidentifiable_root(self):
+        events = supplied_fixture()
+        design = augmented_design(events, identity(15))
+        for gamma in (F(1, 3), 1, 7):
+            self.assertTrue(coercivity_action_bound(design, gamma)['verified'])
+        with self.assertRaises(ValueError):
+            coercivity_action_bound(design, 0)
+        for index in (1, 5):
+            events[index]['accepted'] = False
+        with self.assertRaisesRegex(ValueError, 'not identifiable'):
+            joint_minimum_action_reader(augmented_design(events, identity(15)))
+
+    def test_measurement_only_reader_is_a_special_case(self):
+        o = [[1, 0], [0, 1], [1, 1]]
+        t = [[1, 0], [0, 1]]
+        r = [[4, 0, 0], [0, 9, 0], [0, 0, 16]]
+        design = {'O_h': o, 'A': [[2, 0, 0], [0, 3, 0], [0, 0, 4]], 'T_h': t, 'T': [[0, 0, 0], [0, 0, 0]]}
+        self.assertEqual(joint_minimum_action_reader(design)['action'],
+                         minimum_noise_reader(o, t, r)['measurement_action'])
 
     def test_structured_root_upper_feeds_relative_prediction(self):
         b=[[F(1),0],[0,F(1)]]; u=[[F(1)]]

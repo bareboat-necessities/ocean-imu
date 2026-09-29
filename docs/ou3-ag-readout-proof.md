@@ -117,6 +117,84 @@ one fixed reader is generally invalid under varying coefficients. Even a
 nonzero root residual of size `10^-60` is rejected without a separate AG
 root bound: its action can grow without bound as the root uncertainty grows.
 
+## Joint minimum-action reader (exact)
+
+The pivot reader is one feasible reader; the best one needs no selected
+minor. Stack every action source of the trial estimator as one unit-covariance
+column: the nuisance-root factor `Gamma` (`Gamma Gamma'=U_n`), each prediction
+or sync factor `U_j` in operation order, and each applied noise factor `V_i`.
+The frozen word is then exactly (`augmented_design` in `ag_readout.py`)
+
+`y = O_h h0 + A s`,  terminal AG state `= T_h h0 + T s`,
+
+with `h0` the unknown AG root and `s` the source vector. Every reader with
+`L O_h = T_h` has action `B(L)=(T-L A)(T-L A)'`.
+
+**Theorem (joint reader).** Let `Sigma=A A'>0` and let
+`I_eff = O_h' Sigma^-1 O_h`.
+
+1. **Minimizer.** If `I_eff>0`, the unique Loewner-minimal feasible reader is
+   `L* = T A' Sigma^-1 + Tt I_eff^-1 O_h' Sigma^-1`, where
+   `Tt = T_h - T A' Sigma^-1 O_h`.
+2. **Minimum action.** Its action is `B* = Pi + Tt I_eff^-1 Tt'`, where
+   `Pi = T (I - A' Sigma^-1 A) T'`.
+3. **Every feasible reader.** For each `L` with `L O_h = T_h`,
+   `B(L) = B* + (L-L*) Sigma (L-L*)'`.
+4. **Diffuse limit.** For `h0 ~ N(0, t I)` the auxiliary posterior covariance
+   of the terminal AG state is `Pi + Tt (I/t + I_eff)^-1 Tt'`. This equals the
+   frozen-coefficient Riccati recursion started at `diag(t I6, U_n)`, and it
+   increases to `B*` as `t` grows.
+5. **Coercivity reduction.** For every `g>0`,
+   `B* <= (1+1/g) T T' + (1+g) T_h I_eff^-1 T_h'`.
+   Here `T T'` is the source-driven terminal AG covariance. Because shipping
+   predictions have no nuisance-to-AG block, `T T'` is the AG process Gramian
+   of the window.
+
+*Proof.* Write `L=L*+Delta` with `Delta O_h=0`. Then
+`(T-L* A)A' = -Tt I_eff^-1 O_h'`, so every cross term vanishes, which gives
+item 3. `I - A' Sigma^-1 A` is the orthogonal projector onto `ker A`, which
+gives item 2. Woodbury gives item 4; the Gaussian model is realized by the
+Riccati recursion with realized coefficients frozen. For item 5,
+`Sigma^-1/2 O_h I_eff^-1 O_h' Sigma^-1/2` is a projector, hence
+`T A' Sigma^-1 O_h I_eff^-1 O_h' Sigma^-1 A T' <= T T'`; apply Young to `Tt`. ∎
+
+Consequences:
+
+- **Prior-independent AG bound.** `P_hh <= B*` holds for every actual root with
+  `P_nn <= U_n`, retaining all root cross covariance. No AG prior, pivot or
+  threshold enters.
+- **Full 21×21 bound.** Riccati monotonicity gives `P_end <= lim_t Ric_W(diag(t I6, U_n'))`
+  for every `U_n'` with `P_nn < U_n'`. This full-matrix upper bound needs no
+  Young split and no `U_n` inflation of the terminal nuisance block.
+- **Remaining premise.** The only data-dependent quantity is `I_eff`: the AG
+  root information after marginalizing the nuisance root and every
+  process/measurement source. A source-uniform `B_*` follows from a
+  source-uniform floor `I_eff >= mu` together with the explicit process
+  Gramian and a bound on `|T_h|`.
+- **Measurement-only special case.** The earlier all-row noise reader
+  (`minimum_noise_reader`) is the case with no process or nuisance sources.
+- **Verification.** `joint_reader_audit` checks items 1–5 exactly on the
+  supplied 21-state word; the pivot reader's action is strictly larger there.
+
+**Carried feasibility (non-promoting).** The table below uses real-arithmetic
+optimal-gain replays of the literal carried coefficients (corrected OU core)
+and windows ending at 225.32 s. Each ratio is the largest generalized
+eigenvalue against the replayed actual covariance.
+
+| Window | Quiet `B*`/`P_hh` | Wave `B*`/`P_hh` | Quiet full/`P` | Wave full/`P` |
+|---:|---:|---:|---:|---:|
+| 0.32 s | 6.3e8 | 4.9e8 | 9.5e8 | 5.6e8 |
+| 4 s | 1827 | 2560 | 1844 | 2569 |
+| 16 s | 12.2 | 12.4 | 76.6 | 75.0 |
+| 64 s | 5.07 | 5.40 | 75.4 | 55.1 |
+
+On 0.32-s words `B*` has `lambda_max` 778 (quiet) and 193 (wave). The pivot
+reader's committed values are 1199 and 1450. Short words cannot identify the
+gyro-bias root, so no reader is commensurate there. From 16 s on, the joint
+reader bounds the actual AG covariance within a factor of about 12, and
+within about 5 at 64 s. The full bound stays within 55–77. These replays do
+not certify `I_eff` source-uniformly.
+
 ## Conditional bootstrap to J and full contraction
 
 If the historical action is uniformly bounded by a single `B_* > 0`, then
@@ -146,6 +224,27 @@ is verified with exact PSD elimination. Later corrections/resets cannot
 undo this homogeneous loss. For a useful margin, however, retain and enclose
 the entire actual word factor; the first-prediction implication is not
 automatically a practical nonlinear margin.
+
+**This route has a uniform ceiling.** `first_prediction_relative_ceiling` in
+`corrected_word.py` proves it for every upper comparison `C >= P_root`,
+whatever `B_*`, `U_n` or `eta`. Test the premise on one axis's S coordinate
+(the displacement integral) with `y=e_S`:
+
+`epsilon <= Q_SS/(F L F')_SS <= 3.3741e-10`
+
+- **Numerator.** The OU triple-integrator impulse response in S is at most
+  `t^3/6`. Hence one step has `Q_SS <= Sigma_aw (h/tau) h^6/126 (1+eps_q)`.
+- **Denominator.** `L` is the certified pre-prediction LIN floor.
+
+So `N` predictions certify at most `N epsilon`. That is at most `1.73e-4` per
+2048-s proof word, against a carried word contraction of about `0.39` per
+64 s. On carried 0.32-s words the ideal ratio with the literal root
+covariance is `2e-23` (quiet) and `4e-22` (wave), and the best structured
+chain from `(B*, U_n)` is about `1e-36`.
+
+The implication itself stays valid algebra. The contraction is recast in
+`ou3-corrected-word-proof.md` §6 as one information-ratio inequality in which
+`B*` supplies the upper comparison.
 
 ## Executed checks and unresolved source inequality
 

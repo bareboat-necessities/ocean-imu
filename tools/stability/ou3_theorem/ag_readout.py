@@ -139,29 +139,132 @@ def noise_action_lower(events, n=21, ag=6):
 
 
 
-def augmented_minimum_action_reader(root_nuisance_map, terminal_ag_map,
-                                    observation_map, action_weight):
-    """Exact minimum TOTAL historical action as one weighted reader problem.
+def augmented_design(events, nuisance_factor, n=21, ag=6):
+    """Chronological augmented design of the joint historical reader.
 
-    Stack every action source seen by the backward trial estimator: observation
-    noise, fresh process factors, and a factor of the nuisance-root upper U_n.
-    For a reader coefficient vector l, the terminal AG error source map is
-    affine, Z(l)=Z0-l A.  After augmenting the AG-root cancellation constraint
-    into A, minimizing Z W Z' is a constrained weighted least-squares problem.
-    This function records the normal-form theorem target; construction of the
-    chronological augmented A,W from shipping events is the next source lemma.
-
-    Crucially, this shows process/root action need not be bounded by unsigned
-    recursion once the whole reader is optimized jointly.
+    Every action source of the backward trial estimator is one unit-covariance
+    column: the nuisance-root factor Gamma (Gamma Gamma'=U_n), each prediction
+    or sync factor U_j in operation order, and each applied correction's noise
+    factor V_i. With the AG root h0 unknown, the frozen word is exactly
+      y = O_h h0 + A s,   terminal AG state = T_h h0 + T s,   s ~ unit.
+    Predictions and resets act on the carried sensitivity; nothing is dropped.
+    The unit law is a matrix-algebra device, not a stochastic premise on the
+    physical marine or bias histories.
     """
-    yn,t,o,w=_matrix(root_nuisance_map),_matrix(terminal_ag_map),_matrix(observation_map),_matrix(action_weight)
-    ldlt(w)
-    return {'verified_formulation':True,
-            'objective':'min_L Z(L) W Z(L)^T subject to L O = T_h',
-            'root_nuisance_columns_retained':bool(yn),
-            'joint_process_measurement_root_action':True,
-            'unsigned_residual_accumulation_required':False,
-            'source_uniform_verified':False}
+    gamma = _matrix(nuisance_factor, n-ag)
+    sequence = _events(events, n)
+    sources = len(gamma[0])+sum(len(f[0]) for kind, _, f in sequence if kind != 'reset')
+    x = _zero(n, ag+sources)
+    for i in range(ag):
+        x[i][i] = F(1)
+    for i, row in enumerate(gamma):
+        x[ag+i][ag:ag+len(row)] = row
+    column, rows = ag+len(gamma[0]), []
+    for kind, b, f in sequence:
+        if kind == 'correction':
+            block = matmul(b, x)
+            for i, row in enumerate(f):
+                block[i][column:column+len(row)] = [u+v for u, v in zip(block[i][column:column+len(row)], row)]
+            rows.extend(block)
+            column += len(f[0])
+        else:
+            x = matmul(b, x)
+            if kind == 'prediction':
+                for i, row in enumerate(f):
+                    x[i][column:column+len(row)] = [u+v for u, v in zip(x[i][column:column+len(row)], row)]
+                column += len(f[0])
+    if not rows:
+        raise ValueError('no applied observations')
+    return {'O_h': [r[:ag] for r in rows], 'A': [r[ag:] for r in rows],
+            'T_h': [r[:ag] for r in x[:ag]], 'T': [r[ag:] for r in x[:ag]]}
+
+
+def joint_minimum_action_reader(design):
+    """Loewner-minimal TOTAL historical action subject to L O_h = T_h.
+
+    With Sigma=A A'>0 and I_eff=O_h' Sigma^-1 O_h>0, the unique minimizer is
+      L* = T A' Sigma^-1 + Tt I_eff^-1 O_h' Sigma^-1,  Tt=T_h-T A' Sigma^-1 O_h,
+    with action
+      B* = Pi + Tt I_eff^-1 Tt',   Pi = T (I-A' Sigma^-1 A) T'.
+    Every feasible reader satisfies B(L) = B* + (L-L*) Sigma (L-L*)'. I_eff
+    is the AG-root information left after marginalizing the nuisance root and
+    every process/measurement source: the only data-dependent coercivity
+    quantity of the historical reader. No minor is selected or inverted.
+    """
+    o, a, th, t = (_matrix(design[k]) for k in ('O_h', 'A', 'T_h', 'T'))
+    sigma = matmul(a, transpose(a))
+    ldlt(sigma)
+    si = inverse(sigma)
+    so = matmul(si, o)
+    info = matmul(transpose(o), so)
+    try:
+        ldlt(info)
+    except ValueError as error:
+        raise ValueError('AG root not identifiable after nuisance/process marginalization') from error
+    ta = matmul(t, transpose(a))
+    tilde = add(th, matmul(ta, so), F(-1))
+    ii = inverse(info)
+    pi = add(matmul(t, transpose(t)), matmul(matmul(ta, si), transpose(ta)), F(-1))
+    action = add(pi, matmul(matmul(tilde, ii), transpose(tilde)))
+    reader = add(matmul(ta, si), matmul(matmul(tilde, ii), transpose(so)))
+    if matmul(reader, o) != th:
+        raise ArithmeticError('joint reader does not cancel the AG root exactly')
+    if reader_action_of(design, reader) != action:
+        raise ArithmeticError('joint reader action identity failed')
+    return {'reader': reader, 'action': action, 'AG_effective_information': info,
+            'effective_terminal_map': tilde, 'known_root_residual': pi,
+            'observation_covariance': sigma, 'minor_selection_required': False,
+            'source_uniform_verified': False}
+
+
+def reader_action_of(design, reader):
+    """Exact total action (T-L A)(T-L A)' of a reader with L O_h = T_h."""
+    o, a, th, t = (_matrix(design[k]) for k in ('O_h', 'A', 'T_h', 'T'))
+    reader = _matrix(reader, len(th), len(o))
+    if matmul(reader, o) != th:
+        raise ValueError('uncancelled AG root: no AG prior ceiling is available')
+    z = add(t, matmul(reader, a), F(-1))
+    return matmul(z, transpose(z))
+
+
+def diffuse_prior_posterior(design, scale):
+    """Exact posterior covariance of the terminal AG state for h0 ~ N(0, scale I).
+
+    Equals Pi + Tt (I/scale + I_eff)^-1 Tt' and increases to B* as scale
+    grows: the joint minimum-action reader is the diffuse-AG-root limit of
+    the auxiliary frozen-coefficient Riccati recursion.
+    """
+    o, a, th, t = (_matrix(design[k]) for k in ('O_h', 'A', 'T_h', 'T'))
+    scale = F(scale)
+    if scale <= 0:
+        raise ValueError('positive AG prior scale required')
+    cy = add(matmul(a, transpose(a)), [[scale*v for v in row] for row in matmul(o, transpose(o))])
+    ct = add(matmul(t, transpose(a)), [[scale*v for v in row] for row in matmul(th, transpose(o))])
+    prior = add(matmul(t, transpose(t)), [[scale*v for v in row] for row in matmul(th, transpose(th))])
+    return add(prior, matmul(matmul(ct, inverse(cy)), transpose(ct)), F(-1))
+
+
+def coercivity_action_bound(design, gamma=1):
+    """B* <= (1+1/g) T T' + (1+g) T_h I_eff^-1 T_h' for every g>0 (exact check).
+
+    T T' is the source-driven terminal AG covariance (the AG process Gramian
+    of the window when the transition has no nuisance-to-AG block). Hence a
+    source-uniform floor I_eff >= mu I and bounded T_h give B_* < infinity.
+    The Young split uses that Sigma^-1/2 O_h I_eff^-1 O_h' Sigma^-1/2 is an
+    orthogonal projector.
+    """
+    g = F(gamma)
+    if g <= 0:
+        raise ValueError('positive Young parameter required')
+    joint = joint_minimum_action_reader(design)
+    th, t = _matrix(design['T_h']), _matrix(design['T'])
+    ii = inverse(joint['AG_effective_information'])
+    bound = add([[(1+1/g)*v for v in row] for row in matmul(t, transpose(t))],
+                [[(1+g)*v for v in row] for row in matmul(matmul(th, ii), transpose(th))])
+    if not is_psd(add(bound, joint['action'], F(-1))):
+        raise ArithmeticError('coercivity action bound failed')
+    return {'bound': bound, 'action': joint['action'], 'young_parameter': str(g),
+            'verified': True, 'source_uniform_information_floor_proved': False}
 
 
 def minimum_noise_reader(observation_rows, terminal_map, noise_covariance):
@@ -191,48 +294,11 @@ def minimum_noise_reader(observation_rows, terminal_map, noise_covariance):
 
 
 
-def information_action_upper(information_floor, terminal_norm_upper):
-    """Source-uniform measurement-action implication.
-
-    I>=mu I6 and ||T||<=tau imply T I^-1 T' <= tau^2/mu I6.
-    This is only the observation-noise portion of B_*.
-    """
-    mu,tau=map(F,(information_floor,terminal_norm_upper))
-    if min(mu,tau)<=0: raise ValueError('positive information/transport bounds required')
-    return {'measurement_action_scalar_upper':tau*tau/mu,
-            'requires_process_action_bound':True,
-            'requires_nuisance_root_residual_bound':True}
-
-
 def minimum_noise_action_from_information(information, terminal_map):
     """T I^-1 T' action; source proof target for uniform reader conditioning."""
     info,t=_matrix(information),_matrix(terminal_map); ldlt(info)
     return matmul(matmul(t,inverse(info)),transpose(t))
 
-
-
-def backward_residual_action_bound(*, terminal_norm, transition_norms,
-                                   reset_norms, reader_block_norms,
-                                   observation_norms, process_factor_norms,
-                                   noise_factor_norms, nuisance_upper_norm):
-    """Deterministic norm majorant for process/root parts of reader action.
-
-    Reverse recursion is Y<-YF, Y<-YG, or Y<-Y-LH.  Carry a scalar y>=||Y||
-    and accumulate ||YU||^2 and ||LV||^2.  This is a source-uniform fallback
-    once coefficient-dependent all-row reader block norms are bounded.
-    It is chronological: products use the actual operation order and do not
-    subtract injections perturbatively.
-    """
-    vals=[terminal_norm,nuisance_upper_norm,*transition_norms,*reset_norms,
-          *reader_block_norms,*observation_norms,*process_factor_norms,*noise_factor_norms]
-    vals=list(map(F,vals))
-    if any(x<0 for x in vals): raise ValueError('nonnegative norm bounds required')
-    # This helper intentionally accepts aligned chronological arrays only in
-    # a later source enclosure; algebraic recurrence stated here.
-    return {'recurrence':'prediction: y<-y||F||, add (y||U||)^2; reset: y<-y||G||; observation: y<-y+||L||||H||, add (||L||||V||)^2',
-            'root_residual_action':'<= y_root^2 ||U_n||',
-            'global_unsigned_product_route_promoted':False,
-            'signed_or_block_chronological_enclosure_required':True}
 
 
 def readout_action(events, reader, nuisance_upper, ag=6):
@@ -496,11 +562,81 @@ def gyro_alias_obstruction():
             'invalidated_method': 'unprojected relaxation with unconstrained estimated gyro bias'}
 
 
+def joint_reader_audit(events, nuisance_upper, scales=(F(10)**3, F(10)**9)):
+    """Exact joint-reader identities on one supplied word (not a source bound).
+
+    Verifies Loewner minimality against the pivot reader, the feasible-reader
+    decomposition, equality of the diffuse-prior formula with the literal
+    Riccati recursion from diag(t I6, U_n) at each scale, and the coercivity
+    reduction. The nuisance factor is the identity when U_n=I15.
+    """
+    upper = _matrix(nuisance_upper)
+    ldlt(upper)
+    factor, diagonal = ldlt(upper)
+    nuisance = [[v*r for v, r in zip(row, map(_sqrt_exact, diagonal))] for row in factor]
+    if matmul(nuisance, transpose(nuisance)) != upper:
+        raise ValueError('rational nuisance factor required (use a square-diagonal U_n)')
+    design = augmented_design(events, nuisance)
+    joint = joint_minimum_action_reader(design)
+    pivot = exact_readout(events)
+    pivot_action = readout_action(events, pivot, upper)['action']
+    if reader_action_of(design, pivot) != pivot_action:
+        raise ArithmeticError('augmented design disagrees with the backward reader recursion')
+    delta = add(pivot, joint['reader'], F(-1))
+    if pivot_action != add(joint['action'], matmul(matmul(delta, joint['observation_covariance']), transpose(delta))):
+        raise ArithmeticError('feasible-reader decomposition failed')
+    if not is_psd(add(pivot_action, joint['action'], F(-1))):
+        raise ArithmeticError('joint reader is not Loewner-minimal')
+    previous = None
+    for scale in scales:
+        prior = identity(21)
+        for i in range(6):
+            prior[i][i] = F(scale)
+        for i, row in enumerate(upper):
+            prior[6+i][6:] = row
+        posterior = [row[:6] for row in _riccati(prior, events)[:6]]
+        if posterior != diffuse_prior_posterior(design, scale):
+            raise ArithmeticError('diffuse-prior formula differs from the Riccati recursion')
+        if not is_psd(add(joint['action'], posterior, F(-1))):
+            raise ArithmeticError('diffuse limit does not dominate a finite prior')
+        if previous is not None and not is_psd(add(posterior, previous, F(-1))):
+            raise ArithmeticError('diffuse posterior is not increasing in the AG prior scale')
+        previous = posterior
+    coercivity = coercivity_action_bound(design)
+    return {'joint_action': joint['action'], 'pivot_action': pivot_action,
+            'AG_effective_information': joint['AG_effective_information'],
+            'coercivity_bound': coercivity['bound'], 'scales': [str(x) for x in scales]}
+
+
+def _sqrt_exact(value):
+    root = F(value)
+    num, den = root.numerator, root.denominator
+    from math import isqrt
+    a, b = isqrt(num), isqrt(den)
+    if a*a != num or b*b != den:
+        raise ValueError('rational square root required')
+    return F(a, b)
+
+
+def _riccati(p, events):
+    for kind, b, f in _events(events, len(p)):
+        if kind == 'prediction':
+            p = add(matmul(matmul(b, p), transpose(b)), matmul(f, transpose(f)))
+        elif kind == 'reset':
+            p = matmul(matmul(b, p), transpose(b))
+        else:
+            s = add(matmul(matmul(b, p), transpose(b)), matmul(f, transpose(f)))
+            k = matmul(matmul(p, transpose(b)), inverse(s))
+            p = add(p, matmul(matmul(k, b), p), F(-1))
+    return p
+
+
 def certificate():
     events, upper = supplied_fixture(), identity(15)
     reader = exact_readout(events)
     audit = readout_action(events, reader, upper)
     step = bootstrap(audit['action'], upper, events[0]['F'], events[0]['U'], F(1, 10**10))
+    joint = joint_reader_audit(events, upper)
     return {'qualification': 'OU3_AG_HISTORICAL_READOUT_ACTION_V1',
             'conditional_algebra_verified': True,
             'scope': 'supplied rational 21-state word; no shipping reachability or uniform enclosure',
@@ -508,6 +644,19 @@ def certificate():
             'AG_action': encoded(audit['action']),
             'conditional_AG_loss_lower': encoded(step['AG_loss_lower']),
             'conditional_delta': str(step['delta']),
+            'joint_minimum_action_reader': {
+                'objective': 'min over L O_h=T_h of (T-L A)(T-L A)^T; sources = nuisance-root factor, every process/sync factor, every applied noise factor',
+                'closed_form': 'B*=Pi+Tt I_eff^-1 Tt^T, Tt=T_h-T A^T Sigma^-1 O_h, I_eff=O_h^T Sigma^-1 O_h, Sigma=A A^T',
+                'joint_action': encoded(joint['joint_action']),
+                'pivot_reader_action': encoded(joint['pivot_action']),
+                'AG_effective_information': encoded(joint['AG_effective_information']),
+                'pivot_minus_joint_psd': True,
+                'feasible_reader_decomposition_exact': True,
+                'diffuse_AG_root_riccati_equivalence_scales': joint['scales'],
+                'coercivity_reduction': 'B* <= (1+1/g) T T^T + (1+g) T_h I_eff^-1 T_h^T for every g>0',
+                'coercivity_bound_g1': encoded(joint['coercivity_bound']),
+                'remaining_source_premise': 'uniform floor I_eff >= mu I over admitted recurring A21 windows',
+                'source_uniform_verified': False},
             'rank_three_measurement_rows': True,
             'reader_selection': 'exact largest-residual factor pivot; all observation rows considered',
             'coefficient_relaxation_obstruction': coefficient_relaxation_obstruction(),
