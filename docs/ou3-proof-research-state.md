@@ -1166,6 +1166,52 @@ can the actual Riccati recursion reach/approach the algebraic cancellation
 manifold `det(P_b N_aw|_bperp)=0` under strict service? This is a lower
 dimensional covariance invariant/reachability question. Until it is settled,
 the exact-compatible IFT counterexample has no certified reachable base.
+## Transverse AW-gain cancellation manifold under Riccati updates
+
+Let C be the literal accepted accelerometer Jacobian at a fixed pre-correction
+state and N=P C' its full gain numerator. The exact Kalman/Joseph covariance
+update satisfies
+
+`P+=P-P C' S^-1 C P`, `S=C P C'+Racc`,
+
+and therefore
+
+`P+ C' = P C' [I-S^-1 C P C']
+        = P C' S^-1 Racc`
+
+(equivalently with the invertible right factor written in the matching
+order). Since S and Racc are positive definite, this right factor is
+invertible. Hence for the same row C the rank of every row-block of `P C'`,
+including the AW block, is preserved by its own accelerometer correction.
+An accepted accelerometer update cannot create exact AW gain-numerator rank
+loss from a full-rank pre-update AW numerator.
+
+Literal attitude reset is an invertible covariance congruence and likewise
+cannot create rank loss merely by coordinate change. AW covariance sync adds
+a PSD AW-only increment on the default path; prediction adds the fresh
+`Q_aa=(1-phi^2)Sigma_aw` AW term but also changes C through the nominal mean
+and transports inherited cross covariance. S and magnetic corrections use
+different rows and can change `P C_acc'` nontrivially.
+
+Therefore the cancellation manifold is not invariant under the full A21
+cycle, but neither is it reachable through an accelerometer correction alone.
+Any approach to
+`det(P_b N_aw|_bperp)=0` must be generated between accelerometer updates by
+prediction, S correction, magnetic correction, BA mode changes, or the
+change of the next accelerometer Jacobian C_acc itself.
+
+Strict MAGNETIC SERVICE constrains the magnetic corrected rows but does not
+bound their induced AW cross-covariance action relative to the next
+accelerometer row. The current covariance bounds likewise do not supply a
+positive distance from the cancellation manifold after those intervening
+operations.
+
+Thus exact rank loss is excluded across a single accepted accelerometer
+correction when starting full rank, but the complete regular-A21 Riccati
+reachability question remains open. To close it one needs a per-operation
+distance-to-singularity inequality for prediction + S + magnetic operations,
+or an invariant sign/determinant property of the 2x2 transverse numerator.
+No such invariant is currently proved.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
