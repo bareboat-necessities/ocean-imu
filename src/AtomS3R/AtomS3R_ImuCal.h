@@ -150,7 +150,7 @@ public:
 class ImuCalStoreNvs : public ImuCalStoreT<PrefsKv> {};
 
 // Pretty 3x3 print from row-major float[9].
-static inline void printMat3RowMajor(Print& out, const float a[9], int prec = 9) {
+static __attribute__((noinline)) void printMat3RowMajor(Print& out, const float a[9], int prec = 9) {
   for (int r = 0; r < 3; ++r) {
     out.print("      [");
     for (int c = 0; c < 3; ++c) {
@@ -162,7 +162,7 @@ static inline void printMat3RowMajor(Print& out, const float a[9], int prec = 9)
 }
 
 // Print quick diag + off-diagonal RMS, so you can instantly see "not identity".
-static inline void printMatDiagOffDiagRms(Print& out, const float a[9]) {
+static __attribute__((noinline)) void printMatDiagOffDiagRms(Print& out, const float a[9]) {
   const float d0 = a[0], d1 = a[4], d2 = a[8];
   const float off2 =
       a[1]*a[1] + a[2]*a[2] +
@@ -179,7 +179,7 @@ static inline const float* mat3_identity_rowmajor_() {
 }
 
 // Optional: print a matrix header line with a consistent style.
-static inline void printMatHeader(Print& out, const char* name, const char* meaning) {
+static __attribute__((noinline)) void printMatHeader(Print& out, const char* name, const char* meaning) {
   out.print("    ");
   out.print(name);
   if (meaning && meaning[0]) {
@@ -191,7 +191,7 @@ static inline void printMatHeader(Print& out, const char* name, const char* mean
 }
 
 // Print helpers (startup serial)
-static inline void printBlobSummary(Print& out, const ImuCalBlobV4& b) {
+static __attribute__((noinline)) void printBlobSummary(Print& out, const ImuCalBlobV4& b) {
   const char* mode = "unknown";
   if (b.build_mode == IMU_CAL_MODE_M5_IMU_API) mode = "m5_imu_api";
   out.printf("  build_mode: %s\n", mode);
@@ -202,7 +202,7 @@ static inline void printBlobSummary(Print& out, const ImuCalBlobV4& b) {
   }
 }
 
-static inline void printBlobDetail(Print& out, const ImuCalBlobV4& b) {
+static __attribute__((noinline)) void printBlobDetail(Print& out, const ImuCalBlobV4& b) {
   // ACCEL
   out.printf("  accel: g=%.7f (%s) T0=%.2f rms_mag=%.4f\n", (double)b.accel_g,
              accelGravityMatches(b) ? "matches g_cal_local" : "differs from g_cal_local",
