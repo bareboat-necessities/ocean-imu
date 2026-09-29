@@ -810,6 +810,58 @@ The proof must lower-bound the complete linked reduced matrix using MARINE
 MOTION, MAGNETIC SERVICE and chronological gyro transport.  This avoids both
 AW gain-variation and reset-product cumulative-action circularities.
 
+## Quantitative variational-floor attempt: missing physical-to-nominal modulus
+
+The optimal nuisance-annihilating Schur complement is exact, but the proposed
+four-step contradiction is not yet justified by the current assumptions.
+
+Magnetic service supplies a direct literal row modulus because the committed
+world field is the coefficient of the magnetic attitude row and
+`|B|>=B_min`; after whitening/nuisance projection this gives a transverse
+distance proportional to the distance of attitude from the transported field
+axis, modulo the exact shared-source metric.
+
+The kernel row supplies the exact modulus `mu=1/c`.
+
+Lemma T supplies a conditional chronological gyro modulus once the magnetic
+residuals are small: its constant `q_I` is explicit in terms of service gap,
+field floor, rate bound and the **accelerometer-window transverse geometry**.
+
+The unresolved step is that accelerometer geometry.  MARINE MOTION constrains
+the physical attitude/gravity direction, but the literal accelerometer
+attitude row in `O_s` is built from the estimator nominal force
+`a_hat-g e_z`.  Nuisance elimination allows `a_w,b_a,v,p,S` root
+directions to mimic parts of this row.  The Schur complement removes those
+directions optimally, but no existing theorem lower-bounds the remaining
+distance of the literal nominal accelerometer row from the nuisance span
+using physical attitude span alone.  Corollary A* did this through a nominal
+signed-AW premise; that premise was exactly what the direct formulation was
+intended to avoid.
+
+Therefore compactness/contradiction cannot presently conclude
+`G_red,mu>0` for every admissible MOVING history: a hypothetical sequence
+may keep the physical attitude excitation while its estimator nominal force
+approaches the magnetic-axis/nuisance-compatible geometry.  No current
+assumption or proved estimator invariant excludes that sequence.
+
+This is not repaired by `N_l'N_l>=I`: reset noncontraction preserves
+invertibility, not the missing physical-to-nominal force separation.
+
+Hence the direct variational route has reduced the gap to one precise
+modulus:
+
+`dist_(Sigma^-1)( O_acc,slow x_s,
+                   range[O_f, magnetic-compatible nuisance] )
+ >= a_phys(r)|x_tilt/BA|,quad a_phys(r)>0`                  (VF-A)
+
+on every required moving excitation window, with all literal linked
+coefficients retained.  A proof of (VF-A) may use the exact innovation
+identity `f_measured-b_hat-r_acc = f_hat`, the physical sensor/bias bounds,
+and the candidate storage radius to relate nominal force to physical force,
+but it must not assume pointwise AW tracking.  Until (VF-A) is proved,
+explicit magnetic/Lemma-T/kernel constants cannot be combined into a
+positive `g_*(c,r)`.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
