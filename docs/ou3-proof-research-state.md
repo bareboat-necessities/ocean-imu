@@ -1397,6 +1397,39 @@ norm bounds and singular values cannot establish it.
 Until such a signed formula is derived, the universal AW-gain entry lemma is
 neither proved nor refuted by reachability. The current proof should not
 claim an intermediate-value crossing.
+## New controlling route: soft-kernel ordered-eigenvalue compactness
+
+The exact-kernel quotient/detectability route is no longer preferred because
+its quotient changes discontinuously when a one-dimensional compatibility
+kernel disappears. The corrected alternative keeps finite prior precision on
+a continuously chosen least-information tilt/BA direction for every word.
+
+The key spectral quantity is the second ordered eigenvalue lambda_2 of the
+complete-word slow information (after the already justified nuisance
+elimination), not lambda_min^+. Ordered eigenvalues are continuous. Therefore
+if the complete-word nullspace theorem truly gives nullity <=1 on every
+element of a compact closed retained word class, then lambda_2>0 pointwise
+and compactness legitimately yields `inf lambda_2>0`, including through
+rank-changing words.
+
+This route avoids the epsilon^-2 kernel-disappearance pathology because the
+finite rank-one prior remains on the weak direction before and after exact
+rank loss. It also avoids requiring the unresolved AW-gain entry lemma.
+
+Before promoting this to a theorem, compactness must be checked carefully:
+word duration, dt/tuner/bias/state coefficients are bounded; however event
+acceptance and scheduler patterns are discrete. Treat each regular event
+pattern as a closed stratum and prove there are finitely many patterns on the
+fixed word horizon, or include boundary patterns explicitly. J must be
+continuous on each stratum. Any limit in which an applied correction becomes
+rejected belongs to a neighboring stratum and must separately retain the
+nullity<=1 conclusion under MAGNETIC SERVICE.
+
+Thus the next exact task is topological rather than another covariance
+reachability construction: prove the finite closed-stratum compactness and
+nullity<=1 on every stratum closure. If it closes, the first legitimate
+source-uniform positive spectral modulus follows nonconstructively as
+`lambda_2,bar=inf lambda_2>0`; quantitative extraction can follow afterward.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
