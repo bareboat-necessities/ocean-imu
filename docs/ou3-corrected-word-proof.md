@@ -5735,6 +5735,56 @@ mean/tuner state plus the projected covariance blocks entering K_a,K_S and
 D_perp, not the entire P. A periodic counterexample may be sought on that
 reduced map. No theorem currently proves that reduced map has a fixed point.
 
+## Parametric compatible-period closure and Riccati dichotomy
+
+Fix a smooth periodic attitude/service/event template with strict MOVING and
+magnetic-service margins. Over one period let P0 be the entering covariance,
+z the entering compatible nominal mean/tuner state, and u the finite vector of
+free longitudinal physical-acceleration controls at the accepted
+accelerometer epochs (with smooth interpolation between samples).
+
+Collect all one-period constraints in
+`F(P0,z,u)=0`: exact compatibility at every accelerometer epoch, terminal
+mean/tuner closure, zero velocity/displacement period moments for physical
+translation, and any scheduler phase closure. The two transverse physical
+acceleration components are eliminated by MI-2 wherever D_perp is nonsingular.
+
+If at one regular solution `(Pbar,zbar,ubar)` the Jacobian
+`D_(z,u)F` is onto, the implicit-function theorem gives a local smooth
+selection `z(P),u(P)` for every P near Pbar. Strict physical/service margins
+and D_perp nonsingularity persist by continuity. Thus compatible mean/physical
+period closure can be maintained while P varies locally; the waveform is
+allowed to adjust from period to period.
+
+Define the exact period covariance map along that selected compatible period
+by
+`P_+=R(P)`.                                                (PR-1)
+Iterate `P_(n+1)=R(P_n)`, re-solving z(P_n),u(P_n) each period. This yields
+a forward compatible execution as long as P_n remains in the IFT domain (or
+overlapping continuation charts) and no physical/service/rank boundary is
+reached.
+
+There is then a rigorous dichotomy **conditional on global continuation of
+the closure charts**:
+(A) if {P_n} is unbounded while the compatible physical/mean execution remains
+admissible, the desired uniform A21 covariance ceiling is false directly;
+(B) if {P_n} is bounded, compactness gives accumulation points. A fixed or
+recurrent covariance orbit is not automatic from boundedness alone, but the
+omega-limit set is a nonempty compact invariant set for a continuous R on a
+closed continuation domain. D_perp remains separated from zero if the
+continuation domain was constructed with that margin.
+
+This formulation avoids requiring an identical physical waveform or a
+periodic P. It also exposes the one missing existence premise: a **single
+regular seed solution** with onto D_(z,u)F and D_perp!=0. Constructor
+covariance is not enough unless it lies on an actual recurring A21-compatible
+period seed.
+
+Therefore the bounded/unbounded Riccati dichotomy is ready once a regular
+parametric period seed is proved. The remaining construction task is finite:
+exhibit one admissible period and show the boundary-value Jacobian with respect
+to the free mean/control variables has full row rank.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
