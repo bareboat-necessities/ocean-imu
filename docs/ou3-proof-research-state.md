@@ -1803,6 +1803,43 @@ cannot replace those theorems. The next decisive lemma is full-rank endpoint
 controllability of the reduced longitudinal-input mean recursion for one
 actual regular A21 covariance/history.
 
+## Quantitative H18/refinement/release rocking robustness radius
+
+Existing branch provenance already supplies a quantitative captured-domain
+release result: for tilt error within approximately 7 degrees, the physical
+magnetic bounds |B| in [20,75] uT, horizontal field >=15 uT and residual <=2
+uT imply the deployed MagAutoTuner 35% norm and 5% horizontal gates.
+MAGNETIC SERVICE then supplies finite 128-sample/30-s refinement completion,
+followed by the internal 250-accepted-update/1-s guard and finite A21 release.
+
+Therefore the currently certified **reference-refinement/release** robustness
+radius is
+`theta_rel = about 7 deg`
+in tilt-error space, conditional on already being in that captured domain and
+retaining the stated magnetic margins. This is not a source-uniform capture
+radius from construction.
+
+For the perturbative reachable-covariance argument, a rocking history can be
+kept inside the certified release branch whenever its induced estimator tilt
+error plus the base captured error remains below theta_rel. To satisfy the
+MOVING excitation requirement simultaneously by a small perturbation, one
+needs a strict budget
+`theta_E < theta_rel - theta_base - theta_defects`.        (RR-1)
+If theta_E is left symbolic with no upper bound, RR-1 cannot be certified.
+
+Thus the release mechanism itself has a concrete nonzero neighborhood; the
+missing comparison is an explicit theorem-domain choice/bound on theta_E and
+a capture margin theta_base. If the theorem declares theta_E below the
+available residual budget, continuity of the finite release covariance map
+and openness of D_perp!=0 allow a current-domain rocking release history near
+a regular released history. If not, the old fixed-attitude replay cannot be
+perturbed far enough by the present certificate.
+
+This cleanly separates two issues: reference refinement/release is
+quantitatively robust on the ~7-degree captured domain; source-uniform
+construction/capture into that domain under the amended MOVING assumption
+remains open.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
