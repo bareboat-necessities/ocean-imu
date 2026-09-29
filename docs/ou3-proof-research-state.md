@@ -927,6 +927,46 @@ forgetting all tend to zero converges only to the physical tilt/BA kernel.
 Only after that qualitative coercivity statement is proved should explicit
 moduli be extracted for K_MW.
 
+## Shipping-invariant audit for the restricted detectability gap
+
+All current shipping guards/service conditions were checked for a mechanism
+that could lower-bound the local restricted gap needed by terminal retention.
+
+- MAGNETIC SERVICE is genuinely coercive: on every certified T_M interval the
+  sum of actually applied transported/whitened magnetic rows has a prescribed
+  2-D information floor mu_M. It controls normalized heading/axial-gyro-bias
+  root coordinates and is already the correct source-uniform service premise.
+- The gyro-bias projection (0.5 rad/s) excludes complete-turn aliases and
+  bounds transport rate, but does not impose an angle between the remaining
+  tilt/BA compatibility line and accelerometer rows.
+- The accelerometer-bias projection (0.4 m/s^2) and BA OU decay bound the BA
+  component and keep the kernel family compact; they do not create
+  transversality.
+- S cadence plus the tau_aw clamp [0.02,12] gives the explicit four-S
+  LIN/AW injectivity modulus, but S rows have no direct attitude/BA row.
+- Racc/R_S/tuner clamps bound whitening and action constants. NIS/LDLT gates
+  decide whether a correction is applied; they do not require a minimum
+  attitude/BA information angle for an accepted accelerometer correction.
+- Literal reset factors satisfy sigma_min(N)>=1 and inverse nonexpansion;
+  this preserves invertibility but not force/field transversality.
+- AW sync/floor operations bound covariance and nuisance action; they do not
+  constrain nominal specific-force direction.
+
+Therefore no unused shipping invariant supplies the missing restricted
+tilt/BA gap. MAGNETIC SERVICE closes its intended 2-D heading/gyro sector,
+and four-S closes LIN/AW, but the one-dimensional tilt/BA compatibility
+sector can approach tangency continuously under the current MARINE MOTION
+assumption.
+
+Conclusion: with the present physical assumptions, a source-uniform
+finite-horizon detectability constant C_det (and hence a source-uniform
+strict recurring contraction margin obtained by this route) is not proved.
+The obstruction is not an omitted implementation guard. To obtain such a
+margin one needs either a different theorem that tolerates arbitrarily weak
+tilt/BA detectability without a uniform ratio, or an additional quantitative
+physical/service condition that excites that sector. Adding such a condition
+would strengthen the assumptions and is outside the current task unless
+explicitly authorized.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
