@@ -135,6 +135,33 @@ def block_schur_self_test():
             'cross_cancellation_retained':True}
 
 
+
+def source_uniform_block_loss_target(root_precision_upper, nuisance_loss_floor,
+                                     ag_schur_floor, cross_transform_norm):
+    """Sufficient blockwise target for source-uniform complete-word loss.
+
+    With D=T' diag(S,N) T from the completed-square factorization, suppose
+    S>=s I6, N>=n I15 and ||T^-1||<=k. Then
+        D >= min(s,n)/k^2 I.
+    If J_root=P_root^-1 <= j I, this gives
+        D >= delta J_root, delta=min(s,n)/(k^2 j).
+    This is intentionally matrix/blockwise: no covariance ceiling or
+    independent principal-block lifting is used.
+    """
+    j,n,s,k=map(F,(root_precision_upper,nuisance_loss_floor,
+                   ag_schur_floor,cross_transform_norm))
+    if min(j,n,s,k)<=0:
+        raise ValueError('strict positive block premises required')
+    delta=min(s,n)/(k*k*j)
+    return {'delta':str(delta),'rho0_upper':str(1-delta),
+            'strict':0<delta<1,
+            'required_source_bounds':[
+                'root precision spectral upper',
+                'nuisance loss floor',
+                'AG Schur loss floor after nuisance cancellation',
+                'completed-square inverse transform norm']}
+
+
 def restricted_service_counterexample():
     # A genuine positive-noise Kalman correction with S=4 I. Its restricted
     # heading/bias loss is I_2, but the full loss has a cancellation direction.
