@@ -115,6 +115,24 @@ on every certified interval of length `T_M`.
 
 Attempted callbacks, due events, packets, rejected/invalid measurements, saturation, and maximum gap alone do not establish service.
 
+MAGNETIC SERVICE additionally uses the physical geomagnetic premise appropriate to
+the marine operating region: there is a fixed nonzero world-frame reference
+`b_M^W` such that throughout each certified tail/service continuation
+
+`||b^W(t)-b_M^W|| <= eps_B`,
+
+with a stated small `eps_B`, and the field remains uniformly non-collinear
+with gravity,
+
+`||(I-bhat^W(t)bhat^W(t)^T) g^W|| >= g_B_perp > 0`.
+
+The exactly constant-field case has `eps_B=0`.  This is a physical field
+assumption, not an estimator-state assumption.  It formalizes the fact used
+elsewhere in the proof that the Earth magnetic direction is essentially fixed
+in the world frame over the A21/service time scale.  Any theorem constant that
+uses this premise must retain the explicit `eps_B` degradation; do not
+silently replace a near-constant field by an exact constant one.
+
 ## One proof path
 
 `construction -> startup/capture -> magnetically informed Live/H18 -> H18-to-A21 release -> magnetically informed A21 -> regional practical stability`.
