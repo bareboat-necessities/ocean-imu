@@ -6024,6 +6024,41 @@ excitation and is preferable to changing assumptions: recurring gravity
 direction span should prevent a fixed body BA vector from maintaining its full
 world projection indefinitely.
 
+## Can gravity-direction span give a strict average contraction of held BA?
+
+Let b_H be a fixed nonzero body-frame held accelerometer-bias vector and
+`w(t)=R_true(t)' b_H` its world representation (up to the convention used in
+H7). Always
+`||mean w||<=||b_H||`, with equality iff w(t) has one constant direction
+almost everywhere.
+
+Gravity-direction span alone does **not** make this inequality strict
+uniformly. Choose an admissible attitude motion that is a rotation about the
+body axis parallel to b_H. Then w(t) is constant in world coordinates, while
+the body/world gravity direction can have any prescribed nonzero span (up to
+the rocking amplitude) whenever b_H is not parallel to gravity. Hence for
+such histories
+`Delta_g>=theta_E` but `||mean R' b_H||=||b_H||`.
+Therefore
+`sup_admissible ||mean R' b_H||/||b_H|| = 1`,
+so no source-uniform `kappa(theta_E)<1` follows from the existing gravity-span
+assumption.
+
+Near-constant noncollinear geomagnetism does not remove this geometry by
+itself: rotation about the b_H axis rotates both gravity and magnetic body
+vectors and can still satisfy magnetic service. MAGNETIC SERVICE constrains
+information/application, not the rotation axis relative to b_H.
+
+Thus the hoped-for ~8% improvement cannot be obtained from Delta_g alone.
+The H18 alias ceiling remains the coarse ~7.58-degree value from HO-7 unless
+one uses an additional existing constraint that limits the alignment of the
+held BA axis with the physical rotation axis, or exploits the full zero-action
+magnetic/gyro chronology rather than only gravity span.
+
+This is a genuine counterexample to the proposed kappa lemma, not merely a
+missing estimate. Do not assert kappa(theta_E)<1 under the current MARINE
+MOTION definition.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
