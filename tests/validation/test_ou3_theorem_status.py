@@ -72,6 +72,25 @@ class TheoremStatusTests(unittest.TestCase):
                     "signed_world_injection_transport_budget"):
             self.assertFalse(w[key])
 
+    def test_moving_continuation_keeps_its_open_premises_open(self):
+        r=status_report()
+        o=r["obligations"]
+        for key in ("nominal_signed_mean_attitude_columns",
+                    "pointwise_physical_AW_tracking_premise_refuted_on_admitted_history",
+                    "signed_injection_rotation_identity", "third_order_literal_reset_factor",
+                    "magnetic_service_tube_monotone_field_axis",
+                    "injection_free_aggregate_six_column_floor_given_nominal_window_premises"):
+            self.assertTrue(o[key])
+        for key in ("source_uniform_nominal_AW_window_statistics",
+                    "source_uniform_half_angle_injection_transport",
+                    "aggregate_world_frame_six_column_floor",
+                    "practical_rho0_margin_from_six_column_floor",
+                    "source_uniform_A21_linear_dissipativity"):
+            self.assertFalse(o[key])
+        w=r["world_frame_rows"]
+        self.assertTrue(w["attitude_columns_need_only_nominal_signed_mean"])
+        self.assertIn("A_tilde=I", w["injection_free_floor_premises"])
+
     def test_committed_status_matches_code(self):
         p=ROOT/"reports/results/ou3_stability/theorem-status.json"
         self.assertEqual(json.loads(p.read_text()),status_report())

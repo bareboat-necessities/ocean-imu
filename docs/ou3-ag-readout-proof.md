@@ -18,8 +18,9 @@ Actual acc/mag groups in one prediction cell factor with E=0. A conditional
 geometry bound uses the magnetic direction pulled back through their resets;
 its source-uniform positive premise remains OPEN. In world coordinates the
 array O is attitude-free (`ou3-world-frame-rows.md`); same-cell geometry
-depends on magnetic cadence, while aggregate rows need only an AW tracking
-bound for their attitude columns.
+depends on magnetic cadence, while aggregate rows need only the nominal
+signed AW mean for their attitude columns; Theorem G0 there bounds the
+injection-free array.
 
 
 This result enters the existing finite-error inequality through a source-uniform

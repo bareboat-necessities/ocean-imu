@@ -1,0 +1,139 @@
+{
+  "downstream": {
+    "least_squares_action_upper": "538073/200",
+    "least_squares_gyro_block_upper": "237953/1000000",
+    "operations_lower": 33333,
+    "pivot_floor_lower": "99558584553/1000000000000000",
+    "practical_linear_margin": false,
+    "rho0_margin_upper_at_G0_action": 3.717e-13,
+    "rho0_margin_upper_at_G0_gyro_block": 4.202e-09,
+    "rho0_margin_upper_at_actual_floor_37": 3.422e-07,
+    "rows_upper": 150000,
+    "scalar_B_star_log10_lower": 43367.2,
+    "scalar_implication_finite": true,
+    "word_s": 100
+  },
+  "feasibility": [
+    {
+      "Omega": "invariant",
+      "eps_s": "11/100",
+      "magnetic_gap_s": "1",
+      "positive": true,
+      "six_column_floor_squared_lower": "435685713719/1000000000000000",
+      "window_separation_s": "32"
+    },
+    {
+      "Omega": "invariant",
+      "eps_s": "41/200",
+      "magnetic_gap_s": "1",
+      "positive": true,
+      "six_column_floor_squared_lower": "297357352751/200000000000000",
+      "window_separation_s": "64"
+    },
+    {
+      "Omega": "invariant",
+      "eps_s": null,
+      "magnetic_gap_s": "2",
+      "positive": false,
+      "six_column_floor_squared_lower": "0",
+      "window_separation_s": "32"
+    },
+    {
+      "Omega": "invariant",
+      "eps_s": null,
+      "magnetic_gap_s": "2",
+      "positive": false,
+      "six_column_floor_squared_lower": "0",
+      "window_separation_s": "64"
+    },
+    {
+      "Omega": "physical",
+      "eps_s": "59/200",
+      "magnetic_gap_s": "1",
+      "positive": true,
+      "six_column_floor_squared_lower": "3028322038621/1000000000000000",
+      "window_separation_s": "32"
+    },
+    {
+      "Omega": "physical",
+      "eps_s": "59/200",
+      "magnetic_gap_s": "1",
+      "positive": true,
+      "six_column_floor_squared_lower": "3028322038621/1000000000000000",
+      "window_separation_s": "64"
+    },
+    {
+      "Omega": "physical",
+      "eps_s": null,
+      "magnetic_gap_s": "2",
+      "positive": false,
+      "six_column_floor_squared_lower": "0",
+      "window_separation_s": "32"
+    },
+    {
+      "Omega": "physical",
+      "eps_s": "1/25",
+      "magnetic_gap_s": "2",
+      "positive": true,
+      "six_column_floor_squared_lower": "7243250861/125000000000000",
+      "window_separation_s": "64"
+    }
+  ],
+  "injection_transport_included": false,
+  "magnetic_gap_from_service_s": "1",
+  "magnetic_gap_reason": "MAGNETIC SERVICE holds on every certified interval of length T_M=1 s, so each contains an applied informative row",
+  "nominal_window_premises_proved": false,
+  "qualification": "OU3_AGGREGATE_SIX_COLUMN_FLOOR_V1",
+  "rho0_certified": false,
+  "scope": "injection-free nominal world array (A~=I, B~=int R_hat'), real arithmetic; nominal window premises supplied, not proved",
+  "source_uniform_six_column_floor": false,
+  "synthetic_falsification_audit": {
+    "field_axis_spin": {
+      "G0_floor": 0.0696612,
+      "actual_sigma_min": 45.7042
+    },
+    "frozen_attitude": {
+      "G0_floor": 0.0696612,
+      "actual_sigma_min": 37.1151
+    },
+    "random_piecewise": {
+      "G0_floor": 0.0669579,
+      "actual_sigma_min": 38.17
+    },
+    "transverse_roll": {
+      "G0_floor": 0.0696612,
+      "actual_sigma_min": 60.3606
+    }
+  },
+  "theorem_G0_invariant_Omega_service_gap": {
+    "Omega": "11508652381980153/10000000000000000",
+    "eps_s": "41/200",
+    "magnetic_gap_s": "1",
+    "nominal_force_L1_premise": "6/5",
+    "nominal_transverse_mean_premise_mps2": "2/5",
+    "q_I": "1681/100",
+    "six_column_floor_squared_lower": "297357352751/200000000000000",
+    "six_pivots_lower_for_m_rows": "s/sqrt(m)",
+    "tube_constant": "171694941611/1000000000000",
+    "window_s": "16",
+    "window_separation_s": "64"
+  },
+  "theorem_closed": false,
+  "tube_lemma": {
+    "audit": {
+      "circle_gap_s": "5.45953174936",
+      "circle_max_sample_residual": "1.0867e-81",
+      "circle_tangent_b_component_at_0_and_half_period": [
+        "1.0",
+        "-1.0"
+      ],
+      "field_axis_rotation_tangent_b_component": "1",
+      "monotonicity_needs_gap_below_2pi_over_Omega": true,
+      "rolling_transverse_beta_max_magnetic_residual": "0.904917054369"
+    },
+    "constant": "cos(Omega Delta)-Omega eps",
+    "cos_lower_at_invariant_Omega": "407622315441/1000000000000",
+    "invariant_Omega_times_service_gap": "11508652381980153/10000000000000000",
+    "requires": "Omega Delta<pi/2"
+  }
+}

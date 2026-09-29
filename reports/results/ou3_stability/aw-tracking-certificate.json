@@ -1,0 +1,64 @@
+{
+  "aw_increment_cap": {
+    "aw_variance_at_sigma_floor": "248198254120826731826645263/99277370899200000000000000000",
+    "gain_action_dominates": true,
+    "global_aw_variance_ceiling": "248198254120826731826645263/15512089203000000000000000",
+    "per_step_NIS_needed_to_follow_jerk_limit_at_floor": "143997199538371/1000000000000",
+    "prior_aw_dominates_increment": true,
+    "supplied_NIS": "1097942445/505419448"
+  },
+  "aw_loop_signed_identity": {
+    "exact_residual": "0",
+    "gain_weighted_not_trapezoidal": true,
+    "physical_increments_telescope": true
+  },
+  "corollary_A_star": {
+    "attitude_error_enters": false,
+    "corollary_A_zero_error_16s_floor": "12629938689/2094683134450",
+    "nominal_transverse_mean_threshold_mps2": "196133/100000",
+    "normalized_gram_floor_zero_mean": "1/50",
+    "physical_acceleration_enters": false,
+    "premise": "trapezoidal/convex nominal AW mean mu over the window; one applied magnetic row"
+  },
+  "nominal_mean_signed_correction_representation": {
+    "correction_weights": [
+      "14751/20000",
+      "49/200",
+      "1/4"
+    ],
+    "root_weight": "19751/20000",
+    "weighted_mean": [
+      "192023/175000",
+      "-19261/40000",
+      "509771/1800000"
+    ],
+    "weights_nonnegative_at_most_row_mass": true
+  },
+  "nonlocal_tracking_example": {
+    "exact_gram_dominates_gamma_star": true,
+    "gamma_star": "49/1250",
+    "nominal_mean": [
+      "0",
+      "0",
+      "0"
+    ],
+    "pointwise_nominal_aw_max_mps2": "8",
+    "pointwise_premise_satisfied_by_any_zero_error_history": false
+  },
+  "physical_transfer_16s": {
+    "equals_pointwise_corollary_A_threshold": true,
+    "physical_mean_supply_mps2": "67/80",
+    "signed_mean_error_threshold_mps2": "112383/100000",
+    "window_s": "16"
+  },
+  "pointwise_tracking_premise_necessary": false,
+  "qualification": "OU3_AW_NOMINAL_MEAN_V1",
+  "scope": "real-arithmetic regular A21 world-frame nominal rows; supplied exact words audit algebra only",
+  "source_uniform_nominal_mean_bound": false,
+  "theorem_closed": false,
+  "uniform_AW_tracking_bound": false,
+  "world_innovation_factorization": {
+    "aw_row_linear_in_mean": true,
+    "exact_residual": "0"
+  }
+}

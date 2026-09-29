@@ -30,13 +30,15 @@ In world coordinates every historical AG row is `-R_k[f_k]x[A~_k R_0',B~_k]`
 six-column geometry, except through world injections and the nominal
 rotation integral of the gyro columns. Same-cell geometry also depends on the
 applied magnetic cadence, so the MOVING premise is pursued as an **aggregate
-world-frame** row statement. Its attitude columns transfer from physical
-transverse force at the sole cost of the AW tracking error (plus reference,
-gravity mismatch and injections). That error must be bounded in physical
-units from the literal acc/S correction loop: the AW covariance ceiling is
-sharp and tight at every sync, yet covariance-normalized storage cannot
-carry the AW error uniformly. The AW tracking bound and the aggregate gyro
-columns are OPEN.
+world-frame** row statement. The attitude columns need only the nominal
+signed mean of the AW state (Corollary A*: transverse mean below 1.96133
+m/s^2); the pointwise physical tracking premise is false on admitted
+histories. MAGNETIC SERVICE on every 1-s interval plus the implemented
+nominal-rate bound make the field-axis coordinate of the gyro curve monotone
+(Lemma T), which yields an explicit injection-free aggregate six-column floor
+(Theorem G0) from two separated nominal accelerometer windows. OPEN: a
+source bound on the nominal window statistics, G0 with injections, and a
+downstream contraction that is not process-noise limited.
 
 ## Evidence
 
@@ -141,6 +143,31 @@ columns are OPEN.
   `>=(1/5-e)^2/((1+e)^2+1)`, `e=(11/16+.15+epsilon_a)/g`, positive iff
   `epsilon_a<1.12383 m/s^2`; `gamma(0)` is about .00603. No attitude error or
   magnetic residual is charged.
+- Corollary A* (`aw_tracking.py`, exact): the normalized attitude-column
+  Gram is `>=(sigma_w-m_perp/g)^2/((1+m/g)^2+1)` for the nominal mean
+  `mu=sum alpha_i a_hat_i`; positive iff `m_perp<1.96133 m/s^2`,
+  `gamma*(0)=1/50`. The signed physical transfer recovers 1.12383 as a bound
+  on `|sum alpha_i e_i|`, not on `sup|e|`. The nominal mean is a nonnegatively
+  weighted signed sum of AW corrections; the world innovation factors as
+  `r=R_hat(y-a_hat)`, and the AW loop obeys an exact gain-weighted identity.
+- AW carried audit (`aw-tracking-source-feasibility.json`, six admitted
+  C2-onset histories, exact envelopes, untapped-control parity): pointwise
+  error up to 7.647 m/s^2 (6.80 x 1.12383) with attitude error .0062 rad;
+  signed 16-s mean error <=.371 m/s^2 (ratio .330, sync-locked
+  rectification); nominal transverse mean <=.348 (ratio .177); nominal L1
+  force <=1.091. Rectification: Gamma is periodic in the 21-sample AW sync
+  cycle, and a phase-locked jerk-limited triangle raises the signed mean
+  from <=.05 to .371; a raised tuner sigma reduces it.
+- Lemma I* (`signed_injection.py`): the ordered injection rotation J obeys
+  `M_N M_0'=J K` exactly, so `angle(J)<=alpha_0+alpha_N+int|omega_tilde|`
+  with no norm sum; one reset has `|x|<=alpha_-+alpha_+` (DEAD_END 17 needs
+  attitude error >=1.1416 rad). `N=I-[x]/2+O(|x|^3)`. Corollary A** charges
+  a signed mean of relative rotations.
+- Lemma T and Theorem G0 (`aggregate_floor.py`, exact rationals): service
+  gaps <=1 s and `Omega<=1.1508652` give `|b.T|>=cos(Omega)-Omega eps`
+  (>=.4078-Omega eps); with m_perp<=2/5, u1<=6/5, L=16, G=64,
+  `s^2>=1.486786e-3`, `q_I=16.81`. Synthetic falsification: actual
+  sigma_min 37--60 versus floors .067--.070.
 - The current excited moving forced-balance word already has roll
   .02 sin(t/2) and displacement .4 sin(.6t)e_z. It satisfies the moving span
   premise for T_E>=4*pi, 0<theta_E<=.04. Its 80-digit balance residual is
@@ -173,12 +200,17 @@ budget for arbitrarily repeated switches. These are explicit OPEN obligations.
 
 On MOVING windows the six-column geometry is attitude-free. A same-cell
 floor would need a coupling between applied magnetic cadence and the jerk
-lemma; the aggregate premise avoids it. The attitude columns need the
-nominal AW tracking error below 1.12383 m/s^2 on 16-s windows, bounded in
-physical units: covariance-normalized storage fails by 6.7--6.9 on the
-carried collinear motion (DEAD_END 19). The gyro columns need
-time-separated transverse-force and magnetic rows through the nominal
-rotation integral.
+lemma; the aggregate premise avoids it. The injection-free aggregate floor
+is now explicit (Theorem G0) under two nominal window statistics: the
+transverse nominal AW mean (<1.96133 m/s^2 needed; carried worst .348) and
+the L1 nominal force (carried 1.091). Controlling quantities, in order:
+(i) a source bound on those nominal statistics from the literal AW loop,
+whose average is gain-weighted and rectifies at the 21-sample sync cycle;
+(ii) the injection frame `Q'b`, which the .02 rad/s gyro residual can rotate
+by ~1 rad over a 100-s word, beyond the global fixed-b tube of G0;
+(iii) downstream, G0's floor gives only existence-level contraction
+(margin <=4.2e-9 per 100-s word through the gyro block, 3.4e-7 even at the
+actual floor), because the covariance-ceiling route is process-noise limited.
 Norm-summed NIS/covariance injection bounds overcharge multi-second transport.
 Quiet-subcase homogeneous decay does not control compatible physical mismatch.
 Preserve actual chronological gains, resets, OU and bias histories. No
@@ -332,12 +364,44 @@ comparison. Source-uniform numerical contraction enclosure is not yet justified.
     or not, supplies `epsilon_a<1.12383` at a uniform retained radius.
     Retained: Lemma B and its tightness; the actual AW error .562 satisfies
     Corollary A on both words.
+20. **Pointwise physical AW tracking: refuted on an admitted history.**
+    Failed quantity: `sup|a_hat-a|` on 16-s A21 windows, 7.647 m/s^2 against
+    1.12383 (ratio 6.80) for a C2-onset horizontal triangle 8.7 m/s^2 at 2.8 Hz
+    (exact envelope: jerk <=99.9, |a|<=8.773, |v|<=.391). Classification:
+    structural counterexample to a sufficient premise, not an estimator
+    failure: the horizontal AW prior follows the vertical tuner at the .05
+    sigma floor, and `Delta a_hat Delta a_hat'<=NIS P_aw` then needs NIS>=144
+    per step to follow the jerk limit. Invalidated: any source-uniform bound
+    on the pointwise AW error below 1.12383 (no refinement can cross it).
+    Retained: Corollary A*, which needs only the signed nominal mean
+    (carried worst .177 of its threshold). Do not strengthen MARINE MOTION.
+21. **Perturbative injection charge over 16-s windows: infeasible.**
+    Failed quantity: `delta^2(u_rms^2+1)/gamma*` with `delta` from Lemma I*,
+    5.12 at the retained tilt, 1.79--7.17 at vanishing radius (only .96 for a
+    quiet force RMS and an exact bias estimate), 700--1306 with the invariant.
+    Classification: feasibility ratio above one; the deterministic .02 rad/s
+    gyro residual is corrected by injections at that rate. Invalidated:
+    charging `max|A~_k-A~_j|` against the attitude floor. Retained: Lemma I*
+    (exact, physical), the third-order reset factor and the signed
+    rotating-frame Corollary A** (feasible .22--.77 in the same table).
+22. **Covariance-ceiling contraction from G0: existence only.** Failed
+    quantity: `1-rho_0<=T b0/P_bg,max` with the least-squares reader ceiling
+    from G0: 4.2e-9 per 100-s word (gyro block), 3.7e-13 (full action),
+    3.4e-7 even at the actual floor 37; the scalar reader has
+    `log10 B_*>=43367`. Classification: quantitatively vacuous but strict;
+    b0=1e-11 makes the prediction comparison process-noise limited unless
+    the ceiling is near the true P_bg. Invalidated: obtaining a useful rho_0
+    from a least-singular-value floor through Q>=eps F C F'. Retained: the
+    conditional implication chain. Next: blockwise reader action and an
+    information-based (J_AG) contraction in the slow bias directions.
 
 ## Retained facts
 
 World-frame row factorization, the reset Gram identity, attitude-invariant
 same-cell geometry, the literal injection Loewner budget and the
-isotropic-sync AW covariance ceiling are exact in real arithmetic.
+isotropic-sync AW covariance ceiling are exact in real arithmetic, as are
+Corollary A*, the AW-loop identities, Lemma I*, the third-order reset
+factor, Corollary A**, Lemma T and the injection-free Theorem G0.
 The sampled acceleration mean bound, constant-field joint physical vector
 floor, full covariance-energy identity, LIN path action, full nuisance floor,
 recurring nuisance upper covariance, historical reader factor/root algebra,
@@ -370,60 +434,54 @@ physical tilt/BA ambiguity separately from estimator covariance. A gyro-only
 observation must charge the entire compatible physical-rate tube. Do not hold
 BA, force zero velocity, or shrink covariance solely from quiet-looking data.
 
-For MOVING, work with the aggregate world-frame array: dense accelerometer
-rows carry transverse force on average, applied magnetic rows fix the
-components normal to B_w, and the gyro columns follow the nominal rotation
-integral. The physical transfer then needs only AW tracking (in physical
-units, from the correction loop), reference and gravity mismatch, and
-injections; the body-frame rotation/reference action
-of DEAD_END 13 does not arise. A same-cell route would instead have to derive
-cadence from MAGNETIC SERVICE and couple it to the jerk lemma. A convenient
-supplied example cannot select the uniform margins.
+For MOVING, work with the aggregate world-frame array: accelerometer rows
+enter through nominal window statistics (Corollary A*), applied magnetic rows
+at service gaps fix the components normal to B_w, and the gyro columns follow
+the nominal rotation integral, whose field-axis coordinate Lemma T makes
+monotone. No physical AW tracking, reference or gravity-mismatch transfer is
+needed for the geometry; the body-frame rotation/reference action of
+DEAD_END 13 does not arise. A same-cell route would instead have to derive
+cadence from MAGNETIC SERVICE and couple it to the jerk lemma. Downstream,
+replace the least-singular-value/process-noise route by a blockwise reader
+action and the measurement loss in the slow bias directions.
 
 ## Next falsifiable experiment
 
-State a candidate aggregate world-frame six-column floor: Corollary A for
-the attitude columns, applied magnetic rows at separated times, gyro columns
-through the nominal rotation integral (rate <=1.15 rad/s), and injections
-charged by their signed world sum. Evaluate it at 80 digits on adversarial
-admitted constructions (transverse-force bursts between long collinear
-phases, steady turns, the collinear witness) and on carried words; reject it
-if it is nonpositive or exceeds an actual value. Separately bound the
-physical AW tracking error: write `e_aw` as the output of the literal
-time-varying acc/S correction loop (actual gains, OU decay, syncs) driven by
-physical jerk (<=100 m/s^3), IMU bias and attitude error, and evaluate its
-worst lag at 80 digits on admitted transverse-acceleration histories at the
-MARINE MOTION limits and on both carried collinear words (actual .562). If
-the worst admitted ratio `epsilon_a/1.12383` exceeds one, weaken Corollary A
-(longer windows reach 1.811319) rather than sharpen covariance bounds.
-The stationary tube reader
-remains the quiet-side experiment. Passing finite tests remain
-non-promoting. Do not repeat pairwise, unsigned-energy, variation-norm or
-norm-summed injection tactics.
+Extend Theorem G0 to the literal array: carry the injection frame as a
+rotation Q (Lemma I*, half-angle remainder charged by signed partial sums),
+apply Lemma T on local tubes of about pi/Omega with the kernel direction
+`Q'b` frozen per tube, and chain the monotone field-axis coordinate across
+tubes. Evaluate the resulting floor at 80 digits on the synthetic
+falsification families with injection sequences at the deterministic
+.02 rad/s residual and on the carried world-frame words; reject it if it is
+nonpositive or exceeds an actual value. Separately, test whether the
+nominal window statistics admit a loop bound: evaluate the gain-weighted AW
+identity with the actual sync-cycle gains against the worst phase-locked
+jerk-limited input (currently .371 signed, .348 transverse) and report the
+worst admitted ratio against 1.96133. Passing finite tests remain
+non-promoting. Do not repeat pairwise, unsigned-energy, variation-norm,
+norm-summed or perturbative injection tactics.
 
 ## Validation and infrastructure
 
-Based on main `028406b`. This continuation changes proof tooling, evidence,
-documentation, the proof workflow and the stability article only; no C/C++
-source, Makefile or deployed estimator behavior changes, so `make all` is not
-required by the repository rule and was not run. The OU-III estimator bytes
-and earlier source-replay artifacts are unchanged.
+Based on main `50ec893`. This continuation changes proof tooling, evidence,
+documentation, the proof workflow and the stability article only. The only
+new C++ file is the proof-diagnostic driver `tools/stability/aw_tracking_source.cpp`,
+compiled by its Python audit like the existing readout driver; no estimator
+source, header, Makefile or deployed behavior changes. The OU-III estimator
+bytes and earlier source-replay artifacts are unchanged.
 
-- Focused OU-III suite: **313 tests** pass (`test_ou3_*.py`).
-- Shared validation suite (`make -C tests/validation test`, including the
-  evidence contract and TFG check): **608 tests** pass, with one
-  existing data-dependent skip.
-- `build_evidence.py` reproduces every exact certificate, including
-  `world-frame-certificate.json` and `aw-covariance-ceiling-certificate.json`,
-  verifies all diagnostic provenance and checks every reported world-frame
-  metric.
-- The native proof regressions of the proof workflow (shipping contract and
-  transition, sampled capture, 900-s regime ambiguity, gyro projection) pass
-  against Eigen 3.4.0.
-- `world_frame_source_diagnostic.py --expect` recompiles the derived observer
-  and an untapped control and reproduces the committed four-profile record
-  byte for byte in about three minutes; CI runs the same comparison.
+- Focused OU-III suite: **333 tests** pass (`test_ou3_*.py`); the figure
+  layout test needs matplotlib <3.11 (3.11 removed `get_renderer`; the same
+  error occurs on main).
+- `build_evidence.py` reproduces every exact certificate, including the new
+  `aw-tracking-certificate.json`, `signed-injection-certificate.json` and
+  `aggregate-floor-certificate.json`, and verifies the new AW audit.
+- `aw_tracking_source_diagnostic.py --expect` recompiles the one-tap observer
+  and an untapped control, checks every profile's exact MARINE MOTION
+  envelope and reproduces the committed six-profile record in about two
+  minutes; CI runs the same comparison.
 - Ruff (`tools/quality_gates.sh python`) and `git diff --check` pass.
 - The stability article passes two LuaLaTeX runs: 16 pages, no overfull box,
   no unresolved reference, and the same six underfull warnings as its base.
-  The new AW paragraph was rendered and inspected.
+  The new world-frame paragraphs were rendered and inspected.

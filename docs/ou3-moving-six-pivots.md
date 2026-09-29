@@ -195,6 +195,14 @@ cadence whose length-weighted mean gap is below about .051 s (h=1/5, 16-s
 windows). A uniform c for this selection rule therefore needs a
 magnetic-cadence coupling; the aggregate world-frame rows do not.
 
+The aggregate replacement is Theorem G0 of `ou3-world-frame-rows.md`
+(section 12). It bounds sigma_min of the whole injection-free world array
+directly, without groups or the budget K: 1-s service gaps and the nominal
+rate bound make the field-axis coordinate of the gyro curve monotone
+(Lemma T), and two separated accelerometer windows with a small nominal
+transverse mean then fix it. Section 3 below turns its s into all six pivot
+floors. Its nominal window premises and the injection transport remain OPEN.
+
 ## 3. Quantitative bridge to the existing factor selector
 
 If an m-by-6 array has `sigma_min(O)>=s>0`, then at each of its six

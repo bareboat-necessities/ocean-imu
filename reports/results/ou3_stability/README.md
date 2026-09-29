@@ -82,6 +82,28 @@ python3 -m tools.stability.ou3_theorem.world_frame_source_diagnostic \
   --expect reports/results/ou3_stability/world-frame-source-feasibility.json
 ```
 
+`aw-tracking-certificate.json` exactly checks Corollary A* (attitude
+columns from the nominal signed AW mean, threshold 1.96133 m/s^2), the
+signed physical transfer, the weighted signed-correction representation of
+the nominal mean, the world innovation factorization, the gain-weighted AW
+loop identity and the AW increment cap. `aw-tracking-source-feasibility.json`
+replays six admitted C2-onset histories through the unchanged estimator with
+a one-tap observer and untapped control parity: the pointwise AW premise
+fails by 6.80, the worst signed mean is .330 of 1.12383 (sync-locked
+rectification) and the worst nominal transverse mean .177 of 1.96133.
+`signed-injection-certificate.json` checks Lemma I* (ordered injection
+rotation bounded by endpoint attitude errors plus integrated rate error),
+the third-order reset factor, the rotating-frame floor and the injection
+feasibility table. `aggregate-floor-certificate.json` checks Lemma T and the
+injection-free Theorem G0 (`s^2>=1.486786e-3` under supplied nominal window
+premises), a synthetic falsification audit and the downstream feasibility.
+
+```
+python3 -m tools.stability.ou3_theorem.aw_tracking_source_diagnostic \
+  --eigen /usr/include/eigen3 --output /tmp/ou3-aw-tracking.json \
+  --expect reports/results/ou3_stability/aw-tracking-source-feasibility.json
+```
+
 The proof-side quiet-evidence monitor never certifies physical STILL. No
 shipping mode switch, noise, cadence, magnetic semantics or quality gate is
 changed. The native `regime_ambiguity-test` carries one 900-second construction/

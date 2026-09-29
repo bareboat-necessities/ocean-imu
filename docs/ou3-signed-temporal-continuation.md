@@ -22,8 +22,8 @@ the signed physical-to-nominal transfer of a positive margin is still OPEN.
 `ou3-world-frame-rows.md` shows that the historical rows are attitude-free in
 world coordinates. The body-frame rotation/reference action whose triangle
 budget fails below therefore does not enter the aggregate attitude columns;
-their transfer costs the AW tracking error instead. Same-cell geometry also
-depends on the applied magnetic cadence.
+they need only the nominal signed AW mean. Same-cell geometry also depends
+on the applied magnetic cadence.
 
 
 This continues the existing construction-linked proof. Each lemma below is

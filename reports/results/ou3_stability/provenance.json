@@ -149,7 +149,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "c35682ead83a88d4d0fd6c9313163a4745400059"
+      "git_blob_sha": "508c4a517063ef361b623441c7653a8921718cbe"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -337,7 +337,7 @@
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "d0b02bcb3b9ecd47e48856e0f43f8fa2af59c5e2"
+      "git_blob_sha": "79745bfe1ebed15b64ca26cbf35e3fd1f0ca4ca9"
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
@@ -361,7 +361,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "e62748286d1b3b720b7e2c94c680d2a373bf5cbf"
+      "git_blob_sha": "b652b9b4f0a68e31796023c9e170ad9a423f15fd"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
@@ -409,7 +409,7 @@
     },
     {
       "path": "docs/ou3-signed-temporal-continuation.md",
-      "git_blob_sha": "8ce73a1b838808d713c801de3d27144f2b381be1"
+      "git_blob_sha": "043e2b9b21d250604ae304d4b1a69602599cb361"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal_diagnostic.py",
@@ -433,11 +433,11 @@
     },
     {
       "path": "docs/ou3-regime-design.md",
-      "git_blob_sha": "9aa891e6f0dadcec1daee44c966af44b56e23193"
+      "git_blob_sha": "7d4b537366408f51a3508df7c6dfbe5eb70752b0"
     },
     {
       "path": "docs/ou3-moving-six-pivots.md",
-      "git_blob_sha": "7a4686d26be2a7a8e37e8ee76c349209063f9933"
+      "git_blob_sha": "830f0ecdcf5d2e58c429c24c253f80461e7cf91f"
     },
     {
       "path": "tools/stability/ou3_theorem/regimes.py",
@@ -449,7 +449,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "766d7e75ad26be7b613f2449903e1481a1e5c93d"
+      "git_blob_sha": "fe47c627b72233c1a675d66ba343c28400207bf1"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
@@ -465,7 +465,7 @@
     },
     {
       "path": "tests/validation/test_ou3_theorem_status.py",
-      "git_blob_sha": "9f12dbd1028aa0e4dd5dc6fe0fac307beace5bcd"
+      "git_blob_sha": "a7008c83cacf1edf4539087cd821162c64ef0d27"
     },
     {
       "path": "tests/kalman_ou_iii/regime_ambiguity-test.cpp",
@@ -521,7 +521,7 @@
     },
     {
       "path": "docs/ou3-world-frame-rows.md",
-      "git_blob_sha": "d8e091fd68a9428e6320870257c63cf55f08f6c5"
+      "git_blob_sha": "42d4a2eaf586fcfb7b9f1e7a05b1203b447e9892"
     },
     {
       "path": "tools/stability/ou3_theorem/world_frame.py",
@@ -554,8 +554,57 @@
     {
       "path": "reports/results/ou3_stability/aw-covariance-ceiling-certificate.json",
       "git_blob_sha": "7ac26ca15d6fe64d68fcc345d553f6b4e07dfb5b"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/aw_tracking.py",
+      "git_blob_sha": "653848b65be643901a2438535239dd7b726c387e"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/signed_injection.py",
+      "git_blob_sha": "4ec11ba98141bfa97f8cb193e4ece08970413ae4"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/aggregate_floor.py",
+      "git_blob_sha": "d40b8db17da3fd0fba944d54d2c80faafb6a82af"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/aw_tracking_source_diagnostic.py",
+      "git_blob_sha": "c4e3789b4c503897f5803bdb5455d045b209b6de"
+    },
+    {
+      "path": "tools/stability/aw_tracking_source.cpp",
+      "git_blob_sha": "3c69b725018c7e29217c68dc652ff18cd3a33c05"
+    },
+    {
+      "path": "tests/validation/test_ou3_aw_tracking.py",
+      "git_blob_sha": "1cd9fba447bb28c661dd7f609442e247781fa071"
+    },
+    {
+      "path": "tests/validation/test_ou3_signed_injection.py",
+      "git_blob_sha": "3928e76ecee8989c7685def38cc7025a6dce8ade"
+    },
+    {
+      "path": "tests/validation/test_ou3_aggregate_floor.py",
+      "git_blob_sha": "632855b721b358225b84dac05540ba58d34867a8"
+    },
+    {
+      "path": "reports/results/ou3_stability/aw-tracking-certificate.json",
+      "git_blob_sha": "ca62c90993de025a968428a2abf49a058d4d0e23"
+    },
+    {
+      "path": "reports/results/ou3_stability/signed-injection-certificate.json",
+      "git_blob_sha": "7c3b13fced87af4b54e6be05d1fa627f48024f78"
+    },
+    {
+      "path": "reports/results/ou3_stability/aggregate-floor-certificate.json",
+      "git_blob_sha": "3a0a2fd04a5f66f0b3991bfb902da16ebf1ff994"
+    },
+    {
+      "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
+      "git_blob_sha": "be55ca355837e98e1da00005fbebdb64c6d0b6e3"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
-  "world_frame_continuation_base_main_commit": "7beb63902d3ec0231a08516c3e06580570cbe90e"
+  "world_frame_continuation_base_main_commit": "7beb63902d3ec0231a08516c3e06580570cbe90e",
+  "aw_tracking_continuation_base_main_commit": "50ec89352324aeb221ecc009d1c5a6a8be6deb2c"
 }

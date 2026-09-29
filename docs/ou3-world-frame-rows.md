@@ -1,14 +1,16 @@
-# World-frame historical rows, injection budget and the same-cell limitation
+# World-frame historical rows, injections and the aggregate six-column floor
 
 These results enter `V_next <= rho V + c_d |d|^2` only through the historical
-reader: the six-column floor (c, a, b0) feeds B_*, J_AG, the full covariance
-upper bound and rho_0<1. The injection budget also bounds the injection-squared
-term of the finite-angle reset remainder in the nonlinear supply eta. None of
-them supplies a source-uniform premise by itself. The AW covariance ceiling
-(section 7) enters through Corollary A's AW tracking premise and the
-coercivity bound `|e_aw|^2<=lambda_max(P_aw) V`. Exact checks are in
-`world_frame.py` and `aw_covariance_ceiling.py`; the carried audit is
-`world_frame_source_diagnostic.py`.
+reader: the six-column floor (c, a, b0, or directly s) feeds B_*, J_AG, the
+full covariance upper bound and rho_0<1. The injection bounds also enter the
+injection-squared term of the finite-angle reset remainder in the nonlinear
+supply eta. None of them supplies a source-uniform premise by itself. The AW
+covariance ceiling (section 7) enters through Corollary A's pointwise AW
+premise and `|e_aw|^2<=lambda_max(P_aw) V`; section 8 replaces that premise by
+a signed nominal mean. Exact checks are in `world_frame.py`,
+`aw_covariance_ceiling.py`, `aw_tracking.py`, `signed_injection.py` and
+`aggregate_floor.py`; carried audits are `world_frame_source_diagnostic.py`
+and `aw_tracking_source_diagnostic.py`.
 
 ## 1. World-frame factorization
 
@@ -118,9 +120,9 @@ magnetic rows use B_w exactly. Injections lower `sqrt(gamma)` by at most
 needs `epsilon_a<1.12383 m/s^2` (1.811319 as T grows);
 `gamma(0)=12629938689/2094683134450`, about .00603. Through the covariance,
 `|e_aw|^2<=lambda_max(P_aw) V`; section 7 bounds `lambda_max(P_aw)` sharply
-and shows why that route cannot be uniform. This supplies attitude columns
-of the aggregate premise; the gyro columns need the time structure of Gamma
-and are open.
+and shows why that route cannot be uniform. Section 8 drops the pointwise
+premise (Corollary A*); section 12 adds the gyro columns through the time
+structure of Gamma.
 
 ## 5. Same-cell geometry depends on magnetic cadence
 
@@ -246,18 +248,208 @@ stays near .56 m/s^2, and syncs restore .0791. The ratio
 `sup(|e_aw|^2/lambda_max) sup lambda_max/1.12383^2` is 6.68 with 1-Hz
 magnetic corrections and 6.91 with the 25-Hz cadence of the quiet and
 wave words, although the actual AW error .562 m/s^2 satisfies Corollary A.
-The AW error must be bounded in physical units from the literal correction
-loop, not through covariance-normalized storage.
+Section 9 shows that the pointwise physical premise itself is false on
+admitted histories, and section 8 removes it.
 
-## 8. What remains
+## 8. Corollary A*: the attitude columns need only the nominal signed mean
 
-1. A physical AW tracking bound `epsilon_a<1.12383 m/s^2` on 16-s windows
-   from the literal acc/S correction loop driven by jerk, bias and attitude
-   error. No covariance ceiling can supply it uniformly (section 7).
-2. The aggregate gyro-column floor from transverse-force and magnetic rows at
-   separated times, with nominal rotation up to 1.15 rad/s in Gamma.
-3. The signed world injection sum in place of norm-summed per-correction
-   covariance/NIS bounds, which overcharge the 3-s inter-anchor budget by about
-   460 on the collinear word.
-4. A same-cell floor, if pursued, from MAGNETIC SERVICE density coupled to the
-   jerk-limited collinear cadence; the aggregate route does not need it.
+The rows are nominal: `u_i=(a_hat_i-g e_z)/g`. With convex weights alpha_i,
+`mu=sum alpha_i a_hat_i`, `m=|mu|`, `m_perp=|mu x b|` and one applied magnetic
+row, convexity and the eigenvalue bound of section 4 give
+
+`G >= gamma* I`, `gamma*=(sigma_w-m_perp/g)_+^2/((1+m/g)^2+1)`.
+
+No physical acceleration, attitude, attitude error or magnetic residual
+appears, and no pointwise premise is needed: four rows with `a_hat=(+-8,0,0)`
+and `(0,+-6,+-1)` have zero mean and exactly dominate `gamma*=49/1250` for
+`b=(7,0,24)/25`. Positivity needs only `m_perp<g sigma_w=1.96133 m/s^2`, and
+`gamma*(0)=1/50`, 3.3 times Corollary A's zero-error value. The physical
+transfer `|mu|<=2V/T+J h/4+|sum alpha_i e_i|` shows that Corollary A's
+threshold 1.12383 applies to the **signed mean** error, not to `sup|e|`.
+The nominal mean is a nonnegatively weighted signed sum of AW corrections:
+`sum alpha_i a_hat_i=W_0 a_hat_0+sum_c W_c Delta_c`, `0<=W_c<=1`
+(exact, `aw_tracking.py`). A source-uniform bound on it is OPEN.
+
+## 9. The literal AW correction loop
+
+In the world frame the accelerometer innovation factors exactly as
+`r=R_hat(y-a_hat)`, `y=R_hat'(f-b_hat)+g e_z=a+eta`, with attitude, bias and
+residual only in `eta`. Hence `e+=(I-Gamma)e+Gamma eta` (Gamma=K_a R_hat),
+`e+=e+xi` for S/mag corrections and `e+=phi e-(1-phi)a-Delta a` for the OU
+prediction, and exactly
+
+`sum_acc Gamma(e-eta)=e_0-e_N+sum xi-sum_pred[(1-phi)a_hat+Delta a]`,
+
+with `sum Delta a=a_N-a_0`: the physical increments telescope, but the
+average is **gain-weighted**, not trapezoidal. As for injections,
+`Delta a_hat Delta a_hat'<=NIS K_a S K_a'<=NIS P_aw`; at the .05 sigma floor
+(after the Lemma B excess decays) following a jerk-limit ramp needs
+`NIS>=144` at every step.
+
+**Pointwise premise refuted (DEAD_END 20).** The horizontal AW prior scale
+is `S_factor sigma_Z`, and the tuner reads the vertical channel. On an admitted
+history with a C2 onset (exact rational MARINE MOTION envelope) and a
+horizontal triangle of amplitude 8.7 m/s^2 at 2.8 Hz (jerk bound 99.9),
+the unchanged shipping estimator reaches A21 and keeps `sigma_aw=.05`:
+`sup|a_hat-a|=7.647 m/s^2`, 6.80 times 1.12383, with attitude error
+.0062 rad. Signed 16-s means stay small: error .0327 m/s^2, nominal
+transverse mean .0225. The carried audit
+(`aw-tracking-source-feasibility.json`) covers six profiles:
+
+| Profile | sup error / 1.12383 | signed mean / 1.12383 | m_perp / 1.96133 |
+|---|---:|---:|---:|
+| horizontal triangle at jerk limit | 6.80 | .029 | .011 |
+| triangle with vertical swell | 2.00 | .0074 | .081 |
+| triangle near adaptation cadence | 2.28 | .050 | .103 |
+| collinear witness motion | .216 | .00075 | .00035 |
+| large swell with chop | 1.89 | .0090 | .036 |
+| sync-locked rectification | 2.77 | .330 | .177 |
+
+**Rectification.** The AW covariance sync fires every 21 samples (.105 s);
+P_aw and hence Gamma are periodic in that cycle. A jerk-limited triangle
+phase-locked to it (2.6 m/s^2, 200/21 Hz, phase .4) raises the signed mean
+error from <=.05 to .371 m/s^2: the time-varying gain rectifies. A raised
+tuner sigma reduces it (.10 and .025). It remains below both thresholds;
+the worst nominal transverse mean is .348 m/s^2 and the L1 force mean 1.091.
+These finite replays are neither enclosures nor service certificates.
+
+## 10. Signed world-injection transport
+
+**Lemma I\*.** Let `M=R_hat'R` be the world attitude error. An injection acts
+by `M<-Exp(-x)M`, a prediction by `M<-P M` with `angle(P)<=h|omega_tilde|` up to
+the branch defect. With J the ordered product of the injection rotations
+alone, `M_N M_0'=J K` where K is the ordered product of the rate rotations,
+each conjugated by the preceding injection product. By bi-invariance
+
+`angle(J)<=angle(M_0)+angle(M_N)+int|omega_tilde|`.
+
+This is exact on the rotation group and sums no injection norm. A single
+reset gives `|x|<=alpha_-+alpha_+`, so the relaxed cancellation of DEAD_END
+17 (|d|=4) needs a world attitude error of at least 1.1416 rad.
+
+**Reset factor.** `N=Exp(-[x])(I+[x]/2)=I-[x]/2+R`,
+`R=sum_{n>=3}(1-n/2)(-X)^n/n!`, `|R|<=|x|^3/6` for `|x|<=1`: the quadratic term
+cancels, so A~ rotates by half the injection rotation to first order. The
+half-angle product is not a group identity; its second-order remainder is
+`Sum_l |x_l||S_(l-1)|/4` (signed partial sums S) plus the stretch
+`exp(Sum|x|^2/8)-1`, and has no source bound (OPEN).
+
+**Corollary A\*\*.** For rotation factors Q_k in the rows,
+`|u x Q theta|=|Q'u x theta|` and convexity give the floor
+`|Q_j v_bar x b|^2/(|v_bar|^2+1)` with
+`Q_j v_bar=u_bar+sum alpha_k(Q_j Q_k'-I)u_k`: the loss is the **signed** mean of
+relative rotations. Opposite rotations cancel exactly in the supplied check;
+one-sided ones reduce the floor.
+
+**Feasibility (DEAD_END 21).** Under the deterministic premises the
+perturbative charge `|A~_k-A~_j|` against `sqrt(gamma*)/u_rms` fails on 16-s
+windows: ratio^2 5.12 at the retained tilt .1047; at vanishing radius .96
+only for a quiet force RMS with an exact bias estimate, otherwise 1.79--7.17;
+700--1306 with only the .5 rad/s invariant. The gyro residual alone rotates
+the injections by .02 rad/s. The signed rotating frame is feasible at
+vanishing radius (.22--.64) and at the retained tilt for moderate
+`mean|a_hat|` (.77; 1.006 at 3 m/s^2), and fails with only the invariant.
+`signed-injection-certificate.json` records the table.
+
+## 11. Tube lemma: what prevents gyro-column cancellation
+
+Without injections, `c(t)=theta+Gamma(t)beta`, `Gamma(t)=int_0^t R_hat(s)'ds`,
+is a curve of speed |beta| whose unit tangent `T=R_hat'beta/|beta|` turns at
+most `Omega=|omega_hat|_max` per second. MAGNETIC SERVICE holds on **every**
+interval of length T_M=1 s, so each contains an applied magnetic row and the
+row gaps are Delta<=1 s. The implemented .5 rad/s invariant gives
+`Omega<=.6108652381980153+.02+.02+.5`.
+
+**Lemma T.** If `|P_b c(t_j)|<=eps|beta|` at every magnetic row, then on the
+interior (distance >=pi/(2 Omega) from the word ends)
+
+`|b.T(t)| >= c0 = cos(Omega Delta)-Omega eps`.
+
+*Proof.* Let `s=|b.T(t*)|`, `c=arcsin s` and e the unit transverse direction
+of `T(t*)`. For `|u-t*|<=R=(pi/2-c)/Omega`, `angle(T(u),e)<=Omega|u-t*|+c<=pi/2`.
+If `c<=pi/2-Omega Delta`, samples `t_j in [t*-R,t*-R+Delta]`,
+`t_l in [t*+R-Delta,t*+R]` exist and
+
+`2 eps>=e.(c(t_l)-c(t_j))/|beta|>=int_{|u-t*|<=R-Delta}cos(Omega|u-t*|+c)du
+ =(2/Omega)(cos(Omega Delta)-sin c)`.
+
+Otherwise `s>cos(Omega Delta)` already. Since T is continuous, `b.T` keeps one
+sign: the field-axis coordinate `eta=b.c` is monotone with speed >=c0|beta|.
+
+At the invariant rate `cos(Omega Delta)>=.4078` (rational alternating Taylor
+bound). The condition matters: a circle of radius 1/Omega tangent to the
+b-line returns to it every `2 pi/Omega=5.46 s` while `b.T` changes sign.
+Monotonicity is what excludes cancellation: the relaxed DEAD_END 17 reset
+sequence rotates the tangent by radians, which Lemma I* ties to attitude error.
+
+## 12. Theorem G0: injection-free aggregate six-column floor
+
+Take the injection-free world array (`A~=I`, `B~=Gamma`) on a word whose
+interior contains accelerometer windows W1, W2 of length L separated by a gap
+G, with at least n rows each, and magnetic row gaps <=Delta. Suppose each
+window has nominal transverse mean `m_perp` and L1 force mean
+`u1=mean|f_hat|/g`. Put `mu=sigma_w-m_perp/g`,
+`rho=eps+(Delta/2)sqrt(1-c0^2)`.
+
+* **Gyro part.** Either some magnetic residual exceeds `eps|beta|`, or Lemma T
+  applies; then one window lies at distance >=G/2 from the zero of eta, so
+  `|eta|>=c0 G|beta|/2` there, `|P_b c|<=rho|beta|` at its rows, and Jensen for
+  `(.)_+^2` gives `Q>=q_I|beta|^2`,
+  `q_I=min(B_min^2 eps^2, n g^2(c0 G mu/2-rho u1)_+^2)`.
+* **Attitude part.** On W1 with centre t_c and one magnetic row within
+  Delta/2, convexity, the reverse triangle inequality and `|Gamma(t)|<=t` give
+  `Q>=K(sqrt(gamma*)|theta|-C|beta|)_+^2`, `K=min(n g^2,B_min^2)`,
+  `gamma*=mu^2/(u1^2+1)`, `C=sqrt(gamma*) t_c+sqrt((u1 L/2)^2+(Delta/2)^2)`.
+* **Combination.** For coordinates (theta, lambda beta),
+  `s^2>=q_I k^2/(1+lambda^2 k^2)`, `k=sqrt(K gamma*)/(sqrt(q_I)+sqrt(K) C)`.
+
+With the invariant Omega, Delta=1 s, L=16 s, G=64 s, B_min=20 uT,
+n=16/.006, eps=41/200 and the premises `m_perp<=2/5`, `u1<=6/5` (carried worst
+.348 and 1.091): `c0>=.171694`, `q_I=16.81` and `s^2>=1.486786e-3`
+(`aggregate-floor-certificate.json`, exact rationals). Disjoint 1-s service
+windows (Delta=2) fail at the invariant rate and pass only for a physical
+rate with G=64. An 80-digit tube audit and a synthetic falsification audit
+(field-axis spin, transverse roll, frozen attitude, random rates) find actual
+sigma_min 37--60 against recomputed floors .067--.070: valid and about 600
+times conservative.
+
+G0 is **not** a theorem about the literal array: the injection transport A~
+is excluded, and on a 100-s word the deterministic .02 rad/s gyro residual
+alone lets the injection frame, hence the kernel direction `Q'b`, rotate by
+about 1 rad, which the global fixed-b tube does not tolerate. Its nominal
+window premises are measured, not proved.
+
+## 13. Downstream feasibility
+
+On a 100-s word (m<=150000 AG rows, >=33333 operations) G0 gives six pivots
+>=9.96e-5. The existing scalar reader ceiling multiplies a coefficient bound
+>=20 over every operation: `log10 B_*>=43367`. A least-squares reader has
+action <=`R_max/s^2`=2690 (R_max=4, the magnetic residual bound) and gyro
+block <=`R_max/q_I`=.238. Iterating the corrected-word prediction comparison
+over every prediction bounds the contraction margin by `T b0/P_bg,max`:
+3.7e-13 (full action), 4.2e-9 (gyro block) and 3.4e-7 even at the actual
+floor 37 (b0=1e-11). Classification (DEAD_END 22): the chain is strict only
+in the existence sense; the covariance-ceiling/process-noise route cannot
+deliver a useful rho_0 unless the ceiling is near the true P_bg. The
+contraction must come from the measurement loss J_AG in the slow directions,
+with a blockwise (not least-singular-value) reader action.
+
+The same product appears in information form: for a noise-free AG block
+the homogeneous word factor is `1/(1+lambda_min(P_root^(1/2) I_W P_root^(1/2)))`
+with `I_W=O'R^-1 O`, so the margin is set by the lower covariance times the
+information in each slow direction. A lower bound built from process
+accumulation alone (`P_bg>=T b0`) reproduces `T b0 q_I/R_max`; a Riccati
+comparison with a maximal information rate would instead give
+`P_bg>=sqrt(b0/i_max)` and a margin of order `T sqrt(b0 i_max)`. This is a
+proposed formulation, not a certified bound.
+
+## 14. What remains
+
+1. A source-uniform bound on the nominal window statistics (signed mean,
+   L1 force) of the literal AW loop; the pointwise physical premise is false.
+2. Theorem G0 with injections: a local-tube version tolerating the kernel
+   drift `Q'b` and the half-angle remainder of section 10.
+3. A blockwise reader action and an information-based contraction in the
+   gyro-bias and accelerometer-bias directions.
+4. A same-cell floor is not needed; the aggregate route uses only the
+   1-s service gap.

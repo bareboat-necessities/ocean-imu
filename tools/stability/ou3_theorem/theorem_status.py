@@ -29,7 +29,16 @@ def status_report() -> dict:
         "nominal_attitude_column_physical_transfer_given_AW_tracking":True,
         "sharp_isotropic_sync_AW_covariance_ceiling":True,
         "uniform_AW_tracking_error_bound":False,
+        "nominal_signed_mean_attitude_columns":True,
+        "pointwise_physical_AW_tracking_premise_refuted_on_admitted_history":True,
+        "source_uniform_nominal_AW_window_statistics":False,
+        "signed_injection_rotation_identity":True,
+        "third_order_literal_reset_factor":True,
+        "source_uniform_half_angle_injection_transport":False,
+        "magnetic_service_tube_monotone_field_axis":True,
+        "injection_free_aggregate_six_column_floor_given_nominal_window_premises":True,
         "aggregate_world_frame_six_column_floor":False,
+        "practical_rho0_margin_from_six_column_floor":False,
         "marine_attitude_excitation_numeric_qualification":False,
         "marine_attitude_excitation_implies_signed_temporal_separation":False,
         "physical_tilt_span_sampling_implication":True,
@@ -142,7 +151,16 @@ def status_report() -> dict:
             "aw_covariance_certificate":"aw-covariance-ceiling-certificate.json",
             "aw_covariance_ceiling_tight_at_sync":True,
             "uniform_storage_route_ratio_above_one_on_carried_collinear_words":True,
-            "controlling_transfer_quantity":"physical AW tracking error |a_hat-a| of the literal acc/S correction loop, not covariance-normalized storage",
+            "aw_tracking_certificate":"aw-tracking-certificate.json",
+            "aw_tracking_source_diagnostic":"aw-tracking-source-feasibility.json",
+            "pointwise_physical_AW_premise_refuted_ratio":"6.80",
+            "attitude_columns_need_only_nominal_signed_mean":True,
+            "nominal_transverse_mean_threshold_mps2":"196133/100000",
+            "signed_injection_certificate":"signed-injection-certificate.json",
+            "aggregate_floor_certificate":"aggregate-floor-certificate.json",
+            "injection_free_six_column_floor_squared_lower":"297357352751/200000000000000",
+            "injection_free_floor_premises":["nominal transverse AW mean <= 2/5 m/s^2 on two separated 16-s windows","nominal L1 force mean <= 6/5","A_tilde=I"],
+            "controlling_transfer_quantity":"source bound on the nominal AW window statistics of the literal loop, and the injection frame in Theorem G0",
         },
         "shipping_residual_gyro_bias_hardening":True,
         "implemented_gyro_bias_norm_invariant":True,
@@ -181,10 +199,12 @@ def status_report() -> dict:
             "Same-cell geometry therefore depends only on world nominal force, committed reference and the local injection, never on attitude error. "
             "Literal injections satisfy dd'<=NIS K S K'<=NIS P_theta,theta. A 1-Hz collinear history obeys MARINE MOTION and IMU BIAS and degenerates every same-cell group while aggregate rows stay full rank; its single correction per 1-s window has nearly rank-one service information, so MAGNETIC SERVICE excludes that cadence. "
             "Jerk forbids collinearity at every instant of a cadence whose length-weighted mean gap is below 4(g h-2V/L)/J, about .051 s at h=1/5 and L=16 s. A same-cell floor therefore needs a magnetic-cadence coupling, which aggregate rows avoid. "
-            "The nominal attitude columns transfer from physical transverse force on 16-s windows when the AW tracking error is below 1.12383 m/s^2. "
-            "The isotropic stationary sync keeps lambda_max(P_aw)<=(1+eps)16 and floors P_aw at sigma^2 I at every applied sync, so the covariance route needs sqrt(V)<.28095 at the 4 m/s^2 clamp; "
-            "on the carried collinear motion the uniform storage route fails by 6.7-6.9 although the actual AW error .562 m/s^2 passes. "
-            "Next bound the physical AW tracking error of the literal acc/S correction loop and the signed world injection sum, then prove the aggregate gyro-column floor. "
+            "The isotropic stationary sync keeps lambda_max(P_aw)<=(1+eps)16, but covariance-normalized AW storage fails by 6.7-6.9 on carried collinear motion. "
+            "The pointwise physical AW tracking premise is false on an admitted C2-onset history (7.647 m/s^2, 6.80 x 1.12383): the horizontal AW prior follows the vertical tuner at its .05 floor. "
+            "Corollary A* needs only the nominal signed AW mean: transverse mean below 1.96133 m/s^2 (carried worst .348, including sync-locked rectification). "
+            "Lemma I* bounds the ordered injection rotation by endpoint attitude errors plus the integrated rate error without norm sums; perturbative charging of A~ over 16-s windows is infeasible. "
+            "MAGNETIC SERVICE on every 1-s interval and the nominal-rate bound make the field-axis gyro coordinate monotone (Lemma T); with two separated nominal accelerometer windows the injection-free world array has s^2>=1.486786e-3. "
+            "Next bound the nominal AW window statistics from the literal loop, extend G0 to the literal injection frame with local tubes, and replace the process-noise-limited contraction route (margin <=4.2e-9 per 100-s word from G0) by a blockwise, measurement-loss route. "
             "The .5 rad/s invariant, qualified complete-turn exclusion and one-step gyro floor remain proved, not the complete signed Delta_gyr. "
             "Positive source-uniform signed margins, B_*, J_AG, full covariance upper, rho_0<1, capture/H18/release, nonlinear radius, every-prefix retention, applied magnetic-service qualification and float32 totality remain open."
         ),

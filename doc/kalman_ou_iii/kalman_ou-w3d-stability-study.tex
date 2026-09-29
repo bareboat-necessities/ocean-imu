@@ -57,8 +57,11 @@ acc/mag groups within one prediction cell have an exact row factorization.
 These give a conditional bound on all six historical pivots. In world
 coordinates those rows depend on the attitude estimate only through
 injections and the nominal rotation integral. Same-cell geometry also
-depends on the applied magnetic cadence; aggregate attitude columns transfer
-from physical transverse force given an AW tracking bound. A root-cancelling
+depends on the applied magnetic cadence. Aggregate attitude columns need only
+the nominal signed acceleration mean; a pointwise physical tracking premise
+is false on an admitted history. Magnetic service on every one-second
+interval makes the field-axis coordinate of the gyro curve monotone, which
+gives an explicit injection-free aggregate six-column floor. A root-cancelling
 reader also proves a full covariance ceiling and qualitative homogeneous
 linear loss on the exact zero-residual quiet nominal subcase. Its extension,
 the moving branch's uniform
@@ -1857,8 +1860,64 @@ error stays near $0.56\,\mathrm{m/s^2}$, so
 $\sup_t(\norm{e_{aw}}^2/\lambda_{\max})\,\sup_t\lambda_{\max}/1.12383^2$
 equals $6.68$ with 1-Hz and $6.91$ with 25-Hz magnetic corrections,
 although the actual AW error $0.562\,\mathrm{m/s^2}$ satisfies the corollary.
-The AW tracking bound must therefore be physical, from the literal
-correction loop; it and the aggregate gyro columns remain open.
+
+The pointwise premise is not needed and is false. The rows use only the
+nominal force, so with $\mu=\sum_i\alpha_i\hat a_{w,i}$ convexity gives
+\begin{equation}
+ \gamma^\ast=\frac{(\sigma_w-\norm{\mu\times b}/g)_+^2}{(1+\norm\mu/g)^2+1},
+ \label{eq:corollary-a-star}
+\end{equation}
+positive iff $\norm{\mu\times b}<g\sigma_w=1.96133\,\mathrm{m/s^2}$, with
+$\gamma^\ast(0)=1/50$; the threshold $1.12383$ bounds the signed mean error
+$\norm{\sum_i\alpha_ie_i}$, not $\sup\norm{e}$. The horizontal AW prior follows
+the vertical tuner: on an admitted history with a $C^2$ onset and a
+horizontal triangle of $8.7\,\mathrm{m/s^2}$ at $2.8$\,Hz (jerk bound $99.9$)
+the unchanged estimator reaches A21 with $\sigma_{aw}=0.05$ and
+$\sup\norm{\hat a-a}=7.647\,\mathrm{m/s^2}$, $6.80$ times the old threshold,
+while the attitude error stays at $0.0062$\,rad. Each applied correction
+obeys $\Delta\hat a\Delta\hat a^{\mathsf T}\preceq\mathrm{NIS}\,P_{aw}$, so at
+the $\sigma$ floor following the jerk limit needs $\mathrm{NIS}\ge144$ per
+step. Over six admitted profiles the signed 16-s mean error is at most
+$0.371\,\mathrm{m/s^2}$ and the nominal transverse mean at most $0.348$. The
+worst case locks a jerk-limited triangle to the 21-sample AW covariance
+synchronization cycle: the periodic gain rectifies it. A bound on these
+nominal window statistics from the literal loop remains open.
+
+Injections obey an exact identity on ${\rm SO}(3)$. With $M=\hat R^{\mathsf T}R$
+the world attitude error, an injection acts by $M\mapsto\operatorname{Exp}(-x)M$
+and a prediction by a rotation of angle at most $h\norm{\tilde\omega}$. If $J$
+is the ordered product of the injections alone, $M_NM_0^{\mathsf T}=JK$ where
+$K$ collects the rate rotations conjugated by the preceding injections, so
+\begin{equation}
+ \angle J\le\angle M_0+\angle M_N+\int\norm{\tilde\omega}\,dt
+\end{equation}
+without summing injection norms; one reset has $\norm x\le\alpha_-+\alpha_+$.
+Moreover $N=\operatorname{Exp}(-[x]_\times)(I+[x]_\times/2)=I-[x]_\times/2+O(\norm x^3)$.
+Charging $\max\norm{\tilde A_k-\tilde A_j}$ against the floor fails on 16-s
+windows (squared ratio $5.12$ at the retained tilt), because the
+$0.02\,\mathrm{rad/s}$ gyro residual is corrected at that rate; a signed
+rotating-frame charge is feasible at vanishing radius.
+
+For the gyro columns let $c(t)=\theta+\int_0^t\hat R^{\mathsf T}\beta$, a curve
+of speed $\norm\beta$ whose tangent turns at most
+$\Omega=0.6109+0.02+0.02+0.5\,\mathrm{rad/s}$ per second, the last term being
+the implemented bias invariant. Service on every one-second interval gives
+magnetic rows at gaps $\Delta\le1$\,s. If
+$\norm{P_bc(t_j)}\le\epsilon\norm\beta$ at every magnetic row, a chord
+between two rows straddling $t$ along the transverse tangent direction gives
+\begin{equation}
+ \lvert b^{\mathsf T}\dot c(t)\rvert\ge\bigl(\cos\Omega\Delta-\Omega\epsilon\bigr)\norm\beta,
+\end{equation}
+so the field-axis coordinate is monotone. Two accelerometer windows of
+16\,s separated by 64\,s with nominal transverse mean at most
+$0.4\,\mathrm{m/s^2}$ and nominal force $L^1$ mean at most $1.2$ then give,
+for the injection-free world array, the exact rational floor
+$s^2\ge1.4868\times10^{-3}$. A synthetic audit finds actual values
+$37$--$60$. Two gaps remain: the injection frame, which the gyro residual
+can rotate by about one radian over a 100-s word, and the downstream route:
+through the prediction comparison, $b_0=10^{-11}$ limits the contraction
+margin to $4.2\times10^{-9}$ per 100-s word, so a useful $\rho_0$ needs a
+blockwise reader action and the measurement loss in the bias directions.
 
 \subsection{Admitted stillness ambiguity}
 Quiet truth with constant body-to-world attitude
@@ -2046,8 +2105,9 @@ bridge composition and the chronological six-pivot implication are available.
 The inverse-frame identity and exact same-prediction-cell row grouping
 sharpen its conditional premises. Section~\ref{sec:world-frame} removes the
 attitude estimate from the row geometry, ties same-cell geometry to the
-applied magnetic cadence and reduces the aggregate attitude columns to an AW
-tracking bound. The quiet nominal subcase now has a
+applied magnetic cadence, reduces the aggregate attitude columns to a
+nominal signed mean and gives an injection-free aggregate six-column floor
+from magnetic service. The quiet nominal subcase now has a
 root-independent full covariance ceiling and qualitative homogeneous linear
 loss, without a physical stationary robustness conclusion.
 Stationary practical robustness, runtime certification, finite transition

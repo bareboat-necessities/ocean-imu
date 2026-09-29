@@ -56,9 +56,15 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.regime_continuation_diagnostic import diagnostic as regime_diagnostic
     from tools.stability.ou3_theorem.world_frame import certificate as world_certificate
     from tools.stability.ou3_theorem.aw_covariance_ceiling import certificate as aw_ceiling_certificate
+    from tools.stability.ou3_theorem.aw_tracking import certificate as aw_tracking_certificate
+    from tools.stability.ou3_theorem.signed_injection import certificate as injection_certificate
+    from tools.stability.ou3_theorem.aggregate_floor import certificate as aggregate_certificate
     for name, generate in (
         ("world-frame-certificate.json",world_certificate),
         ("aw-covariance-ceiling-certificate.json",aw_ceiling_certificate),
+        ("aw-tracking-certificate.json",aw_tracking_certificate),
+        ("signed-injection-certificate.json",injection_certificate),
+        ("aggregate-floor-certificate.json",aggregate_certificate),
         ("stationary-covariance-certificate.json",stationary_certificate),
         ("regime-continuation-feasibility.json",regime_diagnostic),
         ("regime-certificate.json",regime_certificate),
@@ -113,6 +119,11 @@ def validate() -> dict:
         verify_world(json.loads((STATUS.parent/"world-frame-source-feasibility.json").read_text()))
     except (ValueError, KeyError, OSError) as error:
         failures.append("world-frame diagnostic verification failed: "+str(error))
+    from tools.stability.ou3_theorem.aw_tracking_source_diagnostic import verify_diagnostic as verify_aw
+    try:
+        verify_aw(json.loads((STATUS.parent/"aw-tracking-source-feasibility.json").read_text()))
+    except (ValueError, KeyError, OSError) as error:
+        failures.append("AW tracking diagnostic verification failed: "+str(error))
     return {"validation_pass":not failures,"failures":failures,"base_main_commit":provenance["base_main_commit"],
             "shipping_behavior_authority":"source implementation","theorem_closed":expected["theorem_closed"]}
 

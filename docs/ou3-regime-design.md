@@ -211,5 +211,7 @@ retaining its effect on future gyro injections. Actual acc/mag groups within
 one prediction cell have E=0 exactly with all resets retained. Their geometry
 uses the field pulled back through those resets and is attitude-free in world
 coordinates (`ou3-world-frame-rows.md`). Same-cell geometry additionally
-depends on the applied magnetic cadence; aggregate rows avoid that. The AW
-tracking bound, gyro columns and historical action remain OPEN.
+depends on the applied magnetic cadence; aggregate rows avoid that. The
+injection-free aggregate floor (Theorem G0) is conditional on nominal AW
+window statistics; those statistics, injections and the historical action
+remain OPEN.
