@@ -218,6 +218,7 @@ def analyze(trace, dps=80):
                 'direct_complete_word_margin': fmt(1-rho_direct),
                 'loss_nuisance_lambda_min': fmt(min(dnn_eigs)),
                 'AG_loss_schur_after_nuisance_lambda_min': fmt(ag_schur_min),
+                'direct_complete_word_nonlinear_headroom': fmt(1-mp.sqrt(rho_direct)),
                 'direct_complete_word_strict_contraction': bool(rho_direct < 1),
                 'exported_Q_lambda_min': fmt(qmin), 'maximum_injection_rad': fmt(injection),
                 'exported_sync_asymmetry_exact': str(sync_skew),
