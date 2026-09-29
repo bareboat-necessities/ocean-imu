@@ -447,6 +447,32 @@ cadence from MAGNETIC SERVICE and couple it to the jerk lemma. Downstream,
 replace the least-singular-value/process-noise route by a blockwise reader
 action and the measurement loss in the slow bias directions.
 
+## Direct information-form contraction probe (non-promoting)
+
+The controlling A21 contraction is now tested without the scalar covariance-ceiling
+route of DEAD_END 22.  The carried-source diagnostic replays the literal full
+21-state homogeneous differential through every prediction, accepted correction
+`I-KH`, and attitude reset, and evaluates
+`M' P_end^-1 M` directly against `P_root^-1`.  It also forms the exact-word
+loss `D=P_root^-1-M'P_end^-1 M` and reports the AG Schur complement
+`D_AA-D_AN D_NN^-1 D_NA` when the nuisance loss is positive definite.  This
+is the correct feasibility quantity for the proposed blockwise/information-form
+route because it allows optimal nuisance cancellation instead of treating an AG
+principal block as independent information.
+
+Role in the tail inequality: a source-uniform enclosure of the direct generalized
+ratio below one supplies the linear `rho_0<1` in
+`V_next<=rho V+c_d||d||^2`; equivalently a positive covariance-whitened full
+loss margin does so.  The AG Schur margin diagnoses whether the six slow AG
+columns survive nuisance cancellation and therefore whether aggregate G0 can
+feed that full loss.  Required feasibility margin: carried
+`direct_complete_word_margin=1-rho_direct>0` and
+`AG_loss_schur_after_nuisance_lambda_min>0`, preferably with room for the
+nonlinear `eta` in `sqrt(rho_0)+eta<1`.  Failure of either on an admitted
+carried word kills this formulation before any source-uniform enclosure is
+attempted.  Finite replay remains non-promoting and does not close any theorem
+status flag.
+
 ## Next falsifiable experiment
 
 Extend Theorem G0 to the literal array: carry the injection frame as a
