@@ -4136,6 +4136,77 @@ condition to characterize/reachability-test.
 Until MR-3 is bounded strictly below one (or a finite product is), no theorem
 statement should use Euclidean `|n_+'Phi n|<1`, and no finite scalar O2
 invariant is claimed.
+## m-word equality-chain theorem for the metric-normalized compatibility mode
+
+Fix the positive physical root metric M and normalize every nontrivial
+compatibility generator by `nu_j' M nu_j=1`. For an admissible same-history
+chain of complete MOVING words W_0,...,W_(m-1), let T_j be the literal
+zero-loss deterministic root transport and define
+
+`a_j = nu_(j+1)' M T_j nu_j`.                               (EC-1)
+
+By M-Cauchy--Schwarz, after normalizing the transported physical attitude
+amplitude consistently, `|a_j|<=1`; equality holds exactly when the
+transported old compatibility line is M-collinear with the next line with no
+metric amplitude loss.
+
+Assume equality at every boundary of a chain. Then there are signs s_j,
+`|s_j|=1`, such that
+
+`T_j nu_j = s_j nu_(j+1)`.                                 (EC-2)
+
+Writing `nu_j=(theta_j,-q_j)` in the physical attitude/BA coordinates gives
+
+`F_j theta_j=s_j theta_(j+1)`,
+`Phi_b,j R_ba,j q_j=s_j q_(j+1)`.                           (EC-3)
+
+Therefore
+
+`|q_m| <= (prod_(j=0)^(m-1) Phi_b,j) C_R |q_0|`.           (EC-4)
+
+With positive minimum word duration and bounded BA time constant there is a
+source-uniform `phi_bar<1` (frame transports are norm preserving in the
+physical BA norm), so
+
+`|q_m| <= phi_bar^m |q_0|`.                                (EC-5)
+
+Thus every infinite equality chain satisfies `q_j->0` exponentially. The
+closed compatibility equations then imply that every subsequential limiting
+word has the zero-BA field-axis compatibility line.
+
+**Compactness consequence.** Let C_infty be the compact inverse-limit class
+of admissible infinite recurring MOVING executions (use diagonal
+Arzela--Ascoli/event compactness). If no execution in C_infty can satisfy
+`|a_j|=1` for all j, then there exist finite m and delta>0 such that every
+admissible m-word chain obeys
+
+`|prod_(j=0)^(m-1) a_j| <= 1-delta`.                        (EC-6)
+
+Proof: otherwise for every n choose an n-word chain with product ->1.
+Since every factor is <=1, each fixed-prefix factor tends to equality.
+Diagonal compactness produces an infinite admissible limiting execution with
+`|a_j|=1` at every boundary, contradiction. Continuity/upper-semicontinuity
+then upgrades the finite m maximum to a strict `1-delta`.
+
+Conversely, if an infinite equality execution exists, no finite m,delta can
+satisfy EC-6.
+
+Hence EC-6 is **equivalent** to excluding an infinite exact persistent
+compatibility execution. Equations EC-3--EC-5 characterize every such
+execution asymptotically: it must approach the zero-BA field-axis
+compatibility manifold while retaining unit M-normalized scalar amplitude.
+
+The current assumptions do not yet exclude that limiting execution. The
+literal base innovation analysis shows physical excitation can appear as
+accelerometer innovation and can in principle retune the nominal force; no
+proved cumulative innovation budget prevents this indefinitely. Therefore
+the m-word theorem is proved conditionally:
+
+`no infinite equality chain  <=>  exists finite m,delta with EC-6`,
+
+but the left-hand exclusion is still OPEN. No claim of blockwise O2
+contraction is made until that exclusion or an explicit infinite equality
+construction is supplied.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
