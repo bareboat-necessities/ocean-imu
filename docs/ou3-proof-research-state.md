@@ -1634,6 +1634,46 @@ it, either P stays bounded (recurrent/bounded counterexample) or P grows in the
 unit-persistent mode (direct failure of the claimed uniform covariance
 ceiling). Requiring covariance recurrence was unnecessarily strong.
 
+## Forward continuation with evolving covariance
+
+Augment the compatibility-manifold state by the actual covariance P. At each
+accepted accelerometer epoch the two transverse compatibility equations solve
+for the two transverse physical-acceleration components whenever the literal
+control Jacobian D_perp(P,x) is nonsingular. The longitudinal physical
+acceleration remains free and may be chosen to satisfy the kinematic moment
+conditions.
+
+The covariance update is defined for every finite PSD P because each shipping
+innovation covariance has a positive measurement-noise floor. Joseph updates
+preserve PSD and prediction adds finite PSD process covariance. Thus finite
+covariance growth does not cause a finite-time algebraic singularity of the
+Kalman update. Large P may change the gain and D_perp, but it does not by
+itself terminate the recursion.
+
+A standard stepwise continuation argument therefore gives: a compatible
+execution can be extended through every finite horizon as long as
+(1) D_perp remains nonsingular at the required correction epochs,
+(2) the MI-2-selected physical acceleration/jerk remains inside MARINE MOTION
+bounds, and (3) the closed MAGNETIC SERVICE condition continues to hold.
+No separate bounded-P hypothesis is needed.
+
+The current shipping invariants prove none of these three margins must fail in
+finite time. Conversely they do not provide positive lower margins sufficient
+for a global continuation theorem. Hence evolving/unbounded covariance does
+not resolve the existence question; it only enters through D_perp and the
+mean-dependent geometry.
+
+In particular there is no estimator-internal finite-time blow-up obstruction:
+for every finite horizon on which D_perp and physical/service conditions hold,
+the coupled mean/covariance recursion is well defined and the compatibility-
+maintaining physical input is obtained recursively. Infinite continuation is
+equivalent to avoiding the three boundary events above for all time.
+
+Thus the remaining global blocker is again D_perp/physical/service viability,
+not covariance magnitude. Since service equality is admissible and physical
+realizability has no structural amplitude/jerk contradiction, D_perp is the
+only unresolved estimator-internal continuation boundary.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
