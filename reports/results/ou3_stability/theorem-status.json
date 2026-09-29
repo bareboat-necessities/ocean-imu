@@ -11,7 +11,7 @@
     "kernel_bounded_contraction": "A<=kappa J+lambda nu nu' and nu'P_0 nu<=c give rho_W<=sup_y[1/(1+y)-1/((1+lambda c)(1+kappa y))]",
     "open_source_premises": [
       "uniform ceiling on the kernel-bounded word diameter kappa_nu (observability off the tilt/BA kernel)",
-      "tilt covariance ceiling about the body field axis for the scalar kernel ceiling c_nu"
+      "linked scalar invariant d_bar K(c_bar)<=c_bar, with d=nu_next' Pi nu_next; an independent tilt ceiling is sufficient but no longer required"
     ],
     "physical_kernel": "nu=(theta_hat,0,...,0,-J_att theta_hat), theta_hat the body field axis",
     "reader_certificate": "ag-readout-certificate.json",
@@ -163,7 +163,8 @@
     "word_contraction_smoother_identity": true,
     "word_diameter_composition_and_slow_fast_factorization": true,
     "word_riccati_diameter_identity": true,
-    "world_frame_historical_row_factorization": true
+    "world_frame_historical_row_factorization": true,
+    "kernel_scalar_fixed_point_reduction": true
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,

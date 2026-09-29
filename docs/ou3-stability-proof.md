@@ -101,6 +101,26 @@ signed temporal margin and force/field exclusion remain open.
 
 Estimator hold, release, correction, and projection never reset physical truth. The shipping gyro-bias mean predictor is identity, so its prediction error is `e_g_minus=e_g_plus+w_g`.
 
+## LOCAL GRAVITY
+
+The certified physical continuation uses a fixed local world-frame gravity
+reference `g_0^W` with
+`||g^W(t)-g_0^W|| <= eps_g`
+throughout the tail under consideration, and
+`g_min <= ||g_0^W|| <= g_max`.
+The shipping gravity magnitude must lie in this declared local-gravity
+envelope. This is a physical-field premise, not an estimator-state or
+tracking assumption.
+
+Together with the near-constant geomagnetic reference `b_M^W`, define the
+fixed world vector
+`d_0=(I-bhat_M bhat_M^T) g_0^W`.
+The inclination-domain restriction gives
+`||d_0|| >= g_min cos(80 deg)`.
+All uses of constant gravity in the tail proof must carry the explicit
+`eps_g` degradation; do not silently replace local gravity by an exact
+constant unless `eps_g=0` is declared.
+
 ## MAGNETIC SERVICE
 
 For each certified tail window rooted at `s`, let `Phi(k,s)` be the ordered differential of the complete preceding same-history shipping execution. The transport ends immediately before the magnetic correction, not after it. Let `H_m,k` be the literal pre-correction magnetic sensitivity and `S_m,k^act` the actual innovation covariance presented to the shipping factorization for a correction that was actually applied. In normalized heading/axial-gyro-bias root coordinates,
@@ -114,6 +134,28 @@ Equivalently, if `S_m,k^act=L_k L_k^T`, use `W_k=L_k^(-1)`. An inverse-free LDLT
 on every certified interval of length `T_M`.
 
 Attempted callbacks, due events, packets, rejected/invalid measurements, saturation, and maximum gap alone do not establish service.
+
+MAGNETIC SERVICE additionally uses the physical geomagnetic premise appropriate to
+the marine operating region: there is a fixed nonzero world-frame reference
+`b_M^W` such that throughout each certified tail/service continuation
+
+`||b^W(t)-b_M^W|| <= eps_B`,
+
+with a stated small `eps_B`, and the field remains uniformly non-collinear
+with gravity,
+
+`|I_M| <= I_max := 80 deg`, and throughout the certified continuation the field variation is small enough to preserve this inclination envelope. Since geomagnetic inclination is measured from the local horizontal, the exact gravity-transverse floor is
+
+`||(I-bhat^W(t)bhat^W(t)^T) g^W|| = |g^W| |cos I(t)| >= g_min cos(I_max) =: g_B_perp > 0`.
+
+For `I_max=80 deg`, `cos(I_max)=0.1736481777`, so `g_B_perp >= 0.1736481777 g_min` (about `1.70 m/s^2` when `g_min` is near standard gravity). This explicitly excludes the near-dip-pole region rather than merely excluding the exact magnetic poles.
+
+The exactly constant-field case has `eps_B=0`.  This is a physical field
+assumption, not an estimator-state assumption.  It formalizes the fact used
+elsewhere in the proof that the Earth magnetic direction is essentially fixed
+in the world frame over the A21/service time scale.  Any theorem constant that
+uses this premise must retain the explicit `eps_B` degradation; do not
+silently replace a near-constant field by an exact constant one.
 
 ## One proof path
 

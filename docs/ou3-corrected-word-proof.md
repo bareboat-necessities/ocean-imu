@@ -550,6 +550,5515 @@ No root covariance matrix, historical reader or excitation premise enters
 remain relevant to coercivity (`P <= C` in the nonlinear supplies), not to
 `rho_0`.
 
+### O1 quotient reader as an augmented minimum-action problem
+
+Before bounding any coefficient, fix the exact inequality required by O1.
+For a word (W), let the frozen design be
+`y=O x_0+A_s s`, `x_N=Phi x_0+T s`, `Sigma=A_s A_s'`.
+For a candidate kernel ceiling `c>0`, put `mu=1/c` and append the
+fictitious scalar datum `z=sqrt(mu) nu' x_0+v`, `var(v)=1`.
+Equivalently,
+
+`O_mu=[O; sqrt(mu) nu']`, `Sigma_mu=diag(Sigma,1)`.
+
+Its information matrix is exactly
+
+`J_mu=J+mu nu nu'`.
+
+Apply the joint minimum-action reader theorem to this augmented word.  The
+Loewner-minimal terminal reader action is exactly
+
+`B_mu = Pi + Phi_tilde J_mu^-1 Phi_tilde' = P_nu`.
+
+Therefore O1 is equivalent to constructing **any** feasible quotient reader
+`L_mu O_mu=Phi` whose residual action obeys
+
+`(T-L_mu A_mu)(T-L_mu A_mu)' <= K(c) Pi`.                 (O1-R)
+
+Indeed minimum action gives `P_nu<=B(L_mu)`, hence
+`kappa_nu=lambda_max(Pi^-1 P_nu)<=K(c)`.  Conversely the minimum reader
+itself attains `P_nu`, so no pivot or singular-value surrogate can improve
+the mathematical target.
+
+This identifies how the existing structure enters the reader:
+
+- the S-chain identity first annihilates the complete `(v,p,S,a_w)` root,
+  every AW process source and every AW sync in the chosen accelerometer/S
+  combinations;
+- applied magnetic rows read the two attitude components normal to the
+  transported field direction;
+- Corollary A*, G0 and Lemma T supply the remaining chronological
+  attitude/gyro-bias quotient geometry;
+- the appended scalar row supplies only the physical tilt/BA kernel;
+- the literal injection/reset matrices stay inside `O_mu,A_mu,Phi,T`, so
+  their signed temporal structure is preserved rather than norm-summed.
+
+What remains genuinely unproved in (O1-R) is an explicit source-uniform
+block reader with a finite action ratio `K(c)`: specifically the nominal
+AW-window statistics and the extension of G0 to the literal injection frame.
+The augmented-reader identity itself is exact and needs neither premise.
+
+### Known-root scalar action after S-chain elimination
+
+For O2 the exact target is not `lambda_max(Pi)` but
+
+`d_j = nu_(j+1)' Pi_j nu_(j+1)`.
+
+Because `Pi_j=Ric_Wj(0)`, every terminal error is a linear function of the
+word sources only.  Let `q=nu_(j+1)` and write the known-root terminal
+functional as
+
+`q' x_N = q' T s`.
+
+For any linear combination `l'y` of the same word data, the trial residual
+is
+
+`q'x_N-l'y=(q'T-l'A_s)s`
+
+and therefore
+
+`d_j <= (q'T-l'A_s)(q'T-l'A_s)'`.                         (D-R)
+
+The minimum over `l` is exactly `d_j`; this is the scalar specialization
+of the minimum-action reader with a known root.  Thus an explicit scalar
+reader is sufficient and no full covariance upper bound is needed.
+
+Choose the data coordinates only **after** applying the S-chain identity.
+The four-S divided-difference combination cancels the complete neutral/AW
+root, every AW process increment and every AW covariance sync exactly.
+Consequently the residual in (D-R) contains only the attitude/BA part of the
+accelerometer combinations, their measurement noises, the LIN
+`(n_v,n_p,n_S)` residual already bounded in the S-chain lemma, and the
+literal attitude/BA process/reset sources.  This is the correct point at
+which to use the transported magnetic rows and the signed G0 geometry.
+Bounding AW sources before this elimination would reintroduce DEAD_END 20.
+
+A source-uniform number `d_bar` therefore follows once one exhibits scalar
+weights `l_j` with
+
+`sup_j |q_j'T_j-l_j'A_(s,j)|^2 <= d_bar`.                  (D-S)
+
+The same transported quotient coordinates used in (O1-R) should be used in
+(D-S); independent coefficient boxes are not admissible substitutes.  The
+remaining open work is to derive those weights and bound their action from
+the literal injected G0 geometry and source-uniform nominal AW-window
+statistics.
+
+### O2 reduction to a scalar known-root invariant
+
+The separate field-axis attitude ceiling is sufficient for O2, but it is not
+necessary.  The kernel-bounded diameter itself supplies a sharper route that
+retains the attitude/BA correlation.
+
+Fix a word (W_j), its root kernel `nu_j`, and a candidate scalar ceiling
+`c_j>0`.  Put `mu_j=1/c_j` and
+`P_nu,j = Ric_Wj(mu_j nu_j nu_j')`.  By definition,
+
+`P_nu,j <= kappa_nu,j Pi_j`,
+
+where `Pi_j=Ric_Wj(0)` is the known-root terminal covariance.  Corollary K
+already proves that every actual root satisfying
+`nu_j' P_j nu_j <= c_j` has `P_(j+1) <= P_nu,j`.  Therefore the exact
+scalar propagation inequality is
+
+`nu_(j+1)' P_(j+1) nu_(j+1)
+ <= nu_(j+1)' P_nu,j nu_(j+1)
+ <= kappa_nu,j d_j`,
+
+with
+
+`d_j := nu_(j+1)' Pi_j nu_(j+1)`.
+
+Consequently O2 follows from the two **linked, same-word** bounds
+
+`kappa_nu,j(1/c_j) <= K(c_j)`,  `d_j <= d_bar`,
+
+and an invariant scalar `c_bar` satisfying
+
+`d_bar K(c_bar) <= c_bar`.                                      (O2-FP)
+
+This is not a full-state covariance ceiling.  `Pi_j` starts from a known
+root, so `d_j` contains only the literal finite-word process/correction/reset
+action.  On a bounded-duration regular A21 word its finiteness follows from
+the already bounded shipping coefficients, process covariances and reset
+Jacobians; what is still needed is a usable explicit source-uniform value
+`d_bar`, preferably from the same block reader/S-chain construction used
+for O1 rather than a norm-summed whole-word envelope.
+
+The dependence of `K` on `c` must not be discarded.  If the physical
+kernel is exactly invisible to the data, weakening the fictitious precision
+`mu=1/c` lets `K(c)` grow with `c`; a bare statement
+`K<infinity` does not imply (O2-FP).  The required scalar mechanism is
+therefore a strict one-dimensional return inequality.  Equivalently, after
+isolating the kernel coordinate in the terminal Schur complement, it is
+enough to prove constants `d>=0, a>=0, b>0` such that
+
+`c_(j+1) <= d + a c_j/(1+b c_j)`,                         (O2-R)
+
+uniformly on recurring roots, and then exhibit `c_bar` with
+
+`d + a c_bar/(1+b c_bar) <= c_bar`.
+
+Here `b` is supported information in the kernel coordinate and `a` is its
+literal terminal persistence.  BA decay may contribute to `a<1`; it must
+not be silently replaced by an exact persistent kernel.  The proved
+`P_ba,ba<=I/1600` remains available to sharpen the reader, but no independent
+attitude/BA Cauchy--Schwarz split is required by (O2-FP) or (O2-R).
+
+**Where this enters.**  (O2-FP) supplies exactly the `c` in Corollary K.
+Together with O1, choose `mu=1/c_bar`,
+`kappa_bar >= sup kappa_nu,j(mu)`; then the recurring linear factor is
+
+`rho_0 <= 1 - 1/kappa_bar < 1`,  `1-rho_0 >= 1/kappa_bar`.
+
+This margin is not yet certified because O1 and the explicit invariant
+constants in (O2-FP)/(O2-R) remain open.  No nonlinear retained-radius claim
+follows until those constants are substituted.
+
+## Coupled quotient contraction and retained-radius theorem
+
+The source-only separation between a globally uniform linear factor and a
+later nonlinear radius is stronger than required.  The correct local theorem
+uses one candidate radius and the same frozen actual word coefficients in
+both estimates.
+
+Let `r>0` and `c>0`.  On every regular A21 word whose every prefix satisfies
+`V<=r^2` and whose root satisfies `nu'P nu<=c`, define:
+
+- `K(c,r)`: a source-uniform upper bound on the augmented quotient diameter
+  `kappa_nu`, using the radius-dependent signed AW/injection geometry;
+- `D(c,r)`: a source-uniform upper bound on
+  `nu_next' P_nu nu_next` (or any sharper scalar Schur return);
+- `E(r)`: the complete word finite-error supply in sqrt-storage units from
+  sensor/model defects, curvature, literal reset remainder, projection and
+  arithmetic, with the actual-gain composition of section 3;
+- `G(r)`: an every-prefix supply bound in the same units.
+
+Corollary K gives the homogeneous word factor
+`rho(c,r)<=1-1/K(c,r)`.  Put `q(c,r)=sqrt(rho(c,r))`.
+The exact finite-error composition then gives
+
+`sqrt(V_next) <= q(c,r) sqrt(V_root) + E(r)`.              (CR-1)
+
+The kernel set propagates simultaneously when
+
+`D(c,r) <= c`.                                             (CR-2)
+
+Thus the rectangle
+`R(r,c)={V<=r^2, nu'P nu<=c}` is invariant at recurring roots provided
+
+`D(c,r)<=c,`
+`q(c,r) r + E(r) <= r`.                                   (CR-3)
+
+Every-prefix retention is obtained from the already exact prefix composition
+when
+
+`r + G(r) <= r_prefix`
+
+for a declared prefix radius `r_prefix` on which all coefficient, projection
+and reset bounds used in `K,D,E` remain valid, and the next complete word
+returns to `R(r,c)`.  In the convenient no-enlargement form this is simply
+a direct prefix self-map inequality for each prefix.
+
+Equivalently the strict complete-word margin is
+
+`M(r,c) := (1-q(c,r))r-E(r) > 0`,                          (CR-M)
+
+together with the scalar-kernel margin `c-D(c,r)>=0`.
+This is the quantity that must be positive before any retained radius is
+claimed.
+
+There is no circularity: choose candidate `(r,c)`; derive `K,D,E,G`
+uniformly over that closed candidate set from the literal shipping
+operations; then verify (CR-3) and the prefix inequalities.  The resulting
+invariance proves that the assumptions used to derive the bounds remain true
+on subsequent words.
+
+The radius-dependent geometry has the schematic form
+
+`m_perp(r)<=m0+m1 r+m2 r^2`,
+`delta_Q(r)<=q0+q1 r+q2 r^2+q3 r^3`.
+
+These enter the local-tube quotient reader directly, producing `K(c,r)` and
+`D(c,r)`; they are not promoted to source-only constants.  The accelerometer
+curvature `|f_hat||theta|^2/2+|theta||e_aw|`, magnetic curvature, finite
+reset remainder and projection/arithmetic terms enter `E(r)` exactly where
+section 3 places their operation defects.
+
+If (CR-3) closes, the certified local linear margin on the invariant set is
+
+`1-rho_0(r,c) >= 1/K(c,r) > 0`,
+
+but regional practical stability still additionally requires startup/H18
+entry, regime transitions, recurring magnetic-service qualification and
+implementation/float32 totality.
+
+## Canonical analytic local-tube readers and actions
+
+Let a local-tube/S-chain reduced record be
+`z=H x + A_z s`, with root quotient coordinate `x=(theta,beta)`, source
+factor `s`, and positive residual covariance `Sigma_z=A_z A_z'`.
+Append the fictitious kernel row with precision `mu=1/c`.  Put
+
+`H_mu=[H; sqrt(mu) nu']`, `Sigma_mu=diag(Sigma_z,1)`,
+`G_mu=H_mu' Sigma_mu^-1 H_mu`.
+
+For any terminal quotient map `F_q`, the canonical weighted reader is
+
+`L_q = F_q G_mu^-1 H_mu' Sigma_mu^-1`.                    (LR-1)
+
+Its coefficients are therefore explicit functions of the literal transported
+tube rows.  It satisfies `L_q H_mu=F_q`.  Its residual source coefficient
+and quadratic action are
+
+`Z_q=T_q-L_q A_mu`,
+`R_q=Z_q Z_q'`.                                            (LR-2)
+
+The minimum-action reader can only improve this action, so (LR-2) is a valid
+constructive O1 reader whenever `G_mu>0`.
+
+For the scalar next-kernel functional `q'=nu_next'`, use
+
+`l_d = q' T_x G_mu^-1 H_mu' Sigma_mu^-1`,                  (LR-3)
+
+where `T_x` is the root-to-terminal quotient map.  Its source residual and
+action are
+
+`z_d=q'T_s-l_d A_mu`,
+`R_d=z_d z_d'`.                                             (LR-4)
+
+Thus `D(c,r)<=R_d` directly.  Equations (LR-1)--(LR-4) are the requested
+analytic reader coefficients and quadratic actions; they retain all source
+cross terms through the common factor `A_mu`.
+
+The local G0 inequalities give an explicit lower matrix for `G_mu`.
+With `a=K_II gamma`, `b=K_II sqrt(gamma) C_II`, and the independent gyro
+supply `q_I`, the radial two-block comparison is
+
+`G_mu >= [[a I,-b I],[-b I,(q_I+K_II C_II^2)I]] + mu nu nu'`.   (LR-5)
+
+Equivalently, before the kernel row, the Schur complement in the gyro block is
+at least `q_I`; the combined smallest quotient eigenvalue is the G0
+`s(c,r)^2`.  Hence
+
+`||G_mu^-1|| <= 1/s(c,r)^2`                                (LR-6)
+
+on the quotient.  This yields the coarse explicit action estimate
+
+`R_q <= (||T_q|| + ||F_q|| ||A_mu||/(s(c,r) sqrt(lambda_min(Sigma_mu))))^2 I`, (LR-7)
+
+and the analogous scalar estimate
+
+`R_d <= (||q'T_s|| + ||q'T_x|| ||A_mu||/(s(c,r) sqrt(lambda_min(Sigma_mu))))^2`. (LR-8)
+
+These norm ceilings are existence bounds only and may reproduce DEAD_END 22
+if used globally.  The useful action is the exact signed quadratic form
+(LR-2)/(LR-4), evaluated symbolically after the S-chain cancellations and
+tube-to-tube coefficient transport, not (LR-7)/(LR-8).
+
+The missing transport constants now have exact definitions rather than free
+parameters.  For the normalized force weights `alpha_k` on an anchored tube,
+
+`A0=|sum alpha_k u_phys,k x b|`,
+`A1=sup_{V<=r^2}|sum alpha_k (u_hat,k-u_phys,k) x b|/r`,
+
+with the error term expanded by the literal AW-loop identity before taking
+the supremum.  For relative reset transport `Q_j Q_k'`, write each literal
+factor as `I-X_l/2+R_l`, `||R_l||<=|x_l|^3/6`.  Then `Q0` is the
+integrated physical gyro-residual/implementation term, `Q1` the coefficient
+of the signed partial sum `S_n=sum_l x_l`, `Q2` the exact pair-product
+coefficient `sum_l |x_l||S_(l-1)|/4`, and `Q3` the accumulated
+`sum_l |x_l|^3/6` remainder after the same signed transport.  No independent
+per-reset box is introduced.
+
+What remains unproved is not the reader formula: it is a finite
+source/radius-uniform evaluation of these signed suprema and of the exact
+actions (LR-2),(LR-4).  Until those are bounded analytically, replacing them
+by carried-word values would be fitted rather than rigorous.
+
+## Signed factor-space bounds for R_q and R_d
+
+The actions (LR-2),(LR-4) admit a nonmultiplicative analytic bound after the
+S-chain reduction.  Index the independent fresh source blocks by `a` and
+write the reduced record and terminal maps as
+
+`A_mu=[A_a]_a`, `T_q=[T_qa]_a`, `T_s=[T_sa]_a`.
+
+The same source block may enter many rows; it is represented once.  For the
+canonical reader define the signed factor coefficients
+
+`Z_qa=T_qa-L_q A_a`,
+`z_da=q'T_sa-l_d A_a`.                                      (FA-1)
+
+Because the whitened fresh factors are mutually independent by construction,
+
+`R_q=sum_a Z_qa Z_qa'`,
+`R_d=sum_a z_da z_da'`.                                     (FA-2)
+
+No cross-factor absolute-value bound is needed.  Correlations within one
+prediction factor, including attitude/gyro-bias and LIN/AW cross terms, stay
+inside its matrix block `A_a,T_a` and are squared only after the signed
+cancellation in (FA-1).
+
+For an S-chain spanning steps k, the AW/root/sync columns are exactly zero.
+Its remaining LIN factor coefficient is
+`-g_k'(n_v,n_p,n_S)_k`; hence its contribution to the reduced-record
+covariance is bounded by
+
+`V_S <= (1+eps) sum_k q_k |g_k|^2
+               (h_k^3/3+h_k^5/20+h_k^7/252)`,               (FA-3)
+
+with `q_k<=2 sigma_k^2/tau_k`.  Measurement factors contribute their actual
+bounded `R_acc,R_mag,R_S` after the same signed row weights.  BA and AG
+prediction factors remain chronological blocks and are not split into
+independent scalar boxes.
+
+Now partition the word into anchored tubes r.  Let `C_r` be the exact
+invertible quotient coordinate map from tube r to a common terminal anchor.
+Transport the local reader coefficient, not its norm:
+
+`L_(q,r)^term=C_r L_(q,r)`,
+`l_(d,r)^term=l_(d,r) C_r^-1`.                               (FA-4)
+
+For each physical source block a, sum all of its transported occurrences
+before squaring:
+
+`Xi_qa=T_qa-sum_r L_(q,r)^term A_(r,a)`,
+`xi_da=q'T_sa-sum_r l_(d,r)^term A_(r,a)`.                   (FA-5)
+
+Then the complete-word actions are exactly
+
+`R_q=sum_a Xi_qa Xi_qa'`,
+`R_d=sum_a xi_da xi_da'`.                                   (FA-6)
+
+This is the desired signed tube-to-tube action formula.  It cannot exhibit
+the exponential operation-count growth of the retired pivot bound: the
+number of terms is the number of fresh source blocks, and cancellation across
+all rows/tubes sharing a block occurs in `Xi` before its norm is taken.
+
+A rigorous scalar ceiling follows from per-family energy bounds without
+destroying temporal signs.  If source blocks are grouped into disjoint
+families `F` (AG process, BA process, S-chain LIN, acc noise, magnetic
+noise, S noise, implementation defect), define
+
+`B_(q,F)=sum_(a in F) Xi_qa Xi_qa'`,
+`b_(d,F)=sum_(a in F) xi_da xi_da'`.                         (FA-7)
+
+Then
+
+`R_q=sum_F B_(q,F)`, `R_d=sum_F b_(d,F)`,                 (FA-8)
+
+and it is sufficient to prove matrix/scalar ceilings
+`B_(q,F)<=bar B_(q,F)`, `b_(d,F)<=bar b_(d,F)`.
+The already proved S-chain bound (FA-3) closes the LIN family.  The BA family
+has total fresh variance bounded by its literal OU/RW recursion and the
+proved marginal `P_ba<=I/1600`.  Measurement families have fixed shipping
+noise ceilings.  The remaining unclosed family is AG process plus its
+signed injected transport: its `Xi` contains the same local-tube
+`Q_k,D_k` coefficients that determine G0.  Thus the action problem has been
+reduced to one matrix-energy bound on that family; AW/root/sync and nuisance
+families no longer obstruct it.
+
+Consequently define
+
+`R_q^bar(c,r)=sum_F bar B_(q,F)(c,r)`,
+`R_d^bar(c,r)=sum_F bar b_(d,F)(c,r)`.                       (FA-9)
+
+Then the rigorous coupled coefficients are
+
+`K(c,r)=lambda_max(Pi_lower^-1 R_q^bar(c,r))`,
+`D(c,r)=R_d^bar(c,r)`.                                      (FA-10)
+
+Here `Pi_lower` is the already proved regular-root lower covariance, with
+the same coordinates.  The only new bound still required for numerical
+closure is the AG-family signed energy in (FA-7); replacing it by
+`||C_r||||L_r||||A_a||` separately would destroy the cancellation and
+recreate DEAD_END 22.
+
+## AG-process signed energy: inverse-frame inequality
+
+The remaining family in (FA-7) can be bounded without forward products of
+reset norms.  Work in the local anchor inverse frame.  Let the chronological
+AG map be `T_k=[[A_k,B_k],[0,I]]` and put `C_k=A_k^-1 B_k`.  A literal
+reset `G=I+[d]/2` sends `A,B` to `GA,GB`, hence leaves `C` unchanged
+exactly.  Moreover `sigma_min(G)>=1`, so `||A_k^-1||<=1` for a word
+started at an anchor with `A=I`; Rodrigues predictions are orthogonal and
+the qualified small-rate branch has the same inverse nonexpansion already
+proved in the chronological-transport lemma.
+
+For prediction k write the full correlated AG process factor as
+`U_k=[U_theta,k;U_b,k]`, `Q_k=U_k U_k'`.  In inverse-frame quotient
+coordinates its fresh contribution is
+
+`W_k=[[A_(k+1)^-1, -C_(k+1)],[0,I]] U_k`.                  (AG-1)
+
+The minus sign is essential: attitude and gyro-bias process columns are not
+split.  The complete signed reader coefficient for this fresh block is
+
+`Xi_(q,k)=H_(q,k) W_k`, `xi_(d,k)=h_(d,k) W_k`,           (AG-2)
+
+where `H_(q,k)`, `h_(d,k)` are the already transported residual-reader
+maps from the injection time to the terminal anchor after all row
+cancellations.  Therefore
+
+`B_(q,AG)=sum_k H_(q,k) W_k W_k' H_(q,k)'`,
+`b_(d,AG)=sum_k h_(d,k) W_k W_k' h_(d,k)'`.                (AG-3)
+
+This is exact factor-space energy.
+
+A source-uniform Loewner bound follows directly from the literal Q blocks.
+Let
+`Q_tt,k<=q_theta,k I`, `Q_bb,k=q_b h_k I`, and
+`||Q_tb,k||<=q_x,k`.  Since `||A^-1||<=1`,
+
+`W_k W_k' <= E_k(C_(k+1))`,                                (AG-4)
+
+with the explicit 6x6 block majorant
+
+`E_k(C) =
+ [[q_theta,k I + q_b h_k C C' + q_x,k( C+C')_abs,  *],
+  [*, q_b h_k I]]`.
+
+For a scalar safe form, completing the square with any `eta_k>0` gives
+
+`W_k W_k' <= diag(
+ (1+eta_k) q_theta,k I
+ +(1+1/eta_k) q_b h_k C C'
+ +(1+eta_k) 2 q_x,k I,
+ (q_b h_k+2 q_x,k/eta_k) I )`.                              (AG-5)
+
+The useful bound keeps the matrix `C C'` and optimizes `eta_k` only after
+the signed reader coefficient `H_(q,k)` is applied.
+
+The inverse-frame recurrence supplies
+
+`C_(k+1)=C_k+A_k^-1 R_k^-1 D_k` at predictions and no change at resets.
+Hence for any anchor interval
+
+`C_k=C_0+sum_(j<k) A_j^-1 R_j^-1 D_j`.                     (AG-6)
+
+Every summand has norm at most `h_j(1+e_D)` on the qualified prediction
+domain.  More importantly, (AG-6) is a signed chronological sum; it is the
+same `D_k` history used by the local-tube G0 reader.  Substitute (AG-6)
+into (AG-3) before taking norms.  Define the tube energy matrices
+
+`M_(q,theta)=sum_k H_(q,k)H_(q,k)'`,
+`M_(q,C)=sum_k H_(q,k) C_(k+1)C_(k+1)' H_(q,k)'`,          (AG-7)
+
+and analogously `m_(d,theta),m_(d,C)`.  Then (AG-5) gives
+
+`B_(q,AG) <= a_theta M_(q,theta)+a_C M_(q,C)+a_b M_(q,b)`, (AG-8)
+`b_(d,AG) <= a_theta m_(d,theta)+a_C m_(d,C)+a_b m_(d,b)`, (AG-9)
+
+where the coefficients are explicit sums/maxima of the shipping
+`q_theta,k,q_b h_k,q_x,k` and the chosen Young parameters.  No reset-product
+factor appears.
+
+Equations (AG-6)--(AG-9) are the controlling matrix-energy inequality.  The
+only remaining quantity is the signed reader-weighted chronological energy
+`M_(q,C)` (and its scalar d analogue).  It is not an independent new
+premise: `C_k` is exactly the gyro-history coordinate already constrained
+by the local-tube G0/Lemma-T construction.  A tube bound
+`sum_k H_k C_k C_k' H_k'<=C_E(c,r)` therefore closes the last source family
+and yields finite `R_q^bar,R_d^bar`.
+
+This result removes literal reset amplification and preserves the correlated
+AG process factor.  It does not yet assign a numerical `C_E`; replacing
+the signed energy by `sum ||H_k||^2 ||C_k||^2` over a long word is the
+coarse norm route and is not promoted.
+
+## Reader-weighted C-energy: leverage inequality
+
+Lemma T supplies lower information, not an upper bound on `|C_k|`; therefore
+it must enter through the inverse normal matrix of the same tube reader.
+Let the whitened reduced tube rows be `X_k` and stack `X=[X_k]_k`.
+Include the fictitious kernel row and put
+
+`G_mu=X'X+mu nu nu'`.
+
+For terminal quotient map `F`, the canonical reader block on row k is
+
+`L_k=F G_mu^-1 X_k'`.                                      (LE-1)
+
+Let `C_k` denote the inverse-frame gyro-history coordinate at that row and
+define the block-diagonal multiplication operator
+`mathcal C=diag(C_k)`.  The signed reader-weighted history energy is exactly
+
+`M_C=F G_mu^-1 X' mathcal C mathcal C' X G_mu^-1 F'`.      (LE-2)
+
+Do not bound `mathcal C` separately.  Decompose the tube rows into attitude
+and gyro columns, `X_k=[U_k,U_k C_k+V_k]`, where `V_k` contains the
+literal within-step gyro injection and the transported magnetic contribution.
+Then
+
+`X [0;I] = mathcal U C + mathcal V`
+
+in stacked notation.  The G0/Lemma-T proof gives a positive lower quadratic
+form on this same gyro column after eliminating attitude.  Denote its Schur
+complement by
+
+`S_g = X_g'(I-P_U)X_g + mu S_nu >= q_T I`,                 (LE-3)
+
+where `P_U` is the weighted attitude-column projector and `q_T>0` is the
+literal local-tube Lemma-T/G0 gyro floor (including the kernel row when
+needed).
+
+The weighted least-squares leverage inequality applies only to the residualized gyro columns
+
+`Xg_perp=(I-P_U)X_g`,
+`Xg_perp S_g^-1 Xg_perp' <= I`                              (LE-4 corrected)
+
+(up to the kernel-row augmentation in the same residualized space). The previously stated unprojected inequality `X_g S_g^-1 X_g'<=I` is false. Consequently the following AG-process action must be rederived with `Xg_perp` carried consistently. Writing the AG-process coefficient as observed gyro-column part plus the within-step remainder,
+
+`mathcal C = mathcal C_obs + mathcal R_D`,
+
+the canonical reader action obeys
+
+`M_C <= ...`                                                (LE-5 RETRACTED)
+
+The former displayed bound is not established by LE-4 corrected because its decomposition used the unprojected gyro column.
+
+The first term is controlled directly by the quotient information:
+`F G_mu^-1 F'<=||F||^2/s(c,r)^2 I`.  The second term contains only the
+within-step defect `R_D`, not the accumulated chronological `C_k`.
+The implemented gyro invariant already gives
+`||R_k^-1D_k-h_k I||<=h_k(theta_k/2+theta_k^2/3)`; hence with
+`theta_k<=theta_max<.007`,
+
+`||R_D,k||<=h_k e_D`,
+`e_D=theta_max/2+theta_max^2/3`.                            (LE-6)
+
+Therefore LE-7 and LE-8 are RETRACTED. A valid AG-process energy bound requires re-expressing the source coefficient in the residualized attitude-orthogonal gyro coordinates and separately charging the `P_U X_g` component. No later theorem may cite LE-5--LE-8 as established.
+
+Thus the accumulated signed `C_k` energy is bounded without
+`sum ||H_k||^2||C_k||^2` and without a reset-product norm.  Lemma T enters
+only through the positive Schur floor `q_T`; large chronological gyro
+history increases both the raw coefficient and the information that
+normalizes its reader leverage.
+
+Scope: (LE-5)--(LE-8) require the algebraic decomposition of the literal
+S-chain/local-tube rows into the same `X_g` used by the G0 Schur complement.
+The injection/reset frame must therefore use one common whitening and anchor
+convention.  This identification is exact for the ideal local-tube array and
+remains to be checked for the literal finite-series/implementation defect.
+Until that bookkeeping check is closed, (LE-7) is a conditional analytic
+bound, not a numerical shipping certificate.
+
+## Literal whitening and anchor identification for the leverage bound
+
+The bookkeeping identification required by (LE-3)--(LE-8) is exact in real
+arithmetic provided whitening is performed **after** the S-chain/local-tube
+row combinations.
+
+Shipping conventions are:
+
+1. the mean quaternion is WORLD-to-BODY and prediction uses the normalized
+   `quat_from_delta_theta(-w h)`;
+2. the AG covariance prediction is
+   `[[R_s,B_s],[0,I]]` from the same `rot_and_B_from_wt(w,h)`;
+3. an applied correction changes the mean by the literal quaternion injection
+   and applies covariance reset `G=I+[d]x/2`;
+4. the world proof coordinates are obtained by left multiplying body rows by
+   the orthogonal `R_k'`, giving
+   `[f_k]x[Atilde_k,Btilde_k]` exactly as in Lemma W.
+
+Thus the local anchor convention used in the leverage proof is
+
+`Q_k=Atilde_k Atilde_j^-1`,
+`D_k=Atilde_j^-1(Btilde_k-Btilde_j)`,
+
+with the same chronological reset factors as shipping.  No transpose or
+sign change is missing: `rot_and_B_from_wt` is the WORLD-to-BODY covariance
+transition, while the proof's `R_k'` is precisely the body-to-world
+orthogonal change of row coordinates.
+
+Finite-series prediction terms do not alter this identification.  They are
+already inside the literal `R_s,B_s`.  Relative to the ideal integral they
+appear only through
+
+`R_s^-1 B_s = h I + Delta_D`,
+`||Delta_D||<=h(theta/2+theta^2/3)`
+
+on the qualified small-angle domain.  This is exactly the `R_D` defect in
+(LE-5)--(LE-7), not a change of anchor or whitening.
+
+The whitening point is essential.  Let `C_S` denote the deterministic
+matrix that forms all selected S-chain and local-tube combinations from the
+raw observation vector.  If the raw auxiliary record is
+
+`y=O x+A s`, `Sigma=A A'`,
+
+then the reduced record is
+
+`z=C_S y=H x+A_z s`,
+`H=C_S O`, `A_z=C_S A`,
+`Sigma_z=C_S Sigma C_S'=A_z A_z'`.                         (WH-1)
+
+The S-chain uses common prediction factors in several combined rows, so
+`Sigma_z` is generally **not block diagonal** even though the fresh factors
+are independent.  Therefore the literal whitened array for Lemma T/G0 is
+
+`X=Sigma_z^-1/2 H`,                                        (WH-2)
+
+with any common square root/inverse factor of the full reduced covariance.
+Whitening individual accelerometer, magnetic or S rows before applying
+`C_S` is not equivalent and is not allowed.
+
+Under (WH-2),
+
+`X'X=H' Sigma_z^-1 H`
+
+is exactly the reduced-record information used by the canonical reader.
+Partitioning its columns into attitude and gyro coordinates therefore gives
+the same `X_g` and the same weighted attitude projector `P_U` that appear
+in the Schur complement (LE-3).  The fictitious kernel row is appended after
+this reduction with independent variance one, so it adds exactly
+`mu nu nu'`.
+
+Consequently the **residualized** leverage identity
+
+`Xg_perp S_g^-1 Xg_perp'<=I`,  `Xg_perp=(I-P_U)X_g`,
+
+uses the same literal whitening and anchor convention as the reader action.
+The unprojected statement `X_g S_g^-1 X_g'<=I` is false, as already noted
+above, and is not restored by this bookkeeping identification.  The literal
+reset transport is retained exactly; finite-series prediction error is
+isolated in `R_D`; S-chain shared-source correlations are retained in
+`Sigma_z`.
+
+**Result.**  The whitening/anchor identification passes only for the
+residualized operator.  It does **not** establish the former signed
+`C_k`-energy bound.  The missing `P_U X_g` component must be charged
+separately, so LE-5--LE-8 and the claimed AG-process family bound remain
+RETRACTED.
+
+## Direct literal reduced-information formulation
+
+The AW-mean and reset-product scalar pre-bounds can be removed entirely.
+Start from the raw frozen auxiliary record
+
+`y=O x+A s`, `Sigma=A A'`.
+
+Choose only deterministic S-chain/local-tube combinations `C_S` whose
+coefficients depend on timestamps and literal transition coefficients, not on
+unknown source values.  Form
+
+`H=C_S O`, `A_z=C_S A`, `Sigma_z=A_z A_z'`.             (DI-1)
+
+All AW root columns, AW process columns and AW covariance-sync columns selected
+by the S-chain vanish **algebraically** in `H,A_z`; no nominal AW mean bound
+is used.  Accelerometer attitude columns remain with their actual nominal
+`a_hat_k` values as linked coefficients of the frozen word.
+
+Retain every literal reset factor in the historical AG columns.  In world
+coordinates these are the exact factors
+
+`N_l=R_(l+) ' G_l R_(l-)`,
+`N_l'N_l=I+(|x_l|^2 I-x_l x_l')/4 >= I`.                  (DI-2)
+
+Do not replace their ordered product by a rotation plus Q1/Q2/Q3 remainder.
+The inequality `sigma_min(N_l)>=1` is useful for invertibility and inverse
+nonexpansion, but by itself does not preserve force/field kernel angles;
+therefore no scalar Corollary-A transport through the reset product is
+claimed.
+
+Whiten only after reduction:
+
+`X=Sigma_z^-1/2 H`.                                        (DI-3)
+
+Partition the slow columns as physical kernel coordinate `nu` and a chosen
+quotient basis `E_q`.  Append the fictitious kernel row and define the exact
+reduced normal matrix
+
+`G_red(c)=
+ [E_q,nu]' H' Sigma_z^-1 H [E_q,nu]
+ +diag(0,1/c)`.                                             (DI-4)
+
+Equivalently avoid a basis by using the projector onto `nu^perp`.  The
+literal quotient and gyro Schur floors are
+
+`s_lit(c)^2=lambda_min(G_red(c))`,
+`q_T,lit(c)=lambda_min(Schur_gyro(G_red(c)))`.              (DI-5)
+
+Every `N_l`, actual nominal AW coefficient, finite-series `R_s,B_s`,
+measurement covariance and shared process correlation is inside (DI-4).
+Thus A0/A1 and Q0..Q3 disappear from the theorem.
+
+For a radius-local proof, coefficients generated by estimator errors range
+over the candidate set `R(r,c)`.  The actual obligation is the matrix
+enclosure
+
+`G_red(c;history) >= G_*(c,r)>0
+ for every history in R(r,c)`.                              (DI-6)
+
+This is a structured same-history matrix inequality, not independent boxes.
+MARINE MOTION and MAGNETIC SERVICE enter only to prove (DI-6), for example by
+pairing actual reduced accelerometer rows with service magnetic rows and the
+inverse-frame chronological gyro coordinate.  No separate nominal-AW mean or
+reset-product estimate is required.
+
+Once (DI-6) is proved, set
+
+`s(c,r)^2=lambda_min(G_*(c,r))`,
+`q_T(c,r)=lambda_min(Schur_gyro(G_*(c,r)))`,
+
+and all leverage/factor-space action bounds above apply unchanged.
+
+**Consequence.**  The previous A_i/Q_i route is retired as unnecessary.
+The controlling unresolved statement is now one direct lower Loewner bound
+(DI-6) for the literal correlated reduced information matrix.  It is not
+proved merely by `sigma_min(N_l)>=1`: noncontractive resets can still change
+kernel alignment.  A proof of (DI-6) must exploit the complete linked row
+matrix and physical/service chronology.  This is narrower and avoids the
+circular cumulative correction-action premise.
+
+## Variational reduced-information floor
+
+The direct lower bound should use the **optimal nuisance-annihilating
+compression**, not an arbitrary S-chain row selection.
+
+Partition the raw frozen design into slow/root columns `O_s` and canceled
+fast/nuisance columns `O_f`:
+
+`y=O_s x_s+O_f x_f+A s`, `Sigma=A A'>0`.
+
+For fixed `x_s`, minimize the whitened data energy over the unrestricted
+nuisance root `x_f`:
+
+`Q_red(x_s)=min_(x_f) ||Sigma^-1/2(O_s x_s+O_f x_f)||^2`.   (VI-1)
+
+The minimizer is the weighted projection onto the complement of
+`range(Sigma^-1/2 O_f)`, hence
+
+`G_red =
+ O_s' Sigma^-1 O_s
+ -O_s' Sigma^-1 O_f
+  (O_f' Sigma^-1 O_f)^dagger
+  O_f' Sigma^-1 O_s`.                                      (VI-2)
+
+Equivalently, if `P_f` is the orthogonal projector onto
+`range(Sigma^-1/2 O_f)`,
+
+`G_red=O_s' Sigma^-1/2 (I-P_f) Sigma^-1/2 O_s`.            (VI-3)
+
+This is the maximal information obtainable by any linear compression that
+annihilates `O_f`.  Every explicit S-chain reader is a feasible compression
+and therefore lies below (VI-2); it need not preserve a source-uniform floor.
+The S-chain identities remain useful to prove that the canceled
+`(v,p,S,a_w)` root/AW sources belong to the nuisance span, but the theorem
+should use the Schur complement (VI-2) itself.
+
+Append the physical-kernel precision after nuisance elimination:
+
+`G_red,mu=G_red+mu nu nu'`, `mu=1/c`.                    (VI-4)
+
+The controlling obligation is therefore the variational inequality
+
+`Q_red(x_s)+mu(nu'x_s)^2 >= g_*(c,r)|x_s|^2`              (VI-5)
+
+for every slow vector and every admissible same-history word in the candidate
+region.  Then `G_*(c,r)=g_* I` is a valid DI-6 floor; block versions may be
+used to retain a sharper gyro Schur constant.
+
+The physical chronology enters (VI-5) without independent coefficient boxes:
+
+- applied magnetic rows penalize the two attitude components transverse to
+  the actual transported field;
+- accelerometer rows and their exact nuisance projection penalize the
+  complementary attitude/BA combinations;
+- MAGNETIC SERVICE bounds gaps between actual magnetic rows;
+- chronological gyro transport/Lemma T prevents a nonzero gyro-bias quotient
+  from remaining in the moving field-axis null line across separated service
+  tubes;
+- MARINE MOTION attitude-span supplies the physical change needed on every
+  complete moving excitation window; STILL is handled by its separate
+  compatible-class argument.
+
+A contradiction proof of (VI-5) is now natural.  If no positive uniform floor
+exists on a compact candidate history class, take a sequence of unit slow
+vectors with `Q_red+mu(nu'x)^2->0`.  The residuals imply, successively:
+magnetic rows force attitude into the transported field-axis line; nuisance-
+projected accelerometer rows force the associated BA/tilt compatibility;
+Lemma T plus recurring service forces gyro bias into the compatible axial
+component; the fictitious kernel row then removes the sole remaining physical
+tilt/BA line.  The limit slow vector must be zero, contradicting unit norm.
+
+What remains for a **quantitative** floor is to turn those four implications
+into explicit inequalities with constants on the radius-local compact class.
+The exact reset factors and literal nominal AW values remain inside
+`O_s,O_f,Sigma`; no A_i or Q_i bounds are required.  Compactness alone would
+prove existence of `g_*>0`, but a usable `K,D,E` requires explicit
+moduli for the magnetic, nuisance-projected accelerometer and Lemma-T steps.
+
+## Closed-loop null invariance and radius-local reachability target
+
+Actual optimal gains cannot repair an exact raw Jacobian null direction.  At
+any correction,
+
+`e_plus=(I-KH)e_minus`.
+
+Hence `H v=0` implies `(I-KH)v=v` for every realized gain `K`; Joseph
+conditioning changes covariance but not this deterministic homogeneous
+direction.  Interleaved gains can help only after prediction/reset transport
+moves the direction out of the next row nullspace.  Therefore the missing
+physical-to-nominal bridge cannot be obtained from gain magnitude or NIS
+alone.
+
+The remaining viable mechanism is radius-local reachability.  Let the true
+world inertial acceleration be `a(t)`, true residual accelerometer bias
+`b_a(t)`, nominal states `a_hat(t),b_hat_a(t)`, and attitude error
+`R_hat=R_err R_true`.  On `V<=r^2`, covariance coercivity gives
+
+`|delta theta|<=c_theta(r) r`,
+`|a_hat-a|<=c_aw(r) r`,
+`|b_hat_a-b_a|<=c_ba(r) r`,                                (RE-1)
+
+**only if** the corresponding covariance upper bounds are available on the
+candidate set.  The AW marginal ceiling gives the one-sided error estimate
+`|e_aw|<=4r`; the BA marginal gives `|e_ba|<=r/40`.  Thus the nominal
+world force differs from the true world force by at most `4r` in the AW
+coordinate, without invoking pointwise AW tracking as a physical premise:
+it is a consequence of being inside the candidate storage ball.
+
+For any unit field direction `b` and any normalized convex window weights,
+
+`| (sum alpha a_hat) x b |
+ <= |(sum alpha a) x b| + 4r`.                              (RE-2)
+
+More importantly for a lower separation, if the physical window supplies
+
+`| (sum alpha a) x b | >= m_phys`,
+
+then
+
+`| (sum alpha a_hat) x b | >= m_phys-4r`.                  (RE-3)
+
+This is a radius-local reachability exclusion of nominal collinearity whenever
+`r<m_phys/4`.  It uses the proved AW covariance marginal and the definition
+of storage, not an independent source assumption.
+
+However MARINE MOTION's current attitude-span premise does **not** imply a
+positive `m_phys` for the signed acceleration mean.  A vessel may change
+attitude while its translational inertial acceleration has zero or
+field-parallel weighted mean.  Therefore (RE-3) alone does not close the
+moving information floor.
+
+The correct reachability target must use gravity direction in the body-frame
+measurement rather than inertial-acceleration mean.  For two times whose true
+attitudes differ by at least `Delta_R`, the body gravity directions differ
+by at least `2 sin(Delta_R/2)`.  Candidate attitude error perturbs each by at
+most `2 sin(c_theta(r)r/2)`.  Thus the nominal body gravity directions retain
+separation
+
+`Delta_g,nom(r) >=
+ 2 sin(Delta_R/2)-4 sin(c_theta(r)r/2)`.                    (RE-4)
+
+If positive, two literal accelerometer attitude Jacobians cannot share the
+same gravity-axis kernel after nuisance projection **unless** AW/BA nuisance
+columns mimic their difference.  Bounding that mimic is now a finite
+two-epoch Schur problem using the proved AW/BA covariance/action bounds, not a
+pointwise AW tracking statement.
+
+So the new quantitative target is the two-epoch nuisance Schur inequality
+
+`Q_acc,red(theta,ba)
+ >= a_2(r) dist((theta,ba),K_phys)^2`, `a_2(r)>0`,         (RE-5)
+
+with `a_2(r)` derived from (RE-4), Racc, the AW/BA nuisance action, and the
+literal two-epoch transition.  Magnetic service then intersects `K_phys`
+with the field-axis line, Lemma T handles gyro bias, and the fictitious kernel
+row removes the remaining one-dimensional compatibility class.
+
+This route uses the existing MARINE MOTION attitude-span assumption directly
+and avoids requiring a physical acceleration mean.
+
+## Literal two-epoch accelerometer/AW/BA Schur modulus
+
+At two applied accelerometer epochs, rotate residuals into common world
+coordinates and write the slow attitude/BA contribution as
+\`d(z)=D z\`, \`z=(theta,b_a)\`, with
+
+\`D=[[C_0,B_0],[C_1 T_theta,B_1 phi_b]]\`.
+
+Here \`C_i=-[f_i]x\` are the literal nominal specific-force attitude rows,
+\`B_i\` are the transported BA rows, and \`T_theta\` is the literal
+inter-epoch attitude transport.  The AW nuisance obeys
+\`a_1=Phi_a a_0+w_a\`.  If \`U_a\` bounds the inherited AW-root action and
+\`Q_a\` the inter-epoch AW process action, define
+
+\`N=[[I,0],[Phi_a,I]]\`,
+\`S_a=N diag(U_a,Q_a) N'+diag(R_0,R_1)\`.
+
+Eliminating the AW root and process factor gives exactly
+
+\`Q_acc,red(z)=d(z)' S_a^-1 d(z)\`,
+\`G_2=D' S_a^-1 D\`.
+
+Therefore, with \`K_phys=ker D\`,
+
+\`Q_acc,red(z)>=a_2 dist(z,K_phys)^2\`,
+\`a_2=lambda_min^+(D' S_a^-1 D)\`.
+
+A source-valid explicit lower bound is
+
+\`a_2 >= sigma_min^+(D)^2/lambda_max(S_a)\`,
+
+and
+
+\`lambda_max(S_a)
+ <= R_acc,max+(1+|Phi_a|)^2 U_a+Q_a,max\`.
+
+Thus
+
+\`a_2(r) >= d_2(r)^2/
+ [R_acc,max+(1+|Phi_a|)^2 U_a+Q_a,max]\`
+
+whenever a source-uniform geometric bound
+\`sigma_min^+(D)>=d_2(r)>0\` is proved.
+
+This closes the AW/BA Schur algebra: unrestricted AW nuisance does not erase
+information for a fixed nondegenerate D; it only enlarges the finite
+denominator through its root/process action.
+
+The remaining issue is the numerator.  MARINE MOTION attitude span does not
+by itself imply \`d_2(r)>0\`: the literal \`C_i\` contain nominal specific
+force, not gravity alone, and admissible translational acceleration can
+compensate a change in gravity direction.  The radius estimate
+\`|a_hat-a|<=4r\` transfers a physical specific-force separation if one is
+available, but the current attitude-span assumption does not supply that
+separation.  Hence no positive numerical \`a_2(r)\` is claimed from attitude
+span alone.
+
+## Two-epoch geometric numerator: exact elimination and obstruction
+
+For
+\`D=[[C_0,B_0],[C_1 T_theta,B_1 phi_b]]\`
+with orthogonal transported BA rows \`B_i\`, eliminate \`b_a\` from the
+noise-free two-epoch equations.  The first row gives
+\`b_a=-B_0' C_0 theta\`.  Substitution into the second gives the exact relative
+operator
+
+\`L_2=C_1 T_theta-phi_b B_1 B_0' C_0\`.                      (GE-1)
+
+Hence
+\`ker D\` is isomorphic to \`ker L_2\`, and the nonzero singular geometry of D
+is controlled by L_2.  A quantitative comparison follows from the elimination
+map:
+for any z=(theta,b_a), let \`e_0=C_0 theta+B_0 b_a\`.  Then
+
+\`C_1T_theta theta+B_1 phi_b b_a
+ =L_2 theta+B_1 phi_b B_0' e_0\`.
+
+Thus
+\`|Dz|^2=|e_0|^2+|L_2 theta+B_1 phi_b B_0'e_0|^2\`.
+Completing the square yields, for any eta>0,
+
+\`|Dz|^2 >= [eta/(1+eta)] |L_2 theta|^2
+            +[1-eta phi_b^2] |e_0|^2\`,                     (GE-2)
+
+whenever \`eta<1/phi_b^2\`.  Therefore an explicit d2 follows from a positive
+singular floor of L2 together with the bounded reconstruction
+\`b_a=B_0'(e_0-C_0 theta)\`.
+
+But current MARINE MOTION attitude span does not imply
+\`sigma_min^+(L_2)>0\`.  The matrices \`C_i=-[f_i]x\` depend on nominal
+specific force.  It is admissible for translational acceleration to make the
+two transported nominal force directions satisfy
+
+\`C_1 T_theta=phi_b B_1B_0' C_0\`
+
+on the relevant two epochs, in which case \`L_2=0\` and D has only the
+single-epoch rank.  Physical attitude can change between the epochs while the
+specific-force cross-product maps remain aligned because translational
+acceleration compensates gravity.
+
+The existing same-cell/collinear constructions in the world-frame proof show
+this mechanism explicitly: bounded displacement, velocity, acceleration,
+jerk and nonzero attitude span can coexist with force parallel to the magnetic
+direction at selected correction times.  MAGNETIC SERVICE excludes one
+particular integer-second cadence but does not convert attitude span into a
+uniform two-epoch specific-force separation.
+
+Consequently no source-uniform \`d_2(r)>0\` can presently be derived from the
+existing MARINE MOTION attitude-span assumption plus reachability radius
+alone.  The two-epoch route is therefore CLOSED as a controlling path unless
+another already-proved shipping-history condition supplies relative
+specific-force excitation.  Do not continue trying to obtain the A21 floor
+from attitude span alone.
+
+This does not refute the full recurring A21 theorem: magnetic-service rows,
+more than two accelerometer epochs, S pseudo-observations and closed-loop
+chronology may jointly remove the degeneracy.  It refutes only the proposed
+two-epoch accelerometer bridge as a source-uniform consequence of the current
+physical assumptions.
+
+## Complete multi-epoch corrected-word operator
+
+The failed two-epoch reduction should not be iterated.  Use the complete
+regular A21 word as one conditional Gaussian operator.
+
+Freeze the literal word, including every prediction, applied accelerometer,
+magnetic and S correction, AW synchronization, BA evolution, Joseph gain and
+attitude reset.  Stack the root as \`x_0=(x_s,x_f)\`, where \`x_s\` contains
+the slow AG/BA quotient plus the physical kernel coordinate and \`x_f\`
+contains the remaining nuisance root.  Stack every fresh process/sync/noise
+factor once in \`s\).  Then exactly
+
+\`y=O_s x_s+O_f x_f+A s\`,
+\`x_N=T_s x_s+T_f x_f+B s\`.                                 (MW-1)
+
+All matrices are chronological literal matrices from shipping.  No
+accelerometer subword, nominal-AW mean, reset-product approximation or
+independent source box is introduced.
+
+Eliminate the nuisance root in the full joint Gaussian record.  With
+\`Sigma=A A'\`, define the whitened nuisance projector
+
+\`P_f=proj range(Sigma^-1/2 O_f)\`
+
+and
+
+\`J_s=O_s' Sigma^-1/2(I-P_f)Sigma^-1/2 O_s\`.                (MW-2)
+
+Append the fictitious kernel precision \`mu=1/c\`:
+
+\`J_(s,mu)=J_s+mu nu nu'\`.                                  (MW-3)
+
+For the terminal state, eliminate the same nuisance root and all data
+optimally using the joint minimum-action identity.  Let \`Pi_s\` be the
+known-slow-root terminal covariance and \`P_(nu,s)\` the terminal covariance
+with only kernel prior precision \`mu\`.  Then the exact complete-word
+diameter is
+
+\`kappa_MW(c)=lambda_max(Pi_s^-1 P_(nu,s))\`.                (MW-4)
+
+This is not a raw observability requirement.  Directions may be weak or
+instantaneously null in accelerometer rows and still have finite diameter
+because the complete word combines:
+- magnetic rows at every qualified service interval;
+- all accelerometer epochs, including changes of nominal force;
+- S pseudo-observations and their correlations with AW/LIN;
+- chronological gyro-bias transport;
+- AW/BA process penalties;
+- actual Joseph corrections and literal reset congruences;
+- terminal forgetting/process noise.
+
+The smoother identity gives an equivalent closed-loop form.  If
+\`C_k=Cov(x_s, x_k | y_<k)\`, every applied correction contributes root loss
+
+\`Delta J_k=C_k H_k' S_k^-1 H_k C_k'\`,                     (MW-5)
+
+transported in the same root coordinates.  Predictions contribute forgetting
+through the joint terminal conditional covariance.  Thus exact row-null
+directions at one epoch are harmless unless they remain invariant under the
+entire corrected chronology.
+
+The source-uniform theorem target is now directly
+
+\`P_(nu,s)(W,c) <= K_MW(c,r) Pi_s(W)\`                       (MW-6)
+
+for every admissible complete MOVING word whose prefixes stay in the candidate
+radius.  Equivalently
+
+\`sup_W kappa_MW(W,c,r)<infinity\`.                          (MW-7)
+
+The physical assumptions enter only in excluding a complete-word invariant
+null sequence.  A contradiction sequence with unbounded diameter would,
+after normalization, have to make simultaneously:
+1. every magnetic-service corrected loss vanish;
+2. every accelerometer corrected loss vanish after optimal AW/BA/LIN mimic;
+3. every S corrected loss vanish;
+4. every AG/BA process-action penalty vanish;
+5. terminal forgetting vanish.
+
+Because process factors are retained in the joint action, an AW/BA nuisance
+that changes between accelerometer epochs to maintain a force degeneracy pays
+its literal process action.  Because S rows are retained, an AW/LIN mimic that
+hides in accelerometer rows must also remain compatible with the integrated
+chain.  This is exactly the coupling discarded by the two-epoch Schur
+argument.
+
+A quantitative proof should therefore lower-bound the **sum** of the five
+nonnegative complete-word actions above, not seek a positive floor for any
+single sensor family.  The already proved nuisance covariance bounds,
+S-chain identity, Lemma T, magnetic service and process floors are valid
+supplies for this sum.
+
+If (MW-6) closes, no separate G0 or two-epoch \`a_2\` is needed for O1:
+\`K(c,r)=K_MW(c,r)\`.  The same complete-word joint factorization gives the
+known-root scalar kernel return \`D(c,r)\`; actual-gain finite-error
+composition then supplies \`E(c,r)\`.  The final invariant test remains
+
+\`D(c,r)<=c\`,
+\`[1-sqrt(1-1/K_MW(c,r))]r>E(c,r)\`.
+
+This section changes the proof target only; it does not claim a uniform
+complete-word bound yet.
+
+## Complete-word zero-action nullspace
+
+Consider a sequence of normalized slow/root directions and nuisance/source
+mimics for complete regular MOVING words whose total joint action tends to
+zero.  Pass to a convergent subsequence on a fixed combinatorial word type.
+All statements below are in the limiting homogeneous auxiliary system.
+
+**1. Fresh process action rigidifies the mimic.**  Every fresh source factor
+has positive covariance on its driven subspace.  Zero source action therefore
+sets every AG, LIN/AW and BA fresh factor to zero.  AW sync factors also vanish.
+Consequently the nuisance trajectory is no longer independently selectable at
+successive observations: it is the deterministic propagation of one root
+nuisance vector through the literal transitions.  In particular BA follows
+its homogeneous OU decay and the complete (v,p,S,a_w) chain follows its
+homogeneous linear dynamics.
+
+**2. S loss removes the free LIN chain.**  Applied S pseudo-observations have
+positive R_S.  Zero corrected S loss gives S(t_j)=0 at every applied S row.
+The regular scheduler supplies the three separated S rows used in the
+nuisance proof.  With zero fresh LIN/AW sources, the exact integrated-chain
+Vandermonde/S-chain identity implies the only homogeneous LIN trajectory
+compatible with all these zero S values and zero terminal forgetting is the
+zero (v,p,S,a_w) trajectory.  Thus no AW root remains available to retune the
+accelerometer force independently across epochs.
+
+**3. Magnetic loss restricts attitude/gyro chronology.**  Zero magnetic loss
+at every applied informative magnetic row gives
+\`[B_k]x theta_k=0\`; hence \`theta_k=lambda_k B_k\` at those rows.  With zero
+AG fresh source action, \`(theta,b_g)\` follows the literal deterministic
+prediction/reset transport.  MAGNETIC SERVICE bounds service gaps.  Lemma T
+then implies that any nonzero gyro-bias component that would move the
+attitude away from the transported field-axis line is impossible.  Therefore
+the limiting AG trajectory is the magnetic-compatible deterministic class:
+gyro bias has no observable transverse/axial component left, and attitude is
+the transported field-axis mode.
+
+**4. Accelerometer loss fixes BA compatibility.**  Since the homogeneous AW
+trajectory was killed in step 2, zero accelerometer loss at every applied row
+reduces to
+
+\`J_att,k theta_k + J_ba,k b_a,k=0\`.
+
+BA has one root vector and deterministic OU decay from step 1; it cannot be
+chosen separately at each epoch.  On the magnetic-compatible attitude class,
+these equations define the common tilt/BA compatibility line.  The literal
+shipping kernel is
+
+\`nu=(theta_hat,0,...,0,-J_att theta_hat)\`
+
+at a word root.  Chronological transport maps this line to the corresponding
+compatibility line at subsequent rows.  Hence the complete zero-action
+trajectory lies in \`span(nu)\`.
+
+**5. Terminal forgetting excludes any hidden terminal mode.**  Zero terminal
+forgetting means a remaining deterministic root direction must also survive
+to the terminal state without fresh-process separation.  Steps 1--4 leave
+only \`span(nu)\`; no additional nuisance terminal mode remains.
+
+Therefore the nullspace of the complete-word joint action is contained in
+the physical tilt/BA kernel:
+
+\`Null(Action_MW) subset span(nu)\`.                           (ZN-1)
+
+Conversely the quiet compatible construction shows why the kernel must be
+retained rather than declared observable; after adding fictitious precision
+\`mu nu nu'\`, the augmented action has trivial nullspace.
+
+**Qualification still required.**  Step 2 needs four, not three, regular S
+rows for the full homogeneous (v,p,S,a_w) chain.  The three-row determinant in
+the nuisance proof cancels only the neutral (v,p,S) polynomial; with zero AW
+process a nonzero homogeneous OU root adds an exponential mode.  Four distinct
+S times give the scalar basis {1,t,t^2,psi_tau(t)}, where psi_tau is the
+integrated OU contribution.  The scheduler supplies such rows, but a uniform
+nonzero determinant over h/tau and the allowed S-gap intervals must be proved.
+  Step 4 likewise requires that the deterministic BA
+decay and transported magnetic-compatible attitude line have a common
+accelerometer compatibility intersection of dimension at most one for every
+admissible MOVING word.  This is a multi-epoch statement and is not implied by
+the failed two-epoch force-separation lemma.  Until these two qualifications
+are discharged, (ZN-1) is a proof skeleton, not a closed theorem.
+
+## Four-S injectivity lemma for the homogeneous LIN/AW chain
+
+For one axis with zero fresh LIN/AW sources, let the root AW mode be
+\`a(t)=a_0 exp(-t/tau)\`.  Integrating through v, p and S gives
+
+\`S(t)=S_0+p_0 t+v_0 t^2/2+a_0 psi_tau(t)\`,
+
+where, modulo the polynomial terms already represented by \`v_0,p_0,S_0\`,
+
+\`psi_tau(t)=tau^3[(t/tau)^2/2-t/tau+1-exp(-t/tau)]\`.       (S4-1)
+
+Its derivatives satisfy
+
+\`psi_tau'''(t)=exp(-t/tau)>0\`.                              (S4-2)
+
+Hence the ordered functions
+\`{1,t,t^2,psi_tau(t)}\` form a strict extended Chebyshev system on every
+finite time interval for every finite \`tau>0\`.  Equivalently, for any
+\`t_0<t_1<t_2<t_3\`,
+
+\`det [1,t_i,t_i^2,psi_tau(t_i)]_(i=0..3) != 0\`,             (S4-3)
+
+with fixed sign.  This follows directly from the generalized mean-value
+formula for divided differences: after removing the Vandermonde factor, the
+last divided difference equals \`psi_tau'''(xi)/3!\` for some
+\`xi in (t_0,t_3)\`, and is strictly positive.
+
+For regular A21 the S scheduler has a positive minimum separation for the
+selected rows and a finite maximum gap; the shipping tuner range has
+\`tau in [0.02,12]\` s.  Normalize \`t_0=0\`.  The admissible tuple
+\`(t_1,t_2,t_3,tau)\` therefore lies in a compact set with
+\`0<t_1<t_2<t_3\` uniformly separated.  The determinant in (S4-3) is
+continuous and nowhere zero on that compact set.  Consequently
+
+\`delta_S4 :=
+ inf |det [1,t_i,t_i^2,psi_tau(t_i)]| >0\`.                  (S4-4)
+
+Thus four selected applied S observations make the zero-source homogeneous
+\`(v,p,S,a_w)\` root injective, uniformly over all regular scheduler timings
+and allowed tau.  If all four S corrected losses vanish, the homogeneous
+LIN/AW root is zero.  This closes qualification 1 of the complete-word
+zero-action nullspace proof in real arithmetic.  A numerical value of
+\`delta_S4\` is not required for qualitative coercivity; it will be needed
+later for an explicit K_MW modulus.
+
+## Multi-epoch magnetic-compatible attitude/BA intersection
+
+Assume the zero-action conclusions already proved: all fresh AG/LIN/AW/BA
+sources vanish, the homogeneous LIN/AW root is zero by the four-S lemma, and
+magnetic service/Lemma T leaves no nonzero gyro-bias component.  Let
+\`F_k\` be the literal invertible attitude transport from the word root to
+accelerometer epoch k, including every prediction and reset.  Then
+
+\`theta_k=F_k theta_0\`,
+\`b_a,k=phi_b(t_k) R_(ba,k) b_a,0\`,                         (AB-1)
+
+where \`R_(ba,k)\` is the literal orthogonal frame transport of the stored BA
+coordinate.
+
+Zero magnetic loss at every applied magnetic row j gives
+
+\`F_j theta_0 in span(B_j)\`.                                (AB-2)
+
+Thus the admissible root attitude space is the intersection
+
+\`K_M=intersection_j F_j^-1 span(B_j)\`.                     (AB-3)
+
+It has dimension at most one unless all pulled-back field lines coincide.  If
+two do not coincide, \`K_M={0}\` and the desired result is immediate (BA is
+then zero from any accelerometer row because its BA row is invertible).
+
+In the only nontrivial case, \`K_M=span(theta_hat_0)\`.  Write
+\`theta_0=lambda theta_hat_0\`.  Zero accelerometer loss at every applied
+epoch k, with AW/LIN already zero, is
+
+\`J_att,k F_k theta_0
+ +R_(ba,k) phi_b(t_k)b_a,0=0\`.                              (AB-4)
+
+Since \`R_(ba,k)\` is invertible,
+
+\`b_a,0=-lambda phi_b(t_k)^-1
+ R_(ba,k)' J_att,k F_k theta_hat_0\`                         (AB-5)
+
+for every k.  Therefore a nonzero solution exists iff the vectors
+
+\`q_k:=phi_b(t_k)^-1 R_(ba,k)' J_att,k F_k theta_hat_0\`     (AB-6)
+
+are identical at all accelerometer epochs.  When they are identical, the
+solution set is exactly the one-dimensional line
+
+\`(theta_0,b_a,0)=lambda(theta_hat_0,-q)\`.                   (AB-7)
+
+When they are not identical, only \`lambda=0\` is possible, and then
+\`b_a,0=0\`.
+
+Hence, without any force-separation premise,
+
+\`dim{(theta_0,b_a,0): all zero magnetic and acc losses}<=1\`. (AB-8)
+
+This is purely linear algebra: magnetic rows first reduce the root attitude
+space to dimension <=1; the invertible BA row at one accelerometer epoch then
+determines the entire three-component BA root from that single attitude
+amplitude; additional accelerometer epochs can only remove the line, never
+increase its dimension.  No assumption that the surviving line equals the
+quiet physical kernel is needed for the dimension statement.
+
+For Corollary K, however, the line used for the fictitious prior must contain
+the actual complete-word nullspace.  If \`K_M=span(theta_hat_0)\` and (AB-6)
+is constant, define the word's physical compatibility vector
+
+\`nu_W=(theta_hat_0,0,...,0,-q)\`.                            (AB-9)
+
+The complete-word nullspace is contained in \`span(nu_W)\`.  In the quiet
+case this reduces to the previously stated
+\`nu_ba=-J_att theta_hat\`.  On a moving word the compatible line may rotate
+with the literal chronology; the recurring kernel ceiling and next-word
+transport must therefore use \`nu_W\`, not assume a fixed instantaneous
+quiet-kernel formula unless their equality is separately proved.
+
+This closes the qualitative dimension-at-most-one lemma.  It also exposes a
+bookkeeping correction: the complete-word kernel is the common
+magnetic/accelerometer compatibility line of that word, which may be trivial;
+its identification with the earlier root field-axis tilt/BA vector remains
+to be checked before applying the existing scalar kernel ceiling unchanged.
+
+## Uniform scalar treatment for the word-dependent compatibility kernel
+
+Corollary K is basis-free: its proof uses only a rank-one root information
+term \`mu nu nu'\`.  Therefore it applies unchanged to any nonzero
+word-dependent null vector \`nu_W\`; no identification with the quiet kernel
+is required.  Normalize the attitude component of a nontrivial compatibility
+line to \`|theta_hat_W|=1\` and write
+
+\`nu_W=(theta_hat_W,0,...,0,-q_W)\`.                          (WK-1)
+
+From any applied accelerometer epoch k on the compatibility line,
+
+\`q_W=phi_b(t_k)^-1 R_(ba,k)' J_att,k F_k theta_hat_W\`.     (WK-2)
+
+The literal attitude transport is a product of orthogonal predictions and
+reset factors with \`sigma_min(N)>=1\`.  For the inverse transport used in
+(WK-2), \`||F_k^-1||<=1\`; forward \`||F_k||\` is finite on a candidate
+retained word.  More directly, the shipping accelerometer Jacobian satisfies
+
+\`||J_att,k||<=|f_hat,k|\`.
+
+The estimator state clamps/tuner bounds and candidate storage give a finite
+radius-local force ceiling \`F_hat,max(r)\`; BA decay obeys
+\`phi_b(t)>=exp(-T_W/tau_b)\`.  Hence
+
+\`|q_W| <= q_max(r)
+ := exp(T_W/tau_b) F_hat,max(r) F_max(r)\`,                  (WK-3)
+
+where \`F_max(r)=sup_k||F_k theta_hat_W||\` over the compact retained
+coefficient class.  This is finite; it need not be small.
+
+The existing BA marginal gives
+
+\`P_ba,ba<=I/1600\`.
+
+For any root covariance and normalized \`nu_W\`, block Cauchy--Schwarz yields
+
+\`nu_W'P nu_W
+ <=( sqrt(theta_hat_W'P_tt theta_hat_W)+|q_W|/40 )^2\`.       (WK-4)
+
+Thus a uniform attitude scalar ceiling \`tau_theta(r)\` on the compact
+retained root class implies
+
+\`nu_W'P nu_W <=
+ c_W(r):=(sqrt(tau_theta(r))+q_max(r)/40)^2\`.                (WK-5)
+
+A separate pre-existing quiet-axis tilt ceiling is not required.  The
+attitude ceiling may be obtained from the complete-word quotient covariance
+bound itself: once the augmented complete-word action is positive on the
+normalized compact kernel family, the known-root covariance plus the finite
+kernel prior \`1/c\` gives a finite attitude marginal.  To avoid circularity,
+use the construction/startup root ceiling for the first recurring word and
+propagate the scalar ceiling with the exact kernel return \`D(c,r)\`;
+Corollary K then applies word by word with each current \`nu_W\`.
+
+Equivalently formulate the recurring invariant as
+
+\`sup_(nu in N(r)) nu'P nu <= c\`,                            (WK-6)
+
+where \`N(r)\` is the compact family of normalized complete-word compatibility
+vectors satisfying (WK-1)--(WK-3).  The rank-one theorem is uniform over this
+family whenever
+
+\`sup_(W,nu_W in N(r)) kappa_(nu_W)(1/c)<infinity\`
+
+and the scalar return satisfies
+
+\`sup_W nu_(W+1)' P_(nu_W,W) nu_(W+1)<=c\`.                 (WK-7)
+
+This is exactly the previous O1/O2 structure with a compact kernel family
+instead of one fixed formula.  The BA marginal and (WK-3) make the family
+bounded; continuity of the literal word maps makes it compact after including
+the zero-kernel case separately.
+
+**Result.**  Identification of \`nu_W\` with the instantaneous quiet kernel is
+unnecessary.  The existing rank-one Corollary K generalizes without change,
+and the scalar invariant generalizes to the compact family \`N(r)\`.  What
+remains quantitative is the same complete-word diameter/return bound
+\`K_MW(c,r),D(c,r)\`; there is no new observability obstruction caused by the
+word-dependent kernel direction.
+
+## Pointwise nullspace does not imply uniform complete-word coercivity
+
+The earlier claim that trivial augmented nullspace plus compactness implies a
+uniform `g_MW(c,r)>0` is RETRACTED.  The compatibility/kernel line can change
+rank or become tangent along an admissible sequence.  Pointwise injectivity
+modulo the word kernel does not imply a uniform positive nonzero singular
+value across such limits.
+
+The later finite-horizon detectability formulation is controlling.  What is
+needed is a uniform relative inequality between terminal persistence and
+observation action, not a uniform Euclidean information floor.
+
+## Four-S injectivity: quantitative bound retracted
+
+The qualitative four-S injectivity lemma remains valid because
+`psi_tau'''(t)=exp(-t/tau)>0` for every finite `tau>0`, so the generalized
+Vandermonde determinant is nonzero at four distinct S times.
+
+The previously claimed explicit determinant floor is RETRACTED.  The proof
+incorrectly used `tau<=12` to infer
+`exp(-t/tau)>=exp(-t/12)`; the inequality is reversed.  Since the admitted
+range includes `tau_min=0.02`, the divided-difference lower bound based only
+on `min psi'''` is exponentially tiny and the displayed >6.82e4 claim is
+false.  For example at times (0,8,16,24) and `tau=.02`, the determinant is
+approximately `.008192(1-exp(-400))^3`, about .008192.
+
+Thus four-S zero-source injectivity is qualitative only at this stage.  No
+explicit four-S singular-value modulus is currently certified.
+
+## Moving-kernel quotient Riccati diameter
+
+For each complete word W retain its normalized compatibility kernel nu_W.
+Do not require a uniform positive nonzero eigenvalue of the data information.
+With kernel precision mu=1/c, let Pi_W be the known-root terminal covariance
+and P_nu,W the terminal covariance with only the rank-one kernel prior. Define
+
+`kappa_Q(W,c)=lambda_max(Pi_W^-1 P_nu,W)`.
+
+This is basis-free. In root coordinates split the moving kernel line from its
+orthogonal quotient and write
+
+`J=[[j_nn,j_nq'];[j_nq,J_qq]]`.
+
+After adding mu on the kernel line, block elimination gives the quotient Schur
+information
+
+`S_q=J_qq-j_nq j_nq'/(j_nn+mu)`.
+
+Write the terminal excess map in Pi-whitened coordinates as
+`H=[h_n,H_q]`. The corresponding quotient terminal map is
+
+`H_eff=H_q-h_n j_nq'/(j_nn+mu)`.
+
+The dangerous quantity is the relative pair (H_eff,S_q), not
+`lambda_min^+(J)`. A quotient information eigenvalue may tend to zero
+without making the Riccati diameter diverge when the terminal excess vanishes
+at the same rate.
+
+The exact target is the Loewner relative-action inequality
+
+`H_eff' H_eff <= (K_Q-1) S_q`,
+
+together with the scalar kernel block bound
+`|h_n|^2/(j_nn+mu)<=K_n-1`. Equivalently, for the optimal complete-word
+minimum-action reader L,
+
+`(T-LA)(T-LA)' <= (K_Q-1) Pi_W`.
+
+These formulations remain meaningful at rank-changing words by shorted
+operator/Moore-Penrose continuation.
+
+A finite continuous extension through a quotient rank loss requires
+
+`Null(S_q) subset Null(H_eff)`.                             (RQ-1)
+
+This is a range condition, not a principal-angle condition. It says that a
+root quotient direction carrying zero complete-word reduced information also
+carries zero terminal excess relative to the known-root covariance. The
+zero-action theorem supplies the data-null classification; what remains is to
+show that the same zero-action nuisance/source mimic reproduces the terminal
+image, establishing (RQ-1) for the literal joint operator.
+
+If (RQ-1) holds at every limiting word, the generalized relative-action ratio
+extends continuously over the compact moving-kernel word family. Its maximum
+is then finite, giving `K_MW(c,r)<infinity` without any uniform
+`sigma_min^+` or principal-angle floor.
+
+## Exact range/shorting test for the moving quotient
+
+The joint minimum-action identity decides (RQ-1) exactly.  After nuisance and
+kernel-line elimination, write the reduced auxiliary model as
+
+`y=O_q q+A s`,
+`x_N=T_q q+T s`,
+`Sigma=A A'>0`.
+
+Define
+
+`J_q=O_q' Sigma^-1 O_q`,
+`Ttilde_q=T_q-T A' Sigma^-1 O_q`.                          (RS-1)
+
+The known-root terminal covariance is
+
+`Pi=T(I-A'Sigma^-1 A)T'`,
+
+and the diffuse quotient terminal covariance is
+
+`Pi+Ttilde_q J_q^dagger Ttilde_q'`
+
+whenever the Moore-Penrose expression is finite on the information range.
+For any v in Null(J_q), positivity of Sigma gives
+
+`O_q v=0`.                                                  (RS-2)
+
+The desired range condition is therefore exactly
+
+`O_q v=0 => Ttilde_q v=0`.                                 (RS-3)
+
+But (RS-3) is **not an algebraic consequence** of the joint Gaussian model.
+If `O_q v=0`, then the source least-squares mimic is zero and
+`Ttilde_q v=T_q v`.  Thus (RS-3) reduces to
+
+`Null(O_q) subset Null(T_q)`.                              (RS-4)
+
+In words: every complete-word data-null quotient root direction must also
+have zero deterministic terminal image.  A root mode can be invisible to all
+measurements yet survive to the terminal state; process noise in Pi does not
+make its deterministic image disappear.  This is precisely why information-
+only contraction and raw observability were insufficient earlier.
+
+For the literal complete-word zero-action classification, data-null directions
+are contained in the one-dimensional compatibility family before the kernel
+prior.  After quotienting by the **exact same** compatibility line nu_W, the
+qualitative result gives Null(O_q)={0} for each fixed nondegenerate word.
+At a rank-changing limit, however, a new quotient data-null direction may
+appear as the compatibility line changes/disappears.  To obtain a continuous
+diameter extension one must show its terminal image tends to zero at the same
+rate; pointwise nullity does not establish that.
+
+Therefore (RQ-1) is not yet closed.  It is equivalent to a quantitative
+forgetting statement for the near-null quotient direction, not merely to the
+zero-action nullspace theorem.  The existing complete-word machinery contains
+the right quantity: the pair `(O_q,T_q)` or, equivalently, the generalized
+ratio
+
+`sup_v |Ttilde_q v|_Pi^-1^2 / |O_q v|_Sigma^-1^2`.         (RS-5)
+
+A finite bound on (RS-5) is exactly the kernel-bounded Riccati diameter sought;
+using (RQ-1) to prove it would be circular unless (RS-4) is established
+uniformly at limiting words by an independent terminal-retention argument.
+
+This closes the proposed automatic shorting route as a dead end.  The next
+valid target is to bound the generalized pair (Ttilde_q,O_q) directly using
+the literal prediction/process structure -- a detectability/finite-horizon
+observability inequality -- rather than seeking a separate information floor
+or assuming the null inclusion.
+
+## Finite-horizon detectability as regularized backward readout
+
+For the moving quotient, exact root cancellation is unnecessarily strong near
+a rank-changing word.  Use the kernel-regularized joint reader.
+
+After nuisance elimination and kernel splitting, let the quotient auxiliary
+model be
+
+`y=O_q v+A s`,
+`x_N=T_q v+T s`,
+`Sigma=A A'`.
+
+Let `J_q=O_q' Sigma^-1 O_q` and let the kernel prior induce the positive
+regularization inherited from the full block Schur complement; denote it
+`M_q>=0`.  The minimum-action regularized reader is
+
+`L_q=T A' Sigma^-1
+ +(T_q-T A' Sigma^-1 O_q)(J_q+M_q)^dagger O_q' Sigma^-1`.   (DET-1)
+
+Its terminal root residual is
+
+`R_qroot=Ttilde_q[I-(J_q+M_q)^dagger J_q]`,                (DET-2)
+
+and its fresh-source action is the corresponding backward-readout sum.  The
+rank-one kernel prior makes the full reader finite even as the moving quotient
+changes rank.
+
+The desired detectability inequality
+
+`|Ttilde_q v|_Pi^-1^2 <= C_det |O_q v|_Sigma^-1^2`         (DET-3)
+
+is equivalent, on Range(J_q), to
+
+`Ttilde_q' Pi^-1 Ttilde_q <= C_det J_q`.                   (DET-4)
+
+For a fixed word its sharp constant is
+
+`C_det(W)=lambda_max(J_q^dagger/2
+ Ttilde_q'Pi^-1 Ttilde_q J_q^dagger/2)`,                   (DET-5)
+
+with infinity if Null(J_q) is not contained in Null(Ttilde_q).  Thus
+`K_MW<=1+C_det`.
+
+Backward readout supplies a constructive upper bound for (DET-5).  Initialize
+a terminal quotient residual Y at the end of the word and run backward:
+prediction adds `(YU)(YU)'` and maps `Y<-YF`; observation block L_i adds
+`(L_i V_i)(L_i V_i)'` and maps `Y<-Y-L_iH_i`; reset maps
+`Y<-YG_i`.  Instead of requiring exact root cancellation, choose the
+blocks L_i by the regularized normal equations associated with
+`J_q+M_q`.  The resulting action is exactly the numerator represented in
+(DET-5), with all shared process factors and literal resets retained.
+
+This formulation shows what must be proved for a source-uniform constant:
+the regularized backward-reader action divided by the root observation action
+must remain bounded as a quotient direction approaches the moving kernel.
+No absolute observation singular-value floor is required.
+
+However the existing zero-action/dimension theorem is insufficient to bound
+this ratio.  It gives pointwise injectivity modulo the kernel but no rate at
+which terminal persistence vanishes relative to observation action near a
+rank-changing word.  The regularized reader prevents an algebraic blow-up in
+the construction, but (DET-3) itself can still fail if a near-null direction
+has O(epsilon) observation amplitude and O(1) terminal image.
+
+Therefore finite-horizon detectability is now the exact remaining quantitative
+property; it has not been proved by the prior compactness arguments.  A valid
+next step must exploit the literal terminal dynamics to show that any
+compatibility-line rotation producing O(epsilon) observation action also
+produces O(epsilon) terminal quotient image.  Without such a terminal
+retention estimate, assigning a finite C_det would be circular.
+
+## Terminal retention from compatibility-line variation
+
+Let K_k be the one-dimensional compatibility line pulled back to the root from
+the corrected history through epoch k, and let p_k be its orthogonal projector
+in the normalized slow root metric.  Exact prediction/reset transport carries
+a vector aligned with K_k without creating a quotient component; quotient
+persistence is created only when the compatible line changes.
+
+For a normalized root vector v decompose recursively
+
+`v=p_k v+(I-p_k)v`.
+
+At the next constraint block,
+
+`(I-p_(k+1))p_k v=(p_k-p_(k+1))p_k v`.                    (TR-1)
+
+Thus the terminal quotient image obeys the exact telescoping form
+
+`T_q v=sum_k T_(N<-k) E_k (p_k-p_(k+1)) p_k v
+        +T_(N<-0)(I-p_0)v`,                                 (TR-2)
+
+where E_k is the literal embedding at the kth constraint block and
+T_(N<-k) is the subsequent deterministic terminal transport.  There is no
+charge for motion along the current compatibility line.
+
+Each projector change is controlled by the residual constraint operator that
+defines the new line.  If C_k is the whitened magnetic/accelerometer/S block
+after nuisance shorting and K_k=Null(C_<=k) has dimension one, the
+Davis--Kahan/sine relation gives
+
+`||(p_k-p_(k+1))p_k v||
+ <= ||C_(k+1) p_k v|| / gap_(k+1)`,                         (TR-3)
+
+where gap_(k+1) is the smallest positive singular value of C_(k+1) restricted
+to K_k^perp.  Multiplying by terminal transport gives
+
+`||T_q v||_(Pi^-1)
+ <= A_0 ||(I-p_0)v||
+   +sum_k A_k/gap_(k+1) ||C_(k+1)p_k v||`,                  (TR-4)
+
+with
+`A_k=||Pi^-1/2 T_(N<-k)E_k||`.
+
+Cauchy--Schwarz then yields the detectability constant
+
+`C_ret <= A_0^2/gap_0^2
+ +sum_k A_k^2/gap_(k+1)^2`,                                (TR-5)
+
+provided the block residual energies are the same terms appearing in
+`|O_qv|_Sigma^-1^2`.
+
+This is the desired terminal-retention mechanism: only compatibility-line
+rotation is charged, and aligned persistence is quotiented out.
+
+But (TR-3) exposes the same quantitative issue as the retired global
+principal-angle proof, now locally: a finite C_ret requires a lower positive
+restricted gap for each line-changing constraint block.  Current assumptions
+allow a new constraint to become arbitrarily tangent to the existing
+compatibility line.  In that case both the line rotation and residual are
+small, but their ratio is governed by the local restricted singular value,
+which has no proved lower bound.
+
+There is no generic improvement from telescoping: for a two-dimensional
+example C_epsilon=[epsilon,0], the compatible line is fixed while observation
+energy is epsilon^2 and a later deterministic terminal map can retain the
+first coordinate with O(1) amplitude.  Exact transport and compactness do not
+bound the ratio.
+
+Therefore a source-uniform C_ret is not established by compatibility-line
+variation under the current assumptions.  The terminal-retention route is
+equivalent to a local transversality/detectability modulus.  This is not a
+new algebraic gap: it is the same near-null/terminal-persistent obstruction
+identified by (DET-3).
+
+The proof must now decide between two genuinely different mechanisms:
+(1) derive a restricted gap from an already existing shipping invariant or
+scheduler/service condition not yet used, or
+(2) accept that the current physical assumptions permit arbitrarily weak
+detectability and cannot yield a source-uniform contraction margin.  Numerical
+carried-word gaps cannot decide this theorem question.
+
+## Continuous soft-kernel Riccati diameter
+
+The exact-kernel quotient is discontinuous when the compatibility nullspace
+changes dimension. Avoid that quotient. Carry instead a continuous unit
+direction n(W) selected from the least-information tilt/BA eigenspace, with
+sign fixed by the transported magnetic field, and append finite precision
+`mu n n'` whether or not the data nullspace is exactly one-dimensional.
+
+Define
+
+`J_mu(W)=J(W)+mu n(W)n(W)'`,
+`P_mu(W)=Pi+Phi_tilde J_mu(W)^-1 Phi_tilde'`,
+`kappa_soft(W)=lambda_max(Pi^-1 P_mu(W))`.
+
+No direction is abruptly promoted from kernel to quotient when an exact
+kernel disappears. If a formerly exact kernel acquires information epsilon^2,
+the same finite prior mu remains on that direction and its contribution is
+bounded by `1/(mu+epsilon^2)` rather than `1/epsilon^2`.
+
+Let E span n^perp and block
+`J=[[j_nn,j_nq'];[j_nq,J_qq]]`. The exact Schur complement is
+
+`S_soft=J_qq-j_nq j_nq'/(j_nn+mu)`.
+
+Because `j_nn+mu>=mu`, rank changes of J along n are harmless. The remaining
+requirement is coercivity only on directions uniformly separated from the
+chosen soft line. This is weaker than the retired exact-kernel principal-angle
+floor: when a second weak direction approaches n, the least-information
+eigenvector n rotates continuously with the weak subspace rather than
+disappearing.
+
+A basis-free formulation uses the two smallest eigenvalues of the tilt/BA
+information block. If lambda_2(W), the second eigenvalue after the soft
+direction, has a source-uniform positive floor, then
+
+`S_soft >= lambda_2,bar I`
+
+on the soft quotient and
+
+`kappa_soft <= 1 + ||Pi^-1/2 Phi_tilde||^2/lambda_2,bar`
+
+(with the sharper block reader retained for actual constants).
+
+The qualitative complete-word nullspace theorem already proves nullity at
+most one for each word. What it did not prove was a uniform smallest positive
+eigenvalue across rank-changing words. For the soft-kernel theorem the
+relevant compactness quantity is instead lambda_2, counting eigenvalues from
+zero with multiplicity. Unlike `lambda_min^+`, lambda_2 is continuous through
+a one-dimensional kernel appearing/disappearing. If every limiting word has
+nullity at most one, compactness now legitimately implies
+
+`inf_W lambda_2(W)>0`,
+
+provided the admissible retained word class itself is compact and the
+complete-word information matrix J(W) is continuous on that closed class.
+
+This repairs the earlier compactness error: continuity applies to the fixed
+ordered eigenvalue lambda_2, not to `lambda_min^+`. It also eliminates the
+kernel-disappearance epsilon^-2 counterexample because finite precision is
+kept on the continuously selected soft direction on both sides of the rank
+change.
+
+The next obligations are therefore (i) verify compactness/closedness of the
+radius-local complete-word coefficient class including scheduler/event-type
+limits; (ii) verify continuity of J on each event stratum and across allowed
+event-boundary limits, or use finitely many closed strata; and (iii) define a
+continuous/measurable soft direction n(W). A globally continuous eigenvector
+is unnecessary for the bound: the rank-one projector onto the least
+eigenspace suffices when lambda_1<lambda_2; at equality any minimizing
+projector gives the same conservative two-dimensional treatment.
+
+If these topological obligations close, a finite source-uniform soft-kernel
+diameter follows without AW-gain entry, determinant sign crossing, or
+finite-horizon detectability of the disappearing exact kernel.
+## Finite closed event strata for regular A21 words
+
+Fix the regular A21 word horizon T_W and the qualified sample interval
+`h in [h_min,h_max]` with h_min>0. Then the number of prediction slots is
+bounded by `N_max=ceil(T_W/h_min)+1`. At each slot the shipping operation
+alphabet is finite: prediction; accelerometer attempted/applied or rejected;
+S due/applied or failed-safe; magnetic attempted/applied or rejected; BA
+mode/projection branch; AW sync due/not due; and the finite reset/projection
+branches. Hence there are finitely many combinatorial event words on T_W.
+
+For a fixed combinatorial word sigma, collect continuous coefficients
+(dt values, states, covariance, physical/tuner parameters, measurements,
+clocks and references) into z. Literal prediction, Joseph correction, reset
+and covariance-sync maps are continuous wherever their selected branch has
+strictly positive LDLT pivots and finite inputs. Define a closed stratum by
+replacing each branch predicate with a closed assignment convention at
+equality (for example the code's actual <= versus < choice). Gate-boundary
+points that select the opposite code branch are placed in that neighboring
+stratum rather than duplicated.
+
+The closure of one fixed applied-event formula need not equal a shipping
+stratum: as an LDLT pivot approaches the fail-safe boundary the applied
+formula may cease to be the code path. Therefore continuity is asserted only
+on each code-selected closed branch, not across a branch switch. The finite
+union of these branch strata covers all regular words.
+
+MAGNETIC SERVICE is evaluated from actually applied informative events. For
+a fixed applied-magnetic pattern its service Gram is continuous in z and the
+condition `lambda_min(sum G_k'G_k)>=mu_M` is closed. A limit in which an
+event becomes rejected belongs to the rejected neighboring stratum; that
+stratum is admissible only if its remaining actually applied events still
+satisfy the same closed service inequality. Thus service prevents loss of the
+last required magnetic information at a boundary unless other applied events
+already retain the floor.
+
+Do not stratify by exact nuisance rank: exact-rank sets are generally not
+closed. Instead retain the raw fixed-dimensional joint factor action
+`Q_W(x)=min_z ||A_W x+D_W z||^2`, with nuisance/process action rows included
+in `D_W`. Structural zero-action directions are moved into the slow root once
+and for all. The proved action floors make the penalized nuisance operator
+coercive, so minimizers are bounded and `Q_W` is continuous/lower-
+semicontinuous through observation-rank changes. The symmetric slow
+information `J(W)` is defined by this quadratic form, without a data-dependent
+pseudoinverse.
+
+The remaining topological requirement is compactness of each substratum.
+Bounds on dt, tuner clamps, bias/state retained radius, covariance ceilings,
+physical/reference bounds and fixed horizon make the continuous coefficient
+set bounded. Closed branch predicates, closed MARINE MOTION/IMU BIAS bounds
+and closed MAGNETIC SERVICE make it closed, provided the all-time physical
+continuation variables are represented by the already assumed compact
+finite-word trace class. That last trace compactness is not automatic from
+bounded acceleration/jerk alone and must use Arzela--Ascoli plus the bounded
+potential/velocity/displacement conditions.
+
+If compactness holds and the complete-word nullity<=1 theorem applies on
+every boundary substratum, ordered eigenvalue continuity gives
+`lambda_2>0` pointwise and therefore a positive minimum on each substratum;
+the finite minimum over strata is positive.
+
+Boundary nullity is the remaining substantive issue. The earlier zero-action
+proof uses four applied S observations and recurring magnetic service. A
+boundary stratum may lose an S application through an LDLT fail-safe; unlike
+MAGNETIC SERVICE, there is currently no first-class S-service assumption
+requiring four actually applied S rows. Therefore the existing nullity<=1
+proof does not automatically extend to every closure stratum. A boundary
+with too few applied S corrections can retain additional homogeneous LIN/AW
+null directions while still satisfying MAGNETIC SERVICE.
+
+Scheduled S-row survival is in fact guaranteed in real arithmetic on the
+retained shipping domain. The S innovation covariance is
+`P_SS+R_S`; covariance PSD gives `P_SS>=0`, while the shipping tuner clamp
+`sigma_S>=1e-6` gives `R_S>=1e-12 I`. Hence `P_SS+R_S` is uniformly SPD and
+the mathematical LDLT cannot fail. Therefore every scheduled regular S update
+is applied, and the four-S zero-action argument extends to event-boundary
+strata without a new S-service assumption.
+
+The remaining boundary question is then magnetic/accelerometer compatibility.
+MAGNETIC SERVICE is closed and stated using actually applied magnetic rows,
+so every admissible boundary stratum retains its magnetic information floor.
+Accelerometer invalid-input rejection is excluded on the finite physical
+retained class by finite measurements/temperature; its LDLT likewise has
+`S_acc>=Racc>=1e-8 I` from the sigma_acc clamp in real arithmetic. Thus
+scheduled finite accelerometer updates are also mathematically applied.
+
+Accordingly the operation pattern relevant to the nullity theorem is fixed by
+the regular scheduler except for magnetic acceptance/service patterns, of
+which there are finitely many and each admissible closed pattern retains
+MAGNETIC SERVICE. Under the existing complete-word zero-action proof this
+supports nullity<=1 on every admissible stratum closure.
+
+## Compactness of finite-word physical traces
+
+Fix a complete MOVING A21 word interval I=[0,T_W]. The existing MARINE
+MOTION bounds give uniform pointwise bounds on p,v,a and the a.e. jerk bound
+`|a_dot|<=J_max`. Thus a is equibounded and J_max-Lipschitz. Arzela--Ascoli
+gives a uniformly convergent subsequence of a. Bounded initial v and p plus
+`v(t)=v(0)+int a` and `p(t)=p(0)+int v` then give uniform convergence of v
+and p. The kinematic identities pass to the limit.
+
+The jerk condition is closed because a uniform limit of J_max-Lipschitz
+functions is J_max-Lipschitz. Pointwise p/v/a bounds are closed. The
+bounded-potential condition `|int_t1^t2 p|<=P_AC` is closed under uniform
+convergence of p for every pair t1<t2.
+
+Physical accelerometer/gyro bias traces are uniformly bounded with uniform
+derivative bounds, hence are equibounded/equi-Lipschitz and compact in C0 by
+Arzela--Ascoli; their derivative bounds remain valid in the limit.
+
+For attitude use R(t) in SO(3). SO(3) is compact, and the nominal/physical
+angular-rate bound makes R equi-Lipschitz through `R_dot=R[omega]x` in the
+integral sense. A uniformly convergent subsequence therefore has a limit in
+SO(3) satisfying the same attitude kinematics. The additional bounded rate
+traces needed by lever-arm coefficients are treated by their existing
+regularity bounds.
+
+The MOVING excitation condition is closed: on each complete T_E subwindow,
+attitude span is the maximum of a continuous rotation-distance function over
+a compact pair-time set. Uniform convergence of R preserves
+`span>=theta_E`. STILL/transition histories belong to their separate regime
+strata and are not inserted into this recurring MOVING word class.
+
+All-time extendability is also closed. Take a sequence of globally admissible
+continuations whose restrictions converge on I. Apply the same uniform
+bounds and Arzela--Ascoli on [-n,n] for n=1,2,... and use a diagonal
+subsequence. The local limits agree on overlaps and define a global
+continuation. The derivative, pointwise and bounded-potential inequalities
+pass to that limit. Hence restrictions to I of globally admissible histories
+form a closed compact trace class.
+
+Sensor/frontend samples on the finite scheduler are continuous evaluations
+of these traces and bounded finite-dimensional frontend/reference variables.
+Combining this physical compactness with the already bounded closed
+estimator/covariance/tuner/clock variables proves compactness of every closed
+event/rank stratum described above.
+
+Therefore, assuming the established boundary nullity<=1 result on every
+admissible stratum, the ordered second eigenvalue lambda_2(J(W)) is continuous
+and strictly positive on each compact stratum. It attains a positive minimum
+there. There are finitely many strata, so
+
+`lambda2_bar := min_strata min_W lambda_2(J(W)) > 0`.
+
+This is a legitimate source-uniform **existence** modulus for the soft-kernel
+route. No numerical value is asserted. The argument uses the fixed ordered
+eigenvalue lambda_2, which is continuous through a one-dimensional rank
+change, rather than the discontinuous `lambda_min^+` used in the retracted
+coercivity argument.
+## Soft-kernel Riccati diameter from the ordered spectral gap
+
+For each complete word W let the ordered eigenvalues of the nuisance-reduced
+slow information be `0<=lambda_1<=lambda_2<=...`, and choose any unit
+eigenvector n_W for lambda_1. Put `mu=1/c` and
+
+`J_soft=J+mu n_W n_W'`.
+
+Because n_W is an eigenvector of J, the eigenvalues of J_soft are exactly
+`lambda_1+mu, lambda_2,...`. Therefore
+
+`J_soft >= m(c,r) I`,
+`m(c,r):=min(mu,lambda2_bar)=min(1/c,lambda2_bar)>0`.        (SK-1)
+
+No continuity of the chosen eigenvector is needed for this inequality. At a
+multiple least eigenvalue, any minimizing eigenvector gives the same lower
+bound; lambda2_bar>0 prevents a two-dimensional zero eigenspace.
+
+The exact Riccati identity gives
+
+`P_soft=Pi+Phi_tilde J_soft^-1 Phi_tilde'`.
+
+Hence
+
+`Pi^-1/2 P_soft Pi^-1/2
+ <= I + (1/m) Pi^-1/2 Phi_tilde Phi_tilde' Pi^-1/2`.
+
+Let
+`Hbar(r):=sup_W ||Pi_W^-1/2 Phi_tilde_W||_2^2`
+over the compact retained word class. Pi has the already proved regular
+known-root positive process floor and all literal word maps are continuous,
+so Hbar(r)<infinity. Consequently
+
+`K_soft(c,r):=1+Hbar(r)/min(1/c,lambda2_bar)`               (SK-2)
+
+is a valid source-uniform soft-kernel Riccati diameter:
+
+`P_soft(W,c)<=K_soft(c,r) Pi_W`.
+
+This is an existence-level explicit formula in two compactness constants
+`lambda2_bar` and `Hbar`; neither has yet been numerically extracted.
+
+### Soft scalar return
+
+The invariant scalar must use the same least-information direction family,
+not the old exact physical kernel. Let n_W be the root soft direction for
+word W and n_next any least-information unit direction at the next root.
+Define
+
+`d_soft(W):=n_next' Pi_W n_next`
+
+and
+
+`dbar_soft(r):=sup_W,n_next d_soft(W)<infinity`,             (SK-3)
+
+where finiteness follows from compactness and continuity of Pi; no full-state
+recurring covariance ceiling is required.
+
+From `P_end<=P_soft<=K_soft Pi`,
+
+`n_next' P_end n_next <= K_soft(c,r) dbar_soft(r)`.
+
+Therefore the soft scalar invariant closes whenever
+
+`D_soft(c,r):=K_soft(c,r)dbar_soft(r) <= c`.                (SK-4)
+
+This replaces the earlier exact-kernel O2 fixed point. It remains linked to
+the same word through Pi before taking the source-uniform sup.
+
+There is an important asymptotic consequence. Since
+`m=min(1/c,lambda2_bar)`, for `c>=1/lambda2_bar`,
+
+`K_soft=1+Hbar c`.
+
+Then `D_soft<=c` requires
+`dbar_soft(1+Hbar c)<=c`, i.e.
+`dbar_soft Hbar<1` and
+`c>=dbar_soft/(1-dbar_soft Hbar)`.
+
+Thus existence of finite lambda2_bar alone is not enough for the scalar
+invariant: the dimensionless linked product `dbar_soft Hbar` must be <1 in
+the large-c branch (or the small-c branch must close). This is now the
+controlling quantitative/existence test for O2.
+## Linked soft-kernel return/diameter action
+
+Do not use the product of separate suprema dbar_soft Hbar. For one word W
+and its next-root soft direction n_+, define
+
+`d_W=n_+' Pi_W n_+`,
+`H_W=Pi_W^-1/2 Phi_tilde_W`.
+
+The large-c scalar return obtained from the coarse spectral diameter contains
+`d_W ||H_W||^2`. Preserve the same word and define
+
+`Gamma_soft(r):=sup_W d_W ||H_W||_2^2`.                    (LK-1)
+
+This is the correct linked replacement for `dbar_soft Hbar`; always
+`Gamma_soft<=dbar_soft Hbar`, often strictly.
+
+Let `z_W=Pi_W^(1/2)n_+`, so `|z_W|^2=d_W`. Then
+
+`d_W ||Pi_W^-1/2 Phi_tilde_W||^2
+ = ||z_W||^2 ||Pi_W^-1/2 Phi_tilde_W||^2`.                 (LK-2)
+
+A direct rank-one terminal bound is sharper for the scalar return:
+
+`n_+' Phi_tilde J_soft^-1 Phi_tilde' n_+
+ = ||J_soft^-1/2 Phi_tilde' n_+||^2`.                       (LK-3)
+
+Using `J_soft>=m I` gives
+
+`<= (1/m) ||Phi_tilde' n_+||^2`.                            (LK-4)
+
+Thus the scalar invariant does not actually require the full operator H_W.
+Define the same-word terminal coupling
+
+`g_W(c):=n_+' Phi_tilde_W J_soft(W,c)^-1 Phi_tilde_W' n_+`,
+`gbar_soft(c,r):=sup_W g_W(c)<infinity`.                    (LK-5)
+
+Then exactly
+
+`n_+' P_soft n_+ = d_W + g_W(c)`.                          (LK-6)
+
+and the source-uniform scalar return can be taken as
+
+`D_soft(c,r)=sup_W [d_W+g_W(c)]`.                          (LK-7)
+
+This dominates neither factor separately and preserves the linked word.
+
+The previously stated large-c criterion based on
+`||Phi_tilde' n_+||^2<1` is RETRACTED: that Euclidean quantity is not
+coordinate/units invariant and the factor `1/m` was already an upper bound,
+not an exact scalar recurrence coefficient.
+
+The invariant condition is simply
+
+`sup_W [d_W+g_W(c)] <= c`,                                  (LK-8 corrected)
+
+with
+`g_W(c)=n_+' Phi_tilde (J+mu n_W n_W')^-1 Phi_tilde' n_+`
+and `mu=1/c`. This is dimensionally and geometrically correct.
+
+Equivalently normalize terminal directions by Pi: put
+`z_+=Pi^(1/2)n_+/sqrt(d_W)` when d_W>0. Then
+
+`g_W(c)/d_W = z_+' Pi^-1/2 Phi_tilde J_soft^-1
+               Phi_tilde' Pi^-1/2 z_+`,                    (LK-9)
+
+which is bounded by `kappa_soft-1` and is dimensionless. But requiring this
+ratio `<1` is sufficient, not necessary; the exact fixed-point inequality
+above is controlling.
+
+Thus O2 should now be attacked by the exact linked scalar function
+`F_W(c)=d_W+g_W(c)-c`. For each word, `g_W(c)` is continuous and
+nondecreasing in c (because mu=1/c decreases and inverse information grows).
+A source-uniform invariant exists if one can find c with
+`sup_W F_W(c)<=0`. Compactness makes the supremum attained and continuous
+under the soft-kernel stratum construction. The next task is to study its
+large-c slope using the exact least-information spectral component, not a
+coordinate-dependent Euclidean norm.
+## Exact large-c soft-kernel persistence coefficient
+
+Diagonalize one word's nuisance-reduced slow information as
+`J=sum_i lambda_i e_i e_i'`, choose the soft direction `n_W=e_1`, and put
+`mu=1/c`. Then exactly
+
+`(J+mu n_W n_W')^-1
+ =(lambda_1+mu)^-1 n_W n_W'
+  +sum_(i>=2) lambda_i^-1 e_i e_i'`.                        (AL-1)
+
+For next-root soft functional n_+, set
+`a_i=n_+' Phi_tilde e_i`. Therefore
+
+`g_W(c)=a_1^2/(lambda_1+1/c)
+       +sum_(i>=2) a_i^2/lambda_i`.                         (AL-2)
+
+If lambda_1>0, g_W(c) remains bounded and its large-c linear coefficient is
+zero. If lambda_1=0, the formula is exact:
+
+`g_W(c)=c |n_+' Phi_tilde n_W|^2 + beta_W`,
+`beta_W=sum_(i>=2) a_i^2/lambda_i`.                          (AL-3)
+
+Hence
+
+`alpha_W=0` when lambda_1>0,
+`alpha_W=|n_+' Phi_tilde n_W|^2` when lambda_1=0.            (AL-4)
+
+There is no asymptotic remainder on an exact-kernel word.
+
+However AL-4 must be interpreted with the same kernel-functional
+normalization used to define the scalar ceiling c. Euclidean unit
+eigenvectors mix attitude and BA coordinates with different physical units;
+under a rescaling of root coordinates the numerical comparison
+`alpha_W<1` changes. The earlier physical kernel formulation implicitly fixed
+a functional nu and bounded `nu'Pnu`; the soft spectral construction must
+likewise declare a root metric/dual functional normalization.
+
+After fixing a positive root metric M, normalize the soft functional in the
+corresponding dual metric and insert the matching M factors in AL-4. The
+source-uniform large-c slope is then the squared induced transfer of the
+current exact data-null functional into the next normalized soft functional.
+
+The existing theorem set does not prove this normalized transfer is strictly
+below one. MAGNETIC SERVICE and four-S control directions transverse to the
+exact compatibility kernel; on an exact data-null line they supply no
+measurement loss. BA decay helps its BA component, but the attitude component
+is transported nearly neutrally. Therefore lambda2_bar>0 does not imply
+`sup alpha_W<1`.
+
+Conclusion: alpha_W is now derived exactly, but O2 remains an independent
+kernel-persistence obligation. The next valid step is to restore the
+physically declared kernel functional/metric (rather than arbitrary Euclidean
+soft eigenvector normalization) and analyze its exact one-word transfer using
+BA decay plus attitude/reset chronology.
+## Physical normalization and exact compatibility-line transfer
+
+Use the physical attitude amplitude as the scalar kernel coordinate. At a
+word root with a nontrivial complete-word compatibility line choose its
+generator
+
+`nu_W=(theta_hat_W,0,...,0,-q_W)`, with `|theta_hat_W|=1`,
+
+where theta_hat_W is the root attitude-error direction about the pulled-back
+world magnetic-field axis and q_W is fixed by all accelerometer compatibility
+equations. A kernel state is `x=lambda nu_W`; lambda is therefore an angle
+amplitude in radians. The scalar covariance ceiling is the variance of this
+declared lambda functional, not the Euclidean norm of the mixed attitude/BA
+vector.
+
+On an exact zero-loss word all fresh root-source factors are zero for the
+homogeneous transfer. Four-S kills LIN/AW, magnetic service/Lemma T kills the
+gyro-bias quotient, and the surviving attitude obeys the deterministic
+attitude/reset transport
+
+`theta_N=F_W theta_0`.
+
+By definition of the next compatibility generator, if the exact line
+persists across the word then
+
+`F_W theta_hat_W = s_W theta_hat_(W+1)`                     (PT-1)
+
+for a scalar signed attitude-amplitude transfer s_W. Because both generators
+are normalized to unit attitude norm,
+
+`|s_W|=|F_W theta_hat_W|`.                                  (PT-2)
+
+The BA component propagates homogeneously as
+`b_a,N=Phi_b,W (-lambda q_W)` (including its literal frame transport).
+Exact compatibility at the next root requires
+
+`Phi_b,W q_W = s_W q_(W+1)`.                               (PT-3)
+
+Thus BA decay does not independently multiply the scalar lambda. Instead it
+constrains which exact compatibility lines can persist: q_(W+1) must absorb
+the relative BA decay compared with attitude transport.
+
+The physically normalized large-c persistence coefficient is therefore
+
+`alpha_W^phys = s_W^2`                                      (PT-4)
+
+for an exact data-null word whose compatibility line maps into the next
+compatibility line; it is zero in the large-c sense on words with no exact
+kernel.
+
+Now inspect the literal attitude transport. Prediction of the homogeneous
+attitude error with zero gyro-bias is a rotation/orthogonal transport in the
+world-frame representation. Quaternion reset uses the exact left-error
+coordinate change; along a zero-innovation/zero-loss compatibility trajectory
+the nominal correction associated with the homogeneous perturbation is zero,
+so the homogeneous physical attitude perturbation is transported without
+dissipation. In the world-frame historical coordinates used by the proof,
+its norm is preserved. Hence for an exact persistent compatibility line
+
+`|F_W theta_hat_W|=1`,
+
+and therefore
+
+`alpha_W^phys=1`.                                           (PT-5)
+
+BA OU decay does not make this scalar mode contract: equation (PT-3) changes
+the BA-to-tilt ratio q of the next compatibility generator, while the
+physically normalized tilt amplitude remains unit persistent.
+
+Consequently, if the admissible recurring class contains an exact
+compatibility line that persists from one complete word root to the next,
+then
+
+`sup_W alpha_W^phys >=1`.
+
+The soft-kernel O2 large-c strict-contraction condition cannot then be proved
+from BA decay alone. A strict `<1` requires an additional mechanism that
+attenuates the physical attitude amplitude along the exact compatibility
+line, or a theorem showing no exact compatibility line can persist across
+successive recurring words under the current assumptions.
+
+This is a conditional obstruction, not yet an existence proof of a persistent
+exact-compatible recurring execution. It clarifies the role of BA decay:
+decay rotates/reweights the compatibility line; it does not itself dissipate
+the physically normalized tilt scalar.
+## Persistence of an exact tilt/BA compatibility line across words
+
+Assume a nontrivial exact compatibility line persists through consecutive
+regular A21 words and normalize every generator by unit physical attitude
+amplitude. The previous transfer identity gives
+
+`Phi_b,W q_W = s_W q_(W+1)`, with `|s_W|=1`.
+
+Active A21 BA prediction has `0<Phi_b,W<1` over every positive-duration
+complete word. Hence
+
+`|q_(W+n)| = (prod_j Phi_b,j) |q_W|`
+
+and, using the positive minimum word duration and finite tau_b ceiling,
+
+`|q_(W+n)| <= phi_bar^n |q_W| ->0` for some phi_bar<1.       (PER-1)
+
+Therefore indefinite exact persistence forces the compatibility lines toward
+the zero-BA field-axis line.
+
+At each accelerometer epoch k in word W, exact compatibility is
+
+`R_ba,k phi_b,k q_W = J_att,k F_k theta_hat_W`              (PER-2)
+
+up to the fixed sign convention. Thus PER-1 implies that along an indefinitely
+persistent sequence the transverse nominal specific-force action on the
+transported magnetic-axis tilt tends uniformly to zero at the applied
+accelerometer rows. In the limit, the nominal accelerometer attitude rows are
+field-axis compatible (zero-BA collinearity).
+
+This does **not** contradict the existing jerk-limited collinear-cadence
+lemma. That lemma constrains physical specific force. PER-2 constrains the
+estimator nominal force appearing in J_att. The proof ledger already contains
+an admitted history refuting source-uniform pointwise AW tracking, so no
+existing theorem transfers the physical jerk/cadence floor to the nominal
+force rows.
+
+Nor does zero homogeneous loss imply zero actual accelerometer innovation:
+the compatibility vector is a linearized error direction; the nominal
+execution may have nonzero innovations and gains while that homogeneous
+direction remains data-null. Therefore the innovation identity cannot turn
+PER-2 into physical force collinearity.
+
+Consequently the current assumptions do not rule out persistence of an exact
+compatibility line across arbitrarily many words. Conversely, PER-1 does not
+construct such an execution; it gives a necessary limiting condition on any
+persistent execution.
+
+Thus the persistence question remains undecidable from the current proved
+physical-to-nominal relations. What is proved is the dichotomy:
+(a) if exact compatibility persists indefinitely, q_W decays geometrically
+and the physical tilt scalar has unit persistence, so O2 cannot obtain strict
+kernel contraction from BA decay; (b) if the current assumptions exclude the
+limiting nominal zero-BA collinearity, the exclusion must come from a new
+closed-loop nominal-force reachability theorem, not from MARINE MOTION's
+physical jerk lemma alone.
+
+This identifies the same missing bridge as the earlier AW analysis in its
+minimal asymptotic form: a relation between physical excitation and the
+nominal accelerometer Jacobian on a persistent zero-loss direction.
+## Rank-continuous complete-word information representation
+
+Do not form the nuisance Schur complement with a Moore--Penrose inverse.
+Retain one fixed-dimensional whitened factor space for each closed event
+stratum. Write the complete frozen observation/action record as
+
+`y = O_s x_s + B z`,                                       (RC-1)
+
+where z stacks the nuisance root and every whitened fresh source/noise
+factor, and B contains their literal chronological coefficients. Give z its
+Euclidean action `|z|^2` by including identity rows for source factors/root
+priors that carry finite action. The reduced slow-root quadratic form is
+
+`Q_W(x_s)=min_z ( |O_s x_s+B z|^2 + |R z|^2 )`,             (RC-2)
+
+where R contains exactly the nuisance/source action rows. Equivalently stack
+
+`C_W=[O_s, B; 0, R]`
+
+and minimize the squared norm of `C_W[x_s;z]` over z.
+
+The crucial point is that the nuisance block
+`D_W=[B;R]` has a **uniform positive singular floor on its penalized
+directions** from the proved nuisance/process/noise floors; exact deterministic
+zero-action nuisance directions are retained explicitly in the slow/root
+class rather than hidden behind a pseudoinverse. Thus the normal matrix
+`D_W'D_W` is positive definite on the chosen nuisance coordinate block after
+removing structural zero columns once per event stratum. Its inverse is
+continuous. The reduced matrix can therefore be written
+
+`J_W = A_W' [I-D_W(D_W'D_W)^-1 D_W'] A_W`,                  (RC-3)
+
+with `A_W=[O_s;0]`, using an ordinary inverse on the fixed penalized nuisance
+space. This representation is continuous through rank changes of the old
+observation-only nuisance matrix because those rank changes no longer alter
+the rank of D_W.
+
+If a structural deterministic nuisance direction has zero action, move it
+into x_s before applying RC-3. The number of such structural coordinates is
+fixed by the shipping state architecture, not by the numerical word. Hence
+no data-dependent rank stratification or pseudoinverse is needed.
+
+### Direct second-eigenvalue argument
+
+For symmetric PSD J_W,
+
+`lambda_2(J_W)=min_(dim L=2) max_(x in L,|x|=1) Q_W(x)`
+
+and equivalently by Courant--Fischer it is the least information after
+allowing one exceptional direction. RC-2 makes Q_W jointly continuous in W
+and x on the compact admissible class.
+
+Suppose, for contradiction, `inf_W lambda_2(J_W)=0`. Compactness gives a
+subsequence W_n->W_* and, by the min--max characterization, orthonormal
+vectors u_n,v_n spanning two-dimensional subspaces with
+`Q_Wn(u_n)->0` and `Q_Wn(v_n)->0` (choose eigenvectors for the two smallest
+eigenvalues). Passing to subsequences gives orthonormal u_*,v_*.
+Continuity of RC-2 yields
+
+`Q_W*(u_*)=Q_W*(v_*)=0`.
+
+Thus `Null(J_W*)` has dimension at least two. But the complete-word zero-action
+theorem, including four-S survival and closed MAGNETIC SERVICE on every
+boundary event stratum, proves
+
+`dim Null(J_W*)<=1`.
+
+Contradiction. Therefore
+
+`lambda2_bar:=inf_(W admissible) lambda_2(J_W)>0`.           (RC-4)
+
+This proof is continuous through nuisance-observation rank changes and through
+appearance/disappearance of the one-dimensional physical compatibility
+kernel. It uses only compactness, continuity of the fixed-factor action, and
+the already proved nullity<=1 classification.
+
+RC-4 is an existence result; it does not give a numerical lambda2_bar. If any
+of the claimed uniform nuisance/action floors needed to make D_W fixed-rank
+fails, RC-3 must be replaced by RC-2 directly. The contradiction proof still
+works provided minimizers z_n are uniformly bounded modulo structural
+zero-action directions; the existing nuisance covariance/action bounds are
+the required coercivity input.
+## Scalar storage on the persistent compatibility line
+
+Normalize a nontrivial compatibility generator by unit physical attitude:
+`nu_W=(theta_hat_W,-q_W)`, `|theta_hat_W|=1`, suppressing zero blocks. A
+persistent homogeneous line satisfies
+
+`theta_hat_W -> s_W theta_hat_(W+1)`, `|s_W|=1`,
+`q_W -> Phi_b,W q_W = s_W q_(W+1)`.
+
+Consider any positive quadratic scalar storage restricted to this line,
+`V_k=lambda^2 w_W`, where
+
+`w_W = a_W + q_W' B_W q_W + 2 c_W' q_W`
+
+is the value of a uniformly positive-definite attitude/BA metric on nu_W.
+Uniform equivalence to a fixed physical scalar ceiling requires
+`0<w_min<=w_W<=w_max<infinity` on the compact word class.
+
+Along exact persistent transport the scalar amplitude lambda is unchanged
+because |s_W|=1. Therefore
+
+`V_(W+1)/V_W = w_(W+1)/w_W`.                                (SI-1)
+
+A source-uniform strict contraction `V_(W+1)<=rho V_W`, rho<1, over an
+indefinitely persistent sequence would imply
+
+`w_(W+n)<=rho^n w_W ->0`,
+
+contradicting the required uniform lower equivalence `w_(W+n)>=w_min>0`.
+
+Hence **no uniformly equivalent positive scalar storage can strictly contract
+an indefinitely persistent exact compatibility mode with unit physical tilt
+amplitude**. Word-dependent BA weighting cannot solve O2 by itself; BA decay
+only changes q_W and therefore the representation of the line.
+
+This is a general obstruction, independent of choosing a quadratic metric:
+any scalar storage uniformly equivalent to lambda^2 has the same telescoping
+contradiction under unit-amplitude persistence.
+
+Therefore O2 can close only if one of the following is proved:
+(i) exact compatibility cannot persist indefinitely, so strict-loss words
+occur with a source-uniform recurrence; or
+(ii) the final practical-stability theorem treats the persistent scalar as a
+neutral bounded gauge/class rather than requiring contraction of it. The
+latter changes the theorem/state notion and is outside the current declared
+regional practical-stability target unless explicitly adopted.
+
+The controlling path under the current theorem is thus persistence exclusion.
+A sufficient statement is: there exist N_K<infinity and eta_K>0 such that
+within every N_K consecutive MOVING words, at least one word has no exact
+compatibility kernel or maps the incoming compatibility line with physical
+tilt amplitude <=1-eta_K. This recurring-loss condition would replace
+per-word scalar contraction and yield blockwise O2 contraction.
+
+The existing BA decay relation shows that if no such loss occurs, q_W->0.
+Thus it suffices to exclude an arbitrarily long sequence whose nominal
+accelerometer Jacobians approach the zero-BA field-axis compatibility at all
+applied rows. This is exactly the minimal physical-to-nominal excitation
+bridge still missing from the proof.
+## Infinite persistence and nominal zero-BA collinearity
+
+Assume, for contradiction, an infinite sequence of exact-compatible regular
+MOVING words with unit physical tilt persistence. Then q_W->0 geometrically.
+At every applied accelerometer epoch the compatibility equation therefore
+forces the transverse nominal specific-force Jacobian action toward zero.
+
+The literal mean chronology does not turn this into a contradiction. During
+prediction the homogeneous LIN/AW mean follows the OU chain and the S=0
+pseudo-update is applied when due **before** the accelerometer correction.
+The S update feeds back the estimator's own integrated state; it imposes no
+physical measurement constraint. The subsequent accelerometer innovation is
+free to correct the AW mean according to the actual measurement residual.
+
+Consequently an asymptotically field-collinear nominal AW history can, at the
+level of the mean recursion, be maintained by a sequence of accelerometer
+innovations while the S pseudo-feedback removes the resulting integrated
+estimator drift. Bounded estimator v,p,S therefore does not imply bounded
+physical velocity/displacement or a contradiction with MARINE MOTION.
+
+The exact innovation identity
+`f_meas-bhat_a-r_acc=fhat`
+also does not help: for prescribed nominal fhat the residual r_acc is the
+difference to the physical measurement. Current assumptions bound physical
+motion/bias but do not impose a source-uniform bound forcing r_acc->0 or
+forcing the estimator nominal AW to track physical acceleration pointwise.
+That premise was already refuted in the research ledger.
+
+Thus the infinite-horizon OU+S mean recursion supplies no autonomous
+obstruction to nominal zero-BA field-axis compatibility. The estimator can
+in principle absorb the physical/nominal mismatch in innovations and its
+closed-loop mean corrections; the present proof has no theorem preventing
+this indefinitely.
+
+Therefore exact compatibility **cannot currently be proved to break** under
+MARINE MOTION + IMU BIAS + MAGNETIC SERVICE alone. The desired blockwise
+constants N_K,eta_K do not follow from the established assumptions.
+
+More strongly, any proof of recurring breakage must add a premise/theorem
+linking physical excitation to the nominal accelerometer Jacobian or to the
+long-run innovation supply (for example a cumulative innovation/action bound
+that prevents persistent nominal/physical separation). No such bound is
+currently part of the admissibility assumptions or proved from shipping.
+
+This is a theorem-level obstruction, not a missing compactness argument:
+compactness can upgrade pointwise eventual breakage to uniform blockwise
+breakage only after eventual breakage itself is established. The current
+closed-loop equations do not establish it.
+## Variational kernel-augmented complete-word coercivity
+
+Fix a retained radius/scalar pair (r,c), c>0. Use the rank-continuous
+fixed-factor complete-word representation
+
+`Q_red,W(x)=min_z ||A_W x+D_W z||^2`,
+
+with every literal nuisance/root/source action retained in the fixed factor
+space. Let nu_W denote a normalized generator of the (possibly limiting)
+one-dimensional physical tilt/BA compatibility relation; when the literal
+data nullspace is trivial, retain the closed compatibility-line relation from
+the same magnetic/accelerometer equations rather than redefining nu by a
+discontinuous least-eigenvector choice.
+
+**Lemma VC.** On the compact admissible complete-word class W(r,c),
+
+`g_*(c,r):=inf_(W, |x|=1)
+ [Q_red,W(x)+(1/c)(nu_W' x)^2] >0`.                         (VC-1)
+
+**Proof by contradiction.** Suppose the infimum is zero. Choose
+`W_n,x_n`, |x_n|=1, and nuisance minimizers z_n with augmented cost ->0.
+
+1. By the finite closed event/rank stratification and the Arzela--Ascoli
+physical-trace result, the literal coefficient histories are compact. Pass to
+a subsequence `W_n->W_*` within one closed admissible boundary stratum.
+MAGNETIC SERVICE remains valid because it is a closed inequality formed from
+actually applied magnetic events; scheduled S and accelerometer rows survive
+in real arithmetic by their positive R floors.
+
+2. Nuisance/process coercivity bounds z_n modulo structural deterministic
+zero-action directions. Those structural directions have already been moved
+into the slow/root coordinate x. Hence z_n is bounded. Pass to
+`z_n->z_*`. Also the unit sphere is compact, so `x_n->x_*` with |x_*|=1.
+
+3. Continuity of the literal fixed-factor matrices gives
+`A_Wn x_n+D_Wn z_n -> A_W* x_*+D_W* z_*`. Zero limiting cost therefore
+gives literal zero complete-word observation/source action at W_*.
+
+4. The complete-word zero-action/nullspace theorem applies on every closed
+admissible boundary stratum: four scheduled S rows kill LIN/AW; closed
+MAGNETIC SERVICE plus chronological transport kills the gyro quotient; all
+accelerometer rows plus the single BA root leave at most the physical
+tilt/BA compatibility line. Therefore
+
+`x_* in span(nu_*)`.                                        (VC-2)
+
+5. The kernel-penalty part of the cost also tends to zero. The compatibility
+relation is defined by continuous literal magnetic/accelerometer equations;
+its graph is closed. Normalize its nontrivial generator by unit physical
+attitude amplitude with a fixed sign convention against the transported
+field. Along a subsequence the generators converge to a generator nu_* of
+the limiting relation. Hence
+
+`nu_*' x_*=0`.                                               (VC-3)
+
+6. From VC-2, `x_*=a nu_*`. With the declared nonzero normalization of nu_*,
+VC-3 gives a=0, so x_*=0, contradicting |x_*|=1.
+
+Therefore VC-1 holds.
+
+**Boundary qualification.** If the limiting compatibility relation is
+trivial, step 4 already gives x_*=0 and the contradiction is immediate; no
+nu_* is needed. If a boundary event pattern violated the nullity theorem,
+that would be the exact failure point. The earlier S/accelerometer SPD and
+closed MAGNETIC SERVICE arguments exclude the identified event-loss cases.
+
+Thus the variational augmented information has a source-uniform positive
+existence floor `g_*(c,r)>0`. This is nonconstructive: it does not yet supply
+a numerical value. It supersedes the older unproved DI-6 assertion only at
+the existence level and does not revive LE-5--LE-8.
+## Diameter and scalar return from the single variational floor
+
+Let `J_aug(W,c)` be the symmetric matrix representing
+`Q_red,W(x)+(1/c)(nu_W'x)^2`. Lemma VC gives
+
+`J_aug(W,c)>=g_*(c,r) I` uniformly.                          (VK-1)
+
+Use the same fixed-factor joint model for the terminal state. After optimal
+nuisance/source elimination, write the conditional root-to-terminal map as
+`Phi_tilde_W` and the known-root terminal covariance as `Pi_W`. The exact
+fictitious-kernel covariance is
+
+`P_nu,W=Pi_W+Phi_tilde_W J_aug(W,c)^-1 Phi_tilde_W'`.       (VK-2)
+
+Define the compact terminal-action constant
+
+`L_T(r):=sup_W ||Pi_W^-1/2 Phi_tilde_W||_2^2 < infinity`.   (VK-3)
+
+Finiteness follows from compactness/continuity of the literal fixed-factor
+word and the known-root process floor for Pi. No AG leverage estimate is
+used.
+
+Then VK-1--VK-3 give
+
+`P_nu,W <= [1+L_T(r)/g_*(c,r)] Pi_W`.
+
+Therefore a usable existence-level diameter is
+
+`K(c,r):=1+L_T(r)/g_*(c,r) < infinity`.                     (VK-4)
+
+Corollary K consequently gives the recurring linear bound
+`rho_0(c,r)<=1-1/K(c,r)` whenever the scalar kernel ceiling c is invariant.
+
+### Exact linked scalar return
+
+Do not multiply K by a separately maximized terminal kernel variance. For the
+next-root physical compatibility functional nu_+, define directly
+
+`D_W(c):=nu_+' P_nu,W nu_+`
+
+`=nu_+'Pi_W nu_+
+ +nu_+'Phi_tilde_W J_aug(W,c)^-1 Phi_tilde_W'nu_+`.         (VK-5)
+
+and
+
+`D(c,r):=sup_W D_W(c)`.                                     (VK-6)
+
+Compactness plus VK-1 makes D finite and attained. The scalar invariant is
+exactly
+
+`D(c,r)<=c`.                                                (VK-7)
+
+A coarse usable upper bound follows from the same variational floor:
+
+`D(c,r) <= d0(r)+L_nu(r)/g_*(c,r)`,                         (VK-8)
+
+where
+`d0(r)=sup_W nu_+'Pi_W nu_+` and
+`L_nu(r)=sup_W ||Phi_tilde_W'nu_+||^2`
+with the physical kernel-functional normalization fixed consistently.
+Both constants are finite by compactness.
+
+Existence of positive g_* alone does **not** imply VK-7 for some c. As c
+increases, the kernel penalty 1/c weakens, so g_*(c,r) can decrease and the
+second term can grow proportionally to c on an exact persistent kernel.
+The earlier physical-persistence analysis shows that this is a real possible
+obstruction, not a defect of VK-8.
+
+Thus O1 is now closed at the existence level by VK-4. O2 is exactly the
+one-dimensional fixed-point problem VK-7. The next mathematical task is to
+study `D(c,r)/c` using the physical compatibility-line transfer, not to
+improve the transverse information floor. If exact unit-persistent kernels
+are admissible, `limsup_(c->infinity)D(c,r)/c>=1`; if every admissible chain
+breaks compatibility with recurring loss, a strict fixed point may exist.
+## Small/large-c analysis of the exact scalar return
+
+For one word W write
+`d_W=nu_+'Pi_W nu_+`, `b_W=Phi_tilde_W'nu_+`, and
+`J_c=J_W+(1/c)nu_W nu_W'`. Then
+
+`D_W(c)=d_W+b_W'J_c^-1 b_W`.                               (DC-1)
+
+Use coordinates `e_1=nu_W/|nu_W|` and split
+`J=[[a,h'];[h,B]]`, `b=(beta,g)`. The rank-one prior adds
+`|nu_W|^2/c` to a. Since the augmented matrix is positive for every c>0,
+block inversion gives
+
+`D_W(c)=d_W+g'B^-1 g
+ + [beta-h'B^-1 g]^2 /
+   [a-h'B^-1 h+|nu_W|^2/c]`,                               (DC-2)
+
+with the usual shorted interpretation if B is represented variationally.
+The complete-word nullity<=1 theorem and transverse floor make B uniformly
+positive on the physical complement.
+
+Define
+`j_W:=a-h'B^-1h>=0`,
+`ell_W:=beta-h'B^-1g`,
+`dperp_W:=d_W+g'B^-1g`. Then exactly
+
+`D_W(c)=dperp_W + ell_W^2/(j_W+|nu_W|^2/c)`.               (DC-3)
+
+This exposes the entire c-dependence.
+
+**Small c.** As c->0+,
+
+`D_W(c)->dperp_W>0` in general, so
+`D_W(c)/c -> +infinity` whenever dperp_W>0.                 (DC-4)
+
+Thus very strong fictitious kernel precision cannot satisfy the scalar
+invariant because the known-root/process return remains finite and positive.
+
+**Large c, observed word.** If `j_W>0`,
+`D_W(c)->dperp_W+ell_W^2/j_W<infinity`, hence
+`D_W(c)/c->0`.                                              (DC-5)
+
+Such a word eventually satisfies its scalar inequality.
+
+**Large c, exact-kernel word.** If `j_W=0`, then
+
+`D_W(c)=dperp_W+c ell_W^2/|nu_W|^2`,
+`D_W(c)/c=ell_W^2/|nu_W|^2+dperp_W/c`.                     (DC-6)
+
+The limiting slope is
+
+`alpha_W:=ell_W^2/|nu_W|^2`.                               (DC-7)
+
+With the physically normalized compatibility functional, alpha_W is exactly
+the squared physical scalar transfer discussed in PT-4/PT-5. Therefore a
+persistent exact compatibility line has `alpha_W=1`; a strictly lossy line
+has alpha_W<1.
+
+For the source-uniform return
+`D(c,r)=sup_W D_W(c)`, compactness makes the supremum attained. Equations
+DC-3--DC-7 imply
+
+`limsup_(c->infinity) D(c,r)/c
+ = sup_(W with j_W=0) alpha_W`,                             (DC-8)
+
+provided the compact word class and coefficients are fixed at radius r;
+words with j_W>0 contribute zero slope. This follows uniformly from the
+transverse lambda_2 floor and compactness.
+
+Hence there are two cases.
+
+1. If `alpha_bar(r):=sup_(exact-kernel words) alpha_W <1`, then choose
+`epsilon=(1-alpha_bar)/2`. Compactness gives C<infinity such that for all
+`c>=C`, `D(c,r)/c<=alpha_bar+epsilon<1`. O2 closes for a finite c.
+
+2. If an admissible exact-kernel word has physical unit persistence
+`alpha_W=1`, then DC-6 gives
+`D_W(c)/c=1+dperp_W/c>1` for every finite c whenever dperp_W>0.
+Therefore `D(c,r)>c` for every finite c: the scalar invariant cannot close
+by this one-word ceiling. Its infimum ratio tends to one from above as
+`c->infinity`.
+
+Thus the exact O2 question is now completely reduced to whether the compact
+admissible word class contains an exact-kernel word with alpha_W=1. No
+intermediate finite-c crossing can rescue the invariant in that case.
+## Does an admissible one-word exact kernel attain alpha=1?
+
+For an exact-kernel word W, the homogeneous data-null trajectory has zero
+gyro-bias quotient, zero LIN/AW root after the four-S argument, and attitude
+transport
+
+`theta_N=F_W theta_0`.
+
+In the world-frame historical coordinates F_W is norm-preserving on this
+surviving attitude mode. With unit physical-attitude normalization at the
+root, `|F_W theta_hat_W|=1`.
+
+However alpha_W in the scalar return is a transfer into the **next-root
+compatibility functional** nu_+, not merely the norm of terminal attitude.
+Thus alpha_W=1 requires the terminal image of the current null line to lie
+exactly on a nontrivial next-root compatibility line with the same unit
+attitude amplitude. Equivalently, for some q_W,q_+,
+
+`F_W theta_hat_W = s theta_hat_+`, `|s|=1`,
+`Phi_b,W q_W = s q_+`,                                      (A1-1)
+
+and the next word's magnetic/accelerometer compatibility equations must hold
+for `(theta_hat_+,-q_+)`.
+
+The current word's exact-kernel equations determine q_W from its own
+accelerometer chronology. Equation A1-1 determines the candidate q_+ after
+BA decay. But admissibility of W alone imposes no equations from the **next
+word's** accelerometer chronology. Therefore a single admissible complete
+word does not by itself determine whether its terminal image is an exact
+kernel of the following word.
+
+If D_W is defined using a supremum over arbitrary admissible next-root
+functionals nu_+, then choosing nu_+ to be the normalized terminal image is
+not legitimate unless there exists an admissible successor word whose
+compatibility line equals that image. Conversely, ruling out alpha=1 requires
+a two-word reachability/compatibility theorem.
+
+Hence the question `does the one-word admissible class contain alpha_W=1?`
+is ill-posed unless W includes its admissible successor compatibility data.
+The correct compact object is an admissible **two-word pair** `(W_0,W_1)`
+with shared terminal/root history. Define alpha on pairs by the transfer from
+the exact kernel of W_0 into the exact kernel functional of W_1.
+
+On this pair class, alpha=1 is equivalent exactly to persistence of the
+compatibility line across the boundary. The previous analysis has neither
+constructed nor excluded such a reachable pair under the current assumptions.
+Therefore the present proof cannot answer yes or no from one-word data.
+
+This corrects the scalar-return formulation: D(c,r) must take its supremum
+over same-history admissible word pairs (or an execution chain), not over a
+word and an independently selected next soft/kernel direction. Compactness
+extends to the two-word class, but the alpha=1 issue is precisely the
+persistent-compatibility reachability question already identified.
+## Same-history two-word alpha compactness dichotomy
+
+Let P2(r,c) be the compact class of admissible consecutive MOVING word pairs
+`(W0,W1)` sharing the literal terminal/root physical, estimator, covariance,
+tuner and scheduler history. Restrict to pairs for which W0 has a nontrivial
+exact compatibility line; normalize its generator by unit physical attitude.
+Define alpha(W0,W1) as the squared physical-attitude amplitude of the W0
+kernel image captured by the W1 compatibility line, and set alpha=0 if W1
+has no compatible line containing that image.
+
+Literal world-frame attitude transport is norm preserving on the zero-loss
+kernel trajectory, while projection onto a unit next compatibility attitude
+line cannot increase norm. Therefore
+
+`0<=alpha(W0,W1)<=1`.                                       (TW-1)
+
+Using the closed compatibility relation rather than a discontinuous chosen
+eigenvector makes alpha upper-semicontinuous; on the nontrivial-line stratum
+it is continuous. Compactness therefore attains the supremum.
+
+Equality alpha=1 holds iff all of the following are true:
+
+1. W0 has an exact compatibility generator
+   `nu0=(theta0,-q0)`, `|theta0|=1`;
+2. its terminal attitude image is exactly the unit attitude generator of a
+   nontrivial W1 compatibility line:
+   `F0 theta0=s theta1`, `|s|=1`;
+3. shared BA state transport matches that line:
+   `Phi_b,0 q0=s q1`;
+4. `(theta1,-q1)` satisfies **all** magnetic and accelerometer zero-loss
+   equations of W1.
+
+Conditions 1--4 are precisely an exact compatibility line persisting across
+the shared word boundary. There is no additional inequality in the current
+assumptions that contradicts them. BA decay only enforces
+`|q1|<|q0|` (unless q0=0); it does not reduce the unit attitude amplitude.
+MAGNETIC SERVICE is compatible with a one-dimensional field-axis null line
+and controls the transverse/gyro sector. Four-S controls LIN/AW. MARINE
+MOTION constrains physical attitude span, not the nominal-force compatibility
+equations defining q0,q1.
+
+Therefore the existing theorem set cannot prove `sup alpha<1`: excluding the
+equality set would require the still-missing physical-to-nominal/reachability
+bridge. Conversely, compactness alone does not prove `sup alpha=1`; it only
+attains the supremum whatever its value is. An equality pair must still be
+shown to exist.
+
+Thus the sharp dichotomy is mathematically well posed but unresolved by the
+current assumptions/lemmas:
+
+`alpha_bar:=max_(P2) alpha` exists and lies in [0,1];
+`alpha_bar<1` iff no admissible exact persistent pair exists;
+`alpha_bar=1` iff an admissible exact persistent pair exists.
+
+This is an equivalence, not yet a proof of either branch. It prevents a
+compactness overclaim: attainment does not determine whether the attained
+maximum equals one.
+## Same-history two-word persistence boundary-value problem
+
+Assume conditions 1--4 of TW hold. Pull every accelerometer compatibility
+equation in W0 and W1 to the shared boundary world frame. For applied epoch k
+in word j, write
+
+`C_jk theta_j = B_jk q_j`,                                  (SH-1)
+
+where C_jk is the literal nominal-force attitude row after chronological
+transport and B_jk is the BA transport/row. Persistence gives
+`theta_1=F_0 theta_0` with unit physical amplitude and
+`q_1=Phi_b,0 q_0` up to the signed frame transport.
+
+Thus the entire two-word zero-loss system is a homogeneous finite-dimensional
+boundary-value problem for the single pair (theta_0,q_0). BA decay changes
+the right-hand amplitude between words, while the left-hand nominal-force
+rows are generated by the actual closed-loop mean history.
+
+Subtracting or comparing SH-1 across the boundary does **not** produce a
+contradiction from the current assumptions. The rows C_1k are not prescribed
+continuations of C_0k: accelerometer innovations, S feedback, attitude
+injection/reset and OU prediction change the nominal AW/attitude history.
+The same-history condition couples these rows through shipping dynamics, but
+the physical admissibility assumptions do not bound the cumulative innovation
+strongly enough to prevent the nominal rows from adapting to the decayed q1.
+
+More explicitly, at each accepted accelerometer correction the physical
+measurement supplies a 3-vector innovation. The compatibility constraint
+imposes two transverse scalar conditions on the nominal AW/attitude geometry.
+Where the transverse AW gain has rank two these conditions are locally
+solvable; where it does not, prior reachability work has neither proved nor
+excluded the required state. The remaining longitudinal innovation and
+endogenous S feedback evolve the internal chain. Therefore the two-word
+boundary equations are not overdetermined by a simple dimension count.
+
+MAGNETIC SERVICE likewise does not exclude SH-1: its two-dimensional
+information floor is transverse to the allowed field-axis line. MARINE
+MOTION controls the physical trajectory but, absent a cumulative
+physical-to-nominal innovation bound, does not constrain C_jk enough to make
+the BA decay mismatch impossible.
+
+**Theorem status.** Under the current assumptions and proved shipping
+invariants, conditions 1--4 are neither shown reachable nor excluded. The
+same-history formulation removes independent-row freedom but does not add a
+proved inequality that forces inconsistency. Therefore no rigorous theorem
+`alpha_bar<1` or `alpha_bar=1` follows.
+
+A genuine exclusion theorem would require one additional proved consequence
+of existing shipping/admissibility, for example a uniform cumulative bound
+on the transverse accelerometer innovation/action over two words that is
+strictly smaller than the amount required to retune compatibility from q0 to
+`Phi_b q0`; or a closed-loop reachability invariant forbidding that retuning.
+No such consequence is currently established.
+
+Conversely, a reachability theorem requires solving the literal two-word mean
+boundary-value system and verifying MARINE MOTION and strict MAGNETIC SERVICE;
+the local AW-rank argument alone is insufficient.
+
+This is the terminal reachability/exclusion gap for O2. Further covariance
+or compactness arguments cannot decide it because both branches are
+compatible with all presently proved inequalities.
+## Controlling O1 path: complete-word nullspace and closed-range continuity
+
+All O1 work is consolidated to the path
+`complete-word nullspace -> uniform qualitative augmented floor -> quantitative enclosure`.
+The later detectability/AW-gain/sign-crossing/soft-kernel investigations are
+diagnostic or alternative formulations and are not controlling.
+
+### Theorem A: complete-word slow nullspace
+
+For every admissible recurring complete A21 word W, including every closed
+event-boundary word allowed by actually-applied MAGNETIC SERVICE,
+
+`Ker J_s(W) subset span(nu_W)`.                              (A)
+
+Here J_s is the nuisance-eliminated slow-root information defined
+variationally, and nu_W is the physical tilt/BA compatibility generator when
+that relation is nontrivial; if the compatibility relation is trivial,
+`Ker J_s(W)={0}`.
+
+The proof is the literal zero-action classification already established:
+zero nuisance/process action rigidifies one deterministic trajectory; four
+scheduled S rows kill LIN/AW; magnetic service plus chronological transport
+eliminates gyro-bias quotient directions; all accelerometer rows plus the
+single BA root leave at most the physical tilt/BA compatibility line.
+Scheduled S and accelerometer rows survive boundary limits in real arithmetic
+because their innovation covariances have positive R floors; MAGNETIC SERVICE
+is closed and uses actually applied rows. Thus the same classification holds
+on admissible boundary words.
+
+### Closed-range convergence lemma
+
+Let
+`F_W=Sigma_W^-1/2 O_f,W`
+be the whitened nuisance observation operator in a fixed event stratum.
+The desired graph property
+
+`W_n->W, z_n in Range(F_Wn), z_n->z => z in Range(F_W)`     (CR-1)
+
+is **not true for arbitrary continuous matrices** when rank drops: for
+`F_epsilon=diag(1,epsilon)`, the ranges are R^2 for epsilon!=0 but limit to
+`span(e1)` at epsilon=0, while z_n=e2 violates CR-1.
+
+Therefore observation-range closedness cannot be assumed across nuisance-rank
+loss. This is exactly why a pseudoinverse/projector representation is unsafe.
+
+For the literal proof, avoid CR-1 by retaining nuisance/process action in the
+fixed-factor variational form
+
+`Q_red,W(x)=min_y ||A_W x+D_W y||^2`,                        (CR-2)
+
+where D_W stacks both nuisance observation columns and their process/root
+action rows. Existing nuisance/process coercivity gives a uniform lower
+singular floor for D_W after structural zero-action directions are moved into
+the slow root. Hence Range(D_W) has fixed rank and a closed graph, minimizers
+are uniformly bounded, and Q_red is continuous (in particular lower
+semicontinuous) on each closed stratum and across the admissible finite union.
+
+If a claimed nuisance coordinate lacks such an action floor, it must be moved
+into the slow/root state; otherwise the compactness proof fails precisely at
+that structural rank-loss direction. No observation-only closed-range lemma
+is used.
+
+### Uniform qualitative O1
+
+Fix `mu=1/c>0`. Suppose no uniform floor exists. Then there are admissible
+`W_n` and `|x_n|=1` with
+
+`x_n'[J_s(W_n)+mu nu_n nu_n']x_n ->0`.                      (UO-1)
+
+Compactness gives, after subsequences, `W_n->W_*`, `x_n->x_*`,
+`|x_*|=1`. The fixed-factor lower semicontinuity from CR-2 gives
+
+`x_*'J_s(W_*)x_*=0`.                                        (UO-2)
+
+By Theorem A, `x_*=alpha nu_*` (or x_*=0 immediately if the limiting
+compatibility relation is trivial). The kernel penalty in UO-1 tends to zero.
+The physical compatibility relation has a closed graph; with its fixed
+normalization, pass to a subsequence `nu_n->nu_*`, obtaining
+
+`nu_*'x_*=0`.                                                (UO-3)
+
+Thus `alpha=0`, so x_*=0, contradicting |x_*|=1. Therefore
+
+`J_s(W)+mu nu_W nu_W' >= g_mu(r,c) I`, `g_mu(r,c)>0`,       (UO-4)
+
+uniformly over all admissible complete A21 words.
+
+This is qualitative only. The next obligation is a constructive enclosure
+`g_mu>=g_under(c,r)>0`; only after that should K(c,r), the same-history scalar
+return D(c,r), rho_0, and the nonlinear retained radius be developed.
+## Constructive enclosure for the variational augmented floor
+
+Quantify Theorem A's implication chain in the same fixed-factor action. Let
+`E` denote total variational action including the kernel row. Introduce
+sector amplitudes u=(u_N,u_L,u_G,u_K), where u_N is penalized nuisance/source
+amplitude, u_L the homogeneous LIN/AW root amplitude, u_G the magnetic/gyro
+quotient amplitude, and u_K the physical tilt/BA compatibility amplitude.
+Use the literal same-history maps; these amplitudes are bookkeeping
+coordinates, not independent worst-case boxes.
+
+1. **Nuisance/process coercivity.** Existing process/noise floors give
+`E >= a_N^2 u_N^2`, with constructive `a_N>0` from the minimum whitened
+fresh-factor/root-action floor on the retained class.
+
+2. **Four-S LIN/AW implication.** Four scheduled S rows give
+`|R_S4 x| >= a_L u_L - b_L u_N`.                            (CG-1)
+The qualitative Chebyshev argument makes a_L positive; constructively one
+may use the generalized-Vandermonde determinant with the correct tau_min
+dependence plus explicit row-norm ceilings, or interval-enclose the analytic
+minimum. The previous false >6.82e4 bound is not used.
+
+3. **Magnetic/gyro implication.** MAGNETIC SERVICE + Lemma T give
+`|R_MG x| >= a_G u_G - b_G,L u_L - b_G,N u_N`,              (CG-2)
+where a_G is built from mu_M and the chronological transport modulus.
+
+4. **Accelerometer tilt/BA implication.** After the preceding sectors are
+charged, all literal accelerometer rows give
+`|R_A x| >= a_K dist(x_K,span nu_W)
+              -b_K,G u_G-b_K,L u_L-b_K,N u_N`.             (CG-3)
+The constructive coefficient a_K is the only genuinely new quantitative
+modulus: it is the minimum nonzero singular value of the complete
+same-history magnetic-compatible accelerometer/BA map on the compact
+retained class, **after allowing the physical line nu_W**. It is not the
+retired absolute principal-angle floor; the line is retained explicitly.
+
+5. **Kernel row.** With mu=1/c,
+`sqrt(E) >= sqrt(mu) |nu_W' x|`.                            (CG-4)
+Together with CG-3 this controls the full tilt/BA sector.
+
+Collect the inequalities before applying triangle/Cauchy into the lower
+triangular implication matrix
+
+`M_imp = [[a_N,0,0,0],
+          [-b_L,a_L,0,0],
+          [-b_GN,-b_GL,a_G,0],
+          [-b_KN,-b_KL,-b_KG,a_K]]`,
+
+and append the kernel functional row `sqrt(mu) k_W'` on the final physical
+sector. Let `H_imp(c,r,W)` be the resulting small Gram matrix. Then
+
+`E >= u' H_imp u`,
+`g_under(c,r):= inf_W lambda_min(H_imp(c,r,W))`.             (CG-5)
+
+If the coefficients have source-uniform bounds with positive diagonal
+`a_N,a_L,a_G,a_K`, compactness gives an explicit computable
+`g_under>0`. This is a constructive enclosure of g_mu and uses no
+observation pseudoinverse or unprojected gyro leverage.
+
+**Current quantitative status.** a_N and the magnetic-service part of a_G
+come from existing explicit floors. a_L is analytically extractable from the
+correct four-S determinant/norm bounds (with tau_min, not tau_max). The
+remaining coefficient a_K has not yet been numerically/analytically
+lower-bounded in the current proof. Qualitative Theorem A proves it cannot
+vanish in the full augmented implication chain, but a separate positive
+minimum for CG-3 alone may fail near rotation of the physical compatibility
+line. Therefore CG-5 must, if necessary, keep the combined accelerometer +
+kernel rows as one block rather than require a_K>0 separately.
+
+The safe constructive target is thus the minimum singular value of that
+**combined literal block** on the compact class. It is an analytic
+finite-dimensional continuous minimization with the physical line retained;
+extracting a certified lower enclosure for it is the remaining numerical-
+constant task before K(c,r) can be evaluated.
+## Combined accelerometer/kernel block floor
+
+After charging nuisance, LIN/AW and magnetic/gyro sectors, let A_W denote the
+literal reduced accelerometer map on the remaining tilt/BA slow coordinates.
+Theorem A gives
+
+`Ker A_W subset span(nu_W)`
+
+on this reduced sector; when the physical compatibility line is nontrivial,
+equality is the worst case. Define
+
+`B_W(c)=[A_W; c^-1/2 nu_W']`.
+
+Then
+`B_W'B_W=A_W'A_W+c^-1 nu_W nu_W'`.                          (AK-1)
+
+For every word this matrix is positive definite: if B_W x=0, then
+`A_Wx=0`, so x=a nu_W, while `nu_W'x=0` forces a=0.
+
+To obtain a quantitative formula, normalize `e=nu_W/|nu_W|` and decompose
+`x=t e+y`, y perpendicular e. Write the reduced accelerometer Gram as
+
+`A_W'A_W=[[a,h'];[h,C]]`
+
+in `(e,e_perp)` coordinates. Since its nullspace is contained in span(e),
+`C>0`. The augmented Gram is
+
+`G_AK=[[a+|nu|^2/c,h'];[h,C]]`.                             (AK-2)
+
+Its Schur complement is
+
+`s_AK = a+|nu|^2/c-h'C^-1h
+     = j_A(W)+|nu|^2/c`,                                   (AK-3)
+
+where `j_A>=0` is the accelerometer information shorted to the physical line.
+
+Let
+`gamma_perp(W)=lambda_min(C_W)>0` and
+`H_A(W)=||C_W^-1/2 h_W||`. A direct completion of squares gives, for
+`x=(t,y)`,
+
+`x'G_AK x
+ = (y+C^-1 h t)' C (y+C^-1 h t) + s_AK t^2`.               (AK-4)
+
+Using `|y+C^-1ht|^2 + t^2` versus `|y|^2+t^2` yields the explicit bound
+
+`lambda_min(G_AK)
+ >= min(gamma_perp,s_AK) / (1+||C^-1 h||)^2`.               (AK-5)
+
+(a sharper 2x2 norm-equivalence factor may be substituted). Therefore
+
+`sigma_min(B_W(c))
+ >= sqrt(min(gamma_perp(W), j_A(W)+|nu_W|^2/c))
+    /(1+||C_W^-1 h_W||).                                    (AK-6)
+
+Now use compactness. The physical generator normalization gives
+`|nu_W|>=nu_min>0`; the reduced transverse accelerometer block C_W is
+continuous and has no zero direction by Theorem A after the previously
+charged sectors, so
+`gamma_bar_perp=inf_W gamma_perp(W)>0`; and continuity gives
+`Hbar_A=sup_W||C_W^-1 h_W||<infinity`. Hence
+
+`a_AK_under(c,r)
+ := sqrt(min(gamma_bar_perp,nu_min^2/c))/(1+Hbar_A) >0`.     (AK-7)
+
+This is a constructive symbolic enclosure:
+`a_AK_under <= inf_W sigma_min B_W(c)`.
+
+Important qualification: the assertion `gamma_bar_perp>0` is valid only if
+the reduced A_W used here is the **complete same-history accelerometer block
+after** nuisance/LIN/gyro implications have been incorporated, so that any
+additional zero direction would contradict Theorem A. It must not be
+identified with an isolated two-epoch or pointwise accelerometer matrix; that
+would resurrect the refuted principal-angle route.
+
+Thus the combined block has a certified positive enclosure in terms of three
+compactness constants `(gamma_bar_perp,nu_min,Hbar_A)`. Numerical/closed-form
+values for those constants are still to be extracted from the literal
+coefficient bounds before H_imp and K can be evaluated numerically.
+## Explicit implication-matrix floor and Riccati diameter
+
+Use the sector implication operator
+
+`M=[[aN,0,0,0],
+    [-bLN,aL,0,0],
+    [-bGN,-bGL,aG,0],
+    [-bKN,-bKL,-bKG,aAK,]]`,                               (IG-1)
+
+where `aAK=a_AK_under(c,r)` from AK-7. All coefficients are nonnegative
+source-uniform enclosures on the retained class; the b's bound the linked
+same-history leakage terms from already charged sectors.
+
+The total fixed-factor action satisfies
+`E >= |M u|^2` after the sector amplitudes are normalized consistently.
+Therefore
+
+`g_under(c,r)=sigma_min(M)^2`                               (IG-2)
+
+is a valid constructive augmented-information floor.
+
+To make positivity explicit without a diagonally-dominant assumption, bound
+the inverse triangular matrix. Let
+
+`d1=1/aN`,
+`d2=(1+bLN*d1)/aL`,
+`d3=(1+bGN*d1+bGL*d2)/aG`,
+`d4=(1+bKN*d1+bKL*d2+bKG*d3)/aAK`.                         (IG-3)
+
+These recursively bound the row-sum norm of the solution of `M u=y`:
+`|u_i|<=d_i ||y||_infinity`. Hence
+
+`||M^-1||_2 <= 2 sqrt(d1^2+d2^2+d3^2+d4^2)`                (IG-4)
+
+(the factor 2 converts the four-dimensional infinity norm of y to its
+Euclidean norm; a sharper norm conversion may be used). Consequently
+
+`sigma_min(M) >=
+ 1/[2 sqrt(d1^2+d2^2+d3^2+d4^2)]`,                         (IG-5)
+
+and the explicit symbolic floor is
+
+`g_under(c,r):=
+ 1/[4(d1^2+d2^2+d3^2+d4^2)] >0`.                           (IG-6)
+
+Because
+`aAK(c,r)=sqrt(min(gamma_bar_perp,nu_min^2/c))/(1+Hbar_A)`,
+all c-dependence is explicit in d4. No Gershgorin subtraction or
+cross-coupling smallness assumption is needed.
+
+The variational theorem gives `J_aug>=g_under I`. With
+`L_T(r)=sup_W ||Pi_W^-1/2 Phi_tilde_W||^2`, the exact terminal covariance
+identity yields
+
+`P_nu,W <= K(c,r) Pi_W`,
+
+`K(c,r):=1+L_T(r)/g_under(c,r)`.                            (IG-7)
+
+Hence
+
+`rho_0(c,r)<=1-1/K(c,r)<1`
+
+whenever the same-history scalar kernel ceiling is invariant.
+
+All constants in IG-3 are now named proof obligations rather than hidden
+matrix minima. Existing results supply aN and the magnetic-service component
+of aG; aL requires the corrected four-S quantitative enclosure; aAK is AK-7;
+the b coefficients are literal operator-norm bounds of the linked leakage
+maps and must be extracted from the retained coefficient bounds. Until those
+numbers/closed forms are supplied, IG-6 is an explicit symbolic theorem, not
+a numerical certificate.
+
+The controlling next step is D(c,r)<=c on admissible same-history word pairs.
+No additional O1 architecture is needed.
+## Constant ledger for the fixed O1 architecture
+
+The implication architecture is fixed. The constants split into three classes.
+
+**Already explicit from shipping/proved floors.**
+`a_N` is the minimum penalized nuisance/process whitening floor after
+structural zero-action coordinates are moved to the slow root. `a_G` has an
+explicit magnetic-service factor from `mu_M` multiplied by the proved
+chronological-transport/Lemma-T modulus. `nu_min>=1` under unit physical
+attitude normalization of `nu=(theta_hat,-q)`.
+
+**Analytically extractable from bounded literal matrices.**
+`a_L` comes from the four-S generalized Vandermonde with the correct
+`tau_min` dependence and explicit row-norm ceiling. The six b coefficients
+are operator norms of the literal same-history leakage blocks and admit
+finite enclosures from the retained dt/state/tuner/reset/process bounds.
+`Hbar_A` and `L_T` are likewise finite operator-norm enclosures once the
+known-root process floor for Pi is inserted.
+
+**Still only compactness-positive unless further quantified.**
+`gamma_bar_perp` is the transverse minimum eigenvalue of the complete reduced
+accelerometer block. Theorem A + compactness proves it positive in this
+representation, but no closed numerical lower enclosure is currently
+derived. Therefore the current `g_under` and K are constructive symbolic
+forms but not yet evaluable numerical certificates.
+
+Do not introduce another O1 route to quantify gamma_bar_perp; if a numerical
+certificate is required, interval/analytic enclosure of this fixed literal
+block is the permitted constant-extraction task.
+
+## Same-history scalar return fixed point
+
+Now consider an admissible shared-history pair `(W0,W1)`. Let `nu0` be W0's
+physical compatibility functional and `nu1` W1's. For W0 define
+
+`d_01=nu1' Pi_0 nu1`,
+`b_01=Phi_tilde_0' nu1`,
+`J0(c)=J_s(W0)+(1/c)nu0 nu0'`.
+
+Then exactly
+
+`D_01(c)=d_01+b_01' J0(c)^-1 b_01`,                         (DP-1)
+`D(c,r)=sup_(same-history pairs) D_01(c)`.                  (DP-2)
+
+Split J_s(W0) along the normalized physical line e0=nu0/|nu0|. Shorting the
+transverse block gives
+
+`D_01(c)=dperp_01 + ell_01^2/(j_0+|nu0|^2/c)`,              (DP-3)
+
+with `j_0>=0`. Hence D_01 is continuous, nondecreasing and concave in c.
+
+If `j_0>0`, D_01(c) is bounded as c->infinity and eventually lies below c.
+If `j_0=0`,
+
+`D_01(c)=dperp_01+c alpha_01`,
+`alpha_01=ell_01^2/|nu0|^2`.                               (DP-4)
+
+On the same-history pair class alpha_01 is exactly the physical scalar
+transfer into W1's compatibility functional. Therefore:
+
+- if `alpha_bar:=sup_(exact-kernel same-history pairs) alpha_01 <1`,
+  compactness and the uniform transverse floor give a finite C such that
+  `D(c,r)<c` for all sufficiently large c;
+- if an admissible same-history pair has `alpha_01=1` and `dperp_01>0`,
+  then `D(c,r)>c` for every finite c.
+
+Thus the existence of a finite scalar fixed point is equivalent to excluding
+a unit-persistent exact-kernel pair (or otherwise proving its dperp term
+vanishes, which the known-root process covariance generally prevents).
+
+The current reachability work has neither constructed nor excluded such a
+pair. Therefore **no finite c is presently certified**, and it would be
+premature to extract numerical values for all O1 constants as though O2 were
+known to close.
+
+The next controlling obligation remains the same-history equality case
+`alpha_01=1`: prove it unreachable under the literal closed-loop mean
+dynamics, or construct it. Only the first outcome permits a finite D<=c
+certificate in this one-word scalar-ceiling architecture.
+## Two-word finite-horizon detectability at the unit-persistence equality case
+
+Focus only on a same-history pair `(W0,W1)` with W0 exact kernel and suppose
+`alpha_01=1`. Let x0=lambda nu0 be the W0 zero-action mode with unit physical
+tilt normalization. Its deterministic terminal image is x1=lambda nu1 if
+equality holds. W0 contributes zero complete-word action by definition.
+
+Define the literal **joint two-word action**
+
+`Q_2(x0)=min_(all shared nuisance/source factors)
+ [action on W0 + action on W1]`,                            (FD-1)
+
+with the W0 terminal state constrained to be the W1 root; do not re-minimize
+that shared state independently. A source-uniform finite-horizon detectability
+inequality sufficient for O2 is
+
+`|lambda|^2 <= C_FD Q_2(x0)`                               (FD-2)
+
+for every unit-persistence candidate pair. If FD-2 holds, Q_2 cannot vanish
+on a nonzero equality mode, so alpha_01=1 is impossible for an exact
+two-word null trajectory; compactness then gives a strict loss margin.
+
+Now classify zero joint action. Zero W0 action gives x0 in span(nu0). Zero
+fresh/process action across the shared boundary propagates the BA component
+homogeneously by Phi_b,0 and the attitude component by the norm-preserving
+world-frame transport. Zero W1 measurement action then requires exactly
+
+`Phi_b,0 q0 = s q1`, `|s|=1`,                              (FD-3)
+
+together with every W1 accelerometer compatibility equation. Thus **zero
+joint action is equivalent to the same-history persistent compatibility
+conditions 1--4** already identified.
+
+Therefore finite-horizon detectability FD-2 is not a consequence of BA decay
+alone: BA decay is already incorporated in FD-3 and can be absorbed by the
+changed next compatibility ratio q1. To prove FD-2 one must show that the
+literal W1 nominal-force rows cannot all satisfy the retuned compatibility
+equations while sharing the actual W0 terminal/mean history.
+
+The closed-loop mean equations currently supply no such inequality. The
+accelerometer innovations that generate the nominal AW/attitude history are
+not part of the homogeneous error action Q_2 as penalized disturbances;
+they belong to the base trajectory. MARINE MOTION bounds the physical base
+trajectory but no proved cumulative innovation bound transfers that physical
+excitation to the nominal W1 Jacobian rows. Consequently a persistent
+compatibility pair is not excluded by the current joint-action algebra.
+
+**Exact conclusion.** A source-uniform FD inequality of form FD-2 is
+equivalent, on the equality class, to excluding conditions 1--4. The current
+assumptions/lemmas do not prove it. Recasting the problem as joint action
+does not create the missing physical-to-nominal bridge.
+
+A noncircular detectability theorem would need to enlarge the action with a
+quantity already bounded by admissibility and sensitive to the base
+accelerometer innovation/nominal-force retuning, then prove that maintaining
+FD-3 for two words consumes a positive amount of that quantity. No such
+base-trajectory supply term is currently present in the stability action.
+
+Thus the equality case remains the sole O2 blocker: neither unreachable nor
+constructed. Further homogeneous covariance/information estimates cannot
+settle it.
+## Base innovation supply versus persistent compatibility
+
+Use the exact accepted-accelerometer identity
+`r_acc,k=f_meas,k-bhat_a,k-fhat_k`.                         (BI-1)
+Let P_bperp denote projection transverse to the transported physical magnetic
+axis. Along a zero-BA limiting compatibility sequence,
+`P_bperp fhat_k ->0` at every applied accelerometer epoch. Therefore
+
+`P_bperp r_acc,k
+ =P_bperp(f_meas,k-bhat_a,k)+o(1)`.                         (BI-2)
+
+The physical jerk/cadence lemma says dense applied epochs cannot all have
+physical specific force parallel to b on a MOVING interval. With the bounded
+physical accelerometer bias, this supplies nonzero transverse **innovation**
+at some epochs unless the physical transverse force is canceled by bhat_a.
+However bhat_a is an estimator mean, not the bounded physical bias; its
+shipping projection only bounds its magnitude.
+
+At an accepted correction the nominal AW/attitude means change by
+`Delta a_w=K_aw r_acc`, `Delta theta=K_theta r_acc`.        (BI-3)
+To force a break of compatibility from BI-2 one needs a lower gain/action
+inequality such as
+
+`|P_bperp[K_aw;K_theta] r| >= kappa_I |P_bperp r|`          (BI-4)
+
+on the relevant innovation directions, or a multi-epoch analogue after S
+feedback. The prior AW-gain reachability analysis proved no such uniform
+lower singular value for reachable A21 covariances; cross-covariances can
+algebraically cancel the AW gain block, and reachability of cancellation is
+open.
+
+More importantly, even BI-4 would not by itself force incompatibility:
+persistent compatibility can use the correction to **retune** the nominal
+force to the next decayed BA ratio. The required retuning is O(1-Phi_b) per
+word and therefore finite. There is no admissibility bound on cumulative
+base innovation energy `sum r_acc' S^-1 r_acc`; NIS is a gate/diagnostic, not
+a stated finite long-run budget. Thus persistent retuning need not exhaust a
+proved resource.
+
+Consequently the existing base innovation/physical-motion relationship does
+not exclude a persistent pair. The physical jerk lemma guarantees excitation
+of the measurement, but shipping corrections are designed to absorb such
+innovation, and the proof assumptions place no cumulative budget on that
+absorption.
+
+### Constructive-pair status
+
+Conversely, BI-1--BI-3 make a persistent pair locally plausible where the
+transverse correction gain has rank two: the physical measurement innovation
+provides exactly the controls needed to enforce the two transverse
+compatibility equations, while BA decay merely changes the target ratio.
+But a rigorous pair construction still requires solving the endogenous
+longitudinal/S/BA endpoint equations and proving the resulting sampled
+physical measurements admit a MARINE MOTION continuation with strict
+MAGNETIC SERVICE. Those obligations remain unsolved.
+
+Therefore neither branch closes under the current theorem set. What is now
+proved is that no existing physical-motion bound creates a finite innovation
+supply budget capable of excluding persistent compatibility. Any exclusion
+theorem needs a new consequence of shipping/admissibility beyond BI-1--BI-3;
+otherwise the productive direction is an explicit boundary-value construction
+of the persistent pair.
+## Explicit two-word compatibility boundary-value construction
+
+Fix one regular two-word scheduler/event pattern with strict magnetic-service
+margin and no projection/gate boundary. Let the accepted accelerometer
+innovations `u_k=r_acc,k in R3` be the base-trajectory controls. The literal
+mean recursion over the pair is a smooth finite-dimensional map
+
+`m_(k+1)=F_k(m_k,u_k)`,                                     (BV-1)
+
+where prediction includes endogenous S pseudo-feedback when due; S residuals
+are not independent controls.
+
+At each accelerometer epoch impose the two transverse compatibility equations
+
+`C_k(m_k,u_<k) theta_k - B_k(m_k,u_<k) q_k =0`.             (BV-2)
+
+Whenever the transverse derivative with respect to two components of u_k has
+rank two, the implicit-function theorem solves
+`u_k,perp=psi_k(m_k,u_k,parallel)` exactly. Substitution leaves one scalar
+control `ell_k=u_k,parallel` per accelerometer epoch and a reduced compatible
+recursion
+
+`m_(k+1)=Fhat_k(m_k,ell_k)`.                                (BV-3)
+
+Across the shared boundary enforce unit-persistent transport
+`theta_1=F_0 theta_0`, `|theta_1|=|theta_0|=1`, and
+`q_1=Phi_b,0 q_0` in the literal frame. The second word's BV-2 equations are
+then imposed by the same elimination.
+
+After transverse elimination there is **no independent BA endpoint closure
+condition**: BA mean evolution is part of m and q is the homogeneous error
+compatibility ratio, not the estimator BA mean. Likewise S need not return
+to its initial value; the two-word pair is not required to be periodic.
+Requiring S_N=S_0 or BA_mean,N=BA_mean,0 would add artificial constraints.
+
+Therefore the finite pair construction needs only:
+(i) existence of a regular initial A21 state with rank-two transverse control
+at each needed epoch (or continuation through isolated rank changes);
+(ii) compatibility equations BV-2 through both words; and
+(iii) physical realization/service admissibility of the resulting controls.
+There is no separate longitudinal/S/BA algebraic endpoint equation forced by
+conditions 1--4.
+
+This corrects the earlier boundary-value count: the remaining longitudinal
+controls are free parameters, not variables that must close an estimator
+periodic orbit. Locally, if a strict-margin compatible base execution with
+rank-two transverse gain exists, the IFT propagates an exact-compatible
+two-word family without an endpoint overdetermination.
+
+However the construction still lacks that **base execution**. Constructor
+diagonal covariance has the required AW gain rank but is not a certified
+recurring A21 root; reachable regular A21 rank-two gain was not proved.
+Thus the boundary-value equations themselves reveal no longitudinal/S/BA
+inconsistency. The only remaining construction obstruction is reachable-base
+existence plus physical/service realization.
+
+Consequently no exclusion theorem arises from endpoint closure. If a reachable
+strict-margin rank-two A21 base can be exhibited, conditions 1--4 are locally
+solvable across two words and alpha_bar=1 follows after physical/service
+verification. Without such a base, reachability remains the unresolved step.
+## Physical realization of a compatible innovation sequence
+
+Assume a regular strict-margin A21 base execution and the IFT-compatible
+innovation sequence u_k from BV-3. The accepted accelerometer identity defines
+the required sampled calibrated physical specific force exactly:
+
+`f_phys,k = fhat_k + bhat_a,k + u_k`                         (PR-1)
+
+(with the literal temperature/calibration convention). Choose the physical
+sensor bias trace within IMU BIAS and set the physical translational
+acceleration samples from PR-1 and the known attitude/gravity transform.
+
+On a finite two-word interval, any sufficiently small perturbation of a
+strictly admissible base acceleration sample sequence can be interpolated by
+a C1 piecewise-cubic/Hermite acceleration trace matching the samples. Its
+jerk norm is bounded by a constant times the maximum sample perturbation
+divided by the minimum sample gap. Therefore, if the base execution has
+strict margins to the acceleration and jerk limits, the IFT controls can be
+restricted to a neighborhood in which the interpolated physical trace
+preserves those bounds.
+
+Integrating the acceleration perturbation over the fixed two-word horizon
+changes velocity and displacement continuously. Strict base margins to their
+bounds therefore persist for sufficiently small controls. The bounded-
+potential inequalities on the finite interval are also continuous in the C0
+position norm. Outside the two-word interval splice back to the original
+globally admissible base continuation with a compact smooth transition;
+strict margins and the free longitudinal controls permit zero net velocity/
+position perturbation to be imposed if needed for the splice. This gives a
+global MARINE MOTION continuation provided the base history has strict
+margins.
+
+Keep the physical attitude/gyro/magnetic-field history equal to the base
+history when realizing the translational perturbation. The accelerometer
+measurement changes, but the physical magnetic samples do not. Estimator
+attitude means/resets can nevertheless change because accelerometer
+innovations inject attitude. The transported magnetic service rows therefore
+vary continuously with the IFT controls rather than remaining exactly fixed.
+
+If the base execution satisfies MAGNETIC SERVICE with strict margin
+`lambda_min(G_M)>=mu_M+delta_M`, delta_M>0`, continuity of the finite
+transported-row Gram gives an epsilon_M>0 such that all sufficiently small
+compatible controls retain
+`lambda_min(G_M)>=mu_M`. Thus strict magnetic service is an open property on
+a fixed accepted-event branch.
+
+Likewise NIS/finite-input/projection branch conditions with strict margins
+are preserved for sufficiently small controls. Therefore **physical
+realization and MAGNETIC SERVICE are locally open obligations**, not a new
+algebraic obstruction.
+
+The remaining nonlocal issue is the base point: one still needs an actual
+reachable recurring A21 execution that simultaneously (i) has strict physical
+and service margins, (ii) lies on an exact compatibility line, and (iii) has
+rank-two transverse compatibility control. If such a base exists, the IFT
+construction plus PR-1 yields a genuine admissible persistent two-word pair
+and hence alpha_bar=1. The current proof has not established existence of
+that base.
+## Fixed-metric exact compatibility-mode return
+
+Fix once and for all a positive-definite physical root metric M on the
+attitude/BA slow sector, with declared units/scales. Normalize every nontrivial
+compatibility generator by
+
+`nu_W' M nu_W = 1`.                                        (MR-1)
+
+Transport the exact W kernel homogeneously to the next recurring root:
+
+`nu_hat_(W->+) = T_W nu_W`,                                 (MR-2)
+
+where T_W is the literal deterministic attitude/reset + BA OU root transport
+on the zero-loss mode. For a same-history successor W+ with normalized
+compatibility generator nu_+, define the metric projection coefficient
+
+`a_W = nu_+' M nu_hat_(W->+)`                               (MR-3)
+
+(the denominator is one by MR-1; retain it explicitly for other
+normalizations). This coefficient is invariant under coordinate rescaling
+when M is transformed accordingly.
+
+The O2 equality question is now the theorem statement
+
+`alpha_M := sup_(admissible exact-kernel same-history pairs) |a_W| < 1 ?`
+
+or, if one-word strict loss fails, whether there exist finite m and delta>0
+with every admissible m-word exact-kernel chain satisfying
+`|prod a_j|<=1-delta`.
+
+BA decay enters T_W exactly. It does not by itself imply |a_W|<1 because the
+next compatibility line may change its BA/attitude ratio. Equality |a_W|=1
+means the transported old line is M-collinear with the next compatibility
+line with no metric amplitude loss. This is the precise persistent-line
+condition to characterize/reachability-test.
+
+Until MR-3 is bounded strictly below one (or a finite product is), no theorem
+statement should use Euclidean `|n_+'Phi n|<1`, and no finite scalar O2
+invariant is claimed.
+## m-word equality-chain theorem for the metric-normalized compatibility mode
+
+Fix the positive physical root metric M and normalize every nontrivial
+compatibility generator by `nu_j' M nu_j=1`. For an admissible same-history
+chain of complete MOVING words W_0,...,W_(m-1), let T_j be the literal
+zero-loss deterministic root transport and define
+
+`a_j = nu_(j+1)' M T_j nu_j`.                               (EC-1)
+
+By M-Cauchy--Schwarz, after normalizing the transported physical attitude
+amplitude consistently, `|a_j|<=1`; equality holds exactly when the
+transported old compatibility line is M-collinear with the next line with no
+metric amplitude loss.
+
+Assume equality at every boundary of a chain. Then there are signs s_j,
+`|s_j|=1`, such that
+
+`T_j nu_j = s_j nu_(j+1)`.                                 (EC-2)
+
+Writing `nu_j=(theta_j,-q_j)` in the physical attitude/BA coordinates gives
+
+`F_j theta_j=s_j theta_(j+1)`,
+`Phi_b,j R_ba,j q_j=s_j q_(j+1)`.                           (EC-3)
+
+Therefore
+
+`|q_m| <= (prod_(j=0)^(m-1) Phi_b,j) C_R |q_0|`.           (EC-4)
+
+With positive minimum word duration and bounded BA time constant there is a
+source-uniform `phi_bar<1` (frame transports are norm preserving in the
+physical BA norm), so
+
+`|q_m| <= phi_bar^m |q_0|`.                                (EC-5)
+
+Thus every infinite equality chain satisfies `q_j->0` exponentially. The
+closed compatibility equations then imply that every subsequential limiting
+word has the zero-BA field-axis compatibility line.
+
+**Compactness consequence.** Let C_infty be the compact inverse-limit class
+of admissible infinite recurring MOVING executions (use diagonal
+Arzela--Ascoli/event compactness). If no execution in C_infty can satisfy
+`|a_j|=1` for all j, then there exist finite m and delta>0 such that every
+admissible m-word chain obeys
+
+`|prod_(j=0)^(m-1) a_j| <= 1-delta`.                        (EC-6)
+
+Proof: otherwise for every n choose an n-word chain with product ->1.
+Since every factor is <=1, each fixed-prefix factor tends to equality.
+Diagonal compactness produces an infinite admissible limiting execution with
+`|a_j|=1` at every boundary, contradiction. Continuity/upper-semicontinuity
+then upgrades the finite m maximum to a strict `1-delta`.
+
+Conversely, if an infinite equality execution exists, no finite m,delta can
+satisfy EC-6.
+
+Hence EC-6 is **equivalent** to excluding an infinite exact persistent
+compatibility execution. Equations EC-3--EC-5 characterize every such
+execution asymptotically: it must approach the zero-BA field-axis
+compatibility manifold while retaining unit M-normalized scalar amplitude.
+
+The current assumptions do not yet exclude that limiting execution. The
+literal base innovation analysis shows physical excitation can appear as
+accelerometer innovation and can in principle retune the nominal force; no
+proved cumulative innovation budget prevents this indefinitely. Therefore
+the m-word theorem is proved conditionally:
+
+`no infinite equality chain  <=>  exists finite m,delta with EC-6`,
+
+but the left-hand exclusion is still OPEN. No claim of blockwise O2
+contraction is made until that exclusion or an explicit infinite equality
+construction is supplied.
+## Infinite equality execution: limiting closed-loop analysis
+
+Assume an admissible infinite recurring MOVING execution with `|a_j|=1` at
+every word boundary. EC-5 gives `q_j->0` exponentially. Hence at every
+applied accelerometer epoch in late words the homogeneous compatibility
+equation tends to
+
+`J_att,k theta_k =0`,                                       (IE-1)
+
+where theta_k is the transported physical magnetic-axis tilt. In the usual
+accelerometer row this means the estimator nominal specific force tends to
+the magnetic-axis-compatible direction.
+
+Use the exact base identity
+`r_acc,k=f_meas,k-bhat_a,k-fhat_k`.                         (IE-2)
+All terms are bounded on the retained region: physical acceleration/bias are
+bounded by admissibility and estimator means are bounded by the retained
+tube/projections. Therefore the innovation sequence required to maintain
+IE-1 is itself uniformly bounded. There is no contradiction from innovation
+blow-up.
+
+The literal mean update is a bounded-input finite-dimensional recursion:
+prediction has stable AW OU factor, BA OU factor when enabled, bounded
+attitude transport, and the S pseudo-update supplies feedback to the
+integrated chain; accepted accelerometer/magnetic gains are finite on the
+retained covariance class. A uniformly bounded innovation sequence therefore
+does not force the estimator mean to leave the retained set by any currently
+proved inequality. In particular there is no cumulative innovation-energy
+budget in MARINE MOTION/IMU BIAS/MAGNETIC SERVICE.
+
+Thus the q->0 limiting equations are dynamically **compatible with bounded
+base inputs at the level of all proved bounds**. This rules out an exclusion
+proof based only on boundedness, OU decay, S feedback, or physical jerk.
+
+However it still does not construct an infinite shipping execution: the
+bounded innovations must be generated by one globally admissible physical
+trajectory while the estimator recursion remains exactly on the compatibility
+manifold and MAGNETIC SERVICE remains strict for all time. The local IFT
+construction proves finite-horizon continuation near a suitable strict-margin
+base, but no global continuation theorem prevents loss of transverse gain
+rank or service margin over infinitely many words.
+
+Therefore the infinite-equality problem reduces to **global continuation of
+the local compatibility manifold**. A decisive theorem must prove one of:
+
+(A) continuation: the compatible manifold contains a forward-complete
+strict-margin A21 trajectory; then an infinite equality execution exists and
+O2 block contraction is false;
+
+(B) escape: every compatible forward trajectory reaches in finite time a
+boundary where compatibility, transverse control rank, retained-state
+bounds, or MAGNETIC SERVICE fails; compactness then yields finite m,delta and
+O2 block contraction.
+
+No current invariant proves A or B. The existing equations show only that
+there is no elementary boundedness contradiction as q->0. Hence the infinite
+execution question remains open, but its precise mathematical form is now a
+forward-completeness/escape problem for the closed-loop compatibility
+manifold, not an observability or covariance problem.
+## Viability criterion for the exact compatibility manifold
+
+Let h(m,q)=0 denote the two transverse literal accelerometer compatibility
+constraints at an applied correction, with m the base estimator/physical
+state and q the BA/tilt ratio. Between corrections q contracts by the known
+BA factor and m follows the shipping prediction/S/magnetic maps. At an
+accelerometer correction the control is the physical/base innovation u.
+
+The discrete viability condition is
+
+`h(F_k(m,u), Phi_b q)=0`.                                   (VIAB-1)
+
+Linearizing in the two transverse control components gives the tangency
+matrix
+`G_perp = d_u_perp h(F_k(m,u),Phi_b q)`.                    (VIAB-2)
+If `sigma_min(G_perp)>=g_c>0` and the required control remains inside strict
+physical/gate margins, the implicit-function theorem gives a unique local
+compatible continuation. Thus loss of compatibility can occur only by
+reaching one of four boundaries: `det G_perp=0`, physical/retained-state
+boundary, event/gate boundary, or magnetic-service boundary.
+
+In the q->0 limit the compatibility target h=0 becomes nominal field-axis
+collinearity. The required correction per step remains bounded (indeed the BA
+target change vanishes with q); no term in VIAB-1 diverges. Therefore there
+is no intrinsic vector-field singularity forcing escape as q->0.
+
+Conversely, forward completeness would follow from a compact positively
+invariant subset of the compatibility manifold on which all four margins are
+strictly positive. The current proof has no lower bound on `sigma_min(G_perp)`
+for reachable A21 states and no invariant lower margin for MAGNETIC SERVICE
+or gates along the constrained continuation. Hence such a subset is not
+proved to exist.
+
+An escape theorem would require a scalar function V_c on the compatibility
+manifold whose increment has a strict sign until a boundary is hit. BA norm
+`|q|` cannot serve: it decreases toward the interior zero-BA manifold rather
+than a forbidden boundary. The retained estimator energies and S-chain
+storage are actively stabilized and likewise have no proved monotone drift
+toward a boundary. Physical bounded-potential motion is not a state function
+of the nominal compatibility manifold.
+
+Therefore neither forward completeness nor finite escape follows from the
+current assumptions. More strongly, the local equations show q=0 is a
+regular candidate limiting manifold rather than a forbidden boundary, so an
+escape proof cannot be based on BA decay alone.
+
+**Resolution status.** The global continuation/escape problem is undecidable
+from the currently proved invariants: the necessary viability rank/margin
+conditions are not controlled source-uniformly, and no monotone escape
+functional exists in the theorem set. Proving either branch requires a new
+shipping invariant (uniform compatibility-control rank/service margin) or an
+explicit forward-complete construction. This is the exact O2 theorem gap.
+## Full OU/S/accelerometer adaptation zero dynamics
+
+Use the literal shipping order: OU/LIN prediction, pending AW covariance
+inflation, scheduled S=0 pseudo-update inside prediction, then accelerometer
+update; AW covariance sync/inflation is mean-neutral. Let m collect the
+transverse nominal mean blocks `(a_w,v,p,S,b_a,theta,...)` immediately after
+an accelerometer correction.
+
+For one prediction interval write the exact mean prediction as
+`m^- = F_k m^+`, with the shipping OU/LIN/BA/attitude coefficients. If an S
+update is due,
+
+`m^S = (I-K_S,k H_S) m^-`,                                  (ZD-1)
+
+because `r_S=-H_S m^-`. This is endogenous feedback, not an external input.
+At the following accelerometer correction,
+
+`m^(+)next = R_k[ m^S + K_a,k r_a,k ]`,                     (ZD-2)
+
+where R_k denotes the literal quaternion/error reset map on the mean
+coordinates (identity on unaffected Euclidean blocks). Covariance sync does
+not enter ZD-1--ZD-2 at mean level, though it changes future gains.
+
+Define the transverse compatibility output at that accelerometer epoch
+`e_c,k=P_b,k fhat_k=P_b,k C_f,k m^S` in the q->0 limit. Exact persistent
+compatibility imposes
+
+`e_c,k=0`.                                                   (ZD-3)
+
+The physical measurement identity gives
+`r_a,k=f_phys,k-fhat_k-bhat_a,k`.                           (ZD-4)
+Substituting ZD-4 into ZD-2 and then the next prediction/S update yields the
+closed forced zero-dynamics map
+
+`m_(k+1)^S = A_cl,k m_k^S + B_phys,k f_phys,k`,             (ZD-5)
+
+with
+`A_cl,k=(I-K_S H_S) F_k R_k [I-K_a(C_f+C_ba)]`
+(with the literal ordering/frame blocks), and
+`B_phys,k=(I-K_S H_S) F_k R_k K_a`.                        (ZD-6)
+
+The constraint `P_b C_f m_k^S=0` is imposed at every applied accelerometer
+epoch. Thus S feedback is fully inside A_cl: its memory cannot be chosen
+independently.
+
+### Does S feedback exclude an infinite zero trajectory?
+
+No source-uniform exclusion follows from the current coefficients. ZD-5 is a
+bounded linear/time-varying forced recursion on the retained tube. The
+physical force is an admissible bounded forcing, and S feedback is stabilizing
+rather than an accumulating conserved quantity. Setting e_c=0 imposes two
+linear constraints per epoch on the forced recursion, while f_phys has three
+components plus the independently evolving admissible attitude history.
+
+To prove impossibility one would need a left-annihilator of the constrained
+input map: a nonzero row L_k such that `L_k B_phys,k=0` but the zero-output
+condition forces `L_k A_cl,k m` to a nonzero value under recurring MARINE
+MOTION. Equivalently, the constrained Rosenbrock matrix of the literal
+adaptation cycle would need a source-uniform rank condition excluding an
+invariant zero.
+
+The current proof has no such rank theorem. In fact the previously proved
+local rank-two transverse AW correction at diagonal covariance indicates the
+opposite locally: where the relevant gain block has rank two, the physical
+accelerometer forcing has enough transverse authority to enforce ZD-3 while
+the S feedback is simply part of the state transition. Endogenous S memory
+changes the required forcing but does not by itself overdetermine it.
+
+Therefore incorporating the S pseudo-measurement correctly does **not yet**
+exclude persistent nominal field-axis compatibility. It sharpens the missing
+lemma to an invariant-zero/rank statement for `(A_cl,B_phys,C_c)` over the
+actual gain/covariance history. A proof that this constrained system has no
+bounded invariant zero under recurring MARINE MOTION would close O2; a
+forward-complete bounded zero-dynamics solution would refute block
+contraction.
+## Literal lifted invariant-zero formulation (terminology corrected)
+
+`applyIntegralZeroPseudoMeas()` is an ordinary Kalman pseudo-measurement
+update with measurement `S=0` and innovation `r_S=-S`. There is no separate
+controller or extra adaptation loop. References below to "S feedback" mean
+only the state-dependent effect of this standard measurement update through
+the Kalman cross-covariance gain; use "S pseudo-update" in theorem text.
+
+Let k_j be successive scheduled S pseudo-update epochs. Lift the literal
+shipping recursion from immediately after S update j to immediately after S
+update j+1. Between them compose, in actual chronological order, every OU/LIN
+prediction, accelerometer update, magnetic update, quaternion reset, BA
+projection and covariance-sync operation. Covariance sync changes future
+gains but has no direct mean increment.
+
+For a fixed actual base history H_j over this interval, the first-order mean
+map has the affine form
+
+`m_(j+1)=A_j(H_j)m_j + B_j(H_j) u_j + d_j(H_j)`,             (LZ-1)
+
+where u_j stacks the physical accelerometer/magnetic measurement forcing over
+the interval. The gains in A_j,B_j are the literal gains generated by the
+same covariance history; they are not independent design variables.
+
+Stack every applied accelerometer compatibility output in the interval:
+
+`y_j=C_j(H_j)m_j + D_j(H_j)u_j + e_j(H_j)`.                 (LZ-2)
+
+In the q->0 equality limit, persistent compatibility requires `y_j=0` for
+all j. A bounded invariant-zero execution is therefore a same-history
+sequence satisfying LZ-1--LZ-2, all shipping gates/projections, MARINE MOTION
+and MAGNETIC SERVICE, with bounded m_j.
+
+Eliminate u_j only if the literal constrained input block D_j has the
+required rank. The finite-interval Rosenbrock matrix is
+
+`R_j(z)=[[zI-A_j,-B_j],[C_j,D_j]]`,                         (LZ-3)
+
+but because coefficients are time varying, absence of a zero of one frozen
+R_j is neither necessary nor sufficient. The needed theorem is a lifted
+uniform left-invertibility/zero-dynamics statement over admissible sequences.
+
+Existing results do not prove it. In particular, the S pseudo-update adds
+rows/couplings to A_j through `K_S(-S)`, but its residual is endogenous and
+does not reduce the dimension of physical forcing by itself. Where D_j has
+full transverse row rank, y_j=0 can be solved locally for transverse physical
+forcing; the remaining question is whether the resulting constrained lifted
+map admits a bounded forward-complete same-history sequence.
+
+Thus the exact invariant-zero blocker survives correct treatment of the S
+pseudo-update. What has improved is the formulation: it is now the lifted
+time-varying shipping map LZ-1--LZ-2, with gains/covariance chronology
+included exactly. No claim that a separate S feedback controller exists is
+made.
+## Long-horizon invariant-zero test against bounded physical motion
+
+Consider a bounded forward-complete zero-output execution of LZ-1--LZ-2 in
+the q->0 regime. At applied accelerometer epochs the nominal specific force
+is field-axis compatible. The physical forcing is
+`f_phys=fhat+bhat_a+r_acc`.                                 (IZ-1)
+
+Sum the physical translational dynamics over N lifted intervals. MARINE
+MOTION's bounded velocity implies the time average of physical acceleration
+tends to zero along long horizons; bounded displacement/potential further
+excludes a persistent nonzero DC component of velocity/position. Therefore
+an invariant-zero construction would be impossible if compatibility required
+a source-uniform nonzero DC transverse component of physical acceleration.
+
+But the literal zero-output constraint does not require such a DC component.
+The field axis and attitude may rotate under admitted MOVING motion, and the
+required transverse accelerometer innovation can be oscillatory with zero
+mean. The S pseudo-update acts on the estimator integral state and can also
+produce bounded periodic corrections. Thus all long-horizon sums can cancel
+without violating bounded velocity/displacement/potential.
+
+Indeed the zero-output equations are affine pointwise constraints on the
+physical measurement forcing, not a sign-definite work/energy identity.
+Neither the Kalman gains nor the S pseudo-update make the required physical
+forcing have a fixed sign or nonzero mean. Consequently summation/telescoping
+of LZ-1 does not yield a contradiction with MARINE MOTION.
+
+### Theorem consequence
+
+Under the current assumptions, a bounded forward-complete invariant zero
+cannot be **excluded** by any existing long-horizon physical boundedness
+condition. The remaining forcing can be zero-mean and periodic/quasiperiodic.
+However existence is still not proved because one must solve the coupled
+time-varying gain/covariance/mean recursion on the zero-output manifold.
+
+A constructive existence theorem would require a periodic (or compact
+recurrent) fixed point of the lifted constrained Poincare map. The natural
+candidate is a periodic MARINE MOTION attitude/force history with strict
+magnetic service and zero-mean translational acceleration, together with a
+periodic covariance/tuner orbit. No analytical fixed-point theorem for that
+shipping map is currently established.
+
+Therefore the invariant-zero question remains undecided, but one branch is
+now narrowed further: **finite escape cannot be proved from bounded physical
+velocity/displacement/potential or the S pseudo-update alone**, because the
+required zero-output forcing need not contain a forbidden DC component.
+## Reduced zero dynamics after eliminating transverse physical forcing
+
+On a fixed lifted interval write the compatibility output as
+`0=y=Cm+D_perp u_perp+D_parallel u_parallel+e`.              (RZ-1)
+Whenever the literal transverse input block D_perp is invertible, eliminate
+
+`u_perp=-D_perp^-1(Cm+D_parallel u_parallel+e)`.             (RZ-2)
+
+Substitution into the lifted mean map gives the exact constrained dynamics
+
+`m_+=A_z m+B_z u_parallel+d_z`,                             (RZ-3)
+
+`A_z=A-B_perp D_perp^-1 C`,
+`B_z=B_parallel-B_perp D_perp^-1 D_parallel`.               (RZ-4)
+
+All S pseudo-update effects are already inside A,B,C,D through the literal
+chronology and gains. Thus persistence reduces locally to boundedness and
+admissibility of this one-input time-varying zero dynamics.
+
+Project RZ-3 onto the LIN chain `(v,p,S)` and AW state. The open-loop
+prediction has the polynomial-integrator chain driven by exponentially
+stable AW; each scheduled S pseudo-update is a Kalman measurement correction
+with innovation `-S`. Consequently the lifted S-to-S map has no conserved
+integrator mode forced by the zero-output constraint: its homogeneous
+coefficients are finite, while the remaining longitudinal input can alter the
+chain through the accelerometer gain/cross covariance.
+
+Critically, the compatibility output removes only the two transverse force
+components. It imposes no condition on the longitudinal physical-force
+component. That remaining scalar input is sufficient to cancel a scalar
+secular S/velocity condition if one appears; there is no second independent
+longitudinal closure equation in the persistent-pair problem.
+
+Therefore the literal S pseudo-update does not produce an algebraic
+overdetermination of the reduced zero dynamics. A finite-escape theorem would
+require showing that RZ-3 has an unstable/unbounded mode that is both
+uncontrollable from B_z and unavoidable under MARINE MOTION. No such mode is
+present in the current zero-action classification: four-S injectivity removes
+homogeneous LIN/AW zero-action roots, while the base forced recursion may
+remain bounded.
+
+This means the invariant-zero analysis does not currently yield an exclusion
+theorem. Locally, where D_perp stays nonsingular and margins are strict, the
+zero manifold is viable and the remaining longitudinal input can maintain
+bounded integral states. Global existence still depends on preventing loss of
+D_perp rank/margins, but there is no intrinsic S-chain escape mechanism.
+## Global controlled-invariance test for the reduced zero dynamics
+
+After transverse elimination the local compatibility dynamics are
+`m_+=A_z(m,H)m+B_z(m,H)u_parallel+d_z(m,H)`, with the actual covariance/
+gain/history variables H carried in the augmented state. Let K be a compact
+strict-margin subset on which D_perp is nonsingular and all shipping branches
+are fixed.
+
+A forward-complete invariant zero exists if K contains a nonempty controlled
+viability kernel: for every state in that kernel there is an admissible
+longitudinal input with the next augmented state again in the kernel. Finite
+escape follows if every candidate compact K has a boundary point whose
+outward normal n satisfies `n'B_z=0` and `n'(A_zm+d_z-m)>0` uniformly (or the
+corresponding discrete tangent-cone condition).
+
+The literal shipping structure supplies neither condition source-uniformly.
+`B_z` is one-dimensional and cannot control arbitrary normals of the full
+augmented mean/covariance/tuner state, so a generic controlled-invariance
+theorem is unavailable. Conversely, covariance/tuner evolution is autonomous
+given the event/mean history and is bounded by existing guards; no proved
+boundary normal has an unavoidable outward drift. S, AW and BA mean dynamics
+are dissipative/bounded rather than sign-definitely escaping.
+
+Most importantly, D_perp depends on covariance cross blocks and the next
+accelerometer Jacobian. Previous analysis proved neither a positive reachable
+lower bound on sigma_min(D_perp) nor inevitable approach to zero. MAGNETIC
+SERVICE likewise has a closed lower floor for admissible words but no theorem
+that its strict margin monotonically decreases along constrained zero
+dynamics.
+
+Therefore the global question cannot be decided by controlled-invariance
+geometry from the current invariants: there is no certified compact viable
+set and no certified escape boundary. The exact undecided quantities are now
+`sigma_min(D_perp)` and the strict gate/service margins along the constrained
+trajectory.
+
+This is a genuine assumption/theorem gap, not a missing algebraic manipulation.
+To prove O2 under current assumptions one must derive an additional invariant
+from shipping showing finite-time loss of one of those quantities. To refute
+O2 one must construct a forward-complete constrained trajectory with their
+positive infima. Neither follows from the presently proved bounds.
+## Compatibility at the exact MAGNETIC SERVICE boundary
+
+MAGNETIC SERVICE is the closed condition
+`lambda_min(G_M)>=mu_M`, with `mu_M>0`, formed from actually applied
+transported magnetic rows on the service sector. At the boundary
+`lambda_min(G_M)=mu_M`, the service Gram remains strictly positive definite
+on that sector. No magnetic information direction is lost merely because the
+surplus above mu_M vanishes.
+
+The surviving physical compatibility line is not a null direction of this
+service Gram in the same coordinate space. Magnetic rows first restrict the
+attitude/gyro root to the transported field-axis compatibility class; the
+one-dimensional tilt/BA line survives only after combining that magnetic
+restriction with accelerometer/BA compatibility. Thus service equality does
+not force the physical compatibility generator to disappear.
+
+All literal magnetic Joseph updates and chronological transports are
+continuous at `lambda_min(G_M)=mu_M`; their innovation covariances retain the
+positive Rmag floor. Therefore a same-history compatible sequence can converge
+to a service-boundary word while retaining well-defined magnetic corrections
+and the one-dimensional compatibility relation.
+
+Consequently there is no analytical escape mechanism at the exact service
+boundary. Compatibility can persist **at the level of the theorem
+constraints** when service equals mu_M; the assumption intentionally admits
+that boundary. A global continuation proof does not need a strict service
+surplus if it can remain on/inside the closed service set.
+
+This removes magnetic-service surplus as an intrinsic O2 blocker. What remains
+is whether the constrained shipping dynamics can keep the actual service
+inequality >=mu_M while maintaining compatibility; equality itself is not a
+singularity. No current invariant forces crossing below mu_M.
+
+Hence the only local viability quantity capable of destroying compatibility
+before violating an explicit physical assumption is the transverse
+compatibility-control rank `sigma_min(D_perp)`. The O2 global problem reduces
+to whether D_perp can remain nonsingular along an admissible constrained
+trajectory (with service allowed to sit on its closed boundary).
+## Can the shipping recursion maintain transverse compatibility authority?
+
+Let D_perp,k be the derivative of the next compatibility output with respect
+to the two transverse components of the physical accelerometer measurement at
+an accepted correction. Because the measurement enters the mean only through
+`K_a r_a`, D_perp factors as
+
+`D_perp,k = C_(c,k+1) T_(k+1<-k) K_a,k E_perp,k`,           (DA-1)
+
+including the literal reset/prediction/S-pseudo-update transport T and the
+next compatibility-output derivative C_c. Since
+`K_a=P C_a' S_a^-1`, loss of authority can arise from the projected gain
+numerator or from its terminal/output transport.
+
+Prediction injects fresh AW process covariance
+`Q_aa=(1-phi_a^2) Sigma_aw_stat >0` into the AW marginal without an equal
+fresh AW-attitude/BA cancellation term. Thus immediately after every positive
+prediction interval the accelerometer gain numerator contains a favorable
+fresh term `Q_aa R_wb'`. However its magnitude is O(h/tau), while inherited
+cross-covariances remain O(1). No Loewner/sign invariant prevents exact
+cancellation of the **projected** numerator after adding the inherited terms.
+
+Repeated accepted accelerometer updates do not force rank loss: for a fixed
+accelerometer Jacobian their own covariance update right-multiplies `P C_a'`
+by an invertible 3x3 factor, preserving its row-block rank. Prediction adds
+fresh AW variance, and reset is invertible. Therefore there is likewise no
+structural mechanism that necessarily drives D_perp toward singularity.
+
+S and magnetic pseudo/measurement updates can change the relevant
+cross-covariances, and the next C_c/J_att geometry changes with the nominal
+mean. Their covariance maps are continuous bounded Joseph maps with positive
+measurement-noise floors. They have no monotone determinant law for
+D_perp. Consequently the shipping recursion has neither a proved repelling
+barrier from `det D_perp=0` nor an attracting mechanism toward it.
+
+### Structural conclusion
+
+The actual covariance recursion is compatible with maintaining D_perp
+nonsingular indefinitely: none of its operations forces rank loss, and
+prediction recurrently injects favorable AW variance. But this is not an
+existence theorem for a particular forward-complete compatible execution,
+because inherited cross-covariances and changing output geometry could still
+drive a chosen trajectory to cancellation.
+
+Conversely, a theorem that every compatible trajectory must reach
+`det D_perp=0` is impossible from the presently known operation-wise
+identities: accelerometer self-updates preserve rank and prediction can move
+away from cancellation. Such a theorem would require a new global invariant
+coupling S/magnetic cross-covariance evolution to compatibility; none is
+present in shipping/proof assumptions.
+
+Therefore rank loss of D_perp cannot serve as a currently proved mandatory
+escape mechanism. At the structural level indefinite nonsingularity is
+allowed, but actual existence remains a global reachability question.
+## Near-constant world field closes the q->0 geometry to a DC AW requirement
+
+MAGNETIC SERVICE now includes a physical world-frame geomagnetic reference
+`b_M^W`, field variation `||b^W-b_M^W||<=eps_B`, and a uniform gravity/field
+non-collinearity margin `g_Bperp>0`.
+
+In the q->0 exact compatibility limit, the accelerometer attitude row
+`J_att=-[f_cog^B]x` annihilates the transported magnetic-axis tilt. Therefore
+`f_cog^B` is parallel to the body magnetic direction. Rotating both vectors
+to world coordinates preserves collinearity. Since
+
+`f_cog^B=R_wb (a_w^W-g^W)`,
+
+the exact constant-field case implies
+
+`P_(b_M^W)^perp (a_w^W-g^W)=0`, hence
+`P_(b_M^W)^perp a_w^W=P_(b_M^W)^perp g^W`.                 (GF-1)
+
+With near-constant field and bounded lever/reference defects,
+
+`||P_(b_M)^perp a_w^W-P_(b_M)^perp g^W|| <= C_B eps_B+C_L`, (GF-2)
+
+where C_L contains only the explicitly bounded lever/linearization terms.
+Thus if `C_B eps_B+C_L<g_Bperp`, persistent q->0 compatibility requires a
+nonzero world-fixed transverse component of nominal AW bounded below by
+
+`a_DC := g_min cos(80 deg)-C_B eps_B-C_L >0`.                  (GF-3)
+
+Numerically `cos(80 deg)=0.1736481777`, so before the explicit field-variation/lever deductions the compatibility mode requires at least `0.1736481777 g_min` of world-fixed nominal AW transverse to the geomagnetic direction. For gravity near 9.81 m/s^2 this is about 1.70 m/s^2; this is a gravity-scale requirement, not a noise-floor trajectory.
+
+This is qualitatively different from an arbitrary oscillatory retuning: the
+required component has a fixed world direction inherited from gravity and the
+near-constant Earth field.
+
+### Interaction with the LIN/S chain
+
+Between measurement corrections AW is OU-decayed, but accelerometer and S
+pseudo-updates can change its mean. If GF-1/GF-3 holds at every dense applied
+accelerometer epoch indefinitely, the nominal AW samples contain a persistent
+world-fixed DC component. The deterministic LIN chain integrates AW into v,p,S.
+
+To turn this into an exclusion theorem one must account for measurement
+corrections to v,p,S as well as AW: the S pseudo-update and accelerometer
+cross-gains can remove integrated drift. Therefore the bare identity
+`v_dot=a_w` between updates is insufficient to claim unbounded v/p/S.
+
+The new field premise nevertheless removes the previous zero-mean forcing
+escape: any persistent compatibility construction must now use the Kalman
+measurement corrections themselves to cancel the fixed DC LIN injection.
+The remaining exact lemma is finite-dimensional and filter-specific:
+
+`persistent GF-3 + bounded (v,p,S)`
+` => measurement-correction action has a nonzero DC component of at least
+   c_DC(a_DC)>0` on every sufficiently long window.          (GF-4 target)
+
+If the literal correction maps cannot supply that DC cancellation while
+remaining on the compatibility manifold, infinite equality is excluded. If
+they can, that supplies the explicit persistent-zero construction mechanism.
+
+Thus near-constant geomagnetism materially sharpens O2 but does not by itself
+complete it; the remaining blocker is now the DC balance of the **literal
+measurement-corrected LIN/S mean recursion**, not arbitrary physical-to-
+nominal tracking.
+## DC balance of the literal measurement-corrected AW/LIN chain
+
+Let `e_B` be any fixed unit world direction in the gravity component
+transverse to the near-constant geomagnetic field. Persistent q->0
+compatibility gives, up to the explicit eps_B/lever defect,
+`e_B' a_w,k >= a_DC>0` at every dense accelerometer epoch.
+
+Between corrections the OU mean prediction is
+`a_w^- = phi_a a_w^+`. Therefore each positive prediction interval removes
+`(1-phi_a)e_B'a_w^+` from this fixed component. Summing the exact AW mean
+recursion over N steps gives
+
+`a_w,N-a_w,0
+ = -sum_k (1-phi_a,k)a_w,k^+
+   +sum_(S updates l) K_awS,l (-S_l^-)
+   +sum_(acc updates k) K_awa,k r_a,k
+   +other literal mean-reset terms`.                        (DCB-1)
+
+Quaternion reset does not directly change the world AW state; covariance sync
+is mean-neutral. For bounded a_w and persistent `e_B'a_w>=a_DC`, division by
+elapsed time yields the necessary average balance
+
+`liminf (1/T) e_B' [sum_S -K_awS S + sum_a K_awa r_a]
+` >= lambda_a a_DC - defects >0`,                           (DCB-2)
+
+where `lambda_a` is the source-uniform OU decay rate implied by the tau/dt
+bounds.
+
+Thus an infinite equality execution requires a nonzero DC **Kalman correction
+supply** into AW. This is now rigorous at the mean-recursion level.
+
+Can that supply occur while physical acceleration has zero long-time mean?
+Yes in principle: `r_a=f_phys-fhat-bhat_a`. Under compatibility, fhat contains
+the gravity-canceling nominal AW component, so even zero-mean physical
+acceleration produces a residual with a nonzero DC component relative to the
+misaligned nominal prediction. The accelerometer update can therefore supply
+the positive average in DCB-2. The S pseudo-update may add or subtract from
+the same balance. No current assumption bounds the long-time mean of
+`K_awa r_a` to zero.
+
+Consequently the new geomagnetic floor proves that persistence requires
+continuous nonzero correction work, but it does **not** make that work
+unavailable: the physical accelerometer residual generated by the erroneous
+DC nominal AW supplies exactly such a correction channel.
+
+To obtain a contradiction one would need a gain identity showing that the
+same DC residual necessarily drives the nominal AW **away** from, rather than
+back toward, the compatibility value after accounting for S updates. The
+Kalman sign is the opposite: for the direct AW measurement block
+`J_aw=R_wb`, the correction tends to reduce the physical-vs-nominal force
+residual. Thus the DC balance is compatible with a steady biased nominal AW
+only if cross-coupled S/attitude/BA corrections continually recreate the
+bias. Whether that closed balance has a fixed point is the remaining exact
+question.
+## Sign of the fixed-direction DC adaptation loop
+
+Project the mean dynamics onto the fixed world direction e_B from GF-3. Let
+`a=e_B'a_w`. Ignore only terms already carried as explicit bounded defects.
+
+**OU prediction.** `a^- = phi_a a^+`, with `0<phi_a<1`: strict attenuation.
+
+**S pseudo-update.** Its AW increment is
+`Delta a_S = - e_B' K_awS S`.                               (LG-1)
+The sign of this term is not fixed by PSD covariance. `K_awS=P_aw,S
+(P_SS+R_S)^-1`; the cross covariance P_aw,S may have either sign along e_B.
+Thus the S pseudo-update is not intrinsically negative or positive feedback
+on a DC AW component.
+
+**Accelerometer update.** In measurement coordinates the direct AW-only
+conditional factor is
+`I-K_aw R_wb`, with `K_aw=P_aw,C S_a^-1`. If all cross covariances with
+attitude/BA/gyro were absent, `P_aw,C=P_aw,aw R_wb'` and the scalar gain
+`k_a=e_B' K_aw R_wb e_B` lies in (0,1), so a physical zero-mean acceleration
+would contract a nominal DC AW bias by factor `1-k_a`.
+
+With the literal filter, however,
+`P_aw,C=P_aw,theta J_att' + P_aw,aw R_wb' + P_aw,ba + ...`. (LG-2)
+The cross terms can change both magnitude and sign of the projected scalar
+`k_a=e_B'K_aw R_wb e_B`. PSD of P and S_a>0 do not imply `0<k_a<1` for this
+sub-block. The full Kalman covariance contracts measurement uncertainty, not
+each individual state component monotonically.
+
+Therefore the one-cycle homogeneous DC coefficient has schematic exact form
+
+`L_DC = (accelerometer/reset transport)
+`       * (I-K_S H_S) * phi_a`,                             (LG-3)
+
+projected from e_B-AW back to e_B-AW, plus cross-state return paths through
+`v,p,S,theta,ba`. Those return paths are part of the same matrix product and
+can have either sign.
+
+### Result
+
+No sign theorem `0<=L_DC<1` follows from Kalman/Joseph structure alone.
+Likewise equality `L_DC=1` is not structurally guaranteed. The complete DC
+loop gain is history/cross-covariance dependent.
+
+The exact condition for a nonzero DC compatibility fixed point is
+`(I-L_DC) a_DC = d_DC`,                                    (LG-4)
+where d_DC is the projected constant forcing generated by gravity/reference
+and physical measurement terms after imposing compatibility. If d_DC=0,
+a nonzero homogeneous fixed point requires eigenvalue one; with nonzero
+forcing a bounded biased fixed point may exist even when |L_DC|<1.
+
+This corrects the proposed dichotomy: proving total loop gain <1 does **not**
+by itself exclude a nonzero required a_DC; a stable affine loop can support a
+nonzero fixed point. Exclusion requires showing the unique affine fixed point
+is inconsistent with GF-3/physical measurements, or that the required forcing
+cannot be supplied.
+
+Thus the next exact calculation is the affine fixed-point equation of the
+complete lifted DC subsystem, not merely the sign of its homogeneous gain.
+## Affine DC fixed-point equation for the lifted adaptation state
+
+Project onto the fixed world direction e_B and collect every mean coordinate
+that can return into AW under one lifted scheduler pattern:
+`x_D=(a_w,v,p,S,b_a,theta,...)_eB`. For a fixed repeated same-history
+coefficient pattern H and admissible constant/periodic physical forcing, the
+literal lifted map is affine
+
+`x_D^+ = A_D(H) x_D + d_D(H,u_phys)`.                       (AF-1)
+
+`A_D` is the exact product of prediction, scheduled S pseudo-update,
+accelerometer/magnetic Kalman updates and resets; covariance sync affects A_D
+through the gains but has no additive mean term.
+
+A periodic DC fixed point satisfies
+
+`(I-A_D)x_* = d_D`.                                         (AF-2)
+
+If I-A_D is invertible,
+`x_*=(I-A_D)^-1 d_D`; otherwise solvability requires the Fredholm condition
+`l'd_D=0` for every left unit eigenvector `l'A_D=l'`, with neutral components
+then fixed by compatibility/boundedness.
+
+The geomagnetic q->0 compatibility condition adds
+
+`C_B x_* = g_Bperp + delta_B`,                              (AF-3)
+
+where C_B selects the world AW component and
+`|delta_B|<=C_Bfield eps_B+C_L`; in the exact constant/no-lever case
+`C_B x_*=g_Bperp`.
+
+Combining AF-2--AF-3 gives the exact algebraic solvability condition
+
+`C_B (I-A_D)^-1 d_D = g_Bperp+delta_B`                      (AF-4)
+
+when invertible, together with all remaining compatibility rows. This is the
+affine invariant-zero fixed-point equation.
+
+Now expose d_D. The physical accelerometer enters only through innovations
+`r=f_phys-fhat-bhat_a`; after substitution, d_D contains the physical
+specific-force/gravity/reference terms multiplied by the literal Kalman gains.
+Therefore d_D is not zero even for zero-mean translational acceleration:
+gravity and the imposed nominal compatibility offset appear in the affine
+forcing.
+
+Consequently no source-independent contradiction follows from AF-4. Depending
+on the actual gains/cross covariances, the affine map can in principle have a
+fixed point with the required `C_B x_*=g_Bperp`. Conversely, no theorem says
+it must.
+
+For nonperiodic admissible marine motion the corresponding exact statement is
+the bounded particular-solution equation
+`x_k=Phi_A(k,0)x_0+sum_i Phi_A(k,i+1)d_i`,                  (AF-5)
+with `C_B x_k` constrained by GF-2 at every accelerometer epoch. Periodic
+AF-4 is therefore a sufficient construction mechanism, not a necessary form
+of every persistent zero.
+
+Thus the affine calculation identifies the decisive quantity:
+`C_B(I-A_D)^-1 d_D` for a candidate recurrent shipping pattern. Proving it
+uniformly separated from the geomagnetic target would exclude periodic
+persistent zeros; exhibiting equality with strict margins would construct
+one. Current symbolic shipping bounds do not determine its value or sign.
+## Marine-motion window decomposition for the geomagnetic O2 argument
+
+The constant/repeated-forcing affine fixed point is only a possible
+counterexample construction device, not the controlling exclusion proof.
+MOVING retains its full time-varying physical history.
+
+On every excitation window W=[t,t+T_E], project onto the fixed world direction
+e_B supplied by the near-constant geomagnetic premise and decompose nominal
+and physical acceleration into a window mean plus a zero-mean fluctuation.
+Exact q->0 compatibility gives a positive lower bound a_DC on the nominal AW
+window mean in this direction, while the fluctuation retains the actual marine
+time variation.
+
+Physical acceleration is not set to zero or constant. Its integral is the
+physical velocity increment, and concatenated windows retain all MARINE
+MOTION velocity/displacement/potential, acceleration/jerk, and recurring
+attitude-span conditions.
+
+Summing the literal measurement-corrected AW recursion over W gives two
+coupled requirements: (1) the correction sequence must replace the positive
+mean OU loss associated with a_DC; (2) the same corrections must accommodate
+the zero-mean time-varying marine forcing while the LIN/S states remain
+bounded. Any exclusion theorem must hold uniformly over these admissible
+fluctuation histories. Absence of a constant affine fixed point would not
+suffice.
+
+### Exact varying-history compatibility identity
+
+At every applied accelerometer epoch k in the q->0 limit,
+
+`P_Bperp [a_w,k^W-g^W]=delta_B,k`,                         (MM-1)
+
+with `||delta_B,k||` bounded by the explicit near-field/lever defects.
+Thus the transverse nominal AW is pinned near the fixed world vector
+`P_Bperp g`; it is not free to follow the varying physical acceleration.
+
+Using the exact innovation identity and rotating to world coordinates,
+
+`P_Bperp R_bw r_a,k
+ =P_Bperp a_phys,k^W-P_Bperp a_w,k^W
+  -P_Bperp R_bw bhat_a,k + lever/calibration terms`.        (MM-2)
+
+Substituting MM-1,
+
+`P_Bperp R_bw r_a,k
+ =P_Bperp a_phys,k^W-P_Bperp g^W
+  -P_Bperp R_bw bhat_a,k + bounded defects`.                (MM-3)
+
+Hence recurring MARINE MOTION variation appears explicitly in the
+accelerometer residual around a fixed gravity-sized offset. The residual is
+not an arbitrary control.
+
+For persistence, the complete S/accelerometer correction sequence must map
+the varying residuals MM-3 back to states satisfying MM-1 at every subsequent
+accelerometer epoch. This is the correct filter-specific bridge. The remaining
+lemma is to show that the literal lifted correction map cannot annihilate all
+allowed zero-mean physical variations while also supplying the fixed positive
+OU-loss replacement and keeping LIN/S bounded. This must use the MARINE
+MOTION excitation span; a DC-only fixed-point argument is insufficient.
+
+## Rotating accelerometer-innovation action from gravity span and geomagnetism
+
+The actual MOVING hypothesis is the stronger/specific gravity-direction span
+condition `Delta_g(W)>=theta_E` on every complete moving excitation window,
+not an unspecified attitude norm span.
+
+Let `b` be the near-constant unit world geomagnetic direction and decompose
+`g=g_parallel+ d`, with `d=P_bperp g`. The inclination restriction gives
+`|d|>=g_min cos(80 deg)`.
+
+In the q->0 compatibility limit the nominal CoG specific-force vector is
+parallel to b, so after subtracting the physical measurement model the
+body-frame accelerometer innovation contains the rotating term `R_wb(t)d`
+(up to physical translational acceleration, BA and the explicit bounded
+defects). Because rotations preserve norm, this term has fixed magnitude at
+least the geomagnetic floor.
+
+Gravity span alone does not imply a positive span of `R_wb d`: rotations
+about d are a geometric exception. This loophole must not be hidden. Combine
+gravity span with the magnetic service geometry. Since g and b are fixed
+non-collinear world vectors, the map R -> (Rg,Rb) is injective on SO(3).
+On the compact set with angle(g,b) bounded away from zero by the inclination
+cutoff, there is a modulus c_gb>0 such that any orientation pair with gravity
+span at least theta_E produces a positive joint span of the two body vectors.
+If `R d` had zero span while `R g` had positive span, the variation must
+occur through the b component; the applied magnetic rows then carry that
+variation. Thus the **joint accelerometer+magnetic signed record**, rather
+than accelerometer innovation alone, has a source-uniform rotating action.
+
+Formally define on W
+`A_rot(W)=sum_acc ||P_record R_wb,k d||^2 + sum_mag ||Delta(R_wb,k b)||^2`
+with the literal whitening/transport used by the complete word. Compactness
+of SO(3), `|d|>=g_min cos80`, `Delta_g>=theta_E`, and MAGNETIC SERVICE give
+a positive existence modulus
+`A_rot(W)>=a_rot(theta_E,mu_M,I_max,eps_B)>0`.
+
+This is an existence-level geometric modulus; an explicit closed formula for
+a_rot is not yet derived. It avoids the false claim that gravity span alone
+forces R d to rotate.
+
+The next adaptation step must retain the **signed joint record**. Its
+accelerometer part enters the literal Kalman mean update, while its magnetic
+part enters the attitude correction/reset and thereby changes the subsequent
+accelerometer Jacobian. The target is to show that an infinite q->0
+compatibility execution would have to annihilate this recurring positive joint
+action through the same-history adaptation map, contradicting the complete-word
+nullity classification unless the physical tilt/BA kernel is nonzero; as
+q->0 that kernel has zero BA component and the geomagnetic floor forbids the
+remaining pure tilt compatibility.
+
+## Zero-BA endpoint lemma and neighborhood consequence
+
+Consider a complete admissible MOVING word and a zero-action slow-root vector
+with q=0. The existing four-S and magnetic/gyro arguments first remove LIN/AW
+root and gyro-bias quotient components. The remaining candidate is pure
+attitude tilt theta.
+
+At every applied magnetic row, zero loss gives
+`[R_wb b^W]x theta_k=0`, so the transported nonzero theta_k must be parallel
+to the body magnetic direction. At every applied accelerometer row, zero loss
+with q=0 gives
+`[R_wb(a_w^W-g^W)]x theta_k=0`, so the same transported tilt must be parallel
+to the nominal CoG specific-force direction. Hence a nonzero pure-tilt null
+trajectory requires
+`a_w^W-g^W parallel b^W` at every relevant accelerometer epoch.          (ZB-1)
+
+Under the near-constant nonvertical geomagnetic premise this implies
+`P_bperp a_w^W=P_bperp g^W+delta_B`, with the positive gravity-transverse
+floor from GF-3.
+
+However, ZB-1 by itself is a condition on the **nominal** AW mean. The
+complete-word homogeneous nullspace equations do not constrain the base AW
+mean through MARINE MOTION; physical gravity span constrains the true
+orientation/history, while accelerometer innovations may make the nominal AW
+satisfy ZB-1. Therefore the stated assumptions do **not** by themselves imply
+that a pure-tilt homogeneous null is impossible.
+
+This exposes an error in the proposed endpoint shortcut: the joint rotating
+base innovation action is not part of the homogeneous information matrix
+J_complete. Positive base residual/innovation does not make a homogeneous
+error direction observable when its linearized measurement rows vanish.
+
+Consequently the theorem
+`q=0 + Delta_g>=theta_E + geomagnetic cutoff + MAGNETIC SERVICE
+ => Ker J_complete={0}`
+is **not proved** and does not follow from the existing assumptions without a
+physical-to-nominal mean constraint.
+
+The neighborhood claim likewise cannot be obtained by continuity. Continuity
+would give a uniform gamma_* only after the q=0 matrix is uniformly positive
+definite; that premise is exactly what remains missing.
+
+What the new geomagnetic premise does prove is narrower but useful: every
+q=0 pure-tilt null word must carry the gravity-sized nominal-AW condition
+ZB-1/GF-3. Thus any counterexample is confined to that explicit base-mean
+manifold. To exclude it one must use the literal mean adaptation dynamics
+over successive words; it cannot be excluded from a single-word homogeneous
+information matrix.
+
+## Multi-word mean-dynamic invariance equation for the q=0 manifold
+
+Let `P_B` be the fixed world projection perpendicular to the near-constant
+geomagnetic direction and define the compatibility-manifold coordinate
+`c_k=P_B(a_w,k-g)` immediately after an accepted accelerometer update.
+Persistent q=0 compatibility requires `c_k=0` at every such epoch (up to the
+explicit eps_B/lever defect tube).
+
+Propagate from one accelerometer epoch to the next using the literal shipping
+order. Write `F_k` for all predictions and any scheduled S pseudo-update
+before the next accelerometer correction, and let `L_k` select its world-AW
+component. Then before the accelerometer update
+`c_(k+1)^-=P_B[L_k F_k x_k-g]`.
+The accepted accelerometer update gives
+`c_(k+1)^+=c_(k+1)^-+P_B L_k K_a,k r_a,k` (with the literal reset/frame
+transport included in L_k). Exact manifold invariance is therefore
+
+`P_B L_k K_a,k r_a,k = -c_(k+1)^-`.                       (MI-1)
+
+Substitute the exact physical residual
+`r_a,k=f_phys,k-fhat_k-bhat_a,k`. On the manifold the nominal force has
+`P_B(a_w-g)=0`, so MI-1 becomes a linear constraint on the actual varying
+physical acceleration plus the endogenous estimator states:
+
+`P_B L_k K_a,k R_wb,k P_B a_phys,k^W
+ = -c_(k+1)^- + known BA/parallel/lever terms`.             (MI-2)
+
+Thus an infinite q=0 compatible execution is equivalent to satisfying MI-2 at
+every accepted accelerometer epoch together with the S/BA/attitude mean
+recursions.
+
+The important point is dimensional. MI-2 is a two-component transverse
+constraint on the three-component physical acceleration sample. MARINE MOTION
+currently imposes bounds, jerk regularity, bounded velocity/displacement/
+potential, and gravity-direction attitude span, but it does not prescribe the
+two transverse translational-acceleration components. Therefore MI-2 can in
+principle select those components while leaving one physical acceleration
+degree of freedom.
+
+The time-varying attitude requirement does not change this count: it changes
+the coefficients in MI-2 and the body measurement, but physical translation
+remains an independent admissible history. Without a lower excitation
+condition on translational acceleration relative to this two-dimensional
+constraint, the existing MARINE MOTION class does not algebraically forbid
+solutions of MI-2.
+
+Hence the desired theorem
+`no infinite execution on P_B(a_w-g)=0`
+cannot be derived from the current assumptions by the mean recursion alone.
+The recursion instead gives the exact construction equation MI-2 for a
+candidate persistent execution. To exclude it one needs either (a) prove that
+solutions of MI-2 necessarily violate the all-time velocity/displacement/
+potential constraints, or (b) add a physical excitation condition that makes
+the transverse physical acceleration incompatible with MI-2 on recurring
+windows.
+
+The earlier long-horizon analysis shows MI-2 forcing may be oscillatory and
+zero-mean, so (a) is not presently established. Thus the remaining gap is now
+an explicit physical-admissibility question for the MI-2-selected acceleration
+history, not an estimator observability question.
+
+## Physical admissibility of the MI-2-selected acceleration law
+
+Write MI-2 as
+`M_k a_phys,perp,k = h_k + N_k a_phys,parallel,k`,          (PA-1)
+where M_k is the literal 2x2 transverse authority obtained from
+`P_B L_k K_a,k R_wb,k P_B`, h_k contains the predicted departure from the
+compatibility manifold plus BA/lever terms, and the remaining longitudinal
+physical acceleration is the free scalar input.
+
+Whenever `sigma_min(M_k)>=d_0>0`,
+`a_phys,perp,k=M_k^-1 h_k+M_k^-1 N_k a_phys,parallel,k`.   (PA-2)
+Hence the required transverse acceleration is finite and obeys the amplitude
+bound
+`|a_phys,perp,k| <= d_0^-1(|h_k|+|N_k||a_parallel,k|)`.
+On a compact retained history all coefficients are bounded, so MI-2 does not
+force acceleration blow-up while transverse authority stays nonsingular.
+
+For jerk, subtract PA-2 at consecutive epochs. With bounded derivatives/
+increments of the gains, attitude, BA, lever terms and compatibility departure,
+`|Delta a_perp| <= C_M |Delta M| + C_h |Delta h|
+                    +C_N |Delta N|+C_u |Delta a_parallel|`. (PA-3)
+Thus the physical jerk limit can be met on a sufficiently regular constrained
+trajectory; there is no structural lower bound forcing jerk above J_max.
+Conversely current assumptions do not guarantee such regularity globally.
+
+For mean and integrated motion, PA-2 is an affine time-varying function of the
+free scalar a_parallel. Over a window,
+`bar a_perp = bar(M^-1 h)+bar(M^-1 N a_parallel)`.          (PA-4)
+One scalar free input cannot generically prescribe both components of the
+transverse mean on a single finite window, so zero mean acceleration is not
+automatic. But MARINE MOTION does not require zero acceleration mean on every
+window; it requires all-time bounded velocity/displacement/potential. Those
+conditions require cancellation over longer histories, and a time-varying
+scalar input can in principle shape the accumulated vector through the rotating
+coefficient `M^-1 N`.
+
+Therefore MI-2 does not structurally violate the current amplitude, jerk, or
+finite-window kinematic conditions. The only possible all-time obstruction is
+whether its forced transverse component has a nonzero secular mean that cannot
+be canceled by the rotating longitudinal channel while respecting the bounds.
+
+Define the long-horizon forced mean
+`A_F(T)=integral_0^T M(t)^-1 h(t) dt`
+and controllable mean direction
+`A_U(T)=integral_0^T M(t)^-1 N(t) u_parallel(t) dt`.
+Bounded velocity requires `A_F(T)+A_U(T)=O(1)` as T grows; bounded
+displacement/potential impose the corresponding first/second moment
+conditions. The current MARINE MOTION and shipping invariants provide no
+source-uniform separation of A_F from the reachable set of A_U.
+
+Hence the current assumptions do not exclude the MI-2-selected physical
+trajectory. Nor does this prove one exists globally: existence requires a
+bounded longitudinal control satisfying the hierarchy of moment conditions
+while D_perp remains nonsingular.
+
+This identifies the exact remaining physical theorem: characterize the
+long-horizon reachable moment set of the scalar longitudinal channel
+`M^-1N`. If the forced moments lie outside it uniformly, O2 closes; if they
+lie inside for one forward-complete strict-service history, that history is
+the admissible persistent-zero counterexample.
+
+## Fixed-world gravity/geomagnetic mean mismatch
+
+Use the LOCAL GRAVITY reference `g_0^W` and MAGNETIC SERVICE reference
+`b_0^W`, and set
+`d_0=P_(b_0)^perp g_0^W`.
+Then
+`||d_0||>=g_min cos(80 deg)`.
+
+For an infinite q->0 compatible execution, the exact accelerometer geometry
+implies at every applied epoch
+`P_(b_0)^perp a_w,k^W = d_0 + delta_k`,                   (FG-1)
+where
+`||delta_k|| <= C_g eps_g+C_B eps_B+C_L`.
+If the total defect is smaller than `||d_0||`, the nominal AW therefore has
+a persistent nonzero fixed-world mean component.
+
+By contrast, physical acceleration satisfies
+`integral_0^T a_phys^W dt = v^W(T)-v^W(0)`.
+The MARINE MOTION bounded-velocity continuation gives
+`(1/T) integral_0^T a_phys^W dt -> 0`.                    (FG-2)
+Bounded displacement supplies the corresponding zero long-time mean velocity,
+and the bounded-potential condition prevents secular displacement hidden by
+finite-window reanchoring.
+
+Hence every persistent compatibility counterexample must realize the strict
+mean mismatch
+`mean P_(b_0)^perp a_w^W = d_0+O(eps_g+eps_B+C_L) != 0`,
+`mean a_phys^W = 0`.                                      (FG-3)
+
+Substituting the exact residual identity into the AW mean recursion shows that
+this mismatch must be sustained entirely by the long-time mean of Kalman
+measurement corrections:
+`mean[Delta a_w,acc + Delta a_w,S + Delta a_w,mag/reset]
+ = mean OU loss of d_0 + defects`.                          (FG-4)
+The physical acceleration itself cannot supply a DC term.
+
+FG-4 is now the controlling mean-dynamic identity. To exclude infinite
+compatibility it remains to prove that, on the q->0 manifold, the literal
+measurement-correction sum has zero (or insufficient) fixed-world DC after
+all bounded estimator states are telescoped. If that identity holds, the
+positive OU loss of d_0 gives an immediate contradiction. If not, the
+nonzero correction term identifies the exact mechanism supporting the
+persistent invariant zero.
+
+## Long-time telescoping of the literal AW correction supply
+
+Let `Delta_a^meas(k)` denote the sum of all mean increments to the world AW
+state at step k caused by actual measurement/pseudo-measurement corrections
+(S, accelerometer, magnetic through attitude/reset coupling where applicable),
+with prediction treated separately. The exact AW recursion is
+`a_(k+1)=phi_k a_k+Delta_a^meas(k)`.                       (TEL-1)
+
+Summing,
+`a_N-a_0=-sum_(k<N)(1-phi_k)a_k+sum_(k<N)Delta_a^meas(k)`. (TEL-2)
+For bounded a_w, division by elapsed time makes the left side vanish. On the
+persistent q->0 manifold FG-1, projection on d0 gives a strictly positive OU
+loss rate (minus the explicit field/gravity/lever defects). Therefore
+`mean_T P_B Delta_a^meas = mean_T (1-phi) P_B a_w >0`.     (TEL-3)
+
+So the total measurement-induced AW correction does **not** telescope to zero;
+bounded AW proves the opposite: it must have a positive mean exactly balancing
+OU decay.
+
+Can bounded v,p,S,BA,attitude force the individual correction sum to zero?
+No. Their exact telescoping equations constrain different gain-weighted
+combinations of the same innovations. For example the S pseudo-update gives
+increments `K_awS(-S)`, `K_vS(-S)`, `K_pS(-S)`, etc.; bounded S constrains
+the S-state row of the total update, not the AW row. Cross-covariance gains
+provide no identity equating their long-time means. Likewise bounded BA and
+attitude constrain their own gain rows. Joseph covariance updates do not
+supply a mean conservation law.
+
+The accelerometer correction also need not have zero mean when physical
+acceleration has zero mean, because
+`r_a=f_phys-fhat-bhat_a`; persistent compatibility gives fhat a fixed
+gravity-related offset. Thus zero mean physical acceleration is compatible
+with a nonzero mean residual and hence a nonzero mean AW correction.
+
+Therefore the hoped-for contradiction
+`bounded states => mean measurement AW correction=0`
+is false. TEL-3 is a balance law, not an impossibility theorem.
+
+The exact remaining requirement for a persistent zero is that the gain-weighted
+correction supply equal the OU loss while all other state-row balance equations
+hold simultaneously. Stack the bounded-state telescoping equations:
+`0 = -Lambda xbar + Gbar_r + Gbar_S + defects`,            (TEL-4)
+where each row uses its literal gain history. Persistence is feasible iff this
+coupled mean-balance system has a solution consistent with the zero-mean
+physical acceleration and compatibility constraints.
+
+No existing Kalman identity makes TEL-4 inconsistent. Thus LOCAL GRAVITY and
+near-constant geomagnetism expose a large required correction supply, but
+bounded estimator states alone do not eliminate it. A proof of impossibility
+must establish a rank/range separation for the **stacked mean correction
+matrix** in TEL-4; otherwise TEL-4 is the algebraic mechanism supporting the
+persistent invariant zero.
+
+## Stacked long-time mean correction range test
+
+Stack the bounded mean-state rows that participate in the compatibility
+balance, `x_m=(a_w,v,p,S,b_a,theta,...)`. At each correction epoch the same
+innovation source enters all rows through one gain matrix. Over a long horizon
+define the gain-weighted source averages without separating linked histories:
+`z_a=(1/T)sum K_a,k r_a,k`, `z_S=(1/T)sum K_S,k(-S_k)`, and analogous
+magnetic/reset contributions. The bounded-state telescoping equations have
+the block form
+`b_req = R_a zeta_a + R_S zeta_S + R_m zeta_m`,            (RG-1)
+where `b_req` contains the deterministic prediction drifts. Its AW component
+contains the positive OU replenishment of d0; its LIN components contain the
+mean deterministic chain couplings.
+
+The key point is that the source variables are not arbitrary vectors:
+`zeta_a` is generated by one physical residual history and `zeta_S` by the
+endogenous S history. Nevertheless the literal Kalman gains are full NX-by-3
+matrices. Algebraically, the stacked correction range contains the columns of
+`[K_a,K_S,K_m]` accumulated over time.
+
+There is no structural row identity in the shipping filter making the AW row
+a linear combination of the v,p,S rows. The covariance cross blocks are
+independent state covariances subject only to PSD/Joseph recursion. Therefore
+a nonzero AW mean correction can coexist algebraically with zero secular
+v,p,S balance: S and accelerometer sources provide different gain columns and
+can cancel LIN rows while adding in the AW row.
+
+Equivalently, no nonzero left annihilator l is known (or implied by the state
+model) such that
+`l' [R_a R_S R_m]=0`
+for every admissible history while
+`l' b_req !=0` due to the geomagnetic d0 term. Without such an annihilator,
+the Fredholm/range test does not exclude the required correction supply.
+
+Indeed the four-S complete-word injectivity result points in the opposite
+direction for the finite-horizon linear system: the S-chain source/action
+columns are sufficiently independent to determine LIN/AW roots rather than
+imposing a conserved mean quantity. Measurement corrections break the open
+chain's simple integral conservation.
+
+Thus the stacked **algebraic** mean correction matrix does not yield a
+source-uniform contradiction from the current shipping structure. The
+required AW DC vector is not structurally outside its range.
+
+What remains is the dynamic/source constraint: whether the particular source
+averages needed by RG-1 can arise from one same-history residual/S sequence
+whose physical acceleration has zero long-time mean and satisfies MARINE
+MOTION. That is not a static rank question. Any proof must use temporal
+correlations/moments of the source sequence; static range has enough degrees
+of freedom.
+
+Therefore the rank/range test is resolved negatively as an exclusion route:
+there is no shipping left-null invariant presently separating the required
+geomagnetic AW replenishment from the correction range. Persistent-zero
+exclusion, if true, must come from temporal moment constraints rather than
+instantaneous/mean correction rank.
+
+## Temporal-moment constraints from bounded physical motion
+
+For one world component, physical kinematics satisfy
+`a=dv/dt`, `v=dp/dt`. Bounded velocity gives the zeroth acceleration
+moment
+`A_0(T)=integral_0^T a(t)dt=v(T)-v(0)=O(1)`, so `A_0(T)/T->0`.
+
+Integration by parts gives the first acceleration moment
+`A_1(T)=integral_0^T (T-t)a(t)dt
+       =p(T)-p(0)-T v(0)`.                                 (TM-1)
+Thus bounded displacement does **not** make A_1 bounded unless the initial
+velocity is zero; it fixes its secular part exactly. Equivalently, after
+subtracting the boundary velocity term, the centered first moment is O(1).
+
+The proof's stronger bounded-potential condition
+`|integral_(t1)^(t2) p(t)dt|<=P_AC`
+controls the next integrated displacement moment and prevents repeated
+reanchoring/secular offsets. These are boundary/moment identities, not a rule
+that every finite-window acceleration mean is zero.
+
+Apply the same moment operators to the MI-2-selected acceleration law
+`M a_perp=h+N a_parallel`. The zeroth and centered-first moment constraints
+become
+`integral M^-1 h + integral M^-1 N a_parallel = O(1)`,     (TM-2)
+and
+`integral (T-t)[M^-1 h+M^-1N a_parallel]
+   = prescribed boundary term + O(1)`.                     (TM-3)
+The bounded-potential condition adds the corresponding second integrated
+constraint.
+
+Because the control direction `M^-1N` is time varying under MARINE MOTION,
+one scalar function a_parallel(t) has infinitely many temporal degrees of
+freedom and can, in principle, satisfy finitely many vector moment constraints
+over successive windows. There is no dimensional contradiction analogous to
+a single scalar constant trying to cancel two fixed vectors.
+
+Most importantly, the fixed nominal AW offset d0 does not appear directly as
+a physical acceleration DC term in TM-2/TM-3; it enters h through the Kalman
+correction requirement. The static range test already showed those correction
+columns can algebraically supply that offset. Time weighting alone does not
+create a sign-definite invariant.
+
+Therefore bounded displacement and bounded potential strengthen the admissible
+source constraints but still do not, from the current identities, force an
+uncancelable secular moment. A contradiction would require a source-uniform
+moment-separation theorem for the rotating scalar channel `M^-1N` (for
+example, a nonzero left functional annihilating all admissible control moments
+but not the forced h moments). No such functional follows from the current
+MARINE MOTION assumptions.
+
+This resolves the naive first-moment route: it supplies exact boundary
+conditions but not yet O2 exclusion. The remaining question is a temporal
+controllability/moment problem for the MI-2 law, not a missing integration-by-
+parts identity.
+
+## Temporal controllability of the rotating scalar MI-2 channel
+
+Set
+`f(t)=M(t)^-1 h(t)` and `g(t)=M(t)^-1 N(t) in R^2`, so the selected
+transverse physical acceleration is
+`a_perp(t)=f(t)+g(t)u(t)`.                                 (TC-1)
+
+Consider a linear time-local functional
+`L_w[a]=integral w(t)'a(t)dt`.
+For L_w to annihilate the contribution of **every** admissible scalar control
+u with compact support inside a regular interval, the fundamental lemma of
+the calculus of variations requires
+`w(t)'g(t)=0` almost everywhere.                            (TC-2)
+In two transverse dimensions, where g(t) is nonzero, every such annihilator is
+`w(t)=lambda(t) J g(t)`, with J the 90-degree rotation.
+
+Therefore the uncontrollable instantaneous component of the MI-2 law is
+exactly
+`f_perp_ctrl(t)=P_(g(t))^perp f(t)`, or equivalently the scalar
+`chi(t)=(Jg(t))' f(t)`.                                   (TC-3)
+
+This resolves the abstract static/moment controllability question: arbitrary
+time variation of the scalar longitudinal input can generate only the
+pointwise line span{g(t)}; it can never alter chi(t). Time weighting and
+higher moments do not change this local annihilator.
+
+A source-uniform exclusion theorem would follow if persistent compatibility
+forced a sign-definite/nonzero long-horizon moment of chi, for example
+`liminf_(T->infinity) |integral_0^T chi(t)dt|/T >= chi_0>0`,
+because bounded physical velocity requires every fixed-world acceleration
+component to have zero long-time mean.
+
+However chi is expressed through the same-history Kalman gains/cross
+covariances in M,N,h. The fixed gravity/geomagnetic vector d0 enters h, but
+nothing presently proved fixes the sign of its projection on Jg(t).
+MARINE MOTION gravity span rotates the coefficients and can make chi change
+sign. Hence no positive chi_0 follows from the current assumptions.
+
+Conversely, if `chi(t)=0` identically along a compatible history, then the
+forced transverse acceleration lies pointwise in the controllable line and a
+scalar u(t) can cancel it exactly at the acceleration level. More generally,
+zero long-time moments of chi remove the velocity obstruction, though
+displacement/potential still impose integrated conditions.
+
+Thus the temporal controllability problem has a precise invariant:
+`chi(t)=det[g(t),f(t)]`.                                   (TC-4)
+The current theorem assumptions neither bound chi away from zero nor force a
+nonzero secular moment. This is the remaining physical-to-estimator linkage
+needed for O2. Any additional assumption, if ultimately required, should be
+stated physically so that it implies a nonzero recurring chi-action; it should
+not directly constrain Kalman gains.
+
+## Determinant reduction of the temporal uncontrollable component
+
+For the 2x2 invertible transverse authority M,
+`chi=det(M^-1 N,M^-1 h)=det(N,h)/det(M)`.                  (CH-1)
+Therefore M cannot create or remove the zero of chi; it only scales and
+orients it. The decisive geometry is the pair (N,h) before transverse
+inversion.
+
+N is the effect of the one remaining longitudinal physical-acceleration
+component on the two compatibility-maintenance equations. h is the forced
+departure produced by OU decay, scheduled S pseudo-updates, BA/lever terms,
+and the fixed gravity/geomagnetic offset d0.
+
+There is no shipping identity forcing N and h to be nonparallel. In
+particular, h contains gain-weighted estimator-state terms, not just d0.
+Those terms evolve with the same covariance/attitude history that determines
+N. The fixed world vectors g0,b0 constrain one component of h but do not fix
+its direction in the two-dimensional compatibility-equation space.
+
+Recurring gravity-direction span changes N and h continuously but likewise
+does not prohibit repeated or persistent collinearity. A rotating pair of
+vectors may remain parallel for all time. Thus
+`Delta_g>=theta_E` plus fixed noncollinear g0,b0 does not imply
+`|det(N,h)|>=chi0` or a nonzero signed average.
+
+Consequently the literal shipping structure and current physical assumptions
+do **not** force a nonzero recurring chi-action. The possibility
+`det(N,h)=0` is an exact codimension-one compatibility condition that the
+remaining physical/estimator history can in principle satisfy; no existing
+invariant excludes it.
+
+This answers the temporal-controllability fork negatively as an exclusion
+route: chi need not be separated from zero by the present assumptions.
+A zero-moment chi is likewise not excluded because no sign law is available.
+
+The pathological mechanism is now explicit: a correlated marine translation
+history can choose its longitudinal component so that the forced departure h
+lies in the instantaneous longitudinal-control image N, while the two
+transverse acceleration components are fixed by MI-2. If this condition is
+maintained with bounded moments, the q=0 compatibility manifold can persist.
+
+This is still not a constructed global execution, but it shows that no theorem
+based only on gravity span, fixed local gravity, near-constant nonvertical
+geomagnetism, and the existing bounded-motion conditions can derive a
+source-uniform chi floor without an additional physical restriction linking
+translation to attitude. Any such added restriction should target this
+correlated-translation degeneracy, not generic acceleration magnitude.
+
+## Literal frozen S-to-S transverse DC calculation
+
+For one fixed transverse world direction and one frozen/slowly varying
+coefficient pattern, use the shipping per-axis LIN order
+`x=(v,p,S,a)'`. Let `Phi` be the exact analytic 4x4
+`PhiAxis4x1_analytic(tau,Delta)` propagation from one scheduled S epoch to
+the next, including all intervening prediction time. Let `e_S=(0,0,1,0)'`.
+
+At the scheduled S=0 pseudo-measurement the scalar projected gain column is
+`k_S=(k_vS,k_pS,k_SS,k_aS)'`, so
+`x^S=(I-k_S e_S') Phi x`.                                 (SDC-1)
+
+Collect the net projected accelerometer mean correction over the same lifted
+interval as one scalar innovation/control u with frozen lifted gain column
+`k_A=(k_vA,k_pA,k_SA,k_aA)'`. Then the exact frozen lifted mean map is
+`x_+ = A_S x + B_S u`,                                    (SDC-2)
+`A_S=(I-k_S e_S')Phi`, `B_S=k_A`,
+with additional accelerometer epochs represented by the chronological product
+and summed input columns; the one-column form is the single-effective-input
+case.
+
+A bounded equilibrium satisfies
+`(I-A_S)x_*=B_S u_*`.                                     (SDC-3)
+Compatibility requires
+`e_a' x_*=g_perp`, `e_a=(0,0,0,1)'`, with
+`g_perp>=g_min cos80` after the declared defects.
+
+If `I-A_S` is invertible, define the literal frozen DC gain
+`G_DC=e_a'(I-A_S)^-1 B_S`.                                (SDC-4)
+Then the required accelerometer innovation is exactly
+`u_*=g_perp/G_DC`                                         (SDC-5)
+provided `G_DC!=0`. The remaining equilibrium states are
+`x_*=(I-A_S)^-1B_S g_perp/G_DC`.
+
+Therefore a bounded frozen equilibrium is **not** excluded merely by the OU
+integrator/S pseudo-update structure. It exists algebraically whenever
+`I-A_S` is invertible and `G_DC!=0`; its physical admissibility is decided
+by the magnitude/sign of u_* and by whether the resulting physical
+acceleration history satisfies MARINE MOTION. If `G_DC=0`, no finite scalar
+accelerometer innovation can sustain nonzero g_perp in this frozen
+single-input model. If `I-A_S` is singular, use the left-null/Fredholm
+conditions together with the compatibility row.
+
+The Kalman code supplies no structural identity forcing `G_DC=0`.
+The S pseudo-update gain k_aS can have either sign through P_aw,S, and the
+accelerometer AW gain k_aA is generally nonzero. Thus outcome A (no bounded
+equilibrium) cannot be proved from architecture alone; outcome B is
+algebraically generic for a frozen regular coefficient set.
+
+For the real MOVING theorem this is only a local diagnostic: gains, attitude
+and physical acceleration vary, and MARINE MOTION forbids replacing the
+whole execution by constant forcing. But SDC-4--SDC-5 answer the requested DC
+question: the literal S adaptation does not inherently reject a gravity-sized
+nominal AW equilibrium. The required innovation is the reciprocal lifted DC
+gain times g_perp. A persistent counterexample would have to realize the
+time-varying analogue of SDC-5 with zero long-time physical acceleration mean.
+
+## Physical realizability of the time-varying required innovation
+
+The lifted control u_j in SDC-5 is an accelerometer **innovation**, not physical
+acceleration. On the compatibility manifold its projected value has the exact
+form
+`u_j = H_j a_phys,j^W - H_j a_w,j^W - H_b bhat_a,j + d_g,j`, (PRDC-1)
+with the literal frame/lever terms included in H_j,d_g,j. Because persistent
+compatibility pins the relevant nominal AW component near the fixed d0, a
+nonzero mean innovation is naturally produced even when physical acceleration
+has zero long-time mean.
+
+Let `u_req,j` be the innovation required by the time-varying lifted
+compatibility recurrence (the analogue of g_perp/G_DC). Solving PRDC-1 gives
+the required physical acceleration component
+`H_j a_phys,j^W = u_req,j + H_j a_w,j^W + H_b bhat_a,j-d_g,j`. (PRDC-2)
+
+Therefore zero-mean physical acceleration is feasible iff the long-time mean
+of the right side of PRDC-2 vanishes (with the full vector equations and
+moment constraints), not iff mean(u_req)=0. The fixed nominal AW term can
+cancel a nonzero innovation mean.
+
+Amplitude and jerk feasibility follow locally from bounded/invertible lifted
+coefficients as in PA-2/PA-3. Recurring gravity-direction span can be imposed
+independently through a smooth periodic/aperiodic attitude history; it changes
+the coefficients in PRDC-2 but does not by itself force a nonzero physical
+acceleration mean.
+
+Thus outcome B is **physically possible in principle** under the present
+assumptions: nothing requires the time-varying innovation needed to sustain
+the biased nominal AW to correspond to a DC physical acceleration. A
+zero-mean, bounded, jerk-limited physical acceleration can generate a
+nonzero-mean innovation because the nominal prediction itself is biased by
+the gravity-sized compatibility offset.
+
+This is not yet an explicit global shipping trajectory, because the same
+history must also make the covariance/gain sequence generate u_req and satisfy
+all higher moment/service conditions. But the proposed physical-realizability
+obstruction (zero mean acceleration versus nonzero required innovation) is
+not valid.
+
+Consequently current MARINE MOTION does not exclude outcome B at the level of
+physical kinematics. A rigorous counterexample now requires solving the
+self-consistent covariance/gain recurrence; a proof of O2 would require an
+additional invariant showing PRDC-2 cannot be self-consistent, not merely
+bounded-motion kinematics.
+
+## Exact chronology test for a D_perp covariance floor
+
+Shipping prediction first propagates the LIN/AW covariance and injects fresh
+AW process covariance. Pending AW covariance inflation is then applied.
+If due, the S=0 pseudo-measurement performs a Joseph covariance update **before**
+the next accelerometer gain is formed. Thus the accelerometer numerator uses
+the post-S covariance, not the raw post-prediction covariance.
+
+Let `N_a=P C_a'` denote the accelerometer gain numerator and project its AW
+rows onto the transverse compatibility channel. Before S correction the fresh
+prediction contributes a positive AW marginal term to N_a. The S covariance
+update is
+`P^S=P^- - P^-H_S'(H_SP^-H_S'+R_S)^-1 H_SP^-`
+(in exact covariance form). Hence
+`N_a^S=N_a^- - P^-H_S' S_S^-1 H_S P^- C_a'`.              (DF-1)
+
+The subtractive term has no sign/alignment restriction relative to the
+projected fresh AW contribution. PSD only guarantees the **full** covariance
+remains PSD. Therefore DF-1 can algebraically cancel a projected AW gain
+numerator while all innovation covariances remain SPD.
+
+Subsequent accelerometer gain multiplication by `S_a^-1` cannot restore a
+lost projected rank. Thus there is no source-uniform positive D_perp floor
+derivable solely from fresh AW process covariance.
+
+Conversely DF-1 does not force cancellation: exact rank loss is an algebraic
+surface in the post-prediction covariance/geometry variables. The S update can
+move toward or away from it. Prediction at the next step again injects fresh
+AW variance. No monotone recurrence drives the system to this surface.
+
+Therefore the actual evolving covariance recursion neither forces
+`D_perp->0` nor supplies a positive invariant floor by operation-wise
+structure. The rank-loss set is a reachable-looking algebraic boundary, not an
+attractor or repeller established by the current invariants.
+
+This means the requested global yes/no cannot be decided from covariance
+recursion identities alone. To prove a persistent counterexample one must show
+one compatible trajectory avoids the DF-1 cancellation surface for all time;
+to prove O2 one must show every compatible trajectory hits it (or another
+admissibility boundary). Neither statement follows from shipping covariance
+algebra.
+
+## Signed determinant barrier test for the S-induced cancellation surface
+
+Let `d(P,x)=det D_perp(P,x)` on a regular fixed-event compatibility branch.
+The cancellation surface is `Z={d=0}`. A compact one-sided invariant region
+would require a source-uniform sign condition for the constrained update of d
+at Z.
+
+The post-S covariance is the smooth map
+`P^S=P-PH_S'(H_SPH_S'+R_S)^-1H_SP`.
+On the SPD innovation domain its differential with respect to P is finite and
+generically nonzero. D_perp also depends smoothly on the nominal geometry and
+the subsequent transport. Therefore d is a smooth scalar function on each
+regular branch.
+
+At a regular rank-one point of Z, the first variation is
+`delta d = tr(adj(D_perp) delta D_perp)`.                  (BAR-1)
+The admissible compatible history supplies variations through preceding
+attitude/geometry, prediction covariance and the remaining physical input.
+No shipping identity constrains BAR-1 to one sign. In particular the S
+subtraction term and fresh AW prediction term enter delta D_perp with opposite
+possible projected orientations. Hence Z is not proved invariant and no
+one-sided inward barrier follows from the covariance algebra.
+
+But transversality of Z is not enough to construct an infinite avoiding
+trajectory. A codimension-one surface can be crossed by generic trajectories;
+local freedom can choose a side only while the compatibility control remains
+regular. To prove eternal avoidance one needs a controlled-invariance theorem
+for a compact subset `|d|>=d0`, including physical moment/service bounds.
+No such inward condition is supplied by BAR-1.
+
+Thus the proposed signed-determinant barrier route does not close either
+branch. It establishes that exact S-induced cancellation is generically a
+crossable hypersurface rather than an estimator-internal invariant, which
+makes mandatory rank loss implausible, but it does not prove a forward-
+complete nonsingular compatible trajectory.
+
+The mathematically honest status is therefore: current assumptions do not
+force every compatible trajectory to hit Z, and local compatible trajectories
+can avoid/cross Z; global eternal avoidance remains an existence problem.
+A proof of it requires an additional recurrence/compactness mechanism beyond
+the local determinant sign.
+
+## Periodic compatible physical/mean construction: closure conditions
+
+Choose a smooth periodic physical attitude R(t) with period T_p and gravity
+span strictly above theta_E on every complete T_E window (for example a
+nondegenerate rocking motion with period/cadence chosen so the rolling-window
+span condition holds). Keep local gravity and geomagnetic world references
+fixed within their declared envelopes. This gives strict recurring magnetic
+geometry away from the dip-pole exclusion.
+
+Choose physical translation periodic with the same T_p. Periodicity of
+position and velocity is equivalent to the acceleration waveform satisfying
+the zeroth and first moment closure conditions over one period:
+`integral_0^Tp a(t)dt=0`,
+`integral_0^Tp (Tp-t)a(t)dt=0`.                            (PC-1)
+Then velocity/displacement repeat and the bounded-potential condition holds
+for the periodic zero-mean displacement after choosing its reference.
+
+Now impose q=0 compatibility at every accelerometer epoch. For a given
+covariance/gain history this determines the two transverse acceleration
+components through MI-2, leaving one longitudinal scalar sequence u_j. Over
+one physical period, PC-1 gives vector closure constraints on u_j. Because
+there are many accelerometer epochs per period, u_j supplies many scalar
+degrees of freedom; the closure problem is a finite linear/nonlinear
+boundary-value system rather than an overdetermined single-control equation.
+
+However the required transverse waveform depends on P through the gains.
+Therefore a periodic physical/mean orbit cannot be constructed independently
+of covariance and then repeated while P changes: changing P changes MI-2 and
+hence the acceleration needed for exact compatibility. This invalidates the
+shortcut of fixing a periodic physical/mean period while allowing arbitrary
+nonperiodic covariance evolution.
+
+A genuine repeated exact-compatible period requires either:
+(a) the relevant gain/authority sequence repeats (not necessarily full P), or
+(b) the physical acceleration waveform is adapted from period to period to the
+evolving P, in which case the physical/mean orbit is not periodic.
+
+Thus continuity of the finite-period covariance map alone cannot preserve a
+fixed determinant margin under repetition. The proposed construction reduces
+back to a joint recurrence of the **relevant gain projection** and the
+periodic closure constraints. Full covariance recurrence is stronger than
+necessary, but recurrence of the gain quantities entering MI-2 is necessary
+for an exactly repeated physical/mean orbit.
+
+This identifies the minimal periodic fixed-point variables: nominal compatible
+mean/tuner state plus the projected covariance blocks entering K_a,K_S and
+D_perp, not the entire P. A periodic counterexample may be sought on that
+reduced map. No theorem currently proves that reduced map has a fixed point.
+
+## Parametric compatible-period closure and Riccati dichotomy
+
+Fix a smooth periodic attitude/service/event template with strict MOVING and
+magnetic-service margins. Over one period let P0 be the entering covariance,
+z the entering compatible nominal mean/tuner state, and u the finite vector of
+free longitudinal physical-acceleration controls at the accepted
+accelerometer epochs (with smooth interpolation between samples).
+
+Collect all one-period constraints in
+`F(P0,z,u)=0`: exact compatibility at every accelerometer epoch, terminal
+mean/tuner closure, zero velocity/displacement period moments for physical
+translation, and any scheduler phase closure. The two transverse physical
+acceleration components are eliminated by MI-2 wherever D_perp is nonsingular.
+
+If at one regular solution `(Pbar,zbar,ubar)` the Jacobian
+`D_(z,u)F` is onto, the implicit-function theorem gives a local smooth
+selection `z(P),u(P)` for every P near Pbar. Strict physical/service margins
+and D_perp nonsingularity persist by continuity. Thus compatible mean/physical
+period closure can be maintained while P varies locally; the waveform is
+allowed to adjust from period to period.
+
+Define the exact period covariance map along that selected compatible period
+by
+`P_+=R(P)`.                                                (PR-1)
+Iterate `P_(n+1)=R(P_n)`, re-solving z(P_n),u(P_n) each period. This yields
+a forward compatible execution as long as P_n remains in the IFT domain (or
+overlapping continuation charts) and no physical/service/rank boundary is
+reached.
+
+There is then a rigorous dichotomy **conditional on global continuation of
+the closure charts**:
+(A) if {P_n} is unbounded while the compatible physical/mean execution remains
+admissible, the desired uniform A21 covariance ceiling is false directly;
+(B) if {P_n} is bounded, compactness gives accumulation points. A fixed or
+recurrent covariance orbit is not automatic from boundedness alone, but the
+omega-limit set is a nonempty compact invariant set for a continuous R on a
+closed continuation domain. D_perp remains separated from zero if the
+continuation domain was constructed with that margin.
+
+This formulation avoids requiring an identical physical waveform or a
+periodic P. It also exposes the one missing existence premise: a **single
+regular seed solution** with onto D_(z,u)F and D_perp!=0. Constructor
+covariance is not enough unless it lies on an actual recurring A21-compatible
+period seed.
+
+Therefore the bounded/unbounded Riccati dichotomy is ready once a regular
+parametric period seed is proved. The remaining construction task is finite:
+exhibit one admissible period and show the boundary-value Jacobian with respect
+to the free mean/control variables has full row rank.
+
+## Regular compatible-period seed: Jacobian structure and remaining existence gap
+
+Choose a smooth periodic rocking attitude template with strict
+`Delta_g>theta_E`, strict MAGNETIC SERVICE, and scheduler phases repeating
+after T_p. Parameterize physical acceleration at the accepted accelerometer
+epochs by three components per epoch and use a smooth periodic interpolation.
+
+Before eliminating controls, the boundary-value equations consist of:
+(i) two compatibility equations per accelerometer epoch;
+(ii) physical velocity/displacement closure over the period;
+(iii) nominal mean/tuner/scheduler closure.
+
+At a point with D_perp nonsingular, the derivative of block (i) with respect
+to the two transverse acceleration components at each epoch is block lower
+triangular in chronology with invertible diagonal blocks D_perp,k. Hence all
+epoch-wise compatibility equations are locally solvable and can be eliminated.
+
+After this elimination, many longitudinal acceleration samples remain. Their
+derivatives with respect to terminal velocity and displacement are the usual
+discrete moment rows `sum w_k u_k` and `sum (T_p-t_k)w_k u_k`. With at
+least two distinct control epochs and nonzero longitudinal direction these
+rows are independent for the scalar longitudinal component; rotating attitude
+can provide vector closure authority over a full period. Thus kinematic
+closure is generically controllable, but a source-uniform full-rank proof
+requires an explicit lower bound on the corresponding sampled moment matrix.
+
+The nominal mean closure derivative with respect to the initial mean is
+`Phi_mean(T_p)-I` after the compatibility controls are eliminated. This block
+is not generically invertible: neutral attitude/reference coordinates and
+integrator coordinates can have unit Floquet multipliers. Closure may use
+remaining control degrees of freedom, but surjectivity then depends on the
+full endpoint controllability matrix of the reduced mean recursion.
+
+Tuner closure is more problematic: tuner states are deterministic functions
+of the measurement/mean history and may include clamps/discrete branches.
+They are not free initial coordinates on a fixed branch unless the branch is
+inside a smooth unclamped region. No current theorem proves a periodic tuner
+orbit for the proposed compatible forcing.
+
+Therefore the triangular Jacobian argument proves only the first block
+(compatibility) rigorously from D_perp!=0. It does not yet prove full
+D_(z,u)F surjectivity or exhibit a seed. Claiming a regular seed from dimension
+count would be incorrect.
+
+The exact finite obligation is now:
+(a) choose a concrete smooth tuner/event branch;
+(b) prove full-rank endpoint controllability of the reduced longitudinal-input
+mean recursion over one period, including v,p,S,AW/BA/attitude closure;
+(c) show the tuner map has a fixed point on that branch;
+(d) select an entering covariance with D_perp!=0.
+
+Until (a)-(d) are supplied, the regular compatible-period seed remains
+unproved.
+
+## Endpoint controllability: correct reduced target
+
+After imposing the periodic physical attitude/service template and eliminating
+the two transverse physical acceleration components by compatibility, do not
+ask the remaining scalar input to control every estimator coordinate. Attitude
+is prescribed/closed by the compatibility+magnetic construction, scheduler
+phase is chosen periodic, and fixed filter parameters need no control.
+
+Let y collect only the residual mean closure coordinates not already fixed by
+those constraints (LIN/S and any active BA scalar combinations). The reduced
+linearized endpoint map is
+`delta y_N = Phi_y delta y_0 + C_N delta u`,
+`C_N=[Phi(N,k+1)b_k]_(k in acc epochs)`,                  (ECM-1)
+where b_k is the effective column after transverse compatibility elimination.
+
+Full endpoint controllability is exactly
+`rank C_N = dim(y_unfixed)`.                              (ECM-2)
+
+The open OU/LIN chain driven by an acceleration input has a confluent
+Vandermonde/Hermite controllability structure: distinct input epochs generate
+independent endpoint moments in a_w,v,p,S. Four distinct effective epochs are
+enough per scalar chain when the direct AW component of b_k is nonzero. This
+is the same {1,t,t^2,psi_tau(t)} structure used by the four-S injectivity
+lemma, now transposed as a controllability statement. Thus the LIN/AW
+subsystem is controllable on a regular branch with nonzero effective AW input.
+
+Active BA/attitude closure is not supplied by that scalar chain. Those
+coordinates are already constrained by exact compatibility and the prescribed
+periodic attitude; requiring them again in y double-counts constraints. The
+remaining BA amplitude on the compatibility line decays and is zero in the
+q=0 periodic construction. Therefore the legitimate q=0 seed closure target
+is the LIN/AW chain, for which ECM-2 holds with four distinct regular
+accelerometer epochs.
+
+Hence endpoint controllability of the **correct reduced q=0 mean closure**
+closes conditionally on the effective longitudinal input having a nonzero AW
+component at four distinct epochs. That nonzero component is the same regular
+gain condition underlying D_perp and is open.
+
+## Unified finite-error physical-to-nominal vector-diversity lemma
+
+Define on a source-qualified complete history window W the literal chronological
+joint action J_vec(W,e,n): applied accelerometer and magnetic innovation losses
+plus the actual AW/BA process action and S pseudo-measurement action, with
+resets/transports and same-history covariance whitening retained. Here e is
+the finite attitude error and n denotes admissible estimator nuisance
+trajectories (AW, BA, LIN/S and associated mean corrections).
+
+The correct theorem is a separation statement, not unconditional coercivity:
+
+For every retained radius r and every epsilon>0, there exists
+`c_vec(epsilon,r,theta_E)>0` such that
+`J_vec >= c_vec`
+whenever the finite-error state is at physical-metric distance at least epsilon
+from the exact compatibility set C.                            (VD-1)
+
+Equivalently, any normalized sequence with J_vec->0 has, after same-history
+compactness extraction, a limiting trajectory in C.           (VD-2)
+
+The proof is by contradiction. Physical histories are compact from the
+MARINE MOTION acceleration/jerk, velocity, displacement/potential and
+gravity-span assumptions; local gravity and geomagnetic histories converge to
+their declared compact field classes; finite estimator/tuner/covariance
+variables are retained. Zero limiting magnetic loss enforces magnetic-axis
+attitude compatibility. Zero accelerometer loss, together with zero AW/BA/S
+process/pseudo action, gives the previously classified tilt/BA compatibility
+relation. Four distinct S observations remove independent LIN/AW homogeneous
+roots. Hence the only zero-action limit is C. Distance>=epsilon is closed and
+disjoint from C, contradiction.
+
+This lemma is valid only if event-boundary lower semicontinuity is carried with
+the raw/variational action; do not use pseudoinverse constant-rank strata.
+
+**Capture use.** If every attitude error with tilt>=7 degrees is separated by
+a positive physical-metric distance from C on the H18/capture branch, VD-1
+gives positive recurring action and finite entry into the refinement tube.
+That separation is an additional branch-specific fact and must be proved; C
+must not contain a >=7-degree captured-domain alias.
+
+**O2 use.** As epsilon->0, VD-1 does not yield a positive floor on C. Instead
+VD-2 identifies every vanishing-action sequence with the explicit
+compatibility manifold. The remaining O2 question is then exactly whether the
+closed-loop mean dynamics can remain in C indefinitely. Thus the lemma
+unifies the reduction but does not by itself prove escape from C.
+
+This is the strongest common theorem supported by the existing nullspace and
+compactness machinery. Claiming that its small-error limit automatically
+closes O2 would be false; the compatibility manifold is deliberately retained.
+
+## H18 finite-error compatibility outside the 7-degree tube
+
+On H18 the accelerometer-bias estimate is held (and its decoupled covariance
+block is unchanged on feasible held segments). Zero magnetic loss between true
+and nominal records with fixed/near-fixed world b0 restricts the attitude
+discrepancy to a rotation `Q_delta` about b0.
+
+For zero accelerometer loss at every applied epoch, the same held body-frame
+BA correction must satisfy the difference between the true and nominal
+specific-force records. Ignoring only the declared bounded field/lever defects,
+the required held BA is
+`b_H = R_true(t)[a_phys(t)-g0]
+       -R_hat(t)[a_w_hat(t)-g0]`.                           (H7-1)
+With `R_hat=R_true Q_delta` in a consistent world/body convention, this
+becomes a time-varying function of R_true(t), physical acceleration and
+nominal AW unless Q_delta=I or the histories satisfy a special compatibility
+relation.
+
+A constant held BA therefore cannot generically absorb a nonzero magnetic-axis
+rotation over a moving history. However the H18 nominal AW state is not held:
+it is an estimator nuisance trajectory and can vary through prediction and
+measurement corrections. Solving H7-1 for nominal AW gives
+`a_w_hat(t)-g0 = Q_delta^-1 [a_phys(t)-g0-R_true(t)^-1 b_H]`. (H7-2)
+Thus for any fixed Q_delta and b_H there is algebraically a time-varying
+nominal AW trajectory that makes the accelerometer residual zero.
+
+The H18 compatibility question therefore reduces to whether the actual H18
+OU/LIN/S mean dynamics can realize H7-2. The held-BA property alone does not
+exclude rotations >=7 degrees. Fixed g0,b0 and gravity-direction span make the
+required AW trajectory nontrivial, but they do not bound its amplitude/action
+away from the allowed H18 nuisance class without using the AW/S dynamics.
+
+Consequently
+`C_H18 intersect {tilt>=7deg}=empty`
+is **not proved** by magnetic geometry plus held BA alone. The same
+physical-to-nominal AW bridge remains. A finite-error capture proof must include
+the H18 AW/S process action in the variational lemma; if zero joint action is
+assumed, then H7-2 must also satisfy zero AW process/S action, which is much
+more restrictive and is the correct next test.
+
+## H18 zero-action OU substitution
+
+For an exact zero-loss H18 alias let Q be the constant attitude discrepancy
+rotation about the fixed world magnetic direction b0, and let b_H be the held
+accelerometer-bias estimate in the body/error convention used by H7-2. The
+accelerometer zero-loss identity is
+`ahat_w-g0 = Q^-1[a_phys-g0-R_true' b_H]`.                 (HO-1)
+
+Zero AW process action requires the homogeneous OU mean law. On an interval
+with constant tau,
+`d ahat_w/dt = -ahat_w/tau`.                               (HO-2)
+Substitution and differentiation give the necessary physical law
+`dot a_phys - d(R_true' b_H)/dt
+ = -(1/tau)[a_phys-g0-R_true'b_H+Q g0]`.                    (HO-3)
+For piecewise-varying shipping tau the same relation holds intervalwise with
+the corresponding tau(t).
+
+More decisive is the long-time mean of HO-1+HO-2. Any bounded homogeneous OU
+trajectory has time average zero:
+`mean ahat_w =0`.
+Bounded physical velocity gives
+`mean a_phys=0`.
+Hence an infinite zero-action alias would require
+`0-g0 = Q^-1[0-g0-mean(R_true' b_H)]`, or
+`mean(R_true' b_H)=(Q-I)g0`.                              (HO-4)
+
+The left side has norm at most |b_H|. Therefore a necessary condition is
+`|(Q-I)g0| <= |b_H|`.
+For a rotation angle alpha about b0,
+`|(Q-I)g0|=2 |P_bperp g0| sin(|alpha|/2)`.
+Using |P_bperp g0|>=g_min cos80deg gives
+`2 g_min cos80deg sin(|alpha|/2) <= |b_H|`.               (HO-5)
+
+Thus every H18 zero-action magnetic-axis alias obeys the explicit angle bound
+`|alpha| <= 2 asin(|b_H|/[2 g_min cos80deg])`, provided the
+argument is <=1.                                                    (HO-6)
+
+Using the declared physical/held accelerometer-bias bound B_H gives the
+source-uniform ceiling
+`alpha_H,max = 2 asin(B_H/[2 g_min cos80deg])`.            (HO-7)
+
+With the proof's recorded physical accelerometer-bias bound
+B_H=0.22516660498395405 m/s^2 and g near standard gravity, the denominator
+2*g*cos80deg is about 3.406 m/s^2, giving alpha_H,max about 0.132 rad,
+approximately 7.58 degrees. Therefore the current coarse bias/nondip-pole
+bounds do **not** yet exclude every 7-degree alias; they miss by roughly
+0.58 degree before eps_g/eps_B/lever defects.
+
+This is nevertheless a sharp quantitative result. To exclude >=7 degrees one
+needs either the actual tighter held-BA bound on H18, a stronger inclination
+domain than 80 degrees, or use the attitude-span average in HO-4 to improve
+`|mean(R' b_H)|<=|b_H|` strictly. The last option uses existing MOVING
+excitation and is preferable to changing assumptions: recurring gravity
+direction span should prevent a fixed body BA vector from maintaining its full
+world projection indefinitely.
+
+## Can gravity-direction span give a strict average contraction of held BA?
+
+Let b_H be a fixed nonzero body-frame held accelerometer-bias vector and
+`w(t)=R_true(t)' b_H` its world representation (up to the convention used in
+H7). Always
+`||mean w||<=||b_H||`, with equality iff w(t) has one constant direction
+almost everywhere.
+
+Gravity-direction span alone does **not** make this inequality strict
+uniformly. Choose an admissible attitude motion that is a rotation about the
+body axis parallel to b_H. Then w(t) is constant in world coordinates, while
+the body/world gravity direction can have any prescribed nonzero span (up to
+the rocking amplitude) whenever b_H is not parallel to gravity. Hence for
+such histories
+`Delta_g>=theta_E` but `||mean R' b_H||=||b_H||`.
+Therefore
+`sup_admissible ||mean R' b_H||/||b_H|| = 1`,
+so no source-uniform `kappa(theta_E)<1` follows from the existing gravity-span
+assumption.
+
+Near-constant noncollinear geomagnetism does not remove this geometry by
+itself: rotation about the b_H axis rotates both gravity and magnetic body
+vectors and can still satisfy magnetic service. MAGNETIC SERVICE constrains
+information/application, not the rotation axis relative to b_H.
+
+Thus the hoped-for ~8% improvement cannot be obtained from Delta_g alone.
+The H18 alias ceiling remains the coarse ~7.58-degree value from HO-7 unless
+one uses an additional existing constraint that limits the alignment of the
+held BA axis with the physical rotation axis, or exploits the full zero-action
+magnetic/gyro chronology rather than only gravity span.
+
+This is a genuine counterexample to the proposed kappa lemma, not merely a
+missing estimate. Do not assert kappa(theta_E)<1 under the current MARINE
+MOTION definition.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
