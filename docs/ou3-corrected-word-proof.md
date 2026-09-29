@@ -4909,6 +4909,66 @@ Thus the affine calculation identifies the decisive quantity:
 uniformly separated from the geomagnetic target would exclude periodic
 persistent zeros; exhibiting equality with strict margins would construct
 one. Current symbolic shipping bounds do not determine its value or sign.
+## Marine-motion window decomposition for the geomagnetic O2 argument
+
+The constant/repeated-forcing affine fixed point is only a possible
+counterexample construction device, not the controlling exclusion proof.
+MOVING retains its full time-varying physical history.
+
+On every excitation window W=[t,t+T_E], project onto the fixed world direction
+e_B supplied by the near-constant geomagnetic premise and decompose nominal
+and physical acceleration into a window mean plus a zero-mean fluctuation.
+Exact q->0 compatibility gives a positive lower bound a_DC on the nominal AW
+window mean in this direction, while the fluctuation retains the actual marine
+time variation.
+
+Physical acceleration is not set to zero or constant. Its integral is the
+physical velocity increment, and concatenated windows retain all MARINE
+MOTION velocity/displacement/potential, acceleration/jerk, and recurring
+attitude-span conditions.
+
+Summing the literal measurement-corrected AW recursion over W gives two
+coupled requirements: (1) the correction sequence must replace the positive
+mean OU loss associated with a_DC; (2) the same corrections must accommodate
+the zero-mean time-varying marine forcing while the LIN/S states remain
+bounded. Any exclusion theorem must hold uniformly over these admissible
+fluctuation histories. Absence of a constant affine fixed point would not
+suffice.
+
+### Exact varying-history compatibility identity
+
+At every applied accelerometer epoch k in the q->0 limit,
+
+`P_Bperp [a_w,k^W-g^W]=delta_B,k`,                         (MM-1)
+
+with `||delta_B,k||` bounded by the explicit near-field/lever defects.
+Thus the transverse nominal AW is pinned near the fixed world vector
+`P_Bperp g`; it is not free to follow the varying physical acceleration.
+
+Using the exact innovation identity and rotating to world coordinates,
+
+`P_Bperp R_bw r_a,k
+ =P_Bperp a_phys,k^W-P_Bperp a_w,k^W
+  -P_Bperp R_bw bhat_a,k + lever/calibration terms`.        (MM-2)
+
+Substituting MM-1,
+
+`P_Bperp R_bw r_a,k
+ =P_Bperp a_phys,k^W-P_Bperp g^W
+  -P_Bperp R_bw bhat_a,k + bounded defects`.                (MM-3)
+
+Hence recurring MARINE MOTION variation appears explicitly in the
+accelerometer residual around a fixed gravity-sized offset. The residual is
+not an arbitrary control.
+
+For persistence, the complete S/accelerometer correction sequence must map
+the varying residuals MM-3 back to states satisfying MM-1 at every subsequent
+accelerometer epoch. This is the correct filter-specific bridge. The remaining
+lemma is to show that the literal lifted correction map cannot annihilate all
+allowed zero-mean physical variations while also supplying the fixed positive
+OU-loss replacement and keeping LIN/S bounded. This must use the MARINE
+MOTION excitation span; a DC-only fixed-point argument is insufficient.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
