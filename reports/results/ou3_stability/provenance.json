@@ -225,11 +225,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/root_covariance_certificate.py",
-      "git_blob_sha": "d5c7c45fa8f71aecce5fbbd90d6eda1799eae104"
+      "git_blob_sha": "c3ba8ea601267edbc62ca9eeda28759e96b3722a"
     },
     {
       "path": "tests/validation/test_ou3_root_covariance_certificate.py",
-      "git_blob_sha": "1a364c8cbad5773fb2a8e2f0b83057b6e606cb48"
+      "git_blob_sha": "4f2cbbb3d55892e8888937e9718c87a692c5f240"
     },
     {
       "path": "tools/stability/ou3_theorem/factor_word.py",
