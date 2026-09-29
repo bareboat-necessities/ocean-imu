@@ -41,6 +41,38 @@ def nonlinear_tail_ratio(p: A21TailPremises) -> float:
     """Small-gain lift: rho=(sqrt(rho0)+eta)^2."""
     return (math.sqrt(p.linear_storage_ratio)+p.nonlinear_storage_lipschitz)**2
 
+
+def direct_rho_small_gain_budget(rho0: float, eta_fraction: float = 0.5) -> dict:
+    """Quantitative downstream budget once a direct linear rho0 is certified.
+
+    eta_max=1-sqrt(rho0).  Reserving eta_fraction of that margin for the
+    nonlinear multiplicative remainder leaves the rest as strict contraction
+    headroom.  This is algebra only; it does not assert that the nonlinear
+    remainder attains the budget on a retained source region.
+    """
+    if not math.isfinite(rho0) or not 0 <= rho0 < 1:
+        raise ValueError("rho0 must be finite in [0,1)")
+    if not math.isfinite(eta_fraction) or not 0 < eta_fraction < 1:
+        raise ValueError("eta fraction must lie in (0,1)")
+    root=math.sqrt(rho0)
+    eta_max=1.0-root
+    eta=eta_fraction*eta_max
+    rho=(root+eta)**2
+    return {"rho0":rho0,"sqrt_rho0":root,"eta_max":eta_max,
+            "reserved_eta":eta,"rho_with_reserved_eta":rho,
+            "one_minus_rho":1.0-rho,
+            "strict":rho<1.0}
+
+
+def disturbance_storage_ceiling(*, rho: float, supply_gain: float,
+                                disturbance_bound: float) -> float:
+    """Steady recurring storage ceiling for V+ <= rho V+c_d d^2."""
+    vals=(rho,supply_gain,disturbance_bound)
+    if not all(math.isfinite(x) for x in vals) or not 0 <= rho < 1 or supply_gain < 0 or disturbance_bound < 0:
+        raise ValueError("valid contraction/supply data required")
+    return supply_gain*disturbance_bound*disturbance_bound/(1.0-rho)
+
+
 def practical_radius_bound(p: A21TailPremises, disturbance_bound: float) -> float:
     if not math.isfinite(disturbance_bound) or disturbance_bound < 0: raise ValueError("finite nonnegative disturbance bound required")
     rho=nonlinear_tail_ratio(p)
