@@ -220,6 +220,31 @@ def aw_increment_cap():
             'global_aw_variance_ceiling': str(ceiling(eps))}
 
 
+
+def nominal_mean_loop_feasibility(*, root_aw_bound, correction_l1_bound,
+                                  row_mass=F(1)):
+    """Fast source-uniform feasibility gate for the signed nominal AW mean.
+
+    The exact representation gives
+      |mu| <= W0 |a_hat0| + sum_c Wc |Delta_c|,
+      0<=W0,Wc<=row_mass.
+    Therefore any proof using only separate absolute correction magnitudes
+    must fit this budget below the G0 2/5 premise.  This is intentionally a
+    kill test, not a promoted bound: if the RHS already exceeds 2/5, a useful
+    proof must exploit the signed gain-weighted loop identity rather than
+    unsigned correction accumulation.
+    """
+    root,corr,mass=map(F,(root_aw_bound,correction_l1_bound,row_mass))
+    if min(root,corr,mass)<0:
+        raise ValueError('nonnegative loop budgets required')
+    rhs=mass*(root+corr)
+    return {'unsigned_representation_upper':str(rhs),
+            'G0_transverse_premise':'2/5',
+            'positive_margin':str(F(2,5)-rhs),
+            'unsigned_route_feasible':rhs<F(2,5),
+            'requires_signed_loop_if_failed':rhs>=F(2,5)}
+
+
 def certificate():
     star16 = corollary_a_star(0, 0)
     old16 = nominal_attitude_column_floor(16, 0, FRACTION)
