@@ -2290,6 +2290,80 @@ scheduler/service condition not yet used, or
 detectability and cannot yield a source-uniform contraction margin.  Numerical
 carried-word gaps cannot decide this theorem question.
 
+## Continuous soft-kernel Riccati diameter
+
+The exact-kernel quotient is discontinuous when the compatibility nullspace
+changes dimension. Avoid that quotient. Carry instead a continuous unit
+direction n(W) selected from the least-information tilt/BA eigenspace, with
+sign fixed by the transported magnetic field, and append finite precision
+`mu n n'` whether or not the data nullspace is exactly one-dimensional.
+
+Define
+
+`J_mu(W)=J(W)+mu n(W)n(W)'`,
+`P_mu(W)=Pi+Phi_tilde J_mu(W)^-1 Phi_tilde'`,
+`kappa_soft(W)=lambda_max(Pi^-1 P_mu(W))`.
+
+No direction is abruptly promoted from kernel to quotient when an exact
+kernel disappears. If a formerly exact kernel acquires information epsilon^2,
+the same finite prior mu remains on that direction and its contribution is
+bounded by `1/(mu+epsilon^2)` rather than `1/epsilon^2`.
+
+Let E span n^perp and block
+`J=[[j_nn,j_nq'];[j_nq,J_qq]]`. The exact Schur complement is
+
+`S_soft=J_qq-j_nq j_nq'/(j_nn+mu)`.
+
+Because `j_nn+mu>=mu`, rank changes of J along n are harmless. The remaining
+requirement is coercivity only on directions uniformly separated from the
+chosen soft line. This is weaker than the retired exact-kernel principal-angle
+floor: when a second weak direction approaches n, the least-information
+eigenvector n rotates continuously with the weak subspace rather than
+disappearing.
+
+A basis-free formulation uses the two smallest eigenvalues of the tilt/BA
+information block. If lambda_2(W), the second eigenvalue after the soft
+direction, has a source-uniform positive floor, then
+
+`S_soft >= lambda_2,bar I`
+
+on the soft quotient and
+
+`kappa_soft <= 1 + ||Pi^-1/2 Phi_tilde||^2/lambda_2,bar`
+
+(with the sharper block reader retained for actual constants).
+
+The qualitative complete-word nullspace theorem already proves nullity at
+most one for each word. What it did not prove was a uniform smallest positive
+eigenvalue across rank-changing words. For the soft-kernel theorem the
+relevant compactness quantity is instead lambda_2, counting eigenvalues from
+zero with multiplicity. Unlike `lambda_min^+`, lambda_2 is continuous through
+a one-dimensional kernel appearing/disappearing. If every limiting word has
+nullity at most one, compactness now legitimately implies
+
+`inf_W lambda_2(W)>0`,
+
+provided the admissible retained word class itself is compact and the
+complete-word information matrix J(W) is continuous on that closed class.
+
+This repairs the earlier compactness error: continuity applies to the fixed
+ordered eigenvalue lambda_2, not to `lambda_min^+`. It also eliminates the
+kernel-disappearance epsilon^-2 counterexample because finite precision is
+kept on the continuously selected soft direction on both sides of the rank
+change.
+
+The next obligations are therefore (i) verify compactness/closedness of the
+radius-local complete-word coefficient class including scheduler/event-type
+limits; (ii) verify continuity of J on each event stratum and across allowed
+event-boundary limits, or use finitely many closed strata; and (iii) define a
+continuous/measurable soft direction n(W). A globally continuous eigenvector
+is unnecessary for the bound: the rank-one projector onto the least
+eigenspace suffices when lambda_1<lambda_2; at equality any minimizing
+projector gives the same conservative two-dimensional treatment.
+
+If these topological obligations close, a finite source-uniform soft-kernel
+diameter follows without AW-gain entry, determinant sign crossing, or
+finite-horizon detectability of the disappearing exact kernel.
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
