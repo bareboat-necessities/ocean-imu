@@ -2400,12 +2400,15 @@ satisfy the same closed service inequality. Thus service prevents loss of the
 last required magnetic information at a boundary unless other applied events
 already retain the floor.
 
-On every fixed stratum the frozen auxiliary matrices O,A and hence the
-nuisance-shorted information J are continuous provided the nuisance covariance
-rank is constant. Avoid pseudoinverse discontinuity by retaining the raw
-joint factor representation or by further stratifying by nuisance rank;
-matrix rank takes finitely many integer values. This yields finitely many
-closed constant-rank substrata on which J is continuous.
+Do not stratify by exact nuisance rank: exact-rank sets are generally not
+closed. Instead retain the raw fixed-dimensional joint factor action
+`Q_W(x)=min_z ||A_W x+D_W z||^2`, with nuisance/process action rows included
+in `D_W`. Structural zero-action directions are moved into the slow root once
+and for all. The proved action floors make the penalized nuisance operator
+coercive, so minimizers are bounded and `Q_W` is continuous/lower-
+semicontinuous through observation-rank changes. The symmetric slow
+information `J(W)` is defined by this quadratic form, without a data-dependent
+pseudoinverse.
 
 The remaining topological requirement is compactness of each substratum.
 Bounds on dt, tuner clamps, bias/state retained radius, covariance ceilings,
@@ -4094,6 +4097,45 @@ rank-two transverse compatibility control. If such a base exists, the IFT
 construction plus PR-1 yields a genuine admissible persistent two-word pair
 and hence alpha_bar=1. The current proof has not established existence of
 that base.
+## Fixed-metric exact compatibility-mode return
+
+Fix once and for all a positive-definite physical root metric M on the
+attitude/BA slow sector, with declared units/scales. Normalize every nontrivial
+compatibility generator by
+
+`nu_W' M nu_W = 1`.                                        (MR-1)
+
+Transport the exact W kernel homogeneously to the next recurring root:
+
+`nu_hat_(W->+) = T_W nu_W`,                                 (MR-2)
+
+where T_W is the literal deterministic attitude/reset + BA OU root transport
+on the zero-loss mode. For a same-history successor W+ with normalized
+compatibility generator nu_+, define the metric projection coefficient
+
+`a_W = nu_+' M nu_hat_(W->+)`                               (MR-3)
+
+(the denominator is one by MR-1; retain it explicitly for other
+normalizations). This coefficient is invariant under coordinate rescaling
+when M is transformed accordingly.
+
+The O2 equality question is now the theorem statement
+
+`alpha_M := sup_(admissible exact-kernel same-history pairs) |a_W| < 1 ?`
+
+or, if one-word strict loss fails, whether there exist finite m and delta>0
+with every admissible m-word exact-kernel chain satisfying
+`|prod a_j|<=1-delta`.
+
+BA decay enters T_W exactly. It does not by itself imply |a_W|<1 because the
+next compatibility line may change its BA/attitude ratio. Equality |a_W|=1
+means the transported old line is M-collinear with the next compatibility
+line with no metric amplitude loss. This is the precise persistent-line
+condition to characterize/reachability-test.
+
+Until MR-3 is bounded strictly below one (or a finite product is), no theorem
+statement should use Euclidean `|n_+'Phi n|<1`, and no finite scalar O2
+invariant is claimed.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
