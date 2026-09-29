@@ -6,11 +6,26 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_theorem.matrix_certificates import congruence, identity, is_psd
 from tools.stability.ou3_theorem.word_energy import (
+    block_generalized_loss_implication, block_schur_self_test,
     full_loss_margin, restricted_service_counterexample, word_identity,
 )
 
 
 class WordEnergyTests(unittest.TestCase):
+    def test_block_schur_retains_nuisance_cancellation(self):
+        r=block_schur_self_test()
+        self.assertTrue(r['verified'])
+        self.assertTrue(r['cross_cancellation_retained'])
+        self.assertNotEqual(r['principal_AG_loss'],r['nuisance_eliminated_AG_loss'])
+
+    def test_block_reduction_does_not_skip_full_root_precision_comparison(self):
+        r=block_generalized_loss_implication(
+            [[1,0,0],[0,1,0],[0,0,1]],
+            [[5,2,2],[2,4,1],[2,1,2]],2,F(1,10))
+        self.assertTrue(r['ag_after_optimal_nuisance_cancellation_spd'])
+        self.assertTrue(r['full_generalized_loss_margin_verified'])
+        self.assertEqual(r['rho0_upper'],'9/10')
+
     def test_restricted_service_cannot_be_lifted_to_full_heading_information(self):
         r=restricted_service_counterexample()
         self.assertTrue(r['verified'])
