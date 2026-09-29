@@ -2452,6 +2452,63 @@ which there are finitely many and each admissible closed pattern retains
 MAGNETIC SERVICE. Under the existing complete-word zero-action proof this
 supports nullity<=1 on every admissible stratum closure.
 
+## Compactness of finite-word physical traces
+
+Fix a complete MOVING A21 word interval I=[0,T_W]. The existing MARINE
+MOTION bounds give uniform pointwise bounds on p,v,a and the a.e. jerk bound
+`|a_dot|<=J_max`. Thus a is equibounded and J_max-Lipschitz. Arzela--Ascoli
+gives a uniformly convergent subsequence of a. Bounded initial v and p plus
+`v(t)=v(0)+int a` and `p(t)=p(0)+int v` then give uniform convergence of v
+and p. The kinematic identities pass to the limit.
+
+The jerk condition is closed because a uniform limit of J_max-Lipschitz
+functions is J_max-Lipschitz. Pointwise p/v/a bounds are closed. The
+bounded-potential condition `|int_t1^t2 p|<=P_AC` is closed under uniform
+convergence of p for every pair t1<t2.
+
+Physical accelerometer/gyro bias traces are uniformly bounded with uniform
+derivative bounds, hence are equibounded/equi-Lipschitz and compact in C0 by
+Arzela--Ascoli; their derivative bounds remain valid in the limit.
+
+For attitude use R(t) in SO(3). SO(3) is compact, and the nominal/physical
+angular-rate bound makes R equi-Lipschitz through `R_dot=R[omega]x` in the
+integral sense. A uniformly convergent subsequence therefore has a limit in
+SO(3) satisfying the same attitude kinematics. The additional bounded rate
+traces needed by lever-arm coefficients are treated by their existing
+regularity bounds.
+
+The MOVING excitation condition is closed: on each complete T_E subwindow,
+attitude span is the maximum of a continuous rotation-distance function over
+a compact pair-time set. Uniform convergence of R preserves
+`span>=theta_E`. STILL/transition histories belong to their separate regime
+strata and are not inserted into this recurring MOVING word class.
+
+All-time extendability is also closed. Take a sequence of globally admissible
+continuations whose restrictions converge on I. Apply the same uniform
+bounds and Arzela--Ascoli on [-n,n] for n=1,2,... and use a diagonal
+subsequence. The local limits agree on overlaps and define a global
+continuation. The derivative, pointwise and bounded-potential inequalities
+pass to that limit. Hence restrictions to I of globally admissible histories
+form a closed compact trace class.
+
+Sensor/frontend samples on the finite scheduler are continuous evaluations
+of these traces and bounded finite-dimensional frontend/reference variables.
+Combining this physical compactness with the already bounded closed
+estimator/covariance/tuner/clock variables proves compactness of every closed
+event/rank stratum described above.
+
+Therefore, assuming the established boundary nullity<=1 result on every
+admissible stratum, the ordered second eigenvalue lambda_2(J(W)) is continuous
+and strictly positive on each compact stratum. It attains a positive minimum
+there. There are finitely many strata, so
+
+`lambda2_bar := min_strata min_W lambda_2(J(W)) > 0`.
+
+This is a legitimate source-uniform **existence** modulus for the soft-kernel
+route. No numerical value is asserted. The argument uses the fixed ordered
+eigenvalue lambda_2, which is continuous through a one-dimensional rank
+change, rather than the discontinuous `lambda_min^+` used in the retracted
+coercivity argument.
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
 on the quotient of the physical kernel.  Together with
 `nu'Pnu<=c` and the proved nuisance bounds, block Cauchy--Schwarz gives a
