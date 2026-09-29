@@ -4493,6 +4493,52 @@ Therefore the invariant-zero question remains undecided, but one branch is
 now narrowed further: **finite escape cannot be proved from bounded physical
 velocity/displacement/potential or the S pseudo-update alone**, because the
 required zero-output forcing need not contain a forbidden DC component.
+## Reduced zero dynamics after eliminating transverse physical forcing
+
+On a fixed lifted interval write the compatibility output as
+`0=y=Cm+D_perp u_perp+D_parallel u_parallel+e`.              (RZ-1)
+Whenever the literal transverse input block D_perp is invertible, eliminate
+
+`u_perp=-D_perp^-1(Cm+D_parallel u_parallel+e)`.             (RZ-2)
+
+Substitution into the lifted mean map gives the exact constrained dynamics
+
+`m_+=A_z m+B_z u_parallel+d_z`,                             (RZ-3)
+
+`A_z=A-B_perp D_perp^-1 C`,
+`B_z=B_parallel-B_perp D_perp^-1 D_parallel`.               (RZ-4)
+
+All S pseudo-update effects are already inside A,B,C,D through the literal
+chronology and gains. Thus persistence reduces locally to boundedness and
+admissibility of this one-input time-varying zero dynamics.
+
+Project RZ-3 onto the LIN chain `(v,p,S)` and AW state. The open-loop
+prediction has the polynomial-integrator chain driven by exponentially
+stable AW; each scheduled S pseudo-update is a Kalman measurement correction
+with innovation `-S`. Consequently the lifted S-to-S map has no conserved
+integrator mode forced by the zero-output constraint: its homogeneous
+coefficients are finite, while the remaining longitudinal input can alter the
+chain through the accelerometer gain/cross covariance.
+
+Critically, the compatibility output removes only the two transverse force
+components. It imposes no condition on the longitudinal physical-force
+component. That remaining scalar input is sufficient to cancel a scalar
+secular S/velocity condition if one appears; there is no second independent
+longitudinal closure equation in the persistent-pair problem.
+
+Therefore the literal S pseudo-update does not produce an algebraic
+overdetermination of the reduced zero dynamics. A finite-escape theorem would
+require showing that RZ-3 has an unstable/unbounded mode that is both
+uncontrollable from B_z and unavoidable under MARINE MOTION. No such mode is
+present in the current zero-action classification: four-S injectivity removes
+homogeneous LIN/AW zero-action roots, while the base forced recursion may
+remain bounded.
+
+This means the invariant-zero analysis does not currently yield an exclusion
+theorem. Locally, where D_perp stays nonsingular and margins are strict, the
+zero manifold is viable and the remaining longitudinal input can maintain
+bounded integral states. Global existence still depends on preventing loss of
+D_perp rank/margins, but there is no intrinsic S-chain escape mechanism.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
