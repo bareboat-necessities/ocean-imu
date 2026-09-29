@@ -5839,6 +5839,45 @@ mean recursion over one period, including v,p,S,AW/BA/attitude closure;
 Until (a)-(d) are supplied, the regular compatible-period seed remains
 unproved.
 
+## Endpoint controllability: correct reduced target
+
+After imposing the periodic physical attitude/service template and eliminating
+the two transverse physical acceleration components by compatibility, do not
+ask the remaining scalar input to control every estimator coordinate. Attitude
+is prescribed/closed by the compatibility+magnetic construction, scheduler
+phase is chosen periodic, and fixed filter parameters need no control.
+
+Let y collect only the residual mean closure coordinates not already fixed by
+those constraints (LIN/S and any active BA scalar combinations). The reduced
+linearized endpoint map is
+`delta y_N = Phi_y delta y_0 + C_N delta u`,
+`C_N=[Phi(N,k+1)b_k]_(k in acc epochs)`,                  (ECM-1)
+where b_k is the effective column after transverse compatibility elimination.
+
+Full endpoint controllability is exactly
+`rank C_N = dim(y_unfixed)`.                              (ECM-2)
+
+The open OU/LIN chain driven by an acceleration input has a confluent
+Vandermonde/Hermite controllability structure: distinct input epochs generate
+independent endpoint moments in a_w,v,p,S. Four distinct effective epochs are
+enough per scalar chain when the direct AW component of b_k is nonzero. This
+is the same {1,t,t^2,psi_tau(t)} structure used by the four-S injectivity
+lemma, now transposed as a controllability statement. Thus the LIN/AW
+subsystem is controllable on a regular branch with nonzero effective AW input.
+
+Active BA/attitude closure is not supplied by that scalar chain. Those
+coordinates are already constrained by exact compatibility and the prescribed
+periodic attitude; requiring them again in y double-counts constraints. The
+remaining BA amplitude on the compatibility line decays and is zero in the
+q=0 periodic construction. Therefore the legitimate q=0 seed closure target
+is the LIN/AW chain, for which ECM-2 holds with four distinct regular
+accelerometer epochs.
+
+Hence endpoint controllability of the **correct reduced q=0 mean closure**
+closes conditionally on the effective longitudinal input having a nonzero AW
+component at four distinct epochs. That nonzero component is the same regular
+gain condition underlying D_perp and is open.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
