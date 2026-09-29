@@ -124,7 +124,11 @@ the marine operating region: there is a fixed nonzero world-frame reference
 with a stated small `eps_B`, and the field remains uniformly non-collinear
 with gravity,
 
-`||(I-bhat^W(t)bhat^W(t)^T) g^W|| >= g_B_perp > 0`.
+`|I_M| <= I_max := 80 deg`, and throughout the certified continuation the field variation is small enough to preserve this inclination envelope. Since geomagnetic inclination is measured from the local horizontal, the exact gravity-transverse floor is
+
+`||(I-bhat^W(t)bhat^W(t)^T) g^W|| = |g^W| |cos I(t)| >= g_min cos(I_max) =: g_B_perp > 0`.
+
+For `I_max=80 deg`, `cos(I_max)=0.1736481777`, so `g_B_perp >= 0.1736481777 g_min` (about `1.70 m/s^2` when `g_min` is near standard gravity). This explicitly excludes the near-dip-pole region rather than merely excluding the exact magnetic poles.
 
 The exactly constant-field case has `eps_B=0`.  This is a physical field
 assumption, not an estimator-state assumption.  It formalizes the fact used
