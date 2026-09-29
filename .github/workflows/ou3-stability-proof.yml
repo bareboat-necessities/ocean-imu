@@ -34,7 +34,9 @@ permissions:
 jobs:
   theorem:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # Native source replays and the final exact enclosure exceed 20 minutes.
+    # Preserve every check; a runner timeout is not a mathematical failure.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v6
         with:
