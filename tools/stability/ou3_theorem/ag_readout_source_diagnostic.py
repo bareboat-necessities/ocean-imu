@@ -121,6 +121,63 @@ def analyze(trace, dps=80):
             t = f*t
             sequence.append((kind, f, q))
         o, endpoint = mp.matrix(rows), t[:6, :]
+
+        # Direct complete-word homogeneous contraction feasibility.  This is
+        # deliberately independent of any scalar covariance ceiling: replay
+        # the literal mean differential M through every prediction, accepted
+        # correction A=I-KH, and reset, then compare
+        # M' P_end^-1 M directly with P_root^-1.  The equivalent loss
+        # D=P_root^-1-M'P_end^-1 M is also Schur-eliminated over the 15
+        # nuisance coordinates, so the reported AG margin already permits the
+        # worst nuisance cancellation.  Finite carried words remain
+        # non-promoting; the source-uniform enclosure is a separate theorem.
+        mfull = mp.eye(21)
+        for e in trace['events']:
+            kind = e['kind']
+            if kind == 'prediction':
+                ff = mp.eye(21)
+                ff[:6, :6] = mat(e['F_AG'])
+                ff[6:18, 6:18] = mat(e['F_LIN'])
+                ff[18:, 18:] = mp.mpf(e['phi_BA'])*mp.eye(3)
+                mfull = ff*mfull
+            elif kind == 'correction':
+                h, k = mat(e['H']), mat(e['K'])
+                mfull = (mp.eye(21)-k*h)*mfull
+            elif kind == 'reset':
+                d = mat(e['d'])
+                x, y, z = d
+                gg = mp.eye(21)
+                gg[:3, :3] += mp.matrix([[0, -z, y], [z, 0, -x], [-y, x, 0]])/2
+                mfull = gg*mfull
+            elif kind in ('sync', 'sync_completion'):
+                pass
+            else:
+                raise ValueError('unknown literal mean event')
+        proot = mat(trace['root_covariance'])
+        pend = mat(trace['terminal_covariance'])
+        jroot = proot**-1
+        endpoint_energy = mfull.T*(pend**-1)*mfull
+        loss = (jroot-endpoint_energy)
+        loss = (loss+loss.T)/2
+        # Generalized endpoint/root energy ratio.  With P_root=L L', root
+        # energy coordinates give C=L' endpoint_energy L.
+        chol = mp.cholesky((proot+proot.T)/2)
+        whitened_endpoint = chol.T*endpoint_energy*chol
+        rho_direct = max(mp.eigsy((whitened_endpoint+whitened_endpoint.T)/2,
+                                  eigvals_only=True))
+        # Exact blockwise target suggested by the information-form route:
+        # minimize the loss over nuisance coordinates for each AG root.
+        daa = loss[:6, :6]
+        dan = loss[:6, 6:]
+        dnn = loss[6:, 6:]
+        dnn_eigs = mp.eigsy((dnn+dnn.T)/2, eigvals_only=True)
+        if min(dnn_eigs) > 0:
+            ag_schur = daa-dan*(dnn**-1)*dan.T
+            ag_schur = (ag_schur+ag_schur.T)/2
+            ag_schur_min = min(mp.eigsy(ag_schur, eigvals_only=True))
+        else:
+            ag_schur_min = mp.mpf('-inf')
+
         # High-precision factor pivoting. This is diagnostic rank, never an
         # exact-zero test or a source-uniform singular-value certificate.
         residual = o.copy()
@@ -157,6 +214,11 @@ def analyze(trace, dps=80):
                 'raw_AG_array_sigma_min': fmt(min(mp.svd(o, compute_uv=False))),
                 'AG_action_lambda_max': fmt(max(mp.eigsy((action+action.T)/2, eigvals_only=True))),
                 'AG_action_minus_literal_covariance_lambda_min': fmt(min(mp.eigsy((action+action.T-p-p.T)/2, eigvals_only=True))),
+                'direct_complete_word_rho': fmt(rho_direct),
+                'direct_complete_word_margin': fmt(1-rho_direct),
+                'loss_nuisance_lambda_min': fmt(min(dnn_eigs)),
+                'AG_loss_schur_after_nuisance_lambda_min': fmt(ag_schur_min),
+                'direct_complete_word_strict_contraction': bool(rho_direct < 1),
                 'exported_Q_lambda_min': fmt(qmin), 'maximum_injection_rad': fmt(injection),
                 'exported_sync_asymmetry_exact': str(sync_skew),
                 'minimum_complete_sync_pair_Rayleigh_quotient_exact': str(sync_rayleigh),
