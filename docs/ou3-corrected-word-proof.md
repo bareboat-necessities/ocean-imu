@@ -1705,6 +1705,85 @@ composition then supplies \`E(c,r)\`.  The final invariant test remains
 This section changes the proof target only; it does not claim a uniform
 complete-word bound yet.
 
+## Complete-word zero-action nullspace
+
+Consider a sequence of normalized slow/root directions and nuisance/source
+mimics for complete regular MOVING words whose total joint action tends to
+zero.  Pass to a convergent subsequence on a fixed combinatorial word type.
+All statements below are in the limiting homogeneous auxiliary system.
+
+**1. Fresh process action rigidifies the mimic.**  Every fresh source factor
+has positive covariance on its driven subspace.  Zero source action therefore
+sets every AG, LIN/AW and BA fresh factor to zero.  AW sync factors also vanish.
+Consequently the nuisance trajectory is no longer independently selectable at
+successive observations: it is the deterministic propagation of one root
+nuisance vector through the literal transitions.  In particular BA follows
+its homogeneous OU decay and the complete (v,p,S,a_w) chain follows its
+homogeneous linear dynamics.
+
+**2. S loss removes the free LIN chain.**  Applied S pseudo-observations have
+positive R_S.  Zero corrected S loss gives S(t_j)=0 at every applied S row.
+The regular scheduler supplies the three separated S rows used in the
+nuisance proof.  With zero fresh LIN/AW sources, the exact integrated-chain
+Vandermonde/S-chain identity implies the only homogeneous LIN trajectory
+compatible with all these zero S values and zero terminal forgetting is the
+zero (v,p,S,a_w) trajectory.  Thus no AW root remains available to retune the
+accelerometer force independently across epochs.
+
+**3. Magnetic loss restricts attitude/gyro chronology.**  Zero magnetic loss
+at every applied informative magnetic row gives
+\`[B_k]x theta_k=0\`; hence \`theta_k=lambda_k B_k\` at those rows.  With zero
+AG fresh source action, \`(theta,b_g)\` follows the literal deterministic
+prediction/reset transport.  MAGNETIC SERVICE bounds service gaps.  Lemma T
+then implies that any nonzero gyro-bias component that would move the
+attitude away from the transported field-axis line is impossible.  Therefore
+the limiting AG trajectory is the magnetic-compatible deterministic class:
+gyro bias has no observable transverse/axial component left, and attitude is
+the transported field-axis mode.
+
+**4. Accelerometer loss fixes BA compatibility.**  Since the homogeneous AW
+trajectory was killed in step 2, zero accelerometer loss at every applied row
+reduces to
+
+\`J_att,k theta_k + J_ba,k b_a,k=0\`.
+
+BA has one root vector and deterministic OU decay from step 1; it cannot be
+chosen separately at each epoch.  On the magnetic-compatible attitude class,
+these equations define the common tilt/BA compatibility line.  The literal
+shipping kernel is
+
+\`nu=(theta_hat,0,...,0,-J_att theta_hat)\`
+
+at a word root.  Chronological transport maps this line to the corresponding
+compatibility line at subsequent rows.  Hence the complete zero-action
+trajectory lies in \`span(nu)\`.
+
+**5. Terminal forgetting excludes any hidden terminal mode.**  Zero terminal
+forgetting means a remaining deterministic root direction must also survive
+to the terminal state without fresh-process separation.  Steps 1--4 leave
+only \`span(nu)\`; no additional nuisance terminal mode remains.
+
+Therefore the nullspace of the complete-word joint action is contained in
+the physical tilt/BA kernel:
+
+\`Null(Action_MW) subset span(nu)\`.                           (ZN-1)
+
+Conversely the quiet compatible construction shows why the kernel must be
+retained rather than declared observable; after adding fictitious precision
+\`mu nu nu'\`, the augmented action has trivial nullspace.
+
+**Qualification still required.**  Step 2 is rigorous only if the three
+regular S rows plus zero terminal forgetting make the homogeneous
+(v,p,S,a_w) chain injective on every allowed timing pattern; the existing
+nuisance proof supplies the needed separated-row determinant but it was used
+there for an upper comparison, so this injectivity implication must be stated
+and checked explicitly.  Step 4 likewise requires that the deterministic BA
+decay and transported magnetic-compatible attitude line have a common
+accelerometer compatibility intersection of dimension at most one for every
+admissible MOVING word.  This is a multi-epoch statement and is not implied by
+the failed two-epoch force-separation lemma.  Until these two qualifications
+are discharged, (ZN-1) is a proof skeleton, not a closed theorem.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
