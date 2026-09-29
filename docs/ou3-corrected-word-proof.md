@@ -3621,6 +3621,85 @@ The safe constructive target is thus the minimum singular value of that
 finite-dimensional continuous minimization with the physical line retained;
 extracting a certified lower enclosure for it is the remaining numerical-
 constant task before K(c,r) can be evaluated.
+## Combined accelerometer/kernel block floor
+
+After charging nuisance, LIN/AW and magnetic/gyro sectors, let A_W denote the
+literal reduced accelerometer map on the remaining tilt/BA slow coordinates.
+Theorem A gives
+
+`Ker A_W subset span(nu_W)`
+
+on this reduced sector; when the physical compatibility line is nontrivial,
+equality is the worst case. Define
+
+`B_W(c)=[A_W; c^-1/2 nu_W']`.
+
+Then
+`B_W'B_W=A_W'A_W+c^-1 nu_W nu_W'`.                          (AK-1)
+
+For every word this matrix is positive definite: if B_W x=0, then
+`A_Wx=0`, so x=a nu_W, while `nu_W'x=0` forces a=0.
+
+To obtain a quantitative formula, normalize `e=nu_W/|nu_W|` and decompose
+`x=t e+y`, y perpendicular e. Write the reduced accelerometer Gram as
+
+`A_W'A_W=[[a,h'];[h,C]]`
+
+in `(e,e_perp)` coordinates. Since its nullspace is contained in span(e),
+`C>0`. The augmented Gram is
+
+`G_AK=[[a+|nu|^2/c,h'];[h,C]]`.                             (AK-2)
+
+Its Schur complement is
+
+`s_AK = a+|nu|^2/c-h'C^-1h
+     = j_A(W)+|nu|^2/c`,                                   (AK-3)
+
+where `j_A>=0` is the accelerometer information shorted to the physical line.
+
+Let
+`gamma_perp(W)=lambda_min(C_W)>0` and
+`H_A(W)=||C_W^-1/2 h_W||`. A direct completion of squares gives, for
+`x=(t,y)`,
+
+`x'G_AK x
+ = (y+C^-1 h t)' C (y+C^-1 h t) + s_AK t^2`.               (AK-4)
+
+Using `|y+C^-1ht|^2 + t^2` versus `|y|^2+t^2` yields the explicit bound
+
+`lambda_min(G_AK)
+ >= min(gamma_perp,s_AK) / (1+||C^-1 h||)^2`.               (AK-5)
+
+(a sharper 2x2 norm-equivalence factor may be substituted). Therefore
+
+`sigma_min(B_W(c))
+ >= sqrt(min(gamma_perp(W), j_A(W)+|nu_W|^2/c))
+    /(1+||C_W^-1 h_W||).                                    (AK-6)
+
+Now use compactness. The physical generator normalization gives
+`|nu_W|>=nu_min>0`; the reduced transverse accelerometer block C_W is
+continuous and has no zero direction by Theorem A after the previously
+charged sectors, so
+`gamma_bar_perp=inf_W gamma_perp(W)>0`; and continuity gives
+`Hbar_A=sup_W||C_W^-1 h_W||<infinity`. Hence
+
+`a_AK_under(c,r)
+ := sqrt(min(gamma_bar_perp,nu_min^2/c))/(1+Hbar_A) >0`.     (AK-7)
+
+This is a constructive symbolic enclosure:
+`a_AK_under <= inf_W sigma_min B_W(c)`.
+
+Important qualification: the assertion `gamma_bar_perp>0` is valid only if
+the reduced A_W used here is the **complete same-history accelerometer block
+after** nuisance/LIN/gyro implications have been incorporated, so that any
+additional zero direction would contradict Theorem A. It must not be
+identified with an isolated two-epoch or pointwise accelerometer matrix; that
+would resurrect the refuted principal-angle route.
+
+Thus the combined block has a certified positive enclosure in terms of three
+compactness constants `(gamma_bar_perp,nu_min,Hbar_A)`. Numerical/closed-form
+values for those constants are still to be extracted from the literal
+coefficient bounds before H_imp and K can be evaluated numerically.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
