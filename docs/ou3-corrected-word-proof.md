@@ -2808,6 +2808,66 @@ This is a conditional obstruction, not yet an existence proof of a persistent
 exact-compatible recurring execution. It clarifies the role of BA decay:
 decay rotates/reweights the compatibility line; it does not itself dissipate
 the physically normalized tilt scalar.
+## Persistence of an exact tilt/BA compatibility line across words
+
+Assume a nontrivial exact compatibility line persists through consecutive
+regular A21 words and normalize every generator by unit physical attitude
+amplitude. The previous transfer identity gives
+
+`Phi_b,W q_W = s_W q_(W+1)`, with `|s_W|=1`.
+
+Active A21 BA prediction has `0<Phi_b,W<1` over every positive-duration
+complete word. Hence
+
+`|q_(W+n)| = (prod_j Phi_b,j) |q_W|`
+
+and, using the positive minimum word duration and finite tau_b ceiling,
+
+`|q_(W+n)| <= phi_bar^n |q_W| ->0` for some phi_bar<1.       (PER-1)
+
+Therefore indefinite exact persistence forces the compatibility lines toward
+the zero-BA field-axis line.
+
+At each accelerometer epoch k in word W, exact compatibility is
+
+`R_ba,k phi_b,k q_W = J_att,k F_k theta_hat_W`              (PER-2)
+
+up to the fixed sign convention. Thus PER-1 implies that along an indefinitely
+persistent sequence the transverse nominal specific-force action on the
+transported magnetic-axis tilt tends uniformly to zero at the applied
+accelerometer rows. In the limit, the nominal accelerometer attitude rows are
+field-axis compatible (zero-BA collinearity).
+
+This does **not** contradict the existing jerk-limited collinear-cadence
+lemma. That lemma constrains physical specific force. PER-2 constrains the
+estimator nominal force appearing in J_att. The proof ledger already contains
+an admitted history refuting source-uniform pointwise AW tracking, so no
+existing theorem transfers the physical jerk/cadence floor to the nominal
+force rows.
+
+Nor does zero homogeneous loss imply zero actual accelerometer innovation:
+the compatibility vector is a linearized error direction; the nominal
+execution may have nonzero innovations and gains while that homogeneous
+direction remains data-null. Therefore the innovation identity cannot turn
+PER-2 into physical force collinearity.
+
+Consequently the current assumptions do not rule out persistence of an exact
+compatibility line across arbitrarily many words. Conversely, PER-1 does not
+construct such an execution; it gives a necessary limiting condition on any
+persistent execution.
+
+Thus the persistence question remains undecidable from the current proved
+physical-to-nominal relations. What is proved is the dichotomy:
+(a) if exact compatibility persists indefinitely, q_W decays geometrically
+and the physical tilt scalar has unit persistence, so O2 cannot obtain strict
+kernel contraction from BA decay; (b) if the current assumptions exclude the
+limiting nominal zero-BA collinearity, the exclusion must come from a new
+closed-loop nominal-force reachability theorem, not from MARINE MOTION's
+physical jerk lemma alone.
+
+This identifies the same missing bridge as the earlier AW analysis in its
+minimal asymptotic form: a relation between physical excitation and the
+nominal accelerometer Jacobian on a persistent zero-loss direction.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
