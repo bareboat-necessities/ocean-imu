@@ -2280,6 +2280,87 @@ compatibility-line rotation producing O(epsilon) observation action also
 produces O(epsilon) terminal quotient image.  Without such a terminal
 retention estimate, assigning a finite C_det would be circular.
 
+## Terminal retention from compatibility-line variation
+
+Let K_k be the one-dimensional compatibility line pulled back to the root from
+the corrected history through epoch k, and let p_k be its orthogonal projector
+in the normalized slow root metric.  Exact prediction/reset transport carries
+a vector aligned with K_k without creating a quotient component; quotient
+persistence is created only when the compatible line changes.
+
+For a normalized root vector v decompose recursively
+
+`v=p_k v+(I-p_k)v`.
+
+At the next constraint block,
+
+`(I-p_(k+1))p_k v=(p_k-p_(k+1))p_k v`.                    (TR-1)
+
+Thus the terminal quotient image obeys the exact telescoping form
+
+`T_q v=sum_k T_(N<-k) E_k (p_k-p_(k+1)) p_k v
+        +T_(N<-0)(I-p_0)v`,                                 (TR-2)
+
+where E_k is the literal embedding at the kth constraint block and
+T_(N<-k) is the subsequent deterministic terminal transport.  There is no
+charge for motion along the current compatibility line.
+
+Each projector change is controlled by the residual constraint operator that
+defines the new line.  If C_k is the whitened magnetic/accelerometer/S block
+after nuisance shorting and K_k=Null(C_<=k) has dimension one, the
+Davis--Kahan/sine relation gives
+
+`||(p_k-p_(k+1))p_k v||
+ <= ||C_(k+1) p_k v|| / gap_(k+1)`,                         (TR-3)
+
+where gap_(k+1) is the smallest positive singular value of C_(k+1) restricted
+to K_k^perp.  Multiplying by terminal transport gives
+
+`||T_q v||_(Pi^-1)
+ <= A_0 ||(I-p_0)v||
+   +sum_k A_k/gap_(k+1) ||C_(k+1)p_k v||`,                  (TR-4)
+
+with
+`A_k=||Pi^-1/2 T_(N<-k)E_k||`.
+
+Cauchy--Schwarz then yields the detectability constant
+
+`C_ret <= A_0^2/gap_0^2
+ +sum_k A_k^2/gap_(k+1)^2`,                                (TR-5)
+
+provided the block residual energies are the same terms appearing in
+`|O_qv|_Sigma^-1^2`.
+
+This is the desired terminal-retention mechanism: only compatibility-line
+rotation is charged, and aligned persistence is quotiented out.
+
+But (TR-3) exposes the same quantitative issue as the retired global
+principal-angle proof, now locally: a finite C_ret requires a lower positive
+restricted gap for each line-changing constraint block.  Current assumptions
+allow a new constraint to become arbitrarily tangent to the existing
+compatibility line.  In that case both the line rotation and residual are
+small, but their ratio is governed by the local restricted singular value,
+which has no proved lower bound.
+
+There is no generic improvement from telescoping: for a two-dimensional
+example C_epsilon=[epsilon,0], the compatible line is fixed while observation
+energy is epsilon^2 and a later deterministic terminal map can retain the
+first coordinate with O(1) amplitude.  Exact transport and compactness do not
+bound the ratio.
+
+Therefore a source-uniform C_ret is not established by compatibility-line
+variation under the current assumptions.  The terminal-retention route is
+equivalent to a local transversality/detectability modulus.  This is not a
+new algebraic gap: it is the same near-null/terminal-persistent obstruction
+identified by (DET-3).
+
+The proof must now decide between two genuinely different mechanisms:
+(1) derive a restricted gap from an already existing shipping invariant or
+scheduler/service condition not yet used, or
+(2) accept that the current physical assumptions permit arbitrarily weak
+detectability and cannot yield a source-uniform contraction margin.  Numerical
+carried-word gaps cannot decide this theorem question.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
