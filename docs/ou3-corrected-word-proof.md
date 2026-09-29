@@ -2509,6 +2509,89 @@ route. No numerical value is asserted. The argument uses the fixed ordered
 eigenvalue lambda_2, which is continuous through a one-dimensional rank
 change, rather than the discontinuous `lambda_min^+` used in the retracted
 coercivity argument.
+## Soft-kernel Riccati diameter from the ordered spectral gap
+
+For each complete word W let the ordered eigenvalues of the nuisance-reduced
+slow information be `0<=lambda_1<=lambda_2<=...`, and choose any unit
+eigenvector n_W for lambda_1. Put `mu=1/c` and
+
+`J_soft=J+mu n_W n_W'`.
+
+Because n_W is an eigenvector of J, the eigenvalues of J_soft are exactly
+`lambda_1+mu, lambda_2,...`. Therefore
+
+`J_soft >= m(c,r) I`,
+`m(c,r):=min(mu,lambda2_bar)=min(1/c,lambda2_bar)>0`.        (SK-1)
+
+No continuity of the chosen eigenvector is needed for this inequality. At a
+multiple least eigenvalue, any minimizing eigenvector gives the same lower
+bound; lambda2_bar>0 prevents a two-dimensional zero eigenspace.
+
+The exact Riccati identity gives
+
+`P_soft=Pi+Phi_tilde J_soft^-1 Phi_tilde'`.
+
+Hence
+
+`Pi^-1/2 P_soft Pi^-1/2
+ <= I + (1/m) Pi^-1/2 Phi_tilde Phi_tilde' Pi^-1/2`.
+
+Let
+`Hbar(r):=sup_W ||Pi_W^-1/2 Phi_tilde_W||_2^2`
+over the compact retained word class. Pi has the already proved regular
+known-root positive process floor and all literal word maps are continuous,
+so Hbar(r)<infinity. Consequently
+
+`K_soft(c,r):=1+Hbar(r)/min(1/c,lambda2_bar)`               (SK-2)
+
+is a valid source-uniform soft-kernel Riccati diameter:
+
+`P_soft(W,c)<=K_soft(c,r) Pi_W`.
+
+This is an existence-level explicit formula in two compactness constants
+`lambda2_bar` and `Hbar`; neither has yet been numerically extracted.
+
+### Soft scalar return
+
+The invariant scalar must use the same least-information direction family,
+not the old exact physical kernel. Let n_W be the root soft direction for
+word W and n_next any least-information unit direction at the next root.
+Define
+
+`d_soft(W):=n_next' Pi_W n_next`
+
+and
+
+`dbar_soft(r):=sup_W,n_next d_soft(W)<infinity`,             (SK-3)
+
+where finiteness follows from compactness and continuity of Pi; no full-state
+recurring covariance ceiling is required.
+
+From `P_end<=P_soft<=K_soft Pi`,
+
+`n_next' P_end n_next <= K_soft(c,r) dbar_soft(r)`.
+
+Therefore the soft scalar invariant closes whenever
+
+`D_soft(c,r):=K_soft(c,r)dbar_soft(r) <= c`.                (SK-4)
+
+This replaces the earlier exact-kernel O2 fixed point. It remains linked to
+the same word through Pi before taking the source-uniform sup.
+
+There is an important asymptotic consequence. Since
+`m=min(1/c,lambda2_bar)`, for `c>=1/lambda2_bar`,
+
+`K_soft=1+Hbar c`.
+
+Then `D_soft<=c` requires
+`dbar_soft(1+Hbar c)<=c`, i.e.
+`dbar_soft Hbar<1` and
+`c>=dbar_soft/(1-dbar_soft Hbar)`.
+
+Thus existence of finite lambda2_bar alone is not enough for the scalar
+invariant: the dimensionless linked product `dbar_soft Hbar` must be <1 in
+the large-c branch (or the small-c branch must close). This is now the
+controlling quantitative/existence test for O2.
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
 on the quotient of the physical kernel.  Together with
 `nu'Pnu<=c` and the proved nuisance bounds, block Cauchy--Schwarz gives a
