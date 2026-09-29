@@ -90,8 +90,13 @@ class CarriedAuditTest(unittest.TestCase):
         self.assertLess(record['worst_nominal_transverse_mean_mps2'], 0.4)
         self.assertLess(record['worst_nominal_force_L1'], 1.2)
         self.assertFalse(record['source_uniform_certificate'])
+        self.assertTrue(record['G0_floor_below_literal_and_injection_free'])
+        self.assertGreater(record['literal_over_injection_free_min'], 0.99)
         for row in record['profiles'].values():
             self.assertLess(row['A21_active_step'], 32000)
+            array = row['literal_array']
+            self.assertLess(array['A_tilde_minus_I_max'], 0.01)
+            self.assertLessEqual(array['G0_floor_service_gap_1s'], array['literal_sigma_min'])
         self.assertEqual(CORR_A_STAR_THRESHOLD, G/5)
         self.assertEqual(CORR_A_PHYSICAL_THRESHOLD, F(112383, 100000))
 

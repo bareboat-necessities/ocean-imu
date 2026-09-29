@@ -521,7 +521,7 @@
     },
     {
       "path": "docs/ou3-world-frame-rows.md",
-      "git_blob_sha": "42d4a2eaf586fcfb7b9f1e7a05b1203b447e9892"
+      "git_blob_sha": "881705a9f066f4d932cee914781875643eeb891b"
     },
     {
       "path": "tools/stability/ou3_theorem/world_frame.py",
@@ -569,15 +569,15 @@
     },
     {
       "path": "tools/stability/ou3_theorem/aw_tracking_source_diagnostic.py",
-      "git_blob_sha": "c4e3789b4c503897f5803bdb5455d045b209b6de"
+      "git_blob_sha": "5b84ec3b65451416a7ce53b09e0aba3ec09abbf7"
     },
     {
       "path": "tools/stability/aw_tracking_source.cpp",
-      "git_blob_sha": "3c69b725018c7e29217c68dc652ff18cd3a33c05"
+      "git_blob_sha": "e16440d81b1b2b3981a0abe5611004ae00475659"
     },
     {
       "path": "tests/validation/test_ou3_aw_tracking.py",
-      "git_blob_sha": "1cd9fba447bb28c661dd7f609442e247781fa071"
+      "git_blob_sha": "b3f272ddfcd7e46501ae7a597fbbefec3f51add9"
     },
     {
       "path": "tests/validation/test_ou3_signed_injection.py",
@@ -601,7 +601,7 @@
     },
     {
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "git_blob_sha": "be55ca355837e98e1da00005fbebdb64c6d0b6e3"
+      "git_blob_sha": "4c70f858488ec3042322e7884d57fb21463c97a8"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",

@@ -167,7 +167,9 @@ downstream contraction that is not process-noise limited.
   gaps <=1 s and `Omega<=1.1508652` give `|b.T|>=cos(Omega)-Omega eps`
   (>=.4078-Omega eps); with m_perp<=2/5, u1<=6/5, L=16, G=64,
   `s^2>=1.486786e-3`, `q_I=16.81`. Synthetic falsification: actual
-  sigma_min 37--60 versus floors .067--.070.
+  sigma_min 37--60 versus floors .067--.070. Carried literal arrays (six
+  100-s A21 words, every reset retained): sigma_min 191.8--267.4, at least the
+  injection-free value, `|A~-I|<=.0045`, G0 floors .072--.084.
 - The current excited moving forced-balance word already has roll
   .02 sin(t/2) and displacement .4 sin(.6t)e_z. It satisfies the moving span
   premise for T_E>=4*pi, 0<theta_E<=.04. Its 80-digit balance residual is
@@ -451,7 +453,11 @@ Extend Theorem G0 to the literal array: carry the injection frame as a
 rotation Q (Lemma I*, half-angle remainder charged by signed partial sums),
 apply Lemma T on local tubes of about pi/Omega with the kernel direction
 `Q'b` frozen per tube, and chain the monotone field-axis coordinate across
-tubes. Evaluate the resulting floor at 80 digits on the synthetic
+tubes. A kernel turning at kappa=|omega_tilde|/2 drags the transverse residual
+at kappa|eta|, so the chained speed is about `c0-kappa|eta|_max`: at .01 rad/s
+this fails on 100-s words at the invariant rate (kappa T_w=1>c0) but leaves
+room on ~40-s words with a physical rate (c0 about .6, gap G about 18 s),
+provided the attitude-error jitter satisfies `alpha T_w<<eps`. Evaluate the resulting floor at 80 digits on the synthetic
 falsification families with injection sequences at the deterministic
 .02 rad/s residual and on the carried world-frame words; reject it if it is
 nonpositive or exceeds an actual value. Separately, test whether the

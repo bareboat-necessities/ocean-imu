@@ -1,9 +1,10 @@
 """Carried AW tracking audit on admitted jerk-limited MOVING histories.
 
 Non-promoting finite diagnostic. A temporary copy of the shipping header gets
-one read-only tap (the AW mean immediately before each accelerometer
-correction); an untapped control compiled from the unchanged header must end
-in the identical state. Every history is checked against MARINE MOTION with
+read-only taps (the AW mean immediately before each accelerometer
+correction, and the prediction/reset/row event stream of the world-frame
+array); an untapped control compiled from the unchanged header must end in
+the identical state. Every history is checked against MARINE MOTION with
 exact rational envelope bounds before it is run. The float replay audits one
 execution; it is neither an enclosure nor an all-time service certificate.
 
@@ -11,6 +12,9 @@ It answers two questions of `docs/ou3-world-frame-rows.md`, section 8:
 the pointwise physical AW tracking premise of Corollary A (refuted on these
 admitted histories) and the signed window means used by Corollary A*
 (`aw_tracking.py`), which carry a large margin on the same executions.
+It also rebuilds the literal world-frame six-column array (Lemma W, with the
+actual resets) on a 100-s word and compares it with the injection-free array
+of Theorem G0 and with G0's floor from the word's own nominal premises.
 """
 import argparse
 from fractions import Fraction as F
@@ -29,8 +33,26 @@ TAP_ANCHOR = '''    last_acc_diag_.accepted = false;
     // Reject invalid corrections'''
 TAP = '''    last_acc_diag_.accepted = false;
     trace_aw_pre = xext.template segment<3>(OFF_AW).template cast<double>();
+    if (aw_event_rec) std::printf("A %.17g %.17g %.17g\\n", trace_aw_pre.x(), trace_aw_pre.y(), trace_aw_pre.z());
 
     // Reject invalid corrections'''
+EVENT_TAPS = (
+    ('''    last_gyr_bias_corrected = gyr - gyro_bias;
+''', '''    last_gyr_bias_corrected = gyr - gyro_bias;
+    if (aw_event_rec) std::printf("P %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g\\n",
+        (double)qref.w(), (double)qref.x(), (double)qref.y(), (double)qref.z(),
+        (double)last_gyr_bias_corrected.x(), (double)last_gyr_bias_corrected.y(),
+        (double)last_gyr_bias_corrected.z(), (double)Ts);
+'''),
+    ('''    ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);
+}''', '''    if (aw_event_rec) std::printf("R %.17g %.17g %.17g %.17g %.17g %.17g %.17g\\n",
+        (double)dtheta_injected.x(), (double)dtheta_injected.y(), (double)dtheta_injected.z(),
+        (double)qref.w(), (double)qref.x(), (double)qref.y(), (double)qref.z());
+    ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);
+}'''),
+)
+MAG_SPAN = ('::measurement_update_mag_only(', '::accelerometer_measurement_func(')
+MAG_ANCHOR = '    xext.noalias() += K * r;'
 FIELD = (F(21), F(0), F(72))          # uT, |B|=75, horizontal fraction 7/25
 PI_UPPER, PI_LOWER = F(355, 113), F(333, 106)
 LIMITS = {'A': F('8.8'), 'V': F('5.5'), 'P': F('8.1'), 'J': F(100)}
@@ -86,9 +108,19 @@ def _compile(tmp):
     header = (REPO/HEADER).read_text()
     if header.count(TAP_ANCHOR) != 1:
         raise ValueError('shipping accelerometer anchor changed')
+    header = header.replace(TAP_ANCHOR, TAP)
+    for old, new in EVENT_TAPS:
+        if header.count(old) != 1:
+            raise ValueError('shipping event anchor changed')
+        header = header.replace(old, new)
+    a, b = header.index(MAG_SPAN[0]), header.index(MAG_SPAN[1])
+    if header[a:b].count(MAG_ANCHOR) != 1:
+        raise ValueError('shipping magnetic anchor changed')
+    header = header[:a]+header[a:b].replace(
+        MAG_ANCHOR, '    if (aw_event_rec) std::printf("M\\n");\n'+MAG_ANCHOR)+header[b:]
     tapped = Path(tmp)/'observed/kalman_ou_iii'
     tapped.mkdir(parents=True)
-    (tapped/'Kalman3D_Wave_OU_III.h').write_text(header.replace(TAP_ANCHOR, TAP))
+    (tapped/'Kalman3D_Wave_OU_III.h').write_text(header)
     out = {}
     for name, extra in (('observed', ['-DAW_TRACKING_TAP', '-I'+str(Path(tmp)/'observed')]),
                         ('control', [])):
@@ -111,9 +143,10 @@ def run_profile(exes, profile):
                              capture_output=True, text=True).stdout.splitlines()
     if observed[-1] != control[-1]:
         raise ValueError(f'{name}: observer changed the carried execution')
-    rows = [[float(x) for x in line.split()] for line in observed[:-1]]
+    rows = [[float(x) for x in line.split()] for line in observed[:-1] if line[0].isdigit()]
+    events = [line for line in observed[:-1] if not line[0].isdigit()]
     active = int(observed[-1].split()[1])
-    return name, args, rows, active
+    return name, args, rows, active, events
 
 
 def analyze(rows, active_step, t_start=T0+RAMP):
@@ -158,6 +191,92 @@ def analyze(rows, active_step, t_start=T0+RAMP):
     }
 
 
+def literal_array(events, word=(2.0, 102.0), windows=((2, 18), (82, 98))):
+    """Literal vs injection-free world six-column arrays on one 100-s word.
+
+    Lemma W with W=I: a prediction adds Gamma=R_pre' Rs' Bs to B~ (Rodrigues
+    Rs=Exp(-[w]h), Bs=int_0^h Exp(-[w]s)ds); a reset multiplies A~ and B~ by
+    N=R_post'(I+[d]/2)R_pre with R_pre=Exp([d])'R_post. Rows are
+    [a_hat-g e_z]x[A~,B~] (accelerometer, before its reset) and [B_w]x[A~,B~]
+    (applied magnetic, before its reset). Times are counted from the first
+    recorded prediction. Float64; non-promoting.
+    """
+    import numpy as np
+    g = float(G)
+
+    def skew(v):
+        return np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+
+    def rot(w, x, y, z):
+        n = w*w+x*x+y*y+z*z
+        return np.array([[w*w+x*x-y*y-z*z, 2*(x*y-w*z), 2*(x*z+w*y)],
+                         [2*(x*y+w*z), w*w-x*x+y*y-z*z, 2*(y*z-w*x)],
+                         [2*(x*z-w*y), 2*(y*z+w*x), w*w-x*x-y*y+z*z]])/n
+
+    def expm(v):
+        th = np.linalg.norm(v)
+        k = skew(v/th) if th > 1e-14 else skew(v)
+        return np.eye(3)+(np.sin(th)*k+(1-np.cos(th))*k@k if th > 1e-14 else k)
+
+    def bint(w, h):
+        om = np.linalg.norm(w)
+        W = skew(w)
+        if om*h < 1e-8:
+            return h*np.eye(3)-h*h/2*W+h**3/6*W@W
+        return h*np.eye(3)-(1-np.cos(om*h))/om**2*W+(om*h-np.sin(om*h))/om**3*W@W
+
+    bw = next(np.array([float(x) for x in e.split()[1:]]) for e in events if e.startswith('B '))
+    b = bw/np.linalg.norm(bw)
+    a, bb, b0 = np.eye(3), np.zeros((3, 3)), np.zeros((3, 3))
+    t, omega, drift = 0.0, 0.0, 0.0
+    gram_lit, gram_free = np.zeros((6, 6)), np.zeros((6, 6))
+    win = {0: [], 1: []}
+    for e in events:
+        f = e.split()
+        if f[0] == 'P':
+            q, w, h = [float(x) for x in f[1:5]], np.array([float(x) for x in f[5:8]]), float(f[8])
+            gam = rot(*q).T@expm(-w*h).T@bint(w, h)
+            bb, b0, t = bb+gam, b0+gam, t+h
+            if word[0] <= t <= word[1]:
+                omega = max(omega, float(np.linalg.norm(w)))
+        elif f[0] == 'R':
+            d = np.array([float(x) for x in f[1:4]])
+            post = rot(*[float(x) for x in f[4:8]])
+            n = post.T@(np.eye(3)+skew(d)/2)@(expm(d).T@post)
+            a, bb = n@a, n@bb
+            if word[0] <= t <= word[1]:
+                drift = max(drift, float(np.linalg.norm(a-np.eye(3), 2)))
+        elif f[0] in 'AM' and word[0] <= t <= word[1]:
+            if f[0] == 'A':
+                ahat = np.array([float(x) for x in f[1:4]])
+                v = ahat-np.array([0.0, 0.0, g])
+                rel = t-word[0]
+                for i, (lo, hi) in enumerate(windows):
+                    if lo <= rel <= hi:
+                        win[i].append(ahat)
+            else:
+                v = bw
+            for gram, z in ((gram_lit, np.hstack([a, bb])), (gram_free, np.hstack([np.eye(3), b0]))):
+                row = skew(v)@z
+                gram += row.T@row
+    floor = lambda m: float(math.sqrt(max(0.0, float(np.linalg.eigvalsh(m).min()))))
+    mperp = max(float(np.linalg.norm(np.cross(np.mean(win[i], axis=0), b))) for i in (0, 1))
+    l1 = max(float(np.mean([np.linalg.norm(x-np.array([0.0, 0.0, g])) for x in win[i]]))/g for i in (0, 1))
+    from .aggregate_floor import optimize_eps
+    up = lambda x: F(x).limit_denominator(10**6)+F(1, 10**6)
+    best = optimize_eps(up(omega), 1, window=16, separation=64, sigma_w=F(1, 5),
+                        m_perp=up(mperp), force_l1=up(l1),
+                        rows_per_window=min(len(win[0]), len(win[1])), start_offset=2,
+                        field_min=F(20))
+    g0 = math.sqrt(float(best[1]['six_column_floor_squared'])) if best else 0.0
+    fmt = lambda x: float(f'{x:.6g}')
+    return {'word_s': [word[0], word[1]], 'literal_sigma_min': fmt(floor(gram_lit)),
+            'injection_free_sigma_min': fmt(floor(gram_free)),
+            'A_tilde_minus_I_max': fmt(drift), 'nominal_rate_max_rad_s': fmt(omega),
+            'word_nominal_transverse_mean_mps2': fmt(mperp), 'word_nominal_force_L1': fmt(l1),
+            'G0_floor_service_gap_1s': fmt(g0)}
+
+
 def diagnostic():
     with tempfile.TemporaryDirectory() as tmp:
         exes = _compile(tmp)
@@ -166,9 +285,9 @@ def diagnostic():
             envelope = admissibility(*profile[1:])
             if not envelope['admitted']:
                 raise ValueError(f'{profile[0]} violates MARINE MOTION')
-            name, args, rows, active = run_profile(exes, profile)
+            name, args, rows, active, events = run_profile(exes, profile)
             profiles[name] = {'arguments': args, 'marine_motion': envelope,
-                              **analyze(rows, active)}
+                              **analyze(rows, active), 'literal_array': literal_array(events)}
     worst = lambda key: max(p[key] for p in profiles.values())
     return {
         'qualification': 'OU3_AW_TRACKING_SOURCE_FEASIBILITY_V1',
@@ -184,6 +303,13 @@ def diagnostic():
         'worst_corollary_A_star_ratio': worst('corollary_A_star_ratio'),
         'worst_nominal_transverse_mean_mps2': worst('nominal_transverse_mean_max_mps2'),
         'worst_nominal_force_L1': worst('nominal_force_L1_max'),
+        'literal_over_injection_free_min': min(
+            p['literal_array']['literal_sigma_min']/p['literal_array']['injection_free_sigma_min']
+            for p in profiles.values()),
+        'G0_floor_below_literal_and_injection_free': all(
+            p['literal_array']['G0_floor_service_gap_1s'] <= min(
+                p['literal_array']['literal_sigma_min'], p['literal_array']['injection_free_sigma_min'])
+            for p in profiles.values()),
         'source_uniform_certificate': False,
         'magnetic_service_certified': False,
         'theorem_closed': False,
@@ -228,6 +354,14 @@ def verify_diagnostic(record):
                         ('worst_nominal_force_L1', 'nominal_force_L1_max')):
         if record[key] != worst(source):
             raise ValueError(f'{key} is not the profile maximum')
+    arrays = [p['literal_array'] for p in record['profiles'].values()]
+    if record['G0_floor_below_literal_and_injection_free'] != all(
+            a['G0_floor_service_gap_1s'] <= min(a['literal_sigma_min'], a['injection_free_sigma_min'])
+            for a in arrays):
+        raise ValueError('G0 floor comparison flag inconsistent')
+    if abs(record['literal_over_injection_free_min']-min(
+            a['literal_sigma_min']/a['injection_free_sigma_min'] for a in arrays)) > 1e-12:
+        raise ValueError('literal/injection-free ratio inconsistent')
     if record['pointwise_premise_refuted_on_admitted_history'] != (record['worst_pointwise_ratio'] > 1):
         raise ValueError('refutation flag inconsistent')
     return True

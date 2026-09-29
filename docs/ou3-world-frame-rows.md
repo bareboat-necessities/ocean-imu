@@ -417,7 +417,13 @@ G0 is **not** a theorem about the literal array: the injection transport A~
 is excluded, and on a 100-s word the deterministic .02 rad/s gyro residual
 alone lets the injection frame, hence the kernel direction `Q'b`, rotate by
 about 1 rad, which the global fixed-b tube does not tolerate. Its nominal
-window premises are measured, not proved.
+window premises are measured, not proved. On the six carried words the AW
+audit rebuilds both arrays over 100 s from the literal event stream
+(predictions, every reset, applied rows): the literal sigma_min is 191.8--267.4,
+at least the injection-free value (ratio >=1.0000089), `|A~-I|<=.0045`, and
+G0's floor from each word's own premises (service gap 1 s, B_min=20 uT) is
+.072--.084. In practice the injection frame is benign; the proof gap is the
+deterministic worst case.
 
 ## 13. Downstream feasibility
 

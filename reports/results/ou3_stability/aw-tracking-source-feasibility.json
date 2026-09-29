@@ -1,5 +1,6 @@
 {
-  "driver_sha256": "4186b739803b30c6af5416c47faf768289f3ca1bf68b7c1539f674c8eac0119d",
+  "G0_floor_below_literal_and_injection_free": true,
+  "driver_sha256": "125556fc495ce77c9a81553e6d696fac91efce6e2665f3f70440e9fea9bd1449",
   "end_s": 460,
   "field_world_uT": [
     "21",
@@ -7,6 +8,7 @@
     "72"
   ],
   "header_sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
+  "literal_over_injection_free_min": 1.0000088801271634,
   "magnetic_service_certified": false,
   "onset_s": 160,
   "pointwise_premise_refuted_on_admitted_history": true,
@@ -24,6 +26,19 @@
       ],
       "attitude_error_max_rad": 0.00115915,
       "corollary_A_star_ratio": 0.000348174,
+      "literal_array": {
+        "A_tilde_minus_I_max": 0.000473755,
+        "G0_floor_service_gap_1s": 0.0839734,
+        "injection_free_sigma_min": 218.48,
+        "literal_sigma_min": 218.524,
+        "nominal_rate_max_rad_s": 0.00499995,
+        "word_nominal_force_L1": 1.01701,
+        "word_nominal_transverse_mean_mps2": 0.000572503,
+        "word_s": [
+          2.0,
+          102.0
+        ]
+      },
       "marine_motion": {
         "admitted": true,
         "bounded_primitive": true,
@@ -62,6 +77,19 @@
       ],
       "attitude_error_max_rad": 0.00617357,
       "corollary_A_star_ratio": 0.0114561,
+      "literal_array": {
+        "A_tilde_minus_I_max": 0.00448559,
+        "G0_floor_service_gap_1s": 0.0805301,
+        "injection_free_sigma_min": 266.49,
+        "literal_sigma_min": 267.409,
+        "nominal_rate_max_rad_s": 0.00500043,
+        "word_nominal_force_L1": 1.04323,
+        "word_nominal_transverse_mean_mps2": 0.0221722,
+        "word_s": [
+          2.0,
+          102.0
+        ]
+      },
       "marine_motion": {
         "admitted": true,
         "bounded_primitive": true,
@@ -100,6 +128,19 @@
       ],
       "attitude_error_max_rad": 0.000244875,
       "corollary_A_star_ratio": 0.0813815,
+      "literal_array": {
+        "A_tilde_minus_I_max": 7.1825e-05,
+        "G0_floor_service_gap_1s": 0.0786052,
+        "injection_free_sigma_min": 248.756,
+        "literal_sigma_min": 248.766,
+        "nominal_rate_max_rad_s": 0.00499998,
+        "word_nominal_force_L1": 1.05237,
+        "word_nominal_transverse_mean_mps2": 0.0510535,
+        "word_s": [
+          2.0,
+          102.0
+        ]
+      },
       "marine_motion": {
         "admitted": true,
         "bounded_primitive": true,
@@ -138,6 +179,19 @@
       ],
       "attitude_error_max_rad": 0.000245179,
       "corollary_A_star_ratio": 0.0364106,
+      "literal_array": {
+        "A_tilde_minus_I_max": 2.84253e-05,
+        "G0_floor_service_gap_1s": 0.0834351,
+        "injection_free_sigma_min": 225.222,
+        "literal_sigma_min": 225.224,
+        "nominal_rate_max_rad_s": 0.005,
+        "word_nominal_force_L1": 1.00238,
+        "word_nominal_transverse_mean_mps2": 0.0561199,
+        "word_s": [
+          2.0,
+          102.0
+        ]
+      },
       "marine_motion": {
         "admitted": true,
         "bounded_primitive": true,
@@ -176,6 +230,19 @@
       ],
       "attitude_error_max_rad": 0.00865353,
       "corollary_A_star_ratio": 0.177372,
+      "literal_array": {
+        "A_tilde_minus_I_max": 0.00371185,
+        "G0_floor_service_gap_1s": 0.0724444,
+        "injection_free_sigma_min": 200.411,
+        "literal_sigma_min": 200.455,
+        "nominal_rate_max_rad_s": 0.00500096,
+        "word_nominal_force_L1": 1.00058,
+        "word_nominal_transverse_mean_mps2": 0.346506,
+        "word_s": [
+          2.0,
+          102.0
+        ]
+      },
       "marine_motion": {
         "admitted": true,
         "bounded_primitive": true,
@@ -214,6 +281,19 @@
       ],
       "attitude_error_max_rad": 0.000598091,
       "corollary_A_star_ratio": 0.102501,
+      "literal_array": {
+        "A_tilde_minus_I_max": 0.00044935,
+        "G0_floor_service_gap_1s": 0.0810637,
+        "injection_free_sigma_min": 191.808,
+        "literal_sigma_min": 191.815,
+        "nominal_rate_max_rad_s": 0.00500001,
+        "word_nominal_force_L1": 1.02182,
+        "word_nominal_transverse_mean_mps2": 0.0662349,
+        "word_s": [
+          2.0,
+          102.0
+        ]
+      },
       "marine_motion": {
         "admitted": true,
         "bounded_primitive": true,

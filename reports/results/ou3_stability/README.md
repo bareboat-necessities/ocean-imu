@@ -90,7 +90,10 @@ loop identity and the AW increment cap. `aw-tracking-source-feasibility.json`
 replays six admitted C2-onset histories through the unchanged estimator with
 a one-tap observer and untapped control parity: the pointwise AW premise
 fails by 6.80, the worst signed mean is .330 of 1.12383 (sync-locked
-rectification) and the worst nominal transverse mean .177 of 1.96133.
+rectification) and the worst nominal transverse mean .177 of 1.96133. It
+also rebuilds the literal world six-column array with every reset over a
+100-s word: literal sigma_min 191.8--267.4, never below the injection-free
+array, `|A~-I|<=.0045`, and G0's floor .072--.084 below both.
 `signed-injection-certificate.json` checks Lemma I* (ordered injection
 rotation bounded by endpoint attitude errors plus integrated rate error),
 the third-order reset factor, the rotating-frame floor and the injection

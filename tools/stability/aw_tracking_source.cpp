@@ -14,6 +14,9 @@
 
 #ifdef AW_TRACKING_TAP
 static Eigen::Vector3d trace_aw_pre = Eigen::Vector3d::Zero();
+// Event stream (prediction P, reset R, accelerometer row A, applied
+// magnetic row M) for the literal world-frame six-column array.
+static bool aw_event_rec = false;
 #endif
 #define private public
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
@@ -67,6 +70,9 @@ int main(int argc, char** argv) {
     int active=-1;
     for (int k=1; k<=n; ++k) {
         const double t=k*.005;
+#ifdef AW_TRACKING_TAP
+        aw_event_rec = t >= trec;
+#endif
         // Horizontal displacement p=env*d; a=env d''+2 env' d'+env'' d.
         double e[4]; envelope(t,t0,tr,e);
         const double w2=2*pi*f2;
@@ -93,6 +99,10 @@ int main(int argc, char** argv) {
 #endif
     }
     const auto& m=filter.raw().mekf();
+#ifdef AW_TRACKING_TAP
+    std::printf("B %.17g %.17g %.17g\n", static_cast<double>(m.v2ref.x()),
+                static_cast<double>(m.v2ref.y()), static_cast<double>(m.v2ref.z()));
+#endif
     std::printf("END %d", active);
     for (int i=0; i<m.xext.size(); ++i) std::printf(" %.9g", static_cast<double>(m.xext(i)));
     for (int i=0; i<4; ++i) std::printf(" %.9g", static_cast<double>(m.qref.coeffs()(i)));
