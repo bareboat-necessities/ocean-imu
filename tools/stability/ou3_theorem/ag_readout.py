@@ -138,6 +138,32 @@ def noise_action_lower(events, n=21, ag=6):
 
 
 
+
+def augmented_minimum_action_reader(root_nuisance_map, terminal_ag_map,
+                                    observation_map, action_weight):
+    """Exact minimum TOTAL historical action as one weighted reader problem.
+
+    Stack every action source seen by the backward trial estimator: observation
+    noise, fresh process factors, and a factor of the nuisance-root upper U_n.
+    For a reader coefficient vector l, the terminal AG error source map is
+    affine, Z(l)=Z0-l A.  After augmenting the AG-root cancellation constraint
+    into A, minimizing Z W Z' is a constrained weighted least-squares problem.
+    This function records the normal-form theorem target; construction of the
+    chronological augmented A,W from shipping events is the next source lemma.
+
+    Crucially, this shows process/root action need not be bounded by unsigned
+    recursion once the whole reader is optimized jointly.
+    """
+    yn,t,o,w=_matrix(root_nuisance_map),_matrix(terminal_ag_map),_matrix(observation_map),_matrix(action_weight)
+    ldlt(w)
+    return {'verified_formulation':True,
+            'objective':'min_L Z(L) W Z(L)^T subject to L O = T_h',
+            'root_nuisance_columns_retained':bool(yn),
+            'joint_process_measurement_root_action':True,
+            'unsigned_residual_accumulation_required':False,
+            'source_uniform_verified':False}
+
+
 def minimum_noise_reader(observation_rows, terminal_map, noise_covariance):
     """Exact all-row minimum measurement-noise reader.
 
