@@ -4969,6 +4969,56 @@ allowed zero-mean physical variations while also supplying the fixed positive
 OU-loss replacement and keeping LIN/S bounded. This must use the MARINE
 MOTION excitation span; a DC-only fixed-point argument is insufficient.
 
+## Rotating accelerometer-innovation action from gravity span and geomagnetism
+
+The actual MOVING hypothesis is the stronger/specific gravity-direction span
+condition `Delta_g(W)>=theta_E` on every complete moving excitation window,
+not an unspecified attitude norm span.
+
+Let `b` be the near-constant unit world geomagnetic direction and decompose
+`g=g_parallel+ d`, with `d=P_bperp g`. The inclination restriction gives
+`|d|>=g_min cos(80 deg)`.
+
+In the q->0 compatibility limit the nominal CoG specific-force vector is
+parallel to b, so after subtracting the physical measurement model the
+body-frame accelerometer innovation contains the rotating term `R_wb(t)d`
+(up to physical translational acceleration, BA and the explicit bounded
+defects). Because rotations preserve norm, this term has fixed magnitude at
+least the geomagnetic floor.
+
+Gravity span alone does not imply a positive span of `R_wb d`: rotations
+about d are a geometric exception. This loophole must not be hidden. Combine
+gravity span with the magnetic service geometry. Since g and b are fixed
+non-collinear world vectors, the map R -> (Rg,Rb) is injective on SO(3).
+On the compact set with angle(g,b) bounded away from zero by the inclination
+cutoff, there is a modulus c_gb>0 such that any orientation pair with gravity
+span at least theta_E produces a positive joint span of the two body vectors.
+If `R d` had zero span while `R g` had positive span, the variation must
+occur through the b component; the applied magnetic rows then carry that
+variation. Thus the **joint accelerometer+magnetic signed record**, rather
+than accelerometer innovation alone, has a source-uniform rotating action.
+
+Formally define on W
+`A_rot(W)=sum_acc ||P_record R_wb,k d||^2 + sum_mag ||Delta(R_wb,k b)||^2`
+with the literal whitening/transport used by the complete word. Compactness
+of SO(3), `|d|>=g_min cos80`, `Delta_g>=theta_E`, and MAGNETIC SERVICE give
+a positive existence modulus
+`A_rot(W)>=a_rot(theta_E,mu_M,I_max,eps_B)>0`.
+
+This is an existence-level geometric modulus; an explicit closed formula for
+a_rot is not yet derived. It avoids the false claim that gravity span alone
+forces R d to rotate.
+
+The next adaptation step must retain the **signed joint record**. Its
+accelerometer part enters the literal Kalman mean update, while its magnetic
+part enters the attitude correction/reset and thereby changes the subsequent
+accelerometer Jacobian. The target is to show that an infinite q->0
+compatibility execution would have to annihilate this recurring positive joint
+action through the same-history adaptation map, contradicting the complete-word
+nullity classification unless the physical tilt/BA kernel is nonzero; as
+q->0 that kernel has zero BA component and the geomagnetic floor forbids the
+remaining pure tilt compatibility.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
