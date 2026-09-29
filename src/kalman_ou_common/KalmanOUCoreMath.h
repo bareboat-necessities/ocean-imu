@@ -136,9 +136,52 @@ inline OUDiscreteCoeffs<T> safe_phi_A_coeffs(T h, T tau) {
     return c;
 }
 
+// S = (S + S^T)/2. The .eval() matters: without it Eigen writes S(i,j) before
+// reading S(j,i) for the mirrored entry, and the result is not symmetric.
+template<typename T, int N>
+inline void symmetrize(Eigen::Matrix<T,N,N>& S) {
+    S = (T(0.5) * (S + S.transpose())).eval();
+}
+
+// Returns a symmetric matrix whose eigenvalues are non-negative up to the
+// rounding tolerance psd_roundoff_tol(); eigenvalues that have to be repaired
+// are lifted to eps. Non-finite entries are replaced (eps on the diagonal,
+// zero elsewhere) before the check, as before. N <= 4 always goes through the
+// eigensolver and lifts every non-positive eigenvalue. Larger matrices take
+// the cheap path first: Eigen's pivoted LDLT reports Success for any finite
+// symmetric matrix without an exact zero pivot, indefinite or not, so
+// info() == Success proves nothing on its own; by Sylvester's law of inertia
+// the signs of its D carry the PSD test. When the LDLT stops at an exact zero
+// pivot (singular PSD matrices do this) its D is no longer a factorisation
+// and the eigenvalues decide. Only an indefinite matrix is modified. N > 6
+// without regularize_large (the TFG full state) is symmetrised only.
+template<typename T, int N>
+inline T psd_roundoff_tol(const Eigen::Matrix<T,N,N>& S) {
+    // Backward error of a diagonally pivoted LDLT: O(N eps ||S||_max).
+    return T(4 * N) * std::numeric_limits<T>::epsilon() * S.cwiseAbs().maxCoeff();
+}
+
+// Lifts every eigenvalue that is not positive to eps. With keep_if_psd, a
+// matrix whose smallest eigenvalue is within -tol of zero is left unchanged.
+template<typename T, int N>
+inline void clamp_eigenvalues_to_floor(Eigen::Matrix<T,N,N>& S, T eps,
+                                       bool keep_if_psd = false, T tol = T(0)) {
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix<T,N,N>> es(S);
+    if (es.info() != Eigen::Success) {
+        S.diagonal().array() += eps;
+        return;
+    }
+    Eigen::Matrix<T,N,1> lam = es.eigenvalues();
+    if (keep_if_psd && lam.minCoeff() >= -tol) return;
+    for (int i = 0; i < N; ++i) {
+        if (!(lam(i) > T(0))) lam(i) = eps;
+    }
+    S = es.eigenvectors() * lam.asDiagonal() * es.eigenvectors().transpose();
+}
+
 template<typename T, int N, bool regularize_large>
 inline void project_psd_impl(Eigen::Matrix<T,N,N>& S, T eps) {
-    S = T(0.5) * (S + S.transpose());
+    symmetrize<T,N>(S);
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
             if (!std::isfinite(S(i,j))) S(i,j) = (i == j) ? eps : T(0);
@@ -146,35 +189,18 @@ inline void project_psd_impl(Eigen::Matrix<T,N,N>& S, T eps) {
     }
 
     if constexpr (N <= 4) {
-        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<T,N,N>> es(S);
-        if (es.info() != Eigen::Success) {
-            S.diagonal().array() += eps;
-            S = T(0.5) * (S + S.transpose());
-            return;
-        }
-        Eigen::Matrix<T,N,1> lam = es.eigenvalues();
-        for (int i = 0; i < N; ++i) {
-            if (!(lam(i) > T(0))) lam(i) = eps;
-        }
-        S = es.eigenvectors() * lam.asDiagonal() * es.eigenvectors().transpose();
+        clamp_eigenvalues_to_floor<T,N>(S, eps);
     } else if constexpr (regularize_large || N <= 6) {
-        Eigen::LDLT<Eigen::Matrix<T,N,N>> ldlt;
-        ldlt.compute(S);
-        if (ldlt.info() != Eigen::Success) {
-            T min_lb = std::numeric_limits<T>::infinity();
-            for (int i = 0; i < N; ++i) {
-                T row_sum = T(0);
-                for (int j = 0; j < N; ++j) {
-                    if (j != i) row_sum += std::abs(S(i,j));
-                }
-                min_lb = std::min(min_lb, S(i,i) - row_sum);
-            }
-            if (!(min_lb > eps)) S.diagonal().array() += (eps - min_lb);
-            ldlt.compute(S);
-            if (ldlt.info() != Eigen::Success) S.diagonal().array() += T(10) * eps;
+        const T tol = psd_roundoff_tol<T,N>(S);
+        Eigen::LDLT<Eigen::Matrix<T,N,N>> ldlt(S);
+        // Congruence preserves inertia, not eigenvalue magnitudes. A small
+        // negative D pivot can correspond to an eigenvalue below -tol, so
+        // apply the roundoff tolerance to S's eigenvalues, not to its pivots.
+        if (ldlt.info() != Eigen::Success || !(ldlt.vectorD().minCoeff() >= T(0))) {
+            clamp_eigenvalues_to_floor<T,N>(S, eps, true, tol);
         }
     }
-    S = T(0.5) * (S + S.transpose());
+    symmetrize<T,N>(S);
 }
 
 template<typename T, int N>
@@ -187,54 +213,91 @@ inline void project_psd_ou_iii(Eigen::Matrix<T,N,N>& S, T eps = T(1e-12)) {
     project_psd_impl<T,N,false>(S, eps);
 }
 
+// Scalar coefficients of the constant-rate SO(3) integrals, written as
+// functions of the dimensionless angle x = |omega|*t so that, with W = [omega]x,
+//
+//   R(t)          = I - t g0(x) W + t^2 g1(x) W^2
+//   B(t)          = int_0^t R = I t - t^2 g1(x) W + t^3 g2(x) W^2
+//   int_0^t B(s)  = I t^2/2 - t^3 g2(x) W + t^4 g3(x) W^2
+//
+// g0 = sin(x)/x, g1 = (1 - cos x)/x^2, g2 = (x - sin x)/x^3 and
+// g3 = (x^2/2 - 1 + cos x)/x^4. The closed forms of g1 (as written), g2 and
+// g3 cancel: their rounding error grows like 1/x^2 ulp, so float keeps no
+// correct digit below x ~ 3e-4 whatever |omega| is. For |x| < 1 all four are
+// evaluated from their alternating even Taylor series through x^18; the
+// first omitted term, at most 1/21! ~ 2e-20 at |x| = 1, is far below half a
+// double ulp of every coefficient. At |x| >= 1 the closed-form
+// amplification is bounded by ~12 ulp (g3) for float and double alike.
+template<typename T>
+struct SO3IntegralCoeffs {
+    T g0, g1, g2, g3;
+};
+
+template<typename T>
+inline SO3IntegralCoeffs<T> so3_integral_coeffs(T x) {
+    SO3IntegralCoeffs<T> c{};
+    if (std::abs(x) < T(1)) {
+        const T y = x * x;
+        // sum_{k=0..9} (-1)^k y^k / (2k+n)!, Horner from the highest order.
+        auto alternating = [y](const T* inv_fact) {
+            T acc = inv_fact[9];
+            for (int k = 8; k >= 0; --k) acc = inv_fact[k] - y * acc;
+            return acc;
+        };
+        static constexpr T n1[10] = {
+            T(1.0/1.0), T(1.0/6.0), T(1.0/120.0), T(1.0/5040.0),
+            T(1.0/362880.0), T(1.0/39916800.0), T(1.0/6227020800.0), T(1.0/1307674368000.0),
+            T(1.0/355687428096000.0), T(1.0/1.21645100408832e+17)};
+        static constexpr T n2[10] = {
+            T(1.0/2.0), T(1.0/24.0), T(1.0/720.0), T(1.0/40320.0),
+            T(1.0/3628800.0), T(1.0/479001600.0), T(1.0/87178291200.0), T(1.0/20922789888000.0),
+            T(1.0/6402373705728000.0), T(1.0/2.43290200817664e+18)};
+        static constexpr T n3[10] = {
+            T(1.0/6.0), T(1.0/120.0), T(1.0/5040.0), T(1.0/362880.0),
+            T(1.0/39916800.0), T(1.0/6227020800.0), T(1.0/1307674368000.0), T(1.0/355687428096000.0),
+            T(1.0/1.21645100408832e+17), T(1.0/5.109094217170944e+19)};
+        static constexpr T n4[10] = {
+            T(1.0/24.0), T(1.0/720.0), T(1.0/40320.0), T(1.0/3628800.0),
+            T(1.0/479001600.0), T(1.0/87178291200.0), T(1.0/20922789888000.0), T(1.0/6402373705728000.0),
+            T(1.0/2.43290200817664e+18), T(1.0/1.1240007277776077e+21)};
+        c.g0 = alternating(n1);
+        c.g1 = alternating(n2);
+        c.g2 = alternating(n3);
+        c.g3 = alternating(n4);
+        return c;
+    }
+    const T s = std::sin(x);
+    const T half_s = std::sin(T(0.5) * x);
+    const T x2 = x * x;
+    c.g0 = s / x;
+    c.g1 = T(2) * half_s * half_s / x2;
+    c.g2 = (x - s) / (x2 * x);
+    c.g3 = (T(0.5) * x2 - T(1) + std::cos(x)) / (x2 * x2);
+    return c;
+}
+
 template<typename T>
 inline void rot_and_B_from_wt(const Eigen::Matrix<T,3,1>& w, T t,
                               Eigen::Matrix<T,3,3>& R, Eigen::Matrix<T,3,3>& B) {
     using Matrix3 = Eigen::Matrix<T,3,3>;
-    const T wnorm = w.norm();
     const Matrix3 W = skew(w);
-
-    if (wnorm < T(1e-7)) {
-        const T t2 = t*t, t3 = t2*t;
-        R = Matrix3::Identity() - W*t + T(0.5)*(W*W)*t2;
-        B = Matrix3::Identity()*t - T(0.5)*W*t2 + (W*W)*(t3/T(6));
-        return;
-    }
-
-    const T theta = wnorm * t;
-    const T s = std::sin(theta), c = std::cos(theta);
-    const T invw = T(1) / wnorm;
-    const Matrix3 K = W * invw;
-    R = Matrix3::Identity() - s*K + (T(1)-c)*(K*K);
-
-    const T invw2 = invw * invw;
-    B = Matrix3::Identity()*t
-      - ((T(1)-c)*invw2)*W
-      + ((t - s*invw)*invw2)*(W*W);
+    const Matrix3 W2 = W * W;
+    const SO3IntegralCoeffs<T> c = so3_integral_coeffs(w.norm() * t);
+    const T t2 = t * t;
+    R = Matrix3::Identity() - (t*c.g0)*W + (t2*c.g1)*W2;
+    B = Matrix3::Identity()*t - (t2*c.g1)*W + (t2*t*c.g2)*W2;
 }
 
 template<typename T>
 inline void integral_B_ds(const Eigen::Matrix<T,3,1>& w, T step,
                           Eigen::Matrix<T,3,3>& IB) {
     using Matrix3 = Eigen::Matrix<T,3,3>;
-    const T wnorm = w.norm();
     const Matrix3 W = skew(w);
-
-    if (wnorm < T(1e-7)) {
-        const T T2 = step*step, T3 = T2*step, T4 = T3*step;
-        IB = Matrix3::Identity()*(T(0.5)*T2)
-           - W*(T(1.0/6.0)*T3)
-           + (W*W)*(T(1.0/24.0)*T4);
-        return;
-    }
-
-    const T theta = wnorm * step;
-    const T s = std::sin(theta), c = std::cos(theta);
-    const T invw = T(1) / wnorm;
-    const T invw2 = invw * invw;
-    IB = Matrix3::Identity()*(T(0.5)*step*step)
-       - ((step - s*invw)*invw2)*W
-       + ((T(0.5)*step*step + (c-T(1))*invw2)*invw2)*(W*W);
+    const SO3IntegralCoeffs<T> c = so3_integral_coeffs(w.norm() * step);
+    const T T2 = step*step, T3 = T2*step;
+    IB = Matrix3::Identity()*(T(0.5)*T2)
+       - (T3*c.g2)*W
+       + (T3*step*c.g3)*(W*W);
 }
 
 template<typename T>
@@ -318,7 +381,7 @@ inline void apply_left_error_reset(Eigen::Matrix<T,NX,NX>& covariance,
 
 template<typename T, int N>
 inline void regularize_psd_if_needed(Eigen::Matrix<T,N,N>& S) {
-    S = T(0.5) * (S + S.transpose());
+    symmetrize<T,N>(S);
     T scale = std::max(T(1), S.cwiseAbs().maxCoeff());
     const T tol = T(64) * std::numeric_limits<T>::epsilon() * scale;
 
@@ -329,19 +392,20 @@ inline void regularize_psd_if_needed(Eigen::Matrix<T,N,N>& S) {
     }
 
     Eigen::LDLT<Eigen::Matrix<T,N,N>> ldlt(S);
-    if (ldlt.info() == Eigen::Success && ldlt.vectorD().minCoeff() >= -tol) return;
+    if (ldlt.info() == Eigen::Success && ldlt.vectorD().minCoeff() >= T(0)) return;
 
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix<T,N,N>> es(S);
     if (es.info() != Eigen::Success) {
         S.diagonal().array() += tol;
-        S = T(0.5) * (S + S.transpose());
+        symmetrize<T,N>(S);
         return;
     }
 
     Eigen::Matrix<T,N,1> eigenvalues = es.eigenvalues();
+    if (eigenvalues.minCoeff() >= -tol) return;
     for (int i = 0; i < N; ++i) eigenvalues(i) = std::max(T(0), eigenvalues(i));
     S = es.eigenvectors() * eigenvalues.asDiagonal() * es.eigenvectors().transpose();
-    S = T(0.5) * (S + S.transpose());
+    symmetrize<T,N>(S);
 }
 
 // Retarget a periodic scheduler without discarding elapsed service credit.

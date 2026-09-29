@@ -486,3 +486,27 @@ jobs:
           name: mcu-binaries-${{ matrix.ino_dir }}
           path: mcu-binaries/*.zip
           if-no-files-found: error
+
+  # The native suites build with Make and never read CMakeLists.txt. Configure
+  # and build every CMake target here so a broken CMake route cannot hide
+  # behind green Make results.
+  cmake:
+    needs: classify
+    if: needs.classify.outputs.run_build == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y --no-install-recommends \
+            g++ cmake libeigen3-dev
+
+      - name: Configure
+        run: cmake -S . -B build
+
+      - name: Build
+        run: cmake --build build --parallel "$(nproc)"

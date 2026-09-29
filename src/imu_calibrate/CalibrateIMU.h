@@ -704,10 +704,11 @@ struct MagCalibration {
 // BMI270's published typical TCO is +/-0.02 deg/s/K (~0.000349 rad/s/K).
 // https://www.bosch-sensortec.com/en/products/motion-sensors/imus/bmi270
 struct GyroThermalLimits {
-  static constexpr double min_span = 5.0;
+  static constexpr double min_span = 2.0; // populated-bin centroid span; eligibility only
+  static constexpr double stationary_scatter_span = 5.0; // raw capture span; stillness protection
   static constexpr int min_bins = 4;
   static constexpr int min_per_bin = 20;
-  static constexpr double min_information = 25.0; // sum (T_bin - mean T_bin)^2
+  static constexpr double min_information = 8.0; // sum (T_bin - mean T_bin)^2
   static constexpr double noise_floor = 0.0002;  // does not shrink with raw sample count
   static constexpr double max_slope_sigma = 0.00005;
   static constexpr double max_slope = 0.001;
@@ -1279,7 +1280,7 @@ struct GyroCalibrator {
     // A narrow-temperature hold cannot explain large scatter as thermal
     // drift. Capture also checks continuous stillness using accel and mag;
     // this protects direct callers against averaging a movement into bias.
-    if (range < GyroThermalLimits::min_span) {
+    if (range < Limits::stationary_scatter_span) {
       DVec scatter = DVec::Zero();
       const DVec mean_rate = sum / buf.n;
       for (int i = 0; i < buf.n; ++i) {

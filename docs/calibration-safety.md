@@ -72,8 +72,16 @@ existing validated gyro calibration unchanged.
 The thermal regression uses double precision and equally weighted populated
 temperature-bin means, centered on their measured mean temperature. Each bin
 requires 20 accepted stationary samples. Qualification requires at least four
-populated bins, at least 5 degrees C between their temperature centroids, and
-centered temperature information `sum((T_bin - mean(T_bin))^2) >= 25 degC^2`.
+populated bins and the populated-bin centroid span required by
+`GyroThermalLimits::min_span`. Centered temperature information must satisfy
+`sum((T_bin - mean(T_bin))^2) >= GyroThermalLimits::min_information`.
+These limits are defined only in
+[`src/imu_calibrate/CalibrateIMU.h`](../src/imu_calibrate/CalibrateIMU.h):
+`min_span` is measured in degrees C, while `min_information` is measured in
+squared degrees C and sums equally weighted populated-bin contributions, not
+raw-sample contributions. The fitter, persisted-blob validation and regression
+tests use that same policy. Passing either eligibility gate does not bypass
+the independent slope-uncertainty and plausibility checks.
 The three-axis one-sigma slope limit is `0.00005 rad/s/degC` per axis. Scatter
 includes both bin lack-of-fit and raw residual scatter, with a `0.0002 rad/s`
 floor; raw sample count does not make correlated hold noise artificially precise.
@@ -120,7 +128,7 @@ detects external interference. The preset and its 20 Hz limit come from the
 The ellipsoid metric determines `A^T A`, not an arbitrary sensor-to-body
 rotation. The correction uses the SPD square root as an initializer, then
 refines a symmetric positive-definite matrix with the fitted hard-iron offset
-subtracted first. A Cholesky whitening factor gives the right
+subtracted first. A nonsymmetric triangular whitening factor gives the right
 norm but not the registered-frame direction. Independent physical mounting
 misalignment is not observable from these magnitude-only samples and is not
 absorbed into the soft-iron correction. Absolute field scale also remains tied

@@ -655,8 +655,8 @@ public:
     }
 
     // Self-similar drift-regularizer pseudo-measurement cadence
-    // T_S = c_T * tau_applied.  Enabled by default; disabling restores the
-    // fixed 15 ms cadence for ablation.
+    // T_S = c_T * tau_applied.  Enabled by default; disabling selects the
+    // fixed 15 ms cadence, which the OU-II device sketch deploys.
     // Whenever the cadence changes while Live, reapply r_p0 and r_v0 so their
     // per-update covariances stay information-rate matched.
     void setTauScaledPseudoUpdateCadence(bool flag) {

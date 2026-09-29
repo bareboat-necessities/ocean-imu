@@ -36,24 +36,33 @@ equivalent to a reader for O~ with terminal `[[A~_N,B~_N],[0,I]]`. All reader
 actions are congruent by the orthogonal `diag(R_N,I)`. Moreover
 
 * prediction: `A~+=W A~`, `B~+=W(B~+Gamma)`, `W=R+' Rs R`,
-  `Gamma=R' Rs^-1 Bs`. If Rs equals the mean increment, W=I and Gamma is the
-  world integral of the nominal body-to-world rotation over the step;
+  `Gamma=R' Rs^-1 Bs`. If Rs equals the mean increment, W=I; with exact
+  integral coefficients Gamma is the world integral of the nominal
+  body-to-world rotation over the step;
 * reset: `A~+=N A~`, `B~+=N B~`, `N=R+' G R`. For any orthogonal mean
   injection `N'N=I+(|x|^2 I-xx')/4`, `x=R' d`, so sigma_min(N)=1,
   `|N|=sqrt(1+|x|^2/4)` and `|N^-1|=1`. For the exponential injection,
   `N=Exp(-[x])(I+[x]/2)` acts transversally as `(1+i theta/2)exp(-i theta)`.
 
 *Proof.* `[Rv]x=R[v]x R'` for rotations; substitute the definitions. The closed
-form gives `Rs^-1 Bs=int_0^h Exp([w]u) du`. Finally `N'N=R' G'G R` and
+form with exact Rodrigues/integral coefficients gives
+`Rs^-1 Bs=int_0^h Exp([w]u) du`; the finite coefficient-series defect must
+be retained for the shipping implementation. Finally `N'N=R' G'G R` and
 `G'G=I+(|d|^2 I-dd')/4`.
 
 Consequently the attitude estimate and its error enter the six-column array
 only through the world injections x (via N) and through Gamma, which
-integrates the nominal rotation. With no injections the rows are
+integrates the nominal rotation. With no injections and exact
+rotation/integral coefficients the rows are
 `[f_k]x [I, int R_hat']`: the world observability matrix of
 `theta_w(t)=theta_w(0)+(int R_hat')b_g`. The source mean uses the polynomial
-quaternion for |w h|<.01 while the covariance uses Rodrigues for |w|>=1e-7;
-|W-I| is that branch and arithmetic defect.
+quaternion for |w h|<.01. The covariance/integral coefficients use alternating
+Taylor series through x^18 for |x|<1, x=|w|h, and closed forms otherwise.
+The exact factorization retains the actual Rs and Bs in W and Gamma.
+|W-I| includes the deterministic coefficient/mean-quaternion approximation
+and floating-point defects. Ideal orthogonal-rotation inverse bounds do not
+silently apply to the truncated coefficients: their transfer is part of the
+still-open implementation/arithmetic premise, not certified by finite replay.
 
 ## 2. Attitude-invariant same-cell geometry
 
@@ -141,7 +150,7 @@ With applied magnetic corrections only at integer seconds, every same-cell
 group degenerates. That cadence is **not** admitted by MAGNETIC SERVICE: a
 single correction per 1-s window maps both normalized heading and axial-bias
 columns nearly onto `H_m R e_z`, and the carried run below has least service
-eigenvalue 2.05e-5 against `mu_M=1`. So no refutation of the same-cell route
+eigenvalue 2.03e-5 against `mu_M=1`. So no refutation of the same-cell route
 under all three assumptions is claimed.
 
 **Jerk-limited collinear cadence.** If the physical force is parallel to b at
@@ -164,7 +173,7 @@ The observer and driver are derived at run time from the existing ones; an
 untapped control reproduces the terminal state exactly. Floors use the
 exported row operands and charge each reset's float mean-injection angle
 delta (the rotation between the exported post-reset attitude and the exact
-`Exp([d]x)` injection, at most 1.6e-9 rad) on top of psi(theta). Quiet and
+`Exp([d]x)` injection, at most 1.8e-9 rad) on top of psi(theta). Quiet and
 wave reuse the existing .32-s windows. Both collinear words apply magnetic
 corrections at 25 Hz through startup; during 225--229 s the first applies
 them only at integer seconds, the second keeps 25 Hz.
@@ -182,10 +191,10 @@ them only at integer seconds, the second keeps 25 Hz.
 | AW tracking error max (m/s^2) | 0 | .0136 | .563 | .562 |
 | lambda_max(P_aw): at syncs / min at acc rows | .0025 / .0012 | .0025 / .0010 | .0791 / .0026 | .0791 / .0026 |
 | AW storage route ratio | 0 | .00035 | 6.68 | 6.91 |
-| one-correction service lambda_min | 1.6e-83 | 1.8e-10 | 2.05e-5 | 6.9e-11 |
+| one-correction service lambda_min | 1.6e-83 | 1.4e-10 | 2.03e-5 | 5.5e-11 |
 
 Prediction world discrepancy is at most 2.1e-9 (float branch), the reset Gram
-identity holds to 4.3e-81 and row factorization to 9.9e-78. `|A~-I|` matches
+identity holds to 6.4e-81 and row factorization to 1.7e-77. `|A~-I|` matches
 half the signed world injection sum: .00112 on the collinear word versus a
 norm sum of .0135. The AW block is reconstructed through every correction
 (`P_aw-K_a S K_a'`) and prediction to 1.7e-6 relative; applied syncs are the

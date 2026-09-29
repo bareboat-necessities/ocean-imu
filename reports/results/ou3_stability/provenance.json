@@ -109,14 +109,15 @@
     "construction_endpoint_storage": "Recorded full 21x21 covariance is exactly SPD. Zero true BA gives V >= e_ba^T P_ba,ba^-1 e_ba >11492.6752, with all cross covariance retained, excluding V<=36 at this finite endpoint. This is not all-time service, eventual-capture refutation, or active-projection proof.",
     "construction_mean_action": "The full carried BG/AW mean action retains actual six-row rank-three gains and innovation correlations, with explicit recorded mean rounding. Outward intervals and rational LDL certify gyro norm <1 at all recorded prefixes; exact binary checks give force/field sine >2/5 at 40000 tail acc observations. The energy-only pointwise uniform exclusion fails with margin [-817884.048495,-817884.048494]; this is an enclosure failure, not a reachable collinear history, source-uniform B_* or contraction. Fresh observer checks every actual gyro projection is inactive; only then is the affine unprojected mean replay analyzed.",
     "gyro_bias_estimator_invariant": "Implemented residual-bias ball R_g=.5 rad/s, separate from physical B_g=.02. Qualified rate includes Omega_max+B_g+N_g+R_g=1.1508652381980153; h in [.004,.006] gives argument .0069051914291880918 and real-source angle <.007. The API does not enforce dt_max.",
-    "one_prediction_gyro_transport": "Real-source Rodrigues and small-rate polynomial branches have transverse singular floor .003999991833333333... s. Complete-turn nominal bias relaxation excluded. Full signed temporal Delta_gyr, force/field separation and word float32 totality remain open.",
+    "one_prediction_gyro_transport": "The retained ideal-rotation comparison has transverse singular floor .003999991833333333... s. Shipping dimensionless coefficient series require the remainder transfer described in so3_coefficient_transfer. Complete-turn nominal bias relaxation is excluded. Full signed temporal Delta_gyr, force/field separation and word float32 totality remain open.",
     "marine_complete_moving_window_excitation": "Every complete T_E window contained in one maximal physical moving episode has gravity span >=theta_E>0. Nondegenerate rest intervals define episode boundaries; isolated zero-rate instants do not restart them. Boundary-crossing windows require transition retention, not immediate excitation. Numerical qualification remains open.",
     "stationary_information_and_detector": "True zero rate supplies direct gyro-bias information up to deterministic noise and bias drift. Gravity/magnetic observations retain physical attitude/BA ambiguity. Smooth rest/motion/rest histories have identical sensor inputs inside unchanged bias/rate/service limits. A finite-entry, universally finite-exit exact-rest detector is impossible on the admitted parameter family. The necessary-evidence monitor never certifies physical STILL and changes no shipping behavior.",
     "regime_transition_composition": "Actual operation prefix gains and supplies compose conditionally, retaining covariance, projections/resets, clocks, physical S/bias histories and magnetic state. Finite detection/retention and a recurring cumulative product/supply budget are open; finite bridges alone are insufficient.",
-    "chronological_six_pivot_implication": "Literal reset and prediction inverses are nonexpansive in real arithmetic. C=A^-1 B is unchanged by reset, whose influence remains in subsequent injections. Actual acc/mag groups with no intervening prediction have E=0 after retaining every reset. Positive uniform group geometry and inter-anchor gyro transport imply all six pivots; source-uniform premises, B_*, J_AG and rho remain open. An exact relaxed reset cancellation is neither source reachability nor loss of all historical row rank.",
+    "chronological_six_pivot_implication": "Literal reset and ideal Rodrigues prediction inverses are nonexpansive in real arithmetic; the shipping coefficient-series transfer must retain the deterministic remainder and arithmetic defects described in so3_coefficient_transfer. C=A^-1 B is unchanged by reset, whose influence remains in subsequent injections. Actual acc/mag groups with no intervening prediction have E=0 after retaining every reset. Positive uniform group geometry and inter-anchor gyro transport imply all six pivots; source-uniform premises, B_*, J_AG and rho remain open. An exact relaxed reset cancellation is neither source reachability nor loss of all historical row rank.",
     "quiet_nominal_historical_covariance": "Exact zero-residual regular quiet nominal subfamily: two normalized actual acc/mag groups cancel arbitrary AG root/cross covariance; inherited nuisance and full correlated process bounds give every-operation full covariance upper and qualitative homogeneous linear loss. No compatible-class nonlinear stationary theorem, useful numerical rho, or physical attitude/BA separation is claimed.",
     "world_frame_historical_rows": "Every regular historical AG row is -R_k[f_k]x[A~_k R_0',B~_k]: predictions leave A~ invariant when the covariance rotation equals the mean increment, resets multiply it by N=R_next' G R with N'N=I+(|x|^2 I-xx')/4, and B~ integrates the nominal R_hat'. Same-cell geometry depends only on world nominal force, committed reference and local injection. Literal injections obey dd'<=NIS K S K'<=NIS P_theta,theta. A 1-Hz collinear MARINE MOTION/IMU BIAS history degenerates every same-cell group while aggregate rows keep rank; its one-correction windows fail MAGNETIC SERVICE, and jerk forbids all-collinear cadences with length-weighted mean gap below 4(g h-2V/L)/J. Attitude columns transfer from physical transverse force given AW tracking <1.12383 m/s^2 on 16-s windows. Aggregate gyro columns, AW tracking, B_*, J_AG and rho remain open.",
-    "aw_covariance_ceiling": "Default profile, real arithmetic: the isotropic pending sync is the spectral max of P_aw and sigma^2 I, prediction maps the AW block to phi^2 P_aw+Q_aa with Q_aa<=(1+eps)(1-phi^2)sigma^2 I, and applied corrections subtract K_a S K_a', so lambda_max(P_aw)<=(1+eps)16 with excess decaying as exp(-t/6). Every applied sync floors P_aw at sigma^2 I, so the ceiling is tight; S_factor!=1 breaks it. Covariance-normalized storage cannot carry the AW error uniformly (carried collinear ratios 6.68 and 6.91); the physical AW tracking bound remains open."
+    "aw_covariance_ceiling": "Default profile, real arithmetic: the isotropic pending sync is the spectral max of P_aw and sigma^2 I, prediction maps the AW block to phi^2 P_aw+Q_aa with Q_aa<=(1+eps)(1-phi^2)sigma^2 I, and applied corrections subtract K_a S K_a', so lambda_max(P_aw)<=(1+eps)16 with excess decaying as exp(-t/6). Every applied sync floors P_aw at sigma^2 I, so the ceiling is tight; S_factor!=1 breaks it. Covariance-normalized storage cannot carry the AW error uniformly (carried collinear ratios 6.68 and 6.91); the physical AW tracking bound remains open.",
+    "so3_coefficient_transfer": "Shipping SO(3) covariance/integral coefficients use degree-18 alternating Taylor series for |omega|h<1 and closed forms otherwise. Exact historical row factorization retains actual Rs and Bs in W and Gamma. Ideal rotation-integral simplification and norm-one inverse bounds require the deterministic coefficient remainder as well as mean-quaternion and floating-point defects; source-uniform implementation transfer remains open and finite replays are non-promoting."
   },
   "operation_lemma_sources": [
     {
@@ -181,7 +182,7 @@
     },
     {
       "path": "src/kalman_ou_common/KalmanOUCoreMath.h",
-      "git_blob_sha": "87ac93af808fe7f54e485e29e499cd6ae34f1714"
+      "git_blob_sha": "24073567959bf2941f26bcc5e67608b2c5414f76"
     },
     {
       "path": "tools/stability/ou3_theorem/lin_path_certificate.py",
@@ -521,7 +522,7 @@
     },
     {
       "path": "docs/ou3-world-frame-rows.md",
-      "git_blob_sha": "211eedb19a57d0ee1bf30ad7c5a571471f76fd00"
+      "git_blob_sha": "4af5f73a423be4292a3a1644ef12916f6ebc8840"
     },
     {
       "path": "tools/stability/ou3_theorem/world_frame.py",
@@ -541,7 +542,7 @@
     },
     {
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "git_blob_sha": "0131a26b27b8fa34c4e75d4f7d2741ceef4fa24f"
+      "git_blob_sha": "78697e88c5c4f34ea8f630e006bb3f57632d7891"
     },
     {
       "path": "tools/stability/ou3_theorem/aw_covariance_ceiling.py",
