@@ -1602,6 +1602,109 @@ chronology may jointly remove the degeneracy.  It refutes only the proposed
 two-epoch accelerometer bridge as a source-uniform consequence of the current
 physical assumptions.
 
+## Complete multi-epoch corrected-word operator
+
+The failed two-epoch reduction should not be iterated.  Use the complete
+regular A21 word as one conditional Gaussian operator.
+
+Freeze the literal word, including every prediction, applied accelerometer,
+magnetic and S correction, AW synchronization, BA evolution, Joseph gain and
+attitude reset.  Stack the root as \`x_0=(x_s,x_f)\`, where \`x_s\` contains
+the slow AG/BA quotient plus the physical kernel coordinate and \`x_f\`
+contains the remaining nuisance root.  Stack every fresh process/sync/noise
+factor once in \`s\).  Then exactly
+
+\`y=O_s x_s+O_f x_f+A s\`,
+\`x_N=T_s x_s+T_f x_f+B s\`.                                 (MW-1)
+
+All matrices are chronological literal matrices from shipping.  No
+accelerometer subword, nominal-AW mean, reset-product approximation or
+independent source box is introduced.
+
+Eliminate the nuisance root in the full joint Gaussian record.  With
+\`Sigma=A A'\`, define the whitened nuisance projector
+
+\`P_f=proj range(Sigma^-1/2 O_f)\`
+
+and
+
+\`J_s=O_s' Sigma^-1/2(I-P_f)Sigma^-1/2 O_s\`.                (MW-2)
+
+Append the fictitious kernel precision \`mu=1/c\`:
+
+\`J_(s,mu)=J_s+mu nu nu'\`.                                  (MW-3)
+
+For the terminal state, eliminate the same nuisance root and all data
+optimally using the joint minimum-action identity.  Let \`Pi_s\` be the
+known-slow-root terminal covariance and \`P_(nu,s)\` the terminal covariance
+with only kernel prior precision \`mu\`.  Then the exact complete-word
+diameter is
+
+\`kappa_MW(c)=lambda_max(Pi_s^-1 P_(nu,s))\`.                (MW-4)
+
+This is not a raw observability requirement.  Directions may be weak or
+instantaneously null in accelerometer rows and still have finite diameter
+because the complete word combines:
+- magnetic rows at every qualified service interval;
+- all accelerometer epochs, including changes of nominal force;
+- S pseudo-observations and their correlations with AW/LIN;
+- chronological gyro-bias transport;
+- AW/BA process penalties;
+- actual Joseph corrections and literal reset congruences;
+- terminal forgetting/process noise.
+
+The smoother identity gives an equivalent closed-loop form.  If
+\`C_k=Cov(x_s, x_k | y_<k)\`, every applied correction contributes root loss
+
+\`Delta J_k=C_k H_k' S_k^-1 H_k C_k'\`,                     (MW-5)
+
+transported in the same root coordinates.  Predictions contribute forgetting
+through the joint terminal conditional covariance.  Thus exact row-null
+directions at one epoch are harmless unless they remain invariant under the
+entire corrected chronology.
+
+The source-uniform theorem target is now directly
+
+\`P_(nu,s)(W,c) <= K_MW(c,r) Pi_s(W)\`                       (MW-6)
+
+for every admissible complete MOVING word whose prefixes stay in the candidate
+radius.  Equivalently
+
+\`sup_W kappa_MW(W,c,r)<infinity\`.                          (MW-7)
+
+The physical assumptions enter only in excluding a complete-word invariant
+null sequence.  A contradiction sequence with unbounded diameter would,
+after normalization, have to make simultaneously:
+1. every magnetic-service corrected loss vanish;
+2. every accelerometer corrected loss vanish after optimal AW/BA/LIN mimic;
+3. every S corrected loss vanish;
+4. every AG/BA process-action penalty vanish;
+5. terminal forgetting vanish.
+
+Because process factors are retained in the joint action, an AW/BA nuisance
+that changes between accelerometer epochs to maintain a force degeneracy pays
+its literal process action.  Because S rows are retained, an AW/LIN mimic that
+hides in accelerometer rows must also remain compatible with the integrated
+chain.  This is exactly the coupling discarded by the two-epoch Schur
+argument.
+
+A quantitative proof should therefore lower-bound the **sum** of the five
+nonnegative complete-word actions above, not seek a positive floor for any
+single sensor family.  The already proved nuisance covariance bounds,
+S-chain identity, Lemma T, magnetic service and process floors are valid
+supplies for this sum.
+
+If (MW-6) closes, no separate G0 or two-epoch \`a_2\` is needed for O1:
+\`K(c,r)=K_MW(c,r)\`.  The same complete-word joint factorization gives the
+known-root scalar kernel return \`D(c,r)\`; actual-gain finite-error
+composition then supplies \`E(c,r)\`.  The final invariant test remains
+
+\`D(c,r)<=c\`,
+\`[1-sqrt(1-1/K_MW(c,r))]r>E(c,r)\`.
+
+This section changes the proof target only; it does not claim a uniform
+complete-word bound yet.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
