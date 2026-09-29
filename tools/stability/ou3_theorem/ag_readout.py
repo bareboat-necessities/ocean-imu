@@ -137,6 +137,39 @@ def noise_action_lower(events, n=21, ag=6):
     return matmul(matmul(terminal, inverse(gram)), transpose(terminal))
 
 
+
+def minimum_noise_reader(observation_rows, terminal_map, noise_covariance):
+    """Exact all-row minimum measurement-noise reader.
+
+    Minimize L R L' subject to L O=T.  For R>0 and
+    I=O'R^-1 O>0, the unique minimum-action reader is
+      L*=T I^-1 O' R^-1,
+    with action T I^-1 T'.  This avoids selecting/inverting a six-row minor.
+    It addresses measurement-noise action only; process and nuisance-root
+    action remain separate terms in the historical backward reader.
+    """
+    o,t,r=_matrix(observation_rows),_matrix(terminal_map),_matrix(noise_covariance)
+    ldlt(r)
+    ri=inverse(r)
+    info=matmul(matmul(transpose(o),ri),o)
+    ldlt(info)
+    l=matmul(matmul(matmul(t,inverse(info)),transpose(o)),ri)
+    if matmul(l,o)!=t:
+        raise ArithmeticError('minimum reader does not cancel AG root exactly')
+    action=matmul(matmul(l,r),transpose(l))
+    optimum=matmul(matmul(t,inverse(info)),transpose(t))
+    if action!=optimum:
+        raise ArithmeticError('minimum reader action identity failed')
+    return {'reader':l,'information':info,'measurement_action':action,
+            'minor_selection_required':False}
+
+
+def minimum_noise_action_from_information(information, terminal_map):
+    """T I^-1 T' action; source proof target for uniform reader conditioning."""
+    info,t=_matrix(information),_matrix(terminal_map); ldlt(info)
+    return matmul(matmul(t,inverse(info)),transpose(t))
+
+
 def readout_action(events, reader, nuisance_upper, ag=6):
     """Verify exact AG root cancellation and return its full matrix action.
 
