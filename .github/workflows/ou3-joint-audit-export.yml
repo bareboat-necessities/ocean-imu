@@ -1,0 +1,23 @@
+name: OU3 joint audit source export
+on:
+  push:
+    branches: [ou3-joint-tuning-audit]
+    paths: [.github/workflows/ou3-joint-audit-export.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Export immutable source
+        run: |
+          git rev-parse HEAD > audit-head.txt
+          git archive --format=zip HEAD -o ocean-imu-audit-source.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ou3-joint-audit-source
+          path: |
+            audit-head.txt
+            ocean-imu-audit-source.zip
+          retention-days: 1
