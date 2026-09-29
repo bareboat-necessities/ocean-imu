@@ -1831,6 +1831,86 @@ zero-action nullspace proof in real arithmetic.  A numerical value of
 \`delta_S4\` is not required for qualitative coercivity; it will be needed
 later for an explicit K_MW modulus.
 
+## Multi-epoch magnetic-compatible attitude/BA intersection
+
+Assume the zero-action conclusions already proved: all fresh AG/LIN/AW/BA
+sources vanish, the homogeneous LIN/AW root is zero by the four-S lemma, and
+magnetic service/Lemma T leaves no nonzero gyro-bias component.  Let
+\`F_k\` be the literal invertible attitude transport from the word root to
+accelerometer epoch k, including every prediction and reset.  Then
+
+\`theta_k=F_k theta_0\`,
+\`b_a,k=phi_b(t_k) R_(ba,k) b_a,0\`,                         (AB-1)
+
+where \`R_(ba,k)\` is the literal orthogonal frame transport of the stored BA
+coordinate.
+
+Zero magnetic loss at every applied magnetic row j gives
+
+\`F_j theta_0 in span(B_j)\`.                                (AB-2)
+
+Thus the admissible root attitude space is the intersection
+
+\`K_M=intersection_j F_j^-1 span(B_j)\`.                     (AB-3)
+
+It has dimension at most one unless all pulled-back field lines coincide.  If
+two do not coincide, \`K_M={0}\` and the desired result is immediate (BA is
+then zero from any accelerometer row because its BA row is invertible).
+
+In the only nontrivial case, \`K_M=span(theta_hat_0)\`.  Write
+\`theta_0=lambda theta_hat_0\`.  Zero accelerometer loss at every applied
+epoch k, with AW/LIN already zero, is
+
+\`J_att,k F_k theta_0
+ +R_(ba,k) phi_b(t_k)b_a,0=0\`.                              (AB-4)
+
+Since \`R_(ba,k)\` is invertible,
+
+\`b_a,0=-lambda phi_b(t_k)^-1
+ R_(ba,k)' J_att,k F_k theta_hat_0\`                         (AB-5)
+
+for every k.  Therefore a nonzero solution exists iff the vectors
+
+\`q_k:=phi_b(t_k)^-1 R_(ba,k)' J_att,k F_k theta_hat_0\`     (AB-6)
+
+are identical at all accelerometer epochs.  When they are identical, the
+solution set is exactly the one-dimensional line
+
+\`(theta_0,b_a,0)=lambda(theta_hat_0,-q)\`.                   (AB-7)
+
+When they are not identical, only \`lambda=0\` is possible, and then
+\`b_a,0=0\`.
+
+Hence, without any force-separation premise,
+
+\`dim{(theta_0,b_a,0): all zero magnetic and acc losses}<=1\`. (AB-8)
+
+This is purely linear algebra: magnetic rows first reduce the root attitude
+space to dimension <=1; the invertible BA row at one accelerometer epoch then
+determines the entire three-component BA root from that single attitude
+amplitude; additional accelerometer epochs can only remove the line, never
+increase its dimension.  No assumption that the surviving line equals the
+quiet physical kernel is needed for the dimension statement.
+
+For Corollary K, however, the line used for the fictitious prior must contain
+the actual complete-word nullspace.  If \`K_M=span(theta_hat_0)\` and (AB-6)
+is constant, define the word's physical compatibility vector
+
+\`nu_W=(theta_hat_0,0,...,0,-q)\`.                            (AB-9)
+
+The complete-word nullspace is contained in \`span(nu_W)\`.  In the quiet
+case this reduces to the previously stated
+\`nu_ba=-J_att theta_hat\`.  On a moving word the compatible line may rotate
+with the literal chronology; the recurring kernel ceiling and next-word
+transport must therefore use \`nu_W\`, not assume a fixed instantaneous
+quiet-kernel formula unless their equality is separately proved.
+
+This closes the qualitative dimension-at-most-one lemma.  It also exposes a
+bookkeeping correction: the complete-word kernel is the common
+magnetic/accelerometer compatibility line of that word, which may be trivial;
+its identification with the earlier root field-axis tilt/BA vector remains
+to be checked before applying the existing scalar kernel ceiling unchanged.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
