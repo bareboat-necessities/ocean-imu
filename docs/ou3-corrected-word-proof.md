@@ -2950,6 +2950,65 @@ fails, RC-3 must be replaced by RC-2 directly. The contradiction proof still
 works provided minimizers z_n are uniformly bounded modulo structural
 zero-action directions; the existing nuisance covariance/action bounds are
 the required coercivity input.
+## Scalar storage on the persistent compatibility line
+
+Normalize a nontrivial compatibility generator by unit physical attitude:
+`nu_W=(theta_hat_W,-q_W)`, `|theta_hat_W|=1`, suppressing zero blocks. A
+persistent homogeneous line satisfies
+
+`theta_hat_W -> s_W theta_hat_(W+1)`, `|s_W|=1`,
+`q_W -> Phi_b,W q_W = s_W q_(W+1)`.
+
+Consider any positive quadratic scalar storage restricted to this line,
+`V_k=lambda^2 w_W`, where
+
+`w_W = a_W + q_W' B_W q_W + 2 c_W' q_W`
+
+is the value of a uniformly positive-definite attitude/BA metric on nu_W.
+Uniform equivalence to a fixed physical scalar ceiling requires
+`0<w_min<=w_W<=w_max<infinity` on the compact word class.
+
+Along exact persistent transport the scalar amplitude lambda is unchanged
+because |s_W|=1. Therefore
+
+`V_(W+1)/V_W = w_(W+1)/w_W`.                                (SI-1)
+
+A source-uniform strict contraction `V_(W+1)<=rho V_W`, rho<1, over an
+indefinitely persistent sequence would imply
+
+`w_(W+n)<=rho^n w_W ->0`,
+
+contradicting the required uniform lower equivalence `w_(W+n)>=w_min>0`.
+
+Hence **no uniformly equivalent positive scalar storage can strictly contract
+an indefinitely persistent exact compatibility mode with unit physical tilt
+amplitude**. Word-dependent BA weighting cannot solve O2 by itself; BA decay
+only changes q_W and therefore the representation of the line.
+
+This is a general obstruction, independent of choosing a quadratic metric:
+any scalar storage uniformly equivalent to lambda^2 has the same telescoping
+contradiction under unit-amplitude persistence.
+
+Therefore O2 can close only if one of the following is proved:
+(i) exact compatibility cannot persist indefinitely, so strict-loss words
+occur with a source-uniform recurrence; or
+(ii) the final practical-stability theorem treats the persistent scalar as a
+neutral bounded gauge/class rather than requiring contraction of it. The
+latter changes the theorem/state notion and is outside the current declared
+regional practical-stability target unless explicitly adopted.
+
+The controlling path under the current theorem is thus persistence exclusion.
+A sufficient statement is: there exist N_K<infinity and eta_K>0 such that
+within every N_K consecutive MOVING words, at least one word has no exact
+compatibility kernel or maps the incoming compatibility line with physical
+tilt amplitude <=1-eta_K. This recurring-loss condition would replace
+per-word scalar contraction and yield blockwise O2 contraction.
+
+The existing BA decay relation shows that if no such loss occurs, q_W->0.
+Thus it suffices to exclude an arbitrarily long sequence whose nominal
+accelerometer Jacobians approach the zero-BA field-axis compatibility at all
+applied rows. This is exactly the minimal physical-to-nominal excitation
+bridge still missing from the proof.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
