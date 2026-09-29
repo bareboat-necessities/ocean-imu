@@ -2364,6 +2364,79 @@ projector gives the same conservative two-dimensional treatment.
 If these topological obligations close, a finite source-uniform soft-kernel
 diameter follows without AW-gain entry, determinant sign crossing, or
 finite-horizon detectability of the disappearing exact kernel.
+## Finite closed event strata for regular A21 words
+
+Fix the regular A21 word horizon T_W and the qualified sample interval
+`h in [h_min,h_max]` with h_min>0. Then the number of prediction slots is
+bounded by `N_max=ceil(T_W/h_min)+1`. At each slot the shipping operation
+alphabet is finite: prediction; accelerometer attempted/applied or rejected;
+S due/applied or failed-safe; magnetic attempted/applied or rejected; BA
+mode/projection branch; AW sync due/not due; and the finite reset/projection
+branches. Hence there are finitely many combinatorial event words on T_W.
+
+For a fixed combinatorial word sigma, collect continuous coefficients
+(dt values, states, covariance, physical/tuner parameters, measurements,
+clocks and references) into z. Literal prediction, Joseph correction, reset
+and covariance-sync maps are continuous wherever their selected branch has
+strictly positive LDLT pivots and finite inputs. Define a closed stratum by
+replacing each branch predicate with a closed assignment convention at
+equality (for example the code's actual <= versus < choice). Gate-boundary
+points that select the opposite code branch are placed in that neighboring
+stratum rather than duplicated.
+
+The closure of one fixed applied-event formula need not equal a shipping
+stratum: as an LDLT pivot approaches the fail-safe boundary the applied
+formula may cease to be the code path. Therefore continuity is asserted only
+on each code-selected closed branch, not across a branch switch. The finite
+union of these branch strata covers all regular words.
+
+MAGNETIC SERVICE is evaluated from actually applied informative events. For
+a fixed applied-magnetic pattern its service Gram is continuous in z and the
+condition `lambda_min(sum G_k'G_k)>=mu_M` is closed. A limit in which an
+event becomes rejected belongs to the rejected neighboring stratum; that
+stratum is admissible only if its remaining actually applied events still
+satisfy the same closed service inequality. Thus service prevents loss of the
+last required magnetic information at a boundary unless other applied events
+already retain the floor.
+
+On every fixed stratum the frozen auxiliary matrices O,A and hence the
+nuisance-shorted information J are continuous provided the nuisance covariance
+rank is constant. Avoid pseudoinverse discontinuity by retaining the raw
+joint factor representation or by further stratifying by nuisance rank;
+matrix rank takes finitely many integer values. This yields finitely many
+closed constant-rank substrata on which J is continuous.
+
+The remaining topological requirement is compactness of each substratum.
+Bounds on dt, tuner clamps, bias/state retained radius, covariance ceilings,
+physical/reference bounds and fixed horizon make the continuous coefficient
+set bounded. Closed branch predicates, closed MARINE MOTION/IMU BIAS bounds
+and closed MAGNETIC SERVICE make it closed, provided the all-time physical
+continuation variables are represented by the already assumed compact
+finite-word trace class. That last trace compactness is not automatic from
+bounded acceleration/jerk alone and must use Arzela--Ascoli plus the bounded
+potential/velocity/displacement conditions.
+
+If compactness holds and the complete-word nullity<=1 theorem applies on
+every boundary substratum, ordered eigenvalue continuity gives
+`lambda_2>0` pointwise and therefore a positive minimum on each substratum;
+the finite minimum over strata is positive.
+
+Boundary nullity is the remaining substantive issue. The earlier zero-action
+proof uses four applied S observations and recurring magnetic service. A
+boundary stratum may lose an S application through an LDLT fail-safe; unlike
+MAGNETIC SERVICE, there is currently no first-class S-service assumption
+requiring four actually applied S rows. Therefore the existing nullity<=1
+proof does not automatically extend to every closure stratum. A boundary
+with too few applied S corrections can retain additional homogeneous LIN/AW
+null directions while still satisfying MAGNETIC SERVICE.
+
+Consequently the finite-stratum decomposition and J-continuity can be made
+rigorous, but the desired global `inf lambda_2>0` does not yet follow from
+current assumptions: S-row survival on all admissible boundary strata is
+missing. One must prove from shipping positive definiteness/fail-safe guards
+that regular A21 S updates cannot fail on the retained domain, or add a
+separate actually-applied S-service premise. The latter would strengthen the
+assumptions and is not authorized here.
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
