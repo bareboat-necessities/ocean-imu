@@ -1155,6 +1155,93 @@ remains to be checked for the literal finite-series/implementation defect.
 Until that bookkeeping check is closed, (LE-7) is a conditional analytic
 bound, not a numerical shipping certificate.
 
+## Literal whitening and anchor identification for the leverage bound
+
+The bookkeeping identification required by (LE-3)--(LE-8) is exact in real
+arithmetic provided whitening is performed **after** the S-chain/local-tube
+row combinations.
+
+Shipping conventions are:
+
+1. the mean quaternion is WORLD-to-BODY and prediction uses the normalized
+   `quat_from_delta_theta(-w h)`;
+2. the AG covariance prediction is
+   `[[R_s,B_s],[0,I]]` from the same `rot_and_B_from_wt(w,h)`;
+3. an applied correction changes the mean by the literal quaternion injection
+   and applies covariance reset `G=I+[d]x/2`;
+4. the world proof coordinates are obtained by left multiplying body rows by
+   the orthogonal `R_k'`, giving
+   `[f_k]x[Atilde_k,Btilde_k]` exactly as in Lemma W.
+
+Thus the local anchor convention used in the leverage proof is
+
+`Q_k=Atilde_k Atilde_j^-1`,
+`D_k=Atilde_j^-1(Btilde_k-Btilde_j)`,
+
+with the same chronological reset factors as shipping.  No transpose or
+sign change is missing: `rot_and_B_from_wt` is the WORLD-to-BODY covariance
+transition, while the proof's `R_k'` is precisely the body-to-world
+orthogonal change of row coordinates.
+
+Finite-series prediction terms do not alter this identification.  They are
+already inside the literal `R_s,B_s`.  Relative to the ideal integral they
+appear only through
+
+`R_s^-1 B_s = h I + Delta_D`,
+`||Delta_D||<=h(theta/2+theta^2/3)`
+
+on the qualified small-angle domain.  This is exactly the `R_D` defect in
+(LE-5)--(LE-7), not a change of anchor or whitening.
+
+The whitening point is essential.  Let `C_S` denote the deterministic
+matrix that forms all selected S-chain and local-tube combinations from the
+raw observation vector.  If the raw auxiliary record is
+
+`y=O x+A s`, `Sigma=A A'`,
+
+then the reduced record is
+
+`z=C_S y=H x+A_z s`,
+`H=C_S O`, `A_z=C_S A`,
+`Sigma_z=C_S Sigma C_S'=A_z A_z'`.                         (WH-1)
+
+The S-chain uses common prediction factors in several combined rows, so
+`Sigma_z` is generally **not block diagonal** even though the fresh factors
+are independent.  Therefore the literal whitened array for Lemma T/G0 is
+
+`X=Sigma_z^-1/2 H`,                                        (WH-2)
+
+with any common square root/inverse factor of the full reduced covariance.
+Whitening individual accelerometer, magnetic or S rows before applying
+`C_S` is not equivalent and is not allowed.
+
+Under (WH-2),
+
+`X'X=H' Sigma_z^-1 H`
+
+is exactly the reduced-record information used by the canonical reader.
+Partitioning its columns into attitude and gyro coordinates therefore gives
+the same `X_g` and the same weighted attitude projector `P_U` that appear
+in the Schur complement (LE-3).  The fictitious kernel row is appended after
+this reduction with independent variance one, so it adds exactly
+`mu nu nu'`.
+
+Consequently the leverage identity
+
+`X_g S_g^-1 X_g'<=I`
+
+and the reader action use one common whitening and anchor convention.  The
+literal reset transport is retained exactly; finite-series prediction error
+is isolated in `R_D`; S-chain shared-source correlations are retained in
+`Sigma_z`.
+
+**Result.**  The bookkeeping identification required by the signed
+`C_k`-energy bound passes in real arithmetic.  The AG-process family is
+therefore bounded conditionally on the already stated positive local-tube
+Schur floor `q_T(c,r)>0` and quotient floor `s(c,r)>0`.  This does not
+prove those radius-dependent floors numerically; it removes the separate
+whitening/anchor obstruction.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
