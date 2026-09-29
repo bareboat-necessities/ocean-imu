@@ -67,6 +67,74 @@ def full_loss_margin(word, delta):
     return is_psd(add(word['loss'],word['root_precision'],-delta))
 
 
+
+def block_schur_loss_certificate(loss, split):
+    """Exact nuisance-eliminated loss and completed-square congruence.
+
+    Partition a symmetric loss D as [[A,B],[B',N]].  If N>0, then
+      D = T' diag(S,N) T,  S=A-B N^-1 B',
+      T=[[I,0],[N^-1 B',I]].
+    Thus S is exactly the AG loss remaining after optimal nuisance
+    cancellation.  This is an algebraic reduction only: contraction still
+    requires comparison of the complete D with root precision.
+    """
+    d=_matrix(loss)
+    n=len(d)
+    if not 0<split<n or d!=transpose(d):
+        raise ValueError('symmetric loss and interior split required')
+    a=[row[:split] for row in d[:split]]
+    b=[row[split:] for row in d[:split]]
+    nn=[row[split:] for row in d[split:]]
+    ldlt(nn)
+    ni=inverse(nn)
+    schur=add(a,matmul(matmul(b,ni),transpose(b)),F(-1))
+    ldlt(schur)
+    t=identity(n)
+    nib=matmul(ni,transpose(b))
+    for i,row in enumerate(nib):
+        for j,v in enumerate(row):
+            t[split+i][j]=v
+    diag=[[F(0) for _ in range(n)] for _ in range(n)]
+    for i,row in enumerate(schur):
+        diag[i][:split]=row
+    for i,row in enumerate(nn):
+        diag[split+i][split:]=row
+    if congruence(diag,t)!=d:
+        raise ArithmeticError('block completed-square identity failed')
+    return {'verified':True,'schur':schur,'nuisance':nn,
+            'ag_after_optimal_nuisance_cancellation_spd':True,
+            'full_contraction_implied_without_root_comparison':False}
+
+
+def block_generalized_loss_implication(root_precision, loss, split, delta):
+    """Exact sufficient test D >= delta J_root after block-Schur reduction.
+
+    The Schur factorization is used to retain cross-coordinate cancellation;
+    the final comparison remains the required full generalized loss inequality.
+    """
+    cert=block_schur_loss_certificate(loss,split)
+    j=_matrix(root_precision); ldlt(j)
+    delta=F(delta)
+    if not 0<delta<1:
+        raise ValueError('delta in (0,1) required')
+    ok=is_psd(add(_matrix(loss),j,-delta))
+    return {**cert,'delta':str(delta),'full_generalized_loss_margin_verified':ok,
+            'rho0_upper':str(1-delta) if ok else None}
+
+
+def block_schur_self_test():
+    """Exact correlated example: principal AG information overstates usable loss."""
+    d=[[F(5),F(2),F(2)],[F(2),F(4),F(1)],[F(2),F(1),F(2)]]
+    cert=block_schur_loss_certificate(d,2)
+    # N=2 and B=(2,1)' so S=A-BB'/2.
+    expected=[[F(3),F(1)],[F(1),F(7,2)]]
+    if cert['schur']!=expected:
+        raise ArithmeticError('unexpected Schur complement')
+    return {'verified':True,'principal_AG_loss':encoded([r[:2] for r in d[:2]]),
+            'nuisance_eliminated_AG_loss':encoded(expected),
+            'cross_cancellation_retained':True}
+
+
 def restricted_service_counterexample():
     # A genuine positive-noise Kalman correction with S=4 I. Its restricted
     # heading/bias loss is I_2, but the full loss has a cancellation direction.
