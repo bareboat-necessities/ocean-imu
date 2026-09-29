@@ -4847,6 +4847,68 @@ cannot be supplied.
 
 Thus the next exact calculation is the affine fixed-point equation of the
 complete lifted DC subsystem, not merely the sign of its homogeneous gain.
+## Affine DC fixed-point equation for the lifted adaptation state
+
+Project onto the fixed world direction e_B and collect every mean coordinate
+that can return into AW under one lifted scheduler pattern:
+`x_D=(a_w,v,p,S,b_a,theta,...)_eB`. For a fixed repeated same-history
+coefficient pattern H and admissible constant/periodic physical forcing, the
+literal lifted map is affine
+
+`x_D^+ = A_D(H) x_D + d_D(H,u_phys)`.                       (AF-1)
+
+`A_D` is the exact product of prediction, scheduled S pseudo-update,
+accelerometer/magnetic Kalman updates and resets; covariance sync affects A_D
+through the gains but has no additive mean term.
+
+A periodic DC fixed point satisfies
+
+`(I-A_D)x_* = d_D`.                                         (AF-2)
+
+If I-A_D is invertible,
+`x_*=(I-A_D)^-1 d_D`; otherwise solvability requires the Fredholm condition
+`l'd_D=0` for every left unit eigenvector `l'A_D=l'`, with neutral components
+then fixed by compatibility/boundedness.
+
+The geomagnetic q->0 compatibility condition adds
+
+`C_B x_* = g_Bperp + delta_B`,                              (AF-3)
+
+where C_B selects the world AW component and
+`|delta_B|<=C_Bfield eps_B+C_L`; in the exact constant/no-lever case
+`C_B x_*=g_Bperp`.
+
+Combining AF-2--AF-3 gives the exact algebraic solvability condition
+
+`C_B (I-A_D)^-1 d_D = g_Bperp+delta_B`                      (AF-4)
+
+when invertible, together with all remaining compatibility rows. This is the
+affine invariant-zero fixed-point equation.
+
+Now expose d_D. The physical accelerometer enters only through innovations
+`r=f_phys-fhat-bhat_a`; after substitution, d_D contains the physical
+specific-force/gravity/reference terms multiplied by the literal Kalman gains.
+Therefore d_D is not zero even for zero-mean translational acceleration:
+gravity and the imposed nominal compatibility offset appear in the affine
+forcing.
+
+Consequently no source-independent contradiction follows from AF-4. Depending
+on the actual gains/cross covariances, the affine map can in principle have a
+fixed point with the required `C_B x_*=g_Bperp`. Conversely, no theorem says
+it must.
+
+For nonperiodic admissible marine motion the corresponding exact statement is
+the bounded particular-solution equation
+`x_k=Phi_A(k,0)x_0+sum_i Phi_A(k,i+1)d_i`,                  (AF-5)
+with `C_B x_k` constrained by GF-2 at every accelerometer epoch. Periodic
+AF-4 is therefore a sufficient construction mechanism, not a necessary form
+of every persistent zero.
+
+Thus the affine calculation identifies the decisive quantity:
+`C_B(I-A_D)^-1 d_D` for a candidate recurrent shipping pattern. Proving it
+uniformly separated from the geomagnetic target would exclude periodic
+persistent zeros; exhibiting equality with strict margins would construct
+one. Current symbolic shipping bounds do not determine its value or sign.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
