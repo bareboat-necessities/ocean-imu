@@ -3058,6 +3058,76 @@ This is a theorem-level obstruction, not a missing compactness argument:
 compactness can upgrade pointwise eventual breakage to uniform blockwise
 breakage only after eventual breakage itself is established. The current
 closed-loop equations do not establish it.
+## Variational kernel-augmented complete-word coercivity
+
+Fix a retained radius/scalar pair (r,c), c>0. Use the rank-continuous
+fixed-factor complete-word representation
+
+`Q_red,W(x)=min_z ||A_W x+D_W z||^2`,
+
+with every literal nuisance/root/source action retained in the fixed factor
+space. Let nu_W denote a normalized generator of the (possibly limiting)
+one-dimensional physical tilt/BA compatibility relation; when the literal
+data nullspace is trivial, retain the closed compatibility-line relation from
+the same magnetic/accelerometer equations rather than redefining nu by a
+discontinuous least-eigenvector choice.
+
+**Lemma VC.** On the compact admissible complete-word class W(r,c),
+
+`g_*(c,r):=inf_(W, |x|=1)
+ [Q_red,W(x)+(1/c)(nu_W' x)^2] >0`.                         (VC-1)
+
+**Proof by contradiction.** Suppose the infimum is zero. Choose
+`W_n,x_n`, |x_n|=1, and nuisance minimizers z_n with augmented cost ->0.
+
+1. By the finite closed event/rank stratification and the Arzela--Ascoli
+physical-trace result, the literal coefficient histories are compact. Pass to
+a subsequence `W_n->W_*` within one closed admissible boundary stratum.
+MAGNETIC SERVICE remains valid because it is a closed inequality formed from
+actually applied magnetic events; scheduled S and accelerometer rows survive
+in real arithmetic by their positive R floors.
+
+2. Nuisance/process coercivity bounds z_n modulo structural deterministic
+zero-action directions. Those structural directions have already been moved
+into the slow/root coordinate x. Hence z_n is bounded. Pass to
+`z_n->z_*`. Also the unit sphere is compact, so `x_n->x_*` with |x_*|=1.
+
+3. Continuity of the literal fixed-factor matrices gives
+`A_Wn x_n+D_Wn z_n -> A_W* x_*+D_W* z_*`. Zero limiting cost therefore
+gives literal zero complete-word observation/source action at W_*.
+
+4. The complete-word zero-action/nullspace theorem applies on every closed
+admissible boundary stratum: four scheduled S rows kill LIN/AW; closed
+MAGNETIC SERVICE plus chronological transport kills the gyro quotient; all
+accelerometer rows plus the single BA root leave at most the physical
+tilt/BA compatibility line. Therefore
+
+`x_* in span(nu_*)`.                                        (VC-2)
+
+5. The kernel-penalty part of the cost also tends to zero. The compatibility
+relation is defined by continuous literal magnetic/accelerometer equations;
+its graph is closed. Normalize its nontrivial generator by unit physical
+attitude amplitude with a fixed sign convention against the transported
+field. Along a subsequence the generators converge to a generator nu_* of
+the limiting relation. Hence
+
+`nu_*' x_*=0`.                                               (VC-3)
+
+6. From VC-2, `x_*=a nu_*`. With the declared nonzero normalization of nu_*,
+VC-3 gives a=0, so x_*=0, contradicting |x_*|=1.
+
+Therefore VC-1 holds.
+
+**Boundary qualification.** If the limiting compatibility relation is
+trivial, step 4 already gives x_*=0 and the contradiction is immediate; no
+nu_* is needed. If a boundary event pattern violated the nullity theorem,
+that would be the exact failure point. The earlier S/accelerometer SPD and
+closed MAGNETIC SERVICE arguments exclude the identified event-loss cases.
+
+Thus the variational augmented information has a source-uniform positive
+existence floor `g_*(c,r)>0`. This is nonconstructive: it does not yet supply
+a numerical value. It supersedes the older unproved DI-6 assertion only at
+the existence level and does not revive LE-5--LE-8.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
