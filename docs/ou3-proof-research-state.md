@@ -740,6 +740,59 @@ the two signed-history maps:
 After those are inserted into G0, assemble the already derived factor-space
 actions and only then solve the invariant inequalities.
 
+## Attempt to derive A_i and Q_i: exact obstruction
+
+The proposed summation-by-parts closure does not produce finite certified
+`A0,A1` from the present assumptions.  The nominal mean representation is
+
+`mu_hat=W0 a_hat_0+sum_c W_c Delta_c`, `0<=W_c<=1`.
+
+Abel summation rewrites the correction term using partial sums of
+`Delta_c`, but its coefficient is the total variation of the chronological
+weights `W_c`.  Those weights depend on the literal OU prediction factors
+and, through the correction increments, on the adaptive Kalman gains and AW
+sync phase.  MARINE MOTION / IMU BIAS / MAGNETIC SERVICE do not bound that
+variation.  The exact AW-loop identity replaces the raw increments by
+gain-weighted `Gamma(e-eta)`, endpoint errors, other-correction increments
+`xi` and prediction leakage; it does not remove the gain variation.  Thus a
+radius-local `A1` requires an additional proved gain/weight-variation
+inequality derived from the covariance recursion.  No such inequality is
+currently in the proof.  Setting `A1` from carried sync-locked words would
+be fitted.
+
+The relative-reset coefficients have the analogous issue at second order.
+Lemma I* bounds the **net rotation** of the ordered injection product by
+endpoint attitude errors plus integrated gyro residual, so the first-order
+signed term has a radius-local bound.  However the literal covariance factor
+is `N=I-X/2+R3`, and its product remainder contains
+
+`sum_l |x_l||S_(l-1)|/4 + exp(sum_l |x_l|^2/8)-1
+ + sum_l |x_l|^3/6`.
+
+Lemma I* bounds the final signed rotation, not `sum |x_l|^2` or the
+partial-sum weighted quadratic term.  The Loewner injection lemma gives each
+`x_l x_l'<=NIS_l P_theta,l`, but the current retained-storage argument has
+no source-uniform bound on the sum of correction NIS/action over a complete
+2048-s word before the contraction margin is known.  Consequently `Q1`
+(first-order net rotation) can be expressed conditionally in terms of the
+candidate radius and gyro residual, but finite `Q2,Q3` are not certified.
+
+This is a genuine circularity in the present local-tube route:
+the nonlinear storage/contraction would bound cumulative correction action,
+while the literal G0 floor currently asks for that action to establish the
+contraction.  The leverage bound removes accumulated gyro-history magnitude
+but does not remove this reset-product remainder or AW gain-variation
+dependence.
+
+Therefore `q_T(c,r)`, `s(c,r)`, `K(c,r)`, `D(c,r)` and `E(c,r)`
+cannot yet be assembled into a rigorous numerical two-dimensional solve.
+The next proof must break the circle structurally, e.g. by formulating the
+local-tube information directly with the exact reset factors `N_l` (using
+`sigma_min(N_l)>=1` and their common signed action) so no Q2/Q3 product
+remainder is needed, and by constructing the S-chain reader from literal
+rows without first requiring a separate bound on the nominal AW mean.
+No new physical assumption is implied by this diagnosis.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
