@@ -2868,6 +2868,88 @@ physical jerk lemma alone.
 This identifies the same missing bridge as the earlier AW analysis in its
 minimal asymptotic form: a relation between physical excitation and the
 nominal accelerometer Jacobian on a persistent zero-loss direction.
+## Rank-continuous complete-word information representation
+
+Do not form the nuisance Schur complement with a Moore--Penrose inverse.
+Retain one fixed-dimensional whitened factor space for each closed event
+stratum. Write the complete frozen observation/action record as
+
+`y = O_s x_s + B z`,                                       (RC-1)
+
+where z stacks the nuisance root and every whitened fresh source/noise
+factor, and B contains their literal chronological coefficients. Give z its
+Euclidean action `|z|^2` by including identity rows for source factors/root
+priors that carry finite action. The reduced slow-root quadratic form is
+
+`Q_W(x_s)=min_z ( |O_s x_s+B z|^2 + |R z|^2 )`,             (RC-2)
+
+where R contains exactly the nuisance/source action rows. Equivalently stack
+
+`C_W=[O_s, B; 0, R]`
+
+and minimize the squared norm of `C_W[x_s;z]` over z.
+
+The crucial point is that the nuisance block
+`D_W=[B;R]` has a **uniform positive singular floor on its penalized
+directions** from the proved nuisance/process/noise floors; exact deterministic
+zero-action nuisance directions are retained explicitly in the slow/root
+class rather than hidden behind a pseudoinverse. Thus the normal matrix
+`D_W'D_W` is positive definite on the chosen nuisance coordinate block after
+removing structural zero columns once per event stratum. Its inverse is
+continuous. The reduced matrix can therefore be written
+
+`J_W = A_W' [I-D_W(D_W'D_W)^-1 D_W'] A_W`,                  (RC-3)
+
+with `A_W=[O_s;0]`, using an ordinary inverse on the fixed penalized nuisance
+space. This representation is continuous through rank changes of the old
+observation-only nuisance matrix because those rank changes no longer alter
+the rank of D_W.
+
+If a structural deterministic nuisance direction has zero action, move it
+into x_s before applying RC-3. The number of such structural coordinates is
+fixed by the shipping state architecture, not by the numerical word. Hence
+no data-dependent rank stratification or pseudoinverse is needed.
+
+### Direct second-eigenvalue argument
+
+For symmetric PSD J_W,
+
+`lambda_2(J_W)=min_(dim L=2) max_(x in L,|x|=1) Q_W(x)`
+
+and equivalently by Courant--Fischer it is the least information after
+allowing one exceptional direction. RC-2 makes Q_W jointly continuous in W
+and x on the compact admissible class.
+
+Suppose, for contradiction, `inf_W lambda_2(J_W)=0`. Compactness gives a
+subsequence W_n->W_* and, by the min--max characterization, orthonormal
+vectors u_n,v_n spanning two-dimensional subspaces with
+`Q_Wn(u_n)->0` and `Q_Wn(v_n)->0` (choose eigenvectors for the two smallest
+eigenvalues). Passing to subsequences gives orthonormal u_*,v_*.
+Continuity of RC-2 yields
+
+`Q_W*(u_*)=Q_W*(v_*)=0`.
+
+Thus `Null(J_W*)` has dimension at least two. But the complete-word zero-action
+theorem, including four-S survival and closed MAGNETIC SERVICE on every
+boundary event stratum, proves
+
+`dim Null(J_W*)<=1`.
+
+Contradiction. Therefore
+
+`lambda2_bar:=inf_(W admissible) lambda_2(J_W)>0`.           (RC-4)
+
+This proof is continuous through nuisance-observation rank changes and through
+appearance/disappearance of the one-dimensional physical compatibility
+kernel. It uses only compactness, continuity of the fixed-factor action, and
+the already proved nullity<=1 classification.
+
+RC-4 is an existence result; it does not give a numerical lambda2_bar. If any
+of the claimed uniform nuisance/action floors needed to make D_W fixed-rank
+fails, RC-3 must be replaced by RC-2 directly. The contradiction proof still
+works provided minimizers z_n are uniformly bounded modulo structural
+zero-action directions; the existing nuisance covariance/action bounds are
+the required coercivity input.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
