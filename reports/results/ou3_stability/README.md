@@ -71,7 +71,7 @@ words (1-Hz and 25-Hz magnetic cadence) through a derived observer with
 untapped control parity. It records floor/actual ratios <=1 after the float
 mean-injection charge, injection bound ratios, the collinear same-cell
 collapse (.0301) beside aggregate sigma 28.50, the failed one-correction
-service information (2.05e-5), the signed injection sum, the literal AW
+service information (2.03e-5), the signed injection sum, the literal AW
 block reconstruction and the failed uniform storage route (6.68 and 6.91).
 CI reproduces the committed record exactly. These are non-promoting finite
 audits:
