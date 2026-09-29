@@ -1911,6 +1911,87 @@ magnetic/accelerometer compatibility line of that word, which may be trivial;
 its identification with the earlier root field-axis tilt/BA vector remains
 to be checked before applying the existing scalar kernel ceiling unchanged.
 
+## Uniform scalar treatment for the word-dependent compatibility kernel
+
+Corollary K is basis-free: its proof uses only a rank-one root information
+term \`mu nu nu'\`.  Therefore it applies unchanged to any nonzero
+word-dependent null vector \`nu_W\`; no identification with the quiet kernel
+is required.  Normalize the attitude component of a nontrivial compatibility
+line to \`|theta_hat_W|=1\` and write
+
+\`nu_W=(theta_hat_W,0,...,0,-q_W)\`.                          (WK-1)
+
+From any applied accelerometer epoch k on the compatibility line,
+
+\`q_W=phi_b(t_k)^-1 R_(ba,k)' J_att,k F_k theta_hat_W\`.     (WK-2)
+
+The literal attitude transport is a product of orthogonal predictions and
+reset factors with \`sigma_min(N)>=1\`.  For the inverse transport used in
+(WK-2), \`||F_k^-1||<=1\`; forward \`||F_k||\` is finite on a candidate
+retained word.  More directly, the shipping accelerometer Jacobian satisfies
+
+\`||J_att,k||<=|f_hat,k|\`.
+
+The estimator state clamps/tuner bounds and candidate storage give a finite
+radius-local force ceiling \`F_hat,max(r)\`; BA decay obeys
+\`phi_b(t)>=exp(-T_W/tau_b)\`.  Hence
+
+\`|q_W| <= q_max(r)
+ := exp(T_W/tau_b) F_hat,max(r) F_max(r)\`,                  (WK-3)
+
+where \`F_max(r)=sup_k||F_k theta_hat_W||\` over the compact retained
+coefficient class.  This is finite; it need not be small.
+
+The existing BA marginal gives
+
+\`P_ba,ba<=I/1600\`.
+
+For any root covariance and normalized \`nu_W\`, block Cauchy--Schwarz yields
+
+\`nu_W'P nu_W
+ <=( sqrt(theta_hat_W'P_tt theta_hat_W)+|q_W|/40 )^2\`.       (WK-4)
+
+Thus a uniform attitude scalar ceiling \`tau_theta(r)\` on the compact
+retained root class implies
+
+\`nu_W'P nu_W <=
+ c_W(r):=(sqrt(tau_theta(r))+q_max(r)/40)^2\`.                (WK-5)
+
+A separate pre-existing quiet-axis tilt ceiling is not required.  The
+attitude ceiling may be obtained from the complete-word quotient covariance
+bound itself: once the augmented complete-word action is positive on the
+normalized compact kernel family, the known-root covariance plus the finite
+kernel prior \`1/c\` gives a finite attitude marginal.  To avoid circularity,
+use the construction/startup root ceiling for the first recurring word and
+propagate the scalar ceiling with the exact kernel return \`D(c,r)\`;
+Corollary K then applies word by word with each current \`nu_W\`.
+
+Equivalently formulate the recurring invariant as
+
+\`sup_(nu in N(r)) nu'P nu <= c\`,                            (WK-6)
+
+where \`N(r)\` is the compact family of normalized complete-word compatibility
+vectors satisfying (WK-1)--(WK-3).  The rank-one theorem is uniform over this
+family whenever
+
+\`sup_(W,nu_W in N(r)) kappa_(nu_W)(1/c)<infinity\`
+
+and the scalar return satisfies
+
+\`sup_W nu_(W+1)' P_(nu_W,W) nu_(W+1)<=c\`.                 (WK-7)
+
+This is exactly the previous O1/O2 structure with a compact kernel family
+instead of one fixed formula.  The BA marginal and (WK-3) make the family
+bounded; continuity of the literal word maps makes it compact after including
+the zero-kernel case separately.
+
+**Result.**  Identification of \`nu_W\` with the instantaneous quiet kernel is
+unnecessary.  The existing rank-one Corollary K generalizes without change,
+and the scalar invariant generalizes to the compact family \`N(r)\`.  What
+remains quantitative is the same complete-word diameter/return bound
+\`K_MW(c,r),D(c,r)\`; there is no new observability obstruction caused by the
+word-dependent kernel direction.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
