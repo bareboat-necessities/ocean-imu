@@ -2430,14 +2430,27 @@ proof does not automatically extend to every closure stratum. A boundary
 with too few applied S corrections can retain additional homogeneous LIN/AW
 null directions while still satisfying MAGNETIC SERVICE.
 
-Consequently the finite-stratum decomposition and J-continuity can be made
-rigorous, but the desired global `inf lambda_2>0` does not yet follow from
-current assumptions: S-row survival on all admissible boundary strata is
-missing. One must prove from shipping positive definiteness/fail-safe guards
-that regular A21 S updates cannot fail on the retained domain, or add a
-separate actually-applied S-service premise. The latter would strengthen the
-assumptions and is not authorized here.
-## Explicit coupled coefficient system
+Scheduled S-row survival is in fact guaranteed in real arithmetic on the
+retained shipping domain. The S innovation covariance is
+`P_SS+R_S`; covariance PSD gives `P_SS>=0`, while the shipping tuner clamp
+`sigma_S>=1e-6` gives `R_S>=1e-12 I`. Hence `P_SS+R_S` is uniformly SPD and
+the mathematical LDLT cannot fail. Therefore every scheduled regular S update
+is applied, and the four-S zero-action argument extends to event-boundary
+strata without a new S-service assumption.
+
+The remaining boundary question is then magnetic/accelerometer compatibility.
+MAGNETIC SERVICE is closed and stated using actually applied magnetic rows,
+so every admissible boundary stratum retains its magnetic information floor.
+Accelerometer invalid-input rejection is excluded on the finite physical
+retained class by finite measurements/temperature; its LDLT likewise has
+`S_acc>=Racc>=1e-8 I` from the sigma_acc clamp in real arithmetic. Thus
+scheduled finite accelerometer updates are also mathematically applied.
+
+Accordingly the operation pattern relevant to the nullity theorem is fixed by
+the regular scheduler except for magnetic acceptance/service patterns, of
+which there are finitely many and each admissible closed pattern retains
+MAGNETIC SERVICE. Under the existing complete-word zero-action proof this
+supports nullity<=1 on every admissible stratum closure.
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
 on the quotient of the physical kernel.  Together with
