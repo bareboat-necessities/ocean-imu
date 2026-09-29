@@ -62,6 +62,27 @@ def prediction_floor():
     return q
 
 
+
+def nuisance_relative_prediction_margin(alpha, q_floor, f_norm, nuisance_ceiling):
+    """Uniform nuisance-relative loss supplied by the first prediction.
+
+    At a pre-prediction root the existing comparisons give
+      L >= alpha U >= alpha P_nn.
+    Hence J_nn=(P^-1)_nn is not bounded by N^-1 alone because root AG/nuisance
+    cross precision is retained.  The first-prediction loss must therefore be
+    compared in the complete relative Schur test, not certified from the
+    nuisance principal covariance in isolation.  This function records that
+    obstruction explicitly so a principal nuisance argument cannot be promoted.
+    """
+    vals=tuple(map(F,(alpha,q_floor,f_norm,nuisance_ceiling)))
+    if min(vals)<=0:
+        raise ValueError('positive premises required')
+    return {'principal_nuisance_prediction_positive':True,
+            'full_relative_nuisance_margin_from_principal_data':False,
+            'reason':'J_nn is conditional root precision and retains AG/nuisance cross precision',
+            'required_replacement':'bound N-delta J_nn jointly with the root cross block or use the complete prediction decrement'}
+
+
 def conditional_scalar_margin(mu, alpha, nuisance_ceiling, q, f_norm):
     """Consequence ONLY if D_AG,AG >= mu I at this pre-prediction root.
 
