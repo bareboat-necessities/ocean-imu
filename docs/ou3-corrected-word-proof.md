@@ -5928,6 +5928,46 @@ This is the strongest common theorem supported by the existing nullspace and
 compactness machinery. Claiming that its small-error limit automatically
 closes O2 would be false; the compatibility manifold is deliberately retained.
 
+## H18 finite-error compatibility outside the 7-degree tube
+
+On H18 the accelerometer-bias estimate is held (and its decoupled covariance
+block is unchanged on feasible held segments). Zero magnetic loss between true
+and nominal records with fixed/near-fixed world b0 restricts the attitude
+discrepancy to a rotation `Q_delta` about b0.
+
+For zero accelerometer loss at every applied epoch, the same held body-frame
+BA correction must satisfy the difference between the true and nominal
+specific-force records. Ignoring only the declared bounded field/lever defects,
+the required held BA is
+`b_H = R_true(t)[a_phys(t)-g0]
+       -R_hat(t)[a_w_hat(t)-g0]`.                           (H7-1)
+With `R_hat=R_true Q_delta` in a consistent world/body convention, this
+becomes a time-varying function of R_true(t), physical acceleration and
+nominal AW unless Q_delta=I or the histories satisfy a special compatibility
+relation.
+
+A constant held BA therefore cannot generically absorb a nonzero magnetic-axis
+rotation over a moving history. However the H18 nominal AW state is not held:
+it is an estimator nuisance trajectory and can vary through prediction and
+measurement corrections. Solving H7-1 for nominal AW gives
+`a_w_hat(t)-g0 = Q_delta^-1 [a_phys(t)-g0-R_true(t)^-1 b_H]`. (H7-2)
+Thus for any fixed Q_delta and b_H there is algebraically a time-varying
+nominal AW trajectory that makes the accelerometer residual zero.
+
+The H18 compatibility question therefore reduces to whether the actual H18
+OU/LIN/S mean dynamics can realize H7-2. The held-BA property alone does not
+exclude rotations >=7 degrees. Fixed g0,b0 and gravity-direction span make the
+required AW trajectory nontrivial, but they do not bound its amplitude/action
+away from the allowed H18 nuisance class without using the AW/S dynamics.
+
+Consequently
+`C_H18 intersect {tilt>=7deg}=empty`
+is **not proved** by magnetic geometry plus held BA alone. The same
+physical-to-nominal AW bridge remains. A finite-error capture proof must include
+the H18 AW/S process action in the variational lemma; if zero joint action is
+assumed, then H7-2 must also satisfy zero AW process/S action, which is much
+more restrictive and is the correct next test.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
