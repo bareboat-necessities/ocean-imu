@@ -59,7 +59,9 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.aw_tracking import certificate as aw_tracking_certificate
     from tools.stability.ou3_theorem.signed_injection import certificate as injection_certificate
     from tools.stability.ou3_theorem.aggregate_floor import certificate as aggregate_certificate
+    from tools.stability.ou3_theorem.word_diameter import certificate as diameter_certificate
     for name, generate in (
+        ("word-diameter-certificate.json",diameter_certificate),
         ("world-frame-certificate.json",world_certificate),
         ("aw-covariance-ceiling-certificate.json",aw_ceiling_certificate),
         ("aw-tracking-certificate.json",aw_tracking_certificate),
@@ -124,6 +126,11 @@ def validate() -> dict:
         verify_aw(json.loads((STATUS.parent/"aw-tracking-source-feasibility.json").read_text()))
     except (ValueError, KeyError, OSError) as error:
         failures.append("AW tracking diagnostic verification failed: "+str(error))
+    from tools.stability.ou3_theorem.information_ratio_source_diagnostic import verify_diagnostic as verify_ratio
+    try:
+        verify_ratio(json.loads((STATUS.parent/"information-ratio-source-feasibility.json").read_text()))
+    except (ValueError, KeyError, OSError) as error:
+        failures.append("information-ratio diagnostic verification failed: "+str(error))
     return {"validation_pass":not failures,"failures":failures,"base_main_commit":provenance["base_main_commit"],
             "shipping_behavior_authority":"source implementation","theorem_closed":expected["theorem_closed"]}
 

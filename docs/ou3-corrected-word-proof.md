@@ -359,15 +359,196 @@ carried words its full bound is within 55–77× of the actual root covariance
 once the preceding window is 16 s or longer. The first-prediction chain is
 the special case `J=0`, `A <= (F^-1QF^-T)^-1`, giving `1/(1+epsilon)`.
 
-**Source-uniform obligations now controlling `rho_0` on MOVING words:**
+The source-uniform obligations of this lemma are restated in section 7,
+where they reduce to one diameter of the word itself.
 
-- **(i)** A floor on the word's root information `J` (full-root
-  identifiability of the future augmented design).
-- **(ii)** A ceiling on `A - kappa J` in the joint-reader metric.
-- **(iii)** The joint-reader floor `I_eff >= mu` on the preceding window.
+## 7. Word Riccati diameter and the kernel-bounded contraction
 
-These are information bounds on the same history; no one-step process floor
-or scalar covariance ceiling appears.
+Role in the tail inequality: these results bound the linear factor `rho_0`
+of one complete word in `V_(j+1) <= rho V_j + c_d ||d||^2`. They retain the
+actual frozen coefficients, gains, resets and correlated sources, and need at
+most one scalar covariance bound. Exact checks are in `word_diameter.py`
+(`word-diameter-certificate.json`); the carried feasibility test is
+`information_ratio_source_diagnostic.py`
+(`information-ratio-source-feasibility.json`).
+
+**Theorem D (diameter, exact).** Write `Pi = Ric_W(0)` for the terminal
+covariance of the word started from a known root and
+`P_diff = lim_t Ric_W(t I)` for the diffusely started word. With
+`Phi_tilde = Phi - T A' Sigma^-1 O` (the root coefficient of `E[x_N|y,x_0]`):
+
+- `A = J + Phi_tilde' Pi^-1 Phi_tilde`, `Pi = T (I - A' Sigma^-1 A) T'`;
+- `Ric_W(t I) = Pi + Phi_tilde (I/t + J)^-1 Phi_tilde'`, so
+  `P_diff = Pi + Phi_tilde J^-1 Phi_tilde'` when `J > 0`;
+- `kappa_W := lambda_max(J^-1 A) = lambda_max(Pi^-1 P_diff)`;
+- for every root covariance, `Pi <= P_end <= P_diff` and
+  `rho_W <= (sqrt(kappa_W)-1)/(sqrt(kappa_W)+1) = tanh(log(kappa_W)/4)`.
+
+*Proof.* The first two items are the Schur and Woodbury forms of the joint
+Gaussian `(y, x_N)`. With `X = Pi^-1/2 Phi_tilde J^-1/2`, the matrices
+`X'X = J^-1/2 (A-J) J^-1/2` and `X X' = Pi^-1/2 (P_diff-Pi) Pi^-1/2` share
+their nonzero spectrum, so both largest eigenvalues equal `kappa_W - 1`.
+The bound is the section 6 lemma with `k = 0`. ∎
+
+No covariance ceiling enters. The bound has the Birkhoff–Hopf form
+`tanh(Delta/4)` at `Delta = log kappa_W`, and it is sharp. For the scalar word
+"correct `y=x+v`, `R=1`, then predict with `Q=1`", `kappa=2` and
+`rho(p)=p/((p+1)(2p+1))`. The identity
+`(3-2 sqrt2)(2p^2+3p+1) - p = ((2-sqrt2)p - (sqrt2-1))^2` shows
+`sup_p rho = (sqrt2-1)/(sqrt2+1)`, attained at `p = 1/sqrt2`.
+
+The section 6 supremum has a closed form. With `c = 1/(1+k)` it equals
+`(sqrt(kappa)-sqrt(c))^2/(kappa-1)` if `c kappa >= 1`, and `1-c` otherwise.
+
+**Composition and factorization (exact).**
+
+- *Composition.* For `W = W_2 o W_1`, `[Pi_W, P_diff,W]` lies inside
+  `[Pi_W2, P_diff,W2]` by Riccati monotonicity. Hence `kappa_W <= kappa_W2`,
+  and along an execution `rho_W <= rho_W1 rho_W2`.
+- *Factorization.* Let `A_s` add the slow terminal state `(theta, b_g, b_a)`
+  to the data, so `J <= A_s <= A`. Then `kappa_W <= kappa_s kappa_f|s`.
+  Here `kappa_s` is the diameter of the slow terminal marginals of
+  `[Pi, P_diff]` and `kappa_f|s` that of the fast Schur complements. The
+  reverse order holds as well.
+- *Dual certificates.* Every compression `L` of the data gives
+  `J >= (L O)' (L Sigma L')^-1 (L O)`. Every full-root reader with
+  `L O = Phi` gives `P_diff <= (T - L A)(T - L A)'`, with equality at the
+  minimum-action reader.
+
+**Corollary K (rank-structured kernel, exact).** Let `nu` be a root direction
+and suppose `A <= kappa J + lambda nu nu'`. Then every root with
+`nu' P_0 nu <= c` satisfies
+
+`rho_W <= sup_y [ 1/(1+y) - 1/((1+lambda c)(1+kappa y)) ]`.
+
+This is section 6 with `K = lambda nu nu'`, whose `P_0` congruence has the
+single eigenvalue `lambda nu' P_0 nu`. Only the scalar `c` bounds the root
+covariance; `J` may be singular along `nu`. For `mu > 0` let
+`P_nu = Ric_W(root information mu nu nu') = Pi + Phi_tilde (J + mu nu nu')^-1 Phi_tilde'`
+and `kappa_nu = lambda_max(Pi^-1 P_nu)`.
+
+- *Premise supplied by a diameter.* A fictitious root observation of
+  `nu'x_0` leaves `Pi` unchanged, so Theorem D gives
+  `A - kappa_nu J <= (kappa_nu - 1) mu nu nu'`. With `mu = 1/c`,
+  `rho_W <= 1 - 1/kappa_nu`.
+- *Invariance.* If `nu' P_0 nu <= c`, then `P_0^-1 >= nu nu'/c`, so
+  `P_end <= P_nu` (Riccati monotonicity, with a limit in `c`). Along a chain
+  of words with kernels `nu_j` and ceilings `c_j`, the property
+  `nu_j' P_j nu_j <= c_j` of the actual roots therefore propagates whenever
+  `nu_(j+1)' P_nu_j nu_(j+1) <= c_(j+1)`.
+
+`kernel_bounded_certificate` verifies the corollary exactly on a word whose
+`J` is singular along `nu`.
+
+**Physical kernel and scalar ceiling.** In A21 take
+`nu = (theta_hat, 0, 0, 0, 0, 0, nu_ba)`, with `theta_hat` the unit body field
+axis (the null direction of the magnetic attitude Jacobian) and
+`nu_ba = -J_att theta_hat`. This is the quiet tilt/accelerometer-bias
+direction that neither the field nor the accelerometer row sees. Block
+Cauchy–Schwarz and the proved `P_ba,ba <= I/1600` give, for every
+covariance,
+
+`nu' P nu <= ( sqrt(tau_theta) + |nu_ba|/40 )^2`, `tau_theta >= theta_hat' P_tt theta_hat`.
+
+With `|nu_ba|` near `g`, the BA term dominates. A tilt premise
+`tau_theta = 10^-3 rad^2` raises the ceiling by 27% at `|nu_ba| = g`.
+
+**S-chain cancellation (exact).** Use the literal per-axis LIN transition
+with any coefficients `phi_va, phi_pa, phi_Sa, alpha`, fresh noise
+`(n_v, n_p, n_S, n_a)` and PSD sync jumps on `a`. Let `c` annihilate
+`(1, t, t^2)` on the applied S times, and put
+
+`omega_k = sum_(t_j >= t_(k+1)) c_j (phi_Sa + phi_pa d + phi_va d^2/2)`,
+`g_k = sum_(t_j >= t_(k+1)) c_j (d^2/2, d, 1)`, with `d = t_j - t_(k+1)`.
+
+Then exactly
+
+`sum_k omega_k a_k - sum_j c_j S_j = - sum_k g_k' (n_v, n_p, n_S)_k`.
+
+The whole `(v, p, S, a_w)` root, every AW noise and every sync jump cancel.
+With `J_aw = R_wb`, the world-frame accelerometer combination
+`sum_k omega_k R_k' y_acc,k - sum_j c_j y_S,j` therefore sees only the
+attitude, BA, measurement noise and this residual. Its variance is at most
+`(1+eps) q sum_k |g_k|^2 (h^3/3 + h^5/20 + h^7/252)`, `q <= 2 sigma^2/tau`.
+
+**Gyro-bias persistence cap (source-uniform).** Every regular A21 word of
+duration `T` (default profile, zero lever arm) satisfies
+
+`kappa_W >= sigma_g^2 (1-delta) / ((1+e)^2 b0 T^2)`.
+
+Here `e <= 2/22!` bounds the degree-18 series for `B_step` and `int B`, and
+`delta = h^2 b0 (1+e)^2/(4 sigma_g^2)`.
+
+*Proof.* Take a root gyro-bias perturbation `beta`. The data-only mimic
+keeps `b_g = 0` and feeds the literal attitude noise `B_step beta` at each
+prediction. It reproduces every row, reset and nuisance state exactly; the
+Schur complement `Q_tt - Q_tb Q_bb^-1 Q_bt >= sigma_g^2 h (1-delta)` then
+gives `u'J u <= T(1+e)^2|beta|^2/(sigma_g^2(1-delta))`. The terminal bias
+alone has `A >= E_bg E_bg'/(b0 T)`. ∎
+
+The cap is 71.19, 17.80 and 4.449 at 16, 32 and 64 s. No `k = 0`
+certificate on such a word can exceed the margin `2/(1+sqrt(cap))`: .212,
+.383 and .643.
+
+**Carried feasibility (non-promoting).** Float64 optimal-gain replays of
+the literal exported coefficients record a 64-s history from 225 s or
+5000 s, so every word starts at a root at 289 s or 5064 s
+(`information-ratio-source-feasibility.json`). BA release is at 120 s. At
+289 s the BA marginal (5.5e-5) is still an order of magnitude below its
+5064-s level (5.3e-4 quiet, 2.5e-4 wave). Margins are `1-rho`.
+"Kernel, exact" uses the actual `nu'P_0 nu` in Corollary K; "kernel,
+ceiling" uses `(sqrt(10^-3)+|nu_ba|/40)^2`.
+
+| Word | Exact | Ideal `C=P_0` | Joint-reader `C` (loss) | `kappa_W` | Kernel, exact | Kernel, ceiling |
+|---|---:|---:|---:|---:|---:|---:|
+| quiet 289 s, 16 s | .0676 | .0674 | .0013 (51.7×) | ∞ | .0357 | .0051 |
+| quiet 289 s, 64 s | .2265 | .2262 | .0053 (43.1×) | ∞ | .2196 | .0203 |
+| quiet 5064 s, 16 s | .0075 | .0075 | .0013 (5.7×) | ∞ | .0074 | .0051 |
+| quiet 5064 s, 64 s | .0296 | .0295 | .0053 (5.6×) | ∞ | .0295 | .0203 |
+| wave 289 s, 16 s | .0697 | .0682 | .0143 (4.9×) | 19380 | .0384 | .0143 |
+| wave 289 s, 64 s | .2355 | .2296 | .0843 (2.8×) | 509 | .2236 | .0843 |
+| wave 5064 s, 16 s | .0220 | .0157 | .0143 (1.5×) | 18850 | .0143 | .0143 |
+| wave 5064 s, 64 s | .0930 | .0843 | .0843 (1.1×) | 506 | .0843 | .0843 |
+| collinear 25 Hz, 16 s | .1056 | .0860 | .0804 (1.3×) | 570 | .0804 | .0804 |
+| collinear 25 Hz, 64 s | .3432 | .2939 | .2805 (1.2×) | 37.5 | .2805 | .2805 |
+| sync-locked, 16 s | .1159 | .0914 | .0914 (1.3×) | 436 | .0899 | .0899 |
+| sync-locked, 64 s | .3838 | .3615 | .3615 (1.1×) | 20.1 | .3615 | .3615 |
+
+What the table shows:
+
+- **Kill criterion.** The joint-reader `C` loses at most 4.9× on MOVING
+  words, so the criterion passes; its optimum there is `k = 0`, where `C`
+  does not enter.
+- **Quiet words.** `kappa_W` is infinite along the kernel. The joint-reader
+  loss of 43–52× at 289 s reflects the transient BA marginal, not the word;
+  at 5064 s it is 5.7×.
+- **Kernel.** The exact-variance kernel bound loses at most 1.9×. On steady
+  quiet words the ceiling loses 1.2× with the actual tilt and 1.5× at the
+  `10^-3` premise.
+- **Diameter structure.** The controlling direction of `kappa_W` is tilt/BA
+  (67–93% BA share), except gyro bias on the 16-s sync-locked word.
+  `kappa_W` equals the slow-marginal diameter up to a fast-given-slow factor
+  ≤1.078, and exceeds the persistence cap on every word.
+- **Invariance.** At the `10^-3` tilt premise `kappa_nu` is 195.8–461.7
+  (16 s) and 15.7–49.2 (64 s). The kernel set propagates on every word,
+  checked against the next root's kernel.
+
+These are finite replays, not enclosures.
+
+**Reduced source-uniform obligations.** Section 6's three bounds (`J` floor,
+`A - kappa J` ceiling, `I_eff` floor) reduce to:
+
+- **(O1)** a source-uniform ceiling on the kernel-bounded diameter
+  `kappa_nu`, i.e. uniform observability of every root direction except the
+  one-dimensional physical tilt/BA kernel;
+- **(O2)** the scalar kernel ceiling `c_nu` and its propagation
+  `nu_next' P_nu nu_next <= c_next`, with the BA part already proved and a
+  tilt ceiling `tau_theta` of order `10^-3 rad^2`.
+
+No root covariance matrix, historical reader or excitation premise enters
+`rho_0`. MARINE MOTION excitation only shrinks `kappa_nu`. `I_eff`/`B_*`
+remain relevant to coercivity (`P <= C` in the nonlinear supplies), not to
+`rho_0`.
 
 ## Source covariance guard for the actual projection
 

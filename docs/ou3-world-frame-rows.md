@@ -468,7 +468,8 @@ proposed formulation, not a certified bound.
    L1 force) of the literal AW loop; the pointwise physical premise is false.
 2. Theorem G0 with injections: a local-tube version tolerating the kernel
    drift `Q'b` and the half-angle remainder of section 10.
-3. A blockwise reader action and an information-based contraction in the
-   gyro-bias and accelerometer-bias directions.
+3. Observability off the physical tilt/BA kernel: a source-uniform ceiling
+   on the kernel-bounded word diameter of `ou3-corrected-word-proof.md`
+   section 7, which these rows, magnetic service and the S-chain supply.
 4. A same-cell floor is not needed; the aggregate route uses only the
    1-s service gap.

@@ -1,0 +1,175 @@
+{
+  "closed_form_information_ratio_bound": "(sqrt(kappa)-sqrt(c))^2/(kappa-1), c=1/(1+k), if c kappa>=1; else 1-c",
+  "closed_form_rational_checks": [
+    {
+      "argmax": "1/3",
+      "c": "1",
+      "kappa": "9",
+      "sup": "1/2"
+    },
+    {
+      "argmax": "1/15",
+      "c": "1/4",
+      "kappa": "25",
+      "sup": "27/32"
+    },
+    {
+      "argmax": "16/119",
+      "c": "4/9",
+      "kappa": "49/4",
+      "sup": "289/405"
+    },
+    {
+      "argmax": "7/290",
+      "c": "1/9",
+      "kappa": "100",
+      "sup": "841/891"
+    }
+  ],
+  "composition": {
+    "kappa_tail_lower": "355824347/8192",
+    "kappa_word_upper": "220475447/4194304",
+    "nested_images": true,
+    "rho_multiplicative": "rho_W <= rho_W1 rho_W2 on every prior"
+  },
+  "diameter_identity": {
+    "every_prior_end_covariance_in_[Pi,P_diff]": true,
+    "exact_rho_upper_for_supplied_priors": [
+      "324877/1048576",
+      "594363/1048576",
+      "291809/524288"
+    ],
+    "identities": [
+      "A = J + Phi_tilde' Pi^-1 Phi_tilde",
+      "P_diff = Pi + Phi_tilde J^-1 Phi_tilde'",
+      "Pi = Ric_W(0)",
+      "Ric_W(t I) = Pi + Phi_tilde (I/t + J)^-1 Phi_tilde'"
+    ],
+    "k0_bound_upper": "495192094984132921700422337209/653648420012661596887510237881",
+    "kappa_bracket": [
+      "1763803575/33554432",
+      "220475447/4194304"
+    ],
+    "lambda_max(J^-1 A) = lambda_max(Pi^-1 P_diff)": true,
+    "scope": "supplied rational five-state word; exact algebra"
+  },
+  "dual_certificates": {
+    "compression_floor_below_J": true,
+    "feasible_reader_action_above_P_diff": true,
+    "minimum_reader_action_equals_P_diff": true
+  },
+  "gyro_bias_persistence_cap": [
+    {
+      "k0_margin_cap_upper_decimal": 0.21192052984810608,
+      "kappa_lower": "5756264351385571365412601550822981599461291130879991/80856168706853870393007131321989941166080256000000",
+      "kappa_lower_decimal": 71.19140621484375,
+      "word_s": "16"
+    },
+    {
+      "k0_margin_cap_upper_decimal": 0.38323353301062546,
+      "kappa_lower": "5756264351385571365412601550822981599461291130879991/323424674827415481572028525287959764664321024000000",
+      "kappa_lower_decimal": 17.797851553710938,
+      "word_s": "32"
+    },
+    {
+      "k0_margin_cap_upper_decimal": 0.6432160805097514,
+      "kappa_lower": "5756264351385571365412601550822981599461291130879991/1293698699309661926288114101151839058657284096000000",
+      "kappa_lower_decimal": 4.4494628884277345,
+      "word_s": "64"
+    },
+    {
+      "k0_margin_cap_upper_decimal": 0.9733840305416203,
+      "kappa_lower": "5756264351385571365412601550822981599461291130879991/5174794797238647705152456404607356234629136384000000",
+      "kappa_lower_decimal": 1.1123657221069336,
+      "word_s": "128"
+    },
+    {
+      "k0_margin_cap_upper_decimal": 1.0,
+      "kappa_lower": "5756264351385571365412601550822981599461291130879991/20699179188954590820609825618429424938516545536000000",
+      "kappa_lower_decimal": 0.2780914305267334,
+      "word_s": "256"
+    }
+  ],
+  "kernel_bounded_corollary": {
+    "J_nu_is_zero": true,
+    "full_diameter_finite": false,
+    "kappa_nu_bracket": [
+      "1963337397/4194304",
+      "981668699/2097152"
+    ],
+    "kernel": [
+      "1",
+      "0",
+      "0",
+      "0",
+      "-1"
+    ],
+    "lambda": "979571547/524288",
+    "priors_checked": [
+      {
+        "bound_upper": "325082903102137437475480728674446346881899146988735648171769/325778868866449754451421414441944307405754197071791059369984",
+        "k": "979571547/2097152",
+        "nu_variance": "1/4"
+      },
+      {
+        "bound_upper": "182289297904052367156802818280778991579013623184907145650089/183250613737377986878924545623593672915736735852882470895616",
+        "k": "326523849/2097152",
+        "nu_variance": "1/12"
+      },
+      {
+        "bound_upper": "2854432912133835098565895042408793321113502808334383095764729/2932009819798047790062792729977498766651787773646119534329856",
+        "k": "979571547/104857600",
+        "nu_variance": "1/200"
+      }
+    ],
+    "scalar_ceiling_c": "1/4"
+  },
+  "qualification": "OU3_WORD_RICCATI_DIAMETER_V1",
+  "rho0_certified": false,
+  "root_covariance_bound_used": false,
+  "s_chain_cancellation": {
+    "S_times": [
+      "0",
+      "9/1000",
+      "3/125",
+      "1/25"
+    ],
+    "aw_noise_and_sync_cancelled": true,
+    "residual": "-sum_k g_k'(n_v,n_p,n_S)_k exactly",
+    "root_cancelled": true,
+    "steps": 8,
+    "weights": [
+      "-6250000/9",
+      "400000000/279",
+      "-3125000/3",
+      "9375000/31"
+    ]
+  },
+  "scalar_kernel_ceiling": {
+    "BA_part_alone_nu_ba_9.80665": "38468153689/640000000000",
+    "example_tau_1e-3_nu_ba_9.80665": "192360942169740154779111821379592780601509056192064359671984788809/2510840694154672305534315769283066566440942177785613805158400000000",
+    "inequality": "nu'P nu <= (sqrt(tau_theta)+|nu_ba|/40)^2 from P_ba,ba <= I/1600"
+  },
+  "sharp_scalar_example": {
+    "attained_at_prior": "1/sqrt(2)",
+    "k0_bound_sharp": true,
+    "kappa": "2",
+    "sup_rho": "3-2*sqrt(2)"
+  },
+  "slow_fast_factorization": {
+    "fast_then_slow": {
+      "conditional_upper": "1512361245/33554432",
+      "marginal_upper": "912375805/268435456",
+      "product": "1379841808357677225/9007199254740992"
+    },
+    "kappa_upper": "220475447/4194304",
+    "slow_then_fast": {
+      "conditional_upper": "618343219/268435456",
+      "marginal_upper": "881865593/16777216",
+      "product": "545295609500963867/4503599627370496"
+    }
+  },
+  "source_uniform_diameter_upper_bound": false,
+  "theorem": "For a frozen word with J>0: lambda_max(J^-1 A) = lambda_max(Pi^-1 P_diff) =: kappa_W, and rho_W <= tanh(log(kappa_W)/4) = (sqrt(kappa_W)-1)/(sqrt(kappa_W)+1) for every root covariance.",
+  "theorem_closed": false
+}

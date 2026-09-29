@@ -322,7 +322,7 @@
     },
     {
       "path": "docs/ou3-corrected-word-proof.md",
-      "git_blob_sha": "0762b245dc6153ff56bacff03f3d8ea02d8a1600"
+      "git_blob_sha": "9ba3701ff701483a8af4df72b037ecb850886f15"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout.py",
@@ -338,7 +338,7 @@
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "18e1d7f9e2cc6b474595a4c57e9e9b24b8986357"
+      "git_blob_sha": "fd91e965b15fb921c8e6a5f6d3952269c16b061c"
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
@@ -362,7 +362,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "b652b9b4f0a68e31796023c9e170ad9a423f15fd"
+      "git_blob_sha": "4f292f9598f98ce2e58525de257ff9a028195491"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
@@ -450,7 +450,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "978983c5b00d617b5f2b3b8cc41ecc711bad6370"
+      "git_blob_sha": "735d31ab703afe567895dc03696d4854f95fd4bf"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
@@ -466,7 +466,7 @@
     },
     {
       "path": "tests/validation/test_ou3_theorem_status.py",
-      "git_blob_sha": "b733001ee05cfac6e1df51158452fe3f769a3958"
+      "git_blob_sha": "2715309902f32c1e751f59da68198622b09036a5"
     },
     {
       "path": "tests/kalman_ou_iii/regime_ambiguity-test.cpp",
@@ -522,7 +522,7 @@
     },
     {
       "path": "docs/ou3-world-frame-rows.md",
-      "git_blob_sha": "4af5f73a423be4292a3a1644ef12916f6ebc8840"
+      "git_blob_sha": "e08d590568faf6bda4925c940cc884747d91099c"
     },
     {
       "path": "tools/stability/ou3_theorem/world_frame.py",
@@ -603,9 +603,34 @@
     {
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
       "git_blob_sha": "77809d942e6f71fcbc1899911268887c6cbd9091"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/word_diameter.py",
+      "git_blob_sha": "fabb20d25e03c74098ab873091c79ad0df410ad6"
+    },
+    {
+      "path": "tests/validation/test_ou3_word_diameter.py",
+      "git_blob_sha": "92f72c6b0e38284040e7ca8ab3baea194d521df1"
+    },
+    {
+      "path": "reports/results/ou3_stability/word-diameter-certificate.json",
+      "git_blob_sha": "7f482831d9b4f37a31ca62bb8617183dcc3c1876"
+    },
+    {
+      "path": "tools/stability/information_ratio_source.cpp",
+      "git_blob_sha": "14880ee0cc9fbd3ea13e167d5f7d7159bfda0bbd"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/information_ratio_source_diagnostic.py",
+      "git_blob_sha": "ee57043cbf62fa6aca9f745dbdc7b968efdd6144"
+    },
+    {
+      "path": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
+      "git_blob_sha": "66a8f244b3470c077a0470bdae4b6987189eac38"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
   "world_frame_continuation_base_main_commit": "7beb63902d3ec0231a08516c3e06580570cbe90e",
-  "aw_tracking_continuation_base_main_commit": "c0f9dd07ed9393e313e7243493ac580857ab318b"
+  "aw_tracking_continuation_base_main_commit": "c0f9dd07ed9393e313e7243493ac580857ab318b",
+  "information_ratio_continuation_base_main_commit": "ee0d46ddc08396b86579e12f2d873ae42fd5106b"
 }

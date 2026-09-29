@@ -93,6 +93,16 @@ def status_report() -> dict:
         "separated_information_or_forgetting_bounds_insufficient":True,
         "information_ratio_word_contraction_lemma":True,
         "source_uniform_word_information_ratio_bounds":False,
+        "word_riccati_diameter_identity":True,
+        "information_ratio_closed_form_supremum":True,
+        "word_diameter_composition_and_slow_fast_factorization":True,
+        "rank_structured_kernel_contraction_corollary":True,
+        "kernel_variance_set_invariance_implication":True,
+        "scalar_kernel_ceiling_from_proved_BA_marginal":True,
+        "s_chain_neutral_and_aw_root_cancellation":True,
+        "source_uniform_gyro_bias_persistence_diameter_cap":True,
+        "source_uniform_kernel_bounded_word_diameter":False,
+        "source_uniform_tilt_about_field_axis_covariance_ceiling":False,
         "actual_gain_finite_error_word_composition":True,
         "joint_word_prediction_measurement_input_action":True,
         "finite_angle_source_reset_remainder":True,
@@ -179,9 +189,14 @@ def status_report() -> dict:
             "first_prediction_epsilon_ceiling":"3.3741e-10 per prediction (S coordinate), independent of B_*, U_n and eta",
             "word_contraction":"rho_W <= sup_y [1/(1+y)-1/((1+k)(1+kappa y))], k=lambda_max^+(C^1/2 (A-kappa J) C^1/2), C>=P_0",
             "carried_slowest_short_word_direction":"translation (velocity/position) with accelerometer-bias share",
-            "open_source_premises":["floor on the word root information J on MOVING windows",
-                                    "ceiling on A-kappa J in the joint-reader metric",
-                                    "floor I_eff>=mu for the preceding-window joint reader"],
+            "diameter_certificate":"word-diameter-certificate.json",
+            "carried_information_ratio_diagnostic":"information-ratio-source-feasibility.json",
+            "word_diameter":"kappa_W=lambda_max(J^-1 A)=lambda_max(Pi^-1 P_diff); rho_W<=tanh(log(kappa_W)/4) for every root covariance",
+            "kernel_bounded_contraction":"A<=kappa J+lambda nu nu' and nu'P_0 nu<=c give rho_W<=sup_y[1/(1+y)-1/((1+lambda c)(1+kappa y))]",
+            "physical_kernel":"nu=(theta_hat,0,...,0,-J_att theta_hat), theta_hat the body field axis",
+            "joint_reader_C_needed_for_rho0":False,
+            "open_source_premises":["uniform ceiling on the kernel-bounded word diameter kappa_nu (observability off the tilt/BA kernel)",
+                                    "tilt covariance ceiling about the body field axis for the scalar kernel ceiling c_nu"],
         },
         "shipping_residual_gyro_bias_hardening":True,
         "implemented_gyro_bias_norm_invariant":True,
@@ -227,8 +242,10 @@ def status_report() -> dict:
             "MAGNETIC SERVICE on every 1-s interval and the nominal-rate bound make the field-axis gyro coordinate monotone (Lemma T); with two separated nominal accelerometer windows the injection-free world array has s^2>=1.486786e-3. "
             "The historical AG reader is now the exact joint minimum-action reader B*=Pi+Tt I_eff^-1 Tt' (the diffuse-AG-root Riccati limit, with a full 21x21 domination), so B_* reduces to a source-uniform floor on the marginalized AG information I_eff; carried 16-64 s windows bound the actual AG covariance within 12x (5x at 64 s). "
             "Every first-prediction relative process comparison Q>=epsilon F C F' is capped at epsilon<=3.3741e-10 per prediction by the one-step S coordinate, whatever B_*, U_n or eta, and separated information-only or forgetting-only word bounds also fail on carried words. "
-            "The word contraction is one information-ratio inequality rho_W<=sup_y[1/(1+y)-1/((1+k)(1+kappa y))], k=lambda_max^+(C^1/2(A-kappa J)C^1/2), with C the joint-reader upper bound. "
-            "Next prove source-uniform floors on the word root information J and on I_eff over MOVING windows and a ceiling on A-kappa J; the nominal AW window statistics and the literal injection frame of G0 remain their geometric inputs. "
+            "The word contraction is one information-ratio inequality rho_W<=sup_y[1/(1+y)-1/((1+k)(1+kappa y))], k=lambda_max^+(C^1/2(A-kappa J)C^1/2). "
+            "Its k=0 form is the word Riccati diameter kappa_W=lambda_max(J^-1 A)=lambda_max(Pi^-1 P_diff), valid for every root covariance; on every carried MOVING word the joint-reader C adds nothing beyond k=0. "
+            "The only positive part of A-kappa J on carried words lies along the physical tilt/BA kernel nu, so one scalar ceiling nu'P_0 nu<=c replaces every root covariance bound, and its BA part is the proved P_ba<=I/1600. "
+            "Next prove a source-uniform ceiling on the kernel-bounded diameter kappa_nu (observability off the kernel, from the G0 gyro geometry, nominal attitude columns, magnetic service and S-chain AW cancellation, with the literal injection frame) and a tilt ceiling about the body field axis. "
             "The .5 rad/s invariant, qualified complete-turn exclusion and one-step gyro floor remain proved, not the complete signed Delta_gyr. "
             "Positive source-uniform signed margins, B_*, J_AG, full covariance upper, rho_0<1, capture/H18/release, nonlinear radius, every-prefix retention, applied magnetic-service qualification and float32 totality remain open."
         ),
