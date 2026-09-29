@@ -101,6 +101,26 @@ signed temporal margin and force/field exclusion remain open.
 
 Estimator hold, release, correction, and projection never reset physical truth. The shipping gyro-bias mean predictor is identity, so its prediction error is `e_g_minus=e_g_plus+w_g`.
 
+## LOCAL GRAVITY
+
+The certified physical continuation uses a fixed local world-frame gravity
+reference `g_0^W` with
+`||g^W(t)-g_0^W|| <= eps_g`
+throughout the tail under consideration, and
+`g_min <= ||g_0^W|| <= g_max`.
+The shipping gravity magnitude must lie in this declared local-gravity
+envelope. This is a physical-field premise, not an estimator-state or
+tracking assumption.
+
+Together with the near-constant geomagnetic reference `b_M^W`, define the
+fixed world vector
+`d_0=(I-bhat_M bhat_M^T) g_0^W`.
+The inclination-domain restriction gives
+`||d_0|| >= g_min cos(80 deg)`.
+All uses of constant gravity in the tail proof must carry the explicit
+`eps_g` degradation; do not silently replace local gravity by an exact
+constant unless `eps_g=0` is declared.
+
 ## MAGNETIC SERVICE
 
 For each certified tail window rooted at `s`, let `Phi(k,s)` be the ordered differential of the complete preceding same-history shipping execution. The transport ends immediately before the magnetic correction, not after it. Let `H_m,k` be the literal pre-correction magnetic sensitivity and `S_m,k^act` the actual innovation covariance presented to the shipping factorization for a correction that was actually applied. In normalized heading/axial-gyro-bias root coordinates,
