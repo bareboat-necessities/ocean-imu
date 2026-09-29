@@ -4318,6 +4318,81 @@ conditions are not controlled source-uniformly, and no monotone escape
 functional exists in the theorem set. Proving either branch requires a new
 shipping invariant (uniform compatibility-control rank/service margin) or an
 explicit forward-complete construction. This is the exact O2 theorem gap.
+## Full OU/S/accelerometer adaptation zero dynamics
+
+Use the literal shipping order: OU/LIN prediction, pending AW covariance
+inflation, scheduled S=0 pseudo-update inside prediction, then accelerometer
+update; AW covariance sync/inflation is mean-neutral. Let m collect the
+transverse nominal mean blocks `(a_w,v,p,S,b_a,theta,...)` immediately after
+an accelerometer correction.
+
+For one prediction interval write the exact mean prediction as
+`m^- = F_k m^+`, with the shipping OU/LIN/BA/attitude coefficients. If an S
+update is due,
+
+`m^S = (I-K_S,k H_S) m^-`,                                  (ZD-1)
+
+because `r_S=-H_S m^-`. This is endogenous feedback, not an external input.
+At the following accelerometer correction,
+
+`m^(+)next = R_k[ m^S + K_a,k r_a,k ]`,                     (ZD-2)
+
+where R_k denotes the literal quaternion/error reset map on the mean
+coordinates (identity on unaffected Euclidean blocks). Covariance sync does
+not enter ZD-1--ZD-2 at mean level, though it changes future gains.
+
+Define the transverse compatibility output at that accelerometer epoch
+`e_c,k=P_b,k fhat_k=P_b,k C_f,k m^S` in the q->0 limit. Exact persistent
+compatibility imposes
+
+`e_c,k=0`.                                                   (ZD-3)
+
+The physical measurement identity gives
+`r_a,k=f_phys,k-fhat_k-bhat_a,k`.                           (ZD-4)
+Substituting ZD-4 into ZD-2 and then the next prediction/S update yields the
+closed forced zero-dynamics map
+
+`m_(k+1)^S = A_cl,k m_k^S + B_phys,k f_phys,k`,             (ZD-5)
+
+with
+`A_cl,k=(I-K_S H_S) F_k R_k [I-K_a(C_f+C_ba)]`
+(with the literal ordering/frame blocks), and
+`B_phys,k=(I-K_S H_S) F_k R_k K_a`.                        (ZD-6)
+
+The constraint `P_b C_f m_k^S=0` is imposed at every applied accelerometer
+epoch. Thus S feedback is fully inside A_cl: its memory cannot be chosen
+independently.
+
+### Does S feedback exclude an infinite zero trajectory?
+
+No source-uniform exclusion follows from the current coefficients. ZD-5 is a
+bounded linear/time-varying forced recursion on the retained tube. The
+physical force is an admissible bounded forcing, and S feedback is stabilizing
+rather than an accumulating conserved quantity. Setting e_c=0 imposes two
+linear constraints per epoch on the forced recursion, while f_phys has three
+components plus the independently evolving admissible attitude history.
+
+To prove impossibility one would need a left-annihilator of the constrained
+input map: a nonzero row L_k such that `L_k B_phys,k=0` but the zero-output
+condition forces `L_k A_cl,k m` to a nonzero value under recurring MARINE
+MOTION. Equivalently, the constrained Rosenbrock matrix of the literal
+adaptation cycle would need a source-uniform rank condition excluding an
+invariant zero.
+
+The current proof has no such rank theorem. In fact the previously proved
+local rank-two transverse AW correction at diagonal covariance indicates the
+opposite locally: where the relevant gain block has rank two, the physical
+accelerometer forcing has enough transverse authority to enforce ZD-3 while
+the S feedback is simply part of the state transition. Endogenous S memory
+changes the required forcing but does not by itself overdetermine it.
+
+Therefore incorporating the S pseudo-measurement correctly does **not yet**
+exclude persistent nominal field-axis compatibility. It sharpens the missing
+lemma to an invariant-zero/rank statement for `(A_cl,B_phys,C_c)` over the
+actual gain/covariance history. A proof that this constrained system has no
+bounded invariant zero under recurring MARINE MOTION would close O2; a
+forward-complete bounded zero-dynamics solution would refute block
+contraction.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
