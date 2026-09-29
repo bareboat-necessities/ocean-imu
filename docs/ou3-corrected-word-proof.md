@@ -598,6 +598,52 @@ block reader with a finite action ratio `K(c)`: specifically the nominal
 AW-window statistics and the extension of G0 to the literal injection frame.
 The augmented-reader identity itself is exact and needs neither premise.
 
+### Known-root scalar action after S-chain elimination
+
+For O2 the exact target is not `lambda_max(Pi)` but
+
+`d_j = nu_(j+1)' Pi_j nu_(j+1)`.
+
+Because `Pi_j=Ric_Wj(0)`, every terminal error is a linear function of the
+word sources only.  Let `q=nu_(j+1)` and write the known-root terminal
+functional as
+
+`q' x_N = q' T s`.
+
+For any linear combination `l'y` of the same word data, the trial residual
+is
+
+`q'x_N-l'y=(q'T-l'A_s)s`
+
+and therefore
+
+`d_j <= (q'T-l'A_s)(q'T-l'A_s)'`.                         (D-R)
+
+The minimum over `l` is exactly `d_j`; this is the scalar specialization
+of the minimum-action reader with a known root.  Thus an explicit scalar
+reader is sufficient and no full covariance upper bound is needed.
+
+Choose the data coordinates only **after** applying the S-chain identity.
+The four-S divided-difference combination cancels the complete neutral/AW
+root, every AW process increment and every AW covariance sync exactly.
+Consequently the residual in (D-R) contains only the attitude/BA part of the
+accelerometer combinations, their measurement noises, the LIN
+`(n_v,n_p,n_S)` residual already bounded in the S-chain lemma, and the
+literal attitude/BA process/reset sources.  This is the correct point at
+which to use the transported magnetic rows and the signed G0 geometry.
+Bounding AW sources before this elimination would reintroduce DEAD_END 20.
+
+A source-uniform number `d_bar` therefore follows once one exhibits scalar
+weights `l_j` with
+
+`sup_j |q_j'T_j-l_j'A_(s,j)|^2 <= d_bar`.                  (D-S)
+
+The same transported quotient coordinates used in (O1-R) should be used in
+(D-S); independent coefficient boxes are not admissible substitutes.  The
+remaining open work is to derive those weights and bound their action from
+the literal injected G0 geometry and source-uniform nominal AW-window
+statistics.
+
 ### O2 reduction to a scalar known-root invariant
 
 The separate field-axis attitude ceiling is sufficient for O2, but it is not
