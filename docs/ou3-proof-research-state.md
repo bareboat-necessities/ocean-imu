@@ -906,6 +906,27 @@ coefficient histories cannot occur inside the candidate retained set.  Adding
 a new physical assumption or changing estimator behavior is outside the
 current task.
 
+## Complete-word replacement after two-epoch failure
+
+The controlling path now uses the complete corrected A21 word as one joint
+Gaussian operator.  All root nuisance coordinates and every fresh
+process/sync/noise factor are retained once; nuisance elimination is the full
+Schur complement, and the kernel prior is appended afterward.  The target is
+
+\`P_(nu,s)(W,c)<=K_MW(c,r) Pi_s(W)\`
+
+uniformly over admissible MOVING words in the candidate retained region.
+This lets magnetic service, all accelerometer epochs, S pseudo-observations,
+chronological gyro transport, AW/BA process penalties, Joseph corrections,
+resets and terminal forgetting cooperate.
+
+The immediate analytical subproblem is the zero-action nullspace: prove that
+a normalized complete-word sequence for which magnetic loss, accelerometer
+loss after nuisance mimic, S loss, AG/BA/AW process action and terminal
+forgetting all tend to zero converges only to the physical tilt/BA kernel.
+Only after that qualitative coercivity statement is proved should explicit
+moduli be extracted for K_MW.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
