@@ -954,17 +954,20 @@ that could lower-bound the local restricted gap needed by terminal retention.
 
 Therefore no unused shipping invariant supplies the missing restricted
 tilt/BA gap. MAGNETIC SERVICE closes its intended 2-D heading/gyro sector,
-and four-S closes LIN/AW, but the one-dimensional tilt/BA compatibility
-sector can approach tangency continuously under the current MARINE MOTION
-assumption.
+and qualitative four-S injectivity closes the zero-action LIN/AW nullspace.
+The current physical assumptions do not themselves provide a proved
+quantitative transversality bound for the remaining tilt/BA compatibility
+sector. Algebraic tangent/near-tangent configurations exist, but subsequent
+reachability analysis has **not** proved that literal shipping A21 executions
+can approach them arbitrarily closely.
 
-Conclusion: with the present physical assumptions, a source-uniform
-finite-horizon detectability constant C_det (and hence a source-uniform
-strict recurring contraction margin obtained by this route) is not proved.
-The obstruction is not an omitted implementation guard. To obtain such a
-margin one needs either a different theorem that tolerates arbitrarily weak
-tilt/BA detectability without a uniform ratio, or an additional quantitative
-physical/service condition that excites that sector. Adding such a condition
+Conclusion: a source-uniform finite-horizon detectability constant C_det is
+not proved by the current lemmas, but the present assumptions have **not been
+disproved**. It remains open whether the literal shipping dynamics restrict
+the reachable A21 histories enough to supply the missing quantitative gap.
+A different theorem may avoid this gap; alternatively a new physical/service
+condition could supply it, but such strengthening is not justified by the
+reachability work completed so far. Adding such a condition
 would strengthen the assumptions and is outside the current task unless
 explicitly authorized.
 ## Corrections to PR #625 analytical claims
@@ -983,6 +986,16 @@ Three earlier claims are corrected fail-closed:
    uniform positive g_MW across rank-changing/tangent kernel histories.
    The uniform-coercivity existence claim is RETRACTED. The later
    finite-horizon detectability/relative-action formulation is controlling.
+
+4. The later "Literal whitening and anchor identification" section formerly
+   resurrected the false unprojected leverage inequality. It is corrected to
+   use only `Xg_perp=(I-P_U)X_g`. The missing `P_U X_g` contribution remains
+   OPEN; no AG-process bound follows from the bookkeeping identification.
+5. Exact construction of `G_red(c)` is not a proof of the target uniform
+   Loewner floor `G_red(c;history)>=G_*(c,r)>0`. That direct-information
+   inequality remains an OPEN O1 target wherever it is invoked. Later
+   rank-continuous/ordered-eigenvalue results must be cited explicitly if
+   used instead; they do not retroactively prove the earlier DI-6 claim.
 
 Implication: K_MW(c,r), D(c,r), a strict recurring contraction margin and the
 final invariant solve remain OPEN. No downstream certificate may cite the
