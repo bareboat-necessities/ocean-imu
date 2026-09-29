@@ -1322,6 +1322,84 @@ kernel alignment.  A proof of (DI-6) must exploit the complete linked row
 matrix and physical/service chronology.  This is narrower and avoids the
 circular cumulative correction-action premise.
 
+## Variational reduced-information floor
+
+The direct lower bound should use the **optimal nuisance-annihilating
+compression**, not an arbitrary S-chain row selection.
+
+Partition the raw frozen design into slow/root columns `O_s` and canceled
+fast/nuisance columns `O_f`:
+
+`y=O_s x_s+O_f x_f+A s`, `Sigma=A A'>0`.
+
+For fixed `x_s`, minimize the whitened data energy over the unrestricted
+nuisance root `x_f`:
+
+`Q_red(x_s)=min_(x_f) ||Sigma^-1/2(O_s x_s+O_f x_f)||^2`.   (VI-1)
+
+The minimizer is the weighted projection onto the complement of
+`range(Sigma^-1/2 O_f)`, hence
+
+`G_red =
+ O_s' Sigma^-1 O_s
+ -O_s' Sigma^-1 O_f
+  (O_f' Sigma^-1 O_f)^dagger
+  O_f' Sigma^-1 O_s`.                                      (VI-2)
+
+Equivalently, if `P_f` is the orthogonal projector onto
+`range(Sigma^-1/2 O_f)`,
+
+`G_red=O_s' Sigma^-1/2 (I-P_f) Sigma^-1/2 O_s`.            (VI-3)
+
+This is the maximal information obtainable by any linear compression that
+annihilates `O_f`.  Every explicit S-chain reader is a feasible compression
+and therefore lies below (VI-2); it need not preserve a source-uniform floor.
+The S-chain identities remain useful to prove that the canceled
+`(v,p,S,a_w)` root/AW sources belong to the nuisance span, but the theorem
+should use the Schur complement (VI-2) itself.
+
+Append the physical-kernel precision after nuisance elimination:
+
+`G_red,mu=G_red+mu nu nu'`, `mu=1/c`.                    (VI-4)
+
+The controlling obligation is therefore the variational inequality
+
+`Q_red(x_s)+mu(nu'x_s)^2 >= g_*(c,r)|x_s|^2`              (VI-5)
+
+for every slow vector and every admissible same-history word in the candidate
+region.  Then `G_*(c,r)=g_* I` is a valid DI-6 floor; block versions may be
+used to retain a sharper gyro Schur constant.
+
+The physical chronology enters (VI-5) without independent coefficient boxes:
+
+- applied magnetic rows penalize the two attitude components transverse to
+  the actual transported field;
+- accelerometer rows and their exact nuisance projection penalize the
+  complementary attitude/BA combinations;
+- MAGNETIC SERVICE bounds gaps between actual magnetic rows;
+- chronological gyro transport/Lemma T prevents a nonzero gyro-bias quotient
+  from remaining in the moving field-axis null line across separated service
+  tubes;
+- MARINE MOTION attitude-span supplies the physical change needed on every
+  complete moving excitation window; STILL is handled by its separate
+  compatible-class argument.
+
+A contradiction proof of (VI-5) is now natural.  If no positive uniform floor
+exists on a compact candidate history class, take a sequence of unit slow
+vectors with `Q_red+mu(nu'x)^2->0`.  The residuals imply, successively:
+magnetic rows force attitude into the transported field-axis line; nuisance-
+projected accelerometer rows force the associated BA/tilt compatibility;
+Lemma T plus recurring service forces gyro bias into the compatible axial
+component; the fictitious kernel row then removes the sole remaining physical
+tilt/BA line.  The limit slow vector must be zero, contradicting unit norm.
+
+What remains for a **quantitative** floor is to turn those four implications
+into explicit inequalities with constants on the radius-local compact class.
+The exact reset factors and literal nominal AW values remain inside
+`O_s,O_f,Sigma`; no A_i or Q_i bounds are required.  Compactness alone would
+prove existence of `g_*>0`, but a usable `K,D,E` requires explicit
+moduli for the magnetic, nuisance-projected accelerometer and Lemma-T steps.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
