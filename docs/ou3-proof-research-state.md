@@ -1568,6 +1568,31 @@ Conclusion: after removing the spurious NIS-gate concern, the only substantive
 global continuation quantities are D_perp rank and magnetic-service surplus.
 Current shipping invariants control neither in the direction needed to decide
 forward completeness versus escape. This is the exact residual O2 gap.
+## Covariance/gain self-consistency of the persistent-mode construction
+
+For accepted linearized Kalman corrections, the Joseph covariance recursion
+depends on P, the measurement Jacobian and R, but not on the numerical
+innovation residual. The S pseudo-update has the same property. Prediction
+covariance likewise does not depend directly on physical translational
+acceleration.
+
+Hence physical acceleration chosen to realize the compatibility-maintaining
+innovation changes the mean but does not directly change P or K. It couples
+back only through mean-dependent Jacobians/resets, tuner variables and event
+chronology.
+
+There is no known covariance invariant forcing this coupled compatible
+execution to escape: PSD is preserved, process covariance is injected, and
+resets are invertible transports. Conversely no recurrent compatible
+covariance orbit is yet proved. The remaining existence problem is a joint
+Poincare/viability fixed point for nominal geometry+tuner+covariance with
+D_perp nonsingular; physical residual realization is then supplied by the
+already-derived PRDC equation.
+
+Thus no residual-to-covariance contradiction closes O2. The unresolved
+estimator-internal question is recurrence of the compatible nominal
+geometry/covariance branch, not innovation magnitude.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
