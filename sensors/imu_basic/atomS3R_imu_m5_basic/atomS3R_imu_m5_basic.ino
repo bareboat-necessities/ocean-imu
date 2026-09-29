@@ -38,6 +38,7 @@ void setup()
   auto cfg = M5.config();
   M5.begin(cfg);
   M5.Imu.begin();
+  ensureMagReady(Serial);
 
   clearM5UnifiedImuCalibration();
 
