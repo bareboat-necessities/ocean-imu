@@ -447,6 +447,31 @@ cadence from MAGNETIC SERVICE and couple it to the jerk lemma. Downstream,
 replace the least-singular-value/process-noise route by a blockwise reader
 action and the measurement loss in the slow bias directions.
 
+## Handoff checkpoint for PR 621
+
+Merge/handoff stopping point: the direct carried complete-word contraction is
+quantitatively viable, but source-uniform A21 contraction is still OPEN.  The
+retained mathematical route is the structured historical-root argument:
+
+1. Prove a source-uniform finite total historical AG reader action `B_*`.
+   Do this with the all-row/joint weighted reader, not a selected minor and not
+   unsigned residual accumulation.  G0, signed temporal service, nominal AW
+   same-history dynamics and literal reset transport are the intended inputs.
+2. Combine `P_AA<=B_*` with the already-proved nuisance `P_NN<=U` using
+   `C_eta=diag((1+eta)B_*,(1+1/eta)U)`; arbitrary cross covariance is retained.
+3. Prove the full matrix process comparison
+   `Q>=epsilon F C_eta F'` for some useful source-uniform epsilon, optimizing
+   eta blockwise.  Then the exact pulled-back prediction identity gives
+   `rho0<=1/(1+epsilon)`.
+4. Only after a useful rho0 is certified, close nonlinear headroom/retained
+   radius, recurring STILL/MOVING transition retention, capture/H18/release
+   entry and float32 transfer.
+
+Do not revive scalar covariance ceilings, scalar root-precision caps,
+principal-block information lifting, independent nominal boxes, pointwise AW
+tracking, unsigned injection/norm accumulation, sampled/fitted rho, or any
+DEAD_END without new mathematics removing its recorded obstruction.
+
 ## All-row reader reformulation
 
 The historical reader no longer needs a source-uniform certificate for any
