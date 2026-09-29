@@ -3914,6 +3914,68 @@ base-trajectory supply term is currently present in the stability action.
 Thus the equality case remains the sole O2 blocker: neither unreachable nor
 constructed. Further homogeneous covariance/information estimates cannot
 settle it.
+## Base innovation supply versus persistent compatibility
+
+Use the exact accepted-accelerometer identity
+`r_acc,k=f_meas,k-bhat_a,k-fhat_k`.                         (BI-1)
+Let P_bperp denote projection transverse to the transported physical magnetic
+axis. Along a zero-BA limiting compatibility sequence,
+`P_bperp fhat_k ->0` at every applied accelerometer epoch. Therefore
+
+`P_bperp r_acc,k
+ =P_bperp(f_meas,k-bhat_a,k)+o(1)`.                         (BI-2)
+
+The physical jerk/cadence lemma says dense applied epochs cannot all have
+physical specific force parallel to b on a MOVING interval. With the bounded
+physical accelerometer bias, this supplies nonzero transverse **innovation**
+at some epochs unless the physical transverse force is canceled by bhat_a.
+However bhat_a is an estimator mean, not the bounded physical bias; its
+shipping projection only bounds its magnitude.
+
+At an accepted correction the nominal AW/attitude means change by
+`Delta a_w=K_aw r_acc`, `Delta theta=K_theta r_acc`.        (BI-3)
+To force a break of compatibility from BI-2 one needs a lower gain/action
+inequality such as
+
+`|P_bperp[K_aw;K_theta] r| >= kappa_I |P_bperp r|`          (BI-4)
+
+on the relevant innovation directions, or a multi-epoch analogue after S
+feedback. The prior AW-gain reachability analysis proved no such uniform
+lower singular value for reachable A21 covariances; cross-covariances can
+algebraically cancel the AW gain block, and reachability of cancellation is
+open.
+
+More importantly, even BI-4 would not by itself force incompatibility:
+persistent compatibility can use the correction to **retune** the nominal
+force to the next decayed BA ratio. The required retuning is O(1-Phi_b) per
+word and therefore finite. There is no admissibility bound on cumulative
+base innovation energy `sum r_acc' S^-1 r_acc`; NIS is a gate/diagnostic, not
+a stated finite long-run budget. Thus persistent retuning need not exhaust a
+proved resource.
+
+Consequently the existing base innovation/physical-motion relationship does
+not exclude a persistent pair. The physical jerk lemma guarantees excitation
+of the measurement, but shipping corrections are designed to absorb such
+innovation, and the proof assumptions place no cumulative budget on that
+absorption.
+
+### Constructive-pair status
+
+Conversely, BI-1--BI-3 make a persistent pair locally plausible where the
+transverse correction gain has rank two: the physical measurement innovation
+provides exactly the controls needed to enforce the two transverse
+compatibility equations, while BA decay merely changes the target ratio.
+But a rigorous pair construction still requires solving the endogenous
+longitudinal/S/BA endpoint equations and proving the resulting sampled
+physical measurements admit a MARINE MOTION continuation with strict
+MAGNETIC SERVICE. Those obligations remain unsolved.
+
+Therefore neither branch closes under the current theorem set. What is now
+proved is that no existing physical-motion bound creates a finite innovation
+supply budget capable of excluding persistent compatibility. Any exclusion
+theorem needs a new consequence of shipping/admissibility beyond BI-1--BI-3;
+otherwise the productive direction is an explicit boundary-value construction
+of the persistent pair.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
