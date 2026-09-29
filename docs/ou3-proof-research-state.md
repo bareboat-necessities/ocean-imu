@@ -1123,6 +1123,49 @@ to satisfy the scalar/integral closure conditions. A rigorous periodic or
 finite-word construction still needs those longitudinal/S/BA equations and
 the physical measurement realization checked against MARINE MOTION and IMU
 BIAS.
+## Regular-A21 AW-gain entry lemma: current result
+
+For an accepted accelerometer correction the literal AW gain numerator is
+
+`N_aw = P_aw,theta J_att' + P_aw,aw R_wb' + P_aw,ba`
+
+(plus the AW/gyro-bias lever-arm cross term when that feature is active), and
+`K_aw=N_aw S^-1`. Since S is positive definite, transverse gain rank is the
+rank of `P_b N_aw`.
+
+A positive AW marginal alone does not imply this rank. PSD covariance permits
+cross blocks to cancel the direct `P_aw,aw R_wb'` term on one or more
+transverse directions. Thus the constructor proof cannot be extended to all
+A21 roots from the AW covariance floor alone.
+
+Shipping prediction injects a favorable fresh term: the LL process covariance
+adds `Q_aa=(1-phi^2) Sigma_aw_stat` to the AW marginal while adding no fresh
+AW-attitude or AW-BA cross covariance. Hence immediately after prediction
+
+`N_aw^- = N_aw,inherited^- + Q_aa R_wb'`.
+
+A universal rank-two floor would follow if the fresh transverse singular
+value exceeded the inherited cancellation norm. At regular 4--6 ms steps,
+however, `1-phi^2=O(h/tau)` is small. Existing nuisance/cross-covariance
+bounds do not prove
+
+`sigma_min(P_b Q_aa R_wb') > ||P_b N_aw,inherited^-||`
+
+or any signed variant preventing exact cancellation. Therefore no
+source-uniform delta_K or finite entry time T_K is currently derivable from
+the proved covariance bounds.
+
+Conversely this algebra does not construct an actual rank-deficient A21
+execution: PSD-compatible cancellation at one covariance matrix is not enough;
+the matrix must be reachable under the literal Riccati recursion and strict
+MAGNETIC SERVICE. No such execution has been analytically constructed.
+
+Conclusion: the proposed regular-A21 AW-gain entry lemma is presently neither
+proved nor disproved. Its controlling subproblem is covariance reachability:
+can the actual Riccati recursion reach/approach the algebraic cancellation
+manifold `det(P_b N_aw|_bperp)=0` under strict service? This is a lower
+dimensional covariance invariant/reachability question. Until it is settled,
+the exact-compatible IFT counterexample has no certified reachable base.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
