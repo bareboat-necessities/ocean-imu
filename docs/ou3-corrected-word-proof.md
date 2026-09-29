@@ -793,6 +793,89 @@ but regional practical stability still additionally requires startup/H18
 entry, regime transitions, recurring magnetic-service qualification and
 implementation/float32 totality.
 
+## Canonical analytic local-tube readers and actions
+
+Let a local-tube/S-chain reduced record be
+`z=H x + A_z s`, with root quotient coordinate `x=(theta,beta)`, source
+factor `s`, and positive residual covariance `Sigma_z=A_z A_z'`.
+Append the fictitious kernel row with precision `mu=1/c`.  Put
+
+`H_mu=[H; sqrt(mu) nu']`, `Sigma_mu=diag(Sigma_z,1)`,
+`G_mu=H_mu' Sigma_mu^-1 H_mu`.
+
+For any terminal quotient map `F_q`, the canonical weighted reader is
+
+`L_q = F_q G_mu^-1 H_mu' Sigma_mu^-1`.                    (LR-1)
+
+Its coefficients are therefore explicit functions of the literal transported
+tube rows.  It satisfies `L_q H_mu=F_q`.  Its residual source coefficient
+and quadratic action are
+
+`Z_q=T_q-L_q A_mu`,
+`R_q=Z_q Z_q'`.                                            (LR-2)
+
+The minimum-action reader can only improve this action, so (LR-2) is a valid
+constructive O1 reader whenever `G_mu>0`.
+
+For the scalar next-kernel functional `q'=nu_next'`, use
+
+`l_d = q' T_x G_mu^-1 H_mu' Sigma_mu^-1`,                  (LR-3)
+
+where `T_x` is the root-to-terminal quotient map.  Its source residual and
+action are
+
+`z_d=q'T_s-l_d A_mu`,
+`R_d=z_d z_d'`.                                             (LR-4)
+
+Thus `D(c,r)<=R_d` directly.  Equations (LR-1)--(LR-4) are the requested
+analytic reader coefficients and quadratic actions; they retain all source
+cross terms through the common factor `A_mu`.
+
+The local G0 inequalities give an explicit lower matrix for `G_mu`.
+With `a=K_II gamma`, `b=K_II sqrt(gamma) C_II`, and the independent gyro
+supply `q_I`, the radial two-block comparison is
+
+`G_mu >= [[a I,-b I],[-b I,(q_I+K_II C_II^2)I]] + mu nu nu'`.   (LR-5)
+
+Equivalently, before the kernel row, the Schur complement in the gyro block is
+at least `q_I`; the combined smallest quotient eigenvalue is the G0
+`s(c,r)^2`.  Hence
+
+`||G_mu^-1|| <= 1/s(c,r)^2`                                (LR-6)
+
+on the quotient.  This yields the coarse explicit action estimate
+
+`R_q <= (||T_q|| + ||F_q|| ||A_mu||/(s(c,r) sqrt(lambda_min(Sigma_mu))))^2 I`, (LR-7)
+
+and the analogous scalar estimate
+
+`R_d <= (||q'T_s|| + ||q'T_x|| ||A_mu||/(s(c,r) sqrt(lambda_min(Sigma_mu))))^2`. (LR-8)
+
+These norm ceilings are existence bounds only and may reproduce DEAD_END 22
+if used globally.  The useful action is the exact signed quadratic form
+(LR-2)/(LR-4), evaluated symbolically after the S-chain cancellations and
+tube-to-tube coefficient transport, not (LR-7)/(LR-8).
+
+The missing transport constants now have exact definitions rather than free
+parameters.  For the normalized force weights `alpha_k` on an anchored tube,
+
+`A0=|sum alpha_k u_phys,k x b|`,
+`A1=sup_{V<=r^2}|sum alpha_k (u_hat,k-u_phys,k) x b|/r`,
+
+with the error term expanded by the literal AW-loop identity before taking
+the supremum.  For relative reset transport `Q_j Q_k'`, write each literal
+factor as `I-X_l/2+R_l`, `||R_l||<=|x_l|^3/6`.  Then `Q0` is the
+integrated physical gyro-residual/implementation term, `Q1` the coefficient
+of the signed partial sum `S_n=sum_l x_l`, `Q2` the exact pair-product
+coefficient `sum_l |x_l||S_(l-1)|/4`, and `Q3` the accumulated
+`sum_l |x_l|^3/6` remainder after the same signed transport.  No independent
+per-reset box is introduced.
+
+What remains unproved is not the reader formula: it is a finite
+source/radius-uniform evaluation of these signed suprema and of the exact
+actions (LR-2),(LR-4).  Until those are bounded analytically, replacing them
+by carried-word values would be fitted rather than rigorous.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
