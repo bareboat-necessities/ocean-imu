@@ -1502,6 +1502,31 @@ claim alpha_bar=1, and do not use its absence to claim alpha_bar<1. Complete
 the A21 O1/O2 theorem conditionally on the actual retained A21 class first;
 startup/H18/release entry remains a separate later composition obligation as
 specified by the controlling proof order.
+## Review corrections: compactness and controlling O2 lemma
+
+The statement that finitely many possible matrix ranks yield finitely many
+closed constant-rank strata is false and is withdrawn. Exact-rank sets are
+not generally closed. O1 continuity now uses only the fixed-factor
+variational action with nuisance/process coercivity; no nuisance-rank
+pseudoinverse stratification is controlling.
+
+The ordered second eigenvalue route is valid only with this continuous
+quadratic-form representation: complete-word nullity<=1 on the closed compact
+admissible class plus continuity of J gives `lambda2_bar>0` at the existence
+level. No numerical lambda2 floor is claimed.
+
+O2 must use a fixed positive physical root metric M. Compatibility generators
+are normalized by `nu'Mnu=1`, and the exact same-history return is
+`a_W=nu_+' M T_W nu_W`. Euclidean mixed-unit comparisons with one are not
+theorem statements.
+
+The controlling proof order is now:
+`nullity<=1 -> lambda2_bar>0 -> soft/augmented O1 finite -> metric-normalized
+compatibility return |a| (or finite product) <1 -> D<=c -> rho0<1 ->
+nonlinear radius -> prefix/release/regime/float32`.
+
+Exploratory detectability, AW-gain and sign-crossing sections are research
+history and must not be cited as alternate controlling routes.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
