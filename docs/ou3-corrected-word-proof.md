@@ -4036,6 +4036,64 @@ Consequently no exclusion theorem arises from endpoint closure. If a reachable
 strict-margin rank-two A21 base can be exhibited, conditions 1--4 are locally
 solvable across two words and alpha_bar=1 follows after physical/service
 verification. Without such a base, reachability remains the unresolved step.
+## Physical realization of a compatible innovation sequence
+
+Assume a regular strict-margin A21 base execution and the IFT-compatible
+innovation sequence u_k from BV-3. The accepted accelerometer identity defines
+the required sampled calibrated physical specific force exactly:
+
+`f_phys,k = fhat_k + bhat_a,k + u_k`                         (PR-1)
+
+(with the literal temperature/calibration convention). Choose the physical
+sensor bias trace within IMU BIAS and set the physical translational
+acceleration samples from PR-1 and the known attitude/gravity transform.
+
+On a finite two-word interval, any sufficiently small perturbation of a
+strictly admissible base acceleration sample sequence can be interpolated by
+a C1 piecewise-cubic/Hermite acceleration trace matching the samples. Its
+jerk norm is bounded by a constant times the maximum sample perturbation
+divided by the minimum sample gap. Therefore, if the base execution has
+strict margins to the acceleration and jerk limits, the IFT controls can be
+restricted to a neighborhood in which the interpolated physical trace
+preserves those bounds.
+
+Integrating the acceleration perturbation over the fixed two-word horizon
+changes velocity and displacement continuously. Strict base margins to their
+bounds therefore persist for sufficiently small controls. The bounded-
+potential inequalities on the finite interval are also continuous in the C0
+position norm. Outside the two-word interval splice back to the original
+globally admissible base continuation with a compact smooth transition;
+strict margins and the free longitudinal controls permit zero net velocity/
+position perturbation to be imposed if needed for the splice. This gives a
+global MARINE MOTION continuation provided the base history has strict
+margins.
+
+Keep the physical attitude/gyro/magnetic-field history equal to the base
+history when realizing the translational perturbation. The accelerometer
+measurement changes, but the physical magnetic samples do not. Estimator
+attitude means/resets can nevertheless change because accelerometer
+innovations inject attitude. The transported magnetic service rows therefore
+vary continuously with the IFT controls rather than remaining exactly fixed.
+
+If the base execution satisfies MAGNETIC SERVICE with strict margin
+`lambda_min(G_M)>=mu_M+delta_M`, delta_M>0`, continuity of the finite
+transported-row Gram gives an epsilon_M>0 such that all sufficiently small
+compatible controls retain
+`lambda_min(G_M)>=mu_M`. Thus strict magnetic service is an open property on
+a fixed accepted-event branch.
+
+Likewise NIS/finite-input/projection branch conditions with strict margins
+are preserved for sufficiently small controls. Therefore **physical
+realization and MAGNETIC SERVICE are locally open obligations**, not a new
+algebraic obstruction.
+
+The remaining nonlocal issue is the base point: one still needs an actual
+reachable recurring A21 execution that simultaneously (i) has strict physical
+and service margins, (ii) lies on an exact compatibility line, and (iii) has
+rank-two transverse compatibility control. If such a base exists, the IFT
+construction plus PR-1 yields a genuine admissible persistent two-word pair
+and hence alpha_bar=1. The current proof has not established existence of
+that base.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
