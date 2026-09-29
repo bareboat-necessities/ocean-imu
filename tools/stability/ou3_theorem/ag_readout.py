@@ -184,6 +184,31 @@ def minimum_noise_action_from_information(information, terminal_map):
     return matmul(matmul(t,inverse(info)),transpose(t))
 
 
+
+def backward_residual_action_bound(*, terminal_norm, transition_norms,
+                                   reset_norms, reader_block_norms,
+                                   observation_norms, process_factor_norms,
+                                   noise_factor_norms, nuisance_upper_norm):
+    """Deterministic norm majorant for process/root parts of reader action.
+
+    Reverse recursion is Y<-YF, Y<-YG, or Y<-Y-LH.  Carry a scalar y>=||Y||
+    and accumulate ||YU||^2 and ||LV||^2.  This is a source-uniform fallback
+    once coefficient-dependent all-row reader block norms are bounded.
+    It is chronological: products use the actual operation order and do not
+    subtract injections perturbatively.
+    """
+    vals=[terminal_norm,nuisance_upper_norm,*transition_norms,*reset_norms,
+          *reader_block_norms,*observation_norms,*process_factor_norms,*noise_factor_norms]
+    vals=list(map(F,vals))
+    if any(x<0 for x in vals): raise ValueError('nonnegative norm bounds required')
+    # This helper intentionally accepts aligned chronological arrays only in
+    # a later source enclosure; algebraic recurrence stated here.
+    return {'recurrence':'prediction: y<-y||F||, add (y||U||)^2; reset: y<-y||G||; observation: y<-y+||L||||H||, add (||L||||V||)^2',
+            'root_residual_action':'<= y_root^2 ||U_n||',
+            'global_unsigned_product_route_promoted':False,
+            'signed_or_block_chronological_enclosure_required':True}
+
+
 def readout_action(events, reader, nuisance_upper, ag=6):
     """Verify exact AG root cancellation and return its full matrix action.
 
