@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_theorem.matrix_certificates import congruence, identity, is_psd
 from tools.stability.ou3_theorem.word_energy import (
-    block_generalized_loss_implication, block_schur_self_test,
+    block_generalized_loss_implication, block_schur_self_test, relative_schur_contraction_certificate,
     full_loss_margin, restricted_service_counterexample, word_identity,
 )
 
@@ -25,6 +25,12 @@ class WordEnergyTests(unittest.TestCase):
         self.assertTrue(r['ag_after_optimal_nuisance_cancellation_spd'])
         self.assertTrue(r['full_generalized_loss_margin_verified'])
         self.assertEqual(r['rho0_upper'],'9/10')
+
+    def test_relative_schur_matches_full_margin(self):
+        w=word_identity([[2,1,0],[1,3,1],[0,1,2]],[{'kind':'correction','H':[[1,0,1],[0,1,0]],'R':[[1,0],[0,2]]}])
+        d=F(1,100)
+        r=relative_schur_contraction_certificate(w['root_precision'],w['loss'],1,d)
+        self.assertEqual(r['verified'],full_loss_margin(w,d))
 
     def test_restricted_service_cannot_be_lifted_to_full_heading_information(self):
         r=restricted_service_counterexample()
