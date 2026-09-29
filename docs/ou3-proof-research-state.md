@@ -1356,6 +1356,47 @@ magnetic/S updates can supply the necessary additive term, but actual
 shipping reachability of a crossing remains unproved. There is no hidden
 Riccati sign invariant found here; the blocker is again reachability of the
 required cross covariance/Jacobian family.
+## Attempted continuous sign-crossing family for transverse AW gain
+
+Parameterizing one accepted accelerometer innovation alpha before a magnetic
+correction gives a genuine continuous family of shipping executions as long
+as acceptance/projection branches remain unchanged: the covariance Joseph
+map at that accelerometer update is residual-independent, but the injected
+attitude/reset, subsequent Jacobians, magnetic covariance update and next
+accelerometer row depend continuously on alpha. Therefore
+
+`D(alpha)=det(P_b N_aw(alpha)|_bperp)`
+
+is continuous on such a branch.
+
+Continuity alone is insufficient. A nonzero derivative D'(0) only proves
+local variation, not opposite signs. The level/north/collinear geometry does
+not provide an odd symmetry `D(-alpha)=-D(alpha)` because the Riccati
+covariance path and reset Jacobians contain even and mixed terms. Existing
+bounds also do not give a derivative lower bound large enough to force a
+crossing before a gate/projection/service margin is reached.
+
+The documented 25-Hz collinear carried word is a useful near-degenerate
+diagnostic with dense magnetic corrections, but it reports a small positive
+same-cell singular value, not the sign of this 2x2 determinant. It cannot be
+promoted to an actual reachable sign-crossing theorem, and finite replay is
+non-promoting under the research protocol.
+
+Hence no continuous actual-execution family with rigorously opposite signs
+has yet been constructed. Conversely no sign invariant was found: the exact
+per-operation formulas permit additive changes capable of algebraic crossing.
+
+The remaining exact condition for an intermediate-value disproof is now:
+find one regular strict-service branch and two analytically certified
+parameter values alpha_-<alpha_+ on that same branch such that
+`D(alpha_-)D(alpha_+)<0`, with all MARINE MOTION/IMU BIAS/service inequalities
+proved throughout the interval. This requires a signed determinant formula
+or monotonicity estimate for the complete acc->reset->mag->prediction map;
+norm bounds and singular values cannot establish it.
+
+Until such a signed formula is derived, the universal AW-gain entry lemma is
+neither proved nor refuted by reachability. The current proof should not
+claim an intermediate-value crossing.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
