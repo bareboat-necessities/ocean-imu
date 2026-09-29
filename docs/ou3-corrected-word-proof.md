@@ -2592,6 +2592,89 @@ Thus existence of finite lambda2_bar alone is not enough for the scalar
 invariant: the dimensionless linked product `dbar_soft Hbar` must be <1 in
 the large-c branch (or the small-c branch must close). This is now the
 controlling quantitative/existence test for O2.
+## Linked soft-kernel return/diameter action
+
+Do not use the product of separate suprema dbar_soft Hbar. For one word W
+and its next-root soft direction n_+, define
+
+`d_W=n_+' Pi_W n_+`,
+`H_W=Pi_W^-1/2 Phi_tilde_W`.
+
+The large-c scalar return obtained from the coarse spectral diameter contains
+`d_W ||H_W||^2`. Preserve the same word and define
+
+`Gamma_soft(r):=sup_W d_W ||H_W||_2^2`.                    (LK-1)
+
+This is the correct linked replacement for `dbar_soft Hbar`; always
+`Gamma_soft<=dbar_soft Hbar`, often strictly.
+
+Let `z_W=Pi_W^(1/2)n_+`, so `|z_W|^2=d_W`. Then
+
+`d_W ||Pi_W^-1/2 Phi_tilde_W||^2
+ = ||z_W||^2 ||Pi_W^-1/2 Phi_tilde_W||^2`.                 (LK-2)
+
+A direct rank-one terminal bound is sharper for the scalar return:
+
+`n_+' Phi_tilde J_soft^-1 Phi_tilde' n_+
+ = ||J_soft^-1/2 Phi_tilde' n_+||^2`.                       (LK-3)
+
+Using `J_soft>=m I` gives
+
+`<= (1/m) ||Phi_tilde' n_+||^2`.                            (LK-4)
+
+Thus the scalar invariant does not actually require the full operator H_W.
+Define the same-word terminal coupling
+
+`g_W:=||Phi_tilde_W' n_+||^2`,
+`gbar_soft(r):=sup_W g_W<infinity`.                         (LK-5)
+
+Then exactly
+
+`n_+' P_soft n_+ <= d_W + g_W/m(c,r)`,                      (LK-6)
+
+and the source-uniform scalar return can be taken as
+
+`D_soft(c,r)=sup_W [d_W+g_W/min(1/c,lambda2_bar)]`.         (LK-7)
+
+This dominates neither factor separately and preserves the linked word.
+
+In the large-c branch (`1/c<=lambda2_bar`),
+
+`D_soft(c,r)=sup_W [d_W+c g_W]`.
+
+A finite invariant c exists iff
+
+`sup_W g_W <1`                                              (LK-8)
+
+and then it suffices to choose
+
+`c >= sup_W d_W/(1-g_W)`                                   (LK-9)
+
+with the supremum taken **jointly word by word**, more sharply
+`c >= sup_W d_W/(1-g_W)` over words with g_W<1.
+
+So the true linked dimensionless quantity is not
+`d_W ||Pi^-1/2 Phi_tilde||^2`; it is
+
+`g_W=||Phi_tilde' n_+||^2`,                                 (LK-10)
+
+the squared deterministic root-to-terminal excess coupling into the next
+soft direction. This is already dimensionless in the normalized root
+coordinates used by the information matrix.
+
+Compactness proves `gbar_soft<infinity` but not `<1`. The existing theorem
+set has no analytical upper bound below one for this terminal coupling.
+Process forgetting and BA decay can make it small, but attitude transport is
+nearly neutral and the next soft direction may align with that persistent
+component. Therefore `gbar_soft<1` is a new quantitative obligation, not a
+consequence of lambda2_bar>0.
+
+Crucially, this obligation is much narrower than the previous Hbar*dbar
+product and can be attacked with the literal terminal map alone. A proof
+should decompose `Phi_tilde' n_+` into attitude, gyro-bias and BA root
+components, use BA OU decay and magnetic-service gyro forgetting, and retain
+the soft-direction attitude/BA correlation. No separate Pi inverse or full
+operator norm is needed.
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
 on the quotient of the physical kernel.  Together with
 `nu'Pnu<=c` and the proved nuisance bounds, block Cauchy--Schwarz gives a
