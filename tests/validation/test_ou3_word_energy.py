@@ -7,6 +7,7 @@ sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_theorem.matrix_certificates import congruence, identity, is_psd
 from tools.stability.ou3_theorem.word_energy import (
     block_generalized_loss_implication, block_schur_self_test, relative_schur_contraction_certificate,
+    prediction_relative_identity, prediction_relative_margin,
     full_loss_margin, restricted_service_counterexample, word_identity,
 )
 
@@ -31,6 +32,15 @@ class WordEnergyTests(unittest.TestCase):
         d=F(1,100)
         r=relative_schur_contraction_certificate(w['root_precision'],w['loss'],1,d)
         self.assertEqual(r['verified'],full_loss_margin(w,d))
+
+    def test_prediction_relative_identity_and_margin(self):
+        p=[[F(2),F(1)],[F(1),F(3)]]; f=[[1,F(1,10)],[0,1]]
+        q=[[F(3),F(0)],[F(0),F(3)]]
+        r=prediction_relative_identity(p,f,q)
+        self.assertTrue(r['verified'])
+        m=prediction_relative_margin(p,f,q,F(1,2))
+        self.assertTrue(m['premise_verified'])
+        self.assertTrue(m['conclusion_verified'])
 
     def test_restricted_service_cannot_be_lifted_to_full_heading_information(self):
         r=restricted_service_counterexample()
