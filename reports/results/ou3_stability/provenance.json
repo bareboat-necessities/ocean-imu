@@ -325,7 +325,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout.py",
-      "git_blob_sha": "aeafd7ccf54a100d63e895d1f2422c258ab25abe"
+      "git_blob_sha": "b3b11d67f87315a692caec3c17665e7d00a5db3d"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_diagnostic.py",
@@ -333,7 +333,7 @@
     },
     {
       "path": "tests/validation/test_ou3_ag_readout.py",
-      "git_blob_sha": "f33205d1ab706ccf8e2f2afbab386af82a05a0ad"
+      "git_blob_sha": "89ec949d6bc16d83e6ca748c4b02cdeb47bd407f"
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
