@@ -5785,6 +5785,60 @@ parametric period seed is proved. The remaining construction task is finite:
 exhibit one admissible period and show the boundary-value Jacobian with respect
 to the free mean/control variables has full row rank.
 
+## Regular compatible-period seed: Jacobian structure and remaining existence gap
+
+Choose a smooth periodic rocking attitude template with strict
+`Delta_g>theta_E`, strict MAGNETIC SERVICE, and scheduler phases repeating
+after T_p. Parameterize physical acceleration at the accepted accelerometer
+epochs by three components per epoch and use a smooth periodic interpolation.
+
+Before eliminating controls, the boundary-value equations consist of:
+(i) two compatibility equations per accelerometer epoch;
+(ii) physical velocity/displacement closure over the period;
+(iii) nominal mean/tuner/scheduler closure.
+
+At a point with D_perp nonsingular, the derivative of block (i) with respect
+to the two transverse acceleration components at each epoch is block lower
+triangular in chronology with invertible diagonal blocks D_perp,k. Hence all
+epoch-wise compatibility equations are locally solvable and can be eliminated.
+
+After this elimination, many longitudinal acceleration samples remain. Their
+derivatives with respect to terminal velocity and displacement are the usual
+discrete moment rows `sum w_k u_k` and `sum (T_p-t_k)w_k u_k`. With at
+least two distinct control epochs and nonzero longitudinal direction these
+rows are independent for the scalar longitudinal component; rotating attitude
+can provide vector closure authority over a full period. Thus kinematic
+closure is generically controllable, but a source-uniform full-rank proof
+requires an explicit lower bound on the corresponding sampled moment matrix.
+
+The nominal mean closure derivative with respect to the initial mean is
+`Phi_mean(T_p)-I` after the compatibility controls are eliminated. This block
+is not generically invertible: neutral attitude/reference coordinates and
+integrator coordinates can have unit Floquet multipliers. Closure may use
+remaining control degrees of freedom, but surjectivity then depends on the
+full endpoint controllability matrix of the reduced mean recursion.
+
+Tuner closure is more problematic: tuner states are deterministic functions
+of the measurement/mean history and may include clamps/discrete branches.
+They are not free initial coordinates on a fixed branch unless the branch is
+inside a smooth unclamped region. No current theorem proves a periodic tuner
+orbit for the proposed compatible forcing.
+
+Therefore the triangular Jacobian argument proves only the first block
+(compatibility) rigorously from D_perp!=0. It does not yet prove full
+D_(z,u)F surjectivity or exhibit a seed. Claiming a regular seed from dimension
+count would be incorrect.
+
+The exact finite obligation is now:
+(a) choose a concrete smooth tuner/event branch;
+(b) prove full-rank endpoint controllability of the reduced longitudinal-input
+mean recursion over one period, including v,p,S,AW/BA/attitude closure;
+(c) show the tuner map has a fixed point on that branch;
+(d) select an entering covariance with D_perp!=0.
+
+Until (a)-(d) are supplied, the regular compatible-period seed remains
+unproved.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
