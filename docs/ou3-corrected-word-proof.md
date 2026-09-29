@@ -5878,6 +5878,56 @@ closes conditionally on the effective longitudinal input having a nonzero AW
 component at four distinct epochs. That nonzero component is the same regular
 gain condition underlying D_perp and is open.
 
+## Unified finite-error physical-to-nominal vector-diversity lemma
+
+Define on a source-qualified complete history window W the literal chronological
+joint action J_vec(W,e,n): applied accelerometer and magnetic innovation losses
+plus the actual AW/BA process action and S pseudo-measurement action, with
+resets/transports and same-history covariance whitening retained. Here e is
+the finite attitude error and n denotes admissible estimator nuisance
+trajectories (AW, BA, LIN/S and associated mean corrections).
+
+The correct theorem is a separation statement, not unconditional coercivity:
+
+For every retained radius r and every epsilon>0, there exists
+`c_vec(epsilon,r,theta_E)>0` such that
+`J_vec >= c_vec`
+whenever the finite-error state is at physical-metric distance at least epsilon
+from the exact compatibility set C.                            (VD-1)
+
+Equivalently, any normalized sequence with J_vec->0 has, after same-history
+compactness extraction, a limiting trajectory in C.           (VD-2)
+
+The proof is by contradiction. Physical histories are compact from the
+MARINE MOTION acceleration/jerk, velocity, displacement/potential and
+gravity-span assumptions; local gravity and geomagnetic histories converge to
+their declared compact field classes; finite estimator/tuner/covariance
+variables are retained. Zero limiting magnetic loss enforces magnetic-axis
+attitude compatibility. Zero accelerometer loss, together with zero AW/BA/S
+process/pseudo action, gives the previously classified tilt/BA compatibility
+relation. Four distinct S observations remove independent LIN/AW homogeneous
+roots. Hence the only zero-action limit is C. Distance>=epsilon is closed and
+disjoint from C, contradiction.
+
+This lemma is valid only if event-boundary lower semicontinuity is carried with
+the raw/variational action; do not use pseudoinverse constant-rank strata.
+
+**Capture use.** If every attitude error with tilt>=7 degrees is separated by
+a positive physical-metric distance from C on the H18/capture branch, VD-1
+gives positive recurring action and finite entry into the refinement tube.
+That separation is an additional branch-specific fact and must be proved; C
+must not contain a >=7-degree captured-domain alias.
+
+**O2 use.** As epsilon->0, VD-1 does not yield a positive floor on C. Instead
+VD-2 identifies every vanishing-action sequence with the explicit
+compatibility manifold. The remaining O2 question is then exactly whether the
+closed-loop mean dynamics can remain in C indefinitely. Thus the lemma
+unifies the reduction but does not by itself prove escape from C.
+
+This is the strongest common theorem supported by the existing nullspace and
+compactness machinery. Claiming that its small-error limit automatically
+closes O2 would be false; the compatibility manifold is deliberately retained.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
