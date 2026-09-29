@@ -336,6 +336,41 @@ contraction: all cross terms and the rounding supply remain in the same
 finite-error inequality. No covariance reset or OU-II stability project is
 introduced.
 
+\section{Local gravity and geomagnetic field premises}
+\label{sec:local-fields}
+The certified continuation carries a fixed local world-frame gravity reference
+$g_0^W$ and a fixed local main-field reference $B_0^W$.  The physical fields
+satisfy
+\begin{align}
+ \norm{g^W(t)-g_0^W}&\le\epsilon_g,&
+ g_{\min}\le\norm{g_0^W}&\le g_{\max},\label{eq:local-gravity}\\
+ \norm{B^W(t)-B_0^W}&\le\epsilon_B,&
+ B_{\min}\le\norm{B_0^W}&\le B_{\max}.\label{eq:local-field}
+\end{align}
+These are physical-field premises, not estimator tracking assumptions.
+The exact-constant cases have $\epsilon_g=0$ or $\epsilon_B=0$.
+The geomagnetic operating domain excludes the near-dip-pole region by
+\begin{equation}
+ |I_M|\le I_{\max}=80^\circ .
+ \label{eq:inclination-domain}
+\end{equation}
+Inclination is measured from the local horizontal.  With
+$\hat B_0=B_0^W/\norm{B_0^W}$, define
+\begin{equation}
+ d_0=(I-\hat B_0\hat B_0^{\mathsf T})g_0^W .
+ \label{eq:d0}
+\end{equation}
+Then
+\begin{equation}
+ \boxed{\norm{d_0}\ge g_{\min}\cos I_{\max}
+ =0.1736481777\,g_{\min}.}
+ \label{eq:gravity-field-floor}
+\end{equation}
+For gravity near standard gravity this is about
+$1.70\,\mathrm{m/s^2}$.  Every later use of a constant gravity or magnetic
+direction carries the explicit $\epsilon_g,\epsilon_B$ degradation; the
+proof does not silently replace the physical fields by exact constants.
+
 \section{Magnetic service}
 For a certified service window rooted at $s$, let $\Phi_{k\leftarrow s}$ be
 the ordered differential of the complete preceding same-history shipping
@@ -367,6 +402,12 @@ actually applied belong to $\mathcal M$. Attempted callbacks, due events,
 packets, rejected or invalid measurements, and saturation do not contribute.
 A maximum event gap alone is insufficient because frequent collinear
 sensitivities may remain rank deficient.
+In addition to \eqref{eq:mag-service}, certified magnetic service uses the
+physical field premise of Section~\ref{sec:local-fields}.  In particular,
+the world main-field direction is near constant on the certified continuation
+and remains uniformly noncollinear with local gravity.  The information
+condition and the physical field condition are distinct: the former concerns
+actually applied shipping corrections; the latter qualifies the environment.
 
 \section{Necessity of sampling regularity}
 \label{sec:capture-obstruction}
