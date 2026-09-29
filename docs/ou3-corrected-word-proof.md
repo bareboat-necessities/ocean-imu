@@ -3458,6 +3458,96 @@ the local AW-rank argument alone is insufficient.
 This is the terminal reachability/exclusion gap for O2. Further covariance
 or compactness arguments cannot decide it because both branches are
 compatible with all presently proved inequalities.
+## Controlling O1 path: complete-word nullspace and closed-range continuity
+
+All O1 work is consolidated to the path
+`complete-word nullspace -> uniform qualitative augmented floor -> quantitative enclosure`.
+The later detectability/AW-gain/sign-crossing/soft-kernel investigations are
+diagnostic or alternative formulations and are not controlling.
+
+### Theorem A: complete-word slow nullspace
+
+For every admissible recurring complete A21 word W, including every closed
+event-boundary word allowed by actually-applied MAGNETIC SERVICE,
+
+`Ker J_s(W) subset span(nu_W)`.                              (A)
+
+Here J_s is the nuisance-eliminated slow-root information defined
+variationally, and nu_W is the physical tilt/BA compatibility generator when
+that relation is nontrivial; if the compatibility relation is trivial,
+`Ker J_s(W)={0}`.
+
+The proof is the literal zero-action classification already established:
+zero nuisance/process action rigidifies one deterministic trajectory; four
+scheduled S rows kill LIN/AW; magnetic service plus chronological transport
+eliminates gyro-bias quotient directions; all accelerometer rows plus the
+single BA root leave at most the physical tilt/BA compatibility line.
+Scheduled S and accelerometer rows survive boundary limits in real arithmetic
+because their innovation covariances have positive R floors; MAGNETIC SERVICE
+is closed and uses actually applied rows. Thus the same classification holds
+on admissible boundary words.
+
+### Closed-range convergence lemma
+
+Let
+`F_W=Sigma_W^-1/2 O_f,W`
+be the whitened nuisance observation operator in a fixed event stratum.
+The desired graph property
+
+`W_n->W, z_n in Range(F_Wn), z_n->z => z in Range(F_W)`     (CR-1)
+
+is **not true for arbitrary continuous matrices** when rank drops: for
+`F_epsilon=diag(1,epsilon)`, the ranges are R^2 for epsilon!=0 but limit to
+`span(e1)` at epsilon=0, while z_n=e2 violates CR-1.
+
+Therefore observation-range closedness cannot be assumed across nuisance-rank
+loss. This is exactly why a pseudoinverse/projector representation is unsafe.
+
+For the literal proof, avoid CR-1 by retaining nuisance/process action in the
+fixed-factor variational form
+
+`Q_red,W(x)=min_y ||A_W x+D_W y||^2`,                        (CR-2)
+
+where D_W stacks both nuisance observation columns and their process/root
+action rows. Existing nuisance/process coercivity gives a uniform lower
+singular floor for D_W after structural zero-action directions are moved into
+the slow root. Hence Range(D_W) has fixed rank and a closed graph, minimizers
+are uniformly bounded, and Q_red is continuous (in particular lower
+semicontinuous) on each closed stratum and across the admissible finite union.
+
+If a claimed nuisance coordinate lacks such an action floor, it must be moved
+into the slow/root state; otherwise the compactness proof fails precisely at
+that structural rank-loss direction. No observation-only closed-range lemma
+is used.
+
+### Uniform qualitative O1
+
+Fix `mu=1/c>0`. Suppose no uniform floor exists. Then there are admissible
+`W_n` and `|x_n|=1` with
+
+`x_n'[J_s(W_n)+mu nu_n nu_n']x_n ->0`.                      (UO-1)
+
+Compactness gives, after subsequences, `W_n->W_*`, `x_n->x_*`,
+`|x_*|=1`. The fixed-factor lower semicontinuity from CR-2 gives
+
+`x_*'J_s(W_*)x_*=0`.                                        (UO-2)
+
+By Theorem A, `x_*=alpha nu_*` (or x_*=0 immediately if the limiting
+compatibility relation is trivial). The kernel penalty in UO-1 tends to zero.
+The physical compatibility relation has a closed graph; with its fixed
+normalization, pass to a subsequence `nu_n->nu_*`, obtaining
+
+`nu_*'x_*=0`.                                                (UO-3)
+
+Thus `alpha=0`, so x_*=0, contradicting |x_*|=1. Therefore
+
+`J_s(W)+mu nu_W nu_W' >= g_mu(r,c) I`, `g_mu(r,c)>0`,       (UO-4)
+
+uniformly over all admissible complete A21 words.
+
+This is qualitative only. The next obligation is a constructive enclosure
+`g_mu>=g_under(c,r)>0`; only after that should K(c,r), the same-history scalar
+return D(c,r), rho_0, and the nonlinear retained radius be developed.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
