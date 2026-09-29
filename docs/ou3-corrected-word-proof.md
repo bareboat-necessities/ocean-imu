@@ -2209,6 +2209,77 @@ the literal prediction/process structure -- a detectability/finite-horizon
 observability inequality -- rather than seeking a separate information floor
 or assuming the null inclusion.
 
+## Finite-horizon detectability as regularized backward readout
+
+For the moving quotient, exact root cancellation is unnecessarily strong near
+a rank-changing word.  Use the kernel-regularized joint reader.
+
+After nuisance elimination and kernel splitting, let the quotient auxiliary
+model be
+
+`y=O_q v+A s`,
+`x_N=T_q v+T s`,
+`Sigma=A A'`.
+
+Let `J_q=O_q' Sigma^-1 O_q` and let the kernel prior induce the positive
+regularization inherited from the full block Schur complement; denote it
+`M_q>=0`.  The minimum-action regularized reader is
+
+`L_q=T A' Sigma^-1
+ +(T_q-T A' Sigma^-1 O_q)(J_q+M_q)^dagger O_q' Sigma^-1`.   (DET-1)
+
+Its terminal root residual is
+
+`R_qroot=Ttilde_q[I-(J_q+M_q)^dagger J_q]`,                (DET-2)
+
+and its fresh-source action is the corresponding backward-readout sum.  The
+rank-one kernel prior makes the full reader finite even as the moving quotient
+changes rank.
+
+The desired detectability inequality
+
+`|Ttilde_q v|_Pi^-1^2 <= C_det |O_q v|_Sigma^-1^2`         (DET-3)
+
+is equivalent, on Range(J_q), to
+
+`Ttilde_q' Pi^-1 Ttilde_q <= C_det J_q`.                   (DET-4)
+
+For a fixed word its sharp constant is
+
+`C_det(W)=lambda_max(J_q^dagger/2
+ Ttilde_q'Pi^-1 Ttilde_q J_q^dagger/2)`,                   (DET-5)
+
+with infinity if Null(J_q) is not contained in Null(Ttilde_q).  Thus
+`K_MW<=1+C_det`.
+
+Backward readout supplies a constructive upper bound for (DET-5).  Initialize
+a terminal quotient residual Y at the end of the word and run backward:
+prediction adds `(YU)(YU)'` and maps `Y<-YF`; observation block L_i adds
+`(L_i V_i)(L_i V_i)'` and maps `Y<-Y-L_iH_i`; reset maps
+`Y<-YG_i`.  Instead of requiring exact root cancellation, choose the
+blocks L_i by the regularized normal equations associated with
+`J_q+M_q`.  The resulting action is exactly the numerator represented in
+(DET-5), with all shared process factors and literal resets retained.
+
+This formulation shows what must be proved for a source-uniform constant:
+the regularized backward-reader action divided by the root observation action
+must remain bounded as a quotient direction approaches the moving kernel.
+No absolute observation singular-value floor is required.
+
+However the existing zero-action/dimension theorem is insufficient to bound
+this ratio.  It gives pointwise injectivity modulo the kernel but no rate at
+which terminal persistence vanishes relative to observation action near a
+rank-changing word.  The regularized reader prevents an algebraic blow-up in
+the construction, but (DET-3) itself can still fail if a near-null direction
+has O(epsilon) observation amplitude and O(1) terminal image.
+
+Therefore finite-horizon detectability is now the exact remaining quantitative
+property; it has not been proved by the prior compactness arguments.  A valid
+next step must exploit the literal terminal dynamics to show that any
+compatibility-line rotation producing O(epsilon) observation action also
+produces O(epsilon) terminal quotient image.  Without such a terminal
+retention estimate, assigning a finite C_det would be circular.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
