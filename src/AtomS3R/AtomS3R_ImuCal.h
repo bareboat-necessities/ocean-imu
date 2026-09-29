@@ -343,7 +343,7 @@ struct MagStartupCfg {
   static constexpr float    MIN_NORM_uT      = 5.0f;
   static constexpr float    MAX_NORM_uT      = 1000.0f;
   static constexpr int      MAX_REINIT       = 3;
-  static constexpr uint32_t WAKE_SETTLE_MS   = 20;     // > BMM150 suspend->sleep 3 ms
+  static constexpr uint32_t WAKE_SETTLE_MS   = 100;    // generous POR margin before the driver soft-resets
   static constexpr uint32_t REINIT_SETTLE_MS = 50;
   static constexpr uint32_t I2C_FREQ         = 400000;
 };
