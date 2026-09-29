@@ -4618,6 +4618,60 @@ before violating an explicit physical assumption is the transverse
 compatibility-control rank `sigma_min(D_perp)`. The O2 global problem reduces
 to whether D_perp can remain nonsingular along an admissible constrained
 trajectory (with service allowed to sit on its closed boundary).
+## Can the shipping recursion maintain transverse compatibility authority?
+
+Let D_perp,k be the derivative of the next compatibility output with respect
+to the two transverse components of the physical accelerometer measurement at
+an accepted correction. Because the measurement enters the mean only through
+`K_a r_a`, D_perp factors as
+
+`D_perp,k = C_(c,k+1) T_(k+1<-k) K_a,k E_perp,k`,           (DA-1)
+
+including the literal reset/prediction/S-pseudo-update transport T and the
+next compatibility-output derivative C_c. Since
+`K_a=P C_a' S_a^-1`, loss of authority can arise from the projected gain
+numerator or from its terminal/output transport.
+
+Prediction injects fresh AW process covariance
+`Q_aa=(1-phi_a^2) Sigma_aw_stat >0` into the AW marginal without an equal
+fresh AW-attitude/BA cancellation term. Thus immediately after every positive
+prediction interval the accelerometer gain numerator contains a favorable
+fresh term `Q_aa R_wb'`. However its magnitude is O(h/tau), while inherited
+cross-covariances remain O(1). No Loewner/sign invariant prevents exact
+cancellation of the **projected** numerator after adding the inherited terms.
+
+Repeated accepted accelerometer updates do not force rank loss: for a fixed
+accelerometer Jacobian their own covariance update right-multiplies `P C_a'`
+by an invertible 3x3 factor, preserving its row-block rank. Prediction adds
+fresh AW variance, and reset is invertible. Therefore there is likewise no
+structural mechanism that necessarily drives D_perp toward singularity.
+
+S and magnetic pseudo/measurement updates can change the relevant
+cross-covariances, and the next C_c/J_att geometry changes with the nominal
+mean. Their covariance maps are continuous bounded Joseph maps with positive
+measurement-noise floors. They have no monotone determinant law for
+D_perp. Consequently the shipping recursion has neither a proved repelling
+barrier from `det D_perp=0` nor an attracting mechanism toward it.
+
+### Structural conclusion
+
+The actual covariance recursion is compatible with maintaining D_perp
+nonsingular indefinitely: none of its operations forces rank loss, and
+prediction recurrently injects favorable AW variance. But this is not an
+existence theorem for a particular forward-complete compatible execution,
+because inherited cross-covariances and changing output geometry could still
+drive a chosen trajectory to cancellation.
+
+Conversely, a theorem that every compatible trajectory must reach
+`det D_perp=0` is impossible from the presently known operation-wise
+identities: accelerometer self-updates preserve rank and prediction can move
+away from cancellation. Such a theorem would require a new global invariant
+coupling S/magnetic cross-covariance evolution to compatibility; none is
+present in shipping/proof assumptions.
+
+Therefore rank loss of D_perp cannot serve as a currently proved mandatory
+escape mechanism. At the structural level indefinite nonsingularity is
+allowed, but actual existence remains a global reachability question.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
