@@ -1103,22 +1103,20 @@ where `P_U` is the weighted attitude-column projector and `q_T>0` is the
 literal local-tube Lemma-T/G0 gyro floor (including the kernel row when
 needed).
 
-The weighted least-squares identity now gives the leverage inequality
+The weighted least-squares leverage inequality applies only to the residualized gyro columns
 
-`X_g S_g^-1 X_g' <= I`.                                    (LE-4)
+`Xg_perp=(I-P_U)X_g`,
+`Xg_perp S_g^-1 Xg_perp' <= I`                              (LE-4 corrected)
 
-Consequently every occurrence of the potentially large signed history
-`C_k` that lies in the observed gyro column is charged through `S_g^-1`,
-not through `sup|C_k|`.  Writing the AG-process coefficient as observed
-gyro-column part plus the within-step remainder,
+(up to the kernel-row augmentation in the same residualized space). The previously stated unprojected inequality `X_g S_g^-1 X_g'<=I` is false. Consequently the following AG-process action must be rederived with `Xg_perp` carried consistently. Writing the AG-process coefficient as observed gyro-column part plus the within-step remainder,
 
 `mathcal C = mathcal C_obs + mathcal R_D`,
 
 the canonical reader action obeys
 
-`M_C <= 2 F G_mu^-1 F'
-       +2 F G_mu^-1 X' mathcal R_D mathcal R_D' X
-            G_mu^-1 F'`.                                   (LE-5)
+`M_C <= ...`                                                (LE-5 RETRACTED)
+
+The former displayed bound is not established by LE-4 corrected because its decomposition used the unprojected gyro column.
 
 The first term is controlled directly by the quotient information:
 `F G_mu^-1 F'<=||F||^2/s(c,r)^2 I`.  The second term contains only the
@@ -1130,16 +1128,7 @@ The implemented gyro invariant already gives
 `||R_D,k||<=h_k e_D`,
 `e_D=theta_max/2+theta_max^2/3`.                            (LE-6)
 
-Using (LE-4) once more on the defect-weighted rows gives the finite bound
-
-`M_C <= 2 ||F||^2/s(c,r)^2
-        [1+e_D^2 T h_max / q_T] I`.                        (LE-7)
-
-The scalar next-kernel reader has the identical estimate with
-`||F||^2` replaced by `|f_d|^2`:
-
-`m_d,C <= 2 |f_d|^2/s(c,r)^2
-          [1+e_D^2 T h_max / q_T]`.                         (LE-8)
+Therefore LE-7 and LE-8 are RETRACTED. A valid AG-process energy bound requires re-expressing the source coefficient in the residualized attitude-orthogonal gyro coordinates and separately charging the `P_U X_g` component. No later theorem may cite LE-5--LE-8 as established.
 
 Thus the accumulated signed `C_k` energy is bounded without
 `sum ||H_k||^2||C_k||^2` and without a reset-product norm.  Lemma T enters
@@ -1992,95 +1981,35 @@ remains quantitative is the same complete-word diameter/return bound
 \`K_MW(c,r),D(c,r)\`; there is no new observability obstruction caused by the
 word-dependent kernel direction.
 
-## Qualitative complete-word coercivity and quantitative gap
+## Pointwise nullspace does not imply uniform complete-word coercivity
 
-Fix a candidate retained radius r and kernel ceiling c>0, and append kernel
-precision mu=1/c. The complete-word augmented joint action is continuous and
-nonnegative on the normalized radius-local word/kernel class.
+The earlier claim that trivial augmented nullspace plus compactness implies a
+uniform `g_MW(c,r)>0` is RETRACTED.  The compatibility/kernel line can change
+rank or become tangent along an admissible sequence.  Pointwise injectivity
+modulo the word kernel does not imply a uniform positive nonzero singular
+value across such limits.
 
-The zero-action results now imply trivial augmented nullspace: zero fresh
-action rigidifies nuisance trajectories; four S rows kill the homogeneous
-LIN/AW root; magnetic service and chronological transport remove gyro-bias
-directions except the magnetic-compatible attitude line; all accelerometer
-rows plus one decaying BA root leave dimension at most one; that line belongs
-to the compact kernel family N(r); and the appended rank-one precision removes
-it.
+The later finite-horizon detectability formulation is controlling.  What is
+needed is a uniform relative inequality between terminal persistence and
+observation action, not a uniform Euclidean information floor.
 
-Therefore compactness gives a positive minimum normalized action
+## Four-S injectivity: quantitative bound retracted
 
-`g_MW(c,r)>0`,
+The qualitative four-S injectivity lemma remains valid because
+`psi_tau'''(t)=exp(-t/tau)>0` for every finite `tau>0`, so the generalized
+Vandermonde determinant is nonzero at four distinct S times.
 
-and hence a uniform augmented information floor
+The previously claimed explicit determinant floor is RETRACTED.  The proof
+incorrectly used `tau<=12` to infer
+`exp(-t/tau)>=exp(-t/12)`; the inequality is reversed.  Since the admitted
+range includes `tau_min=0.02`, the divided-difference lower bound based only
+on `min psi'''` is exponentially tiny and the displayed >6.82e4 claim is
+false.  For example at times (0,8,16,24) and `tau=.02`, the determinant is
+approximately `.008192(1-exp(-400))^3`, about .008192.
 
-`J_MW,mu(W)>=g_MW(c,r) I`.
+Thus four-S zero-source injectivity is qualitative only at this stage.  No
+explicit four-S singular-value modulus is currently certified.
 
-Together with the finite known-root terminal covariance/action bounds this
-proves the existence statements
-
-`K_MW(c,r)<infinity`, `D(c,r)<infinity`.
-
-This is qualitative coercivity, not yet a numerical certificate. Two
-compactness steps remain nonconstructive: the four-S lemma proves a positive
-determinant minimum but has no explicit numerical lower singular value, and
-the multi-epoch magnetic/accelerometer compatibility argument proves
-dimension <=1 but gives no explicit lower principal angle for the next
-independent constraint. Without those two moduli, g_MW cannot be evaluated,
-so neither K_MW nor D nor the contraction margin can be evaluated.
-
-The next quantitative task is therefore an analytic/interval enclosure of
-the full normalized complete-word action supplying (a) a four-S singular
-value floor and (b) a minimum principal-angle floor for the complete
-magnetic+accelerometer compatibility matrix over the compact retained class.
-Carried-word singular values are not substitutes for these moduli.
-## Explicit four-S floor and principal-angle obstruction
-
-Extend the regular three-S selector one row backward. Four selected S times
-have consecutive spacings in [8,8.156] s. Set t0=0, so t3<=24.468 s.
-For the basis {1,t,t^2,psi_tau(t)}, generalized Vandermonde gives
-
-`|det V4|=prod_(i<j)(t_j-t_i) psi_tau'''(xi)/3!`.
-
-Since psi'''=exp(-t/tau), tau<=12, and pair distances are at least
-8,8,8,16,16,24 s,
-
-`|det V4| >= [8^3 16^2 24/6] exp(-24.468/12) = delta_det`,
-
-with delta_det>6.82e4 in this unscaled basis. This is an analytic theorem
-constant. If M4 bounds ||V4||_2, then
-
-`sigma_min(V4)>=delta_det/M4^3`.
-
-A fully explicit choice follows from Frobenius norm and
-`|psi_tau(t)|<=t^3/6`:
-
-`M4^2<=4[1+24.468^2+24.468^4+(24.468^3/6)^2]`.
-
-Thus the four-S singular-value modulus is explicit.
-
-For the full magnetic+accelerometer compatibility matrix, let C_MA stack
-the projectors transverse to all pulled-back magnetic lines and the
-BA-eliminated accelerometer compatibility rows. The qualitative proof gives
-pointwise nullity at most one, but a uniform principal-angle floor would need
-
-`inf_W sigma_min^+(C_MA(W))>0`.
-
-That does not follow from current assumptions. MAGNETIC SERVICE controls
-service information/gaps, not transversality between pulled-back magnetic
-lines and accelerometer compatibility rows. MARINE MOTION controls physical
-attitude span, while the latter rows contain nominal specific force. Admitted
-collinear/sync-locked histories can approach compatibility alignment
-continuously. The compact closure can therefore approach a rank-loss limit
-while every nearby word still has nullity at most one.
-
-Pointwise rank plus compactness is insufficient because sigma_min^+ is not
-continuous through rank loss. Hence no positive source-uniform principal
-angle is currently proved. Carried-word minima cannot fill this theorem gap.
-
-The four-S quantitative modulus is closed; complete-word quantitative
-coercivity remains blocked only by this transversality issue. A different
-kernel-bounded quantity that stays regular as the one-dimensional
-compatibility line rotates is required unless a new physical transversality
-assumption is introduced.
 ## Moving-kernel quotient Riccati diameter
 
 For each complete word W retain its normalized compatibility kernel nu_W.
