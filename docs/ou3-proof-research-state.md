@@ -656,6 +656,42 @@ excitation only shrinks `kappa_nu`. G0, the nominal AW statistics, magnetic
 service, the S-chain and the injection frame are the geometric inputs to
 observability off the kernel. The joint reader remains the coercivity route.
 
+## Analytical obstruction: the two proposed source-only scalar bounds
+
+The literal recursions show that neither remaining scalar can be bounded by a
+useful constant from MARINE MOTION / IMU BIAS / MAGNETIC SERVICE alone.
+
+For the nominal AW mean, the exact loop identity is
+`sum_acc Gamma(e-eta)=e_0-e_N+sum xi-sum_pred[(1-phi)a_hat+Delta a]`.
+The physical increments `sum Delta a=a_N-a_0` telescope, but `eta`
+contains attitude/BA/sensor residual and `xi` contains the AW increments of
+other corrections.  The three physical assumptions do not bound these
+estimator-error terms independently of the retained error storage.  Therefore
+the desired source-only constant `m_perp_bar` does not follow from the
+current premises.  This is distinct from DEAD_END 20: no pointwise AW
+tracking is asserted.
+
+For literal reset transport, Lemma I* gives the signed injection rotation in
+terms of endpoint attitude errors plus the integrated gyro residual.  The
+half-angle factor has the exact local expansion
+`N=I-[x]/2+R_3`, `|R_3|<=|x|^3/6`, with product stretch controlled by
+quadratic/cubic functions of the actual correction injections.  The physical
+assumptions bound the gyro residual contribution but not the endpoint
+attitude-error or correction-injection contribution independently of the
+retained error storage.  Hence a source-only signed-reset constant is likewise
+unavailable.
+
+The correct formulation is radius-coupled.  On a candidate retained ball
+`sqrt(V)<=r`, use covariance coercivity/projection guards to derive
+`m_perp <= m_0+m_1 r+m_2 r^2` and
+`delta_Q <= q_0+q_1 r+q_2 r^2+q_3 r^3`, with `m_0,q_0` the physical/source
+terms.  Insert these directly into the local-tube quotient reader to obtain
+`K(c,r)` and `d_bar(r)`.  The controlling closure is then the coupled
+system
+`d_bar(r) K(c,r)<=c` and the finite-error retained-radius inequality.
+This ordering avoids falsely promoting an error-dependent geometry bound to
+the linear source-uniform theorem.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
