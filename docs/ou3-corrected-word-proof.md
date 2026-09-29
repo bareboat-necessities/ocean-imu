@@ -550,6 +550,77 @@ No root covariance matrix, historical reader or excitation premise enters
 remain relevant to coercivity (`P <= C` in the nonlinear supplies), not to
 `rho_0`.
 
+### O2 reduction to a scalar known-root invariant
+
+The separate field-axis attitude ceiling is sufficient for O2, but it is not
+necessary.  The kernel-bounded diameter itself supplies a sharper route that
+retains the attitude/BA correlation.
+
+Fix a word (W_j), its root kernel `nu_j`, and a candidate scalar ceiling
+`c_j>0`.  Put `mu_j=1/c_j` and
+`P_nu,j = Ric_Wj(mu_j nu_j nu_j')`.  By definition,
+
+`P_nu,j <= kappa_nu,j Pi_j`,
+
+where `Pi_j=Ric_Wj(0)` is the known-root terminal covariance.  Corollary K
+already proves that every actual root satisfying
+`nu_j' P_j nu_j <= c_j` has `P_(j+1) <= P_nu,j`.  Therefore the exact
+scalar propagation inequality is
+
+`nu_(j+1)' P_(j+1) nu_(j+1)
+ <= nu_(j+1)' P_nu,j nu_(j+1)
+ <= kappa_nu,j d_j`,
+
+with
+
+`d_j := nu_(j+1)' Pi_j nu_(j+1)`.
+
+Consequently O2 follows from the two **linked, same-word** bounds
+
+`kappa_nu,j(1/c_j) <= K(c_j)`,  `d_j <= d_bar`,
+
+and an invariant scalar `c_bar` satisfying
+
+`d_bar K(c_bar) <= c_bar`.                                      (O2-FP)
+
+This is not a full-state covariance ceiling.  `Pi_j` starts from a known
+root, so `d_j` contains only the literal finite-word process/correction/reset
+action.  On a bounded-duration regular A21 word its finiteness follows from
+the already bounded shipping coefficients, process covariances and reset
+Jacobians; what is still needed is a usable explicit source-uniform value
+`d_bar`, preferably from the same block reader/S-chain construction used
+for O1 rather than a norm-summed whole-word envelope.
+
+The dependence of `K` on `c` must not be discarded.  If the physical
+kernel is exactly invisible to the data, weakening the fictitious precision
+`mu=1/c` lets `K(c)` grow with `c`; a bare statement
+`K<infinity` does not imply (O2-FP).  The required scalar mechanism is
+therefore a strict one-dimensional return inequality.  Equivalently, after
+isolating the kernel coordinate in the terminal Schur complement, it is
+enough to prove constants `d>=0, a>=0, b>0` such that
+
+`c_(j+1) <= d + a c_j/(1+b c_j)`,                         (O2-R)
+
+uniformly on recurring roots, and then exhibit `c_bar` with
+
+`d + a c_bar/(1+b c_bar) <= c_bar`.
+
+Here `b` is supported information in the kernel coordinate and `a` is its
+literal terminal persistence.  BA decay may contribute to `a<1`; it must
+not be silently replaced by an exact persistent kernel.  The proved
+`P_ba,ba<=I/1600` remains available to sharpen the reader, but no independent
+attitude/BA Cauchy--Schwarz split is required by (O2-FP) or (O2-R).
+
+**Where this enters.**  (O2-FP) supplies exactly the `c` in Corollary K.
+Together with O1, choose `mu=1/c_bar`,
+`kappa_bar >= sup kappa_nu,j(mu)`; then the recurring linear factor is
+
+`rho_0 <= 1 - 1/kappa_bar < 1`,  `1-rho_0 >= 1/kappa_bar`.
+
+This margin is not yet certified because O1 and the explicit invariant
+constants in (O2-FP)/(O2-R) remain open.  No nonlinear retained-radius claim
+follows until those constants are substituted.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
