@@ -447,6 +447,32 @@ cadence from MAGNETIC SERVICE and couple it to the jerk lemma. Downstream,
 replace the least-singular-value/process-noise route by a blockwise reader
 action and the measurement loss in the slow bias directions.
 
+## Direct information-form contraction feasibility result
+
+The carried literal 0.32-s words make the blockwise route quantitatively viable.
+At 80-digit evaluation, the three quiet/near-quiet profiles give
+`rho_direct=0.999581277662247315091075`, hence
+`1-rho=4.187223377526849e-4` and multiplicative nonlinear headroom
+`1-sqrt(rho)=2.093830895e-4`.  The moving wave profile improves to
+`rho_direct=0.99930789646117256106805`, margin `6.921035388e-4`, and
+headroom `3.461116661e-4`.  These are orders of magnitude larger than the
+DEAD_END 22 scalar-ceiling margin.
+
+The same words have strongly positive nuisance and nuisance-eliminated AG loss:
+quiet `lambda_min(D_NN)=0.2621916045`,
+`lambda_min(S_AG)=732.76` or larger; wave
+`lambda_min(D_NN)=1.5376322971`,
+`lambda_min(S_AG)=1120.6010114`.  Therefore nuisance cancellation does not
+explain the worst generalized direction on these carried words.
+
+This finite replay does not promote source-uniform contraction.  The controlling
+uniform target is now the completed-square factorization
+`D=T' diag(S_AG,D_NN) T`: certify a root-precision spectral upper `j`,
+source floors `S_AG>=sI`, `D_NN>=nI`, and a bound
+`||T^-1||<=k`.  Then
+`delta=min(s,n)/(k^2 j)` and `rho0<=1-delta` directly.  This is the next
+controlling inequality.  Do not route it through a scalar covariance ceiling.
+
 ## Direct information-form contraction probe (non-promoting)
 
 The controlling A21 contraction is now tested without the scalar covariance-ceiling
