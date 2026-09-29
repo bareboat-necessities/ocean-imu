@@ -15,7 +15,7 @@ on:
       - "reports/results/ou3_stability/**"
       - ".github/workflows/ou3-stability-proof.yml"
   push:
-    branches: [main]
+    branches: [main, "claude/ou3-*"]
     paths:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
