@@ -158,6 +158,31 @@ def feasibility():
     return rows
 
 
+
+def literal_g0_transport_feasibility(*, injection_free_floor,
+                                     signed_rotation_charge,
+                                     cubic_reset_charge=F(0)):
+    """Kill test for transporting an injection-free G0 singular floor.
+
+    Weyl gives sigma_min(O_literal)>=sigma_min(O_0)-||Delta O||.  This helper
+    records the only margin a perturbation-style literal extension would have.
+    It does not manufacture ||Delta O|| from injection norm sums: callers must
+    supply a signed/half-angle source bound.  A nonpositive margin kills this
+    formulation and requires a direct rotating-frame Gram proof.
+    """
+    floor,charge,cubic=map(F,(injection_free_floor,signed_rotation_charge,cubic_reset_charge))
+    if min(floor,charge,cubic)<0:
+        raise ValueError('nonnegative transport quantities required')
+    margin=floor-charge-cubic
+    return {'injection_free_singular_floor':str(floor),
+            'signed_rotation_charge':str(charge),
+            'cubic_reset_charge':str(cubic),
+            'literal_singular_floor_margin':str(margin),
+            'perturbative_literal_G0_feasible':margin>0,
+            'requires_direct_rotating_frame_if_failed':margin<=0,
+            'norm_summed_injection_budget_allowed':False}
+
+
 def certificate():
     m0 = quaternion_rotation((30, 1, 2, -1))
     x1, x2 = quaternion_rotation((25, -1, 0, 2)), quaternion_rotation((50, 1, -1, 0))
