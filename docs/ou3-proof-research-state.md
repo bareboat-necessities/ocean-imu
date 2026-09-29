@@ -862,6 +862,50 @@ but it must not assume pointwise AW tracking.  Until (VF-A) is proved,
 explicit magnetic/Lemma-T/kernel constants cannot be combined into a
 positive `g_*(c,r)`.
 
+## Physical-to-nominal projected modulus: innovation route fails
+
+The exact accelerometer innovation identity does not supply (VF-A).
+
+Shipping has
+`r_acc=f_meas-[R_wb(a_w-g)+lever+b_a]` and
+`J_att=-[R_wb(a_w-g)]x`, `J_aw=R_wb`, with the BA row identity when BA
+updates are enabled.  Thus the physical measurement can be written as the
+nominal prediction plus the realized innovation, but the attitude Jacobian
+coefficient remains the estimator nuisance state `a_w`.
+
+In the variational information
+`min_xf ||Sigma^-1/2(O_s x_s+O_f x_f)||^2`, the nuisance minimizer is free
+to vary exactly the root AW/BA coordinates whose historical transport enters
+the accelerometer rows.  The realized innovation value is not a column of the
+frozen root design; it is data.  Bounding it by sensor/bias/storage envelopes
+therefore bounds a finite-error defect, not the distance of the slow Jacobian
+column from `range(O_f)`.
+
+Consequently the substitution
+`f_hat=f_meas-b_hat-r_acc` cannot prove a positive nuisance-projected
+attitude/BA information modulus without an additional relation restricting
+the nominal AW/BA history.  Doing so would reintroduce, in another form, the
+refuted pointwise AW-tracking premise or an unproved gain/history bound.
+
+This identifies a structural obstruction to the proposed MOVING
+observability theorem under the current assumptions: MARINE MOTION constrains
+physical motion, but the linearized root-information matrix is built from
+estimator nominal coefficients.  The current assumptions do not guarantee a
+uniform separation between those coefficients and the magnetic-compatible
+nuisance span.
+
+Therefore (VF-A), DI-6 and a source-uniform positive `g_*(c,r)` are not
+proved by the innovation route.  No numerical K,D,E or invariant solve may be
+claimed from it.
+
+A successful continuation needs a genuinely different mechanism already
+present in shipping, for example an information argument using the actual
+closed-loop correction/gain history rather than raw frozen Jacobian
+observability, or a reachability theorem showing that the problematic nominal
+coefficient histories cannot occur inside the candidate retained set.  Adding
+a new physical assumption or changing estimator behavior is outside the
+current task.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
