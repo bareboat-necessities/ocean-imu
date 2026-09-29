@@ -5499,6 +5499,63 @@ source-uniform chi floor without an additional physical restriction linking
 translation to attitude. Any such added restriction should target this
 correlated-translation degeneracy, not generic acceleration magnitude.
 
+## Literal frozen S-to-S transverse DC calculation
+
+For one fixed transverse world direction and one frozen/slowly varying
+coefficient pattern, use the shipping per-axis LIN order
+`x=(v,p,S,a)'`. Let `Phi` be the exact analytic 4x4
+`PhiAxis4x1_analytic(tau,Delta)` propagation from one scheduled S epoch to
+the next, including all intervening prediction time. Let `e_S=(0,0,1,0)'`.
+
+At the scheduled S=0 pseudo-measurement the scalar projected gain column is
+`k_S=(k_vS,k_pS,k_SS,k_aS)'`, so
+`x^S=(I-k_S e_S') Phi x`.                                 (SDC-1)
+
+Collect the net projected accelerometer mean correction over the same lifted
+interval as one scalar innovation/control u with frozen lifted gain column
+`k_A=(k_vA,k_pA,k_SA,k_aA)'`. Then the exact frozen lifted mean map is
+`x_+ = A_S x + B_S u`,                                    (SDC-2)
+`A_S=(I-k_S e_S')Phi`, `B_S=k_A`,
+with additional accelerometer epochs represented by the chronological product
+and summed input columns; the one-column form is the single-effective-input
+case.
+
+A bounded equilibrium satisfies
+`(I-A_S)x_*=B_S u_*`.                                     (SDC-3)
+Compatibility requires
+`e_a' x_*=g_perp`, `e_a=(0,0,0,1)'`, with
+`g_perp>=g_min cos80` after the declared defects.
+
+If `I-A_S` is invertible, define the literal frozen DC gain
+`G_DC=e_a'(I-A_S)^-1 B_S`.                                (SDC-4)
+Then the required accelerometer innovation is exactly
+`u_*=g_perp/G_DC`                                         (SDC-5)
+provided `G_DC!=0`. The remaining equilibrium states are
+`x_*=(I-A_S)^-1B_S g_perp/G_DC`.
+
+Therefore a bounded frozen equilibrium is **not** excluded merely by the OU
+integrator/S pseudo-update structure. It exists algebraically whenever
+`I-A_S` is invertible and `G_DC!=0`; its physical admissibility is decided
+by the magnitude/sign of u_* and by whether the resulting physical
+acceleration history satisfies MARINE MOTION. If `G_DC=0`, no finite scalar
+accelerometer innovation can sustain nonzero g_perp in this frozen
+single-input model. If `I-A_S` is singular, use the left-null/Fredholm
+conditions together with the compatibility row.
+
+The Kalman code supplies no structural identity forcing `G_DC=0`.
+The S pseudo-update gain k_aS can have either sign through P_aw,S, and the
+accelerometer AW gain k_aA is generally nonzero. Thus outcome A (no bounded
+equilibrium) cannot be proved from architecture alone; outcome B is
+algebraically generic for a frozen regular coefficient set.
+
+For the real MOVING theorem this is only a local diagnostic: gains, attitude
+and physical acceleration vary, and MARINE MOTION forbids replacing the
+whole execution by constant forcing. But SDC-4--SDC-5 answer the requested DC
+question: the literal S adaptation does not inherently reject a gravity-sized
+nominal AW equilibrium. The required innovation is the reciprocal lifted DC
+gain times g_perp. A persistent counterexample would have to realize the
+time-varying analogue of SDC-5 with zero long-time physical acceleration mean.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
