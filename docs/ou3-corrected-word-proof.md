@@ -2032,6 +2032,55 @@ the full normalized complete-word action supplying (a) a four-S singular
 value floor and (b) a minimum principal-angle floor for the complete
 magnetic+accelerometer compatibility matrix over the compact retained class.
 Carried-word singular values are not substitutes for these moduli.
+## Explicit four-S floor and principal-angle obstruction
+
+Extend the regular three-S selector one row backward. Four selected S times
+have consecutive spacings in [8,8.156] s. Set t0=0, so t3<=24.468 s.
+For the basis {1,t,t^2,psi_tau(t)}, generalized Vandermonde gives
+
+`|det V4|=prod_(i<j)(t_j-t_i) psi_tau'''(xi)/3!`.
+
+Since psi'''=exp(-t/tau), tau<=12, and pair distances are at least
+8,8,8,16,16,24 s,
+
+`|det V4| >= [8^3 16^2 24/6] exp(-24.468/12) = delta_det`,
+
+with delta_det>6.82e4 in this unscaled basis. This is an analytic theorem
+constant. If M4 bounds ||V4||_2, then
+
+`sigma_min(V4)>=delta_det/M4^3`.
+
+A fully explicit choice follows from Frobenius norm and
+`|psi_tau(t)|<=t^3/6`:
+
+`M4^2<=4[1+24.468^2+24.468^4+(24.468^3/6)^2]`.
+
+Thus the four-S singular-value modulus is explicit.
+
+For the full magnetic+accelerometer compatibility matrix, let C_MA stack
+the projectors transverse to all pulled-back magnetic lines and the
+BA-eliminated accelerometer compatibility rows. The qualitative proof gives
+pointwise nullity at most one, but a uniform principal-angle floor would need
+
+`inf_W sigma_min^+(C_MA(W))>0`.
+
+That does not follow from current assumptions. MAGNETIC SERVICE controls
+service information/gaps, not transversality between pulled-back magnetic
+lines and accelerometer compatibility rows. MARINE MOTION controls physical
+attitude span, while the latter rows contain nominal specific force. Admitted
+collinear/sync-locked histories can approach compatibility alignment
+continuously. The compact closure can therefore approach a rank-loss limit
+while every nearby word still has nullity at most one.
+
+Pointwise rank plus compactness is insufficient because sigma_min^+ is not
+continuous through rank loss. Hence no positive source-uniform principal
+angle is currently proved. Carried-word minima cannot fill this theorem gap.
+
+The four-S quantitative modulus is closed; complete-word quantitative
+coercivity remains blocked only by this transversality issue. A different
+kernel-bounded quantity that stays regular as the one-dimensional
+compatibility line rotates is required unless a new physical transversality
+assumption is introduced.
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
