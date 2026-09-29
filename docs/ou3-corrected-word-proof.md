@@ -3853,6 +3853,67 @@ The next controlling obligation remains the same-history equality case
 `alpha_01=1`: prove it unreachable under the literal closed-loop mean
 dynamics, or construct it. Only the first outcome permits a finite D<=c
 certificate in this one-word scalar-ceiling architecture.
+## Two-word finite-horizon detectability at the unit-persistence equality case
+
+Focus only on a same-history pair `(W0,W1)` with W0 exact kernel and suppose
+`alpha_01=1`. Let x0=lambda nu0 be the W0 zero-action mode with unit physical
+tilt normalization. Its deterministic terminal image is x1=lambda nu1 if
+equality holds. W0 contributes zero complete-word action by definition.
+
+Define the literal **joint two-word action**
+
+`Q_2(x0)=min_(all shared nuisance/source factors)
+ [action on W0 + action on W1]`,                            (FD-1)
+
+with the W0 terminal state constrained to be the W1 root; do not re-minimize
+that shared state independently. A source-uniform finite-horizon detectability
+inequality sufficient for O2 is
+
+`|lambda|^2 <= C_FD Q_2(x0)`                               (FD-2)
+
+for every unit-persistence candidate pair. If FD-2 holds, Q_2 cannot vanish
+on a nonzero equality mode, so alpha_01=1 is impossible for an exact
+two-word null trajectory; compactness then gives a strict loss margin.
+
+Now classify zero joint action. Zero W0 action gives x0 in span(nu0). Zero
+fresh/process action across the shared boundary propagates the BA component
+homogeneously by Phi_b,0 and the attitude component by the norm-preserving
+world-frame transport. Zero W1 measurement action then requires exactly
+
+`Phi_b,0 q0 = s q1`, `|s|=1`,                              (FD-3)
+
+together with every W1 accelerometer compatibility equation. Thus **zero
+joint action is equivalent to the same-history persistent compatibility
+conditions 1--4** already identified.
+
+Therefore finite-horizon detectability FD-2 is not a consequence of BA decay
+alone: BA decay is already incorporated in FD-3 and can be absorbed by the
+changed next compatibility ratio q1. To prove FD-2 one must show that the
+literal W1 nominal-force rows cannot all satisfy the retuned compatibility
+equations while sharing the actual W0 terminal/mean history.
+
+The closed-loop mean equations currently supply no such inequality. The
+accelerometer innovations that generate the nominal AW/attitude history are
+not part of the homogeneous error action Q_2 as penalized disturbances;
+they belong to the base trajectory. MARINE MOTION bounds the physical base
+trajectory but no proved cumulative innovation bound transfers that physical
+excitation to the nominal W1 Jacobian rows. Consequently a persistent
+compatibility pair is not excluded by the current joint-action algebra.
+
+**Exact conclusion.** A source-uniform FD inequality of form FD-2 is
+equivalent, on the equality class, to excluding conditions 1--4. The current
+assumptions/lemmas do not prove it. Recasting the problem as joint action
+does not create the missing physical-to-nominal bridge.
+
+A noncircular detectability theorem would need to enlarge the action with a
+quantity already bounded by admissibility and sensitive to the base
+accelerometer innovation/nominal-force retuning, then prove that maintaining
+FD-3 for two words consumes a positive amount of that quantity. No such
+base-trajectory supply term is currently present in the stability action.
+
+Thus the equality case remains the sole O2 blocker: neither unreachable nor
+constructed. Further homogeneous covariance/information estimates cannot
+settle it.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
