@@ -4672,6 +4672,67 @@ present in shipping/proof assumptions.
 Therefore rank loss of D_perp cannot serve as a currently proved mandatory
 escape mechanism. At the structural level indefinite nonsingularity is
 allowed, but actual existence remains a global reachability question.
+## Near-constant world field closes the q->0 geometry to a DC AW requirement
+
+MAGNETIC SERVICE now includes a physical world-frame geomagnetic reference
+`b_M^W`, field variation `||b^W-b_M^W||<=eps_B`, and a uniform gravity/field
+non-collinearity margin `g_Bperp>0`.
+
+In the q->0 exact compatibility limit, the accelerometer attitude row
+`J_att=-[f_cog^B]x` annihilates the transported magnetic-axis tilt. Therefore
+`f_cog^B` is parallel to the body magnetic direction. Rotating both vectors
+to world coordinates preserves collinearity. Since
+
+`f_cog^B=R_wb (a_w^W-g^W)`,
+
+the exact constant-field case implies
+
+`P_(b_M^W)^perp (a_w^W-g^W)=0`, hence
+`P_(b_M^W)^perp a_w^W=P_(b_M^W)^perp g^W`.                 (GF-1)
+
+With near-constant field and bounded lever/reference defects,
+
+`||P_(b_M)^perp a_w^W-P_(b_M)^perp g^W|| <= C_B eps_B+C_L`, (GF-2)
+
+where C_L contains only the explicitly bounded lever/linearization terms.
+Thus if `C_B eps_B+C_L<g_Bperp`, persistent q->0 compatibility requires a
+nonzero world-fixed transverse component of nominal AW bounded below by
+
+`a_DC := g_Bperp-C_B eps_B-C_L >0`.                         (GF-3)
+
+This is qualitatively different from an arbitrary oscillatory retuning: the
+required component has a fixed world direction inherited from gravity and the
+near-constant Earth field.
+
+### Interaction with the LIN/S chain
+
+Between measurement corrections AW is OU-decayed, but accelerometer and S
+pseudo-updates can change its mean. If GF-1/GF-3 holds at every dense applied
+accelerometer epoch indefinitely, the nominal AW samples contain a persistent
+world-fixed DC component. The deterministic LIN chain integrates AW into v,p,S.
+
+To turn this into an exclusion theorem one must account for measurement
+corrections to v,p,S as well as AW: the S pseudo-update and accelerometer
+cross-gains can remove integrated drift. Therefore the bare identity
+`v_dot=a_w` between updates is insufficient to claim unbounded v/p/S.
+
+The new field premise nevertheless removes the previous zero-mean forcing
+escape: any persistent compatibility construction must now use the Kalman
+measurement corrections themselves to cancel the fixed DC LIN injection.
+The remaining exact lemma is finite-dimensional and filter-specific:
+
+`persistent GF-3 + bounded (v,p,S)`
+` => measurement-correction action has a nonzero DC component of at least
+   c_DC(a_DC)>0` on every sufficiently long window.          (GF-4 target)
+
+If the literal correction maps cannot supply that DC cancellation while
+remaining on the compatibility manifold, infinite equality is excluded. If
+they can, that supplies the explicit persistent-zero construction mechanism.
+
+Thus near-constant geomagnetism materially sharpens O2 but does not by itself
+complete it; the remaining blocker is now the DC balance of the **literal
+measurement-corrected LIN/S mean recursion**, not arbitrary physical-to-
+nominal tracking.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
