@@ -4447,6 +4447,52 @@ pseudo-update. What has improved is the formulation: it is now the lifted
 time-varying shipping map LZ-1--LZ-2, with gains/covariance chronology
 included exactly. No claim that a separate S feedback controller exists is
 made.
+## Long-horizon invariant-zero test against bounded physical motion
+
+Consider a bounded forward-complete zero-output execution of LZ-1--LZ-2 in
+the q->0 regime. At applied accelerometer epochs the nominal specific force
+is field-axis compatible. The physical forcing is
+`f_phys=fhat+bhat_a+r_acc`.                                 (IZ-1)
+
+Sum the physical translational dynamics over N lifted intervals. MARINE
+MOTION's bounded velocity implies the time average of physical acceleration
+tends to zero along long horizons; bounded displacement/potential further
+excludes a persistent nonzero DC component of velocity/position. Therefore
+an invariant-zero construction would be impossible if compatibility required
+a source-uniform nonzero DC transverse component of physical acceleration.
+
+But the literal zero-output constraint does not require such a DC component.
+The field axis and attitude may rotate under admitted MOVING motion, and the
+required transverse accelerometer innovation can be oscillatory with zero
+mean. The S pseudo-update acts on the estimator integral state and can also
+produce bounded periodic corrections. Thus all long-horizon sums can cancel
+without violating bounded velocity/displacement/potential.
+
+Indeed the zero-output equations are affine pointwise constraints on the
+physical measurement forcing, not a sign-definite work/energy identity.
+Neither the Kalman gains nor the S pseudo-update make the required physical
+forcing have a fixed sign or nonzero mean. Consequently summation/telescoping
+of LZ-1 does not yield a contradiction with MARINE MOTION.
+
+### Theorem consequence
+
+Under the current assumptions, a bounded forward-complete invariant zero
+cannot be **excluded** by any existing long-horizon physical boundedness
+condition. The remaining forcing can be zero-mean and periodic/quasiperiodic.
+However existence is still not proved because one must solve the coupled
+time-varying gain/covariance/mean recursion on the zero-output manifold.
+
+A constructive existence theorem would require a periodic (or compact
+recurrent) fixed point of the lifted constrained Poincare map. The natural
+candidate is a periodic MARINE MOTION attitude/force history with strict
+magnetic service and zero-mean translational acceleration, together with a
+periodic covariance/tuner orbit. No analytical fixed-point theorem for that
+shipping map is currently established.
+
+Therefore the invariant-zero question remains undecided, but one branch is
+now narrowed further: **finite escape cannot be proved from bounded physical
+velocity/displacement/potential or the S pseudo-update alone**, because the
+required zero-output forcing need not contain a forbidden DC component.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
