@@ -3976,6 +3976,66 @@ supply budget capable of excluding persistent compatibility. Any exclusion
 theorem needs a new consequence of shipping/admissibility beyond BI-1--BI-3;
 otherwise the productive direction is an explicit boundary-value construction
 of the persistent pair.
+## Explicit two-word compatibility boundary-value construction
+
+Fix one regular two-word scheduler/event pattern with strict magnetic-service
+margin and no projection/gate boundary. Let the accepted accelerometer
+innovations `u_k=r_acc,k in R3` be the base-trajectory controls. The literal
+mean recursion over the pair is a smooth finite-dimensional map
+
+`m_(k+1)=F_k(m_k,u_k)`,                                     (BV-1)
+
+where prediction includes endogenous S pseudo-feedback when due; S residuals
+are not independent controls.
+
+At each accelerometer epoch impose the two transverse compatibility equations
+
+`C_k(m_k,u_<k) theta_k - B_k(m_k,u_<k) q_k =0`.             (BV-2)
+
+Whenever the transverse derivative with respect to two components of u_k has
+rank two, the implicit-function theorem solves
+`u_k,perp=psi_k(m_k,u_k,parallel)` exactly. Substitution leaves one scalar
+control `ell_k=u_k,parallel` per accelerometer epoch and a reduced compatible
+recursion
+
+`m_(k+1)=Fhat_k(m_k,ell_k)`.                                (BV-3)
+
+Across the shared boundary enforce unit-persistent transport
+`theta_1=F_0 theta_0`, `|theta_1|=|theta_0|=1`, and
+`q_1=Phi_b,0 q_0` in the literal frame. The second word's BV-2 equations are
+then imposed by the same elimination.
+
+After transverse elimination there is **no independent BA endpoint closure
+condition**: BA mean evolution is part of m and q is the homogeneous error
+compatibility ratio, not the estimator BA mean. Likewise S need not return
+to its initial value; the two-word pair is not required to be periodic.
+Requiring S_N=S_0 or BA_mean,N=BA_mean,0 would add artificial constraints.
+
+Therefore the finite pair construction needs only:
+(i) existence of a regular initial A21 state with rank-two transverse control
+at each needed epoch (or continuation through isolated rank changes);
+(ii) compatibility equations BV-2 through both words; and
+(iii) physical realization/service admissibility of the resulting controls.
+There is no separate longitudinal/S/BA algebraic endpoint equation forced by
+conditions 1--4.
+
+This corrects the earlier boundary-value count: the remaining longitudinal
+controls are free parameters, not variables that must close an estimator
+periodic orbit. Locally, if a strict-margin compatible base execution with
+rank-two transverse gain exists, the IFT propagates an exact-compatible
+two-word family without an endpoint overdetermination.
+
+However the construction still lacks that **base execution**. Constructor
+diagonal covariance has the required AW gain rank but is not a certified
+recurring A21 root; reachable regular A21 rank-two gain was not proved.
+Thus the boundary-value equations themselves reveal no longitudinal/S/BA
+inconsistency. The only remaining construction obstruction is reachable-base
+existence plus physical/service realization.
+
+Consequently no exclusion theorem arises from endpoint closure. If a reachable
+strict-margin rank-two A21 base can be exhibited, conditions 1--4 are locally
+solvable across two words and alpha_bar=1 follows after physical/service
+verification. Without such a base, reachability remains the unresolved step.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
