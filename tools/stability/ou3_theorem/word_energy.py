@@ -182,6 +182,44 @@ def block_relative_loss_target(root_precision, loss, split):
             'source_uniform_verified':False}
 
 
+
+def relative_schur_contraction_certificate(root_precision, loss, split, delta):
+    """Exact block-Schur characterization of D >= delta J in relative metric.
+
+    Partition both D and J.  D-delta J is positive definite iff its nuisance
+    block N-delta J_nn is positive definite and the corresponding AG Schur
+    complement
+      A-delta J_aa
+      -(B-delta J_an)(N-delta J_nn)^-1(B-delta J_an)'
+    is positive definite.
+    This is the source-uniform target that preserves root cross precision;
+    no square root, scalar precision cap, or independent principal-block
+    information is introduced.
+    """
+    d,j=_matrix(loss),_matrix(root_precision)
+    n=len(d); delta=F(delta)
+    if len(j)!=n or not 0<split<n or not 0<delta<1:
+        raise ValueError('matching matrices, interior split, delta in (0,1) required')
+    e=add(d,j,-delta)
+    aa=[row[:split] for row in e[:split]]
+    an=[row[split:] for row in e[:split]]
+    nn=[row[split:] for row in e[split:]]
+    try:
+        ldlt(nn)
+    except Exception:
+        return {'verified':False,'nuisance_relative_positive':False,
+                'ag_relative_schur_positive':False}
+    schur=add(aa,matmul(matmul(an,inverse(nn)),transpose(an)),F(-1))
+    try:
+        ldlt(schur); ok=True
+    except Exception:
+        ok=False
+    return {'verified':ok,'nuisance_relative_positive':True,
+            'ag_relative_schur_positive':ok,
+            'relative_AG_schur':schur if ok else None,
+            'equivalent_full_margin':is_psd(e)}
+
+
 def restricted_service_counterexample():
     # A genuine positive-noise Kalman correction with S=4 I. Its restricted
     # heading/bias loss is I_2, but the full loss has a cancellation direction.
