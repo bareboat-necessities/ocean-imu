@@ -3340,6 +3340,63 @@ over same-history admissible word pairs (or an execution chain), not over a
 word and an independently selected next soft/kernel direction. Compactness
 extends to the two-word class, but the alpha=1 issue is precisely the
 persistent-compatibility reachability question already identified.
+## Same-history two-word alpha compactness dichotomy
+
+Let P2(r,c) be the compact class of admissible consecutive MOVING word pairs
+`(W0,W1)` sharing the literal terminal/root physical, estimator, covariance,
+tuner and scheduler history. Restrict to pairs for which W0 has a nontrivial
+exact compatibility line; normalize its generator by unit physical attitude.
+Define alpha(W0,W1) as the squared physical-attitude amplitude of the W0
+kernel image captured by the W1 compatibility line, and set alpha=0 if W1
+has no compatible line containing that image.
+
+Literal world-frame attitude transport is norm preserving on the zero-loss
+kernel trajectory, while projection onto a unit next compatibility attitude
+line cannot increase norm. Therefore
+
+`0<=alpha(W0,W1)<=1`.                                       (TW-1)
+
+Using the closed compatibility relation rather than a discontinuous chosen
+eigenvector makes alpha upper-semicontinuous; on the nontrivial-line stratum
+it is continuous. Compactness therefore attains the supremum.
+
+Equality alpha=1 holds iff all of the following are true:
+
+1. W0 has an exact compatibility generator
+   `nu0=(theta0,-q0)`, `|theta0|=1`;
+2. its terminal attitude image is exactly the unit attitude generator of a
+   nontrivial W1 compatibility line:
+   `F0 theta0=s theta1`, `|s|=1`;
+3. shared BA state transport matches that line:
+   `Phi_b,0 q0=s q1`;
+4. `(theta1,-q1)` satisfies **all** magnetic and accelerometer zero-loss
+   equations of W1.
+
+Conditions 1--4 are precisely an exact compatibility line persisting across
+the shared word boundary. There is no additional inequality in the current
+assumptions that contradicts them. BA decay only enforces
+`|q1|<|q0|` (unless q0=0); it does not reduce the unit attitude amplitude.
+MAGNETIC SERVICE is compatible with a one-dimensional field-axis null line
+and controls the transverse/gyro sector. Four-S controls LIN/AW. MARINE
+MOTION constrains physical attitude span, not the nominal-force compatibility
+equations defining q0,q1.
+
+Therefore the existing theorem set cannot prove `sup alpha<1`: excluding the
+equality set would require the still-missing physical-to-nominal/reachability
+bridge. Conversely, compactness alone does not prove `sup alpha=1`; it only
+attains the supremum whatever its value is. An equality pair must still be
+shown to exist.
+
+Thus the sharp dichotomy is mathematically well posed but unresolved by the
+current assumptions/lemmas:
+
+`alpha_bar:=max_(P2) alpha` exists and lies in [0,1];
+`alpha_bar<1` iff no admissible exact persistent pair exists;
+`alpha_bar=1` iff an admissible exact persistent pair exists.
+
+This is an equivalence, not yet a proof of either branch. It prevents a
+compactness overclaim: attainment does not determine whether the attained
+maximum equals one.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
