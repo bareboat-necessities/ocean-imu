@@ -19,6 +19,7 @@ on:
     paths:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
+      - "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/**"
       - "tools/stability/**"
       - "tests/validation/test_ou3_*.py"
       - "tests/kalman_ou_iii/**"
