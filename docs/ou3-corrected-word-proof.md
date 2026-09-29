@@ -715,6 +715,84 @@ This margin is not yet certified because O1 and the explicit invariant
 constants in (O2-FP)/(O2-R) remain open.  No nonlinear retained-radius claim
 follows until those constants are substituted.
 
+## Coupled quotient contraction and retained-radius theorem
+
+The source-only separation between a globally uniform linear factor and a
+later nonlinear radius is stronger than required.  The correct local theorem
+uses one candidate radius and the same frozen actual word coefficients in
+both estimates.
+
+Let `r>0` and `c>0`.  On every regular A21 word whose every prefix satisfies
+`V<=r^2` and whose root satisfies `nu'P nu<=c`, define:
+
+- `K(c,r)`: a source-uniform upper bound on the augmented quotient diameter
+  `kappa_nu`, using the radius-dependent signed AW/injection geometry;
+- `D(c,r)`: a source-uniform upper bound on
+  `nu_next' P_nu nu_next` (or any sharper scalar Schur return);
+- `E(r)`: the complete word finite-error supply in sqrt-storage units from
+  sensor/model defects, curvature, literal reset remainder, projection and
+  arithmetic, with the actual-gain composition of section 3;
+- `G(r)`: an every-prefix supply bound in the same units.
+
+Corollary K gives the homogeneous word factor
+`rho(c,r)<=1-1/K(c,r)`.  Put `q(c,r)=sqrt(rho(c,r))`.
+The exact finite-error composition then gives
+
+`sqrt(V_next) <= q(c,r) sqrt(V_root) + E(r)`.              (CR-1)
+
+The kernel set propagates simultaneously when
+
+`D(c,r) <= c`.                                             (CR-2)
+
+Thus the rectangle
+`R(r,c)={V<=r^2, nu'P nu<=c}` is invariant at recurring roots provided
+
+`D(c,r)<=c,`
+`q(c,r) r + E(r) <= r`.                                   (CR-3)
+
+Every-prefix retention is obtained from the already exact prefix composition
+when
+
+`r + G(r) <= r_prefix`
+
+for a declared prefix radius `r_prefix` on which all coefficient, projection
+and reset bounds used in `K,D,E` remain valid, and the next complete word
+returns to `R(r,c)`.  In the convenient no-enlargement form this is simply
+a direct prefix self-map inequality for each prefix.
+
+Equivalently the strict complete-word margin is
+
+`M(r,c) := (1-q(c,r))r-E(r) > 0`,                          (CR-M)
+
+together with the scalar-kernel margin `c-D(c,r)>=0`.
+This is the quantity that must be positive before any retained radius is
+claimed.
+
+There is no circularity: choose candidate `(r,c)`; derive `K,D,E,G`
+uniformly over that closed candidate set from the literal shipping
+operations; then verify (CR-3) and the prefix inequalities.  The resulting
+invariance proves that the assumptions used to derive the bounds remain true
+on subsequent words.
+
+The radius-dependent geometry has the schematic form
+
+`m_perp(r)<=m0+m1 r+m2 r^2`,
+`delta_Q(r)<=q0+q1 r+q2 r^2+q3 r^3`.
+
+These enter the local-tube quotient reader directly, producing `K(c,r)` and
+`D(c,r)`; they are not promoted to source-only constants.  The accelerometer
+curvature `|f_hat||theta|^2/2+|theta||e_aw|`, magnetic curvature, finite
+reset remainder and projection/arithmetic terms enter `E(r)` exactly where
+section 3 places their operation defects.
+
+If (CR-3) closes, the certified local linear margin on the invariant set is
+
+`1-rho_0(r,c) >= 1/K(c,r) > 0`,
+
+but regional practical stability still additionally requires startup/H18
+entry, regime transitions, recurring magnetic-service qualification and
+implementation/float32 totality.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
