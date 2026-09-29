@@ -1980,6 +1980,252 @@ target. Retain the literal bias-projection sector; a larger or shaped
 invariant region requires its own proof. Exact attitude/bias convergence
 under indefinite stillness is not claimed.
 
+\section{Current complete-word A21 reduction}
+\label{sec:a21-current}
+The current recurring-tail analysis separates two obligations.  O1 bounds the
+covariance transverse to at most one compatibility direction; O2 controls the
+remaining scalar direction from word to word.  This is one proof path, not a
+second estimator architecture.
+
+For a complete recurring word let $J(W)$ denote the literal slow-root
+information obtained from the chronological prediction, applied
+accelerometer, applied magnetic, $S=0$ pseudo-measurement, reset and process
+actions, with nuisance elimination expressed variationally.  The current
+qualitative complete-word result is
+\begin{equation}
+ \boxed{\dim\ker J(W)\le1}
+ \label{eq:nullity-one}
+\end{equation}
+on the qualified regular complete-word class.  The four distinct $S$ rows
+remove an independent homogeneous LIN/AW root because
+\begin{equation}
+ \{1,t,t^2,\psi_\tau(t)\},\qquad
+ \psi_\tau'''(t)=e^{-t/\tau}>0,
+ \label{eq:four-s-ect}
+\end{equation}
+form an extended Chebyshev system.  The former explicit determinant modulus
+for this argument is retracted; only the qualitative injectivity statement is
+used here.
+
+Constant-rank pseudoinverse strata are not used to obtain compactness:
+sets of matrices of exactly fixed rank need not be closed.  Ordered
+eigenvalues of a continuous raw/variational information representation are
+the appropriate quantities through nuisance-rank changes.  Likewise, after
+eliminating attitude columns, the valid leverage inequality applies to the
+residualized gyro columns
+\begin{equation}
+ X_{g,\perp}=(I-P_U)X_g,qquad
+ X_{g,\perp}S_g^{-1}X_{g,\perp}^{\mathsf T}\preceq I .
+ \label{eq:residualized-leverage}
+\end{equation}
+The corresponding inequality with the original unprojected $X_g$ is false and
+is not used.
+
+For O1, let $0\le\lambda_1(W)\le\lambda_2(W)\le\cdots$ be the ordered
+eigenvalues of the slow information and let $n_W$ be a weakest physical-metric
+direction.  Adding the finite scalar prior $c^{-1}n_Wn_W^{\mathsf T}$ gives
+the soft information
+\begin{equation}
+ J_{\rm soft}=J+c^{-1}n_Wn_W^{\mathsf T}.
+ \label{eq:soft-information}
+\end{equation}
+If the complete admissible class is compact and
+\eqref{eq:nullity-one} holds also on all event-boundary limits, continuity
+gives
+\begin{equation}
+ \underline\lambda_2=\inf_W\lambda_2(J(W))>0,qquad
+ J_{\rm soft}\succeq\min\{c^{-1},\underline\lambda_2\}I .
+ \label{eq:soft-o1}
+\end{equation}
+This is the current qualitative O1 route.  Constructive constants and
+every-prefix retention remain separate obligations.
+
+O2 is not implied by \eqref{eq:soft-o1}.  With a fixed positive physical
+root metric $M$, normalize the compatibility direction by
+$n_W^{\mathsf T}Mn_W=1$.  The scalar return must satisfy the same-history
+condition
+\begin{equation}
+ D(c,r)=\sup_W n_{W+1}^{\mathsf T}P_{{\rm soft},W}n_{W+1}\le c .
+ \label{eq:o2-return}
+\end{equation}
+For an exact-kernel word the homogeneous contribution contains the physical
+line-transfer coefficient
+\begin{equation}
+ \alpha_W=
+ \left|n_{W+1}^{\mathsf T}M\widehat n_{W\to+}\right|^2 .
+ \label{eq:alpha-physical}
+\end{equation}
+A source-uniform strict O2 result may be one-word or blockwise.  Equivalently,
+one must exclude an infinite admissible equality execution in which the exact
+tilt/BA compatibility mode persists with unit physical transfer.  This
+infinite-execution question is the controlling O2 obligation.
+
+\section{Compatibility manifold and adaptation dynamics}
+\label{sec:compatibility-dynamics}
+In the limiting zero-BA compatibility geometry, magnetic zero loss makes the
+remaining attitude direction field-axis aligned and accelerometer zero loss
+requires nominal CoG specific force to be field parallel.  With the local
+field premises this gives, up to the declared field/lever defects,
+\begin{equation}
+ P_{B_0^\perp}\hat a_w^W=d_0+\delta_B,qquad
+ \norm{\delta_B}\le C_g\epsilon_g+C_B\epsilon_B+C_L .
+ \label{eq:compat-aw}
+\end{equation}
+Thus a persistent compatible nominal trajectory carries a gravity-scale,
+nearly fixed world AW component.  In contrast, bounded physical velocity
+implies
+\begin{equation}
+ {1\over T}\int_0^T a_{\rm phys}^W(t)\,dt
+ ={v(T)-v(0)\over T}\longrightarrow0 .
+ \label{eq:physical-acc-zero-mean}
+\end{equation}
+The mismatch is sustained, if at all, by measurement-induced estimator
+corrections rather than by a DC physical acceleration.
+
+The shipping mean order is important.  The per-axis LIN state
+$(v,p,S,a_w)$ is propagated by the exact analytic OU-integrator matrix;
+prediction is followed, when due, by the $S=0$ pseudo-update before the next
+accelerometer gain is formed.  For a frozen transverse coefficient pattern,
+write $e_S=(0,0,1,0)^{\mathsf T}$ and let $k_S$ be the projected $S$ gain.
+With an effective accelerometer innovation $u$ and gain column $k_A$,
+\begin{equation}
+ x_{j+1}=A_Sx_j+B_Su_j,quad
+ A_S=(I-k_Se_S^{\mathsf T})\Phi,\quad B_S=k_A .
+ \label{eq:s-lift}
+\end{equation}
+When $I-A_S$ is invertible the frozen DC gain from innovation to AW is
+\begin{equation}
+ G_{\rm DC}=e_a^{\mathsf T}(I-A_S)^{-1}B_S,qquad
+ u_*={g_\perp\over G_{\rm DC}} .
+ \label{eq:dc-gain}
+\end{equation}
+No shipping identity forces $G_{\rm DC}=0$.  Therefore the $S$ adaptation
+does not by itself exclude a bounded gravity-sized nominal AW equilibrium.
+The real MOVING theorem retains the time-varying physical history; the frozen
+calculation is a structural diagnostic, not a counterexample.
+
+For the exact time-varying compatibility manifold, let $P_B$ project
+perpendicular to the local field and let $c_k=P_B(\hat a_{w,k}-g_0)$ at an
+accepted accelerometer epoch.  Persistence requires $c_k=0$.  Propagating
+through the literal prediction and intervening $S$ update gives the
+compatibility-maintenance equation
+\begin{equation}
+ P_BL_kK_{a,k}r_{a,k}=-c_{k+1}^- .
+ \label{eq:mi1}
+\end{equation}
+After substitution of the physical measurement model this is a
+two-component constraint on physical acceleration.  Where its transverse
+Jacobian $D_\perp$ is nonsingular, the two transverse acceleration components
+are locally determined and one longitudinal component remains free.  The
+actual covariance chronology gives
+\begin{equation}
+ N_a^S=N_a^-
+ -P^-H_S^{\mathsf T}S_S^{-1}H_SP^-C_a^{\mathsf T},
+ \label{eq:s-cov-cancel}
+\end{equation}
+so fresh AW process covariance does not furnish a protected positive
+$D_\perp$ floor: the $S$ correction can algebraically cancel its projected
+gain contribution.  Conversely, no monotone covariance identity forces that
+cancellation.  The rank-loss set $\det D_\perp=0$ is a crossable algebraic
+boundary on regular branches, not a proved attractor or invariant surface.
+
+The static stacked mean-correction range and its first temporal moments do
+not produce a conservation law excluding compatibility.  Writing the
+MI--2-selected transverse physical acceleration as
+\begin{equation}
+ a_\perp(t)=f(t)+g(t)u(t),
+ \label{eq:scalar-channel}
+\end{equation}
+the exact instantaneous component uncontrollable by the remaining scalar
+input is
+\begin{equation}
+ \chi(t)=\det[g(t),f(t)] .
+ \label{eq:chi}
+\end{equation}
+The present assumptions neither bound $\chi$ away from zero nor force a
+nonzero signed long-time moment.  This identifies the possible correlated
+translation/attitude degeneracy without asserting that a global pathological
+execution exists.
+
+\section{Finite-error vector-diversity and capture obligation}
+\label{sec:finite-error-diversity}
+Let $\mathcal C$ denote the exact complete-word compatibility set and let
+$J_{\rm vec}(W,e,n)$ be the literal chronological joint accelerometer,
+magnetic, process and $S$ action, minimized only over admissible same-history
+nuisance trajectories $n$.  The common finite-error target is the separation
+lemma
+\begin{equation}
+ \boxed{\operatorname{dist}_M(e,\mathcal C)\ge\varepsilon
+ \Longrightarrow
+ J_{\rm vec}\ge c_{\rm vec}(\varepsilon,r,\theta_E)>0 .}
+ \label{eq:vector-diversity-separation}
+\end{equation}
+It is proved qualitatively by contradiction using compact physical histories,
+the raw/variational action through event-boundary rank changes, magnetic
+zero-loss implications, accelerometer compatibility, and four-$S$
+injectivity.  Equivalently, every normalized sequence with
+$J_{\rm vec}\to0$ has a same-history limit in $\mathcal C$.
+
+For capture, one still needs the branch-specific exclusion
+\begin{equation}
+ \mathcal C_{\rm H18}\cap
+ \{\norm{e_{\rm tilt}}\ge7^\circ\}=\varnothing .
+ \label{eq:h18-seven-target}
+\end{equation}
+The held-BA geometry alone does not prove \eqref{eq:h18-seven-target}.
+If $Q$ is a constant magnetic-axis attitude discrepancy and $\hat b_{a,H}$
+is the held estimator compensation, zero accelerometer loss requires a
+time-varying nominal AW trajectory.  Requiring additionally zero homogeneous
+AW process action yields, on a constant-$\tau$ interval,
+\begin{equation}
+ \dot a_{\rm phys}-{d\over dt}(R^{\mathsf T}\hat b_{a,H})
+ =-{1\over\tau}
+ [a_{\rm phys}-g_0-R^{\mathsf T}\hat b_{a,H}+Qg_0] .
+ \label{eq:h18-ou-alias}
+\end{equation}
+A long-time mean calculation gives the necessary compensation relation
+\begin{equation}
+ \overline{R^{\mathsf T}\hat b_{a,H}}=(Q-I)g_0 .
+ \label{eq:h18-mean-compensation}
+\end{equation}
+If a certified bound $B_H$ on the relevant held compensation were available,
+then
+\begin{equation}
+ |\alpha|\le
+ 2\arcsin\!\left({B_H\over2g_{\min}\cos80^\circ}\right)
+ \label{eq:h18-angle-ceiling}
+\end{equation}
+would follow.  The currently qualified $B_a=0.2251666\,\mathrm{m/s^2}$ is
+a bound on the \emph{physical residual bias}, not automatically on the held
+estimator compensation or H18 bias error.  Substituting $B_a$ for $B_H$ would
+give about $7.58^\circ$ near standard gravity, but that number is conditional
+and is not a certified H18 alias ceiling.
+
+The correct next H18 calculation must use
+$e_{ba}(t)=b_a(t)-\hat b_{a,H}$ together with both physical qualifications
+\begin{equation}
+ \norm{b_a(t)}\le B_a,qquad
+ \norm{\dot b_a(t)}\le D_a ,
+ \label{eq:h18-bias-physical}
+\end{equation}
+and the fact that $\hat b_{a,H}$ is constant on the held bridge.  It must
+derive the physical bias history required by a fixed magnetic-axis alias and
+show either that its amplitude/rate violates \eqref{eq:h18-bias-physical}, or
+construct an admissible alias.  Gravity-direction span alone cannot improve
+\eqref{eq:h18-angle-ceiling}: rotation about the held-BA axis can change the
+gravity direction while leaving $R^{\mathsf T}\hat b_{a,H}$ constant, so no
+source-uniform $\kappa(\theta_E)<1$ follows from
+\eqref{eq:episode-excite} alone.
+
+Once \eqref{eq:h18-seven-target} is proved,
+\eqref{eq:vector-diversity-separation} supplies positive recurring action
+outside the refinement tube and hence a history-dependent finite capture time.
+Inside the approximately $7^\circ$ captured tilt domain, the existing
+magnetic-reference gates and MAGNETIC SERVICE give finite reference
+refinement and, after the accepted-update/guard conditions, finite A21
+release.  The $7^\circ$ quantity is an estimator-error tube; it is not an
+upper bound on the physical excitation parameter $\theta_E$.
+
 \section{Finite-error regional theorem obligations}
 Use the gains, events and covariance of the actual estimator execution
 as coefficients of one auxiliary linear error comparison. If
