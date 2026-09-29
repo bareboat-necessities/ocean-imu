@@ -447,6 +447,29 @@ cadence from MAGNETIC SERVICE and couple it to the jerk lemma. Downstream,
 replace the least-singular-value/process-noise route by a blockwise reader
 action and the measurement loss in the slow bias directions.
 
+## Relative-Schur formulation of the source-uniform contraction
+
+The generalized target now has an exact block test requiring no matrix square
+root and no scalar root-precision ceiling.  Write the complete loss and root
+precision in AG/nuisance blocks.  For any candidate `0<delta<1`,
+`D-delta J_root>0` is equivalent to
+
+`N-delta J_nn>0`
+
+and
+
+`A-delta J_aa
+ -(B-delta J_an)(N-delta J_nn)^-1(B-delta J_an)'>0`.
+
+This retains the root AG/nuisance precision cross block exactly.  It also
+clarifies the next source proof: the already-established nuisance covariance
+comparisons must be converted into a relative nuisance-loss margin, while the
+historical six-column/G0 machinery must lower-bound the **relative** AG Schur
+term after the same cross correction.  A principal AG loss floor alone is not
+enough.  Any proposed analytic constants should first be checked against the
+carried direct margin; a formulation that loses orders of magnitude is to be
+discarded.
+
 ## Root-relative refinement of the blockwise target
 
 The recurring root covariance lower certificate now explicitly yields
