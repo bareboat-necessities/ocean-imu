@@ -3287,6 +3287,59 @@ by this one-word ceiling. Its infimum ratio tends to one from above as
 Thus the exact O2 question is now completely reduced to whether the compact
 admissible word class contains an exact-kernel word with alpha_W=1. No
 intermediate finite-c crossing can rescue the invariant in that case.
+## Does an admissible one-word exact kernel attain alpha=1?
+
+For an exact-kernel word W, the homogeneous data-null trajectory has zero
+gyro-bias quotient, zero LIN/AW root after the four-S argument, and attitude
+transport
+
+`theta_N=F_W theta_0`.
+
+In the world-frame historical coordinates F_W is norm-preserving on this
+surviving attitude mode. With unit physical-attitude normalization at the
+root, `|F_W theta_hat_W|=1`.
+
+However alpha_W in the scalar return is a transfer into the **next-root
+compatibility functional** nu_+, not merely the norm of terminal attitude.
+Thus alpha_W=1 requires the terminal image of the current null line to lie
+exactly on a nontrivial next-root compatibility line with the same unit
+attitude amplitude. Equivalently, for some q_W,q_+,
+
+`F_W theta_hat_W = s theta_hat_+`, `|s|=1`,
+`Phi_b,W q_W = s q_+`,                                      (A1-1)
+
+and the next word's magnetic/accelerometer compatibility equations must hold
+for `(theta_hat_+,-q_+)`.
+
+The current word's exact-kernel equations determine q_W from its own
+accelerometer chronology. Equation A1-1 determines the candidate q_+ after
+BA decay. But admissibility of W alone imposes no equations from the **next
+word's** accelerometer chronology. Therefore a single admissible complete
+word does not by itself determine whether its terminal image is an exact
+kernel of the following word.
+
+If D_W is defined using a supremum over arbitrary admissible next-root
+functionals nu_+, then choosing nu_+ to be the normalized terminal image is
+not legitimate unless there exists an admissible successor word whose
+compatibility line equals that image. Conversely, ruling out alpha=1 requires
+a two-word reachability/compatibility theorem.
+
+Hence the question `does the one-word admissible class contain alpha_W=1?`
+is ill-posed unless W includes its admissible successor compatibility data.
+The correct compact object is an admissible **two-word pair** `(W_0,W_1)`
+with shared terminal/root history. Define alpha on pairs by the transfer from
+the exact kernel of W_0 into the exact kernel functional of W_1.
+
+On this pair class, alpha=1 is equivalent exactly to persistence of the
+compatibility line across the boundary. The previous analysis has neither
+constructed nor excluded such a reachable pair under the current assumptions.
+Therefore the present proof cannot answer yes or no from one-word data.
+
+This corrects the scalar-return formulation: D(c,r) must take its supremum
+over same-history admissible word pairs (or an execution chain), not over a
+word and an independently selected next soft/kernel direction. Compactness
+extends to the two-word class, but the alpha=1 issue is precisely the
+persistent-compatibility reachability question already identified.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
