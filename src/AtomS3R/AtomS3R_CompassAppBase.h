@@ -275,6 +275,7 @@ class CompassAppBase {
 
     auto cfg = M5.config();
     M5.begin(cfg);
+    ensureMagReady(Serial);
 
     clearM5UnifiedImuCalibration();
     delay(250);
