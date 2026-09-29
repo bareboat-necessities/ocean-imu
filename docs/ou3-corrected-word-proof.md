@@ -1786,6 +1786,51 @@ admissible MOVING word.  This is a multi-epoch statement and is not implied by
 the failed two-epoch force-separation lemma.  Until these two qualifications
 are discharged, (ZN-1) is a proof skeleton, not a closed theorem.
 
+## Four-S injectivity lemma for the homogeneous LIN/AW chain
+
+For one axis with zero fresh LIN/AW sources, let the root AW mode be
+\`a(t)=a_0 exp(-t/tau)\`.  Integrating through v, p and S gives
+
+\`S(t)=S_0+p_0 t+v_0 t^2/2+a_0 psi_tau(t)\`,
+
+where, modulo the polynomial terms already represented by \`v_0,p_0,S_0\`,
+
+\`psi_tau(t)=tau^3[(t/tau)^2/2-t/tau+1-exp(-t/tau)]\`.       (S4-1)
+
+Its derivatives satisfy
+
+\`psi_tau'''(t)=exp(-t/tau)>0\`.                              (S4-2)
+
+Hence the ordered functions
+\`{1,t,t^2,psi_tau(t)}\` form a strict extended Chebyshev system on every
+finite time interval for every finite \`tau>0\`.  Equivalently, for any
+\`t_0<t_1<t_2<t_3\`,
+
+\`det [1,t_i,t_i^2,psi_tau(t_i)]_(i=0..3) != 0\`,             (S4-3)
+
+with fixed sign.  This follows directly from the generalized mean-value
+formula for divided differences: after removing the Vandermonde factor, the
+last divided difference equals \`psi_tau'''(xi)/3!\` for some
+\`xi in (t_0,t_3)\`, and is strictly positive.
+
+For regular A21 the S scheduler has a positive minimum separation for the
+selected rows and a finite maximum gap; the shipping tuner range has
+\`tau in [0.02,12]\` s.  Normalize \`t_0=0\`.  The admissible tuple
+\`(t_1,t_2,t_3,tau)\` therefore lies in a compact set with
+\`0<t_1<t_2<t_3\` uniformly separated.  The determinant in (S4-3) is
+continuous and nowhere zero on that compact set.  Consequently
+
+\`delta_S4 :=
+ inf |det [1,t_i,t_i^2,psi_tau(t_i)]| >0\`.                  (S4-4)
+
+Thus four selected applied S observations make the zero-source homogeneous
+\`(v,p,S,a_w)\` root injective, uniformly over all regular scheduler timings
+and allowed tau.  If all four S corrected losses vanish, the homogeneous
+LIN/AW root is zero.  This closes qualification 1 of the complete-word
+zero-action nullspace proof in real arithmetic.  A numerical value of
+\`delta_S4\` is not required for qualitative coercivity; it will be needed
+later for an explicit K_MW modulus.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
