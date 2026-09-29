@@ -987,6 +987,54 @@ Three earlier claims are corrected fail-closed:
 Implication: K_MW(c,r), D(c,r), a strict recurring contraction margin and the
 final invariant solve remain OPEN. No downstream certificate may cite the
 retracted claims.
+## Exact-compatible MOVING + strict MAGNETIC SERVICE construction test
+
+To obtain an exact complete-word tilt/BA kernel, the simplest case sets the
+kernel BA component to zero. In injection-free world coordinates the
+magnetic-compatible attitude direction is the world field b. Zero
+accelerometer loss then requires every applied nominal specific-force row to
+satisfy `[f_hat_k]x b=0`, i.e. f_hat_k parallel b. With nonzero BA the
+condition generalizes to a fixed/decaying transverse component
+`[f_hat_k]x b = -R_ba,k phi_b,k b_a0`.
+
+For the physical force, the existing jerk/velocity lemma rules out exact
+field collinearity at every dense applied correction under the documented
+marine bounds (at h=1/5 and L=16 s it gives a positive minimum weighted
+collinear-sample gap, about .051 s, while regular accelerometer corrections
+are much denser). Thus an exact-compatible construction cannot simply make
+the physical force satisfy the kernel equation at every accelerometer row.
+
+However the literal kernel equation uses estimator nominal force f_hat, not
+physical force. The admitted assumptions constrain physical motion/bias and
+MAGNETIC SERVICE, but there is currently no proved reachability invariant
+forcing f_hat to inherit the physical jerk/velocity anti-collinearity. The
+pointwise AW-tracking premise is explicitly refuted. Therefore the physical
+jerk lemma cannot rule out an exact-compatible nominal history.
+
+Conversely, constructing such a nominal history is not free: it must arise
+from one actual shipping execution with the accelerometer correction, AW OU
+prediction/sync, S corrections, tuner state and accepted measurements. No
+existing theorem proves that an exactly collinear nominal-force sequence is
+reachable while the physical force is not collinear. Carried sync-locked
+examples are only approximate and cannot be promoted to an exact witness.
+
+Strict MAGNETIC SERVICE itself is not the obstruction. It constrains the
+transported magnetic heading/axial-bias rows and can remain strict under
+small perturbations of translational acceleration/AW history. It does not
+directly constrain the tilt/BA nominal-force compatibility equation.
+
+Result: under the current proof state, existence of an exact-compatible
+MOVING shipping execution with strict MAGNETIC SERVICE is neither constructed
+nor ruled out. The question has reduced to a shipping reachability problem:
+can the closed-loop AW/BA/S recursion realize the exact affine nominal-force
+constraint at every applied accelerometer epoch while physical MARINE MOTION
+remains admitted? A proof must use the literal mean recursion; physical
+geometry alone cannot decide it.
+
+Therefore the conditional kernel-disappearance counterexample cannot yet be
+promoted to a disproof of source-uniform C_det, and finite C_det cannot be
+proved by excluding the base word either. This reachability question is now
+the controlling blocker.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
