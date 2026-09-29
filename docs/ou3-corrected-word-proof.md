@@ -5234,6 +5234,59 @@ positive OU loss of d_0 gives an immediate contradiction. If not, the
 nonzero correction term identifies the exact mechanism supporting the
 persistent invariant zero.
 
+## Long-time telescoping of the literal AW correction supply
+
+Let `Delta_a^meas(k)` denote the sum of all mean increments to the world AW
+state at step k caused by actual measurement/pseudo-measurement corrections
+(S, accelerometer, magnetic through attitude/reset coupling where applicable),
+with prediction treated separately. The exact AW recursion is
+`a_(k+1)=phi_k a_k+Delta_a^meas(k)`.                       (TEL-1)
+
+Summing,
+`a_N-a_0=-sum_(k<N)(1-phi_k)a_k+sum_(k<N)Delta_a^meas(k)`. (TEL-2)
+For bounded a_w, division by elapsed time makes the left side vanish. On the
+persistent q->0 manifold FG-1, projection on d0 gives a strictly positive OU
+loss rate (minus the explicit field/gravity/lever defects). Therefore
+`mean_T P_B Delta_a^meas = mean_T (1-phi) P_B a_w >0`.     (TEL-3)
+
+So the total measurement-induced AW correction does **not** telescope to zero;
+bounded AW proves the opposite: it must have a positive mean exactly balancing
+OU decay.
+
+Can bounded v,p,S,BA,attitude force the individual correction sum to zero?
+No. Their exact telescoping equations constrain different gain-weighted
+combinations of the same innovations. For example the S pseudo-update gives
+increments `K_awS(-S)`, `K_vS(-S)`, `K_pS(-S)`, etc.; bounded S constrains
+the S-state row of the total update, not the AW row. Cross-covariance gains
+provide no identity equating their long-time means. Likewise bounded BA and
+attitude constrain their own gain rows. Joseph covariance updates do not
+supply a mean conservation law.
+
+The accelerometer correction also need not have zero mean when physical
+acceleration has zero mean, because
+`r_a=f_phys-fhat-bhat_a`; persistent compatibility gives fhat a fixed
+gravity-related offset. Thus zero mean physical acceleration is compatible
+with a nonzero mean residual and hence a nonzero mean AW correction.
+
+Therefore the hoped-for contradiction
+`bounded states => mean measurement AW correction=0`
+is false. TEL-3 is a balance law, not an impossibility theorem.
+
+The exact remaining requirement for a persistent zero is that the gain-weighted
+correction supply equal the OU loss while all other state-row balance equations
+hold simultaneously. Stack the bounded-state telescoping equations:
+`0 = -Lambda xbar + Gbar_r + Gbar_S + defects`,            (TEL-4)
+where each row uses its literal gain history. Persistence is feasible iff this
+coupled mean-balance system has a solution consistent with the zero-mean
+physical acceleration and compatibility constraints.
+
+No existing Kalman identity makes TEL-4 inconsistent. Thus LOCAL GRAVITY and
+near-constant geomagnetism expose a large required correction supply, but
+bounded estimator states alone do not eliminate it. A proof of impossibility
+must establish a rank/range separation for the **stacked mean correction
+matrix** in TEL-4; otherwise TEL-4 is the algebraic mechanism supporting the
+persistent invariant zero.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
