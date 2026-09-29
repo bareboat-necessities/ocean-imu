@@ -3774,6 +3774,85 @@ a numerical certificate.
 
 The controlling next step is D(c,r)<=c on admissible same-history word pairs.
 No additional O1 architecture is needed.
+## Constant ledger for the fixed O1 architecture
+
+The implication architecture is fixed. The constants split into three classes.
+
+**Already explicit from shipping/proved floors.**
+`a_N` is the minimum penalized nuisance/process whitening floor after
+structural zero-action coordinates are moved to the slow root. `a_G` has an
+explicit magnetic-service factor from `mu_M` multiplied by the proved
+chronological-transport/Lemma-T modulus. `nu_min>=1` under unit physical
+attitude normalization of `nu=(theta_hat,-q)`.
+
+**Analytically extractable from bounded literal matrices.**
+`a_L` comes from the four-S generalized Vandermonde with the correct
+`tau_min` dependence and explicit row-norm ceiling. The six b coefficients
+are operator norms of the literal same-history leakage blocks and admit
+finite enclosures from the retained dt/state/tuner/reset/process bounds.
+`Hbar_A` and `L_T` are likewise finite operator-norm enclosures once the
+known-root process floor for Pi is inserted.
+
+**Still only compactness-positive unless further quantified.**
+`gamma_bar_perp` is the transverse minimum eigenvalue of the complete reduced
+accelerometer block. Theorem A + compactness proves it positive in this
+representation, but no closed numerical lower enclosure is currently
+derived. Therefore the current `g_under` and K are constructive symbolic
+forms but not yet evaluable numerical certificates.
+
+Do not introduce another O1 route to quantify gamma_bar_perp; if a numerical
+certificate is required, interval/analytic enclosure of this fixed literal
+block is the permitted constant-extraction task.
+
+## Same-history scalar return fixed point
+
+Now consider an admissible shared-history pair `(W0,W1)`. Let `nu0` be W0's
+physical compatibility functional and `nu1` W1's. For W0 define
+
+`d_01=nu1' Pi_0 nu1`,
+`b_01=Phi_tilde_0' nu1`,
+`J0(c)=J_s(W0)+(1/c)nu0 nu0'`.
+
+Then exactly
+
+`D_01(c)=d_01+b_01' J0(c)^-1 b_01`,                         (DP-1)
+`D(c,r)=sup_(same-history pairs) D_01(c)`.                  (DP-2)
+
+Split J_s(W0) along the normalized physical line e0=nu0/|nu0|. Shorting the
+transverse block gives
+
+`D_01(c)=dperp_01 + ell_01^2/(j_0+|nu0|^2/c)`,              (DP-3)
+
+with `j_0>=0`. Hence D_01 is continuous, nondecreasing and concave in c.
+
+If `j_0>0`, D_01(c) is bounded as c->infinity and eventually lies below c.
+If `j_0=0`,
+
+`D_01(c)=dperp_01+c alpha_01`,
+`alpha_01=ell_01^2/|nu0|^2`.                               (DP-4)
+
+On the same-history pair class alpha_01 is exactly the physical scalar
+transfer into W1's compatibility functional. Therefore:
+
+- if `alpha_bar:=sup_(exact-kernel same-history pairs) alpha_01 <1`,
+  compactness and the uniform transverse floor give a finite C such that
+  `D(c,r)<c` for all sufficiently large c;
+- if an admissible same-history pair has `alpha_01=1` and `dperp_01>0`,
+  then `D(c,r)>c` for every finite c.
+
+Thus the existence of a finite scalar fixed point is equivalent to excluding
+a unit-persistent exact-kernel pair (or otherwise proving its dperp term
+vanishes, which the known-root process covariance generally prevents).
+
+The current reachability work has neither constructed nor excluded such a
+pair. Therefore **no finite c is presently certified**, and it would be
+premature to extract numerical values for all O1 constants as though O2 were
+known to close.
+
+The next controlling obligation remains the same-history equality case
+`alpha_01=1`: prove it unreachable under the literal closed-loop mean
+dynamics, or construct it. Only the first outcome permits a finite D<=c
+certificate in this one-word scalar-ceiling architecture.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
