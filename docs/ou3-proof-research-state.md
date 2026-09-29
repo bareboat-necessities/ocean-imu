@@ -447,6 +447,32 @@ cadence from MAGNETIC SERVICE and couple it to the jerk lemma. Downstream,
 replace the least-singular-value/process-noise route by a blockwise reader
 action and the measurement loss in the slow bias directions.
 
+## Structured historical-root route to a useful relative margin
+
+The exact first-prediction identity is
+`D_pred=P^-1-(P+C)^-1`, with `C=F^-1 Q F^-T`.  Therefore
+`C>=epsilon P_root` implies
+`D_pred>=epsilon/(1+epsilon) P_root^-1`.  A positive absolute Q floor is
+insufficient without controlling the carried root covariance.
+
+The historical AG reader supplies precisely the missing kind of control.  If
+its action is source-uniformly bounded by `B_*` and the established nuisance
+comparison gives `P_nn<=U`, PSD block Cauchy plus Young gives, for every
+`eta>0`,
+`P_root<=C_eta=diag((1+eta)B_*,(1+1/eta)U)`
+while retaining arbitrary AG/nuisance cross covariance.  Thus it suffices to
+prove the full matrix comparison
+`Q>=epsilon F C_eta F'`.  Then
+`rho0<=1/(1+epsilon)` directly, with no scalar process floor, covariance
+ceiling, or root-precision cap.
+
+This formulation makes the source-uniform historical reader action the
+controlling mathematical obligation again, but now for a quantitatively useful
+relative contraction rather than an absolute AG-loss lemma.  Optimize `eta`
+jointly with the matrix process comparison; do not replace either block by its
+largest scalar eigenvalue.  Existing carried action values (~1200--1450 on the
+0.32-s source audit) show finite feasibility only and do not certify `B_*`.
+
 ## Relative-Schur formulation of the source-uniform contraction
 
 The generalized target now has an exact block test requiring no matrix square
