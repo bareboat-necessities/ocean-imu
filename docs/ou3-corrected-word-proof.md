@@ -1772,12 +1772,14 @@ Conversely the quiet compatible construction shows why the kernel must be
 retained rather than declared observable; after adding fictitious precision
 \`mu nu nu'\`, the augmented action has trivial nullspace.
 
-**Qualification still required.**  Step 2 is rigorous only if the three
-regular S rows plus zero terminal forgetting make the homogeneous
-(v,p,S,a_w) chain injective on every allowed timing pattern; the existing
-nuisance proof supplies the needed separated-row determinant but it was used
-there for an upper comparison, so this injectivity implication must be stated
-and checked explicitly.  Step 4 likewise requires that the deterministic BA
+**Qualification still required.**  Step 2 needs four, not three, regular S
+rows for the full homogeneous (v,p,S,a_w) chain.  The three-row determinant in
+the nuisance proof cancels only the neutral (v,p,S) polynomial; with zero AW
+process a nonzero homogeneous OU root adds an exponential mode.  Four distinct
+S times give the scalar basis {1,t,t^2,psi_tau(t)}, where psi_tau is the
+integrated OU contribution.  The scheduler supplies such rows, but a uniform
+nonzero determinant over h/tau and the allowed S-gap intervals must be proved.
+  Step 4 likewise requires that the deterministic BA
 decay and transported magnetic-compatible attitude line have a common
 accelerometer compatibility intersection of dimension at most one for every
 admissible MOVING word.  This is a multi-epoch statement and is not implied by
