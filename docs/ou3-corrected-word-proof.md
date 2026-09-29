@@ -5644,6 +5644,48 @@ to prove O2 one must show every compatible trajectory hits it (or another
 admissibility boundary). Neither statement follows from shipping covariance
 algebra.
 
+## Signed determinant barrier test for the S-induced cancellation surface
+
+Let `d(P,x)=det D_perp(P,x)` on a regular fixed-event compatibility branch.
+The cancellation surface is `Z={d=0}`. A compact one-sided invariant region
+would require a source-uniform sign condition for the constrained update of d
+at Z.
+
+The post-S covariance is the smooth map
+`P^S=P-PH_S'(H_SPH_S'+R_S)^-1H_SP`.
+On the SPD innovation domain its differential with respect to P is finite and
+generically nonzero. D_perp also depends smoothly on the nominal geometry and
+the subsequent transport. Therefore d is a smooth scalar function on each
+regular branch.
+
+At a regular rank-one point of Z, the first variation is
+`delta d = tr(adj(D_perp) delta D_perp)`.                  (BAR-1)
+The admissible compatible history supplies variations through preceding
+attitude/geometry, prediction covariance and the remaining physical input.
+No shipping identity constrains BAR-1 to one sign. In particular the S
+subtraction term and fresh AW prediction term enter delta D_perp with opposite
+possible projected orientations. Hence Z is not proved invariant and no
+one-sided inward barrier follows from the covariance algebra.
+
+But transversality of Z is not enough to construct an infinite avoiding
+trajectory. A codimension-one surface can be crossed by generic trajectories;
+local freedom can choose a side only while the compatibility control remains
+regular. To prove eternal avoidance one needs a controlled-invariance theorem
+for a compact subset `|d|>=d0`, including physical moment/service bounds.
+No such inward condition is supplied by BAR-1.
+
+Thus the proposed signed-determinant barrier route does not close either
+branch. It establishes that exact S-induced cancellation is generically a
+crossable hypersurface rather than an estimator-internal invariant, which
+makes mandatory rank loss implausible, but it does not prove a forward-
+complete nonsingular compatible trajectory.
+
+The mathematically honest status is therefore: current assumptions do not
+force every compatible trajectory to hit Z, and local compatible trajectories
+can avoid/cross Z; global eternal avoidance remains an existence problem.
+A proof of it requires an additional recurrence/compactness mechanism beyond
+the local determinant sign.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
