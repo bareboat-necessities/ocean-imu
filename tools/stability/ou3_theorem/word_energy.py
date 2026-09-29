@@ -237,7 +237,7 @@ def prediction_relative_identity(root_covariance, transition, process_covariance
     """
     p,f,q=_matrix(root_covariance),_matrix(transition),_matrix(process_covariance)
     ldlt(p); fi=inverse(f)
-    c=congruence(q,fi)
+    c=matmul(matmul(fi,q),transpose(fi))
     pplus=add(p,c)
     decrement=add(inverse(p),inverse(pplus),F(-1))
     # Original-coordinate prediction gives the same decrement.
@@ -255,7 +255,7 @@ def prediction_relative_margin(root_covariance, transition, process_covariance, 
     p,f,q=_matrix(root_covariance),_matrix(transition),_matrix(process_covariance)
     eps=F(epsilon)
     if eps<=0: raise ValueError('positive epsilon required')
-    c=congruence(q,inverse(f))
+    c=matmul(matmul(inverse(f),q),transpose(inverse(f)))
     premise=is_psd(add(c,p,-eps))
     d=prediction_relative_identity(p,f,q)['decrement']
     delta=eps/(1+eps)
