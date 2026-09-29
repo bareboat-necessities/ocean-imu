@@ -447,6 +447,24 @@ cadence from MAGNETIC SERVICE and couple it to the jerk lemma. Downstream,
 replace the least-singular-value/process-noise route by a blockwise reader
 action and the measurement loss in the slow bias directions.
 
+## Root-relative refinement of the blockwise target
+
+The recurring root covariance lower certificate now explicitly yields
+`J_root=P_root^-1 <= L_root^-1` by inverse Loewner order.  This closes the
+existence of a source-uniform root-precision upper bound without any covariance
+ceiling.  However, its smallest fresh AG/BA covariance floors are about
+`5e-10`, so the induced scalar Euclidean precision cap is order `2e9`.
+Using that scalar in `min(s,n)/(k^2 j)` would recreate the conditioning loss
+that made DEAD_END 22 quantitatively useless.
+
+Therefore the productive target is the generalized inequality itself,
+`D >= delta J_root`, evaluated in root-whitened coordinates, while retaining
+the completed-square AG/nuisance factorization.  The scalar `j` route remains
+a valid existence proof but is not the retained quantitative route.  Next
+derive source-uniform block-relative bounds for the whitened AG Schur loss,
+nuisance loss and cross transform.  Kill any formulation whose conditioning
+reduces the carried `~4e-4--7e-4` direct margin by orders of magnitude.
+
 ## Direct information-form contraction feasibility result
 
 The carried literal 0.32-s words make the blockwise route quantitatively viable.
