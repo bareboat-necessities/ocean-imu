@@ -665,3 +665,43 @@ gate or assumption is changed for the proof.
   - **Still to do.** The carried readout record
     (`ag-readout-source-feasibility.json`) predates the core fix and the new
     `contraction_feasibility` fields; it is regenerated before merge.
+
+
+### CI native replay binding (2026-09-29)
+
+Run `36568721853`, job `109407034842`, failed the world-frame `--expect`
+comparison on main `069c6b5301a79b2499476e6d07592d058aa8432c`. The quiet and
+wave cases matched; the collinear cases differed in their trace hashes and
+78 derived metrics. For example, the 1-Hz NIS maximum was
+`17.4755170934018834186006` in CI versus `17.4755343260261939822796` in the
+committed record. All source hashes, observer/control terminal parity and
+`verify_diagnostic` invariants passed.
+
+Classification: cross-environment native replay mismatch, not a failed
+mathematical bound. The old record reproduces exactly with local GCC 14.2,
+Eigen 3.4 and glibc 2.41. Independent Ubuntu 24.04 executions on main and
+PR #622 (`36568698113`) produced byte-identical world-frame records. The
+individual compiler/library contribution is not isolated. Invalidated:
+identical source hashes imply bit-identical native traces across these
+environments.
+
+The canonical world-frame fixture is now the actual `ou3-world-frame.json`
+from main's evidence artifact `11034245782`, independently matched against
+artifact `11033851278`; its Git blob is
+`2e6b651a638a7033466d2f144f491e902e4cd70c`. Only that fixture's provenance
+binding is refreshed. The strict trace-hash comparison, decimal tolerance,
+all invariant/quality gates, shipping source and false/open theorem flags
+are unchanged. Use the workflow's Ubuntu environment for canonical replay;
+this repair does not claim cross-toolchain bitwise portability.
+
+Validation: `build_evidence.py` passes; 649 validation tests pass and one
+simulation-record test is skipped because its inputs are unavailable.
+The initial local compass setup failure was resolved by setting
+`EIGEN_INCLUDE_DIR`, without a repository change. The noncanonical local AW
+replay passes its source/invariant checks but differs in nine exact numeric
+fields; its committed fixture is deliberately not replaced by local output.
+Current limiter: native environment portability and the unchanged open
+mathematical obligations above. Next falsifiable check: rerun the unchanged
+world-frame and downstream AW `--expect` steps on Ubuntu CI. Do not weaken
+comparison tolerances or promote a finite replay to fix an infrastructure
+failure.
