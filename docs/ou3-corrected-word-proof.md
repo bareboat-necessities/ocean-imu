@@ -3202,6 +3202,91 @@ study `D(c,r)/c` using the physical compatibility-line transfer, not to
 improve the transverse information floor. If exact unit-persistent kernels
 are admissible, `limsup_(c->infinity)D(c,r)/c>=1`; if every admissible chain
 breaks compatibility with recurring loss, a strict fixed point may exist.
+## Small/large-c analysis of the exact scalar return
+
+For one word W write
+`d_W=nu_+'Pi_W nu_+`, `b_W=Phi_tilde_W'nu_+`, and
+`J_c=J_W+(1/c)nu_W nu_W'`. Then
+
+`D_W(c)=d_W+b_W'J_c^-1 b_W`.                               (DC-1)
+
+Use coordinates `e_1=nu_W/|nu_W|` and split
+`J=[[a,h'];[h,B]]`, `b=(beta,g)`. The rank-one prior adds
+`|nu_W|^2/c` to a. Since the augmented matrix is positive for every c>0,
+block inversion gives
+
+`D_W(c)=d_W+g'B^-1 g
+ + [beta-h'B^-1 g]^2 /
+   [a-h'B^-1 h+|nu_W|^2/c]`,                               (DC-2)
+
+with the usual shorted interpretation if B is represented variationally.
+The complete-word nullity<=1 theorem and transverse floor make B uniformly
+positive on the physical complement.
+
+Define
+`j_W:=a-h'B^-1h>=0`,
+`ell_W:=beta-h'B^-1g`,
+`dperp_W:=d_W+g'B^-1g`. Then exactly
+
+`D_W(c)=dperp_W + ell_W^2/(j_W+|nu_W|^2/c)`.               (DC-3)
+
+This exposes the entire c-dependence.
+
+**Small c.** As c->0+,
+
+`D_W(c)->dperp_W>0` in general, so
+`D_W(c)/c -> +infinity` whenever dperp_W>0.                 (DC-4)
+
+Thus very strong fictitious kernel precision cannot satisfy the scalar
+invariant because the known-root/process return remains finite and positive.
+
+**Large c, observed word.** If `j_W>0`,
+`D_W(c)->dperp_W+ell_W^2/j_W<infinity`, hence
+`D_W(c)/c->0`.                                              (DC-5)
+
+Such a word eventually satisfies its scalar inequality.
+
+**Large c, exact-kernel word.** If `j_W=0`, then
+
+`D_W(c)=dperp_W+c ell_W^2/|nu_W|^2`,
+`D_W(c)/c=ell_W^2/|nu_W|^2+dperp_W/c`.                     (DC-6)
+
+The limiting slope is
+
+`alpha_W:=ell_W^2/|nu_W|^2`.                               (DC-7)
+
+With the physically normalized compatibility functional, alpha_W is exactly
+the squared physical scalar transfer discussed in PT-4/PT-5. Therefore a
+persistent exact compatibility line has `alpha_W=1`; a strictly lossy line
+has alpha_W<1.
+
+For the source-uniform return
+`D(c,r)=sup_W D_W(c)`, compactness makes the supremum attained. Equations
+DC-3--DC-7 imply
+
+`limsup_(c->infinity) D(c,r)/c
+ = sup_(W with j_W=0) alpha_W`,                             (DC-8)
+
+provided the compact word class and coefficients are fixed at radius r;
+words with j_W>0 contribute zero slope. This follows uniformly from the
+transverse lambda_2 floor and compactness.
+
+Hence there are two cases.
+
+1. If `alpha_bar(r):=sup_(exact-kernel words) alpha_W <1`, then choose
+`epsilon=(1-alpha_bar)/2`. Compactness gives C<infinity such that for all
+`c>=C`, `D(c,r)/c<=alpha_bar+epsilon<1`. O2 closes for a finite c.
+
+2. If an admissible exact-kernel word has physical unit persistence
+`alpha_W=1`, then DC-6 gives
+`D_W(c)/c=1+dperp_W/c>1` for every finite c whenever dperp_W>0.
+Therefore `D(c,r)>c` for every finite c: the scalar invariant cannot close
+by this one-word ceiling. Its infimum ratio tends to one from above as
+`c->infinity`.
+
+Thus the exact O2 question is now completely reduced to whether the compact
+admissible word class contains an exact-kernel word with alpha_W=1. No
+intermediate finite-c crossing can rescue the invariant in that case.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
