@@ -692,6 +692,54 @@ system
 This ordering avoids falsely promoting an error-dependent geometry bound to
 the linear source-uniform theorem.
 
+## Coupled invariant assembly: current quantitative obstruction
+
+The source-family action algebra now closes conditionally: S-chain removes
+AW/root/sync sources, nuisance and measurement families have proved bounds,
+and the AG family has the inverse-frame/leverage bound with literal whitening.
+However the requested numerical two-dimensional solve is not yet well posed.
+
+The reason is upstream of the action assembly.  The leverage estimate is
+
+`M_C <= 2||F||^2/s(c,r)^2 [1+e_D^2 T h_max/q_T(c,r)]`.
+
+Both `s(c,r)` and `q_T(c,r)` are local-tube G0 floors.  Their literal
+values require the radius-dependent nominal signed-AW and relative-reset
+bounds
+
+`m_perp(c,r)<=A0+A1 sqrt(C(c,r))r`,
+`delta_Q(c,r)<=Q0+Q1 sqrt(C(c,r))r+Q2 C(c,r)r^2+Q3 C(c,r)^(3/2)r^3`.
+
+The exact identities defining these coefficients are proved, but finite
+source-uniform numerical ceilings for `A0,A1,Q0..Q3` have not been derived.
+The existing G0 numbers use supplied premises (for example m_perp=0.4 m/s^2)
+and cannot be substituted into a theorem.  Therefore `q_T(c,r)`,
+`s(c,r)`, `R_q^bar(c,r)`, `R_d^bar(c,r)`, and consequently
+`K(c,r),D(c,r)` are still symbolic.
+
+Likewise the finite-error composition is exact, but `E(c,r)` cannot yet be
+evaluated because its actual-gain action coefficients for the complete word
+and literal reset remainder are not all bounded numerically on the same
+candidate rectangle.  The proved BA projection-inactive guard and AW
+marginal are available but do not fill this gap.
+
+Hence no rigorous positive or negative solution of
+
+`D(c,r)<=c`,
+`[1-sqrt(1-1/K(c,r))]r>E(c,r)`
+
+can currently be asserted.  A grid search or substitution of carried-word
+values would be fitted and is prohibited.
+
+The next controlling analytical obligation is therefore not another
+two-dimensional solve.  It is to derive finite radius-local coefficients for
+the two signed-history maps:
+(1) the AW-loop functional producing `A0,A1`, and
+(2) the relative-reset partial-sum/product functional producing
+`Q0..Q3`.
+After those are inserted into G0, assemble the already derived factor-space
+actions and only then solve the invariant inequalities.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
