@@ -1035,6 +1035,59 @@ Therefore the conditional kernel-disappearance counterexample cannot yet be
 promoted to a disproof of source-uniform C_det, and finite C_det cannot be
 proved by excluding the base word either. This reachability question is now
 the controlling blocker.
+## Exact compatibility manifold: literal mean recursion
+
+AW covariance synchronization does not change the AW mean. The mean
+compatibility dynamics therefore consist of OU prediction plus actual
+accelerometer/S corrections (and BA OU prediction/corrections when enabled).
+
+In world coordinates, for the zero-BA compatibility subcase define
+`fhat=a_hat-g=lambda b` immediately before an accelerometer correction.
+Across a prediction of duration h with AW factor phi=exp(-h/tau),
+
+`fhat^-_next=phi fhat +(phi-1)g`.
+
+Hence its transverse component is
+
+`P_b fhat^-_next=(phi-1)P_b g`.
+
+Unless b is parallel to gravity or phi=1, the exact compatibility manifold is
+not invariant under prediction. To return to it at the next accelerometer
+epoch, the intervening mean corrections must supply exactly
+
+`P_b Delta a_hat = (1-phi)P_b g`
+
+plus the known contributions of any S correction and the nonzero-BA affine
+compatibility term.
+
+At an accepted accelerometer update the AW mean changes by
+`Delta a_hat=K_aw r_acc`, where K_aw is the AW 3x3 block of the literal
+Kalman gain. Therefore local exact reachability of the compatibility
+manifold requires the transverse control-rank condition
+
+`rank(P_b K_aw)=2`
+
+at the relevant corrections, together with a residual r_acc whose implied
+physical measurement remains inside MARINE MOTION / IMU BIAS bounds. S
+updates add their literal AW gain times the S residual and must be included
+in the same affine cycle equation; covariance sync adds no mean term.
+
+This identifies a sharp reachability criterion but does not yet prove it.
+The current proof has no source-uniform lower singular-value bound for
+`P_b K_aw`; cross covariance can in principle make that block singular.
+Conversely, no invariant forces it singular. Thus exact-compatible MOVING
+reachability is reduced to the actual closed-loop gain-rank problem, not to
+AW sync or autonomous OU dynamics.
+
+A constructive existence proof can proceed from any strict-margin regular
+state where `rank(P_b K_aw)=2`: the required transverse correction is O(h),
+so by continuity sufficiently small h gives a small residual; physical
+motion/service inequalities with strict margins persist under the resulting
+small smooth input perturbation. To make this rigorous one still must exhibit
+one reachable strict-margin state with that gain rank and verify the
+longitudinal/S/BA cycle closure. No current analytical certificate supplies
+that base state, so exact-compatible MOVING + strict MAGNETIC SERVICE remains
+unresolved rather than ruled out.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
