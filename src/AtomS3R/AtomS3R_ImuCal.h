@@ -349,7 +349,7 @@ struct MagStartupCfg {
 };
 
 // Returns true once PROBE_MIN_GOOD finite, in-range magnetometer samples arrive.
-static inline bool probeMagSamples(decltype(M5.Imu)& imu) {
+static __attribute__((noinline)) bool probeMagSamples(decltype(M5.Imu)& imu) {
   int good = 0;
   const uint32_t t0 = millis();
   while ((uint32_t)(millis() - t0) < MagStartupCfg::PROBE_WINDOW_MS) {
@@ -368,7 +368,7 @@ static inline bool probeMagSamples(decltype(M5.Imu)& imu) {
 
 // Takes the BMM150 out of suspend through the BMI270 AUX interface (manual mode),
 // so the chip-ID check inside the following M5.Imu.begin() succeeds.
-static inline bool wakeBmm150ViaBmi270Aux() {
+static __attribute__((noinline)) bool wakeBmm150ViaBmi270Aux() {
   constexpr uint32_t f = MagStartupCfg::I2C_FREQ;
   static constexpr uint8_t kBmiAddrs[2] = {0x68, 0x69};
   uint8_t bmi = 0;
@@ -389,7 +389,7 @@ static inline bool wakeBmm150ViaBmi270Aux() {
   return true;
 }
 
-static inline bool ensureMagReady(Print& log) {
+static __attribute__((noinline)) bool ensureMagReady(Print& log) {
   if (!M5.Imu.isEnabled()) return false;
   if (probeMagSamples(M5.Imu)) return true;
 
