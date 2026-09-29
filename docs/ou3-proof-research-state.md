@@ -1593,6 +1593,47 @@ Thus no residual-to-covariance contradiction closes O2. The unresolved
 estimator-internal question is recurrence of the compatible nominal
 geometry/covariance branch, not innovation magnitude.
 
+## Periodic Riccati recurrence on a compatible coefficient cycle
+
+Condition on a periodic compatible nominal geometry/event pattern and fixed
+periodic tuner parameters. The covariance recursion is then a finite-period
+discrete Riccati/Joseph map with positive measurement-noise floors and the
+shipping process-noise injection. The complete-word nullity/detectability
+results control all but the declared one-dimensional compatibility direction;
+the added finite kernel prior used in O1 regularizes that direction for the
+auxiliary Riccati diameter.
+
+For the **actual** covariance recursion, standard periodic Riccati existence
+cannot be invoked blindly because the physical compatibility direction may be
+undetected and process noise may enter it. A bounded periodic covariance orbit
+exists only if that neutral direction is dynamically stable or receives
+sufficient recurring information. This is precisely O2. Therefore using a
+periodic-Riccati theorem here would be circular.
+
+The Poincare existence question cannot be reduced to O1. If an exact
+compatibility mode is unit-persistent and receives process covariance, actual
+P grows along it and no recurrent covariance orbit exists; if its deterministic
+return is strictly below one, a bounded periodic covariance orbit is possible.
+Thus covariance recurrence is mathematically equivalent to the scalar O2
+return already under investigation.
+
+Consequently no independent fixed-point theorem solves the blocker. The
+compatible mean/tuner cycle plus D_perp nonsingularity is not enough; one must
+also know the compatibility-mode covariance return. Conversely, assuming a
+recurrent covariance orbit would assume the conclusion needed for O2.
+
+This prevents a circular counterexample construction. A genuine persistent
+physical/mean compatibility execution could coexist with **unbounded
+covariance** in the invisible mode; that would refute the desired covariance
+stability theorem even more directly, without requiring a recurrent P orbit.
+Hence a recurrent covariance orbit is not necessary for an O2 counterexample.
+
+The sharper counterexample target is therefore only a forward-complete
+admissible mean/physical compatibility execution with D_perp nonzero. Along
+it, either P stays bounded (recurrent/bounded counterexample) or P grows in the
+unit-persistent mode (direct failure of the claimed uniform covariance
+ceiling). Requiring covariance recurrence was unnecessarily strong.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
