@@ -4698,7 +4698,9 @@ where C_L contains only the explicitly bounded lever/linearization terms.
 Thus if `C_B eps_B+C_L<g_Bperp`, persistent q->0 compatibility requires a
 nonzero world-fixed transverse component of nominal AW bounded below by
 
-`a_DC := g_Bperp-C_B eps_B-C_L >0`.                         (GF-3)
+`a_DC := g_min cos(80 deg)-C_B eps_B-C_L >0`.                  (GF-3)
+
+Numerically `cos(80 deg)=0.1736481777`, so before the explicit field-variation/lever deductions the compatibility mode requires at least `0.1736481777 g_min` of world-fixed nominal AW transverse to the geomagnetic direction. For gravity near 9.81 m/s^2 this is about 1.70 m/s^2; this is a gravity-scale requirement, not a noise-floor trajectory.
 
 This is qualitatively different from an arbitrary oscillatory retuning: the
 required component has a fixed world direction inherited from gravity and the
