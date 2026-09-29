@@ -197,7 +197,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/word_energy.py",
-      "git_blob_sha": "8d08cc240a5640f902b7aa1820c960872fb3f843"
+      "git_blob_sha": "9ee33bbfc5a1babae872dbca958f49bb8208092f"
     },
     {
       "path": "tools/stability/ou3_theorem/block_factor_numeric.py",
@@ -213,7 +213,7 @@
     },
     {
       "path": "tests/validation/test_ou3_word_energy.py",
-      "git_blob_sha": "f9fa1d9b362198a7bcbedf706727ba726e887b3f"
+      "git_blob_sha": "88801303018c07bb4d2bde31fb5d82f508582e73"
     },
     {
       "path": "tests/validation/test_ou3_block_factor_numeric.py",
