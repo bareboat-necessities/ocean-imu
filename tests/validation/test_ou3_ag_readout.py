@@ -5,7 +5,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.ag_readout import (
-    bootstrap, certificate, coefficient_relaxation_obstruction, exact_readout,
+    bootstrap, structured_root_upper, process_relative_to_structured_root, certificate, coefficient_relaxation_obstruction, exact_readout,
     factor_rows, gyro_alias_obstruction, noise_action_lower, readout_action, supplied_fixture,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
@@ -34,6 +34,14 @@ def posterior(p, events):
 
 
 class HistoricalReadoutTests(unittest.TestCase):
+    def test_structured_root_upper_feeds_relative_prediction(self):
+        b=[[F(1),0],[0,F(1)]]; u=[[F(1)]]
+        c=structured_root_upper(b,u,F(1))
+        self.assertEqual(c,[[2,0,0],[0,2,0],[0,0,2]])
+        r=process_relative_to_structured_root(b,u,identity(3),[[2,0,0],[0,2,0],[0,0,2]],F(1),F(1))
+        self.assertTrue(r['verified'])
+        self.assertEqual(r['delta'],'1/2')
+
     def test_exact_21_state_dominance_with_unbounded_AG_prior_and_cross_terms(self):
         events = supplied_fixture()
         action = readout_action(events, exact_readout(events), identity(15))['action']
