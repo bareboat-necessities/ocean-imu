@@ -447,6 +447,31 @@ cadence from MAGNETIC SERVICE and couple it to the jerk lemma. Downstream,
 replace the least-singular-value/process-noise route by a blockwise reader
 action and the measurement loss in the slow bias directions.
 
+## All-row reader reformulation
+
+The historical reader no longer needs a source-uniform certificate for any
+selected six-row minor.  For the raw all-row AG array `O`, terminal AG map
+`T`, and block observation covariance `R`, the minimum measurement-noise
+reader is exactly
+`L*=T (O'R^-1O)^-1 O'R^-1`
+with action
+`T (O'R^-1O)^-1 T'`.
+Thus a source-uniform weighted information floor controls measurement action
+without pivot conditioning.  Largest-residual pivoting remains only a finite
+witness constructor.
+
+Measurement information alone does not bound the full historical action:
+fresh process factors and the nuisance-root residual also enter.  A naive
+unsigned backward norm recursion is deliberately not promoted because it can
+lose the signed/chronological cancellations already known to matter.  The
+productive formulation is a joint constrained weighted least-squares reader
+whose source vector stacks observation noise, every chronological process
+factor, and a factor of the established nuisance-root upper comparison.
+The total action is then one quadratic objective subject to exact AG-root
+cancellation.  Next derive this augmented chronological design matrix and
+seek a source-uniform lower bound on its weighted normal operator using G0,
+signed temporal service and literal reset transport.
+
 ## Structured historical-root route to a useful relative margin
 
 The exact first-prediction identity is
