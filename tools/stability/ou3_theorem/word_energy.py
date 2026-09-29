@@ -162,6 +162,26 @@ def source_uniform_block_loss_target(root_precision_upper, nuisance_loss_floor,
                 'completed-square inverse transform norm']}
 
 
+
+def block_relative_loss_target(root_precision, loss, split):
+    """Exact source target in the root metric, avoiding a scalar precision cap.
+
+    Congruence by a root-precision Cholesky factor is the natural generalized
+    comparison D >= delta J_root.  This helper keeps the complete matrices and
+    reports the exact logical target; source proofs should enclose the
+    root-whitened completed-square blocks/cross transform directly rather than
+    multiply a Euclidean loss floor by the worst coordinate precision.
+    """
+    j,d=_matrix(root_precision),_matrix(loss)
+    ldlt(j)
+    cert=block_schur_loss_certificate(d,split)
+    return {'verified_algebra':True,'AG_schur':cert['schur'],
+            'nuisance_loss':cert['nuisance'],
+            'target':'lambda_min(J_root^-1/2 D J_root^-1/2) > 0',
+            'scalar_root_precision_ceiling_required':False,
+            'source_uniform_verified':False}
+
+
 def restricted_service_counterexample():
     # A genuine positive-noise Kalman correction with S=4 I. Its restricted
     # heading/bias loss is I_2, but the full loss has a cancellation direction.
