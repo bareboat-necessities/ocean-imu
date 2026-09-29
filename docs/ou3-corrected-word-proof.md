@@ -4266,6 +4266,58 @@ there is no elementary boundedness contradiction as q->0. Hence the infinite
 execution question remains open, but its precise mathematical form is now a
 forward-completeness/escape problem for the closed-loop compatibility
 manifold, not an observability or covariance problem.
+## Viability criterion for the exact compatibility manifold
+
+Let h(m,q)=0 denote the two transverse literal accelerometer compatibility
+constraints at an applied correction, with m the base estimator/physical
+state and q the BA/tilt ratio. Between corrections q contracts by the known
+BA factor and m follows the shipping prediction/S/magnetic maps. At an
+accelerometer correction the control is the physical/base innovation u.
+
+The discrete viability condition is
+
+`h(F_k(m,u), Phi_b q)=0`.                                   (VIAB-1)
+
+Linearizing in the two transverse control components gives the tangency
+matrix
+`G_perp = d_u_perp h(F_k(m,u),Phi_b q)`.                    (VIAB-2)
+If `sigma_min(G_perp)>=g_c>0` and the required control remains inside strict
+physical/gate margins, the implicit-function theorem gives a unique local
+compatible continuation. Thus loss of compatibility can occur only by
+reaching one of four boundaries: `det G_perp=0`, physical/retained-state
+boundary, event/gate boundary, or magnetic-service boundary.
+
+In the q->0 limit the compatibility target h=0 becomes nominal field-axis
+collinearity. The required correction per step remains bounded (indeed the BA
+target change vanishes with q); no term in VIAB-1 diverges. Therefore there
+is no intrinsic vector-field singularity forcing escape as q->0.
+
+Conversely, forward completeness would follow from a compact positively
+invariant subset of the compatibility manifold on which all four margins are
+strictly positive. The current proof has no lower bound on `sigma_min(G_perp)`
+for reachable A21 states and no invariant lower margin for MAGNETIC SERVICE
+or gates along the constrained continuation. Hence such a subset is not
+proved to exist.
+
+An escape theorem would require a scalar function V_c on the compatibility
+manifold whose increment has a strict sign until a boundary is hit. BA norm
+`|q|` cannot serve: it decreases toward the interior zero-BA manifold rather
+than a forbidden boundary. The retained estimator energies and S-chain
+storage are actively stabilized and likewise have no proved monotone drift
+toward a boundary. Physical bounded-potential motion is not a state function
+of the nominal compatibility manifold.
+
+Therefore neither forward completeness nor finite escape follows from the
+current assumptions. More strongly, the local equations show q=0 is a
+regular candidate limiting manifold rather than a forbidden boundary, so an
+escape proof cannot be based on BA decay alone.
+
+**Resolution status.** The global continuation/escape problem is undecidable
+from the currently proved invariants: the necessary viability rank/margin
+conditions are not controlled source-uniformly, and no monotone escape
+functional exists in the theorem set. Proving either branch requires a new
+shipping invariant (uniform compatibility-control rank/service margin) or an
+explicit forward-complete construction. This is the exact O2 theorem gap.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
