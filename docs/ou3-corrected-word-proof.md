@@ -550,6 +550,54 @@ No root covariance matrix, historical reader or excitation premise enters
 remain relevant to coercivity (`P <= C` in the nonlinear supplies), not to
 `rho_0`.
 
+### O1 quotient reader as an augmented minimum-action problem
+
+Before bounding any coefficient, fix the exact inequality required by O1.
+For a word (W), let the frozen design be
+`y=O x_0+A_s s`, `x_N=Phi x_0+T s`, `Sigma=A_s A_s'`.
+For a candidate kernel ceiling `c>0`, put `mu=1/c` and append the
+fictitious scalar datum `z=sqrt(mu) nu' x_0+v`, `var(v)=1`.
+Equivalently,
+
+`O_mu=[O; sqrt(mu) nu']`, `Sigma_mu=diag(Sigma,1)`.
+
+Its information matrix is exactly
+
+`J_mu=J+mu nu nu'`.
+
+Apply the joint minimum-action reader theorem to this augmented word.  The
+Loewner-minimal terminal reader action is exactly
+
+`B_mu = Pi + Phi_tilde J_mu^-1 Phi_tilde' = P_nu`.
+
+Therefore O1 is equivalent to constructing **any** feasible quotient reader
+`L_mu O_mu=Phi` whose residual action obeys
+
+`(T-L_mu A_mu)(T-L_mu A_mu)' <= K(c) Pi`.                 (O1-R)
+
+Indeed minimum action gives `P_nu<=B(L_mu)`, hence
+`kappa_nu=lambda_max(Pi^-1 P_nu)<=K(c)`.  Conversely the minimum reader
+itself attains `P_nu`, so no pivot or singular-value surrogate can improve
+the mathematical target.
+
+This identifies how the existing structure enters the reader:
+
+- the S-chain identity first annihilates the complete `(v,p,S,a_w)` root,
+  every AW process source and every AW sync in the chosen accelerometer/S
+  combinations;
+- applied magnetic rows read the two attitude components normal to the
+  transported field direction;
+- Corollary A*, G0 and Lemma T supply the remaining chronological
+  attitude/gyro-bias quotient geometry;
+- the appended scalar row supplies only the physical tilt/BA kernel;
+- the literal injection/reset matrices stay inside `O_mu,A_mu,Phi,T`, so
+  their signed temporal structure is preserved rather than norm-summed.
+
+What remains genuinely unproved in (O1-R) is an explicit source-uniform
+block reader with a finite action ratio `K(c)`: specifically the nominal
+AW-window statistics and the extension of G0 to the literal injection frame.
+The augmented-reader identity itself is exact and needs neither premise.
+
 ### O2 reduction to a scalar known-root invariant
 
 The separate field-axis attitude ceiling is sufficient for O2, but it is not
