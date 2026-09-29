@@ -5686,6 +5686,55 @@ can avoid/cross Z; global eternal avoidance remains an existence problem.
 A proof of it requires an additional recurrence/compactness mechanism beyond
 the local determinant sign.
 
+## Periodic compatible physical/mean construction: closure conditions
+
+Choose a smooth periodic physical attitude R(t) with period T_p and gravity
+span strictly above theta_E on every complete T_E window (for example a
+nondegenerate rocking motion with period/cadence chosen so the rolling-window
+span condition holds). Keep local gravity and geomagnetic world references
+fixed within their declared envelopes. This gives strict recurring magnetic
+geometry away from the dip-pole exclusion.
+
+Choose physical translation periodic with the same T_p. Periodicity of
+position and velocity is equivalent to the acceleration waveform satisfying
+the zeroth and first moment closure conditions over one period:
+`integral_0^Tp a(t)dt=0`,
+`integral_0^Tp (Tp-t)a(t)dt=0`.                            (PC-1)
+Then velocity/displacement repeat and the bounded-potential condition holds
+for the periodic zero-mean displacement after choosing its reference.
+
+Now impose q=0 compatibility at every accelerometer epoch. For a given
+covariance/gain history this determines the two transverse acceleration
+components through MI-2, leaving one longitudinal scalar sequence u_j. Over
+one physical period, PC-1 gives vector closure constraints on u_j. Because
+there are many accelerometer epochs per period, u_j supplies many scalar
+degrees of freedom; the closure problem is a finite linear/nonlinear
+boundary-value system rather than an overdetermined single-control equation.
+
+However the required transverse waveform depends on P through the gains.
+Therefore a periodic physical/mean orbit cannot be constructed independently
+of covariance and then repeated while P changes: changing P changes MI-2 and
+hence the acceleration needed for exact compatibility. This invalidates the
+shortcut of fixing a periodic physical/mean period while allowing arbitrary
+nonperiodic covariance evolution.
+
+A genuine repeated exact-compatible period requires either:
+(a) the relevant gain/authority sequence repeats (not necessarily full P), or
+(b) the physical acceleration waveform is adapted from period to period to the
+evolving P, in which case the physical/mean orbit is not periodic.
+
+Thus continuity of the finite-period covariance map alone cannot preserve a
+fixed determinant margin under repetition. The proposed construction reduces
+back to a joint recurrence of the **relevant gain projection** and the
+periodic closure constraints. Full covariance recurrence is stronger than
+necessary, but recurrence of the gain quantities entering MI-2 is necessary
+for an exactly repeated physical/mean orbit.
+
+This identifies the minimal periodic fixed-point variables: nominal compatible
+mean/tuner state plus the projected covariance blocks entering K_a,K_S and
+D_perp, not the entire P. A periodic counterexample may be sought on that
+reduced map. No theorem currently proves that reduced map has a fixed point.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
