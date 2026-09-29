@@ -431,7 +431,7 @@ jobs:
           sketch-names: "*.ino"
           sketch-names-find-start: sensors/${{ matrix.ino_dir }}/*
           build-properties: >-
-            { "All": "-funroll-loops -fno-finite-math-only" }
+            { "All": "-funroll-loops -fno-finite-math-only -mauto-litpools" }
           extra-arduino-cli-args: >-
             --warnings default
             --library ${{ github.workspace }}
