@@ -1539,6 +1539,69 @@ available, but the current attitude-span assumption does not supply that
 separation.  Hence no positive numerical \`a_2(r)\` is claimed from attitude
 span alone.
 
+## Two-epoch geometric numerator: exact elimination and obstruction
+
+For
+\`D=[[C_0,B_0],[C_1 T_theta,B_1 phi_b]]\`
+with orthogonal transported BA rows \`B_i\`, eliminate \`b_a\` from the
+noise-free two-epoch equations.  The first row gives
+\`b_a=-B_0' C_0 theta\`.  Substitution into the second gives the exact relative
+operator
+
+\`L_2=C_1 T_theta-phi_b B_1 B_0' C_0\`.                      (GE-1)
+
+Hence
+\`ker D\` is isomorphic to \`ker L_2\`, and the nonzero singular geometry of D
+is controlled by L_2.  A quantitative comparison follows from the elimination
+map:
+for any z=(theta,b_a), let \`e_0=C_0 theta+B_0 b_a\`.  Then
+
+\`C_1T_theta theta+B_1 phi_b b_a
+ =L_2 theta+B_1 phi_b B_0' e_0\`.
+
+Thus
+\`|Dz|^2=|e_0|^2+|L_2 theta+B_1 phi_b B_0'e_0|^2\`.
+Completing the square yields, for any eta>0,
+
+\`|Dz|^2 >= [eta/(1+eta)] |L_2 theta|^2
+            +[1-eta phi_b^2] |e_0|^2\`,                     (GE-2)
+
+whenever \`eta<1/phi_b^2\`.  Therefore an explicit d2 follows from a positive
+singular floor of L2 together with the bounded reconstruction
+\`b_a=B_0'(e_0-C_0 theta)\`.
+
+But current MARINE MOTION attitude span does not imply
+\`sigma_min^+(L_2)>0\`.  The matrices \`C_i=-[f_i]x\` depend on nominal
+specific force.  It is admissible for translational acceleration to make the
+two transported nominal force directions satisfy
+
+\`C_1 T_theta=phi_b B_1B_0' C_0\`
+
+on the relevant two epochs, in which case \`L_2=0\` and D has only the
+single-epoch rank.  Physical attitude can change between the epochs while the
+specific-force cross-product maps remain aligned because translational
+acceleration compensates gravity.
+
+The existing same-cell/collinear constructions in the world-frame proof show
+this mechanism explicitly: bounded displacement, velocity, acceleration,
+jerk and nonzero attitude span can coexist with force parallel to the magnetic
+direction at selected correction times.  MAGNETIC SERVICE excludes one
+particular integer-second cadence but does not convert attitude span into a
+uniform two-epoch specific-force separation.
+
+Consequently no source-uniform \`d_2(r)>0\` can presently be derived from the
+existing MARINE MOTION attitude-span assumption plus reachability radius
+alone.  The two-epoch route is therefore CLOSED as a controlling path unless
+another already-proved shipping-history condition supplies relative
+specific-force excitation.  Do not continue trying to obtain the A21 floor
+from attitude span alone.
+
+This does not refute the full recurring A21 theorem: magnetic-service rows,
+more than two accelerometer epochs, S pseudo-observations and closed-loop
+chronology may jointly remove the degeneracy.  It refutes only the proposed
+two-epoch accelerometer bridge as a source-uniform consequence of the current
+physical assumptions.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
