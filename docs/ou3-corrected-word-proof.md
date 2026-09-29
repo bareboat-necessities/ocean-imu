@@ -1992,6 +1992,46 @@ remains quantitative is the same complete-word diameter/return bound
 \`K_MW(c,r),D(c,r)\`; there is no new observability obstruction caused by the
 word-dependent kernel direction.
 
+## Qualitative complete-word coercivity and quantitative gap
+
+Fix a candidate retained radius r and kernel ceiling c>0, and append kernel
+precision mu=1/c. The complete-word augmented joint action is continuous and
+nonnegative on the normalized radius-local word/kernel class.
+
+The zero-action results now imply trivial augmented nullspace: zero fresh
+action rigidifies nuisance trajectories; four S rows kill the homogeneous
+LIN/AW root; magnetic service and chronological transport remove gyro-bias
+directions except the magnetic-compatible attitude line; all accelerometer
+rows plus one decaying BA root leave dimension at most one; that line belongs
+to the compact kernel family N(r); and the appended rank-one precision removes
+it.
+
+Therefore compactness gives a positive minimum normalized action
+
+`g_MW(c,r)>0`,
+
+and hence a uniform augmented information floor
+
+`J_MW,mu(W)>=g_MW(c,r) I`.
+
+Together with the finite known-root terminal covariance/action bounds this
+proves the existence statements
+
+`K_MW(c,r)<infinity`, `D(c,r)<infinity`.
+
+This is qualitative coercivity, not yet a numerical certificate. Two
+compactness steps remain nonconstructive: the four-S lemma proves a positive
+determinant minimum but has no explicit numerical lower singular value, and
+the multi-epoch magnetic/accelerometer compatibility argument proves
+dimension <=1 but gives no explicit lower principal angle for the next
+independent constraint. Without those two moduli, g_MW cannot be evaluated,
+so neither K_MW nor D nor the contraction margin can be evaluated.
+
+The next quantitative task is therefore an analytic/interval enclosure of
+the full normalized complete-word action supplying (a) a four-S singular
+value floor and (b) a minimum principal-angle floor for the complete
+magnetic+accelerometer compatibility matrix over the compact retained class.
+Carried-word singular values are not substitutes for these moduli.
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
