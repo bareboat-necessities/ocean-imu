@@ -1482,6 +1482,63 @@ row removes the remaining one-dimensional compatibility class.
 This route uses the existing MARINE MOTION attitude-span assumption directly
 and avoids requiring a physical acceleration mean.
 
+## Literal two-epoch accelerometer/AW/BA Schur modulus
+
+At two applied accelerometer epochs, rotate residuals into common world
+coordinates and write the slow attitude/BA contribution as
+\`d(z)=D z\`, \`z=(theta,b_a)\`, with
+
+\`D=[[C_0,B_0],[C_1 T_theta,B_1 phi_b]]\`.
+
+Here \`C_i=-[f_i]x\` are the literal nominal specific-force attitude rows,
+\`B_i\` are the transported BA rows, and \`T_theta\` is the literal
+inter-epoch attitude transport.  The AW nuisance obeys
+\`a_1=Phi_a a_0+w_a\`.  If \`U_a\` bounds the inherited AW-root action and
+\`Q_a\` the inter-epoch AW process action, define
+
+\`N=[[I,0],[Phi_a,I]]\`,
+\`S_a=N diag(U_a,Q_a) N'+diag(R_0,R_1)\`.
+
+Eliminating the AW root and process factor gives exactly
+
+\`Q_acc,red(z)=d(z)' S_a^-1 d(z)\`,
+\`G_2=D' S_a^-1 D\`.
+
+Therefore, with \`K_phys=ker D\`,
+
+\`Q_acc,red(z)>=a_2 dist(z,K_phys)^2\`,
+\`a_2=lambda_min^+(D' S_a^-1 D)\`.
+
+A source-valid explicit lower bound is
+
+\`a_2 >= sigma_min^+(D)^2/lambda_max(S_a)\`,
+
+and
+
+\`lambda_max(S_a)
+ <= R_acc,max+(1+|Phi_a|)^2 U_a+Q_a,max\`.
+
+Thus
+
+\`a_2(r) >= d_2(r)^2/
+ [R_acc,max+(1+|Phi_a|)^2 U_a+Q_a,max]\`
+
+whenever a source-uniform geometric bound
+\`sigma_min^+(D)>=d_2(r)>0\` is proved.
+
+This closes the AW/BA Schur algebra: unrestricted AW nuisance does not erase
+information for a fixed nondegenerate D; it only enlarges the finite
+denominator through its root/process action.
+
+The remaining issue is the numerator.  MARINE MOTION attitude span does not
+by itself imply \`d_2(r)>0\`: the literal \`C_i\` contain nominal specific
+force, not gravity alone, and admissible translational acceleration can
+compensate a change in gravity direction.  The radius estimate
+\`|a_hat-a|<=4r\` transfers a physical specific-force separation if one is
+available, but the current attitude-span assumption does not supply that
+separation.  Hence no positive numerical \`a_2(r)\` is claimed from attitude
+span alone.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
