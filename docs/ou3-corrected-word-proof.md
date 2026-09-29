@@ -5968,6 +5968,62 @@ the H18 AW/S process action in the variational lemma; if zero joint action is
 assumed, then H7-2 must also satisfy zero AW process/S action, which is much
 more restrictive and is the correct next test.
 
+## H18 zero-action OU substitution
+
+For an exact zero-loss H18 alias let Q be the constant attitude discrepancy
+rotation about the fixed world magnetic direction b0, and let b_H be the held
+accelerometer-bias estimate in the body/error convention used by H7-2. The
+accelerometer zero-loss identity is
+`ahat_w-g0 = Q^-1[a_phys-g0-R_true' b_H]`.                 (HO-1)
+
+Zero AW process action requires the homogeneous OU mean law. On an interval
+with constant tau,
+`d ahat_w/dt = -ahat_w/tau`.                               (HO-2)
+Substitution and differentiation give the necessary physical law
+`dot a_phys - d(R_true' b_H)/dt
+ = -(1/tau)[a_phys-g0-R_true'b_H+Q g0]`.                    (HO-3)
+For piecewise-varying shipping tau the same relation holds intervalwise with
+the corresponding tau(t).
+
+More decisive is the long-time mean of HO-1+HO-2. Any bounded homogeneous OU
+trajectory has time average zero:
+`mean ahat_w =0`.
+Bounded physical velocity gives
+`mean a_phys=0`.
+Hence an infinite zero-action alias would require
+`0-g0 = Q^-1[0-g0-mean(R_true' b_H)]`, or
+`mean(R_true' b_H)=(Q-I)g0`.                              (HO-4)
+
+The left side has norm at most |b_H|. Therefore a necessary condition is
+`|(Q-I)g0| <= |b_H|`.
+For a rotation angle alpha about b0,
+`|(Q-I)g0|=2 |P_bperp g0| sin(|alpha|/2)`.
+Using |P_bperp g0|>=g_min cos80deg gives
+`2 g_min cos80deg sin(|alpha|/2) <= |b_H|`.               (HO-5)
+
+Thus every H18 zero-action magnetic-axis alias obeys the explicit angle bound
+`|alpha| <= 2 asin(|b_H|/[2 g_min cos80deg])`, provided the
+argument is <=1.                                                    (HO-6)
+
+Using the declared physical/held accelerometer-bias bound B_H gives the
+source-uniform ceiling
+`alpha_H,max = 2 asin(B_H/[2 g_min cos80deg])`.            (HO-7)
+
+With the proof's recorded physical accelerometer-bias bound
+B_H=0.22516660498395405 m/s^2 and g near standard gravity, the denominator
+2*g*cos80deg is about 3.406 m/s^2, giving alpha_H,max about 0.132 rad,
+approximately 7.58 degrees. Therefore the current coarse bias/nondip-pole
+bounds do **not** yet exclude every 7-degree alias; they miss by roughly
+0.58 degree before eps_g/eps_B/lever defects.
+
+This is nevertheless a sharp quantitative result. To exclude >=7 degrees one
+needs either the actual tighter held-BA bound on H18, a stronger inclination
+domain than 80 degrees, or use the attitude-span average in HO-4 to improve
+`|mean(R' b_H)|<=|b_H|` strictly. The last option uses existing MOVING
+excitation and is preferable to changing assumptions: recurring gravity
+direction span should prevent a fixed body BA vector from maintaining its full
+world projection indefinitely.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
