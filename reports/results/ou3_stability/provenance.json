@@ -149,7 +149,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "508c4a517063ef361b623441c7653a8921718cbe"
+      "git_blob_sha": "ad48e9148b0776ed228ead9f0ceddfe370a0e408"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -521,7 +521,7 @@
     },
     {
       "path": "docs/ou3-world-frame-rows.md",
-      "git_blob_sha": "881705a9f066f4d932cee914781875643eeb891b"
+      "git_blob_sha": "211eedb19a57d0ee1bf30ad7c5a571471f76fd00"
     },
     {
       "path": "tools/stability/ou3_theorem/world_frame.py",
@@ -565,11 +565,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/aggregate_floor.py",
-      "git_blob_sha": "d40b8db17da3fd0fba944d54d2c80faafb6a82af"
+      "git_blob_sha": "401adc6dcb774021467a82ca264d3d273accf111"
     },
     {
       "path": "tools/stability/ou3_theorem/aw_tracking_source_diagnostic.py",
-      "git_blob_sha": "5b84ec3b65451416a7ce53b09e0aba3ec09abbf7"
+      "git_blob_sha": "f84f566001de054d444c59c3bf0f87d791d139c1"
     },
     {
       "path": "tools/stability/aw_tracking_source.cpp",
@@ -585,7 +585,7 @@
     },
     {
       "path": "tests/validation/test_ou3_aggregate_floor.py",
-      "git_blob_sha": "632855b721b358225b84dac05540ba58d34867a8"
+      "git_blob_sha": "6cb3a73ac579f09610cf7024212aa2faecdf3d81"
     },
     {
       "path": "reports/results/ou3_stability/aw-tracking-certificate.json",
@@ -597,11 +597,11 @@
     },
     {
       "path": "reports/results/ou3_stability/aggregate-floor-certificate.json",
-      "git_blob_sha": "3a0a2fd04a5f66f0b3991bfb902da16ebf1ff994"
+      "git_blob_sha": "e2c7f8c1f2a74aa928096a5d615462ba6c5b7d07"
     },
     {
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "git_blob_sha": "4c70f858488ec3042322e7884d57fb21463c97a8"
+      "git_blob_sha": "fb7ee0289779b6dc553a8acf9048f6853db6470f"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",

@@ -373,7 +373,10 @@ If `c<=pi/2-Omega Delta`, samples `t_j in [t*-R,t*-R+Delta]`,
 `2 eps>=e.(c(t_l)-c(t_j))/|beta|>=int_{|u-t*|<=R-Delta}cos(Omega|u-t*|+c)du
  =(2/Omega)(cos(Omega Delta)-sin c)`.
 
-Otherwise `s>cos(Omega Delta)` already. Since T is continuous, `b.T` keeps one
+Otherwise `s>cos(Omega Delta)` already. With less room l (possible only when
+`Omega l<pi/2`), any `eps<r<=l-Delta` gives `2r cos(c+Omega r)<=2 eps`, i.e.
+`s>=sqrt(1-x^2)cos(Omega r)-x Omega r`, `x=eps/r`; the lemma uses the smaller
+of both bounds (`tube_constant`). Since T is continuous, `b.T` keeps one
 sign: the field-axis coordinate `eta=b.c` is monotone with speed >=c0|beta|.
 
 At the invariant rate `cos(Omega Delta)>=.4078` (rational alternating Taylor
@@ -406,9 +409,10 @@ window has nominal transverse mean `m_perp` and L1 force mean
 With the invariant Omega, Delta=1 s, L=16 s, G=64 s, B_min=20 uT,
 n=16/.006, eps=41/200 and the premises `m_perp<=2/5`, `u1<=6/5` (carried worst
 .348 and 1.091): `c0>=.171694`, `q_I=16.81` and `s^2>=1.486786e-3`
-(`aggregate-floor-certificate.json`, exact rationals). Disjoint 1-s service
-windows (Delta=2) fail at the invariant rate and pass only for a physical
-rate with G=64. An 80-digit tube audit and a synthetic falsification audit
+(`aggregate-floor-certificate.json`, exact rationals; 2 s of room before W1
+and after W2, which exceeds pi/(2 Omega)). Disjoint 1-s service windows
+(Delta=2) fail at the invariant rate, and at the physical rate they need more
+than 2 s of room. An 80-digit tube audit and a synthetic falsification audit
 (field-axis spin, transverse roll, frozen attitude, random rates) find actual
 sigma_min 37--60 against recomputed floors .067--.070: valid and about 600
 times conservative.

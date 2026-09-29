@@ -36,10 +36,14 @@ class AggregateFloorTest(unittest.TestCase):
             self.assertLessEqual(sqrt_lower(v)**2, v)
             self.assertGreaterEqual(sqrt_upper(v)**2, v)
 
-    def test_tube_constant_needs_short_service_gaps(self):
-        self.assertGreater(tube_constant(OMEGA_INVARIANT, 1, 0), F(4, 10))
-        self.assertLess(tube_constant(OMEGA_INVARIANT, 2, 0), 0)
-        self.assertGreater(tube_constant(OMEGA_PHYSICAL, 2, 0), 0)
+    def test_tube_constant_needs_short_service_gaps_and_room(self):
+        self.assertGreater(tube_constant(OMEGA_INVARIANT, 1, 0, 2), F(4, 10))
+        self.assertLess(tube_constant(OMEGA_INVARIANT, 2, 0, 2), 0)
+        self.assertGreater(tube_constant(OMEGA_PHYSICAL, 2, 0, 3), 0)
+        # Without room beyond one service gap the slow-rate case gives nothing.
+        self.assertLessEqual(tube_constant(OMEGA_PHYSICAL, 2, F(1, 10), 2), 0)
+        # A nearly frozen attitude keeps the field-axis speed close to one.
+        self.assertGreater(tube_constant(F(1, 200), 1, F(1, 5), 2), F(95, 100))
 
     def test_theorem_g0_positive_and_monotone_in_premises(self):
         best = optimize_eps(OMEGA_INVARIANT, 1, **KW)

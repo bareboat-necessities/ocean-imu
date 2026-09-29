@@ -72,10 +72,10 @@
     },
     {
       "Omega": "physical",
-      "eps_s": "1/25",
+      "eps_s": null,
       "magnetic_gap_s": "2",
-      "positive": true,
-      "six_column_floor_squared_lower": "7243250861/125000000000000",
+      "positive": false,
+      "six_column_floor_squared_lower": "0",
       "window_separation_s": "64"
     }
   ],
@@ -89,19 +89,19 @@
   "source_uniform_six_column_floor": false,
   "synthetic_falsification_audit": {
     "field_axis_spin": {
-      "G0_floor": 0.0696612,
+      "G0_floor": 0.069661,
       "actual_sigma_min": 45.7042
     },
     "frozen_attitude": {
-      "G0_floor": 0.0696612,
+      "G0_floor": 0.069661,
       "actual_sigma_min": 37.1151
     },
     "random_piecewise": {
-      "G0_floor": 0.0669579,
+      "G0_floor": 0.0669577,
       "actual_sigma_min": 38.17
     },
     "transverse_roll": {
-      "G0_floor": 0.0696612,
+      "G0_floor": 0.069661,
       "actual_sigma_min": 60.3606
     }
   },

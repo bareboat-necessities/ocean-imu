@@ -41,26 +41,43 @@ def sqrt_upper(v, digits=15):
     return low if low*low == F(v) else low+F(1, 10**digits)
 
 
-def tube_constant(omega, gap, eps):
-    """Lemma T: |b.T(t)|>=cos(Omega Delta)-Omega eps on the word interior.
+def tube_constant(omega, gap, eps, room):
+    """Lemma T: |b.T(t*)| lower bound at a point with room l>=Delta each side.
 
     T=R_hat(t)'beta/|beta| is the unit tangent of c(t)=theta+int R_hat' beta,
     turning at most Omega per second; magnetic rows at gaps <=Delta see
-    |P_b c(t_j)|<=eps|beta|. Chord along the transverse direction e of T(t*)
-    between two samples straddling t* inside [t*-R,t*+R], R=(pi/2-c)/Omega,
-    c=arcsin|b.T(t*)|: (2/Omega)(cos(Omega Delta)-sin c)<=2 eps.
+    |P_b c(t_j)|<=eps|beta|. With c=arcsin|b.T(t*)| and e the transverse
+    direction of T(t*), take samples straddling t* in the span where
+    Omega|u-t*|+c<=pi/2 and integrate e.T along it:
+    (A) if (pi/2-c)/Omega<=l: (2/Omega)(cos(Omega Delta)-sin c)<=2 eps;
+    (B) otherwise (possible only if Omega l<pi/2), for every eps<r<=l-Delta:
+        2r cos(c+Omega r)<=2 eps, so sin c>=sqrt(1-x^2)cos(Omega r)-x sin(Omega r),
+        x=eps/r; the best r of a grid is taken.
+    The bound is the smaller of both (rational: cos_lower, sin y<=y).
     """
-    om, d, e = map(F, (omega, gap, eps))
-    return cos_lower(om*d)-om*e
+    om, d, e, ell = map(F, (omega, gap, eps, room))
+    case_a = cos_lower(om*d)-om*e
+    if om*ell >= F(15708, 10000):          # 1.5708>pi/2: case B cannot occur
+        return case_a
+    best = None
+    for k in range(1, 9):
+        r = (ell-d)*k/8
+        if r <= e:
+            continue
+        x = e/r
+        bound = sqrt_lower(1-x*x)*cos_lower(om*r)-x*om*r
+        best = bound if best is None else max(best, bound)
+    return min(case_a, best if best is not None else F(0))
 
 
 def theorem_g0(omega, gap, eps, window, separation, sigma_w, m_perp, force_l1,
                rows_per_window, start_offset, gravity=G, field_min=B_MIN, scale=F(1)):
     """Injection-free aggregate six-column floor (Theorem G0), exact rational.
 
-    Word interior I=[pi/(2 Omega), T_w-pi/(2 Omega)] contains two acc windows
-    W1, W2 of length L separated by a gap G; every interval of length Delta
-    contains an applied magnetic row; each window has nominal transverse mean
+    The word extends start_offset>=Delta before W1 and after W2 (the room of
+    Lemma T); W1, W2 have length L and are separated by a gap G; every
+    interval of length Delta contains an applied magnetic row; each window has
+    nominal transverse mean
     |mean(a_hat) x b|<=m_perp and L1 normalized force mean(|f_hat|/g)<=u1.
     Part I (beta): Q>=q_I|beta|^2, q_I=min(B^2 eps^2, n g^2 (c0 G mu/2-rho u1)^2),
     mu=sigma_w-m_perp/g, rho=eps+(Delta/2)sqrt(1-c0^2).
@@ -74,9 +91,9 @@ def theorem_g0(omega, gap, eps, window, separation, sigma_w, m_perp, force_l1,
                                                 sigma_w, m_perp, force_l1))
     g, bmin, lam = F(gravity), F(field_min), F(scale)
     n = F(rows_per_window)
-    c0 = tube_constant(om, d, e)
+    c0 = tube_constant(om, d, e, start_offset)
     if c0 <= 0:
-        return {'tube_constant': c0, 'positive': False, 'reason': 'Omega Delta too large'}
+        return {'tube_constant': c0, 'positive': False, 'reason': 'Omega Delta too large or no room'}
     mu = sw-mp/g
     if mu <= 0:
         return {'tube_constant': c0, 'positive': False, 'reason': 'nominal mean premise'}
@@ -157,6 +174,7 @@ def synthetic_audit(seed=7):
     (with its own row count) and must not exceed the actual floor.
     Float64 linear algebra; non-promoting.
     """
+    import math
     import numpy as np
     rng = np.random.default_rng(seed)
     g, bnorm = float(G), 20.0
@@ -203,10 +221,10 @@ def synthetic_audit(seed=7):
                     for w in (1, 2))
         l1 = max(np.mean([np.linalg.norm(u) for u in forces_w[w]]) for w in (1, 2))
         n = min(len(forces_w[1]), len(forces_w[2]))
+        # Round the measured premises up on a 1e-6 grid (platform-stable).
+        up = lambda x: F(math.ceil(float(x)*10**6)+1, 10**6)
         best = optimize_eps(OMEGA_INVARIANT, 1, window=16, separation=64, sigma_w=FRACTION,
-                            m_perp=F(float(mperp)).limit_denominator(10**9)+F(1, 10**9),
-                            force_l1=F(float(l1)).limit_denominator(10**9)+F(1, 10**9),
-                            rows_per_window=n, start_offset=2)
+                            m_perp=up(mperp), force_l1=up(l1), rows_per_window=n, start_offset=2)
         floor = float(best[1]['six_column_floor_squared']) if best else 0.0
         return float(actual), floor**.5
 

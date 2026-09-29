@@ -263,7 +263,7 @@ def literal_array(events, word=(2.0, 102.0), windows=((2, 18), (82, 98))):
     mperp = max(float(np.linalg.norm(np.cross(np.mean(win[i], axis=0), b))) for i in (0, 1))
     l1 = max(float(np.mean([np.linalg.norm(x-np.array([0.0, 0.0, g])) for x in win[i]]))/g for i in (0, 1))
     from .aggregate_floor import optimize_eps
-    up = lambda x: F(x).limit_denominator(10**6)+F(1, 10**6)
+    up = lambda x: F(math.ceil(x*10**6)+1, 10**6)     # platform-stable upper grid
     best = optimize_eps(up(omega), 1, window=16, separation=64, sigma_w=F(1, 5),
                         m_perp=up(mperp), force_l1=up(l1),
                         rows_per_window=min(len(win[0]), len(win[1])), start_offset=2,
