@@ -5,7 +5,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_theorem.matrix_certificates import add, is_psd, ldlt
-from tools.stability.ou3_theorem.root_covariance_certificate import certificate, process_floors
+from tools.stability.ou3_theorem.root_covariance_certificate import certificate, process_floors, root_precision_upper_bound
 
 
 class JointRootCovarianceTests(unittest.TestCase):
@@ -35,6 +35,14 @@ class JointRootCovarianceTests(unittest.TestCase):
         self.assertFalse(r['constructive_full_A21_mu_rho_enclosure'])
         self.assertFalse(r['uniform_covariance_upper_bound_verified'])
         self.assertFalse(r['float32_covariance_factor_verified'])
+
+    def test_root_precision_upper_comes_from_inverse_order(self):
+        r=root_precision_upper_bound()
+        self.assertTrue(r['inverse_order_used'])
+        self.assertFalse(r['covariance_upper_bound_used'])
+        self.assertGreater(r['root_precision_upper'],0)
+        self.assertEqual(r['root_precision_upper'],max(
+            r['AG_precision_upper'],r['LIN_precision_inf_upper'],r['BA_precision_upper']))
 
     def test_source_gyro_floor_uses_deployed_density_not_old_simulation_value(self):
         source=(ROOT/'sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino').read_text()

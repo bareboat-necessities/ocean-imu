@@ -71,7 +71,7 @@ words (1-Hz and 25-Hz magnetic cadence) through a derived observer with
 untapped control parity. It records floor/actual ratios <=1 after the float
 mean-injection charge, injection bound ratios, the collinear same-cell
 collapse (.0301) beside aggregate sigma 28.50, the failed one-correction
-service information (2.05e-5), the signed injection sum, the literal AW
+service information (2.03e-5), the signed injection sum, the literal AW
 block reconstruction and the failed uniform storage route (6.68 and 6.91).
 CI reproduces the committed record exactly. These are non-promoting finite
 audits:
@@ -80,6 +80,31 @@ audits:
 python3 -m tools.stability.ou3_theorem.world_frame_source_diagnostic \
   --eigen /usr/include/eigen3 --output /tmp/ou3-world-frame.json \
   --expect reports/results/ou3_stability/world-frame-source-feasibility.json
+```
+
+`aw-tracking-certificate.json` exactly checks Corollary A* (attitude
+columns from the nominal signed AW mean, threshold 1.96133 m/s^2), the
+signed physical transfer, the weighted signed-correction representation of
+the nominal mean, the world innovation factorization, the gain-weighted AW
+loop identity and the AW increment cap. `aw-tracking-source-feasibility.json`
+replays six admitted C2-onset histories through the unchanged estimator with
+a one-tap observer and untapped control parity: the pointwise AW premise
+fails by 6.80, the worst signed mean is .330 of 1.12383 (sync-locked
+rectification) and the worst nominal transverse mean .177 of 1.96133. It
+also rebuilds the literal world six-column array with every reset over a
+100-s word: literal sigma_min 191.8--267.4, never below the injection-free
+array, `|A~-I|<=.0045`, and G0's floor .072--.084 below both.
+`signed-injection-certificate.json` checks Lemma I* (ordered injection
+rotation bounded by endpoint attitude errors plus integrated rate error),
+the third-order reset factor, the rotating-frame floor and the injection
+feasibility table. `aggregate-floor-certificate.json` checks Lemma T and the
+injection-free Theorem G0 (`s^2>=1.486786e-3` under supplied nominal window
+premises), a synthetic falsification audit and the downstream feasibility.
+
+```
+python3 -m tools.stability.ou3_theorem.aw_tracking_source_diagnostic \
+  --eigen /usr/include/eigen3 --output /tmp/ou3-aw-tracking.json \
+  --expect reports/results/ou3_stability/aw-tracking-source-feasibility.json
 ```
 
 The proof-side quiet-evidence monitor never certifies physical STILL. No

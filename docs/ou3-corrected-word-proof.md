@@ -281,6 +281,94 @@ all-prefix gyro-projection inactivity is inferred from the BA guard below.
 `ou-gyro-bias-projection.md` supplies the one-prediction transport result and
 states why the full signed temporal margin is still open.
 
+## 6. Word contraction as one information-ratio inequality
+
+Role in the tail inequality: the lemmas below bound the linear factor `rho_0`
+of a complete A21 word in `V_(j+1) <= rho V_j + c_d ||d||^2`. They keep the
+root covariance, cross covariance, actual gains and resets of that word.
+
+**Smoother identity (exact).** Freeze the word's coefficients and use the
+optimal gains. Let `C_k = Cov(x_0, x_k | y)` be the fixed-point smoother
+cross covariance. It evolves as `C<-C F'`, `C<-C (I-KH)'` and `C<-C G'`, and
+`Sigma_00` loses `C H' S^-1 H C'` at each correction. The closed-loop word
+map `M` then satisfies
+
+`M = C_end' P_0^-1`,
+`M' P_end^-1 M = P_0^-1 (Sigma_00|y - Sigma_00|y,x_end) P_0^-1`.
+
+Hence `rho_W = lambda_max(P_0^-1/2 (Sigma_00|y - Sigma_00|y,x_end) P_0^-1/2)`.
+Write `J` for the root information carried by the word's data and `A` for
+the root information in the data together with the terminal state. Then
+`Sigma_00|y = (P_0^-1+J)^-1`, `Sigma_00|y,x_end = (P_0^-1+A)^-1` and `J<=A`.
+The unknowns `w, v` are independent of `x_0`; realized coefficients are
+frozen and no stochastic law is imposed on physical histories.
+`word_smoother_identity` checks both identities exactly on the supplied
+21-state word.
+
+Two separated sufficient conditions follow at once:
+
+- **Information:** `Sigma_00|y <= (1-delta) P_0`, i.e. `J >= delta/(1-delta) P_0^-1`.
+- **Forgetting:** `Sigma_00|y,x_end >= delta P_0`, i.e. `A` small against `P_0^-1`.
+  The first-prediction route of §2 is the special case with `J` dropped and
+  one-step hiding `A <= (F^-1 Q F^-T)^-1`.
+
+**Neither separated condition suffices (exact and carried).**
+`mixed_mechanism_example` builds a two-state word with `rho=1/2` in which
+both separated margins are zero. The carried shipping words show the same
+split, in the replay setting of `ou3-ag-readout-proof.md`:
+
+| Word | Quiet exact | Quiet info-only | Quiet forget-only | Wave exact | Wave info-only | Wave forget-only |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0.32 s | 4.06e-4 | 3e-26 | 2.0e-10 | 6.98e-4 | 3.0e-10 | 2.1e-9 |
+| 4 s | 0.0242 | 3e-17 | 6.3e-4 | 0.0248 | 5.5e-7 | 2.9e-3 |
+| 16 s | 0.0982 | 1e-14 | 5.3e-3 | 0.0996 | 3.2e-4 | 6.6e-3 |
+| 64 s | 0.389 | 3e-12 | 5.2e-3 | 0.393 | 3.0e-3 | 6.5e-3 |
+
+The slowest 0.32-s direction is translational: about 87% velocity/position
+with 10–13% accelerometer bias. Its loss comes mostly from the S
+pseudo-observation and the AW sync. Bias directions contract about 3–5×
+faster. Quiet water keeps the tilt/BA kernel about the magnetic axis
+unobservable, so its information-only margin stays at the rounding floor.
+
+**Information-ratio lemma (exact).** Let `C >= P_0` be any root covariance
+upper bound. For `kappa >= 1` put
+
+`k(kappa) = max(0, lambda_max(C^1/2 (A - kappa J) C^1/2))`.
+
+Then
+
+`rho_W <= sup_(y>=0) [ 1/(1+y) - 1/((1+k)(1+kappa y)) ] < 1`.
+
+If `A <= kappa J` (then `k=0`), this gives `rho_W <= (sqrt(kappa)-1)/(sqrt(kappa)+1)`
+for every `P_0`, with no covariance bound at all.
+
+*Proof.* Put `Y=P_0^1/2 J P_0^1/2` and `Z=P_0^1/2 A P_0^1/2`, so that
+`rho_W=lambda_max((I+Y)^-1-(I+Z)^-1)`. Let `K` be the positive part of
+`A-kappa J` in the `C` metric, so `A <= kappa J + K`. Since `P_0 <= C`,
+`P_0^1/2 K P_0^1/2 <= k I`. Therefore
+`I+Z <= (1+k)(I+kappa Y)`, and operator monotonicity of inversion gives
+`(I+Z)^-1 >= (I+kappa Y)^-1/(1+k)`. The remaining matrix is a function of
+`Y` alone, so functional calculus gives the scalar supremum. With `k=0` its
+maximum is at `y=1/sqrt(kappa)`. ∎
+
+**How the pieces fit.** The lemma uses both mechanisms at once. Directions
+the data see contract through `kappa`, with no covariance bound. Directions
+the data miss contract through the upper comparison `C`, which enters only
+in `k`. The joint reader supplies that `C` (`ou3-ag-readout-proof.md`). On
+carried words its full bound is within 55–77× of the actual root covariance
+once the preceding window is 16 s or longer. The first-prediction chain is
+the special case `J=0`, `A <= (F^-1QF^-T)^-1`, giving `1/(1+epsilon)`.
+
+**Source-uniform obligations now controlling `rho_0` on MOVING words:**
+
+- **(i)** A floor on the word's root information `J` (full-root
+  identifiability of the future augmented design).
+- **(ii)** A ceiling on `A - kappa J` in the joint-reader metric.
+- **(iii)** The joint-reader floor `I_eff >= mu` on the preceding window.
+
+These are information bounds on the same history; no one-step process floor
+or scalar covariance ceiling appears.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular

@@ -1,0 +1,108 @@
+{
+  "half_angle_product_remainder_source_bound": false,
+  "injection_formulation_feasibility": [
+    {
+      "case": "retained tilt, bias exact",
+      "mean_abs_aw_mps2": "1/2",
+      "perturbative_feasible": false,
+      "perturbative_ratio_squared": "127955204743/25000000000",
+      "rotating_frame_feasible": true,
+      "rotating_frame_ratio": "385344603943/500000000000",
+      "u_rms_squared": "2"
+    },
+    {
+      "case": "retained tilt, bias exact",
+      "mean_abs_aw_mps2": "3",
+      "perturbative_feasible": false,
+      "perturbative_ratio_squared": "955398862081/100000000000",
+      "rotating_frame_feasible": false,
+      "rotating_frame_ratio": "1006141369327/1000000000000",
+      "u_rms_squared": "23/5"
+    },
+    {
+      "case": "vanishing radius, bias exact",
+      "mean_abs_aw_mps2": "1/2",
+      "perturbative_feasible": true,
+      "perturbative_ratio_squared": "24/25",
+      "rotating_frame_feasible": true,
+      "rotating_frame_ratio": "220394324259/1000000000000",
+      "u_rms_squared": "2"
+    },
+    {
+      "case": "vanishing radius, bias exact",
+      "mean_abs_aw_mps2": "3",
+      "perturbative_feasible": false,
+      "perturbative_ratio_squared": "224/125",
+      "rotating_frame_feasible": true,
+      "rotating_frame_ratio": "322365945557/1000000000000",
+      "u_rms_squared": "23/5"
+    },
+    {
+      "case": "vanishing radius, bias error B_g",
+      "mean_abs_aw_mps2": "1/2",
+      "perturbative_feasible": false,
+      "perturbative_ratio_squared": "96/25",
+      "rotating_frame_feasible": true,
+      "rotating_frame_ratio": "440788648519/1000000000000",
+      "u_rms_squared": "2"
+    },
+    {
+      "case": "vanishing radius, bias error B_g",
+      "mean_abs_aw_mps2": "3",
+      "perturbative_feasible": false,
+      "perturbative_ratio_squared": "896/125",
+      "rotating_frame_feasible": true,
+      "rotating_frame_ratio": "322365945557/500000000000",
+      "u_rms_squared": "23/5"
+    },
+    {
+      "case": "vanishing radius, invariant only",
+      "mean_abs_aw_mps2": "1/2",
+      "perturbative_feasible": false,
+      "perturbative_ratio_squared": "17496/25",
+      "rotating_frame_feasible": false,
+      "rotating_frame_ratio": "92978855547/15625000000",
+      "u_rms_squared": "2"
+    },
+    {
+      "case": "vanishing radius, invariant only",
+      "mean_abs_aw_mps2": "3",
+      "perturbative_feasible": false,
+      "perturbative_ratio_squared": "163296/125",
+      "rotating_frame_feasible": false,
+      "rotating_frame_ratio": "67999066641/7812500000",
+      "u_rms_squared": "23/5"
+    }
+  ],
+  "lemma_I_star": {
+    "norm_sum_of_injections_used": false,
+    "ordered_product_identity_exact": true,
+    "single_injection_bound": "0.32568122794806669829",
+    "single_supplied_injection_angle": "0.17841068709508357862",
+    "supplied_attitude_and_rate_bound": "0.34969026445677320325",
+    "supplied_injection_angle": "0.16923272771438179497"
+  },
+  "perturbative_charge_feasible_somewhere": true,
+  "qualification": "OU3_SIGNED_INJECTION_TRANSPORT_V1",
+  "relaxed_reset_cancellation_exclusion": {
+    "required_attitude_error_rad_lower": "1.14159265359",
+    "retained_tilt_domain_rad": "10471975511965977/100000000000000000"
+  },
+  "reset_factor_third_order": {
+    "quadratic_term_cancels": true,
+    "small_cubic_bound": "2.3292374765622809338e-7",
+    "small_remainder_norm": "1.1646150988516452038e-7",
+    "supplied_cubic_bound": "0.039041288685470184185",
+    "supplied_remainder_norm": "0.01933582630795811785"
+  },
+  "rotating_frame_attitude_floor": {
+    "no_rotation_floor": "49/1250",
+    "one_sided_floor": "6547460477/200000000000",
+    "relative_rotation_rad": "2 atan(1/40)",
+    "signed_floor": "4896938457/125000000000"
+  },
+  "rotating_frame_feasible_at_vanishing_radius_bias_exact": true,
+  "scope": "real-arithmetic regular A21 world frame; supplied exact words, angles at 80 digits",
+  "source_uniform_signed_injection_bound": false,
+  "theorem_closed": false
+}

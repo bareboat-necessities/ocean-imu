@@ -29,7 +29,16 @@ def status_report() -> dict:
         "nominal_attitude_column_physical_transfer_given_AW_tracking":True,
         "sharp_isotropic_sync_AW_covariance_ceiling":True,
         "uniform_AW_tracking_error_bound":False,
+        "nominal_signed_mean_attitude_columns":True,
+        "pointwise_physical_AW_tracking_premise_refuted_on_admitted_history":True,
+        "source_uniform_nominal_AW_window_statistics":False,
+        "signed_injection_rotation_identity":True,
+        "third_order_literal_reset_factor":True,
+        "source_uniform_half_angle_injection_transport":False,
+        "magnetic_service_tube_monotone_field_axis":True,
+        "injection_free_aggregate_six_column_floor_given_nominal_window_premises":True,
         "aggregate_world_frame_six_column_floor":False,
+        "practical_rho0_margin_from_six_column_floor":False,
         "marine_attitude_excitation_numeric_qualification":False,
         "marine_attitude_excitation_implies_signed_temporal_separation":False,
         "physical_tilt_span_sampling_implication":True,
@@ -74,7 +83,16 @@ def status_report() -> dict:
         "six_column_to_full_contraction_implication":True,
         "six_column_corrected_loss_uniform_bound":False,
         "historical_AG_readout_covariance_implication":True,
+        "joint_minimum_action_historical_reader_identity":True,
+        "joint_reader_diffuse_limit_full_covariance_domination":True,
+        "joint_reader_coercivity_action_reduction":True,
+        "source_uniform_joint_reader_AG_information_floor":False,
         "uniform_historical_AG_readout_action":False,
+        "first_prediction_relative_process_ceiling":True,
+        "word_contraction_smoother_identity":True,
+        "separated_information_or_forgetting_bounds_insufficient":True,
+        "information_ratio_word_contraction_lemma":True,
+        "source_uniform_word_information_ratio_bounds":False,
         "actual_gain_finite_error_word_composition":True,
         "joint_word_prediction_measurement_input_action":True,
         "finite_angle_source_reset_remainder":True,
@@ -142,7 +160,28 @@ def status_report() -> dict:
             "aw_covariance_certificate":"aw-covariance-ceiling-certificate.json",
             "aw_covariance_ceiling_tight_at_sync":True,
             "uniform_storage_route_ratio_above_one_on_carried_collinear_words":True,
-            "controlling_transfer_quantity":"physical AW tracking error |a_hat-a| of the literal acc/S correction loop, not covariance-normalized storage",
+            "aw_tracking_certificate":"aw-tracking-certificate.json",
+            "aw_tracking_source_diagnostic":"aw-tracking-source-feasibility.json",
+            "pointwise_physical_AW_premise_refuted_ratio":"6.80",
+            "attitude_columns_need_only_nominal_signed_mean":True,
+            "nominal_transverse_mean_threshold_mps2":"196133/100000",
+            "signed_injection_certificate":"signed-injection-certificate.json",
+            "aggregate_floor_certificate":"aggregate-floor-certificate.json",
+            "injection_free_six_column_floor_squared_lower":"297357352751/200000000000000",
+            "injection_free_floor_premises":["nominal transverse AW mean <= 2/5 m/s^2 on two separated 16-s windows","nominal L1 force mean <= 6/5","A_tilde=I"],
+            "controlling_transfer_quantity":"source bound on the nominal AW window statistics of the literal loop, and the injection frame in Theorem G0",
+        },
+        "a21_contraction_route":{
+            "reader_certificate":"ag-readout-certificate.json",
+            "contraction_certificate":"corrected-word-certificate.json",
+            "carried_diagnostic":"ag-readout-source-feasibility.json",
+            "joint_reader":"B*=Pi+Tt I_eff^-1 Tt^T, the diffuse-AG-root Riccati limit; B* <= (1+1/g)TT^T+(1+g)T_h I_eff^-1 T_h^T",
+            "first_prediction_epsilon_ceiling":"3.3741e-10 per prediction (S coordinate), independent of B_*, U_n and eta",
+            "word_contraction":"rho_W <= sup_y [1/(1+y)-1/((1+k)(1+kappa y))], k=lambda_max^+(C^1/2 (A-kappa J) C^1/2), C>=P_0",
+            "carried_slowest_short_word_direction":"translation (velocity/position) with accelerometer-bias share",
+            "open_source_premises":["floor on the word root information J on MOVING windows",
+                                    "ceiling on A-kappa J in the joint-reader metric",
+                                    "floor I_eff>=mu for the preceding-window joint reader"],
         },
         "shipping_residual_gyro_bias_hardening":True,
         "implemented_gyro_bias_norm_invariant":True,
@@ -181,10 +220,15 @@ def status_report() -> dict:
             "Same-cell geometry therefore depends only on world nominal force, committed reference and the local injection, never on attitude error. "
             "Literal injections satisfy dd'<=NIS K S K'<=NIS P_theta,theta. A 1-Hz collinear history obeys MARINE MOTION and IMU BIAS and degenerates every same-cell group while aggregate rows stay full rank; its single correction per 1-s window has nearly rank-one service information, so MAGNETIC SERVICE excludes that cadence. "
             "Jerk forbids collinearity at every instant of a cadence whose length-weighted mean gap is below 4(g h-2V/L)/J, about .051 s at h=1/5 and L=16 s. A same-cell floor therefore needs a magnetic-cadence coupling, which aggregate rows avoid. "
-            "The nominal attitude columns transfer from physical transverse force on 16-s windows when the AW tracking error is below 1.12383 m/s^2. "
-            "The isotropic stationary sync keeps lambda_max(P_aw)<=(1+eps)16 and floors P_aw at sigma^2 I at every applied sync, so the covariance route needs sqrt(V)<.28095 at the 4 m/s^2 clamp; "
-            "on the carried collinear motion the uniform storage route fails by 6.7-6.9 although the actual AW error .562 m/s^2 passes. "
-            "Next bound the physical AW tracking error of the literal acc/S correction loop and the signed world injection sum, then prove the aggregate gyro-column floor. "
+            "The isotropic stationary sync keeps lambda_max(P_aw)<=(1+eps)16, but covariance-normalized AW storage fails by 6.7-6.9 on carried collinear motion. "
+            "The pointwise physical AW tracking premise is false on an admitted C2-onset history (7.647 m/s^2, 6.80 x 1.12383): the horizontal AW prior follows the vertical tuner at its .05 floor. "
+            "Corollary A* needs only the nominal signed AW mean: transverse mean below 1.96133 m/s^2 (carried worst .348, including sync-locked rectification). "
+            "Lemma I* bounds the ordered injection rotation by endpoint attitude errors plus the integrated rate error without norm sums; perturbative charging of A~ over 16-s windows is infeasible. "
+            "MAGNETIC SERVICE on every 1-s interval and the nominal-rate bound make the field-axis gyro coordinate monotone (Lemma T); with two separated nominal accelerometer windows the injection-free world array has s^2>=1.486786e-3. "
+            "The historical AG reader is now the exact joint minimum-action reader B*=Pi+Tt I_eff^-1 Tt' (the diffuse-AG-root Riccati limit, with a full 21x21 domination), so B_* reduces to a source-uniform floor on the marginalized AG information I_eff; carried 16-64 s windows bound the actual AG covariance within 12x (5x at 64 s). "
+            "Every first-prediction relative process comparison Q>=epsilon F C F' is capped at epsilon<=3.3741e-10 per prediction by the one-step S coordinate, whatever B_*, U_n or eta, and separated information-only or forgetting-only word bounds also fail on carried words. "
+            "The word contraction is one information-ratio inequality rho_W<=sup_y[1/(1+y)-1/((1+k)(1+kappa y))], k=lambda_max^+(C^1/2(A-kappa J)C^1/2), with C the joint-reader upper bound. "
+            "Next prove source-uniform floors on the word root information J and on I_eff over MOVING windows and a ceiling on A-kappa J; the nominal AW window statistics and the literal injection frame of G0 remain their geometric inputs. "
             "The .5 rad/s invariant, qualified complete-turn exclusion and one-step gyro floor remain proved, not the complete signed Delta_gyr. "
             "Positive source-uniform signed margins, B_*, J_AG, full covariance upper, rho_0<1, capture/H18/release, nonlinear radius, every-prefix retention, applied magnetic-service qualification and float32 totality remain open."
         ),

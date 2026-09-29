@@ -44,10 +44,13 @@ Uniform geometry, injection/action bounds and nonlinear retention remain OPEN.
 In world coordinates the historical AG rows are attitude-free apart from
 world injections and the nominal rotation integral (`ou3-world-frame-rows.md`).
 Same-cell geometry also depends on the applied magnetic cadence. The
-aggregate attitude columns transfer from physical transverse force given an
-AW tracking bound in physical units; the isotropic-sync AW covariance ceiling
-is sharp and tight, so no covariance route supplies it uniformly. That bound
-and the gyro columns remain OPEN.
+aggregate attitude columns need only the nominal signed AW mean (Corollary
+A*); the pointwise physical AW tracking premise is false on an admitted
+history. MAGNETIC SERVICE on every 1-s interval and the nominal-rate bound
+make the field-axis gyro coordinate monotone (Lemma T), which gives an
+explicit injection-free aggregate six-column floor (Theorem G0). A source
+bound on the nominal window statistics, G0 with injections and a useful
+rho_0 remain OPEN.
 
 Physical regimes qualify the single construction/H18/release/A21 route. All
 estimator states, covariance, biases, physical S and bias histories, clocks,

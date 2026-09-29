@@ -31,6 +31,27 @@ def process_floors():
     return ag,ba
 
 
+
+def root_precision_upper_bound():
+    """Uniform spectral upper bound on J_root=P_root^-1.
+
+    The recurring full Loewner lower certificate is block diagonal:
+      P_root >= diag(q_AG I6, C_LIN tensor I3, q_BA I3).
+    Inverse order gives J_root <= L_root^-1.  Bound the LIN inverse spectral
+    norm by its exact positive row-sum norm; the scalar blocks are exact.
+    This is deliberately derived from the covariance LOWER bound, not from
+    any covariance ceiling.
+    """
+    a=action_matrix(); ag,ba=process_floors()
+    c=[[v/2 for v in row] for row in inverse(a)]
+    ci=inverse(c)
+    lin_inf=max(sum(abs(v) for v in row) for row in ci)
+    j=max(2/ag,lin_inf,2/ba)
+    return {'root_precision_upper':j,'AG_precision_upper':2/ag,
+            'LIN_precision_inf_upper':lin_inf,'BA_precision_upper':2/ba,
+            'inverse_order_used':True,'covariance_upper_bound_used':False}
+
+
 def certificate():
     a=action_matrix(); ag,ba=process_floors()
     c=[[v/2 for v in row] for row in inverse(a)]

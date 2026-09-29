@@ -12,7 +12,7 @@ from .lin_path_certificate import inverse, rational_record, small_x_source_defec
 from .matrix_certificates import add, encoded, identity, is_psd, ldlt
 from .nuisance_upper_certificate import bounds
 from .root_covariance_certificate import process_floors
-from .word_energy import full_loss_margin, word_identity
+from .word_energy import full_loss_margin, mixed_mechanism_example, word_identity, word_smoother_identity
 
 
 def nuisance_root_bounds():
@@ -60,6 +60,39 @@ def prediction_floor():
     if q <= 0:
         raise ArithmeticError('nonpositive full process floor')
     return q
+
+
+
+def first_prediction_relative_ceiling():
+    """Source-uniform ceiling on every first-prediction relative comparison.
+
+    If P_root <= C and Q >= eps F C F', take y=e_S for one axis:
+      eps <= Q_SS / (F P_root F')_SS <= Q_SS / (F L F')_SS,
+    where L is the certified pre-prediction embedded LIN floor. The S unit
+    impulse response of the OU triple integrator is <= t^3/6, so the ideal
+    one-step Q_SS <= Sigma_aw (h/tau) h^6/126; the literal branch adds the
+    relative defect eps_q. Row S of F is e_S+(h^2/2, h, 0, <=h^3) on
+    (v,p,S,a). The ceiling is uniform in the admitted execution and in the
+    upper comparison C (B_*, U_n, Young eta): no historical reader can lift
+    it, and N predictions certify at most 1-(1+eps_max)^-N <= N eps_max.
+    """
+    from .lin_path_certificate import small_x_source_defect
+    lower, _, _, _ = nuisance_root_bounds()
+    eps_q = small_x_source_defect()[0]
+    h, tau, sigma2 = F('.006'), F('.02'), F(16)
+    q_ss = (1+eps_q)*sigma2*(h/tau)*h**6/126
+    offset = (h*h/2, h, F(0), h**3)
+    denominator = lower[2][2] - 2*sum(d*abs(lower[i][2]) for i, d in enumerate(offset))
+    if denominator <= 0:
+        raise ArithmeticError('certified S floor does not survive one transition')
+    ceiling = q_ss/denominator
+    steps = F(2048)/F('.004')
+    return {'epsilon_ceiling': ceiling, 'one_step_Q_SS_ceiling': q_ss,
+            'certified_S_floor_after_transition': denominator,
+            'proof_word_predictions_max': steps,
+            'proof_word_margin_ceiling': steps*ceiling,
+            'binding_coordinate': 'S (integral of displacement), one axis',
+            'upper_comparison_independent': True}
 
 
 def conditional_scalar_margin(mu, alpha, nuisance_ceiling, q, f_norm):
@@ -157,8 +190,30 @@ def coupled_example():
             'exact_full_loss_check': True, 'shipping_history': False}
 
 
+def smoother_identity_audit():
+    """Exact smoother contraction identity on the supplied 21-state word."""
+    from .ag_readout import supplied_fixture
+    from .matrix_certificates import matmul, transpose
+    events = []
+    for event in supplied_fixture():
+        if event['kind'] == 'prediction':
+            events.append({'kind': 'prediction', 'F': event['F'], 'Q': matmul(event['U'], transpose(event['U']))})
+        elif event['kind'] == 'correction':
+            events.append({'kind': 'correction', 'H': event['H'], 'R': matmul(event['V'], transpose(event['V']))})
+        else:
+            events.append(event)
+    word = word_smoother_identity(identity(21), events)
+    energy = word_identity(identity(21), events)['endpoint_energy']
+    if word['explained_root_covariance'] != energy:
+        raise ArithmeticError('smoother form differs from the complete-word energy identity')
+    return {'verified': True, 'state_dimension': 21,
+            'identity': 'M=C_end^T P0^-1 and M^T P_end^-1 M = P0^-1 (Sigma_00|y - Sigma_00|y,x_end) P0^-1',
+            'scope': 'supplied rational word; exact algebra, not a source enclosure'}
+
+
 def certificate():
     lower, ba, upper, alpha = nuisance_root_bounds()
+    ceiling = first_prediction_relative_ceiling()
     return {
         'qualification': 'OU3_CORRECTED_WORD_REDUCTION_V1',
         'verified': True,
@@ -172,6 +227,16 @@ def certificate():
         'matrix_implication': 'D_AG,AG >= J > 0 implies P <= diag((1+eta)/alpha J^-1, (1+1/eta) U), eta > 0',
         'remaining_uniform_premise': 'six AG columns of actual complete corrected word loss, in fixed raw coordinates, have a common SPD lower bound J',
         'exact_coupled_example': coupled_example(),
+        'first_prediction_relative_ceiling': {
+            'epsilon_ceiling': rational_record(ceiling['epsilon_ceiling']),
+            'one_step_Q_SS_ceiling': rational_record(ceiling['one_step_Q_SS_ceiling']),
+            'certified_S_floor_after_transition': rational_record(ceiling['certified_S_floor_after_transition']),
+            'proof_word_margin_ceiling': rational_record(ceiling['proof_word_margin_ceiling']),
+            'binding_coordinate': ceiling['binding_coordinate'],
+            'applies_to': 'every upper comparison C>=P_root, including diag((1+eta)B_*,(1+1/eta)U_n)',
+            'useful_rho0_from_first_prediction_route': False},
+        'word_smoother_identity': smoother_identity_audit(),
+        'mixed_mechanism_example': mixed_mechanism_example(),
         'actual_gain_finite_error_word_composition_proved': True,
         'joint_prediction_measurement_input_action_proved': True,
         'reset_comparison': 'exact finite-angle log reset, with normalized source small-angle polynomial defect',

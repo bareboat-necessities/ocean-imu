@@ -30,13 +30,27 @@ In world coordinates every historical AG row is `-R_k[f_k]x[A~_k R_0',B~_k]`
 six-column geometry, except through world injections and the nominal
 rotation integral of the gyro columns. Same-cell geometry also depends on the
 applied magnetic cadence, so the MOVING premise is pursued as an **aggregate
-world-frame** row statement. Its attitude columns transfer from physical
-transverse force at the sole cost of the AW tracking error (plus reference,
-gravity mismatch and injections). That error must be bounded in physical
-units from the literal acc/S correction loop: the AW covariance ceiling is
-sharp and tight at every sync, yet covariance-normalized storage cannot
-carry the AW error uniformly. The AW tracking bound and the aggregate gyro
-columns are OPEN.
+world-frame** row statement. The attitude columns need only the nominal
+signed mean of the AW state (Corollary A*: transverse mean below 1.96133
+m/s^2); the pointwise physical tracking premise is false on admitted
+histories. MAGNETIC SERVICE on every 1-s interval plus the implemented
+nominal-rate bound make the field-axis coordinate of the gyro curve monotone
+(Lemma T), which yields an explicit injection-free aggregate six-column floor
+(Theorem G0) from two separated nominal accelerometer windows. OPEN: a
+source bound on the nominal window statistics and G0 with injections.
+
+**Historical reader.** It is now the exact joint minimum-action reader
+`B*=Pi+Tt I_eff^-1 Tt'`, the diffuse-AG-root Riccati limit with a full 21×21
+domination. `B_*` therefore reduces to one source-uniform floor on the
+marginalized AG information `I_eff`. Carried windows of 16–64 s make it
+commensurate (≤12× the actual AG covariance, ≤5× at 64 s).
+
+**Contraction.** The complete A21 word contraction is one
+information-ratio inequality. It uses the word's data information `J`, the
+data-plus-terminal information `A`, and the joint-reader upper bound `C` only
+in the directions the data miss. Every first-prediction relative process
+comparison is capped at `3.3741e-10` per prediction and is abandoned
+(DEAD_END 25).
 
 ## Evidence
 
@@ -94,7 +108,7 @@ columns are OPEN.
   nonlinear theorem remains OPEN; covariance retention is not state retention.
 - Literal reset G=I+[d]/2 and ideal Rodrigues prediction have inverse norm
   <=1; the shipping coefficient-series transfer remains qualified by
-  DEAD_END 21. C=A^-1 B is unchanged by resets; later gyro injections retain A^-1.
+  DEAD_END 24. C=A^-1 B is unchanged by resets; later gyro injections retain A^-1.
   Exact prefix recurrences bound |C-tI| without amplifying its past defect
   by every reset. A terminal d=4e_x no longer erases an earlier .005-s floor.
   The 80-digit supplied noncommuting audit has floor .0396561974478783
@@ -152,6 +166,33 @@ columns are OPEN.
   `>=(1/5-e)^2/((1+e)^2+1)`, `e=(11/16+.15+epsilon_a)/g`, positive iff
   `epsilon_a<1.12383 m/s^2`; `gamma(0)` is about .00603. No attitude error or
   magnetic residual is charged.
+- Corollary A* (`aw_tracking.py`, exact): the normalized attitude-column
+  Gram is `>=(sigma_w-m_perp/g)^2/((1+m/g)^2+1)` for the nominal mean
+  `mu=sum alpha_i a_hat_i`; positive iff `m_perp<1.96133 m/s^2`,
+  `gamma*(0)=1/50`. The signed physical transfer recovers 1.12383 as a bound
+  on `|sum alpha_i e_i|`, not on `sup|e|`. The nominal mean is a nonnegatively
+  weighted signed sum of AW corrections; the world innovation factors as
+  `r=R_hat(y-a_hat)`, and the AW loop obeys an exact gain-weighted identity.
+- AW carried audit (`aw-tracking-source-feasibility.json`, six admitted
+  C2-onset histories, exact envelopes, untapped-control parity): pointwise
+  error up to 7.647 m/s^2 (6.80 x 1.12383) with attitude error .0062 rad;
+  signed 16-s mean error <=.371 m/s^2 (ratio .330, sync-locked
+  rectification); nominal transverse mean <=.348 (ratio .177); nominal L1
+  force <=1.091. Rectification: Gamma is periodic in the 21-sample AW sync
+  cycle, and a phase-locked jerk-limited triangle raises the signed mean
+  from <=.05 to .371; a raised tuner sigma reduces it.
+- Lemma I* (`signed_injection.py`): the ordered injection rotation J obeys
+  `M_N M_0'=J K` exactly, so `angle(J)<=alpha_0+alpha_N+int|omega_tilde|`
+  with no norm sum; one reset has `|x|<=alpha_-+alpha_+` (DEAD_END 17 needs
+  attitude error >=1.1416 rad). `N=I-[x]/2+O(|x|^3)`. Corollary A** charges
+  a signed mean of relative rotations.
+- Lemma T and Theorem G0 (`aggregate_floor.py`, exact rationals): service
+  gaps <=1 s and `Omega<=1.1508652` give `|b.T|>=cos(Omega)-Omega eps`
+  (>=.4078-Omega eps); with m_perp<=2/5, u1<=6/5, L=16, G=64,
+  `s^2>=1.486786e-3`, `q_I=16.81`. Synthetic falsification: actual
+  sigma_min 37--60 versus floors .067--.070. Carried literal arrays (six
+  100-s A21 words, every reset retained): sigma_min 191.8--267.4, at least the
+  injection-free value, `|A~-I|<=.0045`, G0 floors .072--.084.
 - The current excited moving forced-balance word already has roll
   .02 sin(t/2) and displacement .4 sin(.6t)e_z. It satisfies the moving span
   premise for T_E>=4*pi, 0<theta_E<=.04. Its 80-digit balance residual is
@@ -165,6 +206,41 @@ columns are OPEN.
   F E_BG=E_BG and Z E_BG=0; that cancellation is not gyro feedback.
   The quiet word's exact seven-column null witness has |Wv|>
   754573637/5000000000000000, while its actual quiet innovations vanish.
+- Joint minimum-action reader (`ag_readout.py`, `ou3-ag-readout-proof.md`):
+  - **Construction.** Every action source is a unit column of one augmented
+    chronological design `y=O_h h0+A s`: the nuisance-root factor, every
+    process/sync factor and every applied noise factor.
+  - **Exact results.** The Loewner-minimal feasible action is
+    `B*=Pi+Tt I_eff^-1 Tt'`, and every feasible reader satisfies
+    `B(L)=B*+(L-L*)Sigma(L-L*)'`. The diffuse-prior posterior equals the
+    Riccati recursion from `diag(t I6,U_n)` at every scale, and
+    `B* <= (1+1/g)TT'+(1+g)T_h I_eff^-1 T_h'`.
+  - **Fixture checks.** All of these are exact on the supplied 21-state word,
+    where the pivot reader's action is up to 4.3× larger.
+  - **Carried replays** (real-arithmetic optimal-gain replay of the literal
+    coefficients, corrected core): `B*` is within 6.3e8/1827/12.2/5.1× of
+    the actual AG covariance on 0.32/4/16/64-s quiet windows, and 4.9e8/2560/
+    12.4/5.4× on wave windows. The full 21×21 diffuse limit is within
+    55–77× from 16 s on and dominates the literal terminal covariance.
+- Contraction formulations (`corrected_word.py`, `word_energy.py`,
+  `ou3-corrected-word-proof.md` §6):
+  - **Exact identities.** `M=C_end'P_0^-1` and
+    `M'P_end^-1 M=P_0^-1(Sigma_00|y-Sigma_00|y,x_end)P_0^-1`.
+  - **Information-ratio lemma.** It is exact, with the proof in §6.
+  - **First-prediction ceiling.** It is exact rational: `3.3741e-10` per
+    prediction.
+  - **Direct carried 0.32-s margins** (literal gains, corrected core):
+    quiet `4.18722e-4` (unchanged from the pre-fix core), wave `6.929e-4`.
+  - **Where the loss sits.** The slowest direction is translational (≈87%
+    v/p, 10–13% BA). Its loss is 61–79% S pseudo-observation, 16–23% AW
+    sync, 13% acc and 3% predictions.
+  - **Other directions.** Bias directions have margins 1.7–2.2e-3.
+    `lambda_min(D_NN)` is .26 quiet and 1.54 wave; the nuisance-eliminated AG
+    Schur loss is ≥733 quiet and 1121 wave.
+  - **Longer words.** The exact word margins are .024/.098/.39 at
+    4/16/64 s.
+  - **Separated bounds fail.** The information-only and forgetting-only
+    bounds stay at 3e-26–3e-3 and 2e-10–6.6e-3 respectively.
 - Existing shipping projection evidence is retained unchanged: residual
   gyro-bias <=.5 rad/s, qualified prediction angle <.007, one-step transport
   floor .003999991833333333 s. A complete turn would require bias norm
@@ -185,17 +261,29 @@ budget for arbitrarily repeated switches. These are explicit OPEN obligations.
 
 On MOVING windows the six-column geometry is attitude-free. A same-cell
 floor would need a coupling between applied magnetic cadence and the jerk
-lemma; the aggregate premise avoids it. The attitude columns need the
-nominal AW tracking error below 1.12383 m/s^2 on 16-s windows, bounded in
-physical units: covariance-normalized storage fails by 6.7--6.9 on the
-carried collinear motion (DEAD_END 19). The gyro columns need
-time-separated transverse-force and magnetic rows through the nominal
-rotation integral.
+lemma; the aggregate premise avoids it. The injection-free aggregate floor
+is now explicit (Theorem G0) under two nominal window statistics: the
+transverse nominal AW mean (<1.96133 m/s^2 needed; carried worst .348) and
+the L1 nominal force (carried 1.091). Controlling quantities, in order:
+(i) a source bound on those nominal statistics from the literal AW loop,
+whose average is gain-weighted and rectifies at the 21-sample sync cycle;
+(ii) the injection frame `Q'b`, which the .02 rad/s gyro residual can rotate
+by ~1 rad over a 100-s word, beyond the global fixed-b tube of G0;
+(iii) the three information bounds of the information-ratio contraction on
+MOVING words:
+- a floor on the word's root information `J` (full-root identifiability of
+  the future augmented design);
+- a ceiling on `A-kappa J` in the joint-reader metric;
+- the joint-reader floor `I_eff>=mu` on the preceding >=16-s window.
+
+On carried 0.32-s words the slowest direction is translational, not AG.
+Quiet water leaves the tilt/BA kernel about the magnetic axis outside `J`;
+there contraction comes only through the upper comparison.
 Norm-summed NIS/covariance injection bounds overcharge multi-second transport.
 Quiet-subcase homogeneous decay does not control compatible physical mismatch.
 Preserve actual chronological gains, resets, OU and bias histories. No
-independent nominal boxes, unsigned energy, sampled Gramian or finite replay
-closes B_*.
+independent nominal boxes, unsigned energy, sampled Gramian, selected minor
+or finite replay closes B_*; its exact remaining premise is `I_eff>=mu`.
 Every new lemma's role in V_next<=rho V+c_d|d|^2 is stated in the design:
 stationary information sets a supply/ambiguity radius, bridge products and
 supplies compose rho/c_d, and six pivots feed the historical covariance/loss
@@ -344,8 +432,38 @@ comparison. Source-uniform numerical contraction enclosure is not yet justified.
     or not, supplies `epsilon_a<1.12383` at a uniform retained radius.
     Retained: Lemma B and its tightness; the actual AW error .562 satisfies
     Corollary A on both words.
+20. **Pointwise physical AW tracking: refuted on an admitted history.**
+    Failed quantity: `sup|a_hat-a|` on 16-s A21 windows, 7.647 m/s^2 against
+    1.12383 (ratio 6.80) for a C2-onset horizontal triangle 8.7 m/s^2 at 2.8 Hz
+    (exact envelope: jerk <=99.9, |a|<=8.773, |v|<=.391). Classification:
+    structural counterexample to a sufficient premise, not an estimator
+    failure: the horizontal AW prior follows the vertical tuner at the .05
+    sigma floor, and `Delta a_hat Delta a_hat'<=NIS P_aw` then needs NIS>=144
+    per step to follow the jerk limit. Invalidated: any source-uniform bound
+    on the pointwise AW error below 1.12383 (no refinement can cross it).
+    Retained: Corollary A*, which needs only the signed nominal mean
+    (carried worst .177 of its threshold). Do not strengthen MARINE MOTION.
+21. **Perturbative injection charge over 16-s windows: infeasible.**
+    Failed quantity: `delta^2(u_rms^2+1)/gamma*` with `delta` from Lemma I*,
+    5.12 at the retained tilt, 1.79--7.17 at vanishing radius (only .96 for a
+    quiet force RMS and an exact bias estimate), 700--1306 with the invariant.
+    Classification: feasibility ratio above one; the deterministic .02 rad/s
+    gyro residual is corrected by injections at that rate. Invalidated:
+    charging `max|A~_k-A~_j|` against the attitude floor. Retained: Lemma I*
+    (exact, physical), the third-order reset factor and the signed
+    rotating-frame Corollary A** (feasible .22--.77 in the same table).
+22. **Covariance-ceiling contraction from G0: existence only.** Failed
+    quantity: `1-rho_0<=T b0/P_bg,max` with the least-squares reader ceiling
+    from G0: 4.2e-9 per 100-s word (gyro block), 3.7e-13 (full action),
+    3.4e-7 even at the actual floor 37; the scalar reader has
+    `log10 B_*>=43367`. Classification: quantitatively vacuous but strict;
+    b0=1e-11 makes the prediction comparison process-noise limited unless
+    the ceiling is near the true P_bg. Invalidated: obtaining a useful rho_0
+    from a least-singular-value floor through Q>=eps F C F'. Retained: the
+    conditional implication chain. Next: blockwise reader action and an
+    information-based (J_AG) contraction in the slow bias directions.
 
-20. **LDLT pivot tolerance is not an eigenvalue tolerance: implementation
+23. **LDLT pivot tolerance is not an eigenvalue tolerance: implementation
     failure.** For `N=6`, `tol=24*epsilon`, the symmetric matrix with
     `S_00=1` and lower `5x5` block `-(tol/2) ones` has an LDLT negative pivot
     `-tol/2` but eigenvalue `-5tol/2`. The accepted float result was
@@ -358,7 +476,7 @@ comparison. Source-uniform numerical contraction enclosure is not yet justified.
     New scaled float/double regression checks pass. This does not supply a
     source-uniform arithmetic bound or close nonlinear retention.
 
-21. **Ideal rotation identities are not a source-rounding certificate.** The
+24. **Ideal rotation identities are not a source-rounding certificate.** The
     shared SO(3) coefficients now switch on `x=|w|h` and use degree-18 Taylor
     series for |x|<1; the old `|w|<1e-7` branch description is invalid. Exact
     historical row factorization still uses actual Rs and Bs in W and Gamma.
@@ -371,16 +489,69 @@ comparison. Source-uniform numerical contraction enclosure is not yet justified.
     The next falsifiable test is a directed remainder enclosure under the
     existing nominal-rate/step bounds, not changing the estimator for proof.
 
+25. **First-prediction relative process comparison: structural ceiling.**
+    - **Failed quantity.** `epsilon` in `Q>=epsilon F C_eta F'` with
+      `C_eta>=P_root`. Testing it on one axis's S coordinate gives
+      `epsilon<=Q_SS/(F L F')_SS<=3.3741e-10` for every admitted execution
+      and every upper comparison (`B_*`, `U_n`, `eta`): the OU
+      triple-integrator response is `<=t^3/6`, so one step has
+      `Q_SS=O(h^7)`, and `L` is the certified S floor.
+    - **What it can certify.** `N` predictions certify at most `N epsilon`,
+      i.e. ≤1.73e-4 per 2048-s proof word.
+    - **Carried confirmation.** The ideal ratio with the literal root
+      covariance is 2e-23 (quiet) and 4e-22 (wave). The best
+      `C_eta(B*,U_n)` chain is about 1e-36. The actual word margins are
+      4e-4–7e-4 at 0.32 s and 0.39 at 64 s.
+    - **Classification.** Structural and formulation-level; no reader,
+      nuisance upper or Young split can lift it.
+    - **Invalidated.** Obtaining a useful `rho_0` from any single-prediction
+      (or per-prediction iterated) process comparison. This extends
+      DEAD_END 22 from G0's scalar ceiling to every structured `C_eta`. The
+      scalar root-precision cap (`J_root<=L_root^-1`, about 2e9) stays
+      existence-only for the same reason.
+    - **Retained.** The exact identity `D_pred=P^-1-(P+C)^-1`, the
+      structured root upper `P<=diag((1+eta)B,(1+1/eta)U)` and the exact
+      relative-Schur test of `D>=delta J_root` remain valid algebra.
+26. **Separated information-only or forgetting-only word bounds: insufficient.**
+    - **Failed quantities.** `1-lambda_max(P_0^-1/2 Sigma_00|y P_0^-1/2)`
+      (information only) and `lambda_min(P_0^-1/2 Sigma_00|y,x_end P_0^-1/2)`
+      (forgetting only).
+    - **Carried results.** Quiet: 3e-26/2e-10 at 0.32 s up to 3e-12/5.2e-3
+      at 64 s, against exact .389. Wave: 3e-10/2e-9 up to 3.0e-3/6.5e-3,
+      against exact .393.
+    - **Exact example.** `mixed_mechanism_example` has `rho=1/2` with both
+      separated margins zero.
+    - **Classification.** The feasibility ratio is 60–1e24 below exact.
+      Slow directions contract through information and translation (or the
+      quiet kernel) through forgetting, in different eigenvectors.
+    - **Invalidated.** Any two scalar or eigenvalue-separated contraction
+      bounds.
+    - **Retained.** The exact smoother identity and the joint
+      information-ratio lemma, which keeps both mechanisms in one matrix
+      inequality.
+
 ## Retained facts
 
 World-frame row factorization, the reset Gram identity, attitude-invariant
 same-cell geometry, the literal injection Loewner budget and the
-isotropic-sync AW covariance ceiling are exact in real arithmetic.
+isotropic-sync AW covariance ceiling are exact in real arithmetic, as are
+Corollary A*, the AW-loop identities, Lemma I*, the third-order reset
+factor, Corollary A**, Lemma T and the injection-free Theorem G0.
 The sampled acceleration mean bound, constant-field joint physical vector
 floor, full covariance-energy identity, LIN path action, full nuisance floor,
 recurring nuisance upper covariance, historical reader factor/root algebra,
 complete corrected-word matrix bootstrap, actual-gain finite-error composition,
 reset remainder and projection-sector relations remain available.
+Also exact in real arithmetic:
+
+- the joint minimum-action reader, its diffuse-Riccati form, full 21×21
+  domination and coercivity reduction;
+- the smoother identity `M=C_end'P_0^-1`;
+- the information-ratio word lemma;
+- the relative-Schur characterization of `D>=delta J_root`;
+- the first-prediction identity `D_pred=P^-1-(P+C)^-1`;
+- the first-prediction ceiling.
+
 The physical signed reserve is 27049050188592/625000000000000000, approximately
 4.32784803017472e-5, under its stated physical field hypotheses. Its nominal
 transfer ceiling remains unknown. The six-column-to-full contraction lemma
@@ -408,69 +579,89 @@ physical tilt/BA ambiguity separately from estimator covariance. A gyro-only
 observation must charge the entire compatible physical-rate tube. Do not hold
 BA, force zero velocity, or shrink covariance solely from quiet-looking data.
 
-For MOVING, work with the aggregate world-frame array: dense accelerometer
-rows carry transverse force on average, applied magnetic rows fix the
-components normal to B_w, and the gyro columns follow the nominal rotation
-integral. The physical transfer then needs only AW tracking (in physical
-units, from the correction loop), reference and gravity mismatch, and
-injections; the body-frame rotation/reference action
-of DEAD_END 13 does not arise. A same-cell route would instead have to derive
-cadence from MAGNETIC SERVICE and couple it to the jerk lemma. A convenient
-supplied example cannot select the uniform margins.
+For MOVING, work with the aggregate world-frame array: accelerometer rows
+enter through nominal window statistics (Corollary A*), applied magnetic rows
+at service gaps fix the components normal to B_w, and the gyro columns follow
+the nominal rotation integral, whose field-axis coordinate Lemma T makes
+monotone. No physical AW tracking, reference or gravity-mismatch transfer is
+needed for the geometry; the body-frame rotation/reference action of
+DEAD_END 13 does not arise. A same-cell route would instead have to derive
+cadence from MAGNETIC SERVICE and couple it to the jerk lemma.
+
+Downstream, certify the contraction of whole MOVING words (16 s or longer)
+through the information-ratio lemma, not per prediction. The joint reader
+over the preceding window supplies the upper comparison `C`. The word's
+future augmented design supplies `J` and `A`. G0, the nominal AW statistics
+and the injection frame are the geometric inputs to both information floors.
 
 ## Next falsifiable experiment
 
-State a candidate aggregate world-frame six-column floor: Corollary A for
-the attitude columns, applied magnetic rows at separated times, gyro columns
-through the nominal rotation integral (rate <=1.15 rad/s), and injections
-charged by their signed world sum. Evaluate it at 80 digits on adversarial
-admitted constructions (transverse-force bursts between long collinear
-phases, steady turns, the collinear witness) and on carried words; reject it
-if it is nonpositive or exceeds an actual value. Separately bound the
-physical AW tracking error: write `e_aw` as the output of the literal
-time-varying acc/S correction loop (actual gains, OU decay, syncs) driven by
-physical jerk (<=100 m/s^3), IMU bias and attitude error, and evaluate its
-worst lag at 80 digits on admitted transverse-acceleration histories at the
-MARINE MOTION limits and on both carried collinear words (actual .562). If
-the worst admitted ratio `epsilon_a/1.12383` exceeds one, weaken Corollary A
-(longer windows reach 1.811319) rather than sharpen covariance bounds.
-The stationary tube reader
-remains the quiet-side experiment. Passing finite tests remain
-non-promoting. Do not repeat pairwise, unsigned-energy, variation-norm or
-norm-summed injection tactics.
+Run the non-promoting feasibility test of the information-ratio lemma
+(`ou3-corrected-word-proof.md` §6) before any enclosure.
+
+1. **Carried words.** On carried MOVING words of 16–64 s (wave, the 25-Hz
+   collinear history, the sync-locked triangle), compute `J`, `A` and two
+   choices of `C`: the joint-reader upper bound over the preceding window,
+   and the ideal `C=P_0`. Report the best information-ratio margin against
+   the exact word margin.
+2. **Kill criterion.** Reject the formulation if the joint-reader `C` loses
+   more than one order of magnitude.
+3. **If it survives.** Construct an explicit future root reader from G0's two
+   accelerometer windows, the applied magnetic rows at service gaps and the
+   three-S interpolation rows of the nuisance upper proof. Compare its
+   action with `J^-1` on the same words.
+
+The G0 extensions below remain the geometric inputs to these floors.
+
+Extend Theorem G0 to the literal array: carry the injection frame as a
+rotation Q (Lemma I*, half-angle remainder charged by signed partial sums),
+apply Lemma T on local tubes of about pi/Omega with the kernel direction
+`Q'b` frozen per tube, and chain the monotone field-axis coordinate across
+tubes. A kernel turning at kappa=|omega_tilde|/2 drags the transverse residual
+at kappa|eta|, so the chained speed is about `c0-kappa|eta|_max`: at .01 rad/s
+this fails on 100-s words at the invariant rate (kappa T_w=1>c0) but leaves
+room on ~40-s words with a physical rate (c0 about .6, gap G about 18 s),
+provided the attitude-error jitter satisfies `alpha T_w<<eps`. Evaluate the resulting floor at 80 digits on the synthetic
+falsification families with injection sequences at the deterministic
+.02 rad/s residual and on the carried world-frame words; reject it if it is
+nonpositive or exceeds an actual value. Separately, test whether the
+nominal window statistics admit a loop bound: evaluate the gain-weighted AW
+identity with the actual sync-cycle gains against the worst phase-locked
+jerk-limited input (currently .371 signed, .348 transverse) and report the
+worst admitted ratio against 1.96133. Passing finite tests remain
+non-promoting. Do not repeat pairwise, unsigned-energy, variation-norm,
+norm-summed or perturbative injection tactics.
 
 ## Validation and infrastructure
 
-The numerical-core integration is not proof-only: C++ arithmetic and its
-regressions change. `make all` is therefore required, in addition to the
-source/provenance checks below; final native/CI outcomes belong to PR #617.
-No filter tuning, physical assumptions or quality thresholds are relaxed.
+Based on main `c0f9dd0` merged with the PR 621 continuation (base `50ec893`).
+Main's numerical-core integration (PR #617) changed shared C++ arithmetic:
+`KalmanOUCoreMath.h` now evaluates the SO(3) integral coefficients as
+functions of the angle and repairs only genuinely indefinite matrices. The
+proof continuation adds proof tooling, evidence, documentation, the proof
+workflow and the stability article; its only C++ file is the proof-diagnostic
+driver `tools/stability/aw_tracking_source.cpp`. No estimator source, tuning,
+gate or assumption is changed for the proof.
 
-- `ou_core_numerics-test` passes with the native `-O3` build in float and
-  double, including the new correlated-negative-block cases. Concurrent
-  Eigen-heavy compiles initially exceeded this worker's 4 GiB memory limit
-  (`cc1plus: Killed signal`); the same command passes serially with unchanged
-  flags. This is an infrastructure failure, not evidence against the math.
-- The linked main run `36376443792` failed `clang-tidy` on two coefficient
-  snapshot copies in `mag_field_consistency-test.cpp`. Independent expected
-  values replace those copies; observation snapshots and every acceptance,
-  rejection and mutation assertion remain. No lint check is disabled.
-- The integrated proof/evidence gate rejected the stale common-header hash
-  (`87ac93a` versus `9b92691`). Simply rebinding it would miss changed native
-  arithmetic: the old world-frame record also fails exact reproduction on
-  the moving profiles, while the quiet profile remains unchanged. Regenerate
-  the four-profile record from the corrected source and update its binding.
-  Observer/control terminal parity and every metric check pass; rounded
-  diagnostic bounds above and in `ou3-world-frame-rows.md` match that record.
-- `build_evidence.py` passes and `test_ou3_*.py` passes all **313 tests** after
-  the source/record update. The committed theorem remains OPEN/false and
-  every rational certificate is unchanged. Full validation/robustness and
-  TFG evidence must be regenerated by the existing full-evidence pipeline,
-  never certified by editing only their fingerprints.
-
-Current integration limiter: exact replay and full CI against the final
-source tree, not older green runs. The falsifiable checks are the unchanged
-world-frame `--expect` comparison, `make all`, CMake build, warnings/lint,
-calibration and stationary-device regressions, and the full publication
-pipeline. A failed diagnostic or replay must retain its real failed metric;
-none can promote the still-open finite-error theorem.
+- Native carried-source records bound to the common header are regenerated
+  from the corrected source, never restamped: the world-frame record on main,
+  and the AW tracking record after this merge. Observer/control terminal
+  parity and every metric check must pass on the regenerated records.
+- `build_evidence.py` must reproduce every exact certificate and verify every
+  diagnostic record; the focused `test_ou3_*.py` suite, ruff and
+  `git diff --check` must pass; `make all` is required because main's merge
+  brings C++ arithmetic and regression changes.
+- Full validation/robustness and TFG evidence are regenerated by the existing
+  full-evidence pipeline, never certified by editing only their fingerprints.
+- Local results on the merged tree:
+  - **`make all`.** Every native build and test directory passed. Its
+    `tests/validation` step failed 7 of 650 tests, all stale proof bindings
+    of in-progress edits: the provenance hashes and the committed theorem
+    status.
+  - **After regeneration.** `make -C tests/validation test` passes 650/650,
+    `build_evidence.py` passes, and ruff and `git diff --check` are clean.
+  - **AW record.** `aw_tracking_source_diagnostic.py --expect` reproduces the
+    regenerated record.
+  - **Still to do.** The carried readout record
+    (`ag-readout-source-feasibility.json`) predates the core fix and the new
+    `contraction_feasibility` fields; it is regenerated before merge.

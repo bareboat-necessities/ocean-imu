@@ -121,6 +121,63 @@ def analyze(trace, dps=80):
             t = f*t
             sequence.append((kind, f, q))
         o, endpoint = mp.matrix(rows), t[:6, :]
+
+        # Direct complete-word homogeneous contraction feasibility.  This is
+        # deliberately independent of any scalar covariance ceiling: replay
+        # the literal mean differential M through every prediction, accepted
+        # correction A=I-KH, and reset, then compare
+        # M' P_end^-1 M directly with P_root^-1.  The equivalent loss
+        # D=P_root^-1-M'P_end^-1 M is also Schur-eliminated over the 15
+        # nuisance coordinates, so the reported AG margin already permits the
+        # worst nuisance cancellation.  Finite carried words remain
+        # non-promoting; the source-uniform enclosure is a separate theorem.
+        mfull = mp.eye(21)
+        for e in trace['events']:
+            kind = e['kind']
+            if kind == 'prediction':
+                ff = mp.eye(21)
+                ff[:6, :6] = mat(e['F_AG'])
+                ff[6:18, 6:18] = mat(e['F_LIN'])
+                ff[18:, 18:] = mp.mpf(e['phi_BA'])*mp.eye(3)
+                mfull = ff*mfull
+            elif kind == 'correction':
+                h, k = mat(e['H']), mat(e['K'])
+                mfull = (mp.eye(21)-k*h)*mfull
+            elif kind == 'reset':
+                d = mat(e['d'])
+                x, y, z = d
+                gg = mp.eye(21)
+                gg[:3, :3] += mp.matrix([[0, -z, y], [z, 0, -x], [-y, x, 0]])/2
+                mfull = gg*mfull
+            elif kind in ('sync', 'sync_completion'):
+                pass
+            else:
+                raise ValueError('unknown literal mean event')
+        proot = mat(trace['root_covariance'])
+        pend = mat(trace['terminal_covariance'])
+        jroot = proot**-1
+        endpoint_energy = mfull.T*(pend**-1)*mfull
+        loss = (jroot-endpoint_energy)
+        loss = (loss+loss.T)/2
+        # Generalized endpoint/root energy ratio.  With P_root=L L', root
+        # energy coordinates give C=L' endpoint_energy L.
+        chol = mp.cholesky((proot+proot.T)/2)
+        whitened_endpoint = chol.T*endpoint_energy*chol
+        rho_direct = max(mp.eigsy((whitened_endpoint+whitened_endpoint.T)/2,
+                                  eigvals_only=True))
+        # Exact blockwise target suggested by the information-form route:
+        # minimize the loss over nuisance coordinates for each AG root.
+        daa = loss[:6, :6]
+        dan = loss[:6, 6:]
+        dnn = loss[6:, 6:]
+        dnn_eigs = mp.eigsy((dnn+dnn.T)/2, eigvals_only=True)
+        if min(dnn_eigs) > 0:
+            ag_schur = daa-dan*(dnn**-1)*dan.T
+            ag_schur = (ag_schur+ag_schur.T)/2
+            ag_schur_min = min(mp.eigsy(ag_schur, eigvals_only=True))
+        else:
+            ag_schur_min = mp.mpf('-inf')
+
         # High-precision factor pivoting. This is diagnostic rank, never an
         # exact-zero test or a source-uniform singular-value certificate.
         residual = o.copy()
@@ -157,11 +214,125 @@ def analyze(trace, dps=80):
                 'raw_AG_array_sigma_min': fmt(min(mp.svd(o, compute_uv=False))),
                 'AG_action_lambda_max': fmt(max(mp.eigsy((action+action.T)/2, eigvals_only=True))),
                 'AG_action_minus_literal_covariance_lambda_min': fmt(min(mp.eigsy((action+action.T-p-p.T)/2, eigvals_only=True))),
+                'direct_complete_word_rho': fmt(rho_direct),
+                'direct_complete_word_margin': fmt(1-rho_direct),
+                'loss_nuisance_lambda_min': fmt(min(dnn_eigs)),
+                'AG_loss_schur_after_nuisance_lambda_min': fmt(ag_schur_min),
+                'direct_complete_word_nonlinear_headroom': fmt(1-mp.sqrt(rho_direct)),
+                'direct_complete_word_strict_contraction': bool(rho_direct < 1),
                 'exported_Q_lambda_min': fmt(qmin), 'maximum_injection_rad': fmt(injection),
                 'exported_sync_asymmetry_exact': str(sync_skew),
                 'minimum_complete_sync_pair_Rayleigh_quotient_exact': str(sync_rayleigh),
                 'applied_rows': len(rows), 'events': len(sequence),
                 'source_uniform_verified': False, 'rigorous_enclosure': False}
+
+
+def contraction_feasibility(trace, dps=60):
+    """Non-promoting carried test of the A21 contraction formulations.
+
+    Replays the frozen coefficients with optimal gains and a fixed-point
+    smoother (C=Cov(x_0,x_k|y), Sigma_00) in mp arithmetic, then reports:
+    the smoother form of rho (information/forgetting split), the separated
+    information-only and forgetting-only margins, the block composition of
+    the slowest direction, the ideal first-prediction relative ratio
+    eps_1=lambda_min(P_root^-1/2 F^-1 Q F^-T P_root^-1/2), the joint
+    minimum-action reader B_min (diffuse-AG Riccati limit with the recurring
+    nuisance upper U_n), and the best structured-root chain epsilon.
+    Exported float operands limit eps_1 to its rounding floor.
+    """
+    import mpmath as mp
+    from .nuisance_upper_certificate import bounds
+    n = 21
+    with mp.workdps(dps):
+        mat = lambda a: mp.matrix([[mp.mpf(float(x)) for x in row] for row in a])
+        sym = lambda a: (a+a.T)/2
+        ops = []
+        for e in trace['events']:
+            kind = e['kind']
+            if kind == 'prediction':
+                f, q = mp.eye(n), mp.zeros(n)
+                f[:6, :6], f[6:18, 6:18] = mat(e['F_AG']), mat(e['F_LIN'])
+                q[:6, :6], q[6:18, 6:18], q[18:, 18:] = mat(e['Q_AG']), mat(e['Q_LIN']), mat(e['Q_BA'])
+                for i in range(18, 21):
+                    f[i, i] = mp.mpf(e['phi_BA'])
+                ops.append(('P', f, sym(q)))
+            elif kind == 'sync_completion':
+                inc = completed_sync_increment(e)
+                ops.append(('S', mp.matrix([[mp.mpf(x.numerator)/x.denominator for x in row] for row in inc])))
+            elif kind == 'correction':
+                ops.append(('C', mat(e['H']), sym(mat(e['R']))))
+            elif kind == 'reset':
+                x, y, z = [mp.mpf(float(r[0])) for r in e['d']]
+                g = mp.eye(n)
+                g[:3, :3] += mp.matrix([[0, -z, y], [z, 0, -x], [-y, x, 0]])/2
+                ops.append(('G', g))
+        def replay(p0, smoother=False):
+            p, c, s00 = sym(p0), sym(p0), sym(p0)
+            for op in ops:
+                if op[0] == 'P':
+                    p, c = sym(op[1]*p*op[1].T+op[2]), c*op[1].T
+                elif op[0] == 'S':
+                    p = sym(p+op[1])
+                elif op[0] == 'C':
+                    h, r = op[1], op[2]
+                    s = sym(h*p*h.T+r)
+                    si = s**-1
+                    k = p*h.T*si
+                    if smoother:
+                        ch = c*h.T
+                        s00 = sym(s00-ch*si*ch.T)
+                        c = c*(mp.eye(n)-k*h).T
+                    p = sym(p-k*h*p)
+                else:
+                    p, c = sym(op[1]*p*op[1].T), c*op[1].T
+            return p, c, s00
+        p0 = sym(mat(trace['root_covariance']))
+        pend, c, s00 = replay(p0, smoother=True)
+        forget = sym(s00-c*pend**-1*c.T)
+        chol = mp.cholesky(p0)
+        ci = chol**-1
+        white = lambda a: sym(ci*a*ci.T)
+        ev, vec = mp.eigsy(white(s00-forget))
+        top = max(range(n), key=lambda j: ev[j])
+        e0 = chol*vec[:, top]
+        names = ['theta']*3+['bg']*3+['v']*3+['p']*3+['S']*3+['aw']*3+['ba']*3
+        share = {}
+        for i in range(n):
+            share[names[i]] = share.get(names[i], 0)+(e0[i]/mp.sqrt(p0[i, i]))**2
+        total = sum(share.values())
+        first = next(op for op in ops if op[0] == 'P')
+        fi = first[1]**-1
+        eps1 = min(mp.eigsy(white(sym(fi*first[2]*fi.T)), eigvals_only=True))
+        upper = mp.diag([mp.mpf(x.numerator)/x.denominator for x in bounds()[-1] for _ in range(3)])
+        def diffuse(scale):
+            prior = mp.zeros(n)
+            for i in range(6):
+                prior[i, i] = scale
+            prior[6:, 6:] = upper
+            return replay(prior)[0]
+        coarse, fine = diffuse(mp.mpf(10)**12), diffuse(mp.mpf(10)**14)
+        bmin = fine[:6, :6]
+        literal = sym(mat(trace['terminal_covariance']))
+        best = mp.mpf(0)
+        for k in range(-6, 7):
+            eta = mp.mpf(10)**k
+            cup = mp.zeros(n)
+            cup[:6, :6], cup[6:, 6:] = (1+eta)*bmin, (1+1/eta)*upper
+            lc = mp.cholesky(cup)**-1
+            best = max(best, min(mp.eigsy(sym(lc*sym(fi*first[2]*fi.T)*lc.T), eigvals_only=True)))
+        fmt = lambda x: mp.nstr(x, 12)
+        return {'smoother_rho': fmt(ev[top]), 'smoother_margin': fmt(1-ev[top]),
+                'information_only_margin': fmt(1-max(mp.eigsy(white(s00), eigvals_only=True))),
+                'forgetting_only_margin': fmt(min(mp.eigsy(white(forget), eigvals_only=True))),
+                'slowest_direction_block_shares': {k: mp.nstr(v/total, 3) for k, v in share.items()},
+                'first_prediction_relative_ratio_ideal': fmt(eps1),
+                'joint_reader_Bmin_lambda_max': fmt(max(mp.eigsy(sym(bmin), eigvals_only=True))),
+                'joint_reader_Bmin_minus_literal_AG_lambda_min': fmt(min(mp.eigsy(sym(bmin-literal[:6, :6]), eigvals_only=True))),
+                'joint_reader_scale_convergence': fmt(mp.norm(fine[:6, :6]-coarse[:6, :6])/mp.norm(bmin)),
+                'full_diffuse_limit_minus_literal_lambda_min': fmt(min(mp.eigsy(sym(fine-literal), eigvals_only=True))),
+                'structured_chain_epsilon_best': fmt(best),
+                'decimal_digits': dps, 'optimal_gain_real_arithmetic_replay': True,
+                'source_uniform_verified': False}
 
 
 def rational_upper_factor(matrix, bits=192):
@@ -372,6 +543,7 @@ def run(eigen, headings=('0', '0.001', '0.000001', 'wave')):
                           'literal_terminal_parity': True, **analyze(observed)})
             if heading in ('0', 'wave'):
                 cases[-1]['exact_exported_word_enclosure'] = enclose_exported_word(observed)
+                cases[-1]['contraction_feasibility'] = contraction_feasibility(observed)
     return {'qualification': 'OU3_CARRIED_SOURCE_READOUT_DIAGNOSTIC_V1',
             'shipping_header_sha256': hashlib.sha256(source.encode()).hexdigest(),
             'decimal_digits': 80, 'profile': 'construction through wrapper release; 225 to 225.32 s',

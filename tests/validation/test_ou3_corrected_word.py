@@ -8,7 +8,8 @@ from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.corrected_word import (
-    certificate, conditional_scalar_margin, coupled_example, nuisance_root_bounds,
+    certificate, conditional_scalar_margin, coupled_example, first_prediction_relative_ceiling,
+    nuisance_root_bounds,
     polynomial_injection_defect, projection_storage_guard, reset_remainder_bound,
     shipping_reset_remainder_bound,
 )
@@ -20,6 +21,20 @@ from tools.stability.ou3_theorem.word_energy import word_identity
 
 
 class CoupledCovarianceTests(unittest.TestCase):
+    def test_first_prediction_relative_route_is_process_thin(self):
+        r = first_prediction_relative_ceiling()
+        self.assertLess(r['epsilon_ceiling'], F(1, 10**9))
+        self.assertLess(r['proof_word_margin_ceiling'], F(2, 10**4))
+        self.assertTrue(r['upper_comparison_independent'])
+        # Independent check of the S impulse-response inequality at the
+        # extreme admitted OU parameters: exact OU integral <= h^7 bound.
+        import mpmath as mp
+        h, tau = mp.mpf('0.006'), mp.mpf('0.02')
+        s = lambda u: tau**3*(u*u/(2*tau*tau)-u/tau+1-mp.exp(-u/tau))
+        exact = 2*16/tau*mp.quad(lambda u: s(u)**2, [0, h])
+        self.assertLess(exact, 16*(h/tau)*h**6/126)
+        self.assertGreater(exact, mp.mpf('0.8')*16*(h/tau)*h**6/126)
+
     def test_conditional_upper_bound_keeps_full_21_state_cross_covariance(self):
         c = [[F((3*i+2*j) % 5-2, 5) for j in range(15)] for i in range(6)]
         a = add(identity(6), matmul(c, transpose(c)))
