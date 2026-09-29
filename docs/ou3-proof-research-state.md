@@ -1088,6 +1088,41 @@ one reachable strict-margin state with that gain rank and verify the
 longitudinal/S/BA cycle closure. No current analytical certificate supplies
 that base state, so exact-compatible MOVING + strict MAGNETIC SERVICE remains
 unresolved rather than ruled out.
+## Full-rank AW correction base state
+
+At the constructor/diagonal covariance state, all AW cross-covariances are
+zero and `P_awaw=Sigma_aw_stat>0`. For an accepted accelerometer correction
+the AW gain block is therefore exactly
+
+`K_aw=Sigma_aw_stat R_wb' S^-1`.
+
+`Sigma_aw_stat` and the innovation covariance S are positive definite and
+`R_wb` is orthogonal, so K_aw is invertible. Hence for every nonzero magnetic
+direction b,
+
+`rank(P_b K_aw)=rank(P_b)=2`.
+
+Thus the local two-component compatibility control rank exists analytically;
+gain rank itself is not an obstruction.
+
+This constructor covariance is not automatically a recurring A21 base state.
+To use it for the exact-compatible MOVING counterexample one must connect it
+to a strict-margin regular execution without invoking a reset/reinitialization
+inside A21. A nearby diagonal-dominant covariance would suffice because rank
+two is open. The remaining task is therefore to exhibit a reachable regular
+covariance neighborhood with K_aw invertible (or prove that ordinary
+prediction/corrections preserve invertibility long enough), while arranging
+the mean cycle.
+
+For the mean cycle, the transverse implicit equation at each accepted
+accelerometer update has derivative P_b K_aw of rank two. The implicit
+function theorem therefore solves the two transverse innovation components
+locally for the O(h) OU drift. The longitudinal innovation remains free and
+can be used together with S residual/control and, when enabled, BA innovation
+to satisfy the scalar/integral closure conditions. A rigorous periodic or
+finite-word construction still needs those longitudinal/S/BA equations and
+the physical measurement realization checked against MARINE MOTION and IMU
+BIAS.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
