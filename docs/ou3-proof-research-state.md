@@ -1840,6 +1840,49 @@ quantitatively robust on the ~7-degree captured domain; source-uniform
 construction/capture into that domain under the amended MOVING assumption
 remains open.
 
+## Nonperturbative moving-capture target with symbolic theta_E
+
+Keep theta_E>0 symbolic. The ~7-degree quantity is an estimator tilt-error
+entry tube for the already-certified magnetic-reference refinement mechanism;
+it is not a bound on physical rocking amplitude.
+
+Use the fixed LOCAL GRAVITY vector g0 and near-constant nonvertical magnetic
+vector b0 as two noncollinear world references. For a candidate execution whose
+attitude estimate remains outside the 7-degree tilt tube, compare physical and
+nominal vector records over a complete MOVING window. Bounded physical
+velocity gives the exact diversity identity already present in the proof,
+`T^-1 || integral (a-g) x B dt ||
+ >= g B_h,min - 2 V_max B_max/T`,
+with explicit eps_g/eps_B degradation. Jerk/sampling fidelity transfers this
+continuous action to the sampled applied-record level, while MAGNETIC SERVICE
+guarantees recurring actually applied magnetic information.
+
+The missing finite-error lemma is not local rank. It must show that for every
+attitude error outside the 7-degree tube, the joint sampled acc+mag innovation
+action over a sufficiently long source-qualified window has a positive lower
+bound after minimizing over admissible AW/BA nuisance histories. If such a
+bound c_cap(theta_E)>0 holds, repeated windows cannot leave the estimate
+outside the tube indefinitely while the retained covariance/state remains
+finite: each window supplies finite positive correction information/action.
+This gives a history-dependent finite capture time T_c(h,x0), after which the
+existing refinement/release certificate applies.
+
+The principal unresolved issue is nuisance absorption: nominal AW and BA can
+shift the accelerometer prediction. The physical vector-diversity identity
+prevents physical translation from supplying a permanent rotated-gravity
+surrogate, but one must prove the estimator's OU/S/BA mean dynamics cannot
+cancel the joint finite-error innovation action on every window. This is the
+same physical-to-nominal bridge encountered in O2, now at finite attitude
+error.
+
+Thus nonperturbative moving capture is not yet proved by the existing
+identities. The exact next lemma is a finite-error variational inequality:
+`inf joint innovation action >0`
+over all admissible same-history nuisance trajectories and all attitude errors
+with tilt >=7 degrees, under symbolic theta_E, LOCAL GRAVITY and MAGNETIC
+SERVICE. Once proved, capture-to-refinement/release follows without any upper
+restriction on theta_E.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
