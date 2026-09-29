@@ -5019,6 +5019,55 @@ nullity classification unless the physical tilt/BA kernel is nonzero; as
 q->0 that kernel has zero BA component and the geomagnetic floor forbids the
 remaining pure tilt compatibility.
 
+## Zero-BA endpoint lemma and neighborhood consequence
+
+Consider a complete admissible MOVING word and a zero-action slow-root vector
+with q=0. The existing four-S and magnetic/gyro arguments first remove LIN/AW
+root and gyro-bias quotient components. The remaining candidate is pure
+attitude tilt theta.
+
+At every applied magnetic row, zero loss gives
+`[R_wb b^W]x theta_k=0`, so the transported nonzero theta_k must be parallel
+to the body magnetic direction. At every applied accelerometer row, zero loss
+with q=0 gives
+`[R_wb(a_w^W-g^W)]x theta_k=0`, so the same transported tilt must be parallel
+to the nominal CoG specific-force direction. Hence a nonzero pure-tilt null
+trajectory requires
+`a_w^W-g^W parallel b^W` at every relevant accelerometer epoch.          (ZB-1)
+
+Under the near-constant nonvertical geomagnetic premise this implies
+`P_bperp a_w^W=P_bperp g^W+delta_B`, with the positive gravity-transverse
+floor from GF-3.
+
+However, ZB-1 by itself is a condition on the **nominal** AW mean. The
+complete-word homogeneous nullspace equations do not constrain the base AW
+mean through MARINE MOTION; physical gravity span constrains the true
+orientation/history, while accelerometer innovations may make the nominal AW
+satisfy ZB-1. Therefore the stated assumptions do **not** by themselves imply
+that a pure-tilt homogeneous null is impossible.
+
+This exposes an error in the proposed endpoint shortcut: the joint rotating
+base innovation action is not part of the homogeneous information matrix
+J_complete. Positive base residual/innovation does not make a homogeneous
+error direction observable when its linearized measurement rows vanish.
+
+Consequently the theorem
+`q=0 + Delta_g>=theta_E + geomagnetic cutoff + MAGNETIC SERVICE
+ => Ker J_complete={0}`
+is **not proved** and does not follow from the existing assumptions without a
+physical-to-nominal mean constraint.
+
+The neighborhood claim likewise cannot be obtained by continuity. Continuity
+would give a uniform gamma_* only after the q=0 matrix is uniformly positive
+definite; that premise is exactly what remains missing.
+
+What the new geomagnetic premise does prove is narrower but useful: every
+q=0 pure-tilt null word must carry the gravity-sized nominal-AW condition
+ZB-1/GF-3. Thus any counterexample is confined to that explicit base-mean
+manifold. To exclude it one must use the literal mean adaptation dynamics
+over successive words; it cannot be excluded from a single-word homogeneous
+information matrix.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
