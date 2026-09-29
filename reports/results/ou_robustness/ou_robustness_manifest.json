@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "807b38fbb3cec4052b9a9ace6a2c80301988807a",
+  "git_branch": "claude/ou3-a21-moving-contraction-i3uwg6",
+  "git_commit": "c0551a60c19f7c7468ff8d7ccee499da20a351ec",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -325,8 +325,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-09-28T03:49:05+00:00",
-    "git_commit": "807b38fbb3cec4052b9a9ace6a2c80301988807a",
+    "generated_at": "2026-09-29T01:46:56+00:00",
+    "git_commit": "c0551a60c19f7c7468ff8d7ccee499da20a351ec",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -509,8 +509,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "36372403650",
-      "workflow": "build"
+      "run_id": "36507085623",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
