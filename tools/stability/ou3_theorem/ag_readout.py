@@ -164,6 +164,20 @@ def minimum_noise_reader(observation_rows, terminal_map, noise_covariance):
             'minor_selection_required':False}
 
 
+
+def information_action_upper(information_floor, terminal_norm_upper):
+    """Source-uniform measurement-action implication.
+
+    I>=mu I6 and ||T||<=tau imply T I^-1 T' <= tau^2/mu I6.
+    This is only the observation-noise portion of B_*.
+    """
+    mu,tau=map(F,(information_floor,terminal_norm_upper))
+    if min(mu,tau)<=0: raise ValueError('positive information/transport bounds required')
+    return {'measurement_action_scalar_upper':tau*tau/mu,
+            'requires_process_action_bound':True,
+            'requires_nuisance_root_residual_bound':True}
+
+
 def minimum_noise_action_from_information(information, terminal_map):
     """T I^-1 T' action; source proof target for uniform reader conditioning."""
     info,t=_matrix(information),_matrix(terminal_map); ldlt(info)
