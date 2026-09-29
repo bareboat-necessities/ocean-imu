@@ -2723,6 +2723,91 @@ kernel-persistence obligation. The next valid step is to restore the
 physically declared kernel functional/metric (rather than arbitrary Euclidean
 soft eigenvector normalization) and analyze its exact one-word transfer using
 BA decay plus attitude/reset chronology.
+## Physical normalization and exact compatibility-line transfer
+
+Use the physical attitude amplitude as the scalar kernel coordinate. At a
+word root with a nontrivial complete-word compatibility line choose its
+generator
+
+`nu_W=(theta_hat_W,0,...,0,-q_W)`, with `|theta_hat_W|=1`,
+
+where theta_hat_W is the root attitude-error direction about the pulled-back
+world magnetic-field axis and q_W is fixed by all accelerometer compatibility
+equations. A kernel state is `x=lambda nu_W`; lambda is therefore an angle
+amplitude in radians. The scalar covariance ceiling is the variance of this
+declared lambda functional, not the Euclidean norm of the mixed attitude/BA
+vector.
+
+On an exact zero-loss word all fresh root-source factors are zero for the
+homogeneous transfer. Four-S kills LIN/AW, magnetic service/Lemma T kills the
+gyro-bias quotient, and the surviving attitude obeys the deterministic
+attitude/reset transport
+
+`theta_N=F_W theta_0`.
+
+By definition of the next compatibility generator, if the exact line
+persists across the word then
+
+`F_W theta_hat_W = s_W theta_hat_(W+1)`                     (PT-1)
+
+for a scalar signed attitude-amplitude transfer s_W. Because both generators
+are normalized to unit attitude norm,
+
+`|s_W|=|F_W theta_hat_W|`.                                  (PT-2)
+
+The BA component propagates homogeneously as
+`b_a,N=Phi_b,W (-lambda q_W)` (including its literal frame transport).
+Exact compatibility at the next root requires
+
+`Phi_b,W q_W = s_W q_(W+1)`.                               (PT-3)
+
+Thus BA decay does not independently multiply the scalar lambda. Instead it
+constrains which exact compatibility lines can persist: q_(W+1) must absorb
+the relative BA decay compared with attitude transport.
+
+The physically normalized large-c persistence coefficient is therefore
+
+`alpha_W^phys = s_W^2`                                      (PT-4)
+
+for an exact data-null word whose compatibility line maps into the next
+compatibility line; it is zero in the large-c sense on words with no exact
+kernel.
+
+Now inspect the literal attitude transport. Prediction of the homogeneous
+attitude error with zero gyro-bias is a rotation/orthogonal transport in the
+world-frame representation. Quaternion reset uses the exact left-error
+coordinate change; along a zero-innovation/zero-loss compatibility trajectory
+the nominal correction associated with the homogeneous perturbation is zero,
+so the homogeneous physical attitude perturbation is transported without
+dissipation. In the world-frame historical coordinates used by the proof,
+its norm is preserved. Hence for an exact persistent compatibility line
+
+`|F_W theta_hat_W|=1`,
+
+and therefore
+
+`alpha_W^phys=1`.                                           (PT-5)
+
+BA OU decay does not make this scalar mode contract: equation (PT-3) changes
+the BA-to-tilt ratio q of the next compatibility generator, while the
+physically normalized tilt amplitude remains unit persistent.
+
+Consequently, if the admissible recurring class contains an exact
+compatibility line that persists from one complete word root to the next,
+then
+
+`sup_W alpha_W^phys >=1`.
+
+The soft-kernel O2 large-c strict-contraction condition cannot then be proved
+from BA decay alone. A strict `<1` requires an additional mechanism that
+attenuates the physical attitude amplitude along the exact compatibility
+line, or a theorem showing no exact compatibility line can persist across
+successive recurring words under the current assumptions.
+
+This is a conditional obstruction, not yet an existence proof of a persistent
+exact-compatible recurring execution. It clarifies the role of BA decay:
+decay rotates/reweights the compatibility line; it does not itself dissipate
+the physically normalized tilt scalar.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
