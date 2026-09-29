@@ -5602,6 +5602,48 @@ self-consistent covariance/gain recurrence; a proof of O2 would require an
 additional invariant showing PRDC-2 cannot be self-consistent, not merely
 bounded-motion kinematics.
 
+## Exact chronology test for a D_perp covariance floor
+
+Shipping prediction first propagates the LIN/AW covariance and injects fresh
+AW process covariance. Pending AW covariance inflation is then applied.
+If due, the S=0 pseudo-measurement performs a Joseph covariance update **before**
+the next accelerometer gain is formed. Thus the accelerometer numerator uses
+the post-S covariance, not the raw post-prediction covariance.
+
+Let `N_a=P C_a'` denote the accelerometer gain numerator and project its AW
+rows onto the transverse compatibility channel. Before S correction the fresh
+prediction contributes a positive AW marginal term to N_a. The S covariance
+update is
+`P^S=P^- - P^-H_S'(H_SP^-H_S'+R_S)^-1 H_SP^-`
+(in exact covariance form). Hence
+`N_a^S=N_a^- - P^-H_S' S_S^-1 H_S P^- C_a'`.              (DF-1)
+
+The subtractive term has no sign/alignment restriction relative to the
+projected fresh AW contribution. PSD only guarantees the **full** covariance
+remains PSD. Therefore DF-1 can algebraically cancel a projected AW gain
+numerator while all innovation covariances remain SPD.
+
+Subsequent accelerometer gain multiplication by `S_a^-1` cannot restore a
+lost projected rank. Thus there is no source-uniform positive D_perp floor
+derivable solely from fresh AW process covariance.
+
+Conversely DF-1 does not force cancellation: exact rank loss is an algebraic
+surface in the post-prediction covariance/geometry variables. The S update can
+move toward or away from it. Prediction at the next step again injects fresh
+AW variance. No monotone recurrence drives the system to this surface.
+
+Therefore the actual evolving covariance recursion neither forces
+`D_perp->0` nor supplies a positive invariant floor by operation-wise
+structure. The rank-loss set is a reachable-looking algebraic boundary, not an
+attractor or repeller established by the current invariants.
+
+This means the requested global yes/no cannot be decided from covariance
+recursion identities alone. To prove a persistent counterexample one must show
+one compatible trajectory avoids the DF-1 cancellation surface for all time;
+to prove O2 one must show every compatible trajectory hits it (or another
+admissibility boundary). Neither statement follows from shipping covariance
+algebra.
+
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
