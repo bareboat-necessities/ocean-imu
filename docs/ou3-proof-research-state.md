@@ -1470,6 +1470,38 @@ Next mathematical obligation: extract a constructive positive lower enclosure
 `g_under(c,r)` from the literal zero-action implications while preserving
 same-history correlations. Do not return to observation-only pseudoinverses
 or the retracted unprojected leverage inequalities.
+## Reachable-base dependency for the persistent-pair construction
+
+The requested base cannot currently be certified from startup. The stability
+proof explicitly leaves the H18/reference-refinement/BA-release map open:
+actual release entry into the A21 retained region is a later obligation.
+Therefore constructor covariance or a nominal A21 record cannot be promoted
+to an **actual reachable recurring A21 base** without solving that release
+obligation out of order.
+
+The recurring A21 theorem is conditioned on coefficients from an actual
+post-release execution. Consequently a counterexample/persistent-pair base
+must likewise occur on an actual post-release history; an arbitrary frozen
+state satisfying local A21 inequalities is insufficient.
+
+Properties (1) strict physical/service/gate margins and (3) rank-two
+transverse control are open properties once a suitable actual base exists;
+property (2) exact compatibility is a closed codimension condition that the
+IFT construction can preserve locally. Physical realization and strict
+MAGNETIC SERVICE have already been shown locally open. But no current theorem
+guarantees that the open post-release reachable set intersects the exact
+compatibility manifold at a rank-two point.
+
+Thus reachable-base existence is logically downstream of, or coupled to, the
+still-open release reachability map. It cannot be solved from the current A21
+tail lemmas alone. Conversely, failure to exhibit such a base does not prove
+the compatibility manifold unreachable.
+
+Proof discipline consequence: do not use the persistent-pair construction to
+claim alpha_bar=1, and do not use its absence to claim alpha_bar<1. Complete
+the A21 O1/O2 theorem conditionally on the actual retained A21 class first;
+startup/H18/release entry remains a separate later composition obligation as
+specified by the controlling proof order.
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
