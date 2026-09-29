@@ -2081,6 +2081,64 @@ coercivity remains blocked only by this transversality issue. A different
 kernel-bounded quantity that stays regular as the one-dimensional
 compatibility line rotates is required unless a new physical transversality
 assumption is introduced.
+## Moving-kernel quotient Riccati diameter
+
+For each complete word W retain its normalized compatibility kernel nu_W.
+Do not require a uniform positive nonzero eigenvalue of the data information.
+With kernel precision mu=1/c, let Pi_W be the known-root terminal covariance
+and P_nu,W the terminal covariance with only the rank-one kernel prior. Define
+
+`kappa_Q(W,c)=lambda_max(Pi_W^-1 P_nu,W)`.
+
+This is basis-free. In root coordinates split the moving kernel line from its
+orthogonal quotient and write
+
+`J=[[j_nn,j_nq'];[j_nq,J_qq]]`.
+
+After adding mu on the kernel line, block elimination gives the quotient Schur
+information
+
+`S_q=J_qq-j_nq j_nq'/(j_nn+mu)`.
+
+Write the terminal excess map in Pi-whitened coordinates as
+`H=[h_n,H_q]`. The corresponding quotient terminal map is
+
+`H_eff=H_q-h_n j_nq'/(j_nn+mu)`.
+
+The dangerous quantity is the relative pair (H_eff,S_q), not
+`lambda_min^+(J)`. A quotient information eigenvalue may tend to zero
+without making the Riccati diameter diverge when the terminal excess vanishes
+at the same rate.
+
+The exact target is the Loewner relative-action inequality
+
+`H_eff' H_eff <= (K_Q-1) S_q`,
+
+together with the scalar kernel block bound
+`|h_n|^2/(j_nn+mu)<=K_n-1`. Equivalently, for the optimal complete-word
+minimum-action reader L,
+
+`(T-LA)(T-LA)' <= (K_Q-1) Pi_W`.
+
+These formulations remain meaningful at rank-changing words by shorted
+operator/Moore-Penrose continuation.
+
+A finite continuous extension through a quotient rank loss requires
+
+`Null(S_q) subset Null(H_eff)`.                             (RQ-1)
+
+This is a range condition, not a principal-angle condition. It says that a
+root quotient direction carrying zero complete-word reduced information also
+carries zero terminal excess relative to the known-root covariance. The
+zero-action theorem supplies the data-null classification; what remains is to
+show that the same zero-action nuisance/source mimic reproduces the terminal
+image, establishing (RQ-1) for the literal joint operator.
+
+If (RQ-1) holds at every limiting word, the generalized relative-action ratio
+extends continuously over the compact moving-kernel word family. Its maximum
+is then finite, giving `K_MW(c,r)<infinity` without any uniform
+`sigma_min^+` or principal-angle floor.
+
 ## Explicit coupled coefficient system
 
 For a candidate invariant pair `(r,c)`, let `B_q(c,r)` bound covariance
