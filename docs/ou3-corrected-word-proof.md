@@ -3009,6 +3009,54 @@ Thus it suffices to exclude an arbitrarily long sequence whose nominal
 accelerometer Jacobians approach the zero-BA field-axis compatibility at all
 applied rows. This is exactly the minimal physical-to-nominal excitation
 bridge still missing from the proof.
+## Infinite persistence and nominal zero-BA collinearity
+
+Assume, for contradiction, an infinite sequence of exact-compatible regular
+MOVING words with unit physical tilt persistence. Then q_W->0 geometrically.
+At every applied accelerometer epoch the compatibility equation therefore
+forces the transverse nominal specific-force Jacobian action toward zero.
+
+The literal mean chronology does not turn this into a contradiction. During
+prediction the homogeneous LIN/AW mean follows the OU chain and the S=0
+pseudo-update is applied when due **before** the accelerometer correction.
+The S update feeds back the estimator's own integrated state; it imposes no
+physical measurement constraint. The subsequent accelerometer innovation is
+free to correct the AW mean according to the actual measurement residual.
+
+Consequently an asymptotically field-collinear nominal AW history can, at the
+level of the mean recursion, be maintained by a sequence of accelerometer
+innovations while the S pseudo-feedback removes the resulting integrated
+estimator drift. Bounded estimator v,p,S therefore does not imply bounded
+physical velocity/displacement or a contradiction with MARINE MOTION.
+
+The exact innovation identity
+`f_meas-bhat_a-r_acc=fhat`
+also does not help: for prescribed nominal fhat the residual r_acc is the
+difference to the physical measurement. Current assumptions bound physical
+motion/bias but do not impose a source-uniform bound forcing r_acc->0 or
+forcing the estimator nominal AW to track physical acceleration pointwise.
+That premise was already refuted in the research ledger.
+
+Thus the infinite-horizon OU+S mean recursion supplies no autonomous
+obstruction to nominal zero-BA field-axis compatibility. The estimator can
+in principle absorb the physical/nominal mismatch in innovations and its
+closed-loop mean corrections; the present proof has no theorem preventing
+this indefinitely.
+
+Therefore exact compatibility **cannot currently be proved to break** under
+MARINE MOTION + IMU BIAS + MAGNETIC SERVICE alone. The desired blockwise
+constants N_K,eta_K do not follow from the established assumptions.
+
+More strongly, any proof of recurring breakage must add a premise/theorem
+linking physical excitation to the nominal accelerometer Jacobian or to the
+long-run innovation supply (for example a cumulative innovation/action bound
+that prevents persistent nominal/physical separation). No such bound is
+currently part of the admissibility assumptions or proved from shipping.
+
+This is a theorem-level obstruction, not a missing compactness argument:
+compactness can upgrade pointwise eventual breakage to uniform blockwise
+breakage only after eventual breakage itself is established. The current
+closed-loop equations do not establish it.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
