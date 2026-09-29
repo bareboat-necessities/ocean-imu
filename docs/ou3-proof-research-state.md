@@ -1674,6 +1674,54 @@ not covariance magnitude. Since service equality is admissible and physical
 realizability has no structural amplitude/jerk contradiction, D_perp is the
 only unresolved estimator-internal continuation boundary.
 
+## Minimal covariance data for K_S, K_a and D_perp
+
+At an S pseudo-update, `H_S` selects the three S coordinates. Therefore the
+gain is determined by the full covariance column block
+`P_:S=P(:,S)` and the 3x3 block `P_SS`:
+`K_S=P_:S(P_SS+R_S)^-1`.
+
+At an accelerometer update, the Jacobian has nonzero columns only in attitude,
+AW, BA when enabled, and gyro bias when lever-arm terms are enabled. Hence
+`K_a` is determined by the combined column image
+`P C_a'=P_:theta J_att'+P_:aw R_wb'+P_:ba+P_:bg J_bg'`
+and the innovation covariance. D_perp additionally needs the relevant rows of
+K_a and the subsequent mean/reset transport.
+
+These are the minimal **readout** blocks, but they do not form a closed
+Riccati quotient. Prediction propagates the full LIN block: the S and AW
+columns mix with v and p through the exact 4-state chain. Thus updating
+P_:S and P_:aw requires P_:v and P_:p. Attitude prediction/reset couples
+theta with gyro bias; BA prediction carries its cross blocks. Once these
+columns are included, Joseph measurement updates
+`P^+=P-PC'(CPC'+R)^-1CP`
+modify every retained column through products involving the corresponding
+rows, which by symmetry are the same retained column family.
+
+For the LIN sector closure therefore requires all columns
+`P_:{v,p,S,aw}`; for AG it requires all theta/bg columns when gyro bias is
+present; BA requires its columns. Their union is every state block in the
+shipping OU-III covariance. Cross blocks among these groups are needed by
+prediction and measurement updates. Hence the closure of the gain-readout
+column set under the literal Riccati recursion is the full Pext covariance.
+
+There is no exact lower-dimensional covariance quotient that determines
+K_S,K_a,D_perp and is autonomous under shipping. One can compress to
+measurement-space Schur/information quantities for a **single** update, but
+their next-step evolution depends on cross covariances discarded by that
+compression.
+
+Therefore an exactly periodic gain sequence generally requires recurrence of
+the full covariance (or a special symmetry/invariant submanifold that reduces
+it). The generic reduced Poincare-map shortcut does not close.
+
+A special symmetric counterexample could still exploit an invariant covariance
+submanifold (for example axis-decoupled diagonal/block-diagonal covariance
+under a specially chosen attitude/field geometry). Establishing such an
+invariant submanifold is now the only route to a genuinely lower-dimensional
+periodic covariance construction; otherwise full covariance recurrence is
+unavoidable.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
