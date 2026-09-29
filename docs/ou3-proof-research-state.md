@@ -1758,6 +1758,51 @@ full finite-dimensional PSD covariance together with compatible mean/tuner
 variables; symmetry cannot be used to reduce it without leaving the admitted
 MOVING geometry.
 
+## Four regular-period seed obligations: resolved status
+
+1. **Smooth tuner/event branch.** The OU-III class exposes tau_aw, AW
+stationary covariance and S cadence as model parameters/setters; the Kalman
+class does not autonomously retune them from residuals. A fixed admissible
+interior parameter history and fixed scheduler phase is therefore a legitimate
+smooth coefficient branch for the filter-level A21 analysis (subject to the
+orchestrator theorem carrying those values). S events are periodic and acc/mag
+events can be chosen strictly accepted. This obligation is mechanically
+available; no tuner fixed-point equation exists inside the filter class.
+
+2. **Endpoint controllability.** After transverse compatibility elimination,
+the remaining longitudinal physical acceleration is one scalar input per acc
+epoch. Kinematic velocity/displacement closure uses its zeroth/first sampled
+moments. The proof already has the continuous-history identity
+`T^-1 || integral (a-g) x B dt || >= g B_h,min-2 V_max B_max/T`,
+which shows the physical forcing has nontrivial signed vector action on long
+windows. However it does not prove full-rank endpoint controllability of the
+reduced nominal mean recursion: the input-to-(v,p,S,AW,BA,attitude) endpoint
+matrix still contains actual Kalman gains/cross covariances. No existing
+shipping invariant gives its full row rank. Thus obligation 2 remains OPEN.
+
+3. **Tuner closure.** At filter level choose fixed interior model parameters
+and a period commensurate with the S scheduler; then parameter/scheduler
+closure is exact. If the higher-level orchestrator is included as part of the
+theorem state, its adaptation law must separately be shown periodic/fixed.
+The current filter proof cannot assert that external tuner closure. Thus this
+obligation is CLOSED conditionally at filter level, OPEN for the full
+orchestrated execution unless a fixed admissible tuner mode is certified.
+
+4. **Covariance seed with D_perp!=0.** Constructor/diagonal positive covariance
+gives nonzero direct AW accelerometer gain, but it is not a certified recurring
+A21 seed. For an arbitrary SPD covariance, D_perp singularity is a proper
+algebraic condition unless the determinant is identically zero. The direct AW
+term shows it is not identically zero, so nonsingular SPD covariances form an
+open nonempty set algebraically. What remains unproved is intersection of that
+set with the actual A21-reachable covariance set. Thus obligation 4 is
+algebraically solved but reachability remains OPEN.
+
+Conclusion: all four cannot honestly be declared solved. The hard obstruction
+is still obligation 2 plus reachable intersection in 4; dimension counting
+cannot replace those theorems. The next decisive lemma is full-rank endpoint
+controllability of the reduced longitudinal-input mean recursion for one
+actual regular A21 covariance/history.
+
 ## Next analytical step
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
