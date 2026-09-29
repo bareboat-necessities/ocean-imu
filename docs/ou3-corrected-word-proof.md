@@ -3700,6 +3700,80 @@ Thus the combined block has a certified positive enclosure in terms of three
 compactness constants `(gamma_bar_perp,nu_min,Hbar_A)`. Numerical/closed-form
 values for those constants are still to be extracted from the literal
 coefficient bounds before H_imp and K can be evaluated numerically.
+## Explicit implication-matrix floor and Riccati diameter
+
+Use the sector implication operator
+
+`M=[[aN,0,0,0],
+    [-bLN,aL,0,0],
+    [-bGN,-bGL,aG,0],
+    [-bKN,-bKL,-bKG,aAK,]]`,                               (IG-1)
+
+where `aAK=a_AK_under(c,r)` from AK-7. All coefficients are nonnegative
+source-uniform enclosures on the retained class; the b's bound the linked
+same-history leakage terms from already charged sectors.
+
+The total fixed-factor action satisfies
+`E >= |M u|^2` after the sector amplitudes are normalized consistently.
+Therefore
+
+`g_under(c,r)=sigma_min(M)^2`                               (IG-2)
+
+is a valid constructive augmented-information floor.
+
+To make positivity explicit without a diagonally-dominant assumption, bound
+the inverse triangular matrix. Let
+
+`d1=1/aN`,
+`d2=(1+bLN*d1)/aL`,
+`d3=(1+bGN*d1+bGL*d2)/aG`,
+`d4=(1+bKN*d1+bKL*d2+bKG*d3)/aAK`.                         (IG-3)
+
+These recursively bound the row-sum norm of the solution of `M u=y`:
+`|u_i|<=d_i ||y||_infinity`. Hence
+
+`||M^-1||_2 <= 2 sqrt(d1^2+d2^2+d3^2+d4^2)`                (IG-4)
+
+(the factor 2 converts the four-dimensional infinity norm of y to its
+Euclidean norm; a sharper norm conversion may be used). Consequently
+
+`sigma_min(M) >=
+ 1/[2 sqrt(d1^2+d2^2+d3^2+d4^2)]`,                         (IG-5)
+
+and the explicit symbolic floor is
+
+`g_under(c,r):=
+ 1/[4(d1^2+d2^2+d3^2+d4^2)] >0`.                           (IG-6)
+
+Because
+`aAK(c,r)=sqrt(min(gamma_bar_perp,nu_min^2/c))/(1+Hbar_A)`,
+all c-dependence is explicit in d4. No Gershgorin subtraction or
+cross-coupling smallness assumption is needed.
+
+The variational theorem gives `J_aug>=g_under I`. With
+`L_T(r)=sup_W ||Pi_W^-1/2 Phi_tilde_W||^2`, the exact terminal covariance
+identity yields
+
+`P_nu,W <= K(c,r) Pi_W`,
+
+`K(c,r):=1+L_T(r)/g_under(c,r)`.                            (IG-7)
+
+Hence
+
+`rho_0(c,r)<=1-1/K(c,r)<1`
+
+whenever the same-history scalar kernel ceiling is invariant.
+
+All constants in IG-3 are now named proof obligations rather than hidden
+matrix minima. Existing results supply aN and the magnetic-service component
+of aG; aL requires the corrected four-S quantitative enclosure; aAK is AK-7;
+the b coefficients are literal operator-norm bounds of the linked leakage
+maps and must be extracted from the retained coefficient bounds. Until those
+numbers/closed forms are supplied, IG-6 is an explicit symbolic theorem, not
+a numerical certificate.
+
+The controlling next step is D(c,r)<=c on admissible same-history word pairs.
+No additional O1 architecture is needed.
 ## Source covariance guard for the actual projection
 
 The inherited BA marginal bound is `P_ba,ba <= (1/1600) I3` at every regular
