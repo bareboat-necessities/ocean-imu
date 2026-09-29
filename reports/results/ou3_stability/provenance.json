@@ -197,7 +197,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/word_energy.py",
-      "git_blob_sha": "bb51df9d98a97a6a3275dc06f7ca3d0ac786788f"
+      "git_blob_sha": "f858b5d0e5e28d50b80a5ac97f54417d01832345"
     },
     {
       "path": "tools/stability/ou3_theorem/block_factor_numeric.py",
@@ -213,7 +213,7 @@
     },
     {
       "path": "tests/validation/test_ou3_word_energy.py",
-      "git_blob_sha": "bf9e8a083856144f0546810a4764f03df2d06547"
+      "git_blob_sha": "f9fa1d9b362198a7bcbedf706727ba726e887b3f"
     },
     {
       "path": "tests/validation/test_ou3_block_factor_numeric.py",
@@ -557,11 +557,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/aw_tracking.py",
-      "git_blob_sha": "653848b65be643901a2438535239dd7b726c387e"
+      "git_blob_sha": "7e9b394e6a68db149b90afb64d1aafe6f493b706"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_injection.py",
-      "git_blob_sha": "4ec11ba98141bfa97f8cb193e4ece08970413ae4"
+      "git_blob_sha": "4e9f99b93a6eed4521f404258db4271e9e627530"
     },
     {
       "path": "tools/stability/ou3_theorem/aggregate_floor.py",
