@@ -8069,3 +8069,122 @@ action gives
 with q_rel>0.  If yes, MS20 supplies the needed joint service modulus.  If
 not, the equality vector gives the exact magnetic+gyro nuisance trajectory
 that must be carried into the next compatibility kernel.
+
+
+## 74. Relative gyro-process modulus on Range(G_nh): exact obstruction
+
+Continue MS13--MS21.  Shipping does have positive gyro-bias random-walk
+density b0 (default 1e-10 (rad/s)^2/s), so the nuisance process action is not
+identically zero.  Nevertheless a positive ABSOLUTE Q_n floor is insufficient
+for the required RELATIVE comparison
+
+    Q_n >= q_rel G_nn.                                     (QR1)
+
+The reason is that MAGNETIC SERVICE supplies no source-uniform upper
+comparison for G_nn.
+
+### Exact aggregate counterfamily
+
+For M>0 let
+
+    G(M)=
+      [ 1 0 sqrt(M)
+        0 1 0
+        sqrt(M) 0 M ].                                     (QR2)
+
+Then G(M)>=0 (rank two), and for every M
+
+    G_hh=I_2,                                               (QR3)
+
+so the declared MAGNETIC SERVICE premise is satisfied with mu_M=1.  The
+correlated nuisance range is one-dimensional and
+
+    G_nn=M.                                                 (QR4)
+
+Add any fixed positive nuisance process precision q>0:
+
+    Q_n=q.                                                  (QR5)
+
+The best relative modulus is
+
+    q_rel(M)=q/M ->0.                                      (QR6)
+
+The joint nuisance-shorted service information is
+
+    G_res,joint(M)
+      =diag(q/(M+q),1),                                    (QR7)
+
+hence
+
+    lambda_min G_res,joint=q/(M+q)->0.                    (QR8)
+
+Therefore
+
+    [G_hh>=I_2] + [Q_n>=q I]
+      DOES NOT imply any source-uniform q_rel>0
+      or joint magnetic/gyro Schur floor.                  (QR9)
+
+This counterfamily is purely aggregate and needs no event schedule or
+covariance construction.  It proves that the desired implication is absent
+from the current premise set.
+
+### Existing gyro-persistence theorem does not repair QR9
+
+The committed source-uniform gyro-bias persistence result is a WORD-DIAMETER
+limitation: kappa_W has a lower bound proportional to sigma_g^2/(b0 T^2).
+It says weak gyro-bias process prevents arbitrarily strong contraction on
+short words.  It is not an upper bound on magnetic nuisance information
+G_nn and therefore cannot bound M in QR2.
+
+The G0 quantity q_I=16.81 is likewise not available here: it belongs to the
+long-horizon G0 construction with nominal-force premises that remain
+source-open.  Importing it into the 1-s aggregate magnetic block would be
+both horizon mixing and premise promotion.
+
+### Exact nuisance combinations
+
+The nuisance coordinates correlated with E_hb are the columns of G_nh, i.e.
+the transported AG/root combinations whose magnetic observation rows have
+nonzero inner product with the protected heading/axial-bias service rows.
+No finer coordinate identification changes QR9: after restricting to
+Range(G_nh), diagonalize G_nn and Q_n simultaneously by the generalized
+Rayleigh quotient.  The required constant is exactly
+
+    q_rel =
+      inf_(z in Range(G_nh), z^T G_nn z>0)
+      z^T Q_n z / z^T G_nn z.                              (QR10)
+
+Without an upper/relative control on the denominator, its theorem value is
+zero.
+
+### Consequence for the proof
+
+The proposed route
+
+    MAGNETIC SERVICE + gyro process
+      => residualized magnetic floor
+
+is CLOSED NEGATIVELY under the current assumptions.
+
+This does NOT create a complete-word instability counterexample.  It says
+only that magnetic service cannot be separated from the rest of the
+complete-word action by a positive Schur constant.  The correct architecture
+must keep the magnetic nuisance columns jointly with accelerometer/S/process
+and terminal storage in the complete reader/diameter Gram.
+
+Accordingly:
+- retire standalone gamma_M>0;
+- retire standalone q_rel>0;
+- do not add an upper G_nn assumption or full-P ceiling merely to recover
+  them;
+- retain the exact restricted service block G_hh>=I_2 inside the COMPLETE
+  100-s/two-word generalized Gram.
+
+The next productive calculation is therefore to insert G_hh>=I_2 directly
+as a constrained block in the kernel-augmented two-word Gram JR6 and minimize
+the COMPLETE generalized eigenvalue over arbitrary PSD nuisance blocks
+G_hn,G_nn, while retaining the already-proved four-S/process and kernel
+terms.  If that complete minimization remains positive, nuisance
+cancellation is defeated jointly without a magnetic-only Schur floor.  If
+its infimum is zero, its optimizer gives the exact aggregate compatibility
+direction that the remaining accelerometer/S/kernel terms must handle.
