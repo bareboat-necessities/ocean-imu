@@ -31,16 +31,19 @@ bool hasSavedCalibration = false;
 
 void setup()
 {
+  delay(200);            // allow power to stabilize
+  Serial.setTxBufferSize(4096);
   Serial.begin(115200);
+  Serial.setTxTimeoutMs(0);
   delay(1000);
   Serial.println("M5Stack AtomS3R IMU basic demo (M5Unified IMU API path)");
 
   auto cfg = M5.config();
   M5.begin(cfg);
   M5.Imu.begin();
-  ensureMagReady(Serial);
 
   clearM5UnifiedImuCalibration();
+  delay(250);
 
   hasSavedCalibration = calStore.load(calBlob);
   if (hasSavedCalibration)

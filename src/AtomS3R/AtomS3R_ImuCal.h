@@ -28,7 +28,6 @@
 
       auto cfg = M5.config();
       M5.begin(cfg);
-      atoms3r_ical::ensureMagReady(Serial);  // BMM150 often misses cold-boot init
 
       // 1) Clear M5Unified's own IMU calibration/offset data so it can't "stack"
       //    with our calibration (prevents two different calibrations colliding).

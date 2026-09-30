@@ -138,16 +138,17 @@ public:
   FusionApp() = default;
 
   void begin() {
-    pinMode(18, OUTPUT);
-    digitalWrite(18, LOW); // for USB init
-    delay(300);            // allow power to stabilize
+    delay(200);            // allow power to stabilize
+    Serial.setTxBufferSize(4096);
     Serial.begin(115200);
+    Serial.setTxTimeoutMs(0);
     delay(100);
 
     auto cfg = M5.config();
     cfg.internal_imu = true;
     M5.begin(cfg);
     clearM5UnifiedImuCalibration();
+    delay(250);
 
     ui_.begin();
     if (use_graphics_) {

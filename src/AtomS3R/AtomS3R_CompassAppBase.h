@@ -268,7 +268,10 @@ class CompassAppBase {
       mag_gate_(mag_cfg), boot_name_(boot_name) {}
 
   void begin() {
+    delay(200);            // allow power to stabilize
+    Serial.setTxBufferSize(4096);
     Serial.begin(115200);
+    Serial.setTxTimeoutMs(0);
     delay(150);
     Serial.println();
     Serial.printf("[BOOT] AtomS3R Compass + Cal Wizard (%s)\n", boot_name_);
