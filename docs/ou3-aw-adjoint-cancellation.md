@@ -3908,3 +3908,124 @@ with
 
 This is the exact second-Abel physical bound under the existing MARINE MOTION
 contract.
+
+
+## 42. Quantitative second-Abel coefficient geometry and reader-normalization gap
+
+For
+
+    h_B=(1/L_B)[phi_va lambda_v+phi_pa lambda_p+phi_Sa lambda_S],
+
+the integrated-OU coefficients have exact integral representations
+
+    phi_va = int_0^h exp(-s/tau) ds <= h,
+    phi_pa = int_0^h (h-s) exp(-s/tau) ds <= h^2/2,
+    phi_Sa = int_0^h (h-s)^2/2 exp(-s/tau) ds <= h^3/6.    (Q2-1)
+
+These bounds are uniform for arbitrary tau>0 and avoid small-x expansion
+remainders.
+
+For h<=.006 and nominal activation-cell L=.1,
+
+    phi_va/L <= .06,
+    phi_pa/L <= 1.8e-4,
+    phi_Sa/L <= 3.6e-7.                                    (Q2-2)
+
+If actual cell lengths vary, replace .1 by the proved minimum activation-cell
+length before using these numbers.  The earlier rough p/S factors in section
+41 were too large because they missed powers of h; Q2-2 is the correct
+integrated-chain scaling.
+
+Thus, in Euclidean row norm,
+
+    ||h_B||
+      <= .06 ||lambda_v||
+         +1.8e-4 ||lambda_p||
+         +3.6e-7 ||lambda_S||.                             (Q2-3)
+
+The acceleration remainder satisfies
+
+    (A_max/2) L_B ||g_B||
+      <=4.4[
+          h ||lambda_v||
+          +(h^2/2)||lambda_p||
+          +(h^3/6)||lambda_S||
+        ] L_B,                                              (Q2-4)
+
+so per block its raw coefficient scales are at most
+.0264, 7.92e-5 and 1.584e-7 times the respective reader norms for
+L_B=.1,h=.006.
+
+### What the existing LIN action certificate does and does not provide
+
+The 16-s LIN matrix certificate proves a covariance lower comparison
+
+    P_LIN >= D A^-1 D /2,
+
+equivalently a precision ceiling on LIN endpoint errors.  It does NOT by
+itself bound an arbitrary backward adjoint lambda_L: reader scale is set by
+the terminal readout normalization and the complete-word joint reader.
+
+Therefore substituting the LIN precision matrix directly as a bound on
+||lambda_v||,||lambda_p||,||lambda_S|| would be invalid.
+
+For the present reader the terminal normalization IS fixed (unit transverse
+AW nominal-mean row).  The required quantity is the actual complete-word
+minimum-action reader restricted to the LIN boundary coordinates.  If its
+action is J_reader, then dual Cauchy gives
+
+    |c^T lambda_L|
+      <= sqrt(c^T P_LIN c) sqrt(lambda_L^T P_LIN^-1 lambda_L), (Q2-5)
+
+and the second factor is part of the normalized reader action.  A useful
+numeric D2 bound therefore requires a source-uniform upper bound on this
+NORMALIZED reader action at the ~.1-s boundaries, not another covariance
+lower bound.
+
+### Two-norm formulation
+
+Let a_B be the three-vector of scaled coefficients
+
+    a_B=[phi_va/L_B,phi_pa/L_B,phi_Sa/L_B].
+
+Let W_B be the exact 3x3 covariance/action metric induced on the LIN reader at
+the boundary by the complete-word minimum-action construction.  Then
+
+    |h_B|^2 <= (a_B W_B^-1 a_B^T)(lambda_L^T W_B lambda_L). (Q2-6)
+
+The first factor is pure coefficient geometry and is strongly suppressed by
+Q2-2.  The second is square-summed reader action.
+
+The same representation applies to Delta h_B using the difference of two
+coefficient rows and the chronological reader transport.  If the stacked
+operator of all boundary rows has norm C_stack in the complete-word action
+metric, then
+
+    D2_reader <= sqrt(M+1) C_stack                           (Q2-7)
+
+by generic Cauchy; this still costs sqrt(170) and is not enough a priori.
+To avoid it, one must bound the l1 operator norm of the STACKED divided-
+difference rows directly.  This is now a finite deterministic reader matrix
+problem, not a covariance theorem.
+
+### Remaining exact calculation
+
+Construct the normalized complete-word reader L_min already used in the
+repository, sample its LIN boundary rows at the ~.1-s activation boundaries,
+and form the deterministic divided-difference operator
+
+    D2 L_LIN = [h_1; h_2-h_1; ...; h_M-h_(M-1); h_M].       (Q2-8)
+
+The required constant is the induced action-to-l1 norm
+
+    C_D2 = sup_(||z||_action<=1) ||D2 L_LIN z||_(2,1).      (Q2-9)
+
+A generic spectral bound reintroduces sqrt(M); a useful proof needs the
+special banded/Volterra structure of L_min.  The coefficient scales Q2-2 make
+this plausible, but the existing LIN covariance certificate alone does not
+supply C_D2.
+
+Thus no honest explicit D2_reader number follows yet from the current
+certificate.  What HAS closed analytically is the coefficient geometry; the
+remaining obstruction is precisely the normalized complete-word reader's
+divided-difference l1 norm.
