@@ -1817,7 +1817,7 @@ The bracket is SPD, but a square-root factor is a dense rank-one contraction
 whose off-diagonal signs follow -sign(z_i z_j).  It is not a
 total-positive multiplier in general.  Equivalently, the covariance update
 
-    P^+=P-P h^T(hPh^T+R)^-1 hP                             (TP2)
+    P^+=P-P h^T(hPh^T+R)^-1 hP                             (TP-two)
 
 is a rank-one subtraction.  SPD is preserved, but non-principal minors are
 differences of products and their signs are not preserved in dimension >=3.
@@ -1980,7 +1980,7 @@ any kappa_enc substantially above 1e-14.
 ### 23.1 Information age must be tracked in source-factor history
 
 Do not propagate P_carried and P_fresh through the nonlinear Riccati map as
-separate posterior covariances: C_H(P1+P2) != C_H(P1)+C_H(P2).
+separate posterior covariances: C_H(P_a+P_b) != C_H(P_a)+C_H(P_b).
 
 The exact age decomposition lives instead in the linear source-factor/smoother
 representation.  For independent process factor B_j injected at prediction j,
@@ -3379,7 +3379,7 @@ putting the true physical acceleration on the same history, and
 
 The correction is
 
-    e^+ = e^- + K r,                                       (AP2)
+    e^+ = e^- + K r,                                       (AP-two)
 
 with
 
