@@ -17,6 +17,20 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_magnetic_nuisance_schur_exact(self):
+        from tools.stability.ou3_theorem.magnetic_nuisance_interval import service_schur_information
+        # Two protected columns orthogonal to one nuisance column.
+        H=exact([[1,0,0],[0,1,0],[0,0,1]])
+        z=service_schur_information([(H,eye(3),eye(3))],[0,1],[2])
+        self.assertTrue(z["verified"])
+        self.assertGreater(z["gamma_M_lower"],.999999999)
+
+    def test_magnetic_service_floor_alone_fails_closed(self):
+        from tools.stability.ou3_theorem.magnetic_nuisance_interval import service_floor_only_contract
+        z=service_floor_only_contract()
+        self.assertFalse(z["verified"])
+        self.assertEqual(z["gamma_M_lower"],0.0)
+
     def test_literal_source_certificate_fails_closed_on_magnetic(self):
         from tools.stability.ou3_theorem.rank_loss_literal_boxes import rank_loss_factor_certificate
         z=rank_loss_factor_certificate(max_depth=2)
