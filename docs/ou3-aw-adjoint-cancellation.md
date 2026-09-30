@@ -9340,3 +9340,188 @@ Thus the line-rotation problem is CLOSED qualitatively/source-uniformly by
 the ordered-soft-gap compactness theorem.  The controlling remaining O2
 obligation is the linked product/small-c fixed point in LR15--LR16, not
 another compatibility-angle lemma.
+
+
+## 82. Same-word linked soft product: exact dual form and what cancels
+
+The independent product dbar_soft*Hbar is conservative because both factors
+use the same known-root covariance Pi_W.  For one word W and one unit next
+soft direction n define
+
+    d(W,n)=n^T Pi n,                                       (LP1)
+
+    H(W)=||Pi^-1/2 Phi_tilde||_2^2
+        =lambda_max(Phi_tilde^T Pi^-1 Phi_tilde).          (LP2)
+
+The linked same-word quantity is
+
+    L(W,n)=d(W,n) H(W).                                    (LP3)
+
+### Sharp rank-one generalized-eigenvalue identity
+
+For any root vector x,
+
+    x^T Phi_tilde^T Pi^-1 Phi_tilde x
+      = ||Pi^-1/2 Phi_tilde x||^2.                         (LP4)
+
+Hence
+
+    L(W,n)
+      = sup_(|x|=1)
+        (n^T Pi n)
+        (Phi_tilde x)^T Pi^-1(Phi_tilde x).                (LP5)
+
+Define
+
+    a=Pi^1/2 n,
+    b_x=Pi^-1/2 Phi_tilde x.                               (LP6)
+
+Then
+
+    L(W,n)=sup_|x|=1 ||a||^2 ||b_x||^2.                   (LP7)
+
+There is NO general cancellation of Pi between these norms: Cauchy gives the
+opposite-direction lower relation
+
+    |n^T Phi_tilde x|^2
+      =|a^T b_x|^2
+      <=(n^T Pi n)
+        (Phi_tilde x)^T Pi^-1(Phi_tilde x).                (LP8)
+
+Thus the linked product dominates the squared direct terminal coupling but
+can be arbitrarily larger when a and b_x are nearly orthogonal.
+
+### Exact condition-number interpretation on the relevant subspace
+
+Let S=span{n}+Range(Phi_tilde), and restrict Pi to S.  If
+
+    lambda_min(Pi|S)=p_-,
+    lambda_max(Pi|S)=p_+,                                 (LP9)
+
+then
+
+    L(W,n)
+      <= (p_+/p_-)
+         ||Phi_tilde||_(S)^2.                              (LP10)
+
+This uses only the condition number of Pi on the JOINT soft-direction /
+terminal-root-image subspace, not the full state.  But no current theorem
+provides a source-uniform p_+/p_- on that subspace.  Invoking one would
+reintroduce a covariance condition-number route.
+
+### Better linked quantity from duality
+
+The scalar return does not actually require H(W) in ALL root directions.
+The soft prior is rank one.  Carry the SAME soft direction through the
+terminal map.  The exact rank-one linked leverage is
+
+    ell(W,n,x_soft)
+      =(n^T Pi n)
+       (Phi_tilde x_soft)^T Pi^-1(Phi_tilde x_soft),       (LP11)
+
+where x_soft is the current soft root direction.  This is still LP7 without
+the supremum over unrelated x.
+
+More importantly, if n is chosen as the NEXT soft direction and
+y=Phi_tilde x_soft, decompose in the Pi dual pairing.  Define the normalized
+canonical overlap
+
+    chi =
+      n^T y /
+      sqrt[(n^T Pi n)(y^T Pi^-1 y)].                       (LP12)
+
+Then |chi|<=1 and
+
+    ell = |n^T y|^2/chi^2.                                (LP13)
+
+A lower bound on |chi| would control ell, but adjacent lines can be
+orthogonal, so no such lower bound is available or needed.
+
+### Exact scalar covariance return avoids the product
+
+The independent K_soft*dbar bound is therefore not the sharp same-word
+recurrence.  Let current soft prior variance be c along x_soft.  Its
+terminal rank-one contribution after the regularized word is
+
+    a y y^T,                                               (LP14)
+
+with scalar a already bounded by the rank-one reader.  The NEXT soft scalar
+variance is simply
+
+    a (n^T y)^2.                                           (LP15)
+
+This uses the DIRECT coupling n^T y, not the product
+(n^T Pi n)(y^T Pi^-1 y).  By LP8,
+
+    (n^T y)^2 <= ell,                                      (LP16)
+
+so K_soft*dbar is a Cauchy upper bound that can be very loose.
+
+Combine LP15 with the adjacent-line recurrence AL5--AL14: after normalizing
+the propagated rank-one direction u=y/|y|, the next-kernel carry is controlled
+by its actual overlap rho=n^T u and next soft precision/quotient information.
+The kernel set-invariance already closes for every rho.
+
+Therefore the condition
+
+    dbar_soft Hbar<1                                       (LP17)
+
+is SUFFICIENT but not NECESSARY.  Failure to prove LP17 does not block the
+rank-one soft recurrence.
+
+### What remains after preserving the linked direction
+
+For the rank-one soft contribution, no same-word product of independent
+suprema is needed.  The exact recurrence is governed by:
+1. scalar incoming soft variance a;
+2. deterministic norm g=||Phi_tilde x_soft||;
+3. overlap rho with next soft direction;
+4. next soft information m rho^2+lambda2_bar(1-rho^2).
+
+Thus
+
+    a_next =
+      a g^2 /
+      [1+a g^2
+        (m rho^2+lambda2_bar(1-rho^2))].                  (LP18)
+
+and the next-kernel component is rho^2 times LP18.
+
+The only new scalar not already controlled by AL/LR is the deterministic
+GAIN
+
+    g^2=||Phi_tilde x_soft||^2                             (LP19)
+
+of the propagated soft direction.  Unlike Hbar, LP19 is unweighted by
+Pi^-1 and one-dimensional.
+
+If a source-uniform
+
+    g^2 <= gbar_soft^2 <infinity                           (LP20)
+
+holds on the compact retained word class, then LP18 is finite and next-kernel
+set invariance follows with the existing soft precision.  Strict recurring
+contraction depends on the quotient information term and whether g can
+overcome it, but the controlling inequality is now scalar:
+
+    g^2 /
+      [1+a g^2 m_eff]                                      (LP21)
+
+rather than dbar_soft*Hbar.
+
+### Compactness status
+
+Phi_tilde and the chosen soft-direction PROJECTOR are continuous/bounded on
+each finite closed event stratum; at least-eigenvalue multiplicity, use the
+two-dimensional least eigenspace and maximize g there.  Since the retained
+word class is compact, existence of a finite
+
+    gbar_soft^2 =
+      sup_W sup_(x in E_soft(W),|x|=1)
+      ||Phi_tilde_W x||^2 <infinity                       (LP22)
+
+follows without any Pi condition number.
+
+This closes FINITENESS of the linked rank-one transport.  It does not by
+itself give strict contraction <1; the next quantitative/existence test is
+the scalar gain-vs-information recurrence LP18 over the compact class.
