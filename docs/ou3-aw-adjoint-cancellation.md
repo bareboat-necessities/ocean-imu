@@ -3192,3 +3192,94 @@ and the already established word contraction/diameter certificate directly
 supplies the final reader conversion.  This would connect the signed nominal
 AW proof to Theorem D at exactly one final point, without reintroducing gain
 norms or G0.
+
+
+## 36. The proposed c_read^2 <= kappa_W inequality is false
+
+The same-history product
+
+    (terminal marginal variance)*(initial conditional precision)
+
+is NOT controlled by the Riccati diameter kappa_W in general.
+
+Scalar counterexample: let
+
+    y=x_0+v,   Var(v)=R=1,
+    x_N=x_0+w, Var(w)=Q=1.
+
+For a known root, terminal covariance is
+
+    Pi=Q=1.
+
+For a diffuse root, the measurement leaves variance R=1 before prediction,
+so
+
+    P_diff=Q+R=2,
+
+and Theorem D gives
+
+    kappa_W=P_diff/Pi=2.                                   (CR1)
+
+For an actual root prior Var(x_0)=p>0, the posterior after y is p/(p+1), so
+
+    P_N=1+p/(p+1).
+
+The proposed reader product is
+
+    P_N * p^-1
+      = 1/p + 1/(p+1),                                     (CR2)
+
+which tends to infinity as p->0 while kappa_W remains 2.  Hence no universal
+inequality
+
+    c_read^2 <= kappa_W
+
+(or any fixed multiple independent of the root covariance) can hold.
+
+The failure is conceptual: kappa_W measures the DIAMETER of terminal Riccati
+covariances as the root prior varies from known to diffuse.  The reader
+product multiplies terminal variance by INITIAL precision; an arbitrarily
+well-known root has arbitrarily large initial precision even though the
+terminal diameter remains finite.
+
+### Correct normalization
+
+The transported deterministic column generated at epoch j must be normalized
+by the covariance/source channel that actually CREATES that column, not by
+the total initial conditional precision.  For OU physical forcing, the
+coefficient beta_j is deterministic and its sharp bounded-velocity estimate
+already supplies the source normalization.  Using P_j^-1 on E_aw beta_j
+penalizes a perfectly known AW root even though the physical forcing occurs
+AFTER that root and is unrelated to its uncertainty.
+
+Therefore the final-reader conversion should start at the injection epoch
+AFTER the OU physical defect is added.  If the defect is d_j=E_aw q_j, let
+P_j^def be the covariance metric immediately after the corresponding
+prediction/process channel.  Since prediction adds Q_j,
+
+    P_j^def >= Q_j                                         (CR3)
+
+on the process-supported subspace, and subsequent corrections are
+nonexpansive.  A terminal AW readout obeys
+
+    |u^T E_aw^T M d_j|
+      <= sqrt(u^T P_aa,N u)
+         sqrt(d_j^T (P_j^def)^-1 d_j)
+      <= sqrt(u^T P_aa,N u)
+         sqrt(d_j^T Q_j^dag d_j).                           (CR4)
+
+This is source/action normalization, not root-precision normalization.
+
+CR4 alone may still be quantitatively loose for deterministic physical
+acceleration because Q_j can be tiny.  The sharp beta_OU/Abel bound and the
+metric correction transport therefore need a mixed argument: keep the
+physical sequence in its signed primitive norm through prediction, and use
+Kalman metric contraction only for correction maps.  There is no scalar
+c_read depending only on kappa_W that automatically converts between these
+two norms.
+
+Conclusion: Theorem D does not close the final reader bridge.  The remaining
+lemma is a two-norm transport problem: show that interposed Kalman correction
+maps do not amplify the OU signed-primitive operator from bounded physical
+velocity to final AW readout.  This requires exploiting the special
+accelerometer correction structure, not only generic Riccati diameter.
