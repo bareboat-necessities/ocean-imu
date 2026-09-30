@@ -6096,3 +6096,118 @@ No conclusion is promoted from the finite native replay.  The certificate
 must still enclose the late 12-s tuner/covariance/mean orbit, prove the
 6-degree bound and all gates on that orbit, and evaluate the complete weighted
 functional including correction jumps.
+
+
+## 62. Attempted source-uniform K_17<=250: horizon mismatch and exact obstruction
+
+The proposed next step was to combine the existing aggregate world-frame
+geometry, MAGNETIC SERVICE, jerk/sample fidelity, S-chain cancellation,
+gyro-bias persistence and P_ba<=I/1600 on ONE 17-s word to prove
+
+    sup_W kappa_nu(W) <= K_17 <=250.                        (K17-1)
+
+That implication is NOT available from the current proved lemmas.
+
+### Horizon audit
+
+The relevant existing quantitative geometry has incompatible horizons.
+
+1. Theorem G0 uses two accelerometer windows W1,W2 of length L=16 s
+   separated by G=64 s, plus 2 s of endpoint room for the Lemma-T tube.
+   Its certified constant s^2>=1.486786e-3 therefore belongs to an
+   approximately 100-s construction, not a 17-s word.
+
+2. The jerk/sampling theorem excludes the fixed-attitude sampled alias only
+   over 32 s.
+
+3. Its positive joint 3-D measured-vector information result is a 64-s
+   statement.
+
+4. The 17-s nuisance comparison is genuinely 17 s, and the S-chain
+   cancellation and P_ba<=I/1600 are horizon-compatible, but they do not by
+   themselves supply the missing slow AG quotient information.
+
+Consequently inserting the G0/32-s/64-s constants into a 17-s diameter would
+mix different words and is invalid.  Composition only allows information
+actually contained in the chosen word.
+
+### The G0 premises are not source consequences
+
+Even on its proper long horizon, the explicit G0 number uses
+
+    m_perp <= 2/5 m/s^2,
+    u1     <= 6/5,                                         (K17-2)
+
+for the NOMINAL force windows and an injection-free transported array.
+Those are satisfied by the carried audits but remain unproved source-uniform
+consequences of MARINE MOTION / IMU BIAS / MAGNETIC SERVICE.  The literal
+injection-frame extension is also open.  Therefore G0 cannot currently be
+promoted even on 100 s.
+
+### What IS source-uniformly finite
+
+For a radius-local retained class the exact variational reduction already
+gives the right statement.  Eliminate nuisance coordinates by the Schur
+complement and append the physical-kernel precision mu=1/c:
+
+    G_red,mu = G_red + mu nu nu'.                           (K17-3)
+
+On a compact same-history coefficient class, if
+
+    x' G_red,mu(W) x >0                                    (K17-4)
+
+for every unit slow x and every W in the class, continuity gives
+
+    g_*(c,r)=min_(W,|x|=1) x'G_red,mu(W)x >0.              (K17-5)
+
+Together with the exact S-chain fast elimination and bounded literal source
+factors this implies a FINITE radius-local quotient diameter
+
+    K_17(c,r)<infinity.                                    (K17-6)
+
+This is an existence proof, not an explicit useful number.  Turning K17-5
+into a numerical modulus requires quantitative same-word versions of:
+magnetic transverse information after nuisance projection, accelerometer/BA
+compatibility, gyro transport, and the kernel-row angle.  The current
+published 17-s lemmas do not provide those constants.
+
+### Why 250 cannot be claimed
+
+The carried 16-s kappa_nu values near 196--198 demonstrate feasibility only.
+There is no proved inequality placing every admissible word below them or
+below 250.  In particular:
+- source-uniform nominal signed AW-window statistics are OPEN;
+- source-uniform literal injection-frame transport for G0 is OPEN;
+- the complete slow Schur information floor after nuisance elimination is
+  OPEN;
+- MARINE MOTION T_E and theta_E are still symbolic, so no fixed 17-s
+  excitation amount can be inserted.
+
+Hence K_17<=250 is presently UNPROVED, and no valid algebraic combination of
+the listed certificates yields it.
+
+### Productive correction to the proof target
+
+There are two legitimate paths.
+
+A. Keep 17 s as the nuisance/covariance warm-up horizon, but prove a
+RADIUS-LOCAL quotient bound K_17(c,r) jointly with retained-region invariance.
+This matches the current finite-error architecture: source-only rho need not
+be proved before the nonlinear radius.
+
+B. Use a longer contraction superword whose horizon actually contains the
+available geometry (at least 64 s, and 100 s for G0 as currently stated).
+Then derive a same-superword K_T and compose finite-error supplies over that
+horizon.  The carried diagnostics suggest the diameter improves strongly
+with word length, but no carried number is promoted.
+
+Path A is preferable if the goal is the existing 17-s recurring clock.
+Its next lemma is not K_17<=250 outright but an explicit radius-local
+variational floor
+
+    G_red,mu(W) >= g_17(c,r) I                              (K17-7)
+
+for every retained 17-s word, followed by conversion of g_17 and the
+fast/S-chain factors into K_17(c,r).  This avoids horizon mixing and uses
+the fact that storage itself bounds nominal AW/BA error on the candidate
+region.
