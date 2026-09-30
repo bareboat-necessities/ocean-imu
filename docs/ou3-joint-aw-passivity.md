@@ -178,3 +178,149 @@ The analytically justified next bridge is narrower and stronger:
 If proved, the gravity-sized persistent compatibility trajectory disappears
 without adding a new physical assumption and without changing estimator
 behavior.
+
+
+## 8. Literal chronological lifted map
+
+Fix one world direction `u` and first freeze the realized shipping
+coefficients on one same-history word.  This is not an LTI replacement: the
+coefficients below retain their actual chronological values.  Put
+
+    z_k = [v_k, p_k, S_k, a_k]^T,
+
+where `a_k=u' a_w,k`.  For prediction interval `h_k` with the actually
+applied `tau_k`,
+
+    z_k^- = Phi_k z_{k-1}^+,
+
+with `Phi_k=PhiAxis4x1_analytic(tau_k,h_k)`.  Equivalently, with
+`lambda_k=1/tau_k`, the last column is the exact response to an initial
+acceleration,
+
+    a(h) = exp(-lambda h) a(0),
+    v(h) = v(0) + (1-exp(-lambda h))/lambda * a(0),
+    p(h) = p(0) + h v(0)
+           + [h/lambda-(1-exp(-lambda h))/lambda^2] a(0),
+    S(h) = S(0) + h p(0) + h^2 v(0)/2
+           + [h^2/(2 lambda)-h/lambda^2
+              +(1-exp(-lambda h))/lambda^3] a(0).
+
+Let `e_a=[0,0,0,1]^T` and `e_S=[0,0,1,0]^T`.
+For an accepted accelerometer correction define the *actual projected
+one-axis gain column*
+
+    k^a_k = E_z K_acc,k Rhat_k u,
+
+and retain the attitude/BA/sensor remainder `eta_k`.  The exact scalar
+world innovation factorization gives
+
+    z_k^acc
+      = (I-k^a_k e_a^T) z_k^-
+        + k^a_k a_phys,k + E_z K_acc,k eta_k.
+
+For an S=0 correction, with actual gain column `k^S_k=E_z K_S,k u`,
+
+    z_k^S = (I-k^S_k e_S^T) z_k^acc.
+
+If both corrections occur in one cell their order is the literal source
+order; no commutation is allowed.  Magnetic corrections do not directly
+observe LIN, but their full-state covariance/reset action changes subsequent
+`k^a,k^S` and therefore remains in the realized coefficient chronology.
+
+Define each elementary affine operation
+
+    z_j = A_j z_{j-1} + B_j a_phys,j + D_j eta_j.
+
+Then for a word with operations `1,...,N`,
+
+    z_N = M_N z_0
+          + sum_{j=1}^N M_{N:j+1} B_j a_phys,j
+          + sum_{j=1}^N M_{N:j+1} D_j eta_j,
+
+    M_{r:s}=A_r A_{r-1}...A_s.
+
+This is the requested literal chronological [a_w,v,p,S] lift.  Parameter
+commits merely select the next `Phi_k,Q_k,R_S,k`; covariance synchronization
+changes future gains but not the current mean directly.
+
+For the Corollary-A* functional let `c_i^T=alpha_i e_a^T` at its sampled
+epochs.  Stacking the prefix maps gives exactly
+
+    mu_W = l_0^T z_0 + sum_j beta_j a_phys,j + sum_j d_j^T eta_j,
+
+where
+
+    l_0^T = sum_i c_i^T M_{i:1},
+    beta_j = sum_{i>=j} c_i^T M_{i:j+1} B_j,
+    d_j^T = sum_{i>=j} c_i^T M_{i:j+1} D_j.
+
+Thus the alleged persistent nominal AW mean is not a free state trajectory:
+it is a fixed signed functional of one physical acceleration history, the
+carried root, and explicit defects.
+
+## 9. Abel reduction of the physical-acceleration term
+
+The useful bound is not `sum |beta_j| |a_j|`.  That discards exactly the
+bounded-primitive information in MARINE MOTION and reproduces the failed
+variation-norm route.
+
+Let sampled physical velocity satisfy
+
+    v^phys_j-v^phys_{j-1} = h_j a_phys,j + epsilon^quad_j,
+
+where `epsilon^quad_j` is the jerk-controlled sampling defect.  Put
+`w_j=beta_j/h_j`.  Discrete summation by parts gives
+
+    sum_j beta_j a_phys,j
+      = w_N v^phys_N - w_1 v^phys_0
+        - sum_{j=1}^{N-1}(w_{j+1}-w_j) v^phys_j
+        + E_jerk.
+
+Hence
+
+    |sum beta_j a_phys,j|
+      <= V_max (|w_N|+|w_1|+TV(w))
+         + |E_jerk|.
+
+If the first velocity-level charge is still too large, apply summation by
+parts once more using bounded displacement.  Writing the interior coefficient
+differences as a second discrete derivative produces endpoint velocity terms
+plus
+
+    P_max * TV(Delta w / h)
+
+and an explicitly jerk-controlled quadrature remainder.  This is the correct
+place to exploit bounded displacement; it is also why a phase-locked
+zero-mean wave can create some rectification but cannot automatically create
+an arbitrary DC AW state.
+
+The complete target becomes
+
+    |l_0^T z_0|
+      + C_phys(beta; V_max,P_max,J_max)
+      + sum_j ||d_j|| * ||eta_j||
+      < 1.96133 m/s^2.                 (AW*)
+
+All quantities multiplying physical bounds are functions of the *reachable
+shipping chronology*, not independent gain boxes.
+
+## 10. What is proved and what remains open
+
+The lifted identity and the Abel reduction above are exact.  They prove that
+the former algebraic construction, in which innovations and AW are chosen
+independently, is too relaxed: a shipping trajectory must satisfy (AW*).
+
+They do **not yet prove the numerical strict inequality**.  The missing
+uniform fact is a bound on the first/second discrete variation of the reachable
+weights `beta_j` while tau, sigma_aw, r_S and T_S evolve under their coupled
+scheduler and the covariance follows the literal Riccati recursion.  Existing
+carried evidence (signed 16 s AW tracking-error mean <=0.371 m/s^2 on the
+six audited admitted histories) is strong feasibility evidence, but is not a
+source-uniform enclosure.
+
+Therefore the next calculation is narrowly defined: export `beta_j` from the
+existing literal carried-word observer for the qualified extremal histories,
+compute `TV(beta/h)` and the second-difference displacement charge, and test
+(AW*) before attempting rigorous interval enclosure.  Do not return to an
+unsigned acceleration-variation norm and do not promote the 0.371 observation
+to a theorem.
