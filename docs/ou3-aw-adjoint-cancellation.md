@@ -5056,3 +5056,72 @@ The next calculation is now explicit: use the proved literal sync-inflation
 law to bound the scalar AW recursion ACB10--ACB11.  This should replace
 24336 by an O(16) ceiling, potentially making the final signed-reader budget
 quantitatively useful.
+
+
+## 53. Literal AW sync law gives the sharp causal-reader ceiling B_AW,* = 16
+
+The earlier scalar recursion treated AW covariance synchronization as an
+additive inflation. That is too pessimistic for the literal shipping code.
+
+The current congruent stationary synchronization does:
+1. read/symmetrize the current AW principal block P_aw;
+2. set Sigma=sym(Sigma_aw_stat);
+3. congruently rescale every AW cross-covariance using Cholesky factors when usable;
+4. assign exactly
+
+    Pext[AW,AW] = Sigma.                                    (SC1)
+
+Thus at every scheduled covariance sync,
+
+    P_aa^sync = Sigma_aw_stat.                              (SC2)
+
+The cross-covariance congruence does not alter SC2. The retained tuner
+envelope has
+
+    Sigma_aw_stat <= 16 I_3.                               (SC3)
+
+For one OU prediction,
+
+    P_aa^- = phi^2 P_aa^+ + Q_aa,
+    Q_aa=(1-phi^2) Sigma_aw_stat.                           (SC4)
+
+Hence
+
+    P_aa^- - Sigma = phi^2(P_aa^+ - Sigma).                (SC5)
+
+So if P_aa^+<=16 I and Sigma<=16 I, then P_aa^-<=16 I.
+
+An accepted Kalman correction satisfies P^+<=P^- globally, hence its AW
+principal block cannot increase. Attitude resets leave the AW principal block
+unchanged. A later sync resets it again to Sigma<=16 I.
+
+Therefore, after any sync at which SC2 is applied,
+
+    P_aa(k) <= 16 I                                        (SC6)
+
+for every subsequent regular shipping operation, irrespective of AG/LIN/BA
+cross covariance. If construction initializes P_aa<=16 I, this holds from
+construction onward; otherwise it holds from the first covariance sync.
+
+Section 52 identifies the causal terminal-AW reader action with the AW
+principal block of the corresponding auxiliary covariance. Therefore for
+every unit terminal AW direction on the regular post-sync class,
+
+    B_AW^causal <=16.                                      (SC7)
+
+Since the minimum-action reader is no worse,
+
+    B_AW^* <= B_AW^causal <=16.                            (SC8)
+
+Thus the desired source-uniform normalized terminal-AW action ceiling closes
+with the explicit constant
+
+    B_AW,* =16,    sqrt(B_AW,*)=4.                         (SC9)
+
+No additive sync allowance is needed.
+
+Scope: SC9 relies on the literal congruent stationary synchronization in
+current shipping OU-III. It is not a theorem for the historical additive
+floor law or a mode that disables/replaces this synchronization. It also uses
+the applied stationary target envelope Sigma_aw_stat<=16 I already present in
+the recurring nuisance proof.
