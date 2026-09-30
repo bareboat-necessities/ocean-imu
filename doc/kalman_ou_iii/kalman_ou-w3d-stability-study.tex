@@ -1716,6 +1716,29 @@ terminal component transverse to the next kernel and carries the component
 along it with the next scalar kernel precision.  This joins detectability and
 kernel return in one estimate.
 
+This combined estimate has an exact backward-reader realization.  Define the
+next-root terminal metric
+\begin{equation}
+ Q_+=P_+^\perp\Pi^{-1}P_+^\perp+c_+^{-1}P_+ ,
+ \label{eq:next-kernel-terminal-metric}
+\end{equation}
+factor $Q_+=C_+^TC_+$, and pull all rows of $C_+$ backward through the literal
+word while minimizing their common process/sync/correction source action.
+Let $Y_+$ be the resulting root row.  At the current root put
+$Q_0=S_q+c^{-1}P_W$.  Then the sharp fixed adjacent-word constant is
+\begin{equation}
+ C_{\rm joint}(W,W_+)=
+ \lambda_{\max}\!\left[
+ Q_0^{\dagger/2}Y_+^TY_+Q_0^{\dagger/2}\right],
+ \label{eq:joint-two-word-diameter}
+\end{equation}
+and the desired inequality is simply
+$Y_+^TY_+\preceq C_{\rm joint}Q_0$.  Joseph identities make this Gram pair
+exact and preserve all common source factors, but do not by themselves bound
+the supremum through rank-changing kernel pairs.  The qualitative near-null
+suffix theorem gives the correct limiting compatibility manifold; a uniform
+constant requires a linear-rate estimate transverse to that manifold.
+
 Injections obey an exact identity on ${\rm SO}(3)$. With $M=\hat R^{\mathsf T}R$
 the world attitude error, an injection acts by $M\mapsto\operatorname{Exp}(-x)M$
 and a prediction by a rotation of angle at most $h\norm{\tilde\omega}$. If $J$
