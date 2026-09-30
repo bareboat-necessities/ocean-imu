@@ -1739,6 +1739,34 @@ the supremum through rank-changing kernel pairs.  The qualitative near-null
 suffix theorem gives the correct limiting compatibility manifold; a uniform
 constant requires a linear-rate estimate transverse to that manifold.
 
+The literal transverse derivative can be identified explicitly.  At an
+accepted accelerometer correction the nominal AW increment is
+$\delta\hat a_w=K_{aw}u$, so after projection onto the two-dimensional
+field-transverse compatibility equations the diagonal chronological control
+block is
+\begin{equation}
+ D_{\perp,k}=P_{b^\perp}K_{aw,k}|_{b^\perp}.
+ \label{eq:transverse-aw-jacobian}
+\end{equation}
+The complete two-word transverse Jacobian is block lower triangular in the
+accelerometer innovations.  If every required $D_{\perp,k}$ has rank two,
+the implicit-function theorem solves the two transverse innovation
+components locally.  Substitution leaves the longitudinal innovation as a
+free control; endogenous $S$ feedback and BA mean evolution remain inside
+the reduced recursion and impose no separate periodic endpoint equation.
+Strict magnetic service is open under these small controls and does not add
+a row along the allowed field-axis compatibility line.
+
+Thus full transverse rank does not exclude a persistent compatibility pair;
+near a strict-margin compatible base it makes that pair locally controllable.
+The augmented physical/estimator Jacobian consequently has the explicit
+tangent null directions of this compatibility manifold.  After quotienting
+those tangents, the normal Jacobian is locally full rank.  Uniformity can fail
+only at rank-deficient $P_{b^\perp}K_{aw}$ strata, event/gate boundaries, or
+compatibility-line rank changes.  Those strata, rather than generic
+full-rank words, are the remaining linear obstruction to a source-uniform
+$C_{\rm joint}$.
+
 Injections obey an exact identity on ${\rm SO}(3)$. With $M=\hat R^{\mathsf T}R$
 the world attitude error, an injection acts by $M\mapsto\operatorname{Exp}(-x)M$
 and a prediction by a rotation of angle at most $h\norm{\tilde\omega}$. If $J$
