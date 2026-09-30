@@ -185,6 +185,22 @@ non-promoting.  OPEN: source-uniform K_17 over all retained histories.  Do not
 claim a numerical rho until aggregate world-frame geometry, MAGNETIC SERVICE,
 jerk/sample fidelity, S-chain and gyro persistence are enclosed jointly.
 
+**K17 source-uniform target audited and NOT closed.**  The requested
+combination of existing constants on one 17-s word is invalid: G0's explicit
+s^2>=1.486786e-3 uses two 16-s windows separated by 64 s plus endpoint room
+(~100 s total); the jerk fixed-attitude alias exclusion is 32 s; joint
+measured-vector information is 64 s.  The 17-s nuisance comparison, S-chain
+cancellation and P_ba<=I/1600 are compatible with 17 s but do not alone give
+the missing slow quotient floor.  G0 additionally assumes nominal
+m_perp<=0.4, u1<=1.2 and injection-free transport; these remain source-open.
+Therefore carried kappa_nu~196--198 cannot be promoted and K17<=250 is not
+proved.  Qualitative radius-local finiteness follows from the nuisance Schur
+variational form G_red,mu=G_red+(1/c)nu nu' on a compact retained class if
+its nullspace contradiction is made uniform.  Productive 17-s target:
+derive an explicit same-word floor G_red,mu>=g17(c,r)I, then convert with the
+exact S-chain/fast factor to K17(c,r).  Alternative: move contraction to a
+>=64/100-s superword where existing geometry actually applies.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
