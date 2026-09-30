@@ -1931,3 +1931,47 @@ The generic root p floor ~1.96e-9 still makes FA3 weak.  Thus FA1 confirms
 again that measurement information is ample; the quantitative bottleneck is
 the reader-specific prior decomposition between conditional AW variance and
 the encoded LIN component, not the number of accelerometer rows.
+
+
+## 23. Same-history conditional decomposition alone does not improve kappa_enc
+
+For any prescribed regression L_*, choose X=X^T>0 and p_c>0 and define
+
+    c=X L_*^T,
+    s=L_* X L_*^T+p_c.
+
+Then P=[[X,c],[c^T,s]] is positive definite with Schur complement p_c and
+
+    P_a,l P_ll^-1=L_*.
+
+Thus even the exact four-S cancellation regression is compatible with an SPD
+same-history conditional covariance, with arbitrarily small p_c.  Covariance
+algebra alone cannot improve the global kappa_S,min=1.0104660589e-14.
+
+A stronger kappa_enc must therefore use SHIPPING REACHABILITY of P from the
+literal construction through prediction/correction/sync maps.  Generic PSD,
+marginal floors, upper/lower covariance boxes and Schur identities are
+insufficient unless they encode that reachability.
+
+A promising closed reachability variable is information age.  Decompose the
+pre-measurement covariance factor into
+
+    P = P_carried + P_fresh,
+
+where P_fresh is the sum of independent OU process factors injected since a
+chosen previous accelerometer correction.  Prediction transports P_carried
+and appends a fresh independent factor, so this decomposition is exact before
+the next measurement.  The fresh factor has the known OU positive-kernel
+Gram geometry.  If repeated accelerometer corrections uniformly contract the
+AW content of P_carried while every prediction injects a nonzero fresh AW
+factor, then a source-uniform lower fraction
+
+    P_fresh,aa / P_aa >= eta_fresh>0
+
+(or its conditional/readout analogue) would force every near-deterministic
+encoded AW predictor to contain a nonzero fresh-OU component.  Its selected-S
+residual can then be bounded by the explicit OU kernel rather than the
+arbitrary polynomial fit.
+
+This is a genuine reachability statement and is the next required step for
+any kappa_enc substantially above 1e-14.
