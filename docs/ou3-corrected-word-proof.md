@@ -7748,3 +7748,196 @@ Therefore the dissipativity/LaSalle route has reached its genuine theorem
 boundary: strictness is equivalent to excluding zeros of TR-17 over admissible
 same-history physical/covariance periodic or recurrent histories. Further
 scalar tuner or covariance bounds would again discard the linked structure.
+
+
+## Implicit periodic Riccati sensitivity and covariance elimination
+
+This calculation differentiates the literal periodic covariance map on one
+fixed accepted-event/clamp/scheduler stratum. It does not replace shipping by
+a generic DARE.
+
+Let the tuner already be eliminated as eta=eta^*(p) by TR. Define the
+one-period covariance residual
+
+F_P(P,p):=R_L(P;p,eta^*(p))-P.                              (RS-1)
+
+A periodic covariance orbit satisfies F_P(P^*(p),p)=0.
+
+### Exact Frechet derivatives of literal covariance operations
+
+For a prediction with fixed coefficient F and process covariance Q,
+
+Psi_pred(P)=F P F'+Q,                                      (RS-2)
+
+so
+
+D_P Psi_pred[Delta]=F Delta F'.                            (RS-3)
+
+Parameter/physical variations contribute
+dF P F'+F P dF'+dQ in the forcing derivative D_p Psi.
+
+For any accepted linearized measurement/Joseph update with fixed H,R,
+
+Psi_m(P)=P-P H'(H P H'+R)^-1 H P.                          (RS-4)
+
+Let K=P H'S^-1, S=H P H'+R, and L=I-KH. Direct differentiation, including
+the derivative of S^-1, gives the exact identity
+
+D_P Psi_m[Delta]=L Delta L'.                               (RS-5)
+
+Thus the covariance tangent does NOT require differentiating K separately.
+Variations of H,R caused by p/eta enter only the affine tangent forcing
+D_p Psi_m.
+
+A fixed reset/frame covariance congruence
+
+Psi_G(P)=G P G'                                             (RS-6)
+
+has D_P Psi_G[Delta]=G Delta G'. The derivative with respect to p includes
+dG P G'+G P dG'.
+
+The default pending AW covariance floor is applied inside prediction as a PSD
+increment that depends on the pre-floor AW marginal and the tuner target. On a
+fixed active floor branch it is an affine map in P; therefore its P derivative
+is an explicit linear projection modification. The legacy immediate AW block
+replacement likewise has a projection derivative (zero on the replaced AW
+marginal, identity on untouched blocks, with the literal cross-block policy).
+No branch may be differentiated across its switching boundary; sensitivity is
+stratum-local and one-sided at a boundary.
+
+Symmetrization is the linear projection Delta -> (Delta+Delta')/2. Numerical
+PSD repair/projection is inactive on a strict-margin analytical stratum; if it
+activates, smooth IFT is not applicable there and the branch must be treated
+separately.
+
+### Periodic tangent operator
+
+Compose the exact operation derivatives in shipping order over the period.
+This gives a linear operator on symmetric covariance perturbations
+
+L_P := D_P R_L(P^*;p,eta^*(p)).                            (RS-7)
+
+Without an active marginal-replacement/floor projection, every operation is a
+congruence, so
+
+L_P[Delta]=A_c Delta A_c',                                 (RS-8)
+
+where A_c is the chronological product of prediction F, accepted-update
+closed-loop factors (I-KH), and reset/frame G factors over the SAME period.
+With active AW floor/sync projection, insert its literal linear projection
+between these congruences; RS-7 remains exact.
+
+Vectorizing the pure-congruence case,
+
+vec L_P=(A_c kron A_c) vec Delta.                           (RS-9)
+
+Hence
+
+rho(L_P)=rho(A_c)^2.                                        (RS-10)
+
+Therefore a sufficient and, in the pure-congruence case, exact criterion for
+local covariance fixed-point invertibility is
+
+1 notin spectrum(L_P).                                     (RS-11)
+
+The stronger contraction condition rho(A_c)<1 gives
+rho(L_P)<1 and the Neumann inverse
+
+(I-L_P)^-1=sum_(n>=0) L_P^n.                               (RS-12)
+
+This is the precise covariance-tangent condition required by the implicit
+function theorem. It is NOT the old state-error O1/O2 contraction claim:
+A_c is the covariance sensitivity product for one fixed periodic base
+execution.
+
+With projection branches, use the spectrum of the exact composed symmetric-
+matrix operator L_P; a norm bound <1 is sufficient but not necessary.
+
+### Eliminate P locally
+
+Differentiate F_P(P^*(p),p)=0:
+
+(I-L_P)[dP^*]=B_p[dp],                                     (RS-13)
+
+where
+
+B_p:=D_p R_L(P^*;p,eta^*(p))                               (RS-14)
+
+is the TOTAL waveform forcing derivative. B_p includes:
+- direct physical dependence of prediction/measurement/reset Jacobians;
+- derivative of the private tuner orbit eta^*(p);
+- derivatives of tau,sigma_aw, SpectralMSE R_S and T_S including EMA and
+  delayed commit;
+- derivative of Q(tau,sigma), S noise/cadence and Racc vibration inflation;
+- event-time derivative only inside a fixed scheduler stratum (event changes
+  are nonsmooth boundaries).
+
+If I-L_P is invertible,
+
+dP^*=(I-L_P)^-1 B_p[dp].                                   (RS-15)
+
+Thus P is locally a unique C1 function P^*(p) on every strict-margin periodic
+stratum satisfying RS-11.
+
+### Physical-waveform-only obstruction
+
+Use the stable-monodromy form of the field-aligned mean residual when
+available,
+
+h_PF(p,P)=H_B(p,P)(I-A_L(p,P))^-1 b_L(p,P)-q_B(p).          (RS-16)
+
+More generally use any smooth left-null chart of the Fredholm residual on a
+constant-rank stratum. Define
+
+H_L(p):=h_PF(p,P^*(p)).                                     (RS-17)
+
+Then
+
+D H_L[p][dp]
+ =D_p h_PF[dp]
+  +D_P h_PF[(I-L_P)^-1 B_p[dp]].                           (RS-18)
+
+This is the requested exact same-history sensitivity. The covariance response
+is linked to the waveform through the periodic Riccati equation rather than
+independently bounded.
+
+A periodic LaSalle obstruction on this stratum must satisfy
+
+H_L(p)=0                                                    (RS-19)
+
+plus the physical periodic moment, MARINE MOTION, IMU BIAS, MAGNETIC SERVICE
+and gate constraints. Tuner and covariance are no longer independent
+variables.
+
+### Does covariance elimination itself exclude the obstruction?
+
+No. RS-15 is an elimination theorem, not a sign theorem. If RS-11 holds, it
+makes the obstruction SMALLER and smoother but supplies no reason for H_L(p)
+to be nonzero. If RS-11 fails, that likewise does not prove a pathology:
+covariance may have a nonsmooth/nonunique periodic branch or the unit tangent
+may be removed by an active projection/event change.
+
+What the calculation does establish is the exact fork:
+
+1. **Regular covariance branch:** prove RS-11 (preferably rho(L_P)<1), eliminate
+   P by RS-15, and analyze H_L solely over admissible physical waveforms.
+2. **Singular covariance branch:** characterize Ker(I-L_P). A periodic
+   covariance perturbation in that kernel is a genuine neutral Riccati tangent;
+   it must satisfy the Fredholm transversality condition
+   leftKer(I-L_P) paired with B_p[dp]=0 for continuation. Treat this as a
+   separate closed stratum, not by inflating independent covariance boxes.
+
+### Important relation to the dissipativity experiment
+
+The pure-congruence A_c in RS-8 is the same closed-loop linear factor that
+appears in covariance sensitivity, but RS-10 does NOT by itself prove
+homogeneous estimator contraction. Covariance tangent contraction is a local
+property of the periodic Riccati orbit. Nevertheless it is exactly what is
+needed to remove P from the surviving LaSalle fixed-point equations.
+
+Therefore the next quantitative test is now concrete and much smaller:
+evaluate/prove the spectral condition for L_P on a candidate strict-margin
+periodic field-aligned stratum. If rho(L_P)<1 uniformly there, all covariance
+degrees of freedom disappear and the theorem obstruction becomes H_L(p)=0
+in physical waveform space alone. If a unit covariance tangent is forced by
+the field-aligned geometry, that identifies a new genuine equality mechanism.

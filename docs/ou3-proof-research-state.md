@@ -381,3 +381,28 @@ same-history root problem in physical waveform p and covariance P:
 periodic Riccati residual plus the field-aligned mean Fredholm left-null
 residual, with tuner eliminated analytically and physical/service constraints
 retained. SpectralMSE coupling alone does not exclude the obstruction.
+
+
+### Periodic Riccati sensitivity / covariance elimination
+
+The literal periodic covariance map was differentiated operation by operation.
+Prediction has tangent Delta->F Delta F'; an accepted Joseph update has the
+exact tangent Delta->(I-KH) Delta (I-KH)'; reset/frame changes are congruences;
+AW floor/sync branches contribute their literal linear projection derivative.
+On a fixed strict-margin event stratum these compose to the symmetric-matrix
+operator L_P=D_P R_L.
+
+Without an active projection branch, L_P[Delta]=A_c Delta A_c' and
+rho(L_P)=rho(A_c)^2. The periodic covariance fixed point is locally unique and
+smooth whenever 1 is not in spectrum(L_P); rho(A_c)<1 is a convenient stronger
+condition. Then
+dP^*=(I-L_P)^-1 D_p R_L[dp], where the forcing derivative includes the SAME
+physical waveform's tuner/SpectralMSE/delayed-commit response.
+
+Substitution into the field-aligned Fredholm residual yields the physical-only
+obstruction H_L(p)=h_PF(p,P^*(p)) with exact derivative
+D H=D_p h+D_P h (I-L_P)^-1 D_p R_L.
+This eliminates covariance without independent bounds. It does not by itself
+exclude H_L=0. The next quantitative obligation is the spectral condition for
+L_P on a strict-margin field-aligned periodic stratum; singular covariance
+tangent strata must be treated separately rather than boxed.
