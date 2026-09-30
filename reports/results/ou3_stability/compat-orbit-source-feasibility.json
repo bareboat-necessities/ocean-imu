@@ -1,0 +1,2154 @@
+{
+  "admitted": {
+    "combined:1/5-3/10:3/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.22516660498395405,
+      "arguments": [
+        "2.55",
+        "200/21",
+        "3/10",
+        "3/10",
+        "1/32",
+        "1/5"
+      ],
+      "group": "combined",
+      "long_mean_ratio": -0.01296,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "922710574196525224962876175370444279/2489916620011497062400000000000000",
+        "squared_upper": {
+          "A": "9490267790660498017510300944961/895394361507840000000000000000",
+          "J": "23976455625918445399037123824629555721/2489916620011497062400000000000000",
+          "P": "13557783760650060761575321/223848590376960000000000",
+          "V": "133678953182012030909440921/25468995171778560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.2746,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.1082
+    },
+    "combined:1/5-4/5:4/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.22516660498395405,
+      "arguments": [
+        "2.55",
+        "200/21",
+        "4/5",
+        "3/10",
+        "1/32",
+        "1/5"
+      ],
+      "group": "combined",
+      "long_mean_ratio": 0.01549,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "922710574196525224962876175370444279/2489916620011497062400000000000000",
+        "squared_upper": {
+          "A": "9490267790660498017510300944961/895394361507840000000000000000",
+          "J": "23976455625918445399037123824629555721/2489916620011497062400000000000000",
+          "P": "13557783760650060761575321/223848590376960000000000",
+          "V": "133678953182012030909440921/25468995171778560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.3361,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.1108
+    },
+    "combined:7/25-3/10:3/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.22516660498395405,
+      "arguments": [
+        "2.55",
+        "200/21",
+        "3/10",
+        "3/10",
+        "1/32",
+        "7/25"
+      ],
+      "group": "combined",
+      "long_mean_ratio": -0.04475,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "922710574196525224962876175370444279/2489916620011497062400000000000000",
+        "squared_upper": {
+          "A": "9490267790660498017510300944961/895394361507840000000000000000",
+          "J": "23976455625918445399037123824629555721/2489916620011497062400000000000000",
+          "P": "13557783760650060761575321/223848590376960000000000",
+          "V": "133678953182012030909440921/25468995171778560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.1799,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.1134
+    },
+    "combined:7/25-4/5:4/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.22516660498395405,
+      "arguments": [
+        "2.55",
+        "200/21",
+        "4/5",
+        "3/10",
+        "1/32",
+        "7/25"
+      ],
+      "group": "combined",
+      "long_mean_ratio": 0.04739,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "922710574196525224962876175370444279/2489916620011497062400000000000000",
+        "squared_upper": {
+          "A": "9490267790660498017510300944961/895394361507840000000000000000",
+          "J": "23976455625918445399037123824629555721/2489916620011497062400000000000000",
+          "P": "13557783760650060761575321/223848590376960000000000",
+          "V": "133678953182012030909440921/25468995171778560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.2494,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.116
+    },
+    "phase:S-cadence:0": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "3.3",
+        "22/3",
+        "0",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.0003022,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "88959790405651431/198246400000000",
+        "squared_upper": {
+          "A": "2172749488043121/198246400000000",
+          "J": "1893504209594348569/198246400000000",
+          "P": "81/49561600",
+          "V": "161264601/50751078400"
+        }
+      },
+      "pointwise_max_ratio": 0.4084,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.00108
+    },
+    "phase:S-cadence:1/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "3.3",
+        "22/3",
+        "1/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.0002842,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "88959790405651431/198246400000000",
+        "squared_upper": {
+          "A": "2172749488043121/198246400000000",
+          "J": "1893504209594348569/198246400000000",
+          "P": "81/49561600",
+          "V": "161264601/50751078400"
+        }
+      },
+      "pointwise_max_ratio": 0.4081,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.001086
+    },
+    "phase:S-cadence:1/2": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "3.3",
+        "22/3",
+        "1/2",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -3.533e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "88959790405651431/198246400000000",
+        "squared_upper": {
+          "A": "2172749488043121/198246400000000",
+          "J": "1893504209594348569/198246400000000",
+          "P": "81/49561600",
+          "V": "161264601/50751078400"
+        }
+      },
+      "pointwise_max_ratio": 0.4083,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.001107
+    },
+    "phase:S-cadence:1/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "3.3",
+        "22/3",
+        "1/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.0002145,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "88959790405651431/198246400000000",
+        "squared_upper": {
+          "A": "2172749488043121/198246400000000",
+          "J": "1893504209594348569/198246400000000",
+          "P": "81/49561600",
+          "V": "161264601/50751078400"
+        }
+      },
+      "pointwise_max_ratio": 0.4083,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.001086
+    },
+    "phase:S-cadence:2/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "3.3",
+        "22/3",
+        "2/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 1.743e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "88959790405651431/198246400000000",
+        "squared_upper": {
+          "A": "2172749488043121/198246400000000",
+          "J": "1893504209594348569/198246400000000",
+          "P": "81/49561600",
+          "V": "161264601/50751078400"
+        }
+      },
+      "pointwise_max_ratio": 0.4083,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.001096
+    },
+    "phase:S-cadence:3/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "3.3",
+        "22/3",
+        "3/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.000113,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "88959790405651431/198246400000000",
+        "squared_upper": {
+          "A": "2172749488043121/198246400000000",
+          "J": "1893504209594348569/198246400000000",
+          "P": "81/49561600",
+          "V": "161264601/50751078400"
+        }
+      },
+      "pointwise_max_ratio": 0.4082,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.001092
+    },
+    "phase:S-cadence:3/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "3.3",
+        "22/3",
+        "3/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -1.744e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "88959790405651431/198246400000000",
+        "squared_upper": {
+          "A": "2172749488043121/198246400000000",
+          "J": "1893504209594348569/198246400000000",
+          "P": "81/49561600",
+          "V": "161264601/50751078400"
+        }
+      },
+      "pointwise_max_ratio": 0.4085,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.001115
+    },
+    "phase:S-cadence:4/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "3.3",
+        "22/3",
+        "4/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.0001539,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "88959790405651431/198246400000000",
+        "squared_upper": {
+          "A": "2172749488043121/198246400000000",
+          "J": "1893504209594348569/198246400000000",
+          "P": "81/49561600",
+          "V": "161264601/50751078400"
+        }
+      },
+      "pointwise_max_ratio": 0.4082,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0011
+    },
+    "phase:S-cadence:7/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "3.3",
+        "22/3",
+        "7/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 5.237e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "88959790405651431/198246400000000",
+        "squared_upper": {
+          "A": "2172749488043121/198246400000000",
+          "J": "1893504209594348569/198246400000000",
+          "P": "81/49561600",
+          "V": "161264601/50751078400"
+        }
+      },
+      "pointwise_max_ratio": 0.408,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.001103
+    },
+    "phase:S-cadence:9/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "3.3",
+        "22/3",
+        "9/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.0002494,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "88959790405651431/198246400000000",
+        "squared_upper": {
+          "A": "2172749488043121/198246400000000",
+          "J": "1893504209594348569/198246400000000",
+          "P": "81/49561600",
+          "V": "161264601/50751078400"
+        }
+      },
+      "pointwise_max_ratio": 0.4082,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.001094
+    },
+    "phase:mag-cadence:0": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "0.97",
+        "25",
+        "0",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 2.366e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "86073417096749196831/160000000000000000",
+        "squared_upper": {
+          "A": "33935973294688837969/36000000000000000000",
+          "J": "1513926582903250803169/160000000000000000",
+          "P": "9409/9000000000000",
+          "V": "24117158209/1024000000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.01803,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0001642
+    },
+    "phase:mag-cadence:1/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "0.97",
+        "25",
+        "1/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 2.075e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "86073417096749196831/160000000000000000",
+        "squared_upper": {
+          "A": "33935973294688837969/36000000000000000000",
+          "J": "1513926582903250803169/160000000000000000",
+          "P": "9409/9000000000000",
+          "V": "24117158209/1024000000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.0175,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0001628
+    },
+    "phase:mag-cadence:1/2": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "0.97",
+        "25",
+        "1/2",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 1.978e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "86073417096749196831/160000000000000000",
+        "squared_upper": {
+          "A": "33935973294688837969/36000000000000000000",
+          "J": "1513926582903250803169/160000000000000000",
+          "P": "9409/9000000000000",
+          "V": "24117158209/1024000000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.01806,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0001659
+    },
+    "phase:mag-cadence:1/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "0.97",
+        "25",
+        "1/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 1.856e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "86073417096749196831/160000000000000000",
+        "squared_upper": {
+          "A": "33935973294688837969/36000000000000000000",
+          "J": "1513926582903250803169/160000000000000000",
+          "P": "9409/9000000000000",
+          "V": "24117158209/1024000000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.01718,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0001616
+    },
+    "phase:mag-cadence:2/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "0.97",
+        "25",
+        "2/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 1.761e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "86073417096749196831/160000000000000000",
+        "squared_upper": {
+          "A": "33935973294688837969/36000000000000000000",
+          "J": "1513926582903250803169/160000000000000000",
+          "P": "9409/9000000000000",
+          "V": "24117158209/1024000000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.01804,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.000164
+    },
+    "phase:mag-cadence:3/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "0.97",
+        "25",
+        "3/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 1.737e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "86073417096749196831/160000000000000000",
+        "squared_upper": {
+          "A": "33935973294688837969/36000000000000000000",
+          "J": "1513926582903250803169/160000000000000000",
+          "P": "9409/9000000000000",
+          "V": "24117158209/1024000000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.01763,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0001607
+    },
+    "phase:mag-cadence:3/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "0.97",
+        "25",
+        "3/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 2.281e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "86073417096749196831/160000000000000000",
+        "squared_upper": {
+          "A": "33935973294688837969/36000000000000000000",
+          "J": "1513926582903250803169/160000000000000000",
+          "P": "9409/9000000000000",
+          "V": "24117158209/1024000000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.01753,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0001664
+    },
+    "phase:mag-cadence:4/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "0.97",
+        "25",
+        "4/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 2.623e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "86073417096749196831/160000000000000000",
+        "squared_upper": {
+          "A": "33935973294688837969/36000000000000000000",
+          "J": "1513926582903250803169/160000000000000000",
+          "P": "9409/9000000000000",
+          "V": "24117158209/1024000000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.01768,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0001691
+    },
+    "phase:mag-cadence:7/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "0.97",
+        "25",
+        "7/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 2.504e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "86073417096749196831/160000000000000000",
+        "squared_upper": {
+          "A": "33935973294688837969/36000000000000000000",
+          "J": "1513926582903250803169/160000000000000000",
+          "P": "9409/9000000000000",
+          "V": "24117158209/1024000000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.01719,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.000168
+    },
+    "phase:mag-cadence:9/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "0.97",
+        "25",
+        "9/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 2.594e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "86073417096749196831/160000000000000000",
+        "squared_upper": {
+          "A": "33935973294688837969/36000000000000000000",
+          "J": "1513926582903250803169/160000000000000000",
+          "P": "9409/9000000000000",
+          "V": "24117158209/1024000000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.01805,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0001669
+    },
+    "phase:mag-half:0": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.95",
+        "25/2",
+        "0",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 4.259e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "38633718152262871/100000000000000",
+        "squared_upper": {
+          "A": "9541968684366001/2500000000000000",
+          "J": "961366281847737129/100000000000000",
+          "P": "169/2500000000",
+          "V": "975875121/2560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.1329,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0004542
+    },
+    "phase:mag-half:1/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.95",
+        "25/2",
+        "1/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 3.681e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "38633718152262871/100000000000000",
+        "squared_upper": {
+          "A": "9541968684366001/2500000000000000",
+          "J": "961366281847737129/100000000000000",
+          "P": "169/2500000000",
+          "V": "975875121/2560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.1339,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0004596
+    },
+    "phase:mag-half:1/2": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.95",
+        "25/2",
+        "1/2",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -3.107e-06,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "38633718152262871/100000000000000",
+        "squared_upper": {
+          "A": "9541968684366001/2500000000000000",
+          "J": "961366281847737129/100000000000000",
+          "P": "169/2500000000",
+          "V": "975875121/2560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.1329,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0004528
+    },
+    "phase:mag-half:1/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.95",
+        "25/2",
+        "1/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 2.652e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "38633718152262871/100000000000000",
+        "squared_upper": {
+          "A": "9541968684366001/2500000000000000",
+          "J": "961366281847737129/100000000000000",
+          "P": "169/2500000000",
+          "V": "975875121/2560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.133,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0004559
+    },
+    "phase:mag-half:2/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.95",
+        "25/2",
+        "2/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 3.058e-06,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "38633718152262871/100000000000000",
+        "squared_upper": {
+          "A": "9541968684366001/2500000000000000",
+          "J": "961366281847737129/100000000000000",
+          "P": "169/2500000000",
+          "V": "975875121/2560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.1335,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0004584
+    },
+    "phase:mag-half:3/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.95",
+        "25/2",
+        "3/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 1.56e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "38633718152262871/100000000000000",
+        "squared_upper": {
+          "A": "9541968684366001/2500000000000000",
+          "J": "961366281847737129/100000000000000",
+          "P": "169/2500000000",
+          "V": "975875121/2560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.1339,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0004584
+    },
+    "phase:mag-half:3/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.95",
+        "25/2",
+        "3/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 2.641e-06,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "38633718152262871/100000000000000",
+        "squared_upper": {
+          "A": "9541968684366001/2500000000000000",
+          "J": "961366281847737129/100000000000000",
+          "P": "169/2500000000",
+          "V": "975875121/2560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.1339,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0004591
+    },
+    "phase:mag-half:4/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.95",
+        "25/2",
+        "4/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 2.417e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "38633718152262871/100000000000000",
+        "squared_upper": {
+          "A": "9541968684366001/2500000000000000",
+          "J": "961366281847737129/100000000000000",
+          "P": "169/2500000000",
+          "V": "975875121/2560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.1339,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0004584
+    },
+    "phase:mag-half:7/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.95",
+        "25/2",
+        "7/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 1.293e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "38633718152262871/100000000000000",
+        "squared_upper": {
+          "A": "9541968684366001/2500000000000000",
+          "J": "961366281847737129/100000000000000",
+          "P": "169/2500000000",
+          "V": "975875121/2560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.133,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.000456
+    },
+    "phase:mag-half:9/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.95",
+        "25/2",
+        "9/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 3.698e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "38633718152262871/100000000000000",
+        "squared_upper": {
+          "A": "9541968684366001/2500000000000000",
+          "J": "961366281847737129/100000000000000",
+          "P": "169/2500000000",
+          "V": "975875121/2560000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.1335,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.0004586
+    },
+    "phase:sync-harmonic:0": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.3",
+        "400/21",
+        "0",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.01477,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5407239826786086762394991/46242201600000000000000",
+        "squared_upper": {
+          "A": "4441150222067983465561/2621440000000000000000",
+          "J": "457014776173213913237605009/46242201600000000000000",
+          "P": "3651921/655360000000000",
+          "V": "48923491888089/671088640000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.00894,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.01497
+    },
+    "phase:sync-harmonic:1/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.3",
+        "400/21",
+        "1/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.02323,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5407239826786086762394991/46242201600000000000000",
+        "squared_upper": {
+          "A": "4441150222067983465561/2621440000000000000000",
+          "J": "457014776173213913237605009/46242201600000000000000",
+          "P": "3651921/655360000000000",
+          "V": "48923491888089/671088640000000000"
+        }
+      },
+      "pointwise_max_ratio": -0.002836,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.02343
+    },
+    "phase:sync-harmonic:1/2": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.3",
+        "400/21",
+        "1/2",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.01481,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5407239826786086762394991/46242201600000000000000",
+        "squared_upper": {
+          "A": "4441150222067983465561/2621440000000000000000",
+          "J": "457014776173213913237605009/46242201600000000000000",
+          "P": "3651921/655360000000000",
+          "V": "48923491888089/671088640000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.04069,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.01498
+    },
+    "phase:sync-harmonic:1/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.3",
+        "400/21",
+        "1/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.02233,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5407239826786086762394991/46242201600000000000000",
+        "squared_upper": {
+          "A": "4441150222067983465561/2621440000000000000000",
+          "J": "457014776173213913237605009/46242201600000000000000",
+          "P": "3651921/655360000000000",
+          "V": "48923491888089/671088640000000000"
+        }
+      },
+      "pointwise_max_ratio": -0.001282,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.02252
+    },
+    "phase:sync-harmonic:2/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.3",
+        "400/21",
+        "2/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.001173,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5407239826786086762394991/46242201600000000000000",
+        "squared_upper": {
+          "A": "4441150222067983465561/2621440000000000000000",
+          "J": "457014776173213913237605009/46242201600000000000000",
+          "P": "3651921/655360000000000",
+          "V": "48923491888089/671088640000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.02377,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.001332
+    },
+    "phase:sync-harmonic:3/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.3",
+        "400/21",
+        "3/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.01284,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5407239826786086762394991/46242201600000000000000",
+        "squared_upper": {
+          "A": "4441150222067983465561/2621440000000000000000",
+          "J": "457014776173213913237605009/46242201600000000000000",
+          "P": "3651921/655360000000000",
+          "V": "48923491888089/671088640000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.008292,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.01304
+    },
+    "phase:sync-harmonic:3/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.3",
+        "400/21",
+        "3/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.02327,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5407239826786086762394991/46242201600000000000000",
+        "squared_upper": {
+          "A": "4441150222067983465561/2621440000000000000000",
+          "J": "457014776173213913237605009/46242201600000000000000",
+          "P": "3651921/655360000000000",
+          "V": "48923491888089/671088640000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.05292,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.02344
+    },
+    "phase:sync-harmonic:4/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.3",
+        "400/21",
+        "4/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.01289,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5407239826786086762394991/46242201600000000000000",
+        "squared_upper": {
+          "A": "4441150222067983465561/2621440000000000000000",
+          "J": "457014776173213913237605009/46242201600000000000000",
+          "P": "3651921/655360000000000",
+          "V": "48923491888089/671088640000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.04453,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.01304
+    },
+    "phase:sync-harmonic:7/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.3",
+        "400/21",
+        "7/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.02237,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5407239826786086762394991/46242201600000000000000",
+        "squared_upper": {
+          "A": "4441150222067983465561/2621440000000000000000",
+          "J": "457014776173213913237605009/46242201600000000000000",
+          "P": "3651921/655360000000000",
+          "V": "48923491888089/671088640000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.05437,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.02253
+    },
+    "phase:sync-harmonic:9/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "1.3",
+        "400/21",
+        "9/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.00113,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5407239826786086762394991/46242201600000000000000",
+        "squared_upper": {
+          "A": "4441150222067983465561/2621440000000000000000",
+          "J": "457014776173213913237605009/46242201600000000000000",
+          "P": "3651921/655360000000000",
+          "V": "48923491888089/671088640000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.02731,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.001324
+    },
+    "phase:sync-third:0": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "7.5",
+        "200/63",
+        "0",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.007216,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "2408969743537260241631/4624220160000000000",
+        "squared_upper": {
+          "A": "14965022237654940201/262144000000000000",
+          "J": "43833231856462739758369/4624220160000000000",
+          "P": "15752961/65536000000",
+          "V": "5910281245449/67108864000000"
+        }
+      },
+      "pointwise_max_ratio": 3.23,
+      "pseudo_period_end_s": 0.005682,
+      "tau_aw_end": 0.4167,
+      "window_16s_max_abs_ratio": 0.02149
+    },
+    "phase:sync-third:1/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "7.5",
+        "200/63",
+        "1/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.01205,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "2408969743537260241631/4624220160000000000",
+        "squared_upper": {
+          "A": "14965022237654940201/262144000000000000",
+          "J": "43833231856462739758369/4624220160000000000",
+          "P": "15752961/65536000000",
+          "V": "5910281245449/67108864000000"
+        }
+      },
+      "pointwise_max_ratio": 3.231,
+      "pseudo_period_end_s": 0.005682,
+      "tau_aw_end": 0.4167,
+      "window_16s_max_abs_ratio": 0.03166
+    },
+    "phase:sync-third:1/2": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "7.5",
+        "200/63",
+        "1/2",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.007301,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "2408969743537260241631/4624220160000000000",
+        "squared_upper": {
+          "A": "14965022237654940201/262144000000000000",
+          "J": "43833231856462739758369/4624220160000000000",
+          "P": "15752961/65536000000",
+          "V": "5910281245449/67108864000000"
+        }
+      },
+      "pointwise_max_ratio": 3.233,
+      "pseudo_period_end_s": 0.005682,
+      "tau_aw_end": 0.4167,
+      "window_16s_max_abs_ratio": 0.01988
+    },
+    "phase:sync-third:1/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "7.5",
+        "200/63",
+        "1/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.01209,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "2408969743537260241631/4624220160000000000",
+        "squared_upper": {
+          "A": "14965022237654940201/262144000000000000",
+          "J": "43833231856462739758369/4624220160000000000",
+          "P": "15752961/65536000000",
+          "V": "5910281245449/67108864000000"
+        }
+      },
+      "pointwise_max_ratio": 3.247,
+      "pseudo_period_end_s": 0.005682,
+      "tau_aw_end": 0.4167,
+      "window_16s_max_abs_ratio": 0.0284
+    },
+    "phase:sync-third:2/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "7.5",
+        "200/63",
+        "2/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.01403,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "2408969743537260241631/4624220160000000000",
+        "squared_upper": {
+          "A": "14965022237654940201/262144000000000000",
+          "J": "43833231856462739758369/4624220160000000000",
+          "P": "15752961/65536000000",
+          "V": "5910281245449/67108864000000"
+        }
+      },
+      "pointwise_max_ratio": 3.228,
+      "pseudo_period_end_s": 0.005682,
+      "tau_aw_end": 0.4167,
+      "window_16s_max_abs_ratio": 0.03465
+    },
+    "phase:sync-third:3/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "7.5",
+        "200/63",
+        "3/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 6.154e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "2408969743537260241631/4624220160000000000",
+        "squared_upper": {
+          "A": "14965022237654940201/262144000000000000",
+          "J": "43833231856462739758369/4624220160000000000",
+          "P": "15752961/65536000000",
+          "V": "5910281245449/67108864000000"
+        }
+      },
+      "pointwise_max_ratio": 3.294,
+      "pseudo_period_end_s": 0.005682,
+      "tau_aw_end": 0.4167,
+      "window_16s_max_abs_ratio": 0.01278
+    },
+    "phase:sync-third:3/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "7.5",
+        "200/63",
+        "3/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.01216,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "2408969743537260241631/4624220160000000000",
+        "squared_upper": {
+          "A": "14965022237654940201/262144000000000000",
+          "J": "43833231856462739758369/4624220160000000000",
+          "P": "15752961/65536000000",
+          "V": "5910281245449/67108864000000"
+        }
+      },
+      "pointwise_max_ratio": 3.363,
+      "pseudo_period_end_s": 0.005682,
+      "tau_aw_end": 0.4167,
+      "window_16s_max_abs_ratio": 0.03023
+    },
+    "phase:sync-third:4/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "7.5",
+        "200/63",
+        "4/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 8.297e-05,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "2408969743537260241631/4624220160000000000",
+        "squared_upper": {
+          "A": "14965022237654940201/262144000000000000",
+          "J": "43833231856462739758369/4624220160000000000",
+          "P": "15752961/65536000000",
+          "V": "5910281245449/67108864000000"
+        }
+      },
+      "pointwise_max_ratio": 3.234,
+      "pseudo_period_end_s": 0.005682,
+      "tau_aw_end": 0.4167,
+      "window_16s_max_abs_ratio": 0.01404
+    },
+    "phase:sync-third:7/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "7.5",
+        "200/63",
+        "7/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.01204,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "2408969743537260241631/4624220160000000000",
+        "squared_upper": {
+          "A": "14965022237654940201/262144000000000000",
+          "J": "43833231856462739758369/4624220160000000000",
+          "P": "15752961/65536000000",
+          "V": "5910281245449/67108864000000"
+        }
+      },
+      "pointwise_max_ratio": 3.228,
+      "pseudo_period_end_s": 0.005682,
+      "tau_aw_end": 0.4167,
+      "window_16s_max_abs_ratio": 0.03031
+    },
+    "phase:sync-third:9/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "7.5",
+        "200/63",
+        "9/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.01408,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "2408969743537260241631/4624220160000000000",
+        "squared_upper": {
+          "A": "14965022237654940201/262144000000000000",
+          "J": "43833231856462739758369/4624220160000000000",
+          "P": "15752961/65536000000",
+          "V": "5910281245449/67108864000000"
+        }
+      },
+      "pointwise_max_ratio": 3.271,
+      "pseudo_period_end_s": 0.005682,
+      "tau_aw_end": 0.4167,
+      "window_16s_max_abs_ratio": 0.03282
+    },
+    "phase:sync:0": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.6",
+        "200/21",
+        "0",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.003425,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "31704928380189496782671/722534400000000000000",
+        "squared_upper": {
+          "A": "278255941788707365561/40960000000000000000",
+          "J": "7193639071619810503217329/722534400000000000000",
+          "P": "3651921/10240000000000",
+          "V": "12250931017689/10485760000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.1733,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.003918
+    },
+    "phase:sync:1/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.6",
+        "200/21",
+        "1/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.1035,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "31704928380189496782671/722534400000000000000",
+        "squared_upper": {
+          "A": "278255941788707365561/40960000000000000000",
+          "J": "7193639071619810503217329/722534400000000000000",
+          "P": "3651921/10240000000000",
+          "V": "12250931017689/10485760000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.05063,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.1039
+    },
+    "phase:sync:1/2": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.6",
+        "200/21",
+        "1/2",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.003361,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "31704928380189496782671/722534400000000000000",
+        "squared_upper": {
+          "A": "278255941788707365561/40960000000000000000",
+          "J": "7193639071619810503217329/722534400000000000000",
+          "P": "3651921/10240000000000",
+          "V": "12250931017689/10485760000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.1319,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.00389
+    },
+    "phase:sync:1/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.6",
+        "200/21",
+        "1/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.1726,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "31704928380189496782671/722534400000000000000",
+        "squared_upper": {
+          "A": "278255941788707365561/40960000000000000000",
+          "J": "7193639071619810503217329/722534400000000000000",
+          "P": "3651921/10240000000000",
+          "V": "12250931017689/10485760000000000"
+        }
+      },
+      "pointwise_max_ratio": -0.02901,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.173
+    },
+    "phase:sync:2/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.6",
+        "200/21",
+        "2/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.1136,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "31704928380189496782671/722534400000000000000",
+        "squared_upper": {
+          "A": "278255941788707365561/40960000000000000000",
+          "J": "7193639071619810503217329/722534400000000000000",
+          "P": "3651921/10240000000000",
+          "V": "12250931017689/10485760000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.03524,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.1141
+    },
+    "phase:sync:3/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.6",
+        "200/21",
+        "3/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": -0.1802,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "31704928380189496782671/722534400000000000000",
+        "squared_upper": {
+          "A": "278255941788707365561/40960000000000000000",
+          "J": "7193639071619810503217329/722534400000000000000",
+          "P": "3651921/10240000000000",
+          "V": "12250931017689/10485760000000000"
+        }
+      },
+      "pointwise_max_ratio": -0.02537,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.1806
+    },
+    "phase:sync:3/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.6",
+        "200/21",
+        "3/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.1036,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "31704928380189496782671/722534400000000000000",
+        "squared_upper": {
+          "A": "278255941788707365561/40960000000000000000",
+          "J": "7193639071619810503217329/722534400000000000000",
+          "P": "3651921/10240000000000",
+          "V": "12250931017689/10485760000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.2328,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.104
+    },
+    "phase:sync:4/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.6",
+        "200/21",
+        "4/5",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.1803,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "31704928380189496782671/722534400000000000000",
+        "squared_upper": {
+          "A": "278255941788707365561/40960000000000000000",
+          "J": "7193639071619810503217329/722534400000000000000",
+          "P": "3651921/10240000000000",
+          "V": "12250931017689/10485760000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.3349,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.1808
+    },
+    "phase:sync:7/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.6",
+        "200/21",
+        "7/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.1727,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "31704928380189496782671/722534400000000000000",
+        "squared_upper": {
+          "A": "278255941788707365561/40960000000000000000",
+          "J": "7193639071619810503217329/722534400000000000000",
+          "P": "3651921/10240000000000",
+          "V": "12250931017689/10485760000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.3103,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.1731
+    },
+    "phase:sync:9/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.6",
+        "200/21",
+        "9/10",
+        "0",
+        "1",
+        "1/5"
+      ],
+      "group": "phase",
+      "long_mean_ratio": 0.1137,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "31704928380189496782671/722534400000000000000",
+        "squared_upper": {
+          "A": "278255941788707365561/40960000000000000000",
+          "J": "7193639071619810503217329/722534400000000000000",
+          "P": "3651921/10240000000000",
+          "V": "12250931017689/10485760000000000"
+        }
+      },
+      "pointwise_max_ratio": 0.2836,
+      "pseudo_period_end_s": 0.1364,
+      "tau_aw_end": 10.0,
+      "window_16s_max_abs_ratio": 0.1142
+    },
+    "tuner:swell-1/5:3/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.5",
+        "200/21",
+        "3/10",
+        "1",
+        "1/5",
+        "1/5"
+      ],
+      "group": "tuner",
+      "long_mean_ratio": -0.1337,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "4391029367486147826890654231589911/8963699832041389424640000000000",
+        "squared_upper": {
+          "A": "43287187397436438848552617249/3223419701428224000000000000",
+          "J": "85245968952927746419509345768410089/8963699832041389424640000000000",
+          "P": "323780461789667866489/805854925357056000000",
+          "V": "72305723035282166016889/91688382618402816000000"
+        }
+      },
+      "pointwise_max_ratio": 0.4311,
+      "pseudo_period_end_s": 0.03397,
+      "tau_aw_end": 2.491,
+      "window_16s_max_abs_ratio": 0.1353
+    },
+    "tuner:swell-1/5:4/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.5",
+        "200/21",
+        "4/5",
+        "1",
+        "1/5",
+        "1/5"
+      ],
+      "group": "tuner",
+      "long_mean_ratio": 0.1337,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "4391029367486147826890654231589911/8963699832041389424640000000000",
+        "squared_upper": {
+          "A": "43287187397436438848552617249/3223419701428224000000000000",
+          "J": "85245968952927746419509345768410089/8963699832041389424640000000000",
+          "P": "323780461789667866489/805854925357056000000",
+          "V": "72305723035282166016889/91688382618402816000000"
+        }
+      },
+      "pointwise_max_ratio": 0.649,
+      "pseudo_period_end_s": 0.03397,
+      "tau_aw_end": 2.491,
+      "window_16s_max_abs_ratio": 0.1353
+    },
+    "tuner:swell-2/25:3/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.5",
+        "200/21",
+        "3/10",
+        "1",
+        "2/25",
+        "1/5"
+      ],
+      "group": "tuner",
+      "long_mean_ratio": -0.2112,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5570715187141183414831151051685911/8963699832041389424640000000000",
+        "squared_upper": {
+          "A": "49952295178213944105887017249/3223419701428224000000000000",
+          "J": "84066283133272710831568848948314089/8963699832041389424640000000000",
+          "P": "12628432955196026266489/805854925357056000000",
+          "V": "525235247147939396736889/91688382618402816000000"
+        }
+      },
+      "pointwise_max_ratio": 0.2844,
+      "pseudo_period_end_s": 0.08526,
+      "tau_aw_end": 6.253,
+      "window_16s_max_abs_ratio": 0.2135
+    },
+    "tuner:swell-2/25:4/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.5",
+        "200/21",
+        "4/5",
+        "1",
+        "2/25",
+        "1/5"
+      ],
+      "group": "tuner",
+      "long_mean_ratio": 0.2115,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "5570715187141183414831151051685911/8963699832041389424640000000000",
+        "squared_upper": {
+          "A": "49952295178213944105887017249/3223419701428224000000000000",
+          "J": "84066283133272710831568848948314089/8963699832041389424640000000000",
+          "P": "12628432955196026266489/805854925357056000000",
+          "V": "525235247147939396736889/91688382618402816000000"
+        }
+      },
+      "pointwise_max_ratio": 0.6463,
+      "pseudo_period_end_s": 0.08526,
+      "tau_aw_end": 6.253,
+      "window_16s_max_abs_ratio": 0.2136
+    },
+    "tuner:swell-3/25:3/10": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.5",
+        "200/21",
+        "3/10",
+        "1",
+        "3/25",
+        "1/5"
+      ],
+      "group": "tuner",
+      "long_mean_ratio": -0.1767,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "422229605953138784113352657454078791/726059686395352543395840000000000",
+        "squared_upper": {
+          "A": "3731357911784587961133248397169/261096995815686144000000000000",
+          "J": "6838367258000386649845047342545921209/726059686395352543395840000000000",
+          "P": "202128206344108927585609/65274248953921536000000",
+          "V": "17251751614789975081288009/7426758992090628096000000"
+        }
+      },
+      "pointwise_max_ratio": 0.3468,
+      "pseudo_period_end_s": 0.05738,
+      "tau_aw_end": 4.208,
+      "window_16s_max_abs_ratio": 0.1783
+    },
+    "tuner:swell-3/25:4/5": {
+      "a21_active_step": 24016,
+      "accelerometer_bias_body_mps2": 0.0,
+      "arguments": [
+        "2.5",
+        "200/21",
+        "4/5",
+        "1",
+        "3/25",
+        "1/5"
+      ],
+      "group": "tuner",
+      "long_mean_ratio": 0.1768,
+      "marine_motion": {
+        "admitted": true,
+        "bounded_primitive": true,
+        "displacement_dc": "0",
+        "jerk_margin_squared": "422229605953138784113352657454078791/726059686395352543395840000000000",
+        "squared_upper": {
+          "A": "3731357911784587961133248397169/261096995815686144000000000000",
+          "J": "6838367258000386649845047342545921209/726059686395352543395840000000000",
+          "P": "202128206344108927585609/65274248953921536000000",
+          "V": "17251751614789975081288009/7426758992090628096000000"
+        }
+      },
+      "pointwise_max_ratio": 0.6464,
+      "pseudo_period_end_s": 0.05738,
+      "tau_aw_end": 4.208,
+      "window_16s_max_abs_ratio": 0.1783
+    }
+  },
+  "all_admitted": true,
+  "continuation": {
+    "admitted_prefix": false,
+    "dc_prefix_mps2": 2.6,
+    "final_100s_ratio": 0.1839,
+    "ratio_at_switch": 1.237,
+    "switch_time_s": 212.0,
+    "time_to_leave_0p9_s": 0.26
+  },
+  "dc_probes": {
+    "1": {
+      "admitted": false,
+      "ba_norm_end_mps2": 0.4,
+      "field_axis_rotation_max_rad": 0.004564,
+      "final_50s_ratio": 0.2637,
+      "flipped_about_field": false,
+      "max_1s_ratio": 0.4061,
+      "role": "constant-drive linear-response probe"
+    },
+    "3": {
+      "admitted": false,
+      "ba_norm_end_mps2": 0.4,
+      "field_axis_rotation_max_rad": 3.141,
+      "final_50s_ratio": 0.2062,
+      "flipped_about_field": true,
+      "max_1s_ratio": 1.393,
+      "role": "constant-drive linear-response probe"
+    }
+  },
+  "driver_sha256": "4c6e14021c5c604d0053f519a937909cc30136ba03c1f2902c99c9c64e80da3a",
+  "fusion_sha256": "a5d00d557843dee246bf5bcb5cc1823097db7f66f0aa3f62852bfae2e9c7c6f9",
+  "header_sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
+  "persistent_compatibility_found": false,
+  "qualification": "OU3_COMPAT_ORBIT_SOURCE_FEASIBILITY_V1",
+  "record_interval_s": [
+    300,
+    460
+  ],
+  "required_transverse_aw_mps2": 1.96133,
+  "rocking_roll_pitch": [
+    "0.05",
+    "0.1",
+    "0.03",
+    "0.07"
+  ],
+  "source_uniform_certificate": false,
+  "theorem_closed": false,
+  "window_s": 16,
+  "worst_admitted_long_ratio": 0.2115,
+  "worst_admitted_window_ratio": 0.2136
+}

@@ -3345,7 +3345,7 @@ extends to the two-word class, but the alpha=1 issue is precisely the
 persistent-compatibility reachability question already identified.
 ## Same-history two-word alpha compactness dichotomy
 
-Let P2(r,c) be the compact class of admissible consecutive MOVING word pairs
+Let WP(r,c) be the compact class of admissible consecutive MOVING word pairs
 `(W0,W1)` sharing the literal terminal/root physical, estimator, covariance,
 tuner and scheduler history. Restrict to pairs for which W0 has a nontrivial
 exact compatibility line; normalize its generator by unit physical attitude.
@@ -3393,7 +3393,7 @@ shown to exist.
 Thus the sharp dichotomy is mathematically well posed but unresolved by the
 current assumptions/lemmas:
 
-`alpha_bar:=max_(P2) alpha` exists and lies in [0,1];
+`alpha_bar:=max_(WP) alpha` exists and lies in [0,1];
 `alpha_bar<1` iff no admissible exact persistent pair exists;
 `alpha_bar=1` iff an admissible exact persistent pair exists.
 

@@ -107,6 +107,23 @@ python3 -m tools.stability.ou3_theorem.aw_tracking_source_diagnostic \
   --expect reports/results/ou3_stability/aw-tracking-source-feasibility.json
 ```
 
+`compat-orbit-source-feasibility.json` tests the persistent tilt/BA
+compatibility orbit on the unchanged `SeaStateFusion_OU_III`. Exact
+compatibility needs the nominal transverse AW `P_b a_hat=P_b g` (norm
+`>=1.96133 m/s^2`, the Corollary A* threshold). Over 70 admitted histories
+(jerk-limited triangles phase-locked to the sync, magnetic and S cadences,
+tuner-setting swells, and a maximal accelerometer bias) the worst 16-s
+nominal transverse mean is .214 of it. Non-admitted constant-drive probes
+cross the value only transiently and then rotate the attitude by pi about
+the field; from the crossing, the admitted continuation leaves .9 of the
+value within .26 s.
+
+```
+python3 -m tools.stability.ou3_theorem.compat_orbit_source_diagnostic \
+  --eigen /usr/include/eigen3 --output /tmp/ou3-compat-orbit.json \
+  --expect reports/results/ou3_stability/compat-orbit-source-feasibility.json
+```
+
 The proof-side quiet-evidence monitor never certifies physical STILL. No
 shipping mode switch, noise, cadence, magnetic semantics or quality gate is
 changed. The native `regime_ambiguity-test` carries one 900-second construction/

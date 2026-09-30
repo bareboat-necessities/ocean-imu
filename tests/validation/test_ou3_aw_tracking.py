@@ -15,6 +15,8 @@ from tools.stability.ou3_theorem.aw_tracking import (  # noqa: E402
 from tools.stability.ou3_theorem.aw_tracking_source_diagnostic import (  # noqa: E402
     CORR_A_PHYSICAL_THRESHOLD, CORR_A_STAR_THRESHOLD, PROFILES, TAP_ANCHOR, admissibility,
     verify_diagnostic)
+from tools.stability.ou3_theorem.compat_orbit_source_diagnostic import (  # noqa: E402
+    directions, field, verify_diagnostic as verify_compat)
 from tools.stability.ou3_theorem.matrix_certificates import add, identity, is_psd  # noqa: E402
 
 RESULTS = ROOT/'reports/results/ou3_stability'
@@ -114,6 +116,24 @@ class CarriedAuditTest(unittest.TestCase):
         self.assertIn('const Eigen::Vector3f aw_std(sH, sH, sZ);', fusion)
         common = (ROOT/'src/kalman_common/SeaStateAdaptationCommon.h').read_text()
         self.assertIn('return !(time_ - last_aw_cov_sync_sec_ <= adapt_every_secs_);', common)
+
+
+class CompatibilityOrbitAuditTest(unittest.TestCase):
+    def test_required_value_is_the_corollary_a_star_threshold(self):
+        # f_hat || b needs P_b a_hat = P_b g, of norm g B_h/|B| >= g/5.
+        _, _, required = directions(field('1/5'))
+        self.assertAlmostEqual(required, float(CORR_A_STAR_THRESHOLD), places=12)
+        self.assertGreater(directions(field('7/25'))[2], required)
+
+    def test_committed_audit_is_consistent_and_non_promoting(self):
+        record = json.loads((RESULTS/'compat-orbit-source-feasibility.json').read_text())
+        self.assertTrue(verify_compat(record))
+        self.assertFalse(record['source_uniform_certificate'])
+        self.assertFalse(record['persistent_compatibility_found'])
+        self.assertLess(record['worst_admitted_window_ratio'], 0.25)
+        self.assertTrue(record['dc_probes']['3']['flipped_about_field'])
+        self.assertGreater(record['continuation']['ratio_at_switch'], 1)
+        self.assertLess(record['continuation']['time_to_leave_0p9_s'], 1)
 
 
 if __name__ == '__main__':
