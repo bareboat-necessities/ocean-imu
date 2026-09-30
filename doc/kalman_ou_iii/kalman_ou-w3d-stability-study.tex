@@ -1346,6 +1346,50 @@ joint accelerometer sum above, and the already-declared sampling/implementation
 remainder.  A useful source-uniform norm for that single signed operator
 remains open.
 
+The remaining field-axis rotation term must likewise be formed before norms.
+For $B=[b]_\times$ and $M_b=\exp(\theta_bB)$, one correction cell obeys the
+exact Stieltjes identity
+\begin{align}
+ \int_C M_b a\,dt
+ &=M_{b,R}v_R-M_{b,L}v_L
+   -\int_C M_bBv\,d\theta_b^{\rm cont}\nonumber\\
+ &\quad-\sum_{i\in C}(M_{b,i}^+-M_{b,i}^-)v_i .
+ \label{eq:field-axis-stieltjes}
+\end{align}
+For the literal attitude injection $d_i=E_\theta K_i r_i$, define the exact
+field-axis increment $\kappa_i$ from the post/pre relative attitudes and retain
+$\rho_i^{\rm tw}=\kappa_i-b^Td_i$ as the nonlinear twist/reset remainder.
+The linear correction coefficient is
+\begin{equation}
+ c_i=u^TM_{b,i}^-[b]_\times v_i,\qquad
+ q_i=c_iE_\theta^Tb ,
+ \label{eq:field-axis-coefficient}
+\end{equation}
+so the correction contribution is $q_i^TK_ir_i$.  Accelerometer AW and BA
+terms are therefore parts of the same accelerometer innovation; an $S$
+correction may also rotate attitude through carried cross covariance, and the
+magnetic port is retained in chronological order.
+
+With $z_i=K_i^Tq_i$ and actual innovation covariance $\Omega_i$,
+\begin{equation}
+ z_i^T\Omega_i z_i
+ =q_i^T(P_i^--P_i^+)q_i ,
+ \label{eq:field-axis-joseph}
+\end{equation}
+and the accelerometer, $S$, and magnetic events form one sequential
+Joseph/Schur factorization.  Crucially $q_i$ retains the same physical
+$M_{b,i},v_i$ as \eqref{eq:field-axis-stieltjes}; replacing it by
+$V_{\max}$ before the factorization loses the required correlation.
+
+Summing \eqref{eq:field-axis-stieltjes} over all correction cells in the
+$17$-s word cancels every internal physical endpoint before any norm.  The
+result is one augmented full-root factor row containing the two external
+velocity endpoints, continuous gyro/gyro-bias rotation, the joint
+accelerometer/$S$/magnetic correction row, nonlinear twist/reset remainder,
+and the existing Abel/sampling terms.  Its source-uniform induced norm remains
+open; neither raw attitude total variation nor total NIS is substituted for
+that signed operator.
+
 For the explicit horizontal-field-fraction premise
 $\sigma_w\ge1/5$, the critical nominal transverse scale is
 $g\sigma_w\ge g/5=1.96133\,\mathrm{m/s^2}$.  This number must not be inferred
