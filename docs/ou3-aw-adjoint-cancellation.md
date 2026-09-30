@@ -4357,3 +4357,129 @@ Delta A_B is the small tuner/cadence coefficient variation.
 The next calculation is to telescope C_neutral over all slabs in the dual
 Volterra sum, leaving endpoint polynomial terms, and separately bound the
 total variation of (a_B,b_B,c_B) under the applied tau/h/L chronology.
+
+
+## 47. Neutral Volterra telescoping closes; first-sample coefficient TV does not
+
+Define the neutral three-state translation semigroup
+
+    N(H)=
+      [1 0 0
+       H 1 0
+       H^2/2 H 1],
+
+so N(H1)N(H2)=N(H1+H2).  For the row
+A_B=[a_B,b_B,c_B], section 46 gives exactly
+
+    A_B N(H_B)^T
+      =[a_B,H_B a_B+b_B,H_B^2 a_B/2+H_B b_B+c_B].          (NT1)
+
+Hence the pure prediction commutator is the covariant difference
+
+    C_B^pred=A_(B+1)-A_B N(H_B)^T.                         (NT2)
+
+Let X_B be cumulative neutral time from boundary B to a fixed terminal
+boundary, so X_B=H_B+X_(B+1).  Right-transport NT2 to that common terminal
+frame:
+
+    C_B^pred N(X_(B+1))^T
+      = A_(B+1)N(X_(B+1))^T
+        -A_B N(X_B)^T.                                     (NT3)
+
+Therefore the Volterra sum telescopes EXACTLY:
+
+    sum_(B=r..s) C_B^pred N(X_(B+1))^T
+      = A_(s+1)N(X_(s+1))^T-A_r N(X_r)^T.                 (NT4)
+
+The apparent slab terms -H a and -H b-H^2 a/2 do not accumulate at all.
+For constant intrinsic A_B they reduce entirely to endpoint polynomial rows.
+More generally, after placing every A_B in a common neutral frame, only
+changes of the intrinsic A_B remain.  This closes item (1) without any
+sqrt(number of slabs) or O(M) neutral charge.
+
+### First-sample coefficient variation is not source-uniform
+
+The current definition uses the first physical prediction of each slab:
+
+    a_B=phi_va(h_B,tau_B)/L_B,
+    b_B=phi_pa(h_B,tau_B)/L_B,
+    c_B=phi_Sa(h_B,tau_B)/L_B.                             (NT5)
+
+The declared sampling contract bounds h_B in [.004,.006] but does not impose
+a total-variation bound on the sequence of sample intervals.  An admissible
+sequence can alternate .004,.006 at every slab.  Since phi_va is strictly
+increasing in h,
+
+    TV(a_B)
+
+then grows linearly with the number of slabs even with constant tau and L.
+The same issue affects b_B,c_B.  Thus no horizon-independent useful uniform
+TV(a,b,c) follows from the current chronology.
+
+This is not a physical obstruction; it is an artifact of selecting ONE
+sample to represent a .1-s slab.
+
+### Correct block coefficient: use the whole slab
+
+The first-sample row must be replaced by the exact block-integrated OU
+coefficient.  For a slab with predictions k=1..n and no correction terms
+(the latter remain separate ports), define the intrinsic physical leakage
+row by summing each prediction's contribution transported through the later
+PURE prediction maps.  Semigroup composition gives exactly the same
+coefficient as one integrated-OU prediction over the total slab duration L_B
+when tau is constant inside the applied-tuner cell:
+
+    Abar_B =
+      [ Phi_va(L_B,tau_B)/L_B,
+        Phi_pa(L_B,tau_B)/L_B,
+        Phi_Sa(L_B,tau_B)/L_B ].                            (NT6)
+
+This coefficient is independent of the subdivision h_k and therefore immune
+to sample-jitter TV.  It uses the entire slab rather than a representative
+first sample.
+
+If tau changes only at the slab boundary (the applied tuner chronology),
+NT6 is exact.  If a commit can occur inside a chosen sync slab, split the
+slab at that commit; no new physical assumption is needed.
+
+The uniform sizes for L<=.1 are
+
+    abar<=1,
+    bbar<=L/2<=.05,
+    cbar<=L^2/6<=.0016667,                                 (NT7)
+
+which are larger than the first-sample coefficients but have controlled
+chronology.  More importantly, their neutral covariant differences telescope
+by NT3--NT4; only tuner/boundary variation remains.
+
+### Tuner variation
+
+For fixed L, Phi_va(L,tau)/L is monotone in tau and lies in [0,1].
+The applied tau smoother remains in [.02,12].  A total-variation bound on
+tau_applied over a 17-s word is NOT implied merely by this range: a bounded
+sequence can oscillate.  The actual exponential adaptation law does constrain
+per-commit motion, but without a bound on target-frequency variation its
+total variation can still scale with the number of commits.
+
+Therefore item (2), as originally phrased as TV(a_B,b_B,c_B), does not close
+source-uniformly from current assumptions.
+
+The correct use of NT4 is stronger: do not bound coefficient TV separately.
+Keep the covariant differences C_B^pred inside the telescoping identity.
+Then arbitrary intrinsic coefficient changes contribute only through endpoint
+rows when transported by the neutral semigroup; correction-induced departures
+are already separated as ports.  Any non-neutral effect of changing tau lies
+only in the AW column of F, which A_B annihilates in PC3.
+
+Thus for the PURE (v,p,S) prediction commutator, tuner variation also drops
+out after covariant telescoping.  No TV(tau) theorem is required.
+
+Conclusion:
+- neutral prediction Volterra tail: exact endpoint telescoping CLOSED;
+- raw first-sample TV(a,b,c): cannot be uniformly bounded and should be
+  discarded;
+- replace first-sample A_B by the exact whole-slab intrinsic row or retain
+  the covariant-difference identity directly;
+- the remaining nonlocal tail is no longer a prediction/tuner term.  It is
+  only the correction/reset port departure from the neutral semigroup, which
+  belongs in the already square-summed action framework.
