@@ -347,6 +347,22 @@ of four-S gamma_S, residualized magnetic gamma_M, and their joint terminal-
 active generalized singular value across event/rank strata.  This is now a
 small literal interval-certificate task, not another observability lemma.
 
+**Interval audit for gamma_S/gamma_M/beta found missing matrix certificates.**
+Literal ranges: tau [0.02,12] s, dt [0.004,0.006] s, OU-III S gap <=0.15 s,
+sigma_aw>=0.05, sigma_acc>=0.05, sigma_S>=0.075, Sigma_aw<=16I,
+R_S<=10000I, magnetic service T_M=1/mu_M=1.  Four S epochs can be proof-selected
+in separated 0.15-s cells, removing event coalescence.  But normalized
+gamma_S still needs the full transported four-event residual covariance, for
+which current source-uniform scalar bounds do not give a noncircular upper
+matrix enclosure.  Magnetic service is an UNSHORTED Gram floor; after
+projecting transported gyro/nuisance range, current assumptions permit a
+zero lower endpoint for gamma_M.  Hence honest source-box intervals are
+gamma_S,gamma_M,beta lower=0; no carried positive minimum may be promoted.
+Required infrastructure: outward-rounded literal interval factor propagator
+for <=1.05-s four-S and 1-s magnetic blocks, verified QR/Schur elimination,
+terminal/kernel transport, and 2--3D generalized eigen enclosure with
+adaptive box subdivision; analytic RD13/RD17 handles exact rank faces.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
