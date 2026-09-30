@@ -1070,3 +1070,75 @@ the compact reachable covariance/tuner set.  The existing coarse nuisance
 upper box proves compactness after 17 s but is too large for a useful
 Schur-complement number.  A sharp proof must exploit CY6 and the exact S-chain
 cancellation before taking block norms.
+
+
+### 14.1 Floor-active direct gain bound
+
+Condition on every nuisance coordinate at the post-floor prior.  In a
+field-transverse scalar direction u let
+
+    p = u^T X_c u.
+
+The conditioned accelerometer observation has unit AW coefficient (rotation
+preserves norm) and effective noise variance r_eff>=R_acc; nuisance
+conditioning removes, rather than boxes, the correlated cancellation.  Its
+posterior conditional AW update has scalar information increment 1/r_eff and
+mean gain
+
+    gamma_c = p/(p+r_eff).                                  (CY7)
+
+If u^T Delta u>=d0, CY6 gives p>=d0.  With the shipping accelerometer
+effective variance bounded above by
+
+    r_eff <= r_acc,max^2 + r_unconditioned,
+
+a useful numerical lower gain requires an UPPER bound on the remaining
+conditioned measurement noise, not merely R_eff>=R_acc.  If all nuisance
+coordinates are conditioned exactly, the only physical measurement-noise
+term is R_acc, so in the formal conditional filter
+
+    gamma_c >= d0/(d0+r_acc,max^2).                          (CY8)
+
+This is an information decomposition, not the literal marginal K_aw entry.
+The complete-reader proof may allocate the fresh Delta component to this
+conditional channel and the nuisance reconstruction to the complementary
+reader.
+
+### 14.2 Floor-inactive directions carry stored conditional information
+
+If Delta has zero quadratic form in u, the sync supplies no fresh conditional
+variance.  There are two possibilities:
+
+(a) u^T X_c u >= p0.  Then the same conditional accelerometer information
+argument applies with p0.
+
+(b) u^T X_c u < p0.  Then AW in direction u is already determined to accuracy
+p0 by the nuisance state.  In covariance language there exists the linear
+conditional predictor
+
+    a_u = C_u N^dagger n + epsilon_u,
+    Var(epsilon_u)<p0.                                      (CY9)
+
+The dangerous DC AW component is therefore carried almost entirely by the
+nuisance coordinates.  But the S-chain identity annihilates AW/root/sync
+columns and leaves a signed observation of the neutral integrator/noise
+coordinates.  A persistent DC value encoded in nuisance must consequently
+appear either in the S=0 innovation or in the bounded v/p/S root/endpoints.
+Thus case (b) converts the AW problem into the already exact S-chain
+readout, with residual proportional to sqrt(p0).
+
+This proves a qualitative cycle dichotomy for every p0>0:
+
+    direct conditional AW information >= p0/(p0+r_acc,max^2)
+    OR
+    AW is p0-close (in conditional variance) to an S-chain-observed nuisance
+    predictor.                                                (CY10)
+
+No arbitrary covariance cancellation survives this dichotomy.
+
+What is still needed for a numerical gamma_cycle is the quantitative
+coefficient mapping the nuisance predictor C_u N^dagger n in CY9 into the
+S-chain readout.  The existing S-chain formula gives that coefficient exactly
+for a supplied chronology; a source-uniform lower singular value on the
+relevant predictor subspace has not yet been derived.  This is now the only
+covariance-geometric quantity in the robust cycle lemma.
