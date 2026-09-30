@@ -114,6 +114,9 @@ jobs:
         working-directory: tests/validation
         run: |
           python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_same_execution test_ou3_theorem_status test_ou3_regimes test_ou3_moving_pivots test_ou3_inverse_transport test_ou3_same_cell_groups test_ou3_world_frame test_ou3_aw_covariance_ceiling test_ou3_aw_tracking test_ou3_signed_injection test_ou3_aggregate_floor test_ou3_stationary_covariance test_ou3_tail_stability test_ou3_interval_riccati test_ou3_interval_riccati_21 test_ou3_rank_loss_interval_factor test_ou3_block_factor_metric test_ou3_physical_qualification test_workflow_contract test_ou_replay_fingerprint
+      - name: Build magnetic exhaustive-strata certificate
+        run: |
+          python3 -m tools.stability.ou3_theorem.magnetic_strata_certificate_cli --output /tmp/ou3-magnetic-strata.json
       - name: Build rank-loss interval certificate
         run: |
           python3 -m tools.stability.ou3_theorem.rank_loss_interval_certificate --output /tmp/ou3-rank-loss-interval.json --max-depth 10
