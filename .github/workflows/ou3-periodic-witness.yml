@@ -5,6 +5,9 @@ on:
     paths:
       - "tools/stability/ou3_theorem/periodic_fast_gyro_counterexample.py"
       - ".github/workflows/ou3-periodic-witness.yml"
+concurrency:
+  group: ou3-periodic-witness-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   witness:
     runs-on: ubuntu-24.04
