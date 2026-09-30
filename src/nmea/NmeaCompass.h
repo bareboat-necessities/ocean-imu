@@ -89,7 +89,10 @@ static inline uint8_t nmeaChecksumBody_(const char* body) {
 
 static inline void nmeaPrintBody_(const char* body) {
   const uint8_t cs = nmeaChecksumBody_(body);
-  Serial.printf("$%s*%02X\r\n", body, static_cast<unsigned>(cs));
+  char record[104];
+  const int n = snprintf(record, sizeof(record), "$%s*%02X\r\n", body, static_cast<unsigned>(cs));
+  if (n <= 0 || static_cast<size_t>(n) >= sizeof(record)) return;
+  (void)nmeaTryWriteRecord_(record, static_cast<size_t>(n));
 }
 
 static inline void nmea_xdr_wave_axis_rel(const char* talker, float wave_axis_deg, bool valid)
