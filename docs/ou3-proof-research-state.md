@@ -491,6 +491,21 @@ data-null source range inclusion for the one terminal compatibility vector,
 a finite scalar E_perp upper, and a 1-D deterministic E_ker upper.  Added
 `terminal_compatibility_energy.py`.
 
+**Three scalar terminal obligations audited: exact source mimic is stronger
+than compatibility and remains open.**  For y=O_q v+A s, x_N=T_q v+T s,
+root compatibility O_q v=0 gives source least-squares mimic s=0 and terminal
+excess T_q v; process noise does not automatically reproduce a data-null root.
+Required range inclusion z=P_+perp T_Wr in Range(T_s|Null(A)) is an
+independent output-nulling controllability condition.  If true,
+E_perp=z'[(T_s N_A)(T_s N_A)']^dagger z and a finite upper needs a positive
+directional source-controllability modulus; neither is proved source-uniformly.
+E_ker also needs a cumulative scalar homogeneous compatible-transport upper.
+Thus all three are OPEN.  They form a sufficient exact-source-mimic route,
+not a necessary route to contraction.  Preferred shorter route is the
+already-derived kernel-regularized scalar compatibility reader, which retains
+1/c coercivity and does not require exact source-range inclusion.  Added
+`source_controllability.py` to encode this fail-closed distinction.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
