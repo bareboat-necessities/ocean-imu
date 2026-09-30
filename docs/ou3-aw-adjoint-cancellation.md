@@ -9042,3 +9042,176 @@ the transverse fraction is observed/charged by the next word.
 Thus the remaining scalar recurrence should be written directly for the
 rank-one prior covariance under line rotation, rather than through B in the
 singular Pi metric.
+
+
+## 80. Exact adjacent-line 2x2 rank-one covariance recurrence
+
+Work in the two-dimensional plane spanned by the propagated current
+compatibility direction u and the next-word compatibility direction v.
+Normalize both in the SAME root metric and write
+
+    rho=u^T v=cos theta,
+    s=sqrt(1-rho^2)=sin theta.                             (AL1)
+
+Choose basis {v,q}, q perpendicular to v, so
+
+    u=[rho,s]^T.                                           (AL2)
+
+Let a>=0 be the scalar covariance carried by the current kernel after the
+current-word regularized reader.  Let the next word contribute quotient
+information j>=0 along q and kernel precision m=1/c_+>0 along v.  The prior
+covariance in this plane is
+
+    P0=a u u^T.                                            (AL3)
+
+Because P0 is rank one, it is cleaner to update its scalar amplitude directly.
+The next information seen by u is
+
+    I_u = m rho^2 + j s^2.                                 (AL4)
+
+Bayes/Riccati scalar update gives
+
+    a_+ = a/(1+a I_u)
+        = a/[1+a(m rho^2+j s^2)].                          (AL5)
+
+The posterior covariance remains rank one along u if no fresh process
+covariance is added between these two abstract line updates:
+
+    P_+=a_+ u u^T.                                         (AL6)
+
+Its variance along the NEXT kernel line is
+
+    c_next,carried =
+      v^T P_+ v
+      = a rho^2/[1+a(m rho^2+j s^2)],                     (AL7)
+
+and its transverse variance is
+
+    q^T P_+ q
+      = a s^2/[1+a(m rho^2+j s^2)].                       (AL8)
+
+### Coincident lines
+
+For |rho|=1, s=0,
+
+    a_+=a/(1+a m),
+    c_next,carried=a/(1+a m) <=1/m=c_+.                   (AL9)
+
+Thus with next-kernel precision included as an INFORMATION update, coincident
+lines do not merely preserve an arbitrary a: they cap the carried variance by
+c_+.  If the theorem's c_+ is interpreted as an allowed ceiling rather than
+an actual applied prior update, then AL9 becomes the set-invariance statement
+a<=c_+ => carried a<=c_+; do not double-count the fictitious kernel prior as
+a shipping measurement.
+
+### Orthogonal lines
+
+For rho=0,
+
+    c_next,carried=0,                                      (AL10)
+    q^T P_+ q=a/(1+a j).                                   (AL11)
+
+The old kernel variance is entirely transverse to the next kernel and is
+contracted exactly according to the next quotient information j.  If j=0,
+there is no contraction but also no next-kernel carry; the variance remains
+in the quotient direction and must be handled by the complete next-word
+action.
+
+### Intermediate angle
+
+For x=rho^2 in [0,1],
+
+    f(x):=c_next,carried
+      = a x/[1+a(j+(m-j)x)].                               (AL12)
+
+Differentiate:
+
+    f'(x)=
+      a(1+a j)/
+      [1+a(j+(m-j)x)]^2 >0.                               (AL13)
+
+Therefore the variance carried INTO the next kernel is monotonically
+increasing with overlap and is maximal for coincident lines:
+
+    c_next,carried <= a/(1+a m) <= c_+.                   (AL14)
+
+No intermediate angle can enlarge the next-kernel scalar variance beyond the
+coincident-line case.
+
+The TOTAL posterior trace in the plane is simply a_+.  Its derivative is
+
+    da_+/dx =
+      -a^2(m-j)/
+       [1+a(j+(m-j)x)]^2.                                 (AL15)
+
+Hence:
+- if m>j, total residual variance is largest at orthogonal lines;
+- if j>m, it is largest at coincident lines;
+- if j=m, it is angle-independent.
+
+In all cases
+
+    a_+ <= a/[1+a min(m,j)]                                (AL16)
+
+when min(m,j)>0.  If j=0, arbitrary near-orthogonal rotation does NOT
+automatically contract total variance: a_+ approaches a.  Thus line rotation
+alone is not a contraction mechanism; it only transfers variance between
+kernel and quotient.
+
+### Correct theorem interpretation: kernel precision is a storage device
+
+The rank-one kernel precision 1/c is fictitious proof storage, not a shipping
+measurement.  Therefore one must not apply m and then separately claim the
+same c_+ ceiling.  The useful consequence of AL7 is set invariance:
+
+Given incoming scalar variance a<=c_in and next-word storage ceiling c_+,
+the portion assigned to the next kernel obeys
+
+    v^T P v <= a rho^2 <= a.                               (AL17)
+
+If c_+>=c_in, invariance is automatic even without an information update.
+If c_+<c_in, quotient action j and/or actual word information is needed to
+reduce the overlap component before assigning the tighter next ceiling.
+
+The regularized-reader algebra uses m=1/c_+ internally exactly once; in that
+representation AL14 proves the posterior next-kernel component <=c_+ for
+EVERY angle.
+
+### 2x2 information-matrix form
+
+For a nonsingular background covariance Pi_plane, the exact adjacent update is
+
+    P_post =
+      [ Pi_plane + a u u^T ] updated by
+      J_+ = j q q^T + m v v^T.                            (AL18)
+
+Equivalently,
+
+    P_post =
+      ( [Pi_plane+a uu^T]^-1 + J_+ )^-1,                  (AL19)
+
+on the supported plane.  Woodbury shows the rank-one contribution from a is
+attenuated by the scalar denominator
+
+    1+a u^T J_eff u,                                      (AL20)
+
+where J_eff is J_+ residualized against the background Pi_plane.  The pure
+rank-one formulas AL5--AL16 are the worst/background-free geometry and show
+the angle dependence exactly.
+
+### Conclusion
+
+Adjacent-line geometry itself is benign:
+1. coincident lines are the worst case for NEXT-KERNEL carry;
+2. intermediate angles never enlarge next-kernel variance;
+3. orthogonal rotation transfers all old-kernel variance to the quotient;
+4. arbitrary rotation does NOT automatically contract total variance if the
+   next quotient information can vanish;
+5. with the regularizing next-kernel precision included once, the next-kernel
+   scalar variance is <=c_+ for every angle.
+
+Therefore the scalar kernel SET INVARIANCE part of the two-word recurrence is
+closed algebraically.  The remaining contraction question concerns the
+transverse quotient variance when j can be small.  That is exactly the
+complete-word quotient/action problem already isolated; no additional
+kernel-angle lower bound is needed.
