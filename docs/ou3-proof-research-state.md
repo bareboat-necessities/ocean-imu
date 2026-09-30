@@ -263,6 +263,22 @@ times observation action uniformly.  A regularized literal backward reader
 is an equivalent constructive route and gives K_rel<=1+C_det.  No Euclidean
 information floor is needed.
 
+**Near-null persistence connected to next-word kernel.**  On the final
+regular 17-s suffix, complete observation action ->0 removes fresh
+LIN/AW/BA/AG retuning.  Four S rows qualitatively eliminate persistent
+homogeneous LIN/AW; magnetic service/gyro chronology restrict persistent AG
+to the transported field-compatible class; all accelerometer rows with one
+propagated BA root then force convergence to the word-dependent compatibility
+line.  Hence terminal persistence transverse to the next kernel vanishes:
+dist_Pi^-1(H_eff v,N_next)->0.  The only O(1) escape is into the next kernel.
+This qualitatively joins C_det and scalar return.  Uniform linear rate is
+still open because explicit normalized four-S, residualized magnetic/gyro,
+and multi-epoch acc/BA moduli are not certified.  Exact-compatible MOVING
+reachability is also unresolved and belongs naturally to the next-kernel
+branch.  New controlling target: one combined two-word quotient+kernel
+inequality carrying transverse terminal action plus next-kernel precision,
+rather than independent C_det and D assumptions.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
