@@ -2134,3 +2134,54 @@ combinations can be much stronger than either scalar margin separately.
 The correct next computation is therefore the restricted 4x4 Theorem-D
 matrix for one fresh OU factor with S rows + terminal LIN forgetting, not an
 accelerometer-inclusive Gramian.
+
+
+## 25. Source-age q_ST is not the contraction/mean certificate
+
+A final normalization audit shows that the proposed source-age coercivity is
+not, by itself, the quantity needed for the nominal-AW theorem.
+
+Whiten one freshly injected process coordinate so its prior source action is
+A_age=I.  The exact smoother decomposition partitions that source's influence
+between (i) information extracted by later measurements and (ii) terminal
+conditional uncertainty/forgetting.  A lower bound on
+
+    J_age = extracted_information + terminal_accounted_energy
+
+therefore proves that the source is not in an unaccounted nullspace.  It does
+NOT say that its contribution to the terminal/mean AW readout is small.
+Indeed an exactly conserved source can have J_age=I with no useful mean
+attenuation, while a strongly observed source can also have large J_age.
+
+Theorem D avoids this ambiguity by comparing two terminal covariance
+problems (known-root versus diffuse/root-uncertain) through
+
+    kappa=lambda_max(Pi^-1 P_diff),
+
+and then converting that relative diameter to contraction.  There is no
+analogous implication
+
+    lambda_min(J_age)>0  =>  nominal AW mean < threshold
+
+without an additional readout/terminal comparison.
+
+Thus q_ST is a valid detectability/accounting modulus but is not the missing
+nominal-mean bound.  Computing a tiny or large q_ST cannot decide whether the
+gravity-sized pathological mean is shipping-reachable.
+
+This source-age branch is therefore removed from the critical path.  Retain:
+- the exact zero-innovation 17-s incompatibility subcase;
+- the complete covariance-weighted nominal-AW reader;
+- the endogenous-innovation correction;
+- the exact S passivity identities;
+- the finite first-row accelerometer information as a local fact;
+- the existing Theorem-D complete-word machinery.
+
+The actual unresolved theorem remains a SIGNED readout/source bound for the
+nominal AW mean (or an equivalent closed-loop reachability contradiction).
+It must compare the terminal/multi-time AW readout directly with the allowed
+physical/bias/sensor source set.  Detectability of fresh process factors is
+insufficient.
+
+Consequently no numerical q_ST is promoted as a stability margin.  Doing so
+would be another formulation error rather than progress on the theorem.
