@@ -5125,3 +5125,100 @@ current shipping OU-III. It is not a theorem for the historical additive
 floor law or a mode that disables/replaces this synchronization. It also uses
 the applied stationary target envelope Sigma_aw_stat<=16 I already present in
 the recurring nuisance proof.
+
+
+## 54. Insert B_AW,*=16: joint action budget and remaining physical-to-port constant
+
+The sharp reader ceiling gives
+
+    ||reader||_action <= sqrt(B_AW,*) = 4.                 (JB1)
+
+Do not allocate a separate factor 4 to local leverage and another factor 4
+to correction/reset ports.  They are orthogonal/source blocks of the SAME
+causal-reader action.  If the complete normalized source coordinates are
+partitioned into slab-local observation ports, process/sync ports and root
+nuisance ports, their squared reader coefficients satisfy
+
+    sum_blocks ||ell_block||_source^2 <=16.                (JB2)
+
+Let G_phys be the deterministic linear map from the bounded physical
+primitive charges produced by the two-Abel construction into these normalized
+source/port coordinates.  Then the complete port contribution obeys
+
+    |R_ports| <= ||G_phys||_(primitive -> action-dual) * 4. (JB3)
+
+Thus the former chi_0 and global correction-port constants should be combined
+into ONE physical-to-port operator norm
+
+    C_port := ||G_phys||.                                  (JB4)
+
+The desired numerical physical charge is
+
+    C_phys,total
+      <= C_endpoint + 4 C_port + C_sampling/jerk.          (JB5)
+
+No event-count or block-count factor occurs.
+
+### Threshold comparison
+
+For the worst field fraction sigma_w=1/5 and theta_max=6 deg, the previously
+derived exact-degeneracy budget left approximately
+
+    0.0338 m/s^2                                           (JB6)
+
+at T=17 s after physical velocity endpoint, attitude, BA and sensor charges.
+Therefore the robustified reader route closes that particular 17-s margin if
+
+    C_endpoint,new + 4 C_port + C_sampling,new
+       < 0.0338 m/s^2,                                     (JB7)
+
+after subtracting only charges not already included in the earlier budget.
+
+This inequality must avoid double counting: the two-Abel endpoint/sampling
+terms replace the earlier crude physical-mean term; BA/attitude/sensor defects
+already present in the 0.0338 calculation are not charged again through
+C_port unless the port map represents an additional residual.
+
+### What B_AW,*=16 does NOT supply
+
+JB1 is an action normalization, not by itself a deterministic mean charge.
+A numerical C_port is still required.  The earlier local leverage
+
+    chi_B^2=A_B O_B^T Sigma_B^-1 O_B A_B^T
+
+is one representation of the local part of C_port, but the complete
+physical-to-port map should be formed before taking norms so that common
+source columns and correction Schur cancellations are retained.
+
+The infrastructure now has exactly the needed frozen-word matrices:
+- terminal-AW causal/minimum-action reader;
+- actual sync slabs;
+- chronological adjoints;
+- D2 rows;
+- source/action factors.
+
+For a source-uniform theorem, C_port must be enclosed over the admitted
+shipping slab class.  Its coefficient geometry is independent of reader
+normalization and carries the exact integrated-chain factors established
+earlier.
+
+### Immediate analytic bound available from coefficient geometry
+
+For a <=.1-s local slab, the second-Abel map uses
+
+    phi_va/L <=1,
+    phi_pa/L <=.05,
+    phi_Sa/L <=.001667                              (whole-slab form)
+
+or the much smaller first-sample factors when used inside the exact local
+coboundary.  Therefore a crude Euclidean bound on C_port is O(1), which would
+give O(4 m/s^2) and fail JB7.  The proof requires the actual normalized
+measurement/source Gram to obtain the expected much smaller leverage; raw
+coefficient geometry alone cannot certify the 0.0338 margin.
+
+Conclusion: B_AW,*=16 closes the reader normalization problem, but the final
+numerical gravity-scale contradiction is NOT yet proved.  The single
+remaining quantitative constant is C_port, the source-uniform induced norm of
+the complete physical primitive -> normalized causal-reader port map.  A
+frozen carried-word C_port may diagnose whether the 0.0338 margin is
+realistic, but the theorem needs an enclosure over the shipping slab class.
