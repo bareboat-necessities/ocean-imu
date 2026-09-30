@@ -188,15 +188,12 @@ AG covariance, ≤5× at 64 s). It now serves coercivity only (DEAD_END 27).
   force <=1.091. Rectification: Gamma is periodic in the 21-sample AW sync
   cycle, and a phase-locked jerk-limited triangle raises the signed mean
   from <=.05 to .371; a raised tuner sigma reduces it.
-- Compatibility-orbit audit (`compat-orbit-source-feasibility.json`): exact
-  persistent compatibility needs nominal transverse AW `g B_h/|B|>=1.96133`
-  (the Corollary A* threshold). On 70 admitted histories of the unchanged
-  fusion the worst 16-s ratio is .214 (sync-locked triangle at the jerk limit
-  with a swell-set tau=6.25 s); magnetic, S-cadence and sync-harmonic locking
-  give <=.035. Non-admitted DC probes: BA absorbs first (to its .4 clamp),
-  then AW; at 3 m/s^2 the AW crosses the value (1-s ratio 1.39) and the
-  attitude rotates by pi about the field. From the crossing the admitted
-  continuation drops below .9 of the value in .26 s.
+- DC map of the Kalman loop (`ou3-corrected-word-proof.md`, "Exact DC map"):
+  the information-form fixed point `x*=P zeta*`,
+  `(A'+P^-1 Q)zeta*=C'R^-1 zbar` (DC-1). For the LIN/S chain it gives
+  `ahat*=T mu` with `T=P_va/R_a`,
+  `0<=T<=tau sigma/(tau sigma+R_a)<1` (DC-2/3), proved from Riccati sign
+  identities. S=0 does not reject DC AW, and the loop never amplifies it.
 - Lemma I* (`signed_injection.py`): the ordered injection rotation J obeys
   `M_N M_0'=J K` exactly, so `angle(J)<=alpha_0+alpha_N+int|omega_tilde|`
   with no norm sum; one reset has `|x|<=alpha_-+alpha_+` (DEAD_END 17 needs
@@ -1896,94 +1893,62 @@ with tilt >=7 degrees, under symbolic theta_E, LOCAL GRAVITY and MAGNETIC
 SERVICE. Once proved, capture-to-refinement/release follows without any upper
 restriction on theta_E.
 
-## Persistent compatibility orbit: literal reachability test
+## Persistent compatibility orbit: analytic status
 
-**Reduction (exact).** For a zero-BA compatible word, `[f_hat_k]x b=0` at every
-applied accelerometer row is equivalent to `P_b a_hat_k^- = P_b g`. Its norm
-is `g B_h/|B|`, at least `g/5=1.96133 m/s^2` for the admitted field
-(`B_h>=15 uT`, `|B|<=75 uT`). The often-quoted 1.7 m/s^2 is for an 80-degree
-inclination, which is outside the admitted geometry. With a BA component the
-right side gains `-R_ba phi_b q`; `q_j` decays, so persistence needs the same
-value asymptotically. Every window mean then has `m_perp=g sigma_w`, exactly
-where Corollary A*'s Gram bound `(sigma_w-m_perp/g)^2/(...)` vanishes. The
-orbit is therefore the complement of a source bound on limiter (i). It is not
-a separate phenomenon.
+**Reduction.** With BA decaying, a persistent exact kernel needs
+`P_b^perp ahat -> P_b^perp g`, of norm
+`c*=g B_h/|B|>=g/5=1.96133 m/s^2`. This is the boundary of Corollary A*,
+so O2 is the same problem as limiter (i).
 
-**Literal test.** `compat_orbit_source_diagnostic.py` runs the unchanged fusion
-(state is read after each sample, never written). The target is
-`n=P_b g/|P_b g|` with `sigma_w=1/5`.
-- *Admitted inputs.* The 16-s nominal transverse mean reaches at most .214 of
-  the required value. The case set covers 10 phases each of jerk-limited
-  triangles locked to the sync cycle (21 samples), its harmonic and third
-  subharmonic, the magnetic cadence and its half, and the S cadence. It adds
-  six swell-set tuner states (tau 2.5–6.25 s) and a combined case: triangle,
-  slow bounded wave and a maximal constant accelerometer bias `B_a`, with the
-  field fraction at 1/5 and 7/25. For the linearized sync-cycle phase weights,
-  the LP optimum under `|u_(k+1)-u_k|<=Jh` is the jerk-bang-bang triangle.
-  This LP was an exploratory run and is not in the committed record. On the
-  literal filter the triangle gives 0.367 m/s^2, while the frozen-weight
-  model predicts .245, so the weights are indicative only.
-- *Linear-response probes (not admitted).* A constant drive along `n` goes
-  first into BA, up to its .4 clamp. The excess goes into AW with gain
-  roughly .7–.85. East drive (`g x b`) is absorbed as a rotation about `b`,
-  which is the kernel, seen literally. Only a drive of about 3 m/s^2 carries
-  AW across the compatibility value, and then only transiently. At the
-  crossing the accelerometer and magnetometer directions coincide. The attitude
-  about `b` becomes free, and the filter settles about 3.14 rad from the
-  original attitude about the field.
-- *Forward continuation.* The inadmissible DC prefix is switched off at
-  ratio 1.24 and replaced by the best admitted triangle. The ratio falls below
-  .9 in .26 s and settles at .18.
+**Proved in the DC idealization** (continuous-time, stationary, isotropic
+LIN/S chain; `ou3-corrected-word-proof.md`, "Exact DC map", DC-1 to DC-6):
+- The loop input is the measured world acceleration
+  `ytilde=Qa+(I-Q)g+Rhat'(b_a-bhat+n)`. The compatibility offset is output,
+  not forcing. This corrects AF-4's claim that the offset enters `d_D`.
+- The DC gain is `T=P_va/R_a`, with `0<=T<1`.
+- A kernel rotation `lambda` leaks exactly `c*(1-cos lambda)` along `n` and
+  `-c* sin lambda` along `e`.
+- Persistence therefore needs `cos lambda<=D/c*-(1/T-1)` and
+  `|sin lambda|<=D/c*`, where `D` bounds the non-kernel forcing.
+- Consequences:
+  - with `D=0`, only `lambda=pi` and `T=1/2` work;
+  - with the admitted bias forcing `D=.625`, it needs `lambda>71.4 deg`;
+  - a margin `delta` for Corollary A* follows when
+    `2 sin(lambda_max/2)<=1-(D+delta)/c*`, i.e. `lambda_max<=39.8 deg` as
+    `delta->0`.
 
-**Mechanism (candidate sign structure).** In world coordinates
-`r_w=R_hat r=(a-a_hat)+R_hat(b_a-b_hat_a)+leak(theta_err)`. The loop's
-dependence on `a_hat` is negative feedback toward the physical acceleration.
-A biased prediction produces an innovation that pulls AW back toward the
-physical mean, not one that replenishes the bias. Holding `a_hat.n` against
-OU decay therefore needs an exogenous DC drive along `n`. The possible sources
-are:
-- the physical window mean, at most `2V/L` and tending to 0;
-- bias mismatch, absorbed by BA up to the clamp;
-- off-axis tilt, which is magnetically serviced;
-- field-axis tilt `lambda`, whose leakage `lambda g x b` is orthogonal to `n`
-  (`n` lies in the g-b plane), leaving only `(1-cos lambda) g sigma_w`;
-- sync-cycle rectification.
-The audit measures the last term as the only material one, bounded by the
-jerk-limited amplitude `J/(4 f_sync)=2.63 m/s^2` at the sync frequency.
+This answers the orbit question in the idealization. Replenishment by the
+S cycle cannot hold the offset. The loop's own DC gain is below
+one, so the forcing along `n` must exceed `c*`. The only admissible source
+large enough is a rotation of the estimate by at least 71 degrees about the
+field.
 
-**Answer to the construction question.** On these histories the continuation
-does not approach a gain-rank or service boundary. It meets the
-physical-admissibility boundary: compatibility needs a sustained DC drive
-along `n` of about 3 m/s^2, which bounded displacement forbids. The evidence
-is finite and non-promoting. No admitted persistent compatibility orbit was
-found, and none is excluded.
+**Lemma M (DC form)**:
+`m_perp<=T(2c* sin(lambda_max/2)+D)`, with `Gamma_DC=T<1`.
+It enters the tail inequality as follows:
+Corollary A* margin -> `b_min>0` -> O2 scalar fixed point -> `rho_W<1`.
 
-**Lemma M (target).** On every carried A21 window of length L,
-`m_perp <= Gamma_DC (2V/L + e_B + e_mag + g sigma_w(1-cos lambda_max))
- + Gamma_rect J/(4 f_sync) <= g sigma_w - delta`.
-It enters the tail inequality as follows. Corollary A* gives a positive
-attitude-column Gram on every window, hence a recurring field-axis tilt
-information `b_min>0` per word. The scalar Riccati bound
-`c_next<=d+a c/(1+b_min c)` then has a finite fixed point `c_bar`, closing O2.
-With O1, `kappa_nu` gives `rho_W<1` in `V_(j+1)<=rho V_j+c_d|d|^2`. Audited
-constants: `Gamma_rect J/(4f_sync)<=.42 m/s^2` (ratio .214) and
-`Gamma_DC<=.85` on the excess over the BA clamp. The margin is wide at
-`L=16 s`, since `2V/L=.69`. `lambda_max` must come from the captured domain:
-7-degree tilt gives `lambda<=~35 deg`, so the leakage term is at most .35.
-OPEN: source-uniform `Gamma_DC`, `Gamma_rect` over the admitted tuner range,
-and the BA-clamp interaction.
+**Open (G1–G3).**
+- **G1:** a discrete-time DC-2. In the literal DC-1,
+  `[(Phi'-I)+(P^+)^-1 Phi^-1 Q_d]y=C'R^-1 zbar`, and `Q_d e_v!=0`.
+- **G2:** the periodic-gain monodromy fixed point, plus a rectification bound
+  at the sync frequency.
+- **G3:** the coupled attitude/BA S rows `(P^-1 Q zeta*)_S=0`.
+- **Also open:** a retained-domain bound `lambda_max<71 deg`, from capture.
 
 ## Next analytical step
 
-**First: Lemma M** (section above), which now carries O2. Derive
-`Gamma_rect` from the literal sync jump. By Lemma B, a sync resets the AW
-marginal to `sigma^2 I`, so the AW gain over one 21-sample cycle is an explicit
-sawtooth. That gives the sync-cycle phase weights. With `|u|<=J/(4f_sync)`,
-their jerk-LP value bounds the rectification. `Gamma_DC` comes from the frozen
-LIN S-chain loop. Falsifier: in a float64 replay of the literal gain sequences
-over the admitted tau range, reject Lemma M if the jerk-LP value times its
-DC-to-mean factor exceeds .5 g sigma_w, or if it undershoots the measured
-.214 ratio.
+**First: close G1–G3 for Lemma M.**
+- **G1.** Solve the discrete fixed point for the literal chain. Show
+  `T_d=P^-_va/R_a+O(h)`, with a sign proof from the discrete Riccati entries
+  that mirrors DC-3.
+- **G3.** Extend DC-2 to the coupled S rows. BA adds the column `(C_b=I)`,
+  which should only lower `n'T n`. Prove this with the same row-elimination
+  argument.
+- **G2.** Bound the sync-periodic rectification by the Lemma B sync jump
+  times the jerk-limited amplitude `J/(4 f_sync)`.
+- **Falsifier.** A coupled or discrete counterexample Riccati solution with
+  `n'T n>=1` would refute DC-4 there.
 
 Kernel-bounded observability certificate (O1, O2). Derive explicit symbolic
 bounds before any new source run or enclosure.

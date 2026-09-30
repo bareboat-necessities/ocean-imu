@@ -4909,6 +4909,176 @@ Thus the affine calculation identifies the decisive quantity:
 uniformly separated from the geomagnetic target would exclude periodic
 persistent zeros; exhibiting equality with strict margins would construct
 one. Current symbolic shipping bounds do not determine its value or sign.
+## Exact DC map of the Kalman loop and the forcing needed for compatibility
+
+This section computes the affine fixed point AF-2/AF-4 exactly for a
+stationary Kalman loop. It also corrects two claims above. First, the
+forcing `d_D` does not contain the imposed compatibility offset. Second, the
+DC gain of the LIN/S chain has a definite sign and is below one.
+
+**Setting (idealization DC-H).** Continuous-time, time-invariant Kalman
+filter `xhat' = A xhat + L(z - C xhat)`, `L = P C' R^-1`. Here `P > 0` is the
+stabilizing solution of `A P + P A' + Q - P C' R^-1 C P = 0`, and `z(t) = zbar`
+is constant. This is the stationary, continuous-time counterpart of the
+literal loop. The shipping filter is discrete and its gains are periodic
+(covariance sync, S cadence); gaps G1–G3 at the end record exactly what the
+idealization leaves open.
+
+### Lemma DC-1 (information form of the DC fixed point)
+
+The unique fixed point is `x* = P zeta*`, where
+`(A' + P^-1 Q) zeta* = C' R^-1 zbar`.                          (DC-1)
+
+*Proof.* Multiply the Riccati equation on the left by `P^-1`. This gives
+`P^-1 A P - C' R^-1 C P = -(A' + P^-1 Q)`. Hence
+`A' + P^-1 Q = -P^-1 (A - L C) P`. The right side is similar to `-(A - L C)`,
+which is invertible because `A - L C` is Hurwitz. Substitute `x = P zeta` into
+`A x + L(zbar - C x) = 0` and multiply by `P^-1`. The result is
+`-(A' + P^-1 Q) zeta + C' R^-1 zbar = 0`. ∎
+
+In DC-1 a state whose column of `A` is zero (nothing else depends on it) and
+which carries no process noise contributes nothing to the left side. The S
+coordinates are such states. In the full OU-III model, each S row of DC-1
+reads `(P^-1 Q zeta*)_S = (C' R^-1 zbar)_S = 0`, because the pseudo
+measurement is zero.
+
+### Theorem DC-2 (DC gain of the LIN/S chain)
+
+Take one world axis with states `(v, p, S, a)`. The dynamics are
+`v' = a`, `p' = v`, `S' = p`, `a' = -a/tau + w_a`, with `E w_a^2 = q`. The
+measurements are `z_a = a` (noise `R_a`) and `z_S = S` (noise `R_S`), with
+`zbar = (mu, 0)`. Then:
+
+1. The fixed point is
+   `x* = (mu/R_a) P e_v`,
+   so `ahat* = T mu`, `vhat* = mu P_vv/R_a` and `Shat* = mu P_Sv/R_a`, with
+   `T = P_va/R_a`.                                              (DC-2)
+2. The gain satisfies
+   `T = (sigma - P_aS P_vp/P_SS)/(sigma + R_a/tau) <= tau sigma/(tau sigma + R_a) < 1`,
+   `sigma := P_aa - P_aS^2/P_SS > 0`,
+   and `T >= 0`.                                                (DC-3)
+3. Equivalently, `T = 1 - sqrt(1 - P_vS^2/(R_a R_S))`.
+
+*Proof.*
+
+**Fixed point.** Nothing depends on S, so `(A' zeta)_S = 0`. The remaining
+rows are `(A' zeta)_v = zeta_p`, `(A' zeta)_p = zeta_S` and
+`(A' zeta)_a = zeta_v - zeta_a/tau`. Only `a` carries noise, so
+`P^-1 Q zeta = q zeta_a P^-1 e_a`. Try `zeta = (mu/R_a) e_v`. Then
+`zeta_a = zeta_p = zeta_S = 0`, so the v, p and S rows vanish on both sides
+of DC-1. The a row reads `zeta_v = mu/R_a`. By uniqueness (Lemma DC-1) this
+is the solution, and `x* = P zeta` gives DC-2.
+
+**Riccati entries.** Let `alpha := 1/tau + P_aa/R_a`. Write `(ij)` for the
+`(i, j)` entry of the Riccati equation. The entries used are:
+- `(vv)`: `2 P_va = P_va^2/R_a + P_vS^2/R_S`;
+- `(SS)`: `2 P_pS = P_aS^2/R_a + P_SS^2/R_S`;
+- `(pp)`: `2 P_vp = P_pa^2/R_a + P_pS^2/R_S`;
+- `(aS)`: `P_pa = P_aS (alpha + P_SS/R_S)`;
+- `(pa)`: `P_va = alpha P_pa + P_pS P_aS/R_S`;
+- `(va)`: `P_aa - alpha P_va = P_vS P_aS/R_S`;
+- `(vS)`: `P_vS P_SS/R_S = P_aS (1 - P_va/R_a) + P_vp`.
+
+**Signs.** `(A, sqrt(Q))` is controllable along the chain `a -> v -> p -> S`,
+so `P > 0`. Then:
+- `(SS)` gives `P_pS > 0`.
+- `(pp)` then gives `P_vp > 0`.
+- `(vv)` gives `P_va >= 0`.
+- Substituting `(aS)` into `(pa)` gives
+  `P_va = P_aS [alpha (alpha + P_SS/R_S) + P_pS/R_S]`. The bracket is
+  positive, so `sign P_aS = sign P_va >= 0`.
+
+**Bound.** Multiply `(va)` by `R_a` and eliminate `P_vS/R_S` using `(vS)`.
+This gives
+`P_va (sigma + R_a/tau) = R_a sigma - R_a P_aS P_vp/P_SS`.
+Since `P_aS >= 0` and `P_vp > 0`, DC-3 follows. `(vv)` is a quadratic in
+`P_va`. Its roots are `R_a (1 ± sqrt(1 - P_vS^2/(R_a R_S)))`, and `T < 1`
+selects the minus root. ∎
+
+**Consequences for the S pseudo-measurement.**
+- The S=0 update does not reject a DC AW component. `T` can be arbitrarily
+  close to 1, and the loop holds the pair `(ahat*, Shat*)` with a constant
+  pseudo-residual. The earlier informal argument that "a DC AW would
+  integrate and be removed by S" is false.
+- The same identity shows that the loop never amplifies DC: `0 <= T < 1`.
+
+### Lemma DC-3 (the forcing is the measured acceleration, not the offset)
+
+By `world_innovation_factorization`, the filter's world-frame measured
+acceleration is
+`ytilde = Rhat'(f - bhat) + g = Q a + (I - Q) g + Rhat'(b_a - bhat + n)`,
+`Q := Rhat' R`.                                                (DC-4)
+The AW correction is `K_aw Rhat (ytilde - ahat)`. The loop input is therefore
+`ytilde`, and the nominal compatibility value `P_b^perp ahat = P_b^perp g` is
+the loop's output, not part of its forcing.
+
+With the world reference correct, magnetic consistency means `Q b = b`, so
+`Q = Rot(b, lambda)`. Write `g = c* n + g_b b`, where `c* = |P_b^perp g|`,
+`n` is the unit vector along `P_b^perp g` and `e = b x n`. Then exactly:
+- `n'(I - Q) g = c* (1 - cos lambda)`;
+- `e'(I - Q) g = -c* sin lambda`;
+- `b'(I - Q) g = 0`.                                           (DC-5)
+
+Under the stated magnetic bounds (`B_h >= 15 uT`, `|B| <= 75 uT`),
+`c* = g B_h/|B| >= g/5 = 1.96133 m/s^2`. GF-3's `cos(80 deg)` (1.70 m/s^2)
+lies outside that geometry.
+
+### Theorem DC-4 (forcing needed for persistent compatibility)
+
+**Hypotheses.** DC-H holds per world axis with a common gain `T in [0, 1)`
+(isotropic LIN covariance, as in Lemma B at `S_factor = 1`). The long-window
+mean of `ytilde` is `(I - Q) g + dbar` with `Q = Rot(b, lambda)`. Let
+`D >= |P_b^perp dbar|` bound the non-kernel forcing: physical mean
+acceleration, bias mismatch, off-field-axis attitude error, and `(Q - I) a`.
+
+**Claim.** Persistent compatibility (`P_b^perp ahat = c* n` in the mean)
+requires
+`cos lambda <= D/c* - (1/T - 1) < D/c*` and `|sin lambda| <= D/c*`. (DC-6)
+
+*Proof.* `P_b^perp ahat* = T P_b^perp ybar`. Project on `n` and `e` using
+DC-5:
+- `T (c* (1 - cos lambda) + d_n) = c*`;
+- `T (-c* sin lambda + d_e) = 0`.
+
+Here `|d_n|, |d_e| <= D`. Rearranging gives DC-6. ∎
+
+**Corollaries.**
+1. *Zero non-kernel forcing* (`D = 0`) needs `lambda = pi` and `T = 1/2`
+   exactly. This is a filter rotated half a turn about the field.
+2. *Admitted bias forcing.* With `D = B_a + |bhat|_max = 0.2252 + 0.4`, and
+   the physical mean `2V/L -> 0` on long windows, DC-6 forces
+   `lambda > arccos(0.319) = 71.4 deg`.
+3. *Captured domain.* Any retained domain with `cos lambda_max > D/c*`
+   excludes a persistent compatibility orbit.
+4. *Near-compatibility (Corollary A\*).* `m_perp <= T (2 c* sin(lambda/2) + D)`.
+   So `m_perp <= c* - delta` whenever
+   `2 sin(lambda_max/2) <= 1 - (D + delta)/c*`. For `delta -> 0` this is
+   `lambda_max <= 39.8 deg`. This is Lemma M of the research ledger in its DC
+   form, with `Gamma_DC = T < 1`.
+
+**Where it enters.**
+1. Corollary A\* receives a uniform margin.
+2. That margin gives a recurring field-axis tilt information `b_min > 0` per
+   window.
+3. The scalar return `c_next <= d + a c/(1 + b_min c)` then has a finite
+   fixed point, closing O2.
+4. `kappa_nu` then gives `rho_W < 1` in `V_(j+1) <= rho V_j + c_d |d|^2`.
+
+**Gaps (all open).**
+- **G1, discreteness.** The literal fixed point satisfies
+  `[(Phi' - I) + (P^+)^-1 Phi^-1 Q_d] y = C' R^-1 zbar`, with
+  `y = (P^-)^-1 x^-`. The S rows of `Phi' - I` still vanish. However,
+  `Q_d e_v != 0`, so the `e_v` solution holds only to `O(h)`. A discrete DC-2
+  is needed.
+- **G2, periodic gains.** The monodromy fixed point replaces DC-1.
+  Zero-mean inputs at the sync frequency add a rectified term that DC-4 does
+  not bound.
+- **G3, cross-covariances.** Lemma DC-1 holds for the full coupled model, but
+  DC-2 uses the decoupled LIN/S chain. The coupled S rows
+  `(P^-1 Q zeta*)_S = 0` still have to be solved with attitude and BA
+  present. The attitude and bias errors inside `dbar` are endogenous; DC-4
+  bounds them a priori through `D` and the retained domain.
+
 ## Marine-motion window decomposition for the geomagnetic O2 argument
 
 The constant/repeated-forcing affine fixed point is only a possible

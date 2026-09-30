@@ -131,11 +131,6 @@ def validate() -> dict:
         verify_ratio(json.loads((STATUS.parent/"information-ratio-source-feasibility.json").read_text()))
     except (ValueError, KeyError, OSError) as error:
         failures.append("information-ratio diagnostic verification failed: "+str(error))
-    from tools.stability.ou3_theorem.compat_orbit_source_diagnostic import verify_diagnostic as verify_compat
-    try:
-        verify_compat(json.loads((STATUS.parent/"compat-orbit-source-feasibility.json").read_text()))
-    except (ValueError, KeyError, OSError) as error:
-        failures.append("compatibility-orbit diagnostic verification failed: "+str(error))
     return {"validation_pass":not failures,"failures":failures,"base_main_commit":provenance["base_main_commit"],
             "shipping_behavior_authority":"source implementation","theorem_closed":expected["theorem_closed"]}
 

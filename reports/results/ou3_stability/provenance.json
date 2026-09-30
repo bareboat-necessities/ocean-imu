@@ -322,7 +322,7 @@
     },
     {
       "path": "docs/ou3-corrected-word-proof.md",
-      "git_blob_sha": "8cc6432215a8491adda0e5c9ecd4936ee14303a6"
+      "git_blob_sha": "127a8fba97fa349430771d64825b94da15f60279"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout.py",
@@ -362,7 +362,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "3e8992e3ce24ec89f43028af042e31fccd07cf95"
+      "git_blob_sha": "4f292f9598f98ce2e58525de257ff9a028195491"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
@@ -578,7 +578,7 @@
     },
     {
       "path": "tests/validation/test_ou3_aw_tracking.py",
-      "git_blob_sha": "9c86f2982e35f7da5a833aa693cdf98442da63c5"
+      "git_blob_sha": "b3f272ddfcd7e46501ae7a597fbbefec3f51add9"
     },
     {
       "path": "tests/validation/test_ou3_signed_injection.py",

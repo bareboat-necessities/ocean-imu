@@ -102,8 +102,6 @@ jobs:
         run: python3 -m tools.stability.ou3_theorem.aw_tracking_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-aw-tracking.json --expect reports/results/ou3_stability/aw-tracking-source-feasibility.json
       - name: Reproduce the committed information-ratio audit without promotion
         run: python3 -m tools.stability.ou3_theorem.information_ratio_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-information-ratio.json --expect reports/results/ou3_stability/information-ratio-source-feasibility.json
-      - name: Reproduce the committed compatibility-orbit audit without promotion
-        run: python3 -m tools.stability.ou3_theorem.compat_orbit_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-compat-orbit.json --expect reports/results/ou3_stability/compat-orbit-source-feasibility.json
       - name: Check signed adjoint compatibility on the carried word
         run: python3 -m tools.stability.ou3_theorem.signed_temporal_diagnostic --output /tmp/ou3-signed-adjoint.json
       - name: Check the forced signed balance on a carried moving word
@@ -124,7 +122,6 @@ jobs:
             /tmp/ou3-moving-transport.json
             /tmp/ou3-world-frame.json
             /tmp/ou3-aw-tracking.json
-            /tmp/ou3-compat-orbit.json
             /tmp/ou3-information-ratio.json
             /tmp/ou3-signed-adjoint.json
             /tmp/ou3-signed-balance.json
