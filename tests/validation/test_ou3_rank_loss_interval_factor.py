@@ -17,6 +17,13 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_relative_process_modulus_has_zero_uniform_limit(self):
+        from tools.stability.ou3_theorem.magnetic_service_schur import relative_process_limit,relative_process_route_status
+        a=relative_process_limit(1.0,1.0);b=relative_process_limit(1e12,1.0)
+        self.assertAlmostEqual(a["joint_gamma"],.5)
+        self.assertLess(b["joint_gamma"],1e-11)
+        self.assertEqual(relative_process_route_status()["source_uniform_q_rel_lower"],0.0)
+
     def test_aggregate_magnetic_service_counterexample(self):
         from tools.stability.ou3_theorem.magnetic_service_schur import service_only_counterexample,joint_process_modulus
         z=service_only_counterexample()
