@@ -64,7 +64,7 @@ def driver_source():
     src=src.replace(' || applied!=8','')
     src=src.replace('    const auto& m=filter.raw().mekf();',
       '''    const auto& m=filter.raw().mekf();
-    const auto tune=filter.raw().getTuneState();''')
+    const auto tune=filter.raw().tune_;''')
     src=src.replace('<< ",\\\"root_covariance\\\":" << root',
       '''<< ",\\\"tau_applied\\\":" << tune.tau_applied
               << ",\\\"sigma_applied\\\":" << tune.sigma_applied
