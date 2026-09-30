@@ -15,7 +15,16 @@
 // telemetry instead of letting HWCDC::write() wait for host progress.
 static inline bool nmeaTryWriteRecord_(const char* record, size_t len) {
   if (record == nullptr || len == 0) return false;
-  if (!Serial) return false;
+
+  // Do not probe Serial's bool conversion here. On ESP32-S3 HWCDC that probe
+  // is active: isCDC_Connected() flushes the USB FIFO and may enable the TX
+  // interrupt while it is trying to discover a host. Telemetry must not make
+  // the 200 Hz sensor loop service USB merely because no reader is attached.
+  //
+  // availableForWrite() only inspects the software TX ring. Requiring room
+  // for the complete record keeps the following write on its non-blocking
+  // first-chunk path. With no host, HWCDC's FIFO policy replaces stale
+  // telemetry rather than waiting for a reader.
   const int free_bytes = Serial.availableForWrite();
   if (free_bytes < 0 || static_cast<size_t>(free_bytes) < len) return false;
   return Serial.write(reinterpret_cast<const uint8_t*>(record), len) == len;
