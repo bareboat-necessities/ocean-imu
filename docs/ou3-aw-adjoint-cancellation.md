@@ -3366,3 +3366,153 @@ Its Schur complement in the innovation variable is regular because
 S_acc>=R_acc>0.  The question becomes whether the resulting deterministic
 physical supply has nonpositive DC gain (up to declared attitude/BA/lever
 defects).  This is the correct positive-real formulation.
+
+
+## 38. Full AW-reader / accelerometer-port Schur elimination
+
+Consider one accepted accelerometer correction.  Let e^- be the full
+linearized state error immediately before correction, H the literal full
+accelerometer Jacobian, d the deterministic physical/model/sensor defect after
+putting the true physical acceleration on the same history, and
+
+    r = -H e^- + d.                                        (AP1)
+
+The correction is
+
+    e^+ = e^- + K r,                                       (AP2)
+
+with
+
+    S_acc = H P^- H^T + R_acc >0,
+    K=P^- H^T S_acc^-1.                                    (AP3)
+
+Let lambda^+ be an arbitrary backward reader at the post-correction state.
+Then
+
+    lambda^T e^+
+      = lambda^T e^- + (K^T lambda)^T r.                   (AP4)
+
+Put
+
+    q=K^T lambda=S_acc^-1 H P^- lambda.                     (AP5)
+
+The innovation is therefore one internal 3-vector entering the reader through
+q^T r.
+
+### Regular 3x3 Schur completion
+
+In the complete covariance-weighted action, the accelerometer innovation has
+quadratic cost r^T S_acc^-1 r (up to the fixed action convention).  Completing
+the square,
+
+    q^T r - r^T S_acc^-1 r
+      <= (1/4) q^T S_acc q                                (AP6)
+
+for the convention with unit quadratic coefficient.  Equivalently,
+
+    (1/4) q^T S_acc q
+      =(1/4) lambda^T P^- H^T S_acc^-1 H P^- lambda.        (AP7)
+
+Thus the full accelerometer coupling is charged by an exact PSD Schur square.
+No gain norm, AW-only Gamma sign, AG covariance ceiling, or cross-covariance
+box is required.
+
+The backward reader itself pulls through as
+
+    lambda^-=(I-H^T K^T)lambda^+,                           (AP8)
+
+the full-state analogue of the S-block formula.
+
+### Deterministic physical substitution
+
+For the literal shipping model,
+
+    r =
+      R_wb(a_phys-a_hat_w)
+      + d_att_body+d_BA+d_lever+eta_a.                     (AP9)
+
+Hence
+
+    q^T r =
+      (R_wb^T q)^T a_phys
+      -(R_wb^T q)^T a_hat_w
+      +q^T d_decl.                                         (AP10)
+
+The physical acceleration and nominal AW have EXACTLY the same coefficient
+with opposite signs.  Define
+
+    gamma_lambda = R_wb^T q
+                 = R_wb^T S_acc^-1 H P^- lambda.            (AP11)
+
+Then the accelerometer port contribution is
+
+    gamma_lambda^T(a_phys-a_hat_w)+q^T d_decl.              (AP12)
+
+This is the full-state version of the cancellation previously seen in the AW
+row, but now all attitude/BA/BG cross covariance remains inside q and the
+negative Schur square AP7.
+
+### Combine with OU prediction before bounding
+
+At the preceding OU prediction, the AW error receives
+
+    d_OU=-(1-phi)a_phys-Delta a_phys.                       (AP13)
+
+Transport its AW reader to the accelerometer port.  The combined signed
+physical supply over prediction+correction is therefore of the form
+
+    c_OU^T[-(1-phi)a_phys-Delta a_phys]
+      +gamma_lambda^T(a_phys-a_hat_w)
+      - measurement_square
+      +declared defects.                                   (AP14)
+
+Do NOT bound gamma_lambda^T a_phys and
+-gamma_lambda^T a_hat_w separately.  Substitute
+a_hat_w=a_phys+e_aw at the same correction epoch:
+
+    gamma_lambda^T(a_phys-a_hat_w)
+      =-gamma_lambda^T e_aw.                               (AP15)
+
+Thus the accelerometer port contributes NO independent physical-acceleration
+forcing.  Physical acceleration remains only in AP13, the OU prediction
+forcing.  This recovers the deterministic error recursion AC7 at the full
+reader/action level while retaining the exact negative measurement square.
+
+### Consequence
+
+The accelerometer Schur block therefore closes structurally:
+- endogenous innovation eliminated;
+- physical acceleration cancels from the correction port;
+- attitude/BA/lever/sensor enter only through declared d_decl;
+- arbitrary cross covariance strengthens/changes the PSD Schur square but
+  cannot create a free physical source.
+
+After every accepted accelerometer correction, the backward reader is AP8.
+The only physical forcing over the whole word is the sequence of OU
+prediction defects AP13.
+
+The unresolved two-norm issue is correspondingly narrower: transport of
+those OU defects through AP8 may rotate the final AW reader into
+attitude/BA coordinates, but it cannot create another a_phys source.  To
+bound the signed physical primitive, perform Abel summation on the FULL
+backward reader's AW component at the prediction epochs, not on an isolated
+AW gain.
+
+Let
+
+    b_j = E_aw^T lambda_j^- (1-phi_j)                       (AP16)
+
+be the vector coefficient of a_phys at prediction j after all future full
+corrections have been pulled backward.  The exact final physical reader is
+
+    sum_j b_j^T a_phys,j + corresponding Delta-a terms.     (AP17)
+
+The final remaining quantitative lemma is now simply a variation bound on the
+AW COMPONENT of the full backward reader:
+
+    |b_1|+|b_N|+sum|b_(j+1)-b_j| <= C_full-reader.          (AP18)
+
+Unlike the abandoned beta-TV problem, AP18 contains no independent
+accelerometer innovation or S gain; both have already been Schur-eliminated.
+It is the literal complete-word backward reader variation and is the correct
+object for bounded-velocity Abel summation.
