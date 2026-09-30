@@ -162,3 +162,15 @@ def rank_loss_factor_certificate(max_depth=10):
             "gamma_M_lower":m["gamma_M_lower"],"beta_lower":beta,
             "source_uniform_verified":bool(s["verified"] and m["verified"] and beta>0),
             "theorem_closed":False}
+
+
+def magnetic_certificate_from_operation_stratum(root_dim,ops,ehb_indices,nuisance_indices):
+    """End-to-end literal operation boxes -> magnetic residualized certificate."""
+    from .magnetic_literal_box_export import export_magnetic_event_boxes,event_tuples,validate_one_second_stratum
+    events=export_magnetic_event_boxes(root_dim,ops)
+    v=validate_one_second_stratum(events)
+    if not v["verified"]:
+        return {"verified":False,"gamma_M_lower":0.0,"reason":v["reason"]}
+    z=magnetic_service_factor_box(event_tuples(events),ehb_indices,nuisance_indices)
+    z["literal_event_count"]=len(events);z["event_stratum"]=v
+    return z
