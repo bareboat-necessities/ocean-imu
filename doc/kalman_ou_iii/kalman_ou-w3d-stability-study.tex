@@ -1183,10 +1183,11 @@ three-dimensional vector Gramian supplies it.
 
 \subsection{Shipping-specific signed nominal-AW reader}
 \label{sec:aw-reader-current}
-The carried values following \eqref{eq:corollary-a-star} are diagnostics, not
-uniform premises.  The current proof therefore does not promote the observed
-$0.348$--$0.371\,\mathrm{m/s^2}$ signed means.  Instead it uses the literal
-closed-loop mean and covariance chronology.
+Finite carried signed-AW values are diagnostics, not uniform premises.  The
+current proof therefore uses the literal closed-loop mean and covariance
+chronology.  Its target is the symbolic nominal transverse condition
+$\norm{P_{b^\perp}\mu_W}<g\sigma_w$, with the numerical value $g/5$
+used only when the explicit field-fraction premise $\sigma_w\ge1/5$ holds.
 
 Let $r_{a,k}$ be an accepted accelerometer innovation.  On the same physical
 history, transport it to the nominal world frame.  The shipping measurement
@@ -1871,17 +1872,10 @@ positive reduced heading matrix still leaves any nuisance nullspace open.
 Section~\ref{sec:capture-obstruction} refutes six-degree capture only in the
 former domain without jerk and tilt-span conditions. The new exact
 rest/motion witness obstructs guaranteed exact-STILL entry/exit detection;
-it does not prove instability. Complete-window quantifiers, conditional
-bridge composition and the chronological six-pivot implication are available.
-The inverse-frame identity and exact same-prediction-cell row grouping
-sharpen its conditional premises. Section~\ref{sec:world-frame} removes the
-attitude estimate from the row geometry, ties same-cell geometry to the
-applied magnetic cadence, reduces the aggregate attitude columns to a
-nominal signed mean and gives an injection-free aggregate six-column floor
-from magnetic service. The quiet nominal subcase now has a
-root-independent full covariance ceiling and qualitative homogeneous linear
-loss, without a physical stationary robustness conclusion.
-The current complete-word work additionally gives the qualitative
+it does not prove instability. Complete-window quantifiers and conditional bridge composition are
+retained.  The current signed-AW argument no longer relies on the superseded
+historical six-pivot/world-frame route.  The current complete-word work
+additionally gives the qualitative
 nullity-one/soft-kernel O1 reduction of Section~\ref{sec:a21-current} and the
 finite-error separation formulation of Section~\ref{sec:finite-error-diversity}.
 For the nominal-AW obstruction, Section~\ref{sec:aw-reader-current} supersedes
