@@ -7399,3 +7399,200 @@ contraction.  If every such extra null vector is also terminal-null or moves
 into the next kernel, C_joint remains finite.
 
 This is the precise remaining linear proof obligation.
+
+
+## 70. Classification of rank-deficient transverse AW-gain strata
+
+At an accepted accelerometer correction the literal gain is
+
+    K = P H_a^T Omega^-1,                                  (RD1)
+
+with Omega=H_a P H_a^T+R_eff positive definite.  The AW block is therefore
+
+    K_aw = N_aw Omega^-1,                                  (RD2)
+
+    N_aw =
+      P_aw,theta J_att^T
+      +P_aw,aw R_wb^T
+      +P_aw,ba I
+      +P_aw,bg J_bg^T,                                     (RD3)
+
+where the BA term is present when its mean is active in the correction and
+the gyro-bias lever-arm term is present when enabled; frozen BA uncertainty
+may remain in Omega but not in the mean-gain numerator.
+
+Let E_b be any 3x2 orthonormal basis for b^perp.  The transverse control block
+used in TJ4 is
+
+    D_b = E_b^T K_aw E_u,                                  (RD4)
+
+where E_u selects the two innovation coordinates used as transverse controls.
+Because Omega^-1 is invertible, it is cleaner to classify the coordinate-free
+map
+
+    G_b = E_b^T N_aw Omega^-1 : R^3 -> R^2.                (RD5)
+
+Its rank equals rank(E_b^T N_aw).  Choice of two control coordinates E_u can
+be made after this classification.  Hence innovation covariance conditioning
+cannot create or remove a rank-deficient transverse OUTPUT direction.
+
+### Rank-two regular stratum
+
+    rank(E_b^T N_aw)=2.                                    (RD6)
+
+Then there exists a 2-column innovation subspace E_u with det(D_b)!=0.
+This is the regular IFT stratum of TJ: the exact-compatible manifold is
+locally controllable and, after quotienting its tangents, the normal
+two-word Jacobian is full rank.
+
+### Rank-one stratum
+
+There exists a unique unit transverse AW-output direction d in b^perp such
+that
+
+    d^T N_aw=0.                                             (RD7)
+
+Equivalently,
+
+    P_aw,theta^T d acted through J_att
+    + P_aw,aw d acted through R_wb
+    + P_aw,ba^T d
+    + P_aw,bg^T d acted through J_bg
+
+cancel exactly in the accelerometer covariance numerator.  The missing
+direction is a LEFT null direction of the AW correction map: no
+accelerometer innovation can instantaneously change d^T a_hat_w.
+
+The corresponding compatibility defect after prediction is
+
+    delta_d =
+      d^T P_b[(phi-1)g + S/BA/transport terms].             (RD8)
+
+If delta_d!=0 at a required return epoch, exact compatibility cannot be
+restored there by the accelerometer correction.  Therefore the rank-one
+stratum splits:
+
+R1-X (incompatible rank loss):
+    d^T required transverse return !=0.                     (RD9)
+
+This stratum cannot contain an exact-compatible orbit and is irrelevant to
+the compatibility-manifold uniformity problem; its nonzero defect supplies
+normal observation/action.
+
+R1-K (kernel-aligned rank loss):
+    d^T required transverse return =0 at every deficient
+    epoch and the later S/BA/magnetic chronology preserves
+    that equality.                                         (RD10)
+
+Then the missing control direction is tangent to an enlarged exact-compatible
+stratum.  Its terminal classification is obtained by propagating the
+homogeneous AW-output covector d through the literal later mean maps.  Let
+
+    h_d = Q_+^(1/2) M_(+<-k) E_aw d.                        (RD11)
+
+If h_d=0, the extra direction is TERMINAL-NULL.
+If h_d lies entirely in the next-kernel row of Q_+, it is NEXT-KERNEL.
+If P_+^perp h_d!=0, it is TERMINAL-PERSISTENT and is an explicit obstruction
+to JR11 unless some later non-accelerometer action charges it.
+
+But exact S-chain cancellation gives the needed classification for a PURE
+zero-source AW direction: a nonzero homogeneous AW perturbation generates
+
+    S(t)=a_0 psi_tau(t)+...                                (RD12)
+
+and four distinct S=0 rows force a_0=0 when all accompanying v,p,S root
+coefficients and fresh process action are zero.  Therefore a rank-one missing
+AW correction direction cannot remain a zero-action terminal-persistent PURE
+AW mode through a suffix containing four distinct S observations.
+
+Consequently any R1-K terminal-persistent obstruction must be a COUPLED slow
+mode whose AW component d is accompanied by attitude/BA (and possibly AG)
+components that cancel the S/accelerometer action.  Such a coupled mode is
+exactly part of the complete word-dependent compatibility kernel already
+represented by P_+, provided its magnetic rows are also zero.  If magnetic
+rows are nonzero, MAGNETIC SERVICE charges it.
+
+Thus, under the already-proved complete-word nullspace classification,
+
+    rank-one deficient + zero complete action
+      => terminal-null OR next-kernel.                     (RD13)
+
+There is no extra fixed-word terminal-persistent normal null direction on the
+rank-one stratum.
+
+### Rank-zero stratum
+
+    E_b^T N_aw=0.                                          (RD14)
+
+Both transverse AW-output directions are uncontrollable by the instantaneous
+accelerometer correction.
+
+Again split by the required compatibility return vector r_perp.
+
+R0-X:
+    r_perp !=0.                                             (RD15)
+
+Then exact compatibility is impossible at that epoch unless an intervening
+S/other correction supplies the full return before the compatibility row.
+The literal chronology decides this before declaring the stratum compatible.
+If no such prior supply exists, the stratum is excluded and carries positive
+normal action.
+
+R0-K:
+    r_perp=0 after ALL prior operations at every deficient
+    epoch.                                                  (RD16)
+
+Both missing AW directions are tangent candidates.  However the complete
+zero-action word still has at most a ONE-dimensional slow compatibility
+kernel by the established S+magnetic+accelerometer classification.  Hence two
+independent terminal-persistent normal directions cannot survive.  At most
+one combination can join the next compatibility kernel; every independent
+complement is either S/process charged, magnetic charged, or terminal-null.
+
+Therefore
+
+    rank-zero deficient + zero complete action
+      => at most one next-kernel direction;
+         all other missing transverse directions terminal-null
+         or positive-action.                               (RD17)
+
+### Terminal image theorem for all rank-deficient compatible strata
+
+Combine RD13 and RD17.  For any FIXED admissible literal word satisfying the
+existing complete-word nullspace theorem,
+
+    Null(normal compatibility/action Jacobian)
+       subset Null(Q_+^(1/2) M_terminal)
+              + span(next compatibility kernel).           (RD18)
+
+Thus no rank-deficient P_b K_aw stratum creates an additional fixed-word
+terminal-persistent normal null direction.  Rank deficiency changes the local
+parameterization of the compatibility manifold but not the complete-word
+zero-action terminal classification.
+
+This answers the fixed-word classification requested:
+- rank 2: regular compatible manifold; tangent nulls only;
+- rank 1: missing direction is either incompatible/positive-action, or
+  terminal-null/next-kernel after complete chronology;
+- rank 0: same, with at most one next-kernel combination because the complete
+  slow kernel dimension is <=1.
+
+### What remains source-uniformly open
+
+RD18 is qualitative.  Near a rank-one/rank-zero boundary, the normal action
+can vanish faster than the terminal transverse image even though the exact
+boundary null is terminal-null/next-kernel.  Therefore source-uniform
+C_joint still requires a quantitative rate across these strata.
+
+The useful algebraic stratification variable is the smallest nonzero singular
+value of
+
+    E_b^T N_aw.                                             (RD19)
+
+On regions where it is >=delta, IFT/closed-range gives a local modulus.
+Near delta=0, use the exact deficient-direction split RD9--RD17 and derive a
+second-order/next-operation modulus from S/process or magnetic action.  A
+finite semialgebraic/interval cover of these strata would then certify
+C_joint.
+
+No assumption that P_b K_aw is uniformly full rank is required.
