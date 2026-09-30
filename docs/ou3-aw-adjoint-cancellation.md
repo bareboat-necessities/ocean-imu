@@ -4029,3 +4029,123 @@ Thus no honest explicit D2_reader number follows yet from the current
 certificate.  What HAS closed analytically is the coefficient geometry; the
 remaining obstruction is precisely the normalized complete-word reader's
 divided-difference l1 norm.
+
+
+## 44. Dual divided-difference factorization: local slab term plus transport commutator
+
+Let Lambda_B be the full residual-functional adjoint of the normalized
+terminal-AW minimum-action reader at consecutive actual AW-sync boundaries.
+Collapse the literal homogeneous mean operations in slab B into M_B and stack
+the observation rows applied inside that slab into O_B, with the corresponding
+minimum-action reader weights ell_B.  Backward chronology gives exactly
+
+    Lambda_B = M_B^T Lambda_(B+1) - O_B^T ell_B.            (VD1)
+
+(Here O_B^T ell_B denotes the sum of the individually transported correction
+rows in their literal order; it is notation for the exact slab observation
+reader, not a commuted measurement stack.)
+
+Define the scaled LIN mixing row A_B by
+
+    h_B = A_B Lambda_B,
+
+where A_B is zero outside LIN (v,p,S) and on those coordinates contains the
+literal first-prediction coefficients divided by slab duration:
+
+    A_B|LIN = [phi_va/L_B, phi_pa/L_B, phi_Sa/L_B].         (VD2)
+
+Then an adjacent divided difference is
+
+    h_(B+1)-h_B
+      = [A_(B+1)-A_B M_B^T] Lambda_(B+1)
+        + A_B O_B^T ell_B.                                 (VD3)
+
+This is the exact common-future-tail cancellation formula.
+
+The second term is LOCAL: it uses only observation-reader weights in slab B.
+The first term is the only surviving future-tail dependence and is multiplied
+by the transport commutator
+
+    C_B := A_(B+1)-A_B M_B^T.                              (VD4)
+
+Thus the hoped-for statement "all common future columns cancel" is too
+strong.  The correct statement is that common future tails survive only
+through C_B.
+
+### Dual operator
+
+Let D2 h=[h_1,h_2-h_1,...,h_M-h_(M-1),h_M].  For dual block
+vectors y_i, substitute VD3 and interchange slab/source sums.  The dual
+functional splits exactly into
+
+    (D2 L)^T y = Local(y) + Tail(y),                        (VD5)
+
+where Local is block-banded in the slab observation/source columns and Tail
+is a Volterra sum of C_B^T y_B pulled through future boundary adjoints.
+
+No sqrt(M) is intrinsic to Local: disjoint unit-action source slabs can be
+combined by the complete-word square-sum.  The only possible long-horizon
+loss is Tail, controlled by the sequence C_B rather than by h_B itself.
+
+### Size of the commutator
+
+A_B already has the uniform coefficient geometry
+
+    |A_v|<=.06,
+    |A_p|<=1.8e-4,
+    |A_S|<=3.6e-7
+
+for h<=.006,L=.1.  Moreover M_B is the literal near-identity 0.1-s
+closed-loop transition.  Expanding VD4,
+
+    C_B =
+      (A_(B+1)-A_B)
+      - A_B(M_B^T-I).                                      (VD6)
+
+The first term is tuner/cadence coefficient variation.  The second is a
+small row A_B multiplying the full slab state transition defect.  This is a
+much smaller object than the full reader variation, but it is not zero and
+must be enclosed.
+
+Importantly, using ||M_B-I|| as an arbitrary full-state Euclidean norm would
+again be disastrous because corrections can rotate AG/BA coordinates.  Only
+the columns seen by A_B matter.  Therefore compute/enclose the THREE pulled
+rows
+
+    A_B M_B^T                                               (VD7)
+
+directly from the literal slab chronology.  This retains all Kalman
+cancellations.
+
+### Source-slab norm reduction
+
+If the local term has per-slab action operator L_B^loc and the commutator
+tail has operator C_B Phi_(future), the exact mixed-norm target can be bounded
+without event-count Cauchy provided one proves
+
+    sup_s sum_(B<=s) || C_B Phi_(s<-B) ||_* <= C_tail       (VD8)
+
+and
+
+    sup_s ||L_s^loc||_* <= C_local.                         (VD9)
+
+Then
+
+    C_D2 <= C_endpoint + C_local + C_tail.                 (VD10)
+
+These are Volterra row-sum bounds; there is no sqrt(170).  The future
+transport in VD8 is the SAME full correction/prediction transport already
+present in the normalized reader, not a product of gain norms.
+
+### Status
+
+The infrastructure now exports every ingredient needed to evaluate VD3 on a
+frozen shipping word: exact sync boundaries, Lambda_B, slab operation
+intervals and durations.  The next source-uniform theorem is therefore not a
+generic mixed-norm estimate.  It is an enclosure of the local rows
+A_B O_B^T ell_B and the commutator rows C_B=A_(B+1)-A_B M_B^T over the
+coupled shipping slab class.
+
+This is narrower than the previous D2 obstruction and identifies precisely
+what must be small for the Volterra cancellation to remove the sqrt(170)
+factor.
