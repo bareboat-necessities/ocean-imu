@@ -431,6 +431,19 @@ q_rel/(1+q_rel).  This needs neither full P nor event schedule.  Added
 `magnetic_service_schur.py` and validation of the counterexample/formula.
 Standalone magnetic residualized certificate should not be pursued further.
 
+**Relative gyro-process modulus route closed negatively.**  On
+Range(G_nh), required q_rel is exactly inf z'Q_n z/z'G_nn z.  Positive gyro
+RW/process action alone cannot make it source-uniform because service gives
+no upper comparison on G_nn.  Aggregate family
+G(M)=[[1,0,sqrt(M)],[0,1,0],[sqrt(M),0,M]] satisfies G_hh=I2 for all M.
+With any fixed Q_n=q, q_rel=q/M->0 and joint Schur minimum q/(M+q)->0.
+The committed gyro-persistence cap is a word-diameter lower limitation, not
+an upper magnetic-nuisance information bound; G0 q_I is long-horizon and
+source-open here.  Therefore standalone gamma_M and q_rel are both retired.
+Keep G_hh>=I2 inside the complete two-word Gram and minimize jointly with
+four-S/process/kernel terms instead of Schur-shortening magnetic nuisance
+alone.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
