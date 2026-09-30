@@ -363,6 +363,18 @@ for <=1.05-s four-S and 1-s magnetic blocks, verified QR/Schur elimination,
 terminal/kernel transport, and 2--3D generalized eigen enclosure with
 adaptive box subdivision; analytic RD13/RD17 handles exact rank faces.
 
+**Rank-loss interval factor engine implemented.**  Added
+`rank_loss_interval_factor.py` using the existing midpoint-radius interval
+kernels.  It preserves shared source columns through literal linear maps,
+verifies generic inverses with an exact binary64 residual plus Neumann bound,
+computes four-S Schur information, residualized nuisance-shortened Grams and
+a fail-closed generalized ratio.  Validation tests cover exact synthetic
+cases and enforce zero promotion from scalar source ranges.  Current generated
+status remains gamma_S=gamma_M=beta=0 lower because literal common-source
+interval boxes for arbitrary shipping four-S/magnetic histories are not yet
+exported.  This is now an implementation-data gap, not missing interval
+algebra.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
