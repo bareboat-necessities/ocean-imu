@@ -1634,7 +1634,38 @@ rows in $O_s$ contain the estimator nominal force.  One must prove that
 vanishing nuisance-projected nominal accelerometer information either forces
 the physical attitude/gravity span to vanish or incurs positive
 correction/process action already present in $\Sigma$.  No such modulus is
-yet certified.
+yet certified.  In fact the standalone implication is false under the
+current assumptions.  At two accelerometer epochs the exact slow
+attitude/BA equations have
+\begin{equation}
+ D=\begin{bmatrix}C_0&B_0\\
+ C_1T_\theta&B_1\phi_b\end{bmatrix},
+ \qquad
+ L_2=C_1T_\theta-\phi_bB_1B_0^{-1}C_0 .
+ \label{eq:two-epoch-compatibility}
+\end{equation}
+After BA elimination a nonzero compatibility mode is exactly a vector in
+$\ker L_2$.  MARINE attitude span does not force
+$\sigma_{\min}^+(L_2)>0$, because $C_i=-[\hat f_i]_\times$ contains
+nominal specific force and admitted translational acceleration can compensate
+the gravity-direction change.  Thus physical attitude span alone cannot
+supply a nuisance-projected accelerometer floor.
+
+The replacement is the complete-word relative action.  Zero fresh source
+action rigidifies AW/BA/LIN nuisance trajectories; four $S$ rows remove the
+free homogeneous LIN/AW root qualitatively; magnetic service restricts the
+AG trajectory to at most one transported field-compatible line; all
+accelerometer epochs then leave at most one word-dependent compatibility
+line $\nu_W$.  The rank-one diameter theorem applies to that line.  The
+quantitative target is therefore the relative inequality
+\begin{equation}
+ H_{\rm eff}^T\Pi_{100}^{-1}H_{\rm eff}
+ \preceq K_{\rm rel}S_q ,
+ \label{eq:100s-relative-action}
+\end{equation}
+on the quotient of $\nu_W$, together with the adjacent-superword scalar
+kernel return.  This is weaker than, and does not require, a uniform
+Euclidean accelerometer-information floor.
 
 Injections obey an exact identity on ${\rm SO}(3)$. With $M=\hat R^{\mathsf T}R$
 the world attitude error, an injection acts by $M\mapsto\operatorname{Exp}(-x)M$
