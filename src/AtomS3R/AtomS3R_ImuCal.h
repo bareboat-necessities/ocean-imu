@@ -97,6 +97,16 @@
 
 namespace atoms3r_ical {
 
+// AtomS3R cold power-up needs time before the BMI270/BMM150 AUX chain is
+// initialized. A later software/USB reset naturally gets this settling time
+// from the already-powered rails, which can make a monitor-triggered reboot
+// appear to "fix" the compass. Make cold boot deterministic instead.
+static constexpr uint32_t kImuColdPowerSettleMs = 1500u;
+static inline void waitForImuColdPowerStable() {
+  const uint32_t now = millis();
+  if (now < kImuColdPowerSettleMs) delay(kImuColdPowerSettleMs - now);
+}
+
 // Axis mapping and units: AtomS3R_ImuUnits.h (map_sensor_xyz_to_body_ned_).
 
 // Nominal g -> m/s^2 with g_std (unit conversion only), then body NED.
