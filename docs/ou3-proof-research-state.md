@@ -520,6 +520,20 @@ Remaining scalar issue is only the orientation/return of this terminal
 rank-one prior direction relative to the NEXT word's compatibility line.
 Added `kernel_regularized_scalar.py` and validation.
 
+**Exact adjacent compatibility-line 2x2 recurrence derived.**  In plane
+{next kernel v, quotient q}, propagated current line u=(rho,sqrt(1-rho^2)),
+incoming rank-one variance a, next quotient information j>=0 and proof kernel
+precision m=1/c_+, scalar update is
+a_+=a/[1+a(m rho^2+j(1-rho^2))].
+Next-kernel carry is a_+ rho^2; derivative versus x=rho^2 is
+a(1+aj)/den^2>0.  Thus coincident lines maximize next-kernel carry and
+intermediate angles never enlarge it; with m included once, carried kernel
+variance <=c_+ for every angle.  Orthogonal lines move all variance to
+quotient.  Total variance need not contract under rotation if j=0, so angle
+alone is not a contraction mechanism.  Kernel set-invariance is therefore
+closed algebraically; remaining issue is transverse quotient action when j
+is small.  Added `adjacent_kernel_lines.py` and validation.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
