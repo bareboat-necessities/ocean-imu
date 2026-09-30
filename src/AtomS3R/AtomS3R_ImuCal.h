@@ -278,6 +278,7 @@ struct ImuSample {
   Vector3f m;     // uT     (mapped to body)
   float tempC;    // deg C
   uint32_t mask;  // M5.Imu.update() mask
+  bool mag_updated; // true only when M5Unified reports a new BMI270 AUX/BMM150 sample
   uint32_t sample_us; // micros() timestamp captured at imu.update()
 };
 
@@ -301,12 +302,23 @@ struct ImuSample {
   #endif
 #endif
 
+#ifndef ATOMS3R_IMU_MASK_MAG
+  #if defined(M5IMU_UPDATE_MAG)
+    #define ATOMS3R_IMU_MASK_MAG M5IMU_UPDATE_MAG
+  #elif defined(IMU_UPDATE_MAG)
+    #define ATOMS3R_IMU_MASK_MAG IMU_UPDATE_MAG
+  #else
+    #define ATOMS3R_IMU_MASK_MAG (1u << 2)
+  #endif
+#endif
+
 static constexpr uint32_t kImuMaskAccelGyro = (ATOMS3R_IMU_MASK_ACCEL | ATOMS3R_IMU_MASK_GYRO);
 
 // Reads M5.Imu, applies AtomS3R axis mapping and unit conversion, but does NOT calibrate.
 static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out) {
   out.sample_us = sample_us;
   out.mask = update_mask;
+  out.mag_updated = (out.mask & ATOMS3R_IMU_MASK_MAG) != 0u;
   if ((out.mask & kImuMaskAccelGyro) != kImuMaskAccelGyro) return false;
 
   const auto data = imu.getImuData();
@@ -316,7 +328,9 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, ui
   out.a = map_acc_to_body_ned_(data.accel);
   out.w = map_gyr_to_body_ned_(data.gyro);
 
-  // IMPORTANT: do not rely on a "mag valid" bit. Many builds never set it.
+  // M5Unified keeps the previous raw mag value when BMI270 AUX has no new
+  // BMM150 sample. Consumers must use mag_updated to distinguish that cached
+  // value from a genuine magnetic observation.
   out.m = map_mag_to_body_uT_(data.mag);
 
   return true;
