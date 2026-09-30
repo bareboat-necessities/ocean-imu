@@ -385,6 +385,34 @@ showing that persistent `f_hat parallel b` cannot be maintained by the
 declared physical/source histories.  Only after that escape-from-degeneracy
 lemma may the AG covariance/information machinery be invoked.
 
+**Persistent exact-degeneracy bridge CLOSED.** On the exact
+zero-innovation branch `f_hat=a_hat_w-g e_z parallel b`, projection normal
+to the committed field gives identically
+`P_perp a_hat_w=P_perp(g e_z)`, magnitude `g sigma_w`.  Averaging the
+literal projected accelerometer identity and using bounded physical velocity,
+jerk sampling fidelity, the sharp field-axis gravity defect
+`2 g sigma_w sin(theta/2)`, the universal post-projection BA-error bound and
+the commissioned fast accelerometer residual yields
+
+`g sigma_w <= 2 Vmax/T + J hmax/4
+ +2 g sigma_w sin(theta_max/2)+B_ba,post+N_a`.
+
+At sigma_w=1/5 and theta_max=6 deg the denominator margin is
+0.6808672329 m/s2, so `Tcrit=2 Vmax/margin=16.1561 s`.  Every exact
+zero-innovation degenerate interval of 17 s is therefore impossible, with
+about 0.0338 m/s2 strict margin.  This uses no G0, AW covariance ceiling,
+S-gain sign or carried AW statistic.
+
+For a nonzero-innovation near-degenerate branch the same identity adds only
+the SIGNED transverse accelerometer-innovation mean `Rbar_acc`.  On 17 s
+the branch is excluded if `Rbar_acc<~0.0338 m/s2`.  The pointwise 0.3 m/s2
+fast-residual box cannot supply that signed bound because deterministic
+coherent residuals need not average away.  Thus the remaining robustification
+is now: either prove the complete-reader/S-chain signed innovation mean below
+this escape margin, or use a larger signed innovation directly as
+measurement information/action forcing departure from degeneracy.  G0 may be
+invoked only after this dichotomy; doing so before would be circular.
+
 ## Current limiter
 
 Exact physical rest is not identifiable from the current sensor/bias model.
