@@ -232,6 +232,23 @@ must either force the true MARINE attitude/gravity span to vanish or incur
 positive correction/process action already counted in Sigma.  This is now
 the next controlling lemma.
 
+**Physical-to-nominal separation lemma refuted in standalone form.**  Exact
+two-epoch accelerometer/BA elimination gives
+L2=C1 T_theta-phi_b B1 B0^-1 C0.  A nonzero zero-loss mode is exactly in
+ker L2.  MARINE attitude span does not imply sigma_min^+(L2)>0 because the
+literal C_i=-[fhat_i]x use nominal specific force; admitted translational
+acceleration can compensate gravity-direction change while physical attitude
+spans.  Existing collinear constructions realize this mechanism.  Therefore
+do not seek a standalone accelerometer floor from attitude span.  On the
+complete 100-s word, zero fresh action rigidifies nuisance trajectories,
+four-S compatibility kills free homogeneous LIN/AW, magnetic service reduces
+AG to at most one transported field-compatible line, and all accelerometer
+rows leave at most one word-dependent compatibility kernel nu_W.  The
+controlling quantitative target is now relative terminal/action coercivity
+H_eff' Pi^-1 H_eff <= K_rel S_q on the quotient of nu_W, plus adjacent-word
+kernel return.  A vanishing information eigenvalue is acceptable when the
+terminal excess vanishes at the same rate.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
