@@ -9,10 +9,25 @@
 #include <math.h>
 #include "nmea/NmeaChecksum.h"
 
+// Serial/NMEA is telemetry, never part of the estimator's timing contract.
+// Build each complete sentence first and submit it only when the CDC transmit
+// ring has room for the whole record. A missing/stalled host therefore drops
+// telemetry instead of letting HWCDC::write() wait for host progress.
+static inline bool nmeaTryWriteRecord_(const char* record, size_t len) {
+  if (record == nullptr || len == 0) return false;
+  if (!Serial) return false;
+  const int free_bytes = Serial.availableForWrite();
+  if (free_bytes < 0 || static_cast<size_t>(free_bytes) < len) return false;
+  return Serial.write(reinterpret_cast<const uint8_t*>(record), len) == len;
+}
+
 // Send NMEA sentence WITHOUT the "*hh" part (we append checksum + CRLF).
 static inline void nmea_send(const char* s_no_checksum) {
   const int cs = nmea0183_checksum(s_no_checksum);
-  Serial.printf("%s*%02X\r\n", s_no_checksum, cs);
+  char record[104];
+  const int n = snprintf(record, sizeof(record), "%s*%02X\r\n", s_no_checksum, cs);
+  if (n <= 0 || static_cast<size_t>(n) >= sizeof(record)) return;
+  (void)nmeaTryWriteRecord_(record, static_cast<size_t>(n));
 }
 
 static inline float wrap360f_(float deg) {
@@ -89,7 +104,10 @@ static inline uint8_t nmeaChecksumBody_(const char* body) {
 
 static inline void nmeaPrintBody_(const char* body) {
   const uint8_t cs = nmeaChecksumBody_(body);
-  Serial.printf("$%s*%02X\r\n", body, static_cast<unsigned>(cs));
+  char record[104];
+  const int n = snprintf(record, sizeof(record), "$%s*%02X\r\n", body, static_cast<unsigned>(cs));
+  if (n <= 0 || static_cast<size_t>(n) >= sizeof(record)) return;
+  (void)nmeaTryWriteRecord_(record, static_cast<size_t>(n));
 }
 
 static inline void nmea_xdr_wave_axis_rel(const char* talker, float wave_axis_deg, bool valid)
