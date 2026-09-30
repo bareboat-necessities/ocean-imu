@@ -167,7 +167,8 @@
     "kernel_scalar_fixed_point_reduction": true,
     "causal_aw_full_root_action_ceiling": true,
     "causal_aw_AG_root_cancellation": false,
-    "carried_17s_diagnostic_equals_C_port": false
+    "carried_17s_diagnostic_equals_C_port": false,
+    "source_uniform_reachable_causal_reader_port_norm": false
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
