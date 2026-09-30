@@ -37,6 +37,29 @@ void transmitTask(void* parameter) {
   Record record{};
   for (;;) {
     if (xQueueReceive(queue, &record, portMAX_DELAY) != pdTRUE) continue;
+
+    // A queued record is not permission to exercise HWCDC. With no reader,
+    // HWCDC::write() still calls isCDC_Connected(), flushes the USB FIFO and
+    // drives its interrupt machinery. That made #631 continue touching USB
+    // continuously even though the sensor task itself was isolated.
+    //
+    // Probe reader state only here, at a bounded low cadence. If no reader is
+    // accepting CDC traffic, discard queued telemetry and leave the USB TX
+    // path idle. The producer never waits and the display/estimator are
+    // independent of this decision.
+    static uint32_t next_reader_probe_ms = 0;
+    static bool reader_ready = false;
+    const uint32_t now_ms = millis();
+    if (static_cast<int32_t>(now_ms - next_reader_probe_ms) >= 0) {
+      reader_ready = static_cast<bool>(Serial);
+      next_reader_probe_ms = now_ms + 1000u;
+    }
+    if (!reader_ready) {
+      while (xQueueReceive(queue, &record, 0) == pdTRUE) {}
+      vTaskDelay(pdMS_TO_TICKS(20));
+      continue;
+    }
+
     if (fresh(record)) {
       if (separator_offset < 2) {
         const size_t left = 2 - separator_offset;
