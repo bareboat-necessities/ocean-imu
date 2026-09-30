@@ -249,6 +249,20 @@ H_eff' Pi^-1 H_eff <= K_rel S_q on the quotient of nu_W, plus adjacent-word
 kernel return.  A vanishing information eigenvalue is acceptable when the
 terminal excess vanishes at the same rate.
 
+**100-s relative quotient inequality derived exactly.**  After nuisance and
+word-kernel shorting, write y=O_q v+A s, x_N=T_q v+T s, Sigma=AA'.  Then
+J_q=O_q'Sigma^-1 O_q and Ttilde_q=T_q-T A'Sigma^-1 O_q.  Schur elimination
+of the kernel line gives S_q and H_eff.  The sharp fixed-word constant is
+K_rel-1=lambda_max(S_q^dagger/2 H_eff'Pi^-1 H_eff
+S_q^dagger/2), with infinity exactly if Null(S_q) is not contained in
+Null(H_eff); equivalently Null(O_q) subset Null(T_q).  Complete-word
+zero-action classification supplies this for each fixed nondegenerate word,
+but not uniformly through rank-changing sequences.  Remaining quantitative
+lemma: a near-null quotient direction must satisfy terminal action <= C_det
+times observation action uniformly.  A regularized literal backward reader
+is an equivalent constructive route and gives K_rel<=1+C_det.  No Euclidean
+information floor is needed.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
