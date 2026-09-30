@@ -2553,3 +2553,99 @@ Thus
     H_S=sum_s T_(s+1)^2/lambda_min(R_S,s).
 
 Also D1(Z_S)<=2 sum_s||Z_s||.  A naive independent-extrema bound on H_S is too loose; the remaining scheduler/tuner problem is exactly to bound H_S under the coupled applied tau,R_S,T_S chronology.  The covariance factor is the S-induced AW Joseph decrement and can be paired with forward-decayed OU-process/sync replenishment.  No AG covariance enters.
+
+
+## 30. Uniform coupled bound on the transported S chronology sum
+
+Recall
+
+    H_S=sum_s T_(s+1)^2/lambda_min(R_S,s),
+
+where T_(s+1) is the future OU tail product.  The applied tuner tuple is
+committed only at the adaptation cadence (~.1 s); inside each activation cell
+tau,T_S,r_S are fixed.  The pseudo scheduler preserves elapsed phase when T_S
+is retargeted.
+
+Use cells of length L=.1 s.  In a cell with fixed applied tuple, a conservative
+event-count bound is
+
+    N_S <= 1+ceil(L/T_S),                                   (HS1)
+
+where the extra one covers a phase-preserved event at the cell boundary.
+The smallest S standard deviation is the Y factor .50 times the base r_S, so
+
+    lambda_min(R_S) >= (.5 r_S)^2,   r_S>=.15.             (HS2)
+
+Future squared OU transport across a complete cell is
+
+    d(tau)=exp(-2L/tau).                                    (HS3)
+
+Define the local worst charge
+
+    A(tau,r_S)
+      =[1+ceil(L/T_S(tau))]/(.5 r_S)^2.                    (HS4)
+
+The backward chronology sum satisfies the scalar comparison
+
+    H_i <= A_i+d_i H_(i+1).                                (HS5)
+
+Therefore any
+
+    M >= sup_reachable A/(1-d)                             (HS6)
+
+is invariant under arbitrary sequences of applied cells: if H_(i+1)<=M then
+H_i<=A_i+d_i M<=M.
+
+Using the shipping coupled cadence
+
+    T_S(tau)=clamp((.015/1.1)tau,.005,.15),
+
+tau in [.02,12], and retaining the rigorous possibility r_S=.15 even at
+large tau (SpectralMSE can remain on the base floor as physical wave RMS
+approaches its 1e-6 guard), the maximum of HS6 is at
+
+    tau=12 s, T_S=.15 s, r_S=.15 m*s.
+
+There
+
+    N_S<=2,
+    A=2/.075^2=355.5555556,
+    d=exp(-.2/12)=0.9834714538,
+
+hence
+
+    H_S <= 21511.60494.                                    (HS7)
+
+This is a source-uniform analytical comparison for arbitrary coupled tuner
+cell sequences.  It is conservative relative to the frozen-parameter
+geometric sum (about 7200.37 at the same corner) because HS1 permits one
+retarget/phase-boundary event in every .1-s cell.
+
+### Quantitative consequence
+
+Combining HS7 with the Joseph/Cauchy estimate gives
+
+    D1(Z_S)
+      <=2 sqrt(21511.605)
+         sqrt(sum_s u^T DeltaP_aa,s^S u)
+      ~=293.337 sqrt(S-decrement budget).                   (HS8)
+
+Even with a sharp O(10) AW covariance/decrement budget, HS8 is far too large
+for a g sigma_w mean certificate.  Thus the chronology sum H_S is now
+rigorously finite and explicitly bounded, but Joseph + l1/Cauchy is a
+demonstrated quantitative relaxation failure.
+
+The failure is the same structural one seen earlier: S corrections are signed
+and correlated through the integrated chain, while HS8 replaces them by the
+sum of their norms.  A useful proof must keep the signed future-transported
+S-chain combination before Cauchy/variation, just as the OU kernel had to be
+kept in telescoping form before Abel.
+
+Consequently:
+- variable-phi OU is closed sharply: mass<=1, D1<=2;
+- coupled S chronology is closed as H_S<=21511.605;
+- but the generic Joseph-to-l1 conversion is unusable.
+
+The remaining S calculation is to derive the SIGNED transported S-chain
+kernel itself and seek a telescoping/divided-difference identity for it,
+rather than bounding individual K_aS events.
