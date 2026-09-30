@@ -188,34 +188,49 @@ def chronological_reader_adjoints(events, reader, terminal_row, n=21):
     """Backward residual-functional adjoints for q*x_N - L*y.
 
     Returns one full-state row after each reverse operation plus the terminal
-    row.  Correction rows are consumed in the same chronological order used
-    by augmented_design.  This is an algebra export for reader diagnostics;
-    event timestamps/boundary labels remain the caller's responsibility.
+    row. Optional event metadata is preserved so callers can sample exact
+    shipping boundaries without changing the matrix algebra.
     """
     sequence = _events(events, n)
+    accepted = [e for e in events
+                if e['kind'] != 'correction' or e.get('accepted', True)]
+    if len(accepted) != len(sequence):
+        raise ArithmeticError('event metadata does not align with normalized operations')
     obs_rows = sum(len(b) for kind, b, _ in sequence if kind == 'correction')
     l = _matrix(reader, 1, obs_rows)[0]
     q = [F(0)]*n
     q[int(terminal_row)] = F(1)
     offset = obs_rows
-    out = [{'reverse_index': 0, 'adjoint': q[:], 'kind': 'terminal'}]
+    out = [{'reverse_index': 0, 'forward_index': len(sequence),
+            'adjoint': q[:], 'kind': 'terminal',
+            'aw_sync_boundary': False}]
     reverse_index = 0
-    for kind, b, factor in reversed(sequence):
+    for forward_index in range(len(sequence)-1, -1, -1):
+        kind, b, factor = sequence[forward_index]
+        meta = accepted[forward_index]
         reverse_index += 1
         if kind == 'correction':
             m = len(b)
             offset -= m
             li = l[offset:offset+m]
-            # y_i = H_i x + noise, so residual q*x - L_i*y_i
-            # pulls the state row by q <- q - L_i H_i.
             for j in range(n):
                 q[j] -= sum(li[i]*b[i][j] for i in range(m))
         else:
             q = [sum(q[i]*b[i][j] for i in range(n)) for j in range(n)]
-        out.append({'reverse_index': reverse_index, 'adjoint': q[:], 'kind': kind})
+        out.append({'reverse_index': reverse_index, 'forward_index': forward_index,
+                    'adjoint': q[:], 'kind': kind,
+                    'aw_sync_boundary': bool(meta.get('aw_sync_boundary', False))})
     if offset != 0:
         raise ArithmeticError('reader observation rows not fully consumed')
     return out
+
+
+def sync_boundary_adjoints(events, reader, terminal_row, n=21):
+    """Chronological reader adjoints sampled at actual AW-sync boundaries."""
+    trace = chronological_reader_adjoints(events, reader, terminal_row, n)
+    points = [x for x in trace if x.get('aw_sync_boundary')]
+    points.sort(key=lambda x: x['forward_index'])
+    return points
 
 
 def joint_minimum_action_reader(design):
