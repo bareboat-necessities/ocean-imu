@@ -8,26 +8,21 @@
 
 #include <math.h>
 #include "nmea/NmeaChecksum.h"
+#if defined(ARDUINO_ARCH_ESP32)
+#include "util/SerialTelemetry.h"
+#endif
 
-// Serial/NMEA is telemetry, never part of the estimator's timing contract.
-// Build each complete sentence first and submit it only when the CDC transmit
-// ring has room for the whole record. A missing/stalled host therefore drops
-// telemetry instead of letting HWCDC::write() wait for host progress.
+// ESP32 sensor tasks only enqueue complete records. The dedicated transport
+// worker owns the potentially blocking Serial calls, including TX-space checks.
 static inline bool nmeaTryWriteRecord_(const char* record, size_t len) {
+#if defined(ARDUINO_ARCH_ESP32)
+  return ocean_imu::telemetry::tryEnqueueSerialRecord(record, len);
+#else
   if (record == nullptr || len == 0) return false;
-
-  // Do not probe Serial's bool conversion here. On ESP32-S3 HWCDC that probe
-  // is active: isCDC_Connected() flushes the USB FIFO and may enable the TX
-  // interrupt while it is trying to discover a host. Telemetry must not make
-  // the 200 Hz sensor loop service USB merely because no reader is attached.
-  //
-  // availableForWrite() only inspects the software TX ring. Requiring room
-  // for the complete record keeps the following write on its non-blocking
-  // first-chunk path. With no host, HWCDC's FIFO policy replaces stale
-  // telemetry rather than waiting for a reader.
   const int free_bytes = Serial.availableForWrite();
   if (free_bytes < 0 || static_cast<size_t>(free_bytes) < len) return false;
   return Serial.write(reinterpret_cast<const uint8_t*>(record), len) == len;
+#endif
 }
 
 // Send NMEA sentence WITHOUT the "*hh" part (we append checksum + CRLF).
