@@ -4823,3 +4823,112 @@ The next calculation should prove CA11 exactly for the literal shipping block
 structure, then apply the neutral-chain telescoping already established to
 Y_root,n and the prediction-factor sum in CA14.  If those are bounded, the
 terminal-AW source-uniform action ceiling follows directly.
+
+
+## 51. Exact AG-root cancellation of the causal terminal-AW reader
+
+Let h0 be the six-dimensional AG root and let
+
+    Z_k = partial x_k / partial h0                            (AR1)
+
+be its 21x6 sensitivity along the frozen literal mean word.
+
+On the correction-free skeleton, shipping proof maps have:
+- prediction block diagonal in AG / LIN / BA;
+- sync identity mean map;
+- recorded left-error reset acting inside AG attitude coordinates only.
+
+Therefore the correction-free skeleton has no AG->LIN/AW mean block.  In
+particular a terminal AW row q_aw satisfies
+
+    q_aw Z_N^(skeleton)=0.                                  (AR2)
+
+Accepted corrections are the only operations that can transfer AG root
+sensitivity into AW/LIN.
+
+At correction i,
+
+    Z_i^+ = A_i Z_i^-,
+    A_i=I-K_i H_i.                                         (AR3)
+
+For the causal reader, with backward residual row Y_i^+ immediately after the
+correction, choose
+
+    L_i=Y_i^+ K_i.                                         (AR4)
+
+Then the residual root coefficient across that correction is
+
+    Y_i^+ Z_i^+ =
+      Y_i^+(I-K_i H_i)Z_i^-
+      =Y_i^+ Z_i^- - L_i H_i Z_i^-.                        (AR5)
+
+Thus the observation-reader term cancels EXACTLY the piece of AG-root
+sensitivity removed/created by the correction.
+
+Across a deterministic mean map F (prediction or reset),
+
+    Z^+=F Z^-,
+    Y^-=Y^+ F,                                              (AR6)
+
+so
+
+    Y^- Z^- = Y^+ Z^+.                                     (AR7)
+
+Hence the root-residual pairing is invariant through every non-correction
+operation and changes at a correction exactly by the reader observation term
+AR5.
+
+Backward induction over the complete word therefore yields
+
+    Y_root E_h
+      = q_aw Z_N^(skeleton)
+      =0.                                                   (AR8)
+
+Equivalently, the causal reader satisfies the six exact feasibility equations
+
+    L_causal O_h = T_h,AW.                                  (AR9)
+
+No information matrix, pivot, magnetic geometry floor, G0 premise or AG
+covariance bound is used.  The cancellation is purely chronological and
+depends only on the literal block structure AR2.
+
+### Consequence for action
+
+The arbitrary AG root covariance and all AG/nuisance root cross covariance
+drop out of the causal-reader error action.  Its action is exactly
+
+    B_AW^causal =
+      sum_predictions ||Y_k U_k||^2
+      +sum_corrections ||L_i V_i||^2
+      +Y_root,n U_n Y_root,n^T.                            (AR10)
+
+Joseph completion from section 50 allows correction terms to be combined with
+the pulled state storage rather than bounded individually.
+
+Thus the source-uniform ceiling problem is now entirely nuisance/process:
+
+    B_AW^causal <= B_AW,*                                  (AR11)
+
+with no unknown AG-root term.
+
+### Remaining row-energy problem
+
+The nuisance root comprises LIN and BA.  Backward prediction gives the neutral
+LIN polynomial chain plus OU AW decay; BA has its declared slow transition.
+Corrections create nuisance row components, but their action is Joseph-charged.
+
+The neutral LIN components must be treated with the covariant telescoping from
+sections 40--47, not by a 17-s Euclidean row norm.  The desired energy bound
+should be organized into:
+1. local neutral-LIN endpoint/coboundary terms;
+2. OU AW process action;
+3. BA root/process action under the existing BA envelope/comparison;
+4. globally square-summed correction/reset port action.
+
+Because AR8 removes AG exactly, none of these terms needs the open six-column
+I_eff floor.
+
+The next quantitative calculation is to derive an explicit upper bound for
+AR10 by splitting Y_root,n into (LIN,BA), applying the established nuisance
+upper comparison U_n to the root residual, and using the neutral-chain
+telescoping to bound the LIN row without polynomial horizon growth.
