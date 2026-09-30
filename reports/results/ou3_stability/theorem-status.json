@@ -188,7 +188,8 @@
     "rank_loss_magnetic_nuisance_schur_implemented": true,
     "rank_loss_magnetic_literal_event_box_exporter_implemented": true,
     "rank_loss_magnetic_source_uniform_operation_box_formulas_implemented": true,
-    "rank_loss_magnetic_full_1s_strata_covered": false
+    "rank_loss_magnetic_full_1s_strata_covered": false,
+    "rank_loss_magnetic_exhaustive_driver_implemented": true
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
