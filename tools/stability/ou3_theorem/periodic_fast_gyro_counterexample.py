@@ -50,7 +50,7 @@ def driver_source():
                     'for (int k=1; k<=72000; ++k) {')
     a=src.index('        if (k==45001) {')
     b=src.index('        const double t',a)
-    src=src[:a]+'''        if (k==60001) { root=matrix_json(filter.raw().mekf().covariance_full()); recording=true; }
+    src=src[:a]+'''        if (k==60001) { root=matrix_json(filter.raw().mekf().covariance_full()); }
     '''+src[b:]
     src=src.replace('const float roll = wave ? static_cast<float>(.02*std::sin(.5*t)) : 0.0f;',
       'const double om=M_PI/3.0; const float roll=wave ? static_cast<float>((.02/om)*std::cos(om*t)) : 0.0f;')
