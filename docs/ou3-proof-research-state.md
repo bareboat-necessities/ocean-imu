@@ -112,6 +112,24 @@ of that row including continuous gyro/gyro-bias transport and nonlinear
 twist/reset remainder.  Raw TV, total NIS, V_max times unweighted covariance
 loss, and the old 0.0338 residual margin are not promoted.
 
+**Continuous field-axis enclosure and obstruction.**  The slow residual
+gyro-bias term admits a second physical Abel bound
+2 P_max B_g/T + P_max D_g = 0.01913992353 m/s^2 at T=17 s (apart from the
+joint rotation/chart coefficient derivative).  The commissioned fast gyro
+residual has only an amplitude contract, giving V_max N_g=0.11 m/s^2.
+Moreover v=5.5 sin(t), p=-5.5 cos(t), a=5.5 cos(t), jerk=-5.5 sin(t), and
+n_g=0.02 sin(t)b satisfy the declared primitive/fast-residual envelopes and
+keep field-axis error amplitude at 0.02 rad while producing signed mean
+0.055+O(0.0004) m/s^2.  Hence the old 0.0338084 margin cannot close the
+continuous fast channel from independent envelopes.  This is not yet a
+shipping counterexample because the literal correction chronology has not
+been solved on the witness.  Exact SO(3) jump remainder is <=|v| kappa^2/2
+plus the twist-coordinate remainder; no useful all-word sum of these terms is
+currently proved.  NEXT: either prove same-history cancellation of fast gyro
+against literal acc/S/mag jumps in the augmented full-root functional, or
+extend the sinusoidal witness through those literal corrections and all
+service/gate contracts to obtain a genuine shipping-reachable counterexample.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
