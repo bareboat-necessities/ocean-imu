@@ -2950,3 +2950,150 @@ now to eliminate R_acc,endog,b with the accelerometer measurement/update
 identity in the same way, but its innovation covariance contains AG/BA.
 For the SIGNED mean theorem, use the deterministic identity
 r_acc=y_phys-h(x_hat), not an innovation-covariance lower bound.
+
+
+## 34. Deterministic accelerometer-innovation elimination
+
+The literal accelerometer mean model is
+
+    f_pred = R_wb (a_hat_w-g) + lever + b_a(T),
+    r_acc  = f_meas-f_pred.
+
+Write the physical body measurement on the same history as
+
+    f_meas =
+      R_true (a_phys-g) + lever_true + b_a,true(T) + eta_a.
+
+Transport the residual to the nominal world frame.  Then exactly
+
+    R_wb^T r_acc
+      = a_phys-a_hat_w
+        + d_att + d_BA + d_lever + eta_w,                  (AC1)
+
+where d_att=(R_wb^T R_true-I)(a_phys-g), d_BA is the physical-minus-nominal
+temperature-dependent accelerometer bias, d_lever is the lever-model defect,
+and eta_w=R_wb^T eta_a.  No innovation covariance appears.
+
+Let
+
+    Gamma_k=K_aw,k R_wb,k.
+
+The AW mean correction is therefore
+
+    Delta a_hat_k^acc
+      = Gamma_k(a_phys,k-a_hat_k)
+        + K_aw,k[d_body,k],                                 (AC2)
+
+or, collecting declared world defects,
+
+    a_hat_k^+
+      =(I-Gamma_k)a_hat_k^-
+        +Gamma_k a_phys,k
+        +d_acc,k.                                           (AC3)
+
+This is the central deterministic cancellation: Gamma multiplies the physical
+acceleration and the negative nominal AW with the SAME matrix.  They must not
+be bounded separately.
+
+### Combine with OU prediction
+
+For the simple literal ordering prediction -> (optional S) -> accelerometer,
+temporarily denote the post-S pre-accelerometer AW by a_tilde_k.  Prediction
+from the previous posterior is
+
+    a_pred,k=phi_k a_hat_(k-1)^+.
+
+The S update contributes xi_S,k, so
+
+    a_tilde_k=phi_k a_hat_(k-1)^+ + xi_S,k.                 (AC4)
+
+Substitute AC4 into AC3:
+
+    a_hat_k^+
+      =(I-Gamma_k)phi_k a_hat_(k-1)^+
+       +Gamma_k a_phys,k
+       +(I-Gamma_k)xi_S,k
+       +d_acc,k.                                            (AC5)
+
+Thus the homogeneous closed-loop AW multiplier is
+
+    A_k=(I-Gamma_k)phi_k,                                   (AC6)
+
+and the physical input coefficient is Gamma_k.  The same-history S correction
+is attenuated by I-Gamma_k if it precedes the accelerometer update.
+
+For arbitrary scheduler ordering, AC5 generalizes by composing the literal
+rank-one S maps and accelerometer map in actual order; the key pair
+(I-Gamma),Gamma remains exact at every accepted accelerometer correction.
+
+### Error form
+
+Define e_k=a_hat_k-a_phys,k.  From AC3,
+
+    e_k^+
+      =(I-Gamma_k)e_k^-
+        +d_acc,k,                                           (AC7)
+
+at the measurement instant (same physical sample).  This is stronger than
+the earlier AW-loop rearrangement: physical acceleration CANCELS from the
+measurement error recursion exactly.  Across prediction,
+
+    e_pred,k
+      =phi_k e_(k-1)^+
+       -(1-phi_k)a_phys,k-1
+       -Delta a_phys,k.                                     (AC8)
+
+Hence the only physical forcing of the error occurs through the OU prediction
+identity already handled by the forward-decayed beta_OU kernel.  The
+accelerometer update does not introduce an independent physical-acceleration
+reader at all; it applies I-Gamma to the existing error.
+
+### Complete deterministic word
+
+Iterating AC7--AC8 with the exact S block maps gives
+
+    e_N
+      = M_cl e_0
+        + sum_j M_(N:j)
+            [ -(1-phi_j)a_phys,j - Delta a_phys,j ]
+        + D_S
+        + D_att+BA+lever+sensor+impl.                       (AC9)
+
+Here M_cl is the literal closed-loop product of OU, S and (I-Gamma)
+accelerometer maps.  Crucially there is NO separate sum Gamma_j a_phys,j.
+That term was an artifact of moving Gamma a_hat to the other side before
+substitution.
+
+This removes the remaining endogenous accelerometer source term
+R_acc,endog structurally.
+
+### What remains quantitatively
+
+The nominal AW mean is
+
+    a_hat = a_phys+e.
+
+On a long window, the physical mean is bounded by velocity endpoints and
+jerk as already used.  The error reader AC9 has:
+- OU physical kernel with exact variable-phi mass<=1 and D1<=2 BEFORE the
+  intervening correction maps;
+- homogeneous root term M_cl e_0;
+- S corrections, already eliminable by the two-row block Schur completion;
+- declared deterministic attitude/BA/lever/sensor/implementation defects.
+
+The remaining mathematical issue is now the effect of the matrices
+(I-Gamma_k) on the forward OU kernel.  If they are nonexpansive in the
+relevant signed/readout metric, the beta_OU mass/variation bounds survive and
+the physical contribution closes.  Euclidean nonexpansiveness is NOT
+automatic for an arbitrary Kalman gain.  The correct metric is the
+covariance/information metric in which a Kalman correction is contractive.
+
+Therefore the last feedback lemma is:
+
+    the forward-decayed OU physical reader transported through literal
+    accelerometer corrections has mass/variation no larger than its
+    covariance-weighted complete-word reader bound, without converting back
+    to Euclidean gain norms.                                (AC10)
+
+This is now a pure correction-transport lemma; there is no endogenous
+innovation source left.
