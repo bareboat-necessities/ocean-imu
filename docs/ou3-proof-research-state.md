@@ -534,6 +534,25 @@ alone is not a contraction mechanism.  Kernel set-invariance is therefore
 closed algebraically; remaining issue is transverse quotient action when j
 is small.  Added `adjacent_kernel_lines.py` and validation.
 
+**Relative compatibility-line rotation resolved by ordered soft gap, not
+projector differentiation.**  Exact sine/projector perturbation gives
+sin(theta)<=residual/gap but the local restricted gap has no direct theorem
+floor; using it would resurrect the retired information-floor route.  Current
+main already supplies the rank-change-safe repair: finite closed regular A21
+event strata + compact physical/estimator trace class + complete-word
+boundary nullity<=1 imply a source-uniform ordered second eigenvalue
+lambda2_bar=min lambda_2(J)>0.  lambda_2, unlike lambda_min^+, is continuous
+through appearance/disappearance of a 1-D kernel.  With soft precision
+mu=1/c on the least-information direction,
+J_soft>=min(1/c,lambda2_bar)I and for adjacent-line overlap rho,
+Action_+>=lambda2_bar(1-rho^2).  In the exact 2x2 recurrence,
+a_+<=a/[1+a((1/c_+)rho^2+lambda2_bar(1-rho^2))]
+<=a/[1+a min(1/c_+,lambda2_bar)].
+Thus relative line rotation/quotient action is CLOSED at existence level.
+Remaining O2 blocker is linked soft scalar invariance
+D_soft=K_soft dbar_soft<=c; on large-c branch this requires
+dbar_soft*Hbar<1 (or closure on small-c branch).
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
