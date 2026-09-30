@@ -17,6 +17,13 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_linked_soft_return_uses_same_direction(self):
+        from tools.stability.ou3_theorem.linked_soft_return import linked_cauchy,rank_one_soft_return
+        self.assertTrue(linked_cauchy(2.0,3.0,2.0)["cauchy_holds"])
+        z=rank_one_soft_return(1.0,4.0,.5,.2,3.0)
+        self.assertGreater(z["effective_information"],0.0)
+        self.assertLess(z["posterior_rank_one_variance"],z["propagated_prior_variance"])
+
     def test_adjacent_kernel_line_recurrence(self):
         from tools.stability.ou3_theorem.adjacent_kernel_lines import adjacent_line_update,kernel_carry_derivative
         a=4.0;c=3.0;j=.2
