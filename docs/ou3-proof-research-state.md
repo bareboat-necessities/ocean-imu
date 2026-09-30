@@ -402,6 +402,21 @@ gap as construction/proof of the finite closed seed cover for all allowed
 1-s P/v2hat/dtheta/F/event-gate histories.  Driver/formulas are complete;
 domain cover is not.
 
+**Theorem-domain magnetic seed audit implemented; exhaustive P/schedule
+seed cover is impossible from current closed assumptions.**  Closed seed
+coordinates include dt [4,6] ms, tau [.02,12] s, 6-degree reset domain,
+AW covariance <=16I, BA covariance <=I/1600, committed-field norm/orientation
+chart, and 1-s service mu_M=1.  Two required seed coordinates are NOT closed:
+(1) no source-uniform recurring full 21x21 covariance upper box P exists
+(AG6/full upper covariance remains open), yet S_m_actual/K/I-KH depend on P;
+(2) MAGNETIC SERVICE constrains aggregate accepted information, not a finite
+callback/event schedule, so there is no finite theorem-derived schedule list
+to enumerate.  Added `magnetic_seed_cover.py`; CI now emits these exact
+blockers instead of an empty generic reason.  Conclusion: do not continue
+full-P/event enumeration.  The magnetic certificate must be reformulated
+directly in service-Gram/conditional-Schur variables so it does not require a
+full P ceiling or finite event-pattern cover.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
