@@ -8,30 +8,11 @@
 
 #include <math.h>
 #include "nmea/NmeaChecksum.h"
-#if defined(ARDUINO_ARCH_ESP32)
-#include "util/SerialTelemetry.h"
-#endif
-
-// ESP32 sensor tasks only enqueue complete records. The dedicated transport
-// worker owns the potentially blocking Serial calls, including TX-space checks.
-static inline bool nmeaTryWriteRecord_(const char* record, size_t len) {
-#if defined(ARDUINO_ARCH_ESP32)
-  return ocean_imu::telemetry::tryEnqueueSerialRecord(record, len);
-#else
-  if (record == nullptr || len == 0) return false;
-  const int free_bytes = Serial.availableForWrite();
-  if (free_bytes < 0 || static_cast<size_t>(free_bytes) < len) return false;
-  return Serial.write(reinterpret_cast<const uint8_t*>(record), len) == len;
-#endif
-}
 
 // Send NMEA sentence WITHOUT the "*hh" part (we append checksum + CRLF).
 static inline void nmea_send(const char* s_no_checksum) {
   const int cs = nmea0183_checksum(s_no_checksum);
-  char record[104];
-  const int n = snprintf(record, sizeof(record), "%s*%02X\r\n", s_no_checksum, cs);
-  if (n <= 0 || static_cast<size_t>(n) >= sizeof(record)) return;
-  (void)nmeaTryWriteRecord_(record, static_cast<size_t>(n));
+  Serial.printf("%s*%02X\r\n", s_no_checksum, cs);
 }
 
 static inline float wrap360f_(float deg) {
@@ -108,10 +89,7 @@ static inline uint8_t nmeaChecksumBody_(const char* body) {
 
 static inline void nmeaPrintBody_(const char* body) {
   const uint8_t cs = nmeaChecksumBody_(body);
-  char record[104];
-  const int n = snprintf(record, sizeof(record), "$%s*%02X\r\n", body, static_cast<unsigned>(cs));
-  if (n <= 0 || static_cast<size_t>(n) >= sizeof(record)) return;
-  (void)nmeaTryWriteRecord_(record, static_cast<size_t>(n));
+  Serial.printf("$%s*%02X\r\n", body, static_cast<unsigned>(cs));
 }
 
 static inline void nmea_xdr_wave_axis_rel(const char* talker, float wave_axis_deg, bool valid)
