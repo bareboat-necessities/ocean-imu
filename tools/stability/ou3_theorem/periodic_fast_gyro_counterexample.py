@@ -39,5 +39,64 @@ def certificate():
       "weighted_signed_functional_interval_lower":None,
       "shipping_counterexample_certified":False,
       "theorem_closed":False}
+
+def driver_source():
+    """Untouched shipping wrapper driven by the exact smooth candidate."""
+    from .construction_history_diagnostic import REPO
+    src=(REPO/'tools/stability/ag_readout_source.cpp').read_text()
+    src=src.replace('for (int k=1; k<=45064; ++k) {',
+                    'for (int k=1; k<=240000; ++k) {')
+    a=src.index('        if (k==45001) {')
+    b=src.index('        const double t',a)
+    src=src[:a]+'''        if (k==228001) { root=matrix_json(filter.raw().mekf().covariance_full()); recording=true; }
+    '''+src[b:]
+    src=src.replace('const float roll = wave ? static_cast<float>(.02*std::sin(.5*t)) : 0.0f;',
+      'const double om=M_PI/3.0; const float roll=wave ? static_cast<float>((.02/om)*std::cos(om*t)) : 0.0f;')
+    # true roll rate plus +.02 sin(om t) fast residual is identically zero
+    src=src.replace('const float rate = wave ? static_cast<float>(.01*std::cos(.5*t)) : 0.0f;',
+                    'const float rate=0.0f;')
+    src=src.replace('const float az = wave ? static_cast<float>(-.144*std::sin(.6*t)) : 0.0f;',
+                    'const float ay=wave ? static_cast<float>(3.5*(M_PI/3.0)*std::cos((M_PI/3.0)*t)) : 0.0f;')
+    src=src.replace('rwb*Eigen::Vector3f(0,0,az-g_std)',
+                    'rwb*Eigen::Vector3f(0,ay,-g_std)')
+    src=src.replace('rwb*Eigen::Vector3f(60,0,30)',
+                    'Eigen::Vector3f(75,0,0)')
+    src=src.replace(' || applied!=8','')
+    src=src.replace('    const auto& m=filter.raw().mekf();',
+      '''    const auto& m=filter.raw().mekf();
+    const auto tune=filter.raw().getTuneState();''')
+    src=src.replace('<< ",\\\"root_covariance\\\":" << root',
+      '''<< ",\\\"tau_applied\\\":" << tune.tau_applied
+              << ",\\\"sigma_applied\\\":" << tune.sigma_applied
+              << ",\\\"RS_applied\\\":" << tune.RS_applied
+              << ",\\\"pseudo_period\\\":" << m.get_pseudo_update_period_s()
+              << ",\\\"committed_field\\\":" << matrix_json(m.v2ref)
+              << ",\\\"root_covariance\\\":" << root''')
+    return src
+
+def native_probe(eigen):
+    import json, subprocess, tempfile
+    from pathlib import Path
+    from .construction_history_diagnostic import REPO
+    source=driver_source()
+    with tempfile.TemporaryDirectory(prefix='ou3-periodic-fast-gyro-') as d:
+        d=Path(d); cpp=d/'driver.cpp'; exe=d/'driver'
+        cpp.write_text(source)
+        subprocess.run(['g++','-O2','-std=c++20','-I'+str(REPO/'src'),
+                        '-isystem',str(eigen),str(cpp),'-o',str(exe)],check=True)
+        return json.loads(subprocess.check_output([str(exe),'wave'],text=True))
+
 if __name__=="__main__":
-    import json; print(json.dumps(certificate(),indent=2,sort_keys=True))
+    import argparse,json
+    from pathlib import Path
+    p=argparse.ArgumentParser()
+    p.add_argument('--eigen',type=Path)
+    p.add_argument('--native',action='store_true')
+    args=p.parse_args()
+    out=certificate()
+    if args.native:
+        if args.eigen is None: raise SystemExit('--eigen required with --native')
+        out['native']=native_probe(args.eigen)
+        out['native_periodic_orbit_exported']=True
+    print(json.dumps(out,indent=2,sort_keys=True))
+
