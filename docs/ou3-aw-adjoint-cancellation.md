@@ -2718,3 +2718,120 @@ Thus the next signed derivation should use the pair
 as a 2-row block and eliminate S jumps by block Gaussian elimination.
 The elimination coefficient is computed at the block-matrix level, where
 P_SS+R_S remains regular; do not form C_S eventwise.
+
+
+## 32. Two-row AW/S service-block elimination
+
+Take one complete S-service block from immediately after S service b to
+immediately before service b+1.  Let x=(v,p,S,a).  Collapse every literal
+operation inside the open block (OU predictions, accelerometer corrections,
+syncs and their same-history source inputs) into
+
+    x_(b+1)^- = F_b x_b^+ + G_b y_b,                        (BL1)
+
+where y_b denotes the stacked physical/accelerometer/implementation sources.
+No S pseudo-update is hidden in F_b.
+
+At the terminal S service, with h_S=e_S^T,
+
+    nu_b = 0-h_S x_(b+1)^- = -S_(b+1)^-,                   (BL2)
+
+    x_(b+1)^+ = x_(b+1)^- + K_b nu_b
+              = (I-K_b h_S)x_(b+1)^-.                      (BL3)
+
+The two rows of interest are therefore
+
+    a_(b+1)^+
+      = e_a^T F_b x_b^+ + e_a^T G_b y_b + K_aS,b nu_b,     (BL4)
+
+    S_(b+1)^+
+      = e_S^T F_b x_b^+ + e_S^T G_b y_b + k_SS,b nu_b.     (BL5)
+
+Together with BL2, this is a 2-row block with ONE internal scalar nu_b.
+Do not divide BL4 by BL5 or form P_aS/P_SS.
+
+### Regular Schur elimination
+
+In the covariance-weighted/minimum-action reader the internal pseudo
+innovation has quadratic cost
+
+    nu_b^2 / Omega_S,b,
+    Omega_S,b=P_SS,b^-+R_S,b >0.                            (BL6)
+
+The gain column is
+
+    k_b=[K_aS,b, k_SS,b]^T
+       =[P_aS,b^-,P_SS,b^-]^T/Omega_S,b.                    (BL7)
+
+Eliminating nu_b at BLOCK level is therefore a regular one-dimensional Schur
+complement with denominator Omega_S,b, never P_SS alone.  Equivalently, for
+any two-row adjoint lambda=[lambda_a,lambda_S],
+
+    min_nu {
+       (nu^2/Omega_S)
+       +2 nu (lambda_a K_aS+lambda_S k_SS)
+    }
+
+has minimizer
+
+    nu_*=-Omega_S(lambda_a K_aS+lambda_S k_SS)              (BL8)
+
+and decrement
+
+    -Omega_S(lambda_a K_aS+lambda_S k_SS)^2
+     =-[lambda_a P_aS+lambda_S P_SS]^2/Omega_S.             (BL9)
+
+This is exactly the Joseph/information cancellation but performed BEFORE
+separating AW and S.  It remains finite as P_SS->0 and automatically retains
+the sign/correlation of P_aS.
+
+### Chronological composition
+
+Let L_b be the two-row reader map at the end of block b.  Pull it backward
+through the terminal S update:
+
+    lambda_b^- =
+      (I-h_S^T K_b^T) lambda_b^+
+      = lambda_b^+ - h_S^T(K_b^T lambda_b^+).               (BL10)
+
+Then pull through F_b:
+
+    lambda_b^root = F_b^T lambda_b^-.                       (BL11)
+
+The source coefficient is
+
+    z_b = G_b^T lambda_b^-.                                 (BL12)
+
+Thus an S service changes only the S component of the backward adjoint by the
+scalar K_b^T lambda.  Its covariance-weighted action is charged exactly by
+BL9.  No eventwise |K_aS|, no P_aS/P_SS ratio, and no sqrt(N_S) appears.
+
+Across multiple S blocks the complete signed reader is obtained by repeating
+BL10--BL12.  This is the desired block Gaussian elimination.
+
+### What remains after the elimination
+
+BL10 shows that S cannot be summarized by a tuner-only scalar kernel: the
+elimination coefficient depends on the CURRENT two-row adjoint through
+K_b^T lambda.  But this dependence is favorable: BL9 gives an exact negative
+square in the same variable.  Therefore the correct bound is a block
+completed-square inequality, not TV of an S gain.
+
+For each block, combine:
+1. the forward-decayed OU physical coefficient (mass<=1, D1<=2);
+2. the endogenous accelerometer source coefficient inside G_b;
+3. the terminal S square BL9.
+
+The remaining local inequality has schematic form
+
+    signed physical/source contribution
+      - [lambda_a P_aS+lambda_S P_SS]^2/Omega_S
+      <= block supply.                                     (BL13)
+
+A large S-to-AW coupling increases the negative square rather than the
+variation charge.  This is exactly the cancellation lost by Joseph+Cauchy.
+
+The next quantitative target is therefore to complete the square between the
+physical OU/source coefficient z_b and BL9 over one service block, deriving a
+source-uniform block supply constant C_b.  Summing C_b over blocks preserves
+sign and does not incur sqrt(N_S).
