@@ -190,6 +190,18 @@ class HistoricalReadoutTests(unittest.TestCase):
         self.assertTrue(is_psd(add(action, lower, F(-1))))
         self.assertFalse(is_psd(add(lower, action, F(-1))))
 
+    def test_joint_reader_supports_terminal_aw_row(self):
+        events = supplied_fixture()
+        nuisance = identity(15)
+        design = augmented_design(events, nuisance, terminal_rows=[15])
+        self.assertEqual(design['terminal_rows'], [15])
+        self.assertEqual(len(design['T_h']), 1)
+        self.assertEqual(len(design['T']), 1)
+        joint = joint_minimum_action_reader(design)
+        self.assertEqual(len(joint['reader']), 1)
+        self.assertEqual(matmul(joint['reader'], design['O_h']), design['T_h'])
+        self.assertEqual(reader_action_of(design, joint['reader']), joint['action'])
+
     def test_exact_noise_enclosure_preserves_correlated_columns(self):
         from tools.stability.ou3_theorem.ag_readout_source_diagnostic import rational_upper_factor
         q = [[F(2), F(1, 3)], [F(1, 3), F(1)]]
