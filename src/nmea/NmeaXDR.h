@@ -149,13 +149,12 @@
 
 #include <Arduino.h>
 
-#include "nmea/NmeaChecksum.h"
+#include "nmea/NmeaCompass.h"
 
 inline void gen_nmea0183_xdr(const char *nmea_fmt, float value) {
   char nmea_part[82];
   snprintf(nmea_part, 76, nmea_fmt, value);
-  int checksum = nmea0183_checksum(nmea_part);
-  Serial.printf("%s*%02X\r\n", nmea_part, checksum);
+  nmea_send(nmea_part);
 }
 
 #endif
