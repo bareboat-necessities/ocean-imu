@@ -7773,3 +7773,150 @@ certificates from literal chronology:
 2. residualized magnetic/gyro information gamma_M,*,
 followed by one 2--3 dimensional joint generalized singular-value enclosure.
 No eventwise TV, sqrt(N), or uniform full-rank AW-gain assumption is needed.
+
+
+## 72. Interval-certificate audit for gamma_S, gamma_M and beta_*: current source ranges are insufficient for a rigorous positive number
+
+The requested interval proof arithmetic was attempted from the literal
+shipping/source ranges.
+
+Certified literal ranges currently available include
+
+    tau in [0.02,12] s,                                    (IC1)
+    dt  in [0.004,0.006] s,                                (IC2)
+    T_S <=0.15 s in OU-III Live,                           (IC3)
+    sigma_aw>=0.05 m/s^2,                                  (IC4)
+    sigma_acc>=0.05 m/s^2,                                 (IC5)
+    sigma_S>=0.075 m s,                                    (IC6)
+    Sigma_aw<=16 I,  R_S<=10000 I,                         (IC7)
+    MAGNETIC SERVICE T_M=1 s, mu_M=1.                      (IC8)
+
+These are sufficient to make every fixed carried four-S/magnetic block
+finite.  They are NOT sufficient, by themselves, to certify positive
+source-uniform interval lower bounds for NM5/NM10.
+
+### Four-S interval obstruction
+
+The exact modulus is
+
+    gamma_S =
+      v_a^T Rbar_S^-1/2
+        (I-P_(Rbar_S^-1/2 V_0))
+      Rbar_S^-1/2 v_a.                                    (IC9)
+
+A direct interval box over four event times satisfying only
+0<t_(j+1)-t_j<=0.15 has inf gamma_S=0: distinct epochs may coalesce.  The
+shipping lower cadence clamp at small tau is not a useful fixed physical
+separation for a source-uniform unscaled determinant.
+
+This is NOT a failure of the S-chain theorem.  Select four proof epochs from
+the many accepted S events using separated target cells.  Since the maximum
+gap is 0.15 s, every interval of length 0.15 s contains an accepted S event.
+For example choose one event in each cell
+
+    I1=[0,0.15],
+    I2=[0.30,0.45],
+    I3=[0.60,0.75],
+    I4=[0.90,1.05],                                       (IC10)
+
+relative to a regular suffix start after allowing the first service gap.
+Then selected epochs obey
+
+    t_(j+1)-t_j >=0.15 s                                  (IC11)
+
+and lie inside a 1.05-s block.  This converts the open event-time set to a
+compact separated box.  On IC1+IC10 strict Chebyshev independence implies
+
+    gamma_S,geom :=
+      min_(tau,t_j) dist(v_a,span(V_0))^2 >0.              (IC12)
+
+However converting IC12 to the NORMALIZED gamma_S in IC9 also needs a
+source-uniform UPPER bound on the full transported residual covariance
+Rbar_S.  IC7 bounds the applied local R_S but does not bound the complete
+four-event residual covariance after common process/root/source transport.
+That upper covariance is exactly part of the still-open complete detectability
+comparison.  Therefore a numerical positive lower interval for IC9 cannot be
+certified from IC1--IC8 without circularity.
+
+### Magnetic interval obstruction
+
+MAGNETIC SERVICE gives an unshorted normalized information floor mu_M=1 over
+every 1-s service block.  The required quantity is instead
+
+    gamma_M =
+      lambda_min^+[
+        O_M^T Sigma_M^-1/2
+        (I-P_M,nuis)
+        Sigma_M^-1/2 O_M ].                               (IC13)
+
+Projection can remove an arbitrarily large fraction of an unshorted Gram.
+No theorem currently supplies a source-uniform angle between the magnetic
+attitude rows and the transported gyro/nuisance range.  Thus IC8 does NOT
+imply gamma_M>0 numerically.  A naive interval enclosure using only IC8 has
+lower endpoint zero.
+
+### Consequence for beta_*
+
+Since both normalized component certificates currently have rigorous lower
+endpoint zero,
+
+    gamma_S in [0,+infinity),
+    gamma_M in [0,+infinity),                              (IC14)
+
+the joint generalized singular-value enclosure from source ranges alone is
+
+    beta_* in [0,+infinity).                               (IC15)
+
+Therefore no positive numerical beta_* can honestly be exported yet.  Any
+positive value obtained from carried words would be a diagnostic promotion.
+
+### Non-circular certificate design
+
+The interval task can still be completed, but the variables must be the
+LITERAL finite-word factor matrices, not coarse scalar source boxes.
+
+For each closed combinatorial event stratum:
+1. choose four separated S epochs by IC10;
+2. propagate interval enclosures of the exact common source-factor matrix A_S
+   and observation/root matrix O_S through that <=1.05-s block;
+3. compute the Schur complement gamma_S directly by verified QR/LDL, without
+   separately bounding Rbar_S;
+4. over one qualified magnetic service block propagate the JOINT AG/gyro
+   source matrix [O_M,A_M] and compute the residualized Gram by verified
+   QR/Schur elimination;
+5. propagate the terminal-active map and next-kernel projector on the same
+   stratum;
+6. solve the resulting 2--3 dimensional verified generalized eigenproblem for
+   beta_j;
+7. bisect any interval box whose lower beta bound contains zero, splitting on
+   tau, event times, covariance-factor entries and kernel angle;
+8. treat exact rank-changing faces with the analytic RD13/RD17 terminal-null/
+   next-kernel classification rather than forcing a positive Euclidean
+   singular value there.
+
+This is rigorous computational proof arithmetic.  It does not promote
+carried minima: the carried word is used only to choose a subdivision/order,
+while every accepted box must be enclosed from literal source recurrences.
+
+### What must be added to the proof infrastructure
+
+The current repository does not yet export interval enclosures of the
+complete local source-factor matrices needed in steps 2--5.  Existing
+certificates export scalar covariance/noise bounds and carried matrices, not
+source-uniform interval matrices for arbitrary event/covariance histories.
+Thus the requested gamma_S/gamma_M/beta_* numerical certificates cannot be
+completed honestly in this turn by algebra alone.
+
+The next implementation-proof task is precise:
+- add a literal interval factor propagator for a <=1.05-s four-S block and a
+  1-s magnetic-service block;
+- use outward-rounded interval arithmetic;
+- verify every accepted box against shipping tau/dt/cadence/noise/gate
+  ranges;
+- emit gamma_S_lower, gamma_M_lower and beta_lower only after all boxes close.
+
+Until that tool exists, theorem status must remain
+
+    gamma_S_source_uniform_numeric = false,
+    gamma_M_residualized_numeric   = false,
+    beta_rank_loss_numeric         = false.                (IC16)
