@@ -6044,3 +6044,55 @@ the periodic Riccati/mean equations do not supply the missing cancellation
 lemma; generically they admit a unique forced periodic solution.  The next
 rigorous step is constructive interval certification of one shipping periodic
 orbit, not another symbolic exclusion argument.
+
+
+## 61. Constructive periodic certificate: first literal candidate excluded, lower-frequency refinement
+
+To make the forcing exactly commensurate with the literal 5 ms IMU clock and
+25 Hz magnetic callbacks, first choose omega=pi/3 rad/s (6 s period), with
+
+    v_y=3.5 sin(omega t),
+    n_g,x=0.02 sin(omega t),
+    theta_x=(0.02/omega) cos(omega t),                      (PC1)
+
+and physical acceleration a_y=3.5 omega cos(omega t).  The exact signed
+fast-gyro supply remains
+
+    <v_y n_g,x> = 3.5(0.02)/2 = 0.035 m/s^2.               (PC2)
+
+The literal shipping wrapper was run from startup on this smooth exogenous
+history, with measured gyro identically zero, B=(75,0,0), and the exact
+world-to-body rotated accelerometer sample.  It reaches Live at step 7031 and
+BA-active/refined operation at step 24016.  The committed field is exactly
+(75,0,0), magnetic innovation is zero on the late word, and the late nominal
+states remain finite (recorded AW norm <=4.70116, BA estimate norm <=0.235298).
+
+However, this first candidate is EXCLUDED by an existing theorem condition:
+over the late period the literal relative attitude error reaches
+
+    0.130682 rad = 7.488 deg > pi/30.                       (PC3)
+
+Thus it cannot serve as a counterexample inside the retained 6-degree local
+domain.  This is a useful genuine exclusion: the failure is not periodic
+Riccati solvability but the existing nonlinear-domain gate.
+
+The signed supply PC2 is frequency independent at fixed velocity and gyro
+residual amplitudes.  Therefore refine without changing any assumption to the
+commensurate omega=pi/6 rad/s (12 s period, 2400 IMU samples, 300 magnetic
+callbacks).  Then the analytic physical amplitudes are
+
+    |p| <= 3.5/(pi/6) < 6.685 m,
+    |v| = 3.5 m/s,
+    |a| <= 3.5(pi/6) < 1.834 m/s^2,
+    |jerk| <=3.5(pi/6)^2 <0.961 m/s^3,
+    |theta_x| <=0.02/(pi/6) <0.03820 rad,                  (PC4)
+
+while PC2 remains exactly 0.035 m/s^2.  All pre-compensation physical
+amplitudes are strictly inside the retained envelopes.  This lower-frequency
+candidate is the next interval-certificate target because the accelerometer
+has substantially less dynamic forcing to misattribute to tilt.
+
+No conclusion is promoted from the finite native replay.  The certificate
+must still enclose the late 12-s tuner/covariance/mean orbit, prove the
+6-degree bound and all gates on that orbit, and evaluate the complete weighted
+functional including correction jumps.
