@@ -94,7 +94,7 @@ jobs:
         run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test && ./tests/kalman_ou_iii/regime_ambiguity-test && ./tests/kalman_ou_iii/gyro_bias_projection-test
       - name: Audit carried source readout without promotion
         run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-readout.json
-      - name: Diagnose 17-s terminal-AW physical port norm without promotion
+      - name: Diagnose 17-s terminal-AW D2 reader ratio without promotion
         run: python3 -m tools.stability.ou3_theorem.aw_port_17s_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-aw-port-17s.json
       - name: Audit exact same-cell moving row groups without promotion
         run: python3 -m tools.stability.ou3_theorem.moving_transport_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-moving-transport.json
