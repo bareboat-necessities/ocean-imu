@@ -139,7 +139,7 @@ def noise_action_lower(events, n=21, ag=6):
 
 
 
-def augmented_design(events, nuisance_factor, n=21, ag=6):
+def augmented_design(events, nuisance_factor, n=21, ag=6, terminal_rows=None):
     """Chronological augmented design of the joint historical reader.
 
     Every action source of the backward trial estimator is one unit-covariance
@@ -175,8 +175,12 @@ def augmented_design(events, nuisance_factor, n=21, ag=6):
                 column += len(f[0])
     if not rows:
         raise ValueError('no applied observations')
+    target = list(range(ag)) if terminal_rows is None else list(terminal_rows)
+    if not target or any(i < 0 or i >= n for i in target):
+        raise ValueError('valid terminal row indices required')
     return {'O_h': [r[:ag] for r in rows], 'A': [r[ag:] for r in rows],
-            'T_h': [r[:ag] for r in x[:ag]], 'T': [r[ag:] for r in x[:ag]]}
+            'T_h': [x[i][:ag] for i in target], 'T': [x[i][ag:] for i in target],
+            'terminal_rows': target}
 
 
 def joint_minimum_action_reader(design):
