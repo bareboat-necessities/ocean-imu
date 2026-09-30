@@ -7060,3 +7060,173 @@ If C_joint is finite uniformly on retained 100-s pairs, it directly gives
 the two-superword Riccati diameter and scalar invariance in one estimate.
 The exact-compatible reachability manifold is then allowed as the kernel
 component rather than needing to be excluded.
+
+
+## 68. Two-word kernel-augmented backward reader: exact Gram inequality
+
+Let N_W and N_+ be the normalized compatibility-kernel subspaces at the
+current and next 100-s roots (dimension zero or one).  Let P_+, P_+^perp be
+their Euclidean projectors.  Define the terminal metric
+
+    Q_+ =
+      P_+^perp Pi^-1 P_+^perp
+      +(1/c_+) P_+.                                       (JR1)
+
+Factor Q_+=C_+^T C_+ (Moore-Penrose square root on its support).  The rows of
+C_+ are terminal readouts: Pi-whitened transverse rows plus one next-kernel
+row scaled by c_+^-1/2.
+
+Run ALL rows backward through the literal current 100-s word.  For operation
+j use the exact common-source recursion:
+- prediction x+=F x+U w:
+      Y_j=Y_(j+1)F,     Z_j=Y_(j+1)U;
+- correction with row H and noise factor V:
+      choose reader L_j,
+      Y_j=Y_(j+1)-L_j H,   Z_j=L_j V;
+- reset:
+      Y_j=Y_(j+1)G;
+- PSD sync:
+      identity mean pullback plus its actual source factor.
+
+Stack every Z_j in ONE chronological source row Z(L).  Then for root e_0 and
+fresh source vector s,
+
+    C_+ e_N = Y_0(L)e_0 + Z(L)s.                           (JR2)
+
+Minimize the common source action ||Z(L)||_F^2 over all correction-reader
+blocks L.  This is one finite quadratic least-squares problem.  Denote its
+minimum by B_+ and the associated root row by Y_+.
+
+The exact joint terminal quadratic after optimal source reuse is
+
+    e_0^T Y_+^T Y_+ e_0.                                  (JR3)
+
+At the current root define the action metric
+
+    Q_0 =
+      S_q +(1/c)P_W,                                       (JR4)
+
+where P_W projects onto the current compatibility kernel and S_q is the
+complete quotient Schur information from the same word.
+
+The desired combined inequality is exactly
+
+    Y_+^T Y_+ <= C_joint Q_0.                              (JR5)
+
+Its SHARP fixed-pair constant is
+
+    C_joint(W,W+)
+      =lambda_max[
+        Q_0^dagger/2 Y_+^T Y_+ Q_0^dagger/2 ],             (JR6)
+
+with infinity iff
+
+    Null(Q_0) not subset Null(Y_+).                         (JR7)
+
+Thus the proposed backward-reader construction succeeds algebraically: it
+combines transverse terminal persistence and next-kernel precision in one
+generalized Gram pair, with every Joseph/process/sync factor shared exactly.
+
+### Joseph identities do not by themselves prove a uniform constant
+
+JR5 is NOT an automatic consequence of covariance monotonicity.  Joseph
+identities evaluate the action of a chosen reader and make JR6 exact, but
+they do not imply the range inclusion JR7 uniformly over changing kernel
+pairs.  The remaining condition is two-word finite-horizon detectability.
+
+The qualitative suffix result NP16 gives precisely the limiting range
+classification needed:
+
+    Q_0,n-action ->0
+       => dist(C_+ e_N,N_+)->0.                            (JR8)
+
+Because Q_+ itself assigns finite precision along N_+, zero RHS action also
+requires the current-kernel component to be controlled by the propagated
+kernel precision.  Therefore the only possible violation of JR7 is a
+current zero-cost compatibility direction that maps to a nonzero next-kernel
+component while carrying no current scalar precision.  The +(1/c)P_W term
+removes that possibility for finite c.  Hence for each fixed admissible pair
+with finite c,c_+,
+
+    Null(Q_0) subset Null(Y_+).                             (JR9)
+
+So C_joint(W,W+)<infinity pointwise.
+
+### Uniformity and rank-changing kernel pairs
+
+Pointwise JR9 still does not supply
+
+    sup_(W,W+) C_joint(W,W+) <infinity.                    (JR10)
+
+As kernels rotate, appear or disappear, the smallest positive eigenvalue of
+Q_0 can approach zero.  The numerator must vanish at the same rate.  NP16
+gives convergence to the next kernel but no linear modulus.  Therefore
+compactness plus pointwise range inclusion is insufficient.
+
+The exact source-uniform target is the regularized two-word range estimate
+
+    ||Y_+ v||^2
+      <= C_joint(c,r)
+         [v^T S_q v +(1/c)||P_W v||^2]                    (JR11)
+
+for all retained adjacent superword pairs.  JR11 is simultaneously:
+- quotient finite-horizon detectability;
+- scalar current-to-next kernel return;
+- continuity through kernel rank changes.
+
+It is strictly weaker than any uniform information eigenvalue floor.
+
+### Useful decomposition of JR11
+
+Decompose v=v_perp+alpha nu_W.  The exact minimum-action construction gives
+
+    Y_+ v =
+      Y_+ v_perp + alpha Y_+ nu_W.                         (JR12)
+
+For the quotient piece NP16 says the transverse next-kernel component is
+charged by complete observation/process action.  For the kernel piece,
+
+    ||Y_+ nu_W||^2
+
+is exactly the next-kernel readout action of the current compatibility mode;
+its bound relative to 1/c is the old scalar return, now measured in Q_+
+rather than separately.
+
+The cross term is not bounded independently.  Complete the 2x2 block square:
+
+    [v_perp;alpha]^T
+      [A  b; b^T d]
+    [v_perp;alpha]
+      <= C
+    [v_perp;alpha]^T
+      [S_q 0;0 1/c]
+    [v_perp;alpha].                                       (JR13)
+
+The sharp C is again JR6.  Thus no factor two or separate C_det+D budget is
+needed.
+
+### Remaining analytical obligation
+
+The augmented backward reader therefore DOES combine the two obligations in
+one shot algebraically, but it does not manufacture a source-uniform constant
+from Joseph alone.  To close JR11 one must prove a LINEAR RATE version of the
+near-null suffix dichotomy over the compact retained adjacent-word family.
+
+Equivalently, exclude sequences with
+
+    v_n^T Q_0,n v_n ->0,
+    ||Y_+,n v_n||^2 / (v_n^T Q_0,n v_n) ->infinity.        (JR14)
+
+The structural limit of any such sequence is an exact-compatible
+current-to-next kernel trajectory.  Unlike earlier approaches, this need not
+be excluded.  Linearize the literal two-word mean/covariance chronology
+TRANSVERSE to that compatibility manifold.  If the transverse derivative has
+full rank in the Q_+/Q_0 quotient, the implicit-function/closed-range theorem
+gives a local finite JR11 modulus.  A finite cover of the compact
+compatibility family then gives C_joint(c,r)<infinity.
+
+Thus the next concrete calculation is the TRANSVERSE JACOBIAN of the
+exact-compatible manifold, including P_b K_aw control rank, S/BA cycle
+closure and magnetic service.  Full transverse rank, not existence/nonexistence
+of the compatible orbit, is the final qualitative condition needed for a
+uniform two-word constant.
