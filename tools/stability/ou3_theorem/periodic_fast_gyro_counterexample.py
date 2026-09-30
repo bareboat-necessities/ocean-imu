@@ -45,7 +45,7 @@ def driver_source():
     from .construction_history_diagnostic import REPO
     src=(REPO/'tools/stability/ag_readout_source.cpp').read_text()
     src=src.replace('int live=-1, refined=-1, active=-1, applied=0;',
-      'int live=-1, refined=-1, active=-1, applied=0; std::string prev_state,prev_cov; double rel_tilt_max=0,acc_r_max=0,mag_r_max=0,ba_max=0,aw_max=0;')
+      'int live=-1, refined=-1, active=-1, applied=0; std::string prev_state,prev_cov; double rel_tilt_max=0,acc_r_max=0,mag_r_max=0,ba_max=0,aw_max=0; std::ostringstream roll_samples; bool first_roll=true;')
     src=src.replace('for (int k=1; k<=45064; ++k) {',
                     'for (int k=1; k<=72000; ++k) {')
     a=src.index('        if (k==45001) {')
@@ -66,6 +66,11 @@ def driver_source():
     src=src.replace('        if (live<0 && filter.isLive()) live=k;',
       '''        if(k>70800) {
             const auto& mm=filter.raw().mekf();
+            if(k>71296) {
+                if(!first_roll) roll_samples << ",";
+                first_roll=false;
+                roll_samples << "[" << std::setprecision(17) << mm.qref.x() << "," << mm.qref.w() << "]";
+            }
             const auto qtrue=Eigen::AngleAxisf(roll,Eigen::Vector3f::UnitX());
             const auto qerr=qtrue.inverse()*mm.quaternion_boat();
             rel_tilt_max=std::max(rel_tilt_max,2.0*std::acos(std::min(1.0,std::abs(static_cast<double>(qerr.w())))));
@@ -83,7 +88,8 @@ def driver_source():
       '''    const auto& m=filter.raw().mekf();
     const auto tune=filter.raw().tune_;''')
     src=src.replace('<< ",\\\"root_covariance\\\":" << root',
-      '''<< ",\\\"previous_period_state\\\":" << prev_state
+      '''<< ",\\\"nominal_qref_xw_final_period\\\":[" << roll_samples.str() << "]"
+              << ",\\\"previous_period_state\\\":" << prev_state
               << ",\\\"previous_period_covariance\\\":" << prev_cov
               << ",\\\"relative_attitude_error_max_rad\\\":" << rel_tilt_max
               << ",\\\"acc_innovation_max\\\":" << acc_r_max
