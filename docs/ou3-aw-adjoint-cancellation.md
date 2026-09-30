@@ -869,3 +869,114 @@ old AW-mean reachability problem: prove a source-uniform signed transverse
 accelerometer-innovation mean below the geometric escape margin, OR use its
 nonzero value directly as information/action that forces departure from the
 degenerate set.  Do not bound it by the pointwise 0.3 residual envelope.
+
+
+## 13. Correction: innovation is endogenous; robust DG12 is not a source bound
+
+The zero-innovation special case DG1--DG10 is a valid incompatibility
+calculation.  The proposed nonzero-innovation extension DG11--DG13 is NOT a
+closure theorem: r_acc is the filter innovation
+
+    r_acc = f_meas - f_pred,
+
+hence it is an endogenous function of the same nominal AW/attitude/BA state.
+Moving its signed mean to the physical-source side and then attempting to
+bound it independently is tautological.  A persistent signed innovation is
+precisely how the filter corrects a bad nominal state.
+
+Retain DG1--DG10 only as the exact zero-innovation subcase.  Replace the
+robustification by the following posterior-loop identity.
+
+Let c=P_perp(g e_z), |c|=g sigma_w.  If the POSTERIOR nominal force remains
+exactly degenerate after each accepted correction, then
+
+    P_perp a_hat_k^+ = c.                                  (PL1)
+
+Let a_k^- be the predicted AW immediately before the accelerometer correction,
+and collect every non-accelerometer AW mean correction in xi_k.  The actual
+accelerometer AW increment is
+
+    Delta a_k^acc = K_aw,k r_k.
+
+Projecting PL1 and summing gives the exact required correction balance
+
+    sum_k P_perp K_aw,k r_k
+      = sum_k [ c-P_perp a_k^- ]                            (PL2)
+
+over the accelerometer epochs, with the prediction/S/magnetic chronology
+inside a_k^- rather than replaced by a free input.  Using the literal AW-loop
+telescoping identity,
+
+    sum_acc Gamma_k(e_k-eta_k)
+      = e_0-e_N + sum xi_k
+        -sum_pred[(1-phi_k)a_hat_k+Delta a_phys,k],          (PL3)
+
+shows that physical acceleration increments telescope.  On PL1 the OU part
+contains the fixed term
+
+    sum_pred (1-phi_k)c,                                    (PL4)
+
+while the S corrections contribute their actual restoring increments through
+xi_k.  Thus maintaining the branch requires the accelerometer corrections to
+replenish at least the OU+S loss of c, modulo endpoints and magnetic/reset
+terms.
+
+Crucially PL2/PL3 must now be combined with the SAME innovations
+r_k=f_meas-f_pred.  There is no independent Rbar_acc source.
+
+### Required gain-weighted incompatibility lemma
+
+A sufficient robust bridge is:
+
+For every qualified carried chronology and every interval W on which
+
+    ||P_perp f_hat_k|| <= delta_f                            (PL5)
+
+at all accepted accelerometer epochs,
+
+    || sum_k P_perp K_aw,k r_k
+       - required_replenishment_W(c) ||
+       <= E_phys+E_BA+E_sensor+E_impl,                       (PL6)
+
+and the right side is strictly smaller than the OU+S replenishment required
+when |c|-delta_f >= g sigma_w-delta_f.
+
+Equivalently, after substituting r_k, prove a positive lower bound on
+
+    sum_k <c_hat, (I-Gamma_k)(c-P_perp y_k)>
+      + S-dissipation                                      (PL7)
+
+where Gamma_k=K_aw,k Rhat_k and y_k is the physical world acceleration plus
+the exact attitude/BA/sensor term.  This is a closed-loop passivity inequality,
+not an innovation bound.
+
+The S update already has exact covariance-metric dissipation and zero
+deterministic source.  The remaining quantitative issue is the effective
+accelerometer-to-AW operator Gamma_k on the field-transverse direction under
+the reachable Riccati/tuner chronology.  An arbitrary PSD covariance cannot
+be used; doing so reintroduces the original algebraic cancellation loophole.
+
+Therefore the controlling lemma is now precisely:
+
+    inf_(reachable k, field-transverse u)
+       u^T Sym(Gamma_eff,k) u >= gamma_acc > 0              (PL8)
+
+in the COMPLETE OU+S cycle metric, or, more generally, the word version
+
+    sum_k <u, Gamma_k u> + D_S(W,u)
+       >= gamma_W sum_k |u|^2,                              (PL9)
+
+with gamma_W>0 source-uniformly.  D_S is the exact nonnegative S-chain
+dissipation after eliminating its internal state.  PL9 is allowed to hold
+only over a complete scheduler cycle/word; pointwise gain signs are not
+required.
+
+If PL9 is proved, bounded physical velocity makes the signed physical
+acceleration mean O(1/T), BA has the declared amplitude/rate bounds, and the
+fast deterministic sensor residual contributes through the same positive
+closed-loop operator rather than as an independent 0.3 box.  The forbidden
+posterior c then cannot be an invariant mean.
+
+This is the original Riccati-reachability/passivity question in its correct
+minimal form.  The exact-degeneracy calculation usefully identifies c and
+the needed word length, but it does not remove PL9.
