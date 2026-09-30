@@ -17,6 +17,17 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_adjacent_kernel_line_recurrence(self):
+        from tools.stability.ou3_theorem.adjacent_kernel_lines import adjacent_line_update,kernel_carry_derivative
+        a=4.0;c=3.0;j=.2
+        ortho=adjacent_line_update(a,0.0,j,c)
+        mid=adjacent_line_update(a,.6,j,c)
+        same=adjacent_line_update(a,1.0,j,c)
+        self.assertEqual(ortho["next_kernel_variance"],0.0)
+        self.assertLess(mid["next_kernel_variance"],same["next_kernel_variance"])
+        self.assertTrue(same["kernel_invariance"])
+        self.assertGreater(kernel_carry_derivative(a,.4,j,c),0.0)
+
     def test_scalar_kernel_regularization_removes_J_zero_blowup(self):
         from tools.stability.ou3_theorem.kernel_regularized_scalar import regularized_scalar,augmented_rank_one_leverage
         z=regularized_scalar(0.0,4.0,3.0)
