@@ -8887,3 +8887,158 @@ coercivity, so exact source mimic is unnecessary.  On the homogeneous
 compatibility chart, evaluate the scalar regularized reader action directly.
 This keeps the finite kernel penalty instead of replacing it by the stronger
 Pi^dagger source-range requirement.
+
+
+## 79. Scalar kernel-regularized reader on the compatibility line
+
+Evaluate the regularized reader BEFORE imposing any exact source-range
+condition.  Fix a homogeneous unit compatibility coordinate r and reduce the
+complete word to the scalar root coordinate alpha along r.
+
+After all nuisance/source whitening, write
+
+    y = o alpha + A s,                                     (KR1)
+    x_N = t alpha + T s.                                   (KR2)
+
+Let
+
+    J=o^T Sigma^-1 o >=0,                                  (KR3)
+    m=1/c>0,                                               (KR4)
+    ttilde=t-T A^T Sigma^-1 o.                             (KR5)
+
+Here ttilde is a terminal VECTOR; define its known-root weighted energy
+
+    B=ttilde^T Pi^dagger ttilde in [0,+infinity].          (KR6)
+
+The rank-one kernel prior is the scalar precision m.
+
+### Exact scalar regularized reader
+
+DET-1 reduces to
+
+    L_reg =
+      T A^T Sigma^-1
+      + ttilde (J+m)^-1 o^T Sigma^-1.                      (KR7)
+
+The residual deterministic root coefficient is
+
+    r_root =
+      ttilde [1-J/(J+m)]
+      =ttilde m/(J+m).                                     (KR8)
+
+The extra fresh-source action of the regularized observation term is
+
+    B_src =
+      B * J/(J+m)^2,                                       (KR9)
+
+in the Pi-whitened terminal metric, while the residual root is charged by
+the kernel prior.  Its weighted contribution is
+
+    B_root =
+      B * m/(J+m)^2 * m
+      =B m^2/(J+m)^2                                      (KR10)
+
+if written as terminal residual squared times root variance c=1/m; more
+directly the scalar Bayesian posterior variance is
+
+    p_post=1/(J+m).                                        (KR11)
+
+The exact terminal excess carried by the compatibility coordinate is therefore
+
+    B_reg =
+      B/(J+m).                                             (KR12)
+
+This is the one-dimensional Woodbury/Riccati identity: observation
+information J and kernel precision m ADD before terminal persistence B.
+
+Relative to the current kernel prior variance c=1/m,
+
+    K_reg =
+      1 + B/(J+m)                                         (KR13)
+
+(up to the surrounding known-root Pi block already accounted for in the
+complete reader normalization).
+
+### Rank-change limit
+
+The important limit is J->0.  Then
+
+    B_reg -> B/m = c B,                                   (KR14)
+
+which is finite for every fixed finite B.  There is NO 1/J blow-up.  Thus
+the kernel regularization removes the observation-rate singularity exactly.
+
+As J->infinity,
+
+    B_reg->0.                                              (KR15)
+
+Therefore the scalar regularized reader has the monotone bound
+
+    B_reg <= c B.                                          (KR16)
+
+No source-range inclusion or directional observation floor is needed.
+
+### What remains
+
+KR16 shows that the ONLY remaining source-uniform requirement on the
+compatibility line is
+
+    B_* :=
+      sup_(compatible W, |r|=1)
+      ttilde^T Pi^dagger ttilde < infinity.                (KR17)
+
+This is weaker than TB14 exact source controllability: for fixed finite Pi,
+B is finite whenever ttilde lies in Range(Pi); otherwise B=+infinity.
+Kernel regularization removes J->0 blow-up but cannot create a known-root
+terminal source direction absent from Pi.
+
+The complete conditional Gaussian covariance supplies a useful alternative
+that avoids explicitly inverting Pi.  Define the augmented known-root
+terminal covariance with the kernel prior source:
+
+    Pi_m =
+      Pi + (1/m) ttilde ttilde^T
+      =Pi+c ttilde ttilde^T.                               (KR18)
+
+Then Sherman--Morrison on Range(Pi) gives
+
+    ttilde^T Pi_m^dagger ttilde
+      = B/(1+c B) <=1/c=m.                                (KR19)
+
+Even if B=+infinity in the singular limiting sense, the regularized augmented
+metric remains bounded by m along ttilde.  This is the crucial point: the
+correct terminal metric for the kernel-regularized reader is Pi_m, NOT the
+unregularized known-root Pi on the compatibility line.
+
+Hence a source-uniform terminal action bound exists automatically in the
+AUGMENTED metric:
+
+    c * ttilde^T Pi_m^dagger ttilde <=1.                  (KR20)
+
+This is exact and independent of J, event schedule, full covariance ceiling,
+or source-range inclusion.
+
+### Consequence for the two-word diameter
+
+The previous B_term formulation split the next terminal metric into
+Pi^dagger transverse action plus next-kernel precision BEFORE carrying the
+current kernel prior.  That split was too strong on a direction not in the
+known-root source range.  The kernel-regularized reader instead carries the
+rank-one prior through the word first, producing Pi_m.  Only then should the
+next-kernel split be made.
+
+On the scalar current compatibility coordinate, the terminal covariance
+contribution generated by its prior is rank one and its Pi_m-whitened
+leverage is <=1.  Therefore no separate E_perp/source-controllability theorem
+is required for CURRENT-kernel persistence.
+
+What remains for recurring contraction is only the mismatch between the
+terminal rank-one direction ttilde_W and the NEXT word's compatibility line.
+Let theta_W be their principal angle in the Pi_m/next-kernel metric.  The
+transverse fraction is sin^2 theta_W.  If the next kernel coincides, the
+current kernel prior simply propagates as next kernel precision; if it rotates,
+the transverse fraction is observed/charged by the next word.
+
+Thus the remaining scalar recurrence should be written directly for the
+rank-one prior covariance under line rotation, rather than through B in the
+singular Pi metric.
