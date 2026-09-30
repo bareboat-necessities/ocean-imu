@@ -559,7 +559,7 @@ class FusionApp {
         mag_norm_uT_ >= MAG_FIELD_MIN_UT &&
         mag_norm_uT_ <= MAG_FIELD_MAX_UT;
 
-    mag_fresh_ = s.mag_updated && mag_gate_.update(mag_present_, now_ms);
+    mag_fresh_ = mag_gate_.update(mag_present_, now_ms);
     if (mag_fresh_) rates_.countMag();
 
 #if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
