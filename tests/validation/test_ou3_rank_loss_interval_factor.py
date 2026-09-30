@@ -17,6 +17,14 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_complete_magnetic_cancellation_reduction(self):
+        from tools.stability.ou3_theorem.complete_magnetic_gram import scalar_magnetic_cancellation,restricted_complete_ratio
+        z=scalar_magnetic_cancellation(2.0,3.0)
+        self.assertTrue(z["cancellable"]);self.assertLess(z["selected_direction_action"],1e-28)
+        R=eye(2);q=exact([[2,0],[0,3]]);n=exact([[1,0],[0,1]])
+        r=restricted_complete_ratio(R,q,n)
+        self.assertTrue(r["verified"]);self.assertGreater(r["lower"],1.9)
+
     def test_relative_process_modulus_has_zero_uniform_limit(self):
         from tools.stability.ou3_theorem.magnetic_service_schur import relative_process_limit,relative_process_route_status
         a=relative_process_limit(1.0,1.0);b=relative_process_limit(1e12,1.0)
