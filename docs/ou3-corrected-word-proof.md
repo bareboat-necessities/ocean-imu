@@ -6412,3 +6412,187 @@ a compact invariant neighborhood for Z_k, OR prove a source-uniform loss of
 ZG-15/ZG-16/gate margin along every constrained trajectory.  Either result
 settles the infinite equality chain and therefore the finite-block O2
 condition CG-10.
+
+
+## Literal compatibility transport inside the full block-PSD certificate
+
+This is the direct substitution of CG/ZG into LS3.  It is the controlling O2
+object; no separately maximized d_soft or H appears.
+
+Fix an admissible same-history m-word block
+`B=[j,j+m)` and compose the literal Theorem-D factors over the WHOLE block,
+with the carried physical/estimator/covariance/tuner/scheduler history.  Write
+
+`Pi_B=Ric_B(0)`, `J_B` for the complete nuisance-shortened root information,
+and `Phi_B` for the conditional root-to-terminal map.  Let the literal
+endpoint compatibility graph generators be
+
+`r_0=(a_0,0,-A_0a_0)`, `r_1=(a_1,0,-A_1a_1)`.          (BP-1)
+
+Use one fixed physical metric M and normalize
+`e_0=r_0/sqrt(r_0'Mr_0)`, `n_1=Mr_1/sqrt(r_1'Mr_1)`.
+Equivalently transform root coordinates once by M^(1/2); below the Euclidean
+rank-one `e_0e_0'` means that fixed metric normalization, not a wordwise
+renormalization.
+
+Define
+
+`w_B=Phi_B' n_1`, `d_B=n_1'Pi_B n_1`,
+`G_B(c)=J_B+e_0e_0'/c`.                                  (BP-2)
+
+Then the exact block return is
+
+`D_B(c)=d_B+w_B'G_B(c)^-1 w_B`.                          (BP-3)
+
+All known-root process covariance, diffuse quotient uncertainty, intermediate
+S/accelerometer/magnetic information, AW sync, tuner-dependent process
+factors and cross-covariances are already in Pi_B,J_B,Phi_B.  In particular
+Pi_B is NOT replaced by a scalar background.
+
+The scalar ceiling is exactly the bordered PSD condition
+
+`K_B(c):=
+ [[c-d_B, w_B'],
+  [w_B,   J_B+e_0e_0'/c]] >=0`.                          (BP-4)
+
+BP-4 is LS3 for the literal superword.  Multiplying the first row/column by
+sqrt(c) gives the congruent form
+
+`Khat_B(c)=
+ [[c-d_B,       sqrt(c) w_B'],
+  [sqrt(c) w_B, c J_B+e_0e_0']] >=0`.                    (BP-5)
+
+This form is useful at rank boundaries because it contains no inverse.
+
+### Short only the true quotient, after inserting the literal graph
+
+Choose a fixed-metric orthonormal root basis `[e_0,E_Q]`.  Write
+
+`J_B=[[j,h'];[h,Q]]`, `w_B=(beta,g)`, `Q>0`.         (BP-6)
+
+Here Q is the actual complete block quotient information.  Do not replace it
+by an independent lower floor before taking the Schur complement.  Shorting Q
+in BP-4 gives the EXACT 2x2 certificate
+
+`S_B(c)=
+ [[c-dperp,             ell],
+  [ell, j+1/c]] >=0`,                                    (BP-7)
+
+where
+
+`dperp=d_B+g'Q^-1g`,
+`j=j_B:=j-h'Q^-1h>=0`,
+`ell=ell_B:=beta-h'Q^-1g`.                              (BP-8)
+
+Thus BP-4 is equivalent to
+
+`c>=dperp`,
+`(c-dperp)(j+1/c)-ell^2>=0`.                            (BP-9)
+
+After multiplying by c,
+
+`j c^2+(1-ell^2-j dperp)c-dperp>=0`.                    (BP-10)
+
+This is LS5 with unit fixed-metric root normalization, now derived after the
+literal block composition.  The important point is that dperp contains the
+complete background Pi_B AND the actual quotient return `g'Q^-1g`; ell
+contains the correlated quotient cancellation `h'Q^-1g`.  Neither may be
+bounded independently without losing the linked cancellation.
+
+### Exact compatibility face
+
+If the WHOLE block has a nonzero exact root compatibility mode e_0, then
+
+`J_B e_0=0`.                                              (BP-11)
+
+Because J_B is PSD, BP-11 forces `j=0` and `h=0` in BP-6.  Hence
+
+`ell=beta=e_0'Phi_B'n_1
+ = r_1'M Phi_B r_0/sqrt[(r_0'Mr_0)(r_1'Mr_1)]`.           (BP-12)
+
+On the zero-action graph trajectory `Phi_B r_0=T_Br_0`, so
+
+`alpha_B:=ell^2
+ = |r_1'M T_B r_0|^2/
+   [(r_0'Mr_0)(r_1'Mr_1)]`.                              (BP-13)
+
+The complete-background certificate reduces exactly to
+
+`S_B(c)=
+ [[c-dperp_B, ell_B],
+  [ell_B,     1/c]] >=0`,                                 (BP-14)
+
+or
+
+`c(1-alpha_B)>=dperp_B`.                                 (BP-15)
+
+Therefore:
+- if `alpha_B<1`, the exact finite ceiling is
+  `c>=dperp_B/(1-alpha_B)`;
+- if `alpha_B=1` and `dperp_B>0`, NO finite scalar ceiling exists for that
+  block;
+- if `alpha_B=1,dperp_B=0`, BP-14 is only semidefinite equality and gives no
+  strict contraction.
+
+This conclusion retains the full background.  The obstruction at alpha=1 is
+not an artifact of multiplying dbar and Hbar: the positive dperp_B is the
+literal known-root/quotient covariance appearing in the same Schur
+certificate.
+
+### Intermediate information and the m-word advantage
+
+If the carried endpoint graph direction is charged anywhere inside the block,
+then after complete nuisance shorting `j_B>0` unless another exact block
+null mode survives.  BP-10 then has positive leading coefficient, so every
+fixed block eventually satisfies BP-4 for sufficiently large c.  The positive
+root is
+
+`c_*(B)=
+ [-(1-ell^2-j dperp)
+  +sqrt((1-ell^2-j dperp)^2+4j dperp)]/(2j)`,             (BP-16)
+
+with the j->0 limit given by BP-15 when alpha<1.
+
+Thus the finite-block mechanism is sharper than multiplying boundary alphas:
+a mode may have unit endpoint overlap on an early word but acquire positive
+actual information later; then the superword has j_B>0 and its large-c slope
+is zero.  Only a genuine exact null trajectory through the ENTIRE block lands
+on BP-11--BP-15.
+
+For a wholly exact persistent chain, ZG gives
+`T_k r_k=lambda_k r_(k+1)`.  Then BP-13 factorizes into the product of the
+boundary alphas under the same fixed metric.  If all are one, BP-15 fails
+whenever dperp_B>0.  If some boundary is lossy while the block remains exact,
+alpha_B<1 and BP-15 supplies the finite ceiling.
+
+### Uniform same-history block theorem
+
+For a fixed m let C_m be the compact class of admissible same-history
+m-word blocks with the literal coupled tuner/physical chronology.  Define the
+continuous/shorted BP quantities on each closed event stratum.  A uniform
+block ceiling exists if and only if the BP-10 positive roots are uniformly
+bounded.  A sufficient and, on the exact-kernel face, necessary condition is
+
+`sup_(B in C_m: j_B=0) alpha_B <1`,                      (BP-17)
+
+together with the already required compact finite `dperp_B` and positive
+quotient shorting on the retained coordinates.  Then choose
+
+`c_m >= sup_(B in C_m) c_*(B)<infinity`                  (BP-18)
+
+and BP-4 holds for every block.  Strict inequality can be retained by choosing
+c_m above the attained supremum and preserving the existing nonlinear/
+arithmetic margins.
+
+If BP-17 fails for every finite m because there is an infinite exact
+unit-transfer compatibility execution, the scalar block ceiling architecture
+cannot close: every prefix lies on BP-15 with alpha=1 and positive background.
+If no such infinite execution exists, the EC compactness theorem supplies
+some finite m and delta>0 on the exact face; continuity of BP-10 then gives a
+finite uniform c_m.  This is the precise bridge from the compatibility
+continuation problem to the full-baseline linked Riccati certificate.
+
+No theorem flag is promoted here: the existence/nonexistence of the infinite
+exact equality execution remains OPEN.  What is closed is the algebraic
+question of how its answer enters O2: through BP-4/BP-10, with the complete
+background covariance retained.

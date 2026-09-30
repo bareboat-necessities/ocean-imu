@@ -186,3 +186,38 @@ strict.  Global forward completeness remains OPEN because no source-uniform
 lower bound on that Jacobian or invariant magnetic/gate margin is proved.
 The next decisive obligation is a compact invariant strict-margin ZG patch or
 a theorem that every constrained ZG trajectory loses one of those margins.
+
+
+### Linked block-PSD substitution
+
+The literal compatibility graph is now inserted directly into the full
+superword LS3 certificate.  For an m-word same-history block B,
+
+`K_B(c)=[[c-d_B,w_B'];[w_B,J_B+e_0e_0'/c]]>=0`
+
+is exactly equivalent to the scalar ceiling, with
+`d_B=n_1'Pi_Bn_1`, `w_B=Phi_B'n_1`.  Shorting only the actual quotient
+block gives the exact 2x2 matrix
+
+`[[c-dperp,ell];[ell,j+1/c]]>=0`
+
+and polynomial
+`j c^2+(1-ell^2-j dperp)c-dperp>=0`.
+The full known-root background and quotient covariance stay in dperp; the
+actual quotient cross-cancellation stays in ell.
+
+On an exact block compatibility mode J_B e_0=0, PSD forces the cross
+information to vanish and
+`ell=r_1'M T_Br_0/sqrt[(r_0'Mr_0)(r_1'Mr_1)]`.
+Thus the full-baseline condition is exactly
+`c(1-alpha_B)>=dperp_B`.  Unit alpha with positive background genuinely
+precludes a finite ceiling for that block; this is no dbar/Hbar artifact.
+
+If the carried mode acquires positive information anywhere in the composed
+block, j_B>0 unless an exact block null mode survives, and the block return
+has a finite positive fixed-point root.  Therefore only a whole-block exact
+unit-transfer trajectory obstructs the m-word certificate.  Absence of an
+infinite equality execution plus EC compactness yields some finite m with a
+uniform exact-face alpha gap, and continuity of the linked polynomial then
+yields a uniform finite block ceiling.  Infinite equality remains open; O2
+is not promoted.
