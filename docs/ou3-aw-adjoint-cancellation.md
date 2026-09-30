@@ -1407,3 +1407,121 @@ information Gramian in a proof-scaled 4-state coordinate.  The repository's
 earlier raw OU controllability Gershgorin bound failed from conditioning, so
 the correct next representation is the scaled factor/LDLT already identified
 in the proof ledger, now only 4x4 per axis.
+
+
+## 18. Full 4x4 information floor: valid but quantitatively non-closing
+
+A correction to the proposed target is necessary.  The quantity
+
+    lambda_min(I_tilde)
+
+depends on the arbitrary proof coordinate scaling.  The contraction statement
+
+    rho <= (1+iota)^(-1/2)
+
+is coordinate-invariant only for the PRIOR-WHITENED information
+
+    J_C = P0^(1/2) I_C P0^(1/2),                            (IF1)
+
+equivalently for a Loewner comparison
+
+    I_C >= iota P0^-1.                                      (IF2)
+
+Thus the desired constant is
+
+    iota0=inf_reachable lambda_min(J_C).                     (IF3)
+
+A single .1-s AW-sync cycle cannot have a uniform 4-state information floor:
+at T_S=.15 it may contain no S row, while conditioned accelerometer rows
+observe only AW.  Use a four-S-service superword instead (duration <=.6 s),
+or a longer selected-row word for better conditioning.
+
+The existing exact recurring root covariance certificate uses fixed LIN proof
+scales
+
+    D=diag(2.4,18,132,4)
+
+and supplies the 4x4 lower covariance matrix whose LDL pivots are
+
+    4.2027825893e-8,
+    3.9268873816e-9,
+    9.3267257619e-11,
+    1.9601549308e-9.
+
+Its actual smallest eigenvalue is approximately
+
+    lambda_min(L_root)=4.15919906e-11.                      (IF4)
+
+This is a proved Loewner lower matrix; the decimal eigenvalue is diagnostic,
+while a rational LDL/norm bound may be used for formal promotion.
+
+For four CONSECUTIVE S rows at the coupled short-tau corner
+tau=.02,T_S=.005,r_S=.15, adding the guaranteed accelerometer rows removes
+the tiny AW Schur direction.  In the same fixed proof coordinates the
+combined information eigenvalues are approximately
+
+    1.5999956e-7, 1.7999998, 1.7925380e2, 3.0976090e6.      (IF5)
+
+The small eigenvalue is now a neutral-integrator direction, not AW.  The
+coordinate-invariant crude product comparison therefore gives only
+
+    iota0 >= lambda_min(L_root) lambda_min(I_C)
+           ~= 6.65e-18,                                    (IF6)
+
+for this corner.  The corresponding contraction bound is
+
+    rho <= (1+iota0)^(-1/2)
+         = 1-O(3.3e-18),                                    (IF7)
+
+which is useless on a 17-s horizon.
+
+Selecting four S rows spread through a longer superword improves raw
+conditioning, but does not repair the many-orders-of-magnitude loss caused by
+the generic root covariance lower certificate.  The latter was designed only
+to prove coercivity of the full stability energy, not a sharp AW reader
+metric.
+
+Therefore the full 4x4 minimum-eigenvalue route is classified as a
+QUANTITATIVE RELAXATION FAILURE, not a physical counterexample.  It proves
+strict information but cannot close the nominal-AW bridge.
+
+### Reader-specific Schur information is much stronger
+
+For the AW readout, eliminate (v,p,S) from the information matrix instead of
+taking its smallest eigenvalue.  Accelerometer rows add only positive AW
+information, so their contribution survives the Schur complement unchanged.
+With proof AW scale d_a=4, worst accepted-sample spacing h_acc=.006,
+tau>=.02 and R_acc<=0.3010398645^2, the root-AW information from the
+conditioned accelerometer sequence has the analytical lower bound
+
+    I_a,acc
+      >= (d_a^2/R_acc,max)
+          sum_(j>=1) exp(-2 j h_acc/tau_min)
+      = (16/R_acc,max)
+          exp(-.6)/(1-exp(-.6))
+      ~= 214.7520821.                                       (IF8)
+
+Using a finite superword only truncates the geometric series by its explicit
+positive tail.  This number is independent of S-row conditioning and shows
+that the dangerous AW coordinate itself is strongly read by the conditioned
+accelerometer channel.
+
+Combining IF8 with the GENERIC root conditional-AW lower pivot
+1.9601549308e-9 still gives only about
+
+    4.21e-7                                                (IF9)
+
+of prior-whitened AW information, because that generic covariance floor is
+extremely pessimistic.  But this is eleven orders of magnitude better than
+the full 4x4 eigenvalue comparison and identifies the correct next object:
+a reader-specific lower bound on the conditional AW variance supplied by the
+.1-s PSD synchronization/previous-cycle information, not a full LIN
+covariance eigenvalue.
+
+Conclusion: the requested full 4x4 LDL/information certificate can establish
+iota0>0, but its source-uniform value from existing covariance certificates is
+far too small.  Do not use it to claim closure.  The nominal-AW bridge must
+use the AW Schur/readout metric, where direct accelerometer information is
+O(10^2) in the fixed proof coordinates, together with the exact sync
+conditional-variance increment and the S-chain only for the floor-inactive
+encoded branch.
