@@ -186,7 +186,8 @@
     "rank_loss_interval_factor_propagator_required": true,
     "rank_loss_four_S_source_box_implemented": true,
     "rank_loss_magnetic_nuisance_schur_implemented": true,
-    "rank_loss_magnetic_literal_event_boxes_implemented": false
+    "rank_loss_magnetic_literal_event_box_exporter_implemented": true,
+    "rank_loss_magnetic_source_uniform_operation_boxes_implemented": false
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
