@@ -2402,3 +2402,126 @@ Conclusion: the S elimination is useful, but it does not by itself produce a
 tuner-only D1_eff.  The remaining noncircular local calculation is to prove
 WE10 for the S contribution and OU term, while leaving Gamma inside the
 endogenous accelerometer balance.
+
+
+## 28. Explicit OU variation: raw D1_OU+S is quantitatively impossible
+
+For the OU part of the signed coefficient,
+
+    f(h,tau)=(1-exp(-h/tau))/h.
+
+On h in [.004,.006], tau in [.02,12],
+
+    f_min = 0.0833125035 1/s,
+    f_max = 45.31731173 1/s.                               (OV1)
+
+The derivatives are
+
+    partial_h f =
+      [(1+h/tau)exp(-h/tau)-1]/h^2,
+
+    partial_tau f =
+      -exp(-h/tau)/tau^2.                                  (OV2)
+
+Their absolute suprema on the rectangle occur at the fast corner
+h=.004,tau=.02 and are approximately
+
+    L_h = 1095.194 1/s^2,
+    L_tau = 2046.827 1/s^2.                                (OV3)
+
+Thus tuner/sample variation can be bounded explicitly by
+
+    TV(f) <= L_h sum|Delta h| + L_tau sum|Delta tau|,
+
+with the actual smoother chronology used for the second term.
+
+However the first-Abel charge includes endpoint terms even when f is
+CONSTANT:
+
+    D1_OU = |f_1|+|f_N|+TV(f) >= 2 f.                      (OV4)
+
+At a representative h=.005,tau=.02,
+
+    f=44.23984339 1/s,
+
+so bounded physical velocity alone gives
+
+    Vmax * 2f = 5.5*88.47968677
+              = 486.6382772 m/s^2.                         (OV5)
+
+This exceeds g sigma_w by over two orders of magnitude.  At the exact
+rectangle maximum, 2 Vmax f_max is about 498.49 m/s^2.
+
+Therefore NO refinement of the S contribution can make the raw
+D1_OU+S certificate useful uniformly.  The failure is already present with
+zero S gain and constant tuner parameters.
+
+This is a structural relaxation failure, not evidence of an unstable
+shipping trajectory.  Abel has separated
+
+    sum_pred (1-phi_k) a_k
+
+from the error endpoints in SA1.  For fast OU, (1-phi)/h is O(1/tau), so the
+velocity-endpoint charge is huge; but the SAME OU prediction also contracts
+the carried AW/error state by phi.  Bounding those two effects separately
+destroys their cancellation.
+
+### Correct regrouping
+
+Return to SA1 before moving the OU physical term alone.  At a prediction,
+
+    e^+ = phi e^- -(1-phi)a^- - Delta a
+        = phi a_hat^- - a^+.                               (OV6)
+
+Hence the combination
+
+    endpoint error + sum_pred[(1-phi)a_hat+Delta a]
+
+must be telescoped at the level of a_hat/e together.  For one prediction
+with no intervening correction, the identity is exact and has no
+1/tau-amplified physical-velocity endpoint.
+
+Over a block, define the OU-propagated error endpoint
+
+    E_OU(block)
+      = e_end - Phi_block e_start
+
+and retain all accelerometer/S corrections as signed injections.  Variation
+of constants gives
+
+    E_OU
+      = -sum_j Phi_(end<-j)
+          [(1-phi_j)a_j+Delta a_j]
+        + signed correction transport.                     (OV7)
+
+The physical coefficient now contains the DECAYING future multiplier
+Phi_(end<-j).  Summation by parts acts on
+
+    beta_OU,j =
+      Phi_(end<-j)(1-phi_j),
+
+not on (1-phi_j) alone.  For constant h,tau,
+
+    beta_OU,j=(1-phi) phi^(N-j),
+
+whose total first variation is bounded independently of 1/tau:
+
+    endpoint+TV <= 2(1-phi) <=2.                            (OV8)
+
+More directly, the geometric coefficients telescope and their l1 mass is
+
+    sum_j beta_OU,j = 1-phi^N <=1.                          (OV9)
+
+This is the missing cancellation.
+
+The S corrections must be transported by the SAME future OU multipliers
+before their Joseph-budget/variation bound is taken.  Thus the useful local
+coefficient is a forward-decayed block kernel, not W=(1-phi)+Gamma at the
+same epoch.
+
+Conclusion: an explicit finite D1_OU+S exists, but the requested raw local
+D1 is provably useless (OV5).  The next valid signed calculation is the
+forward-decayed OU+S block kernel beta_OUS, for which the OU component has
+uniform l1 mass <=1 and first variation <=2 in the constant-parameter case.
+Tuner variation can then be charged as a perturbation of a probability-like
+decay kernel rather than as O(1/tau) endpoint variation.
