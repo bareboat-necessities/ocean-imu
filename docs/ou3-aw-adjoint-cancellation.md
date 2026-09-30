@@ -2290,3 +2290,115 @@ A useful theorem is
 
 No covariance detectability surrogate implies SA8; it must be bounded
 directly from the reachable local gain chronology.
+
+
+## 27. Local W_eff block: exact form and covariance dependence
+
+The signed AW balance gives the local pre-elimination coefficient
+
+    W_k=(1-phi_k)I+Gamma_k,
+    Gamma_k=K_aw,k Rhat_k.
+
+To eliminate S mean feedback over a scheduler block, retain the block root
+z0=(v,p,S,a) and write the literal LIN mean recursion
+
+    z_(i+1)=A_i z_i+B_i y_i,                                (WE1)
+
+where A_i is prediction, S=0 correction, or the LIN part of an accelerometer
+correction, and y_i is the same-history physical/nuisance accelerometer
+source.  For a scalar transverse readout of the AW balance, backward
+elimination over the LOCAL block gives
+
+    R_block = lambda_0^T z0 + sum_i w_eff,i y_i.            (WE2)
+
+Thus W_eff exists as a local block coefficient only together with a single
+carried block-root term lambda_0^T z0.  Hiding the root inside W_eff would
+make the coefficient nonlocal again.
+
+For an S event specifically,
+
+    A_S=I-K_S e_S^T,
+    K_aS=P_aS(P_SS+R_S)^-1,                                (WE3)
+
+so the AW correction is -K_aS S.  Therefore the eliminated coefficients
+depend not only on tau,sigma,R_S,T_S but on the carried LIN covariance
+through P_aS and P_SS.  Mean S-chain elimination does NOT remove this
+covariance dependence.
+
+This blocks any claim that D1_eff is a function only of the tuner tuple.
+
+### Noncircular LIN gain bounds
+
+Unlike accelerometer AG coupling, the S gain is purely LIN.  The recurring
+nuisance upper comparison gives source-uniform principal bounds on
+P_aa,P_SS.  PSD Cauchy gives
+
+    ||P_aS|| <= sqrt(||P_aa|| ||P_SS||).                    (WE4)
+
+Since P_SS+R_S >= R_S,
+
+    ||K_aS||
+      <= sqrt(||P_aa|| ||P_SS||)/lambda_min(R_S).           (WE5)
+
+This is rigorous and noncircular but likely very coarse.
+
+A sharper identity uses the Joseph decrement:
+
+    K_aS (P_SS+R_S) K_aS^T
+       = P_aa^- - P_aa^+ |_S >=0.                           (WE6)
+
+Hence for any direction u,
+
+    ||u^T K_aS||^2
+      <= [u^T(P_aa^- - P_aa^+|_S)u]/lambda_min(R_S).        (WE7)
+
+Summing WE7 over S events telescopes only after adding AW process/sync
+replenishment between events.  This is the appropriate way to control local
+gain variation without multiplying the enormous P_SS upper box by
+1/R_S,min.
+
+### Effective variation decomposition
+
+For aligned physical sample epochs define
+
+    w_eff,k = u^T W_eff,k/h_k.
+
+Its first variation splits exactly into
+
+    Delta w_eff
+      = Delta[(1-phi)/h] u^T
+        + Delta[ u^T Gamma/h ]
+        + Delta w_S,elim.                                  (WE8)
+
+The OU scalar part has an analytic derivative bound.  Put
+f(h,tau)=(1-exp(-h/tau))/h.  For h in [.004,.006],
+tau in [.02,12], f is positive and smooth; tuner tau changes only through
+the applied smoothed chronology.  Thus
+
+    |Delta f|
+      <= L_h |Delta h| + L_tau |Delta tau|,                 (WE9)
+
+with explicit sup derivatives on the compact rectangle.
+
+The accelerometer and eliminated-S parts must be treated jointly through
+their Joseph covariance decrements and the .1-s AW sync/process
+replenishment.  Bounding Delta Gamma by independent covariance boxes repeats
+the failed huge-TV relaxation.
+
+The correct local block target is therefore a covariance-budget variation
+inequality
+
+    sum_(k in block) ||Delta[Gamma/h + W_S,elim/h]||
+      <= C_block sqrt( sum measurement decrements
+                       + sum AW process/sync replenishment ), (WE10)
+
+followed by Cauchy--Schwarz across blocks.  All quantities in WE10 are LIN
+covariance quantities; no G0 or AG ceiling is required for the S part.
+The accelerometer Gamma still contains AG/BA cross covariance, so its
+variation cannot be bounded from the LIN nuisance theorem alone.  It must
+remain in the full signed accelerometer identity rather than be boxed.
+
+Conclusion: the S elimination is useful, but it does not by itself produce a
+tuner-only D1_eff.  The remaining noncircular local calculation is to prove
+WE10 for the S contribution and OU term, while leaving Gamma inside the
+endogenous accelerometer balance.
