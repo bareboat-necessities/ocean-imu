@@ -6749,3 +6749,215 @@ either prove every q=0 ZG trajectory reaches a rank/service/gate/physical
 boundary in finite time, or construct one compact forward-invariant
 strict-margin ZG execution.  Once that is decided, BP-10 converts the result
 directly into (or rules out) finite-block O2.
+
+
+## Quantitative transverse authority on the q=0 compatibility manifold
+
+This calculation differentiates the literal next compatibility output with
+respect to the CURRENT accepted accelerometer innovation.  It keeps the
+shipping covariance/gain chronology; G is not replaced by an AW-gain proxy.
+
+Let x_k^S be the estimator mean immediately before accepted accelerometer
+correction k, after prediction and any due S pseudo-update.  Let C_k be the
+literal 3-row accelerometer Jacobian used by shipping,
+
+`C_k=[J_att,k, 0_bg, 0_vps, R_wb,k, J_ba,k]`              (GA-1)
+
+with the optional lever-arm gyro-bias block inserted when enabled and with the
+BA block omitted from the gain when BA updates are frozen.  Shipping computes
+
+`S_k=C_k P_k C_k'+R_acc,k`,
+`K_k=P_k C_k' S_k^-1`.                                   (GA-2)
+
+The mean increment is K_k u_k, followed by the literal quaternion injection,
+bias projection (on a strict interior patch its derivative is identity), and
+error-state reset.  Denote the derivative of that complete post-correction
+mean/reset map by R_k.  Compose from there to the next compatibility evaluation
+all literal predictions, magnetic corrections, and any due S pseudo-update;
+call this derivative F_(k+1,k).  It uses the committed lagged
+`tau,sigma_aw,R_S,T_S` schedule and the covariance-generated gains on that
+same base history.
+
+At q=0 the next homogeneous compatibility output is the two-dimensional
+projection of the next nominal-force/attitude row transverse to the
+transported magnetic axis.  Let C_c,k+1 be its derivative with respect to the
+base mean and let E_perp,k inject the two selected transverse components of
+the physical accelerometer innovation.  Then, away from gate/projection
+boundaries,
+
+`G_k=d_(u_perp) h_k
+ =C_c,k+1 F_(k+1,k) R_k K_k E_perp,k`                     (GA-3)
+
+plus the direct physical-input term if h_(k+1) is defined at the same sample.
+For the one-step-ahead convention used in ZG there is no direct term.  In
+world field-axis notation one may write
+`C_c=P_bperp C_m`, giving the same formula.
+
+Substitute GA-2:
+
+`G_k=N_k S_k^-1 E_perp,k`,                                (GA-4)
+`N_k:=C_c,k+1 F_(k+1,k) R_k P_k C_k'`.                   (GA-5)
+
+Since S_k is SPD on every accepted update, rank(G_k) is exactly the rank of
+the corresponding two-column restriction of N_k.  Positive R_acc cannot
+supply transverse authority that is absent from N_k.
+
+### Exact singular-value comparison
+
+Let `S_perp,k=E_perp,k' S_k E_perp,k` only when E_perp selects an invariant
+measurement plane.  In the general case keep the rectangular right factor.
+For any 2-vector z,
+
+`|G_k z| >= sigma_min(N_k S_k^-1 E_perp,k)|z|`.           (GA-6)
+
+Using singular-value products gives the valid coarse lower implication
+
+`sigma_min(G_k)
+ >= sigma_min(N_k|Range(S_k^-1 E_perp,k))
+    sigma_min(S_k^-1 E_perp,k)`.                          (GA-7)
+
+On the retained compact covariance/noise class,
+`sigma_min(S_k^-1 E_perp,k)>=1/lambda_max(S_k)>0`.
+Therefore a uniform authority floor is EQUIVALENT, up to known finite
+conditioning, to a positive source-uniform floor for the transported
+cross-covariance numerator N_k on the actual transverse innovation plane.
+
+The coupled tuner law supplies compact upper/lower bounds for the conditioning
+factor through process covariance, R_S and cadence, but it does not by itself
+give a lower singular bound for N_k.
+
+### Why covariance positivity does not force N_k to be nonsingular
+
+The numerator is a cross covariance between the current accelerometer
+measurement and the NEXT compatibility output after the intervening corrected
+chronology:
+
+`N_k=Cov(h_(k+1), y_acc,k | past)`                        (GA-8)
+
+in the linearized joint Gaussian model (with the literal reset/transport).
+A positive-definite state covariance P_k and positive R_acc guarantee
+S_k>0, but a cross covariance may vanish.
+
+This is not merely a loose-bound issue.  Partition the current state into the
+two-dimensional compatibility-output sector c and the remaining state r.
+Then the relevant numerator has the schematic exact form
+
+`N_perp=A P_cc H_c'
+        +A P_cr H_r'
+        +B P_rc H_c'
+        +B P_rr H_r'`.                                    (GA-9)
+
+The off-diagonal covariance blocks are signed.  Joseph updates, S
+pseudo-updates, magnetic updates and predictions preserve PSD of the WHOLE
+P but do not preserve the sign or a lower singular value of this particular
+cross block.  AW covariance sync in the deployed path adds a PSD increment to
+the AW marginal while preserving existing cross-covariances; this changes
+relative correlations but again supplies no sign constraint on GA-9.
+
+A two-state SPD witness already shows the algebra: with
+`P=[[1,rho],[rho,1]]`, measurement row H=[1,0], and next output row
+L=[-rho,1], one has `L P H'=0` for every |rho|<1 although P>0 and
+S=1+R>0.  This witness is algebraic, not claimed shipping reachable.  It
+proves that covariance positivity/noise floors alone cannot establish the
+desired authority floor.
+
+### What the actual tuner/S chronology does and does not guarantee
+
+The committed `tau` bounds keep OU prediction coefficients finite and away
+from their singular limits on each positive-dt step.  Positive sigma_aw and
+the pending AW floor provide process covariance in the AW sector.  The
+SpectralMSE R_S law and bounded T_S give recurring finite-noise S corrections.
+Together these are valuable for compactness and for bounding P and S_k.
+
+But G_k depends on the ORIENTATION of the full covariance through P_k C_k'
+and on its subsequent transport through F R.  None of the coupled scalar
+laws fixes that orientation.  S and magnetic Joseph corrections can rotate
+the relevant cross-covariance; accelerometer corrections can do the same.
+Therefore the coupled law does not imply
+
+`inf_(q=0 compatible histories) sigma_min(G_k)>0`.         (GA-10)
+
+Conversely it also does not imply inevitable rank loss.  Full rank is an open
+condition: if one reachable q=0 A21 point has `det G_k !=0`, then a
+neighborhood of that point has a positive local floor.  Constructor/diagonal
+covariance examples establish algebraic rank-two authority, but they are not
+yet certified reachable recurring A21 q=0 roots.
+
+### Indefinite persistence versus inevitable loss
+
+Define the regular authority set
+
+`R_g={z in ZG(q=0): sigma_min(G(z))>=g}`.                 (GA-11)
+
+For any g>0, R_g is closed inside a fixed event/gate stratum; the strict set
+sigma_min(G)>g is open.  The shipping constrained map Z sends a regular point
+to its next q=0 point after solving the transverse innovation.
+
+The current equations prove neither
+
+`exists g>0, compact K subset R_g with Z(K) subset K`      (GA-12)
+
+nor
+
+`every q=0 constrained trajectory reaches det G=0 in
+ finite time`.                                             (GA-13)
+
+Thus the answer to the proposed question is precise:
+
+**the coupled covariance/tuner/S chronology CAN remain uniformly nonsingular
+only if a compact invariant regular set GA-12 exists; nothing in the current
+scalar tuning laws forbids it.  It is NOT forced to remain nonsingular, and
+no current invariant forces eventual singularity.**
+
+This means rank loss cannot presently be used as the automatic mechanism
+that produces j_B>0.  If a constrained trajectory reaches det G=0, exact
+compatibility may still continue through that point using a different input
+chart; singularity of this particular 2x2 chart is not itself positive
+homogeneous information.  To infer j_B>0 one must prove that the FULL
+compatibility equation has no admissible continuation there, not merely that
+one transverse parameterization fails.
+
+### Stronger chart-invariant authority criterion
+
+Let D_k be the full derivative of the two compatibility equations with
+respect to the THREE physical accelerometer components:
+
+`D_k=C_c,k+1 F_(k+1,k) R_k K_k`.                         (GA-14)
+
+Local compatibility continuation requires `rank D_k=2`; a choice of
+E_perp is only a coordinate chart.  Therefore the intrinsic quantity is
+
+`g_full(z)=sigma_2(D_k)`,                                 (GA-15)
+
+the second singular value.  There exists some transverse 2-plane with a
+well-conditioned G iff g_full>0.  If one selected G becomes singular while
+g_full>0, change charts; no compatibility break has occurred.
+
+Using K=P C'S^-1,
+
+`D_k=C_c F R P C' S^-1`.                                 (GA-16)
+
+As before, S^-1 is uniformly conditioned on the retained class, so the
+decisive quantity is the rank-two cross-covariance operator
+
+`C_c F R P C'`.                                          (GA-17)
+
+A finite-block information gain can be forced from authority loss only after
+proving `rank D_k<2` makes the affine compatibility equation unsolvable for
+the actual drift term.  Rank loss alone may instead leave a rank-one or
+rank-zero compatible solution if the drift lies in Range(D_k).
+
+Therefore the next quantitative target should not be a lower bound on one
+chosen G.  It is the chart-invariant constrained solvability margin
+
+`eta_k=dist(-h_k(z,0,0), Range(D_k))` when rank D_k<2,     (GA-18)
+
+together with `sigma_2(D_k)` on the regular set.  A source-uniform theorem
+that every infinite q=0 constrained execution either stays in a compact
+`sigma_2(D)>=g>0` set or incurs `eta>=eta_0>0` at a rank-loss event would
+decide continuation versus positive block information without coordinate
+artifacts.
+
+No such theorem is currently proved.  This calculation rules out the simpler
+hope that positive covariance, R_acc, S recurrence, or the coupled tuner law
+alone enforce or destroy transverse authority.

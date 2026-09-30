@@ -246,3 +246,29 @@ m compactifies to an infinite exact q=0 compatibility execution.  A pure
 j_B>0 theorem is unnecessarily strong and cannot be obtained by homogeneous
 information estimates alone.  O2 remains open exactly at global ZG
 continuation/escape.
+
+
+### Quantitative q=0 authority result
+
+The literal transverse authority is
+`G=C_c F R K_acc E_perp=N S_acc^-1 E_perp`, with
+`N=C_c F R P C_acc'`.  Positive R_acc and the coupled tuner/S chronology
+uniformly condition S_acc on the retained class but do not give a lower
+singular floor for N.  N is a transported cross covariance and can lose rank
+through signed covariance cross terms while the full P remains SPD.  The
+deployed AW covariance floor changes a marginal without imposing an
+orientation/sign constraint on this cross covariance.
+
+Hence the current assumptions prove neither a uniform nonsingularity floor
+nor inevitable rank loss.  Moreover singularity of one chosen 2x2 transverse
+chart is not intrinsic.  The chart-invariant authority is
+`D=C_c F R P C_acc' S_acc^-1` and the relevant regularity measure is its
+second singular value.  Even rank(D)<2 does not by itself imply compatibility
+failure; the affine drift may remain in Range(D).  The intrinsic failure
+margin is the distance of that drift from Range(D).
+
+Therefore rank loss can imply positive block information only when the full
+compatibility equation becomes unsolvable, not merely when a selected G
+minor vanishes.  The next exact target is the paired
+`sigma_2(D)` / range-distance solvability margin along q=0 constrained
+histories.
