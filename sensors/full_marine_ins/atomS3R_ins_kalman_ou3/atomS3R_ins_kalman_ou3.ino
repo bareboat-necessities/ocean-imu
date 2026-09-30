@@ -138,7 +138,9 @@ public:
   FusionApp() = default;
 
   void begin() {
-    delay(50);
+    pinMode(18, OUTPUT);
+    digitalWrite(18, LOW); // for USB init
+    delay(300);            // allow power to stabilize
     Serial.begin(115200);
     delay(100);
 
