@@ -379,3 +379,34 @@ diagnostic:
 
 Until these five pieces are enclosed, a maximum over carried beta traces is a
 falsification/feasibility result, not the requested uniform theorem.
+
+
+## 12. Coarse uniform covariance ceiling is finite but quantitatively useless
+
+The existing nuisance-upper theorem can make the hybrid variation argument
+formally finite, but cannot close (AW*).  Its trial standard-deviation scales
+evaluate to approximately
+
+    b_v = 10651.90625,
+    b_p = 89045.90875,
+    b_S = 266139.62707375,
+    b_aw = 156.
+
+Using only P_nn <= 5 diag(b_i^2 I) and the measurement-noise floors in
+
+    K = P H' (H P H' + R)^-1
+
+therefore yields finite but enormous per-event gain/jump bounds.  Summing them
+over a 16 s word, and especially applying a second difference at h about
+0.005 s, is many orders of magnitude above the 1.96133 m/s^2 target.
+
+Classification: quantitative relaxation failure, not a physical
+counterexample.  Invalidated tactic: promote beta variation from the coarse
+nuisance box plus generic gain Lipschitz inequalities.  Retained facts: the
+literal beta lift, Abel identities, finite hybrid event decomposition, sharp
+AW marginal ceiling, coupled tuner law, and carried beta diagnostic.
+
+The required uniform argument must preserve the structured
+[a_w,v,p,S] Riccati chain (or an equivalent information/passivity metric) so
+that S-event before/after cancellation occurs prior to taking norms.  Do not
+replace it by the diagonal nuisance comparison.
