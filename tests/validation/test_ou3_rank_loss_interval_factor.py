@@ -17,6 +17,25 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_exhaustive_magnetic_strata_driver_positive_exact_leaf(self):
+        from tools.stability.ou3_theorem.magnetic_strata_certificate import ClosedMagneticStratum,exhaustive_certificate
+        from tools.stability.ou3_theorem.magnetic_literal_box_export import CorrectionBox
+        # Three root columns: protected 0,1 and orthogonal nuisance 2.
+        H=exact([[1,0,0],[0,1,0],[0,0,1]])
+        st=ClosedMagneticStratum("s",3,(CorrectionBox(eye(3),"mag",True,H,eye(3),.5,.5),),
+                                 (0,1),(2,),"unit-test-cover")
+        z=exhaustive_certificate([st],max_depth=2)
+        self.assertTrue(z["verified"]);self.assertGreater(z["gamma_M_lower"],.999999999)
+
+    def test_exhaustive_driver_requires_coverage_tag(self):
+        from tools.stability.ou3_theorem.magnetic_strata_certificate import ClosedMagneticStratum,exhaustive_certificate
+        from tools.stability.ou3_theorem.magnetic_literal_box_export import CorrectionBox
+        H=exact([[1,0],[0,1]])
+        st=ClosedMagneticStratum("s",2,(CorrectionBox(eye(2),"mag",True,H,eye(2),.5,.5),),
+                                 (0,1),(),"")
+        z=exhaustive_certificate([st])
+        self.assertFalse(z["verified"]);self.assertEqual(z["gamma_M_lower"],0.0)
+
     def test_shipping_magnetic_operation_box(self):
         from tools.stability.ou3_theorem.shipping_operation_interval_boxes import magnetic_update_box,reset_box
         P=eye(21); v=exact([[1],[2],[3]]); R=eye(3)
