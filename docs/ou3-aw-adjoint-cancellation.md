@@ -4483,3 +4483,96 @@ Conclusion:
 - the remaining nonlocal tail is no longer a prediction/tuner term.  It is
   only the correction/reset port departure from the neutral semigroup, which
   belongs in the already square-summed action framework.
+
+
+## 48. Assembly audit: global neutral endpoint collapse is not quantitatively admissible
+
+The remaining physical bound was to combine:
+(i) the neutral endpoint polynomial charge,
+(ii) local leverage chi_0,
+(iii) globally square-summed correction/reset ports.
+
+Before assigning numbers, the neutral endpoint normalization must be audited.
+
+Section 47 transports every covariant difference to one common future frame:
+A_B N(X_B)^T.  Algebraically this telescopes exactly.  But for a 17-s window,
+
+    A N(X)^T =
+      [a, X a+b, X^2 a/2+X b+c].                           (AS1)
+
+Even with a<=1 for the whole-slab intrinsic row, the S coefficient at X=17
+can be O(144).  Multiplying such a far-frame endpoint row by the declared
+physical displacement bound P_max=8.1 is enormous.  Thus "telescope globally,
+then apply the displacement norm" destroys the local primitive scaling.
+
+The physical displacement bound is translation-local: it controls p(t) in
+the chosen physical frame, while N(X)^T is the estimator integrated-chain
+reader translation.  These cannot be paired after an arbitrary 17-s neutral
+reader transport without carrying the corresponding physical polynomial
+primitive transformation.
+
+Therefore the correct deterministic estimate must keep each covariant
+difference paired with the LOCAL displacement increment/endpoints before the
+long neutral transport.  The Volterra identity is still useful for the
+ACTION/source operator, but not as a single far-terminal physical endpoint
+bound.
+
+### Local endpoint charge
+
+On one slab of duration L<=.1, the whole-slab intrinsic row satisfies
+
+    abar=phi_va(L,tau)/L <=1,
+    bbar<=L/2<=.05,
+    cbar<=L^2/6<=.001667.                                  (AS2)
+
+The second-Abel local endpoint term is therefore bounded with the local
+physical displacement/velocity primitives without X^2 growth.  Adjacent
+local endpoints cancel algebraically in the signed sum; correction-port
+departures are handled by action.  Do not transport the physical endpoint
+row through N(X) before applying P_max.
+
+### Leverage and port terms cannot yet be assigned a source-uniform number
+
+The local leverage is
+
+    chi_B^2=A_B O_B^T Sigma_B^-1 O_B A_B^T.                (AS3)
+
+This is finite on every frozen word.  A source-uniform chi_0 requires a
+uniform enclosure of the literal slab observation design and its marginalized
+source Gram Sigma_B.  Measurement-noise floors alone are insufficient if O_B
+contains carried attitude/BA geometry with no source-uniform AG covariance
+ceiling; using a raw H norm would repeat the G0/covariance circularity.
+
+Likewise the globally square-summed correction/reset port action is useful
+only after normalizing the terminal-AW minimum-action reader by a
+SOURCE-UNIFORM action ceiling.  The existing joint-reader theorem explicitly
+records that its historical action ceiling is still open source-uniformly.
+The newly constructed AW-target reader inherits that same issue.
+
+Hence there is presently no honest source-uniform numeric value for either
+chi_0 times reader action or the global port-action contribution.
+
+### What is closed and what remains
+
+Closed analytically:
+- physical acceleration appears only in OU prediction defects;
+- two Abel steps are legal (V_max,P_max declared);
+- neutral v->p->S prediction geometry telescopes exactly;
+- sample-jitter/tuner TV need not be bounded;
+- S and accelerometer innovations are exact Schur ports;
+- correction ports are square-summed, not l1 accumulated.
+
+Still open:
+- a source-uniform normalized terminal-AW reader action on the retained
+  shipping trace class;
+- equivalently, a source-uniform local leverage/port bound for that reader.
+
+This is the SAME historical-reader action obstruction already recorded for
+the AG joint reader, now in the terminal-AW target.  It cannot be bypassed by
+the neutral telescoping.
+
+The next genuine theorem is therefore to prove a source-uniform action ceiling
+for the terminal-AW minimum-action reader on one short (~.1-s) slab or on the
+17-s qualified word, using the deterministic physical/BA/field constraints
+already established here.  A frozen carried-word value can diagnose margin
+but cannot certify it.
