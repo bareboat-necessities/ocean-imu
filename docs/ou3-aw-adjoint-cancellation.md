@@ -2082,3 +2082,55 @@ This is noncircular and substantially smaller than the old full-root 4x4
 information certificate: no carried root covariance appears.  It is also not
 a new proof architecture; it is Theorem D restricted to a fresh process
 factor already present in the complete-word joint factorization.
+
+
+## 24. Source-age q0: dependence audit and noncircular restriction
+
+The proposed q0 is NOT determined by the fresh 4-state OU factor and tuner
+tuple if accelerometer smoother losses are included.  For a fresh source
+coordinate z,
+
+    Delta J_k=C_k H_k^T S_k^-1 H_k C_k^T,
+
+and S_k=H_k P_k^- H_k^T+R_k contains the carried full covariance.  An
+accelerometer S_k includes attitude/gyro/BA covariance and cross terms.
+The existing recurring nuisance upper theorem explicitly does not supply an
+AG upper covariance.  Bounding S_k from above through G0/AG control would
+reintroduce the circularity this route was intended to avoid.
+
+Therefore a noncircular source-age certificate must initially OMIT
+accelerometer smoother loss.  Keep only:
+- four guaranteed S=0 corrected losses, whose innovation covariance depends
+  on LIN and is bounded by the proved nuisance comparison;
+- terminal LIN forgetting/conditional remainder from the same complete-word
+  identity.
+
+This restricted joint matrix is smaller than the full J_age, so any lower
+bound remains valid when accelerometer/magnetic corrections are restored by
+information monotonicity.
+
+Let J_age,S+T be the exact joint information/forgetting matrix on the fresh
+one-axis OU source coordinates using only S rows and terminal LIN remainder.
+Define
+
+    q0_ST =
+      inf lambda_min(
+        A_age^-1/2 J_age,S+T A_age^-1/2 ).                  (AGE4)
+
+Then
+
+    J_age,full >= J_age,S+T
+
+in the joint minimum-action/information sense, hence q0_full>=q0_ST.
+
+All denominators needed by AGE4 are now controlled by the source-uniform
+nuisance covariance upper theorem and R_S<=10000 I.  No G0, attitude
+covariance ceiling or nominal-AW premise is used.
+
+Caution: the S-only instantaneous Schur floor 1e-14 suggests AGE4 may still
+be numerically weak, but terminal forgetting acts in complementary
+directions.  The proof ledger already shows that such information+forgetting
+combinations can be much stronger than either scalar margin separately.
+The correct next computation is therefore the restricted 4x4 Theorem-D
+matrix for one fresh OU factor with S rows + terminal LIN forgetting, not an
+accelerometer-inclusive Gramian.
