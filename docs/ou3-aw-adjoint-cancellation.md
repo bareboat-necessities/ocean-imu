@@ -3097,3 +3097,98 @@ Therefore the last feedback lemma is:
 
 This is now a pure correction-transport lemma; there is no endogenous
 innovation source left.
+
+
+## 35. Full-metric correction transport and final-reader constant
+
+For every literal accepted Kalman correction with A=I-KH, Joseph gives
+
+    P^+ = A P^- A^T + K R K^T >= A P^- A^T.
+
+Hence
+
+    A^T (P^+)^-1 A <= (P^-)^-1,                            (MT1)
+
+so full-state covariance-weighted error is nonexpansive.  This is exactly the
+actual-gain prefix inequality already proved in the corrected-word theorem.
+
+The AW-only block I-Gamma does NOT inherit MT1 after projection: accelerometer
+corrections exchange energy among attitude, BG/lever, AW and BA coordinates.
+Therefore forward OU physical defects must be embedded in the full state,
+transported through the full A matrices, and projected to the AW reader only
+at the end.
+
+For a unit transverse AW row u and a transported AW column
+x=M_(N<-j) E_aw u,
+
+    |u^T E_aw^T x|
+      <= sqrt(u^T P_aa,N u) ||x||_(P_N^-1)
+      <= sqrt[
+           (u^T P_aa,N u)
+           (u^T E_aw^T P_j^-1 E_aw u)
+         ].                                                 (MT2)
+
+Thus a valid reader constant is the SAME-HISTORY product
+
+    c_read^2 =
+      sup_(shipping,j,u)
+       (u^T P_aa,N u)
+       (u^T E_aw^T P_j^-1 E_aw u).                         (MT3)
+
+The second factor is the inverse conditional AW covariance at epoch j.
+
+### Independent covariance extrema are useless
+
+The recurring nuisance upper comparison permits
+
+    P_aa <=156^2=24336.
+
+The recurring post-prediction lower covariance certificate has a very small
+generic conditional-AW floor (order 1e-9 in the fixed proof coordinates).
+Combining these independently gives c_read of order 10^6, far too large for
+the signed OU Abel bound.  This is another demonstrated relaxation failure:
+the two extrema come from incompatible histories/directions.
+
+Therefore c_read must be bounded as the product MT3 on ONE realized
+covariance chronology.  The required theorem is a same-word covariance ratio,
+not separate upper/lower boxes.
+
+### Riccati-order route
+
+Let R_(N<-j) denote the literal Riccati map from epoch j to N.  For the actual
+P_j,
+
+    P_N=R_(N<-j)(P_j).
+
+The desired scalar is
+
+    F(P_j)=
+      [u^T R(P_j)_aa u]
+      [u^T (P_j)_(a|rest)^-1 u].                           (MT4)
+
+Riccati monotonicity alone does not make F monotone because the two factors
+move in opposite directions.  But this is precisely a projective/diameter
+quantity: it compares a terminal marginal to an initial conditional
+precision along the same Riccati trajectory.
+
+The existing Theorem-D interval
+
+    Pi <= P_N <= P_diff
+
+and its root-to-terminal information ratio can potentially bound MT4 without
+a covariance ceiling.  The next calculation should express MT4 through the
+joint Gaussian (x_j,y_word,x_N) Schur complements and reduce it to the
+word diameter kappa_W, rather than to independent covariance extrema.
+
+If one can prove
+
+    c_read^2 <= kappa_W                                    (MT5)
+
+(or a modest fixed multiple), then
+
+    c_read <= sqrt(kappa_W),
+
+and the already established word contraction/diameter certificate directly
+supplies the final reader conversion.  This would connect the signed nominal
+AW proof to Theorem D at exactly one final point, without reintroducing gain
+norms or G0.
