@@ -8188,3 +8188,147 @@ terms.  If that complete minimization remains positive, nuisance
 cancellation is defeated jointly without a magnetic-only Schur floor.  If
 its infimum is zero, its optimizer gives the exact aggregate compatibility
 direction that the remaining accelerometer/S/kernel terms must handle.
+
+
+## 75. Complete two-word Gram minimization with unrestricted magnetic nuisance
+
+We now keep the restricted service premise G_hh>=I_2 inside the COMPLETE
+kernel-augmented two-word Gram rather than Schur-shortening it separately.
+
+Let z=(h,n,r), where h in R^2 are the protected E_hb coordinates, n are the
+remaining magnetic-correlated nuisance coordinates, and r collects all other
+complete-word quotient/kernel coordinates.  Write the denominator/action Gram
+
+    Q0(G)=Q_nm +
+      [ G_hh G_hn 0
+        G_nh G_nn 0
+        0     0    0 ],                                   (CG1)
+
+where Q_nm>=0 is the SUM of every nonmagnetic contribution retained jointly:
+four-S/process, accelerometer/BA, gyro/process, current-kernel precision and
+all common-source Schur terms.  The terminal metric numerator is
+
+    N_+=Y_+^T Y_+ >=0.                                     (CG2)
+
+The desired fixed-pair comparison is N_+<=C Q0(G).  We ask what can be
+deduced uniformly over the magnetic premise set
+
+    G>=0,  G_hh>=I_2.                                      (CG3)
+
+### Exact minimization over arbitrary magnetic nuisance
+
+For any protected vector h and any nuisance vector n, PSD completion permits
+the rank-one magnetic Gram
+
+    G(h,n;alpha)=w w^T,                                    (CG4)
+
+with protected component w_h chosen so that w_h^T h is nonzero and nuisance
+component w_n chosen to satisfy
+
+    w_h^T h + w_n^T n =0,                                  (CG5)
+
+while additional protected rank-one rows are added orthogonally to enforce
+G_hh>=I_2.  In particular, whenever n!=0 and the nuisance dimension is
+available, the magnetic quadratic z^T G z can be made zero along the chosen
+(h,n) direction despite G_hh>=I_2.  This is the higher-dimensional version
+of MS8/QR2.
+
+Equivalently, minimizing the magnetic quadratic over arbitrary PSD
+G_hn,G_nn with fixed G_hh gives
+
+    inf_G [h;n]^T G [h;n] =
+      0,   n!=0,                                           (CG6)
+
+whereas for n=0 it is h^T G_hh h>=|h|^2.
+
+Therefore the restricted service premise supplies NO uniform curvature on the
+magnetic cancellation cone
+
+    C_mag={ (h,n,r): n!=0 and h can be cancelled by n }.   (CG7)
+
+On that cone the complete denominator reduces exactly to Q_nm.
+
+### Consequence for the global generalized eigenproblem
+
+A finite source-uniform C_joint over all G satisfying CG3 can exist only if
+
+    Null(Q_nm) intersect C_mag
+      subset Null(N_+).                                    (CG8)
+
+More quantitatively, on the terminal-active cancellation cone one needs
+
+    z^T N_+ z <= C_nm z^T Q_nm z.                          (CG9)
+
+Outside the cancellation cone, the protected service contributes at least the
+uncancellable protected component norm and can only improve the comparison.
+
+Thus the proposed global minimization does NOT manufacture a new positive
+magnetic constant.  It removes magnetic nuisance exactly and exposes the
+same complete-word detectability problem, but now in its correct reduced
+form: prove terminal/action coercivity of the NONMAGNETIC joint Gram on the
+magnetic cancellation/compatibility subspace.
+
+### Relation to the complete compatibility kernel
+
+The zero-action classification identifies exactly this cancellation cone.
+If magnetic loss vanishes while service is strict, the AG root must lie in
+the transported field-compatible class; S/process then remove free LIN/AW,
+and accelerometer/BA leave at most the word-dependent line nu_W.  Hence for
+every fixed word
+
+    Null(Q_nm) intersect C_mag
+      subset span(nu_W).                                   (CG10)
+
+After adding current kernel precision (1/c)P_W, the current denominator has
+no zero-cost component along nu_W.  At the next root N_+ measures transverse
+terminal persistence plus (1/c_+) next-kernel persistence.  Therefore exact
+zero-action directions are controlled pointwise.
+
+The remaining issue is again RATE through changing compatibility kernels.
+The magnetic minimization has not worsened it, but cannot solve it.
+
+### Sharp reduced target
+
+Let R_W be any basis for the magnetic cancellation/compatibility subspace
+after exact S-chain nuisance elimination.  Define
+
+    Q_c = R_W^T Q_nm R_W,
+    N_c = R_W^T N_+ R_W.                                   (CG11)
+
+Then the worst magnetic-nuisance-completed two-word constant is exactly
+controlled by
+
+    C_c(W,W+)=
+      lambda_max(Q_c^dagger/2 N_c Q_c^dagger/2),           (CG12)
+
+with infinity iff Null(Q_c) not subset Null(N_c).
+
+All directions orthogonal to the cancellation subspace receive additional
+service curvature and cannot be worse than the maximum of their protected
+service comparison and CG12.
+
+Thus the complete minimization reduces to the already-derived
+kernel-augmented relative-action problem ON THE COMPATIBILITY SUBSPACE.  No
+standalone gamma_M or q_rel is required.
+
+### Does the current proof make the infimum positive?
+
+Pointwise: YES for each fixed nondegenerate word after current-kernel
+regularization, by the complete zero-action classification.
+
+Source-uniformly: NOT YET.  The proof still lacks a linear-rate bound for
+CG12 through rank-changing/moving compatibility lines.  The four-S block
+alone does not supply it, and arbitrary magnetic nuisance has now been
+correctly minimized away.
+
+Therefore the global constrained infimum requested here is not presently
+certified positive.  Nor is it shown to be zero: the aggregate magnetic
+counterfamilies have zero magnetic Schur curvature but do not null the
+four-S/accelerometer/kernel/terminal terms.
+
+The exact remaining object is low-dimensional: construct R_W from the
+field-compatible AG line plus propagated BA compatibility coordinate, insert
+the proved current kernel precision and the literal terminal next-kernel
+metric, and evaluate/bound CG12.  If CG12 blows up, its generalized
+eigenvector is the requested complete compatibility trajectory; if bounded,
+C_joint is finite.
