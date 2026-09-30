@@ -272,3 +272,32 @@ compatibility equation becomes unsolvable, not merely when a selected G
 minor vanishes.  The next exact target is the paired
 `sigma_2(D)` / range-distance solvability margin along q=0 constrained
 histories.
+
+
+### Shipping-closed pathology equation
+
+The compatibility obstruction is now formulated without treating residual,
+gain, covariance or tuner parameters as independent controls.  The complete
+shipping state z includes MEKF mean/P, private front end, tuner EMAs/targets,
+pending one-sample commit, S/AW-sync clocks and gate/service state.  One
+physical IMU sample p advances the deterministic literal map
+`z_+=S(z,p)`.
+
+On q=0, field-axis compatibility imposes the gravity-scale nominal-AW
+condition.  The literal correction then determines the residual required to
+maintain that condition; the measurement identity reconstructs the physical
+acceleration that would have generated that residual.  But the same physical
+history drives the measurement-only period/variance front end, which generates
+tau/sigma_aw, SpectralMSE R_S and T_S with smoothing/clamps/delay; those
+parameters generate P and K through the literal Riccati/Joseph/S/AW-sync
+chronology.  Therefore a pathology must solve the delayed nonlinear
+self-consistency equation
+`a_phys=F_ship[a_phys;T[a_phys],C[a_phys]]`.
+
+Equivalently it must satisfy H_k(z_k,p_k)=0 with z_(k+1)=S(z_k,p_k) at every
+epoch.  The previous local innovation-authority/IFT construction is only a
+relaxation with frozen base history and does not prove reachability.  The next
+target is the periodic/recurrent lifted fixed point of the SAME augmented
+shipping map, after analytically eliminating linear MEKF mean states.  No
+pathological generic zero-dynamics trajectory is henceforth treated as an
+admissible obstruction unless it closes this shipping loop.
