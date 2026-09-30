@@ -553,6 +553,20 @@ Remaining O2 blocker is linked soft scalar invariance
 D_soft=K_soft dbar_soft<=c; on large-c branch this requires
 dbar_soft*Hbar<1 (or closure on small-c branch).
 
+**Independent dbar_soft*Hbar product removed from rank-one recurrence.**
+For one word, linked product is (n'Pi n)*lambda_max(Phi'Pi^-1 Phi); Pi does
+not generally cancel, and Cauchy only gives |n'Phi x|^2 <= product.  But the
+soft prior is rank one, so supremum over unrelated x is unnecessary.  Preserve
+the actual current soft direction x_soft and terminal y=Phi_tilde x_soft.
+Next scalar return uses direct coupling (n_next'y)^2.  With
+g^2=||y||^2, overlap rho and ordered quotient gap lambda2_bar, exact scalar
+recurrence is
+a_next = a g^2/[1+a g^2((1/c_+)rho^2+lambda2_bar(1-rho^2))].
+Thus dbar*Hbar<1 is sufficient but not necessary.  Compact finite-stratum
+word class gives existence of finite one-dimensional gbar_soft without a Pi
+condition number.  Remaining contraction test is scalar gain-vs-information,
+not the independent linked product.  Added `linked_soft_return.py`.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
