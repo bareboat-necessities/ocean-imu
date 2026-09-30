@@ -4252,3 +4252,108 @@ This is narrower than bounding the full C_B.  The remaining deterministic
 matrix calculation is the pure prediction/reset integrated-chain
 commutator C_B^pred; the stochastic/Kalman part is already covered by exact
 loss squares.
+
+
+## 46. Pure prediction commutator: exact neutral-integrator formula
+
+Work on one LIN axis in state order (v,p,S,a).  The literal prediction is
+
+    F(H,tau)=
+      [1      0   0   phi_va
+       H      1   0   phi_pa
+       H^2/2  H   1   phi_Sa
+       0      0   0   phi].                                (PC1)
+
+The second-Abel boundary row has no AW component:
+
+    A_B=[a_B,b_B,c_B,0],
+
+with, for the selected first prediction of slab B divided by slab duration L_B,
+
+    a_B=phi_va(h_B,tau_B)/L_B,
+    b_B=phi_pa(h_B,tau_B)/L_B,
+    c_B=phi_Sa(h_B,tau_B)/L_B.                             (PC2)
+
+For a PURE prediction interval of total duration H, direct multiplication
+gives the exact identity
+
+    A_B F(H,tau)^T
+      =[ a_B,
+         H a_B+b_B,
+         H^2 a_B/2+H b_B+c_B,
+         0 ].                                               (PC3)
+
+All OU-column coefficients cancel from PC3.  In particular the transported
+row has zero AW component and is independent of phi,phi_va,phi_pa,phi_Sa of
+the slab transport.  This is because A_B sees only the neutral v->p->S
+integrator rows.
+
+Therefore the pure-prediction commutator between adjacent slabs is
+
+    C_B^pred =
+      [ a_(B+1)-a_B,
+        b_(B+1)-b_B-H_B a_B,
+        c_(B+1)-c_B-H_B b_B-H_B^2 a_B/2,
+        0 ],                                                (PC4)
+
+axiswise, before attitude/reset coordinate transport.  No covariance, Kalman
+gain, sigma_aw or R_S enters.
+
+### Uniform coefficient bounds
+
+The integral representations give
+
+    0<=a_B<=h_B/L_B,
+    0<=b_B<=h_B^2/(2L_B),
+    0<=c_B<=h_B^3/(6L_B).                                  (PC5)
+
+For h_B<=.006 and a nominal L_B=.1 these are
+
+    a<=.06, b<=1.8e-4, c<=3.6e-7.
+
+If H_B is the full ~.1-s slab duration, the polynomial transport terms in PC4
+have ceilings
+
+    H_B a_B <= .006,
+    H_B b_B <=1.8e-5,
+    H_B^2 a_B/2 <=3e-4                                     (PC6)
+
+for H_B=.1.  Thus the p-component commutator is dominated by the coefficient
+change Delta b and a .006 neutral-integrator term; the S component by
+Delta c, 1.8e-5 and 3e-4 terms.
+
+### Important consequence
+
+Even with CONSTANT tuner and cadence, PC4 is not zero because A_B is the
+first-prediction divided-difference row while F(H)^T transports across the
+whole slab.  The common-tail cancellation therefore leaves a deterministic
+neutral-integrator commutator of order H_B a_B.
+
+This is not a long-horizon instability: the triangular neutral integrator
+has exact polynomial structure.  Its Volterra sum must be combined across
+slabs before norms.  Repeatedly summing the -H a and -H b-H^2 a/2 terms
+telescopes into first/second divided differences of the boundary polynomial
+reader.  Bounding PC4 slab-by-slab in l1 would unnecessarily pay O(M).
+
+### Tuner variation
+
+Only the coefficient differences
+
+    Delta a_B, Delta b_B, Delta c_B                         (PC7)
+
+carry tau/h/L variation.  Since
+a=phi_va(h,tau)/L, b=phi_pa/L, c=phi_Sa/L, their source-uniform variation
+must use the applied tuner chronology and sample/slab timing.  The large
+neutral polynomial terms in PC4 should be telescoped exactly; only PC7 needs
+a variation bound.
+
+Thus C_pred has decomposed again:
+
+    C_B^pred = C_B^neutral + Delta A_B,                     (PC8)
+
+where C_neutral is an exactly summable triangular-integrator coboundary and
+Delta A_B is the small tuner/cadence coefficient variation.
+
+The next calculation is to telescope C_neutral over all slabs in the dual
+Volterra sum, leaving endpoint polynomial terms, and separately bound the
+total variation of (a_B,b_B,c_B) under the applied tau/h/L chronology.
