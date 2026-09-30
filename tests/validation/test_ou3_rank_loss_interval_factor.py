@@ -17,6 +17,23 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_literal_magnetic_export_pre_correction_phi(self):
+        from tools.stability.ou3_theorem.magnetic_literal_box_export import (
+            PredictionBox,CorrectionBox,ResetBox,SyncBox,export_magnetic_event_boxes,event_tuples)
+        F=exact([[1,1],[0,1]]); A=exact([[.5,0],[0,1]])
+        H=exact([[1,0],[0,1]]); S=eye(2)
+        ev=export_magnetic_event_boxes(2,[PredictionBox(F),
+            CorrectionBox(A,"mag",True,H,S,.4,.4),ResetBox(eye(2)),SyncBox()])
+        self.assertEqual(len(ev),1)
+        self.assertEqual(ev[0].Phi_from_window_root.mid,F.mid)
+        self.assertEqual(event_tuples(ev)[0][0].mid,H.mid)
+
+    def test_literal_magnetic_rejected_event_not_exported(self):
+        from tools.stability.ou3_theorem.magnetic_literal_box_export import (
+            CorrectionBox,export_magnetic_event_boxes)
+        ev=export_magnetic_event_boxes(2,[CorrectionBox(eye(2),"mag",False,None,None,.2,.2)])
+        self.assertEqual(ev,())
+
     def test_magnetic_nuisance_schur_exact(self):
         from tools.stability.ou3_theorem.magnetic_nuisance_interval import service_schur_information
         # Two protected columns orthogonal to one nuisance column.
