@@ -353,3 +353,31 @@ tau/sigma_aw, SpectralMSE R_S, T_S, covariance/gains and event schedule that
 make the Fredholm compatibility equations hold. No such strict-margin
 shipping orbit is proved or excluded. The LaSalle obstruction is therefore
 unproved-reachable, not an established counterexample.
+
+
+### SpectralMSE tuner/Riccati fixed-point test
+
+The actual deployed tuner was substituted into the periodic field-aligned
+obstruction. The chronology is triangular: for a prescribed physical waveform,
+the private measurement-only front end determines frequency/band variance,
+then tau/sigma targets, SpectralMSE RS and tau-scaled TS; EMA smoothing and
+delayed commit do not read P or Kalman gains. On a fixed periodic event/clamp
+stratum each EMA has multiplier product(1-alpha)<1 and therefore a unique
+periodic tuner orbit.
+
+Away from cadence clamps the target graph is
+RS=C_* sigma_aB^(6/7) tau^(41/14), TS=c_T tau. This forbids
+independent extrema but has no equality conflicting with the field-aligned
+nominal AW requirement.
+
+Given that unique tuner schedule, covariance is a downstream literal periodic
+Riccati/Joseph/S/sync map P_+=R(P;p,eta*(p)). No algebraic contradiction with
+the tuner exists. A periodic covariance fixed point is not promoted without a
+proved compact invariant covariance set/detectability theorem, but neither is
+it excluded.
+
+The complete periodic LaSalle obstruction is therefore reduced to a
+same-history root problem in physical waveform p and covariance P:
+periodic Riccati residual plus the field-aligned mean Fredholm left-null
+residual, with tuner eliminated analytically and physical/service constraints
+retained. SpectralMSE coupling alone does not exclude the obstruction.

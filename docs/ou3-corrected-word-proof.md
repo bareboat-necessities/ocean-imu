@@ -7543,3 +7543,208 @@ tuner/covariance fixed point itself rather than derive another mean-state or
 kinematic moment identity. In particular, substitute the period-scaled
 front-end variance and SpectralMSE law into the periodic Riccati/S scheduler
 map and test whether PF-15 can be invariant under that SAME map.
+
+
+## SpectralMSE tuner + Riccati/S periodic fixed-point test
+
+This calculation substitutes the deployed tuner law into the surviving
+field-aligned periodic obstruction. It corrects one misleading phrase in the
+previous PF conclusion: for a prescribed physical waveform the tuner and
+covariance are not a mutually coupled algebraic fixed point. Shipping is
+triangular in this part of the chronology.
+
+### 1. The measurement-only tuner is upstream of covariance
+
+Let p be an L-periodic accepted physical IMU waveform, including the attitude
+and physical acceleration seen by the private level/front-end path. Let eta
+collect the private frequency smoother, period-scaled acceleration band,
+variance estimator, stillness state, tau/sigma/RS EMA states, pending commit
+and scheduler progress.
+
+The literal tuner recursion is
+
+eta_(k+1)=T_k(eta_k,p_k),                                   (TR-1)
+
+and contains NO P or Kalman gain input. Its operating-point targets are
+
+f_k = clamp(f_tuner,k),
+tau_t,k = clamp(c_tau/(2 f_k)),                             (TR-2)
+sigma_t,k = clamp(c_sigma sqrt(max(var_band,k-var_noise,0))), (TR-3)
+
+with the documented startup/floor branches. The deployed SpectralMSE target is
+
+RS_t,k = clamp[
+ C_MSE (2 r_a)^(1/14)
+ sigma_aB,k^(6/7) tau_t,k^(24/7) / sqrt(TS(tau_t,k))
+],                                                         (TR-4)
+
+where sigma_aB=sigma_t/c_sigma and
+
+TS(tau)=clamp(c_T tau, TS_min, TS_max).                    (TR-5)
+
+The applied EMA states obey
+
+tauA_(k+1)   =(1-alpha_k) tauA_k+alpha_k tau_t,k,
+sigmaA_(k+1) =(1-alpha_k) sigmaA_k+alpha_k sigma_t,k,
+RSA_(k+1)    =(1-beta_k) RSA_k+beta_k RS_t,k,              (TR-6)
+
+with 0<alpha_k,beta_k<=1 on every valid Live sample. A candidate is staged
+after processing sample k and, when activation cadence permits, committed at
+the beginning of a later sample. The delay is therefore a finite phase state
+inside eta, not an algebraic same-sample loop.
+
+For any fixed periodic target sequence on one fixed clamp/event stratum, the
+scalar affine EMA monodromy has multiplier
+
+q_tau=prod_k(1-alpha_k), q_sigma=q_tau,
+q_RS=prod_k(1-beta_k),                                    (TR-7)
+
+strictly in [0,1). Hence each applied tuner channel has a UNIQUE periodic
+orbit. Explicitly, for x_(k+1)=a_k x_k+(1-a_k)t_k,
+
+x_0^* =
+ [sum_(i=0)^(L-1) (1-a_i) t_i prod_(j=i+1)^(L-1) a_j]
+ /[1-prod_(j=0)^(L-1)a_j].                                 (TR-8)
+
+The delayed commit/pending state merely shifts/samples this unique periodic
+candidate sequence once the scheduler phase itself is periodic. Clamps are
+nonexpansive and do not create a contradiction; on a fixed active clamp face
+they replace the target by the corresponding constant boundary value.
+
+Therefore the actual coupled relation (tau,sigma,RS,TS) is restrictive--TR-4
+and TR-5 prohibit independent extrema--but it does NOT generically obstruct a
+periodic tuner orbit. For a prescribed periodic physical waveform it
+constructs one.
+
+### 2. SpectralMSE makes the tuple lower-dimensional, not inconsistent
+
+Away from cadence clamps, TS=c_T tau and TR-4 reduces exactly to
+
+RS_t =
+ C_* sigma_aB^(6/7) tau^(41/14),                           (TR-9)
+
+because 24/7-1/2=41/14. Thus the instantaneous target tuple lies on a
+two-dimensional graph parameterized by (f,var_band), and after EMA/delay the
+applied tuple lies on the causal filtered image of that graph.
+
+This is the correct replacement for a four-dimensional box. In particular a
+proof may not choose a large tau with an independently small RS or unrelated
+sigma. But TR-9 has no sign/equality relation involving the field-alignment
+mean condition P_B a_w=P_B g. The tuner sees the physical/private-front-end
+band, not the nominal AW DC offset itself.
+
+A periodic physical waveform can have zero translational-acceleration mean
+while having positive band variance and a finite frequency. TR-2--TR-9 then
+produce finite positive periodic tau,sigma,RS,TS. Nothing in SpectralMSE
+forces the nominal AW transverse mean to zero.
+
+### 3. Covariance is downstream: periodic Riccati/S map
+
+Given the periodic applied tuner/scheduler orbit eta^*(p), the covariance map
+is deterministic:
+
+P_(k+1)=R_k(P_k; p_k,eta_k^*),                              (TR-10)
+
+where R_k is the literal sequence of prediction with Q(tau,sigma), pending AW
+PSD floor, due S Joseph update using RS and TS, accepted accelerometer and
+magnetic Joseph updates, reset congruence/projection, and covariance sync
+chronology.
+
+The tuner does not read P, so TR-10 cannot invalidate TR-1--TR-9 by feedback.
+The periodic covariance condition is simply
+
+P_0=R_[0:L)(P_0;p,eta^*(p)).                               (TR-11)
+
+Every constituent covariance operation maps PSD matrices to PSD matrices.
+On the retained compact covariance tube assumed by the regional proof,
+R_[0:L) is continuous on each fixed event/gate stratum. Therefore Brouwer
+would give a periodic covariance fixed point IF one has a convex compact
+forward-invariant covariance set for this same-history map. The current proof
+has not established that invariant set independently of the old covariance
+work, so TR-11 existence is not promoted here.
+
+More strongly, standard periodic Riccati intuition suggests uniqueness/
+attraction when the periodic pair is stabilizable/detectable, but importing
+that theorem without verifying the literal reset, pseudo-update, sync and
+rank conditions would be unjustified. The correct status is:
+
+- the tuner orbit exists uniquely for a prescribed periodic target/event
+  sequence;
+- the covariance periodic orbit is a downstream Riccati fixed-point problem;
+- no algebraic contradiction between SpectralMSE and Riccati/S exists.
+
+### 4. Reinsert the field-aligned mean Fredholm equation
+
+The covariance orbit matters because it determines the gains in
+
+M_PF(p,P) x_0=q_PF(p,P).                                   (TR-12)
+
+Thus the COMPLETE periodic obstruction is now
+
+eta=eta^*(p) from TR-1--TR-9,                              (TR-13)
+P_0=R_[0:L)(P_0;p,eta^*(p)),                               (TR-14)
+q_PF(p,P) in Range M_PF(p,P),                              (TR-15)
+physical periodic moment + service constraints on p.        (TR-16)
+
+This is substantially smaller than the previous formulation. There is no
+independent tuner fixed-point unknown at all after p is chosen. The only
+nonlinear internal fixed point is P (plus scheduler phase if the candidate
+period does not already close it), and P enters the obstruction only through
+the literal gains/coefficient matrices in TR-15.
+
+### 5. Can TR-13--TR-16 be excluded analytically now?
+
+No. Substitution of the actual SpectralMSE law does not create a contradiction.
+
+Indeed it removes degrees of freedom in the favorable direction for rigor:
+tau,sigma,RS,TS are a deterministic causal functional of p. But the resulting
+positive finite schedule is fully compatible with a periodic Riccati/S
+recursion. There is no equation in TR-4/TR-9 that conflicts with the required
+gravity-sized nominal AW mean, because the tuner is measurement-only and its
+variance channel removes the noise floor and tracks the physical wave band.
+
+Conversely this is NOT a construction of a shipping counterexample. To prove
+one, one must exhibit p and a strict-margin periodic P satisfying TR-14 such
+that TR-15 holds and all physical/service gates remain admissible.
+
+### 6. Important consequence for the dissipativity strategy
+
+The hoped-for second-stage exclusion
+
+field-aligned mean
+ + SpectralMSE tuner
+ + Riccati/S
+ => contradiction
+
+does not follow structurally. The tuner is triangular and contractive, so it
+is not the mechanism that removes the pure field-axis LaSalle mode.
+
+The remaining decisive object is the COMPOSED map
+
+G_L(p,P):=
+ [ R_[0:L)(P;p,eta^*(p))-P ;
+   Pi_left(p,P) q_PF(p,P) ],                               (TR-17)
+
+where Pi_left projects q_PF onto the left-null complement of M_PF (or use the
+equivalent stable-monodromy residual). A genuine periodic obstruction is a
+zero of G_L together with physical/service constraints.
+
+This is now a finite-dimensional same-history fixed-point/root problem for
+(p,P), with the tuner analytically eliminated. An analytical exclusion would
+need a sign/degree/range theorem for G_L; a computer-assisted proof could
+interval-enclose G_L over the admissible periodic waveform/covariance
+parameterization. A strict-margin zero would be a genuine shipping-reachable
+LaSalle obstruction.
+
+### Verdict
+
+The delayed SpectralMSE tuner + Riccati/S substitution does NOT exclude the
+field-aligned periodic fixed point from the current assumptions. It also
+shows why: the tuner is upstream and uniquely determined by the physical
+waveform, while covariance is downstream. Their coupling removes independent
+extrema but supplies no contradictory equality.
+
+Therefore the dissipativity/LaSalle route has reached its genuine theorem
+boundary: strictness is equivalent to excluding zeros of TR-17 over admissible
+same-history physical/covariance periodic or recurrent histories. Further
+scalar tuner or covariance bounds would again discard the linked structure.
