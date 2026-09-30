@@ -3283,3 +3283,86 @@ lemma is a two-norm transport problem: show that interposed Kalman correction
 maps do not amplify the OU signed-primitive operator from bounded physical
 velocity to final AW readout.  This requires exploiting the special
 accelerometer correction structure, not only generic Riccati diameter.
+
+
+## 37. Accelerometer passivity: false for isolated AW, exact at the full measurement port
+
+The deterministic AW error update is
+
+    e_aw^+=(I-Gamma)e_aw^- + cross/defect terms,
+    Gamma=K_aw R_wb.
+
+From the literal gain construction,
+
+    K_aw =
+      [ P_a,theta J_att^T
+        +P_aa R_wb^T
+        +P_a,ba
+        +P_a,bg J_bg^T ] S_acc^-1,                          (PA1)
+
+with the BA/BG terms present according to the shipping mode.  Therefore
+
+    Gamma=K_aw R_wb                                         (PA2)
+
+contains cross-covariance terms of unrestricted sign.  PSD of P and SPD of
+S_acc do NOT imply sym(Gamma)>=0, nor ||I-Gamma||_2<=1.
+Consequently there is no generic Euclidean positive-real/passivity theorem
+for the isolated AW correction.  A zero-mean physical input could be
+rectified by an arbitrary algebraic AW gain if the coupled attitude/BA
+coordinates are discarded.
+
+The full accelerometer correction DOES have an exact passive-port identity.
+Let the full linearized error be e, measurement row H, physical/model defect
+d, and innovation
+
+    r=-H e + d                                               (PA3)
+
+(up to the fixed sign convention).  The update is
+
+    e^+=A e + K d,   A=I-KH.                               (PA4)
+
+Joseph gives
+
+    P^+=A P^- A^T+K R K^T.                                 (PA5)
+
+Equivalently in the complete-word action/dual formulation, the measurement
+port contributes the nonnegative square associated with S_acc=H P^- H^T+R.
+Completing that square keeps the SAME combination H e that contains attitude,
+AW, BA and lever/BG effects.  Thus accelerometer feedback is passive in the
+full measurement port, not in the AW coordinate alone.
+
+### Consequence for the signed physical-input theorem
+
+The remaining two-norm lemma cannot be
+
+    isolated AW correction preserves OU beta variation.
+
+That statement is false without additional cross-covariance restrictions.
+
+Instead combine the forward OU physical forcing with the FULL accelerometer
+port before projection, exactly as section 32 combined AW and S.  Over an
+accelerometer-service block retain two objects:
+1. the transverse AW readout adjoint;
+2. the accelerometer predicted-specific-force row H e.
+
+Eliminate the internal accelerometer innovation by a block Schur/completed
+square with denominator S_acc, but substitute the deterministic physical
+measurement identity first.  The physical acceleration appears in both the
+OU forcing and H e with fixed opposite signs.  Their signed combination is
+the candidate positive-real supply rate.
+
+This block-level port formulation has the required properties:
+- no sym(Gamma) assumption;
+- no gain norm;
+- no AG covariance ceiling;
+- all attitude/BA cross covariance retained;
+- same-history physical acceleration appears once;
+- the negative measurement square grows when cross coupling is large.
+
+The next analytical object is therefore a FULL accelerometer-port block
+matrix, analogous to the successful two-row AW/S block:
+    [final AW reader ; accelerometer force-error port].
+Its Schur complement in the innovation variable is regular because
+S_acc>=R_acc>0.  The question becomes whether the resulting deterministic
+physical supply has nonpositive DC gain (up to declared attitude/BA/lever
+defects).  This is the correct positive-real formulation.
