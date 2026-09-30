@@ -1520,6 +1520,50 @@ geometry evidence and must not be compared with the numerical target above.
 A valid diagnostic for $C_{\rm port}$ must first construct
 $G_{\rm phys,W}$ itself.
 
+For the homogeneous linear tail the complete word admits a simpler exact
+storage construction.  Freeze one literal regular A21 word and let $A_j$ be
+$F_j$ at prediction, $I-K_jH_j$ at an accepted accelerometer/$S$/magnetic
+correction, and the literal reset Jacobian at attitude injection.  PSD AW
+synchronization has identity mean map and is retained as a covariance source.
+Then
+\begin{equation}
+ P_W=M_WP_0M_W^T+\mathcal S_W,\qquad
+ D_W=P_0^{-1}-M_W^TP_W^{-1}M_W\succeq0 ,
+ \label{eq:complete-linear-word}
+\end{equation}
+where $M_W$ is the chronological product and $\mathcal S_W$ contains all
+prediction, correction and synchronization source factors transported through
+the later literal operations.  Innovations are absent from
+\eqref{eq:complete-linear-word}; their effects are already encoded in the
+actual gains and Joseph factors.
+
+Hence the exact homogeneous storage factor is
+\begin{equation}
+ \rho_{\rm lin}(W,P_0)
+ =\lambda_{\max}\!\left(
+ P_0^{1/2}M_W^TP_W^{-1}M_WP_0^{1/2}\right)
+ =1-\lambda_{\min}(P_0^{1/2}D_WP_0^{1/2}).
+ \label{eq:rho-linear-word}
+\end{equation}
+The previously proved fixed-point-smoother identity rewrites this in root
+information form.  When the word data information is nonsingular, its
+Riccati diameter
+$\kappa_W=\lambda_{\max}(J_W^{-1}A_W)
+=\lambda_{\max}(\Pi_W^{-1}P_{\rm diff,W})$ gives
+\begin{equation}
+ \rho_{\rm lin}(W,P_0)
+ \le {\sqrt{\kappa_W}-1\over\sqrt{\kappa_W}+1}
+ \quad\hbox{for every }P_0 .
+ \label{eq:rho-diameter}
+\end{equation}
+On the physical tilt/BA kernel the existing rank-one completion instead gives
+$\rho\le1-1/\kappa_\nu$ once the same-word scalar kernel ceiling is
+invariant.  Thus a source-uniform 17-s constant is reduced to an upper
+enclosure $\sup_W\kappa_\nu(W)\le K_{17}<\infty$, followed by
+$\rho_{\rm lin}\le1-1/K_{17}$.  That enclosure remains open; carried
+16-s words suggest the difficult scale is $K\approx200$ (about
+$\rho=0.995$), but those values are explicitly non-promoting.
+
 Injections obey an exact identity on ${\rm SO}(3)$. With $M=\hat R^{\mathsf T}R$
 the world attitude error, an injection acts by $M\mapsto\operatorname{Exp}(-x)M$
 and a prediction by a rotation of angle at most $h\norm{\tilde\omega}$. If $J$
