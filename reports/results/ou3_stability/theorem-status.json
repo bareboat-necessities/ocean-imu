@@ -175,7 +175,11 @@
     "source_uniform_K17_finite_numeric": false,
     "source_uniform_K17_le_250": false,
     "K17_horizon_mixing_rejected": true,
-    "same_history_unit_kernel_persistence_excluded": false
+    "same_history_unit_kernel_persistence_excluded": false,
+    "contraction_superword_100s_adopted": true,
+    "nuisance_warmup_17s_retained": true,
+    "source_uniform_K100_finite_numeric": false,
+    "source_uniform_K100_kernel_invariant": false
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
