@@ -9215,3 +9215,128 @@ closed algebraically.  The remaining contraction question concerns the
 transverse quotient variance when j can be small.  That is exactly the
 complete-word quotient/action problem already isolated; no additional
 kernel-angle lower bound is needed.
+
+
+## 81. Relative line rotation: exact derivative route fails; ordered-soft-gap route closes it
+
+Let C_W be the complete nuisance-reduced compatibility operator and P_W the
+projector onto its one-dimensional exact kernel when present.  For adjacent
+words/constraint blocks, applying the new constraints to the old kernel gives
+the exact residual that rotates the line.  The standard sine relation is
+
+    ||(P_W-P_+)P_W||
+      <= ||C_+ P_W|| / gap_+,                              (LR1)
+
+where gap_+ is the smallest positive singular value of C_+ restricted to the
+old-kernel complement.  Squaring LR1 would give the requested form
+
+    sin^2 theta <= gap_+^-2 * Action_quotient.             (LR2)
+
+But current assumptions do NOT provide a source-uniform lower bound on this
+local restricted gap.  A new constraint may become arbitrarily tangent to
+the old compatibility line.  Thus differentiating the exact homogeneous
+graph r_W=(a_W,-A_W a_W) does not by itself prove a source-uniform LR2.
+Using LR1 with an asserted gap would simply resurrect the retired information-
+floor assumption.
+
+### Continuous soft-kernel replacement
+
+The current main proof already contains the correct rank-change-safe
+replacement.  Let J(W)>=0 be the complete nuisance-reduced slow information
+matrix on a closed regular A21 word stratum, with ordered eigenvalues
+
+    0<=lambda_1(W)<=lambda_2(W)<=...                       (LR3)
+
+The complete zero-action theorem gives nullity(J)<=1 on EVERY admissible
+stratum closure.  The regular A21 word class is a finite union of closed
+event strata; physical traces are compact by the existing Arzela--Ascoli
+argument, bounded estimator/tuner/clock variables are compact, and the
+fixed-factor action form defining J is continuous/lower-semicontinuous
+through observation-rank changes.  Therefore the ORDERED eigenvalue lambda_2
+is continuous and strictly positive on each compact stratum.  Hence
+
+    lambda2_bar :=
+      min_strata min_W lambda_2(J(W)) >0.                 (LR4)
+
+This is the legitimate source-uniform transversality modulus.  It is NOT
+lambda_min^+: lambda_2 remains continuous when a one-dimensional exact kernel
+appears or disappears.
+
+Choose a unit least-information direction n_W and retain finite proof
+precision mu=1/c on it:
+
+    J_soft=J+mu n_W n_W^T.                                 (LR5)
+
+Then exactly
+
+    J_soft >= m(c,r) I,
+    m(c,r)=min(1/c,lambda2_bar)>0.                         (LR6)
+
+Thus a direction transverse to the continuously retained soft line pays at
+least lambda2_bar times its squared amplitude.  In particular, if the
+propagated old soft direction decomposes at the next word as
+
+    u=rho n_+ + sqrt(1-rho^2) q_+,                         (LR7)
+
+then
+
+    Action_+(u)
+      >= lambda2_bar (1-rho^2),                            (LR8)
+
+so the desired relative line-rotation inequality is
+
+    1-rho^2
+      <= Action_+(u)/lambda2_bar.                          (LR9)
+
+No derivative of a normalized exact-kernel vector is needed.
+
+### Interaction with the adjacent-line recurrence
+
+Insert j>=lambda2_bar for the next soft quotient into AL5:
+
+    a_+
+      <= a/
+        [1+a(m rho^2+lambda2_bar(1-rho^2))].              (LR10)
+
+Hence both endpoints are controlled:
+- rho^2=1: next-kernel precision m=1/c_+ controls the carry;
+- rho^2=0: ordered soft gap lambda2_bar controls the quotient;
+- intermediate angles are convex mixtures in the information denominator.
+
+Therefore
+
+    a_+
+      <= a/[1+a min(1/c_+,lambda2_bar)].                  (LR11)
+
+This closes the relative line-rotation/quotient issue at EXISTENCE level.
+
+### What this does NOT yet close
+
+LR4 supplies no numerical value.  More importantly, complete recurring
+contraction still requires the linked terminal/storage constants.  The main
+soft-kernel proof defines
+
+    Hbar(r)=sup_W ||Pi_W^-1/2 Phi_tilde_W||^2 <infinity,   (LR12)
+
+and
+
+    dbar_soft(r)=sup_W n_next^T Pi_W n_next <infinity.     (LR13)
+
+Then
+
+    K_soft(c,r)=
+      1+Hbar/min(1/c,lambda2_bar),                          (LR14)
+
+and scalar invariance requires
+
+    D_soft(c,r)=K_soft(c,r)dbar_soft <=c.                  (LR15)
+
+For c>=1/lambda2_bar this becomes
+
+    dbar_soft Hbar <1,
+    c>=dbar_soft/(1-dbar_soft Hbar).                       (LR16)
+
+Thus the line-rotation problem is CLOSED qualitatively/source-uniformly by
+the ordered-soft-gap compactness theorem.  The controlling remaining O2
+obligation is the linked product/small-c fixed point in LR15--LR16, not
+another compatibility-angle lemma.
