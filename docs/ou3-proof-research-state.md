@@ -417,6 +417,20 @@ full-P/event enumeration.  The magnetic certificate must be reformulated
 directly in service-Gram/conditional-Schur variables so it does not require a
 full P ceiling or finite event-pattern cover.
 
+**Aggregate MAGNETIC SERVICE Schur calculation completed; standalone
+residualized gamma_M is impossible.**  Partition normalized service Gram
+G=[[G_hh,G_hn],[G_nh,G_nn]], with assumed G_hh>=I2.  Exact Schur form is
+G_res=G_hh^(1/2)(I-C C')G_hh^(1/2),
+C=G_hh^-1/2 G_hn G_nn^dagger/2, ||C||<=1.  Existing exact counterexample
+G=[[1,0,1],[0,1,0],[1,0,1]] has G_hh=I2, ||C||=1 and residualized
+diag(0,1).  Therefore service alone has rigorous gamma_M lower=0.  Gyro
+persistence must enter JOINTLY as nuisance process information Q_n.  Correct
+source-only target is relative modulus Q_n>=q_rel G_nn on Range(G_nh);
+then canonical correlation <=1/sqrt(1+q_rel) and joint service floor is
+q_rel/(1+q_rel).  This needs neither full P nor event schedule.  Added
+`magnetic_service_schur.py` and validation of the counterexample/formula.
+Standalone magnetic residualized certificate should not be pursued further.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
