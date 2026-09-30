@@ -4149,3 +4149,106 @@ coupled shipping slab class.
 This is narrower than the previous D2 obstruction and identifies precisely
 what must be small for the Volterra cancellation to remove the sqrt(170)
 factor.
+
+
+## 45. Local slab leverage bound and commutator decomposition
+
+For slab B write the exact backward recurrence
+
+    Lambda_B=M_B^T Lambda_(B+1)-O_B^T ell_B,
+
+and h_B=A_B Lambda_B.  The local divided-difference contribution is
+
+    l_B^loc=A_B O_B^T ell_B.                               (LC1)
+
+Let Sigma_B be the covariance/action Gram of the slab observation-source rows
+in the SAME augmented design after marginalizing the slab's process/source
+columns consistently.  Then weighted Cauchy gives
+
+    |l_B^loc|^2
+      <= chi_B^2 (ell_B Sigma_B ell_B^T),                  (LC2)
+
+where the local leverage is
+
+    chi_B^2 =
+      A_B O_B^T Sigma_B^-1 O_B A_B^T.                     (LC3)
+
+This is the correct source-uniform local constant.  It applies A_B before
+Cauchy, retaining the coefficient ceilings
+(.06,1.8e-4,3.6e-7), and introduces no count of corrections in the slab.
+
+The complete reader action is the square-sum of the slab actions plus process
+and root residual action, so the local terms can be stacked in the action
+metric.  A useful theorem needs only
+
+    sup_B chi_B <= chi_0.                                  (LC4)
+
+Because Sigma_B includes the actual effective measurement covariance, a
+lower noise floor gives a finite chi_0.  Computing chi_0 by replacing O_B
+with an arbitrary row norm would be too coarse; use the literal slab rows.
+
+### Commutator
+
+The nonlocal term is
+
+    C_B Lambda_(B+1),
+    C_B=A_(B+1)-A_B M_B^T.                                 (LC5)
+
+Factor the slab homogeneous map chronologically into predictions/resets and
+Kalman corrections.  Pull A_B forward through this factorization.  Across a
+correction A_k=I-K_k H_k,
+
+    a A_k^T = a - (a H_k^T) K_k^T.                         (LC6)
+
+Thus the correction part of the commutator is a sum of measurement-port rows,
+not a free Euclidean matrix defect.  For S and magnetic H_aw=0 but A_B lives
+on v,p,S, so S can couple directly through its S column; accelerometer can
+couple through the AW/AG/BA columns after prediction mixing.  Each term has
+the form
+
+    scalar/vector port coefficient * K_k^T Lambda_future,   (LC7)
+
+and the latter is exactly the q_k variable charged by the corrected-loss
+square q_k^T S_k q_k.
+
+Across a prediction F_k, the row evolves deterministically:
+
+    a F_k^T.                                                (LC8)
+
+For the pure LIN integrated chain this can be computed analytically from
+phi_va,phi_pa,phi_Sa and the block duration.  Therefore split
+
+    C_B = C_B^pred + C_B^port,                              (LC9)
+
+where C_B^pred is tuner/integration geometry and C_B^port is retained as
+corrected-loss ports.
+
+This is essential: there is no source-uniform useful raw Euclidean bound on
+C_B from tuner ranges alone because M_B contains covariance-dependent gains.
+Trying to bound ||C_B|| directly repeats the failed arbitrary-gain
+relaxation.
+
+### Volterra bound in the correct norm
+
+The dual tail is controlled by
+
+    Tail = sum_B C_B^pred Lambda_(B+1)
+           + sum_ports alpha_k q_k.                         (LC10)
+
+The port sum is square-summed globally by the existing corrected loss.  Only
+C_B^pred requires an l1/Volterra row-sum bound.  It is covariance independent.
+
+Hence the source-uniform constants should be
+
+    chi_0 = sup_B sqrt(A_B O_B^T Sigma_B^-1 O_B A_B^T),    (LC11)
+
+    C_pred = sup_s sum_(B<=s)
+       || C_B^pred Phi_pred(s<-B) ||,                       (LC12)
+
+with all correction ports removed from Phi_pred and charged separately in
+their action metric.
+
+This is narrower than bounding the full C_B.  The remaining deterministic
+matrix calculation is the pure prediction/reset integrated-chain
+commutator C_B^pred; the stochastic/Kalman part is already covered by exact
+loss squares.
