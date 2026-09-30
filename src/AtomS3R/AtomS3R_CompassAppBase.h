@@ -446,7 +446,10 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
 
   if (out.mag_ok && out.mag_norm_uT > 1e-6f) out.m_unit = out.m_cal / out.mag_norm_uT;
 
-  out.mag_fresh = mag_gate_.update(out.m_cal, out.mag_ok, millis());
+  // M5Unified's update mask is the freshness authority. The 200 Hz loop sees
+  // cached BMM150 values between real AUX updates; never manufacture magnetic
+  // observations from elapsed wall time.
+  out.mag_fresh = s.mag_updated && mag_gate_.update(out.m_cal, out.mag_ok, millis());
   
   return out;
 }
