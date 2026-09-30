@@ -5,7 +5,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.ag_readout import (
-    augmented_design, coercivity_action_bound, diffuse_prior_posterior, joint_minimum_action_reader,
+    augmented_design, chronological_reader_adjoints, coercivity_action_bound, diffuse_prior_posterior, joint_minimum_action_reader,
     joint_reader_audit, reader_action_of,
     bootstrap, structured_root_upper, process_relative_to_structured_root,
     minimum_noise_reader, minimum_noise_action_from_information, certificate, coefficient_relaxation_obstruction, exact_readout,
@@ -201,6 +201,18 @@ class HistoricalReadoutTests(unittest.TestCase):
         self.assertEqual(len(joint['reader']), 1)
         self.assertEqual(matmul(joint['reader'], design['O_h']), design['T_h'])
         self.assertEqual(reader_action_of(design, joint['reader']), joint['action'])
+
+    def test_terminal_aw_reader_exports_chronological_adjoints(self):
+        events = supplied_fixture()
+        design = augmented_design(events, identity(15), terminal_rows=[15])
+        joint = joint_minimum_action_reader(design)
+        trace = chronological_reader_adjoints(events, joint['reader'], 15)
+        self.assertEqual(trace[0]['kind'], 'terminal')
+        self.assertEqual(trace[0]['adjoint'][15], 1)
+        # Feasibility means the residual functional cancels every AG root
+        # coordinate after all observations have been pulled back.
+        root = trace[-1]['adjoint']
+        self.assertEqual(root[:6], [F(0)]*6)
 
     def test_exact_noise_enclosure_preserves_correlated_columns(self):
         from tools.stability.ou3_theorem.ag_readout_source_diagnostic import rational_upper_factor
