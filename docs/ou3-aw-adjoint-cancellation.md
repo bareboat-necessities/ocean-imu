@@ -1299,3 +1299,54 @@ Riccati minimization.
 Thus the next proof object is a 1-D conditioned Riccati/mean comparison over
 the compact coupled tuple, not a sum of separately minimized dissipations.
 A valid explicit lower constant must be obtained from the joint map JG1/JG2.
+
+
+## 17. Scalar conditional variance is not a closed Riccati state
+
+The proposed reduction to p=P_(a|l,s) alone is false for the literal
+integrated-OU process.  After conditioning on s=(theta,b_g,b_a), one axis has
+
+    x=(v,p,S,a),   P_c in S_+^4.
+
+Prediction is
+
+    P^- = Phi P^+ Phi^T + Q_d(tau,h,sigma^2),               (RC1)
+
+and shipping Q_d has nonzero q_va,q_pa,q_Sa and the corresponding integrated
+cross terms.  In particular q_Sa is explicitly nonzero.  Therefore the next
+Schur complement
+
+    p_new=P_aa-P_al P_ll^dag P_la                           (RC2)
+
+depends on the complete prior conditional covariance, not only on p_old.
+An S correction
+
+    P^+ = P^- - P^- e_S
+          (e_S^T P^- e_S+r_S^2)^-1 e_S^T P^-               (RC3)
+
+also changes P_aa through P_aS^2/(P_SS+r_S^2), again requiring the cross
+covariance.  Hence two shipping-admissible conditional covariances with the
+same p can have different p_new.  A one-dimensional Riccati recurrence would
+reintroduce an unjustified covariance relaxation.
+
+The smallest exact one-axis conditioned Riccati state is the symmetric 4x4
+P_c for (v,p,S,a), i.e. ten scalar entries.  Its maps are explicit:
+
+prediction RC1;
+S update RC3;
+accelerometer update, after conditioning on AG/BA,
+
+    P^+ = P^- - P^- e_a
+          (e_a^T P^- e_a+r_a)^-1 e_a^T P^-;                (RC4)
+
+and AW sync
+
+    P^+ = P^- + delta e_a e_a^T,                            (RC5)
+
+for the conditional component supplied by the PSD floor.  Mean maps use the
+same gains.
+
+Thus the exact joint DC optimization is a 4-state/10-covariance scalar-axis
+problem, not a 21-state problem but not 1-D either.  Any proof claiming a
+closed p recurrence must first establish an invariant relation expressing all
+P_al cross terms as functions of p; shipping provides no such identity.
