@@ -139,7 +139,7 @@ def noise_action_lower(events, n=21, ag=6):
 
 
 
-def augmented_design(events, nuisance_factor, n=21, ag=6):
+def augmented_design(events, nuisance_factor, n=21, ag=6, terminal_rows=None):
     """Chronological augmented design of the joint historical reader.
 
     Every action source of the backward trial estimator is one unit-covariance
@@ -175,8 +175,114 @@ def augmented_design(events, nuisance_factor, n=21, ag=6):
                 column += len(f[0])
     if not rows:
         raise ValueError('no applied observations')
+    target = list(range(ag)) if terminal_rows is None else list(terminal_rows)
+    if not target or any(i < 0 or i >= n for i in target):
+        raise ValueError('valid terminal row indices required')
     return {'O_h': [r[:ag] for r in rows], 'A': [r[ag:] for r in rows],
-            'T_h': [r[:ag] for r in x[:ag]], 'T': [r[ag:] for r in x[:ag]]}
+            'T_h': [x[i][:ag] for i in target], 'T': [x[i][ag:] for i in target],
+            'terminal_rows': target}
+
+
+
+def chronological_reader_adjoints(events, reader, terminal_row, n=21):
+    """Backward residual-functional adjoints for q*x_N - L*y.
+
+    Returns one full-state row after each reverse operation plus the terminal
+    row. Optional event metadata is preserved so callers can sample exact
+    shipping boundaries without changing the matrix algebra.
+    """
+    sequence = _events(events, n)
+    accepted = [e for e in events
+                if e['kind'] != 'correction' or e.get('accepted', True)]
+    if len(accepted) != len(sequence):
+        raise ArithmeticError('event metadata does not align with normalized operations')
+    obs_rows = sum(len(b) for kind, b, _ in sequence if kind == 'correction')
+    l = _matrix(reader, 1, obs_rows)[0]
+    q = [F(0)]*n
+    q[int(terminal_row)] = F(1)
+    offset = obs_rows
+    out = [{'reverse_index': 0, 'forward_index': len(sequence),
+            'adjoint': q[:], 'kind': 'terminal',
+            'aw_sync_boundary': False}]
+    reverse_index = 0
+    for forward_index in range(len(sequence)-1, -1, -1):
+        kind, b, factor = sequence[forward_index]
+        meta = accepted[forward_index]
+        reverse_index += 1
+        if kind == 'correction':
+            m = len(b)
+            offset -= m
+            li = l[offset:offset+m]
+            for j in range(n):
+                q[j] -= sum(li[i]*b[i][j] for i in range(m))
+        else:
+            q = [sum(q[i]*b[i][j] for i in range(n)) for j in range(n)]
+        out.append({'reverse_index': reverse_index, 'forward_index': forward_index,
+                    'adjoint': q[:], 'kind': kind,
+                    'aw_sync_boundary': bool(meta.get('aw_sync_boundary', False))})
+    if offset != 0:
+        raise ArithmeticError('reader observation rows not fully consumed')
+    return out
+
+
+def sync_boundary_adjoints(events, reader, terminal_row, n=21):
+    """Chronological reader adjoints sampled at actual AW-sync boundaries."""
+    trace = chronological_reader_adjoints(events, reader, terminal_row, n)
+    points = [x for x in trace if x.get('aw_sync_boundary')]
+    points.sort(key=lambda x: x['forward_index'])
+    return points
+
+
+
+def sync_divided_difference_rows(events, reader, terminal_row, n=21):
+    """Form h_B and its endpoint/divided-difference rows at AW-sync slabs.
+
+    State layout is the shipping 21-state order: LIN v,p,S,a_w occupy
+    6:18 in three-axis blocks.  Block duration is reconstructed from the
+    literal v->p prediction coefficient, retaining exact rational operands.
+    """
+    points = sync_boundary_adjoints(events, reader, terminal_row, n)
+    if len(points) < 2:
+        return {'boundaries': points, 'h_rows': [], 'D2_rows': []}
+    sequence = _events(events, n)
+    h_rows = []
+    slabs = []
+    for left, right in zip(points[:-1], points[1:]):
+        lo, hi = left['forward_index'], right['forward_index']
+        if not lo < hi:
+            raise ArithmeticError('non-increasing sync boundaries')
+        duration = F(0)
+        first_prediction = None
+        for k in range(lo+1, hi+1):
+            kind, b, _ = sequence[k]
+            if kind != 'prediction':
+                continue
+            # Identity sync-completion predictions have zero v->p time.
+            dt = b[9][6]
+            if dt:
+                duration += dt
+                if first_prediction is None:
+                    first_prediction = b
+        if duration <= 0 or first_prediction is None:
+            raise ArithmeticError('sync slab has no physical prediction')
+        lam = left['adjoint']
+        hv = [F(0)]*3
+        for axis in range(3):
+            phi_va = first_prediction[6+axis][15+axis]
+            phi_pa = first_prediction[9+axis][15+axis]
+            phi_sa = first_prediction[12+axis][15+axis]
+            hv[axis] = (phi_va*lam[6+axis] + phi_pa*lam[9+axis]
+                        + phi_sa*lam[12+axis])/duration
+        h_rows.append(hv)
+        slabs.append({'left_forward_index': lo, 'right_forward_index': hi,
+                      'duration': duration})
+    d2 = []
+    if h_rows:
+        d2.append(h_rows[0][:])
+        for a, b in zip(h_rows[:-1], h_rows[1:]):
+            d2.append([y-x for x, y in zip(a, b)])
+        d2.append(h_rows[-1][:])
+    return {'boundaries': points, 'slabs': slabs, 'h_rows': h_rows, 'D2_rows': d2}
 
 
 def joint_minimum_action_reader(design):

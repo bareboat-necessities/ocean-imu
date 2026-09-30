@@ -1,0 +1,5224 @@
+# Covariance-weighted AW adjoint cancellation
+
+This is a subordinate lemma for `ou3-joint-aw-passivity.md`, on the same
+construction/capture/H18/release/A21 proof path. It introduces no estimator
+change or separate stability architecture. It is an algebraic result, not a
+numerical diagnostic or a proof of the 1.96133 m/s^2 mean bound.
+
+Scope: the qualified regular real-arithmetic profile, optimal accepted
+corrections using their actual effective measurement covariance, and the
+literal operation chronology. Finite-precision/source defects, projections
+and reconfiguration retain their existing separate qualifications.
+
+## 1. S corrections have exactly zero weighted-adjoint jump
+
+Use the twelve-component mean z=(a_w,v,p,S), with each block a world vector,
+and X=P_LL. At an S correction let H=E_S and
+
+    Omega = H X H^T + R_S,
+    K = X H^T Omega^-1,
+    A = I-K H.
+
+Here K is the LIN part of the actual full gain; because the S row observes
+only LIN, it equals this expression even with arbitrary inherited cross
+covariances. The marginal covariance update gives
+
+    X^+ = X-K Omega K^T = A X = X A^T.
+
+Between readout insertions the exact nominal-mean adjoint obeys
+lambda^-=A^T lambda^+. Define chi=X lambda at the corresponding boundary.
+Then
+
+    chi^- = X A^T lambda^+ = X^+ lambda^+ = chi^+.
+
+In particular,
+
+    sup_(reachable applied S events) ||chi^+-chi^-|| = 0.    (SC)
+
+No sign restriction on K_aw,S or P_aw,S is needed. This holds for every
+positive definite X, so it holds on its shipping-reachable subset. It is
+NOT a claim that beta itself has zero jump or small raw variation.
+A readout atom c is a separate operation, adding X c to chi. An ordinary
+attitude error reset leaves the LIN marginal and reduced mean unchanged;
+its effect on other covariance blocks and later gains is still retained.
+
+## 2. The exact nonzero jump at a nuisance-coupled observation
+
+Partition the full prior covariance and its actually used Jacobian as
+
+    P^- = [[X,C],[C^T,N]],           H=[H_L,H_n].
+
+Let K_L be the actual LIN gain. Then
+
+    K_L Omega = X H_L^T + C H_n^T,
+    X^+ = X-K_L Omega K_L^T.
+
+The nominal LIN mean, with the realized nuisance history kept in the forcing,
+uses A_L=I-K_L H_L, not the Schur-adjusted observation multiplier. Consequently
+
+    chi^- - chi^+
+       = (K_L Omega-X H_L^T) K_L^T lambda^+
+       = C H_n^T K_L^T lambda^+.                         (NC)
+
+Proof: substitute lambda^-=A_L^T lambda^+ in X lambda^- and subtract
+X^+ lambda^+. No bound or sign assumption is used.
+
+For S, H_n=0 and (NC) recovers (SC). For active lever-arm-disabled
+accelerometer updates,
+
+    C H_n^T = P_L,theta J_theta^T + P_L,ba.
+
+Held BA must use its literal covariance-update row. For a magnetic update,
+H_L=0 and (NC) equals K_L,m Omega_m K_L,m^T lambda^+. The actual LIN mean
+also receives K_L,m r_m; its transported source cannot be omitted.
+
+For comparison, on the FULL homogeneous error adjoint p^-=(I-KH)^T p^+,
+
+    P^- p^- = P^+ p^+,
+    K^T p^+ = R^-1 H P^+ p^+.
+
+These identities hold across every optimal measurement, but the full error
+adjoint is not the reduced nominal lift with nuisance coordinates deleted.
+Equation (NC) is precisely the term that deletion would hide.
+
+## 3. Prediction, synchronization and scale commits
+
+If the actual LIN covariance prediction is
+
+    X_new = F X_old F^T + Q + Delta,
+    lambda_old = F^T lambda_new,
+
+with invertible F and the actual pending PSD AW increment Delta, then
+
+    chi_old = F^-1 [chi_new-(Q+Delta)lambda_new].           (PC)
+
+An isolated covariance increment leaves the nominal mean and lambda unchanged
+and changes chi by Delta lambda. It is not a direct AW mean input.
+Readout atoms, (NC), (PC) and literal reset/scale maps are the complete
+weighted-adjoint chronology. No S-gain jump is charged independently of the
+covariance change that exactly cancels it in (SC).
+
+In the isotropic settled scalar normalization, put
+
+    D=diag(sigma I3, sigma*tau I3, sigma*tau^2 I3, sigma*tau^3 I3),
+    x=h/tau,      zeta=2 sigma^2 tau/r_a,      c_T=T_S/tau.
+
+The ideal OU process and transition in these coordinates depend only on x.
+For the SpectralMSE target law the normalized S covariance is
+
+    Rtilde_S = r_S^2/(sigma^2 tau^6)
+       = C_J^2 4^(1/7)/(c_T c_sigma^(12/7)) * zeta^(-1/7).
+
+The realized applied values require the additional factor ell^2, where
+
+    ell = r_S sqrt(T_S) /
+          [C_J (2 r_a)^(1/14) (sigma/c_sigma)^(6/7) tau^(24/7)].
+
+This is an exact definition of the target-to-applied discrepancy, constrained
+by the carried smoothers, commits, clamps and floors; ell is not set to one.
+For general realized scalar R_acc,
+
+    Rtilde_acc = [h R_acc/r_a] * 2/(zeta x).
+
+At a scale commit the normalized mean transforms by D_new^-1 D_old. This
+known coordinate map must accompany the normalized covariance and adjoint.
+
+## Consequence
+
+The direct S-event contribution to chi variation is uniformly ZERO. The
+physical beta variation still depends on (NC), (PC), actual measurement rows,
+readout atoms, and applied schedule/scale changes. A small complete-word bound
+on these terms has not been proved. In particular, a small observed signed
+response does not bound raw first/second variation, and failure of a sufficient
+variation certificate is not a construction-reachable instability example.
+
+
+## 4. Complete covariance-weighted reader theorem
+
+The remaining nominal-mean problem can be stated without raw beta variation.
+Freeze the literal coefficients on one same-history word W, but do not restart
+the root, tuner, scheduler or physical source.  Factor every covariance/action
+channel exactly as in the existing finite-error composition:
+
+    P_i = A_i P_(i-1) A_i^T + B_i B_i^T.
+
+At prediction B_i is a factor of the literal Q_i (including its within-step
+correlations); at an accepted correction its fresh factor is K_i R_i^(1/2);
+at a congruent reset it is zero.  PSD synchronization increments are separate
+prediction-like factors.  Let s be the single stacked vector of all these
+whitened source coordinates, in chronological order.
+
+For the scalar transverse nominal-mean readout q_W x (q_W includes the
+convex AW-window weights and the fixed world direction u), variation of
+constants gives exactly
+
+    q_W x_W = q_W M_W e_0 + Z_W s + d_impl,                 (CR1)
+
+where
+
+    Z_W = [ q_W M_(W<-i) B_i ]_i.                           (CR2)
+
+No independence or Gaussian premise is used: the factorization is matrix
+algebra.  The same physical/source block is represented once, so all of its
+multiple chronological appearances are summed before its norm is taken.
+
+Let
+
+    C_root^2 = q_W M_W P_0 M_W^T q_W^T,                    (CR3)
+    C_src^2  = Z_W Z_W^T.                                  (CR4)
+
+Then covariance Cauchy--Schwarz gives the exact reader inequality
+
+    |q_W x_W|
+      <= C_root sqrt(V_0) + C_src sqrt(A_W) + |d_impl|,     (CR5)
+
+where A_W=s^T s is the complete stacked source action.  This is stronger than
+splitting accelerometer and magnetic terms by the triangle inequality.
+
+If bookkeeping requires source families, write the columns of Z_W as the
+disjoint concatenation
+
+    Z_W=[Z_phys,Z_acc,Z_mag,Z_proc,Z_sync,...].
+
+For A_f=||s_f||^2,
+
+    |Z_W s|
+      <= sqrt( sum_f C_f^2 ) sqrt( sum_f A_f ),             (CR6)
+    C_f^2=Z_f Z_f^T.
+
+Alternatively the weaker requested display follows from familywise
+Cauchy--Schwarz,
+
+    |q_W x_W|
+      <= C_root sqrt(V_0)
+         + C_phys sqrt(A_phys)
+         + C_acc sqrt(A_acc)
+         + C_mag sqrt(A_mag)
+         + C_proc sqrt(A_proc)
+         + C_sync sqrt(A_sync)
+         + C_impl.                                          (CR7)
+
+The physical bounded-primitive contribution can instead be reduced by the
+signed Abel/cycle identity before it is inserted into Z_phys; doing so yields
+the requested notation C_phys(Vmax,Pmax,Jmax) without treating physical
+acceleration as a stochastic OU source.
+
+### Terminal-covariance normalization
+
+The existing covariance recursion supplies
+
+    P_W = M_W P_0 M_W^T + Z_state Z_state^T.
+
+Whitening by P_W^(-1/2) gives a horizontal matrix with operator norm <=1.
+For any terminal scalar row q,
+
+    C_root^2 + C_src^2
+      <= q P_W q^T                                         (CR8)
+
+when q is applied to the corresponding terminal/readout augmented state.
+For a multi-time AW mean, augment the state with the deterministic readout
+accumulator; the same identity holds because readout insertion has no fresh
+source.  Thus the root and source coefficients are not independent constants:
+they share one covariance budget.
+
+This is the key improvement over
+
+    C_root sqrt(V0)+C_acc sqrt(A_acc)+C_mag sqrt(A_mag).
+
+For any nonnegative V0,A_W,
+
+    C_root sqrt(V0)+C_src sqrt(A_W)
+      <= sqrt(C_root^2+C_src^2) sqrt(V0+A_W)
+      <= sqrt(q P_W q^T) sqrt(V0+A_W).                      (CR9)
+
+No square root of the number of corrections appears.
+
+### Relation to the minimum-action historical reader
+
+For the augmented chronological design y=O_h h0+A s and readout/terminal
+quantity r=T_h h0+T s, every linear reader L satisfying L O_h=T_h leaves
+
+    r-Ly = (T-LA)s.
+
+For a scalar readout q, the minimum possible source coefficient is therefore
+
+    C_min^2
+      = q [ Pi + Ttilde I_eff^(-1) Ttilde^T ] q^T,          (CR10)
+
+with
+
+    Pi=T(I-A^T Sigma^(-1)A)T^T,
+    Ttilde=T_h-T A^T Sigma^(-1)O_h,
+    I_eff=O_h^T Sigma^(-1)O_h,
+    Sigma=A A^T.
+
+This is exactly the existing joint minimum-action reader B*.  Hence the
+nominal-mean source theorem does not require a new observability architecture:
+it is a scalar dual use of the already proved reader algebra.  The useful
+bound is the signed factor-space evaluation of (T-L*A), not a product of
+per-event gain norms.
+
+## 5. How the requested source families enter
+
+For an accepted correction with deterministic physical/model residual r_i,
+Joseph form gives P_i >= K_i R_i K_i^T.  In the whitened correction channel
+the source coordinate is
+
+    s_i = R_i^(-1/2) r_i,
+
+so its action is exactly
+
+    A_i = r_i^T R_i^(-1) r_i.                              (CR11)
+
+Therefore
+
+    A_acc = sum_(i in acc) r_acc,i^T R_acc,i^(-1) r_acc,i,
+    A_mag = sum_(i in mag) r_mag,i^T R_mag,i^(-1) r_mag,i. (CR12)
+
+They are square-summed before multiplication by the complete reader.
+The correlation term C H_n^T K_L^T lambda derived above is already contained
+in the same full-state correction factor and must not be added again.
+
+Prediction/model mismatch is handled identically with the least-norm
+coordinate in a factor of Q_i.  PSD AW covariance synchronization has no mean
+residual; it changes the reader/covariance chronology and contributes a factor
+to the auxiliary covariance budget, but it is not a physical mean source.
+Tuner lag likewise changes the literal coefficients.  Its convex-recursion
+bounds qualify the coefficient set; it is not added as an independent AW
+forcing unless the implementation differs from the committed coefficient.
+
+Direct magnetic mean forcing K_m r_m is exactly the magnetic member of
+(CR11--CR12), not an extra Euclidean gain term.
+
+## 6. Physical acceleration is better treated deterministically
+
+The physical acceleration entering the accelerometer is one bounded-primitive
+history, not an independent white source.  Keep its complete signed coefficient
+beta_j from the chronological reader and apply the exact identities already
+proved:
+
+    sum beta_j a_j
+       = endpoint velocity terms
+         + signed first-difference velocity term
+         + jerk quadrature,
+
+or the cycle/jerk decomposition for rapid scheduler modulation.
+
+Define C_phys(W) to be the resulting deterministic bound using the SAME beta
+rows generated by the complete reader.  Then
+
+    |u^T mu_W|
+      <= C_root sqrt(V_0)
+         + C_phys(W;Vmax,Pmax,Jmax)
+         + C_meas sqrt(A_acc+A_mag+A_other)
+         + C_impl,                                          (CR13)
+
+where C_meas may be taken as the Euclidean norm of the concatenated
+measurement-source reader rows.  Familywise C_acc,C_mag is valid but weaker.
+
+The carried root is not discarded.  On a retained region V_0<=r_0^2 its
+contribution is at most C_root r_0.  If the word has homogeneous contraction
+margin delta_W, the terminal-state part additionally satisfies the existing
+
+    ||M_W e_0||_(P_W^-1) <= sqrt(1-delta_W) sqrt(V_0).
+
+For the multi-time nominal mean use the augmented readout accumulator rather
+than substituting this terminal inequality blindly.
+
+## 7. Symbolic field threshold
+
+Let b be the applicable unit reference field and
+
+    sigma_w = ||e_z x b||.
+
+Corollary A* requires exactly
+
+    ||mu_W x b|| < g sigma_w.                              (CR14)
+
+A sufficient scalar bound is ||mu_W||<g sigma_w.  Keep this symbolic in the
+reader theorem.  If the theorem domain separately assumes sigma_w>=1/5, the
+right side is at least
+
+    g/5 = 1.96133 m/s^2.
+
+If the only field-domain information is |I|<=80 degrees under
+sigma_w=cos I, the uniform right side is instead
+
+    g cos(80 deg) ~= 1.7029069 m/s^2.
+
+Reference-field and magnetic-model defects belong once in the magnetic
+residual/action or in the geometric field premise, according to the chosen
+model; do not subtract the same defect twice.
+
+## 8. Quantitative closure condition
+
+The exact sufficient condition on every qualified word is
+
+    C_root(W) r_0
+      + C_phys(W)
+      + C_src(W) sqrt(A_W)
+      + C_impl(W)
+        < g sigma_w,min,                                   (CR15)
+
+or the sharper joint two-vector form
+
+    sqrt(C_root(W)^2+C_src(W)^2)
+      sqrt(r_0^2+A_W)
+      + C_phys(W)+C_impl(W)
+        < g sigma_w,min.                                   (CR16)
+
+Here C_src is the minimum-action/signed-factor coefficient, not a maximum
+single-event gain.  This is the requested complete covariance-weighted reader
+theorem.
+
+What is still OPEN is numerical/analytic evaluation of the source-uniform
+suprema of C_root,C_src,C_phys,A_W,C_impl on the retained coupled
+Riccati/tuner/physical trace class.  The reader formula itself, the
+square-summed measurement action, the absorption of the nuisance-correlation
+term, and the symbolic threshold are closed.  Existing O1/O2 reader machinery
+can be reused to bound C_src because (CR10) is its scalar dual; no new
+observability lemma is required.
+
+
+## 9. Noncircular kernel decomposition and the actual remaining obstruction
+
+The complete reader removes the artificial G0 circularity but does not, by
+itself, make every source coefficient small.  Decompose the relative attitude
+into the magnetically observed plane and the rotation about the applicable
+unit field b.  The observed component is charged in the magnetic
+measurement-action family.  For the field-axis component M_b b=b, the exact
+world accelerometer identity contains
+
+    M_b a_phys + g(e_z-M_b e_z) + beta_a,
+
+where beta_a is the carried world accelerometer bias/sensor residual after
+using one consistent true/nominal rotation convention.
+
+The gravity part has the SHARP kernel bound
+
+    ||g(e_z-M_b e_z)|| <= 2 g sigma_w sin(theta/2).          (K1)
+
+This is smaller than the generic 2g sin(theta/2) by sigma_w.  At the retained
+theta=6 deg and sigma_w=1/5 it is 0.2052961622 m/s^2.
+
+The declared post-projection accelerometer-bias error and fast residual give
+
+    B_ba + N_a = 0.625166604983954 + 0.3
+               = 0.925166604983954 m/s^2.                   (K2)
+
+Thus the non-physical kernel box excluding translated acceleration is
+
+    K0 = 1.1304627671 m/s^2                                 (K3)
+
+at sigma_w=1/5.  This is below g/5, so the static magnetic kernel alone does
+not create the forbidden nominal mean.
+
+The physical translated term is not bounded by A_max.  Since a=dv/dt,
+
+    (1/T) int M_b a dt
+      = [M_b v]_0^T/T - (1/T) int dot(M_b) v dt,             (K4)
+
+and therefore
+
+    ||mean(M_b a)||
+      <= 2 Vmax/T + (Vmax/T) TV(M_b).                       (K5)
+
+The trapezoidal sampled version adds the already proved J h_max/4 sampling
+term plus the corresponding discrete variation of M_b.
+
+This identifies the exact noncircular obstruction: the present retained
+domain bounds sup angle(M_b)<=6 deg but does NOT bound TV(M_b) by a constant
+independent of T.  Lemma I* bounds the NET ordered injection rotation, not
+its total variation.  The estimator axial gyro-bias projection gives an
+amplitude sector, not a signed temporal-variation bound.  Deterministic fast
+sensor residuals likewise have an amplitude bound but no variation premise.
+
+Consequently (K5) cannot be made small by MARINE MOTION/IMU BIAS/MAGNETIC
+SERVICE boxes alone.  Replacing TV(M_b) by T times the gyro-sector amplitude
+is finite but quantitatively useless.  This is not evidence that such a
+field-axis oscillation is shipping-reachable: M_b is an estimator error, not
+a freely selectable physical input.
+
+### Why a new observability lemma would be circular
+
+At the forbidden boundary,
+
+    f_hat=a_hat-g e_z parallel b
+
+is exactly the condition
+
+    ||a_hat x b|| = g sigma_w
+
+at its minimum-norm representative.  The accelerometer attitude row then
+annihilates the field-axis direction.  Therefore any argument that first
+assumes an accelerometer/magnetic six-column floor in order to control M_b
+and then uses that control to prove ||mu_hat x b||<g sigma_w is circular.
+The needed result must instead come from shipping reachability of the
+field-axis error/AW/bias loop.
+
+### Coupled reachability lemma that would close the gap
+
+A sufficient noncircular lemma is a signed temporal bound
+
+    TV_W(M_b)
+      <= C_bg,0 + C_bg,V sqrt(V0)
+          + C_bg,a sqrt(A_acc) + C_bg,S sqrt(A_S)
+          + C_bg,impl,                                      (K6)
+
+where every coefficient is obtained from the literal axial gyro-bias,
+accelerometer-bias, AW/S and reset recursion WITHOUT using G0 or the nominal
+AW mean premise.  Substitution in (K5), followed by (K1--K3), feeds directly
+into (CR15/CR16).
+
+The BA-rate law can help only jointly.  In a zero-residual compatibility
+calculation, changing field-axis attitude changes the gravity compensation at
+rate of order g sigma_w |dot theta_b|; D_a=0.001 would by itself force a very
+slow theta_b.  But AW correction and the deterministic fast accelerometer
+residual can share that compensation, so D_a alone is not a proof of (K6).
+The literal coupled AW/S and axial-bg recursion must be retained.
+
+### Minimum source action formulation
+
+Equivalently, define the constrained complete-word action
+
+    A_min(m) = inf A_W
+
+over all shipping-reachable chronological traces with
+
+    ||mu_hat x b|| >= m,
+
+the carried root and tuner state fixed only by the retained set, and all
+physical histories satisfying the declared contracts.  The desired theorem
+is
+
+    A_min(g sigma_w) > A_available.                         (K7)
+
+The full-reader identities show that S corrections and optimal measurement
+correlations are already represented without gain-sign assumptions.  OU
+leakage alone cannot establish (K7): at tau=12 s the per-step correction
+needed to replenish a g/5 DC AW component is only
+
+    (1-exp(-h/12)) g/5
+      in [0.00065367,0.00098042] m/s^2
+
+for h in [0.004,0.006], far below the declared accelerometer residual
+envelopes.  A successful lower action must therefore come quantitatively from
+the integrated S-chain together with the axial-bg/BA chronology.
+
+At the weak regularizer corner tau=12, sigma=4, the SpectralMSE target exceeds
+the shipping r_S clamp, so the applied target is capped at r_S=100 m*s and
+T_S at 0.15 s (before carried smoothing/commit lag).  Hence this corner must
+be included explicitly in any uniform K7 proof; assuming a strong S update
+there would be invalid.
+
+## 10. Result
+
+The G0 circularity is removed from the statement of the nominal-AW theorem,
+and the static field-axis kernel is bounded sharply by (K1--K3).  The
+complete-reader/source-action formulation is exact.  But the desired strict
+bound is NOT derivable from the currently proved independent envelopes:
+the unclosed quantity is now the signed temporal reachability/total variation
+of the shipping field-axis attitude-error loop, equivalently the constrained
+minimum source action (K7).
+
+This is a reachability obligation, not another geometric observability lemma
+and not a request for a stronger MARINE MOTION assumption.  Proving (K6) or
+(K7) from the literal axial-bg + BA + AW/S recursion is the next analytical
+step.  A carried maximum or an independently chosen TV(M_b) box would be
+fitted and must not be substituted.
+
+
+## 11. Coupled axial loop: necessary pathology rate and no-go for total action
+
+This section attacks (K6/K7) directly.  It obtains a quantitative necessary
+condition for a forbidden nominal-AW word, but also proves that the proposed
+TOTAL source-action comparison is not the correct closing functional under
+the present deterministic sensor contract.
+
+### 11.1 Free axial rotation cannot reach the field threshold
+
+On the field-axis branch let M_b b=b and let theta_b be its signed angle.
+Separate the part of dot(theta_b) generated without estimator corrections:
+physical gyro-bias drift/residual plus the commissioned fast gyro residual.
+The declared amplitude/rate channel gives the conservative free angular-rate
+bound
+
+    Omega_free = N_g + D_g = 0.02001 rad/s,
+
+where charging D_g as a rate is conservative on a one-second normalization;
+using the exact bias-history integral can only improve the word bound.
+
+For a complete T-second window, integration by parts gives
+
+    ||mean(M_b a_phys)||
+       <= 2 Vmax/T + Vmax Omega_free
+          + correction-induced term.                        (AX1)
+
+The sampling-fidelity defect adds J h_max/4.
+
+The static field-axis nuisance bound is
+
+    K_static =
+       2 g sigma_w sin(theta_max/2)
+       + B_ba,post + N_a.                                   (AX2)
+
+At the worst declared field fraction sigma_w=1/5 and retained
+theta_max=6 deg,
+
+    2 g sigma_w sin(3 deg) = 0.205296162115946,
+    K_static = 1.130462767099900 m/s^2.
+
+Choose a 32-s nominal-mean window; this changes no physical assumption and is
+inside the recurring A21 word.  Then
+
+    2 Vmax/T + J h_max/4 = 0.49375 m/s^2,
+    Vmax Omega_free       = 0.110055 m/s^2.
+
+Therefore every forbidden word must obtain at least
+
+    Delta_corr =
+      g/5 - K_static - 0.49375 - 0.110055
+      = 0.227062232900100 m/s^2                             (AX3)
+
+from correction-induced field-axis rotation/rectification.  Equivalently,
+under the integration-by-parts relaxation, it needs average additional
+variation at least
+
+    Omega_corr,needed = Delta_corr/Vmax
+                      = 0.0412840423454727 rad/s.            (AX4)
+
+Thus physical gyro/bias/fast-noise transport alone cannot sustain the
+gravity-scale nominal AW pathology.  Any such shipping trajectory must use
+the estimator correction loop itself at a quantitatively nontrivial rate.
+
+For a general field fraction retain the symbolic margin
+
+    Delta_corr(sigma_w,T)
+      = g sigma_w
+        - 2 g sigma_w sin(theta_max/2)
+        - B_ba,post - N_a
+        - 2 Vmax/T - J h_max/4
+        - Vmax Omega_free.                                  (AX5)
+
+Only when this is positive does AX4 give a useful necessary correction rate.
+
+### 11.2 Why total measurement action cannot close K7
+
+The deterministic sensor contract bounds each fast residual in amplitude; it
+does not impose stochastic cancellation or a finite all-time l2 budget.
+Consequently
+
+    A_acc(T)=sum r_acc,k^T R_acc,k^-1 r_acc,k
+
+and the analogous magnetic action may grow linearly with the number of
+samples even for an admitted coherent bounded residual.  Extending T therefore
+does not make A_available small.  The minimum action required to replenish OU
+leakage also grows linearly with T.  A comparison
+
+    A_min(g sigma_w) > A_available
+
+based only on TOTAL square-summed action is therefore structurally incapable
+of exploiting the fact that the target is a DC/signed-mean quantity.  This
+invalidates K7 as the final scalar closure, while retaining the complete-reader
+factorization for finite-error supplies.
+
+### 11.3 The required functional is low-frequency correction transport
+
+Let delta theta_k^c be the field-axis part of the actual attitude correction
+and let M_b,k be the resulting carried field-axis error.  The exact dangerous
+term is not sum |delta theta_k^c| and not sum NIS_k.  It is the signed pairing
+
+    R_corr(W) =
+       (1/T) sum_k v_k^T (M_b,k^+ - M_b,k^-) + reset defects, (AX6)
+
+or its exact SO(3) counterpart before linearization.
+
+A sufficient shipping lemma is
+
+    |R_corr(W)| <= C_corr < Delta_corr(sigma_w,T).           (AX7)
+
+At sigma_w=1/5,T=32 s it is enough to prove
+
+    C_corr < 0.227062232900100 m/s^2.                        (AX8)
+
+Equivalently, the conservative TV version needs only
+0.0412840423454727 rad/s average correction-induced variation, but AX6 is
+strictly preferable because prediction/correction sawteeth that keep M_b near
+zero cancel before the norm is taken.
+
+### 11.4 Exact covariance identity for correction-induced axial motion
+
+For an accepted correction with full gain K, innovation covariance Omega and
+field-axis attitude selector q_b, put
+
+    delta theta_b = q_b^T K r,
+    Delta P_b = q_b^T K Omega K^T q_b >=0.
+
+Then Cauchy--Schwarz in measurement space gives exactly
+
+    |delta theta_b|^2
+       <= (r^T Omega^-1 r) Delta P_b.                       (AX9)
+
+Meanwhile Joseph form gives
+
+    q_b^T P^+ q_b = q_b^T P^- q_b - Delta P_b
+
+before the reset congruence.  Thus large axial corrections consume axial
+covariance information.  Prediction replenishes that covariance only through
+the literal gyro/gyro-bias process block and reset transport.
+
+Equation AX9 is noncircular: it uses no G0 and no nominal-AW premise.
+However, summing |delta theta_b| with Cauchy--Schwarz introduces a
+sqrt(number-of-corrections) loss and is quantitatively useless.  The next
+valid operation is to insert AX9 into the SIGNED pairing AX6 and telescope
+Delta P_b against prediction replenishment before taking norms.
+
+### 11.5 Exact remaining certificate
+
+Define the chronological axial correction factor
+
+    z_k = sqrt(Delta P_b,k) sign-compatible with q_b^T K_k,
+
+and whiten the corresponding residual coordinate so
+|u_k|^2<=NIS_k and delta theta_b,k=z_k u_k in the scalar relaxed channel.
+Transport every occurrence to the physical-velocity pairing before squaring:
+
+    Xi_b = [ signed coefficient of each fresh gyro/process/measurement factor
+             in R_corr(W) ].
+
+Then
+
+    |R_corr(W)|^2 <= (Xi_b Xi_b^T) A_corr(W).                (AX10)
+
+The point is that Xi_b is formed AFTER the Joseph decrements and prediction
+replenishments telescope.  No per-event gain norm, NIS sum, raw TV, or G0
+geometry enters.  This is the axial scalar analogue of the signed
+factor-space reader already used for R_q/R_d.
+
+The source-uniform theorem now required is
+
+    sup_(reachable W)
+      (Xi_b Xi_b^T) A_corr(W)
+        < Delta_corr(sigma_w,T)^2.                           (AX11)
+
+For the 32-s, sigma_w=1/5 domain the right side is
+
+    Delta_corr^2 = 0.0515572575 (m/s^2)^2.
+
+AX11 is narrower than the previous nominal-AW reader problem: it concerns one
+field-axis signed correction/velocity pairing.  It uses only the literal
+gyro/gyro-bias process covariance, correction Joseph decrements, reset
+transport, and deterministic physical velocity bound.  S/AW/BA enter through
+the actual correction factors but do not require a separate observability
+floor.
+
+What is proved here is AX1--AX10 and the numerical necessary margin AX3/AX4.
+AX11 is NOT yet evaluated source-uniformly.  Therefore the shipping
+impossibility theorem is not claimed closed.  A proof that merely replaces
+AX11 by total NIS/action or raw correction TV would repeat a demonstrated
+quantitative relaxation failure.
+
+
+## 12. Persistent exact-degeneracy lemma: closed without G0
+
+The exact branch condition itself supplies a simpler contradiction than the
+minimum-action construction.  Let b be the applicable unit committed field,
+sigma_w=||e_z x b||>0, and suppose on a complete interval W of duration T
+the literal nominal specific force satisfies
+
+    f_hat(t_k)=a_hat_w(t_k)-g e_z parallel b                 (DG1)
+
+at every applied accelerometer epoch used by the normalized signed mean.
+Then for every such epoch
+
+    P_perp a_hat_w = P_perp(g e_z) =: c,                    (DG2)
+
+where P_perp=I-bb^T and
+
+    ||c||=g sigma_w.                                        (DG3)
+
+Thus exact degeneracy forces a FIXED transverse nominal AW component; lambda(t)
+along b is irrelevant.
+
+Use the exact world accelerometer identity, projected by P_perp.  With a
+consistent true/nominal attitude convention it can be written
+
+    P_perp a_hat_w
+      = P_perp M_b a_phys
+        + P_perp g(e_z-M_b e_z)
+        + P_perp e_ba
+        + P_perp n_a
+        - P_perp r_acc,                                     (DG4)
+
+where M_b is the remaining field-axis attitude mismatch after the magnetically
+observed component is charged in the magnetic residual/action, e_ba is the
+physical-minus-estimated residual accelerometer bias, n_a the commissioned
+fast accelerometer residual, and r_acc the actual innovation.  On an exact
+zero-innovation compatibility branch r_acc=0.  More generally its normalized
+signed mean must be retained as an explicit residual term.
+
+For the exact compatibility branch average DG4 with the nonnegative
+trapezoidal weights of the window.  The physical acceleration term obeys the
+sampling-fidelity identity
+
+    ||mean a_phys||
+       <= 2 Vmax/T + J h_max/4.                             (DG5)
+
+A rotation about b leaves b fixed, so its gravity defect has the sharp bound
+
+    ||g(e_z-M_b e_z)||
+       <= 2 g sigma_w sin(theta_max/2).                     (DG6)
+
+Use the declared universal post-projection estimator/physical BA error
+B_ba,post and fast accelerometer residual N_a.  Since projection cannot
+increase the norm,
+
+    g sigma_w
+      <= 2 Vmax/T + J h_max/4
+         + 2 g sigma_w sin(theta_max/2)
+         + B_ba,post + N_a.                                 (DG7)
+
+Therefore exact persistent degeneracy is impossible whenever
+
+    T >
+    2 Vmax /
+    [ g sigma_w(1-2 sin(theta_max/2))
+      - J h_max/4 - B_ba,post - N_a ],                      (DG8)
+
+provided the denominator is positive.
+
+For the declared worst field fraction sigma_w=1/5,
+
+    g sigma_w                         = 1.96133,
+    2 g sigma_w sin(3 deg)           = 0.205296162115946,
+    J h_max/4                         = 0.15,
+    B_ba,post                         = 0.625166604983954,
+    N_a                               = 0.3.
+
+The remaining physical-mean allowance is
+
+    D = 1.96133 - 0.205296162115946
+        -0.15 -0.625166604983954 -0.3
+      = 0.680867232900100 m/s^2.
+
+Hence
+
+    T_crit = 11/D = 16.156012... s.                         (DG9)
+
+So every exact zero-innovation field-axis-degenerate interval longer than
+16.157 s is excluded by the declared same-history physical/bias/sensor
+envelopes.  A 17-s complete window has strict margin
+
+    g/5 - [11/17 + 0.15 + 0.205296162115946
+           +0.625166604983954+0.3]
+      = 0.033808527... m/s^2.                               (DG10)
+
+This proof uses NO G0, no AW covariance ceiling, no S-gain sign, no carried
+0.348/0.371 value, and no strengthened MARINE MOTION assumption.  OU and S
+can only affect how the estimator attempts to remain on DG1; they cannot
+alter the algebraic requirement DG2.
+
+### Nonzero-innovation robust version
+
+If the branch is only measurement-compatible up to an accelerometer residual,
+define its signed transverse mean
+
+    Rbar_acc =
+      || sum_k alpha_k P_perp Rhat_k^T r_acc,k ||.           (DG11)
+
+Then DG7 becomes
+
+    g sigma_w
+      <= 2 Vmax/T + J h_max/4
+         +2 g sigma_w sin(theta_max/2)
+         +B_ba,post+N_a+Rbar_acc.                            (DG12)
+
+Consequently a 17-s branch is excluded whenever
+
+    Rbar_acc < 0.033808527... m/s^2                         (DG13)
+
+at sigma_w=1/5.  This is a SIGNED residual-mean requirement, not a pointwise
+innovation or total-NIS requirement.  It is exactly the quantity the complete
+covariance-weighted reader should bound; coherent high-frequency residuals
+cancel if their signed mean does.
+
+The previous claim that T_crit was about 21.44 s was arithmetic overcharging:
+it included the free gyro/velocity rotation term even though DG4 already
+works in the field-axis-rotated physical acceleration frame.  For exact
+degeneracy the direct projected measurement identity gives the sharper
+16.156-s threshold above.
+
+### Consequence for the single proof path
+
+The feared persistent exact trajectory is now eliminated on any 17-s
+qualified complete interval, before invoking G0.  Therefore G0 may be applied
+noncircularly AFTER establishing that every 17-s interval either
+
+1. leaves the field-axis-degenerate set by a definite geometric amount, or
+2. carries a signed accelerometer residual mean at least the DG13 threshold.
+
+Case 2 is not yet impossible under the deterministic sensor contract: the
+declared fast residual is amplitude-bounded but need not have zero signed
+mean, and DG13 is much smaller than its 0.3 m/s^2 envelope.  Thus the exact
+zero-innovation pathology is closed, while a near-degenerate persistent
+trajectory can still hide in a coherent signed innovation unless the
+complete reader/S-chain bounds Rbar_acc.
+
+This is the precise remaining robustification.  It is much narrower than the
+old AW-mean reachability problem: prove a source-uniform signed transverse
+accelerometer-innovation mean below the geometric escape margin, OR use its
+nonzero value directly as information/action that forces departure from the
+degenerate set.  Do not bound it by the pointwise 0.3 residual envelope.
+
+
+## 13. Correction: innovation is endogenous; robust DG12 is not a source bound
+
+The zero-innovation special case DG1--DG10 is a valid incompatibility
+calculation.  The proposed nonzero-innovation extension DG11--DG13 is NOT a
+closure theorem: r_acc is the filter innovation
+
+    r_acc = f_meas - f_pred,
+
+hence it is an endogenous function of the same nominal AW/attitude/BA state.
+Moving its signed mean to the physical-source side and then attempting to
+bound it independently is tautological.  A persistent signed innovation is
+precisely how the filter corrects a bad nominal state.
+
+Retain DG1--DG10 only as the exact zero-innovation subcase.  Replace the
+robustification by the following posterior-loop identity.
+
+Let c=P_perp(g e_z), |c|=g sigma_w.  If the POSTERIOR nominal force remains
+exactly degenerate after each accepted correction, then
+
+    P_perp a_hat_k^+ = c.                                  (PL1)
+
+Let a_k^- be the predicted AW immediately before the accelerometer correction,
+and collect every non-accelerometer AW mean correction in xi_k.  The actual
+accelerometer AW increment is
+
+    Delta a_k^acc = K_aw,k r_k.
+
+Projecting PL1 and summing gives the exact required correction balance
+
+    sum_k P_perp K_aw,k r_k
+      = sum_k [ c-P_perp a_k^- ]                            (PL2)
+
+over the accelerometer epochs, with the prediction/S/magnetic chronology
+inside a_k^- rather than replaced by a free input.  Using the literal AW-loop
+telescoping identity,
+
+    sum_acc Gamma_k(e_k-eta_k)
+      = e_0-e_N + sum xi_k
+        -sum_pred[(1-phi_k)a_hat_k+Delta a_phys,k],          (PL3)
+
+shows that physical acceleration increments telescope.  On PL1 the OU part
+contains the fixed term
+
+    sum_pred (1-phi_k)c,                                    (PL4)
+
+while the S corrections contribute their actual restoring increments through
+xi_k.  Thus maintaining the branch requires the accelerometer corrections to
+replenish at least the OU+S loss of c, modulo endpoints and magnetic/reset
+terms.
+
+Crucially PL2/PL3 must now be combined with the SAME innovations
+r_k=f_meas-f_pred.  There is no independent Rbar_acc source.
+
+### Required gain-weighted incompatibility lemma
+
+A sufficient robust bridge is:
+
+For every qualified carried chronology and every interval W on which
+
+    ||P_perp f_hat_k|| <= delta_f                            (PL5)
+
+at all accepted accelerometer epochs,
+
+    || sum_k P_perp K_aw,k r_k
+       - required_replenishment_W(c) ||
+       <= E_phys+E_BA+E_sensor+E_impl,                       (PL6)
+
+and the right side is strictly smaller than the OU+S replenishment required
+when |c|-delta_f >= g sigma_w-delta_f.
+
+Equivalently, after substituting r_k, prove a positive lower bound on
+
+    sum_k <c_hat, (I-Gamma_k)(c-P_perp y_k)>
+      + S-dissipation                                      (PL7)
+
+where Gamma_k=K_aw,k Rhat_k and y_k is the physical world acceleration plus
+the exact attitude/BA/sensor term.  This is a closed-loop passivity inequality,
+not an innovation bound.
+
+The S update already has exact covariance-metric dissipation and zero
+deterministic source.  The remaining quantitative issue is the effective
+accelerometer-to-AW operator Gamma_k on the field-transverse direction under
+the reachable Riccati/tuner chronology.  An arbitrary PSD covariance cannot
+be used; doing so reintroduces the original algebraic cancellation loophole.
+
+Therefore the controlling lemma is now precisely:
+
+    inf_(reachable k, field-transverse u)
+       u^T Sym(Gamma_eff,k) u >= gamma_acc > 0              (PL8)
+
+in the COMPLETE OU+S cycle metric, or, more generally, the word version
+
+    sum_k <u, Gamma_k u> + D_S(W,u)
+       >= gamma_W sum_k |u|^2,                              (PL9)
+
+with gamma_W>0 source-uniformly.  D_S is the exact nonnegative S-chain
+dissipation after eliminating its internal state.  PL9 is allowed to hold
+only over a complete scheduler cycle/word; pointwise gain signs are not
+required.
+
+If PL9 is proved, bounded physical velocity makes the signed physical
+acceleration mean O(1/T), BA has the declared amplitude/rate bounds, and the
+fast deterministic sensor residual contributes through the same positive
+closed-loop operator rather than as an independent 0.3 box.  The forbidden
+posterior c then cannot be an invariant mean.
+
+This is the original Riccati-reachability/passivity question in its correct
+minimal form.  The exact-degeneracy calculation usefully identifies c and
+the needed word length, but it does not remove PL9.
+
+
+## 14. Quantitative cycle target after covariance synchronization
+
+The shipping wrapper performs posterior AW covariance maintenance every
+ADAPT_EVERY_SECS=0.1 s in Live, independently of tuner enablement.  The default
+PSD-floor path stages
+
+    Delta = Pi_+(Sigma_aw-P_aw)
+
+inside the next prediction.  With S_factor=1 and the applied sigma floor,
+
+    Sigma_aw >= sigma_min^2 I,   sigma_min=0.05 m/s^2.       (CY1)
+
+Thus every 0.1-s cycle contains a prediction whose AW marginal is restored in
+the deficient eigendirections before subsequent measurements.  This prevents
+permanent collapse of AW measurement leverage.
+
+In a scalar decoupled comparison, an accelerometer row H_aw=1 with
+P_aw>=sigma_min^2 and R_acc<=r_acc,max^2 would give
+
+    Gamma >= sigma_min^2/(sigma_min^2+r_acc,max^2).          (CY2)
+
+With r_acc,max=0.3010398645 this is about 0.02684.  CY2 is NOT valid for the
+full shipping gain because attitude/BA/LIN cross covariance can alter the AW
+row of P H^T.  It is only the scale indicating that a 17-s word contains
+roughly 170 covariance-maintenance opportunities, so a modest complete-cycle
+floor would suffice.
+
+The correct source-uniform cycle statement is
+
+    sum_(k in cycle) <u, Gamma_k u>
+       + D_S(cycle,u)
+       >= gamma_cycle |u|^2,                                (CY3)
+
+for every field-transverse unit u and every covariance reachable immediately
+after the scheduled AW floor, where D_S is the exact nonnegative homogeneous
+S-chain dissipation expressed in the same Schur/completed-square metric.
+Prediction/process covariance and the PSD floor are included in the cycle
+start; tuner tau,sigma,r_S,T_S are the coupled applied tuple.
+
+A proof of CY3 may use the Schur complement of nuisance coordinates rather
+than P_aw alone.  Let X=P_aw, C=P_aw,n and N=P_nn.  The conditional AW
+covariance
+
+    X_c = X-C N^dagger C^T >=0                              (CY4)
+
+is the part of AW uncertainty not explainable by nuisance coordinates.
+For the accelerometer observation, after conditioning on nuisance, the
+effective scalar/vector gain is generated by X_c with effective noise
+R_eff>=R_acc.  Therefore a positive cycle floor follows if the scheduled
+PSD AW floor supplies a uniform positive lower bound
+
+    X_c >= p_c I                                            (CY5)
+
+at at least one accepted accelerometer update per 0.1-s cycle.
+
+CY5 is the exact covariance-reachability sublemma.  The marginal floor
+P_aw>=sigma_min^2 I does NOT imply CY5: pre-existing AW/nuisance correlation
+can in principle make the Schur complement zero.  The scheduled PSD increment
+helps because it is added ONLY to the AW block while preserving cross
+covariances.  If immediately before the floor the joint covariance is
+[[X,C],[C',N]], then after adding Delta>=0 to AW,
+
+    X_c^new = X_c^old + Delta.                              (CY6)
+
+Hence every strictly positive eigenvalue of Delta is added one-for-one to the
+conditional AW covariance.  The remaining case is an eigendirection u in
+which Delta u=0, meaning u'X u is already at/above the stationary target in
+the spectral-positive-part sense.  Such a direction needs a separate
+conditional-correlation argument; marginal largeness alone is insufficient.
+
+This yields the precise dichotomy for CY5:
+
+1. floor-active direction: u'Delta u>=d0 -> u'X_c^new u>=d0;
+2. floor-inactive direction: P_aw is already large in u, and either its
+   conditional variance is positive, or AW is almost deterministically
+   encoded by nuisance coordinates.  In the latter case the S-chain and
+   nuisance measurements observe that encoding, so the complete-cycle
+   dissipation D_S must be used instead of the direct accelerometer gain.
+
+Thus the desired cycle floor is naturally a sum
+direct-conditional-accelerometer information + S/nuisance dissipation, not a
+pointwise K_aw sign statement.
+
+What remains unproved is a quantitative lower bound gamma_cycle in CY3 over
+the compact reachable covariance/tuner set.  The existing coarse nuisance
+upper box proves compactness after 17 s but is too large for a useful
+Schur-complement number.  A sharp proof must exploit CY6 and the exact S-chain
+cancellation before taking block norms.
+
+
+### 14.1 Floor-active direct gain bound
+
+Condition on every nuisance coordinate at the post-floor prior.  In a
+field-transverse scalar direction u let
+
+    p = u^T X_c u.
+
+The conditioned accelerometer observation has unit AW coefficient (rotation
+preserves norm) and effective noise variance r_eff>=R_acc; nuisance
+conditioning removes, rather than boxes, the correlated cancellation.  Its
+posterior conditional AW update has scalar information increment 1/r_eff and
+mean gain
+
+    gamma_c = p/(p+r_eff).                                  (CY7)
+
+If u^T Delta u>=d0, CY6 gives p>=d0.  With the shipping accelerometer
+effective variance bounded above by
+
+    r_eff <= r_acc,max^2 + r_unconditioned,
+
+a useful numerical lower gain requires an UPPER bound on the remaining
+conditioned measurement noise, not merely R_eff>=R_acc.  If all nuisance
+coordinates are conditioned exactly, the only physical measurement-noise
+term is R_acc, so in the formal conditional filter
+
+    gamma_c >= d0/(d0+r_acc,max^2).                          (CY8)
+
+This is an information decomposition, not the literal marginal K_aw entry.
+The complete-reader proof may allocate the fresh Delta component to this
+conditional channel and the nuisance reconstruction to the complementary
+reader.
+
+### 14.2 Floor-inactive directions carry stored conditional information
+
+If Delta has zero quadratic form in u, the sync supplies no fresh conditional
+variance.  There are two possibilities:
+
+(a) u^T X_c u >= p0.  Then the same conditional accelerometer information
+argument applies with p0.
+
+(b) u^T X_c u < p0.  Then AW in direction u is already determined to accuracy
+p0 by the nuisance state.  In covariance language there exists the linear
+conditional predictor
+
+    a_u = C_u N^dagger n + epsilon_u,
+    Var(epsilon_u)<p0.                                      (CY9)
+
+The dangerous DC AW component is therefore carried almost entirely by the
+nuisance coordinates.  But the S-chain identity annihilates AW/root/sync
+columns and leaves a signed observation of the neutral integrator/noise
+coordinates.  A persistent DC value encoded in nuisance must consequently
+appear either in the S=0 innovation or in the bounded v/p/S root/endpoints.
+Thus case (b) converts the AW problem into the already exact S-chain
+readout, with residual proportional to sqrt(p0).
+
+This proves a qualitative cycle dichotomy for every p0>0:
+
+    direct conditional AW information >= p0/(p0+r_acc,max^2)
+    OR
+    AW is p0-close (in conditional variance) to an S-chain-observed nuisance
+    predictor.                                                (CY10)
+
+No arbitrary covariance cancellation survives this dichotomy.
+
+What is still needed for a numerical gamma_cycle is the quantitative
+coefficient mapping the nuisance predictor C_u N^dagger n in CY9 into the
+S-chain readout.  The existing S-chain formula gives that coefficient exactly
+for a supplied chronology; a source-uniform lower singular value on the
+relevant predictor subspace has not yet been derived.  This is now the only
+covariance-geometric quantity in the robust cycle lemma.
+
+
+## 15. Four-row S information: explicit coupled lower value
+
+For four equally spaced S rows at h=T_S and fixed applied tau over the four-row
+microblock, eliminating the quadratic nuisance columns (v,p,S) is exact by a
+third finite difference.  With
+
+    psi(t)=tau^3[(t/tau)^2/2-t/tau-expm1(-t/tau)],
+
+the vector orthogonal to the three polynomial columns at h,2h,3h,4h is
+(-1,3,-3,1), whose squared norm is 20.  Hence the scalar Schur complement for
+a unit initial AW component is exactly
+
+    kappa_S(tau,h,rS)
+      = [Delta_h^3 psi(h)]^2/(20 rS^2)
+      = tau^6 exp(-2h/tau)(1-exp(-h/tau))^6/(20 rS^2).       (KS1)
+
+This is an analytical formula, not a fitted/replay quantity.
+
+The shipping variables are coupled:
+h=clamp((0.015/1.1)tau,0.005,0.15), and the default SpectralMSE rS target is
+clamped to [0.15,100] after its coupled tau/sigma law.  The minimum of KS1 on
+the deployed coupled envelope occurs at the short-tau floor corner
+
+    tau=0.02 s, h=0.005 s, rS=0.15 m*s.
+
+There
+
+    Delta_h^3 psi
+      = tau^3 exp(-h/tau)(1-exp(-h/tau))^3
+      = 6.7432167881e-8 m*s per (m/s^2),
+
+and therefore
+
+    kappa_S,min = 1.0104660589e-14                         (KS2)
+
+in the corresponding weighted S-action units per squared AW amplitude.
+
+The independent-box corner tau=.02,h=.15,rS=100 is unreachable and must not
+be used.  Conversely KS2 is positive but quantitatively tiny: even hundreds
+of disjoint four-row blocks do not by themselves give a useful gravity-scale
+mean contradiction.
+
+This does NOT invalidate the complete-cycle lemma.  At the corner producing
+KS2, OU decay is strongest: over one 0.1-s covariance-sync interval the
+homogeneous AW multiplier is exp(-0.1/.02)=exp(-5)=0.00673795.  Thus the
+S-chain is the wrong mechanism to price the short-tau corner.  The uniform
+cycle certificate must retain OU leakage + direct conditional accelerometer
+information + S information jointly.  At long tau, where OU leakage is weak,
+KS1 is much larger before the rS clamp and the pseudo cadence is slower; at
+the rS=100 corner its absolute S-action is still small, so the accelerometer
+channel remains essential.
+
+Conclusion: the useful source-uniform constant is NOT kappa_S,min alone.
+KS2 closes the requested four-row Schur-complement calculation and proves
+that an argument of the form '170 cycles times kappa_S,min' cannot close the
+near-degenerate branch.  The next scalar minimization must be
+
+    gamma_cycle =
+      inf_reachable [ D_OU + D_acc,conditional + D_S ],      (KS3)
+
+with all three terms evaluated in one normalized covariance/information
+metric.  Taking their separate global minima would again combine incompatible
+corners and lose the coupled chronology.
+
+
+## 16. Joint-cycle minimization: S-only floor is not the closing constant
+
+The explicit four-row result is
+
+    kappa_S(tau,h,rS)
+      = tau^6 exp(-2h/tau)(1-exp(-h/tau))^6/(20 rS^2).
+
+On the coupled shipping schedule its minimum is
+1.0104660589e-14 at tau=.02,h=.005,rS=.15.  This is too small to close a
+17-s word by multiplication.
+
+The correct joint quantity cannot be the arithmetic sum of three unrelated
+numbers called D_OU,D_acc,D_S.  OU is deterministic mean leakage, the
+accelerometer is endogenous feedback driven by the physical measurement, and
+S is a zero-valued pseudo-measurement.  They must be combined in the same
+input/output map.
+
+For one conditioned transverse AW direction, eliminate l=(v,p,S) over a
+complete block and write the posterior scalar recursion at accelerometer
+epochs as
+
+    a_(k+1) = A_k a_k + B_k y_k,                            (JG1)
+
+where y_k is the exact conditioned physical accelerometer source
+(physical acceleration + retained AG/BA/sensor term), and A_k,B_k are
+generated by the literal OU prediction, every intervening S=0 correction,
+AW covariance sync and the conditioned accelerometer update.  For a word W,
+
+    a_N = A_W a_0 + sum_j G_(W,j) y_j.                      (JG2)
+
+The dangerous quantity is the signed/DC induced gain
+
+    G_DC(W)
+      = sup_(bounded-primitive y, nonzero)
+          |mean_W a| / source_norm_W(y),                    (JG3)
+
+with the physical-acceleration component measured by its bounded primitive
+rather than L-infinity amplitude.  A useful cycle certificate is
+
+    rho_DC = sup_reachable |A_W| < 1
+    and
+    G_DC * declared_source_budget < g sigma_w.              (JG4)
+
+This is the mathematically coherent version of the requested
+OU+accelerometer+S minimization.
+
+### Endpoint behavior on the coupled manifold
+
+Although a full source-uniform G_DC still requires the reachable conditioned
+Riccati map, the coupled endpoints show why no single mechanism's global
+minimum is useful.
+
+At tau=.02, the 0.1-s homogeneous OU multiplier is
+
+    exp(-.1/.02)=exp(-5)=0.006737946999,
+
+so before feedback a DC AW component loses 99.3262% per sync interval.  The
+S-only kappa is minimal here because the rapidly dying AW has little time to
+integrate into S.
+
+At tau=12, the OU multiplier is
+
+    exp(-.1/12)=0.9917012926,
+
+so OU leakage is weak.  This is precisely the region where the integrated
+chain persists and the S/accelerometer feedback must carry the certificate.
+The shipping cadence is clamped at .15 s for tau>=11 s, so a four-S-row block
+spans at most .6 s.  A 17-s interval contains at least 28 disjoint four-row
+blocks, while AW covariance maintenance occurs about every .1 s.
+
+The endpoint mechanisms therefore complement rather than add independently.
+
+### What can and cannot be concluded numerically now
+
+The number kappa_S,min is rigorous but proves that the S-only route is
+quantitatively useless.  The OU endpoint numbers are also exact.  They do NOT
+supply a rigorous numerical gamma_cycle because the conditioned
+accelerometer gain depends on the reachable joint covariance.  The PSD AW
+sync gives the exact Schur increment
+
+    P_(a|l,s)^new=P_(a|l,s)^old+Delta,
+
+but Delta may vanish in a floor-inactive direction.  In that case the
+conditional AW component is either already informative to the accelerometer
+or encoded in l and exposed by S; quantifying that tradeoff is the remaining
+Riccati minimization.
+
+Thus the next proof object is a 1-D conditioned Riccati/mean comparison over
+the compact coupled tuple, not a sum of separately minimized dissipations.
+A valid explicit lower constant must be obtained from the joint map JG1/JG2.
+
+
+## 17. Scalar conditional variance is not a closed Riccati state
+
+The proposed reduction to p=P_(a|l,s) alone is false for the literal
+integrated-OU process.  After conditioning on s=(theta,b_g,b_a), one axis has
+
+    x=(v,p,S,a),   P_c in S_+^4.
+
+Prediction is
+
+    P^- = Phi P^+ Phi^T + Q_d(tau,h,sigma^2),               (RC1)
+
+and shipping Q_d has nonzero q_va,q_pa,q_Sa and the corresponding integrated
+cross terms.  In particular q_Sa is explicitly nonzero.  Therefore the next
+Schur complement
+
+    p_new=P_aa-P_al P_ll^dag P_la                           (RC2)
+
+depends on the complete prior conditional covariance, not only on p_old.
+An S correction
+
+    P^+ = P^- - P^- e_S
+          (e_S^T P^- e_S+r_S^2)^-1 e_S^T P^-               (RC3)
+
+also changes P_aa through P_aS^2/(P_SS+r_S^2), again requiring the cross
+covariance.  Hence two shipping-admissible conditional covariances with the
+same p can have different p_new.  A one-dimensional Riccati recurrence would
+reintroduce an unjustified covariance relaxation.
+
+The smallest exact one-axis conditioned Riccati state is the symmetric 4x4
+P_c for (v,p,S,a), i.e. ten scalar entries.  Its maps are explicit:
+
+prediction RC1;
+S update RC3;
+accelerometer update, after conditioning on AG/BA,
+
+    P^+ = P^- - P^- e_a
+          (e_a^T P^- e_a+r_a)^-1 e_a^T P^-;                (RC4)
+
+and AW sync
+
+    P^+ = P^- + delta e_a e_a^T,                            (RC5)
+
+for the conditional component supplied by the PSD floor.  Mean maps use the
+same gains.
+
+Thus the exact joint DC optimization is a 4-state/10-covariance scalar-axis
+problem, not a 21-state problem but not 1-D either.  Any proof claiming a
+closed p recurrence must first establish an invariant relation expressing all
+P_al cross terms as functions of p; shipping provides no such identity.
+
+
+### 17.1 Exact four-state mean/covariance cycle
+
+For one conditioned world direction define x=(v,p,S,a).  At each operation
+the homogeneous mean and covariance obey the SAME linear map:
+
+prediction:
+    x<-Phi x,
+    P<-Phi P Phi^T+Q;
+
+S correction:
+    A_S=I-K_S e_S^T,
+    x<-A_S x,
+    P<-A_S P A_S^T+K_S r_S^2 K_S^T;
+
+accelerometer correction:
+    A_a=I-K_a e_a^T,
+    x<-A_a x + K_a y,
+    P<-A_a P A_a^T+K_a r_a K_a^T;
+
+sync:
+    x unchanged,
+    P<-P+delta e_a e_a^T.
+
+Thus for a literal cycle C the homogeneous DC retention is
+
+    M_C = product_chronological A_i Phi_i,                  (RC6)
+
+and the physical/source transfer is the corresponding Duhamel sum.  The
+quantity relevant to a constant transverse AW mode is
+
+    rho_a(C)=|e_a^T M_C e_a|                                (RC7)
+
+only when the root has v=p=S=0; for arbitrary carried LIN roots use the
+augmented readout norm
+
+    rho_read(C)
+      = || e_a^T M_C P0^(1/2) || /
+        sqrt(e_a^T P0 e_a),                                 (RC8)
+
+or the covariance-weighted operator norm.  This is the exact composed object
+that replaces the nonclosed scalar p recurrence.
+
+Every measurement operation is nonexpansive in its pre/post covariance
+metric, while prediction/process and sync change the metric through PSD
+increments.  Therefore a source-uniform strict rho_read<1 requires a
+strict-information event on every nonzero homogeneous direction over the
+chosen word.  The four-row S Chebyshev lemma supplies this for the LIN
+subspace; the accelerometer supplies direct a information.  This recovers
+qualitative strict contraction without G0.
+
+A useful explicit numerical rho still requires lower-bounding the joint
+information Gramian in a proof-scaled 4-state coordinate.  The repository's
+earlier raw OU controllability Gershgorin bound failed from conditioning, so
+the correct next representation is the scaled factor/LDLT already identified
+in the proof ledger, now only 4x4 per axis.
+
+
+## 18. Full 4x4 information floor: valid but quantitatively non-closing
+
+A correction to the proposed target is necessary.  The quantity
+
+    lambda_min(I_tilde)
+
+depends on the arbitrary proof coordinate scaling.  The contraction statement
+
+    rho <= (1+iota)^(-1/2)
+
+is coordinate-invariant only for the PRIOR-WHITENED information
+
+    J_C = P0^(1/2) I_C P0^(1/2),                            (IF1)
+
+equivalently for a Loewner comparison
+
+    I_C >= iota P0^-1.                                      (IF2)
+
+Thus the desired constant is
+
+    iota0=inf_reachable lambda_min(J_C).                     (IF3)
+
+A single .1-s AW-sync cycle cannot have a uniform 4-state information floor:
+at T_S=.15 it may contain no S row, while conditioned accelerometer rows
+observe only AW.  Use a four-S-service superword instead (duration <=.6 s),
+or a longer selected-row word for better conditioning.
+
+The existing exact recurring root covariance certificate uses fixed LIN proof
+scales
+
+    D=diag(2.4,18,132,4)
+
+and supplies the 4x4 lower covariance matrix whose LDL pivots are
+
+    4.2027825893e-8,
+    3.9268873816e-9,
+    9.3267257619e-11,
+    1.9601549308e-9.
+
+Its actual smallest eigenvalue is approximately
+
+    lambda_min(L_root)=4.15919906e-11.                      (IF4)
+
+This is a proved Loewner lower matrix; the decimal eigenvalue is diagnostic,
+while a rational LDL/norm bound may be used for formal promotion.
+
+For four CONSECUTIVE S rows at the coupled short-tau corner
+tau=.02,T_S=.005,r_S=.15, adding the guaranteed accelerometer rows removes
+the tiny AW Schur direction.  In the same fixed proof coordinates the
+combined information eigenvalues are approximately
+
+    1.5999956e-7, 1.7999998, 1.7925380e2, 3.0976090e6.      (IF5)
+
+The small eigenvalue is now a neutral-integrator direction, not AW.  The
+coordinate-invariant crude product comparison therefore gives only
+
+    iota0 >= lambda_min(L_root) lambda_min(I_C)
+           ~= 6.65e-18,                                    (IF6)
+
+for this corner.  The corresponding contraction bound is
+
+    rho <= (1+iota0)^(-1/2)
+         = 1-O(3.3e-18),                                    (IF7)
+
+which is useless on a 17-s horizon.
+
+Selecting four S rows spread through a longer superword improves raw
+conditioning, but does not repair the many-orders-of-magnitude loss caused by
+the generic root covariance lower certificate.  The latter was designed only
+to prove coercivity of the full stability energy, not a sharp AW reader
+metric.
+
+Therefore the full 4x4 minimum-eigenvalue route is classified as a
+QUANTITATIVE RELAXATION FAILURE, not a physical counterexample.  It proves
+strict information but cannot close the nominal-AW bridge.
+
+### Reader-specific Schur information is much stronger
+
+For the AW readout, eliminate (v,p,S) from the information matrix instead of
+taking its smallest eigenvalue.  Accelerometer rows add only positive AW
+information, so their contribution survives the Schur complement unchanged.
+With proof AW scale d_a=4, worst accepted-sample spacing h_acc=.006,
+tau>=.02 and R_acc<=0.3010398645^2, the root-AW information from the
+conditioned accelerometer sequence has the analytical lower bound
+
+    I_a,acc
+      >= (d_a^2/R_acc,max)
+          sum_(j>=1) exp(-2 j h_acc/tau_min)
+      = (16/R_acc,max)
+          exp(-.6)/(1-exp(-.6))
+      ~= 214.7520821.                                       (IF8)
+
+Using a finite superword only truncates the geometric series by its explicit
+positive tail.  This number is independent of S-row conditioning and shows
+that the dangerous AW coordinate itself is strongly read by the conditioned
+accelerometer channel.
+
+Combining IF8 with the GENERIC root conditional-AW lower pivot
+1.9601549308e-9 still gives only about
+
+    4.21e-7                                                (IF9)
+
+of prior-whitened AW information, because that generic covariance floor is
+extremely pessimistic.  But this is eleven orders of magnitude better than
+the full 4x4 eigenvalue comparison and identifies the correct next object:
+a reader-specific lower bound on the conditional AW variance supplied by the
+.1-s PSD synchronization/previous-cycle information, not a full LIN
+covariance eigenvalue.
+
+Conclusion: the requested full 4x4 LDL/information certificate can establish
+iota0>0, but its source-uniform value from existing covariance certificates is
+far too small.  Do not use it to claim closure.  The nominal-AW bridge must
+use the AW Schur/readout metric, where direct accelerometer information is
+O(10^2) in the fixed proof coordinates, together with the exact sync
+conditional-variance increment and the S-chain only for the floor-inactive
+encoded branch.
+
+
+## 18. No standalone post-sync conditional-AW variance floor
+
+The default sync computes
+
+    Delta = Pi_+(Sigma_aw_stat - P_aa)
+
+from the MARGINAL AW block and adds Delta only to P_aa.  Therefore
+
+    P_(a|l,s)^new = P_(a|l,s)^old + Delta                  (CF1)
+
+is exact, but it does NOT imply a positive uniform lower bound on
+P_(a|l,s)^new.
+
+Counterfamily (scalar AW versus one encoded state z): for any stationary
+target Sigma>0 and epsilon>0,
+
+    P = [[Sigma, sqrt(Sigma(Sigma-epsilon))],
+         [sqrt(Sigma(Sigma-epsilon)), Sigma]]
+
+is PSD, has P_aa=Sigma so Delta=0, but
+
+    P_(a|z)=epsilon.                                       (CF2)
+
+Let epsilon->0.  Thus
+
+    inf P_(a|l,s)^post-sync = 0                             (CF3)
+
+over algebraically admissible covariances even with the marginal exactly at
+the stationary target.  A positive reader-specific variance floor cannot be
+proved from the sync policy alone.
+
+This is not a shipping counterexample.  It proves that the desired certificate
+must include the information carried by the state that encodes AW.
+
+### Correct reader-specific coercive quantity
+
+After conditioning on s=(theta,bg,ba), partition one-axis LIN covariance as
+
+    P_c = [[P_ll, c],
+           [c^T, P_aa]],  l=(v,p,S).
+
+Let
+
+    p_c = P_aa-c^T P_ll^dag c >=0,                          (CF4)
+
+and define the best linear predictor coefficient
+
+    L = c^T P_ll^dag,   a = L l + epsilon,
+    Var(epsilon)=p_c.                                      (CF5)
+
+Normalize a unit AW readout.  The fraction represented by epsilon is handled
+by direct conditioned accelerometer information; the fraction represented by
+L l is handled by the chronological S-chain information.  Therefore the
+coercive object is not p_c but the infimal decomposition energy
+
+    C_cycle =
+      inf_(epsilon,Ll: epsilon+Ll=1)
+        [ I_acc |epsilon|^2 + I_S(Ll) ],                    (CF6)
+
+with I_acc the complete conditioned accelerometer information over the word
+and I_S the exact S-row action of the encoded LIN predictor.  In scalar
+relaxation, if I_S >= kappa_enc |Ll|^2,
+
+    C_cycle >= I_acc kappa_enc/(I_acc+kappa_enc).           (CF7)
+
+This harmonic-mean form is the exact completed-square minimum over how an AW
+mode splits between fresh conditional variance and encoded LIN state.
+
+The sync strengthens CF6 by increasing only the epsilon/conditional component
+whenever Delta>0; when Delta=0, the marginal is already at target and any
+small p_c necessarily puts almost all of the AW mode into the encoded branch.
+No arbitrary cross-covariance cancellation is left uncharged.
+
+The remaining quantitative problem is therefore to lower-bound kappa_enc for
+the SPECIFIC predictor subspace reachable from the conditional covariance,
+not the global S-only kappa_S,min.  The global value 1.01e-14 permits an
+arbitrary (v,p,S) combination chosen solely to hide AW at four S rows.  A
+shipping covariance predictor L=c^T P_ll^dag is generated by the same OU
+process Q and previous corrections; it is not arbitrary.  Bounding its
+reachable coefficient cone is the next required covariance-reachability
+lemma.
+
+The large I_acc>=214.752 remains useful: once kappa_enc is established,
+CF7 is essentially kappa_enc whenever kappa_enc << I_acc.  Thus the bottleneck
+is now entirely the reachable encoded-LIN predictor, not direct AW
+accelerometer information.
+
+
+### 18.1 Fresh OU-process predictor has a sign restriction
+
+For one prediction interval started from deterministic LIN state, the fresh
+OU process covariance is the Gram covariance of a scalar white-noise input
+passed through positive kernels.  With state ordering l=(v,p,S),a, all
+same-axis fresh cross covariances
+
+    Q_av, Q_ap, Q_aS
+
+are nonnegative for h>0,tau>0: their integral representations are products of
+the positive OU kernel with its positive first/second/third integrals.
+Likewise Q_ll has nonnegative entries.
+
+Thus the fresh-process regression of a on l belongs to a restricted cone; it
+is not the arbitrary coefficient vector used in the global four-row Schur
+minimum.  Measurement corrections can change the carried regression, but
+S=0 corrections are themselves generated by the positive S column and
+accelerometer corrections observe a directly.  This strongly suggests the
+polynomial-cancellation predictor attaining kappa_S,min is not reachable.
+
+A proof still needs an invariant cone or a signed total-positivity statement
+for the Riccati maps.  Merely observing positive Q entries is insufficient:
+matrix inversion in L=c^T P_ll^-1 can change coefficient signs.  The next
+analytical target is therefore a total-positivity/variation-diminishing
+invariant for the conditioned one-axis covariance factors, which would
+exclude the alternating predictor needed to cancel four S rows.
+
+
+## 19. Reachable regression cone: exact measurement invariances
+
+After conditioning on s=(theta,bg,ba), let the one-axis covariance of
+(l,a), l=(v,p,S), be positive definite and write its precision as
+
+    J=P^-1=[[J_ll,J_la],[J_al,J_aa]].
+
+The covariance regression of a on l is exactly
+
+    L=P_al P_ll^-1 = -J_aa^-1 J_al.                         (RG1)
+
+This precision representation makes the measurement maps transparent.
+
+### S=0 update
+
+A noisy S measurement has H=[e_S^T,0], so in information form
+
+    J^+ = J^- + diag_l(e_S e_S^T/r_S^2).                   (RG2)
+
+The a-row J_al and scalar J_aa are unchanged.  Hence
+
+    L^+ = L^-.                                              (RG3)
+
+Thus every S=0 correction leaves the regression of a on the FULL carried
+l=(v,p,S) exactly invariant.  S changes the distribution/covariance of l and
+therefore the action of the encoded component, but it does not rotate L.
+
+### Accelerometer update
+
+A conditioned accelerometer observation of a has H=[0,1].  Therefore
+
+    J_aa^+ = J_aa^- + 1/r_a,
+    J_al^+ = J_al^-.
+
+Hence
+
+    L^+ = alpha_a L^-,
+    alpha_a = J_aa^-/(J_aa^-+1/r_a) in (0,1).              (RG4)
+
+An accelerometer correction scales L toward zero by a positive scalar.  It
+cannot change the sign pattern or projective direction of L.
+
+### AW sync
+
+Adding delta to the covariance aa block leaves P_ll and P_al unchanged, so
+
+    L^+ = L^-                                               (RG5)
+
+exactly.  The sync increases only the conditional residual variance
+p_c=P_(a|l) by delta.
+
+Therefore, among the correction/sync operations,
+
+    S update:       L unchanged,
+    AW sync:        L unchanged,
+    accelerometer:  L -> positive scalar * L.               (RG6)
+
+Only OU prediction/process injection can rotate the projective regression
+direction.  This is a major reduction of the reachable-cone problem.
+
+### Prediction formula
+
+Partition the exact transition as
+
+    l^- = A l^+ + b a^+ + w_l,
+    a^- = phi a^+ + w_a,
+
+with
+
+    A=[[1,0,0],[h,1,0],[h^2/2,h,1]],
+    b=[phi_va,phi_pa,phi_Sa]^T,
+    phi=exp(-h/tau),
+
+and fresh process covariance
+Q=[[Q_ll,q_la],[q_al,q_aa]].
+
+Given P^+ blocks (X=P_ll,c=P_la,s=P_aa),
+
+    X^- = A X A^T + A c b^T + b c^T A^T
+          + s b b^T + Q_ll,                                (RG7)
+
+    c^- = phi(A c+b s)+q_la,                               (RG8)
+
+    s^- = phi^2 s+q_aa.                                    (RG9)
+
+Therefore
+
+    L^- = c^-T (X^-)^-1.                                   (RG10)
+
+RG7--RG10 are the ONLY projective-rotation map that needs a cone invariant.
+
+The fresh-process vectors b and q_la have strictly positive entries for
+h,tau>0.  A and Q_ll are generated by nested positive integration kernels.
+This makes prediction a positive-kernel covariance transformation, but
+positivity of c alone does not immediately imply positivity of L because
+X^-1 can have alternating signs.
+
+The correct object for a cone proof is the PRECISION cross row
+q=-J_al=J_aa L.  Measurements either leave q fixed (S), leave its direction
+fixed while changing J_aa (accelerometer), or covariance-sync changes q only
+through the scalar conditional variance update while preserving L.  Prediction
+is the sole nontrivial map.
+
+### Immediate consequence
+
+Any alternating regression direction capable of realizing the unrestricted
+four-row polynomial cancellation must be CREATED by OU prediction.  It cannot
+be manufactured by repeated S corrections, accelerometer corrections, or AW
+sync.  Thus a source-uniform cone proof may be reduced to one prediction step
+acting on the post-accelerometer cone, followed by a positive scalar
+contraction.
+
+This reduces the remaining invariant problem from the full Riccati recursion
+to the sign-regularity of RG7--RG10 under the integrated-OU prediction.
+
+
+## 20. Proposed three-coefficient cone induction is not closed
+
+Write the conditioned covariance in regression form
+
+    a=L l+epsilon,  Cov(l)=X,  Var(epsilon)=p_c,
+    Cov(l,epsilon)=0.
+
+Then c=X L^T and s=L X L^T+p_c.  Substitution into the literal prediction
+gives, with T=A+bL,
+
+    X^- = T X T^T + p_c b b^T + Q_ll,                      (RG14)
+    c^- = phi[T X L^T+p_c b] + q_la,                       (RG15)
+    L^- = c^-T (X^-)^-1.                                   (RG16)
+
+Therefore L^- depends on X and p_c separately, not on L alone.  Two priors
+with the same regression vector but different conditional residual variance,
+or different X, generally produce different projective directions after one
+prediction.  The proposed induction L in C => L^- in C is thus not a closed
+shipping reachability statement.
+
+The fresh-Q moment curve remains useful but cannot characterize carried
+predictors by itself: prediction mixes transformed carried covariance,
+the rank-one conditional term p_c b b^T, and fresh Q, and regression of a
+matrix sum is not a scalar convex combination of component regressions.
+
+The minimum exact regression-form state is (X,L,p_c): six+three+one=ten
+scalars, algebraically equivalent to the conditioned 4x4 covariance.
+A lower-dimensional proof now requires a stronger invariant relation between
+X,L,p_c.
+
+The natural candidate is not a rectangular L cone but a total-positive Gram
+FACTOR invariant.  The fresh OU Q is the Gram matrix of the nested positive
+kernels (k_v,k_p,k_S,k_a).  Prediction appends fresh kernel-factor columns
+after transporting the carried factor; Kalman measurements are conditioning/
+orthogonal-projection operations on that factor.  A variation-diminishing
+factor invariant, if preserved by those projections, would exclude the
+arbitrary four-row polynomial-cancellation covariance while remaining closed
+under RG14--RG16.
+
+Until that factor invariant is proved, the three-coefficient cone shortcut is
+classified as a nonclosed-state relaxation and must not be promoted.
+
+
+## 21. Total-positive Gram-factor invariant is not preserved by Kalman conditioning
+
+The proposed factor invariant fails under noisy coordinate conditioning.
+Let P=F F^T and let a scalar measurement have row h and variance R>0.  Put
+
+    z=F^T h^T,  q=z^T z+R.
+
+Then
+
+    P^+ = F [I-z z^T/q] F^T.                               (TP1)
+
+The bracket is SPD, but a square-root factor is a dense rank-one contraction
+whose off-diagonal signs follow -sign(z_i z_j).  It is not a
+total-positive multiplier in general.  Equivalently, the covariance update
+
+    P^+=P-P h^T(hPh^T+R)^-1 hP                             (TP-two)
+
+is a rank-one subtraction.  SPD is preserved, but non-principal minors are
+differences of products and their signs are not preserved in dimension >=3.
+The special S and accelerometer coordinate rows do not restore a general
+minor-sign theorem for the full 4x4 covariance/factor.
+
+Therefore strict total positivity, and likewise a global sign-regular minor
+pattern, is not a closed invariant of the shipping Kalman cycle.  Prediction
+and fresh OU factor appending are compatible with positive-kernel structure;
+measurement conditioning is the breaking operation.
+
+The weaker structures that DO survive are:
+
+1. the exact sparse regression identities of section 19;
+2. PSD/Loewner order;
+3. information monotonicity,
+
+    J^+=J+H^T R^-1 H.                                      (TP3)
+
+The third property gives a better route to kappa_enc.  Do not propagate a
+covariance cone.  Select a fixed subset of literal chronological measurement
+rows over a superword, transport them to a common root with the exact OU
+transition, and form the deterministic information design
+
+    I_sel = sum_i Phi_i^T H_i^T R_i^-1 H_i Phi_i.           (TP4)
+
+Partition the root as l=(v,p,S) and a.  The scalar AW information after
+eliminating l is the Schur complement
+
+    kappa_sel =
+      I_aa-I_al I_ll^dag I_la.                             (TP5)
+
+Adding any extra applied measurement row adds a PSD term to I_sel, and the
+minimum residual characterization
+
+    kappa_sel =
+      min_z || R^-1/2 (H_a-H_l z) ||^2                     (TP6)
+
+shows that adding rows cannot decrease kappa_sel.  Thus a lower bound proved
+from selected S/accelerometer rows remains valid under the complete Kalman
+conditioning chronology; no factor-sign invariant is required.
+
+This selected-row Schur certificate differs from the failed global 4x4
+eigenvalue bound: it eliminates the neutral polynomial root directions FIRST
+and targets only the AW reader.  It also differs from the unrestricted
+S-only kappa: accelerometer rows directly observe AW and cannot be fitted by
+the l polynomial columns, so they regularize the near-polynomial cancellation.
+
+The next quantitative calculation is therefore explicit: choose four
+well-separated guaranteed S rows over the shortest uniform superword and a
+guaranteed subset of accelerometer rows; build TP4 using the exact
+piecewise-tau transitions; analytically lower-bound TP6 over the coupled
+tau/rS/cadence tuple.  This scalar residual norm is the correct
+conditioning-invariant kappa_enc certificate.
+
+
+## 22. Finite selected accelerometer certificate: use the first guaranteed row
+
+The previous infinite geometric sum I_acc>=214.752 treated later
+accelerometer rows as open-loop root observations H Phi(t).  That is not a
+rigorous lower bound on information about the same carried root after earlier
+Kalman corrections: the later residual sensitivity is H M_(k:0), with the
+closed-loop mean/covariance sensitivity including those earlier corrections.
+Using open-loop Phi for every later row can over-count root information.
+
+A completely safe finite certificate uses only the FIRST guaranteed
+accelerometer row after the chosen root.  No earlier accelerometer correction
+can have reduced its root sensitivity.  Scheduled finite accelerometer
+updates are mathematically applied on the retained class by the existing
+LDLT/no-invalid-input argument.
+
+In the fixed proof AW coordinate scale d_a=4, the root-AW coefficient at the
+first row is
+
+    h_a = d_a exp(-h/tau).
+
+With h<=h_max=.006 s, tau>=tau_min=.02 s and
+R_acc<=R_acc,max=(.3010398645)^2, the scalar selected information is
+
+    I_acc,1
+      >= d_a^2 exp(-2 h_max/tau_min)/R_acc,max
+       = 16 exp(-.6)/(.3010398645)^2
+       = 96.89364056.                                      (FA1)
+
+This is finite, chronological and noncircular.  It uses one guaranteed row,
+not an infinite sum or a fitted carried statistic.
+
+If the selected design also includes four guaranteed S rows, eliminate the
+neutral root l=(v,p,S) by the least-squares Schur complement.  The first
+accelerometer row has zero l columns in the conditioned one-axis open-loop
+root model, so its residual cannot be canceled by the l fit.  Therefore
+
+    kappa_sel >= I_acc,1 >= 96.89364056                     (FA2)
+
+for that selected root design.
+
+CAVEAT: FA2 is a deterministic selected-row design bound for the conditioned
+root model.  To convert it into the literal FILTER closed-loop root-loss
+coefficient, the selected residual must be represented with the same-history
+innovation/source factor used by the complete-word information identity.
+Only the first accelerometer row is immune to prior accelerometer
+conditioning; later rows require closed-loop sensitivities.  Do not restore
+the 214.752 infinite-series value without that calculation.
+
+Combining FA1 with a prior conditional-AW variance p gives the one-row
+dimensionless information
+
+    iota_1 >= p * 96.89364056.                              (FA3)
+
+The generic root p floor ~1.96e-9 still makes FA3 weak.  Thus FA1 confirms
+again that measurement information is ample; the quantitative bottleneck is
+the reader-specific prior decomposition between conditional AW variance and
+the encoded LIN component, not the number of accelerometer rows.
+
+
+## 23. Same-history conditional decomposition alone does not improve kappa_enc
+
+For any prescribed regression L_*, choose X=X^T>0 and p_c>0 and define
+
+    c=X L_*^T,
+    s=L_* X L_*^T+p_c.
+
+Then P=[[X,c],[c^T,s]] is positive definite with Schur complement p_c and
+
+    P_a,l P_ll^-1=L_*.
+
+Thus even the exact four-S cancellation regression is compatible with an SPD
+same-history conditional covariance, with arbitrarily small p_c.  Covariance
+algebra alone cannot improve the global kappa_S,min=1.0104660589e-14.
+
+A stronger kappa_enc must therefore use SHIPPING REACHABILITY of P from the
+literal construction through prediction/correction/sync maps.  Generic PSD,
+marginal floors, upper/lower covariance boxes and Schur identities are
+insufficient unless they encode that reachability.
+
+A promising closed reachability variable is information age.  Decompose the
+pre-measurement covariance factor into
+
+    P = P_carried + P_fresh,
+
+where P_fresh is the sum of independent OU process factors injected since a
+chosen previous accelerometer correction.  Prediction transports P_carried
+and appends a fresh independent factor, so this decomposition is exact before
+the next measurement.  The fresh factor has the known OU positive-kernel
+Gram geometry.  If repeated accelerometer corrections uniformly contract the
+AW content of P_carried while every prediction injects a nonzero fresh AW
+factor, then a source-uniform lower fraction
+
+    P_fresh,aa / P_aa >= eta_fresh>0
+
+(or its conditional/readout analogue) would force every near-deterministic
+encoded AW predictor to contain a nonzero fresh-OU component.  Its selected-S
+residual can then be bounded by the explicit OU kernel rather than the
+arbitrary polynomial fit.
+
+This is a genuine reachability statement and is the next required step for
+any kappa_enc substantially above 1e-14.
+
+
+### 23.1 Information age must be tracked in source-factor history
+
+Do not propagate P_carried and P_fresh through the nonlinear Riccati map as
+separate posterior covariances: C_H(P_a+P_b) != C_H(P_a)+C_H(P_b).
+
+The exact age decomposition lives instead in the linear source-factor/smoother
+representation.  For independent process factor B_j injected at prediction j,
+its contribution to a later homogeneous/source reader is
+
+    G_(k,j)=M_(k:j+1) B_j,
+
+where M contains the literal subsequent closed-loop correction maps.  The
+covariance/source action is the square sum of these chronological factors.
+Source age is therefore an exact label on columns, preserved through every
+linearized correction.
+
+A useful fresh-information certificate must lower-bound the AW/readout norm
+of columns with age <=T_age relative to the total relevant reader norm:
+
+    sum_{j:k-j<=T_age} ||e_a^T G_(k,j)||^2
+      >= eta_fresh
+         sum_j ||e_a^T G_(k,j)||^2.                         (AGE1)
+
+Unlike an additive posterior-covariance split, AGE1 is meaningful under
+Kalman conditioning.  It is also exactly the representation already used by
+the complete-word square-summed reader.
+
+The remaining analytical task is to prove eta_fresh>0 from:
+(i) nonzero OU process injection each step;
+(ii) finite sample spacing;
+(iii) the finite conditional accelerometer correction;
+(iv) the .1-s AW sync factor; and
+(v) the existing covariance upper bound, which prevents an unbounded ancient
+factor from dominating forever.
+
+Once AGE1 holds, the fresh columns have explicit OU kernel geometry and give
+a nonzero reachable encoded-S floor.  This is the first route identified here
+that both encodes shipping reachability and survives the nonlinear Riccati
+conditioning exactly.
+
+
+## 24. Source-age floor is a restricted joint information-ratio problem
+
+A terminal-survival-only lower bound for a fresh OU source is impossible:
+later measurements may make its terminal sensitivity arbitrarily small.
+The source is then observed rather than destroyed.  Conversely a
+measurement-information-only floor can be tiny in directions removed mainly
+by terminal forgetting.  The proof ledger already records this exact
+phenomenon for complete words: separated information-only and forgetting-only
+margins failed by many orders, while the joint smoother/information-ratio
+matrix remained effective.
+
+Therefore q_age must use the SAME joint matrix mechanism, restricted to the
+fresh OU source subspace.
+
+Let B_j be a canonical full-rank factor of the one-axis fresh OU process
+covariance Q_j (for example Q_j^(1/2)).  Let A_age be the prior/source energy
+matrix for that source coordinate and J_age the exact finite-horizon joint
+matrix containing BOTH corrected measurement loss and terminal forgetting,
+constructed by the existing smoother identity over T_age<=.6 s.  Define
+
+    kappa_age =
+      lambda_max( J_age^-1 A_age )                          (AGE1)
+
+on range(B_j), with the usual generalized-eigenvalue interpretation.  Theorem
+D / the information-ratio lemma then gives the fresh-source contraction
+
+    rho_age <= tanh( log(kappa_age)/4 ) < 1                 (AGE2)
+
+whenever kappa_age is finite.  Equivalently the dimensionless fresh
+coercivity may be written
+
+    q_age =
+      lambda_min( A_age^-1/2 J_age A_age^-1/2 ) >0.         (AGE3)
+
+This definition is invariant to the arbitrary factorization B_j and does not
+multiply by the generic root covariance floor.
+
+Qualitative positivity follows from the conditioned four-state zero-action
+argument: a nonzero fresh OU source with zero corrected accelerometer loss,
+zero four-row S loss and zero terminal forgetting would lie in the complete
+fresh-source nullspace, which is trivial.
+
+But an EXPLICIT useful lower q_age cannot be obtained by multiplying the
+first-row accelerometer number 96.89 with the S-only floor.  The repository
+has already demonstrated that information and forgetting can act in different
+eigendirections; their generalized eigenvalues must be combined before taking
+a scalar minimum.
+
+The correct numerical certificate is thus a 4x4 RESTRICTED version of the
+existing Theorem-D matrix calculation:
+1. inject one fresh one-axis OU Q_j;
+2. retain its four source coordinates only;
+3. propagate its cross-covariance through the literal closed-loop chronology
+   for <=.6 s;
+4. accumulate exact smoother correction losses;
+5. include terminal conditional forgetting;
+6. form A_age^-1/2 J_age A_age^-1/2;
+7. prove its LDLT/Schur floor uniformly over the coupled tau,sigma,rS,T_S,dt
+   and scheduler phase.
+
+This is noncircular and substantially smaller than the old full-root 4x4
+information certificate: no carried root covariance appears.  It is also not
+a new proof architecture; it is Theorem D restricted to a fresh process
+factor already present in the complete-word joint factorization.
+
+
+## 24. Source-age q0: dependence audit and noncircular restriction
+
+The proposed q0 is NOT determined by the fresh 4-state OU factor and tuner
+tuple if accelerometer smoother losses are included.  For a fresh source
+coordinate z,
+
+    Delta J_k=C_k H_k^T S_k^-1 H_k C_k^T,
+
+and S_k=H_k P_k^- H_k^T+R_k contains the carried full covariance.  An
+accelerometer S_k includes attitude/gyro/BA covariance and cross terms.
+The existing recurring nuisance upper theorem explicitly does not supply an
+AG upper covariance.  Bounding S_k from above through G0/AG control would
+reintroduce the circularity this route was intended to avoid.
+
+Therefore a noncircular source-age certificate must initially OMIT
+accelerometer smoother loss.  Keep only:
+- four guaranteed S=0 corrected losses, whose innovation covariance depends
+  on LIN and is bounded by the proved nuisance comparison;
+- terminal LIN forgetting/conditional remainder from the same complete-word
+  identity.
+
+This restricted joint matrix is smaller than the full J_age, so any lower
+bound remains valid when accelerometer/magnetic corrections are restored by
+information monotonicity.
+
+Let J_age,S+T be the exact joint information/forgetting matrix on the fresh
+one-axis OU source coordinates using only S rows and terminal LIN remainder.
+Define
+
+    q0_ST =
+      inf lambda_min(
+        A_age^-1/2 J_age,S+T A_age^-1/2 ).                  (AGE4)
+
+Then
+
+    J_age,full >= J_age,S+T
+
+in the joint minimum-action/information sense, hence q0_full>=q0_ST.
+
+All denominators needed by AGE4 are now controlled by the source-uniform
+nuisance covariance upper theorem and R_S<=10000 I.  No G0, attitude
+covariance ceiling or nominal-AW premise is used.
+
+Caution: the S-only instantaneous Schur floor 1e-14 suggests AGE4 may still
+be numerically weak, but terminal forgetting acts in complementary
+directions.  The proof ledger already shows that such information+forgetting
+combinations can be much stronger than either scalar margin separately.
+The correct next computation is therefore the restricted 4x4 Theorem-D
+matrix for one fresh OU factor with S rows + terminal LIN forgetting, not an
+accelerometer-inclusive Gramian.
+
+
+## 25. Source-age q_ST is not the contraction/mean certificate
+
+A final normalization audit shows that the proposed source-age coercivity is
+not, by itself, the quantity needed for the nominal-AW theorem.
+
+Whiten one freshly injected process coordinate so its prior source action is
+A_age=I.  The exact smoother decomposition partitions that source's influence
+between (i) information extracted by later measurements and (ii) terminal
+conditional uncertainty/forgetting.  A lower bound on
+
+    J_age = extracted_information + terminal_accounted_energy
+
+therefore proves that the source is not in an unaccounted nullspace.  It does
+NOT say that its contribution to the terminal/mean AW readout is small.
+Indeed an exactly conserved source can have J_age=I with no useful mean
+attenuation, while a strongly observed source can also have large J_age.
+
+Theorem D avoids this ambiguity by comparing two terminal covariance
+problems (known-root versus diffuse/root-uncertain) through
+
+    kappa=lambda_max(Pi^-1 P_diff),
+
+and then converting that relative diameter to contraction.  There is no
+analogous implication
+
+    lambda_min(J_age)>0  =>  nominal AW mean < threshold
+
+without an additional readout/terminal comparison.
+
+Thus q_ST is a valid detectability/accounting modulus but is not the missing
+nominal-mean bound.  Computing a tiny or large q_ST cannot decide whether the
+gravity-sized pathological mean is shipping-reachable.
+
+This source-age branch is therefore removed from the critical path.  Retain:
+- the exact zero-innovation 17-s incompatibility subcase;
+- the complete covariance-weighted nominal-AW reader;
+- the endogenous-innovation correction;
+- the exact S passivity identities;
+- the finite first-row accelerometer information as a local fact;
+- the existing Theorem-D complete-word machinery.
+
+The actual unresolved theorem remains a SIGNED readout/source bound for the
+nominal AW mean (or an equivalent closed-loop reachability contradiction).
+It must compare the terminal/multi-time AW readout directly with the allowed
+physical/bias/sensor source set.  Detectability of fresh process factors is
+insufficient.
+
+Consequently no numerical q_ST is promoted as a stability margin.  Doing so
+would be another formulation error rather than progress on the theorem.
+
+
+## 26. Return to the signed AW balance: exact gain-weighted Abel identity
+
+The critical path returns to the literal world-frame AW loop.  Let
+e_k=a_hat_k-a_k and let Gamma_k=K_aw,k Rhat_k at accepted accelerometer
+corrections.  With xi_k collecting actual S/magnetic AW mean corrections, the
+exact identity already proved in the repository is
+
+    sum_acc Gamma_k(e_k-eta_k)
+      = e_0-e_N + sum xi_k
+        -sum_pred[(1-phi_k)a_hat_k + Delta a_k].             (SA1)
+
+Because sum_pred Delta a_k=a_N-a_0 on the same physical history, no
+independent physical-increment source remains.  Substitute a_hat=e+a and
+rearrange.  For any fixed world row u^T,
+
+    sum_pred (1-phi_k) u^T a_k
+      + sum_acc u^T Gamma_k a_k
+    = endpoint/error terms + S/mag terms + eta terms.        (SA2)
+
+Thus the physical acceleration enters through one signed coefficient sequence
+
+    W_k = (1-phi_k) I + 1_acc(k) Gamma_k                    (SA3)
+
+after aligning prediction and correction epochs exactly (with zero Gamma on
+non-acc epochs and the literal chronology used for staggered events).
+
+For a scalar projected physical acceleration a_k=dv/dt sampled at h_k, define
+
+    w_k = u^T W_k / h_k.
+
+The exact first Abel summation gives
+
+    sum_k u^T W_k a_k
+      = w_N v_N-w_1 v_0
+        -sum_(k<N)(w_(k+1)-w_k)v_k
+        -sum_k w_k q_k,                                    (SA4)
+
+where the jerk sampling remainder satisfies
+
+    |q_k| <= J_max h_k^2/2.
+
+Hence
+
+    |sum u^T W_k a_k|
+      <= Vmax[|w_1|+|w_N|+TV(w)]
+         +(Jmax/2) sum h_k ||W_k||.                         (SA5)
+
+This is the exact noncircular place where bounded physical velocity enters.
+Unlike the earlier arbitrary beta reader, W_k is LOCAL:
+
+    W_k=(1-phi_k)I+Gamma_k,
+
+and all S effects remain on the opposite side through the signed sum xi_k.
+The problem is therefore narrower than uniform variation of a backward
+multi-time beta adjoint.
+
+### S-chain must be combined before bounding TV(W)
+
+The S correction contribution is
+
+    xi_k^S = -K_aw,S,k S_k^-.
+
+Do not bound sum xi^S separately.  The same covariance chronology that makes
+Gamma_k periodic generates K_aw,S,k and S_k.  Over one scheduler block, move
+sum xi^S to the left of SA2 and define the effective local coefficient by
+eliminating the homogeneous (v,p,S) response with the exact S-chain identity.
+Call the resulting physical-acceleration coefficient W_eff,k.
+
+Then the desired signed reader bound is
+
+    |sum u^T W_eff,k a_k|
+      <= Vmax D1(W_eff/h)
+         +(Jmax/2)sum h_k||W_eff,k||,                        (SA6)
+
+plus root, BA/attitude/sensor and magnetic defects already isolated in the
+complete reader.
+
+This identifies the genuine quantitative target:
+
+    D1_eff =
+      sup_shipping [
+        |w_eff,1|+|w_eff,N|
+        +sum||w_eff,k+1-w_eff,k||
+      ].                                                     (SA7)
+
+The carried 0.371 m/s2 sync-locked rectification is evidence about SA6 but is
+not a bound.
+
+The advantage over the abandoned beta-TV route is structural: W_eff is
+generated by a LOCAL OU+accelerometer+S block, not by a backward adjoint over
+the whole readout.  Tuner/sync jumps therefore enter only at their actual
+local events, and S-chain cancellation is performed before variation is
+taken.
+
+A useful theorem is
+
+    Vmax D1_eff
+      +(Jmax/2) sup sum h||W_eff||
+      + C_root+C_BA+C_att+C_sensor+C_mag
+        < g sigma_w.                                       (SA8)
+
+No covariance detectability surrogate implies SA8; it must be bounded
+directly from the reachable local gain chronology.
+
+
+## 27. Local W_eff block: exact form and covariance dependence
+
+The signed AW balance gives the local pre-elimination coefficient
+
+    W_k=(1-phi_k)I+Gamma_k,
+    Gamma_k=K_aw,k Rhat_k.
+
+To eliminate S mean feedback over a scheduler block, retain the block root
+z0=(v,p,S,a) and write the literal LIN mean recursion
+
+    z_(i+1)=A_i z_i+B_i y_i,                                (WE1)
+
+where A_i is prediction, S=0 correction, or the LIN part of an accelerometer
+correction, and y_i is the same-history physical/nuisance accelerometer
+source.  For a scalar transverse readout of the AW balance, backward
+elimination over the LOCAL block gives
+
+    R_block = lambda_0^T z0 + sum_i w_eff,i y_i.            (WE2)
+
+Thus W_eff exists as a local block coefficient only together with a single
+carried block-root term lambda_0^T z0.  Hiding the root inside W_eff would
+make the coefficient nonlocal again.
+
+For an S event specifically,
+
+    A_S=I-K_S e_S^T,
+    K_aS=P_aS(P_SS+R_S)^-1,                                (WE3)
+
+so the AW correction is -K_aS S.  Therefore the eliminated coefficients
+depend not only on tau,sigma,R_S,T_S but on the carried LIN covariance
+through P_aS and P_SS.  Mean S-chain elimination does NOT remove this
+covariance dependence.
+
+This blocks any claim that D1_eff is a function only of the tuner tuple.
+
+### Noncircular LIN gain bounds
+
+Unlike accelerometer AG coupling, the S gain is purely LIN.  The recurring
+nuisance upper comparison gives source-uniform principal bounds on
+P_aa,P_SS.  PSD Cauchy gives
+
+    ||P_aS|| <= sqrt(||P_aa|| ||P_SS||).                    (WE4)
+
+Since P_SS+R_S >= R_S,
+
+    ||K_aS||
+      <= sqrt(||P_aa|| ||P_SS||)/lambda_min(R_S).           (WE5)
+
+This is rigorous and noncircular but likely very coarse.
+
+A sharper identity uses the Joseph decrement:
+
+    K_aS (P_SS+R_S) K_aS^T
+       = P_aa^- - P_aa^+ |_S >=0.                           (WE6)
+
+Hence for any direction u,
+
+    ||u^T K_aS||^2
+      <= [u^T(P_aa^- - P_aa^+|_S)u]/lambda_min(R_S).        (WE7)
+
+Summing WE7 over S events telescopes only after adding AW process/sync
+replenishment between events.  This is the appropriate way to control local
+gain variation without multiplying the enormous P_SS upper box by
+1/R_S,min.
+
+### Effective variation decomposition
+
+For aligned physical sample epochs define
+
+    w_eff,k = u^T W_eff,k/h_k.
+
+Its first variation splits exactly into
+
+    Delta w_eff
+      = Delta[(1-phi)/h] u^T
+        + Delta[ u^T Gamma/h ]
+        + Delta w_S,elim.                                  (WE8)
+
+The OU scalar part has an analytic derivative bound.  Put
+f(h,tau)=(1-exp(-h/tau))/h.  For h in [.004,.006],
+tau in [.02,12], f is positive and smooth; tuner tau changes only through
+the applied smoothed chronology.  Thus
+
+    |Delta f|
+      <= L_h |Delta h| + L_tau |Delta tau|,                 (WE9)
+
+with explicit sup derivatives on the compact rectangle.
+
+The accelerometer and eliminated-S parts must be treated jointly through
+their Joseph covariance decrements and the .1-s AW sync/process
+replenishment.  Bounding Delta Gamma by independent covariance boxes repeats
+the failed huge-TV relaxation.
+
+The correct local block target is therefore a covariance-budget variation
+inequality
+
+    sum_(k in block) ||Delta[Gamma/h + W_S,elim/h]||
+      <= C_block sqrt( sum measurement decrements
+                       + sum AW process/sync replenishment ), (WE10)
+
+followed by Cauchy--Schwarz across blocks.  All quantities in WE10 are LIN
+covariance quantities; no G0 or AG ceiling is required for the S part.
+The accelerometer Gamma still contains AG/BA cross covariance, so its
+variation cannot be bounded from the LIN nuisance theorem alone.  It must
+remain in the full signed accelerometer identity rather than be boxed.
+
+Conclusion: the S elimination is useful, but it does not by itself produce a
+tuner-only D1_eff.  The remaining noncircular local calculation is to prove
+WE10 for the S contribution and OU term, while leaving Gamma inside the
+endogenous accelerometer balance.
+
+
+## 28. Explicit OU variation: raw D1_OU+S is quantitatively impossible
+
+For the OU part of the signed coefficient,
+
+    f(h,tau)=(1-exp(-h/tau))/h.
+
+On h in [.004,.006], tau in [.02,12],
+
+    f_min = 0.0833125035 1/s,
+    f_max = 45.31731173 1/s.                               (OV1)
+
+The derivatives are
+
+    partial_h f =
+      [(1+h/tau)exp(-h/tau)-1]/h^2,
+
+    partial_tau f =
+      -exp(-h/tau)/tau^2.                                  (OV2)
+
+Their absolute suprema on the rectangle occur at the fast corner
+h=.004,tau=.02 and are approximately
+
+    L_h = 1095.194 1/s^2,
+    L_tau = 2046.827 1/s^2.                                (OV3)
+
+Thus tuner/sample variation can be bounded explicitly by
+
+    TV(f) <= L_h sum|Delta h| + L_tau sum|Delta tau|,
+
+with the actual smoother chronology used for the second term.
+
+However the first-Abel charge includes endpoint terms even when f is
+CONSTANT:
+
+    D1_OU = |f_1|+|f_N|+TV(f) >= 2 f.                      (OV4)
+
+At a representative h=.005,tau=.02,
+
+    f=44.23984339 1/s,
+
+so bounded physical velocity alone gives
+
+    Vmax * 2f = 5.5*88.47968677
+              = 486.6382772 m/s^2.                         (OV5)
+
+This exceeds g sigma_w by over two orders of magnitude.  At the exact
+rectangle maximum, 2 Vmax f_max is about 498.49 m/s^2.
+
+Therefore NO refinement of the S contribution can make the raw
+D1_OU+S certificate useful uniformly.  The failure is already present with
+zero S gain and constant tuner parameters.
+
+This is a structural relaxation failure, not evidence of an unstable
+shipping trajectory.  Abel has separated
+
+    sum_pred (1-phi_k) a_k
+
+from the error endpoints in SA1.  For fast OU, (1-phi)/h is O(1/tau), so the
+velocity-endpoint charge is huge; but the SAME OU prediction also contracts
+the carried AW/error state by phi.  Bounding those two effects separately
+destroys their cancellation.
+
+### Correct regrouping
+
+Return to SA1 before moving the OU physical term alone.  At a prediction,
+
+    e^+ = phi e^- -(1-phi)a^- - Delta a
+        = phi a_hat^- - a^+.                               (OV6)
+
+Hence the combination
+
+    endpoint error + sum_pred[(1-phi)a_hat+Delta a]
+
+must be telescoped at the level of a_hat/e together.  For one prediction
+with no intervening correction, the identity is exact and has no
+1/tau-amplified physical-velocity endpoint.
+
+Over a block, define the OU-propagated error endpoint
+
+    E_OU(block)
+      = e_end - Phi_block e_start
+
+and retain all accelerometer/S corrections as signed injections.  Variation
+of constants gives
+
+    E_OU
+      = -sum_j Phi_(end<-j)
+          [(1-phi_j)a_j+Delta a_j]
+        + signed correction transport.                     (OV7)
+
+The physical coefficient now contains the DECAYING future multiplier
+Phi_(end<-j).  Summation by parts acts on
+
+    beta_OU,j =
+      Phi_(end<-j)(1-phi_j),
+
+not on (1-phi_j) alone.  For constant h,tau,
+
+    beta_OU,j=(1-phi) phi^(N-j),
+
+whose total first variation is bounded independently of 1/tau:
+
+    endpoint+TV <= 2(1-phi) <=2.                            (OV8)
+
+More directly, the geometric coefficients telescope and their l1 mass is
+
+    sum_j beta_OU,j = 1-phi^N <=1.                          (OV9)
+
+This is the missing cancellation.
+
+The S corrections must be transported by the SAME future OU multipliers
+before their Joseph-budget/variation bound is taken.  Thus the useful local
+coefficient is a forward-decayed block kernel, not W=(1-phi)+Gamma at the
+same epoch.
+
+Conclusion: an explicit finite D1_OU+S exists, but the requested raw local
+D1 is provably useless (OV5).  The next valid signed calculation is the
+forward-decayed OU+S block kernel beta_OUS, for which the OU component has
+uniform l1 mass <=1 and first variation <=2 in the constant-parameter case.
+Tuner variation can then be charged as a perturbation of a probability-like
+decay kernel rather than as O(1/tau) endpoint variation.
+
+
+## 29. Variable-phi forward OU kernel
+
+Let T_j=product_(m=j..N) phi_m and T_(N+1)=1.  The forward-decayed physical OU coefficient is
+
+    beta_j=(1-phi_j) product_(m=j+1..N)phi_m=T_(j+1)-T_j.
+
+For arbitrary shipping 0<phi_j<1, T_j is nondecreasing, hence beta_j>=0 and
+
+    sum beta_j=1-T_1<=1.
+
+For augmented first variation D1=|beta_1|+|beta_N|+sum|Delta beta|, every nonnegative sequence satisfies D1<=2 sum beta, therefore
+
+    D1(beta_OU)<=2(1-T_1)<=2.
+
+This is exact for arbitrary time-varying tau/dt; no tuner smoothness bound is needed.
+
+At an S event s, future OU transport gives Z_s=T_(s+1)K_aS,s. Joseph gives
+
+    ||u'Z_s||^2 <= T_(s+1)^2 [u' DeltaP_aa,s^S u]/lambda_min(R_S,s).
+
+Thus
+
+    sum_s ||u'Z_s|| <= sqrt(H_S) sqrt(sum_s u'DeltaP_aa,s^S u),
+    H_S=sum_s T_(s+1)^2/lambda_min(R_S,s).
+
+Also D1(Z_S)<=2 sum_s||Z_s||.  A naive independent-extrema bound on H_S is too loose; the remaining scheduler/tuner problem is exactly to bound H_S under the coupled applied tau,R_S,T_S chronology.  The covariance factor is the S-induced AW Joseph decrement and can be paired with forward-decayed OU-process/sync replenishment.  No AG covariance enters.
+
+
+## 30. Uniform coupled bound on the transported S chronology sum
+
+Recall
+
+    H_S=sum_s T_(s+1)^2/lambda_min(R_S,s),
+
+where T_(s+1) is the future OU tail product.  The applied tuner tuple is
+committed only at the adaptation cadence (~.1 s); inside each activation cell
+tau,T_S,r_S are fixed.  The pseudo scheduler preserves elapsed phase when T_S
+is retargeted.
+
+Use cells of length L=.1 s.  In a cell with fixed applied tuple, a conservative
+event-count bound is
+
+    N_S <= 1+ceil(L/T_S),                                   (HS1)
+
+where the extra one covers a phase-preserved event at the cell boundary.
+The smallest S standard deviation is the Y factor .50 times the base r_S, so
+
+    lambda_min(R_S) >= (.5 r_S)^2,   r_S>=.15.             (HS2)
+
+Future squared OU transport across a complete cell is
+
+    d(tau)=exp(-2L/tau).                                    (HS3)
+
+Define the local worst charge
+
+    A(tau,r_S)
+      =[1+ceil(L/T_S(tau))]/(.5 r_S)^2.                    (HS4)
+
+The backward chronology sum satisfies the scalar comparison
+
+    H_i <= A_i+d_i H_(i+1).                                (HS5)
+
+Therefore any
+
+    M >= sup_reachable A/(1-d)                             (HS6)
+
+is invariant under arbitrary sequences of applied cells: if H_(i+1)<=M then
+H_i<=A_i+d_i M<=M.
+
+Using the shipping coupled cadence
+
+    T_S(tau)=clamp((.015/1.1)tau,.005,.15),
+
+tau in [.02,12], and retaining the rigorous possibility r_S=.15 even at
+large tau (SpectralMSE can remain on the base floor as physical wave RMS
+approaches its 1e-6 guard), the maximum of HS6 is at
+
+    tau=12 s, T_S=.15 s, r_S=.15 m*s.
+
+There
+
+    N_S<=2,
+    A=2/.075^2=355.5555556,
+    d=exp(-.2/12)=0.9834714538,
+
+hence
+
+    H_S <= 21511.60494.                                    (HS7)
+
+This is a source-uniform analytical comparison for arbitrary coupled tuner
+cell sequences.  It is conservative relative to the frozen-parameter
+geometric sum (about 7200.37 at the same corner) because HS1 permits one
+retarget/phase-boundary event in every .1-s cell.
+
+### Quantitative consequence
+
+Combining HS7 with the Joseph/Cauchy estimate gives
+
+    D1(Z_S)
+      <=2 sqrt(21511.605)
+         sqrt(sum_s u^T DeltaP_aa,s^S u)
+      ~=293.337 sqrt(S-decrement budget).                   (HS8)
+
+Even with a sharp O(10) AW covariance/decrement budget, HS8 is far too large
+for a g sigma_w mean certificate.  Thus the chronology sum H_S is now
+rigorously finite and explicitly bounded, but Joseph + l1/Cauchy is a
+demonstrated quantitative relaxation failure.
+
+The failure is the same structural one seen earlier: S corrections are signed
+and correlated through the integrated chain, while HS8 replaces them by the
+sum of their norms.  A useful proof must keep the signed future-transported
+S-chain combination before Cauchy/variation, just as the OU kernel had to be
+kept in telescoping form before Abel.
+
+Consequently:
+- variable-phi OU is closed sharply: mass<=1, D1<=2;
+- coupled S chronology is closed as H_S<=21511.605;
+- but the generic Joseph-to-l1 conversion is unusable.
+
+The remaining S calculation is to derive the SIGNED transported S-chain
+kernel itself and seek a telescoping/divided-difference identity for it,
+rather than bounding individual K_aS events.
+
+
+## 31. Signed S jump identity and regression-ratio nonclosure
+
+At an S=0 update,
+
+    Delta a^S = -K_aS S^-,
+    Delta S   = -k_SS S^-,
+
+with
+
+    K_aS=P_aS/(P_SS+R_S),
+    k_SS=P_SS/(P_SS+R_S).
+
+Hence, whenever P_SS>0,
+
+    Delta a^S = C_S Delta S,
+    C_S=P_aS/P_SS.                                         (SK1)
+
+The pseudo-measurement denominator cancels exactly.  Future OU transport gives
+
+    Xi_S=sum_s T_(s+1) C_S,s Delta S_s.                    (SK2)
+
+Thus the signed S contribution is a discrete Stieltjes sum.  Summation by
+parts moves differences onto A_s=T_(s+1)C_S,s and leaves S endpoints plus
+the exact propagation gaps between S events.  Those gaps are generated by
+the same (v,p,S,a) integrated chain and must be combined with the physical/OU
+balance before norms.
+
+An S update itself leaves C_S invariant because both P_aS and P_SS are
+multiplied by R_S/(P_SS+R_S).
+
+However C_S is NOT a closed scalar under the rest of shipping chronology.
+For one OU prediction (one axis, ordering v,p,S,a), let
+r_Srow=[h^2/2,h,1,phi_Sa].  Then
+
+    P_aS^- =
+      phi[ (h^2/2)P_av + h P_ap + P_aS + phi_Sa P_aa ]
+      + q_aS,                                               (SK3)
+
+while
+
+    P_SS^- = r_Srow P r_Srow^T + q_SS.                     (SK4)
+
+Therefore C_S^-=P_aS^-/P_SS^- depends on the full 4x4 LIN covariance.
+An accelerometer correction also changes numerator and denominator by
+different Schur products, so it does not preserve C_S.
+
+Consequently the proposed scalar lemma
+
+    TV[T_future P_aS/P_SS] <= C_reg
+
+cannot be proved from a recurrence for C_S alone.  The exact signed jump
+identity SK1 remains valuable, but a useful variation theorem must either:
+(a) keep the full conditioned 4x4 LIN covariance in the coefficient history,
+or
+(b) avoid TV(C_S) entirely by combining SK2 with the propagation equations
+before introducing C_S as a separate coefficient.
+
+Route (b) is preferable.  Substitute Delta S_s=S_s^+-S_s^- directly into
+the chronological S-state recursion and telescope the ACTUAL S jumps before
+dividing by P_SS.  This keeps the regular product K_aS S^- intact and avoids
+the artificial singular ratio when P_SS is small.
+
+Thus the next signed derivation should use the pair
+    (future-transported AW equation, future-transported S equation)
+as a 2-row block and eliminate S jumps by block Gaussian elimination.
+The elimination coefficient is computed at the block-matrix level, where
+P_SS+R_S remains regular; do not form C_S eventwise.
+
+
+## 32. Two-row AW/S service-block elimination
+
+Take one complete S-service block from immediately after S service b to
+immediately before service b+1.  Let x=(v,p,S,a).  Collapse every literal
+operation inside the open block (OU predictions, accelerometer corrections,
+syncs and their same-history source inputs) into
+
+    x_(b+1)^- = F_b x_b^+ + G_b y_b,                        (BL1)
+
+where y_b denotes the stacked physical/accelerometer/implementation sources.
+No S pseudo-update is hidden in F_b.
+
+At the terminal S service, with h_S=e_S^T,
+
+    nu_b = 0-h_S x_(b+1)^- = -S_(b+1)^-,                   (BL2)
+
+    x_(b+1)^+ = x_(b+1)^- + K_b nu_b
+              = (I-K_b h_S)x_(b+1)^-.                      (BL3)
+
+The two rows of interest are therefore
+
+    a_(b+1)^+
+      = e_a^T F_b x_b^+ + e_a^T G_b y_b + K_aS,b nu_b,     (BL4)
+
+    S_(b+1)^+
+      = e_S^T F_b x_b^+ + e_S^T G_b y_b + k_SS,b nu_b.     (BL5)
+
+Together with BL2, this is a 2-row block with ONE internal scalar nu_b.
+Do not divide BL4 by BL5 or form P_aS/P_SS.
+
+### Regular Schur elimination
+
+In the covariance-weighted/minimum-action reader the internal pseudo
+innovation has quadratic cost
+
+    nu_b^2 / Omega_S,b,
+    Omega_S,b=P_SS,b^-+R_S,b >0.                            (BL6)
+
+The gain column is
+
+    k_b=[K_aS,b, k_SS,b]^T
+       =[P_aS,b^-,P_SS,b^-]^T/Omega_S,b.                    (BL7)
+
+Eliminating nu_b at BLOCK level is therefore a regular one-dimensional Schur
+complement with denominator Omega_S,b, never P_SS alone.  Equivalently, for
+any two-row adjoint lambda=[lambda_a,lambda_S],
+
+    min_nu {
+       (nu^2/Omega_S)
+       +2 nu (lambda_a K_aS+lambda_S k_SS)
+    }
+
+has minimizer
+
+    nu_*=-Omega_S(lambda_a K_aS+lambda_S k_SS)              (BL8)
+
+and decrement
+
+    -Omega_S(lambda_a K_aS+lambda_S k_SS)^2
+     =-[lambda_a P_aS+lambda_S P_SS]^2/Omega_S.             (BL9)
+
+This is exactly the Joseph/information cancellation but performed BEFORE
+separating AW and S.  It remains finite as P_SS->0 and automatically retains
+the sign/correlation of P_aS.
+
+### Chronological composition
+
+Let L_b be the two-row reader map at the end of block b.  Pull it backward
+through the terminal S update:
+
+    lambda_b^- =
+      (I-h_S^T K_b^T) lambda_b^+
+      = lambda_b^+ - h_S^T(K_b^T lambda_b^+).               (BL10)
+
+Then pull through F_b:
+
+    lambda_b^root = F_b^T lambda_b^-.                       (BL11)
+
+The source coefficient is
+
+    z_b = G_b^T lambda_b^-.                                 (BL12)
+
+Thus an S service changes only the S component of the backward adjoint by the
+scalar K_b^T lambda.  Its covariance-weighted action is charged exactly by
+BL9.  No eventwise |K_aS|, no P_aS/P_SS ratio, and no sqrt(N_S) appears.
+
+Across multiple S blocks the complete signed reader is obtained by repeating
+BL10--BL12.  This is the desired block Gaussian elimination.
+
+### What remains after the elimination
+
+BL10 shows that S cannot be summarized by a tuner-only scalar kernel: the
+elimination coefficient depends on the CURRENT two-row adjoint through
+K_b^T lambda.  But this dependence is favorable: BL9 gives an exact negative
+square in the same variable.  Therefore the correct bound is a block
+completed-square inequality, not TV of an S gain.
+
+For each block, combine:
+1. the forward-decayed OU physical coefficient (mass<=1, D1<=2);
+2. the endogenous accelerometer source coefficient inside G_b;
+3. the terminal S square BL9.
+
+The remaining local inequality has schematic form
+
+    signed physical/source contribution
+      - [lambda_a P_aS+lambda_S P_SS]^2/Omega_S
+      <= block supply.                                     (BL13)
+
+A large S-to-AW coupling increases the negative square rather than the
+variation charge.  This is exactly the cancellation lost by Joseph+Cauchy.
+
+The next quantitative target is therefore to complete the square between the
+physical OU/source coefficient z_b and BL9 over one service block, deriving a
+source-uniform block supply constant C_b.  Summing C_b over blocks preserves
+sign and does not incur sqrt(N_S).
+
+
+## 33. Block completed square: project source reader onto terminal S innovation
+
+For one S-service block, let the scalar signed source reader after backward
+transport be
+
+    r_b = z_b^T y_b.
+
+Let the terminal pseudo innovation be
+
+    nu_b = -S_(b+1)^-
+         = n_b^T y_b + nu_root,b,                           (BC1)
+
+where n_b^T=-e_S^T G_b and nu_root,b=-e_S^T F_b x_b^+.
+Work in the same covariance/action inner product used by the complete-word
+reader.  Decompose the SOURCE part of r_b into its projection on the source
+part of nu_b and an orthogonal residual:
+
+    r_b = alpha_b nu_b + r_b^perp,                          (BC2)
+
+with
+
+    alpha_b = <r_b,nu_b>/<nu_b,nu_b>
+            = Cov(r_b,nu_b)/Omega_b                         (BC3)
+
+when the complete innovation variance Omega_b is used, and
+<r_b^perp,nu_b>=0.  Root pieces are retained separately rather than hidden in
+the source projection.
+
+The terminal S Schur elimination contributes the negative quadratic action
+
+    -nu_b^2/Omega_b
+
+in normalized innovation coordinates (equivalently BL9 in adjoint
+coordinates).  Therefore the correlated source component completes exactly:
+
+    alpha_b nu_b - nu_b^2/Omega_b
+      <= Omega_b alpha_b^2/4
+       = Cov(r_b,nu_b)^2/(4 Omega_b).                       (BC4)
+
+No triangle inequality is used.
+
+The unexplained source is only r_b^perp.  Its variance/action is the Schur
+residual
+
+    Var(r_b^perp)
+      = Var(r_b)-Cov(r_b,nu_b)^2/Omega_b.                   (BC5)
+
+Thus the pseudo measurement splits the block source reader into:
+1. an S-correlated component, charged by the completed square BC4;
+2. an orthogonal component BC5 that the S update cannot control.
+
+This is the exact same-history cancellation sought in the block argument.
+
+### Covariance form without explicit projection coefficient
+
+Let the joint source covariance of (r_b,nu_b) be
+
+    Sigma_b=[[V_r,C_rS],[C_rS,Omega_b]].
+
+Then the conditional/source residual is
+
+    V_perp = V_r-C_rS^2/Omega_b >=0.                        (BC6)
+
+The block bound can be written
+
+    r_b - nu_b^2/Omega_b
+      <= r_b^perp + C_rS^2/(4 Omega_b),                    (BC7)
+
+with r_b^perp handled by its declared physical/bias/sensor source class.
+Large correlation C_rS REDUCES V_perp; it is not an independent defect.
+
+### Important limitation
+
+BC4 is an action/quadratic completion.  The nominal-AW theorem is a signed
+linear mean bound.  To turn BC5 into a deterministic mean supply C_b, each
+source class still needs its own deterministic constraint:
+- physical acceleration: bounded velocity/jerk, handled by the already
+  forward-decayed OU kernel and summation by parts;
+- commissioned sensor residual: amplitude box;
+- BA/attitude/field terms: retained deterministic envelopes;
+- endogenous accelerometer innovation: must remain in the literal feedback
+  identity, not be assigned a stochastic covariance norm.
+
+Therefore the S block completion does NOT by itself bound the whole z_b^T y_b
+by a covariance variance.  It removes exactly the component aligned with the
+S innovation and leaves a smaller signed reader on the deterministic source
+classes.
+
+### Resulting block supply structure
+
+After OU telescoping and S completion, one block has the form
+
+    R_b
+      <= C_phys,b + C_BA,b + C_sensor,b + C_impl,b
+         + C_Scorr,b
+         + R_acc,endog,b,                                   (BC8)
+
+where
+
+    C_Scorr,b = C_rS^2/(4 Omega_b),                         (BC9)
+
+and the physical coefficient retains the forward OU mass/variation bounds.
+R_acc,endog,b is the ONLY term that cannot be bounded without using the
+accelerometer feedback equation itself.
+
+Summing blocks does not incur sqrt(N_S): every S innovation is eliminated
+locally by its own negative square before block supplies are added.
+
+This closes the S-chain structurally.  The remaining critical calculation is
+now to eliminate R_acc,endog,b with the accelerometer measurement/update
+identity in the same way, but its innovation covariance contains AG/BA.
+For the SIGNED mean theorem, use the deterministic identity
+r_acc=y_phys-h(x_hat), not an innovation-covariance lower bound.
+
+
+## 34. Deterministic accelerometer-innovation elimination
+
+The literal accelerometer mean model is
+
+    f_pred = R_wb (a_hat_w-g) + lever + b_a(T),
+    r_acc  = f_meas-f_pred.
+
+Write the physical body measurement on the same history as
+
+    f_meas =
+      R_true (a_phys-g) + lever_true + b_a,true(T) + eta_a.
+
+Transport the residual to the nominal world frame.  Then exactly
+
+    R_wb^T r_acc
+      = a_phys-a_hat_w
+        + d_att + d_BA + d_lever + eta_w,                  (AC1)
+
+where d_att=(R_wb^T R_true-I)(a_phys-g), d_BA is the physical-minus-nominal
+temperature-dependent accelerometer bias, d_lever is the lever-model defect,
+and eta_w=R_wb^T eta_a.  No innovation covariance appears.
+
+Let
+
+    Gamma_k=K_aw,k R_wb,k.
+
+The AW mean correction is therefore
+
+    Delta a_hat_k^acc
+      = Gamma_k(a_phys,k-a_hat_k)
+        + K_aw,k[d_body,k],                                 (AC2)
+
+or, collecting declared world defects,
+
+    a_hat_k^+
+      =(I-Gamma_k)a_hat_k^-
+        +Gamma_k a_phys,k
+        +d_acc,k.                                           (AC3)
+
+This is the central deterministic cancellation: Gamma multiplies the physical
+acceleration and the negative nominal AW with the SAME matrix.  They must not
+be bounded separately.
+
+### Combine with OU prediction
+
+For the simple literal ordering prediction -> (optional S) -> accelerometer,
+temporarily denote the post-S pre-accelerometer AW by a_tilde_k.  Prediction
+from the previous posterior is
+
+    a_pred,k=phi_k a_hat_(k-1)^+.
+
+The S update contributes xi_S,k, so
+
+    a_tilde_k=phi_k a_hat_(k-1)^+ + xi_S,k.                 (AC4)
+
+Substitute AC4 into AC3:
+
+    a_hat_k^+
+      =(I-Gamma_k)phi_k a_hat_(k-1)^+
+       +Gamma_k a_phys,k
+       +(I-Gamma_k)xi_S,k
+       +d_acc,k.                                            (AC5)
+
+Thus the homogeneous closed-loop AW multiplier is
+
+    A_k=(I-Gamma_k)phi_k,                                   (AC6)
+
+and the physical input coefficient is Gamma_k.  The same-history S correction
+is attenuated by I-Gamma_k if it precedes the accelerometer update.
+
+For arbitrary scheduler ordering, AC5 generalizes by composing the literal
+rank-one S maps and accelerometer map in actual order; the key pair
+(I-Gamma),Gamma remains exact at every accepted accelerometer correction.
+
+### Error form
+
+Define e_k=a_hat_k-a_phys,k.  From AC3,
+
+    e_k^+
+      =(I-Gamma_k)e_k^-
+        +d_acc,k,                                           (AC7)
+
+at the measurement instant (same physical sample).  This is stronger than
+the earlier AW-loop rearrangement: physical acceleration CANCELS from the
+measurement error recursion exactly.  Across prediction,
+
+    e_pred,k
+      =phi_k e_(k-1)^+
+       -(1-phi_k)a_phys,k-1
+       -Delta a_phys,k.                                     (AC8)
+
+Hence the only physical forcing of the error occurs through the OU prediction
+identity already handled by the forward-decayed beta_OU kernel.  The
+accelerometer update does not introduce an independent physical-acceleration
+reader at all; it applies I-Gamma to the existing error.
+
+### Complete deterministic word
+
+Iterating AC7--AC8 with the exact S block maps gives
+
+    e_N
+      = M_cl e_0
+        + sum_j M_(N:j)
+            [ -(1-phi_j)a_phys,j - Delta a_phys,j ]
+        + D_S
+        + D_att+BA+lever+sensor+impl.                       (AC9)
+
+Here M_cl is the literal closed-loop product of OU, S and (I-Gamma)
+accelerometer maps.  Crucially there is NO separate sum Gamma_j a_phys,j.
+That term was an artifact of moving Gamma a_hat to the other side before
+substitution.
+
+This removes the remaining endogenous accelerometer source term
+R_acc,endog structurally.
+
+### What remains quantitatively
+
+The nominal AW mean is
+
+    a_hat = a_phys+e.
+
+On a long window, the physical mean is bounded by velocity endpoints and
+jerk as already used.  The error reader AC9 has:
+- OU physical kernel with exact variable-phi mass<=1 and D1<=2 BEFORE the
+  intervening correction maps;
+- homogeneous root term M_cl e_0;
+- S corrections, already eliminable by the two-row block Schur completion;
+- declared deterministic attitude/BA/lever/sensor/implementation defects.
+
+The remaining mathematical issue is now the effect of the matrices
+(I-Gamma_k) on the forward OU kernel.  If they are nonexpansive in the
+relevant signed/readout metric, the beta_OU mass/variation bounds survive and
+the physical contribution closes.  Euclidean nonexpansiveness is NOT
+automatic for an arbitrary Kalman gain.  The correct metric is the
+covariance/information metric in which a Kalman correction is contractive.
+
+Therefore the last feedback lemma is:
+
+    the forward-decayed OU physical reader transported through literal
+    accelerometer corrections has mass/variation no larger than its
+    covariance-weighted complete-word reader bound, without converting back
+    to Euclidean gain norms.                                (AC10)
+
+This is now a pure correction-transport lemma; there is no endogenous
+innovation source left.
+
+
+## 35. Full-metric correction transport and final-reader constant
+
+For every literal accepted Kalman correction with A=I-KH, Joseph gives
+
+    P^+ = A P^- A^T + K R K^T >= A P^- A^T.
+
+Hence
+
+    A^T (P^+)^-1 A <= (P^-)^-1,                            (MT1)
+
+so full-state covariance-weighted error is nonexpansive.  This is exactly the
+actual-gain prefix inequality already proved in the corrected-word theorem.
+
+The AW-only block I-Gamma does NOT inherit MT1 after projection: accelerometer
+corrections exchange energy among attitude, BG/lever, AW and BA coordinates.
+Therefore forward OU physical defects must be embedded in the full state,
+transported through the full A matrices, and projected to the AW reader only
+at the end.
+
+For a unit transverse AW row u and a transported AW column
+x=M_(N<-j) E_aw u,
+
+    |u^T E_aw^T x|
+      <= sqrt(u^T P_aa,N u) ||x||_(P_N^-1)
+      <= sqrt[
+           (u^T P_aa,N u)
+           (u^T E_aw^T P_j^-1 E_aw u)
+         ].                                                 (MT2)
+
+Thus a valid reader constant is the SAME-HISTORY product
+
+    c_read^2 =
+      sup_(shipping,j,u)
+       (u^T P_aa,N u)
+       (u^T E_aw^T P_j^-1 E_aw u).                         (MT3)
+
+The second factor is the inverse conditional AW covariance at epoch j.
+
+### Independent covariance extrema are useless
+
+The recurring nuisance upper comparison permits
+
+    P_aa <=156^2=24336.
+
+The recurring post-prediction lower covariance certificate has a very small
+generic conditional-AW floor (order 1e-9 in the fixed proof coordinates).
+Combining these independently gives c_read of order 10^6, far too large for
+the signed OU Abel bound.  This is another demonstrated relaxation failure:
+the two extrema come from incompatible histories/directions.
+
+Therefore c_read must be bounded as the product MT3 on ONE realized
+covariance chronology.  The required theorem is a same-word covariance ratio,
+not separate upper/lower boxes.
+
+### Riccati-order route
+
+Let R_(N<-j) denote the literal Riccati map from epoch j to N.  For the actual
+P_j,
+
+    P_N=R_(N<-j)(P_j).
+
+The desired scalar is
+
+    F(P_j)=
+      [u^T R(P_j)_aa u]
+      [u^T (P_j)_(a|rest)^-1 u].                           (MT4)
+
+Riccati monotonicity alone does not make F monotone because the two factors
+move in opposite directions.  But this is precisely a projective/diameter
+quantity: it compares a terminal marginal to an initial conditional
+precision along the same Riccati trajectory.
+
+The existing Theorem-D interval
+
+    Pi <= P_N <= P_diff
+
+and its root-to-terminal information ratio can potentially bound MT4 without
+a covariance ceiling.  The next calculation should express MT4 through the
+joint Gaussian (x_j,y_word,x_N) Schur complements and reduce it to the
+word diameter kappa_W, rather than to independent covariance extrema.
+
+If one can prove
+
+    c_read^2 <= kappa_W                                    (MT5)
+
+(or a modest fixed multiple), then
+
+    c_read <= sqrt(kappa_W),
+
+and the already established word contraction/diameter certificate directly
+supplies the final reader conversion.  This would connect the signed nominal
+AW proof to Theorem D at exactly one final point, without reintroducing gain
+norms or G0.
+
+
+## 36. The proposed c_read^2 <= kappa_W inequality is false
+
+The same-history product
+
+    (terminal marginal variance)*(initial conditional precision)
+
+is NOT controlled by the Riccati diameter kappa_W in general.
+
+Scalar counterexample: let
+
+    y=x_0+v,   Var(v)=R=1,
+    x_N=x_0+w, Var(w)=Q=1.
+
+For a known root, terminal covariance is
+
+    Pi=Q=1.
+
+For a diffuse root, the measurement leaves variance R=1 before prediction,
+so
+
+    P_diff=Q+R=2,
+
+and Theorem D gives
+
+    kappa_W=P_diff/Pi=2.                                   (CR1)
+
+For an actual root prior Var(x_0)=p>0, the posterior after y is p/(p+1), so
+
+    P_N=1+p/(p+1).
+
+The proposed reader product is
+
+    P_N * p^-1
+      = 1/p + 1/(p+1),                                     (CR2)
+
+which tends to infinity as p->0 while kappa_W remains 2.  Hence no universal
+inequality
+
+    c_read^2 <= kappa_W
+
+(or any fixed multiple independent of the root covariance) can hold.
+
+The failure is conceptual: kappa_W measures the DIAMETER of terminal Riccati
+covariances as the root prior varies from known to diffuse.  The reader
+product multiplies terminal variance by INITIAL precision; an arbitrarily
+well-known root has arbitrarily large initial precision even though the
+terminal diameter remains finite.
+
+### Correct normalization
+
+The transported deterministic column generated at epoch j must be normalized
+by the covariance/source channel that actually CREATES that column, not by
+the total initial conditional precision.  For OU physical forcing, the
+coefficient beta_j is deterministic and its sharp bounded-velocity estimate
+already supplies the source normalization.  Using P_j^-1 on E_aw beta_j
+penalizes a perfectly known AW root even though the physical forcing occurs
+AFTER that root and is unrelated to its uncertainty.
+
+Therefore the final-reader conversion should start at the injection epoch
+AFTER the OU physical defect is added.  If the defect is d_j=E_aw q_j, let
+P_j^def be the covariance metric immediately after the corresponding
+prediction/process channel.  Since prediction adds Q_j,
+
+    P_j^def >= Q_j                                         (CR3)
+
+on the process-supported subspace, and subsequent corrections are
+nonexpansive.  A terminal AW readout obeys
+
+    |u^T E_aw^T M d_j|
+      <= sqrt(u^T P_aa,N u)
+         sqrt(d_j^T (P_j^def)^-1 d_j)
+      <= sqrt(u^T P_aa,N u)
+         sqrt(d_j^T Q_j^dag d_j).                           (CR4)
+
+This is source/action normalization, not root-precision normalization.
+
+CR4 alone may still be quantitatively loose for deterministic physical
+acceleration because Q_j can be tiny.  The sharp beta_OU/Abel bound and the
+metric correction transport therefore need a mixed argument: keep the
+physical sequence in its signed primitive norm through prediction, and use
+Kalman metric contraction only for correction maps.  There is no scalar
+c_read depending only on kappa_W that automatically converts between these
+two norms.
+
+Conclusion: Theorem D does not close the final reader bridge.  The remaining
+lemma is a two-norm transport problem: show that interposed Kalman correction
+maps do not amplify the OU signed-primitive operator from bounded physical
+velocity to final AW readout.  This requires exploiting the special
+accelerometer correction structure, not only generic Riccati diameter.
+
+
+## 37. Accelerometer passivity: false for isolated AW, exact at the full measurement port
+
+The deterministic AW error update is
+
+    e_aw^+=(I-Gamma)e_aw^- + cross/defect terms,
+    Gamma=K_aw R_wb.
+
+From the literal gain construction,
+
+    K_aw =
+      [ P_a,theta J_att^T
+        +P_aa R_wb^T
+        +P_a,ba
+        +P_a,bg J_bg^T ] S_acc^-1,                          (PA1)
+
+with the BA/BG terms present according to the shipping mode.  Therefore
+
+    Gamma=K_aw R_wb                                         (PA2)
+
+contains cross-covariance terms of unrestricted sign.  PSD of P and SPD of
+S_acc do NOT imply sym(Gamma)>=0, nor ||I-Gamma||_2<=1.
+Consequently there is no generic Euclidean positive-real/passivity theorem
+for the isolated AW correction.  A zero-mean physical input could be
+rectified by an arbitrary algebraic AW gain if the coupled attitude/BA
+coordinates are discarded.
+
+The full accelerometer correction DOES have an exact passive-port identity.
+Let the full linearized error be e, measurement row H, physical/model defect
+d, and innovation
+
+    r=-H e + d                                               (PA3)
+
+(up to the fixed sign convention).  The update is
+
+    e^+=A e + K d,   A=I-KH.                               (PA4)
+
+Joseph gives
+
+    P^+=A P^- A^T+K R K^T.                                 (PA5)
+
+Equivalently in the complete-word action/dual formulation, the measurement
+port contributes the nonnegative square associated with S_acc=H P^- H^T+R.
+Completing that square keeps the SAME combination H e that contains attitude,
+AW, BA and lever/BG effects.  Thus accelerometer feedback is passive in the
+full measurement port, not in the AW coordinate alone.
+
+### Consequence for the signed physical-input theorem
+
+The remaining two-norm lemma cannot be
+
+    isolated AW correction preserves OU beta variation.
+
+That statement is false without additional cross-covariance restrictions.
+
+Instead combine the forward OU physical forcing with the FULL accelerometer
+port before projection, exactly as section 32 combined AW and S.  Over an
+accelerometer-service block retain two objects:
+1. the transverse AW readout adjoint;
+2. the accelerometer predicted-specific-force row H e.
+
+Eliminate the internal accelerometer innovation by a block Schur/completed
+square with denominator S_acc, but substitute the deterministic physical
+measurement identity first.  The physical acceleration appears in both the
+OU forcing and H e with fixed opposite signs.  Their signed combination is
+the candidate positive-real supply rate.
+
+This block-level port formulation has the required properties:
+- no sym(Gamma) assumption;
+- no gain norm;
+- no AG covariance ceiling;
+- all attitude/BA cross covariance retained;
+- same-history physical acceleration appears once;
+- the negative measurement square grows when cross coupling is large.
+
+The next analytical object is therefore a FULL accelerometer-port block
+matrix, analogous to the successful two-row AW/S block:
+    [final AW reader ; accelerometer force-error port].
+Its Schur complement in the innovation variable is regular because
+S_acc>=R_acc>0.  The question becomes whether the resulting deterministic
+physical supply has nonpositive DC gain (up to declared attitude/BA/lever
+defects).  This is the correct positive-real formulation.
+
+
+## 38. Full AW-reader / accelerometer-port Schur elimination
+
+Consider one accepted accelerometer correction.  Let e^- be the full
+linearized state error immediately before correction, H the literal full
+accelerometer Jacobian, d the deterministic physical/model/sensor defect after
+putting the true physical acceleration on the same history, and
+
+    r = -H e^- + d.                                        (AP1)
+
+The correction is
+
+    e^+ = e^- + K r,                                       (AP-two)
+
+with
+
+    S_acc = H P^- H^T + R_acc >0,
+    K=P^- H^T S_acc^-1.                                    (AP3)
+
+Let lambda^+ be an arbitrary backward reader at the post-correction state.
+Then
+
+    lambda^T e^+
+      = lambda^T e^- + (K^T lambda)^T r.                   (AP4)
+
+Put
+
+    q=K^T lambda=S_acc^-1 H P^- lambda.                     (AP5)
+
+The innovation is therefore one internal 3-vector entering the reader through
+q^T r.
+
+### Regular 3x3 Schur completion
+
+In the complete covariance-weighted action, the accelerometer innovation has
+quadratic cost r^T S_acc^-1 r (up to the fixed action convention).  Completing
+the square,
+
+    q^T r - r^T S_acc^-1 r
+      <= (1/4) q^T S_acc q                                (AP6)
+
+for the convention with unit quadratic coefficient.  Equivalently,
+
+    (1/4) q^T S_acc q
+      =(1/4) lambda^T P^- H^T S_acc^-1 H P^- lambda.        (AP7)
+
+Thus the full accelerometer coupling is charged by an exact PSD Schur square.
+No gain norm, AW-only Gamma sign, AG covariance ceiling, or cross-covariance
+box is required.
+
+The backward reader itself pulls through as
+
+    lambda^-=(I-H^T K^T)lambda^+,                           (AP8)
+
+the full-state analogue of the S-block formula.
+
+### Deterministic physical substitution
+
+For the literal shipping model,
+
+    r =
+      R_wb(a_phys-a_hat_w)
+      + d_att_body+d_BA+d_lever+eta_a.                     (AP9)
+
+Hence
+
+    q^T r =
+      (R_wb^T q)^T a_phys
+      -(R_wb^T q)^T a_hat_w
+      +q^T d_decl.                                         (AP10)
+
+The physical acceleration and nominal AW have EXACTLY the same coefficient
+with opposite signs.  Define
+
+    gamma_lambda = R_wb^T q
+                 = R_wb^T S_acc^-1 H P^- lambda.            (AP11)
+
+Then the accelerometer port contribution is
+
+    gamma_lambda^T(a_phys-a_hat_w)+q^T d_decl.              (AP12)
+
+This is the full-state version of the cancellation previously seen in the AW
+row, but now all attitude/BA/BG cross covariance remains inside q and the
+negative Schur square AP7.
+
+### Combine with OU prediction before bounding
+
+At the preceding OU prediction, the AW error receives
+
+    d_OU=-(1-phi)a_phys-Delta a_phys.                       (AP13)
+
+Transport its AW reader to the accelerometer port.  The combined signed
+physical supply over prediction+correction is therefore of the form
+
+    c_OU^T[-(1-phi)a_phys-Delta a_phys]
+      +gamma_lambda^T(a_phys-a_hat_w)
+      - measurement_square
+      +declared defects.                                   (AP14)
+
+Do NOT bound gamma_lambda^T a_phys and
+-gamma_lambda^T a_hat_w separately.  Substitute
+a_hat_w=a_phys+e_aw at the same correction epoch:
+
+    gamma_lambda^T(a_phys-a_hat_w)
+      =-gamma_lambda^T e_aw.                               (AP15)
+
+Thus the accelerometer port contributes NO independent physical-acceleration
+forcing.  Physical acceleration remains only in AP13, the OU prediction
+forcing.  This recovers the deterministic error recursion AC7 at the full
+reader/action level while retaining the exact negative measurement square.
+
+### Consequence
+
+The accelerometer Schur block therefore closes structurally:
+- endogenous innovation eliminated;
+- physical acceleration cancels from the correction port;
+- attitude/BA/lever/sensor enter only through declared d_decl;
+- arbitrary cross covariance strengthens/changes the PSD Schur square but
+  cannot create a free physical source.
+
+After every accepted accelerometer correction, the backward reader is AP8.
+The only physical forcing over the whole word is the sequence of OU
+prediction defects AP13.
+
+The unresolved two-norm issue is correspondingly narrower: transport of
+those OU defects through AP8 may rotate the final AW reader into
+attitude/BA coordinates, but it cannot create another a_phys source.  To
+bound the signed physical primitive, perform Abel summation on the FULL
+backward reader's AW component at the prediction epochs, not on an isolated
+AW gain.
+
+Let
+
+    b_j = E_aw^T lambda_j^- (1-phi_j)                       (AP16)
+
+be the vector coefficient of a_phys at prediction j after all future full
+corrections have been pulled backward.  The exact final physical reader is
+
+    sum_j b_j^T a_phys,j + corresponding Delta-a terms.     (AP17)
+
+The final remaining quantitative lemma is now simply a variation bound on the
+AW COMPONENT of the full backward reader:
+
+    |b_1|+|b_N|+sum|b_(j+1)-b_j| <= C_full-reader.          (AP18)
+
+Unlike the abandoned beta-TV problem, AP18 contains no independent
+accelerometer innovation or S gain; both have already been Schur-eliminated.
+It is the literal complete-word backward reader variation and is the correct
+object for bounded-velocity Abel summation.
+
+
+## 39. Exact 0.1-s block reader and two-norm coarse graining
+
+Partition a regular word at the applied-tuner/covariance-sync activation
+boundaries t_B, with block length L_B about .1 s.  Freeze the realized
+coefficients only for the auxiliary linear comparison.  Collapse all literal
+homogeneous operations in block B into
+
+    e_(B+1)=M_B e_B + sum_(j in B) M_(B+1<-j) d_j.          (CB1)
+
+All accepted accelerometer/S/magnetic corrections are inside M_B.  Their
+measurement/source defects retain the existing square-summed factor
+representation; do not convert them to eventwise l1 norms.
+
+Let Lambda_(B+1) be the full backward reader at the block end.  The block-root
+reader is
+
+    Lambda_B=M_B^T Lambda_(B+1).                            (CB2)
+
+For a physical OU prediction defect at sample j,
+
+    d_j^phys=E_aw[-(1-phi_j)a_j-Delta a_j].
+
+Its exact signed coefficient in the block reader is
+
+    c_(B,j)^T
+      =-Lambda_(B+1)^T M_(B+1<-j) E_aw.                    (CB3)
+
+Thus the block physical contribution is
+
+    R_phys,B =
+      sum_(j in B) c_(B,j)^T
+        [(1-phi_j)a_j+Delta a_j].                           (CB4)
+
+Because the future transport M_(B+1<-j) includes internal correction maps and
+LIN prediction mixing, c_(B,j) is NOT generally a common boundary AW reader
+times the scalar pure-OU kernel.  Claiming
+R_phys,B=(1-Phi_B) r_B a would discard the very correction rotations being
+proved about.
+
+### Internal summation by parts
+
+Write a_j=(v_(j+1)-v_j)/h_j plus the bounded jerk remainder.  Apply discrete
+summation by parts only inside B.  This gives
+
+    R_phys,B =
+      B_B^R v_(B+1)-B_B^L v_B
+      + R_var,B + R_jerk,B,                                (CB5)
+
+where B_B^{L,R} are exact block endpoint reader coefficients and R_var,B
+contains only differences of c_(B,j)/h_j INSIDE the block.
+
+Do not bound R_var,B by raw total variation.  Split each difference into:
+1. OU prediction transport, whose scalar forward kernel has mass<=1 and
+   D1<=2;
+2. correction-induced reader jumps.
+
+For an accelerometer correction the AW-reader jump is
+-R_wb^T q_acc and its squared norm is bounded by the exact corrected loss
+q_acc^T S_acc q_acc / lambda_min(R_acc).  S, magnetic and covariance sync
+have no direct AW-reader jump; their indirect effect enters through later
+prediction mixing and is retained in the full block metric.
+
+Therefore the internal correction part obeys a block l2 estimate
+
+    ||R_var,B^corr||
+      <= C_B sqrt(Loss_B) sqrt(PrimitiveEnergy_B),          (CB6)
+
+with C_B depending only on the finite block horizon/scales, not on the number
+of corrections individually.  The exact sharp C_B still needs derivation;
+using eventwise Cauchy would give sqrt(n_B) and is not promoted.
+
+### Global block composition
+
+Sum CB5 over blocks.  Adjacent velocity-boundary terms combine as
+
+    sum_B [B_B^R v_(B+1)-B_B^L v_B]
+      = endpoint terms
+        +sum_internal (B_(B-1)^R-B_B^L) v_B.               (CB7)
+
+Thus bounded physical velocity is charged only by BLOCK-TO-BLOCK reader
+variation, not sample-level variation.
+
+The residual correction terms should be accumulated with the existing
+complete-word square-summed input identity:
+
+    sqrt(sum_B Loss_B)                                     (CB8)
+
+rather than sum_B sqrt(Loss_B).  This avoids a sqrt(number of blocks) loss.
+
+### Remaining quantitative lemma
+
+The useful block theorem is now:
+
+    D_block =
+      |B_0^L|+|B_last^R|
+      +sum_B |B_(B-1)^R-B_B^L|
+      <= C_boundary,                                       (CB9)
+
+and
+
+    sum_B ||R_var,B^corr||
+      <= C_corr sqrt(total corrected loss)
+                   * physical-primitive budget,             (CB10)
+
+with C_boundary,C_corr source-uniform and modest.
+
+CB9 is a variation bound on only ~170 boundary readers.  CB10 keeps all
+~3400 internal corrections in their natural l2 action.  This is the exact
+two-norm coarse graining needed for the signed physical theorem.
+
+The next calculation is to express B_B^L,B_B^R in terms of Lambda_B and the
+block OU tail products, then test whether CB9 telescopes across the covariance
+sync boundary (sync has identity mean map) so that only tuner changes and
+block corrected-loss remainders contribute.
+
+
+## 40. Exact block endpoint coefficients: physical OU forcing is a coboundary
+
+The physical prediction forcing must be kept as the pair
+
+    (1-phi_j)a_j + Delta a_j
+      = a_(j+1)-phi_j a_j.                                 (BE1)
+
+Let r_j=E_aw^T lambda_j denote the full backward reader's AW component at the
+appropriate prediction boundaries.  Ignoring corrections for one moment, the
+physical contribution of prediction j is
+
+    -r_(j+1)^T [a_(j+1)-phi_j a_j].                        (BE2)
+
+Summing over a prediction-only block j=m,...,n gives
+
+    R_phys,B =
+       phi_m r_(m+1)^T a_m - r_(n+1)^T a_(n+1)
+       +sum_(j=m+1..n)
+          [phi_j r_(j+1)-r_j]^T a_j,                        (BE3)
+
+where r_j is the AW reader immediately after pulling through prediction
+j-1.  Thus the internal coefficient is the FAILURE of the pure prediction
+adjoint relation.
+
+For the full LIN prediction, BR3 gives
+
+    r_j =
+      phi_j r_(j+1)
+      +phi_va,j lambda_v,j+1
+      +phi_pa,j lambda_p,j+1
+      +phi_Sa,j lambda_S,j+1.                              (BE4)
+
+Hence
+
+    phi_j r_(j+1)-r_j
+      =-[phi_va lambda_v
+         +phi_pa lambda_p
+         +phi_Sa lambda_S]_(j+1).                           (BE5)
+
+So even before measurement corrections, the only internal physical
+coefficient is the integrated-LIN reader mixing; there is no raw OU
+variation term at all.
+
+### Include corrections
+
+At a correction between predictions, the full reader changes by
+
+    lambda^- - lambda^+ = -H^T q.                           (BE6)
+
+For S and magnetic updates H_aw=0, so they do not directly alter r.  For an
+accelerometer update,
+
+    Delta r=-R_wb^T q_acc.                                 (BE7)
+
+Therefore the exact internal coefficient in BE3 is
+
+    phi_j r_(j+1)-r_j
+      = -c_L,j^T lambda_L,j+1
+        + correction_jump_terms,                            (BE8)
+
+with c_L=[phi_va,phi_pa,phi_Sa].  The correction jump terms are nonzero only
+for accelerometer ports in the AW component and are square-summed by the
+corrected-loss identity.
+
+### Explicit block endpoint coefficients
+
+Comparing BE3 with
+
+    R_phys,B =
+      B_B^R a_(n+1)-B_B^L a_m + R_internal,B,
+
+the exact endpoint coefficients are
+
+    B_B^L = -phi_m r_(m+1),                                 (BE9)
+    B_B^R = -r_(n+1),                                       (BE10)
+
+up to the fixed sign convention of R_phys.  Equivalently, if the block
+boundary is chosen immediately before the first prediction, pull r_(m+1)
+through that prediction and write
+
+    B_B^L = -[r_m-c_L,m^T lambda_L,m+1].                    (BE11)
+
+Thus B_L and B_R are boundary AW readers plus a single prediction-mixing
+term; they do NOT contain a sum of internal OU coefficients.
+
+### Adjacent block cancellation
+
+Choose blocks at identity-mean covariance-sync boundaries.  The final reader
+of block B and initial reader of B+1 are the SAME full reader at the common
+boundary because sync has identity mean map.  Therefore the leading AW-reader
+parts of
+
+    B_B^R-B_(B+1)^L
+
+cancel exactly.  The mismatch is only:
+1. the first-prediction LIN mixing term of the new block;
+2. any accelerometer correction whose literal event ordering lies exactly at
+   the boundary.
+
+There is NO tuner-jump term by itself: phi of the new block appears only in
+the local first-prediction identity BE11, and the physical forcing pair BE1
+remains exact for arbitrary phi.
+
+Hence the block-boundary variation is controlled by the integrated-LIN
+reader at ONE prediction per block plus boundary correction ports, not by
+variation of tau.
+
+### Two-norm global bound
+
+The integrated-LIN boundary charge is
+
+    g_B =
+      phi_va lambda_v
+      +phi_pa lambda_p
+      +phi_Sa lambda_S.                                    (BE12)
+
+The accelerometer boundary jump is R_wb^T q_acc.  Both have natural
+covariance-weighted l2 controls:
+- g_B through the LIN reader metric/process covariance;
+- q_acc through q_acc^T S_acc q_acc.
+
+Therefore
+
+    D_block
+      <= endpoint_reader_charge
+         + sum_B ||g_B||
+         + sum_boundary_acc ||q_acc||.                      (BE13)
+
+Do NOT apply Cauchy separately to the two sums.  Stack all g_B and q_acc as
+columns of the complete-word factor/reader operator and use its single
+operator-norm <=1 identity.  The physical boundary velocities are then the
+input coefficients.  The desired inequality has the form
+
+    |sum_B g_B^T v_B + acc-boundary terms|
+      <= C_2 sqrt(sum_B ||v_B||^2_weighted),                (BE14)
+
+which is still l2 in block velocities.  To exploit only |v_B|<=Vmax without
+sqrt(N_B), one needs additional sign/variation structure of g_B.  Thus exact
+block cancellation removes all OU/tuner variation, but the LIN-reader
+boundary sequence remains the final l1-vs-l2 obstacle.
+
+This is much narrower than CB9: C_boundary is not yet modest from existing
+loss identities alone.  The remaining sequence is specifically the
+integrated-LIN mixing g_B at one prediction per .1-s block.
+
+
+## 41. Second Abel step is admissible: use the declared physical displacement bound
+
+The authoritative MARINE MOTION constants include
+
+    P_max=8.1 m,
+    V_max=5.5 m/s,
+    A_max=8.8 m/s^2,
+    J_max=100 m/s^3.
+
+Thus a second summation-by-parts step from physical velocity to physical
+displacement does NOT strengthen the assumptions.
+
+After the first exact block coboundary reduction, the unresolved physical
+boundary term has the form
+
+    R_g = sum_(B=1..M) g_B^T v_B,                           (A2-1)
+
+where, at one prediction per ~.1-s block,
+
+    g_B =
+      phi_va,B lambda_v,B
+      +phi_pa,B lambda_p,B
+      +phi_Sa,B lambda_S,B.                                (A2-2)
+
+Let L_B=t_(B+1)-t_B and p_B be the physical displacement primitive at the
+block boundary.  Taylor/integral remainder gives
+
+    v_B = (p_(B+1)-p_B)/L_B + eps_v,B,                     (A2-3)
+
+with
+
+    ||eps_v,B|| <= A_max L_B/2                              (A2-4)
+
+when v_B is the boundary velocity at the chosen end; the corresponding
+one-sided convention changes only the sign of the remainder.
+
+Define
+
+    h_B = g_B/L_B.                                          (A2-5)
+
+Then
+
+    R_g =
+      sum_B h_B^T(p_(B+1)-p_B)
+      +sum_B g_B^T eps_v,B.                                (A2-6)
+
+Discrete Abel gives exactly
+
+    sum_B h_B^T(p_(B+1)-p_B)
+      = h_M^T p_(M+1)-h_1^T p_1
+        -sum_(B=1..M-1)(h_(B+1)-h_B)^T p_(B+1).             (A2-7)
+
+Therefore
+
+    |R_g|
+      <= P_max[
+           ||h_1||+||h_M||
+           +sum||Delta h_B||
+         ]
+         +(A_max/2) sum_B L_B ||g_B||.                     (A2-8)
+
+This replaces the previous V_max * sum||g_B|| charge by:
+- P_max times first variation of the much smoother h_B=g_B/L_B;
+- an acceleration remainder weighted by L_B.
+
+### Divided-difference structure of g_B
+
+The integrated-OU coefficients satisfy
+
+    phi_va = tau(1-phi),
+    phi_pa = tau^2(x+exp(-x)-1),
+    phi_Sa = tau^3(.5x^2-x-exp(-x)+1),  x=h/tau.           (A2-9)
+
+For small h these are respectively
+
+    h+O(h^2/tau),
+    h^2/2+O(h^3/tau),
+    h^3/6+O(h^4/tau).                                      (A2-10)
+
+Hence at one prediction,
+
+    g_B/L_B
+      ~ (h/L_B) lambda_v
+        +(h^2/(2L_B)) lambda_p
+        +(h^3/(6L_B)) lambda_S.                            (A2-11)
+
+Since h~.005 and L_B~.1, the p and S reader contributions receive additional
+small factors ~.00125 and ~2.1e-5 relative to their raw components.  The
+leading v-reader factor is ~.05.
+
+This is the quantitative reason the second Abel step is promising.
+
+### What remains to prove
+
+The exact first variation is
+
+    Delta h_B =
+      Delta[(phi_va/L_B)lambda_v]
+      +Delta[(phi_pa/L_B)lambda_p]
+      +Delta[(phi_Sa/L_B)lambda_S].                         (A2-12)
+
+Reader jumps inside the block have already been Schur-eliminated/square-summed.
+At sync boundaries the mean reader is continuous.  Therefore Delta h_B is
+generated by:
+1. one prediction/tuner coefficient change;
+2. accumulated full-reader evolution over the preceding block, controlled in
+   the complete-word metric.
+
+A useful theorem now needs a source-uniform bound on the SECOND divided
+difference/variation of these three scaled LIN reader components.  If direct
+l1 variation is still too loose, the p and S terms admit third/fourth Abel
+steps because physical p is already bounded but no additional physical
+primitive beyond displacement is declared; therefore only one more Abel step
+is legally available on the physical side.  Any further smoothing must come
+from the reader dynamics themselves, not a new physical assumption.
+
+The target is
+
+    D2_reader =
+      ||h_1||+||h_M||+sum||Delta h_B||,                    (A2-13)
+
+with
+
+    |R_g| <= 8.1 D2_reader
+             +4.4 sum_B L_B||g_B||.                        (A2-14)
+
+This is the exact second-Abel physical bound under the existing MARINE MOTION
+contract.
+
+
+## 42. Quantitative second-Abel coefficient geometry and reader-normalization gap
+
+For
+
+    h_B=(1/L_B)[phi_va lambda_v+phi_pa lambda_p+phi_Sa lambda_S],
+
+the integrated-OU coefficients have exact integral representations
+
+    phi_va = int_0^h exp(-s/tau) ds <= h,
+    phi_pa = int_0^h (h-s) exp(-s/tau) ds <= h^2/2,
+    phi_Sa = int_0^h (h-s)^2/2 exp(-s/tau) ds <= h^3/6.    (Q2-1)
+
+These bounds are uniform for arbitrary tau>0 and avoid small-x expansion
+remainders.
+
+For h<=.006 and nominal activation-cell L=.1,
+
+    phi_va/L <= .06,
+    phi_pa/L <= 1.8e-4,
+    phi_Sa/L <= 3.6e-7.                                    (Q2-2)
+
+If actual cell lengths vary, replace .1 by the proved minimum activation-cell
+length before using these numbers.  The earlier rough p/S factors in section
+41 were too large because they missed powers of h; Q2-2 is the correct
+integrated-chain scaling.
+
+Thus, in Euclidean row norm,
+
+    ||h_B||
+      <= .06 ||lambda_v||
+         +1.8e-4 ||lambda_p||
+         +3.6e-7 ||lambda_S||.                             (Q2-3)
+
+The acceleration remainder satisfies
+
+    (A_max/2) L_B ||g_B||
+      <=4.4[
+          h ||lambda_v||
+          +(h^2/2)||lambda_p||
+          +(h^3/6)||lambda_S||
+        ] L_B,                                              (Q2-4)
+
+so per block its raw coefficient scales are at most
+.0264, 7.92e-5 and 1.584e-7 times the respective reader norms for
+L_B=.1,h=.006.
+
+### What the existing LIN action certificate does and does not provide
+
+The 16-s LIN matrix certificate proves a covariance lower comparison
+
+    P_LIN >= D A^-1 D /2,
+
+equivalently a precision ceiling on LIN endpoint errors.  It does NOT by
+itself bound an arbitrary backward adjoint lambda_L: reader scale is set by
+the terminal readout normalization and the complete-word joint reader.
+
+Therefore substituting the LIN precision matrix directly as a bound on
+||lambda_v||,||lambda_p||,||lambda_S|| would be invalid.
+
+For the present reader the terminal normalization IS fixed (unit transverse
+AW nominal-mean row).  The required quantity is the actual complete-word
+minimum-action reader restricted to the LIN boundary coordinates.  If its
+action is J_reader, then dual Cauchy gives
+
+    |c^T lambda_L|
+      <= sqrt(c^T P_LIN c) sqrt(lambda_L^T P_LIN^-1 lambda_L), (Q2-5)
+
+and the second factor is part of the normalized reader action.  A useful
+numeric D2 bound therefore requires a source-uniform upper bound on this
+NORMALIZED reader action at the ~.1-s boundaries, not another covariance
+lower bound.
+
+### Two-norm formulation
+
+Let a_B be the three-vector of scaled coefficients
+
+    a_B=[phi_va/L_B,phi_pa/L_B,phi_Sa/L_B].
+
+Let W_B be the exact 3x3 covariance/action metric induced on the LIN reader at
+the boundary by the complete-word minimum-action construction.  Then
+
+    |h_B|^2 <= (a_B W_B^-1 a_B^T)(lambda_L^T W_B lambda_L). (Q2-6)
+
+The first factor is pure coefficient geometry and is strongly suppressed by
+Q2-2.  The second is square-summed reader action.
+
+The same representation applies to Delta h_B using the difference of two
+coefficient rows and the chronological reader transport.  If the stacked
+operator of all boundary rows has norm C_stack in the complete-word action
+metric, then
+
+    D2_reader <= sqrt(M+1) C_stack                           (Q2-7)
+
+by generic Cauchy; this still costs sqrt(170) and is not enough a priori.
+To avoid it, one must bound the l1 operator norm of the STACKED divided-
+difference rows directly.  This is now a finite deterministic reader matrix
+problem, not a covariance theorem.
+
+### Remaining exact calculation
+
+Construct the normalized complete-word reader L_min already used in the
+repository, sample its LIN boundary rows at the ~.1-s activation boundaries,
+and form the deterministic divided-difference operator
+
+    D2 L_LIN = [h_1; h_2-h_1; ...; h_M-h_(M-1); h_M].       (Q2-8)
+
+The required constant is the induced action-to-l1 norm
+
+    C_D2 = sup_(||z||_action<=1) ||D2 L_LIN z||_(2,1).      (Q2-9)
+
+A generic spectral bound reintroduces sqrt(M); a useful proof needs the
+special banded/Volterra structure of L_min.  The coefficient scales Q2-2 make
+this plausible, but the existing LIN covariance certificate alone does not
+supply C_D2.
+
+Thus no honest explicit D2_reader number follows yet from the current
+certificate.  What HAS closed analytically is the coefficient geometry; the
+remaining obstruction is precisely the normalized complete-word reader's
+divided-difference l1 norm.
+
+
+## 44. Dual divided-difference factorization: local slab term plus transport commutator
+
+Let Lambda_B be the full residual-functional adjoint of the normalized
+terminal-AW minimum-action reader at consecutive actual AW-sync boundaries.
+Collapse the literal homogeneous mean operations in slab B into M_B and stack
+the observation rows applied inside that slab into O_B, with the corresponding
+minimum-action reader weights ell_B.  Backward chronology gives exactly
+
+    Lambda_B = M_B^T Lambda_(B+1) - O_B^T ell_B.            (VD1)
+
+(Here O_B^T ell_B denotes the sum of the individually transported correction
+rows in their literal order; it is notation for the exact slab observation
+reader, not a commuted measurement stack.)
+
+Define the scaled LIN mixing row A_B by
+
+    h_B = A_B Lambda_B,
+
+where A_B is zero outside LIN (v,p,S) and on those coordinates contains the
+literal first-prediction coefficients divided by slab duration:
+
+    A_B|LIN = [phi_va/L_B, phi_pa/L_B, phi_Sa/L_B].         (VD2)
+
+Then an adjacent divided difference is
+
+    h_(B+1)-h_B
+      = [A_(B+1)-A_B M_B^T] Lambda_(B+1)
+        + A_B O_B^T ell_B.                                 (VD3)
+
+This is the exact common-future-tail cancellation formula.
+
+The second term is LOCAL: it uses only observation-reader weights in slab B.
+The first term is the only surviving future-tail dependence and is multiplied
+by the transport commutator
+
+    C_B := A_(B+1)-A_B M_B^T.                              (VD4)
+
+Thus the hoped-for statement "all common future columns cancel" is too
+strong.  The correct statement is that common future tails survive only
+through C_B.
+
+### Dual operator
+
+Let D2 h=[h_1,h_2-h_1,...,h_M-h_(M-1),h_M].  For dual block
+vectors y_i, substitute VD3 and interchange slab/source sums.  The dual
+functional splits exactly into
+
+    (D2 L)^T y = Local(y) + Tail(y),                        (VD5)
+
+where Local is block-banded in the slab observation/source columns and Tail
+is a Volterra sum of C_B^T y_B pulled through future boundary adjoints.
+
+No sqrt(M) is intrinsic to Local: disjoint unit-action source slabs can be
+combined by the complete-word square-sum.  The only possible long-horizon
+loss is Tail, controlled by the sequence C_B rather than by h_B itself.
+
+### Size of the commutator
+
+A_B already has the uniform coefficient geometry
+
+    |A_v|<=.06,
+    |A_p|<=1.8e-4,
+    |A_S|<=3.6e-7
+
+for h<=.006,L=.1.  Moreover M_B is the literal near-identity 0.1-s
+closed-loop transition.  Expanding VD4,
+
+    C_B =
+      (A_(B+1)-A_B)
+      - A_B(M_B^T-I).                                      (VD6)
+
+The first term is tuner/cadence coefficient variation.  The second is a
+small row A_B multiplying the full slab state transition defect.  This is a
+much smaller object than the full reader variation, but it is not zero and
+must be enclosed.
+
+Importantly, using ||M_B-I|| as an arbitrary full-state Euclidean norm would
+again be disastrous because corrections can rotate AG/BA coordinates.  Only
+the columns seen by A_B matter.  Therefore compute/enclose the THREE pulled
+rows
+
+    A_B M_B^T                                               (VD7)
+
+directly from the literal slab chronology.  This retains all Kalman
+cancellations.
+
+### Source-slab norm reduction
+
+If the local term has per-slab action operator L_B^loc and the commutator
+tail has operator C_B Phi_(future), the exact mixed-norm target can be bounded
+without event-count Cauchy provided one proves
+
+    sup_s sum_(B<=s) || C_B Phi_(s<-B) ||_* <= C_tail       (VD8)
+
+and
+
+    sup_s ||L_s^loc||_* <= C_local.                         (VD9)
+
+Then
+
+    C_D2 <= C_endpoint + C_local + C_tail.                 (VD10)
+
+These are Volterra row-sum bounds; there is no sqrt(170).  The future
+transport in VD8 is the SAME full correction/prediction transport already
+present in the normalized reader, not a product of gain norms.
+
+### Status
+
+The infrastructure now exports every ingredient needed to evaluate VD3 on a
+frozen shipping word: exact sync boundaries, Lambda_B, slab operation
+intervals and durations.  The next source-uniform theorem is therefore not a
+generic mixed-norm estimate.  It is an enclosure of the local rows
+A_B O_B^T ell_B and the commutator rows C_B=A_(B+1)-A_B M_B^T over the
+coupled shipping slab class.
+
+This is narrower than the previous D2 obstruction and identifies precisely
+what must be small for the Volterra cancellation to remove the sqrt(170)
+factor.
+
+
+## 45. Local slab leverage bound and commutator decomposition
+
+For slab B write the exact backward recurrence
+
+    Lambda_B=M_B^T Lambda_(B+1)-O_B^T ell_B,
+
+and h_B=A_B Lambda_B.  The local divided-difference contribution is
+
+    l_B^loc=A_B O_B^T ell_B.                               (LC1)
+
+Let Sigma_B be the covariance/action Gram of the slab observation-source rows
+in the SAME augmented design after marginalizing the slab's process/source
+columns consistently.  Then weighted Cauchy gives
+
+    |l_B^loc|^2
+      <= chi_B^2 (ell_B Sigma_B ell_B^T),                  (LC2)
+
+where the local leverage is
+
+    chi_B^2 =
+      A_B O_B^T Sigma_B^-1 O_B A_B^T.                     (LC3)
+
+This is the correct source-uniform local constant.  It applies A_B before
+Cauchy, retaining the coefficient ceilings
+(.06,1.8e-4,3.6e-7), and introduces no count of corrections in the slab.
+
+The complete reader action is the square-sum of the slab actions plus process
+and root residual action, so the local terms can be stacked in the action
+metric.  A useful theorem needs only
+
+    sup_B chi_B <= chi_0.                                  (LC4)
+
+Because Sigma_B includes the actual effective measurement covariance, a
+lower noise floor gives a finite chi_0.  Computing chi_0 by replacing O_B
+with an arbitrary row norm would be too coarse; use the literal slab rows.
+
+### Commutator
+
+The nonlocal term is
+
+    C_B Lambda_(B+1),
+    C_B=A_(B+1)-A_B M_B^T.                                 (LC5)
+
+Factor the slab homogeneous map chronologically into predictions/resets and
+Kalman corrections.  Pull A_B forward through this factorization.  Across a
+correction A_k=I-K_k H_k,
+
+    a A_k^T = a - (a H_k^T) K_k^T.                         (LC6)
+
+Thus the correction part of the commutator is a sum of measurement-port rows,
+not a free Euclidean matrix defect.  For S and magnetic H_aw=0 but A_B lives
+on v,p,S, so S can couple directly through its S column; accelerometer can
+couple through the AW/AG/BA columns after prediction mixing.  Each term has
+the form
+
+    scalar/vector port coefficient * K_k^T Lambda_future,   (LC7)
+
+and the latter is exactly the q_k variable charged by the corrected-loss
+square q_k^T S_k q_k.
+
+Across a prediction F_k, the row evolves deterministically:
+
+    a F_k^T.                                                (LC8)
+
+For the pure LIN integrated chain this can be computed analytically from
+phi_va,phi_pa,phi_Sa and the block duration.  Therefore split
+
+    C_B = C_B^pred + C_B^port,                              (LC9)
+
+where C_B^pred is tuner/integration geometry and C_B^port is retained as
+corrected-loss ports.
+
+This is essential: there is no source-uniform useful raw Euclidean bound on
+C_B from tuner ranges alone because M_B contains covariance-dependent gains.
+Trying to bound ||C_B|| directly repeats the failed arbitrary-gain
+relaxation.
+
+### Volterra bound in the correct norm
+
+The dual tail is controlled by
+
+    Tail = sum_B C_B^pred Lambda_(B+1)
+           + sum_ports alpha_k q_k.                         (LC10)
+
+The port sum is square-summed globally by the existing corrected loss.  Only
+C_B^pred requires an l1/Volterra row-sum bound.  It is covariance independent.
+
+Hence the source-uniform constants should be
+
+    chi_0 = sup_B sqrt(A_B O_B^T Sigma_B^-1 O_B A_B^T),    (LC11)
+
+    C_pred = sup_s sum_(B<=s)
+       || C_B^pred Phi_pred(s<-B) ||,                       (LC12)
+
+with all correction ports removed from Phi_pred and charged separately in
+their action metric.
+
+This is narrower than bounding the full C_B.  The remaining deterministic
+matrix calculation is the pure prediction/reset integrated-chain
+commutator C_B^pred; the stochastic/Kalman part is already covered by exact
+loss squares.
+
+
+## 46. Pure prediction commutator: exact neutral-integrator formula
+
+Work on one LIN axis in state order (v,p,S,a).  The literal prediction is
+
+    F(H,tau)=
+      [1      0   0   phi_va
+       H      1   0   phi_pa
+       H^2/2  H   1   phi_Sa
+       0      0   0   phi].                                (PC1)
+
+The second-Abel boundary row has no AW component:
+
+    A_B=[a_B,b_B,c_B,0],
+
+with, for the selected first prediction of slab B divided by slab duration L_B,
+
+    a_B=phi_va(h_B,tau_B)/L_B,
+    b_B=phi_pa(h_B,tau_B)/L_B,
+    c_B=phi_Sa(h_B,tau_B)/L_B.                             (PC2)
+
+For a PURE prediction interval of total duration H, direct multiplication
+gives the exact identity
+
+    A_B F(H,tau)^T
+      =[ a_B,
+         H a_B+b_B,
+         H^2 a_B/2+H b_B+c_B,
+         0 ].                                               (PC3)
+
+All OU-column coefficients cancel from PC3.  In particular the transported
+row has zero AW component and is independent of phi,phi_va,phi_pa,phi_Sa of
+the slab transport.  This is because A_B sees only the neutral v->p->S
+integrator rows.
+
+Therefore the pure-prediction commutator between adjacent slabs is
+
+    C_B^pred =
+      [ a_(B+1)-a_B,
+        b_(B+1)-b_B-H_B a_B,
+        c_(B+1)-c_B-H_B b_B-H_B^2 a_B/2,
+        0 ],                                                (PC4)
+
+axiswise, before attitude/reset coordinate transport.  No covariance, Kalman
+gain, sigma_aw or R_S enters.
+
+### Uniform coefficient bounds
+
+The integral representations give
+
+    0<=a_B<=h_B/L_B,
+    0<=b_B<=h_B^2/(2L_B),
+    0<=c_B<=h_B^3/(6L_B).                                  (PC5)
+
+For h_B<=.006 and a nominal L_B=.1 these are
+
+    a<=.06, b<=1.8e-4, c<=3.6e-7.
+
+If H_B is the full ~.1-s slab duration, the polynomial transport terms in PC4
+have ceilings
+
+    H_B a_B <= .006,
+    H_B b_B <=1.8e-5,
+    H_B^2 a_B/2 <=3e-4                                     (PC6)
+
+for H_B=.1.  Thus the p-component commutator is dominated by the coefficient
+change Delta b and a .006 neutral-integrator term; the S component by
+Delta c, 1.8e-5 and 3e-4 terms.
+
+### Important consequence
+
+Even with CONSTANT tuner and cadence, PC4 is not zero because A_B is the
+first-prediction divided-difference row while F(H)^T transports across the
+whole slab.  The common-tail cancellation therefore leaves a deterministic
+neutral-integrator commutator of order H_B a_B.
+
+This is not a long-horizon instability: the triangular neutral integrator
+has exact polynomial structure.  Its Volterra sum must be combined across
+slabs before norms.  Repeatedly summing the -H a and -H b-H^2 a/2 terms
+telescopes into first/second divided differences of the boundary polynomial
+reader.  Bounding PC4 slab-by-slab in l1 would unnecessarily pay O(M).
+
+### Tuner variation
+
+Only the coefficient differences
+
+    Delta a_B, Delta b_B, Delta c_B                         (PC7)
+
+carry tau/h/L variation.  Since
+a=phi_va(h,tau)/L, b=phi_pa/L, c=phi_Sa/L, their source-uniform variation
+must use the applied tuner chronology and sample/slab timing.  The large
+neutral polynomial terms in PC4 should be telescoped exactly; only PC7 needs
+a variation bound.
+
+Thus C_pred has decomposed again:
+
+    C_B^pred = C_B^neutral + Delta A_B,                     (PC8)
+
+where C_neutral is an exactly summable triangular-integrator coboundary and
+Delta A_B is the small tuner/cadence coefficient variation.
+
+The next calculation is to telescope C_neutral over all slabs in the dual
+Volterra sum, leaving endpoint polynomial terms, and separately bound the
+total variation of (a_B,b_B,c_B) under the applied tau/h/L chronology.
+
+
+## 47. Neutral Volterra telescoping closes; first-sample coefficient TV does not
+
+Define the neutral three-state translation semigroup
+
+    N(H)=
+      [1 0 0
+       H 1 0
+       H^2/2 H 1],
+
+so N(H1)N(H2)=N(H1+H2).  For the row
+A_B=[a_B,b_B,c_B], section 46 gives exactly
+
+    A_B N(H_B)^T
+      =[a_B,H_B a_B+b_B,H_B^2 a_B/2+H_B b_B+c_B].          (NT1)
+
+Hence the pure prediction commutator is the covariant difference
+
+    C_B^pred=A_(B+1)-A_B N(H_B)^T.                         (NT2)
+
+Let X_B be cumulative neutral time from boundary B to a fixed terminal
+boundary, so X_B=H_B+X_(B+1).  Right-transport NT2 to that common terminal
+frame:
+
+    C_B^pred N(X_(B+1))^T
+      = A_(B+1)N(X_(B+1))^T
+        -A_B N(X_B)^T.                                     (NT3)
+
+Therefore the Volterra sum telescopes EXACTLY:
+
+    sum_(B=r..s) C_B^pred N(X_(B+1))^T
+      = A_(s+1)N(X_(s+1))^T-A_r N(X_r)^T.                 (NT4)
+
+The apparent slab terms -H a and -H b-H^2 a/2 do not accumulate at all.
+For constant intrinsic A_B they reduce entirely to endpoint polynomial rows.
+More generally, after placing every A_B in a common neutral frame, only
+changes of the intrinsic A_B remain.  This closes item (1) without any
+sqrt(number of slabs) or O(M) neutral charge.
+
+### First-sample coefficient variation is not source-uniform
+
+The current definition uses the first physical prediction of each slab:
+
+    a_B=phi_va(h_B,tau_B)/L_B,
+    b_B=phi_pa(h_B,tau_B)/L_B,
+    c_B=phi_Sa(h_B,tau_B)/L_B.                             (NT5)
+
+The declared sampling contract bounds h_B in [.004,.006] but does not impose
+a total-variation bound on the sequence of sample intervals.  An admissible
+sequence can alternate .004,.006 at every slab.  Since phi_va is strictly
+increasing in h,
+
+    TV(a_B)
+
+then grows linearly with the number of slabs even with constant tau and L.
+The same issue affects b_B,c_B.  Thus no horizon-independent useful uniform
+TV(a,b,c) follows from the current chronology.
+
+This is not a physical obstruction; it is an artifact of selecting ONE
+sample to represent a .1-s slab.
+
+### Correct block coefficient: use the whole slab
+
+The first-sample row must be replaced by the exact block-integrated OU
+coefficient.  For a slab with predictions k=1..n and no correction terms
+(the latter remain separate ports), define the intrinsic physical leakage
+row by summing each prediction's contribution transported through the later
+PURE prediction maps.  Semigroup composition gives exactly the same
+coefficient as one integrated-OU prediction over the total slab duration L_B
+when tau is constant inside the applied-tuner cell:
+
+    Abar_B =
+      [ Phi_va(L_B,tau_B)/L_B,
+        Phi_pa(L_B,tau_B)/L_B,
+        Phi_Sa(L_B,tau_B)/L_B ].                            (NT6)
+
+This coefficient is independent of the subdivision h_k and therefore immune
+to sample-jitter TV.  It uses the entire slab rather than a representative
+first sample.
+
+If tau changes only at the slab boundary (the applied tuner chronology),
+NT6 is exact.  If a commit can occur inside a chosen sync slab, split the
+slab at that commit; no new physical assumption is needed.
+
+The uniform sizes for L<=.1 are
+
+    abar<=1,
+    bbar<=L/2<=.05,
+    cbar<=L^2/6<=.0016667,                                 (NT7)
+
+which are larger than the first-sample coefficients but have controlled
+chronology.  More importantly, their neutral covariant differences telescope
+by NT3--NT4; only tuner/boundary variation remains.
+
+### Tuner variation
+
+For fixed L, Phi_va(L,tau)/L is monotone in tau and lies in [0,1].
+The applied tau smoother remains in [.02,12].  A total-variation bound on
+tau_applied over a 17-s word is NOT implied merely by this range: a bounded
+sequence can oscillate.  The actual exponential adaptation law does constrain
+per-commit motion, but without a bound on target-frequency variation its
+total variation can still scale with the number of commits.
+
+Therefore item (2), as originally phrased as TV(a_B,b_B,c_B), does not close
+source-uniformly from current assumptions.
+
+The correct use of NT4 is stronger: do not bound coefficient TV separately.
+Keep the covariant differences C_B^pred inside the telescoping identity.
+Then arbitrary intrinsic coefficient changes contribute only through endpoint
+rows when transported by the neutral semigroup; correction-induced departures
+are already separated as ports.  Any non-neutral effect of changing tau lies
+only in the AW column of F, which A_B annihilates in PC3.
+
+Thus for the PURE (v,p,S) prediction commutator, tuner variation also drops
+out after covariant telescoping.  No TV(tau) theorem is required.
+
+Conclusion:
+- neutral prediction Volterra tail: exact endpoint telescoping CLOSED;
+- raw first-sample TV(a,b,c): cannot be uniformly bounded and should be
+  discarded;
+- replace first-sample A_B by the exact whole-slab intrinsic row or retain
+  the covariant-difference identity directly;
+- the remaining nonlocal tail is no longer a prediction/tuner term.  It is
+  only the correction/reset port departure from the neutral semigroup, which
+  belongs in the already square-summed action framework.
+
+
+## 48. Assembly audit: global neutral endpoint collapse is not quantitatively admissible
+
+The remaining physical bound was to combine:
+(i) the neutral endpoint polynomial charge,
+(ii) local leverage chi_0,
+(iii) globally square-summed correction/reset ports.
+
+Before assigning numbers, the neutral endpoint normalization must be audited.
+
+Section 47 transports every covariant difference to one common future frame:
+A_B N(X_B)^T.  Algebraically this telescopes exactly.  But for a 17-s window,
+
+    A N(X)^T =
+      [a, X a+b, X^2 a/2+X b+c].                           (AS1)
+
+Even with a<=1 for the whole-slab intrinsic row, the S coefficient at X=17
+can be O(144).  Multiplying such a far-frame endpoint row by the declared
+physical displacement bound P_max=8.1 is enormous.  Thus "telescope globally,
+then apply the displacement norm" destroys the local primitive scaling.
+
+The physical displacement bound is translation-local: it controls p(t) in
+the chosen physical frame, while N(X)^T is the estimator integrated-chain
+reader translation.  These cannot be paired after an arbitrary 17-s neutral
+reader transport without carrying the corresponding physical polynomial
+primitive transformation.
+
+Therefore the correct deterministic estimate must keep each covariant
+difference paired with the LOCAL displacement increment/endpoints before the
+long neutral transport.  The Volterra identity is still useful for the
+ACTION/source operator, but not as a single far-terminal physical endpoint
+bound.
+
+### Local endpoint charge
+
+On one slab of duration L<=.1, the whole-slab intrinsic row satisfies
+
+    abar=phi_va(L,tau)/L <=1,
+    bbar<=L/2<=.05,
+    cbar<=L^2/6<=.001667.                                  (AS2)
+
+The second-Abel local endpoint term is therefore bounded with the local
+physical displacement/velocity primitives without X^2 growth.  Adjacent
+local endpoints cancel algebraically in the signed sum; correction-port
+departures are handled by action.  Do not transport the physical endpoint
+row through N(X) before applying P_max.
+
+### Leverage and port terms cannot yet be assigned a source-uniform number
+
+The local leverage is
+
+    chi_B^2=A_B O_B^T Sigma_B^-1 O_B A_B^T.                (AS3)
+
+This is finite on every frozen word.  A source-uniform chi_0 requires a
+uniform enclosure of the literal slab observation design and its marginalized
+source Gram Sigma_B.  Measurement-noise floors alone are insufficient if O_B
+contains carried attitude/BA geometry with no source-uniform AG covariance
+ceiling; using a raw H norm would repeat the G0/covariance circularity.
+
+Likewise the globally square-summed correction/reset port action is useful
+only after normalizing the terminal-AW minimum-action reader by a
+SOURCE-UNIFORM action ceiling.  The existing joint-reader theorem explicitly
+records that its historical action ceiling is still open source-uniformly.
+The newly constructed AW-target reader inherits that same issue.
+
+Hence there is presently no honest source-uniform numeric value for either
+chi_0 times reader action or the global port-action contribution.
+
+### What is closed and what remains
+
+Closed analytically:
+- physical acceleration appears only in OU prediction defects;
+- two Abel steps are legal (V_max,P_max declared);
+- neutral v->p->S prediction geometry telescopes exactly;
+- sample-jitter/tuner TV need not be bounded;
+- S and accelerometer innovations are exact Schur ports;
+- correction ports are square-summed, not l1 accumulated.
+
+Still open:
+- a source-uniform normalized terminal-AW reader action on the retained
+  shipping trace class;
+- equivalently, a source-uniform local leverage/port bound for that reader.
+
+This is the SAME historical-reader action obstruction already recorded for
+the AG joint reader, now in the terminal-AW target.  It cannot be bypassed by
+the neutral telescoping.
+
+The next genuine theorem is therefore to prove a source-uniform action ceiling
+for the terminal-AW minimum-action reader on one short (~.1-s) slab or on the
+17-s qualified word, using the deterministic physical/BA/field constraints
+already established here.  A frozen carried-word value can diagnose margin
+but cannot certify it.
+
+
+## 49. Terminal-AW action ceiling: reduction and causal-reader route
+
+For an arbitrary terminal target row q, the joint minimum-action theorem gives
+
+    B_q^* = Pi_q + Ttilde_q I_eff^-1 Ttilde_q^T,            (AWC1)
+
+with the SAME
+
+    I_eff=O_h^T Sigma^-1 O_h                               (AWC2)
+
+as the AG reader.  I_eff depends only on the six unknown AG root columns and
+the complete source/observation design, not on the terminal target.
+
+Therefore a source-uniform floor I_eff>=mu I would immediately imply a
+terminal-AW ceiling:
+
+    B_AW^*
+      <= (1+1/g) T_AW T_AW^T
+         +(1+g) T_h,AW I_eff^-1 T_h,AW^T.                  (AWC3)
+
+The source-driven AW terminal covariance T_AW T_AW^T is uniformly bounded by
+the OU stationary/process construction plus the established nuisance/source
+envelopes on a finite word, and T_h,AW is a finite product of bounded literal
+mean maps.  Thus the only coercivity issue in AWC3 is mu>0.
+
+But the current AG reader proof explicitly records that a source-uniform
+moving-window I_eff floor remains OPEN.  Hence AWC3 does not create a new
+proof of the requested AW ceiling; it reduces to the existing six-column
+historical-reader obstruction.
+
+### Why T_h,AW is not zero
+
+Shipping prediction has no AG->AW mean block, but an accelerometer correction
+
+    A=I-KH
+
+does.  Its AW/AG block is
+
+    A_AW,AG = -K_AW H_AG.                                  (AWC4)
+
+Therefore an AG root perturbation can enter terminal AW through accepted
+accelerometer corrections, and T_h,AW is generally nonzero.
+
+### Causal cancellation identity
+
+The same structure provides a more promising explicit trial reader.  At the
+correction that creates the AG->AW transfer,
+
+    delta a_AW^+ =
+      delta a_AW^- - K_AW H_AG delta h^- - ...             (AWC5)
+
+while the raw auxiliary observation contains
+
+    y_i = H_AG delta h^- + H_n delta n^- + V_i s_i.         (AWC6)
+
+Choose the local trial-reader block
+
+    L_i^AW = - (future AW transport) K_AW                  (AWC7)
+
+with sign according to the residual convention.  Its contribution L_i y_i
+cancels exactly the AG-root term created by -K_AW H_AG at that event.  Repeat
+this chronologically for every accelerometer correction.  Magnetic/S
+corrections have no direct H_AW measurement row but can alter future
+transport; their effects are included in the future AW transport in AWC7.
+
+Backward induction then gives exact AG-root cancellation without solving a
+six-column inverse: it is simply the Duhamel expansion of the corrected mean
+recursion.
+
+The action of this CAUSAL reader consists of:
+1. transported AW process/sync factors;
+2. gain-weighted accelerometer noise factors
+       (future transport) K_AW V_i;
+3. nuisance-root residual after AG cancellation;
+4. S/mag correction effects only through their future transport.
+
+This is exactly the actual-gain trial estimator of terminal AW.
+
+### Source-uniform ceiling target for the causal reader
+
+Because the minimum-action reader is no worse than any feasible reader,
+
+    B_AW^* <= B_AW^causal.                                 (AWC8)
+
+A source-uniform AW ceiling therefore follows if one can bound the causal
+action directly.  Joseph gives a telescoping covariance budget for the
+gain-weighted noise terms:
+
+    K_i R_i K_i^T <= P_i^- - A_i P_i^- A_i^T,              (AWC9)
+
+with subsequent future transport.  Summed chronologically, these measurement
+terms plus process factors reconstruct the terminal AW covariance generated
+from ZERO AG root and the bounded nuisance root.  Consequently
+
+    B_AW^causal
+
+is bounded by the diffuse-AG auxiliary Riccati terminal AW marginal, but this
+statement alone is circular unless that marginal is bounded independently.
+
+For AW specifically, OU prediction supplies phi<1 and fresh stationary
+process covariance; S/accelerometer corrections are covariance-decreasing
+globally.  The remaining source-uniform theorem can therefore be reduced to
+an AW-marginal covariance upper bound with nuisance root bounded, WITHOUT an
+AG root ceiling, by showing that AG-root covariance injected into AW by
+corrections is canceled in the causal reader action rather than carried as
+state covariance.
+
+This is narrower than I_eff coercivity: construct B_AW^causal backward and
+bound its residual nuisance/process/noise action directly using the already
+proved nuisance upper comparison and OU stationary AW process budget.
+
+The next calculation should write the exact backward action recursion for
+this causal AW reader and test whether its action obeys a scalar/matrix
+Lyapunov inequality driven only by the OU AW process and bounded nuisance
+sector.  If yes, it proves B_AW,* without solving the open AG information
+floor.
+
+
+## 50. Causal terminal-AW reader: exact backward action recursion
+
+Let Y^+ be the terminal-AW trial-reader residual row immediately AFTER an
+accepted correction.  Choose the causal observation-reader block
+
+    L_i = Y^+ K_i.                                         (CA1)
+
+The correction residual pulls backward as
+
+    Y^- = Y^+ - L_i H_i
+        = Y^+(I-K_i H_i)
+        = Y^+ A_i.                                         (CA2)
+
+The reader action added by the measurement noise is
+
+    Delta B_i = L_i R_i L_i^T
+              = Y^+ K_i R_i K_i^T Y^{+T}.                  (CA3)
+
+Joseph gives
+
+    P_i^+=A_i P_i^- A_i^T+K_i R_i K_i^T.                  (CA4)
+
+Therefore, for ANY P_i^-,
+
+    Y^- P_i^- Y^{-T}+Delta B_i
+      =Y^+ P_i^+ Y^{+T}.                                   (CA5)
+
+Thus an accepted Kalman correction is action-neutral for this causal trial
+reader: its gain/noise contribution exactly completes the pulled-back state
+action.  No gain norm or information floor is required.
+
+Across a prediction x^+=F x^-+U w,
+
+    Y^-=Y^+ F,                                              (CA6)
+    B^-=B^+ + (Y^+ U)(Y^+ U)^T.                            (CA7)
+
+Across a deterministic reset G,
+
+    Y^-=Y^+ G,                                              (CA8)
+
+with no source action addition.  Sync/process factors are predictions with
+identity mean transition and enter CA7.
+
+Initialize at the terminal transverse AW row
+
+    Y_N=E_aw^T u, B_N=0.                                   (CA9)
+
+Iterating CA1--CA8 backward gives the exact causal reader.  Its total action
+at the historical root is
+
+    B_AW^causal
+      = B_sources + Y_root,n U_n Y_root,n^T,               (CA10)
+
+provided
+
+    Y_root,h=0.                                             (CA11)
+
+The causal observation weights CA1 cancel every AG-root contribution created
+by the same corrections, so CA11 follows by backward Duhamel induction when
+the uncorrected prediction/reset path has no nuisance-to-AG/AW source that
+recreates an uncancelled AG terminal component.  This condition must be
+checked on the literal reset/prediction structure; it is not assumed.
+
+### Lyapunov interpretation
+
+For any auxiliary root covariance with nuisance block <=U_n and arbitrary AG
+block/cross covariance, CA11 removes the AG root.  Equations CA5--CA8 show
+that the causal action is exactly the quadratic storage propagated by the
+literal covariance recursion with that AG root contribution deleted.
+
+Corrections cannot increase this storage: their apparent reader-noise action
+is exactly the Joseph completion.  All growth comes from:
+- prediction process/sync factors CA7;
+- the bounded nuisance-root residual CA10;
+- deterministic resets through row transport.
+
+Hence the desired source-uniform ceiling reduces to bounding the backward row
+Y under prediction/reset chronology and the accumulated process factors.
+
+### OU/LIN row recursion
+
+On one LIN axis, write Y_L=(y_v,y_p,y_S,y_a).  Across a pure OU prediction
+of duration h,
+
+    y_a^- =
+      phi_va y_v^+ + phi_pa y_p^+
+      +phi_Sa y_S^+ +phi y_a^+,                            (CA12)
+
+while
+
+    y_v^-=y_v^+ + h y_p^+ +h^2 y_S^+/2,
+    y_p^-=y_p^+ + h y_S^+,
+    y_S^-=y_S^+.                                           (CA13)
+
+Thus backward prediction contains neutral polynomial growth in (v,p,S), even
+though the AW component has phi<1.  A terminal AW row has y_v=y_p=y_S=0
+initially, but corrections can create LIN v/p/S components (notably S
+pseudo-updates).  Therefore an AW-only scalar Lyapunov recursion does NOT
+close.
+
+However the neutral components are exactly the same triangular chain already
+handled by the two-Abel/covariant-telescoping argument.  Their polynomial
+growth should not be bounded as state action over a long horizon; retain them
+as local port/coboundary terms.
+
+### Consequence for the ceiling
+
+CA5 proves the key correction theorem: Kalman corrections do not create an
+unbounded causal-reader action.  But a global B_AW,* still needs control of
+the backward neutral LIN row generated by S/other ports and deterministic
+resets.  The existing nuisance upper comparison U_n can close CA10 only if
+the ROOT residual Y_root,n is uniformly bounded.
+
+Therefore the remaining ceiling theorem is now
+
+    ||Y_root,n||_(U_n)² + sum_prediction ||Y^+ U||² <= B_* (CA14)
+
+for the causal row generated by CA1--CA9, with Y_root,h=0 exactly.
+
+This is strictly narrower than the six-column I_eff problem: no inverse
+information matrix appears.  It is a backward row-energy bound driven by
+bounded process factors and neutral LIN port components.
+
+The next calculation should prove CA11 exactly for the literal shipping block
+structure, then apply the neutral-chain telescoping already established to
+Y_root,n and the prediction-factor sum in CA14.  If those are bounded, the
+terminal-AW source-uniform action ceiling follows directly.
+
+
+## 51. Exact AG-root cancellation of the causal terminal-AW reader
+
+Let h0 be the six-dimensional AG root and let
+
+    Z_k = partial x_k / partial h0                            (AR1)
+
+be its 21x6 sensitivity along the frozen literal mean word.
+
+On the correction-free skeleton, shipping proof maps have:
+- prediction block diagonal in AG / LIN / BA;
+- sync identity mean map;
+- recorded left-error reset acting inside AG attitude coordinates only.
+
+Therefore the correction-free skeleton has no AG->LIN/AW mean block.  In
+particular a terminal AW row q_aw satisfies
+
+    q_aw Z_N^(skeleton)=0.                                  (AR2)
+
+Accepted corrections are the only operations that can transfer AG root
+sensitivity into AW/LIN.
+
+At correction i,
+
+    Z_i^+ = A_i Z_i^-,
+    A_i=I-K_i H_i.                                         (AR3)
+
+For the causal reader, with backward residual row Y_i^+ immediately after the
+correction, choose
+
+    L_i=Y_i^+ K_i.                                         (AR4)
+
+Then the residual root coefficient across that correction is
+
+    Y_i^+ Z_i^+ =
+      Y_i^+(I-K_i H_i)Z_i^-
+      =Y_i^+ Z_i^- - L_i H_i Z_i^-.                        (AR5)
+
+Thus the observation-reader term cancels EXACTLY the piece of AG-root
+sensitivity removed/created by the correction.
+
+Across a deterministic mean map F (prediction or reset),
+
+    Z^+=F Z^-,
+    Y^-=Y^+ F,                                              (AR6)
+
+so
+
+    Y^- Z^- = Y^+ Z^+.                                     (AR7)
+
+Hence the root-residual pairing is invariant through every non-correction
+operation and changes at a correction exactly by the reader observation term
+AR5.
+
+Backward induction over the complete word therefore yields
+
+    Y_root E_h
+      = q_aw Z_N^(skeleton)
+      =0.                                                   (AR8)
+
+Equivalently, the causal reader satisfies the six exact feasibility equations
+
+    L_causal O_h = T_h,AW.                                  (AR9)
+
+No information matrix, pivot, magnetic geometry floor, G0 premise or AG
+covariance bound is used.  The cancellation is purely chronological and
+depends only on the literal block structure AR2.
+
+### Consequence for action
+
+The arbitrary AG root covariance and all AG/nuisance root cross covariance
+drop out of the causal-reader error action.  Its action is exactly
+
+    B_AW^causal =
+      sum_predictions ||Y_k U_k||^2
+      +sum_corrections ||L_i V_i||^2
+      +Y_root,n U_n Y_root,n^T.                            (AR10)
+
+Joseph completion from section 50 allows correction terms to be combined with
+the pulled state storage rather than bounded individually.
+
+Thus the source-uniform ceiling problem is now entirely nuisance/process:
+
+    B_AW^causal <= B_AW,*                                  (AR11)
+
+with no unknown AG-root term.
+
+### Remaining row-energy problem
+
+The nuisance root comprises LIN and BA.  Backward prediction gives the neutral
+LIN polynomial chain plus OU AW decay; BA has its declared slow transition.
+Corrections create nuisance row components, but their action is Joseph-charged.
+
+The neutral LIN components must be treated with the covariant telescoping from
+sections 40--47, not by a 17-s Euclidean row norm.  The desired energy bound
+should be organized into:
+1. local neutral-LIN endpoint/coboundary terms;
+2. OU AW process action;
+3. BA root/process action under the existing BA envelope/comparison;
+4. globally square-summed correction/reset port action.
+
+Because AR8 removes AG exactly, none of these terms needs the open six-column
+I_eff floor.
+
+The next quantitative calculation is to derive an explicit upper bound for
+AR10 by splitting Y_root,n into (LIN,BA), applying the established nuisance
+upper comparison U_n to the root residual, and using the neutral-chain
+telescoping to bound the LIN row without polynomial horizon growth.
+
+
+## 52. Explicit causal-reader action ceiling as an auxiliary Riccati marginal
+
+The four action pieces in AR10 should not be bounded separately.  Initialize
+an auxiliary covariance at the historical root by
+
+    P0_aux = diag(0_AG, U_n),                               (ACB1)
+
+with the already proved recurring nuisance comparison U_n.  Replay the SAME
+literal frozen prediction/process, accepted corrections and resets.
+
+Because the causal reader is exactly feasible and uses L_i=Y^+ K_i, the
+backward Joseph identities imply
+
+    B_AW^causal
+      = u^T (P_N_aux)_AW,AW u                              (ACB2)
+
+for the terminal transverse unit row u.  This is the standard trial-estimator
+duality: root nuisance action, prediction factors and measurement-noise
+reader action reconstruct exactly the auxiliary terminal covariance seen by
+the causal reader.
+
+Hence
+
+    B_AW^* <= B_AW^causal
+            <= lambda_max((P_N_aux)_AW,AW).                 (ACB3)
+
+This proves the requested source-uniform ceiling as soon as P_N_aux has a
+uniform nuisance/AW upper comparison.
+
+### Immediate finite ceiling
+
+The recurring nuisance theorem already supplies a source-uniform AW marginal
+ceiling
+
+    P_aa <= 156^2 = 24336                                   (ACB4)
+
+on regular A21 histories after the 17-s construction/service interval, with
+all nuisance cross blocks retained.  Since P0_aux<=the nuisance comparison
+and Riccati is monotone,
+
+    B_AW^causal <= 24336                                    (ACB5)
+
+for a unit AW coordinate on that recurring regular class.
+
+Thus a finite source-uniform normalized terminal-AW reader action ceiling
+DOES exist, independently of the open AG information floor:
+
+    B_AW,* = 24336                                          (ACB6)
+
+is a valid conservative choice under the nuisance theorem's stated scope.
+
+This closes the qualitative existence theorem requested in section 48.
+
+### Quantitative usefulness
+
+sqrt(B_AW,*)=156 is far too large for the gravity-scale signed-mean margin.
+Using ACB6 in local leverage/port Cauchy estimates would overwhelm
+g sigma_w.  Therefore the existence theorem is closed, but the useful
+quantitative ceiling remains open.
+
+Skipping corrections cannot improve it: prediction/reset-only propagation of
+U_n is even looser because neutral LIN uncertainty grows polynomially over
+17 s.  To obtain a useful B_AW,* one must retain the S and accelerometer
+conditioning that produced the recurring nuisance bound.
+
+The right quantitative object is therefore the AW marginal of the auxiliary
+Riccati recursion ACB1, not a sum of four independent action budgets.
+A source-uniform improvement can be obtained if the existing nuisance-upper
+proof is rerun specifically for the AW marginal with the literal recurring
+S/accelerometer service, instead of using the full five-block Cauchy
+comparison whose factor 5 and 17-s neutral envelopes dominate ACB4.
+
+### Narrow next target
+
+Prove directly on the recurring nuisance-only auxiliary recursion
+
+    (P_k_aux)_AW,AW <= B_aw_sharp I_3                       (ACB7)
+
+with B_aw_sharp small enough for the signed-reader margin.  AG root is zero
+in ACB1, but AG covariance generated by process/corrections is retained
+normally; no AG upper comparison is required at the root.
+
+The OU prediction alone has stationary AW variance sigma_aw^2<=16.  S and
+accelerometer corrections are covariance-decreasing in the full PSD order,
+although sync adds the bounded scheduled AW increment.  Therefore a
+candidate sharp scalar recursion is
+
+    p_aw^+ <= phi^2 p_aw + q_aw + Delta_sync               (ACB8)
+
+ONLY if cross-block correction effects are handled through Loewner order
+before projecting.  Since conditioning satisfies P^+<=P^- globally, it
+cannot increase the AW principal block.  Resets act only on AG and leave AW
+unchanged.  Thus ACB8 is valid across corrections/resets.
+
+Prediction is block diagonal AG/LIN/BA; within LIN, the AW prediction row is
+only phi times previous AW, so
+
+    P_aa^- = phi^2 P_aa^+ + Q_aa.                           (ACB9)
+
+No v/p/S cross term enters the AW marginal prediction.
+
+Consequently the AW marginal admits a CLOSED scalar upper recursion,
+independent of neutral LIN covariance.  This is the key simplification.
+
+With q_aw chosen by the OU discretization,
+    q_aw = sigma_aw^2(1-phi^2)
+for the stationary OU component, ACB9 gives
+
+    p^- <= phi^2 p^+ + sigma_aw^2(1-phi^2).                (ACB10)
+
+Corrections can only decrease p.  Sync inflation is the only extra positive
+AW term and must be bounded by its literal scheduled Delta.
+
+Therefore a sharp source-uniform ceiling is
+
+    p_aw <= max(p_aw,root, sigma_aw,max^2)
+            + accumulated/steady sync inflation allowance. (ACB11)
+
+The next calculation is now explicit: use the proved literal sync-inflation
+law to bound the scalar AW recursion ACB10--ACB11.  This should replace
+24336 by an O(16) ceiling, potentially making the final signed-reader budget
+quantitatively useful.
+
+
+## 53. Literal AW sync law gives the sharp causal-reader ceiling B_AW,* = 16
+
+The earlier scalar recursion treated AW covariance synchronization as an
+additive inflation. That is too pessimistic for the literal shipping code.
+
+The current congruent stationary synchronization does:
+1. read/symmetrize the current AW principal block P_aw;
+2. set Sigma=sym(Sigma_aw_stat);
+3. congruently rescale every AW cross-covariance using Cholesky factors when usable;
+4. assign exactly
+
+    Pext[AW,AW] = Sigma.                                    (SC1)
+
+Thus at every scheduled covariance sync,
+
+    P_aa^sync = Sigma_aw_stat.                              (SC2)
+
+The cross-covariance congruence does not alter SC2. The retained tuner
+envelope has
+
+    Sigma_aw_stat <= 16 I_3.                               (SC3)
+
+For one OU prediction,
+
+    P_aa^- = phi^2 P_aa^+ + Q_aa,
+    Q_aa=(1-phi^2) Sigma_aw_stat.                           (SC4)
+
+Hence
+
+    P_aa^- - Sigma = phi^2(P_aa^+ - Sigma).                (SC5)
+
+So if P_aa^+<=16 I and Sigma<=16 I, then P_aa^-<=16 I.
+
+An accepted Kalman correction satisfies P^+<=P^- globally, hence its AW
+principal block cannot increase. Attitude resets leave the AW principal block
+unchanged. A later sync resets it again to Sigma<=16 I.
+
+Therefore, after any sync at which SC2 is applied,
+
+    P_aa(k) <= 16 I                                        (SC6)
+
+for every subsequent regular shipping operation, irrespective of AG/LIN/BA
+cross covariance. If construction initializes P_aa<=16 I, this holds from
+construction onward; otherwise it holds from the first covariance sync.
+
+Section 52 identifies the causal terminal-AW reader action with the AW
+principal block of the corresponding auxiliary covariance. Therefore for
+every unit terminal AW direction on the regular post-sync class,
+
+    B_AW^causal <=16.                                      (SC7)
+
+Since the minimum-action reader is no worse,
+
+    B_AW^* <= B_AW^causal <=16.                            (SC8)
+
+Thus the desired source-uniform normalized terminal-AW action ceiling closes
+with the explicit constant
+
+    B_AW,* =16,    sqrt(B_AW,*)=4.                         (SC9)
+
+No additive sync allowance is needed.
+
+Scope: SC9 relies on the literal congruent stationary synchronization in
+current shipping OU-III. It is not a theorem for the historical additive
+floor law or a mode that disables/replaces this synchronization. It also uses
+the applied stationary target envelope Sigma_aw_stat<=16 I already present in
+the recurring nuisance proof.
+
+
+## 54. Insert B_AW,*=16: joint action budget and remaining physical-to-port constant
+
+The sharp reader ceiling gives
+
+    ||reader||_action <= sqrt(B_AW,*) = 4.                 (JB1)
+
+Do not allocate a separate factor 4 to local leverage and another factor 4
+to correction/reset ports.  They are orthogonal/source blocks of the SAME
+causal-reader action.  If the complete normalized source coordinates are
+partitioned into slab-local observation ports, process/sync ports and root
+nuisance ports, their squared reader coefficients satisfy
+
+    sum_blocks ||ell_block||_source^2 <=16.                (JB2)
+
+Let G_phys be the deterministic linear map from the bounded physical
+primitive charges produced by the two-Abel construction into these normalized
+source/port coordinates.  Then the complete port contribution obeys
+
+    |R_ports| <= ||G_phys||_(primitive -> action-dual) * 4. (JB3)
+
+Thus the former chi_0 and global correction-port constants should be combined
+into ONE physical-to-port operator norm
+
+    C_port := ||G_phys||.                                  (JB4)
+
+The desired numerical physical charge is
+
+    C_phys,total
+      <= C_endpoint + 4 C_port + C_sampling/jerk.          (JB5)
+
+No event-count or block-count factor occurs.
+
+### Threshold comparison
+
+For the worst field fraction sigma_w=1/5 and theta_max=6 deg, the previously
+derived exact-degeneracy budget left approximately
+
+    0.0338 m/s^2                                           (JB6)
+
+at T=17 s after physical velocity endpoint, attitude, BA and sensor charges.
+Therefore the robustified reader route closes that particular 17-s margin if
+
+    C_endpoint,new + 4 C_port + C_sampling,new
+       < 0.0338 m/s^2,                                     (JB7)
+
+after subtracting only charges not already included in the earlier budget.
+
+This inequality must avoid double counting: the two-Abel endpoint/sampling
+terms replace the earlier crude physical-mean term; BA/attitude/sensor defects
+already present in the 0.0338 calculation are not charged again through
+C_port unless the port map represents an additional residual.
+
+### What B_AW,*=16 does NOT supply
+
+JB1 is an action normalization, not by itself a deterministic mean charge.
+A numerical C_port is still required.  The earlier local leverage
+
+    chi_B^2=A_B O_B^T Sigma_B^-1 O_B A_B^T
+
+is one representation of the local part of C_port, but the complete
+physical-to-port map should be formed before taking norms so that common
+source columns and correction Schur cancellations are retained.
+
+The infrastructure now has exactly the needed frozen-word matrices:
+- terminal-AW causal/minimum-action reader;
+- actual sync slabs;
+- chronological adjoints;
+- D2 rows;
+- source/action factors.
+
+For a source-uniform theorem, C_port must be enclosed over the admitted
+shipping slab class.  Its coefficient geometry is independent of reader
+normalization and carries the exact integrated-chain factors established
+earlier.
+
+### Immediate analytic bound available from coefficient geometry
+
+For a <=.1-s local slab, the second-Abel map uses
+
+    phi_va/L <=1,
+    phi_pa/L <=.05,
+    phi_Sa/L <=.001667                              (whole-slab form)
+
+or the much smaller first-sample factors when used inside the exact local
+coboundary.  Therefore a crude Euclidean bound on C_port is O(1), which would
+give O(4 m/s^2) and fail JB7.  The proof requires the actual normalized
+measurement/source Gram to obtain the expected much smaller leverage; raw
+coefficient geometry alone cannot certify the 0.0338 margin.
+
+Conclusion: B_AW,*=16 closes the reader normalization problem, but the final
+numerical gravity-scale contradiction is NOT yet proved.  The single
+remaining quantitative constant is C_port, the source-uniform induced norm of
+the complete physical primitive -> normalized causal-reader port map.  A
+frozen carried-word C_port may diagnose whether the 0.0338 margin is
+realistic, but the theorem needs an enclosure over the shipping slab class.

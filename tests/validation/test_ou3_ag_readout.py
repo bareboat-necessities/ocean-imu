@@ -5,7 +5,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.ag_readout import (
-    augmented_design, coercivity_action_bound, diffuse_prior_posterior, joint_minimum_action_reader,
+    augmented_design, chronological_reader_adjoints, coercivity_action_bound, diffuse_prior_posterior, joint_minimum_action_reader, sync_divided_difference_rows,
     joint_reader_audit, reader_action_of,
     bootstrap, structured_root_upper, process_relative_to_structured_root,
     minimum_noise_reader, minimum_noise_action_from_information, certificate, coefficient_relaxation_obstruction, exact_readout,
@@ -189,6 +189,47 @@ class HistoricalReadoutTests(unittest.TestCase):
         lower = noise_action_lower(events)
         self.assertTrue(is_psd(add(action, lower, F(-1))))
         self.assertFalse(is_psd(add(lower, action, F(-1))))
+
+    def test_joint_reader_supports_terminal_aw_row(self):
+        events = supplied_fixture()
+        nuisance = identity(15)
+        design = augmented_design(events, nuisance, terminal_rows=[15])
+        self.assertEqual(design['terminal_rows'], [15])
+        self.assertEqual(len(design['T_h']), 1)
+        self.assertEqual(len(design['T']), 1)
+        joint = joint_minimum_action_reader(design)
+        self.assertEqual(len(joint['reader']), 1)
+        self.assertEqual(matmul(joint['reader'], design['O_h']), design['T_h'])
+        self.assertEqual(reader_action_of(design, joint['reader']), joint['action'])
+
+    def test_terminal_aw_reader_exports_chronological_adjoints(self):
+        events = supplied_fixture()
+        design = augmented_design(events, identity(15), terminal_rows=[15])
+        joint = joint_minimum_action_reader(design)
+        trace = chronological_reader_adjoints(events, joint['reader'], 15)
+        self.assertEqual(trace[0]['kind'], 'terminal')
+        self.assertEqual(trace[0]['adjoint'][15], 1)
+        # Feasibility means the residual functional cancels every AG root
+        # coordinate after all observations have been pulled back.
+        root = trace[-1]['adjoint']
+        self.assertEqual(root[:6], [F(0)]*6)
+
+    def test_sync_slab_divided_difference_export(self):
+        base = supplied_fixture()
+        # Insert identity mean-map markers representing actual AW sync completions.
+        marker_event = {'kind': 'prediction', 'F': identity(21),
+                        'U': [[F(0)] for _ in range(21)],
+                        'aw_sync_boundary': True}
+        events = [marker_event] + base[:4] + [marker_event] + base[4:] + [marker_event]
+        # This exporter only needs a correctly sized observation reader; the
+        # minimum-action normalization is tested separately above.
+        obs = sum(len(e['H']) for e in events if e['kind'] == 'correction')
+        reader = [[F(0)]*obs]
+        report = sync_divided_difference_rows(events, reader, 15)
+        self.assertEqual(len(report['boundaries']), 3)
+        self.assertEqual(len(report['h_rows']), 2)
+        self.assertEqual(len(report['D2_rows']), 3)
+        self.assertTrue(all(s['duration'] > 0 for s in report['slabs']))
 
     def test_exact_noise_enclosure_preserves_correlated_columns(self):
         from tools.stability.ou3_theorem.ag_readout_source_diagnostic import rational_upper_factor

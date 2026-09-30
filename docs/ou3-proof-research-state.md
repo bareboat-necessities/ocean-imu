@@ -283,6 +283,136 @@ AG covariance, ≤5× at 64 s). It now serves coercivity only (DEAD_END 27).
   replays do not certify the changed core; the existing full-evidence
   pipeline must regenerate the affected evidence, not restamp it.
 
+**Nominal-AW complete reader (PR #630).** The raw beta-TV route has been
+replaced by an exact complete covariance-weighted scalar reader.  For a
+transverse multi-time AW readout q, augment the chronological state with its
+readout accumulator and write the literal factor recursion once.  If M is the
+root transition and Z the single signed coefficient on the stacked whitened
+source vector, then
+
+`q mu = q M e0 + Z s + d_impl`
+
+and
+
+`|q mu| <= C_root sqrt(V0) + C_src sqrt(A_W) + C_phys + C_impl`.
+
+The stronger joint form is
+
+`sqrt(C_root^2+C_src^2) sqrt(V0+A_W)+C_phys+C_impl < g sigma_w`.
+
+Accelerometer and magnetic residual actions are square-summed in `A_W`
+before taking norms; the nuisance-correlation term
+`C H_n' K_L' lambda` is not a new source.  In the full covariance-weighted
+adjoint every optimal correction obeys `P- p-=P+ p+`; the reduced
+correlation term is exactly the bookkeeping residue from deleting nuisance
+coordinates.  S corrections have zero weighted-adjoint jump.  Direct magnetic
+mean forcing is its ordinary `r_mag' R_mag^-1 r_mag` action.  Prediction and
+PSD AW sync remain chronological covariance factors; tuner lag qualifies the
+coefficient trace and is not an independent mean forcing.
+
+The scalar minimum source action is the dual of the existing joint
+minimum-action reader
+`B*=Pi+Ttilde I_eff^-1 Ttilde'`; no parallel observability architecture is
+introduced.  However this does NOT numerically close the nominal-AW premise:
+the currently useful source-uniform bounds for that reader still invoke G0
+geometry whose premises include the nominal signed-AW statistic itself.
+Substituting carried .348--.371 m/s^2 values would therefore be circular/fitted.
+The new controlling obligation is a noncircular source-uniform evaluation of
+the scalar reader coefficients/actions on the retained coupled
+Riccati/tuner/physical trace class.
+
+Keep the threshold symbolic as `g sigma_w`.  The value `g/5=1.96133`
+requires the separate field-domain premise `sigma_w>=1/5`; an 80-degree
+inclination premise alone gives `g cos(80 deg)~=1.7029069`.
+
+**Noncircular nominal-AW reduction.** The complete reader shows that G0
+cannot be used to prove its own nominal-AW premise.  Decomposing attitude by
+the field direction removes most of the apparent box loss: a field-axis
+rotation of angle theta changes gravity by at most
+`2 g sigma_w sin(theta/2)`, only 0.2052962 m/s^2 at theta=6 deg and
+sigma_w=1/5.  With the declared post-projection BA error and fast
+accelerometer residual, the static kernel nuisance is 1.1304628 m/s^2,
+below g/5.
+
+The remaining translated physical term is exactly
+`mean(M_b a)=[M_b v]_0^T/T-T^-1 int dot(M_b)v dt`, so its noncircular
+control requires a signed temporal/TV bound on the SHIPPING field-axis
+attitude-error loop.  The retained 6-degree angle bound, Lemma I* net
+rotation, axial gyro-bias projection sector, and physical BA-rate bound do
+not individually supply such a TV bound.  Using G0 to obtain it would be
+circular because `f_hat parallel b` is precisely the boundary
+`|a_hat x b|=g sigma_w`.
+
+Equivalent target: prove a constrained minimum source-action inequality
+`A_min(g sigma_w)>A_available` for the literal axial-bg + BA + AW/S
+chronology.  OU leakage alone is far too weak: at tau=12 s replenishing a
+g/5 DC AW component costs only 0.000654--0.000980 m/s2 per 4--6 ms step.
+The weak-regularizer corner must also be retained: tau=12,sigma=4 drives the
+SpectralMSE target into the r_S=100 m*s clamp with T_S=0.15 s.  Thus the
+next analytical obligation is a reachability/passivity bound for the coupled
+field-axis error/AW/S/bias loop, not another observability lemma and not a
+stronger MARINE MOTION assumption.
+
+**Axial coupled-loop reduction (PR #630).** A 32-s noncircular
+field-axis calculation now gives a quantitative necessary condition for the
+nominal-AW pathology.  At sigma_w=1/5 and the retained 6-degree tilt,
+field-axis gravity mismatch is only 0.2052962 m/s2.  Adding the universal
+post-projection BA error, fast accel residual, physical signed-mean/sampling
+bound and the 0.02001 rad/s free gyro/bias rotation leaves a strict
+0.2270622 m/s2 gap to g/5.  Thus any forbidden trajectory must obtain at
+least that much rectification from correction-induced field-axis attitude
+motion; the conservative equivalent average correction-induced angular
+variation is 0.0412840 rad/s.
+
+Total NIS/source action cannot close this gap: deterministic bounded sensor
+residuals may be coherent, so square-summed measurement action grows with
+word length.  The correct functional is the signed velocity/axial-correction
+pairing.  For each correction,
+`|delta theta_b|^2 <= NIS * q_b' K Omega K' q_b`, and the second factor is
+exactly the Joseph decrement of axial attitude covariance.  The desired
+certificate telescopes those decrements against prediction replenishment
+before taking a norm.
+
+A new structural obstruction is explicit: no source-uniform AG/axial
+covariance ceiling is currently available without G0.  On the exactly
+field-axis-degenerate nominal-force branch, magnetic and accelerometer rows
+can both miss the axial attitude/bg pair, while bg process noise accumulates.
+Therefore a generic Joseph-decrement bound cannot be promoted uniformly
+without first excluding persistent degeneracy; using G0 for that exclusion
+would be circular.  This is not a reachable counterexample.  It means the
+next contradiction must come from the coupled AW/BA/S MEAN recursion itself,
+showing that persistent `f_hat parallel b` cannot be maintained by the
+declared physical/source histories.  Only after that escape-from-degeneracy
+lemma may the AG covariance/information machinery be invoked.
+
+**Persistent exact-degeneracy bridge CLOSED.** On the exact
+zero-innovation branch `f_hat=a_hat_w-g e_z parallel b`, projection normal
+to the committed field gives identically
+`P_perp a_hat_w=P_perp(g e_z)`, magnitude `g sigma_w`.  Averaging the
+literal projected accelerometer identity and using bounded physical velocity,
+jerk sampling fidelity, the sharp field-axis gravity defect
+`2 g sigma_w sin(theta/2)`, the universal post-projection BA-error bound and
+the commissioned fast accelerometer residual yields
+
+`g sigma_w <= 2 Vmax/T + J hmax/4
+ +2 g sigma_w sin(theta_max/2)+B_ba,post+N_a`.
+
+At sigma_w=1/5 and theta_max=6 deg the denominator margin is
+0.6808672329 m/s2, so `Tcrit=2 Vmax/margin=16.1561 s`.  Every exact
+zero-innovation degenerate interval of 17 s is therefore impossible, with
+about 0.0338 m/s2 strict margin.  This uses no G0, AW covariance ceiling,
+S-gain sign or carried AW statistic.
+
+For a nonzero-innovation near-degenerate branch the same identity adds only
+the SIGNED transverse accelerometer-innovation mean `Rbar_acc`.  On 17 s
+the branch is excluded if `Rbar_acc<~0.0338 m/s2`.  The pointwise 0.3 m/s2
+fast-residual box cannot supply that signed bound because deterministic
+coherent residuals need not average away.  Thus the remaining robustification
+is now: either prove the complete-reader/S-chain signed innovation mean below
+this escape margin, or use a larger signed innovation directly as
+measurement information/action forcing departure from degeneracy.  G0 may be
+invoked only after this dichotomy; doing so before would be circular.
+
 ## Current limiter
 
 Exact physical rest is not identifiable from the current sensor/bias model.
@@ -1278,7 +1408,7 @@ The second term contains the favorable fresh AW block
 contains transported inherited cross covariance. Therefore
 
 `d_a- >= sigma_min(P_b Q_aa R_wb'|_bperp)
-       - ||P_b R_P||`,                                      (OP-P2)
+       - ||P_b R_P||`,                                      (OP-second)
 
 where R_P is the exact sum of all other transported/process contributions.
 Current bounds do not make the right side positive.

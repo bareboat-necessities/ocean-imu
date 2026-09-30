@@ -437,6 +437,7 @@ def enclose_exported_word(trace):
     events = []
     completed = 0
     pending_prediction = False
+    pending_aw_sync = False
     for e in trace['events']:
         kind = e['kind']
         if kind == 'prediction':
@@ -474,13 +475,16 @@ def enclose_exported_word(trace):
                 raise ValueError('sync operand outside a prediction boundary')
             # Keep the raw operand in provenance, but charge the complete
             # literal operation exactly once at its following boundary.
+            pending_aw_sync = True
             continue
         elif kind == 'sync_completion':
             if not pending_prediction:
                 raise ValueError('sync completion without a prediction')
             pending_prediction = False
             factor = signed_upper_factor(completed_sync_increment(e))
-            events.append({'kind': 'prediction', 'F': identity(21), 'U': factor})
+            events.append({'kind': 'prediction', 'F': identity(21), 'U': factor,
+                           'aw_sync_boundary': pending_aw_sync})
+            pending_aw_sync = False
             completed += 1
         else:
             raise ValueError('unrecorded source operation')
