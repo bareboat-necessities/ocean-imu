@@ -5,7 +5,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.ag_readout import (
-    augmented_design, chronological_reader_adjoints, coercivity_action_bound, diffuse_prior_posterior, joint_minimum_action_reader,
+    augmented_design, chronological_reader_adjoints, coercivity_action_bound, diffuse_prior_posterior, joint_minimum_action_reader, sync_divided_difference_rows,
     joint_reader_audit, reader_action_of,
     bootstrap, structured_root_upper, process_relative_to_structured_root,
     minimum_noise_reader, minimum_noise_action_from_information, certificate, coefficient_relaxation_obstruction, exact_readout,
@@ -213,6 +213,23 @@ class HistoricalReadoutTests(unittest.TestCase):
         # coordinate after all observations have been pulled back.
         root = trace[-1]['adjoint']
         self.assertEqual(root[:6], [F(0)]*6)
+
+    def test_sync_slab_divided_difference_export(self):
+        base = supplied_fixture()
+        # Insert identity mean-map markers representing actual AW sync completions.
+        marker_event = {'kind': 'prediction', 'F': identity(21),
+                        'U': [[F(0)] for _ in range(21)],
+                        'aw_sync_boundary': True}
+        events = [marker_event] + base[:4] + [marker_event] + base[4:] + [marker_event]
+        # This exporter only needs a correctly sized observation reader; the
+        # minimum-action normalization is tested separately above.
+        obs = sum(len(e['H']) for e in events if e['kind'] == 'correction')
+        reader = [[F(0)]*obs]
+        report = sync_divided_difference_rows(events, reader, 15)
+        self.assertEqual(len(report['boundaries']), 3)
+        self.assertEqual(len(report['h_rows']), 2)
+        self.assertEqual(len(report['D2_rows']), 3)
+        self.assertTrue(all(s['duration'] > 0 for s in report['slabs']))
 
     def test_exact_noise_enclosure_preserves_correlated_columns(self):
         from tools.stability.ou3_theorem.ag_readout_source_diagnostic import rational_upper_factor
