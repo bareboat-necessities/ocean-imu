@@ -324,3 +324,58 @@ compute `TV(beta/h)` and the second-difference displacement charge, and test
 (AW*) before attempting rigorous interval enclosure.  Do not return to an
 unsigned acceleration-variation norm and do not promote the 0.371 observation
 to a theorem.
+
+
+## 11. Uniform variation must be a hybrid bound
+
+A direct smooth-parameter derivative bound for beta is invalid.  The shipping
+chronology is hybrid: S corrections enter at periodic scheduler boundaries,
+accelerometer/magnetic corrections may be accepted or rejected, and attitude
+resets change the covariance transport.  Therefore beta has genuine discrete
+jumps even when tau, sigma_aw and r_S vary smoothly.
+
+Split each 16 s word at event boundaries.  On open event-free cells write
+
+    TV(beta/h) <= integral ||d(beta/h)/dt|| dt,
+
+and charge each event by its exact jump
+
+    J_e = ||(beta/h)_{e+}-(beta/h)_{e-}||.
+
+Then
+
+    TV(beta/h)
+      <= C_smooth(tau,sigma,r_S,T_S,P)
+         + sum_{e in E_S} J_e^S
+         + sum_{e in E_acc} J_e^acc
+         + sum_{e in E_mag/reset} J_e^reset.
+
+The scheduler supplies a finite count for S events on a finite word once the
+shipping tau/cadence clamps are inserted.  Accelerometer events have the IMU
+sample count.  Magnetic service supplies applied-event information but not by
+itself an upper count; the frontend cadence/scheduler bound must be used for
+that purpose.  Per-event jump bounds must come from reachable covariance
+bounds and the positive measurement-noise floors, not from arbitrary PSD
+covariances.
+
+For the second Abel step apply the same decomposition to
+Delta(beta/h)/h.  Naively bounding every event independently introduces an
+O(h^-2) charge and is expected to be useless.  The second-difference proof
+must pair the before/after maps of each scheduled event, leaving only the
+change in the event gain and neighboring prediction maps.  In particular, a
+fixed repeated S event is not charged as an arbitrary new impulse every
+sample.
+
+This identifies the source-uniform certificate that would promote the carried
+diagnostic:
+
+1. compact reachable bounds for P and the coupled applied
+   (tau,sigma_aw,r_S,T_S) schedule;
+2. lower innovation-covariance floors from R_acc and R_S;
+3. smooth Riccati sensitivity between event boundaries;
+4. exact event-jump formulas and finite scheduler counts;
+5. a paired-event second-difference bound avoiding the artificial h^-2
+   explosion.
+
+Until these five pieces are enclosed, a maximum over carried beta traces is a
+falsification/feasibility result, not the requested uniform theorem.
