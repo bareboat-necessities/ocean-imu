@@ -273,6 +273,8 @@ class CompassAppBase {
     Serial.println();
     Serial.printf("[BOOT] AtomS3R Compass + Cal Wizard (%s)\n", boot_name_);
 
+    waitForImuColdPowerStable();
+
     auto cfg = M5.config();
     M5.begin(cfg);
     ensureMagReady(Serial);
