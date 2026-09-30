@@ -201,6 +201,20 @@ derive an explicit same-word floor G_red,mu>=g17(c,r)I, then convert with the
 exact S-chain/fast factor to K17(c,r).  Alternative: move contraction to a
 >=64/100-s superword where existing geometry actually applies.
 
+**Proof clock changed to 100-s contraction superword; estimator unchanged.**
+17 s is retained only as the nuisance/root warm-up and intermediate-root
+control horizon.  A complete moving 100-s word legitimately contains G0's
+two 16-s windows with 64-s separation, the 32-s alias exclusion, 64-s joint
+vector information and every 1-s magnetic-service interval on one history.
+Define K100=sup lambda_max(Pi100^-1 Pnu,100); kernel invariance gives
+rho100<=1-1/K100.  This removes the previous horizon mixing.  It does NOT
+close K100 numerically: G0's nominal m_perp/u1 premises and literal
+injection-frame extension remain source/radius-open, and adjacent superwords
+still require exclusion of the unit-persistent exact-kernel equality in the
+scalar return.  Once those close, use the existing exact every-prefix
+composition to retain all intermediate 17-s roots and finite-error supplies.
+No estimator schedule or assumption changed.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
