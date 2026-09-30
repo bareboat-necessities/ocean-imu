@@ -1237,18 +1237,28 @@ Then
 Thus a correction is action-neutral for this trial reader.  Across prediction,
 $Y^-=Y^+F$ and the added action is $(Y^+U)(Y^+U)^{\mathsf T}$.
 
-Let $Z_k=\partial x_k/\partial h_0$ denote sensitivity to the six-dimensional
-attitude/gyro-bias root.  Prediction is block diagonal in AG/LIN/BA, sync has
-identity mean map, and the recorded left-error reset acts inside AG.  At a
-correction $Z^+=(I-KH)Z^-$.  Equation~\eqref{eq:causal-aw-reader} therefore
-cancels exactly the correction-created AG-to-AW root transfer.  Backward
-induction gives
+The backward residual row must retain the complete root.  In particular,
+the correction-free absence of an AG$\to$AW mean block does \emph{not} imply
+$Y_{\rm root,AG}=0$: already for one correction and a terminal AW row $q$,
+$qE_h=0$ gives
 \begin{equation}
- \boxed{Y_{\rm root,AG}=0.}
- \label{eq:aw-root-cancel}
+ q(I-KH)E_h=-qKHE_h,
+ \label{eq:aw-root-survives}
 \end{equation}
-This cancellation uses no historical information inverse or AG covariance
-ceiling.
+which is generically nonzero.  The observation term is part of the residual
+functional and cannot be counted again as a cancellation inside $Y$.
+
+This does not require an AG covariance ceiling.  Start at an actual post-sync
+boundary with the full carried covariance $P_0$, including every root block
+and cross covariance.  Iterating \eqref{eq:causal-joseph} through the literal
+prediction/process and reset chronology gives exactly
+\begin{equation}
+ Y_0P_0Y_0^{\mathsf T}
+ +\sum_k\norm{Y_kU_k}^2
+ +\sum_i L_iR_iL_i^{\mathsf T}
+ =u^{\mathsf T}P_Nu .
+ \label{eq:causal-full-root-action}
+\end{equation}
 
 The literal shipping AW covariance synchronization is stronger than an
 additive floor: it assigns
@@ -1271,13 +1281,17 @@ post-sync class,
         \sqrt{B_{AW,*}}\le4.}
  \label{eq:aw-action-ceiling}
 \end{equation}
-This is a source-uniform normalized terminal-AW reader-action ceiling and
-does not require the still-open six-column historical information floor.
+This is a source-uniform normalized terminal-AW reader-action ceiling for the
+\emph{full} causal action in \eqref{eq:causal-full-root-action}.  It does not
+require the still-open six-column historical information floor or a zero AG
+root row.
 
 What remains is a single deterministic conversion constant.  Let
 $G_{\rm phys,W}$ denote the complete map from the two-Abel bounded physical
 primitive to the normalized causal-reader source/port coordinates, with all
-accelerometer, $S$, process/sync and nuisance-root columns retained jointly.
+accelerometer, $S$, process/sync and root columns retained jointly.  Its root
+uncertainty rows are identically zero: root uncertainty contributes to the
+single reader-action budget but is not a physical primitive input.
 Define
 \begin{equation}
  C_{\rm port}=\sup_W
@@ -1302,9 +1316,13 @@ target is approximately
  C_{\rm port}<8.45\,10^{-3}.
  \label{eq:cport-target}
 \end{equation}
-The dedicated $17$-s carried-word computation of this quantity is explicitly
-non-promoting: it can diagnose margin but cannot replace the source-uniform
-enclosure required by \eqref{eq:cport}.
+The existing $17$-s carried-word divided-difference diagnostic does
+\emph{not} compute this quantity: it reports a reader-dependent
+$\|D_2h\|_{2,1}/\sqrt{B}$ ratio and omits the complete physical-primitive to
+normalized-source operator.  It is retained only as non-promoting reader
+geometry evidence and must not be compared with the numerical target above.
+A valid diagnostic for $C_{\rm port}$ must first construct
+$G_{\rm phys,W}$ itself.
 
 Injections obey an exact identity on ${\rm SO}(3)$. With $M=\hat R^{\mathsf T}R$
 the world attitude error, an injection acts by $M\mapsto\operatorname{Exp}(-x)M$
