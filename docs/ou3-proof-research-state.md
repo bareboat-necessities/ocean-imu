@@ -161,3 +161,28 @@ quantity: absence of an infinite unit-transfer same-history execution implies
 existence of finite m,delta with block alpha<=1-delta. The unresolved question
 is global continuation/escape of the coupled compatibility zero dynamics. No
 estimator assumption or tuner law was changed.
+
+
+### Literal zero-dynamics substitution result
+
+Substituting r=(a,0,-Aa) into the actual Live chronology gives the graph
+cocycle `A_+ T_att a=T_ba A a` plus the literal magnetic/accelerometer
+compatibility rows.  Prediction, due S=0 update, accelerometer correction,
+measurement-only tuner update, one-sample-later tau/sigma/R_S commit, AW
+covariance sync and asynchronous magnetic callbacks are retained in order.
+
+On a regular stratum the two transverse compatibility equations solve the two
+transverse accelerometer-innovation components by IFT, leaving one
+longitudinal physical input.  The tuner is a bounded lagged coefficient
+sequence, the S residual is endogenous, and AW covariance sync is mean-neutral.
+No term diverges or has a sign forcing escape as BA q->0; q=0 is a regular
+candidate compatibility manifold.  Bounded physical primitives likewise do
+not force escape because the required physical forcing can be zero-mean.
+
+Conclusion: existing tuner/S/BA/physical inequalities do NOT imply finite
+escape.  Local compatible continuation is proved conditionally wherever the
+transverse compatibility Jacobian and physical/service/gate margins are
+strict.  Global forward completeness remains OPEN because no source-uniform
+lower bound on that Jacobian or invariant magnetic/gate margin is proved.
+The next decisive obligation is a compact invariant strict-margin ZG patch or
+a theorem that every constrained ZG trajectory loses one of those margins.
