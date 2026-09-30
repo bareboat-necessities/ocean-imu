@@ -17,6 +17,17 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_homogeneous_compatibility_scalar_ratio_scale_invariant(self):
+        from tools.stability.ou3_theorem.compatibility_chart import reduced_pair,scalar_ratio,kernel_prior_floor_for_unit_direction
+        R=exact([[2.0],[0.0]])
+        Qnm=zeros(2,2);N=exact([[3.0,0],[0,0]])
+        # Projector onto span(e1).
+        Pk=exact([[1.0,0],[0,0]])
+        q,n=reduced_pair(R,Qnm,N,Pk,4.0)
+        z=scalar_ratio(q.mid[0][0],n.mid[0][0])
+        self.assertTrue(z["verified"]);self.assertAlmostEqual(z["upper"],12.0)
+        self.assertAlmostEqual(kernel_prior_floor_for_unit_direction(4.0),.25)
+
     def test_complete_magnetic_cancellation_reduction(self):
         from tools.stability.ou3_theorem.complete_magnetic_gram import scalar_magnetic_cancellation,restricted_complete_ratio
         z=scalar_magnetic_cancellation(2.0,3.0)
