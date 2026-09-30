@@ -3632,3 +3632,149 @@ The next calculation is to express B_B^L,B_B^R in terms of Lambda_B and the
 block OU tail products, then test whether CB9 telescopes across the covariance
 sync boundary (sync has identity mean map) so that only tuner changes and
 block corrected-loss remainders contribute.
+
+
+## 40. Exact block endpoint coefficients: physical OU forcing is a coboundary
+
+The physical prediction forcing must be kept as the pair
+
+    (1-phi_j)a_j + Delta a_j
+      = a_(j+1)-phi_j a_j.                                 (BE1)
+
+Let r_j=E_aw^T lambda_j denote the full backward reader's AW component at the
+appropriate prediction boundaries.  Ignoring corrections for one moment, the
+physical contribution of prediction j is
+
+    -r_(j+1)^T [a_(j+1)-phi_j a_j].                        (BE2)
+
+Summing over a prediction-only block j=m,...,n gives
+
+    R_phys,B =
+       phi_m r_(m+1)^T a_m - r_(n+1)^T a_(n+1)
+       +sum_(j=m+1..n)
+          [phi_j r_(j+1)-r_j]^T a_j,                        (BE3)
+
+where r_j is the AW reader immediately after pulling through prediction
+j-1.  Thus the internal coefficient is the FAILURE of the pure prediction
+adjoint relation.
+
+For the full LIN prediction, BR3 gives
+
+    r_j =
+      phi_j r_(j+1)
+      +phi_va,j lambda_v,j+1
+      +phi_pa,j lambda_p,j+1
+      +phi_Sa,j lambda_S,j+1.                              (BE4)
+
+Hence
+
+    phi_j r_(j+1)-r_j
+      =-[phi_va lambda_v
+         +phi_pa lambda_p
+         +phi_Sa lambda_S]_(j+1).                           (BE5)
+
+So even before measurement corrections, the only internal physical
+coefficient is the integrated-LIN reader mixing; there is no raw OU
+variation term at all.
+
+### Include corrections
+
+At a correction between predictions, the full reader changes by
+
+    lambda^- - lambda^+ = -H^T q.                           (BE6)
+
+For S and magnetic updates H_aw=0, so they do not directly alter r.  For an
+accelerometer update,
+
+    Delta r=-R_wb^T q_acc.                                 (BE7)
+
+Therefore the exact internal coefficient in BE3 is
+
+    phi_j r_(j+1)-r_j
+      = -c_L,j^T lambda_L,j+1
+        + correction_jump_terms,                            (BE8)
+
+with c_L=[phi_va,phi_pa,phi_Sa].  The correction jump terms are nonzero only
+for accelerometer ports in the AW component and are square-summed by the
+corrected-loss identity.
+
+### Explicit block endpoint coefficients
+
+Comparing BE3 with
+
+    R_phys,B =
+      B_B^R a_(n+1)-B_B^L a_m + R_internal,B,
+
+the exact endpoint coefficients are
+
+    B_B^L = -phi_m r_(m+1),                                 (BE9)
+    B_B^R = -r_(n+1),                                       (BE10)
+
+up to the fixed sign convention of R_phys.  Equivalently, if the block
+boundary is chosen immediately before the first prediction, pull r_(m+1)
+through that prediction and write
+
+    B_B^L = -[r_m-c_L,m^T lambda_L,m+1].                    (BE11)
+
+Thus B_L and B_R are boundary AW readers plus a single prediction-mixing
+term; they do NOT contain a sum of internal OU coefficients.
+
+### Adjacent block cancellation
+
+Choose blocks at identity-mean covariance-sync boundaries.  The final reader
+of block B and initial reader of B+1 are the SAME full reader at the common
+boundary because sync has identity mean map.  Therefore the leading AW-reader
+parts of
+
+    B_B^R-B_(B+1)^L
+
+cancel exactly.  The mismatch is only:
+1. the first-prediction LIN mixing term of the new block;
+2. any accelerometer correction whose literal event ordering lies exactly at
+   the boundary.
+
+There is NO tuner-jump term by itself: phi of the new block appears only in
+the local first-prediction identity BE11, and the physical forcing pair BE1
+remains exact for arbitrary phi.
+
+Hence the block-boundary variation is controlled by the integrated-LIN
+reader at ONE prediction per block plus boundary correction ports, not by
+variation of tau.
+
+### Two-norm global bound
+
+The integrated-LIN boundary charge is
+
+    g_B =
+      phi_va lambda_v
+      +phi_pa lambda_p
+      +phi_Sa lambda_S.                                    (BE12)
+
+The accelerometer boundary jump is R_wb^T q_acc.  Both have natural
+covariance-weighted l2 controls:
+- g_B through the LIN reader metric/process covariance;
+- q_acc through q_acc^T S_acc q_acc.
+
+Therefore
+
+    D_block
+      <= endpoint_reader_charge
+         + sum_B ||g_B||
+         + sum_boundary_acc ||q_acc||.                      (BE13)
+
+Do NOT apply Cauchy separately to the two sums.  Stack all g_B and q_acc as
+columns of the complete-word factor/reader operator and use its single
+operator-norm <=1 identity.  The physical boundary velocities are then the
+input coefficients.  The desired inequality has the form
+
+    |sum_B g_B^T v_B + acc-boundary terms|
+      <= C_2 sqrt(sum_B ||v_B||^2_weighted),                (BE14)
+
+which is still l2 in block velocities.  To exploit only |v_B|<=Vmax without
+sqrt(N_B), one needs additional sign/variation structure of g_B.  Thus exact
+block cancellation removes all OU/tuner variation, but the LIN-reader
+boundary sequence remains the final l1-vs-l2 obstacle.
+
+This is much narrower than CB9: C_boundary is not yet modest from existing
+loss identities alone.  The remaining sequence is specifically the
+integrated-LIN mixing g_B at one prediction per .1-s block.
