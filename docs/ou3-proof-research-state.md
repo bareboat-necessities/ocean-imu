@@ -452,3 +452,30 @@ shipping self-consistency equations. Any positive Mahony-proxy lower bound
 must first prove that those equations force nonzero translational proxy input
 or nonzero private-Mahony tracking error. Do not assume proxy leakage before
 that reachability step.
+
+
+### Step 6 physical-sample/Mahony substitution
+
+The field-aligned MEKF condition was substituted directly into the literal
+post-S accelerometer correction. With aS the pre-accelerometer AW mean and
+K_aw the actual carried gain, the conditioned physical body specific force
+must satisfy
+M(f_B-fhat_B)=q with M=P_B K_aw and q=P_B(g-aS).
+On a regular rank-two branch every required sample is
+f_B=fhat_B+M^dagger q+N zeta, where N spans the one-dimensional physical
+nullspace. Thus no innovation is independently chosen.
+
+Substitution into the actual private Mahony proxy gives
+a_proxy=A_forced-(d_M'N) zeta. Therefore field alignment alone still does not
+force pointwise proxy energy: the one remaining physical component can cancel
+the Mahony vertical output whenever d_M'N is nonzero. The cancellation
+sequence must, however, satisfy the SAME physical velocity/displacement/jerk
+constraints and drives the private Mahony/tuner/covariance chronology.
+
+A zero-proxy candidate is characterized exactly by the 3x3 same-history
+system [M;d_M'] f_B=[M fhat_B+q;-g]. If nonsingular it uniquely determines the
+physical sample at each epoch; if singular, existence is a Fredholm range
+condition. The next decisive calculation is to propagate this constrained
+sample through the Mahony and physical dynamics over a complete window and
+test recurrent admissibility. No positive proxy-energy floor or tuner
+consequence is promoted before that test.
