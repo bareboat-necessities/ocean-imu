@@ -378,3 +378,151 @@ square-summed measurement action, the absorption of the nuisance-correlation
 term, and the symbolic threshold are closed.  Existing O1/O2 reader machinery
 can be reused to bound C_src because (CR10) is its scalar dual; no new
 observability lemma is required.
+
+
+## 9. Noncircular kernel decomposition and the actual remaining obstruction
+
+The complete reader removes the artificial G0 circularity but does not, by
+itself, make every source coefficient small.  Decompose the relative attitude
+into the magnetically observed plane and the rotation about the applicable
+unit field b.  The observed component is charged in the magnetic
+measurement-action family.  For the field-axis component M_b b=b, the exact
+world accelerometer identity contains
+
+    M_b a_phys + g(e_z-M_b e_z) + beta_a,
+
+where beta_a is the carried world accelerometer bias/sensor residual after
+using one consistent true/nominal rotation convention.
+
+The gravity part has the SHARP kernel bound
+
+    ||g(e_z-M_b e_z)|| <= 2 g sigma_w sin(theta/2).          (K1)
+
+This is smaller than the generic 2g sin(theta/2) by sigma_w.  At the retained
+theta=6 deg and sigma_w=1/5 it is 0.2052961622 m/s^2.
+
+The declared post-projection accelerometer-bias error and fast residual give
+
+    B_ba + N_a = 0.625166604983954 + 0.3
+               = 0.925166604983954 m/s^2.                   (K2)
+
+Thus the non-physical kernel box excluding translated acceleration is
+
+    K0 = 1.1304627671 m/s^2                                 (K3)
+
+at sigma_w=1/5.  This is below g/5, so the static magnetic kernel alone does
+not create the forbidden nominal mean.
+
+The physical translated term is not bounded by A_max.  Since a=dv/dt,
+
+    (1/T) int M_b a dt
+      = [M_b v]_0^T/T - (1/T) int dot(M_b) v dt,             (K4)
+
+and therefore
+
+    ||mean(M_b a)||
+      <= 2 Vmax/T + (Vmax/T) TV(M_b).                       (K5)
+
+The trapezoidal sampled version adds the already proved J h_max/4 sampling
+term plus the corresponding discrete variation of M_b.
+
+This identifies the exact noncircular obstruction: the present retained
+domain bounds sup angle(M_b)<=6 deg but does NOT bound TV(M_b) by a constant
+independent of T.  Lemma I* bounds the NET ordered injection rotation, not
+its total variation.  The estimator axial gyro-bias projection gives an
+amplitude sector, not a signed temporal-variation bound.  Deterministic fast
+sensor residuals likewise have an amplitude bound but no variation premise.
+
+Consequently (K5) cannot be made small by MARINE MOTION/IMU BIAS/MAGNETIC
+SERVICE boxes alone.  Replacing TV(M_b) by T times the gyro-sector amplitude
+is finite but quantitatively useless.  This is not evidence that such a
+field-axis oscillation is shipping-reachable: M_b is an estimator error, not
+a freely selectable physical input.
+
+### Why a new observability lemma would be circular
+
+At the forbidden boundary,
+
+    f_hat=a_hat-g e_z parallel b
+
+is exactly the condition
+
+    ||a_hat x b|| = g sigma_w
+
+at its minimum-norm representative.  The accelerometer attitude row then
+annihilates the field-axis direction.  Therefore any argument that first
+assumes an accelerometer/magnetic six-column floor in order to control M_b
+and then uses that control to prove ||mu_hat x b||<g sigma_w is circular.
+The needed result must instead come from shipping reachability of the
+field-axis error/AW/bias loop.
+
+### Coupled reachability lemma that would close the gap
+
+A sufficient noncircular lemma is a signed temporal bound
+
+    TV_W(M_b)
+      <= C_bg,0 + C_bg,V sqrt(V0)
+          + C_bg,a sqrt(A_acc) + C_bg,S sqrt(A_S)
+          + C_bg,impl,                                      (K6)
+
+where every coefficient is obtained from the literal axial gyro-bias,
+accelerometer-bias, AW/S and reset recursion WITHOUT using G0 or the nominal
+AW mean premise.  Substitution in (K5), followed by (K1--K3), feeds directly
+into (CR15/CR16).
+
+The BA-rate law can help only jointly.  In a zero-residual compatibility
+calculation, changing field-axis attitude changes the gravity compensation at
+rate of order g sigma_w |dot theta_b|; D_a=0.001 would by itself force a very
+slow theta_b.  But AW correction and the deterministic fast accelerometer
+residual can share that compensation, so D_a alone is not a proof of (K6).
+The literal coupled AW/S and axial-bg recursion must be retained.
+
+### Minimum source action formulation
+
+Equivalently, define the constrained complete-word action
+
+    A_min(m) = inf A_W
+
+over all shipping-reachable chronological traces with
+
+    ||mu_hat x b|| >= m,
+
+the carried root and tuner state fixed only by the retained set, and all
+physical histories satisfying the declared contracts.  The desired theorem
+is
+
+    A_min(g sigma_w) > A_available.                         (K7)
+
+The full-reader identities show that S corrections and optimal measurement
+correlations are already represented without gain-sign assumptions.  OU
+leakage alone cannot establish (K7): at tau=12 s the per-step correction
+needed to replenish a g/5 DC AW component is only
+
+    (1-exp(-h/12)) g/5
+      in [0.00065367,0.00098042] m/s^2
+
+for h in [0.004,0.006], far below the declared accelerometer residual
+envelopes.  A successful lower action must therefore come quantitatively from
+the integrated S-chain together with the axial-bg/BA chronology.
+
+At the weak regularizer corner tau=12, sigma=4, the SpectralMSE target exceeds
+the shipping r_S clamp, so the applied target is capped at r_S=100 m*s and
+T_S at 0.15 s (before carried smoothing/commit lag).  Hence this corner must
+be included explicitly in any uniform K7 proof; assuming a strong S update
+there would be invalid.
+
+## 10. Result
+
+The G0 circularity is removed from the statement of the nominal-AW theorem,
+and the static field-axis kernel is bounded sharply by (K1--K3).  The
+complete-reader/source-action formulation is exact.  But the desired strict
+bound is NOT derivable from the currently proved independent envelopes:
+the unclosed quantity is now the signed temporal reachability/total variation
+of the shipping field-axis attitude-error loop, equivalently the constrained
+minimum source action (K7).
+
+This is a reachability obligation, not another geometric observability lemma
+and not a request for a stronger MARINE MOTION assumption.  Proving (K6) or
+(K7) from the literal axial-bg + BA + AW/S recursion is the next analytical
+step.  A carried maximum or an independently chosen TV(M_b) box would be
+fitted and must not be substituted.
