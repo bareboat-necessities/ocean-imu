@@ -1667,6 +1667,28 @@ on the quotient of $\nu_W$, together with the adjacent-superword scalar
 kernel return.  This is weaker than, and does not require, a uniform
 Euclidean accelerometer-information floor.
 
+For the complete conditional Gaussian quotient
+$y=O_qv+As$, $x_N=T_qv+Ts$, put
+$\Sigma=AA^T$, $J_q=O_q^T\Sigma^{-1}O_q$, and
+$\widetilde T_q=T_q-TA^T\Sigma^{-1}O_q$.  After Schur elimination of the
+kernel line with precision $\mu=1/c$, the sharp fixed-word constant is
+\begin{equation}
+ K_{\rm rel}(W)-1=
+ \lambda_{\max}\!\left[
+ S_q^{\dagger/2}H_{\rm eff}^T\Pi_{100}^{-1}
+ H_{\rm eff}S_q^{\dagger/2}\right].
+ \label{eq:relative-quotient-diameter}
+\end{equation}
+It is finite exactly when
+$\ker S_q\subseteq\ker H_{\rm eff}$, equivalently
+$\ker O_q\subseteq\ker T_q$ in the reduced Gaussian coordinates.  The
+complete-word zero-action classification gives this inclusion for each fixed
+nondegenerate word, but a uniform bound through rank-changing sequences
+requires the stronger near-null estimate
+$\mathcal A_{\rm term}\le C_{\rm det}\mathcal A_{\rm obs}$.
+A regularized literal backward reader realizing this estimate yields
+$K_{\rm rel}\le1+C_{\rm det}$ while retaining all common source factors.
+
 Injections obey an exact identity on ${\rm SO}(3)$. With $M=\hat R^{\mathsf T}R$
 the world attitude error, an injection acts by $M\mapsto\operatorname{Exp}(-x)M$
 and a prediction by a rotation of angle at most $h\norm{\tilde\omega}$. If $J$
