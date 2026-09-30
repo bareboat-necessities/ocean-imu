@@ -183,7 +183,9 @@
     "gamma_S_source_uniform_numeric": false,
     "gamma_M_residualized_numeric": false,
     "beta_rank_loss_numeric": false,
-    "rank_loss_interval_factor_propagator_required": true
+    "rank_loss_interval_factor_propagator_required": true,
+    "rank_loss_four_S_source_box_implemented": true,
+    "rank_loss_magnetic_nuisance_box_implemented": false
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
