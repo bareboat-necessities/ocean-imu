@@ -120,6 +120,8 @@ def status_report() -> dict:
         "gamma_M_residualized_numeric":False,
         "beta_rank_loss_numeric":False,
         "rank_loss_interval_factor_propagator_required":True,
+        "rank_loss_four_S_source_box_implemented":True,
+        "rank_loss_magnetic_nuisance_box_implemented":False,
         "same_history_unit_kernel_persistence_excluded":False,
         "source_uniform_tilt_about_field_axis_covariance_ceiling":False,
         "kernel_scalar_fixed_point_reduction":True,
