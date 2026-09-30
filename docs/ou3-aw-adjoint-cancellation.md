@@ -1142,3 +1142,68 @@ S-chain readout.  The existing S-chain formula gives that coefficient exactly
 for a supplied chronology; a source-uniform lower singular value on the
 relevant predictor subspace has not yet been derived.  This is now the only
 covariance-geometric quantity in the robust cycle lemma.
+
+
+## 15. Four-row S information: explicit coupled lower value
+
+For four equally spaced S rows at h=T_S and fixed applied tau over the four-row
+microblock, eliminating the quadratic nuisance columns (v,p,S) is exact by a
+third finite difference.  With
+
+    psi(t)=tau^3[(t/tau)^2/2-t/tau-expm1(-t/tau)],
+
+the vector orthogonal to the three polynomial columns at h,2h,3h,4h is
+(-1,3,-3,1), whose squared norm is 20.  Hence the scalar Schur complement for
+a unit initial AW component is exactly
+
+    kappa_S(tau,h,rS)
+      = [Delta_h^3 psi(h)]^2/(20 rS^2)
+      = tau^6 exp(-2h/tau)(1-exp(-h/tau))^6/(20 rS^2).       (KS1)
+
+This is an analytical formula, not a fitted/replay quantity.
+
+The shipping variables are coupled:
+h=clamp((0.015/1.1)tau,0.005,0.15), and the default SpectralMSE rS target is
+clamped to [0.15,100] after its coupled tau/sigma law.  The minimum of KS1 on
+the deployed coupled envelope occurs at the short-tau floor corner
+
+    tau=0.02 s, h=0.005 s, rS=0.15 m*s.
+
+There
+
+    Delta_h^3 psi
+      = tau^3 exp(-h/tau)(1-exp(-h/tau))^3
+      = 6.7432167881e-8 m*s per (m/s^2),
+
+and therefore
+
+    kappa_S,min = 1.0104660589e-14                         (KS2)
+
+in the corresponding weighted S-action units per squared AW amplitude.
+
+The independent-box corner tau=.02,h=.15,rS=100 is unreachable and must not
+be used.  Conversely KS2 is positive but quantitatively tiny: even hundreds
+of disjoint four-row blocks do not by themselves give a useful gravity-scale
+mean contradiction.
+
+This does NOT invalidate the complete-cycle lemma.  At the corner producing
+KS2, OU decay is strongest: over one 0.1-s covariance-sync interval the
+homogeneous AW multiplier is exp(-0.1/.02)=exp(-5)=0.00673795.  Thus the
+S-chain is the wrong mechanism to price the short-tau corner.  The uniform
+cycle certificate must retain OU leakage + direct conditional accelerometer
+information + S information jointly.  At long tau, where OU leakage is weak,
+KS1 is much larger before the rS clamp and the pseudo cadence is slower; at
+the rS=100 corner its absolute S-action is still small, so the accelerometer
+channel remains essential.
+
+Conclusion: the useful source-uniform constant is NOT kappa_S,min alone.
+KS2 closes the requested four-row Schur-complement calculation and proves
+that an argument of the form '170 cycles times kappa_S,min' cannot close the
+near-degenerate branch.  The next scalar minimization must be
+
+    gamma_cycle =
+      inf_reachable [ D_OU + D_acc,conditional + D_S ],      (KS3)
+
+with all three terms evaluated in one normalized covariance/information
+metric.  Taking their separate global minima would again combine incompatible
+corners and lose the coupled chronology.
