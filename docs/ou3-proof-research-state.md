@@ -430,3 +430,25 @@ The decisive theorem question is therefore entirely reachability of
 P_B a_hat_w=P_B g. If reachable, strict full-attitude contraction is impossible
 without accepting the gauge or strengthening assumptions; if unreachable,
 LaSalle compactness can still give strictness.
+
+
+### Mahony proxy excitation test
+
+The proposed source-uniform implication from persistent field alignment to
+positive adaptation-proxy energy is false as a consequence of the current
+assumptions. Shipping's default proxy is
+a_proxy=-((R_M f_B)_z+g) from a private measurement-only Mahony observer.
+For zero translational acceleration, exact gyro, and correctly initialized
+private tilt, arbitrary bounded attitude motion has
+f_B=R_true'(-g e_z), R_M=R_true and therefore a_proxy=0 identically. This
+includes roll/pitch attitude-span excitation; correct gyro levelling removes
+gravity rather than leaking it.
+
+Hence MARINE MOTION attitude span and the internal MEKF field-alignment
+condition do not themselves imply E_proxy>0. The period-scaled band can be
+zero apart from explicit tuner/noise floors. This does not construct the full
+MEKF pathology: sustaining its biased nominal a_w must still solve the literal
+shipping self-consistency equations. Any positive Mahony-proxy lower bound
+must first prove that those equations force nonzero translational proxy input
+or nonzero private-Mahony tracking error. Do not assume proxy leakage before
+that reachability step.

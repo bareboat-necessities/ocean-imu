@@ -8112,3 +8112,97 @@ Further covariance spectral estimates cannot decide this. The next proof work
 should return to reachability/exclusion of CS-1 in physical waveform space,
 using the shipping-closed equation, rather than seek rho(A_c)<1 on a stratum
 where an exact unit mode is now proved.
+
+
+## Mahony/adaptation-proxy excitation test on the field-aligned branch
+
+This calculation tests the proposed bridge
+
+persistent field alignment => positive private-proxy band energy.            (PX-1)
+
+The literal shipping code does NOT support PX-1 from the current assumptions.
+
+The default tuner input is produced by VerticalAccelComplementary, a private
+measurement-only Mahony observer. For conditioned body specific force f_B and
+its private body-to-NED quaternion R_M, shipping reports
+
+a_proxy = -((R_M f_B)_z + g).                              (PX-2)
+
+This proxy reads no MEKF state. It is then passed through the period-scaled
+AdaptiveWaveBandPass before the variance estimator used for sigma_aw.
+
+Consider an ideal admissible rigid-body motion with zero translational
+acceleration, bounded arbitrary attitude motion, exact/calibrated gyro, and
+the private Mahony observer initialized at the true tilt. Then
+
+f_B = R_true'(-g e_z),                                     (PX-3)
+
+and the gyro propagation preserves R_M=R_true (up to irrelevant yaw gauge).
+The Mahony accelerometer correction is zero because the measured gravity
+direction agrees with its predicted vertical. Hence
+
+(R_M f_B)_z=-g                                             (PX-4)
+
+at every sample and therefore
+
+a_proxy=0.                                                 (PX-5)
+
+This remains true under bounded roll/pitch excitation as well as yaw:
+attitude span by itself does not create gravity leakage in a correctly
+gyro-propagated levelled measurement. Zero translational acceleration also
+satisfies the bounded velocity/displacement/potential and translational jerk
+parts of MARINE MOTION; an allowed moving attitude episode can supply the
+attitude-span requirement. Thus the current physical assumptions contain no
+positive lower bound on proxy energy merely from attitude excitation.
+
+The period-scaled band is linear on a fixed frequency schedule, so PX-5 gives
+zero band signal after transients. The variance channel then sees only its
+explicit measurement/noise/startup floor; it does not acquire a positive
+field-alignment-dependent energy. Consequently no theorem of the form
+
+E_proxy(W)>=E_min(g_perp,Delta_R,...)>0                    (PX-6)
+
+follows from MARINE MOTION + the internal MEKF condition
+P_B a_hat_w=P_B g alone.
+
+This does NOT construct the complete field-aligned shipping pathology. The
+MEKF condition is internal and the same raw physical history must also solve
+the shipping self-consistency/Fredholm equations that sustain its biased
+nominal a_hat_w. The point of PX-3--PX-5 is narrower and decisive: the private
+Mahony/adaptation pipeline supplies no independent implication from attitude
+motion or field alignment to positive proxy band energy. Any positive proxy
+lower bound must first prove that the FULL shipping self-consistency equation
+forces either
+
+(a) nonzero translational acceleration in the proxy vertical channel, or
+(b) a nonzero private-Mahony tilt tracking error/leakage,
+
+and must quantify that forcing from the same physical history. Neither is
+currently proved.
+
+Therefore it is invalid to insert a positive E_min into the tuner law before
+solving that upstream reachability relation. The only unconditional tuner
+lower scale on PX-5 is the implemented variance/startup floor, which is a
+design floor and is not evidence against the pathology.
+
+### Consequence for the proposed amplitude route
+
+The desired chain
+
+field alignment -> Mahony leakage -> sigma_aB floor -> tuner response
+
+breaks at its first arrow under the present theorem assumptions. The correct
+same-history chain remains
+
+field alignment + literal MEKF mean recursion
+ -> required raw physical history
+ -> private Mahony proxy
+ -> period-scaled band/variance
+ -> tuner.                                                  (PX-7)
+
+Thus the next proof step must return to the shipping-closed mean equation and
+derive what RAW physical acceleration/gyro history is forced by sustaining
+P_B a_hat_w=P_B g. Only after that forced history is known can PX-2 be applied
+to obtain a proxy-energy bound. Treating generic attitude span as proxy
+excitation would repeat the proof-relaxation error this branch was intended
+to avoid.
