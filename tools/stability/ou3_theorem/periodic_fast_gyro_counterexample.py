@@ -66,7 +66,7 @@ def driver_source():
     src=src.replace('        if (live<0 && filter.isLive()) live=k;',
       '''        if(k>70800) {
             const auto& mm=filter.raw().mekf();
-            if(k>71296) {
+            if(k>68600) {
                 if(!first_roll) roll_samples << ",";
                 first_roll=false;
                 roll_samples << "[" << std::setprecision(17) << mm.qref.x() << "," << mm.qref.w() << "]";
@@ -88,7 +88,7 @@ def driver_source():
       '''    const auto& m=filter.raw().mekf();
     const auto tune=filter.raw().tune_;''')
     src=src.replace('<< ",\\\"root_covariance\\\":" << root',
-      '''<< ",\\\"nominal_qref_xw_final_period\\\":[" << roll_samples.str() << "]"
+      '''<< ",\\\"nominal_qref_xw_final_17s\\\":[" << roll_samples.str() << "]"
               << ",\\\"previous_period_state\\\":" << prev_state
               << ",\\\"previous_period_covariance\\\":" << prev_cov
               << ",\\\"relative_attitude_error_max_rad\\\":" << rel_tilt_max
