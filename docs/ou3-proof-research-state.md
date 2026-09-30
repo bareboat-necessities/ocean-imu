@@ -406,3 +406,27 @@ This eliminates covariance without independent bounds. It does not by itself
 exclude H_L=0. The next quantitative obligation is the spectral condition for
 L_P on a strict-margin field-aligned periodic stratum; singular covariance
 tangent strata must be treated separately rather than boxed.
+
+
+### Field-aligned covariance spectral test
+
+The periodic covariance tangent was tested structurally on the exact
+field-aligned LaSalle branch. The pure magnetic-field-axis attitude vector is
+transported by prediction/reset into the next field-axis vector and is
+annihilated by every S, accelerometer and magnetic measurement row. Therefore
+each closed-loop update factor (I-KH) fixes it regardless of K, and over a
+period the closed-loop state product satisfies A_c r=r.
+
+Consequently rho(A_c)>=1 and, on the congruence covariance tangent,
+Delta=r r' is an exact unit eigenmatrix: L_P[Delta]=Delta. The default AW
+floor/sync projection acts only on the AW sector and does not remove this pure
+attitude covariance tangent. Thus I-L_P is singular on the exact field-aligned
+branch and covariance cannot be eliminated there by the regular implicit
+Riccati formula.
+
+This is a genuine geometric neutral mechanism, not a proof relaxation. It is
+conditional on the BASE field-aligned execution being shipping reachable.
+The decisive theorem question is therefore entirely reachability of
+P_B a_hat_w=P_B g. If reachable, strict full-attitude contraction is impossible
+without accepting the gauge or strengthening assumptions; if unreachable,
+LaSalle compactness can still give strictness.

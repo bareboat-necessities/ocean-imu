@@ -7941,3 +7941,174 @@ periodic field-aligned stratum. If rho(L_P)<1 uniformly there, all covariance
 degrees of freedom disappear and the theorem obstruction becomes H_L(p)=0
 in physical waveform space alone. If a unit covariance tangent is forced by
 the field-aligned geometry, that identifies a new genuine equality mechanism.
+
+
+## Spectral test of the periodic covariance tangent on the field-aligned branch
+
+This calculation tests RS-11 structurally on the sole surviving LaSalle
+candidate. The result is negative for strict covariance-tangent contraction:
+field alignment itself supplies a unit closed-loop state mode on the
+pure-congruence branch.
+
+Let the base periodic shipping execution satisfy, at every required
+accelerometer epoch,
+
+P_B a_hat_w = P_B g,                                       (CS-1)
+
+so the nominal specific force fhat_cog is parallel to the transported body
+magnetic axis b. Let
+
+r_k=(b_k,0_bg,0_v,0_p,0_S,0_aw,0_ba)                      (CS-2)
+
+denote the normalized pure field-axis attitude homogeneous vector in the
+current local error coordinates (with the literal frame scaling understood).
+
+### Operation-by-operation transport
+
+1. **Prediction.** On the zero fresh-source homogeneous dynamics, the AG
+   prediction/reset transport maps the field-axis attitude class into the
+   next transported field-axis class:
+
+   F_k r_k = r_k^-                                         (CS-3)
+
+   up to the coordinate normalization/transport already used in the magnetic
+   compatibility lemmas. No LIN/AW/BA component is generated on the exact
+   q=0 equality branch.
+
+2. **S pseudo-update.** H_S r=0 because r has no S/LIN component. Hence
+
+   (I-K_S H_S) r = r.                                      (CS-4)
+
+3. **Accelerometer update.** The homogeneous row is
+   H_a r=-[fhat_cog]x b=0 by CS-1. Therefore, independently of K_a,
+
+   (I-K_a H_a) r = r.                                      (CS-5)
+
+   This is exact: covariance cross terms cannot create contraction when the
+   measurement row itself annihilates the vector.
+
+4. **Magnetic update.** H_m r=-[B]x b=0, so
+
+   (I-K_m H_m) r = r.                                      (CS-6)
+
+5. **AW covariance sync/floor.** On the pure-congruence covariance branch this
+   is absent/inactive by hypothesis; mean-state AW sync does not act on the
+   attitude vector. Active covariance projection branches are treated below.
+
+6. **Quaternion/reset/frame change.** The literal reset/frame Jacobian G
+   changes coordinates but transports the same physical infinitesimal
+   field-axis rotation:
+
+   G_k r_k = r_(k+).                                       (CS-7)
+
+Thus every accepted closed-loop factor in A_c either fixes r or transports it
+to the next representation of the same physical field-axis rotation.
+
+For one periodic base orbit, the physical magnetic/reference/frame state
+returns after L, so in the same root coordinates
+
+A_c r_0 = r_0.                                              (CS-8)
+
+Hence
+
+1 in spectrum(A_c),  rho(A_c)>=1.                           (CS-9)
+
+No covariance values or tuner parameters enter this conclusion beyond their
+role in maintaining the field-aligned base branch and accepted event
+chronology.
+
+### Consequence for the pure-congruence covariance tangent
+
+RS gives
+
+L_P[Delta]=A_c Delta A_c'.                                 (CS-10)
+
+Set Delta_0=r_0 r_0'. Then by CS-8,
+
+L_P[Delta_0]=Delta_0.                                      (CS-11)
+
+Therefore
+
+1 in spectrum(L_P),                                        (CS-12)
+
+and I-L_P is singular. The regular implicit elimination RS-15 cannot be used
+on the exact field-aligned periodic equality branch.
+
+This is a GENUINE neutral Riccati tangent associated with the same geometric
+unobservability as the nonzero LaSalle mode, not an artifact of independently
+boxed covariance.
+
+### Does this imply a family of periodic covariance fixed points?
+
+No. A unit derivative does not by itself prove a nonlinear continuum of fixed
+points. Continuation of a periodic covariance solution under waveform
+variation must satisfy the singular Fredholm condition
+
+<Lambda, B_p[dp]>=0                                        (CS-13)
+
+for every left unit tangent Lambda in Ker(I-L_P^*), and higher-order terms may
+remove or bifurcate the branch. The periodic covariance itself can remain
+unique even with a unit derivative at a nonhyperbolic fixed point.
+
+Nor does CS-12 construct the base field-aligned physical execution. It is
+conditional on CS-1 being shipping reachable.
+
+### Active AW floor/sync projection
+
+The identity CS-11 is a statement about the pure-congruence covariance
+sensitivity branch. The default pending AW floor acts only on the AW covariance
+sector. Since Delta_0 has support purely in the attitude field-axis sector, an
+AW-only projection leaves Delta_0 unchanged. Therefore the unit tangent
+survives the default AW floor/sync derivative as well, provided that operation
+does not explicitly zero attitude/AW cross terms involving Delta_0 (there are
+none for Delta_0=r r').
+
+Likewise S covariance operations have H_S r=0 and their Joseph tangent fixes
+Delta_0. Accelerometer and magnetic Joseph tangents fix it by CS-5--CS-6.
+Thus the actual deployed covariance-floor chronology does not remove this
+particular unit tangent.
+
+A full covariance reset that explicitly overwrote the attitude marginal could
+remove it, but no such recurring shipping operation exists in Live A21.
+
+### Stronger conclusion
+
+The proposed spectral route cannot globally eliminate covariance on the
+field-aligned equality stratum:
+
+rho(L_P)<1 is FALSE there.                                  (CS-14)
+
+Indeed the exact neutral tangent is
+
+Delta_0 = r_field r_field'.                                (CS-15)
+
+This is valuable because it aligns the covariance and dissipativity pictures:
+the same physical field-axis gauge is simultaneously
+- a zero-dissipation homogeneous error direction;
+- a unit closed-loop state multiplier;
+- a unit periodic covariance tangent.
+
+There is therefore no hidden covariance contraction capable of eliminating
+the surviving LaSalle mode once exact field alignment holds.
+
+### What remains the correct theorem question
+
+The entire strict-stability issue is now upstream of this neutral geometry:
+
+Can the literal shipping BASE execution satisfy CS-1 indefinitely under the
+physical/front-end/tuner/mean equations?
+
+If NO, the field-aligned stratum is unreachable and the unit tangent never
+belongs to an admissible recurring execution; DL compactness can yield strict
+finite-window dissipation.
+
+If YES, strict contraction of full attitude error is impossible under the
+current assumptions because the actual measurements are geometrically
+collinear on that execution. One must then accept the field-axis gauge, add an
+assumption excluding persistent gravity/magnetic collinearity of the NOMINAL
+specific force, or weaken the theorem.
+
+Further covariance spectral estimates cannot decide this. The next proof work
+should return to reachability/exclusion of CS-1 in physical waveform space,
+using the shipping-closed equation, rather than seek rho(A_c)<1 on a stratum
+where an exact unit mode is now proved.
