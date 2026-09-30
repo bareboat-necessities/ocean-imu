@@ -233,6 +233,58 @@ def sync_boundary_adjoints(events, reader, terminal_row, n=21):
     return points
 
 
+
+def sync_divided_difference_rows(events, reader, terminal_row, n=21):
+    """Form h_B and its endpoint/divided-difference rows at AW-sync slabs.
+
+    State layout is the shipping 21-state order: LIN v,p,S,a_w occupy
+    6:18 in three-axis blocks.  Block duration is reconstructed from the
+    literal v->p prediction coefficient, retaining exact rational operands.
+    """
+    points = sync_boundary_adjoints(events, reader, terminal_row, n)
+    if len(points) < 2:
+        return {'boundaries': points, 'h_rows': [], 'D2_rows': []}
+    sequence = _events(events, n)
+    h_rows = []
+    slabs = []
+    for left, right in zip(points[:-1], points[1:]):
+        lo, hi = left['forward_index'], right['forward_index']
+        if not lo < hi:
+            raise ArithmeticError('non-increasing sync boundaries')
+        duration = F(0)
+        first_prediction = None
+        for k in range(lo+1, hi+1):
+            kind, b, _ = sequence[k]
+            if kind != 'prediction':
+                continue
+            # Identity sync-completion predictions have zero v->p time.
+            dt = b[9][6]
+            if dt:
+                duration += dt
+                if first_prediction is None:
+                    first_prediction = b
+        if duration <= 0 or first_prediction is None:
+            raise ArithmeticError('sync slab has no physical prediction')
+        lam = left['adjoint']
+        hv = [F(0)]*3
+        for axis in range(3):
+            phi_va = first_prediction[6+axis][15+axis]
+            phi_pa = first_prediction[9+axis][15+axis]
+            phi_sa = first_prediction[12+axis][15+axis]
+            hv[axis] = (phi_va*lam[6+axis] + phi_pa*lam[9+axis]
+                        + phi_sa*lam[12+axis])/duration
+        h_rows.append(hv)
+        slabs.append({'left_forward_index': lo, 'right_forward_index': hi,
+                      'duration': duration})
+    d2 = []
+    if h_rows:
+        d2.append(h_rows[0][:])
+        for a, b in zip(h_rows[:-1], h_rows[1:]):
+            d2.append([y-x for x, y in zip(a, b)])
+        d2.append(h_rows[-1][:])
+    return {'boundaries': points, 'slabs': slabs, 'h_rows': h_rows, 'D2_rows': d2}
+
+
 def joint_minimum_action_reader(design):
     """Loewner-minimal TOTAL historical action subject to L O_h = T_h.
 
