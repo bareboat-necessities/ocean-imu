@@ -210,4 +210,156 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertEqual(z["gamma_M_lower"],0.0)
         self.assertEqual(z["beta_lower"],0.0)
 
+
+class LinkedSoftFullCovarianceTests(unittest.TestCase):
+    """Exact algebraic witnesses; none is a shipping-reachability certificate."""
+
+    def setUp(self):
+        from fractions import Fraction
+        from tools.stability.ou3_theorem.lin_path_certificate import inverse
+        from tools.stability.ou3_theorem.matrix_certificates import add, identity, matmul, transpose
+        self.F = Fraction
+        self.inverse, self.add = inverse, add
+        self.eye, self.mm, self.tr = identity, matmul, transpose
+
+    def matrix(self, rows):
+        return [[self.F(x) for x in row] for row in rows]
+
+    def scale(self, rows, scalar):
+        return [[scalar*x for x in row] for row in rows]
+
+    def quad(self, matrix, vector):
+        v = [[self.F(x)] for x in vector]
+        return self.mm(self.tr(v), self.mm(matrix, v))[0][0]
+
+    def test_full_baseline_rank_one_identity_with_singular_and_full_information(self):
+        from tools.stability.ou3_theorem.linked_soft_return import conditional_rank_one
+        f = self.F
+        b = self.matrix([[2, '1/3'], ['1/3', 3]])
+        y = [f(3, 5), f(4, 5)]
+        yy = self.mm([[x] for x in y], [y])
+        for j in (self.matrix([[0, 0], [0, 2]]), self.matrix([[1, '1/4'], ['1/4', 2]])):
+            for a in (f(0), f(7, 3)):
+                z = conditional_rank_one(b, j, y, a)
+                prior = self.add(b, self.scale(yy, a))
+                direct = self.inverse(self.add(self.inverse(prior), j))
+                self.assertEqual(z['posterior'], direct)
+                self.assertGreaterEqual(z['effective_information'], 0)
+
+    def test_sharp_generalized_eigenvalue_is_attained(self):
+        from tools.stability.ou3_theorem.linked_soft_return import linked_directional_max
+        f = self.F
+        b = self.matrix([[2, '1/3'], ['1/3', 3]])
+        j = self.matrix([[1, '1/4'], ['1/4', 2]])
+        n, p = [f(5, 13), f(12, 13)], f(7, 3)
+        for e in (None, self.matrix([[2, 1], [0, 3]]), self.matrix([[3], [4]])):
+            z = linked_directional_max(b, j, n, p, e)
+            extremizer = z['extremizing_prior']
+            actual = self.inverse(self.add(self.inverse(extremizer), j))
+            self.assertEqual(self.quad(actual, n), z['max_variance'])
+            excess = self.add(extremizer, b, -1)
+            self.assertEqual(excess[0][0]+excess[1][1], p)
+            self.assertEqual(excess[0][0]*excess[1][1]-excess[0][1]**2, 0)
+
+    def test_full_space_duality_equals_isotropic_envelope_directionally(self):
+        from tools.stability.ou3_theorem.linked_soft_return import linked_directional_max
+        b = self.matrix([[1, '-9/10'], ['-9/10', 1]])
+        j = self.matrix([[0, 0], [0, 1]])
+        p = self.F(3, 2)
+        z = linked_directional_max(b, j, [1, 0], p)
+        direct = self.inverse(self.add(self.inverse(self.add(b, self.scale(self.eye(2), p))), j))
+        self.assertEqual(z['max_variance'], direct[0][0])
+
+    def test_nonorthonormal_chart_scaling_preserves_sharp_bound(self):
+        from tools.stability.ou3_theorem.linked_soft_return import linked_directional_max
+        b, j = self.eye(2), self.matrix([[0, 0], [0, 2]])
+        values = [linked_directional_max(b, j, [1, 1], 3, self.matrix([[3*k], [4*k]]))
+                  for k in (self.F(1), self.F(1, 1000), self.F(1000))]
+        self.assertEqual(values[0]['max_variance'], values[1]['max_variance'])
+        self.assertEqual(values[0]['max_variance'], values[2]['max_variance'])
+
+    def test_correlated_baseline_changes_worst_angle(self):
+        from tools.stability.ou3_theorem.linked_soft_return import conditional_rank_one, linked_directional_max
+        f = self.F
+        b, j = self.matrix([[1, '-9/10'], ['-9/10', 1]]), self.matrix([[0, 0], [0, 1]])
+        aligned = conditional_rank_one(b, j, [1, 0], 1)
+        rotated = conditional_rank_one(b, j, [f(12, 13), f(5, 13)], 1)
+        extra = rotated['posterior'][0][0]-rotated['baseline'][0][0]
+        self.assertEqual(extra, f(1083, 968))
+        self.assertGreater(rotated['posterior'][0][0], aligned['posterior'][0][0])
+        bound = linked_directional_max(b, j, [1, 0], 1)
+        self.assertEqual(bound['max_excess'], f(227, 200))
+        self.assertEqual(bound['max_variance'], f(173, 100))
+        self.assertLessEqual(rotated['posterior'][0][0], bound['max_variance'])
+
+    def test_compressed_covariance_is_not_compressed_inverse(self):
+        pi = self.matrix([[1, '4/5'], ['4/5', 1]])
+        linked_product = pi[0][0]*self.inverse(pi)[0][0]
+        self.assertEqual(linked_product, self.F(25, 9))
+        self.assertGreater(linked_product, 1)  # The one-dimensional compression has condition number 1.
+
+    def test_product_can_fail_while_exact_scalar_return_is_invariant(self):
+        from tools.stability.ou3_theorem.linked_soft_return import soft_scalar_return
+        # Pi=diag(100,1), Phi=I/2, J=diag(0,1), n=u=e1.
+        z = soft_scalar_return(100, self.F(1, 4), 0, 200)
+        self.assertEqual(z['variance'], 150)
+        self.assertEqual(z['ratio'], self.F(3, 4))
+        self.assertGreater(self.F(100, 4), 1)  # d_soft*H=25 on this very same word.
+
+    def test_synthetic_next_precision_does_not_prove_invariance(self):
+        from tools.stability.ou3_theorem.linked_soft_return import (
+            conditional_rank_one, rank_one_soft_return, soft_scalar_return)
+        b, j = self.eye(2), self.matrix([[0, 0], [0, 1]])
+        for c in (1, 2, 100):
+            real = conditional_rank_one(b, j, [1, 0], c)
+            self.assertEqual(real['effective_information'], 0)
+            self.assertEqual(real['posterior'][0][0], c+1)
+            exact = soft_scalar_return(1, 1, 0, c)
+            self.assertEqual(exact['invariance_margin'], -1)
+            synthetic = rank_one_soft_return(c, 1, 1, 1, c)
+            self.assertEqual(synthetic['next_kernel_variance'], c/2)
+            self.assertFalse(synthetic['proves_shipping_invariance'])
+
+    def test_exact_spectral_split_uses_full_quotient_and_baseline(self):
+        from tools.stability.ou3_theorem.linked_soft_return import soft_scalar_return
+        f = self.F
+        u, q, n = [f(3, 5), f(4, 5)], [f(-4, 5), f(3, 5)], [f(5, 13), f(12, 13)]
+        uu, qq = self.mm([[x] for x in u], [u]), self.mm([[x] for x in q], [q])
+        pi, phi, c = self.matrix([[2, '1/3'], ['1/3', 3]]), self.matrix([[2, 1], [-1, 3]]), f(7, 5)
+        w = [row[0] for row in self.mm(self.tr(phi), [[x] for x in n])]
+        d = self.quad(pi, n)+sum(x*y for x, y in zip(w, q))**2/2
+        ell_sq = sum(x*y for x, y in zip(w, u))**2
+        for soft_info in (f(0), f(3, 11)):
+            j = self.add(self.scale(uu, soft_info), self.scale(qq, 2))
+            g = self.add(j, self.scale(uu, 1/c))
+            direct = self.add(pi, self.mm(phi, self.mm(self.inverse(g), self.tr(phi))))
+            self.assertEqual(soft_scalar_return(d, ell_sq, soft_info, c)['variance'], self.quad(direct, n))
+
+    def test_physical_prior_scale_and_polynomial_identity(self):
+        from tools.stability.ou3_theorem.linked_soft_return import soft_scalar_return
+        f = self.F
+        for j in (f(0), f(1, 7)):
+            z = soft_scalar_return(f(2, 3), f(5, 4), j, 3, 4)
+            self.assertEqual(z['fixed_point_polynomial'], z['invariance_margin']*(4+3*j))
+        self.assertGreater(soft_scalar_return(1, 4, 1, 5)['invariance_margin'], 0)
+        self.assertLess(soft_scalar_return(1, 4, 1, 4)['invariance_margin'], 0)
+
+    def test_invalid_domains_fail_closed(self):
+        from tools.stability.ou3_theorem.linked_soft_return import conditional_rank_one, linked_directional_max, soft_scalar_return
+        with self.assertRaises(ValueError):
+            conditional_rank_one(self.eye(2), [[0, 0], [0, -1]], [1, 0], 1)
+        with self.assertRaises(ValueError):
+            linked_directional_max(self.eye(2), self.eye(2), [1, 0], 1, [[1, 1], [0, 0]])
+        for c in (0, -1, float('nan'), float('inf')):
+            with self.assertRaises(ValueError):
+                soft_scalar_return(1, 1, 0, c)
+
+    def test_status_never_promotes_algebra_to_O2(self):
+        from tools.stability.ou3_theorem.linked_soft_return import linked_product_status
+        z = linked_product_status()
+        self.assertTrue(z['full_covariance_baseline_required'])
+        self.assertFalse(z['next_ceiling_is_an_applied_measurement'])
+        self.assertFalse(z['source_uniform_O2_closed'])
+
+
 if __name__=="__main__":unittest.main()

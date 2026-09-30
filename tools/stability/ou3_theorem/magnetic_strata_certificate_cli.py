@@ -6,10 +6,13 @@ with no seeds and emits the exact unresolved coverage reason.
 from __future__ import annotations
 import argparse,json
 from pathlib import Path
-from .magnetic_strata_certificate import exhaustive_certificate\nfrom .magnetic_seed_cover import theorem_seed_cover
+from .magnetic_strata_certificate import exhaustive_certificate
+from .magnetic_seed_cover import theorem_seed_cover
 def main():
  p=argparse.ArgumentParser();p.add_argument("--output",required=True);a=p.parse_args()
- seeds,audit=theorem_seed_cover()\n z=exhaustive_certificate(seeds)\n z[\"seed_audit\"]=audit
+ seeds,audit=theorem_seed_cover()
+ z=exhaustive_certificate(seeds)
+ z["seed_audit"]=audit
  Path(a.output).write_text(json.dumps(z,indent=2,sort_keys=True)+"\n")
  print(json.dumps(z,sort_keys=True))
 if __name__=="__main__":main()
