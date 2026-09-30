@@ -526,3 +526,194 @@ and not a request for a stronger MARINE MOTION assumption.  Proving (K6) or
 (K7) from the literal axial-bg + BA + AW/S recursion is the next analytical
 step.  A carried maximum or an independently chosen TV(M_b) box would be
 fitted and must not be substituted.
+
+
+## 11. Coupled axial loop: necessary pathology rate and no-go for total action
+
+This section attacks (K6/K7) directly.  It obtains a quantitative necessary
+condition for a forbidden nominal-AW word, but also proves that the proposed
+TOTAL source-action comparison is not the correct closing functional under
+the present deterministic sensor contract.
+
+### 11.1 Free axial rotation cannot reach the field threshold
+
+On the field-axis branch let M_b b=b and let theta_b be its signed angle.
+Separate the part of dot(theta_b) generated without estimator corrections:
+physical gyro-bias drift/residual plus the commissioned fast gyro residual.
+The declared amplitude/rate channel gives the conservative free angular-rate
+bound
+
+    Omega_free = N_g + D_g = 0.02001 rad/s,
+
+where charging D_g as a rate is conservative on a one-second normalization;
+using the exact bias-history integral can only improve the word bound.
+
+For a complete T-second window, integration by parts gives
+
+    ||mean(M_b a_phys)||
+       <= 2 Vmax/T + Vmax Omega_free
+          + correction-induced term.                        (AX1)
+
+The sampling-fidelity defect adds J h_max/4.
+
+The static field-axis nuisance bound is
+
+    K_static =
+       2 g sigma_w sin(theta_max/2)
+       + B_ba,post + N_a.                                   (AX2)
+
+At the worst declared field fraction sigma_w=1/5 and retained
+theta_max=6 deg,
+
+    2 g sigma_w sin(3 deg) = 0.205296162115946,
+    K_static = 1.130462767099900 m/s^2.
+
+Choose a 32-s nominal-mean window; this changes no physical assumption and is
+inside the recurring A21 word.  Then
+
+    2 Vmax/T + J h_max/4 = 0.49375 m/s^2,
+    Vmax Omega_free       = 0.110055 m/s^2.
+
+Therefore every forbidden word must obtain at least
+
+    Delta_corr =
+      g/5 - K_static - 0.49375 - 0.110055
+      = 0.227062232900100 m/s^2                             (AX3)
+
+from correction-induced field-axis rotation/rectification.  Equivalently,
+under the integration-by-parts relaxation, it needs average additional
+variation at least
+
+    Omega_corr,needed = Delta_corr/Vmax
+                      = 0.0412840423454727 rad/s.            (AX4)
+
+Thus physical gyro/bias/fast-noise transport alone cannot sustain the
+gravity-scale nominal AW pathology.  Any such shipping trajectory must use
+the estimator correction loop itself at a quantitatively nontrivial rate.
+
+For a general field fraction retain the symbolic margin
+
+    Delta_corr(sigma_w,T)
+      = g sigma_w
+        - 2 g sigma_w sin(theta_max/2)
+        - B_ba,post - N_a
+        - 2 Vmax/T - J h_max/4
+        - Vmax Omega_free.                                  (AX5)
+
+Only when this is positive does AX4 give a useful necessary correction rate.
+
+### 11.2 Why total measurement action cannot close K7
+
+The deterministic sensor contract bounds each fast residual in amplitude; it
+does not impose stochastic cancellation or a finite all-time l2 budget.
+Consequently
+
+    A_acc(T)=sum r_acc,k^T R_acc,k^-1 r_acc,k
+
+and the analogous magnetic action may grow linearly with the number of
+samples even for an admitted coherent bounded residual.  Extending T therefore
+does not make A_available small.  The minimum action required to replenish OU
+leakage also grows linearly with T.  A comparison
+
+    A_min(g sigma_w) > A_available
+
+based only on TOTAL square-summed action is therefore structurally incapable
+of exploiting the fact that the target is a DC/signed-mean quantity.  This
+invalidates K7 as the final scalar closure, while retaining the complete-reader
+factorization for finite-error supplies.
+
+### 11.3 The required functional is low-frequency correction transport
+
+Let delta theta_k^c be the field-axis part of the actual attitude correction
+and let M_b,k be the resulting carried field-axis error.  The exact dangerous
+term is not sum |delta theta_k^c| and not sum NIS_k.  It is the signed pairing
+
+    R_corr(W) =
+       (1/T) sum_k v_k^T (M_b,k^+ - M_b,k^-) + reset defects, (AX6)
+
+or its exact SO(3) counterpart before linearization.
+
+A sufficient shipping lemma is
+
+    |R_corr(W)| <= C_corr < Delta_corr(sigma_w,T).           (AX7)
+
+At sigma_w=1/5,T=32 s it is enough to prove
+
+    C_corr < 0.227062232900100 m/s^2.                        (AX8)
+
+Equivalently, the conservative TV version needs only
+0.0412840423454727 rad/s average correction-induced variation, but AX6 is
+strictly preferable because prediction/correction sawteeth that keep M_b near
+zero cancel before the norm is taken.
+
+### 11.4 Exact covariance identity for correction-induced axial motion
+
+For an accepted correction with full gain K, innovation covariance Omega and
+field-axis attitude selector q_b, put
+
+    delta theta_b = q_b^T K r,
+    Delta P_b = q_b^T K Omega K^T q_b >=0.
+
+Then Cauchy--Schwarz in measurement space gives exactly
+
+    |delta theta_b|^2
+       <= (r^T Omega^-1 r) Delta P_b.                       (AX9)
+
+Meanwhile Joseph form gives
+
+    q_b^T P^+ q_b = q_b^T P^- q_b - Delta P_b
+
+before the reset congruence.  Thus large axial corrections consume axial
+covariance information.  Prediction replenishes that covariance only through
+the literal gyro/gyro-bias process block and reset transport.
+
+Equation AX9 is noncircular: it uses no G0 and no nominal-AW premise.
+However, summing |delta theta_b| with Cauchy--Schwarz introduces a
+sqrt(number-of-corrections) loss and is quantitatively useless.  The next
+valid operation is to insert AX9 into the SIGNED pairing AX6 and telescope
+Delta P_b against prediction replenishment before taking norms.
+
+### 11.5 Exact remaining certificate
+
+Define the chronological axial correction factor
+
+    z_k = sqrt(Delta P_b,k) sign-compatible with q_b^T K_k,
+
+and whiten the corresponding residual coordinate so
+|u_k|^2<=NIS_k and delta theta_b,k=z_k u_k in the scalar relaxed channel.
+Transport every occurrence to the physical-velocity pairing before squaring:
+
+    Xi_b = [ signed coefficient of each fresh gyro/process/measurement factor
+             in R_corr(W) ].
+
+Then
+
+    |R_corr(W)|^2 <= (Xi_b Xi_b^T) A_corr(W).                (AX10)
+
+The point is that Xi_b is formed AFTER the Joseph decrements and prediction
+replenishments telescope.  No per-event gain norm, NIS sum, raw TV, or G0
+geometry enters.  This is the axial scalar analogue of the signed
+factor-space reader already used for R_q/R_d.
+
+The source-uniform theorem now required is
+
+    sup_(reachable W)
+      (Xi_b Xi_b^T) A_corr(W)
+        < Delta_corr(sigma_w,T)^2.                           (AX11)
+
+For the 32-s, sigma_w=1/5 domain the right side is
+
+    Delta_corr^2 = 0.0515572575 (m/s^2)^2.
+
+AX11 is narrower than the previous nominal-AW reader problem: it concerns one
+field-axis signed correction/velocity pairing.  It uses only the literal
+gyro/gyro-bias process covariance, correction Joseph decrements, reset
+transport, and deterministic physical velocity bound.  S/AW/BA enter through
+the actual correction factors but do not require a separate observability
+floor.
+
+What is proved here is AX1--AX10 and the numerical necessary margin AX3/AX4.
+AX11 is NOT yet evaluated source-uniformly.  Therefore the shipping
+impossibility theorem is not claimed closed.  A proof that merely replaces
+AX11 by total NIS/action or raw correction TV would repeat a demonstrated
+quantitative relaxation failure.
