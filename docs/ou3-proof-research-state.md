@@ -168,6 +168,23 @@ solution of that finite equation violates one existing condition.  Interval
 arithmetic here would certify a constructed trajectory, not promote a fitted
 diagnostic constant.
 
+**Complete 17-s homogeneous linear word.**  Constructed the literal
+21-state chronological mean map using prediction F, accepted acc/S/mag
+I-KH, literal attitude resets, identity-mean PSD AW sync, active BA prediction,
+and the carried covariance/source factors.  Exact expansion gives
+P_W=M_W P_0 M_W'+S_W and D_W=P_0^-1-M_W'P_W^-1 M_W.  Therefore
+rho_lin(W,P0)=lambda_max(P0^(1/2)M_W'P_W^-1 M_W P0^(1/2))
+=1-lambda_min(P0^(1/2)D_WP0^(1/2)); innovations are eliminated exactly.
+The existing smoother identity gives the equivalent information form and
+Riccati diameter.  With the physical tilt/BA rank-one kernel, the surviving
+source target is sup_W kappa_nu(W)<=K_17<infinity plus same-word scalar kernel
+invariance, yielding rho_lin<=1-1/K_17.  Existing carried 16-s feasibility
+words have exact rho about .884--.993 and difficult kappa_nu about 196--198,
+so the plausible theorem scale is rho~.995, but these numbers remain
+non-promoting.  OPEN: source-uniform K_17 over all retained histories.  Do not
+claim a numerical rho until aggregate world-frame geometry, MAGNETIC SERVICE,
+jerk/sample fidelity, S-chain and gyro persistence are enclosed jointly.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
