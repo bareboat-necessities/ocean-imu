@@ -444,6 +444,21 @@ Keep G_hh>=I2 inside the complete two-word Gram and minimize jointly with
 four-S/process/kernel terms instead of Schur-shortening magnetic nuisance
 alone.
 
+**Complete Gram minimized over arbitrary magnetic nuisance.**  With
+G>=0,G_hh>=I2, arbitrary nuisance completion can cancel all magnetic
+quadratic on any selected protected+nuisance direction with nonzero nuisance
+component.  Thus worst magnetic curvature on the compatibility cone is zero;
+the complete denominator there is exactly the NONMAGNETIC joint Gram
+(four-S/process + acc/BA + gyro + current-kernel precision).  Fixed-word
+zero-action classification puts its null intersection inside nu_W, so current
+kernel precision controls it pointwise.  Source-uniform positivity still
+requires a rate through moving/rank-changing nu_W.  Reduced exact target:
+choose basis R_W of magnetic cancellation/compatibility subspace and bound
+C_c=lambda_max((R'Q_nm R)^dagger/2 (R'N_+R)
+(R'Q_nm R)^dagger/2).  Added `complete_magnetic_gram.py`.  The global
+infimum is therefore neither proved positive nor proved zero; magnetic
+counterfamilies alone do not null S/acc/kernel/terminal terms.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
