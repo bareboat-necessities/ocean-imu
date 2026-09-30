@@ -717,3 +717,155 @@ AX11 is NOT yet evaluated source-uniformly.  Therefore the shipping
 impossibility theorem is not claimed closed.  A proof that merely replaces
 AX11 by total NIS/action or raw correction TV would repeat a demonstrated
 quantitative relaxation failure.
+
+
+## 12. Persistent exact-degeneracy lemma: closed without G0
+
+The exact branch condition itself supplies a simpler contradiction than the
+minimum-action construction.  Let b be the applicable unit committed field,
+sigma_w=||e_z x b||>0, and suppose on a complete interval W of duration T
+the literal nominal specific force satisfies
+
+    f_hat(t_k)=a_hat_w(t_k)-g e_z parallel b                 (DG1)
+
+at every applied accelerometer epoch used by the normalized signed mean.
+Then for every such epoch
+
+    P_perp a_hat_w = P_perp(g e_z) =: c,                    (DG2)
+
+where P_perp=I-bb^T and
+
+    ||c||=g sigma_w.                                        (DG3)
+
+Thus exact degeneracy forces a FIXED transverse nominal AW component; lambda(t)
+along b is irrelevant.
+
+Use the exact world accelerometer identity, projected by P_perp.  With a
+consistent true/nominal attitude convention it can be written
+
+    P_perp a_hat_w
+      = P_perp M_b a_phys
+        + P_perp g(e_z-M_b e_z)
+        + P_perp e_ba
+        + P_perp n_a
+        - P_perp r_acc,                                     (DG4)
+
+where M_b is the remaining field-axis attitude mismatch after the magnetically
+observed component is charged in the magnetic residual/action, e_ba is the
+physical-minus-estimated residual accelerometer bias, n_a the commissioned
+fast accelerometer residual, and r_acc the actual innovation.  On an exact
+zero-innovation compatibility branch r_acc=0.  More generally its normalized
+signed mean must be retained as an explicit residual term.
+
+For the exact compatibility branch average DG4 with the nonnegative
+trapezoidal weights of the window.  The physical acceleration term obeys the
+sampling-fidelity identity
+
+    ||mean a_phys||
+       <= 2 Vmax/T + J h_max/4.                             (DG5)
+
+A rotation about b leaves b fixed, so its gravity defect has the sharp bound
+
+    ||g(e_z-M_b e_z)||
+       <= 2 g sigma_w sin(theta_max/2).                     (DG6)
+
+Use the declared universal post-projection estimator/physical BA error
+B_ba,post and fast accelerometer residual N_a.  Since projection cannot
+increase the norm,
+
+    g sigma_w
+      <= 2 Vmax/T + J h_max/4
+         + 2 g sigma_w sin(theta_max/2)
+         + B_ba,post + N_a.                                 (DG7)
+
+Therefore exact persistent degeneracy is impossible whenever
+
+    T >
+    2 Vmax /
+    [ g sigma_w(1-2 sin(theta_max/2))
+      - J h_max/4 - B_ba,post - N_a ],                      (DG8)
+
+provided the denominator is positive.
+
+For the declared worst field fraction sigma_w=1/5,
+
+    g sigma_w                         = 1.96133,
+    2 g sigma_w sin(3 deg)           = 0.205296162115946,
+    J h_max/4                         = 0.15,
+    B_ba,post                         = 0.625166604983954,
+    N_a                               = 0.3.
+
+The remaining physical-mean allowance is
+
+    D = 1.96133 - 0.205296162115946
+        -0.15 -0.625166604983954 -0.3
+      = 0.680867232900100 m/s^2.
+
+Hence
+
+    T_crit = 11/D = 16.156012... s.                         (DG9)
+
+So every exact zero-innovation field-axis-degenerate interval longer than
+16.157 s is excluded by the declared same-history physical/bias/sensor
+envelopes.  A 17-s complete window has strict margin
+
+    g/5 - [11/17 + 0.15 + 0.205296162115946
+           +0.625166604983954+0.3]
+      = 0.033808527... m/s^2.                               (DG10)
+
+This proof uses NO G0, no AW covariance ceiling, no S-gain sign, no carried
+0.348/0.371 value, and no strengthened MARINE MOTION assumption.  OU and S
+can only affect how the estimator attempts to remain on DG1; they cannot
+alter the algebraic requirement DG2.
+
+### Nonzero-innovation robust version
+
+If the branch is only measurement-compatible up to an accelerometer residual,
+define its signed transverse mean
+
+    Rbar_acc =
+      || sum_k alpha_k P_perp Rhat_k^T r_acc,k ||.           (DG11)
+
+Then DG7 becomes
+
+    g sigma_w
+      <= 2 Vmax/T + J h_max/4
+         +2 g sigma_w sin(theta_max/2)
+         +B_ba,post+N_a+Rbar_acc.                            (DG12)
+
+Consequently a 17-s branch is excluded whenever
+
+    Rbar_acc < 0.033808527... m/s^2                         (DG13)
+
+at sigma_w=1/5.  This is a SIGNED residual-mean requirement, not a pointwise
+innovation or total-NIS requirement.  It is exactly the quantity the complete
+covariance-weighted reader should bound; coherent high-frequency residuals
+cancel if their signed mean does.
+
+The previous claim that T_crit was about 21.44 s was arithmetic overcharging:
+it included the free gyro/velocity rotation term even though DG4 already
+works in the field-axis-rotated physical acceleration frame.  For exact
+degeneracy the direct projected measurement identity gives the sharper
+16.156-s threshold above.
+
+### Consequence for the single proof path
+
+The feared persistent exact trajectory is now eliminated on any 17-s
+qualified complete interval, before invoking G0.  Therefore G0 may be applied
+noncircularly AFTER establishing that every 17-s interval either
+
+1. leaves the field-axis-degenerate set by a definite geometric amount, or
+2. carries a signed accelerometer residual mean at least the DG13 threshold.
+
+Case 2 is not yet impossible under the deterministic sensor contract: the
+declared fast residual is amplitude-bounded but need not have zero signed
+mean, and DG13 is much smaller than its 0.3 m/s^2 envelope.  Thus the exact
+zero-innovation pathology is closed, while a near-degenerate persistent
+trajectory can still hide in a coherent signed innovation unless the
+complete reader/S-chain bounds Rbar_acc.
+
+This is the precise remaining robustification.  It is much narrower than the
+old AW-mean reachability problem: prove a source-uniform signed transverse
+accelerometer-innovation mean below the geometric escape margin, OR use its
+nonzero value directly as information/action that forces departure from the
+degenerate set.  Do not bound it by the pointwise 0.3 residual envelope.
