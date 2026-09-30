@@ -7920,3 +7920,152 @@ Until that tool exists, theorem status must remain
     gamma_S_source_uniform_numeric = false,
     gamma_M_residualized_numeric   = false,
     beta_rank_loss_numeric         = false.                (IC16)
+
+
+## 73. Aggregate magnetic-service Schur reduction: exact canonical correlation and impossibility from service alone
+
+Let the complete normalized magnetic/gyro information over one qualified
+service window be partitioned after all common-source whitening as
+
+    G = [ G_hh  G_hn
+          G_nh  G_nn ] >=0,                               (MS1)
+
+where h are exactly the two E_hb service coordinates and n are all remaining
+transported AG/root nuisance coordinates.  MAGNETIC SERVICE states only
+
+    G_hh >= I_2.                                           (MS2)
+
+No event schedule or full covariance ceiling is needed for the following
+exact reduction.
+
+On range(G_nn), define
+
+    C_M = G_hh^-1/2 G_hn G_nn^dagger/2.                   (MS3)
+
+PSD of G implies
+
+    ||C_M|| <=1.                                           (MS4)
+
+The nuisance-shorted service information is
+
+    G_res =
+      G_hh-G_hn G_nn^dagger G_nh
+      =G_hh^1/2 (I-C_M C_M^T) G_hh^1/2.                  (MS5)
+
+Therefore, if one could prove
+
+    ||C_M|| <= eta_M<1,                                    (MS6)
+
+then immediately
+
+    G_res >= (1-eta_M^2)G_hh
+          >= (1-eta_M^2)I_2,                              (MS7)
+
+and gamma_M>=1-eta_M^2.
+
+### MAGNETIC SERVICE alone cannot give eta_M<1
+
+The current assumptions do not imply MS6.  The exact PSD matrix
+
+    G_ex =
+      [1 0 1
+       0 1 0
+       1 0 1]                                              (MS8)
+
+has
+
+    G_hh=I_2,  G_nn=[1],  G_hn=[1;0],                     (MS9)
+
+so MAGNETIC SERVICE holds with equality mu_M=1, but
+
+    C_M=[1;0],   ||C_M||=1,                               (MS10)
+
+and
+
+    G_res=diag(0,1).                                       (MS11)
+
+The full loss has the nuisance-cancellation null vector (1,0,-1).  This is
+the existing restricted-service counterexample in the repository, rewritten
+as the exact canonical-correlation obstruction.
+
+Hence
+
+    G_hh>=I_2  DOES NOT IMPLY  gamma_M>0.                  (MS12)
+
+No manipulation of the Schur complement can change this fact.
+
+### Do the existing gyro-persistence bounds force eta_M<1?
+
+Not by themselves.  Gyro-persistence/process bounds control how a nuisance
+root coordinate propagates in time and can provide positive action for
+retuning it.  MS1, however, is already the MAGNETIC observation Gram after
+root transport.  A nuisance column may be exactly collinear with one protected
+service column while still respecting finite gyro transport.  To turn gyro
+process action into a strict canonical-angle bound one must enlarge MS1 to
+the JOINT magnetic+gyro-process Gram,
+
+    G_joint =
+      [ G_hh             G_hn
+        G_nh   G_nn+Q_n ],                                 (MS13)
+
+where Q_n is the normalized nuisance process/persistence information on the
+same service/root coordinates.
+
+Then
+
+    G_res,joint =
+      G_hh-G_hn(G_nn+Q_n)^-1 G_nh.                         (MS14)
+
+If a source-uniform conditional process floor
+
+    Q_n >= q_n I  on Range(G_nh),   q_n>0                 (MS15)
+
+and an upper comparison
+
+    G_nn <= M_n I                                          (MS16)
+
+hold in the relevant nuisance range, then
+
+    ||C_joint||^2 <= M_n/(M_n+q_n)<1,                     (MS17)
+
+and
+
+    gamma_M,joint >= q_n/(M_n+q_n).                        (MS18)
+
+But the current proof does not possess MS16 without a transported nuisance
+upper comparison; the gyro persistence cap is a lower/action statement, not
+that upper bound.  More generally the exact sufficient quantity is the
+relative process modulus
+
+    q_rel =
+      inf_z z^T Q_n z / z^T G_nn z  >0                    (MS19)
+
+on Range(G_nh).  If q_rel>0 then
+
+    gamma_M,joint >= q_rel/(1+q_rel).                      (MS20)
+
+This relative formulation requires no full P ceiling and no event schedule.
+It is the correct next target.
+
+### Consequence
+
+The attempted magnetic-only gamma_M certificate is impossible under the
+declared MAGNETIC SERVICE premise.  Its rigorous source-uniform lower bound
+is exactly zero unless additional JOINT process information is included.
+
+The proof should therefore retire the standalone requirement
+gamma_M_residualized>0 and replace it with a joint magnetic+gyro-process
+relative modulus q_rel in MS19.  This is already compatible with the complete
+reader/action architecture, which never required sensor-family information
+to be positive separately.
+
+The next calculation is narrow: express Q_n and G_nn on the two nuisance
+coordinates that actually correlate with E_hb after the complete 1-s
+transport, then test whether the already-proved gyro-bias process/persistence
+action gives
+
+    Q_n >= q_rel G_nn                                      (MS21)
+
+with q_rel>0.  If yes, MS20 supplies the needed joint service modulus.  If
+not, the equality vector gives the exact magnetic+gyro nuisance trajectory
+that must be carried into the next compatibility kernel.
