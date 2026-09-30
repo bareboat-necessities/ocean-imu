@@ -1428,6 +1428,43 @@ same-history signed cancellation of the fast-gyro term with the literal
 accelerometer/$S$/magnetic correction jumps, with the exact nonlinear jumps
 retained.
 
+The candidate fast-gyro history can be propagated further through the literal
+measurement equations.  Set
+$R_{\rm true}=\exp(\theta(t)[b]_\times)$ with
+$\dot\theta=-0.02\sin t$ and choose the commissioned gyro residual
+$n_g=0.02\sin t\,b$.  Then the supplied gyro is identically zero, while
+$R_{\rm true}^TB=B$ makes the magnetic innovation identically zero.  For any
+candidate nominal AW history $w(t)$, choosing
+\begin{equation}
+ a_{\rm phys}=g e_z+R_{\rm true}(w-g e_z)
+ \label{eq:fast-gyro-acc-compat}
+\end{equation}
+makes the physical accelerometer sample exactly equal to the level nominal
+prediction with AW $w$.  For a $5.5\cos t$ principal component the additional
+gravity compensation is at most $0.19613\,{\rm m/s^2}$, so the declared
+acceleration and jerk envelopes are not the obstruction.
+
+The remaining condition is estimator self-consistency.  Over each scheduled
+$S$ interval the literal lifted mean has the affine form
+$x_{j+1}=A_{S,j}x_j+\sum_lB_{jl}u_{jl}$ with
+$x=(v,p,S,a_w)$.  Over one candidate period this gives
+\begin{equation}
+ (I-A_{\rm per})x_0=B_{\rm per}u_{\rm per},
+ \label{eq:periodic-riccati-compat}
+\end{equation}
+together with the sampled AW target, the exact accelerometer innovation
+identity, BA dynamics, and the actual covariance-generated accelerometer,
+$S$, and magnetic gains.  No structural identity forces the unit-frequency
+gain in \eqref{eq:periodic-riccati-compat} to vanish.
+
+A period-closing attitude balance is insufficient: it is unweighted, whereas
+the dangerous functional weights every correction by
+$c_i=u^TM_{b,i}[b]_\times v_i$.  Thus magnetic service can close the net
+attitude error without implying cancellation of the signed
+rotation--velocity functional.  The remaining discriminator is the coupled
+periodic Riccati/mean compatibility system, not another independent-envelope
+norm.
+
 For the explicit horizontal-field-fraction premise
 $\sigma_w\ge1/5$, the critical nominal transverse scale is
 $g\sigma_w\ge g/5=1.96133\,\mathrm{m/s^2}$.  This number must not be inferred
