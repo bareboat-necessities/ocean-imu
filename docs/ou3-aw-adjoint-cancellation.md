@@ -1975,3 +1975,44 @@ arbitrary polynomial fit.
 
 This is a genuine reachability statement and is the next required step for
 any kappa_enc substantially above 1e-14.
+
+
+### 23.1 Information age must be tracked in source-factor history
+
+Do not propagate P_carried and P_fresh through the nonlinear Riccati map as
+separate posterior covariances: C_H(P1+P2) != C_H(P1)+C_H(P2).
+
+The exact age decomposition lives instead in the linear source-factor/smoother
+representation.  For independent process factor B_j injected at prediction j,
+its contribution to a later homogeneous/source reader is
+
+    G_(k,j)=M_(k:j+1) B_j,
+
+where M contains the literal subsequent closed-loop correction maps.  The
+covariance/source action is the square sum of these chronological factors.
+Source age is therefore an exact label on columns, preserved through every
+linearized correction.
+
+A useful fresh-information certificate must lower-bound the AW/readout norm
+of columns with age <=T_age relative to the total relevant reader norm:
+
+    sum_{j:k-j<=T_age} ||e_a^T G_(k,j)||^2
+      >= eta_fresh
+         sum_j ||e_a^T G_(k,j)||^2.                         (AGE1)
+
+Unlike an additive posterior-covariance split, AGE1 is meaningful under
+Kalman conditioning.  It is also exactly the representation already used by
+the complete-word square-summed reader.
+
+The remaining analytical task is to prove eta_fresh>0 from:
+(i) nonzero OU process injection each step;
+(ii) finite sample spacing;
+(iii) the finite conditional accelerometer correction;
+(iv) the .1-s AW sync factor; and
+(v) the existing covariance upper bound, which prevents an unbounded ancient
+factor from dominating forever.
+
+Once AGE1 holds, the fresh columns have explicit OU kernel geometry and give
+a nonzero reachable encoded-S floor.  This is the first route identified here
+that both encodes shipping reachability and survives the nonlinear Riccati
+conditioning exactly.
