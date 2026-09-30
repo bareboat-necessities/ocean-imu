@@ -3516,3 +3516,119 @@ Unlike the abandoned beta-TV problem, AP18 contains no independent
 accelerometer innovation or S gain; both have already been Schur-eliminated.
 It is the literal complete-word backward reader variation and is the correct
 object for bounded-velocity Abel summation.
+
+
+## 39. Exact 0.1-s block reader and two-norm coarse graining
+
+Partition a regular word at the applied-tuner/covariance-sync activation
+boundaries t_B, with block length L_B about .1 s.  Freeze the realized
+coefficients only for the auxiliary linear comparison.  Collapse all literal
+homogeneous operations in block B into
+
+    e_(B+1)=M_B e_B + sum_(j in B) M_(B+1<-j) d_j.          (CB1)
+
+All accepted accelerometer/S/magnetic corrections are inside M_B.  Their
+measurement/source defects retain the existing square-summed factor
+representation; do not convert them to eventwise l1 norms.
+
+Let Lambda_(B+1) be the full backward reader at the block end.  The block-root
+reader is
+
+    Lambda_B=M_B^T Lambda_(B+1).                            (CB2)
+
+For a physical OU prediction defect at sample j,
+
+    d_j^phys=E_aw[-(1-phi_j)a_j-Delta a_j].
+
+Its exact signed coefficient in the block reader is
+
+    c_(B,j)^T
+      =-Lambda_(B+1)^T M_(B+1<-j) E_aw.                    (CB3)
+
+Thus the block physical contribution is
+
+    R_phys,B =
+      sum_(j in B) c_(B,j)^T
+        [(1-phi_j)a_j+Delta a_j].                           (CB4)
+
+Because the future transport M_(B+1<-j) includes internal correction maps and
+LIN prediction mixing, c_(B,j) is NOT generally a common boundary AW reader
+times the scalar pure-OU kernel.  Claiming
+R_phys,B=(1-Phi_B) r_B a would discard the very correction rotations being
+proved about.
+
+### Internal summation by parts
+
+Write a_j=(v_(j+1)-v_j)/h_j plus the bounded jerk remainder.  Apply discrete
+summation by parts only inside B.  This gives
+
+    R_phys,B =
+      B_B^R v_(B+1)-B_B^L v_B
+      + R_var,B + R_jerk,B,                                (CB5)
+
+where B_B^{L,R} are exact block endpoint reader coefficients and R_var,B
+contains only differences of c_(B,j)/h_j INSIDE the block.
+
+Do not bound R_var,B by raw total variation.  Split each difference into:
+1. OU prediction transport, whose scalar forward kernel has mass<=1 and
+   D1<=2;
+2. correction-induced reader jumps.
+
+For an accelerometer correction the AW-reader jump is
+-R_wb^T q_acc and its squared norm is bounded by the exact corrected loss
+q_acc^T S_acc q_acc / lambda_min(R_acc).  S, magnetic and covariance sync
+have no direct AW-reader jump; their indirect effect enters through later
+prediction mixing and is retained in the full block metric.
+
+Therefore the internal correction part obeys a block l2 estimate
+
+    ||R_var,B^corr||
+      <= C_B sqrt(Loss_B) sqrt(PrimitiveEnergy_B),          (CB6)
+
+with C_B depending only on the finite block horizon/scales, not on the number
+of corrections individually.  The exact sharp C_B still needs derivation;
+using eventwise Cauchy would give sqrt(n_B) and is not promoted.
+
+### Global block composition
+
+Sum CB5 over blocks.  Adjacent velocity-boundary terms combine as
+
+    sum_B [B_B^R v_(B+1)-B_B^L v_B]
+      = endpoint terms
+        +sum_internal (B_(B-1)^R-B_B^L) v_B.               (CB7)
+
+Thus bounded physical velocity is charged only by BLOCK-TO-BLOCK reader
+variation, not sample-level variation.
+
+The residual correction terms should be accumulated with the existing
+complete-word square-summed input identity:
+
+    sqrt(sum_B Loss_B)                                     (CB8)
+
+rather than sum_B sqrt(Loss_B).  This avoids a sqrt(number of blocks) loss.
+
+### Remaining quantitative lemma
+
+The useful block theorem is now:
+
+    D_block =
+      |B_0^L|+|B_last^R|
+      +sum_B |B_(B-1)^R-B_B^L|
+      <= C_boundary,                                       (CB9)
+
+and
+
+    sum_B ||R_var,B^corr||
+      <= C_corr sqrt(total corrected loss)
+                   * physical-primitive budget,             (CB10)
+
+with C_boundary,C_corr source-uniform and modest.
+
+CB9 is a variation bound on only ~170 boundary readers.  CB10 keeps all
+~3400 internal corrections in their natural l2 action.  This is the exact
+two-norm coarse graining needed for the signed physical theorem.
+
+The next calculation is to express B_B^L,B_B^R in terms of Lambda_B and the
+block OU tail products, then test whether CB9 telescopes across the covariance
+sync boundary (sync has identity mean map) so that only tuner changes and
+block corrected-loss remainders contribute.
