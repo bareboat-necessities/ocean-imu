@@ -5514,3 +5514,183 @@ the continuous gyro/gyro-bias term FV23 and the nonlinear FV25 remainder,
 tight enough that the COMPLETE nominal-AW inequality is below g sigma_w.
 No 0.0338 m/s^2 residual margin is assumed available before those terms are
 inserted.  Failure of a coarse enclosure is not a shipping counterexample.
+
+
+## 58. Source-uniform enclosure of the continuous field-axis term and explicit envelope obstruction
+
+Write the continuous field-axis error rate on the retained chart as
+
+    dot(theta_b)^cont =
+      b^T e_bg + b^T n_g + rho_chart,                       (CE1)
+
+where e_bg is the SAME-HISTORY total residual gyro-bias channel from IMU BIAS,
+n_g is the commissioned fast gyro residual, and rho_chart contains the
+already-declared chart/prediction transport defect.  Physical angular rate
+does not appear as an independent error source: it is common to truth and
+nominal propagation.
+
+The continuous contribution to the normalized physical mean is
+
+    C_cont =
+      (1/T) int_W c(t) [b^T e_bg(t)+b^T n_g(t)] dt
+      +R_chart,
+    c(t)=u^T M_b(t)[b]_x v(t).                              (CE2)
+
+Since |c|<=|v|, the fast channel has the sharp envelope consequence
+
+    |C_fast| <= V_max N_g.                                 (CE3)
+
+For the slow residual bias, use the displacement primitive rather than the
+velocity envelope.  Ignoring only the separately charged derivative of the
+bounded rotation coefficient, scalar integration by parts gives
+
+    (1/T) int v^T w e_bg dt
+      = [p^T w e_bg]_0^T/T
+        -(1/T) int p^T w dot(e_bg) dt
+        -(1/T) int p^T dot(w) e_bg dt,                     (CE4)
+
+with w=-[b]_x M_b^T u and |w|<=1.  Therefore the part not already assigned to
+field-axis rotation/chart coupling obeys
+
+    |C_bg,primitive|
+      <= 2 P_max B_g/T + P_max D_g.                        (CE5)
+
+At T=17 s, using the declared source envelopes,
+
+    2 P_max B_g/T + P_max D_g
+      = 2(8.1)(0.02)/17 + 8.1e-5
+      = 0.0191399235294118 m/s^2,                          (CE6)
+
+and
+
+    V_max N_g = (5.5)(0.02)
+              = 0.11 m/s^2.                               (CE7)
+
+Thus even before R_chart and the nonlinear reset term,
+
+    C_cont,envelope <= 0.129139923529412 m/s^2 + R_chart.  (CE8)
+
+CE8 is a VALID source-uniform upper enclosure, but it is not useful for the
+old 0.0338084 m/s^2 arithmetic remainder.
+
+### Explicit admitted-envelope witness for the fast channel
+
+The failure is not merely the looseness of CE3.  Consider on an integer
+number of 2*pi-second cycles
+
+    v(t)=5.5 sin(t) e_1,
+    p(t)=-5.5 cos(t) e_1,
+    a(t)=5.5 cos(t) e_1,
+    jerk(t)=-5.5 sin(t) e_1,                               (CE9)
+
+and choose the field axis/terminal direction so that
+u^T M_b[b]_x e_1=1+O(theta_b), with commissioned fast gyro residual
+
+    n_g(t)=0.02 sin(t) b.                                  (CE10)
+
+Take e_bg=0 and no correction jump for this scalar envelope calculation.
+Then
+
+    theta_b(t)=-0.02 cos(t)+const,                          (CE11)
+
+so the field-axis error amplitude is only 0.02 rad < 6 degrees, while all
+physical primitive bounds are satisfied:
+
+    |p|=5.5<8.1,
+    |v|=5.5,
+    |a|=5.5<8.8,
+    |jerk|=5.5<100.                                        (CE12)
+
+The normalized signed supply is
+
+    (1/T) int v^T [b]_x^T M_b^T u (b^T n_g) dt
+      = 5.5(0.02)/2 + O(0.02^2)
+      = 0.055 + O(0.0004) m/s^2.                           (CE13)
+
+This already exceeds 0.0338084.  CE9--CE13 are an explicit counterexample to
+ANY proof that attempts to bound the continuous fast-gyro channel by the
+declared independent physical/sensor envelopes and retained 6-degree tube
+alone.
+
+It is NOT yet a counterexample to the shipping theorem: the complete
+accelerometer/S/magnetic correction chronology has not been solved for this
+history.  A theorem may still close if those corrections cancel CE13 in the
+same signed augmented factor row.  Such cancellation must be proved from
+shipping reachability; it cannot be assumed from MAGNETIC SERVICE because a
+rotation about the instantaneous field direction is precisely the
+magnetically weak coordinate.
+
+### Nonlinear SO(3) jump remainder
+
+For an exact field-axis jump kappa,
+
+    Exp(kappa B)-I-kappa B
+
+has spectral norm
+
+    r_exp(kappa)
+      <= kappa^2/2                                         (CE14)
+
+for the retained local branch.  Hence the exact jump remainder from FV9 obeys
+
+    |epsilon_i^SO3|
+      <= |v_i| kappa_i^2/2
+         + |v_i| |rho_i^tw|,                               (CE15)
+
+with a harmless refinement replacing kappa^2/2 by the exact trigonometric
+remainder if desired.  Consequently
+
+    |R_W^SO3|/T
+      <= V_max/(2T) sum_i kappa_i^2
+         +V_max/T sum_i |rho_i^tw|.                        (CE16)
+
+The existing literal injection lemma gives eventwise
+
+    |d_i|^2 <= NIS_i q_theta^T K_i Omega_i K_i^T q_theta,  (CE17)
+
+but the current deterministic contract supplies neither a source-uniform
+all-word sum of NIS-weighted decrements nor a signed bound on
+sum |rho_i^tw|.  Therefore CE16 is finite on each carried word but has NO
+currently proved useful source-uniform numerical constant.  Replacing it by
+number-of-events times a pointwise maximum would resurrect the failed
+sqrt(N)/TV architecture.
+
+The correct escape is to keep the exact jump FV3 in the augmented nonlinear
+functional, or prove a complete-word quadratic injection-action bound from
+the literal accepted-correction chronology.  Until one of those is closed,
+
+    C_rot,* <= 0.129139923529412
+               + C_chart + C_SO3 + C_joint-correction      (CE18)
+
+is the strongest simple source-uniform analytical enclosure supplied by the
+declared envelopes, and it is quantitatively insufficient.
+
+### Margin consequence
+
+The previously quoted 17-s remainder
+
+    Delta_old = 0.0338084 m/s^2
+
+cannot be certified as spare margin for the corrected proof.  Even the
+admitted-envelope fast-channel witness CE13 contributes about 0.055 m/s^2.
+Therefore the test
+
+    C_endpoint,new + 4 C_* + C_sampling,new < 0.0338
+
+FAILS as a source-envelope argument before any positive endpoint, sampling or
+nonlinear-reset charge is added.
+
+This failure identifies the exact missing lemma rather than strengthening
+MARINE MOTION:
+
+    SAME-HISTORY FAST-GYRO CANCELLATION LEMMA:
+    the signed fast-gyro term CE2 plus the literal
+    accelerometer/S/magnetic correction jumps FV24 must admit a joint
+    source-uniform bound substantially below V_max N_g.     (CE19)
+
+CE19 must be derived from the literal estimator/measurement chronology with
+the nominal AW/BA/S coupling retained.  If CE9--CE13 can be extended to make
+those literal corrections satisfy every retained service/gate contract while
+preserving a >available-margin signed residual, it becomes a genuine
+shipping-reachable analytical counterexample.  Otherwise the mechanism that
+prevents that extension is exactly the lemma needed to continue the proof.
