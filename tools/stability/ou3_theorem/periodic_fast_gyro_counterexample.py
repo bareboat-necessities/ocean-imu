@@ -44,6 +44,8 @@ def driver_source():
     """Untouched shipping wrapper driven by the exact smooth candidate."""
     from .construction_history_diagnostic import REPO
     src=(REPO/'tools/stability/ag_readout_source.cpp').read_text()
+    src=src.replace('int live=-1, refined=-1, active=-1, applied=0;',
+      'int live=-1, refined=-1, active=-1, applied=0; std::string prev_state,prev_cov; double rel_tilt_max=0,acc_r_max=0,mag_r_max=0,ba_max=0,aw_max=0;')
     src=src.replace('for (int k=1; k<=45064; ++k) {',
                     'for (int k=1; k<=240000; ++k) {')
     a=src.index('        if (k==45001) {')
@@ -61,12 +63,34 @@ def driver_source():
                     'rwb*Eigen::Vector3f(0,ay,-g_std)')
     src=src.replace('rwb*Eigen::Vector3f(60,0,30)',
                     'Eigen::Vector3f(75,0,0)')
+    src=src.replace('        if (live<0 && filter.isLive()) live=k;',
+      '''        if(k>238800) {
+            const auto& mm=filter.raw().mekf();
+            const auto qtrue=Eigen::AngleAxisf(roll,Eigen::Vector3f::UnitX());
+            const auto qerr=qtrue.inverse()*mm.quaternion_boat();
+            rel_tilt_max=std::max(rel_tilt_max,2.0*std::acos(std::min(1.0,std::abs(static_cast<double>(qerr.w())))));
+            acc_r_max=std::max(acc_r_max,static_cast<double>(mm.lastAccDiag().r.norm()));
+            ba_max=std::max(ba_max,static_cast<double>(mm.get_acc_bias().norm()));
+            aw_max=std::max(aw_max,static_cast<double>(mm.xext.segment<3>(15).norm()));
+        }
+        if(k==238800) { prev_state=matrix_json(filter.raw().mekf().xext); prev_cov=matrix_json(filter.raw().mekf().Pext); }
+        if (live<0 && filter.isLive()) live=k;''')
+    src=src.replace('            if (recording && filter.raw().mekf().lastMagDiag().accepted) ++applied;',
+      '''            if (recording && filter.raw().mekf().lastMagDiag().accepted) ++applied;
+            if(k>238800) mag_r_max=std::max(mag_r_max,static_cast<double>(filter.raw().mekf().lastMagDiag().r.norm()));''')
     src=src.replace(' || applied!=8','')
     src=src.replace('    const auto& m=filter.raw().mekf();',
       '''    const auto& m=filter.raw().mekf();
     const auto tune=filter.raw().tune_;''')
     src=src.replace('<< ",\\\"root_covariance\\\":" << root',
-      '''<< ",\\\"tau_applied\\\":" << tune.tau_applied
+      '''<< ",\\\"previous_period_state\\\":" << prev_state
+              << ",\\\"previous_period_covariance\\\":" << prev_cov
+              << ",\\\"relative_attitude_error_max_rad\\\":" << rel_tilt_max
+              << ",\\\"acc_innovation_max\\\":" << acc_r_max
+              << ",\\\"mag_innovation_max\\\":" << mag_r_max
+              << ",\\\"ba_estimate_max\\\":" << ba_max
+              << ",\\\"aw_estimate_max\\\":" << aw_max
+              << ",\\\"tau_applied\\\":" << tune.tau_applied
               << ",\\\"sigma_applied\\\":" << tune.sigma_applied
               << ",\\\"RS_applied\\\":" << tune.RS_applied
               << ",\\\"pseudo_period\\\":" << m.get_pseudo_update_period_s()
