@@ -389,6 +389,19 @@ source-uniform interval H_m/S_m_actual/Phi event boxes from literal shipping
 chronology; existing MagneticEvent exports only the two already-projected
 E_hb rows, so it cannot recover non-E_hb nuisance columns.
 
+**Exhaustive 1-s magnetic stratum driver implemented.**  Added
+`magnetic_strata_certificate.py`: branch-and-bound over CLOSED operation
+strata, literal event export, E_hb/non-E_hb Schur certification, adaptive
+splitting of unresolved interval operation entries, exact unresolved-leaf
+reporting, and a mandatory source-domain coverage tag on every seed.  It
+cannot certify a finite list of representative/carried words as exhaustive.
+CI now emits the magnetic-strata status.  Current run intentionally has no
+theorem-domain seeds and therefore fails closed with
+`reason=no source-domain strata supplied`; this identifies the remaining
+gap as construction/proof of the finite closed seed cover for all allowed
+1-s P/v2hat/dtheta/F/event-gate histories.  Driver/formulas are complete;
+domain cover is not.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
