@@ -353,6 +353,38 @@ next analytical obligation is a reachability/passivity bound for the coupled
 field-axis error/AW/S/bias loop, not another observability lemma and not a
 stronger MARINE MOTION assumption.
 
+**Axial coupled-loop reduction (PR #630).** A 32-s noncircular
+field-axis calculation now gives a quantitative necessary condition for the
+nominal-AW pathology.  At sigma_w=1/5 and the retained 6-degree tilt,
+field-axis gravity mismatch is only 0.2052962 m/s2.  Adding the universal
+post-projection BA error, fast accel residual, physical signed-mean/sampling
+bound and the 0.02001 rad/s free gyro/bias rotation leaves a strict
+0.2270622 m/s2 gap to g/5.  Thus any forbidden trajectory must obtain at
+least that much rectification from correction-induced field-axis attitude
+motion; the conservative equivalent average correction-induced angular
+variation is 0.0412840 rad/s.
+
+Total NIS/source action cannot close this gap: deterministic bounded sensor
+residuals may be coherent, so square-summed measurement action grows with
+word length.  The correct functional is the signed velocity/axial-correction
+pairing.  For each correction,
+`|delta theta_b|^2 <= NIS * q_b' K Omega K' q_b`, and the second factor is
+exactly the Joseph decrement of axial attitude covariance.  The desired
+certificate telescopes those decrements against prediction replenishment
+before taking a norm.
+
+A new structural obstruction is explicit: no source-uniform AG/axial
+covariance ceiling is currently available without G0.  On the exactly
+field-axis-degenerate nominal-force branch, magnetic and accelerometer rows
+can both miss the axial attitude/bg pair, while bg process noise accumulates.
+Therefore a generic Joseph-decrement bound cannot be promoted uniformly
+without first excluding persistent degeneracy; using G0 for that exclusion
+would be circular.  This is not a reachable counterexample.  It means the
+next contradiction must come from the coupled AW/BA/S MEAN recursion itself,
+showing that persistent `f_hat parallel b` cannot be maintained by the
+declared physical/source histories.  Only after that escape-from-degeneracy
+lemma may the AG covariance/information machinery be invoked.
+
 ## Current limiter
 
 Exact physical rest is not identifiable from the current sensor/bias model.
