@@ -47,10 +47,10 @@ def driver_source():
     src=src.replace('int live=-1, refined=-1, active=-1, applied=0;',
       'int live=-1, refined=-1, active=-1, applied=0; std::string prev_state,prev_cov; double rel_tilt_max=0,acc_r_max=0,mag_r_max=0,ba_max=0,aw_max=0;')
     src=src.replace('for (int k=1; k<=45064; ++k) {',
-                    'for (int k=1; k<=240000; ++k) {')
+                    'for (int k=1; k<=72000; ++k) {')
     a=src.index('        if (k==45001) {')
     b=src.index('        const double t',a)
-    src=src[:a]+'''        if (k==228001) { root=matrix_json(filter.raw().mekf().covariance_full()); recording=true; }
+    src=src[:a]+'''        if (k==60001) { root=matrix_json(filter.raw().mekf().covariance_full()); recording=true; }
     '''+src[b:]
     src=src.replace('const float roll = wave ? static_cast<float>(.02*std::sin(.5*t)) : 0.0f;',
       'const double om=M_PI/3.0; const float roll=wave ? static_cast<float>((.02/om)*std::cos(om*t)) : 0.0f;')
@@ -64,7 +64,7 @@ def driver_source():
     src=src.replace('rwb*Eigen::Vector3f(60,0,30)',
                     'Eigen::Vector3f(75,0,0)')
     src=src.replace('        if (live<0 && filter.isLive()) live=k;',
-      '''        if(k>238800) {
+      '''        if(k>70800) {
             const auto& mm=filter.raw().mekf();
             const auto qtrue=Eigen::AngleAxisf(roll,Eigen::Vector3f::UnitX());
             const auto qerr=qtrue.inverse()*mm.quaternion_boat();
@@ -73,11 +73,11 @@ def driver_source():
             ba_max=std::max(ba_max,static_cast<double>(mm.get_acc_bias().norm()));
             aw_max=std::max(aw_max,static_cast<double>(mm.xext.segment<3>(15).norm()));
         }
-        if(k==238800) { prev_state=matrix_json(filter.raw().mekf().xext); prev_cov=matrix_json(filter.raw().mekf().Pext); }
+        if(k==70800) { prev_state=matrix_json(filter.raw().mekf().xext); prev_cov=matrix_json(filter.raw().mekf().Pext); }
         if (live<0 && filter.isLive()) live=k;''')
     src=src.replace('            if (recording && filter.raw().mekf().lastMagDiag().accepted) ++applied;',
       '''            if (recording && filter.raw().mekf().lastMagDiag().accepted) ++applied;
-            if(k>238800) mag_r_max=std::max(mag_r_max,static_cast<double>(filter.raw().mekf().lastMagDiag().r.norm()));''')
+            if(k>70800) mag_r_max=std::max(mag_r_max,static_cast<double>(filter.raw().mekf().lastMagDiag().r.norm()));''')
     src=src.replace(' || applied!=8','')
     src=src.replace('    const auto& m=filter.raw().mekf();',
       '''    const auto& m=filter.raw().mekf();
