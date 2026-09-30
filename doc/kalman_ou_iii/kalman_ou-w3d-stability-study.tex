@@ -1390,6 +1390,44 @@ and the existing Abel/sampling terms.  Its source-uniform induced norm remains
 open; neither raw attitude total variation nor total NIS is substituted for
 that signed operator.
 
+A direct envelope bound shows why the remaining correlation is essential.
+Writing the continuous field-axis error rate as residual gyro bias plus the
+commissioned fast gyro residual, the slow bias part admits a second physical
+summation-by-parts bound
+\begin{equation}
+ C_{bg}\le {2P_{\max}B_g\over T}+P_{\max}D_g
+ =0.01913992353\ {\rm m/s^2}\quad(T=17\ {\rm s}),
+ \label{eq:field-axis-bg-envelope}
+\end{equation}
+apart from the rotation/chart term already retained in the joint operator.
+The fast residual has only an amplitude contract, hence
+\begin{equation}
+ C_{g,\rm fast}\le V_{\max}N_g=0.11\ {\rm m/s^2}.
+ \label{eq:field-axis-fast-envelope}
+\end{equation}
+This is not merely a loose inequality: $v=5.5\sin t$ and
+$n_g=0.02\sin t\,b$ obey the declared primitive and fast-residual envelopes,
+produce only $0.02$ rad field-axis error amplitude, and yield a signed mean
+$0.055+O(0.02^2)\,{\rm m/s^2}$.  Thus the former
+$0.0338\,{\rm m/s^2}$ remainder cannot close the fast channel from the
+independent envelopes alone.  This witness is not yet a shipping
+counterexample because the literal correction chronology has not been solved
+on it.
+
+For an exact field-axis correction jump $\kappa_i$, the exponential remainder
+obeys
+\begin{equation}
+ \norm{\exp(\kappa_i[b]_\times)-I-\kappa_i[b]_\times}
+ \le {\kappa_i^2\over2},
+ \label{eq:field-axis-exp-remainder}
+\end{equation}
+so a word bound requires a complete-word quadratic injection/twist bound.
+The current eventwise Joseph inequality does not provide such a bound without
+reintroducing event-count/TV loss.  Consequently the next required lemma is a
+same-history signed cancellation of the fast-gyro term with the literal
+accelerometer/$S$/magnetic correction jumps, with the exact nonlinear jumps
+retained.
+
 For the explicit horizontal-field-fraction premise
 $\sigma_w\ge1/5$, the critical nominal transverse scale is
 $g\sigma_w\ge g/5=1.96133\,\mathrm{m/s^2}$.  This number must not be inferred
