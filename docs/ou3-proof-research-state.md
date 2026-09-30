@@ -328,3 +328,28 @@ scalar covariance ceiling.
 Feasibility verdict: promising/conditional. The architecture passes the first
 analytical test; do not delete O1/O2 yet. Next test the full zero-dissipation
 equality conditions in the shipping-closed SC/PE recursion.
+
+
+### Periodic field-alignment Fredholm test
+
+The surviving LaSalle candidate was tested on the base shipping system by
+imposing P_B a_w=P_B g at every required accelerometer epoch. For a prescribed
+periodic physical waveform and its same-history coefficient orbit, periodicity
+and all field-alignment rows reduce exactly to
+M_PF x_0=q_PF with M_PF=[I-A_L;H_B].
+
+This mean-level Fredholm system is not structurally inconsistent. The literal
+S/accelerometer correction columns generically can support a nonzero
+gravity-sized AW equilibrium; there is no shipping left annihilator forcing
+the gravity/field target outside their range. Periodic velocity/position/
+potential moments likewise do not give a source-uniform contradiction because
+the biased nominal AW permits nonzero-mean innovation with zero-mean physical
+acceleration, and the remaining longitudinal physical channel has no proved
+nonzero uncontrollable moment under current MARINE MOTION.
+
+The only unresolved condition is now the same-history delayed tuner/covariance
+fixed point: the physical waveform must generate the private front-end,
+tau/sigma_aw, SpectralMSE R_S, T_S, covariance/gains and event schedule that
+make the Fredholm compatibility equations hold. No such strict-margin
+shipping orbit is proved or excluded. The LaSalle obstruction is therefore
+unproved-reachable, not an established counterexample.
