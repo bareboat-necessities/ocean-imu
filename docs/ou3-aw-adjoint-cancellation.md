@@ -5893,3 +5893,154 @@ WC14--WC18 has no solution uniformly over the retained coupled tuner
 chronology, which would be the missing same-history cancellation/exclusion
 lemma; or construct one exact/interval-enclosed solution and evaluate WC20,
 which would complete the shipping-reachable counterexample.
+
+
+## 60. Periodic Riccati/mean compatibility: analytic reduction and exclusion criterion
+
+The remaining WC14--WC18 problem is not an arbitrary nonlinear fixed point.
+For a prescribed periodic physical input history, the deployed front-end
+variance/frequency channels are deterministic stable filters.  After their
+transients, the tuner state satisfies a unique periodic forced recurrence.
+The applied tau, sigma_aw, S cadence and R_S therefore form a fixed periodic
+coefficient word U_*; they are not independent controls.
+
+For this fixed word, covariance propagation is independent of the innovation
+VALUES.  Let R_j denote one complete literal covariance step (prediction,
+pending AW sync, scheduled S correction, accelerometer correction, magnetic
+correction and resets in actual order).  Then
+
+    P_(j+1)=R_j(P_j),    R_(j+m)=R_j.                       (PR1)
+
+On the retained regular class all process/measurement covariances are
+positive on their declared channels and the periodic word contains recurring
+magnetic/accelerometer/S observations.  Hence any stabilizing periodic
+covariance solution P_j^* is determined by U_* alone.  Existence/uniqueness
+may be established by the standard finite-horizon Riccati monotonicity once
+the already-required periodic detectability/stabilizability conditions are
+inserted; no physical innovation can be chosen to alter P_j^*.
+
+Freeze those literal periodic gains K_j^*=K(P_j^*,U_*).  The MEAN dynamics are
+then an affine periodic linear system
+
+    x_(j+1)=A_j x_j+B_j u_j+d_j,                            (PR2)
+
+where u_j is the accelerometer measurement innovation and d_j contains the
+fixed physical/BA/magnetic/S forcing not assigned to u.  Let
+
+    Phi=A_(m-1)...A_0,                                     (PR3)
+
+and define the one-period reachability matrix
+
+    G=[A_(m-1)...A_1 B_0, ..., B_(m-1)].                   (PR4)
+
+Periodic closure is exactly
+
+    (I-Phi)x_0 = G u + d_per.                              (PR5)
+
+This has the Fredholm criterion
+
+    y^T(G u+d_per)=0
+    for every y in ker((I-Phi)^T).                         (PR6)
+
+If I-Phi is nonsingular there is NO Fredholm obstruction:
+
+    x_0=(I-Phi)^-1(G u+d_per)                              (PR7)
+
+for every periodic innovation word u.  Therefore contraction of the corrected
+mean word actually favors existence of a periodic forced orbit; it does not
+exclude the witness.
+
+The physical compatibility equations close the loop.  Stack the actual
+accelerometer rows over one period.  Because innovation is measured minus
+predicted,
+
+    u = z_phys - C x - c0.                                 (PR8)
+
+Substitute PR7 into PR8.  The exact periodic compatibility equation is
+
+    [ I + C (I-Phi)^-1 G ] u
+      = z_phys-c0-C(I-Phi)^-1 d_per.                       (PR9)
+
+Call the bracket D_per.  The witness is EXCLUDED iff either:
+(a) PR6 fails in the singular case, or
+(b) D_per is singular with the right side outside its range, or
+(c) the unique solution violates a retained physical/gate/tuner condition.
+
+There is no architectural reason for (a) or (b).  In fact D_per is the
+finite-word closed-loop innovation sensitivity.  Positive R_acc means the
+Kalman correction never imposes an exact algebraic measurement constraint;
+for a finite covariance and finite word, the standard innovation map from
+measurement sequence to innovation sequence is block lower triangular with
+IDENTITY diagonal.  Therefore it is invertible.  Equivalently, chronological
+Kalman filtering defines a bijection
+
+    measurement word <-> innovation word                   (PR10)
+
+for a fixed initial mean/coefficient word.  The periodic boundary condition
+adds only the finite-dimensional root equation PR5.
+
+This yields an important conclusion:
+
+    PERIODIC RICCATI DYNAMICS ALONE CANNOT EXCLUDE
+    THE FAST-GYRO WITNESS.                                 (PR11)
+
+Any exclusion must come from the PHYSICAL admissibility of the unique
+periodic closed-loop solution (amplitude/jerk/bounded primitives, BA
+projection, tuner/gates, or magnetic-service qualification), not from a
+missing mean fixed point.
+
+### Constructive periodic solution map
+
+For the proposed field-axis history the physical measurement word is an
+explicit smooth function of the desired physical acceleration.  Define the
+periodic closed-loop transfer from physical acceleration samples a to the
+nominal AW samples by
+
+    w_hat = T_aw,a a + t_aw,                               (PR12)
+
+where T_aw,a is obtained by eliminating u and x_0 with PR5/PR8.  The exact
+accelerometer compatibility construction WC6 requires
+
+    a = g e_z + R_true(w_hat-g e_z)+a_free,                 (PR13)
+
+with a_free reserved for the chosen principal physical oscillation/centering.
+Substitute PR12:
+
+    [I - R T_aw,a] a
+      = g e_z - R g e_z + R t_aw + a_free.                 (PR14)
+
+Thus the genuine counterexample/exclusion problem is one finite linear
+periodic equation for the physical acceleration word, followed by deterministic
+inequality checks.  If I-R T_aw,a is nonsingular, PR14 has a UNIQUE periodic
+solution.  Again, nonsingularity produces the candidate rather than excludes
+it.
+
+A proof of impossibility therefore requires a quantitative statement that
+EVERY PR14 solution violates at least one existing source envelope or gate.
+No such statement follows from OU decay or S=0 architecture alone.
+
+### What can be proved without numerical fitted constants
+
+The previous frozen-word calculation already established that the
+accelerometer-to-AW DC transfer is generically nonzero.  The same
+chronological structure at frequency omega=1 gives a rational matrix transfer
+in z=e^{i h} for a frozen subword.  Positive acceleration measurement noise
+and finite gains make this transfer finite.  Hence, away from isolated
+algebraic zeros of det(I-R T_aw,a), the implicit-function theorem gives a
+locally unique periodic compatible solution depending continuously on
+(tau,sigma,R_S,K).  The coupled tuner law restricts those coefficients to a
+compact periodic path but supplies no identity pinning it to an algebraic
+zero.
+
+Consequently an ANALYTIC UNIVERSAL EXCLUSION of the periodic orbit cannot be
+obtained from the present structural equations.  To promote a genuine
+counterexample one still needs a rigorous interval enclosure of ONE actual
+periodic coefficient/gain orbit and PR14 solution, followed by the declared
+physical/service/gate checks.  Such interval evaluation is proof arithmetic,
+not a fitted theorem premise.
+
+This resolves the requested dichotomy at the structural analytical level:
+the periodic Riccati/mean equations do not supply the missing cancellation
+lemma; generically they admit a unique forced periodic solution.  The next
+rigorous step is constructive interval certification of one shipping periodic
+orbit, not another symbolic exclusion argument.
