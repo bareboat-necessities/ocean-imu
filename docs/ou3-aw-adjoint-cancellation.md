@@ -5694,3 +5694,202 @@ those literal corrections satisfy every retained service/gate contract while
 preserving a >available-margin signed residual, it becomes a genuine
 shipping-reachable analytical counterexample.  Otherwise the mechanism that
 prevents that extension is exactly the lemma needed to continue the proof.
+
+
+## 59. Propagating the sinusoidal fast-gyro witness through the literal correction equations
+
+The CE9--CE13 envelope witness can be embedded much further into the literal
+sensor chronology.  This section separates what is exact from the remaining
+self-consistent Riccati problem.
+
+### Exact gyro/magnetic completion
+
+Choose the committed unit field axis b and a smooth physical body-to-world
+attitude
+
+    R_true(t)=Exp(theta(t)[b]_x),
+    dot(theta)(t)=-0.02 sin(t).                             (WC1)
+
+Choose zero physical gyro-bias residual and the commissioned fast gyro
+residual
+
+    n_g(t)=+0.02 sin(t) b.                                  (WC2)
+
+Then the measured gyro supplied to the nominal estimator is exactly zero:
+
+    omega_meas = omega_true+n_g =0.                         (WC3)
+
+A level nominal attitude therefore has zero prediction rotation.  Moreover a
+rotation about the committed field leaves the magnetic sample invariant:
+
+    R_true(t)^T B = B.                                      (WC4)
+
+Thus with nominal qref=I and v2ref=B,
+
+    r_mag(t)=0                                               (WC5)
+
+at every callback.  Zero magnetic residual does NOT imply absence of magnetic
+service.  The service information depends on H_m, the covariance and the
+accepted cadence.  The historical exact field-axis obstruction already proves
+that a 25-Hz zero-residual magnetic word can satisfy the one-second
+MAGNETIC SERVICE floor; WC4 uses the same symmetry.  Therefore magnetic
+corrections do not necessarily cancel the fast-gyro field-axis ambiguity.
+
+### Exact accelerometer compatibility map
+
+Let w(t) denote the nominal AW trajectory that the estimator would need on
+this branch and take BA=0 first.  With lever arm zero, choose physical
+acceleration
+
+    a_phys(t)
+      = g e_z + R_true(t)[w(t)-g e_z].                      (WC6)
+
+Then the literal physical accelerometer sample is
+
+    f_meas = R_true^T(a_phys-g e_z)
+           = w-g e_z,                                      (WC7)
+
+which is EXACTLY the nominal level accelerometer prediction for AW=w.
+Hence
+
+    r_acc=0                                                 (WC8)
+
+whenever the nominal AW state equals w.  A nonzero BA trajectory simply
+replaces w by w+ba in WC6/WC7.
+
+For the desired large translation take the principal component
+
+    w_1(t)=5.5 cos(t).                                      (WC9)
+
+Because rotation about b can be chosen with b=e_1, this component is unchanged
+by R_true.  The gravity compensation in WC6 has norm at most
+
+    2 g sin(0.02/2)=0.1961297312 m/s^2.                    (WC10)
+
+Therefore the instantaneous acceleration magnitude is below
+
+    sqrt(5.5^2+0.19613^2)=5.50350 <8.8,                    (WC11)
+
+before a tiny DC centering adjustment.  Its derivative is likewise far below
+J_max=100.  The mean O(theta^2) vertical gravity defect in WC6 must be removed
+by the corresponding O(theta^2) DC component of w (or BA); otherwise physical
+velocity would acquire a secular drift.  This centering is below 0.001
+m/s^2 and lies inside the declared envelopes.  The resulting p,v primitives
+remain within the CE9 bounds plus O(0.2) transverse corrections.
+
+Thus the physical kinematics and the literal gyro, accelerometer and magnetic
+MEASUREMENT EQUATIONS do not exclude the witness.
+
+### Why zero accelerometer innovation is not an invariant shipping trajectory
+
+The estimator AW mean is not free.  Between corrections,
+
+    w^-_(k+1)=phi_k w_k^+                                  (WC12)
+
+in its AW component, with the corresponding exact v,p,S lift.  If r_acc=0 at
+all epochs, accelerometer corrections cannot replenish the loss
+(1-phi_k)w_k.  The S=0 correction can change AW through P_AW,S, but its input
+is fixed by
+
+    r_S=-S_hat.                                             (WC13)
+
+Therefore WC8 can persist only if the homogeneous OU+S corrected map has the
+required unit-frequency orbit.  There is no architectural identity asserting
+this.
+
+Allow the literal accelerometer innovation u_k.  Over one scheduled S
+interval the exact frozen lifted scalar recurrence from the shipping code is
+
+    x_(j+1)=A_S,j x_j + sum_l B_(j,l) u_(j,l),              (WC14)
+
+where x=(vhat,phat,Shat,what), A_S contains the exact analytic OU propagation
+and the actual S gain, and every B_(j,l) is the actual chronological
+accelerometer gain transported through later operations.  Magnetic
+corrections and BA coupling enlarge WC14 but do not change its affine form.
+
+For a period-m lifted word write
+
+    x_(j+m)=A_per x_j + B_per u_[j,j+m).                    (WC15)
+
+A periodic AW target w_req sampled from WC6 is self-consistent iff
+
+    (I-A_per)x_j = B_per u_per,                             (WC16)
+    e_a^T x_k = w_req,k                                     (WC17)
+
+at every accelerometer epoch, together with the literal innovation identity
+
+    u_k =
+      R_true,k^T(a_phys,k-g e_z)
+      -Rhat_k^T(what_k-g e_z)
+      -bhat_a,k                                             (WC18)
+
+and the BA/S/magnetic state recurrences.
+
+Equations WC14--WC18 are the exact finite-dimensional compatibility system
+for the proposed periodic counterexample.  They show immediately that the
+correction chronology does NOT NECESSARILY cancel the dangerous fast-gyro
+term: the earlier frozen-word DC calculation has generic nonzero
+accelerometer-to-AW gain, and no source identity forces B_per or the
+unit-frequency transfer in WC16 to vanish.
+
+Conversely, WC14--WC18 also show why CE9--CE13 is not yet a complete shipping
+counterexample.  One must solve the actual periodic covariance/gain orbit,
+because K_acc, K_S and K_mag are generated by that same orbit.
+
+### Joint signed balance on a compatible periodic orbit
+
+Suppose WC14--WC18 have a period-m solution.  Sum the exact attitude-error
+balance over one period.  Since theta_b returns to its initial value,
+
+    0 =
+      int_period b^T n_g dt
+      +sum_acc b^T E_theta K_a r_a
+      +sum_S   b^T E_theta K_S r_S
+      +sum_mag b^T E_theta K_m r_m
+      +R_twist.                                             (WC19)
+
+For WC4, r_mag=0, but the magnetic covariance still changes future gains.
+Multiply the operationwise balance BEFORE summation by the physical signed
+coefficient c_i.  The desired cancellation lemma would require the weighted
+version
+
+    int c(t)b^T n_g dt
+      +sum_acc c_i b^T E_theta K_a r_a
+      +sum_S c_i b^T E_theta K_S r_S
+      +R_twist,c
+      = small.                                              (WC20)
+
+WC19 does NOT imply WC20 because c_i varies with physical velocity.  This is
+the exact mathematical reason magnetic service plus bounded attitude error
+does not by itself cancel the 0.055 m/s^2 supply.
+
+Hence there is presently NO analytical necessity lemma forcing cancellation.
+The only remaining discriminator is the self-consistent periodic
+Riccati/mean system WC14--WC18.
+
+### Status of the candidate
+
+The witness now satisfies analytically:
+- MARINE primitive amplitude and jerk limits, after the stated O(theta^2)
+  centering;
+- IMU BIAS with zero slow physical gyro bias;
+- commissioned fast gyro residual exactly at its 0.02-rad/s envelope;
+- gyro sample compatibility WC3;
+- magnetometer sample compatibility WC4--WC5;
+- accelerometer sample compatibility map WC6--WC8;
+- field-axis error amplitude 0.02 rad, inside the retained 6-degree domain;
+- a 25-Hz accepted zero-residual magnetic chronology of the same symmetry
+  class for which the historical proof supplies one-second service.
+
+Not yet proved:
+- existence of the literal periodic covariance/gain orbit satisfying
+  WC14--WC18 with the actual coupled tau,sigma,R_S adaptation chronology;
+- all applied tuner/gate states on that orbit;
+- the resulting exact weighted residual in WC20.
+
+Therefore the next proof calculation is no longer another norm inequality.
+It is a finite-dimensional PERIODIC RICCATI COMPATIBILITY problem: prove
+WC14--WC18 has no solution uniformly over the retained coupled tuner
+chronology, which would be the missing same-history cancellation/exclusion
+lemma; or construct one exact/interval-enclosed solution and evaluate WC20,
+which would complete the shipping-reachable counterexample.
