@@ -459,6 +459,24 @@ C_c=lambda_max((R'Q_nm R)^dagger/2 (R'N_+R)
 infimum is therefore neither proved positive nor proved zero; magnetic
 counterfamilies alone do not null S/acc/kernel/terminal terms.
 
+**Compatibility Gram reduced to homogeneous 1x1 chart.**  Let a_W be an
+unnormalized homogeneous generator of the field-compatible AG line and
+q_W=A_W a_W the common propagated BA compatibility vector.  The complete
+kernel generator is r_W=(a_W,0_LIN/AW,-q_W); no normalization is used.
+On rank-one strata the reduced pair is scalar:
+q_c=r' [Q_nonmag+(1/c)P_W] r,
+n_c=r'N_+r, C_c=n_c/q_c.
+Since P_W projects onto span(r), current kernel precision contributes
+|r|^2/c exactly.  Thus generator shrinkage at rank-zero transitions cannot
+cause blow-up; scale cancels.  A two-column homogeneous cofactor chart
+R=[r1,r2] plus transition relation D alpha=0 handles rank changes: rank(D)=2
+means no compatibility line, rank 1 reduces to the scalar ratio, rank 0 would
+be a genuine 2-D compatibility obstruction excluded on the retained
+nondegenerate class.  After unit normalization only for analysis,
+denominator>=1/c.  Remaining target is therefore an UPPER bound
+B_term,c=sup_{compatible,|r|=1} r'T_W'Q_+T_W r; then C_c<=c B_term,c.
+Added `compatibility_chart.py` and scale-invariance validation.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
