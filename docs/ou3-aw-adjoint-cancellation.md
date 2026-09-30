@@ -7596,3 +7596,180 @@ finite semialgebraic/interval cover of these strata would then certify
 C_joint.
 
 No assumption that P_b K_aw is uniformly full rank is required.
+
+
+## 71. Near-rank-loss quantitative modulus: four-S + residualized magnetic block
+
+Let d in b^perp be a unit left near-null direction of the literal AW
+accelerometer numerator at epoch k:
+
+    ||d^T N_aw,k|| <= delta.                               (NM1)
+
+Because Omega_k^-1 is bounded on the retained class, the instantaneous
+accelerometer authority in d is O(delta).  A useful lower bound cannot be
+taken from the NEXT S event alone: the carried (v,p,S) root can cancel one
+S residual exactly.  The first source-valid object is the four-S
+Schur-completed block.
+
+### Four-S residualized modulus
+
+Let t_1<...<t_4 be the next four distinct accepted S epochs in the regular
+suffix and let h_j=t_j-t_k.  With zero fresh LIN/AW process action, the
+homogeneous scalar LIN response in direction d is
+
+    s_j =
+      S_0+p_0 h_j+v_0 h_j^2/2+a_0 psi_tau(h_j),            (NM2)
+
+where a_0=d^T delta a_w,k is the missing AW component and
+
+    psi_tau(h)=tau^3(h^2/(2 tau^2)-h/tau+1-exp(-h/tau)).   (NM3)
+
+Stack
+
+    V_S =
+      [1 h_1 h_1^2/2 psi_tau(h_1)
+       ...
+       1 h_4 h_4^2/2 psi_tau(h_4)].                        (NM4)
+
+Let Rbar_S be the FULL four-event residual covariance after transporting all
+common fresh source factors and shorting every nuisance source except the
+homogeneous root (S0,p0,v0,a0).  Rbar_S>0 on the retained class.
+
+Partition V_S=[V_0,v_a], V_0 in R^(4x3).  Eliminating S0,p0,v0 gives the exact
+scalar Schur information for the missing AW direction
+
+    gamma_S =
+      v_a^T Rbar_S^-1/2
+        (I-P_(Rbar_S^-1/2 V_0))
+      Rbar_S^-1/2 v_a.                                    (NM5)
+
+Strict Chebyshev independence implies gamma_S>0 for every fixed finite tau
+and four distinct epochs.  On a compact cadence/tau class with a positive
+minimum separation between the selected four epochs,
+
+    gamma_S >= gamma_S,* >0.                              (NM6)
+
+NM6 is the correct quantitative S modulus.  It does not use the retracted
+raw Vandermonde determinant floor; gamma_S,* must be enclosed from the
+literal normalized covariance/cadence ranges.
+
+If fresh LIN/AW process action is allowed, the joint Schur complement simply
+adds its normalized action.  Therefore for the missing direction amplitude
+a_0,
+
+    A_S+proc >= gamma_S,* |a_0|^2.                         (NM7)
+
+### Residualized magnetic/gyro modulus
+
+Let z_ag be the AG component induced by the same near-null compatibility
+direction after the accelerometer correction and transport it to a qualified
+magnetic-service block.  Stack the actual magnetic rows and gyro/process
+sources over one service interval.  After whitening by their FULL common
+source covariance and projecting out the transported field-compatible
+attitude/gyro line, define
+
+    G_M,res =
+      O_M^T Sigma_M^-1/2
+        (I-P_M,nuis)
+      Sigma_M^-1/2 O_M.                                   (NM8)
+
+For the component z_perp transverse to the magnetic-compatible line,
+
+    A_M+gyro >= z_perp^T G_M,res z_perp.                   (NM9)
+
+The raw MAGNETIC SERVICE premise lower-bounds an unshorted service Gram.  It
+does NOT automatically lower-bound G_M,res.  Hence the valid source-uniform
+constant is
+
+    gamma_M,* =
+      inf_(retained qualified service blocks)
+      lambda_min^+(G_M,res).                               (NM10)
+
+A useful proof requires gamma_M,*>0.  This is exactly the residualized
+magnetic/gyro modulus previously identified as open; no unprojected leverage
+constant is substituted.
+
+### Joint near-rank-loss block
+
+Propagate the unit missing AW-output direction d from epoch k to the selected
+four-S block and magnetic block using the literal homogeneous mean maps.
+After eliminating current/next compatibility-kernel coordinates, write the
+resulting terminal-normal image as
+
+    h_+(d)=T_S d + T_M d + r_delta,                         (NM11)
+
+where r_delta is the contribution of the small but nonzero accelerometer
+authority.  On the retained gain/noise class
+
+    ||r_delta||_(Q_+) <= C_K delta.                        (NM12)
+
+Define the two normalized residual maps
+
+    B_S d = sqrt(gamma_S,*) A_S d,
+    B_M d = G_M,res^(1/2) A_M d.                           (NM13)
+
+and stack
+
+    B_N=[B_S;B_M].                                         (NM14)
+
+The exact source-valid near-rank-loss modulus is the generalized singular
+value
+
+    beta_* =
+      inf_(retained deficient strata, |d|=1)
+      ||B_N d||^2 /
+      ||P_+^perp T_+ d||_(Pi^-1)^2.                        (NM15)
+
+with the convention beta=infinity when the terminal transverse image is zero.
+If beta_*>0, then
+
+    ||P_+^perp T_+ d||_(Pi^-1)^2
+      <= beta_*^-1 (A_S+proc+A_M+gyro)
+         + C_delta delta^2.                                (NM16)
+
+This is precisely the requested combined normalized-action versus terminal
+Q_+ bound near rank loss.
+
+### Can beta_*>0 be proved from the CURRENT certificates?
+
+Not yet.  NM6 requires a literal normalized four-S interval enclosure and
+NM10 requires a residualized magnetic/gyro floor.  Neither numerical
+source-uniform constant is presently certified.  More importantly, even
+gamma_S,*>0 and gamma_M,*>0 separately do not guarantee beta_*>0 if the
+terminal-normal direction can approach the joint null of the propagated S
+and magnetic blocks while moving into the next compatibility kernel.  After
+P_+^perp projection that kernel motion is harmless; the fixed-word
+classification RD13/RD17 shows the remaining exact joint null has zero
+terminal-normal image.  Therefore pointwise beta>0 holds on every fixed
+nondegenerate stratum.  Uniform beta_*>0 still requires continuity through
+rank/cadence strata.
+
+### Finite-cover formulation
+
+The retained parameter set splits into finitely many combinatorial event
+types once accepted-correction/gate boundaries are treated as separate
+closed strata.  On each interior stratum:
+- tau and S cadence lie in compact intervals;
+- selected S epochs have positive separation;
+- covariance/source factors are bounded and positive;
+- the maps in NM5--NM15 are continuous.
+
+If interval arithmetic certifies on each stratum
+
+    gamma_S >= gs_j>0,
+    G_M,res >= gm_j P_M,perp,
+    P_+^perp T_+^T T_+ P_+^perp <= t_j I,                 (NM17)
+
+and excludes an extra joint null by a lower singular enclosure of B_N on the
+terminal-active subspace, then
+
+    beta_j>0,   C_joint,j <= max(1/beta_j,C_regular,j).    (NM18)
+
+A finite maximum gives the desired source-uniform C_joint.
+
+Thus the near-rank-loss calculation is now reduced to TWO concrete interval
+certificates from literal chronology:
+1. four-S Schur information gamma_S,*;
+2. residualized magnetic/gyro information gamma_M,*,
+followed by one 2--3 dimensional joint generalized singular-value enclosure.
+No eventwise TV, sqrt(N), or uniform full-rank AW-gain assumption is needed.
