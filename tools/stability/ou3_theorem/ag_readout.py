@@ -183,6 +183,41 @@ def augmented_design(events, nuisance_factor, n=21, ag=6, terminal_rows=None):
             'terminal_rows': target}
 
 
+
+def chronological_reader_adjoints(events, reader, terminal_row, n=21):
+    """Backward residual-functional adjoints for q*x_N - L*y.
+
+    Returns one full-state row after each reverse operation plus the terminal
+    row.  Correction rows are consumed in the same chronological order used
+    by augmented_design.  This is an algebra export for reader diagnostics;
+    event timestamps/boundary labels remain the caller's responsibility.
+    """
+    sequence = _events(events, n)
+    obs_rows = sum(len(b) for kind, b, _ in sequence if kind == 'correction')
+    l = _matrix(reader, 1, obs_rows)[0]
+    q = [F(0)]*n
+    q[int(terminal_row)] = F(1)
+    offset = obs_rows
+    out = [{'reverse_index': 0, 'adjoint': q[:], 'kind': 'terminal'}]
+    reverse_index = 0
+    for kind, b, factor in reversed(sequence):
+        reverse_index += 1
+        if kind == 'correction':
+            m = len(b)
+            offset -= m
+            li = l[offset:offset+m]
+            # y_i = H_i x + noise, so residual q*x - L_i*y_i
+            # pulls the state row by q <- q - L_i H_i.
+            for j in range(n):
+                q[j] -= sum(li[i]*b[i][j] for i in range(m))
+        else:
+            q = [sum(q[i]*b[i][j] for i in range(n)) for j in range(n)]
+        out.append({'reverse_index': reverse_index, 'adjoint': q[:], 'kind': kind})
+    if offset != 0:
+        raise ArithmeticError('reader observation rows not fully consumed')
+    return out
+
+
 def joint_minimum_action_reader(design):
     """Loewner-minimal TOTAL historical action subject to L O_h = T_h.
 
