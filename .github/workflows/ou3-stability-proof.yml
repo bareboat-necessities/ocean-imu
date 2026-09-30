@@ -96,6 +96,10 @@ jobs:
         run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-readout.json
       - name: Diagnose 17-s terminal-AW D2 reader ratio without promotion
         run: python3 -m tools.stability.ou3_theorem.aw_port_17s_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-aw-port-17s.json
+      - name: Probe commensurate periodic fast-gyro candidate without promotion
+        run: |
+          python3 -m tools.stability.ou3_theorem.periodic_fast_gyro_counterexample --native --eigen /usr/include/eigen3 > /tmp/ou3-periodic-fast-gyro.json
+          cat /tmp/ou3-periodic-fast-gyro.json
       - name: Audit exact same-cell moving row groups without promotion
         run: python3 -m tools.stability.ou3_theorem.moving_transport_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-moving-transport.json
       - name: Reproduce the committed world-frame audit without promotion
