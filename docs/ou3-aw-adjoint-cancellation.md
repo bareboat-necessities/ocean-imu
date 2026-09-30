@@ -4576,3 +4576,121 @@ for the terminal-AW minimum-action reader on one short (~.1-s) slab or on the
 17-s qualified word, using the deterministic physical/BA/field constraints
 already established here.  A frozen carried-word value can diagnose margin
 but cannot certify it.
+
+
+## 49. Terminal-AW action ceiling: reduction and causal-reader route
+
+For an arbitrary terminal target row q, the joint minimum-action theorem gives
+
+    B_q^* = Pi_q + Ttilde_q I_eff^-1 Ttilde_q^T,            (AWC1)
+
+with the SAME
+
+    I_eff=O_h^T Sigma^-1 O_h                               (AWC2)
+
+as the AG reader.  I_eff depends only on the six unknown AG root columns and
+the complete source/observation design, not on the terminal target.
+
+Therefore a source-uniform floor I_eff>=mu I would immediately imply a
+terminal-AW ceiling:
+
+    B_AW^*
+      <= (1+1/g) T_AW T_AW^T
+         +(1+g) T_h,AW I_eff^-1 T_h,AW^T.                  (AWC3)
+
+The source-driven AW terminal covariance T_AW T_AW^T is uniformly bounded by
+the OU stationary/process construction plus the established nuisance/source
+envelopes on a finite word, and T_h,AW is a finite product of bounded literal
+mean maps.  Thus the only coercivity issue in AWC3 is mu>0.
+
+But the current AG reader proof explicitly records that a source-uniform
+moving-window I_eff floor remains OPEN.  Hence AWC3 does not create a new
+proof of the requested AW ceiling; it reduces to the existing six-column
+historical-reader obstruction.
+
+### Why T_h,AW is not zero
+
+Shipping prediction has no AG->AW mean block, but an accelerometer correction
+
+    A=I-KH
+
+does.  Its AW/AG block is
+
+    A_AW,AG = -K_AW H_AG.                                  (AWC4)
+
+Therefore an AG root perturbation can enter terminal AW through accepted
+accelerometer corrections, and T_h,AW is generally nonzero.
+
+### Causal cancellation identity
+
+The same structure provides a more promising explicit trial reader.  At the
+correction that creates the AG->AW transfer,
+
+    delta a_AW^+ =
+      delta a_AW^- - K_AW H_AG delta h^- - ...             (AWC5)
+
+while the raw auxiliary observation contains
+
+    y_i = H_AG delta h^- + H_n delta n^- + V_i s_i.         (AWC6)
+
+Choose the local trial-reader block
+
+    L_i^AW = - (future AW transport) K_AW                  (AWC7)
+
+with sign according to the residual convention.  Its contribution L_i y_i
+cancels exactly the AG-root term created by -K_AW H_AG at that event.  Repeat
+this chronologically for every accelerometer correction.  Magnetic/S
+corrections have no direct H_AW measurement row but can alter future
+transport; their effects are included in the future AW transport in AWC7.
+
+Backward induction then gives exact AG-root cancellation without solving a
+six-column inverse: it is simply the Duhamel expansion of the corrected mean
+recursion.
+
+The action of this CAUSAL reader consists of:
+1. transported AW process/sync factors;
+2. gain-weighted accelerometer noise factors
+       (future transport) K_AW V_i;
+3. nuisance-root residual after AG cancellation;
+4. S/mag correction effects only through their future transport.
+
+This is exactly the actual-gain trial estimator of terminal AW.
+
+### Source-uniform ceiling target for the causal reader
+
+Because the minimum-action reader is no worse than any feasible reader,
+
+    B_AW^* <= B_AW^causal.                                 (AWC8)
+
+A source-uniform AW ceiling therefore follows if one can bound the causal
+action directly.  Joseph gives a telescoping covariance budget for the
+gain-weighted noise terms:
+
+    K_i R_i K_i^T <= P_i^- - A_i P_i^- A_i^T,              (AWC9)
+
+with subsequent future transport.  Summed chronologically, these measurement
+terms plus process factors reconstruct the terminal AW covariance generated
+from ZERO AG root and the bounded nuisance root.  Consequently
+
+    B_AW^causal
+
+is bounded by the diffuse-AG auxiliary Riccati terminal AW marginal, but this
+statement alone is circular unless that marginal is bounded independently.
+
+For AW specifically, OU prediction supplies phi<1 and fresh stationary
+process covariance; S/accelerometer corrections are covariance-decreasing
+globally.  The remaining source-uniform theorem can therefore be reduced to
+an AW-marginal covariance upper bound with nuisance root bounded, WITHOUT an
+AG root ceiling, by showing that AG-root covariance injected into AW by
+corrections is canceled in the causal reader action rather than carried as
+state covariance.
+
+This is narrower than I_eff coercivity: construct B_AW^causal backward and
+bound its residual nuisance/process/noise action directly using the already
+proved nuisance upper comparison and OU stationary AW process budget.
+
+The next calculation should write the exact backward action recursion for
+this causal AW reader and test whether its action obeys a scalar/matrix
+Lyapunov inequality driven only by the OU AW process and bounded nuisance
+sector.  If yes, it proves B_AW,* without solving the open AG information
+floor.
