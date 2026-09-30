@@ -8531,3 +8531,196 @@ If CH22 holds, then immediately from CH20
 No rank-change modulus, magnetic Schur floor, or compatibility-angle lower
 bound is then needed.  If CH22 fails, the diverging sequence is precisely the
 terminally amplified compatibility trajectory obstructing contraction.
+
+
+## 77. Terminal compatibility image: exact causal/Joseph variational bound
+
+Continue CH22.  For a unit current compatibility direction r, split
+
+    B_term(r)=
+      ||P_+^perp T_W r||_(Pi^-1)^2
+      +(1/c_+)||P_+ T_W r||^2.                            (TB1)
+
+The second term is purely deterministic.  The first is a known-root terminal
+readout and admits an exact minimum-action representation.
+
+### Known-root Pi^-1 term
+
+With the root fixed to zero, write the complete word as
+
+    y=A s,
+    x_N=T_s s,                                             (TB2)
+
+so
+
+    Pi=T_s(I-A^T(AA^T)^dagger A)T_s^T                     (TB3)
+
+on the terminal source range.  For the desired deterministic terminal vector
+
+    z=P_+^perp T_W r,                                      (TB4)
+
+the quadratic
+
+    z^T Pi^dagger z                                        (TB5)
+
+is exactly the minimum fresh-source energy required to reproduce z while
+remaining invisible to the word data:
+
+    z^T Pi^dagger z
+      = min_s { ||s||^2 :
+                 A s=0,
+                 T_s s=z },                                (TB6)
+
+whenever z lies in the known-root terminal source range; otherwise the value
+is +infinity.
+
+Equivalently, in backward-reader form, initialize the terminal row
+Pi^dagger/2 z and pull it backward through the literal word.  At each accepted
+correction choose L_i=Y_i^+ K_i.  Joseph gives
+
+    Y_i^- P_i^- Y_i^-T + L_i R_i L_i^T
+      =Y_i^+ P_i^+ Y_i^+T,                                (TB7)
+
+while predictions add exactly the process-source action and resets transport
+the row.  Thus TB5 is an exact causal action, not a covariance-upper-bound
+problem.
+
+It is NOT automatically <=1.  Pi whitening normalizes source energy, but a
+deterministic root image can require arbitrarily large source energy or lie
+outside the source range.
+
+### Compatibility mimic
+
+On an exact zero-data compatibility word, the current root trajectory r
+satisfies all homogeneous sensor equations after nuisance elimination.  To
+bound TB5, seek a fresh-source trajectory s_r with
+
+    A s_r=0,                                               (TB8)
+    T_s s_r=P_+^perp T_W r.                                (TB9)
+
+Any such construction gives
+
+    ||P_+^perp T_W r||_(Pi^-1)^2
+      <= ||s_r||^2.                                        (TB10)
+
+The natural causal construction is to replay the deterministic compatibility
+trajectory using the same process/reset ports:
+- AG: gyro/gyro-bias process ports reproduce the transported field-compatible
+  attitude/gyro component;
+- BA: the bias process/projection port reproduces the propagated BA component;
+- LIN/AW: zero on the compatibility chart after S-chain elimination;
+- corrections: choose the endogenous zero-data correction ports, so no
+  measurement residual source is required;
+- resets: deterministic congruence, no fresh source.
+
+Let M_src,W be the linear map from r to these fresh-source coefficients.  If
+the replay closes exactly,
+
+    A M_src,W r=0,
+    T_s M_src,W r=P_+^perp T_W r,                          (TB11)
+
+then
+
+    B_perp(r)<=r^T M_src,W^T M_src,W r.                    (TB12)
+
+Hence
+
+    B_perp,* <=
+      sup_(compatible W) ||M_src,W||^2.                    (TB13)
+
+This is the causal/Joseph terminal bound sought; it needs no full covariance
+upper ceiling.
+
+### Which ports actually permit the replay?
+
+Here the literal model matters.  Gyro-bias and BA root components are
+persistent states with only very weak/random-walk process injection; attitude
+has gyro process injection.  A deterministic compatibility root at the word
+start is not in general reproducible at unit source energy by fresh sources
+over the word.  In particular, replaying a constant gyro-bias root b_g over
+T through its RW port costs proportional to |b_g|^2/(b0 T) if one creates it
+from zero at the beginning, and exact creation at t=0 is impossible without
+an initial source port.  Therefore the naive full-trajectory replay TB11 is
+too strong.
+
+Only the TERMINAL transverse image must be reproduced.  The correct minimum
+source mimic may inject process later and use zero-data correction sources.
+Its energy is precisely TB6.  This is a finite controllability-energy
+problem for the known-root word.
+
+### Source-range obstruction and next-kernel split
+
+If a compatibility direction has a terminal component that is deterministically
+persistent but is not in Range(T_s|Null(A)), then TB5=+infinity.  The
+next-kernel projector removes the component that is allowed to persist
+without fresh-source mimic.  Thus the exact required range condition is
+
+    P_+^perp T_W span(r_W)
+      subset Range(T_s|Null(A)).                           (TB14)
+
+This is the terminal version of the earlier near-null detectability
+condition.  The fixed-word zero-action classification strongly suggests
+TB14 but does not prove it automatically: data-null root and data-null source
+ranges need not coincide.
+
+### Deterministic next-kernel term
+
+For unit r,
+
+    (1/c_+)||P_+ T_W r||^2
+      <= ||T_W r||^2/c_+.                                 (TB15)
+
+A source-uniform deterministic transport bound on the ONE-DIMENSIONAL
+compatibility family is sufficient.  It is much weaker than a full-state
+matrix bound.  Prediction AG/BA transport over finite 100 s is bounded from
+the declared dt/rate/bias coefficients; corrections/resets on an exact
+zero-data compatibility trajectory have the homogeneous compatible action.
+The current proof has not yet exported an explicit source-uniform number for
+this scalar transport.
+
+### Exact reduced terminal target
+
+Define the scalar controllability energy
+
+    E_perp(W)=
+      min_s {||s||^2:
+             A s=0,
+             T_s s=P_+^perp T_W r_W/||r_W||}.              (TB16)
+
+and deterministic kernel transport
+
+    E_ker(W)=
+      ||P_+ T_W r_W||^2/||r_W||^2.                         (TB17)
+
+Then
+
+    B_term,c =
+      sup_W [ E_perp(W)+E_ker(W)/c_+ ].                    (TB18)
+
+Consequently
+
+    C_c <=
+      c sup_W [E_perp(W)+E_ker(W)/c_+].                    (TB19)
+
+This is an EXACT scalar characterization on rank-one compatibility words.
+
+### Current status
+
+TB18 is not yet bounded numerically or source-uniformly.  The Joseph identity
+has removed any need for a full covariance ceiling, but it has exposed the
+remaining condition as a data-null SOURCE CONTROLLABILITY problem.
+
+The next narrow calculation is to form the one-dimensional terminal
+compatibility controllability pair:
+- root terminal vector t_r=T_W r;
+- data-null source operator N_A spanning Null(A);
+- terminal source map T_s N_A.
+
+Then
+
+    E_perp =
+      z^T[(T_s N_A)(T_s N_A)^T]^dagger z,                  (TB20)
+
+z=P_+^perp t_r, with infinity if z is outside the range.  Because z is only
+one vector, a scalar backward controllability reader can evaluate/bound TB20
+without any full-state covariance upper theorem.
