@@ -130,6 +130,25 @@ against literal acc/S/mag jumps in the augmented full-root functional, or
 extend the sinusoidal witness through those literal corrections and all
 service/gate contracts to obtain a genuine shipping-reachable counterexample.
 
+**Fast-gyro witness through literal measurements.**  Strengthened the
+0.055-envelope witness by taking true attitude R=Exp(theta[b]x),
+theta_dot=-0.02 sin(t), and fast gyro residual +0.02 sin(t)b.  The supplied
+gyro is then exactly zero and R'B=B, so the level nominal gyro/magnetic
+samples are exactly compatible; zero magnetic residual does not remove
+magnetic covariance/service.  For any candidate nominal AW w, physical
+a=g e_z+R(w-g e_z) makes the accelerometer sample exactly the level nominal
+prediction.  A 5.5 cos(t) AW component needs only <=0.19613 m/s^2 additional
+gravity compensation and remains within acceleration/jerk envelopes after
+O(theta^2) DC centering.  The obstruction is therefore not the measurement
+equations but self-consistency of the literal OU+S+acc covariance/gain orbit.
+Over one period it is the finite-dimensional system
+(I-A_per)x=B_per u plus sampled AW compatibility, exact innovation identity,
+BA recurrence and the actual covariance-generated gains.  Net periodic
+attitude balance does not imply the needed weighted cancellation because the
+dangerous correction sum carries c_i=u'M_b[b]x v_i.  No structural identity
+found forces that weighted sum to cancel.  NEXT: solve/exclude the coupled
+periodic Riccati/mean compatibility system under the retained tuner chronology.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
