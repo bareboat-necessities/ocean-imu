@@ -1309,6 +1309,43 @@ bounded by $4C_{\rm port}$, with no separate factor four for correction
 families.  A source-uniform useful enclosure of \eqref{eq:cport} is not yet
 proved.
 
+The exact slab algebra further prevents an independent pseudo-measurement
+charge.  Embed the same physical LIN history
+$\chi=(v,p,S,a)$ and set
+$\delta_k=\chi_{k+1}-F_k\chi_k$; its AW component is exactly
+$a_{k+1}-\phi_ka_k$.  In physical-error coordinates an $S=0$ update contributes
+$-K_SS_{\rm true}$, whereas deterministic accelerometer elimination leaves
+no free physical-acceleration input.  For one covariance-sync slab $B$ the
+reachable adjoint therefore satisfies
+\begin{equation}
+ \mathcal B_B
+ =\lambda_B^TE_L\chi_B-\lambda_{B+1}^TE_L\chi_{B+1}
+  +\sum_{i\in a(B)}q_i^TR_{wb,i}a_i ,
+ \qquad q_i=K_i^T\lambda_i^+ .
+ \label{eq:slab-physical-bilinear}
+\end{equation}
+This is exactly the result of performing both Abel steps while retaining the
+neutral semigroup: the physical $S_{\rm true}$ term cancels the corresponding
+neutral boundary contribution and must not be charged eventwise.
+
+For the actual sequential accelerometer and $S$ corrections, with conditional
+innovation covariances $\Omega_i$, their joint Schur form is
+\begin{equation}
+ -\sum_i\norm{\Omega_i^{-1/2}(r_i-\tfrac12\Omega_iq_i)}^2
+ +\frac14\sum_iq_i^T\Omega_iq_i ,
+ \qquad
+ q_i^T\Omega_iq_i
+ =\lambda_i^{+T}(P_i^--P_i^+)\lambda_i^+ .
+ \label{eq:joint-as-schur}
+\end{equation}
+The positive term is a covariance-storage decrement, not another reader
+budget.  Summing \eqref{eq:slab-physical-bilinear} over all actual sync slabs
+of the $17$-s word cancels every internal boundary before any norm.  The
+remaining signed operator contains only the two physical endpoints, the
+joint accelerometer sum above, and the already-declared sampling/implementation
+remainder.  A useful source-uniform norm for that single signed operator
+remains open.
+
 For the explicit horizontal-field-fraction premise
 $\sigma_w\ge1/5$, the critical nominal transverse scale is
 $g\sigma_w\ge g/5=1.96133\,\mathrm{m/s^2}$.  This number must not be inferred
