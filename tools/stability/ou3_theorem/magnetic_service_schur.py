@@ -32,3 +32,15 @@ def current_contract():
             "joint_q_rel_verified":False,
             "joint_gamma_lower":0.0,
             "next_obligation":"prove Q_n >= q_rel G_nn on Range(G_nh)"}
+
+
+def relative_process_limit(M:float,q:float):
+    if not (M>0 and q>0): raise ValueError("M,q positive")
+    return {"M":M,"q":q,"service_mu":1.0,"q_rel_best":q/M,
+            "joint_gamma":q/(M+q)}
+
+def relative_process_route_status():
+    return {"verified_negative":True,"source_uniform_q_rel_lower":0.0,
+            "source_uniform_joint_gamma_lower":0.0,
+            "reason":"service gives no upper or relative bound on correlated nuisance information",
+            "next_obligation":"complete two-word Gram minimization with restricted service block retained"}
