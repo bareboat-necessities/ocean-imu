@@ -173,12 +173,9 @@ class FusionApp {
     Serial.begin(115200);
     delay(100);
 
-    waitForImuColdPowerStable();
-
     auto cfg = M5.config();
     cfg.internal_imu = true;
     M5.begin(cfg);
-    ensureMagReady(Serial);
     clearM5UnifiedImuCalibration();
 
     ui_.begin();
