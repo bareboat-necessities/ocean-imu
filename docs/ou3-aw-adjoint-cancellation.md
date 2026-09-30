@@ -6524,3 +6524,194 @@ a positive reduced information charge.
 If neither implication can be proved, the limiting sequence supplies the
 candidate admissible compatibility trajectory that blocks the 100-s
 contraction theorem.
+
+
+## 65. Physical-to-nominal separation lemma: exact compatibility and refutation
+
+Assume the nuisance-projected literal accelerometer information tends to zero
+on a retained same-history sequence.  The requested implication was that the
+true MARINE attitude/gravity span must then tend to zero unless positive
+process/correction action remains.  The exact accelerometer/BA compatibility
+equations show that this implication is FALSE as a consequence of attitude
+span alone.
+
+### Two-epoch exact Schur compatibility
+
+Take two applied accelerometer epochs inside one complete moving excitation
+window and rotate both residual equations to common world coordinates.  After
+the exact S-chain has removed the free LIN/AW root, write the slow
+attitude/BA contribution as
+
+    d(z)=D z,    z=(theta_0,b_a,0),                         (PN1)
+
+    D=[ C_0                 B_0
+        C_1 T_theta    B_1 phi_b ],                         (PN2)
+
+where
+- C_i=-[f_hat_i]_x is the LITERAL nominal specific-force attitude row;
+- B_i is the transported invertible BA row;
+- T_theta is literal attitude transport between the epochs;
+- phi_b is the homogeneous BA decay.
+
+With inherited AW/process nuisance retained, exact elimination gives
+
+    Q_acc,red(z)=d(z)^T S_a^-1 d(z),                        (PN3)
+
+where S_a is the positive two-epoch residual covariance containing actual
+accelerometer noise plus the transported AW root/process action.  Thus zero
+reduced accelerometer information is equivalent to D z=0 in the zero-action
+limit.
+
+Eliminate BA from PN2.  The first row gives
+
+    b_a,0=-B_0^-1 C_0 theta_0.                              (PN4)
+
+Substitution into the second gives the exact relative compatibility operator
+
+    L_2 theta_0=0,                                         (PN5)
+
+    L_2 :=
+      C_1 T_theta
+      -phi_b B_1 B_0^-1 C_0.                               (PN6)
+
+(With the orthogonal BA convention B_0^-1=B_0^T.)  Therefore the nontrivial
+two-epoch compatibility class is precisely ker L_2.
+
+For finite action, completing the square gives, for 0<eta<1/phi_b^2,
+
+    |D z|^2
+      >= eta/(1+eta) |L_2 theta_0|^2
+         +(1-eta phi_b^2)|e_0|^2,                          (PN7)
+
+where e_0=C_0 theta_0+B_0 b_a,0.  Consequently a positive physical-to-nominal
+modulus would require a source-uniform positive singular floor for L_2 on the
+relevant quotient.
+
+### Pullback to true gravity does not supply that floor
+
+Let R_true,i be the true attitudes.  MARINE MOTION supplies a span between
+some attitudes in every complete excitation window.  On a retained ball the
+nominal gravity directions remain close to the true ones, schematically
+
+    Delta_g,nom(r)
+      >=2 sin(Delta_R/2)-4 sin(theta_err,max(r)/2).         (PN8)
+
+But C_i is NOT the gravity cross-product map.  It uses the nominal specific
+force
+
+    f_hat_i = a_hat_i-g e_z                                (PN9)
+
+in world convention.  Translational acceleration is an admitted physical
+degree of freedom.  It can compensate the changed gravity direction so that
+
+    C_1 T_theta
+      =phi_b B_1 B_0^-1 C_0                               (PN10)
+
+on the selected epochs, i.e. L_2=0, while R_true,1 differs from R_true,0.
+
+The existing bounded collinear/same-cell constructions exhibit exactly this
+mechanism: nonzero attitude span, bounded displacement/velocity/acceleration/
+jerk and force directions chosen to be compatible at selected correction
+times.  MAGNETIC SERVICE excludes a particular sparse magnetic cadence but
+does not convert physical attitude span into a uniform two-epoch
+specific-force separation.
+
+Therefore
+
+    MARINE attitude span
+      -/-> sigma_min^+(L_2)>0,                              (PN11)
+
+and hence
+
+    MARINE attitude span
+      -/-> positive nuisance-projected accelerometer
+           information                                     (PN12)
+
+under the current assumptions.
+
+This refutes the proposed physical-to-nominal separation lemma in its
+two-epoch/sensor-family form.  It does NOT produce a zero-action complete
+shipping word: magnetic rows, all accelerometer epochs, S observations,
+process penalties and terminal forgetting still act jointly.
+
+### Correct replacement: complete-word joint compatibility
+
+The proof must use the complete 100-s corrected word.  Stack exactly
+
+    y=O_s x_s+O_f x_f+A s,
+    x_N=T_s x_s+T_f x_f+B s.                               (PN13)
+
+Eliminate nuisance root x_f with the full whitened Schur projector and retain
+all fresh source factors once.  A sequence with vanishing TOTAL joint action
+must simultaneously satisfy:
+1. zero fresh LIN/AW/BA/AG process action;
+2. four-S homogeneous LIN/AW compatibility;
+3. every magnetic-service row;
+4. EVERY accelerometer compatibility equation with one deterministically
+   propagated BA root;
+5. terminal persistence/forgetting.
+
+Zero fresh action rigidifies the nuisance trajectory: translational/AW/BA
+mimics cannot be retuned independently at the epochs used in PN10.  The S
+rows kill the free homogeneous LIN/AW trajectory qualitatively.  Magnetic
+rows restrict the attitude/gyro trajectory to at most one transported
+field-compatible line.  Then all accelerometer equations determine at most
+one common BA compatibility line.
+
+Explicitly, after magnetic reduction let
+
+    theta_k=F_k theta_0,
+    b_a,k=phi_b(t_k) R_ba,k b_a,0.                          (PN14)
+
+At every accelerometer epoch zero loss requires
+
+    J_att,k F_k theta_0
+      +R_ba,k phi_b(t_k)b_a,0=0.                            (PN15)
+
+If the pulled-back magnetic lines intersect trivially, theta_0=0 and PN15
+gives b_a,0=0.  Otherwise write theta_0=lambda theta_hat_0.  Then a nonzero
+solution exists iff
+
+    q_k :=
+      phi_b(t_k)^-1 R_ba,k^T
+      J_att,k F_k theta_hat_0                               (PN16)
+
+is IDENTICAL at every accelerometer epoch.  If so the complete sensor
+nullspace is the single word-dependent compatibility line
+
+    nu_W=(theta_hat_0,0,...,0,-q_W).                        (PN17)
+
+If the q_k are not all identical, the complete slow nullspace is trivial.
+
+Thus the correct qualitative conclusion is
+
+    Null(complete 100-s joint action)
+       subset span(nu_W),                                  (PN18)
+
+not that physical attitude span alone gives a positive accelerometer floor.
+
+The rank-one Riccati-diameter theorem is basis-free and can use this
+word-dependent nu_W.  The remaining quantitative problem is a RELATIVE
+complete-word inequality between terminal persistence and total action on
+the quotient of span(nu_W), plus the adjacent-superword scalar return.  This
+is the finite-horizon detectability problem already identified in the
+corrected-word proof.
+
+### Consequence for the 100-s G0 plan
+
+The longer superword remains useful because all physical/service lemmas now
+live on one history, but G0 cannot be completed by deriving a standalone
+physical-to-nominal accelerometer modulus from MARINE attitude span.  That
+route is closed.
+
+The next controlling calculation must instead attack the complete-word
+relative action:
+
+    H_eff^T Pi_100^-1 H_eff
+      <= K_rel S_q,                                        (PN19)
+
+where S_q is the nuisance-eliminated information Schur complement transverse
+to the word-dependent kernel and H_eff is the corresponding terminal excess
+map.  A vanishing S_q is harmless if H_eff vanishes at the same rate.  This
+relative inequality is exactly what the Riccati diameter needs and is weaker
+than a uniform Euclidean accelerometer-information floor.
