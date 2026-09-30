@@ -130,3 +130,34 @@ committed JSON differs from status_report(), and an older test still demands
 true for a retracted S-chain claim. Those are existing implementation/status
 contract failures, not failures of LS1--LS12. They remain to be reconciled
 without re-promoting retracted mathematics. Full native CI was not run here.
+
+
+### Literal graph alpha / block refinement
+
+The exact-kernel slope is now tied directly to the homogeneous compatibility
+graph, not to an arbitrary soft eigenvector. For
+`r_W=(a,0,-A_Wa)`, fixed physical metric M and same-history successor
+`r_+`,
+
+`alpha_W=|r_+' M T_W r_W|^2/[(r_W'Mr_W)(r_+'Mr_+)]`.
+
+This follows because `J_Wr_W=0` annihilates both the Schur diagonal and
+cross block, so the LS4 coupling is exactly the endpoint graph pairing.
+`A_W,T_W,r_+` retain the literal physical history, covariance-generated
+gains, S/magnetic/accelerometer chronology and committed coupled tuner values.
+
+No current lemma proves the one-pair supremum is <1. This is not a proof
+failure by itself. For m words, compose the FULL Riccati word before
+scalarization and use LS1 on that superword. On an exact block kernel the
+large-c slope is the same endpoint graph formula with
+`T_[j,m]=T_(j+m-1)...T_j`; if an intermediate word charges the carried
+mode, the block has positive Schur information and zero large-c slope for
+that mode. Along a wholly exact persistent chain the block alpha is the
+product of the boundary alphas. Therefore one-word alpha=1 is harmless if
+unit transfer cannot persist through a finite block.
+
+The existing equality-chain compactness theorem now applies to this literal
+quantity: absence of an infinite unit-transfer same-history execution implies
+existence of finite m,delta with block alpha<=1-delta. The unresolved question
+is global continuation/escape of the coupled compatibility zero dynamics. No
+estimator assumption or tuner law was changed.

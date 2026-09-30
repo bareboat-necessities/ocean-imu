@@ -257,3 +257,144 @@ rational identities/counterexamples, including singular information, Schur
 return, chart scaling, attainment, full-space duality and LS12. These checks
 validate algebra, not admissible-history coverage or outward-rounded constants.
 The helper `linked_product_status()` keeps source_uniform_O2_closed=false.
+
+
+## Literal compatibility-graph alpha and finite-block return
+
+The exact-kernel large-c slope can be written without choosing a soft
+eigenvector. On a rank-one exact compatibility stratum use the homogeneous
+literal graph
+
+`r_W(a)=(a,0_{LIN/AW},-A_W a)`,                           (CG-1)
+
+where `a` is a nonzero homogeneous attitude coordinate and `A_W a` is the
+BA vector forced by every literal magnetic/accelerometer/S/process zero-action
+compatibility equation of that SAME realized word. `A_W` therefore depends
+on the actual chronological nominal-force rows, resets, held/active BA
+transport and the committed coupled tuner history; it is not freely chosen.
+
+Fix the physical metric `M>0` once and define
+
+`s_W=r_W' M r_W`, `e_W=r_W/sqrt(s_W)`.                  (CG-2)
+
+For a same-history successor `W_+` let `r_+` be its literal graph
+generator and `n_+=M r_+/sqrt(s_+)` the corresponding unit dual functional.
+On an exact-kernel word `J_W r_W=0`. In the Schur basis whose first vector
+is `e_W`, positive semidefiniteness gives both the first diagonal and the
+cross block of `J_W` equal to zero. Thus `j_W=0` and the Schur coefficient
+in DC-3 is not arbitrary:
+
+`ell_W=e_W' Phi_tilde_W' n_+
+       = r_+' M Phi_tilde_W r_W / sqrt(s_W s_+)`.          (CG-3)
+
+Consequently the exact large-c slope is
+
+`alpha_W=ell_W^2
+ = |r_+' M Phi_tilde_W r_W|^2/(s_W s_+)`.                 (CG-4)
+
+If one retains the unnormalized convention of LS4, the same statement is
+`alpha=ell_raw^2/s_W`; CG-4 is the invariant normalized form. On a
+zero-action compatibility trajectory `Phi_tilde_W r_W=T_W r_W`, because the
+conditional root map and literal deterministic homogeneous transport agree
+on the data-null root. Therefore
+
+`alpha_W
+ = |r_+' M T_W r_W|^2/
+   [(r_W'Mr_W)(r_+'Mr_+)]`.                               (CG-5)
+
+This is the literal compatibility-graph transfer, not a least-eigenvector
+surrogate. Every dependence of `A_W,T_W,r_+` on physical acceleration,
+attitude, biases, S pseudo-updates, magnetic service, covariance-generated
+gains and the coupled `tau,sigma_aw,R_S,T_S` chronology remains inside CG-5.
+
+Hence the one-boundary theorem question is precisely
+
+`alpha_bar_1 =
+ sup_(same-history exact-kernel pairs)
+ |r_+' M T_W r_W|^2/(s_W s_+) < 1 ?`.                    (CG-6)
+
+No current lemma proves CG-6. BA decay alone cannot: the next graph can change
+its attitude/BA ratio so that `T_W r_W` is collinear with `r_+`. Conversely
+compactness does not prove equality; it only ensures that the maximum is
+attained once the closed same-history pair class is established.
+
+### Full-baseline block return
+
+If `alpha_bar_1=1`, do NOT conclude instability. The correct m-word object
+is the complete composed Riccati word, not the numerical composition of the
+scalar functions `D_W`. Scalarization after each word discards the baseline
+matrix B and its cross-covariances, which LS8--LS12 show can change the next
+return.
+
+For a same-history block
+`B_m=W_(j+m-1) o ... o W_j`, compose the literal chronological factors
+first, preserving the actual carried covariance, source columns, tuner state
+and shared boundary states. Let
+
+`Pi_[j,m], J_[j,m], Phi_[j,m]`
+
+be Theorem-D's known-root covariance, root information and conditional
+root-to-terminal map of that WHOLE block. With endpoint graph generators
+`r_j,r_(j+m)`, define
+
+`G_[j,m](c)=J_[j,m]+r_j r_j'/c`                         (CG-7)
+
+in the fixed normalized physical coordinates and
+
+`D_[j,m](c)=
+ n_(j+m)' Pi_[j,m] n_(j+m)
+ +n_(j+m)' Phi_[j,m] G_[j,m](c)^-1
+                Phi_[j,m]' n_(j+m)`.                     (CG-8)
+
+CG-8 is exactly LS1 applied once to the superword. It automatically includes
+all intermediate quotient information and all B cross-covariance
+cancellations. If the block itself has an exact endpoint kernel, its large-c
+slope is
+
+`alpha_[j,m]=
+ |r_(j+m)' M T_[j,m] r_j|^2/
+ [(r_j'Mr_j)(r_(j+m)'Mr_(j+m))]`,                         (CG-9)
+
+where `T_[j,m]=T_(j+m-1)...T_j` only on the zero-action compatibility
+trajectory. If any intermediate word forces positive action on the carried
+mode, that mode is not in the block kernel; the block Schur information
+`j_[j,m]>0` and its contribution to `D_[j,m](c)/c` tends to zero instead.
+
+Thus a sufficient block O2 condition is: for some finite m,
+
+`sup_(same-history exact block-kernel chains) alpha_[j,m] <= 1-delta`
+for a `delta>0`.                                          (CG-10)
+
+Together with compact full-baseline `dperp_[j,m]`, CG-10 gives a finite
+block ceiling by the same LS5/DC argument. One-word unit transfer is harmless
+if it cannot persist through the block.
+
+When every constituent word is exact-kernel and the transported graph remains
+exactly on each next graph, write
+
+`T_k r_k=lambda_k r_(k+1)`.                              (CG-11)
+
+Then CG-9 factorizes exactly:
+
+`alpha_[j,m]=prod_(k=j)^(j+m-1) alpha_k`.                 (CG-12)
+
+If a constituent has `alpha_k=1` but a later one has strict loss, the block
+contracts. If all `alpha_k=1`, the chain is an exact persistent
+compatibility execution. Therefore the finite-block alternative is equivalent
+to excluding an infinite same-history unit-transfer chain, not to excluding
+unit transfer on every individual word.
+
+The existing EC compactness theorem now applies to the literal graph quantity
+CG-5: if no admissible infinite recurring execution satisfies
+`T_k r_k=lambda_k r_(k+1)` with unit normalized transfer at every boundary,
+then diagonal compactness yields some finite `m` and `delta>0` satisfying
+CG-10. Conversely an infinite equality execution defeats every such finite
+block.
+
+This is as far as the present assumptions close analytically. The coupled
+physical/tuner chronology has NOT yet excluded or constructed the infinite
+equality execution. Its exact equations are the already-derived compatibility
+zero dynamics/BV system, now with the endpoint quantity fixed by CG-5. The
+next decisive calculation is therefore to test global continuation of that
+literal graph under the coupled shipping zero dynamics; further arbitrary
+soft-eigenvector or separated covariance bounds cannot decide O2.
