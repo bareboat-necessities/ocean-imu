@@ -297,6 +297,24 @@ magnetic service).  If full transverse rank holds uniformly on the compact
 compatibility family, local closed-range estimates plus finite cover give
 C_joint(c,r)<infinity.
 
+**Literal transverse Jacobian derived.**  At each accepted accelerometer
+correction delta ahat=K_aw u, so the two field-transverse compatibility
+equations have chronological diagonal control block
+D_perp=P_bperp K_aw|_bperp.  The complete two-word transverse Jacobian is
+block lower triangular in innovations.  Rank(D_perp)=2 at required epochs
+therefore gives full row rank and IFT elimination of two transverse innovation
+components.  After elimination, longitudinal innovations remain free;
+endogenous S feedback and estimator BA mean stay inside the recursion and
+create no separate periodic endpoint closure.  Strict magnetic service is
+open and does not constrain the allowed field-axis kernel.  Thus full
+transverse rank SUPPORTS a local exact-compatible manifold rather than
+excluding persistence.  Differentiating the IFT family gives explicit
+augmented-Jacobian null directions tangent to that manifold; quotienting them
+leaves a locally full-rank normal Jacobian.  Uniform C_joint can fail only at
+rank-deficient P_b K_aw strata, gate/event boundaries, compatibility-line
+rank changes, or absent reachable compatible bases.  Current proof has no
+source-uniform rank-two certificate on recurring compatible A21 roots.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
