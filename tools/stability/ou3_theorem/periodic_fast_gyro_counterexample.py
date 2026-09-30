@@ -1,15 +1,15 @@
 """Constructive periodic fast-gyro witness certificate.
 
-Non-promoting until every interval check is true. The forcing period is 6 s:
-1200 literal 5 ms IMU samples and 150 deployed 25 Hz magnetic callbacks.
+Non-promoting until every interval check is true. The forcing period is 12 s:
+2400 literal 5 ms IMU samples and 300 deployed 25 Hz magnetic callbacks.
 """
 from fractions import Fraction as F
-DT=F(1,200); PERIOD_S=F(6); SAMPLES=1200; MAG_STRIDE=8
+DT=F(1,200); PERIOD_S=F(12); SAMPLES=2400; MAG_STRIDE=8
 VAMP=F(7,2); NGAMP=F(1,50)
 
 def certificate():
     pi_lo,pi_hi=F(333,106),F(355,113)
-    om_lo,om_hi=pi_lo/3,pi_hi/3
+    om_lo,om_hi=pi_lo/6,pi_hi/6
     p_hi=VAMP/om_lo
     a_hi=VAMP*om_hi
     j_hi=VAMP*om_hi*om_hi
@@ -53,12 +53,12 @@ def driver_source():
     src=src[:a]+'''        if (k==60001) { root=matrix_json(filter.raw().mekf().covariance_full()); }
     '''+src[b:]
     src=src.replace('const float roll = wave ? static_cast<float>(.02*std::sin(.5*t)) : 0.0f;',
-      'const double om=M_PI/3.0; const float roll=wave ? static_cast<float>((.02/om)*std::cos(om*t)) : 0.0f;')
+      'const double om=M_PI/6.0; const float roll=wave ? static_cast<float>((.02/om)*std::cos(om*t)) : 0.0f;')
     # true roll rate plus +.02 sin(om t) fast residual is identically zero
     src=src.replace('const float rate = wave ? static_cast<float>(.01*std::cos(.5*t)) : 0.0f;',
                     'const float rate=0.0f;')
     src=src.replace('const float az = wave ? static_cast<float>(-.144*std::sin(.6*t)) : 0.0f;',
-                    'const float ay=wave ? static_cast<float>(3.5*(M_PI/3.0)*std::cos((M_PI/3.0)*t)) : 0.0f;')
+                    'const float ay=wave ? static_cast<float>(3.5*(M_PI/6.0)*std::cos((M_PI/6.0)*t)) : 0.0f;')
     src=src.replace('rwb*Eigen::Vector3f(0,0,az-g_std)',
                     'rwb*Eigen::Vector3f(0,ay,-g_std)')
     src=src.replace('rwb*Eigen::Vector3f(60,0,30)',
