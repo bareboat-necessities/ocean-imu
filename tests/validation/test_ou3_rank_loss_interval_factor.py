@@ -17,6 +17,15 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_scalar_kernel_regularization_removes_J_zero_blowup(self):
+        from tools.stability.ou3_theorem.kernel_regularized_scalar import regularized_scalar,augmented_rank_one_leverage
+        z=regularized_scalar(0.0,4.0,3.0)
+        self.assertAlmostEqual(z["terminal_excess"],12.0)
+        self.assertAlmostEqual(z["upper_cB"],12.0)
+        a=augmented_rank_one_leverage(4.0,3.0)
+        self.assertLess(a["leverage"],1.0)
+        self.assertEqual(augmented_rank_one_leverage(4.0,None)["leverage_upper"],1.0)
+
     def test_terminal_compatibility_energy_composition(self):
         from tools.stability.ou3_theorem.terminal_compatibility_energy import scalar_terminal_bound,source_range_status
         z=scalar_terminal_bound(2.0,3.0,4.0,5.0)
