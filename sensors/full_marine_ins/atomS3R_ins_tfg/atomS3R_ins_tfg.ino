@@ -613,7 +613,7 @@ private:
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
-    mag_fresh_ = s.mag_updated && mag_gate_.update(mag_ok_, millis());
+    mag_fresh_ = mag_gate_.update(mag_ok_, millis());
     if (mag_fresh_) rates_.countMag();
 
     // runtime_.applyAccel() has already applied the saved sensor temperature
