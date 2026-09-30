@@ -17,6 +17,16 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_theorem_magnetic_seed_audit_fails_on_real_blockers(self):
+        from tools.stability.ou3_theorem.magnetic_seed_cover import magnetic_seed_audit,theorem_seed_cover
+        z=magnetic_seed_audit()
+        self.assertFalse(z["seed_cover_constructible"])
+        self.assertIn("full_covariance_P",z["blockers"])
+        self.assertIn("event_schedule",z["blockers"])
+        seeds,a=theorem_seed_cover()
+        self.assertEqual(seeds,())
+        self.assertEqual(a["qualification"],"OU3_MAGNETIC_SEED_AUDIT_V1")
+
     def test_exhaustive_magnetic_strata_driver_positive_exact_leaf(self):
         from tools.stability.ou3_theorem.magnetic_strata_certificate import ClosedMagneticStratum,exhaustive_certificate
         from tools.stability.ou3_theorem.magnetic_literal_box_export import CorrectionBox
