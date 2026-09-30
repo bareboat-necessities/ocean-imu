@@ -32,41 +32,31 @@
 
 \begin{abstract}
 This study analyzes deterministic stability of the shipping OU--III marine
-estimator. The marine domain includes locally absolutely continuous physical
-acceleration with jerk bounded by $100\,\mathrm{m/s^3}$. A sharp nonuniform
-sampling estimate excludes the previously demonstrated 200-Hz ambiguity and
-the previously demonstrated sampled alias.  A separate physical-domain rule
-separates stationary observability, finite transitions and excited marine
-motion. Positive gravity-direction span is required only on complete windows
-inside a physical moving episode, not immediately after departure from rest.
-An exact rest/motion sensor ambiguity prevents certifying physical stillness
-from quiet packets with both finite entry and universal finite exit. No
-stationary estimator switch is enabled. A joint three-dimensional vector-information bound
-retains accelerometer and magnetic coupling and both magnetic residual
-limits. Physical acceleration mismatch contributes a certified supply to
-the literal OU prediction in the full covariance metric, without imposing an
-OU prior on truth. The complete covariance-energy identity, corrected LIN
-path action, joint lower covariance and nuisance upper covariance are
-retained. A coupled Schur comparison reduces a sufficient full-state
-contraction certificate to six corrected attitude/gyro-bias loss columns.
-An exact historical readout action supplies a conditional route to their
-covariance bound while retaining nuisance and process correlations.
-Actual-gain finite-error composition includes an explicit injection-dependent
-reset remainder. Inverse-frame gyro transport retains literal resets; actual
-acc/mag groups within one prediction cell have an exact row factorization.
-These give a conditional bound on all six historical pivots. In world
-coordinates those rows depend on the attitude estimate only through
-injections and the nominal rotation integral. Same-cell geometry also
-depends on the applied magnetic cadence. Aggregate attitude columns need only
-the nominal signed acceleration mean; a pointwise physical tracking premise
-is false on an admitted history. Magnetic service on every one-second
-interval makes the field-axis coordinate of the gyro curve monotone, which
-gives an explicit injection-free aggregate six-column floor. A root-cancelling
-reader also proves a full covariance ceiling and qualitative homogeneous
-linear loss on the exact zero-residual quiet nominal subcase. Its extension,
-the moving branch's uniform
-premises, stationary practical boundedness, transition retention, general
-capture, nonlinear retention and arithmetic transfer remain unproved.
+estimator under the declared bounded displacement, velocity, acceleration,
+jerk, IMU-bias and magnetic-service domain.  The proof follows one shipping
+path through construction, capture, magnetically informed H18,
+refinement/release and recurring A21; no estimator behavior is changed for
+the proof.  The current moving-branch analysis eliminates a previously
+problematic gravity-scale nominal wave-acceleration trajectory by retaining
+the closed-loop chronology rather than treating innovations as independent
+inputs.  The literal accelerometer identity makes physical acceleration and
+nominal $a_w$ enter with the same Kalman coefficient and opposite signs;
+full-port Schur completions retain accelerometer and $S=0$ cancellations.
+Two discrete Abel/coboundary reductions use the declared velocity and
+displacement primitives, while the neutral $v\to p\to S$ prediction chain
+telescopes through its exact polynomial semigroup.  An explicit causal
+terminal-AW reader cancels all six attitude/gyro-bias root columns
+chronologically.  Joseph completion makes accepted corrections action-neutral
+for this reader, and the literal congruent AW covariance synchronization sets
+$P_{aa}$ to its stationary target.  Consequently the normalized terminal-AW
+reader action has the source-uniform ceiling $B_{AW,*}\le16$ on the retained
+regular post-sync class, independently of the still-open historical
+six-column information floor.  The remaining quantitative moving-branch
+obligation is a source-uniform enclosure of one physical-primitive-to-port
+operator $C_{\rm port}$; a dedicated 17-s carried-word computation is
+diagnostic only.  General capture, nonlinear retained-radius closure,
+transition retention and arithmetic/float32 transfer remain open, so
+end-to-end regional practical stability is not yet claimed.
 \end{abstract}
 
 \section{Theorem scope}
@@ -2628,11 +2618,19 @@ loss, without a physical stationary robustness conclusion.
 The current complete-word work additionally gives the qualitative
 nullity-one/soft-kernel O1 reduction of Section~\ref{sec:a21-current} and the
 finite-error separation formulation of Section~\ref{sec:finite-error-diversity}.
-It does not yet establish strict O2 return, a current-domain H18 capture
-certificate, a nonlinear invariant radius, every-prefix retention, or
-float32 closure.  In particular, the physical residual-bias envelope $B_a$
-must not be substituted for an unproved H18 held-estimator-error bound.
-End-to-end regional practical stability remains unproved.
+For the nominal-AW obstruction, Section~\ref{sec:aw-reader-current} supersedes
+the earlier gain-sign, coefficient-TV and generic historical-information
+shortcuts: innovations are eliminated in the full closed-loop ports, the
+neutral LIN chain is reduced by two physical primitives, and a causal
+terminal-AW reader has the source-uniform action ceiling $B_{AW,*}\le16$.
+The remaining quantitative bridge is the source-uniform bound on
+$C_{\rm port}$ in \eqref{eq:cport}; finite carried-word values are diagnostics,
+not theorem constants.  The proof still does not establish strict O2 return,
+a current-domain H18 capture certificate, a nonlinear invariant radius,
+every-prefix retention, or float32 closure.  In particular, the physical
+residual-bias envelope $B_a$ must not be substituted for an unproved H18
+held-estimator-error bound.  End-to-end regional practical stability remains
+unproved.
 
 \section*{Acknowledgments and disclosure}
 This work was prepared with supervised assistance from artificial intelligence
