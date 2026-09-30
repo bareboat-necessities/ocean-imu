@@ -149,6 +149,25 @@ dangerous correction sum carries c_i=u'M_b[b]x v_i.  No structural identity
 found forces that weighted sum to cancel.  NEXT: solve/exclude the coupled
 periodic Riccati/mean compatibility system under the retained tuner chronology.
 
+**Periodic Riccati/mean system analytically reduced.**  For a prescribed
+periodic physical input, the stable front-end/tuner filters converge to a
+periodic tau/sigma/R_S/T_S word.  Covariance evolution for that word is
+independent of innovation values; its stabilizing periodic orbit fixes the
+gains.  The mean period equation is (I-Phi)x0=G u+d.  If I-Phi is invertible
+(as expected for a corrected contractive word), every periodic innovation
+word has a unique periodic mean root.  For fixed gains, measurement-word to
+innovation-word transport is block lower triangular with identity diagonal,
+hence bijective.  Eliminating root and innovations leaves one physical
+equation [I-R T_aw,a]a = g ez-R g ez+R t_aw+a_free.
+Nonsingularity creates a unique periodic candidate rather than excluding it.
+Therefore the periodic Riccati/mean architecture supplies no universal
+same-history cancellation lemma.  Structural analytical exclusion has failed.
+NEXT: interval-certify one actual coupled periodic tuner/covariance orbit and
+its physical solution, then check MARINE/IMU/MAGNETIC/gates; or prove every
+solution of that finite equation violates one existing condition.  Interval
+arithmetic here would certify a constructed trajectory, not promote a fitted
+diagnostic constant.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
