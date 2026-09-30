@@ -17,6 +17,22 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_shipping_magnetic_operation_box(self):
+        from tools.stability.ou3_theorem.shipping_operation_interval_boxes import magnetic_update_box,reset_box
+        P=eye(21); v=exact([[1],[2],[3]]); R=eye(3)
+        box,z=magnetic_update_box(P,v,R,applied=True)
+        self.assertTrue(z["verified"])
+        self.assertEqual(box.H.shape,(3,21));self.assertEqual(box.S_actual.shape,(3,3))
+        self.assertEqual(box.A.shape,(21,21))
+        d=exact([[.1],[0],[0]])
+        self.assertEqual(reset_box(d).G.shape,(21,21))
+
+    def test_shipping_magnetic_update_fails_closed_for_singular_S(self):
+        from tools.stability.ou3_theorem.shipping_operation_interval_boxes import magnetic_update_box
+        P=zeros(21,21);v=exact([[1],[0],[0]]);R=zeros(3,3)
+        box,z=magnetic_update_box(P,v,R,applied=True)
+        self.assertFalse(z["verified"])
+
     def test_literal_magnetic_export_pre_correction_phi(self):
         from tools.stability.ou3_theorem.magnetic_literal_box_export import (
             PredictionBox,CorrectionBox,ResetBox,SyncBox,export_magnetic_event_boxes,event_tuples)
