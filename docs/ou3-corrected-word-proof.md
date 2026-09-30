@@ -7197,3 +7197,199 @@ genuine shipping-reachable counterexample to this proof architecture.
 
 Until SC-21 is solved or excluded, no generic viability trajectory should be
 called an admissible obstruction.
+
+
+## Candidate replacement proof: complete-word dissipativity / LaSalle feasibility test
+
+This section is deliberately parallel to O1/O2. It tests whether the exact
+source-faithful complete-word factorization already supplies a useful
+semidefinite storage/dissipation identity before any scalar kernel ceiling,
+diameter, generalized eigenvalue or independent extremum is introduced.
+
+### Exact minimum-action storage
+
+Freeze one literal recurring linear A21 service word W, including the actual
+same-history tuner/covariance/event chronology. Stack the root x, every fresh
+whitened process/sync/noise factor s exactly once, all applied measurement
+residuals y, and terminal error x_+. The existing complete-word factorization
+has the form
+
+y = O x + A s,
+x_+ = T x + B s.                                           (DL-1)
+
+The whitening uses the actual joint source covariance, so correlations are
+retained. Split x=(x_s,x_f) only when eliminating a genuine nuisance root.
+
+For a prescribed root x define the complete zero-output action
+
+D_W(x) :=
+ min_(x_f,s) { ||s||^2 + ||R^(-1/2)(O_s x+O_f x_f+A s)||^2 },  (DL-2)
+
+where the second norm is shorthand for the exact whitened applied
+accelerometer, magnetic and S rows; equivalently absorb R^(-1/2) into O,A.
+This is the same fixed-factor variational object used by the complete-word
+information proof. Therefore
+
+D_W(x)=x' J_W x >=0.                                       (DL-3)
+
+No covariance ceiling or O1/O2 scalar bound is required for DL-3.
+
+The dynamic-programming form is more revealing. Let V_k(e) be the minimum
+remaining whitened source/measurement action from event phase k to the end of
+the frozen word, conditional on current homogeneous error e. Then every
+literal operation satisfies the Bellman equality
+
+V_k(e_k)=min_(fresh source)
+ { d_k(e_k,source)+V_(k+1)(e_(k+1)) },                     (DL-4)
+
+with d_k>=0 the exact local process or innovation action. Along the minimizing
+trajectory,
+
+V_k(e_k)-V_(k+1)(e_(k+1))=d_k.                             (DL-5)
+
+Summing the actual allowed event path gives
+
+V_root(x)-V_terminal(x_+)=D_W(x)
+ =D_proc+D_sync+D_S+D_acc+D_mag+D_terminal >=0.            (DL-6)
+
+DL-6 is the requested path-complete dissipativity identity. The phase
+storages V_k are quadratic value functions (Schur complements of the same
+joint Gaussian action); they need not decrease under every physical operation
+when viewed in one fixed Euclidean metric. Their Bellman differences are
+nonnegative on the allowed event graph.
+
+For a disturbance/noise input w that is not minimized as an internal source,
+completion of squares gives the supply form
+
+V_+-V_- <= -D_W(e)+w' Q_W w                               (DL-7)
+
+after augmenting the value function with the exact cross term, or the
+equivalent joint quadratic supply matrix before Young relaxation. The
+homogeneous feasibility test needs only DL-6.
+
+### Equality set: no scalar ceiling is needed
+
+Because DL-6 is a sum/minimum of nonnegative whitened actions,
+
+D_W(x)=0                                                   (DL-8)
+
+if and only if one literal homogeneous trajectory makes every constituent
+action zero simultaneously. Hence equality forces:
+
+1. every fresh process and AW-sync source factor is zero;
+2. every applied S pseudo-measurement homogeneous residual is zero;
+3. every accepted accelerometer homogeneous residual is zero;
+4. every applied magnetic homogeneous residual is zero;
+5. terminal/minimum-action nuisance loss is zero.
+
+These are not independently chosen zeroes: the SAME deterministic homogeneous
+trajectory must satisfy all five through the literal chronological maps.
+
+Existing proof lemmas then apply without quantitative scalarization.
+Four-S injectivity removes an independent homogeneous LIN/AW root on a regular
+service word. Magnetic zero action plus service restricts AG to the transported
+field-axis class. Zero fresh BA action makes BA follow its literal homogeneous
+transport. Accelerometer zero action intersects those classes in the physical
+tilt/BA compatibility graph. Thus, subject to the already recorded four-S and
+multi-epoch intersection qualifications,
+
+Ker D_W = Ker J_W subseteq C_W,                             (DL-9)
+
+where C_W is the literal compatibility graph. On strata where the physical
+compatibility line is known to exist exactly, equality gives that line rather
+than strict one-word dissipation.
+
+This is a GOOD outcome for the proposed architecture: the feasibility test
+does not need to prove one-word strictness.
+
+### Why this is not merely O1 in new notation
+
+O1/O2 next ask for a quantitative lower eigenvalue away from the kernel and a
+separate covariance ceiling along it. DL instead keeps only the exact
+semidefinite action and follows its equality trajectory through successive
+same-history service words.
+
+Let e_(j+1)=F_Wj^(0)e_j denote the deterministic homogeneous transport selected
+by D_Wj(e_j)=0. Define the m-block accumulated dissipation
+
+D_[j,m](e_j)=sum_(r=0)^(m-1) D_W(j+r)(e_(j+r)).             (DL-10)
+
+Then D_[j,m]=0 iff the SAME error trajectory lies in the literal zero-action
+set of every constituent word. No intermediate compatibility direction,
+covariance, tuner tuple or nuisance mimic may be reselected independently.
+
+The central LaSalle question is therefore
+
+largest invariant subset of {D_W=0} under literal shipping chronology = ?  (DL-11)
+
+This is exactly the shipping-closed compatibility fixed-point problem derived
+in SC/PE. If the alleged compatibility history is not reachable by the actual
+coupled physical/front-end/tuner/covariance equations, it is not in the
+invariant equality set even though each relaxed word separately has a
+compatibility graph.
+
+### Compactness gives strict finite-window dissipation
+
+Assume a compact retained recurring A21 execution class, continuity/lower
+semicontinuity of the fixed-factor action across its finite event strata, and
+uniform equivalence m0|e|^2 <= V_phase(e) <= m1|e|^2. Suppose the only
+forward-complete same-history trajectory satisfying D_Wj(e_j)=0 for every j
+is the desired zero error (or explicitly accepted gauge).
+
+If no finite-window strictness existed, for every n there would be a normalized
+initial error and n-word same-history execution with accumulated dissipation
+tending to zero. Event compactness and the fixed-factor lower-semicontinuity
+argument already used elsewhere in the proof give a diagonal limiting
+infinite trajectory with D_Wj=0 for every j, contradicting DL-11.
+
+Therefore there exist finite m and epsilon>0 such that
+
+sum_(r=0)^(m-1) D_W(j+r)(e_(j+r))
+ >= epsilon V_j(e_j).                                      (DL-12)
+
+Telescoping DL-6 gives
+
+V_(j+m)(e_(j+m)) <= (1-epsilon) V_j(e_j).                  (DL-13)
+
+Thus strict contraction follows from invariant-set exclusion plus compactness,
+without a kernel covariance ceiling.
+
+For disturbances, DL-7 and the same m-block sum give regional ISS/practical
+stability once the nonlinear/reset remainder is absorbed by the existing
+small-radius estimates.
+
+### Does the experiment pass?
+
+At the analytical level: YES, conditionally.
+
+- A nonnegative complete-word quadratic action already exists in the current
+  source-faithful factorization.
+- It admits a path-complete Bellman/storage interpretation.
+- Its equality conditions are exactly the simultaneous zero process/S/acc/mag
+  actions already characterized by the proof.
+- No scalar kernel ceiling is needed to state nonexpansiveness or the equality
+  set.
+- The remaining strictness problem is precisely the same-history invariant
+  zero-dissipation problem, where the new shipping-closed tuner/covariance
+  self-consistency analysis belongs.
+
+What is NOT yet proved is the decisive DL-11 invariant-set exclusion. Nor has
+a single globally uniform phase metric/value function been constructively
+enclosed over every shipping-generated tuner/covariance history. Those are the
+two obligations to test before replacing O1/O2 as the main theorem path.
+
+The experiment therefore justifies continuing this architecture, but not yet
+deleting O1/O2.
+
+### Next decisive calculation
+
+Use SC-19/PE on an equality trajectory, but now equality supplies MORE than
+q=0 compatibility: every homogeneous fresh source, S, accelerometer and
+magnetic action is exactly zero. Substitute those equality conditions into
+the shipping-closed physical/front-end/tuner/covariance recursion and ask
+whether a nonzero forward-complete same-history trajectory exists.
+
+If none exists, DL-12 follows by compactness and the scalar O1/O2 ceiling path
+can be retired. If one exists, it is a genuine zero-dissipation obstruction
+to this stronger architecture and immediately identifies the theorem/assumption
+gap.

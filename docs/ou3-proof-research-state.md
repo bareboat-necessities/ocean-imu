@@ -301,3 +301,30 @@ target is the periodic/recurrent lifted fixed point of the SAME augmented
 shipping map, after analytically eliminating linear MEKF mean states.  No
 pathological generic zero-dynamics trajectory is henceforth treated as an
 admissible obstruction unless it closes this shipping loop.
+
+
+### Dissipativity/LaSalle feasibility experiment
+
+A candidate replacement proof was tested without rewriting O1/O2. The existing
+complete-word fixed-factor Gaussian/action representation already defines a
+nonnegative quadratic minimum action D_W=x'J_Wx. Dynamic programming gives
+phase-dependent quadratic value functions whose Bellman differences are the
+literal nonnegative process/sync/S/accelerometer/magnetic actions. Summing one
+allowed service path gives an exact path-complete dissipativity identity.
+
+Equality D_W=0 requires one SAME homogeneous trajectory to make every fresh
+source, S, accelerometer, magnetic and terminal action zero simultaneously.
+Subject to the existing four-S and multi-epoch qualifications, its zero set is
+contained in the literal physical compatibility graph. No scalar kernel
+covariance ceiling is needed for this semidefinite identity.
+
+If the largest forward-invariant same-history subset of D=0 is only zero
+(error/gauge), compactness and fixed-factor lower semicontinuity give finite
+m,epsilon with accumulated dissipation >=epsilon V and hence m-word
+contraction. The unresolved theorem is therefore invariant-set exclusion under
+the shipping-closed physical/front-end/tuner/covariance chronology, not a
+scalar covariance ceiling.
+
+Feasibility verdict: promising/conditional. The architecture passes the first
+analytical test; do not delete O1/O2 yet. Next test the full zero-dissipation
+equality conditions in the shipping-closed SC/PE recursion.
