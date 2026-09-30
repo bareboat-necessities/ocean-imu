@@ -1924,6 +1924,187 @@ worst case locks a jerk-limited triangle to the 21-sample AW covariance
 synchronization cycle: the periodic gain rectifies it. A bound on these
 nominal window statistics from the literal loop remains open.
 
+
+\subsection{Shipping-specific signed nominal-AW reader}
+\label{sec:aw-reader-current}
+The carried values following \eqref{eq:corollary-a-star} are diagnostics, not
+uniform premises.  The current proof therefore does not promote the observed
+$0.348$--$0.371\,\mathrm{m/s^2}$ signed means.  Instead it uses the literal
+closed-loop mean and covariance chronology.
+
+Let $r_{a,k}$ be an accepted accelerometer innovation.  On the same physical
+history, transport it to the nominal world frame.  The shipping measurement
+model gives exactly
+\begin{equation}
+ \hat R_k^{\mathsf T}r_{a,k}
+ =a_k-\hat a_{w,k}+d_{\theta,k}+d_{ba,k}+d_{\ell,k}+\eta_{a,k},
+ \label{eq:acc-deterministic-elim}
+\end{equation}
+where the four $d$ terms are the retained attitude, accelerometer-bias,
+lever-arm and sensor residuals.  Thus, with
+$\Gamma_k=K_{aw,k}\hat R_k$,
+\begin{equation}
+ e_{aw,k}^+=(I-\Gamma_k)e_{aw,k}^-+d_{a,k},
+ \qquad e_{aw}=\hat a_w-a .
+ \label{eq:aw-error-correction}
+\end{equation}
+There is no independent physical-acceleration source at an accelerometer
+correction.  Physical acceleration enters the AW error only through OU
+prediction:
+\begin{equation}
+ e_{aw,k}^-=\phi_ke_{aw,k-1}^+
+ -(1-\phi_k)a_{k-1}-\Delta a_k .
+ \label{eq:aw-error-prediction}
+\end{equation}
+The pair in the physical forcing is the discrete coboundary
+\begin{equation}
+ (1-\phi_k)a_k+\Delta a_k=a_{k+1}-\phi_ka_k.
+ \label{eq:physical-coboundary}
+\end{equation}
+
+The correction must not be projected to the AW block before its Kalman
+cancellation is used.  For a complete correction $A_k=I-K_kH_k$, Joseph's
+identity gives
+\begin{equation}
+ A_k^{\mathsf T}(P_k^+)^{-1}A_k\preceq(P_k^-)^{-1}.
+ \label{eq:full-metric-nonexpansion}
+\end{equation}
+For a backward reader $\lambda^+$, put $q=K_k^{\mathsf T}\lambda^+$.
+The full accelerometer port has the regular Schur completion
+\begin{equation}
+ q^{\mathsf T}r-r^{\mathsf T}S_a^{-1}r
+ \le {1\over4}q^{\mathsf T}S_aq ,
+ \label{eq:acc-port-square}
+\end{equation}
+up to the fixed action normalization.  The analogous $S=0$ pseudo-update
+completion is used before any eventwise norm is taken.  Consequently neither
+accelerometer nor $S$ innovations are independent controls in the signed-AW
+argument.
+
+For the variable-$\phi$ OU kernel,
+\begin{equation}
+ \beta_j=(1-\phi_j)\prod_{m>j}\phi_m ,
+ \qquad
+ \sum_j\beta_j\le1,\qquad D_1(\beta)\le2 .
+ \label{eq:ou-kernel-mass}
+\end{equation}
+A first Abel step uses the declared velocity bound.  At the actual
+approximately $0.1$-s AW covariance-sync boundaries, the only direct
+backward-AW reader jumps are accelerometer ports; covariance sync has
+identity mean map and $S$/magnetic rows have no AW measurement column.
+The remaining prediction mixing is
+\begin{equation}
+ g_B=\phi_{va}\lambda_v+\phi_{pa}\lambda_p+\phi_{Sa}\lambda_S .
+ \label{eq:block-lin-mixing}
+\end{equation}
+The declared $P_{\max}=8.1\,\mathrm m$ permits a second Abel step from
+velocity to physical displacement.  Uniform integral identities give, for
+$h\le0.006$ s and a $0.1$-s cell,
+\begin{equation}
+ {\phi_{va}\over L}\le0.06,\qquad
+ {\phi_{pa}\over L}\le1.8\,10^{-4},\qquad
+ {\phi_{Sa}\over L}\le3.6\,10^{-7}.
+ \label{eq:second-abel-scales}
+\end{equation}
+These sample-level numbers are not themselves a theorem constant.  The exact
+pure-prediction row uses the neutral semigroup
+\begin{equation}
+ N(H)=
+ \begin{bmatrix}1&0&0\\H&1&0\\H^2/2&H&1\end{bmatrix},
+ \qquad N(H_1)N(H_2)=N(H_1+H_2),
+ \label{eq:neutral-semigroup}
+\end{equation}
+and its covariant differences telescope before norms.  Hence no total
+variation premise on sample jitter or on the applied tuner is required.
+Correction departures remain in their square-summed port action.
+
+\subsubsection{Causal terminal-AW reader}
+For a unit terminal transverse AW row $u$, let $Y^+$ be the backward residual
+row immediately after a correction and choose the causal observation-reader
+weight
+\begin{equation}
+ L_i=Y^+K_i .
+ \label{eq:causal-aw-reader}
+\end{equation}
+Then
+\begin{align}
+ Y^-&=Y^+(I-K_iH_i),\nonumber\\
+ Y^-P_i^-Y^{-\mathsf T}+L_iR_iL_i^{\mathsf T}
+ &=Y^+P_i^+Y^{+\mathsf T}.
+ \label{eq:causal-joseph}
+\end{align}
+Thus a correction is action-neutral for this trial reader.  Across prediction,
+$Y^-=Y^+F$ and the added action is $(Y^+U)(Y^+U)^{\mathsf T}$.
+
+Let $Z_k=\partial x_k/\partial h_0$ denote sensitivity to the six-dimensional
+attitude/gyro-bias root.  Prediction is block diagonal in AG/LIN/BA, sync has
+identity mean map, and the recorded left-error reset acts inside AG.  At a
+correction $Z^+=(I-KH)Z^-$.  Equation~\eqref{eq:causal-aw-reader} therefore
+cancels exactly the correction-created AG-to-AW root transfer.  Backward
+induction gives
+\begin{equation}
+ \boxed{Y_{\rm root,AG}=0.}
+ \label{eq:aw-root-cancel}
+\end{equation}
+This cancellation uses no historical information inverse or AG covariance
+ceiling.
+
+The literal shipping AW covariance synchronization is stronger than an
+additive floor: it assigns
+\begin{equation}
+ P_{aa}\leftarrow\Sigma_{aw,\rm stat}
+ \preceq16I_3 .
+ \label{eq:aw-sync-replacement}
+\end{equation}
+Between synchronizations,
+\begin{equation}
+ P_{aa}^-=\phi^2P_{aa}^+
+ +(1-\phi^2)\Sigma_{aw,\rm stat},
+ \label{eq:aw-scalar-cov}
+\end{equation}
+accepted corrections can only decrease the principal covariance block, and
+attitude resets leave it unchanged.  Therefore, on the retained regular
+post-sync class,
+\begin{equation}
+ \boxed{B_{AW,W}^{\min}\le B_{AW,W}^{\rm causal}\le16,\qquad
+        \sqrt{B_{AW,*}}\le4.}
+ \label{eq:aw-action-ceiling}
+\end{equation}
+This is a source-uniform normalized terminal-AW reader-action ceiling and
+does not require the still-open six-column historical information floor.
+
+What remains is a single deterministic conversion constant.  Let
+$G_{\rm phys,W}$ denote the complete map from the two-Abel bounded physical
+primitive to the normalized causal-reader source/port coordinates, with all
+accelerometer, $S$, process/sync and nuisance-root columns retained jointly.
+Define
+\begin{equation}
+ C_{\rm port}=\sup_W
+ \norm{G_{\rm phys,W}}_{\rm primitive\to action^\ast}.
+ \label{eq:cport}
+\end{equation}
+Then the complete port contribution is bounded by $4C_{\rm port}$, not by a
+separate factor four for each correction family.  A source-uniform useful
+upper enclosure of \eqref{eq:cport} is not yet proved.
+
+For the explicit horizontal-field-fraction premise
+$\sigma_w\ge1/5$, the critical nominal transverse scale is
+$g\sigma_w\ge g/5=1.96133\,\mathrm{m/s^2}$.  This number must not be inferred
+from the inclination premise alone: $|I_M|\le80^\circ$ supplies only
+$g\cos80^\circ\approx1.7029\,\mathrm{m/s^2}$ at standard gravity.
+Using the previously declared $6^\circ$ retained attitude, BA, sensor and
+physical endpoint charges, the $17$-s worst-$\sigma_w$ bookkeeping leaves
+approximately $0.0338\,\mathrm{m/s^2}$ of strict margin.  Therefore, after
+avoiding double counting of those existing charges, a sufficient diagnostic
+target is approximately
+\begin{equation}
+ C_{\rm port}<8.45\,10^{-3}.
+ \label{eq:cport-target}
+\end{equation}
+The dedicated $17$-s carried-word computation of this quantity is explicitly
+non-promoting: it can diagnose margin but cannot replace the source-uniform
+enclosure required by \eqref{eq:cport}.
+
 Injections obey an exact identity on ${\rm SO}(3)$. With $M=\hat R^{\mathsf T}R$
 the world attitude error, an injection acts by $M\mapsto\operatorname{Exp}(-x)M$
 and a prediction by a rotation of angle at most $h\norm{\tilde\omega}$. If $J$
