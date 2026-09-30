@@ -375,6 +375,20 @@ interval boxes for arbitrary shipping four-S/magnetic histories are not yet
 exported.  This is now an implementation-data gap, not missing interval
 algebra.
 
+**Literal magnetic E_hb/non-E_hb Schur engine implemented.**  Added
+`magnetic_nuisance_interval.py`.  For each accepted service event it takes
+interval H_m, actual S_m and complete pre-correction Phi; verifies S_m^-1,
+forms the actual information blocks for protected E_hb columns and explicit
+non-E_hb root columns, and Schur-shorts the nuisance block.  The service
+premise mu_M=1 is retained only as an audit of the unshorted E_hb Gram; it is
+never substituted for the residualized floor.  Exact synthetic tests verify
+orthogonal nuisance shortening and the fail-closed service-floor-only case.
+`rank_loss_literal_boxes.py` now accepts these event boxes and feeds the
+result into the rank-loss certificate.  Remaining exporter gap: construct
+source-uniform interval H_m/S_m_actual/Phi event boxes from literal shipping
+chronology; existing MagneticEvent exports only the two already-projected
+E_hb rows, so it cannot recover non-E_hb nuisance columns.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
