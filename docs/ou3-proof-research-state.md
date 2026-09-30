@@ -221,3 +221,28 @@ infinite equality execution plus EC compactness yields some finite m with a
 uniform exact-face alpha gap, and continuity of the linked polynomial then
 yields a uniform finite block ceiling.  Infinite equality remains open; O2
 is not promoted.
+
+
+### q=0 full-block information result
+
+The block Schur information j_B is exactly the minimum complete joint action
+of the carried compatibility root after true nuisance shorting.  On q=0,
+j_B=0 iff the literal homogeneous trajectory has zero fresh process/sync
+action, zero S action, magnetic-axis AG compatibility and zero accelerometer
+compatibility action through every event of the block.  Subject to the
+four-S/nullity qualifications, this is precisely the ZG compatibility
+trajectory.
+
+Therefore endpoint alpha=1 does not by itself force j_B=0: intermediate
+incompatibility gives positive block information.  But an exact forward
+compatible ZG execution gives j_B=0 on EVERY finite prefix.  The coupled
+tuner/S/magnetic chronology introduces no unavoidable positive action while
+the base trajectory remains on a regular strict-margin ZG patch.
+
+The finite-block rescue dichotomy is consequently: for some finite m, every
+same-history block must either acquire uniformly positive j_B or suffer a
+uniform exact-face alpha loss.  Failure of that combined alternative for all
+m compactifies to an infinite exact q=0 compatibility execution.  A pure
+j_B>0 theorem is unnecessarily strong and cannot be obtained by homogeneous
+information estimates alone.  O2 remains open exactly at global ZG
+continuation/escape.
