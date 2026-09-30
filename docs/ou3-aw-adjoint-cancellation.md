@@ -8724,3 +8724,166 @@ Then
 z=P_+^perp t_r, with infinity if z is outside the range.  Because z is only
 one vector, a scalar backward controllability reader can evaluate/bound TB20
 without any full-state covariance upper theorem.
+
+
+## 78. Three scalar terminal obligations: range inclusion is NOT implied by compatibility
+
+The proposed final-suffix source mimic must distinguish ROOT data-nullity from
+SOURCE data-nullity.  The exact Gaussian algebra shows that compatibility of
+the deterministic root does not automatically provide a fresh-source mimic.
+
+Write the quotient word
+
+    y=O_q v+A s,
+    x_N=T_q v+T s,                                        (SC1)
+
+with Sigma=AA^T.  For a root compatibility direction v satisfying
+
+    O_q v=0,                                               (SC2)
+
+the least-squares source used to mimic its DATA is
+
+    s_ls=-A^T Sigma^-1 O_q v=0.                            (SC3)
+
+Hence the corresponding terminal excess is
+
+    Ttilde_q v
+      =(T_q-T A^T Sigma^-1 O_q)v
+      =T_q v.                                              (SC4)
+
+Thus process noise does not automatically reproduce or erase the terminal
+image of a data-null root.
+
+### Obligation 1: exact source-range inclusion
+
+For the homogeneous compatibility generator r_W, let
+
+    z_W=P_+^perp T_W r_W.                                  (SC5)
+
+The required statement is genuinely
+
+    z_W in Range(T_s | Null(A)).                           (SC6)
+
+It is independent of root compatibility O_q r_W=0.  If SC6 fails for an
+admissible word, then
+
+    E_perp(W)=+infinity                                    (SC7)
+
+in the known-root Pi^dagger metric, and the proposed B_term proof fails on
+that word.  This is a proof obstruction, not necessarily estimator
+instability; it means this particular kernel-prior/known-root comparison
+cannot bound the terminal image.
+
+### Can the final 17-s suffix force SC6?
+
+Not from the current port structure alone.  The suffix has fresh gyro,
+gyro-bias RW, BA OU, LIN/AW process and measurement-noise sources, but SC6
+also requires their combination to produce ZERO complete data A s=0 while
+hitting one prescribed terminal vector.  Positive process densities give
+controllability of individual state coordinates, not output-nulling
+controllability.
+
+The exact test is the Rosenbrock-like finite-horizon matrix
+
+    C_null =
+      [ A
+        T_s ],                                             (SC8)
+
+with target [0;z_W].  SC6 holds iff
+
+    rank([A;T_s]) =
+      rank([A;T_s | (0,z_W)]).                             (SC9)
+
+Equivalently, if N_A spans Null(A),
+
+    z_W in Range(T_s N_A).                                 (SC10)
+
+This is a one-vector range test, but it must be established from the literal
+17-s source/output chronology.
+
+### Obligation 2: finite source energy
+
+When SC6 holds,
+
+    E_perp(W)
+      = z_W^T[(T_s N_A)(T_s N_A)^T]^dagger z_W.            (SC11)
+
+A source-uniform finite upper bound requires a lower singular modulus only in
+the ONE terminal direction z_W, not on the full source controllability
+matrix.  Define
+
+    sigma_c(W)=
+      sup_{s in Null(A)}
+        <z_hat_W,T_s s>/||s||,                             (SC12)
+
+where z_hat=z/|z|.  Then
+
+    E_perp(W) <= |z_W|^2/sigma_c(W)^2.                    (SC13)
+
+The exact source-uniform target is therefore
+
+    inf_W sigma_c(W)>0                                     (SC14)
+
+together with a deterministic |z_W| upper bound.  SC14 is weaker than full
+controllability but is not currently proved.
+
+### Obligation 3: one-dimensional kernel transport
+
+The next-kernel term is
+
+    E_ker(W)=||P_+ T_W r_W||^2/||r_W||^2.                 (SC15)
+
+Because r_W contains only AG+BA compatibility coordinates, its homogeneous
+prediction between corrections is finite-dimensional:
+- attitude/gyro-bias uses the literal AG transition;
+- BA uses phi_b R_ba;
+- LIN/AW components are zero on the compatibility chart.
+
+However correction mean maps and resets can transfer AG/BA into other
+coordinates before the terminal projection.  A source-uniform scalar upper
+bound therefore still requires a bound on the LITERAL homogeneous compatible
+transport T_W r_W.  Pointwise finite gains are not enough without a
+source-uniform cumulative bound.
+
+### Regularized reader avoids requiring SC6
+
+The important consequence is that SC6 is stronger than necessary for the
+original Riccati diameter.  The corrected-word proof already contains the
+appropriate construction: the KERNEL-REGULARIZED backward reader.  Instead
+of demanding an exact data-null source mimic, allow residual root action
+penalized by the current kernel precision.
+
+For the quotient model SC1, with regularization M_q inherited from the
+rank-one kernel prior,
+
+    L_q =
+      T A^T Sigma^-1
+      +(T_q-T A^T Sigma^-1 O_q)
+        (J_q+M_q)^dagger O_q^T Sigma^-1,                   (SC16)
+
+and terminal root residual
+
+    R_qroot=
+      Ttilde_q[I-(J_q+M_q)^dagger J_q].                    (SC17)
+
+This reader remains finite even if SC6 fails, provided the combined
+kernel-regularized Gram has finite action.  Therefore the three scalar
+obligations TB16--TB17 are a SUFFICIENT route, not an equivalent necessary
+route to contraction.
+
+### Current conclusion
+
+Obligations 1--3 are not closed by existing structure:
+1. source-range inclusion SC6: OPEN and not implied by compatibility;
+2. finite E_perp: OPEN, conditional on SC6;
+3. E_ker upper: OPEN as a literal cumulative scalar transport bound.
+
+Attempting to prove them by saying fresh process ports can replay the
+compatibility root would be invalid.
+
+The shorter valid route returns to the already-derived regularized 1x1
+compatibility reader: current kernel precision 1/c is itself the source of
+coercivity, so exact source mimic is unnecessary.  On the homogeneous
+compatibility chart, evaluate the scalar regularized reader action directly.
+This keeps the finite kernel penalty instead of replacing it by the stronger
+Pi^dagger source-range requirement.
