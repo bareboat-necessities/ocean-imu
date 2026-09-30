@@ -479,3 +479,28 @@ condition. The next decisive calculation is to propagate this constrained
 sample through the Mahony and physical dynamics over a complete window and
 test recurrent admissibility. No positive proxy-energy floor or tuner
 consequence is promoted before that test.
+
+
+### Direct admissibility reduction
+
+Trying to exclude the final field-aligned/zero-proxy LaSalle mode by physical
+or Mahony constraints reveals an unavoidable quiet branch. Current MARINE
+MOTION explicitly permits arbitrarily long complete stillness. With
+a_phys=0, omega=0 and the private Mahony settled at true tilt, the Mahony
+vertical proxy and adaptation band are exactly zero while all physical
+velocity/displacement/jerk bounds hold.
+
+Therefore a universal non-admissibility proof cannot rely on mandatory proxy
+excitation. It must exclude a filter-internal field-aligned fixed point under
+quiet physical input. After the quiet tuner converges to its floor schedule
+and covariance to its periodic Riccati/S orbit, the question is the finite
+shipping system (I-A_Q)x=b_Q plus field-alignment rows H_FA x=q_FA.
+
+Projected onto the transverse AW direction, persistence requires the total
+quiet S/accelerometer/magnetic mean correction to replenish positive OU decay.
+A sufficient exclusion is a signed-gain lemma showing the reachable quiet
+periodic covariance makes that total correction nonpositive. Generic PSD
+covariance algebra cannot prove the sign because S and cross-covariance terms
+are signed; the lemma must be proved on the actual reachable quiet Riccati
+orbit. If the quiet fixed-point system has a strict solution, strict
+full-attitude stability is genuinely false under current assumptions.
