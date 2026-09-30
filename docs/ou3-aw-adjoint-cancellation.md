@@ -1350,3 +1350,60 @@ Thus the exact joint DC optimization is a 4-state/10-covariance scalar-axis
 problem, not a 21-state problem but not 1-D either.  Any proof claiming a
 closed p recurrence must first establish an invariant relation expressing all
 P_al cross terms as functions of p; shipping provides no such identity.
+
+
+### 17.1 Exact four-state mean/covariance cycle
+
+For one conditioned world direction define x=(v,p,S,a).  At each operation
+the homogeneous mean and covariance obey the SAME linear map:
+
+prediction:
+    x<-Phi x,
+    P<-Phi P Phi^T+Q;
+
+S correction:
+    A_S=I-K_S e_S^T,
+    x<-A_S x,
+    P<-A_S P A_S^T+K_S r_S^2 K_S^T;
+
+accelerometer correction:
+    A_a=I-K_a e_a^T,
+    x<-A_a x + K_a y,
+    P<-A_a P A_a^T+K_a r_a K_a^T;
+
+sync:
+    x unchanged,
+    P<-P+delta e_a e_a^T.
+
+Thus for a literal cycle C the homogeneous DC retention is
+
+    M_C = product_chronological A_i Phi_i,                  (RC6)
+
+and the physical/source transfer is the corresponding Duhamel sum.  The
+quantity relevant to a constant transverse AW mode is
+
+    rho_a(C)=|e_a^T M_C e_a|                                (RC7)
+
+only when the root has v=p=S=0; for arbitrary carried LIN roots use the
+augmented readout norm
+
+    rho_read(C)
+      = || e_a^T M_C P0^(1/2) || /
+        sqrt(e_a^T P0 e_a),                                 (RC8)
+
+or the covariance-weighted operator norm.  This is the exact composed object
+that replaces the nonclosed scalar p recurrence.
+
+Every measurement operation is nonexpansive in its pre/post covariance
+metric, while prediction/process and sync change the metric through PSD
+increments.  Therefore a source-uniform strict rho_read<1 requires a
+strict-information event on every nonzero homogeneous direction over the
+chosen word.  The four-row S Chebyshev lemma supplies this for the LIN
+subspace; the accelerometer supplies direct a information.  This recovers
+qualitative strict contraction without G0.
+
+A useful explicit numerical rho still requires lower-bounding the joint
+information Gramian in a proof-scaled 4-state coordinate.  The repository's
+earlier raw OU controllability Gershgorin bound failed from conditioning, so
+the correct next representation is the scaled factor/LDLT already identified
+in the proof ledger, now only 4x4 per axis.
