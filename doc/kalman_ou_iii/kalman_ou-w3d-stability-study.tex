@@ -1767,6 +1767,29 @@ compatibility-line rank changes.  Those strata, rather than generic
 full-rank words, are the remaining linear obstruction to a source-uniform
 $C_{\rm joint}$.
 
+Near a deficient stratum a single next-$S$ event is insufficient, because
+the carried $(v,p,S)$ root can cancel one residual.  The source-valid
+quantitative object uses the next four distinct $S$ epochs.  With
+$V_S=[V_0,v_a]$ the exact homogeneous
+$\{1,t,t^2/2,\psi_\tau(t)\}$ array and $\bar R_S$ the full transported
+four-event residual covariance, the missing-AW Schur information is
+\begin{equation}
+ \gamma_S=
+ v_a^T\bar R_S^{-1/2}
+ (I-P_{\bar R_S^{-1/2}V_0})
+ \bar R_S^{-1/2}v_a .
+ \label{eq:four-S-schur-modulus}
+\end{equation}
+The magnetic companion is the analogous residualized service Gram after
+whitening and projecting out the transported field-compatible AG nuisance.
+Stacking these two normalized maps gives a low-dimensional generalized
+singular value $\beta$.  A positive source-uniform lower enclosure
+$\beta_*>0$ yields the desired terminal-normal bound near AW-gain rank loss.
+The current proof establishes positivity pointwise after quotienting the
+next kernel, but numerical uniformity still requires literal interval
+enclosures for the four-$S$ Schur modulus, the residualized magnetic/gyro
+modulus, and their joint terminal-active singular value.
+
 The literal gain formula further classifies those strata.  Since
 $K_{aw}=N_{aw}\Omega^{-1}$ with $\Omega\succ0$,
 \begin{equation}
