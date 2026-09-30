@@ -504,3 +504,23 @@ covariance algebra cannot prove the sign because S and cross-covariance terms
 are signed; the lemma must be proved on the actual reachable quiet Riccati
 orbit. If the quiet fixed-point system has a strict solution, strict
 full-attitude stability is genuinely false under current assumptions.
+
+
+### Theorem scope changed to MARINE MOTION
+
+The OU-III stability theorem is now explicitly scoped to a certified
+MARINE_MOTION branch. Arbitrarily long inertial stillness is handled outside
+this theorem by an intended independent prefilter/state-machine and separate
+stationary estimator/reset branch. This is an architecture assumption, not a
+claim that the existing frontEndStill/Mahony-band flag certifies physical
+stillness.
+
+Every recurring moving interval retains the existing physical/bias bounds,
+MAGNETIC SERVICE, and the fixed-horizon attitude-span condition
+Delta_R>=Delta_R_min. "Not still" alone is not sufficient excitation.
+Transition intervals require a separate bounded handoff lemma.
+
+The quiet field-aligned fixed-point obstruction is therefore out of scope for
+the MARINE_MOTION contraction theorem. The remaining LaSalle question is only
+whether a field-aligned zero-dissipation execution can satisfy the literal
+shipping equations while also satisfying recurring MARINE MOTION excitation.

@@ -8523,3 +8523,76 @@ under the current theorem statement.
 No stronger conclusion is justified from the present assumptions. In
 particular, complete stillness prevents using mandatory Mahony/proxy excitation
 as the universal exclusion mechanism.
+
+
+## Scope change: stability theorem for certified MARINE MOTION only
+
+The main OU-III stability theorem is henceforth scoped to the MARINE MOTION
+operating regime. Arbitrarily long physical stillness is NOT part of the
+execution class for this theorem.
+
+This is an explicit architecture assumption, not a claim about the current
+front-end stillness flag. The intended deployed architecture places an
+independent inertial-regime prefilter/state machine ahead of the OU-III motion
+estimator:
+
+physical IMU -> regime prefilter -> {CERTIFIED_STILL, MARINE_MOTION}.        (MM-1)
+
+CERTIFIED_STILL is handled by a separate stationary branch/reset model outside
+the theorem proved here. The OU-III MARINE_MOTION theorem applies only after
+the prefilter has admitted the execution to the moving branch.
+
+The prefilter must be designed so that a physically moving history capable of
+violating the MARINE_MOTION theorem assumptions cannot be silently certified
+as STILL. In particular the theorem does NOT identify "small Mahony proxy",
+"small wave-band variance", or the existing frontEndStill flag with physical
+stillness. A future implementation/proof of the regime prefilter must use
+independent inertial evidence and conservative hysteresis. Its soundness is a
+separate obligation.
+
+### MARINE MOTION assumption used by this proof
+
+For every all-time execution segment on which OU-III remains in the analyzed
+moving branch:
+
+1. the existing physical amplitude, rate, jerk, bias, bounded velocity,
+   bounded displacement and bounded-potential assumptions hold;
+2. MAGNETIC SERVICE and IMU BIAS hold as already stated;
+3. there is a fixed excitation horizon T_E and span Delta_R_min>0 such that
+   every complete interval [t,t+T_E] wholly contained in the MARINE_MOTION
+   branch has physical attitude span at least Delta_R_min;
+4. no arbitrarily long inertially quiescent interval belongs to this class:
+   such an interval is required by architecture to be transferred to
+   CERTIFIED_STILL instead.
+
+Item 4 does not replace item 3. "Not certified still" is not itself sufficient
+excitation; recurring attitude-span/service remains a first-class assumption.
+
+Transition intervals that have neither a certified-still guarantee nor a full
+T_E moving-excitation window are outside the recurring contraction statement.
+They must be covered by a finite-duration bounded handoff/transition lemma in
+the final hybrid theorem.
+
+### Effect on the proof
+
+The quiet shipping fixed-point obstruction SA-4--SA-10 is removed from the
+admissible class of the MARINE_MOTION theorem by scope, not by pretending it
+is unstable. It remains relevant to design and proof of the separate
+CERTIFIED_STILL branch.
+
+The dissipativity/LaSalle route now needs to exclude nonzero invariant
+zero-dissipation trajectories only among histories satisfying the recurring
+MARINE MOTION conditions above. The sole remaining equality candidate is the
+field-axis attitude mode supported by a MOVING base execution satisfying
+P_B(a_hat_w-g)=0 at every relevant accelerometer epoch.
+
+Accordingly, future reachability work must not use the stationary
+counterexample as a blocker. It must ask whether the literal field-alignment
+physical-sample equation PH-4/PH-17 can persist on a history that satisfies
+the recurring moving attitude-span condition and all same-history
+tuner/covariance equations.
+
+If no such MOVING execution exists, Inv{D=0} is trivial on the theorem class
+and compactness yields finite-window strict dissipation. The separate hybrid
+proof then combines: stationary-branch stability, bounded transitions, and
+OU-III MARINE_MOTION contraction.
