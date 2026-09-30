@@ -135,16 +135,20 @@ def adaptive_four_s_gamma(*,tau_box=(.02,12.0),time_cells=None,max_depth=10,
             "leaf_count":len(leaves),"qualification":"OU3_FOUR_S_INTERVAL_V1"}
 
 
-def magnetic_service_factor_box():
-    """Current source-uniform magnetic factor contract.
+def magnetic_service_factor_box(events=None,ehb_indices=None,nuisance_indices=None):
+    """Residualized magnetic certificate from literal interval event boxes.
 
-    MAGNETIC SERVICE certifies the unshorted normalized Gram only.  Until the
-    literal AG/gyro nuisance factor box is supplied, residualized information
-    must remain fail-closed at zero.
+    Each event is (H_m,S_m_actual,Phi_from_window_root), all as IMat.  If the
+    boxes are absent, fail closed: the service floor alone is insufficient.
     """
-    return {"verified":False,"gamma_M_lower":0.0,
-            "unshorted_service_mu":1.0,"window_s":1.0,
-            "reason":"residualized AG/gyro nuisance factor box not yet certified"}
+    if events is None:
+        return {"verified":False,"gamma_M_lower":0.0,
+                "unshorted_service_mu":1.0,"window_s":1.0,
+                "reason":"literal H_m/S_m_actual/Phi interval events not supplied"}
+    if ehb_indices is None or nuisance_indices is None:
+        raise ValueError("explicit E_hb and nuisance root columns required")
+    from .magnetic_nuisance_interval import service_schur_information
+    return service_schur_information(events,ehb_indices,nuisance_indices)
 
 
 def rank_loss_factor_certificate(max_depth=10):
