@@ -17,6 +17,15 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_aggregate_magnetic_service_counterexample(self):
+        from tools.stability.ou3_theorem.magnetic_service_schur import service_only_counterexample,joint_process_modulus
+        z=service_only_counterexample()
+        self.assertEqual(z["service_mu"],1.0)
+        self.assertEqual(z["canonical_correlation"],1.0)
+        self.assertEqual(z["gamma_residualized"],0.0)
+        q=joint_process_modulus(1.0)
+        self.assertTrue(q["verified"]);self.assertAlmostEqual(q["gamma_joint_lower"],.5)
+
     def test_theorem_magnetic_seed_audit_fails_on_real_blockers(self):
         from tools.stability.ou3_theorem.magnetic_seed_cover import magnetic_seed_audit,theorem_seed_cover
         z=magnetic_seed_audit()
