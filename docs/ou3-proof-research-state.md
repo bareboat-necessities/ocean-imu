@@ -283,6 +283,48 @@ AG covariance, ≤5× at 64 s). It now serves coercivity only (DEAD_END 27).
   replays do not certify the changed core; the existing full-evidence
   pipeline must regenerate the affected evidence, not restamp it.
 
+**Nominal-AW complete reader (PR #630).** The raw beta-TV route has been
+replaced by an exact complete covariance-weighted scalar reader.  For a
+transverse multi-time AW readout q, augment the chronological state with its
+readout accumulator and write the literal factor recursion once.  If M is the
+root transition and Z the single signed coefficient on the stacked whitened
+source vector, then
+
+`q mu = q M e0 + Z s + d_impl`
+
+and
+
+`|q mu| <= C_root sqrt(V0) + C_src sqrt(A_W) + C_phys + C_impl`.
+
+The stronger joint form is
+
+`sqrt(C_root^2+C_src^2) sqrt(V0+A_W)+C_phys+C_impl < g sigma_w`.
+
+Accelerometer and magnetic residual actions are square-summed in `A_W`
+before taking norms; the nuisance-correlation term
+`C H_n' K_L' lambda` is not a new source.  In the full covariance-weighted
+adjoint every optimal correction obeys `P- p-=P+ p+`; the reduced
+correlation term is exactly the bookkeeping residue from deleting nuisance
+coordinates.  S corrections have zero weighted-adjoint jump.  Direct magnetic
+mean forcing is its ordinary `r_mag' R_mag^-1 r_mag` action.  Prediction and
+PSD AW sync remain chronological covariance factors; tuner lag qualifies the
+coefficient trace and is not an independent mean forcing.
+
+The scalar minimum source action is the dual of the existing joint
+minimum-action reader
+`B*=Pi+Ttilde I_eff^-1 Ttilde'`; no parallel observability architecture is
+introduced.  However this does NOT numerically close the nominal-AW premise:
+the currently useful source-uniform bounds for that reader still invoke G0
+geometry whose premises include the nominal signed-AW statistic itself.
+Substituting carried .348--.371 m/s^2 values would therefore be circular/fitted.
+The new controlling obligation is a noncircular source-uniform evaluation of
+the scalar reader coefficients/actions on the retained coupled
+Riccati/tuner/physical trace class.
+
+Keep the threshold symbolic as `g sigma_w`.  The value `g/5=1.96133`
+requires the separate field-domain premise `sigma_w>=1/5`; an 80-degree
+inclination premise alone gives `g cos(80 deg)~=1.7029069`.
+
 ## Current limiter
 
 Exact physical rest is not identifiable from the current sensor/bias model.
