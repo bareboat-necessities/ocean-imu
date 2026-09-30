@@ -1126,61 +1126,6 @@ Together with the BA bound, five-block Cauchy--Schwarz proves
 This is an upper principal-block comparison. It does not supply a full-state
 lower comparison or a decay rate. The remaining uniform upper block is AG.
 
-\subsection{Reduction to six corrected loss columns}
-Choose word roots immediately before prediction, after 17~s of regular
-A21 operation. Let $L_+$ be the embedded LIN/BA floor supplied by the
-preceding post-prediction comparison. Monotonicity of a Kalman correction,
-including its positive-semidefinite limit, gives
-\begin{equation}
- P\succeq E_nLE_n^{\mathsf T},\qquad
- L=(L_+^{-1}+\Lambda_n)^{-1},
-\end{equation}
-where $\Lambda_n$ is block diagonal with nonzero blocks
-\begin{align}
- (\Lambda_n)_{SS}&=\sigma_{S,\min}^{-2}I_3,\nonumber\\
- (\Lambda_n)_{aw,aw}&=(\Lambda_n)_{ba,ba}
- =2\sigma_{a,\min}^{-2}I_3.
-\end{align}
-Indeed, there is at most one S and one accelerometer correction between
-predictions, and the latter has nuisance row $[0,0,0,R_{wb},I]$.
-Magnetic corrections and attitude resets preserve an embedded nuisance
-floor. Write the upper bound in \eqref{eq:nuisance-upper} as $U$ and choose
-$0<\alpha<1$ with $L\succeq\alpha U$.
-
-\begin{lemma}[Coupled covariance reduction]
-If the six AG columns of the complete loss satisfy
-$(D_W)_{hh}\succeq J\succ0$, then, for every $\eta>0$,
-\begin{equation}
- P\preceq C_\eta:=\operatorname{diag}\left(
- {1+\eta\over\alpha}J^{-1},(1+\eta^{-1})U\right).
- \label{eq:coupled-upper}
-\end{equation}
-\end{lemma}
-\begin{proof}
-Write $P=[\begin{smallmatrix}A&C\\C^{\mathsf T}&N\end{smallmatrix}]$.
-Since $L\succeq\alpha U\succeq\alpha N$, the embedded lower bound
-implies $CN^{-1}C^{\mathsf T}\preceq(1-\alpha)A$.
-Thus the conditional covariance satisfies
-\begin{equation}
- \alpha A\preceq A-CN^{-1}C^{\mathsf T}
- =((P^{-1})_{hh})^{-1}\preceq J^{-1},
-\end{equation}
-where the last step uses $D_W\preceq P^{-1}$ from
-\eqref{eq:word-energy}. Block Cauchy--Schwarz and Young's inequality
-give \eqref{eq:coupled-upper}, without discarding $C$.
-\end{proof}
-If the first prediction satisfies
-$Q\succeq\epsilon FC_\eta F^{\mathsf T}$, $\epsilon>0$, then
-\begin{equation}
- D_W\succeq{\epsilon\over1+\epsilon}P^{-1},\qquad
- \rho_0\le{1\over1+\epsilon}<1.
-\end{equation}
-The regular source has a positive full process floor and bounded $F$,
-so a uniform $J\succ0$ suffices. This is a conditional full-state
-implication. Establishing $J$ for the actual varying corrected transport
-remains open; neither two-column magnetic service nor the physical
-three-dimensional vector Gramian supplies it.
-
 \subsection{Shipping-specific signed nominal-AW reader}
 \label{sec:aw-reader-current}
 Finite carried signed-AW values are diagnostics, not uniform premises.  The
