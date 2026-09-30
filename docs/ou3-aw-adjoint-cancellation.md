@@ -4696,436 +4696,187 @@ sector.  If yes, it proves B_AW,* without solving the open AG information
 floor.
 
 
-## 50. Causal terminal-AW reader: exact backward action recursion
+## 50. Causal terminal-AW reader: exact full-root action recursion
 
 Let Y^+ be the terminal-AW trial-reader residual row immediately AFTER an
-accepted correction.  Choose the causal observation-reader block
+accepted correction. Choose the causal observation weight
 
     L_i = Y^+ K_i.                                         (CA1)
 
-The correction residual pulls backward as
+Then
 
-    Y^- = Y^+ - L_i H_i
-        = Y^+(I-K_i H_i)
-        = Y^+ A_i.                                         (CA2)
+    Y^- = Y^+(I-K_i H_i),                                  (CA2)
 
-The reader action added by the measurement noise is
+and Joseph gives exactly
 
-    Delta B_i = L_i R_i L_i^T
-              = Y^+ K_i R_i K_i^T Y^{+T}.                  (CA3)
-
-Joseph gives
-
-    P_i^+=A_i P_i^- A_i^T+K_i R_i K_i^T.                  (CA4)
-
-Therefore, for ANY P_i^-,
-
-    Y^- P_i^- Y^{-T}+Delta B_i
-      =Y^+ P_i^+ Y^{+T}.                                   (CA5)
-
-Thus an accepted Kalman correction is action-neutral for this causal trial
-reader: its gain/noise contribution exactly completes the pulled-back state
-action.  No gain norm or information floor is required.
+    Y^- P_i^- Y^{-T} + L_i R_i L_i^T
+      = Y^+ P_i^+ Y^{+T}.                                  (CA3)
 
 Across a prediction x^+=F x^-+U w,
 
-    Y^-=Y^+ F,                                              (CA6)
-    B^-=B^+ + (Y^+ U)(Y^+ U)^T.                            (CA7)
+    Y^-=Y^+F,                                               (CA4)
+    B^-=B^+ +(Y^+U)(Y^+U)^T,                               (CA5)
 
-Across a deterministic reset G,
+and a deterministic reset only transports Y.  Therefore, for ANY PSD root
+covariance P_0 carried by the same literal covariance chronology,
 
-    Y^-=Y^+ G,                                              (CA8)
+    Y_0 P_0 Y_0^T
+      + sum_process ||Y_k U_k||^2
+      + sum_corrections L_i R_i L_i^T
+      = u^T P_N u.                                         (CA6)
 
-with no source action addition.  Sync/process factors are predictions with
-identity mean transition and enter CA7.
+This is the useful causal-reader identity.  It includes the complete root
+row; no root block is discarded.
 
-Initialize at the terminal transverse AW row
+### Important correction: the AG root does not cancel
 
-    Y_N=E_aw^T u, B_N=0.                                   (CA9)
+The former section 51 claimed Y_root,AG=0 from the fact that the
+correction-free skeleton has no AG->LIN/AW mean block.  That inference is
+false.  A single correction is already a counterexample.  If q is a terminal
+AW row and the pre-correction AG root injection is E_h, then
 
-Iterating CA1--CA8 backward gives the exact causal reader.  Its total action
-at the historical root is
+    Y^- E_h = q(I-KH)E_h = -q K H E_h                      (CA7)
 
-    B_AW^causal
-      = B_sources + Y_root,n U_n Y_root,n^T,               (CA10)
+whenever q E_h=0.  This is generically nonzero.  The observation term
+L H E_h is part of the residual functional q x_N-L y; it must not be counted
+a second time as a cancellation inside Y^-.
 
-provided
+Equivalently, the chronological adjoint implemented by
+`chronological_reader_adjoints` pulls a correction as q<-q-LH.  With the
+causal choice L=qK this is exactly q(I-KH), not the correction-free skeleton
+row.  Thus no historical six-column information inverse is avoided by a
+fictitious zero AG row.
 
-    Y_root,h=0.                                             (CA11)
+This correction does NOT destroy the sharp action ceiling below, because CA6
+uses the full carried root covariance and telescopes to the terminal AW
+principal covariance.
 
-The causal observation weights CA1 cancel every AG-root contribution created
-by the same corrections, so CA11 follows by backward Duhamel induction when
-the uncorrected prediction/reset path has no nuisance-to-AG/AW source that
-recreates an uncancelled AG terminal component.  This condition must be
-checked on the literal reset/prediction structure; it is not assumed.
+## 51. Sharp causal-reader action ceiling without AG-root cancellation
 
-### Lyapunov interpretation
+The literal shipping AW covariance synchronization assigns exactly
 
-For any auxiliary root covariance with nuisance block <=U_n and arbitrary AG
-block/cross covariance, CA11 removes the AG root.  Equations CA5--CA8 show
-that the causal action is exactly the quadratic storage propagated by the
-literal covariance recursion with that AG root contribution deleted.
+    P_aa <- Sigma_aw,stat,    Sigma_aw,stat <= 16 I.        (SC1)
 
-Corrections cannot increase this storage: their apparent reader-noise action
-is exactly the Joseph completion.  All growth comes from:
-- prediction process/sync factors CA7;
-- the bounded nuisance-root residual CA10;
-- deterministic resets through row transport.
+Between syncs,
 
-Hence the desired source-uniform ceiling reduces to bounding the backward row
-Y under prediction/reset chronology and the accumulated process factors.
+    P_aa^- = phi^2 P_aa^+
+             +(1-phi^2) Sigma_aw,stat.                     (SC2)
 
-### OU/LIN row recursion
+Accepted Kalman corrections satisfy P^+<=P^- in Loewner order, hence cannot
+increase the AW principal block.  Attitude resets leave AW unchanged.  A
+later sync again assigns SC1.  Consequently every regular post-sync suffix
+obeys
 
-On one LIN axis, write Y_L=(y_v,y_p,y_S,y_a).  Across a pure OU prediction
-of duration h,
+    P_aa(k) <=16 I.                                        (SC3)
 
-    y_a^- =
-      phi_va y_v^+ + phi_pa y_p^+
-      +phi_Sa y_S^+ +phi y_a^+,                            (CA12)
+Apply CA6 from an actual post-sync boundary with the FULL carried P_0,
+including AG/LIN/BA blocks and all cross covariance.  For every unit terminal
+AW direction u,
 
-while
+    B_AW,W^causal
+      := Y_0 P_0 Y_0^T
+         +sum_process ||Y_k U_k||^2
+         +sum_corrections L_i R_i L_i^T
+       = u^T P_N u
+       <=16.                                                (SC4)
 
-    y_v^-=y_v^+ + h y_p^+ +h^2 y_S^+/2,
-    y_p^-=y_p^+ + h y_S^+,
-    y_S^-=y_S^+.                                           (CA13)
+Therefore
 
-Thus backward prediction contains neutral polynomial growth in (v,p,S), even
-though the AW component has phi<1.  A terminal AW row has y_v=y_p=y_S=0
-initially, but corrections can create LIN v/p/S components (notably S
-pseudo-updates).  Therefore an AW-only scalar Lyapunov recursion does NOT
-close.
+    B_AW,W^min <= B_AW,W^causal <=16,
+    sqrt(B_AW,*) <=4.                                      (SC5)
 
-However the neutral components are exactly the same triangular chain already
-handled by the two-Abel/covariant-telescoping argument.  Their polynomial
-growth should not be bounded as state action over a long horizon; retain them
-as local port/coboundary terms.
+No AG covariance ceiling and no AG-root cancellation are needed.  The
+arbitrary AG root is paid inside the single full-root action in SC4, and the
+literal covariance chronology itself proves that the total paid action cannot
+exceed the terminal AW marginal.
 
-### Consequence for the ceiling
+For the physical-transfer estimate this is harmless: the deterministic
+physical primitive map has zero columns into root uncertainty.  Cauchy is
+applied only after embedding that map into the SAME complete action space as
+SC4.  Root action can consume part of the reader budget but cannot create an
+extra physical charge.
 
-CA5 proves the key correction theorem: Kalman corrections do not create an
-unbounded causal-reader action.  But a global B_AW,* still needs control of
-the backward neutral LIN row generated by S/other ports and deterministic
-resets.  The existing nuisance upper comparison U_n can close CA10 only if
-the ROOT residual Y_root,n is uniformly bounded.
+## 52. Exact object required for the physical port enclosure
 
-Therefore the remaining ceiling theorem is now
+Let S_W be the complete normalized action-source space of the causal reader:
+the full root factor, every prediction/process or covariance-sync factor, and
+every accepted correction-noise factor, all in literal chronology.  Let
+ell_W be its reader coefficient row.  SC4 states
 
-    ||Y_root,n||_(U_n)² + sum_prediction ||Y^+ U||² <= B_* (CA14)
+    ||ell_W||_2 <=4.                                       (GP1)
 
-for the causal row generated by CA1--CA9, with Y_root,h=0 exactly.
+After deterministic accelerometer elimination, keep the physical OU forcing
+as the exact coboundary
 
-This is strictly narrower than the six-column I_eff problem: no inverse
-information matrix appears.  It is a backward row-energy bound driven by
-bounded process factors and neutral LIN port components.
+    a_(k+1)-phi_k a_k,                                     (GP2)
 
-The next calculation should prove CA11 exactly for the literal shipping block
-structure, then apply the neutral-chain telescoping already established to
-Y_root,n and the prediction-factor sum in CA14.  If those are bounded, the
-terminal-AW source-uniform action ceiling follows directly.
+perform the first Abel reduction with physical velocity and the second with
+the declared displacement primitive, and telescope the neutral v->p->S
+semigroup before taking norms.  This produces a linear map
 
-
-## 51. Exact AG-root cancellation of the causal terminal-AW reader
-
-Let h0 be the six-dimensional AG root and let
-
-    Z_k = partial x_k / partial h0                            (AR1)
-
-be its 21x6 sensitivity along the frozen literal mean word.
-
-On the correction-free skeleton, shipping proof maps have:
-- prediction block diagonal in AG / LIN / BA;
-- sync identity mean map;
-- recorded left-error reset acting inside AG attitude coordinates only.
-
-Therefore the correction-free skeleton has no AG->LIN/AW mean block.  In
-particular a terminal AW row q_aw satisfies
-
-    q_aw Z_N^(skeleton)=0.                                  (AR2)
-
-Accepted corrections are the only operations that can transfer AG root
-sensitivity into AW/LIN.
-
-At correction i,
-
-    Z_i^+ = A_i Z_i^-,
-    A_i=I-K_i H_i.                                         (AR3)
-
-For the causal reader, with backward residual row Y_i^+ immediately after the
-correction, choose
-
-    L_i=Y_i^+ K_i.                                         (AR4)
-
-Then the residual root coefficient across that correction is
-
-    Y_i^+ Z_i^+ =
-      Y_i^+(I-K_i H_i)Z_i^-
-      =Y_i^+ Z_i^- - L_i H_i Z_i^-.                        (AR5)
-
-Thus the observation-reader term cancels EXACTLY the piece of AG-root
-sensitivity removed/created by the correction.
-
-Across a deterministic mean map F (prediction or reset),
-
-    Z^+=F Z^-,
-    Y^-=Y^+ F,                                              (AR6)
-
-so
-
-    Y^- Z^- = Y^+ Z^+.                                     (AR7)
-
-Hence the root-residual pairing is invariant through every non-correction
-operation and changes at a correction exactly by the reader observation term
-AR5.
-
-Backward induction over the complete word therefore yields
-
-    Y_root E_h
-      = q_aw Z_N^(skeleton)
-      =0.                                                   (AR8)
-
-Equivalently, the causal reader satisfies the six exact feasibility equations
-
-    L_causal O_h = T_h,AW.                                  (AR9)
-
-No information matrix, pivot, magnetic geometry floor, G0 premise or AG
-covariance bound is used.  The cancellation is purely chronological and
-depends only on the literal block structure AR2.
-
-### Consequence for action
-
-The arbitrary AG root covariance and all AG/nuisance root cross covariance
-drop out of the causal-reader error action.  Its action is exactly
-
-    B_AW^causal =
-      sum_predictions ||Y_k U_k||^2
-      +sum_corrections ||L_i V_i||^2
-      +Y_root,n U_n Y_root,n^T.                            (AR10)
-
-Joseph completion from section 50 allows correction terms to be combined with
-the pulled state storage rather than bounded individually.
-
-Thus the source-uniform ceiling problem is now entirely nuisance/process:
-
-    B_AW^causal <= B_AW,*                                  (AR11)
-
-with no unknown AG-root term.
-
-### Remaining row-energy problem
-
-The nuisance root comprises LIN and BA.  Backward prediction gives the neutral
-LIN polynomial chain plus OU AW decay; BA has its declared slow transition.
-Corrections create nuisance row components, but their action is Joseph-charged.
-
-The neutral LIN components must be treated with the covariant telescoping from
-sections 40--47, not by a 17-s Euclidean row norm.  The desired energy bound
-should be organized into:
-1. local neutral-LIN endpoint/coboundary terms;
-2. OU AW process action;
-3. BA root/process action under the existing BA envelope/comparison;
-4. globally square-summed correction/reset port action.
-
-Because AR8 removes AG exactly, none of these terms needs the open six-column
-I_eff floor.
-
-The next quantitative calculation is to derive an explicit upper bound for
-AR10 by splitting Y_root,n into (LIN,BA), applying the established nuisance
-upper comparison U_n to the root residual, and using the neutral-chain
-telescoping to bound the LIN row without polynomial horizon growth.
-
-
-## 52. Explicit causal-reader action ceiling as an auxiliary Riccati marginal
-
-The four action pieces in AR10 should not be bounded separately.  Initialize
-an auxiliary covariance at the historical root by
-
-    P0_aux = diag(0_AG, U_n),                               (ACB1)
-
-with the already proved recurring nuisance comparison U_n.  Replay the SAME
-literal frozen prediction/process, accepted corrections and resets.
-
-Because the causal reader is exactly feasible and uses L_i=Y^+ K_i, the
-backward Joseph identities imply
-
-    B_AW^causal
-      = u^T (P_N_aux)_AW,AW u                              (ACB2)
-
-for the terminal transverse unit row u.  This is the standard trial-estimator
-duality: root nuisance action, prediction factors and measurement-noise
-reader action reconstruct exactly the auxiliary terminal covariance seen by
-the causal reader.
-
-Hence
-
-    B_AW^* <= B_AW^causal
-            <= lambda_max((P_N_aux)_AW,AW).                 (ACB3)
-
-This proves the requested source-uniform ceiling as soon as P_N_aux has a
-uniform nuisance/AW upper comparison.
-
-### Immediate finite ceiling
-
-The recurring nuisance theorem already supplies a source-uniform AW marginal
-ceiling
-
-    P_aa <= 156^2 = 24336                                   (ACB4)
-
-on regular A21 histories after the 17-s construction/service interval, with
-all nuisance cross blocks retained.  Since P0_aux<=the nuisance comparison
-and Riccati is monotone,
-
-    B_AW^causal <= 24336                                    (ACB5)
-
-for a unit AW coordinate on that recurring regular class.
-
-Thus a finite source-uniform normalized terminal-AW reader action ceiling
-DOES exist, independently of the open AG information floor:
-
-    B_AW,* = 24336                                          (ACB6)
-
-is a valid conservative choice under the nuisance theorem's stated scope.
-
-This closes the qualitative existence theorem requested in section 48.
-
-### Quantitative usefulness
-
-sqrt(B_AW,*)=156 is far too large for the gravity-scale signed-mean margin.
-Using ACB6 in local leverage/port Cauchy estimates would overwhelm
-g sigma_w.  Therefore the existence theorem is closed, but the useful
-quantitative ceiling remains open.
-
-Skipping corrections cannot improve it: prediction/reset-only propagation of
-U_n is even looser because neutral LIN uncertainty grows polynomially over
-17 s.  To obtain a useful B_AW,* one must retain the S and accelerometer
-conditioning that produced the recurring nuisance bound.
-
-The right quantitative object is therefore the AW marginal of the auxiliary
-Riccati recursion ACB1, not a sum of four independent action budgets.
-A source-uniform improvement can be obtained if the existing nuisance-upper
-proof is rerun specifically for the AW marginal with the literal recurring
-S/accelerometer service, instead of using the full five-block Cauchy
-comparison whose factor 5 and 17-s neutral envelopes dominate ACB4.
-
-### Narrow next target
-
-Prove directly on the recurring nuisance-only auxiliary recursion
-
-    (P_k_aux)_AW,AW <= B_aw_sharp I_3                       (ACB7)
-
-with B_aw_sharp small enough for the signed-reader margin.  AG root is zero
-in ACB1, but AG covariance generated by process/corrections is retained
-normally; no AG upper comparison is required at the root.
-
-The OU prediction alone has stationary AW variance sigma_aw^2<=16.  S and
-accelerometer corrections are covariance-decreasing in the full PSD order,
-although sync adds the bounded scheduled AW increment.  Therefore a
-candidate sharp scalar recursion is
-
-    p_aw^+ <= phi^2 p_aw + q_aw + Delta_sync               (ACB8)
-
-ONLY if cross-block correction effects are handled through Loewner order
-before projecting.  Since conditioning satisfies P^+<=P^- globally, it
-cannot increase the AW principal block.  Resets act only on AG and leave AW
-unchanged.  Thus ACB8 is valid across corrections/resets.
-
-Prediction is block diagonal AG/LIN/BA; within LIN, the AW prediction row is
-only phi times previous AW, so
-
-    P_aa^- = phi^2 P_aa^+ + Q_aa.                           (ACB9)
-
-No v/p/S cross term enters the AW marginal prediction.
-
-Consequently the AW marginal admits a CLOSED scalar upper recursion,
-independent of neutral LIN covariance.  This is the key simplification.
-
-With q_aw chosen by the OU discretization,
-    q_aw = sigma_aw^2(1-phi^2)
-for the stationary OU component, ACB9 gives
-
-    p^- <= phi^2 p^+ + sigma_aw^2(1-phi^2).                (ACB10)
-
-Corrections can only decrease p.  Sync inflation is the only extra positive
-AW term and must be bounded by its literal scheduled Delta.
-
-Therefore a sharp source-uniform ceiling is
-
-    p_aw <= max(p_aw,root, sigma_aw,max^2)
-            + accumulated/steady sync inflation allowance. (ACB11)
-
-The next calculation is now explicit: use the proved literal sync-inflation
-law to bound the scalar AW recursion ACB10--ACB11.  This should replace
-24336 by an O(16) ceiling, potentially making the final signed-reader budget
-quantitatively useful.
-
-
-## 53. Literal AW sync law gives the sharp causal-reader ceiling B_AW,* = 16
-
-The earlier scalar recursion treated AW covariance synchronization as an
-additive inflation. That is too pessimistic for the literal shipping code.
-
-The current congruent stationary synchronization does:
-1. read/symmetrize the current AW principal block P_aw;
-2. set Sigma=sym(Sigma_aw_stat);
-3. congruently rescale every AW cross-covariance using Cholesky factors when usable;
-4. assign exactly
-
-    Pext[AW,AW] = Sigma.                                    (SC1)
-
-Thus at every scheduled covariance sync,
-
-    P_aa^sync = Sigma_aw_stat.                              (SC2)
-
-The cross-covariance congruence does not alter SC2. The retained tuner
-envelope has
-
-    Sigma_aw_stat <= 16 I_3.                               (SC3)
-
-For one OU prediction,
-
-    P_aa^- = phi^2 P_aa^+ + Q_aa,
-    Q_aa=(1-phi^2) Sigma_aw_stat.                           (SC4)
-
-Hence
-
-    P_aa^- - Sigma = phi^2(P_aa^+ - Sigma).                (SC5)
-
-So if P_aa^+<=16 I and Sigma<=16 I, then P_aa^-<=16 I.
-
-An accepted Kalman correction satisfies P^+<=P^- globally, hence its AW
-principal block cannot increase. Attitude resets leave the AW principal block
-unchanged. A later sync resets it again to Sigma<=16 I.
-
-Therefore, after any sync at which SC2 is applied,
-
-    P_aa(k) <= 16 I                                        (SC6)
-
-for every subsequent regular shipping operation, irrespective of AG/LIN/BA
-cross covariance. If construction initializes P_aa<=16 I, this holds from
-construction onward; otherwise it holds from the first covariance sync.
-
-Section 52 identifies the causal terminal-AW reader action with the AW
-principal block of the corresponding auxiliary covariance. Therefore for
-every unit terminal AW direction on the regular post-sync class,
-
-    B_AW^causal <=16.                                      (SC7)
-
-Since the minimum-action reader is no worse,
-
-    B_AW^* <= B_AW^causal <=16.                            (SC8)
-
-Thus the desired source-uniform normalized terminal-AW action ceiling closes
-with the explicit constant
-
-    B_AW,* =16,    sqrt(B_AW,*)=4.                         (SC9)
-
-No additive sync allowance is needed.
-
-Scope: SC9 relies on the literal congruent stationary synchronization in
-current shipping OU-III. It is not a theorem for the historical additive
-floor law or a mode that disables/replaces this synchronization. It also uses
-the applied stationary target envelope Sigma_aw_stat<=16 I already present in
-the recurring nuisance proof.
-
+    G_phys,W : P_W -> S_W,                                 (GP3)
+
+where P_W is the finite-dimensional physical primitive coordinate space
+(endpoint velocity/displacement plus the exact one-sided sampling remainder).
+The root-source rows of G_phys,W are identically zero.  Accelerometer and S
+columns are not independent controls: their entries are the Schur-completed
+ports from the same-history correction chronology.
+
+Define
+
+    C_port = sup_W ||G_phys,W||_(P_W -> l2).               (GP4)
+
+Then, with the dual norm on the bounded primitive coordinates,
+
+    |R_ports,W|
+       = |ell_W G_phys,W p_W|
+       <=4 C_port ||p_W||_P.                               (GP5)
+
+This is the correct single-budget formulation.  It neither requires nor
+permits a second factor four for accelerometer, S, process/sync or root
+families.
+
+The old quantity
+
+    ||D2 h||_(2,1) / sqrt(reader action)                    (GP6)
+
+is NOT GP4.  It is a reader-dependent divided-difference diagnostic.  It
+omits the physical primitive scaling, the complete normalized source columns,
+and the Schur-completed port embedding.  It must not be called C_port,W or
+compared with the 8.45e-3 target.
+
+## 53. What is analytically closed and what remains
+
+Closed, source-uniformly:
+- accelerometer innovation is endogenous and is eliminated on the same
+  physical history;
+- GP2 is an exact OU coboundary for arbitrary applied phi;
+- two Abel steps are legal under the already-declared V_max and P_max;
+- the neutral LIN polynomial semigroup telescopes exactly, so no tuner or
+  sample-jitter total-variation premise is needed;
+- accelerometer and S corrections are retained through their complete Schur
+  ports;
+- the causal terminal-AW reader has the single full-root action ceiling SC5.
+
+Still open: an explicit source-uniform numerical enclosure of GP4 over the
+coupled shipping chronology.  Raw coefficient geometry is insufficient:
+replacing the normalized source Gram by independent measurement floors gives
+an O(1) bound, far above the available gravity-scale margin.  The enclosure
+must therefore be performed on the complete Schur-normalized source operator
+before norms, preserving common columns.
+
+The next admissible analytical calculation is to write GP3 blockwise as the
+composition
+
+    bounded physical primitive
+      -> exact Abel boundary/coboundary rows
+      -> Schur-completed chronological source columns
+      -> common normalized action space,                  (GP7)
+
+then bound the largest singular value of the symbolic block operator using
+only declared interval envelopes and exact covariance identities.  A carried
+word may test this construction, but cannot supply any interval endpoint or
+theorem constant.
 
 ## 54. Insert B_AW,*=16: joint action budget and remaining physical-to-port constant
 
