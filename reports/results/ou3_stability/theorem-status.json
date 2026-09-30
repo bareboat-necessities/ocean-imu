@@ -179,7 +179,11 @@
     "contraction_superword_100s_adopted": true,
     "nuisance_warmup_17s_retained": true,
     "source_uniform_K100_finite_numeric": false,
-    "source_uniform_K100_kernel_invariant": false
+    "source_uniform_K100_kernel_invariant": false,
+    "gamma_S_source_uniform_numeric": false,
+    "gamma_M_residualized_numeric": false,
+    "beta_rank_loss_numeric": false,
+    "rank_loss_interval_factor_propagator_required": true
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
