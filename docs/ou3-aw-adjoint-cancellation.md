@@ -1872,3 +1872,62 @@ guaranteed subset of accelerometer rows; build TP4 using the exact
 piecewise-tau transitions; analytically lower-bound TP6 over the coupled
 tau/rS/cadence tuple.  This scalar residual norm is the correct
 conditioning-invariant kappa_enc certificate.
+
+
+## 22. Finite selected accelerometer certificate: use the first guaranteed row
+
+The previous infinite geometric sum I_acc>=214.752 treated later
+accelerometer rows as open-loop root observations H Phi(t).  That is not a
+rigorous lower bound on information about the same carried root after earlier
+Kalman corrections: the later residual sensitivity is H M_(k:0), with the
+closed-loop mean/covariance sensitivity including those earlier corrections.
+Using open-loop Phi for every later row can over-count root information.
+
+A completely safe finite certificate uses only the FIRST guaranteed
+accelerometer row after the chosen root.  No earlier accelerometer correction
+can have reduced its root sensitivity.  Scheduled finite accelerometer
+updates are mathematically applied on the retained class by the existing
+LDLT/no-invalid-input argument.
+
+In the fixed proof AW coordinate scale d_a=4, the root-AW coefficient at the
+first row is
+
+    h_a = d_a exp(-h/tau).
+
+With h<=h_max=.006 s, tau>=tau_min=.02 s and
+R_acc<=R_acc,max=(.3010398645)^2, the scalar selected information is
+
+    I_acc,1
+      >= d_a^2 exp(-2 h_max/tau_min)/R_acc,max
+       = 16 exp(-.6)/(.3010398645)^2
+       = 96.89364056.                                      (FA1)
+
+This is finite, chronological and noncircular.  It uses one guaranteed row,
+not an infinite sum or a fitted carried statistic.
+
+If the selected design also includes four guaranteed S rows, eliminate the
+neutral root l=(v,p,S) by the least-squares Schur complement.  The first
+accelerometer row has zero l columns in the conditioned one-axis open-loop
+root model, so its residual cannot be canceled by the l fit.  Therefore
+
+    kappa_sel >= I_acc,1 >= 96.89364056                     (FA2)
+
+for that selected root design.
+
+CAVEAT: FA2 is a deterministic selected-row design bound for the conditioned
+root model.  To convert it into the literal FILTER closed-loop root-loss
+coefficient, the selected residual must be represented with the same-history
+innovation/source factor used by the complete-word information identity.
+Only the first accelerometer row is immune to prior accelerometer
+conditioning; later rows require closed-loop sensitivities.  Do not restore
+the 214.752 infinite-series value without that calculation.
+
+Combining FA1 with a prior conditional-AW variance p gives the one-row
+dimensionless information
+
+    iota_1 >= p * 96.89364056.                              (FA3)
+
+The generic root p floor ~1.96e-9 still makes FA3 weak.  Thus FA1 confirms
+again that measurement information is ample; the quantitative bottleneck is
+the reader-specific prior decomposition between conditional AW variance and
+the encoded LIN component, not the number of accelerometer rows.
