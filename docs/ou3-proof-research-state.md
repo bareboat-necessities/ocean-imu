@@ -67,7 +67,12 @@ the full carried root covariance, Joseph telescoping makes the complete causal
 reader action exactly u'P_Nu, and the literal AW sync/prediction/correction
 chronology gives u'P_Nu<=16.  Thus sqrt(B_AW,*)<=4 remains source-uniform with
 the AG root retained in the single action budget.  The physical primitive map
-has zero root-uncertainty columns.  The committed 17-s diagnostic previously
+has zero root-uncertainty columns.  The unrestricted full action-source norm is also too coarse: process and
+accelerometer source factors are orthogonal in covariance action, so taking
+that norm before pairing destroys their exact same-history opposite-sign
+cancellation.  The surviving constant is therefore the induced bilinear norm
+restricted to the literal reachable causal-reader rows, not an arbitrary
+reader cone.  The committed 17-s diagnostic previously
 called C_port,W is not G_phys,W: it is only ||D2 h||_(2,1)/sqrt(action), so it
 cannot be compared with the 8.45e-3 target.  The controlling obligation is to
 construct the complete two-Abel physical-primitive -> normalized source
