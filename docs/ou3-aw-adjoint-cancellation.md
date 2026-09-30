@@ -6211,3 +6211,166 @@ for every retained 17-s word, followed by conversion of g_17 and the
 fast/S-chain factors into K_17(c,r).  This avoids horizon mixing and uses
 the fact that storage itself bounds nominal AW/BA error on the candidate
 region.
+
+
+## 63. Adopt a 100-s contraction superword; retain 17 s only as nuisance warm-up
+
+The proof clock is now separated from the estimator clock.  No shipping
+schedule, tuner, correction cadence, assumption or quality gate is changed.
+
+Let t_r be a regular A21 post-prediction root for which the existing 17-s
+nuisance/root comparison has matured.  Define the contraction superword
+
+    W_100=[t_r,t_r+100 s].                                  (SW1)
+
+All literal operations inside W_100 are retained.  The 17-s theorem is used
+only to establish the nuisance covariance/source class at t_r and at
+intermediate roots; it is NOT asserted to contract the complete state.
+
+### Why 100 s is the first convenient existing-proof horizon
+
+A 100-s moving superword can contain, on the SAME history:
+- a first 16-s accelerometer window W1;
+- 64 s of separation;
+- a second 16-s accelerometer window W2;
+- the endpoint room already used by the Lemma-T tube construction, by placing
+  the windows inside the available 100-s interval as in the existing G0
+  proof;
+- every 1-s MAGNETIC SERVICE subwindow;
+- the complete 32-s jerk/alias exclusion interval;
+- at least one complete 64-s joint measured-vector information interval;
+- repeated 17-s nuisance warm-up blocks, exact S-chain cancellations and the
+  proved P_ba<=I/1600 ceiling.
+
+Thus no 32/64/100-s constant is imported from outside W_100.
+
+For any prefix/suffix decomposition W_100=UV, the exact word identities give
+
+    M_W=M_V M_U,                                            (SW2)
+
+and the complete source covariance composes as
+
+    S_W=M_V S_U M_V^T+S_V.                                 (SW3)
+
+Information can only increase under adding observations to the word, while
+the Riccati diameter is nonincreasing under informative prefixing.  Hence any
+certified informative subword may be used inside W_100 without changing its
+constant to a fictitious 17-s one.
+
+### 100-s diameter theorem target
+
+Define the same physical-kernel completion at the superword root,
+
+    J_100,mu = J_100 + mu nu_0 nu_0^T,    mu=1/c_100.       (SW4)
+
+Let Pi_100 be the known-root terminal covariance and P_nu,100 the terminal
+covariance with only the kernel precision in SW4.  Put
+
+    K_100 =
+      sup_(admissible W_100)
+      lambda_max(Pi_100^-1 P_nu,100).                      (SW5)
+
+If the scalar kernel set is invariant between successive 100-s roots,
+
+    nu_1^T P_nu,100 nu_1 <= c_100,                          (SW6)
+
+then Corollary K gives
+
+    rho_100 <= 1-1/K_100 <1.                               (SW7)
+
+The recurring theorem is then stated on the 100-s roots.  Intermediate 17-s
+roots are controlled by the exact every-prefix finite-error composition; they
+need not contract individually.
+
+### What existing geometry now supplies legitimately
+
+On a complete moving W_100, the horizon issue is removed.  The existing G0
+construction may be embedded as one slow AG information reader, the 32-s
+sampling lemma may be used for alias exclusion, and the 64-s measured-vector
+lemma may be used for physical-vector information.  Exact S-chain
+cancellation removes the neutral LIN/AW root from the corresponding reduced
+reader, while the 17-s nuisance comparison controls the remaining nuisance
+action.  Gyro-bias persistence and MAGNETIC SERVICE act on the same W_100,
+and P_ba<=I/1600 supplies the BA part of the kernel precision.
+
+This gives the structural implication
+
+    [G0 literal premises on W_100]
+      + [same-history kernel return <1]
+      => K_100<infinity
+      => rho_100<1.                                        (SW8)
+
+### Two obligations remain; changing the word does not erase them
+
+The longer word fixes only the horizon mismatch.  It does NOT promote the
+two source-open inputs of G0:
+
+G100-1. NOMINAL FORCE PREMISES.
+The explicit G0 number s^2>=1.486786e-3 uses
+
+    m_perp<=0.4 m/s^2,    u1<=1.2                          (SW9)
+
+on its two nominal 16-s windows.  The carried audits satisfy these bounds,
+but no source/radius-uniform theorem currently derives them from the literal
+AW loop.  On a retained storage ball the valid target is instead
+
+    m_perp(r)<=m_phys,perp + 4 r + curvature(r),            (SW10)
+
+or the stronger signed AW-loop estimate, evaluated on the same W_100.
+
+G100-2. LITERAL INJECTION FRAME / KERNEL RETURN.
+G0 is proved for the injection-free world array.  The literal reset/injection
+transport and the equality case of the scalar kernel return must be handled
+on W_100.  In particular the exact recurrence
+
+    D_01(c)=d_perp+ell^2/(j0+||nu_0||^2/c)                 (SW11)
+
+still forbids a finite invariant c if an admissible same-history exact-kernel
+pair has unit persistence with d_perp>0.  A 100-s word gives substantially
+more geometry with which to exclude that equality, but does not make the
+exclusion automatic.
+
+Therefore K_100 is not yet assigned a numerical value.
+
+### Why this architecture is nevertheless strictly better
+
+The 17-s K target required new quantitative geometry on a horizon shorter
+than every existing physical-information theorem.  SW1 instead aligns the
+contraction word with the proofs already available.  The remaining tasks are
+now only:
+1. convert the nominal signed-force/injection premises of G0 into
+   radius-local same-history inequalities on W_100;
+2. use the 32/64-s physical information plus recurring magnetic service and
+   BA decay to exclude the unit-persistent exact-kernel equality on adjacent
+   W_100 words;
+3. evaluate the already-fixed canonical reader/action formulas to obtain an
+   explicit K_100(c,r).
+
+If K_100<=Kbar is obtained, the per-superword linear factor is
+
+    rho_100 <= 1-1/Kbar.                                   (SW12)
+
+For comparison only, a Kbar=250 certificate would give rho_100<=0.996 per
+100 s; no such number is claimed here.
+
+### Recurring finite-error composition
+
+Let q_100=sqrt(rho_100).  At 100-s roots the retained-radius inequality is
+
+    sqrt(V_(n+1)) <= q_100 sqrt(V_n)+E_100(r).              (SW13)
+
+The scalar kernel ceiling propagates by SW6.  For every prefix
+0<=tau<=100 s use the existing exact prefix composition
+
+    sqrt(V(t_n+tau))
+      <= G_tau(r) sqrt(V_n)+S_tau(r).                       (SW14)
+
+Thus the longer proof word does not permit uncontrolled growth between
+contraction epochs.  Regional practical stability follows once
+
+    q_100 r+E_100(r) <= r,                                 (SW15)
+    D_100(c,r) <= c,                                       (SW16)
+
+and the prefix retained-domain inequalities close.  Startup/H18/release and
+STILL/transition bridges remain the downstream obligations already present
+in the single proof path.
