@@ -506,6 +506,20 @@ already-derived kernel-regularized scalar compatibility reader, which retains
 1/c coercivity and does not require exact source-range inclusion.  Added
 `source_controllability.py` to encode this fail-closed distinction.
 
+**Scalar kernel-regularized reader evaluated exactly.**  On unit
+compatibility coordinate, after nuisance whitening let scalar observation
+information J>=0, current kernel precision m=1/c and terminal excess vector
+ttilde.  Regularized reader denominator is J+m; root residual factor is
+m/(J+m), so J->0 is finite.  More strongly, carry current kernel prior into
+terminal covariance Pi_m=Pi+c ttilde ttilde'.  Rank-one Woodbury leverage is
+c ttilde'Pi_m^dagger ttilde=cB/(1+cB)<=1, with limit 1 even when the
+unregularized B=ttilde'Pi^dagger ttilde diverges/outside source range.
+Therefore exact source controllability/E_perp is not required for current
+kernel persistence.  Previous split against singular Pi was too strong.
+Remaining scalar issue is only the orientation/return of this terminal
+rank-one prior direction relative to the NEXT word's compatibility line.
+Added `kernel_regularized_scalar.py` and validation.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
