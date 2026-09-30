@@ -78,7 +78,7 @@ def driver_source():
             ba_max=std::max(ba_max,static_cast<double>(mm.get_acc_bias().norm()));
             aw_max=std::max(aw_max,static_cast<double>(mm.xext.segment<3>(15).norm()));
         }
-        if(k==70800) { prev_state=matrix_json(filter.raw().mekf().xext); prev_cov=matrix_json(filter.raw().mekf().Pext); }
+        if(k==71296) { prev_state=matrix_json(filter.raw().mekf().xext); prev_cov=matrix_json(filter.raw().mekf().Pext); }
         if (live<0 && filter.isLive()) live=k;''')
     src=src.replace('            if (recording && filter.raw().mekf().lastMagDiag().accepted) ++applied;',
       '''            if (recording && filter.raw().mekf().lastMagDiag().accepted) ++applied;
