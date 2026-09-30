@@ -1,0 +1,23 @@
+name: OU3 beta variation diagnostic
+on:
+  push:
+    branches: [ou3-joint-tuning-audit]
+    paths:
+      - tools/stability/ou3_theorem/beta_variation_diagnostic.py
+      - .github/workflows/ou3-beta-variation.yml
+permissions:
+  contents: read
+jobs:
+  beta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libeigen3-dev
+      - name: Run literal beta variation audit
+        run: |
+          PYTHONPATH=. python3 -m tools.stability.ou3_theorem.beta_variation_diagnostic --output beta-variation.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ou3-beta-variation
+          path: beta-variation.json
+          retention-days: 2
