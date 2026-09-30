@@ -330,32 +330,5 @@ static inline void clearM5UnifiedImuCalibration() {
   M5.Imu.clearOffsetData();
 }
 
-// Magnetometer bring-up.
-//
-// The AtomS3R BMM150 sits behind the BMI270 AUX I2C master. M5Unified's BMI270
-// driver soft-resets/powers the BMM150 (reg 0x4B = 0x83) and reads its chip ID
-// with no startup delay. After a cold power-up the BMM150 is in suspend mode and
-// needs ~3 ms to reach sleep mode, so the chip-ID read fails, the AUX channel is
-// never enabled and no magnetometer samples are produced. Warm resets work
-// because the BMM150 is already powered. Call ensureMagReady() after M5.begin()
-// (and before clearM5UnifiedImuCalibration()): it waits for real magnetometer
-// samples and, if none arrive, wakes the BMM150 and re-runs M5.Imu.begin().
-struct MagStartupCfg {
-  static constexpr uint32_t PROBE_WINDOW_MS  = 600;    // BMM150 runs at ~30 Hz
-  static constexpr int      PROBE_MIN_GOOD   = 5;
-  static constexpr float    MIN_NORM_uT      = 5.0f;
-  static constexpr float    MAX_NORM_uT      = 1000.0f;
-  static constexpr int      MAX_REINIT       = 3;
-  static constexpr uint32_t WAKE_SETTLE_MS   = 100;    // generous POR margin before the driver soft-resets
-  static constexpr uint32_t REINIT_SETTLE_MS = 50;
-  static constexpr uint32_t I2C_FREQ         = 400000;
-};
-
-// Returns true once PROBE_MIN_GOOD finite, in-range magnetometer samples arrive.
-// Implemented out-of-line so the recovery path does not inflate every Arduino
-// sketch translation unit (important on Xtensa, whose l32r literal reach is finite).
-bool probeMagSamples(decltype(M5.Imu)& imu);
-bool wakeBmm150ViaBmi270Aux();
-bool ensureMagReady(Print& log);
 
 } // namespace atoms3r_ical
