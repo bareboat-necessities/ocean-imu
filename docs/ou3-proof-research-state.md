@@ -325,6 +325,34 @@ Keep the threshold symbolic as `g sigma_w`.  The value `g/5=1.96133`
 requires the separate field-domain premise `sigma_w>=1/5`; an 80-degree
 inclination premise alone gives `g cos(80 deg)~=1.7029069`.
 
+**Noncircular nominal-AW reduction.** The complete reader shows that G0
+cannot be used to prove its own nominal-AW premise.  Decomposing attitude by
+the field direction removes most of the apparent box loss: a field-axis
+rotation of angle theta changes gravity by at most
+`2 g sigma_w sin(theta/2)`, only 0.2052962 m/s^2 at theta=6 deg and
+sigma_w=1/5.  With the declared post-projection BA error and fast
+accelerometer residual, the static kernel nuisance is 1.1304628 m/s^2,
+below g/5.
+
+The remaining translated physical term is exactly
+`mean(M_b a)=[M_b v]_0^T/T-T^-1 int dot(M_b)v dt`, so its noncircular
+control requires a signed temporal/TV bound on the SHIPPING field-axis
+attitude-error loop.  The retained 6-degree angle bound, Lemma I* net
+rotation, axial gyro-bias projection sector, and physical BA-rate bound do
+not individually supply such a TV bound.  Using G0 to obtain it would be
+circular because `f_hat parallel b` is precisely the boundary
+`|a_hat x b|=g sigma_w`.
+
+Equivalent target: prove a constrained minimum source-action inequality
+`A_min(g sigma_w)>A_available` for the literal axial-bg + BA + AW/S
+chronology.  OU leakage alone is far too weak: at tau=12 s replenishing a
+g/5 DC AW component costs only 0.000654--0.000980 m/s2 per 4--6 ms step.
+The weak-regularizer corner must also be retained: tau=12,sigma=4 drives the
+SpectralMSE target into the r_S=100 m*s clamp with T_S=0.15 s.  Thus the
+next analytical obligation is a reachability/passivity bound for the coupled
+field-axis error/AW/S/bias loop, not another observability lemma and not a
+stronger MARINE MOTION assumption.
+
 ## Current limiter
 
 Exact physical rest is not identifiable from the current sensor/bias model.
