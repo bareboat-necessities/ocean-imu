@@ -640,7 +640,10 @@ private:
   }
 
   bool readMagSample_(Vector3f& m_out) {
-    (void)M5.Imu.update();
+    const uint32_t mask = M5.Imu.update();
+    if ((mask & ATOMS3R_IMU_MASK_MAG) == 0u) {
+      return false;
+    }
     const auto data = M5.Imu.getImuData();
     m_out = map_mag_to_body_uT_(data.mag);
     return finite3_(m_out);
