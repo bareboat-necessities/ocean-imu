@@ -477,6 +477,20 @@ denominator>=1/c.  Remaining target is therefore an UPPER bound
 B_term,c=sup_{compatible,|r|=1} r'T_W'Q_+T_W r; then C_c<=c B_term,c.
 Added `compatibility_chart.py` and scale-invariance validation.
 
+**Terminal compatibility numerator reduced by exact Joseph/source
+controllability identity.**  Split B_term into transverse known-root
+Pi^dagger energy plus next-kernel deterministic transport/c_+.  For unit
+compatibility r, z=P_+perp T_W r has exact energy
+E_perp=min ||s||^2 subject to A s=0 and T_s s=z; equivalently
+z'Pi^dagger z, with infinity if z is outside the data-null source range.
+Pi whitening does NOT make this <=1 automatically.  A causal backward reader
+gives the same minimum through Joseph telescoping and needs no full covariance
+upper ceiling.  Next-kernel term is E_ker/c_+, E_ker=||P_+T_Wr||^2.  Hence
+B_term=sup(E_perp+E_ker/c_+) and C_c<=c B_term.  Remaining exact obligations:
+data-null source range inclusion for the one terminal compatibility vector,
+a finite scalar E_perp upper, and a 1-D deterministic E_ker upper.  Added
+`terminal_compatibility_energy.py`.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
