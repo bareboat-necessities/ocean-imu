@@ -103,6 +103,7 @@ def status_report() -> dict:
         "causal_aw_full_root_action_ceiling":True,
         "causal_aw_AG_root_cancellation":False,
         "carried_17s_diagnostic_equals_C_port":False,
+        "source_uniform_reachable_causal_reader_port_norm":False,
         "source_uniform_gyro_bias_persistence_diameter_cap":True,
         "source_uniform_kernel_bounded_word_diameter":False,
         "source_uniform_tilt_about_field_axis_covariance_ceiling":False,
