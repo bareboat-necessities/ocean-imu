@@ -1408,7 +1408,7 @@ The second term contains the favorable fresh AW block
 contains transported inherited cross covariance. Therefore
 
 `d_a- >= sigma_min(P_b Q_aa R_wb'|_bperp)
-       - ||P_b R_P||`,                                      (OP-P2)
+       - ||P_b R_P||`,                                      (OP-second)
 
 where R_P is the exact sum of all other transported/process contributions.
 Current bounds do not make the right side positive.
