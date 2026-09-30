@@ -1465,6 +1465,39 @@ rotation--velocity functional.  The remaining discriminator is the coupled
 periodic Riccati/mean compatibility system, not another independent-envelope
 norm.
 
+That system admits a sharper analytical reduction.  Once the periodic physical
+input fixes the stable tuner response, the applied
+$(\tau,\sigma_{aw},R_S,T_S)$ word is periodic.  Covariance evolution is then
+independent of innovation values; its stabilizing periodic solution, when it
+exists, fixes all Kalman gains.  The mean period map is affine,
+\begin{equation}
+ (I-\Phi)x_0=G u+d .
+ \label{eq:periodic-mean-fredholm}
+\end{equation}
+If $I-\Phi$ is nonsingular, every periodic innovation word has a unique
+periodic mean root.  Moreover, for fixed gains the chronological map from a
+measurement word to its innovation word is block lower triangular with
+identity diagonal, hence invertible.  Thus positive-noise Kalman corrections
+do not create an algebraic incompatibility that could exclude the candidate.
+
+Eliminating the periodic mean root and innovations leaves one finite physical
+compatibility equation
+\begin{equation}
+ [I-\mathcal R T_{aw,a}]a
+ =g e_z-\mathcal R g e_z+\mathcal R t_{aw}+a_{\rm free},
+ \label{eq:periodic-physical-compat}
+\end{equation}
+where $T_{aw,a}$ is the literal one-period closed-loop transfer from physical
+accelerometer samples to nominal AW samples and $\mathcal R$ is the
+block-diagonal true field-axis rotation word.  Nonsingularity of the bracket
+produces a unique periodic candidate rather than excluding one.  Therefore
+the periodic Riccati/mean architecture supplies no universal cancellation
+lemma.  A genuine counterexample now requires an interval-certified solution
+of \eqref{eq:periodic-physical-compat} for one actual coupled tuner/covariance
+orbit and verification of the existing physical, gate and service
+inequalities; conversely an impossibility proof must show every such solution
+violates one of those existing conditions.
+
 For the explicit horizontal-field-fraction premise
 $\sigma_w\ge1/5$, the critical nominal transverse scale is
 $g\sigma_w\ge g/5=1.96133\,\mathrm{m/s^2}$.  This number must not be inferred
