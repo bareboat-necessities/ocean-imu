@@ -6715,3 +6715,176 @@ to the word-dependent kernel and H_eff is the corresponding terminal excess
 map.  A vanishing S_q is harmless if H_eff vanishes at the same rate.  This
 relative inequality is exactly what the Riccati diameter needs and is weaker
 than a uniform Euclidean accelerometer-information floor.
+
+
+## 66. Relative quotient inequality from the complete 100-s conditional Gaussian word
+
+Fix one literal 100-s superword and perform the SAME nuisance elimination and
+word-dependent kernel split as PN13--PN18.  In quotient coordinates v, write
+
+    y = O_q v + A s,                                       (RQ1)
+    x_N = T_q v + T s,                                     (RQ2)
+
+with Sigma=A A^T>0 the complete auxiliary source covariance.  All prediction,
+AW sync, accelerometer, S, magnetic, BA and reset chronology is already inside
+O_q,A,T_q,T.
+
+The known-root terminal covariance is the shorted source covariance
+
+    Pi =
+      T [I-A^T Sigma^-1 A] T^T.                            (RQ3)
+
+Define
+
+    J_q = O_q^T Sigma^-1 O_q,                              (RQ4)
+
+    Ttilde_q =
+      T_q - T A^T Sigma^-1 O_q.                            (RQ5)
+
+RQ5 is the terminal root image after optimally reusing the SAME fresh-source
+coordinates to explain the data.  The diffuse quotient adds exactly
+
+    Ttilde_q J_q^dagger Ttilde_q^T                         (RQ6)
+
+when the Moore-Penrose range condition is satisfied.
+
+### Kernel-line Schur elimination
+
+Before quotienting, split the augmented root information with normalized
+word kernel n and quotient q:
+
+    J_mu =
+      [ j_nn+mu   j_nq^T
+        j_nq      J_qq ],    mu=1/c.                       (RQ7)
+
+The quotient Schur information is
+
+    S_q =
+      J_qq - j_nq j_nq^T/(j_nn+mu).                        (RQ8)
+
+In Pi-whitened terminal coordinates split the excess map
+
+    H=[h_n,H_q].                                            (RQ9)
+
+Eliminating the same kernel coordinate gives
+
+    H_eff =
+      H_q - h_n j_nq^T/(j_nn+mu).                          (RQ10)
+
+Therefore the exact quotient contribution to the kernel-bounded Riccati
+diameter is controlled by
+
+    H_eff^T H_eff <= (K_rel-1) S_q.                        (RQ11)
+
+Restoring unwhitened coordinates,
+
+    H_eff^T Pi^-1 H_eff
+      <= (K_rel-1) S_q.                                    (RQ12)
+
+The SHARP fixed-word constant is
+
+    K_rel(W)-1 =
+      lambda_max[
+        S_q^dagger/2
+        H_eff^T Pi^-1 H_eff
+        S_q^dagger/2 ],                                    (RQ13)
+
+with value infinity exactly when
+
+    Null(S_q) not subset Null(H_eff).                       (RQ14)
+
+Thus the requested relative inequality is not an additional relaxation: it
+is exactly the quotient generalized eigenvalue in the complete conditional
+Gaussian word.
+
+### Exact range test
+
+After kernel shorting, rewrite the quotient model again in the form RQ1--RQ2.
+For any v in Null(J_q),
+
+    0=v^T J_q v=||Sigma^-1/2 O_q v||^2
+      => O_q v=0.                                          (RQ15)
+
+Then RQ5 gives
+
+    Ttilde_q v=T_q v.                                      (RQ16)
+
+Hence the finite-extension condition is exactly
+
+    Null(O_q) subset Null(T_q).                            (RQ17)
+
+This is a finite-horizon detectability condition: every quotient root
+direction invisible to the COMPLETE 100-s observation record must also have
+zero deterministic terminal image.
+
+The complete-word zero-action classification proves RQ17 for each fixed
+nondegenerate word after quotienting by its exact compatibility line.
+However pointwise injectivity is insufficient for a UNIFORM K_rel.  Along a
+rank-changing sequence, singular values of O_q may tend to zero while
+T_q v remains O(1).  Therefore compactness alone cannot bound RQ13.
+
+### Regularized backward-reader representation
+
+The relative ratio can be represented without forming small singular values.
+Initialize the terminal quotient residual in Pi-whitened coordinates and run
+the literal word backward.  At each operation:
+- prediction: Y<-Y F and add the common process factor Y U;
+- accepted correction: choose the observation reader block L_i and set
+  Y<-Y-L_i H_i while adding L_i V_i;
+- reset: Y<-Y G_i;
+- PSD AW sync: identity mean pullback with its source factor retained.
+
+Choose all L_i jointly by the regularized normal equations corresponding to
+J_mu.  The minimum total fresh-source action is exactly the quadratic
+numerator in RQ13.  The denominator is the quotient observation action S_q.
+Thus a source-uniform reader estimate
+
+    Action_terminal(v)
+      <= C_det Action_observation(v)                       (RQ18)
+
+for every quotient root v is equivalent to
+
+    K_rel <= 1+C_det.                                      (RQ19)
+
+No Euclidean information floor is required.
+
+### What the current structural lemmas imply
+
+The 100-s word gives the following zero-action chain:
+1. zero fresh LIN/AW/BA/AG source action rigidifies nuisance trajectories;
+2. four S rows kill the zero-source homogeneous LIN/AW root qualitatively;
+3. magnetic service plus gyro transport restricts AG to at most one
+   transported field-compatible line;
+4. all accelerometer rows with one propagated BA root leave at most the
+   word-dependent compatibility line nu_W;
+5. quotienting by nu_W leaves no fixed-word zero-action root direction.
+
+Therefore the only possible failure of a UNIFORM RQ18 is a NEAR-null sequence
+whose observation action tends to zero faster than its terminal persistence.
+
+### Remaining quantitative target
+
+The relative quotient inequality has now been DERIVED exactly, but no finite
+source-uniform numerical C_det is yet proved.  The next analytical obligation
+is the near-null persistence lemma:
+
+    for every retained sequence (W_n,v_n) with |v_n|=1,
+    Action_observation(W_n,v_n)->0
+      => Action_terminal(W_n,v_n)->0
+         at a uniform linear rate.                          (RQ20)
+
+Equivalently, construct C_det from the literal prediction/process structure.
+This is weaker than proving sigma_min(O_q)>0 and is the shortest remaining
+route to K_100<infinity.
+
+A useful decomposition of RQ20 is by the last operation at which a normalized
+near-null direction has appreciable amplitude.  If it persists to the
+terminal state, backward propagation across the final 17-s nuisance-regular
+suffix must either:
+(a) generate S/process action through LIN/AW;
+(b) generate magnetic/gyro action through AG;
+(c) generate accelerometer/BA action outside nu_W; or
+(d) lie asymptotically in the next word's compatibility kernel.
+Cases (a)--(c) charge S_q; case (d) is exactly the adjacent-superword scalar
+kernel-return problem.  Thus relative quotient detectability and kernel
+return are the two complementary pieces of the recurring contraction proof.
