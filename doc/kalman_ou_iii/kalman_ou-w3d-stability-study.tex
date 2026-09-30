@@ -1767,6 +1767,29 @@ compatibility-line rank changes.  Those strata, rather than generic
 full-rank words, are the remaining linear obstruction to a source-uniform
 $C_{\rm joint}$.
 
+The literal gain formula further classifies those strata.  Since
+$K_{aw}=N_{aw}\Omega^{-1}$ with $\Omega\succ0$,
+\begin{equation}
+ N_{aw}=
+ P_{aw,\theta}J_{att}^T+
+ P_{aw,aw}R_{wb}^T+
+ P_{aw,ba}+
+ P_{aw,bg}J_{bg}^T ,
+ \label{eq:aw-gain-numerator}
+\end{equation}
+with only the enabled mean-correction terms retained.  Thus transverse rank
+loss is exactly rank loss of $P_{b^\perp}N_{aw}$; innovation covariance
+conditioning cannot create it.  On a rank-one stratum the unique missing
+left direction is either incompatible with the required return, giving
+positive action, or belongs after the complete $S$/magnetic/accelerometer
+chronology to the terminal-null/next-kernel class.  On a rank-zero stratum
+the complete-word nullspace theorem allows at most one next-kernel
+combination; every independent complement is charged or terminal-null.
+Hence no fixed rank-deficient stratum creates an additional
+terminal-persistent normal null mode.  The remaining issue is only a uniform
+rate as the smallest nonzero singular value of
+$P_{b^\perp}N_{aw}$ tends to zero.
+
 Injections obey an exact identity on ${\rm SO}(3)$. With $M=\hat R^{\mathsf T}R$
 the world attitude error, an injection acts by $M\mapsto\operatorname{Exp}(-x)M$
 and a prediction by a rotation of angle at most $h\norm{\tilde\omega}$. If $J$
