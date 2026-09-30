@@ -78,6 +78,23 @@ cannot be compared with the 8.45e-3 target.  The controlling obligation is to
 construct the complete two-Abel physical-primitive -> normalized source
 operator before taking norms, then enclose its induced norm source-uniformly.
 
+**Exact sync-slab/17-s physical telescope.**  The physical LIN lift
+chi=(v,p,S,a) with delta=chi_next-F_L chi has AW component
+a_next-phi a exactly.  In physical-error coordinates S=0 contributes the real
+forcing -K_S S_true with the single fixed capture origin, while deterministic
+accelerometer elimination contributes no independent physical acceleration.
+For one actual sync slab the prediction plus S forcing telescopes exactly to
+lambda_L' E_L chi_L-lambda_R' E_L chi_R plus the missing accelerometer reader
+jump sum q_a' R_wb a_phys.  Hence the S_true/P_AC term cancels the neutral
+boundary created by the second Abel step and must not be charged eventwise.
+The joint accelerometer+S completion is one chronological innovation square;
+its positive q'Omega q term equals the covariance-storage decrement
+lambda'(P^- - P^+)lambda and is retained with Joseph storage, not assigned a
+second factor-four budget.  Summing all sync slabs over 17 s cancels every
+internal physical boundary before norms.  OPEN: bound the resulting single
+signed endpoint+accelerometer functional source-uniformly tightly enough for
+the 0.0338 m/s^2 residual margin.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
