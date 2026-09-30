@@ -215,6 +215,23 @@ scalar return.  Once those close, use the existing exact every-prefix
 composition to retain all intermediate 17-s roots and finite-error supplies.
 No estimator schedule or assumption changed.
 
+**Literal 100-s G0 radius-local attempt reduced to one modulus.**  Tried
+the natural m_perp(r)=m0+A1 r+A2 r^2 and injection
+delta_Q(r)=q0+Q1 r+Q2 r^2+Q3 r^3 route on the same 100-s word.  It remains
+circular: the signed AW mean needs a source-uniform bound on variation of the
+literal OU/Kalman/sync weights (time-varying gains can rectify); the reset
+product needs complete-word bounds on sum|x_i|^2 and partial-sum quadratic
+injection action, which are not available before contraction.  Therefore
+these scalars are not promoted.  Adopt the exact nuisance-reduced information
+G_red,mu=O_s' Sigma^-1/2(I-P_f)Sigma^-1/2 O_s+(1/c)nu nu'.
+All literal AW coefficients, resets, S-chain cancellation and source
+correlations remain inside it.  The 100-s target is G_red,mu>=g100(c,r)I.
+The sole missing quantitative implication is physical-to-nominal
+accelerometer separation: vanishing reduced nominal accelerometer information
+must either force the true MARINE attitude/gravity span to vanish or incur
+positive correction/process action already counted in Sigma.  This is now
+the next controlling lemma.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
