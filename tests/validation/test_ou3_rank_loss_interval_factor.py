@@ -10,6 +10,20 @@ from tools.stability.ou3_theorem.rank_loss_interval_factor import (
 )
 
 class RankLossIntervalFactorTests(unittest.TestCase):
+    def test_literal_four_s_point_box_certifies(self):
+        from tools.stability.ou3_theorem.rank_loss_literal_boxes import four_s_gamma_box
+        cells=((.10,.10),(.35,.35),(.65,.65),(.95,.95))
+        z=four_s_gamma_box(cells,(1.0,1.0))
+        self.assertTrue(z["verified"])
+        self.assertGreater(z["lower"],0.0)
+
+    def test_literal_source_certificate_fails_closed_on_magnetic(self):
+        from tools.stability.ou3_theorem.rank_loss_literal_boxes import rank_loss_factor_certificate
+        z=rank_loss_factor_certificate(max_depth=2)
+        self.assertFalse(z["source_uniform_verified"])
+        self.assertEqual(z["gamma_M_lower"],0.0)
+        self.assertEqual(z["beta_lower"],0.0)
+
     def test_verified_generic_inverse(self):
         a=exact([[2.0,.1],[.1,1.0]])
         ai,c=verified_inverse(a)
