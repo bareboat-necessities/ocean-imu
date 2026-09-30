@@ -2835,3 +2835,118 @@ The next quantitative target is therefore to complete the square between the
 physical OU/source coefficient z_b and BL9 over one service block, deriving a
 source-uniform block supply constant C_b.  Summing C_b over blocks preserves
 sign and does not incur sqrt(N_S).
+
+
+## 33. Block completed square: project source reader onto terminal S innovation
+
+For one S-service block, let the scalar signed source reader after backward
+transport be
+
+    r_b = z_b^T y_b.
+
+Let the terminal pseudo innovation be
+
+    nu_b = -S_(b+1)^-
+         = n_b^T y_b + nu_root,b,                           (BC1)
+
+where n_b^T=-e_S^T G_b and nu_root,b=-e_S^T F_b x_b^+.
+Work in the same covariance/action inner product used by the complete-word
+reader.  Decompose the SOURCE part of r_b into its projection on the source
+part of nu_b and an orthogonal residual:
+
+    r_b = alpha_b nu_b + r_b^perp,                          (BC2)
+
+with
+
+    alpha_b = <r_b,nu_b>/<nu_b,nu_b>
+            = Cov(r_b,nu_b)/Omega_b                         (BC3)
+
+when the complete innovation variance Omega_b is used, and
+<r_b^perp,nu_b>=0.  Root pieces are retained separately rather than hidden in
+the source projection.
+
+The terminal S Schur elimination contributes the negative quadratic action
+
+    -nu_b^2/Omega_b
+
+in normalized innovation coordinates (equivalently BL9 in adjoint
+coordinates).  Therefore the correlated source component completes exactly:
+
+    alpha_b nu_b - nu_b^2/Omega_b
+      <= Omega_b alpha_b^2/4
+       = Cov(r_b,nu_b)^2/(4 Omega_b).                       (BC4)
+
+No triangle inequality is used.
+
+The unexplained source is only r_b^perp.  Its variance/action is the Schur
+residual
+
+    Var(r_b^perp)
+      = Var(r_b)-Cov(r_b,nu_b)^2/Omega_b.                   (BC5)
+
+Thus the pseudo measurement splits the block source reader into:
+1. an S-correlated component, charged by the completed square BC4;
+2. an orthogonal component BC5 that the S update cannot control.
+
+This is the exact same-history cancellation sought in the block argument.
+
+### Covariance form without explicit projection coefficient
+
+Let the joint source covariance of (r_b,nu_b) be
+
+    Sigma_b=[[V_r,C_rS],[C_rS,Omega_b]].
+
+Then the conditional/source residual is
+
+    V_perp = V_r-C_rS^2/Omega_b >=0.                        (BC6)
+
+The block bound can be written
+
+    r_b - nu_b^2/Omega_b
+      <= r_b^perp + C_rS^2/(4 Omega_b),                    (BC7)
+
+with r_b^perp handled by its declared physical/bias/sensor source class.
+Large correlation C_rS REDUCES V_perp; it is not an independent defect.
+
+### Important limitation
+
+BC4 is an action/quadratic completion.  The nominal-AW theorem is a signed
+linear mean bound.  To turn BC5 into a deterministic mean supply C_b, each
+source class still needs its own deterministic constraint:
+- physical acceleration: bounded velocity/jerk, handled by the already
+  forward-decayed OU kernel and summation by parts;
+- commissioned sensor residual: amplitude box;
+- BA/attitude/field terms: retained deterministic envelopes;
+- endogenous accelerometer innovation: must remain in the literal feedback
+  identity, not be assigned a stochastic covariance norm.
+
+Therefore the S block completion does NOT by itself bound the whole z_b^T y_b
+by a covariance variance.  It removes exactly the component aligned with the
+S innovation and leaves a smaller signed reader on the deterministic source
+classes.
+
+### Resulting block supply structure
+
+After OU telescoping and S completion, one block has the form
+
+    R_b
+      <= C_phys,b + C_BA,b + C_sensor,b + C_impl,b
+         + C_Scorr,b
+         + R_acc,endog,b,                                   (BC8)
+
+where
+
+    C_Scorr,b = C_rS^2/(4 Omega_b),                         (BC9)
+
+and the physical coefficient retains the forward OU mass/variation bounds.
+R_acc,endog,b is the ONLY term that cannot be bounded without using the
+accelerometer feedback equation itself.
+
+Summing blocks does not incur sqrt(N_S): every S innovation is eliminated
+locally by its own negative square before block supplies are added.
+
+This closes the S-chain structurally.  The remaining critical calculation is
+now to eliminate R_acc,endog,b with the accelerometer measurement/update
+identity in the same way, but its innovation covariance contains AG/BA.
+For the SIGNED mean theorem, use the deterministic identity
+r_acc=y_phys-h(x_hat), not an innovation-covariance lower bound.
