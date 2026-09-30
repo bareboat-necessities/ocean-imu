@@ -2016,3 +2016,69 @@ Once AGE1 holds, the fresh columns have explicit OU kernel geometry and give
 a nonzero reachable encoded-S floor.  This is the first route identified here
 that both encodes shipping reachability and survives the nonlinear Riccati
 conditioning exactly.
+
+
+## 24. Source-age floor is a restricted joint information-ratio problem
+
+A terminal-survival-only lower bound for a fresh OU source is impossible:
+later measurements may make its terminal sensitivity arbitrarily small.
+The source is then observed rather than destroyed.  Conversely a
+measurement-information-only floor can be tiny in directions removed mainly
+by terminal forgetting.  The proof ledger already records this exact
+phenomenon for complete words: separated information-only and forgetting-only
+margins failed by many orders, while the joint smoother/information-ratio
+matrix remained effective.
+
+Therefore q_age must use the SAME joint matrix mechanism, restricted to the
+fresh OU source subspace.
+
+Let B_j be a canonical full-rank factor of the one-axis fresh OU process
+covariance Q_j (for example Q_j^(1/2)).  Let A_age be the prior/source energy
+matrix for that source coordinate and J_age the exact finite-horizon joint
+matrix containing BOTH corrected measurement loss and terminal forgetting,
+constructed by the existing smoother identity over T_age<=.6 s.  Define
+
+    kappa_age =
+      lambda_max( J_age^-1 A_age )                          (AGE1)
+
+on range(B_j), with the usual generalized-eigenvalue interpretation.  Theorem
+D / the information-ratio lemma then gives the fresh-source contraction
+
+    rho_age <= tanh( log(kappa_age)/4 ) < 1                 (AGE2)
+
+whenever kappa_age is finite.  Equivalently the dimensionless fresh
+coercivity may be written
+
+    q_age =
+      lambda_min( A_age^-1/2 J_age A_age^-1/2 ) >0.         (AGE3)
+
+This definition is invariant to the arbitrary factorization B_j and does not
+multiply by the generic root covariance floor.
+
+Qualitative positivity follows from the conditioned four-state zero-action
+argument: a nonzero fresh OU source with zero corrected accelerometer loss,
+zero four-row S loss and zero terminal forgetting would lie in the complete
+fresh-source nullspace, which is trivial.
+
+But an EXPLICIT useful lower q_age cannot be obtained by multiplying the
+first-row accelerometer number 96.89 with the S-only floor.  The repository
+has already demonstrated that information and forgetting can act in different
+eigendirections; their generalized eigenvalues must be combined before taking
+a scalar minimum.
+
+The correct numerical certificate is thus a 4x4 RESTRICTED version of the
+existing Theorem-D matrix calculation:
+1. inject one fresh one-axis OU Q_j;
+2. retain its four source coordinates only;
+3. propagate its cross-covariance through the literal closed-loop chronology
+   for <=.6 s;
+4. accumulate exact smoother correction losses;
+5. include terminal conditional forgetting;
+6. form A_age^-1/2 J_age A_age^-1/2;
+7. prove its LDLT/Schur floor uniformly over the coupled tau,sigma,rS,T_S,dt
+   and scheduler phase.
+
+This is noncircular and substantially smaller than the old full-root 4x4
+information certificate: no carried root covariance appears.  It is also not
+a new proof architecture; it is Theorem D restricted to a fresh process
+factor already present in the complete-word joint factorization.
