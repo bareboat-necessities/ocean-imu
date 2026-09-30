@@ -315,6 +315,22 @@ rank-deficient P_b K_aw strata, gate/event boundaries, compatibility-line
 rank changes, or absent reachable compatible bases.  Current proof has no
 source-uniform rank-two certificate on recurring compatible A21 roots.
 
+**Rank-deficient transverse AW-gain strata classified.**  Literal
+K_aw=N_aw Omega^-1 with Omega>0 and
+N_aw=P_aw,theta J_att'+P_aw,aw R_wb'+P_aw,ba+P_aw,bg J_bg' (enabled terms).
+Thus coordinate-free transverse rank is rank(E_b' N_aw); R_eff/innovation
+conditioning cannot create/remove rank loss.  Rank 1 has one missing AW
+output direction d with d'N_aw=0.  If required compatibility return along d
+is nonzero, the stratum is incompatible and pays positive action.  If return
+is zero, full S/process/magnetic/acc chronology makes a zero-action missing
+direction terminal-null or next-kernel; pure AW persistence is killed by
+four S rows.  Rank 0 is analogous: complete slow nullspace dimension <=1, so
+at most one combination can join next kernel; independent complements are
+charged or terminal-null.  Therefore no fixed deficient stratum creates an
+extra terminal-persistent NORMAL null.  Source-uniform C_joint still needs a
+rate across rank-loss boundaries; stratify by singular values of E_b'N_aw and
+use next-operation S/process/magnetic action near zero.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
