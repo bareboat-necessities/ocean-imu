@@ -7230,3 +7230,172 @@ exact-compatible manifold, including P_b K_aw control rank, S/BA cycle
 closure and magnetic service.  Full transverse rank, not existence/nonexistence
 of the compatible orbit, is the final qualitative condition needed for a
 uniform two-word constant.
+
+
+## 69. Literal transverse Jacobian: Schur elimination and explicit persistence direction
+
+Linearize the exact-compatible two-word boundary equations about a regular
+strict-margin compatible execution.  At accepted accelerometer epoch k use
+the innovation u_k in R^3 as the physical/measurement control and let
+
+    E_k(m_k,u_<k)=0 in R^2                                (TJ1)
+
+be the two transverse compatibility equations after projecting the nominal
+force/BA relation onto b^perp.  The literal mean recursion, including
+prediction and endogenous S feedback, is
+
+    m_(k+1)=F_k(m_k,u_k).                                  (TJ2)
+
+### Transverse block
+
+At fixed pre-correction covariance/gain, the AW mean increment is
+
+    delta a_hat = K_aw,k u_k.                              (TJ3)
+
+Therefore the derivative of TJ1 with respect to the two transverse innovation
+components is, up to the invertible frame/projector factors already present
+in E_k,
+
+    D_perp,k = P_b K_aw,k |_bperp.                         (TJ4)
+
+The full two-word transverse Jacobian is block lower triangular in
+chronological innovation controls because u_k first enters the current
+correction and affects later equations only through TJ2.  Its diagonal blocks
+are D_perp,k.  Hence
+
+    rank D_perp,k=2 at every required epoch                (TJ5)
+
+implies full row rank of the complete transverse compatibility Jacobian.
+
+This is the exact implicit-function condition previously identified by the
+reachability analysis.
+
+### Longitudinal/S/BA Schur elimination
+
+Choose two transverse components of each u_k as dependent controls.  Under
+TJ5 the IFT gives
+
+    u_(k,perp)=psi_k(m_k,u_(k,parallel)),                  (TJ6)
+
+and substitution produces the reduced compatible recursion
+
+    m_(k+1)=Fhat_k(m_k,ell_k),
+    ell_k=u_(k,parallel).                                  (TJ7)
+
+There is NO independent longitudinal S endpoint equation.  The S residual is
+endogenous to m and is already applied inside Fhat.  There is likewise NO
+separate BA endpoint closure: the estimator BA mean is part of m, whereas
+the compatibility ratio q is the homogeneous error-kernel coordinate.  The
+two-word construction is not required to be periodic in S or BA mean.
+
+Thus after transverse Schur elimination the longitudinal variables ell_k are
+free controls subject only to physical/gate realization.  The alleged
+longitudinal/S/BA overdetermination vanishes.
+
+### Magnetic transport
+
+MAGNETIC SERVICE acts transversely to the allowed field-axis compatibility
+line.  Along an exact compatible field-axis kernel its measurement loss is
+zero while its information Gram may remain strictly above the service floor.
+Perturbing the compatible innovations changes transported magnetic rows
+continuously.  Therefore at a base execution with strict service surplus
+
+    lambda_min(G_M) >= mu_M+delta_M,   delta_M>0,           (TJ8)
+
+all sufficiently small IFT controls preserve MAGNETIC SERVICE.  The magnetic
+block does not add an independent row that destroys TJ5.
+
+### Consequence: full transverse rank supports, rather than excludes, persistence
+
+The remaining two-word boundary conditions for a unit-persistent kernel are
+
+    theta_1=F_0 theta_0,                                   (TJ9)
+    q_1=Phi_b,0 R_ba q_0,                                  (TJ10)
+
+together with the compatibility equations TJ1 throughout W0 and W1.
+After TJ6 these are propagated kernel identities, not extra estimator
+S/BA-periodicity equations.
+
+Hence, IF there exists one reachable recurring strict-margin A21 base that
+simultaneously:
+1. lies on an exact compatibility line;
+2. satisfies TJ5 on the needed correction epochs;
+3. has strict MARINE/gate and magnetic-service margins,
+
+then the implicit-function theorem constructs a local exact-compatible
+two-word family.  Physical accelerometer samples are realized by
+
+    f_phys,k=f_hat,k+b_hat_a,k+u_k,                         (TJ11)
+
+and sufficiently small controls preserve finite-horizon acceleration, jerk,
+velocity, displacement and strict service margins by continuity/Hermite
+interpolation.  Such a base would yield an admissible persistent
+current-to-next kernel pair and therefore the equality branch of the
+two-word return.
+
+This means the hoped-for conclusion
+
+    "full transverse rank => finite transverse loss away from persistence"
+
+has the WRONG sign near a compatible base.  Full rank makes compatibility
+locally CONTROLLABLE.
+
+### Explicit null/tangent direction of the augmented two-word Jacobian
+
+On the exact-compatible manifold, differentiate the IFT family with respect
+to any free longitudinal control parameter ell.  Let
+
+    delta m_k = d m_k/d ell,
+    delta u_(k,perp)=D psi_k delta(m_k,ell).                (TJ12)
+
+By construction,
+
+    D E_k [delta m_k,delta u_k]=0                          (TJ13)
+
+at every accelerometer compatibility row.  Differentiate the propagated
+kernel identities TJ9--TJ10 and magnetic-compatible field-axis relation.
+The resulting nonzero tangent vector
+
+    z_tan =
+      (delta m_0, delta u_0,...,delta u_N,
+       delta theta_0,delta q_0)                            (TJ14)
+
+lies in the nullspace of the TRANSVERSE compatibility Jacobian while moving
+along the exact-compatible two-word manifold.  This is the explicit null
+direction requested.  It is not an instability mode by itself; it is a
+tangent/reachability direction in the augmented physical+estimator control
+space.
+
+After quotienting the compatibility manifold, TJ14 is removed.  The normal
+Jacobian is full rank exactly under TJ5 and the ordinary nonsingularity of
+the recursive state chart.  Therefore the local closed-range estimate needed
+for JR11 holds NEAR ANY SUCH REGULAR COMPATIBLE BASE.  The problematic places
+for uniformity are instead:
+- rank loss of P_b K_aw;
+- gate/service/event-stratum boundaries;
+- appearance/disappearance of the compatibility line;
+- lack of a reachable compatible base.
+
+### Current theorem consequence
+
+There is NO explicit transverse null direction outside the compatibility
+manifold produced by the literal algebra when TJ5 holds.  Conversely the
+current proof does not certify TJ5 source-uniformly on recurring A21 roots.
+At constructor/diagonal covariance the AW correction block is full rank, but
+that is not a certified recurring compatible root.
+
+Therefore the remaining global question is NOT symbolic Jacobian rank.  It is
+REACHABLE-BASE / STRATIFIED-RANK coverage:
+
+    every exact-compatible retained two-word orbit
+      either has rank-two P_b K_aw and hence a regular
+      compatibility manifold with finite normal C_joint,
+      or lies in a rank-deficient stratum for which the
+      normal two-word Gram JR6 must be bounded separately.  (TJ15)
+
+If a rank-deficient compatible stratum has an extra normal null vector with
+nonzero terminal Q_+ image, it is the explicit obstruction to uniform
+contraction.  If every such extra null vector is also terminal-null or moves
+into the next kernel, C_joint remains finite.
+
+This is the precise remaining linear proof obligation.
