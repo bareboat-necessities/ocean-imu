@@ -2525,3 +2525,31 @@ forward-decayed OU+S block kernel beta_OUS, for which the OU component has
 uniform l1 mass <=1 and first variation <=2 in the constant-parameter case.
 Tuner variation can then be charged as a perturbation of a probability-like
 decay kernel rather than as O(1/tau) endpoint variation.
+
+
+## 29. Variable-phi forward OU kernel
+
+Let T_j=product_(m=j..N) phi_m and T_(N+1)=1.  The forward-decayed physical OU coefficient is
+
+    beta_j=(1-phi_j) product_(m=j+1..N)phi_m=T_(j+1)-T_j.
+
+For arbitrary shipping 0<phi_j<1, T_j is nondecreasing, hence beta_j>=0 and
+
+    sum beta_j=1-T_1<=1.
+
+For augmented first variation D1=|beta_1|+|beta_N|+sum|Delta beta|, every nonnegative sequence satisfies D1<=2 sum beta, therefore
+
+    D1(beta_OU)<=2(1-T_1)<=2.
+
+This is exact for arbitrary time-varying tau/dt; no tuner smoothness bound is needed.
+
+At an S event s, future OU transport gives Z_s=T_(s+1)K_aS,s. Joseph gives
+
+    ||u'Z_s||^2 <= T_(s+1)^2 [u' DeltaP_aa,s^S u]/lambda_min(R_S,s).
+
+Thus
+
+    sum_s ||u'Z_s|| <= sqrt(H_S) sqrt(sum_s u'DeltaP_aa,s^S u),
+    H_S=sum_s T_(s+1)^2/lambda_min(R_S,s).
+
+Also D1(Z_S)<=2 sum_s||Z_s||.  A naive independent-extrema bound on H_S is too loose; the remaining scheduler/tuner problem is exactly to bound H_S under the coupled applied tau,R_S,T_S chronology.  The covariance factor is the S-induced AW Joseph decrement and can be paired with forward-decayed OU-process/sync replenishment.  No AG covariance enters.
