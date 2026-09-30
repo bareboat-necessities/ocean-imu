@@ -331,6 +331,22 @@ extra terminal-persistent NORMAL null.  Source-uniform C_joint still needs a
 rate across rank-loss boundaries; stratify by singular values of E_b'N_aw and
 use next-operation S/process/magnetic action near zero.
 
+**Near-rank-loss quantitative modulus derived.**  A single next-S event
+cannot supply a source-uniform AW modulus because carried v/p/S root can
+cancel it.  Use the next four distinct S epochs: with V_S=[V0,v_a] for the
+exact {1,t,t^2/2,psi_tau} homogeneous array and Rbar_S the full transported
+residual covariance, gamma_S=v_a'R^-1/2(I-P_{R^-1/2 V0})R^-1/2 v_a.  This is
+the exact Schur information for the missing AW direction.  Magnetic
+companion is G_M,res after full source whitening and projection of transported
+field-compatible AG/gyro nuisance.  Propagate the deficient direction d to
+both blocks and stack their normalized maps B_N.  The source-valid modulus is
+beta=||B_N d||^2 / ||P_next^perp T_+ d||_{Pi^-1}^2.  beta>0 pointwise on every
+fixed nondegenerate stratum by the deficient-stratum null classification.
+Uniform beta_*>0 is not yet certified: it requires interval lower enclosures
+of four-S gamma_S, residualized magnetic gamma_M, and their joint terminal-
+active generalized singular value across event/rank strata.  This is now a
+small literal interval-certificate task, not another observability lemma.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
