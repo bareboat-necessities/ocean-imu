@@ -1757,3 +1757,46 @@ contraction.
 
 This reduces the remaining invariant problem from the full Riccati recursion
 to the sign-regularity of RG7--RG10 under the integrated-OU prediction.
+
+
+## 20. Proposed three-coefficient cone induction is not closed
+
+Write the conditioned covariance in regression form
+
+    a=L l+epsilon,  Cov(l)=X,  Var(epsilon)=p_c,
+    Cov(l,epsilon)=0.
+
+Then c=X L^T and s=L X L^T+p_c.  Substitution into the literal prediction
+gives, with T=A+bL,
+
+    X^- = T X T^T + p_c b b^T + Q_ll,                      (RG14)
+    c^- = phi[T X L^T+p_c b] + q_la,                       (RG15)
+    L^- = c^-T (X^-)^-1.                                   (RG16)
+
+Therefore L^- depends on X and p_c separately, not on L alone.  Two priors
+with the same regression vector but different conditional residual variance,
+or different X, generally produce different projective directions after one
+prediction.  The proposed induction L in C => L^- in C is thus not a closed
+shipping reachability statement.
+
+The fresh-Q moment curve remains useful but cannot characterize carried
+predictors by itself: prediction mixes transformed carried covariance,
+the rank-one conditional term p_c b b^T, and fresh Q, and regression of a
+matrix sum is not a scalar convex combination of component regressions.
+
+The minimum exact regression-form state is (X,L,p_c): six+three+one=ten
+scalars, algebraically equivalent to the conditioned 4x4 covariance.
+A lower-dimensional proof now requires a stronger invariant relation between
+X,L,p_c.
+
+The natural candidate is not a rectangular L cone but a total-positive Gram
+FACTOR invariant.  The fresh OU Q is the Gram matrix of the nested positive
+kernels (k_v,k_p,k_S,k_a).  Prediction appends fresh kernel-factor columns
+after transporting the carried factor; Kalman measurements are conditioning/
+orthogonal-projection operations on that factor.  A variation-diminishing
+factor invariant, if preserved by those projections, would exclude the
+arbitrary four-row polynomial-cancellation covariance while remaining closed
+under RG14--RG16.
+
+Until that factor invariant is proved, the three-coefficient cone shortcut is
+classified as a nonclosed-state relaxation and must not be promoted.
