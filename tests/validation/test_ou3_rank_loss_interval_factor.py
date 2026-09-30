@@ -17,6 +17,14 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(z["verified"])
         self.assertGreater(z["lower"],0.0)
 
+    def test_terminal_compatibility_energy_composition(self):
+        from tools.stability.ou3_theorem.terminal_compatibility_energy import scalar_terminal_bound,source_range_status
+        z=scalar_terminal_bound(2.0,3.0,4.0,5.0)
+        self.assertAlmostEqual(z["B_term"],2.6)
+        self.assertAlmostEqual(z["C_c_upper"],10.4)
+        self.assertFalse(source_range_status(False)["verified"])
+        self.assertTrue(source_range_status(True,7.0)["verified"])
+
     def test_homogeneous_compatibility_scalar_ratio_scale_invariant(self):
         from tools.stability.ou3_theorem.compatibility_chart import reduced_pair,scalar_ratio,kernel_prior_floor_for_unit_direction
         R=exact([[2.0],[0.0]])
