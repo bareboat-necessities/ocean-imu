@@ -1,5 +1,5 @@
 """17-s carried terminal-AW port diagnostic; non-promoting finite evidence."""
-import argparse, hashlib, json, math, subprocess, tempfile
+import argparse, json, math, subprocess, tempfile
 from pathlib import Path
 import numpy as np
 from .ag_readout_source_diagnostic import REPO, HEADER, instrument
