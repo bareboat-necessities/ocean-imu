@@ -6888,3 +6888,175 @@ suffix must either:
 Cases (a)--(c) charge S_q; case (d) is exactly the adjacent-superword scalar
 kernel-return problem.  Thus relative quotient detectability and kernel
 return are the two complementary pieces of the recurring contraction proof.
+
+
+## 67. Near-null persistence on the final 17-s suffix: dichotomy and reachability blocker
+
+Let W_n be retained 100-s moving superwords and v_n normalized quotient root
+directions, after shorting the exact word kernel nu_(W_n), such that
+
+    A_obs,n :=
+      v_n^T S_q(W_n) v_n ->0.                              (NP1)
+
+Assume their terminal persistence does NOT vanish:
+
+    A_term,n :=
+      ||H_eff(W_n)v_n||_(Pi^-1)^2 >= eps_0>0.              (NP2)
+
+We derive the consequences on the final regular 17-s suffix Z_n.
+
+Because the complete joint action is a sum of squared COMMON source-factor
+coefficients before any familywise norm, NP1 implies every individual
+nonnegative block contribution on Z_n tends to zero after the optimal
+nuisance/kernel shorting.  Pass to a convergent subsequence of the retained
+coefficient histories and normalized directions.
+
+### Case 1: LIN/AW amplitude persists on the suffix
+
+If a nonzero homogeneous LIN/AW component survives on Z_n, zero fresh
+LIN/AW/sync action rigidifies it to one deterministic homogeneous chain.
+Zero S corrected loss at four distinct applied S epochs then forces the
+root coefficients of
+
+    S(t)=S0+p0 t+v0 t^2/2+a0 psi_tau(t)                    (NP3)
+
+to vanish qualitatively because {1,t,t^2,psi_tau} is a strict Chebyshev
+system for every finite tau>0.  Therefore a terminal-persistent near-null
+sequence cannot retain an O(1) LIN/AW quotient component without paying
+S/process action.  Quantitatively, a uniform C_det would require a lower
+singular modulus for this four-S map in the ACTUAL normalized source metric;
+the earlier explicit determinant floor is retracted and cannot be reused.
+
+### Case 2: AG component persists away from magnetic compatibility
+
+If the transported AG component has O(1) distance from the pulled-back
+magnetic-compatible line at some qualified service interval, MAGNETIC SERVICE
+and positive magnetic R force O(1) observation action.  Hence NP1 implies the
+AG trajectory approaches the deterministic magnetic-compatible class on the
+final suffix.  Zero fresh AG action simultaneously removes independent
+gyro-bias retuning; Lemma-T chronology then leaves at most the transported
+field-compatible attitude/gyro line.
+
+A uniform rate again needs the residualized magnetic/gyro modulus; the
+previous unprojected leverage inequality is retracted.
+
+### Case 3: accelerometer/BA incompatibility persists outside the word kernel
+
+With LIN/AW gone asymptotically and AG restricted to the magnetic-compatible
+line, accelerometer loss reduces to one propagated BA root:
+
+    J_att,k F_k theta_0
+      +R_ba,k phi_b(t_k)b_a,0 ->0.                          (NP4)
+
+If the vectors
+
+    q_k =
+      phi_b(t_k)^-1 R_ba,k^T
+      J_att,k F_k theta_hat_0                               (NP5)
+
+do not converge to one common q, at least one accelerometer row has positive
+residual distance and NP1 fails.  Thus any terminal-persistent near-null
+sequence must approach the complete-word compatibility line
+
+    nu_W=(theta_hat_0,0,...,0,-q).                          (NP6)
+
+This proves the qualitative suffix dichotomy:
+
+    A_obs,n->0 and A_term,n not->0
+      => terminal root approaches the NEXT compatibility
+         family, unless one of S/process, magnetic/gyro or
+         accelerometer/BA actions stays positive.           (NP7)
+
+### Connection to adjacent-superword kernel return
+
+Let N(r) be the compact family of normalized word-dependent compatibility
+vectors.  Define the distance of the terminal quotient image to the next
+kernel family,
+
+    d_next(x)=inf_(nu in N_next(r),alpha)
+                 ||x-alpha nu||_(Pi^-1).                   (NP8)
+
+The suffix argument gives qualitatively
+
+    A_obs,n->0 => d_next(H_eff v_n)->0.                    (NP9)
+
+Therefore the only possible O(1) terminal escape from relative detectability
+is INTO the next word's scalar compatibility kernel.  This connects C_det
+and the scalar return exactly as desired.
+
+A quantitative combined inequality would be
+
+    d_next(H_eff v)^2
+      <= C_det,perp A_obs(v),                               (NP10)
+
+and
+
+    sup_(nu in N_W,nu+ in N_next)
+      nu_+^T P_(nu,W) nu_+
+      <= D_100(c,r).                                       (NP11)
+
+Then NP10 controls the terminal component transverse to the next kernel and
+NP11 controls the scalar component along it.  The recurring contraction no
+longer needs C_det and kernel return as unrelated assumptions.
+
+### Why NP10 is NOT yet proved source-uniformly
+
+The qualitative implications above do not provide a finite uniform linear
+rate.  Three quantitative moduli remain:
+- the normalized four-S homogeneous-chain singular modulus;
+- the residualized magnetic/gyro modulus;
+- the multi-epoch accelerometer/BA distance to the moving compatibility
+  family.
+
+More importantly, the third modulus has a reachability boundary case that
+cannot currently be excluded.  The existing exact-compatible MOVING analysis
+shows that a nominal field-compatible force history can satisfy all
+accelerometer kernel equations if the closed-loop AW/BA/S mean recursion can
+return to that manifold.  Prediction leaves the zero-BA manifold by
+
+    P_b fhat_next^-=(phi-1)P_b g,                           (NP12)
+
+so the intervening corrections must supply
+
+    P_b Delta a_hat=(1-phi)P_b g + S/BA terms.             (NP13)
+
+At an accelerometer correction
+
+    Delta a_hat=K_aw r_acc.                                (NP14)
+
+Local exact reachability therefore depends on
+
+    rank(P_b K_aw)=2                                       (NP15)
+
+plus longitudinal/S/BA cycle closure and physical measurement admissibility.
+The current proof has neither a source-uniform lower rank/singular-value
+certificate for P_b K_aw nor an invariant forcing it singular.  No exact
+shipping-compatible MOVING trajectory satisfying NP12--NP15 and strict
+MAGNETIC SERVICE has been constructed either.
+
+Hence a sequence may in principle approach an exactly compatible reachable
+manifold while carrying O(1) terminal kernel amplitude.  That behavior is
+precisely the next-kernel branch of NP7, so it does not invalidate the
+dichotomy, but it prevents promotion of NP10 to a numerical source-uniform
+constant until the adjacent-kernel return/reachability problem is solved.
+
+### Result
+
+The near-null persistence lemma is CLOSED qualitatively in the combined form:
+
+    near-zero complete observation action
+      => terminal persistence either vanishes transversely
+         or converges into the next compatibility kernel.  (NP16)
+
+It is NOT closed quantitatively.  The correct next theorem is a COMBINED
+quotient+kernel inequality, not separate C_det and D bounds:
+
+    ||Proj_(N_next)^perp H_eff v||_(Pi^-1)^2
+      + (1/c_next)|Proj_(N_next) H_eff v|^2
+      <= C_joint(c,r) [ v^T S_q v + (1/c)|Proj_(N_W)v|^2 ].
+                                                               (NP17)
+
+If C_joint is finite uniformly on retained 100-s pairs, it directly gives
+the two-superword Riccati diameter and scalar invariance in one estimate.
+The exact-compatible reachability manifold is then allowed as the kernel
+component rather than needing to be excluded.
