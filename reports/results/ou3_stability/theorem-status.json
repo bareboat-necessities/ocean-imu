@@ -168,7 +168,10 @@
     "causal_aw_full_root_action_ceiling": true,
     "causal_aw_AG_root_cancellation": false,
     "carried_17s_diagnostic_equals_C_port": false,
-    "source_uniform_reachable_causal_reader_port_norm": false
+    "source_uniform_reachable_causal_reader_port_norm": false,
+    "exact_sync_slab_physical_bilinear": true,
+    "joint_accel_S_schur_quadratic": true,
+    "seventeen_second_pre_norm_physical_telescope": true
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
