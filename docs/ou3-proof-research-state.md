@@ -95,6 +95,23 @@ internal physical boundary before norms.  OPEN: bound the resulting single
 signed endpoint+accelerometer functional source-uniformly tightly enough for
 the 0.0338 m/s^2 residual margin.
 
+**Signed field-axis rotation x velocity telescope.**  On the retained local
+field-axis chart, exact Stieltjes integration by parts gives one correction
+cell as external M_b v endpoints minus the continuous gyro/gyro-bias rotation
+pairing and the exact SO(3) correction jumps.  For each correction the exact
+field-axis increment is retained; kappa-b' E_theta K r is charged as the
+nonlinear twist/reset remainder.  The linear signed coefficient is
+c_i=u'M_b[b]x v_i, so q_i=c_i E_theta' b remains inside the same-history
+Joseph port.  Accelerometer AW and BA pieces are parts of the same
+accelerometer innovation, S can rotate attitude through carried cross
+covariance, and magnetic corrections remain sequential.  With
+z_i=K_i' q_i, z_i'Omega_i z_i=q_i'(P_i^- - P_i^+)q_i exactly.  Summing every
+17-s correction cell cancels all internal physical endpoints before norms and
+produces one augmented full-root factor row.  OPEN: source-uniform enclosure
+of that row including continuous gyro/gyro-bias transport and nonlinear
+twist/reset remainder.  Raw TV, total NIS, V_max times unweighted covariance
+loss, and the old 0.0338 residual margin are not promoted.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
