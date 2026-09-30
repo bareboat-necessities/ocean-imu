@@ -279,6 +279,24 @@ branch.  New controlling target: one combined two-word quotient+kernel
 inequality carrying transverse terminal action plus next-kernel precision,
 rather than independent C_det and D assumptions.
 
+**Kernel-augmented two-word backward reader derived exactly.**  Terminal
+metric Q_+=P_+perp Pi^-1 P_+perp+(1/c_+)P_+ is factored into reader rows and
+pulled backward through the literal current 100-s word with one common
+process/sync/correction source space.  After minimizing reader action, root
+row Y_+ satisfies the desired combined inequality against
+Q_0=S_q+(1/c)P_W.  Sharp fixed-pair constant:
+C_joint=lambda_max(Q_0^dagger/2 Y_+'Y_+ Q_0^dagger/2), finite iff
+Null(Q_0) subset Null(Y_+).  This combines quotient detectability and scalar
+kernel return with no separate budgets/cross-term loss.  Joseph identities
+make the Gram pair exact but do not bound the source-uniform supremum through
+rank-changing kernels.  Near-null suffix classification shows the limiting
+bad set is the exact-compatible current-to-next kernel manifold.  Remaining
+qualitative condition: full rank of the literal TWO-WORD derivative
+transverse to that manifold (including P_b K_aw control, S/BA cycle and
+magnetic service).  If full transverse rank holds uniformly on the compact
+compatibility family, local closed-range estimates plus finite cover give
+C_joint(c,r)<infinity.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
