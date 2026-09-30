@@ -59,6 +59,20 @@ Every first-prediction relative process comparison is capped at
 domination. Carried windows of 16–64 s make it commensurate (≤12× the actual
 AG covariance, ≤5× at 64 s). It now serves coercivity only (DEAD_END 27).
 
+**Causal terminal-AW correction (post-PR #630 audit).**  The claimed exact
+AG-root cancellation was false: for one correction a terminal AW row q with
+q E_h=0 pulls back to q(I-KH)E_h=-qKHE_h in general.  The useful sharp result
+survives without that claim.  Starting at an actual post-sync boundary with
+the full carried root covariance, Joseph telescoping makes the complete causal
+reader action exactly u'P_Nu, and the literal AW sync/prediction/correction
+chronology gives u'P_Nu<=16.  Thus sqrt(B_AW,*)<=4 remains source-uniform with
+the AG root retained in the single action budget.  The physical primitive map
+has zero root-uncertainty columns.  The committed 17-s diagnostic previously
+called C_port,W is not G_phys,W: it is only ||D2 h||_(2,1)/sqrt(action), so it
+cannot be compared with the 8.45e-3 target.  The controlling obligation is to
+construct the complete two-Abel physical-primitive -> normalized source
+operator before taking norms, then enclose its induced norm source-uniformly.
+
 ## Evidence
 
 - Shared OU arithmetic uses cancellation-safe dimensionless SO(3) integral
