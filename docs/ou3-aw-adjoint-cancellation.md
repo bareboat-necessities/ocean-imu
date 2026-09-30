@@ -8332,3 +8332,202 @@ the proved current kernel precision and the literal terminal next-kernel
 metric, and evaluate/bound CG12.  If CG12 blows up, its generalized
 eigenvector is the requested complete compatibility trajectory; if bounded,
 C_joint is finite.
+
+
+## 76. Source-uniform compatibility chart and symbolic 1x1/2x2 reduced Gram
+
+The magnetic cancellation minimization CG1--CG12 leaves only the
+field-compatible AG/BA compatibility set.  A continuous chart should not
+normalize the surviving line, because a unit vector is discontinuous when
+the line appears/disappears.
+
+### Homogeneous graph chart
+
+Let L_W be the linear map collecting the complete zero-source magnetic
+constraints on the AG root.  Its field-compatible kernel has dimension
+r_W in {0,1} on the retained class.  Let a_W in R^6 be ANY homogeneous
+generator of ker L_W when r_W=1; do not normalize it.  Pull the accelerometer
+attitude rows back to the word root.  Exact BA compatibility at every applied
+accelerometer epoch is
+
+    J_att,k F_k a_W lambda
+      +R_ba,k phi_b(t_k) b_a,0 =0.                         (CH1)
+
+Define
+
+    q_k(a_W)=
+      phi_b(t_k)^-1 R_ba,k^T J_att,k F_k a_W.              (CH2)
+
+The word is exactly compatible iff q_k(a_W) is independent of k.  Denote the
+common linear image by
+
+    q_W=A_W a_W.                                           (CH3)
+
+Then a homogeneous generator of the COMPLETE slow compatibility line is
+
+    r_W =
+      [ a_W
+        0_(LIN/AW)
+       -A_W a_W ],                                        (CH4)
+
+with the entries placed in the literal AG/BA root coordinates.  Scaling
+a_W scales r_W, so no division by |a_W| occurs.
+
+When ker L_W={0}, set r_W=0.  Thus the compatibility set is represented by
+the rank-at-most-one matrix
+
+    R_W=r_W in R^(21x1),                                   (CH5)
+
+which collapses continuously to zero at a rank-zero face whenever a
+continuous homogeneous null generator is used (e.g. an exterior-product/
+cofactor generator of the magnetic constraint matrix).
+
+### Rank-one stratum: scalar generalized ratio
+
+Let
+
+    Qbar_W = Q_nonmag,W +(1/c) P_W,                        (CH6)
+    Nbar_W = N_+,W.                                        (CH7)
+
+On a rank-one compatibility stratum,
+
+    q_c(W)=r_W^T Qbar_W r_W,                               (CH8)
+    n_c(W)=r_W^T Nbar_W r_W.                               (CH9)
+
+Both are homogeneous of degree two in r_W.  Therefore the reduced generalized
+eigenvalue is the SCALAR ratio
+
+    C_c(W,W+)=n_c(W)/q_c(W),                               (CH10)
+
+for q_c>0.  The arbitrary scale of a_W cancels exactly.
+
+Current-kernel precision contributes
+
+    (1/c) |P_W r_W|^2.                                     (CH11)
+
+If P_W is the projector onto span(r_W), then CH11 equals |r_W|^2/c.
+Consequently q_c cannot vanish on a fixed rank-one word for finite c even if
+all nonmagnetic sensor/process action vanishes.
+
+The terminal numerator is
+
+    n_c =
+      ||P_+^perp T_W r_W||_(Pi^-1)^2
+      +(1/c_+) ||P_+ T_W r_W||^2,                          (CH12)
+
+where T_W denotes the complete deterministic terminal map after the same
+source shorting used by the augmented backward reader.  Thus CH10 is exactly
+
+    C_c =
+      [ transverse terminal persistence
+        + next-kernel persistence/c_+ ]
+      /
+      [ nonmagnetic complete-word action
+        + current-kernel precision/c ].                    (CH13)
+
+This is the desired one-dimensional reduction.
+
+### Rank-zero/rank-one transition: homogeneous 2x2 chart
+
+At a transition face a normalized r_W is singular even though the subspace
+graph is well behaved.  Use two homogeneous candidate columns r_1,r_2
+generated from adjacent nonzero cofactors/minors of L_W and form
+
+    R=[r_1 r_2].                                           (CH14)
+
+The actual compatibility line is the one-dimensional null combination of
+the transition relation D_W alpha=0; when rank is zero, D_W has rank two and
+no nonzero alpha survives.
+
+Define
+
+    Q_2=R^T Qbar_W R,
+    N_2=R^T Nbar_W R.                                      (CH15)
+
+Restrict to ker D_W.  The sharp transition ratio is
+
+    C_2 =
+      sup_(alpha!=0,D_W alpha=0)
+        alpha^T N_2 alpha / alpha^T Q_2 alpha.             (CH16)
+
+Hence:
+- rank(D_W)=2: compatibility rank zero, no ratio is owed;
+- rank(D_W)=1: ker D_W is one-dimensional and CH16 reduces to CH10;
+- rank(D_W)=0: a genuine two-dimensional compatibility space would exist.
+  The complete-word nullspace theorem excludes this on the retained
+  nondegenerate class; if encountered it is an explicit theorem obstruction,
+  not a coordinate singularity.
+
+This 2x2 homogeneous chart crosses line appearance/disappearance without
+normalization.
+
+### Symbolic current-kernel contribution
+
+Choose a basis alpha for ker D_W and let r=R alpha.  Since current kernel
+precision is exactly rank one along the actual compatibility line,
+
+    alpha^T R^T[(1/c)P_W]R alpha
+      =(1/c) |R alpha|^2.                                 (CH17)
+
+Therefore
+
+    alpha^T Q_2 alpha
+      = A_nm(alpha)+(1/c)|R alpha|^2,                      (CH18)
+
+where A_nm is the retained four-S/process + accelerometer/BA + gyro action
+after magnetic cancellation.
+
+Similarly,
+
+    alpha^T N_2 alpha
+      = A_term,perp(alpha)
+       +(1/c_+) |P_+ T_W R alpha|^2.                       (CH19)
+
+The remaining generalized ratio is thus explicitly 1x1 on every actual
+rank-one stratum and at most 2x2 only for transition bookkeeping.
+
+### What source-uniform boundedness now requires
+
+Because of CH17, blow-up cannot occur merely because the homogeneous
+generator r_W tends to zero: numerator and denominator are both quadratic in
+the same scale.  Normalize only for analysis by |R alpha|=1 AFTER forming the
+homogeneous quotient.  Then
+
+    denominator >=1/c.                                    (CH20)
+
+Therefore a source-uniform bound follows from a source-uniform upper bound on
+
+    A_term,perp(alpha)
+      +(1/c_+) |P_+ T_W R alpha|^2                         (CH21)
+
+for unit compatibility directions.
+
+The second term is <=1/c_+ times the deterministic terminal-map norm.  The
+first is the Pi^-1 terminal transverse metric.  Thus the moving-kernel RATE
+problem has reduced to a TERMINAL MAP upper bound on the one-dimensional
+compatibility family, not an information lower bound.
+
+This is a major simplification: current kernel precision already supplies the
+denominator floor 1/c on the homogeneous compatibility chart.
+
+### Remaining blocker
+
+The repository does not yet have a source-uniform upper bound for the
+Pi^-1-weighted terminal image T_W r on arbitrary retained 100-s compatible
+words.  Such a bound is weaker than a full covariance upper ceiling but is
+still not automatic: Pi may have small directions and T_W includes literal
+resets/corrections.
+
+Hence the next exact target is
+
+    B_term,c :=
+      sup_(compatible W, |r|=1)
+      r^T T_W^T Q_+ T_W r < infinity.                     (CH22)
+
+If CH22 holds, then immediately from CH20
+
+    C_c <= c B_term,c.                                     (CH23)
+
+No rank-change modulus, magnetic Schur floor, or compatibility-angle lower
+bound is then needed.  If CH22 fails, the diverging sequence is precisely the
+terminally amplified compatibility trajectory obstructing contraction.
