@@ -1800,3 +1800,75 @@ under RG14--RG16.
 
 Until that factor invariant is proved, the three-coefficient cone shortcut is
 classified as a nonclosed-state relaxation and must not be promoted.
+
+
+## 21. Total-positive Gram-factor invariant is not preserved by Kalman conditioning
+
+The proposed factor invariant fails under noisy coordinate conditioning.
+Let P=F F^T and let a scalar measurement have row h and variance R>0.  Put
+
+    z=F^T h^T,  q=z^T z+R.
+
+Then
+
+    P^+ = F [I-z z^T/q] F^T.                               (TP1)
+
+The bracket is SPD, but a square-root factor is a dense rank-one contraction
+whose off-diagonal signs follow -sign(z_i z_j).  It is not a
+total-positive multiplier in general.  Equivalently, the covariance update
+
+    P^+=P-P h^T(hPh^T+R)^-1 hP                             (TP2)
+
+is a rank-one subtraction.  SPD is preserved, but non-principal minors are
+differences of products and their signs are not preserved in dimension >=3.
+The special S and accelerometer coordinate rows do not restore a general
+minor-sign theorem for the full 4x4 covariance/factor.
+
+Therefore strict total positivity, and likewise a global sign-regular minor
+pattern, is not a closed invariant of the shipping Kalman cycle.  Prediction
+and fresh OU factor appending are compatible with positive-kernel structure;
+measurement conditioning is the breaking operation.
+
+The weaker structures that DO survive are:
+
+1. the exact sparse regression identities of section 19;
+2. PSD/Loewner order;
+3. information monotonicity,
+
+    J^+=J+H^T R^-1 H.                                      (TP3)
+
+The third property gives a better route to kappa_enc.  Do not propagate a
+covariance cone.  Select a fixed subset of literal chronological measurement
+rows over a superword, transport them to a common root with the exact OU
+transition, and form the deterministic information design
+
+    I_sel = sum_i Phi_i^T H_i^T R_i^-1 H_i Phi_i.           (TP4)
+
+Partition the root as l=(v,p,S) and a.  The scalar AW information after
+eliminating l is the Schur complement
+
+    kappa_sel =
+      I_aa-I_al I_ll^dag I_la.                             (TP5)
+
+Adding any extra applied measurement row adds a PSD term to I_sel, and the
+minimum residual characterization
+
+    kappa_sel =
+      min_z || R^-1/2 (H_a-H_l z) ||^2                     (TP6)
+
+shows that adding rows cannot decrease kappa_sel.  Thus a lower bound proved
+from selected S/accelerometer rows remains valid under the complete Kalman
+conditioning chronology; no factor-sign invariant is required.
+
+This selected-row Schur certificate differs from the failed global 4x4
+eigenvalue bound: it eliminates the neutral polynomial root directions FIRST
+and targets only the AW reader.  It also differs from the unrestricted
+S-only kappa: accelerometer rows directly observe AW and cannot be fitted by
+the l polynomial columns, so they regularize the near-polynomial cancellation.
+
+The next quantitative calculation is therefore explicit: choose four
+well-separated guaranteed S rows over the shortest uniform superword and a
+guaranteed subset of accelerometer rows; build TP4 using the exact
+piecewise-tau transitions; analytically lower-bound TP6 over the coupled
+tau/rS/cadence tuple.  This scalar residual norm is the correct
+conditioning-invariant kappa_enc certificate.
