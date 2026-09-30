@@ -171,7 +171,11 @@
     "source_uniform_reachable_causal_reader_port_norm": false,
     "exact_sync_slab_physical_bilinear": true,
     "joint_accel_S_schur_quadratic": true,
-    "seventeen_second_pre_norm_physical_telescope": true
+    "seventeen_second_pre_norm_physical_telescope": true,
+    "source_uniform_K17_finite_numeric": false,
+    "source_uniform_K17_le_250": false,
+    "K17_horizon_mixing_rejected": true,
+    "same_history_unit_kernel_persistence_excluded": false
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
