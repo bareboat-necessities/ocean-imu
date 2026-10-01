@@ -1,3 +1,7 @@
+## Candidate assembled-device FAST profile
+
+Use H_a=H_g=60 s, C_a=.05 m/s, C_g=.002 rad as the current candidate qualification. On any 30-s MARINE window the signed FAST accumulation caps remain .05 m/s and .002 rad. The known phi=.01 sin(t/2) witness needs at least .370655073155 m/s and .0197081716368 rad after sampling charge, so this candidate excludes that witness by either sensor separately, with reserves .320655073155 m/s and .0177081716368 rad. This is not yet the general same-history gauge theorem; hardware validation of these candidate caps also remains required.
+
 ## User-qualified MARINE excitation constants (2026-10-01)\n\nFor the controlling theorem, use T_E=T_P=30 s, theta_E=2 deg, P_E=.03 m. These are theorem qualification premises supplied by the user; they are not inferred from RAO data. IMU fast H_a,C_a,H_g,C_g remain OPEN. Consequences: P_E/T_P=.001 m/s; theta_E/T_E=.00116355283466 rad/s. The generic signed acceleration chord lower max(0,P_E-T_P V_max) remains zero, so no pointwise acceleration floor follows.\n\n# OU-III proof: SLOW + FAST physical IMU qualification
 
 Base main: `eef30627130f434eb14ea9f42f4df140a291d341` (2026-10-01).
