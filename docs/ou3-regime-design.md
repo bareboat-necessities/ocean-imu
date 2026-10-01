@@ -146,10 +146,20 @@ Use maximal moving episodes I=(a,b) between those intervals (including the
 initial or final unbounded episode). Isolated zero-rate instants do not split
 a moving episode; periodic rocking retains one episode.
 They are properties of one continuous history, not labels that can be restarted
-at each proof word. The revised excitation quantifier is precisely
+at each proof word. The revised excitation quantifier has TWO required spans on the same moving
+episode:
 
-`for every moving episode I and every t with [t,t+T_E] subset closure(I):`
-`Delta_g([t,t+T_E]) >= theta_E > 0`.
+`for every moving episode I and every complete [t,t+T_E] subset closure(I):`
+`Delta_g([t,t+T_E]) >= theta_E > 0`,
+
+and
+
+`for every moving episode I and every complete [t,t+T_P] subset closure(I):`
+`Delta_p([t,t+T_P]) := sup ||p(s)-p(u)|| >= P_E > 0`.
+
+Both use whole-window diameter, not endpoint difference.  The four numerical
+constants remain OPEN.  In particular, pure attitude rocking with p=v=a=0
+does not satisfy MOVING.
 
 No excitation requirement is imposed on windows crossing a rest boundary.
 A departure at a first permits a complete excited window at a+T_E. Shorter

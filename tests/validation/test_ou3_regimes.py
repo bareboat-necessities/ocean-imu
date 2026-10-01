@@ -17,7 +17,7 @@ class RegimeTests(unittest.TestCase):
     def window(self, start, span=0.1, end=100):
         return moving_window_requirement(episode_start=10, episode_end=end,
                                          window_start=start, window_s=20,
-                                         theta_e=0.1, span=span)
+                                         theta_e=0.1, span=span, displacement_window_s=20, displacement_e=0.2, displacement_span=0.2)
 
     def test_departure_has_complete_window_grace(self):
         # [0,20] includes only the first ten seconds of motion; no pathological
@@ -26,6 +26,7 @@ class RegimeTests(unittest.TestCase):
         self.assertFalse(self.window(9.99999)["excitation_required"])
         self.assertTrue(self.window(10)["excitation_required"])
         self.assertTrue(self.window(10)["complete_excited_window"])
+        self.assertTrue(self.window(10)["complete_displacement_excited_window"])
         self.assertFalse(self.window(10)["regime_certificate"])
 
     def test_return_to_rest_and_short_episode(self):
@@ -38,6 +39,20 @@ class RegimeTests(unittest.TestCase):
             row = self.window(start, span=0, end=math.inf)
             self.assertTrue(row["excitation_required"])
             self.assertFalse(row["complete_excited_window"])
+
+    def test_zero_translation_rocking_is_not_moving(self):
+        row = moving_window_requirement(episode_start=10, episode_end=100,
+            window_start=10, window_s=20, theta_e=.1, span=.2,
+            displacement_window_s=20, displacement_e=.01, displacement_span=0)
+        self.assertTrue(row["complete_attitude_excited_window"])
+        self.assertFalse(row["complete_displacement_excited_window"])
+        self.assertFalse(row["complete_excited_window"])
+
+    def test_periodic_displacement_span_not_endpoint_difference(self):
+        row = moving_window_requirement(episode_start=0, episode_end=100,
+            window_start=0, window_s=20, theta_e=.1, span=.1,
+            displacement_window_s=20, displacement_e=.5, displacement_span=1.0)
+        self.assertTrue(row["complete_excited_window"])
 
     def test_span_uses_whole_window_not_endpoint_difference(self):
         self.assertTrue(self.window(10, span=.1)["complete_excited_window"])

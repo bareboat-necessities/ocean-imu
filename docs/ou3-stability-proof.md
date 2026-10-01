@@ -22,9 +22,16 @@ for every continuation. Equivalently, `qdot=p` has uniformly bounded potential d
 
 Physical translation is `p_CoG=p_eq+p`. Global origin, current, propulsion, leeway, and secular reference motion may be represented in `p_eq`, but nonzero `ddot(p_eq)` remains actual specific force/model disturbance unless the shipping implementation explicitly compensates it.
 
-Excitation is required only on every complete T_E window contained in one
-maximal physical moving episode between nondegenerate rest intervals. Isolated
-zero-rate instants do not restart an episode. T_E/theta_E remain symbolic.
+MOVING has two independent recurring physical excitation requirements on the
+same maximal episode.  First, every complete attitude window of duration T_E
+has gravity-direction diameter at least theta_E>0.  Second, every complete
+displacement window of duration T_P has wave-displacement diameter
+sup_{s,u in W} ||p(s)-p(u)|| >= P_E>0.  Both are spans over the whole window,
+not endpoint differences, so periodic rocking and periodic translation may
+return to their starting values.  T_E,theta_E,T_P,P_E remain symbolic and
+numerically OPEN; no minimum wave height is invented.  Consequently p=v=a=0
+with attitude rocking is not a MOVING history under this contract. Isolated
+zero-rate instants do not restart an episode.
 Windows crossing rest boundaries carry finite-transition obligations; no
 arbitrarily short departure window owes a full positive span. Read
 `ou3-regime-design.md` for the exact quantifiers, stationary observability,
@@ -114,8 +121,7 @@ sample-cell lengths. It need not be smaller than `min(2Bs,Dsh)+2Bf` for raw
 samples. Windowed/weighted comparisons use SF3--SF6, not an unjustified reduced
 endpoint noise box. Paired indistinguishable histories use differences of two
 reachable error sets, together with both sensors and the unchanged magnetic
-service. Existing symbolic MARINE admits an all-slow sin-cubed ambiguity with
-fast=0. The `.01 sin(.5t)` witness violates both candidate all-slow rate bounds;
+service. The former zero-translation all-slow sin-cubed construction is excluded from MOVING by the displacement-span requirement; it remains a historical obstruction to the older attitude-only contract. The `.01 sin(.5t)` witness violates both candidate all-slow rate bounds;
 its mixed slow/fast admissibility remains OPEN, not automatically excluded.
 
 ## LOCAL GRAVITY

@@ -7,7 +7,7 @@
     "A_max_mps2": 8.8,
     "Omega_max_rad_s": 0.6108652381980153,
     "P_AC_max_m_s": 1100,
-    "qualification": "retained marine envelope plus selected acceleration-jerk limit; acceleration is locally absolutely continuous; same-history all-time primitive and jerk membership must be certified",
+    "qualification": "retained marine envelope plus selected acceleration-jerk limit; MOVING requires both attitude and displacement span on complete moving windows; all-time primitive, jerk and both excitation memberships must be certified",
     "J_max_mps3": 100,
     "attitude_excitation": {
       "T_E_s": null,
@@ -16,6 +16,14 @@
       "rule": "for every physical moving episode I and every complete window W of duration T_E contained in closure(I): gravity-direction span(W) >= theta_E; windows crossing physical rest boundaries belong to transition; isolated zero-rate instants do not split moving episodes",
       "numerical_qualification": "OPEN; pinned 28-ft RAO evidence does not presently certify a theorem-grade source-uniform rolling minimum",
       "transition_scope": "one carried physical episode; no boundary reselection at proof words; finite detector delay and recurring bridge retention remain OPEN"
+    },
+    "displacement_excitation": {
+      "T_P_s": null,
+      "P_E_m": null,
+      "metric": "wave-displacement Euclidean diameter/span",
+      "rule": "for every physical moving episode I and every complete window W of duration T_P contained in closure(I): sup_{s,u in W} ||p(s)-p(u)|| >= P_E > 0; windows crossing physical rest boundaries belong to transition; isolated zero-rate instants do not split moving episodes",
+      "numerical_qualification": "OPEN; no minimum wave displacement is invented by the proof",
+      "transition_scope": "same carried physical wave coordinate and primitive; no boundary or proof-word reselection"
     }
   },
   "imu_bias": {
@@ -23,7 +31,7 @@
     "B_a_s_mps2": 0.22516660498395405,
     "D_a_s_mps3": 0.001,
     "B_g_s_rad_s": 0.02,
-    "D_g_s_rad_s2": 1e-05,
+    "D_g_s_rad_s2": 0.00001,
     "B_a_f_mps2": 0.3,
     "B_g_f_rad_s": 0.02,
     "fast_accel_horizon_s": null,

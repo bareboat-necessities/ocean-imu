@@ -68,13 +68,11 @@ chosen sensor specifications. Missing H,C means current-model admission and
 exclusion are both OPEN. The old sqrt(V)>=.4 bound cannot be transferred by
 changing which part of the error is called physical slow BA.
 
-The existing phi=.001 sin(t/40)^3 rest/motion family DOES survive with both
-fast components identically zero. Charge the tiny gravity-representation
+The former phi=.001 sin(t/40)^3 construction has p=v=a=0 and therefore does NOT satisfy the amended MOVING displacement-span condition. It is retained only as a counterexample to the previous attitude-only MARINE contract. Charge the tiny gravity-representation
 constant to slow accelerometer bias. Its slow amplitude/rate bounds obey the
 inherited candidates, and the quiet execution retains MAGNETIC SERVICE.
 It fits symbolic MARINE T_E=80*pi, theta_E=.002 on complete moving windows.
-Thus the existing symbolic MARINE condition does not automatically give a
-strict gauge-breaking margin, even with perfect fast cancellation. This does
+Thus that zero-translation construction no longer blocks the amended MARINE contract. Full moving compatibility must now include the nonzero displacement span together with attitude, SLOW+FAST IMU and magnetic service. This does
 not refute every fixed deployment pair (T_E,theta_E), nor practical stability
 relative to the compatible class. No EXCITED_MOVING strengthening is adopted.
 

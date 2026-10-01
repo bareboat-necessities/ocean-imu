@@ -19,7 +19,8 @@ def _positive(*values):
 
 
 def moving_window_requirement(*, episode_start, episode_end, window_start,
-                              window_s, theta_e, span=None):
+                              window_s, theta_e, span=None, displacement_window_s=None,
+                              displacement_e=None, displacement_span=None):
     """Quantify only over complete windows within ONE physical moving episode.
 
     An absent span or a boundary-crossing window cannot certify MOVING.
@@ -27,17 +28,31 @@ def moving_window_requirement(*, episode_start, episode_end, window_start,
     +infinity is permitted only as an episode end.
     """
     _positive(window_s, theta_e)
+    if displacement_window_s is None: displacement_window_s=window_s
+    _positive(displacement_window_s)
+    if displacement_e is not None: _positive(displacement_e)
     if (theta_e > math.pi or not math.isfinite(episode_start)
             or not math.isfinite(window_start) or math.isnan(episode_end)
             or episode_end <= episode_start):
         raise ValueError("valid physical episode and angular threshold required")
     end = window_start + window_s
-    if not math.isfinite(end):
+    displacement_end = window_start + displacement_window_s
+    if not math.isfinite(end) or not math.isfinite(displacement_end):
         raise ValueError("window endpoint overflow")
     required = episode_start <= window_start and end <= episode_end
+    displacement_required = episode_start <= window_start and displacement_end <= episode_end
     valid_span = (span is not None and math.isfinite(span) and 0 <= span <= math.pi)
-    return {"excitation_required": required,
-            "complete_excited_window": bool(required and valid_span and span >= theta_e),
+    valid_displacement = (displacement_span is not None and math.isfinite(displacement_span)
+                          and displacement_span >= 0)
+    displacement_ok = (displacement_e is not None and displacement_required
+                       and valid_displacement and displacement_span >= displacement_e)
+    attitude_ok = bool(required and valid_span and span >= theta_e)
+    return {"excitation_required": required or displacement_required,
+            "attitude_excitation_required": required,
+            "displacement_excitation_required": displacement_required,
+            "complete_attitude_excited_window": attitude_ok,
+            "complete_displacement_excited_window": bool(displacement_ok),
+            "complete_excited_window": bool(attitude_ok and displacement_ok),
             "regime_certificate": False}
 
 
