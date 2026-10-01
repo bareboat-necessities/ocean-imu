@@ -397,3 +397,17 @@ DECISIVE CONDITION: a numerically certified MARINE pair can exclude the exact at
 Equality is not enough because the excitation premise is >= theta_E. The current constants.json still has T_E and theta_E null/OPEN, so the comparison cannot yet be discharged. Mahony does not alter the envelope: packet equality makes its measurement-only trajectory and the complete staged coupled tuner chronology identical to nominal.
 
 Next: obtain/derive the existing theorem-grade MARINE (T_E,theta_E) from admissible physical evidence without strengthening the assumption. If none is currently certified, point-entry on MOVING remains conditional on the displayed strict inequality; proceed with quotient-action positivity only after it is satisfied.
+
+
+## MARINE excitation qualification audit — current
+
+A complete repository audit found no existing theorem-grade numerical pair (T_E,theta_E) to populate constants.json. The controlling proof documents intentionally keep both symbolic, and constants.json marks numerical qualification OPEN. The pinned v1.2.1 28-ft vessel-RAO bundles are finite statistical replay evidence with provenance; they do not certify an all-time rolling minimum of gravity-direction span for every complete window of every admitted moving continuation.
+
+Nor can a positive theta_E be derived from the other present MARINE/IMU bounds. The exact packet-indistinguishable family admits alpha>0 arbitrarily small and nu>0 sufficiently small while satisfying B_a,D_a,B_g,D_g,Omega_max, zero translation/jerk/primitive and magnetic service. Its complete-window span is 2 alpha>0 but tends to zero with alpha. Thus the infimum of admissible moving-window gravity span under the remaining assumptions is zero. Any positive numerical theta_E would be an additional quantitative excitation qualification, not a consequence of the currently numeric envelopes.
+
+Consequently constants.json must remain null/OPEN: filling it from the finite RAO traces would promote statistical evidence into an unsupported source-uniform physical assumption. The quotient point-entry theorem is conditional on an independently justified pair satisfying
+
+    theta_E > Theta_gauge(T_E)
+            = min(4 asin(B_a/(2g)), T_E min(D_a/g,B_g,Omega_max)).
+
+Without such a qualification, the source-uniform theorem conclusion must remain stability/retention relative to the measurement-compatible attitude/BA class even during MOVING; point convergence is not identifiable. This is now the controlling assumption gap, not a missing numerical calculation.
