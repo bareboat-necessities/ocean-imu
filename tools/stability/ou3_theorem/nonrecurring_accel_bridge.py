@@ -36,7 +36,11 @@ def certificate():
       "sensor_record_margin_mps2":str(allowance-sensor_mean),
       "sensor_record_margin_positive":sensor_mean<allowance,
       "nominal_AW_mean_follows_sensor_mean":False,
-      "reason_open":"literal time-varying acc/S gains can rectify; use signed AW-loop/two-Abel identity",
+      "required_full_state_reader_budget_mps2":str(allowance-sensor_mean),
+      "reader_closure_condition":"sup_same_history ||L_AW b_full|| < 0.89553839501604595 m/s^2",
+      "reader_must_pair_acc_process_S_before_norm":True,
+      "AW_only_Joseph_projection_allowed":False,
+      "reason_open":"literal time-varying acc/S gains can rectify; complete full-state causal reader/two-Abel source must fit the remaining budget",
       "G0_nominal_window_premise_closed":False,
       "theorem_closed":False}
 
