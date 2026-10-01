@@ -353,3 +353,57 @@ Splitting K_aw,a Rtrue a_phys away from -K_aw,a Rhat a_hat_w destroys the closed
             + linked BA/lever/LF terms,
 
 with A_cl,k containing I-P_k K_aw,a,k Rhat_k on the transverse subspace. Test passivity/contraction of the COMPLETE pair using the actual Riccati identity K S K'=P^- -P^+ and the S restoring identity, rather than variation of K. This is a new cancellation-preserving mechanism, not another Abel refinement.
+
+
+## Closed-loop transverse AW passivity calculation — exact result
+
+At an accepted accelerometer correction, with pre-row transverse projector P_B and nominal body rotation Rhat, the AW mean row is
+
+    a_w^+ = a_w^S + K_aw r_a,
+    r_a = Rhat(a_phys-a_w^S)+eta,
+
+where eta keeps attitude/true-vs-nominal rotation, gravity mismatch, physical/estimated BA, lever and sensor residual in the chosen consistent convention. Therefore
+
+    u^+ := P_B(a_w^+-g)
+         = P_B(I-K_aw Rhat)(a_w^S-g)
+           +P_B K_aw Rhat(a_phys-g)
+           +P_B K_aw eta_g,                                (CL-1)
+
+with eta_g adjusted so the identity is exact. This is the desired closed-loop map; prediction, reference transport and the due-S correction precede it exactly as in TAW-1/2.
+
+However the Riccati identity does NOT make the transverse AW block passive by itself. Partition the full pre-correction covariance into the selected LIN/AW coordinates X and nuisance coordinates N with cross block C, and H=[H_L,H_n]. Schur elimination gives
+
+    D_c=H_n C' X^-1,
+    H_tilde=H_L+D_c,
+    R_eff=R+H_n(N-C'X^-1 C)H_n' >0,
+
+and the exact marginal gain K_L=X H_tilde'(H_tilde X H_tilde'+R_eff)^-1. The literal nominal map is A_L=I-K_L H_L=A_tilde+K_L D_c. For any adjoint lambda the exact Joseph balance is
+
+    ||A_L'lambda||_X^2 + ||K_L'lambda||_(R_eff)^2
+      = ||lambda||_(X+)^2
+        +2 t' D_c X lambda_tilde + ||D_c' t||_X^2,          (CL-2)
+
+where t=K_L'lambda and lambda_tilde=A_tilde'lambda. The RHS extra terms are the exact correlation supply from attitude/BA/other nuisance covariance. They have no fixed sign. Thus K S K'=P^- -P^+ proves passivity of the FULL correction/error storage, but not of transverse AW after deleting nuisance coordinates.
+
+The due S correction is better: its measurement row has no nuisance part, so D_c=0 and
+
+    A_S'(X_S^+)^-1 A_S
+      =X_S^-1-H_S'(H_S X_S H_S'+R_S)^-1 H_S,               (CL-3)
+
+an exact restoring loss. For physical error the pseudo target contributes supply nu=-S_phys, so even CL-3 becomes supply-minus-innovation loss rather than pure decay.
+
+Therefore the hoped-for AW-only inequality obtained by combining CL-1 with KSK'=P^--P^+ is FALSE in general. Cross covariance can transfer correction storage between AW and attitude/BA. This is not a numerical looseness and should not be repaired with gain signs or marginal covariance boxes.
+
+RETAINED ROUTE: keep the COMPLETE 21-state innovation storage at accelerometer rows, where the exact information identity is
+
+    Delta V_acc = nu_acc' R_acc^-1 nu_acc
+                  -(H e+nu_acc)' S_acc^-1(H e+nu_acc),      (CL-4)
+
+and combine it with the exact S identity
+
+    Delta V_S = nu_S' R_S^-1 nu_S
+                -(H_S e+nu_S)' S_S^-1(H_S e+nu_S).          (CL-5)
+
+The same innovations that replenish nominal AW are therefore charged in the full-state loss/supply ledger instead of treated as arbitrary AW forcing. EXCITED_MOVING + LF residual qualification must enter by proving that a persistent word-dependent attitude/BA compatibility direction requires a nonzero sequence of BASE innovation supplies whose linked physical supply is smaller than the corresponding innovation loss. This is the correct passivity target.
+
+NEXT FALSIFIABLE CALCULATION: on the exact persistent compatibility-line ansatz from PT/PER, derive the minimum base accelerometer+S innovation action needed to keep J_att F theta_hat near zero while BA compatibility q_W decays. Compare that required innovation action with the maximum physical supply allowed by bounded v/p/S, LF residuals and BA rates using CL-4/5. This is scalar/line-constrained and preserves full-state Joseph passivity; it avoids AW marginal passivity and gain variation.
