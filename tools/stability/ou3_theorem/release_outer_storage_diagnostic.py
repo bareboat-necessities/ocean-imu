@@ -7,10 +7,15 @@ BA-eliminated outer storage from attitude alone. It is not source-uniform entry.
 from pathlib import Path
 import json, math, subprocess, tempfile
 import numpy as np
-from .construction_history_diagnostic import REPO\n\ndef driver_source():\n    return (REPO/"tools/stability/ag_readout_source.cpp").read_text()
+from .construction_history_diagnostic import REPO
+
+def driver_source():
+    return (REPO/"tools/stability/ag_readout_source.cpp").read_text()
 
 def release_driver_source():
-    s=driver_source()\n    s=s.replace("for (int k=1; k<=45064; ++k) {", "for (int k=1; k<=40000; ++k) {")\n    s=s.replace("if (k==45001) {", "if (k==39950) {")
+    s=driver_source()
+    s=s.replace("for (int k=1; k<=45064; ++k) {", "for (int k=1; k<=40000; ++k) {")
+    s=s.replace("if (k==45001) {", "if (k==39950) {")
     # This probe needs only the first A21 release (~step 36008), not the
     # construction diagnostic's 600-s tail. Keep a short post-release scoring
     # tail so the inherited JSON remains finite.
@@ -20,7 +25,8 @@ def release_driver_source():
     old="int live=-1, refined=-1, active=-1, applied=0;"
     # driver_source inherits this declaration from ag_readout_source.cpp.
     if old not in s: raise ValueError("release declaration anchor changed")
-    s=s.replace(old, old+"\n    std::string release_cov, release_state, release_quat;")
+    s=s.replace(old, old+"
+    std::string release_cov, release_state, release_quat;")
     old_active="if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) active=k;"
     new_active='''if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) {
                 active=k;
@@ -94,4 +100,5 @@ if __name__=="__main__":
     import argparse
     p=argparse.ArgumentParser(); p.add_argument("--eigen",type=Path,default=Path("/usr/include/eigen3"))
     p.add_argument("--output",type=Path,required=True); a=p.parse_args()
-    a.output.write_text(json.dumps(run(a.eigen),indent=2,sort_keys=True)+"\n")
+    a.output.write_text(json.dumps(run(a.eigen),indent=2,sort_keys=True)+"
+")
