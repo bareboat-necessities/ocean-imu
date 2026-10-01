@@ -11,6 +11,11 @@ from .construction_history_diagnostic import REPO, driver_source
 
 def release_driver_source():
     s=driver_source()
+    # This probe needs only the first A21 release (~step 36008), not the
+    # construction diagnostic's 600-s tail. Keep a short post-release scoring
+    # tail so the inherited JSON remains finite.
+    s=s.replace("k<=120000", "k<=37000")
+    s=s.replace("k>80000", "k>36000")
     old="int live=-1, refined=-1, active=-1, applied=0;"
     # driver_source inherits this declaration from ag_readout_source.cpp.
     if old not in s: raise ValueError("release declaration anchor changed")
