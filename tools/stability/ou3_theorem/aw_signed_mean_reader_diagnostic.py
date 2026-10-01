@@ -29,15 +29,10 @@ def certificate():
     report=json.loads(REPORT.read_text())
     # The committed report names this metric by profile; tolerate naming
     # changes by searching signed-mean numeric leaves and select the maximum.
-    vals=_find_numbers(report,'signed_mean')
+    vals=_find_numbers(report,'signed_16s_mean_error_max_mps2')
     if not vals:
-        raise ValueError('committed AW audit has no signed_mean metric')
-    # Ratios are dimensionless and must not be mistaken for m/s^2. Prefer
-    # explicit error/value leaves and reject obvious ratio keys.
-    candidates=[(k,v) for k,v in vals if 'ratio' not in k.lower() and 'threshold' not in k.lower()]
-    if not candidates:
-        raise ValueError('no dimensional signed-mean metric found')
-    worst_key,worst=max(candidates,key=lambda kv: abs(kv[1]))
+        raise ValueError('committed AW audit has no dimensional signed 16-s mean error metric')
+    worst_key,worst=max(vals,key=lambda kv: abs(kv[1]))
     allowance=F(bridge()['required_full_state_reader_budget_mps2'])
     return {
       'qualification':'OU3_CARRIED_SIGNED_AW_READER_16S_V1',
