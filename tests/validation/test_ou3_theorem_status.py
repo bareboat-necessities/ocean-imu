@@ -120,10 +120,15 @@ class TheoremStatusTests(unittest.TestCase):
                     "rank_structured_kernel_contraction_corollary",
                     "kernel_variance_set_invariance_implication",
                     "scalar_kernel_ceiling_from_proved_BA_marginal",
-                    "s_chain_neutral_and_aw_root_cancellation",
+                    "causal_aw_full_root_action_ceiling",
                     "source_uniform_gyro_bias_persistence_diameter_cap"):
             self.assertTrue(o[key])
-        for key in ("source_uniform_kernel_bounded_word_diameter",
+        # The causal reader pays the full root action: its AG-root term is
+        # not annihilated by the neutral S-chain elimination.
+        for key in ("s_chain_neutral_and_aw_root_cancellation",
+                    "causal_aw_AG_root_cancellation",
+                    "source_uniform_reachable_causal_reader_port_norm",
+                    "source_uniform_kernel_bounded_word_diameter",
                     "source_uniform_tilt_about_field_axis_covariance_ceiling",
                     "source_uniform_A21_linear_dissipativity"):
             self.assertFalse(o[key])
