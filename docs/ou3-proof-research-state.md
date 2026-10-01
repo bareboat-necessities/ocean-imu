@@ -380,3 +380,17 @@ Repeat the complete evidence target on Ubuntu/Python 3.12 with the failed run's
 fingerprinted bundles before advancing main. The subsequent main build must
 regenerate and validate its own evidence; this repair does not certify new
 simulation results or discharge the mathematical obligations above.
+
+## CI: information-ratio replay comparison
+
+Failed quantity: `information_ratio_source_diagnostic --expect` on the
+`theorem` job compared `diameter.relative_difference` (committed 1.03e-5 max,
+fresh 2.3e-6 on the same case) with a 5e-3 relative tolerance. Classification:
+implementation/CI. That leaf is the residual of an identity between two equal
+quantities, so its value is float32 replay noise and is not reproducible
+across toolchains. Invalidated hypothesis: every recorded leaf is well posed
+for relative comparison. Retained facts: the identity contract
+`relative_difference < 1e-3` is still enforced by `verify_diagnostic`; the
+replay comparison now only requires both records below 1e-4; every other leaf
+keeps the 5e-3 relative comparison. Current limiter and next falsifiable
+experiment are unchanged from the sections above.
