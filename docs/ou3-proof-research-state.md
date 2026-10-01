@@ -407,3 +407,31 @@ and combine it with the exact S identity
 The same innovations that replenish nominal AW are therefore charged in the full-state loss/supply ledger instead of treated as arbitrary AW forcing. EXCITED_MOVING + LF residual qualification must enter by proving that a persistent word-dependent attitude/BA compatibility direction requires a nonzero sequence of BASE innovation supplies whose linked physical supply is smaller than the corresponding innovation loss. This is the correct passivity target.
 
 NEXT FALSIFIABLE CALCULATION: on the exact persistent compatibility-line ansatz from PT/PER, derive the minimum base accelerometer+S innovation action needed to keep J_att F theta_hat near zero while BA compatibility q_W decays. Compare that required innovation action with the maximum physical supply allowed by bounded v/p/S, LF residuals and BA rates using CL-4/5. This is scalar/line-constrained and preserves full-state Joseph passivity; it avoids AW marginal passivity and gain variation.
+
+
+## Persistent-line minimum base-innovation action — proposed route fails at zero lower bound
+
+Parameterize a nontrivial homogeneous compatibility line on word W by x=lambda nu_W with nu_W=(theta_hat_W,-q_W), ||theta_hat_W||=1. Exact persistence requires
+
+    J_att,k F_k theta_hat_W = R_ba,k phi_b,k q_W              (PL-1)
+
+at every applied accelerometer row, magnetic compatibility at the applied magnetic rows, and Phi_b,W q_W=s_W q_(W+1), |s_W|=1. These equations are derivatives of the measurement maps with respect to the HOMOGENEOUS perturbation around the carried base execution.
+
+Crucially, PL-1 contains J_att,k (hence the base nominal pre-update a_hat_w) but contains NO base accelerometer innovation r_a,k. The base innovation enters the NOMINAL state recursion that generated J_att, but once that base trajectory is fixed, the homogeneous null condition is independent of the residual magnitude. The same is true for homogeneous S loss: H_S delta x=0 does not constrain r_S^base=-S_hat^base.
+
+Therefore the optimization
+
+    inf { sum r_a,k' S_a,k^-1 r_a,k + sum r_S,k' S_S,k^-1 r_S,k :
+          persistent homogeneous compatibility line PL-1 }
+
+has no positive lower bound from the compatibility equations themselves. Algebraically the lower bound is 0: a base trajectory that already lies on the required nominal-collinearity manifold may have arbitrarily small/zero base innovations while the homogeneous measurement derivative retains a nontrivial null line. Full-state Joseph passivity correctly charges innovations that occur, but it cannot create innovation action merely because the linearized observation map is rank deficient.
+
+Hence the hoped-for inequality
+
+    minimum required base innovation action > maximum physical supply
+
+cannot be proved without first proving the missing CLOSED-LOOP REACHABILITY statement that EXCITED_MOVING + LF residual qualification prevents the base nominal trajectory from remaining on/near that collinearity manifold with small innovations. Using Joseph identities before that bridge is circular: they price innovation supply but do not force innovations to exist.
+
+FAILURE CLASSIFICATION: structural/observability, not numerical looseness. Invalidated hypothesis: persistent homogeneous compatibility necessarily requires nonzero base innovation replenishment. Retained facts: full-state CL-4/5 passivity, persistent-line BA decay q_W->0, EXCITED_MOVING, LF residual qualification, and exact base AW recurrence remain valid.
+
+NEXT FALSIFIABLE CALCULATION: attack the collinearity manifold directly with the ZERO/SMALL-BASE-INNOVATION specialization, which is the least favorable case for the proposed supply argument. Set r_a=r_S=0 (or tend them to zero) in the exact base recurrence and ask whether an EXCITED_MOVING physical history satisfying bounded v,p,S, BA rates and LF residual bounds can keep P_B(a_hat_w-g)->0 over successive words. If impossible, compactness/continuity can yield a positive distance/action from the manifold and only then Joseph passivity converts that distance into a finite-error supply bound. If possible, it provides the surviving pathological base execution and point-entry remains false under the strengthened assumptions.
