@@ -524,3 +524,25 @@ The quiet field-aligned fixed-point obstruction is therefore out of scope for
 the MARINE_MOTION contraction theorem. The remaining LaSalle question is only
 whether a field-aligned zero-dissipation execution can satisfy the literal
 shipping equations while also satisfying recurring MARINE MOTION excitation.
+
+
+### Moving-only field-aligned obstruction
+
+After excluding certified stillness from the theorem, persistent field
+alignment requires the actual world physical acceleration to lie in the
+same-history affine family a_phys,k=F_k+U_k zeta_k, obtained directly from
+PH-4. Recurring attitude span rotates F,U but does not by itself make this
+family violate bounded velocity/displacement/potential: the remaining scalar
+physical sequence zeta can exploit the time-varying U direction.
+
+Over a complete moving window the exact admissibility question is whether the
+forced physical moment vector lies outside the reachable set of that scalar
+channel, including amplitude/jerk and boundary bounds. Current MARINE MOTION
+places no translation-attitude relation strong enough to prove this uniform
+separation. Two-epoch attitude span and magnetic service are insufficient.
+
+Thus the quiet obstruction is gone, but the moving pathological trajectory is
+not yet excluded. The next theorem must either prove a positive reachable-
+moment separation from the literal shipping-generated F,U, or strengthen the
+independent moving-regime admission condition with a raw-IMU excitation
+certificate that implies that separation.
