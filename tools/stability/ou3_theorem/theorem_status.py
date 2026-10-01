@@ -20,6 +20,9 @@ def status_report() -> dict:
         "displacement_four_S_boundary_mismatch_identified":True,
         "displacement_boundary_velocity_completion":True,
         "displacement_boundary_velocity_LIN_action_bound":False,
+        "held_H18_LIN_structural_detectability":True,
+        "held_H18_all_time_covariance_coefficient_compactness":False,
+        "held_H18_uniform_LIN_BIBO":False,
         "stationary_observability_structure":True,
         "stationary_gyro_information_bound":True,
         "quiet_zero_residual_nominal_six_column_floor":True,
@@ -251,7 +254,7 @@ def status_report() -> dict:
             "legacy_word_diameter_results_role":"retained algebra/history only, not the controlling architecture",
             "open_source_premises":[
                 "qualify both slow/fast physical histories and derive the MARINE+MAGNETIC same-history compatibility margin",
-                "literal interleaved held-BA LIN BIBO, compact release, q^T v boundary-row LIN action, outer entry and linked finite-error/prefix supplies",
+                "all-time held-H18 covariance/coefficient compactness -> uniform LIN BIBO (which also closes q^T v), compact release, outer entry and linked finite-error/prefix supplies",
             ],
         },
         "shipping_residual_gyro_bias_hardening":True,
