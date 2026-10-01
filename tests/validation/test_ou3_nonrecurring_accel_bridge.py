@@ -10,6 +10,9 @@ class T(unittest.TestCase):
         self.assertTrue(r["sensor_record_margin_positive"])
         self.assertGreater(F(r["sensor_record_margin_mps2"]),F(89,100))
         self.assertFalse(r["nominal_AW_mean_follows_sensor_mean"])
+        self.assertEqual(F(r["required_full_state_reader_budget_mps2"]), F(r["sensor_record_margin_mps2"]))
+        self.assertTrue(r["reader_must_pair_acc_process_S_before_norm"])
+        self.assertFalse(r["AW_only_Joseph_projection_allowed"])
         self.assertFalse(r["G0_nominal_window_premise_closed"])
 
 if __name__=="__main__":
