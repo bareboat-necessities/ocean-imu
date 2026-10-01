@@ -508,3 +508,24 @@ NEXT FALSIFIABLE CALCULATION: exploit the defining backward forced-data adjoint 
     V_max TV_C + B_a||sum C_i|| + D_a Tail_C
 
 DIRECTLY by the same complete-word action/geometry, rather than bounding TV_C and Tail_C separately. If the adjoint recursion does not control this linked combination, the proposed S-chain route cannot close outer entry under the present assumptions and a different shaped storage/functional is required.
+
+
+## Linked C-functional calculation — S-chain/Abel route falsified as a norm bound
+
+The requested linked quantity was evaluated against the strongest already-derived same-word refinement. The backward forced-data adjoint plus S-chain moments do not provide a useful source-uniform norm bound on
+
+    V_max TV_C + B_a||sum C_i|| + D_a Tail_C
+
+by themselves. The obstruction is structural: the S-chain annihilation moments apply to the scalar/divided-difference weights before multiplication by the time-varying physical-frame/forced-adjoint matrices. After insertion of those matrices, sum C_i and first/variation moments are not annihilated; their changes contain the same chronological rotation/gain action that the adjoint is supposed to control. The backward adjoint is an exact identity, not a contraction or bounded-variation law.
+
+A literal carried-word calculation already tests the strongest admissible variation-norm refinement: first combine signed C_i within each actual S interval, replace acceleration by the shared interval velocity increment, then Abel-sum the interval endpoint coefficients before taking norms. On the 225--289 s word this reduces the crude 239.97 physical acceleration charge to
+
+    velocity charge = 23.98805965312,
+    jerk charge     =  3.82238280532,
+    total           = 27.81044245844.
+
+The available projected-gravity threshold on the same word is 8.77133455729, so the rigorous bound fails by 19.03910790115 even BEFORE root, sensor, BA or spline defects. Yet the actual signed physical acceleration action on that same word has norm about .005. Thus the failure is caused by variation-norm relaxation, not by the same-history dynamics. Adding the nonnegative BA linked terms can only worsen this inequality.
+
+FAILURE CLASSIFICATION: the proposed S-chain + Abel + TV_C route cannot close outer entry under the present assumptions if it takes norms of C variation/tails. The exact failed inequality is 8.77133455729 > 27.81044245844 + further nonnegative supplies. Invalidated hypothesis: S-chain moment annihilation plus the backward forced adjoint controls the linked C variation strongly enough after time-varying frame/gain insertion. Retained facts: exact S-chain cancellation, forced-data adjoint, physical Abel identities, EXCITED_MOVING gauge separation, and the tiny actual signed action remain valid.
+
+CURRENT LIMITER / NEXT FALSIFIABLE CALCULATION: preserve the JOINT signed physical acceleration + rotation/reference action before taking norms. Substitute the zero-innovation accelerometer and magnetic equations into the forced-data identity and combine the physical Q_i a_i term with g(R_i-Q_i)e_z and the magnetic Q_i B-R_i B term under one common rotation error. Seek an exact geometric pairing/coboundary in which the large C variation terms cancel. Do not bound TV_C, rotation action, or BA tails separately. If no such joint identity exists, this S-chain outer-entry formulation is a dead end and the outer storage must be changed.
