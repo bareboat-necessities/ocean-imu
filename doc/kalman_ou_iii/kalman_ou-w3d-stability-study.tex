@@ -978,92 +978,83 @@ Prediction follows from $P^-\succeq FP^+F^{\mathsf T}$, Joseph correction from t
 
 The equality set of \eqref{eq:path-dissipation-current} is source structured. Four scheduled $S$ observations eliminate the homogeneous $(v,p,S,a_w)$ root. Magnetic service and chronological gyro transport remove the observed attitude/gyro-bias quotient. Accelerometer compatibility leaves at most the physical tilt/BA compatibility class. On the regular MARINE branch, the only nonzero zero-dissipation candidate relevant to the current local theorem is the field-axis attitude mode with nominal CoG specific force parallel to the committed magnetic reference.
 
-\section{Compatibility manifold and adaptation dynamics}
-\label{sec:compatibility-dynamics}
-In the limiting zero-BA compatibility geometry, magnetic zero loss makes the
-remaining attitude direction field-axis aligned and accelerometer zero loss
-requires nominal CoG specific force to be field parallel.  With the local
-field premises this gives, up to the declared field/lever defects,
+\section{Radius-local field-axis exclusion}
+Let $b$ be the committed unit magnetic reference and $P_B=I-bb^{\mathsf T}$.  On the qualified branch
 \begin{equation}
- P_{B_0^\perp}\hat a_w^W=d_0+\delta_B,qquad
- \norm{\delta_B}\le C_g\epsilon_g+C_B\epsilon_B+C_L .
- \label{eq:compat-aw}
+ \sigma_w=\norm{e_z\times b}\ge{1\over5},\qquad
+ \norm{P_Bg}\ge1.96133\ {\rm m/s^2}.
+ \label{eq:field-transverse-gravity}
 \end{equation}
-Thus a persistent compatible nominal trajectory carries a gravity-scale,
-nearly fixed world AW component.  In contrast, bounded physical velocity
-implies
+A source audit of the regular A21 covariance gives
 \begin{equation}
- {1\over T}\int_0^T a_{\rm phys}^W(t)\,dt
- ={v(T)-v(0)\over T}\longrightarrow0 .
- \label{eq:physical-acc-zero-mean}
+ P_{a_wa_w}\preceq16.48I .
+ \label{eq:aw-marginal-ceiling-current}
 \end{equation}
-The mismatch is sustained, if at all, by measurement-induced estimator
-corrections rather than by a DC physical acceleration.
 
-The shipping mean order is important.  The per-axis LIN state
-$(v,p,S,a_w)$ is propagated by the exact analytic OU-integrator matrix;
-prediction is followed, when due, by the $S=0$ pseudo-update before the next
-accelerometer gain is formed.  For a frozen transverse coefficient pattern,
-write $e_S=(0,0,1,0)^{\mathsf T}$ and let $k_S$ be the projected $S$ gain.
-With an effective accelerometer innovation $u$ and gain column $k_A$,
+\begin{lemma}[Storage-local AW tube]
+Inside $V\le r^2$,
 \begin{equation}
- x_{j+1}=A_Sx_j+B_Su_j,quad
- A_S=(I-k_Se_S^{\mathsf T})\Phi,\quad B_S=k_A .
- \label{eq:s-lift}
+ \norm{\hat a_w-a_{\rm phys}}<4.06r .
+ \label{eq:aw-local-tube-current}
 \end{equation}
-When $I-A_S$ is invertible the frozen DC gain from innovation to AW is
-\begin{equation}
- G_{\rm DC}=e_a^{\mathsf T}(I-A_S)^{-1}B_S,qquad
- u_*={g_\perp\over G_{\rm DC}} .
- \label{eq:dc-gain}
-\end{equation}
-No shipping identity forces $G_{\rm DC}=0$.  Therefore the $S$ adaptation
-does not by itself exclude a bounded gravity-sized nominal AW equilibrium.
-The real MOVING theorem retains the time-varying physical history; the frozen
-calculation is a structural diagnostic, not a counterexample.
+\end{lemma}
+\begin{proof}
+Covariance Cauchy--Schwarz applied to the AW marginal of the same full storage gives $\norm{e_{aw}}\le\sqrt{16.48}\sqrt V<4.06r$.
+\end{proof}
+This is a local consequence of the reachable covariance; it is not a global tracking assumption and does not follow merely from the coupled tuner law.
 
-For the exact time-varying compatibility manifold, let $P_B$ project
-perpendicular to the local field and let $c_k=P_B(\hat a_{w,k}-g_0)$ at an
-accepted accelerometer epoch.  Persistence requires $c_k=0$.  Propagating
-through the literal prediction and intervening $S$ update gives the
-compatibility-maintenance equation
+\begin{lemma}[Sampled physical force/field separation]
+On every physical interval of length $T$,
 \begin{equation}
- P_BL_kK_{a,k}r_{a,k}=-c_{k+1}^- .
- \label{eq:mi1}
+ \max_{s\in W}\norm{P_B(a(s)-g)}
+ \ge1.96133-{11\over T}.
 \end{equation}
-After substitution of the physical measurement model this is a
-two-component constraint on physical acceleration.  Where its transverse
-Jacobian $D_\perp$ is nonsingular, the two transverse acceleration components
-are locally determined and one longitudinal component remains free.  The
-actual covariance chronology gives
+On the retained regular branch actually applied accelerometer epochs are at most $h_{\rm acc}=0.006$ s apart.  With $\norm{\dot a}\le100\ {\rm m/s^3}$, some applied epoch satisfies
 \begin{equation}
- N_a^S=N_a^-
- -P^-H_S^{\mathsf T}S_S^{-1}H_SP^-C_a^{\mathsf T},
- \label{eq:s-cov-cancel}
+ \norm{P_B(a-g)}\ge
+ m_{\rm phys}(T):=1.96133-{11\over T}-0.6 .
+ \label{eq:sampled-separation-current}
 \end{equation}
-so fresh AW process covariance does not furnish a protected positive
-$D_\perp$ floor: the $S$ correction can algebraically cancel its projected
-gain contribution.  Conversely, no monotone covariance identity forces that
-cancellation.  The rank-loss set $\det D_\perp=0$ is a crossable algebraic
-boundary on regular branches, not a proved attractor or invariant surface.
+\end{lemma}
+\begin{proof}
+Integrating $P_B(a-g)$ gives $P_B(v(t+T)-v(t))-TP_Bg$.  Use $\norm v\le5.5$, then transfer a maximizing continuous time to an applied sample with the jerk bound.
+\end{proof}
 
-The static stacked mean-correction range and its first temporal moments do
-not produce a conservation law excluding compatibility.  Writing the
-MI--2-selected transverse physical acceleration as
+\begin{theorem}[Local field-axis invariant-set exclusion]
+A forward-complete zero-dissipation field-axis trajectory requires
+$P_B(\hat a_w-g)=0$ at every applied accelerometer epoch.  Such persistence is impossible whenever
 \begin{equation}
- a_\perp(t)=f(t)+g(t)u(t),
- \label{eq:scalar-channel}
+ 1.96133-{11\over T}-0.6-4.06r>0.
+ \label{eq:field-exclusion-condition-current}
 \end{equation}
-the exact instantaneous component uncontrollable by the remaining scalar
-input is
+At $T=17$ s, $m_{\rm phys}=0.714271176470588\ldots\ {\rm m/s^2}$.  The conservative choice
 \begin{equation}
- \chi(t)=\det[g(t),f(t)] .
- \label{eq:chi}
+ \boxed{r_{\rm FA}=0.15}
 \end{equation}
-The present assumptions neither bound $\chi$ away from zero nor force a
-nonzero signed long-time moment.  This identifies the possible correlated
-translation/attitude degeneracy without asserting that a global pathological
-execution exists.
+leaves strict margin
+$0.714271176470588-4.06(0.15)=0.105271176470588\ldots\ {\rm m/s^2}$.
+Consequently, conditional on the established zero-dissipation classification,
+\begin{equation}
+ \boxed{{\rm Inv}_{\rm MARINE}(\{\mathcal D=0\})\cap\{V\le0.15^2\}=\{0\}.}
+ \label{eq:local-invariant-exclusion-current}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Field alignment and \eqref{eq:aw-local-tube-current} imply $\norm{P_B(a-g)}<4.06r$ at every applied epoch, contradicting \eqref{eq:sampled-separation-current}.
+\end{proof}
+
+\begin{theorem}[Finite-window homogeneous strictness]
+On the closed retained same-history class inside $V\le0.15^2$, there exist finite $m$ and $\eta_D>0$ such that
+\begin{equation}
+ \sum_{j=0}^{m-1}\mathcal D_{k+j}\ge\eta_DV_k,\qquad
+ V_{k+m}\le(1-\eta_D)V_k .
+ \label{eq:finite-window-strictness-current}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Otherwise normalized windows with accumulated action tending to zero admit a diagonal compactness limit that is forward complete and has zero action at every operation.  Equation \eqref{eq:local-invariant-exclusion-current} forces that limit to zero, contradicting normalization.
+\end{proof}
+No numerical $\eta_D$ is presently certified.
 
 \section{Finite-error vector-diversity and capture obligation}
 \label{sec:finite-error-diversity}
