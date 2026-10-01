@@ -26,6 +26,8 @@ def instrument(source):
         source = source.replace(old, new)
 
     once('    apply_pending_aw_covariance_inflation_();', '''    if (recording) {
+        estimator_state = xext.template cast<double>();
+        estimator_quat = qref.coeffs().template cast<double>();
         const T trace_phi = std::exp(-Ts / std::max(T(1e-3), tau_bacc_));
         const T trace_qscale = -T(0.5)*std::max(T(1e-3),tau_bacc_)
             *std::expm1(-T(2)*Ts/std::max(T(1e-3),tau_bacc_));
@@ -41,6 +43,8 @@ def instrument(source):
     once('        Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;',
          '        readout_sync(Delta);\n        Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;')
     once('    ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);',
+         '    estimator_state = xext.template cast<double>();\n'
+         '    estimator_quat = qref.coeffs().template cast<double>();\n'
          '    readout_reset(dtheta_injected);\n'
          '    ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);')
     # Record only actually applied updates. Preserve any innovation safety bump
@@ -65,6 +69,8 @@ def instrument(source):
         chunk = chunk.replace('    xext.noalias() += K * r;', f'''    if (recording) {{
         Eigen::Matrix<T,3,NX> trace_h = Eigen::Matrix<T,3,NX>::Zero();
         {hcode}
+        estimator_state = xext.template cast<double>();
+        estimator_quat = qref.coeffs().template cast<double>();
         readout_correction("{sensor}",trace_h,({noise}+(S_mat-trace_s)).eval(),K);
     }}
     xext.noalias() += K * r;''')
