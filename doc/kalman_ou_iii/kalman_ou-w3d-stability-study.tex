@@ -1062,6 +1062,28 @@ Minimizing over every non-attitude outer coordinate still gives
 \end{equation}
 This carried history is not a source-uniform counterexample to eventual capture; it proves that stage flags alone cannot imply direct release into the inner ball.
 
+\paragraph{Excited-moving qualification.}
+For the point-entry branch we distinguish \emph{EXCITED\_MOVING} from generic physical motion.  In engineering terms, EXCITED\_MOVING is sustained vessel motion in which the vessel undergoes a non-negligible change in roll or pitch within a bounded time.  Precisely, there are fixed physical qualification constants $T_X<\infty$ and $\theta_X>0$ such that every complete interval $W=[t,t+T_X]$ contained in an EXCITED\_MOVING episode satisfies
+\[
+ \operatorname{span}_{s\in W} u_g(s)\ge\theta_X,\qquad
+ u_g(s)=\frac{Q(s)^Tg_0^W}{\|g_0^W\|}.
+\]
+This is a property of the true vessel motion, not an OU--III output or runtime mode.  STILL, TRANSITION and weak MOVING remain admitted and need not satisfy it.  No minimum wave height, spectrum, heave, angular frequency or RAO amplitude is assumed.
+
+The proof checks sufficiency separately.  An exactly packet-indistinguishable attitude/BA history can change its gravity direction over a duration $T$ by at most
+\[
+ \Theta_{\rm gauge}(T)=
+ \min\!\left\{
+ 4\arcsin\!\frac{B_a}{2g_{\min}},
+ T\min\!\left(\frac{D_a}{g_{\min}},B_g,\Omega_{\max}\right)
+ \right\}.
+\]
+Hence the simple physical qualification breaks the exact stationary gauge whenever
+\[
+ \boxed{\theta_X>\Theta_{\rm gauge}(T_X).}
+\]
+With the currently qualified bias envelopes this comparison, rather than the engineering definition itself, is where sensor-bias constants enter.  The private Mahony observer adds no independent information: identical conditioned packets generate identical Mahony and staged coupled $(\tau,\sigma_{a_w},R_S,T_S)$ histories.
+
 The required architecture therefore has two nested A21 regions, but the outer region cannot be a point-error Lyapunov set on every admitted continuation.  At physical rest there is an exact attitude/accelerometer-bias gauge: a sufficiently small constant rotation $Q_\alpha$ about the magnetic field can be compensated by $b_a=g(Q_\alpha e_z-e_z)$ while leaving accelerometer, gyro and magnetometer packets unchanged.  Taking $\alpha=10^{-3}$ rad gives $\|b_a\|=2g\sin(\alpha/2)<0.009807\,\mathrm{m/s^2}$ with zero bias rate, strictly inside IMU BIAS.  Complete stillness may persist arbitrarily long, so no moving-excitation window is owed, while the quiet actual magnetic-service floor is retained.  On the identical nominal filter history the proved quiet bound $P_{b_ab_a}\preceq I/1600$ gives $\sqrt V\ge\|e_{b_a}\|/0.025>0.392>0.15$.  Hence no deterministic storage built from the common shipping history can force every certified continuation into the point set $V\le0.15^2$.  The controlling outer object must instead measure distance to this stationary measurement-compatible class.  Stationary A21 requires practical retention to that class; a complete admitted moving-excitation window must then collapse the gauge and provide finite retained entry into an inner $V\le r_{\rm in}^2<0.15^2$ ball, after which the field-axis LaSalle theorem applies.  Active BA dynamics remain a carried bounded coordinate and are eliminated from outer storage with the covariance marginal, never by conditioning.
 
 \section{Capture and finite-error retention}
