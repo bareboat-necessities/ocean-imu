@@ -11,8 +11,12 @@ def status_report() -> dict:
         "fast_gyro_temporal_device_qualification":False,
         "assembled_slow_fast_decomposition_qualification":False,
         "two_timescale_joint_physical_gauge_exclusion":False,
+        "displacement_excitation_to_full_moving_compatibility_exclusion":False,
         "two_timescale_source_uniform_finite_error_supply":False,
         "marine_regime_complete_window_contract":True,
+        "marine_displacement_excitation_contract":True,
+        "zero_translation_moving_alias_excluded":True,
+        "displacement_span_signed_kinematic_moment":True,
         "stationary_observability_structure":True,
         "stationary_gyro_information_bound":True,
         "quiet_zero_residual_nominal_six_column_floor":True,
@@ -228,7 +232,8 @@ def status_report() -> dict:
             "finite_capture_can_certify_all_time":False,
             "decomposition_reselection_at_release_or_regime_boundary":False,
             "oscillatory_0p01_sin_0p5t_admissibility":"OPEN",
-            "all_slow_sin_cubed_ambiguity_survives":True,
+            "all_slow_sin_cubed_ambiguity_survives":False,
+            "all_slow_sin_cubed_status":"historical attitude-only MARINE witness; excluded from MOVING by P_E>0",
             "stronger_EXCITED_MOVING_adopted":False,
         },
         "a21_contraction_route":{
@@ -269,7 +274,7 @@ def status_report() -> dict:
         "next_controlling_obligation":(
             "Qualify the six candidate slow/fast budgets and both signed fast-accumulation profiles on one delivered calibrated history. "
             "Missing H_a,C_a,H_g,C_g remain OPEN; do not replace them by unrestricted residual boxes or a fitted excitation threshold. "
-            "Existing MARINE T_E/theta_E remain symbolic; the all-slow sin-cubed ambiguity survives with fast=0. "
+            "Existing MARINE T_E/theta_E and T_P/P_E remain symbolic; the zero-translation sin-cubed witness is now outside MOVING. "
             "The .01 sin(.5t) witness violates the candidate all-slow rates, but mixed allocation remains OPEN. "
             "Keep the exact dissipativity/LaSalle path, source coupled tuner chronology, physical gyro/accel constraints and actual magnetic service. "
             "Prove literal interleaved H18 LIN BIBO and release compactness, outer retention and finite inner entry, then linked complete-word/prefix supply. "
