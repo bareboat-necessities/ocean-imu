@@ -240,3 +240,42 @@ the inner boundary together with dissipativity on the compact annulus
 .15 <= sqrt(V_outer,elim) <= R_outer to prove finite entrance, or to derive a
 larger field-alignment exclusion radius valid on that annulus. Directly
 asserting .15 entry at release is withdrawn.
+
+
+## 8. Universal outer -> inner full-state entry is false under the present contract
+
+The shaped-storage bootstrap cannot prove universal finite entrance into the point inner ball on all certified A21 continuations. The obstruction is the source-audited stationary attitude/accelerometer-bias gauge, now applied directly to the proposed entry theorem.
+
+At physical rest the noiseless sensor map is
+
+    gyro = b_g,
+    f = -g Q e_z + b_a,
+    m = Q B.
+
+A constant-rest member suffices. Take Q_alpha to be a constant rotation by alpha=1/1000 rad about B, b_g=0 and b_a=g(Q_alpha e_z-e_z). Then p=v=a=0, all bias rates vanish, ||b_a||=2g sin(alpha/2)<.009807 m/s2 << B_a, and the accelerometer, gyro and magnetometer packets are exactly the quiet nominal packets forever. Complete stillness may persist arbitrarily long, so no T_E/theta_E excitation is owed. The actually applied quiet magnetic-service floor remains above the required value. The existing quiet covariance comparison gives P_ba,ba <= I/1600; hence on this distinct physical truth
+
+    sqrt(V) >= ||e_ba||/.025 > .392 > .15.
+
+Because the shipping estimator, tuner, covariance, magnetic reference, scheduler and gates are deterministic causal functions of the common packet history, the nominal and rotated physical truths generate the same complete filter history. Consequently no storage constructed solely from that history can force both physical errors to the point set V<=.15^2. OU forgetting, S=0 pseudo-updates, AW covariance synchronization and active BA prediction do not add physical information: the BA error recurrence contains the physical supply (1-phi_b)b_a+w_a, and magnetic corrections are blind to rotation about the magnetic axis. A signed/windowed AW primitive cannot remove this stationary gauge.
+
+Therefore the requested implication
+
+    every certified H18/A21 release -> eventual retained V<=.15^2 entry
+
+is FALSE under the current assumptions. This is an identifiability/theorem-target failure, not a failed scalar bound and not evidence for changing runtime behavior. Do not interval-refine a shaped point storage against this family.
+
+The controlling nested proof remains one architecture but must be regime/quotient aware:
+
+1. define W_out on distance to the measurement-compatible attitude/BA class, with BA eliminated by the outer marginal rather than conditioned;
+2. prove stationary A21 retention/practical stability to that class while carrying the literal tuner/covariance/service history;
+3. on a complete admitted moving episode with the declared attitude-span excitation, prove that moving information collapses the stationary gauge and gives finite retained entry into V<=r_in^2, r_in<.15;
+4. then invoke the existing radius-local LaSalle theorem and finite-error retention inequalities.
+
+This does not strengthen MARINE MOTION. If an execution remains at complete physical rest forever, its theorem conclusion is practical stability to the stationary consistency class, not convergence of an unobservable physical attitude/BA representative to zero covariance-metric error.
+
+Next falsifiable calculation: construct the exact stationary gauge tangent
+
+    K_stat = {(delta theta,delta b_a): delta theta || Q B,
+              delta b_a = g delta(Q e_z)}
+
+at the carried A21 root, project the complete literal corrected-word action to K_stat^perp, and test whether one complete same-history T_E moving window supplies strictly positive action on the remaining gauge coordinate using the literal coupled tau/sigma_aw/R_S/T_S chronology. If the high-precision margin is not comfortably positive, identify the surviving same-history gauge before any interval refinement.
