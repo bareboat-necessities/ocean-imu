@@ -15,6 +15,7 @@ def status_report() -> dict:
         "two_timescale_source_uniform_finite_error_supply":False,
         "marine_regime_complete_window_contract":True,
         "marine_displacement_excitation_contract":True,
+        "marine_displacement_excitation_numeric_qualification":True,
         "zero_translation_moving_alias_excluded":True,
         "displacement_span_signed_kinematic_moment":True,
         "displacement_four_S_boundary_mismatch_identified":True,
