@@ -260,3 +260,55 @@ The remaining bridge is now minimal and precise: prove that on one same-history 
 on every complete EXCITED_MOVING word (or an equivalent linked action), derived from physical tilt excitation + LF residual bounds + bounded physical primitives and literal innovation dynamics. Pointwise AW tracking is neither needed nor allowed.
 
 NEXT FALSIFIABLE CALCULATION: derive the exact base AW error recurrence at accepted accelerometer and S updates, project it transverse to the committed magnetic field, and combine it over a 60-s EXCITED_MOVING window with the LF residual charge. Test whether the coupled recurrence yields a positive integrated nominal transverse-force floor without replacing innovations by independent controls. If the high-precision same-history feasibility floor is zero/negative, identify the surviving base trajectory before attempting interval enclosure.
+
+
+## Exact transverse base-AW recurrence and 60-s summation — current
+
+Let b_k=B_ref,k/||B_ref,k|| and P_k=I-b_k b_k'. At the pre-accelerometer epoch define x_k^S=a_hat_w,k^S-g and u_k^S=P_k x_k^S. The literal mean chronology is:
+
+    prediction:  a_hat_w,k^- = phi_k a_hat_w,k-1^+,
+    due S row:   a_hat_w,k^S = a_hat_w,k^- - K_aw,S,k S_k^-,
+    acc row:     a_hat_w,k^+ = a_hat_w,k^S + K_aw,a,k r_a,k,
+
+with the actual base innovation
+
+    r_a,k = f_meas,k - [Rhat_k x_k^S + lever_k + b_hat_a,temp,k].
+
+Therefore exactly
+
+    u_k^+ = P_k[phi_k a_hat_w,k-1^+ - g
+                -K_aw,S,k S_k^- + K_aw,a,k r_a,k].          (TAW-1)
+
+Writing x_(k-1)^+=u_(k-1)^+ + b_(k-1) alpha_(k-1),
+alpha_(k-1)=b_(k-1)'x_(k-1)^+, gives the explicit projector-transport form
+
+    u_k^+ = phi_k P_k u_(k-1)^+
+            +phi_k alpha_(k-1) P_k b_(k-1)
+            -(1-phi_k)P_k g
+            -P_k K_aw,S,k S_k^-
+            +P_k K_aw,a,k r_a,k.                           (TAW-2)
+
+The second term is the committed-reference rotation charge. TAW-1/2 carry the actual S and accelerometer innovations; homogeneous D=0 does not remove them.
+
+Substitute the physical calibrated measurement model into r_a,k:
+
+    f_meas,k = Rtrue_k(a_phys,k-g_phys)+lever_true,k
+               +b_a,phys,temp,k+n_a,k.
+
+Then TAW-1 is a closed same-history recurrence driven by physical a/attitude/bias/residual and the estimator state/covariance/reference chronology. The LF qualification constrains only L_X n_a and L_X n_g; it does not directly constrain r_a because r_a also contains Rtrue a_phys-Rhat a_hat_w, BA mismatch, lever/reference mismatch and base state error.
+
+For a 60-s window W, unrolling TAW-1 gives exactly
+
+    u_N = Phi_(N,0) u_0 + sum_(j=1)^N Phi_(N,j) c_j,          (TAW-3)
+
+where Phi_(N,j) is the ordered product of the literal transverse prediction/update maps and c_j contains the linked gravity-forgetting, reference-transport, S-innovation and accelerometer-innovation terms. The desired action is
+
+    A_X(W)=sum_(k in W) w_k ||u_k^S||^2.                    (TAW-4)
+
+No lower bound on A_X follows from the LF residual envelope alone: LF bounds only one component of c_j. In particular, EXCITED_MOVING constrains TRUE Q(t), whereas u_k is a nominal-force state and actual base innovations provide closed-loop feedback capable in principle of replenishing the gravity-scale AW component. Bounding n_a,n_g in the vessel band removes the explicit quiet-packet residual witness but does not algebraically prevent cancellation through the physical acceleration/BA/base-innovation terms.
+
+Thus the proposed implication
+
+    EXCITED_MOVING + LF residual envelope => A_X(W)>=c_X>0
+
+is NOT established by TAW-1--4 without an additional already-existing physical primitive relation being used. The next valid calculation is to substitute r_a into TAW-3 and eliminate the physical acceleration contribution by the bounded-v/p/S primitives over the SAME 60-s word, while retaining K_aw,a, K_aw,S and the coupled tuner chronology. This is a closed-loop forced-response calculation, not pointwise AW tracking and not an independent-innovation bound. A non-promoting same-history diagnostic should evaluate the resulting signed functional before interval enclosure.
