@@ -108,9 +108,13 @@ int main(int argc, char** argv) {
         const float rate = wave ? static_cast<float>(.01*std::cos(.5*t)) : 0.0f;
         const float az = wave ? static_cast<float>(-.144*std::sin(.6*t)) : 0.0f;
         const Eigen::Matrix3f rwb=Eigen::AngleAxisf(-roll,Eigen::Vector3f::UnitX()).toRotationMatrix();
+        estimator_state = filter.raw().mekf().xext.template cast<double>();
+        estimator_quat = filter.raw().mekf().qref.coeffs().template cast<double>();
         filter.update(.005f,Eigen::Vector3f(rate,0,0),rwb*Eigen::Vector3f(0,0,az-g_std));
         if (k%8==0) {
             const Eigen::Vector3f measured_field = wave ? (rwb*Eigen::Vector3f(60,0,30)).eval() : field;
+            estimator_state = filter.raw().mekf().xext.template cast<double>();
+            estimator_quat = filter.raw().mekf().qref.coeffs().template cast<double>();
             filter.updateMag(measured_field);
             if (recording && filter.raw().mekf().lastMagDiag().accepted) ++applied;
         }
