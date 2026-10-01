@@ -1255,7 +1255,13 @@ The associated coefficient/gain family is compact. Structural zero-kernel plus c
 
 On the retained $\le7^\circ$ captured tilt domain, the existing magnetic field/residual bounds leave positive margin at the literal MagAutoTuner gates. MAGNETIC SERVICE supplies informative samples in uniformly finite time; the refinement count/window and subsequent bias-release guard therefore give a conservative finite proof horizon, not a runtime timeout. Compact attitude, projected gyro bias, H18 LIN BIBO and finite continuous covariance/reference evolution then give a compact A21 release set conditional on captured-domain entry. Release is not asserted to lie in $V\le0.15^2$.
 
-For the controlling theorem in this revision, MARINE excitation is user-qualified as $T_E=T_P=30\,{\rm s}$, $\theta_E=2^\circ$, and $P_E=0.03\,{\rm m}$. These are premises, not values inferred from vessel RAO evidence. They imply the mean-value scales $\theta_E/T_E=1.16355283466\times10^{-3}\,{\rm rad/s}$ and $P_E/T_P=10^{-3}\,{\rm m/s}$. Since $P_E-T_PV_{\max}<0$, displacement span still gives no instantaneous acceleration floor; the paired physical $p/v/S/a$ functional remains necessary.\n\n\section{Outer physical-to-nominal bridge and paired two-Abel operator}
+For the controlling theorem in this revision, MARINE excitation is user-qualified as $T_E=T_P=30\,{\rm s}$, $\theta_E=2^\circ$, and $P_E=0.03\,{\rm m}$. These are premises, not values inferred from vessel RAO evidence. They imply the mean-value scales $\theta_E/T_E=1.16355283466\times10^{-3}\,{\rm rad/s}$ and $P_E/T_P=10^{-3}\,{\rm m/s}$. Since $P_E-T_PV_{\max}<0$, displacement span still gives no instantaneous acceleration floor; the paired physical $p/v/S/a$ functional remains necessary.\n\nFor the current candidate assembled-device FAST qualification we take
+\[
+ H_a=H_g=60\,{\rm s},\qquad C_a=0.05\,{\rm m/s},\qquad C_g=0.002\,{\rm rad}.
+\]
+On every 30-s MARINE window the corresponding signed FAST caps are still $0.05\,{\rm m/s}$ and $0.002\,{\rm rad}$. The known $\phi=.01\sin(t/2)$ witness requires at least $0.370655073155\,{\rm m/s}$ and $0.0197081716368\,{\rm rad}$ after the existing sampling charge, so the candidate excludes that witness through either sensor separately. The remaining general same-history gauge theorem and assembled-device validation are not inferred from this witness test.
+
+\section{Outer physical-to-nominal bridge and paired two-Abel operator}
 The displacement chord identity
 \[
  q^{\mathsf T}\Delta p=Tq^{\mathsf T}v_0+\int_0^T(T-t)q^{\mathsf T}a(t)\,dt
