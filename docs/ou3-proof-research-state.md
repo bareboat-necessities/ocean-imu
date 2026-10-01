@@ -447,3 +447,17 @@ This does NOT yet prove entry: properties (1)-(3), especially the outer zero-act
 The local RL-FA zero-action classification cannot simply be extended to the outer annulus. Its final field-axis contradiction uses the storage-local AW relation ||a_hat_w-a_phys||<4.06 r. That relation is intentionally unavailable before inner entry and fails as a global premise. Therefore EXCITED_MOVING excitation by itself does not yet prove that zero complete-word action outside the inner ball equals the attitude/BA gauge.
 
 What remains valid globally on exact zero action is the literal measurement compatibility plus homogeneous covariance-metric nonexpansion and the exact OU/S/BA recurrences. The next proof must eliminate nominal AW from the zero-action compatibility equations over a complete EXCITED_MOVING window using the integrated a_w->v->p->S chain, S=0 pseudo-observations, bounded physical v/p primitives, and the one same-history coupled tuner sequence. The desired exact implication is: zero complete-word action + bounded physical primitives + EXCITED_MOVING => packet-compatible attitude/BA gauge only. It must not invoke pointwise AW tracking. Once this exact implication is proved, the strict theta_X>Theta_gauge(T_X) margin and compactness provide qualitative positive annular dissipation for any fixed positive margin.
+
+
+## Outer zero-action: exact S-chain reduction — current
+
+The correct non-pointwise AW bridge is the already-proved exact four-S-event divided-difference identity in word_diameter.py. For four actual S epochs with coefficients c_j annihilating 1,t,t^2, define the literal chronology-dependent AW weights omega_k from phi_va,phi_pa,phi_Sa. Then exactly, for arbitrary varying literal OU coefficients,
+
+    sum_k omega_k a_hat_w,k - sum_j c_j S_hat_j
+      = - sum_k g_k' (n_v,n_p,n_S)_k.
+
+The identity cancels the complete LIN root (v,p,S,a_w), every AW process forcing term and every AW covariance-sync jump. It therefore respects the coupled same-history tuner chronology and does not require pointwise AW tracking.
+
+On exact complete-word zero dissipation every actually applied S innovation is zero, hence S_hat_j=0 at each of the four atoms. Every applied accelerometer/magnetic innovation is also zero, so correction mean jumps vanish. The remaining identity is a signed/windowed nominal-AW functional determined only by the literal prediction chronology and integrated source terms. This is the correct object to substitute into the zero-accelerometer compatibility equations before comparing physical gravity directions.
+
+However, this identity alone does not yet imply packet-compatible attitude/BA gauge: the right-hand integrated source term is not zero in the homogeneous covariance comparison, and the accelerometer compatibility contains the same-history physical acceleration and attitude. The next exact calculation is to combine the S-chain weights with the zero-innovation accelerometer equations at the same epochs and Abel-sum the physical acceleration using bounded v and jerk. The target is a two-epoch/weighted gravity relation whose only non-gravity physical remainder is bias-rate plus bounded endpoint/quadrature terms. EXCITED_MOVING can exclude zero action only if that derived remainder is strictly below the physical theta_X span. No pointwise ||a_hat_w-a_phys|| bound is permitted.
