@@ -36,6 +36,23 @@ def verify_endpoint(boundaries):
     predicted=add(matmul(c["M"],e0),c["b"])
     return {**c,"endpoint_identity_exact":predicted==eN}
 
+def event_boundary_pairing(events):
+    """Pair pre-operation snapshots when intervening exported events are mean-neutral.
+
+    sync/sync_completion alter covariance only. Every prediction/correction/reset
+    changes the mean map and therefore starts a new boundary. The post-error of
+    one mean event is the pre-error of the next mean event only after all
+    intervening covariance-only events are skipped.
+    """
+    mean_kinds={"prediction","correction","reset"}
+    idx=[i for i,e in enumerate(events) if e.get("kind") in mean_kinds]
+    pairs=[]
+    for a,b in zip(idx,idx[1:]):
+        hidden=[e.get("kind") for e in events[a+1:b] if e.get("kind") not in ("sync","sync_completion")]
+        if hidden: raise ValueError(f"unclassified hidden mean chronology: {hidden}")
+        pairs.append((a,b))
+    return pairs
+
 def certificate():
     # exact 2-D synthetic chronology proves composition/order convention.
     B=[{"kind":"prediction","A":[["2","0"],["0","1"]],"e_before":[["1"],["3"]],"e_after":[["5"],["4"]]},
@@ -44,6 +61,8 @@ def certificate():
     return {"qualification":"OU3_LOCAL_DEFECT_COMPOSITION_V1",
             "synthetic_endpoint_identity_exact":r["endpoint_identity_exact"],
             "endpoint_residual_used_as_input":False,
+            "pre_operation_snapshots_exported":True,
+            "post_boundary_pairing_rule_implemented":True,
             "native_literal_boundary_export_complete":False,
             "source_uniform_verified":False,"theorem_closed":False}
 
