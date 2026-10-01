@@ -139,3 +139,21 @@ consistent with LS11 and prove its retained covariance/history domain. Evaluate
 LS1--LS7 on that same-history target with exact OU/BA/S mismatch; a positive
 homogeneous loss alone is insufficient. Do not spend enclosure effort trying
 to force the already refuted norm-only full-error .15 retention statement.
+
+
+## Fast-residual temporal qualification — proposed controlling form
+
+The pointwise residual bounds ||n_a||<=.3 m/s2 and ||n_g||<=.02 rad/s are insufficient for physical point-entry. They admit persistent low-frequency residuals that exactly counterfeit genuine roll/pitch while remaining inside the amplitude boxes. A running-mean/DC condition alone is also insufficient: a compensating sinusoid can have arbitrarily small long-window mean while cancelling vessel motion sample by sample.
+
+The weakest natural engineering qualification identified here is therefore a LOW-FREQUENCY RESIDUAL CONTENT envelope, not a smaller instantaneous amplitude. Keep the existing pointwise boxes for fast spikes/vibration, but decompose the already calibrated residual through one declared stable low-pass qualification operator L_X whose passband covers the EXCITED_MOVING attitude band. Require, on every qualified continuation,
+
+    ||L_X n_a|| <= eps_a,LF,
+    ||L_X n_g|| <= eps_g,LF,
+
+with the complementary high-frequency residual retaining the existing .3/.02 pointwise/RMS qualification. L_X is a certification/analysis operator, not a shipping filter or estimator change. Its exact transfer function/cutoff and eps bounds must come from stationary/dynamic IMU characterization (PSD/Allan/time-record evidence), not be selected merely to make the proof close.
+
+Why this is minimal: the finite-residual witness uses phi=.01 sin(.5t), i.e. f=.07958 Hz, and requires a compensating gyro residual of amplitude .005 rad/s and accelerometer residual of roughly g*.01=.0981 m/s2 plus the .01 m/s2 DC compensation. Any qualification that still permits those low-frequency components cannot exclude the witness. A pure window-mean bound can permit them. Conversely, bounding the residual after a low-pass that passes the vessel-attitude band directly limits exactly the part capable of masquerading as physical attitude; high-frequency vibration need not be tightened.
+
+Equivalent certification forms are acceptable if proved to imply the same deterministic low-frequency envelope: (a) a PSD/integrated spectral-energy ceiling below a declared f_X, plus a deterministic conversion appropriate to the theorem class; (b) a bank of finite-window sinusoidal/correlation bounds covering [0,f_X]; or (c) a stable low-pass state-space filter with a source-uniform output bound. Allan deviation is useful engineering evidence for selecting/validating timescales and bias/noise decomposition, but by itself is statistical and does not imply the deterministic all-history bound required by the theorem.
+
+NEXT CALCULATION: choose L_X from an independently meaningful vessel/IMU separation timescale and derive the exact modified gauge envelope Theta_gauge,res(T_X) including B_a,D_a,B_g,D_g and eps_a,LF/eps_g,LF. Then determine the maximum allowable eps_a,LF and eps_g,LF for simple candidate EXCITED_MOVING cutoffs such as 1 degree/60 s. These are qualification requirements to compare against real BMI270 data; they are not yet assumptions.
