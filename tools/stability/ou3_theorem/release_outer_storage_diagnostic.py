@@ -21,7 +21,9 @@ def driver_source():
     oldout='<< ",\\\"root_covariance\\\":" << root'
     newout='<< ",\\\"release_covariance\\\":" << release_cov << ",\\\"release_state\\\":" << release_state << ",\\\"release_quaternion\\\":" << release_quat << ",\\\"root_covariance\\\":" << root'
     if oldout not in s: raise ValueError("output anchor changed")
-    s=s.replace(oldout,newout)\n    s=s.replace(" || applied!=8","")\n    return s
+    s=s.replace(oldout,newout)
+    s=s.replace(" || applied!=8","")
+    return s
 
 def rotvec(coeffs):
     q=np.asarray(coeffs,float).reshape(4); xyz=q[:3]; w=q[3]; n=np.linalg.norm(xyz)
@@ -54,4 +56,5 @@ def run(eigen):
 if __name__=="__main__":
     import argparse
     p=argparse.ArgumentParser(); p.add_argument("--eigen",type=Path,default=Path("/usr/include/eigen3")); p.add_argument("--output",type=Path,required=True)
-    a=p.parse_args(); a.output.write_text(json.dumps(run(a.eigen),indent=2,sort_keys=True)+"\n")
+    a=p.parse_args(); a.output.write_text(json.dumps(run(a.eigen),indent=2,sort_keys=True)+"
+")
