@@ -70,3 +70,53 @@ These validate the analytical substitutions, not a full trajectory enclosure.
 Full native validation and CI were not run here. Inherited failures, numerical
 experiments, unsuccessful routes, and exact previous status are retained in the
 archived ledger and previous PR history; they are not claimed repaired.
+
+
+## Shipping-reference and prefix-premise audit — 1c8f4e94
+
+The requested follow-up is now source-audited in
+`docs/ou3-shipping-reference-prefix-retention.md`.
+
+The continuous hard-iron reference update has an exact same-statistics
+Lipschitz law: with `L(b)=wbar-Abar*b` and `||Abar||<=1`, each canonical
+horizontal/z reference component moves by at most the applied body-bias
+increment, and the full canonical reference by at most `sqrt(2)` times it.
+The 45-s slew gives the corresponding per-update increment. This is literal
+shipping chronology, not a compatibility relaxation.
+
+That result does NOT yield the needed all-time nominal cone from the present
+contract. Startup/refinement enforce a 5% horizontal fraction, but the default
+continuous path does not reapply that fraction gate; it only requires positive
+horizontal magnitude above .001 uT. Its loose accepted-fit envelope
+`.35*(75+5+2)=28.7 uT` exceeds the declared physical 15-uT horizontal
+minimum. More decisively, its statistics use the private Mahony tilt, and no
+all-time deterministic true-to-proxy tilt tube has yet been proved. Therefore
+the physical-field cone cannot be silently transferred to the nominal
+reference.
+
+The FA12 full-storage premise also cannot be inherited from six-degree capture.
+The fixed-reference field-exclusion radius must satisfy `r<.355396`, whereas
+the handoff tilt covariance sigma is .035 rad, so a six-degree tilt error alone
+has minimum covariance-metric radius `(pi/30)/.035=2.99199...`. This does not
+say handoff has six-degree error; it proves the existing capture target does
+not imply the small FA12 storage ball.
+
+To remove that artificial circularity, the field-axis lemma is reformulated in
+the exact component it needs. If
+`||a_hat_w-a_phys||<=eps_aw` at every relevant prefix, the fixed-reference
+100-s exclusion needs only
+`eps_aw < g*sin(10deg)-.26 = 1.4429069015... m/s^2`.
+The varying-reference version is given as PR10 in the new note. This is much
+weaker than requiring the entire 21-state Mahalanobis error to be <=.25.
+
+Prefix invariance remains a simultaneous fixed-point problem, not an upstream
+premise: the same block must close kernel covariance return, word error supply,
+and every-prefix supply. Proving `V<=r^2` first from covariance bounds would
+be circular because the strict word return needed for that storage recursion is
+the open O2/BP obligation.
+
+Next decisive calculation: derive (or falsify) an all-time private-Mahony tilt
+tube and an all-prefix AW tracking tube from their literal error equations on
+the SAME physical history, retaining the coupled tau/sigma_aw/R_S/T_S
+chronology; insert those component tubes into BP-4/BP-10 and solve the retained
+rectangle simultaneously. No theorem flag is promoted.
