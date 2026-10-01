@@ -110,8 +110,17 @@ class TheoremStatusTests(unittest.TestCase):
             self.assertFalse(o[key])
         route=r["a21_contraction_route"]
         self.assertEqual(len(route["open_source_premises"]),2)
-        self.assertIn("independent of B_*", route["first_prediction_epsilon_ceiling"])
-        self.assertFalse(route["joint_reader_C_needed_for_rho0"])
+        self.assertIn("LaSalle", route["method"])
+        self.assertIn("(tau,sigma_aw,R_S,T_S)", route["chronology"])
+        self.assertFalse(route["O1_O2_kernel_ceiling_architecture_controlling"])
+        self.assertFalse(route["zero_homogeneous_action_implies_zero_base_innovations"])
+        model=r["imu_bias_model"]
+        self.assertIn("OPEN",model["temporal_numerical_qualification"])
+        self.assertFalse(model["independent_residual_box_admission"])
+        self.assertFalse(model["stronger_EXCITED_MOVING_adopted"])
+        for key in ("fast_accel_temporal_device_qualification", "fast_gyro_temporal_device_qualification",
+                    "two_timescale_joint_physical_gauge_exclusion", "two_timescale_source_uniform_finite_error_supply"):
+            self.assertFalse(o[key])
 
     def test_word_diameter_reduction_keeps_source_bounds_open(self):
         o=status_report()["obligations"]

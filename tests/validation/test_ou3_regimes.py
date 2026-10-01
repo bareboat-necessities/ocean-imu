@@ -71,15 +71,15 @@ class RegimeTests(unittest.TestCase):
         self.assertEqual(rows[-1]["radius"], F(3, 2)**20)
         self.assertGreater(rows[-1]["radius"], 3000)
 
-    def test_gyro_average_charges_false_entry_and_coherent_noise(self):
+    def test_gyro_average_charges_false_entry_and_supplied_fast_action(self):
         radius = stationary_gyro_average_radius(F(1, 50), F(1, 100000),
-                                               [1, 0], [F(1, 2)] * 2)
+                                               [1, 0], [F(1, 2)] * 2, slow_amplitude=F(1,50))
         self.assertEqual(radius, F(4001, 200000))
         hidden = stationary_gyro_average_radius(F(1, 50), 0, [1, 0],
-                                               [F(1, 2)] * 2, F(1, 100))
+                                               [F(1, 2)] * 2, F(1, 100), slow_amplitude=F(1,50))
         self.assertEqual(hidden, F(3, 100))
         self.assertEqual(stationary_gyro_average_radius(F(1, 50), 0,
-                         range(1000), [F(1, 1000)] * 1000), F(1, 50))
+                         range(1000), [F(1, 1000)] * 1000, slow_amplitude=F(1,50)), F(1, 50))
 
     def test_exact_bias_service_and_scope_certificate(self):
         report = certificate()
@@ -99,8 +99,8 @@ class QuietEvidenceTests(unittest.TestCase):
     def rest(self, monitor, start, count):
         result = None
         for k in range(count):
-            # Correlated bounded sensor noise and a persistent physical bias
-            # cannot be averaged away by an assumed white-noise model.
+            # Amplitude-only necessary screen: passing it never certifies
+            # the new fast temporal contract or physical STILL.
             result = monitor.step(start + k * .005, (.019, .001, 0),
                                   (.08, .03, -9.70665 + .05 * math.sin(k)))
         return result
@@ -112,6 +112,7 @@ class QuietEvidenceTests(unittest.TestCase):
         self.assertEqual(self.rest(m, 2, 1), "STILL_COMPATIBLE")
         self.assertEqual(self.rest(m, 2.005, 20000), "STILL_COMPATIBLE")
         self.assertFalse(m.certified_still)
+        self.assertFalse(m.certified_fast_history)
 
     def test_detectable_motion_exits_then_requires_fresh_dwell(self):
         m = self.monitor()
@@ -156,6 +157,7 @@ class QuietEvidenceTests(unittest.TestCase):
                 self.assertEqual(status, "STILL_COMPATIBLE")
             moving_seen |= abs(phi) > .0009
             self.assertFalse(m.certified_still)
+        self.assertFalse(m.certified_fast_history)
         self.assertTrue(moving_seen)
 
 

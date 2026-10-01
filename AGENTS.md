@@ -60,3 +60,18 @@ Run a non-promoting high-precision feasibility diagnostic before rigorous enclos
 Keep `docs/ou3-proof-research-state.md` concise and current under Current hypothesis, Evidence, Current limiter, Failed approaches / DEAD_ENDS, Retained facts, Alternatives, and Next falsifiable experiment.
 
 Do not claim the end-to-end theorem until finite capture, finite-error dissipativity, retention, and implementation/arithmetic premises are all closed.
+
+### IMU BIAS physical qualification (SLOW + FAST)
+
+The controlling proof-side IMU model is `docs/ou3-imu-two-timescale.md`:
+`e_a=b_a,s+b_a,f`, `e_g=b_g,s+b_g,f`. Physical bias-state comparison coordinates
+refer to SLOW components; FAST errors are same-history delivered sensor forcing.
+Both fast horizon/cap pairs are OPEN until independently qualified. A finite
+trace, statistical noise parameter, calibration gate or old residual amplitude
+box does not discharge that qualification. Preserve one split and primitive
+through construction, H18, A21 and regime transitions. Use SF3--SF9's reachable
+raw/averaged/matrix-weighted sets in current physical inequalities; archived
+norm-only counterexamples retain their old-model label. No stronger MARINE or
+EXCITED_MOVING condition is introduced by this correction. Old O1/O2 research
+notes are not the controlling architecture; the full-state dissipativity/LaSalle
+and linked supply path remains. This does not authorize runtime changes.

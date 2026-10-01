@@ -1,4 +1,4 @@
-"""All-time real-arithmetic obstruction under the norm-only residual contract.
+"""HISTORICAL all-time obstruction under the V3 norm-only residual contract.
 
 The witness is a physical truth producing the existing quiet packet history.
 It is NOT inferred from homogeneous zero action. No runtime/noise setting is
@@ -10,6 +10,11 @@ import json
 from pathlib import Path
 from .sampled_capture_obstruction import service_certificate
 
+# Frozen old-domain limits: historical witness, NOT controlling IMU BIAS.
+LEGACY_ACCEL_RESIDUAL = F(".3")
+LEGACY_GYRO_RESIDUAL = F(".02")
+LEGACY_ACCEL_BIAS = F(".22516660498395405")
+
 
 def certificate():
     c = json.loads(Path(__file__).with_name('constants.json').read_text(), parse_float=F)
@@ -20,9 +25,9 @@ def certificate():
     # Exact packets: f=-g_model*ez, gyro=0, mag=75*ex.
     accel_upper = g*alpha + ba + abs(g-g_model)
     gyro_upper = alpha*nu
-    assert accel_upper < c['sensor_model']['accel_fast_residual_norm_max_mps2']
-    assert gyro_upper < c['sensor_model']['gyro_fast_residual_norm_max_rad_s']
-    assert ba < c['imu_bias']['B_a_mps2']
+    assert accel_upper < LEGACY_ACCEL_RESIDUAL
+    assert gyro_upper < LEGACY_GYRO_RESIDUAL
+    assert ba < LEGACY_ACCEL_BIAS
     assert gyro_upper < c['marine_motion']['Omega_max_rad_s']
     # Period=4*pi<88/7<60 and span=2*alpha>pi/180, using pi<22/7.
     assert 4*F(22, 7) < 60
@@ -51,7 +56,9 @@ def certificate():
         'physical_sqrt_V_lower': str(r_lower),
         'inner_radius': '3/20',
         'finite_residual_inner_retention_refuted_on_this_class': True,
-        'scope': 'norm-only deterministic residuals, inherited regular real-arithmetic quiet source profile',
+        'scope': 'HISTORICAL V3 norm-only deterministic residuals, inherited real-arithmetic quiet source profile',
+        'current_two_timescale_admissibility': 'OPEN; see imu-two-timescale-certificate.json',
+        'current_model_storage_lower_bound_inferred': False,
         'all_time_float32_verified': False,
         'local_homogeneous_theorem_refuted': False,
         'end_to_end_stability_theorem_closed': False,

@@ -1,5 +1,5 @@
 {
-  "qualification": "OU3_MARINE_IMU_MAGNETIC_CONTRACT_V3",
+  "qualification": "OU3_MARINE_IMU_MAGNETIC_CONTRACT_V4_SLOW_FAST",
   "role": "Declared deterministic certification limits. A numeric limit is not a claim that every assembled device has been qualified to it.",
   "marine_motion": {
     "P_max_m": 8.1,
@@ -19,15 +19,27 @@
     }
   },
   "imu_bias": {
-    "B_a_mps2": 0.22516660498395405,
-    "D_a_mps3": 0.001,
-    "B_g_rad_s": 0.02,
-    "D_g_rad_s2": 0.00001,
+    "model": "e_a=b_a_s+b_a_f; e_g=b_g_s+b_g_f",
+    "B_a_s_mps2": 0.22516660498395405,
+    "D_a_s_mps3": 0.001,
+    "B_g_s_rad_s": 0.02,
+    "D_g_s_rad_s2": 1e-05,
+    "B_a_f_mps2": 0.3,
+    "B_g_f_rad_s": 0.02,
+    "fast_accel_horizon_s": null,
+    "fast_accel_accumulation_cap_mps": null,
+    "fast_gyro_horizon_s": null,
+    "fast_gyro_accumulation_cap_rad": null,
+    "temporal_rule": "On the calibrated delivered-sample hold, every placed window of length 0<T<=H_i has norm of signed integral <= min(B_i_f*T,C_i); finite H_i>0 and C_i<B_i_f*H_i. Longer intervals use the carried history, not a reset.",
+    "assembled_two_timescale_qualification": "OPEN",
     "qualification": {
-      "B_a": "derived from the retained commissioned per-axis 0.13 m/s^2 residual envelope",
-      "D_a": "selected deterministic deployment limit; assembled-history qualification is open",
-      "B_g": "retained commissioned residual norm envelope",
-      "D_g": "retained commissioned gyro-bias rate envelope"
+      "B_a_s": "Inherited candidate sqrt(3)*0.13. The old prose calls 0.13 a commissioned per-axis residual envelope; no attached assembled-device record establishing this slow-component bound was found. Not a fit-uncertainty or sensor-noise sigma.",
+      "D_a_s": "Inherited selected deterministic deployment limit, not a measured bias-rate specification. Assembled slow-history qualification OPEN.",
+      "B_g_s": "Inherited 0.02 norm envelope; previous commissioned wording has no linked assembled slow-component evidence. Candidate only.",
+      "D_g_s": "Inherited 1e-5 rate envelope; no linked time-record qualification found. Candidate only, not estimator process noise.",
+      "B_a_f": "Inherited 0.3 instantaneous proof envelope, not a broadband RMS-to-pathwise conversion. Two-timescale decomposition qualification OPEN.",
+      "B_g_f": "Inherited 0.02 instantaneous proof envelope, not the gyro sigma or noise density. Two-timescale decomposition qualification OPEN.",
+      "fast_temporal": "OPEN for both sensors: H and C are deliberately null. The accumulation form is a conditional qualification interface, not a new measured device specification. Missing values never mean unrestricted fast error."
     }
   },
   "magnetic_service": {
@@ -44,14 +56,13 @@
   },
   "sensor_model": {
     "nominal_sample_period_s": 0.005,
-    "accel_fast_residual_norm_max_mps2": 0.3,
-    "gyro_fast_residual_norm_max_rad_s": 0.02,
-    "qualification": "deterministic commissioned BMI270 profile; fast residual bound also caps the vibration detector-band RMS used by Racc inflation; A21 theorem admits 166.7--250 Hz timing [0.004,0.006] s; deployment qualification remains separate",
+    "qualification": "Existing timing, Racc and detector-band limits retained numerically. The detector-band RMS envelope is a separate proof qualification of the actual frontend, not implied by a new fast-component amplitude or by an RMS-to-pathwise conversion. Assembled qualification remains OPEN.",
     "sample_period_min_s": 0.004,
     "sample_period_max_s": 0.006,
     "accel_nominal_std_mps2": 0.2,
     "accel_vibration_racc_gain": 0.75,
-    "accel_effective_std_max_mps2": 0.3010398644698074
+    "accel_effective_std_max_mps2": 0.3010398644698074,
+    "accel_vibration_detector_rms_max_mps2": 0.3
   },
   "a21_schedule": {
     "tau_min_s": 0.02,

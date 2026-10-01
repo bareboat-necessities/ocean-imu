@@ -29,8 +29,8 @@ def certificate():
     sensor = c["sensor_model"]
     h_min, h_max = sensor["sample_period_min_s"], sensor["sample_period_max_s"]
     omega = c["marine_motion"]["Omega_max_rad_s"]
-    physical_bias = c["imu_bias"]["B_g_rad_s"]
-    residual = sensor["gyro_fast_residual_norm_max_rad_s"]
+    physical_bias = c["imu_bias"]["B_g_s_rad_s"]
+    residual = c["imu_bias"]["B_g_f_rad_s"]
     radius = source_radius()
     angle = h_max * (omega + physical_bias + residual + radius)
     # The shipping quaternion uses a normalized polynomial below .01 rad.
@@ -49,10 +49,12 @@ def certificate():
     if not small_floor > lower > 0:
         raise ArithmeticError("small-rate source branch lacks the claimed floor")
     return {
-        "qualification": "OU3_IMPLEMENTED_GYRO_BIAS_INVARIANT_V1",
+        "qualification": "OU3_IMPLEMENTED_GYRO_BIAS_INVARIANT_V2_SLOW_FAST",
+        "physical_coordinate": "slow gyro bias; fast remains delivered sensor forcing",
+        "amplitude_bound_is_not_temporal_qualification": True,
         "estimator_radius_rad_s": str(radius),
-        "physical_residual_bias_rad_s": str(physical_bias),
-        "fast_measurement_residual_rad_s": str(residual),
+        "physical_slow_bias_rad_s": str(physical_bias),
+        "fast_measurement_amplitude_rad_s": str(residual),
         "physical_angular_rate_rad_s": str(omega),
         "admitted_step_s": [str(h_min), str(h_max)],
         "corrected_rate_norm_upper_rad_s": str(omega+physical_bias+residual+radius),
@@ -64,7 +66,8 @@ def certificate():
         "gyro_transport_relative_singular_floor": str(relative_floor),
         "gyro_transport_singular_floor_s": str(lower),
         "small_rate_polynomial_singular_floor_s": str(small_floor),
-        "physical_assumptions_changed": False,
+        "physical_amplitude_numbers_changed": False,
+        "imu_temporal_model_migrated": True,
         "mean_only_covariance_preserved": True,
         "complete_turn_nominal_bias_alias_excluded": True,
         "single_prediction_transport_source_uniform_real_arithmetic": True,

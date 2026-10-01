@@ -37,7 +37,7 @@ def certificate():
                                ('marine_motion','sensor_model','imu_bias','magnetic_service'))
     g, jerk, h = F('9.80665'), F(motion['J_max_mps3']), F(sensor['sample_period_max_s'])
     velocity = F(motion['V_max_mps'])
-    acc_residual = F(bias['B_a_mps2'])+F(sensor['accel_fast_residual_norm_max_mps2'])
+    acc_residual = F(bias['B_a_s_mps2'])+F(bias['B_a_f_mps2'])
     # Both magnetic residual envelopes are charged; neither is discarded.
     mag_residual = F(mag['hard_iron_residual_norm_max_uT'])+F(mag['measurement_residual_norm_max_uT'])
     eta = jerk*h/4
@@ -68,7 +68,10 @@ def certificate():
     source_action_rate=((1+theta)*action_rate+(1+1/theta)*amplitude**2*transition_defect/
                         F(sensor['sample_period_min_s']))/(1-eps)
     return {
-        'qualification':'OU3_JERK_SAMPLING_FIDELITY_V1',
+        'qualification':'OU3_JERK_SAMPLING_FIDELITY_V2_SLOW_FAST',
+        'imu_error_domain':'same-history SLOW + FAST; weighted support before amplitude relaxation',
+        'amplitude_outer_is_not_fast_admission':True,
+        'both_fast_device_profiles_qualified':False,
         'verified':True,
         'acceleration_locally_absolutely_continuous_required':True,
         'jerk_limit_mps3':str(jerk),

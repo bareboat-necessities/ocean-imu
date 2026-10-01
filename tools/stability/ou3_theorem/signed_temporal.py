@@ -225,7 +225,7 @@ def endpoint_annihilating_multiplier_constraints():
       "BG_companion_equation":"z_b'=-z_theta",
       "BG_endpoint_conditions":["z_b(t0)=0","z_b(t1)=0"],
       "equivalent_BG_moment_condition":"integral z_theta dt = 0",
-      "physical_BG_increment_supply":"sum z_b,k w_g,k; ||w_g,k||<=D_g dt_k",
+      "physical_BG_increment_supply":"sum z_b,k w_g,k; ||w_g_s,k||<=min(2 B_g_s,D_g_s dt_k); FAST remains in signed sensor rows",
     }
 
 
@@ -424,8 +424,8 @@ def gyro_construction_barrier():
     from .gyro_bias_projection import certificate as gyro_certificate
     gyro=gyro_certificate()
     c=json.loads(Path(__file__).with_name('constants.json').read_text(),parse_float=F)
-    omega=c['marine_motion']['Omega_max_rad_s']; bg=c['imu_bias']['B_g_rad_s']
-    ng=c['sensor_model']['gyro_fast_residual_norm_max_rad_s']
+    omega=c['marine_motion']['Omega_max_rad_s']; bg=c['imu_bias']['B_g_s_rad_s']
+    ng=c['imu_bias']['B_g_f_rad_s']
     hmax=c['sensor_model']['sample_period_max_s']; pi_lower=F('3.14159265358979323846')
     return {"first_prediction_increment_ceiling":hmax*(omega+bg+ng),
             "complete_turn_requires_bias_norm_at_least":2*pi_lower/hmax-omega-bg-ng,

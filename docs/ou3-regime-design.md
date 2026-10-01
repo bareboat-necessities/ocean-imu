@@ -23,17 +23,22 @@ class plus a deterministic ambiguity radius, rather than zero full-state error.
 
 ## What is observable at physical rest
 
-For true rest, in the fixed deployed frame and after accounting for temperature,
-lever-arm and calibration terms, the observations are
+For true rest in the fixed calibrated deployed frame, the observations are
 
-`gyro=b_g+n_g`, `f=-g Q e_z+b_a+n_a`, `m=Q B+b_m+n_m`.
+`gyro=b_g,s+b_g,f`, `f=-g Q e_z+b_a,s+b_a,f`, `m=Q B+b_m+n_m`.
+The two IMU components include the calibrated delivered-stream error; no third
+unrestricted calibration residual is introduced. Lever/reference uncertainty
+keeps its existing explicitly stated physical role.
 
 Thus zero physical rate gives direct gyro-bias information, but not exact bias
 in bounded noise. A time average over a dwell D estimates the *terminal* bias
-with error at most `N_g+D_g D/2`; a certified rate tube `|omega|<=eps_w` adds
-`eps_w`. Deterministic bounded noise does not decrease as `1/sqrt(N)`. The
-discrete version charges the weighted sample ages. Longer dwell alone cannot
-make this bound tend to zero.
+with error at most
+`K_g*(D)/D + (1/D) integral_0^D min(2B_g,s,D_g,s*u) du` for continuous
+averaging, plus the stated sampling defect for delivered holds. A certified
+rate tube `|omega|<=eps_w` adds eps_w. For actual discrete weights use
+`F_g(W)+sum_i alpha_i min(2B_g,s,D_g,s*(t_end-t_i))`, where F_g is the
+SAME-history fast matrix/weighted support bound from SF5. Unknown H_g,C_g
+leaves F_g OPEN; there is no 1/sqrt(N), zero-mean or independence assumption.
 
 Zero physical v/a would support stationary observations **if** certified.
 Neither velocity nor absolute wave displacement is observed by an IMU packet.
@@ -57,7 +62,7 @@ and every-prefix retention for arbitrary duration. A covariance decrease along
 an estimator OU mode cannot be reported as shrinking the deterministic physical
 ambiguity. Keep that uncertainty as a separate set/supply unless a justified
 covariance rule is proved. The existing projections give `|e_bg|<=.52` and,
-on completed BA projections, `|e_ba|<=B_a+.4`; they do not prove the remaining
+on completed BA projections, `|e_ba,s|<=B_a,s+.4`; they do not prove the remaining
 state or covariance theorem. This observability result sets an irreducible
 practical radius, not a value of rho.
 
@@ -66,14 +71,14 @@ practical radius, not a value of rho.
 Let alpha=1/1000, nu=1/40, and on a moving episode [a,b] of an integer number
 of periods put `phi(t)=alpha sin^3(nu(t-a))`. Outside it put phi=0. Use
 `R=Rx(phi)`, p=v=a=0, B=75 e_x,
-`b_g=-phi' e_x`, `b_a=g(R' e_z-e_z)`, and zero fast residuals.
-Both phi' and phi'' vanish at the joins. The physical bias histories are
+`b_g,s=-phi' e_x`, `b_a,s=g(R' e_z-e_z)`, and zero fast residuals.
+Both phi' and phi'' vanish at the joins. The physical slow-bias histories are
 locally absolutely continuous across rest/motion joins and satisfy
 
 `|b_a|<=g alpha`, `|dot b_a|<=3g alpha nu`,
 `|b_g|<=3 alpha nu`, `|dot b_g|<=9 alpha nu^2`.
 
-All four are strictly inside the unchanged qualification. Translation, jerk
+All four are strictly inside the inherited candidate slow qualification. Translation, jerk
 and primitive are zero. Every complete `T_E=2pi/nu=80pi` window **contained in
 the moving episode** has gravity span `2alpha=.002`. No numerical deployment
 qualification of these symbolic parameters is asserted. The measured record
@@ -91,9 +96,11 @@ finite rest entry time and continue indefinitely without a detectable packet
 change. False entry and delayed exit have no general finite upper bound.
 
 The real-arithmetic witness uses g=9.80665. The native regression separately
-charges the constant residual `(g-g_float)e_z`, of norm
+charges the constant SLOW accelerometer offset `(g-g_float)e_z`, of norm
 .0000001617431640625 m/s^2, to produce the literal float32 quiet packet.
-It does not silently redefine physical gravity or a physical bias bound.
+Add that norm to the slow amplitude bound above; the strict reserve still
+holds. Both fast components remain exactly zero. This does not redefine gravity
+or certify the inherited candidate budgets on a real assembled device.
 
 The actual nominal execution is the existing quiet construction, so the
 stationary applied MAGNETIC SERVICE argument is retained. Its true-axis
@@ -108,9 +115,13 @@ force and field remain separated and the gyro transport is ordinary.
 A sound implementation must distinguish necessary quiet evidence from physical
 certification. Under the stated bounds, exact rest necessarily satisfies
 
-`|gyro_i|<=B_g+N_g`, `||f_i|-g|<=B_a+N_a`,
-`|gyro_j-gyro_i|<=min(2B_g,D_g |t_j-t_i|)+2N_g`,
-`|f_j-f_i|<=min(2B_a,D_a |t_j-t_i|)+2N_a`.
+`|gyro_i|<=B_g,s+B_g,f`, `||f_i|-g|<=B_a,s+B_a,f`,
+`|gyro_j-gyro_i|<=Delta_g(|t_j-t_i|)`,
+`|f_j-f_i|<=Delta_a(|t_j-t_i|)`, with the raw complete-cell Delta from SF3.
+For the incomplete newest cell, only its amplitude bound is available. The
+existing falsification monitor therefore retains the necessary OUTER relaxation
+`min(2B_i,s,D_i,s*h)+2B_i,f`. Passing that outer test never qualifies the fast
+history; both all-placed-window checks and the common split remain required.
 
 The reference monitor checks these against the first sample of a continuous
 dwell. Invalid packets, nonincreasing time or excessive gaps invalidate that
@@ -156,7 +167,9 @@ not reset just because a physical label changes, and no prior history is
 silently discarded. H18/refinement during physical rest still need their own
 finite completion proof; STILL is not an external BA hold.
 
-At every bridge operation let `sqrt(V_i)<=g_i sqrt(V_(i-1))+s_i`, including
+All bridge supplies retain the same slow predecessor and both fast primitives
+from before the boundary. No H18/release/regime clock resets their qualification
+windows or selects a different split. At every bridge operation let `sqrt(V_i)<=g_i sqrt(V_(i-1))+s_i`, including
 the actual reset/projection/hard-event supplies and any storage comparison at
 a regime change. Induction gives
 

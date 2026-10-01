@@ -34,6 +34,20 @@ The old 200-Hz witness has jerk amplitude `400*pi*2g/sqrt(5) > 10500 m/s^3`.
 It is excluded. Its exact obstruction remains useful for showing why removing
 this condition would invalidate the six-degree capture claim.
 
+## Current sensor-error domain
+
+The numerical sampling/geometry bounds below remain conservative OUTER bounds,
+not qualification of a delivered error history. In every mean row first retain
+`E_a,W=sum alpha_k R_k(b_a,s,k+b_a,f,k)`, with ONE reachable decomposition.
+Its support is SF5's slow predecessor plus signed matrix fast action. A raw
+point comparison uses SF3 instead. The inequality
+`|E_a,W|<=B_a,s+B_a,f` is still valid for normalized nonnegative weights and
+orthogonal frames, but is only a relaxation of the new domain. It never proves
+fast admissibility or a tighter mean by itself. Unknown H_a,C_a remains OPEN.
+Actual varying frames, gains and sampling times are inside the weights; scalar
+unweighted cancellation cannot be substituted for transported gyro/acc action.
+No MARINE, MAGNETIC SERVICE or shipping sampling limit is changed.
+
 ## 1. Sharp sampling bound on nonuniform cells
 
 For a cell of length h, integration by parts gives
@@ -70,7 +84,7 @@ residual. The physical sensor equation implies
 Taking the weighted mean and using the preceding bound gives, with true tilt
 `theta=angle(e_z,R e_z)`,
 
-`2g sin(theta/2) <= 11/T + .15 + B_a + N_a`.
+`2g sin(theta/2) <= 11/T + .15 + B_a,s + B_a,f`.
 
 At T >= 32 s the right side is at most 1.018916605 m/s^2. The exact rational
 certificate bounds `2g sin(3 degrees)` strictly above this using
@@ -94,7 +108,7 @@ Charge both the 5-uT hard-iron and 2-uT measurement residual envelopes.
 
 Writing weighted means u_bar,b_bar and e=e_z,
 
-`||u_bar+e|| <= epsilon = (11/T+.15+B_a+N_a)/g`,
+`||u_bar+e|| <= epsilon = (11/T+.15+B_a,s+B_a,f)/g`,
 
 `||b_bar-B/75|| <= r = 7/75`.
 

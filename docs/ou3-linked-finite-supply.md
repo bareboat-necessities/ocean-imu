@@ -2,7 +2,8 @@
 
 Controlling continuation of PR #639, audited at `6c96893640abbbc49caeb68a9fe27a27680850b3`.
 The shipping sources are also unchanged on main `17df0e8d64ca07dd6d35ee9a8fea72a85e3eb0d7`.
-No estimator, tuner, scheduler, noise envelope, capture gate or theorem flag is changed.
+The original algebra is retained. The current physical IMU domain is the SLOW + FAST
+model below; estimator, tuner, scheduler and capture gates are unchanged.
 The path remains construction -> capture -> magnetic H18 -> refinement/release ->
 A21 -> regional practical stability. This note supplies the linked finite-error
 inequality in that path; it does not claim its source-uniform premises.
@@ -39,25 +40,36 @@ r_FA=.15, correct BA marginal elimination, exact operation energy identities
 and same-history requirement remain. The new outer exclusion and homogeneous
 entry statements from the invalid implications above are not retained.
 
-## 2. Keep the engineering definition of EXCITED_MOVING
+## 2. Current physical domain: unchanged MARINE, two-timescale IMU
 
-EXCITED_MOVING is sustained vessel motion in which the vessel undergoes a
-non-negligible change in roll or pitch within a bounded time. With R_bw the
-true body-to-world attitude, put u_g(t)=R_bw(t)' g0/|g0|. Fixed physical
-qualification constants T_X>0 and theta_X>0 require
+Use the existing MARINE MOTION complete-episode windows and actual MAGNETIC
+SERVICE. Do not add the former EXCITED_MOVING research proposal as a premise.
+For both sensors use `e_i=b_i,s+b_i,f` with slow amplitude/rate and the
+all-placed-window fast contract in `ou3-imu-two-timescale.md`, SF1--SF5.
+Both fast horizon/cap pairs and assembled slow-budget qualification are OPEN.
 
-    max_{s,t in W} angle(u_g(s),u_g(t)) >= theta_X
+At every operation, the BA/BG physical coordinates in e are SLOW bias errors.
+The same slow history generates the bias-prediction mismatch, and the fast
+history enters the actual calibrated sensor rows. Compose those rows before
+bounding them. Let E_i(W|past) be the restriction of the ONE carried admissible
+slow/fast history, including windows crossing W's boundary. The needed bound is
 
-for every complete T_X window contained in an EXCITED_MOVING episode. Generic
-weak motion remains distinct. The definition contains no filter state, bias
-limit, forced adjoint, or posterior covariance. It is not a runtime switch.
+    chi_* = sup { chi_gamma(J0,JN,M,b) :
+        same literal continuation, (e_a,e_g) in E_a(W|past) x E_g(W|past),
+        the SAME physical MARINE trajectory and applied MAGNETIC SERVICE }.
 
-An excitation condition must subsequently be checked against the full
-physical/model/residual contract. The previous bias-only threshold concerns a
-restricted quiet-packet, zero-translation, horizontal-field family; it is not a
-proved universal cutoff for all moving histories or for nonzero sensor errors.
-In particular the claim that any strict margin above that cutoff closes
-finite-error point entry is false for the norm-only residual class in section 6.
+The product notation does not authorize independent choice of physical
+kinematics, M, b, loss, tuner, covariance or scheduler. SF5 gives signed matrix
+support bounds for sensor terms, with primitive endpoint and rotating-weight
+variation retained. `linked_supply.imu_supply_outer` supplies this conditional
+algebra for both sensors and refuses an unknown fast profile; it is NOT a
+source-uniform estimate of chi_*. SF6 gives the joint ambiguity equations.
+Raw two-epoch bounds use reachable cell differences, not a fictitious small
+noise mean; averaged or transported rows must use their own functionals.
+
+The all-slow sin-cubed family survives for an existing symbolic MARINE pair.
+Therefore strict gauge breaking does not follow from a renamed residual class.
+No quiet-packet bias-only threshold is a universal physical entry test.
 
 ## 3. Exact signed word and optimal linked additive constant
 
@@ -188,12 +200,14 @@ The exact-rational `linked_supply.py` checker separately verifies LS1--LS3,
 sharpness, correlation retention, signed source cancellation and fail-closed
 relative positivity. These are algebra checks, not a source-uniform theorem.
 
-## 6. A distinct analytical finite-residual obstruction
+## 6. Historical V3 norm-only finite-residual obstruction (not new-model admission)
 
 This obstruction does not use the failed wave budget. It uses the literal
 norm-only deterministic residual contract: |n_a|<=.3 m/s^2, |n_g|<=.02 rad/s.
-No zero-mean, low-frequency exclusion, or temporal cancellation condition on
-these residuals is stated in constants.json. The word "fast" alone is not one.
+The PRE-MIGRATION V3 constants stated no temporal cancellation condition.
+`finite_residual_obstruction.py` freezes that historical class explicitly.
+The current constants have a different two-timescale contract with OPEN temporal
+parameters; the construction below is not thereby admitted to the new class.
 
 Set alpha=.01 rad, nu=.5 /s, c=.01 m/s^2 and, for all time,
 
@@ -244,17 +258,21 @@ budget chi_gamma<gamma*.15^2 on a class containing LS8--LS11 and guaranteeing
 retained full-physical-error entry. This does not refute the conditional local
 homogeneous theorem, claim filter divergence, or prove an all-time float32 fact.
 
-`finite_residual_obstruction.py` checks the rational global bounds and reuses
-the existing actual-service certificate. A temporal/stochastic residual model
-that excludes LS8 would be a different qualification, not something to assume
-silently here. No residual assumption is changed in this continuation.
+`finite_residual_obstruction.py` checks the historical rational bounds and
+reuses the existing actual-service certificate. SF7 re-tests LS8 under the
+new model: all-slow compensation violates the candidate rate bounds; ANY
+mixed split must meet the opposing-window accumulation requirements. Admission
+and exclusion remain OPEN until both temporal profiles are independently
+qualified. LS11 is about the old chosen slow BA coordinate and is not invariant
+under reassignment of an error component to a different slow/fast split.
 
 ## 7. Current conclusion
 
 The linked identity and its root/prefix conditions are proved. The diagnostic
 improves the separated bound but fails the small-radius feasibility gate.
-More importantly, the norm-only finite-residual class contains an explicit
-excited quiet-packet history outside the requested inner ball forever.
+The HISTORICAL norm-only class contains a quiet-packet history outside the
+old inner ball forever. Its new-model mixed allocation is OPEN; the smaller
+all-slow sin-cubed ambiguity still survives the symbolic MARINE condition.
 Therefore robust physical entry below .15 is not closed by this continuation.
 Outer compactness/release and zero-action transfer also remain open following
 the prerequisite corrections in section 1. Preserve the existing local result

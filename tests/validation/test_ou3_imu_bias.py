@@ -1,4 +1,6 @@
 from fractions import Fraction
+from dataclasses import replace
+from tools.stability.ou3_theorem.imu_temporal import FastWindow
 import math
 import sys
 from pathlib import Path
@@ -15,32 +17,55 @@ from tools.stability.ou3_theorem.imu_bias import (
     prediction_joint_blocks,correction_projection_relation,
 )
 
-LIMITS=BiasLimits(0.22516660498395405,0.001,0.02,1.0e-5)
+LIMITS=BiasLimits(0.22516660498395405,0.001,0.02,1.0e-5,.3,.02,
+                  FastWindow(2,.1),FastWindow(2,.01))
 
 class ImuBiasTests(unittest.TestCase):
     def test_successor_is_not_an_independent_box(self):
-        self.assertFalse(successor_allowed((0,0,0),(0.1,0,0),0.005,LIMITS.B_a_mps2,LIMITS.D_a_mps3))
+        self.assertFalse(successor_allowed((0,0,0),(0.1,0,0),0.005,LIMITS.B_a_s_mps2,LIMITS.D_a_s_mps3))
 
     def test_same_history_slow_drift_passes(self):
         s=[BiasSample("h",0.0,(0.01,0,0),(0.001,0,0)),
            BiasSample("h",1.0,(0.0105,0,0),(0.001005,0,0))]
         self.assertTrue(audit_bias_trace(s,LIMITS)["finite_prefix_pass"])
 
-    def test_all_time_total_residual_certificate_is_fail_closed(self):
+    def test_all_time_slow_fast_certificate_is_fail_closed(self):
+        # Synthetic conditional certificate, not an assembled-device claim.
         good=BiasContinuationCertificate(
-            "h",0.20,5.0e-4,0.01,5.0e-6,True,True,True
-        )
+            "h",.20,5e-4,.01,5e-6,True,True,True,.2,.01,
+            FastWindow(2,.1),FastWindow(2,.01),"split-1","synthetic-proof",
+            True,True)
         self.assertTrue(continuation_admitted(good,LIMITS))
+        for kwargs in (
+            dict(predecessor_continuity_certified=False),
+            dict(calibration_scope_qualified=False),
+            dict(all_time_continuation_certified=False),
+            dict(accel_fast_window=None),dict(gyro_fast_window=None),
+            dict(all_placed_windows_certified=False),
+            dict(delivered_sample_scope_certified=False),
+            dict(decomposition_id=""),dict(temporal_evidence_id=""),
+            dict(accel_fast_window=FastWindow(2,.101)),
+            dict(gyro_fast_window=FastWindow(3,.01)),
+            dict(accel_fast_norm_upper_mps2=.31),
+        ):
+            with self.subTest(kwargs=kwargs):
+                self.assertFalse(continuation_admitted(replace(good,**kwargs),LIMITS))
+        self.assertFalse(continuation_admitted(good,BiasLimits.from_constants()))
 
-        independent_successors=BiasContinuationCertificate(
-            "h",0.20,5.0e-4,0.01,5.0e-6,False,True,True
-        )
-        self.assertFalse(continuation_admitted(independent_successors,LIMITS))
+    def test_missing_fast_parameters_do_not_mean_independent_noise(self):
+        limits=BiasLimits.from_constants()
+        self.assertFalse(limits.temporal_parameters_present)
+        out=audit_bias_trace([BiasSample("h",0,(0,0,0),(0,0,0)),
+                              BiasSample("h",1,(0,0,0),(0,0,0))],limits)
+        self.assertIsNone(out["finite_prefix_pass"])
+        self.assertTrue(out["slow_and_amplitude_prefix_pass"])
+        self.assertEqual(out["temporal_qualification"],"OPEN")
+        self.assertFalse(out["all_time_certified"])
 
-        unqualified_calibration=BiasContinuationCertificate(
-            "h",0.20,5.0e-4,0.01,5.0e-6,True,False,True
-        )
-        self.assertFalse(continuation_admitted(unqualified_calibration,LIMITS))
+    def test_cannot_reselect_split_at_release(self):
+        samples=[BiasSample("h",0,(0,0,0),(0,0,0),decomposition_id="H18"),
+                 BiasSample("h",1,(0,0,0),(0,0,0),decomposition_id="A21")]
+        self.assertFalse(audit_bias_trace(samples,LIMITS)["finite_prefix_pass"])
 
     def test_one_first_class_relation_covers_held_and_active(self):
         phi=math.exp(-0.1/5000.0)

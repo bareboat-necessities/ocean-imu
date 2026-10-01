@@ -1,0 +1,46 @@
+{
+  "fast_accel_numerical_qualification": "OPEN",
+  "fast_gyro_numerical_qualification": "OPEN",
+  "marine_and_magnetic": {
+    "T_E_and_theta_E_numerically_qualified": false,
+    "all_slow_sin_cubed_family_remains": "regime-certificate.json; phi=.001*sin(t/40)^3, T_E=80*pi, theta_E=.002, fast=0",
+    "assumptions_changed": false,
+    "scope": "symbolic existing MARINE permits this family; not a counterexample for every fixed T_E/theta_E",
+    "strict_general_gauge_breaking_margin_proved": false,
+    "stronger_EXCITED_MOVING_added": false
+  },
+  "matrix_weighted_fast_endpoint_term_retained": true,
+  "model": "e_a=b_a_s+b_a_f; e_g=b_g_s+b_g_f",
+  "oscillatory_witness": {
+    "accel_rate_to_candidate_limit_ratio": "196133/4000",
+    "accel_slow_required_rate_mps3": "196133/4000000",
+    "all_slow_admissible_under_candidate_rates": false,
+    "bound_scope": "necessary for ANY slow/fast split, not fitted fast-model constants",
+    "continuous_necessary_accel_K_lower_mps": "16763509470901957724304895810011146394540343656057470141117151195503348311/45000000000000000000000000000000000000000000000000000000000000000000000000",
+    "continuous_necessary_gyro_K_lower_rad": "9901303955989106413811655090001238488282260406228607793457461243944816479/500000000000000000000000000000000000000000000000000000000000000000000000000",
+    "current_model_admissibility": "OPEN",
+    "delivered_sample_necessary_accel_K_lower_mps": "16679478291975407346303192755614138498816253706057470141117151195503348311/45000000000000000000000000000000000000000000000000000000000000000000000000",
+    "delivered_sample_necessary_gyro_K_lower_rad": "9854085818405651821437561559950547559845560406228607793457461243944816479/500000000000000000000000000000000000000000000000000000000000000000000000000",
+    "excluded_by_merely_renaming_noise_fast": false,
+    "gyro_rate_to_candidate_limit_ratio": "250",
+    "gyro_slow_required_rate_rad_s2": "1/400",
+    "half_period_rational_bracket": [
+      "19634954084936207740391521145496893/3125000000000000000000000000000000",
+      "314159265358979323846264338327950289/50000000000000000000000000000000000"
+    ],
+    "half_period_s": "2*pi",
+    "historical_BA_storage_lower_bound_transferred_to_new_split": false,
+    "historical_V3_counterexample_preserved": true,
+    "phi": "(1/100)*sin(t/2)"
+  },
+  "pair_history_differences_require_two_reachable_error_histories": true,
+  "qualification": "OU3_IMU_TWO_TIMESCALE_ALGEBRA_V1",
+  "raw_two_epoch_independent_fast_box_admission": false,
+  "raw_two_epoch_rule": "min(2Bs,Ds*h)+min(Bf,C/min(H,dt_i))+min(Bf,C/min(H,dt_j)); complete distinct cells, global class supremum",
+  "runtime_calibration_tuner_and_gates_changed": false,
+  "six_amplitude_rate_limits": "inherited declared candidates, not newly measured device guarantees",
+  "source_uniform_finite_error_supply_closed": false,
+  "temporal_scope": "every placed window of calibrated delivered-sample hold; one carried decomposition",
+  "theorem_closed": false,
+  "window_mean_difference_bound": "min(2Bs,Ds*h)+2 min(K*(L),K*(h))/L for continuous slow averages; add slow sampling defect for held samples"
+}

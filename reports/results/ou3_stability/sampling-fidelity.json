@@ -1,5 +1,8 @@
 {
   "acceleration_locally_absolutely_continuous_required": true,
+  "amplitude_outer_is_not_fast_admission": true,
+  "both_fast_device_profiles_qualified": false,
+  "imu_error_domain": "same-history SLOW + FAST; weighted support before amplitude relaxation",
   "jerk_limit_mps3": "100",
   "joint_vector_information": {
     "accelerometer_residual_total_mps2": "10503332099679081/20000000000000000",
@@ -35,7 +38,7 @@
     "primitive_m_s": "27/5000000000",
     "velocity_mps": "9/5000"
   },
-  "qualification": "OU3_JERK_SAMPLING_FIDELITY_V1",
+  "qualification": "OU3_JERK_SAMPLING_FIDELITY_V2_SLOW_FAST",
   "quiet_water_admitted": true,
   "sample_period_max_s": "3/500",
   "shipping_capture_certified": false,

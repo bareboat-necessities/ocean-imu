@@ -15,12 +15,12 @@ class GyroProjectionProofTests(unittest.TestCase):
     def test_source_radius_is_engineering_margin_not_truth_bound(self):
         c = certificate()
         self.assertEqual(source_radius(), F(1,2))
-        self.assertEqual(F(c["estimator_radius_rad_s"])/F(c["physical_residual_bias_rad_s"]), 25)
-        self.assertFalse(c["physical_assumptions_changed"])
+        self.assertEqual(F(c["estimator_radius_rad_s"])/F(c["physical_slow_bias_rad_s"]), 25)
+        self.assertFalse(c["physical_amplitude_numbers_changed"])
 
     def test_prediction_charges_both_residual_terms(self):
         c = certificate()
-        rate = sum(F(c[k]) for k in ("physical_angular_rate_rad_s", "physical_residual_bias_rad_s", "fast_measurement_residual_rad_s", "estimator_radius_rad_s"))
+        rate = sum(F(c[k]) for k in ("physical_angular_rate_rad_s", "physical_slow_bias_rad_s", "fast_measurement_amplitude_rad_s", "estimator_radius_rad_s"))
         self.assertEqual(F(c["prediction_argument_upper_rad"]), F(3,500)*rate)
         self.assertLess(F(c["prediction_argument_upper_rad"])+F(c["quaternion_polynomial_angle_defect_upper_rad"]), F(7,1000))
         self.assertGreater(F(c["margin_from_pi_lower_rad"]), 3)

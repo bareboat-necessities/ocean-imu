@@ -32,6 +32,24 @@ lemmas target the nominal temporal margins; a six-pivot lemma then supplies a
 conditional historical-reader bound for the complete matrix process comparison.
 None of these lemmas by itself supplies contraction, capture or retention.
 
+## Current controlling physical supply (SLOW + FAST)
+
+All physical b_a/b_g in the retained bias-state algebra now mean the SLOW
+components. FAST errors remain the signed calibrated measurement-row forcing.
+Use `ou3-imu-two-timescale.md` SF1--SF9 for the admissible domain. Both numerical
+fast profiles are OPEN; neither this note's carried diagnostics nor old
+amplitude-only sums establish them. Historical O1/O2/reader proposals below
+are algebraic research history, not the controlling proof architecture.
+
+For any actual row weights A_k, slow action is exactly
+`(sum A_k)b_s,0 + sum_j(sum_(k>=j)A_k)w_s,j`, with linked increments and ALL
+partial amplitude constraints. Fast action is exactly
+`q_last(U_end-U_start)+sum_j(q_(j-1)-q_j)(U_j-U_start)`, q_k=A_k/dt_k.
+Keep the signed endpoint and varying gyro/attitude/frame gains. Their norms
+may be bounded using K* only after temporal qualification. Form the linked
+chi_gamma on these SAME histories; a failed norm-sum diagnostic is not a
+reason to fit H,C or to assert a source-uniform inequality.
+
 ## Physical span and the literal signed relations
 
 Write Q(t) for true world-to-body rotation, R_i for the estimator rotation,
@@ -60,7 +78,7 @@ Writing fhat_i=R_i(ahat_i-g e_z), subtraction on the same physical history gives
 Thus the sampled pair satisfies
 
 `||Delta fhat+Delta bhat_a+Delta r^a-Delta(Qa)||
- >=2g sin(alpha/2)-min(2B_a,D_a |t_j-t_i|)-2N_a`.
+ >=2g sin(alpha/2)-min(2B_a,D_a,s |t_j-t_i|)-2N_a`.
 
 This constrains a signed combination. It does not lower bound nominal
 force/field angle: physical acceleration, actual bias updates and innovations
@@ -96,8 +114,8 @@ Every T_E interval spans a full roll period and has gravity span 2alpha=theta_E;
 it is not completely still. The physical biases are smooth and obey the
 unchanged bounds under these sufficient symbolic conditions:
 
-`g alpha<=B_a`, `g alpha nu<=D_a`,
-`alpha nu<=min(B_g,Omega_max)`, `alpha nu^2<=D_g`.
+`g alpha<=B_a,s`, `g alpha nu<=D_a,s`,
+`alpha nu<=min(B_g,s,Omega_max)`, `alpha nu^2<=D_g,s`.
 
 Indeed ||b_a||=2g|sin(phi/2)|<=g alpha, ||dot b_a||<=g alpha nu,
 ||b_g||<=alpha nu and ||dot b_g||<=alpha nu^2. Translation, jerk and primitive
@@ -352,7 +370,7 @@ Rodrigues integrated bias transport has transverse singular values
 `h |sinc(theta/2)|`, vanishing at nonzero complete turns. Subsequently
 `omega_hat=omega+b_g+n_g-bhat_g`; a complete turn at any allowed step requires
 
-`||bhat_g||>=2pi/h_max-(Omega_max+B_g+N_g)>1046.5466859583 rad/s`.
+`||bhat_g||>=2pi/h_max-(Omega_max+B_g,s+B_g,f)>1046.5466859583 rad/s`.
 
 The shipping residual gyro-bias mean now has the implemented Euclidean bound
 `||bhat_g||<=.5 rad/s`, independently of the physical `.02 rad/s` bias bound.
@@ -367,7 +385,7 @@ The historical `h=.005, bhat_g=-400pi e_z` example violates the implemented
 invariant. This does not close the full signed `Delta_gyr(W)` or a historical
 six-pivot bound: actual chronological observations, resets and projection
 defects still require their joint enclosure. The projection changes only
-the mean. Its ideal component sector has gap `R_g-B_g=.48 rad/s`; covariance
+the mean. Its ideal component sector has gap `R_g-B_g,s=.48 rad/s`; covariance
 cross terms and inward floating-point rounding remain separate signed supplies.
 The forced balance observes both gyro and accelerometer mean projections.
 
