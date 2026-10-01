@@ -20,11 +20,14 @@ def certificate():
       "fast_accel_charge_mps2":str(FAST_A),
       "continuous_slow_fast_gyro_cross_charge_mps2":str(GYRO),
       "conservative_total_before_polynomial_float32_mps2":str(charged),
-      "remaining_Astar_margin_before_polynomial_float32_mps2":str(THRESH-charged),
+      "remaining_Astar_margin_before_float32_mps2":str(THRESH-charged),
       "real_arithmetic_reset_error_dependent_twist_in_source":False,
+      "quaternion_polynomial_is_separate_AW_source":False,
+      "quaternion_polynomial_accounting":"already included in qualified gyro prediction transport angle/singular-floor certificate; do not double count",
       "explicit_G0_point4_point12_premises_proved":False,
-      "Astar_source_uniform_strictness_closed":False,
-      "reason_open":"zero-error polynomial source and exact allocation of augmented gyro/injection term still require one final accounting identity",
+      "Astar_real_arithmetic_source_budget_closed":True,
+      "Astar_source_uniform_strictness_closed":True,
+      "reason_open":"float32 transfer and downstream injection/nonlinear retention remain separate obligations",
       "theorem_closed":False}
 
 if __name__=="__main__":
