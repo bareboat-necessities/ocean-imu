@@ -8963,3 +8963,203 @@ This calculation prevents an invalid proof shortcut. To genuinely weed out
 the trajectory, either certify WM-11 with a read-only estimator-aware monitor,
 or strengthen MARINE MOTION with a physical translation-attitude condition
 that makes the F bridge provable.
+
+
+## Zero-dissipation substitution into the forced physical term F
+
+This calculation tests the missing bridge needed to turn raw multidirectional
+marine excitation into exclusion of the final field-aligned LaSalle mode.
+
+Recall the exact required physical family on a regular rank-two branch:
+
+f_B = fhat_B + M^dagger q + N zeta,                         (ZF-1)
+M=P_B K_aw, q=P_B(g-aS), Ker M=span{N},                    (ZF-2)
+
+and in world physical acceleration coordinates
+
+a_phys = F + U zeta,                                       (ZF-3)
+F=R_true(fhat_B+M^dagger q)+g+d,
+U=R_true N.                                                 (ZF-4)
+
+The desired shortcut would be to use complete-word zero dissipation D=0 to
+show F=U beta+d_small, reducing every pathological physical history to one
+scalar moving channel plus defects.
+
+### Homogeneous equality does not zero the base innovation
+
+D is the quadratic action of the HOMOGENEOUS estimator-error trajectory about
+one literal base shipping execution. D=0 implies that the homogeneous
+measurement variations vanish:
+
+delta r_acc=0, delta r_S=0, delta r_mag=0,                 (ZF-5)
+
+together with zero homogeneous fresh-source action and the previously derived
+delta v=delta p=delta S=delta a_w=0 on the surviving field-axis mode.
+
+ZF-5 does NOT imply that the BASE innovations vanish:
+
+r_acc^base need not be 0,
+r_S^base=-S^base need not be 0,
+r_mag^base need not be 0.                                  (ZF-6)
+
+Indeed a persistent field-aligned base mean generally REQUIRES nonzero base
+accelerometer/S correction supply to replenish the gravity-scale AW component
+lost under OU prediction.
+
+Therefore none of the D=0 equality conditions sets q=0 in ZF-2. Here q is the
+BASE departure of the pre-accelerometer AW mean from the field-aligned target,
+not the homogeneous BA compatibility coordinate that also used q notation in
+earlier sections. To avoid ambiguity define henceforth
+
+q_FA,k := P_B(g-aS_k).                                     (ZF-7)
+
+Then
+
+q_FA = P_B K_aw r_acc^base                                 (ZF-8)
+
+on an exact post-accelerometer field-aligned base execution. This quantity is
+generically nonzero whenever OU/S chronology moves the pre-update base mean
+off the target.
+
+### Exact decomposition of the forced term
+
+Choose the Moore-Penrose right inverse for clarity. Then
+M^dagger q_FA lies in Range(M') and is orthogonal to N=Ker M. Hence
+
+f_B-fhat_B =
+ M^dagger q_FA + N zeta                                    (ZF-9)
+
+is the orthogonal decomposition of the BASE accelerometer residual into:
+- the unique minimum-norm component required to restore the two field-aligned
+  coordinates; and
+- the one-dimensional null component invisible to that restoration equation.
+
+Thus the gravity-scale particular component M^dagger q_FA is, by construction,
+TRANSVERSE to N unless q_FA=0. It cannot be rewritten as N beta.
+
+After world rotation,
+
+F = R_true fhat_B+g+d + R_true M^dagger q_FA.              (ZF-10)
+
+The last term is orthogonal to U=R_true N in the Euclidean physical scaling.
+Consequently the exact distance of the correction part of F from the scalar
+channel is
+
+dist(R_true M^dagger q_FA, span U)
+ = ||M^dagger q_FA||.                                      (ZF-11)
+
+If sigma_min(M)>0,
+
+||M^dagger q_FA|| >= ||q_FA||/sigma_max(M),                (ZF-12)
+
+and also
+||M^dagger q_FA|| <= ||q_FA||/sigma_min(M).                (ZF-13)
+
+Therefore zero dissipation does the OPPOSITE of the hoped-for collapse:
+whenever the base pre-update field-alignment departure q_FA is nonzero, the
+literal restoration requires a physical residual component transverse to the
+remaining scalar channel.
+
+### Can the nominal-force part cancel this transverse component?
+
+Yes in the raw physical acceleration F. The term R_true fhat_B+g+d is not a
+small defect on the base execution. Under field alignment after correction,
+the pre-update fhat_B contains the OU/S-displaced nominal AW, BA and lever
+terms. Its projection onto U^perp can cancel or reinforce
+R_true M^dagger q_FA. No homogeneous zero-action identity fixes that sign.
+
+This is why the raw Gram gamma_raw cannot yet be asserted positive merely
+from q_FA!=0: the measurable physical acceleration is the SUM ZF-10, not the
+correction residual alone.
+
+### A sharper measurable object: innovation rather than acceleration
+
+The quantity that DOES have an exact transverse decomposition is the literal
+base accelerometer innovation
+
+r_acc^base = f_B-fhat_B.                                   (ZF-14)
+
+From ZF-9,
+
+r_acc^base=M^dagger q_FA+N zeta.                           (ZF-15)
+
+Therefore its energy transverse to the one-dimensional null channel is exactly
+
+||Pi_Nperp r_acc^base||^2
+ = ||M^dagger q_FA||^2.                                    (ZF-16)
+
+Over a window,
+
+sum w ||Pi_Nperp r_acc^base||^2
+ = sum w ||M^dagger q_FA||^2.                              (ZF-17)
+
+This is a strict linked identity, not a bound.
+
+But r_acc^base and N depend on the main filter through fhat_B and K_aw.
+Accordingly ZF-17 is available to a read-only estimator-aware stability
+monitor, not to a fully independent raw-IMU prefilter.
+
+### Relation to marine oscillation
+
+Ordinary physical acceleration oscillation does not constrain q_FA away from
+zero and does not prevent cancellation inside F. Multidirectional RAW physical
+acceleration likewise cannot be identified with ZF-17 without controlling the
+nominal-force term.
+
+However, if the architecture permits a read-only monitor, the correct
+excitation certificate is immediate: require recurring transverse BASE
+innovation action
+
+Gamma_innov(W):=
+ sum_(k in W) w_k ||Pi_Nk_perp r_acc,k^base||^2
+ =sum w_k ||M_k^dagger q_FA,k||^2
+ >= gamma_innov>0.                                         (ZF-18)
+
+This condition is exactly tied to the field-alignment restoration geometry.
+It cannot be gamed by the free scalar zeta.
+
+For the LaSalle exclusion one needs the complementary statement: an infinite
+field-aligned zero-dissipation execution would require the same base
+innovation/covariance chronology indefinitely. ZF-18 by itself does not make
+the HOMOGENEOUS field-axis attitude observable, because H_acc r_field=0 under
+exact alignment. Thus even positive base innovation action is not sufficient
+to kill the geometric homogeneous mode. It only certifies that the base is
+actively maintaining the pathological alignment.
+
+### Verdict
+
+The proposed bridge
+
+D=0 + field alignment => F in span(U)+small defects         (ZF-19)
+
+is FALSE.
+
+The exact reason is now proved: D=0 zeros homogeneous actions, not base
+innovations, and the field-aligned base execution generally contains a
+nonzero transverse particular innovation M^dagger q_FA. This term is
+orthogonal to the free scalar channel, not contained in it.
+
+Therefore neither ordinary nor multidirectional raw physical oscillation can,
+under the present assumptions, universally weed out the pathology by a
+one-channel Gram argument.
+
+This leaves the theorem with a genuine geometric issue: if the BASE nominal
+specific force is exactly collinear with the magnetic field, the pure
+field-axis attitude error is unobservable regardless of how rich the BASE
+innovation or physical acceleration is elsewhere. To exclude that mode, the
+MARINE MOTION theorem must directly guarantee recurring NONCOLLINEARITY of the
+nominal/physical gravity-sensitive vector and magnetic field, or the estimator
+architecture must supply an additional independent attitude reference.
+
+A physically meaningful theorem assumption is therefore a recurring
+gravity/specific-force excitation condition, for example a windowed lower
+bound on
+
+sum_(k in W) w_k
+ || P_(b_k)^perp f_ref,k ||^2 >= gamma_col>0,               (ZF-20)
+
+where f_ref must be defined from an independent physical proxy (not the
+pathological MEKF nominal force) with a proved defect tube to the
+accelerometer attitude vector used by the filter. Establishing that defect
+tube is the next required bridge if the condition is to be raw-IMU
+certifiable.

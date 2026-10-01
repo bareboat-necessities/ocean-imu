@@ -576,3 +576,32 @@ translation-attitude condition plus a proof that field-aligned F lies in its
 excluded class, or permit a read-only stability monitor to use published
 K_aw/aS and evaluate the exact WM-11 reachable-moment distance. Do not assert
 the raw Gram alone as sufficient.
+
+
+### Zero-dissipation substitution into F
+
+The attempted bridge from multidirectional raw marine excitation to exclusion
+of the field-aligned LaSalle mode was tested exactly and is false.
+Complete-word D=0 zeros HOMOGENEOUS process/S/accelerometer/magnetic actions;
+it does not zero the BASE filter innovations. On an exact post-accelerometer
+field-aligned base execution, the pre-update departure
+q_FA=P_B(g-aS) satisfies q_FA=P_B K_aw r_acc^base and is generally nonzero
+because OU/S chronology moves the base mean off the target.
+
+The required base innovation decomposes exactly as
+r_acc^base=M^dagger q_FA+N zeta. With Moore-Penrose M^dagger, the first term
+lies in Range(M') and is orthogonal to the free scalar channel N=Ker M.
+Therefore zero dissipation does not collapse the forced term F into the
+one-dimensional U channel; it introduces a genuinely transverse particular
+correction whenever q_FA!=0. The nominal-force part of physical acceleration
+can cancel this term, so raw multidirectional acceleration does not certify
+escape.
+
+The exact transverse identity lives in BASE innovation space:
+||Pi_Nperp r_acc||^2=||M^dagger q_FA||^2. It is estimator-aware and still does
+not make the homogeneous field-axis attitude mode observable under exact
+force/magnetic collinearity. The remaining issue is genuinely geometric:
+strict stability requires recurring noncollinearity of an independent
+gravity/specific-force reference and magnetic field (with a proved bridge to
+the filter attitude row), or an additional attitude reference. Do not claim
+raw acceleration oscillation alone removes the mode.
