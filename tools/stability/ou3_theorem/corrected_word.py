@@ -153,7 +153,7 @@ def projection_storage_guard():
     from pathlib import Path
     constants = json.loads(Path(__file__).with_name('constants.json').read_text())
     # The contract stores physical and estimator bias bounds separately.
-    physical = F(str(constants['imu_bias']['B_a_mps2']))
+    physical = F(str(constants['imu_bias']['B_a_s_mps2']))
     radius = F('0.4')
     gap = radius-physical
     if gap <= 0:

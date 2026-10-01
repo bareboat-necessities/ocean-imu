@@ -1,12 +1,15 @@
 {
+  "bias_model": "two-timescale; witness uses slow components only",
   "boundary_crossing_window_requires_excitation": false,
+  "constant_slow_gravity_representation_offset_mps2": "53/327680000",
   "exact_identical_IMU_history": true,
   "excitation_quantifier": "every complete T_E window contained in one physical moving episode",
+  "fast_accel_and_gyro_identically_zero": true,
   "finite_bridge_algebra": true,
   "finite_bridges_alone_imply_recurring_stability": false,
   "finite_exit_delay_from_existing_assumptions": false,
-  "native_gravity_representation_residual_mps2": "53/327680000",
-  "qualification": "OU3_REGIME_CONTRACT_V1",
+  "numerical_device_membership_claimed": false,
+  "qualification": "OU3_REGIME_CONTRACT_V2_SLOW_FAST",
   "rest_motion_joins_C2": true,
   "shipping_mode_switch_enabled": false,
   "source_uniform_transition_retention": false,
@@ -20,16 +23,16 @@
   "witness_actual_service_lower": "292499707500073125/78621131613576512",
   "witness_alpha_rad": "1/1000",
   "witness_bias_global_upper": {
-    "B_a_mps2": "196133/20000000",
-    "B_g_rad_s": "3/40000",
-    "D_a_mps3": "588399/800000000",
-    "D_g_rad_s2": "9/1600000"
+    "B_a_s_mps2": "401687009/40960000000",
+    "B_g_s_rad_s": "3/40000",
+    "D_a_s_mps3": "588399/800000000",
+    "D_g_s_rad_s2": "9/1600000"
   },
   "witness_bias_margin": {
-    "B_a_mps2": "4307199099679081/20000000000000000",
-    "B_g_rad_s": "797/40000",
-    "D_a_mps3": "211601/800000000",
-    "D_g_rad_s2": "7/1600000"
+    "B_a_s_mps2": "17228783459263199/80000000000000000",
+    "B_g_s_rad_s": "797/40000",
+    "D_a_s_mps3": "211601/800000000",
+    "D_g_s_rad_s2": "7/1600000"
   },
   "witness_nu_rad_s": "1/40",
   "witness_theta_E_rad": "1/500",

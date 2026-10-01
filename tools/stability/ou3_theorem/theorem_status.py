@@ -4,7 +4,27 @@ from __future__ import annotations
 def status_report() -> dict:
     obligations={
         "physical_contract_formulation":True,
+        "two_timescale_accel_and_gyro_contract_formulation":True,
+        "two_epoch_same_history_bias_envelope":True,
+        "signed_fast_accumulation_functional_identity":True,
+        "fast_accel_temporal_device_qualification":False,
+        "fast_gyro_temporal_device_qualification":False,
+        "assembled_slow_fast_decomposition_qualification":False,
+        "two_timescale_joint_physical_gauge_exclusion":False,
+        "displacement_excitation_to_full_moving_compatibility_exclusion":False,
+        "two_timescale_source_uniform_finite_error_supply":False,
         "marine_regime_complete_window_contract":True,
+        "marine_displacement_excitation_contract":True,
+        "zero_translation_moving_alias_excluded":True,
+        "displacement_span_signed_kinematic_moment":True,
+        "displacement_four_S_boundary_mismatch_identified":True,
+        "displacement_boundary_velocity_completion":True,
+        "displacement_boundary_velocity_LIN_action_bound":True,
+        "held_H18_LIN_structural_detectability":True,
+        "held_H18_all_time_covariance_coefficient_compactness":True,
+        "held_H18_uniform_homogeneous_LIN_strictness":True,
+        "held_H18_uniform_LIN_BIBO":True,
+        "held_H18_affine_input_bound":True,
         "stationary_observability_structure":True,
         "stationary_gyro_information_bound":True,
         "quiet_zero_residual_nominal_six_column_floor":True,
@@ -157,7 +177,7 @@ def status_report() -> dict:
         "implementation_and_arithmetic_totality":False,
     }
     return {
-        "qualification":"OU3_SINGLE_MARINE_IMU_MAGNETIC_STABILITY_ARCHITECTURE_V2",
+        "qualification":"OU3_SINGLE_MARINE_IMU_MAGNETIC_STABILITY_ARCHITECTURE_V3_SLOW_FAST",
         "principal_assumptions":["MARINE MOTION","IMU BIAS","MAGNETIC SERVICE"],
         "quantifier":"one persistent physical execution belongs to all three assumption classes simultaneously",
         "proof_path":["construction","startup/capture","finite magnetically informed Live/H18 bridge",
@@ -210,22 +230,34 @@ def status_report() -> dict:
             "injection_free_floor_premises":["nominal transverse AW mean <= 2/5 m/s^2 on two separated 16-s windows","nominal L1 force mean <= 6/5","A_tilde=I"],
             "controlling_transfer_quantity":"source bound on the nominal AW window statistics of the literal loop, and the injection frame in Theorem G0",
         },
+        "imu_bias_model":{
+            "certificate":"imu-two-timescale-certificate.json",
+            "model":"e_a=b_a_s+b_a_f; e_g=b_g_s+b_g_f",
+            "fast_rule":"amplitude plus every-placed-window signed accumulation of delivered calibrated samples",
+            "temporal_numerical_qualification":"OPEN for both sensors",
+            "six_limits_status":"inherited candidate budgets, not newly measured guarantees",
+            "independent_residual_box_admission":False,
+            "finite_capture_can_certify_all_time":False,
+            "decomposition_reselection_at_release_or_regime_boundary":False,
+            "oscillatory_0p01_sin_0p5t_admissibility":"OPEN",
+            "all_slow_sin_cubed_ambiguity_survives":False,
+            "all_slow_sin_cubed_status":"historical attitude-only MARINE witness; excluded from MOVING by P_E>0",
+            "stronger_EXCITED_MOVING_adopted":False,
+        },
         "a21_contraction_route":{
-            "reader_certificate":"ag-readout-certificate.json",
+            "method":"path-complete covariance-metric dissipativity and LaSalle on one carried history",
+            "chronology":"literal prediction, S, accel, mag, PSD synchronization, resets; coupled (tau,sigma_aw,R_S,T_S)",
             "contraction_certificate":"corrected-word-certificate.json",
-            "carried_diagnostic":"ag-readout-source-feasibility.json",
-            "joint_reader":"B*=Pi+Tt I_eff^-1 Tt^T, the diffuse-AG-root Riccati limit; B* <= (1+1/g)TT^T+(1+g)T_h I_eff^-1 T_h^T",
-            "first_prediction_epsilon_ceiling":"3.3741e-10 per prediction (S coordinate), independent of B_*, U_n and eta",
-            "word_contraction":"rho_W <= sup_y [1/(1+y)-1/((1+k)(1+kappa y))], k=lambda_max^+(C^1/2 (A-kappa J) C^1/2), C>=P_0",
-            "carried_slowest_short_word_direction":"translation (velocity/position) with accelerometer-bias share",
-            "diameter_certificate":"word-diameter-certificate.json",
-            "carried_information_ratio_diagnostic":"information-ratio-source-feasibility.json",
-            "word_diameter":"kappa_W=lambda_max(J^-1 A)=lambda_max(Pi^-1 P_diff); rho_W<=tanh(log(kappa_W)/4) for every root covariance",
-            "kernel_bounded_contraction":"A<=kappa J+lambda nu nu' and nu'P_0 nu<=c give rho_W<=sup_y[1/(1+y)-1/((1+lambda c)(1+kappa y))]",
-            "physical_kernel":"nu=(theta_hat,0,...,0,-J_att theta_hat), theta_hat the body field axis",
-            "joint_reader_C_needed_for_rho0":False,
-            "open_source_premises":["uniform ceiling on the kernel-bounded word diameter kappa_nu (observability off the tilt/BA kernel)",
-                                    "linked scalar invariant d_bar K(c_bar)<=c_bar, with d=nu_next' Pi nu_next; an independent tilt ceiling is sufficient but no longer required"],
+            "finite_supply_identity":"linked_supply.py: e_N=M e_0+b, linked chi_gamma on jointly reachable histories",
+            "local_field_axis_radius":0.15,
+            "local_radius_implies_release_or_outer_entry":False,
+            "zero_homogeneous_action_implies_zero_base_innovations":False,
+            "O1_O2_kernel_ceiling_architecture_controlling":False,
+            "legacy_word_diameter_results_role":"retained algebra/history only, not the controlling architecture",
+            "open_source_premises":[
+                "qualify both slow/fast physical histories and derive the MARINE+MAGNETIC same-history compatibility margin",
+                "from the compact captured-domain A21 release set, prove outer A21 retention and finite inner entry using temporal SLOW+FAST reachability plus displacement/attitude excitation and actual magnetic service"
+            ],
         },
         "shipping_residual_gyro_bias_hardening":True,
         "implemented_gyro_bias_norm_invariant":True,
@@ -248,34 +280,13 @@ def status_report() -> dict:
             "certificate":"sampled-capture-obstruction.json",
         },
         "next_controlling_obligation":(
-            "Excitation quantifies only over complete T_E windows within one physical moving episode. "
-            "No excitation is demanded immediately after rest or across rest boundaries; isolated zero-rate instants do not restart an episode. "
-            "T_E/theta_E remain symbolic. Exact rest/motion sensor indistinguishability blocks a sound exact-STILL detector with both finite entry and universal finite exit under the existing assumptions. "
-            "Prove stationary practical stability for the whole measurement-compatible class before enabling estimator changes; the quiet attitude/accelerometer-bias ambiguity prevents exact separation and universal V<=36 capture. "
-            "The exact zero-residual quiet nominal subcase now has a root-independent historical AG action, every-operation full covariance upper comparison and qualitative homogeneous linear loss, without a nonlinear physical stability conclusion. "
-            "Bridge prefix composition is proved conditionally, but finite detection time, source-uniform retention and the cumulative budget across recurring switches remain open. "
-            "On complete excited moving windows continue the actual signed forced adjoint with root, rotation/reference, gains, physical bias and OU history retained. "
-            "Removing indefinite stillness does not repair the already-excited moving diagnostic's failed rotation and velocity-variation budgets. "
-            "Chronological gyro transport plus two actual sensor-row groups now gives a conditional six-column singular floor and all six greedy pivot floors. "
-            "Literal reset inverses are nonexpansive, and C=A^-1 B cancels each reset while retaining its effect on later injections; an exact relaxed reset sequence still cancels the inter-anchor gyro block, without proving shipping reachability or all-row rank loss. "
-            "Applied acc/mag rows in one prediction cell factor exactly with E=0 after retaining every intervening reset. Uniform group geometry and inter-anchor transport remain open. "
-            "Its reset/asynchrony/reference defect budget is not yet bounded uniformly; two temporal margins alone still do not imply six pivots. "
-            "In world coordinates every historical AG row is -R_k[f_k]x[A_tilde_k R_0',B_tilde_k]: predictions leave A_tilde invariant, resets multiply it by N=R_next' G R with N'N=I+(|x|^2 I-xx')/4, and B_tilde integrates the nominal R_hat'. "
-            "Same-cell geometry therefore depends only on world nominal force, committed reference and the local injection, never on attitude error. "
-            "Literal injections satisfy dd'<=NIS K S K'<=NIS P_theta,theta. A 1-Hz collinear history obeys MARINE MOTION and IMU BIAS and degenerates every same-cell group while aggregate rows stay full rank; its single correction per 1-s window has nearly rank-one service information, so MAGNETIC SERVICE excludes that cadence. "
-            "Jerk forbids collinearity at every instant of a cadence whose length-weighted mean gap is below 4(g h-2V/L)/J, about .051 s at h=1/5 and L=16 s. A same-cell floor therefore needs a magnetic-cadence coupling, which aggregate rows avoid. "
-            "The isotropic stationary sync keeps lambda_max(P_aw)<=(1+eps)16, but covariance-normalized AW storage fails by 6.7-6.9 on carried collinear motion. "
-            "The pointwise physical AW tracking premise is false on an admitted C2-onset history (7.647 m/s^2, 6.80 x 1.12383): the horizontal AW prior follows the vertical tuner at its .05 floor. "
-            "Corollary A* needs only the nominal signed AW mean: transverse mean below 1.96133 m/s^2 (carried worst .348, including sync-locked rectification). "
-            "Lemma I* bounds the ordered injection rotation by endpoint attitude errors plus the integrated rate error without norm sums; perturbative charging of A~ over 16-s windows is infeasible. "
-            "MAGNETIC SERVICE on every 1-s interval and the nominal-rate bound make the field-axis gyro coordinate monotone (Lemma T); with two separated nominal accelerometer windows the injection-free world array has s^2>=1.486786e-3. "
-            "The historical AG reader is now the exact joint minimum-action reader B*=Pi+Tt I_eff^-1 Tt' (the diffuse-AG-root Riccati limit, with a full 21x21 domination), so B_* reduces to a source-uniform floor on the marginalized AG information I_eff; carried 16-64 s windows bound the actual AG covariance within 12x (5x at 64 s). "
-            "Every first-prediction relative process comparison Q>=epsilon F C F' is capped at epsilon<=3.3741e-10 per prediction by the one-step S coordinate, whatever B_*, U_n or eta, and separated information-only or forgetting-only word bounds also fail on carried words. "
-            "The word contraction is one information-ratio inequality rho_W<=sup_y[1/(1+y)-1/((1+k)(1+kappa y))], k=lambda_max^+(C^1/2(A-kappa J)C^1/2). "
-            "Its k=0 form is the word Riccati diameter kappa_W=lambda_max(J^-1 A)=lambda_max(Pi^-1 P_diff), valid for every root covariance; on every carried MOVING word the joint-reader C adds nothing beyond k=0. "
-            "The only positive part of A-kappa J on carried words lies along the physical tilt/BA kernel nu, so one scalar ceiling nu'P_0 nu<=c replaces every root covariance bound, and its BA part is the proved P_ba<=I/1600. "
-            "O2 reduces further by Riccati monotonicity: P_end<=P_nu<=kappa_nu Pi, so prove the linked scalar fixed point d_bar K(c_bar)<=c_bar with d=nu_next'Pi nu_next (or c_next<=d+a c/(1+b c)); an independent field-axis tilt ceiling is sufficient but not required. Next prove O1 and explicit same-word constants for that scalar invariant using G0 geometry, magnetic service, S-chain cancellation and the literal injection frame. "
-            "The .5 rad/s invariant, qualified complete-turn exclusion and one-step gyro floor remain proved, not the complete signed Delta_gyr. "
-            "Positive source-uniform signed margins, B_*, J_AG, full covariance upper, rho_0<1, capture/H18/release, nonlinear radius, every-prefix retention, applied magnetic-service qualification and float32 totality remain open."
+            "Qualify the six candidate slow/fast budgets and both signed fast-accumulation profiles on one delivered calibrated history. "
+            "Missing H_a,C_a,H_g,C_g remain OPEN; do not replace them by unrestricted residual boxes or a fitted excitation threshold. "
+            "Existing MARINE T_E/theta_E and T_P/P_E remain symbolic; the zero-translation sin-cubed witness is now outside MOVING. "
+            "The .01 sin(.5t) witness violates the candidate all-slow rates, but mixed allocation remains OPEN. "
+            "Keep the exact dissipativity/LaSalle path, source coupled tuner chronology, physical gyro/accel constraints and actual magnetic service. "
+            "Prove literal interleaved H18 LIN BIBO and release compactness, outer retention and finite inner entry, then linked complete-word/prefix supply. "
+            "Never infer zero base innovations from zero homogeneous action. Regime composition and float32 closure remain separate. "
+            "Historical O1/O2 scalar kernel ceilings and the unqualified 1-degree/60-second low-pass gate are not controlling."
         ),
     }

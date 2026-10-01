@@ -31,7 +31,7 @@
 \maketitle
 
 \begin{abstract}
-This study analyzes deterministic regional stability of the shipping OU--III marine estimator under the declared MARINE MOTION, IMU BIAS and MAGNETIC SERVICE domain, without changing estimator behavior, tuning, gates or quality thresholds.  The proof follows one same-history path through construction, capture, magnetically informed H18, refinement/release, recurring A21 and regional practical stability.  The current controlling argument is path-complete covariance-metric dissipativity and a LaSalle invariant-set exclusion, not the superseded scalar kernel-ceiling search.  The literal OU prediction, $S=0$ pseudo-measurement, accelerometer and magnetic corrections, covariance synchronization, resets and coupled $(\tau,\sigma_{a_w},R_S,T_S)$ chronology are retained together.  On the regular MARINE branch, the zero-dissipation set reduces to the physical compatibility class.  A source-audited bound $P_{a_wa_w}\preceq16.48I$ and bounded physical velocity/jerk exclude its remaining field-axis candidate inside the explicit storage radius $\sqrt V\le0.15$: over 17 s the sampled physical force/field separation is $0.714271\,\mathrm{m/s^2}$ while the largest local nominal/physical AW mismatch is $0.609\,\mathrm{m/s^2}$, leaving a strict $0.105271\,\mathrm{m/s^2}$ margin.  Compactness then gives finite-window homogeneous strict dissipation at the existence level.  Direct H18 release into this inner ball is not a valid universal target; a literal release audit shows attitude storage can be orders of magnitude larger even after BA elimination.  The controlling open problem is staged entry through a retained outer A21 region into the inner LaSalle ball, followed by finite nonlinear/source supply, regime-transition and float32 closure.  End-to-end regional practical stability is not yet claimed.
+This study analyzes deterministic regional stability of the shipping OU--III marine estimator under the declared MARINE MOTION, IMU BIAS and MAGNETIC SERVICE domain, without changing estimator behavior, tuning, gates or quality thresholds.  The proof follows one same-history path through construction, capture, magnetically informed H18, refinement/release, recurring A21 and regional practical stability.  The current controlling argument is path-complete covariance-metric dissipativity and a LaSalle invariant-set exclusion, not the superseded scalar kernel-ceiling search.  The literal OU prediction, $S=0$ pseudo-measurement, accelerometer and magnetic corrections, covariance synchronization, resets and coupled $(\tau,\sigma_{a_w},R_S,T_S)$ chronology are retained together.  On the regular MARINE branch, the zero-dissipation set reduces to the physical compatibility class.  A source-audited bound $P_{a_wa_w}\preceq16.48I$ and bounded physical velocity/jerk exclude its remaining field-axis candidate inside the explicit storage radius $\sqrt V\le0.15$: over 17 s the sampled physical force/field separation is $0.714271\,\mathrm{m/s^2}$ while the largest local nominal/physical AW mismatch is $0.609\,\mathrm{m/s^2}$, leaving a strict $0.105271\,\mathrm{m/s^2}$ margin.  Compactness then gives finite-window homogeneous strict dissipation at the existence level.  Direct H18 release into this inner ball is not a valid universal target; a literal release audit shows attitude storage can be orders of magnitude larger even after BA elimination.  The controlling open problem is staged entry through a retained outer A21 region into the inner LaSalle ball, followed by finite nonlinear/source supply, regime-transition and float32 closure.  Both sensors now use a carried slow-plus-fast error model with signed window accumulation; its numerical temporal qualification is open, not replaced by unrestricted residual boxes.  MARINE MOVING likewise requires recurring whole-window displacement span in addition to gravity-direction span, so zero-translation rocking is not an admitted moving ambiguity.  The numerical excitation constants remain open. End-to-end regional practical stability is not yet claimed.
 \end{abstract}
 
 \section{Theorem scope}
@@ -76,20 +76,33 @@ $W=[t,t+T_E]$, define body gravity direction $g_b(s)=R(s)^{\mathsf T}e_z$ and
  \Delta_g(W)=\sup_{s,u\in W}\arccos\!\bigl(g_b(s)^{\mathsf T}g_b(u)\bigr).
  \label{eq:attitude-span}
 \end{equation}
-The moving requirement is precisely
+A certified MOVING episode has two recurring excitation requirements on the
+same physical history.  The attitude requirement is
 \begin{equation}
  \fitcol{\boxed{\forall I,\ \forall t:\ [t,t+T_E]\subset\overline I
        \ \Longrightarrow\ \Delta_g([t,t+T_E])\ge\theta_E>0.}}
  \label{eq:episode-excite}
 \end{equation}
-No span condition is imposed on a window crossing a rest boundary. A departure
-at $a$ first allows a complete excited window at $a+T_E$; a shorter moving
-episode is wholly transition for this proof. Sustained constant-attitude
-translation cannot evade the condition by relabeling successive transitions.
-Indefinite physical rest remains admissible. The span uses roll/pitch rather
-than yaw, and is not an endpoint difference: periodic rocking can return to
-its initial attitude. $T_E,\theta_E$ remain symbolic; pinned vessel evidence
-does not yet qualify their all-time complete-window minimum.
+Define the wave-displacement diameter on $W$ by
+\begin{equation}
+ \Delta_p(W)=\sup_{s,u\in W}\norm{p(s)-p(u)} .
+ \label{eq:displacement-span}
+\end{equation}
+The displacement requirement is independently
+\begin{equation}
+ \fitcol{\boxed{\forall I,\ \forall t:\ [t,t+T_P]\subset\overline I
+       \ \Longrightarrow\ \Delta_p([t,t+T_P])\ge P_E>0.}}
+ \label{eq:displacement-excite}
+\end{equation}
+No span condition is imposed on a window crossing a rest boundary.  A shorter
+moving episode may therefore remain wholly transition for one or both
+requirements.  Both quantities are whole-window diameters rather than endpoint
+differences: periodic rocking and periodic translation may return to their
+initial values.  Pure attitude rocking with $p=v=a=0$ is not MOVING because
+$\Delta_p=0$.  Conversely, sustained constant-attitude translation cannot
+satisfy the attitude condition.  Indefinite quiet water remains admissible as
+STILL.  The four constants $T_E,\theta_E,T_P,P_E$ remain symbolic and
+numerically OPEN; no minimum wave height is invented from the proof.
 Pointwise bounds are insufficient. Admission additionally requires
 \begin{equation}
  \boxed{\norm{\int_{t_1}^{t_2}p(\tau)\,d\tau}\le P_{\rm AC},
@@ -134,27 +147,56 @@ associated specific force remains an implemented model term or a declared
 same-history disturbance.
 
 \section{IMU bias}
-The total residual accelerometer and gyro biases after the calibration
-actually performed are locally absolutely continuous and satisfy
-\begin{align}
- \norm{b_a(t)}&\le B_a,& \norm{\dot b_a(t)}&\le D_a,\nonumber\\
- \norm{b_g(t)}&\le B_g,& \norm{\dot b_g(t)}&\le D_g
- \quad\text{a.e.}
+The calibrated delivered measurements have exactly two error components per sensor:
+\begin{equation}
+ \boxed{y_a=f_{\rm true}+b_{a,s}+b_{a,f},\qquad
+        y_g=\omega_{\rm true}+b_{g,s}+b_{g,f}.}
+ \label{eq:imu-slow-fast}
+\end{equation}
+The slow components are locally absolutely continuous with, for $i=a,g$,
+\begin{equation}
+ \begin{aligned}
+ \norm{b_{i,s}}&\le B_{i,s},\qquad \norm{\dot b_{i,s}}\le D_{i,s},\\
+ \norm{b_{i,s}(t+h)-b_{i,s}(t)}&\le\min(2B_{i,s},D_{i,s}h).
+ \end{aligned}
  \label{eq:bias-cont}
-\end{align}
-The constants are qualified separately. No decomposition of physical truth is
-imposed: the aggregate residual may simultaneously include turn-on offset,
-thermal drift, strain, hysteresis, aging, correlated drift, and other
-calibration residuals. The sampled physical histories obey
-\begin{align}
- b_{a,k+1}&=b_{a,k}+w_{a,k},&
- \norm{w_{a,k}}&\le D_a\Delta t_k,\nonumber\\
- b_{g,k+1}&=b_{g,k}+w_{g,k},&
- \norm{w_{g,k}}&\le D_g\Delta t_k .
+\end{equation}
+The fast component satisfies $\norm{b_{i,f}}\le B_{i,f}$ and the following
+conditional qualification. Write $f_i^h$ for the hold of its actually delivered
+calibrated samples and $\dot U_i=f_i^h$. Every placed interval of length
+$0<T\le H_i$ must satisfy
+\begin{equation}
+ \boxed{\begin{aligned}
+ \norm{U_i(s+T)-U_i(s)}&\le\min(B_{i,f}T,C_i),\\
+ H_i&>0,\quad 0\le C_i<B_{i,f}H_i.
+ \end{aligned}}
+ \label{eq:fast-window}
+\end{equation}
+For $B_{i,f}=0$ use $C_i=0$. This is signed accumulation, not independence,
+white noise, exact zero mean or an infinite-horizon bounded primitive.
+It permits small persistent leakage up to $C_i/H_i$, not arbitrary persistence
+at the whole instantaneous amplitude. All four numerical parameters
+$H_a,C_a,H_g,C_g$ are \textbf{OPEN}; neither calibration fit statistics nor
+component noise densities provide them. Missing parameters never authorize
+unrestricted fast signals. The six amplitude/rate numbers are inherited
+candidate qualification budgets, not newly measured assembled-device limits.
+The provenance and complete migration are in
+\texttt{docs/ou3-imu-two-timescale.md}.
+
+Select one decomposition for the entire physical history, including every
+cross-word and cross-regime window. No release, correction, reference event or
+proof partition may reset it or reassign its slow/fast portions. The sampled
+slow recurrence is
+\begin{equation}
+ b_{i,s,k+1}=b_{i,s,k}+w_{i,s,k},\qquad
+ \norm{w_{i,s,k}}\le\min(2B_{i,s},D_{i,s}\Delta t_k).
  \label{eq:bias-discrete}
-\end{align}
-Thus the successor is constrained by its predecessor rather than selected
-independently from an amplitude box.
+\end{equation}
+The old symbols $b_a,b_g,b$ in the estimator-bias error coordinates below denote
+these \emph{slow} physical components, not total measurement errors. The
+estimated states, their covariance, and the complete shipping chronology are
+unchanged. Fast errors enter the actual gyro prediction and accelerometer
+correction, with their transported gains; they do not become extra bias states.
 
 Let $e_b=b-\hat b$. For the accelerometer-bias estimate, define the implemented
 prediction factor
@@ -210,8 +252,8 @@ $d_{b,k}=\hat b_{a,k}^{\rm corr}-\operatorname{Proj}_{R_b}
  \label{eq:bias-defect}
 \end{equation}
 \begin{lemma}[Estimate-projection bounds]
-For $\norm{b_a}\le B_a$ and an applied positive-radius projection,
-$\norm{e_{b_a}^{+}}\le B_a+R_b$. If additionally $B_a\le R_b$, then
+For $\norm{b_a}\le B_{a,s}$ and an applied positive-radius projection,
+$\norm{e_{b_a}^{+}}\le B_{a,s}+R_b$. If additionally $B_{a,s}\le R_b$, then
 \begin{equation}
  \norm{e_{b_a}^{+}}^2+\norm{d_b}^2
  \le\norm{e_{b_a}^{\rm corr}}^2.
@@ -238,7 +280,7 @@ covariance cross terms: covariance Cauchy--Schwarz yields
 $\|e_{b_a}\|\le\sqrt V/40$. Thus projection is inactive at a finite
 pre-projection boundary whenever
 \begin{equation}
- \sqrt V<40(0.4-B_a)=6.993335800641838.
+ \sqrt V<40(0.4-B_{a,s})=6.993335800641838.
 \end{equation}
 At $\sqrt V\le6$ the interior slack is
 $0.02483339501604595\,\mathrm{m/s^2}$ and the projection defect is exactly
@@ -252,7 +294,7 @@ $e_{b_g,k+1}^{-}=e_{b_g,k}^{+}+w_{g,k}$ before its actual correction.
 Both OU-II and OU-III constrain the residual sensor-bias estimate to the
 Euclidean ball $\|\hat b_g\|\le R_g=0.5\,\mathrm{rad/s}$. This deliberately
 generous estimator radius is distinct from the physical residual qualification
-$B_g=0.02\,\mathrm{rad/s}$. It is enforced before prediction, after every
+$B_{g,s}=0.02\,\mathrm{rad/s}$. It is enforced before prediction, after every
 coupled correction, at initialization/handoff and after frame retargeting.
 The common correction guard precedes the invalid-attitude return. The mean
 alone is projected; covariance is preserved. Non-finite bias recovers to zero.
@@ -260,8 +302,8 @@ The finite implementation scales safely and uses an inward allowance of eight
 scalar epsilons; its rounding defect is carried separately.
 
 For the already qualified $h\in[0.004,0.006]$ s family, the literal calibrated
-gyro input includes physical rate, total post-calibration residual bias and
-fast measurement residual. With $N_g=0.02\,\mathrm{rad/s}$,
+gyro input includes physical rate and the two post-calibration
+slow/fast components. With $B_{g,f}=0.02\,\mathrm{rad/s}$,
 \begin{align}
  \phi&=h\|\omega_m-\hat b_g\|\nonumber\\
  &\le 0.006(0.6108652381980153+0.02+0.02+0.5)\nonumber\\
@@ -270,8 +312,8 @@ fast measurement residual. With $N_g=0.02\,\mathrm{rad/s}$,
 The normalized quaternion polynomial adds at most
 $4(\phi^6/46080+\phi^7/645120)$ to its real-source angle. Hence a conservative
 angle cap is $\bar\phi=0.007$ rad, with margins exceeding $3.13459$ rad from
-$\pi$ and $6.27618$ rad from $2\pi$. Calibration and temperature residuals
-are included in $B_g$. The device API itself admits arbitrary positive finite
+$\pi$ and $6.27618$ rad from $2\pi$. All calibrated errors must admit the same slow/fast decomposition;
+no additional unrestricted calibration residual is allowed. The device API itself admits arbitrary positive finite
 timesteps; this certificate does not cover device stalls outside the qualified
 range or unqualified gyro spikes.
 
@@ -295,7 +337,7 @@ full signed temporal $\inf_W\Delta_{\rm gyr}(W)>0$: chronological observation
 forcing, resets and projection defects still require a uniform word bound.
 Nominal force/field collinearity remains a separate obstruction. For ideal
 projection $d_g=\hat b_g^{\rm corr}-\operatorname{Proj}_{R_g}(\hat b_g^{\rm corr})$,
-$(e_g^+)^{\mathsf T}d_g\le-(R_g-B_g)\|d_g\|$, with radius gap $0.48$.
+$(e_g^+)^{\mathsf T}d_g\le-(R_g-B_{g,s})\|d_g\|$, with radius gap $0.48$.
 As for accelerometer bias, this component sector is not full covariance-metric
 contraction: all cross terms and the rounding supply remain in the same
 finite-error inequality. No covariance reset or OU-II stability project is
@@ -438,7 +480,7 @@ also describes the mean differential with the realized adaptation.
 In magnetic units divided by 75 the block is
 \begin{align}
  F(t)&=\begin{pmatrix}1&t\\0&1\end{pmatrix},& H&=(1,0),\nonumber\\
- Q(t)&=\begin{pmatrix}\sigma_g^2t+q_gt^3/3&q_gt^2/2\\q_gt^2/2&q_gt\end{pmatrix},&
+ Q(t)&=\begin{pmatrix}\sigma_g^2t+q_gt^3/3&q_gt^2/2\\q_gt^2t^2/(2q_g)&q_gt\end{pmatrix},&
  r&=(0.8/75)^2,
 \end{align}
 where $\sigma_g=0.00135$ and $q_g=10^{-10}$. The source zero-rate
@@ -547,7 +589,7 @@ The physical sensor equation gives
 $a_i=g(e_z-Re_z)-R(b_{a,i}+n_{a,i})$. Weighted averaging and
 \eqref{eq:sampled-mean} imply
 \begin{equation}
- 2g\sin(\theta/2)\le11/T+0.15+B_a+N_a.
+ 2g\sin(\theta/2)\le11/T+0.15+B_{a,s}+B_{a,f}.
 \end{equation}
 At $T=32$ the right side is below $1.018917$. Using $\pi>3.14159$
 and $\sin x\ge x-x^3/6$ gives $2g\sin(\pi/60)>1.0264$.
@@ -563,7 +605,7 @@ Use the preceding $\alpha_i$ and any nonnegative magnetic weights
 $\beta_j$ summing to one. True transport is an analytical coordinate, not
 an estimator input. With both magnetic residual limits charged,
 \begin{align}
- \norm{\bar u+e_z}&\le\epsilon=(11/T+0.15+B_a+N_a)/g,\nonumber\\
+ \norm{\bar u+e_z}&\le\epsilon=(11/T+0.15+B_{a,s}+B_{a,f})/g,\nonumber\\
  \norm{\bar b-B/75}&\le r=(5+2)/75.
 \end{align}
 Assume the declared $\norm B\le75$ and horizontal component at least $15$.
@@ -721,18 +763,22 @@ STILL label does not authorize an external accelerometer-bias hold.
 At true rest, with $Q=R^{\mathsf T}$ and residual magnetic terms suppressed
 only for this identifiability calculation,
 \begin{equation}
- y_g=b_g+n_g,\qquad f=-gQe_z+b_a+n_a,\qquad m=QB.
+ y_g=b_{g,s}+b_{g,f},\qquad f=-gQe_z+b_{a,s}+b_{a,f},\qquad m=QB.
 \end{equation}
 Known zero physical rate gives direct gyro-bias information. For nonnegative
 weights $w_i$ summing to one and sample ages $d_i$ from the dwell endpoint,
 \begin{equation}
  \norm{\sum_i w_i y_{g,i}-b_g(t_{\rm end})}
-       \le N_g+D_g\sum_i w_i d_i.
+       \le {\cal F}_g(w)+\sum_i w_i\min(2B_{g,s},D_{g,s}d_i).
  \label{eq:stationary-gyro-supply}
 \end{equation}
 A certified residual physical rate bound $\varepsilon_\omega$ adds that
 amount, including on false entry. Uniform continuous averaging over duration
-$D$ gives $N_g+D_gD/2$. Deterministic bounded noise does not decay as
+$D$ has slow charge at most $D_{g,s}D/2$. Here
+${\cal F}_g(w)=\sup_{b_{g,f}\in\mathcal F_g}\|\sum_iw_i b_{g,f,i}\|$ uses the
+same placed-window set and actual sample weights; \eqref{eq:fast-abel} supplies
+an upper bound when both temporal parameters are known. The amplitude-only
+upper bound $B_{g,f}$ alone is not fast-history qualification. Noise does not decay as
 $1/\sqrt N$. This is a possible stationary observation supply in $c_d$, not
 a proof that quiet samples certify zero rate.
 
@@ -744,7 +790,7 @@ Thus the required stationary theorem is practical boundedness relative to a
 measurement-consistency class, with an explicit physical ambiguity radius.
 The estimator BA prior cannot make that deterministic ambiguity shrink.
 The existing mean projections bound gyro and BA error by $.52$ and
-$B_a+.4$, respectively, after their prescribed operations; they do not prove
+$B_{a,s}+.4$, respectively, after their prescribed operations; they do not prove
 bounded wave states, covariance or a nonlinear stationary retained region.
 The all-time bounded primitive implies $p=0$ on an indefinite rest tail,
 while the inherited physical $S$ remains constant and need not be zero.
@@ -769,7 +815,7 @@ Each lies strictly inside the unchanged IMU BIAS limits. Translation, jerk
 and primitive vanish. Every complete $T_E=80\pi$ window inside the moving
 episode has span $2\alpha=.002$. This is an admissible parameter instance,
 not a numerical qualification of the deployment. The native regression
-charges the additional constant gravity-representation residual of norm
+places in the slow component the additional constant gravity-representation offset of norm
 $1.617431640625\times10^{-7}\,\mathrm{m/s^2}$; physical gravity is unchanged.
 In real arithmetic the observations are identically $(y_g,f,m)=(0,-ge_z,75e_x)$ before, during and after motion.
 The existing actual stationary magnetic-service lower bound remains above
@@ -786,9 +832,9 @@ signed nominal margin.
 
 Necessary quiet evidence follows from the physical/noise envelopes:
 \begin{align}
- \norm{y_{g,i}}&\le B_g+N_g,\quad |\norm{f_i}-g|\le B_a+N_a,\nonumber\\
- \norm{y_{g,j}-y_{g,i}}&\le\min(2B_g,D_g|t_j-t_i|)+2N_g,\nonumber\\
- \norm{f_j-f_i}&\le\min(2B_a,D_a|t_j-t_i|)+2N_a.
+ \norm{y_{g,i}}&\le B_{g,s}+B_{g,f},\quad |\norm{f_i}-g|\le B_{a,s}+B_{a,f},\nonumber\\
+ \norm{y_{g,j}-y_{g,i}}&\le\min(2B_{g,s},D_{g,s}|t_j-t_i|)+2B_{g,f},\nonumber\\
+ \norm{f_j-f_i}&\le\min(2B_{a,s},D_{a,s}|t_j-t_i|)+2B_{a,f}.
 \end{align}
 The proof-side monitor tests a continuous dwell against an anchor, invalidates
 it on bad packets/gaps, delays entry and immediately exits on inconsistent
@@ -1065,23 +1111,98 @@ This carried history is not a source-uniform counterexample to eventual capture;
 The required architecture therefore has two nested A21 regions: an outer capture/retention region large enough to contain certified H18/A21 release, and the inner $V\le0.15^2$ region where the field-axis theorem gives strict local dissipation.  Active BA dynamics are carried as a bounded internal coordinate during the outer-to-inner transition.  The next entry theorem must prove finite entrance through the annulus rather than assume inner-ball membership at release.
 
 
-\section{Excited motion, residual qualification, and reference geometry}
-For outer moving-regime exclusion we distinguish a physical condition from estimator coordinates. EXCITED\_MOVING means sustained vessel motion in which roll or pitch undergoes a non-negligible change within a bounded interval. The current feasibility candidate is
-\[
- T_X=60\ {\rm s},\qquad \theta_X=1^\circ .
-\]
-It is not yet a promoted theorem constant. Pointwise fast-residual boxes alone are insufficient: persistent low-frequency residuals can counterfeit genuine tilt. The proposed assembled-device qualification retains the full-band boxes and additionally requires
-\[
- \|L_Xn_a\|\le\epsilon_{a,{\rm LF}},\qquad
- \|L_Xn_g\|\le\epsilon_{g,{\rm LF}},
-\]
-for a fixed offline certification low-pass whose passband covers the vessel-motion band. For the $1^\circ/60$ s candidate a conservative joint gate is
-\[
- 2\arcsin(\epsilon_{a,{\rm LF}}/g)+60\epsilon_{g,{\rm LF}}
- <0.01133499524 .
-\]
-The corresponding axis intercepts are approximately $0.05558\ {\rm m/s^2}$ and $1.8892\times10^{-4}\ {\rm rad/s}$. These are qualification targets, not certified hardware assumptions.
+\section{Two-epoch reachability and joint physical ambiguity}
+Let $\mathcal E_i=\mathcal S_i+\mathcal F_i$ be the full history set defined by
+\eqref{eq:bias-cont}--\eqref{eq:fast-window}, not a product of endpoint boxes.
+For two distinct complete hold cells of lengths $d_0,d_1$ separated by $h>0$,
+put $c_i(d)=\min(B_{i,f},C_i/\min(H_i,d))$. The global error-class supremum is
+\begin{align}
+ \Delta_{i,s}(h)&=\min(2B_{i,s},D_{i,s}h),\nonumber\\
+ \Delta_{i,f}(h;d_0,d_1)&=c_i(d_0)+c_i(d_1),\nonumber\\
+ \Delta_i(h;d_0,d_1)&=\Delta_{i,s}(h)+\Delta_{i,f}(h;d_0,d_1).
+ \label{eq:two-epoch-slow-fast}
+\end{align}
+Opposite fast values on the two cells and zero elsewhere attain the fast bound;
+a clipped slow ramp attains the slow bound in the same direction. Previously
+fixed predecessors and physical sensor equations can only shrink this class.
+At $h=0$ the exact change is zero. If $C_i\ge B_{i,f}\max(d_0,d_1)$, the fast
+term is still $2B_{i,f}$: temporal averaging does not imply a smaller raw endpoint
+modulus. An incomplete terminal cell cannot use the complete-cell improvement.
+Unknown $H_i,C_i$ leave the reachable fast change OPEN, not unrestricted.
 
+For $T=nH_i+r$, $0\le r<H_i$, define the same-history outer integral envelope
+$K_i^*(T)=nC_i+\min(B_{i,f}r,C_i)$. The length-$L$ boxcar satisfies
+\begin{equation}
+ \norm{\overline f_i^{\,L}(t+h)-\overline f_i^{\,L}(t)}
+ \le {2\min(K_i^*(L),K_i^*(h))\over L}.
+ \label{eq:fast-mean-difference}
+\end{equation}
+For continuous slow averages add $\min(2B_{i,s},D_{i,s}h)$. Held slow averages
+require the actual quadrature error, or the conservative
+$\min(2B_{i,s},D_{i,s}(h+h_{\max}))$ for $h>0$.
+
+For actual matrix weights $A_k$, cell lengths $d_k$ and $q_k=A_k/d_k$, retain
+\begin{align}
+ \sum_{k=m}^{n-1}A_k b_{i,f,k}
+ &=q_{n-1}(U_{i,n}-U_{i,m})
+   +\sum_{k=m+1}^{n-1}(q_{k-1}-q_k)(U_{i,k}-U_{i,m}),\label{eq:fast-abel}\\
+ \sum_k A_k b_{i,s,k}
+ &=(\sum_k A_k)b_{i,s,0}
+   +\sum_{j\ge1}(\sum_{k\ge j}A_k)w_{i,s,j}.\label{eq:slow-abel}
+\end{align}
+Bound the signed fast primitive differences by $K_i^*$, retaining the endpoint
+term and rotating/gain coefficients. Slow increments obey
+\eqref{eq:bias-discrete} together with every partial-sum amplitude constraint.
+These expressions replace independent pointwise extrema in all time-linked
+source functionals. One-step amplitude outer bounds remain valid inequalities,
+not physical membership tests.
+
+Two indistinguishable physical histories must simultaneously satisfy
+\begin{align}
+ R_1^{\mathsf T}(a_1-g_1)-R_0^{\mathsf T}(a_0-g_0)
+   &=e_{a,0}-e_{a,1}\in\mathcal E_a-\mathcal E_a,\nonumber\\
+ \omega_1-\omega_0&=e_{g,0}-e_{g,1}\in\mathcal E_g-\mathcal E_g.
+ \label{eq:joint-ambiguity}
+\end{align}
+Unspecified pairs require twice the single-history difference envelope, unless
+one reference error is fixed. MARINE translation/jerk/primitive histories and
+actually applied MAGNETIC SERVICE remain linked to these equations. For
+$Q=R_1R_0^{\mathsf T}$,
+$\dot Q=R_1[\omega_1-\omega_0]_\times R_0^{\mathsf T}$; gyro accumulation is a
+transported matrix functional, not just an unweighted angular integral.
+A fixed magnetic field leaves field-axis physical rotations invisible, even
+when the specified restricted heading/axial-bias service holds.
+
+The former all-slow $\phi=.001\sin^3(t/40)$ construction had
+$p=v=a=0$.  It therefore violates \eqref{eq:displacement-excite} for every
+$P_E>0$ and is no longer an admitted MOVING counterexample.  It is retained
+only as a historical obstruction to the previous attitude-only MARINE
+contract.  A current ambiguity must simultaneously realize nonzero recurring
+displacement span, the translation kinematics and primitive bound, attitude
+span, both SLOW+FAST IMU histories, and actual MAGNETIC SERVICE.  Displacement
+span alone is not converted into an instantaneous acceleration floor: the
+proof must use the linked chain $\dot p=v$, $\dot v=a$, the bounded primitive,
+and the literal $S=0$ chronology.
+
+For $\phi=.01\sin(.5t)$, all-slow compensation requires maximum accel/gyro
+rates $.04903325\,{\rm m/s^3}$ and $.0025\,{\rm rad/s^2}$, respectively
+49.03325 and 250 times the candidate slow limits. For \emph{any} mixed split,
+subtract opposite half-wave windows of length $L=2\pi$. With
+$I_a\ge(g/.5)(2(.01)-2(.01)^3/9)$, $I_g=.02$, a necessary continuous bound is
+\begin{equation}
+ K_i^*(L)\ge I_i-{L\over2}\min(2B_{i,s},D_{i,s}L).
+ \label{eq:witness-fast-necessary}
+\end{equation}
+Charging the delivered-sample quadrature error and slow hold error at
+$h_{\max}=.006$ gives necessary lower bounds approximately
+$.370655073155\,{\rm m/s}$ for accel and $.0197081716368\,{\rm rad}$ for gyro.
+These are requirements imposed by the witness, not device constants chosen to
+exclude it. Its current slow/fast admissibility remains OPEN. The V3 norm-only
+counterexample is preserved as history; its particular BA storage lower bound
+cannot be transferred to a different decomposition. Zero homogeneous action
+still does not imply zero base innovations.
+
+\subsection{Reference geometry remains a separate obligation}
 Continuous hard-iron adaptation preserves the canonical world-reference gauge $B_{\rm ref}=(h,0,z)$. If an all-time vector-reference error $\|B_{\rm ref}-B_{\rm true}\|\le E_B<15\,\mu{\rm T}$ is certified, then
 \[
  \|P_{B_{\rm ref}}g\|\ge g{15-E_B\over75+E_B}>0 .
@@ -1100,20 +1221,43 @@ and hence
 A source-uniform Mahony-proxy tilt bound and exact hard-iron/reference residual transfer remain open.
 
 \section{H18 to A21 release compactness}
-A21 release is the first literal transition for which accelerometer-bias updates become enabled; it is not Live handoff. Shipping requires both the magnetic-count gate and clearance of the wrapper external BA hold. Second-stage magnetic-reference refinement has no forced timeout, so source currently provides no uniform finite release-time upper bound.
-
-The principal potentially noncompact pre-release mean coordinate is $z=(\hat v,\hat p,\hat S,\hat a_w)$. For the default bounded shipping profile,
+The held-BA LIN obstruction is closed at the qualitative source-uniform level. Three separated actually applied $S$ rows kill the neutral $(v,p,S)$ polynomial root, and a fourth kills the integrated-OU $a_w$ root. Prediction and covariance-matched corrections are nonexpansive in the carried covariance metric. The existing nuisance comparison lifts to held H18 for the first four blocks and gives, after the 17-s regular-service prefix,
 \[
- h\in[0.004,0.006],\quad \tau\in[0.02,12],\quad
- \sigma_{a_w}\ge9\times10^{-4}\ {\rm m/s^2}.
+ \boxed{P_{LL}\preceq5\,\operatorname{diag}(b_v^2I,b_p^2I,b_S^2I,156^2I)} .
 \]
-The per-axis integrated-OU process covariance is a finite-horizon controllability Gramian. The chain is controllable throughout this compact box, so continuity gives
-\[
- \boxed{\inf\lambda_{\min}(Q_{LL})>0.}
-\]
-A high-precision diagnostic at the apparent worst corner gives a smallest eigenvalue of order $2.2\times10^{-29}$; this is not promoted as a global numerical certificate.
+The associated coefficient/gain family is compact. Structural zero-kernel plus compactness gives a uniform homogeneous factor $\rho_L<1$ on a fixed separated four-$S$ word. Bounded fixed-word physical/IMU forcing then gives all-time held-H18 LIN BIBO, including the displacement boundary coordinate $q^{\mathsf T}v$.
 
-Three separated $S$ rows remove the neutral polynomial root and four applied $S$ rows remove the homogeneous OU extension. The actual H18 word also contains accelerometer corrections whose LIN gain uses attitude/LIN cross covariance, so S-only contraction cannot be promoted to actual 12-state BIBO stability. A read-only diagnostic now propagates the exact 12-column LIN tangent through a 17-s held-BA carried word, using $F_{LL}$ at prediction and $I-K_LH_L$ at corrections, with AG tangent columns treated as inputs. Its carried result is non-promoting; the source-uniform target remains BIBO stability of the literal interleaved acc+$S$ LIN subsystem.
+On the retained $\le7^\circ$ captured tilt domain, the existing magnetic field/residual bounds leave positive margin at the literal MagAutoTuner gates. MAGNETIC SERVICE supplies informative samples in uniformly finite time; the refinement count/window and subsequent bias-release guard therefore give a conservative finite proof horizon, not a runtime timeout. Compact attitude, projected gyro bias, H18 LIN BIBO and finite continuous covariance/reference evolution then give a compact A21 release set conditional on captured-domain entry. Release is not asserted to lie in $V\le0.15^2$.
+
+\section{Outer physical-to-nominal bridge and paired two-Abel operator}
+The displacement chord identity
+\[
+ q^{\mathsf T}\Delta p=Tq^{\mathsf T}v_0+\int_0^T(T-t)q^{\mathsf T}a(t)\,dt
+\]
+is completed by the nonzero-boundary multiplier $\lambda(t)=T-t$, which may be superposed with the literal four-$S$ spline without changing its endpoint coefficients. H18 LIN BIBO bounds the resulting $q^{\mathsf T}v_0$ row.
+
+For the hypothetical proof-feasibility profile
+\[
+ T_E=T_P=H_a=H_g=60\ {\rm s},\quad \theta_E=1^\circ,\quad P_E=0.02\ {\rm m},
+ \quad C_a=1.2\ {\rm m/s},\quad C_g=0.0042\ {\rm rad},
+\]
+the slow+fast physical ambiguity calculation leaves
+\[
+ \boxed{M_{\rm cand}=0.003056118\ {\rm rad}\simeq0.1751^\circ.}
+\]
+These values are not physically qualified constants.
+
+Zero homogeneous six-column action does not set carried base innovations to zero. The outer bridge therefore uses the signed accelerometer+$S$ adjoint. Summing actual synchronization slabs cancels internal physical $p/v/S/a$ boundaries before norms and eliminates interior innovations through the same Joseph port. The remaining state contribution is external endpoint-reader action plus nonlinear reset/rotation/arithmetic defects.
+
+The causal terminal-AW reader has source-uniform action $B_{\rm AW,*}\le16$, but multiplying its norm by an outer-state radius destroys the paired cancellation. The decisive object is the complete paired two-Abel operator $\mathcal G_{\rm phys,W}$ built from literal $F,Q,K,H,S$, synchronization and reset chronology. Common process/$S$ and accelerometer physical-source columns are added with their signs before norms, and adjacent slab endpoints are telescoped first. The executable \texttt{paired\_two\_abel.py} layer audits these exact operations and does not reuse $C_{\rm port,W}$.
+
+The controlling candidate-profile test is
+\[
+ \boxed{\sup_{\mathcal H_{\rm outer}}\|\mathcal G_{\rm phys,W}\|_{\rm ind}
+ +E_{\rm nonlinear}<0.003056118\ {\rm rad}.}
+ \label{eq:paired-two-abel-target}
+\]
+It remains OPEN. The current estimator-word export lacks the physical $p/v/S/a$ lift aligned to each prediction/$S$/accelerometer boundary. After that lift is exported, a carried matrix can be evaluated as feasibility evidence; theorem closure then requires a source-uniform factor enclosure over the compact outer coefficient class. If \eqref{eq:paired-two-abel-target} closes, the physical-to-nominal bridge gives $J_{\rm AG}>0$, enabling the existing corrected-word full covariance upper comparison and homogeneous $\rho_0<1$.
 
 \section{Linked finite-error supply}
 For a complete physical word write $e_N=Me_0+b_W$, $J_0=P_0^{-1}$, $J_N=P_N^{-1}$ and $D_W=J_0-M^{\mathsf T}J_NM$. For $G_\gamma=D_W-\gamma J_0\succ0$, define
@@ -1125,16 +1269,25 @@ Completing the square gives
 \[
  \boxed{V_N\le(1-\gamma)V_0+\chi_\gamma.}
 \]
-This preserves forcing direction relative to the same dissipation matrix. Outer retention at level $C$ requires $\chi_\gamma\le\gamma C$; strict finite entry below $r_{\rm in}$ requires $\chi_\gamma/\gamma<r_{\rm in}^2$ on the jointly reachable class. The former pointwise residual contract admitted an excited counterfeit execution, motivating the explicit low-frequency qualification above.
+This preserves forcing direction relative to the same dissipation matrix. Outer retention at level $C$ requires $\chi_\gamma\le\gamma C$; strict finite entry below $r_{\rm in}$ requires $\chi_\gamma/\gamma<r_{\rm in}^2$ on the jointly reachable class. The supremum is now over the jointly reachable $\mathcal E_a,\mathcal E_g$
+histories, intersected with MARINE, MAGNETIC SERVICE and the exact generated
+frontend/tuner/covariance history. Equations~\eqref{eq:fast-abel}--\eqref{eq:slow-abel}
+bound its sensor functionals; unknown fast temporal qualification leaves the
+numerical source-uniform supply OPEN. Other nonlinear, OU, projection, reference
+and arithmetic defects remain separate and are not relabelled IMU fast error.
 
 \section{Capture and finite-error retention}
-The same proof path still requires finite construction/capture into a magnetically informed H18 domain and a source-uniform refinement/release bridge.  The approximately $7^\circ$ refinement quantity is an estimator-error tube, not a covariance-storage radius and not a bound on physical rocking amplitude.  A six-degree attitude error does not imply membership in $V\le0.15^2$.
+The same proof path still requires finite construction/capture into the retained magnetically informed H18 domain.  Conditional on captured-domain entry, refinement/release compactness is now proved as above.  The approximately $7^\circ$ refinement quantity is an estimator-error tube, not a covariance-storage radius and not a bound on physical rocking amplitude.  A six-degree attitude error does not imply membership in $V\le0.15^2$.
 
 The held-BA H18 geometry must use the actual constant held estimator BA together with
 \begin{equation}
- \norm{b_a(t)}\le B_a,\qquad \norm{\dot b_a(t)}\le D_a,
+ \norm{b_a(t)}\le B_{a,s},\qquad \norm{\dot b_a(t)}\le D_{a,s},
 \end{equation}
 rather than substituting the physical bias envelope for an estimator-error bound.
+The same fast primitives and all placed-window constraints survive capture,
+H18 and release; holding the estimate does not hold physical slow truth or reset
+fast history. A21 compatibility persistence is tested only on this reachable
+base class, with the original coupled $(\tau,\sigma_{a_w},R_S,T_S)$ chronology.
 
 For finite error, write $e_i=A_ie_{i-1}+d_i$.  Variation of constants in the covariance metric and the joint prediction/Joseph source-factor identity give
 \begin{equation}
@@ -1181,10 +1334,15 @@ $A_{\max}$ & 8.80 & m/s$^2$\\
 $J_{\max}$ & 100 & m/s$^3$\\
 $\Omega_{\max}$ & 0.610865 & rad/s\\
 $P_{\rm AC}$ & 1100 & m\,s\\
-$B_a$ & 0.225167 & m/s$^2$\\
-$D_a$ & 0.001 & m/s$^3$\\
-$B_g$ & 0.020 & rad/s\\
-$D_g$ & $1.0\times10^{-5}$ & rad/s$^2$\\
+$T_E,\theta_E$ & OPEN & attitude excitation\\
+$T_P,P_E$ & OPEN & displacement excitation\\
+$B_{a,s}$ & 0.225167 & m/s$^2$\\
+$D_{a,s}$ & 0.001 & m/s$^3$\\
+$B_{g,s}$ & 0.020 & rad/s\\
+$D_{g,s}$ & $1.0\times10^{-5}$ & rad/s$^2$\\
+$B_{a,f}$ & 0.3 (candidate) & m/s$^2$\\
+$B_{g,f}$ & 0.02 (candidate) & rad/s\\
+$H_a,C_a,H_g,C_g$ & OPEN & temporal qualification\\
 $R_b$ (estimate) & 0.4 & m/s$^2$\\
 $\tau_{b,e}$ (estimate) & 5000 & s\\
 $\sigma_g$ (process) & 0.00135 & rad/$\sqrt{\mathrm{s}}$\\
@@ -1202,8 +1360,9 @@ magnetic residual & 2 & $\mu$T\\
 \end{tabular}
 \end{table}
 
-The accelerometer bias-rate value is a selected deterministic qualification
-limit; assembled-history qualification remains open. Magnetic information
+In particular, assembled-history qualification remains open for both sensors.
+All six IMU amplitude/rate values are inherited candidate qualification budgets;
+assembled two-timescale membership and both temporal profiles remain OPEN. Magnetic information
 constants likewise remain to be certified uniformly from actually applied
 shipping sensitivities.
 
@@ -1220,11 +1379,11 @@ The current proof order is
 \begin{array}{c}
 \text{construction/capture and magnetically informed H18}\\
 \Downarrow\\
-\text{all-time held-BA LIN/reference compactness and A21 release}\\
+\text{all-time held-BA LIN/reference compactness}\\\text{and A21 release}\\
 \Downarrow\\
-\text{EXCITED\_MOVING physical-to-nominal compatibility exclusion}\\
+\text{MARINE + slow/fast physical-to-nominal}\\\text{compatibility exclusion}\\
 \Downarrow\\
-\text{source-uniform outer A21 retention and finite inner entry}\\
+\text{source-uniform outer A21 retention}\\\text{and finite inner entry}\\
 \Downarrow\\
 \text{local LaSalle finite-window strictness}\\
 \Downarrow\\
@@ -1235,12 +1394,12 @@ The current proof order is
 \]
 The principal open obligations are:
 \begin{enumerate}
- \item finish the actual interleaved 17-s held-BA LIN BIBO theorem and the source-uniform compact A21 release class;
- \item certify the magnetic-reference cone, including Mahony-proxy tilt and continuous hard-iron/reference error transfer;
- \item certify the assembled-device low-frequency residual envelope and use it with EXCITED\_MOVING to exclude persistence of the corrected-word variational compatibility line without setting base innovations to zero;
- \item prove source-uniform outer A21 retention and finite entry below $0.15$, carrying active BA and the same tuner/reference history;
+ \item finish general construction/capture into the retained $\le7^\circ$ magnetically informed H18 domain and certify the magnetic-reference cone;
+ \item physically qualify $(H_a,C_a,H_g,C_g,T_E,\theta_E,T_P,P_E)$; the $60$-s/$1^\circ$/$0.02$-m profile above is hypothetical only;
+ \item extend the read-only proof exporter with the aligned physical $p/v/S/a$ lift, construct the literal paired two-Abel operator, and prove the source-uniform bound \eqref{eq:paired-two-abel-target};
+ \item use the resulting $J_{\rm AG}>0$ to close the source-uniform corrected-word covariance/contraction certificate and outer A21 retention/finite inner entry;
  \item close linked complete-word finite-error and every-prefix supplies;
- \item compose STILL/TRANSITION/EXCITED\_MOVING regimes and transfer the real-arithmetic inequalities to float32.
+ \item compose STILL/TRANSITION/MOVING regimes and transfer the real-arithmetic inequalities to float32.
 \end{enumerate}
 End-to-end regional practical stability remains unproved. Retracted routes include direct release into the local ball, source-uniform pointwise AW tracking before entry, coefficient-variation/Abel norm bounds, AW-only passivity, and inference from homogeneous zero action to zero carried base innovations.
 

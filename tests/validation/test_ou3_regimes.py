@@ -17,7 +17,7 @@ class RegimeTests(unittest.TestCase):
     def window(self, start, span=0.1, end=100):
         return moving_window_requirement(episode_start=10, episode_end=end,
                                          window_start=start, window_s=20,
-                                         theta_e=0.1, span=span)
+                                         theta_e=0.1, span=span, displacement_window_s=20, displacement_e=0.2, displacement_span=0.2)
 
     def test_departure_has_complete_window_grace(self):
         # [0,20] includes only the first ten seconds of motion; no pathological
@@ -26,6 +26,7 @@ class RegimeTests(unittest.TestCase):
         self.assertFalse(self.window(9.99999)["excitation_required"])
         self.assertTrue(self.window(10)["excitation_required"])
         self.assertTrue(self.window(10)["complete_excited_window"])
+        self.assertTrue(self.window(10)["complete_displacement_excited_window"])
         self.assertFalse(self.window(10)["regime_certificate"])
 
     def test_return_to_rest_and_short_episode(self):
@@ -38,6 +39,20 @@ class RegimeTests(unittest.TestCase):
             row = self.window(start, span=0, end=math.inf)
             self.assertTrue(row["excitation_required"])
             self.assertFalse(row["complete_excited_window"])
+
+    def test_zero_translation_rocking_is_not_moving(self):
+        row = moving_window_requirement(episode_start=10, episode_end=100,
+            window_start=10, window_s=20, theta_e=.1, span=.2,
+            displacement_window_s=20, displacement_e=.01, displacement_span=0)
+        self.assertTrue(row["complete_attitude_excited_window"])
+        self.assertFalse(row["complete_displacement_excited_window"])
+        self.assertFalse(row["complete_excited_window"])
+
+    def test_periodic_displacement_span_not_endpoint_difference(self):
+        row = moving_window_requirement(episode_start=0, episode_end=100,
+            window_start=0, window_s=20, theta_e=.1, span=.1,
+            displacement_window_s=20, displacement_e=.5, displacement_span=1.0)
+        self.assertTrue(row["complete_excited_window"])
 
     def test_span_uses_whole_window_not_endpoint_difference(self):
         self.assertTrue(self.window(10, span=.1)["complete_excited_window"])
@@ -71,15 +86,15 @@ class RegimeTests(unittest.TestCase):
         self.assertEqual(rows[-1]["radius"], F(3, 2)**20)
         self.assertGreater(rows[-1]["radius"], 3000)
 
-    def test_gyro_average_charges_false_entry_and_coherent_noise(self):
+    def test_gyro_average_charges_false_entry_and_supplied_fast_action(self):
         radius = stationary_gyro_average_radius(F(1, 50), F(1, 100000),
-                                               [1, 0], [F(1, 2)] * 2)
+                                               [1, 0], [F(1, 2)] * 2, slow_amplitude=F(1,50))
         self.assertEqual(radius, F(4001, 200000))
         hidden = stationary_gyro_average_radius(F(1, 50), 0, [1, 0],
-                                               [F(1, 2)] * 2, F(1, 100))
+                                               [F(1, 2)] * 2, F(1, 100), slow_amplitude=F(1,50))
         self.assertEqual(hidden, F(3, 100))
         self.assertEqual(stationary_gyro_average_radius(F(1, 50), 0,
-                         range(1000), [F(1, 1000)] * 1000), F(1, 50))
+                         range(1000), [F(1, 1000)] * 1000, slow_amplitude=F(1,50)), F(1, 50))
 
     def test_exact_bias_service_and_scope_certificate(self):
         report = certificate()
@@ -99,8 +114,8 @@ class QuietEvidenceTests(unittest.TestCase):
     def rest(self, monitor, start, count):
         result = None
         for k in range(count):
-            # Correlated bounded sensor noise and a persistent physical bias
-            # cannot be averaged away by an assumed white-noise model.
+            # Amplitude-only necessary screen: passing it never certifies
+            # the new fast temporal contract or physical STILL.
             result = monitor.step(start + k * .005, (.019, .001, 0),
                                   (.08, .03, -9.70665 + .05 * math.sin(k)))
         return result
@@ -112,6 +127,7 @@ class QuietEvidenceTests(unittest.TestCase):
         self.assertEqual(self.rest(m, 2, 1), "STILL_COMPATIBLE")
         self.assertEqual(self.rest(m, 2.005, 20000), "STILL_COMPATIBLE")
         self.assertFalse(m.certified_still)
+        self.assertFalse(m.certified_fast_history)
 
     def test_detectable_motion_exits_then_requires_fresh_dwell(self):
         m = self.monitor()
@@ -156,6 +172,7 @@ class QuietEvidenceTests(unittest.TestCase):
                 self.assertEqual(status, "STILL_COMPATIBLE")
             moving_seen |= abs(phi) > .0009
             self.assertFalse(m.certified_still)
+        self.assertFalse(m.certified_fast_history)
         self.assertTrue(moving_seen)
 
 

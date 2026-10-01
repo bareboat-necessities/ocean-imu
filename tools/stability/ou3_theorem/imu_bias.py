@@ -1,8 +1,15 @@
-"""IMU BIAS same-history contract and literal estimator operations."""
+"""IMU BIAS: two-timescale same-history contract and literal estimator algebra.
+
+Every b_true/b_true_k in the estimator algebra below denotes the SLOW component.
+The shipping estimated-bias state is unchanged; FAST measurement error remains
+an actual sensor forcing on that SAME execution, never a second slow state.
+"""
 from __future__ import annotations
 from dataclasses import dataclass
 import math
 from typing import Sequence
+
+from .imu_temporal import FastWindow, slow_change, audit_fast_prefix
 
 Vec3=tuple[float,float,float]
 
@@ -26,51 +33,98 @@ def scale(c: float,x: Sequence[float]) -> Vec3:
 
 @dataclass(frozen=True)
 class BiasLimits:
-    B_a_mps2: float
-    D_a_mps3: float
-    B_g_rad_s: float
-    D_g_rad_s2: float
+    """One SLOW + FAST profile; missing temporal parameters remain OPEN."""
+    B_a_s_mps2: float
+    D_a_s_mps3: float
+    B_g_s_rad_s: float
+    D_g_s_rad_s2: float
+    B_a_f_mps2: float
+    B_g_f_rad_s: float
+    accel_fast_window: FastWindow | None = None
+    gyro_fast_window: FastWindow | None = None
+
     def __post_init__(self) -> None:
-        vals=(self.B_a_mps2,self.D_a_mps3,self.B_g_rad_s,self.D_g_rad_s2)
+        vals=(self.B_a_s_mps2,self.D_a_s_mps3,self.B_g_s_rad_s,
+              self.D_g_s_rad_s2,self.B_a_f_mps2,self.B_g_f_rad_s)
         if not all(math.isfinite(v) and v>=0.0 for v in vals):
             raise ValueError("bias limits must be finite and nonnegative")
+        for w,b in ((self.accel_fast_window,self.B_a_f_mps2),
+                    (self.gyro_fast_window,self.B_g_f_rad_s)):
+            if w is not None:
+                w.validate_amplitude(b)
+
+    @classmethod
+    def from_constants(cls):
+        import json
+        from pathlib import Path
+        c=json.loads(Path(__file__).with_name("constants.json").read_text())["imu_bias"]
+        def window(h,c):
+            if (h is None)!=(c is None):
+                raise ValueError("fast horizon and accumulation cap must be qualified together")
+            return None if h is None else FastWindow(h,c)
+        return cls(c["B_a_s_mps2"],c["D_a_s_mps3"],c["B_g_s_rad_s"],c["D_g_s_rad_s2"],
+                   c["B_a_f_mps2"],c["B_g_f_rad_s"],
+                   window(c["fast_accel_horizon_s"],c["fast_accel_accumulation_cap_mps"]),
+                   window(c["fast_gyro_horizon_s"],c["fast_gyro_accumulation_cap_rad"]))
+
+    @property
+    def temporal_parameters_present(self) -> bool:
+        return self.accel_fast_window is not None and self.gyro_fast_window is not None
+
 
 @dataclass(frozen=True)
 class BiasContinuationCertificate:
-    """All-time certificate for the single total-residual IMU BIAS history."""
+    """External all-time evidence for ONE carried decomposition, BOTH sensors.
+
+    Calibration gates and a finite capture cannot manufacture this certificate.
+    The window fields certify every placement, including cross-word windows.
+    """
     history_id: str
-    accel_bias_norm_upper_mps2: float
-    accel_bias_rate_norm_upper_mps3: float
-    gyro_bias_norm_upper_rad_s: float
-    gyro_bias_rate_norm_upper_rad_s2: float
+    accel_slow_norm_upper_mps2: float
+    accel_slow_rate_norm_upper_mps3: float
+    gyro_slow_norm_upper_rad_s: float
+    gyro_slow_rate_norm_upper_rad_s2: float
     predecessor_continuity_certified: bool
     calibration_scope_qualified: bool
     all_time_continuation_certified: bool
+    accel_fast_norm_upper_mps2: float
+    gyro_fast_norm_upper_rad_s: float
+    accel_fast_window: FastWindow | None = None
+    gyro_fast_window: FastWindow | None = None
+    decomposition_id: str = ""
+    temporal_evidence_id: str = ""
+    delivered_sample_scope_certified: bool = False
+    all_placed_windows_certified: bool = False
 
     def __post_init__(self) -> None:
         if not self.history_id:
             raise ValueError("nonempty history_id required")
-        vals=(
-            self.accel_bias_norm_upper_mps2,
-            self.accel_bias_rate_norm_upper_mps3,
-            self.gyro_bias_norm_upper_rad_s,
-            self.gyro_bias_rate_norm_upper_rad_s2,
-        )
+        vals=(self.accel_slow_norm_upper_mps2,self.accel_slow_rate_norm_upper_mps3,
+              self.gyro_slow_norm_upper_rad_s,self.gyro_slow_rate_norm_upper_rad_s2,
+              self.accel_fast_norm_upper_mps2,self.gyro_fast_norm_upper_rad_s)
         if not all(math.isfinite(v) and v>=0.0 for v in vals):
             raise ValueError("bias certificate bounds must be finite and nonnegative")
 
 
 def continuation_admitted(cert: BiasContinuationCertificate,
                           limits: BiasLimits) -> bool:
-    """Validate one persistent total-residual accelerometer/gyro bias history."""
-    return (
-        cert.accel_bias_norm_upper_mps2 <= limits.B_a_mps2
-        and cert.accel_bias_rate_norm_upper_mps3 <= limits.D_a_mps3
-        and cert.gyro_bias_norm_upper_rad_s <= limits.B_g_rad_s
-        and cert.gyro_bias_rate_norm_upper_rad_s2 <= limits.D_g_rad_s2
+    """Fail closed: neither a noise box nor finite-prefix statistics is FAST."""
+    def covered(given,required):
+        return (given is not None and required is not None
+                and given.horizon_s == required.horizon_s and given.cap <= required.cap)
+    return bool(
+        cert.accel_slow_norm_upper_mps2 <= limits.B_a_s_mps2
+        and cert.accel_slow_rate_norm_upper_mps3 <= limits.D_a_s_mps3
+        and cert.gyro_slow_norm_upper_rad_s <= limits.B_g_s_rad_s
+        and cert.gyro_slow_rate_norm_upper_rad_s2 <= limits.D_g_s_rad_s2
+        and cert.accel_fast_norm_upper_mps2 <= limits.B_a_f_mps2
+        and cert.gyro_fast_norm_upper_rad_s <= limits.B_g_f_rad_s
+        and covered(cert.accel_fast_window,limits.accel_fast_window)
+        and covered(cert.gyro_fast_window,limits.gyro_fast_window)
+        and cert.decomposition_id and cert.temporal_evidence_id
+        and cert.delivered_sample_scope_certified and cert.all_placed_windows_certified
         and cert.predecessor_continuity_certified
-        and cert.calibration_scope_qualified
-        and cert.all_time_continuation_certified
+        and cert.calibration_scope_qualified and cert.all_time_continuation_certified
     )
 
 
@@ -78,36 +132,70 @@ def continuation_admitted(cert: BiasContinuationCertificate,
 class BiasSample:
     history_id: str
     t_s: float
-    b_a_mps2: Vec3
-    b_g_rad_s: Vec3
+    b_a_s_mps2: Vec3
+    b_g_s_rad_s: Vec3
+    b_a_f_mps2: Vec3 = (0.0,0.0,0.0)
+    b_g_f_rad_s: Vec3 = (0.0,0.0,0.0)
+    decomposition_id: str = "single-carried-split"
+
     def __post_init__(self) -> None:
-        if not self.history_id or not math.isfinite(self.t_s): raise ValueError("valid history and time required")
-        vec(self.b_a_mps2); vec(self.b_g_rad_s)
+        if not self.history_id or not self.decomposition_id or not math.isfinite(self.t_s):
+            raise ValueError("valid history, decomposition and time required")
+        for x in (self.b_a_s_mps2,self.b_g_s_rad_s,self.b_a_f_mps2,self.b_g_f_rad_s):
+            vec(x)
+
 
 def successor_allowed(current: Sequence[float],successor: Sequence[float],dt_s: float,
                       amplitude_limit: float,rate_limit: float,*,tolerance: float=0.0) -> bool:
+    """SLOW predecessor test only; FAST has a separate carried-window test."""
     if not (math.isfinite(dt_s) and dt_s>0.0): return False
     if not all(math.isfinite(v) and v >= 0.0 for v in (amplitude_limit,rate_limit,tolerance)): return False
     return (norm(current)<=amplitude_limit+tolerance and
             norm(successor)<=amplitude_limit+tolerance and
-            norm(sub(successor,current))<=rate_limit*dt_s+tolerance)
+            norm(sub(successor,current))<=slow_change(amplitude_limit,rate_limit,dt_s)+tolerance)
+
 
 def audit_bias_trace(samples: Sequence[BiasSample],limits: BiasLimits,*,tolerance: float=0.0) -> dict:
+    """Finite-prefix audit. Last timestamp closes the preceding fast hold cell.
+
+    No proof boundary resets a bias or its accumulation. The last fast value
+    has no observed hold duration and its temporal extension is not certified.
+    Passing this audit never certifies an all-time physical continuation.
+    """
     if not samples: raise ValueError("empty bias history")
     if not math.isfinite(tolerance) or tolerance < 0.0:
         raise ValueError("finite nonnegative tolerance required")
-    failures=[]; hid=samples[0].history_id
+    failures=[]; hid=samples[0].history_id; split=samples[0].decomposition_id
     for i,s in enumerate(samples):
-        if s.history_id!=hid: failures.append(f"sample {i}: detached history")
-        if norm(s.b_a_mps2)>limits.B_a_mps2+tolerance: failures.append(f"sample {i}: accelerometer amplitude")
-        if norm(s.b_g_rad_s)>limits.B_g_rad_s+tolerance: failures.append(f"sample {i}: gyro amplitude")
+        if s.history_id!=hid or s.decomposition_id!=split:
+            failures.append(f"sample {i}: detached history/decomposition")
+        for name,value,bound in (("accelerometer slow",s.b_a_s_mps2,limits.B_a_s_mps2),
+                                 ("gyro slow",s.b_g_s_rad_s,limits.B_g_s_rad_s),
+                                 ("accelerometer fast",s.b_a_f_mps2,limits.B_a_f_mps2),
+                                 ("gyro fast",s.b_g_f_rad_s,limits.B_g_f_rad_s)):
+            if norm(value)>bound+tolerance: failures.append(f"sample {i}: {name} amplitude")
         if i:
             p=samples[i-1]; dt=s.t_s-p.t_s
-            if not successor_allowed(p.b_a_mps2,s.b_a_mps2,dt,limits.B_a_mps2,limits.D_a_mps3,tolerance=tolerance):
-                failures.append(f"sample {i}: accelerometer predecessor/rate")
-            if not successor_allowed(p.b_g_rad_s,s.b_g_rad_s,dt,limits.B_g_rad_s,limits.D_g_rad_s2,tolerance=tolerance):
-                failures.append(f"sample {i}: gyro predecessor/rate")
-    return {"finite_prefix_pass":not failures,"failures":failures,"history_id":hid,
+            if not successor_allowed(p.b_a_s_mps2,s.b_a_s_mps2,dt,limits.B_a_s_mps2,limits.D_a_s_mps3,tolerance=tolerance):
+                failures.append(f"sample {i}: accelerometer slow predecessor/rate")
+            if not successor_allowed(p.b_g_s_rad_s,s.b_g_s_rad_s,dt,limits.B_g_s_rad_s,limits.D_g_s_rad_s2,tolerance=tolerance):
+                failures.append(f"sample {i}: gyro slow predecessor/rate")
+    slow_amplitude_pass=not failures
+    temporal={}
+    if len(samples)>1 and all(b.t_s>a.t_s for a,b in zip(samples,samples[1:])):
+        for name,field,bound,window in (
+            ("accel","b_a_f_mps2",limits.B_a_f_mps2,limits.accel_fast_window),
+            ("gyro","b_g_f_rad_s",limits.B_g_f_rad_s,limits.gyro_fast_window)):
+            temporal[name]=audit_fast_prefix([s.t_s for s in samples],
+                [getattr(s,field) for s in samples[:-1]],bound,window,tolerance=tolerance)
+            if temporal[name]["finite_prefix_pass"] is False:
+                failures.append(f"{name}: fast all-placed-window prefix")
+    known=len(temporal)==2 and all(v["finite_prefix_pass"] is not None for v in temporal.values())
+    return {"finite_prefix_pass":False if failures else (True if known else None),
+            "slow_and_amplitude_prefix_pass":slow_amplitude_pass,
+            "failures":failures,"history_id":hid,"decomposition_id":split,
+            "fast_prefixes":temporal,"temporal_qualification":"CONDITIONAL_PREFIX" if known else "OPEN",
+            "all_time_certified":False,"last_fast_cell_extension_certified":False,
             "independent_successor_boxes_allowed":False,"physical_bias_reset_at_estimator_release":False}
 
 def estimator_prediction_factor(mode: str,phi_ou: float) -> float:
@@ -120,7 +208,7 @@ def estimator_prediction_factor(mode: str,phi_ou: float) -> float:
 
 @dataclass(frozen=True)
 class BiasPredictionRelation:
-    """One physical bias law with a mode-dependent estimator prediction."""
+    """One physical SLOW bias law with a mode-dependent estimator prediction."""
     mode: str
     phi_e: float
     e_b_plus: Vec3
@@ -134,7 +222,8 @@ def accel_prediction_relation(mode: str,phi_ou: float,e_b_plus: Sequence[float],
     """First-class relation e^- = phi_e e^+ + (1-phi_e)b + w.
 
     H18 uses phi_e=1. A21 uses the literal shipping OU factor. Physical truth
-    is the same bounded/rate-bounded bias history in both modes.
+    is the same bounded/rate-bounded SLOW history in both modes. FAST error
+    enters the actual sensor operation, not this physical slow-bias recurrence.
     """
     phi_e=estimator_prediction_factor(mode,phi_ou)
     e_plus=vec(e_b_plus); b_true=vec(b_true_k); w=vec(w_k)

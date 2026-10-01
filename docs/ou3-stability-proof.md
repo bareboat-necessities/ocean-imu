@@ -22,9 +22,16 @@ for every continuation. Equivalently, `qdot=p` has uniformly bounded potential d
 
 Physical translation is `p_CoG=p_eq+p`. Global origin, current, propulsion, leeway, and secular reference motion may be represented in `p_eq`, but nonzero `ddot(p_eq)` remains actual specific force/model disturbance unless the shipping implementation explicitly compensates it.
 
-Excitation is required only on every complete T_E window contained in one
-maximal physical moving episode between nondegenerate rest intervals. Isolated
-zero-rate instants do not restart an episode. T_E/theta_E remain symbolic.
+MOVING has two independent recurring physical excitation requirements on the
+same maximal episode.  First, every complete attitude window of duration T_E
+has gravity-direction diameter at least theta_E>0.  Second, every complete
+displacement window of duration T_P has wave-displacement diameter
+sup_{s,u in W} ||p(s)-p(u)|| >= P_E>0.  Both are spans over the whole window,
+not endpoint differences, so periodic rocking and periodic translation may
+return to their starting values.  T_E,theta_E,T_P,P_E remain symbolic and
+numerically OPEN; no minimum wave height is invented.  Consequently p=v=a=0
+with attitude rocking is not a MOVING history under this contract. Isolated
+zero-rate instants do not restart an episode.
 Windows crossing rest boundaries carry finite-transition obligations; no
 arbitrarily short departure window owes a full positive span. Read
 `ou3-regime-design.md` for the exact quantifiers, stationary observability,
@@ -62,44 +69,60 @@ cannot control infinitely repeated switches.
 
 ## IMU BIAS
 
-One deterministic physical assumption covers total residual accelerometer and gyro bias after actual calibration:
+The authoritative error model after the calibration actually applied is
 
-`||b_a||<=B_a, ||dot b_a||<=D_a`
+`y_a=f_true+b_a_s+b_a_f`, `y_g=omega_true+b_g_s+b_g_f`.
 
-`||b_g||<=B_g, ||dot b_g||<=D_g`.
+For each sensor the SLOW component is locally absolutely continuous and obeys
+`|b_s|<=B_s`, `|dot b_s|<=D_s`; hence its same-history increment obeys
+`|b_s(t+h)-b_s(t)|<=min(2B_s,D_s h)`. The FAST component obeys `|b_f|<=B_f`
+and a signed accumulation qualification on the **calibrated delivered-sample
+hold**: every placed window of duration `0<T<=H` has
 
-The sampled physical recurrence is predecessor constrained:
+`|integral b_f dt|<=min(B_f T,C)`, with `H>0`, `0<=C<B_f H`.
 
-`b_a[k+1]=b_a[k]+w_a[k], ||w_a[k]||<=D_a dt[k]`
+The zero-fast case uses C=0. This permits small persistent leakage, not another
+unrestricted slow signal at the whole fast amplitude. It assumes neither white
+noise nor independence nor exact zero mean. **Both sensors' H and C are OPEN.**
+Missing temporal values block physical qualification; they never mean an
+unrestricted residual channel. The six amplitude/rate numbers are inherited
+candidate proof budgets, not newly established assembled-device guarantees.
+See `ou3-imu-two-timescale.md` for the complete provenance audit, all-placed-window
+quantifiers, two-epoch envelope, signed functional bounds and witness tests.
 
-and analogously for gyro bias.
+One decomposition and both accumulated-error histories persist across all proof
+words, estimator hold/release and physical regime transitions. One physical
+history cannot move an excluded slow signal into fast error without satisfying
+that same fast temporal qualification. No additional unrestricted residual is
+permitted. The same-history error set, not its independent pointwise boxes,
+controls compatibility, capture, A21 persistence, finite-error supply and entry.
 
-For accelerometer-bias prediction the proof uses one first-class relation in both shipping modes:
+In the estimator-error identities, physical `b` now denotes the SLOW component;
+the shipping estimate and covariance are unchanged. Accelerometer prediction is
 
-`e_b[k+1]- = phi_e[k] e_b[k]+ + (1-phi_e[k]) b[k] + w[k]`,
+`e_b[k+1]- = phi_e[k] e_b[k]+ + (1-phi_e[k]) b_s[k] + w_s[k]`,
 
-with `phi_e[k]=1` in H18/held prediction and `phi_e[k]=phi_OU[k]` in A21/active prediction. This is an estimator-mode coefficient, not a physical-bias law.
+with `phi_e=1` in H18/held prediction and the literal shipping `phi_OU` in A21.
+Physical truth has no estimator-imposed OU law. Gyro bias prediction is identity:
+`e_g_minus=e_g_plus+w_g_s`. Fast errors enter the actual sensor operations, with
+their signed time-dependent gains/frames retained. Correction and projection
+remain separate: `e_corr=e_minus-delta_bhat`,
+`e_plus=b_s-Proj_R(bhat_corr)`. Neither changes physical truth.
 
-Correction is carried separately using the actual estimator increment:
+The implemented gyro estimate invariant remains `|b_hat_g|<=.5 rad/s`, separate
+from the candidate physical `B_g_s=.02`. The radial sector gap is still .48;
+the real-arithmetic 4--6 ms one-prediction angle/transport bounds retain
+`Omega_max+B_g_s+B_g_f+.5`. These are amplitude-only outer inequalities, not
+fast-history membership or whole-word stability certificates. The complete
+covariance-metric defect, roundoff and signed gyro action remain charged.
 
-`e_corr=e_minus-delta_bhat`.
-
-Projection is then carried separately with the shipping Euclidean estimate projection:
-
-`bhat_plus=Proj_R(bhat_corr)`, `e_plus=b_true-Proj_R(bhat_corr)`.
-
-OU-II/III additionally implement the fixed residual gyro-bias invariant
-`|b_hat_g|<=R_g=.5 rad/s`, separate from physical `B_g=.02`. It is enforced
-before prediction and immediately after coupled corrections, including before
-the invalid-attitude return. Its covariance is unchanged. The ideal radial
-sector has gap `R_g-B_g=.48`; its mean defect and inward-rounding allowance
-must remain in the full covariance storage, not be discarded as a contraction.
-On the qualified 4--6 ms source family the prediction angle is below .007 rad
-and the one-cell transverse gyro transport floor is .003999991833333333 s.
-See [the engineering design and scope](ou-gyro-bias-projection.md); the full
-signed temporal margin and force/field exclusion remain open.
-
-Estimator hold, release, correction, and projection never reset physical truth. The shipping gyro-bias mean predictor is identity, so its prediction error is `e_g_minus=e_g_plus+w_g`.
+The actual two-epoch reachable change is given in SF2, including complete
+sample-cell lengths. It need not be smaller than `min(2Bs,Dsh)+2Bf` for raw
+samples. Windowed/weighted comparisons use SF3--SF6, not an unjustified reduced
+endpoint noise box. Paired indistinguishable histories use differences of two
+reachable error sets, together with both sensors and the unchanged magnetic
+service. The former zero-translation all-slow sin-cubed construction is excluded from MOVING by the displacement-span requirement; it remains a historical obstruction to the older attitude-only contract. The `.01 sin(.5t)` witness violates both candidate all-slow rate bounds;
+its mixed slow/fast admissibility remains OPEN, not automatically excluded.
 
 ## LOCAL GRAVITY
 

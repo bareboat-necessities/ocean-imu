@@ -19,7 +19,8 @@ def _positive(*values):
 
 
 def moving_window_requirement(*, episode_start, episode_end, window_start,
-                              window_s, theta_e, span=None):
+                              window_s, theta_e, span=None, displacement_window_s=None,
+                              displacement_e=None, displacement_span=None):
     """Quantify only over complete windows within ONE physical moving episode.
 
     An absent span or a boundary-crossing window cannot certify MOVING.
@@ -27,17 +28,31 @@ def moving_window_requirement(*, episode_start, episode_end, window_start,
     +infinity is permitted only as an episode end.
     """
     _positive(window_s, theta_e)
+    if displacement_window_s is None: displacement_window_s=window_s
+    _positive(displacement_window_s)
+    if displacement_e is not None: _positive(displacement_e)
     if (theta_e > math.pi or not math.isfinite(episode_start)
             or not math.isfinite(window_start) or math.isnan(episode_end)
             or episode_end <= episode_start):
         raise ValueError("valid physical episode and angular threshold required")
     end = window_start + window_s
-    if not math.isfinite(end):
+    displacement_end = window_start + displacement_window_s
+    if not math.isfinite(end) or not math.isfinite(displacement_end):
         raise ValueError("window endpoint overflow")
     required = episode_start <= window_start and end <= episode_end
+    displacement_required = episode_start <= window_start and displacement_end <= episode_end
     valid_span = (span is not None and math.isfinite(span) and 0 <= span <= math.pi)
-    return {"excitation_required": required,
-            "complete_excited_window": bool(required and valid_span and span >= theta_e),
+    valid_displacement = (displacement_span is not None and math.isfinite(displacement_span)
+                          and displacement_span >= 0)
+    displacement_ok = (displacement_e is not None and displacement_required
+                       and valid_displacement and displacement_span >= displacement_e)
+    attitude_ok = bool(required and valid_span and span >= theta_e)
+    return {"excitation_required": required or displacement_required,
+            "attitude_excitation_required": required,
+            "displacement_excitation_required": displacement_required,
+            "complete_attitude_excited_window": attitude_ok,
+            "complete_displacement_excited_window": bool(displacement_ok),
+            "complete_excited_window": bool(attitude_ok and displacement_ok),
             "regime_certificate": False}
 
 
@@ -79,32 +94,35 @@ def squared_bridge(gain, supply, eta):
             "storage_supply": (1 + 1 / eta) * s * s}
 
 
-def stationary_gyro_average_radius(noise_bound, bias_rate, sample_ages, weights,
-                                  angular_rate_bound=0):
-    """Terminal physical bias error, with deterministic noise and false entry.
+def stationary_gyro_average_radius(fast_action_bound, bias_rate, sample_ages, weights,
+                                  angular_rate_bound=0, *, slow_amplitude):
+    """Terminal SLOW-bias error with a supplied same-history FAST action bound.
 
-    Charge certified residual physical rate explicitly. Equal samples do not
-    reduce the worst-case deterministic noise bound. This is a possible
-    stationary observation supply, not a command to change shipping bias.
+    `fast_action_bound` bounds |sum weights_i b_g_f,i|, obtained from the
+    reachable window set (e.g. imu_temporal.fast_weighted_outer), NOT from
+    dividing a noise sigma by sqrt(N). An amplitude-only bound remains a
+    conservative inequality, but is not temporal qualification or admission.
+    This identity neither certifies STILL nor changes the shipping estimator.
     """
-    n, d, w = map(F, (noise_bound, bias_rate, angular_rate_bound))
+    n, d, w, bs = map(F, (fast_action_bound, bias_rate, angular_rate_bound, slow_amplitude))
     ages, weights = tuple(map(F, sample_ages)), tuple(map(F, weights))
-    if (min(n, d, w) < 0 or not ages or len(ages) != len(weights)
+    if (min(n, d, w, bs) < 0 or not ages or len(ages) != len(weights)
             or min(ages) < 0 or min(weights) < 0 or sum(weights) != 1):
         raise ValueError("nonnegative bounds/ages and normalized weights required")
-    return n + w + d * sum(a * c for a, c in zip(ages, weights))
+    return n + w + sum(min(2*bs,d*a)*c for a,c in zip(ages,weights))
+
 
 
 @dataclass(frozen=True)
 class QuietEvidenceLimits:
-    """Explicit proof-side bounds, not newly selected shipping tuning."""
+    """Amplitude-only necessary screen; NEVER fast temporal qualification."""
     gravity: float
-    accel_bias: float
-    accel_rate: float
-    accel_noise: float
-    gyro_bias: float
-    gyro_rate: float
-    gyro_noise: float
+    accel_slow_bias: float
+    accel_slow_rate: float
+    accel_fast_amplitude: float
+    gyro_slow_bias: float
+    gyro_slow_rate: float
+    gyro_fast_amplitude: float
     dwell_s: float
     max_gap_s: float
 
@@ -112,8 +130,8 @@ class QuietEvidenceLimits:
         _positive(self.gravity, self.dwell_s, self.max_gap_s)
         if self.dwell_s <= self.max_gap_s:
             raise ValueError("dwell must exceed one permitted packet gap")
-        for x in (self.accel_bias, self.accel_rate, self.accel_noise,
-                  self.gyro_bias, self.gyro_rate, self.gyro_noise):
+        for x in (self.accel_slow_bias, self.accel_slow_rate, self.accel_fast_amplitude,
+                  self.gyro_slow_bias, self.gyro_slow_rate, self.gyro_fast_amplitude):
             if not math.isfinite(x) or x < 0:
                 raise ValueError("finite nonnegative sensor bounds required")
 
@@ -137,6 +155,10 @@ class QuietEvidenceMonitor:
         self.compatible = False
 
     @property
+    def certified_fast_history(self):
+        return False
+
+    @property
     def certified_still(self):
         return False
 
@@ -144,8 +166,8 @@ class QuietEvidenceMonitor:
         lim = self.limits
         try:
             values_ok = (math.isfinite(time_s)
-                         and norm(gyro) <= lim.gyro_bias + lim.gyro_noise
-                         and abs(norm(accel) - lim.gravity) <= lim.accel_bias + lim.accel_noise)
+                         and norm(gyro) <= lim.gyro_slow_bias + lim.gyro_fast_amplitude
+                         and abs(norm(accel) - lim.gravity) <= lim.accel_slow_bias + lim.accel_fast_amplitude)
         except (ValueError, TypeError, OverflowError):
             values_ok = False
         if not values_ok:
@@ -159,8 +181,8 @@ class QuietEvidenceMonitor:
         if self.anchor is not None:
             t0, g0, a0 = self.anchor
             age = time_s - t0
-            acc_bound = min(2 * lim.accel_bias, lim.accel_rate * age) + 2 * lim.accel_noise
-            gyro_bound = min(2 * lim.gyro_bias, lim.gyro_rate * age) + 2 * lim.gyro_noise
+            acc_bound = min(2 * lim.accel_slow_bias, lim.accel_slow_rate * age) + 2 * lim.accel_fast_amplitude
+            gyro_bound = min(2 * lim.gyro_slow_bias, lim.gyro_slow_rate * age) + 2 * lim.gyro_fast_amplitude
             if norm(sub(accel, a0)) > acc_bound or norm(sub(gyro, g0)) > gyro_bound:
                 self.compatible = False
                 self.anchor = None
@@ -183,19 +205,22 @@ def certificate():
     from .sampled_capture_obstruction import service_certificate
     c = json.loads(Path(__file__).with_name("constants.json").read_text(), parse_float=F)
     alpha, nu, gravity = F(1, 1000), F(1, 40), F("9.80665")
-    bounds = {"B_a_mps2": gravity * alpha, "D_a_mps3": 3 * gravity * alpha * nu,
-              "B_g_rad_s": 3 * alpha * nu, "D_g_rad_s2": 9 * alpha * nu**2}
+    literal_gravity = F("9.8066501617431640625")
+    representation_offset = abs(literal_gravity-gravity)
+    bounds = {"B_a_s_mps2": gravity * alpha + representation_offset, "D_a_s_mps3": 3 * gravity * alpha * nu,
+              "B_g_s_rad_s": 3 * alpha * nu, "D_g_s_rad_s2": 9 * alpha * nu**2}
     margins = {key: F(c["imu_bias"][key]) - value for key, value in bounds.items()}
     assert all(x > 0 for x in margins.values())
-    assert bounds["B_g_rad_s"] < c["marine_motion"]["Omega_max_rad_s"]
+    assert bounds["B_g_s_rad_s"] < c["marine_motion"]["Omega_max_rad_s"]
     service = F(service_certificate()["actual_innovation_service_lower"])
     service *= (1 - alpha**2 / 2)**2
     assert service > c["magnetic_service"]["mu_M"]
-    literal_gravity = F("9.8066501617431640625")
-    representation_noise = abs(literal_gravity - gravity)
-    assert representation_noise < c["sensor_model"]["accel_fast_residual_norm_max_mps2"]
+
     return {
-        "qualification": "OU3_REGIME_CONTRACT_V1",
+        "qualification": "OU3_REGIME_CONTRACT_V2_SLOW_FAST",
+        "bias_model": "two-timescale; witness uses slow components only",
+        "fast_accel_and_gyro_identically_zero": True,
+        "numerical_device_membership_claimed": False,
         "excitation_quantifier": "every complete T_E window contained in one physical moving episode",
         "boundary_crossing_window_requires_excitation": False,
         "witness_alpha_rad": str(alpha), "witness_nu_rad_s": str(nu),
@@ -206,7 +231,7 @@ def certificate():
         "witness_actual_service_lower": str(service),
         "rest_motion_joins_C2": True,
         "exact_identical_IMU_history": True,
-        "native_gravity_representation_residual_mps2": str(representation_noise),
+        "constant_slow_gravity_representation_offset_mps2": str(representation_offset),
         "universal_sound_exact_rest_detector_with_entry_and_exit_liveness": False,
         "finite_exit_delay_from_existing_assumptions": False,
         "stationary_gyro_noise_does_not_average_away": True,

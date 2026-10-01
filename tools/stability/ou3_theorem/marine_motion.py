@@ -72,6 +72,7 @@ class MarineContinuationCertificate:
     jerk_norm_upper_mps3: float | None = None
     acceleration_locally_absolutely_continuous_certified: bool = False
     regime_window_contract_certified: bool = False
+    displacement_window_contract_certified: bool = False
 
     def __post_init__(self) -> None:
         if not self.history_id:
@@ -106,6 +107,7 @@ def continuation_admitted(cert: MarineContinuationCertificate,
         and cert.jerk_norm_upper_mps3 <= limits.jerk_max_mps3
         and cert.acceleration_locally_absolutely_continuous_certified
         and cert.regime_window_contract_certified
+        and cert.displacement_window_contract_certified
     )
 
 
@@ -125,6 +127,7 @@ def quiet_water_continuation_certificate(history_id: str="quiet") -> MarineConti
         jerk_norm_upper_mps3=0.0,
         acceleration_locally_absolutely_continuous_certified=True,
         regime_window_contract_certified=True,
+        displacement_window_contract_certified=True,
     )
 
 
@@ -201,6 +204,7 @@ def audit_sampled_trace(samples: Sequence[MarineSample], limits: MarineLimits, *
         "constant_nonzero_displacement_continuation_admitted":False,
         "quiet_water_admitted":True,
         "regime_window_all_time_certificate_required":True,
+        "displacement_window_all_time_certificate_required":True,
     }
 
 

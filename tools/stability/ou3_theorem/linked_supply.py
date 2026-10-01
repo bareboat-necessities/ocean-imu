@@ -106,3 +106,39 @@ def retained_entry_budget(gamma, supply_upper, radius_squared):
             'strict_entry_budget': supply < gamma*radius,
             'limiting_storage_bound': supply/gamma,
             'prefix_retention_verified': False, 'source_uniform_verified': False}
+
+
+def imu_supply_outer(operators, steps_s, limits):
+    """Conditional SF5 sensor support on ONE already-frozen literal word.
+
+    operators contains accel_slow, accel_fast, gyro_slow, gyro_fast matrices
+    (one output-by-3 coefficient per complete delivered cell). Include actual
+    prediction/correction transport and bias-model mismatch in these matrices.
+    A finite outer support is NOT the linked chi supremum: loss and forcing
+    still share the same physical/covariance/tuner history. Do not use this
+    norm relaxation to revive the failed independent-extrema proof route.
+    """
+    from .imu_temporal import (OpenTemporalQualification, slow_weighted_outer,
+                               fast_weighted_outer)
+    import numpy as np
+    keys = {'accel_slow', 'accel_fast', 'gyro_slow', 'gyro_fast'}
+    if set(operators) != keys:
+        raise ValueError('both slow and fast transported operators required for BOTH sensors')
+    if not limits.temporal_parameters_present:
+        raise OpenTemporalQualification('both delivered-stream temporal profiles remain required')
+    dt = np.asarray(steps_s, dtype=float)
+    if dt.ndim != 1 or len(dt) == 0 or not np.isfinite(dt).all() or np.any(dt <= 0):
+        raise ValueError('positive finite complete-cell durations required')
+    shapes = {np.asarray(operators[k]).shape for k in keys}
+    if (len(shapes) != 1 or len(next(iter(shapes))) != 3
+            or next(iter(shapes))[0] != len(dt) or next(iter(shapes))[2] != 3):
+        raise ValueError('all four operators must share one word and output coordinates')
+    terms = {}
+    for name,bs,ds,bf,fw in (
+            ('accel',limits.B_a_s_mps2,limits.D_a_s_mps3,limits.B_a_f_mps2,limits.accel_fast_window),
+            ('gyro',limits.B_g_s_rad_s,limits.D_g_s_rad_s2,limits.B_g_f_rad_s,limits.gyro_fast_window)):
+        terms[name+'_slow'] = slow_weighted_outer(operators[name+'_slow'],dt[:-1],bs,ds)
+        terms[name+'_fast'] = fast_weighted_outer(operators[name+'_fast'],dt,bf,fw)
+    return {'terms':terms,'conditional_support_outer':sum(terms.values()),
+            'source_uniform_verified':False,'linked_chi_supremum_verified':False,
+            'physical_device_qualified':False,'decomposition_reselected':False}
