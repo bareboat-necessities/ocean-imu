@@ -153,3 +153,19 @@ Retained facts (finite carried evidence only): quiet live 18051 / active
 24064, rho_LIN=0.03953, sigma_max=0.3258; wave live 6368 / active 24016,
 rho_LIN=0.006467, sigma_max=0.03199. This does not establish source-uniform
 held-BA LIN BIBO stability; the next falsifiable experiment above stands.
+
+## CI: captured-domain H18 refinement margin was negative at 7 degrees
+
+Failed quantity: `refinement_gate_margins` horizontal-fraction margin at the
+captured tilt bound, `test_ou3_h18_release` on `ou-evidence / commit`. With
+|B| in [20,75] uT, B_h>=15 uT, residual <=2 uT and tilt 7 degrees the rotation
+loss is 2*75*sin(3.5 deg)=9.157 uT, so the horizontal fraction lower bound is
+3.843/77=0.049905 < 0.05 (margin -9.46e-5). Classification: mathematical
+(premise constant). Invalidated hypothesis: the 7-degree captured domain gives
+positive margin at the literal 5% horizontal-fraction gate. The largest
+admissible tilt is `refinement_tilt_limit_rad` = 6.9944 degrees. Retained
+facts: on the <=6.9-degree domain the margin is +1.60e-3 and the norm-ratio
+margin +0.1278; the conservative captured-domain release bound is unchanged
+(469 s); compact A21 release remains conditional on capture, now into the
+<=6.9-degree domain. Current limiter and next falsifiable experiment are
+unchanged; general capture must now reach the smaller domain.

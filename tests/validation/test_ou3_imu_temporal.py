@@ -1,5 +1,4 @@
 """Synthetic algebra/negative tests; no fixture values qualify actual hardware."""
-from dataclasses import replace
 from fractions import Fraction as F
 import math
 import unittest

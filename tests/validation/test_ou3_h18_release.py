@@ -1,5 +1,5 @@
 import unittest
-from tools.stability.ou3_theorem.h18_release import *
+from tools.stability.ou3_theorem.h18_release import default_captured_refinement, release_compactness
 class T(unittest.TestCase):
  def test_gates(self):
   r=default_captured_refinement(); self.assertTrue(r["all_tuner_gates_uniformly_pass"]); self.assertGreater(r["margins"]["norm_ratio_margin"],0); self.assertGreater(r["margins"]["horizontal_fraction_margin"],0)

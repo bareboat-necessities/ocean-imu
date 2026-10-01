@@ -1,6 +1,5 @@
 from fractions import Fraction
 from dataclasses import replace
-from tools.stability.ou3_theorem.imu_temporal import FastWindow
 import math
 import sys
 from pathlib import Path
@@ -9,6 +8,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 
+from tools.stability.ou3_theorem.imu_temporal import FastWindow
 from tools.stability.ou3_theorem.imu_bias import (
     BiasContinuationCertificate,BiasLimits,BiasSample,accel_prediction_error,
     accel_prediction_relation,audit_bias_trace,continuation_admitted,

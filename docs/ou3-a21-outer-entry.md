@@ -1,6 +1,6 @@
 # A21 outer retention and finite inner entry
 
-The captured <=7-degree H18 release set is now compact. It is not the inner
+The captured <=6.9-degree H18 release set is now compact. It is not the inner
 sqrt(V)<=.15 ball.
 
 For any retained compact outer A21 set K containing that release set, remove
