@@ -682,3 +682,28 @@ Closure therefore requires either a physically explicit wave
 spectral/directional MARINE class, a 3-D independent adaptation/monitoring
 statistic, or a direct read-only tracking monitor. Do not use current
 sigma_a,B as a deterministic bound on arbitrary 3-D marine forcing.
+
+
+### Quantitative radius-local field-alignment exclusion
+
+Using the retained-ball AW bound |a_hat-a|<=4r and the exact jerk-cadence
+lemma gives a direct numerical exclusion.  If nominal field alignment
+persists at every applied accelerometer epoch over length L, then necessarily
+
+4r+eps_r(r)+eps_F >=
+g_min cos80deg -2 V_max/L-J_max h_acc/4.
+
+With V_max=5.5 m/s, J_max=100 m/s^3, regular 25-Hz h_acc=.04 s and nominal
+g_min=9.80665, the zero-defect physical margins are:
+16 s: 0.0154069 m/s^2 (ideal r<.0038517);
+64 s: 0.5310319 (ideal r<.132758);
+100 s: 0.5929069 (ideal r<.148227).
+Thus the 100-s superword is the useful certificate window. Including only the
+known r/40 BA term gives zero-fixed-defect r<.147306.
+
+The theorem still keeps eps_g and eps_B symbolic, so the honest certified
+condition is eps_F<0.1736481777 g_min-1.11 and r_FA is the largest root of
+4r+eps_r(r)+eps_F=0.1736481777 g_min-1.11. Once the declared field,
+lever/calibration and compatibility defects are inserted, a positive radius
+closes the moving field-aligned LaSalle obstruction. No tuner spectral
+assumption is required.

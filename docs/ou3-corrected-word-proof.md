@@ -9737,3 +9737,202 @@ forcing-action bound needed by TM.
 
 Without those physical spectral/directional premises, the desired proof would
 claim more than the front end observes.
+
+
+## Quantitative radius-local exclusion using the declared MARINE/MAGNETIC bounds
+
+The previous frontend detour enlarged the theorem class unnecessarily.  For
+the regional theorem use the already proved retained-ball AW error estimate
+
+|a_hat-a| <= 4 r                                            (QR-1)
+
+(and |e_ba|<=r/40 where the force comparison needs BA explicitly), together
+with the exact MARINE MOTION and MAGNETIC SERVICE constants.
+
+Let e_B be the unit direction of
+d_0=P_(b_M)^perp g_0.  The declared inclination bound gives
+
+g_Bperp >= g_min cos(80 deg).                               (QR-2)
+
+Let eps_F collect ONLY the already declared fixed physical/reference defects
+in the scalar e_B force comparison: local-gravity variation eps_g,
+near-constant-field projector variation from eps_B, lever/calibration terms,
+and the exact-compatibility tolerance.  Let eps_r(r) collect radius-local
+attitude/BA terms, with eps_r(r)->0 and including the r/40 BA contribution
+when applicable.
+
+If the nominal field-aligned zero-action pathology persists at every applied
+accelerometer epoch t_k, QR-1 implies
+
+e_B' a(t_k) >=
+ g_Bperp - [4r+eps_r(r)+eps_F].                             (QR-3)
+
+(The sign convention is chosen so e_B'g=g_Bperp.)
+
+Between applied accelerometer epochs, |a_dot|<=J_max.  For a gap D_k,
+
+integral_(t_k)^(t_(k+1)) e_B'a(t) dt
+ >= [g_Bperp-eps_col] D_k - J_max D_k^2/4,                 (QR-4)
+
+where eps_col=4r+eps_r(r)+eps_F.  Summing gaps over a window of length L and
+using |v_end-v_start|<=2 V_max gives the NECESSARY condition for persistence
+
+eps_col >=
+ g_Bperp - 2 V_max/L
+ - (J_max/4) [sum D_k^2/sum D_k].                          (QR-5)
+
+For the regular 25-Hz applied cadence used by the proof,
+D_k<=h_acc=0.04 s, hence
+
+sum D_k^2/sum D_k <= h_acc                                 (QR-6)
+
+and a persistent pathology requires
+
+4r+eps_r(r)+eps_F >=
+ M(L):=g_Bperp-2 V_max/L-J_max h_acc/4.                    (QR-7)
+
+Therefore it is EXCLUDED whenever
+
+4r+eps_r(r)+eps_F < M(L).                                  (QR-8)
+
+This is the requested explicit radius inequality.
+
+### Literal numerical substitution
+
+The current deterministic certification table gives
+
+V_max=5.50 m/s,
+J_max=100 m/s^3.                                           (QR-9)
+
+The magnetic theorem gives
+
+g_Bperp>=g_min cos80deg
+       =0.1736481777 g_min.                                (QR-10)
+
+Using g_min=9.80665 m/s^2 for the nominal numerical audit gives
+g_Bperp>=1.7029069 m/s^2.  This numerical use is an audit value; the theorem
+retains g_min and eps_g symbolically until their certified envelopes are
+instantiated.
+
+At h_acc=0.04 s,
+
+J_max h_acc/4=1.000000 m/s^2.                              (QR-11)
+
+Thus, before eps_F/eps_r deductions,
+
+L=16 s:
+ M_16=1.7029069-11/16-1
+     =0.0154069 m/s^2,
+ r_FA,ideal(16)=M_16/4
+     =0.0038517.                                            (QR-12)
+
+L=64 s:
+ M_64=1.7029069-11/64-1
+     =0.5310319 m/s^2,
+ r_FA,ideal(64)=0.1327580.                                 (QR-13)
+
+L=100 s:
+ M_100=1.7029069-11/100-1
+      =0.5929069 m/s^2,
+ r_FA,ideal(100)=0.1482267.                                (QR-14)
+
+As L->infinity,
+
+M_inf=1.7029069-1=0.7029069,
+r_FA,ideal(inf)=0.1757267.                                 (QR-15)
+
+The 16-s route has essentially no defect headroom and should NOT be used for
+the final certificate.  The existing 100-s superword has about
+0.593 m/s^2 of zero-radius headroom before declared defects and is the natural
+window for this exclusion.
+
+### Symbolic certified radius with the actual field envelopes retained
+
+Because eps_g and eps_B are deliberately still symbolic in the theorem
+contract, a fully numerical r_FA cannot honestly be emitted yet.  The
+certified 100-s condition is
+
+4r+eps_r(r)
+ <
+ 0.1736481777 g_min
+ -0.11
+ -1.00
+ -eps_F,                                                    (QR-16)
+
+or
+
+4r+eps_r(r)
+ <
+ 0.1736481777 g_min -1.11-eps_F.                           (QR-17)
+
+Here eps_F must be instantiated from the declared eps_g/eps_B projector
+perturbation plus lever/calibration/compatibility constants.  A positive
+radius exists iff
+
+eps_F < 0.1736481777 g_min-1.11.                           (QR-18)
+
+At nominal standard gravity the right side is about
+
+0.5929069 m/s^2.                                           (QR-19)
+
+Once eps_F is supplied, define r_FA as the largest nonnegative root of
+
+4r+eps_r(r)+eps_F
+ =0.1736481777 g_min-1.11.                                 (QR-20)
+
+If the only remaining radius-dependent force defect is the BA storage term
+r/40, a conservative closed form is
+
+r_FA >=
+ [0.1736481777 g_min-1.11-eps_F]/(4+1/40),                 (QR-21)
+
+provided the numerator is positive.  At zero fixed defects and nominal
+gravity this gives
+
+r_FA >=0.5929069/4.025
+     =0.147306.                                             (QR-22)
+
+Any additional attitude-to-force term eps_att(r) must be added to the
+denominator/modulus rather than omitted.
+
+### Relation to the older jerk-collinearity audit
+
+The existing world-frame lemma obtained, for h=1/5 and L=16 s,
+
+sum D_k^2/sum D_k >=0.0509532 s
+
+if physical force is exactly collinear at every correction.  A regular
+25-Hz cadence has D=0.04 s, so exact collinearity is already impossible.
+QR-5 is its radius-local tube version.  The very small M_16 above explains
+why the exact-collinearity statement was easy while a useful finite-radius
+16-s tube has little margin.  Extending to the already contemplated 100-s
+superword converts the same physical mechanism into useful radius headroom.
+
+### Analytical consequence
+
+Fix any certified field/reference envelopes satisfying QR-18 and choose
+r<r_FA from QR-20.  An infinite zero-dissipation MARINE trajectory in the
+retained ball would, by the complete-word equality characterization, maintain
+nominal field alignment at every applied accelerometer epoch.  QR-1 then
+imposes QR-3.  But summing the literal MARINE jerk/velocity inequalities over
+each 100-s block contradicts QR-8.
+
+Hence, conditionally on the already declared field/reference envelopes,
+
+Inv_MARINE({D=0} intersect {V<=r^2})={0}.                  (QR-23)
+
+Compactness of the retained same-history class then yields a finite block
+length m and eta_D(r)>0 with strict accumulated dissipation, hence homogeneous
+block contraction.  The practical/ISS theorem still needs the existing
+nonlinear/source-supply retention step, but the alleged moving
+field-aligned trajectory is analytically excluded inside this radius.
+
+### Remaining data obligation
+
+The calculation found the actual bottleneck: not tuner variance, but the
+still-symbolic certified values of eps_g and eps_B and any nonzero
+lever/calibration/compatibility force defects.  They must be instantiated or
+bounded tightly enough that their total eps_F is <0.5929069 m/s^2 (at nominal
+gravity) on the 100-s certificate.  This is a large margin relative to normal
+field/reference perturbations, but the proof must insert the declared values
+rather than assume them zero.
