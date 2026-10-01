@@ -10,7 +10,7 @@
     "method": "path-complete covariance-metric dissipativity and LaSalle on one carried history",
     "open_source_premises": [
       "qualify both slow/fast physical histories and derive the MARINE+MAGNETIC same-history compatibility margin",
-      "literal interleaved held-BA LIN BIBO, compact release, outer entry and linked finite-error/prefix supplies"
+      "from the compact captured-domain A21 release set, prove outer A21 retention and finite inner entry using temporal SLOW+FAST reachability plus displacement/attitude excitation and actual magnetic service"
     ],
     "zero_homogeneous_action_implies_zero_base_innovations": false
   },
@@ -35,7 +35,8 @@
   },
   "implemented_gyro_bias_norm_invariant": true,
   "imu_bias_model": {
-    "all_slow_sin_cubed_ambiguity_survives": true,
+    "all_slow_sin_cubed_ambiguity_survives": false,
+    "all_slow_sin_cubed_status": "historical attitude-only MARINE witness; excluded from MOVING by P_E>0",
     "certificate": "imu-two-timescale-certificate.json",
     "decomposition_reselection_at_release_or_regime_boundary": false,
     "fast_rule": "amplitude plus every-placed-window signed accumulation of delivered calibrated samples",
@@ -47,7 +48,7 @@
     "stronger_EXCITED_MOVING_adopted": false,
     "temporal_numerical_qualification": "OPEN for both sensors"
   },
-  "next_controlling_obligation": "Qualify the six candidate slow/fast budgets and both signed fast-accumulation profiles on one delivered calibrated history. Missing H_a,C_a,H_g,C_g remain OPEN; do not replace them by unrestricted residual boxes or a fitted excitation threshold. Existing MARINE T_E/theta_E remain symbolic; the all-slow sin-cubed ambiguity survives with fast=0. The .01 sin(.5t) witness violates the candidate all-slow rates, but mixed allocation remains OPEN. Keep the exact dissipativity/LaSalle path, source coupled tuner chronology, physical gyro/accel constraints and actual magnetic service. Prove literal interleaved H18 LIN BIBO and release compactness, outer retention and finite inner entry, then linked complete-word/prefix supply. Never infer zero base innovations from zero homogeneous action. Regime composition and float32 closure remain separate. Historical O1/O2 scalar kernel ceilings and the unqualified 1-degree/60-second low-pass gate are not controlling.",
+  "next_controlling_obligation": "Qualify the six candidate slow/fast budgets and both signed fast-accumulation profiles on one delivered calibrated history. Missing H_a,C_a,H_g,C_g remain OPEN; do not replace them by unrestricted residual boxes or a fitted excitation threshold. Existing MARINE T_E/theta_E and T_P/P_E remain symbolic; the zero-translation sin-cubed witness is now outside MOVING. The .01 sin(.5t) witness violates the candidate all-slow rates, but mixed allocation remains OPEN. Keep the exact dissipativity/LaSalle path, source coupled tuner chronology, physical gyro/accel constraints and actual magnetic service. Prove literal interleaved H18 LIN BIBO and release compactness, outer retention and finite inner entry, then linked complete-word/prefix supply. Never infer zero base innovations from zero homogeneous action. Regime composition and float32 closure remain separate. Historical O1/O2 scalar kernel ceilings and the unqualified 1-degree/60-second low-pass gate are not controlling.",
   "no_heading_service_result_role": "necessity lemma only",
   "obligations": {
     "A21_covariance_hard_event_compactness": false,
@@ -82,6 +83,11 @@
     "constructive_full_A21_mu_rho_enclosure": false,
     "constructive_root_covariance_floor": true,
     "contraction_superword_100s_adopted": true,
+    "displacement_boundary_velocity_LIN_action_bound": true,
+    "displacement_boundary_velocity_completion": true,
+    "displacement_excitation_to_full_moving_compatibility_exclusion": false,
+    "displacement_four_S_boundary_mismatch_identified": true,
+    "displacement_span_signed_kinematic_moment": true,
     "exact_sync_slab_physical_bilinear": true,
     "explicit_A21_nonlinear_radius": false,
     "factorized_word_exact_reference_parity": true,
@@ -101,6 +107,11 @@
     "full_state_magnetic_information_lifting": false,
     "gamma_M_residualized_numeric": false,
     "gamma_S_source_uniform_numeric": false,
+    "held_H18_LIN_structural_detectability": true,
+    "held_H18_affine_input_bound": true,
+    "held_H18_all_time_covariance_coefficient_compactness": true,
+    "held_H18_uniform_LIN_BIBO": true,
+    "held_H18_uniform_homogeneous_LIN_strictness": true,
     "historical_AG_readout_covariance_implication": true,
     "implementation_and_arithmetic_totality": false,
     "information_ratio_closed_form_supremum": true,
@@ -122,6 +133,7 @@
     "magnetic_service_tube_monotone_field_axis": true,
     "marine_attitude_excitation_implies_signed_temporal_separation": false,
     "marine_attitude_excitation_numeric_qualification": false,
+    "marine_displacement_excitation_contract": true,
     "marine_regime_complete_window_contract": true,
     "maximal_correction_covariance_order": true,
     "no_heading_service_obstruction": true,
@@ -209,7 +221,8 @@
     "word_contraction_smoother_identity": true,
     "word_diameter_composition_and_slow_fast_factorization": true,
     "word_riccati_diameter_identity": true,
-    "world_frame_historical_row_factorization": true
+    "world_frame_historical_row_factorization": true,
+    "zero_translation_moving_alias_excluded": true
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,

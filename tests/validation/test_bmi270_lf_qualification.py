@@ -3,7 +3,6 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-import numpy as np
 from tools.stability.ou3_theorem.bmi270_lf_qualification import design_fir, response, analyze
 
 class LFQualificationTests(unittest.TestCase):

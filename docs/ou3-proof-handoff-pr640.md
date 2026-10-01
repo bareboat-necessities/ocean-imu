@@ -34,7 +34,7 @@ It leaves physical ambiguity reserve 0.003056118 rad (~.1751 deg). Do NOT call t
 * Held-H18 covariance/coefficient family compact; uniform homogeneous rho_L<1 exists qualitatively.
 * Fixed-word affine source is bounded; all-time held-H18 LIN BIBO closes qualitatively.
 * q^T v displacement boundary action and principal LIN release mean compactness close.
-* Captured <=7 deg magnetic refinement gates have positive margin; MAGNETIC SERVICE gives finite captured-domain refinement/release. Compact A21 release set follows conditionally on capture.
+* Captured <=6.9 deg magnetic refinement gates have positive margin; MAGNETIC SERVICE gives finite captured-domain refinement/release. Compact A21 release set follows conditionally on capture.
 * Zero homogeneous AG action does NOT imply zero base innovations; never revive that inference.
 * Candidate 60-s profile passes physical ambiguity gate with 0.003056118 rad reserve.
 * Old fast-gyro amplitude-only sinusoidal obstruction is excluded by candidate C_g temporal primitive.
@@ -64,7 +64,7 @@ Next executable task:
 
 ## Other open obligations
 
-* General construction/capture into the retained <=7 deg H18 domain.
+* General construction/capture into the retained <=6.9 deg H18 domain.
 * Magnetic-reference cone / Mahony proxy / continuous hard-iron transfer.
 * Physical qualification of H_a,C_a,H_g,C_g,T_E,theta_E,T_P,P_E.
 * Source-uniform corrected-word numerical loss/rho after J_AG.

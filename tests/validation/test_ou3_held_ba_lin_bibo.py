@@ -1,5 +1,5 @@
 import unittest
-from tools.stability.ou3_theorem.held_ba_lin_bibo import *
+from tools.stability.ou3_theorem.held_ba_lin_bibo import affine_input_compactness, certificate, h18_lin_covariance_upper
 class T(unittest.TestCase):
  def test_covariance_lift(self): self.assertTrue(h18_lin_covariance_upper()["P_LL_uniform_upper_after_17s_held_H18"])
  def test_affine_compactness(self):

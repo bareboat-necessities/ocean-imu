@@ -122,11 +122,11 @@
   "operation_lemma_sources": [
     {
       "path": "tools/stability/ou3_theorem/imu_bias.py",
-      "git_blob_sha": "f9d5d3755c35aedd2ccc9b71313e36e71a090e1a"
+      "git_blob_sha": "8965aeeaf9fb3ea1961255b94ee6959c35f68aac"
     },
     {
       "path": "tools/stability/ou3_theorem/marine_motion.py",
-      "git_blob_sha": "cfc7494c875a12c56ea5b415e38a915962aa0a04"
+      "git_blob_sha": "eecc9772ff8b9d1e18bc9d47cec2f8b640bdf698"
     },
     {
       "path": "tools/stability/ou3_theorem/magnetic_service.py",
@@ -134,11 +134,11 @@
     },
     {
       "path": "tests/validation/test_ou3_imu_bias.py",
-      "git_blob_sha": "c473f7503b1ffbf7f2be859b958a0a19ded9ecb7"
+      "git_blob_sha": "4d8db7645ba3d5a319c8a23735c9b22eaa35bafc"
     },
     {
       "path": "tests/validation/test_ou3_marine_motion.py",
-      "git_blob_sha": "9d9c2ef871c731490af4c56f3647665f1046cef6"
+      "git_blob_sha": "38c451910488fe9fd5a6659efc72efaff0f1160a"
     },
     {
       "path": "tests/validation/test_ou3_magnetic_service.py",
@@ -150,7 +150,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "8d3497736318ec02e74f4f630f2ec8208851f4a0"
+      "git_blob_sha": "98d561f2903afe35afa190614fa07d496634c8ff"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -178,7 +178,7 @@
     },
     {
       "path": "tests/validation/test_ou3_physical_qualification.py",
-      "git_blob_sha": "70f4a2649a772c6051e893b9447c10de63d95fad"
+      "git_blob_sha": "bd93d1346b1d635d7ef6faf55a54e71ebc3dc1b0"
     },
     {
       "path": "src/kalman_ou_common/KalmanOUCoreMath.h",
@@ -302,7 +302,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/sampling_fidelity.py",
-      "git_blob_sha": "0ff482023d489c6f0e8937e1765ac9912953be36"
+      "git_blob_sha": "c9ba09b1cb4f628fd90e8c5b9361e5f5b7b00232"
     },
     {
       "path": "tests/validation/test_ou3_sampling_fidelity.py",
@@ -310,11 +310,11 @@
     },
     {
       "path": "docs/ou3-sampling-fidelity.md",
-      "git_blob_sha": "8da3fa085bf4f2b2ed01b2072f83b9f380052f6e"
+      "git_blob_sha": "bb3dab16fbf8d87c81142a535937b7802c425199"
     },
     {
       "path": "tools/stability/ou3_theorem/corrected_word.py",
-      "git_blob_sha": "4f9f4ea575815cfc0a63bbc6af5bb0b846afe461"
+      "git_blob_sha": "92caff66f1e97471296b7d54938d52f0723b5e46"
     },
     {
       "path": "tests/validation/test_ou3_corrected_word.py",
@@ -362,7 +362,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "4f292f9598f98ce2e58525de257ff9a028195491"
+      "git_blob_sha": "ac6c3f3c33c747e85b48f2a4e750e4ca7f238202"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
@@ -382,11 +382,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/gyro_bias_projection.py",
-      "git_blob_sha": "c6abdb24ae5a2e2cf6edb6b38b6890fc0d4c86c2"
+      "git_blob_sha": "836fe3c7c64f6e1fa7c07d97b02e5ae783289411"
     },
     {
       "path": "tests/validation/test_ou3_gyro_bias_projection.py",
-      "git_blob_sha": "1e5efcffb9d82f27a9d935086ea588d4463ac457"
+      "git_blob_sha": "16d7824ec2b0c10d8cf15c7f44239a4887ed3e72"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -402,7 +402,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal.py",
-      "git_blob_sha": "d164ef74f1cfdadf9aadc42224129a4b6f1838ee"
+      "git_blob_sha": "52bb9951924fbe011f100f382cada5c6db4d760e"
     },
     {
       "path": "tests/validation/test_ou3_signed_temporal.py",
@@ -410,7 +410,7 @@
     },
     {
       "path": "docs/ou3-signed-temporal-continuation.md",
-      "git_blob_sha": "043e2b9b21d250604ae304d4b1a69602599cb361"
+      "git_blob_sha": "62ed1136efc4c206b364c67e7bc85fc6cfafda69"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal_diagnostic.py",
@@ -434,7 +434,7 @@
     },
     {
       "path": "docs/ou3-regime-design.md",
-      "git_blob_sha": "7d4b537366408f51a3508df7c6dfbe5eb70752b0"
+      "git_blob_sha": "602bb0098f5dee259e050ded93de43135bec66c0"
     },
     {
       "path": "docs/ou3-moving-six-pivots.md",
@@ -442,7 +442,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/regimes.py",
-      "git_blob_sha": "35445902e84dda56749e13c1da28a91f15ee3ba7"
+      "git_blob_sha": "b368b047ba1b1319e690faed6dd4244292b92e63"
     },
     {
       "path": "tools/stability/ou3_theorem/moving_pivots.py",
@@ -450,15 +450,15 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "37e9fe4b17f25fd47a1dae60191ece2463294205"
+      "git_blob_sha": "4e20e01e1d2e0e95e16e44bec97eacfa2ac58fb8"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
-      "git_blob_sha": "5c6cd642ece49ba3b074ea534ea4f3e43e41ffdb"
+      "git_blob_sha": "d2187bb518bca25e901f7444a4cbd4d379a23398"
     },
     {
       "path": "tests/validation/test_ou3_regimes.py",
-      "git_blob_sha": "1673a7d2af5e32be711499c8a20825fcb527fc2e"
+      "git_blob_sha": "3623c0d436bdd13f5876d2e4f75201d7e72ec6d9"
     },
     {
       "path": "tests/validation/test_ou3_moving_pivots.py",
@@ -466,7 +466,7 @@
     },
     {
       "path": "tests/validation/test_ou3_theorem_status.py",
-      "git_blob_sha": "24d7d02e0bf97772fe3560e5302b4943fbd22104"
+      "git_blob_sha": "e00ccb5378b413a1f091d36cf5b1c3a551789ce5"
     },
     {
       "path": "tests/kalman_ou_iii/regime_ambiguity-test.cpp",
@@ -474,7 +474,7 @@
     },
     {
       "path": "reports/results/ou3_stability/regime-certificate.json",
-      "git_blob_sha": "5d179ace3601f7a0cbdf2e6120ef24cbbdbcb362"
+      "git_blob_sha": "994be9b85f123374681f2f7218b05dd1fe04be2d"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
