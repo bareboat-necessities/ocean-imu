@@ -98,7 +98,7 @@ may remain correct as algebra or an explicitly amplitude-relaxed outer bound.
 Numerical assembled-device slow/fast qualification is OPEN for both sensors.
 The complete physical joint acc/gyro/magnetic reachable ambiguity must then be
 compared with the EXISTING fixed MARINE constants, not a bias-only threshold.
-H18 release compactness/BIBO for the literal interleaved word, outer retention,
+Held-H18 LIN BIBO and captured-domain release compactness are CLOSED qualitatively/source-uniformly by the post-#640 certificate; outer retention,
 physical-to-nominal transfer, linked finite supply, nonlinear/prefix retention,
 regime composition and float32 totality also remain OPEN. All end-to-end theorem
 flags remain false. No finite carried replay supplies the missing uniformity.
