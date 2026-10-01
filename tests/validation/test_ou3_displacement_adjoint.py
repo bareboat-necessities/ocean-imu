@@ -1,7 +1,7 @@
 from fractions import Fraction as F
 import unittest
 from tools.stability.ou3_theorem.displacement_adjoint import (
- four_s_boundary_jets, displacement_chord_identity, chord_multiplier_jet,
+ four_s_boundary_jets, chord_multiplier_jet,
  chord_integration_by_parts, augmented_multiplier_identity, certificate)
 
 class DisplacementAdjointTests(unittest.TestCase):
