@@ -462,7 +462,7 @@ def differences(a, b, rel, path='$'):
     only have to stay below a noise floor an order of magnitude tighter.
     """
     if path.endswith('.relative_difference') and a is not None and b is not None:
-        return [] if max(a, b) <= RELATIVE_DIFFERENCE_FLOOR else [f'{path}: {a} != {b}']
+        return [] if min(a, b) >= 0 and max(a, b) <= RELATIVE_DIFFERENCE_FLOOR else [f'{path}: {a} != {b}']
     if isinstance(a, dict) and isinstance(b, dict):
         if a.keys() != b.keys():
             return [f'{path}: keys {sorted(set(a) ^ set(b))}']
