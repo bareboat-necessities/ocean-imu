@@ -1221,20 +1221,43 @@ and hence
 A source-uniform Mahony-proxy tilt bound and exact hard-iron/reference residual transfer remain open.
 
 \section{H18 to A21 release compactness}
-A21 release is the first literal transition for which accelerometer-bias updates become enabled; it is not Live handoff. Shipping requires both the magnetic-count gate and clearance of the wrapper external BA hold. Second-stage magnetic-reference refinement has no forced timeout, so source currently provides no uniform finite release-time upper bound.
-
-The principal potentially noncompact pre-release mean coordinate is $z=(\hat v,\hat p,\hat S,\hat a_w)$. For the default bounded shipping profile,
+The held-BA LIN obstruction is closed at the qualitative source-uniform level. Three separated actually applied $S$ rows kill the neutral $(v,p,S)$ polynomial root, and a fourth kills the integrated-OU $a_w$ root. Prediction and covariance-matched corrections are nonexpansive in the carried covariance metric. The existing nuisance comparison lifts to held H18 for the first four blocks and gives, after the 17-s regular-service prefix,
 \[
- h\in[0.004,0.006],\quad \tau\in[0.02,12],\quad
- \sigma_{a_w}\ge9\times10^{-4}\ {\rm m/s^2}.
+ \boxed{P_{LL}\preceq5\,\operatorname{diag}(b_v^2I,b_p^2I,b_S^2I,156^2I)} .
 \]
-The per-axis integrated-OU process covariance is a finite-horizon controllability Gramian. The chain is controllable throughout this compact box, so continuity gives
-\[
- \boxed{\inf\lambda_{\min}(Q_{LL})>0.}
-\]
-A high-precision diagnostic at the apparent worst corner gives a smallest eigenvalue of order $2.2\times10^{-29}$; this is not promoted as a global numerical certificate.
+The associated coefficient/gain family is compact. Structural zero-kernel plus compactness gives a uniform homogeneous factor $\rho_L<1$ on a fixed separated four-$S$ word. Bounded fixed-word physical/IMU forcing then gives all-time held-H18 LIN BIBO, including the displacement boundary coordinate $q^{\mathsf T}v$.
 
-Three separated $S$ rows remove the neutral polynomial root and four applied $S$ rows remove the homogeneous OU extension. The actual H18 word also contains accelerometer corrections whose LIN gain uses attitude/LIN cross covariance, so S-only contraction cannot be promoted to actual 12-state BIBO stability. A read-only diagnostic now propagates the exact 12-column LIN tangent through a 17-s held-BA carried word, using $F_{LL}$ at prediction and $I-K_LH_L$ at corrections, with AG tangent columns treated as inputs. Its carried result is non-promoting; the source-uniform target remains BIBO stability of the literal interleaved acc+$S$ LIN subsystem.
+On the retained $\le7^\circ$ captured tilt domain, the existing magnetic field/residual bounds leave positive margin at the literal MagAutoTuner gates. MAGNETIC SERVICE supplies informative samples in uniformly finite time; the refinement count/window and subsequent bias-release guard therefore give a conservative finite proof horizon, not a runtime timeout. Compact attitude, projected gyro bias, H18 LIN BIBO and finite continuous covariance/reference evolution then give a compact A21 release set conditional on captured-domain entry. Release is not asserted to lie in $V\le0.15^2$.
+
+\section{Outer physical-to-nominal bridge and paired two-Abel operator}
+The displacement chord identity
+\[
+ q^{\mathsf T}\Delta p=Tq^{\mathsf T}v_0+\int_0^T(T-t)q^{\mathsf T}a(t)\,dt
+\]
+is completed by the nonzero-boundary multiplier $\lambda(t)=T-t$, which may be superposed with the literal four-$S$ spline without changing its endpoint coefficients. H18 LIN BIBO bounds the resulting $q^{\mathsf T}v_0$ row.
+
+For the hypothetical proof-feasibility profile
+\[
+ T_E=T_P=H_a=H_g=60\ {\rm s},\quad \theta_E=1^\circ,\quad P_E=0.02\ {\rm m},
+ \quad C_a=1.2\ {\rm m/s},\quad C_g=0.0042\ {\rm rad},
+\]
+the slow+fast physical ambiguity calculation leaves
+\[
+ \boxed{M_{\rm cand}=0.003056118\ {\rm rad}\simeq0.1751^\circ.}
+\]
+These values are not physically qualified constants.
+
+Zero homogeneous six-column action does not set carried base innovations to zero. The outer bridge therefore uses the signed accelerometer+$S$ adjoint. Summing actual synchronization slabs cancels internal physical $p/v/S/a$ boundaries before norms and eliminates interior innovations through the same Joseph port. The remaining state contribution is external endpoint-reader action plus nonlinear reset/rotation/arithmetic defects.
+
+The causal terminal-AW reader has source-uniform action $B_{\rm AW,*}\le16$, but multiplying its norm by an outer-state radius destroys the paired cancellation. The decisive object is the complete paired two-Abel operator $\mathcal G_{\rm phys,W}$ built from literal $F,Q,K,H,S$, synchronization and reset chronology. Common process/$S$ and accelerometer physical-source columns are added with their signs before norms, and adjacent slab endpoints are telescoped first. The executable \texttt{paired\_two\_abel.py} layer audits these exact operations and does not reuse $C_{\rm port,W}$.
+
+The controlling candidate-profile test is
+\[
+ \boxed{\sup_{\mathcal H_{\rm outer}}\|\mathcal G_{\rm phys,W}\|_{\rm ind}
+ +E_{\rm nonlinear}<0.003056118\ {\rm rad}.}
+ \label{eq:paired-two-abel-target}
+\]
+It remains OPEN. The current estimator-word export lacks the physical $p/v/S/a$ lift aligned to each prediction/$S$/accelerometer boundary. After that lift is exported, a carried matrix can be evaluated as feasibility evidence; theorem closure then requires a source-uniform factor enclosure over the compact outer coefficient class. If \eqref{eq:paired-two-abel-target} closes, the physical-to-nominal bridge gives $J_{\rm AG}>0$, enabling the existing corrected-word full covariance upper comparison and homogeneous $\rho_0<1$.
 
 \section{Linked finite-error supply}
 For a complete physical word write $e_N=Me_0+b_W$, $J_0=P_0^{-1}$, $J_N=P_N^{-1}$ and $D_W=J_0-M^{\mathsf T}J_NM$. For $G_\gamma=D_W-\gamma J_0\succ0$, define
@@ -1254,7 +1277,7 @@ numerical source-uniform supply OPEN. Other nonlinear, OU, projection, reference
 and arithmetic defects remain separate and are not relabelled IMU fast error.
 
 \section{Capture and finite-error retention}
-The same proof path still requires finite construction/capture into a magnetically informed H18 domain and a source-uniform refinement/release bridge.  The approximately $7^\circ$ refinement quantity is an estimator-error tube, not a covariance-storage radius and not a bound on physical rocking amplitude.  A six-degree attitude error does not imply membership in $V\le0.15^2$.
+The same proof path still requires finite construction/capture into the retained magnetically informed H18 domain.  Conditional on captured-domain entry, refinement/release compactness is now proved as above.  The approximately $7^\circ$ refinement quantity is an estimator-error tube, not a covariance-storage radius and not a bound on physical rocking amplitude.  A six-degree attitude error does not imply membership in $V\le0.15^2$.
 
 The held-BA H18 geometry must use the actual constant held estimator BA together with
 \begin{equation}
@@ -1371,10 +1394,10 @@ The current proof order is
 \]
 The principal open obligations are:
 \begin{enumerate}
- \item finish the actual interleaved 17-s held-BA LIN BIBO theorem and the source-uniform compact A21 release class;
- \item certify the magnetic-reference cone, including Mahony-proxy tilt and continuous hard-iron/reference error transfer;
- \item qualify both assembled-device slow/fast histories and the existing MARINE excitation constants $(T_E,\theta_E,T_P,P_E)$, then exclude persistence of the corrected-word variational compatibility line using the linked displacement/velocity/acceleration/$S$ chain, gyro history and actual magnetic service without setting base innovations to zero;
- \item prove source-uniform outer A21 retention and finite entry below $0.15$, carrying active BA and the same tuner/reference history;
+ \item finish general construction/capture into the retained $\le7^\circ$ magnetically informed H18 domain and certify the magnetic-reference cone;
+ \item physically qualify $(H_a,C_a,H_g,C_g,T_E,\theta_E,T_P,P_E)$; the $60$-s/$1^\circ$/$0.02$-m profile above is hypothetical only;
+ \item extend the read-only proof exporter with the aligned physical $p/v/S/a$ lift, construct the literal paired two-Abel operator, and prove the source-uniform bound \eqref{eq:paired-two-abel-target};
+ \item use the resulting $J_{\rm AG}>0$ to close the source-uniform corrected-word covariance/contraction certificate and outer A21 retention/finite inner entry;
  \item close linked complete-word finite-error and every-prefix supplies;
  \item compose STILL/TRANSITION/MOVING regimes and transfer the real-arithmetic inequalities to float32.
 \end{enumerate}
