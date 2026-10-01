@@ -85,3 +85,42 @@ a valid substitute.
 
 The carried margin 0.52439539501604595 m/s^2 is the available wrapping,
 nonlinear and float32 headroom for this enclosure.
+
+## Uniformity theorem and remaining quantitative diameter
+
+On any fixed regular event stratum, the shipping prediction, Joseph correction,
+S scheduler, AW synchronization, reset and projection maps are continuous in
+the carried state/covariance/tuner/reference variables as long as their already
+declared positive innovation-noise floors and solve guards hold. The candidate
+physical history class is equibounded/equicontinuous on 16 s: p,v,a and jerk
+are bounded; SLOW bias is bounded/Lipschitz; FAST held histories are bounded
+and have the all-placed-window primitive cap; attitude lies in compact SO(3);
+BG/BA estimates are projected; tuner variables are clamped and coupled.
+Held-H18 LIN BIBO and the captured release result provide the needed finite
+LIN root set on the qualified branch. Closed scheduler/gate strata and the
+finite number of operations on 16 s therefore make the reachable regular
+16-s word class compact. Phi is continuous on each stratum and has one-sided
+continuous limits at hard-event boundaries retained by the literal branch
+semantics. Hence
+
+    B_AW := sup_{h in H_16} |Phi(h)|
+
+exists and is finite.
+
+This proves source-uniform FINITENESS, but not the strict numerical inequality
+B_AW < .89553839501604595. For strict closure choose the committed carried
+stress family as centers h_j and a dependency-preserving factor metric d_F on
+the COMPOSED chronological factors. A sufficient finite-cover certificate is
+
+    max_j |Phi(h_j)| + L_Phi * delta_F + E_nl + E_f32
+      < .89553839501604595,                                (AWB3)
+
+where every reachable h lies within delta_F of some center in the same event
+stratum and L_Phi is a rigorous Lipschitz bound of the composed Phi map on
+that stratum. Since max_j|Phi(h_j)|=.371143, the available combined radius is
+
+    L_Phi delta_F + E_nl + E_f32 < .52439539501604595.
+
+Neither L_Phi nor delta_F is presently certified in the repository. This is
+the sole quantitative source-uniform gap in AWB2; independent gain/tuner boxes
+are not substituted.
