@@ -546,3 +546,33 @@ not yet excluded. The next theorem must either prove a positive reachable-
 moment separation from the literal shipping-generated F,U, or strengthen the
 independent moving-regime admission condition with a raw-IMU excitation
 certificate that implies that separation.
+
+
+### Raw-IMU admission certificate calculation
+
+Starting from the exact moving obstruction a_phys=F+U zeta, the natural
+independent raw-IMU statistic is the distance of the independently levelled
+specific-force history from every scalar body-axis explanation. With
+y_k=R_M,k f_B,k+g e_z, the unconstrained Gram residual is
+
+gamma_raw=sum w_k||y_k||^2 -
+ lambda_max(sum w_k R_M,k' y_k y_k' R_M,k).
+
+It is computable from conditioned accelerometer plus the private Mahony
+attitude and conservatively lower-bounds the residual once physical
+moment/jerk constraints are dropped; explicit Mahony/calibration defects can
+be subtracted in distance form.
+
+However this statistic alone does not imply the exact shipping separation
+WM-11. The pathological physical family is affine F_k+U_k zeta_k, and the
+forced term F contains a gravity-scale estimator-dependent correction, not a
+small raw-sensor nuisance. Under the current broad bounded-translation
+assumptions there is no nonvacuous independent raw-IMU class known to contain
+all such F. Therefore an independent prefilter cannot, from raw motion alone,
+distinguish every history that might be internally pathological.
+
+To close rigorously, either strengthen MARINE MOTION with a measurable
+translation-attitude condition plus a proof that field-aligned F lies in its
+excluded class, or permit a read-only stability monitor to use published
+K_aw/aS and evaluate the exact WM-11 reachable-moment distance. Do not assert
+the raw Gram alone as sufficient.

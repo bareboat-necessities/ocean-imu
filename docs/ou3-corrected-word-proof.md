@@ -8754,3 +8754,212 @@ The next productive calculation should either derive WM-11 from the literal
 shipping-generated F,U over a complete moving service window, or formulate
 the weakest raw-IMU admission statistic that certifies WM-11 and can be
 implemented by the regime prefilter.
+
+
+## Raw-IMU moving admission certificate derived from the scalar-channel obstruction
+
+The goal is to replace the shipping-dependent separation WM-11 by a
+conservative condition that an INDEPENDENT regime prefilter can evaluate from
+conditioned accelerometer, gyro and its private Mahony tilt only.
+
+WM-4 shows that every persistent field-aligned LaSalle execution has physical
+world acceleration
+
+a_phys,k = F_k+U_k zeta_k,                                 (RC-1)
+
+with only one free scalar physical channel per sample. A certificate based on
+attitude span or gyro Gram alone cannot exclude RC-1: zeta_k can vary at every
+sample while U_k rotates. The measurable certificate must therefore test the
+specific-force history itself against the class of one-dimensional
+instantaneous explanations.
+
+### Independent levelled raw-IMU coordinates
+
+Let R_M,k be the private Mahony body-to-level frame, independent of the MEKF,
+and let f_B,k be the conditioned/calibrated body specific force available to
+the prefilter. Define the independently levelled linear-acceleration proxy
+
+y_k := R_M,k f_B,k + g e_z.                                (RC-2)
+
+The shipping vertical proxy is -e_z'y_k; RC-2 retains all three components.
+Let omega_k be the conditioned gyro after only calibration/static bias
+allowance available to the independent prefilter.
+
+On a certified moving window W, stack y=(y_1,...,y_N). The prefilter also
+knows dt_k and R_M,k, hence the physical integration operators in its own
+level frame up to the declared Mahony tilt-error tube.
+
+### Degenerate one-channel motion class
+
+For a candidate unit body direction n, its independently levelled direction is
+
+u_k(n)=R_M,k n.                                             (RC-3)
+
+Define the class of scalar-channel acceleration histories
+
+C_W(n):={ c_k+u_k(n) zeta_k },                              (RC-4)
+
+where c belongs to the declared calibration/gravity/Mahony-error tube and
+zeta satisfies the same physical acceleration/jerk and finite-window
+velocity/displacement boundary allowances used by MARINE MOTION. Let Z_W be
+that convex admissible scalar sequence set and B_W the finite boundary tube.
+
+For fixed n, the best-fit weighted residual is
+
+E_W(n):=
+ min_(zeta in Z_W, boundary in B_W)
+ sum_k w_k || y_k-u_k(n) zeta_k-c_k ||^2.                  (RC-5)
+
+The nuisance c_k is minimized only over independently certified sensor/
+Mahony/calibration defect bounds; it is NOT an arbitrary three-vector.
+
+The raw moving certificate is
+
+E_move(W):=min_(|n|=1) E_W(n).                             (RC-6)
+
+This is the squared distance of the actual independently levelled raw-IMU
+history from every physically admissible rotating one-dimensional
+specific-force channel.
+
+A practical implementation can discretize/branch-and-bound the sphere or use
+the Gram relaxation below; the theorem uses RC-6 itself.
+
+### Unconstrained Gram lower surrogate
+
+Ignoring moment/jerk constraints and defect tubes makes the degeneracy class
+larger, hence gives a conservative LOWER residual. For fixed n the optimal
+pointwise zeta is u_k'u y_k (u_k is unit), so
+
+E0_W(n)=sum_k w_k y_k' [I-u_k(n)u_k(n)'] y_k.              (RC-7)
+
+Using u_k=R_M,k n,
+
+E0_W(n)=E_y - n' G_W n,                                    (RC-8)
+E_y=sum_k w_k ||y_k||^2,
+G_W=sum_k w_k R_M,k' y_k y_k' R_M,k.                       (RC-9)
+
+Therefore
+
+min_n E0_W(n)=E_y-lambda_max(G_W).                         (RC-10)
+
+This is the correct raw-IMU Gram statistic derived from RC-1. It is NOT
+lambda_min of an attitude Gram. It measures how much of the levelled
+acceleration energy cannot be explained by ANY single body-axis scalar
+history.
+
+Define
+
+gamma_raw(W):=
+ E_y-lambda_max(G_W).                                      (RC-11)
+
+Then gamma_raw>0 certifies non-collinearity of the measured specific-force
+history with every single body-fixed axis, after independent levelling.
+
+Because RC-7 discarded physical moment/jerk restrictions, adding them can
+only increase the best-fit residual:
+
+E_move(W)>=gamma_raw(W)-epsilon_defect(W).                 (RC-12)
+
+where epsilon_defect is the explicit enlargement due to Mahony tilt,
+calibration, lever and bias uncertainty. A robust version follows from
+||delta y_k||<=eps_k:
+the distance (not squared distance) obeys
+
+sqrt(E_move) >=
+ sqrt(max(gamma_raw,0)) - sqrt(sum w_k eps_k^2).            (RC-13)
+
+Thus a sufficient implementable admission test is
+
+sqrt(gamma_raw(W)) >
+ sqrt(sum w_k eps_k^2)+gamma_margin.                        (RC-14)
+
+It is computed entirely from conditioned accelerometer plus private Mahony
+attitude; gyro enters through R_M propagation and can be separately required
+to satisfy the existing attitude-span/rate certificate.
+
+### Relation to the shipping field-aligned obstruction
+
+RC-14 excludes a PURE one-body-axis physical acceleration history. To imply
+WM-11 for the actual affine family F_k+U_k zeta_k, one more bridge is required:
+the shipping-forced term F_k must lie inside the independently certified
+defect/boundary class c_k after subtracting the measured physical history.
+
+In general F_k is NOT a small sensor defect; it contains the gravity-scale
+field-alignment correction M_k^dagger q_k. Therefore RC-14 alone does not
+logically imply WM-11.
+
+This is decisive: there is no raw-IMU statistic, independent of the estimator,
+that can distinguish an arbitrary physically admissible measured trajectory
+from itself merely because the estimator internally represents it as
+F+U zeta. If the theorem allows arbitrary bounded translation, an independent
+prefilter cannot know whether that same raw history is compatible with the
+internal pathological gain/covariance state.
+
+Hence a prefilter-only certificate can close the theorem only if MARINE MOTION
+is strengthened by a PHYSICAL excitation condition whose violation contains
+every field-aligned F+U zeta history. RC-11 is one candidate physical condition
+only after proving the missing bridge F in the admitted nuisance class; that
+bridge is currently false at gravity scale.
+
+### A certificate that is sufficient by construction
+
+The weakest exact admission statistic that DOES imply WM-11 must include the
+filter-independent physical moment model but also a declared physical
+subspace class known a priori to contain every pathological forced term.
+If such a class S_FA,k can be bounded from hardware/geometry alone, define
+the raw distance
+
+Gamma_FA(W)=
+ dist( y,
+       { s_k+R_M,k n zeta_k :
+         s in S_FA(W), |n|=1, zeta in Z_W } ).             (RC-15)
+
+Then Gamma_FA>=gamma_move>0 excludes the pathology provided one proves
+R_M R_true' F in S_FA for every field-aligned shipping history. At present
+the only source-uniform S_FA from existing assumptions is essentially the
+full bounded-acceleration ball, making RC-15 vacuous.
+
+Therefore the requested independent raw-IMU sufficient condition cannot be
+made nonvacuous from the CURRENT physical assumptions without either:
+(a) a new physically meaningful translation-attitude excitation premise, or
+(b) using some estimator-derived quantity (gain/covariance/nominal force) in
+the regime certificate.
+
+### Recommended minimal augmentation
+
+If independence from the main filter is mandatory, add a measurable physical
+condition directly:
+
+on every certified MARINE MOTION window, the independently levelled
+acceleration history has a robust multi-axis residual
+
+gamma_raw(W)>=gamma_min>epsilon_defect(W),                 (RC-16)
+
+AND prove/assume that the pathological field-aligned family is
+single-body-axis explainable in these coordinates within the defect tube.
+The first half is implementable now; the second half is the missing theorem
+and cannot be asserted from WM-4 because of F.
+
+Alternatively allow the admission monitor to read ONLY the main filter's
+published K_aw/aS (without feeding back into estimation). Then it can evaluate
+the exact WM-10/WM-11 distance directly from raw IMU plus F,U. That is a
+runtime proof monitor rather than an independent physical prefilter, and it
+would reject precisely the pathological reachable-moment class with no new
+physical assumption.
+
+### Conclusion
+
+The correct Gram derived from RC-1 is
+
+gamma_raw= sum w||y||^2 -
+ lambda_max(sum w R_M' y y' R_M).                          (RC-17)
+
+It is a useful raw-IMU multi-axis excitation statistic and is strictly better
+than an invented attitude Gram. But under the present broad MARINE MOTION
+translation class, RC-17 alone cannot imply the exact shipping separation
+WM-11 because the pathological family has a non-small affine forced term F.
+
+This calculation prevents an invalid proof shortcut. To genuinely weed out
+the trajectory, either certify WM-11 with a read-only estimator-aware monitor,
+or strengthen MARINE MOTION with a physical translation-attitude condition
+that makes the F bridge provable.
