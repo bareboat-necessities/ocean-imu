@@ -1,4 +1,8 @@
-import math, tempfile, unittest
+import math, unittest
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.bmi270_lf_qualification import design_fir, response, G, THETA_MARGIN
 class LFQualificationTests(unittest.TestCase):
  def test_joint_intercepts(self):

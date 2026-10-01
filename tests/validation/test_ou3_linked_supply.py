@@ -1,6 +1,10 @@
 import unittest
 from fractions import Fraction as F
 
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.linked_supply import (
     compose_defects, linked_supply, completed_square_check, retained_entry_budget)
 

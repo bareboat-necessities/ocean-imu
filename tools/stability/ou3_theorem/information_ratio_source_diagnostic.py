@@ -45,6 +45,7 @@ TILT_PREMISES = ('1e-4', '1e-3')           # rad^2 ceilings along theta_hat
 KERNEL_PREMISE = '1e-3'
 DIFFUSE = 1e8
 FINITE_DIAMETER = 1e6
+RELATIVE_DIFFERENCE_FLOOR = 1e-4         # replay-noise floor for the diameter identity residual
 BA_MARGINAL = 1/1600
 KAPPAS = np.unique(np.concatenate([np.geomspace(1.0001, 1e7, 481), [1.5, 2, 3, 4, 5, 8, 10]]))
 NAMES = ['theta']*3+['bg']*3+['v']*3+['p']*3+['S']*3+['aw']*3+['ba']*3
@@ -455,8 +456,13 @@ def differences(a, b, rel, path='$'):
 
     Native float32 replays differ at about 1e-6 relative between toolchains
     (see the CI native replay binding in the research ledger); the record
-    keeps four significant digits and only well-posed quantities.
+    keeps four significant digits and only well-posed quantities. The diameter
+    identity residual ``relative_difference`` is itself replay noise; its
+    contract (<1e-3) is enforced by verify_diagnostic, so here both records
+    only have to stay below a noise floor an order of magnitude tighter.
     """
+    if path.endswith('.relative_difference') and a is not None and b is not None:
+        return [] if min(a, b) >= 0 and max(a, b) <= RELATIVE_DIFFERENCE_FLOOR else [f'{path}: {a} != {b}']
     if isinstance(a, dict) and isinstance(b, dict):
         if a.keys() != b.keys():
             return [f'{path}: keys {sorted(set(a) ^ set(b))}']

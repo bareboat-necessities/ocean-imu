@@ -679,3 +679,33 @@ Added read-only held_ba_lin_word_diagnostic.py. It compiles a temporary copy of 
 AG perturbation columns are deliberately not folded into the 12x12 root map; they are inputs for the later BIBO theorem. The diagnostic reports Euclidean spectral radius and singular norm. Endpoint covariance-metric induced norm still needs root/terminal P_LL snapshots added before any contraction theorem promotion. The CI step is explicitly non-promoting: no assertion rho<1 is used.
 
 This is finite carried evidence only. Even if rho_LIN<1 on quiet/wave histories, source-uniform BIBO requires the fixed-factor nullspace/compactness argument over the admissible held-BA coefficient/covariance class. If rho>=1, inspect the corresponding eigenvector before any bounding work.
+
+## CI: information-ratio replay comparison
+
+Failed quantity: `information_ratio_source_diagnostic --expect` on the
+`theorem` job compared `diameter.relative_difference` (committed 1.03e-5 max,
+fresh 2.3e-6 on the same case) with a 5e-3 relative tolerance. Classification:
+implementation/CI. That leaf is the residual of an identity between two equal
+quantities, so its value is float32 replay noise and is not reproducible
+across toolchains. Invalidated hypothesis: every recorded leaf is well posed
+for relative comparison. Retained facts: the identity contract
+`relative_difference < 1e-3` is still enforced by `verify_diagnostic`; the
+replay comparison now only requires both records below 1e-4; every other leaf
+keeps the 5e-3 relative comparison. Current limiter and next falsifiable
+experiment are unchanged from the sections above.
+
+## CI: held-BA LIN word diagnostic did not execute
+
+Failed quantity: `held_ba_lin_word_diagnostic` on the `theorem` job raised
+`JSONDecodeError` (`"root_covariance":,`). Classification: implementation.
+Its driver patch removed the root-covariance capture, compiled against the
+untapped shipping header (zero recorded events), and recorded past first BA
+activation, so the "last 3400 predictions" would not have been the held
+window. Invalidated hypothesis: none; the diagnostic had not produced a
+number. Fix: capture the root at the first Live sample, compile with the
+`ag_readout_source_diagnostic.instrument` tapped header copy, and stop
+recording permanently at the first `acc_bias_updates_enabled` transition.
+Retained facts (finite carried evidence only): quiet live 18051 / active
+24064, rho_LIN=0.03953, sigma_max=0.3258; wave live 6368 / active 24016,
+rho_LIN=0.006467, sigma_max=0.03199. This does not establish source-uniform
+held-BA LIN BIBO stability; the next falsifiable experiment above stands.

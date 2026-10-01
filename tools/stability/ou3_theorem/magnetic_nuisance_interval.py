@@ -6,7 +6,6 @@ floor after arbitrary nuisance projection.  It builds the joint block
 [G_hb,G_n] so the Schur loss caused by non-E_hb root columns is explicit.
 """
 from __future__ import annotations
-import math
 from .interval_riccati_21 import IMat,matmul,transpose,add,scale
 from .rank_loss_interval_factor import verified_inverse,zeros
 from .interval_riccati import symmetric_interval_gershgorin
