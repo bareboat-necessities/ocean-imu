@@ -265,3 +265,33 @@ H18-complement architecture, not a new proof path.
 Current limiter: source-uniform outer/BA-quotient release set inclusion and
 quantitative quotient finite-window dissipation/supply. Do not retry universal
 direct full-V release.
+
+
+## Literal release outer-storage audit — attitude is the entry obstruction
+
+A dedicated unchanged-header release snapshot now evaluates the carried
+construction history at first A21 activation (step 36008, 180.039996 s).
+Correct BA elimination uses the outer covariance marginal; at the release
+boundary BA cross covariance is zero so it also equals the conditional outer
+block there.
+
+Release tilt is 8.144927 deg. The attitude covariance eigenvalues are
+3.5352043e-6, 3.5550410e-6 and 1.2944541e-5. Minimizing the BA-eliminated
+outer storage over every other non-attitude outer coordinate still gives
+
+    V_outer,elim >= theta' P_theta^-1 theta
+                  = 5716.295063726523,
+    sqrt(V_outer,elim) >= 75.60618403098071.
+
+Thus this literal release is nowhere near r_FA=.15; ATTITUDE alone consumes
+the radius. At this covariance, V<=.15^2 would necessarily require tilt
+<=.000539678 rad=.0309213 deg.
+
+This is finite carried evidence only: the stress history does not certify
+all-time MAGNETIC SERVICE and therefore is not an eventual-capture
+counterexample. It does prove that stage flags/release mechanics themselves
+do not imply entry into the tiny local storage ball. The controlling proof now
+needs an outer A21 retained/capture region and finite entrance from that region
+to the inner r_FA=.15 LaSalle ball. The r_FA field-axis inequality cannot
+simply be enlarged to the observed release storage: its current source-audited
+AW component conversion loses positivity above r~=.176.
