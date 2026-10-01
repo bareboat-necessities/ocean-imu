@@ -337,3 +337,18 @@ FAILED INEQUALITY: no source-uniform `W_out large => Delta W_out<=-epsilon` can 
 CONTROLLING PATH: one nested architecture, but the outer set is distance to the stationary measurement-compatible attitude/BA class. Prove stationary practical retention to that class; then use an actually complete MARINE moving window to collapse the gauge and enter V<=r_in^2<.15^2 with retention; only then invoke the local LaSalle theorem. Indefinite physical rest has a consistency-class conclusion rather than an impossible point-error conclusion.
 
 NEXT FALSIFIABLE CALCULATION: form the exact stationary gauge tangent K_stat at the carried A21 root, quotient the complete corrected-word action by K_stat, and evaluate the remaining gauge action over one complete same-history T_E moving window using the literal coupled tau/sigma_aw/R_S/T_S chronology. Do not refine a global shaped point-storage or retry pointwise AW tracking.
+
+
+## Mahony/gauge quotient audit — current
+
+Mahony is part of the literal coefficient chronology, not an independent observation. The shipping order conditions accelerometer input, advances the private measurement-only Mahony vertical observer, updates period/sigma tuning, stages the coupled online tuple, and commits it at the next IMU sample. Therefore any corrected-word quotient calculation must carry Mahony/front-end state and the resulting lagged coupled tau/sigma_aw/R_S/T_S sequence. Identical conditioned IMU histories imply identical Mahony and tuner histories.
+
+At a stationary root, with body magnetic vector b=Q^T B, the acc/mag physical observation differential has the one-dimensional attitude/BA kernel
+
+    K_stat = span{ (delta_theta=b, delta_ba=g[Q^T e_z]_x b) },
+
+with all other error coordinates zero (up to the global attitude-error sign convention). For complete-word quadratic action J_W, quotient by choosing a root-metric complement Z and using Jbar_W=Z^T J_W Z, equivalently minimize the action over additions lambda*k_stat.
+
+The hoped-for strictly positive action on the remaining gauge coordinate over one generic moving T_E window is NOT implied by the current contract. The numerical T_E and theta_E fields remain OPEN/null in constants.json. More strongly, the existing exact sin^3 rest/motion witness has positive gravity-direction span on each complete moving window while its accelerometer, gyro and magnetometer packets remain exactly nominal through compensating admissible physical biases. Hence Mahony and the complete coupled tuner word are also nominal. Symbolic positive attitude span alone therefore cannot give a positive quotient floor.
+
+Current limiter: derive the largest gravity-direction span Theta_gauge(T_E) achievable by this exact packet-indistinguishable family under the existing B_a,D_a,B_g,D_g and Omega_max bounds. Only an independently certified MARINE pair satisfying theta_E>Theta_gauge(T_E) could exclude this gauge and justify a point-entry moving theorem. Otherwise MOVING also requires a consistency-class theorem. No theorem flag is promoted.
