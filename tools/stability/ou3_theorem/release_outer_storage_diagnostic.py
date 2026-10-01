@@ -21,7 +21,7 @@ def driver_source():
     oldout='<< ",\\\"root_covariance\\\":" << root'
     newout='<< ",\\\"release_covariance\\\":" << release_cov << ",\\\"release_state\\\":" << release_state << ",\\\"release_quaternion\\\":" << release_quat << ",\\\"root_covariance\\\":" << root'
     if oldout not in s: raise ValueError("output anchor changed")
-    return s.replace(oldout,newout)
+    s=s.replace(oldout,newout)\n    s=s.replace(" || applied!=8","")\n    return s
 
 def rotvec(coeffs):
     q=np.asarray(coeffs,float).reshape(4); xyz=q[:3]; w=q[3]; n=np.linalg.norm(xyz)
