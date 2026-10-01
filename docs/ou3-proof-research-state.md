@@ -230,3 +230,38 @@ The end-to-end regional practical-stability theorem is NOT promoted.
 Historical O1/O2/kernel-ceiling and signed-reader calculations remain useful
 research but are non-controlling for exclusion of the zero-dissipation
 field-axis trajectory.
+
+
+## Entry/retention continuation — staged A21 entry required
+
+`docs/ou3-staged-entry-retention.md` is now controlling downstream of the
+r_FA=.15 field-axis exclusion.
+
+Direct H18 release into full V<=.15^2 is NOT a valid universal target.
+Shipping held BA is decoupled with sigma_bacc0=.004 m/s2; enabling A21 merely
+floors its diagonal variance to sigma_bacc0^2. The admitted physical BA norm
+is .22516660498395405. A permitted held b_hat_a=0 therefore has decoupled
+release contribution V_ba=(.22516660498395405/.004)^2>3168, versus .0225 for
+the final local ball. No assumption or runtime change is made.
+
+Homogeneous every-prefix retention IS closed once inside the local ball:
+prediction/correction are covariance-metric nonexpansive and congruent resets
+preserve storage; PSD covariance inflations cannot increase fixed-error
+storage. Finite nonlinear/source/arithmetic residuals require an inner root
+radius r_in<.15 with
+
+    sup_k G_k(.15,d) <= .15-r_in,
+    E_W(.15,d) <= (1-q) r_in,
+
+q=sqrt(1-eta_D).
+
+The correct entry path eliminates the held BA coordinate. At release it is
+literally decoupled; after release use the BA Schur complement / quotient
+storage V_o|ba. Prove quotient-local entry/retention at .15, apply the
+field-axis LaSalle exclusion there, then use active A21 BA dynamics and the
+dissipative projection sector to enter the full ball. This is the same
+H18-complement architecture, not a new proof path.
+
+Current limiter: source-uniform outer/BA-quotient release set inclusion and
+quantitative quotient finite-window dissipation/supply. Do not retry universal
+direct full-V release.
