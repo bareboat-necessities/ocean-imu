@@ -93,6 +93,10 @@ interleaved H18; lower covariance bound substituted for full compactness; old
 O1/O2 kernel-ceiling architecture used as the controlling route. Archived algebra
 may remain correct as algebra or an explicitly amplitude-relaxed outer bound.
 
+## Exact joint gauge qualification
+
+The controlling quantifiers are now written explicitly in [joint SLOW+FAST physical gauge separation](ou3-joint-gauge-separation.md). For fixed qualified MARINE tuple m=(T_E,theta_E,T_P,P_E), Q_IMU(m) is the set of fast horizon/cap tuples for which the infimum of the SAME-history stacked acc+gyro causal compatibility residual, restricted by actual MAGNETIC SERVICE, is strictly positive. Process/accelerometer columns are paired and physical p/v/S/a boundaries telescope before norms. Because the four MARINE excitation constants are also numerically OPEN on main, the current empirical qualification is Q_phys over both MARINE and IMU parameters; no four-dimensional numerical Q_IMU is asserted before m is fixed.
+
 ## Current limiter and alternatives
 
 Numerical assembled-device slow/fast qualification is OPEN for both sensors.
