@@ -951,7 +951,7 @@ On the regular covariance-matched real-arithmetic comparison, every literal pref
 Prediction follows from $P^-\succeq FP^+F^{\mathsf T}$, Joseph correction from the exact measurement-energy identity, congruent reset preserves storage, and PSD covariance inflation cannot increase fixed-error inverse-covariance storage.
 \end{proof}
 
-The equality set of \eqref{eq:path-dissipation-current} is source structured. Four scheduled $S$ observations eliminate the homogeneous $(v,p,S,a_w)$ root. Magnetic service and chronological gyro transport remove the observed attitude/gyro-bias quotient. Accelerometer compatibility leaves at most the physical tilt/BA compatibility class. On the regular MARINE branch, the only nonzero zero-dissipation candidate relevant to the current local theorem is the field-axis attitude mode with nominal CoG specific force parallel to the committed magnetic reference.
+The equality set of \eqref{eq:path-dissipation-current} is source structured. Four applied $S$ rows eliminate the homogeneous variation $(\\delta v,\\delta p,\\delta S,\\delta a_w)$ root through the corrected-word extended-Chebyshev argument. This statement does not set the carried base innovations to zero. Magnetic service reduces the remaining homogeneous attitude/gyro-bias root to at most a one-dimensional word-dependent compatibility line; an accelerometer row then determines the held-BA homogeneous component from that line. Persistence of this variational line is governed by the nominal pre-update force and therefore still requires a physical-to-nominal bridge outside the local radius theorem.
 
 \section{Radius-local field-axis exclusion}
 Let $b$ be the committed unit magnetic reference and $P_B=I-bb^{\mathsf T}$.  On the qualified branch
@@ -1064,6 +1064,69 @@ This carried history is not a source-uniform counterexample to eventual capture;
 
 The required architecture therefore has two nested A21 regions: an outer capture/retention region large enough to contain certified H18/A21 release, and the inner $V\le0.15^2$ region where the field-axis theorem gives strict local dissipation.  Active BA dynamics are carried as a bounded internal coordinate during the outer-to-inner transition.  The next entry theorem must prove finite entrance through the annulus rather than assume inner-ball membership at release.
 
+
+\section{Excited motion, residual qualification, and reference geometry}
+For outer moving-regime exclusion we distinguish a physical condition from estimator coordinates. EXCITED\_MOVING means sustained vessel motion in which roll or pitch undergoes a non-negligible change within a bounded interval. The current feasibility candidate is
+\[
+ T_X=60\ {\rm s},\qquad \theta_X=1^\circ .
+\]
+It is not yet a promoted theorem constant. Pointwise fast-residual boxes alone are insufficient: persistent low-frequency residuals can counterfeit genuine tilt. The proposed assembled-device qualification retains the full-band boxes and additionally requires
+\[
+ \|L_Xn_a\|\le\epsilon_{a,{\rm LF}},\qquad
+ \|L_Xn_g\|\le\epsilon_{g,{\rm LF}},
+\]
+for a fixed offline certification low-pass whose passband covers the vessel-motion band. For the $1^\circ/60$ s candidate a conservative joint gate is
+\[
+ 2\arcsin(\epsilon_{a,{\rm LF}}/g)+60\epsilon_{g,{\rm LF}}
+ <0.01133499524 .
+\]
+The corresponding axis intercepts are approximately $0.05558\ {\rm m/s^2}$ and $1.8892\times10^{-4}\ {\rm rad/s}$. These are qualification targets, not certified hardware assumptions.
+
+Continuous hard-iron adaptation preserves the canonical world-reference gauge $B_{\rm ref}=(h,0,z)$. If an all-time vector-reference error $\|B_{\rm ref}-B_{\rm true}\|\le E_B<15\,\mu{\rm T}$ is certified, then
+\[
+ \|P_{B_{\rm ref}}g\|\ge g{15-E_B\over75+E_B}>0 .
+\]
+Writing proxy leveling error as $R_i=\Delta_iQ_i$ gives
+\[
+ B_{\rm ref}-B_{\rm true}
+ =\overline{(\Delta_i-I)B_{\rm true}}
+ +\overline{\Delta_iQ_i(b_{\rm true}-b_{\rm app})}
+ +\overline{\Delta_iQ_in_{m,i}},
+\]
+and hence
+\[
+ E_B\le150\sin(\delta_{\rm proxy}/2)+E_{\rm HI}+E_m .
+\]
+A source-uniform Mahony-proxy tilt bound and exact hard-iron/reference residual transfer remain open.
+
+\section{H18 to A21 release compactness}
+A21 release is the first literal transition for which accelerometer-bias updates become enabled; it is not Live handoff. Shipping requires both the magnetic-count gate and clearance of the wrapper external BA hold. Second-stage magnetic-reference refinement has no forced timeout, so source currently provides no uniform finite release-time upper bound.
+
+The principal potentially noncompact pre-release mean coordinate is $z=(\hat v,\hat p,\hat S,\hat a_w)$. For the default bounded shipping profile,
+\[
+ h\in[0.004,0.006],\quad \tau\in[0.02,12],\quad
+ \sigma_{a_w}\ge9\times10^{-4}\ {\rm m/s^2}.
+\]
+The per-axis integrated-OU process covariance is a finite-horizon controllability Gramian. The chain is controllable throughout this compact box, so continuity gives
+\[
+ \boxed{\inf\lambda_{\min}(Q_{LL})>0.}
+\]
+A high-precision diagnostic at the apparent worst corner gives a smallest eigenvalue of order $2.2\times10^{-29}$; this is not promoted as a global numerical certificate.
+
+Three separated $S$ rows remove the neutral polynomial root and four applied $S$ rows remove the homogeneous OU extension. The actual H18 word also contains accelerometer corrections whose LIN gain uses attitude/LIN cross covariance, so S-only contraction cannot be promoted to actual 12-state BIBO stability. A read-only diagnostic now propagates the exact 12-column LIN tangent through a 17-s held-BA carried word, using $F_{LL}$ at prediction and $I-K_LH_L$ at corrections, with AG tangent columns treated as inputs. Its carried result is non-promoting; the source-uniform target remains BIBO stability of the literal interleaved acc+$S$ LIN subsystem.
+
+\section{Linked finite-error supply}
+For a complete physical word write $e_N=Me_0+b_W$, $J_0=P_0^{-1}$, $J_N=P_N^{-1}$ and $D_W=J_0-M^{\mathsf T}J_NM$. For $G_\gamma=D_W-\gamma J_0\succ0$, define
+\[
+ z_W=M^{\mathsf T}J_Nb_W,\qquad
+ \chi_\gamma=b_W^{\mathsf T}J_Nb_W+z_W^{\mathsf T}G_\gamma^{-1}z_W .
+\]
+Completing the square gives
+\[
+ \boxed{V_N\le(1-\gamma)V_0+\chi_\gamma.}
+\]
+This preserves forcing direction relative to the same dissipation matrix. Outer retention at level $C$ requires $\chi_\gamma\le\gamma C$; strict finite entry below $r_{\rm in}$ requires $\chi_\gamma/\gamma<r_{\rm in}^2$ on the jointly reachable class. The former pointwise residual contract admitted an excited counterfeit execution, motivating the explicit low-frequency qualification above.
+
 \section{Capture and finite-error retention}
 The same proof path still requires finite construction/capture into a magnetically informed H18 domain and a source-uniform refinement/release bridge.  The approximately $7^\circ$ refinement quantity is an estimator-error tube, not a covariance-storage radius and not a bound on physical rocking amplitude.  A six-degree attitude error does not imply membership in $V\le0.15^2$.
 
@@ -1145,39 +1208,41 @@ constants likewise remain to be certified uniformly from actually applied
 shipping sensitivities.
 
 \section{Current analytical closure order}
-The controlling local theorem is now
-\begin{equation}
+The radius-local result remains the strongest controlling theorem:
+\[
  \boxed{{\rm Inv}_{\rm MARINE}(\{\mathcal D=0\})\cap\{V\le0.15^2\}=\{0\},}
-\end{equation}
-with finite-window homogeneous strictness following by compactness.  The former persistent field-axis compatibility trajectory is therefore not a local invariant obstruction after entry into the certified ball.  Historical scalar O1/O2 kernel-ceiling, causal-reader, separated $dH$, gain-sign and coefficient-variation constructions are not part of the controlling closure order.
+\]
+with finite-window homogeneous strictness following by compactness on its retained class. It does not imply that H18/A21 release is local.
 
 The current proof order is
 \[
 \boxed{
 \begin{array}{c}
-\text{construction/capture and magnetically informed H18 refinement}\\
+\text{construction/capture and magnetically informed H18}\\
 \Downarrow\\
-\text{source-uniform outer A21 release/retention region}\\
+\text{all-time held-BA LIN/reference compactness and A21 release}\\
 \Downarrow\\
-\text{finite entrance into }V\le0.15^2\text{ with BA staged/eliminated}\\
+\text{EXCITED\_MOVING physical-to-nominal compatibility exclusion}\\
+\Downarrow\\
+\text{source-uniform outer A21 retention and finite inner entry}\\
 \Downarrow\\
 \text{local LaSalle finite-window strictness}\\
 \Downarrow\\
-\text{nonlinear/source prefix and block supply}\\
+\text{linked finite-error supply and prefix retention}\\
 \Downarrow\\
-\text{STILL/TRANSITION/MOVING composition and float32 closure}.
+\text{regime composition and float32 closure}.
 \end{array}}
 \]
 The principal open obligations are:
 \begin{enumerate}
- \item certify the outer H18/A21 release set and its every-prefix retention;
- \item prove finite outer-to-inner A21 entrance while carrying active BA and the same tuner/covariance/service history;
- \item obtain a usable finite-window dissipation margin or a directly linked supply certificate;
- \item close nonlinear, physical-source, reset/projection and prefix supplies;
- \item compose regime handoffs without an unproved dwell assumption; and
- \item transfer the real-arithmetic inequalities to float32 with explicit roundoff and operation-count supplies.
+ \item finish the actual interleaved 17-s held-BA LIN BIBO theorem and the source-uniform compact A21 release class;
+ \item certify the magnetic-reference cone, including Mahony-proxy tilt and continuous hard-iron/reference error transfer;
+ \item certify the assembled-device low-frequency residual envelope and use it with EXCITED\_MOVING to exclude persistence of the corrected-word variational compatibility line without setting base innovations to zero;
+ \item prove source-uniform outer A21 retention and finite entry below $0.15$, carrying active BA and the same tuner/reference history;
+ \item close linked complete-word finite-error and every-prefix supplies;
+ \item compose STILL/TRANSITION/EXCITED\_MOVING regimes and transfer the real-arithmetic inequalities to float32.
 \end{enumerate}
-End-to-end regional practical stability remains unproved.
+End-to-end regional practical stability remains unproved. Retracted routes include direct release into the local ball, source-uniform pointwise AW tracking before entry, coefficient-variation/Abel norm bounds, AW-only passivity, and inference from homogeneous zero action to zero carried base innovations.
 
 \section{Evidence boundary}
 Exact algebraic and rational checks support the operation factors, integrated OU/S identities, Joseph action identities, AW marginal ceiling and field-axis scalar substitutions.  Finite carried histories are diagnostics, not source-uniform theorem certificates.  In particular, the release audit proves that direct stage-flag-to-inner-ball entry is not a valid universal lemma, but it does not refute eventual A21 capture.
