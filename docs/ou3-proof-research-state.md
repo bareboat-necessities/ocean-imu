@@ -197,3 +197,31 @@ if the low-frequency accelerometer residual is negligible. A balanced 50/50 angu
 These are NOT proposed sensor specifications yet. They are the maximum deterministic low-frequency residual tradeoff implied by the simple 1-degree/60-s EXCITED_MOVING candidate after already charging the existing physical bias-rate envelope. Actual qualification should leave engineering/proof margin below the LF1 boundary and must be demonstrated on calibrated assembled BMI270 devices over temperature and mounting conditions. The Bosch typical broadband noise numbers are not deterministic low-frequency guarantees and cannot by themselves certify LF1.
 
 LF1 excludes the explicit .01-rad/.5-rad-s finite-residual witness: that witness needs about .098 m/s2 low-frequency accelerometer compensation and .005 rad/s low-frequency gyro compensation, far outside the LF1 intercepts. It does not yet prove the linked chi_gamma/gamma<r_in^2 finite-error condition; remaining model/reference/arithmetic supplies still have to be carried in that same-word budget.
+
+
+## Concrete low-frequency certification operator and BMI270 protocol
+
+Recommended proof/certification operator L_X: an OFFLINE zero-phase low-pass with passband edge 0.20 Hz and stopband beginning 0.30 Hz (nominal separating frequency 0.25 Hz), applied after calibration/temperature compensation to residuals resampled on the qualified 166.7--250 Hz timestamp grid. Zero phase is deliberate: this is a certification operator, not shipping runtime, so phase/group delay should not consume the deterministic residual budget. The passband must have a declared minimum gain (recommend >=.99 on [0,.15] Hz); the stopband attenuation and transition band must be fixed in the qualification artifact. A forward-backward Butterworth/FIR implementation is acceptable only after its actual magnitude response is exported and used in the proof. The theorem should bind the operator coefficients/hash, not the name '0.25-Hz filter'.
+
+Why 0.25 Hz: the explicit residual obstruction is .0796 Hz and therefore remains in-band; a 60-s 1-degree qualification has relevant timescales down to O(.02--.1 Hz). 0.25 Hz leaves substantial margin above these motions while remaining orders below the BMI270 hardware anti-noise bandwidth at the shipping ~200-Hz ODR. This value is an engineering starting point and must be checked against actual vessel roll/pitch spectra; it is not inferred from Bosch typical noise density.
+
+Qualification protocol must estimate TRUE residual, not raw sensor output. Use the exact shipping sensor configuration, calibration, mounting, power and timestamp path. Required assembled-device tests:
+
+1. Stationary six-orientation thermal soak: at least +/-X,+/-Y,+/-Z, covering the deployment temperature range or declared temperature bins. Reference angular rate is zero and reference specific force is gravity in the surveyed orientation. After applying the same calibration/temperature compensation as shipping, form n_a(t),n_g(t), apply L_X offline, and record sup norm and long-window maxima. This certifies low-frequency offset/thermal/creep behavior.
+2. Slow single-axis rotation: precision rate table/encoder reference, roll and pitch separately, with sinusoidal/triangular motions spanning .02,.05,.08,.10,.15,.20 Hz and amplitudes including 1--10 degrees. Compute residual after subtracting reference kinematics/gravity, then L_X. This catches scale, cross-axis, phase, mounting and slow dynamic errors that stationary testing cannot.
+3. Combined two-axis slow motion: at least representative roll+pitch trajectories in the same band, to prevent a per-axis qualification from missing norm/cross-axis coupling.
+4. Temperature repetition during/after slow motion and multiple power cycles. Include assembled PCB/mounting stress, because the theorem is for the device, not a bare BMI270 typical part.
+5. Duration: stationary records must be long enough to expose low-frequency drift well below .02 Hz (hours, not minutes); dynamic runs need many cycles per frequency and repeated runs. Exact duration/sample-count is a deployment qualification choice, not proved here.
+
+Pass criterion for the 1-degree/60-s candidate is the JOINT deterministic tradeoff
+
+    2 asin(eps_a_LF/g_min)+60 eps_g_LF < .0113349952420757.
+
+Do not independently require the two axis intercepts. A qualification report should publish the measured worst assembled-device pair (eps_a_LF,eps_g_LF), its margin to this boundary, filter coefficients/response, temperature/mounting envelope, reference-instrument uncertainty, number of devices/runs, and raw-data hashes. Reference uncertainty must be charged into eps_a_LF/eps_g_LF rather than ignored.
+
+For an initial engineering target with 50/50 angular allocation, demonstrate strictly below approximately
+
+    eps_a_LF = .02779 m/s2,
+    eps_g_LF = 9.45e-5 rad/s (.00541 deg/s),
+
+and retain additional qualification margin. These are test targets, not yet theorem assumptions. If measured data fail them, first optimize the physically chosen T_X/theta_X pair or calibration characterization; do not silently alter runtime or residual bounds for proof convenience.
