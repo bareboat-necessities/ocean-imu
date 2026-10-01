@@ -326,3 +326,14 @@ The local FA theorem remains valid after entry, but entry must use a shaped
 signed/windowed AW functional or return to the global same-history FA
 reachability/action calculation. Do not retry a source-uniform pointwise AW
 tracking lemma; it is already falsified on the admitted class.
+
+
+## Outer-entry no-go and controlling reformulation — current
+
+The requested universal shaped-storage theorem `every certified H18/A21 release -> eventual retained V<=.15^2 entry` is analytically false under the present contract. A constant-rest member of the exact stationary attitude/BA gauge suffices: rotate the true attitude by alpha=1/1000 rad about B, set b_g=0 and b_a=g(Q_alpha e_z-e_z), and keep p=v=a=0. It has zero bias rates, ||b_a||<.009807 m/s2, exactly nominal accelerometer/gyro/magnetometer packets forever, and retains the quiet actual MAGNETIC SERVICE floor. Arbitrary complete stillness is explicitly admitted, so moving excitation is not owed. On the identical nominal filter history the proved quiet P_ba,ba<=I/1600 gives sqrt(V)>=||e_ba||/.025>.392>.15.
+
+FAILED INEQUALITY: no source-uniform `W_out large => Delta W_out<=-epsilon` can hold toward the point physical-error set on every certified continuation, and no universal eventual retained point-entry time exists. Failure class: identifiability/theorem-target failure, not conditioning or numerical sharpness. Invalidated hypothesis: the full coupled shipping structure plus MAGNETIC SERVICE is sufficient to collapse stationary attitude/BA ambiguity. Retained facts: the r_FA=.15 local LaSalle exclusion after point entry, the 16.48 AW covariance ceiling, operation-wise homogeneous nonexpansion, correct BA storage elimination, and release audits remain valid.
+
+CONTROLLING PATH: one nested architecture, but the outer set is distance to the stationary measurement-compatible attitude/BA class. Prove stationary practical retention to that class; then use an actually complete MARINE moving window to collapse the gauge and enter V<=r_in^2<.15^2 with retention; only then invoke the local LaSalle theorem. Indefinite physical rest has a consistency-class conclusion rather than an impossible point-error conclusion.
+
+NEXT FALSIFIABLE CALCULATION: form the exact stationary gauge tangent K_stat at the carried A21 root, quotient the complete corrected-word action by K_stat, and evaluate the remaining gauge action over one complete same-history T_E moving window using the literal coupled tau/sigma_aw/R_S/T_S chronology. Do not refine a global shaped point-storage or retry pointwise AW tracking.
