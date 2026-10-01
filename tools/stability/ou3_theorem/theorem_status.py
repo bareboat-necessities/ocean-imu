@@ -59,7 +59,7 @@ def status_report() -> dict:
         "injection_free_aggregate_six_column_floor_given_nominal_window_premises":True,
         "aggregate_world_frame_six_column_floor":False,
         "practical_rho0_margin_from_six_column_floor":False,
-        "marine_attitude_excitation_numeric_qualification":False,
+        "marine_attitude_excitation_numeric_qualification":True,
         "marine_attitude_excitation_implies_signed_temporal_separation":False,
         "physical_tilt_span_sampling_implication":True,
         "carried_signed_adjoint_compatibility_criterion":True,
@@ -282,7 +282,7 @@ def status_report() -> dict:
         "next_controlling_obligation":(
             "Qualify the six candidate slow/fast budgets and both signed fast-accumulation profiles on one delivered calibrated history. "
             "Missing H_a,C_a,H_g,C_g remain OPEN; do not replace them by unrestricted residual boxes or a fitted excitation threshold. "
-            "Existing MARINE T_E/theta_E and T_P/P_E remain symbolic; the zero-translation sin-cubed witness is now outside MOVING. "
+            "MARINE is now user-qualified at T_E=T_P=30 s, theta_E=2 deg, P_E=.03 m; the zero-translation sin-cubed witness is now outside MOVING. "
             "The .01 sin(.5t) witness violates the candidate all-slow rates, but mixed allocation remains OPEN. "
             "Keep the exact dissipativity/LaSalle path, source coupled tuner chronology, physical gyro/accel constraints and actual magnetic service. "
             "Held-H18 LIN BIBO and captured-domain release compactness are already closed qualitatively; prove general capture, outer retention and finite inner entry, then linked complete-word/prefix supply. "
