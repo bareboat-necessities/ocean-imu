@@ -513,3 +513,33 @@ CURRENT LIMITER: the new LF IMU residual qualification bounds only sensor residu
 Also, the existing constants hard_iron_residual_norm_max=5 uT and measurement_residual_norm_max=2 uT cannot simply be inserted as E_HI and E_m without checking their exact physical definitions against MR-2. In particular the continuous estimator's 3-uT fit RMS and .35 field-scale bias gate are estimator diagnostics, not direct pointwise bounds on b_true-b_app.
 
 NEXT FALSIFIABLE CALCULATION: derive a deterministic low-frequency tilt-error bound for VerticalAccelComplementary/Mahony in the yaw-free two-axis subsystem. Treat physical horizontal acceleration as the disturbance, use bounded velocity/displacement to bound its low-frequency component through the proxy correction transfer, and add the certified LF accelerometer/gyro residual envelopes. The target need only be modest (roughly <6 deg if a 7-uT non-tilt reference budget is later justified), not sub-degree. If the proxy transfer has nonzero DC gain from arbitrary bounded marine acceleration that cannot be controlled by the existing primitives, the reference cone must remain an independent qualification rather than be derived from EXCITED_MOVING.
+
+
+## Private Mahony proxy tilt transfer — linearized two-axis result
+
+Shipping VerticalAccelComplementary uses the private IMU-only Mahony observer with twoKp=.2 and twoKi=.02. In Mahony_AHRS the cross-product error is a half-vector, so the small-angle yaw-free tilt subsystem has effective k_P=twoKp/2=.1 s^-1 and k_I=twoKi/2=.01 s^-2 (sign chosen for stable negative feedback). For one horizontal axis, with tilt error e, integral-feedback/bias state beta, horizontal specific-force disturbance u=a_h/g, gyro residual d_g and accelerometer-direction residual d_a,
+
+    e_dot = -k_P e + beta + d_g + k_P(u+d_a),
+    beta_dot = -k_I e.                                      (MP-1)
+
+Thus the translational-acceleration-to-tilt transfer is
+
+    H_a(s)=k_P s/(s^2+k_P s+k_I),                           (MP-2)
+
+while gyro-rate residual enters through
+
+    H_g(s)=s/(s^2+k_P s+k_I).                               (MP-3)
+
+The PI loop rejects constant gyro bias but H_a has the expected low-frequency behavior: H_a(0)=0 with positive k_I; near sqrt(k_I)=.1 rad/s it can pass substantial slow acceleration. This is why the integral term can wind up against sustained horizontal acceleration, as the source comment states.
+
+For sinusoidal physical horizontal acceleration at angular frequency omega, bounded physical velocity gives A_a<=omega V_max. Hence the corresponding linearized proxy tilt amplitude obeys
+
+    |e_a| <= (V_max/g) omega |H_a(j omega)|.                 (MP-4)
+
+Using V_max=5.5 m/s and the literal gains, the values for .02,.05,.08,.10,.15,.20 Hz are approximately 3.67,3.37,3.28,3.25,3.23,3.22 degrees. This is below the ~6.1-degree proxy target associated with a hypothetical 7-uT non-tilt magnetic-reference budget. It is a feasibility result only: a sinusoidal spectral component is not a deterministic arbitrary-history theorem.
+
+The LF accelerometer residual enters MP-1 as direction error approximately eps_a_LF/g and the LF gyro residual through H_g. Their deterministic contribution can be added only after defining the same certification band/operator for the proxy theorem. The 50/50 test targets are small enough to evaluate, but no theorem is promoted here.
+
+CURRENT LIMITER: existing MARINE bounds |v|<=V_max and |p|<=P_max do not directly imply a source-uniform L_infinity bound on the output of the stable convolution H_a applied to arbitrary a=v'. A crude L1 impulse-response times |a|<=A_max is too loose and ignores the derivative structure. The correct deterministic route is to integrate H_a(s)*s V(s) by parts: define G_v(s)=s H_a(s)=k_P s^2/(s^2+k_P s+k_I), separate its direct k_P term from the stable strictly-proper remainder, and exploit BOTH |v| and the finite-window/position primitive to control the low-frequency part. Alternatively formulate the proxy error directly as a stable state driven by bounded v through an integration-by-parts storage. Do not replace the arbitrary history by sinusoidal decomposition without a spectral norm theorem.
+
+NEXT FALSIFIABLE CALCULATION: derive an induced bound from bounded v and p for MP-1 over the 30-s magnetic refinement / 600-s continuous-HI windows. Compute the exact impulse kernels for the literal k_P,k_I and evaluate the sharp endpoint + L1-kernel constants after integration by parts. If the resulting deterministic proxy bound plus LF sensor charges is < the MR-3 cone budget, close E_B; if it exceeds it badly, proxy tilt/reference cone must be independently qualified from device/vessel data rather than inferred from the broad MARINE envelopes.
