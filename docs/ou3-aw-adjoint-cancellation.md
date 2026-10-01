@@ -803,15 +803,15 @@ The remaining physical-mean allowance is
 
 Hence
 
-    T_crit = 11/D = 16.156012... s.                         (DG9)
+    T_crit = 11/D = 16.1558663253... s.                         (DG9)
 
 So every exact zero-innovation field-axis-degenerate interval longer than
-16.157 s is excluded by the declared same-history physical/bias/sensor
+16.156 s is excluded by the declared same-history physical/bias/sensor
 envelopes.  A 17-s complete window has strict margin
 
     g/5 - [11/17 + 0.15 + 0.205296162115946
            +0.625166604983954+0.3]
-      = 0.033808527... m/s^2.                               (DG10)
+      = 0.0338084094... m/s^2.                               (DG10)
 
 This proof uses NO G0, no AW covariance ceiling, no S-gain sign, no carried
 0.348/0.371 value, and no strengthened MARINE MOTION assumption.  OU and S
@@ -835,7 +835,7 @@ Then DG7 becomes
 
 Consequently a 17-s branch is excluded whenever
 
-    Rbar_acc < 0.033808527... m/s^2                         (DG13)
+    Rbar_acc < 0.0338084094... m/s^2                         (DG13)
 
 at sigma_w=1/5.  This is a SIGNED residual-mean requirement, not a pointwise
 innovation or total-NIS requirement.  It is exactly the quantity the complete
