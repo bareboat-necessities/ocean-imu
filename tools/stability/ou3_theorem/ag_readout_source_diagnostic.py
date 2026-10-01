@@ -564,6 +564,9 @@ def run(eigen, headings=('0', '0.001', '0.000001', 'wave')):
             for key in control:
                 if key != 'events' and control[key] != observed[key]:
                     raise ValueError(f'observer changed literal source output: {key}')
+            # The untapped control intentionally has no proof events. Validate
+            # only the observed temporary-header stream; terminal parity above
+            # proves the taps did not alter shipping output.
             cases.append({'input_profile': heading,
                           'live_step': observed['live_step'], 'refined_step': observed['refined_step'],
                           'active_step': observed['active_step'],
