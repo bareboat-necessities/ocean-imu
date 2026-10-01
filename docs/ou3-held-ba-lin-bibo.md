@@ -1,29 +1,30 @@
-# Held-H18 LIN compactness and BIBO
+# Held-H18 LIN BIBO theorem
 
 The displacement boundary row q^T v is a coordinate of z=(v,p,S,a_w); no second reader is introduced.
 
-Three distinct actual S observations kill the neutral (v,p,S) root because rows [t^2/2,t,1] have determinant (t1-t0)(t2-t0)(t2-t1)/2 != 0. A fourth distinct S observation kills the integrated-OU a_w extension by the existing extended-Chebyshev/four-S lemma. Prediction and covariance-matched corrections are nonexpansive in the literal covariance metric.
+Three distinct actual S observations kill the neutral (v,p,S) root, and a fourth kills the integrated-OU a_w extension by the existing extended-Chebyshev/four-S lemma. Prediction and covariance-matched corrections are nonexpansive in the literal covariance metric.
 
-The covariance upper bound was already proved in docs/ou3-nuisance-upper-proof.md. After 17 s it bounds P_nn using a dominating comparison that keeps autonomous LIN prediction and actual S corrections, fixes realized AW sync increments, and OMITS accelerometer and magnetic corrections. Its cancellation of an arbitrarily large neutral root uses three separated S observations. BA is a separate fifth-block argument.
-
-Therefore the first four blocks do not require active BA. The same tuner, pseudo-S scheduler and LIN prediction operate during regular Live H18 before BA release. Holding BA does not alter LIN F/Q or suppress S corrections. Hence
+The existing nuisance-upper proof lifts to held H18 because its first four blocks use only autonomous LIN prediction, actual S corrections and fixed realized AW sync increments while omitting accelerometer/magnetic corrections. BA activity appears only in its separate fifth block. Thus after 17 s of regular held-H18 service,
 
     P_LL <= 5 diag(b_v^2 I,b_p^2 I,b_S^2 I,156^2 I)
 
-at every operation boundary after 17 s of regular held-H18 service, with LIN cross covariance retained. Other optimal corrections only decrease the LIN principal covariance.
+at every operation boundary, with LIN cross covariance retained. The same proof supplies compact dt/tau/sigma/R_S/scheduler ranges. Positive innovation-noise floors make actual gains continuous. Compactness plus the zero-action kernel gives a source-uniform homogeneous rho_L<1 on a fixed separated four-S word.
 
-The same source proof supplies dt in [.004,.006], tau in [.02,12], sigma_aw<=4, R_S sigma<=100 and applied-S gap <=.156 s. Positive measurement-noise floors make gains continuous on this bounded family. Thus held-H18 homogeneous words after 17 s form a compact coefficient/covariance family.
+For BIBO, unlike the later sharp outer-entry inequality, only FINITENESS of the affine word forcing is required. On that fixed word dt>=.004 gives finitely many operations. MARINE supplies finite p,v,a,jerk,angular-rate and primitive bounds. SLOW accel/gyro biases have finite amplitudes; FAST errors have finite amplitudes. The held BA error is bounded after a feasible completed projection, and the implemented gyro estimate is bounded. Physical S is bounded by the persistent primitive. Gravity/magnetic/reference envelopes are finite. Since covariance/tuner/scheduler and actual gains form a compact family, the finite chronological affine word map is continuous on a compact input/coefficient product. Therefore a source-uniform constant D_H<infinity exists with
 
-Compactness plus the zero-action kernel gives by continuity a source-uniform strict homogeneous factor on a fixed separated four-S word:
+    ||d_H||_word <= D_H.
 
-    V_L,end <= rho_L V_L,root, rho_L<1.
+This existence proof does NOT use independence, zero mean, or an unrestricted residual channel. The OPEN fast temporal H,C values are not needed for mere BIBO because the fixed word has finite event count and B_f is finite. They remain essential for the later same-history gauge/outer-entry margin, where replacing temporal reachability by independent amplitude boxes would be too weak.
 
-No numerical rho_L is claimed. The remaining BIBO step is AFFINE forcing: AG/BG and held BA enter through literal cross-coupled gains; physical SLOW+FAST sensor histories and physical S enter base innovations. A fixed word is finite, but this source vector must be bounded on the SAME physical history.
+Hence
 
-Once a source-uniform fixed-word input bound d_H exists,
+    sqrt(V_L,k+N) <= sqrt(rho_L) sqrt(V_L,k) + c_H D_H
 
-    sqrt(V_L,end) <= sqrt(rho_L) sqrt(V_L,root)+c_H ||d_H||,
+and iteration gives a finite all-time held-H18 LIN radius after the 17-s entry prefix. The finite prefix is bounded by continuity from the finite construction/handoff state and bounded inputs. The covariance upper comparison converts the storage radius to finite Euclidean v,p,S,a_w bounds.
 
-and iteration gives an all-time H18 LIN radius. The covariance upper bound then converts storage to a finite Euclidean velocity bound, closing q^T v, the displacement boundary row and principal LIN release compactness.
+Consequences now CLOSED at the qualitative/source-uniform existence level:
+* all-time held-H18 LIN BIBO;
+* q^T v displacement boundary action;
+* principal LIN mean compactness at A21 release.
 
-Thus Riccati compactness is no longer the blocker. The next obstruction is the linked affine H18 input bound under MARINE + SLOW/FAST IMU + MAGNETIC SERVICE.
+No numerical BIBO radius is claimed. This does not close H18 reference-refinement time, AG/BG compactness, nonlinear retention, or the sharp linked outer-to-inner A21 supply. For those later steps, retain the SLOW+FAST temporal reachable sets and actual MAGNETIC SERVICE rather than this deliberately coarse amplitude compactness argument.
