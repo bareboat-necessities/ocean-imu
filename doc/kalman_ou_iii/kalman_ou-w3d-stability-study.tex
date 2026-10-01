@@ -1087,6 +1087,20 @@ With the currently qualified bias envelopes this comparison, rather than the eng
 The required architecture therefore has two nested A21 regions, but the outer region cannot be a point-error Lyapunov set on every admitted continuation.  At physical rest there is an exact attitude/accelerometer-bias gauge: a sufficiently small constant rotation $Q_\alpha$ about the magnetic field can be compensated by $b_a=g(Q_\alpha e_z-e_z)$ while leaving accelerometer, gyro and magnetometer packets unchanged.  Taking $\alpha=10^{-3}$ rad gives $\|b_a\|=2g\sin(\alpha/2)<0.009807\,\mathrm{m/s^2}$ with zero bias rate, strictly inside IMU BIAS.  Complete stillness may persist arbitrarily long, so no moving-excitation window is owed, while the quiet actual magnetic-service floor is retained.  On the identical nominal filter history the proved quiet bound $P_{b_ab_a}\preceq I/1600$ gives $\sqrt V\ge\|e_{b_a}\|/0.025>0.392>0.15$.  Hence no deterministic storage built from the common shipping history can force every certified continuation into the point set $V\le0.15^2$.  The controlling outer object must instead measure distance to this stationary measurement-compatible class.  Stationary A21 requires practical retention to that class; a complete admitted moving-excitation window must then collapse the gauge and provide finite retained entry into an inner $V\le r_{\rm in}^2<0.15^2$ ball, after which the field-axis LaSalle theorem applies.  Active BA dynamics remain a carried bounded coordinate and are eliminated from outer storage with the covariance marginal, never by conditioning.
 
 \section{Capture and finite-error retention}
+\paragraph{Outer homogeneous invariant-set exclusion.}
+On the retained real-arithmetic branch, every due $S=0$ pseudo-update is actually applied: $R_S\succ0$ by the literal positive tuner floor and $P_{SS}\succeq0$, hence $P_{SS}+R_S\succ0$ and the shipping LDLT succeeds.  Four distinct due epochs therefore give four accepted zero-$S$ atoms.  At zero complete-word dissipation all accepted innovations vanish, so mean corrections and attitude injections vanish and covariance synchronization does not alter the mean.  Per axis the literal homogeneous LIN mean obeys
+\[
+ \dot{\hat a}_w=-\lambda(t)\hat a_w,\quad
+ \dot{\hat v}=\hat a_w,\quad
+ \dot{\hat p}=\hat v,\quad
+ \dot{\hat S}=\hat p,\qquad \lambda(t)>0 .
+\]
+Thus $\hat S'''(t)=\rho(t)a_0$ with $\rho(t)>0$.  Four zeros of $\hat S$ force, by repeated Rolle arguments, a zero of its third derivative; hence $a_0=0$.  Then $\hat S$ is quadratic and four zeros force $\hat v=\hat p=\hat S=\hat a_w=0$.  Zero homogeneous accelerometer action consequently leaves only attitude/BA compatibility, while zero homogeneous magnetic action under MAGNETIC SERVICE removes all but the field-axis compatibility direction.  The remaining one-dimensional gauge is excluded on EXCITED\_MOVING by $\theta_X>\Theta_{\rm gauge}(T_X)$.  Therefore, conditional on the compact retained outer event/history class,
+\[
+ \boxed{\operatorname{Inv}_{\rm EXCITED\_MOVING}(\{\mathcal D=0\})=\{0\}.}
+\]
+This is the homogeneous invariant-set theorem.  Literal deterministic temperature and configured lever-arm compensation are retained in the common model; finite calibration, sensor, magnetic-reference, model and arithmetic residuals enter the later complete-word supply and are not inserted into the zero-action invariant set.
+
 The same proof path still requires finite construction/capture into a magnetically informed H18 domain and a source-uniform refinement/release bridge.  The approximately $7^\circ$ refinement quantity is an estimator-error tube, not a covariance-storage radius and not a bound on physical rocking amplitude.  A six-degree attitude error does not imply membership in $V\le0.15^2$.
 
 The held-BA H18 geometry must use the actual constant held estimator BA together with
