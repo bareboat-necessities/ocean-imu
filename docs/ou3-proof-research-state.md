@@ -629,3 +629,31 @@ still needs a lower measurement-information floor and a linked complete-window
 bound on physical-minus-nominal forcing under the same tuner/covariance
 chronology. Charts support the mechanism but are not substituted for this
 margin proof.
+
+
+### Quantitative tracking-margin calculation
+
+The physical side now has an explicit sampled margin. For a window T,
+bounded velocity, gravity/magnetic transverse floor, jerk J_max and maximum
+accepted-accelerometer gap h_acc give a recurring epoch with
+epsilon_phys(T)=g_Bperp-2V_max/T-J_max h_acc-defects >0.
+
+The literal physical-to-nominal mismatch evolves as
+e_(k+1)=A_k R_k S_k^-1 e_k+w_k, hence exactly by a chronological
+complete-window convolution. The existing source-factor/Joseph identity
+bounds accumulated estimator/model disturbances without separate gain norms:
+transported source action into any accelerometer-output row is bounded by the
+terminal predicted measurement covariance times total source action.
+
+However the base physical acceleration increment in w_k is not a small model
+disturbance and is not bounded by the existing process-source action. Current
+MARINE MOTION allows arbitrary bounded/jerk-limited translation, while a
+deterministic tracking-error bound necessarily depends on waveform
+bandwidth/amplitude relative to filter bandwidth. Thus the desired strict
+tracking margin is not yet source-uniformly proved.
+
+The remaining bridge is to bound deterministic physical-force increment action
+by the SAME period-scaled front-end/tuner statistic, or explicitly include a
+certified-MARINE tracking-band envelope. With that bridge, the exact
+complete-window gain can be compared to the explicit physical separation
+margin and the field-aligned LaSalle mode excluded.

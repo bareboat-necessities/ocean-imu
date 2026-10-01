@@ -9350,3 +9350,211 @@ Inv{D=0}={0}, and dissipativity+compactness yields finite-window contraction.
 If FT-20 fails for the declared broad marine envelopes, the theorem needs
 either a tighter certified-MARINE admission envelope or a weaker tracking
 claim; it does NOT follow that the pathology is reachable.
+
+
+## Quantitative complete-window tracking-margin test
+
+The desired exclusion is
+
+tracking mismatch at some recurring physical-separation epoch
+ < physical force/magnetic separation at that epoch.        (TM-1)
+
+This section derives the strongest source-faithful form currently available
+and identifies the exact missing quantitative input.
+
+### 1. A strict physical separation margin needs jerk/sampling, not velocity alone
+
+PN1 showed that true specific force cannot remain inside an arbitrarily chosen
+magnetic-axis tube longer than
+2 V_max/(g_Bperp-epsilon). That is a residence-time theorem. By itself it does
+not supply a fixed positive sampled separation epsilon_sep: a continuous
+trajectory may repeatedly leave every smaller tube by an arbitrarily small
+amount.
+
+Let
+d(t):=P_B f_phys(t)=P_B a_phys(t)-P_B g.                    (TM-2)
+
+Assume the declared translational jerk bound
+|dot a_phys|<=J_max. Then d is J_max-Lipschitz. Suppose on a window of length
+T all sampled/continuous transverse separations obey |d(t)|<=D. Then
+
+P_B[v(T)-v(0)]
+ =T P_B g + integral d(t)dt,                                (TM-3)
+
+so
+
+2 V_max >= |P_B[v(T)-v(0)]|
+ >= T g_Bperp - integral |d|dt
+ >= T(g_Bperp-D).                                           (TM-4)
+
+Hence for any T>2V_max/g_Bperp,
+
+max_(t in W)|d(t)|
+ >= epsilon_sep(T):=
+ g_Bperp-2V_max/T >0.                                      (TM-5)
+
+This already gives a continuous-time excursion height. If accelerometer
+accepted epochs have maximum gap h_acc and d is J_max-Lipschitz, some accepted
+epoch k satisfies
+
+|d(t_k)| >= epsilon_sep(T)-J_max h_acc.                    (TM-6)
+
+Therefore choose T such that
+
+epsilon_phys(T):=
+ g_Bperp-2V_max/T-J_max h_acc-epsilon_field/cal >0.        (TM-7)
+
+Then every complete MARINE window of length T contains an accepted
+accelerometer epoch with true transverse specific-force magnitude at least
+epsilon_phys(T).
+
+TM-7 is the quantitative physical side of the desired margin.
+
+### 2. Exact same-history tracking operator
+
+For the physical-vs-nominal measurement mismatch e=z-h(x), the accepted
+accelerometer correction has first-order map
+
+e^+=D_k e + d_NL,k,
+D_k:=R_k S_k^-1.                                            (TM-8)
+
+Between accepted accelerometer epochs, carry the literal prediction, due S,
+attitude/gyro, BA-temperature and lever evolution. Linearizing the measurement
+mismatch gives
+
+e_(k+1)^- = A_k D_k e_k^- + w_k,                            (TM-9)
+
+where w_k is the TOTAL same-history physical-minus-nominal forcing plus the
+finite-angle/lever remainder. Define
+
+L_k:=A_k D_k.                                               (TM-10)
+
+Over a complete window,
+
+e_j^-=
+ Phi(j,0)e_0^-
+ + sum_(i<j) Phi(j,i+1) w_i,                               (TM-11)
+
+Phi(j,i)=L_(j-1)...L_i.                                     (TM-12)
+
+No gain, tuner, covariance or forcing component is independently maximized in
+TM-11.
+
+### 3. Joint action bound for the forcing term
+
+The existing actual-gain finite-error/source-factor identity gives the correct
+way to bound the accumulated w_i. Express each prediction/correction forcing
+through its literal covariance/noise factor B_i u_i. After chronological
+transport to epoch j,
+
+P_j =
+ Phi_P(j,0) P_0 Phi_P(j,0)'
+ + sum_i Phi_P(j,i+1) B_i B_i' Phi_P(j,i+1)'.              (TM-13)
+
+Whitening by P_j shows the horizontally stacked transported source operator has
+norm at most one. Therefore for any output row C_e,j mapping state/source
+defects into specific-force mismatch,
+
+|| C_e,j sum_i Phi_P B_i u_i ||
+ <= sqrt(lambda_max(C_e,j P_j C_e,j'))
+    sqrt(sum_i ||u_i||^2).                                 (TM-14)
+
+For accelerometer output this covariance factor is bounded by the predicted
+measurement covariance:
+
+C_e,j P_j C_e,j' <= S_a,j                                  (TM-15)
+
+in PSD order after including the literal measurement model blocks. Thus in
+the innovation metric,
+
+|| accumulated estimator-source tracking defect ||_(S_a,j^-1)
+ <= sqrt(sum_i ||u_i||^2).                                 (TM-16)
+
+This is the linked complete-window bound; it avoids summing per-sample gain
+norms.
+
+### 4. Why TM-16 does not yet bound BASE physical tracking error
+
+The u_i in the finite-error/source-factor identity are MODEL/estimation
+disturbance actions: process mismatch, measurement noise/nonlinear residual,
+reset defects, etc. The actual MARINE physical acceleration waveform is not a
+small disturbance around a known truth trajectory in the base mean recursion;
+it is the measurement signal the estimator is tracking.
+
+In TM-9, w_i contains the physical force increment
+Delta_phys-Delta_nom. There is currently no theorem bounding the action of
+this BASE forcing by the stochastic/process source budget sum||u_i||^2.
+Doing so would assume the conclusion that the physical waveform follows the
+OU model closely enough.
+
+The tuner chooses tau,sigma_aw from that waveform, but sigma_aw is a variance
+scale, not a deterministic pathwise bound on physical acceleration increments.
+Therefore the existing Joseph/source-factor identity cannot by itself produce
+a deterministic source-uniform epsilon_track for arbitrary admitted MARINE
+waveforms.
+
+### 5. Exact margin condition and status
+
+At the guaranteed physical-separation epoch j from TM-7, persistent nominal
+field alignment implies
+
+|P_B e_j| >= epsilon_phys(T)-epsilon_nominal_model.         (TM-17)
+
+The tracking recursion TM-11 excludes the pathology if one can prove
+
+sup_same-history
+ |P_B[Phi(j,0)e_0 + sum Phi(j,i+1)w_i]|
+ <
+ epsilon_phys(T)-epsilon_nominal_model                     (TM-18)
+
+for at least one such j in every T-window.
+
+The literal Kalman correction supplies contraction D_k=R S^-1 and the source-
+factor identity tightly bounds estimator/model disturbances. What remains
+unbounded in TM-18 is the deterministic BASE physical forcing component of
+w_i under the current MARINE MOTION class.
+
+Consequently the quantitative tracking margin (5) is NOT proved from the
+present assumptions. The obstacle is not covariance/gain independence; it is
+that MARINE MOTION currently permits arbitrary bounded/jerk-limited
+translational acceleration, whereas deterministic tracking error depends on
+its bandwidth/amplitude relative to the estimator closed-loop bandwidth.
+
+### 6. Minimal condition that would close it
+
+A physically natural certified-MARINE condition is a deterministic
+tracking-band envelope on the independent raw-IMU force, for example
+
+sum_(i in W)
+ || Delta f_phys,i ||^2 / q_track,i <= E_track             (TM-19)
+
+or an equivalent Lipschitz/bandwidth bound tied to the already measured wave
+period, with q_track generated from the SAME tuner schedule. If TM-19 is
+chosen so that the induced complete-window gain in TM-11 is below the right
+side of TM-18, nominal field alignment is impossible.
+
+This is not an artificial observability assumption: it states quantitatively
+that the marine force waveform lies inside the bandwidth/amplitude envelope
+the filter is designed and tuned to track. The filter studies empirically show
+this for the tested wave spectra; a theorem needs it as a deterministic
+admission envelope or must derive it from a physical wave model.
+
+Alternatively, prove a deterministic relation between the period-scaled
+front-end band statistic and the pathwise forcing action in TM-19. That would
+turn the existing tuner measurement into the needed certificate without a new
+external assumption.
+
+### Conclusion
+
+The complete-window same-history calculation is now closed as far as the
+current deterministic assumptions permit:
+
+- physical separation margin: explicit TM-7;
+- literal tracking transition: exact TM-8--TM-12;
+- estimator/model disturbance accumulation: linked TM-14--TM-16;
+- unresolved term: deterministic physical waveform forcing in TM-11.
+
+Thus the charts' physical/nominal tracking can be proved uniformly only after
+connecting the admitted marine waveform's deterministic increment energy to
+the same tuner-generated tracking bandwidth. That is the next mathematical
+bridge; further covariance or compatibility analysis cannot replace it.
