@@ -295,3 +295,34 @@ needs an outer A21 retained/capture region and finite entrance from that region
 to the inner r_FA=.15 LaSalle ball. The r_FA field-axis inequality cannot
 simply be enlarged to the observed release storage: its current source-audited
 AW component conversion loses positivity above r~=.176.
+
+
+## Literal release outer-entry calculation — AW is the blocker
+
+The requested BA-eliminated release calculation is recorded in
+`docs/ou3-release-outer-entry-audit.md`.
+
+A dedicated unchanged-header diagnostic snapshots first A21 BA activation at
+step 24016 (120.079997316 s) on the carried diagonal-wave construction. Using
+the exact physical construction and outer marginal identity
+`V_o=min_ba V=e_o'P_oo^-1 e_o`, the finite carried release has
+`V_o=79300.039948`, sqrt=281.603, versus target .15.
+
+Principal-block lower bounds after minimizing every other coordinate identify
+AW as dominant: attitude 9.7976, bg 3.59e-7, v 331.982, p 1996.290,
+S 84.977, AW 60867.918. The release AW error norm is about 8.385 m/s2.
+This finite history is not an all-time service/capture certificate.
+
+The second requested calculation has a negative but decisive result:
+the present assumptions do NOT imply source-uniform pointwise AW entry.
+An existing admitted A21 history already refutes pointwise physical-AW
+tracking at 7.647 m/s2 on a 16-s window, whereas the r_FA=.15 local lemma
+requires <.609 m/s2. P_aw,aw<=16.48 I only converts an ALREADY SMALL storage
+to an AW component bound; it does not bound deterministic AW error before
+entry. No AW mean projection supplies such a cap.
+
+Therefore direct H18/release -> V_o<=.15^2 is not the correct bootstrap.
+The local FA theorem remains valid after entry, but entry must use a shaped
+signed/windowed AW functional or return to the global same-history FA
+reachability/action calculation. Do not retry a source-uniform pointwise AW
+tracking lemma; it is already falsified on the admitted class.
