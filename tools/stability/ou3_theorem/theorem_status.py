@@ -51,6 +51,8 @@ def status_report() -> dict:
         "sharp_isotropic_sync_AW_covariance_ceiling":True,
         "uniform_AW_tracking_error_bound":False,\n        "source_uniform_Astar_real_arithmetic_signed_mean":True,\n        "source_uniform_Astar_positive_attitude_gram_exists":True,
         "Astar_plus_magnetic_implies_full_six_column_rank":False,
+        "real_arithmetic_AW_source_transfer_closed_for_Astar":True,
+        "next_six_column_route":"same-cell acc-mag groups with E=0; prove uniform group floor c and inter-group gyro floor b0",
         "nominal_signed_mean_attitude_columns":True,
         "pointwise_physical_AW_tracking_premise_refuted_on_admitted_history":True,
         "source_uniform_nominal_AW_window_statistics":False,
