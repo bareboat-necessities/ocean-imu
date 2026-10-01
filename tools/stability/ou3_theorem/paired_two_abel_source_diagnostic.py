@@ -97,7 +97,11 @@ def analyze(trace):
         per_axis.append({'axis':axis,'paired_process':proc,'paired_acc_S':corr,
                          'paired_sum':val,'unpaired_abs_sum':abs(proc)+abs(corr)})
     norm=float(np.linalg.norm(total))
+    unpaired=math.sqrt(sum(x["unpaired_abs_sum"]**2 for x in per_axis))
+    cancellation=unpaired/norm if norm>0 else math.inf
     return {'paired_output_vector':total.tolist(),'paired_output_norm_rad':norm,
+            'unpaired_vector_norm_upper':unpaired,
+            'pairing_cancellation_factor':cancellation,
             'candidate_reserve_rad':RESERVE,'beats_candidate_reserve':norm<RESERVE,
             'reserve_margin_rad':RESERVE-norm,'axes':per_axis,
             'pairs_before_norm':True,'source_uniform_verified':False,
