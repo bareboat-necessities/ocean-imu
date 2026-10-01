@@ -461,3 +461,50 @@ The identity cancels the complete LIN root (v,p,S,a_w), every AW process forcing
 On exact complete-word zero dissipation every actually applied S innovation is zero, hence S_hat_j=0 at each of the four atoms. Every applied accelerometer/magnetic innovation is also zero, so correction mean jumps vanish. The remaining identity is a signed/windowed nominal-AW functional determined only by the literal prediction chronology and integrated source terms. This is the correct object to substitute into the zero-accelerometer compatibility equations before comparing physical gravity directions.
 
 However, this identity alone does not yet imply packet-compatible attitude/BA gauge: the right-hand integrated source term is not zero in the homogeneous covariance comparison, and the accelerometer compatibility contains the same-history physical acceleration and attitude. The next exact calculation is to combine the S-chain weights with the zero-innovation accelerometer equations at the same epochs and Abel-sum the physical acceleration using bounded v and jerk. The target is a two-epoch/weighted gravity relation whose only non-gravity physical remainder is bias-rate plus bounded endpoint/quadrature terms. EXCITED_MOVING can exclude zero action only if that derived remainder is strictly below the physical theta_X span. No pointwise ||a_hat_w-a_phys|| bound is permitted.
+
+
+## EXCITED_MOVING weighted-acceleration Abel calculation — exact result
+
+Combine the exact four-S divided-difference AW identity with zero-innovation accelerometer compatibility. After transporting each accelerometer equation into one common physical/world frame, the physical acceleration appears as a signed matrix-weighted sum
+
+    A_phys = sum_i h_i C_i a(t_i),
+
+where C_i is not a free coefficient: it is the literal S-chain/forced-adjoint weight composed with the same-history attitude/frame transport and accepted-update chronology. For the one physical velocity history v'=a, exact discrete Abel summation plus left-cell jerk quadrature gives
+
+    ||A_phys|| <= V_max (||C_0||+||C_{N-1}||
+                    +sum_{i=1}^{N-1} ||C_{i-1}-C_i||)
+                 +(J_max/2) sum_i ||C_i|| h_i^2.
+
+This is the concrete physical-a remainder. The physical BA term has the analogous exact Abel form
+
+    sum_i C_i b_a(t_i)
+      =(sum_i C_i)b_a(t_0)
+       +sum_j (sum_{i>j} C_i)(b_a(t_{j+1})-b_a(t_j)),
+
+and therefore is bounded only after signed totals/tails are formed, using B_a and D_a. These identities preserve one history and do not use pointwise AW tracking.
+
+FAILED SHORTCUT / CURRENT LIMITER: existing source assumptions do not yet bound the literal matrix-weight variation
+
+    TV_C=||C_0||+||C_{N-1}||+sum ||C_i-C_{i-1}||
+
+or the signed BA tail weights source-uniformly. C_i contains the forced-data/S-chain multiplier, actual rotation/reference transport and literal gains/resets. Bounding each factor independently or using coefficient total variation is an explicitly retracted route and can swamp the gravity span. Thus a finite numeric E_outer(T_X) does NOT follow yet from V_max,J_max,D_a alone.
+
+The useful exact decomposition is
+
+    E_outer = V_max TV_C
+              +(J_max/2) sum ||C_i||h_i^2
+              + B_a ||sum C_i||
+              + D_a sum_j ||sum_{i>j}C_i|| dt_j
+              + E_LIN-source + E_sensor/reference + E_literal,
+
+with all C-dependent quantities linked to one literal word. EXCITED_MOVING gives the gravity side 2 g_min sin(theta_X/2). Entry follows if the linked same-word inequality
+
+    2 g_min sin(theta_X/2) > E_outer
+
+is proved uniformly. Do not replace the linked C quantities by independent maxima.
+
+NEXT FALSIFIABLE CALCULATION: exploit the defining backward forced-data adjoint together with the S-chain annihilation moments to bound the linked combination
+
+    V_max TV_C + B_a||sum C_i|| + D_a Tail_C
+
+DIRECTLY by the same complete-word action/geometry, rather than bounding TV_C and Tail_C separately. If the adjoint recursion does not control this linked combination, the proposed S-chain route cannot close outer entry under the present assumptions and a different shaped storage/functional is required.
