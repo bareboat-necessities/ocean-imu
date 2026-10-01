@@ -435,3 +435,33 @@ cannot be proved without first proving the missing CLOSED-LOOP REACHABILITY stat
 FAILURE CLASSIFICATION: structural/observability, not numerical looseness. Invalidated hypothesis: persistent homogeneous compatibility necessarily requires nonzero base innovation replenishment. Retained facts: full-state CL-4/5 passivity, persistent-line BA decay q_W->0, EXCITED_MOVING, LF residual qualification, and exact base AW recurrence remain valid.
 
 NEXT FALSIFIABLE CALCULATION: attack the collinearity manifold directly with the ZERO/SMALL-BASE-INNOVATION specialization, which is the least favorable case for the proposed supply argument. Set r_a=r_S=0 (or tend them to zero) in the exact base recurrence and ask whether an EXCITED_MOVING physical history satisfying bounded v,p,S, BA rates and LF residual bounds can keep P_B(a_hat_w-g)->0 over successive words. If impossible, compactness/continuity can yield a positive distance/action from the manifold and only then Joseph passivity converts that distance into a finite-error supply bound. If possible, it provides the surviving pathological base execution and point-entry remains false under the strengthened assumptions.
+
+
+## Magnetic-reference cone audit — canonical geometry proved; quantitative cone still conditional
+
+Literal source sharply narrows the reference problem. Every continuous hard-iron reference write goes through ContinuousHardIronTracker::slewTowardEstimate. It does NOT adopt an arbitrary fitted 3-D field direction. The tracker preserves the canonical world gauge and writes
+
+    B_ref=(h,0,z),
+    h=h_anchor+(h_new-h_anchor),
+    z=z_anchor+(z_new-z_anchor),
+
+with h>MAG_INIT_MIN_MAG_NORM. The continuous estimator uses the independent yaw-stripped startup-proxy tilt, and its fit is gated by information, residual RMS and max hard-iron fraction. Therefore continuous adaptation cannot freely rotate the nominal reference azimuth; approach to gravity can occur only through collapse of h relative to |z|.
+
+However the literal source floor is only MAG_INIT_MIN_MAG_NORM=1e-3 uT. By itself this yields no useful source-uniform lower cone. The physical MAGNETIC SERVICE constants B_h,true>=15 uT and 20<=|B_true|<=75 uT apply to the physical field/accepted information; they cannot simply be substituted for nominal h_ref.
+
+A useful cone follows IF an already-qualified all-time reference-vector error bound ||B_ref-B_true||<=E_B is available. Then
+
+    h_ref >= 15-E_B,
+    |B_ref| <= 75+E_B,
+    ||P_Bref g|| = g h_ref/|B_ref|
+      >= g (15-E_B)/(75+E_B),                               (MR-1)
+
+for E_B<15. If one were entitled to combine the existing 5-uT hard-iron residual and 2-uT measurement residual into E_B=7 uT, MR-1 would give
+
+    ||P_Bref g|| >= 9.80665*(8/82) = .956746341463... m/s2.
+
+But that implication is NOT presently proved. The 5-uT and 2-uT constants bound physical residual components used by MAGNETIC SERVICE/sampling certificates; they are not a theorem that the continuously learned world reference remains within 7 uT of the true field. The continuous tracker itself permits a fitted bias up to .35 times measured field norm and gates fit residual RMS at 3 uT; neither alone gives ||B_ref-B_true||<=7 because proxy-tilt error and identifiability enter the level-frame fit.
+
+The new LF accelerometer/gyro residual qualification helps bound the startup-proxy tilt error in the vessel-motion band, but a quantitative all-time proxy-tilt/reference error transfer has not yet been derived. Thus the desired source-uniform positive nominal cone is CONDITIONAL, not closed.
+
+NEXT FALSIFIABLE CALCULATION: derive E_B directly from the canonical reference update formula ref(b)=mean(R_i m_i)-mean(R_i)b. Write R_i=R_true,i Delta_i and m_i=R_true,i' B_true+b_true+n_m. Bound B_ref-B_true in terms of (i) proxy tilt error Delta_i, (ii) fitted/applied hard-iron error, and (iii) magnetic measurement residual. Use the estimator's 3-uT fit-residual and .35-field bias gates only where they mathematically bound those terms. Then combine the new LF IMU qualification with the proxy observer dynamics to see whether E_B<15 uT is actually certifiable. If not, the reference cone remains an explicit independent qualification requirement.
