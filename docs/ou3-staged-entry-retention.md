@@ -72,23 +72,25 @@ storage provided the source-audited AW marginal implication
     ||e_aw|| < 4.06 sqrt(V_o)                               (ER2)
 
 is retained for the corresponding Schur/decoupled covariance. At the literal
-release boundary it is immediate from block diagonality. After release, BA
-cross covariance regrows, so a recurring staged proof must use the Schur
-complement
+release boundary it is immediate from block diagonality. After release, BA cross covariance regrows. Eliminating BA from the STORAGE
+quadratic means minimizing over e_ba:
 
-    P_o|ba = P_oo-P_ob P_bb^-1 P_bo
+    V_o,elim(e_o) := min_z [e_o;z]' P^-1 [e_o;z]
+                   = e_o' P_oo^-1 e_o.                     (ER3)
 
-and quotient storage
+Thus the eliminated covariance is the OUTER MARGINAL P_oo. The covariance
+Schur complement P_oo-P_ob P_bb^-1 P_bo instead corresponds to conditioning
+on/fixing the BA coordinate and is NOT equivalent to eliminating BA from the
+quadratic. At the literal held-to-active release boundary P_ob=0, so the two
+happen to coincide there. After release they must not be conflated.
 
-    V_o|ba = e_o' (P_o|ba)^-1 e_o                           (ER3)
-
-or the equivalent minimum over the BA coordinate. This is the correct
-quantity: a large released BA error must not destroy the already-local
-attitude/AW geometry merely because full V is large.
+This eliminated storage is the correct quantity: a large released BA error
+must not destroy already-local attitude/AW geometry merely because full V is
+large.
 
 The next staged theorem is therefore:
 
-(A) prove V_o|ba<=.15^2 entry/retention through capture/H18/release;
+(A) prove V_o,elim<=.15^2 entry/retention through capture/H18/release;
 (B) on that quotient-local A21 class, use the field-axis LaSalle exclusion to
     obtain finite-window strict quotient dissipation;
 (C) carry the bounded BA error through its literal active OU prediction,
@@ -151,7 +153,7 @@ CLOSED:
 - the correct inner/outer prefix fixed-point inequalities ER8--ER10.
 
 OPEN:
-- quotient-local entry V_o|ba<=.15^2 at release;
+- quotient-local entry V_o,elim<=.15^2 at release;
 - source-uniform quotient compactness/dissipation after BA elimination;
 - a quantitative eta_D (hence q);
 - exact E_W and G_k bounds small enough for ER10;
