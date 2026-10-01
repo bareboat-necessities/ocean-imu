@@ -250,6 +250,38 @@ def analyze(trace, dps=80):
                 'source_uniform_verified': False, 'rigorous_enclosure': False}
 
 
+def paired_physical_reconstruction(trace):
+    """Falsifiable carried check of the exported physical lift.
+
+    This is deliberately a reconstruction test, not yet G_phys,W: it verifies
+    that the aligned p/v/S/a columns obey the same discrete physical chain at
+    literal prediction epochs, so the subsequent two-Abel pairing has a valid
+    common source. A failed chain invalidates the exporter immediately.
+    """
+    import numpy as np
+    pred = [e for e in trace["events"] if e["kind"] == "prediction"]
+    if len(pred) < 2:
+        raise ValueError("paired physical reconstruction needs predictions")
+    t = np.array([float(e["physical_t"]) for e in pred])
+    p = np.array([[float(x[0]) for x in e["physical_p"]] for e in pred])
+    v = np.array([[float(x[0]) for x in e["physical_v"]] for e in pred])
+    a = np.array([[float(x[0]) for x in e["physical_a"]] for e in pred])
+    ss = np.array([[float(x[0]) for x in e["physical_S"]] for e in pred])
+    dt = np.diff(t)
+    # Exact analytic replay truth is sampled at the event epoch. Trapezoidal
+    # defects are diagnostic only and should scale as O(dt^3) for this fixture.
+    ep = p[1:] - p[:-1] - .5*dt[:,None]*(v[1:]+v[:-1])
+    ev = v[1:] - v[:-1] - .5*dt[:,None]*(a[1:]+a[:-1])
+    es = ss[1:] - ss[:-1] - .5*dt[:,None]*(p[1:]+p[:-1])
+    return {"prediction_epochs":len(pred),
+            "max_trapezoid_p_defect":float(np.max(np.linalg.norm(ep,axis=1))),
+            "max_trapezoid_v_defect":float(np.max(np.linalg.norm(ev,axis=1))),
+            "max_trapezoid_S_defect":float(np.max(np.linalg.norm(es,axis=1))),
+            "is_G_phys_W":False,
+            "reason":"chain validation only; causal normalized source adjoints must still be paired",
+            "source_uniform_verified":False}
+
+
 def contraction_feasibility(trace, dps=60):
     """Non-promoting carried test of the A21 contraction formulations.
 
@@ -572,6 +604,7 @@ def run(eigen, headings=('0', '0.001', '0.000001', 'wave')):
                           'active_step': observed['active_step'],
                           'literal_terminal_parity': True,
                           'physical_lift': validate_physical_lift(observed),
+                          'physical_chain': paired_physical_reconstruction(observed),
                           **analyze(observed)})
             if heading in ('0', 'wave'):
                 cases[-1]['exact_exported_word_enclosure'] = enclose_exported_word(observed)
