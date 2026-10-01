@@ -225,3 +225,38 @@ For an initial engineering target with 50/50 angular allocation, demonstrate str
     eps_g_LF = 9.45e-5 rad/s (.00541 deg/s),
 
 and retain additional qualification margin. These are test targets, not yet theorem assumptions. If measured data fail them, first optimize the physically chosen T_X/theta_X pair or calibration characterization; do not silently alter runtime or residual bounds for proof convenience.
+
+
+## Corrected EXCITED_MOVING homogeneous invariant-set audit
+
+Re-proof starts from the homogeneous variation, not base innovations. On one literal carried base execution, D_W=0 means every HOMOGENEOUS fresh-source factor and corrected measurement variation is zero. It does NOT imply r_acc^base=r_mag^base=r_S^base=0.
+
+The existing corrected-word machinery already gives the exact qualitative nullspace reduction. Zero fresh source action makes one deterministic homogeneous root nuisance trajectory. Four distinct applied S rows form an extended-Chebyshev system for {1,t,t^2,psi_tau}; hence zero homogeneous S loss kills the full homogeneous (v,p,S,a_w) root. Zero homogeneous magnetic loss plus service reduces the root attitude space K_M to dimension <=1. With homogeneous AW zero, one accelerometer row determines the complete BA root from that attitude amplitude; additional rows can only remove the line. Therefore for every complete regular word
+
+    Null(Action_W) subset span(nu_W),
+
+where nu_W=(theta_hat_W,0,...,0,-q_W) is the WORD-DEPENDENT common magnetic/accelerometer compatibility line, possibly trivial. This statement is valid with arbitrary nonzero BASE innovations.
+
+What EXCITED_MOVING must exclude is persistence of nu_W, not the stationary packet gauge directly. Physical normalization shows that if a nontrivial exact compatibility line maps from word W to W+1, its attitude amplitude has |s_W|=1. Active BA OU decay instead forces
+
+    Phi_b,W q_W = s_W q_(W+1),
+
+so indefinite persistence drives |q_W| ->0 while leaving the physical homogeneous tilt amplitude undiminished. At accelerometer epochs this implies
+
+    J_att,k F_k theta_hat_W ->0,
+
+where J_att,k is built from NOMINAL (a_hat_w-g), not true physical force. Thus an indefinitely persistent homogeneous kernel approaches a nominal zero-BA field-axis collinearity condition.
+
+EXCITED_MOVING + the new LF residual qualification constrain TRUE attitude and sensor residual content. They do not by themselves bound the nominal AW/J_att trajectory because base accelerometer/S innovations remain nonzero and can replenish nominal AW. Therefore the implication
+
+    D_W=0 + EXCITED_MOVING + LF residual qualification => e=0
+
+is NOT yet proved. The earlier argument that four S atoms set base AW to zero is withdrawn and must not be revived.
+
+The remaining bridge is now minimal and precise: prove that on one same-history base execution satisfying EXCITED_MOVING and the LF residual envelope, the shipping closed-loop nominal force cannot remain asymptotically field-axis-collinear on every applied accelerometer epoch while a unit physical homogeneous field-axis tilt direction persists. This must use the actual base innovation/AW/S correction chronology and coupled tau,sigma_aw,R_S,T_S law. A sufficient theorem would be a windowed lower bound
+
+    sum_{k in W} w_k ||P_{B_ref,k}(a_hat_w,k-g)||^2 >= c_X >0
+
+on every complete EXCITED_MOVING word (or an equivalent linked action), derived from physical tilt excitation + LF residual bounds + bounded physical primitives and literal innovation dynamics. Pointwise AW tracking is neither needed nor allowed.
+
+NEXT FALSIFIABLE CALCULATION: derive the exact base AW error recurrence at accepted accelerometer and S updates, project it transverse to the committed magnetic field, and combine it over a 60-s EXCITED_MOVING window with the LF residual charge. Test whether the coupled recurrence yields a positive integrated nominal transverse-force floor without replacing innovations by independent controls. If the high-precision same-history feasibility floor is zero/negative, identify the surviving base trajectory before attempting interval enclosure.
