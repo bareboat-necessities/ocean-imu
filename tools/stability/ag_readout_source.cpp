@@ -15,6 +15,18 @@
 
 static bool recording = false;
 static std::vector<std::string> events;
+static double physical_t = 0.0;
+static Eigen::Vector3d physical_p = Eigen::Vector3d::Zero();
+static Eigen::Vector3d physical_v = Eigen::Vector3d::Zero();
+static Eigen::Vector3d physical_S = Eigen::Vector3d::Zero();
+static Eigen::Vector3d physical_a = Eigen::Vector3d::Zero();
+static std::string physical_json() {
+    return std::string(",\"physical_t\":")+std::to_string(physical_t)
+        +",\"physical_p\":"+matrix_json(physical_p)
+        +",\"physical_v\":"+matrix_json(physical_v)
+        +",\"physical_S\":"+matrix_json(physical_S)
+        +",\"physical_a\":"+matrix_json(physical_a);
+}
 template<class A> static std::string matrix_json(const A& a) {
     std::ostringstream out;
     out << std::setprecision(17) << '[';
@@ -38,11 +50,12 @@ static void readout_prediction(const A& f, const B& fl, const C& q,
     out << std::setprecision(17) << "{\"kind\":\"prediction\",\"F_AG\":"
         << matrix_json(f) << ",\"F_LIN\":" << matrix_json(fl)
         << ",\"Q_AG\":" << matrix_json(q) << ",\"Q_LIN\":" << matrix_json(ql)
-        << ",\"phi_BA\":" << phi << ",\"Q_BA\":" << matrix_json(qb) << '}';
+        << ",\"phi_BA\":" << phi << ",\"Q_BA\":" << matrix_json(qb)
+        << physical_json() << '}';
     events.push_back(out.str());
 }
 template<class A> static void readout_sync(const A& q) {
-    if (recording) events.push_back("{\"kind\":\"sync\",\"Q\":"+matrix_json(q)+'}');
+    if (recording) events.push_back("{\"kind\":\"sync\",\"Q\":"+matrix_json(q)+physical_json()+'}');
 }
 template<class A, class B, class C>
 static void readout_correction(const char* sensor, const A& h, const B& r, const C& k) {
@@ -50,7 +63,7 @@ static void readout_correction(const char* sensor, const A& h, const B& r, const
         +"\",\"H\":"+matrix_json(h)+",\"R\":"+matrix_json(r)+",\"K\":"+matrix_json(k)+'}');
 }
 template<class A> static void readout_reset(const A& d) {
-    if (recording) events.push_back("{\"kind\":\"reset\",\"d\":"+matrix_json(d)+'}');
+    if (recording) events.push_back("{\"kind\":\"reset\",\"d\":"+matrix_json(d)+physical_json()+'}');
 }
 
 #define private public
@@ -80,6 +93,15 @@ int main(int argc, char** argv) {
             recording=true;
         }
         const double t = static_cast<double>(k)*.005;
+        physical_t = t;
+        if (wave) {
+            physical_p = Eigen::Vector3d(0.0,0.0,.4*std::sin(.6*t));
+            physical_v = Eigen::Vector3d(0.0,0.0,.24*std::cos(.6*t));
+            physical_a = Eigen::Vector3d(0.0,0.0,-.144*std::sin(.6*t));
+            physical_S = Eigen::Vector3d(0.0,0.0,(.4/.6)*(1.0-std::cos(.6*t)));
+        } else {
+            physical_p.setZero(); physical_v.setZero(); physical_a.setZero(); physical_S.setZero();
+        }
         const float roll = wave ? static_cast<float>(.02*std::sin(.5*t)) : 0.0f;
         const float rate = wave ? static_cast<float>(.01*std::cos(.5*t)) : 0.0f;
         const float az = wave ? static_cast<float>(-.144*std::sin(.6*t)) : 0.0f;
