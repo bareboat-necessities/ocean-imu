@@ -1,70 +1,29 @@
-# Held-BA LIN BIBO reduction and the displacement boundary row
+# Held-H18 LIN compactness and BIBO
 
-The displacement completion introduces no new reader architecture.  Its only
-root term is q^T v0, one coordinate of the existing held-H18 LIN state
-z=(v,p,S,a_w).
+The displacement boundary row q^T v is a coordinate of z=(v,p,S,a_w); no second reader is introduced.
 
-For the literal homogeneous comparison use the covariance storage
-V_L=e_L^T P_LL^{-1}e_L only as a shorthand for the corresponding full-state
-variational restriction; do not discard cross covariance in the parent
-certificate. Prediction with positive process covariance is nonexpansive in
-the carried covariance metric. Every covariance-matched S or accelerometer
-correction is also nonexpansive by the exact Joseph measurement-energy
-identity. PSD synchronization cannot increase fixed-error inverse-covariance
-storage. Thus accelerometer updates need NOT be assigned an independently
-bounded Euclidean gain or treated as damping.
+Three distinct actual S observations kill the neutral (v,p,S) root because rows [t^2/2,t,1] have determinant (t1-t0)(t2-t0)(t2-t1)/2 != 0. A fourth distinct S observation kills the integrated-OU a_w extension by the existing extended-Chebyshev/four-S lemma. Prediction and covariance-matched corrections are nonexpansive in the literal covariance metric.
 
-The zero-action kernel is structural.  For the neutral chain
-v'=0, p'=v, S'=p, three distinct S observations have rows
-[t^2/2,t,1]. Their determinant is
+The covariance upper bound was already proved in docs/ou3-nuisance-upper-proof.md. After 17 s it bounds P_nn using a dominating comparison that keeps autonomous LIN prediction and actual S corrections, fixes realized AW sync increments, and OMITS accelerometer and magnetic corrections. Its cancellation of an arbitrarily large neutral root uses three separated S observations. BA is a separate fifth-block argument.
 
-    (t1-t0)(t2-t0)(t2-t1)/2 != 0.
+Therefore the first four blocks do not require active BA. The same tuner, pseudo-S scheduler and LIN prediction operate during regular Live H18 before BA release. Holding BA does not alter LIN F/Q or suppress S corrections. Hence
 
-Hence v0=p0=S0=0.  The remaining homogeneous integrated-OU a_w root contributes
-the nonpolynomial exponential extension to S.  A fourth distinct S row kills
-that root by the same extended-Chebyshev/four-S argument already used in the
-corrected-word proof, uniformly for tau in the compact interval [.02,12].
-Therefore no nonzero 12-state homogeneous LIN root can have zero S action over
-a four-event separated word. Accelerometer action can only add nonnegative
-measurement loss in the covariance metric.
+    P_LL <= 5 diag(b_v^2 I,b_p^2 I,b_S^2 I,156^2 I)
 
-This proves STRUCTURAL DETECTABILITY, not yet a source-uniform contraction
-number. To pass from pointwise strict loss to a common rho_LIN<1 by compactness,
-the family of literal held-H18 words must itself be compact independently of
-how long magnetic refinement delays release. Required premises are:
+at every operation boundary after 17 s of regular held-H18 service, with LIN cross covariance retained. Other optimal corrections only decrease the LIN principal covariance.
 
-* a source-uniform upper bound on P_LL and the relevant full covariance/cross
-  covariance during held H18;
-* compact reachable tau,sigma_aw,R_S,T_S and scheduler phase on that same
-  all-time held history;
-* bounded actual correction coefficients/gains with innovation covariance
-  uniformly positive.
+The same source proof supplies dt in [.004,.006], tau in [.02,12], sigma_aw<=4, R_S sigma<=100 and applied-S gap <=.156 s. Positive measurement-noise floors make gains continuous on this bounded family. Thus held-H18 homogeneous words after 17 s form a compact coefficient/covariance family.
 
-The current repository has a fresh-process covariance LOWER bound and finite
-carried 17-s diagnostics. Neither supplies the first item. Using P>=L as an
-upper/action bound would reverse the covariance order. Thus the requested
-uniform BIBO theorem cannot honestly be promoted yet.
+Compactness plus the zero-action kernel gives by continuity a source-uniform strict homogeneous factor on a fixed separated four-S word:
 
-Conditional on those compactness premises, continuity plus the zero-kernel
-result gives a finite separated four-S word with
+    V_L,end <= rho_L V_L,root, rho_L<1.
 
-    V_L,end <= rho_L V_L,root,   rho_L<1.
+No numerical rho_L is claimed. The remaining BIBO step is AFFINE forcing: AG/BG and held BA enter through literal cross-coupled gains; physical SLOW+FAST sensor histories and physical S enter base innovations. A fixed word is finite, but this source vector must be bounded on the SAME physical history.
 
-For affine bounded input d (AG/BG, held BA, physical/sensor forcing), variation
-of constants over that fixed word gives
+Once a source-uniform fixed-word input bound d_H exists,
 
-    sqrt(V_L,end) <= sqrt(rho_L) sqrt(V_L,root) + c_L ||d||_word,
+    sqrt(V_L,end) <= sqrt(rho_L) sqrt(V_L,root)+c_H ||d_H||,
 
-and iteration gives the standard BIBO radius c_L dmax/(1-sqrt(rho_L)).
-The displacement boundary row then follows immediately from
-|q^T v0| <= ||E_v^T P_LL^(1/2)|| sqrt(V_L,root), with the same all-time
-covariance upper bound. It is therefore one consequence of H18 BIBO, not a
-separate proof obstruction.
+and iteration gives an all-time H18 LIN radius. The covariance upper bound then converts storage to a finite Euclidean velocity bound, closing q^T v, the displacement boundary row and principal LIN release compactness.
 
-This reduction closes the structural/nullspace question and identifies the
-single remaining H18 premise: ALL-TIME HELD-H18 COVARIANCE/COEFFICIENT
-COMPACTNESS. The next calculation should attack that covariance upper bound
-from recurring S corrections plus the stable OU process, retaining
-accelerometer corrections as covariance-decreasing Joseph operations and
-retaining full cross covariance. If such an upper bound fails, a uniform
-release-time theorem is required instead.
+Thus Riccati compactness is no longer the blocker. The next obstruction is the linked affine H18 input bound under MARINE + SLOW/FAST IMU + MAGNETIC SERVICE.
