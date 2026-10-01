@@ -657,3 +657,28 @@ by the SAME period-scaled front-end/tuner statistic, or explicitly include a
 certified-MARINE tracking-band envelope. With that bridge, the exact
 complete-window gain can be compared to the explicit physical separation
 margin and the field-aligned LaSalle mode excluded.
+
+
+### Literal frontend tracking-bridge test
+
+The proposed deterministic bound from full physical-force increment action to
+the current tuner statistic is false on the declared MARINE class. Shipping
+first projects conditioned 3-D specific force through the private Mahony
+observer to one scalar vertical acceleration, then applies a scalar
+period-scaled HP+LP band, then measures EW central variance. A bounded
+horizontal sinusoidal translation has positive force-increment action but
+zero ideal vertical proxy/band variance; independent attitude excitation can
+still satisfy the moving attitude-span condition. Even for vertical forcing,
+the band-pass has low/high-frequency attenuation, so no coercive pathwise
+increment bound exists without a spectral-support premise.
+
+The field-alignment restoration mismatch is transverse to the magnetic field,
+not necessarily vertical, so it is not automatically outside this frontend
+nullspace. The current tuner can rigorously bound only the measured vertical
+component restricted to a spectral subspace where the adaptive band's minimum
+gain is positive.
+
+Closure therefore requires either a physically explicit wave
+spectral/directional MARINE class, a 3-D independent adaptation/monitoring
+statistic, or a direct read-only tracking monitor. Do not use current
+sigma_a,B as a deterministic bound on arbitrary 3-D marine forcing.

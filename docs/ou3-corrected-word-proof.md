@@ -9558,3 +9558,182 @@ Thus the charts' physical/nominal tracking can be proved uniformly only after
 connecting the admitted marine waveform's deterministic increment energy to
 the same tuner-generated tracking bandwidth. That is the next mathematical
 bridge; further covariance or compatibility analysis cannot replace it.
+
+
+## Literal front-end test of the deterministic tracking-action bridge
+
+TM identified the desired bridge
+
+sum ||Delta f_phys||_(Q_track^-1)^2
+ <= C_track E_frontend(W).                                 (FB-1)
+
+This section substitutes the actual shipping front end:
+VerticalAccelComplementary -> AdaptiveWaveBandPass ->
+SeaStateAutoTuner variance/frequency.
+
+### Exact signals seen by adaptation
+
+VerticalAccelComplementary is measurement-only. With private Mahony
+body-to-NED rotation R_M and conditioned body specific force f_B, its scalar
+output is
+
+a_V=-(e_z' R_M f_B+g).                                     (FB-2)
+
+Thus the adaptation path discards the two independently levelled horizontal
+specific-force components before any band or variance operation.
+
+AdaptiveWaveBandPass is the scalar time-varying linear recursion
+
+l_+=q_l l+alpha_l a_V,
+b_+=q_h b+alpha_h q_l(a_V-l),                              (FB-3)
+
+with low/high corners [0.5,4] times the lagged tuning frequency, subject to
+absolute/Nyquist clamps. SeaStateAutoTuner then forms debiased exponentially
+weighted first and second moments of b and reports
+
+var_B=E_w[b^2]-E_w[b]^2.                                   (FB-4)
+
+The variance horizon is K periods of the supplied wave frequency, clamped in
+seconds. The operating-point law subtracts the exact propagated bench-noise
+variance of FB-3 and uses
+
+sigma_aw,target=c_sigma sqrt(max(var_B-var_noise,0))        (FB-5)
+
+(up to startup floor/clamp), while tau comes from the measurement-only period
+estimate. SpectralMSE R_S and T_S are downstream of this same tuple.
+
+### FB-1 is impossible on the current MARINE class
+
+The map from the three-component conditioned physical force history to
+E_frontend has a nontrivial exact nullspace even with perfect Mahony tracking.
+
+Take a level-frame physical translational acceleration
+
+a_phys^M(t)=A sin(omega t) e_x,                             (FB-6)
+
+with zero vertical component, omega in any admissible marine band and A small
+enough to satisfy acceleration/jerk/velocity/displacement bounds. With exact
+private tilt and no vertical translation,
+
+a_V(t)=0.                                                   (FB-7)
+
+After the finite filter transient,
+
+b(t)=0, var_B=0                                             (FB-8)
+
+apart from the explicit bench/startup floors, while
+
+Delta f_phys !=0                                            (FB-9)
+
+and its deterministic increment/action over a nontrivial window is positive.
+Amplitude A may be varied within the physical envelope without changing the
+ideal frontend wave variance.
+
+A separate admissible roll/pitch history can supply the theorem's recurring
+attitude-span condition; correct gyro propagation of the private Mahony tilt
+does not turn FB-6 into vertical proxy energy. Thus the counterexample is not
+removed by MARINE MOTION attitude excitation.
+
+Consequently there is no finite source-uniform C_track for FB-1 on the
+current three-dimensional MARINE MOTION class.
+
+### Band-pass nullspace makes the scalar problem noncoercive too
+
+Even if FB-1 were restricted to vertical force, the adaptive band statistic
+cannot control arbitrary deterministic vertical increment energy without a
+spectral-envelope assumption. FB-3 is a high-pass followed by a low-pass.
+Constant/very-slow vertical components are attenuated by the high-pass and
+sufficiently fast components by the low-pass, while deterministic increment
+energy may remain nonzero. The EW central variance FB-4 additionally removes
+the band-output mean.
+
+Therefore an inequality from FULL vertical pathwise increment energy to
+period-scaled band variance requires the physical waveform to be restricted
+to a frequency class on which the transfer magnitude of FB-3 has a positive
+lower bound. The current bounded acceleration/jerk assumptions do not provide
+that spectral support condition.
+
+### Does the field-aligned pathology lie automatically in the measured channel?
+
+No. The restoration condition is
+
+M r_acc=q_FA, M=P_B K_aw,                                  (FB-10)
+
+where P_B is transverse to the geomagnetic field. Its required innovation
+component M^dagger q_FA is a general three-component body force. Magnetic
+transverse directions are not the Mahony vertical direction. No shipping
+identity proved so far forces the field-alignment-supporting physical
+mismatch to have a nonzero vertical projection, let alone to lie inside
+[0.5,4] f_tune.
+
+Hence the frontend nullspace counterexample is relevant to the final
+obstruction, not merely to unrelated physical forcing.
+
+### What the tuner DOES certify
+
+For the scalar proxy component that actually lies in the adaptive band, the
+statistics are exact and useful. Conditional on a fixed coefficient history,
+FB-3 is a stable linear operator B_W. The debiased EMA variance is a positive
+quadratic form in its output after removal of the weighted mean. On any
+declared spectral subspace X_W for which
+
+||B_W x||_w >= beta_B ||x||_w, beta_B>0,                   (FB-11)
+
+the measured variance supplies a coercive bound on the zero-mean scalar
+component:
+
+||x-mean_w x||_w^2
+ <= beta_B^-2 E_var(W).                                    (FB-12)
+
+The tuner then maps that SAME measured E_var causally into sigma_aw, tau,
+T_S and R_S. This is a valid linked tracking-budget theorem, but only for the
+measured vertical in-band subspace.
+
+### Consequence for the LaSalle strategy
+
+The proposed closure
+
+arbitrary MARINE physical forcing
+ -> current vertical frontend statistic
+ -> uniform 3D tracking tube
+ -> nominal/physical noncollinearity bridge                 (FB-13)
+
+is mathematically false.
+
+There are three rigorous repair options:
+
+1. **Strengthen the certified MARINE class.** Require the physical
+   acceleration relevant to the theorem to lie in a declared wave spectral/
+   directional envelope with a positive projection into the private vertical
+   band. Then prove beta_B>0 for that envelope and use FB-12.
+
+2. **Make adaptation/monitoring 3-D.** Feed independent Mahony-levelled
+   three-axis acceleration into corresponding period-scaled bands/statistics.
+   A 3-D band-energy statistic removes the horizontal nullspace. A spectral
+   support premise is still required to control out-of-band deterministic
+   forcing, but it can be matched to the marine-wave class rather than to one
+   vertical component.
+
+3. **Do not use tuner variance to prove tracking.** Retain TM-18 as a direct
+   same-history condition and certify it with a read-only runtime stability
+   monitor using the actual physical/nominal mismatch and gains.
+
+For the current shipping estimator and current broad MARINE assumptions,
+FB-1 cannot be used to close Inv{D=0}={0}. This is a structural limitation of
+the information supplied to adaptation, not a missing covariance inequality.
+
+### Minimal theorem-compatible path
+
+If the intended theorem is genuinely for wave-driven marine motion rather
+than arbitrary bounded 3-D translation, formalize that physical class
+explicitly. A self-similar marine-wave spectral envelope already motivates
+the SpectralMSE tuner. If the theorem assumes that the acceleration component
+relevant to force tracking has support in
+[f_low,f_high]=[0.5,4] f_tune (with leakage margin) and a known nonzero
+projection into the Mahony vertical channel, then the minimum transfer gain of
+FB-3 on that compact normalized band is positive. FB-11--FB-12 become
+quantitative and the SAME sigma_a,B used by shipping supplies the deterministic
+forcing-action bound needed by TM.
+
+Without those physical spectral/directional premises, the desired proof would
+claim more than the front end observes.
