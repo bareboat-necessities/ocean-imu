@@ -1,4 +1,4 @@
-# OU-III proof: SLOW + FAST physical IMU qualification
+## User-qualified MARINE excitation constants (2026-10-01)\n\nFor the controlling theorem, use T_E=T_P=30 s, theta_E=2 deg, P_E=.03 m. These are theorem qualification premises supplied by the user; they are not inferred from RAO data. IMU fast H_a,C_a,H_g,C_g remain OPEN. Consequences: P_E/T_P=.001 m/s; theta_E/T_E=.00116355283466 rad/s. The generic signed acceleration chord lower max(0,P_E-T_P V_max) remains zero, so no pointwise acceleration floor follows.\n\n# OU-III proof: SLOW + FAST physical IMU qualification
 
 Base main: `eef30627130f434eb14ea9f42f4df140a291d341` (2026-10-01).
 Controlling derivation: [two-timescale IMU model](ou3-imu-two-timescale.md).
