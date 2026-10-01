@@ -124,3 +124,30 @@ that stratum. Since max_j|Phi(h_j)|=.371143, the available combined radius is
 Neither L_Phi nor delta_F is presently certified in the repository. This is
 the sole quantitative source-uniform gap in AWB2; independent gain/tuner boxes
 are not substituted.
+
+## Why a six-center numerical cover is not yet a proof
+
+The candidate MARINE/SLOW+FAST assumptions exclude an all-time exact
+field-axis collinearity execution: persistent nominal field alignment would
+require the gravity-sized transverse physical acceleration identified by the
+sampled force/field theorem, and integrating that acceleration contradicts
+the all-time |v|<=5.5 bound. Together with the compact same-history class this
+gives a positive qualitative distance from persistent exact collinearity.
+
+It does NOT imply that every reachable 16-s composed factor word lies within
+a known radius of one of the six committed stress words. The Riccati analysis
+already shows no proved positive distance from the transverse AW-gain
+cancellation manifold at a single finite word: S/magnetic corrections,
+prediction and the changing accelerometer Jacobian can move the AW gain
+numerator additively, and no current invariant bounds those linked changes by
+less than the incoming singular distance.
+
+Therefore assigning a numerical delta_F from the six carried words would be
+an invented qualification. The finite-cover inequality AWB3 is a valid
+sufficient condition, but its delta_F is presently unproved. The correct
+source-uniform consequence currently available is qualitative: exact
+persistent collinearity is excluded, so a finite superword strictness margin
+exists by compactness. A numerical .895538395 AW-reader ceiling needs either
+(a) a rigorous reachable-factor cover, or (b) a direct contradiction proving
+that |Phi|>=.895538395 itself forces the forbidden persistent acceleration
+pattern. Neither implication is currently established.
