@@ -1,3 +1,7 @@
+## Candidate FAST gyro removes the historical continuous field-axis obstruction
+
+The old continuous obstruction used n_g=.02 sin(t)b and required about .04 rad signed accumulation over a half-cycle. The candidate C_g=.002 rad excludes it by a factor 20. In the exact 17-s field-axis Stieltjes telescope, the inherited slow charge is 2 P_max B_g,s/T + P_max D_g,s = .0129961764705882 m/s^2 and the candidate FAST primitive contributes at most P_max C_g/T = .000647058823529412 m/s^2, total .0136432352941176 m/s^2 before coefficient-rotation and exact SO(3) correction-jump/twist terms. Thus the historical .055 m/s^2 witness is no longer admissible. The controlling correlated remainder is now the source-uniform sum of coefficient rotation plus exact correction jump/twist action; do not fall back to independent gain or total-NIS norms.
+
 ## Signed AW reader: uniformity status
 
 The carried six-profile stress family now passes the recovered AWB2 allowance: worst signed 16-s error .371143 m/s^2 versus .89553839501604595, leaving .52439539501604595 m/s^2. Compactness/continuity of the qualified regular 16-s same-history word class proves existence of a finite source-uniform B_AW=sup|Phi|. Strict numerical closure is reduced to one dependency-preserving finite-cover inequality L_Phi delta_F + E_nl + E_f32 < .52439539501604595. L_Phi and delta_F are not yet certified; independent gain/tuner/covariance boxes are invalid because they destroy the paired cancellation. This is now the controlling quantitative AW-transfer obligation.
