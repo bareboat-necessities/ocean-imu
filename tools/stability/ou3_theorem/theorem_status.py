@@ -256,7 +256,7 @@ def status_report() -> dict:
             "legacy_word_diameter_results_role":"retained algebra/history only, not the controlling architecture",
             "open_source_premises":[
                 "qualify both slow/fast physical histories and derive the MARINE+MAGNETIC same-history compatibility margin",
-                "complete remaining H18 reference/AG release compactness, then outer entry and sharp linked finite-error/prefix supplies using temporal SLOW+FAST reachability",
+                "from the compact captured-domain A21 release set, prove outer A21 retention and finite inner entry using temporal SLOW+FAST reachability plus displacement/attitude excitation and actual magnetic service"
             ],
         },
         "shipping_residual_gyro_bias_hardening":True,
