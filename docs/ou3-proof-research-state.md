@@ -120,3 +120,63 @@ tube and an all-prefix AW tracking tube from their literal error equations on
 the SAME physical history, retaining the coupled tau/sigma_aw/R_S/T_S
 chronology; insert those component tubes into BP-4/BP-10 and solve the retained
 rectangle simultaneously. No theorem flag is promoted.
+
+
+## Correction: the 1.4429069-m/s^2 target is sufficient, not yet implied — current head
+
+The immediate blocker is still ONLY the persistent nominal force/field
+collinearity trajectory. The desired contradiction is
+
+    |weighted mean P_B(a_hat_w-a_phys)| < 1.4429069015... m/s^2
+
+for the 100-s, 6-ms, 80-degree specialization, because physical bounded
+velocity+jerk contributes at most .26 m/s^2 while the transverse gravity
+requirement is g sin(10 deg)=1.7029069015....
+
+However, the existing sections 59--61 of
+`docs/ou3-aw-adjoint-cancellation.md` already prove that this inequality
+CANNOT be inferred merely by saying that a_hat_w, tau, sigma_aw, R_S and T_S
+are coupled.
+
+For a prescribed smooth periodic physical history, the measurement-only
+front end and tuner determine one periodic applied coefficient word U_*.
+Conditional on U_*, covariance propagation is independent of innovation
+VALUES. After the stabilizing periodic Riccati orbit is fixed, the mean is an
+affine periodic linear system. The finite Kalman map from a measurement word
+to its innovation word is block lower triangular with identity diagonal and is
+therefore invertible. The exact periodic compatibility equation is PR9/PR14.
+Generically nonsingularity gives a UNIQUE compatible forced periodic orbit; it
+does not exclude one.
+
+Therefore the coupled tuning law is essential for fixing the coefficients, but
+it is not an amplitude theorem for deterministic estimation error. Covariance
+P_aw,aw<=16.48 I likewise bounds uncertainty/action geometry, not
+|a_hat_w-a_phys| on an arbitrary deterministic forced execution.
+
+This invalidates the proposed shortcut
+
+    coupled tuner law => |mean(a_hat_w-a_phys)|<1.4429.
+
+The 1.4429 number remains a correct sufficient threshold. To prove the
+pathological trajectory inadmissible one must instead show that the UNIQUE
+self-consistent PR14 solution violates an EXISTING admissibility condition
+(physical p/v/a/jerk, bias/projection, gate, service, retained local angle), or
+prove a sharper signed identity that forces such a violation.
+
+The constructive audit has already made this falsifiable. The first
+commensurate 6-s candidate is excluded because its literal late relative
+attitude reaches 7.488 degrees >6 degrees. The analytically refined 12-s
+candidate has pre-compensation physical amplitudes strictly inside the
+declared envelopes and is the decisive next target. It has not yet been
+certified as a shipping counterexample because its late periodic
+tuner/covariance/mean orbit, six-degree bound, gates/service and complete
+weighted functional remain to be enclosed.
+
+Accordingly, do NOT claim the accel||mag pathology is excluded yet, and do NOT
+spend the next calculation deriving a generic AW tracking tube from covariance.
+The decisive calculation is the literal 12-s PR14 periodic orbit with outward
+enclosure. If it violates an existing condition, extract that violation as the
+analytical exclusion lemma. If it satisfies all conditions, the pathological
+trajectory is admissible under the current theorem contract and the stability
+proof must be reformulated; no additional physical assumption may be silently
+introduced.
