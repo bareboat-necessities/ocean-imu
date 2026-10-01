@@ -78,10 +78,27 @@ def analyze(path):
   'physical_S_origin':'one fixed capture/Live epoch; never reset at word boundaries',
   'metric':'exact symmetric part of exported float covariance; arithmetic enclosure not claimed'}
  if dmin<=0: ans['status']='NO_POSITIVE_FROZEN_WORD_LOSS';return ans
- gam=dmin/2;G=Delta-gam*mp.eye(21);chi=(b.T*b)[0]+(z.T*(G**-1)*z)[0]
+ def eval_gamma(g):
+  GG=Delta-g*mp.eye(21)
+  cc=(b.T*b)[0]+(z.T*(GG**-1)*z)[0]
+  return cc/g,cc,GG
+ # Convex-looking one-dimensional objective; use a dense logit grid then
+ # golden refinement inside the best bracket. Diagnostic only.
+ grid=[dmin*mp.mpf(k)/1000 for k in range(1,1000)]
+ vals=[eval_gamma(g)[0] for g in grid]
+ ib=min(range(len(vals)),key=lambda k: vals[k])
+ lo=grid[max(0,ib-1)]; hi=grid[min(len(grid)-1,ib+1)]
+ gr=(mp.sqrt(5)-1)/2
+ a,c=lo,hi; x1=c-gr*(c-a); x2=a+gr*(c-a); f1=eval_gamma(x1)[0]; f2=eval_gamma(x2)[0]
+ for _ in range(120):
+  if f1>f2: a=x1;x1=x2;f1=f2;x2=a+gr*(c-a);f2=eval_gamma(x2)[0]
+  else: c=x2;x2=x1;f2=f1;x1=c-gr*(c-a);f1=eval_gamma(x1)[0]
+ gam=(a+c)/2; ratio,chi,G=eval_gamma(gam)
  completed=(1-gam)*V0+chi-((x-G**-1*z).T*G*(x-G**-1*z))[0]
  ans.update({'gamma':fmt(gam),'linked_supply_chi':fmt(chi),
-  'frozen_fixed_forcing_sufficient_radius':fmt(mp.sqrt(chi/gam)),
+  'optimized_chi_over_gamma':fmt(ratio),
+  'optimized_linked_to_inner_budget_ratio':fmt(ratio/(mp.mpf('.15')**2)),
+  'frozen_fixed_forcing_sufficient_radius':fmt(mp.sqrt(ratio)),
   'linked_to_inner_budget_ratio':fmt(chi/(gam*mp.mpf('.15')**2)),
   'linked_to_root_budget_ratio':fmt(chi/(gam*V0)) if V0 else None,
   'separated_fixed_forcing_radius':fmt(mp.norm(b)/(1-mp.sqrt(1-dmin))),
