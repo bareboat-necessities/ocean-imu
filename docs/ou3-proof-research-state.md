@@ -636,3 +636,31 @@ Coarse high-precision scans show the smallest eigenvalue decreasing with tau and
 IMPORTANT qualification: if callers disable tuner clamps/freeze sigma below the default physical floor, QL-1 must be restated for that profile. The theorem here is for the default bounded shipping profile.
 
 NEXT RESULT ENABLED: combine QL-1 with the existing all-time P_LL upper bound after the 17-s regular segment, compact tau/R_S/S-scheduler ranges, exact S-storage nonexpansion, and four-S injectivity. The normalized S-only 17-s homogeneous LIN word class is compact and has no nonzero zero-action direction. Therefore by continuity its complete-word covariance-metric contraction has a source-uniform rho_H<1. The remaining step for the deterministic mean ISS theorem is to bound the affine forcing of the S-only/full held-BA mean word; do not estimate rho_H from the tiny one-step q_LL,min.
+
+
+## Held-BA LIN affine-forcing closure audit — LIN-only ISS decomposition is invalid for actual H18
+
+Attempting to finish z_(j+1)=M_j z_j+d_j with z=(v,p,S,a_w) exposes an important coupling. The S-only held-BA subsystem does admit a compact 17-s covariance-metric contraction class after QL-1. But the ACTUAL H18 execution interleaves accelerometer (and magnetic/attitude) corrections. At an accelerometer row,
+
+    r_a = f_meas - [Rhat(a_w-g)+lever+b_a,temp],
+    z^+ = z^- + K_L r_a.
+
+Hence
+
+    z^+ = [I-K_L Rhat E_aw] z^- + K_L[f_meas+Rhat g-lever-b_a,temp],
+
+only after freezing the current attitude/covariance scheduling variables. The state-dependent -K_L Rhat a_w term must be inside the homogeneous map; it cannot be placed in bounded forcing. Moreover K_L contains P_Ltheta J_att' and other full-state cross covariance, and quaternion correction/reset changes the scheduling state. Thus the actual 17-s LIN map is not the S-only M_W plus an additive bounded disturbance independent of z.
+
+One could bound the affine exogenous part at each acc row: physical f_meas is bounded by MARINE acceleration + gravity + bias/residual/lever envelopes; positive R_acc and finite covariance/Jacobian bounds give finite K_L. But repeated bounded per-row forcing is useful only if the COMPLETE interleaved homogeneous LIN/AG map has a uniform stability modulus. S-only rho_H<1 does not prove that, because accelerometer corrections are passive in FULL covariance-metric error storage, not in Euclidean/LIN mean; cross covariance can transfer storage between attitude and LIN.
+
+Therefore the previously stated 'remaining step is only D_H<infinity' was too strong. D_H is finite once the scheduling/full covariance class is compact, but the claimed LIN-only rho_H for the ACTUAL word is not yet established.
+
+Correct noncircular route for H18 release compactness: enlarge the pre-release homogeneous state to AG+LIN = (theta,b_g,v,p,S,a_w), with BA held/decoupled. Use the complete covariance-metric operation identities: prediction process floors, acc/mag Joseph corrections, S restoring corrections and attitude reset congruence. The existing corrected-word nullity<=1 theorem applies to this class; MAGNETIC SERVICE removes AG directions except the possible field-axis attitude/held-BA compatibility. Because BA is held as a nuisance constant rather than an active homogeneous state, accelerometer compatibility may leave a forced affine offset but cannot create an unbounded homogeneous LIN mode. To get uniform contraction/ISS one must either (a) exclude the remaining field-axis homogeneous line on H18 using the still-open physical-to-nominal bridge/reference cone, or (b) quotient that one line and separately note attitude is compact and bg is projected, so it cannot make LIN mean unbounded if the quotient dynamics are ISS.
+
+Promising option (b): prove a quotient ISS theorem for LIN driven by compact AG. Since attitude lives on compact SO(3) and bg_hat has hard radius .5, treat AG mean as bounded scheduling/input rather than requiring AG contraction. Form the exact LIN correction as
+
+    z^+ = A_L,k z^- + B_L,k xi_AG,k + d_phys,k,
+
+where xi_AG is represented by bounded finite attitude coordinates on event charts and projected bg. On the compact covariance/tuner/reference class, A_L,k and B_L,k are bounded. The S rows make the homogeneous LIN pair uniformly detectable. The remaining proof is a switched/time-varying BIBO theorem showing the interleaved A_L,k word remains uniformly stable despite acc-row feedback/cross-covariance. This cannot be inferred from S-only contraction but can be tested directly on the fixed-factor complete word.
+
+NEXT FALSIFIABLE CALCULATION: build the exact 12x12 LIN Jacobian product of the ACTUAL held-BA word, including prediction, acc correction linearization and S correction, while treating AG perturbation columns as inputs. Compute/analytically characterize its covariance-metric largest singular value over carried H18 words. If <1 with margin and the only near-unit directions correspond to AG input columns rather than LIN roots, proceed to source-uniform compactness via fixed-factor nullspace/continuity. If a LIN root has unit gain, identify it; do not hide it in d_j.
