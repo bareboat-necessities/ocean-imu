@@ -16,6 +16,7 @@ def release_driver_source():
     # tail so the inherited JSON remains finite.
     s=s.replace("k<=120000", "k<=37000")
     s=s.replace("k>80000", "k>36000")
+    s=s.replace("std::string root;", 'std::string root="[]";')
     old="int live=-1, refined=-1, active=-1, applied=0;"
     # driver_source inherits this declaration from ag_readout_source.cpp.
     if old not in s: raise ValueError("release declaration anchor changed")
