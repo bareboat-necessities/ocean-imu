@@ -17,6 +17,8 @@ def status_report() -> dict:
         "marine_displacement_excitation_contract":True,
         "zero_translation_moving_alias_excluded":True,
         "displacement_span_signed_kinematic_moment":True,
+        "displacement_four_S_boundary_mismatch_identified":True,
+        "displacement_boundary_velocity_completion":False,
         "stationary_observability_structure":True,
         "stationary_gyro_information_bound":True,
         "quiet_zero_residual_nominal_six_column_floor":True,
@@ -248,7 +250,7 @@ def status_report() -> dict:
             "legacy_word_diameter_results_role":"retained algebra/history only, not the controlling architecture",
             "open_source_premises":[
                 "qualify both slow/fast physical histories and derive the MARINE+MAGNETIC same-history compatibility margin",
-                "literal interleaved held-BA LIN BIBO, compact release, outer entry and linked finite-error/prefix supplies",
+                "literal interleaved held-BA LIN BIBO, compact release, displacement boundary-velocity completion, outer entry and linked finite-error/prefix supplies",
             ],
         },
         "shipping_residual_gyro_bias_hardening":True,
