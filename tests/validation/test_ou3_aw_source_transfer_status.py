@@ -11,6 +11,9 @@ class T(unittest.TestCase):
         self.assertTrue(r["Astar_source_uniform_strictness_closed"])
         self.assertFalse(r["quaternion_polynomial_is_separate_AW_source"])
         self.assertFalse(r["explicit_G0_point4_point12_premises_proved"])
+        # The source theorem is deliberately weaker than the old explicit G0
+        # constants but is strict enough to exclude persistent field-compatible
+        # zero-dissipation geometry on qualified moving superwords.
 
 if __name__=="__main__":
     unittest.main()
