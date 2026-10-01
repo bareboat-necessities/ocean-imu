@@ -326,3 +326,19 @@ The local FA theorem remains valid after entry, but entry must use a shaped
 signed/windowed AW functional or return to the global same-history FA
 reachability/action calculation. Do not retry a source-uniform pointwise AW
 tracking lemma; it is already falsified on the admitted class.
+
+## CI consistency repair after the causal AW root correction
+
+Failure classification: implementation/CI, not mathematical. After the AW
+root-action correction, `s_chain_neutral_and_aw_root_cancellation` is
+`False` in `theorem_status.py`; the committed status, provenance blob SHAs and
+the status test still asserted the former `True`. The study text had also
+dropped the conditional finite-error statement `V_(j+1)<=rho V_j+c_d d^2`
+with coercivity. Two interval-factor tools failed open: a zero-column source
+factor was rejected, and a singular `S_actual` midpoint raised instead of
+returning an unverified certificate.
+
+Invalidated hypothesis: none. Retained facts: the S-chain/AW root
+cancellation remains open; the finite-error dissipativity statement remains
+conditional; the interval inverse now fails closed. Current limiter and next
+falsifiable experiment are unchanged from the staged-entry section above.

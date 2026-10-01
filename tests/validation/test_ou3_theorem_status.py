@@ -120,10 +120,10 @@ class TheoremStatusTests(unittest.TestCase):
                     "rank_structured_kernel_contraction_corollary",
                     "kernel_variance_set_invariance_implication",
                     "scalar_kernel_ceiling_from_proved_BA_marginal",
-                    "s_chain_neutral_and_aw_root_cancellation",
                     "source_uniform_gyro_bias_persistence_diameter_cap"):
             self.assertTrue(o[key])
-        for key in ("source_uniform_kernel_bounded_word_diameter",
+        for key in ("s_chain_neutral_and_aw_root_cancellation",
+                    "source_uniform_kernel_bounded_word_diameter",
                     "source_uniform_tilt_about_field_axis_covariance_ceiling",
                     "source_uniform_A21_linear_dissipativity"):
             self.assertFalse(o[key])

@@ -1,11 +1,10 @@
 from __future__ import annotations
-import math,sys
+import sys
 from pathlib import Path
 import unittest
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_theorem.rank_loss_interval_factor import (
-    FactorState,exact,eye,zeros,verified_inverse,source_covariance,
-    schur_scalar_information,residualized_gram,generalized_ratio_lower,
+    FactorState,exact,eye,zeros,verified_inverse,schur_scalar_information,residualized_gram,generalized_ratio_lower,
     source_range_audit,
 )
 

@@ -84,7 +84,10 @@ def verified_inverse(a: IMat) -> tuple[IMat,dict]:
     """Generic square inverse enclosure from an exact binary64 residual test."""
     n,m=a.shape
     if n!=m: raise ValueError("square matrix required")
-    b=_mid_inverse(a.mid)
+    try:
+        b=_mid_inverse(a.mid)
+    except ArithmeticError:
+        return zeros(n,n),{"verified":False,"reason":"singular midpoint"}
     # Exact residual of the binary64 midpoint/inverse pair.
     rmax=Fraction(0)
     for i in range(n):

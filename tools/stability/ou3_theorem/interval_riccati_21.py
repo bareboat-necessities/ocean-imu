@@ -24,7 +24,7 @@ class IMat:
         if n==0 or len(self.rad)!=n:
             raise ValueError("nonempty matrix required")
         m=len(self.mid[0])
-        if m==0 or any(len(r)!=m for r in self.mid) or any(len(r)!=m for r in self.rad):
+        if any(len(r)!=m for r in self.mid) or any(len(r)!=m for r in self.rad):
             raise ValueError("rectangular midpoint/radius matrices required")
         for a,b in zip(self.mid,self.rad):
             for x,r in zip(a,b):

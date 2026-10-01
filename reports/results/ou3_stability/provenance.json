@@ -41,7 +41,7 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "09dc5c0c884e27683fa4067621bb5630d232aed6"
+      "git_blob_sha": "2e3d1578a5d7d37913eb9ddaef72a65bb3e2c7b3"
     }
   ],
   "semantic_bindings": {
@@ -150,7 +150,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "ad48e9148b0776ed228ead9f0ceddfe370a0e408"
+      "git_blob_sha": "e417ba74710d11fc4e7c0c51989602f2d87d70e3"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -166,7 +166,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/interval_riccati_21.py",
-      "git_blob_sha": "213a633dc39c091e3e26013e0a1807043781007f"
+      "git_blob_sha": "424666848f79e85f3c70d71bd60a175424ce3adc"
     },
     {
       "path": "tests/validation/test_ou3_interval_riccati_21.py",
@@ -322,11 +322,11 @@
     },
     {
       "path": "docs/ou3-corrected-word-proof.md",
-      "git_blob_sha": "9ba3701ff701483a8af4df72b037ecb850886f15"
+      "git_blob_sha": "3944e79c2df2f70cb9b395e2c7abc0f854d57c64"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout.py",
-      "git_blob_sha": "c92794a9731a581ac5bae142b51fe4415728b768"
+      "git_blob_sha": "736aaf87f7b8ab3901bed55d35063864fded7f5b"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_diagnostic.py",
@@ -334,7 +334,7 @@
     },
     {
       "path": "tests/validation/test_ou3_ag_readout.py",
-      "git_blob_sha": "93d819259a163dd84c58b585a54ef017341d9349"
+      "git_blob_sha": "032baaff810ff9f034d02776246ba673140e3d4f"
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
@@ -346,7 +346,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py",
-      "git_blob_sha": "c1aeadb632d390099818e36db3f6f3b3e90b2cfe"
+      "git_blob_sha": "f8855293c145e3562016e4526e5f8efe094e6741"
     },
     {
       "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
@@ -450,7 +450,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "735d31ab703afe567895dc03696d4854f95fd4bf"
+      "git_blob_sha": "37e9fe4b17f25fd47a1dae60191ece2463294205"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
@@ -466,7 +466,7 @@
     },
     {
       "path": "tests/validation/test_ou3_theorem_status.py",
-      "git_blob_sha": "2715309902f32c1e751f59da68198622b09036a5"
+      "git_blob_sha": "9229c932fe77199c7918fa687e40e3aedb5ded59"
     },
     {
       "path": "tests/kalman_ou_iii/regime_ambiguity-test.cpp",

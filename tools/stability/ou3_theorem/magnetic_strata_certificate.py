@@ -14,7 +14,7 @@ from pathlib import Path
 from .interval_riccati_21 import IMat
 from .rank_loss_literal_boxes import magnetic_certificate_from_operation_stratum
 from .shipping_operation_interval_boxes import split_interval_matrix,widest_entry
-from .magnetic_literal_box_export import PredictionBox,CorrectionBox,ResetBox,SyncBox
+from .magnetic_literal_box_export import PredictionBox,CorrectionBox,ResetBox
 
 
 @dataclass(frozen=True)

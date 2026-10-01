@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 from .interval_riccati_21 import IMat,add,matmul,scale,transpose
-from .rank_loss_interval_factor import eye,zeros,verified_inverse
+from .rank_loss_interval_factor import eye,verified_inverse
 from .magnetic_literal_box_export import PredictionBox,CorrectionBox,ResetBox
 
 
