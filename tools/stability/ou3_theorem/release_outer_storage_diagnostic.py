@@ -1,75 +1,55 @@
-"""Literal first-A21-release outer-storage diagnostic; finite evidence only."""
+"""Literal A21-release snapshot and BA-eliminated outer-storage diagnostic."""
 from pathlib import Path
 import json, math, subprocess, tempfile
 import numpy as np
-
-REPO=Path(__file__).resolve().parents[3]
+from .construction_history_diagnostic import REPO
 
 def driver_source():
     s=(REPO/"tools/stability/ag_readout_source.cpp").read_text()
-    s=s.replace("for (int k=1; k<=45064; ++k) {","for (int k=1; k<=40000; ++k) {")
-    s=s.replace("if (k==45001) {","if (k==39950) {")
-    s=s.replace("const float roll = wave ? static_cast<float>(.02*std::sin(.5*t)) : 0.0f;","const float roll=0.0f;")
-    s=s.replace("const float rate = wave ? static_cast<float>(.01*std::cos(.5*t)) : 0.0f;","const float rate=0.0f;")
-    s=s.replace("const float az = wave ? static_cast<float>(-.144*std::sin(.6*t)) : 0.0f;","const float az = wave ? static_cast<float>(6*std::sin(2*t)) : 0.0f;")
-    s=s.replace("rwb*Eigen::Vector3f(0,0,az-g_std)","rwb*Eigen::Vector3f(az,0,az-g_std)")
-    s=s.replace("rwb*Eigen::Vector3f(60,0,30)","rwb*Eigen::Vector3f(45,0,45)")
-    s=s.replace(" || applied!=8","")
-    s=s.replace("static_cast<double>(k)*.005","static_cast<double>(k)*static_cast<double>(.005f)")
+    s=s.replace("for (int k=1; k<=45064; ++k) {","for (int k=1; k<=37000; ++k) {")
+    s=s.replace("if (k==45001) {","if (k==36950) {")
     s=s.replace("int live=-1, refined=-1, active=-1, applied=0;",
-                'int live=-1, refined=-1, active=-1, applied=0; std::string release_cov,release_state,release_quat;')
+      "int live=-1, refined=-1, active=-1, applied=0; std::string release_cov,release_state,release_quat;")
     old="if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) active=k;"
-    new='''if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) {
+    new="""if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) {
             active=k; const auto& rm=filter.raw().mekf();
             release_cov=matrix_json(rm.Pext); release_state=matrix_json(rm.xext);
             release_quat=matrix_json(rm.qref.coeffs());
-        }'''
-    if old not in s: raise ValueError("active-release anchor changed")
+        }"""
+    if old not in s: raise ValueError("active anchor changed")
     s=s.replace(old,new)
-    anchor='<< ",\\\"root_covariance\\\":" << root'
-    if anchor not in s: raise ValueError("output anchor changed")
-    s=s.replace(anchor,'<< ",\\\"release_covariance\\\":" << release_cov'
-                       ' << ",\\\"release_state\\\":" << release_state'
-                       ' << ",\\\"release_quaternion\\\":" << release_quat '
-                       +anchor)
-    return s
+    oldout='<< ",\\\"root_covariance\\\":" << root'
+    newout='<< ",\\\"release_covariance\\\":" << release_cov << ",\\\"release_state\\\":" << release_state << ",\\\"release_quaternion\\\":" << release_quat << ",\\\"root_covariance\\\":" << root'
+    if oldout not in s: raise ValueError("output anchor changed")
+    return s.replace(oldout,newout)
 
-def rotvec(qcoeff):
-    q=np.asarray(qcoeff,dtype=float).reshape(4); xyz=q[:3]; w=float(q[3])
-    n=float(np.linalg.norm(xyz))
+def rotvec(coeffs):
+    q=np.asarray(coeffs,float).reshape(4); xyz=q[:3]; w=q[3]; n=np.linalg.norm(xyz)
     if n==0: return np.zeros(3)
-    angle=2*math.atan2(n,w)
-    if angle>math.pi: angle-=2*math.pi
-    return xyz*(angle/n)
+    a=2*math.atan2(n,w)
+    if a>math.pi: a-=2*math.pi
+    return xyz/n*a
 
 def audit(native):
-    P=np.asarray(native["release_covariance"],dtype=float)
+    P=np.asarray(native["release_covariance"],float)
     theta=rotvec(native["release_quaternion"])
-    Ptt=P[:3,:3]
-    eig=np.linalg.eigvalsh(Ptt)
-    if eig[0]<=0: raise ArithmeticError("attitude marginal is not SPD")
-    Vtheta=float(theta@np.linalg.solve(Ptt,theta))
-    return {
-      "active_step":int(native["active_step"]),
-      "release_time_s":int(native["active_step"])*float(np.float32(.005)),
-      "release_tilt_rad":float(np.linalg.norm(theta)),
-      "release_tilt_deg":float(np.linalg.norm(theta))*180/math.pi,
-      "release_attitude_covariance":Ptt.tolist(),
-      "release_attitude_cov_eigenvalues":eig.tolist(),
-      "ba_eliminated_outer_storage_lower_from_attitude":Vtheta,
-      "ba_eliminated_outer_sqrt_storage_lower_from_attitude":math.sqrt(Vtheta),
-      "target_radius":.15,"target_squared_radius":.0225,
-      "attitude_alone_excludes_entry":Vtheta>.0225,
-      "qualification":"FINITE_CARRIED_RELEASE_DIAGNOSTIC_ONLY",
-      "source_uniform_verified":False}
+    Ptt=P[:3,:3]; eig=np.linalg.eigvalsh(Ptt)
+    val=float(theta@np.linalg.solve(Ptt,theta))
+    return {"active_step":native["active_step"],
+      "release_time_s":native["active_step"]*float(np.float32(.005)),
+      "release_tilt_deg":float(np.linalg.norm(theta)*180/math.pi),
+      "attitude_storage_lower_after_BA_and_all_other_outer_elimination":val,
+      "attitude_sqrt_storage_lower":math.sqrt(val),
+      "attitude_cov_eigenvalues":eig.tolist(),"target_radius":.15,
+      "target_squared_radius":.0225,"attitude_alone_excludes_entry":val>.0225,
+      "qualification":"FINITE_CARRIED_RELEASE_DIAGNOSTIC_ONLY","source_uniform_verified":False}
 
-def run(eigen=Path("/usr/include/eigen3")):
-    with tempfile.TemporaryDirectory(prefix="ou3-release-outer-") as d:
-        src=Path(d)/"release.cpp"; exe=Path(d)/"release"; src.write_text(driver_source())
+def run(eigen):
+    with tempfile.TemporaryDirectory(prefix="ou3-release-") as d:
+        src=Path(d)/"r.cpp"; exe=Path(d)/"r"; src.write_text(driver_source())
         subprocess.run(["g++","-O2","-std=c++20","-I"+str(REPO/"src"),"-isystem",str(eigen),str(src),"-o",str(exe)],check=True)
         native=json.loads(subprocess.check_output([str(exe),"wave"],text=True))
-    return {"audit":audit(native),"native_release":{k:native[k] for k in
-      ("active_step","release_covariance","release_state","release_quaternion")}}
+    return {"audit":audit(native),"native_release":{k:native[k] for k in ("active_step","release_covariance","release_state","release_quaternion")}}
 
 if __name__=="__main__":
     import argparse
