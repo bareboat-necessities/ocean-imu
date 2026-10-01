@@ -352,3 +352,48 @@ with all other error coordinates zero (up to the global attitude-error sign conv
 The hoped-for strictly positive action on the remaining gauge coordinate over one generic moving T_E window is NOT implied by the current contract. The numerical T_E and theta_E fields remain OPEN/null in constants.json. More strongly, the existing exact sin^3 rest/motion witness has positive gravity-direction span on each complete moving window while its accelerometer, gyro and magnetometer packets remain exactly nominal through compensating admissible physical biases. Hence Mahony and the complete coupled tuner word are also nominal. Symbolic positive attitude span alone therefore cannot give a positive quotient floor.
 
 Current limiter: derive the largest gravity-direction span Theta_gauge(T_E) achievable by this exact packet-indistinguishable family under the existing B_a,D_a,B_g,D_g and Omega_max bounds. Only an independently certified MARINE pair satisfying theta_E>Theta_gauge(T_E) could exclude this gauge and justify a point-entry moving theorem. Otherwise MOVING also requires a consistency-class theorem. No theorem flag is promoted.
+
+
+## Exact hidden-gauge span envelope — current
+
+For the packet-indistinguishable family rotate the physical attitude by phi(t) about the (fixed world) magnetic axis and compensate the physical residual biases so that the measured gyro, accelerometer and magnetometer packets equal the nominal packets. The exact relations are
+
+    ||b_a|| = 2 g |sin(phi/2)|,
+    ||dot b_a|| = g |dot phi|,
+    ||b_g|| = |dot phi|,
+    ||dot b_g|| = |ddot phi|,
+    ||omega|| = |dot phi|.
+
+Therefore every such history satisfying the existing bounds obeys
+
+    |phi| <= A_g := 2 asin(B_a/(2g)),
+    |dot phi| <= L_g := min(D_a/g, B_g, Omega_max).
+
+D_g constrains curvature but cannot improve the source-uniform range bound on an arbitrary interior T-window, because constant dot-phi is admissible and has dot-b_g=0. Hence the exact sharp envelope implied by these five scalar bounds is
+
+    Theta_gauge(T) = min(2 A_g, L_g T)
+                   = min(4 asin(B_a/(2g)),
+                         T min(D_a/g,B_g,Omega_max)).
+
+With current constants g=9.80665, B_a=0.22516660498395405, D_a=.001, B_g=.02, D_g=1e-5 and Omega_max=.6108652381980153,
+
+    A_g = .0229611081599661 rad = 1.31557459051 deg,
+    2 A_g = .0459222163199322 rad = 2.63114918102 deg,
+    L_g = D_a/g = .000101971621297793 rad/s
+        = .00584254353047 deg/s,
+    T_sat = 2 A_g/L_g = 450.343102674 s.
+
+Thus
+
+    Theta_gauge(T) = min(.0459222163199322,
+                         .000101971621297793 T) rad.
+
+This bound is sharp for arbitrary interior windows under the listed scalar constraints: a constant-rate segment realizes the Lipschitz branch (with D_g charge zero), and sufficiently slow ramps plus a plateau approach the amplitude branch while respecting D_g. Join smoothness may reduce a particular boundary-crossing construction, but the MARINE excitation quantifier applies to every complete window contained in a moving episode and cannot assume a rest join at each window endpoint.
+
+DECISIVE CONDITION: a numerically certified MARINE pair can exclude the exact attitude/BA packet gauge only if
+
+    theta_E > Theta_gauge(T_E).
+
+Equality is not enough because the excitation premise is >= theta_E. The current constants.json still has T_E and theta_E null/OPEN, so the comparison cannot yet be discharged. Mahony does not alter the envelope: packet equality makes its measurement-only trajectory and the complete staged coupled tuner chronology identical to nominal.
+
+Next: obtain/derive the existing theorem-grade MARINE (T_E,theta_E) from admissible physical evidence without strengthening the assumption. If none is currently certified, point-entry on MOVING remains conditional on the displayed strict inequality; proceed with quotient-action positivity only after it is satisfied.
