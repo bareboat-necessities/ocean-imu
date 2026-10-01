@@ -704,8 +704,8 @@ activation, so the "last 3400 predictions" would not have been the held
 window. Invalidated hypothesis: none; the diagnostic had not produced a
 number. Fix: capture the root at the first Live sample, compile with the
 `ag_readout_source_diagnostic.instrument` tapped header copy, and stop
-recording at the first `acc_bias_updates_enabled` transition. Retained facts
-(finite carried evidence only): quiet live 18051 / active 24064,
-rho_LIN=0.03698, sigma_max=0.2443; wave live 6368 / active 24016,
-rho_LIN=0.006134, sigma_max=0.02390. This does not establish source-uniform
+recording permanently at the first `acc_bias_updates_enabled` transition.
+Retained facts (finite carried evidence only): quiet live 18051 / active
+24064, rho_LIN=0.03953, sigma_max=0.3258; wave live 6368 / active 24016,
+rho_LIN=0.006467, sigma_max=0.03199. This does not establish source-uniform
 held-BA LIN BIBO stability; the next falsifiable experiment above stands.

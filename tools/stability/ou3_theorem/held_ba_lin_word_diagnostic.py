@@ -17,7 +17,7 @@ def driver_source():
     s=(REPO/"tools/stability/ag_readout_source.cpp").read_text()
     # Record from Live onward so Python can select an exact held 17-s suffix.
     s=s.replace("if (k==45001) {\n            if (active<0 || k-active<3400) return 2;\n            root=matrix_json(filter.raw().mekf().covariance_full());\n            recording=true;\n        }",
-                "if (filter.isLive() && !recording) {\n            root=matrix_json(filter.raw().mekf().covariance_full());\n            recording=true;\n        }")
+                "if (active<0 && filter.isLive() && !recording) {\n            root=matrix_json(filter.raw().mekf().covariance_full());\n            recording=true;\n        }")
     s=s.replace(" || applied!=8","")
     # The held window ends at first BA activation; stop recording there.
     s=s.replace("if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) active=k;",
