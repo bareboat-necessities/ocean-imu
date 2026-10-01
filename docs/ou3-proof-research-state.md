@@ -556,3 +556,20 @@ MAGNETIC SERVICE is aggregate normalized information over each service interval;
 follows from the current chronology. Forcing such same-epoch/common-weight pairing would strengthen the update-cadence assumptions and is not allowed.
 
 This does NOT falsify the joint signed route. It identifies the needed next object: transport the asynchronous magnetic action to the accelerometer/S epochs using the existing world-frame historical-row factorization and MAGNETIC SERVICE, while preserving signed multipliers. The candidate is a service-window aggregate pairing, not pointwise pairing. The existing world-frame results are relevant: historical attitude rows are attitude-free apart from signed world injections and nominal rotation integral, and aggregate rows avoid same-cell magnetic-cadence dependence. The next falsifiable calculation is therefore to express the forced-data rotation term in those aggregate world-frame coordinates and test whether the service Gram supplies a coercive bound on the common M(t)-I action without taking norms of rotation variation or gain variation separately.
+
+
+## Service-window aggregate M-I coercivity audit — current
+
+Transporting the joint forced-data rotation terms into the existing world-frame aggregate coordinates does NOT currently yield a source-uniform inequality A_W(M)>=c_X d(M,G)^2 from MAGNETIC SERVICE + EXCITED_MOVING alone.
+
+Reason: MAGNETIC SERVICE is already a coercive Gram condition only on the normalized heading/axial-gyro-bias ROOT differential transported through the preceding literal execution. It does not state a finite-rotation coercive bound for arbitrary M(t)-I, nor does it synchronize the forced-data acc/mag multipliers. The existing aggregate world-frame theorem G0 does produce a six-column floor without same-cell magnetic pairing, but only under additional NOMINAL premises: two long accelerometer windows with a bounded nominal transverse AW mean m_perp, bounded L1 nominal force mean u1, controlled signed injection transport, and adequate word interior. Those premises are not consequences of EXCITED_MOVING, which constrains TRUE roll/pitch only, and source-uniform bounds on m_perp/u1/injection transport remain open.
+
+Thus the desired implication
+
+    MAGNETIC SERVICE + EXCITED_MOVING => A_W(M)>=c_X d(M,G)^2
+
+is not proved by the current aggregate machinery. Treating G0's carried m_perp/u1 values as physical assumptions would reintroduce estimator-dependent excitation and is not allowed.
+
+What IS obtained at exact zero action is a kernel-intersection statement at the physical sensor-map level: zero magnetic residual confines instantaneous attitude ambiguity to rotation about the physical/committed field (modulo declared reference/residual terms); zero accelerometer residual permits that rotation to be traded against physical BA and nominal AW. EXCITED_MOVING excludes the pure attitude/BA packet gauge only after nominal AW has been eliminated. Therefore the unresolved obstruction is now isolated to the nominal AW contribution, not magnetic geometry.
+
+NEXT FALSIFIABLE CALCULATION: use the exact S-chain divided-difference identity specifically to eliminate nominal AW INSIDE the physical zero-innovation accelerometer equations before introducing the forced-data multipliers. Work at the sensor-map kernel level rather than bounding the full forced-adjoint functional. If four S=0 atoms plus homogeneous OU/LIN propagation imply that any zero-action AW contribution compatible with bounded physical v,p is a low-order coboundary that cannot track EXCITED_MOVING gravity span, the kernel reduces to the attitude/BA gauge and MAGNETIC SERVICE then removes its non-field component. If this kernel-level elimination still leaves a free AW function capable of cancelling arbitrary excited tilt, outer point entry cannot follow from the present assumptions.
