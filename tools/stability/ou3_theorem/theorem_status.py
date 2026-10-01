@@ -285,7 +285,7 @@ def status_report() -> dict:
             "Existing MARINE T_E/theta_E and T_P/P_E remain symbolic; the zero-translation sin-cubed witness is now outside MOVING. "
             "The .01 sin(.5t) witness violates the candidate all-slow rates, but mixed allocation remains OPEN. "
             "Keep the exact dissipativity/LaSalle path, source coupled tuner chronology, physical gyro/accel constraints and actual magnetic service. "
-            "Prove literal interleaved H18 LIN BIBO and release compactness, outer retention and finite inner entry, then linked complete-word/prefix supply. "
+            "Held-H18 LIN BIBO and captured-domain release compactness are already closed qualitatively; prove general capture, outer retention and finite inner entry, then linked complete-word/prefix supply. "
             "Never infer zero base innovations from zero homogeneous action. Regime composition and float32 closure remain separate. "
             "Historical O1/O2 scalar kernel ceilings and the unqualified 1-degree/60-second low-pass gate are not controlling."
         ),
