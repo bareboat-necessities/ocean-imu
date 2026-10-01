@@ -411,3 +411,12 @@ Consequently constants.json must remain null/OPEN: filling it from the finite RA
             = min(4 asin(B_a/(2g)), T_E min(D_a/g,B_g,Omega_max)).
 
 Without such a qualification, the source-uniform theorem conclusion must remain stability/retention relative to the measurement-compatible attitude/BA class even during MOVING; point convergence is not identifiable. This is now the controlling assumption gap, not a missing numerical calculation.
+
+
+## Physical-excitation derivation attempt — no positive source-uniform pair
+
+The requested derivation of a physically justified numerical (T_E,theta_E) from existing evidence was completed and is negative. Repository proof sources intentionally leave the pair symbolic. The pinned 28-ft vessel-RAO data are finite statistical response replays, not an all-time lower-envelope qualification. Linear RAO response scales with incident wave amplitude, so the dataset cannot imply a nonzero response floor for the broader MARINE class without a lower environmental wave-energy/amplitude premise that the theorem does not contain. Encounter-frequency degeneracy likewise prevents manufacturing a universal finite excitation period from vessel speed/heading alone.
+
+Analytically, the existing physical envelopes provide only upper bounds. The exact indistinguishable family can scale alpha -> 0 and nu -> 0 while remaining strictly inside all current B_a,D_a,B_g,D_g,Omega_max, translation, jerk, primitive and magnetic-service bounds. Hence for every proposed T>0 and eps>0 there is an admitted moving family whose complete-window gravity span is positive but below eps (choosing a sufficiently small amplitude and sufficiently slow smooth periodic motion). Therefore no positive theta_E(T) is derivable from the current numerical assumptions: the source-uniform lower envelope is zero.
+
+This means a numerical pair satisfying theta_E>Theta_gauge(T_E) cannot honestly be populated from current repository or generic RAO evidence. Such a pair requires an independently justified quantitative excitation premise (for example a certified operational sea/motion lower envelope), which would strengthen MARINE MOTION and is prohibited merely for proof convenience. Until such evidence is adopted by the theorem contract, retain T_E/theta_E as OPEN and formulate source-uniform stability relative to the measurement-compatible class.
