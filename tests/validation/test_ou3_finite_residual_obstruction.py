@@ -1,6 +1,10 @@
 from fractions import Fraction as F
 import math
 import unittest
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from tools.stability.ou3_theorem.finite_residual_obstruction import certificate
 
 

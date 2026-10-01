@@ -5,7 +5,6 @@ the compatibility cone.  The source-uniform comparison must therefore be
 made with the nonmagnetic joint Gram restricted to that cone.
 """
 from __future__ import annotations
-import math
 from .interval_riccati_21 import IMat,matmul,transpose
 from .rank_loss_interval_factor import generalized_ratio_lower
 

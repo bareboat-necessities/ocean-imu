@@ -11,7 +11,7 @@ No carried word is an input.
 from __future__ import annotations
 import math
 from .interval_riccati_21 import IMat
-from .rank_loss_interval_factor import exact,eye,zeros,schur_scalar_information
+from .rank_loss_interval_factor import exact,schur_scalar_information
 
 
 def _out(x): return math.nextafter(x,math.inf)

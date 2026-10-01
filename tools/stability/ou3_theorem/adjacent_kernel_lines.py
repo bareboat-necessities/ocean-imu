@@ -1,6 +1,5 @@
 """Exact two-line rank-one covariance recurrence."""
 from __future__ import annotations
-import math
 
 def adjacent_line_update(a:float,rho:float,j:float,c_next:float):
     if a<0 or j<0 or c_next<=0 or abs(rho)>1+1e-15:
