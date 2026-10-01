@@ -148,6 +148,11 @@ jobs:
         run: |
           python3 -m tools.stability.ou3_theorem.paired_two_abel_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-paired-physical.json
           cat /tmp/ou3-paired-physical.json
+      - name: Diagnose linked finite-supply ratio without promotion
+        run: |
+          mkdir -p /tmp/ou3-linked
+          python3 -m tools.stability.ou3_theorem.linked_supply_source_diagnostic --directory /tmp/ou3-linked --output /tmp/ou3-linked.json --export --eigen /usr/include/eigen3
+          cat /tmp/ou3-linked.json
       - name: Audit exact same-cell moving row groups without promotion
         run: python3 -m tools.stability.ou3_theorem.moving_transport_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-moving-transport.json
       - name: Reproduce the committed world-frame audit without promotion
