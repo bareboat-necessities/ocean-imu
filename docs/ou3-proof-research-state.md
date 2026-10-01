@@ -529,3 +529,30 @@ The available projected-gravity threshold on the same word is 8.77133455729, so 
 FAILURE CLASSIFICATION: the proposed S-chain + Abel + TV_C route cannot close outer entry under the present assumptions if it takes norms of C variation/tails. The exact failed inequality is 8.77133455729 > 27.81044245844 + further nonnegative supplies. Invalidated hypothesis: S-chain moment annihilation plus the backward forced adjoint controls the linked C variation strongly enough after time-varying frame/gain insertion. Retained facts: exact S-chain cancellation, forced-data adjoint, physical Abel identities, EXCITED_MOVING gauge separation, and the tiny actual signed action remain valid.
 
 CURRENT LIMITER / NEXT FALSIFIABLE CALCULATION: preserve the JOINT signed physical acceleration + rotation/reference action before taking norms. Substitute the zero-innovation accelerometer and magnetic equations into the forced-data identity and combine the physical Q_i a_i term with g(R_i-Q_i)e_z and the magnetic Q_i B-R_i B term under one common rotation error. Seek an exact geometric pairing/coboundary in which the large C variation terms cancel. Do not bound TV_C, rotation action, or BA tails separately. If no such joint identity exists, this S-chain outer-entry formulation is a dead end and the outer storage must be changed.
+
+
+## Joint acc+gravity+magnetic forced-data substitution — exact audit
+
+Keep the forced-data identity signed and substitute the zero-innovation physical sensor equations before any norm. On a fixed-reference specialization B_i=B^true=B, the acc contribution at epoch i is exactly
+
+    L_i^a Q_i a_i + g L_i^a(R_i-Q_i)e_z
+      = L_i^a Q_i(a_i-g e_z) + g L_i^a R_i e_z,
+
+while a magnetic epoch j contributes
+
+    L_j^m(Q_j-R_j)B.
+
+Writing M_i=R_i Q_i^T gives the rotation mismatch forms
+
+    g L_i^a Q_i^T?  [depending on common-frame convention] (M_i-I) g_i,
+    L_j^m Q_j^T? (I-M_j) B,
+
+so both are actions of the SAME physical/nominal rotation error, but with different chronological multipliers and generally different epochs. The exact algebra therefore confirms a common geometric variable but does NOT yield a pointwise coboundary by itself.
+
+MAGNETIC SERVICE is aggregate normalized information over each service interval; it does not guarantee a magnetic correction at each accelerometer/S weight epoch or equality/proportionality of the forced-adjoint multipliers L^a and L^m. The backward forced-data recursion generates sensor-type-dependent L_i because Hbar_acc has AW/BA blocks while Hbar_mag has zero Euclidean mean-state map. Thus no exact identity of the form
+
+    sum_i C_i (M_i-I)g + sum_i C_i (I-M_i)B = endpoint
+
+follows from the current chronology. Forcing such same-epoch/common-weight pairing would strengthen the update-cadence assumptions and is not allowed.
+
+This does NOT falsify the joint signed route. It identifies the needed next object: transport the asynchronous magnetic action to the accelerometer/S epochs using the existing world-frame historical-row factorization and MAGNETIC SERVICE, while preserving signed multipliers. The candidate is a service-window aggregate pairing, not pointwise pairing. The existing world-frame results are relevant: historical attitude rows are attitude-free apart from signed world injections and nominal rotation integral, and aggregate rows avoid same-cell magnetic-cadence dependence. The next falsifiable calculation is therefore to express the forced-data rotation term in those aggregate world-frame coordinates and test whether the service Gram supplies a coercive bound on the common M(t)-I action without taking norms of rotation variation or gain variation separately.
