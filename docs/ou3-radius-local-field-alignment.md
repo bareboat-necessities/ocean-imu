@@ -8,10 +8,14 @@ vertical frontend.
 ## Lemma RL-A — storage-local nominal/physical acceleration relation
 
 On every regular A21 prefix in the candidate set V=e'P^-1 e <= r^2 for which
-the inherited AW marginal ceiling P_aw,aw <= 16 I is applicable, matrix
-Cauchy--Schwarz gives
+the literal regular-real-arithmetic AW marginal ceiling from the later source
+audit is P_aw,aw <= 16.48 I. Matrix Cauchy--Schwarz therefore gives the
+outward-safe bound
 
-    ||e_aw|| = ||a_hat_w-a_phys|| <= 4 r.                    (RL-A1)
+    ||e_aw|| = ||a_hat_w-a_phys|| <= sqrt(16.48) r < 4.06 r. (RL-A1)
+
+The older 4r statement is the ideal/exact-OU specialization; 4.06 is used
+below so this lemma is consistent with the current source audit.
 
 The inherited active-BA marginal P_ba,ba <= I/1600 likewise gives
 
@@ -93,7 +97,7 @@ Using RL-A1,
 
     ||P_B(a_phys-g)||
       = ||P_B(a_phys-a_hat_w)||
-      <= 4r.                                                (RL-FA2)
+      < 4.06r.                                              (RL-FA2)
 
 But RL-B says every T-window contains an actually applied accelerometer epoch
 with
@@ -102,7 +106,7 @@ with
 
 Therefore persistence is impossible whenever
 
-    M(r,T):=1.96133 - 11/T - .6 - 4r > 0.                  (RL-FA4)
+    M(r,T):=1.96133 - 11/T - .6 - 4.06r > 0.               (RL-FA4)
 
 At the already used 17-s nuisance/root warm-up,
 
@@ -113,8 +117,8 @@ At the already used 17-s nuisance/root warm-up,
 so every
 
     r < r_FA,max(17)
-      = m_phys(17)/4
-      = 0.178567794117647...                                (RL-FA5)
+      = m_phys(17)/4.06
+      = 0.175928...                                          (RL-FA5)
 
 is admissible for this exclusion. A deliberately conservative explicit choice
 is
@@ -123,11 +127,11 @@ is
 
 for which
 
-    M(.15,17)=0.114271176470588... m/s^2 > 0.              (RL-FA7)
+    M(.15,17)=0.105271176470588... m/s^2 > 0.              (RL-FA7)
 
 The six-degree local attitude domain is a separate coordinate-domain
 restriction; r_FA is the dimensionless covariance-storage radius. RL-A1
-already supplies the physical units for 4r.
+already supplies the physical units for 4.06r.
 
 ### Defect bookkeeping
 
