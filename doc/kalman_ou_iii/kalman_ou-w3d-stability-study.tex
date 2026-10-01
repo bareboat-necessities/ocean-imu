@@ -1101,6 +1101,17 @@ Thus $\hat S'''(t)=\rho(t)a_0$ with $\rho(t)>0$.  Four zeros of $\hat S$ force, 
 \]
 This is the homogeneous invariant-set theorem.  Literal deterministic temperature and configured lever-arm compensation are retained in the common model; finite calibration, sensor, magnetic-reference, model and arithmetic residuals enter the later complete-word supply and are not inserted into the zero-action invariant set.
 
+\paragraph{Source-uniform outer release tube.}
+The outer set is not defined by a small posterior covariance metric.  The literal constructor zeros the full extended mean, and the bootstrap carries the LIN mean without prediction until Live; the Live handoff reseats the AW covariance but does not change the mean.  Hence at the first A21 prediction
+\[
+ \hat v=\hat p=\hat S=\hat a_w=0 .
+\]
+MARINE MOTION therefore bounds the corresponding release errors by $V_{\max}$, $P_{\max}$, $P_{AC}$ and $A_{\max}$.  The attitude pair lies on compact $SO(3)$, while the implemented gyro- and accelerometer-bias estimate projections give finite error balls $\|e_{b_g}\|\le0.52$ and $\|e_{b_a}\|\le B_a+0.4$.  Release/reset covariance seeds are finite by source; after 17 s regular A21 the nuisance principal upper comparison is uniform.  On any fixed bootstrap horizon, finite source transitions, positive measurement floors, Joseph updates and resets keep the remaining covariance coordinates finite.
+
+Let $H_{\rm out}$ cover the 17-s nuisance warmup, four accepted $S$ periods and the first complete EXCITED\_MOVING service word.  Define $\mathcal R_{\rm out}^{(1)}$ as the closure of all literal same-history A21 prefixes of duration at most $H_{\rm out}$ reachable from the certified release box.  The finite event-stratified real-arithmetic map sends the compact release/coefficient class to a compact finite-horizon tube, so $\mathcal R_{\rm out}^{(1)}$ contains every certified release and every prefix through that first word without assuming small $V$.
+
+This construction proves finite-horizon outer compactness, not indefinite invariance.  The next entry step must show either entrance during a fixed number of EXCITED\_MOVING words or an inward boundary inequality for a shaped outer sublevel; otherwise repeated finite tubes alone do not prove all-time retention.
+
 The same proof path still requires finite construction/capture into a magnetically informed H18 domain and a source-uniform refinement/release bridge.  The approximately $7^\circ$ refinement quantity is an estimator-error tube, not a covariance-storage radius and not a bound on physical rocking amplitude.  A six-degree attitude error does not imply membership in $V\le0.15^2$.
 
 The held-BA H18 geometry must use the actual constant held estimator BA together with
