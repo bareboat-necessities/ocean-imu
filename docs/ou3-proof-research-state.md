@@ -543,3 +543,37 @@ The LF accelerometer residual enters MP-1 as direction error approximately eps_a
 CURRENT LIMITER: existing MARINE bounds |v|<=V_max and |p|<=P_max do not directly imply a source-uniform L_infinity bound on the output of the stable convolution H_a applied to arbitrary a=v'. A crude L1 impulse-response times |a|<=A_max is too loose and ignores the derivative structure. The correct deterministic route is to integrate H_a(s)*s V(s) by parts: define G_v(s)=s H_a(s)=k_P s^2/(s^2+k_P s+k_I), separate its direct k_P term from the stable strictly-proper remainder, and exploit BOTH |v| and the finite-window/position primitive to control the low-frequency part. Alternatively formulate the proxy error directly as a stable state driven by bounded v through an integration-by-parts storage. Do not replace the arbitrary history by sinusoidal decomposition without a spectral norm theorem.
 
 NEXT FALSIFIABLE CALCULATION: derive an induced bound from bounded v and p for MP-1 over the 30-s magnetic refinement / 600-s continuous-HI windows. Compute the exact impulse kernels for the literal k_P,k_I and evaluate the sharp endpoint + L1-kernel constants after integration by parts. If the resulting deterministic proxy bound plus LF sensor charges is < the MR-3 cone budget, close E_B; if it exceeds it badly, proxy tilt/reference cone must be independently qualified from device/vessel data rather than inferred from the broad MARINE envelopes.
+
+
+## H18 -> A21 release compactness audit — release event defined; uniform release time is OPEN
+
+Define A21 release source-faithfully as the first literal transition at which mekf.acc_bias_updates_enabled() becomes true (equivalently the external hold is clear and the inner magnetic-count lock has opened). Do not identify release with Live handoff or with a fixed clock time. Different carried histories legitimately give different release times.
+
+Shipping chronology has two independent gates after Live:
+
+1. inner magnetic-count gate: updateMag increments mag_updates_applied_; after >=mag_updates_to_unlock (default 250), >1 s since first mag update, and Live, accel_bias_locked_ clears;
+2. wrapper external hold: with refinement enabled, beginStartup_ calls setAccBiasHold(true). The hold clears only in maybeRefineMagReference_ AFTER MagAutoTuner returns a finite valid second-stage reference. The refinement starts no earlier than 90 s and uses a nominal 30-s window, but there is no forced refinement timeout; invalid/incomplete acquisition simply returns and retries.
+
+Therefore the current source does NOT give a source-uniform finite upper bound T_release on H18/Live -> A21 release. MAGNETIC SERVICE as currently formulated bounds recurring informative service once in the theorem regime, but the proof has not yet shown it implies successful MagAutoTuner refinement in a uniformly bounded time. Hence the tempting compactness argument
+
+    compact Live set --finite uniformly bounded pre-release flow--> compact A21 release set
+
+is unavailable as stated.
+
+This does not mean release coordinates are unbounded. Several have all-time source bounds independent of release time: attitude lies on SO(3); gyro and accel bias estimates have hard projections; physical MARINE/Bias states are bounded; tuner tau/sigma/R_S/T_S are clamped/coupled; reference writes are canonical and hard-iron application is gated/slewed. But LIN MEAN (vhat,phat,Shat,a_hat_w) has no hard projection, and covariance/reference/scheduler histories require all-time retained bounds, not merely finite-horizon continuity. The carried release's nonzero LIN state is therefore expected and must be included.
+
+Correct compact release class target:
+
+    R_rel = closure of all states/histories at the first BA-enable event
+
+with coordinates
+
+    (Qhat,bg_hat,vhat,phat,Shat,a_hat_w,ba_hat,P,
+     tau,sigma_aw,R_S,T_S,tuner EMA/state,
+     B_ref,hard-iron estimator/applied state,
+     mag/refinement counters and clocks,S scheduler phase,
+     physical Q,v,p,a,S,bg,ba and residual-filter states).
+
+To prove R_rel compact without a uniform release time, every listed noncompact coordinate must have an ALL-TIME source-uniform bound while BA is held. Existing nuisance covariance results give important covariance bounds after regular A21, but they cannot be silently applied before A21 release if their hypotheses include active BA/regular A21. The LIN mean remains the principal unresolved coordinate.
+
+NEXT FALSIFIABLE CALCULATION: prove or refute all-time boundedness of the held-BA pre-release LIN mean under literal Live/H18 dynamics. Use the exact stable OU a_w recurrence plus recurring S=0 pseudo-updates and bounded accelerometer/magnetic measurements; derive a shaped bound for (a_w,v,p,S) that is independent of release time. If this closes, combine with source covariance/tuner/reference bounds to obtain compact R_rel despite arbitrarily delayed refinement. If it fails because neutral v/p/S can drift under bounded innovations, then H18->A21 compact release requires either a theorem that refinement/release occurs within finite time from existing MAGNETIC SERVICE or a different retained pre-release invariant.
