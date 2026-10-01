@@ -605,3 +605,27 @@ strict stability requires recurring noncollinearity of an independent
 gravity/specific-force reference and magnetic field (with a proved bridge to
 the filter attitude row), or an additional attitude reference. Do not claim
 raw acceleration oscillation alone removes the mode.
+
+
+### Physical/nominal force tracking lemma
+
+The literal accelerometer Kalman correction gives an exact first-order
+tracking identity. For measurement mismatch e=z-h(x), Jacobian C, covariance
+P and R, the post-correction mismatch against the same physical sample is
+e+=(I-CK)e=R(CPC'+R)^-1 e. In the R metric this is similar to
+(I+R^-1/2 CPC' R^-1/2)^-1, so accepted updates contract every direction with
+positive predicted measurement covariance. This formalizes the physical/
+nominal tracking seen in filter charts.
+
+Between updates the mismatch is forced by the difference between physical
+specific-force change and literal OU/S/attitude/BA/lever prediction. Hence
+the complete recursion is an ISS tracking system. Combined with the proved
+finite residence time of true force/magnetic collinearity, persistent nominal
+field alignment is excluded if a complete-window tracking-error bound is
+strictly smaller than the recurring physical noncollinearity margin.
+
+That final quantitative margin is not yet proved source-uniformly: the proof
+still needs a lower measurement-information floor and a linked complete-window
+bound on physical-minus-nominal forcing under the same tuner/covariance
+chronology. Charts support the mechanism but are not substituted for this
+margin proof.
