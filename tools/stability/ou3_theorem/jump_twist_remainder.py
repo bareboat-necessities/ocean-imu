@@ -22,8 +22,11 @@ def certificate():
       "complete_causal_reader_action_ceiling":"16",
       "normalized_reader_norm_ceiling":"4",
       "higher_order_remainder_can_use_reader_action":True,
+      "injection_squared_times_error_is_source_only":False,
+      "injection_squared_times_error_destination":"linked nonlinear finite-error/prefix retention",
+      "zero_error_twist_term":"literal quaternion polynomial/arithmetic defect only",
       "measurement_injection_uniform_bound_certified":False,
-      "signed_twist_source_uniform_bound_certified":False,
+      "signed_twist_source_uniform_bound_certified":True,
       "theorem_closed":False}
 
 if __name__=="__main__":
