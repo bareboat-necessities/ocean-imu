@@ -465,3 +465,51 @@ But that implication is NOT presently proved. The 5-uT and 2-uT constants bound 
 The new LF accelerometer/gyro residual qualification helps bound the startup-proxy tilt error in the vessel-motion band, but a quantitative all-time proxy-tilt/reference error transfer has not yet been derived. Thus the desired source-uniform positive nominal cone is CONDITIONAL, not closed.
 
 NEXT FALSIFIABLE CALCULATION: derive E_B directly from the canonical reference update formula ref(b)=mean(R_i m_i)-mean(R_i)b. Write R_i=R_true,i Delta_i and m_i=R_true,i' B_true+b_true+n_m. Bound B_ref-B_true in terms of (i) proxy tilt error Delta_i, (ii) fitted/applied hard-iron error, and (iii) magnetic measurement residual. Use the estimator's 3-uT fit-residual and .35-field bias gates only where they mathematically bound those terms. Then combine the new LF IMU qualification with the proxy observer dynamics to see whether E_B<15 uT is actually certifiable. If not, the reference cone remains an explicit independent qualification requirement.
+
+
+## Magnetic-reference error decomposition — exact; proxy-tilt bound is the limiter
+
+For the continuous hard-iron accumulation let Q_i be the TRUE body->level tilt rotation and let the proxy leveling rotation be R_i=Delta_i Q_i, where Delta_i is the tilt-frame error. Use the physical magnetometer model
+
+    m_i=Q_i' B_true + b_true + n_m,i
+
+in the yaw-stripped level convention (any fixed yaw gauge is absorbed into B_true). For an applied hard-iron correction b_app, the estimator's exact level reference is
+
+    B_ref = mean(R_i m_i)-mean(R_i)b_app.
+
+Substitution gives the exact decomposition
+
+    B_ref-B_true
+      = mean[(Delta_i-I)B_true]
+        +mean[Delta_i Q_i(b_true-b_app)]
+        +mean[Delta_i Q_i n_m,i].                           (MR-2)
+
+Because rotations preserve norm, if angle(Delta_i)<=delta_proxy on the accumulation window, ||b_true-b_app||<=E_HI and ||n_m||<=E_m, then
+
+    ||B_ref-B_true||
+      <= 2 B_max sin(delta_proxy/2)+E_HI+E_m
+      =: E_B.                                               (MR-3)
+
+No independence/zero-mean assumption is used. The same bound applies to a weighted mean with nonnegative normalized weights. Continuous partial application is covered by E_HI for the actually applied b_app. The canonical re-gauging in slewTowardEstimate preserves the horizontal/vertical level-field changes rather than arbitrary azimuth rotation; MR-3 is therefore the natural physical error budget to qualify that update.
+
+Combining with the physical field envelope gives, whenever E_B<15 uT,
+
+    ||P_Bref g|| >= g (15-E_B)/(75+E_B) >0.                 (MR-4)
+
+Numerically, if HI and magnetic residual charges were temporarily zero, E_B<15 requires only
+
+    delta_proxy < 2 asin(15/(2*75)) = .2003348423 rad
+                = 11.47834 deg.
+
+With a hypothetical combined E_HI+E_m=7 uT, the proxy requirement for merely positive cone is
+
+    delta_proxy < 2 asin((15-7)/150)
+                = .106717... rad = 6.115... deg,
+
+and the resulting E_B=7 special case (if independently justified) would give ||P_Bref g||>=.956746 m/s2.
+
+CURRENT LIMITER: the new LF IMU residual qualification bounds only sensor residual content. It does NOT by itself give angle(Delta_i)<=delta_proxy for the private Mahony proxy, because the proxy accelerometer sees genuine marine translational/wave acceleration as well as gravity. The proxy gains are deliberately below the wave band, but a deterministic source-uniform tilt-error transfer from bounded physical v/p/a/jerk + LF residuals to the Mahony observer has not been proved. Therefore MR-3/4 are conditional and E_B<15 is not yet certified.
+
+Also, the existing constants hard_iron_residual_norm_max=5 uT and measurement_residual_norm_max=2 uT cannot simply be inserted as E_HI and E_m without checking their exact physical definitions against MR-2. In particular the continuous estimator's 3-uT fit RMS and .35 field-scale bias gate are estimator diagnostics, not direct pointwise bounds on b_true-b_app.
+
+NEXT FALSIFIABLE CALCULATION: derive a deterministic low-frequency tilt-error bound for VerticalAccelComplementary/Mahony in the yaw-free two-axis subsystem. Treat physical horizontal acceleration as the disturbance, use bounded velocity/displacement to bound its low-frequency component through the proxy correction transfer, and add the certified LF accelerometer/gyro residual envelopes. The target need only be modest (roughly <6 deg if a 7-uT non-tilt reference budget is later justified), not sub-degree. If the proxy transfer has nonzero DC gain from arbitrary bounded marine acceleration that cannot be controlled by the existing primitives, the reference cone must remain an independent qualification rather than be derived from EXCITED_MOVING.
