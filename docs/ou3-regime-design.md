@@ -215,3 +215,26 @@ depends on the applied magnetic cadence; aggregate rows avoid that. The
 injection-free aggregate floor (Theorem G0) is conditional on nominal AW
 window statistics; those statistics, injections and the historical action
 remain OPEN.
+
+
+## EXCITED_MOVING: minimal proof-side physical subregime
+
+EXCITED_MOVING is a physical proof qualification, not a shipping mode, detector, or estimator change. It inherits MARINE MOTION, IMU BIAS, MAGNETIC SERVICE, local-gravity/field premises and the complete same-history execution unchanged. STILL, TRANSITION and weak/unqualified MOVING remain admitted.
+
+Let u_g(t)=Q(t)^T g_0^W/||g_0^W|| be the true body gravity direction. For two epochs separated by h define
+
+    Gamma_ba(h)=2 asin(min(1, min(2 B_a,D_a h)/(2 g_min))).
+
+Packet equality requires g(u_g(t2)-u_g(t1)) to be supplied by the accelerometer-bias difference, whose norm is at most min(2 B_a,D_a h). Gyro bounds give an additional but presently looser angular-rate envelope h min(B_g,Omega_max); D_g constrains curvature but does not improve an arbitrary interior-window range because constant rate has zero gyro-bias derivative.
+
+A complete physical interval W=[s,s+T_X] is gauge-breaking with margin delta_X>0 when there exist t1<t2 in W such that
+
+    angle(u_g(t1),u_g(t2)) >= Gamma_ba(t2-t1)+delta_X.
+
+This two-epoch condition is weaker and more directly relevant than a minimum wave height, roll RMS, spectral band, or generic total-attitude span. It asks only for physical gravity geometry that the admitted accelerometer-bias history cannot reproduce. Magnetic service remains a separate existing premise; the private Mahony observer is not used to certify u_g or the excitation.
+
+For finite outer-to-inner entry, one isolated gauge-breaking window is insufficient in general. Define an EXCITED_MOVING episode J by the recurrence condition: while the carried execution remains outside the target inner set, every interval [t,t+T_X] contained in J contains at least one gauge-breaking pair with the same fixed delta_X>0. No excitation is required after inner entry, and no EXCITED_MOVING qualification is imposed on STILL, TRANSITION, or weak MOVING episodes.
+
+This is the minimum new physical information proposed for the entry proof. Everything else needed by the proof is not a new physical assumption: (i) a source-uniform compact outer release/retention set must be derived from the existing capture/H18/release contracts; (ii) the complete corrected-word action on the quotient by K_stat must be shown continuous/coercive on that compact outer annulus under literal accepted-update and coupled tuner chronology; and (iii) the existing zero-action classification must be extended to that outer annulus. If those analytical obligations show that zero quotient action would force the measurement-compatible gauge, the strict delta_X condition excludes it. Compactness then gives a positive complete-window dissipation floor on each closed annulus r_in<=distance<=R_out. Recurrent gauge-breaking windows imply finite, possibly history-dependent, entrance into V<=r_in^2. After entry the existing r_FA=.15 LaSalle result and finite-error retention apply.
+
+Do not replace this condition by an estimator-derived tilt threshold. A theorem qualification must come from physical/reference evidence independent of OU-III, or be stated explicitly as an operational-domain assumption. A finite RAO replay may validate plausibility but cannot alone certify the all-continuation window condition.
