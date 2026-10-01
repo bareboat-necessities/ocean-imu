@@ -7,10 +7,10 @@ BA-eliminated outer storage from attitude alone. It is not source-uniform entry.
 from pathlib import Path
 import json, math, subprocess, tempfile
 import numpy as np
-from .construction_history_diagnostic import REPO, driver_source
+from .construction_history_diagnostic import REPO\n\ndef driver_source():\n    return (REPO/"tools/stability/ag_readout_source.cpp").read_text()
 
 def release_driver_source():
-    s=driver_source()
+    s=driver_source()\n    s=s.replace("for (int k=1; k<=45064; ++k) {", "for (int k=1; k<=40000; ++k) {")\n    s=s.replace("if (k==45001) {", "if (k==39950) {")
     # This probe needs only the first A21 release (~step 36008), not the
     # construction diagnostic's 600-s tail. Keep a short post-release scoring
     # tail so the inherited JSON remains finite.
