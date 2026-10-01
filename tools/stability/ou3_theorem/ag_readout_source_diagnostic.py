@@ -37,7 +37,7 @@ def instrument(source):
     apply_pending_aw_covariance_inflation_();
     symmetrize_Pext_();   // Symmetry hygiene
     if (recording) events.push_back(std::string("{\\"kind\\":\\"sync_completion\\",\\"before\\":")
-        +matrix_json(trace_before_sync)+",\\"after\\":"+matrix_json(Pext)+'}');''')
+        +matrix_json(trace_before_sync)+",\\"after\\":"+matrix_json(Pext)+physical_json()+'}');''')
     once('        Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;',
          '        readout_sync(Delta);\n        Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;')
     once('    ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);',
@@ -70,6 +70,29 @@ def instrument(source):
     xext.noalias() += K * r;''')
         source = source[:a]+chunk+source[b:]
     return source
+
+
+def validate_physical_lift(trace):
+    """Check that every literal operation boundary carries one aligned replay truth snapshot."""
+    required = ("physical_t", "physical_p", "physical_v", "physical_S", "physical_a")
+    events = trace["events"]
+    if not events:
+        raise ValueError("physical lift requires events")
+    for i, event in enumerate(events):
+        missing = [key for key in required if key not in event]
+        if missing:
+            raise ValueError(f"event {i} missing physical lift fields: {missing}")
+        for key in required[1:]:
+            value = event[key]
+            if len(value) != 3 or any(len(row) != 1 for row in value):
+                raise ValueError(f"event {i} malformed {key}")
+    times = [float(event["physical_t"]) for event in events]
+    if any(b < a for a, b in zip(times, times[1:])):
+        raise ValueError("physical lift time is not chronological")
+    return {"aligned_event_count": len(events),
+            "all_literal_boundaries_have_p_v_S_a": True,
+            "chronological": True,
+            "source_uniform_verified": False}
 
 
 def analyze(trace, dps=80):
@@ -544,7 +567,9 @@ def run(eigen, headings=('0', '0.001', '0.000001', 'wave')):
             cases.append({'input_profile': heading,
                           'live_step': observed['live_step'], 'refined_step': observed['refined_step'],
                           'active_step': observed['active_step'],
-                          'literal_terminal_parity': True, **analyze(observed)})
+                          'literal_terminal_parity': True,
+                          'physical_lift': validate_physical_lift(observed),
+                          **analyze(observed)})
             if heading in ('0', 'wave'):
                 cases[-1]['exact_exported_word_enclosure'] = enclose_exported_word(observed)
                 cases[-1]['contraction_feasibility'] = contraction_feasibility(observed)
