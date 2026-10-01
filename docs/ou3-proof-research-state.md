@@ -693,3 +693,19 @@ for relative comparison. Retained facts: the identity contract
 replay comparison now only requires both records below 1e-4; every other leaf
 keeps the 5e-3 relative comparison. Current limiter and next falsifiable
 experiment are unchanged from the sections above.
+
+## CI: held-BA LIN word diagnostic did not execute
+
+Failed quantity: `held_ba_lin_word_diagnostic` on the `theorem` job raised
+`JSONDecodeError` (`"root_covariance":,`). Classification: implementation.
+Its driver patch removed the root-covariance capture, compiled against the
+untapped shipping header (zero recorded events), and recorded past first BA
+activation, so the "last 3400 predictions" would not have been the held
+window. Invalidated hypothesis: none; the diagnostic had not produced a
+number. Fix: capture the root at the first Live sample, compile with the
+`ag_readout_source_diagnostic.instrument` tapped header copy, and stop
+recording at the first `acc_bias_updates_enabled` transition. Retained facts
+(finite carried evidence only): quiet live 18051 / active 24064,
+rho_LIN=0.03698, sigma_max=0.2443; wave live 6368 / active 24016,
+rho_LIN=0.006134, sigma_max=0.02390. This does not establish source-uniform
+held-BA LIN BIBO stability; the next falsifiable experiment above stands.

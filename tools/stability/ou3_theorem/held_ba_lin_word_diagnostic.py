@@ -8,6 +8,7 @@ from pathlib import Path
 import json, subprocess, tempfile
 import numpy as np
 from .construction_history_diagnostic import REPO
+from .ag_readout_source_diagnostic import HEADER, instrument
 
 NL=12
 OFF_L=6
@@ -16,8 +17,11 @@ def driver_source():
     s=(REPO/"tools/stability/ag_readout_source.cpp").read_text()
     # Record from Live onward so Python can select an exact held 17-s suffix.
     s=s.replace("if (k==45001) {\n            if (active<0 || k-active<3400) return 2;\n            root=matrix_json(filter.raw().mekf().covariance_full());\n            recording=true;\n        }",
-                "if (filter.isLive()) recording=true;")
+                "if (filter.isLive() && !recording) {\n            root=matrix_json(filter.raw().mekf().covariance_full());\n            recording=true;\n        }")
     s=s.replace(" || applied!=8","")
+    # The held window ends at first BA activation; stop recording there.
+    s=s.replace("if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) active=k;",
+                "if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) { active=k; recording=false; }")
     return s
 
 def lin_factor(ev):
@@ -36,7 +40,10 @@ def lin_factor(ev):
 def run(eigen, mode="wave"):
     with tempfile.TemporaryDirectory(prefix="ou3-held-lin-") as d:
         src=Path(d)/"r.cpp"; exe=Path(d)/"r"; src.write_text(driver_source())
-        subprocess.run(["g++","-O2","-std=c++20","-I"+str(REPO/"src"),"-isystem",str(eigen),str(src),"-o",str(exe)],check=True)
+        # Readout taps exist only in an instrumented copy of the shipping header.
+        (Path(d)/"kalman_ou_iii").mkdir()
+        (Path(d)/"kalman_ou_iii"/HEADER.name).write_text(instrument((REPO/HEADER).read_text()))
+        subprocess.run(["g++","-O2","-std=c++20","-I"+d,"-I"+str(REPO/"src"),"-isystem",str(eigen),str(src),"-o",str(exe)],check=True)
         native=json.loads(subprocess.check_output([str(exe),mode],text=True))
     live=native["live_step"]; active=native["active_step"]
     if active<0 or live<0 or active-live<3400:
