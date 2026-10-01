@@ -20,13 +20,6 @@ static Eigen::Vector3d physical_p = Eigen::Vector3d::Zero();
 static Eigen::Vector3d physical_v = Eigen::Vector3d::Zero();
 static Eigen::Vector3d physical_S = Eigen::Vector3d::Zero();
 static Eigen::Vector3d physical_a = Eigen::Vector3d::Zero();
-static std::string physical_json() {
-    return std::string(",\"physical_t\":")+std::to_string(physical_t)
-        +",\"physical_p\":"+matrix_json(physical_p)
-        +",\"physical_v\":"+matrix_json(physical_v)
-        +",\"physical_S\":"+matrix_json(physical_S)
-        +",\"physical_a\":"+matrix_json(physical_a);
-}
 template<class A> static std::string matrix_json(const A& a) {
     std::ostringstream out;
     out << std::setprecision(17) << '[';
@@ -41,6 +34,13 @@ template<class A> static std::string matrix_json(const A& a) {
     }
     out << ']';
     return out.str();
+}
+static std::string physical_json() {
+    return std::string(",\"physical_t\":")+std::to_string(physical_t)
+        +",\"physical_p\":"+matrix_json(physical_p)
+        +",\"physical_v\":"+matrix_json(physical_v)
+        +",\"physical_S\":"+matrix_json(physical_S)
+        +",\"physical_a\":"+matrix_json(physical_a);
 }
 template<class A, class B, class C, class D, class E>
 static void readout_prediction(const A& f, const B& fl, const C& q,
