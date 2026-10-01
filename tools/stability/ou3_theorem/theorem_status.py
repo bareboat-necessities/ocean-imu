@@ -49,7 +49,7 @@ def status_report() -> dict:
         "quiet_nominal_six_column_floor_any_attitude_admitted_reference":True,
         "nominal_attitude_column_physical_transfer_given_AW_tracking":True,
         "sharp_isotropic_sync_AW_covariance_ceiling":True,
-        "uniform_AW_tracking_error_bound":False,
+        "uniform_AW_tracking_error_bound":False,\n        "source_uniform_Astar_real_arithmetic_signed_mean":True,\n        "source_uniform_Astar_positive_attitude_gram_exists":True,
         "nominal_signed_mean_attitude_columns":True,
         "pointwise_physical_AW_tracking_premise_refuted_on_admitted_history":True,
         "source_uniform_nominal_AW_window_statistics":False,
