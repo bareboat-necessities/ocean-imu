@@ -624,3 +624,22 @@ Covariance: release/reset seeds are finite by source. After 17 s regular A21 the
 IMPORTANT LIMITATION: this finite-horizon compact tube is not yet an invariant outer set for arbitrarily many failed entry words. To obtain every-prefix retention until entry, use the newly proved homogeneous annular strictness on each compact tube to show entry during the FIRST complete EXCITED_MOVING word (or a fixed finite number of words) rather than postulating indefinite outer invariance. If zero-action exclusion + compactness supplies strict homogeneous dissipation on that first word but finite physical/model supply can overwhelm it, repeated-word retention still needs a linked supply/storage budget. Do not claim all-time R_out invariance from finite source continuity alone.
 
 NEXT FALSIFIABLE CALCULATION: formulate the first-complete-EXCITED_MOVING-word compact tube K_out from the explicit release error box and source coefficient bounds, then apply the outer Inv(D=0)={0} compactness contradiction on the closed annulus outside r_in. Determine whether this yields guaranteed homogeneous entrance within that one word or only a positive decrement. If only decrement, derive a sublevel W_out whose boundary decrement is inward so repeated words remain in a compact enlargement; do not use posterior V at release as that sublevel.
+
+
+## Outer retention: no new shaped storage is needed for the homogeneous theorem
+
+A useful simplification closes the homogeneous outer-retention construction. Although posterior V is unusable as a SMALL release/capture metric, it can be used as a LARGE invariant outer storage after the finite A21 bootstrap. The missing ingredient is a covariance LOWER bound, and the existing lin-path/root-covariance certificate supplies it: after a 16--16.006 s regular A21 path, the full 21-state covariance at the certified post-prediction roots satisfies P>=P_min>0 (LIN from the exact path Gramian, AG/BA from fresh process floors, combined by the proved Loewner comparison). Thus P^-1<=P_min^-1 at those roots.
+
+The source-uniform release mean-error box and finite-horizon prefix map proved above give a finite Euclidean error ceiling E_box through the bootstrap. Therefore at the first certified post-bootstrap root
+
+    V=e'P^-1 e <= lambda_max(P_min^-1) E_box^2 =: C_out < infinity.
+
+No useful numerical value of C_out is required. Define the homogeneous outer sublevel at certified roots by W_out:=V and R_out={V<=C_out}, together with the finite event/history coefficient class and the corresponding operation prefixes. For the covariance-matched homogeneous comparison, every literal prediction/correction/reset/covariance-floor operation is nonexpansive in V, so every prefix after such a root satisfies V_prefix<=V_root<=C_out. Hence the boundary is not merely inward on complete words: operation-wise Delta V<=0. This gives homogeneous every-prefix outer retention for arbitrarily many EXCITED_MOVING words.
+
+The outer invariant-set theorem gives Inv_EXCITED_MOVING({D=0})={0}. On each closed annulus r_in^2<=V<=C_out of the compact retained history/root class, the standard diagonal compactness argument therefore gives finite m_out and eta_out>0 with cumulative homogeneous dissipation >=eta_out V_root, hence
+
+    V_(k+m_out) <= (1-eta_out)V_k.
+
+Repeated complete EXCITED_MOVING service implies finite homogeneous entrance into V<r_in^2. A single first word is NOT guaranteed to enter; the theorem only needs finite repeated-word entry. Because V itself provides prefix retention, no separate shaped W_out is needed for the homogeneous mechanism.
+
+LIMITATION: finite-error/source disturbances destroy exact operation-wise nonexpansion. For the physical theorem the outer boundary requires a linked supply condition (or a larger robust outer level) before repeated-word retention can be claimed. This is downstream of homogeneous entry and must use the same complete-word loss/supply factors; do not separately pessimistically estimate eta_out and E_out. Also, P_min is certified at specified regular post-prediction roots, so root-to-root theorem wording must preserve that phase; finite prefixes between roots are covered by operation-wise V nonexpansion once rooted.
