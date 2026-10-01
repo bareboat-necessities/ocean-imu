@@ -19,6 +19,9 @@ def certificate():
       "available_AW_headroom_mps2":str(HEAD),
       "linear_jump_must_telescope":True,
       "eventwise_remainder_sum_allowed":False,
+      "complete_causal_reader_action_ceiling":"16",
+      "normalized_reader_norm_ceiling":"4",
+      "higher_order_remainder_can_use_reader_action":True,
       "measurement_injection_uniform_bound_certified":False,
       "signed_twist_source_uniform_bound_certified":False,
       "theorem_closed":False}
