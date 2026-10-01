@@ -312,3 +312,44 @@ Thus the proposed implication
     EXCITED_MOVING + LF residual envelope => A_X(W)>=c_X>0
 
 is NOT established by TAW-1--4 without an additional already-existing physical primitive relation being used. The next valid calculation is to substitute r_a into TAW-3 and eliminate the physical acceleration contribution by the bounded-v/p/S primitives over the SAME 60-s word, while retaining K_aw,a, K_aw,S and the coupled tuner chronology. This is a closed-loop forced-response calculation, not pointwise AW tracking and not an independent-innovation bound. A non-promoting same-history diagnostic should evaluate the resulting signed functional before interval enclosure.
+
+
+## 60-s physical-acceleration elimination in the transverse AW recurrence — route falsified
+
+Substituting the exact base accelerometer innovation into TAW-3 isolates the physical acceleration contribution as a SAME-HISTORY signed gain-weighted sum
+
+    A_phys(W)=sum_j beta_j a_phys(t_j),
+
+where beta_j is the ordered transported product containing the literal P_B/reference projector, AW accelerometer gain K_aw,a,j, true/nominal frame convention, intervening S/acc/mag mean maps, and coupled tuner/covariance chronology. It is not a scalar averaging weight and is not independent of the physical history.
+
+With h_j=t_j-t_(j-1), w_j=beta_j/h_j and v'=a, exact first Abel summation gives
+
+    sum_j beta_j a(t_j)
+      = w_n v_n-w_1 v_0
+        -sum_(j=1)^(n-1)(w_(j+1)-w_j)v_j
+        -sum_j w_j q_j,
+
+    ||q_j|| <= (J_max/2) h_j^2.
+
+Thus
+
+    ||A_phys|| <= V_max[||w_1||+||w_n||+sum||Delta w_j||]
+                  +(J_max/2)sum h_j||beta_j||.              (TAW-A1)
+
+The tempting unweighted 60-s mean bound 2 V_max/60=.18333 m/s2 is therefore NOT applicable through the literal time-varying gains/projectors. It would be valid only for essentially constant scalar weights, which shipping does not supply.
+
+Using p'=v performs a second Abel step and differentiates the gain-weight sequence again. Grouping coefficients inside actual S intervals before taking norms is the strongest already-permitted refinement of this mechanism. The existing same-history calculation gives velocity charge 23.98805965312 and jerk charge 3.82238280532, total 27.81044245844, against a recorded projected-gravity budget 8.77133455729 before root/sensor/BA/spline defects. The actual signed acceleration action on that carried word is about .005, proving that the failure is relaxation/correlation loss, not large physical acceleration.
+
+Therefore bounded v,p,S primitives + EXCITED_MOVING + LF residual qualification do NOT close a positive nominal transverse-force floor through any coefficient-variation/Abel norm bound. Per AGENTS failure protocol this mechanism has had its motivated refinement and must stop. Do not try narrower interval subdivision, second/third Abel variation, or independent gain/projector maxima.
+
+RETAINED EXACT STRUCTURE: TAW-1--3, the signed gain-weighted physical acceleration term, the LF residual qualification, bounded physical primitives, and the tiny carried signed action remain valid. The next route must preserve cancellation between A_phys and the OTHER terms driven by the same accelerometer innovation. In particular K_aw,a multiplies the full innovation
+
+    r_a = Rtrue(a_phys-g_phys)-Rhat(a_hat_w-g_model)
+          +BA/lever/residual terms.
+
+Splitting K_aw,a Rtrue a_phys away from -K_aw,a Rhat a_hat_w destroys the closed-loop feedback cancellation. NEXT FALSIFIABLE CALCULATION: combine those two terms before summation and derive the exact affine closed-loop transverse map
+
+    u_k^+ = A_cl,k u_k^S + Kbar_k Rtrue,k(a_phys,k-g_phys)
+            + linked BA/lever/LF terms,
+
+with A_cl,k containing I-P_k K_aw,a,k Rhat_k on the transverse subspace. Test passivity/contraction of the COMPLETE pair using the actual Riccati identity K S K'=P^- -P^+ and the S restoring identity, rather than variation of K. This is a new cancellation-preserving mechanism, not another Abel refinement.
