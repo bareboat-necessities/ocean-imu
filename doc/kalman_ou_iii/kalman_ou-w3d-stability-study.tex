@@ -31,7 +31,7 @@
 \maketitle
 
 \begin{abstract}
-This study analyzes deterministic regional stability of the shipping OU--III marine estimator under the declared MARINE MOTION, IMU BIAS and MAGNETIC SERVICE domain, without changing estimator behavior, tuning, gates or quality thresholds.  The proof follows one same-history path through construction, capture, magnetically informed H18, refinement/release, recurring A21 and regional practical stability.  The current controlling argument is path-complete covariance-metric dissipativity and a LaSalle invariant-set exclusion, not the superseded scalar kernel-ceiling search.  The literal OU prediction, $S=0$ pseudo-measurement, accelerometer and magnetic corrections, covariance synchronization, resets and coupled $(\tau,\sigma_{a_w},R_S,T_S)$ chronology are retained together.  On the regular MARINE branch, the zero-dissipation set reduces to the physical compatibility class.  A source-audited bound $P_{a_wa_w}\preceq16.48I$ and bounded physical velocity/jerk exclude its remaining field-axis candidate inside the explicit storage radius $\sqrt V\le0.15$: over 17 s the sampled physical force/field separation is $0.714271\,\mathrm{m/s^2}$ while the largest local nominal/physical AW mismatch is $0.609\,\mathrm{m/s^2}$, leaving a strict $0.105271\,\mathrm{m/s^2}$ margin.  Compactness then gives finite-window homogeneous strict dissipation at the existence level.  Direct H18 release into this inner ball is not a valid universal target; a literal release audit shows attitude storage can be orders of magnitude larger even after BA elimination.  The controlling open problem is staged entry through a retained outer A21 region into the inner LaSalle ball, followed by finite nonlinear/source supply, regime-transition and float32 closure.  Both sensors now use a carried slow-plus-fast error model with signed window accumulation; its numerical temporal qualification is open, not replaced by unrestricted residual boxes. End-to-end regional practical stability is not yet claimed.
+This study analyzes deterministic regional stability of the shipping OU--III marine estimator under the declared MARINE MOTION, IMU BIAS and MAGNETIC SERVICE domain, without changing estimator behavior, tuning, gates or quality thresholds.  The proof follows one same-history path through construction, capture, magnetically informed H18, refinement/release, recurring A21 and regional practical stability.  The current controlling argument is path-complete covariance-metric dissipativity and a LaSalle invariant-set exclusion, not the superseded scalar kernel-ceiling search.  The literal OU prediction, $S=0$ pseudo-measurement, accelerometer and magnetic corrections, covariance synchronization, resets and coupled $(\tau,\sigma_{a_w},R_S,T_S)$ chronology are retained together.  On the regular MARINE branch, the zero-dissipation set reduces to the physical compatibility class.  A source-audited bound $P_{a_wa_w}\preceq16.48I$ and bounded physical velocity/jerk exclude its remaining field-axis candidate inside the explicit storage radius $\sqrt V\le0.15$: over 17 s the sampled physical force/field separation is $0.714271\,\mathrm{m/s^2}$ while the largest local nominal/physical AW mismatch is $0.609\,\mathrm{m/s^2}$, leaving a strict $0.105271\,\mathrm{m/s^2}$ margin.  Compactness then gives finite-window homogeneous strict dissipation at the existence level.  Direct H18 release into this inner ball is not a valid universal target; a literal release audit shows attitude storage can be orders of magnitude larger even after BA elimination.  The controlling open problem is staged entry through a retained outer A21 region into the inner LaSalle ball, followed by finite nonlinear/source supply, regime-transition and float32 closure.  Both sensors now use a carried slow-plus-fast error model with signed window accumulation; its numerical temporal qualification is open, not replaced by unrestricted residual boxes.  MARINE MOVING likewise requires recurring whole-window displacement span in addition to gravity-direction span, so zero-translation rocking is not an admitted moving ambiguity.  The numerical excitation constants remain open. End-to-end regional practical stability is not yet claimed.
 \end{abstract}
 
 \section{Theorem scope}
@@ -76,20 +76,33 @@ $W=[t,t+T_E]$, define body gravity direction $g_b(s)=R(s)^{\mathsf T}e_z$ and
  \Delta_g(W)=\sup_{s,u\in W}\arccos\!\bigl(g_b(s)^{\mathsf T}g_b(u)\bigr).
  \label{eq:attitude-span}
 \end{equation}
-The moving requirement is precisely
+A certified MOVING episode has two recurring excitation requirements on the
+same physical history.  The attitude requirement is
 \begin{equation}
  \fitcol{\boxed{\forall I,\ \forall t:\ [t,t+T_E]\subset\overline I
        \ \Longrightarrow\ \Delta_g([t,t+T_E])\ge\theta_E>0.}}
  \label{eq:episode-excite}
 \end{equation}
-No span condition is imposed on a window crossing a rest boundary. A departure
-at $a$ first allows a complete excited window at $a+T_E$; a shorter moving
-episode is wholly transition for this proof. Sustained constant-attitude
-translation cannot evade the condition by relabeling successive transitions.
-Indefinite physical rest remains admissible. The span uses roll/pitch rather
-than yaw, and is not an endpoint difference: periodic rocking can return to
-its initial attitude. $T_E,\theta_E$ remain symbolic; pinned vessel evidence
-does not yet qualify their all-time complete-window minimum.
+Define the wave-displacement diameter on $W$ by
+\begin{equation}
+ \Delta_p(W)=\sup_{s,u\in W}\norm{p(s)-p(u)} .
+ \label{eq:displacement-span}
+\end{equation}
+The displacement requirement is independently
+\begin{equation}
+ \fitcol{\boxed{\forall I,\ \forall t:\ [t,t+T_P]\subset\overline I
+       \ \Longrightarrow\ \Delta_p([t,t+T_P])\ge P_E>0.}}
+ \label{eq:displacement-excite}
+\end{equation}
+No span condition is imposed on a window crossing a rest boundary.  A shorter
+moving episode may therefore remain wholly transition for one or both
+requirements.  Both quantities are whole-window diameters rather than endpoint
+differences: periodic rocking and periodic translation may return to their
+initial values.  Pure attitude rocking with $p=v=a=0$ is not MOVING because
+$\Delta_p=0$.  Conversely, sustained constant-attitude translation cannot
+satisfy the attitude condition.  Indefinite quiet water remains admissible as
+STILL.  The four constants $T_E,\theta_E,T_P,P_E$ remain symbolic and
+numerically OPEN; no minimum wave height is invented from the proof.
 Pointwise bounds are insufficient. Admission additionally requires
 \begin{equation}
  \boxed{\norm{\int_{t_1}^{t_2}p(\tau)\,d\tau}\le P_{\rm AC},
@@ -1160,12 +1173,16 @@ transported matrix functional, not just an unweighted angular integral.
 A fixed magnetic field leaves field-axis physical rotations invisible, even
 when the specified restricted heading/axial-bias service holds.
 
-No stronger EXCITED\_MOVING assumption is adopted. The existing symbolic MARINE
-condition admits the all-slow $\phi=.001\sin^3(t/40)$ family already described
-in the regime section: $T_E=80\pi$, $\theta_E=.002$, both fast components zero.
-Thus the existing symbolic family does not itself give a general strict
-physical gauge-breaking margin. This is not a counterexample for every fixed
-$T_E,\theta_E$, and does not refute practical stability of its compatible class.
+The former all-slow $\phi=.001\sin^3(t/40)$ construction had
+$p=v=a=0$.  It therefore violates \eqref{eq:displacement-excite} for every
+$P_E>0$ and is no longer an admitted MOVING counterexample.  It is retained
+only as a historical obstruction to the previous attitude-only MARINE
+contract.  A current ambiguity must simultaneously realize nonzero recurring
+displacement span, the translation kinematics and primitive bound, attitude
+span, both SLOW+FAST IMU histories, and actual MAGNETIC SERVICE.  Displacement
+span alone is not converted into an instantaneous acceleration floor: the
+proof must use the linked chain $\dot p=v$, $\dot v=a$, the bounded primitive,
+and the literal $S=0$ chronology.
 
 For $\phi=.01\sin(.5t)$, all-slow compensation requires maximum accel/gyro
 rates $.04903325\,{\rm m/s^3}$ and $.0025\,{\rm rad/s^2}$, respectively
@@ -1294,6 +1311,8 @@ $A_{\max}$ & 8.80 & m/s$^2$\\
 $J_{\max}$ & 100 & m/s$^3$\\
 $\Omega_{\max}$ & 0.610865 & rad/s\\
 $P_{\rm AC}$ & 1100 & m\,s\\
+$T_E,\theta_E$ & OPEN & attitude excitation\\
+$T_P,P_E$ & OPEN & displacement excitation\\
 $B_{a,s}$ & 0.225167 & m/s$^2$\\
 $D_{a,s}$ & 0.001 & m/s$^3$\\
 $B_{g,s}$ & 0.020 & rad/s\\
@@ -1354,7 +1373,7 @@ The principal open obligations are:
 \begin{enumerate}
  \item finish the actual interleaved 17-s held-BA LIN BIBO theorem and the source-uniform compact A21 release class;
  \item certify the magnetic-reference cone, including Mahony-proxy tilt and continuous hard-iron/reference error transfer;
- \item qualify both assembled-device slow/fast histories and use them with the existing MARINE condition to exclude persistence of the corrected-word variational compatibility line without setting base innovations to zero;
+ \item qualify both assembled-device slow/fast histories and the existing MARINE excitation constants $(T_E,\theta_E,T_P,P_E)$, then exclude persistence of the corrected-word variational compatibility line using the linked displacement/velocity/acceleration/$S$ chain, gyro history and actual magnetic service without setting base innovations to zero;
  \item prove source-uniform outer A21 retention and finite entry below $0.15$, carrying active BA and the same tuner/reference history;
  \item close linked complete-word finite-error and every-prefix supplies;
  \item compose STILL/TRANSITION/MOVING regimes and transfer the real-arithmetic inequalities to float32.
