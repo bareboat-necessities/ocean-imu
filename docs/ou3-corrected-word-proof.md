@@ -6083,3 +6083,3856 @@ the retained source profile and independent of the missing AG upper bound.
 It must be proved at every pre-projection prefix. Neither invariant radius 6,
 entry into that radius, nor finite-injection/arithmetic totality follows.
 The reset's injection-dependent remainder remains separately chargeable.
+
+
+## Literal compatibility-graph alpha and finite-block return
+
+The exact-kernel large-c slope can be written without choosing a soft
+eigenvector. On a rank-one exact compatibility stratum use the homogeneous
+literal graph
+
+`r_W(a)=(a,0_{LIN/AW},-A_W a)`,                           (CG-1)
+
+where `a` is a nonzero homogeneous attitude coordinate and `A_W a` is the
+BA vector forced by every literal magnetic/accelerometer/S/process zero-action
+compatibility equation of that SAME realized word. `A_W` therefore depends
+on the actual chronological nominal-force rows, resets, held/active BA
+transport and the committed coupled tuner history; it is not freely chosen.
+
+Fix the physical metric `M>0` once and define
+
+`s_W=r_W' M r_W`, `e_W=r_W/sqrt(s_W)`.                  (CG-2)
+
+For a same-history successor `W_+` let `r_+` be its literal graph
+generator and `n_+=M r_+/sqrt(s_+)` the corresponding unit dual functional.
+On an exact-kernel word `J_W r_W=0`. In the Schur basis whose first vector
+is `e_W`, positive semidefiniteness gives both the first diagonal and the
+cross block of `J_W` equal to zero. Thus `j_W=0` and the Schur coefficient
+in DC-3 is not arbitrary:
+
+`ell_W=e_W' Phi_tilde_W' n_+
+       = r_+' M Phi_tilde_W r_W / sqrt(s_W s_+)`.          (CG-3)
+
+Consequently the exact large-c slope is
+
+`alpha_W=ell_W^2
+ = |r_+' M Phi_tilde_W r_W|^2/(s_W s_+)`.                 (CG-4)
+
+If one retains the unnormalized convention of LS4, the same statement is
+`alpha=ell_raw^2/s_W`; CG-4 is the invariant normalized form. On a
+zero-action compatibility trajectory `Phi_tilde_W r_W=T_W r_W`, because the
+conditional root map and literal deterministic homogeneous transport agree
+on the data-null root. Therefore
+
+`alpha_W
+ = |r_+' M T_W r_W|^2/
+   [(r_W'Mr_W)(r_+'Mr_+)]`.                               (CG-5)
+
+This is the literal compatibility-graph transfer, not a least-eigenvector
+surrogate. Every dependence of `A_W,T_W,r_+` on physical acceleration,
+attitude, biases, S pseudo-updates, magnetic service, covariance-generated
+gains and the coupled `tau,sigma_aw,R_S,T_S` chronology remains inside CG-5.
+
+Hence the one-boundary theorem question is precisely
+
+`alpha_bar_1 =
+ sup_(same-history exact-kernel pairs)
+ |r_+' M T_W r_W|^2/(s_W s_+) < 1 ?`.                    (CG-6)
+
+No current lemma proves CG-6. BA decay alone cannot: the next graph can change
+its attitude/BA ratio so that `T_W r_W` is collinear with `r_+`. Conversely
+compactness does not prove equality; it only ensures that the maximum is
+attained once the closed same-history pair class is established.
+
+### Full-baseline block return
+
+If `alpha_bar_1=1`, do NOT conclude instability. The correct m-word object
+is the complete composed Riccati word, not the numerical composition of the
+scalar functions `D_W`. Scalarization after each word discards the baseline
+matrix B and its cross-covariances, which LS8--LS12 show can change the next
+return.
+
+For a same-history block
+`B_m=W_(j+m-1) o ... o W_j`, compose the literal chronological factors
+first, preserving the actual carried covariance, source columns, tuner state
+and shared boundary states. Let
+
+`Pi_[j,m], J_[j,m], Phi_[j,m]`
+
+be Theorem-D's known-root covariance, root information and conditional
+root-to-terminal map of that WHOLE block. With endpoint graph generators
+`r_j,r_(j+m)`, define
+
+`G_[j,m](c)=J_[j,m]+r_j r_j'/c`                         (CG-7)
+
+in the fixed normalized physical coordinates and
+
+`D_[j,m](c)=
+ n_(j+m)' Pi_[j,m] n_(j+m)
+ +n_(j+m)' Phi_[j,m] G_[j,m](c)^-1
+                Phi_[j,m]' n_(j+m)`.                     (CG-8)
+
+CG-8 is exactly LS1 applied once to the superword. It automatically includes
+all intermediate quotient information and all B cross-covariance
+cancellations. If the block itself has an exact endpoint kernel, its large-c
+slope is
+
+`alpha_[j,m]=
+ |r_(j+m)' M T_[j,m] r_j|^2/
+ [(r_j'Mr_j)(r_(j+m)'Mr_(j+m))]`,                         (CG-9)
+
+where `T_[j,m]=T_(j+m-1)...T_j` only on the zero-action compatibility
+trajectory. If any intermediate word forces positive action on the carried
+mode, that mode is not in the block kernel; the block Schur information
+`j_[j,m]>0` and its contribution to `D_[j,m](c)/c` tends to zero instead.
+
+Thus a sufficient block O2 condition is: for some finite m,
+
+`sup_(same-history exact block-kernel chains) alpha_[j,m] <= 1-delta`
+for a `delta>0`.                                          (CG-10)
+
+Together with compact full-baseline `dperp_[j,m]`, CG-10 gives a finite
+block ceiling by the same LS5/DC argument. One-word unit transfer is harmless
+if it cannot persist through the block.
+
+When every constituent word is exact-kernel and the transported graph remains
+exactly on each next graph, write
+
+`T_k r_k=lambda_k r_(k+1)`.                              (CG-11)
+
+Then CG-9 factorizes exactly:
+
+`alpha_[j,m]=prod_(k=j)^(j+m-1) alpha_k`.                 (CG-12)
+
+If a constituent has `alpha_k=1` but a later one has strict loss, the block
+contracts. If all `alpha_k=1`, the chain is an exact persistent
+compatibility execution. Therefore the finite-block alternative is equivalent
+to excluding an infinite same-history unit-transfer chain, not to excluding
+unit transfer on every individual word.
+
+The existing EC compactness theorem now applies to the literal graph quantity
+CG-5: if no admissible infinite recurring execution satisfies
+`T_k r_k=lambda_k r_(k+1)` with unit normalized transfer at every boundary,
+then diagonal compactness yields some finite `m` and `delta>0` satisfying
+CG-10. Conversely an infinite equality execution defeats every such finite
+block.
+
+This is as far as the present assumptions close analytically. The coupled
+physical/tuner chronology has NOT yet excluded or constructed the infinite
+equality execution. Its exact equations are the already-derived compatibility
+zero dynamics/BV system, now with the endpoint quantity fixed by CG-5. The
+next decisive calculation is therefore to test global continuation of that
+literal graph under the coupled shipping zero dynamics; further arbitrary
+soft-eigenvector or separated covariance bounds cannot decide O2.
+
+
+## Literal compatibility graph substituted into the coupled shipping zero dynamics
+
+This section performs the CG substitution in the actual Live chronology.  It
+does not freeze the tuner, invent an S controller, or choose an independent
+soft direction.
+
+At an accepted accelerometer epoch k let the exact homogeneous compatibility
+generator be
+
+`r_k=(a_k,0_{LIN/AW},-A_k a_k)`.                          (ZG-1)
+
+Write `q_k=A_k a_k`.  The magnetic zero-action equations constrain `a_k`
+to the transported body-field axis, while the accelerometer zero-action
+equation is
+
+`J_att,k a_k-J_ba,k q_k=0`.                              (ZG-2)
+
+All rows in ZG-2 are the literal rows generated by the actual nominal mean,
+reference, reset and covariance history.  Four-S/process zero action has
+already removed an independent LIN/AW homogeneous root; it does NOT set the
+base nominal AW mean to zero.
+
+For a unit-transfer equality boundary, the homogeneous root must satisfy
+
+`T_k r_k=lambda_k r_(k+1)`,                               (ZG-3)
+
+with unit fixed-M normalized amplitude.  Hence, componentwise,
+
+`a_(k+1)=lambda_k^-1 T_att,k a_k`,
+`q_(k+1)=lambda_k^-1 T_ba,k q_k`.                         (ZG-4)
+
+Substituting q=Aa gives the exact graph cocycle
+
+`A_(k+1) T_att,k a_k = T_ba,k A_k a_k`.                  (ZG-5)
+
+ZG-5, together with ZG-2 at every applied accelerometer/magnetic epoch, is the
+literal equality manifold.  It is stronger than merely requiring a chosen
+eigenvector to have unit norm.
+
+### Shipping mean/tuner chronology on ZG
+
+Let `z_k` denote the complete base estimator mean, covariance, tuner,
+front-end, scheduler and physical state immediately before sample k.  The
+shipping order is:
+
+1. commit the schedule staged after sample k-1;
+2. predict the MEKF with committed tau and sigma_aw;
+3. apply a due S=0 pseudo-update with the committed actual R_S and cadence;
+4. apply the accelerometer correction;
+5. update the measurement-only tuner/front end from the current conditioned
+   physical sample;
+6. stage the new smoothed tau/sigma_aw/R_S candidate for sample k+1;
+7. apply a due AW covariance sync, which is mean-neutral but changes later
+   gains;
+8. apply asynchronous magnetic corrections in their actual callbacks.
+
+Thus the active schedule `theta_k=(tau_k,sigma_k,R_S,k,T_S,k)` is measurable
+with respect to the preceding physical samples.  It is not an algebraic
+unknown that can be chosen to satisfy ZG-5, but neither is it an extra
+constraint on the current compatibility output.
+
+Write the exact pre-accelerometer base mean after prediction and any due S
+pseudo-update as
+
+`m_k^S=S_k(theta_k,P_k) F_k(theta_k) m_(k-1)^+`,
+`S_k=I-K_S,k H_S`.                                       (ZG-6)
+
+The accepted accelerometer identity is
+
+`u_k=r_acc,k=f_phys,k-fhat_k-bhat_a,k`,                   (ZG-7)
+
+and the post-correction/reset map is
+
+`m_k^+=R_k[m_k^S+K_a,k u_k]`.                            (ZG-8)
+
+Covariance, gains and the next graph A_(k+1) follow the same actual operations.
+The compatibility-maintenance equation obtained by substituting ZG-8 into the
+next ZG-2 has the exact form
+
+`h_k(z_k,q_k,u_k)=0 in R^2`.                              (ZG-9)
+
+No independent S residual appears: it is already the state-dependent term
+`-H_S m^-` in ZG-6.  No independent tuner variable appears: theta_k is the
+lagged measurement-only schedule carried in z_k.
+
+Split the physical accelerometer innovation into two transverse components
+and one longitudinal component relative to the current compatibility axis,
+
+`u_k=(u_perp,k,u_parallel,k)`.                            (ZG-10)
+
+On every regular stratum where
+
+`G_k=d_(u_perp) h_k`                                      (ZG-11)
+
+is nonsingular, the implicit-function theorem gives
+
+`u_perp,k=Psi_k(z_k,q_k,u_parallel,k)`.                   (ZG-12)
+
+Substitution into the complete shipping map gives the exact reduced equality
+dynamics
+
+`z_(k+1)=Z_k(z_k,q_k,u_parallel,k)`,
+`q_(k+1)=T_ba,k q_k/lambda_k`,                           (ZG-13)
+
+with the tuner/front-end update and next-sample commit INCLUDED in Z_k.  This
+is a one-input nonautonomous viability system on the literal compatibility
+graph.
+
+### Does the coupled tuner/S chronology force finite escape?
+
+No.  The substitution identifies no sign-definite or divergent term.
+
+First, the BA factor drives q toward the regular q=0 compatibility manifold;
+it does not drive the trajectory toward a forbidden boundary.  At q=0,
+ZG-9 is nominal field-axis compatibility and the target increment caused by
+BA decay vanishes.
+
+Second, the S pseudo-update is a bounded Kalman map inside Z_k.  It changes
+the required Psi_k and the future covariance/gains but supplies no additional
+independent equality beyond h_k=0.  Its innovation is endogenous and can be
+bounded on a bounded compatible trajectory.
+
+Third, the deployed tuner does not close an algebraic loop at the same
+sample.  Its inputs are the measurement-only front end; its smoothed candidate
+is staged after the current MEKF correction and committed before the next
+sample.  Therefore its effect in ZG-13 is a bounded one-step-lagged coefficient
+sequence.  The coupled law is important quantitatively--tau changes the OU
+transport and T_S, sigma changes process/sync covariance, and the SpectralMSE
+law changes R_S--but none of those operations adds a compatibility equation.
+The safety clamps keep these coefficients in the retained compact ranges.
+
+Fourth, AW covariance synchronization is mean-neutral.  It can alter
+G_(k+1) through the next gains, so a rank-loss boundary remains possible, but
+it cannot itself force the current compatible mean off ZG.
+
+Finally, MARINE MOTION bounded velocity/displacement/potential does not create
+a monotone escape supply.  After ZG-12 the free longitudinal input and the
+time-varying attitude permit zero-mean periodic/quasiperiodic physical
+acceleration.  Hence maintaining h=0 need not consume a nonzero DC physical
+acceleration or an accumulating innovation-energy resource.
+
+Therefore the literal coupled chronology gives
+
+`finite escape is NOT implied by the present assumptions`.             (ZG-14)
+
+This is a theorem about the available inequalities, not a construction of a
+shipping counterexample.
+
+### Does the substitution prove a forward-complete equality execution?
+
+Not yet.  Local continuation follows on any strict-margin regular patch from
+ZG-11--ZG-12.  A forward-complete equality execution would follow if there
+were a compact positively invariant subset K of ZG on which, uniformly,
+
+`sigma_min(G_k)>=g_0>0`,                                  (ZG-15)
+all physical/retained-state and gate margins are positive, and
+the recurring magnetic-service Gram has margin
+`lambda_min(G_M)>=mu_M+delta_M`.                          (ZG-16)
+
+The current theorem set proves neither ZG-15 nor invariance of those margins
+along the constrained map Z_k.  In particular covariance cross terms can
+drive the transverse accelerometer gain toward rank loss, and MAGNETIC
+SERVICE is an assumption on the actual execution, not a proved invariant of
+the compatibility-controlled continuation.
+
+Conversely, an escape theorem would require showing every ZG trajectory
+reaches one of these boundaries in finite time.  ZG-13 supplies no Lyapunov
+or barrier function with such a sign.  The natural candidate |q| moves in the
+wrong direction: it decays into the regular q=0 interior.
+
+Hence the exact dichotomy after literal substitution is:
+
+- **forced finite escape:** disproved as a consequence of the existing
+  algebra/boundedness/tuner/S arguments; none supplies the required sign;
+- **forward-complete compatible execution:** locally viable on regular
+  strict-margin patches, globally OPEN because positive invariance of such a
+  patch is not proved.
+
+This is enough to rule out further attempts to close O2 by BA decay, S
+pseudo-update accumulation, tuner coupling, bounded physical primitives, or
+one-word covariance estimates.  The remaining decisive task is narrower:
+construct a reachable strict-margin recurring A21 base point on ZG and prove
+a compact invariant neighborhood for Z_k, OR prove a source-uniform loss of
+ZG-15/ZG-16/gate margin along every constrained trajectory.  Either result
+settles the infinite equality chain and therefore the finite-block O2
+condition CG-10.
+
+
+## Literal compatibility transport inside the full block-PSD certificate
+
+This is the direct substitution of CG/ZG into LS3.  It is the controlling O2
+object; no separately maximized d_soft or H appears.
+
+Fix an admissible same-history m-word block
+`B=[j,j+m)` and compose the literal Theorem-D factors over the WHOLE block,
+with the carried physical/estimator/covariance/tuner/scheduler history.  Write
+
+`Pi_B=Ric_B(0)`, `J_B` for the complete nuisance-shortened root information,
+and `Phi_B` for the conditional root-to-terminal map.  Let the literal
+endpoint compatibility graph generators be
+
+`r_0=(a_0,0,-A_0a_0)`, `r_1=(a_1,0,-A_1a_1)`.          (BP-1)
+
+Use one fixed physical metric M and normalize
+`e_0=r_0/sqrt(r_0'Mr_0)`, `n_1=Mr_1/sqrt(r_1'Mr_1)`.
+Equivalently transform root coordinates once by M^(1/2); below the Euclidean
+rank-one `e_0e_0'` means that fixed metric normalization, not a wordwise
+renormalization.
+
+Define
+
+`w_B=Phi_B' n_1`, `d_B=n_1'Pi_B n_1`,
+`G_B(c)=J_B+e_0e_0'/c`.                                  (BP-2)
+
+Then the exact block return is
+
+`D_B(c)=d_B+w_B'G_B(c)^-1 w_B`.                          (BP-3)
+
+All known-root process covariance, diffuse quotient uncertainty, intermediate
+S/accelerometer/magnetic information, AW sync, tuner-dependent process
+factors and cross-covariances are already in Pi_B,J_B,Phi_B.  In particular
+Pi_B is NOT replaced by a scalar background.
+
+The scalar ceiling is exactly the bordered PSD condition
+
+`K_B(c):=
+ [[c-d_B, w_B'],
+  [w_B,   J_B+e_0e_0'/c]] >=0`.                          (BP-4)
+
+BP-4 is LS3 for the literal superword.  Multiplying the first row/column by
+sqrt(c) gives the congruent form
+
+`Khat_B(c)=
+ [[c-d_B,       sqrt(c) w_B'],
+  [sqrt(c) w_B, c J_B+e_0e_0']] >=0`.                    (BP-5)
+
+This form is useful at rank boundaries because it contains no inverse.
+
+### Short only the true quotient, after inserting the literal graph
+
+Choose a fixed-metric orthonormal root basis `[e_0,E_Q]`.  Write
+
+`J_B=[[j,h'];[h,Q]]`, `w_B=(beta,g)`, `Q>0`.         (BP-6)
+
+Here Q is the actual complete block quotient information.  Do not replace it
+by an independent lower floor before taking the Schur complement.  Shorting Q
+in BP-4 gives the EXACT 2x2 certificate
+
+`S_B(c)=
+ [[c-dperp,             ell],
+  [ell, j+1/c]] >=0`,                                    (BP-7)
+
+where
+
+`dperp=d_B+g'Q^-1g`,
+`j=j_B:=j-h'Q^-1h>=0`,
+`ell=ell_B:=beta-h'Q^-1g`.                              (BP-8)
+
+Thus BP-4 is equivalent to
+
+`c>=dperp`,
+`(c-dperp)(j+1/c)-ell^2>=0`.                            (BP-9)
+
+After multiplying by c,
+
+`j c^2+(1-ell^2-j dperp)c-dperp>=0`.                    (BP-10)
+
+This is LS5 with unit fixed-metric root normalization, now derived after the
+literal block composition.  The important point is that dperp contains the
+complete background Pi_B AND the actual quotient return `g'Q^-1g`; ell
+contains the correlated quotient cancellation `h'Q^-1g`.  Neither may be
+bounded independently without losing the linked cancellation.
+
+### Exact compatibility face
+
+If the WHOLE block has a nonzero exact root compatibility mode e_0, then
+
+`J_B e_0=0`.                                              (BP-11)
+
+Because J_B is PSD, BP-11 forces `j=0` and `h=0` in BP-6.  Hence
+
+`ell=beta=e_0'Phi_B'n_1
+ = r_1'M Phi_B r_0/sqrt[(r_0'Mr_0)(r_1'Mr_1)]`.           (BP-12)
+
+On the zero-action graph trajectory `Phi_B r_0=T_Br_0`, so
+
+`alpha_B:=ell^2
+ = |r_1'M T_B r_0|^2/
+   [(r_0'Mr_0)(r_1'Mr_1)]`.                              (BP-13)
+
+The complete-background certificate reduces exactly to
+
+`S_B(c)=
+ [[c-dperp_B, ell_B],
+  [ell_B,     1/c]] >=0`,                                 (BP-14)
+
+or
+
+`c(1-alpha_B)>=dperp_B`.                                 (BP-15)
+
+Therefore:
+- if `alpha_B<1`, the exact finite ceiling is
+  `c>=dperp_B/(1-alpha_B)`;
+- if `alpha_B=1` and `dperp_B>0`, NO finite scalar ceiling exists for that
+  block;
+- if `alpha_B=1,dperp_B=0`, BP-14 is only semidefinite equality and gives no
+  strict contraction.
+
+This conclusion retains the full background.  The obstruction at alpha=1 is
+not an artifact of multiplying dbar and Hbar: the positive dperp_B is the
+literal known-root/quotient covariance appearing in the same Schur
+certificate.
+
+### Intermediate information and the m-word advantage
+
+If the carried endpoint graph direction is charged anywhere inside the block,
+then after complete nuisance shorting `j_B>0` unless another exact block
+null mode survives.  BP-10 then has positive leading coefficient, so every
+fixed block eventually satisfies BP-4 for sufficiently large c.  The positive
+root is
+
+`c_*(B)=
+ [-(1-ell^2-j dperp)
+  +sqrt((1-ell^2-j dperp)^2+4j dperp)]/(2j)`,             (BP-16)
+
+with the j->0 limit given by BP-15 when alpha<1.
+
+Thus the finite-block mechanism is sharper than multiplying boundary alphas:
+a mode may have unit endpoint overlap on an early word but acquire positive
+actual information later; then the superword has j_B>0 and its large-c slope
+is zero.  Only a genuine exact null trajectory through the ENTIRE block lands
+on BP-11--BP-15.
+
+For a wholly exact persistent chain, ZG gives
+`T_k r_k=lambda_k r_(k+1)`.  Then BP-13 factorizes into the product of the
+boundary alphas under the same fixed metric.  If all are one, BP-15 fails
+whenever dperp_B>0.  If some boundary is lossy while the block remains exact,
+alpha_B<1 and BP-15 supplies the finite ceiling.
+
+### Uniform same-history block theorem
+
+For a fixed m let C_m be the compact class of admissible same-history
+m-word blocks with the literal coupled tuner/physical chronology.  Define the
+continuous/shorted BP quantities on each closed event stratum.  A uniform
+block ceiling exists if and only if the BP-10 positive roots are uniformly
+bounded.  A sufficient and, on the exact-kernel face, necessary condition is
+
+`sup_(B in C_m: j_B=0) alpha_B <1`,                      (BP-17)
+
+together with the already required compact finite `dperp_B` and positive
+quotient shorting on the retained coordinates.  Then choose
+
+`c_m >= sup_(B in C_m) c_*(B)<infinity`                  (BP-18)
+
+and BP-4 holds for every block.  Strict inequality can be retained by choosing
+c_m above the attained supremum and preserving the existing nonlinear/
+arithmetic margins.
+
+If BP-17 fails for every finite m because there is an infinite exact
+unit-transfer compatibility execution, the scalar block ceiling architecture
+cannot close: every prefix lies on BP-15 with alpha=1 and positive background.
+If no such infinite execution exists, the EC compactness theorem supplies
+some finite m and delta>0 on the exact face; continuity of BP-10 then gives a
+finite uniform c_m.  This is the precise bridge from the compatibility
+continuation problem to the full-baseline linked Riccati certificate.
+
+No theorem flag is promoted here: the existence/nonexistence of the infinite
+exact equality execution remains OPEN.  What is closed is the algebraic
+question of how its answer enters O2: through BP-4/BP-10, with the complete
+background covariance retained.
+
+
+## Can q=0 compatibility acquire positive full-block information?
+
+This calculation addresses the remaining possibility after BP: perhaps the
+endpoint graph transfer stays unit but the complete block nevertheless charges
+the carried mode, so `j_B>0`.
+
+Use the exact fixed-factor block model after all literal operations have been
+composed:
+
+`y=O_s x+A xi+O_f x_f`,                                   (QI-1)
+
+where xi stacks every fresh process, measurement and sync source ONCE and x_f
+is the nuisance root.  With the actual joint source covariance whitened into
+the factor columns, nuisance shorting gives
+
+`x'J_B x =
+ min_(x_f,xi) ||O_s x+O_f x_f+A xi||^2+||xi||^2`           (QI-2)
+
+in the equivalent minimum-action representation (or its exact correlated
+whitened form).  The essential fact is positivity: `x'J_Bx=0` iff there is
+a literal homogeneous trajectory with ZERO total source/measurement action.
+No cancellation between positive source actions can make a nonzero action
+zero.
+
+Let `e_0` be the normalized q=0 compatibility root.  The shorted scalar in
+BP-8 obeys
+
+`j_B=0 <=> e_0'J_Be_0=0`                                 (QI-3)
+
+because J_B is PSD and the quotient Schur complement is its minimum over the
+quotient coordinates.  Thus j_B is exactly the minimum complete-block action
+of the carried graph mode after all allowed nuisance-root mimics, not a
+separate observability constant.
+
+### Zero-action classification on q=0
+
+Set q=0 in the literal graph.  If `j_B=0`, every nonnegative component of
+QI-2 must vanish.
+
+1. **Fresh process/sync factors vanish.**  AW, LIN, AG/BA fresh process factors
+   and AW covariance-sync factors are zero in the homogeneous auxiliary
+   trajectory.  Hence no intermediate nuisance can be reselected from word to
+   word; it is the deterministic image of the block root.
+
+2. **S rows vanish.**  Every applied S=0 row has zero homogeneous residual.
+   With zero fresh LIN/AW source action, the four-S injectivity result removes
+   the independent homogeneous `(v,p,S,a_w)` root on regular blocks.  This
+   statement concerns the error trajectory; the BASE nominal AW mean remains
+   free to follow the coupled tuner/physical zero dynamics.
+
+3. **Magnetic rows vanish.**  Every applied informative magnetic row has zero
+   homogeneous residual.  MAGNETIC SERVICE plus the deterministic AG transport
+   leaves the transported field-axis attitude class (and the already-qualified
+   gyro-bias restrictions).
+
+4. **Accelerometer rows vanish.**  With q=0 and no homogeneous LIN/AW/BA mimic,
+   the homogeneous accelerometer condition is exactly the field-axis
+   compatibility equation generated by the ACTUAL base nominal specific-force
+   history.  In the notation of ZG this is `h_k(z_k,0,u_k)=0` at every
+   applied epoch.
+
+Therefore
+
+`j_B=0`
+`<=>`
+`the q=0 carried graph extends as a zero-action compatibility trajectory
+ through every literal event of B`,                                    (QI-4)
+
+subject to the already stated four-S/nullity qualifications.  The reverse
+direction is immediate: such a literal zero-action trajectory is an admissible
+competitor in QI-2 with zero cost.
+
+This equivalence is stronger than the earlier endpoint alpha statement.
+Endpoint unit transfer alone does NOT imply j_B=0; any intermediate violation
+of S/magnetic/accelerometer compatibility gives positive block action.  But an
+exact ZG trajectory does imply j_B=0 for every finite prefix.
+
+### Does the coupled q=0 zero dynamics necessarily make j_B positive?
+
+No theorem in the present assumptions does so.  Substitution of ZG-12 into
+the base shipping recursion shows why.  On every regular strict-margin patch,
+the two transverse physical accelerometer components solve the two
+compatibility equations:
+
+`u_perp,k=Psi_k(z_k,0,u_parallel,k)`.                     (QI-5)
+
+The S pseudo-update is already inside z_k and Psi_k.  The lagged
+`tau,sigma_aw,R_S,T_S` tuner schedule changes the coefficients and future
+covariance/gains but adds no homogeneous action when the corresponding
+homogeneous S/process residuals are zero.  Magnetic service constrains the
+homogeneous attitude mode but is compatible with the field-axis line.  Hence
+none of these terms creates an unavoidable positive summand in QI-2 while the
+constrained base trajectory remains on a regular ZG patch.
+
+In particular there is no valid implication
+
+`endpoint alpha=1 => j_B>0 after at most m words`          (QI-6)
+
+from the current assumptions.  Proving QI-6 would be exactly an escape theorem
+for ZG in different notation.
+
+Conversely, local IFT viability is not a proof that j_B=0 can persist forever:
+the constrained base trajectory may eventually hit transverse-rank loss,
+a physical/gate boundary, or the magnetic-service boundary.  At that first
+event the exact zero-action continuation can fail and every sufficiently long
+superword containing the failure has `j_B>0` for the carried mode.
+
+### Compactness equivalence for finite-block rescue
+
+Let ZG_infty be the inverse-limit class of admissible recurring q=0
+same-history executions.  Assume the established compact event-stratum and
+four-S/nullity qualifications.  Then the following are equivalent:
+
+(A) there is no forward-complete execution in ZG_infty satisfying exact
+    compatibility at every literal event;
+
+(B) there exist finite m and epsilon_J>0 such that every admissible m-word
+    q=0 carried graph mode has
+    `j_B>=epsilon_J` OR leaves the exact block-kernel face with
+    `alpha_B<=1-delta` for some uniform delta>0.           (QI-7)
+
+Proof.  If (B) fails for every m, choose longer and longer blocks whose
+shorted action tends to zero while endpoint loss tends to zero.  Compactness,
+lower semicontinuity of the nonnegative joint action and diagonal extraction
+produce an infinite literal zero-action ZG execution.  Conversely an infinite
+exact ZG execution has j_B=0 and alpha_B=1 on every finite prefix, contradicting
+(B).
+
+A slightly stronger pure-information statement,
+`j_B>=epsilon_J>0` on every m-word block, is NOT equivalent and need not
+hold: a finite block can remain an exact kernel but have alpha_B<1, which is
+already sufficient through BP-15.  The correct rescue alternative is the
+union in QI-7: positive block information OR strict exact-kernel transfer loss.
+
+### Consequence for the proof strategy
+
+The full-block information side does not independently eliminate the equality
+execution.  It proves that the information and compatibility formulations are
+the SAME obstruction:
+
+`infinite exact q=0 ZG execution`
+`<=>`
+`for every finite prefix: j_B=0 and alpha_B=1`.           (QI-8)
+
+Thus searching for a generic positive lower bound on j_B while allowing exact
+ZG compatibility would be circular.  The next useful theorem must operate on
+the BASE constrained dynamics, not on another homogeneous information bound:
+either prove every q=0 ZG trajectory reaches a rank/service/gate/physical
+boundary in finite time, or construct one compact forward-invariant
+strict-margin ZG execution.  Once that is decided, BP-10 converts the result
+directly into (or rules out) finite-block O2.
+
+
+## Quantitative transverse authority on the q=0 compatibility manifold
+
+This calculation differentiates the literal next compatibility output with
+respect to the CURRENT accepted accelerometer innovation.  It keeps the
+shipping covariance/gain chronology; G is not replaced by an AW-gain proxy.
+
+Let x_k^S be the estimator mean immediately before accepted accelerometer
+correction k, after prediction and any due S pseudo-update.  Let C_k be the
+literal 3-row accelerometer Jacobian used by shipping,
+
+`C_k=[J_att,k, 0_bg, 0_vps, R_wb,k, J_ba,k]`              (GA-1)
+
+with the optional lever-arm gyro-bias block inserted when enabled and with the
+BA block omitted from the gain when BA updates are frozen.  Shipping computes
+
+`S_k=C_k P_k C_k'+R_acc,k`,
+`K_k=P_k C_k' S_k^-1`.                                   (GA-2)
+
+The mean increment is K_k u_k, followed by the literal quaternion injection,
+bias projection (on a strict interior patch its derivative is identity), and
+error-state reset.  Denote the derivative of that complete post-correction
+mean/reset map by R_k.  Compose from there to the next compatibility evaluation
+all literal predictions, magnetic corrections, and any due S pseudo-update;
+call this derivative F_(k+1,k).  It uses the committed lagged
+`tau,sigma_aw,R_S,T_S` schedule and the covariance-generated gains on that
+same base history.
+
+At q=0 the next homogeneous compatibility output is the two-dimensional
+projection of the next nominal-force/attitude row transverse to the
+transported magnetic axis.  Let C_c,k+1 be its derivative with respect to the
+base mean and let E_perp,k inject the two selected transverse components of
+the physical accelerometer innovation.  Then, away from gate/projection
+boundaries,
+
+`G_k=d_(u_perp) h_k
+ =C_c,k+1 F_(k+1,k) R_k K_k E_perp,k`                     (GA-3)
+
+plus the direct physical-input term if h_(k+1) is defined at the same sample.
+For the one-step-ahead convention used in ZG there is no direct term.  In
+world field-axis notation one may write
+`C_c=P_bperp C_m`, giving the same formula.
+
+Substitute GA-2:
+
+`G_k=N_k S_k^-1 E_perp,k`,                                (GA-4)
+`N_k:=C_c,k+1 F_(k+1,k) R_k P_k C_k'`.                   (GA-5)
+
+Since S_k is SPD on every accepted update, rank(G_k) is exactly the rank of
+the corresponding two-column restriction of N_k.  Positive R_acc cannot
+supply transverse authority that is absent from N_k.
+
+### Exact singular-value comparison
+
+Let `S_perp,k=E_perp,k' S_k E_perp,k` only when E_perp selects an invariant
+measurement plane.  In the general case keep the rectangular right factor.
+For any 2-vector z,
+
+`|G_k z| >= sigma_min(N_k S_k^-1 E_perp,k)|z|`.           (GA-6)
+
+Using singular-value products gives the valid coarse lower implication
+
+`sigma_min(G_k)
+ >= sigma_min(N_k|Range(S_k^-1 E_perp,k))
+    sigma_min(S_k^-1 E_perp,k)`.                          (GA-7)
+
+On the retained compact covariance/noise class,
+`sigma_min(S_k^-1 E_perp,k)>=1/lambda_max(S_k)>0`.
+Therefore a uniform authority floor is EQUIVALENT, up to known finite
+conditioning, to a positive source-uniform floor for the transported
+cross-covariance numerator N_k on the actual transverse innovation plane.
+
+The coupled tuner law supplies compact upper/lower bounds for the conditioning
+factor through process covariance, R_S and cadence, but it does not by itself
+give a lower singular bound for N_k.
+
+### Why covariance positivity does not force N_k to be nonsingular
+
+The numerator is a cross covariance between the current accelerometer
+measurement and the NEXT compatibility output after the intervening corrected
+chronology:
+
+`N_k=Cov(h_(k+1), y_acc,k | past)`                        (GA-8)
+
+in the linearized joint Gaussian model (with the literal reset/transport).
+A positive-definite state covariance P_k and positive R_acc guarantee
+S_k>0, but a cross covariance may vanish.
+
+This is not merely a loose-bound issue.  Partition the current state into the
+two-dimensional compatibility-output sector c and the remaining state r.
+Then the relevant numerator has the schematic exact form
+
+`N_perp=A P_cc H_c'
+        +A P_cr H_r'
+        +B P_rc H_c'
+        +B P_rr H_r'`.                                    (GA-9)
+
+The off-diagonal covariance blocks are signed.  Joseph updates, S
+pseudo-updates, magnetic updates and predictions preserve PSD of the WHOLE
+P but do not preserve the sign or a lower singular value of this particular
+cross block.  AW covariance sync in the deployed path adds a PSD increment to
+the AW marginal while preserving existing cross-covariances; this changes
+relative correlations but again supplies no sign constraint on GA-9.
+
+A two-state SPD witness already shows the algebra: with
+`P=[[1,rho],[rho,1]]`, measurement row H=[1,0], and next output row
+L=[-rho,1], one has `L P H'=0` for every |rho|<1 although P>0 and
+S=1+R>0.  This witness is algebraic, not claimed shipping reachable.  It
+proves that covariance positivity/noise floors alone cannot establish the
+desired authority floor.
+
+### What the actual tuner/S chronology does and does not guarantee
+
+The committed `tau` bounds keep OU prediction coefficients finite and away
+from their singular limits on each positive-dt step.  Positive sigma_aw and
+the pending AW floor provide process covariance in the AW sector.  The
+SpectralMSE R_S law and bounded T_S give recurring finite-noise S corrections.
+Together these are valuable for compactness and for bounding P and S_k.
+
+But G_k depends on the ORIENTATION of the full covariance through P_k C_k'
+and on its subsequent transport through F R.  None of the coupled scalar
+laws fixes that orientation.  S and magnetic Joseph corrections can rotate
+the relevant cross-covariance; accelerometer corrections can do the same.
+Therefore the coupled law does not imply
+
+`inf_(q=0 compatible histories) sigma_min(G_k)>0`.         (GA-10)
+
+Conversely it also does not imply inevitable rank loss.  Full rank is an open
+condition: if one reachable q=0 A21 point has `det G_k !=0`, then a
+neighborhood of that point has a positive local floor.  Constructor/diagonal
+covariance examples establish algebraic rank-two authority, but they are not
+yet certified reachable recurring A21 q=0 roots.
+
+### Indefinite persistence versus inevitable loss
+
+Define the regular authority set
+
+`R_g={z in ZG(q=0): sigma_min(G(z))>=g}`.                 (GA-11)
+
+For any g>0, R_g is closed inside a fixed event/gate stratum; the strict set
+sigma_min(G)>g is open.  The shipping constrained map Z sends a regular point
+to its next q=0 point after solving the transverse innovation.
+
+The current equations prove neither
+
+`exists g>0, compact K subset R_g with Z(K) subset K`      (GA-12)
+
+nor
+
+`every q=0 constrained trajectory reaches det G=0 in
+ finite time`.                                             (GA-13)
+
+Thus the answer to the proposed question is precise:
+
+**the coupled covariance/tuner/S chronology CAN remain uniformly nonsingular
+only if a compact invariant regular set GA-12 exists; nothing in the current
+scalar tuning laws forbids it.  It is NOT forced to remain nonsingular, and
+no current invariant forces eventual singularity.**
+
+This means rank loss cannot presently be used as the automatic mechanism
+that produces j_B>0.  If a constrained trajectory reaches det G=0, exact
+compatibility may still continue through that point using a different input
+chart; singularity of this particular 2x2 chart is not itself positive
+homogeneous information.  To infer j_B>0 one must prove that the FULL
+compatibility equation has no admissible continuation there, not merely that
+one transverse parameterization fails.
+
+### Stronger chart-invariant authority criterion
+
+Let D_k be the full derivative of the two compatibility equations with
+respect to the THREE physical accelerometer components:
+
+`D_k=C_c,k+1 F_(k+1,k) R_k K_k`.                         (GA-14)
+
+Local compatibility continuation requires `rank D_k=2`; a choice of
+E_perp is only a coordinate chart.  Therefore the intrinsic quantity is
+
+`g_full(z)=sigma_2(D_k)`,                                 (GA-15)
+
+the second singular value.  There exists some transverse 2-plane with a
+well-conditioned G iff g_full>0.  If one selected G becomes singular while
+g_full>0, change charts; no compatibility break has occurred.
+
+Using K=P C'S^-1,
+
+`D_k=C_c F R P C' S^-1`.                                 (GA-16)
+
+As before, S^-1 is uniformly conditioned on the retained class, so the
+decisive quantity is the rank-two cross-covariance operator
+
+`C_c F R P C'`.                                          (GA-17)
+
+A finite-block information gain can be forced from authority loss only after
+proving `rank D_k<2` makes the affine compatibility equation unsolvable for
+the actual drift term.  Rank loss alone may instead leave a rank-one or
+rank-zero compatible solution if the drift lies in Range(D_k).
+
+Therefore the next quantitative target should not be a lower bound on one
+chosen G.  It is the chart-invariant constrained solvability margin
+
+`eta_k=dist(-h_k(z,0,0), Range(D_k))` when rank D_k<2,     (GA-18)
+
+together with `sigma_2(D_k)` on the regular set.  A source-uniform theorem
+that every infinite q=0 constrained execution either stays in a compact
+`sigma_2(D)>=g>0` set or incurs `eta>=eta_0>0` at a rank-loss event would
+decide continuation versus positive block information without coordinate
+artifacts.
+
+No such theorem is currently proved.  This calculation rules out the simpler
+hope that positive covariance, R_acc, S recurrence, or the coupled tuner law
+alone enforce or destroy transverse authority.
+
+
+## Shipping-closed self-consistency equation for the alleged q=0 trajectory
+
+The preceding ZG/GA formulations deliberately exposed local compatibility
+authority, but they still permit a misleading reading: choose an innovation
+u to keep h=0 and ask later whether some physical motion realizes u.  Shipping
+does not have that causal freedom.  The accelerometer residual, the private
+measurement-only front end, the tuner schedule, covariance, Kalman gain and
+next residual are generated by ONE physical IMU history.
+
+This section therefore removes u as an independent control.
+
+### One literal sample map
+
+Let the exogenous physical sample be
+
+`p_k=(R_k^phys, omega_k^phys, a_k^phys, b_k^phys, temperature_k, ...)`
+
+with calibrated accelerometer sample `y_k=Y(p_k)`.  Let `z_k` contain the
+complete shipping state immediately before updateCore_: MEKF mean/covariance,
+private Mahony/front-end state, wave-period/frequency/variance state, tuner
+EMAs and targets, pending one-sample tune commit, S/AW-sync clocks, magnetic
+reference/service state, and gate state.
+
+Shipping executes one deterministic map
+
+`z_(k+1)=S_k(z_k,p_k)`.                                   (SC-1)
+
+Its relevant factorization is causal:
+
+`theta_k = Commit(z_k.pending)`,                          (SC-2)
+`ybar_k = conditionAccel(y_k; z_k)`,
+`front_(k+)=Front(front_k,omega_k,ybar_k)`,               (SC-3)
+`(x_k^-,P_k^-)=Predict_theta_k(x_k,P_k)`,
+`(x_k^a,P_k^a)=AccUpdate(ybar_k;x_k^-,P_k^-)`,            (SC-4)
+`tuner_(k+)=Tune(front_(k+),ybar_k;tuner_k)`,
+`pending_(k+)=Stage(tuner_(k+))`,                         (SC-5)
+followed by due AW covariance sync and asynchronous magnetic callbacks in
+their literal order.  A due S=0 pseudo-update is inside Predict_theta_k with
+the committed actual R_S and T_S.  The exact source order in the wrapper is
+commit -> condition -> private level/front end -> MEKF prediction/acc update
+-> tuner -> AW sync; the period estimator used by tuning is lagged as in the
+shipping code.
+
+The committed parameter tuple is therefore a functional of the PRIOR physical
+history,
+
+`theta_k=(tau_k,sigma_aw,k,R_S,k,T_S,k)
+          =T_k[p_0,...,p_(k-1);z_0]`.                     (SC-6)
+
+For the deployed SpectralMSE branch this functional includes the
+measurement-only period-scaled acceleration band, variance horizon, operating
+point
+`tau_target=c_tau T_z/2`,
+`sigma_target=c_sigma sigma_a,B`,
+the tau/sigma EMA, and
+
+`R_S,target=C_J q_eff^(1/14) sigma_a,B^(6/7)
+              tau^(24/7)/sqrt(T_S)`,                      (SC-7)
+
+with `T_S` the actual tau-scaled/clamped pseudo cadence, R_S EMA/clamps, and
+the one-sample delayed commit.  Thus tau,sigma_aw,R_S,T_S are not independent
+unknowns in the compatibility equations.
+
+### Impose q=0 compatibility BEFORE solving for the physical input
+
+On the alleged late pathological branch, the homogeneous compatibility line
+has q=0 and the nominal predicted specific force is parallel to the
+transported magnetic field.  In the fixed-world form already derived,
+
+`P_bperp a_hat_w,k = P_bperp g + delta_field/lever,k`.     (SC-8)
+
+Call the right-hand required nominal AW value `a_hat_w,k^*(z_k,p_k)`;
+its transverse component is gravity scale.  The literal pre-update prediction
+and any due S correction produce `a_hat_w,k^-`.  Shipping accelerometer
+correction gives
+
+`a_hat_w,k^+
+ =a_hat_w,k^- + K_aw,k(z_k,theta_k,ybar_k) r_k`,           (SC-9)
+
+where
+
+`r_k=ybar_k-h_acc(x_k^-,P_k^-,temperature_k)`.            (SC-10)
+
+Attitude, BA and lever terms are corrected by OTHER rows of this SAME K_k and
+the quaternion/reset map, so the exact compatibility equation is more
+generally
+
+`C_comp,k S_k(z_k,p_k)=0`.                                (SC-11)
+
+When the literal correction map is locally invertible on the two required
+compatibility components, SC-11 determines the residual required by
+compatibility as a FUNCTION of the pre-sample shipping state and the remaining
+physical sample components,
+
+`r_k=r_req(z_k,p_k;theta_k)`,                              (SC-12)
+
+not as a free control.  Substituting the measurement identity SC-10 gives the
+required physical accelerometer sample
+
+`ybar_k =
+ h_acc(x_k^-,temperature_k)+r_req(z_k,p_k;theta_k)`.       (SC-13)
+
+After undoing the deterministic conditioning/calibration map on its accepted
+branch, SC-13 is an equation for the physical acceleration:
+
+`a_k^phys =
+ A_req[z_k,R_k^phys,omega_k^phys,temperature_k;theta_k]`.  (SC-14)
+
+### Close the tuner/covariance loop
+
+But theta_k and the covariance/gain appearing in A_req are themselves
+generated by the SAME physical history.  Substitute SC-6 into SC-14 and
+advance the complete shipping state with SC-1:
+
+`a_k^phys =
+ A_req[z_k,R_k^phys,omega_k^phys,T_k[p_<k;z_0]]`,          (SC-15)
+`z_(k+1)=S_k(z_k,p_k)`.                                   (SC-16)
+
+Equivalently, over an m-word physical history p define
+
+`T[p]` = literal front-end/tuner schedule functional,
+`C[p]` = literal Riccati/Joseph/AW-sync covariance functional driven by T[p],
+`R[p;T[p],C[p]]` = residual sequence required by q=0 compatibility,
+and `A[p;...]` = physical acceleration reconstructed from that residual.
+
+The pathological trajectory exists only if
+
+`a_phys = F_ship[a_phys]
+ := A[R[a_phys;T[a_phys],C[a_phys]],
+      T[a_phys],C[a_phys]]`                                (SC-17)
+
+together with the physical attitude/gyro/magnetic history and every MARINE
+MOTION, IMU BIAS, MAGNETIC SERVICE, gate and retained-state condition.
+
+SC-17 is the requested shipping self-consistency equation.  It is a
+history-dependent delayed nonlinear fixed point, not the pointwise
+two-equation/two-control viability problem.
+
+### Immediate analytical consequences
+
+1. **Independent extrema are forbidden.**  Any proof step choosing a
+   compatibility-favorable residual, a different tuner-favorable physical
+   spectrum, and an independently favorable covariance is invalid.  They must
+   all be images of the same p under SC-1.
+
+2. **The gravity-scale nominal AW requirement is not a physical acceleration
+   requirement.**  SC-8 forces a persistent nominal AW transverse component,
+   while bounded physical velocity forces zero long-time mean physical
+   acceleration.  Therefore any fixed point must continually regenerate the
+   gravity-scale nominal AW through the gain-weighted residual/S/magnetic
+   correction supply while its physical acceleration remains AC.  This is the
+   exact coupled balance to test.
+
+3. **The tuner sees physical/front-end acceleration, not r_req.**  In
+   particular the variance channel uses the private levelled acceleration,
+   period-scaled band and lagged wave-period estimate.  A large DC residual
+   caused by nominal-force mismatch need not appear as tuner wave variance in
+   the same way; conversely an oscillatory physical acceleration that makes
+   the tuner choose a given sigma/tau also changes the residual in SC-10.
+   These effects cannot be separated.
+
+4. **Covariance is deterministic once the physical/event history is fixed.**
+   Given z_0 and p, Joseph updates, S cadence/R_S, OU Q(tau,sigma), magnetic
+   updates and AW sync determine P and K.  The gain needed in SC-12 cannot be
+   selected independently.
+
+5. **Commit delay matters.**  The sample y_k that must satisfy SC-13 cannot
+   alter theta_k used by its own correction.  It only changes the candidate
+   committed at k+1.  Hence a putative periodic/recurrent fixed point must
+   close the augmented delayed state, including tuner/front-end memory and
+   pending commit, not merely the MEKF mean.
+
+### Eliminate the residual exactly
+
+On an accepted branch, SC-10 lets us remove r entirely from the fixed-point
+unknowns.  Define the compatibility residual map
+
+`H_k(z_k,p_k):=C_comp,k S_k(z_k,p_k)`.                    (SC-18)
+
+The exact pathological history is simply a physical history satisfying
+
+`H_k(z_k,p_k)=0` for every required accelerometer/magnetic epoch,
+`z_(k+1)=S_k(z_k,p_k)`,                                   (SC-19)
+
+with theta/P/K generated internally by S.  This formulation is tautological
+but important: it prevents the proof from enlarging the reachable set by
+promoting innovations, gains, covariance or tuner parameters to controls.
+
+For analysis, split p into the actual physical acceleration a and the
+remaining physical history w.  The local derivative is the TOTAL shipping
+derivative
+
+`D_ship,k=d_a H_k
+ =partial_a H_k
+  +partial_z H_k * d_a z_k
+  +partial_theta H_k * d_a T[p_<k]
+  +partial_P H_k * d_a C[p_<k]`.                          (SC-20)
+
+At the current sample, causality makes the last three history terms depend
+only on prior acceleration samples; over a word they are essential.  The
+earlier GA operator retained only the instantaneous correction authority with
+the base history frozen.  SC-20 is the correct derivative for reachability of
+the shipping fixed point.
+
+### What is proved now, and what is not
+
+SC-17/SC-19 does NOT yet prove that the pathological fixed point is impossible.
+It proves that the generic zero-dynamics viability calculation is only a
+relaxation and cannot establish reachability of the pathology.
+
+Nor can the existing local rank-two gain result establish existence: it proves
+solvability after freezing a base history, whereas SC-17 requires that the
+resulting physical samples reproduce that same base history's tuner and
+covariance sequence.
+
+The next falsifiable analytical calculation is now well posed.  Assume an
+asymptotically periodic/recurrent physical history of period L on q=0.  Lift
+SC-1 over L to the augmented state including tuner/front-end/covariance memory:
+
+`z_L=Phi_L(z_0,p_[0,L))`,
+`H_[0,L)(z_0,p)=0`.                                      (SC-21)
+
+A recurrent pathology requires a fixed point (or compact recurrent orbit) of
+this SAME map, with the physical acceleration satisfying its zero-mean and
+moment constraints.  One should next eliminate the MEKF linear mean states
+from SC-21 using the exact OU/S transition for the tuner sequence generated by
+p, leaving a reduced fixed-point equation in the physical waveform and the
+front-end/tuner/covariance orbit.  If the resulting equations are inconsistent,
+the alleged pathology is unreachable and finite-block O2 follows by
+compactness.  If they have one strict-margin admissible solution, that is a
+genuine shipping-reachable counterexample to this proof architecture.
+
+Until SC-21 is solved or excluded, no generic viability trajectory should be
+called an admissible obstruction.
+
+
+## Candidate replacement proof: complete-word dissipativity / LaSalle feasibility test
+
+This section is deliberately parallel to O1/O2. It tests whether the exact
+source-faithful complete-word factorization already supplies a useful
+semidefinite storage/dissipation identity before any scalar kernel ceiling,
+diameter, generalized eigenvalue or independent extremum is introduced.
+
+### Exact minimum-action storage
+
+Freeze one literal recurring linear A21 service word W, including the actual
+same-history tuner/covariance/event chronology. Stack the root x, every fresh
+whitened process/sync/noise factor s exactly once, all applied measurement
+residuals y, and terminal error x_+. The existing complete-word factorization
+has the form
+
+y = O x + A s,
+x_+ = T x + B s.                                           (DL-1)
+
+The whitening uses the actual joint source covariance, so correlations are
+retained. Split x=(x_s,x_f) only when eliminating a genuine nuisance root.
+
+For a prescribed root x define the complete zero-output action
+
+D_W(x) :=
+ min_(x_f,s) { ||s||^2 + ||R^(-1/2)(O_s x+O_f x_f+A s)||^2 },  (DL-2)
+
+where the second norm is shorthand for the exact whitened applied
+accelerometer, magnetic and S rows; equivalently absorb R^(-1/2) into O,A.
+This is the same fixed-factor variational object used by the complete-word
+information proof. Therefore
+
+D_W(x)=x' J_W x >=0.                                       (DL-3)
+
+No covariance ceiling or O1/O2 scalar bound is required for DL-3.
+
+The dynamic-programming form is more revealing. Let V_k(e) be the minimum
+remaining whitened source/measurement action from event phase k to the end of
+the frozen word, conditional on current homogeneous error e. Then every
+literal operation satisfies the Bellman equality
+
+V_k(e_k)=min_(fresh source)
+ { d_k(e_k,source)+V_(k+1)(e_(k+1)) },                     (DL-4)
+
+with d_k>=0 the exact local process or innovation action. Along the minimizing
+trajectory,
+
+V_k(e_k)-V_(k+1)(e_(k+1))=d_k.                             (DL-5)
+
+Summing the actual allowed event path gives
+
+V_root(x)-V_terminal(x_+)=D_W(x)
+ =D_proc+D_sync+D_S+D_acc+D_mag+D_terminal >=0.            (DL-6)
+
+DL-6 is the requested path-complete dissipativity identity. The phase
+storages V_k are quadratic value functions (Schur complements of the same
+joint Gaussian action); they need not decrease under every physical operation
+when viewed in one fixed Euclidean metric. Their Bellman differences are
+nonnegative on the allowed event graph.
+
+For a disturbance/noise input w that is not minimized as an internal source,
+completion of squares gives the supply form
+
+V_+-V_- <= -D_W(e)+w' Q_W w                               (DL-7)
+
+after augmenting the value function with the exact cross term, or the
+equivalent joint quadratic supply matrix before Young relaxation. The
+homogeneous feasibility test needs only DL-6.
+
+### Equality set: no scalar ceiling is needed
+
+Because DL-6 is a sum/minimum of nonnegative whitened actions,
+
+D_W(x)=0                                                   (DL-8)
+
+if and only if one literal homogeneous trajectory makes every constituent
+action zero simultaneously. Hence equality forces:
+
+1. every fresh process and AW-sync source factor is zero;
+2. every applied S pseudo-measurement homogeneous residual is zero;
+3. every accepted accelerometer homogeneous residual is zero;
+4. every applied magnetic homogeneous residual is zero;
+5. terminal/minimum-action nuisance loss is zero.
+
+These are not independently chosen zeroes: the SAME deterministic homogeneous
+trajectory must satisfy all five through the literal chronological maps.
+
+Existing proof lemmas then apply without quantitative scalarization.
+Four-S injectivity removes an independent homogeneous LIN/AW root on a regular
+service word. Magnetic zero action plus service restricts AG to the transported
+field-axis class. Zero fresh BA action makes BA follow its literal homogeneous
+transport. Accelerometer zero action intersects those classes in the physical
+tilt/BA compatibility graph. Thus, subject to the already recorded four-S and
+multi-epoch intersection qualifications,
+
+Ker D_W = Ker J_W subseteq C_W,                             (DL-9)
+
+where C_W is the literal compatibility graph. On strata where the physical
+compatibility line is known to exist exactly, equality gives that line rather
+than strict one-word dissipation.
+
+This is a GOOD outcome for the proposed architecture: the feasibility test
+does not need to prove one-word strictness.
+
+### Why this is not merely O1 in new notation
+
+O1/O2 next ask for a quantitative lower eigenvalue away from the kernel and a
+separate covariance ceiling along it. DL instead keeps only the exact
+semidefinite action and follows its equality trajectory through successive
+same-history service words.
+
+Let e_(j+1)=F_Wj^(0)e_j denote the deterministic homogeneous transport selected
+by D_Wj(e_j)=0. Define the m-block accumulated dissipation
+
+D_[j,m](e_j)=sum_(r=0)^(m-1) D_W(j+r)(e_(j+r)).             (DL-10)
+
+Then D_[j,m]=0 iff the SAME error trajectory lies in the literal zero-action
+set of every constituent word. No intermediate compatibility direction,
+covariance, tuner tuple or nuisance mimic may be reselected independently.
+
+The central LaSalle question is therefore
+
+largest invariant subset of {D_W=0} under literal shipping chronology = ?  (DL-11)
+
+This is exactly the shipping-closed compatibility fixed-point problem derived
+in SC/PE. If the alleged compatibility history is not reachable by the actual
+coupled physical/front-end/tuner/covariance equations, it is not in the
+invariant equality set even though each relaxed word separately has a
+compatibility graph.
+
+### Compactness gives strict finite-window dissipation
+
+Assume a compact retained recurring A21 execution class, continuity/lower
+semicontinuity of the fixed-factor action across its finite event strata, and
+uniform equivalence m0|e|^2 <= V_phase(e) <= m1|e|^2. Suppose the only
+forward-complete same-history trajectory satisfying D_Wj(e_j)=0 for every j
+is the desired zero error (or explicitly accepted gauge).
+
+If no finite-window strictness existed, for every n there would be a normalized
+initial error and n-word same-history execution with accumulated dissipation
+tending to zero. Event compactness and the fixed-factor lower-semicontinuity
+argument already used elsewhere in the proof give a diagonal limiting
+infinite trajectory with D_Wj=0 for every j, contradicting DL-11.
+
+Therefore there exist finite m and epsilon>0 such that
+
+sum_(r=0)^(m-1) D_W(j+r)(e_(j+r))
+ >= epsilon V_j(e_j).                                      (DL-12)
+
+Telescoping DL-6 gives
+
+V_(j+m)(e_(j+m)) <= (1-epsilon) V_j(e_j).                  (DL-13)
+
+Thus strict contraction follows from invariant-set exclusion plus compactness,
+without a kernel covariance ceiling.
+
+For disturbances, DL-7 and the same m-block sum give regional ISS/practical
+stability once the nonlinear/reset remainder is absorbed by the existing
+small-radius estimates.
+
+### Does the experiment pass?
+
+At the analytical level: YES, conditionally.
+
+- A nonnegative complete-word quadratic action already exists in the current
+  source-faithful factorization.
+- It admits a path-complete Bellman/storage interpretation.
+- Its equality conditions are exactly the simultaneous zero process/S/acc/mag
+  actions already characterized by the proof.
+- No scalar kernel ceiling is needed to state nonexpansiveness or the equality
+  set.
+- The remaining strictness problem is precisely the same-history invariant
+  zero-dissipation problem, where the new shipping-closed tuner/covariance
+  self-consistency analysis belongs.
+
+What is NOT yet proved is the decisive DL-11 invariant-set exclusion. Nor has
+a single globally uniform phase metric/value function been constructively
+enclosed over every shipping-generated tuner/covariance history. Those are the
+two obligations to test before replacing O1/O2 as the main theorem path.
+
+The experiment therefore justifies continuing this architecture, but not yet
+deleting O1/O2.
+
+### Next decisive calculation
+
+Use SC-19/PE on an equality trajectory, but now equality supplies MORE than
+q=0 compatibility: every homogeneous fresh source, S, accelerometer and
+magnetic action is exactly zero. Substitute those equality conditions into
+the shipping-closed physical/front-end/tuner/covariance recursion and ask
+whether a nonzero forward-complete same-history trajectory exists.
+
+If none exists, DL-12 follows by compactness and the scalar O1/O2 ceiling path
+can be retired. If one exists, it is a genuine zero-dissipation obstruction
+to this stronger architecture and immediately identifies the theorem/assumption
+gap.
+
+
+## Periodic base field-alignment Fredholm test for the LaSalle obstruction
+
+This calculation tests the single surviving DL equality candidate on the BASE
+shipping system. It imposes
+
+P_B a_w,k = P_B g                                             (PF-1)
+
+at every required accelerometer epoch, where P_B projects onto the fixed-world
+plane transverse to the qualified geomagnetic reference (with the declared
+field/lever defect tube suppressed here for readability). The physical
+waveform is the only external degree of freedom. Tuner parameters, covariance,
+gains and event chronology are generated by that same waveform.
+
+Fix an L-periodic physical waveform p and suppose its complete private-front-
+end/tuner/covariance/event orbit rho is also L-periodic. Conditional on this
+same-history rho, collect the affine MEKF mean coordinates in x. The literal
+shipping recursion is
+
+x_(k+1)=A_k(p,rho)x_k+b_k(p,rho).                            (PF-2)
+
+Lift one period:
+
+x_L=A_L x_0+b_L.                                            (PF-3)
+
+Stack every PF-1 row as C_k x_k=d_g. After substitution of the lifted
+intermediate states this gives
+
+H_B x_0 = q_B.                                              (PF-4)
+
+Hence periodic field-aligned base means exist iff the finite Fredholm system
+
+M_PF x_0=q_PF,                                              (PF-5)
+M_PF=[I-A_L; H_B],  q_PF=[b_L; q_B]
+
+is consistent. Equivalently every left-null vector l of M_PF must satisfy
+l' q_PF=0. This is the exact mean-state arithmetic test; no innovation or gain
+is promoted to a control.
+
+If rho(A_L)<1, the mean is unique and PF-5 reduces to
+
+F_PF(p,rho):=H_B(I-A_L)^(-1)b_L-q_B=0.                      (PF-6)
+
+If A_L has unit Floquet modes, PF-5 is retained without regularization.
+
+### Does the literal AW/LIN/S structure make PF-5 inconsistent?
+
+No. The existing frozen S-to-S calculation is the one-direction Schur
+reduction of PF-5. For a transverse direction, with lifted mean map
+x_+=A_S x+B_S u and AW selector e_a, compatibility e_a'x=g_perp gives
+
+G_DC=e_a'(I-A_S)^(-1 B_S,                                  (PF-7)
+u_*=g_perp/G_DC                                             (PF-8)
+
+whenever I-A_S is invertible and G_DC is nonzero. The shipping Kalman/S
+structure contains no identity forcing G_DC=0. Thus the mean-level Fredholm
+matrix is generically capable of supporting the required nonzero AW component.
+
+The same conclusion holds for the full multi-input/multi-epoch period:
+measurement corrections break the open LIN-chain integral conservation.
+There is no source-uniform left annihilator of the literal accelerometer/S/
+magnetic correction columns whose pairing with q_B is forced nonzero by the
+gravity/field offset. Therefore PF-5 cannot be declared inconsistent from
+the current state equations and boundedness assumptions alone.
+
+### Add periodic physical moments using the SAME waveform
+
+Periodic physical velocity and position impose exact linear moment equations
+on p:
+
+sum_k dt_k a_phys,k=0,                                      (PF-9)
+
+and the discrete first acceleration moment equals the required velocity/
+position boundary term (zero for a fully periodic translational state after
+choosing the period boundary consistently). Bounded-potential adds the next
+integrated moment constraint.
+
+On PF-1, the exact accelerometer innovation is
+
+r_a,k = a_phys,k - a_hat_w,k - b_hat_a,k + gravity/frame/lever terms. (PF-10)
+
+Thus a zero-mean physical acceleration need not have zero-mean innovation:
+the gravity-sized biased nominal AW in PF-1 contributes a fixed mean offset.
+The literal accelerometer correction can therefore supply the nonzero mean AW
+increment required to balance OU decay.
+
+After eliminating the two transverse physical acceleration components with
+the exact manifold-invariance equation, write
+
+a_perp,k=f_k+g_k u_k,                                      (PF-11)
+
+where u_k is the remaining longitudinal physical acceleration component and
+f_k,g_k are generated by the SAME rho orbit. PF-9 and the higher periodic
+moments become finite linear functionals of the scalar sequence u_k. Their
+uncontrollable pointwise component is
+
+chi_k=det(g_k,f_k).                                         (PF-12)
+
+Current MARINE MOTION, gravity span and magnetic service impose no sign or
+nonzero-moment law on chi_k. Consequently the periodic moment equations do not
+supply a source-uniform Fredholm contradiction either. They may constrain a
+particular candidate waveform, but the theorem assumptions do not make PF-5
+inconsistent for every admissible waveform.
+
+### Reinsert the delayed tuner/covariance fixed point
+
+The remaining condition is the genuinely coupled one. Let
+
+rho=Rho_ship[p,x]                                           (PF-13)
+
+be the literal private-front-end, period/variance estimator, smoothed
+tau/sigma_aw, SpectralMSE R_S, tau-scaled T_S, delayed commit, Riccati/Joseph,
+S/sync/magnetic/event orbit. After eliminating x by PF-5, a periodic LaSalle
+obstruction is exactly a solution of
+
+rho_L=rho_0,                                                (PF-14)
+q_PF in Range(M_PF(p,rho)),                                 (PF-15)
+rho=Rho_ship[p,X_PF(p,rho)],                                (PF-16)
+physical periodic moment/service constraints on p.          (PF-17)
+
+This is smaller than the previous generic zero-dynamics problem. It contains
+no independent residual, covariance, gain or tuner variables.
+
+### Verdict
+
+The focused periodic/Fredholm calculation does NOT analytically exclude the
+surviving field-aligned base execution under the current assumptions.
+
+It also does NOT construct one. What it proves is:
+
+1. the linear MEKF mean subsystem and periodic physical moment equations do
+   not contain a structural contradiction with PF-1;
+2. the only unresolved self-consistency is PF-14--PF-17, especially whether
+   the SAME physical waveform makes the delayed tuner/covariance orbit produce
+   the gains required by PF-15;
+3. therefore the nonzero pure-field-axis LaSalle candidate remains
+   UNPROVED-REACHABLE, not an admissible established counterexample.
+
+For the dissipativity architecture this is a sharp decision point. A theorem
+excluding PF-14--PF-17 would make Inv{D=0} trivial and yield finite-window
+strictness by DL compactness. A strict-margin solution of PF-14--PF-17 would
+be a genuine shipping-reachable zero-dissipation mode and would refute strict
+contraction under the present assumptions.
+
+The next analytical step, if the LaSalle route is continued, must attack the
+tuner/covariance fixed point itself rather than derive another mean-state or
+kinematic moment identity. In particular, substitute the period-scaled
+front-end variance and SpectralMSE law into the periodic Riccati/S scheduler
+map and test whether PF-15 can be invariant under that SAME map.
+
+
+## SpectralMSE tuner + Riccati/S periodic fixed-point test
+
+This calculation substitutes the deployed tuner law into the surviving
+field-aligned periodic obstruction. It corrects one misleading phrase in the
+previous PF conclusion: for a prescribed physical waveform the tuner and
+covariance are not a mutually coupled algebraic fixed point. Shipping is
+triangular in this part of the chronology.
+
+### 1. The measurement-only tuner is upstream of covariance
+
+Let p be an L-periodic accepted physical IMU waveform, including the attitude
+and physical acceleration seen by the private level/front-end path. Let eta
+collect the private frequency smoother, period-scaled acceleration band,
+variance estimator, stillness state, tau/sigma/RS EMA states, pending commit
+and scheduler progress.
+
+The literal tuner recursion is
+
+eta_(k+1)=T_k(eta_k,p_k),                                   (TR-1)
+
+and contains NO P or Kalman gain input. Its operating-point targets are
+
+f_k = clamp(f_tuner,k),
+tau_t,k = clamp(c_tau/(2 f_k)),                             (TR-2)
+sigma_t,k = clamp(c_sigma sqrt(max(var_band,k-var_noise,0))), (TR-3)
+
+with the documented startup/floor branches. The deployed SpectralMSE target is
+
+RS_t,k = clamp[
+ C_MSE (2 r_a)^(1/14)
+ sigma_aB,k^(6/7) tau_t,k^(24/7) / sqrt(TS(tau_t,k))
+],                                                         (TR-4)
+
+where sigma_aB=sigma_t/c_sigma and
+
+TS(tau)=clamp(c_T tau, TS_min, TS_max).                    (TR-5)
+
+The applied EMA states obey
+
+tauA_(k+1)   =(1-alpha_k) tauA_k+alpha_k tau_t,k,
+sigmaA_(k+1) =(1-alpha_k) sigmaA_k+alpha_k sigma_t,k,
+RSA_(k+1)    =(1-beta_k) RSA_k+beta_k RS_t,k,              (TR-6)
+
+with 0<alpha_k,beta_k<=1 on every valid Live sample. A candidate is staged
+after processing sample k and, when activation cadence permits, committed at
+the beginning of a later sample. The delay is therefore a finite phase state
+inside eta, not an algebraic same-sample loop.
+
+For any fixed periodic target sequence on one fixed clamp/event stratum, the
+scalar affine EMA monodromy has multiplier
+
+q_tau=prod_k(1-alpha_k), q_sigma=q_tau,
+q_RS=prod_k(1-beta_k),                                    (TR-7)
+
+strictly in [0,1). Hence each applied tuner channel has a UNIQUE periodic
+orbit. Explicitly, for x_(k+1)=a_k x_k+(1-a_k)t_k,
+
+x_0^* =
+ [sum_(i=0)^(L-1) (1-a_i) t_i prod_(j=i+1)^(L-1) a_j]
+ /[1-prod_(j=0)^(L-1)a_j].                                 (TR-8)
+
+The delayed commit/pending state merely shifts/samples this unique periodic
+candidate sequence once the scheduler phase itself is periodic. Clamps are
+nonexpansive and do not create a contradiction; on a fixed active clamp face
+they replace the target by the corresponding constant boundary value.
+
+Therefore the actual coupled relation (tau,sigma,RS,TS) is restrictive--TR-4
+and TR-5 prohibit independent extrema--but it does NOT generically obstruct a
+periodic tuner orbit. For a prescribed periodic physical waveform it
+constructs one.
+
+### 2. SpectralMSE makes the tuple lower-dimensional, not inconsistent
+
+Away from cadence clamps, TS=c_T tau and TR-4 reduces exactly to
+
+RS_t =
+ C_* sigma_aB^(6/7) tau^(41/14),                           (TR-9)
+
+because 24/7-1/2=41/14. Thus the instantaneous target tuple lies on a
+two-dimensional graph parameterized by (f,var_band), and after EMA/delay the
+applied tuple lies on the causal filtered image of that graph.
+
+This is the correct replacement for a four-dimensional box. In particular a
+proof may not choose a large tau with an independently small RS or unrelated
+sigma. But TR-9 has no sign/equality relation involving the field-alignment
+mean condition P_B a_w=P_B g. The tuner sees the physical/private-front-end
+band, not the nominal AW DC offset itself.
+
+A periodic physical waveform can have zero translational-acceleration mean
+while having positive band variance and a finite frequency. TR-2--TR-9 then
+produce finite positive periodic tau,sigma,RS,TS. Nothing in SpectralMSE
+forces the nominal AW transverse mean to zero.
+
+### 3. Covariance is downstream: periodic Riccati/S map
+
+Given the periodic applied tuner/scheduler orbit eta^*(p), the covariance map
+is deterministic:
+
+P_(k+1)=R_k(P_k; p_k,eta_k^*),                              (TR-10)
+
+where R_k is the literal sequence of prediction with Q(tau,sigma), pending AW
+PSD floor, due S Joseph update using RS and TS, accepted accelerometer and
+magnetic Joseph updates, reset congruence/projection, and covariance sync
+chronology.
+
+The tuner does not read P, so TR-10 cannot invalidate TR-1--TR-9 by feedback.
+The periodic covariance condition is simply
+
+P_0=R_[0:L)(P_0;p,eta^*(p)).                               (TR-11)
+
+Every constituent covariance operation maps PSD matrices to PSD matrices.
+On the retained compact covariance tube assumed by the regional proof,
+R_[0:L) is continuous on each fixed event/gate stratum. Therefore Brouwer
+would give a periodic covariance fixed point IF one has a convex compact
+forward-invariant covariance set for this same-history map. The current proof
+has not established that invariant set independently of the old covariance
+work, so TR-11 existence is not promoted here.
+
+More strongly, standard periodic Riccati intuition suggests uniqueness/
+attraction when the periodic pair is stabilizable/detectable, but importing
+that theorem without verifying the literal reset, pseudo-update, sync and
+rank conditions would be unjustified. The correct status is:
+
+- the tuner orbit exists uniquely for a prescribed periodic target/event
+  sequence;
+- the covariance periodic orbit is a downstream Riccati fixed-point problem;
+- no algebraic contradiction between SpectralMSE and Riccati/S exists.
+
+### 4. Reinsert the field-aligned mean Fredholm equation
+
+The covariance orbit matters because it determines the gains in
+
+M_PF(p,P) x_0=q_PF(p,P).                                   (TR-12)
+
+Thus the COMPLETE periodic obstruction is now
+
+eta=eta^*(p) from TR-1--TR-9,                              (TR-13)
+P_0=R_[0:L)(P_0;p,eta^*(p)),                               (TR-14)
+q_PF(p,P) in Range M_PF(p,P),                              (TR-15)
+physical periodic moment + service constraints on p.        (TR-16)
+
+This is substantially smaller than the previous formulation. There is no
+independent tuner fixed-point unknown at all after p is chosen. The only
+nonlinear internal fixed point is P (plus scheduler phase if the candidate
+period does not already close it), and P enters the obstruction only through
+the literal gains/coefficient matrices in TR-15.
+
+### 5. Can TR-13--TR-16 be excluded analytically now?
+
+No. Substitution of the actual SpectralMSE law does not create a contradiction.
+
+Indeed it removes degrees of freedom in the favorable direction for rigor:
+tau,sigma,RS,TS are a deterministic causal functional of p. But the resulting
+positive finite schedule is fully compatible with a periodic Riccati/S
+recursion. There is no equation in TR-4/TR-9 that conflicts with the required
+gravity-sized nominal AW mean, because the tuner is measurement-only and its
+variance channel removes the noise floor and tracks the physical wave band.
+
+Conversely this is NOT a construction of a shipping counterexample. To prove
+one, one must exhibit p and a strict-margin periodic P satisfying TR-14 such
+that TR-15 holds and all physical/service gates remain admissible.
+
+### 6. Important consequence for the dissipativity strategy
+
+The hoped-for second-stage exclusion
+
+field-aligned mean
+ + SpectralMSE tuner
+ + Riccati/S
+ => contradiction
+
+does not follow structurally. The tuner is triangular and contractive, so it
+is not the mechanism that removes the pure field-axis LaSalle mode.
+
+The remaining decisive object is the COMPOSED map
+
+G_L(p,P):=
+ [ R_[0:L)(P;p,eta^*(p))-P ;
+   Pi_left(p,P) q_PF(p,P) ],                               (TR-17)
+
+where Pi_left projects q_PF onto the left-null complement of M_PF (or use the
+equivalent stable-monodromy residual). A genuine periodic obstruction is a
+zero of G_L together with physical/service constraints.
+
+This is now a finite-dimensional same-history fixed-point/root problem for
+(p,P), with the tuner analytically eliminated. An analytical exclusion would
+need a sign/degree/range theorem for G_L; a computer-assisted proof could
+interval-enclose G_L over the admissible periodic waveform/covariance
+parameterization. A strict-margin zero would be a genuine shipping-reachable
+LaSalle obstruction.
+
+### Verdict
+
+The delayed SpectralMSE tuner + Riccati/S substitution does NOT exclude the
+field-aligned periodic fixed point from the current assumptions. It also
+shows why: the tuner is upstream and uniquely determined by the physical
+waveform, while covariance is downstream. Their coupling removes independent
+extrema but supplies no contradictory equality.
+
+Therefore the dissipativity/LaSalle route has reached its genuine theorem
+boundary: strictness is equivalent to excluding zeros of TR-17 over admissible
+same-history physical/covariance periodic or recurrent histories. Further
+scalar tuner or covariance bounds would again discard the linked structure.
+
+
+## Implicit periodic Riccati sensitivity and covariance elimination
+
+This calculation differentiates the literal periodic covariance map on one
+fixed accepted-event/clamp/scheduler stratum. It does not replace shipping by
+a generic DARE.
+
+Let the tuner already be eliminated as eta=eta^*(p) by TR. Define the
+one-period covariance residual
+
+F_P(P,p):=R_L(P;p,eta^*(p))-P.                              (RS-1)
+
+A periodic covariance orbit satisfies F_P(P^*(p),p)=0.
+
+### Exact Frechet derivatives of literal covariance operations
+
+For a prediction with fixed coefficient F and process covariance Q,
+
+Psi_pred(P)=F P F'+Q,                                      (RS-2)
+
+so
+
+D_P Psi_pred[Delta]=F Delta F'.                            (RS-3)
+
+Parameter/physical variations contribute
+dF P F'+F P dF'+dQ in the forcing derivative D_p Psi.
+
+For any accepted linearized measurement/Joseph update with fixed H,R,
+
+Psi_m(P)=P-P H'(H P H'+R)^-1 H P.                          (RS-4)
+
+Let K=P H'S^-1, S=H P H'+R, and L=I-KH. Direct differentiation, including
+the derivative of S^-1, gives the exact identity
+
+D_P Psi_m[Delta]=L Delta L'.                               (RS-5)
+
+Thus the covariance tangent does NOT require differentiating K separately.
+Variations of H,R caused by p/eta enter only the affine tangent forcing
+D_p Psi_m.
+
+A fixed reset/frame covariance congruence
+
+Psi_G(P)=G P G'                                             (RS-6)
+
+has D_P Psi_G[Delta]=G Delta G'. The derivative with respect to p includes
+dG P G'+G P dG'.
+
+The default pending AW covariance floor is applied inside prediction as a PSD
+increment that depends on the pre-floor AW marginal and the tuner target. On a
+fixed active floor branch it is an affine map in P; therefore its P derivative
+is an explicit linear projection modification. The legacy immediate AW block
+replacement likewise has a projection derivative (zero on the replaced AW
+marginal, identity on untouched blocks, with the literal cross-block policy).
+No branch may be differentiated across its switching boundary; sensitivity is
+stratum-local and one-sided at a boundary.
+
+Symmetrization is the linear projection Delta -> (Delta+Delta')/2. Numerical
+PSD repair/projection is inactive on a strict-margin analytical stratum; if it
+activates, smooth IFT is not applicable there and the branch must be treated
+separately.
+
+### Periodic tangent operator
+
+Compose the exact operation derivatives in shipping order over the period.
+This gives a linear operator on symmetric covariance perturbations
+
+L_P := D_P R_L(P^*;p,eta^*(p)).                            (RS-7)
+
+Without an active marginal-replacement/floor projection, every operation is a
+congruence, so
+
+L_P[Delta]=A_c Delta A_c',                                 (RS-8)
+
+where A_c is the chronological product of prediction F, accepted-update
+closed-loop factors (I-KH), and reset/frame G factors over the SAME period.
+With active AW floor/sync projection, insert its literal linear projection
+between these congruences; RS-7 remains exact.
+
+Vectorizing the pure-congruence case,
+
+vec L_P=(A_c kron A_c) vec Delta.                           (RS-9)
+
+Hence
+
+rho(L_P)=rho(A_c)^2.                                        (RS-10)
+
+Therefore a sufficient and, in the pure-congruence case, exact criterion for
+local covariance fixed-point invertibility is
+
+1 notin spectrum(L_P).                                     (RS-11)
+
+The stronger contraction condition rho(A_c)<1 gives
+rho(L_P)<1 and the Neumann inverse
+
+(I-L_P)^-1=sum_(n>=0) L_P^n.                               (RS-12)
+
+This is the precise covariance-tangent condition required by the implicit
+function theorem. It is NOT the old state-error O1/O2 contraction claim:
+A_c is the covariance sensitivity product for one fixed periodic base
+execution.
+
+With projection branches, use the spectrum of the exact composed symmetric-
+matrix operator L_P; a norm bound <1 is sufficient but not necessary.
+
+### Eliminate P locally
+
+Differentiate F_P(P^*(p),p)=0:
+
+(I-L_P)[dP^*]=B_p[dp],                                     (RS-13)
+
+where
+
+B_p:=D_p R_L(P^*;p,eta^*(p))                               (RS-14)
+
+is the TOTAL waveform forcing derivative. B_p includes:
+- direct physical dependence of prediction/measurement/reset Jacobians;
+- derivative of the private tuner orbit eta^*(p);
+- derivatives of tau,sigma_aw, SpectralMSE R_S and T_S including EMA and
+  delayed commit;
+- derivative of Q(tau,sigma), S noise/cadence and Racc vibration inflation;
+- event-time derivative only inside a fixed scheduler stratum (event changes
+  are nonsmooth boundaries).
+
+If I-L_P is invertible,
+
+dP^*=(I-L_P)^-1 B_p[dp].                                   (RS-15)
+
+Thus P is locally a unique C1 function P^*(p) on every strict-margin periodic
+stratum satisfying RS-11.
+
+### Physical-waveform-only obstruction
+
+Use the stable-monodromy form of the field-aligned mean residual when
+available,
+
+h_PF(p,P)=H_B(p,P)(I-A_L(p,P))^-1 b_L(p,P)-q_B(p).          (RS-16)
+
+More generally use any smooth left-null chart of the Fredholm residual on a
+constant-rank stratum. Define
+
+H_L(p):=h_PF(p,P^*(p)).                                     (RS-17)
+
+Then
+
+D H_L[p][dp]
+ =D_p h_PF[dp]
+  +D_P h_PF[(I-L_P)^-1 B_p[dp]].                           (RS-18)
+
+This is the requested exact same-history sensitivity. The covariance response
+is linked to the waveform through the periodic Riccati equation rather than
+independently bounded.
+
+A periodic LaSalle obstruction on this stratum must satisfy
+
+H_L(p)=0                                                    (RS-19)
+
+plus the physical periodic moment, MARINE MOTION, IMU BIAS, MAGNETIC SERVICE
+and gate constraints. Tuner and covariance are no longer independent
+variables.
+
+### Does covariance elimination itself exclude the obstruction?
+
+No. RS-15 is an elimination theorem, not a sign theorem. If RS-11 holds, it
+makes the obstruction SMALLER and smoother but supplies no reason for H_L(p)
+to be nonzero. If RS-11 fails, that likewise does not prove a pathology:
+covariance may have a nonsmooth/nonunique periodic branch or the unit tangent
+may be removed by an active projection/event change.
+
+What the calculation does establish is the exact fork:
+
+1. **Regular covariance branch:** prove RS-11 (preferably rho(L_P)<1), eliminate
+   P by RS-15, and analyze H_L solely over admissible physical waveforms.
+2. **Singular covariance branch:** characterize Ker(I-L_P). A periodic
+   covariance perturbation in that kernel is a genuine neutral Riccati tangent;
+   it must satisfy the Fredholm transversality condition
+   leftKer(I-L_P) paired with B_p[dp]=0 for continuation. Treat this as a
+   separate closed stratum, not by inflating independent covariance boxes.
+
+### Important relation to the dissipativity experiment
+
+The pure-congruence A_c in RS-8 is the same closed-loop linear factor that
+appears in covariance sensitivity, but RS-10 does NOT by itself prove
+homogeneous estimator contraction. Covariance tangent contraction is a local
+property of the periodic Riccati orbit. Nevertheless it is exactly what is
+needed to remove P from the surviving LaSalle fixed-point equations.
+
+Therefore the next quantitative test is now concrete and much smaller:
+evaluate/prove the spectral condition for L_P on a candidate strict-margin
+periodic field-aligned stratum. If rho(L_P)<1 uniformly there, all covariance
+degrees of freedom disappear and the theorem obstruction becomes H_L(p)=0
+in physical waveform space alone. If a unit covariance tangent is forced by
+the field-aligned geometry, that identifies a new genuine equality mechanism.
+
+
+## Spectral test of the periodic covariance tangent on the field-aligned branch
+
+This calculation tests RS-11 structurally on the sole surviving LaSalle
+candidate. The result is negative for strict covariance-tangent contraction:
+field alignment itself supplies a unit closed-loop state mode on the
+pure-congruence branch.
+
+Let the base periodic shipping execution satisfy, at every required
+accelerometer epoch,
+
+P_B a_hat_w = P_B g,                                       (CS-1)
+
+so the nominal specific force fhat_cog is parallel to the transported body
+magnetic axis b. Let
+
+r_k=(b_k,0_bg,0_v,0_p,0_S,0_aw,0_ba)                      (CS-2)
+
+denote the normalized pure field-axis attitude homogeneous vector in the
+current local error coordinates (with the literal frame scaling understood).
+
+### Operation-by-operation transport
+
+1. **Prediction.** On the zero fresh-source homogeneous dynamics, the AG
+   prediction/reset transport maps the field-axis attitude class into the
+   next transported field-axis class:
+
+   F_k r_k = r_k^-                                         (CS-3)
+
+   up to the coordinate normalization/transport already used in the magnetic
+   compatibility lemmas. No LIN/AW/BA component is generated on the exact
+   q=0 equality branch.
+
+2. **S pseudo-update.** H_S r=0 because r has no S/LIN component. Hence
+
+   (I-K_S H_S) r = r.                                      (CS-4)
+
+3. **Accelerometer update.** The homogeneous row is
+   H_a r=-[fhat_cog]x b=0 by CS-1. Therefore, independently of K_a,
+
+   (I-K_a H_a) r = r.                                      (CS-5)
+
+   This is exact: covariance cross terms cannot create contraction when the
+   measurement row itself annihilates the vector.
+
+4. **Magnetic update.** H_m r=-[B]x b=0, so
+
+   (I-K_m H_m) r = r.                                      (CS-6)
+
+5. **AW covariance sync/floor.** On the pure-congruence covariance branch this
+   is absent/inactive by hypothesis; mean-state AW sync does not act on the
+   attitude vector. Active covariance projection branches are treated below.
+
+6. **Quaternion/reset/frame change.** The literal reset/frame Jacobian G
+   changes coordinates but transports the same physical infinitesimal
+   field-axis rotation:
+
+   G_k r_k = r_(k+).                                       (CS-7)
+
+Thus every accepted closed-loop factor in A_c either fixes r or transports it
+to the next representation of the same physical field-axis rotation.
+
+For one periodic base orbit, the physical magnetic/reference/frame state
+returns after L, so in the same root coordinates
+
+A_c r_0 = r_0.                                              (CS-8)
+
+Hence
+
+1 in spectrum(A_c),  rho(A_c)>=1.                           (CS-9)
+
+No covariance values or tuner parameters enter this conclusion beyond their
+role in maintaining the field-aligned base branch and accepted event
+chronology.
+
+### Consequence for the pure-congruence covariance tangent
+
+RS gives
+
+L_P[Delta]=A_c Delta A_c'.                                 (CS-10)
+
+Set Delta_0=r_0 r_0'. Then by CS-8,
+
+L_P[Delta_0]=Delta_0.                                      (CS-11)
+
+Therefore
+
+1 in spectrum(L_P),                                        (CS-12)
+
+and I-L_P is singular. The regular implicit elimination RS-15 cannot be used
+on the exact field-aligned periodic equality branch.
+
+This is a GENUINE neutral Riccati tangent associated with the same geometric
+unobservability as the nonzero LaSalle mode, not an artifact of independently
+boxed covariance.
+
+### Does this imply a family of periodic covariance fixed points?
+
+No. A unit derivative does not by itself prove a nonlinear continuum of fixed
+points. Continuation of a periodic covariance solution under waveform
+variation must satisfy the singular Fredholm condition
+
+<Lambda, B_p[dp]>=0                                        (CS-13)
+
+for every left unit tangent Lambda in Ker(I-L_P^*), and higher-order terms may
+remove or bifurcate the branch. The periodic covariance itself can remain
+unique even with a unit derivative at a nonhyperbolic fixed point.
+
+Nor does CS-12 construct the base field-aligned physical execution. It is
+conditional on CS-1 being shipping reachable.
+
+### Active AW floor/sync projection
+
+The identity CS-11 is a statement about the pure-congruence covariance
+sensitivity branch. The default pending AW floor acts only on the AW covariance
+sector. Since Delta_0 has support purely in the attitude field-axis sector, an
+AW-only projection leaves Delta_0 unchanged. Therefore the unit tangent
+survives the default AW floor/sync derivative as well, provided that operation
+does not explicitly zero attitude/AW cross terms involving Delta_0 (there are
+none for Delta_0=r r').
+
+Likewise S covariance operations have H_S r=0 and their Joseph tangent fixes
+Delta_0. Accelerometer and magnetic Joseph tangents fix it by CS-5--CS-6.
+Thus the actual deployed covariance-floor chronology does not remove this
+particular unit tangent.
+
+A full covariance reset that explicitly overwrote the attitude marginal could
+remove it, but no such recurring shipping operation exists in Live A21.
+
+### Stronger conclusion
+
+The proposed spectral route cannot globally eliminate covariance on the
+field-aligned equality stratum:
+
+rho(L_P)<1 is FALSE there.                                  (CS-14)
+
+Indeed the exact neutral tangent is
+
+Delta_0 = r_field r_field'.                                (CS-15)
+
+This is valuable because it aligns the covariance and dissipativity pictures:
+the same physical field-axis gauge is simultaneously
+- a zero-dissipation homogeneous error direction;
+- a unit closed-loop state multiplier;
+- a unit periodic covariance tangent.
+
+There is therefore no hidden covariance contraction capable of eliminating
+the surviving LaSalle mode once exact field alignment holds.
+
+### What remains the correct theorem question
+
+The entire strict-stability issue is now upstream of this neutral geometry:
+
+Can the literal shipping BASE execution satisfy CS-1 indefinitely under the
+physical/front-end/tuner/mean equations?
+
+If NO, the field-aligned stratum is unreachable and the unit tangent never
+belongs to an admissible recurring execution; DL compactness can yield strict
+finite-window dissipation.
+
+If YES, strict contraction of full attitude error is impossible under the
+current assumptions because the actual measurements are geometrically
+collinear on that execution. One must then accept the field-axis gauge, add an
+assumption excluding persistent gravity/magnetic collinearity of the NOMINAL
+specific force, or weaken the theorem.
+
+Further covariance spectral estimates cannot decide this. The next proof work
+should return to reachability/exclusion of CS-1 in physical waveform space,
+using the shipping-closed equation, rather than seek rho(A_c)<1 on a stratum
+where an exact unit mode is now proved.
+
+
+## Mahony/adaptation-proxy excitation test on the field-aligned branch
+
+This calculation tests the proposed bridge
+
+persistent field alignment => positive private-proxy band energy.            (PX-1)
+
+The literal shipping code does NOT support PX-1 from the current assumptions.
+
+The default tuner input is produced by VerticalAccelComplementary, a private
+measurement-only Mahony observer. For conditioned body specific force f_B and
+its private body-to-NED quaternion R_M, shipping reports
+
+a_proxy = -((R_M f_B)_z + g).                              (PX-2)
+
+This proxy reads no MEKF state. It is then passed through the period-scaled
+AdaptiveWaveBandPass before the variance estimator used for sigma_aw.
+
+Consider an ideal admissible rigid-body motion with zero translational
+acceleration, bounded arbitrary attitude motion, exact/calibrated gyro, and
+the private Mahony observer initialized at the true tilt. Then
+
+f_B = R_true'(-g e_z),                                     (PX-3)
+
+and the gyro propagation preserves R_M=R_true (up to irrelevant yaw gauge).
+The Mahony accelerometer correction is zero because the measured gravity
+direction agrees with its predicted vertical. Hence
+
+(R_M f_B)_z=-g                                             (PX-4)
+
+at every sample and therefore
+
+a_proxy=0.                                                 (PX-5)
+
+This remains true under bounded roll/pitch excitation as well as yaw:
+attitude span by itself does not create gravity leakage in a correctly
+gyro-propagated levelled measurement. Zero translational acceleration also
+satisfies the bounded velocity/displacement/potential and translational jerk
+parts of MARINE MOTION; an allowed moving attitude episode can supply the
+attitude-span requirement. Thus the current physical assumptions contain no
+positive lower bound on proxy energy merely from attitude excitation.
+
+The period-scaled band is linear on a fixed frequency schedule, so PX-5 gives
+zero band signal after transients. The variance channel then sees only its
+explicit measurement/noise/startup floor; it does not acquire a positive
+field-alignment-dependent energy. Consequently no theorem of the form
+
+E_proxy(W)>=E_min(g_perp,Delta_R,...)>0                    (PX-6)
+
+follows from MARINE MOTION + the internal MEKF condition
+P_B a_hat_w=P_B g alone.
+
+This does NOT construct the complete field-aligned shipping pathology. The
+MEKF condition is internal and the same raw physical history must also solve
+the shipping self-consistency/Fredholm equations that sustain its biased
+nominal a_hat_w. The point of PX-3--PX-5 is narrower and decisive: the private
+Mahony/adaptation pipeline supplies no independent implication from attitude
+motion or field alignment to positive proxy band energy. Any positive proxy
+lower bound must first prove that the FULL shipping self-consistency equation
+forces either
+
+(a) nonzero translational acceleration in the proxy vertical channel, or
+(b) a nonzero private-Mahony tilt tracking error/leakage,
+
+and must quantify that forcing from the same physical history. Neither is
+currently proved.
+
+Therefore it is invalid to insert a positive E_min into the tuner law before
+solving that upstream reachability relation. The only unconditional tuner
+lower scale on PX-5 is the implemented variance/startup floor, which is a
+design floor and is not evidence against the pathology.
+
+### Consequence for the proposed amplitude route
+
+The desired chain
+
+field alignment -> Mahony leakage -> sigma_aB floor -> tuner response
+
+breaks at its first arrow under the present theorem assumptions. The correct
+same-history chain remains
+
+field alignment + literal MEKF mean recursion
+ -> required raw physical history
+ -> private Mahony proxy
+ -> period-scaled band/variance
+ -> tuner.                                                  (PX-7)
+
+Thus the next proof step must return to the shipping-closed mean equation and
+derive what RAW physical acceleration/gyro history is forced by sustaining
+P_B a_hat_w=P_B g. Only after that forced history is known can PX-2 be applied
+to obtain a proxy-energy bound. Treating generic attitude span as proxy
+excitation would repeat the proof-relaxation error this branch was intended
+to avoid.
+
+
+## Step 6: field-aligned shipping recurrence -> required physical IMU -> private Mahony proxy
+
+This calculation removes the accelerometer innovation as an independent
+variable. It is local to an accepted accelerometer epoch on one literal
+same-history base execution, after prediction and any due S pseudo-update and
+before the accelerometer correction.
+
+Let aS_k be the world AW mean at that instant, R_k the literal world-to-B'
+rotation, ell_k the literal lever-arm term, and bA_k the temperature-corrected
+accelerometer-bias mean. Shipping predicts
+
+fhat_B,k = R_k(aS_k-g)+ell_k+bA_k.                          (PH-1)
+
+Let K_aw,k be the three AW rows of the ACTUAL accelerometer Kalman gain
+computed from the carried covariance after the same prediction/S chronology.
+For conditioned/de-heeled measured specific force f_B,k, shipping updates
+
+aA_k = aS_k+K_aw,k(f_B,k-fhat_B,k).                        (PH-2)
+
+Quaternion injection/reset does not change the AW mean itself. Let P_B denote
+the fixed-world projector transverse to the qualified geomagnetic reference.
+Exact field alignment at the post-accelerometer boundary requires
+
+P_B(aA_k-g)=0.                                              (PH-3)
+
+Substitution gives the literal physical-measurement equation
+
+M_k(f_B,k-fhat_B,k)=q_k,                                   (PH-4)
+M_k:=P_B K_aw,k,
+q_k:=P_B(g-aS_k).                                           (PH-5)
+
+No residual has been chosen: PH-4 is an equation for the actual conditioned
+body specific-force sample.
+
+### Required physical sample
+
+On a regular rank-two branch, rank M_k=2. Let N_k be a unit vector spanning
+Ker M_k and let M_k^dagger be any fixed right inverse on Range(P_B), for
+example the metric Moore-Penrose inverse in the declared physical scaling.
+Then every physical sample capable of restoring field alignment is exactly
+
+f_B,k^req =
+ fhat_B,k + M_k^dagger q_k + N_k zeta_k.                   (PH-6)
+
+The scalar zeta_k is not an invented estimator control. It is the one physical
+accelerometer component that field alignment does not determine at this
+instant. It must be generated by one admissible physical translational/
+rotational motion and must satisfy all temporal velocity/displacement/jerk
+constraints over the SAME history.
+
+If rank M_k<2, PH-4 is solvable only when q_k is in Range(M_k); otherwise field
+alignment fails immediately and the LaSalle mode acquires positive action.
+The rank-deficient solvable case has a larger physical nullspace and must be
+handled by the same range/nullspace formulation rather than a pseudoinverse
+shortcut.
+
+Undoing de-heeling/calibration and the IMU lever model maps PH-6 uniquely to
+the corresponding raw physical accelerometer sample once the physical
+attitude/rate/temperature history is fixed.
+
+### Substitute PH-6 into the actual private Mahony proxy
+
+Shipping VerticalAccelComplementary is independent of the MEKF. At sample k
+its private Mahony state defines the body down row d_M,k and reports
+
+a_proxy,k = -(d_M,k' f_B,k + g).                           (PH-7)
+
+Substituting the REQUIRED field-alignment sample PH-6 gives
+
+a_proxy,k =
+ A_forced,k - c_k zeta_k,                                  (PH-8)
+
+where
+
+A_forced,k :=
+ -[d_M,k' (fhat_B,k+M_k^dagger q_k)+g],                    (PH-9)
+c_k:=d_M,k' N_k.                                            (PH-10)
+
+This is the exact same-history bridge that was missing from PX.
+
+### Does field alignment force nonzero Mahony proxy action?
+
+Not pointwise in general.
+
+If c_k is nonzero, the remaining physical direction can make the instantaneous
+proxy exactly zero by
+
+zeta_k^0=A_forced,k/c_k.                                   (PH-11)
+
+If c_k=0, the proxy is independent of the remaining physical direction and
+field alignment forces
+
+a_proxy,k=A_forced,k.                                      (PH-12)
+
+Therefore a source-uniform pointwise lower bound follows only on epochs where
+|c_k| is sufficiently small AND |A_forced,k| is bounded away from zero, or
+after temporal physical constraints prevent the cancellation sequence PH-11.
+
+This result explains both previous observations:
+- generic attitude excitation alone need not excite the private proxy;
+- the MEKF field-alignment recurrence DOES constrain the physical sample, but
+  leaves one physical scalar degree of freedom on a regular rank-two branch.
+
+### The exact temporal cancellation test
+
+Over a complete window W, collect zeta=(zeta_k). The physical velocity,
+position and higher bounded-potential moment equations are linear/affine
+constraints on the physical acceleration and therefore, after PH-6, have form
+
+C_W zeta = d_W.                                             (PH-13)
+
+Jerk/amplitude and MARINE MOTION impose additional convex/nonlinear bounds
+zeta in Z_W. The private Mahony state is itself driven by PH-6, so d_M,k and
+therefore A_forced,k,c_k depend causally on earlier zeta. For a fixed Mahony
+trajectory the proxy vector is
+
+a_proxy = A_forced-C_M zeta,                               (PH-14)
+
+with C_M diagonal entries c_k. The exact minimum proxy energy compatible with
+field alignment and physical moments is
+
+E_proxy^FA(W)=
+ min_{zeta in Z_W, C_W zeta=d_W}
+ || B_W[A_forced-C_M zeta] ||^2,                            (PH-15)
+
+where B_W is the LITERAL period-scaled adaptation band operator generated
+causally by that same proxy/frequency history. In the full problem B_W and
+A_forced,C_M are history dependent, so PH-15 denotes the coupled constrained
+functional, not a fixed quadratic program.
+
+The desired theorem E_proxy^FA>=E_min>0 is therefore equivalent to proving
+that the zero/low-band cancellation sequence PH-11 cannot simultaneously
+satisfy the physical moment constraints and the private Mahony recursion.
+
+### Characterization of the surviving low-proxy orbit
+
+A zero-proxy candidate must satisfy at every sample
+
+d_M,k' f_B,k^req = -g,                                     (PH-16)
+
+together with PH-4. On a regular branch this is the 3x3 physical system
+
+[ M_k ; d_M,k' ] f_B,k =
+[ M_k fhat_B,k+q_k ; -g ].                                 (PH-17)
+
+If the augmented matrix is nonsingular, PH-17 uniquely determines the body
+specific-force sample required to keep BOTH the MEKF field aligned and the
+private proxy zero. This sample then drives the Mahony gyro/accelerometer
+recursion, the physical translational dynamics, and the next tuner/covariance
+state. Thus the surviving candidate is no longer a free zero-dynamics family:
+it is the deterministic/implicit SAME-HISTORY orbit generated by PH-17 plus
+the physical gyro history.
+
+If the augmented matrix is singular, existence is the corresponding Fredholm
+range condition; incompatibility at any epoch gives positive proxy action or
+breaks field alignment.
+
+This is the correct surviving obstruction to test.
+
+### Consequence for the proof plan
+
+Step 6 does NOT yet prove a positive proxy-energy floor. It reduces that claim
+to a precise shipping reachability problem with one physical scalar eliminated.
+The next calculation must propagate PH-17 through the private Mahony update
+and physical velocity/displacement equations over a complete service/excitation
+window.
+
+There are now two clean outcomes:
+
+1. PH-17 cannot remain physically admissible/periodic while satisfying MARINE
+   MOTION, IMU BIAS and MAGNETIC SERVICE. Then PH-15 has a positive compact
+   minimum E_min and Parts V--VIII of the dissipativity proof can proceed.
+
+2. PH-17 has a strict-margin admissible recurrent solution. Then the Mahony
+   proxy can remain zero/low while the MEKF stays field aligned; adaptation
+   does not eliminate the LaSalle mode. That solution is the first genuine
+   shipping-closed obstruction and should be constructed explicitly rather
+   than relaxed away.
+
+No tuner propagation is performed yet because the required positive proxy
+energy has not been proved.
+
+
+## Direct shipping-admissibility reduction of the final LaSalle candidate
+
+The goal is now to exclude, not relax, the sole surviving nonzero
+zero-dissipation mode. Step PH showed that field alignment plus zero private
+Mahony proxy fixes the conditioned physical accelerometer sample by
+
+[ M_k ; d_M,k' ] f_B,k =
+[ M_k fhat_B,k+q_k ; -g ],                                 (SA-1)
+
+on a regular branch, with M_k=P_B K_aw,k and
+q_k=P_B(g-aS_k).
+
+### Physical/Mahony constraints alone cannot exclude SA-1
+
+Write the private Mahony down axis in world coordinates as
+s_M=R_true d_M. Ignoring only the already declared calibration/lever defects,
+zero proxy is exactly
+
+d_M' f_B=-g
+<=> s_M' a_phys = g(s_M,z-1) = -g(1-s_M,z).                (SA-2)
+
+This sign-definite identity is useful but not contradictory. On a recurrent
+physical orbit, integration by parts gives
+
+g integral(1-s_M,z) dt
+ = integral dot(s_M)' v dt                                 (SA-3)
+
+(up to periodic boundary terms). Current MARINE MOTION bounds the right-hand
+side but supplies no positive lower separation: s_M may equal the true down
+axis.
+
+Indeed the all-time STILL branch gives the decisive admissible physical
+history
+
+a_phys=0, omega=0, v=const (take v=0), p=const,             (SA-4)
+
+with calibrated bounded biases. The private Mahony observer can be settled at
+the true tilt, so s_M=e_z and SA-2 holds with equality; its levelled proxy and
+period-scaled band are exactly zero after transients. This history satisfies
+the existing bounded velocity/displacement/potential/jerk conditions and is
+not removed by the updated MARINE MOTION assumption, which explicitly permits
+complete stillness for arbitrary duration.
+
+Therefore no theorem based on physical moments, attitude span, Mahony leakage
+or proxy energy can exclude the final LaSalle candidate on the full declared
+execution class. Any valid proof must also exclude a FILTER-INTERNAL
+field-aligned equilibrium driven by the quiet physical history SA-4.
+
+### Quiet-input shipping fixed point
+
+On SA-4 the tuner/front end converges to its literal stillness/floor schedule;
+call the resulting periodic scheduler/tuner sequence eta_Q (periodic because
+S cadence and parameter-activation phase remain). Covariance then follows the
+literal periodic quiet Riccati map and any recurrent candidate has P_Q on its
+periodic orbit.
+
+The mean system over one complete quiet scheduler period has an affine map
+
+x_+ = A_Q(P_Q,eta_Q) x + b_Q(P_Q,eta_Q),                   (SA-5)
+
+where b_Q contains the constant gravity/reference/bias measurement terms.
+Field alignment imposes
+
+H_FA x = q_FA                                               (SA-6)
+
+at every required accelerometer boundary. Thus the quiet pathological
+execution exists iff the exact finite system
+
+(I-A_Q)x=b_Q,
+H_FA x=q_FA                                                (SA-7)
+
+is consistent together with the periodic covariance equation for P_Q.
+
+Equivalently, in the stable mean-monodromy case,
+
+F_Q(P_Q):=
+H_FA (I-A_Q)^-1 b_Q-q_FA =0.                               (SA-8)
+
+This is the strongest admissibility test presently available because every
+physical, Mahony and tuner degree of freedom has disappeared. Only the literal
+quiet covariance/gain orbit remains.
+
+### Signed AW correction condition
+
+Project SA-5 onto the fixed transverse gravity/magnetic direction n. A
+field-aligned recurrent mean requires a_Q=n'a_w>=a0>0. Over one quiet period,
+
+a_Q [1-Phi_OU,Q] =
+sum_j n' Delta a_w,j^(S/acc/mag/reset),                    (SA-9)
+
+with the exact chronological OU factors and corrections. The quiet physical
+accelerometer sample has zero translational acceleration, so every
+accelerometer innovation is generated by the estimator's own nominal
+field-aligned force/bias/attitude mismatch.
+
+For the pathology to persist, the TOTAL quiet closed-loop DC gain from that
+mismatch into AW must have the sign that REPLENISHES OU decay. A direct AW
+measurement term has the opposite stabilizing sign; only attitude/BA/LIN
+cross-covariance and S-induced corrections can reverse the net sign.
+
+Hence a sufficient exclusion theorem is the literal signed quiet-gain lemma
+
+n' Delta a_w,total <= 0                                    (SA-10)
+
+whenever a_Q>0 and the physical input is SA-4 (with defect margins). Then
+SA-9 is impossible because its left side is strictly positive.
+
+The current proof does NOT establish SA-10. Earlier exact chronology analysis
+already showed why generic PSD arguments are insufficient: the post-S
+accelerometer numerator contains signed cross-covariance terms and the S
+AW correction can have either sign. But SA-10 is now required only on the
+REACHABLE quiet periodic Riccati orbit P_Q, not on an arbitrary PSD covariance.
+
+### Consequence
+
+The attempt to prove the final trajectory inadmissible has reduced the theorem
+to a concrete shipping-only question:
+
+Does the actual quiet periodic Riccati/S orbit admit a field-aligned mean
+fixed point SA-7?
+
+If SA-10 (or directly F_Q(P_Q)!=0) is proved on that orbit, the quiet branch
+is excluded. The MOVING branch must then be treated with the same signed
+periodic fixed-point test on its waveform-generated tuner/covariance orbit.
+
+If SA-7 has a strict-margin solution, then the final LaSalle mode is genuinely
+shipping-admissible even at rest and strict full-attitude stability is false
+under the current theorem statement.
+
+No stronger conclusion is justified from the present assumptions. In
+particular, complete stillness prevents using mandatory Mahony/proxy excitation
+as the universal exclusion mechanism.
+
+
+## Scope change: stability theorem for certified MARINE MOTION only
+
+The main OU-III stability theorem is henceforth scoped to the MARINE MOTION
+operating regime. Arbitrarily long physical stillness is NOT part of the
+execution class for this theorem.
+
+This is an explicit architecture assumption, not a claim about the current
+front-end stillness flag. The intended deployed architecture places an
+independent inertial-regime prefilter/state machine ahead of the OU-III motion
+estimator:
+
+physical IMU -> regime prefilter -> {CERTIFIED_STILL, MARINE_MOTION}.        (MM-1)
+
+CERTIFIED_STILL is handled by a separate stationary branch/reset model outside
+the theorem proved here. The OU-III MARINE_MOTION theorem applies only after
+the prefilter has admitted the execution to the moving branch.
+
+The prefilter must be designed so that a physically moving history capable of
+violating the MARINE_MOTION theorem assumptions cannot be silently certified
+as STILL. In particular the theorem does NOT identify "small Mahony proxy",
+"small wave-band variance", or the existing frontEndStill flag with physical
+stillness. A future implementation/proof of the regime prefilter must use
+independent inertial evidence and conservative hysteresis. Its soundness is a
+separate obligation.
+
+### MARINE MOTION assumption used by this proof
+
+For every all-time execution segment on which OU-III remains in the analyzed
+moving branch:
+
+1. the existing physical amplitude, rate, jerk, bias, bounded velocity,
+   bounded displacement and bounded-potential assumptions hold;
+2. MAGNETIC SERVICE and IMU BIAS hold as already stated;
+3. there is a fixed excitation horizon T_E and span Delta_R_min>0 such that
+   every complete interval [t,t+T_E] wholly contained in the MARINE_MOTION
+   branch has physical attitude span at least Delta_R_min;
+4. no arbitrarily long inertially quiescent interval belongs to this class:
+   such an interval is required by architecture to be transferred to
+   CERTIFIED_STILL instead.
+
+Item 4 does not replace item 3. "Not certified still" is not itself sufficient
+excitation; recurring attitude-span/service remains a first-class assumption.
+
+Transition intervals that have neither a certified-still guarantee nor a full
+T_E moving-excitation window are outside the recurring contraction statement.
+They must be covered by a finite-duration bounded handoff/transition lemma in
+the final hybrid theorem.
+
+### Effect on the proof
+
+The quiet shipping fixed-point obstruction SA-4--SA-10 is removed from the
+admissible class of the MARINE_MOTION theorem by scope, not by pretending it
+is unstable. It remains relevant to design and proof of the separate
+CERTIFIED_STILL branch.
+
+The dissipativity/LaSalle route now needs to exclude nonzero invariant
+zero-dissipation trajectories only among histories satisfying the recurring
+MARINE MOTION conditions above. The sole remaining equality candidate is the
+field-axis attitude mode supported by a MOVING base execution satisfying
+P_B(a_hat_w-g)=0 at every relevant accelerometer epoch.
+
+Accordingly, future reachability work must not use the stationary
+counterexample as a blocker. It must ask whether the literal field-alignment
+physical-sample equation PH-4/PH-17 can persist on a history that satisfies
+the recurring moving attitude-span condition and all same-history
+tuner/covariance equations.
+
+If no such MOVING execution exists, Inv{D=0} is trivial on the theorem class
+and compactness yields finite-window strict dissipation. The separate hybrid
+proof then combines: stationary-branch stability, bounded transitions, and
+OU-III MARINE_MOTION contraction.
+
+
+## Weeding the moving field-aligned trajectory: exact remaining obstruction
+
+After scoping the theorem to certified MARINE MOTION, the stationary
+counterexample is removed. This does NOT by itself make the surviving
+field-aligned LaSalle trajectory impossible. The moving assumptions must be
+used on the literal required-sample equation PH-4.
+
+At every accepted accelerometer epoch, persistent field alignment requires
+
+M_k(f_B,k-fhat_B,k)=q_k,                                   (WM-1)
+M_k=P_B K_aw,k, q_k=P_B(g-aS_k).
+
+On a regular rank-two branch,
+
+f_B,k=fhat_B,k+M_k^dagger q_k+N_k zeta_k.                 (WM-2)
+
+Convert this conditioned body specific force to true world translational
+acceleration:
+
+a_phys,k^W =
+ R_true,k f_B,k + g + d_lever/cal,k.                       (WM-3)
+
+Therefore
+
+a_phys,k^W = F_k + U_k zeta_k,                             (WM-4)
+
+with literal same-history
+F_k=R_true,k(fhat_B,k+M_k^dagger q_k)+g+d_k and
+U_k=R_true,k N_k.
+
+This is the exact physical trajectory family capable of maintaining the
+LaSalle field-alignment condition. All tuner/covariance dependence is inside
+F_k,U_k through the carried shipping history.
+
+### What recurring attitude span does and does not do
+
+MARINE MOTION guarantees that on every complete T_E moving window there are
+epochs i,j with physical attitude separation at least Delta_R_min. This rotates
+R_true and therefore F,U. But it does NOT imply that the scalar-controlled
+affine acceleration family WM-4 has nonzero energy, nonzero mean, or violates
+bounded motion. A time-varying scalar zeta can exploit the rotating U_k
+direction.
+
+Indeed the already-derived moment equations are
+
+sum dt_k (F_k+U_k zeta_k)=bounded velocity increment,      (WM-5)
+
+and the first/second temporal moments give displacement/potential closure.
+Attitude span supplies variation of U_k but no theorem currently separates
+the forced moment vector generated by F from the reachable moment cone/span
+generated by the scalar sequence zeta.
+
+Thus the statement
+
+Delta_R>=Delta_R_min => no solution of WM-1               (WM-6)
+
+is FALSE as a structural implication. Proving it would require an additional
+rank/separation property of the ACTUAL sequence U_k,F_k.
+
+### Exact complete-window admissibility matrix
+
+For a fixed same-history moving window W with n accepted accelerometer epochs,
+stack the physical moment equations after WM-4. Let C_0,C_1,C_2 denote the
+discrete integration operators for acceleration, velocity/displacement and
+bounded-potential moments. Then
+
+A_W zeta = -b_W + boundary terms,                          (WM-7)
+
+where
+
+A_W=[C_0 U; C_1 U; C_2 U],                                 (WM-8)
+b_W=[C_0 F; C_1 F; C_2 F].                                 (WM-9)
+
+Here U is the block-diagonal map zeta_k->U_k zeta_k. Amplitude and jerk impose
+additional box/difference constraints.
+
+Therefore the moving pathological trajectory is excluded on W iff the literal
+forced moment vector lies outside the physically admissible reachable set:
+
+-b_W notin A_W Z_W + B_W,                                  (WM-10)
+
+where Z_W encodes acceleration/jerk limits and B_W the allowed finite boundary
+increments. This is an exact same-history statement; it introduces no
+fictitious control because zeta is precisely the physical component left
+undetermined by the two field-alignment equations.
+
+If WM-10 holds with a positive distance uniformly over every admitted
+same-history W, compactness yields a positive action/proxy margin and removes
+the LaSalle trajectory.
+
+### Two-epoch test is insufficient
+
+At two epochs the unknowns zeta_i,zeta_j are two scalars while only bounded
+physical increments, not zero increments, are required. Nonzero attitude span
+changes U_i,U_j but does not generically overdetermine the system. Magnetic
+service constrains the homogeneous error direction and base magnetic
+corrections; it does not directly constrain physical translation. Therefore
+no valid two-epoch contradiction follows solely from attitude span plus
+magnetic service.
+
+This confirms the earlier PA/MI diagnosis in a cleaner moving-only setting:
+the remaining obstruction is a LONG-HORIZON reachable-moment problem for the
+literal one-dimensional physical channel U_k.
+
+### Can current MARINE MOTION assumptions prove WM-10 uniformly?
+
+No. They bound acceleration, jerk, velocity, displacement and potential and
+require recurring attitude span, but impose no relation between translational
+acceleration and attitude. Hence they permit correlated translation histories
+whose scalar zeta sequence can, in principle, cancel the forced moments as
+U_k rotates. The shipping equations determine F,U, but the present proof has
+no invariant showing their forced moments lie outside the scalar-channel
+reachable set.
+
+This is not a proof that a full shipping counterexample exists: F,U depend on
+the covariance/tuner orbit generated by the same physical history. It is a
+proof that the CURRENT physical assumptions alone cannot weed it out by
+attitude span, bounded motion, Mahony proxy or magnetic service.
+
+### What would actually close the moving theorem
+
+There are now only two rigorous routes.
+
+**Route A -- prove a shipping-generated moment separation.**
+Use the literal coupled tuner/covariance recursion to prove that every
+field-aligned moving history has
+
+dist(-b_W, A_W Z_W+B_W)>=delta_FA>0                        (WM-11)
+
+on some uniform finite window. This is a property of the shipping-generated
+F,U, not an added physical assumption. It would eliminate the pathology and
+complete the LaSalle strictness lemma.
+
+**Route B -- strengthen the MARINE MOTION/prefilter admission condition.**
+Require the moving regime to certify an excitation condition that directly
+excludes the scalar-channel degeneracy, e.g. a raw-IMU/translation-attitude
+window condition whose literal consequence is WM-11. Such a condition must be
+physically measurable/certifiable by the independent regime prefilter; simply
+restating nominal MEKF observability is not acceptable.
+
+Under the user's chosen architecture (STILL handled separately), Route B is
+legitimate if the prefilter can conservatively refuse to admit ambiguous weak
+motion to the contraction-certified MARINE MOTION branch. A third TRANSITION/
+UNCERTAIN branch may remain bounded without a strict contraction claim.
+
+### Current theorem status
+
+The quiet obstruction is removed by scope. The moving field-aligned trajectory
+is NOT YET weeded out by the existing MARINE MOTION assumptions. The exact
+remaining test is WM-11. Further manipulation of generic zero dynamics or
+covariance boxes cannot prove it.
+
+The next productive calculation should either derive WM-11 from the literal
+shipping-generated F,U over a complete moving service window, or formulate
+the weakest raw-IMU admission statistic that certifies WM-11 and can be
+implemented by the regime prefilter.
+
+
+## Raw-IMU moving admission certificate derived from the scalar-channel obstruction
+
+The goal is to replace the shipping-dependent separation WM-11 by a
+conservative condition that an INDEPENDENT regime prefilter can evaluate from
+conditioned accelerometer, gyro and its private Mahony tilt only.
+
+WM-4 shows that every persistent field-aligned LaSalle execution has physical
+world acceleration
+
+a_phys,k = F_k+U_k zeta_k,                                 (RC-1)
+
+with only one free scalar physical channel per sample. A certificate based on
+attitude span or gyro Gram alone cannot exclude RC-1: zeta_k can vary at every
+sample while U_k rotates. The measurable certificate must therefore test the
+specific-force history itself against the class of one-dimensional
+instantaneous explanations.
+
+### Independent levelled raw-IMU coordinates
+
+Let R_M,k be the private Mahony body-to-level frame, independent of the MEKF,
+and let f_B,k be the conditioned/calibrated body specific force available to
+the prefilter. Define the independently levelled linear-acceleration proxy
+
+y_k := R_M,k f_B,k + g e_z.                                (RC-2)
+
+The shipping vertical proxy is -e_z'y_k; RC-2 retains all three components.
+Let omega_k be the conditioned gyro after only calibration/static bias
+allowance available to the independent prefilter.
+
+On a certified moving window W, stack y=(y_1,...,y_N). The prefilter also
+knows dt_k and R_M,k, hence the physical integration operators in its own
+level frame up to the declared Mahony tilt-error tube.
+
+### Degenerate one-channel motion class
+
+For a candidate unit body direction n, its independently levelled direction is
+
+u_k(n)=R_M,k n.                                             (RC-3)
+
+Define the class of scalar-channel acceleration histories
+
+C_W(n):={ c_k+u_k(n) zeta_k },                              (RC-4)
+
+where c belongs to the declared calibration/gravity/Mahony-error tube and
+zeta satisfies the same physical acceleration/jerk and finite-window
+velocity/displacement boundary allowances used by MARINE MOTION. Let Z_W be
+that convex admissible scalar sequence set and B_W the finite boundary tube.
+
+For fixed n, the best-fit weighted residual is
+
+E_W(n):=
+ min_(zeta in Z_W, boundary in B_W)
+ sum_k w_k || y_k-u_k(n) zeta_k-c_k ||^2.                  (RC-5)
+
+The nuisance c_k is minimized only over independently certified sensor/
+Mahony/calibration defect bounds; it is NOT an arbitrary three-vector.
+
+The raw moving certificate is
+
+E_move(W):=min_(|n|=1) E_W(n).                             (RC-6)
+
+This is the squared distance of the actual independently levelled raw-IMU
+history from every physically admissible rotating one-dimensional
+specific-force channel.
+
+A practical implementation can discretize/branch-and-bound the sphere or use
+the Gram relaxation below; the theorem uses RC-6 itself.
+
+### Unconstrained Gram lower surrogate
+
+Ignoring moment/jerk constraints and defect tubes makes the degeneracy class
+larger, hence gives a conservative LOWER residual. For fixed n the optimal
+pointwise zeta is u_k'u y_k (u_k is unit), so
+
+E0_W(n)=sum_k w_k y_k' [I-u_k(n)u_k(n)'] y_k.              (RC-7)
+
+Using u_k=R_M,k n,
+
+E0_W(n)=E_y - n' G_W n,                                    (RC-8)
+E_y=sum_k w_k ||y_k||^2,
+G_W=sum_k w_k R_M,k' y_k y_k' R_M,k.                       (RC-9)
+
+Therefore
+
+min_n E0_W(n)=E_y-lambda_max(G_W).                         (RC-10)
+
+This is the correct raw-IMU Gram statistic derived from RC-1. It is NOT
+lambda_min of an attitude Gram. It measures how much of the levelled
+acceleration energy cannot be explained by ANY single body-axis scalar
+history.
+
+Define
+
+gamma_raw(W):=
+ E_y-lambda_max(G_W).                                      (RC-11)
+
+Then gamma_raw>0 certifies non-collinearity of the measured specific-force
+history with every single body-fixed axis, after independent levelling.
+
+Because RC-7 discarded physical moment/jerk restrictions, adding them can
+only increase the best-fit residual:
+
+E_move(W)>=gamma_raw(W)-epsilon_defect(W).                 (RC-12)
+
+where epsilon_defect is the explicit enlargement due to Mahony tilt,
+calibration, lever and bias uncertainty. A robust version follows from
+||delta y_k||<=eps_k:
+the distance (not squared distance) obeys
+
+sqrt(E_move) >=
+ sqrt(max(gamma_raw,0)) - sqrt(sum w_k eps_k^2).            (RC-13)
+
+Thus a sufficient implementable admission test is
+
+sqrt(gamma_raw(W)) >
+ sqrt(sum w_k eps_k^2)+gamma_margin.                        (RC-14)
+
+It is computed entirely from conditioned accelerometer plus private Mahony
+attitude; gyro enters through R_M propagation and can be separately required
+to satisfy the existing attitude-span/rate certificate.
+
+### Relation to the shipping field-aligned obstruction
+
+RC-14 excludes a PURE one-body-axis physical acceleration history. To imply
+WM-11 for the actual affine family F_k+U_k zeta_k, one more bridge is required:
+the shipping-forced term F_k must lie inside the independently certified
+defect/boundary class c_k after subtracting the measured physical history.
+
+In general F_k is NOT a small sensor defect; it contains the gravity-scale
+field-alignment correction M_k^dagger q_k. Therefore RC-14 alone does not
+logically imply WM-11.
+
+This is decisive: there is no raw-IMU statistic, independent of the estimator,
+that can distinguish an arbitrary physically admissible measured trajectory
+from itself merely because the estimator internally represents it as
+F+U zeta. If the theorem allows arbitrary bounded translation, an independent
+prefilter cannot know whether that same raw history is compatible with the
+internal pathological gain/covariance state.
+
+Hence a prefilter-only certificate can close the theorem only if MARINE MOTION
+is strengthened by a PHYSICAL excitation condition whose violation contains
+every field-aligned F+U zeta history. RC-11 is one candidate physical condition
+only after proving the missing bridge F in the admitted nuisance class; that
+bridge is currently false at gravity scale.
+
+### A certificate that is sufficient by construction
+
+The weakest exact admission statistic that DOES imply WM-11 must include the
+filter-independent physical moment model but also a declared physical
+subspace class known a priori to contain every pathological forced term.
+If such a class S_FA,k can be bounded from hardware/geometry alone, define
+the raw distance
+
+Gamma_FA(W)=
+ dist( y,
+       { s_k+R_M,k n zeta_k :
+         s in S_FA(W), |n|=1, zeta in Z_W } ).             (RC-15)
+
+Then Gamma_FA>=gamma_move>0 excludes the pathology provided one proves
+R_M R_true' F in S_FA for every field-aligned shipping history. At present
+the only source-uniform S_FA from existing assumptions is essentially the
+full bounded-acceleration ball, making RC-15 vacuous.
+
+Therefore the requested independent raw-IMU sufficient condition cannot be
+made nonvacuous from the CURRENT physical assumptions without either:
+(a) a new physically meaningful translation-attitude excitation premise, or
+(b) using some estimator-derived quantity (gain/covariance/nominal force) in
+the regime certificate.
+
+### Recommended minimal augmentation
+
+If independence from the main filter is mandatory, add a measurable physical
+condition directly:
+
+on every certified MARINE MOTION window, the independently levelled
+acceleration history has a robust multi-axis residual
+
+gamma_raw(W)>=gamma_min>epsilon_defect(W),                 (RC-16)
+
+AND prove/assume that the pathological field-aligned family is
+single-body-axis explainable in these coordinates within the defect tube.
+The first half is implementable now; the second half is the missing theorem
+and cannot be asserted from WM-4 because of F.
+
+Alternatively allow the admission monitor to read ONLY the main filter's
+published K_aw/aS (without feeding back into estimation). Then it can evaluate
+the exact WM-10/WM-11 distance directly from raw IMU plus F,U. That is a
+runtime proof monitor rather than an independent physical prefilter, and it
+would reject precisely the pathological reachable-moment class with no new
+physical assumption.
+
+### Conclusion
+
+The correct Gram derived from RC-1 is
+
+gamma_raw= sum w||y||^2 -
+ lambda_max(sum w R_M' y y' R_M).                          (RC-17)
+
+It is a useful raw-IMU multi-axis excitation statistic and is strictly better
+than an invented attitude Gram. But under the present broad MARINE MOTION
+translation class, RC-17 alone cannot imply the exact shipping separation
+WM-11 because the pathological family has a non-small affine forced term F.
+
+This calculation prevents an invalid proof shortcut. To genuinely weed out
+the trajectory, either certify WM-11 with a read-only estimator-aware monitor,
+or strengthen MARINE MOTION with a physical translation-attitude condition
+that makes the F bridge provable.
+
+
+## Zero-dissipation substitution into the forced physical term F
+
+This calculation tests the missing bridge needed to turn raw multidirectional
+marine excitation into exclusion of the final field-aligned LaSalle mode.
+
+Recall the exact required physical family on a regular rank-two branch:
+
+f_B = fhat_B + M^dagger q + N zeta,                         (ZF-1)
+M=P_B K_aw, q=P_B(g-aS), Ker M=span{N},                    (ZF-2)
+
+and in world physical acceleration coordinates
+
+a_phys = F + U zeta,                                       (ZF-3)
+F=R_true(fhat_B+M^dagger q)+g+d,
+U=R_true N.                                                 (ZF-4)
+
+The desired shortcut would be to use complete-word zero dissipation D=0 to
+show F=U beta+d_small, reducing every pathological physical history to one
+scalar moving channel plus defects.
+
+### Homogeneous equality does not zero the base innovation
+
+D is the quadratic action of the HOMOGENEOUS estimator-error trajectory about
+one literal base shipping execution. D=0 implies that the homogeneous
+measurement variations vanish:
+
+delta r_acc=0, delta r_S=0, delta r_mag=0,                 (ZF-5)
+
+together with zero homogeneous fresh-source action and the previously derived
+delta v=delta p=delta S=delta a_w=0 on the surviving field-axis mode.
+
+ZF-5 does NOT imply that the BASE innovations vanish:
+
+r_acc^base need not be 0,
+r_S^base=-S^base need not be 0,
+r_mag^base need not be 0.                                  (ZF-6)
+
+Indeed a persistent field-aligned base mean generally REQUIRES nonzero base
+accelerometer/S correction supply to replenish the gravity-scale AW component
+lost under OU prediction.
+
+Therefore none of the D=0 equality conditions sets q=0 in ZF-2. Here q is the
+BASE departure of the pre-accelerometer AW mean from the field-aligned target,
+not the homogeneous BA compatibility coordinate that also used q notation in
+earlier sections. To avoid ambiguity define henceforth
+
+q_FA,k := P_B(g-aS_k).                                     (ZF-7)
+
+Then
+
+q_FA = P_B K_aw r_acc^base                                 (ZF-8)
+
+on an exact post-accelerometer field-aligned base execution. This quantity is
+generically nonzero whenever OU/S chronology moves the pre-update base mean
+off the target.
+
+### Exact decomposition of the forced term
+
+Choose the Moore-Penrose right inverse for clarity. Then
+M^dagger q_FA lies in Range(M') and is orthogonal to N=Ker M. Hence
+
+f_B-fhat_B =
+ M^dagger q_FA + N zeta                                    (ZF-9)
+
+is the orthogonal decomposition of the BASE accelerometer residual into:
+- the unique minimum-norm component required to restore the two field-aligned
+  coordinates; and
+- the one-dimensional null component invisible to that restoration equation.
+
+Thus the gravity-scale particular component M^dagger q_FA is, by construction,
+TRANSVERSE to N unless q_FA=0. It cannot be rewritten as N beta.
+
+After world rotation,
+
+F = R_true fhat_B+g+d + R_true M^dagger q_FA.              (ZF-10)
+
+The last term is orthogonal to U=R_true N in the Euclidean physical scaling.
+Consequently the exact distance of the correction part of F from the scalar
+channel is
+
+dist(R_true M^dagger q_FA, span U)
+ = ||M^dagger q_FA||.                                      (ZF-11)
+
+If sigma_min(M)>0,
+
+||M^dagger q_FA|| >= ||q_FA||/sigma_max(M),                (ZF-12)
+
+and also
+||M^dagger q_FA|| <= ||q_FA||/sigma_min(M).                (ZF-13)
+
+Therefore zero dissipation does the OPPOSITE of the hoped-for collapse:
+whenever the base pre-update field-alignment departure q_FA is nonzero, the
+literal restoration requires a physical residual component transverse to the
+remaining scalar channel.
+
+### Can the nominal-force part cancel this transverse component?
+
+Yes in the raw physical acceleration F. The term R_true fhat_B+g+d is not a
+small defect on the base execution. Under field alignment after correction,
+the pre-update fhat_B contains the OU/S-displaced nominal AW, BA and lever
+terms. Its projection onto U^perp can cancel or reinforce
+R_true M^dagger q_FA. No homogeneous zero-action identity fixes that sign.
+
+This is why the raw Gram gamma_raw cannot yet be asserted positive merely
+from q_FA!=0: the measurable physical acceleration is the SUM ZF-10, not the
+correction residual alone.
+
+### A sharper measurable object: innovation rather than acceleration
+
+The quantity that DOES have an exact transverse decomposition is the literal
+base accelerometer innovation
+
+r_acc^base = f_B-fhat_B.                                   (ZF-14)
+
+From ZF-9,
+
+r_acc^base=M^dagger q_FA+N zeta.                           (ZF-15)
+
+Therefore its energy transverse to the one-dimensional null channel is exactly
+
+||Pi_Nperp r_acc^base||^2
+ = ||M^dagger q_FA||^2.                                    (ZF-16)
+
+Over a window,
+
+sum w ||Pi_Nperp r_acc^base||^2
+ = sum w ||M^dagger q_FA||^2.                              (ZF-17)
+
+This is a strict linked identity, not a bound.
+
+But r_acc^base and N depend on the main filter through fhat_B and K_aw.
+Accordingly ZF-17 is available to a read-only estimator-aware stability
+monitor, not to a fully independent raw-IMU prefilter.
+
+### Relation to marine oscillation
+
+Ordinary physical acceleration oscillation does not constrain q_FA away from
+zero and does not prevent cancellation inside F. Multidirectional RAW physical
+acceleration likewise cannot be identified with ZF-17 without controlling the
+nominal-force term.
+
+However, if the architecture permits a read-only monitor, the correct
+excitation certificate is immediate: require recurring transverse BASE
+innovation action
+
+Gamma_innov(W):=
+ sum_(k in W) w_k ||Pi_Nk_perp r_acc,k^base||^2
+ =sum w_k ||M_k^dagger q_FA,k||^2
+ >= gamma_innov>0.                                         (ZF-18)
+
+This condition is exactly tied to the field-alignment restoration geometry.
+It cannot be gamed by the free scalar zeta.
+
+For the LaSalle exclusion one needs the complementary statement: an infinite
+field-aligned zero-dissipation execution would require the same base
+innovation/covariance chronology indefinitely. ZF-18 by itself does not make
+the HOMOGENEOUS field-axis attitude observable, because H_acc r_field=0 under
+exact alignment. Thus even positive base innovation action is not sufficient
+to kill the geometric homogeneous mode. It only certifies that the base is
+actively maintaining the pathological alignment.
+
+### Verdict
+
+The proposed bridge
+
+D=0 + field alignment => F in span(U)+small defects         (ZF-19)
+
+is FALSE.
+
+The exact reason is now proved: D=0 zeros homogeneous actions, not base
+innovations, and the field-aligned base execution generally contains a
+nonzero transverse particular innovation M^dagger q_FA. This term is
+orthogonal to the free scalar channel, not contained in it.
+
+Therefore neither ordinary nor multidirectional raw physical oscillation can,
+under the present assumptions, universally weed out the pathology by a
+one-channel Gram argument.
+
+This leaves the theorem with a genuine geometric issue: if the BASE nominal
+specific force is exactly collinear with the magnetic field, the pure
+field-axis attitude error is unobservable regardless of how rich the BASE
+innovation or physical acceleration is elsewhere. To exclude that mode, the
+MARINE MOTION theorem must directly guarantee recurring NONCOLLINEARITY of the
+nominal/physical gravity-sensitive vector and magnetic field, or the estimator
+architecture must supply an additional independent attitude reference.
+
+A physically meaningful theorem assumption is therefore a recurring
+gravity/specific-force excitation condition, for example a windowed lower
+bound on
+
+sum_(k in W) w_k
+ || P_(b_k)^perp f_ref,k ||^2 >= gamma_col>0,               (ZF-20)
+
+where f_ref must be defined from an independent physical proxy (not the
+pathological MEKF nominal force) with a proved defect tube to the
+accelerometer attitude vector used by the filter. Establishing that defect
+tube is the next required bridge if the condition is to be raw-IMU
+certifiable.
+
+
+## Physical-to-nominal force tracking under the literal accelerometer update
+
+This section formalizes the empirical chart observation that the OU-III
+nominal specific force follows the physical accelerometer force. The result is
+an exact local feedback identity plus a forced tracking recursion. It is then
+tested against the field-aligned LaSalle candidate.
+
+Let h_a(x) be the literal accelerometer measurement function and z_a the
+conditioned physical body specific-force measurement. Define the base
+measurement mismatch
+
+e_k := z_a,k-h_a(x_k^-).                                    (FT-1)
+
+On a fixed accepted-update stratum, linearize h_a at x_k^- with the literal
+Jacobian
+
+C_k=[J_att,k, J_bg,k, ..., R_wb,k (AW), I (BA), ...].       (FT-2)
+
+The Kalman correction is
+
+delta x_k=K_k e_k,
+K_k=P_k^- C_k' S_k^-1,
+S_k=C_k P_k^- C_k'+R_k.                                    (FT-3)
+
+To first order, the post-correction mismatch against the SAME physical sample
+is
+
+e_k^+ = e_k-C_k K_k e_k
+      = (I-C_k K_k)e_k.                                    (FT-4)
+
+Using S=CPC'+R,
+
+I-C K
+ = I-CPC' S^-1
+ = R S^-1.                                                  (FT-5)
+
+Thus
+
+e_k^+=R_k S_k^-1 e_k.                                      (FT-6)
+
+In the R-weighted measurement metric this map is similar to
+
+(I+R^-1/2 C P C' R^-1/2)^-1,                              (FT-7)
+
+so all eigenvalues lie in (0,1], and they are strictly below one on every
+measurement direction with positive predicted measurement covariance. If
+
+lambda_min(R^-1/2 C P C' R^-1/2)>=mu_a>0,                  (FT-8)
+
+then
+
+||e_k^+||_(R^-1)
+ <= alpha_a ||e_k||_(R^-1),
+alpha_a:=1/(1+mu_a)<1.                                     (FT-9)
+
+This is the exact linear tracking mechanism visible in the filter charts. The
+nonlinear finite-angle/lever remainder is already bounded by the existing
+actual-gain finite-error lemmas and can be appended as d_NL,k.
+
+### Between samples: forced tracking recursion
+
+The next pre-update mismatch is not e_k^+, because both the physical force and
+the nominal prediction evolve. Write
+
+e_(k+1)^-
+ = A_e,k e_k^+ + Delta_phys,k - Delta_nom,k + d_NL,k,       (FT-10)
+
+where Delta_phys is the actual conditioned physical specific-force change and
+Delta_nom contains the literal OU prediction, attitude/gyro propagation,
+scheduled S pseudo-update, BA temperature evolution and lever terms. No term
+is independently chosen: all are generated by the same shipping history.
+
+Combining FT-9 and FT-10,
+
+||e_(k+1)^-|| <=
+ ||A_e,k|| alpha_a ||e_k^-||
+ + ||Delta_phys,k-Delta_nom,k||
+ + ||d_NL,k||.                                              (FT-11)
+
+On a compact MARINE branch, if the complete between-update coefficient has
+q_e:=sup ||A_e,k|| alpha_a<1, then iteration gives the ISS tracking bound
+
+||e_k^-||
+ <= q_e^(k-k0)||e_k0^-||
+ + sum_i q_e^(k-1-i)
+   (||Delta_phys,i-Delta_nom,i||+||d_NL,i||).               (FT-12)
+
+FT-12 is the rigorous statement that physical and nominal forces follow one
+another. It is conditional on the source-uniform measurement-information
+floor FT-8 and on q_e<1; neither follows merely from visual charts.
+
+### Consequence for persistent nominal field alignment
+
+Suppose the pathological base execution maintains
+
+P_B h_cog,k^nom =0                                         (FT-13)
+
+at every relevant post-update epoch, where h_cog^nom is the nominal CoG
+specific force in world/body-equivalent coordinates. PN1 proved that the TRUE
+physical specific force cannot remain within epsilon_f of the magnetic axis
+for more than T_col.
+
+At every recurring PN1-separated epoch,
+
+|P_B e_k| >=
+ |P_B f_phys,k|-defect_nom,k.                              (FT-14)
+
+If FT-12 provides a uniform tracking tube
+
+||e_k|| <= epsilon_track                                   (FT-15)
+
+with
+
+epsilon_track+epsilon_model < epsilon_sep,                 (FT-16)
+
+where epsilon_sep is the recurring physical noncollinearity margin supplied
+by PN1 on a chosen longer window, then FT-13 is impossible at that epoch.
+Indeed nominal field alignment plus FT-15 would imply physical force lies
+inside the same magnetic-axis tube, contradicting PN1.
+
+This gives the desired physical-to-nominal bridge, but only after proving a
+quantitative tracking tube smaller than the physical separation margin.
+
+### Does the current theorem already provide FT-15 with the needed margin?
+
+Not yet.
+
+FT-6 proves strict contraction at each accepted accelerometer update only in
+directions with a positive predicted measurement-covariance floor. The current
+proof has lower floors on R and process sources, but it has NOT yet exported a
+source-uniform positive lower bound mu_a for the full literal C P C' on every
+MARINE accelerometer epoch. More importantly, FT-10 contains physical-vs-
+nominal forcing increments; MARINE acceleration may change on the same time
+scale as the estimator, so the ISS steady tracking radius in FT-12 need not be
+small compared with the geometric gravity/magnetic separation without a
+quantitative calculation.
+
+Thus the charts are consistent with and explained by FT-6, but they are not a
+proof of the source-uniform inequality FT-16.
+
+### Stronger complete-window form
+
+A per-sample small tube is unnecessary. Over a complete moving window define
+the chronological tracking transition
+
+Phi_e(k,j)=product_(l=j)^(k-1) A_e,l R_l S_l^-1.            (FT-17)
+
+Then
+
+e_k=Phi_e(k,k0)e_k0+
+ sum_i Phi_e(k,i+1) w_i,                                   (FT-18)
+
+where w_i is the literal physical-minus-nominal prediction forcing including
+S/OU/BA/attitude terms and nonlinear defects.
+
+The theorem needs only that every interval longer than T_col contains an epoch
+at which
+
+||P_B e_k|| < |P_B f_phys,k|-epsilon_model.                (FT-19)
+
+A source-uniform complete-window gain bound can be much sharper than FT-12,
+because it retains the actual coupled tuner/covariance chronology and marine
+forcing instead of independently maximizing alpha_a and w_i.
+
+This is now the correct quantitative proof target. It is a tracking-gain
+problem, not an observability/kernel problem.
+
+### Status
+
+The literal Kalman algebra PROVES that accepted accelerometer updates contract
+physical-vs-nominal specific-force mismatch according to FT-6. Bounded
+physical velocity PROVES recurring physical force/magnetic noncollinearity.
+Together they reduce exclusion of the pathological nominal field alignment to
+one quantitative margin:
+
+complete-window tracking error < recurring physical noncollinearity margin.
+                                                                    (FT-20)
+
+FT-20 is not yet discharged numerically/source-uniformly. If it holds on the
+declared MARINE class, the field-aligned LaSalle execution is impossible,
+Inv{D=0}={0}, and dissipativity+compactness yields finite-window contraction.
+
+If FT-20 fails for the declared broad marine envelopes, the theorem needs
+either a tighter certified-MARINE admission envelope or a weaker tracking
+claim; it does NOT follow that the pathology is reachable.
+
+
+## Quantitative complete-window tracking-margin test
+
+The desired exclusion is
+
+tracking mismatch at some recurring physical-separation epoch
+ < physical force/magnetic separation at that epoch.        (TM-1)
+
+This section derives the strongest source-faithful form currently available
+and identifies the exact missing quantitative input.
+
+### 1. A strict physical separation margin needs jerk/sampling, not velocity alone
+
+PN1 showed that true specific force cannot remain inside an arbitrarily chosen
+magnetic-axis tube longer than
+2 V_max/(g_Bperp-epsilon). That is a residence-time theorem. By itself it does
+not supply a fixed positive sampled separation epsilon_sep: a continuous
+trajectory may repeatedly leave every smaller tube by an arbitrarily small
+amount.
+
+Let
+d(t):=P_B f_phys(t)=P_B a_phys(t)-P_B g.                    (TM-2)
+
+Assume the declared translational jerk bound
+|dot a_phys|<=J_max. Then d is J_max-Lipschitz. Suppose on a window of length
+T all sampled/continuous transverse separations obey |d(t)|<=D. Then
+
+P_B[v(T)-v(0)]
+ =T P_B g + integral d(t)dt,                                (TM-3)
+
+so
+
+2 V_max >= |P_B[v(T)-v(0)]|
+ >= T g_Bperp - integral |d|dt
+ >= T(g_Bperp-D).                                           (TM-4)
+
+Hence for any T>2V_max/g_Bperp,
+
+max_(t in W)|d(t)|
+ >= epsilon_sep(T):=
+ g_Bperp-2V_max/T >0.                                      (TM-5)
+
+This already gives a continuous-time excursion height. If accelerometer
+accepted epochs have maximum gap h_acc and d is J_max-Lipschitz, some accepted
+epoch k satisfies
+
+|d(t_k)| >= epsilon_sep(T)-J_max h_acc.                    (TM-6)
+
+Therefore choose T such that
+
+epsilon_phys(T):=
+ g_Bperp-2V_max/T-J_max h_acc-epsilon_field/cal >0.        (TM-7)
+
+Then every complete MARINE window of length T contains an accepted
+accelerometer epoch with true transverse specific-force magnitude at least
+epsilon_phys(T).
+
+TM-7 is the quantitative physical side of the desired margin.
+
+### 2. Exact same-history tracking operator
+
+For the physical-vs-nominal measurement mismatch e=z-h(x), the accepted
+accelerometer correction has first-order map
+
+e^+=D_k e + d_NL,k,
+D_k:=R_k S_k^-1.                                            (TM-8)
+
+Between accepted accelerometer epochs, carry the literal prediction, due S,
+attitude/gyro, BA-temperature and lever evolution. Linearizing the measurement
+mismatch gives
+
+e_(k+1)^- = A_k D_k e_k^- + w_k,                            (TM-9)
+
+where w_k is the TOTAL same-history physical-minus-nominal forcing plus the
+finite-angle/lever remainder. Define
+
+L_k:=A_k D_k.                                               (TM-10)
+
+Over a complete window,
+
+e_j^-=
+ Phi(j,0)e_0^-
+ + sum_(i<j) Phi(j,i+1) w_i,                               (TM-11)
+
+Phi(j,i)=L_(j-1)...L_i.                                     (TM-12)
+
+No gain, tuner, covariance or forcing component is independently maximized in
+TM-11.
+
+### 3. Joint action bound for the forcing term
+
+The existing actual-gain finite-error/source-factor identity gives the correct
+way to bound the accumulated w_i. Express each prediction/correction forcing
+through its literal covariance/noise factor B_i u_i. After chronological
+transport to epoch j,
+
+P_j =
+ Phi_P(j,0) P_0 Phi_P(j,0)'
+ + sum_i Phi_P(j,i+1) B_i B_i' Phi_P(j,i+1)'.              (TM-13)
+
+Whitening by P_j shows the horizontally stacked transported source operator has
+norm at most one. Therefore for any output row C_e,j mapping state/source
+defects into specific-force mismatch,
+
+|| C_e,j sum_i Phi_P B_i u_i ||
+ <= sqrt(lambda_max(C_e,j P_j C_e,j'))
+    sqrt(sum_i ||u_i||^2).                                 (TM-14)
+
+For accelerometer output this covariance factor is bounded by the predicted
+measurement covariance:
+
+C_e,j P_j C_e,j' <= S_a,j                                  (TM-15)
+
+in PSD order after including the literal measurement model blocks. Thus in
+the innovation metric,
+
+|| accumulated estimator-source tracking defect ||_(S_a,j^-1)
+ <= sqrt(sum_i ||u_i||^2).                                 (TM-16)
+
+This is the linked complete-window bound; it avoids summing per-sample gain
+norms.
+
+### 4. Why TM-16 does not yet bound BASE physical tracking error
+
+The u_i in the finite-error/source-factor identity are MODEL/estimation
+disturbance actions: process mismatch, measurement noise/nonlinear residual,
+reset defects, etc. The actual MARINE physical acceleration waveform is not a
+small disturbance around a known truth trajectory in the base mean recursion;
+it is the measurement signal the estimator is tracking.
+
+In TM-9, w_i contains the physical force increment
+Delta_phys-Delta_nom. There is currently no theorem bounding the action of
+this BASE forcing by the stochastic/process source budget sum||u_i||^2.
+Doing so would assume the conclusion that the physical waveform follows the
+OU model closely enough.
+
+The tuner chooses tau,sigma_aw from that waveform, but sigma_aw is a variance
+scale, not a deterministic pathwise bound on physical acceleration increments.
+Therefore the existing Joseph/source-factor identity cannot by itself produce
+a deterministic source-uniform epsilon_track for arbitrary admitted MARINE
+waveforms.
+
+### 5. Exact margin condition and status
+
+At the guaranteed physical-separation epoch j from TM-7, persistent nominal
+field alignment implies
+
+|P_B e_j| >= epsilon_phys(T)-epsilon_nominal_model.         (TM-17)
+
+The tracking recursion TM-11 excludes the pathology if one can prove
+
+sup_same-history
+ |P_B[Phi(j,0)e_0 + sum Phi(j,i+1)w_i]|
+ <
+ epsilon_phys(T)-epsilon_nominal_model                     (TM-18)
+
+for at least one such j in every T-window.
+
+The literal Kalman correction supplies contraction D_k=R S^-1 and the source-
+factor identity tightly bounds estimator/model disturbances. What remains
+unbounded in TM-18 is the deterministic BASE physical forcing component of
+w_i under the current MARINE MOTION class.
+
+Consequently the quantitative tracking margin (5) is NOT proved from the
+present assumptions. The obstacle is not covariance/gain independence; it is
+that MARINE MOTION currently permits arbitrary bounded/jerk-limited
+translational acceleration, whereas deterministic tracking error depends on
+its bandwidth/amplitude relative to the estimator closed-loop bandwidth.
+
+### 6. Minimal condition that would close it
+
+A physically natural certified-MARINE condition is a deterministic
+tracking-band envelope on the independent raw-IMU force, for example
+
+sum_(i in W)
+ || Delta f_phys,i ||^2 / q_track,i <= E_track             (TM-19)
+
+or an equivalent Lipschitz/bandwidth bound tied to the already measured wave
+period, with q_track generated from the SAME tuner schedule. If TM-19 is
+chosen so that the induced complete-window gain in TM-11 is below the right
+side of TM-18, nominal field alignment is impossible.
+
+This is not an artificial observability assumption: it states quantitatively
+that the marine force waveform lies inside the bandwidth/amplitude envelope
+the filter is designed and tuned to track. The filter studies empirically show
+this for the tested wave spectra; a theorem needs it as a deterministic
+admission envelope or must derive it from a physical wave model.
+
+Alternatively, prove a deterministic relation between the period-scaled
+front-end band statistic and the pathwise forcing action in TM-19. That would
+turn the existing tuner measurement into the needed certificate without a new
+external assumption.
+
+### Conclusion
+
+The complete-window same-history calculation is now closed as far as the
+current deterministic assumptions permit:
+
+- physical separation margin: explicit TM-7;
+- literal tracking transition: exact TM-8--TM-12;
+- estimator/model disturbance accumulation: linked TM-14--TM-16;
+- unresolved term: deterministic physical waveform forcing in TM-11.
+
+Thus the charts' physical/nominal tracking can be proved uniformly only after
+connecting the admitted marine waveform's deterministic increment energy to
+the same tuner-generated tracking bandwidth. That is the next mathematical
+bridge; further covariance or compatibility analysis cannot replace it.
+
+
+## Literal front-end test of the deterministic tracking-action bridge
+
+TM identified the desired bridge
+
+sum ||Delta f_phys||_(Q_track^-1)^2
+ <= C_track E_frontend(W).                                 (FB-1)
+
+This section substitutes the actual shipping front end:
+VerticalAccelComplementary -> AdaptiveWaveBandPass ->
+SeaStateAutoTuner variance/frequency.
+
+### Exact signals seen by adaptation
+
+VerticalAccelComplementary is measurement-only. With private Mahony
+body-to-NED rotation R_M and conditioned body specific force f_B, its scalar
+output is
+
+a_V=-(e_z' R_M f_B+g).                                     (FB-2)
+
+Thus the adaptation path discards the two independently levelled horizontal
+specific-force components before any band or variance operation.
+
+AdaptiveWaveBandPass is the scalar time-varying linear recursion
+
+l_+=q_l l+alpha_l a_V,
+b_+=q_h b+alpha_h q_l(a_V-l),                              (FB-3)
+
+with low/high corners [0.5,4] times the lagged tuning frequency, subject to
+absolute/Nyquist clamps. SeaStateAutoTuner then forms debiased exponentially
+weighted first and second moments of b and reports
+
+var_B=E_w[b^2]-E_w[b]^2.                                   (FB-4)
+
+The variance horizon is K periods of the supplied wave frequency, clamped in
+seconds. The operating-point law subtracts the exact propagated bench-noise
+variance of FB-3 and uses
+
+sigma_aw,target=c_sigma sqrt(max(var_B-var_noise,0))        (FB-5)
+
+(up to startup floor/clamp), while tau comes from the measurement-only period
+estimate. SpectralMSE R_S and T_S are downstream of this same tuple.
+
+### FB-1 is impossible on the current MARINE class
+
+The map from the three-component conditioned physical force history to
+E_frontend has a nontrivial exact nullspace even with perfect Mahony tracking.
+
+Take a level-frame physical translational acceleration
+
+a_phys^M(t)=A sin(omega t) e_x,                             (FB-6)
+
+with zero vertical component, omega in any admissible marine band and A small
+enough to satisfy acceleration/jerk/velocity/displacement bounds. With exact
+private tilt and no vertical translation,
+
+a_V(t)=0.                                                   (FB-7)
+
+After the finite filter transient,
+
+b(t)=0, var_B=0                                             (FB-8)
+
+apart from the explicit bench/startup floors, while
+
+Delta f_phys !=0                                            (FB-9)
+
+and its deterministic increment/action over a nontrivial window is positive.
+Amplitude A may be varied within the physical envelope without changing the
+ideal frontend wave variance.
+
+A separate admissible roll/pitch history can supply the theorem's recurring
+attitude-span condition; correct gyro propagation of the private Mahony tilt
+does not turn FB-6 into vertical proxy energy. Thus the counterexample is not
+removed by MARINE MOTION attitude excitation.
+
+Consequently there is no finite source-uniform C_track for FB-1 on the
+current three-dimensional MARINE MOTION class.
+
+### Band-pass nullspace makes the scalar problem noncoercive too
+
+Even if FB-1 were restricted to vertical force, the adaptive band statistic
+cannot control arbitrary deterministic vertical increment energy without a
+spectral-envelope assumption. FB-3 is a high-pass followed by a low-pass.
+Constant/very-slow vertical components are attenuated by the high-pass and
+sufficiently fast components by the low-pass, while deterministic increment
+energy may remain nonzero. The EW central variance FB-4 additionally removes
+the band-output mean.
+
+Therefore an inequality from FULL vertical pathwise increment energy to
+period-scaled band variance requires the physical waveform to be restricted
+to a frequency class on which the transfer magnitude of FB-3 has a positive
+lower bound. The current bounded acceleration/jerk assumptions do not provide
+that spectral support condition.
+
+### Does the field-aligned pathology lie automatically in the measured channel?
+
+No. The restoration condition is
+
+M r_acc=q_FA, M=P_B K_aw,                                  (FB-10)
+
+where P_B is transverse to the geomagnetic field. Its required innovation
+component M^dagger q_FA is a general three-component body force. Magnetic
+transverse directions are not the Mahony vertical direction. No shipping
+identity proved so far forces the field-alignment-supporting physical
+mismatch to have a nonzero vertical projection, let alone to lie inside
+[0.5,4] f_tune.
+
+Hence the frontend nullspace counterexample is relevant to the final
+obstruction, not merely to unrelated physical forcing.
+
+### What the tuner DOES certify
+
+For the scalar proxy component that actually lies in the adaptive band, the
+statistics are exact and useful. Conditional on a fixed coefficient history,
+FB-3 is a stable linear operator B_W. The debiased EMA variance is a positive
+quadratic form in its output after removal of the weighted mean. On any
+declared spectral subspace X_W for which
+
+||B_W x||_w >= beta_B ||x||_w, beta_B>0,                   (FB-11)
+
+the measured variance supplies a coercive bound on the zero-mean scalar
+component:
+
+||x-mean_w x||_w^2
+ <= beta_B^-2 E_var(W).                                    (FB-12)
+
+The tuner then maps that SAME measured E_var causally into sigma_aw, tau,
+T_S and R_S. This is a valid linked tracking-budget theorem, but only for the
+measured vertical in-band subspace.
+
+### Consequence for the LaSalle strategy
+
+The proposed closure
+
+arbitrary MARINE physical forcing
+ -> current vertical frontend statistic
+ -> uniform 3D tracking tube
+ -> nominal/physical noncollinearity bridge                 (FB-13)
+
+is mathematically false.
+
+There are three rigorous repair options:
+
+1. **Strengthen the certified MARINE class.** Require the physical
+   acceleration relevant to the theorem to lie in a declared wave spectral/
+   directional envelope with a positive projection into the private vertical
+   band. Then prove beta_B>0 for that envelope and use FB-12.
+
+2. **Make adaptation/monitoring 3-D.** Feed independent Mahony-levelled
+   three-axis acceleration into corresponding period-scaled bands/statistics.
+   A 3-D band-energy statistic removes the horizontal nullspace. A spectral
+   support premise is still required to control out-of-band deterministic
+   forcing, but it can be matched to the marine-wave class rather than to one
+   vertical component.
+
+3. **Do not use tuner variance to prove tracking.** Retain TM-18 as a direct
+   same-history condition and certify it with a read-only runtime stability
+   monitor using the actual physical/nominal mismatch and gains.
+
+For the current shipping estimator and current broad MARINE assumptions,
+FB-1 cannot be used to close Inv{D=0}={0}. This is a structural limitation of
+the information supplied to adaptation, not a missing covariance inequality.
+
+### Minimal theorem-compatible path
+
+If the intended theorem is genuinely for wave-driven marine motion rather
+than arbitrary bounded 3-D translation, formalize that physical class
+explicitly. A self-similar marine-wave spectral envelope already motivates
+the SpectralMSE tuner. If the theorem assumes that the acceleration component
+relevant to force tracking has support in
+[f_low,f_high]=[0.5,4] f_tune (with leakage margin) and a known nonzero
+projection into the Mahony vertical channel, then the minimum transfer gain of
+FB-3 on that compact normalized band is positive. FB-11--FB-12 become
+quantitative and the SAME sigma_a,B used by shipping supplies the deterministic
+forcing-action bound needed by TM.
+
+Without those physical spectral/directional premises, the desired proof would
+claim more than the front end observes.
+
+
+## Quantitative radius-local exclusion using the declared MARINE/MAGNETIC bounds
+
+The previous frontend detour enlarged the theorem class unnecessarily.  For
+the regional theorem use the already proved retained-ball AW error estimate
+
+|a_hat-a| <= 4 r                                            (QR-1)
+
+(and |e_ba|<=r/40 where the force comparison needs BA explicitly), together
+with the exact MARINE MOTION and MAGNETIC SERVICE constants.
+
+Let e_B be the unit direction of
+d_0=P_(b_M)^perp g_0.  The declared inclination bound gives
+
+g_Bperp >= g_min cos(80 deg).                               (QR-2)
+
+Let eps_F collect ONLY the already declared fixed physical/reference defects
+in the scalar e_B force comparison: local-gravity variation eps_g,
+near-constant-field projector variation from eps_B, lever/calibration terms,
+and the exact-compatibility tolerance.  Let eps_r(r) collect radius-local
+attitude/BA terms, with eps_r(r)->0 and including the r/40 BA contribution
+when applicable.
+
+If the nominal field-aligned zero-action pathology persists at every applied
+accelerometer epoch t_k, QR-1 implies
+
+e_B' a(t_k) >=
+ g_Bperp - [4r+eps_r(r)+eps_F].                             (QR-3)
+
+(The sign convention is chosen so e_B'g=g_Bperp.)
+
+Between applied accelerometer epochs, |a_dot|<=J_max.  For a gap D_k,
+
+integral_(t_k)^(t_(k+1)) e_B'a(t) dt
+ >= [g_Bperp-eps_col] D_k - J_max D_k^2/4,                 (QR-4)
+
+where eps_col=4r+eps_r(r)+eps_F.  Summing gaps over a window of length L and
+using |v_end-v_start|<=2 V_max gives the NECESSARY condition for persistence
+
+eps_col >=
+ g_Bperp - 2 V_max/L
+ - (J_max/4) [sum D_k^2/sum D_k].                          (QR-5)
+
+For the regular 25-Hz applied cadence used by the proof,
+D_k<=h_acc=0.04 s, hence
+
+sum D_k^2/sum D_k <= h_acc                                 (QR-6)
+
+and a persistent pathology requires
+
+4r+eps_r(r)+eps_F >=
+ M(L):=g_Bperp-2 V_max/L-J_max h_acc/4.                    (QR-7)
+
+Therefore it is EXCLUDED whenever
+
+4r+eps_r(r)+eps_F < M(L).                                  (QR-8)
+
+This is the requested explicit radius inequality.
+
+### Literal numerical substitution
+
+The current deterministic certification table gives
+
+V_max=5.50 m/s,
+J_max=100 m/s^3.                                           (QR-9)
+
+The magnetic theorem gives
+
+g_Bperp>=g_min cos80deg
+       =0.1736481777 g_min.                                (QR-10)
+
+Using g_min=9.80665 m/s^2 for the nominal numerical audit gives
+g_Bperp>=1.7029069 m/s^2.  This numerical use is an audit value; the theorem
+retains g_min and eps_g symbolically until their certified envelopes are
+instantiated.
+
+At h_acc=0.04 s,
+
+J_max h_acc/4=1.000000 m/s^2.                              (QR-11)
+
+Thus, before eps_F/eps_r deductions,
+
+L=16 s:
+ M_16=1.7029069-11/16-1
+     =0.0154069 m/s^2,
+ r_FA,ideal(16)=M_16/4
+     =0.0038517.                                            (QR-12)
+
+L=64 s:
+ M_64=1.7029069-11/64-1
+     =0.5310319 m/s^2,
+ r_FA,ideal(64)=0.1327580.                                 (QR-13)
+
+L=100 s:
+ M_100=1.7029069-11/100-1
+      =0.5929069 m/s^2,
+ r_FA,ideal(100)=0.1482267.                                (QR-14)
+
+As L->infinity,
+
+M_inf=1.7029069-1=0.7029069,
+r_FA,ideal(inf)=0.1757267.                                 (QR-15)
+
+The 16-s route has essentially no defect headroom and should NOT be used for
+the final certificate.  The existing 100-s superword has about
+0.593 m/s^2 of zero-radius headroom before declared defects and is the natural
+window for this exclusion.
+
+### Symbolic certified radius with the actual field envelopes retained
+
+Because eps_g and eps_B are deliberately still symbolic in the theorem
+contract, a fully numerical r_FA cannot honestly be emitted yet.  The
+certified 100-s condition is
+
+4r+eps_r(r)
+ <
+ 0.1736481777 g_min
+ -0.11
+ -1.00
+ -eps_F,                                                    (QR-16)
+
+or
+
+4r+eps_r(r)
+ <
+ 0.1736481777 g_min -1.11-eps_F.                           (QR-17)
+
+Here eps_F must be instantiated from the declared eps_g/eps_B projector
+perturbation plus lever/calibration/compatibility constants.  A positive
+radius exists iff
+
+eps_F < 0.1736481777 g_min-1.11.                           (QR-18)
+
+At nominal standard gravity the right side is about
+
+0.5929069 m/s^2.                                           (QR-19)
+
+Once eps_F is supplied, define r_FA as the largest nonnegative root of
+
+4r+eps_r(r)+eps_F
+ =0.1736481777 g_min-1.11.                                 (QR-20)
+
+If the only remaining radius-dependent force defect is the BA storage term
+r/40, a conservative closed form is
+
+r_FA >=
+ [0.1736481777 g_min-1.11-eps_F]/(4+1/40),                 (QR-21)
+
+provided the numerator is positive.  At zero fixed defects and nominal
+gravity this gives
+
+r_FA >=0.5929069/4.025
+     =0.147306.                                             (QR-22)
+
+Any additional attitude-to-force term eps_att(r) must be added to the
+denominator/modulus rather than omitted.
+
+### Relation to the older jerk-collinearity audit
+
+The existing world-frame lemma obtained, for h=1/5 and L=16 s,
+
+sum D_k^2/sum D_k >=0.0509532 s
+
+if physical force is exactly collinear at every correction.  A regular
+25-Hz cadence has D=0.04 s, so exact collinearity is already impossible.
+QR-5 is its radius-local tube version.  The very small M_16 above explains
+why the exact-collinearity statement was easy while a useful finite-radius
+16-s tube has little margin.  Extending to the already contemplated 100-s
+superword converts the same physical mechanism into useful radius headroom.
+
+### Analytical consequence
+
+Fix any certified field/reference envelopes satisfying QR-18 and choose
+r<r_FA from QR-20.  An infinite zero-dissipation MARINE trajectory in the
+retained ball would, by the complete-word equality characterization, maintain
+nominal field alignment at every applied accelerometer epoch.  QR-1 then
+imposes QR-3.  But summing the literal MARINE jerk/velocity inequalities over
+each 100-s block contradicts QR-8.
+
+Hence, conditionally on the already declared field/reference envelopes,
+
+Inv_MARINE({D=0} intersect {V<=r^2})={0}.                  (QR-23)
+
+Compactness of the retained same-history class then yields a finite block
+length m and eta_D(r)>0 with strict accumulated dissipation, hence homogeneous
+block contraction.  The practical/ISS theorem still needs the existing
+nonlinear/source-supply retention step, but the alleged moving
+field-aligned trajectory is analytically excluded inside this radius.
+
+### Remaining data obligation
+
+The calculation found the actual bottleneck: not tuner variance, but the
+still-symbolic certified values of eps_g and eps_B and any nonzero
+lever/calibration/compatibility force defects.  They must be instantiated or
+bounded tightly enough that their total eps_F is <0.5929069 m/s^2 (at nominal
+gravity) on the 100-s certificate.  This is a large margin relative to normal
+field/reference perturbations, but the proof must insert the declared values
+rather than assume them zero.

@@ -5,7 +5,6 @@ import numpy as np
 from .ag_readout_source_diagnostic import REPO, HEADER, instrument
 
 DRIVER=REPO/'tools/stability/aw_port_17s_source.cpp'
-TARGET=8.45e-3
 
 def compile_and_run(eigen, heading):
     source=(REPO/HEADER).read_text()
@@ -85,10 +84,9 @@ def one_axis(events, axis):
     d2=[hs[0]]+[hs[i]-hs[i-1] for i in range(1,len(hs))]+[hs[-1]]
     d21=sum(float(np.linalg.norm(x)) for x in d2)
     root=math.sqrt(max(action,0.0))
-    c=d21/root if root>0 else math.inf
+    ratio=d21/root if root>0 else math.inf
     return {'axis':axis,'sync_slabs':len(hs),'reader_action':action,'sqrt_reader_action':root,
-            'D2_block_2_1':d21,'C_port_W':c,'four_C_port_W':4*c,
-            'target_C_port':TARGET,'ratio_to_target':c/TARGET,'below_target':c<TARGET}
+            'D2_block_2_1':d21,'D2_reader_over_sqrt_action':ratio}
 
 def run(eigen):
     global trace_global
@@ -98,11 +96,14 @@ def run(eigen):
         ev=normalized_events(trace_global)
         axes=[one_axis(ev,a) for a in range(3)]
         cases.append({'profile':heading,'events':len(ev),'axes':axes,
-                      'max_C_port_W':max(x['C_port_W'] for x in axes),
-                      'all_axes_below_target':all(x['below_target'] for x in axes)})
-    return {'qualification':'OU3_AW_PORT_17S_CARRIED_DIAGNOSTIC_V1',
-            'window_s':17,'definition':'C_port_W = block-(2,1) norm of D2 h divided by sqrt(causal reader action)',
-            'target_C_port':TARGET,'non_promoting':True,'source_uniform_verified':False,
+                      'max_D2_reader_over_sqrt_action':
+                          max(x['D2_reader_over_sqrt_action'] for x in axes)})
+    return {'qualification':'OU3_AW_D2_READER_17S_CARRIED_DIAGNOSTIC_V2',
+            'window_s':17,
+            'definition':'reader-dependent block-(2,1) norm of D2 h divided by sqrt(full causal-reader action)',
+            'is_C_port_W':False,
+            'reason_not_C_port_W':'does not construct the physical-primitive to complete normalized action-source operator G_phys,W',
+            'non_promoting':True,'source_uniform_verified':False,
             'theorem_closed':False,'cases':cases}
 
 if __name__=='__main__':

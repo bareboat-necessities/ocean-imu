@@ -33,6 +33,29 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  periodic-witness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install native witness dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
+      - name: Run commensurate periodic fast-gyro candidate
+        run: |
+          python3 -m tools.stability.ou3_theorem.periodic_fast_gyro_counterexample --native --eigen /usr/include/eigen3 > /tmp/ou3-periodic-fast-gyro.json
+          cat /tmp/ou3-periodic-fast-gyro.json
+      - uses: actions/upload-artifact@v6
+        if: ${{ always() }}
+        with:
+          name: ou3-periodic-fast-gyro-witness
+          path: /tmp/ou3-periodic-fast-gyro.json
+          retention-days: 7
+          if-no-files-found: warn
   theorem:
     runs-on: ubuntu-24.04
     # Native source replays and the final exact enclosure exceed 20 minutes.
@@ -49,6 +72,16 @@ jobs:
         run: python3 -m pip install numpy scipy mpmath
       - name: Compile theorem tooling
         run: python3 -m py_compile tools/stability/ou3_theorem/*.py
+      - name: Compute literal A21 release outer storage first
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
+          python3 -m tools.stability.ou3_theorem.release_outer_storage_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-release-outer-early.json
+          cat /tmp/ou3-release-outer-early.json
+      - name: Audit literal A21 release outer storage without theorem promotion
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
+          python3 -m tools.stability.ou3_theorem.release_outer_storage_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-release-outer.json
+          cat /tmp/ou3-release-outer.json
       - name: Execute rational LIN path certificate
         run: |
           python3 tools/stability/ou3_theorem/lin_path_certificate.py --output /tmp/ou3-lin-path-certificate.json
@@ -82,10 +115,21 @@ jobs:
             /tmp/ou3-lin-path-certificate.json
           retention-days: 7
           if-no-files-found: error
+      - name: Probe commensurate periodic fast-gyro candidate without promotion
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
+          python3 -m tools.stability.ou3_theorem.periodic_fast_gyro_counterexample --native --eigen /usr/include/eigen3 > /tmp/ou3-periodic-fast-gyro.json
+          cat /tmp/ou3-periodic-fast-gyro.json
       - name: Validate theorem contracts
         working-directory: tests/validation
         run: |
-          python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_same_execution test_ou3_theorem_status test_ou3_regimes test_ou3_moving_pivots test_ou3_inverse_transport test_ou3_same_cell_groups test_ou3_world_frame test_ou3_aw_covariance_ceiling test_ou3_aw_tracking test_ou3_signed_injection test_ou3_aggregate_floor test_ou3_stationary_covariance test_ou3_tail_stability test_ou3_interval_riccati test_ou3_interval_riccati_21 test_ou3_block_factor_metric test_ou3_physical_qualification test_workflow_contract test_ou_replay_fingerprint
+          python3 -m unittest -v test_ou3_architecture_cleanup test_ou3_imu_bias test_ou3_magnetic_service test_ou3_marine_motion test_ou3_no_mag_obstruction test_ou3_same_execution test_ou3_theorem_status test_ou3_regimes test_ou3_moving_pivots test_ou3_inverse_transport test_ou3_same_cell_groups test_ou3_world_frame test_ou3_aw_covariance_ceiling test_ou3_aw_tracking test_ou3_signed_injection test_ou3_aggregate_floor test_ou3_stationary_covariance test_ou3_tail_stability test_ou3_interval_riccati test_ou3_interval_riccati_21 test_ou3_rank_loss_interval_factor test_ou3_block_factor_metric test_ou3_physical_qualification test_workflow_contract test_ou_replay_fingerprint
+      - name: Build magnetic exhaustive-strata certificate
+        run: |
+          python3 -m tools.stability.ou3_theorem.magnetic_strata_certificate_cli --output /tmp/ou3-magnetic-strata.json
+      - name: Build rank-loss interval certificate
+        run: |
+          python3 -m tools.stability.ou3_theorem.rank_loss_interval_certificate --output /tmp/ou3-rank-loss-interval.json --max-depth 10
       - name: Validate provenance and fail-closed status
         run: python3 tools/stability/ou3_theorem/build_evidence.py --output /tmp/ou3-stability-evidence.json
       - name: Build literal shipping regressions
@@ -94,7 +138,7 @@ jobs:
         run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test && ./tests/kalman_ou_iii/regime_ambiguity-test && ./tests/kalman_ou_iii/gyro_bias_projection-test
       - name: Audit carried source readout without promotion
         run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-readout.json
-      - name: Diagnose 17-s terminal-AW physical port norm without promotion
+      - name: Diagnose 17-s terminal-AW D2 reader ratio without promotion
         run: python3 -m tools.stability.ou3_theorem.aw_port_17s_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-aw-port-17s.json
       - name: Audit exact same-cell moving row groups without promotion
         run: python3 -m tools.stability.ou3_theorem.moving_transport_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-moving-transport.json
@@ -131,6 +175,7 @@ jobs:
             /tmp/ou3-signed-balance/export.json
             /tmp/ou3-signed-balance/balance.bin
             /tmp/ou3-construction.json
+            /tmp/ou3-release-outer.json
             /tmp/ou3-mean-diagnostic.json
             /tmp/ou3-mean-enclosure.json
             /tmp/ou3-mean/export.json

@@ -1,0 +1,29 @@
+{
+  "qualification": "OU3_RANK_LOSS_INTERVAL_FACTOR_V1",
+  "literal_ranges": {
+    "tau_s": [
+      0.02,
+      12
+    ],
+    "dt_s": [
+      0.004,
+      0.006
+    ],
+    "S_gap_max_s": 0.15,
+    "sigma_aw_min": 0.05,
+    "accel_std_min": 0.05,
+    "integral_std_min": 0.075,
+    "aw_covariance_upper": 16,
+    "R_S_variance_upper": 10000,
+    "magnetic_service_window_s": 1,
+    "magnetic_service_mu": 1
+  },
+  "gamma_S_lower": 0,
+  "gamma_M_lower": 0,
+  "beta_lower": 0,
+  "interval_factor_engine_implemented": true,
+  "literal_common_source_boxes_complete": false,
+  "source_uniform_verified": false,
+  "theorem_closed": false,
+  "limiter": "positive bounds require literal common-source interval boxes for selected four-S and residualized magnetic blocks"
+}
