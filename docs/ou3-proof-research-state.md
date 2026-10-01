@@ -577,3 +577,29 @@ with coordinates
 To prove R_rel compact without a uniform release time, every listed noncompact coordinate must have an ALL-TIME source-uniform bound while BA is held. Existing nuisance covariance results give important covariance bounds after regular A21, but they cannot be silently applied before A21 release if their hypotheses include active BA/regular A21. The LIN mean remains the principal unresolved coordinate.
 
 NEXT FALSIFIABLE CALCULATION: prove or refute all-time boundedness of the held-BA pre-release LIN mean under literal Live/H18 dynamics. Use the exact stable OU a_w recurrence plus recurring S=0 pseudo-updates and bounded accelerometer/magnetic measurements; derive a shaped bound for (a_w,v,p,S) that is independent of release time. If this closes, combine with source covariance/tuner/reference bounds to obtain compact R_rel despite arbitrarily delayed refinement. If it fails because neutral v/p/S can drift under bounded innovations, then H18->A21 compact release requires either a theorem that refinement/release occurs within finite time from existing MAGNETIC SERVICE or a different retained pre-release invariant.
+
+
+## Held-BA pre-release LIN all-time bound — structural detectability yes; uniform BIBO modulus OPEN
+
+Consider the literal Live/H18 LIN mean z=(v,p,S,a_w) while BA updates are held. Prediction is autonomous with stable OU AW and neutral v->p->S integration. Recurring S=0 corrections use the full-state Kalman gain but their LIN measurement row is exactly H_S=[0,0,I,0]. Accelerometer and magnetic corrections add further feedback/forcing through full-state cross covariance.
+
+There is NO structural neutral LIN mode invisible to recurring S rows once AW is stable: for zero forcing, three separated S samples determine the quadratic neutral (v,p,S) root, and four samples determine the added homogeneous OU AW root (the proved extended-Chebyshev four-S lemma). Thus an exact unit-eigenvalue obstruction is absent. This is consistent with the nuisance covariance proof, whose three-S interpolation cancels an arbitrary neutral covariance root after 17 s.
+
+However covariance boundedness/detectability does not by itself prove deterministic MEAN BIBO boundedness for the actual adaptive observer. To obtain
+
+    sup_{t<t_rel} ||z_hat(t)|| < infinity
+
+independently of arbitrarily delayed release, one needs a UNIFORM exponential/stability modulus for the time-varying homogeneous mean map, or an ISS Lyapunov/storage inequality, plus bounded exogenous physical/sensor/reference inputs. The S correction gain can in principle become arbitrarily weak if the relevant P(:,S) geometry collapses relative to R_S; the current nuisance-upper theorem supplies covariance ceilings but not a source-uniform lower information/gain floor for the held-BA pre-release chronology. The four-S nullspace lemma gives injectivity word-by-word, not yet a uniform contraction modulus on the noncompact covariance/history class.
+
+The covariance trial-estimator proof cannot simply be reused for the mean: its auxiliary S observations have bounded measurement noise in a Gaussian comparison and prove an optimal covariance upper bound; the actual pseudo observation is identically zero and the estimator's deterministic posterior mean depends on its own prior state through K_S. A covariance error bound is not a bound on a deterministic mean initialized/driven off-model.
+
+Therefore the all-time LIN bound is NOT yet closed, but the failure is not a discovered drifting mode. The exact remaining obligation is a uniform pre-release S-observer detectability/ISS certificate. A sufficient route is:
+
+1. define a fixed 17-s held-BA word using the same three/four S epochs as the nuisance proof;
+2. freeze one reachable covariance/tuner/scheduler history and form the homogeneous 12x12 LIN mean transfer M_W including literal prediction and S corrections (acc/mag corrections may first be omitted for a dominating/diagnostic S-only map only if dominance for mean is proved; otherwise retain them);
+3. prove source-uniform rho(M_W)<=rho_H<1 over the compact coefficient/covariance class, or equivalently a quadratic storage decrement;
+4. bound the complete-word affine forcing from bounded physical measurements, bias projections, magnetic/reference terms and arithmetic; then ISS gives ||z_n||<=rho_H^n||z_0||+B/(1-rho_H).
+
+CURRENT LIMITER: compactness of the coefficient/covariance class used in step 3 is itself partly the release problem. Tuner/scheduler are compact; LIN covariance has an all-time upper bound after the 17-s regular segment from the existing nuisance theorem even with BA held (the proof's BA block is decoupled and the LIN comparison does not require active BA), but the attitude/BG covariance and their cross-covariance entering acc/mag LIN gains still need a pre-release upper bound if those rows are retained. The S-only LIN gain depends only on the LIN marginal P_LL and R_S, so a promising noncircular route is to prove S-only 12-state mean contraction from the already-bounded P_LL class and then show interleaved acc/mag corrections cannot destroy a chosen FULL covariance-metric storage, rather than Euclidean LIN norm.
+
+NEXT FALSIFIABLE CALCULATION: construct the exact S-only 17-s homogeneous LIN mean word from the Riccati comparison and test whether its covariance-metric contraction is uniformly strict over the proved P_LL/R_S/tau ranges. The exact S restoring identity and four-S injectivity imply pointwise strictness; compactness of the bounded positive-definite LIN covariance/tuner/scheduler class would then give rho_H<1 provided a source-uniform covariance LOWER floor at word roots is available. Check that lower floor next. If absent, derive it from fresh LIN process noise over one prediction before the root. This is the shortest route to an all-time held-BA LIN ISS bound without assuming finite release time.
