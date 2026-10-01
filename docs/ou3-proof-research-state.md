@@ -573,3 +573,26 @@ is not proved by the current aggregate machinery. Treating G0's carried m_perp/u
 What IS obtained at exact zero action is a kernel-intersection statement at the physical sensor-map level: zero magnetic residual confines instantaneous attitude ambiguity to rotation about the physical/committed field (modulo declared reference/residual terms); zero accelerometer residual permits that rotation to be traded against physical BA and nominal AW. EXCITED_MOVING excludes the pure attitude/BA packet gauge only after nominal AW has been eliminated. Therefore the unresolved obstruction is now isolated to the nominal AW contribution, not magnetic geometry.
 
 NEXT FALSIFIABLE CALCULATION: use the exact S-chain divided-difference identity specifically to eliminate nominal AW INSIDE the physical zero-innovation accelerometer equations before introducing the forced-data multipliers. Work at the sensor-map kernel level rather than bounding the full forced-adjoint functional. If four S=0 atoms plus homogeneous OU/LIN propagation imply that any zero-action AW contribution compatible with bounded physical v,p is a low-order coboundary that cannot track EXCITED_MOVING gravity span, the kernel reduces to the attitude/BA gauge and MAGNETIC SERVICE then removes its non-field component. If this kernel-level elimination still leaves a free AW function capable of cancelling arbitrary excited tilt, outer point entry cannot follow from the present assumptions.
+
+
+## Binary AW-counterfeit question — CLOSED for exact zero action
+
+At exact complete-word zero dissipation every accepted acc/mag/S innovation is zero. Therefore every correction mean increment K r is zero, every attitude injection is zero, and covariance AW synchronization changes covariance only. The nominal LIN MEAN follows the literal homogeneous prediction. Per spatial axis, with positive piecewise-continuous lambda(t)=1/tau(t),
+
+    a_hat'(t)=-lambda(t) a_hat(t),
+    v_hat'=a_hat,
+    p_hat'=v_hat,
+    S_hat'=p_hat.
+
+Hence
+
+    a_hat(t)=rho(t) a0,  rho(t)=exp(-integral lambda)>0,
+    S_hat'''(t)=rho(t) a0
+
+on prediction interiors (the literal discrete transition is the exact integrated constant-lambda solution on each sample; coefficient commits preserve state continuity). Four distinct actually applied zero-S events under D=0 give S_hat(t_j)=0 for j=0,1,2,3. Generalized Rolle: four zeros of a C2 function with absolutely continuous second derivative imply a zero of S''' almost everywhere between the extremes. But if a0!=0, S'''=rho a0 has fixed nonzero sign. Contradiction. Therefore a0=0. Then a_hat=0 identically, S_hat is quadratic, and four distinct zeros force v_hat=p_hat=S_hat=0 identically as well. Componentwise this closes all 12 LIN mean coordinates.
+
+Thus the binary question is answered NO: a zero-action nominal AW trajectory satisfying the literal homogeneous OU/S mean chain cannot counterfeit arbitrary EXCITED_MOVING tilt once four distinct applied S=0 atoms occur. It cannot counterfeit any tilt through AW at all; AW is identically zero on that zero-action interval.
+
+This is stronger and simpler than the weighted four-S identity for the exact invariant-set problem. The divided-difference identity remains useful for approximate/nonzero-action quantitative bounds, but zero-action classification should use the sign/Rolle argument directly.
+
+With AW removed, zero accelerometer compatibility is only attitude + physical/estimated BA + declared sensor/model residuals; zero magnetic compatibility supplies the existing field-axis restriction. In the ideal exact physical-map specialization this reduces to the stationary attitude/BA compatible gauge, which EXCITED_MOVING excludes when theta_X>Theta_gauge(T_X). Remaining source-audited work before claiming the full outer zero-action theorem: carry temperature/calibration/lever/reference residual terms exactly and verify four distinct ACCEPTED S atoms on every candidate EXCITED_MOVING proof word; then state the kernel intersection with MAGNETIC SERVICE on the actual reference chronology. No pointwise AW tracking is used.
