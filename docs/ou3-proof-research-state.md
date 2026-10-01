@@ -664,3 +664,18 @@ Promising option (b): prove a quotient ISS theorem for LIN driven by compact AG.
 where xi_AG is represented by bounded finite attitude coordinates on event charts and projected bg. On the compact covariance/tuner/reference class, A_L,k and B_L,k are bounded. The S rows make the homogeneous LIN pair uniformly detectable. The remaining proof is a switched/time-varying BIBO theorem showing the interleaved A_L,k word remains uniformly stable despite acc-row feedback/cross-covariance. This cannot be inferred from S-only contraction but can be tested directly on the fixed-factor complete word.
 
 NEXT FALSIFIABLE CALCULATION: build the exact 12x12 LIN Jacobian product of the ACTUAL held-BA word, including prediction, acc correction linearization and S correction, while treating AG perturbation columns as inputs. Compute/analytically characterize its covariance-metric largest singular value over carried H18 words. If <1 with margin and the only near-unit directions correspond to AG input columns rather than LIN roots, proceed to source-uniform compactness via fixed-factor nullspace/continuity. If a LIN root has unit gain, identify it; do not hide it in d_j.
+
+
+## Actual held-BA 17-s LIN variational diagnostic — instrumented, result pending CI
+
+Added read-only held_ba_lin_word_diagnostic.py. It compiles a temporary copy of the existing literal shipping replay and records factors from Live while BA remains held. For the final 3400 predictions (=17 s at the carried .005-s cadence) before the first acc_bias_updates_enabled transition, it propagates a 12-column LIN tangent basis through the exact event chronology:
+
+    prediction:       M <- F_LL M,
+    acc correction:   M <- (I-K_L H_L) M,
+    S correction:     M <- (I-K_L H_L) M,
+    mag correction:   H_L=0, so direct LIN root factor is I,
+    covariance sync / attitude reset: direct LIN mean factor I.
+
+AG perturbation columns are deliberately not folded into the 12x12 root map; they are inputs for the later BIBO theorem. The diagnostic reports Euclidean spectral radius and singular norm. Endpoint covariance-metric induced norm still needs root/terminal P_LL snapshots added before any contraction theorem promotion. The CI step is explicitly non-promoting: no assertion rho<1 is used.
+
+This is finite carried evidence only. Even if rho_LIN<1 on quiet/wave histories, source-uniform BIBO requires the fixed-factor nullspace/compactness argument over the admissible held-BA coefficient/covariance class. If rho>=1, inspect the corresponding eigenvector before any bounding work.
