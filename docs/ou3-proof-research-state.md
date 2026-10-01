@@ -180,3 +180,53 @@ analytical exclusion lemma. If it satisfies all conditions, the pathological
 trajectory is admissible under the current theorem contract and the stability
 proof must be reformulated; no additional physical assumption may be silently
 introduced.
+
+
+## Controlling LaSalle update — radius-local field-axis candidate excluded
+
+The controlling local proof is now `docs/ou3-radius-local-field-alignment.md`.
+It replaces the attempted global nominal-AW/innovation control for the
+zero-dissipation invariant-set question.
+
+Inside the retained storage ball, the current literal source audit gives
+`||a_hat_w-a_phys||<4.06 r` from `P_aw,aw<=16.48 I`; the inherited BA
+marginal gives `||e_ba||<=r/40`. BA is NOT added to the field-alignment
+tube because the implemented accelerometer attitude Jacobian uses the nominal
+CoG vector `a_hat_w-g`; BA is a separate measurement column and lever arm is
+attitude-independent there.
+
+On the explicit committed-field branch `sigma_w>=1/5`,
+`||P_B g||>=9.80665/5=1.96133 m/s2`. For one MARINE history,
+`||v||<=5.5` gives a continuous T-window point with
+`||P_B(a-g)||>=1.96133-11/T`. The 100-m/s3 jerk bound and an ACTUALLY
+APPLIED accelerometer gap <=.006 s transfer this to a sampled epoch with
+
+    m_phys(T)=1.96133-11/T-.6.
+
+At T=17 s, `m_phys=0.714271176470588...`. Hence persistent nominal
+field alignment is impossible whenever
+`4.06 r<m_phys`, i.e. `r<0.175928...`. Adopt the deliberately
+conservative local exclusion radius
+
+    r_FA=.15, T_FA=17 s,
+
+with strict margin `0.105271176470588... m/s2`.
+
+Conditional on the already established zero-dissipation classification
+(leaving only the field-axis candidate), this proves
+
+    Inv_MARINE({D=0}) intersect {V<=.15^2} = {0}
+
+on the regular real-arithmetic retained branch. The existing closed-stratum
+compactness argument then gives existence of finite `m` and `eta_D>0`
+for homogeneous finite-window strict dissipation by contradiction/diagonal
+extraction. No numerical eta_D is claimed.
+
+OPEN after this local invariant-set closure: entry/every-prefix retention in
+V<=.15^2, finite capture/H18/release, nonlinear/source supply over the
+finite-window block, recurring transition budget, and full float32 totality.
+The end-to-end regional practical-stability theorem is NOT promoted.
+
+Historical O1/O2/kernel-ceiling and signed-reader calculations remain useful
+research but are non-controlling for exclusion of the zero-dissipation
+field-axis trajectory.
