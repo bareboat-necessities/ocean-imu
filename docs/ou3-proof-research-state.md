@@ -603,3 +603,36 @@ Therefore the all-time LIN bound is NOT yet closed, but the failure is not a dis
 CURRENT LIMITER: compactness of the coefficient/covariance class used in step 3 is itself partly the release problem. Tuner/scheduler are compact; LIN covariance has an all-time upper bound after the 17-s regular segment from the existing nuisance theorem even with BA held (the proof's BA block is decoupled and the LIN comparison does not require active BA), but the attitude/BG covariance and their cross-covariance entering acc/mag LIN gains still need a pre-release upper bound if those rows are retained. The S-only LIN gain depends only on the LIN marginal P_LL and R_S, so a promising noncircular route is to prove S-only 12-state mean contraction from the already-bounded P_LL class and then show interleaved acc/mag corrections cannot destroy a chosen FULL covariance-metric storage, rather than Euclidean LIN norm.
 
 NEXT FALSIFIABLE CALCULATION: construct the exact S-only 17-s homogeneous LIN mean word from the Riccati comparison and test whether its covariance-metric contraction is uniformly strict over the proved P_LL/R_S/tau ranges. The exact S restoring identity and four-S injectivity imply pointwise strictness; compactness of the bounded positive-definite LIN covariance/tuner/scheduler class would then give rho_H<1 provided a source-uniform covariance LOWER floor at word roots is available. Check that lower floor next. If absent, derive it from fresh LIN process noise over one prediction before the root. This is the shortest route to an all-time held-BA LIN ISS bound without assuming finite release time.
+
+
+## Fresh LIN process covariance lower floor — POSITIVE, qualitative compactness closed
+
+The literal per-axis Q_LL is IntegratedOUChain<T,3>::process_covariance for state [v,p,S,a_w]. It is the exact finite-horizon controllability Gramian of
+
+    v'=a_w, p'=v, S'=p, a_w'=-(1/tau)a_w + sqrt(q_c) w,
+    q_c=2 sigma_aw^2/tau.
+
+For every h>0, finite tau>0 and sigma_aw>0, the pair (A,B) is controllable: [B,AB,A^2B,A^3B] has full rank 4. Hence its finite-horizon Gramian Q_axis(h,tau,sigma)>0. The 3-axis independent/correlated construction is positive definite whenever the stationary AW covariance has a positive isotropic floor.
+
+Default tuner lower sigma: after variance readiness measureOperatingPoint_ enforces var_wave>=1e-6 and the default sigma_coeff=.9, so sigma_target>=9e-4 m/s2. Before readiness it is floored higher (.05 or band-noise); TuneState starts at .01. The EMA is a convex update between positive applied and target values. Thus on the default clamped path
+
+    sigma_aw >= sigma_min = 9e-4 m/s2.
+
+Together with h in [.004,.006] and tau in [.02,12], the parameter box is compact and Q_axis is continuous and SPD everywhere. Therefore
+
+    q_LL,min := inf lambda_min(Q_LL) >0.                    (QL-1)
+
+This proves the qualitative covariance LOWER floor needed for compact normalized held-BA LIN word roots after one prediction. It does not require a useful numerical value.
+
+High-precision non-promoting evaluation of the exact continuous Gramian (equivalent to the literal analytic formula in real arithmetic) shows the scale. At h=.004, tau=12, sigma=.0009, the per-axis eigenvalues are approximately
+
+    2.19427693446e-29,
+    1.91999999491e-22,
+    7.19999991997e-16,
+    5.39822199280e-10.
+
+Coarse high-precision scans show the smallest eigenvalue decreasing with tau and increasing strongly with h on the qualified box, so this corner is the apparent minimum; no interval monotonicity proof is promoted. QL-1 follows from compactness/controllability regardless. The tiny numerical floor means a one-step Euclidean/covariance condition-number estimate would be uselessly conservative; use QL-1 only for qualitative compactness and obtain contraction from complete 17-s S-observation action.
+
+IMPORTANT qualification: if callers disable tuner clamps/freeze sigma below the default physical floor, QL-1 must be restated for that profile. The theorem here is for the default bounded shipping profile.
+
+NEXT RESULT ENABLED: combine QL-1 with the existing all-time P_LL upper bound after the 17-s regular segment, compact tau/R_S/S-scheduler ranges, exact S-storage nonexpansion, and four-S injectivity. The normalized S-only 17-s homogeneous LIN word class is compact and has no nonzero zero-action direction. Therefore by continuity its complete-word covariance-metric contraction has a source-uniform rho_H<1. The remaining step for the deterministic mean ISS theorem is to bound the affine forcing of the S-only/full held-BA mean word; do not estimate rho_H from the tiny one-step q_LL,min.
