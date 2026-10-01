@@ -166,3 +166,77 @@ If that outer release set fits .15, the field-axis result supplies the missing
 quotient invariant-set exclusion while the active BA transient is handled as
 a bounded internal coordinate. If it does not fit, identify the outer
 component consuming the radius before changing assumptions.
+
+
+## 6. Literal carried release audit: attitude already excludes .15 entry
+
+The dedicated read-only diagnostic
+`release_outer_storage_diagnostic.py` snapshots the unchanged shipping
+construction history at the first sample for which
+`acc_bias_updates_enabled()` is true. It is finite carried evidence, not a
+source-uniform release theorem.
+
+Observed literal release:
+
+    active_step = 36008
+    t_release = 180.0399959757924 s
+    tilt = 0.14215579822992427 rad = 8.14492727188796 deg
+
+The release attitude covariance marginal is
+
+    [[8.08563254395267e-6, 0, 4.691878984885989e-6],
+     [0, 3.535204314175644e-6, 0],
+     [4.691878984885989e-6, 0, 8.413949217356276e-6]]
+
+with eigenvalues
+
+    3.5352043141756427e-6,
+    3.555041007836594e-6,
+    1.2944540753472348e-5.
+
+At release held BA is decoupled, so BA elimination and the outer release block
+coincide. To identify a non-BA obstruction without needing physical v/p/S
+coordinate reconstruction, minimize the outer quadratic further over every
+non-attitude outer coordinate. The exact covariance identity leaves
+
+    V_outer,elim >= theta' P_theta,theta^-1 theta
+                  = 5716.295063726523,
+
+hence
+
+    sqrt(V_outer,elim) >= 75.60618403098071.                (ER11)
+
+This is overwhelmingly outside r_FA=.15 (r_FA^2=.0225). The radius consumer is
+therefore already ATTITUDE; BA elimination does not repair direct release
+entry on this carried history.
+
+A useful scale consequence follows without using the observed attitude
+direction. Since lambda_max(P_theta)=1.2944540753472348e-5, membership in
+V<=.15^2 would NECESSARILY require
+
+    ||theta|| <= .15 sqrt(lambda_max(P_theta))
+              = 5.3968e-4 rad ~= .03092 deg                 (ER12)
+
+at this covariance. The observed 8.145 deg is over two orders of magnitude
+larger in angle.
+
+ER11 is not a source-uniform counterexample to eventual capture: this stress
+history is already documented as not certifying all-time MAGNETIC SERVICE and
+does not satisfy the desired captured release premise. It DOES answer the
+literal carried-release diagnostic and shows that the next theorem cannot be
+"stage flags imply V_outer<=.15^2". The missing entry mechanism must establish
+subsequent A21 attitude/storage contraction from a substantially larger
+release set until the trajectory enters the .15 local LaSalle ball.
+
+Thus the proof needs two nested A21 regions:
+
+1. an OUTER A21 capture/retention region large enough to contain certified
+   release attitude/storage;
+2. the INNER r_FA=.15 region, where field-axis invariant-set exclusion gives
+   strict local dissipation.
+
+The next analytical obligation is to use the zero-dissipation exclusion on
+the inner boundary together with dissipativity on the compact annulus
+.15 <= sqrt(V_outer,elim) <= R_outer to prove finite entrance, or to derive a
+larger field-alignment exclusion radius valid on that annulus. Directly
+asserting .15 entry at release is withdrawn.
