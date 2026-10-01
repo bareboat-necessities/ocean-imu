@@ -37,7 +37,11 @@ template<class A> static std::string matrix_json(const A& a) {
     out << ']';
     return out.str();
 }
-static std::string estimator_json() {\n    return std::string(",\\\"estimator_state\\\":")+matrix_json(estimator_state)\n        +",\\\"estimator_quaternion\\\":"+matrix_json(estimator_quat);\n}\nstatic std::string physical_json() {
+static std::string estimator_json() {
+    return std::string(",\"estimator_state\":")+matrix_json(estimator_state)
+        +",\"estimator_quaternion\":"+matrix_json(estimator_quat);
+}
+static std::string physical_json() {
     return std::string(",\"physical_t\":")+std::to_string(physical_t)
         +",\"physical_p\":"+matrix_json(physical_p)
         +",\"physical_v\":"+matrix_json(physical_v)
