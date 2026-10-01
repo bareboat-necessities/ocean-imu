@@ -56,5 +56,4 @@ def run(eigen):
 if __name__=="__main__":
     import argparse
     p=argparse.ArgumentParser(); p.add_argument("--eigen",type=Path,default=Path("/usr/include/eigen3")); p.add_argument("--output",type=Path,required=True)
-    a=p.parse_args(); a.output.write_text(json.dumps(run(a.eigen),indent=2,sort_keys=True)+"
-")
+    a=p.parse_args(); a.output.write_text(json.dumps(run(a.eigen),indent=2,sort_keys=True)+chr(10))
