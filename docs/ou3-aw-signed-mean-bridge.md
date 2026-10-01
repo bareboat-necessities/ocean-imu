@@ -151,3 +151,46 @@ exists by compactness. A numerical .895538395 AW-reader ceiling needs either
 (a) a rigorous reachable-factor cover, or (b) a direct contradiction proving
 that |Phi|>=.895538395 itself forces the forbidden persistent acceleration
 pattern. Neither implication is currently established.
+
+## Geometry-or-action dichotomy (controlling replacement for AWB3)
+
+A numerical pointwise source-uniform AWB2 ceiling is stronger than needed.
+Let M=.89553839501604595 m/s^2 be the proved physical-to-Corollary-A* reserve,
+and let Phi be the complete same-history signed AW reader remainder.
+
+For every complete 16-s regular word exactly one of the following holds.
+
+1. |Phi|<M. Then the physical/sensor transfer gives |P_B mu_hat|<g/5 and
+   Corollary A* supplies a positive attitude-column Gram floor. Together with
+   MAGNETIC SERVICE, Lemma T and the existing aggregate construction this is
+   the geometry branch.
+
+2. |Phi|>=M. Phi is a continuous linear functional of the complete
+   chronological correction/process source after the exact physical
+   telescoping. On the compact regular word class its R-whitened reader action
+
+       A_Phi(h)=||L_Phi(h) R_full(h)^(1/2)||^2
+
+   has a finite source-uniform maximum Abar<infinity. Cauchy--Schwarz gives
+
+       D_source(W) >= |Phi|^2/Abar >= M^2/Abar > 0,
+
+   where D_source is the SAME full-state Joseph/information correction action;
+   no AW marginal passivity is used. Thus failure of the geometry premise
+   itself supplies strict full-state action.
+
+Consequently every regular 16-s word has either positive aggregate geometry
+or positive full-state source action. On the compact reachable class the
+continuous combined quantity
+
+    G_dich(h)=max( geometry_margin(h), |Phi(h)|^2/A_Phi(h) )
+
+(with the second term interpreted by its continuous zero-reader limit) has no
+zero. Therefore its minimum is strictly positive. This closes qualitative
+source-uniform escape from the field-axis degeneracy without a numerical
+finite cover of Phi and without asserting the stronger AWB2 ceiling.
+
+For a NUMERICAL contraction constant one still needs a numerical upper
+enclosure of Abar (or an equivalent direct combined factor enclosure). The
+previous .524395 finite-cover target is therefore optional, not a logical
+blocker to qualitative source-uniform gauge breaking.
