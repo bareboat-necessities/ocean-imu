@@ -1,5 +1,4 @@
 """Status of the corrected outer physical-to-nominal bridge."""
-import math
 def candidate():
  reserve=.003056118
  return {"profile":{"T_s":60,"theta_deg":1,"P_E_m":.02,"C_a_mps":1.2,"C_g_rad":.0042},
