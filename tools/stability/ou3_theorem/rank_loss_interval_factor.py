@@ -28,6 +28,8 @@ def exact(rows) -> IMat:
 
 
 def zeros(n: int,m: int) -> IMat:
+    if n<=0 or m<0:
+        raise ValueError("positive row and nonnegative column counts required")
     return exact([[0.0]*m for _ in range(n)])
 
 
@@ -84,7 +86,12 @@ def verified_inverse(a: IMat) -> tuple[IMat,dict]:
     """Generic square inverse enclosure from an exact binary64 residual test."""
     n,m=a.shape
     if n!=m: raise ValueError("square matrix required")
-    b=_mid_inverse(a.mid)
+    try:
+        b=_mid_inverse(a.mid)
+    except ArithmeticError as error:
+        return zeros(n,n),{"verified":False,"reason":str(error)}
+    if any(not math.isfinite(x) for row in b for x in row):
+        return zeros(n,n),{"verified":False,"reason":"non-finite midpoint inverse"}
     # Exact residual of the binary64 midpoint/inverse pair.
     rmax=Fraction(0)
     for i in range(n):
@@ -99,9 +106,19 @@ def verified_inverse(a: IMat) -> tuple[IMat,dict]:
     erad=max(sum(Fraction.from_float(max(0.0,x)) for x in row) for row in a.rad)
     q=rmax+bnorm*erad
     if q>=1:
-        return zeros(n,n),{"verified":False,"residual_ratio_upper":float(q)}
+        try:
+            q_upper=float(q)
+        except OverflowError:
+            q_upper=math.inf
+        return zeros(n,n),{"verified":False,"residual_ratio_upper":q_upper}
     delta=bnorm*q/(1-q)
-    rad=tuple(tuple(_out(float(delta)) for _ in range(n)) for _ in range(n))
+    try:
+        radius=_out(float(delta))
+    except OverflowError:
+        radius=math.inf
+    if not math.isfinite(radius):
+        return zeros(n,n),{"verified":False,"reason":"non-finite inverse enclosure"}
+    rad=tuple(tuple(radius for _ in range(n)) for _ in range(n))
     return IMat(b,rad),{"verified":True,"residual_ratio_upper":float(q),
                         "inverse_error_inf_upper":float(delta)}
 
@@ -134,6 +151,9 @@ class FactorState:
 
 
 def source_covariance(c: IMat) -> IMat:
+    # An empty factor has zero covariance; IMat does not represent zero rows.
+    if c.shape[1]==0:
+        return zeros(c.shape[0],c.shape[0])
     return matmul(c,transpose(c))
 
 
@@ -144,14 +164,18 @@ def schur_scalar_information(v0: IMat,va: IMat,residual_cov: IMat) -> dict:
     rinv,rcert=verified_inverse(residual_cov)
     if not rcert["verified"]:
         return {"verified":False,"lower":0.0,"reason":"residual covariance inverse"}
-    g00=matmul(matmul(transpose(v0),rinv),v0)
-    g0a=matmul(matmul(transpose(v0),rinv),va)
     gaa=matmul(matmul(transpose(va),rinv),va)
-    g00i,gcert=verified_inverse(g00)
-    if not gcert["verified"]:
-        return {"verified":False,"lower":0.0,"reason":"nuisance Gram inverse"}
-    loss=matmul(matmul(transpose(g0a),g00i),g0a)
-    gam=sub(gaa,loss)
+    if v0.shape[1]==0:
+        gam=gaa
+        gcert={"verified":True,"reason":"no nuisance columns"}
+    else:
+        g00=matmul(matmul(transpose(v0),rinv),v0)
+        g0a=matmul(matmul(transpose(v0),rinv),va)
+        g00i,gcert=verified_inverse(g00)
+        if not gcert["verified"]:
+            return {"verified":False,"lower":0.0,"reason":"nuisance Gram inverse"}
+        loss=matmul(matmul(transpose(g0a),g00i),g0a)
+        gam=sub(gaa,loss)
     lo=math.nextafter(gam.mid[0][0]-gam.rad[0][0],-math.inf)
     hi=math.nextafter(gam.mid[0][0]+gam.rad[0][0],math.inf)
     return {"verified":lo>0.0,"lower":max(0.0,lo),"upper":hi,

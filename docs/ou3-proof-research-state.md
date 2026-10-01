@@ -1,645 +1,141 @@
-# OU-III proof: current continuation state
-
-Source audit: PR #637 at `1bbd3b3bc58879d7f95863cef5726ee10c80616f`.
-The complete preceding ledger is preserved byte-for-byte in
-[the pre-field-axis-audit ledger](ou3-proof-research-state-before-field-axis-audit.md).
-The long-form derivations remain in `ou3-corrected-word-proof.md` and
-`ou3-linked-soft-return.md`; do not revive their explicitly retracted claims.
-
-## Single proof path and unchanged scope
-
-construction -> capture -> magnetically informed H18 -> refinement/release ->
-recurring A21 -> regional practical stability. The contraction word remains
-100 s; 17 s remains nuisance/root warm-up. Runtime, physical assumptions,
-coupled tau/sigma_aw/r_S/T_S chronology, noise, and quality gates are unchanged.
-Stillness is not removed from the physical class by this continuation.
-
-## New analytical result
-
-[Source-audited regional field-axis exclusion](ou3-field-axis-regional-exclusion.md)
-(FA1--FA12) is the current calculation. It repairs two source mismatches in QR:
-accelerometer updates occur every regular IMU sample (maximum qualified applied
-gap 6 ms, not 40 ms); default AW synchronization is an additive PSD floor, not
-congruence. Isotropy makes its marginal eigenvalues exactly max(old,target),
-which supplies the needed ceiling without a full 21-state covariance ceiling.
-An exact-rational audit of the literal Q polynomials supports the conservative
-regular real-arithmetic bound P_aw,aw<=16.48 I, hence ||e_aw||<4.06 sqrt(V_base).
-
-The sharp same-history trapezoidal inequality gives
-
-    sum_i w_i ||P_bi(a_hat_i-g_model)||^2 >= max(M_ref(r),0)^2,
-    M_ref(r)=G0-delta_g-eta_ref(Amax+g_model_max)
-             -4.06(1+eta_ref)r-2Vmax/L-Jmax h_acc/4.
-
-Every a_hat_i and V_base,i is evaluated at the actual PRE-ACCELEROMETER prefix.
-For a fixed, correctly bounded nominal reference with inclination <=80 deg,
-the 100-s pre-radius margin is 1.4429069015... m/s^2. At r=.25 the margin exceeds
-.4279 m/s^2 before reference-error charges (.4278 after worst-case word-boundary trimming). This is a conditional local
-exclusion of the particular field-aligned base trajectory, not stability.
-
-## Scope correction / unresolved implication
-
-The physical magnetic field and the learned nominal reference are different
-objects. MagAutoTuner's initial 5% horizontal-fraction gate gives a weaker
-positive fixed-reference margin, but the default continuous hard-iron path
-rewrites the reference without reapplying that fraction gate. This does NOT
-prove it fails in a shipping execution. It prevents treating the startup cone
-or physical 80-degree cone as an already established all-time nominal cone.
-
-Next: prove eta_ref (or a sufficient direct nominal cone/variation estimate)
-from literal acquisition, refinement and hard-iron updates, then discharge
-prefix retention in the same physical history. Do not invent zero defects,
-freeze the default reference, disable continuous hard iron, replace actual
-accepted-update times, or assume stability while proving retention.
-
-## Classification and validation
-
-PROVED CONDITIONAL: FA1--FA12 under their stated regular covariance, prefix,
-reference and physical premises. The new bound is a base geometric row-energy
-floor, not the full innovation-weighted nuisance-eliminated word action.
-
-OPEN: unconditional shipping exclusion, capture/release, source-uniform linked
-O2 return bound, numerical full-word rho<1, nonlinear/physical supply retention,
-and target arithmetic. No theorem or quality flag is promoted. Zero homogeneous
-action must never be substituted for zero BASE innovation. Regional r is a
-full-state covariance-metric radius, not the retained six-degree attitude angle.
-
-The 13 new exact scalar/rational regressions pass with
-`python -m unittest discover -s tests/validation -p 'test_ou3_field_alignment_exclusion.py' -v`.
-These validate the analytical substitutions, not a full trajectory enclosure.
-Full native validation and CI were not run here. Inherited failures, numerical
-experiments, unsuccessful routes, and exact previous status are retained in the
-archived ledger and previous PR history; they are not claimed repaired.
-
-
-## Shipping-reference and prefix-premise audit — 1c8f4e94
-
-The requested follow-up is now source-audited in
-`docs/ou3-shipping-reference-prefix-retention.md`.
-
-The continuous hard-iron reference update has an exact same-statistics
-Lipschitz law: with `L(b)=wbar-Abar*b` and `||Abar||<=1`, each canonical
-horizontal/z reference component moves by at most the applied body-bias
-increment, and the full canonical reference by at most `sqrt(2)` times it.
-The 45-s slew gives the corresponding per-update increment. This is literal
-shipping chronology, not a compatibility relaxation.
-
-That result does NOT yield the needed all-time nominal cone from the present
-contract. Startup/refinement enforce a 5% horizontal fraction, but the default
-continuous path does not reapply that fraction gate; it only requires positive
-horizontal magnitude above .001 uT. Its loose accepted-fit envelope
-`.35*(75+5+2)=28.7 uT` exceeds the declared physical 15-uT horizontal
-minimum. More decisively, its statistics use the private Mahony tilt, and no
-all-time deterministic true-to-proxy tilt tube has yet been proved. Therefore
-the physical-field cone cannot be silently transferred to the nominal
-reference.
-
-The FA12 full-storage premise also cannot be inherited from six-degree capture.
-The fixed-reference field-exclusion radius must satisfy `r<.355396`, whereas
-the handoff tilt covariance sigma is .035 rad, so a six-degree tilt error alone
-has minimum covariance-metric radius `(pi/30)/.035=2.99199...`. This does not
-say handoff has six-degree error; it proves the existing capture target does
-not imply the small FA12 storage ball.
-
-To remove that artificial circularity, the field-axis lemma is reformulated in
-the exact component it needs. If
-`||a_hat_w-a_phys||<=eps_aw` at every relevant prefix, the fixed-reference
-100-s exclusion needs only
-`eps_aw < g*sin(10deg)-.26 = 1.4429069015... m/s^2`.
-The varying-reference version is given as PR10 in the new note. This is much
-weaker than requiring the entire 21-state Mahalanobis error to be <=.25.
-
-Prefix invariance remains a simultaneous fixed-point problem, not an upstream
-premise: the same block must close kernel covariance return, word error supply,
-and every-prefix supply. Proving `V<=r^2` first from covariance bounds would
-be circular because the strict word return needed for that storage recursion is
-the open O2/BP obligation.
-
-Next decisive calculation: derive (or falsify) an all-time private-Mahony tilt
-tube and an all-prefix AW tracking tube from their literal error equations on
-the SAME physical history, retaining the coupled tau/sigma_aw/R_S/T_S
-chronology; insert those component tubes into BP-4/BP-10 and solve the retained
-rectangle simultaneously. No theorem flag is promoted.
-
-
-## Correction: the 1.4429069-m/s^2 target is sufficient, not yet implied — current head
-
-The immediate blocker is still ONLY the persistent nominal force/field
-collinearity trajectory. The desired contradiction is
-
-    |weighted mean P_B(a_hat_w-a_phys)| < 1.4429069015... m/s^2
-
-for the 100-s, 6-ms, 80-degree specialization, because physical bounded
-velocity+jerk contributes at most .26 m/s^2 while the transverse gravity
-requirement is g sin(10 deg)=1.7029069015....
-
-However, the existing sections 59--61 of
-`docs/ou3-aw-adjoint-cancellation.md` already prove that this inequality
-CANNOT be inferred merely by saying that a_hat_w, tau, sigma_aw, R_S and T_S
-are coupled.
-
-For a prescribed smooth periodic physical history, the measurement-only
-front end and tuner determine one periodic applied coefficient word U_*.
-Conditional on U_*, covariance propagation is independent of innovation
-VALUES. After the stabilizing periodic Riccati orbit is fixed, the mean is an
-affine periodic linear system. The finite Kalman map from a measurement word
-to its innovation word is block lower triangular with identity diagonal and is
-therefore invertible. The exact periodic compatibility equation is PR9/PR14.
-Generically nonsingularity gives a UNIQUE compatible forced periodic orbit; it
-does not exclude one.
-
-Therefore the coupled tuning law is essential for fixing the coefficients, but
-it is not an amplitude theorem for deterministic estimation error. Covariance
-P_aw,aw<=16.48 I likewise bounds uncertainty/action geometry, not
-|a_hat_w-a_phys| on an arbitrary deterministic forced execution.
-
-This invalidates the proposed shortcut
-
-    coupled tuner law => |mean(a_hat_w-a_phys)|<1.4429.
-
-The 1.4429 number remains a correct sufficient threshold. To prove the
-pathological trajectory inadmissible one must instead show that the UNIQUE
-self-consistent PR14 solution violates an EXISTING admissibility condition
-(physical p/v/a/jerk, bias/projection, gate, service, retained local angle), or
-prove a sharper signed identity that forces such a violation.
-
-The constructive audit has already made this falsifiable. The first
-commensurate 6-s candidate is excluded because its literal late relative
-attitude reaches 7.488 degrees >6 degrees. The analytically refined 12-s
-candidate has pre-compensation physical amplitudes strictly inside the
-declared envelopes and is the decisive next target. It has not yet been
-certified as a shipping counterexample because its late periodic
-tuner/covariance/mean orbit, six-degree bound, gates/service and complete
-weighted functional remain to be enclosed.
-
-Accordingly, do NOT claim the accel||mag pathology is excluded yet, and do NOT
-spend the next calculation deriving a generic AW tracking tube from covariance.
-The decisive calculation is the literal 12-s PR14 periodic orbit with outward
-enclosure. If it violates an existing condition, extract that violation as the
-analytical exclusion lemma. If it satisfies all conditions, the pathological
-trajectory is admissible under the current theorem contract and the stability
-proof must be reformulated; no additional physical assumption may be silently
-introduced.
-
-
-## Controlling LaSalle update — radius-local field-axis candidate excluded
-
-The controlling local proof is now `docs/ou3-radius-local-field-alignment.md`.
-It replaces the attempted global nominal-AW/innovation control for the
-zero-dissipation invariant-set question.
-
-Inside the retained storage ball, the current literal source audit gives
-`||a_hat_w-a_phys||<4.06 r` from `P_aw,aw<=16.48 I`; the inherited BA
-marginal gives `||e_ba||<=r/40`. BA is NOT added to the field-alignment
-tube because the implemented accelerometer attitude Jacobian uses the nominal
-CoG vector `a_hat_w-g`; BA is a separate measurement column and lever arm is
-attitude-independent there.
-
-On the explicit committed-field branch `sigma_w>=1/5`,
-`||P_B g||>=9.80665/5=1.96133 m/s2`. For one MARINE history,
-`||v||<=5.5` gives a continuous T-window point with
-`||P_B(a-g)||>=1.96133-11/T`. The 100-m/s3 jerk bound and an ACTUALLY
-APPLIED accelerometer gap <=.006 s transfer this to a sampled epoch with
-
-    m_phys(T)=1.96133-11/T-.6.
-
-At T=17 s, `m_phys=0.714271176470588...`. Hence persistent nominal
-field alignment is impossible whenever
-`4.06 r<m_phys`, i.e. `r<0.175928...`. Adopt the deliberately
-conservative local exclusion radius
-
-    r_FA=.15, T_FA=17 s,
-
-with strict margin `0.105271176470588... m/s2`.
-
-Conditional on the already established zero-dissipation classification
-(leaving only the field-axis candidate), this proves
-
-    Inv_MARINE({D=0}) intersect {V<=.15^2} = {0}
-
-on the regular real-arithmetic retained branch. The existing closed-stratum
-compactness argument then gives existence of finite `m` and `eta_D>0`
-for homogeneous finite-window strict dissipation by contradiction/diagonal
-extraction. No numerical eta_D is claimed.
-
-OPEN after this local invariant-set closure: entry/every-prefix retention in
-V<=.15^2, finite capture/H18/release, nonlinear/source supply over the
-finite-window block, recurring transition budget, and full float32 totality.
-The end-to-end regional practical-stability theorem is NOT promoted.
-
-Historical O1/O2/kernel-ceiling and signed-reader calculations remain useful
-research but are non-controlling for exclusion of the zero-dissipation
-field-axis trajectory.
-
-
-## Entry/retention continuation — staged A21 entry required
-
-`docs/ou3-staged-entry-retention.md` is now controlling downstream of the
-r_FA=.15 field-axis exclusion.
-
-Direct H18 release into full V<=.15^2 is NOT a valid universal target.
-Shipping held BA is decoupled with sigma_bacc0=.004 m/s2; enabling A21 merely
-floors its diagonal variance to sigma_bacc0^2. The admitted physical BA norm
-is .22516660498395405. A permitted held b_hat_a=0 therefore has decoupled
-release contribution V_ba=(.22516660498395405/.004)^2>3168, versus .0225 for
-the final local ball. No assumption or runtime change is made.
-
-Homogeneous every-prefix retention IS closed once inside the local ball:
-prediction/correction are covariance-metric nonexpansive and congruent resets
-preserve storage; PSD covariance inflations cannot increase fixed-error
-storage. Finite nonlinear/source/arithmetic residuals require an inner root
-radius r_in<.15 with
-
-    sup_k G_k(.15,d) <= .15-r_in,
-    E_W(.15,d) <= (1-q) r_in,
-
-q=sqrt(1-eta_D).
-
-The correct entry path eliminates the held BA coordinate. At release it is
-literally decoupled; after release use the BA Schur complement / quotient
-storage V_o|ba. Prove quotient-local entry/retention at .15, apply the
-field-axis LaSalle exclusion there, then use active A21 BA dynamics and the
-dissipative projection sector to enter the full ball. This is the same
-H18-complement architecture, not a new proof path.
-
-Current limiter: source-uniform outer/BA-quotient release set inclusion and
-quantitative quotient finite-window dissipation/supply. Do not retry universal
-direct full-V release.
-
-
-## Literal release outer-storage audit — attitude is the entry obstruction
-
-A dedicated unchanged-header release snapshot now evaluates the carried
-construction history at first A21 activation (step 36008, 180.039996 s).
-Correct BA elimination uses the outer covariance marginal; at the release
-boundary BA cross covariance is zero so it also equals the conditional outer
-block there.
-
-Release tilt is 8.144927 deg. The attitude covariance eigenvalues are
-3.5352043e-6, 3.5550410e-6 and 1.2944541e-5. Minimizing the BA-eliminated
-outer storage over every other non-attitude outer coordinate still gives
-
-    V_outer,elim >= theta' P_theta^-1 theta
-                  = 5716.295063726523,
-    sqrt(V_outer,elim) >= 75.60618403098071.
-
-Thus this literal release is nowhere near r_FA=.15; ATTITUDE alone consumes
-the radius. At this covariance, V<=.15^2 would necessarily require tilt
-<=.000539678 rad=.0309213 deg.
-
-This is finite carried evidence only: the stress history does not certify
-all-time MAGNETIC SERVICE and therefore is not an eventual-capture
-counterexample. It does prove that stage flags/release mechanics themselves
-do not imply entry into the tiny local storage ball. The controlling proof now
-needs an outer A21 retained/capture region and finite entrance from that region
-to the inner r_FA=.15 LaSalle ball. The r_FA field-axis inequality cannot
-simply be enlarged to the observed release storage: its current source-audited
-AW component conversion loses positivity above r~=.176.
-
-
-## Literal release outer-entry calculation — AW is the blocker
-
-The requested BA-eliminated release calculation is recorded in
-`docs/ou3-release-outer-entry-audit.md`.
-
-A dedicated unchanged-header diagnostic snapshots first A21 BA activation at
-step 24016 (120.079997316 s) on the carried diagonal-wave construction. Using
-the exact physical construction and outer marginal identity
-`V_o=min_ba V=e_o'P_oo^-1 e_o`, the finite carried release has
-`V_o=79300.039948`, sqrt=281.603, versus target .15.
-
-Principal-block lower bounds after minimizing every other coordinate identify
-AW as dominant: attitude 9.7976, bg 3.59e-7, v 331.982, p 1996.290,
-S 84.977, AW 60867.918. The release AW error norm is about 8.385 m/s2.
-This finite history is not an all-time service/capture certificate.
-
-The second requested calculation has a negative but decisive result:
-the present assumptions do NOT imply source-uniform pointwise AW entry.
-An existing admitted A21 history already refutes pointwise physical-AW
-tracking at 7.647 m/s2 on a 16-s window, whereas the r_FA=.15 local lemma
-requires <.609 m/s2. P_aw,aw<=16.48 I only converts an ALREADY SMALL storage
-to an AW component bound; it does not bound deterministic AW error before
-entry. No AW mean projection supplies such a cap.
-
-Therefore direct H18/release -> V_o<=.15^2 is not the correct bootstrap.
-The local FA theorem remains valid after entry, but entry must use a shaped
-signed/windowed AW functional or return to the global same-history FA
-reachability/action calculation. Do not retry a source-uniform pointwise AW
-tracking lemma; it is already falsified on the admitted class.
-
-
-## Outer-entry no-go and controlling reformulation — current
-
-The requested universal shaped-storage theorem `every certified H18/A21 release -> eventual retained V<=.15^2 entry` is analytically false under the present contract. A constant-rest member of the exact stationary attitude/BA gauge suffices: rotate the true attitude by alpha=1/1000 rad about B, set b_g=0 and b_a=g(Q_alpha e_z-e_z), and keep p=v=a=0. It has zero bias rates, ||b_a||<.009807 m/s2, exactly nominal accelerometer/gyro/magnetometer packets forever, and retains the quiet actual MAGNETIC SERVICE floor. Arbitrary complete stillness is explicitly admitted, so moving excitation is not owed. On the identical nominal filter history the proved quiet P_ba,ba<=I/1600 gives sqrt(V)>=||e_ba||/.025>.392>.15.
-
-FAILED INEQUALITY: no source-uniform `W_out large => Delta W_out<=-epsilon` can hold toward the point physical-error set on every certified continuation, and no universal eventual retained point-entry time exists. Failure class: identifiability/theorem-target failure, not conditioning or numerical sharpness. Invalidated hypothesis: the full coupled shipping structure plus MAGNETIC SERVICE is sufficient to collapse stationary attitude/BA ambiguity. Retained facts: the r_FA=.15 local LaSalle exclusion after point entry, the 16.48 AW covariance ceiling, operation-wise homogeneous nonexpansion, correct BA storage elimination, and release audits remain valid.
-
-CONTROLLING PATH: one nested architecture, but the outer set is distance to the stationary measurement-compatible attitude/BA class. Prove stationary practical retention to that class; then use an actually complete MARINE moving window to collapse the gauge and enter V<=r_in^2<.15^2 with retention; only then invoke the local LaSalle theorem. Indefinite physical rest has a consistency-class conclusion rather than an impossible point-error conclusion.
-
-NEXT FALSIFIABLE CALCULATION: form the exact stationary gauge tangent K_stat at the carried A21 root, quotient the complete corrected-word action by K_stat, and evaluate the remaining gauge action over one complete same-history T_E moving window using the literal coupled tau/sigma_aw/R_S/T_S chronology. Do not refine a global shaped point-storage or retry pointwise AW tracking.
-
-
-## Mahony/gauge quotient audit — current
-
-Mahony is part of the literal coefficient chronology, not an independent observation. The shipping order conditions accelerometer input, advances the private measurement-only Mahony vertical observer, updates period/sigma tuning, stages the coupled online tuple, and commits it at the next IMU sample. Therefore any corrected-word quotient calculation must carry Mahony/front-end state and the resulting lagged coupled tau/sigma_aw/R_S/T_S sequence. Identical conditioned IMU histories imply identical Mahony and tuner histories.
-
-At a stationary root, with body magnetic vector b=Q^T B, the acc/mag physical observation differential has the one-dimensional attitude/BA kernel
-
-    K_stat = span{ (delta_theta=b, delta_ba=g[Q^T e_z]_x b) },
-
-with all other error coordinates zero (up to the global attitude-error sign convention). For complete-word quadratic action J_W, quotient by choosing a root-metric complement Z and using Jbar_W=Z^T J_W Z, equivalently minimize the action over additions lambda*k_stat.
-
-The hoped-for strictly positive action on the remaining gauge coordinate over one generic moving T_E window is NOT implied by the current contract. The numerical T_E and theta_E fields remain OPEN/null in constants.json. More strongly, the existing exact sin^3 rest/motion witness has positive gravity-direction span on each complete moving window while its accelerometer, gyro and magnetometer packets remain exactly nominal through compensating admissible physical biases. Hence Mahony and the complete coupled tuner word are also nominal. Symbolic positive attitude span alone therefore cannot give a positive quotient floor.
-
-Current limiter: derive the largest gravity-direction span Theta_gauge(T_E) achievable by this exact packet-indistinguishable family under the existing B_a,D_a,B_g,D_g and Omega_max bounds. Only an independently certified MARINE pair satisfying theta_E>Theta_gauge(T_E) could exclude this gauge and justify a point-entry moving theorem. Otherwise MOVING also requires a consistency-class theorem. No theorem flag is promoted.
-
-
-## Exact hidden-gauge span envelope — current
-
-For the packet-indistinguishable family rotate the physical attitude by phi(t) about the (fixed world) magnetic axis and compensate the physical residual biases so that the measured gyro, accelerometer and magnetometer packets equal the nominal packets. The exact relations are
-
-    ||b_a|| = 2 g |sin(phi/2)|,
-    ||dot b_a|| = g |dot phi|,
-    ||b_g|| = |dot phi|,
-    ||dot b_g|| = |ddot phi|,
-    ||omega|| = |dot phi|.
-
-Therefore every such history satisfying the existing bounds obeys
-
-    |phi| <= A_g := 2 asin(B_a/(2g)),
-    |dot phi| <= L_g := min(D_a/g, B_g, Omega_max).
-
-D_g constrains curvature but cannot improve the source-uniform range bound on an arbitrary interior T-window, because constant dot-phi is admissible and has dot-b_g=0. Hence the exact sharp envelope implied by these five scalar bounds is
-
-    Theta_gauge(T) = min(2 A_g, L_g T)
-                   = min(4 asin(B_a/(2g)),
-                         T min(D_a/g,B_g,Omega_max)).
-
-With current constants g=9.80665, B_a=0.22516660498395405, D_a=.001, B_g=.02, D_g=1e-5 and Omega_max=.6108652381980153,
-
-    A_g = .0229611081599661 rad = 1.31557459051 deg,
-    2 A_g = .0459222163199322 rad = 2.63114918102 deg,
-    L_g = D_a/g = .000101971621297793 rad/s
-        = .00584254353047 deg/s,
-    T_sat = 2 A_g/L_g = 450.343102674 s.
-
-Thus
-
-    Theta_gauge(T) = min(.0459222163199322,
-                         .000101971621297793 T) rad.
-
-This bound is sharp for arbitrary interior windows under the listed scalar constraints: a constant-rate segment realizes the Lipschitz branch (with D_g charge zero), and sufficiently slow ramps plus a plateau approach the amplitude branch while respecting D_g. Join smoothness may reduce a particular boundary-crossing construction, but the MARINE excitation quantifier applies to every complete window contained in a moving episode and cannot assume a rest join at each window endpoint.
-
-DECISIVE CONDITION: a numerically certified MARINE pair can exclude the exact attitude/BA packet gauge only if
-
-    theta_E > Theta_gauge(T_E).
-
-Equality is not enough because the excitation premise is >= theta_E. The current constants.json still has T_E and theta_E null/OPEN, so the comparison cannot yet be discharged. Mahony does not alter the envelope: packet equality makes its measurement-only trajectory and the complete staged coupled tuner chronology identical to nominal.
-
-Next: obtain/derive the existing theorem-grade MARINE (T_E,theta_E) from admissible physical evidence without strengthening the assumption. If none is currently certified, point-entry on MOVING remains conditional on the displayed strict inequality; proceed with quotient-action positivity only after it is satisfied.
-
-
-## MARINE excitation qualification audit — current
-
-A complete repository audit found no existing theorem-grade numerical pair (T_E,theta_E) to populate constants.json. The controlling proof documents intentionally keep both symbolic, and constants.json marks numerical qualification OPEN. The pinned v1.2.1 28-ft vessel-RAO bundles are finite statistical replay evidence with provenance; they do not certify an all-time rolling minimum of gravity-direction span for every complete window of every admitted moving continuation.
-
-Nor can a positive theta_E be derived from the other present MARINE/IMU bounds. The exact packet-indistinguishable family admits alpha>0 arbitrarily small and nu>0 sufficiently small while satisfying B_a,D_a,B_g,D_g,Omega_max, zero translation/jerk/primitive and magnetic service. Its complete-window span is 2 alpha>0 but tends to zero with alpha. Thus the infimum of admissible moving-window gravity span under the remaining assumptions is zero. Any positive numerical theta_E would be an additional quantitative excitation qualification, not a consequence of the currently numeric envelopes.
-
-Consequently constants.json must remain null/OPEN: filling it from the finite RAO traces would promote statistical evidence into an unsupported source-uniform physical assumption. The quotient point-entry theorem is conditional on an independently justified pair satisfying
-
-    theta_E > Theta_gauge(T_E)
-            = min(4 asin(B_a/(2g)), T_E min(D_a/g,B_g,Omega_max)).
-
-Without such a qualification, the source-uniform theorem conclusion must remain stability/retention relative to the measurement-compatible attitude/BA class even during MOVING; point convergence is not identifiable. This is now the controlling assumption gap, not a missing numerical calculation.
-
-
-## Physical-excitation derivation attempt — no positive source-uniform pair
-
-The requested derivation of a physically justified numerical (T_E,theta_E) from existing evidence was completed and is negative. Repository proof sources intentionally leave the pair symbolic. The pinned 28-ft vessel-RAO data are finite statistical response replays, not an all-time lower-envelope qualification. Linear RAO response scales with incident wave amplitude, so the dataset cannot imply a nonzero response floor for the broader MARINE class without a lower environmental wave-energy/amplitude premise that the theorem does not contain. Encounter-frequency degeneracy likewise prevents manufacturing a universal finite excitation period from vessel speed/heading alone.
-
-Analytically, the existing physical envelopes provide only upper bounds. The exact indistinguishable family can scale alpha -> 0 and nu -> 0 while remaining strictly inside all current B_a,D_a,B_g,D_g,Omega_max, translation, jerk, primitive and magnetic-service bounds. Hence for every proposed T>0 and eps>0 there is an admitted moving family whose complete-window gravity span is positive but below eps (choosing a sufficiently small amplitude and sufficiently slow smooth periodic motion). Therefore no positive theta_E(T) is derivable from the current numerical assumptions: the source-uniform lower envelope is zero.
-
-This means a numerical pair satisfying theta_E>Theta_gauge(T_E) cannot honestly be populated from current repository or generic RAO evidence. Such a pair requires an independently justified quantitative excitation premise (for example a certified operational sea/motion lower envelope), which would strengthen MARINE MOTION and is prohibited merely for proof convenience. Until such evidence is adopted by the theorem contract, retain T_E/theta_E as OPEN and formulate source-uniform stability relative to the measurement-compatible class.
-
-
-## EXCITED_MOVING minimum physical premise — current
-
-EXCITED_MOVING is now defined separately in ou3-regime-design.md as a proof-side physical subregime, not a runtime mode. It adds no wave-height, spectral, RAO, roll-RMS or estimator-derived condition. Let u_g be the true body gravity direction and define Gamma_ba(h)=2 asin(min(1,min(2 B_a,D_a h)/(2 g_min))). A window is gauge-breaking with margin delta_X>0 if it contains t1<t2 with angle(u_g(t1),u_g(t2)) >= Gamma_ba(t2-t1)+delta_X. This is the direct physical separation needed to defeat the exact attitude/BA packet ambiguity.
-
-For finite entry from a compact outer annulus, one isolated window is not enough. The minimal recurrence premise is: while the same carried execution remains outside the inner target, every T_X interval contained in an EXCITED_MOVING episode contains such a gauge-breaking pair with one fixed positive delta_X. Excitation is not required after inner entry and is not imposed on STILL, TRANSITION or weak MOVING.
-
-This premise is intentionally physical/reference-side; Mahony or OU-III output cannot certify it. Remaining requirements for entry are analytical obligations, not additional physical assumptions: derive compact outer release/retention from existing H18/A21 contracts; prove quotient corrected-word continuity/coercivity and extend the zero-action classification over the outer annulus with literal accepted-update and coupled tuner chronology. If zero quotient action reduces to the measurement-compatible gauge, delta_X excludes it; compactness then yields positive annular dissipation and recurrent windows give finite (possibly history-dependent) inner entry.
-
-
-## EXCITED_MOVING controlling definition and entry continuation — current
-
-Controlling engineering definition: EXCITED_MOVING is sustained vessel motion in which the vessel undergoes a non-negligible change in roll or pitch within a bounded time. Formally, fixed physical qualification constants T_X<infinity and theta_X>0 require every complete T_X interval contained in an EXCITED_MOVING episode to have true body-gravity-direction span at least theta_X. This is physical/reference-side and is not a runtime detector, Mahony output, OU-III state, minimum wave height, spectrum, heave or RAO-amplitude assumption. Generic weak MOVING remains admitted.
-
-Sufficiency lemma, not definition: the exact packet-indistinguishable attitude/BA family has span at most Theta_gauge(T)=min(4 asin(B_a/(2g_min)), T min(D_a/g_min,B_g,Omega_max)). Therefore theta_X>Theta_gauge(T_X) excludes that exact gauge on every EXCITED_MOVING window. Sensor-bias constants belong here, not in the physical regime definition.
-
-ENTRY CONTINUATION: any fixed strict margin delta_X=theta_X-Theta_gauge(T_X)>0 is topologically sufficient for an existence-level annular dissipation floor IF the following already-open analytical properties are proved on one compact retained outer class: (1) the literal complete-word action is continuous in the carried physical/filter history and root error after quotienting the stationary compatible class; (2) zero action on an EXCITED_MOVING word implies membership in the exact packet-compatible gauge; (3) the compact outer annulus and every-prefix retention are source-uniform. Reason: the closed subset satisfying span>=theta_X is separated from the closed zero-action gauge set by the strict margin; a continuous nonnegative complete-word action therefore attains a strictly positive minimum on each compact annulus. No numerical lower margin beyond positivity is needed for qualitative finite entry. A numerical margin will be needed later for explicit eta_out/finite-error robustness.
-
-This does NOT yet prove entry: properties (1)-(3), especially the outer zero-action classification and compact retained release set, remain open. The next calculation is to prove property (2) for the literal corrected word while carrying Mahony/tuner chronology, not to tune theta_X.
-
-
-## Outer EXCITED_MOVING zero-action audit — current limiter
-
-The local RL-FA zero-action classification cannot simply be extended to the outer annulus. Its final field-axis contradiction uses the storage-local AW relation ||a_hat_w-a_phys||<4.06 r. That relation is intentionally unavailable before inner entry and fails as a global premise. Therefore EXCITED_MOVING excitation by itself does not yet prove that zero complete-word action outside the inner ball equals the attitude/BA gauge.
-
-What remains valid globally on exact zero action is the literal measurement compatibility plus homogeneous covariance-metric nonexpansion and the exact OU/S/BA recurrences. The next proof must eliminate nominal AW from the zero-action compatibility equations over a complete EXCITED_MOVING window using the integrated a_w->v->p->S chain, S=0 pseudo-observations, bounded physical v/p primitives, and the one same-history coupled tuner sequence. The desired exact implication is: zero complete-word action + bounded physical primitives + EXCITED_MOVING => packet-compatible attitude/BA gauge only. It must not invoke pointwise AW tracking. Once this exact implication is proved, the strict theta_X>Theta_gauge(T_X) margin and compactness provide qualitative positive annular dissipation for any fixed positive margin.
-
-
-## Outer zero-action: exact S-chain reduction — current
-
-The correct non-pointwise AW bridge is the already-proved exact four-S-event divided-difference identity in word_diameter.py. For four actual S epochs with coefficients c_j annihilating 1,t,t^2, define the literal chronology-dependent AW weights omega_k from phi_va,phi_pa,phi_Sa. Then exactly, for arbitrary varying literal OU coefficients,
-
-    sum_k omega_k a_hat_w,k - sum_j c_j S_hat_j
-      = - sum_k g_k' (n_v,n_p,n_S)_k.
-
-The identity cancels the complete LIN root (v,p,S,a_w), every AW process forcing term and every AW covariance-sync jump. It therefore respects the coupled same-history tuner chronology and does not require pointwise AW tracking.
-
-On exact complete-word zero dissipation every actually applied S innovation is zero, hence S_hat_j=0 at each of the four atoms. Every applied accelerometer/magnetic innovation is also zero, so correction mean jumps vanish. The remaining identity is a signed/windowed nominal-AW functional determined only by the literal prediction chronology and integrated source terms. This is the correct object to substitute into the zero-accelerometer compatibility equations before comparing physical gravity directions.
-
-However, this identity alone does not yet imply packet-compatible attitude/BA gauge: the right-hand integrated source term is not zero in the homogeneous covariance comparison, and the accelerometer compatibility contains the same-history physical acceleration and attitude. The next exact calculation is to combine the S-chain weights with the zero-innovation accelerometer equations at the same epochs and Abel-sum the physical acceleration using bounded v and jerk. The target is a two-epoch/weighted gravity relation whose only non-gravity physical remainder is bias-rate plus bounded endpoint/quadrature terms. EXCITED_MOVING can exclude zero action only if that derived remainder is strictly below the physical theta_X span. No pointwise ||a_hat_w-a_phys|| bound is permitted.
-
-
-## EXCITED_MOVING weighted-acceleration Abel calculation — exact result
-
-Combine the exact four-S divided-difference AW identity with zero-innovation accelerometer compatibility. After transporting each accelerometer equation into one common physical/world frame, the physical acceleration appears as a signed matrix-weighted sum
-
-    A_phys = sum_i h_i C_i a(t_i),
-
-where C_i is not a free coefficient: it is the literal S-chain/forced-adjoint weight composed with the same-history attitude/frame transport and accepted-update chronology. For the one physical velocity history v'=a, exact discrete Abel summation plus left-cell jerk quadrature gives
-
-    ||A_phys|| <= V_max (||C_0||+||C_{N-1}||
-                    +sum_{i=1}^{N-1} ||C_{i-1}-C_i||)
-                 +(J_max/2) sum_i ||C_i|| h_i^2.
-
-This is the concrete physical-a remainder. The physical BA term has the analogous exact Abel form
-
-    sum_i C_i b_a(t_i)
-      =(sum_i C_i)b_a(t_0)
-       +sum_j (sum_{i>j} C_i)(b_a(t_{j+1})-b_a(t_j)),
-
-and therefore is bounded only after signed totals/tails are formed, using B_a and D_a. These identities preserve one history and do not use pointwise AW tracking.
-
-FAILED SHORTCUT / CURRENT LIMITER: existing source assumptions do not yet bound the literal matrix-weight variation
-
-    TV_C=||C_0||+||C_{N-1}||+sum ||C_i-C_{i-1}||
-
-or the signed BA tail weights source-uniformly. C_i contains the forced-data/S-chain multiplier, actual rotation/reference transport and literal gains/resets. Bounding each factor independently or using coefficient total variation is an explicitly retracted route and can swamp the gravity span. Thus a finite numeric E_outer(T_X) does NOT follow yet from V_max,J_max,D_a alone.
-
-The useful exact decomposition is
-
-    E_outer = V_max TV_C
-              +(J_max/2) sum ||C_i||h_i^2
-              + B_a ||sum C_i||
-              + D_a sum_j ||sum_{i>j}C_i|| dt_j
-              + E_LIN-source + E_sensor/reference + E_literal,
-
-with all C-dependent quantities linked to one literal word. EXCITED_MOVING gives the gravity side 2 g_min sin(theta_X/2). Entry follows if the linked same-word inequality
-
-    2 g_min sin(theta_X/2) > E_outer
-
-is proved uniformly. Do not replace the linked C quantities by independent maxima.
-
-NEXT FALSIFIABLE CALCULATION: exploit the defining backward forced-data adjoint together with the S-chain annihilation moments to bound the linked combination
-
-    V_max TV_C + B_a||sum C_i|| + D_a Tail_C
-
-DIRECTLY by the same complete-word action/geometry, rather than bounding TV_C and Tail_C separately. If the adjoint recursion does not control this linked combination, the proposed S-chain route cannot close outer entry under the present assumptions and a different shaped storage/functional is required.
-
-
-## Linked C-functional calculation — S-chain/Abel route falsified as a norm bound
-
-The requested linked quantity was evaluated against the strongest already-derived same-word refinement. The backward forced-data adjoint plus S-chain moments do not provide a useful source-uniform norm bound on
-
-    V_max TV_C + B_a||sum C_i|| + D_a Tail_C
-
-by themselves. The obstruction is structural: the S-chain annihilation moments apply to the scalar/divided-difference weights before multiplication by the time-varying physical-frame/forced-adjoint matrices. After insertion of those matrices, sum C_i and first/variation moments are not annihilated; their changes contain the same chronological rotation/gain action that the adjoint is supposed to control. The backward adjoint is an exact identity, not a contraction or bounded-variation law.
-
-A literal carried-word calculation already tests the strongest admissible variation-norm refinement: first combine signed C_i within each actual S interval, replace acceleration by the shared interval velocity increment, then Abel-sum the interval endpoint coefficients before taking norms. On the 225--289 s word this reduces the crude 239.97 physical acceleration charge to
-
-    velocity charge = 23.98805965312,
-    jerk charge     =  3.82238280532,
-    total           = 27.81044245844.
-
-The available projected-gravity threshold on the same word is 8.77133455729, so the rigorous bound fails by 19.03910790115 even BEFORE root, sensor, BA or spline defects. Yet the actual signed physical acceleration action on that same word has norm about .005. Thus the failure is caused by variation-norm relaxation, not by the same-history dynamics. Adding the nonnegative BA linked terms can only worsen this inequality.
-
-FAILURE CLASSIFICATION: the proposed S-chain + Abel + TV_C route cannot close outer entry under the present assumptions if it takes norms of C variation/tails. The exact failed inequality is 8.77133455729 > 27.81044245844 + further nonnegative supplies. Invalidated hypothesis: S-chain moment annihilation plus the backward forced adjoint controls the linked C variation strongly enough after time-varying frame/gain insertion. Retained facts: exact S-chain cancellation, forced-data adjoint, physical Abel identities, EXCITED_MOVING gauge separation, and the tiny actual signed action remain valid.
-
-CURRENT LIMITER / NEXT FALSIFIABLE CALCULATION: preserve the JOINT signed physical acceleration + rotation/reference action before taking norms. Substitute the zero-innovation accelerometer and magnetic equations into the forced-data identity and combine the physical Q_i a_i term with g(R_i-Q_i)e_z and the magnetic Q_i B-R_i B term under one common rotation error. Seek an exact geometric pairing/coboundary in which the large C variation terms cancel. Do not bound TV_C, rotation action, or BA tails separately. If no such joint identity exists, this S-chain outer-entry formulation is a dead end and the outer storage must be changed.
-
-
-## Joint acc+gravity+magnetic forced-data substitution — exact audit
-
-Keep the forced-data identity signed and substitute the zero-innovation physical sensor equations before any norm. On a fixed-reference specialization B_i=B^true=B, the acc contribution at epoch i is exactly
-
-    L_i^a Q_i a_i + g L_i^a(R_i-Q_i)e_z
-      = L_i^a Q_i(a_i-g e_z) + g L_i^a R_i e_z,
-
-while a magnetic epoch j contributes
-
-    L_j^m(Q_j-R_j)B.
-
-Writing M_i=R_i Q_i^T gives the rotation mismatch forms
-
-    g L_i^a Q_i^T?  [depending on common-frame convention] (M_i-I) g_i,
-    L_j^m Q_j^T? (I-M_j) B,
-
-so both are actions of the SAME physical/nominal rotation error, but with different chronological multipliers and generally different epochs. The exact algebra therefore confirms a common geometric variable but does NOT yield a pointwise coboundary by itself.
-
-MAGNETIC SERVICE is aggregate normalized information over each service interval; it does not guarantee a magnetic correction at each accelerometer/S weight epoch or equality/proportionality of the forced-adjoint multipliers L^a and L^m. The backward forced-data recursion generates sensor-type-dependent L_i because Hbar_acc has AW/BA blocks while Hbar_mag has zero Euclidean mean-state map. Thus no exact identity of the form
-
-    sum_i C_i (M_i-I)g + sum_i C_i (I-M_i)B = endpoint
-
-follows from the current chronology. Forcing such same-epoch/common-weight pairing would strengthen the update-cadence assumptions and is not allowed.
-
-This does NOT falsify the joint signed route. It identifies the needed next object: transport the asynchronous magnetic action to the accelerometer/S epochs using the existing world-frame historical-row factorization and MAGNETIC SERVICE, while preserving signed multipliers. The candidate is a service-window aggregate pairing, not pointwise pairing. The existing world-frame results are relevant: historical attitude rows are attitude-free apart from signed world injections and nominal rotation integral, and aggregate rows avoid same-cell magnetic-cadence dependence. The next falsifiable calculation is therefore to express the forced-data rotation term in those aggregate world-frame coordinates and test whether the service Gram supplies a coercive bound on the common M(t)-I action without taking norms of rotation variation or gain variation separately.
-
-
-## Service-window aggregate M-I coercivity audit — current
-
-Transporting the joint forced-data rotation terms into the existing world-frame aggregate coordinates does NOT currently yield a source-uniform inequality A_W(M)>=c_X d(M,G)^2 from MAGNETIC SERVICE + EXCITED_MOVING alone.
-
-Reason: MAGNETIC SERVICE is already a coercive Gram condition only on the normalized heading/axial-gyro-bias ROOT differential transported through the preceding literal execution. It does not state a finite-rotation coercive bound for arbitrary M(t)-I, nor does it synchronize the forced-data acc/mag multipliers. The existing aggregate world-frame theorem G0 does produce a six-column floor without same-cell magnetic pairing, but only under additional NOMINAL premises: two long accelerometer windows with a bounded nominal transverse AW mean m_perp, bounded L1 nominal force mean u1, controlled signed injection transport, and adequate word interior. Those premises are not consequences of EXCITED_MOVING, which constrains TRUE roll/pitch only, and source-uniform bounds on m_perp/u1/injection transport remain open.
-
-Thus the desired implication
-
-    MAGNETIC SERVICE + EXCITED_MOVING => A_W(M)>=c_X d(M,G)^2
-
-is not proved by the current aggregate machinery. Treating G0's carried m_perp/u1 values as physical assumptions would reintroduce estimator-dependent excitation and is not allowed.
-
-What IS obtained at exact zero action is a kernel-intersection statement at the physical sensor-map level: zero magnetic residual confines instantaneous attitude ambiguity to rotation about the physical/committed field (modulo declared reference/residual terms); zero accelerometer residual permits that rotation to be traded against physical BA and nominal AW. EXCITED_MOVING excludes the pure attitude/BA packet gauge only after nominal AW has been eliminated. Therefore the unresolved obstruction is now isolated to the nominal AW contribution, not magnetic geometry.
-
-NEXT FALSIFIABLE CALCULATION: use the exact S-chain divided-difference identity specifically to eliminate nominal AW INSIDE the physical zero-innovation accelerometer equations before introducing the forced-data multipliers. Work at the sensor-map kernel level rather than bounding the full forced-adjoint functional. If four S=0 atoms plus homogeneous OU/LIN propagation imply that any zero-action AW contribution compatible with bounded physical v,p is a low-order coboundary that cannot track EXCITED_MOVING gravity span, the kernel reduces to the attitude/BA gauge and MAGNETIC SERVICE then removes its non-field component. If this kernel-level elimination still leaves a free AW function capable of cancelling arbitrary excited tilt, outer point entry cannot follow from the present assumptions.
-
-
-## Binary AW-counterfeit question — CLOSED for exact zero action
-
-At exact complete-word zero dissipation every accepted acc/mag/S innovation is zero. Therefore every correction mean increment K r is zero, every attitude injection is zero, and covariance AW synchronization changes covariance only. The nominal LIN MEAN follows the literal homogeneous prediction. Per spatial axis, with positive piecewise-continuous lambda(t)=1/tau(t),
-
-    a_hat'(t)=-lambda(t) a_hat(t),
-    v_hat'=a_hat,
-    p_hat'=v_hat,
-    S_hat'=p_hat.
-
-Hence
-
-    a_hat(t)=rho(t) a0,  rho(t)=exp(-integral lambda)>0,
-    S_hat'''(t)=rho(t) a0
-
-on prediction interiors (the literal discrete transition is the exact integrated constant-lambda solution on each sample; coefficient commits preserve state continuity). Four distinct actually applied zero-S events under D=0 give S_hat(t_j)=0 for j=0,1,2,3. Generalized Rolle: four zeros of a C2 function with absolutely continuous second derivative imply a zero of S''' almost everywhere between the extremes. But if a0!=0, S'''=rho a0 has fixed nonzero sign. Contradiction. Therefore a0=0. Then a_hat=0 identically, S_hat is quadratic, and four distinct zeros force v_hat=p_hat=S_hat=0 identically as well. Componentwise this closes all 12 LIN mean coordinates.
-
-Thus the binary question is answered NO: a zero-action nominal AW trajectory satisfying the literal homogeneous OU/S mean chain cannot counterfeit arbitrary EXCITED_MOVING tilt once four distinct applied S=0 atoms occur. It cannot counterfeit any tilt through AW at all; AW is identically zero on that zero-action interval.
-
-This is stronger and simpler than the weighted four-S identity for the exact invariant-set problem. The divided-difference identity remains useful for approximate/nonzero-action quantitative bounds, but zero-action classification should use the sign/Rolle argument directly.
-
-With AW removed, zero accelerometer compatibility is only attitude + physical/estimated BA + declared sensor/model residuals; zero magnetic compatibility supplies the existing field-axis restriction. In the ideal exact physical-map specialization this reduces to the stationary attitude/BA compatible gauge, which EXCITED_MOVING excludes when theta_X>Theta_gauge(T_X). Remaining source-audited work before claiming the full outer zero-action theorem: carry temperature/calibration/lever/reference residual terms exactly and verify four distinct ACCEPTED S atoms on every candidate EXCITED_MOVING proof word; then state the kernel intersection with MAGNETIC SERVICE on the actual reference chronology. No pointwise AW tracking is used.
-
-
-## Accepted S service + final homogeneous attitude/BA kernel — CLOSED conditionally
-
-Accepted S atoms: shipping calls applyIntegralZeroPseudoMeas whenever periodic_update_due fires. Its innovation covariance is P_SS+R_S. On the retained real-arithmetic covariance domain P_SS is PSD and the literal tuner enforces strictly positive sigma_S (source floor 1e-6), hence R_S is SPD and P_SS+R_S is SPD. safe_ldlt3 therefore succeeds on its first factorization; the S correction is actually applied. Thus every due S event is accepted on the retained mathematical branch. With finite positive T_S and qualified 4--6 ms prediction steps, any word long enough to contain four due periods contains four distinct accepted S atoms. The EXCITED_MOVING proof word must explicitly include this finite S-service prefix; this is scheduler chronology, not a new physical assumption.
-
-Homogeneous sensor-map convention: the LaSalle D=0 invariant-set theorem is the zero-disturbance comparison. Literal deterministic temperature compensation and configured lever-arm compensation stay in both truth/model maps and cancel when the declared model is exact. Finite fast-sensor residual, calibration defect, magnetic-field/reference mismatch and arithmetic/model defects are restored later through the additive complete-word supply; they are not extra coordinates in Inv(D=0). This preserves the existing proof architecture and avoids turning bounded disturbances into exact unobservable modes.
-
-After the four-S Rolle lemma, zero action gives nominal v=p=S=a_w=0 on the interval. Zero homogeneous accelerometer residual therefore reduces to the attitude/BA compatibility equation, while zero homogeneous magnetic residual plus MAGNETIC SERVICE removes every attitude component except the field-axis compatibility direction (with the actual committed reference frozen in the homogeneous word). The remaining one-dimensional physical ambiguity is exactly the attitude/BA gauge bounded by Theta_gauge(T_X). EXCITED_MOVING with theta_X>Theta_gauge(T_X) excludes it. Therefore, conditional on the already required compact retained outer word/domain and literal homogeneous event strata,
-
-    Inv_EXCITED_MOVING({D=0}) = {0}.
-
-This is an existence-level outer zero-action exclusion, not yet a finite-error entry theorem. Compactness now yields a positive finite-window homogeneous dissipation floor on each closed retained outer annulus, provided the outer class itself is compact and every prefix remains in it. Remaining entry obligations are therefore: construct/source-certify R_outer from H18/A21 release, prove every-prefix outer retention, choose r_in<.15, and then restore the linked finite physical/model/arithmetic supply without separately pessimistic eta/E estimates.
-
-
-## Source-uniform outer release mean set — CLOSED; prefix bootstrap identified
-
-Shipping source gives a source-uniform release mean box without using posterior V. The OU-III constructor sets the entire extended mean xext to zero. The wrapper's enterLive_ comment and chronology state that the linear block is carried through bootstrap without being propagated before Live; enterLive_ reseats only the AW COVARIANCE and does not change the AW mean. Therefore at the first Live/A21 prediction
-
-    vhat=phat=Shat=ahat_w=0
-
-source-uniformly for the ordinary construction path. Physical MARINE bounds immediately give |e_v|<=V_max, |e_p|<=P_max, |e_aw|<=A_max, while the once-anchored physical S error is bounded by the declared persistent primitive span P_AC. Attitude error lies in compact SO(3) (use geodesic angle <=pi, or the retained coordinate chart after certified release). The implemented estimate projections give |bhat_g|<=.5 and |bhat_a|<=.4, hence |e_bg|<=.52 and |e_ba|<=B_a+.4. Thus the release physical/mean-error set is compact independently of tiny posterior covariance.
-
-Covariance: release/reset seeds are finite by source. After 17 s regular A21 the proved nuisance principal upper comparison bounds (v,p,S,AW,BA) at every operation. Attitude/gyro covariance finiteness over any FIXED finite prefix follows directly from finite source F,Q,Joseph updates/resets and positive measurement floors; a useful all-time AG ceiling is not needed merely to define the first finite outer bootstrap word. Therefore define R_out initially as the image/closure of the compact release box under the literal same-history A21 map over one fixed bootstrap horizon H_out>=max(17 s, four S periods, one EXCITED_MOVING service word). Continuous real-arithmetic operation strata with finite event counts map compact sets to compact sets; include all prefixes in the union/closure. This gives a compact finite-horizon outer tube containing every certified release execution and every prefix through the first complete excited word.
-
-IMPORTANT LIMITATION: this finite-horizon compact tube is not yet an invariant outer set for arbitrarily many failed entry words. To obtain every-prefix retention until entry, use the newly proved homogeneous annular strictness on each compact tube to show entry during the FIRST complete EXCITED_MOVING word (or a fixed finite number of words) rather than postulating indefinite outer invariance. If zero-action exclusion + compactness supplies strict homogeneous dissipation on that first word but finite physical/model supply can overwhelm it, repeated-word retention still needs a linked supply/storage budget. Do not claim all-time R_out invariance from finite source continuity alone.
-
-NEXT FALSIFIABLE CALCULATION: formulate the first-complete-EXCITED_MOVING-word compact tube K_out from the explicit release error box and source coefficient bounds, then apply the outer Inv(D=0)={0} compactness contradiction on the closed annulus outside r_in. Determine whether this yields guaranteed homogeneous entrance within that one word or only a positive decrement. If only decrement, derive a sublevel W_out whose boundary decrement is inward so repeated words remain in a compact enlargement; do not use posterior V at release as that sublevel.
-
-
-## Outer retention: no new shaped storage is needed for the homogeneous theorem
-
-A useful simplification closes the homogeneous outer-retention construction. Although posterior V is unusable as a SMALL release/capture metric, it can be used as a LARGE invariant outer storage after the finite A21 bootstrap. The missing ingredient is a covariance LOWER bound, and the existing lin-path/root-covariance certificate supplies it: after a 16--16.006 s regular A21 path, the full 21-state covariance at the certified post-prediction roots satisfies P>=P_min>0 (LIN from the exact path Gramian, AG/BA from fresh process floors, combined by the proved Loewner comparison). Thus P^-1<=P_min^-1 at those roots.
-
-The source-uniform release mean-error box and finite-horizon prefix map proved above give a finite Euclidean error ceiling E_box through the bootstrap. Therefore at the first certified post-bootstrap root
-
-    V=e'P^-1 e <= lambda_max(P_min^-1) E_box^2 =: C_out < infinity.
-
-No useful numerical value of C_out is required. Define the homogeneous outer sublevel at certified roots by W_out:=V and R_out={V<=C_out}, together with the finite event/history coefficient class and the corresponding operation prefixes. For the covariance-matched homogeneous comparison, every literal prediction/correction/reset/covariance-floor operation is nonexpansive in V, so every prefix after such a root satisfies V_prefix<=V_root<=C_out. Hence the boundary is not merely inward on complete words: operation-wise Delta V<=0. This gives homogeneous every-prefix outer retention for arbitrarily many EXCITED_MOVING words.
-
-The outer invariant-set theorem gives Inv_EXCITED_MOVING({D=0})={0}. On each closed annulus r_in^2<=V<=C_out of the compact retained history/root class, the standard diagonal compactness argument therefore gives finite m_out and eta_out>0 with cumulative homogeneous dissipation >=eta_out V_root, hence
-
-    V_(k+m_out) <= (1-eta_out)V_k.
-
-Repeated complete EXCITED_MOVING service implies finite homogeneous entrance into V<r_in^2. A single first word is NOT guaranteed to enter; the theorem only needs finite repeated-word entry. Because V itself provides prefix retention, no separate shaped W_out is needed for the homogeneous mechanism.
-
-LIMITATION: finite-error/source disturbances destroy exact operation-wise nonexpansion. For the physical theorem the outer boundary requires a linked supply condition (or a larger robust outer level) before repeated-word retention can be claimed. This is downstream of homogeneous entry and must use the same complete-word loss/supply factors; do not separately pessimistically estimate eta_out and E_out. Also, P_min is certified at specified regular post-prediction roots, so root-to-root theorem wording must preserve that phase; finite prefixes between roots are covered by operation-wise V nonexpansion once rooted.
+# OU-III proof: controlling state after linked finite-supply audit
+
+Audit: PR #639 at `6c96893640abbbc49caeb68a9fe27a27680850b3`, with shipping
+sources unchanged on main `17df0e8d64ca07dd6d35ee9a8fea72a85e3eb0d7`.
+Current derivation: [linked finite-error supply](ou3-linked-finite-supply.md).
+Historical detail remains in Git history and the existing archived ledgers;
+retracted calculations are not premises. Runtime, tuning, gates and the
+MARINE/IMU/MAGNETIC and residual numerical limits are unchanged.
+
+## Current hypothesis
+
+One path: construction -> capture -> magnetically informed H18 ->
+refinement/release -> A21 -> regional practical stability. Retain the conditional
+radius-local field-axis result in `ou3-radius-local-field-alignment.md`, with
+r_FA=.15, T_FA=17 s and strict local margin .10527117647 m/s^2. Do not assert
+source-uniform outer entry merely from this local result.
+
+EXCITED_MOVING retains the engineering definition: sustained vessel motion
+with a non-negligible roll/pitch change in a bounded time. Its physical
+qualification is true body-gravity-direction span >=theta_X on every complete
+T_X window contained in an excited episode, independently of the estimator.
+Weak motion is distinct. A bias-only quiet-packet envelope is not a universal
+finite-error sufficiency test; all residual supplies must be retained.
+
+## Evidence
+
+For one actual event history write e_N=M e_0+b, with b the signed transported
+sum of the exact operation defects. Let J0=P0^-1, JN=PN^-1 and
+
+    G=J0-M'JN M-gamma J0>0, z=M'JN b,
+    chi_gamma=b'JN b+z'G^-1 z.
+
+The new exact completed-square identity is
+
+    V_N=(1-gamma)V_0+chi_gamma
+          -(e_0-G^-1 z)'G(e_0-G^-1 z).
+
+It couples forcing direction to the same word loss. For a source-uniform
+chi upper bound, root retention at C requires chi<=gamma C; finite entry
+below r_in requires STRICT reserve chi/gamma<r_in^2. Every-prefix retention
+still needs the linked prefix inequalities, not just an endpoint test.
+
+The 80-digit carried 225.00--225.32-s diagnostic preserves observer/control
+terminal state and covariance exactly. Wave: rho=.9993070523483296,
+gamma=.0003464738258352, chi=306.1085110793. The inner budget ratio is
+chi/(gamma*.15^2)=39266523.7608. The fixed-forcing sufficient radius is
+939.9451 instead of the separated bound 27673.6030. This is a failed finite
+feasibility budget, NOT a source-uniform counterexample: b is retrospective,
+and the wave replay does not certify all-time magnetic service.
+
+A separate analytical norm-only finite-residual witness DOES exclude the
+proposed full physical-error inner retention for an admitted excited example:
+roll=.01 sin(t/2), zero translation, B=75 e_x, constant BA=.01 e_x,
+compensating residuals |n_a|<.108067<.3 and |n_g|<=.005<.02. Packets are exactly
+quiet while every 60-s window has tilt span .02 rad>1 degree. The actual quiet
+MAGNETIC SERVICE certificate survives the true-axis projection. Nominal BA
+stays zero and P_ba,ba<=I/1600 implies sqrt(V)>=.4>.15 forever on the regular
+real-arithmetic tail. This uses the explicit packet/mean induction, not D=0.
+No temporal cancellation of the bounded residuals is assumed in constants.json.
+See the full note and `finite_residual_obstruction.py` for all-time bounds.
+
+## Failed approaches / DEAD_ENDS
+
+**Homogeneous/base conflation.** Failed implication: D_W=0 => r_base=0 =>
+nominal AW=0 after four S atoms. The action concerns homogeneous measurement
+variation, not the base innovation. ZF-5--ZF-8 already explicitly forbid this.
+The literal small-x integrated-OU coefficients also are not exact exponential
+integrals. Failure: mathematical premise substitution. The purported outer
+zero-action exclusion and subsequent homogeneous entry closure are withdrawn.
+Retained: correct homogeneous operation loss and the local conditional result.
+
+**Wrong release boundary.** Failed implication: zero LIN at constructor/pre-Live
+handoff => zero LIN at A21 release. H18 runs predictions and corrections before
+BA activation. Carried example: Live 31.84 s, A21 120.08 s, release LIN norm
+.711963. Failure: chronology, not a failed small constant. The source-uniform
+H18/A21 release mean box remains open; finite per-history release times do not
+supply one common compact release set.
+
+**Unproved compactness.** Failed implication: P>=P_min and V<=C => compact full
+history/error set. Scalar P=n^2,e=n gives V=1 with unbounded state/covariance.
+Failure: missing coercivity/upper bounds. Retained: regular root covariance
+lower comparison and conditional finite-horizon continuity. Every-prefix
+outer retention and closed strata must still be proved.
+
+**Linked finite budget.** Failed inequality on the carried wave word:
+306.1085110793 <= .0003464738258352*.15^2. This is a feasibility failure of
+this fixed-forcing bound. No interval refinement or independent TV/gain/BA
+maxima is justified. Retained: exact sharp fixed-word completed square.
+
+**Noise-blind excited entry.** Failed implication: true tilt span above the
+bias-only envelope => robust full V entry below .15. The exact finite-residual
+witness has sqrt(V)>=.4. Failure: physical indistinguishability under the
+norm-only residual model. This is not observer divergence or a refutation of
+local homogeneous contraction. A label such as "fast" adds no spectral or
+zero-mean premise by itself.
+
+## Retained facts
+
+P_aw,aw<=16.48 I on the audited regular source branch; |e_aw|<4.06 sqrt(V)
+only when the ACTUAL error storage is local. BA elimination is
+min_b V=e_o'P_oo^-1 e_o, not conditioning. The source S scheduler has bounded
+regular gaps; SPD innovation covariance gives accepted S corrections in exact
+real arithmetic, not automatically in float32. Exact OU/S identities, signed
+variation of constants, covariance energy identities and the coupled
+(tau,sigma_aw,R_S,T_S) chronology remain useful. No finite carried replay or
+arbitrary covariance box is promoted to a source theorem.
+
+## Current limiter
+
+The requested finite-error .15 target is incompatible with the explicit
+norm-only residual witness for the tested EXCITED_MOVING qualification. In
+addition the claimed outer homogeneous closure relied on invalid premises.
+Source-uniform outer release/retention, correct zero-action/base transfer,
+linked supply and every-prefix bounds, regime composition and float32 totality
+remain open. All end-to-end theorem flags remain false.
+
+## Alternatives
+
+Use the linked matrix identity on a physically appropriate practical-error
+set, retaining the observable consistency class and unavoidable residual tube.
+The existing .15 theorem stays conditional where its base-error premise holds.
+A stronger temporal/stochastic sensor qualification would be a separate change
+requiring justification; none is introduced here. Do not enlarge a covariance
+ball and claim compactness, or declare actual innovations zero from D=0.
+
+## Validation and CI boundary
+
+The new exact-rational linked-supply tests and finite-residual witness tests
+pass. The native source diagnostic has exact observer/control terminal parity;
+its completed-square residual is below 4.4e-78. All-time float32 service and
+arithmetic are not certified. Main's existing CI/provenance repairs are
+retained; full native `make all` and repository-wide CI are not claimed run by
+this mathematical/documentation continuation.
+
+## Next falsifiable calculation
+
+Before another outer entry enclosure, specify a practical physical-error target
+consistent with LS11 and prove its retained covariance/history domain. Evaluate
+LS1--LS7 on that same-history target with exact OU/BA/S mismatch; a positive
+homogeneous loss alone is insufficient. Do not spend enclosure effort trying
+to force the already refuted norm-only full-error .15 retention statement.

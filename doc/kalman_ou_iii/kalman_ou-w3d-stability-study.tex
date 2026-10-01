@@ -1062,68 +1062,9 @@ Minimizing over every non-attitude outer coordinate still gives
 \end{equation}
 This carried history is not a source-uniform counterexample to eventual capture; it proves that stage flags alone cannot imply direct release into the inner ball.
 
-\paragraph{Excited-moving qualification.}
-For the point-entry branch we distinguish \emph{EXCITED\_MOVING} from generic physical motion.  In engineering terms, EXCITED\_MOVING is sustained vessel motion in which the vessel undergoes a non-negligible change in roll or pitch within a bounded time.  Precisely, there are fixed physical qualification constants $T_X<\infty$ and $\theta_X>0$ such that every complete interval $W=[t,t+T_X]$ contained in an EXCITED\_MOVING episode satisfies
-\[
- \operatorname{span}_{s\in W} u_g(s)\ge\theta_X,\qquad
- u_g(s)=\frac{Q(s)^Tg_0^W}{\|g_0^W\|}.
-\]
-This is a property of the true vessel motion, not an OU--III output or runtime mode.  STILL, TRANSITION and weak MOVING remain admitted and need not satisfy it.  No minimum wave height, spectrum, heave, angular frequency or RAO amplitude is assumed.
-
-The proof checks sufficiency separately.  An exactly packet-indistinguishable attitude/BA history can change its gravity direction over a duration $T$ by at most
-\[
- \Theta_{\rm gauge}(T)=
- \min\!\left\{
- 4\arcsin\!\frac{B_a}{2g_{\min}},
- T\min\!\left(\frac{D_a}{g_{\min}},B_g,\Omega_{\max}\right)
- \right\}.
-\]
-Hence the simple physical qualification breaks the exact stationary gauge whenever
-\[
- \boxed{\theta_X>\Theta_{\rm gauge}(T_X).}
-\]
-With the currently qualified bias envelopes this comparison, rather than the engineering definition itself, is where sensor-bias constants enter.  The private Mahony observer adds no independent information: identical conditioned packets generate identical Mahony and staged coupled $(\tau,\sigma_{a_w},R_S,T_S)$ histories.
-
-The required architecture therefore has two nested A21 regions, but the outer region cannot be a point-error Lyapunov set on every admitted continuation.  At physical rest there is an exact attitude/accelerometer-bias gauge: a sufficiently small constant rotation $Q_\alpha$ about the magnetic field can be compensated by $b_a=g(Q_\alpha e_z-e_z)$ while leaving accelerometer, gyro and magnetometer packets unchanged.  Taking $\alpha=10^{-3}$ rad gives $\|b_a\|=2g\sin(\alpha/2)<0.009807\,\mathrm{m/s^2}$ with zero bias rate, strictly inside IMU BIAS.  Complete stillness may persist arbitrarily long, so no moving-excitation window is owed, while the quiet actual magnetic-service floor is retained.  On the identical nominal filter history the proved quiet bound $P_{b_ab_a}\preceq I/1600$ gives $\sqrt V\ge\|e_{b_a}\|/0.025>0.392>0.15$.  Hence no deterministic storage built from the common shipping history can force every certified continuation into the point set $V\le0.15^2$.  The controlling outer object must instead measure distance to this stationary measurement-compatible class.  Stationary A21 requires practical retention to that class; a complete admitted moving-excitation window must then collapse the gauge and provide finite retained entry into an inner $V\le r_{\rm in}^2<0.15^2$ ball, after which the field-axis LaSalle theorem applies.  Active BA dynamics remain a carried bounded coordinate and are eliminated from outer storage with the covariance marginal, never by conditioning.
+The required architecture therefore has two nested A21 regions: an outer capture/retention region large enough to contain certified H18/A21 release, and the inner $V\le0.15^2$ region where the field-axis theorem gives strict local dissipation.  Active BA dynamics are carried as a bounded internal coordinate during the outer-to-inner transition.  The next entry theorem must prove finite entrance through the annulus rather than assume inner-ball membership at release.
 
 \section{Capture and finite-error retention}
-\paragraph{Outer homogeneous invariant-set exclusion.}
-On the retained real-arithmetic branch, every due $S=0$ pseudo-update is actually applied: $R_S\succ0$ by the literal positive tuner floor and $P_{SS}\succeq0$, hence $P_{SS}+R_S\succ0$ and the shipping LDLT succeeds.  Four distinct due epochs therefore give four accepted zero-$S$ atoms.  At zero complete-word dissipation all accepted innovations vanish, so mean corrections and attitude injections vanish and covariance synchronization does not alter the mean.  Per axis the literal homogeneous LIN mean obeys
-\[
- \dot{\hat a}_w=-\lambda(t)\hat a_w,\quad
- \dot{\hat v}=\hat a_w,\quad
- \dot{\hat p}=\hat v,\quad
- \dot{\hat S}=\hat p,\qquad \lambda(t)>0 .
-\]
-Thus $\hat S'''(t)=\rho(t)a_0$ with $\rho(t)>0$.  Four zeros of $\hat S$ force, by repeated Rolle arguments, a zero of its third derivative; hence $a_0=0$.  Then $\hat S$ is quadratic and four zeros force $\hat v=\hat p=\hat S=\hat a_w=0$.  Zero homogeneous accelerometer action consequently leaves only attitude/BA compatibility, while zero homogeneous magnetic action under MAGNETIC SERVICE removes all but the field-axis compatibility direction.  The remaining one-dimensional gauge is excluded on EXCITED\_MOVING by $\theta_X>\Theta_{\rm gauge}(T_X)$.  Therefore, conditional on the compact retained outer event/history class,
-\[
- \boxed{\operatorname{Inv}_{\rm EXCITED\_MOVING}(\{\mathcal D=0\})=\{0\}.}
-\]
-This is the homogeneous invariant-set theorem.  Literal deterministic temperature and configured lever-arm compensation are retained in the common model; finite calibration, sensor, magnetic-reference, model and arithmetic residuals enter the later complete-word supply and are not inserted into the zero-action invariant set.
-
-\paragraph{Source-uniform outer release tube.}
-The outer set is not defined by a small posterior covariance metric.  The literal constructor zeros the full extended mean, and the bootstrap carries the LIN mean without prediction until Live; the Live handoff reseats the AW covariance but does not change the mean.  Hence at the first A21 prediction
-\[
- \hat v=\hat p=\hat S=\hat a_w=0 .
-\]
-MARINE MOTION therefore bounds the corresponding release errors by $V_{\max}$, $P_{\max}$, $P_{AC}$ and $A_{\max}$.  The attitude pair lies on compact $SO(3)$, while the implemented gyro- and accelerometer-bias estimate projections give finite error balls $\|e_{b_g}\|\le0.52$ and $\|e_{b_a}\|\le B_a+0.4$.  Release/reset covariance seeds are finite by source; after 17 s regular A21 the nuisance principal upper comparison is uniform.  On any fixed bootstrap horizon, finite source transitions, positive measurement floors, Joseph updates and resets keep the remaining covariance coordinates finite.
-
-Let $H_{\rm out}$ cover the 17-s nuisance warmup, four accepted $S$ periods and the first complete EXCITED\_MOVING service word.  Define $\mathcal R_{\rm out}^{(1)}$ as the closure of all literal same-history A21 prefixes of duration at most $H_{\rm out}$ reachable from the certified release box.  The finite event-stratified real-arithmetic map sends the compact release/coefficient class to a compact finite-horizon tube, so $\mathcal R_{\rm out}^{(1)}$ contains every certified release and every prefix through that first word without assuming small $V$.
-
-The finite-horizon construction also supplies a finite Euclidean error ceiling at the first regular post-bootstrap root.  At such roots the existing LIN path and fresh AG/BA process certificates give a full covariance lower comparison $P\succeq P_{\min}\succ0$.  Hence
-\[
- V=e^TP^{-1}e\le \lambda_{\max}(P_{\min}^{-1})\,\|e\|^2=:C_{\rm out}<\infty .
-\]
-Although $V$ is far too severe to serve as a small capture metric, the large sublevel
-\[
- \mathcal R_{\rm out}=\{V\le C_{\rm out}\}
-\]
-is the appropriate homogeneous retention set.  Every literal covariance-matched prediction, correction, reset and PSD covariance-floor operation is nonexpansive in $V$, so all prefixes remain in this sublevel.  On every closed annulus $r_{\rm in}^2\le V\le C_{\rm out}$, the EXCITED\_MOVING zero-action exclusion and compactness give finite $m_{\rm out}$ and $\eta_{\rm out}>0$ with
-\[
- V_{k+m_{\rm out}}\le(1-\eta_{\rm out})V_k .
-\]
-Repeated complete EXCITED\_MOVING service therefore gives finite homogeneous entrance into $V<r_{\rm in}^2$.  Entrance during the first word is neither required nor asserted.  Finite physical/model/arithmetic supply is a subsequent robust-retention obligation and is not hidden in this homogeneous statement.  The next entry step must show either entrance during a fixed number of EXCITED\_MOVING words or an inward boundary inequality for a shaped outer sublevel; otherwise repeated finite tubes alone do not prove all-time retention.
-
 The same proof path still requires finite construction/capture into a magnetically informed H18 domain and a source-uniform refinement/release bridge.  The approximately $7^\circ$ refinement quantity is an estimator-error tube, not a covariance-storage radius and not a bound on physical rocking amplitude.  A six-degree attitude error does not imply membership in $V\le0.15^2$.
 
 The held-BA H18 geometry must use the actual constant held estimator BA together with
