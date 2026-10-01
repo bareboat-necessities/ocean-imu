@@ -43,18 +43,29 @@ class StabilityPublicationTests(unittest.TestCase):
         ):
             self.assertIn(state, self.flat)
 
-    def test_finite_error_statement_and_qualification_remain_conditional(self):
+    def test_finite_error_statement_preserves_metric_and_supply(self):
         for marker in (
-            r"\label{eq:diss}", r"0\le\rho<1",
-            r"m\norm{e_j}^2\le V_j\le M\norm{e_j}^2",
-            r"\label{tab:limits}",
+            r"V_i=e_i^{\mathsf T}P_i^{-1}e_i",
+            r"\label{eq:path-dissipation-current}",
+            r"\label{eq:finite-window-strictness-current}",
+            r"\label{eq:finite-error-block-current}",
+            r"\label{eq:retained-radius-current}",
+            r"\label{eq:reset-remainder-current}",
+            r"\sqrt{1-\eta_D}\sqrt{V_k}+E_W(r,d)",
+            r"\sup_\ell G_\ell(0.15,d)\le0.15-r_{\rm in}",
+            r"E_W(0.15,d)\le(1-\sqrt{1-\eta_D})r_{\rm in}",
         ):
             self.assertIn(marker, self.study.replace("&", ""))
-        self.assertIn("every-prefix bounds and forward retention", self.flat)
-        self.assertIn("This implication is conditional until", self.flat)
-        self.assertIn("Finite simulations do not establish", self.flat)
+        self.assertIn("simultaneous fixed-point inequalities", self.flat)
+        self.assertIn("prefix retention must not be assumed", self.flat)
+
+    def test_finite_error_statement_and_qualification_remain_conditional(self):
+        self.assertIn(r"\label{tab:limits}", self.study)
+        self.assertIn("No numerical $\\eta_D$ is presently certified.", self.flat)
+        self.assertIn("The local field-axis result is conditional", self.flat)
+        self.assertIn("Finite carried histories are diagnostics, not source-uniform theorem certificates.", self.flat)
         self.assertIn("assembled-history qualification remains open", self.flat)
-        self.assertIn("End-to-end regional practical stability remains", self.flat)
+        self.assertIn("End-to-end regional practical stability remains unproved.", self.flat)
 
 
 if __name__ == "__main__":

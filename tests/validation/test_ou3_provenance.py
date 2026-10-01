@@ -25,6 +25,8 @@ class ProofProvenanceTests(unittest.TestCase):
         for group, source in (
             ("authoritative_shipping_sources", "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h"),
             ("operation_lemma_sources", "src/kalman_ou_common/KalmanOUCoreMath.h"),
+            ("operation_lemma_sources", "tools/stability/ou3_theorem/interval_riccati_21.py"),
+            ("operation_lemma_sources", "tools/stability/ou3_theorem/rank_loss_interval_factor.py"),
             ("operation_lemma_sources", "docs/ou3-construction-mean-action.md"),
             ("operation_lemma_sources", "reports/results/ou3_stability/construction-mean-action.json"),
         ):

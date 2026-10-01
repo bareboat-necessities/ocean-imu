@@ -16,6 +16,7 @@ N=21
 
 @dataclass(frozen=True)
 class IMat:
+    """Interval matrix with nonempty rows; zero-column source factors are valid."""
     mid: tuple[tuple[float,...],...]
     rad: tuple[tuple[float,...],...]
 

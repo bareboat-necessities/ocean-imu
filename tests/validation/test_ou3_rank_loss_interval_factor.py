@@ -4,7 +4,8 @@ from pathlib import Path
 import unittest
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_theorem.rank_loss_interval_factor import (
-    FactorState,exact,eye,zeros,verified_inverse,schur_scalar_information,residualized_gram,generalized_ratio_lower,
+    FactorState,exact,eye,zeros,verified_inverse,source_covariance,
+    schur_scalar_information,residualized_gram,generalized_ratio_lower,
     source_range_audit,
 )
 
@@ -175,6 +176,69 @@ class RankLossIntervalFactorTests(unittest.TestCase):
         self.assertTrue(c["verified"])
         self.assertLess(c["residual_ratio_upper"],1e-12)
         self.assertAlmostEqual(ai.mid[0][0],1/1.99,places=12)
+
+    def test_verified_inverse_singular_and_unbounded_candidates_fail_closed(self):
+        for a in (zeros(2,2), exact([[1,2],[2,4]]), exact([[5e-324]])):
+            with self.subTest(matrix=a.mid):
+                inverse,cert=verified_inverse(a)
+                self.assertFalse(cert["verified"])
+                self.assertEqual(inverse.shape,a.shape)
+                self.assertEqual(inverse,zeros(*a.shape))
+                self.assertIn("reason",cert)
+
+    def test_verified_inverse_rejects_uncertain_singular_interval(self):
+        from tools.stability.ou3_theorem.interval_riccati_21 import IMat
+        # Both a modest and an overflow-sized Neumann ratio must fail closed.
+        for midpoint,radius in ((1.0,1.0),(1e-300,1e300)):
+            with self.subTest(midpoint=midpoint,radius=radius):
+                a=IMat(((midpoint,),),((radius,),))
+                _,cert=verified_inverse(a)
+                self.assertFalse(cert["verified"])
+                self.assertGreaterEqual(cert["residual_ratio_upper"],1.0)
+        with self.assertRaises(ValueError):
+            verified_inverse(exact([[1,2]]))
+
+    def test_singular_information_elimination_never_claims_a_positive_floor(self):
+        for covariance in (zeros(2,2),eye(2)):
+            result=schur_scalar_information(zeros(2,1),exact([[1],[0]]),covariance)
+            self.assertFalse(result["verified"])
+            self.assertEqual(result["lower"],0.0)
+        gram,result=residualized_gram(eye(2),zeros(2,1),eye(2))
+        self.assertFalse(result["verified"])
+        self.assertEqual(result["lower"],0.0)
+        self.assertEqual(gram,zeros(2,2))
+
+    def test_empty_source_covariance_and_factor_transports(self):
+        empty=zeros(2,0)
+        self.assertEqual(empty.shape,(2,0))
+        self.assertEqual(source_covariance(empty),zeros(2,2))
+        st=FactorState(eye(2),empty).affine_mean(eye(2))
+        self.assertEqual(st.B.shape,(2,0))
+        st=st.predict(eye(2),empty)
+        self.assertEqual(st.B.shape,(2,0))
+        _,source=st.observe(exact([[1,0]]),zeros(1,0))
+        self.assertEqual(source.shape,(1,0))
+        st=st.correct(eye(2),exact([[1],[0]]),exact([[2]]))
+        self.assertEqual(st.B.mid,((-2.0,),(0.0,)))
+
+    def test_empty_nuisance_preserves_unshorted_information(self):
+        result=schur_scalar_information(zeros(2,0),exact([[1],[0]]),eye(2))
+        self.assertTrue(result["verified"])
+        self.assertGreater(result["lower"],.999999999)
+        gram,result=residualized_gram(eye(2),zeros(2,0),eye(2))
+        self.assertTrue(result["verified"])
+        self.assertGreater(result["lower"],.999999999)
+        self.assertEqual(gram.shape,(2,2))
+
+    def test_empty_factors_do_not_admit_invalid_shapes(self):
+        from tools.stability.ou3_theorem.interval_riccati_21 import IMat
+        for n,m in ((0,2),(-1,2),(2,-1)):
+            with self.assertRaises(ValueError):
+                zeros(n,m)
+        for mid,rad in ((((),()),((),)),(((),()),((),(0.0,))),
+                        (((),(0.0,)),((),())),((),())):
+            with self.assertRaises(ValueError):
+                IMat(mid,rad)
 
     def test_factor_propagation_preserves_shared_source(self):
         st=FactorState(eye(2),zeros(2,0))

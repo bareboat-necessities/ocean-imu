@@ -1098,24 +1098,6 @@ The finite attitude injection retains the explicit reset-coordinate remainder. I
 \end{equation}
 Polynomial-quaternion and float32 defects remain separate additive supplies.
 
-Bounded physical, model, and arithmetic forcing then requires an independently
-certified supply bound in
-\begin{equation}
- V_{j+1}\le\rho V_j+c_d\bar d^2,\qquad 0\le\rho<1.
- \label{eq:diss}
-\end{equation}
-Uniform coercivity and every-prefix bounds and forward retention require
-\begin{equation}
- m\norm{e_j}^2\le V_j\le M\norm{e_j}^2.
-\end{equation}
-If these bounds and finite entry are established, the ultimate root-error
-bound is $\limsup_j\norm{e_j}\le
-\sqrt{c_d/[m(1-\rho)]}\,\bar d$, with a separate prefix gain.
-This implication is conditional until full loss,
-covariance coercivity, nonlinear radius, supply, capture, bridge/release, and
-prefix certificates close. Finite simulations do not establish these
-source-uniform inequalities.
-
 \section{Declared constants}
 Symbolic assumptions are separated from current numerical certification limits
 in Table~\ref{tab:limits}. A declared value is a testable deployment

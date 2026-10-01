@@ -327,18 +327,56 @@ signed/windowed AW functional or return to the global same-history FA
 reachability/action calculation. Do not retry a source-uniform pointwise AW
 tracking lemma; it is already falsified on the admitted class.
 
-## CI consistency repair after the causal AW root correction
 
-Failure classification: implementation/CI, not mathematical. After the AW
-root-action correction, `s_chain_neutral_and_aw_root_cancellation` is
-`False` in `theorem_status.py`; the committed status, provenance blob SHAs and
-the status test still asserted the former `True`. The study text had also
-dropped the conditional finite-error statement `V_(j+1)<=rho V_j+c_d d^2`
-with coercivity. Two interval-factor tools failed open: a zero-column source
-factor was rejected, and a singular `S_actual` midpoint raised instead of
-returning an unverified certificate.
+## CI integrity gate
 
-Invalidated hypothesis: none. Retained facts: the S-chain/AW root
-cancellation remains open; the finite-error dissipativity statement remains
-conditional; the interval inverse now fails closed. Current limiter and next
-falsifiable experiment are unchanged from the staged-entry section above.
+### Current hypothesis
+The shared evidence gate must reproduce the current proof sources without
+changing the estimator, physical premises, or theorem completion flags.
+
+### Evidence
+Run 36809791048 / job 110210632369 at main `962a0707` reported 719 tests,
+10 failures and two errors: zero-column factors were rejected; a singular
+midpoint inverse escaped the fail-closed certificate; two duplicate workflows
+survived; publication/status assertions and seven source hashes were stale.
+The generated theorem-status narrative also differed from its current generator.
+The repaired complete evidence target passes 726 tests (one existing simulation-
+data skip) against that run's full validation, robustness and TFG bundles.
+The first local retry failed only because Eigen was not on the include path;
+setting EIGEN_INCLUDE_DIR to the installed Eigen headers resolved it without
+changing the test or application code. The independent provenance validator
+reports validation_pass=true and theorem_closed=false.
+The native shipping contract and transition regressions also pass. A parallel
+compile was killed by the local memory limit; the serial build succeeded.
+Temporary verifier run 36817238008 lacked mpmath/matplotlib: 706 loaded tests
+reported 28 import/dependent errors and one stale late-override assertion.
+This was an environment failure, not a new proof result; use the original
+apt-managed Python dependencies before repeating that verifier.
+
+### Failed approaches / DEAD_ENDS
+Treating every rectangular factor as nonempty incorrectly rejects an empty
+source history. Requiring the retracted AG-root cancellation or obsolete paper
+labels does not validate the current proof. Do not restore those claims or
+bypass the provenance gate to make CI green.
+
+### Retained facts
+Empty source factors have exactly zero covariance. Singular or unbounded
+inverse candidates return an unverified certificate, never a positive floor.
+Both standalone diagnostics already run in the unified proof workflow.
+The existing source certificates reproduce exactly; all theorem completion
+flags remain unchanged and false where previously open. The audited sketch
+hash change is the existing USB startup sequence, not an estimator change here.
+
+### Current limiter
+The mathematical entry, retention, finite-error supply and arithmetic
+obligations above remain open; repairing CI does not discharge them.
+
+### Alternatives
+Retain the unified diagnostic jobs and the negative/provenance mutation tests;
+refresh only audited source bindings and exactly reproducible generated status.
+
+### Next falsifiable experiment
+Repeat the complete evidence target on Ubuntu/Python 3.12 with the failed run's
+fingerprinted bundles before advancing main. The subsequent main build must
+regenerate and validate its own evidence; this repair does not certify new
+simulation results or discharge the mathematical obligations above.
