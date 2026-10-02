@@ -1,4 +1,4 @@
-"""Exact variation-of-constants composition from local affine defects.
+"""Exact variation-of-constants composition from local affine defects.\n
 
 This module is algebraic proof infrastructure. A native observer must provide
 each literal homogeneous factor A_k and the SAME-boundary physical error e_k,
