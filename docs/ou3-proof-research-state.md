@@ -1,3 +1,9 @@
+## Constructive reachable-graph enclosure is now the controlling calculation
+
+The new interface in `reachable_history_enclosure.py` permits subdivision only in shared theorem-input history coordinates and structurally rejects generated tuner/covariance/gain coordinates. `joint_shaped_supply.py` accumulates the exact same-symbol quadratic form for storage loss minus physical supply, retaining source/loss cross terms. The constructive certificate uses the cellwise linked quotient `max_i s_i/d_i`, never `(max s_i)/(min d_i)`. The remaining open implementation is the literal causal interval/affine propagator from one history cell through frontend/Mahony, frequency/variance, staged tuner, covariance/gains and mean defects, followed by every-prefix joint-form enclosure. Existing interval matrix arithmetic may be reused only underneath this history interface.
+
+Structures preserved: complete shipping causal graph, source/loss dependencies, temporal SLOW+FAST primitives, OU/S chain and adaptive chronology. Relaxation: numerical outer enclosure of theorem-input history cells only. Failure from coarse enclosure is D; propagator/parity defects are E. No shipping counterexample found.
+
 ## Common-Q and separated-LIN relaxations removed
 
 The shaped-storage diagnostic now uses the full dense 12x12 LIN block of the
