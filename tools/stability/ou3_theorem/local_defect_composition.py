@@ -42,15 +42,18 @@ def _col(v):
 def carried_error(event, after=False):
     """21-state physical error in the literal local error-state coordinates."""
     suffix="_after" if after else ""
+    def physical(name):
+        key=name+suffix
+        return _col(event[key] if after and key in event else event[name])
     x=_col(event["estimator_state"+suffix])
-    th=left_attitude_error(_col(event["estimator_quaternion"+suffix]),_col(event["physical_quaternion"]))
+    th=left_attitude_error(_col(event["estimator_quaternion"+suffix]),physical("physical_quaternion"))
     th=[a-b for a,b in zip(th,x[:3])]
-    bg=[a-b for a,b in zip(_col(event["physical_bg"]),x[3:6])]
-    v=[a-b for a,b in zip(_col(event["physical_v"]),x[6:9])]
-    p=[a-b for a,b in zip(_col(event["physical_p"]),x[9:12])]
-    S=[a-b for a,b in zip(_col(event["physical_S"]),x[12:15])]
-    aw=[a-b for a,b in zip(_col(event["physical_a"]),x[15:18])]
-    ba=[a-b for a,b in zip(_col(event["physical_ba"]),x[18:21])]
+    bg=[a-b for a,b in zip(physical("physical_bg"),x[3:6])]
+    v=[a-b for a,b in zip(physical("physical_v"),x[6:9])]
+    p=[a-b for a,b in zip(physical("physical_p"),x[9:12])]
+    S=[a-b for a,b in zip(physical("physical_S"),x[12:15])]
+    aw=[a-b for a,b in zip(physical("physical_a"),x[15:18])]
+    ba=[a-b for a,b in zip(physical("physical_ba"),x[18:21])]
     return [[str(z)] for z in th+bg+v+p+S+aw+ba]
 
 def literal_mean_factor(event):
