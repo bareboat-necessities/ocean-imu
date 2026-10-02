@@ -59,7 +59,7 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
   acc_norm_floor=g-Amax-C["imu_bias"]["B_a_s_mps2"]-C["imu_bias"]["B_a_f_mps2"]
   raw_step=(C["marine_motion"]["J_max_mps3"]+g*C["marine_motion"]["Omega_max_rad_s"]+Amax*C["marine_motion"]["Omega_max_rad_s"]+C["imu_bias"]["D_a_s_mps3"])*dt
   alpha_guard=math.exp(-2*math.pi*guard.cutoff_hz*dt)
-  fast_state=fast_lp_minus_raw_bound(alpha_guard,guard.poles,dt,C["imu_bias"]["B_a_f_mps2"],C["imu_bias"]["C_a_mps"],C["imu_bias"]["H_a_s"],t)
+  fast_state=fast_lp_minus_raw_bound(alpha_guard,guard.poles,dt,C["imu_bias"]["B_a_f_mps2"],C["imu_bias"]["fast_accel_accumulation_cap_mps"],C["imu_bias"]["fast_accel_accumulation_horizon_s"],t)
   gs=guard.step(delivered_a,dt,acc_norm_floor,raw_step,fast_state);guard_weights.append(gs["weight"]);conditioned_acc.append(gs["conditioned"]);racc.append(covariance_interval_from_excess(gs["excess"]))
   conditioned_norm_floor=gs["conditioned_norm_lower"]
   try:state=adapt.step(I(dt,dt),delivered_g,gs["conditioned"],I(.12,.12),acc_norm_lower=conditioned_norm_floor)
