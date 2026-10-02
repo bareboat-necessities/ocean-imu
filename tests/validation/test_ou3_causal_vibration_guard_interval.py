@@ -23,9 +23,9 @@ class GuardIntervalTests(unittest.TestCase):
   self.assertLessEqual(z["conditioned_norm_lower"],.4+1e-15)
  def test_fast_charge_is_not_recursively_accumulated(self):
   g=initial_guard();a=(I(0,0),I(0,0),I(9.8,9.8));g.step(a,.005,.4,0.,0.)
-  z=g.step(a,.005,.4,0.,.12)
+  g.step(a,.005,.4,0.,.12)
   self.assertAlmostEqual(g.smooth_lp_raw_diff_norm[1],0.)
   self.assertAlmostEqual(g.lp_raw_diff_norm[1],.12)
-  z=g.step(a,.005,.4,0.,.13)
+  g.step(a,.005,.4,0.,.13)
   self.assertAlmostEqual(g.lp_raw_diff_norm[1],.13)
 if __name__=='__main__':unittest.main()

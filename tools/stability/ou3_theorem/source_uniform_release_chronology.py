@@ -46,7 +46,6 @@ def schedule_from_adaptation(adaptation_trace,dt=.005,elapsed0=0.):
  """Enumerate literal S due events from causally generated applied tau."""
  sch=Scheduler(elapsed0,.015);out=[]
  for k,a in enumerate(adaptation_trace):
-  tau_mid=.5*(a["tau"].lo+a["tau"].hi)
   # A non-point tau interval can straddle a due/not-due scheduler boundary.
   # Do not pick one branch in a promoted source-uniform leaf.
   plo=pseudo_period(a["tau"].lo);phi=pseudo_period(a["tau"].hi)

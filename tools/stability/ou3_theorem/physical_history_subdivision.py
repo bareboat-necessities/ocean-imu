@@ -1,8 +1,6 @@
 """Physical-input-only subdivision driver for the causal release leaf."""
 from __future__ import annotations
-from dataclasses import dataclass
 import re
-from .source_uniform_history_cover import choose_split
 
 PHYSICAL_PREFIXES=("physical_p_","physical_v_","slow_accel_","slow_gyro_",
                    "fast_accel_primitive_","fast_gyro_primitive_",

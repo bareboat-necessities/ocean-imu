@@ -1,6 +1,5 @@
 """Explicit shipping goLive seed for constructive release propagation."""
 from __future__ import annotations
-import math
 from .interval_riccati_21 import diagonal_interval
 
 def certificate():

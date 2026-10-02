@@ -1,6 +1,6 @@
 """Outer interpolation of shared history knots to delivered-sample cells."""
 from __future__ import annotations
-import re,math
+import re
 from .causal_tuner_interval import I
 
 _PAT=re.compile(r"^(.*)_([0-2])_([0-9]+(?:\.[0-9]+)?)$")

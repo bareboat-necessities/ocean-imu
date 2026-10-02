@@ -97,8 +97,6 @@ def generate_point_stream(history_payload,dt=.005):
    r=-x[12:15];x,P,e=correction(x,P,H,R,r,"S");e["sample"]=k;events.append(e)
    x,P,e=reset_after_correction(x,P,e["dx"]);e["sample"]=k;events.append(e)
   # Physical acceleration and delivered sensor error must be point-resolved.
-  pa=np.array([pointI(history_payload["physical"]["acceleration"][k].value_component[a]
-      if False else row[f"physical_v_{a}"],"unused") for a in range(3)]) if False else None
   # literal_history_leaf_propagator exports the acceleration box separately below.
   avec=history_payload["physical_acceleration"][k]
   a=np.array([pointI(q,"physical acceleration") for q in avec])
@@ -147,8 +145,6 @@ def interval_predict_mean(xm,xr,h,tau_lo,tau_hi,tau_ba=120.):
   cc=.5*(lo+hi);rr=.5*(hi-lo)
   return cc*cm,abs(cc)*cr+rr*np.abs(cm)+rr*cr
  ym=xm.copy();yr=xr.copy()
- for sl,j in ((slice(6,9),0),(slice(9,12),1),(slice(12,15),2),(slice(15,18),3)):
-  pass
  vm,vr=xm[6:9],xr[6:9];pm,pr=xm[9:12],xr[9:12];sm,sr=xm[12:15],xr[12:15];am,ar=xm[15:18],xr[15:18]
  avm,avr=mul_interval(am,ar,*coeff[0]);apm,apr=mul_interval(am,ar,*coeff[1]);asm,asr=mul_interval(am,ar,*coeff[2]);aam,aar=mul_interval(am,ar,*coeff[3])
  ym[6:9]=vm+avm;yr[6:9]=vr+avr
@@ -178,7 +174,7 @@ def generate_interval_stream(history_payload,dt=.005,max_samples=None):
  n=len(samples) if max_samples is None else min(len(samples),max_samples)
  xm=np.zeros(N);xr=np.zeros(N);P=covariance_interval();sch=Scheduler(0.,.015);events=[]
  for k in range(n):
-  row,tune=samples[k],adapt[k]
+  tune=adapt[k]
   try:
    xm,xr,phi=interval_predict_mean(xm,xr,dt,tune["tau"].lo,tune["tau"].hi)
    F,Q=shipping_prediction_intervals(dt_min=dt,dt_max=dt,tau_min=tune["tau"].lo,tau_max=tune["tau"].hi,

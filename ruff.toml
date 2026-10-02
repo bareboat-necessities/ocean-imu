@@ -28,3 +28,4 @@ ignore = [
 
 [lint.per-file-ignores]
 "tools/ou_robustness.py" = ["F403"]
+"tests/validation/test_ou3_*.py" = ["F403"]

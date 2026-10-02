@@ -27,7 +27,8 @@ def same_prediction_cell_groups(events):
     Events use the existing source observer format. All applied corrections
     stay in the optimal covariance comparison; their resets act literally on
     the auxiliary AG coordinates. The zero-lever-arm acc/mag BG rows must be
-    zero. Sync has no AG transition. Unsupported hard events fail closed.
+    zero. Sync and the read-only adaptive-state record have no AG transition.
+    Unsupported hard events fail closed.
     """
     from .matrix_certificates import identity, matmul
     transport = identity(6)
@@ -77,7 +78,7 @@ def same_prediction_cell_groups(events):
                 groups.append({'C': c, 'anchor_transport': anchor['transport'],
                                'raw_rows': raw, 'acc_event': anchor['event'],
                                'mag_event': number})
-        elif kind not in ('sync', 'sync_completion'):
+        elif kind not in ('sync', 'sync_completion', 'adaptive_state'):
             raise ValueError('unretained hard event in regular AG group')
     return groups
 

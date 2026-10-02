@@ -96,6 +96,10 @@ def validate_physical_lift(trace):
     if not events:
         raise ValueError("physical lift requires events")
     for i, event in enumerate(events):
+        # The read-only tuner record is not an operation boundary; it carries
+        # only physical_t, which stays in the chronology check below.
+        if event.get("kind") == "adaptive_state":
+            continue
         missing = [key for key in required if key not in event]
         if missing:
             raise ValueError(f"event {i} missing physical lift fields: {missing}")
@@ -113,7 +117,7 @@ def validate_physical_lift(trace):
     times = [float(event["physical_t"]) for event in events]
     if any(b < a for a, b in zip(times, times[1:])):
         raise ValueError("physical lift time is not chronological")
-    return {"aligned_event_count": len(events),
+    return {"aligned_event_count": sum(event.get("kind") != "adaptive_state" for event in events),
             "all_literal_boundaries_have_p_v_S_a": True,
             "all_literal_boundaries_have_full_carried_truth_and_estimator_state": True,
             "native_literal_boundary_export_complete": True,

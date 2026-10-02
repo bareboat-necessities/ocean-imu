@@ -1,6 +1,8 @@
 """Backward interval AW reader paired with same-history guard weights."""
 from __future__ import annotations
 import numpy as np
+def _out(x):
+ x=np.asarray(x,float);return np.where(x>0.,np.nextafter(x,np.inf),x)
 def mr(M):return np.asarray(M.mid,float),np.asarray(M.rad,float)
 def rowmul(lm,lr,M):
  m,r=mr(M);return lm@m,_out(np.abs(lm)@r+lr@np.abs(m)+lr@r)

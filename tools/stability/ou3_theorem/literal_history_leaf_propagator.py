@@ -10,7 +10,7 @@ from pathlib import Path
 from .history_interpolation import sample_history,fast_primitive_increment_outer,physical_acceleration_history
 from .causal_tuner_interval import (I,MahonyBox,initial_wave_period_box,BandBox,
  VarianceBox,ShippingTunerBox,ClosedCausalAdaptationBox)
-from .history_witness_builder import TimedVectorBox,AttitudeGravityBox,build_history_witness
+from .history_witness_builder import TimedVectorBox,AttitudeGravityBox
 from .marine_magnetic_qcqp import VectorBox,MagneticEventBox
 from .source_uniform_release_chronology import connect as connect_release_chronology
 from .causal_vibration_guard_interval import initial_guard

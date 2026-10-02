@@ -4,7 +4,6 @@ Fail closed on the currently missing AG covariance numeric ceiling; this module
 prevents qualitative compactness from being mistaken for a usable P0 box.
 """
 from __future__ import annotations
-from fractions import Fraction
 from .h18_release import release_compactness
 from .nuisance_upper_certificate import certificate as nuisance_certificate
 

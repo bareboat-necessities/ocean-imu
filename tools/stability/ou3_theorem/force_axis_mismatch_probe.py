@@ -1,6 +1,6 @@
 """Numerical same-history force-axis mismatch diagnostics."""
 import math
-from .force_axis_same_history import axis_angle_bound,force_change_bound
+from .force_axis_same_history import axis_angle_bound
 H=.006;J=100.
 def diagnostic():
  df=H*J;rows=[]

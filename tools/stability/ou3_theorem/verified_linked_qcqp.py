@@ -43,7 +43,7 @@ def source_supply_upper(B,C,e_box,u_box):
  # upper of -2 e'B u-u'C u on independent e/u BOX coordinates, while both
  # remain from one history cell. This primitive is used only inside a leaf.
  # Stack z=[e,u] and evaluate exact quadratic interval.
- ne=len(e_box.lo);nu=len(u_box.lo);Z=Box(np.r_[e_box.lo,u_box.lo],np.r_[e_box.hi,u_box.hi])
+ ne=len(e_box.lo);Z=Box(np.r_[e_box.lo,u_box.lo],np.r_[e_box.hi,u_box.hi])
  M=np.block([[np.zeros((ne,ne)),-B],[-B.T,-C]])
  return quadratic_interval(M,Z)[1]
 
@@ -96,7 +96,7 @@ def interval_matrix_quadratic_upper(Mmid,Mrad,box):
  return math.nextafter(mid+err,math.inf)
 
 def interval_source_supply_upper(Bmid,Brad,Cmid,Crad,e_box,u_box):
- ne=len(e_box.lo);nu=len(u_box.lo);Z=Box(np.r_[e_box.lo,u_box.lo],np.r_[e_box.hi,u_box.hi])
+ ne=len(e_box.lo);Z=Box(np.r_[e_box.lo,u_box.lo],np.r_[e_box.hi,u_box.hi])
  M=np.block([[np.zeros((ne,ne)),-np.asarray(Bmid,float)],[-np.asarray(Bmid,float).T,-np.asarray(Cmid,float)]])
  R=np.block([[np.zeros((ne,ne)),np.asarray(Brad,float)],[np.asarray(Brad,float).T,np.asarray(Crad,float)]])
  return interval_matrix_quadratic_upper(M,R,Z)

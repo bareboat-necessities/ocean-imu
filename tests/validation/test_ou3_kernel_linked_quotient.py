@@ -1,5 +1,4 @@
 import unittest
-from tools.stability.ou3_theorem.interval_riccati_21 import diagonal_interval
 from tools.stability.ou3_theorem.interval_shaped_supply import IJointQuadratic
 from tools.stability.ou3_theorem.rank_loss_interval_factor import exact
 from tools.stability.ou3_theorem.kernel_linked_quotient import optimize_lambda_grid

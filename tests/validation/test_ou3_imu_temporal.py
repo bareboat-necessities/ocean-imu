@@ -143,8 +143,10 @@ class LinkedImuSupplyTests(unittest.TestCase):
         from tools.stability.ou3_theorem.linked_supply import imu_supply_outer
         ops={k:np.array([np.eye(3),-np.eye(3)])*.5 for k in
              ('accel_slow','accel_fast','gyro_slow','gyro_fast')}
+        from dataclasses import replace
+        open_limits=replace(BiasLimits.from_constants(),accel_fast_window=None,gyro_fast_window=None)
         with self.assertRaises(OpenTemporalQualification):
-            imu_supply_outer(ops,[.5,.5],BiasLimits.from_constants())
+            imu_supply_outer(ops,[.5,.5],open_limits)
         limits=BiasLimits(1,.01,1,.01,1,1,FastWindow(1,.1),FastWindow(1,.1))
         out=imu_supply_outer(ops,[.5,.5],limits)
         self.assertAlmostEqual(out['terms']['accel_slow'],.0025)
