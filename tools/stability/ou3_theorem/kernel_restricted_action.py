@@ -34,7 +34,15 @@ def restrict_interval_action(A:IMat,line_mid,line_radius=None):
  """
  r=np.asarray(line_mid,float)
  if line_radius is not None and np.max(np.abs(line_radius))>0:
-  raise ArithmeticError("interval kernel rotation requires angle enclosure")
+  from .compatibility_line_interval import line_angle_radius
+  from .angle_projector_enclosure import projector_cone_restricted_lower
+  ac=line_angle_radius(r,line_radius)
+  if not ac["verified"]: raise ArithmeticError("kernel line cone not separated from zero")
+  c=projector_cone_restricted_lower(A,r,ac["angle_rad"])
+  if not c["verified"]: raise ArithmeticError("angle-aware restricted action not positive")
+  U=householder_complement(r);Ui=exact(U.tolist())
+  R=matmul(matmul(transpose(Ui),A),Ui)
+  return R,{**c,"kernel_dimension":1,"line_component_radius_used":True}
  U=householder_complement(r);Ui=exact(U.tolist())
  R=matmul(matmul(transpose(Ui),A),Ui)
  lo,hi=symmetric_interval_gershgorin(R.mid,R.rad)
