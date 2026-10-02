@@ -75,8 +75,8 @@ def instrument(source):
         if chunk.count(anchor) != 1 or chunk.count('    xext.noalias() += K * r;') != 1:
             raise ValueError('shipping correction observer anchor changed')
         chunk = chunk.replace(anchor, '    const Matrix3 trace_s = S_mat;\n'+anchor)
-        chunk = chunk.replace('    xext.noalias() += K * r;', f'''    if (recording) {{
-        Eigen::Matrix<T,3,NX> trace_h = Eigen::Matrix<T,3,NX>::Zero();
+        chunk = chunk.replace('    xext.noalias() += K * r;', f'''    Eigen::Matrix<T,3,NX> trace_h = Eigen::Matrix<T,3,NX>::Zero();
+    if (recording) {{
         {hcode}
         estimator_state = xext.template cast<double>();
         estimator_quat = qref.coeffs().template cast<double>();
