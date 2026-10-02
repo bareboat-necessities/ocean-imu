@@ -1,3 +1,14 @@
+## Common-R block Gram identity removes attitude partition at goLive
+
+Keeping the shared R symbol through HPH' before intervalization yields an exact simplification for the literal block-diagonal goLive covariance:
+HPH' = p_theta (||f||^2 I - f f') + (p_aw+p_ba) I.
+The identities [f]x[f]x'=||f||^2I-ff' and R R'=I eliminate ALL R_wb dependence. Thus the earlier 1021 attitude cells are unnecessary for the goLive accelerometer innovation itself; their near-threshold residual was purely an enclosure artifact.
+
+The blockwise probe verifies the exact-force case with residual 0.001529888 and inverse norm bound 0.06053263. Force uncertainty remains: 0.1-deg direction gives residual 1.08287 while .01 deg gives .109664 under the current Lipschitz force-Gram bound. The next tightening should exploit the eigenstructure of A(f)=||f||^2I-ff' directly (eigenvalues 0,rho^2,rho^2) rather than entrywise/spectral perturbation about a force direction. Since innovation eigenvalues depend on rho but orientation only rotates the rank-one null direction, an isotropic R_acc may allow a direction-free inverse bound and eliminate force angular covering too.
+
+Structures preserved: literal block-diagonal goLive P, common R, exact skew identity. Relaxations: current force-cone Lipschitz perturbation is conservative. No shipping counterexample.
+
+
 ## Rotated accelerometer innovation frame tested: algebraic AW cancellation does not improve the factor enclosure
 
 The exact transformation Q=R_wb' gives Q J_aw=I, Q J_ba=R_wb', and Q J_att=-[f_b]x R_wb'. This is algebraically lossless with isotropic R_acc and was implemented before intervalization. However, over the complete 1021-cell attitude cover the factor certificate is worse: even exact worst-magnitude local-body force has worst residual 7.955848 (Gram perturbation 131.606807), with all 1021 cells failing; the full force ball gives residual 340.418. The attitude uncertainty removed from AW reappears in BA and the right factor of J_att, and the current interval product pays for those dependencies separately.
