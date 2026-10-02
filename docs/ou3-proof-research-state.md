@@ -1,3 +1,16 @@
+## Literal axis transport correction: gyro/reset rotations cancel; OU latent evolution is the continuous mismatch
+
+Source audit of the shipping accelerometer row shows f_cog,b=R_wb(a_w-g). The private Mahony observer is measurement-only after goLive and does not propagate qref; MEKF qref is propagated by bias-corrected gyro and corrected by left attitude injections. If the structured covariance axis is carried through each injection/reset by the same left rotation, both the correction/reset and the next gyro prediction are exact common conjugations and preserve INJ coefficients. Therefore the continuous inter-row axis mismatch reduces exactly to the world latent vectors w_k=a_w,k-g and w_{k+1}=phi_k a_w,k-g during prediction (before measurement correction), not to physical jerk plus an independent Mahony/gyro term. Watchdog re-lock remains a separate shipping reset event.
+
+For one OU prediction, ||w_+-w||=(1-phi)||a_w|| and min(||w||,||w_+||)>=g-||a_w|| when ||a_w||<g. Thus delta<=2 asin((1-phi)A/[2(g-A)]) when the chord is below diameter; otherwise use pi and weighted defect. Worst timing/tau corner h=.006,tau=.02 gives phi=.740818. Diagnostic deltas: A=.1 -> .153 deg; .5 -> .798 deg; 1 ->1.686 deg; 2 ->3.805 deg; 4 ->10.243 deg; 8 ->70.04 deg. Near A~g the direction can become arbitrary, so the proof must again weight by the actual structured anisotropic coefficients rather than require uniform small delta.
+
+This supersedes the earlier physical-jerk axis diagnostic for the covariance H-axis: physical jerk belongs to source/physical-history bounds, but the literal H nominal axis is estimator latent a_w-g. No Mahony continuous term is admissible here because shipping does not feed Mahony attitude into the live MEKF.
+
+Next quantitative calculation: derive/propagate a numerical same-history bound on ||a_w|| (and the relevant INJ b_k,c_k coefficients) from the literal OU mean + acc/S corrections over the release image, then evaluate the weighted rebase defect |b_k|sin(delta_k)+2|c_k|sin(delta_k/2). Include watchdog re-lock as its own reset branch.
+
+Structures preserved: literal f_cog,b model, gyro qref propagation, correction injection, OU mean. Relaxations: norm-only A bound in the diagnostic. No shipping counterexample.
+
+
 ## Same-history per-sample force-axis mismatch quantified without low-force singularity
 
 Using the literal marine jerk ceiling J_max=100 m/s^3 and qualified sample gap h<=.006 s gives ||Delta f||<=.6 m/s^2 from physical jerk over one sample. For nonzero endpoint magnitudes r=min(rho_k,rho_{k+1}) with .6<2r, the exact chord bound is delta_k<=2 asin(.6/(2r)). This gives 1.84767 deg at rho=18.60665, 3.43826 deg at rho=10, 6.87963 deg at rho=5, 34.9152 deg at rho=1. Near zero the angular bound correctly becomes vacuous.
