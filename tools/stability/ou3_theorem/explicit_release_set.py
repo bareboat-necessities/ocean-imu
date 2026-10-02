@@ -21,7 +21,9 @@ def certificate():
    "LIN_mean_numeric_radius_available":False,
    "BA_graph_interval_available":False,
    "explicit_full_P0_interval_available":False,
-   "constructive_leaf_seed_available":True,\n   "constructive_seed_location":"goLive before finite H18/refinement propagation",
+   "constructive_leaf_seed_available":True,
+   "constructive_seed_location":"goLive before finite H18/refinement propagation",
    "reason":"release is constructed as finite literal image of the explicit goLive seed; standalone precomputed LIN radius is unnecessary",
-   "qualitative_compactness_not_promoted_to_numeric_box":True,\n   "release_image_must_be_computed_by_causal_propagator":True,
+   "qualitative_compactness_not_promoted_to_numeric_box":True,
+   "release_image_must_be_computed_by_causal_propagator":True,
    "theorem_closed":False}
