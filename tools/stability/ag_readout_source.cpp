@@ -172,6 +172,8 @@ int main(int argc, char** argv) {
         }
         if (recording) {
             const auto& raw = filter.raw();
+            estimator_state = raw.mekf().xext.template cast<double>();
+            estimator_quat = raw.mekf().qref.coeffs().template cast<double>();
             std::ostringstream tune;
             tune << std::setprecision(17)
                  << "{\"kind\":\"adaptive_state\",\"physical_t\":" << physical_t
@@ -186,7 +188,7 @@ int main(int argc, char** argv) {
                  << ",\"freq\":" << raw.getFreqHz()
                  << ",\"period\":" << raw.getPeriodSec()
                  << ",\"proxy_q\":" << matrix_json(raw.startupProxyQuat().coeffs())
-                 << "}";
+                 << physical_json() << "}";
             events.push_back(tune.str());
         }
         if (live<0 && filter.isLive()) live=k;
