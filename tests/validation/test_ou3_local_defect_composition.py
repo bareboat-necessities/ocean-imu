@@ -1,5 +1,5 @@
 import unittest
-from tools.stability.ou3_theorem.local_defect_composition import certificate, verify_endpoint, event_boundary_pairing, left_attitude_error, carried_error, literal_mean_factor
+from tools.stability.ou3_theorem.local_defect_composition import certificate, verify_endpoint, event_boundary_pairing, left_attitude_error, carried_error
 
 class T(unittest.TestCase):
     def test_exact_local_composition(self):
