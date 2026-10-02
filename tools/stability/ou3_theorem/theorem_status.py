@@ -136,6 +136,8 @@ def status_report() -> dict:
         "nonlinear_marine_magnetic_qcqp_callbacks":True,
         "history_cell_nonlinear_witness_builder":True,
         "history_leaf_ratio_connector":True,
+        "interval_source_coefficients_consumed_by_qcqp":True,
+        "marine_existential_window_logic":True,
         "constructive_cellwise_supply_dissipation_quotient":False,
         "source_uniform_block_factor_root_coercivity":True,
         "constructive_fixed_coordinate_A21_mu_enclosure":False,
