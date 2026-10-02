@@ -1,4 +1,5 @@
-name: ou3-stability-proof\n# proof-source attribution refresh
+name: ou3-stability-proof
+# proof-source attribution refresh
 on:
   workflow_dispatch:
   pull_request:
