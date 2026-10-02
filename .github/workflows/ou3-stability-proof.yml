@@ -88,6 +88,11 @@ jobs:
           cat /tmp/ou3-held-ba-lin-word.json
       - name: Audit carried source readout without promotion
         run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-source-readout.json
+      - name: Diagnose 16s 30s 100s linked prospective supply
+        run: |
+          rm -rf /tmp/ou3-linked-horizons
+          python3 -m tools.stability.ou3_theorem.linked_supply_source_diagnostic --export --directory /tmp/ou3-linked-horizons --output /tmp/ou3-linked-horizons.json --eigen /usr/include/eigen3 --horizons 16,30,100
+          cat /tmp/ou3-linked-horizons.json
       - name: Validate local affine-defect composition contract
         run: python3 -m unittest tests.validation.test_ou3_local_defect_composition -v
       - name: Validate exact complete-word nullspace lemma
