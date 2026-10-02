@@ -24,7 +24,9 @@ static Eigen::Vector4d physical_quat = Eigen::Vector4d(0,0,0,1);
 static Eigen::Vector3d physical_bg = Eigen::Vector3d::Zero();
 static Eigen::Vector3d physical_ba = Eigen::Vector3d::Zero();
 static Eigen::Matrix<double,21,1> estimator_state = Eigen::Matrix<double,21,1>::Zero();
-static Eigen::Vector4d estimator_quat = Eigen::Vector4d(0,0,0,1);\nstatic Eigen::Matrix<double,21,1> estimator_state_after = Eigen::Matrix<double,21,1>::Zero();\nstatic Eigen::Vector4d estimator_quat_after = Eigen::Vector4d(0,0,0,1);
+static Eigen::Vector4d estimator_quat = Eigen::Vector4d(0,0,0,1);
+static Eigen::Matrix<double,21,1> estimator_state_after = Eigen::Matrix<double,21,1>::Zero();
+static Eigen::Vector4d estimator_quat_after = Eigen::Vector4d(0,0,0,1);
 template<class A> static std::string matrix_json(const A& a) {
     std::ostringstream out;
     out << std::setprecision(17) << '[';
