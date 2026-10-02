@@ -1,3 +1,14 @@
+## Same-history per-sample force-axis mismatch quantified without low-force singularity
+
+Using the literal marine jerk ceiling J_max=100 m/s^3 and qualified sample gap h<=.006 s gives ||Delta f||<=.6 m/s^2 from physical jerk over one sample. For nonzero endpoint magnitudes r=min(rho_k,rho_{k+1}) with .6<2r, the exact chord bound is delta_k<=2 asin(.6/(2r)). This gives 1.84767 deg at rho=18.60665, 3.43826 deg at rho=10, 6.87963 deg at rho=5, 34.9152 deg at rho=1. Near zero the angular bound correctly becomes vacuous.
+
+The apparent singularity is harmless when axis mismatch is weighted by the anisotropic projector coefficient b=p_theta rho^2: the worst-basis projector cost collapses quadratically as rho->0 (0.222 at rho=.3, .02467 at rho=.1, exactly 0 at rho=0 in the goLive diagnostic). Therefore the structured covariance proof should propagate weighted two-axis defects directly, not seek a uniform small delta_k.
+
+Important remaining shipping term: the current .6 bound is for physical world-force evolution from jerk. The requested delta_k compares n_{k+1} with U_k n_k, so the final same-history bound must add/derive the frame-transport discrepancy from the literal gyro/Mahony/reference update. Do not append an independent Omega*h box; derive the relative transport from the same history. This is now the next missing term.
+
+Structures preserved: temporal jerk, sample-gap qualification, low-force projector scaling. Relaxation: diagnostic uses the goLive b=p_theta rho^2 to illustrate weighting; later covariance b_k must be carried from the structured Riccati coefficients. No shipping counterexample.
+
+
 ## Changing-axis structured covariance transition derived
 
 For exact common rotation U, the INJ algebra transports with no coefficient inflation: if n_+=Un, then U(aI+b nn'+c[n]x)U'=aI+b n_+n_+'+c[n_+]x. Thus predictor rotation itself is not a source of block-algebra growth.
