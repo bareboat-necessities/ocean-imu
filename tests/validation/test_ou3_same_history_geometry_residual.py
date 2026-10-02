@@ -17,4 +17,12 @@ class GeometryResidualTests(unittest.TestCase):
  def test_gravity_alone_refuses_yaw(self):
   with self.assertRaises(ArithmeticError):
    physical_rotation_from_gravity_heading(np.array([0.,0.,1.]))
+ def test_world_geometry_eliminates_absolute_yaw(self):
+  q=world_acc_row(aw_hat=np.array([.2,.1,.3]))
+  self.assertFalse(q["absolute_attitude_required"])
+  self.assertTrue(np.allclose(q["force_world"],np.array([.2,.1,.3-G])))
+ def test_world_residual_signed_source(self):
+  r=world_acc_residual_source(physical_a=np.array([1.,0,0]),aw_hat=np.array([.7,0,0]),
+      world_sensor_error=np.array([-.1,0,0]),ba_world=np.array([.05,0,0]))
+  self.assertAlmostEqual(r[0],.15)
 if __name__=="__main__":unittest.main()
