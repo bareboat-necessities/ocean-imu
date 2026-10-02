@@ -5,7 +5,7 @@ import heapq,math,numpy as np
 from .golive_release_seed import covariance_interval
 from .release_interval_propagation import one_sample_boxes
 from .interval_riccati_21 import predict_covariance,verified_joseph_update,diagonal_interval
-from .accel_geometry_cell import accel_h_from_force_rotation,rotation_cell_from_small_angle
+from .accel_geometry_cell import accel_h_from_force_rotation,rotation_cell_from_ball
 
 @dataclass(frozen=True)
 class AFCell:
@@ -30,10 +30,9 @@ def root_cell():
 
 def attempt(cell):
  F,Q,_,Racc,*_=one_sample_boxes();P=predict_covariance(covariance_interval(),F,Q)
- tm=(cell.theta_lo+cell.theta_hi)/2;tr=(cell.theta_hi-cell.theta_lo)/2
  fm=(cell.f_lo+cell.f_hi)/2;fr=(cell.f_hi-cell.f_lo)/2
  try:
-  Rm,Rr=rotation_cell_from_small_angle(tm,tr)
+  Rm,Rr=rotation_cell_from_ball(math.radians(6.9))
   H=accel_h_from_force_rotation(fm,fr,Rm,Rr)
   P1,c=verified_joseph_update(P,H,Racc)
   return {"verified":True,"P":P1,"innovation":c}
@@ -50,8 +49,8 @@ def adaptive_cover(max_depth=10,max_cells=4096):
   # Exclude force boxes wholly outside the physical sphere before splitting.
   fnear=np.where((c.f_lo<=0)&(c.f_hi>=0),0,np.minimum(abs(c.f_lo),abs(c.f_hi)))
   if np.linalg.norm(fnear)>18.60665: continue
-  w=c.widths()/np.r_[np.full(3,math.radians(6.9)),np.full(3,18.60665)]
-  j=int(np.argmax(w));a,b=c.split(j)
+  w=(c.f_hi-c.f_lo)/18.60665
+  j=3+int(np.argmax(w));a,b=c.split(j)
   for x in (a,b):
    counter+=1;heapq.heappush(heap,(-float(np.max(x.widths())),counter,x))
  return {"verified":not bad,"leaf_count":len(leaves),"unresolved_count":len(bad),
