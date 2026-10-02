@@ -39,9 +39,14 @@ def hull(a,b):return I(min(a.lo,b.lo),max(a.hi,b.hi))
 @dataclass
 class MahonyBox:
  q:tuple[I,I,I,I]; integ:tuple[I,I,I]; initialized:bool
- def step(self,dt:I,gyro:tuple[I,I,I],acc:tuple[I,I,I],two_kp:float,two_ki:float):
-  # Shipping observer is fed -acc; normalization uses exact sqrt enclosure
-  ax,ay,az=(-acc[0],-acc[1],-acc[2]); n2=ax.sq()+ay.sq()+az.sq(); inv=recip(sqrti(n2));ax,ay,az=ax*inv,ay*inv,az*inv
+ def step(self,dt:I,gyro:tuple[I,I,I],acc:tuple[I,I,I],two_kp:float,two_ki:float,norm_lower:float|None=None):
+  # Shipping observer is fed -acc. Component interval arithmetic can lose the
+  # coupled physical norm constraint and falsely include the zero vector.
+  ax,ay,az=(-acc[0],-acc[1],-acc[2]); n2=ax.sq()+ay.sq()+az.sq()
+  if norm_lower is not None:
+   if not(norm_lower>0 and math.isfinite(norm_lower)):raise ArithmeticError("invalid coupled accelerometer norm floor")
+   n2=I(max(n2.lo,norm_lower*norm_lower),n2.hi)
+  inv=recip(sqrti(n2));ax,ay,az=ax*inv,ay*inv,az*inv
   q0,q1,q2,q3=self.q
   hvx=q1*q3-q0*q2; hvy=q0*q1+q2*q3; hvz=.5*(q0.sq()-q1.sq()-q2.sq()+q3.sq())
   ex=ay*hvz-az*hvy;ey=az*hvx-ax*hvz;ez=ax*hvy-ay*hvx
@@ -206,9 +211,9 @@ def initial_wave_period_box():
 class ClosedCausalAdaptationBox:
  mahony:MahonyBox; wave_period:WavePeriodBox; band:BandBox; variance:VarianceBox; tuner:ShippingTunerBox
  tune_prior_hz:float=.2
- def step(self,dt:I,gyro,acc,noise_sigma:I,two_kp=.2,two_ki=.02,tau_coeff=1.38,sigma_coeff=.90):
+ def step(self,dt:I,gyro,acc,noise_sigma:I,two_kp=.2,two_ki=.02,tau_coeff=1.38,sigma_coeff=.90,acc_norm_lower:float|None=None):
   applied=self.tuner.commit()
-  vertical=self.mahony.step(dt,gyro,acc,two_kp,two_ki)
+  vertical=self.mahony.step(dt,gyro,acc,two_kp,two_ki,acc_norm_lower)
   self.wave_period.step(dt,vertical)
   f=self.wave_period.frequency(self.tune_prior_hz)
   banded=self.band.step(vertical,dt,f);var=self.variance.update(dt,banded,f)
