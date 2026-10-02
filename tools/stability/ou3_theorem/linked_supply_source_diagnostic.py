@@ -1,6 +1,6 @@
 """80-digit linked-supply diagnostic on carried source words; no promotion.
 
-Reports prospective local-defect parity and endpoint source attribution before any enclosure.
+Reports prospective local-defect parity and endpoint source attribution before any enclosure.\nShipping-faithfulness protocol applies: these carried diagnostics are non-promoting.
 
 Use --export to compile an observer and untapped control via the existing
 readout fixture. Otherwise analyze previously exported word-{0,wave}.json.
