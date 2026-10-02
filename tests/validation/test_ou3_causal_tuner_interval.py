@@ -2,6 +2,10 @@ import unittest,math
 from tools.stability.ou3_theorem.causal_tuner_interval import *
 class CausalTunerIntervalTests(unittest.TestCase):
  def point(self,x):return I(x,x)
+ def test_interval_division_contains_corner_quotients(self):
+  z=I(2,4)/I(2,3)
+  self.assertLessEqual(z.lo,2/3);self.assertGreaterEqual(z.hi,2)
+  with self.assertRaises(ArithmeticError): _=I(1,2)/I(-1,1)
  def test_point_band_matches_formula(self):
   b=BandBox(I(0,0),I(0,0),I(0,0),I(0,0),I(0,0))
   y=b.step(I(1,1),I(.005,.005),I(.2,.2))
