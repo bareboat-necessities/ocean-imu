@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import heapq,math,numpy as np
 from .golive_release_seed import covariance_interval
 from .release_interval_propagation import one_sample_boxes
-from .interval_riccati_21 import predict_covariance,verified_joseph_update,diagonal_interval
+from .interval_riccati_21 import predict_covariance,verified_joseph_update_psd,diagonal_interval
 from .accel_geometry_cell import accel_h_from_force_rotation,rotation_cell_from_ball
 
 @dataclass(frozen=True)
@@ -34,7 +34,7 @@ def attempt(cell):
  try:
   Rm,Rr=rotation_cell_from_ball(math.radians(6.9))
   H=accel_h_from_force_rotation(fm,fr,Rm,Rr)
-  P1,c=verified_joseph_update(P,H,Racc)
+  P1,c=verified_joseph_update_psd(P,H,Racc)
   return {"verified":True,"P":P1,"innovation":c}
  except Exception as e:return {"verified":False,"reason":str(e)}
 
