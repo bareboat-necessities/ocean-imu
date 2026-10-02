@@ -69,6 +69,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Run source-uniform interval release diagnostic
+        continue-on-error: true
+        run: |
+          python3 -m tools.stability.ou3_theorem.run_interval_release | tee /tmp/ou3-interval-release.json
+
       - name: Install factor algebra dependencies
         run: python3 -m pip install numpy scipy mpmath
       - name: Compile theorem tooling
