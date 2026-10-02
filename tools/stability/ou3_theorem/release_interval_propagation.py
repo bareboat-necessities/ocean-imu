@@ -5,7 +5,7 @@ from pathlib import Path
 from .golive_release_seed import covariance_interval
 from .interval_riccati_21 import (shipping_prediction_intervals,shipping_acc_update_intervals,
  shipping_integral_update_intervals,shipping_mag_update_intervals,predict_covariance,
- verified_joseph_update,aw_covariance_floor_event,spectral_box)
+ verified_joseph_update,verified_joseph_update_psd,aw_covariance_floor_event,spectral_box)
 ROOT=Path(__file__).resolve().parents[3]
 C=json.loads((ROOT/"tools/stability/ou3_theorem/constants.json").read_text())
 
@@ -43,3 +43,25 @@ def probe():
   z=covariance_release_image(1)
   return {"one_step_verified":z["verified"],"spectral_box":z["spectral_box"]}
  except Exception as e:return {"one_step_verified":False,"reason":str(e)}
+
+def covariance_release_psd_steps(steps):
+ from .accel_geometry_cell import accel_h_from_force_rotation,rotation_cell_from_ball
+ import numpy as np
+ F,Q,_,Racc,*_=one_sample_boxes();P=covariance_interval()
+ Rm,Rr=rotation_cell_from_ball(math.radians(6.9));fm=np.zeros(3);fr=np.full(3,9.80665+C["marine_motion"]["A_max_mps2"])
+ H=accel_h_from_force_rotation(fm,fr,Rm,Rr)
+ checkpoints=[];targets={1,10,100,1000,10000,50000,100000,math.ceil(469./C["sensor_model"]["sample_period_min_s"])}
+ for k in range(1,steps+1):
+  P=predict_covariance(P,F,Q)
+  P,cert=verified_joseph_update_psd(P,H,Racc)
+  P=aw_covariance_floor_event(P,16.)
+  if k in targets:
+   lo,hi=spectral_box(P);checkpoints.append({"step":k,"spectral_lower":lo,"spectral_upper":hi,
+      "inverse_certificate":cert.get("certificate"),"finite":math.isfinite(hi)})
+   if not math.isfinite(hi):break
+ return {"verified":all(x["finite"] for x in checkpoints),"steps_requested":steps,
+         "steps_completed":checkpoints[-1]["step"] if checkpoints else steps,"checkpoints":checkpoints}
+
+def staged_psd_probe():
+ n=math.ceil(469./C["sensor_model"]["sample_period_min_s"])
+ return covariance_release_psd_steps(n)
