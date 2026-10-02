@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Same-history geometry/residual propagation for one release boundary.
 
 The estimator error coordinates are primary.  We do not reconstruct an
