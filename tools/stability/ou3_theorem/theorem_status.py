@@ -147,6 +147,8 @@ def status_report() -> dict:
         "captured_attitude_ball_factor_cover":True,
         "golive_common_rotation_gram_identity":True,
         "golive_direction_free_projector_inverse":True,
+        "structured_INJ_block_algebra_closed":True,
+        "structured_Riccati_full_shipping_chronology_numeric":False,
         "release_state_enclosure_connected_to_history_cover":False,
         "aggregate_magnetic_service_operator_connected":True,
         "accepted_magnetic_event_strata_connected_to_history_cover":"NOT_REQUIRED_AGGREGATE_SERVICE_USED",
