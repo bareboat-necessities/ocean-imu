@@ -426,10 +426,10 @@ def verified_gain_interval_psd(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
     """
     try:
         return verified_gain_interval(p,h,r)
-    except ValueError:
+    except ValueError as err:
         S=innovation_covariance(p,h,r)
         floor,_=symmetric_interval_gershgorin(r.mid,r.rad)
-        if not floor>0: raise ValueError("positive measurement noise floor required")
+        if not floor>0: raise ValueError("positive measurement noise floor required") from err
         inv0=_inverse3_exact(S.mid)
         inv0n=max(sum(abs(x) for x in row) for row in inv0)
         b=_out(1.0/floor+inv0n)
@@ -453,10 +453,10 @@ def linked_covariance_update(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
     S=innovation_covariance(p,h,r)
     try:
         Sinv,cert=verified_inverse3_interval(S)
-    except ValueError:
+    except ValueError as err:
         # PSD guarantees existence but a useful linked subtraction requires an
         # inverse enclosure narrow enough to preserve sign/cancellation.
-        raise ArithmeticError("linked innovation inverse enclosure required")
+        raise ArithmeticError("linked innovation inverse enclosure required") from err
     PHt=matmul(p,transpose(h))
     corr=matmul(matmul(PHt,Sinv),transpose(PHt))
     out=symmetrize(add(p,scale(corr,-1.0)))
