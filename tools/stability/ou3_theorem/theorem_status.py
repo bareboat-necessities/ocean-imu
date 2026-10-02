@@ -141,7 +141,7 @@ def status_report() -> dict:
         "source_uniform_history_cover_generator":True,
         "literal_history_cell_sample_propagator":True,
         "explicit_release_set_gap_audited":True,
-        "release_state_enclosure_connected_to_history_cover":False,
+        "literal_golive_constructive_seed":True,\n        "numeric_release_AG_BG_BA_partial":True,\n        "release_state_enclosure_connected_to_history_cover":False,
         "aggregate_magnetic_service_operator_connected":True,
         "accepted_magnetic_event_strata_connected_to_history_cover":"NOT_REQUIRED_AGGREGATE_SERVICE_USED",
         "literal_history_cell_to_leaf_propagator":False,
