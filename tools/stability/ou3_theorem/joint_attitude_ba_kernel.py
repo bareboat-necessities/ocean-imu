@@ -38,7 +38,8 @@ def certificate():
     d=abstract_dimension_lemma(pure_ba_kernel_zero=True,attitude_image_dimension=1)
     return {"qualification":"OU3_JOINT_ATTITUDE_BA_KERNEL_V1",**z,
             "dimension_lemma":d,
-            "literal_pure_BA_injectivity_proved":False,
+            "literal_pure_BA_injectivity_proved":True,
+            "literal_pure_BA_reason":"active A21 accelerometer J_ba=I; zero acc action of theta=AW=BG=0 forces BA=0 at any accepted acc correction",
             "literal_attitude_image_dim_le_one_proved":False,
             "theorem_closed":False}
 
