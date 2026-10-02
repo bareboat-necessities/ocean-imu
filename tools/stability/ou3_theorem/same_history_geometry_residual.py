@@ -79,3 +79,40 @@ def boundary(*,R_bw_phys,theta_error,physical_a,accel_error,aw_hat,ba_hat,
  a["injection"]=correction_injection(K_acc,a["residual"])
  return {"acc":a,"S":s_geometry_and_residual(S_phys,S_hat),
          "same_history_boundary":True}
+
+def world_acc_row(*,aw_hat,g=G):
+ """Attitude-free world-frame accelerometer attitude geometry.
+
+ By Lemma W, body row -[R f]x factors orthogonally to [f_world]x with
+ f_world=aw_hat-g e_z.  This is the preferred source-uniform representation
+ when HistoryCell does not carry absolute yaw.
+ """
+ fw=np.asarray(aw_hat,float)-np.array([0.,0.,g])
+ return {"force_world":fw,"Jatt_world":skew(fw),
+         "absolute_attitude_required":False,
+         "orthogonal_body_factor_suppressed":True}
+
+def world_acc_residual_source(*,physical_a,aw_hat,world_sensor_error,
+                              ba_world=None,lever_world=None):
+ """World-coordinate residual source before the orthogonal body factor.
+
+ This retains the signed physical-minus-nominal acceleration source.  BA and
+ lever terms must already be transported by the same estimator boundary; they
+ are not independently oriented here.
+ """
+ z=np.asarray(physical_a,float)-np.asarray(aw_hat,float)+np.asarray(world_sensor_error,float)
+ if ba_world is not None:z=z-np.asarray(ba_world,float)
+ if lever_world is not None:z=z-np.asarray(lever_world,float)
+ return z
+
+def world_boundary(*,physical_a,aw_hat,world_sensor_error,error_state,H_world,
+                   K_world,S_phys,S_hat,ba_world=None,lever_world=None):
+ geom=world_acc_row(aw_hat=aw_hat)
+ r=world_acc_residual_source(physical_a=physical_a,aw_hat=aw_hat,
+       world_sensor_error=world_sensor_error,ba_world=ba_world,lever_world=lever_world)
+ return {"acc":{"force_world":geom["force_world"],"Jatt_world":geom["Jatt_world"],
+                "residual_world":r,
+                "local_defect_world":local_measurement_defect(r,H_world,error_state),
+                "injection":correction_injection(K_world,r)},
+         "S":s_geometry_and_residual(S_phys,S_hat),
+         "same_history_boundary":True,"absolute_yaw_eliminated":True}
