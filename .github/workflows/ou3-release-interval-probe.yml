@@ -10,6 +10,7 @@ on:
       - '.github/workflows/ou3-release-interval-probe.yml'
       - 'tools/stability/ou3_theorem/theorem_status.py'
       - 'tools/stability/ou3_theorem/release_accel_geometry_cover.py'
+      - 'tools/stability/ou3_theorem/release_interval_propagation.py'
       - 'tools/stability/ou3_theorem/accel_geometry_cell.py'
 jobs:
   probe:
@@ -20,4 +21,4 @@ jobs:
         with: {python-version: '3.11'}
       - run: pip install numpy
       - run: |
-          python -c 'import json; from tools.stability.ou3_theorem.release_accel_geometry_cover import adaptive_cover; z=adaptive_cover(); print(json.dumps(z,indent=2)); raise SystemExit(0 if z["verified"] else 1)'
+          python -c 'import json; from tools.stability.ou3_theorem.release_interval_propagation import staged_psd_probe; z=staged_psd_probe(); print(json.dumps(z,indent=2)); raise SystemExit(0 if z["verified"] else 1)'
