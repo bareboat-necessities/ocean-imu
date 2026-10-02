@@ -1,3 +1,19 @@
+## Same-history geometry/residual propagator: algebra closed; physical acceleration linkage repaired
+
+same_history_geometry_residual.py now constructs, on one operation boundary, the literal accelerometer residual, Jacobians, local affine defect d_acc=r-H e, S residual r_S=-S_hat=e_S-S_phys, and reset injection dtheta=(K r)_theta from the SAME gain/residual product. Tests pin zero-error residual, S identity, and injection identity.
+
+Absolute attitude is deliberately not added as a new independent HistoryCell coordinate. Existing Lemma W permits the accelerometer attitude geometry to be represented in world coordinates by f_world=a_w_hat-g e_z and [f_world]x, eliminating absolute yaw from the source-uniform row. The new world_boundary path uses the signed source physical_a-a_w_hat+sensor_error-(same-boundary BA/lever transports). This is the admissible route for the current root, whose gravity_dir knots cannot determine yaw.
+
+While wiring this path, a more basic source-link defect was found in literal_history_leaf_propagator: physical acceleration had been replaced independently at every sample by the full [-A_max,A_max]^3 cube. That destroys the signed p'=v, v'=a/jerk linkage and makes any r_acc enclosure too loose by construction. history_interpolation.py now derives a same-history acceleration outer from the physical-velocity knots and J_max: for each signed secant over h,
+|a(t)-(v(t+h)-v(t))/h| <= J_max |h|/2,
+then intersects all available secants with A_max. The causal leaf now feeds this linked acceleration into the delivered accelerometer/tuner path instead of the independent A_max cube.
+
+This completes the algebraic geometry/residual operation map, but not yet a promoted full release replay. The remaining source-uniform numerical gap is estimator-mean propagation inside the HistoryCell leaf: a_w_hat, S_hat, BA mean and structured covariance/gain must be advanced together so the world residual source, K r correction, dtheta reset and next covariance coefficients are produced at the same boundary. The existing golive_to_a21_release driver propagates an affine mean interval from an operation_stream, but that operation_stream is exactly what must now be generated causally rather than supplied externally.
+
+Structures preserved: world-frame attitude-free row factorization; same-boundary local defect; literal K r reset; S identity; physical velocity/acceleration/jerk linkage; SLOW+FAST causal tuner path. Relaxations: the velocity-knot acceleration formula is a rigorous outer secant/Jerk enclosure and may be loose between 30-s knots, but does not introduce independent acceleration controls. No shipping counterexample.
+
+Next calculation: implement the closed-loop estimator mean/covariance operation-stream generator starting from golive_release_seed, using each sampled physical/bias history row, causal tuner tuple and literal S due branch. It should emit prediction -> due S -> acc -> reset in shipping order (plus aggregate magnetic action separately), updating a_w_hat/S_hat/BA and structured covariance before the next sample. That stream is the final missing input to the (A_k,a_k,b_k,c_k,D_k) iterator.
+
 ## Source-uniform release seam connected to explicit seed and literal S scheduler
 
 The explicit goLive construction seed is now connected to the causal history leaf instead of being reported as missing: zero 21-state mean, diagonal covariance upper seed with AW variance 16.48 and BA variance 0.004^2, zero cross covariance at handoff, plus the existing BA-graph numerical interval. The source-uniform release chronology also carries the shipping progress-preserving S scheduler. Its period is generated causally from the same applied tau via T_S=clamp(c_T tau,.005,.15); if a tau interval straddles a due/not-due boundary, the leaf fails closed and must split a shared history coordinate rather than choosing a scheduler branch.
