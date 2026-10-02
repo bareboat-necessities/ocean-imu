@@ -146,6 +146,7 @@ def status_report() -> dict:
         "release_one_step_source_uniform_innovation":True,
         "captured_attitude_ball_factor_cover":True,
         "golive_common_rotation_gram_identity":True,
+        "golive_direction_free_projector_inverse":True,
         "release_state_enclosure_connected_to_history_cover":False,
         "aggregate_magnetic_service_operator_connected":True,
         "accepted_magnetic_event_strata_connected_to_history_cover":"NOT_REQUIRED_AGGREGATE_SERVICE_USED",
