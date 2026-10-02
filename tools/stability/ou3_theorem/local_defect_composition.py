@@ -98,10 +98,18 @@ def carried_local_defect_certificate(trace):
     residual=add(eN,matmul(c["M"],e0),F(-1))
     diff=add(c["b"],residual,F(-1))
     maxdiff=max(abs(float(x[0])) for x in diff)
+    gaps=[]
+    for k,(left,right) in enumerate(zip(B,B[1:])):
+        gap=add(matrix(right["e_before"]),matrix(left["e_after"]),F(-1))
+        gaps.append((max(abs(float(x[0])) for x in gap),k,left["kind"],right["kind"]))
+    worst=max(gaps,default=(0.0,-1,"none","none"))
     return {"local_defect_count":c["local_defect_count"],
             "endpoint_residual_used_as_input":False,
             "local_b_endpoint_residual_max_abs":maxdiff,
             "local_b_endpoint_parity":maxdiff < 5e-10,
+            "maximum_interoperation_error_gap":worst[0],
+            "worst_gap_after_operation":worst[1],
+            "worst_gap_kind_pair":[worst[2],worst[3]],
             "native_literal_boundary_export_complete":True,
             "same_operation_pre_post_snapshots":True,
             "b_local":[[float(x[0])] for x in c["b"]]}
