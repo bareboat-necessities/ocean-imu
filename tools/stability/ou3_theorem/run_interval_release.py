@@ -5,6 +5,7 @@ from .source_uniform_root import root_cells
 from .literal_history_leaf_propagator import propagate_history_cell
 from .closed_loop_release_stream import generate_interval_stream
 from .linked_guard_aw_reader import linked_charge
+from .enclosure_failure import EnclosureFailure
 import math
 
 def main():
@@ -13,7 +14,10 @@ def main():
   payload=propagate_history_cell(root,60.,.005)
  except Exception as e:
   traceback.print_exc()
-  print(json.dumps({"verified":False,"stage":"history_leaf","first_failure_sample":0,
+  tt=e.time if isinstance(e,EnclosureFailure) else None
+  print(json.dumps({"verified":False,"stage":getattr(e,"stage","history_leaf"),
+                    "first_failure_time":tt,
+                    "first_failure_sample":None if tt is None else int(round(tt/.005)),
                     "reason":str(e),"classification":"D_ENCLOSURE_FAILURE"},indent=2))
   return 2
  out=generate_interval_stream(payload,.005)
