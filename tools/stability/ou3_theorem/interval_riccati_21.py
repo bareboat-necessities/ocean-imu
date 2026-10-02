@@ -352,17 +352,36 @@ def _inverse3_exact(a: tuple[tuple[float,...],...]) -> tuple[tuple[float,...],..
 
 
 def verified_inverse3_interval(s: IMat) -> tuple[IMat,dict]:
-    """Entrywise inverse enclosure after the strict spectral residual check."""
+    """Verified inverse using midpoint approximate-inverse residual + interval radius.
+
+    This avoids Gershgorin's false failure on correlated but SPD midpoint
+    innovations. Y is the explicit 3x3 midpoint inverse. If
+    eta=||I-Y S0||_inf<1 then ||S0^-1||_inf<=||Y||_inf/(1-eta).
+    Adding interval E is certified when ||S0^-1||*||E||<1.
+    """
     if s.shape!=(3,3): raise ValueError("3x3 innovation required")
-    cert=innovation_inverse_spectral_certificate(s)
-    if not cert["verified"]: raise ValueError("innovation inverse not verified")
     inv0=_inverse3_exact(s.mid)
-    # ||S0^-1|| <= 1/a from the same certified midpoint eigen floor.
-    a=1.0/cert["inverse_norm_bound"] + max(sum(row) for row in s.rad)
+    # Residual computed with outward interval arithmetic even though operands
+    # are point matrices, retaining binary64 operation error in the radius.
+    y=IMat(inv0,tuple(tuple(0.0 for _ in range(3)) for _ in range(3)))
+    s0=IMat(s.mid,tuple(tuple(0.0 for _ in range(3)) for _ in range(3)))
+    ys=matmul(y,s0)
+    eta=0.0
+    for i in range(3):
+        eta=max(eta,sum(abs(ys.mid[i][j]-(1.0 if i==j else 0.0))+ys.rad[i][j] for j in range(3)))
+    yn=max(sum(abs(x) for x in row) for row in inv0)
+    if not eta<1.0: raise ValueError("midpoint inverse residual not verified")
+    invnorm0=yn/(1.0-eta)
     er=max(sum(row) for row in s.rad)
-    residual=er/a
-    delta=(1.0/a)*residual/(1.0-residual)
+    residual=invnorm0*er
+    if not residual<1.0: raise ValueError("innovation inverse not verified")
+    invnorm=invnorm0/(1.0-residual)
+    # Neumann perturbation ||S^-1-S0^-1|| <= ||S0^-1|| r ||S^-1||.
+    delta=invnorm0*er*invnorm
     rad=tuple(tuple(_out(delta) for _ in range(3)) for _ in range(3))
+    cert={"verified":True,"midpoint_inverse_residual":eta,
+          "interval_residual_norm_bound":residual,"inverse_norm_bound":invnorm,
+          "certificate":"approximate_inverse_residual"}
     return IMat(inv0,rad),cert
 
 
