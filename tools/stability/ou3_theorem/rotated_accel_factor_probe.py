@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Probe PSD-factor inverse in rotated accelerometer innovation frame."""
 from __future__ import annotations
 import math,numpy as np
