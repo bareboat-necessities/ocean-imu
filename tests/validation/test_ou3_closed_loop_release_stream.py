@@ -15,4 +15,16 @@ class ClosedLoopReleaseTests(unittest.TestCase):
   x=np.ones(21);P=covariance_interval();dx=np.zeros(21);dx[0]=.01
   y,_,e=reset_after_correction(x,P,dx)
   self.assertTrue(np.allclose(y[:3],0));self.assertAlmostEqual(e["dtheta"][0],.01)
+ def test_interval_H_uses_same_aw_radius(self):
+  xm=np.zeros(21);xr=np.zeros(21);xr[15]=.2
+  H=interval_world_acc_H(xm,xr)
+  self.assertGreater(H.rad[1][2],0.)
+ def test_interval_reset_uses_same_dtheta_radius(self):
+  G=interval_reset_G(np.array([.1,0,0]),np.array([.02,0,0]))
+  self.assertGreater(G.rad[1][2],0.)
+ def test_interval_prediction_zero_radius_point_tau(self):
+  xm=np.zeros(21);xr=np.zeros(21);xm[15]=1.
+  m,r,_=interval_predict_mean(xm,xr,.005,1.1,1.1)
+  p,_=predict_mean(xm,.005,1.1)
+  self.assertTrue(np.allclose(m,p));self.assertLess(np.max(r),1e-12)
 if __name__=="__main__":unittest.main()
