@@ -72,7 +72,7 @@ template<class A> static void readout_sync(const A& q) {
 template<class A, class B, class C>
 static void readout_correction(const char* sensor, const A& h, const B& r, const C& k) {
     if (recording) events.push_back(std::string("{\"kind\":\"correction\",\"sensor\":\"")+sensor
-        +"\",\"H\":"+matrix_json(h)+",\"R\":"+matrix_json(r)+",\"K\":"+matrix_json(k)+'}');
+        +"\",\"H\":"+matrix_json(h)+",\"R\":"+matrix_json(r)+",\"K\":"+matrix_json(k)+physical_json()+'}');
 }
 template<class A> static void readout_reset(const A& d) {
     if (recording) events.push_back("{\"kind\":\"reset\",\"d\":"+matrix_json(d)+physical_json()+'}');

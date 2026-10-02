@@ -1,6 +1,5 @@
 """Candidate FAST-gyro charge in the signed field-axis telescope."""
 from fractions import Fraction as F
-import math
 T=F(17); P=F("5.5"); Bs=F("0.02"); Ds=F("0.00001")
 Hg=F(60); Cg=F("0.002"); Bf=F("0.02")
 
