@@ -25,9 +25,12 @@ def instrument(source):
             raise ValueError(f'shipping observer anchor changed: {old[:60]}')
         source = source.replace(old, new)
 
-    once('void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(\\n    Vector3 const& gyr_body, T Ts)\\n{\\n    project_gyro_bias_();',\n         'void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(\\n    Vector3 const& gyr_body, T Ts)\\n{\\n    if (recording) { estimator_state = xext.template cast<double>(); estimator_quat = qref.coeffs().template cast<double>(); }\\n    project_gyro_bias_();')\n\n    once('    apply_pending_aw_covariance_inflation_();', '''    if (recording) {
-        estimator_state = xext.template cast<double>();
-        estimator_quat = qref.coeffs().template cast<double>();
+    once('void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(\n    Vector3 const& gyr_body, T Ts)\n{\n    project_gyro_bias_();',
+         'void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(\n    Vector3 const& gyr_body, T Ts)\n{\n    if (recording) { estimator_state = xext.template cast<double>(); estimator_quat = qref.coeffs().template cast<double>(); }\n    project_gyro_bias_();')
+
+    once('    apply_pending_aw_covariance_inflation_();', '''    if (recording) {
+        estimator_state_after = xext.template cast<double>();
+        estimator_quat_after = qref.coeffs().template cast<double>();
         const T trace_phi = std::exp(-Ts / std::max(T(1e-3), tau_bacc_));
         const T trace_qscale = -T(0.5)*std::max(T(1e-3),tau_bacc_)
             *std::expm1(-T(2)*Ts/std::max(T(1e-3),tau_bacc_));
