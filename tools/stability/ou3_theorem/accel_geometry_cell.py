@@ -50,3 +50,18 @@ def force_cell_from_ball(radius):
  r=float(radius)
  if not(r>0):raise ValueError("force radius")
  return np.zeros(3),np.full(3,r),{"euclidean_radius":r,"component_cube_is_outer_only":True}
+
+def rodrigues(theta):
+ t=np.asarray(theta,float);a=np.linalg.norm(t)
+ if a==0:return np.eye(3)
+ K=np.array([[0,-t[2],t[1]],[t[2],0,-t[0]],[-t[1],t[0],0.]])/a
+ return np.eye(3)+math.sin(a)*K+(1-math.cos(a))*(K@K)
+
+def rotation_cell_centered(center,radius):
+ """R=R(center) R(delta), ||delta||<=radius; interval around R(center).
+
+ Multiplication by an orthogonal center preserves spectral perturbation norm.
+ Entrywise radius uses ||R(delta)-I||2 <= 2 sin(radius/2).
+ """
+ Rc=rodrigues(center);eps=2*math.sin(float(radius)/2)
+ return Rc,np.full((3,3),eps)
