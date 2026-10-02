@@ -1,37 +1,47 @@
-"""Backward AW reader through literal release events."""
+"""Backward interval AW reader paired with same-history guard weights."""
 from __future__ import annotations
 import numpy as np
-from .guard_weighted_fast_abel import integrated_primitive_bound
-
-def mmid(M): return np.asarray(M.mid,float)
-
-def terminal_aw_reader(events,n_samples,ell=(0.,0.,1.)):
- lam=np.zeros(21);lam[15:18]=np.asarray(ell,float)
- coeff=np.zeros((n_samples,3))
+def mr(M):return np.asarray(M.mid,float),np.asarray(M.rad,float)
+def rowmul(lm,lr,M):
+ m,r=mr(M);return lm@m,np.nextafter(np.abs(lm)@r+lr@np.abs(m)+lr@r,np.inf)
+def corradj(lm,lr,K,H):
+ km,kr=mr(K);hm,hr=mr(H);pm=km@hm;pr=np.abs(km)@hr+kr@np.abs(hm)+kr@hr
+ a=np.eye(km.shape[0])-pm
+ return lm@a,np.nextafter(np.abs(lm)@pr+lr@np.abs(a)+lr@pr,np.inf)
+def readcoef(lm,lr,K):
+ m,r=mr(K);return lm@m,np.nextafter(np.abs(lm)@r+lr@np.abs(m)+lr@r,np.inf)
+def terminal_aw_reader_interval(events,n,ell=(0.,0.,1.)):
+ lm=np.zeros(21);lm[15:18]=np.asarray(ell,float);lr=np.zeros(21)
+ cm=np.zeros((n,3));cr=np.zeros((n,3))
  for e in reversed(events):
-  kind=e.get("kind")
-  if kind=="acc":
-   k=int(e["sample"]);K=mmid(e["K"])
-   coeff[k]+=lam@K
-   H=mmid(e["H"])
-   lam=lam@(np.eye(21)-K@H)
-  elif kind=="S":
-   K=mmid(e["K"]);H=mmid(e["H"])
-   lam=lam@(np.eye(21)-K@H)
-  elif kind=="prediction":
-   lam=lam@mmid(e["F"])
-  # reset adjoint is already represented in event G.
-  if "G" in e: lam=lam@mmid(e["G"])
- return coeff
-
+  if "G" in e:lm,lr=rowmul(lm,lr,e["G"])
+  if e.get("kind")=="acc":
+   k=int(e["sample"]);a,b=readcoef(lm,lr,e["K"]);cm[k]+=a;cr[k]=np.nextafter(cr[k]+b,np.inf)
+   lm,lr=corradj(lm,lr,e["K"],e["H"])
+  elif e.get("kind")=="S":lm,lr=corradj(lm,lr,e["K"],e["H"])
+  elif e.get("kind")=="prediction":lm,lr=rowmul(lm,lr,e["F"])
+ return {"mid":cm,"rad":cr,"adj_mid":lm,"adj_rad":lr}
+def product(cm,cr,wm,wr):
+ return cm*wm,np.nextafter(np.abs(cm)*wr+np.abs(wm)*cr+cr*wr,np.inf)
+def qinterval(alpha,cm,cr,weights):
+ n=len(weights);wm=np.array([.5*(w.lo+w.hi) for w in weights]);wr=np.array([.5*(w.hi-w.lo) for w in weights])
+ pm,pr=product(np.asarray(cm),np.asarray(cr),wm,wr);qm=np.zeros(n);qr=np.zeros(n)
+ for k in range(n):
+  qm[k]-=pm[k];qr[k]+=pr[k]
+  for j in range(k+1):
+   a=(1-alpha)*(alpha**(k-j));qm[j]+=a*pm[k];qr[j]+=a*pr[k]
+ return qm,np.nextafter(qr,np.inf)
+def charge(qm,qr):
+ if len(qm)==0:return 0.
+ z=abs(qm[-1])+qr[-1]
+ for j in range(len(qm)-1):z+=abs(qm[j+1]-qm[j])+qr[j+1]+qr[j]
+ return float(z)
 def linked_charge(events,guard_weights,dt,C,H,alpha,ell=(0.,0.,1.)):
- n=len(guard_weights);R=terminal_aw_reader(events,n,ell)
- wm=[.5*(w.lo+w.hi) for w in guard_weights]
- wr=[.5*(w.hi-w.lo) for w in guard_weights]
- axes=[integrated_primitive_bound(alpha,dt,C,0.,H,wm,R[:,j]) for j in range(3)]
- return {"axis_bounds":[z["bound"] for z in axes],
-         "axis_charges":[z["charge"] for z in axes],
-         "max_midpoint_bound":max(z["bound"] for z in axes),
-         "reader":R,"weight_mid":wm,"weight_rad":wr,
-         "promotion_ready":False,
-         "remaining":"interval adjoint reader and weight-radius contribution"}
+ n=len(guard_weights)
+ if n>int(np.floor(H/dt)):raise ArithmeticError("reader exceeds FAST primitive horizon")
+ R=terminal_aw_reader_interval(events,n,ell);axes=[]
+ for j in range(3):
+  qm,qr=qinterval(alpha,R["mid"][:,j],R["rad"][:,j],guard_weights);ch=charge(qm,qr)
+  axes.append({"charge_upper":ch,"bound":C*ch})
+ return {"axes":axes,"axis_bounds":[z["bound"] for z in axes],"max_bound":max(z["bound"] for z in axes),
+         "paired_before_abel":True,"independent_global_suprema":False,"promotion_ready":True}
