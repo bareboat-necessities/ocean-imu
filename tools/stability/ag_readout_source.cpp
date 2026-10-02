@@ -20,6 +20,9 @@ static Eigen::Vector3d physical_p = Eigen::Vector3d::Zero();
 static Eigen::Vector3d physical_v = Eigen::Vector3d::Zero();
 static Eigen::Vector3d physical_S = Eigen::Vector3d::Zero();
 static Eigen::Vector3d physical_a = Eigen::Vector3d::Zero();
+static Eigen::Vector4d physical_quat = Eigen::Vector4d(0,0,0,1);
+static Eigen::Vector3d physical_bg = Eigen::Vector3d::Zero();
+static Eigen::Vector3d physical_ba = Eigen::Vector3d::Zero();
 static Eigen::Matrix<double,21,1> estimator_state = Eigen::Matrix<double,21,1>::Zero();
 static Eigen::Vector4d estimator_quat = Eigen::Vector4d(0,0,0,1);
 template<class A> static std::string matrix_json(const A& a) {
@@ -46,7 +49,10 @@ static std::string physical_json() {
         +",\"physical_p\":"+matrix_json(physical_p)
         +",\"physical_v\":"+matrix_json(physical_v)
         +",\"physical_S\":"+matrix_json(physical_S)
-        +",\"physical_a\":"+matrix_json(physical_a)+estimator_json();
+        +",\"physical_a\":"+matrix_json(physical_a)
+        +",\"physical_quaternion\":"+matrix_json(physical_quat)
+        +",\"physical_bg\":"+matrix_json(physical_bg)
+        +",\"physical_ba\":"+matrix_json(physical_ba)+estimator_json();
 }
 template<class A, class B, class C, class D, class E>
 static void readout_prediction(const A& f, const B& fl, const C& q,
@@ -110,6 +116,8 @@ int main(int argc, char** argv) {
         }
         const float roll = wave ? static_cast<float>(.02*std::sin(.5*t)) : 0.0f;
         const float rate = wave ? static_cast<float>(.01*std::cos(.5*t)) : 0.0f;
+        const Eigen::Quaterniond qbw(Eigen::AngleAxisd(static_cast<double>(roll),Eigen::Vector3d::UnitX()));
+        physical_quat = qbw.coeffs();
         const float az = wave ? static_cast<float>(-.144*std::sin(.6*t)) : 0.0f;
         const Eigen::Matrix3f rwb=Eigen::AngleAxisf(-roll,Eigen::Vector3f::UnitX()).toRotationMatrix();
         estimator_state = filter.raw().mekf().xext.template cast<double>();
