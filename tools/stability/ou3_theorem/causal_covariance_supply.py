@@ -14,6 +14,7 @@ from .interval_riccati_21 import (IMat,N,predict_covariance,innovation_covarianc
 from .rank_loss_interval_factor import eye
 from .reachable_history_enclosure import HistoryCell
 from .joint_shaped_supply import JointQuadratic
+from .interval_shaped_supply import IJointQuadratic,verified_precision
 
 def _mid(a:IMat): return np.asarray(a.mid,float)
 def correction_factor(k:IMat,h:IMat)->IMat:return add(eye(N),scale(matmul(k,h),-1))
@@ -24,9 +25,14 @@ class CovarianceSupplyState:
  P:IMat
  joint:JointQuadratic
  prefix: list
+ interval_joint: IJointQuadratic|None=None
  def __post_init__(self):
   if self.P.shape!=(N,N):raise ValueError("A21 covariance required")
   if self.joint.dependency_token!=self.root.prefix_token:raise ValueError("dependency token mismatch")
+  if self.interval_joint is None:self.interval_joint=IJointQuadratic.zeros(N,self.joint.B.shape[1],self.root.prefix_token)
+
+ def _Qinterval(self):
+  return verified_precision(self.P)
 
  def _Qmid(self):
   p=(_mid(self.P)+_mid(self.P).T)/2
@@ -34,14 +40,19 @@ class CovarianceSupplyState:
   except np.linalg.LinAlgError as e:raise ArithmeticError("covariance midpoint storage singular") from e
 
  def predict(self,F:IMat,Q:IMat,Dsrc:np.ndarray):
-  q0=self._Qmid(); self.P=predict_covariance(self.P,F,Q);q1=self._Qmid()
-  self.joint.add_operation(q0,q1,_mid(F),Dsrc);self.prefix.append(self.joint.matrix().copy())
+  Q0,c0=self._Qinterval();q0=self._Qmid(); self.P=predict_covariance(self.P,F,Q);Q1,c1=self._Qinterval();q1=self._Qmid()
+  self.joint.add_operation(q0,q1,_mid(F),Dsrc)
+  from .rank_loss_interval_factor import exact
+  Di=exact(Dsrc.tolist())
+  self.interval_joint.add_operation(Q0,Q1,F,Di);self.prefix.append({"mid":self.joint.matrix().copy(),"precision":[c0,c1]})
 
  def correct(self,H:IMat,R:IMat,Dsrc:np.ndarray,sensor:str):
-  q0=self._Qmid();S=innovation_covariance(self.P,H,R);Sinv,cert=verified_inverse3_interval(S)
+  Q0,c0=self._Qinterval();q0=self._Qmid();S=innovation_covariance(self.P,H,R);Sinv,cert=verified_inverse3_interval(S)
   K=matmul(matmul(self.P,transpose(H)),Sinv);A=correction_factor(K,H)
-  self.P=joseph_covariance(self.P,K,H,R);q1=self._Qmid()
-  self.joint.add_operation(q0,q1,_mid(A),Dsrc);self.prefix.append(self.joint.matrix().copy())
+  self.P=joseph_covariance(self.P,K,H,R);Q1,c1=self._Qinterval();q1=self._Qmid()
+  self.joint.add_operation(q0,q1,_mid(A),Dsrc)
+  from .rank_loss_interval_factor import exact
+  self.interval_joint.add_operation(Q0,Q1,A,exact(Dsrc.tolist()));self.prefix.append({"mid":self.joint.matrix().copy(),"precision":[c0,c1]})
   return {"sensor":sensor,"K":K,"A":A,"innovation_inverse":cert}
 
  def covariance_sync_aw(self,target_variance_upper:float):
@@ -52,8 +63,10 @@ class CovarianceSupplyState:
 
  def reset(self,G:IMat,Dsrc:np.ndarray):
   # Shipping reset transports covariance congruently; no artificial Q.
-  q0=self._Qmid();self.P=matmul(matmul(G,self.P),transpose(G));q1=self._Qmid()
-  self.joint.add_operation(q0,q1,_mid(G),Dsrc);self.prefix.append(self.joint.matrix().copy())
+  Q0,c0=self._Qinterval();q0=self._Qmid();self.P=matmul(matmul(G,self.P),transpose(G));Q1,c1=self._Qinterval();q1=self._Qmid()
+  self.joint.add_operation(q0,q1,_mid(G),Dsrc)
+  from .rank_loss_interval_factor import exact
+  self.interval_joint.add_operation(Q0,Q1,G,exact(Dsrc.tolist()));self.prefix.append({"mid":self.joint.matrix().copy(),"precision":[c0,c1]})
 
 def new_state(root:HistoryCell,P:IMat,source_dimension:int):
  return CovarianceSupplyState(root,P,JointQuadratic.zeros(N,source_dimension,root.prefix_token),[])
