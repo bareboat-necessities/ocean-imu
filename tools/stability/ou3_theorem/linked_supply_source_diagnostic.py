@@ -40,7 +40,7 @@ def error(state, qraw, t, live, wave):
  return e
 fmt=lambda x:mp.nstr(x,25)
 def analyze(path):
- trace=json.loads(path.read_text()); wave=trace['profile']=='wave'
+ trace=json.loads(path.read_text())
  M=mp.eye(21)
  for ev in trace['events']:
   if ev['kind']=='prediction':
@@ -119,7 +119,7 @@ def analyze(path):
  completed=(1-gam)*V0+chi-((x-G**-1*z).T*G*(x-G**-1*z))[0]
  ans.update({'defect_origin':'prospective_local_defect_composition',
   'eligible_for_theorem_entry_test':False,
-  'gamma':fmt(gam),'linked_supply_chi':fmt(chi),
+  'gamma':fmt(gam),'gamma_optimizer_case':optimizer_case,'linked_supply_chi':fmt(chi),
   'optimized_chi_over_gamma':fmt(ratio),
   'optimized_linked_to_inner_budget_ratio':fmt(ratio/(mp.mpf('.15')**2)),
   'frozen_fixed_forcing_sufficient_radius':fmt(mp.sqrt(ratio)),
