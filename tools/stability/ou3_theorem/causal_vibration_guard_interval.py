@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Interval replica of the literal AccelVibrationGuard state.
 
 Uses scalar interval arithmetic componentwise. Branch crossings at target clamp
