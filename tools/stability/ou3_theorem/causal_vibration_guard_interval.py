@@ -10,7 +10,10 @@ import math
 from .causal_tuner_interval import I,expi,sqrti
 
 def hull(a,b):return I(min(a.lo,b.lo),max(a.hi,b.hi))
-def clamp01(x):\n if x.hi<=0:return I(0.,0.)\n if x.lo>=1:return I(1.,1.)\n return I(max(0.,x.lo),min(1.,x.hi))
+def clamp01(x):
+ if x.hi<=0:return I(0.,0.)
+ if x.lo>=1:return I(1.,1.)
+ return I(max(0.,x.lo),min(1.,x.hi))
 def square_outer(x):
  if x.lo<=0<=x.hi:return I(0.,max(x.lo*x.lo,x.hi*x.hi))
  return I(min(x.lo*x.lo,x.hi*x.hi),max(x.lo*x.lo,x.hi*x.hi))
