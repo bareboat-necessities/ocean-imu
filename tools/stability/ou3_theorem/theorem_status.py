@@ -119,6 +119,7 @@ def status_report() -> dict:
         "source_uniform_shaped_physical_supply_numeric":False,
         "dependency_preserving_history_cell_schema":True,
         "joint_shaped_dissipation_supply_identity":True,
+        "causal_mahony_variance_tuner_interval_propagator":True,
         "causal_history_interval_propagator_complete":False,
         "constructive_cellwise_supply_dissipation_quotient":False,
         "source_uniform_block_factor_root_coercivity":True,
