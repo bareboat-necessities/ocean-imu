@@ -8,6 +8,7 @@ on:
       - 'tools/stability/ou3_theorem/golive_release_seed.py'
       - 'tools/stability/ou3_theorem/interval_riccati_21.py'
       - '.github/workflows/ou3-release-interval-probe.yml'
+      - 'tools/stability/ou3_theorem/theorem_status.py'
 jobs:
   probe:
     runs-on: ubuntu-latest
