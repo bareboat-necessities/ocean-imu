@@ -1,3 +1,23 @@
+## Guard LP/raw correlation recurrence connected to physical history
+
+The vibration-guard norm proof now uses the literal convex-blend structure instead of the decorrelated component perturbation. For each low-pass pole define d_p,k=stage_p,k-f_k. Shipping initialization gives d_p,0=0 exactly. With alpha=exp(-2*pi*f_c*dt) and Delta_k=||f_k-f_{k-1}||,
+
+||d_0,k|| <= alpha (||d_0,k-1||+Delta_k),
+
+||d_p,k|| <= (1-alpha)||d_p-1,k|| + alpha(||d_p,k-1||+Delta_k), p>0.
+
+Since f_c,k=f_k+w_k d_LP,k and 0<=w<=1,
+
+||f_c,k|| >= ||f_k||-w_hi ||d_LP,k||.
+
+The proof guard carries this scalar coupled recurrence separately from the component interval LP state. Thus the huge XYZ diameter no longer directly destroys the Mahony normalization floor.
+
+The same-history adjacent raw increment is connected from existing physical/source assumptions. The current conservative bound is
+Delta_k <= (J_max + g Omega_max + A_max Omega_max + D_a,s) dt + 2 B_a,f.
+The first four terms respectively cover translational jerk, rotating gravity, rotating translational acceleration and slow accelerometer-bias drift. The final FAST term is a conservative adjacent delivered-value jump; it preserves the existing FAST amplitude qualification but does not yet exploit the much stronger signed primitive cap C_a=.05 m/s. Therefore this is rigorous but potentially loose. If it limits the recurrence, the next tightening should derive adjacent/LP-convolved FAST contribution directly from the carried signed primitive history, not add a new physical assumption.
+
+Tests pin d_p,0=0 and the weighted LP-difference floor. No estimator behavior changed.
+
 ## First executed source-uniform release failure: sample-0 Mahony norm dependency; coupled norm repair
 
 CI run 37039885269 is the first run that reached the new interval-release diagnostic. It failed at history-leaf sample 0 with "normalization denominator not separated from zero". This is classification D, not a shipping counterexample. The cause is dependency loss: component intervals for the accelerometer contain the zero vector although the physical specific-force norm cannot vanish under the declared marine/bias envelopes.
