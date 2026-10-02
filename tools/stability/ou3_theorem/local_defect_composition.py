@@ -85,7 +85,7 @@ def carried_boundaries(events):
             continue
         if "estimator_state_after" not in event or "estimator_quaternion_after" not in event:
             raise ValueError("mean event missing same-boundary post snapshot")
-        out.append({"kind":event["kind"],"A":literal_mean_factor(event),
+        out.append({"kind":event["kind"],"sensor":event.get("sensor"),"A":literal_mean_factor(event),
                     "e_before":carried_error(event),
                     "e_after":carried_error(event, after=True)})
     return out
@@ -122,7 +122,7 @@ def local_defects(boundaries):
         if len(A[0])!=n or len(e0)!=n or len(e1)!=n or len(e0[0])!=1 or len(e1[0])!=1:
             raise ValueError(f"boundary {k} dimension mismatch")
         d=add(e1,matmul(A,e0),F(-1))
-        out.append({"A":A,"d":d,"kind":item.get("kind","unknown")})
+        out.append({"A":A,"d":d,"kind":item.get("kind","unknown"),"sensor":item.get("sensor")})
     return out
 
 def compose_local(boundaries):
