@@ -1,3 +1,14 @@
+## Structured covariance class identified: INJ block algebra
+
+The literal predictor has a natural 3-axis block structure: LIN [v,p,S,aw] is a scalar 4x4 chain tensored with I3; BA is scalar*I3; AG is a 2x2 matrix of 3-D rotation/integral operators. For a fixed shared force direction n, define N=nn' and J=[n]x. The three-dimensional algebra A_n=span{I,N,J} is closed because N^2=N, J^2=N-I, NJ=JN=0 and J'=-J. It is also closed under inversion when nonsingular: for A=iI+nN+jJ, A^-1 has coefficients i/(i^2+j^2), 1/(i+n)-i/(i^2+j^2), -j/(i^2+j^2).
+
+Therefore an accelerometer Riccati correction preserves blockwise A_n structure PROVIDED the common force direction symbol is carried through all relevant blocks: HPH', PH', S^-1 and P-PH'S^-1HP are sums/products in the same algebra. This reduces each 3x3 covariance block from 9 arbitrary entries to 3 scalars.
+
+Important limitation: shipping prediction rotates attitude with gyro while the physical force direction can change. Thus a single fixed n algebra is not automatically invariant across multiple samples. Full repeated closure requires a transition map between A_{n_k} and A_{n_{k+1}} using the SAME Mahony/physical history and MARINE bounds, not independently reselecting n each sample. The theorem-status flag closes only the algebraic primitive, not full shipping chronology.
+
+Structures preserved: common force symbol, exact skew/projector identities, literal block predictor topology. Relaxation: none in algebra closure; cross-sample changing-axis closure remains open. No shipping counterexample.
+
+
 ## Direction-free goLive accelerometer innovation inverse CLOSED
 
 From the exact common-R Gram identity, write f=rho n and P_n=I-nn'. Then S=cI+aP_n with c=R_acc+p_aw+p_ba and a=p_theta rho^2. Since P_n is an orthogonal projector,
