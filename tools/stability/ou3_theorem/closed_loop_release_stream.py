@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Closed-loop release operation stream from one causal history leaf.
 
 This is proof-side mirror algebra, not a second estimator.  It uses the literal
