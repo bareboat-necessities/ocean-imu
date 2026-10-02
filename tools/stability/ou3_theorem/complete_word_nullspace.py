@@ -61,6 +61,19 @@ def service_row_stratum_certificate(block_builder, strata):
     return {"strata":out,"all_strata_kernel_line":all_ok,
             "callback_pattern_enumeration_used":False}
 
+def positive_attitude_then_BA_graph_status(attitude_constraint):
+    """Exact rank status of the aggregate attitude block under A*.
+
+    A* strictness means the 3-D attitude Gram is positive definite, hence its
+    row stack has rank 3/nullity 0. The physical tilt/BA compatibility line is
+    therefore NOT the kernel of an attitude-only constraint; it arises only
+    after nuisance/BA elimination in the joint equations.
+    """
+    C=matrix(attitude_constraint); n=len(C[0]); _,piv=rref(C)
+    return {"attitude_rank":len(piv),"attitude_nullity":n-len(piv),
+            "Astar_attitude_PD_equivalent":len(piv)==n,
+            "attitude_only_nullity_one_claim_valid":False}
+
 def graph_kernel_certificate(attitude_constraint,A):
     """Exact graph-kernel lemma for word-dependent BA compatibility.
 
