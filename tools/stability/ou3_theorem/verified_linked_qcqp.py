@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Verified branch-and-bound QCQP for linked shaped supply on one history cell.
 
 The domain is the SAME temporal source polytope.  Bounds use interval quadratic
