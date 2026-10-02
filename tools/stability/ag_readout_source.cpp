@@ -42,7 +42,9 @@ template<class A> static std::string matrix_json(const A& a) {
 }
 static std::string estimator_json() {
     return std::string(",\"estimator_state\":")+matrix_json(estimator_state)
-        +",\"estimator_quaternion\":"+matrix_json(estimator_quat);
+        +",\"estimator_quaternion\":"+matrix_json(estimator_quat)
+        +",\"estimator_state_after\":"+matrix_json(estimator_state_after)
+        +",\"estimator_quaternion_after\":"+matrix_json(estimator_quat_after);
 }
 static std::string physical_json() {
     return std::string(",\"physical_t\":")+std::to_string(physical_t)
@@ -72,7 +74,8 @@ template<class A> static void readout_sync(const A& q) {
 template<class A, class B, class C>
 static void readout_correction(const char* sensor, const A& h, const B& r, const C& k) {
     if (recording) events.push_back(std::string("{\"kind\":\"correction\",\"sensor\":\"")+sensor
-        +"\",\"H\":"+matrix_json(h)+",\"R\":"+matrix_json(r)+",\"K\":"+matrix_json(k)+'}');
+        +"\",\"H\":"+matrix_json(h)+",\"R\":"+matrix_json(r)+",\"K\":"+matrix_json(k)
+        +physical_json()+'}');
 }
 template<class A> static void readout_reset(const A& d) {
     if (recording) events.push_back("{\"kind\":\"reset\",\"d\":"+matrix_json(d)+physical_json()+'}');
