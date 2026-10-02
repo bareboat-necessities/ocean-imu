@@ -1,3 +1,27 @@
+## Literal gain export corrected; reset creates a fourth structured covariance component
+
+The requested gain export exposed two shipping-faithfulness corrections. First, after accelerometer coupling the S pseudo gain is not generally scalar*I: the exact structured expression is
+K_aw,S = P_aw,S (P_SS + R_S)^-1,
+with all three factors carried in the INJ algebra. Second, when the shipping lever-arm Jacobian is enabled, the accelerometer AW numerator also contains P_aw,bg J_bg'. The exporter now retains both terms and also exposes the accepted-magnetometer AW gain P_aw,theta J_mag' S_mag^-1. No entrywise K box is introduced.
+
+The source link is now explicit at the same pre-correction boundary:
+r_acc = H_acc e + d_acc,
+where d_acc is the existing local affine measurement defect, and
+r_S = -S_hat = e_S - S_phys.
+Thus the existing local-defect bound constrains d_acc, not r_acc independently; the state/source correlation must be retained. The AW mean iterator now applies ordered vector products K r for accepted acc/S/mag corrections before taking ||a_w||. The previous scalar sum of gain-norm times residual-norm remains only an explicitly labelled triangle relaxation.
+
+Attempting the requested scalar-coefficient iteration through the literal release chronology found a missing reset term. Shipping applyQuaternionCorrectionFromErrorState applies the covariance reset G=I+0.5[dtheta]x to the attitude block/cross-covariances. This is not a common orthogonal rotation. For an AW-theta INJ block B=aI+b nn'+c[n]x and dtheta=d_parallel n+d_perp,
+
+B G' = B (I - 0.5 d_parallel [n]x) - 0.5 B [d_perp]x.
+
+The first term is exactly INJ and updates (a,b,c) algebraically; the second is a genuine non-INJ matrix defect. structured_reset_split.py carries this residual exactly and verifies the bound
+||E_reset||_2 <= 0.5 ||B||_2 ||d_perp||.
+Therefore an exact shipping release iteration cannot consist only of (A_k,b_k,c_k,D_axis,k) unless D_k is enlarged to carry this reset-generated matrix defect and its subsequent effect on innovation/gain/covariance. Treating reset as a common rotation would be a dropped shipping structure.
+
+Current limiter: propagate the reset matrix defect through the next prediction/acc/S/mag Riccati operations (or prove a closed finite-dimensional augmented algebra containing n and d_perp), while keeping the vector AW source chronology linked. Then iterate A_k together with structured coefficients and the accumulated covariance defect through the complete release schedule.
+
+Structures preserved: literal acc/S/mag gain columns, lever-arm BG column, non-isotropic S covariance, vector correction order, local-defect/state source identity, first-order MEKF covariance reset. Relaxations introduced: only the optional scalar triangle AW recurrence and optional submultiplicative reset-defect bound; exact vector/matrix paths are retained. Failure classification: no theorem failure; the prior scalar-only reset-closure premise is an E-level proof-model omission and is corrected here. No shipping counterexample.
+
 ## Structured AW gains and literal source identities exported
 
 For an accelerometer correction, the AW gain is now represented directly in INJ coefficients:
