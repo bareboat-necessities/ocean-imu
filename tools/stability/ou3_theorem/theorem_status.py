@@ -130,6 +130,8 @@ def status_report() -> dict:
         "kernel_linked_quotient_primitive":True,
         "verified_direct_temporal_qcqp_solver":True,
         "cellwise_ratio_composer":True,
+        "kernel_restricted_interval_action_primitive":True,
+        "kernel_line_angle_enclosure_complete":False,
         "kernel_restricted_interval_action_numeric":False,
         "nonlinear_marine_magnetic_qcqp_callbacks":False,
         "constructive_cellwise_supply_dissipation_quotient":False,
