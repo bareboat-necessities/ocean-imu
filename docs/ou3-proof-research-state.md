@@ -1,3 +1,16 @@
+## Structured AW mean recurrence linked to changing-axis defect
+
+The literal mean chronology is now encoded prospectively. Prediction gives a_w^- = phi a_w. Accepted accelerometer correction gives a_w^+ = a_w^- + K_aw r. A due S=0 correction subsequently contributes K_aw,S (-S). Therefore a source-uniform norm image satisfies A_next <= phi A + ||K_aw||||r|| + ||K_aw,S||||S||, with all gains/residual/means required from the SAME structured history leaf. No independent A_max is introduced.
+
+Combining with the exact literal axis transport gives delta(A,phi) from w=a_w-g -> phi a_w-g and D=|b|sin(delta)+2|c|sin(delta/2), with pi/worst-basis fallback when w can approach zero. `structured_aw_mean_recurrence.py` implements this prospective recurrence.
+
+This calculation also corrects the role of Mahony: after goLive the private Mahony observer does not drive qref. MEKF gyro propagation and accepted attitude injections are common rotations of the structured axis and cancel exactly; watchdog re-lock is a separate reset branch. Thus the missing numerical inputs are not a Mahony angle box but SAME-history structured bounds for K_aw, acc residual, K_aw,S, S mean, and INJ b,c.
+
+Next calculation: extend the symbolic/block Riccati step to export K_aw and K_aw,S norms directly from its scalar coefficients, and connect existing physical/local-defect source bounds to ||r|| and ||S||. Then iterate A_k,D_k alongside covariance coefficients.
+
+Structures preserved: literal mean correction order and common rotations. Relaxations: norm triangle inequality in the scalar A recurrence; source/gain correlation should be retained where possible in the final shaped certificate. Failure would be D. No shipping counterexample.
+
+
 ## Literal axis transport correction: gyro/reset rotations cancel; OU latent evolution is the continuous mismatch
 
 Source audit of the shipping accelerometer row shows f_cog,b=R_wb(a_w-g). The private Mahony observer is measurement-only after goLive and does not propagate qref; MEKF qref is propagated by bias-corrected gyro and corrected by left attitude injections. If the structured covariance axis is carried through each injection/reset by the same left rotation, both the correction/reset and the next gyro prediction are exact common conjugations and preserve INJ coefficients. Therefore the continuous inter-row axis mismatch reduces exactly to the world latent vectors w_k=a_w,k-g and w_{k+1}=phi_k a_w,k-g during prediction (before measurement correction), not to physical jerk plus an independent Mahony/gyro term. Watchdog re-lock remains a separate shipping reset event.
