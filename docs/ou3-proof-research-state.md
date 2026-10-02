@@ -1,3 +1,11 @@
+## Nonlinear MARINE/MAGNETIC QCQP callbacks implemented
+
+`marine_magnetic_qcqp.py` now provides whole-history-box TRUE/FALSE/UNKNOWN certification for Euclidean velocity/position/acceleration/jerk envelopes, 30-s gravity-direction span witnesses, 30-s displacement-diameter witnesses, and recurring 1-s magnetic service with field/residual/informative-event qualification. UNKNOWN forces subdivision; midpoint satisfaction cannot promote a leaf. `verified_linked_qcqp.shipping_side_callback` wires these premises into the direct temporal QCQP.
+
+One concrete plumbing obligation remains before actual leaves can simultaneously emit d_i and s_i: the shared-history propagator must construct `MarineMagneticWitness` objects from each causal cell, including certified witness endpoint pairs for every complete 30-s MOVING window and the applied magnetic-event time/field/residual boxes. The callback itself is implemented; theorem status keeps `history_cell_nonlinear_witness_builder=false` until that causal builder exists. Likewise the angle-aware kernel primitive still needs actual cell line cones to set `kernel_restricted_interval_action_numeric=true`. No numerical max_i s_i/d_i is claimed before both are supplied by the same leaves.
+
+Structures preserved: nonlinear MARINE/MAGNETIC premises and actual recurring service logic. Relaxation: none promoted; witness-pair selection must itself be certified by the history builder. No shipping counterexample.
+
 ## Angle-aware projector/restriction enclosure implemented
 
 For a history cell whose word-dependent compatibility line lies within angle delta of its certified midpoint direction, `angle_projector_enclosure.py` uses the exact rank-one projector identity `||P(r)-P(r0)||_2=sin(delta)` and a verified interval action norm to lower-bound the homogeneous action uniformly over the entire line cone. No uncertain orthonormal basis is selected. The bound is `lambda0(1-eps^2)-||A||(2 eps+eps^2)`, eps=sin(delta), where lambda0 is the interval midpoint-complement floor. `restrict_interval_action` now consumes a nonzero line component radius through this cone certificate and fails closed if the resulting floor is not positive. Cell-ratio plumbing accepts the resulting line-cone certificate.
