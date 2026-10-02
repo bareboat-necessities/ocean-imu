@@ -19,7 +19,7 @@ def interval_matvec(K:IMat,r_mid,r_rad):
    km,kr=K.mid[i][j],K.rad[i][j]
    outm[i]+=km*rm[j]
    outr[i]+=abs(km)*rr[j]+abs(rm[j])*kr+kr*rr[j]
- return outm,np.nextafter(outr,np.inf)
+ return outm,np.nextafter(np.nextafter(outr,np.inf),np.inf)
 
 def interval_residual_acc(a_mid,a_rad,aw_mid,aw_rad,sensor_mid,sensor_rad,ba_mid,ba_rad):
  m=np.asarray(a_mid)-np.asarray(aw_mid)+np.asarray(sensor_mid)-np.asarray(ba_mid)
