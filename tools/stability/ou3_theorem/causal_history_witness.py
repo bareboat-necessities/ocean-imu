@@ -6,7 +6,7 @@ from .reachable_history_enclosure import HistoryCell
 from .marine_magnetic_qcqp import VectorBox,MagneticEventBox,MarineMagneticWitness,callback
 from .compatibility_line_interval import joint_line,line_angle_radius
 from .constructive_cell_ratio import kernel_certificate_from_line_cone,combine
-from .verified_linked_qcqp import Box,verified_supply_bnb
+from .verified_linked_qcqp import Box,verified_interval_supply_bnb
 from .temporal_source_domain import build_temporal_domain,nonlinear_side_constraints
 
 @dataclass
@@ -83,10 +83,7 @@ def certify_leaf(state,constants,iq,A0,T,A1,line1,e_box,u_box,symbols,source_sid
  if not kc["zero_set_excluded"]:return {"verified":False,"reason":"kernel restricted action"}
  domain=build_temporal_domain(symbols,state.times[-1]-state.times[0]);LA,Lb=domain.matrices()
  side=source_side_builder(state,constants)
- supply=verified_supply_bnb(np.asarray(iq.B.mid),np.asarray(iq.C.mid),e_box,u_box,LA,Lb,side,max_leaves=max_leaves)
- # Midpoint B/C cannot promote if interval radii are nonzero.
- br=max(max(row) for row in iq.B.rad);cr=max(max(row) for row in iq.C.rad)
- if br>0 or cr>0:return {"verified":False,"reason":"interval B/C QCQP bound not yet used","kernel":kc,"supply_diagnostic":supply}
+ supply=verified_interval_supply_bnb(iq.B,iq.C,e_box,u_box,LA,Lb,side,max_leaves=max_leaves)
  ratio=combine(state.root.prefix_token,iq,kc,supply)
  return {"verified":ratio.verified,"ratio":ratio,"kernel":kc,"supply":supply,
          "same_dependency_token":iq.dependency_token==state.root.prefix_token}
