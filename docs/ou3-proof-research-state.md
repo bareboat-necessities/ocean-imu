@@ -1,3 +1,13 @@
+## Source-uniform release seam connected to explicit seed and literal S scheduler
+
+The explicit goLive construction seed is now connected to the causal history leaf instead of being reported as missing: zero 21-state mean, diagonal covariance upper seed with AW variance 16.48 and BA variance 0.004^2, zero cross covariance at handoff, plus the existing BA-graph numerical interval. The source-uniform release chronology also carries the shipping progress-preserving S scheduler. Its period is generated causally from the same applied tau via T_S=clamp(c_T tau,.005,.15); if a tau interval straddles a due/not-due boundary, the leaf fails closed and must split a shared history coordinate rather than choosing a scheduler branch.
+
+Important MAGNETIC SERVICE correction: the existing proof already establishes that there is no finite callback-pattern cover under the aggregate service premise. Therefore source_uniform_release_chronology.py deliberately does not enumerate magnetic callbacks. It retains AggregateMagneticService(T_M,mu_M) and requires the later homogeneous/source certificate to consume that applied-information operator. Inventing a periodic magnetic callback schedule would be a shipping-invalid strengthening.
+
+The old literal_history_leaf_propagator failure reason is corrected. P0/mean/BA-graph seed is available. The current missing connection is same-history attitude/measurement geometry and residual/local-defect stream: R_wb/force geometry, accepted accelerometer row, d_acc, physical/estimator S, structured covariance coefficients, and reset dtheta=Ktheta r at the same correction boundary. Until those are propagated from each HistoryCell, the requested full numerical (A_k,a_k,b_k,c_k,D_k) iteration remains fail-closed rather than populated with independent extrema.
+
+Structures preserved: explicit shipping goLive seed; persistent scheduler progress; causal coupled tau->T_S; aggregate applied magnetic service; same-history requirement for residual/reset inputs. Relaxations introduced: none in the chronology seam. No shipping counterexample. Next calculation: construct the missing geometry/residual stream from the physical history interpolation plus estimator mean/covariance propagation, then feed structured gain, vector AW and covariance-defect iterators sample by sample.
+
 ## Structured covariance defect recurrence added after reset audit
 
 To continue the requested release iteration without dropping the literal MEKF reset, write P_k=P_struct,k+E_k and carry D_k>=||E_k||_2. The exact reset split supplies the new source-linked non-INJ remainder. Between resets the remainder is propagated in literal order. Prediction gives
