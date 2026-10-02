@@ -39,7 +39,7 @@ def attempt(cell):
   return {"verified":True,"P":P1,"innovation":c}
  except Exception as e:return {"verified":False,"reason":str(e)}
 
-def adaptive_cover(max_depth=18,max_cells=200000):
+def adaptive_cover(max_depth=10,max_cells=4096):
  root=root_cell();heap=[(-float(np.max(root.widths())),0,root)];leaves=[];bad=[];counter=0
  while heap:
   _,_,c=heapq.heappop(heap);z=attempt(c)
@@ -47,7 +47,7 @@ def adaptive_cover(max_depth=18,max_cells=200000):
   if c.depth>=max_depth or len(heap)+len(leaves)+len(bad)>=max_cells:
    bad.append((c,z));continue
   # Normalize theta by captured radius and force by force radius.
-  w=c.widths()/np.r_[np.full(3,math.radians(6.9)),np.full(3,18.60665)]
+  # Exclude force boxes wholly outside the physical sphere before splitting.\n  fnear=np.where((c.f_lo<=0)&(c.f_hi>=0),0,np.minimum(abs(c.f_lo),abs(c.f_hi)))\n  if np.linalg.norm(fnear)>18.60665: continue\n  w=c.widths()/np.r_[np.full(3,math.radians(6.9)),np.full(3,18.60665)]
   j=int(np.argmax(w));a,b=c.split(j)
   for x in (a,b):
    counter+=1;heapq.heappush(heap,(-float(np.max(x.widths())),counter,x))
