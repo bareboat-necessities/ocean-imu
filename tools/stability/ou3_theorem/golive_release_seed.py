@@ -21,3 +21,7 @@ def certificate():
 def covariance_interval():
  d=certificate()["covariance_diagonal_upper"]
  return diagonal_interval(tuple(d),tuple(d))
+
+def covariance_factor_interval():
+ from .psd_factor_innovation import point_cholesky_from_diagonal
+ return point_cholesky_from_diagonal(certificate()["covariance_diagonal_upper"])
