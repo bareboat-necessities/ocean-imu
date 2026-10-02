@@ -53,3 +53,31 @@ def fast_primitive_increment_outer(cell,kind,axis,t0,t1,constants):
  else:B=imu["B_g_f_rad_s"];H=imu["fast_gyro_horizon_s"];C=imu["fast_gyro_accumulation_cap_rad"]
  if T<0 or T>H+1e-12:raise ArithmeticError("FAST increment outside qualified horizon")
  cap=min(B*T,C);return I(-cap,cap)
+
+def acceleration_outer_from_velocity_knots(cell,axis,t,constants,probe_s=None):
+ """Causal outer acceleration from the SAME physical-v history and jerk bound.
+
+ For any h>0, v(t+h)-v(t)=integral a and |a(s)-a(t)|<=J|s-t| imply
+ |a(t)-(v(t+h)-v(t))/h|<=J h/2.  Intersect forward/backward knot pairs.
+ This retains signed primitive information that a pointwise A_max cube loses.
+ """
+ k=parse_knots(cell);vk=k[("physical_v",axis)]
+ A=constants["marine_motion"]["A_max_mps2"];J=constants["marine_motion"]["J_max_mps3"]
+ cand=[I(-A,A)]
+ for ti,vi in vk:
+  h=ti-t
+  if abs(h)<1e-12:continue
+  # Bound v(t) from all velocity knots before forming the signed secant.
+  vt=lipschitz_outer(vk,t,A,constants["marine_motion"]["V_max_mps"])
+  if h>0:
+   sec=I((vi.lo-vt.hi)/h,(vi.hi-vt.lo)/h)
+  else:
+   hh=-h;sec=I((vt.lo-vi.hi)/hh,(vt.hi-vi.lo)/hh)
+  rad=.5*J*abs(h);cand.append(I(sec.lo-rad,sec.hi+rad))
+ lo=max(x.lo for x in cand);hi=min(x.hi for x in cand)
+ if lo>hi:raise ArithmeticError("velocity knots incompatible with jerk/acceleration history")
+ return I(lo,hi)
+
+def physical_acceleration_history(cell,times,constants):
+ return [tuple(acceleration_outer_from_velocity_knots(cell,a,t,constants) for a in range(3))
+         for t in times]
