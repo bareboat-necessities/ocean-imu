@@ -6,7 +6,6 @@ and compares the largest literal signed-mean error to the analytically proved
 candidate full-state reader allowance.
 """
 import json
-from pathlib import Path
 from fractions import Fraction as F
 from .ag_readout_source_diagnostic import REPO
 from .nonrecurring_accel_bridge import certificate as bridge
