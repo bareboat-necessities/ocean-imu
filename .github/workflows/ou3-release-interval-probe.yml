@@ -14,9 +14,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
-      - run: python - <<'PY'
-          import json
-          from tools.stability.ou3_theorem.release_interval_propagation import probe
-          z=probe();print(json.dumps(z,indent=2))
-          if not z["one_step_verified"]: raise SystemExit(1)
-        PY
+      - run: |
+          python - <<'PY'
+            import json
+            from tools.stability.ou3_theorem.release_interval_propagation import probe
+            z=probe();print(json.dumps(z,indent=2))
+            if not z["one_step_verified"]: raise SystemExit(1)
+          PY
