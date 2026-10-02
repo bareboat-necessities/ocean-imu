@@ -12,6 +12,7 @@ on:
       - 'tools/stability/ou3_theorem/release_accel_geometry_cover.py'
       - 'tools/stability/ou3_theorem/release_interval_propagation.py'
       - 'tools/stability/ou3_theorem/accel_geometry_cell.py'
+      - 'tools/stability/ou3_theorem/interval_riccati_21.py'
 jobs:
   probe:
     runs-on: ubuntu-latest
