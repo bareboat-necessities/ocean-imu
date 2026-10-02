@@ -25,7 +25,7 @@ def instrument(source):
             raise ValueError(f'shipping observer anchor changed: {old[:60]}')
         source = source.replace(old, new)
 
-    once('    apply_pending_aw_covariance_inflation_();', '''    if (recording) {
+    once('void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(\\n    Vector3 const& gyr_body, T Ts)\\n{\\n    project_gyro_bias_();',\n         'void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(\\n    Vector3 const& gyr_body, T Ts)\\n{\\n    if (recording) { estimator_state = xext.template cast<double>(); estimator_quat = qref.coeffs().template cast<double>(); }\\n    project_gyro_bias_();')\n\n    once('    apply_pending_aw_covariance_inflation_();', '''    if (recording) {
         estimator_state = xext.template cast<double>();
         estimator_quat = qref.coeffs().template cast<double>();
         const T trace_phi = std::exp(-Ts / std::max(T(1e-3), tau_bacc_));
@@ -42,11 +42,17 @@ def instrument(source):
         +matrix_json(trace_before_sync)+",\\"after\\":"+matrix_json(Pext)+physical_json()+'}');''')
     once('        Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;',
          '        readout_sync(Delta);\n        Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;')
-    once('    ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);',
-         '    estimator_state = xext.template cast<double>();\n'
-         '    estimator_quat = qref.coeffs().template cast<double>();\n'
-         '    readout_reset(dtheta_injected);\n'
-         '    ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);')
+    # Export reset with both sides of the same local-coordinate boundary.
+    a = source.index('void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyQuaternionCorrectionFromErrorState()')
+    b = source.index('/*\n  Project the accelerometer-bias estimate', a)
+    chunk = source[a:b]
+    chunk = chunk.replace('    const Vector3 dtheta = xext.template segment<3>(0);',
+        '    const Vector3 dtheta = xext.template segment<3>(0);\n'
+        '    if (recording) { estimator_state = xext.template cast<double>(); estimator_quat = qref.coeffs().template cast<double>(); }')
+    chunk = chunk.replace('    project_acc_bias_();',
+        '    project_acc_bias_();\n'
+        '    if (recording) { estimator_state_after = xext.template cast<double>(); estimator_quat_after = qref.coeffs().template cast<double>(); readout_reset(dtheta); }')
+    source = source[:a]+chunk+source[b:]
     # Record only actually applied updates. Preserve any innovation safety bump
     # as effective R, without confusing it with floating covariance roundoff.
     for start, stop, sensor, hcode, noise in (
@@ -71,9 +77,13 @@ def instrument(source):
         {hcode}
         estimator_state = xext.template cast<double>();
         estimator_quat = qref.coeffs().template cast<double>();
-        readout_correction("{sensor}",trace_h,({noise}+(S_mat-trace_s)).eval(),K);
     }}
-    xext.noalias() += K * r;''')
+    xext.noalias() += K * r;
+    if (recording) {{
+        estimator_state_after = xext.template cast<double>();
+        estimator_quat_after = qref.coeffs().template cast<double>();
+        readout_correction("{sensor}",trace_h,({noise}+(S_mat-trace_s)).eval(),K);
+    }}''')
         source = source[:a]+chunk+source[b:]
     return source
 
