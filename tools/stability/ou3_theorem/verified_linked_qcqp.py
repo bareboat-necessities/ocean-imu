@@ -77,3 +77,12 @@ def verified_supply_bnb(B,C,e_box,u_box,A,b,side_callback,*,tol=1e-5,max_leaves=
   for child in box.split(j):
    if linear_feasible(child,A,b):push(source_supply_upper(B,C,e_box,child),child)
  return QCQPCertificate(best,leaves,True,"complete",maxw)
+
+def shipping_side_callback(witness_builder,constants):
+ """Adapt a shared-history box to the nonlinear shipping premise callback."""
+ from .marine_magnetic_qcqp import callback
+ def f(box):
+  w=witness_builder(box)
+  if w is None:return None
+  return callback(w,constants)
+ return f
