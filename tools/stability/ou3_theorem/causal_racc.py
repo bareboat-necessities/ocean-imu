@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Causal vibration-conditioned Racc enclosure from the same guard history."""
 from __future__ import annotations
 import math,numpy as np
