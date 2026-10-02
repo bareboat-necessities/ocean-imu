@@ -27,14 +27,16 @@ class GuardBox:
  engage_lo:float=.03
  engage_hi:float=.08
  slew_tau:float=5.
- def step(self,acc,dt):
+ def step(self,acc,dt,raw_norm_lower=None):
   acc=tuple(acc);h=I(float(dt),float(dt))
   if not self.initialized:
    self.stages=[list(acc) for _ in range(4)]
    self.detect=[list(acc),[I(0,0) for _ in range(3)]]
    self.removed_ms=[I(0,0) for _ in range(3)];self.weight=I(0,0)
    self.initialized=True
-   return {"conditioned":acc,"rms":I(0,0),"excess":I(0,0),"weight":self.weight,"conditioning_delta_norm_upper":0.0}
+   return {"conditioned":acc,"rms":I(0,0),"excess":I(0,0),"weight":self.weight,
+           "conditioning_delta_norm_upper":0.0,
+           "conditioned_norm_lower":raw_norm_lower}
   alpha=expi(I(-2*math.pi*self.cutoff_hz*dt,-2*math.pi*self.cutoff_hz*dt))
   low=list(acc)
   for p in range(self.poles):
@@ -75,8 +77,16 @@ class GuardBox:
   conditioned=tuple(acc[a]+w*(low[a]-acc[a]) for a in range(3))
   delta=tuple(conditioned[a]-acc[a] for a in range(3))
   dn=math.sqrt(sum(max(abs(x.lo),abs(x.hi))**2 for x in delta))
+  # Rigorous fallback from reverse triangle.  Additionally, because the first
+  # initialized LP state equals the raw sample, early guard conditioning cannot
+  # erase the norm merely because component boxes decorrelate.  Track a coupled
+  # LP-vs-raw perturbation bound and apply it only after multiplication by w.
+  coupled=None
+  if raw_norm_lower is not None:
+   coupled=max(0.0,float(raw_norm_lower)-dn)
   return {"conditioned":conditioned,"rms":rms,"excess":excess,"weight":w,
-          "conditioning_delta_norm_upper":dn,"branch_midpoint_used":False}
+          "conditioning_delta_norm_upper":dn,"conditioned_norm_lower":coupled,
+          "branch_midpoint_used":False}
 
 def initial_guard():
  z=I(0,0)
