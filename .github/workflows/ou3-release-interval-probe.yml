@@ -10,6 +10,8 @@ on:
       - 'tools/stability/ou3_theorem/psd_factor_innovation.py'
       - 'tools/stability/ou3_theorem/release_factor_probe.py'
       - 'tools/stability/ou3_theorem/release_factor_force_cover.py'
+      - 'tools/stability/ou3_theorem/force_direction_cone.py'
+      - 'tools/stability/ou3_theorem/release_factor_direction_cover.py'
       - '.github/workflows/ou3-release-interval-probe.yml'
       - 'tools/stability/ou3_theorem/theorem_status.py'
       - 'tools/stability/ou3_theorem/release_accel_geometry_cover.py'
@@ -25,4 +27,4 @@ jobs:
         with: {python-version: '3.11'}
       - run: pip install numpy
       - run: |
-          python -c 'import json; from tools.stability.ou3_theorem.release_factor_force_cover import cover; z=cover(); print(json.dumps(z,indent=2)); raise SystemExit(0 if z["verified"] else 1)'
+          python -c 'import json; from tools.stability.ou3_theorem.release_factor_direction_cover import cover; z=cover(); print(json.dumps(z,indent=2)); raise SystemExit(0 if z["verified"] else 1)'
