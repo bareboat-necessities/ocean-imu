@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Blockwise accelerometer innovation Gram preserving the common rotation symbol.
 
 For block-diagonal covariance at goLive:
