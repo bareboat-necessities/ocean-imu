@@ -41,12 +41,11 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
  prev_a=None
  for i,row in enumerate(samples):
   t=row["t"];slow_a=tuple(row[f"slow_accel_{a}"] for a in range(3));slow_g=tuple(row[f"slow_gyro_{a}"] for a in range(3))
-  # Physical acceleration is constrained by v derivative but sparse knots do
-  # not determine it. Use theorem envelope; causal p/v consistency remains a
-  # side constraint and prevents promotion if unresolved.
-  Amax=C["marine_motion"]["A_max_mps2"];avec=(I(-Amax,Amax),)*3
+  # Same-history acceleration derived from physical velocity knots + jerk.
+  avec=physical_acc[i]
   fast_a=tuple(fast_primitive_increment_outer(cell,"accel",a,max(0,t-dt),t,C)* (1/dt) for a in range(3))
-  fast_g=tuple(fast_primitive_increment_outer(cell,"gyro",a,max(0,t-dt),t,C)* (1/dt) for a in range(3))\n  fast_acc.append(fast_a)
+  fast_g=tuple(fast_primitive_increment_outer(cell,"gyro",a,max(0,t-dt),t,C)* (1/dt) for a in range(3))
+  fast_acc.append(fast_a)
   delivered_a=tuple(avec[a]+slow_a[a]+fast_a[a] for a in range(3));delivered_g=tuple(slow_g[a]+fast_g[a] for a in range(3))
   gs=guard.step(delivered_a,dt);conditioned_acc.append(gs["conditioned"]);racc.append(covariance_interval_from_excess(gs["excess"]))
   try:state=adapt.step(I(dt,dt),delivered_g,gs["conditioned"],I(.12,.12))
