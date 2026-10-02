@@ -94,7 +94,7 @@ static void readout_prediction(const A& f, const B& fl, const C& q,
         << matrix_json(f) << ",\"F_LIN\":" << matrix_json(fl)
         << ",\"Q_AG\":" << matrix_json(q) << ",\"Q_LIN\":" << matrix_json(ql)
         << ",\"phi_BA\":" << phi << ",\"Q_BA\":" << matrix_json(qb)
-        << physical_json() << '}';
+        << prediction_physical_json() << '}';
     events.push_back(out.str());
 }
 template<class A> static void readout_sync(const A& q) {
