@@ -56,7 +56,7 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
   body_a=(I(-Amax,Amax),)*3
   delivered_a=tuple(g*gv_comp[a]+body_a[a]+slow_a[a]+fast_a[a] for a in range(3));delivered_g=tuple(slow_g[a]+fast_g[a] for a in range(3))
   acc_norm_floor=g-Amax-C["imu_bias"]["B_a_s_mps2"]-C["imu_bias"]["B_a_f_mps2"]
-  gs=guard.step(delivered_a,dt,acc_norm_floor);conditioned_acc.append(gs["conditioned"]);racc.append(covariance_interval_from_excess(gs["excess"]))
+  raw_step=(C["marine_motion"]["J_max_mps3"]+g*C["marine_motion"]["Omega_max_rad_s"]+Amax*C["marine_motion"]["Omega_max_rad_s"]+C["imu_bias"]["D_a_s_mps3"])*dt+2*C["imu_bias"]["B_a_f_mps2"]\n  gs=guard.step(delivered_a,dt,acc_norm_floor,raw_step);conditioned_acc.append(gs["conditioned"]);racc.append(covariance_interval_from_excess(gs["excess"]))
   conditioned_norm_floor=gs["conditioned_norm_lower"]
   try:state=adapt.step(I(dt,dt),delivered_g,gs["conditioned"],I(.12,.12),acc_norm_lower=conditioned_norm_floor)
   except ArithmeticError as e:
