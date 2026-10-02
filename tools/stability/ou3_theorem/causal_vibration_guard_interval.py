@@ -28,7 +28,7 @@ class GuardBox:
  engage_lo:float=.03
  engage_hi:float=.08
  slew_tau:float=5.
- def step(self,acc,dt,raw_norm_lower=None):
+ def step(self,acc,dt,raw_norm_lower=None,raw_increment_norm_upper=None):
   acc=tuple(acc);h=I(float(dt),float(dt))
   if not self.initialized:
    self.stages=[list(acc) for _ in range(4)]
@@ -46,7 +46,7 @@ class GuardBox:
   # so ||d_p,k|| <= (1-alpha)||d_{p-1,k}||
   #                  + alpha(||d_p,k-1||+delta_k).
   # raw_increment_norm_upper is supplied from the same physical/sensor history.
-  delta_raw=getattr(self,"raw_increment_norm_upper",None)
+  delta_raw=raw_increment_norm_upper
   low=list(acc)
   old_diff=list(self.lp_raw_diff_norm)
   new_diff=list(old_diff)
