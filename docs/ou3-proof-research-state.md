@@ -1,3 +1,12 @@
+## Force-angle threshold test: no alpha_* exists until attitude geometry is refined
+
+The requested residual-vs-force-cone-angle calculation was completed with rho fixed exactly at 18.60665 m/s^2. There is no passing force half-angle under the current 6.9-deg attitude ball: even alpha=0 gives Gram perturbation 105.695718 and residual 6.389781>1. Therefore no force-direction spherical cover, however fine, can close the current factor inverse certificate.
+
+A follow-up isolation sweep with exact force direction/magnitude shows the residual crosses 1 as the attitude/rotation cell radius shrinks. Verified bisection gives beta_* in [1.1514768600, 1.1514778137] deg, with residuals 0.999999662 and 1.000000500 respectively. Thus the current factor certificate requires attitude-history cells of radius <~1.1514769 deg. This does NOT strengthen the physical captured assumption: the full 6.9-deg captured ball must be covered by multiple attitude cells whose union contains it, with centers generated from the same history geometry. A fixed smaller attitude assumption is forbidden.
+
+Structures preserved: exact force skew norm and PSD-factor innovation. Relaxation: factor perturbation norm remains conservative. Failure classification D. No shipping counterexample. Next constructive calculation: cover the 6.9-deg rotation-vector ball by <=1.15-deg local attitude cells (or derive center-dependent SO(3) cells) and retest factor inverse jointly with force cones.
+
+
 ## PSD-factor innovation refinement localizes remaining width to force geometry
 
 The release innovation has been reformulated as P=L L', Y=H L, S=R_acc+Y Y'. `psd_factor_innovation.py` bounds the Gram perturbation at Y-level before inversion. On the entire captured attitude ball plus entire force ball, the first factor probe gives Gram perturbation inf-norm 4088.3910 and Neumann residual 247.10397, so a narrow inverse is not available. This is class D and sharply localizes the width to H/force geometry; covariance PSD and inverse existence are no longer the issue.
