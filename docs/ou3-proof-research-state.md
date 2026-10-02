@@ -1,3 +1,15 @@
+## First executed source-uniform release failure: sample-0 Mahony norm dependency; coupled norm repair
+
+CI run 37039885269 is the first run that reached the new interval-release diagnostic. It failed at history-leaf sample 0 with "normalization denominator not separated from zero". This is classification D, not a shipping counterexample. The cause is dependency loss: component intervals for the accelerometer contain the zero vector although the physical specific-force norm cannot vanish under the declared marine/bias envelopes.
+
+The leaf also exposed a modeling omission: Mahony must receive delivered specific force including gravity in body coordinates, not translational physical_a+bias. The proof leaf now constructs a conservative body component hull g*gravity_dir + R^T a_phys + slow + fast, using |R^T a_phys| component <= A_max. Crucially it retains the coupled reverse-triangle norm floor
+g-A_max-B_a_s-B_a_f = 9.80665-8.8-0.22516660498395405-0.3 = 0.4814833950160458 m/s^2.
+MahonyBox accepts this coupled norm floor when normalizing, preventing the component hull from manufacturing a false zero denominator.
+
+Because AccelVibrationGuard conditions the vector before Mahony, the raw norm floor is not reused blindly. causal_vibration_guard_interval now exports an upper bound on ||f_conditioned-f_raw||, and the leaf supplies max-information floor f_raw_lower-delta_guard to Mahony. If that quantity becomes nonpositive the enclosure again fails closed at the actual sample; no floor is invented.
+
+This repair does not assume recurrent acceleration, absolute yaw, or an independent Mahony input. It is a rigorous relaxation of body translational direction using the existing A_max norm plus carried gravity-direction/bias histories. It may be wide; any later failure is a D-level enclosure-width issue unless an admitted execution is constructed.
+
 ## Interval closed-loop mean state implemented; full-horizon execution seam reached
 
 closed_loop_release_stream.py now carries the release mean as (x_mid,x_rad). Literal OU prediction hulls phi_va/phi_pa/phi_Sa/alpha over the same generated tau interval. The same AW cell constructs the world-frame H_acc interval; the same physical-acceleration/conditioned-sensor/AW/BA cells construct r_acc; covariance-derived interval K is immediately multiplied by that residual cell; x is updated by the resulting interval K r; and the same dtheta interval constructs G=I+0.5[dtheta]x for covariance congruence. S correction follows the same pattern. Each accelerometer event records dominant radius attribution among AW, BA, residual, K, reset and guard.
