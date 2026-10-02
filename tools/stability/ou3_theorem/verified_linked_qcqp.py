@@ -122,3 +122,36 @@ def verified_interval_supply_bnb(B,C,e_box,u_box,A,b,side_callback,*,tol=1e-5,ma
   for child in box.split(j):
    if linear_feasible(child,A,b):push(ub(child),child)
  return QCQPCertificate(best,leaves,True,"complete",maxw)
+
+def interval_source_supply_upper(Bi,Ci,e_box,u_box):
+ """Rigorous supply upper for interval B,C over one leaf box."""
+ Bm=np.asarray(Bi.mid,float);Br=np.asarray(Bi.rad,float);Cm=np.asarray(Ci.mid,float);Cr=np.asarray(Ci.rad,float)
+ ne,nu=Bm.shape;Z=Box(np.r_[e_box.lo,u_box.lo],np.r_[e_box.hi,u_box.hi])
+ M=np.block([[np.zeros((ne,ne)),-Bm],[-Bm.T,-Cm]])
+ ub=quadratic_interval(M,Z)[1]
+ # coefficient uncertainty: 2 sum Br_ij |e_i u_j| + sum Cr_ij |u_i u_j|
+ ea=np.maximum(abs(e_box.lo),abs(e_box.hi));ua=np.maximum(abs(u_box.lo),abs(u_box.hi))
+ ub += 2*float(ea@Br@ua)+float(ua@Cr@ua)
+ return math.nextafter(ub,math.inf)
+
+def verified_interval_supply_bnb(Bi,Ci,e_box,u_box,A,b,side_callback,*,tol=1e-5,max_leaves=200000):
+ heap=[];counter=0
+ def push(ub,box):
+  nonlocal counter;counter+=1;heapq.heappush(heap,(-ub,counter,box))
+ if not linear_feasible(u_box,A,b):return QCQPCertificate(-math.inf,0,True,"empty linear domain",0)
+ push(interval_source_supply_upper(Bi,Ci,e_box,u_box),u_box);best=-math.inf;leaves=0;maxw=0.
+ while heap:
+  neg,_,box=heapq.heappop(heap);ub=-neg
+  if ub<=best:continue
+  side=side_callback(box)
+  if side is False:continue
+  widths=box.hi-box.lo;maxw=max(maxw,float(widths.max(initial=0)))
+  if side is True and widths.max(initial=0)<=tol:best=max(best,ub);leaves+=1;continue
+  if leaves+len(heap)>=max_leaves:return QCQPCertificate(max(best,ub),leaves,False,"leaf limit",maxw)
+  j=int(np.argmax(widths))
+  if widths[j]<=tol:
+   if side is None:return QCQPCertificate(max(best,ub),leaves,False,"nonlinear side unresolved",maxw)
+   best=max(best,ub);leaves+=1;continue
+  for child in box.split(j):
+   if linear_feasible(child,A,b):push(interval_source_supply_upper(Bi,Ci,e_box,child),child)
+ return QCQPCertificate(best,leaves,True,"complete",maxw)
