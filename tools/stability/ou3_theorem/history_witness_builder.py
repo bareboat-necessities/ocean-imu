@@ -5,7 +5,7 @@ No midpoint witness admission.  All outputs retain the root dependency token.
 from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
-from .marine_magnetic_qcqp import VectorBox,MagneticEventBox,MarineMagneticWitness
+from .marine_magnetic_qcqp import VectorBox,MarineMagneticWitness
 from .compatibility_line_interval import joint_line,line_angle_radius
 
 @dataclass(frozen=True)

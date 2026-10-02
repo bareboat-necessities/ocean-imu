@@ -35,7 +35,7 @@ class GuardBox:
  engage_hi:float=.08
  slew_tau:float=5.
  def step(self,acc,dt,raw_norm_lower=None,raw_increment_norm_upper=None,fast_state_bound=None):
-  acc=tuple(acc);h=I(float(dt),float(dt))
+  acc=tuple(acc)
   if not self.initialized:
    self.stages=[list(acc) for _ in range(4)]
    self.detect=[list(acc),[I(0,0) for _ in range(3)]]

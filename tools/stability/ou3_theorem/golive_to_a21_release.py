@@ -7,7 +7,7 @@ literal operation factors. It never substitutes an existential LIN radius.
 from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
-from .golive_release_seed import covariance_interval,certificate as seed_certificate
+from .golive_release_seed import covariance_interval
 from .causal_covariance_supply import new_state
 from .reachable_history_enclosure import HistoryCell
 

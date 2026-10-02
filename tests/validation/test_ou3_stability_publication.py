@@ -13,59 +13,46 @@ class StabilityPublicationTests(unittest.TestCase):
         cls.flat = re.sub(r"\s+", " ", cls.study)
 
     def test_simultaneous_physical_contracts_are_defined_in_the_study(self):
-        for marker in (
-            r"\label{eq:intersection}", r"\label{eq:pointwise}",
-            r"\label{eq:pac}", r"\label{eq:bias-cont}",
-            r"\label{eq:bias-discrete}", r"\label{eq:mag-service}",
-        ):
-            self.assertIn(marker, self.study)
-        self.assertIn("same-history requirement", self.flat)
-        self.assertIn("Quiet water", self.flat)
-        self.assertIn("Permanent displacement DC is inadmissible", self.flat)
-        self.assertIn("not restarted at word boundaries", self.flat)
+        self.assertIn(r"h\in{\cal M}_{\rm marine}\cap{\cal B}_{\rm IMU}\cap{\cal S}_{\rm mag}", self.flat)
+        self.assertIn("The same \\(h\\) determines physical motion, delivered sensors", self.flat)
+        self.assertIn("Complete physical stillness may persist arbitrarily long.", self.flat)
+        self.assertIn("Physical history continues across proof-word boundaries.", self.flat)
+        self.assertIn("e_a=b_{a,s}+b_{a,f},\\qquad e_g=b_{g,s}+b_{g,f}", self.flat)
+        self.assertIn("The primitive history is carried through adjacent proof words and is never reset by the proof.",
+                      self.flat)
 
     def test_only_applied_informative_magnetic_corrections_establish_service(self):
-        self.assertIn(r"\label{eq:G}", self.study)
-        self.assertIn(r"\succeq\mu_M I_2", self.study)
-        self.assertIn("whose shipping correction was actually applied", self.flat)
-        self.assertIn("A maximum event gap alone is insufficient", self.flat)
-        self.assertIn(r"\label{eq:unipotent}", self.study)
-        self.assertIn("not a second stability theorem", self.flat)
+        self.assertIn("recurring accepted magnetic information", self.flat)
+        self.assertIn("The proof uses the literal accepted-event chronology", self.flat)
+        self.assertIn("does not replace it with continuous yaw observation", self.flat)
 
     def test_capture_and_the_tail_inherit_one_execution(self):
-        self.assertIn(r"T_c=T_c(h,x_0)<\infty", self.study)
-        self.assertIn("No common finite startup deadline is assumed", self.flat)
-        self.assertIn("without reseeding", self.flat)
-        for state in (
-            "full covariance", "physical bias histories", "frontend",
-            "tuner state", "committed parameters", "magnetic reference state",
-            "scheduler", "clocks", "physical source continuation",
-        ):
+        self.assertIn("Generated filter quantities are functions of this history, not independent theorem inputs.",
+                      self.flat)
+        self.assertIn("advances the same mean and covariance history through the literal operation stream", self.flat)
+        self.assertIn("generated quantities are never independently split", self.flat)
+        for state in ("frontend and tuner state", "covariance", "accepted events", "scheduler state",
+                      "estimator mean"):
             self.assertIn(state, self.flat)
 
     def test_finite_error_statement_preserves_metric_and_supply(self):
         for marker in (
-            r"V_i=e_i^{\mathsf T}P_i^{-1}e_i",
-            r"\label{eq:path-dissipation-current}",
-            r"\label{eq:finite-window-strictness-current}",
-            r"\label{eq:finite-error-block-current}",
-            r"\label{eq:retained-radius-current}",
-            r"\label{eq:reset-remainder-current}",
-            r"\sqrt{1-\eta_D}\sqrt{V_k}+E_W(r,d)",
-            r"\sup_\ell G_\ell(0.15,d)\le0.15-r_{\rm in}",
-            r"E_W(0.15,d)\le(1-\sqrt{1-\eta_D})r_{\rm in}",
+            r"e_N=Me_0+b",
+            r"G_\gamma=J_0-M^TJ_NM-\gamma J_0",
+            r"\chi_\gamma=b^TJ_Nb+z^TG_\gamma^{-1}z",
+            r"\sqrt V\le0.15",
         ):
-            self.assertIn(marker, self.study.replace("&", ""))
-        self.assertIn("simultaneous fixed-point inequalities", self.flat)
-        self.assertIn("prefix retention must not be assumed", self.flat)
+            self.assertIn(marker, self.flat)
+        self.assertIn("Homogeneous contraction alone is insufficient", self.flat)
+        self.assertIn("at every required prefix", self.flat)
 
     def test_finite_error_statement_and_qualification_remain_conditional(self):
-        self.assertIn(r"\label{tab:limits}", self.study)
-        self.assertIn("No numerical $\\eta_D$ is presently certified.", self.flat)
-        self.assertIn("The local field-axis result is conditional", self.flat)
-        self.assertIn("Finite carried histories are diagnostics, not source-uniform theorem certificates.", self.flat)
-        self.assertIn("assembled-history qualification remains open", self.flat)
-        self.assertIn("End-to-end regional practical stability remains unproved.", self.flat)
+        self.assertIn("None of these labels promotes an end-to-end theorem.", self.flat)
+        self.assertIn("--- OPEN]", self.flat)
+        self.assertIn("regional practical stability is not yet claimed", self.flat)
+        self.assertIn("End-to-end shipping stability is therefore not yet claimed.", self.flat)
+        self.assertIn("Numerical diagnostics are evidence only when their provenance identifies the shipping source",
+                      self.flat)
 
 
 if __name__ == "__main__":

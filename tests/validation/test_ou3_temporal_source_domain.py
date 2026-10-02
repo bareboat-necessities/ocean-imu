@@ -1,4 +1,4 @@
-import unittest,numpy as np
+import unittest
 from tools.stability.ou3_theorem.temporal_source_domain import Symbol,build_temporal_domain,nonlinear_side_constraints
 class TemporalSourceDomainTests(unittest.TestCase):
  def test_slow_rate_and_fast_windows_present(self):

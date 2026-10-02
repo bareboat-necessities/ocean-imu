@@ -35,8 +35,8 @@ def observer_source(source):
         ('readout_prediction(F_AA, F_LL, Q_AA, Q_LL, trace_phi, (Q_bacc_*trace_qscale).eval());',
          'readout_prediction(F_AA, F_LL, Q_AA, Q_LL, trace_phi, (Q_bacc_*trace_qscale).eval());'
          ' readout_quaternion(qref.coeffs());', 1),
-        ('    readout_reset(dtheta_injected);\n',
-         '    readout_reset(dtheta_injected);\n    readout_quaternion(qref.coeffs());\n', 1),
+        ('readout_reset(dtheta); }\n',
+         'readout_reset(dtheta); readout_quaternion(qref.coeffs()); }\n', 1),
         ('        readout_correction("',
          '        readout_state(qref.coeffs(),xext,Pext.template topLeftCorner<3,3>().eval(),r,S_mat);\n'
          '        readout_correction("', 3),

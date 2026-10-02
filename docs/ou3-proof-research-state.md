@@ -760,3 +760,16 @@ margin +0.1278; the conservative captured-domain release bound is unchanged
 (469 s); compact A21 release remains conditional on capture, now into the
 <=6.9-degree domain. Current limiter and next falsifiable experiment are
 unchanged; general capture must now reach the smaller domain.
+
+## CI: main after PR #643 (Ruff, readout lift, stale provenance)
+
+Failed quantity: `quality-gates / python` (Ruff, including undefined `_out` in
+`linked_guard_aw_reader.py`) and `ou3-stability-proof / theorem` at
+`ag_readout_source_diagnostic`, which rejected the read-only `adaptive_state`
+trace record; the full evidence suite also reported stale provenance and
+diagnostic fingerprints. Classification: E (implementation/CI); no
+mathematical result and no shipping counterexample. Invalidated hypothesis:
+every native trace event is an operation boundary. Retained facts: regenerated
+margins keep their sign (signed-balance S-interval margin -19.0391078,
+rotation-triangle margin -30.4543160; same-cell values move by about 1e-9).
+Current limiter and next falsifiable experiment are unchanged.

@@ -1,6 +1,6 @@
 """Closed-form accelerometer innovation inverse from rank-two force projector."""
 from __future__ import annotations
-import math,numpy as np
+import numpy as np
 from .golive_release_seed import certificate as seed
 
 def coefficients(rho,r_noise):

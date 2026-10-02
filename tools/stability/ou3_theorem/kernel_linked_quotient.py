@@ -6,7 +6,6 @@ side certificates; absence fails closed.
 """
 from __future__ import annotations
 import math
-import numpy as np
 from .interval_riccati import symmetric_interval_gershgorin
 from .rank_loss_interval_factor import IMat,verified_inverse,matmul,transpose,add,scale
 

@@ -4,7 +4,7 @@
     {
       "active_step": 24064,
       "all_six_pivot_budget": "0.3010813587116822840605018218810017510858",
-      "exported_trace_sha256": "5afa751e2be232e4dfa65a27eb214b447fceb67afb93e59a7d046b01e707ffc7",
+      "exported_trace_sha256": "81c006f2047f1e01d3b7ef5649d77b0020b429f3bb172564e6e876a7b452478e",
       "groups": 8,
       "input_profile": "0",
       "interanchor_attitude_norm": "1.0",
@@ -16,12 +16,12 @@
       "refined_step": 24064,
       "row_defect_exactly_zero": true,
       "selected_acc_events": [
-        32,
-        277
+        39,
+        340
       ],
       "selected_mag_events": [
-        34,
-        279
+        41,
+        342
       ],
       "source_uniform_verified": false,
       "two_group_actual_singular_value": "1.922502992341224756407509248534790053449",
@@ -29,34 +29,34 @@
     },
     {
       "active_step": 24016,
-      "all_six_pivot_budget": "0.2686214784118300506316739379637217051006",
-      "exported_trace_sha256": "66e364e485ea8aa7e41e6b0d082a1f1d63427b99561f05e77d3ae0401ba6d8fb",
+      "all_six_pivot_budget": "0.2686214777675998155336426152342218244105",
+      "exported_trace_sha256": "3371a4746939fbd6b14fc7180d930cda451872ec4747aa1aca8bf42aed63e453",
       "groups": 8,
       "input_profile": "wave",
-      "interanchor_attitude_norm": "1.000000053495880198924524818446517463495",
-      "interanchor_gyro_singular_value": "0.2799999319100524874681548007637629250184",
+      "interanchor_attitude_norm": "1.000000053495880351616354572261784991869",
+      "interanchor_gyro_singular_value": "0.2799999311426562959548957130361942602503",
       "literal_terminal_parity": true,
       "live_step": 6368,
-      "minimum_group_attitude_singular_value": "8.749387368500346423095437545859432135144",
+      "minimum_group_attitude_singular_value": "8.749387368551455743700747850004474109206",
       "real_trajectory_enclosed": false,
       "refined_step": 24016,
       "row_defect_exactly_zero": true,
       "selected_acc_events": [
-        30,
-        279
+        37,
+        342
       ],
       "selected_mag_events": [
-        32,
-        281
+        39,
+        344
       ],
       "source_uniform_verified": false,
-      "two_group_actual_singular_value": "1.717587283388896033262430244551313444506",
-      "two_group_six_column_budget": "1.074485913647320202526695751854886820402"
+      "two_group_actual_singular_value": "1.717587282443913211698507502019454615833",
+      "two_group_six_column_budget": "1.074485911070399262134570460936887297642"
     }
   ],
   "decimal_digits": 80,
-  "driver_sha256": "7db7a4ef9e63a8f626dd983271eec7335c29b600801bd1f181a8ef965a5f0405",
-  "observer_header_sha256": "c7a3cc3237a5857859297b6b3a0740f70b9251a4f2753dd629deaea09f3070fd",
+  "driver_sha256": "9c5bc5a959c1cc683f73c37e4298b6d6aa577d2b41e0fafcaf84990b133c3b26",
+  "observer_header_sha256": "15a4d2fce3caea83c8bc3947e3f260b6dc955032551cb859d8c838d77e3c6e5a",
   "qualification": "OU3_CARRIED_SAME_CELL_GROUP_DIAGNOSTIC_V1",
   "shipping_header_sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
   "source_uniform_verified": false,
