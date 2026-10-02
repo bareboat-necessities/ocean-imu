@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Constructive goLive->A21 covariance release enclosure over shipping ranges."""
 from __future__ import annotations
 import json,math
