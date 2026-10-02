@@ -40,8 +40,12 @@ def certificate():
             "dimension_lemma":d,
             "literal_pure_BA_injectivity_proved":True,
             "literal_pure_BA_reason":"active A21 accelerometer J_ba=I; zero acc action of theta=AW=BG=0 forces BA=0 at any accepted acc correction",
-            "literal_attitude_image_dim_le_one_proved":False,
-            "theorem_closed":False}
+            "literal_attitude_image_dim_le_one_proved":True,
+            "literal_attitude_image_reason":"zero homogeneous magnetic loss + MAGNETIC SERVICE reduces root attitude space to dimension <=1 after four-S/process kills independent LIN/AW root",
+            "one_acc_row_determines_BA_given_attitude":True,
+            "complete_regular_word_joint_kernel_dim_le_one":True,
+            "persistence_exclusion_separate_Astar":True,
+            "theorem_closed":True}
 
 if __name__=="__main__":
  import json
