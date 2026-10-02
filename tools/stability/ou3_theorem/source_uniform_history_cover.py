@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Source-uniform causal history-cover generator.
 
 This is the sole admissible cover driver for the constructive shaped certificate.
