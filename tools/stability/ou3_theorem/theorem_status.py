@@ -126,6 +126,8 @@ def status_report() -> dict:
         "causal_history_interval_propagator_complete":False,
         "verified_full_21_precision_enclosure":True,
         "interval_joint_shaped_quadratic":True,
+        "temporal_same_history_source_domain":True,
+        "kernel_linked_quotient_primitive":True,
         "constructive_cellwise_supply_dissipation_quotient":False,
         "source_uniform_block_factor_root_coercivity":True,
         "constructive_fixed_coordinate_A21_mu_enclosure":False,
