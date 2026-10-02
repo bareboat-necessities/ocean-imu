@@ -1,3 +1,11 @@
+## Angle-aware projector/restriction enclosure implemented
+
+For a history cell whose word-dependent compatibility line lies within angle delta of its certified midpoint direction, `angle_projector_enclosure.py` uses the exact rank-one projector identity `||P(r)-P(r0)||_2=sin(delta)` and a verified interval action norm to lower-bound the homogeneous action uniformly over the entire line cone. No uncertain orthonormal basis is selected. The bound is `lambda0(1-eps^2)-||A||(2 eps+eps^2)`, eps=sin(delta), where lambda0 is the interval midpoint-complement floor. `restrict_interval_action` now consumes a nonzero line component radius through this cone certificate and fails closed if the resulting floor is not positive. Cell-ratio plumbing accepts the resulting line-cone certificate.
+
+This closes the angle-aware restriction primitive. `kernel_restricted_interval_action_numeric` remains false until actual reachable history cells provide their interval A_super and compatibility-line radii and obtain positive floors; no carried midpoint result is promoted. The remaining independent constructive blocker is still the nonlinear MARINE/MAGNETIC QCQP callback implementation.
+
+Structures preserved: entire word-dependent line cone, later-word action, common-root transport. Relaxation: the projector perturbation inequality is conservative but valid for the shipping line family; failure is D, not instability. No shipping counterexample.
+
 ## Word-dependent kernel-restricted interval action implemented
 
 `kernel_restricted_action.py` now forms the superword homogeneous action in common root coordinates, `A_super=A0+T' A1 T`, before restricting by the first complete word's actual compatibility line. The complement is constructed from that word-specific line; no fixed global compatibility vector is used. `compatibility_line_interval.py` encodes the joint attitude/BA graph line r=(a,-A_ba a) and provides an angle-radius certificate for cell uncertainty. The restriction deliberately fails closed when the line has nonzero interval radius until an angle-aware projector enclosure is supplied. `constructive_cell_ratio.py` is wired to accept this later-word restricted action.
