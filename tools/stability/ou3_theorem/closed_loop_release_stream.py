@@ -13,6 +13,7 @@ from .interval_riccati_21 import (IMat,predict_covariance,verified_gain_interval
  shipping_integral_update_intervals,selector_h)
 from .source_uniform_release_chronology import Scheduler,pseudo_period
 from .same_history_geometry_residual import skew
+from .interval_kr import interval_matvec
 N=21;G=9.80665
 
 def point_imat(a):
@@ -111,3 +112,15 @@ def generate_point_stream(history_payload,dt=.005):
   x,P,e=reset_after_correction(x,P,e["dx"]);e["sample"]=k;events.append(e)
  return {"mean":x,"P":P,"events":events,"samples":len(samples),
          "same_history_closed_loop":True,"magnetic_callback_pattern_enumerated":False}
+
+def interval_correction_product(P,H,R,r_mid,r_rad):
+ """Covariance-derived interval K and SAME-cell K*r correction."""
+ K,cert=verified_gain_interval_psd(P,H,R)
+ dm,dr=interval_matvec(K,r_mid,r_rad)
+ return {"K":K,"dx_mid":dm,"dx_rad":dr,
+         "dtheta_mid":dm[:3],"dtheta_rad":dr[:3],
+         "inverse_certificate":cert,"same_Kr_cell":True}
+
+def racc_imat(entry):
+ return IMat(tuple(tuple(float(x) for x in row) for row in entry["mid"]),
+             tuple(tuple(float(x) for x in row) for row in entry["rad"]))
