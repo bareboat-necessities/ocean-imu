@@ -1,6 +1,7 @@
 import unittest
 from tools.stability.ou3_theorem.complete_word_nullspace import compatibility_line_certificate, graph_kernel_certificate, positive_attitude_then_BA_graph_status
 from tools.stability.ou3_theorem.nullspace_strata import audit_service_row_strata, magnetic_service_kernel_certificate, invertible_transport_kernel_rule
+from tools.stability.ou3_theorem.joint_attitude_ba_kernel import certificate as joint_kernel_certificate
 
 class T(unittest.TestCase):
     def test_Astar_attitude_block_is_full_rank_not_line(self):
@@ -29,6 +30,14 @@ class T(unittest.TestCase):
         r=compatibility_line_certificate(blocks,[0,1,1,0])
         self.assertEqual(r["nullity"],2)
         self.assertFalse(r["kernel_equals_compatibility_line"])
+
+    def test_complete_regular_word_joint_kernel_dimension(self):
+        r=joint_kernel_certificate()
+        self.assertTrue(r["literal_pure_BA_injectivity_proved"])
+        self.assertTrue(r["literal_attitude_image_dim_le_one_proved"])
+        self.assertTrue(r["one_acc_row_determines_BA_given_attitude"])
+        self.assertTrue(r["complete_regular_word_joint_kernel_dim_le_one"])
+        self.assertTrue(r["theorem_closed"])
 
     def test_continuous_magnetic_and_transport_cover(self):
         m=magnetic_service_kernel_certificate(1)
