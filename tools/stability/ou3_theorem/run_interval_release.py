@@ -4,6 +4,8 @@ import json,traceback
 from .source_uniform_root import root_cells
 from .literal_history_leaf_propagator import propagate_history_cell
 from .closed_loop_release_stream import generate_interval_stream
+from .linked_guard_aw_reader import linked_charge
+import math
 
 def main():
  root=root_cells(60.)[0]
@@ -21,6 +23,10 @@ def main():
   r=out["mean_rad"];slim["terminal_radii"]={
    "AW":float(max(r[15:18])),"BA":float(max(r[18:21])),
    "S":float(max(r[12:15]))}
+ if out.get("verified"):
+  alpha=math.exp(-2*math.pi*3*.005)
+  z=linked_charge(out["events"],payload["guard_weight"],.005,.05,60.,alpha)
+  slim["guard_fast_aw_midpoint"]={k:v for k,v in z.items() if k not in ("reader","weight_mid","weight_rad")}
  print(json.dumps(slim,indent=2))
  return 0 if out.get("verified") else 2
 
