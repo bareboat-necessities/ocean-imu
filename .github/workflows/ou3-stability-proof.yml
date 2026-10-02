@@ -76,6 +76,11 @@ jobs:
         run: |
           python3 -m tools.stability.ou3_theorem.run_interval_release | tee /tmp/ou3-interval-release.json
 
+      - name: Diagnose physical HistoryCell subdivision
+        continue-on-error: true
+        run: |
+          python3 -m tools.stability.ou3_theorem.run_physical_history_subdivision | tee /tmp/ou3-physical-subdivision.json
+
       - name: Compile theorem tooling
         run: python3 -m py_compile tools/stability/ou3_theorem/*.py
       - name: Compute literal A21 release outer storage first
