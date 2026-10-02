@@ -98,3 +98,52 @@ class TunerBox:
   if self.pending:self.tau,self.sigma=self.pending;self.pending=None
   TS=(self.tau*.02).clamp(.004,.15)
   return self.tau,self.sigma,TS
+
+def pow_pos(x:I,p:float)->I:
+ if x.lo<=0: raise ArithmeticError("positive power base not separated from zero")
+ return I(math.nextafter(x.lo**p,-math.inf),math.nextafter(x.hi**p,math.inf))
+
+def spectral_mse_RS(tau:I,sigma:I,TS:I,c_sigma=0.90,cj=.0538,
+                    r_a=.0148*.0148*.005)->I:
+ # Literal deployed law: C_J*(2 r_a)^(1/14)*(sigma/c_sigma*tau^4)^(6/7)/sqrt(TS)
+ sigma_ab=I(max(1e-6,sigma.lo/c_sigma),max(1e-6,sigma.hi/c_sigma))
+ u=sigma_ab*tau*tau*tau*tau
+ return cj*((2*r_a)**(1/14))*pow_pos(u,6/7)*recip(sqrti(TS))
+
+@dataclass
+class ShippingTunerBox:
+ """Applied/staged tuple including deployed SpectralMSE R_S channel."""
+ tau:I; sigma:I; RS:I; pending:tuple[I,I,I]|None=None
+ def stage(self,dt:I,f:I,var:I,noise:I,tau_coeff:float,sigma_coeff:float,
+           alpha:I,alpha_rs:I):
+  ft=I(max(.05,f.lo),min(1.2,f.hi));tt=(tau_coeff*.5*recip(ft)).clamp(.02,12.)
+  wave=I(max(1e-6,var.lo-noise.sq().hi),max(1e-6,var.hi-noise.sq().lo));ss=(sigma_coeff*sqrti(wave)).clamp(0,4.)
+  TS=(tt*.02).clamp(.004,.15);rr=spectral_mse_RS(tt,ss,TS,sigma_coeff).clamp(.15,100.)
+  ct=(1-alpha)*self.tau+alpha*tt;cs=(1-alpha)*self.sigma+alpha*ss;cr=(1-alpha_rs)*self.RS+alpha_rs*rr
+  self.pending=(ct,cs,cr)
+ def commit(self):
+  if self.pending:self.tau,self.sigma,self.RS=self.pending;self.pending=None
+  TS=(self.tau*.02).clamp(.004,.15)
+  return self.tau,self.sigma,self.RS,TS
+
+@dataclass
+class CausalAdaptationBox:
+ mahony:MahonyBox; band:BandBox; variance:VarianceBox; tuner:ShippingTunerBox
+ def step(self,dt:I,gyro,acc,wave_frequency:I,noise_sigma:I,two_kp=.2,two_ki=.02,
+          tau_coeff=1.38,sigma_coeff=.90,adapt_periods=.40,rs_mult=1.5):
+  # Commit y_{k-1}'s staged candidate before y_k, matching shipping timing.
+  applied=self.tuner.commit()
+  vertical=self.mahony.step(dt,gyro,acc,two_kp,two_ki)
+  banded=self.band.step(vertical,dt,wave_frequency)
+  var=self.variance.update(dt,banded,wave_frequency)
+  sea=.5*recip(wave_frequency.clamp(.05,1.2))
+  adapt_sec=adapt_periods*sea
+  alpha=1-expi(-dt*recip(adapt_sec))
+  # Default slew-log is zero: RS horizon = mult*tau_target, clamped by shipping helper.
+  tau_target=(tau_coeff*.5*recip(wave_frequency.clamp(.05,1.2))).clamp(.02,12.)
+  rs_sec=rs_mult*tau_target
+  alpha_rs=1-expi(-dt*recip(rs_sec))
+  self.tuner.stage(dt,wave_frequency,var,noise_sigma,tau_coeff,sigma_coeff,alpha,alpha_rs)
+  return {"vertical":vertical,"band":banded,"variance":var,
+          "tau":applied[0],"sigma_aw":applied[1],"R_S":applied[2],"T_S":applied[3],
+          "pending":self.tuner.pending}
