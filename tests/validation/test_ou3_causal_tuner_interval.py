@@ -2,6 +2,13 @@ import unittest,math
 from tools.stability.ou3_theorem.causal_tuner_interval import *
 class CausalTunerIntervalTests(unittest.TestCase):
  def point(self,x):return I(x,x)
+ def test_mahony_quaternion_norm_dependency_does_not_create_zero(self):
+  z=I(-1,1);m=MahonyBox((z,z,z,z),(I(0,0),I(0,0),I(0,0)),True,1.0)
+  # Deliberately decorrelated component box contains q=0, while the coupled
+  # invariant states the represented quaternion is normalized.
+  out=m.step(I(.005,.005),(I(0,0),I(0,0),I(0,0)),
+             (I(0,0),I(0,0),I(9.8,9.8)),.2,.02,9.8)
+  self.assertTrue(math.isfinite(out.lo));self.assertEqual(m.q_norm_lower,1.0)
  def test_interval_division_contains_corner_quotients(self):
   z=I(2,4)/I(2,3)
   self.assertLessEqual(z.lo,2/3);self.assertGreaterEqual(z.hi,2)
