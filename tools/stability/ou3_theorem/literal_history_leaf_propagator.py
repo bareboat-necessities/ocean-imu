@@ -46,9 +46,18 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
   fast_a=tuple(fast_primitive_increment_outer(cell,"accel",a,max(0,t-dt),t,C)* (1/dt) for a in range(3))
   fast_g=tuple(fast_primitive_increment_outer(cell,"gyro",a,max(0,t-dt),t,C)* (1/dt) for a in range(3))
   fast_acc.append(fast_a)
-  delivered_a=tuple(avec[a]+slow_a[a]+fast_a[a] for a in range(3));delivered_g=tuple(slow_g[a]+fast_g[a] for a in range(3))
+  # Body specific-force components: gravity direction is carried explicitly.
+  # Physical translational acceleration has only a world-frame norm contract at
+  # this seam, so its body components are conservatively rotated into [-A,A].
+  # The coupled norm floor below retains the reverse-triangle information lost
+  # by that component hull.
+  Amax=C["marine_motion"]["A_max_mps2"];g=9.80665
+  gv_comp=tuple(row[f"gravity_dir_{a}"] for a in range(3))
+  body_a=(I(-Amax,Amax),)*3
+  delivered_a=tuple(g*gv_comp[a]+body_a[a]+slow_a[a]+fast_a[a] for a in range(3));delivered_g=tuple(slow_g[a]+fast_g[a] for a in range(3))
+  acc_norm_floor=g-Amax-C["imu_bias"]["B_a_s_mps2"]-C["imu_bias"]["B_a_f_mps2"]
   gs=guard.step(delivered_a,dt);conditioned_acc.append(gs["conditioned"]);racc.append(covariance_interval_from_excess(gs["excess"]))
-  try:state=adapt.step(I(dt,dt),delivered_g,gs["conditioned"],I(.12,.12))
+  try:state=adapt.step(I(dt,dt),delivered_g,gs["conditioned"],I(.12,.12),acc_norm_lower=acc_norm_floor)
   except ArithmeticError as e:
    raise ArithmeticError("causal adaptation enclosure unresolved at t=%.6f: %s"%(t,e))
   trace.append(state)
