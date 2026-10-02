@@ -39,10 +39,12 @@ def left_attitude_error(est_wb,true_bw):
 def _col(v):
     return [float(x[0] if isinstance(x,(list,tuple)) else x) for x in v]
 
-def carried_error(event):
-    """21-state true-minus-estimate error in the literal root coordinates."""
-    x=_col(event["estimator_state"])
-    th=left_attitude_error(_col(event["estimator_quaternion"]),_col(event["physical_quaternion"]))
+def carried_error(event, after=False):
+    """21-state physical error in the literal local error-state coordinates."""
+    suffix="_after" if after else ""
+    x=_col(event["estimator_state"+suffix])
+    th=left_attitude_error(_col(event["estimator_quaternion"+suffix]),_col(event["physical_quaternion"]))
+    th=[a-b for a,b in zip(th,x[:3])]
     bg=[a-b for a,b in zip(_col(event["physical_bg"]),x[3:6])]
     v=[a-b for a,b in zip(_col(event["physical_v"]),x[6:9])]
     p=[a-b for a,b in zip(_col(event["physical_p"]),x[9:12])]
@@ -97,7 +99,8 @@ def carried_local_defect_certificate(trace):
             "endpoint_residual_used_as_input":False,
             "local_b_endpoint_residual_max_abs":maxdiff,
             "local_b_endpoint_parity":maxdiff < 5e-10,
-            "native_literal_boundary_export_complete":True,\n            "same_operation_pre_post_snapshots":True,
+            "native_literal_boundary_export_complete":True,
+            "same_operation_pre_post_snapshots":True,
             "b_local":[[float(x[0])] for x in c["b"]]}
 
 def local_defects(boundaries):
