@@ -443,6 +443,26 @@ def verified_joseph_update_psd(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
     k,cert=verified_gain_interval_psd(p,h,r)
     return joseph_covariance(p,k,h,r),cert
 
+def linked_covariance_update(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
+    """Covariance correction P-PH'(HPH'+R)^-1HP, retaining linked factors.
+
+    Algebraically identical to the Kalman/Joseph covariance update in exact
+    arithmetic. Unlike intervalizing K first, the subtractive information term
+    remains one linked expression. Requires a verified innovation inverse.
+    """
+    S=innovation_covariance(p,h,r)
+    try:
+        Sinv,cert=verified_inverse3_interval(S)
+    except ValueError:
+        # PSD guarantees existence but a useful linked subtraction requires an
+        # inverse enclosure narrow enough to preserve sign/cancellation.
+        raise ArithmeticError("linked innovation inverse enclosure required")
+    PHt=matmul(p,transpose(h))
+    corr=matmul(matmul(PHt,Sinv),transpose(PHt))
+    out=symmetrize(add(p,scale(corr,-1.0)))
+    return out,{**cert,"covariance_form":"linked_information_subtraction",
+               "gain_intervalized":False}
+
 def contains(outer: IMat, inner: IMat) -> bool:
     if outer.shape!=inner.shape: return False
     n,m=outer.shape
