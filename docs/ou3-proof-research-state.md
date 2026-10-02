@@ -763,22 +763,13 @@ unchanged; general capture must now reach the smaller domain.
 
 ## CI: main after PR #643 (Ruff, readout lift, stale provenance)
 
-Failed quantities: `quality-gates / python` (59 Ruff findings, including
-`F821 _out` undefined in `linked_guard_aw_reader.py`, so that module raised
-`NameError` on every call); `ou3-stability-proof / theorem` at
-`ag_readout_source_diagnostic` ("event 4 missing physical lift fields"); and
-in the full evidence suite, stale provenance/status, the same-cell grouper
-("unretained hard event in regular AG group"), the world-frame observer anchor,
-and stale test expectations. Classification: E (implementation/CI) for every
-item; nothing here is a mathematical result or a shipping counterexample.
-Invalidated hypotheses: every native trace event is an operation boundary
-(the driver now also records a read-only `adaptive_state` tuner snapshot);
-the world-frame quaternion tap can anchor on the pre-#643 reset line.
-Fixes: `_out` rounds positive radii outward and keeps exact zeros; the lift
-check and same-cell grouper pass `adaptive_state` through like `sync`; the
-quaternion tap follows the relocated reset tap (qref is identical at both
-points); diagnostics, `theorem-status.json` and provenance were regenerated
-from the current sources. Retained facts: all regenerated margins keep their
-sign (signed-balance S-interval margin -19.0391078, rotation-triangle margin
--30.4543160; same-cell group values move by about 1e-9 with shifted event
-indices). Current limiter and next falsifiable experiment are unchanged.
+Failed quantity: `quality-gates / python` (Ruff, including undefined `_out` in
+`linked_guard_aw_reader.py`) and `ou3-stability-proof / theorem` at
+`ag_readout_source_diagnostic`, which rejected the read-only `adaptive_state`
+trace record; the full evidence suite also reported stale provenance and
+diagnostic fingerprints. Classification: E (implementation/CI); no
+mathematical result and no shipping counterexample. Invalidated hypothesis:
+every native trace event is an operation boundary. Retained facts: regenerated
+margins keep their sign (signed-balance S-interval margin -19.0391078,
+rotation-triangle margin -30.4543160; same-cell values move by about 1e-9).
+Current limiter and next falsifiable experiment are unchanged.

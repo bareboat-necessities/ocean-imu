@@ -119,6 +119,11 @@ For the shipping accelerometer-bias projection,
  \operatorname{Proj}_{R_b}(\hat b_{a,k}^{\rm corr}).
  \label{eq:bias-projection}
 \end{align}
+Structures preserved: the shipping mode switch between held and active
+accelerometer-bias prediction, one shared physical increment for truth and
+error, and correction and projection as separate literal operations.
+Relaxations introduced: none; these are identities of the implemented
+estimator, not bounds.
 
 \section{Magnetic service}
 MAGNETIC SERVICE supplies recurring accepted magnetic information subject to the shipping field-norm, calibration, geometry, acceptance and service-gap bounds. The proof uses the literal accepted-event chronology and does not replace it with continuous yaw observation. The implemented residual gyro-bias projection is retained and is distinct from the physical delivered-gyro qualification.
