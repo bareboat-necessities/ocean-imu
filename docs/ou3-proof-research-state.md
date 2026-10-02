@@ -1,3 +1,12 @@
+## First release interval probe: broad H_acc box fails verified innovation inverse
+
+After two CI-only class-E issues were fixed (workflow heredoc indentation and literal escaped newlines in theorem_status.py), the first actual one-sample goLive release probe ran. Result: `one_step_verified=false`, reason `innovation inverse not verified`. This is class D: the existing accelerometer H interval independently boxes skew-force and rotation entries and is too broad even at the numerical goLive covariance seed. It is not a shipping counterexample and does not invalidate the goLive-image construction.
+
+The next refinement is shipping dependency, not smaller assumptions. `accel_geometry_cell.py` now constructs H_acc from one shared force-vector cell and one SO(3) rotation cell; J_att=-[f]x, J_aw=R_wb and J_ba=I remain coupled. Small-angle rotation cells include a rigorous quadratic remainder and fail closed when too wide. The release cover must subdivide the shared attitude/specific-force history coordinates until the innovation inverse verifies, rather than independently splitting H or K.
+
+Structures preserved: literal acc geometry and common attitude/force dependency. Relaxation: local SO(3) enclosure is conservative with a rigorous remainder. Failure classification D. No shipping counterexample.
+
+
 ## goLive -> A21 finite release image propagation is now executable
 
 `golive_to_a21_release.py` propagates the explicit zero-mean goLive seed through a supplied literal operation stream, carrying the full verified 21-state covariance and affine mean interval and emitting the A21 BA-graph enclosure. `release_interval_propagation.py` supplies the shipping-specific interval prediction and accelerometer-correction covariance map from the declared dt/tau/omega/noise ranges; it retains the AW covariance floor and deliberately does not invent S or magnetic callback cadences. Aggregate magnetic information remains a theorem action, not an event schedule.
