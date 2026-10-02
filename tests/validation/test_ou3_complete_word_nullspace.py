@@ -1,8 +1,14 @@
 import unittest
-from tools.stability.ou3_theorem.complete_word_nullspace import compatibility_line_certificate, graph_kernel_certificate
+from tools.stability.ou3_theorem.complete_word_nullspace import compatibility_line_certificate, graph_kernel_certificate, positive_attitude_then_BA_graph_status
 from tools.stability.ou3_theorem.nullspace_strata import audit_service_row_strata, magnetic_service_kernel_certificate, invertible_transport_kernel_rule
 
 class T(unittest.TestCase):
+    def test_Astar_attitude_block_is_full_rank_not_line(self):
+        r=positive_attitude_then_BA_graph_status([[1,0,0],[0,1,0],[0,0,1]])
+        self.assertEqual(r["attitude_nullity"],0)
+        self.assertTrue(r["Astar_attitude_PD_equivalent"])
+        self.assertFalse(r["attitude_only_nullity_one_claim_valid"])
+
     def test_word_dependent_graph_kernel(self):
         # theta constraint leaves span((1,1)); arbitrary word-dependent A
         # then forces BA=-A theta without changing nullity.
