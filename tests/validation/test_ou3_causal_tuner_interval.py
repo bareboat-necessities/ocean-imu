@@ -21,4 +21,17 @@ class CausalTunerIntervalTests(unittest.TestCase):
  def test_mahony_fails_closed_on_zero_acc_norm(self):
   m=MahonyBox((I(1,1),I(0,0),I(0,0),I(0,0)),(I(0,0),)*3,True)
   with self.assertRaises(ArithmeticError):m.step(I(.005,.005),(I(0,0),)*3,(I(0,0),)*3,.2,.02)
+ def test_wave_period_prior_is_generated_until_usable(self):
+  w=initial_wave_period_box()
+  self.assertEqual(w.frequency(.2),(I(.2,.2)))
+ def test_wave_period_point_state_advances(self):
+  w=initial_wave_period_box()
+  # Early leak transient has no gate ambiguity and must remain generated.
+  for _ in range(10): w.step(I(.005,.005),I(.1,.1))
+  self.assertGreater(w.elapsed.lo,0)
+  self.assertFalse(w.usable)
+ def test_closed_chain_has_no_frequency_input(self):
+  import inspect
+  sig=inspect.signature(ClosedCausalAdaptationBox.step)
+  self.assertNotIn("wave_frequency",sig.parameters)
 if __name__=="__main__":unittest.main()
