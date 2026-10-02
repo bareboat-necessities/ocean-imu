@@ -1,6 +1,7 @@
 # ruff: noqa: F401, F811
 import unittest,numpy as np
-from tools.stability.ou3_theorem.verified_linked_qcqp import Box,verified_supply_bnb,verified_interval_supply_bnb\nfrom tools.stability.ou3_theorem.rank_loss_interval_factor import exact
+from tools.stability.ou3_theorem.verified_linked_qcqp import Box,verified_supply_bnb,verified_interval_supply_bnb
+from tools.stability.ou3_theorem.rank_loss_interval_factor import exact
 class VerifiedLinkedQCQPTests(unittest.TestCase):
  def test_scalar_supply_upper(self):
   B=np.array([[.2]]);C=np.array([[-.1]]);e=Box(np.array([-1.]),np.array([1.]));u=Box(np.array([-.5]),np.array([.5]))
