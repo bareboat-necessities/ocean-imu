@@ -64,8 +64,9 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
   gs=guard.step(delivered_a,dt,acc_norm_floor,raw_step,fast_state);guard_weights.append(gs["weight"]);conditioned_acc.append(gs["conditioned"]);racc.append(covariance_interval_from_excess(gs["excess"]))
   conditioned_norm_floor=gs["conditioned_norm_lower"]
   try:state=adapt.step(I(dt,dt),delivered_g,gs["conditioned"],I(.12,.12),acc_norm_lower=conditioned_norm_floor)
-  except ArithmeticError as e:
-   raise ArithmeticError("causal adaptation enclosure unresolved at t=%.6f: %s"%(t,e))
+  except (ArithmeticError,ValueError,OverflowError) as e:
+   sens={name:iv.width for name,iv in cell.coordinates if name.startswith(("gravity_dir_","slow_accel_","fast_accel_primitive_","physical_v_","physical_p_"))}
+   raise EnclosureFailure("causal adaptation",str(e),t,sens) from e
   trace.append(state)
   vv=vb(tuple(row[f"physical_v_{a}"] for a in range(3)));pp=vb(tuple(row[f"physical_p_{a}"] for a in range(3)));aa=vb(avec)
   vel.append(TimedVectorBox(t,t,vv));pos.append(TimedVectorBox(t,t,pp));acc.append(TimedVectorBox(t,t,aa))
