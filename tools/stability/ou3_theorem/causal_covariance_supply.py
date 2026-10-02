@@ -57,3 +57,14 @@ class CovarianceSupplyState:
 
 def new_state(root:HistoryCell,P:IMat,source_dimension:int):
  return CovarianceSupplyState(root,P,JointQuadratic.zeros(N,source_dimension,root.prefix_token),[])
+
+def source_columns_from_interval(mid:np.ndarray,rad:np.ndarray,token_count:int):
+ """Embed one dependency-preserving affine source factor supplied by history propagator.
+
+ The caller owns symbol identity; this function never invents independent
+ columns for generated tuner/gain uncertainty.
+ """
+ mid=np.asarray(mid,float);rad=np.asarray(rad,float)
+ if mid.shape!=(N,token_count) or rad.shape!=mid.shape:raise ValueError("source factor shape")
+ if np.any(rad<0):raise ValueError("nonnegative source radii")
+ return mid,rad
