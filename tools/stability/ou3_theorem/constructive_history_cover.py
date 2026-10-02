@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import json,math
 from pathlib import Path
 import numpy as np
-from .verified_linked_qcqp import Box,verified_supply_bnb,shipping_side_callback
+from .verified_linked_qcqp import Box,verified_interval_supply_bnb,shipping_side_callback
 from .constructive_cell_ratio import kernel_certificate_from_line_cone,combine,cover_max
 from .marine_magnetic_qcqp import callback
 ROOT=Path(__file__).resolve().parents[3]
@@ -27,13 +27,8 @@ def certify_leaf(x:ConstructiveLeaf,*,tol=1e-4,max_leaves=200000):
  kc=kernel_certificate_from_line_cone(x.A0,x.witness.kernel_line.midpoint,
        x.witness.kernel_line.component_radius,x.T,x.A1,x.witness.kernel_line.midpoint)
  side=shipping_side_callback(lambda box:x.witness.marine_magnetic,CONSTANTS)
- supply=verified_supply_bnb(np.asarray(x.interval_joint.B.mid,float),
-       np.asarray(x.interval_joint.C.mid,float),x.e_box,x.u_box,x.linear_A,x.linear_b,
-       side,tol=tol,max_leaves=max_leaves)
- # Midpoint B/C is NOT promotable when radii are nonzero. Fail closed here until
- # verified_supply_bnb consumes interval B/C directly.
- br=max(max(r) for r in x.interval_joint.B.rad);cr=max(max(r) for r in x.interval_joint.C.rad)
- if br>0 or cr>0:return {"verified":False,"token":x.token,"reason":"interval B/C QCQP not yet consumed","B_rad":br,"C_rad":cr}
+ supply=verified_interval_supply_bnb(x.interval_joint.B,x.interval_joint.C,
+       x.e_box,x.u_box,x.linear_A,x.linear_b,side,tol=tol,max_leaves=max_leaves)
  z=combine(x.token,x.interval_joint,kc,supply)
  return {"verified":z.verified,"token":x.token,"ratio":z,"kernel":kc,"supply":supply}
 
