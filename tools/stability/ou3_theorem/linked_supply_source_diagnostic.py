@@ -95,7 +95,9 @@ def analyze(path):
   else: c=x2;x2=x1;f2=f1;x1=c-gr*(c-a);f1=eval_gamma(x1)[0]
  gam=(a+c)/2; ratio,chi,G=eval_gamma(gam)
  completed=(1-gam)*V0+chi-((x-G**-1*z).T*G*(x-G**-1*z))[0]
- ans.update({'gamma':fmt(gam),'linked_supply_chi':fmt(chi),
+ ans.update({'defect_origin':'retrospective_endpoint_residual',
+  'eligible_for_theorem_entry_test':False,
+  'gamma':fmt(gam),'linked_supply_chi':fmt(chi),
   'optimized_chi_over_gamma':fmt(ratio),
   'optimized_linked_to_inner_budget_ratio':fmt(ratio/(mp.mpf('.15')**2)),
   'frozen_fixed_forcing_sufficient_radius':fmt(mp.sqrt(ratio)),
