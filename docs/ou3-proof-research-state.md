@@ -1,3 +1,14 @@
+## Release innovation gate CLOSED source-uniformly on the captured ball
+
+The captured attitude domain is now represented by the theorem's rotation-vector ball ||dtheta||<=6.9 deg, not the artificial Cartesian cube. Rodrigues bounds enclose the whole SO(3) image. A force-ball cover retains ||f||<=g+Amax.
+
+Entrywise innovation inversion still failed after force subdivision because it discarded the structural PSD fact. The shipping covariance set satisfies P>=0 at every Riccati step, hence HPH'>=0 and S=HPH'+R_acc >= R_acc. `verified_joseph_update_psd` now uses this lossless covariance-set invariant: if the narrow approximate-inverse residual certificate fails, the strict measurement-noise floor supplies a rigorous center-zero inverse entry box with ||S^-1||<=1/lambda_min(R_acc). No midpoint gain is used.
+
+CI result for the complete one-step captured attitude/force domain: VERIFIED, leaf_count=1, unresolved=0, max_depth=0. Thus no geometry subdivision is needed to prove innovation invertibility. The next release calculation is repeated PSD-aware prediction/correction propagation from goLive toward A21 activation; gain tightness, rather than invertibility, may become the limiter.
+
+Structures preserved: attitude norm ball, force norm ball, covariance PSD invariant, literal R_acc floor. Relaxations: the noise-floor inverse entry box is coarse but lossless. Failure of its downstream Joseph enclosure would be D. No shipping counterexample.
+
+
 ## First release interval probe: broad H_acc box fails verified innovation inverse
 
 After two CI-only class-E issues were fixed (workflow heredoc indentation and literal escaped newlines in theorem_status.py), the first actual one-sample goLive release probe ran. Result: `one_step_verified=false`, reason `innovation inverse not verified`. This is class D: the existing accelerometer H interval independently boxes skew-force and rotation entries and is too broad even at the numerical goLive covariance seed. It is not a shipping counterexample and does not invalidate the goLive-image construction.
