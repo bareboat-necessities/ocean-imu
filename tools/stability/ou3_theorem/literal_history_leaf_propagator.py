@@ -60,7 +60,10 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
   mag.append(MagneticEventBox(t,t,mv,VectorBox(np.full(3,-C["magnetic_service"]["measurement_residual_norm_max_uT"]),np.full(3,C["magnetic_service"]["measurement_residual_norm_max_uT"])),None))
  # Do not invent release covariance/BA graph. Return the causal trace so the
  # release-state enclosure can be connected explicitly.
+ from .aggregate_magnetic_service import AggregateMagneticService
+ mag_service=AggregateMagneticService(C["magnetic_service"]["T_M_s"],C["magnetic_service"]["mu_M"])
  return {"root":cell,"samples":samples,"adaptation_trace":trace,
-         "physical":{"velocity":vel,"position":pos,"acceleration":acc,"jerk":jerk,"gravity":grav,"magnetic":mag},
+         "physical":{"velocity":vel,"position":pos,"acceleration":acc,"jerk":jerk,"gravity":grav},
+         "aggregate_magnetic_service":mag_service,
          "complete_constructive_leaf":False,
-         "reason":"certified release covariance/BA graph and accepted magnetic-event strata not yet connected"}
+         "reason":"explicit numerical release P0/mean/BA-graph seed not yet proved; magnetic callback enumeration replaced by aggregate service operator"}
