@@ -1,3 +1,14 @@
+## Adaptive shaped-storage derivation advanced
+
+The exact lossless coordinate identities are now implemented in adaptive_shaped_storage.py and regressed: the shipping integrated OU prediction normalizes to a dimensionless h/tau family, and generated tuner scaling changes are exact coboundaries that telescope across a persistent history. The carried source driver now exports the actually applied tau, sigma_aw, R_S, T_S, targets, variance/frequency state and proxy quaternion at each recorded sample; adaptive_shaped_storage_diagnostic.py consumes those joint tuples without Cartesian boxing. This is the first quantitative route that explicitly keeps the shipping tuner generator inside W_out.
+
+Structures preserved: literal shipping OU primitives; generated tuner tuple; one-sample causal adaptation; persistent Mahony-driven frontend history; persistent filter/physical execution.
+Relaxations introduced: current shaped-storage diagnostic is finite carried evidence only; common quadratic Q has not yet been asserted source-uniformly.
+Failed calculations: none in this shaped-storage derivation yet. Earlier escaped-newline/tooling faults are class E; short-word scalar entry remains class D.
+Genuine shipping counterexample found: no.
+Established shipping results retained: A* bridge, complete-word kernel <=1, persistent compatibility exclusion, qualitative superword strictness, compact outer release and finite practical absorbing radius.
+Next calculation using more shipping structure: form the literal normalized S-correction factors from actual covariance-derived K_S together with generated R_S,T_S, then solve the complete 60/100-s same-history quadratic dissipation problem before any enclosure.
+
 ## Controlling quantitative route: adaptive shaped storage
 
 The controlling next proof is now `docs/ou3-adaptive-shaped-storage.md`, not the short-word scalar chi/gamma route. In shipping-generated coordinates y=D(tau,sigma)(v,p,S,a_w), the frozen-tuple literal integrated OU transition is dimensionless and depends only on h/tau; tuner commits enter as exact causal diagonal coboundaries D_{k+1}D_k^-1, which telescope over a word and must not be independently normed. Literal S=0 corrections are transformed with their actual covariance-derived gains, while R_S and T_S remain generated from the same SpectralMSE/tau-cadence history. The next certificate seeks a same-history W_N-W_0 <= -Dissipation + Supply inequality over 60/100 s, carrying AG/BA/magnetic/accelerometer loss and rotating compatibility jointly. A common-Q failure is class D, not filter instability.
