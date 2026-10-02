@@ -1,3 +1,12 @@
+## PSD-factor innovation refinement localizes remaining width to force geometry
+
+The release innovation has been reformulated as P=L L', Y=H L, S=R_acc+Y Y'. `psd_factor_innovation.py` bounds the Gram perturbation at Y-level before inversion. On the entire captured attitude ball plus entire force ball, the first factor probe gives Gram perturbation inf-norm 4088.3910 and Neumann residual 247.10397, so a narrow inverse is not available. This is class D and sharply localizes the width to H/force geometry; covariance PSD and inverse existence are no longer the issue.
+
+An adaptive force-ball sector cover was launched, but Cartesian force boxes are expensive and discard the norm-ball geometry. If that cover is large, the next preferred calculation is an analytic magnitude+direction/conic force parameterization for [f]x, preserving ||f||<=g+Amax directly rather than enumerating an axis cube.
+
+Structures preserved: P factor, Y=HL, PSD Gram, attitude ball, force norm premise. Relaxation: interval Y factor radii remain conservative. No shipping counterexample.
+
+
 ## Repeated release propagation: invertibility solved, gain enclosure is the next limiter
 
 The staged goLive->A21 PSD-aware propagation was executed after the one-step innovation gate closed. The center-zero inverse fallback causes interval Joseph arithmetic to become non-finite before the first useful staged checkpoint. This is class D: the inverse existence theorem is valid, but the entrywise gain enclosure is too coarse.
