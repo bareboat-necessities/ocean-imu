@@ -25,7 +25,7 @@ def one_pole_filtered_fast_bound(alpha,dt,B,C,H):
  # Exact geometric tail beyond H uses pointwise B; inside H use primitive cap.
  n=max(1,int(math.floor(H/dt)))
  tail=(alpha**n)*B
- return (1-alpha)*B*dt+(1-alpha)*C/dt+tail
+ return (1-alpha)*B+(1-alpha)*C/dt+tail
 
 def cascade_filtered_fast_bound(alpha,dt,B,C,H,poles):
  """Conservative: later positive unit-gain poles cannot increase L-infinity."""
