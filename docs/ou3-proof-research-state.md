@@ -280,4 +280,9 @@ diagnostic had not produced a number. Fix: correction events now export the
 same physical/estimator snapshot as prediction, sync and reset events.
 Retained facts: terminal parity between observed and untapped shipping output
 is still enforced, and the local forcing endpoint-parity gate is unchanged.
-Current limiter and next falsifiable experiment are unchanged.
+The committed signed-adjoint and signed-balance diagnostics fingerprint this
+driver and had not been regenerated after the earlier observer snapshot
+changes; they were regenerated. Their charges moved by about 1e-8 relative,
+and the signed-balance margins stay negative (S-interval -19.03910780414,
+rotation triangle -30.45431596760). Current limiter and next falsifiable
+experiment are unchanged.
