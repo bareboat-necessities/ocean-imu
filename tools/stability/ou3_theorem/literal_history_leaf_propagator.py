@@ -13,6 +13,8 @@ from .causal_tuner_interval import (I,MahonyBox,initial_wave_period_box,BandBox,
 from .history_witness_builder import TimedVectorBox,AttitudeGravityBox,build_history_witness
 from .marine_magnetic_qcqp import VectorBox,MagneticEventBox
 from .source_uniform_release_chronology import connect as connect_release_chronology
+from .causal_vibration_guard_interval import initial_guard
+from .causal_racc import covariance_interval_from_excess
 ROOT=Path(__file__).resolve().parents[3]
 C=json.loads((ROOT/"tools/stability/ou3_theorem/constants.json").read_text())
 
@@ -34,7 +36,7 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
  certified release-state propagator; absence is reported rather than invented.
  """
  n=int(round(horizon_s/dt));times=[i*dt for i in range(n+1)]
- samples=sample_history(cell,times,C);physical_acc=physical_acceleration_history(cell,times,C);adapt=initial_adaptation();trace=[];fast_acc=[]
+ samples=sample_history(cell,times,C);physical_acc=physical_acceleration_history(cell,times,C);adapt=initial_adaptation();guard=initial_guard();trace=[];fast_acc=[];racc=[];conditioned_acc=[]
  vel=[];pos=[];acc=[];jerk=[];grav=[];mag=[]
  prev_a=None
  for i,row in enumerate(samples):
@@ -46,7 +48,8 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
   fast_a=tuple(fast_primitive_increment_outer(cell,"accel",a,max(0,t-dt),t,C)* (1/dt) for a in range(3))
   fast_g=tuple(fast_primitive_increment_outer(cell,"gyro",a,max(0,t-dt),t,C)* (1/dt) for a in range(3))\n  fast_acc.append(fast_a)
   delivered_a=tuple(avec[a]+slow_a[a]+fast_a[a] for a in range(3));delivered_g=tuple(slow_g[a]+fast_g[a] for a in range(3))
-  try:state=adapt.step(I(dt,dt),delivered_g,delivered_a,I(.12,.12))
+  gs=guard.step(delivered_a,dt);conditioned_acc.append(gs["conditioned"]);racc.append(covariance_interval_from_excess(gs["excess"]))
+  try:state=adapt.step(I(dt,dt),delivered_g,gs["conditioned"],I(.12,.12))
   except ArithmeticError as e:
    raise ArithmeticError("causal adaptation enclosure unresolved at t=%.6f: %s"%(t,e))
   trace.append(state)
@@ -63,7 +66,7 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
  # release-state enclosure can be connected explicitly.
  from .aggregate_magnetic_service import AggregateMagneticService
  mag_service=AggregateMagneticService(C["magnetic_service"]["T_M_s"],C["magnetic_service"]["mu_M"])
- payload={"root":cell,"samples":samples,"adaptation_trace":trace,"physical_acceleration":physical_acc,"fast_accel":fast_acc,
+ payload={"root":cell,"samples":samples,"adaptation_trace":trace,"physical_acceleration":physical_acc,"fast_accel":fast_acc,"conditioned_accel":conditioned_acc,"Racc_interval":racc,
          "physical":{"velocity":vel,"position":pos,"acceleration":acc,"jerk":jerk,"gravity":grav},
          "aggregate_magnetic_service":mag_service,
          "complete_constructive_leaf":False}
