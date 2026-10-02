@@ -73,8 +73,8 @@ def recurring_magnetic_service(events,start,end,T,field_min,field_max,resmax):
 @dataclass
 class MarineMagneticWitness:
  velocity:list[VectorBox];position:list[VectorBox];acceleration:list[VectorBox];jerk:list[VectorBox]
- gravity_pairs:list[tuple[VectorBox,VectorBox]]
- displacement_pairs:list[tuple[VectorBox,VectorBox]]
+ gravity_windows:list[list[tuple[VectorBox,VectorBox]]]
+ displacement_windows:list[list[tuple[VectorBox,VectorBox]]]
  magnetic_events:list[MagneticEventBox];start:float;end:float
 
 def callback(w,constants):
@@ -85,11 +85,15 @@ def callback(w,constants):
  if any(x is UNKNOWN for x in states):return UNKNOWN
  # Witness pairs are generated for every complete 30-s moving window by the
  # history-cell builder. Each pair must certify the required diameter/span.
- for a,b in w.gravity_pairs:
-  q=gravity_direction_span_witness(a,b,m["attitude_excitation"]["theta_E_rad"])
-  if q is not TRUE:return q
- for a,b in w.displacement_pairs:
-  q=difference_span_witness(a,b,m["displacement_excitation"]["P_E_m"])
-  if q is not TRUE:return q
+ for pairs in w.gravity_windows:
+  qs=[gravity_direction_span_witness(a,b,m["attitude_excitation"]["theta_E_rad"]) for a,b in pairs]
+  if any(q is TRUE for q in qs): pass
+  elif any(q is UNKNOWN for q in qs): return UNKNOWN
+  else: return FALSE
+ for pairs in w.displacement_windows:
+  qs=[difference_span_witness(a,b,m["displacement_excitation"]["P_E_m"]) for a,b in pairs]
+  if any(q is TRUE for q in qs): pass
+  elif any(q is UNKNOWN for q in qs): return UNKNOWN
+  else: return FALSE
  return recurring_magnetic_service(w.magnetic_events,w.start,w.end,mag["T_M_s"],
           mag["field_norm_min_uT"],mag["field_norm_max_uT"],mag["measurement_residual_norm_max_uT"])
