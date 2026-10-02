@@ -46,6 +46,21 @@ def compatibility_line_certificate(blocks,line):
             "kernel_equals_compatibility_line":annihilated and nullity==1,
             "block_row_counts":{name:names.count(name) for name in sorted(set(names))}}
 
+def service_row_stratum_certificate(block_builder, strata):
+    """Exact rank audit over a theorem-supplied finite SERVICE-ROW stratum cover.
+
+    This intentionally refuses callback-pattern enumeration. Each stratum must
+    provide literal root-coordinate blocks and its declared compatibility line.
+    """
+    out=[]; all_ok=True
+    for st in strata:
+        blocks,line=block_builder(st)
+        c=compatibility_line_certificate(blocks,line)
+        c["stratum"]=st
+        out.append(c); all_ok &= c["kernel_equals_compatibility_line"]
+    return {"strata":out,"all_strata_kernel_line":all_ok,
+            "callback_pattern_enumeration_used":False}
+
 def certificate():
     blocks=[("four_S_LIN",[[1,0,0,0],[0,1,0,0]]),
             ("magnetic_AG",[[0,0,1,-1]]),
@@ -54,6 +69,8 @@ def certificate():
     c=compatibility_line_certificate(blocks,[0,0,1,1])
     return {"qualification":"OU3_COMPLETE_WORD_NULLSPACE_V1",**c,
             "literal_event_strata_regressed":False,
+            "finite_callback_pattern_cover_exists":False,
+            "required_stratum_parameterization":"aggregate MAGNETIC SERVICE rows + literal continuous factor parameters",
             "Astar_persistence_exclusion_separate":True,
             "theorem_closed":False}
 
