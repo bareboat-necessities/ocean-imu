@@ -1,5 +1,5 @@
 import unittest
-from tools.stability.ou3_theorem.local_defect_composition import certificate, verify_endpoint, event_boundary_pairing
+from tools.stability.ou3_theorem.local_defect_composition import certificate, verify_endpoint, event_boundary_pairing, left_attitude_error
 
 class T(unittest.TestCase):
     def test_exact_local_composition(self):
@@ -7,6 +7,16 @@ class T(unittest.TestCase):
         self.assertTrue(r["synthetic_endpoint_identity_exact"])
         self.assertFalse(r["endpoint_residual_used_as_input"])
         self.assertFalse(r["native_literal_boundary_export_complete"])
+
+    def test_left_attitude_error_sign(self):
+        import math
+        a=.02
+        # estimated W->B identity; true B->W=Rx(+a), hence true W->B=Rx(-a)
+        true_bw=[math.sin(a/2),0,0,math.cos(a/2)]
+        e=left_attitude_error([0,0,0,1],true_bw)
+        self.assertAlmostEqual(e[0],-a,places=12)
+        self.assertAlmostEqual(e[1],0,places=12)
+        self.assertAlmostEqual(e[2],0,places=12)
 
     def test_boundary_pairing_skips_only_mean_neutral_events(self):
         ev=[{"kind":"prediction"},{"kind":"sync"},{"kind":"sync_completion"},
