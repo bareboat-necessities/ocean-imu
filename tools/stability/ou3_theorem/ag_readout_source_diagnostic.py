@@ -616,11 +616,17 @@ def run(eigen, headings=('0', '0.001', '0.000001', 'wave')):
             # The untapped control intentionally has no proof events. Validate
             # only the observed temporary-header stream; terminal parity above
             # proves the taps did not alter shipping output.
+            lift=validate_physical_lift(observed)
+            from .local_defect_composition import carried_local_defect_certificate
+            local_defect=carried_local_defect_certificate(observed)
+            if not local_defect["local_b_endpoint_parity"]:
+                raise ArithmeticError("locally composed forcing vector failed endpoint parity")
             cases.append({'input_profile': heading,
                           'live_step': observed['live_step'], 'refined_step': observed['refined_step'],
                           'active_step': observed['active_step'],
                           'literal_terminal_parity': True,
-                          'physical_lift': validate_physical_lift(observed),
+                          'physical_lift': lift,
+                          'local_affine_defect': local_defect,
                           'physical_chain': paired_physical_reconstruction(observed),
                           **analyze(observed)})
             if heading in ('0', 'wave'):
