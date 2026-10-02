@@ -1,3 +1,11 @@
+## Causal history-cell witness builder implemented
+
+`history_witness_builder.py` now constructs, from one propagated dependency root, the nonlinear MARINE/MAGNETIC witness and the joint attitude/BA compatibility-line cone. It carries timed interval v,p,a,j and gravity-direction samples, all certainly 30-s-separated candidate endpoint pairs, applied magnetic event boxes, and the graph line r=(a,-G a). The line component radius includes `|G| da + dG |a| + dG da`; cells whose line cone reaches zero fail closed. `history_leaf_certificate.py` connects that SAME witness to nonlinear premise certification, later-word angle-aware kernel restriction, and the cellwise ratio composer.
+
+This completes the witness/connector plumbing, but actual rigorous ratios still require the upstream causal history propagator to emit these timed physical/gravity/magnetic boxes and the source QCQP to finish a verified supply certificate on each leaf. The current builder's 30-s pair set is a candidate set; the callback presently requires every supplied pair to satisfy the span, which is sufficient but stronger than the theorem's existential diameter condition within each window. Before promotion, the builder must group candidate pairs per 30-s window and certify at least one pair per window, rather than all pairs. This is a D-level conservatism, not a shipping claim.
+
+Structures preserved: shared dependency root, physical chronology, magnetic event chronology, joint BA graph line. Relaxation: current all-pairs span test is conservative and must be changed to per-window existential witness groups before promotion. No shipping counterexample.
+
 ## Nonlinear MARINE/MAGNETIC QCQP callbacks implemented
 
 `marine_magnetic_qcqp.py` now provides whole-history-box TRUE/FALSE/UNKNOWN certification for Euclidean velocity/position/acceleration/jerk envelopes, 30-s gravity-direction span witnesses, 30-s displacement-diameter witnesses, and recurring 1-s magnetic service with field/residual/informative-event qualification. UNKNOWN forces subdivision; midpoint satisfaction cannot promote a leaf. `verified_linked_qcqp.shipping_side_callback` wires these premises into the direct temporal QCQP.
