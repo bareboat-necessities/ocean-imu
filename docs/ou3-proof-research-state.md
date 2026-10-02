@@ -1,3 +1,11 @@
+## Aggregate magnetic service connected; explicit release-set audit exposes the true remaining quantitative gap
+
+`aggregate_magnetic_service.py` now consumes MAGNETIC SERVICE exactly as stated: `sum G_i'G_i >= mu_M I_2` over each service window. It produces a root-coordinate PSD action lower bound once the SAME-history magnetic loss weight is certified; no callback schedule or service-row enumeration is introduced. `literal_history_leaf_propagator.py` now carries this aggregate operator instead of synthetic magnetic event boxes. Thus the prior event-schedule blocker is removed by using more shipping/theorem structure, not less.
+
+`explicit_release_set.py` audits the H18/A21 release theorem against the needs of a constructive leaf. The existing repository proves captured-domain release compactness, BG/LIN mean compactness and a numerical LIN/BA covariance upper comparison, but it does NOT export numerical AG covariance upper bounds, BG/LIN mean radii, or a BA-graph interval. Consequently there is currently no rigorous explicit full-P0 interval seed. This is now the single release connector blocker. Qualitative compactness is deliberately not converted into an invented box.
+
+Structures preserved: aggregate MAGNETIC SERVICE and authoritative release theorem. Relaxations introduced: none. Failure classification: missing quantitative release constants is an open proof obligation; treating compactness as numerical bounds would be E. No shipping counterexample.
+
 ## HistoryCell sample propagator implemented; two required release/service inputs exposed
 
 `history_interpolation.py` rigorously expands sparse theorem-input knots: SLOW uses all knot/rate constraints; physical p/v use derivative envelopes; FAST uses the all-window signed primitive cap directly; gravity/magnetic vectors remain full envelopes between sparse knots unless causal information narrows them. `literal_history_leaf_propagator.py` expands a 60/100-s cell to delivered 5-ms samples and runs the closed Mahony->WavePeriod->band/variance->staged tuner chain sample-by-sample. It emits timed physical/gravity/magnetic boxes and the generated adaptation trace.
