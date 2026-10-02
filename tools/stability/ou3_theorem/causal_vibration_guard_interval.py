@@ -34,7 +34,7 @@ class GuardBox:
    self.detect=[list(acc),[I(0,0) for _ in range(3)]]
    self.removed_ms=[I(0,0) for _ in range(3)];self.weight=I(0,0)
    self.initialized=True
-   return {"conditioned":acc,"rms":I(0,0),"excess":I(0,0),"weight":self.weight}
+   return {"conditioned":acc,"rms":I(0,0),"excess":I(0,0),"weight":self.weight,"conditioning_delta_norm_upper":0.0}
   alpha=expi(I(-2*math.pi*self.cutoff_hz*dt,-2*math.pi*self.cutoff_hz*dt))
   low=list(acc)
   for p in range(self.poles):
@@ -73,8 +73,10 @@ class GuardBox:
    lo=0. if w.lo<eps else w.lo;hi=1. if w.hi>1-eps else w.hi;w=I(lo,hi)
   self.weight=w
   conditioned=tuple(acc[a]+w*(low[a]-acc[a]) for a in range(3))
+  delta=tuple(conditioned[a]-acc[a] for a in range(3))
+  dn=math.sqrt(sum(max(abs(x.lo),abs(x.hi))**2 for x in delta))
   return {"conditioned":conditioned,"rms":rms,"excess":excess,"weight":w,
-          "branch_midpoint_used":False}
+          "conditioning_delta_norm_upper":dn,"branch_midpoint_used":False}
 
 def initial_guard():
  z=I(0,0)
