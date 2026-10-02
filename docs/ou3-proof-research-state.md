@@ -1,3 +1,12 @@
+## Joint attitude-cover x force-cone threshold is numerically impractical with current factor norm
+
+Using the full verified 1021-cell attitude cover, the worst-cell joint threshold was solved before generating a force mesh. At exact force direction, the outer radial-shell width must be below roughly 0.0034--0.0040 m/s^2 (passing 0.00340698 gives residual .998298; failing .00397481 gives 1.003819). At exact force magnitude, force-direction half-angle must be below roughly .00549--.00610 deg (passing .00549316 gives residual .999944; failing .00610352 gives 1.003807). The worst attitude cells are near the factor threshold, so almost no force uncertainty remains.
+
+Therefore a literal Cartesian product of 1021 attitude cells with a force spherical cover at this resolution would be enormous and is not the preferred constructive route. This is a D-level conservatism of the current factor perturbation norm, not a shipping issue. The next calculation should tighten the JOINT attitude+force geometry rather than independently budgeting their perturbations: exploit that accelerometer attitude block -[f]x and AW block R_wb arise from the same physical/attitude history, and preferably rotate the innovation into the local body/force frame before taking norms. Do not generate millions of force cones from these thresholds.
+
+Structures preserved: complete attitude cover and exact force-cone identities. Relaxation causing failure: additive independent norm budget for attitude-induced R uncertainty and force-induced skew uncertainty inside Y. No shipping counterexample.
+
+
 ## Captured 6.9-deg attitude ball factor cover CLOSED
 
 A deterministic cubic-lattice cover in rotation-vector coordinates now covers all of R^3 with Euclidean covering radius 1.10 deg; retaining cells whose 1.10-deg balls intersect the captured 6.9-deg ball gives 1021 local attitude cells. The analytic full-space lattice covering argument proves no holes; the local radius has 0.05147686 deg margin below the measured factor threshold 1.15147686 deg.
