@@ -62,7 +62,24 @@ def analyze(path):
  e0=mat(B[0]['e_before']); e1=mat(B[-1]['e_after'])
  b_local=mat([[float(v[0])] for v in local['b']])
  prospective_parity=mp.norm(e1-M*e0-b_local)
+ # Exact endpoint decomposition by literal operation class.  Each local d_k is
+ # transported through all later mean factors before grouping, so cancellation
+ # inside a physical source class is retained.
+ from .local_defect_composition import local_defects
+ ops=local_defects(B)
+ suffix=mp.eye(21); grouped={}; transported=[None]*len(ops)
+ for k in range(len(ops)-1,-1,-1):
+  d=mat([[float(v[0])] for v in ops[k]['d']])
+  transported[k]=suffix*d
+  A=mat([[float(v) for v in row] for row in ops[k]['A']])
+  suffix=suffix*A
+ for op,term in zip(ops,transported):
+  label=op['kind'] if op['kind']!='correction' else 'correction:'+str(op.get('sensor'))
+  grouped[label]=grouped.get(label,mp.zeros(21,1))+term
  x=L0**-1*e0; b=Li*b_local; z=H.T*b
+ grouped_metric={key:fmt(mp.norm(Li*value)) for key,value in grouped.items()}
+ block_names=(('theta',0,3),('bg',3,6),('v',6,9),('p',9,12),('S',12,15),('aw',15,18),('ba',18,21))
+ endpoint_raw_blocks={name:fmt(mp.norm(b_local[a:z0])) for name,a,z0 in block_names}
  V0=(x.T*x)[0]; VN=(e1.T*(PN**-1)*e1)[0]
  ans={'profile':trace['profile'],'dps':80,'event_count':len(trace['events']),
   'observer_terminal_parity':trace['observer_terminal_parity'],
@@ -78,6 +95,8 @@ def analyze(path):
   'supply_is_retrospective_endpoint_residual':False,
   'local_defect_origin':'prospective_literal_same_boundary_composition',
   'local_b_endpoint_parity_norm':fmt(prospective_parity),
+  'endpoint_forcing_metric_norm_by_operation_class':grouped_metric,
+  'endpoint_forcing_raw_norm_by_state_block':endpoint_raw_blocks,
   'uniform_inner_retention_refuted_by_this_finite_replay':False,
   'all_time_magnetic_service_verified':False,
   'physical_S_origin':'one fixed capture/Live epoch; never reset at word boundaries',
