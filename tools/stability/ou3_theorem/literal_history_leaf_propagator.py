@@ -7,7 +7,7 @@ where literal covariance/geometry inputs are not yet derivable from the cell.
 from __future__ import annotations
 import json,math,numpy as np
 from pathlib import Path
-from .history_interpolation import sample_history,fast_primitive_increment_outer
+from .history_interpolation import sample_history,fast_primitive_increment_outer,physical_acceleration_history
 from .causal_tuner_interval import (I,MahonyBox,initial_wave_period_box,BandBox,
  VarianceBox,ShippingTunerBox,ClosedCausalAdaptationBox)
 from .history_witness_builder import TimedVectorBox,AttitudeGravityBox,build_history_witness
@@ -34,7 +34,7 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
  certified release-state propagator; absence is reported rather than invented.
  """
  n=int(round(horizon_s/dt));times=[i*dt for i in range(n+1)]
- samples=sample_history(cell,times,C);adapt=initial_adaptation();trace=[]
+ samples=sample_history(cell,times,C);physical_acc=physical_acceleration_history(cell,times,C);adapt=initial_adaptation();trace=[]
  vel=[];pos=[];acc=[];jerk=[];grav=[];mag=[]
  prev_a=None
  for i,row in enumerate(samples):
