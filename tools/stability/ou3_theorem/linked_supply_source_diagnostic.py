@@ -152,50 +152,58 @@ def analyze(path):
  return ans
 
 
-def export_words(directory, eigen, compiler):
+def export_words(directory, eigen, compiler, horizons=(16,30,100)):
     directory.mkdir(parents=True, exist_ok=True)
     inc = directory/'include'/'kalman_ou_iii'
     inc.mkdir(parents=True, exist_ok=True)
     header = (REPO/HEADER).read_text()
     (inc/HEADER.name).write_text(instrument(header))
-    source = (REPO/'tools/stability/ag_readout_source.cpp').read_text()
-    def once(old, new):
-        nonlocal source
-        if source.count(old) != 1:
-            raise ValueError('readout driver anchor changed: '+old[:70])
-        source = source.replace(old, new)
-    once('    std::string root;', '    std::string root, root_state, root_quat, release_state;')
-    once('            recording=true;',
-         '            root_state=matrix_json(filter.raw().mekf().xext);\n'
-         '            root_quat=matrix_json(filter.raw().mekf().qref.coeffs());\n'
-         '            recording=true;')
-    once('if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) active=k;',
-         'if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) {\n'
-         '          active=k; release_state=matrix_json(filter.raw().mekf().xext);\n        }')
-    needle = '              << ",\\\"terminal_covariance\\\":" << matrix_json(m.Pext)'
-    # Avoid altering any estimator or shared driver in the repository.
-    once(needle,
-         '              << ",\\\"root_state\\\":" << root_state\n'
-         '              << ",\\\"root_quaternion\\\":" << root_quat\n'
-         '              << ",\\\"release_state\\\":" << release_state\n'+needle)
-    driver = directory/'linked-source.cpp'
-    driver.write_text(source)
-    source_hashes = {str(p.relative_to(REPO)): hashlib.sha256(p.read_bytes()).hexdigest()
-                     for p in sorted((REPO/'src').rglob('*.h'))}
-    for name, includes in [('observed', ['-I'+str(inc.parent)]), ('control', [])]:
-        subprocess.run([compiler, '-O1', '-std=c++20', *includes,
-                        '-I'+str(REPO/'src'), '-isystem', str(eigen),
-                        str(driver), '-o', str(directory/name)], check=True)
-    for profile in ['0', 'wave']:
-        obs = json.loads(subprocess.check_output([str(directory/'observed'), profile], text=True))
-        ctl = json.loads(subprocess.check_output([str(directory/'control'), profile], text=True))
-        if any(obs[k] != v for k, v in ctl.items() if k != 'events'):
-            raise ArithmeticError('observer changed source execution')
-        obs.update(profile=profile, observer_terminal_parity=True,
-                   source_header_sha256=hashlib.sha256(header.encode()).hexdigest(),
-                   source_hashes=source_hashes)
-        (directory/('word-'+profile+'.json')).write_text(json.dumps(obs, sort_keys=True))
-
+    source0 = (REPO/'tools/stability/ag_readout_source.cpp').read_text()
+    for horizon in horizons:
+        source = source0
+        def once(old, new):
+            nonlocal source
+            if source.count(old) != 1:
+                raise ValueError('readout driver anchor changed: '+old[:70])
+            source = source.replace(old, new)
+        samples=int(round(float(horizon)/.005))
+        terminal=45000+samples
+        once('for (int k=1; k<=45064; ++k)',f'for (int k=1; k<={terminal}; ++k)')
+        once('    std::string root;', '    std::string root, root_state, root_quat, release_state;')
+        once('            recording=true;',
+             '            root_state=matrix_json(filter.raw().mekf().xext);\n'
+             '            root_quat=matrix_json(filter.raw().mekf().qref.coeffs());\n'
+             '            recording=true;')
+        once('if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) active=k;',
+             'if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) {\n'
+             '          active=k; release_state=matrix_json(filter.raw().mekf().xext);\n        }')
+        once('if (!m.Pext.allFinite() || !m.xext.allFinite() || applied!=8) return 3;',
+             'if (!m.Pext.allFinite() || !m.xext.allFinite()) return 3;')
+        needle = '              << ",\\\"terminal_covariance\\\":" << matrix_json(m.Pext)'
+        once(needle,
+             '              << ",\\\"root_state\\\":" << root_state\n'
+             '              << ",\\\"root_quaternion\\\":" << root_quat\n'
+             '              << ",\\\"release_state\\\":" << release_state\n'+needle)
+        driver = directory/f'linked-source-{horizon}s.cpp'
+        driver.write_text(source)
+        source_hashes = {str(p.relative_to(REPO)): hashlib.sha256(p.read_bytes()).hexdigest()
+                         for p in sorted((REPO/'src').rglob('*.h'))}
+        binaries={}
+        for name, includes in [('observed', ['-I'+str(inc.parent)]), ('control', [])]:
+            binary=directory/f'{name}-{horizon}s'
+            subprocess.run([compiler, '-O1', '-std=c++20', *includes,
+                            '-I'+str(REPO/'src'), '-isystem', str(eigen),
+                            str(driver), '-o', str(binary)], check=True)
+            binaries[name]=binary
+        for profile in ['0', 'wave']:
+            obs = json.loads(subprocess.check_output([str(binaries['observed']), profile], text=True))
+            ctl = json.loads(subprocess.check_output([str(binaries['control']), profile], text=True))
+            if any(obs[k] != v for k, v in ctl.items() if k != 'events'):
+                raise ArithmeticError('observer changed source execution')
+            obs.update(profile=profile, horizon_s=horizon, observer_terminal_parity=True,
+                       source_header_sha256=hashlib.sha256(header.encode()).hexdigest(),
+                       source_hashes=source_hashes)
+            (directory/f'word-{profile}-{horizon}s.json').write_text(json.dumps(obs, sort_keys=True))
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -203,14 +211,14 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--export', action='store_true')
     parser.add_argument('--eigen', type=Path, default=Path('/usr/include/eigen3'))
-    parser.add_argument('--cxx', default=shutil.which('clang++') or 'g++')
+    parser.add_argument('--cxx', default=shutil.which('clang++') or 'g++')\n    parser.add_argument('--horizons', default='16,30,100')
     args = parser.parse_args()
     if args.export:
-        export_words(args.directory.resolve(), args.eigen, args.cxx)
+        horizons=tuple(int(x) for x in args.horizons.split(','))\n        export_words(args.directory.resolve(), args.eigen, args.cxx, horizons)
     with mp.workdps(80):
         report = {'kind': 'NON_PROMOTING_LINKED_FINITE_SUPPLY', 'decimal_digits': 80,
                   'source_uniform_verified': False, 'theorem_closed': False,
-                  'words': [analyze(args.directory/('word-'+p+'.json')) for p in ['0', 'wave']]}
+                  'words': [analyze(args.directory/f'word-{p}-{h}s.json') for h in tuple(int(x) for x in args.horizons.split(',')) for p in ['0','wave']]}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, sort_keys=True)+'\n')
     print(json.dumps(report, indent=2, sort_keys=True))
