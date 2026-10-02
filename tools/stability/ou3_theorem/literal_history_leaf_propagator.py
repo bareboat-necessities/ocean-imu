@@ -16,6 +16,7 @@ from .source_uniform_release_chronology import connect as connect_release_chrono
 from .causal_vibration_guard_interval import initial_guard
 from .causal_racc import covariance_interval_from_excess
 from .guard_fast_state_abel import fast_lp_minus_raw_bound
+from .enclosure_failure import EnclosureFailure
 ROOT=Path(__file__).resolve().parents[3]
 C=json.loads((ROOT/"tools/stability/ou3_theorem/constants.json").read_text())
 
