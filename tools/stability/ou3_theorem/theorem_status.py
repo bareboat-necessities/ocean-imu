@@ -150,6 +150,8 @@ def status_report() -> dict:
         "structured_INJ_block_algebra_closed":True,
         "common_rotation_INJ_transport_exact":True,
         "changing_axis_two_axis_basis_identified":True,
+        "literal_axis_transport_frame_cancellation":True,
+        "structured_AW_mean_defect_recurrence":True,
         "structured_Riccati_full_shipping_chronology_numeric":False,
         "release_state_enclosure_connected_to_history_cover":False,
         "aggregate_magnetic_service_operator_connected":True,
