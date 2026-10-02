@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Root parameterization for conditional OU-III source-uniform history covers."""
 from __future__ import annotations
 import json
