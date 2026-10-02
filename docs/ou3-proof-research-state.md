@@ -1,3 +1,12 @@
+## Repeated release propagation: invertibility solved, gain enclosure is the next limiter
+
+The staged goLive->A21 PSD-aware propagation was executed after the one-step innovation gate closed. The center-zero inverse fallback causes interval Joseph arithmetic to become non-finite before the first useful staged checkpoint. This is class D: the inverse existence theorem is valid, but the entrywise gain enclosure is too coarse.
+
+The fallback has therefore been tightened without changing the admissible shipping set: retain the actual midpoint innovation inverse as center and use the PSD/noise-floor theorem only for a rigorous perturbation radius. The primary Neumann/Krawczyk inverse remains preferred whenever its interval residual verifies. A new staged run is queued to determine whether this centered PSD enclosure survives 10/100/1000+ samples.
+
+Structures preserved: P>=0, actual midpoint S, measurement floor, literal Joseph form. Relaxation: coarse norm perturbation radius only; failure is D. No shipping counterexample.
+
+
 ## Release innovation gate CLOSED source-uniformly on the captured ball
 
 The captured attitude domain is now represented by the theorem's rotation-vector ball ||dtheta||<=6.9 deg, not the artificial Cartesian cube. Rodrigues bounds enclose the whole SO(3) image. A force-ball cover retains ||f||<=g+Amax.
