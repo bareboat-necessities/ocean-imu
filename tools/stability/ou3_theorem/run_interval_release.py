@@ -26,7 +26,7 @@ def main():
  if out.get("verified"):
   alpha=math.exp(-2*math.pi*3*.005)
   z=linked_charge(out["events"],payload["guard_weight"],.005,.05,60.,alpha)
-  slim["guard_fast_aw_midpoint"]={k:v for k,v in z.items() if k not in ("reader","weight_mid","weight_rad")}
+  slim["guard_fast_aw_interval"]={k:v for k,v in z.items()}
  print(json.dumps(slim,indent=2))
  return 0 if out.get("verified") else 2
 
