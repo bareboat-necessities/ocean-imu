@@ -1,3 +1,15 @@
+## Common-Q and separated-LIN relaxations removed
+
+The shaped-storage diagnostic now uses the full dense 12x12 LIN block of the
+literal covariance metric after shipping normalization and permits root/terminal
+storage to vary with the actual generated tuner/covariance state.  The earlier
+seven scalar block weights and one-common-Q-across-sea-states ansatz are retired,
+not controlling.  The complete carried test is
+rho=lambda_max(Q0^-1/2 Mbar' QN Mbar Q0^-1/2) with Qk=(Dk Pk Dk')^-1.
+This retains v/p/S/a_w cross terms and causal adaptation.  Remaining relaxation:
+finite carried replay rather than source-uniform enclosure.  Failure remains
+class D unless a literal shipping execution violates a theorem conclusion.
+
 ## Adaptive shaped-storage derivation advanced
 
 The exact lossless coordinate identities are now implemented in adaptive_shaped_storage.py and regressed: the shipping integrated OU prediction normalizes to a dimensionless h/tau family, and generated tuner scaling changes are exact coboundaries that telescope across a persistent history. The carried source driver now exports the actually applied tau, sigma_aw, R_S, T_S, targets, variance/frequency state and proxy quaternion at each recorded sample; adaptive_shaped_storage_diagnostic.py consumes those joint tuples without Cartesian boxing. This is the first quantitative route that explicitly keeps the shipping tuner generator inside W_out.
