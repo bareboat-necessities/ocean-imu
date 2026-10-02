@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 import unittest
 import numpy as np
 from tools.stability.ou3_theorem.inj_block_algebra import INJ
