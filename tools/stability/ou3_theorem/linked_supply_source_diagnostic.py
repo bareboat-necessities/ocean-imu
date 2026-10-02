@@ -152,7 +152,7 @@ def analyze(path):
  return ans
 
 
-def export_words(directory, eigen, compiler, horizons=(16,30,100)):
+def export_words(directory, eigen, compiler, horizons=(16,30,60,100)):
     directory.mkdir(parents=True, exist_ok=True)
     inc = directory/'include'/'kalman_ou_iii'
     inc.mkdir(parents=True, exist_ok=True)
