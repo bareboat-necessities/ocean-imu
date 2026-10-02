@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from tools.stability.ou3_theorem.adaptive_shaped_storage import (
     scaling, normalized_prediction_exact, physical_prediction,
-    normalized_factor, tuner_coboundary, prediction_parity)
+    normalized_factor, tuner_coboundary, prediction_parity, normalized_S_correction21)
 
 class AdaptiveShapedStorageTests(unittest.TestCase):
     def test_exact_real_prediction_normalization(self):
@@ -23,6 +23,13 @@ class AdaptiveShapedStorageTests(unittest.TestCase):
         left=normalized_factor(A,*a,*b)
         right=tuner_coboundary(*a,*b)@normalized_prediction_exact(h,a[0])
         self.assertLess(np.linalg.norm(left-right,ord=np.inf),2e-12)
+
+    def test_S_factor_is_similarity_of_literal_gain(self):
+        H=np.zeros((3,21));H[:,12:15]=np.eye(3)
+        K=np.zeros((21,3));K[12:15,:]=.2*np.eye(3);K[15:18,:]=.03*np.eye(3)
+        A=normalized_S_correction21(K,H,1.7,.42)
+        self.assertTrue(np.all(np.isfinite(A)))
+        self.assertLess(np.linalg.norm(A[12:15,12:15]-.8*np.eye(3)),1e-12)
 
 if __name__=="__main__":
     unittest.main()
