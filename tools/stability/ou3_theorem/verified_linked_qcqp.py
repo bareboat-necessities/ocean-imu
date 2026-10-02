@@ -86,3 +86,39 @@ def shipping_side_callback(witness_builder,constants):
   if w is None:return None
   return callback(w,constants)
  return f
+
+def interval_matrix_quadratic_upper(Mmid,Mrad,box):
+ """Rigorous upper of z'Mz for interval M on box."""
+ mid=quadratic_interval(Mmid,box)[1]
+ R=np.asarray(Mrad,float);absmax=np.maximum(np.abs(box.lo),np.abs(box.hi))
+ err=float(absmax@R@absmax)
+ return math.nextafter(mid+err,math.inf)
+
+def interval_source_supply_upper(Bmid,Brad,Cmid,Crad,e_box,u_box):
+ ne=len(e_box.lo);nu=len(u_box.lo);Z=Box(np.r_[e_box.lo,u_box.lo],np.r_[e_box.hi,u_box.hi])
+ M=np.block([[np.zeros((ne,ne)),-np.asarray(Bmid,float)],[-np.asarray(Bmid,float).T,-np.asarray(Cmid,float)]])
+ R=np.block([[np.zeros((ne,ne)),np.asarray(Brad,float)],[np.asarray(Brad,float).T,np.asarray(Crad,float)]])
+ return interval_matrix_quadratic_upper(M,R,Z)
+
+def verified_interval_supply_bnb(B,C,e_box,u_box,A,b,side_callback,*,tol=1e-5,max_leaves=200000):
+ heap=[];counter=0
+ def ub(box):return interval_source_supply_upper(B.mid,B.rad,C.mid,C.rad,e_box,box)
+ def push(v,box):
+  nonlocal counter;counter+=1;heapq.heappush(heap,(-v,counter,box))
+ if not linear_feasible(u_box,A,b):return QCQPCertificate(-math.inf,0,True,"empty linear domain",0)
+ push(ub(u_box),u_box);best=-math.inf;leaves=0;maxw=0.
+ while heap:
+  neg,_,box=heapq.heappop(heap);v=-neg
+  if v<=best:continue
+  side=side_callback(box)
+  if side is False:continue
+  widths=box.hi-box.lo;maxw=max(maxw,float(widths.max(initial=0)))
+  if side is True and widths.max(initial=0)<=tol:best=max(best,v);leaves+=1;continue
+  if leaves+len(heap)>=max_leaves:return QCQPCertificate(max(best,v),leaves,False,"leaf limit",maxw)
+  j=int(np.argmax(widths))
+  if widths[j]<=tol:
+   if side is None:return QCQPCertificate(max(best,v),leaves,False,"nonlinear side unresolved",maxw)
+   best=max(best,v);leaves+=1;continue
+  for child in box.split(j):
+   if linear_feasible(child,A,b):push(ub(child),child)
+ return QCQPCertificate(best,leaves,True,"complete",maxw)
