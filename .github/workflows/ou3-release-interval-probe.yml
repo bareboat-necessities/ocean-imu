@@ -30,6 +30,7 @@ on:
       - 'tests/validation/test_ou3_changing_axis_inj.py'
       - 'tools/stability/ou3_theorem/force_axis_same_history.py'
       - 'tools/stability/ou3_theorem/force_axis_mismatch_probe.py'
+      - 'tools/stability/ou3_theorem/literal_axis_transport.py'
       - '.github/workflows/ou3-release-interval-probe.yml'
       - 'tools/stability/ou3_theorem/theorem_status.py'
       - 'tools/stability/ou3_theorem/release_accel_geometry_cover.py'
@@ -45,4 +46,4 @@ jobs:
         with: {python-version: '3.11'}
       - run: pip install numpy
       - run: |
-          python -c 'import json; from tools.stability.ou3_theorem.force_axis_mismatch_probe import diagnostic; z=diagnostic(); print(json.dumps(z,indent=2)); raise SystemExit(0 if z["verified"] else 1)'
+          python -c 'import json; from tools.stability.ou3_theorem.literal_axis_transport import diagnostic; z=diagnostic(); print(json.dumps(z,indent=2)); raise SystemExit(0 if z["verified"] else 1)'
