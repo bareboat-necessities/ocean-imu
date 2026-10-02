@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Causal history-cell witness builder joining nonlinear premises and shaped ratio."""
 from __future__ import annotations
 from dataclasses import dataclass,field
