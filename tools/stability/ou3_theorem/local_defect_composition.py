@@ -9,6 +9,33 @@ from fractions import Fraction as F
 from .linked_supply import matrix
 from .matrix_certificates import add, identity, matmul
 
+def quat_mul(a,b):
+    # Stored Eigen coeff order [x,y,z,w].
+    ax,ay,az,aw=map(float,a); bx,by,bz,bw=map(float,b)
+    return [aw*bx+ax*bw+ay*bz-az*by,
+            aw*by-ay*0+ay*bw+az*bx-ax*bz,
+            aw*bz+az*bw+ax*by-ay*bx,
+            aw*bw-ax*bx-ay*by-az*bz]
+
+def quat_conj(q):
+    x,y,z,w=map(float,q); return [-x,-y,-z,w]
+
+def left_attitude_error(est_wb,true_bw):
+    """Rotation vector d with true W->B = Exp(d) * estimated W->B.
+
+    Inputs use Eigen quaternion coeff order [x,y,z,w]. Carried fixture has B'=B.
+    """
+    import math
+    true_wb=quat_conj(true_bw)
+    dq=quat_mul(true_wb,quat_conj(est_wb))
+    n=math.sqrt(sum(x*x for x in dq))
+    dq=[x/n for x in dq]
+    if dq[3]<0: dq=[-x for x in dq]
+    v=math.sqrt(sum(x*x for x in dq[:3]))
+    if v<1e-14: return [2*x for x in dq[:3]]
+    ang=2*math.atan2(v,dq[3])
+    return [ang*x/v for x in dq[:3]]
+
 def local_defects(boundaries):
     out=[]
     for k,item in enumerate(boundaries):
