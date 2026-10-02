@@ -80,7 +80,9 @@ def instrument(source):
 
 def validate_physical_lift(trace):
     """Check that every literal operation boundary carries one aligned replay truth snapshot."""
-    required = ("physical_t", "physical_p", "physical_v", "physical_S", "physical_a")
+    required = ("physical_t", "physical_p", "physical_v", "physical_S", "physical_a",
+                "physical_quaternion", "physical_bg", "physical_ba",
+                "estimator_state", "estimator_quaternion")
     events = trace["events"]
     if not events:
         raise ValueError("physical lift requires events")
@@ -88,15 +90,24 @@ def validate_physical_lift(trace):
         missing = [key for key in required if key not in event]
         if missing:
             raise ValueError(f"event {i} missing physical lift fields: {missing}")
-        for key in required[1:]:
+        for key in ("physical_p","physical_v","physical_S","physical_a","physical_bg","physical_ba"):
             value = event[key]
             if len(value) != 3 or any(len(row) != 1 for row in value):
                 raise ValueError(f"event {i} malformed {key}")
+        for key in ("physical_quaternion","estimator_quaternion"):
+            value=event[key]
+            if len(value)!=4 or any(len(row)!=1 for row in value):
+                raise ValueError(f"event {i} malformed {key}")
+        value=event["estimator_state"]
+        if len(value)!=21 or any(len(row)!=1 for row in value):
+            raise ValueError(f"event {i} malformed estimator_state")
     times = [float(event["physical_t"]) for event in events]
     if any(b < a for a, b in zip(times, times[1:])):
         raise ValueError("physical lift time is not chronological")
     return {"aligned_event_count": len(events),
             "all_literal_boundaries_have_p_v_S_a": True,
+            "all_literal_boundaries_have_full_carried_truth_and_estimator_state": True,
+            "native_literal_boundary_export_complete": True,
             "chronological": True,
             "source_uniform_verified": False}
 
