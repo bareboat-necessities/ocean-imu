@@ -399,6 +399,35 @@ def verified_joseph_update(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
     return joseph_covariance(p,k,h,r),cert
 
 
+def spd_noise_floor_inverse_box(r: IMat) -> tuple[IMat,dict]:
+    """Lossless inverse enclosure from S=H P H'+R >= R >= r_min I.
+
+    Requires covariance provenance P>=0; then every actual innovation is SPD.
+    Each inverse entry has magnitude <= ||S^-1||2 <= 1/r_min. Center-zero
+    entrywise box is coarse but rigorous and does not require entrywise S
+    dependency destruction.
+    """
+    if r.shape!=(3,3): raise ValueError("3x3 measurement covariance required")
+    lo,_=symmetric_interval_gershgorin(r.mid,r.rad)
+    if not lo>0: raise ValueError("positive measurement noise floor required")
+    b=_out(1.0/lo)
+    z=tuple(tuple(0.0 for _ in range(3)) for _ in range(3))
+    rad=tuple(tuple(b for _ in range(3)) for _ in range(3))
+    return IMat(z,rad),{"verified":True,"certificate":"PSD_covariance_plus_measurement_floor",
+                        "measurement_floor":lo,"inverse_norm_bound":b}
+
+def verified_gain_interval_psd(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
+    """Gain enclosure retaining the covariance-set invariant P>=0."""
+    try:
+        return verified_gain_interval(p,h,r)
+    except ValueError:
+        sinv,cert=spd_noise_floor_inverse_box(r)
+        return matmul(matmul(p,transpose(h)),sinv),cert
+
+def verified_joseph_update_psd(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
+    k,cert=verified_gain_interval_psd(p,h,r)
+    return joseph_covariance(p,k,h,r),cert
+
 def contains(outer: IMat, inner: IMat) -> bool:
     if outer.shape!=inner.shape: return False
     n,m=outer.shape
