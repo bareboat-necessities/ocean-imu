@@ -58,26 +58,25 @@ def analyze(path):
  L0=mp.cholesky(P0);LN=mp.cholesky(PN); Li=LN**-1
  H=Li*M*L0
  Delta=sym(mp.eye(21)-H.T*H); eig=mp.eigsy(Delta,eigvals_only=True); dmin=min(eig)
- from .local_defect_composition import carried_boundaries, compose_local
+ from .local_defect_composition import carried_boundaries
  B=carried_boundaries(trace['events'])
- local=compose_local(B)
  e0=mat(B[0]['e_before']); e1=mat(B[-1]['e_after'])
- b_local=mat([[float(v[0])] for v in local['b']])
- prospective_parity=mp.norm(e1-M*e0-b_local)
- # Exact endpoint decomposition by literal operation class.  Each local d_k is
- # transported through all later mean factors before grouping, so cancellation
- # inside a physical source class is retained.
- from .local_defect_composition import local_defects
- ops=local_defects(B)
- suffix=mp.eye(21); grouped={}; transported=[None]*len(ops)
- for k in range(len(ops)-1,-1,-1):
-  d=mat([[float(v[0])] for v in ops[k]['d']])
-  transported[k]=suffix*d
-  A=mat([[float(v) for v in row] for row in ops[k]['A']])
-  suffix=suffix*A
- for op,term in zip(ops,transported):
-  label=op['kind'] if op['kind']!='correction' else 'correction:'+str(op.get('sensor'))
-  grouped[label]=grouped.get(label,mp.zeros(21,1))+term
+ # Prospective 80-digit composition for long carried diagnostics.  The exact
+ # Fraction implementation remains the algebraic certificate; using it for a
+ # 100-s/20k-step feasibility replay creates enormous rational numerators with
+ # no theorem benefit.
+ b_local=mp.zeros(21,1); M_local=mp.eye(21); grouped={}
+ for item in B:
+  A=mat([[float(v) for v in row] for row in item['A']])
+  eb=mat(item['e_before']); ea=mat(item['e_after'])
+  d=ea-A*eb
+  for key in list(grouped): grouped[key]=A*grouped[key]
+  label=item['kind'] if item['kind']!='correction' else 'correction:'+str(item.get('sensor'))
+  grouped[label]=grouped.get(label,mp.zeros(21,1))+d
+  b_local=A*b_local+d
+  M_local=A*M_local
+ prospective_parity=mp.norm(e1-M_local*e0-b_local)
+ homogeneous_map_parity=mp.norm(M-M_local)
  x=L0**-1*e0; b=Li*b_local; z=H.T*b
  grouped_metric={key:fmt(mp.norm(Li*value)) for key,value in grouped.items()}
  block_names=(('theta',0,3),('bg',3,6),('v',6,9),('p',9,12),('S',12,15),('aw',15,18),('ba',18,21))
@@ -96,7 +95,7 @@ def analyze(path):
   'source_uniform_verified':False,'theorem_closed':False,
   'supply_is_retrospective_endpoint_residual':False,
   'local_defect_origin':'prospective_literal_same_boundary_composition',
-  'local_b_endpoint_parity_norm':fmt(prospective_parity),
+  'local_b_endpoint_parity_norm':fmt(prospective_parity),\n  'homogeneous_map_parity_norm':fmt(homogeneous_map_parity),
   'endpoint_forcing_metric_norm_by_operation_class':grouped_metric,
   'endpoint_forcing_raw_norm_by_state_block':endpoint_raw_blocks,
   'uniform_inner_retention_refuted_by_this_finite_replay':False,
