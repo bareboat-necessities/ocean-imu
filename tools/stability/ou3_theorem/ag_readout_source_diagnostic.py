@@ -96,8 +96,9 @@ def validate_physical_lift(trace):
     if not events:
         raise ValueError("physical lift requires events")
     for i, event in enumerate(events):
-        # The read-only tuner record is not an operation boundary; it carries
-        # only physical_t, which stays in the chronology check below.
+        # The read-only tuner record is not an operation boundary. Its
+        # physical_t is printed at full precision while boundaries use
+        # std::to_string, so it is also left out of the chronology check.
         if event.get("kind") == "adaptive_state":
             continue
         missing = [key for key in required if key not in event]
@@ -114,7 +115,7 @@ def validate_physical_lift(trace):
         value=event["estimator_state"]
         if len(value)!=21 or any(len(row)!=1 for row in value):
             raise ValueError(f"event {i} malformed estimator_state")
-    times = [float(event["physical_t"]) for event in events]
+    times = [float(event["physical_t"]) for event in events if event.get("kind") != "adaptive_state"]
     if any(b < a for a, b in zip(times, times[1:])):
         raise ValueError("physical lift time is not chronological")
     return {"aligned_event_count": sum(event.get("kind") != "adaptive_state" for event in events),
@@ -634,6 +635,10 @@ def run(eigen, headings=('0', '0.001', '0.000001', 'wave')):
             local_defect=carried_local_defect_certificate(observed)
             # A failed parity is a diagnostic result until boundary continuity is
             # localized below; do not hide the first offending native boundary.
+            # The operation replays below see only literal operation events; the
+            # read-only adaptive_state record changes no estimator quantity.
+            operations = {**observed, 'events': [e for e in observed['events']
+                                                 if e.get('kind') != 'adaptive_state']}
             cases.append({'input_profile': heading,
                           'live_step': observed['live_step'], 'refined_step': observed['refined_step'],
                           'active_step': observed['active_step'],
@@ -641,10 +646,10 @@ def run(eigen, headings=('0', '0.001', '0.000001', 'wave')):
                           'physical_lift': lift,
                           'local_affine_defect': local_defect,
                           'physical_chain': paired_physical_reconstruction(observed),
-                          **analyze(observed)})
+                          **analyze(operations)})
             if heading in ('0', 'wave'):
-                cases[-1]['exact_exported_word_enclosure'] = enclose_exported_word(observed)
-                cases[-1]['contraction_feasibility'] = contraction_feasibility(observed)
+                cases[-1]['exact_exported_word_enclosure'] = enclose_exported_word(operations)
+                cases[-1]['contraction_feasibility'] = contraction_feasibility(operations)
     return {'qualification': 'OU3_CARRIED_SOURCE_READOUT_DIAGNOSTIC_V1',
             'shipping_header_sha256': hashlib.sha256(source.encode()).hexdigest(),
             'decimal_digits': 80, 'profile': 'construction through wrapper release; 225 to 225.32 s',
