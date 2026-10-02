@@ -20,6 +20,7 @@ class GuardBox:
  detect:list
  removed_ms:list
  weight:I
+ lp_raw_diff_norm:list
  initialized:bool=False
  cutoff_hz:float=3.0
  poles:int=2
@@ -32,19 +33,34 @@ class GuardBox:
   if not self.initialized:
    self.stages=[list(acc) for _ in range(4)]
    self.detect=[list(acc),[I(0,0) for _ in range(3)]]
-   self.removed_ms=[I(0,0) for _ in range(3)];self.weight=I(0,0)
+   self.removed_ms=[I(0,0) for _ in range(3)];self.weight=I(0,0);self.lp_raw_diff_norm=[0.0]*4
    self.initialized=True
    return {"conditioned":acc,"rms":I(0,0),"excess":I(0,0),"weight":self.weight,
            "conditioning_delta_norm_upper":0.0,
            "conditioned_norm_lower":raw_norm_lower}
   alpha=expi(I(-2*math.pi*self.cutoff_hz*dt,-2*math.pi*self.cutoff_hz*dt))
+  # Coupled recurrence for d_p = stage_p - raw_k.  Let
+  # delta_k = ||raw_k-raw_{k-1}||. For p=0,
+  # d_0,k = alpha(d_0,k-1 - (raw_k-raw_{k-1})).
+  # For p>0, stage_p,k=(1-alpha)stage_{p-1,k}+alpha stage_p,k-1,
+  # so ||d_p,k|| <= (1-alpha)||d_{p-1,k}||
+  #                  + alpha(||d_p,k-1||+delta_k).
+  # raw_increment_norm_upper is supplied from the same physical/sensor history.
+  delta_raw=getattr(self,"raw_increment_norm_upper",None)
   low=list(acc)
+  old_diff=list(self.lp_raw_diff_norm)
+  new_diff=list(old_diff)
   for p in range(self.poles):
    nxt=[]
    for a in range(3):
     self.stages[p][a]=(1-alpha)*low[a]+alpha*self.stages[p][a]
     nxt.append(self.stages[p][a])
    low=nxt
+   if delta_raw is not None:
+    ah=alpha.hi
+    if p==0:new_diff[p]=ah*(old_diff[p]+delta_raw)
+    else:new_diff[p]=(1-alpha.lo)*new_diff[p-1]+ah*(old_diff[p]+delta_raw)
+  self.lp_raw_diff_norm=new_diff
   gamma=expi(I(-2*math.pi*self.detect_hz*dt,-2*math.pi*self.detect_hz*dt))
   hp=list(acc)
   for p in range(2):
@@ -77,17 +93,17 @@ class GuardBox:
   conditioned=tuple(acc[a]+w*(low[a]-acc[a]) for a in range(3))
   delta=tuple(conditioned[a]-acc[a] for a in range(3))
   dn=math.sqrt(sum(max(abs(x.lo),abs(x.hi))**2 for x in delta))
-  # Rigorous fallback from reverse triangle.  Additionally, because the first
-  # initialized LP state equals the raw sample, early guard conditioning cannot
-  # erase the norm merely because component boxes decorrelate.  Track a coupled
-  # LP-vs-raw perturbation bound and apply it only after multiplication by w.
+  # Exact output relation is conditioned=raw+w*(LP-raw).  Use the coupled
+  # LP/raw difference recurrence, not the component-box delta.  Since w>=0,
+  # ||conditioned|| >= ||raw||-w_hi*||LP-raw||.
   coupled=None
+  lp_diff=new_diff[self.poles-1] if self.poles else 0.0
   if raw_norm_lower is not None:
-   coupled=max(0.0,float(raw_norm_lower)-dn)
+   coupled=max(0.0,float(raw_norm_lower)-w.hi*lp_diff)
   return {"conditioned":conditioned,"rms":rms,"excess":excess,"weight":w,
-          "conditioning_delta_norm_upper":dn,"conditioned_norm_lower":coupled,
+          "conditioning_delta_norm_upper":dn,"lp_raw_diff_norm_upper":lp_diff,"conditioned_norm_lower":coupled,
           "branch_midpoint_used":False}
 
 def initial_guard():
  z=I(0,0)
- return GuardBox([[z,z,z] for _ in range(4)],[[z,z,z] for _ in range(2)],[z,z,z],z)
+ return GuardBox([[z,z,z] for _ in range(4)],[[z,z,z] for _ in range(2)],[z,z,z],z,[0.0]*4)
