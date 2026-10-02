@@ -1,3 +1,14 @@
+## Captured 6.9-deg attitude ball factor cover CLOSED
+
+A deterministic cubic-lattice cover in rotation-vector coordinates now covers all of R^3 with Euclidean covering radius 1.10 deg; retaining cells whose 1.10-deg balls intersect the captured 6.9-deg ball gives 1021 local attitude cells. The analytic full-space lattice covering argument proves no holes; the local radius has 0.05147686 deg margin below the measured factor threshold 1.15147686 deg.
+
+Each cell uses its own Rodrigues center R(theta_c) and multiplicative local rotation perturbation, not a zero-centered approximation. Running the PSD-factor innovation certificate over all 1021 cells with exact worst-magnitude force produced zero failures. Worst cell: residual 0.965173718, Gram perturbation 15.94380372, inverse norm bound 1.73547152. Thus the complete captured attitude domain admits a narrow factor-innovation inverse under this local cover.
+
+Caveat: this run used exact force direction/magnitude to isolate and close the attitude cover. The final joint history cover must combine these attitude cells with force-direction/magnitude cells; the earlier whole-force cone failure means that joint refinement remains necessary. This does not change the 6.9-deg theorem domain.
+
+Structures preserved: full captured attitude ball, center-dependent SO(3), PSD factor innovation. Relaxation: lattice cells overlap and include points outside the captured ball, a safe outer cover. No shipping counterexample.
+
+
 ## Force-angle threshold test: no alpha_* exists until attitude geometry is refined
 
 The requested residual-vs-force-cone-angle calculation was completed with rho fixed exactly at 18.60665 m/s^2. There is no passing force half-angle under the current 6.9-deg attitude ball: even alpha=0 gives Gram perturbation 105.695718 and residual 6.389781>1. Therefore no force-direction spherical cover, however fine, can close the current factor inverse certificate.
