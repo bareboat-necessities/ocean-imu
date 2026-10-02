@@ -73,11 +73,16 @@ def literal_mean_factor(event):
     return A
 
 def carried_boundaries(events):
-    pairs=event_boundary_pairing(events); out=[]
-    for ia,ib in pairs:
-        a,b=events[ia],events[ib]
-        out.append({"kind":a["kind"],"A":literal_mean_factor(a),
-                    "e_before":carried_error(a),"e_after":carried_error(b)})
+    """Use literal same-operation pre/post snapshots; never the next event."""
+    out=[]
+    for event in events:
+        if event.get("kind") not in {"prediction","correction","reset"}:
+            continue
+        if "estimator_state_after" not in event or "estimator_quaternion_after" not in event:
+            raise ValueError("mean event missing same-boundary post snapshot")
+        out.append({"kind":event["kind"],"A":literal_mean_factor(event),
+                    "e_before":carried_error(event),
+                    "e_after":carried_error(event, after=True)})
     return out
 
 def carried_local_defect_certificate(trace):
@@ -92,7 +97,7 @@ def carried_local_defect_certificate(trace):
             "endpoint_residual_used_as_input":False,
             "local_b_endpoint_residual_max_abs":maxdiff,
             "local_b_endpoint_parity":maxdiff < 5e-10,
-            "native_literal_boundary_export_complete":True,
+            "native_literal_boundary_export_complete":True,\n            "same_operation_pre_post_snapshots":True,
             "b_local":[[float(x[0])] for x in c["b"]]}
 
 def local_defects(boundaries):
