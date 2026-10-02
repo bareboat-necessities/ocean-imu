@@ -1,3 +1,16 @@
+## Explicit release numerics: AG/BG/BA closed; LIN radius eliminated as a prerequisite
+
+The literal H18/refinement horizon certificate gives a conservative A21 activation time of 469 s from captured-service origin. Using the worst shipping attitude reseed variance 1.5708^2, Pb0=1e-6, AtomS3R shipping gyro noise density .00135 rad/s/sqrt(Hz-equivalent discrete input) at 200 Hz, and gyro-bias driving variance 1e-11, an observation-free AG covariance comparison gives P_AG <= 8.06571980866 I_6 over that finite horizon. This deliberately drops covariance-reducing acc/mag corrections. The shipping gyro-bias projection radius .5 plus physical slow-bias radius .02 gives ||e_bg||<=.52 rad/s. Since the active-A21 accelerometer Jacobian has J_ba=I, the zero-action BA graph obeys ||A_ba||<=g+A_max=18.60665, hence each graph entry lies in [-18.60665,18.60665].
+
+A separate numerical LIN mean radius is no longer required to seed the constructive proof. Shipping bootstrap leaves the MEKF mean untouched; at goLive all 21 mean coordinates are zero, while covariance has an explicit diagonal outer seed: attitude <=1.5708^2, BG=1e-6, v=1, p=400, S=2500, AW<=16.48, BA=.004^2. `golive_release_seed.py` records this. The release set is therefore defined constructively as the finite literal image of this numerical goLive seed under the same 469-s causal history propagation. This is stronger than converting qualitative H18 BIBO compactness into an arbitrary LIN radius.
+
+MAGNETIC SERVICE is now consumed directly as its actual transported/innovation-whitened information Gramian; no extra magnetic gain weight is needed and no callback schedule is enumerated.
+
+Open integration: the sample history propagator must now propagate the goLive mean/covariance through literal MEKF prediction/corrections to the A21 activation event. Until that finite image is interval-computed, `release_state_enclosure_connected_to_history_cover` remains false. No missing standalone LIN constant remains as a theorem premise.
+
+Structures preserved: literal goLive initialization, finite H18/refinement chronology, aggregate actual-innovation MAGNETIC SERVICE. Relaxations: AG covariance comparison drops corrections only in the safe covariance-increasing direction. No shipping counterexample.
+
+
 ## Aggregate magnetic service connected; explicit release-set audit exposes the true remaining quantitative gap
 
 `aggregate_magnetic_service.py` now consumes MAGNETIC SERVICE exactly as stated: `sum G_i'G_i >= mu_M I_2` over each service window. It produces a root-coordinate PSD action lower bound once the SAME-history magnetic loss weight is certified; no callback schedule or service-row enumeration is introduced. `literal_history_leaf_propagator.py` now carries this aggregate operator instead of synthetic magnetic event boxes. Thus the prior event-schedule blocker is removed by using more shipping/theorem structure, not less.
