@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """PSD-factor innovation cover using force magnitude/direction cones."""
 from __future__ import annotations
 import math,heapq,numpy as np
