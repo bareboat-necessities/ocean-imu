@@ -38,7 +38,7 @@ def _window_pair_groups(samples,start,end,T):
  for ws in starts:
   if ws<start-1e-12 or ws+T>end+1e-12:continue
   inside=[x for x in samples if x.t_lo>=ws-1e-12 and x.t_hi<=ws+T+1e-12]
-  pairs=[(x.value,y.value) for i,x in enumerate(inside) for y in inside[i+1:]]
+  val=lambda x: x.gravity if isinstance(x,AttitudeGravityBox) else x.value\n  pairs=[(val(x),val(y)) for i,x in enumerate(inside) for y in inside[i+1:]]
   out.append(pairs)
  return out
 
