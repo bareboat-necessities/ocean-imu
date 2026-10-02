@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 import unittest,math
 from tools.stability.ou3_theorem.guard_weighted_fast_abel import *
 class WeightedGuardFastAbelTests(unittest.TestCase):
