@@ -1,3 +1,17 @@
+## FAST signed-primitive tightening for guard: adjacent-sample route does not improve the bound
+
+The requested signed-primitive calculation was carried out for the vibration-guard one-pole kernel. With piecewise-held FAST input u_k, U_n=h sum_{i<=n} u_i and every placed primitive bounded by C_a over H_a, discrete summation by parts gives a finite-window filtered-output bound of the form
+|LP(u)| <= (1-alpha) B_f + (1-alpha) C_a/h + alpha^(H_a/h) B_f
+(componentwise; later positive unit-gain LP poles do not increase the L-infinity bound). Therefore
+|LP(u)-u| <= B_f + that quantity.
+The tail is negligible for H_a=60 s.
+
+Numerically at h=.005 s and fc=3 Hz, alpha=exp(-2*pi*3*.005)=0.91005724. The primitive-derived unweighted first-pole term is about 0.9264 m/s^2 before adding the raw B_f in LP-minus-raw form, whereas the simple pointwise difference bound 2 B_f is 0.6 m/s^2. Thus C_a=.05 m/s does NOT tighten the adjacent-sample LP/raw difference at this sampling/corner; its C_a/h conversion is too expensive. Replacing 2B_f by this result would make the certificate worse.
+
+guard_fast_primitive.py records the derivation and selects min(pointwise,primitive), then applies the actual same-history guard weight w. This identifies the correct next use of the signed primitive: not as a surrogate adjacent jump bound Delta_k, but directly in the weighted convolution w_k(LP-I)u over the guard slew horizon, where w changes on 5 s and the Abel kernel can exploit C_a without paying C_a/h at every sample. No new assumption is needed.
+
+This is a useful negative calculation: the previously proposed adjacent FAST primitive tightening is analytically unproductive and should not be pursued. Keep the valid 2B_f term in the raw-increment recurrence for now; attack the weighted FAST correction as one temporal operator if CI shows it is the limiter.
+
 ## Guard LP/raw correlation recurrence connected to physical history
 
 The vibration-guard norm proof now uses the literal convex-blend structure instead of the decorrelated component perturbation. For each low-pass pole define d_p,k=stage_p,k-f_k. Shipping initialization gives d_p,0=0 exactly. With alpha=exp(-2*pi*f_c*dt) and Delta_k=||f_k-f_{k-1}||,
