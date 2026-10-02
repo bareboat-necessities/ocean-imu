@@ -94,6 +94,12 @@ jobs:
           rm -rf /tmp/ou3-linked-horizons
           python3 -m tools.stability.ou3_theorem.linked_supply_source_diagnostic --export --directory /tmp/ou3-linked-horizons --output /tmp/ou3-linked-horizons.json --eigen /usr/include/eigen3 --horizons 16,30,60,100
           cat /tmp/ou3-linked-horizons.json
+      - name: Diagnose shipping shaped Q on 60s and 100s words
+        run: |
+          python3 -m tools.stability.ou3_theorem.adaptive_shaped_storage_diagnostic --directory /tmp/ou3-linked-horizons --output /tmp/ou3-shaped-storage.json --horizons 16,30,60,100
+          python3 -m tools.stability.ou3_theorem.adaptive_shaped_q_diagnostic --directory /tmp/ou3-linked-horizons --output /tmp/ou3-shaped-q.json --horizons 60,100
+          cat /tmp/ou3-shaped-storage.json
+          cat /tmp/ou3-shaped-q.json
       - name: Validate local affine-defect composition contract
         run: python3 -m unittest tests.validation.test_ou3_local_defect_composition -v
       - name: Validate exact complete-word nullspace lemma
