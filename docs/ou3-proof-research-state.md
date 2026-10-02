@@ -1,3 +1,11 @@
+## Midpoint-Q relaxation removed; first rigorous interval shaped form exists
+
+The covariance/gain path now computes a verified full 21x21 precision enclosure `Q=P^-1` at every storage boundary using the exact-binary64 residual/Neumann inverse certificate. `IJointQuadratic` accumulates interval `Q0,Q1,A,D` directly, so the shaped action coefficients no longer depend on midpoint precision. Failure of the full inverse certificate stops the proof. Tests require verified full precision and interval joint algebra.
+
+This is the first genuinely rigorous shaped-form infrastructure, but the final constructive certificate is intentionally still fail-closed: the interval A block can be inspected for homogeneous action, while the B/C source blocks cannot be converted to a supply bound until the SAME history cell carries a rigorous source-domain metric encoding SLOW rates, FAST primitives, MARINE physical boundaries, measurement/model defects and magnetic-service source coordinates. `rigorous_cell_from_interval_joint` therefore refuses to promote a quotient without that metric. This avoids reintroducing independent source suprema.
+
+Structures preserved: verified P/K/Q chronology, full 21-state precision, shared history source symbols, interval joint cross terms. Relaxations introduced: none in precision inversion; source-domain metric remains an open constructive obligation rather than a relaxation. No shipping counterexample. Next calculation: attach the theorem's temporal SLOW+FAST/MARINE source-domain quadratic/functional to the same history symbols and solve the kernel-aware generalized cell quotient.
+
 ## Literal covariance/gain -> joint shaped-supply subchain implemented
 
 `causal_covariance_supply.py` now takes one shared reachable-history cell and an A21 covariance enclosure, propagates literal prediction P-=FPF'+Q, computes each 3-D innovation and a verified interval inverse, generates K=P H' S^-1 internally, applies literal Joseph covariance, and feeds A=I-KH plus the same history-source columns immediately into `JointQuadratic`. Reset covariance is transported congruently. AW covariance sync and BA release remain covariance-only chronology events and do not invent mean supply. P and K are never admissible history-cell coordinates.
