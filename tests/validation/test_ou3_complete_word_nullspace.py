@@ -1,6 +1,6 @@
 import unittest
 from tools.stability.ou3_theorem.complete_word_nullspace import compatibility_line_certificate
-from tools.stability.ou3_theorem.nullspace_strata import audit_service_row_strata
+from tools.stability.ou3_theorem.nullspace_strata import audit_service_row_strata, magnetic_service_kernel_certificate, invertible_transport_kernel_rule
 
 class T(unittest.TestCase):
     def test_exact_line(self):
@@ -14,6 +14,14 @@ class T(unittest.TestCase):
         r=compatibility_line_certificate(blocks,[0,1,1,0])
         self.assertEqual(r["nullity"],2)
         self.assertFalse(r["kernel_equals_compatibility_line"])
+
+    def test_continuous_magnetic_and_transport_cover(self):
+        m=magnetic_service_kernel_certificate(1)
+        self.assertTrue(m["continuous_service_row_cover_complete"])
+        self.assertEqual(m["magnetic_service_common_kernel_dimension"],0)
+        t=invertible_transport_kernel_rule()
+        self.assertTrue(t["kernel_dimension_invariant_under_transport"])
+        self.assertFalse(t["continuous_transport_subdivision_required"])
 
     def test_service_row_stratum_uses_no_gain(self):
         st={"name":"regular","process_rows":[[1,0,0]],"S_rows":[],
