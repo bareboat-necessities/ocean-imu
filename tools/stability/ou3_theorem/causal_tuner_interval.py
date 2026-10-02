@@ -22,6 +22,12 @@ class I:
  def __mul__(self,o):
   o=iv(o);v=(self.lo*o.lo,self.lo*o.hi,self.hi*o.lo,self.hi*o.hi);return I(math.nextafter(min(v),-math.inf),math.nextafter(max(v),math.inf))
  __rmul__=__mul__
+ def __truediv__(self,o):
+  o=iv(o)
+  if o.lo<=0<=o.hi:raise ArithmeticError("interval division singular")
+  vals=(self.lo/o.lo,self.lo/o.hi,self.hi/o.lo,self.hi/o.hi)
+  return I(math.nextafter(min(vals),-math.inf),math.nextafter(max(vals),math.inf))
+ def __rtruediv__(self,o):return iv(o).__truediv__(self)
  def sq(self):
   if self.lo<=0<=self.hi:return I(0,math.nextafter(max(self.lo*self.lo,self.hi*self.hi),math.inf))
   return self*self
