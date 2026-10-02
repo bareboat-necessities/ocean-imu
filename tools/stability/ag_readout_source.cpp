@@ -170,6 +170,25 @@ int main(int argc, char** argv) {
             filter.updateMag(measured_field);
             if (recording && filter.raw().mekf().lastMagDiag().accepted) ++applied;
         }
+        if (recording) {
+            const auto& raw = filter.raw();
+            std::ostringstream tune;
+            tune << std::setprecision(17)
+                 << "{\"kind\":\"adaptive_state\",\"physical_t\":" << physical_t
+                 << ",\"tau\":" << raw.getTauApplied()
+                 << ",\"sigma_aw\":" << raw.getSigmaApplied()
+                 << ",\"R_S\":" << raw.getRSApplied()
+                 << ",\"T_S\":" << raw.getPseudoUpdatePeriodSec()
+                 << ",\"tau_target\":" << raw.getTauTarget()
+                 << ",\"sigma_target\":" << raw.getSigmaTarget()
+                 << ",\"variance\":" << raw.getAccelVariance()
+                 << ",\"variance_horizon\":" << raw.getSigmaVarianceHorizonSec()
+                 << ",\"freq\":" << raw.getFreqHz()
+                 << ",\"period\":" << raw.getPeriodSec()
+                 << ",\"proxy_q\":" << matrix_json(raw.startupProxyQuat().coeffs())
+                 << "}";
+            events.push_back(tune.str());
+        }
         if (live<0 && filter.isLive()) live=k;
         if (refined<0 && filter.hasRefinedMagReference()) refined=k;
         if (active<0 && filter.raw().mekf().acc_bias_updates_enabled()) active=k;
