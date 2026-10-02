@@ -43,8 +43,8 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
   t=row["t"];slow_a=tuple(row[f"slow_accel_{a}"] for a in range(3));slow_g=tuple(row[f"slow_gyro_{a}"] for a in range(3))
   # Same-history acceleration derived from physical velocity knots + jerk.
   avec=physical_acc[i]
-  fast_a=tuple(fast_primitive_increment_outer(cell,"accel",a,max(0,t-dt),t,C)* (1/dt) for a in range(3))
-  fast_g=tuple(fast_primitive_increment_outer(cell,"gyro",a,max(0,t-dt),t,C)* (1/dt) for a in range(3))
+  fast_a=tuple(fast_primitive_increment_outer(cell,"accel",a,max(0,t-dt),t,C)* (1.0/dt) for a in range(3))
+  fast_g=tuple(fast_primitive_increment_outer(cell,"gyro",a,max(0,t-dt),t,C)* (1.0/dt) for a in range(3))
   fast_acc.append(fast_a)
   # Body specific-force components: gravity direction is carried explicitly.
   # Physical translational acceleration has only a world-frame norm contract at
