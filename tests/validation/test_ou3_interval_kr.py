@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 import unittest,numpy as np
 from tools.stability.ou3_theorem.interval_riccati_21 import IMat
 from tools.stability.ou3_theorem.interval_kr import *
