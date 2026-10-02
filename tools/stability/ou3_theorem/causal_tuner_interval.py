@@ -45,6 +45,7 @@ def hull(a,b):return I(min(a.lo,b.lo),max(a.hi,b.hi))
 @dataclass
 class MahonyBox:
  q:tuple[I,I,I,I]; integ:tuple[I,I,I]; initialized:bool
+ q_norm_lower:float=1.0
  def step(self,dt:I,gyro:tuple[I,I,I],acc:tuple[I,I,I],two_kp:float,two_ki:float,norm_lower:float|None=None):
   # Shipping observer is fed -acc. Component interval arithmetic can lose the
   # coupled physical norm constraint and falsely include the zero vector.
@@ -63,8 +64,19 @@ class MahonyBox:
   g=[gyro[i]+ints[i]+two_kp*e for i,e in enumerate((ex,ey,ez))]
   h=.5*dt; gx,gy,gz=(x*h for x in g)
   n0=q0-q1*gx-q2*gy-q3*gz;n1=q1+q0*gx+q2*gz-q3*gy;n2q=q2+q0*gy-q1*gz+q3*gx;n3=q3+q0*gz+q1*gy-q2*gx
-  nn=n0.sq()+n1.sq()+n2q.sq()+n3.sq(); rinv=recip(sqrti(nn))
+  nn=n0.sq()+n1.sq()+n2q.sq()+n3.sq()
+  # Exact coupled identity for q+ = q + .5 dt q*(0,g):
+  # ||q+||^2 = ||q||^2 (1 + ||.5 dt g||^2).  Cross term vanishes.
+  # Hence the pre-normalization norm is at least the carried normalized-q floor.
+  # Retain component intervals for orientation, but do not let their dependency
+  # loss manufacture a zero norm.
+  if not(self.q_norm_lower>0 and math.isfinite(self.q_norm_lower)):
+   raise ArithmeticError("invalid coupled quaternion norm floor")
+  nn=I(max(nn.lo,self.q_norm_lower*self.q_norm_lower),nn.hi)
+  rinv=recip(sqrti(nn))
   self.q=(n0*rinv,n1*rinv,n2q*rinv,n3*rinv);self.integ=tuple(ints);self.initialized=True
+  # Shipping normalization returns unit norm in exact arithmetic.
+  self.q_norm_lower=1.0
   # down row dot original specific force
   q0,q1,q2,q3=self.q
   down=(2*(q1*q3-q0*q2),2*(q2*q3+q0*q1),q0.sq()-q1.sq()-q2.sq()+q3.sq())
