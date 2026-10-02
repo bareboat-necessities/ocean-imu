@@ -64,6 +64,62 @@ H_a=H_g=60\,{\rm s},\qquad C_a=0.05\,{\rm m/s},\qquad C_g=0.002\,{\rm rad}.
 \]
 The primitive history is carried through adjacent proof words and is never reset by the proof.
 
+\subsection{Accelerometer-bias estimator relations}
+The physical SLOW component is carried by one sampled history; the estimator
+bias prior does not act on it. The sampled
+slow recurrence is
+\begin{equation}
+ b_{i,s,k+1}=b_{i,s,k}+w_{i,s,k},\qquad
+ \norm{w_{i,s,k}}\le\min(2B_{i,s},D_{i,s}\Delta t_k).
+ \label{eq:bias-discrete}
+\end{equation}
+Let $e_b=b-\hat b$. For the accelerometer-bias estimate, define the implemented
+prediction factor
+\begin{equation}
+ \phi_{e,k}=
+ \begin{cases}
+ 1,&\text{H18/held prediction},\\
+ \phi_{{\rm OU},k},&\text{A21/active prediction}.
+ \end{cases}
+ \label{eq:phi-mode}
+\end{equation}
+With physical truth $b_{k+1}=b_k+w_k$, both modes obey the single relation
+\begin{equation}
+ \boxed{
+ e_{b,k+1}^{-}=
+ \phi_{e,k}e_{b,k}^{+}+
+ (1-\phi_{e,k})b_k+w_k .}
+ \label{eq:bias-prediction}
+\end{equation}
+Equation~\eqref{eq:bias-prediction} is an estimator-mode relation, not a model
+imposed on physical truth.
+For $z_b=(e_b,b)$ the same identity has the joint form
+\begin{equation}
+ \begin{bmatrix}e_{b,k+1}^{-}\\b_{k+1}\end{bmatrix}
+ =\begin{bmatrix}\phi_{e,k}I&(1-\phi_{e,k})I\\0&I\end{bmatrix}
+ \begin{bmatrix}e_{b,k}^{+}\\b_k\end{bmatrix}
+ +\begin{bmatrix}I\\I\end{bmatrix}w_k.
+ \label{eq:bias-joint}
+\end{equation}
+The two rows share one physical increment. Neither independent disturbance
+columns nor an estimator-induced reset of $b$ preserves this relation.
+
+
+Measurement correction is carried separately. If the implemented correction
+changes the estimate by $\Delta\hat b_k$, then
+\begin{equation}
+ e_{b,k}^{\rm corr}=e_{b,k}^{-}-\Delta\hat b_k .
+ \label{eq:bias-correction}
+\end{equation}
+For the shipping accelerometer-bias projection,
+\begin{align}
+ \hat b_{a,k}^{+}&=\operatorname{Proj}_{R_b}
+                      (\hat b_{a,k}^{\rm corr}),\nonumber\\
+ e_{b_a,k}^{+}&=b_{a,k}-
+ \operatorname{Proj}_{R_b}(\hat b_{a,k}^{\rm corr}).
+ \label{eq:bias-projection}
+\end{align}
+
 \section{Magnetic service}
 MAGNETIC SERVICE supplies recurring accepted magnetic information subject to the shipping field-norm, calibration, geometry, acceptance and service-gap bounds. The proof uses the literal accepted-event chronology and does not replace it with continuous yaw observation. The implemented residual gyro-bias projection is retained and is distinct from the physical delivered-gyro qualification.
 
