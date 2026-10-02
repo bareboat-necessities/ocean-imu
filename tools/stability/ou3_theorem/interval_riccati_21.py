@@ -352,17 +352,36 @@ def _inverse3_exact(a: tuple[tuple[float,...],...]) -> tuple[tuple[float,...],..
 
 
 def verified_inverse3_interval(s: IMat) -> tuple[IMat,dict]:
-    """Entrywise inverse enclosure after the strict spectral residual check."""
+    """Verified inverse using midpoint approximate-inverse residual + interval radius.
+
+    This avoids Gershgorin's false failure on correlated but SPD midpoint
+    innovations. Y is the explicit 3x3 midpoint inverse. If
+    eta=||I-Y S0||_inf<1 then ||S0^-1||_inf<=||Y||_inf/(1-eta).
+    Adding interval E is certified when ||S0^-1||*||E||<1.
+    """
     if s.shape!=(3,3): raise ValueError("3x3 innovation required")
-    cert=innovation_inverse_spectral_certificate(s)
-    if not cert["verified"]: raise ValueError("innovation inverse not verified")
     inv0=_inverse3_exact(s.mid)
-    # ||S0^-1|| <= 1/a from the same certified midpoint eigen floor.
-    a=1.0/cert["inverse_norm_bound"] + max(sum(row) for row in s.rad)
+    # Residual computed with outward interval arithmetic even though operands
+    # are point matrices, retaining binary64 operation error in the radius.
+    y=IMat(inv0,tuple(tuple(0.0 for _ in range(3)) for _ in range(3)))
+    s0=IMat(s.mid,tuple(tuple(0.0 for _ in range(3)) for _ in range(3)))
+    ys=matmul(y,s0)
+    eta=0.0
+    for i in range(3):
+        eta=max(eta,sum(abs(ys.mid[i][j]-(1.0 if i==j else 0.0))+ys.rad[i][j] for j in range(3)))
+    yn=max(sum(abs(x) for x in row) for row in inv0)
+    if not eta<1.0: raise ValueError("midpoint inverse residual not verified")
+    invnorm0=yn/(1.0-eta)
     er=max(sum(row) for row in s.rad)
-    residual=er/a
-    delta=(1.0/a)*residual/(1.0-residual)
+    residual=invnorm0*er
+    if not residual<1.0: raise ValueError("innovation inverse not verified")
+    invnorm=invnorm0/(1.0-residual)
+    # Neumann perturbation ||S^-1-S0^-1|| <= ||S0^-1|| r ||S^-1||.
+    delta=invnorm0*er*invnorm
     rad=tuple(tuple(_out(delta) for _ in range(3)) for _ in range(3))
+    cert={"verified":True,"midpoint_inverse_residual":eta,
+          "interval_residual_norm_bound":residual,"inverse_norm_bound":invnorm,
+          "certificate":"approximate_inverse_residual"}
     return IMat(inv0,rad),cert
 
 
@@ -379,6 +398,70 @@ def verified_joseph_update(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
     k,cert=verified_gain_interval(p,h,r)
     return joseph_covariance(p,k,h,r),cert
 
+
+def spd_noise_floor_inverse_box(r: IMat) -> tuple[IMat,dict]:
+    """Lossless inverse enclosure from S=H P H'+R >= R >= r_min I.
+
+    Requires covariance provenance P>=0; then every actual innovation is SPD.
+    Each inverse entry has magnitude <= ||S^-1||2 <= 1/r_min. Center-zero
+    entrywise box is coarse but rigorous and does not require entrywise S
+    dependency destruction.
+    """
+    if r.shape!=(3,3): raise ValueError("3x3 measurement covariance required")
+    lo,_=symmetric_interval_gershgorin(r.mid,r.rad)
+    if not lo>0: raise ValueError("positive measurement noise floor required")
+    b=_out(1.0/lo)
+    z=tuple(tuple(0.0 for _ in range(3)) for _ in range(3))
+    rad=tuple(tuple(b for _ in range(3)) for _ in range(3))
+    return IMat(z,rad),{"verified":True,"certificate":"PSD_covariance_plus_measurement_floor",
+                        "measurement_floor":lo,"inverse_norm_bound":b}
+
+def verified_gain_interval_psd(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
+    """Gain enclosure retaining P>=0 while centering at the actual midpoint inverse.
+
+    If the entrywise S perturbation is too large for Neumann inclusion, PSD
+    still gives ||S^-1||<=1/rmin. We keep inv(S_mid) as center and use
+    ||S^-1-inv(S_mid)|| <= ||S^-1||+||inv(S_mid)|| for a rigorous, materially
+    tighter box than center zero whenever the midpoint is informative.
+    """
+    try:
+        return verified_gain_interval(p,h,r)
+    except ValueError as err:
+        S=innovation_covariance(p,h,r)
+        floor,_=symmetric_interval_gershgorin(r.mid,r.rad)
+        if not floor>0: raise ValueError("positive measurement noise floor required") from err
+        inv0=_inverse3_exact(S.mid)
+        inv0n=max(sum(abs(x) for x in row) for row in inv0)
+        b=_out(1.0/floor+inv0n)
+        sinv=IMat(inv0,tuple(tuple(b for _ in range(3)) for _ in range(3)))
+        cert={"verified":True,"certificate":"PSD_floor_centered_midpoint_inverse",
+              "measurement_floor":floor,"inverse_norm_bound":1.0/floor,
+              "perturbation_entry_radius":b}
+        return matmul(matmul(p,transpose(h)),sinv),cert
+
+def verified_joseph_update_psd(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
+    k,cert=verified_gain_interval_psd(p,h,r)
+    return joseph_covariance(p,k,h,r),cert
+
+def linked_covariance_update(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
+    """Covariance correction P-PH'(HPH'+R)^-1HP, retaining linked factors.
+
+    Algebraically identical to the Kalman/Joseph covariance update in exact
+    arithmetic. Unlike intervalizing K first, the subtractive information term
+    remains one linked expression. Requires a verified innovation inverse.
+    """
+    S=innovation_covariance(p,h,r)
+    try:
+        Sinv,cert=verified_inverse3_interval(S)
+    except ValueError as err:
+        # PSD guarantees existence but a useful linked subtraction requires an
+        # inverse enclosure narrow enough to preserve sign/cancellation.
+        raise ArithmeticError("linked innovation inverse enclosure required") from err
+    PHt=matmul(p,transpose(h))
+    corr=matmul(matmul(PHt,Sinv),transpose(PHt))
+    out=symmetrize(add(p,scale(corr,-1.0)))
+    return out,{**cert,"covariance_form":"linked_information_subtraction",
+               "gain_intervalized":False}
 
 def contains(outer: IMat, inner: IMat) -> bool:
     if outer.shape!=inner.shape: return False

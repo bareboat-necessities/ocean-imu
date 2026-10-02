@@ -1,4 +1,5 @@
 name: ou3-stability-proof
+# proof-source attribution refresh
 on:
   workflow_dispatch:
   pull_request:
@@ -15,7 +16,7 @@ on:
       - "reports/results/ou3_stability/**"
       - ".github/workflows/ou3-stability-proof.yml"
   push:
-    branches: [main, "claude/ou3-*"]
+    branches: [main, "claude/ou3-*", "proof/ou3-*"]
     paths:
       - "src/kalman_ou_iii/**"
       - "src/kalman_ou_common/**"
@@ -70,6 +71,16 @@ jobs:
           python-version: "3.12"
       - name: Install factor algebra dependencies
         run: python3 -m pip install numpy scipy mpmath
+      - name: Run source-uniform interval release diagnostic
+        continue-on-error: true
+        run: |
+          python3 -m tools.stability.ou3_theorem.run_interval_release | tee /tmp/ou3-interval-release.json
+
+      - name: Diagnose physical HistoryCell subdivision
+        continue-on-error: true
+        run: |
+          python3 -m tools.stability.ou3_theorem.run_physical_history_subdivision | tee /tmp/ou3-physical-subdivision.json
+
       - name: Compile theorem tooling
         run: python3 -m py_compile tools/stability/ou3_theorem/*.py
       - name: Compute literal A21 release outer storage first
@@ -88,6 +99,17 @@ jobs:
           cat /tmp/ou3-held-ba-lin-word.json
       - name: Audit carried source readout without promotion
         run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-source-readout.json
+      - name: Diagnose 16s 30s 60s 100s linked prospective supply
+        run: |
+          rm -rf /tmp/ou3-linked-horizons
+          python3 -m tools.stability.ou3_theorem.linked_supply_source_diagnostic --export --directory /tmp/ou3-linked-horizons --output /tmp/ou3-linked-horizons.json --eigen /usr/include/eigen3 --horizons 16,30,60,100
+          cat /tmp/ou3-linked-horizons.json
+      - name: Diagnose shipping shaped Q on 60s and 100s words
+        run: |
+          python3 -m tools.stability.ou3_theorem.adaptive_shaped_storage_diagnostic --directory /tmp/ou3-linked-horizons --output /tmp/ou3-shaped-storage.json --horizons 16,30,60,100
+          python3 -m tools.stability.ou3_theorem.adaptive_shaped_q_diagnostic --directory /tmp/ou3-linked-horizons --output /tmp/ou3-shaped-q.json --horizons 60,100
+          cat /tmp/ou3-shaped-storage.json
+          cat /tmp/ou3-shaped-q.json
       - name: Validate local affine-defect composition contract
         run: python3 -m unittest tests.validation.test_ou3_local_defect_composition -v
       - name: Validate exact complete-word nullspace lemma

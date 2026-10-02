@@ -319,23 +319,23 @@ The actual reference is checked constant on this particular word.
 The declared physical gravity 9.80665 and its shipping float representation
 are kept separately; their difference is an explicit model/arithmetic term.
 At 80 digits the forced identity residual norm is approximately
-`2.84874602317e-82`; this is a finite decimal diagnostic, not an interval
+`3.38446651750e-82`; this is a finite decimal diagnostic, not an interval
 enclosure or a source-uniform certificate. The root multiplier is not zero:
 its block Frobenius norms for BG,V,P,S,AW,BA are approximately
-`(0,.01746150,.003428685,.001083323,.00008579003,1.117579)`.
+`(0,.01746150,.003428686,.001083322,.00008578987,1.117579)`.
 Only its BG cancellation is the structural identity proved above.
 
 The recorded reference gives projected gravity `g||Pi_B e_z||=8.77133455729`.
 This is a diagnostic necessary budget for the normalized actual-S average
 under nominal collinearity; the spline defect and all other supplies still
 have to be charged. It is not a source-uniform nominal field floor. The
-rotation triangle bound costs `39.22565052489`, giving margin
-`-30.45431596760` before all other charges. This invalidates that norm
+rotation triangle bound costs `39.22565272637`, giving margin
+`-30.45431816909` before all other charges. This invalidates that norm
 relaxation, not the actual signed rotation term (whose norm is about .00116)
 or the original separation target. No interval enclosure of it is attempted.
 
 The cellwise signed-velocity/jerk bound costs
-`239.57211610857 + .39841221469 = 239.97052832325`. One refinement combines
+`239.57211796185 + .39841223353 = 239.97053019538`. One refinement combines
 signed coefficients C_i inside each actual S interval [a,b] first. Put
 H=b-a and D=sum C_i. The exact physical identity and remainder are
 
@@ -348,8 +348,8 @@ intervals, so sum by parts again with the signed D/H before taking norms.
 For C=(1,-1), sample times (0,1), a(t)=t, the total D vanishes but the
 remainder is exactly -1, attaining the bound; it cannot be discarded.
 
-On this word the refined velocity charge is `23.98805974096`, jerk charge
-`3.82238262046`, total `27.81044236142`, still `19.03910780414` above the
+On this word the refined velocity charge is `23.98805965312`, jerk charge
+`3.82238280532`, total `27.81044245844`, still `19.03910790115` above the
 recorded threshold before root, sensor, bias or spline defects. The signed
 physical acceleration action itself has norm about .005, but that value
 cannot be used as an upper bound for other histories. After this second

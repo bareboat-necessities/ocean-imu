@@ -1,0 +1,205 @@
+\section{Proofs of the current lemma chain}
+This section proves the implications labeled PROVED and the implication part of each CONDITIONAL lemma.  Raw exact-rational or interval arithmetic is delegated only where explicitly stated.
+
+\subsection{Shipping OU prediction identities}
+For one OU axis,
+\[
+a_w(t+s)=e^{-s/\tau}a_w(t)+\int_0^s e^{-(s-r)/\tau}\,dW(r).
+\]
+Successive integration gives the deterministic coefficients multiplying the root acceleration. With \(x=h/\tau\),
+\[
+\phi_{pa}=\tau^2(x+e^{-x}-1),\qquad
+\phi_{Sa}=\tau^3(\tfrac12x^2-x-e^{-x}+1).
+\]
+Taylor expansion gives the shipping small-\(x\) branches as the analytic limits. The process covariance has Gram form
+\[
+Q=\int_0^h\Phi(h-s)LL^T\Phi(h-s)^T\,ds\succeq0.
+\]
+Thus the shipping discrete prediction and process action used by the proof are the exact OU-chain quantities.
+
+\subsection{Joseph correction and reset action}
+For \(S=HP^-H^T+R\), \(K=P^-H^TS^{-1}\), \(A=I-KH\),
+\[
+P^+=AP^-A^T+KRK^T
+=P^- -P^-H^TS^{-1}HP^-.
+\]
+The Woodbury identity yields the equivalent positive information increment. Hence correction action is nonnegative and zero action implies zero corresponding whitened homogeneous innovation. The certificate evaluates this identity with the literal matrices and retains cross covariance.
+
+If \(e^+=Ge\) and \(P^+=GP^-G^T\), then
+\[
+(e^+)^T(P^+)^{-1}e^+=e^T(P^-)^{-1}e
+\]
+for nonsingular \(G\). Therefore the shipping reset transports storage but creates no artificial loss or supply.
+
+\subsection{Held BA and loss of heading service}
+On a held-BA interval the estimator BA mean is constant, its gain rows vanish and its covariance block is frozen/decoupled. For two perturbations sharing one physical bias history,
+\[
+\delta e_o^+=A\delta e_o+B\delta e_b,\qquad
+\delta e_b^+=\delta e_b,
+\]
+so
+\[
+\Psi=\begin{bmatrix}A&B\\0&I_3\end{bmatrix}.
+\]
+Thus strict full-state H18 contraction in a fixed positive quadratic metric is impossible and is not a premise of the proof.
+
+Without informative heading service the axial equations satisfy
+\[
+\dot\theta_z=-e_{b_g,z},\qquad \dot e_{b_g,z}=0,
+\]
+hence over \(T\)
+\[
+\binom{\theta_z(T)}{e_{b_g,z}(T)}
+=\begin{bmatrix}1&-T\\0&1\end{bmatrix}
+\binom{\theta_z(0)}{e_{b_g,z}(0)}.
+\]
+The nontrivial Jordan block gives linear heading growth for nonzero axial bias error, proving the necessity of recurring magnetic service.
+
+\subsection{Qualified gyro-bias alias exclusion}
+A sampled complete-turn alias requires an integer \(2\pi\) nominal rotation within one prediction step. On the qualified \(4\)--\(6\) ms family the implemented \(\norm{\hat b_g}\le0.5\) projection together with the physical slow/FAST gyro and angular-rate envelopes gives a one-step angle strictly below the first nonzero complete turn. The committed interval certificate checks the worst endpoint and a positive transverse singular floor. Therefore the alias is excluded on this qualified timestep family.
+
+\subsection{Complete-word LIN and joint kernel reduction}
+Zero process action places the homogeneous root in the exact kernel of every transported process factor. Zero \(S\)-correction action adds the transported \(S\) rows. Stacking these literal rows at a common root and eliminating along \(v\to p\to S\) removes independent LIN/\(a_w\) zero-action roots. The certificate performs exact rational row reduction, not a floating rank threshold.
+
+Condition on a fixed admissible complete magnetic/event transport stratum. After LIN reduction, zero magnetic action restricts AG to the service-compatible subspace; literal accelerometer rows then impose BA compatibility. Exact reduction of this complete stack gives nullity at most one on every certified stratum. This proves the conditional implication. The open premise is a continuous source-uniform cover of every reachable MAGNETIC SERVICE row/transport stratum.
+
+At an active A21 accelerometer update the BA Jacobian block is \(I_3\) up to the residual sign convention. Therefore, once a surviving attitude amplitude is fixed, \(H_{\rm acc}e=0\) has at most one BA solution. BA cannot add an independent kernel direction.
+
+\subsection{Same-history physical-to-nominal bridge}
+Assume a nonzero compatibility direction persists through a qualified moving superword. Transporting the literal zero-innovation equations to common world coordinates removes absolute attitude from same-cell force/field geometry. Slow bias terms retain their amplitude/rate histories, FAST terms retain their signed primitives, physical acceleration is tied to the same \(v\)-history by \(v'=a\) and the jerk bound, and magnetic rows use the same accepted service history. Persistence therefore implies vanishing of the linked A* physical/nominal functional. The derived A* inequality excludes persistence whenever its source margin is strictly positive. The implication is proved; the open premise is a source-uniform positive margin on every reachable physical HistoryCell and prefix.
+
+\subsection{H18 release and A21 root covariance}
+Assume finite completion of the shipping reference-refinement/release state machine. Captured attitude, projected gyro bias and held BA are compact/bounded; the literal H18 LIN subsystem is BIBO with BA as bounded input; tuner/reference/scheduler/covariance maps are continuous over the finite bridge. Hence the terminal release image is compact. The unresolved premise is source-uniform finite completion of that state machine.
+
+For recurring A21 roots, the exact-rational LIN certificate proves a full Loewner lower comparison for the complete \(16\)-s LIN path. The joint-root certificate combines this with fresh AG/BA process injection while retaining cross covariance and proves
+\[
+P_{\rm root}\succeq L_{\rm root}\succ0.
+\]
+The finite certificate checks exact rational LDL/Loewner inequalities; only raw arithmetic is delegated. Since inversion reverses Loewner order,
+\[
+J_{\rm root}=P_{\rm root}^{-1}\preceq L_{\rm root}^{-1}.
+\]
+If the release image is compact, continuity of \(V=e^TJe\) then gives a finite \(C_{\rm out}=\sup V\), proving existence of a compact outer root region. Retention and inner entry remain separate open premises.
+
+\subsection{Specific-force and quaternion normalization}
+Reverse triangle inequality gives
+\[
+\norm{f_{\rm raw}}\ge g-A_{\max}-B_{a,s}-B_{a,f}>0.
+\]
+No component independence is used.
+
+For \(r=\frac{\Delta t}{2}(0,\omega_c)\), quaternion multiplication by the pure imaginary \(r\) is orthogonal to \(q\) in \(\R^4\), and
+\(\norm{q\otimes r}=\norm q\,\norm r\). Hence
+\[
+\norm{q+q\otimes r}^2
+=\norm q^2(1+\norm r^2)
+=\norm q^2\left(1+\frac{\Delta t^2}{4}\norm{\omega_c}^2\right).
+\]
+Thus Cartesian quaternion intervals cannot create a physical zero normalization denominator.
+
+\subsection{Vibration guard and FAST Abel state}
+For one pole,
+\[
+s_k=(1-\alpha)f_k+\alpha s_{k-1}.
+\]
+With \(d_k=s_k-f_k\),
+\[
+d_k=\alpha(d_{k-1}-(f_k-f_{k-1})),
+\]
+so
+\[
+\norm{d_k}\le\alpha(\norm{d_{k-1}}+\Delta_k).
+\]
+Repeating the subtraction through the positive cascade proves the stated later-pole recurrence. Since \(f_c=f+w d_{\rm LP}\),
+\[
+\norm{f_c}\ge\norm f-w_{\max}\norm{d_{\rm LP}}.
+\]
+
+For FAST input write the current finite causal LP-minus-identity state as
+\[
+d_k=\sum_{j=0}^{n-1}q_j u_{k-j}.
+\]
+Let \(U_m=h\sum_{i\le m}u_i\). Discrete Abel summation rewrites \(d_k\) as endpoint primitive terms plus first differences \(q_{j+1}-q_j\). The all-placed-window primitive cap bounds those terms by \(C_a/h\), while the stable pre-horizon tail is charged by \(B_{a,f}\). This charge is applied once to the current LP state, not recursively at each sample. Taking its minimum with the valid pointwise \(2B_{a,f}\) bound preserves rigor.
+
+\subsection{Integrated weighted guard--reader Abel bound}
+For
+\[
+Q=h\sum_k c_kw_k[(L-I)u]_k,
+\]
+expand the convolution and interchange the finite sums to obtain
+\[
+Q=h\sum_j q_j u_j.
+\]
+Using \(U_j=h\sum_{i\le j}u_i\), Abel summation gives, up to the endpoint convention,
+\[
+Q=q_NU_N+\sum_j(q_j-q_{j+1})U_j.
+\]
+Therefore
+\[
+|Q|\le C_a\left(|q_N|+\sum_j|q_{j+1}-q_j|\right).
+\]
+The \(h\) in the integrated functional cancels the primitive \(1/h\). In the interval certificate \(q_j\) is constructed only after pairing same-sample reader and guard-weight cells, including the bilinear radius term, so no independent global supremum product is introduced.
+
+\subsection{Backward interval AW reader}
+Start with terminal row \(\lambda_N\). Reverse a prediction by
+\(\lambda^-=\lambda^+F\). Reverse a correction
+\[
+e^+=(I-KH)e^-+Kr_{\rm src}
+\]
+by recording source coefficient \(\lambda^+K\) and propagating
+\[
+\lambda^-=\lambda^+(I-KH).
+\]
+Forward reset follows correction, so reverse chronology crosses \(G\) first. Midpoint-radius products include
+\[
+|\bar\lambda|\,\Delta M+\Delta\lambda\,|\bar M|
++\Delta\lambda\,\Delta M,
+\]
+which encloses every product in the event cell. Backward induction therefore encloses every \(c_k=\lambda_k^TK_k\).
+
+\subsection{Physical HistoryCell subdivision}
+A root HistoryCell contains only declared physical/sensor coordinates. Bisection of one interval creates two children whose union is exactly the parent physical set. Regenerating the complete causal estimator history in each child preserves the functional dependence of every generated state on that physical history. Induction over the subdivision tree proves coverage. Because generated quantities are not root coordinates, the cover cannot manufacture impossible independent combinations of \(w,\tau,R_S,P,K\), Mahony state or scheduler state.
+
+\subsection{Linked finite-error completed square}
+Let
+\[
+e_N=Me_0+b,\qquad V_0=e_0^TJ_0e_0,\qquad V_N=e_N^TJ_Ne_N.
+\]
+For \(0<\gamma\) define
+\[
+G_\gamma=J_0-M^TJ_NM-\gamma J_0,\qquad z=M^TJ_Nb.
+\]
+If \(G_\gamma\succ0\), direct expansion gives
+\[
+V_N-(1-\gamma)V_0
+=-e_0^TG_\gamma e_0+2e_0^Tz+b^TJ_Nb.
+\]
+Completing the square,
+\[
+-e_0^TG_\gamma e_0+2e_0^Tz
+=-(e_0-G_\gamma^{-1}z)^TG_\gamma(e_0-G_\gamma^{-1}z)
++z^TG_\gamma^{-1}z.
+\]
+Hence
+\[
+V_N\le(1-\gamma)V_0+\chi_\gamma,\qquad
+\chi_\gamma=b^TJ_Nb+z^TG_\gamma^{-1}z.
+\]
+Thus \(\chi_\gamma/\gamma<r^2\), together with prefix retention, implies strict entry/retention relative to the radius \(r\). The open source-uniform target is
+\[
+\sup_h\inf_\gamma\frac{\chi_\gamma(h)}{\gamma}<0.0225.
+\]
+
+\subsection{Local theorem and final open implication}
+The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
+
+Consequently the final theorem is a genuine implication chain:
+\[
+\text{source assumptions}
+\Rightarrow\text{construction/capture}
+\Rightarrow H18\text{ release}
+\Rightarrow\text{recurring A21 finite-error dissipation}
+\Rightarrow\text{linked entry}
+\Rightarrow\text{local theorem}.
+\]
+The arrows whose source-uniform premises remain open are identified explicitly in the lemma statements; no proof is asserted for those premises.

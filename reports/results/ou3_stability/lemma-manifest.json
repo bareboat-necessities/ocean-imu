@@ -1,0 +1,402 @@
+{
+  "schema_version": 1,
+  "authoritative_manuscript": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
+  "proof_appendix": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex",
+  "status_source": "reports/results/ou3_stability/theorem-status.json",
+  "provenance_source": "reports/results/ou3_stability/provenance.json",
+  "status_vocabulary": [
+    "PROVED",
+    "CONDITIONAL",
+    "OPEN"
+  ],
+  "lemmas": [
+    {
+      "id": "ou_prediction",
+      "kind": "lemma",
+      "latex_title": "Shipping OU prediction identities --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "MARINE MOTION",
+        "shipping OU-III chronology"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/corrected_word.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/corrected-word-certificate.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "joseph_action",
+      "kind": "lemma",
+      "latex_title": "Joseph correction action --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "positive innovation covariance",
+        "literal H,R,K"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/corrected_word.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/corrected-word-certificate.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "reset_congruence",
+      "kind": "lemma",
+      "latex_title": "Attitude reset congruence --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "shipping reset domain"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/corrected_word.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/corrected-word-certificate.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "h18_held_ba",
+      "kind": "lemma",
+      "latex_title": "Held-BA H18 structure --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "H18 held BA",
+        "same physical history"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/theorem_status.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/theorem-status.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "heading_service_necessity",
+      "kind": "lemma",
+      "latex_title": "No-heading-service necessity --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "gyro-bias identity prediction"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/theorem_status.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/theorem-status.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "gyro_alias_exclusion",
+      "kind": "lemma",
+      "latex_title": "Residual gyro-bias alias exclusion --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "qualified 4--6 ms timestep family",
+        "implemented gyro-bias projection",
+        "IMU BIAS"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/theorem_status.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/theorem-status.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "lin_s_null",
+      "kind": "lemma",
+      "latex_title": "Complete-word LIN/\\(S\\) null reduction --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "literal complete regular word",
+        "positive process/S action"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/complete_word_nullspace.py",
+        "tools/stability/ou3_theorem/nullspace_strata.py"
+      ],
+      "certificates": [],
+      "open_dependencies": []
+    },
+    {
+      "id": "joint_kernel",
+      "kind": "lemma",
+      "latex_title": "Regular-word joint kernel reduction --- CONDITIONAL",
+      "status": "CONDITIONAL",
+      "assumptions": [
+        "MAGNETIC SERVICE",
+        "literal complete-word rows",
+        "active accelerometer rows"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/complete_word_nullspace.py",
+        "tools/stability/ou3_theorem/nullspace_strata.py"
+      ],
+      "certificates": [],
+      "open_dependencies": [
+        "source-uniform continuous cover of all admissible magnetic service row/transport strata"
+      ]
+    },
+    {
+      "id": "a21_ba_unique",
+      "kind": "lemma",
+      "latex_title": "Active-A21 BA uniqueness --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "active A21 accelerometer correction"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/complete_word_nullspace.py"
+      ],
+      "certificates": [],
+      "open_dependencies": []
+    },
+    {
+      "id": "physical_nominal_bridge",
+      "kind": "lemma",
+      "latex_title": "Same-history physical-to-nominal bridge --- CONDITIONAL",
+      "status": "CONDITIONAL",
+      "assumptions": [
+        "MARINE MOTION",
+        "IMU BIAS",
+        "MAGNETIC SERVICE",
+        "same-history chronology"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/literal_history_leaf_propagator.py",
+        "tools/stability/ou3_theorem/same_history_geometry_residual.py"
+      ],
+      "certificates": [],
+      "open_dependencies": [
+        "source-uniform positive A* compatibility margin on every reachable HistoryCell and prefix"
+      ]
+    },
+    {
+      "id": "h18_release",
+      "kind": "lemma",
+      "latex_title": "H18 LIN bounded-input/bounded-state release --- CONDITIONAL",
+      "status": "CONDITIONAL",
+      "assumptions": [
+        "captured compact domain",
+        "held BA bounded",
+        "literal H18 chronology"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/literal_history_leaf_propagator.py"
+      ],
+      "certificates": [],
+      "open_dependencies": [
+        "finite source-uniform completion of shipping magnetic-reference refinement/release state machine"
+      ]
+    },
+    {
+      "id": "a21_root_cov",
+      "kind": "lemma",
+      "latex_title": "Regular A21 root covariance lower bound --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "complete 16-s regular LIN window",
+        "regular A21 post-prediction root"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/root_covariance_certificate.py",
+        "tools/stability/ou3_theorem/lin_path_certificate.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/provenance.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "compact_outer",
+      "kind": "lemma",
+      "latex_title": "Compact outer A21 region --- CONDITIONAL",
+      "status": "CONDITIONAL",
+      "assumptions": [
+        "compact H18 release image",
+        "A21 root covariance lower bound"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/release_outer_storage_diagnostic.py"
+      ],
+      "certificates": [],
+      "open_dependencies": [
+        "source-uniform release completion",
+        "finite-error and every-prefix retention"
+      ]
+    },
+    {
+      "id": "force_floor",
+      "kind": "lemma",
+      "latex_title": "Specific-force normalization floor --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "MARINE MOTION",
+        "IMU BIAS",
+        "declared local gravity envelope"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/literal_history_leaf_propagator.py"
+      ],
+      "certificates": [],
+      "open_dependencies": []
+    },
+    {
+      "id": "quaternion_norm",
+      "kind": "lemma",
+      "latex_title": "Mahony quaternion norm identity --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "literal Mahony Euler update"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/causal_tuner_interval.py"
+      ],
+      "certificates": [],
+      "open_dependencies": []
+    },
+    {
+      "id": "guard_recurrence",
+      "kind": "lemma",
+      "latex_title": "Vibration-guard LP/raw recurrence --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "literal AccelVibrationGuard"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/causal_vibration_guard_interval.py"
+      ],
+      "certificates": [],
+      "open_dependencies": []
+    },
+    {
+      "id": "fast_lp_abel",
+      "kind": "lemma",
+      "latex_title": "FAST LP-state Abel bound --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "IMU BIAS FAST signed primitive",
+        "qualified FAST horizon"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/guard_fast_state_abel.py"
+      ],
+      "certificates": [],
+      "open_dependencies": []
+    },
+    {
+      "id": "weighted_guard_abel",
+      "kind": "lemma",
+      "latex_title": "Integrated weighted guard--reader Abel bound --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "IMU BIAS FAST signed primitive",
+        "same-history guard weights/readers"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/guard_weighted_fast_abel.py"
+      ],
+      "certificates": [],
+      "open_dependencies": []
+    },
+    {
+      "id": "aw_reader",
+      "kind": "lemma",
+      "latex_title": "Backward interval AW reader --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "literal release event stream",
+        "interval K,H,F,G cells"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/linked_guard_aw_reader.py"
+      ],
+      "certificates": [],
+      "open_dependencies": []
+    },
+    {
+      "id": "history_subdivision",
+      "kind": "lemma",
+      "latex_title": "Physical HistoryCell subdivision soundness --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "root cells contain physical/sensor coordinates only"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/physical_history_subdivision.py",
+        "tools/stability/ou3_theorem/enclosure_failure.py"
+      ],
+      "certificates": [],
+      "open_dependencies": []
+    },
+    {
+      "id": "completed_square",
+      "kind": "lemma",
+      "latex_title": "Finite-error completed-square entry --- PROVED as an algebraic implication",
+      "status": "PROVED",
+      "assumptions": [
+        "G_gamma positive definite",
+        "same-history M,b,J0,JN"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/linked_supply.py"
+      ],
+      "certificates": [],
+      "open_dependencies": [
+        "source-uniform sup_h inf_gamma chi_gamma/gamma < 0.0225",
+        "every-prefix retention"
+      ]
+    },
+    {
+      "id": "local_theorem",
+      "kind": "theorem",
+      "latex_title": "Retained local real-arithmetic stability theorem --- PROVED on its qualified branch",
+      "status": "PROVED",
+      "assumptions": [
+        "local sqrt(V)<=0.15 domain",
+        "local magnetic/gate/source hypotheses"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/theorem_status.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/theorem-status.json",
+        "reports/results/ou3_stability/provenance.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "regional_theorem",
+      "kind": "theorem",
+      "latex_title": "Regional practical stability of shipping OU--III --- OPEN",
+      "status": "OPEN",
+      "assumptions": [
+        "all preceding live-path assumptions and lemmas"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/theorem_status.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/theorem-status.json"
+      ],
+      "open_dependencies": [
+        "finite construction/capture and H18 release",
+        "complete source-uniform physical HistoryCell release/A21 enclosure",
+        "strict recurring finite-error A21 contraction and every-prefix retention",
+        "linked entry inequality",
+        "nonlinear remainder control",
+        "float32 transfer",
+        "regime composition"
+      ]
+    }
+  ]
+}
