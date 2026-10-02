@@ -12,6 +12,7 @@ from .causal_tuner_interval import (I,MahonyBox,initial_wave_period_box,BandBox,
  VarianceBox,ShippingTunerBox,ClosedCausalAdaptationBox)
 from .history_witness_builder import TimedVectorBox,AttitudeGravityBox,build_history_witness
 from .marine_magnetic_qcqp import VectorBox,MagneticEventBox
+from .source_uniform_release_chronology import connect as connect_release_chronology
 ROOT=Path(__file__).resolve().parents[3]
 C=json.loads((ROOT/"tools/stability/ou3_theorem/constants.json").read_text())
 
@@ -62,8 +63,11 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
  # release-state enclosure can be connected explicitly.
  from .aggregate_magnetic_service import AggregateMagneticService
  mag_service=AggregateMagneticService(C["magnetic_service"]["T_M_s"],C["magnetic_service"]["mu_M"])
- return {"root":cell,"samples":samples,"adaptation_trace":trace,
+ payload={"root":cell,"samples":samples,"adaptation_trace":trace,
          "physical":{"velocity":vel,"position":pos,"acceleration":acc,"jerk":jerk,"gravity":grav},
          "aggregate_magnetic_service":mag_service,
-         "complete_constructive_leaf":False,
-         "reason":"explicit numerical release P0/mean/BA-graph seed not yet proved; magnetic callback enumeration replaced by aggregate service operator"}
+         "complete_constructive_leaf":False}
+ release=connect_release_chronology(payload)
+ payload["release_chronology"]=release
+ payload["reason"]="same-history attitude/measurement geometry and residual/local-defect stream not yet attached; explicit goLive seed and aggregate magnetic service are available"
+ return payload
