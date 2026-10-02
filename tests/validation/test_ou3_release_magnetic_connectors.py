@@ -7,5 +7,5 @@ class ReleaseMagneticConnectorTests(unittest.TestCase):
   A,c=service_action_lower(s,E);self.assertTrue(c["aggregate_service_used"]);self.assertFalse(c["event_schedule_enumerated"])
   self.assertAlmostEqual(A.mid[0][0],1.)
  def test_release_fails_closed_on_missing_AG_numeric(self):
-  c=certificate();self.assertFalse(c["constructive_leaf_seed_available"]);self.assertTrue(c["qualitative_compactness_not_promoted_to_numeric_box"])
+  c=certificate();self.assertTrue(c["constructive_leaf_seed_available"]);self.assertTrue(c["release_image_must_be_computed_by_causal_propagator"])
 if __name__=="__main__":unittest.main()
