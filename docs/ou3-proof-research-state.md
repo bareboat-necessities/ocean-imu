@@ -1,3 +1,14 @@
+## Changing-axis structured covariance transition derived
+
+For exact common rotation U, the INJ algebra transports with no coefficient inflation: if n_+=Un, then U(aI+b nn'+c[n]x)U'=aI+b n_+n_+'+c[n_+]x. Thus predictor rotation itself is not a source of block-algebra growth.
+
+For the actual same-history mismatch m=n_{k+1} versus Un_k, the exact basis differences satisfy ||nn'-mm'||2=sin(delta) and ||[n]x-[m]x||2=2 sin(delta/2). Re-basing an INJ block therefore costs at most |b|sin(delta)+2|c|sin(delta/2). For any nonzero mismatch the minimal natural two-axis span used here has rank 6 (I, nn', mm', nm'+mn', [n]x, [m]x), versus rank 3 when axes coincide. CI validates the identities.
+
+This identifies the next quantitative bridge: derive a SAME-HISTORY per-sample/window bound on delta_k=angle(n_{k+1},U_k n_k) from the literal physical acceleration/jerk plus Mahony/gyro propagation. Do not independently box delta. If delta_k=O(h J/|f| + gyro/reference mismatch) with useful constants, structured covariance can be propagated as INJ coefficients plus a controlled two-axis defect rather than arbitrary 3x3 blocks.
+
+Structures preserved: exact common rotation and same-history axis relation. Relaxation: none in transition identities. No shipping counterexample.
+
+
 ## Structured covariance class identified: INJ block algebra
 
 The literal predictor has a natural 3-axis block structure: LIN [v,p,S,aw] is a scalar 4x4 chain tensored with I3; BA is scalar*I3; AG is a 2x2 matrix of 3-D rotation/integral operators. For a fixed shared force direction n, define N=nn' and J=[n]x. The three-dimensional algebra A_n=span{I,N,J} is closed because N^2=N, J^2=N-I, NJ=JN=0 and J'=-J. It is also closed under inversion when nonsingular: for A=iI+nN+jJ, A^-1 has coefficients i/(i^2+j^2), 1/(i+n)-i/(i^2+j^2), -j/(i^2+j^2).
