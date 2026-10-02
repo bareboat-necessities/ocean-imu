@@ -1,8 +1,17 @@
 import unittest
-from tools.stability.ou3_theorem.complete_word_nullspace import compatibility_line_certificate
+from tools.stability.ou3_theorem.complete_word_nullspace import compatibility_line_certificate, graph_kernel_certificate
 from tools.stability.ou3_theorem.nullspace_strata import audit_service_row_strata, magnetic_service_kernel_certificate, invertible_transport_kernel_rule
 
 class T(unittest.TestCase):
+    def test_word_dependent_graph_kernel(self):
+        # theta constraint leaves span((1,1)); arbitrary word-dependent A
+        # then forces BA=-A theta without changing nullity.
+        r=graph_kernel_certificate([[1,-1]],[[2,3],[5,7]])
+        self.assertEqual(r["attitude_nullity"],1)
+        self.assertEqual(r["graph_stack_nullity"],1)
+        self.assertTrue(r["kernel_is_word_dependent_BA_graph"])
+        self.assertFalse(r["fixed_global_compatibility_vector_required"])
+
     def test_exact_line(self):
         blocks=[("S",[[1,0,0]]),("mag",[[0,1,-1]])]
         r=compatibility_line_certificate(blocks,[0,1,1])
