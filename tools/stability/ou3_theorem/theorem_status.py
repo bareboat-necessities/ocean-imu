@@ -61,7 +61,7 @@ def status_report() -> dict:
         "entry_into_local_0p15_ball_proved":False,
         "Astar_plus_magnetic_implies_full_six_column_rank":False,
         "real_arithmetic_AW_source_transfer_closed_for_Astar":True,
-        "next_six_column_route":"same-cell acc-mag groups with E=0; prove uniform group floor c and inter-group gyro floor b0",
+        "next_six_column_route":"retired same-cell localization; use aggregate A* plus magnetic-service kernel and word-dependent BA graph",
         "nominal_signed_mean_attitude_columns":True,
         "pointwise_physical_AW_tracking_premise_refuted_on_admitted_history":True,
         "source_uniform_nominal_AW_window_statistics":False,
