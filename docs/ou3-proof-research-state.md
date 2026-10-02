@@ -1,3 +1,12 @@
+## goLive -> A21 finite release image propagation is now executable
+
+`golive_to_a21_release.py` propagates the explicit zero-mean goLive seed through a supplied literal operation stream, carrying the full verified 21-state covariance and affine mean interval and emitting the A21 BA-graph enclosure. `release_interval_propagation.py` supplies the shipping-specific interval prediction and accelerometer-correction covariance map from the declared dt/tau/omega/noise ranges; it retains the AW covariance floor and deliberately does not invent S or magnetic callback cadences. Aggregate magnetic information remains a theorem action, not an event schedule.
+
+The release construction no longer needs an existential standalone LIN radius: the numerical LIN release box is the finite image of the zero goLive LIN mean. The remaining source-uniform integration is coefficient-cell subdivision for the literal operation stream. A dedicated CI probe now tests whether the broad root coefficient cell can verify even one innovation inverse before attempting the 469-s image. If it fails, the correct response is shared-history subdivision (attitude/specific-force/tuner coordinates), not midpoint K or an independent gain box.
+
+Structures preserved: literal goLive seed, full P cross-covariance propagation, acc correction chronology, AW sync increase, aggregate magnetic service. Relaxations: optional S/mag covariance reductions are omitted only for the release covariance upper comparison; their mean/action effects remain required in the literal operation stream used for the final leaf. No shipping counterexample.
+
+
 ## Explicit release numerics: AG/BG/BA closed; LIN radius eliminated as a prerequisite
 
 The literal H18/refinement horizon certificate gives a conservative A21 activation time of 469 s from captured-service origin. Using the worst shipping attitude reseed variance 1.5708^2, Pb0=1e-6, AtomS3R shipping gyro noise density .00135 rad/s/sqrt(Hz-equivalent discrete input) at 200 Hz, and gyro-bias driving variance 1e-11, an observation-free AG covariance comparison gives P_AG <= 8.06571980866 I_6 over that finite horizon. This deliberately drops covariance-reducing acc/mag corrections. The shipping gyro-bias projection radius .5 plus physical slow-bias radius .02 gives ||e_bg||<=.52 rad/s. Since the active-A21 accelerometer Jacobian has J_ba=I, the zero-action BA graph obeys ||A_ba||<=g+A_max=18.60665, hence each graph entry lies in [-18.60665,18.60665].
