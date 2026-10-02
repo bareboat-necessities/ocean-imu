@@ -222,7 +222,9 @@
     "word_diameter_composition_and_slow_fast_factorization": true,
     "word_riccati_diameter_identity": true,
     "world_frame_historical_row_factorization": true,
-    "zero_translation_moving_alias_excluded": true
+    "zero_translation_moving_alias_excluded": true,
+    "shipping_faithfulness_protocol_recorded": true,
+    "short_word_scalar_completed_square_failure_class": "D_SUFFICIENT_BOUND_FAILURE"
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
@@ -292,5 +294,7 @@
     "signed_world_injection_transport_budget": false,
     "source_diagnostic": "world-frame-source-feasibility.json",
     "uniform_storage_route_ratio_above_one_on_carried_collinear_words": true
-  }
+  },
+  "proof_governance": "docs/ou3-shipping-faithfulness-protocol.md",
+  "proof_target": "actual shipping OU-III filter; surrogate enlargements must be explicit and failure does not transfer without losslessness"
 }
