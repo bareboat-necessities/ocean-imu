@@ -144,6 +144,7 @@ def status_report() -> dict:
         "literal_golive_constructive_seed":True,
         "numeric_release_AG_BG_BA_partial":True,
         "release_one_step_source_uniform_innovation":True,
+        "captured_attitude_ball_factor_cover":True,
         "release_state_enclosure_connected_to_history_cover":False,
         "aggregate_magnetic_service_operator_connected":True,
         "accepted_magnetic_event_strata_connected_to_history_cover":"NOT_REQUIRED_AGGREGATE_SERVICE_USED",
