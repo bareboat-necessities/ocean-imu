@@ -26,17 +26,20 @@ class HistoryWitness:
  marine_magnetic:MarineMagneticWitness
  kernel_line:KernelLineCone
 
-def _covering_pairs(samples,T):
- """All endpoint pairs whose time separation certainly spans a complete T window.
+def _window_pair_groups(samples,start,end,T):
+ """Candidate existential diameter pairs grouped per complete sliding T window.
 
- A real MARINE diameter witness may occur at interior times. The causal
- propagator must therefore tag candidate witness samples densely enough; this
- routine returns every certainly separated pair rather than choosing a midpoint.
+ Window starts are induced by sample endpoint times; between event times the
+ candidate membership is unchanged. Each group contains every pair certainly
+ contained in that window and therefore supports an existential certificate.
  """
+ starts=sorted(set([start]+[max(start,min(end-T,x.t_lo)) for x in samples if start<=x.t_lo<=end-T]+[max(start,min(end-T,x.t_hi-T)) for x in samples]))
  out=[]
- for i,a in enumerate(samples):
-  for b in samples[i+1:]:
-   if b.t_lo-a.t_hi>=T-1e-12:out.append((a.value,b.value))
+ for ws in starts:
+  if ws<start-1e-12 or ws+T>end+1e-12:continue
+  inside=[x for x in samples if x.t_lo>=ws-1e-12 and x.t_hi<=ws+T+1e-12]
+  pairs=[(x.value,y.value) for i,x in enumerate(inside) for y in inside[i+1:]]
+  out.append(pairs)
  return out
 
 def build_history_witness(*,dependency_token,velocity,position,acceleration,jerk,
@@ -46,8 +49,8 @@ def build_history_witness(*,dependency_token,velocity,position,acceleration,jerk
  if not dependency_token:raise ValueError("dependency token required")
  seqs=(velocity,position,acceleration,jerk,gravity)
  if any(not x for x in seqs):raise ArithmeticError("causal physical witness history incomplete")
- gp=_covering_pairs(gravity,marine_T);pp=_covering_pairs(position,marine_T)
- if end-start>=marine_T and (not gp or not pp):raise ArithmeticError("30-s witness candidates missing")
+ gp=_window_pair_groups(gravity,start,end,marine_T);pp=_window_pair_groups(position,start,end,marine_T)
+ if end-start>=marine_T and (not gp or not pp or any(not x for x in gp) or any(not x for x in pp)):raise ArithmeticError("30-s window witness candidates missing")
  # Joint graph line interval: r=(a,-G a). Midpoint and first-order interval
  # radius with rigorous product remainder |dG| |da|.
  a=np.asarray(attitude_line_mid,float);ar=np.asarray(attitude_line_rad,float)
