@@ -1,3 +1,15 @@
+## Structured covariance defect recurrence added after reset audit
+
+To continue the requested release iteration without dropping the literal MEKF reset, write P_k=P_struct,k+E_k and carry D_k>=||E_k||_2. The exact reset split supplies the new source-linked non-INJ remainder. Between resets the remainder is propagated in literal order. Prediction gives
+D^- <= ||F||^2 D + D_axis + D_Q.
+For a Riccati correction C(P)=P-PH'(HPH'+R)^-1HP, with structured innovation S0 and q=||S0^-1|| ||H||^2 D<1, Banach/resolvent expansion gives an explicit finite D^+ bound; if q>=1 the sufficient envelope fails closed and is classification D, not instability. Reset gives
+D^+ <= ||G||^2 D^- + D_reset,
+where D_reset is obtained from the same-history dtheta=K_theta r split, not an independent reset-angle box.
+
+structured_covariance_defect.py implements this chronology. This makes the intended iteration conceptually (A_k, structured a/b/c coefficients, D_k), with A_k updated by ordered vector K r products and D_k carrying both changing-axis and reset-generated non-INJ covariance remainder. The next numerical promotion step is to feed this iterator from the certified release leaf: literal structured P coefficients, H/S inverses, same-boundary residual vectors/local defects, accepted S/mag scheduler events, and dtheta from each accepted correction. The current source-uniform history propagator still fails closed before those release P0/mean/BA-graph inputs are connected, so no source-uniform numeric radius is claimed yet.
+
+Structures preserved: literal reset congruence, correction order, covariance-derived gains, same-history dtheta=Ktheta r, accepted S/mag events, and coupled tuner history. Relaxation introduced: D uses spectral-norm perturbation/resolvent bounds around the structured covariance. A miss of q<1 is D-level sufficient-bound failure. No shipping counterexample.
+
 ## Literal gain export corrected; reset creates a fourth structured covariance component
 
 The requested gain export exposed two shipping-faithfulness corrections. First, after accelerometer coupling the S pseudo gain is not generally scalar*I: the exact structured expression is
