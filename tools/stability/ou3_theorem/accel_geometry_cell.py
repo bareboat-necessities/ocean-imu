@@ -6,6 +6,7 @@ innovation certificate.
 """
 from __future__ import annotations
 import numpy as np
+import math
 from .interval_riccati_21 import IMat,N
 
 def accel_h_from_force_rotation(f_mid,f_rad,R_mid,R_rad):
@@ -29,3 +30,23 @@ def rotation_cell_from_small_angle(theta_mid,theta_rad):
  Rm=np.eye(3)+skew(t);rem=.5*rho*rho/(1-rho/3)
  Rr=np.abs(skew(r))+rem*np.ones((3,3))
  return Rm,Rr
+
+def rotation_cell_from_ball(radius):
+ """Rigorous SO(3) entry enclosure for ||theta||<=radius via Rodrigues.
+
+ R=I+sinc(r)[theta]x+(1-cos r)/r^2 [theta]x^2.
+ For r<=radius, off-diagonal first term <=sin(radius), while every entry of
+ [u]x^2=uu'-I has magnitude <=1 and coefficient <=1-cos(radius).
+ Center at I; use common entry radius sin(rho)+(1-cos(rho)).
+ This intentionally retains the norm-ball premise instead of a component cube.
+ """
+ rho=float(radius)
+ if not(0<=rho<math.pi/2):raise ValueError("rotation ball radius")
+ rad=math.sin(rho)+(1-math.cos(rho))
+ return np.eye(3),np.full((3,3),rad)
+
+def force_cell_from_ball(radius):
+ """Component enclosure plus norm metadata for ||f||<=radius."""
+ r=float(radius)
+ if not(r>0):raise ValueError("force radius")
+ return np.zeros(3),np.full(3,r),{"euclidean_radius":r,"component_cube_is_outer_only":True}
