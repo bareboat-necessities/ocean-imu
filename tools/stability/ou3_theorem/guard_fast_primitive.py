@@ -41,3 +41,17 @@ def audit(alpha,dt,B,C,H,poles):
          "lp_minus_raw_fast_component_upper":B+yf,
          "uses_signed_primitive_cap":True,"H_s":H,"C":C,"B":B,
          "tail_pointwise":alpha**max(1,int(math.floor(H/dt)))*B}
+
+def weighted_lp_minus_raw_fast_bound(alpha,dt,B,C,H,poles,w_hi):
+ """Use the better of pointwise and primitive convolution, then apply guard w."""
+ if not 0<=w_hi<=1:raise ValueError("weight")
+ primitive=lp_minus_raw_fast_bound(alpha,dt,B,C,H,poles)
+ pointwise=2*B
+ return w_hi*min(pointwise,primitive)
+
+def comparison(alpha,dt,B,C,H,poles,w_hi):
+ p=lp_minus_raw_fast_bound(alpha,dt,B,C,H,poles);q=2*B
+ return {"primitive_unweighted":p,"pointwise_unweighted":q,
+         "selected_unweighted":min(p,q),
+         "weighted":w_hi*min(p,q),
+         "primitive_improves":p<q}
