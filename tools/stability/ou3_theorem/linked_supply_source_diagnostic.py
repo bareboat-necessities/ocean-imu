@@ -1,5 +1,7 @@
 """80-digit linked-supply diagnostic on carried source words; no promotion.
 
+Reports prospective local-defect parity and endpoint source attribution before any enclosure.
+
 Use --export to compile an observer and untapped control via the existing
 readout fixture. Otherwise analyze previously exported word-{0,wave}.json.
 Actual endpoint defects are retrospective; they are not uniform supply bounds.
