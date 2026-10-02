@@ -138,6 +138,8 @@ def status_report() -> dict:
         "history_leaf_ratio_connector":True,
         "interval_source_coefficients_consumed_by_qcqp":True,
         "marine_existential_window_logic":True,
+        "source_uniform_history_cover_generator":True,
+        "literal_history_cell_to_leaf_propagator":False,
         "constructive_cellwise_supply_dissipation_quotient":False,
         "source_uniform_block_factor_root_coercivity":True,
         "constructive_fixed_coordinate_A21_mu_enclosure":False,
