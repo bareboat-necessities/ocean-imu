@@ -61,6 +61,26 @@ def service_row_stratum_certificate(block_builder, strata):
     return {"strata":out,"all_strata_kernel_line":all_ok,
             "callback_pattern_enumeration_used":False}
 
+def graph_kernel_certificate(attitude_constraint,A):
+    """Exact graph-kernel lemma for word-dependent BA compatibility.
+
+    C_theta must have nullity one. A maps attitude coordinates to BA. The
+    stacked canonical equations [C_theta 0; A I] then have exactly the graph
+    kernel {(a,-Aa): a in ker C_theta}; no fixed word-independent generator is
+    assumed.
+    """
+    Ct=matrix(attitude_constraint); AA=matrix(A)
+    p=len(Ct[0]); q=len(AA)
+    if len(AA[0])!=p or any(len(row)!=q for row in AA):
+        raise ValueError("A must be q by p")
+    _,piv=rref(Ct); ntheta=p-len(piv)
+    C=[row+[F(0)]*q for row in Ct]
+    C += [AA[i]+[F(int(i==j)) for j in range(q)] for i in range(q)]
+    _,allp=rref(C); nullity=p+q-len(allp)
+    return {"attitude_nullity":ntheta,"graph_stack_nullity":nullity,
+            "kernel_is_word_dependent_BA_graph":ntheta==1 and nullity==1,
+            "fixed_global_compatibility_vector_required":False}
+
 def certificate():
     blocks=[("four_S_LIN",[[1,0,0,0],[0,1,0,0]]),
             ("magnetic_AG",[[0,0,1,-1]]),
@@ -72,6 +92,7 @@ def certificate():
             "finite_callback_pattern_cover_exists":False,
             "required_stratum_parameterization":"aggregate MAGNETIC SERVICE rows + literal continuous factor parameters",
             "Astar_persistence_exclusion_separate":True,
+            "word_dependent_graph_kernel_required":True,
             "theorem_closed":False}
 
 if __name__=="__main__":
