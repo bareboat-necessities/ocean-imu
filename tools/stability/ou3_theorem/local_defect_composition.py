@@ -64,6 +64,8 @@ def certificate():
             "pre_operation_snapshots_exported":True,
             "post_boundary_pairing_rule_implemented":True,
             "native_literal_boundary_export_complete":False,
+            "carried_driver_truth_reconstructible":True,
+            "source_uniform_truth_boundary_export_complete":False,
             "source_uniform_verified":False,"theorem_closed":False}
 
 if __name__=="__main__":
