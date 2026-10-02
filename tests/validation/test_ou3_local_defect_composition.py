@@ -1,5 +1,5 @@
 import unittest
-from tools.stability.ou3_theorem.local_defect_composition import certificate, verify_endpoint, event_boundary_pairing, left_attitude_error
+from tools.stability.ou3_theorem.local_defect_composition import certificate, verify_endpoint, event_boundary_pairing, left_attitude_error, carried_error, literal_mean_factor
 
 class T(unittest.TestCase):
     def test_exact_local_composition(self):
@@ -17,6 +17,16 @@ class T(unittest.TestCase):
         self.assertAlmostEqual(e[0],-a,places=12)
         self.assertAlmostEqual(e[1],0,places=12)
         self.assertAlmostEqual(e[2],0,places=12)
+
+    def test_carried_error_layout(self):
+        e={"estimator_state":[[0]]*21,"estimator_quaternion":[[0],[0],[0],[1]],
+           "physical_quaternion":[[0],[0],[0],[1]],"physical_bg":[[0],[0],[0]],
+           "physical_v":[[1],[2],[3]],"physical_p":[[4],[5],[6]],
+           "physical_S":[[7],[8],[9]],"physical_a":[[10],[11],[12]],
+           "physical_ba":[[13],[14],[15]]}
+        x=carried_error(e)
+        self.assertEqual(len(x),21)
+        self.assertEqual([float(x[i][0]) for i in range(6,21)],list(range(1,16)))
 
     def test_boundary_pairing_skips_only_mean_neutral_events(self):
         ev=[{"kind":"prediction"},{"kind":"sync"},{"kind":"sync_completion"},
