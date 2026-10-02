@@ -1,3 +1,13 @@
+## Causal history-cell witness builder implemented; interval B/C QCQP repaired
+
+`causal_history_witness.py` now carries one dependency token through physical v/p/a/j and gravity-direction boxes, applied magnetic-event boxes, word-dependent attitude/BA compatibility-line cones, temporal source symbols, nonlinear MARINE/MAGNETIC premise certification, kernel-restricted action and direct QCQP supply. It derives 30-s witness pairs from the propagated physical boxes and never fabricates excitation when a whole-box witness is unavailable. `certify_leaf` emits a ratio only when both certificate halves verify on the same token.
+
+While joining the halves, a remaining midpoint relaxation was found in the QCQP numerator: interval B/C coefficient radii were not included. `verified_interval_supply_bnb` now rigorously adds those coefficient radii to every branch-and-bound upper bound, and the causal witness uses it. Thus midpoint B/C no longer blocks promotion.
+
+The remaining blocker to an actual numerical leaf ratio is no longer witness plumbing. We need a concrete source-uniform history-cell generator that feeds this builder with interval physical trajectories, source-symbol boxes, A0/T/A1 shaped actions, and compatibility-line graph/radius enclosures from the causal shipping propagator. The APIs now join correctly, but no synthetic or replay leaf is promoted as the source-uniform cover. `actual_history_leaf_ratio_certificate` therefore remains false.
+
+Structures preserved: same causal dependency token across nonlinear premises, kernel action and interval B/C supply. Relaxations introduced: none in the join; branch boxes are outer representations of the same history cell. No shipping counterexample.
+
 ## Causal history-cell witness builder implemented
 
 `history_witness_builder.py` now constructs, from one propagated dependency root, the nonlinear MARINE/MAGNETIC witness and the joint attitude/BA compatibility-line cone. It carries timed interval v,p,a,j and gravity-direction samples, all certainly 30-s-separated candidate endpoint pairs, applied magnetic event boxes, and the graph line r=(a,-G a). The line component radius includes `|G| da + dG |a| + dG da`; cells whose line cone reaches zero fail closed. `history_leaf_certificate.py` connects that SAME witness to nonlinear premise certification, later-word angle-aware kernel restriction, and the cellwise ratio composer.
