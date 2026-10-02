@@ -124,6 +124,8 @@ def status_report() -> dict:
         "sensor_to_joint_tuner_causal_chain_closed":True,
         "literal_covariance_gain_joint_supply_propagator":True,
         "causal_history_interval_propagator_complete":False,
+        "verified_full_21_precision_enclosure":True,
+        "interval_joint_shaped_quadratic":True,
         "constructive_cellwise_supply_dissipation_quotient":False,
         "source_uniform_block_factor_root_coercivity":True,
         "constructive_fixed_coordinate_A21_mu_enclosure":False,
