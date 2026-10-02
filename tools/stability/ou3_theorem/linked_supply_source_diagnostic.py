@@ -75,7 +75,9 @@ def analyze(path):
   'live_time_s':trace['live_step']/200,
   'release_LIN_mean_norm':fmt(mp.norm(mat(trace['release_state'])[6:18,:])),
   'source_uniform_verified':False,'theorem_closed':False,
-  'supply_is_retrospective_endpoint_residual':False,\n  'local_defect_origin':'prospective_literal_same_boundary_composition',\n  'local_b_endpoint_parity_norm':fmt(prospective_parity),
+  'supply_is_retrospective_endpoint_residual':False,
+  'local_defect_origin':'prospective_literal_same_boundary_composition',
+  'local_b_endpoint_parity_norm':fmt(prospective_parity),
   'uniform_inner_retention_refuted_by_this_finite_replay':False,
   'all_time_magnetic_service_verified':False,
   'physical_S_origin':'one fixed capture/Live epoch; never reset at word boundaries',
@@ -115,7 +117,7 @@ def analyze(path):
   optimizer_case='unique_interior_stationary'
  ratio,chi,G=eval_gamma(gam)
  completed=(1-gam)*V0+chi-((x-G**-1*z).T*G*(x-G**-1*z))[0]
- ans.update({'defect_origin':'retrospective_endpoint_residual',
+ ans.update({'defect_origin':'prospective_local_defect_composition',
   'eligible_for_theorem_entry_test':False,
   'gamma':fmt(gam),'linked_supply_chi':fmt(chi),
   'optimized_chi_over_gamma':fmt(ratio),
