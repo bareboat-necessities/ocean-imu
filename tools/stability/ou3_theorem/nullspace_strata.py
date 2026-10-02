@@ -47,12 +47,26 @@ def magnetic_service_kernel_certificate(mu_M):
             "continuous_service_row_cover_complete":True,
             "event_count_or_timing_enumerated":False}
 
+def invertible_transport_kernel_rule():
+    """Rank/nullity is unchanged by invertible root/row transport.
+
+    Regular OU prediction has phi>0 and triangular nonzero diagonal; attitude
+    rotation is invertible. Reset G=I+[d]/2 has det=1+|d|^2/4>0. Therefore
+    continuous dt/tau/rotation/reset strata do not create new kernel dimension;
+    only the canonical transported row geometry must be checked.
+    """
+    return {"regular_prediction_invertible":True,
+            "reset_invertible_for_all_finite_injections":True,
+            "kernel_dimension_invariant_under_transport":True,
+            "continuous_transport_subdivision_required":False}
+
 def certificate():
     # Structural regression only; theorem-domain literal strata are supplied
     # by the native/interval exporter, never invented here.
     return {"qualification":"OU3_LITERAL_ZERO_ACTION_SERVICE_STRATA_V1",
             "all_strata_verified":False,"theorem_domain_strata_supplied":False,
             "magnetic_continuous_cover":magnetic_service_kernel_certificate(1.0),
+            "transport_cover":invertible_transport_kernel_rule(),
             "uses_K_or_innovation_covariance":False,
             "callback_pattern_enumeration_used":False,
             "theorem_closed":False}
