@@ -1,3 +1,7 @@
+# Shipping-faithfulness gate — READ BEFORE NEW MATHEMATICS
+
+The permanent governing protocol is [`docs/ou3-shipping-faithfulness-protocol.md`](ou3-shipping-faithfulness-protocol.md): **WE ARE PROVING STABILITY OF THE ACTUAL SHIPPING OU-III FILTER.** Before promoting any important result, record `Structures preserved` and `Relaxations introduced`. Classify every failed attempt A/B/C/D/E. PR #643's short-word scalar completed-square failure is **D. SUFFICIENT-BOUND FAILURE**, not filter instability. No proof-word boundary may reset a shipping/adaptive/physical history that shipping itself preserves.
+
 ## Adaptive OU/S normalization opened as the shaped-storage candidate
 
 For one generated tuner tuple define dimensionless chain coordinates a_bar=a_w/sigma, v_bar=v/(sigma tau), p_bar=p/(sigma tau^2), S_bar=S/(sigma tau^3) and normalized time s=t/tau. The homogeneous continuous OU/integrator chain then has parameter-free drift a_bar'=-a_bar, v_bar'=a_bar, p_bar'=v_bar, S_bar'=p_bar; the exact discrete phi_pa and phi_Sa are precisely its sampled primitives. Thus tau and sigma should enter a long-word storage through the causal coordinate scaling, not as independent nuisance extrema. For the deployed SpectralMSE law, before explicit cadence clamps,
