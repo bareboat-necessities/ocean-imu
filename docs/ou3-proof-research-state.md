@@ -1,3 +1,12 @@
+## Rotated accelerometer innovation frame tested: algebraic AW cancellation does not improve the factor enclosure
+
+The exact transformation Q=R_wb' gives Q J_aw=I, Q J_ba=R_wb', and Q J_att=-[f_b]x R_wb'. This is algebraically lossless with isotropic R_acc and was implemented before intervalization. However, over the complete 1021-cell attitude cover the factor certificate is worse: even exact worst-magnitude local-body force has worst residual 7.955848 (Gram perturbation 131.606807), with all 1021 cells failing; the full force ball gives residual 340.418. The attitude uncertainty removed from AW reappears in BA and the right factor of J_att, and the current interval product pays for those dependencies separately.
+
+Classification D: useful algebraic transformation, but no useful enclosure under the present factor norm. Do not pursue this rotated-frame route as controlling proof. Retained fact: Q J_aw=I exactly, but cancellation alone is insufficient. No shipping counterexample.
+
+The next stronger route should preserve the shared rotation symbol across BOTH transformed attitude and BA blocks (symbolic/affine arithmetic or a block quadratic Gram identity), rather than replacing R' by independent entry radii in each occurrence.
+
+
 ## Joint attitude-cover x force-cone threshold is numerically impractical with current factor norm
 
 Using the full verified 1021-cell attitude cover, the worst-cell joint threshold was solved before generating a force mesh. At exact force direction, the outer radial-shell width must be below roughly 0.0034--0.0040 m/s^2 (passing 0.00340698 gives residual .998298; failing .00397481 gives 1.003819). At exact force magnitude, force-direction half-angle must be below roughly .00549--.00610 deg (passing .00549316 gives residual .999944; failing .00610352 gives 1.003807). The worst attitude cells are near the factor threshold, so almost no force uncertainty remains.
