@@ -1,3 +1,10 @@
+## Controlling quantitative route: adaptive shaped storage
+
+The controlling next proof is now `docs/ou3-adaptive-shaped-storage.md`, not the short-word scalar chi/gamma route. In shipping-generated coordinates y=D(tau,sigma)(v,p,S,a_w), the frozen-tuple literal integrated OU transition is dimensionless and depends only on h/tau; tuner commits enter as exact causal diagonal coboundaries D_{k+1}D_k^-1, which telescope over a word and must not be independently normed. Literal S=0 corrections are transformed with their actual covariance-derived gains, while R_S and T_S remain generated from the same SpectralMSE/tau-cadence history. The next certificate seeks a same-history W_N-W_0 <= -Dissipation + Supply inequality over 60/100 s, carrying AG/BA/magnetic/accelerometer loss and rotating compatibility jointly. A common-Q failure is class D, not filter instability.
+
+Structures preserved: literal OU primitives, S feedback, covariance/gains, causal tuner generation/staging, Mahony-driven tuner input, persistent history, source/loss direction, rotating weak directions.
+Relaxations introduced: quadratic Q is only a candidate storage form; it does not enlarge the shipping execution family.
+
 # Shipping-faithfulness gate — READ BEFORE NEW MATHEMATICS
 
 The permanent governing protocol is [`docs/ou3-shipping-faithfulness-protocol.md`](ou3-shipping-faithfulness-protocol.md): **WE ARE PROVING STABILITY OF THE ACTUAL SHIPPING OU-III FILTER.** Before promoting any important result, record `Structures preserved` and `Relaxations introduced`. Classify every failed attempt A/B/C/D/E. PR #643's short-word scalar completed-square failure is **D. SUFFICIENT-BOUND FAILURE**, not filter instability. No proof-word boundary may reset a shipping/adaptive/physical history that shipping itself preserves.
