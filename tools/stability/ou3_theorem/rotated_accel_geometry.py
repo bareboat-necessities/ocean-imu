@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Joint accelerometer geometry in a rotated innovation frame.
 
 Left multiplication of innovation by an orthogonal Q preserves the Kalman
