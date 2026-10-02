@@ -86,6 +86,12 @@ jobs:
         run: |
           python3 -m tools.stability.ou3_theorem.held_ba_lin_word_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-held-ba-lin-word.json
           cat /tmp/ou3-held-ba-lin-word.json
+      - name: Audit carried source readout without promotion
+        run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-source-readout.json
+      - name: Validate local affine-defect composition contract
+        run: python3 -m unittest tests.validation.test_ou3_local_defect_composition -v
+      - name: Validate exact complete-word nullspace lemma
+        run: python3 -m unittest tests.validation.test_ou3_complete_word_nullspace -v
       - name: Execute rational LIN path certificate
         run: |
           python3 tools/stability/ou3_theorem/lin_path_certificate.py --output /tmp/ou3-lin-path-certificate.json
@@ -140,16 +146,25 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev && make -C tests/kalman_ou_iii shipping_contract-test shipping_transition-test sampled_capture-test && make -C tests/kalman_ou_iii -f Makefile -f RegimeRegression.mk regime_ambiguity-test && make -C tests/kalman_ou_iii -f Makefile -f ../common/GyroBiasProjectionRegression.mk gyro_bias_projection-test
       - name: Run literal shipping regressions
         run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test && ./tests/kalman_ou_iii/regime_ambiguity-test && ./tests/kalman_ou_iii/gyro_bias_projection-test
-      - name: Audit carried source readout without promotion
-        run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --output /tmp/ou3-source-readout.json
       - name: Diagnose 17-s terminal-AW D2 reader ratio without promotion
         run: python3 -m tools.stability.ou3_theorem.aw_port_17s_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-aw-port-17s.json
+      - name: Diagnose paired physical source bridge without promotion
+        run: |
+          python3 -m tools.stability.ou3_theorem.paired_two_abel_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-paired-physical.json
+          cat /tmp/ou3-paired-physical.json
+      - name: Diagnose linked finite-supply ratio without promotion
+        run: |
+          mkdir -p /tmp/ou3-linked
+          python3 -m tools.stability.ou3_theorem.linked_supply_source_diagnostic --directory /tmp/ou3-linked --output /tmp/ou3-linked.json --export --eigen /usr/include/eigen3
+          cat /tmp/ou3-linked.json
       - name: Audit exact same-cell moving row groups without promotion
         run: python3 -m tools.stability.ou3_theorem.moving_transport_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-moving-transport.json
       - name: Reproduce the committed world-frame audit without promotion
         run: python3 -m tools.stability.ou3_theorem.world_frame_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-world-frame.json --expect reports/results/ou3_stability/world-frame-source-feasibility.json
       - name: Reproduce the committed AW tracking audit without promotion
         run: python3 -m tools.stability.ou3_theorem.aw_tracking_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-aw-tracking.json --expect reports/results/ou3_stability/aw-tracking-source-feasibility.json
+      - name: Check carried signed AW reader against analytic margin
+        run: python3 -m tools.stability.ou3_theorem.aw_signed_mean_reader_diagnostic
       - name: Reproduce the committed information-ratio audit without promotion
         run: python3 -m tools.stability.ou3_theorem.information_ratio_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-information-ratio.json --expect reports/results/ou3_stability/information-ratio-source-feasibility.json
       - name: Check signed adjoint compatibility on the carried word

@@ -308,7 +308,7 @@ supplies are still present; they must not be relabelled arbitrary IMU fast error
 | MARINE sampling and excitation | Existing jerk/velocity telescope plus actual weighted E_a support; SF4/SF5, not independent endpoint extrema. Existing Bs+Bf constants remain conservative one-step/mean outer bounds only. |
 | Magnetic interaction | Unchanged applied-event information; retain frames and gyro kernels in SF5/SF8; do not confuse restricted service with full physical gauge exclusion. |
 | Capture/Live/H18 | Carry both components, primitives and frontend state through the real chronology; held BA does not hold physical slow truth or clear fast accumulation. |
-| H18 release | Same slow truth and fast history; estimator release changes permissions/covariance only. LIN BIBO and release compactness remain OPEN. |
+| H18 release | Same slow truth and fast history; estimator release changes permissions/covariance only. Held-H18 LIN BIBO and captured-domain release compactness are CLOSED qualitatively; general capture and sharp outer-entry supply remain OPEN. |
 | A21 persistence | Homogeneous compatibility equations remain source-faithful; test attainable base histories using SF1--SF8, not zero-base-innovation substitution. |
 | Outer-to-inner entry | Linked chi/gamma<r_in² plus every-prefix retention over the new reachable class; no model-only promotion. |
 | Finite-error supply | Slow recurrence SF6 and fast functional SF5; all other existing defects remain linked. Unknown H,C blocks a numerical source-uniform temporal supply. |

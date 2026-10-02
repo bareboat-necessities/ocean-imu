@@ -15,6 +15,7 @@ def status_report() -> dict:
         "two_timescale_source_uniform_finite_error_supply":False,
         "marine_regime_complete_window_contract":True,
         "marine_displacement_excitation_contract":True,
+        "marine_displacement_excitation_numeric_qualification":True,
         "zero_translation_moving_alias_excluded":True,
         "displacement_span_signed_kinematic_moment":True,
         "displacement_four_S_boundary_mismatch_identified":True,
@@ -49,6 +50,21 @@ def status_report() -> dict:
         "nominal_attitude_column_physical_transfer_given_AW_tracking":True,
         "sharp_isotropic_sync_AW_covariance_ceiling":True,
         "uniform_AW_tracking_error_bound":False,
+        "source_uniform_Astar_real_arithmetic_signed_mean":True,
+        "source_uniform_Astar_positive_attitude_gram_exists":True,
+        "shipping_closed_persistent_ZG_excluded_real_arithmetic":True,
+        "complete_word_zero_dissipation_invariant_set_trivial_on_qualified_moving_superwords":True,
+        "complete_regular_word_joint_zero_action_kernel_nullity_at_most_one":True,
+        "surviving_joint_kernel_line_has_unique_BA_for_attitude_amplitude":True,
+        "literal_event_strata_regressed":True,
+        "qualitative_finite_superword_strict_dissipation_exists":True,
+        "compact_outer_A21_release_region_exists":True,
+        "finite_linked_supply_supremum_on_compact_outer_class_exists":True,
+        "finite_practical_outer_absorbing_radius_exists":True,
+        "entry_into_local_0p15_ball_proved":False,
+        "Astar_plus_magnetic_implies_full_six_column_rank":False,
+        "real_arithmetic_AW_source_transfer_closed_for_Astar":True,
+        "next_six_column_route":"retired same-cell localization; use aggregate A* plus magnetic-service kernel and word-dependent BA graph",
         "nominal_signed_mean_attitude_columns":True,
         "pointwise_physical_AW_tracking_premise_refuted_on_admitted_history":True,
         "source_uniform_nominal_AW_window_statistics":False,
@@ -59,7 +75,7 @@ def status_report() -> dict:
         "injection_free_aggregate_six_column_floor_given_nominal_window_premises":True,
         "aggregate_world_frame_six_column_floor":False,
         "practical_rho0_margin_from_six_column_floor":False,
-        "marine_attitude_excitation_numeric_qualification":False,
+        "marine_attitude_excitation_numeric_qualification":True,
         "marine_attitude_excitation_implies_signed_temporal_separation":False,
         "physical_tilt_span_sampling_implication":True,
         "carried_signed_adjoint_compatibility_criterion":True,
@@ -282,10 +298,10 @@ def status_report() -> dict:
         "next_controlling_obligation":(
             "Qualify the six candidate slow/fast budgets and both signed fast-accumulation profiles on one delivered calibrated history. "
             "Missing H_a,C_a,H_g,C_g remain OPEN; do not replace them by unrestricted residual boxes or a fitted excitation threshold. "
-            "Existing MARINE T_E/theta_E and T_P/P_E remain symbolic; the zero-translation sin-cubed witness is now outside MOVING. "
+            "MARINE is now user-qualified at T_E=T_P=30 s, theta_E=2 deg, P_E=.03 m; the zero-translation sin-cubed witness is now outside MOVING. "
             "The .01 sin(.5t) witness violates the candidate all-slow rates, but mixed allocation remains OPEN. "
             "Keep the exact dissipativity/LaSalle path, source coupled tuner chronology, physical gyro/accel constraints and actual magnetic service. "
-            "Prove literal interleaved H18 LIN BIBO and release compactness, outer retention and finite inner entry, then linked complete-word/prefix supply. "
+            "Held-H18 LIN BIBO and captured-domain release compactness are already closed qualitatively; prove general capture, outer retention and finite inner entry, then linked complete-word/prefix supply. "
             "Never infer zero base innovations from zero homogeneous action. Regime composition and float32 closure remain separate. "
             "Historical O1/O2 scalar kernel ceilings and the unqualified 1-degree/60-second low-pass gate are not controlling."
         ),

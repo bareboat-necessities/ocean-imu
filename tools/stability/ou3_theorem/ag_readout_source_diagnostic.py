@@ -26,6 +26,8 @@ def instrument(source):
         source = source.replace(old, new)
 
     once('    apply_pending_aw_covariance_inflation_();', '''    if (recording) {
+        estimator_state = xext.template cast<double>();
+        estimator_quat = qref.coeffs().template cast<double>();
         const T trace_phi = std::exp(-Ts / std::max(T(1e-3), tau_bacc_));
         const T trace_qscale = -T(0.5)*std::max(T(1e-3),tau_bacc_)
             *std::expm1(-T(2)*Ts/std::max(T(1e-3),tau_bacc_));
@@ -37,10 +39,12 @@ def instrument(source):
     apply_pending_aw_covariance_inflation_();
     symmetrize_Pext_();   // Symmetry hygiene
     if (recording) events.push_back(std::string("{\\"kind\\":\\"sync_completion\\",\\"before\\":")
-        +matrix_json(trace_before_sync)+",\\"after\\":"+matrix_json(Pext)+'}');''')
+        +matrix_json(trace_before_sync)+",\\"after\\":"+matrix_json(Pext)+physical_json()+'}');''')
     once('        Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;',
          '        readout_sync(Delta);\n        Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;')
     once('    ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);',
+         '    estimator_state = xext.template cast<double>();\n'
+         '    estimator_quat = qref.coeffs().template cast<double>();\n'
          '    readout_reset(dtheta_injected);\n'
          '    ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);')
     # Record only actually applied updates. Preserve any innovation safety bump
@@ -65,11 +69,47 @@ def instrument(source):
         chunk = chunk.replace('    xext.noalias() += K * r;', f'''    if (recording) {{
         Eigen::Matrix<T,3,NX> trace_h = Eigen::Matrix<T,3,NX>::Zero();
         {hcode}
+        estimator_state = xext.template cast<double>();
+        estimator_quat = qref.coeffs().template cast<double>();
         readout_correction("{sensor}",trace_h,({noise}+(S_mat-trace_s)).eval(),K);
     }}
     xext.noalias() += K * r;''')
         source = source[:a]+chunk+source[b:]
     return source
+
+
+def validate_physical_lift(trace):
+    """Check that every literal operation boundary carries one aligned replay truth snapshot."""
+    required = ("physical_t", "physical_p", "physical_v", "physical_S", "physical_a",
+                "physical_quaternion", "physical_bg", "physical_ba",
+                "estimator_state", "estimator_quaternion")
+    events = trace["events"]
+    if not events:
+        raise ValueError("physical lift requires events")
+    for i, event in enumerate(events):
+        missing = [key for key in required if key not in event]
+        if missing:
+            raise ValueError(f"event {i} missing physical lift fields: {missing}")
+        for key in ("physical_p","physical_v","physical_S","physical_a","physical_bg","physical_ba"):
+            value = event[key]
+            if len(value) != 3 or any(len(row) != 1 for row in value):
+                raise ValueError(f"event {i} malformed {key}")
+        for key in ("physical_quaternion","estimator_quaternion"):
+            value=event[key]
+            if len(value)!=4 or any(len(row)!=1 for row in value):
+                raise ValueError(f"event {i} malformed {key}")
+        value=event["estimator_state"]
+        if len(value)!=21 or any(len(row)!=1 for row in value):
+            raise ValueError(f"event {i} malformed estimator_state")
+    times = [float(event["physical_t"]) for event in events]
+    if any(b < a for a, b in zip(times, times[1:])):
+        raise ValueError("physical lift time is not chronological")
+    return {"aligned_event_count": len(events),
+            "all_literal_boundaries_have_p_v_S_a": True,
+            "all_literal_boundaries_have_full_carried_truth_and_estimator_state": True,
+            "native_literal_boundary_export_complete": True,
+            "chronological": True,
+            "source_uniform_verified": False}
 
 
 def analyze(trace, dps=80):
@@ -225,6 +265,38 @@ def analyze(trace, dps=80):
                 'minimum_complete_sync_pair_Rayleigh_quotient_exact': str(sync_rayleigh),
                 'applied_rows': len(rows), 'events': len(sequence),
                 'source_uniform_verified': False, 'rigorous_enclosure': False}
+
+
+def paired_physical_reconstruction(trace):
+    """Falsifiable carried check of the exported physical lift.
+
+    This is deliberately a reconstruction test, not yet G_phys,W: it verifies
+    that the aligned p/v/S/a columns obey the same discrete physical chain at
+    literal prediction epochs, so the subsequent two-Abel pairing has a valid
+    common source. A failed chain invalidates the exporter immediately.
+    """
+    import numpy as np
+    pred = [e for e in trace["events"] if e["kind"] == "prediction"]
+    if len(pred) < 2:
+        raise ValueError("paired physical reconstruction needs predictions")
+    t = np.array([float(e["physical_t"]) for e in pred])
+    p = np.array([[float(x[0]) for x in e["physical_p"]] for e in pred])
+    v = np.array([[float(x[0]) for x in e["physical_v"]] for e in pred])
+    a = np.array([[float(x[0]) for x in e["physical_a"]] for e in pred])
+    ss = np.array([[float(x[0]) for x in e["physical_S"]] for e in pred])
+    dt = np.diff(t)
+    # Exact analytic replay truth is sampled at the event epoch. Trapezoidal
+    # defects are diagnostic only and should scale as O(dt^3) for this fixture.
+    ep = p[1:] - p[:-1] - .5*dt[:,None]*(v[1:]+v[:-1])
+    ev = v[1:] - v[:-1] - .5*dt[:,None]*(a[1:]+a[:-1])
+    es = ss[1:] - ss[:-1] - .5*dt[:,None]*(p[1:]+p[:-1])
+    return {"prediction_epochs":len(pred),
+            "max_trapezoid_p_defect":float(np.max(np.linalg.norm(ep,axis=1))),
+            "max_trapezoid_v_defect":float(np.max(np.linalg.norm(ev,axis=1))),
+            "max_trapezoid_S_defect":float(np.max(np.linalg.norm(es,axis=1))),
+            "is_G_phys_W":False,
+            "reason":"chain validation only; causal normalized source adjoints must still be paired",
+            "source_uniform_verified":False}
 
 
 def contraction_feasibility(trace, dps=60):
@@ -541,10 +613,22 @@ def run(eigen, headings=('0', '0.001', '0.000001', 'wave')):
             for key in control:
                 if key != 'events' and control[key] != observed[key]:
                     raise ValueError(f'observer changed literal source output: {key}')
+            # The untapped control intentionally has no proof events. Validate
+            # only the observed temporary-header stream; terminal parity above
+            # proves the taps did not alter shipping output.
+            lift=validate_physical_lift(observed)
+            from .local_defect_composition import carried_local_defect_certificate
+            local_defect=carried_local_defect_certificate(observed)
+            if not local_defect["local_b_endpoint_parity"]:
+                raise ArithmeticError("locally composed forcing vector failed endpoint parity")
             cases.append({'input_profile': heading,
                           'live_step': observed['live_step'], 'refined_step': observed['refined_step'],
                           'active_step': observed['active_step'],
-                          'literal_terminal_parity': True, **analyze(observed)})
+                          'literal_terminal_parity': True,
+                          'physical_lift': lift,
+                          'local_affine_defect': local_defect,
+                          'physical_chain': paired_physical_reconstruction(observed),
+                          **analyze(observed)})
             if heading in ('0', 'wave'):
                 cases[-1]['exact_exported_word_enclosure'] = enclose_exported_word(observed)
                 cases[-1]['contraction_feasibility'] = contraction_feasibility(observed)

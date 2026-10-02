@@ -10,19 +10,19 @@
     "qualification": "retained marine envelope plus selected acceleration-jerk limit; MOVING requires both attitude and displacement span on complete moving windows; all-time primitive, jerk and both excitation memberships must be certified",
     "J_max_mps3": 100,
     "attitude_excitation": {
-      "T_E_s": null,
-      "theta_E_rad": null,
+      "T_E_s": 30,
+      "theta_E_rad": 0.03490658503988659,
       "metric": "gravity-direction tilt span",
       "rule": "for every physical moving episode I and every complete window W of duration T_E contained in closure(I): gravity-direction span(W) >= theta_E; windows crossing physical rest boundaries belong to transition; isolated zero-rate instants do not split moving episodes",
-      "numerical_qualification": "OPEN; pinned 28-ft RAO evidence does not presently certify a theorem-grade source-uniform rolling minimum",
+      "numerical_qualification": "USER-SPECIFIED theorem qualification: every complete 30-s MOVING window has gravity-direction span >=2 deg",
       "transition_scope": "one carried physical episode; no boundary reselection at proof words; finite detector delay and recurring bridge retention remain OPEN"
     },
     "displacement_excitation": {
-      "T_P_s": null,
-      "P_E_m": null,
+      "T_P_s": 30,
+      "P_E_m": 0.03,
       "metric": "wave-displacement Euclidean diameter/span",
       "rule": "for every physical moving episode I and every complete window W of duration T_P contained in closure(I): sup_{s,u in W} ||p(s)-p(u)|| >= P_E > 0; windows crossing physical rest boundaries belong to transition; isolated zero-rate instants do not split moving episodes",
-      "numerical_qualification": "OPEN; no minimum wave displacement is invented by the proof",
+      "numerical_qualification": "USER-SPECIFIED theorem qualification: every complete 30-s MOVING window has wave-displacement span >=0.03 m",
       "transition_scope": "same carried physical wave coordinate and primitive; no boundary or proof-word reselection"
     }
   },
@@ -34,12 +34,12 @@
     "D_g_s_rad_s2": 0.00001,
     "B_a_f_mps2": 0.3,
     "B_g_f_rad_s": 0.02,
-    "fast_accel_horizon_s": null,
-    "fast_accel_accumulation_cap_mps": null,
-    "fast_gyro_horizon_s": null,
-    "fast_gyro_accumulation_cap_rad": null,
+    "fast_accel_horizon_s": 60,
+    "fast_accel_accumulation_cap_mps": 0.05,
+    "fast_gyro_horizon_s": 60,
+    "fast_gyro_accumulation_cap_rad": 0.002,
     "temporal_rule": "On the calibrated delivered-sample hold, every placed window of length 0<T<=H_i has norm of signed integral <= min(B_i_f*T,C_i); finite H_i>0 and C_i<B_i_f*H_i. Longer intervals use the carried history, not a reset.",
-    "assembled_two_timescale_qualification": "OPEN",
+    "assembled_two_timescale_qualification": "USER-SPECIFIED candidate assembled-device FAST qualification; analytical theorem use conditional on actual delivered-device validation",
     "qualification": {
       "B_a_s": "Inherited candidate sqrt(3)*0.13. The old prose calls 0.13 a commissioned per-axis residual envelope; no attached assembled-device record establishing this slow-component bound was found. Not a fit-uncertainty or sensor-noise sigma.",
       "D_a_s": "Inherited selected deterministic deployment limit, not a measured bias-rate specification. Assembled slow-history qualification OPEN.",
@@ -47,7 +47,7 @@
       "D_g_s": "Inherited 1e-5 rate envelope; no linked time-record qualification found. Candidate only, not estimator process noise.",
       "B_a_f": "Inherited 0.3 instantaneous proof envelope, not a broadband RMS-to-pathwise conversion. Two-timescale decomposition qualification OPEN.",
       "B_g_f": "Inherited 0.02 instantaneous proof envelope, not the gyro sigma or noise density. Two-timescale decomposition qualification OPEN.",
-      "fast_temporal": "OPEN for both sensors: H and C are deliberately null. The accumulation form is a conditional qualification interface, not a new measured device specification. Missing values never mean unrestricted fast error."
+      "fast_temporal": "USER-SPECIFIED candidate: H_a=60 s,C_a=.05 m/s,H_g=60 s,C_g=.002 rad; hardware validation remains required"
     }
   },
   "magnetic_service": {
