@@ -12,6 +12,7 @@ on:
       - 'tools/stability/ou3_theorem/release_factor_force_cover.py'
       - 'tools/stability/ou3_theorem/force_direction_cone.py'
       - 'tools/stability/ou3_theorem/release_factor_direction_cover.py'
+      - 'tests/validation/test_ou3_force_direction_cone.py'
       - '.github/workflows/ou3-release-interval-probe.yml'
       - 'tools/stability/ou3_theorem/theorem_status.py'
       - 'tools/stability/ou3_theorem/release_accel_geometry_cover.py'
