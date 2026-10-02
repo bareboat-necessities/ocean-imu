@@ -80,3 +80,19 @@ def certify(leaves:tuple[PropagatedCell,...], entry_budget:float):
             "every_prefix_positive_dissipation":prefix_ok,
             "history_cells":len(leaves),
             "generated_outputs_independently_boxed":False}
+
+def rigorous_cell_from_interval_joint(root:HistoryCell,iq,zero_set_excluded:bool):
+    """Fail-closed scalar enclosure from one dependency-preserving interval joint form.
+
+    This deliberately does not divide by a global unrelated eigenvalue.  A
+    later kernel-aware generalized solver must provide the positive homogeneous
+    restriction; until then the cell cannot promote.
+    """
+    from tools.stability.ou3_theorem.interval_riccati import symmetric_interval_gershgorin
+    alo,ahi=symmetric_interval_gershgorin(iq.A.mid,iq.A.rad)
+    # Supply includes cross/source blocks and cannot be bounded independently
+    # without a source-domain metric. Fail closed until the SAME cell supplies it.
+    return {"dependency_token":root.prefix_token,"homogeneous_action_lower":alo,
+            "homogeneous_action_upper":ahi,"zero_set_excluded":zero_set_excluded,
+            "source_metric_attached":False,"constructive_quotient_verified":False,
+            "reason":"same-history source-domain metric not yet attached"}
