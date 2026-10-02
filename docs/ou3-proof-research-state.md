@@ -1,3 +1,11 @@
+## Word-dependent kernel-restricted interval action implemented
+
+`kernel_restricted_action.py` now forms the superword homogeneous action in common root coordinates, `A_super=A0+T' A1 T`, before restricting by the first complete word's actual compatibility line. The complement is constructed from that word-specific line; no fixed global compatibility vector is used. `compatibility_line_interval.py` encodes the joint attitude/BA graph line r=(a,-A_ba a) and provides an angle-radius certificate for cell uncertainty. The restriction deliberately fails closed when the line has nonzero interval radius until an angle-aware projector enclosure is supplied. `constructive_cell_ratio.py` is wired to accept this later-word restricted action.
+
+This removes the conceptual kernel blocker but not yet the numeric cell certificate: actual history cells produce an interval family of compatibility lines, not an exact line. The next calculation is therefore the angle-aware projector/restriction enclosure using the certified line cone, so `kernel_restricted_interval_action_numeric` can become true without midpoint-line substitution. After that, the nonlinear MARINE/MAGNETIC QCQP callbacks remain the other blocker to max_i s_i/d_i.
+
+Structures preserved: word-dependent joint attitude/BA line, rotating weak directions, later-word action and common-root transport. Relaxation: none promoted; midpoint line is diagnostic only when line radius is zero. No shipping counterexample.
+
 ## Direct temporal QCQP selected; cellwise max s_i/d_i plumbing complete
 
 A direct verified branch-and-bound QCQP now bounds the linked B/C supply on the SAME temporal source variables, avoiding an artificial ellipsoid. Linear SLOW/FAST window facets prune source boxes; nonlinear MARINE/MAGNETIC constraints are callback obligations and UNKNOWN forces subdivision/failure. `constructive_cell_ratio.py` composes a supply certificate with a kernel-restricted homogeneous action and computes s_i/d_i; `cover_max` returns max_i s_i/d_i only when every leaf verifies.
