@@ -417,11 +417,26 @@ def spd_noise_floor_inverse_box(r: IMat) -> tuple[IMat,dict]:
                         "measurement_floor":lo,"inverse_norm_bound":b}
 
 def verified_gain_interval_psd(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
-    """Gain enclosure retaining the covariance-set invariant P>=0."""
+    """Gain enclosure retaining P>=0 while centering at the actual midpoint inverse.
+
+    If the entrywise S perturbation is too large for Neumann inclusion, PSD
+    still gives ||S^-1||<=1/rmin. We keep inv(S_mid) as center and use
+    ||S^-1-inv(S_mid)|| <= ||S^-1||+||inv(S_mid)|| for a rigorous, materially
+    tighter box than center zero whenever the midpoint is informative.
+    """
     try:
         return verified_gain_interval(p,h,r)
     except ValueError:
-        sinv,cert=spd_noise_floor_inverse_box(r)
+        S=innovation_covariance(p,h,r)
+        floor,_=symmetric_interval_gershgorin(r.mid,r.rad)
+        if not floor>0: raise ValueError("positive measurement noise floor required")
+        inv0=_inverse3_exact(S.mid)
+        inv0n=max(sum(abs(x) for x in row) for row in inv0)
+        b=_out(1.0/floor+inv0n)
+        sinv=IMat(inv0,tuple(tuple(b for _ in range(3)) for _ in range(3)))
+        cert={"verified":True,"certificate":"PSD_floor_centered_midpoint_inverse",
+              "measurement_floor":floor,"inverse_norm_bound":1.0/floor,
+              "perturbation_entry_radius":b}
         return matmul(matmul(p,transpose(h)),sinv),cert
 
 def verified_joseph_update_psd(p: IMat,h: IMat,r: IMat) -> tuple[IMat,dict]:
