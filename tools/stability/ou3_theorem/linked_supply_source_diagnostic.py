@@ -211,16 +211,19 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--export', action='store_true')
     parser.add_argument('--eigen', type=Path, default=Path('/usr/include/eigen3'))
-    parser.add_argument('--cxx', default=shutil.which('clang++') or 'g++')\n    parser.add_argument('--horizons', default='16,30,100')
+    parser.add_argument('--cxx', default=shutil.which('clang++') or 'g++')
+    parser.add_argument('--horizons', default='16,30,60,100')
     args = parser.parse_args()
+    horizons=tuple(int(x) for x in args.horizons.split(','))
     if args.export:
-        horizons=tuple(int(x) for x in args.horizons.split(','))\n        export_words(args.directory.resolve(), args.eigen, args.cxx, horizons)
+        export_words(args.directory.resolve(), args.eigen, args.cxx, horizons)
     with mp.workdps(80):
         report = {'kind': 'NON_PROMOTING_LINKED_FINITE_SUPPLY', 'decimal_digits': 80,
                   'source_uniform_verified': False, 'theorem_closed': False,
-                  'words': [analyze(args.directory/f'word-{p}-{h}s.json') for h in tuple(int(x) for x in args.horizons.split(',')) for p in ['0','wave']]}
+                  'words': [analyze(args.directory/f'word-{p}-{h}s.json')
+                            for h in horizons for p in ['0','wave']]}
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, indent=2, sort_keys=True)+'\n')
+    args.output.write_text(json.dumps(report, indent=2, sort_keys=True)+'\\n')
     print(json.dumps(report, indent=2, sort_keys=True))
 
 
