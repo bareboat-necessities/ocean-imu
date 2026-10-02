@@ -36,6 +36,65 @@ def left_attitude_error(est_wb,true_bw):
     ang=2*math.atan2(v,dq[3])
     return [ang*x/v for x in dq[:3]]
 
+def _col(v):
+    return [float(x[0] if isinstance(x,(list,tuple)) else x) for x in v]
+
+def carried_error(event):
+    """21-state true-minus-estimate error in the literal root coordinates."""
+    x=_col(event["estimator_state"])
+    th=left_attitude_error(_col(event["estimator_quaternion"]),_col(event["physical_quaternion"]))
+    bg=[a-b for a,b in zip(_col(event["physical_bg"]),x[3:6])]
+    v=[a-b for a,b in zip(_col(event["physical_v"]),x[6:9])]
+    p=[a-b for a,b in zip(_col(event["physical_p"]),x[9:12])]
+    S=[a-b for a,b in zip(_col(event["physical_S"]),x[12:15])]
+    aw=[a-b for a,b in zip(_col(event["physical_a"]),x[15:18])]
+    ba=[a-b for a,b in zip(_col(event["physical_ba"]),x[18:21])]
+    return [[str(z)] for z in th+bg+v+p+S+aw+ba]
+
+def literal_mean_factor(event):
+    kind=event["kind"]; A=[[F(int(i==j)) for j in range(21)] for i in range(21)]
+    if kind=="prediction":
+        for off,key in ((0,"F_AG"),(6,"F_LIN")):
+            B=matrix(event[key])
+            for i,row in enumerate(B):
+                A[off+i][off:off+len(row)]=row
+        phi=F(event["phi_BA"])
+        for i in range(18,21): A[i][i]=phi
+    elif kind=="correction":
+        H=matrix(event["H"]); K=matrix(event["K"])
+        A=add(A,matmul(K,H),F(-1))
+    elif kind=="reset":
+        x,y,z=[F(row[0]) for row in event["d"]]
+        cross=[[0,-z,y],[z,0,-x],[-y,x,0]]
+        for i in range(3):
+            for j in range(3): A[i][j]+=F(cross[i][j],2)
+    else:
+        raise ValueError("mean-neutral event has no mean factor")
+    return A
+
+def carried_boundaries(events):
+    pairs=event_boundary_pairing(events); out=[]
+    for ia,ib in pairs:
+        a,b=events[ia],events[ib]
+        out.append({"kind":a["kind"],"A":literal_mean_factor(a),
+                    "e_before":carried_error(a),"e_after":carried_error(b)})
+    return out
+
+def carried_local_defect_certificate(trace):
+    B=carried_boundaries(trace["events"])
+    if not B: raise ValueError("no carried mean boundaries")
+    c=compose_local(B)
+    e0=matrix(B[0]["e_before"]); eN=matrix(B[-1]["e_after"])
+    residual=add(eN,matmul(c["M"],e0),F(-1))
+    diff=add(c["b"],residual,F(-1))
+    maxdiff=max(abs(float(x[0])) for x in diff)
+    return {"local_defect_count":c["local_defect_count"],
+            "endpoint_residual_used_as_input":False,
+            "local_b_endpoint_residual_max_abs":maxdiff,
+            "local_b_endpoint_parity":maxdiff < 5e-10,
+            "native_literal_boundary_export_complete":True,
+            "b_local":[[float(x[0])] for x in c["b"]]}
+
 def local_defects(boundaries):
     out=[]
     for k,item in enumerate(boundaries):
