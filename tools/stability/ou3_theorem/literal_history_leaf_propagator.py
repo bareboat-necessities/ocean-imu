@@ -36,7 +36,7 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
  certified release-state propagator; absence is reported rather than invented.
  """
  n=int(round(horizon_s/dt));times=[i*dt for i in range(n+1)]
- samples=sample_history(cell,times,C);physical_acc=physical_acceleration_history(cell,times,C);adapt=initial_adaptation();guard=initial_guard();trace=[];fast_acc=[];racc=[];conditioned_acc=[]
+ samples=sample_history(cell,times,C);physical_acc=physical_acceleration_history(cell,times,C);adapt=initial_adaptation();guard=initial_guard();trace=[];fast_acc=[];racc=[];conditioned_acc=[];guard_weights=[]
  vel=[];pos=[];acc=[];jerk=[];grav=[];mag=[]
  prev_a=None
  for i,row in enumerate(samples):
@@ -57,7 +57,7 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
   delivered_a=tuple(g*gv_comp[a]+body_a[a]+slow_a[a]+fast_a[a] for a in range(3));delivered_g=tuple(slow_g[a]+fast_g[a] for a in range(3))
   acc_norm_floor=g-Amax-C["imu_bias"]["B_a_s_mps2"]-C["imu_bias"]["B_a_f_mps2"]
   raw_step=(C["marine_motion"]["J_max_mps3"]+g*C["marine_motion"]["Omega_max_rad_s"]+Amax*C["marine_motion"]["Omega_max_rad_s"]+C["imu_bias"]["D_a_s_mps3"])*dt+2*C["imu_bias"]["B_a_f_mps2"]
-  gs=guard.step(delivered_a,dt,acc_norm_floor,raw_step);conditioned_acc.append(gs["conditioned"]);racc.append(covariance_interval_from_excess(gs["excess"]))
+  gs=guard.step(delivered_a,dt,acc_norm_floor,raw_step);guard_weights.append(gs["weight"]);conditioned_acc.append(gs["conditioned"]);racc.append(covariance_interval_from_excess(gs["excess"]))
   conditioned_norm_floor=gs["conditioned_norm_lower"]
   try:state=adapt.step(I(dt,dt),delivered_g,gs["conditioned"],I(.12,.12),acc_norm_lower=conditioned_norm_floor)
   except ArithmeticError as e:
@@ -76,7 +76,7 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
  # release-state enclosure can be connected explicitly.
  from .aggregate_magnetic_service import AggregateMagneticService
  mag_service=AggregateMagneticService(C["magnetic_service"]["T_M_s"],C["magnetic_service"]["mu_M"])
- payload={"root":cell,"samples":samples,"adaptation_trace":trace,"physical_acceleration":physical_acc,"fast_accel":fast_acc,"conditioned_accel":conditioned_acc,"Racc_interval":racc,
+ payload={"root":cell,"samples":samples,"adaptation_trace":trace,"physical_acceleration":physical_acc,"fast_accel":fast_acc,"conditioned_accel":conditioned_acc,"Racc_interval":racc,"guard_weight":guard_weights,
          "physical":{"velocity":vel,"position":pos,"acceleration":acc,"jerk":jerk,"gravity":grav},
          "aggregate_magnetic_service":mag_service,
          "complete_constructive_leaf":False}
