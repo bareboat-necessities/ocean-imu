@@ -147,3 +147,74 @@ class CausalAdaptationBox:
   return {"vertical":vertical,"band":banded,"variance":var,
           "tau":applied[0],"sigma_aw":applied[1],"R_S":applied[2],"T_S":applied[3],
           "pending":self.tuner.pending}
+
+def logi(x:I)->I:
+ if x.lo<=0: raise ArithmeticError("log argument not separated from zero")
+ return I(math.nextafter(math.log(x.lo),-math.inf),math.nextafter(math.log(x.hi),math.inf))
+
+@dataclass
+class WavePeriodBox:
+ accel_prev:I; hp1:I; hp1_prev:I; hp2:I; velocity:I; elevation:I
+ vmean:I; vsq:I; emean:I; esq:I; weight:I; elapsed:I
+ log_period:I|None=None; usable:bool=False
+ lambda_:float=2*math.pi*.02
+ def frequency(self,prior=.2):
+  if self.usable and self.log_period is not None:
+   return expi(-self.log_period)
+  return I(prior,prior)
+ def step(self,dt:I,a:I):
+  decay=expi(-self.lambda_*dt);gain=(1-decay)/self.lambda_
+  st1=decay*(self.hp1+a-self.accel_prev);st2=decay*(self.hp2+st1-self.hp1_prev)
+  self.accel_prev=a;self.hp1_prev=st1;self.hp1=st1;self.hp2=st2
+  self.velocity=decay*self.velocity+gain*st2;self.elevation=decay*self.elevation+gain*self.velocity
+  self.elapsed=self.elapsed+dt
+  moment_start=3/self.lambda_
+  if self.elapsed.hi<moment_start:return
+  if self.elapsed.lo<moment_start:raise ArithmeticError("wave-period moment-start branch unresolved")
+  period=expi(self.log_period) if self.log_period is not None else I(6,6)
+  requested=4*period
+  if requested.lo<20<requested.hi or requested.lo<180<requested.hi:raise ArithmeticError("wave-period horizon clamp unresolved")
+  horizon=I(max(20,requested.lo),min(180,requested.hi));alpha=1-expi(-dt*recip(horizon))
+  self.weight=(1-alpha)*self.weight+alpha
+  self.vmean=(1-alpha)*self.vmean+alpha*self.velocity;self.vsq=(1-alpha)*self.vsq+alpha*self.velocity.sq()
+  self.emean=(1-alpha)*self.emean+alpha*self.elevation;self.esq=(1-alpha)*self.esq+alpha*self.elevation.sq()
+  if self.weight.hi<=1e-3:return
+  if self.weight.lo<=1e-3:raise ArithmeticError("wave-period weight gate unresolved")
+  vm=self.vmean*recip(self.weight);em=self.emean*recip(self.weight)
+  vv=I(max(0,(self.vsq*recip(self.weight)).lo-vm.sq().hi),max(0,(self.vsq*recip(self.weight)).hi-vm.sq().lo))
+  ev=I(max(0,(self.esq*recip(self.weight)).lo-em.sq().hi),max(0,(self.esq*recip(self.weight)).hi-em.sq().lo))
+  if ev.lo<=1e-12 or vv.lo<=1e-12:raise ArithmeticError("wave-period variance gate unresolved")
+  om=vv*recip(ev)-self.lambda_*self.lambda_
+  if om.lo<=1e-8:raise ArithmeticError("wave-period omega gate unresolved")
+  raw=2*math.pi*recip(sqrti(om));lr=logi(raw)
+  if self.log_period is None:self.log_period=lr
+  else:
+   sea=expi(self.log_period);h=.05*sea
+   # Dynamic horizon helper has a dt lower guard; this branch is literal away from guard crossings.
+   if h.lo<dt.hi:raise ArithmeticError("log-period horizon guard unresolved")
+   al=1-expi(-dt*recip(h));self.log_period=self.log_period+al*(lr-self.log_period)
+  if not self.usable:
+   floor=4/self.lambda_;hist=self.elapsed-I(3/self.lambda_,3/self.lambda_);per=expi(self.log_period)
+   if self.elapsed.lo>=floor and hist.lo>=per.hi:self.usable=True
+   elif self.elapsed.hi>=floor and hist.hi>=per.lo:raise ArithmeticError("usable-period gate unresolved")
+
+def initial_wave_period_box():
+ z=I(0,0)
+ return WavePeriodBox(z,z,z,z,z,z,z,z,z,z,z,z,None,False)
+
+@dataclass
+class ClosedCausalAdaptationBox:
+ mahony:MahonyBox; wave_period:WavePeriodBox; band:BandBox; variance:VarianceBox; tuner:ShippingTunerBox
+ tune_prior_hz:float=.2
+ def step(self,dt:I,gyro,acc,noise_sigma:I,two_kp=.2,two_ki=.02,tau_coeff=1.38,sigma_coeff=.90):
+  applied=self.tuner.commit()
+  vertical=self.mahony.step(dt,gyro,acc,two_kp,two_ki)
+  self.wave_period.step(dt,vertical)
+  f=self.wave_period.frequency(self.tune_prior_hz)
+  banded=self.band.step(vertical,dt,f);var=self.variance.update(dt,banded,f)
+  sea=.5*recip(f.clamp(.05,1.2));alpha=1-expi(-dt*recip(.40*sea))
+  tt=(tau_coeff*.5*recip(f.clamp(.05,1.2))).clamp(.02,12.);alpha_rs=1-expi(-dt*recip(1.5*tt))
+  self.tuner.stage(dt,f,var,noise_sigma,tau_coeff,sigma_coeff,alpha,alpha_rs)
+  return {"vertical":vertical,"f_tune":f,"wave_period_usable":self.wave_period.usable,
+          "band":banded,"variance":var,"tau":applied[0],"sigma_aw":applied[1],
+          "R_S":applied[2],"T_S":applied[3],"pending":self.tuner.pending}
