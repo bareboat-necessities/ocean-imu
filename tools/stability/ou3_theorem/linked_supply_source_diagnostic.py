@@ -56,10 +56,13 @@ def analyze(path):
  L0=mp.cholesky(P0);LN=mp.cholesky(PN); Li=LN**-1
  H=Li*M*L0
  Delta=sym(mp.eye(21)-H.T*H); eig=mp.eigsy(Delta,eigvals_only=True); dmin=min(eig)
- t0=mp.mpf(225);tn=mp.mpf('225.32');live=mp.mpf(trace['live_step'])/200
- e0=error(trace['root_state'],trace['root_quaternion'],t0,live,wave)
- e1=error(trace['terminal_state'],trace['terminal_quaternion'],tn,live,wave)
- x=L0**-1*e0; b=Li*(e1-M*e0); z=H.T*b
+ from .local_defect_composition import carried_boundaries, compose_local
+ B=carried_boundaries(trace['events'])
+ local=compose_local(B)
+ e0=mat(B[0]['e_before']); e1=mat(B[-1]['e_after'])
+ b_local=mat([[float(v[0])] for v in local['b']])
+ prospective_parity=mp.norm(e1-M*e0-b_local)
+ x=L0**-1*e0; b=Li*b_local; z=H.T*b
  V0=(x.T*x)[0]; VN=(e1.T*(PN**-1)*e1)[0]
  ans={'profile':trace['profile'],'dps':80,'event_count':len(trace['events']),
   'observer_terminal_parity':trace['observer_terminal_parity'],
@@ -72,7 +75,7 @@ def analyze(path):
   'live_time_s':trace['live_step']/200,
   'release_LIN_mean_norm':fmt(mp.norm(mat(trace['release_state'])[6:18,:])),
   'source_uniform_verified':False,'theorem_closed':False,
-  'supply_is_retrospective_endpoint_residual':True,
+  'supply_is_retrospective_endpoint_residual':False,\n  'local_defect_origin':'prospective_literal_same_boundary_composition',\n  'local_b_endpoint_parity_norm':fmt(prospective_parity),
   'uniform_inner_retention_refuted_by_this_finite_replay':False,
   'all_time_magnetic_service_verified':False,
   'physical_S_origin':'one fixed capture/Live epoch; never reset at word boundaries',
@@ -82,18 +85,35 @@ def analyze(path):
   GG=Delta-g*mp.eye(21)
   cc=(b.T*b)[0]+(z.T*(GG**-1)*z)[0]
   return cc/g,cc,GG
- # Convex-looking one-dimensional objective; use a dense logit grid then
- # golden refinement inside the best bracket. Diagnostic only.
- grid=[dmin*mp.mpf(k)/1000 for k in range(1,1000)]
- vals=[eval_gamma(g)[0] for g in grid]
- ib=min(range(len(vals)),key=lambda k: vals[k])
- lo=grid[max(0,ib-1)]; hi=grid[min(len(grid)-1,ib+1)]
- gr=(mp.sqrt(5)-1)/2
- a,c=lo,hi; x1=c-gr*(c-a); x2=a+gr*(c-a); f1=eval_gamma(x1)[0]; f2=eval_gamma(x2)[0]
- for _ in range(120):
-  if f1>f2: a=x1;x1=x2;f1=f2;x2=a+gr*(c-a);f2=eval_gamma(x2)[0]
-  else: c=x2;x2=x1;f2=f1;x1=c-gr*(c-a);f1=eval_gamma(x1)[0]
- gam=(a+c)/2; ratio,chi,G=eval_gamma(gam)
+ # Exact scalar optimality condition for f(gamma)=chi(gamma)/gamma:
+ # gamma*chi'(gamma)-chi(gamma)=0.  Since chi''>=0, its left side is
+ # monotone nondecreasing; bisection therefore finds the unique interior
+ # minimizer when it exists.  A strict-boundary infimum is approached from
+ # below and is sufficient for the diagnostic.
+ c0=(b.T*b)[0]
+ def stationarity(g):
+  GG=Delta-g*mp.eye(21)
+  inv=GG**-1
+  chi=c0+(z.T*inv*z)[0]
+  chip=(z.T*inv*inv*z)[0]
+  return g*chip-chi
+ eps=dmin*mp.mpf('1e-30')
+ lo=dmin*mp.mpf('1e-30'); hi=dmin-eps
+ if c0==0 and mp.norm(z)==0:
+  gam=dmin/2
+  optimizer_case='zero_forcing'
+ elif stationarity(hi)<=0:
+  gam=hi
+  optimizer_case='boundary_infimum'
+ else:
+  a,c=lo,hi
+  for _ in range(240):
+   mid=(a+c)/2
+   if stationarity(mid)>0: c=mid
+   else: a=mid
+  gam=(a+c)/2
+  optimizer_case='unique_interior_stationary'
+ ratio,chi,G=eval_gamma(gam)
  completed=(1-gam)*V0+chi-((x-G**-1*z).T*G*(x-G**-1*z))[0]
  ans.update({'defect_origin':'retrospective_endpoint_residual',
   'eligible_for_theorem_entry_test':False,
