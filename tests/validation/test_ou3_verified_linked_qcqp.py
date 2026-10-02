@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 import unittest,numpy as np
 from tools.stability.ou3_theorem.verified_linked_qcqp import Box,verified_supply_bnb,verified_interval_supply_bnb\nfrom tools.stability.ou3_theorem.rank_loss_interval_factor import exact
 class VerifiedLinkedQCQPTests(unittest.TestCase):
