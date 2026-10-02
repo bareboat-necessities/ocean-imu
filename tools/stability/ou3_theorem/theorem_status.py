@@ -122,6 +122,7 @@ def status_report() -> dict:
         "causal_mahony_variance_tuner_interval_propagator":True,
         "literal_wave_period_interval_propagator":True,
         "sensor_to_joint_tuner_causal_chain_closed":True,
+        "literal_covariance_gain_joint_supply_propagator":True,
         "causal_history_interval_propagator_complete":False,
         "constructive_cellwise_supply_dissipation_quotient":False,
         "source_uniform_block_factor_root_coercivity":True,
