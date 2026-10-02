@@ -1,3 +1,14 @@
+## Direction-free goLive accelerometer innovation inverse CLOSED
+
+From the exact common-R Gram identity, write f=rho n and P_n=I-nn'. Then S=cI+aP_n with c=R_acc+p_aw+p_ba and a=p_theta rho^2. Since P_n is an orthogonal projector,
+S^-1 = c^-1 nn' + (c+a)^-1(I-nn').
+This is exact and eliminates both attitude and force-direction partitions at goLive. Over rho in [0,18.60665] and literal isotropic R_acc variance [0.04,0.090625], the verified eigen floor is c>=16.520016 and ||S^-1||2<=0.0605326291. At rho_max and minimum R, transverse inverse eigenvalue is .00114842656 while parallel is .0605326290. The theorem-status flag `golive_direction_free_projector_inverse` is closed.
+
+This closes only the literal block-diagonal goLive correction. After one prediction/correction, P develops cross-block structure, so the same projector formula cannot simply be reused. The next calculation should derive whether the shipping prediction preserves a structured covariance class (isotropic 3x3 Kronecker/block form under common rotations) sufficiently to propagate a symbolic/block Riccati envelope without reverting to entrywise P/K intervals.
+
+Structures preserved: exact projector/eigenstructure, full force range, isotropic R_acc. Relaxations: none in the inverse identity. No shipping counterexample.
+
+
 ## Common-R block Gram identity removes attitude partition at goLive
 
 Keeping the shared R symbol through HPH' before intervalization yields an exact simplification for the literal block-diagonal goLive covariance:
