@@ -5,7 +5,6 @@ the nuisance kernel. If projection of the joint zero-action kernel to attitude
 is injective, and the admissible aggregate attitude compatibility space has
 dimension <=1, then the full joint kernel has dimension <=1.
 """
-from fractions import Fraction as F
 from .complete_word_nullspace import rref, matrix
 
 def rank(a):
