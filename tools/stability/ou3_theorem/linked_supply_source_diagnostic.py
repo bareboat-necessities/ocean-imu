@@ -54,7 +54,8 @@ def analyze(path):
   elif ev['kind']=='reset':
    v=[mp.mpf(float(x[0])) for x in ev['d']]
    M[:3,:]=(mp.eye(3)+skew(v)/2)*M[:3,:]
-  elif ev['kind'] not in ('sync','sync_completion'): raise ValueError(ev['kind'])
+  elif ev['kind'] in ('sync','sync_completion','adaptive_state'): pass
+  else: raise ValueError(ev['kind'])
  P0=sym(mat(trace['root_covariance'])); PN=sym(mat(trace['terminal_covariance']))
  L0=mp.cholesky(P0);LN=mp.cholesky(PN); Li=LN**-1
  H=Li*M*L0
