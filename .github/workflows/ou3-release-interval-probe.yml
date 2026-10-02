@@ -1,0 +1,22 @@
+name: OU3 release interval probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [proof/ou3-linked-local-defects]
+    paths:
+      - 'tools/stability/ou3_theorem/release_interval_propagation.py'
+      - 'tools/stability/ou3_theorem/golive_release_seed.py'
+      - 'tools/stability/ou3_theorem/interval_riccati_21.py'
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python - <<'PY'
+          import json
+          from tools.stability.ou3_theorem.release_interval_propagation import probe
+          z=probe();print(json.dumps(z,indent=2))
+          if not z["one_step_verified"]: raise SystemExit(1)
+        PY
