@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 """Same-history source identities for structured AW release propagation.
 
 These are identities/coordinate maps, not independent source boxes.  A promoted
