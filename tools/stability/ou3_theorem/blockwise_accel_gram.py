@@ -35,6 +35,6 @@ def innovation_inverse_from_gram(Gmid,Grad,R):
  Rm=np.asarray(R.mid,float);Rr=np.asarray(R.rad,float)
  S0=Rm+np.asarray(Gmid,float);E=np.asarray(Grad,float)+Rr
  inv=np.linalg.inv(S0);eta=np.linalg.norm(inv,np.inf)*np.linalg.norm(E,np.inf)
- return {"verified":eta<1,"residual":float(eta),
+ return {"verified":bool(eta<1),"residual":float(eta),
   "inverse_norm_bound":float(np.linalg.norm(inv,np.inf)/(1-eta)) if eta<1 else None,
   "common_rotation_cancelled":True}
