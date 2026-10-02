@@ -1,3 +1,11 @@
+## Direct temporal QCQP selected; cellwise max s_i/d_i plumbing complete
+
+A direct verified branch-and-bound QCQP now bounds the linked B/C supply on the SAME temporal source variables, avoiding an artificial ellipsoid. Linear SLOW/FAST window facets prune source boxes; nonlinear MARINE/MAGNETIC constraints are callback obligations and UNKNOWN forces subdivision/failure. `constructive_cell_ratio.py` composes a supply certificate with a kernel-restricted homogeneous action and computes s_i/d_i; `cover_max` returns max_i s_i/d_i only when every leaf verifies.
+
+Two concrete blockers remain before a numerical radius can be honestly emitted: (1) construct the interval homogeneous action on the quotient/restriction that removes the word-dependent joint attitude/BA compatibility line using the already-proved later-word/A* action; full-space Gershgorin is explicitly rejected; (2) implement the nonlinear MARINE/MAGNETIC QCQP callbacks (Euclidean norms, 30-s spans, jerk, recurring service) on the same history boxes. Until both exist, the solver fails closed and no numerical max ratio is claimed.
+
+Structures preserved: direct temporal polytope, shared source symbols, interval shaped B/C, kernel-before-division discipline. Relaxation: box branch-and-bound is an outer numerical representation of the same history domain; no generated coefficient boxes or independent source extrema. Failure from leaf limits/coarse boxes is D, callback/arithmetic defects E. No shipping counterexample.
+
 ## Temporal MARINE + SLOW+FAST source domain attached to shaped symbols
 
 `temporal_source_domain.py` now builds one persistent source timeline. SLOW accel/gyro symbols obey amplitude plus all pairwise `min(2B,D dt)` difference constraints. FAST accel/gyro symbols obey instantaneous theorem envelopes plus every placed discrete signed-integral window up to H=60 s with caps C_a=.05 m/s and C_g=.002 rad; histories are not reset at proof boundaries. Physical v,p,a boundary symbols use the declared marine envelope, while Euclidean norm coupling, 30-s attitude/displacement spans, jerk and 1-s magnetic service are retained as nonlinear same-cell side constraints rather than replaced by component boxes. Measurement-model limits are attached from constants.json. Hardware qualification remains conditional.
