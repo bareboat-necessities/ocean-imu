@@ -1,3 +1,11 @@
+## Executable history-cover pipeline connected; interval B/C midpoint escape removed
+
+The MARINE span callback now implements the theorem's existential diameter logic per complete window: at least one certified endpoint pair in each window suffices; UNKNOWN candidates force subdivision. `constructive_history_cover.py` connects one causal leaf witness, interval joint form, nonlinear premises, angle-aware kernel restriction and direct source QCQP. During this connection a midpoint escape was found: the QCQP consumed midpoint B/C. `verified_interval_supply_bnb` now adds rigorous coefficient-radius contributions and the cover consumes interval B/C directly. No midpoint source coefficients remain in the executable path.
+
+The architecture can now compute a ratio for a fully populated leaf. The remaining blocker to an actual numeric cover is data population: there is not yet a source-uniform history-cell generator that emits a finite cover of timed physical/gravity/magnetic boxes, interval A0/T/A1, compatibility graph line boxes, interval joint form, and e/u boxes over the complete 60/100-s theorem class. Existing carried replays are not such a cover. Therefore max_i s_i/d_i is still not numerically claimed. Building that finite causal cover is now the sole integration obligation; any leaf that fails inverse/kernel/nonlinear/QCQP certification subdivides only its shared history inputs.
+
+Structures preserved: existential MARINE semantics, interval source coefficients, shared leaf dependencies, all prior shipping couplings. Relaxations introduced: branch-and-bound boxes only. No shipping counterexample.
+
 ## Causal history-cell witness builder implemented; interval B/C QCQP repaired
 
 `causal_history_witness.py` now carries one dependency token through physical v/p/a/j and gravity-direction boxes, applied magnetic-event boxes, word-dependent attitude/BA compatibility-line cones, temporal source symbols, nonlinear MARINE/MAGNETIC premise certification, kernel-restricted action and direct QCQP supply. It derives 30-s witness pairs from the propagated physical boxes and never fabricates excitation when a whole-box witness is unavailable. `certify_leaf` emits a ratio only when both certificate halves verify on the same token.
