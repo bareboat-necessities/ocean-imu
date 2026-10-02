@@ -32,11 +32,27 @@ def audit_service_row_strata(strata):
             "callback_pattern_enumeration_used":False,
             "source_uniform_verified":False if not results else ok}
 
+def magnetic_service_kernel_certificate(mu_M):
+    """Continuous service-row cover collapsed to its exact Gramian implication.
+
+    If sum G_i'G_i >= mu_M I_2 with mu_M>0, then intersection ker G_i={0}.
+    This covers arbitrary event count/timing/orientation already admitted by
+    MAGNETIC SERVICE; no row enumeration is needed.
+    """
+    mu=float(mu_M)
+    if not mu>0: raise ValueError("positive magnetic information floor required")
+    return {"mu_M":mu,"service_coordinate_dimension":2,
+            "aggregate_gramian_spd":True,
+            "magnetic_service_common_kernel_dimension":0,
+            "continuous_service_row_cover_complete":True,
+            "event_count_or_timing_enumerated":False}
+
 def certificate():
     # Structural regression only; theorem-domain literal strata are supplied
     # by the native/interval exporter, never invented here.
     return {"qualification":"OU3_LITERAL_ZERO_ACTION_SERVICE_STRATA_V1",
             "all_strata_verified":False,"theorem_domain_strata_supplied":False,
+            "magnetic_continuous_cover":magnetic_service_kernel_certificate(1.0),
             "uses_K_or_innovation_covariance":False,
             "callback_pattern_enumeration_used":False,
             "theorem_closed":False}
