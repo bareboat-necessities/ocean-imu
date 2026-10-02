@@ -40,3 +40,13 @@ def kernel_certificate_from_words(A0,line0,T,A1,line1):
          "restricted_eigen_lower":c["restricted_eigen_lower"],
          "word_dependent_kernel":True,"later_word_action_included":True,
          "line_rotation_rad":c["midpoint_line_rotation_rad"]}
+
+def kernel_certificate_from_line_cone(A0,line0,line0_radius,T,A1,line1):
+ from .kernel_restricted_action import augment_later_word_action,restrict_interval_action
+ As=augment_later_word_action(A0,T,A1)
+ R,c=restrict_interval_action(As,line0,line0_radius)
+ return {"zero_set_excluded":bool(c["verified"]),"restricted_action":R,
+         "restricted_eigen_lower":c["restricted_eigen_lower"],
+         "word_dependent_kernel":True,"later_word_action_included":True,
+         "line_cone_covered":c.get("whole_line_cone_covered",False),
+         "line_angle_rad":c.get("line_angle_rad",0.)}
