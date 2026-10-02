@@ -32,3 +32,11 @@ def cover_max(cells):
  m=max(cells,key=lambda x:x.ratio_upper)
  return {"verified":True,"max_ratio_upper":m.ratio_upper,"limiting_token":m.token,
          "cell_count":len(cells)}
+
+def kernel_certificate_from_words(A0,line0,T,A1,line1):
+ from .kernel_restricted_action import certify_rotating_line
+ R,c=certify_rotating_line(A0,line0,T,A1,line1)
+ return {"zero_set_excluded":bool(c["verified"]),"restricted_action":R,
+         "restricted_eigen_lower":c["restricted_eigen_lower"],
+         "word_dependent_kernel":True,"later_word_action_included":True,
+         "line_rotation_rad":c["midpoint_line_rotation_rad"]}
