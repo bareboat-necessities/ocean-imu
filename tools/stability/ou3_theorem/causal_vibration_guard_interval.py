@@ -21,6 +21,8 @@ class GuardBox:
  removed_ms:list
  weight:I
  lp_raw_diff_norm:list
+ smooth_lp_raw_diff_norm:list
+ elapsed:float=0.0
  initialized:bool=False
  cutoff_hz:float=3.0
  poles:int=2
@@ -28,12 +30,12 @@ class GuardBox:
  engage_lo:float=.03
  engage_hi:float=.08
  slew_tau:float=5.
- def step(self,acc,dt,raw_norm_lower=None,raw_increment_norm_upper=None):
+ def step(self,acc,dt,raw_norm_lower=None,raw_increment_norm_upper=None,fast_state_bound=None):
   acc=tuple(acc);h=I(float(dt),float(dt))
   if not self.initialized:
    self.stages=[list(acc) for _ in range(4)]
    self.detect=[list(acc),[I(0,0) for _ in range(3)]]
-   self.removed_ms=[I(0,0) for _ in range(3)];self.weight=I(0,0);self.lp_raw_diff_norm=[0.0]*4
+   self.removed_ms=[I(0,0) for _ in range(3)];self.weight=I(0,0);self.lp_raw_diff_norm=[0.0]*4;self.smooth_lp_raw_diff_norm=[0.0]*4;self.elapsed=0.0
    self.initialized=True
    return {"conditioned":acc,"rms":I(0,0),"excess":I(0,0),"weight":self.weight,
            "conditioning_delta_norm_upper":0.0,
@@ -49,7 +51,8 @@ class GuardBox:
   delta_raw=raw_increment_norm_upper
   low=list(acc)
   old_diff=list(self.lp_raw_diff_norm)
-  new_diff=list(old_diff)
+  old_smooth=list(self.smooth_lp_raw_diff_norm)
+  new_diff=list(old_diff);new_smooth=list(old_smooth)
   for p in range(self.poles):
    nxt=[]
    for a in range(3):
@@ -58,8 +61,14 @@ class GuardBox:
    low=nxt
    if delta_raw is not None:
     ah=alpha.hi
-    if p==0:new_diff[p]=ah*(old_diff[p]+delta_raw)
-    else:new_diff[p]=(1-alpha.lo)*new_diff[p-1]+ah*(old_diff[p]+delta_raw)
+    if p==0:new_smooth[p]=ah*(old_smooth[p]+delta_raw)
+    else:new_smooth[p]=(1-alpha.lo)*new_smooth[p-1]+ah*(old_smooth[p]+delta_raw)
+  self.smooth_lp_raw_diff_norm=new_smooth
+  self.elapsed+=dt
+  # FAST is not recursively charged in delta_raw. Its complete LP-I state is
+  # supplied by one signed-primitive Abel bound at the current elapsed time.
+  fb=0.0 if fast_state_bound is None else float(fast_state_bound)
+  new_diff=[x+fb for x in new_smooth]
   self.lp_raw_diff_norm=new_diff
   gamma=expi(I(-2*math.pi*self.detect_hz*dt,-2*math.pi*self.detect_hz*dt))
   hp=list(acc)
@@ -106,4 +115,4 @@ class GuardBox:
 
 def initial_guard():
  z=I(0,0)
- return GuardBox([[z,z,z] for _ in range(4)],[[z,z,z] for _ in range(2)],[z,z,z],z,[0.0]*4)
+ return GuardBox([[z,z,z] for _ in range(4)],[[z,z,z] for _ in range(2)],[z,z,z],z,[0.0]*4,[0.0]*4,0.0)
