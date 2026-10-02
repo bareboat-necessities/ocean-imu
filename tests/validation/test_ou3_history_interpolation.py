@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 import unittest,json
 from pathlib import Path
 from tools.stability.ou3_theorem.source_uniform_root import root_cells
