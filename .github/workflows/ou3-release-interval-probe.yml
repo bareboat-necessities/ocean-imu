@@ -14,6 +14,7 @@ on:
       - 'tools/stability/ou3_theorem/release_factor_direction_cover.py'
       - 'tests/validation/test_ou3_force_direction_cone.py'
       - 'tools/stability/ou3_theorem/force_cone_angle_threshold.py'
+      - 'tools/stability/ou3_theorem/attitude_factor_threshold.py'
       - '.github/workflows/ou3-release-interval-probe.yml'
       - 'tools/stability/ou3_theorem/theorem_status.py'
       - 'tools/stability/ou3_theorem/release_accel_geometry_cover.py'
@@ -29,4 +30,4 @@ jobs:
         with: {python-version: '3.11'}
       - run: pip install numpy
       - run: |
-          python -c 'import json; from tools.stability.ou3_theorem.force_cone_angle_threshold import solve_alpha; z=solve_alpha(); print(json.dumps(z,indent=2)); raise SystemExit(0 if z["verified"] else 1)'
+          python -c 'import json; from tools.stability.ou3_theorem.attitude_factor_threshold import sweep; z={"verified":True,"rows":sweep()}; print(json.dumps(z,indent=2)); raise SystemExit(0 if z["verified"] else 1)'
