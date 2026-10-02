@@ -1,3 +1,20 @@
+## Structured AW gains and literal source identities exported
+
+For an accelerometer correction, the AW gain is now represented directly in INJ coefficients:
+K_aw=(P_aw,theta J_att' + P_aw,aw J_aw' + [active BA] P_aw,ba) S_acc^-1.
+All products and S^-1 stay in the same INJ algebra, so K_aw is an INJ block. Its exact spectral norm is max(|i+n|,sqrt(i^2+j^2)); no entrywise K interval is introduced. For a due S=0 correction while the LIN covariance blocks are scalar*I, K_aw,S=(p_aw,S/(p_SS+r_S)) I exactly.
+
+The source side is linked by literal identities rather than new boxes: r_acc=f_meas-[R_wb(a_w-g)+lever+b_a(temp)], and r_S=-S_mean. Existing native local-defect instrumentation already exports literal r, K, estimator state and physical truth at each accepted correction, providing a carried parity target for the structured formulas.
+
+The prospective scalar iteration is therefore now algebraically complete in form:
+A_next <= phi A + ||K_aw||||r_acc|| + ||K_aw,S||||S_mean||,
+delta=delta(A,phi),
+D=|b|sin(delta)+2|c|sin(delta/2).
+What remains OPEN is the source-uniform numeric iteration: the structured Riccati engine must actually propagate the block coefficients P_aw,theta, P_aw,aw, P_aw,ba, P_aw,S, P_SS and S_acc through prediction/corrections/resets, while the causal history leaf supplies dependency-preserving r_acc and S_mean bounds. Do not fill these with independent global maxima.
+
+Structures preserved: exact gain algebra and literal residual definitions. Relaxation: scalar norm triangle in A recurrence. No shipping counterexample.
+
+
 ## Structured AW mean recurrence linked to changing-axis defect
 
 The literal mean chronology is now encoded prospectively. Prediction gives a_w^- = phi a_w. Accepted accelerometer correction gives a_w^+ = a_w^- + K_aw r. A due S=0 correction subsequently contributes K_aw,S (-S). Therefore a source-uniform norm image satisfies A_next <= phi A + ||K_aw||||r|| + ||K_aw,S||||S||, with all gains/residual/means required from the SAME structured history leaf. No independent A_max is introduced.
