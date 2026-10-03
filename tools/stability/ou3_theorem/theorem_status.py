@@ -366,6 +366,8 @@ def status_report() -> dict:
             "planar_covariance_parity_factorization":True,
             "tail_all_sample_phase_service_min_gt_one_diagnostic":True,
             "twenty_second_point_poincare_invalid_due_scheduler_phase":True,
+            "scheduler_phase_coordinate_invariant":True,
+            "oracle_rational_service_margin":True,
             "scheduler_phase_augmented_invariant_cell":False,
             "all_time_actual_magnetic_service_for_planar_pair":False,
             "finite_replay_is_all_time_certificate":False,
