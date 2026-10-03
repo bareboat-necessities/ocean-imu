@@ -1,5 +1,11 @@
 ## FAST signed-primitive tightening for guard: adjacent-sample route does not improve the bound
 
+## Exact MOVING tilt--BA gauge obstruction (2026-10-02)
+
+The proposed absolute MOVING separation lemma is false under the current physical contract. `docs/ou3-moving-gauge-obstruction.md` gives an analytical class-B obstruction: two indefinitely MOVING histories satisfy the same 30-s 2-deg roll span and .03-m displacement span yet differ by a constant roll about B=75e_x and an admitted persistent SLOW BA history. Delivered accel/gyro/mag records, and therefore deterministic shipping/magnetic-service chronology, are identical. FAST components are zero. Current limiter: formulate the finite-error theorem on the measurement-compatible quotient/tube in BOTH STILL and MOVING; do not claim MOVING alone yields absolute physical tilt/BA identifiability and do not strengthen physical assumptions merely to remove this witness.
+
+Failure classification: **B**. Structures preserved: full shipping chronology and all current physical contracts. Relaxations introduced: none.
+
 The requested signed-primitive calculation was carried out for the vibration-guard one-pole kernel. With piecewise-held FAST input u_k, U_n=h sum_{i<=n} u_i and every placed primitive bounded by C_a over H_a, discrete summation by parts gives a finite-window filtered-output bound of the form
 |LP(u)| <= (1-alpha) B_f + (1-alpha) C_a/h + alpha^(H_a/h) B_f
 (componentwise; later positive unit-gain LP poles do not increase the L-infinity bound). Therefore
