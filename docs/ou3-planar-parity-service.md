@@ -79,6 +79,16 @@ at every finite prefix. This proves the actual accepted cadence on the planar
 real-arithmetic execution once the reference/refinement stage has completed.
 It does not by itself prove the required information floor.
 
+## Literal accelerometer nuisance is a Schur complement
+
+For one linearized accelerometer correction partition the error as target x=(attitude,BG) and nuisance n=(AW,BA and the other coordinates entering the row). With prior covariance [[Pxx,Pxn],[Pnx,Pnn]] and row y=A x+B n+v, exact Gaussian elimination gives n|x covariance N=Pnn-Pnx Pxx^-1 Pxn, effective target row A_eff=A+B Pnx Pxx^-1, and effective noise R_eff=R+B N B'. The target information increment is exactly
+
+    J_x^+ - J_x^- = A_eff' R_eff^-1 A_eff.
+
+This is the same update implemented by the literal PCt/S/Joseph chronology; no independent nuisance gain is introduced. The identity is regression-tested in accel_conditional_information.py. It establishes the correct comparison object for the direct-attitude oracle.
+
+However, the desired service comparison is not a free monotonicity theorem. Stronger nonmag information shrinks target covariance but also changes the transported homogeneous heading/BG probes before the next magnetic sample. Therefore samplewise I_acc,literal <= I_acc,oracle alone does not yet imply an ordering of the later magnetic service Gramian. The remaining bridge must propagate the paired covariance+probe action (or prove an equivalent information-form variational inequality) through prediction, S, accel and reset on the same history. This prevents an invalid shortcut.
+
 ## Scheduler coordinate is structurally invariant
 
 The scheduler component of the augmented cell is not itself open: the literal retarget function preserves elapsed time when it is below the new period and otherwise parks it immediately below the new period; periodic_update_due then returns an elapsed value in [0,T_S). Hence the causal set {(elapsed,T_S): T_S>0, 0<=elapsed<T_S} is forward invariant under every shipping retarget/due operation. What remains open is covariance/service enclosure uniformly over that scheduler coordinate, not boundedness of the scheduler state.
