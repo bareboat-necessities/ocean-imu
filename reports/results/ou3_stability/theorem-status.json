@@ -290,7 +290,8 @@
     "literal_history_cell_to_leaf_propagator": false,
     "constructive_cellwise_supply_dissipation_quotient": false,
     "absolute_moving_tilt_ba_separation": false,
-    "moving_measurement_compatible_quotient_theorem": false
+    "moving_measurement_compatible_quotient_theorem": false,
+    "moving_measurement_compatible_quotient_formulation": true
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
