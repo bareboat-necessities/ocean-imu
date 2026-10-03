@@ -1,4 +1,4 @@
-\section{Proofs of the current lemma chain}
+\section{Proof appendix: complete arguments for the current lemma chain}\label{sec:proofappendix}
 This section proves the implications labeled PROVED and the implication part of each CONDITIONAL lemma.  Raw exact-rational or interval arithmetic is delegated only where explicitly stated.
 
 \subsection{Shipping OU prediction identities}
@@ -185,10 +185,137 @@ Hence
 V_N\le(1-\gamma)V_0+\chi_\gamma,\qquad
 \chi_\gamma=b^TJ_Nb+z^TG_\gamma^{-1}z.
 \]
-Thus \(\chi_\gamma/\gamma<r^2\), together with prefix retention, implies strict entry/retention relative to the radius \(r\). The open source-uniform target is
+Thus \(\chi_\gamma/\gamma<r^2\), together with prefix retention, implies strict entry/retention relative to the radius \(r\). Such a strict target cannot be imposed on all admitted quiet histories. The algebra does not establish its hypotheses on MOVING histories either; the planar compatibility audit must first be resolved with actual all-time magnetic service.
+
+
+\subsection{Quiet fibre and persistent source charge}
+For a constant quiet record, \(d=b_{s,\rm hold}+b_f\). Averaging over a complete
+\(H\)-window yields \(\norm d\le B_s+C/H\). Conversely, radially project
+\(d\) onto the \(B_s\) ball and put the constant remainder in FAST. Its norm
+is at most \(C/H<B_f\); for every \(T\le H\) its signed integral is bounded
+by both \(B_fT\) and \(C\). The split persists forever and its slow derivative
+is zero. This proves necessity and sufficiency, not merely a pointwise outer box.
+For \(B=y_m=75e_x\), \(R^TB=B\) gives \(R=R_x(\theta)\), and
 \[
-\sup_h\inf_\gamma\frac{\chi_\gamma(h)}{\gamma}<0.0225.
+\norm{-g_me_z+gR^Te_z}^2
+=(g-g_m)^2+4gg_m\sin^2(\theta/2).
 \]
+The physical primitive \(S_*\) is inherited; the estimator's \(S=0\) correction
+does not reset physical truth.
+
+For a centered interval \(I\) of length \(L\), contained in a quiet episode,
+\[
+L(d-b_s(t_k))=\int_I(d-b_{s,\rm hold})\,dt
+ +\int_I(b_{s,\rm hold}-b_s(t_k))\,dt.
+\]
+The first integral has norm at most \(C\). The second is bounded by
+\(D(L^2/4+hL)\): the centered distance integral is \(L^2/4\), and each hold
+origin differs from its time by at most \(h\). Division by \(L\) proves the
+charge. A one-sided interval instead gives \(DL/2\). With current constants,
+\(L_a=14\), \(L_g=28\), \(h=.006\), the charges are
+\(\eta_a=.00707742857143\) and \(\eta_g=.000141488571429\).
+Let \(r_a=\eta_a+C_a/H_a\), \(r_g=\eta_g\) for zero gyro record.
+Keeping the same attitude and inherited LIN coordinates in a constant compatible
+representative changes only the physical slow-bias error coordinates. Therefore,
+for \(J_{bb}=E_b^TP_k^{-1}E_b\),
+\[
+\operatorname{dist}_{P_k^{-1}}(e_k,\mathcal Q_{{\rm still},k})^2
+\le\sup_{\norm{u_a}\le r_a,\,\norm{u_g}\le r_g}
+\binom{u_g}{u_a}^{T}J_{bb}\binom{u_g}{u_a}.
+\]
+This is a same-prefix source projection bound. It retains cross covariance;
+its uniformization and boundedness of the estimator remain separate obligations.
+
+\subsection{Exact MOVING sensor-compatible pair}
+For a fixed field-axis rotation \(Q\), put \(d_Q=(Q^T-I)ge_z\).
+The transformation
+\[
+R_1=QR_0,\quad a_1=Qa_0,\quad
+b_{a,1}=b_{a,0}+R_0^Td_Q
+\]
+preserves specific force and magnetic observations. The two body rates agree,
+and \(\frac{d}{dt}(R_0^Td_Q)=-[\omega_0]_\times R_0^Td_Q\).
+Thus bias compensation is constant when rotation is about that body vector,
+although gravity direction need not be constant.
+
+For the explicit symmetric pair, direct multiplication gives
+\[
+R_\pm^T(a_xe_x-ge_z)+b_{a,\pm}
+=R_y(-\psi)(a_xe_x-gce_z),\qquad R_\pm^TB=75R_y(-\psi)e_x.
+\]
+Also \(R_\pm^T\dot R_\pm=[\dot\psi e_y]_\times\) and
+\((R_+^T-R_-^T)ge_z=2gs e_y\), proving identical records and a zero
+two-epoch difference for every pair of times. This is not a homogeneous BA
+solution: the physical prediction forcing \((1-\phi_b)b_a\) is retained.
+
+Every 30-second interval contains the 20-second period. At its pitch extrema
+\(\pm.02\), the gravity-direction chord is \(2c\sin(.02)\).
+Using \(\sin(.02)\ge.02-.02^3/6\) proves a span larger than two degrees.
+The displacement span is \(.04\). Differentiating the specified \(p\) gives
+bounds below \(.006284\), \(.001975\), \(.000621\) for velocity,
+acceleration and jerk; integrating gives \(\norm S<.128\).
+Bias norms are \(gs=.09806404839879003<B_{a,s}\), bias rates are zero, and
+FAST primitives vanish identically. Exact rational checks reproduce all margins.
+No all-time accepted-information premise is inferred from these source bounds.
+
+\subsection{Planar covariance parity and service phase}
+For the exact planar record, prediction and all measurement rows preserve the
+partition
+\[
+\begin{split}
+E={}&\{\theta_y,b_{g,y},v_{x,z},p_{x,z},S_{x,z},a_{w,x,z},b_{a,x,z}\},\\
+O={}&\{\theta_{x,z},b_{g,x,z},v_y,p_y,S_y,a_{w,y},b_{a,y}\}.
+\end{split}
+\]
+The blocks have dimensions 12 and 9.  For an XZ predicted vector, the skew
+attitude Jacobian maps X/Z residual rows to \(\theta_y\) and the Y row to
+\(\theta_{x,z}\); the OU predictor and S selector are axis-separable, and
+the Y-axis reset preserves the same partition.  Diagonal startup covariance
+therefore gives zero E/O cross covariance for the exact real-arithmetic branch.
+
+The auxiliary plus/minus service columns may be sum/difference transformed to
+these parity blocks, but the shipping service condition is not replaced: each
+physical \(+\) and \(-\) heading/BG pair retains its own 2-by-2 information
+test.  The exact field geometry gives
+\[
+ \|[-75R_y(-\psi)e_x]_\times d_\pm\|=75
+\]
+at every phase.
+
+A 20-s point covariance return is not a valid invariant target because the
+shipping progress-preserving S scheduler does not return to the same phase.
+At the carried tail \(T_S=0.1363605112\) s and the measured scheduler
+coordinate differs after 20 s even though the applied \(\tau,\sigma,R_S,T_S\)
+repeat to float precision.  Hence the rigorous Poincare object is a cell in
+\((P_E,P_O,\text{adaptive state},\text{scheduler phase})\), not a single
+covariance matrix.  The final-cycle all-IMU-root replay has service minimum
+above 7, but outward interval self-inclusion and the all-time floor remain open.
+
+\subsection{Same-record full covariance comparison}
+Identical initial estimator state and delivered prefixes imply identical complete
+internal executions by induction, including frontend, parameters, covariance,
+gains, hard events and scheduler. No generated quantity is selected independently.
+On the specified BA branch, let \(\bar p=1/1600\).
+The literal initial/release variance and stationary OU variance are below
+\(\bar p\). Held prediction preserves the diagonal and active prediction is
+its convex combination with stationary variance. Regular Joseph corrections
+cannot increase it; held zero BA rows, attitude resets and AW sync do not change
+it. Thus \(P_{b_ay,b_ay}\le\bar p\) at every regular prefix of this branch.
+
+For any SPD \(P\), Cauchy--Schwarz applied to
+\(e_y^Te=(P^{1/2}e_y)^T(P^{-1/2}e)\) gives
+\(e^TP^{-1}e\ge e_{b_ay}^2/P_{b_ay,b_ay}\).
+Since \(\max\{|gs-\hat b_y|,|-gs-\hat b_y|\}\ge gs\),
+\[
+\max(V_+,V_-)\ge (gs)^2/\bar p=15.386492141376374\ldots.
+\]
+The pair cannot both have eventual retained \(V<.0225\) if both entire
+continuations meet all premises. Establishing all-time actually applied
+MAGNETIC SERVICE and execution totality for this pair remains open. The
+102 carried one-second checks are evidence, not that certificate.
+Structures preserved: the complete shipping record/chronology and full covariance
+metric. Relaxations: only the explicitly stated quiet bias-charge ball outer;
+no relaxation is used in the MOVING record identity or pair lower comparison.
 
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
@@ -202,4 +329,4 @@ Consequently the final theorem is a genuine implication chain:
 \Rightarrow\text{linked entry}
 \Rightarrow\text{local theorem}.
 \]
-The arrows whose source-uniform premises remain open are identified explicitly in the lemma statements; no proof is asserted for those premises.
+The entry arrow is not universal absolute physical-error entry. Quiet compatible-tube boundedness and the MOVING admission/entry audit are separate open premises. The arrows whose source-uniform premises remain open are identified explicitly in the lemma statements; no proof is asserted for those premises.

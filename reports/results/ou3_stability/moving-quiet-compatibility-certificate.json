@@ -1,0 +1,99 @@
+{
+  "actually_applied_magnetic_service_all_time_verified": false,
+  "additional_physical_assumptions": [],
+  "classification": {
+    "full_shipping_MOVING_absolute_entry": "OPEN_PENDING_ALL_TIME_ADMISSION",
+    "two_epoch_span_plus_persistent_bias_separation": "B_EXACT_PHYSICAL_COMPATIBILITY_OBSTRUCTION"
+  },
+  "exact_bounds": {
+    "acceleration_max_mps2": "5041/2553800",
+    "fast_accel_norm_mps2": "0",
+    "fast_gyro_norm_rad_s": "0",
+    "half_gravity_chord_lower": "199981667/10000250000",
+    "jerk_max_mps3": "357911/577158800",
+    "omega_max_rad_s": "71/11300",
+    "position_max_m": "1/50",
+    "position_primitive_max_m_s": "212/1665",
+    "position_span_m": "1/25",
+    "slow_accel_bias_norm_mps2": "196133/2000050",
+    "slow_accel_bias_rate_mps3": "0",
+    "slow_gyro_bias_norm_rad_s": "0",
+    "slow_gyro_bias_rate_rad_s2": "0",
+    "velocity_max_mps": "71/11300"
+  },
+  "finite_carried_magnetic_audit_is_all_time_certificate": false,
+  "marine_and_slow_fast_verified": true,
+  "parameters": {
+    "cos_theta": "39999/40001",
+    "displacement_amplitude_m": "1/50",
+    "g": "196133/20000",
+    "nu": "pi/10",
+    "period_s": "20",
+    "pitch_amplitude_rad": "1/50",
+    "sin_theta": "400/40001"
+  },
+  "physical_membership_checks": {
+    "acceleration": true,
+    "all_placed_FAST_windows": true,
+    "angular_rate": true,
+    "displacement_span": true,
+    "field_norm": true,
+    "full_period_in_every_attitude_window": true,
+    "full_period_in_every_displacement_window": true,
+    "gravity_span": true,
+    "horizontal_field": true,
+    "jerk": true,
+    "position": true,
+    "primitive": true,
+    "slow_accel": true,
+    "velocity": true
+  },
+  "qualification": "OU3_MOVING_QUIET_COMPATIBILITY_V1",
+  "quiet_constant_record": {
+    "accel_to_canonical_constant_split_charge_mps2": "83063/10500000",
+    "centered_window_accel_s": "14",
+    "centered_window_gyro_s": "28",
+    "constant_FAST_leakage_accel_mps2": "1/1200",
+    "constant_FAST_leakage_gyro_rad_s": "1/30000",
+    "effective_total_bias_cap_mps2": "13559996299037243/60000000000000000",
+    "gyro_zero_record_to_canonical_split_charge_rad_s": "49521/350000000",
+    "half_angle_squared_upper": "2941975994076952771540692566266159/22157656890314941406250000000000000000",
+    "instantaneous_slow_accel_to_total_charge_mps2": "24771/3500000",
+    "instantaneous_slow_gyro_to_total_charge_rad_s": "49521/350000000",
+    "scope": "ideal fixed magnetic record; projection onto attitude, not a full estimator boundedness theorem",
+    "uniform_covariance_metric_tube_certified": false
+  },
+  "result_type": "analytical identities with exact-rational bound reproduction",
+  "same_estimator_pair_metric": {
+    "BA_marginal_ceiling": "1/1600",
+    "BA_physical_forcing_dropped": false,
+    "comparison_target": "9/400",
+    "estimator_symmetry_needed_for_pair_lower": false,
+    "literal_stationary_BA_variance": "5497558125/8796093022208",
+    "max_of_pair_V_lower": "615490459024/40002000025",
+    "scope": "real arithmetic, default BA prior, finite SPD shipping covariance at the queried prefix",
+    "strictly_above_target": true
+  },
+  "sensor_identity": {
+    "accelerometer": [
+      "a_x*cos(psi)+g*cos(theta)*sin(psi)",
+      "0",
+      "a_x*sin(psi)-g*cos(theta)*cos(psi)"
+    ],
+    "formal_polynomial_difference_zero": true,
+    "gravity_difference": "(R_+^T-R_-^T)g*e_z = 2*g*sin(theta)*e_y",
+    "gyro_identity": "R_s^T dR_s/dt = [psi_dot*e_y]_x, independent of sign s",
+    "magnetometer": [
+      "75*cos(psi)",
+      "0",
+      "75*sin(psi)"
+    ],
+    "two_epoch_difference_exact": "0"
+  },
+  "shipping_BA_header_sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
+  "shipping_behavior_changed": false,
+  "shipping_instability_counterexample": false,
+  "source_constants_sha256": "f16a242578bfa07b4f91ca67e3e5e2661426d3cc5cee7892d7ea3245e586cae9",
+  "theorem_closed": false,
+  "universal_MOVING_entry_refuted_on_fully_admitted_shipping_history": false
+}

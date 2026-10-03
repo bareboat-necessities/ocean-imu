@@ -339,6 +339,78 @@
       "open_dependencies": []
     },
     {
+      "id": "quiet_record_fibre",
+      "kind": "lemma",
+      "latex_title": "Quiet constant-record compatibility fibre --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "constant ideal magnetic record",
+        "physical stillness",
+        "one persistent SLOW+FAST split"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/moving_quiet_compatibility.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/moving-quiet-compatibility-certificate.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "quiet_temporal_source_charge",
+      "kind": "lemma",
+      "latex_title": "Persistent quiet SLOW+FAST source charge --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "centered qualified window contained in one quiet episode",
+        "literal delivered-sample hold and slow rate bound",
+        "actual same-prefix covariance for metric conversion"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/moving_quiet_compatibility.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/moving-quiet-compatibility-certificate.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "moving_constant_bias_compatibility",
+      "kind": "lemma",
+      "latex_title": "MOVING constant-bias sensor compatibility --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "explicit planar physical family",
+        "current MARINE and SLOW+FAST constants",
+        "ideal fixed physical magnetic field; no all-time applied-service claim"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/moving_quiet_compatibility.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/moving-quiet-compatibility-certificate.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "moving_pair_metric_lower",
+      "kind": "lemma",
+      "latex_title": "Same-record full-metric pair lower bound --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "identical complete shipping sensor prefixes and initialization",
+        "default BA prior and finite SPD regular covariance branch",
+        "physical biases plus/minus g sin(theta) e_y"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/moving_quiet_compatibility.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/moving-quiet-compatibility-certificate.json"
+      ],
+      "open_dependencies": []
+    },
+    {
       "id": "completed_square",
       "kind": "lemma",
       "latex_title": "Finite-error completed-square entry --- PROVED as an algebraic implication",
@@ -352,8 +424,9 @@
       ],
       "certificates": [],
       "open_dependencies": [
-        "source-uniform sup_h inf_gamma chi_gamma/gamma < 0.0225",
-        "every-prefix retention"
+        "forcing-aware quiet-compatible tube and covariance-metric retention",
+        "settle all-time planar MOVING admission before asserting absolute inner entry under the existing assumptions",
+        "source-uniform linked supply and every-prefix retention on one reachable history"
       ]
     },
     {
@@ -392,10 +465,11 @@
         "finite construction/capture and H18 release",
         "complete source-uniform physical HistoryCell release/A21 enclosure",
         "strict recurring finite-error A21 contraction and every-prefix retention",
-        "linked entry inequality",
         "nonlinear remainder control",
         "float32 transfer",
-        "regime composition"
+        "regime composition",
+        "quiet-compatible practical boundedness",
+        "physically justified MOVING target after all-time planar admission audit"
       ]
     }
   ]

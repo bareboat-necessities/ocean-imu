@@ -4,6 +4,14 @@ from __future__ import annotations
 def status_report() -> dict:
     obligations={
         "physical_contract_formulation":True,
+        "quiet_absolute_entry_obstruction":True,
+        "quiet_constant_record_fibre":True,
+        "quiet_centered_slow_fast_source_charge":True,
+        "quiet_uniform_covariance_metric_tube":False,
+        "moving_constant_bias_sensor_compatibility":True,
+        "same_record_full_metric_pair_lower_comparison":True,
+        "planar_moving_all_time_magnetic_service_admission":False,
+        "planar_moving_full_shipping_counterexample_admitted":False,
         "two_timescale_accel_and_gyro_contract_formulation":True,
         "two_epoch_same_history_bias_envelope":True,
         "signed_fast_accumulation_functional_identity":True,
@@ -302,7 +310,7 @@ def status_report() -> dict:
             "certificate":"imu-two-timescale-certificate.json",
             "model":"e_a=b_a_s+b_a_f; e_g=b_g_s+b_g_f",
             "fast_rule":"amplitude plus every-placed-window signed accumulation of delivered calibrated samples",
-            "temporal_numerical_qualification":"OPEN for both sensors",
+            "temporal_numerical_qualification":"user-specified H_a=H_g=60,C_a=.05,C_g=.002; assembled validation OPEN",
             "six_limits_status":"inherited candidate budgets, not newly measured guarantees",
             "independent_residual_box_admission":False,
             "finite_capture_can_certify_all_time":False,
@@ -324,7 +332,7 @@ def status_report() -> dict:
             "legacy_word_diameter_results_role":"retained algebra/history only, not the controlling architecture",
             "open_source_premises":[
                 "qualify both slow/fast physical histories and derive the MARINE+MAGNETIC same-history compatibility margin",
-                "from the compact captured-domain A21 release set, prove outer A21 retention and finite inner entry using temporal SLOW+FAST reachability plus displacement/attitude excitation and actual magnetic service"
+                "prove quiet-compatible boundedness and settle the planar MOVING all-time magnetic-service admission before claiming absolute inner entry; retain the same H18/A21 state and covariance"
             ],
         },
         "shipping_residual_gyro_bias_hardening":True,
@@ -347,14 +355,42 @@ def status_report() -> dict:
             "sampling_certificate":"sampling-fidelity.json",
             "certificate":"sampled-capture-obstruction.json",
         },
+        "moving_quiet_compatibility":{
+            "certificate":"moving-quiet-compatibility-certificate.json",
+            "carried_diagnostic":"moving-compatibility-carried.json",
+            "quiet_universal_absolute_entry_refuted":True,
+            "moving_two_epoch_span_bias_separation_refuted":True,
+            "moving_full_premise_absolute_entry_refuted":False,
+            "planar_mean_invariant_manifold":True,
+            "reduced_periodic_service_recurrence_formulated":True,
+            "planar_covariance_parity_factorization":True,
+            "tail_all_sample_phase_service_min_gt_one_diagnostic":True,
+            "twenty_second_point_poincare_invalid_due_scheduler_phase":True,
+            "scheduler_phase_coordinate_invariant":True,
+            "oracle_rational_service_margin":True,
+            "paired_correction_storage_invariant":True,
+            "paired_prediction_loss_identity":True,
+            "planar_anisotropic_root_factors":True,
+            "matrix_lower_factor_correction_transport":True,
+            "planar_same_history_covariance_lower_cell":False,
+            "scheduler_phase_augmented_invariant_cell":False,
+            "all_time_actual_magnetic_service_for_planar_pair":False,
+            "finite_replay_is_all_time_certificate":False,
+            "homogeneous_kernel_results_imply_physical_identifiability":False,
+            "physical_bias_OU_mismatch_retained":True,
+            "shipping_instability_claimed":False,
+            "extra_physical_assumptions_adopted":False,
+        },
         "next_controlling_obligation":(
-            "Qualify the six candidate slow/fast budgets and both signed fast-accumulation profiles on one delivered calibrated history. "
-            "Missing H_a,C_a,H_g,C_g remain OPEN; do not replace them by unrestricted residual boxes or a fitted excitation threshold. "
-            "MARINE is now user-qualified at T_E=T_P=30 s, theta_E=2 deg, P_E=.03 m; the zero-translation sin-cubed witness is now outside MOVING. "
-            "The .01 sin(.5t) witness violates the candidate all-slow rates, but mixed allocation remains OPEN. "
-            "Keep the exact dissipativity/LaSalle path, source coupled tuner chronology, physical gyro/accel constraints and actual magnetic service. "
-            "Held-H18 LIN BIBO and captured-domain release compactness are already closed qualitatively; prove general capture, outer retention and finite inner entry, then linked complete-word/prefix supply. "
-            "Never infer zero base innovations from zero homogeneous action. Regime composition and float32 closure remain separate. "
-            "Historical O1/O2 scalar kernel ceilings and the unqualified 1-degree/60-second low-pass gate are not controlling."
+            "Prove forcing-aware quiet-compatible boundedness using the exact constant-record fibre and persistent source charges. "
+            "The exact planar MOVING pair satisfies current 30-s span and SLOW+FAST limits with constant bias and identical sensor records; "
+            "the proposed two-epoch span/bias separation has an exact zero direction. "
+            "The ideal mean execution and covariance admit an exact 12+9 parity factorization. A 20-s point return is invalid because the progress-preserving S scheduler phase does not return; the invariant cell must carry that phase. "
+            "Certify a forward-invariant one-period enclosure and phase-uniform one-second actually applied MAGNETIC SERVICE for that SAME shipping history before declaring "
+            "a fully admitted MOVING obstruction or asserting absolute inner entry from the existing assumptions. "
+            "The fresh 240/1200-s replays and final-cycle all-IMU-root service sweep are non-promoting finite evidence; the tail sweep remains above 7 but is not an interval/all-time certificate. "
+            "Keep construction/H18/refinement/release, the full persistent HistoryCell, coupled tuner, actual covariance/gains and BA physical forcing. "
+            "Homogeneous kernel/action results and completed-square algebra remain valid but do not identify the physical tilt/BA decomposition. "
+            "All-time device qualification, nonlinear/prefix retention, float32 transfer and regime composition remain OPEN."
         ),
     }

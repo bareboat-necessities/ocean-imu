@@ -117,7 +117,9 @@
     "quiet_nominal_historical_covariance": "Exact zero-residual regular quiet nominal subfamily: two normalized actual acc/mag groups cancel arbitrary AG root/cross covariance; inherited nuisance and full correlated process bounds give every-operation full covariance upper and qualitative homogeneous linear loss. No compatible-class nonlinear stationary theorem, useful numerical rho, or physical attitude/BA separation is claimed.",
     "world_frame_historical_rows": "Every regular historical AG row is -R_k[f_k]x[A~_k R_0',B~_k]: predictions leave A~ invariant when the covariance rotation equals the mean increment, resets multiply it by N=R_next' G R with N'N=I+(|x|^2 I-xx')/4, and B~ integrates the nominal R_hat'. Same-cell geometry depends only on world nominal force, committed reference and local injection. Literal injections obey dd'<=NIS K S K'<=NIS P_theta,theta. A 1-Hz collinear MARINE MOTION/IMU BIAS history degenerates every same-cell group while aggregate rows keep rank; its one-correction windows fail MAGNETIC SERVICE, and jerk forbids all-collinear cadences with length-weighted mean gap below 4(g h-2V/L)/J. Attitude columns transfer from physical transverse force given AW tracking <1.12383 m/s^2 on 16-s windows. Aggregate gyro columns, AW tracking, B_*, J_AG and rho remain open.",
     "aw_covariance_ceiling": "Default profile, real arithmetic: the isotropic pending sync is the spectral max of P_aw and sigma^2 I, prediction maps the AW block to phi^2 P_aw+Q_aa with Q_aa<=(1+eps)(1-phi^2)sigma^2 I, and applied corrections subtract K_a S K_a', so lambda_max(P_aw)<=(1+eps)16 with excess decaying as exp(-t/6). Every applied sync floors P_aw at sigma^2 I, so the ceiling is tight; S_factor!=1 breaks it. Covariance-normalized storage cannot carry the AW error uniformly (carried collinear ratios 6.68 and 6.91); the physical AW tracking bound remains open.",
-    "so3_coefficient_transfer": "Shipping SO(3) covariance/integral coefficients use degree-18 alternating Taylor series for |omega|h<1 and closed forms otherwise. Exact historical row factorization retains actual Rs and Bs in W and Gamma. Ideal rotation-integral simplification and norm-one inverse bounds require the deterministic coefficient remainder as well as mean-quaternion and floating-point defects; source-uniform implementation transfer remains open and finite replays are non-promoting."
+    "so3_coefficient_transfer": "Shipping SO(3) covariance/integral coefficients use degree-18 alternating Taylor series for |omega|h<1 and closed forms otherwise. Exact historical row factorization retains actual Rs and Bs in W and Gamma. Ideal rotation-integral simplification and norm-one inverse bounds require the deterministic coefficient remainder as well as mean-quaternion and floating-point defects; source-uniform implementation transfer remains open and finite replays are non-promoting.",
+    "physical_compatibility_scope": "Homogeneous kernel exclusion is not physical tilt/BA identifiability. Exact planar MOVING sensor-compatible pair satisfies current source spans with constant SLOW BA; all-time applied magnetic-service admission remains OPEN.",
+    "quiet_entry_scope": "Universal absolute V<.0225 entry on indefinite STILL is refuted. Quiet constant-record fibre uses B_s+C/H, not B_s+B_f; a uniform covariance-metric practical tube remains OPEN."
   },
   "operation_lemma_sources": [
     {
@@ -150,7 +152,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "bd32678ac44316d13b7e02aee1f6d70fa6378ac1"
+      "git_blob_sha": "2096292700d526cf48a9e43d6b82bf33f6b26fad"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -362,7 +364,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "ac6c3f3c33c747e85b48f2a4e750e4ca7f238202"
+      "git_blob_sha": "4181e2a53cf23dfeebb98d2654152f25b2712cd2"
     },
     {
       "path": "tools/stability/ou3_theorem/construction_mean_action.py",
@@ -450,7 +452,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "0b222fff5a0059b95ce268a55b44be5a718caad0"
+      "git_blob_sha": "9228bc0798bb329b940b6949e95cd7d7ae91efe6"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
@@ -635,10 +637,51 @@
     {
       "path": "tests/validation/test_ou3_rank_loss_interval_factor.py",
       "git_blob_sha": "9dc912579ef608716597a3606cf30dd5968b0a91"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/moving_quiet_compatibility.py",
+      "git_blob_sha": "644fbebf56ff446e97cf55068b85dba2cb4731ee"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/moving_compatibility_diagnostic.py",
+      "git_blob_sha": "6e19b3037a88492a7569a1c6f5b9230f76e0f512"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/moving_compatibility_probe.cpp",
+      "git_blob_sha": "3a623fc712f1e47644c40b1fea7fe665e882e005"
+    },
+    {
+      "path": "tests/validation/test_ou3_moving_quiet_compatibility.py",
+      "git_blob_sha": "1ccf13d47ef4b03b9b3e2979c2b681ce108b26b5"
+    },
+    {
+      "path": "docs/ou3-moving-quiet-compatibility.md",
+      "git_blob_sha": "97d21848fd7ab4ee9c91fc646662244486941f06"
+    },
+    {
+      "path": "docs/ou3-proof-research-state.md",
+      "git_blob_sha": "bce7b17f2dfe79882bc1d8eb8c84dcc5dacb5c21"
+    },
+    {
+      "path": "docs/ou3-quiet-inner-entry-obstruction.md",
+      "git_blob_sha": "934191443df328cf903e7de5821fa3d4d9dbbc42"
+    },
+    {
+      "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
+      "git_blob_sha": "3158f54083fe31b58da81054759d78a07ffe0a53"
+    },
+    {
+      "path": "reports/results/ou3_stability/lemma-manifest.json",
+      "git_blob_sha": "30ccacc61632a10c28879a7e8c36ee379942bc40"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
   "world_frame_continuation_base_main_commit": "7beb63902d3ec0231a08516c3e06580570cbe90e",
   "aw_tracking_continuation_base_main_commit": "c0f9dd07ed9393e313e7243493ac580857ab318b",
-  "information_ratio_continuation_base_main_commit": "ee0d46ddc08396b86579e12f2d873ae42fd5106b"
+  "information_ratio_continuation_base_main_commit": "ee0d46ddc08396b86579e12f2d873ae42fd5106b",
+  "moving_compatibility_continuation_base_main_commit": "3ff766eb0f71cd5ce04ba93252288097574ace90",
+  "moving_compatibility_reconciled_main_commit": "7bc48e9dfba67d3d903c79914cdac7a8e28aa0c5",
+  "planar_parity_service": "Analytical real-arithmetic 12+9 covariance parity factorization for the exact planar MOVING record. Literal service remains two separate 2x2 +/- heading/BG Gramians. Fresh 240/1200-s diagnostics sweep every IMU-sample root over the final 20-s source phase cycle; minimum tail service remains >7. A 20-s point covariance return is invalid because the progress-preserving S scheduler phase does not return. The scheduler-phase-augmented interval cell and all-time information floor remain OPEN.",
+  "paired_prediction_loss": "Exact identity for P-=FPF'+Q and Phi-=FPhi: paired storage loss is Phi-'[C^-1-(C+Q)^-1]Phi-, C=FPF'. Corrections are exactly storage-invariant. A useful source-uniform one-second bound now requires a planar same-history covariance lower cell; the generic A21 root floor is orders too weak and is not promoted.",
+  "planar_anisotropic_factor_transport": "Complete 12+9 planar factors are obtained by exact permutation of the existing joint-root Loewner certificate without scalarization. Prediction eta uses lambda_max(Q,FLL'F'). Corrections transport a lower factor by ((LL')^-1+Jbar)^-1 when literal information is bounded by Jbar. Every-prefix factor sequence remains OPEN pending literal parity-block correction information ceilings and reset transport."
 }

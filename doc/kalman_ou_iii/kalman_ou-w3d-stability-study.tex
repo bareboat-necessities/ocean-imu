@@ -3,17 +3,32 @@
 \ifPDFTeX\usepackage[utf8]{inputenc}\usepackage[T1]{fontenc}\fi
 \usepackage{amsmath,amssymb,amsthm,bm,newtxtext,newtxmath,booktabs,siunitx,balance}
 \usepackage[breaklinks=true,hidelinks]{hyperref}
-\newtheorem{lemma}{Lemma}\newtheorem{theorem}{Theorem}\newtheorem{remark}{Remark}
+\newtheorem{lemma}{Lemma}\newtheorem{theorem}{Theorem}\newtheorem{proposition}{Proposition}\newtheorem{remark}{Remark}
 \newcommand{\R}{\mathbb{R}}\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 \title{Regional Practical Stability Study of the Shipping OU--III Marine Inertial Estimator}
 \author{Mikhail S. Grushinskiy}
 \begin{document}\maketitle
 
 \begin{abstract}
-This paper studies regional practical stability of the shipping OU--III marine inertial estimator without replacing its deployed prediction, measurement chronology, adaptive tuning, reset, bias handling, or scheduling by a surrogate filter. The proof uses one same physical and sensor history throughout construction, capture, magnetically informed H18, refinement/release, recurring A21, and regional practical stability. Marine motion, magnetic service, and a two-timescale delivered-IMU qualification define the source class. The local real-arithmetic theorem is retained on its qualified region. The outer proof is constructive but not yet complete: a causal interval HistoryCell propagator advances the literal frontend, tuner, mean and covariance from physical input coordinates only, with dependency-preserving normalization and FAST signed-primitive bounds. If an enclosure is unresolved, only physical/sensor history coordinates may be subdivided; generated quantities are never independently split. The remaining obligation is a source-uniform finite-error release/recurrence certificate, linked outer-to-inner entry, and finite-precision closure. End-to-end shipping stability is therefore not yet claimed.
+This paper studies regional practical stability of the deployed OU--III marine
+inertial estimator using its literal 21-state prediction, accelerometer and
+magnetic corrections, $S=0$ pseudo-measurements, bias projection, Mahony
+frontend, vibration guard, adaptive wave tuning, covariance resets and
+scheduler.  The source class is stated explicitly through MARINE MOTION,
+SLOW+FAST delivered-IMU and MAGNETIC SERVICE assumptions.  A retained local
+real-arithmetic stability theorem is proved on $\sqrt V\le0.15$, together
+with the structural prediction, correction, reset, kernel, covariance and
+same-history source lemmas required by the outer argument.  The measurement
+map possesses a genuine attitude/accelerometer-bias compatibility fibre, so a
+regional theorem cannot require universal convergence of the absolute physical
+decomposition.  The appropriate outer statement combines bounded motion along
+the compatible gauge with strict contraction transverse to it.  The regional
+theorem remains open only on the explicitly listed source-uniform release,
+magnetic-admission, quotient-coercivity, finite-error, nonlinear and
+finite-precision premises.
 \end{abstract}
 
-\section{Proof scope}
+\section{Shipping model and theorem scope}
 The sole proof path is
 \[
 \boxed{\text{construction}\to\text{capture}\to H18\to
@@ -24,6 +39,69 @@ One execution \(h\) belongs to
 h\in{\cal M}_{\rm marine}\cap{\cal B}_{\rm IMU}\cap{\cal S}_{\rm mag}.
 \]
 The same \(h\) determines physical motion, delivered sensors, frontend and tuner state, covariance, accepted events, scheduler state and estimator mean. Generated filter quantities are functions of this history, not independent theorem inputs. No estimator behavior, tuning law, physical constant, quality gate, measurement cadence, MARINE MOTION condition, MAGNETIC SERVICE condition, or IMU qualification is changed for the proof.
+
+\section{Assumptions and numerical qualification}
+Table~\ref{tab:assumptions} collects the deterministic source and service
+constants used by the proof.  These are theorem qualifications; where assembled
+hardware validation remains open, that fact is part of the theorem status and
+is not silently converted into an empirical claim.
+
+\begin{table*}[t]
+\centering\small
+\caption{Deterministic assumptions and qualification constants.}
+\label{tab:assumptions}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Class & Constant & Value / requirement\\
+\midrule
+Gravity & $g$ & $9.80665\ {\rm m\,s^{-2}}$\\
+MARINE & $P_{\max},V_{\max},A_{\max}$ & $8.1\ {\rm m},\ 5.5\ {\rm m\,s^{-1}},\ 8.8\ {\rm m\,s^{-2}}$\\
+MARINE & $\Omega_{\max},J_{\max}$ & $0.6108652382\ {\rm rad\,s^{-1}},\ 100\ {\rm m\,s^{-3}}$\\
+MARINE MOVING & $T_E,\theta_E$ & $30\ {\rm s},\ 2^\circ$ gravity-direction span\\
+MARINE MOVING & $T_P,P_E$ & $30\ {\rm s},\ 0.03\ {\rm m}$ displacement diameter\\
+Accel SLOW & $B_{a,s},D_{a,s}$ & $0.225166605\ {\rm m\,s^{-2}},\ 10^{-3}\ {\rm m\,s^{-3}}$\\
+Accel FAST & $B_{a,f},H_a,C_a$ & $0.3\ {\rm m\,s^{-2}},\ 60\ {\rm s},\ 0.05\ {\rm m\,s^{-1}}$\\
+Gyro SLOW & $B_{g,s},D_{g,s}$ & $0.02\ {\rm rad\,s^{-1}},\ 10^{-5}\ {\rm rad\,s^{-2}}$\\
+Gyro FAST & $B_{g,f},H_g,C_g$ & $0.02\ {\rm rad\,s^{-1}},\ 60\ {\rm s},\ 0.002\ {\rm rad}$\\
+Magnetic field & $\norm B$ & $20\le\norm B\le75\ \mu{\rm T}$\\
+Magnetic geometry & horizontal field & $\ge15\ \mu{\rm T}$\\
+Magnetic residuals & hard iron / measurement & $\le5\ \mu{\rm T}$ / $\le2\ \mu{\rm T}$\\
+MAGNETIC SERVICE & $T_M,\mu_M$ & $1\ {\rm s},\ 1$\\
+Sampling & $\Delta t$ & $0.004\le\Delta t\le0.006\ {\rm s}$; nominal $0.005\ {\rm s}$\\
+Accelerometer noise & $\sigma_{a,0}$ & $0.2\ {\rm m\,s^{-2}}$ nominal\\
+A21 tuner & $\tau$ & $0.02\le\tau\le12\ {\rm s}$\\
+$S=0$ scheduler & $T_S$ & $0.005\le T_S\le0.15\ {\rm s}$, generated by shipping law\\
+Retained domain & tilt & $\le6^\circ$\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\paragraph{MARINE MOTION.}
+An admitted history is either physically STILL for an arbitrary duration or
+belongs to a MOVING episode satisfying both complete-window excitation
+conditions in Table~\ref{tab:assumptions}.  A proof-word boundary does not
+restart an episode, displacement primitive, bias history, or FAST primitive.
+
+\paragraph{SLOW+FAST delivered IMU.}
+The deterministic decomposition and signed-window primitive conditions are
+those stated below.  The numerical bias limits in Table~\ref{tab:assumptions}
+are candidate assembled-device qualifications: the mathematical implications
+proved in this article are conditional on the delivered device satisfying them.
+
+\paragraph{MAGNETIC SERVICE.}
+For every placed service window of length $T_M$, the literal accepted magnetic
+events, transported through the actual prediction/correction/reset chronology,
+must supply the shipping heading/axial-gyro-bias information floor $\mu_M$.
+The field norm, horizontal geometry, residual hard-iron and measurement
+envelopes in Table~\ref{tab:assumptions} are simultaneous premises.  Packet
+cadence alone is not MAGNETIC SERVICE.
+
+\paragraph{Gravity and magnetic geometry.}
+Gravity has fixed magnitude $g$ in the navigation frame.  Magnetic geometry is
+not replaced by a free yaw observation: the proof uses the delivered body-frame
+field and the shipping learned/reference field, subject to the norm, horizontal
+component and residual bounds above.  In the exact planar compatibility audit,
+the admissible extremal field $B=75e_x\,\mu{\rm T}$ is used explicitly.
 
 \section{Marine motion}
 Let \(p,v,a\in\R^3\), \(R\in{\rm SO}(3)\), and body rate \(\omega\) satisfy
@@ -210,7 +288,7 @@ Release starts from the explicit goLive seed and advances the same mean and cova
 \[
 x_k=(\bar x_k,\Delta x_k)
 \]
-and the structured covariance cell is propagated in parallel. The objective is the actual finite-error recurrence
+and the structured covariance cell is propagated in parallel. The finite-error release analysis uses the recurrence
 \[
 (A_k,a_k,b_k,c_k,D_k),
 \]
@@ -244,7 +322,7 @@ The retained local real-arithmetic analysis supplies the inner target
 \[
 \sqrt V\le0.15.
 \]
-On this branch the literal OU--III structure, measurement chronology and source assumptions are retained. This local result is used as the target of the outer entry proof; it is not extrapolated globally.
+On this branch the literal OU--III structure, measurement chronology and source assumptions are retained. This local result is not extrapolated globally. The quiet physical ambiguity prevents universal absolute entry; MOVING entry must be justified separately and cannot be inferred from scalar gravity span alone.
 
 \section{Outer-to-inner entry target}
 For a complete finite-error word
@@ -260,17 +338,278 @@ and
 \[
 \chi_\gamma=b^TJ_Nb+z^TG_\gamma^{-1}z.
 \]
-The required linked entry condition is
+The completed-square identity is retained, but the former condition
 \[
-\boxed{
-\sup_{h\ {\rm reachable}}
-\inf_{0<\gamma<\gamma_{\max}(h)}
-\frac{\chi_\gamma(h)}{\gamma}<0.15^2=0.0225,
-}
+\sup_{h\ {\rm admitted}}\inf_\gamma\chi_\gamma(h)/\gamma<0.0225
 \]
-together with the corresponding prefix-retention inequalities. The affine vector \(b\) must be generated locally from the literal chronology, not reconstructed from unrelated worst-case source bounds.
+is not a valid universal target: an indefinitely quiet admitted physical
+history has \(V\ge15.38649\). The physical proof distinguishes STILL and
+MOVING without adding an estimator mode. Quiet intervals need a bounded
+compatibility tube; a MOVING absolute-entry inequality is a separate open
+obligation on the existing source class, not a consequence of the local theorem.
+All coefficients, forcing and prefix metrics must remain on one reachable history.
 
-\section{Current lemma chain}
+\subsection{The exact MOVING separation audit}
+Put \(s=400/40001\), \(c=39999/40001\),
+\(\psi(t)=0.02\sin(\pi t/10)\), and
+\[
+R_\pm=R_x(\pm\theta)R_y(\psi),\quad
+p=0.02\sin(\pi t/10)e_x,\quad b_{a,\pm}=\pm gs e_y,
+\]
+where \(\sin\theta=s\), \(\cos\theta=c\), all gyro biases and FAST errors
+are zero, and \(B=75e_x\). Both complete physical histories have the same
+sensor record
+\[
+y_a=R_y(-\psi)(a_xe_x-gce_z),\quad
+y_g=\dot\psi e_y,\quad y_m=75R_y(-\psi)e_x.
+\]
+Every 30-second window has displacement span \(0.04\) m and gravity span
+\(2\arcsin(c\sin0.02)>2^\circ\), but
+\[
+(R_+^T-R_-^T)ge_z=2gs e_y
+\]
+is constant. Hence its two-epoch difference is exactly zero, not a loose
+norm bound. The same constant SLOW bias persists indefinitely.
+For a common shipping covariance with \(P_{b_ay,b_ay}\le1/1600\),
+\[
+\max(V_+,V_-)\ge1600(gs)^2>15.38649.
+\]
+This is a physical sensor-compatibility theorem and a conditional full-metric
+lower comparison. It does not yet refute a theorem restricted by all-time
+actually applied MAGNETIC SERVICE: that admission obligation remains open.
+The literal planar factors also preserve an exact covariance parity split:
+a 12-state block contains \(\delta\theta_y,b_{g,y}\) and the X/Z
+LIN/AW/BA coordinates, while the complementary 9-state block contains
+\(\delta\theta_{x,z},b_{g,x,z}\) and the Y nuisance coordinates.  The
+off-parity covariance is identically zero in the exact branch.  The literal
+service criterion remains the two separate 2-by-2 \(+/-\) heading/BG
+Gramians; the parity transform is used only to factor propagation.
+
+The exact planar branch preserves the covariance parity split described above.
+Because the progress-preserving $S=0$ scheduler need not return to its initial
+phase after one physical source period, an all-time covariance/service proof
+must carry scheduler phase as part of its invariant cell.  Finite replay
+diagnostics are not used as theorem premises.
+
+\section{Proofs of the structural lemmas}
+This section records the mathematical arguments used by the machine
+certificates.  The certificates check the literal implementation and numerical
+side conditions; they do not replace the proofs.
+
+\begin{proposition}[OU prediction identities]
+For the scalar OU equation $\dot a_w=-a_w/\tau+\xi$, variation of constants
+gives $a_w(t+h)=e^{-h/\tau}a_w(t)+\int_0^h e^{-(h-s)/\tau}\xi(t+s)\,ds$.
+Integrating successively through $\dot v=a_w$, $\dot p=v$ and $\dot S=p$
+gives the shipping coefficients
+\[
+ \phi=e^{-x},\quad
+ \phi_{pa}=\tau^2(x+\operatorname{expm1}(-x)),\quad
+ \phi_{Sa}=\tau^3\!\left(\tfrac12x^2-x-\operatorname{expm1}(-x)\right),
+ \qquad x=h/\tau .
+\]
+Their Taylor series at $x=0$ are exactly the implemented small-$x$ branches.
+The discrete process covariance is an integral
+$\int_0^h\Phi(s)LQ_cL^T\Phi(s)^Tds$ and is therefore positive semidefinite.
+\end{proposition}
+
+\begin{proposition}[Joseph correction/storage identity]
+Let $S=HP^-H^T+R\succ0$, $K=P^-H^TS^{-1}$ and $A=I-KH$.
+The Joseph update is $P^+=AP^-A^T+KRK^T$.  Expanding and using
+$KS=P^-H^T$ gives $P^+=P^--P^-H^TS^{-1}HP^-$.  Woodbury therefore yields
+\[
+ (P^+)^{-1}=(P^-)^{-1}+H^TR^{-1}H .
+\]
+For a homogeneous perturbation $\xi^+=A\xi^-$, the correction loss is the
+nonnegative quadratic measurement action.  In the paired covariance--probe
+form used later,
+\[
+ (\Phi^+)^T(P^+)^{-1}\Phi^+=(\Phi^-)^T(P^-)^{-1}\Phi^- .
+\]
+Thus the correction cannot be represented by an independently chosen gain or
+covariance.
+\end{proposition}
+
+\begin{proposition}[Attitude reset]
+The shipping reset acts linearly on error coordinates by a nonsingular block
+matrix $G$ and applies the congruence $P\mapsto GPG^T$ to covariance.
+Consequently
+\[
+ (G\xi)^T(GPG^T)^{-1}(G\xi)=\xi^TP^{-1}\xi .
+\]
+For the implemented attitude block $G_\theta=I-\frac12[d\theta]_\times$,
+\[
+G_\theta^TG_\theta
+=I+\tfrac14(\norm{d\theta}^2I-d\theta d\theta^T),
+\]
+so its singular values are $1$ and
+$\sqrt{1+\norm{d\theta}^2/4}$ (twice).  This proves invertibility and the
+reset-conditioning formula used by the interval proof.
+\end{proposition}
+
+\begin{proposition}[Held-BA triangular structure]
+During an H18 held-BA segment, BA prediction and correction are disabled.
+Hence the BA increment is constant while the remaining state may depend
+affinely on it.  In coordinates $(x_{\rm rest},b_a)$ the homogeneous map is
+therefore
+\[
+ \Psi=\begin{bmatrix}A&B\\0&I_3\end{bmatrix}.
+\]
+The identity BA block precludes strict contraction of the complete H18 state
+in a fixed quadratic metric.  Treating held BA as a bounded input and H18 as
+a finite bridge is therefore necessary and sufficient for the later release
+argument.
+\end{proposition}
+
+\begin{proposition}[No-heading-service obstruction]
+With no informative heading correction, the axial linearized equations are
+$\dot\theta_z=-b_{g,z}$ and $\dot b_{g,z}=0$.  Over duration $T$ their
+transition is, up to the sign convention on $b_g$,
+\[
+ \begin{bmatrix}1&T\\0&1\end{bmatrix}.
+\]
+Its powers contain a term growing linearly in elapsed time whenever the axial
+gyro-bias error is nonzero.  Thus recurring heading information is necessary
+for the stated tail theorem.
+\end{proposition}
+
+\begin{proposition}[Active BA uniqueness]
+At an active accelerometer correction the BA Jacobian is $J_{ba}=I_3$.
+After all other zero-action equations fix a candidate attitude/AW amplitude,
+the homogeneous accelerometer equation has the form $r_0+\delta b_a=0$ and
+therefore has the unique solution $\delta b_a=-r_0$.  BA cannot contribute a
+second independent kernel direction.
+\end{proposition}
+
+\begin{proposition}[Specific-force floor]
+The raw delivered specific force is the sum of gravity, physical translational
+acceleration and delivered accelerometer error.  The reverse triangle
+inequality gives
+\[
+ \norm{f_{\rm raw}}
+ \ge g-A_{\max}-B_{a,s}-B_{a,f}.
+\]
+With Table~\ref{tab:assumptions}, the right-hand side is strictly positive.
+This is a coupled physical norm statement and is not lost merely because an
+axis-aligned interval hull contains the origin.
+\end{proposition}
+
+\begin{proposition}[Mahony normalization]
+Quaternion multiplication by a pure vector is orthogonal to the original
+quaternion and has norm $\norm q\,\norm{\omega_c}$.  Hence for the Euler step
+$q^+=q+\frac h2q\otimes(0,\omega_c)$ the cross term vanishes and
+\[
+ \norm{q^+}^2=\norm q^2\left(1+\frac{h^2}{4}\norm{\omega_c}^2\right).
+\]
+Therefore normalization is well defined for every nonzero input quaternion.
+\end{proposition}
+
+\begin{proposition}[Completed-square finite-error bound]
+For $e_N=Me_0+b$,
+\[
+V_N=e_0^TM^TJ_NMe_0+2e_0^TM^TJ_Nb+b^TJ_Nb .
+\]
+Subtract $(1-\gamma)e_0^TJ_0e_0$ and put
+$G_\gamma=J_0-M^TJ_NM-\gamma J_0$, $z=M^TJ_Nb$.
+If $G_\gamma\succ0$, completing the square gives
+\[
+2e_0^Tz-e_0^TG_\gamma e_0
+\le z^TG_\gamma^{-1}z ,
+\]
+and hence
+\[
+V_N\le(1-\gamma)V_0+
+b^TJ_Nb+z^TG_\gamma^{-1}z .
+\]
+This is an algebraic implication only; source-uniform bounds on its
+same-history coefficients remain separate obligations.
+\end{proposition}
+
+\begin{corollary}[Sharp linked supply, retention and finite entry]
+For fixed $M,b,J_0,J_N,\gamma$ in the proposition, the additive constant
+\[
+ \chi_\gamma=b^TJ_Nb+
+ (M^TJ_Nb)^TG_\gamma^{-1}(M^TJ_Nb)
+\]
+is minimal over unrestricted root errors $e_0$: equality is attained at
+$e_0=G_\gamma^{-1}M^TJ_Nb$.  Equivalently, if
+$P_0=L_0L_0^T$, $P_N=L_NL_N^T$,
+$H=L_N^{-1}ML_0$, $\beta=L_N^{-1}b$ and
+$\Delta=I-H^TH$, then
+\[
+ \chi_\gamma=\norm{\beta}^2+
+ (H^T\beta)^T(\Delta-\gamma I)^{-1}H^T\beta .
+\]
+If on one reachable history class $\gamma\ge\gamma_*>0$ and
+$\chi_\gamma\le\chi_*$, then
+\[
+ V_n\le r_*^2+(1-\gamma_*)^n(V_0-r_*^2),
+ \qquad r_*^2=\chi_*/\gamma_* .
+\]
+Root retention in $V\le C$ requires $\chi_*\le\gamma_*C$.
+Finite entry into $V<r_{\rm in}^2$ requires the strict inequality
+$r_*<r_{\rm in}$; equality guarantees at most asymptotic approach.
+
+Every-prefix retention is a separate linked condition.  For fixed prefix data
+$(M_\ell,b_\ell,J_\ell)$, a sufficient S-procedure certificate is the
+existence of $\mu_\ell\ge0$ such that
+\[
+\begin{bmatrix}
+ \mu_\ell J_0-M_\ell^TJ_\ell M_\ell&
+ -M_\ell^TJ_\ell b_\ell\\
+ -b_\ell^TJ_\ell M_\ell&
+ C_{\rm pre}-b_\ell^TJ_\ell b_\ell-\mu_\ell C
+\end{bmatrix}\succeq0 .
+\]
+These statements are algebraic implications.  Their source-uniform use still
+requires $M_\ell,b_\ell,J_\ell$ to arise from the same shipping history.
+\end{corollary}
+
+\paragraph{Longer certified proofs.}
+The complete-word LIN/$S$ null reduction, regular-root covariance lower
+comparison, FAST Abel lemmas, backward AW reader, physical HistoryCell
+subdivision, quiet compatibility fibre, persistent quiet source charge and
+the exact MOVING compatible-pair construction require longer chronological
+or interval arguments.  Their complete derivations are collected in
+Appendix~\ref{sec:proofappendix}; each appendix proof names its machine proof
+module and certificate.  A lemma is labelled PROVED only when the corresponding
+manifest entry has no open dependency.
+
+\section{Proof roadmap}
+Table~\ref{tab:proofroadmap} separates proved mathematics from conditional
+bridges and open source-uniform obligations.  Detailed derivations of the
+longer results are in Appendix~\ref{sec:proofappendix}; machine certificates
+verify implementation-specific arithmetic and are not substitutes for those
+derivations.
+
+\begin{table*}[t]
+\centering\scriptsize
+\caption{Current proof chain and location of the mathematical argument.}
+\label{tab:proofroadmap}
+\begin{tabular}{@{}p{.25\textwidth}p{.12\textwidth}p{.25\textwidth}p{.27\textwidth}@{}}
+\toprule
+Result & Status & Principal assumptions & Proof location\\
+\midrule
+OU prediction / Joseph / reset & PROVED & shipping chronology, $R\succ0$ & structural proofs above; Appendix\\
+Held-BA H18 structure & PROVED & H18 BA hold & structural proof above; Appendix\\
+No-heading-service necessity & PROVED & no informative heading rows & structural proof above; Appendix\\
+LIN/$S$ complete-word null reduction & PROVED & complete regular word & Appendix: exact row/kernel reduction\\
+Joint AG/BG/BA kernel reduction & CONDITIONAL & MAGNETIC SERVICE strata & Appendix; continuous service cover OPEN\\
+Active A21 BA uniqueness & PROVED & active accel correction & structural proof above; Appendix\\
+H18 release compactness & CONDITIONAL & finite refinement/release completion & Appendix; completion OPEN\\
+A21 root covariance lower bound & PROVED & complete 16-s regular LIN path & Appendix; exact-rational certificate\\
+Frontend force/quaternion/guard lemmas & PROVED & MARINE + IMU qualification & structural proof above; Appendix\\
+FAST Abel / linked reader bounds & PROVED & signed FAST primitive, same-history reader & Appendix\\
+Quiet compatibility fibre/source charge & PROVED & STILL, persistent SLOW+FAST split & Appendix\\
+MOVING same-record pair & PROVED & explicit planar family, current source constants & Appendix\\
+All-time magnetic admission of MOVING pair & OPEN & literal MAGNETIC SERVICE & current controlling admission certificate\\
+Completed-square implication & PROVED & $G_\gamma\succ0$, same-history coefficients & structural proof above; Appendix\\
+Retained local theorem & PROVED locally & $\sqrt V\le0.15$ and local gates & Appendix / local certificates\\
+Regional practical stability & OPEN & all preceding conditional/open premises & final theorem\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\section{Supporting lemmas}
 The labels below are part of the theorem statement.  \textbf{PROVED} means the implication is established under the hypotheses stated here. \textbf{CONDITIONAL} means the algebraic implication is proved but one or more source-uniform premises remain to be certified on the full reachable class. \textbf{OPEN PREMISE} is a required statement not yet proved.  None of these labels promotes an end-to-end theorem.
 
 \begin{lemma}[Shipping OU prediction identities --- PROVED]
@@ -388,6 +727,51 @@ A terminal AW reader can be transported backward through the literal prediction,
 If a causal interval leaf is unresolved, bisecting a root physical/sensor history coordinate and regenerating the complete estimator history in each child preserves coverage of the parent physical set.  Generated quantities---including \(w\), Mahony state, \(\tau\), \(\sigma_{aw}\), \(R_S\), \(T_S\), covariance, gain and scheduler phase---need not and shall not be split independently.
 \end{lemma}
 
+\begin{lemma}[Quiet constant-record compatibility fibre --- PROVED]
+For a constant ideal magnetic record and physical stillness, let
+\(d_a(R)=y_a+gR^Te_z\). An indefinite SLOW+FAST decomposition exists exactly
+when \(\norm{d_a(R)}\le B_{a,s}+C_a/H_a\). For
+\(y_a=-g_me_z\), \(y_m=B=75e_x\), the attitude fibre is
+\[
+R=R_x(\theta),\qquad
+(g-g_m)^2+4gg_m\sin^2(\theta/2)\le(B_{a,s}+C_a/H_a)^2.
+\]
+This is the ideal constant-record source fibre, not a full estimator boundedness theorem.
+\end{lemma}
+
+\begin{lemma}[Persistent quiet SLOW+FAST source charge --- PROVED]
+On a centered length-\(L\) window contained in one quiet constant-record
+interval, with \(L\le H\) and mesh bounded by \(h\),
+\[
+\norm{d-b_s(t_k)}\le C/L+DL/4+Dh.
+\]
+The charge to a canonical constant compatible split is obtained by adding
+at most \(C/H\); for zero gyro record no such additional term is needed.
+The metric charge uses the full bias block of the actual \(P_k^{-1}\).
+A time-uniform covariance-metric tube remains open.
+\end{lemma}
+
+\begin{lemma}[MOVING constant-bias sensor compatibility --- PROVED]
+The planar pair above satisfies the current complete-window MARINE spans,
+all physical amplitude/jerk/primitive bounds and the persistent SLOW+FAST
+bounds for all time, with identical accelerometer, gyro and ideal magnetic
+records. Its tilt-induced bias difference is constant. Thus scalar gravity
+span plus bias temporal regularity does not imply a strictly positive
+physical two-epoch separation charge. Actual all-time shipping magnetic
+service is a separate admission obligation, not a conclusion of this lemma.
+\end{lemma}
+
+\begin{lemma}[Same-record full-metric pair lower bound --- PROVED]
+At any common finite SPD shipping prefix of this pair, on the default BA
+covariance branch \(P_{b_ay,b_ay}\le1/1600\),
+\[
+\max(V_+,V_-)\ge1600(g\sin\theta)^2>15.38649.
+\]
+The bound retains the full covariance metric and does not require a nominal
+symmetry assumption. It rules out simultaneous eventual retained inner
+entry if both complete continuations satisfy every theorem premise.
+\end{lemma}
+
 \begin{lemma}[Finite-error completed-square entry --- PROVED as an algebraic implication]
 For \(e_N=Me_0+b\), define
 \[
@@ -399,11 +783,11 @@ and
 \]
 Whenever \(G_\gamma\succ0\), the completed-square inequality gives the linked finite-error storage bound used for outer-to-inner entry.
 \end{lemma}
-\noindent\textbf{Open premise:} source-uniformly establish
-\[
-\sup_{h\ {\rm reachable}}\inf_\gamma\frac{\chi_\gamma(h)}{\gamma}<0.0225
-\]
-and the corresponding every-prefix retention inequalities.
+\noindent\textbf{Open premise:} establish forcing-aware quiet-tube retention
+and determine a valid MOVING entry target under the existing assumptions.
+First settle all-time admission of the planar pair; a finite carried word
+cannot resolve this. Any retained entry claim also requires every-prefix
+bounds and the corresponding linked same-history supply inequality.
 
 \begin{theorem}[Retained local real-arithmetic stability theorem --- PROVED on its qualified branch]
 Under its stated local source, magnetic, covariance and gate hypotheses, the shipping OU--III error dynamics retain the local LaSalle/practical-stability result on
@@ -414,40 +798,60 @@ This theorem is an inner-region result and does not by itself prove capture or e
 \end{theorem}
 
 \begin{theorem}[Regional practical stability of shipping OU--III --- OPEN]
-The end-to-end theorem follows from the proved lemmas above once the conditional source-uniform premises are discharged: finite construction/capture and H18 release, complete physical HistoryCell enclosure of the release/A21 chronology, strict recurring finite-error A21 contraction with every-prefix retention, the linked entry inequality, nonlinear remainder control, float32 transfer, and regime composition.  These premises are not yet all certified; therefore regional practical stability is not yet claimed.
+The end-to-end theorem follows from the proved lemmas above once the conditional source-uniform premises are discharged: finite construction/capture and H18 release, complete physical HistoryCell enclosure of the release/A21 chronology, strict recurring finite-error A21 contraction with every-prefix retention, forcing-aware quiet-tube boundedness, a justified MOVING target after the planar admission audit, nonlinear remainder control, float32 transfer, and regime composition.  These premises are not yet all certified; therefore regional practical stability is not yet claimed.
 \end{theorem}
 
 \input{kalman_ou-w3d-stability-proofs.tex-part}
 
-\section{Current theorem status}
-The following items are established or implemented as proof machinery:
+\section{Open theorem dependencies}
+The regional theorem is intentionally stated as OPEN until the following
+mathematical premises are discharged.  This list is part of the theorem
+specification rather than a research chronology.
 \begin{enumerate}
-\item the literal shipping model and single proof path;
-\item the MARINE MOTION, MAGNETIC SERVICE and two-timescale IMU source domain;
-\item the retained local real-arithmetic theorem;
-\item complete-word kernel/compatibility reduction and the same-history physical bridge used by the current path;
-\item compact construction/capture/release sets and recurring regular-word machinery;
-\item causal HistoryCell generation of frontend/tuner quantities from physical inputs;
-\item coupled accelerometer and quaternion normalization invariants;
-\item FAST signed-primitive treatment of guard and linked AW source functionals;
-\item interval mean/covariance/gain/reset chronology and physical-only subdivision on enclosure failure.
+\item \textbf{Finite H18 release.}  Prove source-uniform finite completion of
+the literal reference-refinement/release state machine and compactness of its
+terminal image.
+\item \textbf{Magnetic admission on the planar compatible pair.}  Prove the
+all-time applied MAGNETIC SERVICE information floor for the exact MOVING
+same-record pair.  Until this is established, the pair is not promoted from a
+source-compatible construction to a counterexample satisfying every tail
+premise.
+\item \textbf{Quiet compatible tube.}  Uniformize the proved quiet source
+projection bound in the actual covariance metric and establish boundedness of
+the complete shipping execution during arbitrary admitted STILL intervals.
+\item \textbf{Quotient/transverse A21 coercivity.}  Formulate the
+measurement-compatible gauge explicitly and prove a strict recurring action
+lower bound on its transverse complement rather than requiring contraction of
+the unobservable physical decomposition.
+\item \textbf{Linked finite-error supply and prefix retention.}  Bound the
+completed-square forcing, AW/guard source terms, endpoint terms and every
+required prefix on one reachable physical HistoryCell; independent extrema of
+gain, tuner, covariance and source histories are not admissible.
+\item \textbf{Nonlinear and finite-precision transfer.}  Bound the nonlinear
+remainder on the retained domain and transfer the real-arithmetic result to
+the shipping float32 execution.
+\item \textbf{Regime composition.}  Combine construction, H18 release,
+qualified MOVING transverse contraction and STILL compatible-tube boundedness
+without introducing a new estimator mode.
 \end{enumerate}
-
-The end-to-end theorem remains open. The decisive remaining tasks are:
-\begin{enumerate}
-\item complete the physical HistoryCell cover so the causal frontend/tuner and release stream remain source-uniformly enclosed;
-\item generate the full literal \((A_k,a_k,b_k,c_k,D_k)\) release recurrence on every verified leaf;
-\item certify recurring A21 finite-error contraction and every required prefix;
-\item prove the linked outer-to-inner inequality above over the complete reachable cover;
-\item close nonlinear remainder, float32 and regime-composition bounds.
-\end{enumerate}
-A failed interval leaf is not a physical instability result. Conversely, a converged admitted physical leaf that violates a required shipping condition is a genuine counterexample and must be reported.
+Failure of an interval enclosure is not a physical counterexample.  Conversely,
+an admitted converged physical history that violates a claimed premise must be
+reported as a counterexample to that premise.
 
 \section{Reproducibility}
 The theorem text is controlled by the literal shipping implementation and generated proof certificates in the repository. Numerical diagnostics are evidence only when their provenance identifies the shipping source revision, preserves the same-history dependency structure, and passes the corresponding fail-closed theorem gate. Research-history notes and superseded proof attempts are intentionally excluded from this article.
 
 \section{Conclusion}
-The current proof architecture is shipping-faithful and source-coupled. It retains the adaptive OU--III filter rather than proving stability of a simplified estimator. Local stability and the homogeneous structural ingredients are in place; the remaining work is a constructive source-uniform finite-error release/recurrence certificate, linked entry into the retained local region, and finite-precision closure. Until those obligations are discharged, regional practical stability of the complete shipping estimator remains an open theorem.
+The shipping OU--III estimator is analyzed without replacing its state,
+adaptive tuning, covariance, correction chronology, bias projection or
+scheduler by a surrogate system.  The local real-arithmetic theorem and the
+structural lemmas listed above are proved under the stated qualifications.
+Absolute convergence of the physical attitude/accelerometer-bias decomposition
+is not an admissible global target because the measurement map has a genuine
+compatibility fibre.  The regional theorem is therefore formulated through
+bounded compatible motion and transverse contraction.  It remains open
+precisely on the dependencies listed above; no numerical diagnostic is used
+to fill an unproved implication.
 
 \balance
 \end{document}
