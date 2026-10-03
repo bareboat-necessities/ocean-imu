@@ -50,7 +50,8 @@ int main(int argc,char**argv){
  Fusion f;f.begin(cfg);
  const double g=9.80665,sn=400.0/40001,cs=39999.0/40001,nu=acos(-1.)/10;
  int live=-1,refined=-1,active=-1,accepted=0;
- int wr=-1,windows=0,mag_min=10000;double service_min=1e100,service_max=0;\n double tail_pth_max=0,tail_pth_min=1e100,tail_pbg_max=0,tail_cross_max=0; int tail_samples=0;
+ int wr=-1,windows=0,mag_min=10000;double service_min=1e100,service_max=0;
+ double tail_pth_max=0,tail_pth_min=1e100,tail_pbg_max=0,tail_cross_max=0; int tail_samples=0;
  double bay=0,pbay=0,qxz=0,resmag=0,normlin=0,mintilt=10,maxmetric=0,minmetric=1e100;
  for(int k=1;k<=int(end*200);++k){
   double t=k*.005,phase=nu*t,psi=.02*sin(phase),rate=.02*nu*cos(phase),ax=-.02*nu*nu*sin(phase);
@@ -85,5 +86,5 @@ int main(int argc,char**argv){
    ++tail_samples;
    if(m.Pext(19,19)<=0)throw std::runtime_error("nonpositive BA covariance marginal");double V=pow(g*sn-m.get_acc_bias().y(),2)/m.Pext(19,19);minmetric=std::min(minmetric,V);maxmetric=std::max(maxmetric,V);}
  }
- const auto&m=f.raw().mekf();std::cout<<std::setprecision(17)<<"{\"service_min\":"<<service_min<<",\"service_max\":"<<service_max<<",\"service_windows\":"<<windows<<",\"service_mags_min\":"<<mag_min<<",\"duration\":"<<end<<",\"live_step\":"<<live<<",\"refined_step\":"<<refined<<",\"active_step\":"<<active<<",\"accepted_mag\":"<<accepted<<",\"max_abs_bay\":"<<bay<<",\"max_Pbay\":"<<pbay<<",\"max_q_xz\":"<<qxz<<",\"max_mag_residual\":"<<resmag<<",\"max_position\":"<<normlin<<",\"tail_V_lower_min\":"<<minmetric<<",\"tail_V_lower_max\":"<<maxmetric<<",\"tau\":"<<f.raw().getTauApplied()<<",\"sigma\":"<<f.raw().getSigmaApplied()<<",\"R_S\":"<<f.raw().getRSApplied()<<",\"period\":"<<f.raw().getPseudoUpdatePeriodSec()<<",\"ref\":["<<m.v2ref.x()<<","<<m.v2ref.y()<<","<<m.v2ref.z()<<"]}\n";
+ const auto&m=f.raw().mekf();std::cout<<std::setprecision(17)<<"{\"service_min\":"<<service_min<<",\"service_max\":"<<service_max<<",\"service_windows\":"<<windows<<",\"service_mags_min\":"<<mag_min<<",\"duration\":"<<end<<",\"live_step\":"<<live<<",\"refined_step\":"<<refined<<",\"active_step\":"<<active<<",\"accepted_mag\":"<<accepted<<",\"max_abs_bay\":"<<bay<<",\"max_Pbay\":"<<pbay<<",\"max_q_xz\":"<<qxz<<",\"max_mag_residual\":"<<resmag<<",\"max_position\":"<<normlin<<",\"tail_V_lower_min\":"<<minmetric<<",\"tail_V_lower_max\":"<<maxmetric<<",\"tau\":"<<f.raw().getTauApplied()<<",\"sigma\":"<<f.raw().getSigmaApplied()<<",\"R_S\":"<<f.raw().getRSApplied()<<",\"period\":"<<f.raw().getPseudoUpdatePeriodSec()<<",\"ref\":["<<m.v2ref.x()<<","<<m.v2ref.y()<<","<<m.v2ref.z()<<"],\"tail_pth_min\":"<<tail_pth_min<<",\"tail_pth_max\":"<<tail_pth_max<<",\"tail_pbg_norm_max\":"<<tail_pbg_max<<",\"tail_pth_bg_norm_max\":"<<tail_cross_max<<",\"tail_cov_samples\":"<<tail_samples<<"}\n";
 }

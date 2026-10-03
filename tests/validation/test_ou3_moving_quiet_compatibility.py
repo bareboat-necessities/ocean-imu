@@ -2,6 +2,7 @@
 from fractions import Fraction as F
 import hashlib
 import json
+import math
 from pathlib import Path
 import sys
 import unittest
@@ -62,6 +63,30 @@ class MovingQuietCompatibilityTests(unittest.TestCase):
         self.assertGreater(c['native']['service_min'],1)
         self.assertGreater(c['native']['active_step'],0)
         self.assertGreater(c['native']['tail_V_lower_min'],15)
+
+    def test_both_replays_export_real_tail_covariance_measurements(self):
+        for seconds, name in ((240, 'moving-compatibility-carried.json'),
+                              (1200, 'moving-compatibility-carried-1200s.json')):
+            with self.subTest(duration=seconds):
+                c = json.loads((ROOT/'reports/results/ou3_stability'/name).read_text())
+                self.assertEqual(c['probe_sha256'], hashlib.sha256(PROBE.read_bytes()).hexdigest())
+                self.assertEqual(c['shipping_header_sha256'], hashlib.sha256(HEADER.read_bytes()).hexdigest())
+                self.assertEqual(c['instrumented_header_sha256'],
+                                 hashlib.sha256(instrument(HEADER.read_text()).encode()).hexdigest())
+                n = c['native']
+                self.assertEqual(n['duration'], seconds)
+                self.assertEqual(n['tail_cov_samples'], (seconds - 200) * 200)
+                for key in ('tail_pth_min', 'tail_pth_max', 'tail_pbg_norm_max',
+                            'tail_pth_bg_norm_max', 'service_min'):
+                    self.assertTrue(math.isfinite(n[key]))
+                self.assertGreater(n['tail_pth_min'], 0)
+                self.assertGreaterEqual(n['tail_pth_max'], n['tail_pth_min'])
+                self.assertGreater(n['tail_pbg_norm_max'], 0)
+                self.assertGreaterEqual(n['tail_pth_bg_norm_max'], 0)
+                self.assertFalse(c['all_time_magnetic_service_verified'])
+                self.assertFalse(c['all_placed_service_windows_verified'])
+                self.assertFalse(c['full_shipping_counterexample_admitted'])
+                self.assertFalse(c['theorem_closed'])
 
 if __name__=='__main__':
     unittest.main()

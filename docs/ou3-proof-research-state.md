@@ -60,6 +60,18 @@ Observed BA-y and quaternion x/z remain zero; the BA-marginal V lower comparison
 is at least 217.6418599 over t>200 s. The estimator, covariance, frontend, tuner,
 physical history and scheduler are never restarted at probe roots.
 
+The separately regenerated 1200-s replay is
+`moving-compatibility-carried-1200s.json`: 27,756 accepted corrections and
+1,062 disjoint one-second windows have service minimum 7.024764605642482.
+Across 200,000 post-update samples with 200<t<=1200 s, the observed attitude
+covariance eigenvalues range from 2.823888735292713e-6 to 1.033762015218564e-5;
+max ||P_BG||_F=3.571022388047431e-8 and max ||P_theta,BG||_F=1.020562678075850e-7.
+The BA-y covariance maximum increases to 2.289898111484945e-4 and the observed
+BA-y metric lower comparison decreases to 41.99556975975723. Hence the extra
+windows support service feasibility, but do not establish that covariance has
+settled into a periodic forward-invariant cell. Both records come from fresh
+native executions of the same repaired probe and carry its actual source hash.
+
 These are NOT all placed windows, NOT an all-time MAGNETIC SERVICE certificate,
 NOT a full nonlinear HistoryCell enclosure, and NOT a float32 totality theorem.
 The finite source record also does not qualify an assembled physical IMU.
@@ -68,7 +80,9 @@ The finite source record also does not qualify an assembled physical IMU.
 
 The covariance-metric quotient/tube work formerly isolated in PR #650 is now carried on this branch. For a literal certified one-dimensional compatibility line r at a root with J=P^-1, normalize r^T J r=1 and use Pi_Q=r r^T J, Pi_perp=I-Pi_Q. Then V=alpha^2+V_perp exactly. Across a finite same-history word the quotient map is xi_N=M_Q xi_0+b_Q+C_Q alpha_0; the gauge-to-transverse term is retained as forcing. This algebra is covered by compatibility_quotient.py and its regression tests. Source-uniform A_Q, linked quotient supply and every-prefix tube retention remain OPEN. The MOVING family's all-time MAGNETIC SERVICE admission also remains OPEN; the quotient construction does not promote that family to a full-premise counterexample.
 
-* **Planar MAGNETIC SERVICE reduction:** the exact MOVING witness has body heading axis orthogonal to the 75-uT body field at every epoch.  The constant-axis 2x2 heading/BG reference Riccati channel (h=.04 s, sigma_m=.8, gyro density .00135, b_g RW=1e-11, BG normalization .02) enters the loose D=diag(1e-3,1e-5) envelope after the first magnetic correction; D is a strict reference supersolution.  A 25-event one-second reference word started at D has lambda_min=5.97918>mu_M=1; the limiting reference orbit gives 7.02920 versus the carried full-filter 7.0247646.  This does NOT certify service.  The limiter is now the same-word perturbation ||I_ship-I_ref||_2<4.9 with rotating heading basis, literal Joseph corrections, resets and actual innovation covariance retained.  Classification: retained feasibility reduction; no shipping relaxation is promoted.\n\n## Planar MOVING service reduction
+* **Planar MAGNETIC SERVICE reduction:** the exact MOVING witness has body heading axis orthogonal to the 75-uT body field at every epoch.  The constant-axis 2x2 heading/BG reference Riccati channel (h=.04 s, sigma_m=.8, gyro density .00135, b_g RW=1e-11, BG normalization .02) enters the loose D=diag(1e-3,1e-5) envelope after the first magnetic correction; D is a strict reference supersolution.  A 25-event one-second reference word started at D has lambda_min=5.97918>mu_M=1; the limiting reference orbit gives 7.02920 versus the carried full-filter 7.0247646.  This does NOT certify service.  The limiter is now the same-word perturbation ||I_ship-I_ref||_2<4.9 with rotating heading basis, literal Joseph corrections, resets and actual innovation covariance retained.  Classification: retained feasibility reduction; no shipping relaxation is promoted.
+
+## Planar MOVING service reduction
 
 The exact pair's common delivered record has an analytical planar mean invariant manifold after canonical magnetic reference acquisition: q_x=q_z=0 on the planar branch, gyro/BG are Y-only, delivered accel/mag and BA/AW/LIN means are XZ-parity, and the literal residual/Jacobian/update structure preserves that parity. This explains the carried symmetry without assuming it. The covariance does NOT reduce to a scalar: exact pitch propagation and corrections retain a coupled attitude/BG covariance and cross-blocks entering P_theta,theta and S_m. The all-time MAGNETIC SERVICE task is therefore reduced to a periodic reduced HistoryCell carrying those covariance pieces, four heading/BG probes, accepted magnetic events, and the literal tuner/scheduler factors. Finite service_min~7.0248 remains diagnostic only. Current limiter: construct a one-period forward-invariant enclosure and a phase-uniform one-second accepted-information lower bound > mu_M=1. Classification of failure, if any, must distinguish D enclosure loss from an actual premise violation.
 
@@ -88,6 +102,15 @@ still be connected through the actual startup/refinement/release state machine.
 
 ## Failed approaches / DEAD_ENDS
 
+* **E, repaired replay/evidence path:** the tail-covariance probe contained a
+  literal backslash-n outside a string and omitted its measured covariance fields
+  from JSON. Its old carried record consequently had a stale probe hash. The
+  syntax/export defects are repaired, both 240-s and 1200-s records are regenerated
+  by executing the current probe, and a regression checks both records' hashes,
+  finite exported envelopes and exact sample counts. No old numerical artifact
+  is relabelled. The merge conflict is the broad evidence fingerprint: main's
+  regenerated evidence and its original fingerprint are retained, so changed
+  proof sources still trigger the existing conservative replay gate.
 * **B, established quiet absolute-entry obstruction:** indefinite stillness can
   hide .0981 m/s^2 physical BA; estimator BA OU decay does not remove physical
   forcing `(1-phi_b)b_a`. The old universal absolute-entry target is dead.
@@ -128,10 +151,17 @@ still be connected through the actual startup/refinement/release state machine.
   world-frame fixture, whose sigma_a was .12. The replay is now labelled by its
   actual fixed configuration, not falsely attributed to that entire fixture.
   Neither native source nor numerical results were changed for this correction.
-* **Local full build:** `make all` stops in tests/ahrs compiling ahrs-qmekf-sim.cpp
-  with `fatal error: Eigen/Dense: No such file or directory` at the default
-  /usr/include/eigen3 fallback. The focused native probe was built using the
-  installed Eigen tree explicitly. A full repository build is not claimed.
+* **E, local validation environment:** native compilation and both replays use
+  the installed Eigen tree explicitly via EIGEN_DIR/EIGEN_INCLUDE_DIR. The initial
+  broad Python suite's compass test could not locate that tree; its documented
+  EIGEN_INCLUDE_DIR setting repairs the environment without changing a test.
+  The broad Python validation rerun passes 936 tests with one record-dependent
+  skip. Primary `make all EIGEN_DIR=<installed Eigen>` stops at
+  `tests/imu_calibrate/Makefile:83: accel_cal-test.o`: g++ reports
+  `fatal error: Killed signal terminated program cc1plus`.
+  Separately, `make ensure-sim-data` cannot fetch the pinned v1.2.1 archive:
+  curl exits 6, `Could not resolve host: github.com`. A complete data-driven
+  `make all` success is not claimed. Both focused native replays completed.
 
 ## Retained facts and implementation
 

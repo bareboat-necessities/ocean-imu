@@ -648,11 +648,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/moving_compatibility_probe.cpp",
-      "git_blob_sha": "b3f5c22e398acbc0a5cc4a26b956ea2c00b0093a"
+      "git_blob_sha": "1b304d0bfa537052ac25790bf01310ec05150f38"
     },
     {
       "path": "tests/validation/test_ou3_moving_quiet_compatibility.py",
-      "git_blob_sha": "7aa3cddc81307a9034399f5399d90b60981aab07"
+      "git_blob_sha": "61a3b5b58afe5c05e2e4651d87d2c4cd0cf005be"
     },
     {
       "path": "docs/ou3-moving-quiet-compatibility.md",
@@ -660,7 +660,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "a549461e905972276211d4cce9d7ccf2f3f5e393"
+      "git_blob_sha": "7109fdc55afa9b3d1a5060afe39e394f6f094cc3"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
