@@ -202,7 +202,9 @@ def analyze(trace, dps=80):
                 gg = mp.eye(21)
                 gg[:3, :3] += mp.matrix([[0, -z, y], [z, 0, -x], [-y, x, 0]])/2
                 mfull = gg*mfull
-            elif kind in ('sync', 'sync_completion'):
+            elif kind in ('sync', 'sync_completion', 'adaptive_state'):
+                # sync records alter covariance only; adaptive_state is a
+                # same-history observer snapshot and alters neither mean nor P.
                 pass
             else:
                 raise ValueError('unknown literal mean event')
