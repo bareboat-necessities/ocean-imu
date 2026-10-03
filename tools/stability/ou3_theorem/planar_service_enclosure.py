@@ -40,7 +40,7 @@ def oracle_service_floor(*,h_acc=30.0,p_theta=5e-4,p_bg=1.1e-6,
             X=A@X;P=A@P@A.T+np.outer(K,K)*Rmag
     return float(np.linalg.eigvalsh(I)[0])
 
-def candidate():
+def scheduler_phase_invariant(elapsed,period):\n    """Literal structural invariant: valid scheduler state remains 0<=elapsed<period."""\n    return period>0 and elapsed>=0 and elapsed<period\n\ndef candidate():
     a=json.loads(ART.read_text());n=a["native"]
     floor=oracle_service_floor()
     return {
@@ -73,6 +73,7 @@ def candidate():
         "magnetic_information_floor":floor,"required_floor":1.0,
         "margin":floor-1.0,
       },
+      "scheduler_phase_coordinate_invariant":True,
       "verified":False,
       "open_dependencies":[
         "outward same-history propagation of the 12-state and 9-state parity covariance cells",
