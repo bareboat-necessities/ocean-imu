@@ -316,3 +316,39 @@ MAGNETIC SERVICE definition.  Relaxations introduced: the scalar reference
 channel freezes the within-gap heading basis only to define the comparison
 object; it is not substituted for the shipping channel and cannot itself
 promote admission.
+
+
+### M5a. Exact planar block to enclose
+
+The small reference/full discrepancy is not accidental.  The witness record has
+gyro only on \(e_y\), all mean attitude propagation is therefore by rotations
+about \(e_y\), and the carried symmetry has no \(x/z\) quaternion component.
+The magnetic field and gravity/heading vectors both lie in the rotating \(x/z\)
+plane and remain orthogonal.  In the basis
+\[
+ e_B(t)=R_y(-\psi)e_x,\qquad e_H(t)=R_y(-\psi)(0,\pm\sin\theta,\cos\theta),
+ \qquad e_y,
+\]
+the magnetic heading residual is scalar: \(H_m e_H\) is parallel to \(e_y\)
+with norm 75.
+
+The literal accelerometer Jacobian has the same closure property.  Its
+\(e_y\)-residual couples the heading attitude coordinate to the \(e_y\)
+world-AW and body-BA coordinates; the S pseudo-row couples the corresponding
+\(v_y,p_y,S_y,a_{w,y}\) chain.  Thus the service calculation is contained in
+the seven-coordinate block
+\[
+ (\theta_H,\ b_{g,H},\ v_y,\ p_y,\ S_y,\ a_{w,y},\ b_{a,y}).
+\]
+The complementary coordinates can affect this statement only if the literal
+prediction, Joseph updates or reset congruence create cross-block covariance.
+The next certificate must therefore verify algebraically, operation by
+operation, that the planar symmetry preserves this block (or enclose the
+off-block leakage if float32 arithmetic is included).  Once that is done, the
+all-time service problem reduces to a 7x7 causal Riccati/mean-factor recurrence
+with a 2-column heading/BG probe, rather than a 21-state interval enclosure.
+
+This reduction does not delete the accelerometer, S, AW or BA structure:
+those four mechanisms are precisely why the block is seven-dimensional rather
+than the scalar 2x2 reference.  It also does not use the observed zero
+\(\hat b_{a,y}\) as an assumption.
