@@ -361,6 +361,8 @@ def status_report() -> dict:
             "quiet_universal_absolute_entry_refuted":True,
             "moving_two_epoch_span_bias_separation_refuted":True,
             "moving_full_premise_absolute_entry_refuted":False,
+            "planar_mean_invariant_manifold":True,
+            "reduced_periodic_service_recurrence_formulated":True,
             "all_time_actual_magnetic_service_for_planar_pair":False,
             "finite_replay_is_all_time_certificate":False,
             "homogeneous_kernel_results_imply_physical_identifiability":False,
@@ -372,7 +374,8 @@ def status_report() -> dict:
             "Prove forcing-aware quiet-compatible boundedness using the exact constant-record fibre and persistent source charges. "
             "The exact planar MOVING pair satisfies current 30-s span and SLOW+FAST limits with constant bias and identical sensor records; "
             "the proposed two-epoch span/bias separation has an exact zero direction. "
-            "Certify all-time actually applied MAGNETIC SERVICE and execution totality for that SAME shipping history before declaring "
+            "The ideal mean execution has an analytical planar parity manifold; covariance still requires a reduced periodic HistoryCell. "
+            "Certify a forward-invariant one-period enclosure and phase-uniform one-second actually applied MAGNETIC SERVICE for that SAME shipping history before declaring "
             "a fully admitted MOVING obstruction or asserting absolute inner entry from the existing assumptions. "
             "The 240-s replay and 102 disjoint one-second service checks are non-promoting finite evidence. "
             "Keep construction/H18/refinement/release, the full persistent HistoryCell, coupled tuner, actual covariance/gains and BA physical forcing. "
