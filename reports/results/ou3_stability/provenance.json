@@ -452,7 +452,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "79d71c1e121f4e0a34ca9572181b667e06787ef1"
+      "git_blob_sha": "055eb8dce71012009c520125cb4d697cb7817d5d"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
@@ -644,11 +644,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/moving_compatibility_diagnostic.py",
-      "git_blob_sha": "3283d28fe16cfc58c095be6703d9cb5792c1a36e"
+      "git_blob_sha": "6e19b3037a88492a7569a1c6f5b9230f76e0f512"
     },
     {
       "path": "tools/stability/ou3_theorem/moving_compatibility_probe.cpp",
-      "git_blob_sha": "1b304d0bfa537052ac25790bf01310ec05150f38"
+      "git_blob_sha": "3a623fc712f1e47644c40b1fea7fe665e882e005"
     },
     {
       "path": "tests/validation/test_ou3_moving_quiet_compatibility.py",
@@ -660,7 +660,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "7109fdc55afa9b3d1a5060afe39e394f6f094cc3"
+      "git_blob_sha": "95f1ef3e41f1d4a30afb1dcf0e49d3f34fd090ac"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -680,5 +680,6 @@
   "aw_tracking_continuation_base_main_commit": "c0f9dd07ed9393e313e7243493ac580857ab318b",
   "information_ratio_continuation_base_main_commit": "ee0d46ddc08396b86579e12f2d873ae42fd5106b",
   "moving_compatibility_continuation_base_main_commit": "3ff766eb0f71cd5ce04ba93252288097574ace90",
-  "moving_compatibility_reconciled_main_commit": "7bc48e9dfba67d3d903c79914cdac7a8e28aa0c5"
+  "moving_compatibility_reconciled_main_commit": "7bc48e9dfba67d3d903c79914cdac7a8e28aa0c5",
+  "planar_parity_service": "Analytical real-arithmetic 12+9 covariance parity factorization for the exact planar MOVING record. Literal service remains two separate 2x2 +/- heading/BG Gramians. Fresh 240/1200-s diagnostics sweep every IMU-sample root over the final 20-s source phase cycle; minimum tail service remains >7. A 20-s point covariance return is invalid because the progress-preserving S scheduler phase does not return. The scheduler-phase-augmented interval cell and all-time information floor remain OPEN."
 }
