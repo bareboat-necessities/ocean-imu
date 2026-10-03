@@ -89,6 +89,10 @@ This is the same update implemented by the literal PCt/S/Joseph chronology; no i
 
 However, the desired service comparison is not a free monotonicity theorem. Stronger nonmag information shrinks target covariance but also changes the transported homogeneous heading/BG probes before the next magnetic sample. Therefore samplewise I_acc,literal <= I_acc,oracle alone does not yet imply an ordering of the later magnetic service Gramian. The remaining bridge must propagate the paired covariance+probe action (or prove an equivalent information-form variational inequality) through prediction, S, accel and reset on the same history. This prevents an invalid shortcut.
 
+## Attitude reset metric
+
+The shipping first-order attitude covariance/probe reset uses G=I-(1/2)[dtheta]x on the attitude block. Because [dtheta]x is real skew-symmetric, G'G=I+(1/4)(||dtheta||^2 I-dtheta dtheta'). Its singular values are exactly 1 and sqrt(1+||dtheta||^2/4) (twice). Thus the reset is invertible, has sigma_min=1, and its inverse has sigma_min=1/sqrt(1+||dtheta||^2/4). This closes the coordinate-conditioning formula needed by the comparison; a uniform numerical dtheta bound must still come from the same-history correction cell rather than an independent clamp.
+
 ## Scheduler coordinate is structurally invariant
 
 The scheduler component of the augmented cell is not itself open: the literal retarget function preserves elapsed time when it is below the new period and otherwise parks it immediately below the new period; periodic_update_due then returns an elapsed value in [0,T_S). Hence the causal set {(elapsed,T_S): T_S>0, 0<=elapsed<T_S} is forward invariant under every shipping retarget/due operation. What remains open is covariance/service enclosure uniformly over that scheduler coordinate, not boundedness of the scheduler state.
