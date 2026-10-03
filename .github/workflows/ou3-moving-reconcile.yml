@@ -1,0 +1,121 @@
+name: ou3-moving-reconcile
+on:
+  push:
+    branches: [proof/ou3-moving-compatibility-audit]
+    paths: [.github/workflows/ou3-moving-reconcile.yml]
+permissions:
+  contents: write
+jobs:
+  reconcile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install numpy scipy mpmath
+      - name: Merge audited main and preserve both proof changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/proof/ou3-moving-compatibility-audit
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 - <<'PY'
+          import hashlib,json,subprocess
+          from pathlib import Path
+          base='3ff766eb0f71cd5ce04ba93252288097574ace90'
+          ours='9af4d641d7f518417e616661192e5b6c414f077e'
+          main='7bc48e9dfba67d3d903c79914cdac7a8e28aa0c5'
+          def show(ref,path):
+              return subprocess.check_output(['git','show',f'{ref}:{path}'])
+          def sha(data):
+              return hashlib.sha1(f'blob {len(data)}\0'.encode()+data).hexdigest()
+          assert not subprocess.check_output(['git','diff',base,main,'--','src','sensors','tools','tests'])
+          assert subprocess.run(['git','merge-base','--is-ancestor',ours,'HEAD']).returncode==0
+          result=subprocess.run(['git','merge','--no-commit','--no-ff',main])
+          assert result.returncode in (0,1)
+          names=['doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex',
+                 'reports/results/ou3_stability/lemma-manifest.json',
+                 'docs/ou3-proof-research-state.md']
+          for path in names:
+              Path(path).write_bytes(show(ours,path))
+          old='doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex'
+          new=old+'-part'
+          Path(new).write_bytes(show(ours,old))
+          Path(old).unlink(missing_ok=True)
+          study=Path(names[0]);s=study.read_text()
+          assert s.count('\\input{kalman_ou-w3d-stability-proofs.tex}')==1
+          study.write_text(s.replace('\\input{kalman_ou-w3d-stability-proofs.tex}',
+                                     '\\input{kalman_ou-w3d-stability-proofs.tex-part}'))
+          manifest=Path(names[1]);s=manifest.read_text()
+          assert s.count('"'+old+'"')==1
+          manifest.write_text(s.replace('"'+old+'"','"'+new+'"'))
+          ledger=Path(names[2]);s=ledger.read_text()
+          old_note='''* **E, baseline provenance:** a clean extraction of main 3ff766e fails
+            build_evidence with two existing source bindings (ag_readout_source.cpp and
+            ag_readout_source_diagnostic.py) and five existing construction/signed/same-cell
+            driver fingerprints. The new branch preserves these stale bindings rather than
+            re-signing old numerical evidence. They need separately reproduced evidence.
+          '''
+          new_note='''* **E, resolved provenance/LaTeX failure:** main 3ff766e had seven stale
+            source/driver bindings and compiled an input-only proof fragment standalone.
+            Main 7bc48e9 (PR #648) regenerated the five affected reports without changing
+            their numerical fields, repaired their provenance, and renamed the appendix
+            to .tex-part. This branch retains those corrections; no old numerical evidence
+            is re-signed to conceal a source mismatch.
+          '''
+          assert old_note in s
+          ledger.write_text(s.replace(old_note,new_note))
+          p='reports/results/ou3_stability/provenance.json'
+          current=json.loads(show(ours,p));previous=json.loads(show(base,p));latest=json.loads(show(main,p))
+          merged_paths=set(names+[new])
+          for table in ('authoritative_shipping_sources','operation_lemma_sources'):
+              bmap={r['path']:r for r in previous.get(table,[])}
+              mmap={r['path']:r for r in latest.get(table,[])}
+              for row in current.get(table,[]):
+                  path=row['path']
+                  if path in bmap and row['git_blob_sha']==bmap[path]['git_blob_sha'] and path in mmap:
+                      row['git_blob_sha']=mmap[path]['git_blob_sha']
+                  if path==old:
+                      row['path']=new;path=new
+                  if path in merged_paths:
+                      row['git_blob_sha']=sha(Path(path).read_bytes())
+          current['moving_compatibility_reconciled_main_commit']=main
+          Path(p).write_text(json.dumps(current,indent=2)+'\n')
+          # Latest main's five regenerated reports are copied verbatim, not re-signed.
+          for name in ('construction-history-feasibility.json','construction-mean-action.json',
+                       'signed-adjoint-diagnostic.json','signed-balance-diagnostic.json',
+                       'moving-transport-source-feasibility.json'):
+              path='reports/results/ou3_stability/'+name
+              assert Path(path).read_bytes()==show(main,path)
+          assert Path('docs/ou3-stability-handoff.md').read_bytes()==show(main,'docs/ou3-stability-handoff.md')
+          from tools.ou_replay_fingerprint import compute_results_fingerprint
+          p=Path('reports/ou_evidence_fingerprint.json');record=json.loads(show(main,str(p)))
+          results=compute_results_fingerprint()
+          record.update(results_fingerprint=results['fingerprint'],results_file_count=results['file_count'],results_files=results['files'])
+          # Keep source replay fingerprint unchanged; changed proof tooling still requires full replay.
+          p.write_text(json.dumps(record,indent=2,sort_keys=True)+'\n')
+          expected={
+            'docs/ou3-proof-research-state.md':'840ea09c4927b19c1adfb816174d9f1dfa23d22e',
+            'doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex':'1c9ad426a77d2d4ce5fb5b14f64ccecf4d373b88',
+            new:'3b3896513a2688703a16f1bf9a40885da31c1148',
+            'reports/results/ou3_stability/lemma-manifest.json':'30ccacc61632a10c28879a7e8c36ee379942bc40',
+            'reports/results/ou3_stability/provenance.json':'cd1e600436fe6f511af9d99f60acdd68e47e9589',
+            'reports/ou_evidence_fingerprint.json':'da6dd7641a9a84b1897638c679b1a92376ad9fad'}
+          for path,digest in expected.items():
+              assert sha(Path(path).read_bytes())==digest,('unexpected merged bytes',path)
+          subprocess.run(['git','add','-A'],check=True)
+          assert not subprocess.check_output(['git','ls-files','-u'])
+          assert not subprocess.check_output(['git','diff','--cached',ours,'--','src','sensors','tools','tests'])
+          PY
+          python3 -m tools.stability.ou3_theorem.build_evidence
+          python3 -m unittest discover -s tests/validation -p test_ou3_moving_quiet_compatibility.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_lemma_manifest.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_theorem_status.py -v
+          git diff --cached --check
+          git commit -m 'Merge main PR648 provenance and appendix repairs into moving compatibility proof'
+          git push origin HEAD:refs/heads/proof/ou3-moving-compatibility-audit
