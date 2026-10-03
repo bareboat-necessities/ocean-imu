@@ -13,6 +13,16 @@ def _mm(a,b):
  return [[sum(a[i][k]*b[k][j] for k in range(len(b))) for j in range(len(b[0]))] for i in range(len(a))]
 def _tr(a): return [list(x) for x in zip(*a)]
 
+
+def reset_metric_bound(delta_max):
+    """Singular-value bounds for G=I-.5[dtheta]x used by shipping covariance reset."""
+    d=float(delta_max)
+    # skew is normal with eigenvalues 0,+/- i d; singular values of I-.5 skew
+    # are 1 and sqrt(1+d^2/4). Hence reset never contracts Euclidean norm.
+    return {"sigma_min":1.0,"sigma_max":(1.0+d*d/4.0)**0.5,
+            "inverse_sigma_min":1.0/(1.0+d*d/4.0)**0.5,
+            "exact_formula":True}
+
 def certificate():
  dt=F(1,200);B=F(75);ha=F(30);Rm=F(16,25);Ra=F(1,25)
  qg=F(27,20000)**2;qbg=F(1,10_000_000_000)
@@ -51,6 +61,7 @@ def certificate():
   "covariance_difference_det_decimal":float(detD),
   "information_matrix_decimal":[[float(x) for x in r] for r in I],
   "information_minus_identity_det_decimal":float(detJ),
+  "shipping_reset_metric_bound":reset_metric_bound(.1),
   "literal_shipping_service_proved":False,
   "open_dependencies":["prove literal nonmag chronology is no more suppressive than oracle for magnetic incremental information",
                        "prove all-time literal predicted-force/attitude-information bound corresponding to oracle gain <=30",
