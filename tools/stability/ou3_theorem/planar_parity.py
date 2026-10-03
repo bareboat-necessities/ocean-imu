@@ -40,7 +40,7 @@ def certificate():
     return {"qualification":"OU3_PLANAR_PARITY_DECOMPOSITION_V1",
             "even_indices":list(EVEN),"odd_indices":list(ODD),
             "block_dimensions":[len(EVEN),len(ODD)],
-            "service_blocks":[2,2],
+            "auxiliary_transformed_blocks":[2,2],\n            "literal_service_criterion":"two separate 2x2 heading/BG Gramians for d_plus and d_minus",
             "lossless":True,
             "basis_change_orthogonal":True,
             "claim":"literal planar real-arithmetic factors preserve parity; interval enclosure may propagate the two blocks independently",
