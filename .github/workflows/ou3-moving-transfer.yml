@@ -1,0 +1,84 @@
+name: ou3-moving-transfer
+on:
+  push:
+    branches: [proof/ou3-moving-compatibility-audit]
+    paths:
+      - .github/workflows/ou3-moving-transfer.yml
+      - .github/ou3-moving-transfer/**
+permissions:
+  contents: write
+jobs:
+  apply-audited-proof-files:
+    if: github.repository == 'bareboat-necessities/ocean-imu'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Apply exact hash-checked proof-only edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/proof/ou3-moving-compatibility-audit
+          git merge-base --is-ancestor 3ff766eb0f71cd5ce04ba93252288097574ace90 HEAD
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, subprocess
+          from pathlib import Path
+          root = Path.cwd()
+          encoded = ''.join((root/f'.github/ou3-moving-transfer/{i}.b64').read_text() for i in range(5))
+          data = lzma.decompress(base64.b64decode(''.join(encoded.split()), validate=True))
+          assert hashlib.sha256(data).hexdigest() == '78ad9b37d3b942daeb8c47b4c55caf479f532ea6f49b6c9f422f361d403a60e5'
+          changes = json.loads(data)
+          allowed = {
+            'docs/ou3-moving-quiet-compatibility.md',
+            'docs/ou3-proof-research-state.md',
+            'docs/ou3-quiet-inner-entry-obstruction.md',
+            'docs/ou3-shipping-faithfulness-protocol.md',
+            'doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex',
+            'doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex',
+            'reports/results/ou3_stability/lemma-manifest.json',
+            'reports/results/ou3_stability/moving-compatibility-carried.json',
+            'reports/results/ou3_stability/moving-quiet-compatibility-certificate.json',
+            'reports/results/ou3_stability/provenance.json',
+            'reports/results/ou3_stability/theorem-status.json',
+            'tools/stability/ou3_theorem/build_evidence.py',
+            'tools/stability/ou3_theorem/moving_compatibility_diagnostic.py',
+            'tools/stability/ou3_theorem/moving_compatibility_probe.cpp',
+            'tools/stability/ou3_theorem/moving_quiet_compatibility.py',
+            'tools/stability/ou3_theorem/theorem_status.py',
+            'tests/validation/test_ou3_moving_quiet_compatibility.py',
+          }
+          assert len(changes) == len(allowed)
+          assert {c['path'] for c in changes} == allowed
+          updates = []
+          for c in changes:
+              path = root/c['path']
+              assert not path.is_symlink()
+              old = path.read_bytes() if path.exists() else None
+              digest = hashlib.sha256(old).hexdigest() if old is not None else None
+              assert digest == c['old_sha256'], ('base mismatch', c['path'])
+              lines = (old or b'').decode().splitlines(keepends=True)
+              end = 0
+              for i,j,replacement in c['edits']:
+                  assert end <= i <= j <= len(lines)
+                  end = j
+              for i,j,replacement in reversed(c['edits']):
+                  lines[i:j] = replacement
+              new = ''.join(lines).encode()
+              assert hashlib.sha256(new).hexdigest() == c['new_sha256'], ('result mismatch',c['path'])
+              updates.append((path,new))
+          for path,new in updates:
+              path.parent.mkdir(parents=True,exist_ok=True)
+              path.write_bytes(new)
+              print(hashlib.sha256(new).hexdigest(),path.relative_to(root))
+          subprocess.run(['git','add','--',*sorted(allowed)],check=True)
+          PY
+          python3 -m unittest discover -s tests/validation -p test_ou3_moving_quiet_compatibility.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_lemma_manifest.py -v
+          python3 -m unittest discover -s tests/validation -p test_ou3_theorem_status.py -v
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'proof: establish quiet fibre and audit exact moving tilt-bias compatibility'
+          git push origin HEAD:refs/heads/proof/ou3-moving-compatibility-audit
