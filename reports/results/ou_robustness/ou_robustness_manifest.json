@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "7bc48e9dfba67d3d903c79914cdac7a8e28aa0c5",
+  "git_branch": "fix/ou3-ci-reproduction",
+  "git_commit": "78d39b9f7f8032c1149b0c2ba1a1aff335c9d749",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -325,8 +325,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-10-03T04:24:14+00:00",
-    "git_commit": "7bc48e9dfba67d3d903c79914cdac7a8e28aa0c5",
+    "generated_at": "2026-10-03T17:48:38+00:00",
+    "git_commit": "78d39b9f7f8032c1149b0c2ba1a1aff335c9d749",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -509,8 +509,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "37093502570",
-      "workflow": "build"
+      "run_id": "37139719010",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
