@@ -72,7 +72,8 @@ def run_native(eigen, duration=240.0, profile_output=None):
         p = subprocess.run(command, capture_output=True, text=True, timeout=90)
         if p.returncode:
             raise RuntimeError("probe compile failed:\\n" + p.stdout + "\\n" + p.stderr)
-        args=[str(binary), str(duration)] + ([str(profile_output)] if profile_output is not None else [])\n        result = subprocess.run(args, check=True, capture_output=True, text=True, timeout=max(240,int(duration*2)))
+        args=[str(binary), str(duration)] + ([str(profile_output)] if profile_output is not None else [])
+        result = subprocess.run(args, check=True, capture_output=True, text=True, timeout=max(240,int(duration*2)))
         native = json.loads(result.stdout)
         def check_finite(value):
             if isinstance(value, dict):
@@ -111,7 +112,8 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--eigen",type=Path,default=Path("/usr/include/eigen3"))
     p.add_argument("--duration",type=float,default=240.0)
-    p.add_argument("--output",type=Path)\n    p.add_argument("--profile-output",type=Path)
+    p.add_argument("--output",type=Path)
+    p.add_argument("--profile-output",type=Path)
     args=p.parse_args()
     text=json.dumps(run_native(args.eigen,args.duration,args.profile_output),indent=2,sort_keys=True)+"\n"
     if args.output:
