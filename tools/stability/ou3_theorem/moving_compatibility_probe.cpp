@@ -20,7 +20,7 @@ struct MovingSlot { bool active=false; int root=-1; double phi[21][4]{}; double 
 static MovingSlot moving_slots[SLIDING];
 static double sliding_service_min=1e100,sliding_service_max=0; static int sliding_windows=0,sliding_mags_min=10000;
 static double pred_product=1.0,pred_eta_max=0.0; static int pred_count=0,s_due_count=0;
-static Eigen::Matrix<double,21,21> lowerP; static bool lower_ready=false; static double lower_product=1.0,lower_eta_max=0; static int lower_count=0;
+static Eigen::Matrix<double,21,21> lowerP; static bool lower_ready=false,lower_pending=false; static double lower_product=1.0,lower_eta_max=0; static int lower_count=0;
 static const int PE[12]={1,4,6,8,9,11,12,14,15,17,18,20}, PO[9]={0,2,3,5,7,10,13,16,19};
 static void lower_correct(const char* kind){
  if(!lower_ready)return;
@@ -45,6 +45,7 @@ static void slot_prediction(MovingSlot& s,const float* fa,const float* fl,float 
 static void slot_correction(MovingSlot& s,const char* kind,const float* h,const float* sv,const float* gain){ double y[3][4]={};for(int i=0;i<3;++i)for(int j=0;j<4;++j)for(int k=0;k<21;++k)y[i][j]+=double(h[i+3*k])*s.phi[k][j]; if(kind[0]=='m'){double l[3][3]={},w[3][4]={};for(int i=0;i<3;++i)for(int j=0;j<=i;++j){double v=double(sv[i+3*j]);for(int k=0;k<j;++k)v-=l[i][k]*l[j][k];if(!std::isfinite(v)||(i==j&&v<=0))throw std::runtime_error("sliding innovation not SPD");l[i][j]=i==j?std::sqrt(v):v/l[j][j];}for(int i=0;i<3;++i)for(int j=0;j<4;++j){double v=y[i][j];for(int k=0;k<i;++k)v-=l[i][k]*w[k][j];w[i][j]=v/l[i][i];}for(int i=0;i<4;++i)for(int j=0;j<4;++j)for(int k=0;k<3;++k)s.info[i][j]+=w[k][i]*w[k][j];++s.mags;} for(int i=0;i<21;++i)for(int j=0;j<4;++j)for(int k=0;k<3;++k)s.phi[i][j]-=double(gain[i+21*k])*y[k][j]; }
 static void slot_reset(MovingSlot& s,const float* d){double g[3][3]={{1,-double(d[2])/2,double(d[1])/2},{double(d[2])/2,1,-double(d[0])/2},{-double(d[1])/2,double(d[0])/2,1}},o[3][4]={};for(int i=0;i<3;++i)for(int j=0;j<4;++j)for(int k=0;k<3;++k)o[i][j]+=g[i][k]*s.phi[k][j];for(int i=0;i<3;++i)for(int j=0;j<4;++j)s.phi[i][j]=o[i][j];}
 static void moving_prediction(const float* fa,const float* fl,const float* qa,const float* ql,float phi,const float* qb,const float* pminus){
+ if(lower_pending && !lower_ready){lowerP.setZero(); const double qag=2.6521754857e-10,qba=1.25e-9,qlin=4.3051931518e-10;for(int i=0;i<6;++i)lowerP(i,i)=qag;for(int i=6;i<18;++i)lowerP(i,i)=qlin;for(int i=18;i<21;++i)lowerP(i,i)=qba;lower_ready=true;lower_pending=false;}
  if(lower_ready && lower_count<200){
   Eigen::Matrix<double,21,21> F=Eigen::Matrix<double,21,21>::Zero(),Q=Eigen::Matrix<double,21,21>::Zero();
   for(int i=0;i<6;++i)for(int j=0;j<6;++j){F(i,j)=double(fa[i+6*j]);Q(i,j)=double(qa[i+6*j]);}
