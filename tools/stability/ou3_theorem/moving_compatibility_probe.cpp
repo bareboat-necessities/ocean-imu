@@ -51,7 +51,7 @@ static void moving_prediction(const float* fa,const float* fl,const float* qa,co
  for(int i=0;i<6;++i)for(int j=0;j<6;++j){lastF(i,j)=double(fa[i+6*j]);lastQ(i,j)=double(qa[i+6*j]);}
  for(int i=0;i<12;++i)for(int j=0;j<12;++j){lastF(i+6,j+6)=double(fl[i+12*j]);lastQ(i+6,j+6)=double(ql[i+12*j]);}
  for(int i=0;i<3;++i){lastF(i+18,i+18)=double(phi);for(int j=0;j<3;++j)lastQ(i+18,j+18)=double(qb[i+3*j]);}
- if(moving_model){prevP=moving_model->Pext.cast<double>();have_prev=true;}
+ if(have_prev){/* prevP is refreshed from pminus below */}
  if(lower_ready && lower_count<200){
   Eigen::Matrix<double,21,21> F=Eigen::Matrix<double,21,21>::Zero(),Q=Eigen::Matrix<double,21,21>::Zero();
   for(int i=0;i<6;++i)for(int j=0;j<6;++j){F(i,j)=double(fa[i+6*j]);Q(i,j)=double(qa[i+6*j]);}
@@ -80,9 +80,9 @@ static void moving_prediction(const float* fa,const float* fl,const float* qa,co
  for(auto& s:moving_slots)if(s.active)slot_prediction(s,fa,fl,phi);
 }
 static void moving_correction(const char* kind,const float* h,const float* s,const float* gain){
- if(kind[0]=='S' && moving_model && have_prev){
+ if(kind[0]=='S' && have_prev){
   Eigen::Matrix<double,3,21> H=Eigen::Matrix<double,3,21>::Zero();for(int d=0;d<3;++d)H(d,12+d)=1.;
-  Eigen::Matrix3d R;R.setZero();for(int i=0;i<3;++i)for(int j=0;j<3;++j)R(i,j)=double(s[i+3*j])-double((H*moving_model->Pext.cast<double>()*H.transpose())(i,j));
+  Eigen::Matrix3d R=.15*.15*Eigen::Matrix3d::Identity();
   auto Ric=[&](const Eigen::Matrix<double,21,21>& P){Eigen::Matrix3d V=H*P*H.transpose()+R;return P-P*H.transpose()*V.inverse()*H*P;};
   Eigen::Matrix<double,21,21> C=lastF*prevP*lastF.transpose()+lastQ;
   Eigen::Matrix<double,21,21> D=Ric(C)-(lastF*Ric(prevP)*lastF.transpose()+lastQ);D=(D+D.transpose())*.5;
