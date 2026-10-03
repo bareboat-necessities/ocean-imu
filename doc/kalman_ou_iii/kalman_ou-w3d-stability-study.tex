@@ -13,7 +13,7 @@
 This paper studies regional practical stability of the shipping OU--III marine inertial estimator without replacing its deployed prediction, measurement chronology, adaptive tuning, reset, bias handling, or scheduling by a surrogate filter. The proof uses one same physical and sensor history throughout construction, capture, magnetically informed H18, refinement/release, recurring A21, and regional practical stability. Marine motion, magnetic service, and a two-timescale delivered-IMU qualification define the source class. The local real-arithmetic theorem is retained on its qualified region. The outer proof is constructive but not yet complete: a causal interval HistoryCell propagator advances the literal frontend, tuner, mean and covariance from physical input coordinates only, with dependency-preserving normalization and FAST signed-primitive bounds. If an enclosure is unresolved, only physical/sensor history coordinates may be subdivided; generated quantities are never independently split. The remaining obligations include source-uniform finite-error release/recurrence and finite-precision closure. Absolute physical-error entry cannot be imposed during indefinite stillness. An exact moving sensor-compatible pair also defeats the proposed gravity-span/bias-variation separation step; its all-time applied magnetic-service admission remains open. End-to-end shipping stability is therefore not yet claimed.
 \end{abstract}
 
-\section{Proof scope}
+\section{Shipping model and theorem scope}
 The sole proof path is
 \[
 \boxed{\text{construction}\to\text{capture}\to H18\to
@@ -273,7 +273,7 @@ Release starts from the explicit goLive seed and advances the same mean and cova
 \[
 x_k=(\bar x_k,\Delta x_k)
 \]
-and the structured covariance cell is propagated in parallel. The objective is the actual finite-error recurrence
+and the structured covariance cell is propagated in parallel. The finite-error release analysis uses the recurrence
 \[
 (A_k,a_k,b_k,c_k,D_k),
 \]
@@ -370,14 +370,11 @@ off-parity covariance is identically zero in the exact branch.  The literal
 service criterion remains the two separate 2-by-2 \(+/-\) heading/BG
 Gramians; the parity transform is used only to factor propagation.
 
-Fresh 240-s and 1200-s shipping replays sweep every IMU-sample root over the
-final 20-s source phase cycle and retain a minimum service value above 7.02.
-They also expose why a point 20-s Poincare return is not the correct enclosure:
-the progress-preserving S scheduler phase does not return after one source
-period.  The invariant cell must carry scheduler phase as a causal coordinate.
-These are non-promoting finite diagnostics; the scheduler-phase-augmented
-outward interval inclusion and all-time information floor remain open. No
-shipping instability is claimed.
+The exact planar branch preserves the covariance parity split described above.
+Because the progress-preserving $S=0$ scheduler need not return to its initial
+phase after one physical source period, an all-time covariance/service proof
+must carry scheduler phase as part of its invariant cell.  Finite replay
+diagnostics are not used as theorem premises.
 
 \section{Proofs of the structural lemmas}
 This section records the mathematical arguments used by the machine
@@ -557,7 +554,7 @@ Regional practical stability & OPEN & all preceding conditional/open premises & 
 \end{tabular}
 \end{table*}
 
-\section{Current lemma chain}
+\section{Supporting lemmas}
 The labels below are part of the theorem statement.  \textbf{PROVED} means the implication is established under the hypotheses stated here. \textbf{CONDITIONAL} means the algebraic implication is proved but one or more source-uniform premises remain to be certified on the full reachable class. \textbf{OPEN PREMISE} is a required statement not yet proved.  None of these labels promotes an end-to-end theorem.
 
 \begin{lemma}[Shipping OU prediction identities --- PROVED]
@@ -751,35 +748,55 @@ The end-to-end theorem follows from the proved lemmas above once the conditional
 
 \input{kalman_ou-w3d-stability-proofs.tex-part}
 
-\section{Current theorem status}
-The following items are established or implemented as proof machinery:
+\section{Open theorem dependencies}
+The regional theorem is intentionally stated as OPEN until the following
+mathematical premises are discharged.  This list is part of the theorem
+specification rather than a research chronology.
 \begin{enumerate}
-\item the literal shipping model and single proof path;
-\item the MARINE MOTION, MAGNETIC SERVICE and two-timescale IMU source domain;
-\item the retained local real-arithmetic theorem;
-\item complete-word kernel/compatibility reduction and the same-history physical bridge used by the current path;
-\item compact construction/capture/release sets and recurring regular-word machinery;
-\item causal HistoryCell generation of frontend/tuner quantities from physical inputs;
-\item coupled accelerometer and quaternion normalization invariants;
-\item FAST signed-primitive treatment of guard and linked AW source functionals;
-\item interval mean/covariance/gain/reset chronology and physical-only subdivision on enclosure failure.
+\item \textbf{Finite H18 release.}  Prove source-uniform finite completion of
+the literal reference-refinement/release state machine and compactness of its
+terminal image.
+\item \textbf{Magnetic admission on the planar compatible pair.}  Prove the
+all-time applied MAGNETIC SERVICE information floor for the exact MOVING
+same-record pair.  Until this is established, the pair is not promoted from a
+source-compatible construction to a counterexample satisfying every tail
+premise.
+\item \textbf{Quiet compatible tube.}  Uniformize the proved quiet source
+projection bound in the actual covariance metric and establish boundedness of
+the complete shipping execution during arbitrary admitted STILL intervals.
+\item \textbf{Quotient/transverse A21 coercivity.}  Formulate the
+measurement-compatible gauge explicitly and prove a strict recurring action
+lower bound on its transverse complement rather than requiring contraction of
+the unobservable physical decomposition.
+\item \textbf{Linked finite-error supply and prefix retention.}  Bound the
+completed-square forcing, AW/guard source terms, endpoint terms and every
+required prefix on one reachable physical HistoryCell; independent extrema of
+gain, tuner, covariance and source histories are not admissible.
+\item \textbf{Nonlinear and finite-precision transfer.}  Bound the nonlinear
+remainder on the retained domain and transfer the real-arithmetic result to
+the shipping float32 execution.
+\item \textbf{Regime composition.}  Combine construction, H18 release,
+qualified MOVING transverse contraction and STILL compatible-tube boundedness
+without introducing a new estimator mode.
 \end{enumerate}
-
-The end-to-end theorem remains open. The decisive remaining tasks are:
-\begin{enumerate}
-\item complete the physical HistoryCell cover so the causal frontend/tuner and release stream remain source-uniformly enclosed;
-\item generate the full literal \((A_k,a_k,b_k,c_k,D_k)\) release recurrence on every verified leaf;
-\item certify recurring A21 finite-error contraction and every required prefix;
-\item prove quiet-compatible boundedness and settle the planar MOVING all-time admission question before claiming an absolute inner-entry inequality;
-\item close nonlinear remainder, float32 and regime-composition bounds.
-\end{enumerate}
-A failed interval leaf is not a physical instability result. Conversely, a converged admitted physical leaf that violates a required shipping condition is a genuine counterexample and must be reported.
+Failure of an interval enclosure is not a physical counterexample.  Conversely,
+an admitted converged physical history that violates a claimed premise must be
+reported as a counterexample to that premise.
 
 \section{Reproducibility}
 The theorem text is controlled by the literal shipping implementation and generated proof certificates in the repository. Numerical diagnostics are evidence only when their provenance identifies the shipping source revision, preserves the same-history dependency structure, and passes the corresponding fail-closed theorem gate. Research-history notes and superseded proof attempts are intentionally excluded from this article.
 
 \section{Conclusion}
-The current proof architecture is shipping-faithful and source-coupled. It retains the adaptive OU--III filter rather than proving stability of a simplified estimator. Local stability and the homogeneous structural ingredients are in place; the remaining work is a constructive source-uniform finite-error release/recurrence certificate, a physically valid compatibility/entry target, and finite-precision closure. Until those obligations are discharged, regional practical stability of the complete shipping estimator remains an open theorem.
+The shipping OU--III estimator is analyzed without replacing its state,
+adaptive tuning, covariance, correction chronology, bias projection or
+scheduler by a surrogate system.  The local real-arithmetic theorem and the
+structural lemmas listed above are proved under the stated qualifications.
+Absolute convergence of the physical attitude/accelerometer-bias decomposition
+is not an admissible global target because the measurement map has a genuine
+compatibility fibre.  The regional theorem is therefore formulated through
+bounded compatible motion and transverse contraction.  It remains open
+precisely on the dependencies listed above; no numerical diagnostic is used
+to fill an unproved implication.
 
 \balance
 \end{document}
