@@ -85,7 +85,7 @@ def run_native(eigen, duration=240.0):
         "accepted_information_used": True,
         "actual_innovation_covariance_used": True,
         "actual_gain_and_reset_chronology_used": True,
-        "service_window_coverage": "disjoint one-second sampled-root windows after BA activation plus 17 s",
+        "service_window_coverage": "disjoint one-second sampled-root windows after BA activation plus 17 s; additionally every IMU-sample root over the final 20-s source phase cycle",
         "reduced_covariance_diagnostic": "tail P_theta eigenvalue envelope plus BG and theta-BG block norms; finite carried feasibility only",
         "all_placed_service_windows_verified": False,
         "all_time_magnetic_service_verified": False,
