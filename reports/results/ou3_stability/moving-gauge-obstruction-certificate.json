@@ -1,0 +1,27 @@
+{
+  "classification": "B",
+  "role": "lossless obstruction to absolute MOVING physical tilt/BA separation; not shipping instability",
+  "period_s": 30,
+  "relative_roll_rad": 0.009999916667916645,
+  "relative_roll_deg": 0.572953020554149,
+  "rock_amplitude_rad": 0.017453292519943295,
+  "position_amplitude_m": 0.015,
+  "velocity_max_mps": 0.003141592653589793,
+  "acceleration_max_mps2": 0.0006579736267392904,
+  "jerk_max_mps3": 0.00013780567413466583,
+  "angular_rate_max_rad_s": 0.0036554090374405026,
+  "slow_accel_bias_norm_mps2": 0.09806527419173386,
+  "slow_accel_bias_rate_max_mps3": 0.00035846868953954484,
+  "delivered_accel_records_identical": true,
+  "delivered_gyro_records_identical": true,
+  "delivered_mag_records_identical": true,
+  "fast_components_zero": true,
+  "admitted_by_numeric_physical_envelopes": true,
+  "structures_preserved": [
+    "21-state shipping execution",
+    "MARINE MOVING spans",
+    "persistent SLOW+FAST split",
+    "MAGNETIC SERVICE chronology"
+  ],
+  "relaxations_introduced": []
+}
