@@ -10,6 +10,7 @@
 #include <sstream>
 #include <string>
 #include <stdexcept>
+#include <array>
 
 static bool moving_recording=false;
 static double moving_phi[21][4],moving_info[4][4];
@@ -19,10 +20,41 @@ struct MovingSlot { bool active=false; int root=-1; double phi[21][4]{}; double 
 static MovingSlot moving_slots[SLIDING];
 static double sliding_service_min=1e100,sliding_service_max=0; static int sliding_windows=0,sliding_mags_min=10000;
 static double pred_product=1.0,pred_eta_max=0.0; static int pred_count=0,s_due_count=0;
+static Eigen::Matrix<double,21,21> lowerP; static bool lower_ready=false; static double lower_product=1.0,lower_eta_max=0; static int lower_count=0;
+static const int PE[12]={1,4,6,8,9,11,12,14,15,17,18,20}, PO[9]={0,2,3,5,7,10,13,16,19};
+static void lower_correct(const char* kind){
+ if(!lower_ready)return;
+ Eigen::Matrix<double,21,21> J=Eigen::Matrix<double,21,21>::Zero();
+ if(kind[0]=='a'){
+  // Coupled Cauchy ceiling for attitude/AW/BA, f<=30, sigma_a>=0.2.
+  const double w[3]={30.,1.,1.}; const int off[3]={0,15,18};
+  for(int a=0;a<3;++a)for(int b=0;b<3;++b)for(int d=0;d<3;++d)J(off[a]+d,off[b]+d)+=w[a]*w[b]/.04;
+ } else if(kind[0]=='S'){
+  for(int d=0;d<3;++d)J(12+d,12+d)=1./(.15*.15);
+ } else if(kind[0]=='m'){
+  for(int d=0;d<3;++d)J(d,d)=75.*75./(.8*.8);
+ } else return;
+ Eigen::LDLT<Eigen::Matrix<double,21,21>> ld(lowerP);
+ if(ld.info()!=Eigen::Success)return;
+ Eigen::Matrix<double,21,21> A=ld.solve(Eigen::Matrix<double,21,21>::Identity())+J;
+ Eigen::LDLT<Eigen::Matrix<double,21,21>> la(A);
+ if(la.info()!=Eigen::Success)return;
+ lowerP=la.solve(Eigen::Matrix<double,21,21>::Identity()); lowerP=(lowerP+lowerP.transpose())*.5;
+}
 static void slot_prediction(MovingSlot& s,const float* fa,const float* fl,float phi){ double out[21][4]={};for(int i=0;i<6;++i)for(int j=0;j<4;++j)for(int k=0;k<6;++k)out[i][j]+=double(fa[i+6*k])*s.phi[k][j];for(int i=0;i<12;++i)for(int j=0;j<4;++j)for(int k=0;k<12;++k)out[i+6][j]+=double(fl[i+12*k])*s.phi[k+6][j];for(int i=18;i<21;++i)for(int j=0;j<4;++j)out[i][j]=double(phi)*s.phi[i][j];for(int i=0;i<21;++i)for(int j=0;j<4;++j)s.phi[i][j]=out[i][j]; }
 static void slot_correction(MovingSlot& s,const char* kind,const float* h,const float* sv,const float* gain){ double y[3][4]={};for(int i=0;i<3;++i)for(int j=0;j<4;++j)for(int k=0;k<21;++k)y[i][j]+=double(h[i+3*k])*s.phi[k][j]; if(kind[0]=='m'){double l[3][3]={},w[3][4]={};for(int i=0;i<3;++i)for(int j=0;j<=i;++j){double v=double(sv[i+3*j]);for(int k=0;k<j;++k)v-=l[i][k]*l[j][k];if(!std::isfinite(v)||(i==j&&v<=0))throw std::runtime_error("sliding innovation not SPD");l[i][j]=i==j?std::sqrt(v):v/l[j][j];}for(int i=0;i<3;++i)for(int j=0;j<4;++j){double v=y[i][j];for(int k=0;k<i;++k)v-=l[i][k]*w[k][j];w[i][j]=v/l[i][i];}for(int i=0;i<4;++i)for(int j=0;j<4;++j)for(int k=0;k<3;++k)s.info[i][j]+=w[k][i]*w[k][j];++s.mags;} for(int i=0;i<21;++i)for(int j=0;j<4;++j)for(int k=0;k<3;++k)s.phi[i][j]-=double(gain[i+21*k])*y[k][j]; }
 static void slot_reset(MovingSlot& s,const float* d){double g[3][3]={{1,-double(d[2])/2,double(d[1])/2},{double(d[2])/2,1,-double(d[0])/2},{-double(d[1])/2,double(d[0])/2,1}},o[3][4]={};for(int i=0;i<3;++i)for(int j=0;j<4;++j)for(int k=0;k<3;++k)o[i][j]+=g[i][k]*s.phi[k][j];for(int i=0;i<3;++i)for(int j=0;j<4;++j)s.phi[i][j]=o[i][j];}
 static void moving_prediction(const float* fa,const float* fl,const float* qa,const float* ql,float phi,const float* qb,const float* pminus){
+ if(lower_ready && lower_count<200){
+  Eigen::Matrix<double,21,21> F=Eigen::Matrix<double,21,21>::Zero(),Q=Eigen::Matrix<double,21,21>::Zero();
+  for(int i=0;i<6;++i)for(int j=0;j<6;++j){F(i,j)=double(fa[i+6*j]);Q(i,j)=double(qa[i+6*j]);}
+  for(int i=0;i<12;++i)for(int j=0;j<12;++j){F(i+6,j+6)=double(fl[i+12*j]);Q(i+6,j+6)=double(ql[i+12*j]);}
+  for(int i=0;i<3;++i){F(i+18,i+18)=double(phi);for(int j=0;j<3;++j)Q(i+18,j+18)=double(qb[i+3*j]);}
+  Eigen::Matrix<double,21,21> C=F*lowerP*F.transpose(); C=(C+C.transpose())*.5;
+  Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::Matrix<double,21,21>> es(Q,C);
+  if(es.info()==Eigen::Success){double eta=std::max(0.0,es.eigenvalues().maxCoeff());lower_eta_max=std::max(lower_eta_max,eta);lower_product/=1.+eta;++lower_count;}
+  lowerP=C+Q; lowerP=(lowerP+lowerP.transpose())*.5;
+ }
  if(pred_count<200){
   Eigen::Matrix<double,21,21> Q=Eigen::Matrix<double,21,21>::Zero(),Pm;
   for(int i=0;i<21;++i)for(int j=0;j<21;++j)Pm(i,j)=double(pminus[i+21*j]);
@@ -40,7 +72,7 @@ static void moving_prediction(const float* fa,const float* fl,const float* qa,co
  for(int i=0;i<21;++i)for(int j=0;j<4;++j)moving_phi[i][j]=out[i][j];
  for(auto& s:moving_slots)if(s.active)slot_prediction(s,fa,fl,phi);
 }
-static void moving_correction(const char* kind,const float* h,const float* s,const float* gain){ if(kind[0]=='S')++s_due_count;
+static void moving_correction(const char* kind,const float* h,const float* s,const float* gain){ if(kind[0]=='S')++s_due_count; lower_correct(kind);
  double y[3][4]={};for(int i=0;i<3;++i)for(int j=0;j<4;++j)for(int k=0;k<21;++k)y[i][j]+=double(h[i+3*k])*moving_phi[k][j];
  if(kind[0]=='m'){
   double l[3][3]={},w[3][4]={};
@@ -127,5 +159,5 @@ int main(int argc,char**argv){
    ++tail_samples;
    if(m.Pext(19,19)<=0)throw std::runtime_error("nonpositive BA covariance marginal");double V=pow(g*sn-m.get_acc_bias().y(),2)/m.Pext(19,19);minmetric=std::min(minmetric,V);maxmetric=std::max(maxmetric,V);}
  }
- const auto&m=f.raw().mekf();std::cout<<std::setprecision(17)<<"{\"service_min\":"<<service_min<<",\"service_max\":"<<service_max<<",\"service_windows\":"<<windows<<",\"service_mags_min\":"<<mag_min<<",\"duration\":"<<end<<",\"live_step\":"<<live<<",\"refined_step\":"<<refined<<",\"active_step\":"<<active<<",\"accepted_mag\":"<<accepted<<",\"max_abs_bay\":"<<bay<<",\"max_Pbay\":"<<pbay<<",\"max_q_xz\":"<<qxz<<",\"max_mag_residual\":"<<resmag<<",\"max_position\":"<<normlin<<",\"tail_V_lower_min\":"<<minmetric<<",\"tail_V_lower_max\":"<<maxmetric<<",\"tau\":"<<f.raw().getTauApplied()<<",\"sigma\":"<<f.raw().getSigmaApplied()<<",\"R_S\":"<<f.raw().getRSApplied()<<",\"period\":"<<f.raw().getPseudoUpdatePeriodSec()<<",\"ref\":["<<m.v2ref.x()<<","<<m.v2ref.y()<<","<<m.v2ref.z()<<"],\"tail_pth_min\":"<<tail_pth_min<<",\"tail_pth_max\":"<<tail_pth_max<<",\"tail_pbg_norm_max\":"<<tail_pbg_max<<",\"tail_pth_bg_norm_max\":"<<tail_cross_max<<",\"tail_cov_samples\":"<<tail_samples<<",\"sliding_service_min\":"<<sliding_service_min<<",\"sliding_service_max\":"<<sliding_service_max<<",\"sliding_service_windows\":"<<sliding_windows<<",\"sliding_service_mags_min\":"<<sliding_mags_min<<",\"cycle_P_max_abs_diff\":"<<(have_cycle?(m.Pext-Pcycle).cwiseAbs().maxCoeff():-1)<<",\"cycle_tau_abs_diff\":"<<std::abs(double(f.raw().getTauApplied())-cycle_tau)<<",\"cycle_sigma_abs_diff\":"<<std::abs(double(f.raw().getSigmaApplied())-cycle_sigma)<<",\"cycle_RS_abs_diff\":"<<std::abs(double(f.raw().getRSApplied())-cycle_rs)<<",\"cycle_period_abs_diff\":"<<std::abs(double(f.raw().getPseudoUpdatePeriodSec())-cycle_period)<<",\"parity_even_eig_max\":"<<parity_even_max<<",\"parity_odd_eig_max\":"<<parity_odd_max<<",\"parity_off_fro_max\":"<<parity_off_max<<",\"tail_fhat_max\":"<<tail_fhat_max<<",\"cycle_scheduler_elapsed_abs_diff\":"<<std::abs(double(m.pseudo_update_elapsed_s_)-cycle_elapsed)<<",\"prediction_first200_product\":"<<pred_product<<",\"prediction_first200_count\":"<<pred_count<<",\"S_due_count\":"<<s_due_count<<"}\n";
+ const auto&m=f.raw().mekf();std::cout<<std::setprecision(17)<<"{\"service_min\":"<<service_min<<",\"service_max\":"<<service_max<<",\"service_windows\":"<<windows<<",\"service_mags_min\":"<<mag_min<<",\"duration\":"<<end<<",\"live_step\":"<<live<<",\"refined_step\":"<<refined<<",\"active_step\":"<<active<<",\"accepted_mag\":"<<accepted<<",\"max_abs_bay\":"<<bay<<",\"max_Pbay\":"<<pbay<<",\"max_q_xz\":"<<qxz<<",\"max_mag_residual\":"<<resmag<<",\"max_position\":"<<normlin<<",\"tail_V_lower_min\":"<<minmetric<<",\"tail_V_lower_max\":"<<maxmetric<<",\"tau\":"<<f.raw().getTauApplied()<<",\"sigma\":"<<f.raw().getSigmaApplied()<<",\"R_S\":"<<f.raw().getRSApplied()<<",\"period\":"<<f.raw().getPseudoUpdatePeriodSec()<<",\"ref\":["<<m.v2ref.x()<<","<<m.v2ref.y()<<","<<m.v2ref.z()<<"],\"tail_pth_min\":"<<tail_pth_min<<",\"tail_pth_max\":"<<tail_pth_max<<",\"tail_pbg_norm_max\":"<<tail_pbg_max<<",\"tail_pth_bg_norm_max\":"<<tail_cross_max<<",\"tail_cov_samples\":"<<tail_samples<<",\"sliding_service_min\":"<<sliding_service_min<<",\"sliding_service_max\":"<<sliding_service_max<<",\"sliding_service_windows\":"<<sliding_windows<<",\"sliding_service_mags_min\":"<<sliding_mags_min<<",\"cycle_P_max_abs_diff\":"<<(have_cycle?(m.Pext-Pcycle).cwiseAbs().maxCoeff():-1)<<",\"cycle_tau_abs_diff\":"<<std::abs(double(f.raw().getTauApplied())-cycle_tau)<<",\"cycle_sigma_abs_diff\":"<<std::abs(double(f.raw().getSigmaApplied())-cycle_sigma)<<",\"cycle_RS_abs_diff\":"<<std::abs(double(f.raw().getRSApplied())-cycle_rs)<<",\"cycle_period_abs_diff\":"<<std::abs(double(f.raw().getPseudoUpdatePeriodSec())-cycle_period)<<",\"parity_even_eig_max\":"<<parity_even_max<<",\"parity_odd_eig_max\":"<<parity_odd_max<<",\"parity_off_fro_max\":"<<parity_off_max<<",\"tail_fhat_max\":"<<tail_fhat_max<<",\"cycle_scheduler_elapsed_abs_diff\":"<<std::abs(double(m.pseudo_update_elapsed_s_)-cycle_elapsed)<<",\"prediction_first200_product\":"<<pred_product<<",\"prediction_first200_count\":"<<pred_count<<",\"S_due_count\":"<<s_due_count<<",\"lower_factor_first200_product\":"<<lower_product<<",\"lower_factor_eta_max\":"<<lower_eta_max<<",\"lower_factor_count\":"<<lower_count<<"}\n";
 }
