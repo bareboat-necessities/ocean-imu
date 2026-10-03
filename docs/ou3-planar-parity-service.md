@@ -89,6 +89,16 @@ This is the same update implemented by the literal PCt/S/Joseph chronology; no i
 
 However, the desired service comparison is not a free monotonicity theorem. Stronger nonmag information shrinks target covariance but also changes the transported homogeneous heading/BG probes before the next magnetic sample. Therefore samplewise I_acc,literal <= I_acc,oracle alone does not yet imply an ordering of the later magnetic service Gramian. The remaining bridge must propagate the paired covariance+probe action (or prove an equivalent information-form variational inequality) through prediction, S, accel and reset on the same history. This prevents an invalid shortcut.
 
+## Paired covariance--probe correction identity
+
+The correct same-history comparison variable is now explicit. For any positive-noise linear correction with S=HPH'+R, K=PH'S^-1, Joseph covariance P+=(I-KH)P(I-KH)'+KRK', and homogeneous probe Phi+=(I-KH)Phi, the information-form identity P+^-1=P^-1+H'R^-1H and I-KH=P+P^-1 imply exactly
+
+    Phi+' P+^-1 Phi+ = Phi-' P^-1 Phi-.
+
+Thus literal accelerometer and S=0 corrections do not consume covariance-metric heading/BG probe storage when P and Phi are propagated together. This is stronger and cleaner than trying to order covariance or gains separately. The Schur identity above explains how nuisance enters the correction, but no additional nuisance-loss charge is needed for this paired storage.
+
+This does not by itself prove the next magnetic service summand: prediction adds process covariance and therefore can reduce Phi'P^-1Phi, the magnetic row rotates with the nominal attitude, and reset changes coordinates. Those are now the only comparison losses that must be bounded between magnetic events. The reset singular values are given below. The remaining prediction loss should be evaluated directly from the literal Q/F factors on each 5-ms step, preserving the two parity blocks and scheduler phase.
+
 ## Attitude reset metric
 
 The shipping first-order attitude covariance/probe reset uses G=I-(1/2)[dtheta]x on the attitude block. Because [dtheta]x is real skew-symmetric, G'G=I+(1/4)(||dtheta||^2 I-dtheta dtheta'). Its singular values are exactly 1 and sqrt(1+||dtheta||^2/4) (twice). Thus the reset is invertible, has sigma_min=1, and its inverse has sigma_min=1/sqrt(1+||dtheta||^2/4). This closes the coordinate-conditioning formula needed by the comparison; a uniform numerical dtheta bound must still come from the same-history correction cell rather than an independent clamp.
