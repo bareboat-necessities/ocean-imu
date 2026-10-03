@@ -1,0 +1,26 @@
+name: ou3-moving-audit-snapshot
+on:
+  push:
+    branches: [proof/ou3-moving-compatibility-audit]
+    paths: [.github/workflows/ou3-moving-audit-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 3ff766eb0f71cd5ce04ba93252288097574ace90
+      - name: Archive exact audited source
+        run: |
+          test "$(git rev-parse HEAD)" = 3ff766eb0f71cd5ce04ba93252288097574ace90
+          mkdir -p /tmp/ou3-moving-source
+          git archive --format=tar.gz HEAD > /tmp/ou3-moving-source/source.tar.gz
+          git rev-parse HEAD > /tmp/ou3-moving-source/HEAD.txt
+          sha256sum /tmp/ou3-moving-source/source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ou3-moving-pinned-source
+          path: /tmp/ou3-moving-source
+          retention-days: 1
