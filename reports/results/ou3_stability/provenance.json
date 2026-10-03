@@ -452,7 +452,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "47fac44af95f9bd9f5a5252b5bc265f2d775a79b"
+      "git_blob_sha": "6bf7eb979395a62325a2396845ac9b1f6c8ac711"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
@@ -660,7 +660,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "9e6f8b5c838962a0f4a58782f56b99c979ab844d"
+      "git_blob_sha": "0f8958812803df8919651b281886e9d35fe1409e"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -681,5 +681,6 @@
   "information_ratio_continuation_base_main_commit": "ee0d46ddc08396b86579e12f2d873ae42fd5106b",
   "moving_compatibility_continuation_base_main_commit": "3ff766eb0f71cd5ce04ba93252288097574ace90",
   "moving_compatibility_reconciled_main_commit": "7bc48e9dfba67d3d903c79914cdac7a8e28aa0c5",
-  "planar_parity_service": "Analytical real-arithmetic 12+9 covariance parity factorization for the exact planar MOVING record. Literal service remains two separate 2x2 +/- heading/BG Gramians. Fresh 240/1200-s diagnostics sweep every IMU-sample root over the final 20-s source phase cycle; minimum tail service remains >7. A 20-s point covariance return is invalid because the progress-preserving S scheduler phase does not return. The scheduler-phase-augmented interval cell and all-time information floor remain OPEN."
+  "planar_parity_service": "Analytical real-arithmetic 12+9 covariance parity factorization for the exact planar MOVING record. Literal service remains two separate 2x2 +/- heading/BG Gramians. Fresh 240/1200-s diagnostics sweep every IMU-sample root over the final 20-s source phase cycle; minimum tail service remains >7. A 20-s point covariance return is invalid because the progress-preserving S scheduler phase does not return. The scheduler-phase-augmented interval cell and all-time information floor remain OPEN.",
+  "paired_prediction_loss": "Exact identity for P-=FPF'+Q and Phi-=FPhi: paired storage loss is Phi-'[C^-1-(C+Q)^-1]Phi-, C=FPF'. Corrections are exactly storage-invariant. A useful source-uniform one-second bound now requires a planar same-history covariance lower cell; the generic A21 root floor is orders too weak and is not promoted."
 }
