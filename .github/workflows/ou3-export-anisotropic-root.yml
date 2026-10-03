@@ -1,0 +1,13 @@
+name: ou3-export-anisotropic-root
+on:
+  push:
+    branches: [proof/ou3-moving-compatibility-audit]
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install numpy
+      - run: python3 -m tools.stability.ou3_theorem.export_planar_root_lower
