@@ -1,0 +1,15 @@
+name: ou3-planar-tube-seed
+on:
+  push:
+    branches: [proof/ou3-moving-compatibility-audit]
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: sudo apt-get update && sudo apt-get install -y libeigen3-dev g++
+      - run: |
+          python3 -m tools.stability.ou3_theorem.moving_compatibility_diagnostic --eigen /usr/include/eigen3 --duration 1200 --output /tmp/tube.json
+          cat /tmp/tube.json
