@@ -79,6 +79,10 @@ at every finite prefix. This proves the actual accepted cadence on the planar
 real-arithmetic execution once the reference/refinement stage has completed.
 It does not by itself prove the required information floor.
 
+## Scheduler coordinate is structurally invariant
+
+The scheduler component of the augmented cell is not itself open: the literal retarget function preserves elapsed time when it is below the new period and otherwise parks it immediately below the new period; periodic_update_due then returns an elapsed value in [0,T_S). Hence the causal set {(elapsed,T_S): T_S>0, 0<=elapsed<T_S} is forward invariant under every shipping retarget/due operation. What remains open is covariance/service enclosure uniformly over that scheduler coordinate, not boundedness of the scheduler state.
+
 ## Exact-rational oracle margin
 
 A deliberately more-informative two-state attitude/BG feasibility oracle has now been solved exactly over rational arithmetic. It uses dt=1/200 s, direct isotropic attitude information H_a=30 with R_a=1/25 at every IMU sample, magnetic H_m=75 with R_m=16/25 every eight samples, P_theta,0=1/2000 and P_bg,0=11/10000000, and the literal gyro/process densities used by the replay. Over one second the exact rational Riccati map satisfies P_0-P_1 positive definite, so this oracle cell is self-containing by Riccati monotonicity. The accumulated magnetic heading/BG information satisfies I_mag-I_2 positive definite exactly; det(I_mag-I_2) is about 0.98970433. Thus the magnetic geometry has strict margin even after intentionally strong direct attitude conditioning.
