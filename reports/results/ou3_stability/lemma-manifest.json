@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "authoritative_manuscript": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-  "proof_appendix": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex",
+  "proof_appendix": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
   "status_source": "reports/results/ou3_stability/theorem-status.json",
   "provenance_source": "reports/results/ou3_stability/provenance.json",
   "status_vocabulary": [

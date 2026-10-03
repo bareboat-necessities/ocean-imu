@@ -836,7 +836,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "sha256": "2001e8dd0e5e18a73741f983471a3d2b1c53be8c98827f8418922102f65d5ebd"
+      "sha256": "4a6e4a8f00ce04a409f42c57342d865b21e9566b82bb180f5187307ae787c95c"
     },
     {
       "kind": "file",
@@ -2204,7 +2204,7 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "ee56ca12ed6d228c3a0e7e4e29a7d5730ab1a1fd3417ae7bed617c2ab84b4f25",
+  "results_fingerprint": "6428502495cca7588a8428fbc9474b9c0a84f42705e36e54885fa1c610a0f7b4",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
