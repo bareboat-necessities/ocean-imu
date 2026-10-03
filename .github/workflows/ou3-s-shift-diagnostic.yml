@@ -10,4 +10,4 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: sudo apt-get update && sudo apt-get install -y libeigen3-dev g++
-      - run: python3 -m tools.stability.ou3_theorem.moving_compatibility_diagnostic --eigen /usr/include/eigen3 --duration 1200 --output /tmp/s.json\n          cat /tmp/s.json
+      - run: |\n          python3 -m tools.stability.ou3_theorem.moving_compatibility_diagnostic --eigen /usr/include/eigen3 --duration 1200 --output /tmp/s.json\n          cat /tmp/s.json
