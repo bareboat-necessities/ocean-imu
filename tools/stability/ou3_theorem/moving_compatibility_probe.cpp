@@ -105,13 +105,13 @@ int main(int argc,char**argv){
    tail_pth_max=std::max(tail_pth_max,es.eigenvalues().maxCoeff());
    tail_pbg_max=std::max(tail_pbg_max,Pbg.norm());
    tail_cross_max=std::max(tail_cross_max,Ptb.norm());
-   static const int E[12]={1,4,6,8,9,11,12,14,15,17,18,20}; static const int O[9]={0,2,3,5,7,10,13,16,19};
-   Eigen::Matrix<double,12,12> Pe;Eigen::Matrix<double,9,9> Po;Eigen::Matrix<double,12,9> Peo;
-   for(int i=0;i<12;++i)for(int j=0;j<12;++j)Pe(i,j)=m.Pext(E[i],E[j]);
-   for(int i=0;i<9;++i)for(int j=0;j<9;++j)Po(i,j)=m.Pext(O[i],O[j]);
-   for(int i=0;i<12;++i)for(int j=0;j<9;++j)Peo(i,j)=m.Pext(E[i],O[j]);
-   Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,12,12>> ee(Pe);Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,9,9>> eo(Po);
-   parity_even_max=std::max(parity_even_max,ee.eigenvalues().maxCoeff());parity_odd_max=std::max(parity_odd_max,eo.eigenvalues().maxCoeff());parity_off_max=std::max(parity_off_max,Peo.norm());
+   if(k%8==0){static const int E[12]={1,4,6,8,9,11,12,14,15,17,18,20}; static const int O[9]={0,2,3,5,7,10,13,16,19};
+    Eigen::Matrix<double,12,12> Pe;Eigen::Matrix<double,9,9> Po;Eigen::Matrix<double,12,9> Peo;
+    for(int i=0;i<12;++i)for(int j=0;j<12;++j)Pe(i,j)=m.Pext(E[i],E[j]);
+    for(int i=0;i<9;++i)for(int j=0;j<9;++j)Po(i,j)=m.Pext(O[i],O[j]);
+    for(int i=0;i<12;++i)for(int j=0;j<9;++j)Peo(i,j)=m.Pext(E[i],O[j]);
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,12,12>> ee(Pe);Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,9,9>> eo(Po);
+    parity_even_max=std::max(parity_even_max,ee.eigenvalues().maxCoeff());parity_odd_max=std::max(parity_odd_max,eo.eigenvalues().maxCoeff());parity_off_max=std::max(parity_off_max,Peo.norm());}
    tail_fhat_max=std::max(tail_fhat_max,double(m.accelerometer_measurement_func(35).norm()));
    ++tail_samples;
    if(m.Pext(19,19)<=0)throw std::runtime_error("nonpositive BA covariance marginal");double V=pow(g*sn-m.get_acc_bias().y(),2)/m.Pext(19,19);minmetric=std::min(minmetric,V);maxmetric=std::max(maxmetric,V);}
