@@ -394,6 +394,27 @@
       "open_dependencies": []
     },
     {
+      "id": "compatibility_quotient",
+      "kind": "lemma",
+      "latex_title": "Covariance-metric compatibility quotient --- PROVED algebraically",
+      "status": "PROVED",
+      "assumptions": [
+        "SPD shipping root covariance",
+        "nonzero literal one-dimensional compatibility line when present"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/compatibility_quotient.py",
+        "tools/stability/ou3_theorem/kernel_restricted_action.py",
+        "tools/stability/ou3_theorem/compatibility_line_interval.py"
+      ],
+      "certificates": [],
+      "open_dependencies": [
+        "source-uniform finite gauge radius",
+        "same-HistoryCell quotient completed-square supply",
+        "every-prefix tube retention"
+      ]
+    },
+    {
       "id": "regional_theorem",
       "kind": "theorem",
       "latex_title": "Regional practical stability of shipping OU--III --- OPEN",
