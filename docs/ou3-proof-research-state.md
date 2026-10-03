@@ -100,11 +100,12 @@ still be connected through the actual startup/refinement/release state machine.
 * **CI/evidence only:** main proof run 37089011773 was cancelled in the long
   linked prospective-supply step after earlier diagnostic steps succeeded.
   The periodic-witness job passed. This is not a theorem failure or success.
-* **E, baseline provenance:** a clean extraction of main 3ff766e fails
-  build_evidence with two existing source bindings (ag_readout_source.cpp and
-  ag_readout_source_diagnostic.py) and five existing construction/signed/same-cell
-  driver fingerprints. The new branch preserves these stale bindings rather than
-  re-signing old numerical evidence. They need separately reproduced evidence.
+* **E, resolved provenance/LaTeX failure:** main 3ff766e had seven stale
+  source/driver bindings and compiled an input-only proof fragment standalone.
+  Main 7bc48e9 (PR #648) regenerated the five affected reports without changing
+  their numerical fields, repaired their provenance, and renamed the appendix
+  to .tex-part. This branch retains those corrections; no old numerical evidence
+  is re-signed to conceal a source mismatch.
 * **Local full build:** `make all` stops in tests/ahrs compiling ahrs-qmekf-sim.cpp
   with `fatal error: Eigen/Dense: No such file or directory` at the default
   /usr/include/eigen3 fallback. The focused native probe was built using the
