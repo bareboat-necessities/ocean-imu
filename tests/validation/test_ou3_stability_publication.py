@@ -12,6 +12,12 @@ class StabilityPublicationTests(unittest.TestCase):
         cls.study = "\n".join(reachable_sources(STUDY).values())
         cls.flat = re.sub(r"\s+", " ", cls.study)
 
+    def test_used_theorem_environments_are_declared(self):
+        declared = set(re.findall(r"\\newtheorem\{([^}]+)\}", self.study))
+        for name in ("lemma", "theorem", "proposition", "remark", "corollary"):
+            if r"\begin{" + name + "}" in self.study:
+                self.assertIn(name, declared, f"undefined LaTeX theorem environment: {name}")
+
     def test_simultaneous_physical_contracts_are_defined_in_the_study(self):
         self.assertIn(r"h\in{\cal M}_{\rm marine}\cap{\cal B}_{\rm IMU}\cap{\cal S}_{\rm mag}", self.flat)
         self.assertIn("The same \\(h\\) determines physical motion, delivered sensors", self.flat)
@@ -30,7 +36,7 @@ class StabilityPublicationTests(unittest.TestCase):
         self.assertIn("Generated filter quantities are functions of this history, not independent theorem inputs.",
                       self.flat)
         self.assertIn("advances the same mean and covariance history through the literal operation stream", self.flat)
-        self.assertIn("generated quantities are never independently split", self.flat)
+        self.assertIn("No generated quantity is selected independently.", self.flat)
         for state in ("frontend and tuner state", "covariance", "accepted events", "scheduler state",
                       "estimator mean"):
             self.assertIn(state, self.flat)
@@ -50,7 +56,7 @@ class StabilityPublicationTests(unittest.TestCase):
         self.assertIn("None of these labels promotes an end-to-end theorem.", self.flat)
         self.assertIn("--- OPEN]", self.flat)
         self.assertIn("regional practical stability is not yet claimed", self.flat)
-        self.assertIn("End-to-end shipping stability is therefore not yet claimed.", self.flat)
+        self.assertIn("The regional theorem is intentionally stated as OPEN", self.flat)
         self.assertIn("Numerical diagnostics are evidence only when their provenance identifies the shipping source",
                       self.flat)
 

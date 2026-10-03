@@ -73,6 +73,7 @@ class MovingQuietCompatibilityTests(unittest.TestCase):
                 self.assertEqual(c['shipping_header_sha256'], hashlib.sha256(HEADER.read_bytes()).hexdigest())
                 self.assertEqual(c['instrumented_header_sha256'],
                                  hashlib.sha256(instrument(HEADER.read_text()).encode()).hexdigest())
+                self.assertTrue(c['compiler'])
                 n = c['native']
                 self.assertEqual(n['duration'], seconds)
                 self.assertEqual(n['tail_cov_samples'], (seconds - 200) * 200)

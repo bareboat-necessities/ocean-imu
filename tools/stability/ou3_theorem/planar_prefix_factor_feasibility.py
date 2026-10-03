@@ -10,7 +10,6 @@ import numpy as np, math
 from .planar_anisotropic_factors import full_root_lower
 from .planar_information_ceilings import acc_ceiling,S_ceiling,mag_ceiling
 from .planar_parity import EVEN,ODD
-from .lower_factor_transport import corrected_lower
 
 def embed(Je,Jo):
  J=np.zeros((21,21));J[np.ix_(EVEN,EVEN)]=Je;J[np.ix_(ODD,ODD)]=Jo;return J

@@ -9,7 +9,6 @@ eigenvalues can then be evaluated without replacing L by min eig(L) I.
 from __future__ import annotations
 import numpy as np
 from .lin_matrix_certificate import action_matrix
-from .lin_path_certificate import inverse
 from .root_covariance_certificate import process_floors
 from .planar_parity import EVEN,ODD
 

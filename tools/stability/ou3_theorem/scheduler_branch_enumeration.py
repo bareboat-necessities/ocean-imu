@@ -22,7 +22,7 @@ def representatives(period,dt,steps):
 
 def due_word(elapsed,period,dt,steps):
     out=[]
-    for k in range(steps):
+    for _ in range(steps):
         total=elapsed+dt
         if total < period:
             elapsed=total;out.append(False)

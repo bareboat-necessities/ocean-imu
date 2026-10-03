@@ -152,7 +152,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "2096292700d526cf48a9e43d6b82bf33f6b26fad"
+      "git_blob_sha": "5353997e6e9f3cc313e46f053691a06f0db8ef08"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -644,15 +644,15 @@
     },
     {
       "path": "tools/stability/ou3_theorem/moving_compatibility_diagnostic.py",
-      "git_blob_sha": "6e19b3037a88492a7569a1c6f5b9230f76e0f512"
+      "git_blob_sha": "e923de84d8058478eb7086003e7ed80557dde954"
     },
     {
       "path": "tools/stability/ou3_theorem/moving_compatibility_probe.cpp",
-      "git_blob_sha": "3a623fc712f1e47644c40b1fea7fe665e882e005"
+      "git_blob_sha": "c547fae58bdd8752875cc3dbde492517e0ad42f1"
     },
     {
       "path": "tests/validation/test_ou3_moving_quiet_compatibility.py",
-      "git_blob_sha": "1ccf13d47ef4b03b9b3e2979c2b681ce108b26b5"
+      "git_blob_sha": "c810b0d252164d5b275de5dbb4e139e732d368d4"
     },
     {
       "path": "docs/ou3-moving-quiet-compatibility.md",
@@ -660,7 +660,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "bce7b17f2dfe79882bc1d8eb8c84dcc5dacb5c21"
+      "git_blob_sha": "2c91eddaa8a0cc0b15fd0a07b479e65a6f1060e3"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -668,7 +668,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "3158f54083fe31b58da81054759d78a07ffe0a53"
+      "git_blob_sha": "12d84edc23962fec5adb796fed98f31114d07ca3"
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
@@ -682,6 +682,6 @@
   "moving_compatibility_continuation_base_main_commit": "3ff766eb0f71cd5ce04ba93252288097574ace90",
   "moving_compatibility_reconciled_main_commit": "7bc48e9dfba67d3d903c79914cdac7a8e28aa0c5",
   "planar_parity_service": "Analytical real-arithmetic 12+9 covariance parity factorization for the exact planar MOVING record. Literal service remains two separate 2x2 +/- heading/BG Gramians. Fresh 240/1200-s diagnostics sweep every IMU-sample root over the final 20-s source phase cycle; minimum tail service remains >7. A 20-s point covariance return is invalid because the progress-preserving S scheduler phase does not return. The scheduler-phase-augmented interval cell and all-time information floor remain OPEN.",
-  "paired_prediction_loss": "Exact identity for P-=FPF'+Q and Phi-=FPhi: paired storage loss is Phi-'[C^-1-(C+Q)^-1]Phi-, C=FPF'. Corrections are exactly storage-invariant. A useful source-uniform one-second bound now requires a planar same-history covariance lower cell; the generic A21 root floor is orders too weak and is not promoted.",
+  "paired_prediction_loss": "Exact identity for P-=FPF'+Q and Phi-=FPhi: paired storage loss is Phi-'[C^-1-(C+Q)^-1]Phi-, C=FPF'. Each Kalman/Joseph correction additionally subtracts (H Phi)'(HPH'+R)^-1(H Phi); corrections are not storage-invariant. A source-uniform magnetic-service comparison must retain every nonmagnetic correction action and the same-history lower covariance cell. The generic A21 root floor is orders too weak and is not promoted.",
   "planar_anisotropic_factor_transport": "Complete 12+9 planar factors are obtained by exact permutation of the existing joint-root Loewner certificate without scalarization. Prediction eta uses lambda_max(Q,FLL'F'). Corrections transport a lower factor by ((LL')^-1+Jbar)^-1 when literal information is bounded by Jbar. Every-prefix factor sequence remains OPEN pending literal parity-block correction information ceilings and reset transport."
 }

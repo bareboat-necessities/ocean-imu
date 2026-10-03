@@ -14,12 +14,13 @@ def main():
   payload=propagate_history_cell(root,60.,.005)
  except Exception as e:
   traceback.print_exc()
-  tt=e.time if isinstance(e,EnclosureFailure) else None
+  expected=isinstance(e,EnclosureFailure)
+  tt=e.time if expected else None
   print(json.dumps({"verified":False,"stage":getattr(e,"stage","history_leaf"),
                     "first_failure_time":tt,
                     "first_failure_sample":None if tt is None else int(round(tt/.005)),
-                    "reason":str(e),"classification":"D_ENCLOSURE_FAILURE"},indent=2))
-  return 2
+                    "reason":str(e),"classification":"D_ENCLOSURE_FAILURE" if expected else "E_IMPLEMENTATION_FAILURE"},indent=2))
+  return 2 if expected else 1
  out=generate_interval_stream(payload,.005)
  slim={k:v for k,v in out.items() if k not in ("P","events","mean_mid","mean_rad")}
  slim["event_count"]=len(out.get("events",()))
