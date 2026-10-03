@@ -134,6 +134,10 @@ The generic-root per-step product route is retired. A new phase-indexed Loewner 
 
 For fixed tail T_S=0.1363605111837387 s and dt=0.005 s, periodic_update_due partitions the initial elapsed interval [0,T_S) into finitely many due-word cells. Over one 20-s/4000-sample source word, exact threshold enumeration gives 4002 threshold points, 4001 open cells, and 4001 distinct S=0 due words. Thus scheduler-uniform covariance-tube containment reduces to 4001 deterministic literal Riccati branches plus one-sided/float32-tolerance treatment of the finite threshold set; no continuum interval dependency is necessary for the scheduler event pattern. The planar periodic tube framework now uses phase-indexed Loewner lower/upper faces and exact monotonicity of prediction/Riccati correction. Fresh 1200-s seed scales remain lambda_min(P_E)>=1.3500027935e-8 and lambda_min(P_O)>=1.3500695110e-8. Full branch containment has not yet been executed/certified, so periodic_lower_tube_verified remains false.
 
+## Periodic-tube branch execution status
+
+The scheduler continuum is now exactly finite: 4001 open due-word cells over a 20-s word at the carried tail T_S, plus 4002 threshold points requiring one-sided tolerance treatment. The Loewner tube map and phase-profile validator are implemented. The current replay artifact stores extrema and endpoint drift, but not the phase-indexed covariance centers P_E/P_O needed to define and test tube faces. This is an evidence-shape limitation, not a mathematical obstruction. The next native export must record the settled 4000-sample parity covariance profile for two consecutive source periods, after which all 4001 deterministic branches can be propagated against inflated spectral radii. Tail eigenvalue minima alone are not promoted to containment because they do not specify Loewner tube centers.
+
 ## Current limiter
 
 The decisive next quantity is an **all-time, every-window applied magnetic
