@@ -3,7 +3,7 @@
 \ifPDFTeX\usepackage[utf8]{inputenc}\usepackage[T1]{fontenc}\fi
 \usepackage{amsmath,amssymb,amsthm,bm,newtxtext,newtxmath,booktabs,siunitx,balance}
 \usepackage[breaklinks=true,hidelinks]{hyperref}
-\newtheorem{lemma}{Lemma}\newtheorem{theorem}{Theorem}\newtheorem{remark}{Remark}
+\newtheorem{lemma}{Lemma}\newtheorem{theorem}{Theorem}\newtheorem{proposition}{Proposition}\newtheorem{remark}{Remark}
 \newcommand{\R}{\mathbb{R}}\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 \title{Regional Practical Stability Study of the Shipping OU--III Marine Inertial Estimator}
 \author{Mikhail S. Grushinskiy}
@@ -378,6 +378,149 @@ period.  The invariant cell must carry scheduler phase as a causal coordinate.
 These are non-promoting finite diagnostics; the scheduler-phase-augmented
 outward interval inclusion and all-time information floor remain open. No
 shipping instability is claimed.
+
+\section{Proofs of the structural lemmas}
+This section records the mathematical arguments used by the machine
+certificates.  The certificates check the literal implementation and numerical
+side conditions; they do not replace the proofs.
+
+\begin{proposition}[OU prediction identities]
+For the scalar OU equation $\dot a_w=-a_w/\tau+\xi$, variation of constants
+gives $a_w(t+h)=e^{-h/\tau}a_w(t)+\int_0^h e^{-(h-s)/\tau}\xi(t+s)\,ds$.
+Integrating successively through $\dot v=a_w$, $\dot p=v$ and $\dot S=p$
+gives the shipping coefficients
+\[
+ \phi=e^{-x},\quad
+ \phi_{pa}=\tau^2(x+\operatorname{expm1}(-x)),\quad
+ \phi_{Sa}=\tau^3\!\left(\tfrac12x^2-x-\operatorname{expm1}(-x)\right),
+ \qquad x=h/\tau .
+\]
+Their Taylor series at $x=0$ are exactly the implemented small-$x$ branches.
+The discrete process covariance is an integral
+$\int_0^h\Phi(s)LQ_cL^T\Phi(s)^Tds$ and is therefore positive semidefinite.
+\end{proposition}
+
+\begin{proposition}[Joseph correction/storage identity]
+Let $S=HP^-H^T+R\succ0$, $K=P^-H^TS^{-1}$ and $A=I-KH$.
+The Joseph update is $P^+=AP^-A^T+KRK^T$.  Expanding and using
+$KS=P^-H^T$ gives $P^+=P^--P^-H^TS^{-1}HP^-$.  Woodbury therefore yields
+\[
+ (P^+)^{-1}=(P^-)^{-1}+H^TR^{-1}H .
+\]
+For a homogeneous perturbation $\xi^+=A\xi^-$, the correction loss is the
+nonnegative quadratic measurement action.  In the paired covariance--probe
+form used later,
+\[
+ (\Phi^+)^T(P^+)^{-1}\Phi^+=(\Phi^-)^T(P^-)^{-1}\Phi^- .
+\]
+Thus the correction cannot be represented by an independently chosen gain or
+covariance.
+\end{proposition}
+
+\begin{proposition}[Attitude reset]
+The shipping reset acts linearly on error coordinates by a nonsingular block
+matrix $G$ and applies the congruence $P\mapsto GPG^T$ to covariance.
+Consequently
+\[
+ (G\xi)^T(GPG^T)^{-1}(G\xi)=\xi^TP^{-1}\xi .
+\]
+For the implemented attitude block $G_\theta=I-\frac12[d\theta]_\times$,
+\[
+G_\theta^TG_\theta
+=I+\tfrac14(\norm{d\theta}^2I-d\theta d\theta^T),
+\]
+so its singular values are $1$ and
+$\sqrt{1+\norm{d\theta}^2/4}$ (twice).  This proves invertibility and the
+reset-conditioning formula used by the interval proof.
+\end{proposition}
+
+\begin{proposition}[Held-BA triangular structure]
+During an H18 held-BA segment, BA prediction and correction are disabled.
+Hence the BA increment is constant while the remaining state may depend
+affinely on it.  In coordinates $(x_{\rm rest},b_a)$ the homogeneous map is
+therefore
+\[
+ \Psi=\begin{bmatrix}A&B\\0&I_3\end{bmatrix}.
+\]
+The identity BA block precludes strict contraction of the complete H18 state
+in a fixed quadratic metric.  Treating held BA as a bounded input and H18 as
+a finite bridge is therefore necessary and sufficient for the later release
+argument.
+\end{proposition}
+
+\begin{proposition}[No-heading-service obstruction]
+With no informative heading correction, the axial linearized equations are
+$\dot\theta_z=-b_{g,z}$ and $\dot b_{g,z}=0$.  Over duration $T$ their
+transition is, up to the sign convention on $b_g$,
+\[
+ \begin{bmatrix}1&T\\0&1\end{bmatrix}.
+\]
+Its powers contain a term growing linearly in elapsed time whenever the axial
+gyro-bias error is nonzero.  Thus recurring heading information is necessary
+for the stated tail theorem.
+\end{proposition}
+
+\begin{proposition}[Active BA uniqueness]
+At an active accelerometer correction the BA Jacobian is $J_{ba}=I_3$.
+After all other zero-action equations fix a candidate attitude/AW amplitude,
+the homogeneous accelerometer equation has the form $r_0+\delta b_a=0$ and
+therefore has the unique solution $\delta b_a=-r_0$.  BA cannot contribute a
+second independent kernel direction.
+\end{proposition}
+
+\begin{proposition}[Specific-force floor]
+The raw delivered specific force is the sum of gravity, physical translational
+acceleration and delivered accelerometer error.  The reverse triangle
+inequality gives
+\[
+ \norm{f_{\rm raw}}
+ \ge g-A_{\max}-B_{a,s}-B_{a,f}.
+\]
+With Table~\ref{tab:assumptions}, the right-hand side is strictly positive.
+This is a coupled physical norm statement and is not lost merely because an
+axis-aligned interval hull contains the origin.
+\end{proposition}
+
+\begin{proposition}[Mahony normalization]
+Quaternion multiplication by a pure vector is orthogonal to the original
+quaternion and has norm $\norm q\,\norm{\omega_c}$.  Hence for the Euler step
+$q^+=q+\frac h2q\otimes(0,\omega_c)$ the cross term vanishes and
+\[
+ \norm{q^+}^2=\norm q^2\left(1+\frac{h^2}{4}\norm{\omega_c}^2\right).
+\]
+Therefore normalization is well defined for every nonzero input quaternion.
+\end{proposition}
+
+\begin{proposition}[Completed-square finite-error bound]
+For $e_N=Me_0+b$,
+\[
+V_N=e_0^TM^TJ_NMe_0+2e_0^TM^TJ_Nb+b^TJ_Nb .
+\]
+Subtract $(1-\gamma)e_0^TJ_0e_0$ and put
+$G_\gamma=J_0-M^TJ_NM-\gamma J_0$, $z=M^TJ_Nb$.
+If $G_\gamma\succ0$, completing the square gives
+\[
+2e_0^Tz-e_0^TG_\gamma e_0
+\le z^TG_\gamma^{-1}z ,
+\]
+and hence
+\[
+V_N\le(1-\gamma)V_0+
+b^TJ_Nb+z^TG_\gamma^{-1}z .
+\]
+This is an algebraic implication only; source-uniform bounds on its
+same-history coefficients remain separate obligations.
+\end{proposition}
+
+\paragraph{Longer certified proofs.}
+The complete-word LIN/$S$ null reduction, regular-root covariance lower
+comparison, FAST Abel lemmas, backward AW reader, physical HistoryCell
+subdivision, quiet compatibility fibre, persistent quiet source charge and
+the exact MOVING compatible-pair construction require longer chronological
+or interval arguments.  Their complete derivations are collected in
+Appendix~\ref{sec:proofappendix}; each appendix proof names its machine proof
+module and certificate.  A lemma is labelled PROVED only when the corresponding
+manifest entry has no open dependency.
 
 \section{Current lemma chain}
 The labels below are part of the theorem statement.  \textbf{PROVED} means the implication is established under the hypotheses stated here. \textbf{CONDITIONAL} means the algebraic implication is proved but one or more source-uniform premises remain to be certified on the full reachable class. \textbf{OPEN PREMISE} is a required statement not yet proved.  None of these labels promotes an end-to-end theorem.
