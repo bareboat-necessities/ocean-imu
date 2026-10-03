@@ -150,7 +150,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "dc3ec715873520abd480a0d7be33c1dfc9bc8aac"
+      "git_blob_sha": "bd32678ac44316d13b7e02aee1f6d70fa6378ac1"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -342,11 +342,11 @@
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
-      "git_blob_sha": "4f0e9b941acbd2121c1f3072db853e5dee9b4bdf"
+      "git_blob_sha": "278bb8afde227b812618c56d6e11fbe07c6fa0e0"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py",
-      "git_blob_sha": "f08452ea50760cc455e2b153b8e226901f0807b0"
+      "git_blob_sha": "f269537bbd8a56beaafd01d0061e215a25f11af6"
     },
     {
       "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
@@ -358,7 +358,7 @@
     },
     {
       "path": "reports/results/ou3_stability/construction-history-feasibility.json",
-      "git_blob_sha": "01a5506d18778cac1e052c7cfe5e81b8dd2c0106"
+      "git_blob_sha": "feb16af672bd86ea13da47e219878b62343315eb"
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
@@ -374,7 +374,7 @@
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "git_blob_sha": "3c799a635582cd0f72b468059a244b05e8679141"
+      "git_blob_sha": "ca2ff0fad3d61494d2cb715527ed88f2bcc7d552"
     },
     {
       "path": "tests/validation/test_ou3_construction_mean_action.py",
@@ -422,7 +422,7 @@
     },
     {
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "git_blob_sha": "adfbbdb6495f96d04d64d9dd3b0afba5db6316b5"
+      "git_blob_sha": "5b512946edf39ad1ae5ce515ebeae1ae3669c054"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal_balance.py",
@@ -430,7 +430,7 @@
     },
     {
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "git_blob_sha": "947ad7f3618e247141a911e671104615524108b3"
+      "git_blob_sha": "4ece469a985dd3fbfccac7e256db4849f5383dd1"
     },
     {
       "path": "docs/ou3-regime-design.md",
@@ -518,7 +518,7 @@
     },
     {
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "git_blob_sha": "adf05ed2eb677569eca874d7c113cd25d3461066"
+      "git_blob_sha": "c066ce7de5316f6eecebe5d2dd142e477be63a65"
     },
     {
       "path": "docs/ou3-world-frame-rows.md",
