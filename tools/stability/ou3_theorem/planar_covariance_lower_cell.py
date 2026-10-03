@@ -63,6 +63,8 @@ def certificate():
       "correction_information_handling":"literal positive-noise measurement action; accel nuisance retained by complete parity-block path, magnetic rows retained separately when constructing the covariance floor",
       "process_handling":"literal AG, LIN-OU and BA process action over the same one-second path; no one-step scalar process floor substituted",
       "ag_trial_covariance_floor":ag,
+      "ag_scalarization_rejected":ag["covariance_scalar_floor"]<1e-9,
+      "required_metric":"retain full anisotropic 2x2 AG lower matrix inside each parity block",
       "ag_trial_role":"conditional upper-action feasibility pending literal Schur/oracle dominance; not promoted as lower cell",
       "even_action_matrix_verified":False,
       "odd_action_matrix_verified":False,
