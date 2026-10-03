@@ -62,9 +62,10 @@ int main(int argc,char**argv){
  int live=-1,refined=-1,active=-1,accepted=0;
  int wr=-1,windows=0,mag_min=10000;double service_min=1e100,service_max=0;
  double tail_pth_max=0,tail_pth_min=1e100,tail_pbg_max=0,tail_cross_max=0; int tail_samples=0;
+ double parity_even_max=0,parity_odd_max=0,parity_off_max=0,tail_fhat_max=0;
  double bay=0,pbay=0,qxz=0,resmag=0,normlin=0,mintilt=10,maxmetric=0,minmetric=1e100;
  Eigen::Matrix<float,21,21> Pcycle=Eigen::Matrix<float,21,21>::Zero(); bool have_cycle=false;
- double cycle_tau=0,cycle_sigma=0,cycle_rs=0,cycle_period=0;
+ double cycle_tau=0,cycle_sigma=0,cycle_rs=0,cycle_period=0,cycle_elapsed=0;
  for(int k=1;k<=int(end*200);++k){
   double t=k*.005,phase=nu*t,psi=.02*sin(phase),rate=.02*nu*cos(phase),ax=-.02*nu*nu*sin(phase);
   Eigen::Matrix3d U=Eigen::AngleAxisd(-psi,Eigen::Vector3d::UnitY()).toRotationMatrix();
@@ -93,7 +94,7 @@ int main(int argc,char**argv){
   } else if(k>int((end-1.0)*200)){
    auto &sl=moving_slots[k%SLIDING];if(sl.active&&k-sl.root==200){for(int i=0;i<4;i+=2){double aa=sl.info[i][i],bb=sl.info[i][i+1],cc=sl.info[i+1][i+1];double den=aa+cc+std::hypot(aa-cc,2*bb);double vv=2*(aa*cc-bb*bb)/den;sliding_service_min=std::min(sliding_service_min,vv);sliding_service_max=std::max(sliding_service_max,vv);}++sliding_windows;sliding_mags_min=std::min(sliding_mags_min,sl.mags);sl.active=false;}
   }
-  if(k==int((end-20.0)*200)){Pcycle=m.Pext;have_cycle=true;cycle_tau=f.raw().getTauApplied();cycle_sigma=f.raw().getSigmaApplied();cycle_rs=f.raw().getRSApplied();cycle_period=f.raw().getPseudoUpdatePeriodSec();}
+  if(k==int((end-20.0)*200)){Pcycle=m.Pext;have_cycle=true;cycle_tau=f.raw().getTauApplied();cycle_sigma=f.raw().getSigmaApplied();cycle_rs=f.raw().getRSApplied();cycle_period=f.raw().getPseudoUpdatePeriodSec();cycle_elapsed=m.pseudo_update_elapsed_s_;}
   if(k>40000){
    Eigen::Matrix3d Pth=m.Pext.block<3,3>(0,0).cast<double>();
    Eigen::Matrix3d Pbg=m.Pext.block<3,3>(3,3).cast<double>();
@@ -104,8 +105,16 @@ int main(int argc,char**argv){
    tail_pth_max=std::max(tail_pth_max,es.eigenvalues().maxCoeff());
    tail_pbg_max=std::max(tail_pbg_max,Pbg.norm());
    tail_cross_max=std::max(tail_cross_max,Ptb.norm());
+   static const int E[12]={1,4,6,8,9,11,12,14,15,17,18,20}; static const int O[9]={0,2,3,5,7,10,13,16,19};
+   Eigen::Matrix<double,12,12> Pe;Eigen::Matrix<double,9,9> Po;Eigen::Matrix<double,12,9> Peo;
+   for(int i=0;i<12;++i)for(int j=0;j<12;++j)Pe(i,j)=m.Pext(E[i],E[j]);
+   for(int i=0;i<9;++i)for(int j=0;j<9;++j)Po(i,j)=m.Pext(O[i],O[j]);
+   for(int i=0;i<12;++i)for(int j=0;j<9;++j)Peo(i,j)=m.Pext(E[i],O[j]);
+   Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,12,12>> ee(Pe);Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,9,9>> eo(Po);
+   parity_even_max=std::max(parity_even_max,ee.eigenvalues().maxCoeff());parity_odd_max=std::max(parity_odd_max,eo.eigenvalues().maxCoeff());parity_off_max=std::max(parity_off_max,Peo.norm());
+   tail_fhat_max=std::max(tail_fhat_max,double(m.accelerometer_measurement_func(35).norm()));
    ++tail_samples;
    if(m.Pext(19,19)<=0)throw std::runtime_error("nonpositive BA covariance marginal");double V=pow(g*sn-m.get_acc_bias().y(),2)/m.Pext(19,19);minmetric=std::min(minmetric,V);maxmetric=std::max(maxmetric,V);}
  }
- const auto&m=f.raw().mekf();std::cout<<std::setprecision(17)<<"{\"service_min\":"<<service_min<<",\"service_max\":"<<service_max<<",\"service_windows\":"<<windows<<",\"service_mags_min\":"<<mag_min<<",\"duration\":"<<end<<",\"live_step\":"<<live<<",\"refined_step\":"<<refined<<",\"active_step\":"<<active<<",\"accepted_mag\":"<<accepted<<",\"max_abs_bay\":"<<bay<<",\"max_Pbay\":"<<pbay<<",\"max_q_xz\":"<<qxz<<",\"max_mag_residual\":"<<resmag<<",\"max_position\":"<<normlin<<",\"tail_V_lower_min\":"<<minmetric<<",\"tail_V_lower_max\":"<<maxmetric<<",\"tau\":"<<f.raw().getTauApplied()<<",\"sigma\":"<<f.raw().getSigmaApplied()<<",\"R_S\":"<<f.raw().getRSApplied()<<",\"period\":"<<f.raw().getPseudoUpdatePeriodSec()<<",\"ref\":["<<m.v2ref.x()<<","<<m.v2ref.y()<<","<<m.v2ref.z()<<"],\"tail_pth_min\":"<<tail_pth_min<<",\"tail_pth_max\":"<<tail_pth_max<<",\"tail_pbg_norm_max\":"<<tail_pbg_max<<",\"tail_pth_bg_norm_max\":"<<tail_cross_max<<",\"tail_cov_samples\":"<<tail_samples<<",\"sliding_service_min\":"<<sliding_service_min<<",\"sliding_service_max\":"<<sliding_service_max<<",\"sliding_service_windows\":"<<sliding_windows<<",\"sliding_service_mags_min\":"<<sliding_mags_min<<",\"cycle_P_max_abs_diff\":"<<(have_cycle?(m.Pext-Pcycle).cwiseAbs().maxCoeff():-1)<<",\"cycle_tau_abs_diff\":"<<std::abs(double(f.raw().getTauApplied())-cycle_tau)<<",\"cycle_sigma_abs_diff\":"<<std::abs(double(f.raw().getSigmaApplied())-cycle_sigma)<<",\"cycle_RS_abs_diff\":"<<std::abs(double(f.raw().getRSApplied())-cycle_rs)<<",\"cycle_period_abs_diff\":"<<std::abs(double(f.raw().getPseudoUpdatePeriodSec())-cycle_period)<<"}\n";
+ const auto&m=f.raw().mekf();std::cout<<std::setprecision(17)<<"{\"service_min\":"<<service_min<<",\"service_max\":"<<service_max<<",\"service_windows\":"<<windows<<",\"service_mags_min\":"<<mag_min<<",\"duration\":"<<end<<",\"live_step\":"<<live<<",\"refined_step\":"<<refined<<",\"active_step\":"<<active<<",\"accepted_mag\":"<<accepted<<",\"max_abs_bay\":"<<bay<<",\"max_Pbay\":"<<pbay<<",\"max_q_xz\":"<<qxz<<",\"max_mag_residual\":"<<resmag<<",\"max_position\":"<<normlin<<",\"tail_V_lower_min\":"<<minmetric<<",\"tail_V_lower_max\":"<<maxmetric<<",\"tau\":"<<f.raw().getTauApplied()<<",\"sigma\":"<<f.raw().getSigmaApplied()<<",\"R_S\":"<<f.raw().getRSApplied()<<",\"period\":"<<f.raw().getPseudoUpdatePeriodSec()<<",\"ref\":["<<m.v2ref.x()<<","<<m.v2ref.y()<<","<<m.v2ref.z()<<"],\"tail_pth_min\":"<<tail_pth_min<<",\"tail_pth_max\":"<<tail_pth_max<<",\"tail_pbg_norm_max\":"<<tail_pbg_max<<",\"tail_pth_bg_norm_max\":"<<tail_cross_max<<",\"tail_cov_samples\":"<<tail_samples<<",\"sliding_service_min\":"<<sliding_service_min<<",\"sliding_service_max\":"<<sliding_service_max<<",\"sliding_service_windows\":"<<sliding_windows<<",\"sliding_service_mags_min\":"<<sliding_mags_min<<",\"cycle_P_max_abs_diff\":"<<(have_cycle?(m.Pext-Pcycle).cwiseAbs().maxCoeff():-1)<<",\"cycle_tau_abs_diff\":"<<std::abs(double(f.raw().getTauApplied())-cycle_tau)<<",\"cycle_sigma_abs_diff\":"<<std::abs(double(f.raw().getSigmaApplied())-cycle_sigma)<<",\"cycle_RS_abs_diff\":"<<std::abs(double(f.raw().getRSApplied())-cycle_rs)<<",\"cycle_period_abs_diff\":"<<std::abs(double(f.raw().getPseudoUpdatePeriodSec())-cycle_period)<<",\"parity_even_eig_max\":"<<parity_even_max<<",\"parity_odd_eig_max\":"<<parity_odd_max<<",\"parity_off_fro_max\":"<<parity_off_max<<",\"tail_fhat_max\":"<<tail_fhat_max<<",\"cycle_scheduler_elapsed_abs_diff\":"<<std::abs(double(m.pseudo_update_elapsed_s_)-cycle_elapsed)<<"}\n";
 }
