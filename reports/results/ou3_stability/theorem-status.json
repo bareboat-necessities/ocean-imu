@@ -67,7 +67,10 @@
     "twenty_second_point_poincare_invalid_due_scheduler_phase": true,
     "scheduler_phase_augmented_invariant_cell": false,
     "scheduler_phase_coordinate_invariant": true,
-    "oracle_rational_service_margin": true
+    "oracle_rational_service_margin": true,
+    "paired_correction_storage_invariant": true,
+    "paired_prediction_loss_identity": true,
+    "planar_same_history_covariance_lower_cell": false
   },
   "next_controlling_obligation": "Prove forcing-aware quiet-compatible boundedness using the exact constant-record fibre and persistent source charges. The exact planar MOVING pair satisfies current 30-s span and SLOW+FAST limits with constant bias and identical sensor records; the proposed two-epoch span/bias separation has an exact zero direction. The ideal mean execution and covariance admit an exact 12+9 parity factorization. A 20-s point return is invalid because the progress-preserving S scheduler phase does not return; the invariant cell must carry that phase. Certify a forward-invariant one-period enclosure and phase-uniform one-second actually applied MAGNETIC SERVICE for that SAME shipping history before declaring a fully admitted MOVING obstruction or asserting absolute inner entry from the existing assumptions. The fresh 240/1200-s replays and final-cycle all-IMU-root service sweep are non-promoting finite evidence; the tail sweep remains above 7 but is not an interval/all-time certificate. Keep construction/H18/refinement/release, the full persistent HistoryCell, coupled tuner, actual covariance/gains and BA physical forcing. Homogeneous kernel/action results and completed-square algebra remain valid but do not identify the physical tilt/BA decomposition. All-time device qualification, nonlinear/prefix retention, float32 transfer and regime composition remain OPEN.",
   "no_heading_service_result_role": "necessity lemma only",
