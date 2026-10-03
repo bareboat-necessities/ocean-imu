@@ -113,6 +113,10 @@ A deliberately more-informative two-state attitude/BG feasibility oracle has now
 
 This is not yet a shipping service proof. Promotion requires a formal Schur/conditional-information comparison showing that the literal accelerometer+S nuisance chronology cannot suppress the magnetic incremental information more than this oracle, an all-time bound corresponding to H_a<=30 on the literal predicted specific force/attitude row, and treatment of the shipping reset coordinates. These dependencies are explicit in planar_oracle_rational.py and fail closed.
 
+## Literal prediction and scheduler reuse
+
+No independent reimplementation of the 12x12 LIN prediction is needed. The proof instrumentation already receives F_LL and Q_LL after the shipping calls to IntegratedOUChain::transition/process_covariance, together with F_AA,Q_AA, the BA phi/Q block and every correction/reset in operation order. The factor stream therefore treats those callback matrices as the literal coefficients. Likewise S=0 is observed only when the shipping time_update calls periodic_update_due and then applyIntegralZeroPseudoMeas; the factor stream consumes that actual correction event instead of approximating a cadence. This removes the surrogate F_LL/Q_LL and scheduler chronology from the intended certificate. A temporary non-promoting diagnostic exports the first-200 literal prediction retention and S-event count to verify plumbing before interval promotion.
+
 ## Remaining Poincare certificate
 
 The same-history enclosure now needs two independent parity cells rather than a
