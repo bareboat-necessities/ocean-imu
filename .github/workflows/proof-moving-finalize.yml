@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python3 -m pip install numpy scipy mpmath
+      - run: python3 -m pip install numpy scipy mpmath matplotlib
       - name: Fold the audit into the existing proof workflow
         run: |
           python3 - <<'PY'
@@ -32,7 +32,7 @@ jobs:
                     python3 -m unittest discover -s tests/validation -p test_ou3_theorem_status.py -v
           '''
           new='''      - name: Install proof dependencies
-                  run: python3 -m pip install numpy scipy mpmath
+                  run: python3 -m pip install numpy scipy mpmath matplotlib
                 - name: Validate all OU-III proof contracts and provenance
                   run: |
                     python3 -m tools.stability.ou3_theorem.build_evidence
@@ -49,7 +49,9 @@ jobs:
           note='''* **E, CI layout corrected:** the full 628-test run rejected a separate OU-III
             compatibility workflow under the existing single-workflow architecture guard.
             Its job is now inside ou3-stability-proof.yml; the guard and all other jobs are
-            unchanged. This CI-layout error has no mathematical implication.
+            unchanged. The complete runner suite also needs matplotlib for its existing
+            figure-layout test; the missing dependency caused one import error and is now
+            installed explicitly. These CI errors have no mathematical implication.
           '''
           assert marker in s
           p.write_text(s.replace(marker,note+marker))
@@ -62,10 +64,10 @@ jobs:
           p=Path('reports/ou_evidence_fingerprint.json');obj=json.loads(p.read_text());r=compute_results_fingerprint()
           obj.update(results_fingerprint=r['fingerprint'],results_file_count=r['file_count'],results_files=r['files'])
           p.write_text(json.dumps(obj,indent=2,sort_keys=True)+'\n')
-          expected={'.github/workflows/ou3-stability-proof.yml':'56fe13874554bb8353a951ba5bc439531fa0fca3',
-                    'docs/ou3-proof-research-state.md':'3d7b93027e36d44edce94a54d199c3cccc230446',
-                    'reports/results/ou3_stability/provenance.json':'db032b9dc159533560ac013ff7c91d682b3c54dc',
-                    'reports/ou_evidence_fingerprint.json':'185e006b912592d464c09329a576a132d664a177'}
+          expected={'.github/workflows/ou3-stability-proof.yml':'76d165d65df55490bac89107c8fbdc2c7013c7ba',
+                    'docs/ou3-proof-research-state.md':'b3a81048cb207c7998e272bd67aa97acb96004f8',
+                    'reports/results/ou3_stability/provenance.json':'ceb0c17127988fb2a5bc23aad9ba711037445bfd',
+                    'reports/ou_evidence_fingerprint.json':'154dab5c1a10ae688bfbe2501db278426a4efec9'}
           for path,digest in expected.items():assert sha(Path(path).read_bytes())==digest,path
           Path('/tmp/expected-proof-blobs.json').write_text(json.dumps(expected))
           PY
