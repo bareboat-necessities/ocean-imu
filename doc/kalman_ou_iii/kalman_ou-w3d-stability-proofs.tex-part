@@ -65,8 +65,25 @@ Condition on a fixed admissible complete magnetic/event transport stratum. After
 
 At an active A21 accelerometer update the BA Jacobian block is \(I_3\) up to the residual sign convention. Therefore, once a surviving attitude amplitude is fixed, \(H_{\rm acc}e=0\) has at most one BA solution. BA cannot add an independent kernel direction.
 
-\subsection{Same-history physical-to-nominal bridge}
-Assume a nonzero compatibility direction persists through a qualified moving superword. Transporting the literal zero-innovation equations to common world coordinates removes absolute attitude from same-cell force/field geometry. Slow bias terms retain their amplitude/rate histories, FAST terms retain their signed primitives, physical acceleration is tied to the same \(v\)-history by \(v'=a\) and the jerk bound, and magnetic rows use the same accepted service history. Persistence therefore implies vanishing of the linked A* physical/nominal functional. The derived A* inequality excludes persistence whenever its source margin is strictly positive. The implication is proved; the open premise is a source-uniform positive margin on every reachable physical HistoryCell and prefix.
+\subsection{MOVING physical compatibility obstruction}
+The current MOVING spans do not give absolute physical tilt--BA identifiability.
+Set \(\omega_0=2\pi/30\), \(\phi(t)=(\pi/180)\sin(\omega_0t)\),
+\(p(t)=0.015\sin(\omega_0t)e_x\), and \(B=75e_x\). Compare
+\(R_0=R_x(\phi)\) and \(R_1=R_x(\phi+\delta)\), where
+\(\delta=2\arctan(1/200)\), with zero gyro/FAST biases and
+\[
+ b_{a,1}=R_0^T(a-ge_z)-R_1^T(a-ge_z).
+\]
+Since \(a\parallel e_x\), the two force records coincide; body rates coincide;
+and rotation about \(e_x\) leaves \(B\) invariant. Hence complete delivered
+records and deterministic shipping histories coincide. The SLOW BA norm is
+\(0.098065274192\,\mathrm{m/s^2}\) and its derivative is bounded by
+\(0.000358468690\,\mathrm{m/s^3}\), strictly inside current budgets.
+Every complete 30-s window has exactly the required \(2^\circ\) gravity span
+and \(0.03\,\mathrm m\) displacement diameter. Therefore universal absolute
+MOVING tilt--BA separation is false. This is class B, not instability. The
+finite-error continuation must use the measurement-compatible quotient/tube,
+contract observable coordinates, and bound the gauge component.
 
 \subsection{H18 release and A21 root covariance}
 Assume finite completion of the shipping reference-refinement/release state machine. Captured attitude, projected gyro bias and held BA are compact/bounded; the literal H18 LIN subsystem is BIBO with BA as bounded input; tuner/reference/scheduler/covariance maps are continuous over the finite bridge. Hence the terminal release image is compact. The unresolved premise is source-uniform finite completion of that state machine.
