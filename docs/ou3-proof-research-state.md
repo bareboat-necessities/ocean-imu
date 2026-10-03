@@ -146,6 +146,15 @@ The native probe now exports the full 8000-sample settled parity covariance prof
 
 The full two-period covariance profile export is operational (OU3PRF1, 8000 samples of P_E/P_O plus scheduler elapsed/T_S). Equal-source-phase comparison across different scheduler phases is invalid/too wide, so the tube coordinate is genuinely (source phase,scheduler cell). Exact scheduler-word analysis gives 4001 cells. Crucially, adjacent cells are not independent: among 4000 adjacencies, 3999 due words differ at exactly two sample decisions and one differs at one decision. Thus the branch family is a chain of local S-event shifts. scheduler_s_shift_commutator.py formulates the exact local covariance defect between moving one S correction across a sample boundary, R_S(FPF'+Q) versus F R_S(P) F'+Q. A source-uniform joint tube can therefore be certified by interval-bounding this local commutator on the settled phase covariance tube and propagating the resulting neighboring-cell radii, rather than performing 4001x4000 unrelated Riccati replays. The commutator interval bound is not yet evaluated, so joint tube containment and r_tube remain OPEN.
 
+## Exact local S-shift commutator identity
+
+The scheduler-cell sensitivity now has an exact algebraic form. Let R_H(P)=P-PH'(HPH'+R)^-1HP be the S=0 covariance correction and C=FPF'+Q. Then
+
+R_H(C) - [F R_H(P) F' + Q]
+= FPH'(HPH'+R)^-1HPF' - CH'(HCH'+R)^-1HC.
+
+This is implemented and regression-tested in scheduler_s_shift_bound.py. It reduces the local branch difference to the difference of two rank-at-most-3 information-removal terms; no 21x21 interval Riccati map is needed. A rigorous immediate outer bound is the sum of their spectral norms, using R_S floor and a phase covariance upper tube, but that may be loose because the two terms strongly cancel for 5-ms shifts. The next numerical step is to evaluate the exact difference on the exported settled phase profile and compare it with the two-term outer bound. If the outer bound is too loose, intervalize the linked difference directly rather than separately bounding the two removals. phase_uniform_bound_verified remains false until that evaluation/interval enclosure succeeds.
+
 ## Current limiter
 
 The decisive next quantity is an **all-time, every-window applied magnetic
