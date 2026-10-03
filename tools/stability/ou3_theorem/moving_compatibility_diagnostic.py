@@ -53,12 +53,14 @@ def instrument(text):
         ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);''')
     return s
 
-def run_native(eigen, duration=240.0, profile_output=None):
+def run_native(eigen, duration=240.0, profile_output=None, cxx="g++"):
     eigen = Path(eigen)
     if not (eigen / "Eigen/Dense").is_file():
         raise ValueError("Eigen include directory must contain Eigen/Dense")
     if not 220 <= duration <= 3600:
         raise ValueError("duration must lie in [220,3600] seconds")
+    compiler = subprocess.run([cxx, "--version"], check=True, capture_output=True,
+                              text=True, timeout=10).stdout.splitlines()[0]
     tapped = instrument(HEADER.read_text())
     with tempfile.TemporaryDirectory(prefix="ou3-moving-compatibility-") as directory:
         work = Path(directory)
@@ -66,12 +68,12 @@ def run_native(eigen, duration=240.0, profile_output=None):
         path.parent.mkdir(parents=True)
         path.write_text(tapped)
         binary = work / "probe"
-        command = ["g++", "-std=c++20", "-O1", "-DEIGEN_UNROLLING_LIMIT=0", "-DEIGEN_NON_ARDUINO",
+        command = [cxx, "-std=c++20", "-O1", "-DEIGEN_UNROLLING_LIMIT=0", "-DEIGEN_NON_ARDUINO",
                    "-I"+str(work), "-I"+str(REPO/"src"), "-I"+str(eigen),
                    str(PROBE), "-o", str(binary)]
         p = subprocess.run(command, capture_output=True, text=True, timeout=90)
         if p.returncode:
-            raise RuntimeError("probe compile failed:\\n" + p.stdout + "\\n" + p.stderr)
+            raise RuntimeError("probe compile failed:\n" + p.stdout + "\n" + p.stderr)
         args=[str(binary), str(duration)] + ([str(profile_output)] if profile_output is not None else [])
         result = subprocess.run(args, check=True, capture_output=True, text=True, timeout=max(240,int(duration*2)))
         native = json.loads(result.stdout)
@@ -89,6 +91,7 @@ def run_native(eigen, duration=240.0, profile_output=None):
         "qualification": "OU3_MOVING_COMPATIBILITY_CARRIED_V1",
         "result_type": "finite carried float32 diagnostic; not an interval theorem",
         "native": native,
+        "compiler": compiler,
         "probe_sha256": hashlib.sha256(PROBE.read_bytes()).hexdigest(),
         "shipping_header_sha256": hashlib.sha256(HEADER.read_bytes()).hexdigest(),
         "instrumented_header_sha256": hashlib.sha256(tapped.encode()).hexdigest(),
@@ -111,11 +114,12 @@ def run_native(eigen, duration=240.0, profile_output=None):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--eigen",type=Path,default=Path("/usr/include/eigen3"))
+    p.add_argument("--cxx", default="g++", help="C++ compiler; defaults to the CI g++ toolchain")
     p.add_argument("--duration",type=float,default=240.0)
     p.add_argument("--output",type=Path)
     p.add_argument("--profile-output",type=Path)
     args=p.parse_args()
-    text=json.dumps(run_native(args.eigen,args.duration,args.profile_output),indent=2,sort_keys=True)+"\n"
+    text=json.dumps(run_native(args.eigen,args.duration,args.profile_output,args.cxx),indent=2,sort_keys=True)+"\n"
     if args.output:
         args.output.parent.mkdir(parents=True,exist_ok=True)
         args.output.write_text(text)

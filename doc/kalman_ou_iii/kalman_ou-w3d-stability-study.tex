@@ -3,7 +3,7 @@
 \ifPDFTeX\usepackage[utf8]{inputenc}\usepackage[T1]{fontenc}\fi
 \usepackage{amsmath,amssymb,amsthm,bm,newtxtext,newtxmath,booktabs,siunitx,balance}
 \usepackage[breaklinks=true,hidelinks]{hyperref}
-\newtheorem{lemma}{Lemma}\newtheorem{theorem}{Theorem}\newtheorem{proposition}{Proposition}\newtheorem{remark}{Remark}
+\newtheorem{lemma}{Lemma}\newtheorem{theorem}{Theorem}\newtheorem{proposition}{Proposition}\newtheorem{remark}{Remark}\newtheorem{corollary}{Corollary}
 \newcommand{\R}{\mathbb{R}}\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 \title{Regional Practical Stability Study of the Shipping OU--III Marine Inertial Estimator}
 \author{Mikhail S. Grushinskiy}
@@ -423,7 +423,12 @@ For a homogeneous perturbation $\xi^+=A\xi^-$, the correction loss is the
 nonnegative quadratic measurement action.  In the paired covariance--probe
 form used later,
 \[
- (\Phi^+)^T(P^+)^{-1}\Phi^+=(\Phi^-)^T(P^-)^{-1}\Phi^- .
+ \begin{aligned}
+ (\Phi^+)^T(P^+)^{-1}\Phi^+
+ &= (\Phi^-)^T(P^-)^{-1}\Phi^-\\
+ &\quad -(H\Phi^-)^TS^{-1}(H\Phi^-),
+ \qquad\Phi^+=A\Phi^- .
+\end{aligned}
 \]
 Thus the correction cannot be represented by an independently chosen gain or
 covariance.

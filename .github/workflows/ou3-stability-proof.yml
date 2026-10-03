@@ -71,18 +71,20 @@ jobs:
           python-version: "3.12"
       - name: Install factor algebra dependencies
         run: python3 -m pip install numpy scipy mpmath
+      - name: Compile theorem tooling
+        run: python3 -m py_compile tools/stability/ou3_theorem/*.py
       - name: Run source-uniform interval release diagnostic
         continue-on-error: true
         run: |
+          set -o pipefail
           python3 -m tools.stability.ou3_theorem.run_interval_release | tee /tmp/ou3-interval-release.json
 
       - name: Diagnose physical HistoryCell subdivision
         continue-on-error: true
         run: |
+          set -o pipefail
           python3 -m tools.stability.ou3_theorem.run_physical_history_subdivision | tee /tmp/ou3-physical-subdivision.json
 
-      - name: Compile theorem tooling
-        run: python3 -m py_compile tools/stability/ou3_theorem/*.py
       - name: Compute literal A21 release outer storage first
         run: |
           sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev

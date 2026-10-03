@@ -96,11 +96,44 @@ Fresh current-probe replays now check every IMU-sample root over the final 20-s 
 
 ## Paired covariance/probe comparison
 
-The requested nuisance bridge has a stronger exact correction identity. For any positive-noise Kalman/Joseph correction, if the homogeneous service probe is propagated by the same A=I-KH as shipping, then Phi_plus' P_plus^-1 Phi_plus = Phi_minus' P_minus^-1 Phi_minus exactly. This applies to literal accelerometer and S=0 corrections and is implemented/tested in paired_covariance_probe.py. Thus accel/S nuisance does not consume covariance-metric probe storage when covariance and probes are carried together; separate P or gain ordering is unnecessary and potentially invalid. The literal accelerometer nuisance elimination is also exactly the Schur conditional-information update in accel_conditional_information.py. Remaining comparison losses are prediction/process Q, changing magnetic geometry, and reset coordinates. The shipping reset G=I-.5[dtheta]x has exact sigma_min=1 and sigma_max=sqrt(1+|dtheta|^2/4); a same-history dtheta ceiling is still required for inverse-coordinate comparison. The direct-attitude oracle remains a feasibility comparator, not yet a literal service theorem. Next decisive calculation: bound the one-second cumulative prediction/process loss in paired storage on the two parity blocks, uniformly over scheduler phase, then convert retained paired storage into the two literal magnetic 2x2 Gramian floors using the exact planar field geometry.
+For a positive-noise Kalman/Joseph correction, let S=HPH'+R, K=PH'S^-1,
+A=I-KH and Phi_plus=A Phi. The correct exact identity is
+
+`Phi_plus' P_plus^-1 Phi_plus = Phi' P^-1 Phi - (H Phi)' S^-1 (H Phi)`.
+
+Indeed P_plus=AP=PA', so A'P_plus^-1 A=P^-1-H'S^-1H. The previous
+storage-invariance hypothesis is false: even P=Phi=H=R=1 gives storage 1
+before and 1/2 after correction. The seeded six-state diagnostic previously
+reported an alleged identity defect of 0.44169017966796503; that quantity is
+the nonzero measurement-loss norm, not roundoff. Classification **E**:
+incorrect mathematical diagnostic, not a shipping instability counterexample.
+`paired_covariance_probe.py` now checks the complete dissipation identity;
+scalar, zero-information and full cross-covariance regressions retain the loss.
+Literal accelerometer and S=0 corrections therefore consume their own action
+and cannot be omitted when lower-bounding the magnetic share.
+
+Retained facts: the Schur conditional-information update in
+`accel_conditional_information.py`, the literal covariance/probe chronology,
+and the shipping reset singular-value formula remain unchanged. No shipping
+behavior, physical assumption, quality gate or theorem status is changed.
+The direct-attitude oracle remains a feasibility comparator. Next falsifiable
+calculation: telescope the actual prediction losses AND every nonmagnetic
+correction action on the two parity blocks, then bound the remaining literal
+magnetic 2x2 action uniformly over scheduler phase.
 
 ## Exact paired prediction loss
 
-For one literal prediction P-=F P F'+Q, Phi-=F Phi, with C=F P F', the paired storage loss is exactly Delta_pred=Phi-'[C^-1-(C+Q)^-1]Phi-. Equivalently, if eta=lambda_max(C^-1/2 Q C^-1/2), the prediction retains at least 1/(1+eta) of Phi'P^-1Phi. This is implemented/tested in paired_prediction_loss.py. Together with the exact correction invariant, nonmag chronology now has zero correction loss and explicit PSD prediction loss only (plus reset coordinate comparison). The existing generic recurring root covariance floor cannot certify a useful eta here: its AG scale is about 5e-10 whereas the planar carried P_theta is 2.8e-6 to 1.04e-5, so substituting the generic floor loses orders of magnitude and would be a D-type proof-bound failure. The next required enclosure is therefore a same-planar-history covariance LOWER cell (not only the upper candidate already recorded), uniform over scheduler phase. It must be propagated jointly in the exact 12+9 parity representation. Once that lower cell is available, the literal Q/F factors give a rigorous one-second product of prediction retention factors; exact correction invariance means accel/S nuisance introduces no additional charge. Then use the exact field geometry and the two physical +/- 2x2 probes to convert retained storage into the service floor.
+For P_minus=F P F'+Q, Phi_minus=F Phi and C=F P F', the prediction loss is
+exactly Phi_minus'[C^-1-(C+Q)^-1]Phi_minus. If
+eta=lambda_max(C^-1/2 Q C^-1/2), prediction retains at least 1/(1+eta) of the
+incoming paired storage; `paired_prediction_loss.py` checks this identity.
+It does not remove the additional PSD loss at each accel/S/mag correction.
+The generic recurring AG covariance floor (about 5e-10) remains too weak for
+a useful eta compared with carried planar P_theta (2.8e-6 to 1.04e-5).
+A scheduler-phase-uniform LOWER covariance cell must be propagated in the
+same 12+9 parity representation. A product of prediction-retention factors
+alone is not a nonmagnetic-chronology retention bound: the correction actions
+must also be carried before converting storage into a magnetic-service floor.
 
 ## Scheduler-phase lower covariance cell attempt
 
@@ -116,7 +149,9 @@ Matrix information ceilings are now derived in planar_information_ceilings.py. T
 
 ## Literal 200-prediction retention diagnostic
 
-The native prediction callback now compiles and consumes the literal shipping F_AA/Q_AA, F_LL/Q_LL and BA phi/Q after the actual time-update construction. The first 200 predictions of the first one-second service word after the established service root give carried paired-storage retention product r_pred=0.33887185610103454. The same replay has service_min=7.024764605642482 and final-cycle all-root sliding_service_min=7.027543186409253; multiplying the former by r_pred gives about 2.38, so the observed service margin remains above 1 at the measured prediction-loss scale. This multiplication is feasibility evidence only, not a theorem: r_pred currently uses the carried P itself rather than the scheduler-phase-uniform lower-factor enclosure. The replay also reports tail ||f_hat|| max 9.806161880493164. S_due_count=755 is across all recorded disjoint service words, not one word. Classification: finite carried diagnostic. The rigorous next step remains interval/lower-factor propagation of the same literal coefficient stream over every scheduler phase, plus the all-time f_hat<=30 binding.
+The native prediction callback now compiles and consumes the literal shipping F_AA/Q_AA, F_LL/Q_LL and BA phi/Q after the actual time-update construction. The first 200 predictions of the first one-second service word after the established service root give carried paired-storage retention product r_pred=0.33887185610103454. The same replay has service_min=7.024764605642482 and final-cycle all-root sliding_service_min=7.027543186409253; multiplying the former by r_pred gives about 2.38, so the observed service margin remains above 1 at the measured prediction-loss scale. This multiplication is feasibility evidence only, not a theorem or a lower
+bound on nonmagnetic-chronology retention. The accel/S correction losses in
+the corrected paired identity must also be retained: r_pred currently uses the carried P itself rather than the scheduler-phase-uniform lower-factor enclosure. The replay also reports tail ||f_hat|| max 9.806161880493164. S_due_count=755 is across all recorded disjoint service words, not one word. Classification: finite carried diagnostic. The rigorous next step remains interval/lower-factor propagation of the same literal coefficient stream over every scheduler phase, plus the all-time f_hat<=30 binding.
 
 ## Lower-factor literal callback control result
 
@@ -287,3 +322,40 @@ S and do not confuse a pseudo-measurement with physical observability.
    no universal physical identification is inferred from them.
 6. Next calculation: all-time actual magnetic service on the same planar history,
    using its parity and causal recurrences, not a relaxed input family.
+
+## CI implementation integrity
+
+The main-source CI repair is classification **E**: literal escaped newlines
+broke planar tooling/tests and silently commented out the gravity-direction
+history assignment; an undeclared corollary environment broke LaTeX; lint
+findings and an obsolete branch-only diagnostic workflow violated existing
+quality/architecture checks. Proof-source bindings and the finite moving
+replay records were stale. These failures invalidate execution/reproduction
+claims for those artifacts, not the shipping estimator. The paired-storage
+identity error and its invalidated inference are documented above.
+
+The repair restores the history fields and normal source lines, declares the
+used LaTeX environment, removes unused imports/the obsolete duplicate
+workflow, and preserves the publication's current conditional wording in its
+tests. Syntax validation runs before interval diagnostics; pipefail preserves
+producer exit status, and unexpected exceptions are classified E rather than
+misreported as an enclosure bound failure. Expected unresolved interval bounds
+remain non-promoting diagnostics, with no theorem or gate weakened.
+
+Structures preserved: shipping source, all physical/service qualifications,
+same-history tuner/covariance/scheduler chronology, full paired measurement
+loss and existing theorem status. Relaxations introduced: none by this CI
+repair. No genuine shipping counterexample is established. Retained facts:
+the previously qualified local/algebraic results and the corrected prediction
+and correction identities; regional and all-time service claims remain OPEN.
+Both 240-s and 1200-s records are freshly executed from the current probe with
+Clang 17; the compiler is recorded explicitly, while the driver's default CI
+compiler remains g++. GCC compilation exceeded this session's 4-GiB memory
+limit even with lower-GC-memory parameters (E, infrastructure). No estimator
+or diagnostic arithmetic was changed to fit that limit. Existing common
+native replay fields are unchanged; newly exported quantities are measured,
+not copied or inferred. The repaired interval diagnostic reaches the existing
+causal-adaptation enclosure limit at t=0.15 s / sample 30 (D), not a missing
+history field (E). Next falsifiable check: verify source bindings, the complete
+Python/evidence checks and study rendering, then the fresh pull-request checks. The mathematical next step remains the
+joint prediction-plus-correction service comparison stated above.

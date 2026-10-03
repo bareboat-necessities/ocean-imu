@@ -40,7 +40,11 @@ def oracle_service_floor(*,h_acc=30.0,p_theta=5e-4,p_bg=1.1e-6,
             X=A@X;P=A@P@A.T+np.outer(K,K)*Rmag
     return float(np.linalg.eigvalsh(I)[0])
 
-def scheduler_phase_invariant(elapsed,period):\n    """Literal structural invariant: valid scheduler state remains 0<=elapsed<period."""\n    return period>0 and elapsed>=0 and elapsed<period\n\n
+def scheduler_phase_invariant(elapsed,period):
+    """Literal structural invariant: valid scheduler state remains 0<=elapsed<period."""
+    return period>0 and elapsed>=0 and elapsed<period
+
+
 def planar_guard_excess_bound(*,amplitude=10.0,omega=2*math.pi/20,detect_hz=25.0,poles=2,engage_lo=.03):
     """Conservative steady sinusoid bound for the two-pole detector on planar record.
     Each detector high-pass has gain w/sqrt(w^2+wc^2). Gravity/DC is rejected.
