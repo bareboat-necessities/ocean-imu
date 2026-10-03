@@ -79,6 +79,12 @@ at every finite prefix. This proves the actual accepted cadence on the planar
 real-arithmetic execution once the reference/refinement stage has completed.
 It does not by itself prove the required information floor.
 
+## Exact-rational oracle margin
+
+A deliberately more-informative two-state attitude/BG feasibility oracle has now been solved exactly over rational arithmetic. It uses dt=1/200 s, direct isotropic attitude information H_a=30 with R_a=1/25 at every IMU sample, magnetic H_m=75 with R_m=16/25 every eight samples, P_theta,0=1/2000 and P_bg,0=11/10000000, and the literal gyro/process densities used by the replay. Over one second the exact rational Riccati map satisfies P_0-P_1 positive definite, so this oracle cell is self-containing by Riccati monotonicity. The accumulated magnetic heading/BG information satisfies I_mag-I_2 positive definite exactly; det(I_mag-I_2) is about 0.98970433. Thus the magnetic geometry has strict margin even after intentionally strong direct attitude conditioning.
+
+This is not yet a shipping service proof. Promotion requires a formal Schur/conditional-information comparison showing that the literal accelerometer+S nuisance chronology cannot suppress the magnetic incremental information more than this oracle, an all-time bound corresponding to H_a<=30 on the literal predicted specific force/attitude row, and treatment of the shipping reset coordinates. These dependencies are explicit in planar_oracle_rational.py and fail closed.
+
 ## Remaining Poincare certificate
 
 The same-history enclosure now needs two independent parity cells rather than a
