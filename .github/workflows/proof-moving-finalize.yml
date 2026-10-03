@@ -17,11 +17,15 @@ jobs:
         with:
           python-version: '3.12'
       - run: python3 -m pip install numpy scipy mpmath matplotlib
-      - name: Fold the audit into the existing proof workflow
+      - name: Validate exact proof and CI integration
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import json,hashlib
+          def edit(path,old,new):
+              p=Path(path);s=p.read_text()
+              assert s.count(old)==1,(path,s.count(old))
+              p.write_text(s.replace(old,new))
           extra=Path('.github/workflows/ou3-moving-compatibility.yml')
           main=Path('.github/workflows/ou3-stability-proof.yml')
           job=extra.read_text().split('jobs:\n',1)[1]
@@ -44,30 +48,73 @@ jobs:
           main.write_text(main.read_text()+job)
           extra.unlink()
           Path('.github/workflows/proof-moving-finalize.yml').unlink()
-          p=Path('docs/ou3-proof-research-state.md');s=p.read_text()
-          marker='* **Local full build:**'
+          edit('tests/validation/test_ou3_article_figure_layout.py',
+               'from matplotlib.figure import Figure\n',
+               'from matplotlib.figure import Figure\nfrom matplotlib.backends.backend_agg import FigureCanvasAgg\n')
+          edit('tests/validation/test_ou3_article_figure_layout.py',
+               '                    fig.canvas.draw()\n                    renderer = fig.canvas.get_renderer()\n',
+               '                    # savefig is intercepted; attach the renderer explicitly rather\n'
+               "                    # than depending on pyplot's current or post-close canvas.\n"
+               '                    canvas = FigureCanvasAgg(fig)\n'
+               '                    canvas.draw()\n                    renderer = canvas.get_renderer()\n')
+          source='moving_compatibility_probe.cpp: sigma_a=0.2 matches current theorem/default wrapper; sigma_g=0.00135 and sigma_m=0.8 match the world-frame fixture; this is not that fixture unchanged'
+          edit('tools/stability/ou3_theorem/moving_compatibility_diagnostic.py',
+               '"noise_profile_source": "tools/stability/ou3_theorem/world_frame_source_diagnostic.py",',
+               f'"noise_profile_source": {json.dumps(source)},\n        "same_as_world_frame_fixture": False,')
+          p=Path('reports/results/ou3_stability/moving-compatibility-carried.json')
+          c=json.loads(p.read_text());c['noise_profile_source']=source;c['same_as_world_frame_fixture']=False
+          p.write_text(json.dumps(c,indent=2,sort_keys=True)+'\n')
+          edit('docs/ou3-moving-quiet-compatibility.md',
+               'The noise profile is the existing `world_frame_source_diagnostic.py` profile, not\n'
+               'a new tuned gate or a changed deployed default. Read-only temporary header taps\n',
+               'The fixed diagnostic profile is sigma_a=0.2, sigma_g=0.00135 and sigma_m=0.8.\n'
+               'The accelerometer value matches the current theorem and default wrapper; the\n'
+               'other two values match the world-frame fixture. That older fixture uses sigma_a=0.12,\n'
+               "so this replay is not its unchanged profile or every deployment's default.\n"
+               'No configured value was retuned after observing this result. Read-only temporary header taps\n')
+          edit('docs/ou3-proof-research-state.md',
+               'read-only F/H/K/S/reset taps and the existing world-frame proof noise profile.\n',
+               'read-only F/H/K/S/reset taps and the recorded fixed diagnostic noise profile\n'
+               "(sigma_a=.2, sigma_g=.00135, sigma_m=.8), not every deployment's default.\n")
           note='''* **E, CI layout corrected:** the full 628-test run rejected a separate OU-III
             compatibility workflow under the existing single-workflow architecture guard.
             Its job is now inside ou3-stability-proof.yml; the guard and all other jobs are
             unchanged. The complete runner suite also needs matplotlib for its existing
             figure-layout test; the missing dependency caused one import error and is now
-            installed explicitly. These CI errors have no mathematical implication.
+            installed explicitly. Its intercepted savefig also needs an explicit Agg
+            canvas; all geometry assertions are preserved. These CI errors have no
+            mathematical implication.
+          * **E, diagnostic attribution corrected:** sigma_a=.2 matches the current
+            theorem/default wrapper, while sigma_g=.00135 and sigma_m=.8 match the earlier
+            world-frame fixture, whose sigma_a was .12. The replay is now labelled by its
+            actual fixed configuration, not falsely attributed to that entire fixture.
+            Neither native source nor numerical results were changed for this correction.
           '''
-          assert marker in s
-          p.write_text(s.replace(marker,note+marker))
+          edit('docs/ou3-proof-research-state.md','* **Local full build:**',note+'* **Local full build:**')
+          edit('tests/validation/test_ou3_moving_quiet_compatibility.py',
+               "        self.assertFalse(c['full_shipping_counterexample_admitted'])\n",
+               "        self.assertFalse(c['full_shipping_counterexample_admitted'])\n"
+               "        self.assertFalse(c['same_as_world_frame_fixture'])\n"
+               "        self.assertEqual(c['noise_profile'],{'sigma_a':.2,'sigma_g':.00135,'sigma_m':.8})\n")
           def sha(data):return hashlib.sha1(f'blob {len(data)}\0'.encode()+data).hexdigest()
+          expected={
+              '.github/workflows/ou3-stability-proof.yml':'76d165d65df55490bac89107c8fbdc2c7013c7ba',
+              'tests/validation/test_ou3_article_figure_layout.py':'42e711a4682220d3d3cdb617e0c8ba7f5f922b0e',
+              'tools/stability/ou3_theorem/moving_compatibility_diagnostic.py':'403c7aad8fe9b7c976a7b5c6ee84544ce42c217c',
+              'reports/results/ou3_stability/moving-compatibility-carried.json':'f272aa04ea1bf7ae82979335bd809b859ec01a23',
+              'docs/ou3-moving-quiet-compatibility.md':'acadc34effbf5ce5f916b717336124688fc92ab8',
+              'docs/ou3-proof-research-state.md':'54bf706ee87ee0881f506eb59245bc47bd69dca3',
+              'tests/validation/test_ou3_moving_quiet_compatibility.py':'7aa3cddc81307a9034399f5399d90b60981aab07',
+              'reports/results/ou3_stability/provenance.json':'306f9646ee64fd83030ec0a55d8435b36bd5d3c2',
+              'reports/ou_evidence_fingerprint.json':'425707f327a3211ffba93a3a66bfc72fcf799bb7'}
           p=Path('reports/results/ou3_stability/provenance.json');obj=json.loads(p.read_text())
           for row in obj['operation_lemma_sources']:
-              if row['path']=='docs/ou3-proof-research-state.md':row['git_blob_sha']=sha(Path(row['path']).read_bytes())
+              if row['path'] in expected:row['git_blob_sha']=sha(Path(row['path']).read_bytes())
           p.write_text(json.dumps(obj,indent=2)+'\n')
           from tools.ou_replay_fingerprint import compute_results_fingerprint
           p=Path('reports/ou_evidence_fingerprint.json');obj=json.loads(p.read_text());r=compute_results_fingerprint()
           obj.update(results_fingerprint=r['fingerprint'],results_file_count=r['file_count'],results_files=r['files'])
           p.write_text(json.dumps(obj,indent=2,sort_keys=True)+'\n')
-          expected={'.github/workflows/ou3-stability-proof.yml':'76d165d65df55490bac89107c8fbdc2c7013c7ba',
-                    'docs/ou3-proof-research-state.md':'b3a81048cb207c7998e272bd67aa97acb96004f8',
-                    'reports/results/ou3_stability/provenance.json':'ceb0c17127988fb2a5bc23aad9ba711037445bfd',
-                    'reports/ou_evidence_fingerprint.json':'154dab5c1a10ae688bfbe2501db278426a4efec9'}
           for path,digest in expected.items():assert sha(Path(path).read_bytes())==digest,path
           Path('/tmp/expected-proof-blobs.json').write_text(json.dumps(expected))
           PY
