@@ -138,6 +138,10 @@ For fixed tail T_S=0.1363605111837387 s and dt=0.005 s, periodic_update_due part
 
 The scheduler continuum is now exactly finite: 4001 open due-word cells over a 20-s word at the carried tail T_S, plus 4002 threshold points requiring one-sided tolerance treatment. The Loewner tube map and phase-profile validator are implemented. The current replay artifact stores extrema and endpoint drift, but not the phase-indexed covariance centers P_E/P_O needed to define and test tube faces. This is an evidence-shape limitation, not a mathematical obstruction. The next native export must record the settled 4000-sample parity covariance profile for two consecutive source periods, after which all 4001 deterministic branches can be propagated against inflated spectral radii. Tail eigenvalue minima alone are not promoted to containment because they do not specify Loewner tube centers.
 
+## Two-period covariance profile export
+
+The native probe now exports the full 8000-sample settled parity covariance profile (two consecutive 20-s source periods), including scheduler elapsed and T_S at every sample, in compact OU3PRF1 binary format. The profile parser is tested. The two periods begin at scheduler elapsed 0.0235901065 s and 0.1149571761 s. Comparing covariance at equal source phase while ignoring scheduler phase gives spectral differences up to 0.00295580 in E and 0.00397450 in O (including 1.25 candidate inflation), far larger than the ~1.35e-8 minimum covariance scale. Therefore a source-phase-only periodic tube is invalid/too large; this is classification D for the proposed tube coordinates, not instability. The tube must be indexed jointly by source phase and scheduler due-word/elapsed branch. The 4001 exact scheduler cells already provide that finite second coordinate. Next certificate construction must build centers/radii per (source phase, scheduler cell), rather than comparing two arbitrary scheduler phases at the same source phase. No containment or r_tube result is promoted from the naive two-period comparison.
+
 ## Current limiter
 
 The decisive next quantity is an **all-time, every-window applied magnetic
