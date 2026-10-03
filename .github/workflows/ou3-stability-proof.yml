@@ -223,3 +223,32 @@ jobs:
             /tmp/ou3-mean/mean-action.bin
           retention-days: 7
           if-no-files-found: error
+  moving-compatibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install proof dependencies
+        run: python3 -m pip install numpy scipy mpmath matplotlib
+      - name: Validate all OU-III proof contracts and provenance
+        run: |
+          python3 -m tools.stability.ou3_theorem.build_evidence
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_*.py' -v
+      - name: Install native diagnostic dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
+      - name: Replay actual accepted magnetic information without promotion
+        run: |
+          python3 -m tools.stability.ou3_theorem.moving_compatibility_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-moving-compatibility.json
+          cat /tmp/ou3-moving-compatibility.json
+      - uses: actions/upload-artifact@v6
+        if: ${{ always() }}
+        with:
+          name: ou3-moving-compatibility-carried
+          path: /tmp/ou3-moving-compatibility.json
+          retention-days: 7
+          if-no-files-found: warn

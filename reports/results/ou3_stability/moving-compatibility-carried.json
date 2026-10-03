@@ -38,11 +38,12 @@
     "sigma_g": 0.00135,
     "sigma_m": 0.8
   },
-  "noise_profile_source": "tools/stability/ou3_theorem/world_frame_source_diagnostic.py",
+  "noise_profile_source": "moving_compatibility_probe.cpp: sigma_a=0.2 matches current theorem/default wrapper; sigma_g=0.00135 and sigma_m=0.8 match the world-frame fixture; this is not that fixture unchanged",
   "nonlinear_or_float32_all_time_totality_verified": false,
   "probe_sha256": "6e200ff601092987fb29b30e9b06f80ab8ce0fa11dacc6cebcc6d8589b8d2997",
   "qualification": "OU3_MOVING_COMPATIBILITY_CARRIED_V1",
   "result_type": "finite carried float32 diagnostic; not an interval theorem",
+  "same_as_world_frame_fixture": false,
   "service_window_coverage": "disjoint one-second sampled-root windows after BA activation plus 17 s",
   "shipping_behavior_changed": false,
   "shipping_header_sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",

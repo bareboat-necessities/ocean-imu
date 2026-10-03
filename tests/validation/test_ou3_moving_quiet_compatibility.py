@@ -57,6 +57,8 @@ class MovingQuietCompatibilityTests(unittest.TestCase):
         self.assertFalse(c['all_time_magnetic_service_verified'])
         self.assertFalse(c['all_placed_service_windows_verified'])
         self.assertFalse(c['full_shipping_counterexample_admitted'])
+        self.assertFalse(c['same_as_world_frame_fixture'])
+        self.assertEqual(c['noise_profile'],{'sigma_a':.2,'sigma_g':.00135,'sigma_m':.8})
         self.assertGreater(c['native']['service_min'],1)
         self.assertGreater(c['native']['active_step'],0)
         self.assertGreater(c['native']['tail_V_lower_min'],15)

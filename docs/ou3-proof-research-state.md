@@ -50,7 +50,8 @@ physical source is small enough for absolute .15 entry.
 ### Finite carried diagnostic, not an interval theorem
 
 `moving_compatibility_diagnostic.py` compiles the literal wrapper with temporary
-read-only F/H/K/S/reset taps and the existing world-frame proof noise profile.
+read-only F/H/K/S/reset taps and the recorded fixed diagnostic noise profile
+(sigma_a=.2, sigma_g=.00135, sigma_m=.8), not every deployment's default.
 The 240-s replay reaches Live at sample 17960 and refined-reference/active-BA at
 24016. It has 3756 accepted magnetic corrections. In 102 disjoint one-second
 windows after activation plus 17 s, the actual transported/innovation-whitened
@@ -106,6 +107,19 @@ still be connected through the actual startup/refinement/release state machine.
   their numerical fields, repaired their provenance, and renamed the appendix
   to .tex-part. This branch retains those corrections; no old numerical evidence
   is re-signed to conceal a source mismatch.
+* **E, CI layout corrected:** the full 628-test run rejected a separate OU-III
+  compatibility workflow under the existing single-workflow architecture guard.
+  Its job is now inside ou3-stability-proof.yml; the guard and all other jobs are
+  unchanged. The complete runner suite also needs matplotlib for its existing
+  figure-layout test; the missing dependency caused one import error and is now
+  installed explicitly. Its intercepted savefig also needs an explicit Agg
+  canvas; all geometry assertions are preserved. These CI errors have no
+  mathematical implication.
+* **E, diagnostic attribution corrected:** sigma_a=.2 matches the current
+  theorem/default wrapper, while sigma_g=.00135 and sigma_m=.8 match the earlier
+  world-frame fixture, whose sigma_a was .12. The replay is now labelled by its
+  actual fixed configuration, not falsely attributed to that entire fixture.
+  Neither native source nor numerical results were changed for this correction.
 * **Local full build:** `make all` stops in tests/ahrs compiling ahrs-qmekf-sim.cpp
   with `fatal error: Eigen/Dense: No such file or directory` at the default
   /usr/include/eigen3 fallback. The focused native probe was built using the

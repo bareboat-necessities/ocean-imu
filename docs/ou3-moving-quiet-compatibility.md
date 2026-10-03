@@ -199,8 +199,11 @@ not used to promote the pair bound into an all-time float32 theorem.
 The native driver runs the literal full shipping wrapper, including construction,
 H18, reference refinement, BA release, guard/Mahony, coupled tuner, OU/S chronology,
 actual covariance/gains/Joseph updates, resets and continuous magnetic processing.
-The noise profile is the existing `world_frame_source_diagnostic.py` profile, not
-a new tuned gate or a changed deployed default. Read-only temporary header taps
+The fixed diagnostic profile is sigma_a=0.2, sigma_g=0.00135 and sigma_m=0.8.
+The accelerometer value matches the current theorem and default wrapper; the
+other two values match the world-frame fixture. That older fixture uses sigma_a=0.12,
+so this replay is not its unchanged profile or every deployment's default.
+No configured value was retuned after observing this result. Read-only temporary header taps
 export F, H, K, the actual factorized innovation S and G. They do not replace the
 estimator. Four homogeneous probe columns represent both true heading/axial-BG
 pairs. Only these diagnostic columns restart at a service root; the estimator and

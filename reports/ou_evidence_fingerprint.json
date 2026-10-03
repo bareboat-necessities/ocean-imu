@@ -851,7 +851,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-compatibility-carried.json",
-      "sha256": "dd053a3dd21415d6f9b8534554a645aaf1bd66cc9b5d4b60c528f0b6bcb51964"
+      "sha256": "3550a5370afd2e112670bb140faf382c8825a042682738231b756ec0272562d8"
     },
     {
       "kind": "file",
@@ -876,7 +876,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "6fc2c452681f11b68c66f39e34a13d1c41cf7afee45ce98375af4f97b80cb3ad"
+      "sha256": "17284d2740d7fa00908f7d17295eee7665aa8619a0d3c3bf856bf045283a0caf"
     },
     {
       "kind": "file",
@@ -2214,7 +2214,7 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "3a7817bdea455de0a05abc7dad793ad43dd44415de50e4c52f05221391c81e0b",
+  "results_fingerprint": "be5f1e21c50d0d050d2bb242aa497768da905e00835adf7c1f5cf47b0300532d",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",

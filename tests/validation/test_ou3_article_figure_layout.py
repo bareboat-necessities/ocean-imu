@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import ou3_lever_arm_study as lever
 import ou3_engine_noise_mitigation as guard
 from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 
 def read_rows(path):
@@ -53,8 +54,11 @@ class ArticleHorizontalPanelTests(unittest.TestCase):
                         self.assertAlmostEqual(box.y1, boxes[0].y1)
                     for left, right in zip(boxes, boxes[1:]):
                         self.assertLess(left.x1, right.x0)
-                    fig.canvas.draw()
-                    renderer = fig.canvas.get_renderer()
+                    # savefig is intercepted; attach the renderer explicitly rather
+                    # than depending on pyplot's current or post-close canvas.
+                    canvas = FigureCanvasAgg(fig)
+                    canvas.draw()
+                    renderer = canvas.get_renderer()
                     # Tight extents include rendered labels, not out-of-view locator ticks.
                     artists = [*fig.axes, *fig.texts, *fig.legends]
                     for artist in artists:
