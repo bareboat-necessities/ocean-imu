@@ -109,6 +109,7 @@ int main(int argc,char**argv){
  double bay=0,pbay=0,qxz=0,resmag=0,normlin=0,mintilt=10,maxmetric=0,minmetric=1e100;
  Eigen::Matrix<float,21,21> Pcycle=Eigen::Matrix<float,21,21>::Zero(); bool have_cycle=false;
  double cycle_tau=0,cycle_sigma=0,cycle_rs=0,cycle_period=0,cycle_elapsed=0;
+  lowerP.setZero(); {const double qag=2.6521754857e-10,qba=1.25e-9,qlin=4.3051931518e-10;for(int i=0;i<6;++i)lowerP(i,i)=qag;for(int i=6;i<18;++i)lowerP(i,i)=qlin;for(int i=18;i<21;++i)lowerP(i,i)=qba;} lower_ready=true;
  for(int k=1;k<=int(end*200);++k){
   double t=k*.005,phase=nu*t,psi=.02*sin(phase),rate=.02*nu*cos(phase),ax=-.02*nu*nu*sin(phase);
   Eigen::Matrix3d U=Eigen::AngleAxisd(-psi,Eigen::Vector3d::UnitY()).toRotationMatrix();
