@@ -58,6 +58,10 @@ because the common Ry rotation cancels in the cross product and d_+/- are unit
 vectors orthogonal to e_x. This identity is retained symbolically before any
 intervalization.
 
+## Continuous hard-iron symmetry
+
+On the exact planar record the continuous hard-iron tracker cannot create a spurious accepted 3-D offset. Its excitation matrix is M=I-A' A with A the weighted mean of tilt rotations. Every rotation is about Y, so A e_y=e_y and M e_y=0. Therefore lambda_min(M)=0 and the literal information gate in ContinuousMagHardIronEstimator::solve_ fails. The continuous estimate is not promoted and the applied hard-iron correction remains its zero startup value on the exact zero-hard-iron history. The corrected magnetic input consequently retains norm 75 uT and the learned planar reference remains finite/nonzero.
+
 ## All-time acceptance
 
 After Live/refinement, the wrapper forwards every supplied 25-Hz magnetic call
