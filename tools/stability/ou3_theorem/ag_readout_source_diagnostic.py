@@ -167,6 +167,8 @@ def analyze(trace, dps=80):
                 f, q = mp.eye(21), None
                 f[:3, :3] += mp.matrix([[0, -z, y], [z, 0, -x], [-y, x, 0]])/2
                 injection = max(injection, mp.norm(d))
+            elif kind == 'adaptive_state':
+                continue
             else:
                 h, r = mat(e['H']), mat(e['R'])
                 rows.extend([list((h*t)[i, :]) for i in range(3)])
@@ -203,7 +205,7 @@ def analyze(trace, dps=80):
                 gg = mp.eye(21)
                 gg[:3, :3] += mp.matrix([[0, -z, y], [z, 0, -x], [-y, x, 0]])/2
                 mfull = gg*mfull
-            elif kind in ('sync', 'sync_completion'):
+            elif kind in ('sync', 'sync_completion', 'adaptive_state'):
                 pass
             else:
                 raise ValueError('unknown literal mean event')
@@ -347,6 +349,8 @@ def contraction_feasibility(trace, dps=60):
                 ops.append(('S', mp.matrix([[mp.mpf(x.numerator)/x.denominator for x in row] for row in inc])))
             elif kind == 'correction':
                 ops.append(('C', mat(e['H']), sym(mat(e['R']))))
+            elif kind == 'adaptive_state':
+                continue
             elif kind == 'reset':
                 x, y, z = [mp.mpf(float(r[0])) for r in e['d']]
                 g = mp.eye(n)
@@ -546,6 +550,8 @@ def enclose_exported_word(trace):
             if pending_prediction:
                 raise ValueError('missing sync/symmetry boundary before correction')
             events.append({'kind': kind, 'H': e['H'], 'V': rational_upper_factor(e['R'])})
+        elif kind == 'adaptive_state':
+            continue
         elif kind == 'reset':
             if pending_prediction:
                 raise ValueError('missing sync/symmetry boundary before reset')
