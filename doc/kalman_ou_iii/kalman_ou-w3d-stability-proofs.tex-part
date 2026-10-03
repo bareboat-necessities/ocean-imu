@@ -258,6 +258,39 @@ Bias norms are \(gs=.09806404839879003<B_{a,s}\), bias rates are zero, and
 FAST primitives vanish identically. Exact rational checks reproduce all margins.
 No all-time accepted-information premise is inferred from these source bounds.
 
+\subsection{Planar covariance parity and service phase}
+For the exact planar record, prediction and all measurement rows preserve the
+partition
+\[
+\begin{split}
+E={}&\{\theta_y,b_{g,y},v_{x,z},p_{x,z},S_{x,z},a_{w,x,z},b_{a,x,z}\},\\
+O={}&\{\theta_{x,z},b_{g,x,z},v_y,p_y,S_y,a_{w,y},b_{a,y}\}.
+\end{split}
+\]
+The blocks have dimensions 12 and 9.  For an XZ predicted vector, the skew
+attitude Jacobian maps X/Z residual rows to \(\theta_y\) and the Y row to
+\(\theta_{x,z}\); the OU predictor and S selector are axis-separable, and
+the Y-axis reset preserves the same partition.  Diagonal startup covariance
+therefore gives zero E/O cross covariance for the exact real-arithmetic branch.
+
+The auxiliary plus/minus service columns may be sum/difference transformed to
+these parity blocks, but the shipping service condition is not replaced: each
+physical \(+\) and \(-\) heading/BG pair retains its own 2-by-2 information
+test.  The exact field geometry gives
+\[
+ \|[-75R_y(-\psi)e_x]_\times d_\pm\|=75
+\]
+at every phase.
+
+A 20-s point covariance return is not a valid invariant target because the
+shipping progress-preserving S scheduler does not return to the same phase.
+At the carried tail \(T_S=0.1363605112\) s and the measured scheduler
+coordinate differs after 20 s even though the applied \(\tau,\sigma,R_S,T_S\)
+repeat to float precision.  Hence the rigorous Poincare object is a cell in
+\((P_E,P_O,\text{adaptive state},\text{scheduler phase})\), not a single
+covariance matrix.  The final-cycle all-IMU-root replay has service minimum
+above 7, but outward interval self-inclusion and the all-time floor remain open.
+
 \subsection{Same-record full covariance comparison}
 Identical initial estimator state and delivered prefixes imply identical complete
 internal executions by induction, including frontend, parameters, covariance,
