@@ -13,6 +13,7 @@ def status_report() -> dict:
         "two_timescale_joint_physical_gauge_exclusion":False,
         "displacement_excitation_to_full_moving_compatibility_exclusion":False,
         "absolute_moving_tilt_ba_separation":False,
+        "moving_measurement_compatible_quotient_formulation":True,
         "moving_measurement_compatible_quotient_theorem":False,
         "two_timescale_source_uniform_finite_error_supply":False,
         "marine_regime_complete_window_contract":True,
