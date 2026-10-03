@@ -15,7 +15,7 @@ def root_cells(horizon_s=60.):
  word boundaries.
  """
  if horizon_s not in (60.,100.):raise ValueError("certified horizons 60/100 s")
- imu=C["imu_bias"];m=C["marine_motion"];dt=30.
+ imu=C["imu_bias"];m=C["marine_motion"]
  coords=[]
  knots=[0.,30.,60.] if horizon_s==60 else [0.,30.,60.,90.,100.]
  for t in knots:

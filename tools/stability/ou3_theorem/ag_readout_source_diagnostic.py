@@ -96,6 +96,11 @@ def validate_physical_lift(trace):
     if not events:
         raise ValueError("physical lift requires events")
     for i, event in enumerate(events):
+        # The read-only tuner record is not an operation boundary. Its
+        # physical_t is printed at full precision while boundaries use
+        # std::to_string, so it is also left out of the chronology check.
+        if event.get("kind") == "adaptive_state":
+            continue
         missing = [key for key in required if key not in event]
         if missing:
             raise ValueError(f"event {i} missing physical lift fields: {missing}")
@@ -110,10 +115,10 @@ def validate_physical_lift(trace):
         value=event["estimator_state"]
         if len(value)!=21 or any(len(row)!=1 for row in value):
             raise ValueError(f"event {i} malformed estimator_state")
-    times = [float(event["physical_t"]) for event in events]
+    times = [float(event["physical_t"]) for event in events if event.get("kind") != "adaptive_state"]
     if any(b < a for a, b in zip(times, times[1:])):
         raise ValueError("physical lift time is not chronological")
-    return {"aligned_event_count": len(events),
+    return {"aligned_event_count": sum(event.get("kind") != "adaptive_state" for event in events),
             "all_literal_boundaries_have_p_v_S_a": True,
             "all_literal_boundaries_have_full_carried_truth_and_estimator_state": True,
             "native_literal_boundary_export_complete": True,
@@ -163,8 +168,6 @@ def analyze(trace, dps=80):
                 f[:3, :3] += mp.matrix([[0, -z, y], [z, 0, -x], [-y, x, 0]])/2
                 injection = max(injection, mp.norm(d))
             elif kind == 'adaptive_state':
-                # Same-history frontend/tuner snapshot: required by the physical lift,
-                # but it is not a Riccati/mean operation and contributes no H/R row.
                 continue
             else:
                 h, r = mat(e['H']), mat(e['R'])
@@ -203,8 +206,6 @@ def analyze(trace, dps=80):
                 gg[:3, :3] += mp.matrix([[0, -z, y], [z, 0, -x], [-y, x, 0]])/2
                 mfull = gg*mfull
             elif kind in ('sync', 'sync_completion', 'adaptive_state'):
-                # sync records alter covariance only; adaptive_state is a
-                # same-history observer snapshot and alters neither mean nor P.
                 pass
             else:
                 raise ValueError('unknown literal mean event')
@@ -549,6 +550,8 @@ def enclose_exported_word(trace):
             if pending_prediction:
                 raise ValueError('missing sync/symmetry boundary before correction')
             events.append({'kind': kind, 'H': e['H'], 'V': rational_upper_factor(e['R'])})
+        elif kind == 'adaptive_state':
+            continue
         elif kind == 'reset':
             if pending_prediction:
                 raise ValueError('missing sync/symmetry boundary before reset')
@@ -559,8 +562,6 @@ def enclose_exported_word(trace):
                 for j in range(3):
                     reset[i][j] += cross[i][j]/2
             events.append({'kind': kind, 'G': reset})
-        elif kind == 'adaptive_state':
-            continue
         elif kind == 'sync':
             if not pending_prediction:
                 raise ValueError('sync operand outside a prediction boundary')
@@ -640,6 +641,10 @@ def run(eigen, headings=('0', '0.001', '0.000001', 'wave')):
             local_defect=carried_local_defect_certificate(observed)
             # A failed parity is a diagnostic result until boundary continuity is
             # localized below; do not hide the first offending native boundary.
+            # The operation replays below see only literal operation events; the
+            # read-only adaptive_state record changes no estimator quantity.
+            operations = {**observed, 'events': [e for e in observed['events']
+                                                 if e.get('kind') != 'adaptive_state']}
             cases.append({'input_profile': heading,
                           'live_step': observed['live_step'], 'refined_step': observed['refined_step'],
                           'active_step': observed['active_step'],
@@ -647,10 +652,10 @@ def run(eigen, headings=('0', '0.001', '0.000001', 'wave')):
                           'physical_lift': lift,
                           'local_affine_defect': local_defect,
                           'physical_chain': paired_physical_reconstruction(observed),
-                          **analyze(observed)})
+                          **analyze(operations)})
             if heading in ('0', 'wave'):
-                cases[-1]['exact_exported_word_enclosure'] = enclose_exported_word(observed)
-                cases[-1]['contraction_feasibility'] = contraction_feasibility(observed)
+                cases[-1]['exact_exported_word_enclosure'] = enclose_exported_word(operations)
+                cases[-1]['contraction_feasibility'] = contraction_feasibility(operations)
     return {'qualification': 'OU3_CARRIED_SOURCE_READOUT_DIAGNOSTIC_V1',
             'shipping_header_sha256': hashlib.sha256(source.encode()).hexdigest(),
             'decimal_digits': 80, 'profile': 'construction through wrapper release; 225 to 225.32 s',

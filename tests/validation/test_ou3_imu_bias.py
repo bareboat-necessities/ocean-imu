@@ -53,7 +53,7 @@ class ImuBiasTests(unittest.TestCase):
         self.assertFalse(continuation_admitted(good,BiasLimits.from_constants()))
 
     def test_missing_fast_parameters_do_not_mean_independent_noise(self):
-        limits=BiasLimits.from_constants()
+        limits=replace(BiasLimits.from_constants(),accel_fast_window=None,gyro_fast_window=None)
         self.assertFalse(limits.temporal_parameters_present)
         out=audit_bias_trace([BiasSample("h",0,(0,0,0),(0,0,0)),
                               BiasSample("h",1,(0,0,0),(0,0,0))],limits)

@@ -1,5 +1,4 @@
 """Verify projector inverse against literal goLive Racc interval."""
-import json
 from pathlib import Path
 from .projector_innovation_inverse import direction_free_bounds,inverse_coefficients
 from .release_interval_propagation import one_sample_boxes

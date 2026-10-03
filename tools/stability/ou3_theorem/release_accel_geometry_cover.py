@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import heapq,math,numpy as np
 from .golive_release_seed import covariance_interval
 from .release_interval_propagation import one_sample_boxes
-from .interval_riccati_21 import predict_covariance,verified_joseph_update_psd,diagonal_interval
+from .interval_riccati_21 import predict_covariance,verified_joseph_update_psd
 from .accel_geometry_cell import accel_h_from_force_rotation,rotation_cell_from_ball
 
 @dataclass(frozen=True)
@@ -12,8 +12,6 @@ class AFCell:
  theta_lo:np.ndarray;theta_hi:np.ndarray;f_lo:np.ndarray;f_hi:np.ndarray;depth:int=0
  def widths(self):return np.r_[self.theta_hi-self.theta_lo,self.f_hi-self.f_lo]
  def split(self,j):
-  if j<3:lo=self.theta_lo;hi=self.theta_hi;fl=self.f_lo;fh=self.f_hi
-  else:lo=self.f_lo;hi=self.f_hi;fl=self.theta_lo;fh=self.theta_hi
   if j<3:
    m=(self.theta_lo[j]+self.theta_hi[j])/2
    a,b=self.theta_hi.copy(),self.theta_lo.copy();a[j]=m;b[j]=m

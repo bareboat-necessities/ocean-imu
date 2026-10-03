@@ -21,7 +21,7 @@ def gram_innovation_from_factor(H:IMat,L:IMat,R:IMat):
 def woodbury_inverse_point_factor(Hmid,Lmid,Rdiag):
  """Exact midpoint low-rank identity used as center, not as theorem enclosure."""
  H=np.asarray(Hmid,float);L=np.asarray(Lmid,float);r=np.asarray(Rdiag,float)
- Ri=np.diag(1/r);Y=H@L
+ Y=H@L
  # S is only 3x3; this form keeps PSD construction explicit.
  S=np.diag(r)+Y@Y.T
  return np.linalg.inv(S),S

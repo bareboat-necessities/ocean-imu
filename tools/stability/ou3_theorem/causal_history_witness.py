@@ -43,7 +43,7 @@ class CausalWitnessState:
   # its whole-box lower span reaches the premise. Absence is represented by a
   # degenerate unresolved pair so callback cannot silently pass.
   from .marine_magnetic_qcqp import difference_span_witness,gravity_direction_span_witness,TRUE
-  for i,t0 in enumerate(self.times):
+  for t0 in self.times:
    if t0+T>self.times[-1]+1e-12:break
    ids=[j for j,t in enumerate(self.times) if t0-1e-12<=t<=t0+T+1e-12]
    found=None

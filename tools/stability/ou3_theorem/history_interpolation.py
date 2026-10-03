@@ -1,6 +1,6 @@
 """Outer interpolation of shared history knots to delivered-sample cells."""
 from __future__ import annotations
-import re,math
+import re
 from .causal_tuner_interval import I
 
 _PAT=re.compile(r"^(.*)_([0-2])_([0-9]+(?:\.[0-9]+)?)$")
@@ -41,7 +41,7 @@ def sample_history(cell,times,constants):
    # Lipschitz envelopes; later causal consistency intersects p'=v, v'=a.
    row[f"physical_p_{a}"]=lipschitz_outer(k[("physical_p",a)],t,m["V_max_mps"],m["P_max_m"])
    row[f"physical_v_{a}"]=lipschitz_outer(k[("physical_v",a)],t,m["A_max_mps2"],m["V_max_mps"])
-   # For a unit gravity direction expressed in the rotating body frame,\n   # ||gdot_body|| = ||omega x g_body|| <= Omega_max.  Retain that literal\n   # MARINE MOTION coupling so source-knot subdivision can actually tighten\n   # the causal Mahony path instead of being erased by a full [-1,1] box.\n   row[f"gravity_dir_{a}"]=lipschitz_outer(k[("gravity_dir",a)],t,m["Omega_max_rad_s"],1.)
+   # For unit gravity direction in the rotating body frame,\n   # ||gdot_body|| = ||omega x g_body|| <= Omega_max.\n   row[f"gravity_dir_{a}"]=lipschitz_outer(k[("gravity_dir",a)],t,m["Omega_max_rad_s"],1.)
    row[f"mag_field_{a}"]=bounded_outer(k[("mag_field",a)],t,constants["magnetic_service"]["field_norm_max_uT"])
   out.append(row)
  return out

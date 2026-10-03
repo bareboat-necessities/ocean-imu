@@ -26,7 +26,7 @@ class ForceCone:
   ||[rho n-rhoc n0]x||2 = ||rho n-rhoc n0||
      <= drho + rho_hi*2 sin(alpha/2).
   """
-  rc=.5*(self.rho_lo+self.rho_hi);dr=.5*(self.rho_hi-self.rho_lo)
+  dr=.5*(self.rho_hi-self.rho_lo)
   return dr+self.rho_hi*2*math.sin(.5*self.half_angle)
 
 def accel_h_force_cone(cone:ForceCone,R_mid,R_rad):
@@ -38,7 +38,8 @@ def accel_h_force_cone(cone:ForceCone,R_mid,R_rad):
  for i in range(3):hm[i,18+i]=1.
  return IMat(tuple(map(tuple,hm)),tuple(map(tuple,hr)))
 
-def octahedral_direction_cones(half_angle=math.acos(1/math.sqrt(3))):
+_OCTAHEDRAL_HALF_ANGLE=math.acos(1/math.sqrt(3))
+def octahedral_direction_cones(half_angle=_OCTAHEDRAL_HALF_ANGLE):
  """Six axis cones cover S^2 when half-angle >= acos(1/sqrt(3))."""
  axes=[]
  for i in range(3):

@@ -4,7 +4,7 @@ Constraints attach to existing source symbols; no independent component maxima.
 """
 from __future__ import annotations
 from dataclasses import dataclass
-import json,math
+import json
 from pathlib import Path
 import numpy as np
 ROOT=Path(__file__).resolve().parents[3]

@@ -134,7 +134,7 @@
     },
     {
       "path": "tests/validation/test_ou3_imu_bias.py",
-      "git_blob_sha": "4d8db7645ba3d5a319c8a23735c9b22eaa35bafc"
+      "git_blob_sha": "8312dc003724bc8f16b9cedb66ea9759e91d19c5"
     },
     {
       "path": "tests/validation/test_ou3_marine_motion.py",
@@ -150,7 +150,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "98d561f2903afe35afa190614fa07d496634c8ff"
+      "git_blob_sha": "dc3ec715873520abd480a0d7be33c1dfc9bc8aac"
     },
     {
       "path": "tools/stability/ou3_theorem/tail_stability.py",
@@ -166,7 +166,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/interval_riccati_21.py",
-      "git_blob_sha": "6c3ae4d42d06cc96a72e927fe80fee10a3b16356"
+      "git_blob_sha": "f02c0c3fa709ff5c5985d24a5bd706e14e233d95"
     },
     {
       "path": "tests/validation/test_ou3_interval_riccati_21.py",
@@ -342,11 +342,11 @@
     },
     {
       "path": "tools/stability/ag_readout_source.cpp",
-      "git_blob_sha": "cf3fbf38ac35db1cf458419425bbb26b85954ed4"
+      "git_blob_sha": "4f0e9b941acbd2121c1f3072db853e5dee9b4bdf"
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py",
-      "git_blob_sha": "f8855293c145e3562016e4526e5f8efe094e6741"
+      "git_blob_sha": "f08452ea50760cc455e2b153b8e226901f0807b0"
     },
     {
       "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
@@ -358,7 +358,7 @@
     },
     {
       "path": "reports/results/ou3_stability/construction-history-feasibility.json",
-      "git_blob_sha": "168fde66301d95e85d66276224183ab02ca335db"
+      "git_blob_sha": "01a5506d18778cac1e052c7cfe5e81b8dd2c0106"
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
@@ -374,7 +374,7 @@
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "git_blob_sha": "b5bcf0104979652237a810beb5a3eddebb8989c9"
+      "git_blob_sha": "3c799a635582cd0f72b468059a244b05e8679141"
     },
     {
       "path": "tests/validation/test_ou3_construction_mean_action.py",
@@ -410,7 +410,7 @@
     },
     {
       "path": "docs/ou3-signed-temporal-continuation.md",
-      "git_blob_sha": "62ed1136efc4c206b364c67e7bc85fc6cfafda69"
+      "git_blob_sha": "1e71e9ff72b5b8e689ffbec7f1204b2b6dd3bc52"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal_diagnostic.py",
@@ -422,7 +422,7 @@
     },
     {
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "git_blob_sha": "9fc98561d7669d2ed5d2ab676c42c03c308572dd"
+      "git_blob_sha": "adfbbdb6495f96d04d64d9dd3b0afba5db6316b5"
     },
     {
       "path": "tools/stability/ou3_theorem/signed_temporal_balance.py",
@@ -430,7 +430,7 @@
     },
     {
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "git_blob_sha": "8eb20f1a00ca77b79ac35d947881d9a16b1fef52"
+      "git_blob_sha": "947ad7f3618e247141a911e671104615524108b3"
     },
     {
       "path": "docs/ou3-regime-design.md",
@@ -446,15 +446,15 @@
     },
     {
       "path": "tools/stability/ou3_theorem/moving_pivots.py",
-      "git_blob_sha": "2326d917c33a561a4966b6a6d968e60914be186c"
+      "git_blob_sha": "582ee15aa19c91ed5a7ce5928662ffc39c77246b"
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "4e20e01e1d2e0e95e16e44bec97eacfa2ac58fb8"
+      "git_blob_sha": "0b222fff5a0059b95ce268a55b44be5a718caad0"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
-      "git_blob_sha": "d2187bb518bca25e901f7444a4cbd4d379a23398"
+      "git_blob_sha": "8a05fd09532d252b63b9c2bcc1156af567d54e1f"
     },
     {
       "path": "tests/validation/test_ou3_regimes.py",
@@ -518,7 +518,7 @@
     },
     {
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "git_blob_sha": "06f0f9598cd9a046c8621e0e1549645ea6c9f91b"
+      "git_blob_sha": "adf05ed2eb677569eca874d7c113cd25d3461066"
     },
     {
       "path": "docs/ou3-world-frame-rows.md",
@@ -530,7 +530,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/world_frame_source_diagnostic.py",
-      "git_blob_sha": "4f7ec948ddd0ac26ef577fd038d34d6544f8f4f1"
+      "git_blob_sha": "706ffc2d42c5eddb3e541d1c7b27b87fcf8b5463"
     },
     {
       "path": "tests/validation/test_ou3_world_frame.py",
@@ -542,7 +542,7 @@
     },
     {
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "git_blob_sha": "2e6b651a638a7033466d2f144f491e902e4cd70c"
+      "git_blob_sha": "38ce083d486db6335bc4dcd3c2f1438ed324947f"
     },
     {
       "path": "tools/stability/ou3_theorem/aw_covariance_ceiling.py",
