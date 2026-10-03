@@ -31,8 +31,30 @@ def variational_lower_from_action(action):
     return {"action_lambda_max":float(ev[-1]),"covariance_scalar_floor":float(1/ev[-1]),
             "covariance_matrix":np.linalg.inv(A).tolist()}
 
+
+def ag_trial_action(*,T=1.0,gyro_density=.00135,bg_rw=1e-10,
+                    acc_count=251,acc_h=30.0,acc_R=.04,
+                    mag_count=26,mag_h=75.0,mag_R=.64):
+    """Explicit linear endpoint path theta=t/T*theta1, bg=t/T*bg1.
+
+    Dynamics theta_dot=-bg+u_g, bg_dot=u_b. Choosing this affine path gives
+    u_b=bg1/T and u_g=theta1/T+(t/T)bg1. Integrating the process action and
+    adding maximal direct measurement information yields an upper endpoint
+    action. It is deliberately more informative than literal rows; therefore
+    it is usable only after the Schur/oracle comparison is discharged.
+    """
+    import numpy as np
+    sg2=gyro_density**2; sb2=bg_rw**2
+    A=np.zeros((2,2))
+    # integral (theta/T + t bg/T)^2/sg2
+    A[0,0]+=1/(T*sg2);A[0,1]+=1/(2*sg2);A[1,0]+=1/(2*sg2);A[1,1]+=T/(3*sg2)
+    A[1,1]+=1/(T*sb2)
+    # theta(t_i)=(t_i/T) theta1; worst sum <= count for endpoint coefficient.
+    A[0,0]+=acc_count*acc_h**2/acc_R+mag_count*mag_h**2/mag_R
+    return variational_lower_from_action(A)
+
 def certificate():
-    counts=event_counts()
+    counts=event_counts(); ag=ag_trial_action(acc_count=counts["acc_max"],mag_count=counts["mag_max"])
     return {
       "qualification":"OU3_PLANAR_SCHEDULER_PHASE_LOWER_CELL_V1",
       "representation":"one-second variational endpoint action, separately on exact 12/9 parity blocks",
@@ -40,6 +62,8 @@ def certificate():
       "scheduler_phase_handling":"use maximal S-event information in the action upper bound; this is valid for every initial elapsed in [0,T_S)",
       "correction_information_handling":"literal positive-noise measurement action; accel nuisance retained by complete parity-block path, magnetic rows retained separately when constructing the covariance floor",
       "process_handling":"literal AG, LIN-OU and BA process action over the same one-second path; no one-step scalar process floor substituted",
+      "ag_trial_covariance_floor":ag,
+      "ag_trial_role":"conditional upper-action feasibility pending literal Schur/oracle dominance; not promoted as lower cell",
       "even_action_matrix_verified":False,
       "odd_action_matrix_verified":False,
       "lower_cell_verified":False,
