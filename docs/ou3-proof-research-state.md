@@ -1,5 +1,9 @@
 ## FAST signed-primitive tightening for guard: adjacent-sample route does not improve the bound
 
+## Measurement-compatible quotient/tube (2026-10-02)
+
+`docs/ou3-compatible-quotient-tube.md` now defines the covariance-metric quotient by the actual word-dependent one-dimensional attitude/BA compatibility line. With J=P^-1 and J-normalized r, Pi_Q=r r' J and Pi_perp=I-Pi_Q give the exact identity V=alpha^2+V_perp. `compatibility_quotient.py` also derives the finite-word quotient map xi_N=M_Q xi_0+b_Q+C_Q alpha_0, making rotation/transport of the physical gauge an explicit same-history transverse forcing rather than silently killing it. Existing kernel-restricted action becomes the transverse coercivity mechanism. Algebra/formulation is PROVED; source-uniform finite gauge radius, linked quotient supply and every-prefix tube retention remain OPEN.
+
 ## Exact MOVING tilt--BA gauge obstruction (2026-10-02)
 
 The proposed absolute MOVING separation lemma is false under the current physical contract. `docs/ou3-moving-gauge-obstruction.md` gives an analytical class-B obstruction: two indefinitely MOVING histories satisfy the same 30-s 2-deg roll span and .03-m displacement span yet differ by a constant roll about B=75e_x and an admitted persistent SLOW BA history. Delivered accel/gyro/mag records, and therefore deterministic shipping/magnetic-service chronology, are identical. FAST components are zero. Current limiter: formulate the finite-error theorem on the measurement-compatible quotient/tube in BOTH STILL and MOVING; do not claim MOVING alone yields absolute physical tilt/BA identifiability and do not strengthen physical assumptions merely to remove this witness.
