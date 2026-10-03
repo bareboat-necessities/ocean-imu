@@ -524,6 +524,46 @@ This is an algebraic implication only; source-uniform bounds on its
 same-history coefficients remain separate obligations.
 \end{proposition}
 
+\begin{corollary}[Sharp linked supply, retention and finite entry]
+For fixed $M,b,J_0,J_N,\gamma$ in the proposition, the additive constant
+\[
+ \chi_\gamma=b^TJ_Nb+
+ (M^TJ_Nb)^TG_\gamma^{-1}(M^TJ_Nb)
+\]
+is minimal over unrestricted root errors $e_0$: equality is attained at
+$e_0=G_\gamma^{-1}M^TJ_Nb$.  Equivalently, if
+$P_0=L_0L_0^T$, $P_N=L_NL_N^T$,
+$H=L_N^{-1}ML_0$, $\beta=L_N^{-1}b$ and
+$\Delta=I-H^TH$, then
+\[
+ \chi_\gamma=\norm{\beta}^2+
+ (H^T\beta)^T(\Delta-\gamma I)^{-1}H^T\beta .
+\]
+If on one reachable history class $\gamma\ge\gamma_*>0$ and
+$\chi_\gamma\le\chi_*$, then
+\[
+ V_n\le r_*^2+(1-\gamma_*)^n(V_0-r_*^2),
+ \qquad r_*^2=\chi_*/\gamma_* .
+\]
+Root retention in $V\le C$ requires $\chi_*\le\gamma_*C$.
+Finite entry into $V<r_{\rm in}^2$ requires the strict inequality
+$r_*<r_{\rm in}$; equality guarantees at most asymptotic approach.
+
+Every-prefix retention is a separate linked condition.  For fixed prefix data
+$(M_\ell,b_\ell,J_\ell)$, a sufficient S-procedure certificate is the
+existence of $\mu_\ell\ge0$ such that
+\[
+\begin{bmatrix}
+ \mu_\ell J_0-M_\ell^TJ_\ell M_\ell&
+ -M_\ell^TJ_\ell b_\ell\\
+ -b_\ell^TJ_\ell M_\ell&
+ C_{\rm pre}-b_\ell^TJ_\ell b_\ell-\mu_\ell C
+\end{bmatrix}\succeq0 .
+\]
+These statements are algebraic implications.  Their source-uniform use still
+requires $M_\ell,b_\ell,J_\ell$ to arise from the same shipping history.
+\end{corollary}
+
 \paragraph{Longer certified proofs.}
 The complete-word LIN/$S$ null reduction, regular-root covariance lower
 comparison, FAST Abel lemmas, backward AW reader, physical HistoryCell
