@@ -244,3 +244,75 @@ upper bound, not an admission witness. Finite replay scope is not a relaxation
 that can be promoted to an all-time theorem. No shipping instability counterexample
 has been certified. The local qualified theorem, homogeneous loss identities and
 forcing-aware completed-square algebra remain valid.
+
+
+## M5. Planar magnetic-service reference channel and remaining perturbation
+
+The all-time service calculation can be reduced much further before any interval
+enclosure.  On the planar witness the physical heading axis is the body gravity
+direction
+\[
+h_\pm(t)=R_y(-\psi(t))(0,\pm\sin\theta,\cos\theta)^T,
+\]
+whereas the body magnetic field is \(B_b(t)=75R_y(-\psi(t))e_x\).  Hence
+\(h_\pm(t)^T B_b(t)=0\) identically and the literal magnetic Jacobian has direct
+heading sensitivity of constant norm 75 at every magnetic epoch.  This is why
+the finite service probe correctly injects the heading/BG roots along \(h_\pm\);
+the magnetic null axis \(R_y(-\psi)e_x\) is a different coordinate.
+
+As a reference calculation, suppress the small rotation of the heading/BG basis
+over one magnetic gap and retain the literal scalar AG process parameters.  With
+magnetic gap \(h_m=.04\) s, field \(B=75\), \(R_m=.8^2\), gyro density
+\(q_g^{1/2}=.00135\), gyro-bias RW density \(q_b=10^{-11}\), and the theorem's
+BG normalization \(c_b=.02\), use
+\[
+ F=\begin{bmatrix}1&h_m\\0&1\end{bmatrix},\qquad
+ H=[B,0],
+\]
+with the exact integrated white-noise covariance for this constant-axis pair.
+The handoff yaw variance is \(.087^2\) and the BG variance is \(10^{-6}\).
+After one magnetic correction the reference covariance is already strictly
+below the deliberately loose Loewner envelope
+\[
+ D=\operatorname{diag}(10^{-3},10^{-5}),
+\]
+and one complete predict/correct reference step maps \(D\) strictly inside
+itself.  Thus \(D\) is an easy reference Riccati supersolution, not a fitted
+steady-state covariance.
+
+Starting any one-second reference service word at \(D\), propagating the
+literal sequential innovation covariance and correction factors for 25 magnetic
+epochs, and injecting root coordinates \(\operatorname{diag}(1,.02)\), gives
+\[
+ \lambda_{\min} I_{\rm ref}(D)=5.97918\ldots > 1.
+\]
+Starting at the limiting reference Riccati orbit gives \(7.02920\ldots\), which
+explains the carried full-filter value \(7.0247646\) without using it as proof.
+The important certified target is not the last digits: the loose reference
+envelope still leaves about \(4.97\) units above the required \(\mu_M=1\).
+
+This does **not** yet certify MAGNETIC SERVICE for the shipping witness.  The
+remaining object is now a perturbation theorem, not a general covariance
+theorem: on every one-second word, compare the literal transported/whitened
+heading/BG Gram to the reference Gram while retaining (i) the
+\(|\dot\psi|\le .02\pi/10\) rotating basis, (ii) all actual accelerometer,
+S and magnetic Joseph corrections, (iii) quaternion reset congruences, and
+(iv) the actual innovation covariance.  It is sufficient to prove the linked
+same-word bound
+\[
+ \|I_{\rm ship}-I_{\rm ref}\|_2 < 4.9.
+\]
+By Weyl this implies \(\lambda_{\min}I_{\rm ship}>1\) for every placed
+one-second service window.  The carried discrepancy is only about .00444 in
+the minimum eigenvalue, so the available reference reserve is roughly three
+orders of magnitude larger than the observed effect; that observation is
+feasibility evidence only.  The perturbation must be enclosed analytically or
+by a source-uniform interval certificate before M3 can be promoted to a fully
+admitted MOVING obstruction.
+
+Structures preserved: literal AG process noise, actual innovation whitening,
+actual correction/reset chronology, the same physical witness and the same
+MAGNETIC SERVICE definition.  Relaxations introduced: the scalar reference
+channel freezes the within-gap heading basis only to define the comparison
+object; it is not substituted for the shipping channel and cannot itself
+promote admission.
