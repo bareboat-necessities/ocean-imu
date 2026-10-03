@@ -318,10 +318,24 @@ After the complete LIN/\(S\) reduction, recurring magnetic rows and literal acce
 At an active A21 accelerometer correction the literal accelerometer-bias Jacobian has the identity BA column.  Consequently, after the other zero-action rows fix a surviving attitude amplitude, BA compatible with zero accelerometer action is unique; BA cannot supply an additional independent kernel direction.
 \end{lemma}
 
-\begin{lemma}[Same-history physical-to-nominal bridge --- CONDITIONAL]
-Under the stated MARINE MOTION, SLOW+FAST IMU and MAGNETIC SERVICE hypotheses, persistence of a nonzero regular-word compatibility direction implies a signed physical/nominal compatibility functional on the same history.  The derived A* geometry and signed-source machinery provide the required form without assuming independent nominal acceleration, bias, or tuner trajectories.
+\begin{lemma}[Absolute MOVING tilt--BA separation obstruction --- PROVED]
+With \(\phi(t)=1^\circ\sin(2\pi t/30)\), \(p(t)=0.015\sin(2\pi t/30)e_x\),
+\(B=75e_x\), and \(\delta=2\arctan(1/200)\), compare
+\(R_0=R_x(\phi)\) and \(R_1=R_x(\phi+\delta)\).  Zero gyro/FAST biases and
+\[
+ b_{a,1}=R_0^T(a-ge_z)-R_1^T(a-ge_z)
+\]
+give identical delivered accelerometer, gyro and magnetic records. Every complete
+30-s window has gravity span \(2^\circ\) and displacement diameter
+\(0.03\,\mathrm m\), while \(\|b_{a,1}\|=0.098065274192<B_{a,s}\) and
+\(\|\dot b_{a,1}\|_\infty=0.000358468690<D_{a,s}\).
+Thus current qualified MOVING does not imply strict absolute physical tilt--BA
+separation.
 \end{lemma}
-\noindent\textbf{Open premise:} the current causal physical HistoryCell cover must certify the quantitative bridge uniformly over all reachable histories and prefixes.
+\noindent\textbf{Consequence:} the absolute MOVING physical-to-nominal bridge
+is invalid as a universal lemma (failure class B, not shipping instability).
+The continuation must use a measurement-compatible quotient/tube without
+strengthening the physical assumptions.
 
 \begin{lemma}[H18 LIN bounded-input/bounded-state release --- CONDITIONAL]
 With held BA treated as a bounded input, compact captured attitude/gyro-bias state, literal H18 covariance chronology and finite magnetic-reference refinement imply a compact H18 release image whenever the refinement/release state machine completes in finite time.
