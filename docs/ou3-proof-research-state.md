@@ -64,6 +64,10 @@ These are NOT all placed windows, NOT an all-time MAGNETIC SERVICE certificate,
 NOT a full nonlinear HistoryCell enclosure, and NOT a float32 totality theorem.
 The finite source record also does not qualify an assembled physical IMU.
 
+## Consolidated compatibility quotient
+
+The covariance-metric quotient/tube work formerly isolated in PR #650 is now carried on this branch. For a literal certified one-dimensional compatibility line r at a root with J=P^-1, normalize r^T J r=1 and use Pi_Q=r r^T J, Pi_perp=I-Pi_Q. Then V=alpha^2+V_perp exactly. Across a finite same-history word the quotient map is xi_N=M_Q xi_0+b_Q+C_Q alpha_0; the gauge-to-transverse term is retained as forcing. This algebra is covered by compatibility_quotient.py and its regression tests. Source-uniform A_Q, linked quotient supply and every-prefix tube retention remain OPEN. The MOVING family's all-time MAGNETIC SERVICE admission also remains OPEN; the quotient construction does not promote that family to a full-premise counterexample.
+
 ## Current limiter
 
 The decisive next quantity is an **all-time, every-window applied magnetic
