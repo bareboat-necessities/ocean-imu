@@ -161,23 +161,43 @@
       "open_dependencies": []
     },
     {
-      "id": "physical_nominal_bridge",
+      "id": "moving_gauge_obstruction",
       "kind": "lemma",
-      "latex_title": "Same-history physical-to-nominal bridge --- CONDITIONAL",
-      "status": "CONDITIONAL",
+      "latex_title": "Absolute MOVING tilt--BA separation obstruction --- PROVED",
+      "status": "PROVED",
       "assumptions": [
-        "MARINE MOTION",
-        "IMU BIAS",
-        "MAGNETIC SERVICE",
-        "same-history chronology"
+        "current MARINE MOVING T_E=T_P=30 s, theta_E=2 deg, P_E=.03 m",
+        "current SLOW+FAST IMU envelopes",
+        "B=75 e_x within current geomagnetic envelope",
+        "same deterministic shipping initial state and accepted magnetic chronology"
       ],
       "proof_modules": [
-        "tools/stability/ou3_theorem/literal_history_leaf_propagator.py",
-        "tools/stability/ou3_theorem/same_history_geometry_residual.py"
+        "tools/stability/ou3_theorem/moving_gauge_obstruction.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/moving-gauge-obstruction-certificate.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "compatibility_quotient",
+      "kind": "lemma",
+      "latex_title": "Covariance-metric compatibility quotient --- PROVED algebraically",
+      "status": "PROVED",
+      "assumptions": [
+        "SPD shipping root covariance",
+        "nonzero literal one-dimensional compatibility line when present"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/compatibility_quotient.py",
+        "tools/stability/ou3_theorem/kernel_restricted_action.py",
+        "tools/stability/ou3_theorem/compatibility_line_interval.py"
       ],
       "certificates": [],
       "open_dependencies": [
-        "source-uniform positive A* compatibility margin on every reachable HistoryCell and prefix"
+        "source-uniform finite gauge radius",
+        "same-HistoryCell quotient completed-square supply",
+        "every-prefix tube retention"
       ]
     },
     {
@@ -373,46 +393,6 @@
         "reports/results/ou3_stability/provenance.json"
       ],
       "open_dependencies": []
-    },
-    {
-      "id": "moving_gauge_obstruction",
-      "kind": "lemma",
-      "latex_title": "Absolute MOVING tilt--BA separation obstruction --- PROVED",
-      "status": "PROVED",
-      "assumptions": [
-        "current MARINE MOVING T_E=T_P=30 s, theta_E=2 deg, P_E=.03 m",
-        "current SLOW+FAST IMU envelopes",
-        "B=75 e_x within current geomagnetic envelope",
-        "same deterministic shipping initial state and accepted magnetic chronology"
-      ],
-      "proof_modules": [
-        "tools/stability/ou3_theorem/moving_gauge_obstruction.py"
-      ],
-      "certificates": [
-        "reports/results/ou3_stability/moving-gauge-obstruction-certificate.json"
-      ],
-      "open_dependencies": []
-    },
-    {
-      "id": "compatibility_quotient",
-      "kind": "lemma",
-      "latex_title": "Covariance-metric compatibility quotient --- PROVED algebraically",
-      "status": "PROVED",
-      "assumptions": [
-        "SPD shipping root covariance",
-        "nonzero literal one-dimensional compatibility line when present"
-      ],
-      "proof_modules": [
-        "tools/stability/ou3_theorem/compatibility_quotient.py",
-        "tools/stability/ou3_theorem/kernel_restricted_action.py",
-        "tools/stability/ou3_theorem/compatibility_line_interval.py"
-      ],
-      "certificates": [],
-      "open_dependencies": [
-        "source-uniform finite gauge radius",
-        "same-HistoryCell quotient completed-square supply",
-        "every-prefix tube retention"
-      ]
     },
     {
       "id": "regional_theorem",
