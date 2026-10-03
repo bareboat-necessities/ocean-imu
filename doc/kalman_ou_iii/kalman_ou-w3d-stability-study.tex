@@ -10,7 +10,22 @@
 \begin{document}\maketitle
 
 \begin{abstract}
-This paper studies regional practical stability of the shipping OU--III marine inertial estimator without replacing its deployed prediction, measurement chronology, adaptive tuning, reset, bias handling, or scheduling by a surrogate filter. The proof uses one same physical and sensor history throughout construction, capture, magnetically informed H18, refinement/release, recurring A21, and regional practical stability. Marine motion, magnetic service, and a two-timescale delivered-IMU qualification define the source class. The local real-arithmetic theorem is retained on its qualified region. The outer proof is constructive but not yet complete: a causal interval HistoryCell propagator advances the literal frontend, tuner, mean and covariance from physical input coordinates only, with dependency-preserving normalization and FAST signed-primitive bounds. If an enclosure is unresolved, only physical/sensor history coordinates may be subdivided; generated quantities are never independently split. The remaining obligations include source-uniform finite-error release/recurrence and finite-precision closure. Absolute physical-error entry cannot be imposed during indefinite stillness. An exact moving sensor-compatible pair also defeats the proposed gravity-span/bias-variation separation step; its all-time applied magnetic-service admission remains open. End-to-end shipping stability is therefore not yet claimed.
+This paper studies regional practical stability of the deployed OU--III marine
+inertial estimator using its literal 21-state prediction, accelerometer and
+magnetic corrections, $S=0$ pseudo-measurements, bias projection, Mahony
+frontend, vibration guard, adaptive wave tuning, covariance resets and
+scheduler.  The source class is stated explicitly through MARINE MOTION,
+SLOW+FAST delivered-IMU and MAGNETIC SERVICE assumptions.  A retained local
+real-arithmetic stability theorem is proved on $\sqrt V\le0.15$, together
+with the structural prediction, correction, reset, kernel, covariance and
+same-history source lemmas required by the outer argument.  The measurement
+map possesses a genuine attitude/accelerometer-bias compatibility fibre, so a
+regional theorem cannot require universal convergence of the absolute physical
+decomposition.  The appropriate outer statement combines bounded motion along
+the compatible gauge with strict contraction transverse to it.  The regional
+theorem remains open only on the explicitly listed source-uniform release,
+magnetic-admission, quotient-coercivity, finite-error, nonlinear and
+finite-precision premises.
 \end{abstract}
 
 \section{Shipping model and theorem scope}
