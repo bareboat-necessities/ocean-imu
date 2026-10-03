@@ -24,7 +24,18 @@ def instrument(text):
      nonlocal s
      assert s.count(a)==1,(a,s.count(a));s=s.replace(a,b)
     once('    apply_pending_aw_covariance_inflation_();', '''    if (moving_recording) {
-            moving_prediction(F_AA.data(),F_LL.data(),acc_bias_updates_enabled_ ? std::exp(-Ts/std::max(T(1e-3),tau_bacc_)) : T(1));
+            Eigen::Matrix<T,3,3> Qba_diag = Eigen::Matrix<T,3,3>::Zero();
+            if constexpr (with_accel_bias) {
+                const T tau_b_dbg = std::max(T(1e-3), tau_bacc_);
+                const T phi_b_dbg = acc_bias_updates_enabled_ ? std::exp(-Ts/tau_b_dbg) : T(1);
+                if (acc_bias_updates_enabled_) {
+                    const T qd_dbg = -T(0.5)*tau_b_dbg*std::expm1(-T(2)*Ts/tau_b_dbg);
+                    Qba_diag = Q_bacc_*qd_dbg;
+                }
+                moving_prediction(F_AA.data(),F_LL.data(),Q_AA.data(),Q_LL.data(),phi_b_dbg,Qba_diag.data(),Pext.data());
+            } else {
+                moving_prediction(F_AA.data(),F_LL.data(),Q_AA.data(),Q_LL.data(),T(1),Qba_diag.data(),Pext.data());
+            }
         }
         apply_pending_aw_covariance_inflation_();''')
     for start,stop,kind,hcode in [
