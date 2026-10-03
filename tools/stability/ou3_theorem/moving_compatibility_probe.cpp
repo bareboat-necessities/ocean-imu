@@ -11,6 +11,8 @@
 #include <string>
 #include <stdexcept>
 #include <array>
+#include <fstream>
+#include <cstdint>
 
 static bool moving_recording=false;
 static double moving_phi[21][4],moving_info[4][4];
@@ -97,6 +99,8 @@ const float g_std=9.80665f;
 using Fusion=SeaStateFusion_OU_III<TrackerType::KALMANF>;
 int main(int argc,char**argv){
  const double end=argc>1?std::stod(argv[1]):240.0;
+ const char* profile_path=argc>2?argv[2]:nullptr; std::ofstream profile;
+ if(profile_path){profile.open(profile_path,std::ios::binary);const char magic[8]={'O','U','3','P','R','F','1','\0'};profile.write(magic,8);uint32_t n=8000;profile.write(reinterpret_cast<const char*>(&n),4);}
  Fusion::Config cfg;
  // Current proof source profile. No startup/gate/tuner/scheduler overrides.
  cfg.sigma_a.setConstant(.2f);cfg.sigma_g.setConstant(.00135f);cfg.sigma_m.setConstant(.8f);
@@ -139,6 +143,13 @@ int main(int argc,char**argv){
    auto &sl=moving_slots[k%SLIDING];if(sl.active&&k-sl.root==200){for(int i=0;i<4;i+=2){double aa=sl.info[i][i],bb=sl.info[i][i+1],cc=sl.info[i+1][i+1];double den=aa+cc+std::hypot(aa-cc,2*bb);double vv=2*(aa*cc-bb*bb)/den;sliding_service_min=std::min(sliding_service_min,vv);sliding_service_max=std::max(sliding_service_max,vv);}++sliding_windows;sliding_mags_min=std::min(sliding_mags_min,sl.mags);sl.active=false;}
   }
   if(k==int((end-20.0)*200)){Pcycle=m.Pext;have_cycle=true;cycle_tau=f.raw().getTauApplied();cycle_sigma=f.raw().getSigmaApplied();cycle_rs=f.raw().getRSApplied();cycle_period=f.raw().getPseudoUpdatePeriodSec();cycle_elapsed=m.pseudo_update_elapsed_s_;}
+  if(profile.is_open() && k>int((end-40.0)*200)){
+   static const int EP[12]={1,4,6,8,9,11,12,14,15,17,18,20}; static const int OP[9]={0,2,3,5,7,10,13,16,19};
+   float elapsed=m.pseudo_update_elapsed_s_,period_now=m.pseudo_update_period_s_;
+   profile.write(reinterpret_cast<const char*>(&elapsed),4);profile.write(reinterpret_cast<const char*>(&period_now),4);
+   for(int i=0;i<12;++i)for(int j=0;j<12;++j){float v=m.Pext(EP[i],EP[j]);profile.write(reinterpret_cast<const char*>(&v),4);}
+   for(int i=0;i<9;++i)for(int j=0;j<9;++j){float v=m.Pext(OP[i],OP[j]);profile.write(reinterpret_cast<const char*>(&v),4);}
+  }
   if(k>40000){
    Eigen::Matrix3d Pth=m.Pext.block<3,3>(0,0).cast<double>();
    Eigen::Matrix3d Pbg=m.Pext.block<3,3>(3,3).cast<double>();
