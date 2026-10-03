@@ -246,7 +246,7 @@ The decisive executable path is the source-uniform physical HistoryCell release 
 
 Enclosure failures carry actual time. Subdivision may split only physical/sensor root histories (p, v, slow accel/gyro, FAST primitives, gravity direction, magnetic field), never generated w, Mahony state, tau, sigma_aw, R_S, T_S, covariance, gain or scheduler phase. A converged admitted physical leaf that literally violates a required condition is a counterexample, not indefinite class D.
 
-The stability-study manuscript is doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex. Detailed current proofs are in doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex. Historical witnesses, dead architectures and retracted lemmas were removed. The live lemma chain is labeled PROVED/CONDITIONAL/OPEN; conditional implications are proved with their unresolved premises named.
+The stability-study manuscript is doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex. Detailed current proofs are in doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part. Historical witnesses, dead architectures and retracted lemmas were removed. The live lemma chain is labeled PROVED/CONDITIONAL/OPEN; conditional implications are proved with their unresolved premises named.
 
 Machine mapping is reports/results/ou3_stability/lemma-manifest.json. It maps every current LaTeX lemma/theorem to stable ID, status, assumptions, proof modules, certificates and open dependencies. tests/validation/test_ou3_lemma_manifest.py enforces exact manuscript coverage and referenced paths. Keep it synchronized on any lemma change or promotion.
 

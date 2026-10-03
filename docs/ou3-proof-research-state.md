@@ -774,6 +774,21 @@ margins keep their sign (signed-balance S-interval margin -19.0391078,
 rotation-triangle margin -30.4543160; same-cell values move by about 1e-9).
 Current limiter and next falsifiable experiment are unchanged.
 
+## CI: main after PR #646 (stale readout-driver provenance, LaTeX fragment)
+
+Failed quantity: `build / ou-evidence / commit` evidence suite (8 failures,
+3 errors in `test_ou3_provenance`, `test_ou3_same_cell_groups`,
+`test_ou3_signed_temporal`): PR #646 changed `ag_readout_source.cpp` and
+`ag_readout_source_diagnostic.py` without refreshing bound provenance or the
+driver/observer/trace fingerprints of the construction-history, construction
+mean-action, signed-adjoint, signed-balance and same-cell reports; and
+`build (kalman_ou_iii)` compiled the input-only proofs fragment standalone.
+Classification: E (implementation/CI); no mathematical result and no shipping
+counterexample. Invalidated hypothesis: a tooling merge keeps derived report
+fingerprints current. Retained facts: all five reports were regenerated with
+their generators and every numerical field is bit-identical; only hashes
+moved. Current limiter and next falsifiable experiment are unchanged.
+
 
 ## Quiet absolute-entry obstruction (current session)
 

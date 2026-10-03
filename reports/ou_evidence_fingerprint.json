@@ -791,12 +791,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/construction-history-feasibility.json",
-      "sha256": "bea90c708918fc6f17ce7b5ff0b71ac85ddb1bf311d6ab644eda8ffbe2b5337a"
+      "sha256": "1514e0adfc308f87e25e562e0edf2ac30f79956c7328f276f4a5c41f21cf5184"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "sha256": "f5202a26fb6205d48d6cd9ea9c085f739a4cd9723245c22a257061cda341411b"
+      "sha256": "c70a5fd39c58ec83a236bbed8d1132f2b5b827dcad6b90baa7e68c50674bd99e"
     },
     {
       "kind": "file",
@@ -836,7 +836,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "sha256": "2001e8dd0e5e18a73741f983471a3d2b1c53be8c98827f8418922102f65d5ebd"
+      "sha256": "4a6e4a8f00ce04a409f42c57342d865b21e9566b82bb180f5187307ae787c95c"
     },
     {
       "kind": "file",
@@ -856,7 +856,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "sha256": "0dc9d8501e17a415fe3f294e3deaafae3c3affa2c75fc3f84dfca25f8c3dd827"
+      "sha256": "e7d8f12b6ef0b2e3186136878e3a1f2534e96f8539435dc64e7f21696799d75e"
     },
     {
       "kind": "file",
@@ -866,7 +866,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "eefdb76f22d7c1c2d40e16a6d70924b51ddad997c966d7841e2afd90e199c5b2"
+      "sha256": "cb86a7388558f66b4ed94779e74d05d4bf3f1d3a4b3f237a333bcff84f751205"
     },
     {
       "kind": "file",
@@ -901,12 +901,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "sha256": "65e602bf09586646904c199fdda9e733947781ca074a254c81abd10ef122f09b"
+      "sha256": "ddac5eb5e3a571dbc452b1942dc26c0f39b557bac05a3927801084be945c9b62"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "sha256": "be508669423dca41dd371e21b764bf768622c74b27e198d9d00e6833de5ef0e5"
+      "sha256": "e4fbef825df744f3d73f7dda0865b79d4c90bbb6a37396c9e4280be48982863a"
     },
     {
       "kind": "file",
@@ -2204,7 +2204,7 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "ee56ca12ed6d228c3a0e7e4e29a7d5730ab1a1fd3417ae7bed617c2ab84b4f25",
+  "results_fingerprint": "c42f3731df4d59ac0c1c91326933b76159cdcd7bf0c94cdf4f9ed83e5a160995",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
