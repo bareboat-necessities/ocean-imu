@@ -21,7 +21,7 @@ static constexpr int SLIDING=200;
 struct MovingSlot { bool active=false; int root=-1; double phi[21][4]{}; double info[4][4]{}; int mags=0; };
 static MovingSlot moving_slots[SLIDING];
 static double sliding_service_min=1e100,sliding_service_max=0; static int sliding_windows=0,sliding_mags_min=10000;
-static double pred_product=1.0,pred_eta_max=0.0; static int pred_count=0,s_due_count=0; static double tube_min_even=1e100,tube_min_odd=1e100,tube_phase_drift_even=0,tube_phase_drift_odd=0;
+static double pred_product=1.0,pred_eta_max=0.0; static int pred_count=0,s_due_count=0; static double tube_min_even=1e100,tube_min_odd=1e100,tube_phase_drift_even=0,tube_phase_drift_odd=0,s_shift_max=0;
 static Eigen::Matrix<double,21,21> lowerP; static bool lower_ready=false; static double lower_product=1.0,lower_eta_max=0; static int lower_count=0;
 static const int PE[12]={1,4,6,8,9,11,12,14,15,17,18,20}, PO[9]={0,2,3,5,7,10,13,16,19};
 static void lower_correct(const char* kind){
@@ -74,7 +74,12 @@ static void moving_prediction(const float* fa,const float* fl,const float* qa,co
  for(int i=0;i<21;++i)for(int j=0;j<4;++j)moving_phi[i][j]=out[i][j];
  for(auto& s:moving_slots)if(s.active)slot_prediction(s,fa,fl,phi);
 }
-static void moving_correction(const char* kind,const float* h,const float* s,const float* gain){ if(kind[0]=='S')++s_due_count; lower_correct(kind);
+static void moving_correction(const char* kind,const float* h,const float* s,const float* gain){
+ if(kind[0]=='S' && moving_model){
+  // Carried local commutator diagnostic using the just-applied S correction is
+  // not reconstructible without the pre-prediction covariance; exact identity
+  // evaluation is performed by a dedicated callback at prediction below.
+ } if(kind[0]=='S')++s_due_count; lower_correct(kind);
  double y[3][4]={};for(int i=0;i<3;++i)for(int j=0;j<4;++j)for(int k=0;k<21;++k)y[i][j]+=double(h[i+3*k])*moving_phi[k][j];
  if(kind[0]=='m'){
   double l[3][3]={},w[3][4]={};
