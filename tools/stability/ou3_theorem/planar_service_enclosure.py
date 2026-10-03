@@ -40,7 +40,21 @@ def oracle_service_floor(*,h_acc=30.0,p_theta=5e-4,p_bg=1.1e-6,
             X=A@X;P=A@P@A.T+np.outer(K,K)*Rmag
     return float(np.linalg.eigvalsh(I)[0])
 
-def scheduler_phase_invariant(elapsed,period):\n    """Literal structural invariant: valid scheduler state remains 0<=elapsed<period."""\n    return period>0 and elapsed>=0 and elapsed<period\n\ndef candidate():
+def scheduler_phase_invariant(elapsed,period):\n    """Literal structural invariant: valid scheduler state remains 0<=elapsed<period."""\n    return period>0 and elapsed>=0 and elapsed<period\n\n
+def planar_guard_excess_bound(*,amplitude=10.0,omega=2*math.pi/20,detect_hz=25.0,poles=2,engage_lo=.03):
+    """Conservative steady sinusoid bound for the two-pole detector on planar record.
+    Each detector high-pass has gain w/sqrt(w^2+wc^2). Gravity/DC is rejected.
+    The actual varying x/z record is a finite combination of the source fundamental
+    and small harmonics; this function records only the fundamental feasibility
+    bound and is therefore non-promoting until harmonic/restart transients are enclosed.
+    """
+    wc=2*math.pi*detect_hz; q=omega/math.hypot(omega,wc)
+    rms=amplitude*q**poles/math.sqrt(2)
+    return {"fundamental_rms_bound":rms,"engage_lo":engage_lo,
+            "fundamental_below_engagement":rms<engage_lo,
+            "startup_transient_and_harmonics_enclosed":False}
+
+def candidate():
     a=json.loads(ART.read_text());n=a["native"]
     floor=oracle_service_floor()
     return {
@@ -68,6 +82,7 @@ def scheduler_phase_invariant(elapsed,period):\n    """Literal structural invari
         "twenty_second_full_P_max_abs_drift":n["cycle_P_max_abs_diff"],
         "twenty_second_scheduler_elapsed_abs_drift":n["cycle_scheduler_elapsed_abs_diff"],
       },
+      "guard_feasibility":planar_guard_excess_bound(),
       "oracle_feasibility":{
         "h_acc":30.0,"P_theta":5e-4,"P_bg":1.1e-6,
         "magnetic_information_floor":floor,"required_floor":1.0,
