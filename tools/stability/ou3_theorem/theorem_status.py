@@ -370,6 +370,8 @@ def status_report() -> dict:
             "oracle_rational_service_margin":True,
             "paired_correction_storage_invariant":True,
             "paired_prediction_loss_identity":True,
+            "planar_anisotropic_root_factors":True,
+            "matrix_lower_factor_correction_transport":True,
             "planar_same_history_covariance_lower_cell":False,
             "scheduler_phase_augmented_invariant_cell":False,
             "all_time_actual_magnetic_service_for_planar_pair":False,
