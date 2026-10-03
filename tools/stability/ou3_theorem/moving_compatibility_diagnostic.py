@@ -58,7 +58,7 @@ def run_native(eigen, duration=240.0):
         command = ["g++", "-std=c++20", "-O1", "-DEIGEN_UNROLLING_LIMIT=0", "-DEIGEN_NON_ARDUINO",
                    "-I"+str(work), "-I"+str(REPO/"src"), "-I"+str(eigen),
                    str(PROBE), "-o", str(binary)]
-        subprocess.run(command, check=True, capture_output=True, text=True, timeout=90)
+        p=subprocess.run(command, capture_output=True, text=True, timeout=90)\n        if p.returncode:\n            raise RuntimeError('probe compile failed:\\n'+p.stdout+'\\n'+p.stderr)
         result = subprocess.run([str(binary), str(duration)], check=True,
                                 capture_output=True, text=True, timeout=240)
         native = json.loads(result.stdout)
