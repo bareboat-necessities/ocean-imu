@@ -39,15 +39,17 @@ The four service probes are [h+,bg+,h-,bg-], with
     d_+ = Ry(-psi)(0,+sin(theta),cos(theta)),
     d_- = Ry(-psi)(0,-sin(theta),cos(theta)).
 
-The orthogonal +/- transform splits them into
+The orthogonal +/- transform splits the auxiliary four-column action into
 
     (d_+-d_-)/sqrt(2)  in E,
     (d_++d_-)/sqrt(2)  in O,
 
-with the corresponding BG probes. Thus the 4x4 accepted-information matrix is
-orthogonally similar to two independent 2x2 service matrices. Its smallest
-eigenvalue is the minimum of the two 2x2 smallest eigenvalues. No information
-or covariance correlation is discarded.
+with the corresponding BG probes. This is useful for propagating covariance and
+homogeneous columns without cross-parity dependency. The literal MAGNETIC
+SERVICE criterion, however, is not replaced by a 4x4 eigenvalue: shipping checks
+the two physical 2x2 heading/BG Gramians for d_+ and d_- separately. Each such
+physical pair is reconstructed from its E and O components and must itself have
+lambda_min >= mu_M. No cross-sign 4x4 criterion is promoted.
 
 A useful exact geometry identity is also phase independent. With
 B_b=75 Ry(-psi)e_x,
