@@ -363,6 +363,10 @@ def status_report() -> dict:
             "moving_full_premise_absolute_entry_refuted":False,
             "planar_mean_invariant_manifold":True,
             "reduced_periodic_service_recurrence_formulated":True,
+            "planar_covariance_parity_factorization":True,
+            "tail_all_sample_phase_service_min_gt_one_diagnostic":True,
+            "twenty_second_point_poincare_invalid_due_scheduler_phase":True,
+            "scheduler_phase_augmented_invariant_cell":False,
             "all_time_actual_magnetic_service_for_planar_pair":False,
             "finite_replay_is_all_time_certificate":False,
             "homogeneous_kernel_results_imply_physical_identifiability":False,
@@ -374,10 +378,10 @@ def status_report() -> dict:
             "Prove forcing-aware quiet-compatible boundedness using the exact constant-record fibre and persistent source charges. "
             "The exact planar MOVING pair satisfies current 30-s span and SLOW+FAST limits with constant bias and identical sensor records; "
             "the proposed two-epoch span/bias separation has an exact zero direction. "
-            "The ideal mean execution has an analytical planar parity manifold; covariance still requires a reduced periodic HistoryCell. "
+            "The ideal mean execution and covariance admit an exact 12+9 parity factorization. A 20-s point return is invalid because the progress-preserving S scheduler phase does not return; the invariant cell must carry that phase. "
             "Certify a forward-invariant one-period enclosure and phase-uniform one-second actually applied MAGNETIC SERVICE for that SAME shipping history before declaring "
             "a fully admitted MOVING obstruction or asserting absolute inner entry from the existing assumptions. "
-            "The 240-s replay and 102 disjoint one-second service checks are non-promoting finite evidence. "
+            "The fresh 240/1200-s replays and final-cycle all-IMU-root service sweep are non-promoting finite evidence; the tail sweep remains above 7 but is not an interval/all-time certificate. "
             "Keep construction/H18/refinement/release, the full persistent HistoryCell, coupled tuner, actual covariance/gains and BA physical forcing. "
             "Homogeneous kernel/action results and completed-square algebra remain valid but do not identify the physical tilt/BA decomposition. "
             "All-time device qualification, nonlinear/prefix retention, float32 transfer and regime composition remain OPEN."
