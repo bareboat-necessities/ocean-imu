@@ -59,9 +59,10 @@ jobs:
           if-no-files-found: warn
   theorem:
     runs-on: ubuntu-24.04
-    # Native source replays and the final exact enclosure exceed 20 minutes.
+    # Native source replays, the 16/30/60/100 s linked-supply words (about an
+    # hour at 80 digits) and the final exact enclosure exceed 40 minutes.
     # Preserve every check; a runner timeout is not a mathematical failure.
-    timeout-minutes: 40
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
         with:

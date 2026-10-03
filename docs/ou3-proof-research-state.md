@@ -773,3 +773,14 @@ every native trace event is an operation boundary. Retained facts: regenerated
 margins keep their sign (signed-balance S-interval margin -19.0391078,
 rotation-triangle margin -30.4543160; same-cell values move by about 1e-9).
 Current limiter and next falsifiable experiment are unchanged.
+
+## CI: main after PR #645 (proof appendix build, theorem job timeout)
+
+Failed quantity: `build (kalman_ou_iii)` LaTeX compile, which typesets every
+`*.tex` in the directory standalone and stopped at the `\input` proof
+appendix; and the `ou3-stability-proof / theorem` job, cancelled by its
+40-minute limit inside the 16/30/60/100 s linked-supply diagnostic (about one
+hour at 80 digits). Classification: E (CI); no mathematical result. Invalidated
+hypothesis: the theorem job fits in 40 minutes. Retained facts: the
+linked-supply diagnostic completes (exit 0) on the current sources. Current
+limiter and next falsifiable experiment are unchanged.
