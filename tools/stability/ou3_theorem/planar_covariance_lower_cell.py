@@ -32,7 +32,7 @@ def variational_lower_from_action(action):
             "covariance_matrix":np.linalg.inv(A).tolist()}
 
 
-def ag_trial_action(*,T=1.0,gyro_density=.00135,bg_rw=1e-10,
+def ag_trial_action(*,T=1.0,gyro_density=.00135,bg_drive_density=1e-5,
                     acc_count=251,acc_h=30.0,acc_R=.04,
                     mag_count=26,mag_h=75.0,mag_R=.64):
     """Explicit linear endpoint path theta=t/T*theta1, bg=t/T*bg1.
@@ -44,7 +44,7 @@ def ag_trial_action(*,T=1.0,gyro_density=.00135,bg_rw=1e-10,
     it is usable only after the Schur/oracle comparison is discharged.
     """
     import numpy as np
-    sg2=gyro_density**2; sb2=bg_rw**2
+    sg2=gyro_density**2; sb2=bg_drive_density**2
     A=np.zeros((2,2))
     # integral (theta/T + t bg/T)^2/sg2
     A[0,0]+=1/(T*sg2);A[0,1]+=1/(2*sg2);A[1,0]+=1/(2*sg2);A[1,1]+=T/(3*sg2)
