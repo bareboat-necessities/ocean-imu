@@ -288,7 +288,9 @@
     "aggregate_magnetic_service_operator_connected": true,
     "accepted_magnetic_event_strata_connected_to_history_cover": "NOT_REQUIRED_AGGREGATE_SERVICE_USED",
     "literal_history_cell_to_leaf_propagator": false,
-    "constructive_cellwise_supply_dissipation_quotient": false
+    "constructive_cellwise_supply_dissipation_quotient": false,
+    "absolute_moving_tilt_ba_separation": false,
+    "moving_measurement_compatible_quotient_theorem": false
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
@@ -360,5 +362,13 @@
     "uniform_storage_route_ratio_above_one_on_carried_collinear_words": true
   },
   "proof_governance": "docs/ou3-shipping-faithfulness-protocol.md",
-  "proof_target": "actual shipping OU-III filter; surrogate enlargements must be explicit and failure does not transfer without losslessness"
+  "proof_target": "actual shipping OU-III filter; surrogate enlargements must be explicit and failure does not transfer without losslessness",
+  "moving_gauge_obstruction": {
+    "classification": "B",
+    "analytical": true,
+    "admitted_by_current_numeric_envelopes": true,
+    "absolute_physical_tilt_ba_separation_refuted": true,
+    "shipping_instability_refuted": false,
+    "module": "tools/stability/ou3_theorem/moving_gauge_obstruction.py"
+  }
 }
