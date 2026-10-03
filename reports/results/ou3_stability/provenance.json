@@ -452,7 +452,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "09ad92448c6fa8ae8a20f8539b643e9554f6ec61"
+      "git_blob_sha": "79d71c1e121f4e0a34ca9572181b667e06787ef1"
     },
     {
       "path": "tools/stability/ou3_theorem/constants.json",
@@ -644,11 +644,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/moving_compatibility_diagnostic.py",
-      "git_blob_sha": "403c7aad8fe9b7c976a7b5c6ee84544ce42c217c"
+      "git_blob_sha": "3283d28fe16cfc58c095be6703d9cb5792c1a36e"
     },
     {
       "path": "tools/stability/ou3_theorem/moving_compatibility_probe.cpp",
-      "git_blob_sha": "d69c119669b4dcc62e5073cfefb72c15ec701adc"
+      "git_blob_sha": "b3f5c22e398acbc0a5cc4a26b956ea2c00b0093a"
     },
     {
       "path": "tests/validation/test_ou3_moving_quiet_compatibility.py",
@@ -656,11 +656,11 @@
     },
     {
       "path": "docs/ou3-moving-quiet-compatibility.md",
-      "git_blob_sha": "acadc34effbf5ce5f916b717336124688fc92ab8"
+      "git_blob_sha": "97d21848fd7ab4ee9c91fc646662244486941f06"
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "54bf706ee87ee0881f506eb59245bc47bd69dca3"
+      "git_blob_sha": "a549461e905972276211d4cce9d7ccf2f3f5e393"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
