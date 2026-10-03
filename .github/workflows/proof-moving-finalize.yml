@@ -1,0 +1,101 @@
+name: proof-moving-finalize
+on:
+  push:
+    branches: [proof/ou3-moving-compatibility-audit]
+    paths: [.github/workflows/proof-moving-finalize.yml]
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install numpy scipy mpmath
+      - name: Fold the audit into the existing proof workflow
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib
+          extra=Path('.github/workflows/ou3-moving-compatibility.yml')
+          main=Path('.github/workflows/ou3-stability-proof.yml')
+          job=extra.read_text().split('jobs:\n',1)[1]
+          old='''      - name: Validate exact compatibility and fail-closed status
+                  run: |
+                    python3 -m unittest discover -s tests/validation -p test_ou3_moving_quiet_compatibility.py -v
+                    python3 -m unittest discover -s tests/validation -p test_ou3_lemma_manifest.py -v
+                    python3 -m unittest discover -s tests/validation -p test_ou3_theorem_status.py -v
+          '''
+          new='''      - name: Install proof dependencies
+                  run: python3 -m pip install numpy scipy mpmath
+                - name: Validate all OU-III proof contracts and provenance
+                  run: |
+                    python3 -m tools.stability.ou3_theorem.build_evidence
+                    python3 -m unittest discover -s tests/validation -p 'test_ou3_*.py' -v
+          '''
+          assert old in job
+          job=job.replace(old,new)
+          assert '\n  moving-compatibility:' not in main.read_text()
+          main.write_text(main.read_text()+job)
+          extra.unlink()
+          Path('.github/workflows/proof-moving-finalize.yml').unlink()
+          p=Path('docs/ou3-proof-research-state.md');s=p.read_text()
+          marker='* **Local full build:**'
+          note='''* **E, CI layout corrected:** the full 628-test run rejected a separate OU-III
+            compatibility workflow under the existing single-workflow architecture guard.
+            Its job is now inside ou3-stability-proof.yml; the guard and all other jobs are
+            unchanged. This CI-layout error has no mathematical implication.
+          '''
+          assert marker in s
+          p.write_text(s.replace(marker,note+marker))
+          def sha(data):return hashlib.sha1(f'blob {len(data)}\0'.encode()+data).hexdigest()
+          p=Path('reports/results/ou3_stability/provenance.json');obj=json.loads(p.read_text())
+          for row in obj['operation_lemma_sources']:
+              if row['path']=='docs/ou3-proof-research-state.md':row['git_blob_sha']=sha(Path(row['path']).read_bytes())
+          p.write_text(json.dumps(obj,indent=2)+'\n')
+          from tools.ou_replay_fingerprint import compute_results_fingerprint
+          p=Path('reports/ou_evidence_fingerprint.json');obj=json.loads(p.read_text());r=compute_results_fingerprint()
+          obj.update(results_fingerprint=r['fingerprint'],results_file_count=r['file_count'],results_files=r['files'])
+          p.write_text(json.dumps(obj,indent=2,sort_keys=True)+'\n')
+          expected={'.github/workflows/ou3-stability-proof.yml':'56fe13874554bb8353a951ba5bc439531fa0fca3',
+                    'docs/ou3-proof-research-state.md':'3d7b93027e36d44edce94a54d199c3cccc230446',
+                    'reports/results/ou3_stability/provenance.json':'db032b9dc159533560ac013ff7c91d682b3c54dc',
+                    'reports/ou_evidence_fingerprint.json':'185e006b912592d464c09329a576a132d664a177'}
+          for path,digest in expected.items():assert sha(Path(path).read_bytes())==digest,path
+          Path('/tmp/expected-proof-blobs.json').write_text(json.dumps(expected))
+          PY
+          git add -A
+          git diff --cached --check
+          python3 -m tools.stability.ou3_theorem.build_evidence
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_*.py' -v
+      - name: Store verified Git objects without updating any branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import os,json,urllib.request
+          from pathlib import Path
+          repo='bareboat-necessities/ocean-imu'
+          def request(endpoint,payload=None):
+              data=json.dumps(payload).encode() if payload is not None else None
+              req=urllib.request.Request('https://api.github.com/repos/'+repo+endpoint,data=data,
+                  headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],
+                           'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+              with urllib.request.urlopen(req) as response:return json.load(response)
+          entries=[]
+          for path,digest in json.loads(Path('/tmp/expected-proof-blobs.json').read_text()).items():
+              blob=request('/git/blobs',{'content':Path(path).read_text(),'encoding':'utf-8'})
+              assert blob['sha']==digest
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':digest})
+          for path in ('.github/workflows/ou3-moving-compatibility.yml','.github/workflows/proof-moving-finalize.yml'):
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':None})
+          base=request('/git/commits/'+os.environ['GITHUB_SHA'])['tree']['sha']
+          tree=request('/git/trees',{'base_tree':base,'tree':entries})
+          print('FINAL_TREE_SHA='+tree['sha'])
+          print('PARENT_COMMIT='+os.environ['GITHUB_SHA'])
+          PY
