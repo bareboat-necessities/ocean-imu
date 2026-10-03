@@ -24,3 +24,5 @@ The estimator BA OU prior does not make the physical slow bias decay. In the sam
 Therefore the package “every admissible history enters V<0.15^2” plus effective recurring strict contraction cannot hold on the entire current physical source class. This does not refute practical boundedness or the qualified local theorem. The regional theorem remains OPEN; its entry/retention target must accommodate this admitted quiet tilt/bias ambiguity rather than strengthening the physical assumptions.
 
 Failure classification: B for the specified absolute-entry target. Structures preserved: actual 21-state filter, BA behavior, covariance/gains/Joseph chronology, Mahony, guard, coupled adaptation, S=0, magnetic service and persistent physical history. Additional physical assumptions: none.
+
+For the exact quiet source fibre, covariance-metric source charge and separate MOVING span audit, see `ou3-moving-quiet-compatibility.md`. The latter has an exact all-time physical sensor identity but its all-time shipping magnetic-service admission is still OPEN; it is not yet a fully admitted MOVING counterexample.

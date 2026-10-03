@@ -61,7 +61,9 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.aggregate_floor import certificate as aggregate_certificate
     from tools.stability.ou3_theorem.word_diameter import certificate as diameter_certificate
     from tools.stability.ou3_theorem.imu_two_timescale_certificate import certificate as imu_certificate
+    from tools.stability.ou3_theorem.moving_quiet_compatibility import certificate as compatibility_certificate
     for name, generate in (
+        ("moving-quiet-compatibility-certificate.json",compatibility_certificate),
         ("imu-two-timescale-certificate.json",imu_certificate),
         ("word-diameter-certificate.json",diameter_certificate),
         ("world-frame-certificate.json",world_certificate),

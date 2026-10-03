@@ -1,0 +1,50 @@
+{
+  "accepted_information_used": true,
+  "actual_gain_and_reset_chronology_used": true,
+  "actual_innovation_covariance_used": true,
+  "all_placed_service_windows_verified": false,
+  "all_time_magnetic_service_verified": false,
+  "full_shipping_counterexample_admitted": false,
+  "instrumented_header_sha256": "a51ca0f0dfda4377e0ce4082ed52c26c61a5ad16fba6860582ea31509243c039",
+  "native": {
+    "R_S": 0.41333234310150146,
+    "accepted_mag": 3756,
+    "active_step": 24016,
+    "duration": 240,
+    "live_step": 17960,
+    "max_Pbay": 4.4185238948557526e-05,
+    "max_abs_bay": 0,
+    "max_mag_residual": 0.003968014847487211,
+    "max_position": 0.013739407062530518,
+    "max_q_xz": 0,
+    "period": 0.1363605111837387,
+    "ref": [
+      75,
+      0,
+      2.014929305005353e-05
+    ],
+    "refined_step": 24016,
+    "service_mags_min": 25,
+    "service_max": 7.027771652030772,
+    "service_min": 7.024764605642482,
+    "service_windows": 102,
+    "sigma": 0.05000000074505806,
+    "tail_V_lower_max": 276.20842101613204,
+    "tail_V_lower_min": 217.64185997853875,
+    "tau": 9.999771118164062
+  },
+  "noise_profile": {
+    "sigma_a": 0.2,
+    "sigma_g": 0.00135,
+    "sigma_m": 0.8
+  },
+  "noise_profile_source": "tools/stability/ou3_theorem/world_frame_source_diagnostic.py",
+  "nonlinear_or_float32_all_time_totality_verified": false,
+  "probe_sha256": "6e200ff601092987fb29b30e9b06f80ab8ce0fa11dacc6cebcc6d8589b8d2997",
+  "qualification": "OU3_MOVING_COMPATIBILITY_CARRIED_V1",
+  "result_type": "finite carried float32 diagnostic; not an interval theorem",
+  "service_window_coverage": "disjoint one-second sampled-root windows after BA activation plus 17 s",
+  "shipping_behavior_changed": false,
+  "shipping_header_sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
+  "theorem_closed": false
+}

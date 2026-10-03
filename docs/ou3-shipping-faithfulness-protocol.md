@@ -69,3 +69,7 @@ The short-word scalar completed-square route to V<0.15^2 failed by more than six
 Every proof-session handoff must state: (1) shipping structures preserved; (2) relaxations introduced; (3) A/B/C/D/E classification for every failed calculation; (4) whether any genuine shipping counterexample was found; (5) established shipping-level results that remain valid; (6) the next calculation that uses more shipping structure, not less.
 
 **Default:** when mathematical convenience conflicts with literal shipping structure, use literal shipping structure. A stronger surrogate theorem is optional only when its purpose and enlargement are explicit; if it fails, return immediately to the shipping-reachable family.
+
+## Physical compatibility is not homogeneous zero action
+
+The quiet absolute-entry obstruction is controlling. The exact MOVING sensor-compatible pair in `ou3-moving-quiet-compatibility.md` also refutes the proposed scalar-span/two-epoch bias-variation step, but its all-time actually applied magnetic-service admission remains OPEN. Retain homogeneous kernel/action results without interpreting them as physical tilt/BA identification. The finite planar replay is not an all-time or source-uniform certificate. No estimator mode or stronger physical assumption is introduced.
