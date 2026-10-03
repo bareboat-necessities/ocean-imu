@@ -299,9 +299,22 @@ For a common shipping covariance with \(P_{b_ay,b_ay}\le1/1600\),
 This is a physical sensor-compatibility theorem and a conditional full-metric
 lower comparison. It does not yet refute a theorem restricted by all-time
 actually applied MAGNETIC SERVICE: that admission obligation remains open.
-The finite 240-second shipping replay has 102 checked disjoint service windows
-with minimum information eigenvalue above 7.02, but this is not an all-time
-or source-uniform certificate. No shipping instability is claimed.
+The literal planar factors also preserve an exact covariance parity split:
+a 12-state block contains \(\delta\theta_y,b_{g,y}\) and the X/Z
+LIN/AW/BA coordinates, while the complementary 9-state block contains
+\(\delta\theta_{x,z},b_{g,x,z}\) and the Y nuisance coordinates.  The
+off-parity covariance is identically zero in the exact branch.  The literal
+service criterion remains the two separate 2-by-2 \(+/-\) heading/BG
+Gramians; the parity transform is used only to factor propagation.
+
+Fresh 240-s and 1200-s shipping replays sweep every IMU-sample root over the
+final 20-s source phase cycle and retain a minimum service value above 7.02.
+They also expose why a point 20-s Poincare return is not the correct enclosure:
+the progress-preserving S scheduler phase does not return after one source
+period.  The invariant cell must carry scheduler phase as a causal coordinate.
+These are non-promoting finite diagnostics; the scheduler-phase-augmented
+outward interval inclusion and all-time information floor remain open. No
+shipping instability is claimed.
 
 \section{Current lemma chain}
 The labels below are part of the theorem statement.  \textbf{PROVED} means the implication is established under the hypotheses stated here. \textbf{CONDITIONAL} means the algebraic implication is proved but one or more source-uniform premises remain to be certified on the full reachable class. \textbf{OPEN PREMISE} is a required statement not yet proved.  None of these labels promotes an end-to-end theorem.
