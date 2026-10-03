@@ -375,6 +375,25 @@
       "open_dependencies": []
     },
     {
+      "id": "moving_gauge_obstruction",
+      "kind": "lemma",
+      "latex_title": "Absolute MOVING tilt--BA separation obstruction --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "current MARINE MOVING T_E=T_P=30 s, theta_E=2 deg, P_E=.03 m",
+        "current SLOW+FAST IMU envelopes",
+        "B=75 e_x within current geomagnetic envelope",
+        "same deterministic shipping initial state and accepted magnetic chronology"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/moving_gauge_obstruction.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/moving-gauge-obstruction-certificate.json"
+      ],
+      "open_dependencies": []
+    },
+    {
       "id": "regional_theorem",
       "kind": "theorem",
       "latex_title": "Regional practical stability of shipping OU--III --- OPEN",
@@ -389,6 +408,7 @@
         "reports/results/ou3_stability/theorem-status.json"
       ],
       "open_dependencies": [
+        "measurement-compatible quotient/tube theorem for STILL and MOVING",
         "finite construction/capture and H18 release",
         "complete source-uniform physical HistoryCell release/A21 enclosure",
         "strict recurring finite-error A21 contraction and every-prefix retention",
