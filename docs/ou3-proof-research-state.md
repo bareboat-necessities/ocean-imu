@@ -773,3 +773,8 @@ every native trace event is an operation boundary. Retained facts: regenerated
 margins keep their sign (signed-balance S-interval margin -19.0391078,
 rotation-triangle margin -30.4543160; same-cell values move by about 1e-9).
 Current limiter and next falsifiable experiment are unchanged.
+
+
+## Quiet absolute-entry obstruction (current session)
+
+Analytical status: the universal absolute physical-error entry target `V<0.15^2` is obstructed by an admitted indefinitely-still history. A roll `tan(theta/2)=1/200` with persistent SLOW accelerometer bias `(0,g sin(theta),g cos(theta)-g_m)` produces the exact nominal level accelerometer record; choosing `B=75 e_x` also leaves the magnetic record unchanged. The bias is within the current IMU BIAS envelope. The full shipping frontend/state machine remains active and sees zero nominal innovations. The shipping BA covariance marginal has the all-prefix ceiling `P_bay,bay<=1/1600`, hence the full covariance metric satisfies `V>=15.386492141376374>0.0225`. The BA OU prior is an estimator law; the same-history physical-error equation retains forcing `(1-phi_b)b_a` and does not make the physical slow bias decay. Classification B for the specified absolute-entry + effective recurring-contraction package; this is not a divergence or regional-practical-boundedness counterexample. Regional theorem remains OPEN. See `docs/ou3-quiet-inner-entry-obstruction.md`.
