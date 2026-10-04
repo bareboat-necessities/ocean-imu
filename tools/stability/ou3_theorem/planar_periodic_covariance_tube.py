@@ -1,12 +1,12 @@
 """Planar periodic covariance tube certificate framework.
 
-The tube is centered on a literal settled periodic covariance profile, not on
-the generic A21 root floor. A phase-indexed profile P0[j] is certified by
-Loewner radii r[j] when every literal one-step map sends the entire input ball
-P0[j]+/-r[j]I into the next ball. Scheduler phase is an explicit branch.
-
-This module contains the exact Riccati monotonicity tests used after the literal
-phase profile and factor rows are exported. It fails closed without that export.
+This is a reference monotone-map primitive, not a complete shipping tube.
+It includes prediction and positive-noise Riccati corrections only. Literal
+reset congruences, AW-floor synchronization, mean/coefficient feedback and both
+scheduler/adaptation clocks must still be attached. In particular, additive AW
+floor synchronization is NOT Loewner monotone; independently mapped Loewner
+faces do not enclose it. See planar_service_cell.py for the Frobenius bound.
+Floating tests here are diagnostics, not outward-rounded interval certificates.
 """
 from __future__ import annotations
 import numpy as np
@@ -44,13 +44,16 @@ def certificate():
     return {"qualification":"OU3_PLANAR_PERIODIC_COVARIANCE_TUBE_V1",
             "representation":"phase-indexed Loewner balls around literal settled planar covariance profile, separately 12/9 parity",
             "scheduler":"branch over every S=0 placement induced by elapsed in [0,T_S)",
-            "map":"literal F/Q prediction followed by literal positive-noise correction rows and reset congruence",
+            "map":"reference F/Q prediction and positive-noise Riccati correction rows only",
+            "literal_reset_AW_and_joint_coefficient_stream_attached":False,
+            "AW_floor_Loewner_monotonicity":False,
             "monotonicity":"prediction and positive-noise Riccati correction are Loewner monotone; reset is congruence",
             "profile_export_verified":False,
             "all_scheduler_branches_contained":False,
             "periodic_lower_tube_verified":False,
             "prediction_retention_lower":None,
-            "required_retention":1/7.024764605642482,
+            "required_retention":None,
+            "prediction_product_times_replay_service_is_a_service_bound":False,
             "theorem_closed":False}
 if __name__=="__main__":
  import json;print(json.dumps(certificate(),indent=2,sort_keys=True))

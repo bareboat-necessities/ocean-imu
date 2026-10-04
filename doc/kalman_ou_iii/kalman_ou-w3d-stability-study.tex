@@ -19,10 +19,10 @@ SLOW+FAST delivered-IMU and MAGNETIC SERVICE assumptions.  A retained local
 real-arithmetic stability theorem is proved on $\sqrt V\le0.15$, together
 with the structural prediction, correction, reset, kernel, covariance and
 same-history source lemmas required by the outer argument.  The measurement
-map possesses a genuine attitude/accelerometer-bias compatibility fibre, so a
-regional theorem cannot require universal convergence of the absolute physical
-decomposition.  The appropriate outer statement combines bounded motion along
-the compatible gauge with strict contraction transverse to it.  The regional
+map possesses a genuine attitude/accelerometer-bias compatibility fibre.
+Indefinite STILL therefore requires a compatible-tube target. For MOVING,
+the exact same-record pair still requires an all-time magnetic-admission
+decision before its absolute-entry target can be ruled out.  The regional
 theorem remains open only on the explicitly listed source-uniform release,
 magnetic-admission, quotient-coercivity, finite-error, nonlinear and
 finite-precision premises.
@@ -31,8 +31,11 @@ finite-precision premises.
 \section{Shipping model and theorem scope}
 The sole proof path is
 \[
-\boxed{\text{construction}\to\text{capture}\to H18\to
-\text{release}\to A21\to\text{regional practical stability}.}
+\begin{gathered}
+\text{construction}\to\text{capture}\to H18\\
+\to\text{refinement/release}\to A21\\
+\to\text{regional practical stability}.
+\end{gathered}
 \]
 One execution \(h\) belongs to
 \[
@@ -110,9 +113,10 @@ Let \(p,v,a\in\R^3\), \(R\in{\rm SO}(3)\), and body rate \(\omega\) satisfy
 \]
 almost everywhere, with
 \[
-\norm p\le P_{\max},\quad\norm v\le V_{\max},\quad
-\norm a\le A_{\max},\quad\norm\omega\le\Omega_{\max},\quad
-\norm{\dot a}\le J_{\max}.
+\begin{gathered}
+\norm p\le P_{\max},\quad\norm v\le V_{\max},\quad\norm a\le A_{\max},\\
+\norm\omega\le\Omega_{\max},\quad\norm{\dot a}\le J_{\max}.
+\end{gathered}
 \]
 Complete physical stillness may persist arbitrarily long. Otherwise every complete moving window of duration \(T_E\) has gravity-direction span at least \(\theta_E\), and every complete moving window of duration \(T_P\) has displacement diameter at least \(P_E\). The constructive candidate values are
 \[
@@ -127,14 +131,18 @@ e_a=b_{a,s}+b_{a,f},\qquad e_g=b_{g,s}+b_{g,f}.
 \]
 The slow components obey amplitude and derivative bounds
 \[
-\norm{b_{a,s}}\le B_{a,s},\quad\norm{\dot b_{a,s}}\le D_{a,s},\qquad
+\begin{gathered}
+\norm{b_{a,s}}\le B_{a,s},\quad\norm{\dot b_{a,s}}\le D_{a,s},\\
 \norm{b_{g,s}}\le B_{g,s},\quad\norm{\dot b_{g,s}}\le D_{g,s}.
+\end{gathered}
 \]
 FAST components obey instantaneous envelopes and, for every placed
 \(0<T\le H_i\),
 \[
-\norm{\int_t^{t+T}b_{a,f}\,ds}\le\min(B_{a,f}T,C_a),\qquad
+\begin{gathered}
+\norm{\int_t^{t+T}b_{a,f}\,ds}\le\min(B_{a,f}T,C_a),\\
 \norm{\int_t^{t+T}b_{g,f}\,ds}\le\min(B_{g,f}T,C_g).
+\end{gathered}
 \]
 The candidate temporal constants are
 \[
@@ -215,8 +223,11 @@ The translational model retains the chain \(v\to p\to S\), the OU wave-accelerat
 
 The regular chronology is
 \[
-\text{prediction}\to S=0\to\text{accelerometer correction}
+\begin{gathered}
+\text{prediction and pending AW sync}\to S=0\\
+\to\text{accelerometer correction}\\
 \to\text{accepted magnetic correction},
+\end{gathered}
 \]
 with shipping attitude resets after the applicable corrections. The accelerometer residual is generated from the same mean cell,
 \[
@@ -281,7 +292,7 @@ A typed enclosure failure records stage, actual failure time and physical-input 
 \section{Construction, capture and H18}
 Construction establishes a compact shipping-reachable seed with the implemented covariance, bias projection, tuner and scheduler states. Capture uses the literal accelerometer and magnetic chronology. H18 retains attitude and gyro bias jointly with LIN and accelerometer bias.
 
-Complete-word homogeneous compatibility is evaluated on literal factors. The regular-word kernel reduction, recurring magnetic service, active accelerometer-bias geometry and the same-history physical-to-nominal bridge are used to exclude persistent nonzero compatibility directions. The proof does not invoke a separate observability-Gramian assumption.
+Complete-word homogeneous compatibility is evaluated on literal factors. The regular-word kernel reduction, magnetic-service strata and active accelerometer-bias geometry are retained with their stated qualifications. They do not identify the physical attitude/BA decomposition or exclude the exact planar physical gauge. The source-uniform physical-to-nominal bridge remains conditional, and the MOVING pair first requires an all-time admission decision. No separate observability-Gramian assumption is introduced.
 
 \section{Release and recurring A21}
 Release starts from the explicit goLive seed and advances the same mean and covariance history through the literal operation stream. The mean is carried as
@@ -353,15 +364,19 @@ All coefficients, forcing and prefix metrics must remain on one reachable histor
 Put \(s=400/40001\), \(c=39999/40001\),
 \(\psi(t)=0.02\sin(\pi t/10)\), and
 \[
-R_\pm=R_x(\pm\theta)R_y(\psi),\quad
+\begin{gathered}
+R_\pm=R_x(\pm\theta)R_y(\psi),\\
 p=0.02\sin(\pi t/10)e_x,\quad b_{a,\pm}=\pm gs e_y,
+\end{gathered}
 \]
 where \(\sin\theta=s\), \(\cos\theta=c\), all gyro biases and FAST errors
 are zero, and \(B=75e_x\). Both complete physical histories have the same
 sensor record
 \[
-y_a=R_y(-\psi)(a_xe_x-gce_z),\quad
+\begin{gathered}
+y_a=R_y(-\psi)(a_xe_x-gce_z),\\
 y_g=\dot\psi e_y,\quad y_m=75R_y(-\psi)e_x.
+\end{gathered}
 \]
 Every 30-second window has displacement span \(0.04\) m and gravity span
 \(2\arcsin(c\sin0.02)>2^\circ\), but
@@ -388,8 +403,11 @@ Gramians; the parity transform is used only to factor propagation.
 The exact planar branch preserves the covariance parity split described above.
 Because the progress-preserving $S=0$ scheduler need not return to its initial
 phase after one physical source period, an all-time covariance/service proof
-must carry scheduler phase as part of its invariant cell.  Finite replay
-diagnostics are not used as theorem premises.
+must carry scheduler phase as part of its invariant cell.  The cell must also retain the AW-synchronization clock, pending targets,
+planar mean and raw private Mahony state. The default AW-floor map is not
+Loewner monotone, so positive-noise Riccati monotonicity alone is insufficient.
+The old ideal-normalization frontend replica is not a shipping certificate.
+Finite replay diagnostics are not used as theorem premises.
 
 \section{Proofs of the structural lemmas}
 This section records the mathematical arguments used by the machine
@@ -402,14 +420,17 @@ gives $a_w(t+h)=e^{-h/\tau}a_w(t)+\int_0^h e^{-(h-s)/\tau}\xi(t+s)\,ds$.
 Integrating successively through $\dot v=a_w$, $\dot p=v$ and $\dot S=p$
 gives the shipping coefficients
 \[
- \phi=e^{-x},\quad
- \phi_{pa}=\tau^2(x+\operatorname{expm1}(-x)),\quad
- \phi_{Sa}=\tau^3\!\left(\tfrac12x^2-x-\operatorname{expm1}(-x)\right),
- \qquad x=h/\tau .
+\begin{aligned}
+ \phi&=e^{-x},\qquad x=h/\tau,\\
+ \phi_{pa}&=\tau^2(x+\operatorname{expm1}(-x)),\\
+ \phi_{Sa}&=\tau^3\!\left(\tfrac12x^2-x-\operatorname{expm1}(-x)\right).
+\end{aligned}
 \]
-Their Taylor series at $x=0$ are exactly the implemented small-$x$ branches.
-The discrete process covariance is an integral
-$\int_0^h\Phi(s)LQ_cL^T\Phi(s)^Tds$ and is therefore positive semidefinite.
+The implemented small-$x$ branches are finite truncations, not equalities
+to these formulas away from zero. The existing exact-rational source-defect
+certificate retains $\Delta\Phi$ and bounds the process difference relative
+to the positive ideal OU Gram. Its positive relative margin establishes PSD
+for the qualified literal branch; float32 transfer remains separate.
 \end{proposition}
 
 \begin{proposition}[Joseph correction/storage identity]
@@ -441,7 +462,7 @@ Consequently
 \[
  (G\xi)^T(GPG^T)^{-1}(G\xi)=\xi^TP^{-1}\xi .
 \]
-For the implemented attitude block $G_\theta=I-\frac12[d\theta]_\times$,
+For the implemented attitude block $G_\theta=I+\frac12[d\theta]_\times$,
 \[
 G_\theta^TG_\theta
 =I+\tfrac14(\norm{d\theta}^2I-d\theta d\theta^T),
@@ -461,8 +482,8 @@ therefore
 \]
 The identity BA block precludes strict contraction of the complete H18 state
 in a fixed quadratic metric.  Treating held BA as a bounded input and H18 as
-a finite bridge is therefore necessary and sufficient for the later release
-argument.
+a finite bridge avoids that particular contraction obstruction. Uniform
+boundedness and finite release still require their separate proofs.
 \end{proposition}
 
 \begin{proposition}[No-heading-service obstruction]
@@ -606,6 +627,7 @@ Frontend force/quaternion/guard lemmas & PROVED & MARINE + IMU qualification & s
 FAST Abel / linked reader bounds & PROVED & signed FAST primitive, same-history reader & Appendix\\
 Quiet compatibility fibre/source charge & PROVED & STILL, persistent SLOW+FAST split & Appendix\\
 MOVING same-record pair & PROVED & explicit planar family, current source constants & Appendix\\
+Planar cell algebra / guard inactivity & PROVED & fixed same-history factors / exact planar source, real arithmetic & Appendix: admission-cell algebra and guard\\
 All-time magnetic admission of MOVING pair & OPEN & literal MAGNETIC SERVICE & current controlling admission certificate\\
 Completed-square implication & PROVED & $G_\gamma\succ0$, same-history coefficients & structural proof above; Appendix\\
 Retained local theorem & PROVED locally & $\sqrt V\le0.15$ and local gates & Appendix / local certificates\\
@@ -618,7 +640,7 @@ Regional practical stability & OPEN & all preceding conditional/open premises & 
 The labels below are part of the theorem statement.  \textbf{PROVED} means the implication is established under the hypotheses stated here. \textbf{CONDITIONAL} means the algebraic implication is proved but one or more source-uniform premises remain to be certified on the full reachable class. \textbf{OPEN PREMISE} is a required statement not yet proved.  None of these labels promotes an end-to-end theorem.
 
 \begin{lemma}[Shipping OU prediction identities --- PROVED]
-For every qualified positive shipping step and applied \(\tau\), the discrete OU coefficients used for \(a_w\), \(v\), \(p\), and \(S\) are the exact integrals of the continuous OU chain, with the shipping small-argument branches equal to their analytic limits.  The associated process covariance is positive semidefinite.
+On the qualified step/tuner domain, the OU integral identities define the comparison coefficients for \(a_w,v,p,S\). The literal finite small-argument polynomials retain their certified transition defect and relative process defect; they are not replaced by their ideal limits. The existing positive relative process margin proves PSD in real arithmetic on this domain. Float32 transfer is not asserted.
 \end{lemma}
 
 \begin{lemma}[Joseph correction action --- PROVED]
@@ -738,8 +760,10 @@ For a constant ideal magnetic record and physical stillness, let
 when \(\norm{d_a(R)}\le B_{a,s}+C_a/H_a\). For
 \(y_a=-g_me_z\), \(y_m=B=75e_x\), the attitude fibre is
 \[
-R=R_x(\theta),\qquad
+\begin{gathered}
+R=R_x(\theta),\\
 (g-g_m)^2+4gg_m\sin^2(\theta/2)\le(B_{a,s}+C_a/H_a)^2.
+\end{gathered}
 \]
 This is the ideal constant-record source fibre, not a full estimator boundedness theorem.
 \end{lemma}
@@ -775,6 +799,26 @@ covariance branch \(P_{b_ay,b_ay}\le1/1600\),
 The bound retains the full covariance metric and does not require a nominal
 symmetry assumption. It rules out simultaneous eventual retained inner
 entry if both complete continuations satisfy every theorem premise.
+\end{lemma}
+
+\begin{lemma}[Planar admission-cell transport algebra --- PROVED]
+For fixed same-history covariance/measurement factors, the local prediction--$S$
+commutator has the linked resolvent representation and ranks at most four/two
+on the 12/9 parity blocks. The literal additive AW-floor map is not Loewner
+monotone, but is Frobenius nonexpansive for a fixed target; changing its target
+adds at most the target difference norm. The complete covariance partial
+derivative retains every prediction, Joseph correction, reset and active AW
+marginal replacement. No self-containing joint causal cell or magnetic-service
+floor is concluded from these algebraic statements.
+\end{lemma}
+
+\begin{lemma}[Planar guard inactivity --- PROVED in real arithmetic]
+For the specified exact planar MOVING record sampled at $h=1/200$ seconds,
+the literal seeded 25-Hz two-stage detector has RMS below $0.000531$ at every
+prefix. With the unchanged $0.03$ engagement threshold, the guard weight is
+identically zero, and conditioning returns the raw record for all time.
+This is a real-arithmetic source/guard component result, not a float32 or
+all-time magnetic-admission theorem.
 \end{lemma}
 
 \begin{lemma}[Finite-error completed-square entry --- PROVED as an algebraic implication]
@@ -851,10 +895,11 @@ The shipping OU--III estimator is analyzed without replacing its state,
 adaptive tuning, covariance, correction chronology, bias projection or
 scheduler by a surrogate system.  The local real-arithmetic theorem and the
 structural lemmas listed above are proved under the stated qualifications.
-Absolute convergence of the physical attitude/accelerometer-bias decomposition
-is not an admissible global target because the measurement map has a genuine
-compatibility fibre.  The regional theorem is therefore formulated through
-bounded compatible motion and transverse contraction.  It remains open
+Universal absolute entry of the physical attitude/accelerometer-bias
+decomposition is already obstructed on indefinite STILL. A compatible tube
+is the required target there. For MOVING, whether the exact same-record pair
+is admitted for all time remains undecided; only after that decision may its
+absolute-entry target be excluded or the transverse tube become controlling.  It remains open
 precisely on the dependencies listed above; no numerical diagnostic is used
 to fill an unproved implication.
 

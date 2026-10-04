@@ -1,0 +1,196 @@
+{
+  "AW_target_minus_prior_eigenvalue_range": [
+    0.0008455758215859532,
+    0.0013998093879384263
+  ],
+  "all_time_magnetic_service_verified": false,
+  "counts": {
+    "1": 8000,
+    "2": 8000,
+    "3": 1000,
+    "4": 294,
+    "5": 9294,
+    "6": 8000,
+    "7": 8000,
+    "8": 9294,
+    "aw_fully_active": 381,
+    "aw_pending": 381
+  },
+  "finite_float32_residuals_are_not_uniform_arithmetic_bounds": true,
+  "joint_tuner_marginal_ranges_diagnostic_only": {
+    "AW_pending": [
+      0.0,
+      1.0
+    ],
+    "RS_applied": [
+      0.41333234310150146,
+      0.41333234310150146
+    ],
+    "RS_target": [
+      0.4133591651916504,
+      0.4133591651916504
+    ],
+    "acc_var": [
+      6.4269944921591105e-09,
+      2.0159452773782505e-08
+    ],
+    "elapsed": [
+      0.0,
+      0.13633254170417786
+    ],
+    "period": [
+      0.1363605111837387,
+      0.1363605111837387
+    ],
+    "sigma_applied": [
+      0.0009000058635137975,
+      0.0009000058635137975
+    ],
+    "sigma_target": [
+      0.0009000000427477062,
+      0.0009000000427477062
+    ],
+    "tau": [
+      9.999771118164062,
+      9.999771118164062
+    ],
+    "tau_applied": [
+      9.999771118164062,
+      9.999771118164062
+    ],
+    "tau_target": [
+      10.0,
+      10.0
+    ],
+    "vertical_acc": [
+      -0.03354358673095703,
+      -0.033539772033691406
+    ],
+    "wave_period": [
+      66.14215850830078,
+      67.56131744384766
+    ]
+  },
+  "local_S_prediction_commutator": {
+    "actually_S_due_tested_predictions": {
+      "even": {
+        "absolute": {
+          "max": 2.099149684085607e-05,
+          "sample": 40438
+        },
+        "linked_one_percent_cell_bound": {
+          "max": 0.0016300210594681315,
+          "sample": 40438
+        },
+        "linked_point_bound": {
+          "max": 0.001591962544546223,
+          "sample": 40438
+        },
+        "relative": {
+          "max": 0.0008993007742085211,
+          "sample": 40438
+        },
+        "two_term_bound": {
+          "max": 0.015503704519149005,
+          "sample": 40138
+        }
+      },
+      "odd": {
+        "absolute": {
+          "max": 4.054784464580457e-05,
+          "sample": 40138
+        },
+        "linked_one_percent_cell_bound": {
+          "max": 0.0025795764728999433,
+          "sample": 40138
+        },
+        "linked_point_bound": {
+          "max": 0.002518081276995247,
+          "sample": 40138
+        },
+        "relative": {
+          "max": 0.0016318964965439287,
+          "sample": 40138
+        },
+        "two_term_bound": {
+          "max": 0.013399896210416685,
+          "sample": 40138
+        }
+      },
+      "samples": 294
+    },
+    "all_tested_predictions": {
+      "even": {
+        "absolute": {
+          "max": 2.099149684085607e-05,
+          "sample": 40438
+        },
+        "linked_one_percent_cell_bound": {
+          "max": 0.0016300210594681315,
+          "sample": 40438
+        },
+        "linked_point_bound": {
+          "max": 0.001591962544546223,
+          "sample": 40438
+        },
+        "relative": {
+          "max": 0.0008993007742085211,
+          "sample": 40438
+        },
+        "two_term_bound": {
+          "max": 0.015503704519149005,
+          "sample": 40138
+        }
+      },
+      "odd": {
+        "absolute": {
+          "max": 4.054784464580457e-05,
+          "sample": 40138
+        },
+        "linked_one_percent_cell_bound": {
+          "max": 0.0025795764728999433,
+          "sample": 40138
+        },
+        "linked_point_bound": {
+          "max": 0.002518081276995247,
+          "sample": 40138
+        },
+        "relative": {
+          "max": 0.0016318964965439287,
+          "sample": 40138
+        },
+        "two_term_bound": {
+          "max": 0.013399896210416685,
+          "sample": 40138
+        }
+      },
+      "samples": 8000
+    }
+  },
+  "local_commutator_is_complete_scheduler_word_defect": false,
+  "maximum_absolute_operation_residuals": {
+    "PHt": 4.1692748212196484e-10,
+    "aw_sync": 4.656612877414201e-10,
+    "correction_input": 1.4210854715202004e-14,
+    "gain_solve": 1.0412428280703878e-09,
+    "innovation": 3.121931668736977e-08,
+    "joseph": 1.324608849689879e-09,
+    "linked_even_identity": 1.0526925468476445e-17,
+    "linked_odd_identity": 6.528929957436147e-18,
+    "next_prediction_input": 0.0,
+    "prediction": 1.830381780171253e-09,
+    "reset_congruence": 2.7732804388450744e-12,
+    "sample_output": 0.0
+  },
+  "qualification": "OU3_PLANAR_SERVICE_OPERATION_AUDIT_V1",
+  "result_type": "FINITE DIAGNOSTIC ONLY",
+  "sample_range": [
+    40001,
+    48000
+  ],
+  "scheduler_phase_cell_forward_invariant": false,
+  "smallest_covariance_eigenvalue_observed": 1.6741008657809843e-08,
+  "smallest_innovation_eigenvalue_observed": 0.040976330637931824,
+  "stream_sha256": "ac31f983e09b7f2c8182c24474450dcd20efd31348b47bed7f25b0f32c8b3efc",
+  "theorem_closed": false
+}

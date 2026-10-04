@@ -318,37 +318,27 @@ object; it is not substituted for the shipping channel and cannot itself
 promote admission.
 
 
-### M5a. Exact planar block to enclose
+### M5a. Exact parity blocks and physical probe restriction
 
-The small reference/full discrepancy is not accidental.  The witness record has
-gyro only on \(e_y\), all mean attitude propagation is therefore by rotations
-about \(e_y\), and the carried symmetry has no \(x/z\) quaternion component.
-The magnetic field and gravity/heading vectors both lie in the rotating \(x/z\)
-plane and remain orthogonal.  In the basis
-\[
- e_B(t)=R_y(-\psi)e_x,\qquad e_H(t)=R_y(-\psi)(0,\pm\sin\theta,\cos\theta),
- \qquad e_y,
-\]
-the magnetic heading residual is scalar: \(H_m e_H\) is parallel to \(e_y\)
-with norm 75.
+The scalar reference does not identify an invariant seven-state shipping block.
+The physical heading axis has a nonzero Y component on each member of the pair;
+it is not contained in the nominal XZ plane. Prediction, accelerometer/AW/BA
+coupling and resets retain both attitude/BG directions in the odd block.
+The lossless invariant covariance decomposition is the full 12+9 parity
+partition in `ou3-planar-parity-service.md`, with all within-parity cross terms.
 
-The literal accelerometer Jacobian has the same closure property.  Its
-\(e_y\)-residual couples the heading attitude coordinate to the \(e_y\)
-world-AW and body-BA coordinates; the S pseudo-row couples the corresponding
-\(v_y,p_y,S_y,a_{w,y}\) chain.  Thus the service calculation is contained in
-the seven-coordinate block
-\[
- (\theta_H,\ b_{g,H},\ v_y,\ p_y,\ S_y,\ a_{w,y},\ b_{a,y}).
-\]
-The complementary coordinates can affect this statement only if the literal
-prediction, Joseph updates or reset congruence create cross-block covariance.
-The next certificate must therefore verify algebraically, operation by
-operation, that the planar symmetry preserves this block (or enclose the
-off-block leakage if float32 arithmetic is included).  Once that is done, the
-all-time service problem reduces to a 7x7 causal Riccati/mean-factor recurrence
-with a 2-column heading/BG probe, rather than a 21-state interval enclosure.
+An orthogonal sum/difference transformation splits the four auxiliary probe
+columns into two two-column parity probes. This diagonalizes the auxiliary
+4x4 information. For either physical history, the two-column service matrix
+is the restriction back to that physical heading/BG plane: with the repository's
+sum/difference normalization it is `(I_even+I_odd)/2`, not either block alone
+and not the smallest eigenvalue of the auxiliary 4x4 matrix.
 
-This reduction does not delete the accelerometer, S, AW or BA structure:
-those four mechanisms are precisely why the block is seven-dimensional rather
-than the scalar 2x2 reference.  It also does not use the observed zero
-\(\hat b_{a,y}\) as an assumption.
+The covariance and mean evolve with the literal frontend, magnetic reference,
+S scheduler and separate AW-sync clock. A 20-second source period does not
+reset those phases. Positive-noise Riccati correction is Loewner monotone, but
+the actual additive AW floor is not; the linked cell algebra supplies the
+appropriate Frobenius bound. Corrected finite operation replay includes every
+prediction, correction, reset and AW event, with an untapped control.
+These facts do not constitute all-time gate/covariance continuation or the
+phase-uniform service certificate; those obligations remain OPEN.

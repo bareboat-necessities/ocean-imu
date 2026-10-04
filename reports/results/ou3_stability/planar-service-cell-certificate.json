@@ -1,0 +1,94 @@
+{
+  "all_time_magnetic_service_verified": false,
+  "aw_floor": {
+    "frobenius_nonexpansive_for_fixed_target": true,
+    "loewner_monotone": false,
+    "ordered_input_difference": [
+      [
+        "1",
+        "1"
+      ],
+      [
+        "1",
+        "1"
+      ]
+    ],
+    "output_difference": [
+      [
+        "1",
+        "1"
+      ],
+      [
+        "1",
+        "0"
+      ]
+    ],
+    "output_difference_determinant": "-1",
+    "proof": "A+(T-A)_+=T+(A-T)_+; PSD-cone projection is Frobenius nonexpansive; other matrix blocks are unchanged",
+    "scaled_frobenius_condition": "block-diagonal coordinate scaling, scalar on each invariant AW block",
+    "varying_target_bound": "||F_T(P)-F_T0(P0)||_F <= ||P-P0||_F+||T-T0||_F"
+  },
+  "full_shipping_counterexample_admitted": false,
+  "linked_identity_exact_rational_residual": "0",
+  "linked_shift_identity": "D=U A^-1 (B-A) B^-1 U' - U B^-1 Z' - Z B^-1 U' - Z B^-1 Z'",
+  "linked_shift_rank_upper": {
+    "even": 4,
+    "odd": 2
+  },
+  "noncommuting_innovation_identity_matrix": [
+    [
+      "353387/950820",
+      "1183069/1521312",
+      "18641/3169400"
+    ],
+    [
+      "1183069/1521312",
+      "9127549/5071040",
+      "5629743/12677600"
+    ],
+    [
+      "18641/3169400",
+      "5629743/12677600",
+      "1645323/1584700"
+    ]
+  ],
+  "numerical_norms_are_directed_rounding": false,
+  "old_bound_counterexample": {
+    "P": [
+      [
+        "5000",
+        "5/2"
+      ],
+      [
+        "5/2",
+        "1/200"
+      ]
+    ],
+    "P_ldlt_pivots": [
+      "5000",
+      "3/800"
+    ],
+    "Phi": [
+      [
+        "10000",
+        "0"
+      ],
+      [
+        "0",
+        "1/100"
+      ]
+    ],
+    "Phi_minus_P_ldlt_pivots": [
+      "5000",
+      "3/800"
+    ],
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "defect_D11": "500/3",
+    "invalid_bound": "1/20",
+    "shipping_counterexample": false
+  },
+  "qualification": "OU3_PLANAR_SERVICE_CELL_ALGEBRA_V1",
+  "result_type": "PROVED analytical theorem; exact rational algebra regressions",
+  "scheduler_phase_cell_forward_invariant": false,
+  "theorem_closed": false
+}

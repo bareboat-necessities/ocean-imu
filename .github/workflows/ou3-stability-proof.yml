@@ -13,6 +13,7 @@ on:
       - "tests/kalman_ou_iii/**"
       - "docs/ou3-*.md"
       - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
+      - "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part"
       - "reports/results/ou3_stability/**"
       - ".github/workflows/ou3-stability-proof.yml"
   push:
@@ -26,6 +27,7 @@ on:
       - "tests/kalman_ou_iii/**"
       - "docs/ou3-*.md"
       - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
+      - "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part"
       - "reports/results/ou3_stability/**"
       - ".github/workflows/ou3-stability-proof.yml"
 concurrency:
@@ -254,3 +256,42 @@ jobs:
           path: /tmp/ou3-moving-compatibility.json
           retention-days: 7
           if-no-files-found: warn
+
+  planar-service-cell:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install planar audit dependencies
+        run: |
+          python3 -m pip install numpy scipy mpmath
+          sudo apt-get update -qq
+          sudo apt-get install -y clang libeigen3-dev
+      - name: Verify analytical algebra and fail-closed bindings
+        run: |
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_planar_service_*.py' -v
+          python3 -m unittest tests.validation.test_ou3_planar_information_ceilings tests.validation.test_ou3_causal_tuner_interval -v
+          python3 -m tools.stability.ou3_theorem.build_evidence
+      - name: Export and audit actual planar word with untapped control
+        run: |
+          python3 -m tools.stability.ou3_theorem.planar_service_stream --cxx clang++ --eigen /usr/include/eigen3 --duration 240 --tail 40 --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-stream.json
+          python3 -m tools.stability.ou3_theorem.planar_service_audit --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-operation-audit.json
+          python3 -m tools.stability.ou3_theorem.planar_service_frechet --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-frechet.json
+          python3 -m tools.stability.ou3_theorem.planar_service_verify --stream-report /tmp/ou3-planar-stream.json --operation-audit /tmp/ou3-planar-operation-audit.json --frechet /tmp/ou3-planar-frechet.json
+      - uses: actions/upload-artifact@v6
+        if: ${{ !cancelled() }}
+        with:
+          name: ou3-planar-service-cell-diagnostics
+          path: |
+            /tmp/ou3-planar-stream.json
+            /tmp/ou3-planar-operation-audit.json
+            /tmp/ou3-planar-frechet.json
+          retention-days: 7
+          if-no-files-found: error

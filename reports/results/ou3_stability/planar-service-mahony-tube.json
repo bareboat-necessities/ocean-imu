@@ -1,0 +1,111 @@
+{
+  "G": [
+    [
+      "10",
+      "-5"
+    ],
+    [
+      "-5",
+      "15"
+    ]
+  ],
+  "G_norm_charge_upper": "7841/12000000000",
+  "all_time_frontend_tube_verified": false,
+  "all_time_magnetic_service_verified": false,
+  "complete_literal_one_step_error_caps_verified": false,
+  "coordinates": "z=(private normalized-direction pitch minus physical psi, 10*integralFBy)",
+  "endpoint_checks": [
+    {
+      "A": [
+        [
+          "5761781453082304116791/5764607523034234880000",
+          "5368709/10737418240"
+        ],
+        [
+          "-263066741/536870912000",
+          "1"
+        ]
+      ],
+      "B": [
+        [
+          "2826069951930763209/5764607523034234880000"
+        ],
+        [
+          "263066741/536870912000"
+        ]
+      ],
+      "B_G_norm_upper": "1/500",
+      "G_minus_ATGA_minus_marginG": [
+        [
+          "7315064627711159293597125874975279506479/3323069989462289682259517650700861440000000",
+          "7737132841750916957983706733/6189700196426901374495621120000"
+        ],
+        [
+          "7737132841750916957983706733/6189700196426901374495621120000",
+          "1365491246118522059/1441151880758558720000"
+        ]
+      ],
+      "effective_gain": "49/100",
+      "positive_LDL_pivots": [
+        "7315064627711159293597125874975279506479/3323069989462289682259517650700861440000000",
+        "34774317280831469320587794441076072379201/146301292554223185871942517499505590129580000"
+      ]
+    },
+    {
+      "A": [
+        [
+          "5761666103288347759109/5764607523034234880000",
+          "5368709/10737418240"
+        ],
+        [
+          "-273804159/536870912000",
+          "1"
+        ]
+      ],
+      "B": [
+        [
+          "2941419745887120891/5764607523034234880000"
+        ],
+        [
+          "273804159/536870912000"
+        ]
+      ],
+      "B_G_norm_upper": "1/500",
+      "G_minus_ATGA_minus_marginG": [
+        [
+          "7979345971291115662035050359252703202279/3323069989462289682259517650700861440000000",
+          "8975073162851170191076953191/6189700196426901374495621120000"
+        ],
+        [
+          "8975073162851170191076953191/6189700196426901374495621120000",
+          "1365491246118522059/1441151880758558720000"
+        ]
+      ],
+      "effective_gain": "51/100",
+      "positive_LDL_pivots": [
+        "7979345971291115662035050359252703202279/3323069989462289682259517650700861440000000",
+        "11473249971370735918536603804982289435401/159586919425822313240701007185054064045580000"
+      ]
+    }
+  ],
+  "exogenous_angle_offset_cap": "1/4000",
+  "first_coordinate_additive_cap": "23/500000000",
+  "h_binary32_exact": "5368709/1073741824",
+  "integralFBy_abs_bound": ".00017",
+  "interior_gain_argument": "A is affine in a, so A^T G A is matrix convex; endpoint inequalities cover [0.49,0.51]",
+  "literal_initialization_in_tube_verified": false,
+  "one_step_radial_margin_lower": "81/100000000",
+  "pitch_error_abs_bound": ".0021",
+  "qualification": "OU3_PLANAR_MAHONY_CONDITIONAL_TUBE_V1",
+  "raw_quaternion_norm_not_assumed_one": true,
+  "required_raw_squared_norm_interval": [
+    ".995",
+    "1.001"
+  ],
+  "result_type": "CONDITIONAL; common-quadratic and charge inequalities proved exactly",
+  "root_G_norm_radius": "3/500",
+  "scaled_integral_additive_cap": "1/500000000",
+  "squared_norm_decrement_lower": "27/100000",
+  "strict_radial_margin": "1879/12000000000",
+  "theorem_closed": false
+}

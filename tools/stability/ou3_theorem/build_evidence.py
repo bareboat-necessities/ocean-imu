@@ -62,7 +62,15 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.word_diameter import certificate as diameter_certificate
     from tools.stability.ou3_theorem.imu_two_timescale_certificate import certificate as imu_certificate
     from tools.stability.ou3_theorem.moving_quiet_compatibility import certificate as compatibility_certificate
+    from tools.stability.ou3_theorem.planar_service_cell import certificate as planar_cell_certificate
+    from tools.stability.ou3_theorem.planar_service_guard import certificate as planar_guard_certificate
+    from tools.stability.ou3_theorem.planar_service_frontend_binding import certificate as planar_frontend_binding_certificate
+    from tools.stability.ou3_theorem.planar_service_mahony_tube import certificate as planar_mahony_tube_certificate
     for name, generate in (
+        ("planar-service-cell-certificate.json",planar_cell_certificate),
+        ("planar-service-guard-certificate.json",planar_guard_certificate),
+        ("planar-service-frontend-binding.json",planar_frontend_binding_certificate),
+        ("planar-service-mahony-tube.json",planar_mahony_tube_certificate),
         ("moving-quiet-compatibility-certificate.json",compatibility_certificate),
         ("imu-two-timescale-certificate.json",imu_certificate),
         ("word-diameter-certificate.json",diameter_certificate),
@@ -91,6 +99,13 @@ def validate() -> dict:
         artifact=STATUS.parent/name
         if not artifact.is_file() or json.loads(artifact.read_text())!=generate():
             failures.append(f"committed {name} differs from exact reproduction")
+    from tools.stability.ou3_theorem.planar_service_verify import verify as verify_planar
+    try:
+        verify_planar(*(json.loads((STATUS.parent/name).read_text()) for name in (
+            "planar-service-stream-diagnostic.json", "planar-service-operation-audit.json",
+            "planar-service-frechet-diagnostic.json")))
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        failures.append("finite planar evidence verification failed: "+str(error))
     from tools.stability.ou3_theorem.construction_history_diagnostic import driver_source, zero_true_bias_storage_audit
     construction=json.loads((STATUS.parent/"construction-history-feasibility.json").read_text())
     if construction.get("generated_driver_sha256") != hashlib.sha256(driver_source().encode()).hexdigest():

@@ -11,11 +11,20 @@ Successive integration gives the deterministic coefficients multiplying the root
 \phi_{pa}=\tau^2(x+e^{-x}-1),\qquad
 \phi_{Sa}=\tau^3(\tfrac12x^2-x-e^{-x}+1).
 \]
-Taylor expansion gives the shipping small-\(x\) branches as the analytic limits. The process covariance has Gram form
+Taylor expansion identifies the ideal limits. Shipping uses finite
+small-\(x\) polynomials, whose nonzero remainder must remain explicit. The process covariance has Gram form
 \[
 Q=\int_0^h\Phi(h-s)LL^T\Phi(h-s)^T\,ds\succeq0.
 \]
-Thus the shipping discrete prediction and process action used by the proof are the exact OU-chain quantities.
+The literal small-$x$ covariance is compared with this ideal Gram, rather
+than equated to it. The rational coefficient/tail calculation in
+\texttt{lin\_path\_certificate.small\_x\_source\_defect} uses natural
+step scaling $D_h=\operatorname{diag}(h,h^2,h^3,1)$ and gives
+$Q_{\rm ship}\succeq(1-\epsilon_Q)Q_{\rm ideal}$ with
+$0\le\epsilon_Q<1$ on the qualified domain. It also charges the nonzero
+$\Delta\Phi$ in the path action. The reproduced LIN matrix certificate
+retains these terms, establishing the stated real-arithmetic PSD comparison.
+No exact-real or float32 branch is silently substituted for another.
 
 \subsection{Joseph correction and reset action}
 For \(S=HP^-H^T+R\), \(K=P^-H^TS^{-1}\), \(A=I-KH\),
@@ -240,8 +249,10 @@ although gravity direction need not be constant.
 
 For the explicit symmetric pair, direct multiplication gives
 \[
-R_\pm^T(a_xe_x-ge_z)+b_{a,\pm}
-=R_y(-\psi)(a_xe_x-gce_z),\qquad R_\pm^TB=75R_y(-\psi)e_x.
+\begin{aligned}
+R_\pm^T(a_xe_x-ge_z)+b_{a,\pm}&=R_y(-\psi)(a_xe_x-gce_z),\\
+R_\pm^TB&=75R_y(-\psi)e_x.
+\end{aligned}
 \]
 Also \(R_\pm^T\dot R_\pm=[\dot\psi e_y]_\times\) and
 \((R_+^T-R_-^T)ge_z=2gs e_y\), proving identical records and a zero
@@ -291,6 +302,188 @@ repeat to float precision.  Hence the rigorous Poincare object is a cell in
 covariance matrix.  The final-cycle all-IMU-root replay has service minimum
 above 7, but outward interval self-inclusion and the all-time floor remain open.
 
+\subsection{Planar admission-cell transport algebra}
+The proof modules are \texttt{planar\_service\_cell.py},
+\texttt{scheduler\_s\_shift\_bound.py}, and
+\texttt{planar\_service\_frechet.py}.  Exact rational regressions are in
+\texttt{planar-service-cell-certificate.json}; they supplement the following
+algebraic proof, rather than replacing a general argument by sampled identities.
+
+Write $\mathcal R_H(P)=P-PH^T(HPH^T+R)^{-1}HP$, $C=FPF^T+Q$,
+$A=HPH^T+R$, $B=HCH^T+R$, $U=FPH^T$, and $Z=CH^T-U$.
+Expanding both alternative local operation orders gives
+\[
+\begin{aligned}
+D&=\mathcal R_H(C)-[F\mathcal R_H(P)F^T+Q]\\
+ &=UA^{-1}U^T-(U+Z)B^{-1}(U+Z)^T.
+\end{aligned}
+\]
+Use $A^{-1}-B^{-1}=A^{-1}(B-A)B^{-1}$, without commuting the matrices:
+\[
+\begin{aligned}
+ D={}&UA^{-1}(B-A)B^{-1}U^T-UB^{-1}Z^T\\
+ &-ZB^{-1}U^T-ZB^{-1}Z^T.
+\end{aligned}
+\]
+In particular $D=[U,Z]M[U,Z]^T$ for a $2m$-dimensional symmetric core.
+The literal $S$ selector has $m=2$ on the even block and $m=1$ on the odd
+block, giving ranks at most four and two.  Also
+\[
+\begin{aligned}
+Z&=[FP(F^T-I)+Q]H^T,\\
+B-A&=H[(F-I)PF^T+P(F^T-I)+Q]H^T.
+\end{aligned}
+\]
+Thus the small one-step differences remain linked before taking norms.
+If $A\succeq aI$, $B\succeq bI$, $\|WU\|\le u$, $\|WZ\|\le z$,
+and $\|B-A\|\le e$, then
+\[
+\|WDW^T\|\le u^2e/(ab)+(2uz+z^2)/b.
+\]
+For a declared cell $P=P_0+LEL^T$, $\|E\|\le r$, expand each occurrence
+of the \emph{same} $E$ in these three factors and use submultiplicativity.
+This proves the implemented cell formula. Its floating evaluation is not an
+outward-rounded certificate and the cell is not presumed reachable.
+
+The old implication $P\preceq\bar P\Rightarrow
+\|PH^T\|\le\|\bar P H^T\|$ is false.  An exact example is
+\[
+\begin{gathered}
+P=\begin{bmatrix}5000&5/2\\5/2&1/200\end{bmatrix},\quad H=[0,1],\\
+\bar P=\operatorname{diag}(10000,1/100),\quad F=I,\\
+Q=\operatorname{diag}(0,1/100),\quad R=1/100.
+\end{gathered}
+\]
+Both $P$ and $\bar P-P$ are positive definite, but $D_{11}=500/3$,
+whereas the old two-term formula gives $1/20$.  The corrected two-term
+bound instead uses the PSD block Cauchy inequality
+$\|FPH^T\|^2\le\|F\bar PF^T\|\|H\bar PH^T\|$.
+Likewise an orientation-free accelerometer information majorant must use
+\[
+\Big\|\sum_i A_i x_i\Big\|^2
+\le\Big(\sum_i w_i\Big)\sum_iw_i\|x_i\|^2,
+\qquad \|A_i\|\le w_i,
+\]
+not $(ww^T)\otimes I$, which has false null directions for differently
+rotated blocks. This corrected block-diagonal majorant is an explicit
+relaxation; it is not used in place of the exported actual accelerometer row.
+The vertical $S$ noise floor is also multiplied by the literal axis factors
+$(0.72,0.50,1)$ before forming an information ceiling.
+
+For the default AW-floor operation let $E_w$ inject the AW coordinates:
+\[
+\mathcal F_\Sigma(P)=P+E_w(\Sigma-P_{ww})_+E_w^T.
+\]
+This map is not Loewner monotone.  With one AW coordinate (coordinate two),
+$P_0=I_2$, $P_1=I_2+\mathbf1\mathbf1^T$, and target $3$, its output
+difference is $\left[\begin{smallmatrix}1&1\\1&0\end{smallmatrix}\right]$,
+whose determinant is $-1$, although the input difference is PSD.
+Consequently AW synchronization cannot be added to a monotone-face tube by
+mapping its two faces independently.
+
+There is nevertheless an exact useful norm bound. The AW output block is
+$\Sigma+(P_{ww}-\Sigma)_+$.  Orthogonal projection onto the closed PSD cone
+is Frobenius nonexpansive: the two projection variational inequalities imply
+$\|\Pi X-\Pi Y\|_F^2\le\langle\Pi X-\Pi Y,X-Y\rangle$.
+All other covariance blocks are unchanged. Summing their squared Frobenius
+norms proves
+\[
+\|\mathcal F_\Sigma(P)-\mathcal F_\Sigma(P_0)\|_F\le\|P-P_0\|_F.
+\]
+Varying the target adds at most $\|\Sigma-\Sigma_0\|_F$ by the same
+projection inequality and the triangle inequality. The result remains valid
+under block-diagonal coordinate scaling that is scalar on each invariant AW
+block; an arbitrary covariance-whitening matrix need not have this property.
+
+For fixed $F,Q,H,R,G,\Sigma$, differentiation gives respectively
+$E\mapsto FEF^T$, $E\mapsto(I-KH)E(I-KH)^T$, and $E\mapsto GEG^T$.
+On a fully active AW face $\Sigma-P_{ww}\succ0$, the AW derivative deletes
+only the $ww$ marginal of $E$; all cross-state covariance perturbations remain.
+Composition on orthonormal symmetric-matrix bases gives the complete-word
+covariance partial derivative.  This is a block of the required joint causal
+Jacobian, not that whole Jacobian: variations of mean, generated rows, gains
+through those rows, targets, clocks and hard-event branches remain explicit
+open inputs. The measured twenty-second gains $0.74261434$ and $0.87382130$
+are finite diagnostics in different root/end metrics, not a Poincare
+self-inclusion or an all-time magnetic-service theorem.
+
+\paragraph{Structures preserved and relaxation scope.}
+The local identities keep the same $P,F,Q,H,R$, the full parity blocks,
+Joseph corrections, actual reset sign $G_\theta=I+\tfrac12[d\theta]_\times$,
+and additive AW synchronization. The covariance cell and fixed-coefficient
+partial derivative are explicitly declared proof relaxations. Moving an $S$
+event across a complete sample also crosses accelerometer/reset and possibly
+magnetic/AW operations and changes future mean-dependent coefficients; the
+local rank bound alone does not certify that full scheduler-word defect.
+
+\subsection{All-time planar guard inactivity in real arithmetic}
+The source-specific module and certificate are
+\texttt{planar\_service\_guard.py} and
+\texttt{planar-service-guard-certificate.json}.
+Let $h=1/200$, $\nu=\pi/10<11/35$, and $a(t)$ be the common delivered
+specific-force record of the planar pair. Differentiating the \emph{same}
+rotated record gives
+\[
+\|\dot a\|\le .02\nu^3+.02\nu(g+.02\nu^2)
+ <106801783/1715000000=:L.
+\]
+Therefore successive samples differ by at most $hL$.
+For the literal 25-Hz first detector, $\gamma=e^{-\pi/4}<23/50$;
+the committed rational exponential-series lower bound proves this inequality.
+The seeded first high-pass output obeys
+\[
+\begin{gathered}
+h_{1,k}=\gamma(h_{1,k-1}+a_k-a_{k-1}),\quad h_{1,0}=0,\\
+\sup_k\|h_{1,k}\|\le\gamma hL/(1-\gamma).
+\end{gathered}
+\]
+The second detector low-pass state is a convex average of $h_1$, starting
+at zero, so its high-pass output has norm at most twice this value. The sum
+of the three squared-output EWs is a convex average of $\|h_2\|^2$.
+Consequently, at every prefix,
+\[
+\begin{aligned}
+\operatorname{RMS}_{\rm detector}&\le\frac{2456441009}{4630500000000}\\
+&<0.000531<0.03.
+\end{aligned}
+\]
+The target engagement is zero. Its seeded weight remains zero under the
+literal slew and rail parking, and the guard returns the input unchanged.
+This proof preserves both detector stages, startup seeding, RMS and weight
+chronology. It changes no physical constants and does not require a new
+excitation condition. It is an all-time \emph{real-arithmetic component}
+result; the float32 rounding transfer and the rest of admission remain open.
+
+\subsection{Private frontend binding and conditional pitch--integral tube}
+The old interval frontend is not a literal implementation certificate.
+\texttt{Mahony\_AHRS<float>::invSqrt} uses a bit seed and one Newton step,
+not exact normalization. For $q=(1,0,0,0)$, zero gyro and aligned nonzero
+acceleration, feedback vanishes but the first raw quaternion norm is not one.
+\texttt{planar-service-frontend-binding.json} evaluates the exact binary32
+operation word with round-to-nearest, ties-to-even and no contraction.
+The pre-normalization quaternion identity remains valid; replacing the
+post-normalization raw quaternion by a unit quaternion is not justified.
+The vertical frontend uses its raw components, whereas its public quaternion
+accessor separately normalizes them. Gravity subtraction, initial tilt seed,
+readiness/period chronology, literal tuner constants and the AW clock must
+also be bound. The unbound reference HistoryCell entry now fails closed.
+
+A narrower conditional frontend calculation is already executable in
+\texttt{planar\_service\_mahony\_tube.py}. For pitch error $e$ and integral
+feedback $i$, put $z=(e,10i)$ and
+\[
+G=\begin{bmatrix}10&-5\\-5&15\end{bmatrix},\quad
+A(a)=\begin{bmatrix}1-a(.2h+.02h^2)&h/10\\-10(.02)ha&1\end{bmatrix}.
+\]
+For $a\in[.49,.51]$, exact endpoint LDL checks and matrix convexity give
+$A(a)^TGA(a)\preceq(1-.00027)G$. The proposed additive caps give
+$G$-norm charge at most $7841/12000000000$, strictly less than the radial
+margin $.006(.00027)/2=.00000081$. Thus those hypotheses imply retention
+of $\|z\|_G\le.006$, without assuming the raw quaternion has unit norm.
+The one-step caps and initialization are not yet source-bound for every
+literal float execution; this calculation is explicitly CONDITIONAL, not
+proof of all-time frontend or magnetic admission.
+
 \subsection{Same-record full covariance comparison}
 Identical initial estimator state and delivered prefixes imply identical complete
 internal executions by induction, including frontend, parameters, covariance,
@@ -322,11 +515,11 @@ The retained local LaSalle theorem is used only under its qualified local hypoth
 
 Consequently the final theorem is a genuine implication chain:
 \[
-\text{source assumptions}
-\Rightarrow\text{construction/capture}
-\Rightarrow H18\text{ release}
-\Rightarrow\text{recurring A21 finite-error dissipation}
-\Rightarrow\text{linked entry}
-\Rightarrow\text{local theorem}.
+\begin{gathered}
+\text{source assumptions}\Rightarrow\text{construction/capture}\\
+\Rightarrow H18\text{ release}\\
+\Rightarrow\text{recurring A21 finite-error dissipation}\\
+\Rightarrow\text{linked entry}\Rightarrow\text{local theorem}.
+\end{gathered}
 \]
 The entry arrow is not universal absolute physical-error entry. Quiet compatible-tube boundedness and the MOVING admission/entry audit are separate open premises. The arrows whose source-uniform premises remain open are identified explicitly in the lemma statements; no proof is asserted for those premises.

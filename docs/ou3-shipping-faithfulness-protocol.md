@@ -44,7 +44,7 @@ Do not treat a_w,v,p,S as independent nuisance coordinates. Preserve exact OU pr
 
 A scalar relaxation such as ||b||^2/lambda_min(Delta) is not evidence against shipping unless proved lossless. Keep source and loss operators on the same history using linked quadratic supply, generalized eigenvalues, dissipativity, IQC-style arguments, shaped storage or exact directional completed squares.
 
-The finite-word compatibility direction r_W=(a,-A_W a) is word dependent. MARINE/A* exclude persistent nonzero compatibility across qualified MOVING superwords. Do not price a superword by unrelated one-word weakest eigenvalues unless losslessness is proved.
+The finite-word compatibility direction r_W=(a,-A_W a) is word dependent. Homogeneous zero-action exclusion is a conditional statement on qualified coefficient/service words. It is not physical tilt/BA identification: the exact MOVING compatible pair has a persistent physical gauge, with all-time admission still open. Do not price a superword by unrelated one-word weakest eigenvalues unless losslessness is proved.
 
 ## Horizons and proof boundaries
 
@@ -58,7 +58,7 @@ Before calling a witness a shipping counterexample, explicitly answer YES to all
 
 ## Established results remain controlling
 
-Unless an actual shipping-level contradiction is found, retain: real-arithmetic A* physical->nominal bridge under current candidate qualification; complete regular-word joint zero-action kernel nullity <=1; exclusion of persistent nonzero compatibility on qualified MOVING superwords; qualitative finite-superword strict dissipation; compact outer A21 release region; and existence of a finite practical absorbing radius. Do not revive O1/O2 or another observability architecture merely because quantitative entry is open.
+Retain the exact operation identities, complete-word kernel reductions and qualified local theorem. Use the current lemma manifest for source-uniform status: the physical/nominal bridge, joint-kernel cover, H18 release and compact outer region are CONDITIONAL. Their algebraic implications do not establish completion of construction/release or physical gauge separation. Neither quiet absolute entry nor scalar-span MOVING bias separation may be revived. The exact MOVING pair's all-time actually applied service audit remains controlling; no generic A21 argument substitutes for that admission calculation.
 
 ## PR #643 standing interpretation
 

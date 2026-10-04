@@ -91,17 +91,19 @@ However, the desired service comparison is not a free monotonicity theorem. Stro
 
 ## Paired covariance--probe correction identity
 
-The correct same-history comparison variable is now explicit. For any positive-noise linear correction with S=HPH'+R, K=PH'S^-1, Joseph covariance P+=(I-KH)P(I-KH)'+KRK', and homogeneous probe Phi+=(I-KH)Phi, the information-form identity P+^-1=P^-1+H'R^-1H and I-KH=P+P^-1 imply exactly
+For S=HPH'+R, K=PH'S^-1, Joseph Pplus and Phi_plus=(I-KH)Phi,
 
-    Phi+' P+^-1 Phi+ = Phi-' P^-1 Phi-.
+    Phi_plus' Pplus^-1 Phi_plus = Phi' P^-1 Phi - (H Phi)' S^-1 (H Phi).
 
-Thus literal accelerometer and S=0 corrections do not consume covariance-metric heading/BG probe storage when P and Phi are propagated together. This is stronger and cleaner than trying to order covariance or gains separately. The Schur identity above explains how nuisance enters the correction, but no additional nuisance-loss charge is needed for this paired storage.
-
-This does not by itself prove the next magnetic service summand: prediction adds process covariance and therefore can reduce Phi'P^-1Phi, the magnetic row rotates with the nominal attitude, and reset changes coordinates. Those are now the only comparison losses that must be bounded between magnetic events. The reset singular values are given below. The remaining prediction loss should be evaluated directly from the literal Q/F factors on each 5-ms step, preserving the two parity blocks and scheduler phase.
+Every accelerometer, S and magnetic correction consumes its PSD action. Reset
+congruence preserves paired storage; prediction generally consumes additional
+storage. A product of prediction-retention factors times a replay service
+minimum is not a magnetic-service lower bound. All intervening correction
+losses must be carried. The old equality without the loss was erroneous.
 
 ## Attitude reset metric
 
-The shipping first-order attitude covariance/probe reset uses G=I-(1/2)[dtheta]x on the attitude block. Because [dtheta]x is real skew-symmetric, G'G=I+(1/4)(||dtheta||^2 I-dtheta dtheta'). Its singular values are exactly 1 and sqrt(1+||dtheta||^2/4) (twice). Thus the reset is invertible, has sigma_min=1, and its inverse has sigma_min=1/sqrt(1+||dtheta||^2/4). This closes the coordinate-conditioning formula needed by the comparison; a uniform numerical dtheta bound must still come from the same-history correction cell rather than an independent clamp.
+The shipping first-order attitude covariance/probe reset uses G=I+(1/2)[dtheta]x on the attitude block. Because [dtheta]x is real skew-symmetric, G'G=I+(1/4)(||dtheta||^2 I-dtheta dtheta'). Its singular values are exactly 1 and sqrt(1+||dtheta||^2/4) (twice). Thus the reset is invertible, has sigma_min=1, and its inverse has sigma_min=1/sqrt(1+||dtheta||^2/4). This closes the coordinate-conditioning formula needed by the comparison; a uniform numerical dtheta bound must still come from the same-history correction cell rather than an independent clamp.
 
 ## Scheduler coordinate is structurally invariant
 
@@ -117,31 +119,61 @@ This is not yet a shipping service proof. Promotion requires a formal Schur/cond
 
 No independent reimplementation of the 12x12 LIN prediction is needed. The proof instrumentation already receives F_LL and Q_LL after the shipping calls to IntegratedOUChain::transition/process_covariance, together with F_AA,Q_AA, the BA phi/Q block and every correction/reset in operation order. The factor stream therefore treats those callback matrices as the literal coefficients. Likewise S=0 is observed only when the shipping time_update calls periodic_update_due and then applyIntegralZeroPseudoMeas; the factor stream consumes that actual correction event instead of approximating a cadence. This removes the surrogate F_LL/Q_LL and scheduler chronology from the intended certificate. A temporary non-promoting diagnostic exports the first-200 literal prediction retention and S-event count to verify plumbing before interval promotion.
 
-## Remaining Poincare certificate
+## Complete phase-aware causal cell: OPEN
 
-The same-history enclosure now needs two independent parity cells rather than a
-generic 21x21 box. It must also carry the filtered adaptive parameters and
-pseudo-measurement phase because those are causal scheduling variables. For one
-20-s source period define the exact literal maps F_E,F_O on those cells.
+The exact covariance decomposition is 12+9, but these blocks are NOT independent
+causal histories. A forward-invariant cell must retain the planar mean, both
+covariances, private raw Mahony quaternion/integral, guard, frequency/variance,
+staged/applied joint tuner tuple, S phase, AW synchronization clock and pending
+target, reference/refinement state and gates. The S interval alone is invariant;
+that is not covariance or service containment.
 
-A valid certificate must provide outward-rounded cells C_E,C_O,C_T such that
+Default AW synchronization is P -> P+Ew(Sigma-Pww)_+Ew'. It is not Loewner
+monotone. `planar_service_cell.py` proves its fixed-target Frobenius bound and
+the rank-4/even, rank-2/odd linked S/prediction commutator. The old scalar-norm
+bound from P<=Pupper and the orientation-independent rank-three accelerometer
+ceiling were false; corrected bounds and exact counterexamples are documented
+in the appendix. These are proof-code failures, not shipping counterexamples.
 
-    F_E(C_E,C_T) subset int(C_E),
-    F_O(C_O,C_T) subset int(C_O),
-    F_T(C_T)     subset int(C_T),
+`planar_service_stream.py` exports the true pre-prediction P, literal F/Q/R_S,
+all actual correction H/R/S/K/PCt/residuals, pre/post reset, AW target/pending
+state and sample state in operation order. `planar_service_audit.py` checks this
+word before measuring local defects. Its S/prediction commutator is not the
+complete scheduler-cell difference, which must also traverse acc/reset and
+possibly mag/AW operations and future mean-dependent coefficients.
 
-and then propagate each 2x2 service probe through every sample root in a
-one-second placed window. The phase-uniform result is
+The entire covariance partial derivative, retaining all AW replacements, has
+finite twenty-second relative Frobenius gains approximately 0.74261434 and
+0.87382130. This is a frozen-coefficient Jacobian block in different root/end
+metrics, not a self-containing shipping cell. The full same-history mean and
+coefficient feedback remains open. Products of one-step/sync-local norms lose
+this cancellation and are retired after the failed grouping refinement.
 
-    min_phi min(lambda_min(I_E(phi)),lambda_min(I_O(phi))) > 1.
+The literal private float Mahony observer is not exactly normalized. Its raw
+quaternion is used to produce vertical acceleration. The old interval reference
+also omitted gravity subtraction and lacks literal seeding/period/tuner/clock
+binding; it must not feed a shipping HistoryCell. The default entry now fails
+closed with an implementation-binding error. A conditional pitch/integral
+quadratic tube has an exact positive margin, but its every-step error and
+initialization caps still need source binding.
 
-The 1200-s replay is only a seed-selection diagnostic. Tail sample-root sweeping
-and 20-s Poincare drift are recorded separately and are not theorem evidence
-until the interval inclusion above succeeds.
+One all-time component has closed: `planar_service_guard.py` proves that the
+exact planar record's seeded guard stays inactive in real arithmetic, since its
+detector RMS is below 0.000531<0.03. Float32 transfer is not inferred from this.
 
-Structures preserved: literal 21-state chronology through an exact invariant
-permutation; actual covariance/gain/Joseph/reset; actual accepted magnetic
-events; coupled tuner/scheduler.
+For service, the orthogonal plus/minus transform gives parity information
+matrices I_E and I_O with each physical pair I_+=I_-=(I_E+I_O)/2. Therefore the
+required lower floor is for those physical 2x2 matrices, not the minimum of the
+parity eigenvalues and not a 4x4 eigenvalue. Every placed window/root and all
+future scheduler/adaptation phases must be covered after complete causal
+self-inclusion. Current all-time admission and exclusion remain OPEN.
 
-Relaxations introduced: none in the parity factorization. Any interval hull used
-later must be recorded as an explicit outer enclosure.
+Structures preserved: full 21-state literal execution; parity is a lossless
+permutation; actual gains, Joseph, resets, AW synchronization and both clocks;
+physical bias/S histories are inherited and never reset by proof boundaries.
+
+Relaxations introduced: fixed-coefficient covariance derivatives and local
+covariance cells are explicitly subordinate blocks/outer sets, not reachable
+shipping trajectories. Numerical spectra and reference oracles are finite
+feasibility diagnostics only. No physical assumption, estimator parameter or
+quality gate has changed.

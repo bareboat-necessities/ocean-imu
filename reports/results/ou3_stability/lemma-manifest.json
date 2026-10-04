@@ -16,14 +16,17 @@
       "latex_title": "Shipping OU prediction identities --- PROVED",
       "status": "PROVED",
       "assumptions": [
-        "MARINE MOTION",
-        "shipping OU-III chronology"
+        "qualified 4--6 ms regular step and existing OU tuner domain",
+        "literal finite-polynomial source defects retained",
+        "real arithmetic; float32 transfer separate"
       ],
       "proof_modules": [
-        "tools/stability/ou3_theorem/corrected_word.py"
+        "tools/stability/ou3_theorem/corrected_word.py",
+        "tools/stability/ou3_theorem/lin_path_certificate.py"
       ],
       "certificates": [
-        "reports/results/ou3_stability/corrected-word-certificate.json"
+        "reports/results/ou3_stability/corrected-word-certificate.json",
+        "reports/results/ou3_stability/lin-matrix-certificate.json"
       ],
       "open_dependencies": []
     },
@@ -407,6 +410,46 @@
       ],
       "certificates": [
         "reports/results/ou3_stability/moving-quiet-compatibility-certificate.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "planar_cell_transport",
+      "kind": "lemma",
+      "latex_title": "Planar admission-cell transport algebra --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "positive covariance and innovation matrices",
+        "same-history local operation factors",
+        "default additive AW floor",
+        "fixed-coefficient partial derivative, not full joint causal Jacobian"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/planar_service_cell.py",
+        "tools/stability/ou3_theorem/scheduler_s_shift_bound.py",
+        "tools/stability/ou3_theorem/planar_service_frechet.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/planar-service-cell-certificate.json"
+      ],
+      "open_dependencies": []
+    },
+    {
+      "id": "planar_guard_inactivity",
+      "kind": "lemma",
+      "latex_title": "Planar guard inactivity --- PROVED in real arithmetic",
+      "status": "PROVED",
+      "assumptions": [
+        "exact planar MOVING source",
+        "fixed 1/200-second sampling",
+        "literal guard seeding and default detector/engagement constants",
+        "real arithmetic; no float32 transfer asserted"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/planar_service_guard.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/planar-service-guard-certificate.json"
       ],
       "open_dependencies": []
     },
