@@ -15,5 +15,8 @@
   "joint_phase_cell_forward_invariant": false,
   "every_placed_window_magnetic_service_verified": false,
   "all_time_magnetic_service_verified": false,
-  "theorem_closed": false
+  "theorem_closed": false,
+  "generated_reverse_feedback_ports_zero": true,
+  "generated_one_way_coefficient_ranges_all_time_bounded": false,
+  "remaining_bidirectional_loop": "MEKF mean <-> covariance through state-dependent H and P-dependent K"
 }
