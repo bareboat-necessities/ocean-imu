@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "5d8d8ef87e309caaa9c6fb37e7b38a9ebfd7a59f"
+      "git_blob_sha": "d9cff2802ec8396afc6f1d71ec1747bd85b23c0a"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "14332e7802bebe49a24525d871204542f6b4978f"
+      "git_blob_sha": "c4ae289ea4aa614fb22c83a93eb89dd8ddcec92d"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "ccf739c5abd59086c36668bea6c2723ead96c93d"
+      "git_blob_sha": "bca9afc01c7263dd653bcc8a4e160c7182ec541f"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "e5ee22e5d24b7833e646363be65385ade2828242"
+      "git_blob_sha": "19e14970dd1c8b3165b254ec02f1df75fce7d620"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "2b96671b6b51213d82a3466d46461f32e80d7137"
+      "git_blob_sha": "2dc8ba29a348c82a0975dd17850cae0f25a3f8ea"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "e18143135a366a6b0567500ca6765c425ceb7e0e"
+      "git_blob_sha": "bc64c164cb7145013ba46d6463499c87850ebbac"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -956,7 +956,7 @@
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "4d79e39455f459a498037100394b46c0309d5029"
+      "git_blob_sha": "0c329caed4c0ba3483dc936e5ba285e6a8d53683"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
@@ -964,19 +964,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "edc28cc4dde145321b248024838247e06ede4eff"
+      "git_blob_sha": "10944703afd24bd60f521c2372e931d0fa5f9cc2"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "ec26989db615b250fe88cbe4076718dc89e80e25"
+      "git_blob_sha": "6b4f0e70c3e6d248ebf777a38e4311d05562b387"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
-      "git_blob_sha": "719e8679f304a94c9e3759e0b2a5666a5bea429b"
+      "git_blob_sha": "315e1cd25fd736629eb586ec9356ba5537a1cc88"
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "0d978ff7458adc7f45a17ac0c8e5c796b229688b"
+      "git_blob_sha": "078f6a89c3f13dda0bc03b37be824b04ec9c3db1"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
@@ -1164,6 +1164,16 @@
       "unclosed_complete_word_gap": "D, no shipping counterexample",
       "local_evidence_test_dependency": "E, Eigen 3.4.0 supplied through existing EIGEN_INCLUDE_DIR",
       "test_process_stale_certificate": "E, scope metadata edited during a running suite; freeze artifacts and rerun"
-    }
+    },
+    "AW_shear_constant_acc_row_verified": true,
+    "AW_row_covariance_port_connection_difference_verified": true,
+    "AW_shear_full_connection_derivative_retained": true,
+    "AW_shear_qualified_magnetic_loss_preserved": true,
+    "AW_shear_combined_port_absorption_verified": false,
+    "AW_shear_proof_label": "app:aw-shear-loss",
+    "AW_shear_tooling_failure": "E: missing display-math terminator caught by local compilation and corrected; no proof condition changed",
+    "central_planar_physical_acc_curvature_charge_verified": true,
+    "acc_charge_preserves_pitch_AW_cross_covariance": true,
+    "acc_curvature_requires_nominal_AW_BA_box": false
   }
 }

@@ -12,7 +12,7 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `d4d5700ae0f2963c62a8085f1f8bcb8857319db5`.
+Verified starting PR head: `5b030f42265afcce3d8983f37bc344a0c070b57d`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved. Current CI chronology belongs in PR metadata.
 
@@ -127,6 +127,37 @@ The observed-coefficient center defect .0006179245 is finite and uses future
 observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
+
+**PROVED — analytical AW shear reduction:** the full-state invertible frame
+`L=I-E_aw[aw]x E_theta^T` makes the nominal-world accelerometer row constant.
+The remaining AW-row covariance port is exactly
+`A(Gamma P+P Gamma')A'-(Gamma C+C Gamma')`, so it cancels in the covariant
+correction tangent. The fixed-noise additive substep retains the full Fisher
+covariance loss, with exact joint balance
+`Delta W=-||H eta-m||_S^-1^2-lambda L_P+||m||_R^-1^2`.
+The mismatch m is linked and endogenous, not independent forcing.
+[The derivation](ou3-measurement-frame-loss.md#exact-aw-shear-removes-the-remaining-nominal-accelerometer-row-derivative)
+retains the actual post-correction jump
+`B_L=I+N(K_aw r)`, `dB_L=N(dK_aw r+K_aw dr)` and its downstream covariance
+score. Literal OU prediction retains its attitude-frame discrepancy, BG and
+integrated LIN columns. The actual AW increment is unchanged, but its face
+uses the recovered original AW marginal. Nothing is independently boxed.
+The physical gauge is transformed, not deleted.
+
+For the central planar physical comparison, the sensor equation cancels the
+nominal BA term in the mean mismatch. Its remaining curvature obeys
+`||m0||_R^-1^2 <= V*tr(R^-1 J_y B_v P B_v' J_y')`, where B_v uses the
+actual physical-force divided rotation and nominal variation. The exact
+coefficient retains signed pitch/AW cross covariance; no nominal AW/BA box
+is required. Source cross-plus-square work remains linked. Uniform activation
+of V and the joint covariance block, and word-level absorption, are OPEN.
+
+The qualified magnetic 9/10 loss and its pitch/BG ceilings survive in this
+same joint storage: parity, attitude/BG marginal and physical comparison
+energy are unchanged. **OPEN:** absorb the combined mean mismatch, actual
+frame-jump, prediction/reset and noise/reference/AW-face work against the
+complete transverse action. Do not separately charge the now-cancelled AW-row
+norm or add losses belonging to different joint storage coordinates.
 
 **PROVED — analytical linked suffix-score normal form:**
 [The word-score proof and minimal activation table](ou3-linked-word-score.md)
@@ -299,16 +330,15 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
-An analytical obligation: form the combined acc/AW-row and prediction/reset
-coefficient work using the suffix-score normal form, including each generated
-covariance port's later score. Bound the same-history process/AW comparison
-loss and physical/source/chart score, preserving its range and kernel parts.
-Compare the resulting coupled action to existing physical service on justified
-compatible strata, including complementary process/S loss and endpoint gauge
-work. Prove only the reference/chart/energy and branch activation required by
-that estimate. The uniform margin is still OPEN; it is not supplied by a NIS
-maximum, a positive magnetic row constant or passing identity tests. No radius
-before the complete-word gap. Planar admission remains a separate obligation.
+An analytical obligation: use the AW shear to form the combined linked
+measurement mismatch and actual applied-increment frame work, including every
+generated covariance suffix score. Keep literal OU/BG/LIN and attitude-frame
+discrepancies, reset, AW face, noise/reference and physical/source ports.
+Absorb that combined work against magnetic/S/process action on a justified
+transverse lift, using the inherited comparison-supply budget. The covariance
+row derivative is now an exact connection difference, not another independent
+norm to bound. Prove only the activation and finite-precision facts required
+by that estimate. Uniform c and planar all-time admission remain OPEN.
 
 ## Verification scope
 
@@ -324,7 +354,7 @@ in the PR metadata.
    gauge, nonlinear fibre, both covariance parities, frontend/reference/clocks.
 2. Relaxations: fixed regular real-operation branches for derivatives and
    explicit norm/rounding majorants, qualified sqrt/exp and exact reference arithmetic; no arbitrary independent generated inputs.
-3. Failures: E proof-helper scope/derivative, source-anchor bugs and a corrected
+3. Failures: E proof-helper scope/derivative, source-anchor/display-delimiter bugs and a corrected
    covariance-variable name collision with the retired-architecture guard, and
    unavailable local IEEEtran class (full rendering delegated to retained CI); D incomplete
    sufficient cell, fixed-root ball and AW norm-product tactics. No instability
@@ -332,7 +362,7 @@ in the PR metadata.
 4. Admitted counterexample: none; all-time admission/exclusion remains OPEN.
 5. Retained: 25 proved entries, qualified local theorem and exact compatibility
    obstruction; qualified frontend and linked storage proofs extend entries without count promotion.
-6. Next: bound the linked suffix-score budget and combined generated acc/AW,
-   prediction/reset/frame ports against process/S and retained magnetic loss;
+6. Next: absorb the linked measurement mismatch and applied-increment frame
+   ports, with literal prediction/reset work and the suffix-score budget;
    prove only their required activation bounds.
    The uniform transverse gap and planar admission remain separate obligations.

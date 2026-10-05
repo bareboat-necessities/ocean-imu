@@ -427,6 +427,12 @@ def status_report() -> dict:
             "general_compatible_strata_and_uniform_transverse_gap_verified":False,
             "measurement_frame_loss_certificate":"measurement-frame-loss-certificate.json",
             "exact_moving_frame_measurement_feedback_reduction":True,
+            "AW_shear_constant_acc_row_verified":True,
+            "AW_row_covariance_port_coboundary_verified":True,
+            "AW_shear_applied_increment_frame_derivative_retained":True,
+            "AW_shear_combined_port_absorption_verified":False,
+            "central_planar_acc_physical_curvature_charge_verified":True,
+            "central_planar_acc_charge_uses_nominal_AW_BA_boxes":False,
             "qualified_planar_magnetic_coupled_loss_fraction":"9/10",
             "qualified_planar_magnetic_loss_is_complete_word_contraction":False,
             "qualified_service_pitch_variance_upper":"3/5000",
@@ -453,7 +459,8 @@ def status_report() -> dict:
             "prior-observation readers derive pitch/BG covariance ceilings and quantitative pitch-row loss. "
             "The exact suffix-score normal form cancels optimal additive local scores and retains all generated covariance suffix ports. "
             "Its loss-generated score charge is bounded by inherited root comparison energy plus signed source work minus realized NIS; physical/kernel forcing remains. "
-            "Bound the linked comparison-loss/source score and absorb combined accelerometer AW-row, prediction/reset/frame/AW/projection work while proving only required activation bounds. "
+            "The AW shear makes the accelerometer row constant and cancels its covariance row port as an exact connection difference, preserving qualified magnetic loss. "
+            "Absorb linked mean mismatch and actual applied-increment frame derivatives with OU/BG/LIN, reset, noise/reference and AW-face work; use only their required activation bounds. "
             "Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes "
             "to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. "
             "The physical same-record tangent is forced and is not automatically the homogeneous or action kernel. "

@@ -10,10 +10,13 @@ from tools.stability.ou3_theorem.measurement_frame import (
     certificate, connection, correction, covariance_row_charge, frame,
     magnetic_connection_charge, planar_magnetic_loss_margin, planar_pitch_domain_bounds,
     pullback_differentials, rank_one_magnetic_balance,
-    row_differentials, world_rows,
+    row_differentials, world_rows, aw_connection, aw_shear,
+    aw_shear_differentials, row_connection_coboundary, fixed_row_joint_balance,
+    planar_acc_mismatch_charge,
 )
 from tools.stability.ou3_theorem.planar_innovation_storage import information_shear_correction
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import product
+from tools.stability.ou3_theorem.planar_linked_riccati_mean import gain_differential
 from tools.stability.ou3_theorem.world_frame import quaternion_rotation, skew
 
 
@@ -150,6 +153,123 @@ class MeasurementFrameTests(unittest.TestCase):
         self.assertIn('float b0  = 1e-10f;', config)
         self.assertIn('c.Pq0, c.Pb0, c.b0, c.R_S_noise', wrapper)
         self.assertIn('cfg.sigma_g.setConstant(.00135f);cfg.sigma_m.setConstant(.8f);', probe)
+
+    def test_aw_shear_fixes_acc_row_and_preserves_full_held_joseph(self):
+        aw, g = [F(1, 5), 0, F(-1, 7)], [0, 0, 10]
+        L, Linv = aw_shear(aw), aw_shear([-x for x in aw])
+        H, Hmag = world_rows([a-b for a, b in zip(aw, g)], [7, 0, F(1, 9)])
+        Hfixed, _ = world_rows([-x for x in g], [7, 0, F(1, 9)])
+        self.assertEqual(product(L, Linv), identity(21))
+        self.assertEqual(product(H, Linv), Hfixed)
+        self.assertEqual(product(Hmag, Linv), Hmag)
+        # L acts only inside the active block: even arbitrary held mask
+        # congruence holds, without claiming optimality for nonzero held cross.
+        transformed = product(L, self.P, transpose(L))
+        for held in (False, True):
+            old = correction(self.P, H, self.noise, self.r, held)
+            new = correction(transformed, Hfixed, self.noise, self.r, held)
+            self.assertEqual(new['K'], product(L, old['K']))
+            self.assertEqual(new['C'], product(L, old['C'], transpose(L)))
+        da = [F(1, 11), F(-1, 13), F(2, 17)]
+        Gamma = aw_connection(da)
+        self.assertEqual(product(Gamma, aw_connection(aw)), zeros(21, 21))
+        dH, _ = row_differentials(da, [0, 0, 0])
+        self.assertEqual(product(H, Gamma), dH)
+        row_connection_coboundary(self.P, H, self.noise, Gamma)
+
+    def test_aw_shear_correction_and_changed_endpoint_connection(self):
+        aw, da = [F(1, 5), 0, F(-1, 7)], [F(1, 11), 0, F(2, 17)]
+        H, _ = world_rows([aw[0], 0, aw[2]-10], [7, 0, 0])
+        dH, _ = row_differentials(da, [0, 0, 0])
+        e, de, dp = zeros(21, 1), zeros(21, 1), zeros(21, 21)
+        e[1][0], e[15][0], e[18][0] = F(1, 20), F(1, 9), F(-1, 12)
+        de[1][0], dp[1][15], dp[15][1] = F(1, 13), F(1, 19), F(1, 19)
+        for i in range(3):
+            de[15+i][0] = da[i]
+        dr = [[-x for x in row] for row in product(H, de)]
+        old = information_shear_correction(self.P, H, self.noise, e, self.r,
+                                          dp, de, dH, zeros(3, 3), dr)
+        op = correction(self.P, H, self.noise, self.r)
+        dk = gain_differential(self.P, H, op['K'], inverse(op['S']), dp, dH, zeros(3, 3))
+        ep = add(e, product(op['K'], self.r))
+        dep = add(add(de, product(dk, self.r)), product(op['K'], dr))
+        before = aw_shear_differentials(aw, da, self.P, dp, e, de)
+        frozen = aw_shear_differentials(aw, da, op['C'], old['posterior_covariance_tangent'], ep, dep)
+        Hfixed, _ = world_rows([0, 0, -10], [7, 0, 0])
+        new = correction(before['P'], Hfixed, self.noise, self.r)
+        A = add(identity(21), product(new['K'], Hfixed), -1)
+        mismatch = add(dr, product(Hfixed, before['de']))
+        self.assertEqual(frozen['dP'], product(A, before['dP'], transpose(A)))
+        self.assertEqual(frozen['eta'], add(product(A, before['eta']), product(new['K'], mismatch)))
+        fixed_row_joint_balance(before['P'], Hfixed, self.noise,
+                                before['eta'], before['dP'], mismatch)
+        aw_next = [aw[i]+op['increment'][15+i][0] for i in range(3)]
+        da_next = [dep[15+i][0] for i in range(3)]
+        Lnext = aw_shear(aw_next)
+        jump = product(Lnext, aw_shear([-x for x in aw]))
+        self.assertEqual(jump, aw_shear([op['increment'][15+i][0] for i in range(3)]))
+        after = aw_shear_differentials(aw_next, da_next, op['C'],
+                                       old['posterior_covariance_tangent'], ep, dep)
+        djump = aw_connection([da_next[i]-da[i] for i in range(3)])
+        expected = add(add(product(jump, frozen['dP'], transpose(jump)),
+                           product(djump, frozen['P'], transpose(jump))),
+                       product(jump, frozen['P'], transpose(djump)))
+        self.assertEqual(after['dP'], expected)
+        self.assertNotEqual(after['dP'], product(jump, frozen['dP'], transpose(jump)))
+
+    def test_aw_increment_and_ou_prediction_keep_literal_structure(self):
+        aw, da = [F(1, 5), 0, F(-1, 7)], [F(1, 11), 0, F(2, 17)]
+        L, Linv, Gamma = aw_shear(aw), aw_shear([-x for x in aw]), aw_connection(da)
+        increment = zeros(21, 21)
+        increment[15][15], increment[17][17] = F(1, 9), F(2, 11)
+        self.assertEqual(product(L, increment, transpose(L)), increment)
+        self.assertEqual(product(Gamma, increment), zeros(21, 21))
+        # Exact block algebra, not a frozen complete derivative or orbit.
+        phi, Fmap = F(4, 5), identity(21)
+        W, B = self.R, [[F(i == j, 7) for j in range(3)] for i in range(3)]
+        for i in range(3):
+            Fmap[i][:3], Fmap[i][3:6] = W[i], B[i]
+            Fmap[15+i][15+i] = phi
+            Fmap[6+i][15+i] = F(2, 7)
+        transformed = product(aw_shear([phi*x for x in aw]), Fmap, Linv)
+        expected = [[phi*x for x in row] for row in product(skew(aw), add(identity(3), W, -1))]
+        self.assertEqual([row[:3] for row in transformed[15:18]], expected)
+        bg = [[-phi*x for x in row] for row in product(skew(aw), B)]
+        self.assertEqual([row[3:6] for row in transformed[15:18]], bg)
+        self.assertNotEqual([row[:3] for row in transformed[6:9]], zeros(3, 3))
+
+    def test_magnetic_loss_domain_survives_aw_shear(self):
+        aw = [F(1, 5), 0, F(-1, 7)]
+        L = aw_shear(aw)
+        P = product(L, self.P, transpose(L))
+        self.assertEqual([r[:6] for r in P[:6]], [r[:6] for r in self.P[:6]])
+        e = zeros(21, 1)
+        e[1][0], e[15][0] = F(1, 20), F(1, 9)
+        ep = product(L, e)
+        self.assertEqual(product(transpose(ep), inverse(P), ep),
+                         product(transpose(e), inverse(self.P), e))
+
+    def test_physical_acc_substitution_keeps_covariance_and_source_cross(self):
+        # Formal exact operands for the algebraic identity, not a physical
+        # trajectory or an independent domain enclosure of angle/rotation.
+        e = zeros(21, 1)
+        t, omega, da = F(1, 10), F(1, 7), [F(1, 11), 0, F(-1, 13)]
+        e[1][0], e[15][0], e[17][0] = t, F(1, 9), F(-2, 17)
+        df, nu = [F(3, 5), 0, F(-1, 8)], [F(1, 19), 0, F(1, 23)]
+        P = [r[:] for r in self.P]
+        P[1][15] = P[15][1] = F(1, 4)
+        out = planar_acc_mismatch_charge(P, e, da, omega, df, nu, self.noise)
+        residual_plus_ba = [[-e[15+i][0]+t*df[i]+nu[i]] for i in range(3)]
+        Jy = skew([0, 1, 0])
+        direct = add(product(Jy, [[t*x] for x in da]),
+                     [[omega*x for x in r] for r in product(Jy, residual_plus_ba)], -1)
+        self.assertEqual(out['mismatch'], direct)
+        self.assertLessEqual(out['curvature_energy'], out['curvature_upper'])
+        self.assertNotEqual(out['source_cross'], 0)
+        uncoupled = [r[:] for r in P]
+        uncoupled[1][15] = uncoupled[15][1] = F(0)
+        other = planar_acc_mismatch_charge(uncoupled, e, da, omega, df, nu, self.noise)
+        self.assertNotEqual(out['linked_covariance_form'], other['linked_covariance_form'])
 
 
 if __name__ == '__main__':

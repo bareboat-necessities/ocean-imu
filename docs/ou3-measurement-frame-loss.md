@@ -172,3 +172,134 @@ They do not add a second magnetic charge.
 **Next calculation:** absorb the accelerometer AW-row port and prediction/reset
 work against the linked process/S and retained magnetic loss, keeping physical
 gauge/source forcing. Prove precisely the activation facts that estimate uses.
+
+## Exact AW shear removes the remaining nominal accelerometer row derivative
+
+**PROVED — analytical**, on each regular CoG real-operation branch. The
+continuation in `app:aw-shear-loss` uses the invertible full-state frame
+
+\[
+ N(a)=-E_{aw}[a]_\times E_\theta^T,\quad L(a)=I+N(a),\quad
+ L(a)^{-1}=I-N(a).
+\]
+
+`N(a)N(b)=0` for every a,b. At the actual nominal AW state,
+`Hacc L^-1=[+[g]x,0,0,0,0,I,I]`: the row is independent of AW. Magnetic and
+S rows are unchanged. Held-BA masks commute with this transformation, so the
+literal innovation/gain/Joseph operands are preserved, including arbitrary
+held cross blocks. Optimal loss formulas still require the reached active
+reduction and retain `dR_eff=dRacc+dPBA`.
+
+This is a change of proof coordinates, not an invariant-EKF replacement.
+No bound on nominal AW is needed for invertibility. For the comparison
+orientation `e_aw=aw_hat-a_physical`, its AW component is
+`e_tilde_aw=(I+[e_theta]x)e_aw-[a_physical]x e_theta`.
+The inverse of `I+[e_theta]x` has norm at most one. Thus no tangent direction
+is deleted. Physical/source variation retains the derivative of physical AW.
+Point physical energy is unchanged: `e_tilde' P_tilde^-1 e_tilde=e'P^-1e`.
+The same-record physical fibre has unchanged nominal L and transforms with
+its precision Gram intact; a constant gravity row is not bias identification.
+
+With `Gamma=dL L^-1=N(daw)`, the transformed differential is
+
+\[
+ d\widetilde P=LdPL^T+\Gamma\widetilde P+\widetilde P\Gamma^T,
+ \qquad
+ \widetilde\eta=L\eta-\widetilde P\Gamma^T\widetilde J\widetilde e.
+\]
+
+The actual accelerometer covariance row port is exactly the boundary difference
+
+\[
+ -K\,dH\,C-C\,dH^TK^T
+ =A(\Gamma P+P\Gamma^T)A^T-(\Gamma C+C\Gamma^T).
+\]
+
+It cancels in the transformed correction. On the fixed-noise substep,
+`dC_tilde=A_tilde dP_tilde A_tilde'` and
+`eta_tilde+=A_tilde eta_tilde+K_tilde m`, with the complete linked mismatch
+`m=dr+H_tilde de_tilde`. The exact joint balance is
+
+\[
+ W^+-W=-\|\widetilde H\widetilde\eta-m\|_{S^{-1}}^2
+       -\lambda L_P+\|m\|_{R^{-1}}^2.
+\]
+
+Thus the full covariance Fisher loss is retained, without independently
+charging the AW-row norm. The remaining mean mismatch is endogenous; its
+positive square cannot be treated as independent noise. In the preceding
+rotating frame it is
+`m_acc=m_extra-[omega]x r-Hacc Omega e-[daw]x e_theta`.
+All physical/noise/reference/chart contributions remain in their literal ports.
+
+The cost is explicit and must not be omitted. A correction changes AW by
+`Delta a=K_aw r`; its next-frame map and derivative are
+
+\[
+ B_L=I+N(K_{aw}r),\qquad dB_L=N(dK_{aw}r+K_{aw}dr).
+\]
+
+These produce covariance and mean connection work in the *same* word, including
+the suffix-score contribution of generated covariance. The literal OU
+prediction gives
+`F_tilde_aw,theta=phi[aw]x(I-W_theta)` and
+`F_tilde_aw,BG=-phi[aw]x B_theta`. The integrated v/p/S rows retain
+`F_y,aw[aw]x`. Do not set the literal attitude-frame discrepancy to zero or
+delete BG/LIN coupling. Process covariance and reset retain both endpoint
+frames and their complete derivatives.
+
+The actual AW PSD increment is unchanged by L and has `Gamma Delta_aw=0`.
+Its active face must still be evaluated using the original AW marginal
+recovered from `L^-1 P_tilde L^-T`; it is not the transformed marginal's floor.
+Pending target, same-history face derivative and clock remain inherited.
+
+On the planar stratum L preserves parity, the attitude/BG covariance marginal,
+physical comparison energy and magnetic innovation. The same qualified 9/10
+magnetic-loss proof therefore applies to this new joint storage, as do its
+pitch/BG covariance ceilings. This is a reapplication in one consistent
+storage, not adding decrements from two different storage functions. Fixed
+S loss is retained; noise/reference variations and held ports remain explicit.
+
+**Minimal remaining obligation:** combine the linked mean mismatch with the
+actual correction-frame jump, literal OU/reset/BG/LIN, noise/reference and AW
+face ports in the suffix-score balance. Use the inherited comparison supply
+budget. Prove a positive uniform transverse gap on its necessary activation
+domain. That absorption, all-time domain, precision transfer and special planar
+admission remain **OPEN**. No radius is solved. Structures preserved: complete
+shipping state/covariance/history and all frame derivatives. Relaxation: regular
+real-operation CoG scope; no new physical assumptions or runtime changes.
+
+### Physical substitution narrows the remaining mean-port domain
+
+**PROVED — analytical** for the fixed-input central planar physical comparison,
+not the roll/BA fibre. Put `e_theta=t e_y`, nominal pitch variation `omega`,
+`J_y=[e_y]x` and `R_nom'R_phys=R_y(-t)`. The sensor equation gives
+`r+e_BA=-e_aw+(R_y(-t)-I)(a_physical-g)+nu`. Thus the BA estimate cancels,
+and the linked mismatch becomes
+
+\[
+ m_a=J_y[t\,daw+\omega e_{aw}-\omega tD(t)f_{phys}-\omega\nu],
+ \qquad D(t)=(R_y(-t)-I)/t.
+\]
+
+The continuous extension is `D(0)=-J_y`, and `||D(t)||<=1` analytically.
+The source nu retains existing FAST and explicit model/arithmetic defects;
+it is not a new unrestricted residual channel. Let
+`k=daw-omega D(t)f_physical` and let `B_v` have pitch column k and AW block
+`omega I`. For `m0=J_y B_v e`, the same-history bound is
+
+\[
+ \|m_0\|_{R^{-1}}^2
+ \le V\operatorname{tr}(R^{-1}J_y B_v P B_v^T J_y^T).
+\]
+
+This follows from `e=P^(1/2)z`, `||z||^2=V`. Writing
+`U=J_y'R^-1 J_y`, the coefficient is exactly
+`P_pitch,pitch*k'Uk + 2*omega*k'U*P_aw,pitch + omega^2*tr(U P_aw,aw)`.
+The signed pitch/AW cross covariance is retained. The source cross-plus-square
+is also retained: `-2*omega*m0'R^-1 J_y nu + omega^2*nu' U nu`.
+No nominal AW or BA box appears. Only comparison energy, the joint pitch/AW
+covariance block, actual physical force/rotation and existing source bounds
+are needed for this port. Uniform activation and absorption together with the
+applied-increment frame jump remain OPEN. This is a derived bound, not a
+sampled covariance enclosure or a complete-word contraction assertion.

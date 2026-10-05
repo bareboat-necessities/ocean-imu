@@ -2163,6 +2163,236 @@ constant or physical assumption is changed. The exact-rational regressions
 in the information-shear word module validate these identities; the proof
 is the derivation above, not the tests. Uniform full coercivity remains OPEN.
 
+\subsection{AW shear, exact row cancellation and retained endpoint work}
+\label{app:aw-shear-loss}
+
+\paragraph{Scope and storage role.}
+The following is an analytical identity for every regular real-operation CoG
+word, in the complete nominal-world frame of
+Appendix~\ref{app:measurement-frame-loss}. Actual covariance/gain/Joseph,
+held masks, OU coefficients and inherited physical history remain unchanged.
+It removes the accelerometer row-variation covariance port before taking
+norms, while retaining the resulting endpoint and mean work. It does not
+assert a complete-word gap or transfer the CoG wrapper profile to the
+AtomS3R sketch with different settings or lever-arm terms.
+
+Let $E_a,E_\theta$ select the AW and attitude blocks. Define
+\[
+ N(a)=-E_a[a]_\times E_\theta^T,\qquad L(a)=I+N(a).
+\]
+For every $a,b$, $N(a)N(b)=0$, so $L(a)^{-1}=I-N(a)$ and
+$L(a+b)=L(a)L(b)$. There is no bound on $a$ needed for invertibility.
+At the actual nominal $a=\widehat a_w$, set
+$\widetilde P=LPL^T$, $\widetilde e=Le$, $\widetilde H=HL^{-1}$.
+The literal rows become
+\[
+ \begin{split}
+ \widetilde H_a&=([g]_\times,0,0,0,0,I,I),\\
+ \widetilde H_m&=H_m,\qquad \widetilde H_S=H_S.
+ \end{split}                                                   \tag{AS1}
+\]
+Thus all nominal AW dependence of the accelerometer row is removed.
+Reference/noise variations are not removed. The transformation commutes with
+the held-BA row/column mask; its gain, innovation and Joseph operands transform
+exactly, including arbitrary held cross blocks. Optimal identities below still
+require the reached held active reduction, with $dR_{eff}=dR_a+dP_{BA}$.
+Mask congruence alone is not optimality.
+
+\paragraph{Connection and exact cancellation --- PROVED analytical.}
+Put $\Gamma=dL L^{-1}=N(d\widehat a_w)$. The complete differential is
+\[
+ \begin{split}
+ d\widetilde P&=L\,dP\,L^T+\Gamma\widetilde P+
+                                      \widetilde P\Gamma^T,\\
+ d\widetilde e&=L\,de+\Gamma\widetilde e,\\
+ \widetilde\eta&=L\eta-
+           \widetilde P\Gamma^T\widetilde J\widetilde e.
+ \end{split}                                                   \tag{AS2}
+\]
+It would be incorrect to transform the covariance tangent by frozen
+congruence alone. Since $dH_a=H_a\Gamma$, its original row port obeys
+\[
+ \begin{split}
+ U_H&=-K\,dH\,C-C\,dH^TK^T\\
+ &=A(\Gamma P+P\Gamma^T)A^T-(\Gamma C+C\Gamma^T).
+ \end{split}                                                   \tag{AS3}
+\]
+Indeed $C=AP=PA^T$, so the first half of the difference is
+$(A-I)\Gamma C=-KH\Gamma C$, and the other half is its transpose.
+This proves the connection-difference identity with its exact sign.
+Consequently the additive correction, evaluated in its current $L$ frame,
+has, for fixed noise,
+\[
+ d\widetilde C=\widetilde A\,d\widetilde P\,\widetilde A^T,
+ \qquad
+ \widetilde\eta^+=\widetilde A\widetilde\eta+
+                                      \widetilde K m,            \tag{AS4}
+\]
+where $m=dr+\widetilde H\,d\widetilde e$. A noise variation adds its
+literal $\widetilde K\,dR\,\widetilde K^T$ and mean noise port.
+For the AW shear alone $m=(dr+Hde)+dH\,e$; for the preceding rotating
+world frame, write its retained residual mismatch as $m_{extra}$ and obtain
+\[
+ m_a=m_{extra}-[\omega]_\times r-H_a\Omega e
+                                  -[d\widehat a_w]_\times e_\theta.
+                                                               \tag{AS5}
+\]
+Here all operands are from the same pre-correction world frame;
+$\Omega=\operatorname{diag}([\omega]_\times,[\omega]_\times,0,0,0,0,
+[\omega]_\times)$. Physical/source/chart variations are in $m_{extra}$.
+The formula does not replace the full literal residual derivative by zero.
+
+For $W=\widetilde\eta^T\widetilde J\widetilde\eta+
+\lambda\operatorname{tr}(\widetilde Jd\widetilde P
+                         \widetilde Jd\widetilde P)$, (AS4) gives exactly
+\[
+ W^+-W=-\|\widetilde H\widetilde\eta-m\|_{S^{-1}}^2
+                -\lambda L_P+\|m\|_{R^{-1}}^2.                 \tag{AS6}
+\]
+To verify it, use $\widetilde A^T\widetilde C^{-1}\widetilde K
+=\widetilde H^TS^{-1}$ and
+$\widetilde K^T\widetilde C^{-1}\widetilde K=R^{-1}-S^{-1}$,
+then complete the square. This retains all of the covariance Fisher loss,
+with no independent AW-row charge or NIS cap. It does not make $m$ independent
+forcing; its full signed quadratic work must remain in the word matrix.
+
+\paragraph{No lost direction or erased physical gauge.}
+At a fixed physical truth, choose the additive comparison orientation
+$e_a=\widehat a_w-a_{phys}$. The transformed AW comparison is
+\[
+ \widetilde e_a=(I+[e_\theta]_\times)e_a-[a_{phys}]_\times e_\theta.
+\]
+The matrix $I+[e_\theta]_\times$ has determinant $1+\|e_\theta\|^2$
+and inverse norm at most one: its squared norm on $v$ is
+$\|v\|^2+\|[e_\theta]_\times v\|^2$. Thus this transformation of
+$(e,P)$ is invertible on the existing attitude chart. It does not delete a
+singular direction. Physical source variation retains the derivative of
+$a_{phys}$ instead of resetting truth. Also
+$\widetilde e^T\widetilde J\widetilde e=e^TJe$ exactly.
+For the same-record physical fibre $dL=0$, because the nominal execution is
+identical; its basis becomes $LR_G$, with unchanged precision Gram and gauge
+amplitude. Neither homogeneous kernel equality nor physical identifiability
+follows from the constant gravity row in (AS1).
+
+\paragraph{Endpoint work and literal prediction are retained.}
+A correction changes nominal AW by $\Delta a=K_{aw}r$. The required next-frame
+map and its differential are exactly
+\[
+ \begin{split}
+ B_L&=L(a^+)L(a)^{-1}=I+N(K_{aw}r),\\
+ dB_L&=N(dK_{aw}r+K_{aw}dr).
+ \end{split}                                                   \tag{AS7}
+\]
+Its covariance port is $dB_L\widetilde C B_L^T+
+B_L\widetilde C\,dB_L^T$, and its mean/chart port follows the same literal
+frame transport. A frozen factor product omitting (AS7) is not the complete
+derivative. All parts enter the suffix-score identity (WS5)--(WS6), including
+the downstream score of covariance created at this frame jump. No independent
+bound on each AW norm or row increment is used.
+
+For the literal OU prediction $a^+=\phi a$, retain the exact nominal-world
+attitude covariance block $W_\theta$ and attitude/BG block $B_\theta$.
+The transformed prediction $L(\phi a)F L(a)^{-1}$ has blocks
+\[
+ \begin{split}
+ \widetilde F_{a\theta}&=\phi[a]_\times(I-W_\theta),\\
+ \widetilde F_{ab_g}&=-\phi[a]_\times B_\theta,\\
+ \widetilde F_{y\theta}&=F_{ya}[a]_\times,
+                         \qquad y\in\{v,p,S\}.
+ \end{split}                                                   \tag{AS8}
+\]
+These follow by block multiplication of the actual block-diagonal AG/LIN/BA
+prediction. Do not replace $W_\theta$ by $I$: literal SO(3) coefficient and
+mean-frame discrepancies remain. The BG and integrated LIN couplings are
+not discarded. Process covariance is $L(\phi a)Q L(\phi a)^T$ with its full
+differential, including same-history tuner variation. Reset uses both literal
+endpoint rotation frames and the AW shear; projection retains its shift.
+
+The default AW increment has support only on AW/AW, hence
+$L\Delta_{aw}L^T=\Delta_{aw}$ and $\Gamma\Delta_{aw}=0$.
+There is no new shear connection work at an AW sync whose mean is unchanged.
+Its face is still evaluated on the original marginal recovered from
+$L^{-1}\widetilde P L^{-T}$, not the transformed AW marginal. The actual
+face/target derivative remains. This is not a new covariance floor law.
+
+\paragraph{Physical substitution and linked curvature charge --- PROVED analytical.}
+For the fixed-input central planar comparison, let $e_\theta=t e_y$,
+$d\theta=\omega e_y$, $J_y=[e_y]_\times$, and
+$R_{nom}^TR_{phys}=R_y(-t)$. This is the central physical pitch comparison,
+not the roll/BA same-record gauge. The literal accelerometer equation gives
+\[
+ r+e_{BA}=-e_{aw}+(R_y(-t)-I)f_{phys}+\nu,\qquad
+ f_{phys}=a_{phys}-g.                                      \tag{AS9}
+\]
+Here $\nu$ retains the existing delivered FAST and explicit model/arithmetic
+source defects; no new unrestricted residual class is introduced. The nominal
+BA estimate cancels before taking a norm. In (AS5), the two pitch rotations
+commute, and $H_a\Omega e=\omega J_y e_{BA}$. Therefore
+\[
+ m_a=J_y\{t\,d\widehat a_w+\omega e_{aw}
+                 -\omega t D(t)f_{phys}-\omega\nu\},       \tag{AS10}
+\]
+where $D(t)=(R_y(-t)-I)/t$, extended by $D(0)=-J_y$.
+Since $\|R_y(-t)-I\|=2|\sin(t/2)|$, $\|D(t)\|\le1$ for all $t$.
+The complete physical coefficient is retained; its phase is not varied
+independently of the delivered history.
+
+For the same nominal variation set $k=d\widehat a_w-\omega D(t)f_{phys}$
+and let $B_v$ have column $k$ at pitch and block $\omega I$ at AW, all
+other columns zero. Thus $m_0=J_yB_v e$ and $m_a=m_0-\omega J_y\nu$.
+For every actual $P\succ0$ and $V=e^TP^{-1}e$, Cauchy--Schwarz in the same
+covariance metric proves
+\[
+ \begin{split}
+ \|m_0\|_{R^{-1}}^2
+ &\le V\operatorname{tr}(R^{-1}J_yB_v P B_v^TJ_y^T),\\
+ \operatorname{tr}(R^{-1}J_yB_v P B_v^TJ_y^T)
+ &=p_{\theta\theta}k^TUk+2\omega k^TUc
+                          +\omega^2\operatorname{tr}(U P_{aw,aw}),
+ \end{split}                                                   \tag{AS11}
+\]
+with $U=J_y^TR^{-1}J_y$, $c=P_{aw,\theta_y}$ and
+$p_{\theta\theta}=P_{\theta_y,\theta_y}$. To see the inequality directly,
+write $e=P^{1/2}z$, $\|z\|^2=V$, and use the Frobenius bound on
+$R^{-1/2}J_yB_vP^{1/2}z$. The signed covariance cross term is preserved.
+No independent AW/BA estimate bound, covariance maximum or residual maximum
+has been substituted. Source work is still exactly
+\[
+ \|m_a\|_{R^{-1}}^2=\|m_0\|_{R^{-1}}^2
+ -2\omega m_0^TR^{-1}J_y\nu
+ +\omega^2\nu^TJ_y^TR^{-1}J_y\nu.                         \tag{AS12}
+\]
+These terms enter the complete word together, not as independent extremes.
+The necessary activation quantities for this port are now $V$, the linked
+pitch/AW covariance block, actual physical force/rotation and the existing
+source qualifications. The comparison budget (WS8c) supplies the exact
+bookkeeping for $V$ but not its uniform numerical bound. Proving (AS11)--(AS12)
+small enough after pairing with (AS7), process/$S$ and magnetic action remains
+OPEN. No finite measurement value or new source constant is used.
+
+\paragraph{Retained magnetic margin and exact open obligation.}
+On the planar stratum the shear preserves parity, the attitude/BG marginal,
+comparison energy, reference, residual and innovation. The rank-one magnetic
+proof therefore applies in the new joint coordinates with the same qualified
+$9/10$ loss, pitch/BG covariance bounds and activation conditions. Its proof
+uses only these unchanged quantities and the identity
+$de_\theta=\widetilde\eta_\theta+
+(d\widetilde P\widetilde J\widetilde e)_\theta$.
+The $S$ row remains fixed as well. These are not summed as losses from two
+different storage functions: the complete word must use this one new storage.
+
+The remaining gap requires the linked mean mismatch (AS5), actual correction
+frame jumps (AS7), prediction/reset/source terms (AS8), noise/reference/AW
+faces and moving-quotient terms to be included together. The inherited
+comparison-energy budget (WS8c) is retained because point comparison energy
+is unchanged. Uniform absorption and transverse coercivity are OPEN. No
+radius, all-time planar admission or target-toolchain arithmetic closure is
+asserted. Structures preserved: full 21-state P/K/Joseph/masks, OU and BG/LIN,
+physical gauge, all derivative and inherited clock/source ports. Relaxations:
+regular real-operation CoG scope and explicitly conditional activation only;
+no estimator behavior or assumption change. Exact-rational regressions check
+the noncommuting identities; this derivation, not the tests, proves them.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

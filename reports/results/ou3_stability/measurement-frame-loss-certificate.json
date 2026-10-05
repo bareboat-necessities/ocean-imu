@@ -1,4 +1,14 @@
 {
+  "AW_row_covariance_port_is_exact_coboundary": true,
+  "AW_shear": "L=I-E_aw[aw]x E_theta^T, L^-1=I+E_aw[aw]x E_theta^T",
+  "AW_shear_acc_row": "[+[g]x,0,0,0,0,I,I]",
+  "AW_shear_connection_derivative_retained": true,
+  "AW_shear_correction_balance": "Delta W=-||H eta-m||_(S^-1)^2-lambda L_P+||m||_(R^-1)^2; m is linked, not independent noise",
+  "AW_shear_floor_face_uses_original_recovered_marginal": true,
+  "AW_shear_post_correction_jump": "L(aw+)L(aw)^-1=I+N(K_aw r); dJump=N(dK_aw r+K_aw dr)",
+  "AW_shear_preserves_qualified_planar_magnetic_loss": true,
+  "AW_shear_proof": "app:aw-shear-loss",
+  "AW_shear_uniform_port_absorption_verified": false,
   "S_correction_fixed_noise_exact_loss": true,
   "acc_covariance_port_bound": "||qP||_C^2 <= 4 tr(C dH^T (R^-1-S^-1) dH) <= 8 lambda_max(C_theta,theta)||daw||^2/rmin",
   "acc_row": "Hbar_acc=[-[aw-g]x,0,0,0,0,I,I]",
@@ -19,6 +29,10 @@
   "mag_row": "Hbar_mag=[-[Bref]x,0,0,0,0,0,0]",
   "nominal_aw_cap_needed_for_dH_coefficient": false,
   "planar_12_plus_9_parity_preserved": true,
+  "planar_acc_charge_requires_nominal_AW_or_BA_box": false,
+  "planar_acc_charge_retains_pitch_AW_cross_covariance": true,
+  "planar_acc_curvature_charge": "||m0||_(R^-1)^2 <= (e^T P^-1 e) tr(R^-1 J_y B_v P B_v^T J_y^T)",
+  "planar_acc_physical_mismatch": "m=J_y[t daw+omega e_aw-omega t D(t)(a_phys-g)-omega nu], D(t)=(R_y(-t)-I)/t",
   "planar_magnetic_loss": {
     "activation_domain_forward_invariant": false,
     "covariance_square_charge_upper": "189/10000",
@@ -75,14 +89,14 @@
   },
   "positive_magnetic_loss_scope": "nominal planar invariant stratum, even mean and parity-block covariance; not all nominal perturbations",
   "profile": "planar wrapper sigma_a=.2, sigma_g=.00135, sigma_m=.8, b0=1e-10, adaptive S; no AtomS3R transfer",
-  "qualification": "OU3_MEASUREMENT_FRAME_V1",
+  "qualification": "OU3_MEASUREMENT_FRAME_V2",
   "relaxations_introduced": [
     "regular real-operation derivatives; finite precision and branch crossings separate",
     "CoG profile stated; nonzero lever-arm Jacobian needs its own retained port"
   ],
   "remaining_acc_row_derivative": "dHbar_acc=[-[daw]x,0,0,0,0,0,0]",
   "remaining_feedback": [
-    "AW-dependent acc row",
+    "linked acc mismatch and applied-increment AW-frame jump",
     "reference and noise variation",
     "nominal-frame shear connection",
     "prediction and reset endpoint-frame derivatives",
@@ -91,7 +105,7 @@
     "source/gauge/precision qualifications"
   ],
   "remaining_mag_row_derivative": "dHbar_mag=[-[dBref]x,0,0,0,0,0,0]",
-  "result_type": "PROVED \u2014 analytical identities and qualified planar magnetic-loss implication",
+  "result_type": "PROVED \u2014 analytical moving-frame/AW-shear identities and qualified planar magnetic-loss implication",
   "same_record_physical_variation": "dR_nominal=dP=0, hence omega=dPbar=0; not a nominal-root tangent",
   "scope": "regular real-operation complete 21-state CoG profile; no estimator modification",
   "shear_frame_connection": "etabar=T^T eta-Pbar Omega Jbar ebar",

@@ -275,6 +275,13 @@ covariance-gain/residual charges, not the actual derivative. The uniform score
 budget, generated-port absorption and full transverse action remain OPEN.
 Do not count magnetic work twice or erase score forcing in an action kernel.
 
+The [AW shear continuation](ou3-measurement-frame-loss.md) now removes the
+accelerometer's nominal AW-row covariance port by an exact connection
+difference. Work in one consistent joint storage: retain the transformed
+mean mismatch, actual correction-frame jump and all OU/reset/AW-face ports.
+Do not return to an independent per-operation AW-row norm charge, omit its
+endpoint derivative, or sum magnetic losses from different storage frames.
+
 ## Scope and handoff rules
 
 Only after the positive gap and actual charges are proved may an invariant

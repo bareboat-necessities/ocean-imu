@@ -153,10 +153,125 @@ def transported_factor(before_rotation, after_rotation, factor):
     return product(transpose(frame(after_rotation)), factor, frame(before_rotation))
 
 
+def aw_connection(daw):
+    """Nilpotent AW/attitude connection in the nominal-world frame."""
+    out = zeros(21, 21)
+    for i, row in enumerate(skew(daw)):
+        out[15+i][:3] = [-x for x in row]
+    return out
+
+
+def aw_shear(aw):
+    """L=I+N(aw), L^-1=I-N(aw), N(a)N(b)=0 for all a,b.
+
+    H_acc L^-1=[+[g]x,0,0,0,0,I,I]. No nominal AW cap is
+    needed for invertibility. Endpoint/frame derivatives are NOT discarded.
+    """
+    return add(identity(21), aw_connection(aw))
+
+
+def aw_shear_differentials(aw, daw, P, dP, e, de):
+    """Complete moving-frame differential; not a fixed congruence tangent."""
+    L, Gamma = aw_shear(aw), aw_connection(daw)
+    p = product(L, P, transpose(L))
+    ep = product(L, e)
+    dp = add(add(product(L, dP, transpose(L)), product(Gamma, p)), product(p, transpose(Gamma)))
+    dep = add(product(L, de), product(Gamma, ep))
+    eta = add(dep, product(dp, inverse(p), ep), -1)
+    original = add(de, product(dP, inverse(P), e), -1)
+    linked = add(product(L, original), product(p, transpose(Gamma), inverse(p), ep), -1)
+    assert eta == linked
+    return {'L': L, 'connection': Gamma, 'P': p, 'dP': dp, 'e': ep,
+            'de': dep, 'eta': eta}
+
+
+def row_connection_coboundary(P, H, Rnoise, Gamma):
+    """dH=H Gamma: exact covariance row port is a metric coboundary.
+
+    Valid optimal branch only. Reached held BA uses its active effective-noise
+    reduction. dR and post-correction connection changes remain separate.
+    """
+    ldlt(P)
+    ldlt(Rnoise)
+    S = add(product(H, P, transpose(H)), Rnoise)
+    K = product(P, transpose(H), inverse(S))
+    A = add(identity(len(P)), product(K, H), -1)
+    C = product(A, P)
+    dH = product(H, Gamma)
+    U = [[-x for x in row] for row in add(product(K, dH, C), product(C, transpose(dH), transpose(K)))]
+    root = add(product(Gamma, P), product(P, transpose(Gamma)))
+    terminal = add(product(Gamma, C), product(C, transpose(Gamma)))
+    coboundary = add(product(A, root, transpose(A)), terminal, -1)
+    assert U == coboundary
+    return {'row_port': U, 'root_connection': root, 'terminal_connection': terminal}
+
+
+def fixed_row_joint_balance(P, H, Rnoise, eta, dP, mismatch, weight=F(1)):
+    """Exact pre-injection joint loss after ALL frame terms enter mismatch.
+
+    eta+=A eta+K mismatch, dP+=A dP A'. Noise/reference variations
+    and the next moving-frame jump are not covered by this substep alone.
+    The signed work remains endogenous; mismatch is not independent noise.
+    """
+    ldlt(P)
+    ldlt(Rnoise)
+    if weight <= 0:
+        raise ValueError('positive covariance weight required')
+    S = add(product(H, P, transpose(H)), Rnoise)
+    K = product(P, transpose(H), inverse(S))
+    A = add(identity(len(P)), product(K, H), -1)
+    C, dp = product(A, P), product(A, dP, transpose(A))
+    ep = add(product(A, eta), product(K, mismatch))
+    J, Jc = inverse(P), inverse(C)
+    initial = product(transpose(eta), J, eta)[0][0]+weight*trace(product(J, dP, J, dP))
+    terminal = product(transpose(ep), Jc, ep)[0][0]+weight*trace(product(Jc, dp, Jc, dp))
+    lossP = trace(product(J, dP, J, dP))-trace(product(Jc, dp, Jc, dp))
+    corrected = add(product(H, eta), mismatch, -1)
+    action = product(transpose(corrected), inverse(S), corrected)[0][0]+weight*lossP
+    supply = product(transpose(mismatch), inverse(Rnoise), mismatch)[0][0]
+    assert terminal-initial == -action+supply
+    return {'initial': initial, 'terminal': terminal, 'corrected_action': action,
+            'linked_mismatch_supply': supply, 'covariance_loss': lossP}
+
+
+def planar_acc_mismatch_charge(P, e, daw, omega, divided_force, source, Rnoise):
+    """Same-history physical substitution, not an independent operand box.
+
+    On the fixed-input central planar comparison, e_theta=t e_y and
+    divided_force=(R_y(-t)-I)(a_phys-g)/t, continuously extended at t=0.
+    source retains delivered FAST/model forcing; it is not an invented noise
+    channel. The helper checks algebra, not the physical qualification of inputs.
+    """
+    ldlt(P)
+    ldlt(Rnoise)
+    if e[0][0] or e[2][0] or daw[1]:
+        raise ValueError('central planar pitch/AW comparison required')
+    Jy = skew([0, 1, 0])
+    B = zeros(3, 21)
+    for i in range(3):
+        B[i][1] = daw[i]-omega*divided_force[i]
+        B[i][15+i] = omega
+    m0 = product(Jy, B, e)
+    q = [[-omega*x for x in row] for row in product(Jy, [[x] for x in source])]
+    m = add(m0, q)
+    precision = inverse(Rnoise)
+    E = product(transpose(e), inverse(P), e)[0][0]
+    linked_form = trace(product(precision, Jy, B, P, transpose(B), transpose(Jy)))
+    actual = product(transpose(m0), precision, m0)[0][0]
+    cross = 2*product(transpose(m0), precision, q)[0][0]
+    square = product(transpose(q), precision, q)[0][0]
+    total = product(transpose(m), precision, m)[0][0]
+    assert 0 <= actual <= E*linked_form and total == actual+cross+square
+    return {'physical_curvature_row': B, 'mismatch': m, 'comparison_energy': E,
+            'linked_covariance_form': linked_form, 'curvature_energy': actual,
+            'curvature_upper': E*linked_form, 'source_cross': cross,
+            'source_square': square, 'full_mismatch_energy': total}
+
+
 def certificate():
     return {
-        'qualification': 'OU3_MEASUREMENT_FRAME_V1',
-        'result_type': 'PROVED — analytical identities and qualified planar magnetic-loss implication',
+        'qualification': 'OU3_MEASUREMENT_FRAME_V2',
+        'result_type': 'PROVED — analytical moving-frame/AW-shear identities and qualified planar magnetic-loss implication',
         'scope': 'regular real-operation complete 21-state CoG profile; no estimator modification',
         'positive_magnetic_loss_scope': 'nominal planar invariant stratum, even mean and parity-block covariance; not all nominal perturbations',
         'profile': 'planar wrapper sigma_a=.2, sigma_g=.00135, sigma_m=.8, b0=1e-10, adaptive S; no AtomS3R transfer',
@@ -177,6 +292,20 @@ def certificate():
         'mag_connection_energy': 'v^T (Rbar^-1-Sbar^-1) v, v=[omega]rbar+Hbar Omega ebar',
         'acc_covariance_port_bound': '||qP||_C^2 <= 4 tr(C dH^T (R^-1-S^-1) dH) <= 8 lambda_max(C_theta,theta)||daw||^2/rmin',
         'coefficient_8_is_uniform_algebraic_constant': True,
+        'AW_shear_proof': 'app:aw-shear-loss',
+        'AW_shear': 'L=I-E_aw[aw]x E_theta^T, L^-1=I+E_aw[aw]x E_theta^T',
+        'AW_shear_acc_row': '[+[g]x,0,0,0,0,I,I]',
+        'AW_row_covariance_port_is_exact_coboundary': True,
+        'AW_shear_connection_derivative_retained': True,
+        'AW_shear_correction_balance': 'Delta W=-||H eta-m||_(S^-1)^2-lambda L_P+||m||_(R^-1)^2; m is linked, not independent noise',
+        'AW_shear_post_correction_jump': 'L(aw+)L(aw)^-1=I+N(K_aw r); dJump=N(dK_aw r+K_aw dr)',
+        'AW_shear_uniform_port_absorption_verified': False,
+        'AW_shear_floor_face_uses_original_recovered_marginal': True,
+        'AW_shear_preserves_qualified_planar_magnetic_loss': True,
+        'planar_acc_physical_mismatch': 'm=J_y[t daw+omega e_aw-omega t D(t)(a_phys-g)-omega nu], D(t)=(R_y(-t)-I)/t',
+        'planar_acc_curvature_charge': '||m0||_(R^-1)^2 <= (e^T P^-1 e) tr(R^-1 J_y B_v P B_v^T J_y^T)',
+        'planar_acc_charge_retains_pitch_AW_cross_covariance': True,
+        'planar_acc_charge_requires_nominal_AW_or_BA_box': False,
         'nominal_aw_cap_needed_for_dH_coefficient': False,
         'world_frame_is_full_filter_contraction': False,
         'all_time_nominal_innovation_bound_verified': False,
@@ -184,7 +313,7 @@ def certificate():
         'planar_pitch_domain': planar_pitch_domain_bounds(),
         'planar_magnetic_loss': planar_magnetic_loss_margin(F(3, 500), 6, 100),
         'S_correction_fixed_noise_exact_loss': True,
-        'remaining_feedback': ['AW-dependent acc row', 'reference and noise variation',
+        'remaining_feedback': ['linked acc mismatch and applied-increment AW-frame jump', 'reference and noise variation',
             'nominal-frame shear connection', 'prediction and reset endpoint-frame derivatives',
             'held bias/source ports', 'AW faces and projection', 'source/gauge/precision qualifications'],
         'same_record_physical_variation': 'dR_nominal=dP=0, hence omega=dPbar=0; not a nominal-root tangent',
