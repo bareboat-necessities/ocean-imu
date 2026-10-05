@@ -5,6 +5,11 @@
     "199/200",
     "1001/1000"
   ],
+  "extended_domain_argument": "even exponent shifts leave s*y_seed^2 unchanged; all intermediate products remain normal; identical dot/rounding bound",
+  "extended_input_squared_norm_domain": [
+    "1/4",
+    "128"
+  ],
   "linked_seed_squared_enclosure": [
     "93/100",
     "27/25"
@@ -16,6 +21,10 @@
     "79228181403731957922052177921/79228153069531653329230233600"
   ],
   "pitch_integral_tube_verified": false,
+  "pre_component_scalar_squared_norm_bounds": [
+    "2620505215055042398389276477872624280115848315536765736541135550829/2632807291713929667447950692091760807972377621131995629844692992000",
+    "4388012152856393552220018568678783257050259966664640356604182528/4388009537397758053585735310570332403895442518741059762519714475"
+  ],
   "premises": [
     "IEEE binary32, round-to-nearest, gradual underflow, no unsafe reassociation",
     "represented pre-normalization quaternion has exact squared norm in [1/4,4]",

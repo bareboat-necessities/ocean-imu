@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "41f816c1cc70d5fabd3fd0e49e53cc77930edf13"
+      "git_blob_sha": "2c28c67e3e4754ffe7a9e1a8013fb526747a0ecf"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "c49b9e236a57e8eaba5bcefc6350692da6a9add0"
+      "git_blob_sha": "23b8b2932f1b5fb27282b36c014eeb701227144f"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "4877e51c626ed60692a74bd168a0805567fa6abd"
+      "git_blob_sha": "ef143d806e81d27692605d2df03aff647596f3f8"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "6f4c1fbf6cbfd88a38c7172e630dd0f21c4bdfe9"
+      "git_blob_sha": "bc66690d2852241ef12c5812534b9b18c72b4ece"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -512,7 +512,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "52a691df159082186f5eed1d4faa4627a9966d15"
+      "git_blob_sha": "d9003ec226b92edc61f411be63e2934347b100b1"
     },
     {
       "path": "tools/stability/ou3_theorem/causal_tuner_interval.py",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "101097b8f09a1e790a548aa37c2c465a2b73c218"
+      "git_blob_sha": "2e57b40358453371bc324cf6979e3f78619bf276"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "5526d3bcab5a64d613dffb87ff3721ad5d6f4e5e"
+      "git_blob_sha": "809501e3be676a369cb43ba00071e687614bc33a"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -816,7 +816,7 @@
     },
     {
       "path": "docs/ou3-planar-parity-service.md",
-      "git_blob_sha": "57c3487bf56f3e169a4c5cb5f1d03c881301b317"
+      "git_blob_sha": "9d75919860d4dc37e09e4c3bbec62745aa5a4a5a"
     },
     {
       "path": "reports/results/ou3_stability/planar-every-root-service-diagnostic.json",
@@ -880,7 +880,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/mahony_raw_normalization.py",
-      "git_blob_sha": "31aa290336c6a9ce44317277224a79b2c052bba3"
+      "git_blob_sha": "a06852448b3a4b9901fcb529b44ccce75144da6f"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_causal_calculus.py",
@@ -896,7 +896,7 @@
     },
     {
       "path": "reports/results/ou3_stability/mahony-raw-normalization-certificate.json",
-      "git_blob_sha": "8afad01a6c4429201935f296d39cb59291daa99c"
+      "git_blob_sha": "71e66fc07073f549ddad5f018076d7a9a2821872"
     },
     {
       "path": "reports/results/ou3_stability/planar-linked-riccati-mean-certificate.json",
@@ -909,6 +909,30 @@
     {
       "path": "reports/results/ou3_stability/planar-mean-covariance-ports.json",
       "git_blob_sha": "cfdb3a0dfeb05ffa98c2549270d202e2d8d5ff7b"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_frontend_domain.py",
+      "git_blob_sha": "504ee1bb30f81f35bdeb1ad86a2ca3eb70f8bac7"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_complete_word_storage.py",
+      "git_blob_sha": "36a6bc41bd13cbd120f7cae2e05e83d394218d14"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_frontend_domain.py",
+      "git_blob_sha": "ed1879b0313db09a5ce8c0b035048660e047ac85"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_complete_word_storage.py",
+      "git_blob_sha": "70d2a34597562c475a136d2b940601eb9a5999cb"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-frontend-domain-certificate.json",
+      "git_blob_sha": "d5ca37e0899c3570ccc804fc983aafb5738be0a1"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-complete-word-storage-certificate.json",
+      "git_blob_sha": "97e06fddd5ac6e1f029c5385cfac7e3b0d29c0a0"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -979,7 +1003,7 @@
     "result_type": "FINITE DIAGNOSTIC ONLY",
     "starting_PR_653_head": "4d387d19849aa177e1b84dae5d28a8eb3a80cf40"
   },
-  "reconciled_pr_head": "649a3555d28c21913596371db2320a3b25c0b7e0",
+  "reconciled_pr_head": "ad9676a0e9f2ebb29fca98467fec92e4c2f1b5e8",
   "planar_moving_center_audit": {
     "result_type": "FINITE DIAGNOSTIC ONLY",
     "starting_main": "59959d1bf33a3c5f4f70331104546a6486468df6",
@@ -1011,5 +1035,27 @@
       "dR and varying acc rotation block retained",
       "held accelerometer H_gain differs from H_S"
     ]
+  },
+  "inherited_domain_storage_audit": {
+    "result_type": "OPEN",
+    "proof_appendix_sections": [
+      "app:planar-frontend-domain",
+      "app:planar-complete-word-storage"
+    ],
+    "analytical_certificates": [
+      "mahony-raw-normalization-certificate.json",
+      "planar-frontend-domain-certificate.json",
+      "planar-complete-word-storage-certificate.json"
+    ],
+    "finite_exploration_performed": false,
+    "shipping_sources_changed": false,
+    "qualified_frontend_domain_implication_verified": true,
+    "target_libm_qualification_verified": false,
+    "real_reference_cone_angle_cap": "11/5000",
+    "full_inherited_nominal_domain_verified": false,
+    "linked_covariance_residual_loss_constant": "1/2",
+    "uniform_complete_word_storage_margin": null,
+    "radius_or_floor_solve_performed": false,
+    "all_time_magnetic_service_verified": false
   }
 }

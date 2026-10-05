@@ -77,7 +77,11 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.planar_linked_riccati_mean import certificate as linked_calculus_certificate
     from tools.stability.ou3_theorem.planar_causal_calculus import certificate as causal_calculus_certificate
     from tools.stability.ou3_theorem.planar_mean_covariance_ports import certificate as mean_ports_certificate
+    from tools.stability.ou3_theorem.planar_frontend_domain import certificate as frontend_domain_certificate
+    from tools.stability.ou3_theorem.planar_complete_word_storage import certificate as word_storage_certificate
     for name, generate in (
+        ("planar-frontend-domain-certificate.json",frontend_domain_certificate),
+        ("planar-complete-word-storage-certificate.json",word_storage_certificate),
         ("mahony-raw-normalization-certificate.json",raw_norm_certificate),
         ("planar-linked-riccati-mean-certificate.json",linked_calculus_certificate),
         ("planar-causal-calculus-certificate.json",causal_calculus_certificate),

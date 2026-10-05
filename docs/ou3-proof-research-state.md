@@ -7,12 +7,9 @@ MOVING compatible family. Neither admission nor exclusion has been proved.
 Do not return to generic A21 entry or gravity-span/BA separation.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR #653 head: `b082eef3ce05e2a3553170c53ef137dc79b44aa3`.
-Reconciled parent: `649a3555d28c21913596371db2320a3b25c0b7e0` (generated
-validation only; no shipping/proof source changes). The PR is draft, open and
-mergeable with that main. Its existing
-`planar-service-cell` job 111804096880 passed; the overall parent proof run was subsequently cancelled when the generated
-validation commit advanced the branch. CI details and chronology belong in PR metadata.
+Verified starting PR #653 head: `b28268b11e2c1d98e4d3c787fd9c1cae716bcab3`.
+The PR is draft, open and mergeable. Both current proof runs, including
+planar-service-cell, passed. CI chronology belongs in PR metadata.
 
 Manifest counts remain **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
 `theorem_closed=false`, `regional_practical_stability_claimed=false`.
@@ -42,20 +39,30 @@ columns and masks BA rows. Its literal Joseph differential is separate from
 the unmasked optimal Riccati formula. Exact dual-number and rational identities
 verify these noncommuting formulas without finite differences.
 
-**PROVED — analytical:** the literal Mahony 0x5f375a86 bit seed and one Newton
-step map a represented pre-normalization squared norm in [1/4,4] into raw norm
-squared strictly in (.995,1.001), under explicit IEEE premises. Three analytic
-cubic extrema, evaluated as exact rationals, cover all seed mantissas; no grid
-is sampled. This local result does not establish all-time input-domain,
-pitch/integral, initialization or tuner containment.
+**PROVED — analytical, explicitly qualified implication:** the private frontend
+now has source-derived binary32 error charges, rather than assumed caps.
+The bit-seed norm argument extends to squared input norms in [1/4,128].
+A rational guard/seed induction and the literal new-integral-before-proportional
+operation order close the pitch/integral cell `||z||_G<=.006` at every prefix.
+The corrected rate is below .0067; the derived pitch charge is below 46e-9 and
+scaled integral charge below 2e-9. This uses stated RN/sqrt/exp qualifications;
+actual target-toolchain libm qualification remains OPEN. It is not a MEKF gain.
 
-**PROVED — analytical, real arithmetic:** normalized planar tilt rotations fix
-e_y, so the continuous hard-iron information matrix has an exact zero direction
-and its positive information gate cannot pass. Default startup hard-iron fitting
-is disabled. The canonical learned reference is therefore a rotated-sample
-weighted mean and has norm at most 75. Reference alignment, finite acquisition
-and arithmetic transfer are still open; the generic helper does not silently
-assign this profile-specific bound to another cell.
+**PROVED — analytical reference-cone implication:** within that private domain,
+exact normalized tilt and nonnegative same-history reference averaging give
+`a*=11/5000`, `Bx>=75*(1-a*^2/2)`, `|Bz|<=75*a*`, `||B||<=75`.
+Exact planar hard-iron symmetry retains its zero information direction.
+Float reference accumulation, continuous-offset arithmetic, finite acquisition
+and the complete inherited nominal MEKF domain remain OPEN.
+
+**PROVED — analytical:** on each unmasked optimal correction, the covariance
+part of `dK*r` satisfies `||f_P||_(C^-1)^2 <= (NIS/2)*L_P`, where `L_P` is
+that SAME operation's covariance Fisher-storage loss. The proof retains linked
+P/H/r and has exact constant 1/2. It is not applied to the held-BA branch.
+For the complete joint quotient/covariance word, the exact storage identity
+retains the shared gauge/source forcing and all cross terms. If its matrix gap
+is uniformly at least `epsilon*J0`, Young's inequality yields rho=1-epsilon/2
+with an explicit linked supply matrix. **No positive uniform epsilon is proved.**
 
 **PROVED — analytical:** the magnetic-information differential and finite
 resolvent bound are derived for complete same-history probe words. For stacked
@@ -87,11 +94,17 @@ The analytical identities do not yet establish a common-storage rho<1,
 nonlinear/source/arithmetic charges, an inherited invariant radius, or a
 phase-uniform center magnetic-information floor. The exact missing domains are:
 
-* nominal aw and the learned-reference alignment/lower geometry;
+* nominal aw, actual innovations/precision and their linked complete-word bounds;
 * startup/capture/H18/refinement/release and every-prefix gate/solver margins;
-* raw Mahony pitch/integral, period/variance/tuner state and both actual clocks;
+* target libm qualification, float reference arithmetic/acquisition, period/variance/tuner state and both clocks;
 * actual nominal-chart/precision conversion of gauge amplitude and curvature;
 * complete linked mean/P/reference word derivatives and nonlinear remainders.
+
+The precise storage limiter is the sign of the complete-word matrix gap after
+including dH/dR, reset/AW/projection and moving quotient terms. The new 1/2
+residual-loss bound still needs a uniform same-history NIS/domain bound. No
+finite NIS maximum or private-frontend decrement is substituted for it. Radius
+and all-future service calculations are deliberately not performed first.
 
 The corrected row helper takes explicit nominal-aw, reference and noise-cell
 bounds. Missing bounds return null. Physical acceleration was incorrectly used
@@ -103,6 +116,18 @@ The AtomS3R deployment has sigma_a=.12, fixed S and other distinct settings.
 No result is transferred between profiles. Physical S is never reset by S=0.
 
 ## Failed approaches / DEAD_ENDS
+
+* **E, corrected algebra:** the partial joint bound must retain the square
+  gain-residual charge `NIS*L_P/2`. Its covariance loss coefficient is
+  `(lambda-NIS)/2`, not `lambda/2`. An exact regression rejects the omitted
+  square. This correction supplies no uniform bound on shipping NIS.
+* **D, current incomplete sufficient inequality:** the exact linked storage
+  identity and residual-loss bound do not provide a positive uniform epsilon
+  without inherited nominal/innovation/precision bounds. The invalid shortcut
+  would be to substitute the private frontend decrement or a finite factor gain.
+  Retained: source-derived qualified frontend cell, real reference cone, exact
+  residual-loss and complete-word identities. Next: bound the remaining linked
+  MEKF domain and word terms, before attempting any radius or floor.
 
 * **E:** physical acceleration substituted for nominal aw, point innovation floor
   used as a local proof constant, omitted dR/rotation-block terms. Corrected
@@ -146,8 +171,8 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 ## Next falsifiable experiment
 
 This is an analytical obligation, not another simulation: establish the
-inherited center/reference/nominal-state domain, then derive a complete-word
-common storage inequality using the literal linked calculus and moving quotient
+inherited nominal MEKF/innovation/precision domain and float reference chronology,
+then prove a positive uniform margin in the derived complete-word storage inequality using the literal linked calculus and moving quotient
 projector. Retain C_Q alpha, covariance coupling, fibre curvature, arithmetic
 and every-prefix branch/phase containment. Only after solving its radius may
 the compact center information inequality and perturbation bound be evaluated
@@ -156,25 +181,22 @@ center recurrence alone closes this chain.
 
 ## Verification scope
 
-All 722 OU-III regression tests pass locally, including exact rational/dual
-algebra and source bindings; the Python quality gate and proof evidence
-validator pass with theorem closure false. No new replay,
-secant or sampled cell is generated. Certificate reproduction, manifest/status,
-provenance and Python quality gates validate synchronization; they do not prove
-an invariant domain. No C/C++ or estimator behavior is changed, so no new
-`make all` result is claimed.
+All 729 tests in the first complete OU-III run pass, together with the Python
+quality gate and synchronized proof-evidence validator. One additional exact
+regression checks the gain-residual square charge. No new replay, secant, phase
+grid or sampled covariance cell is generated. No shipping C/C++ is changed.
 
 ## Shipping-faithfulness handoff
 
 1. Preserved: literal full state/P/K, inherited chronology, physical history,
    gauge, nonlinear fibre, both covariance parities, frontend/reference/clocks.
 2. Relaxations: fixed regular real-operation branches for derivatives and
-   explicit norm/rounding majorants; no arbitrary independent generated inputs.
+   explicit norm/rounding majorants, qualified sqrt/exp and exact reference arithmetic; no arbitrary independent generated inputs.
 3. Failures: E proof-helper scope/derivative and source-anchor bugs; D incomplete
    sufficient cell, fixed-root ball and AW norm-product tactics. No instability
    claim follows from any of these.
 4. Admitted counterexample: none; all-time admission/exclusion remains OPEN.
 5. Retained: 25 proved entries, qualified local theorem and exact compatibility
-   obstruction; new component proofs extend entries without count promotion.
+   obstruction; qualified frontend and linked storage proofs extend entries without count promotion.
 6. Next: source-uniform inherited causal-center storage/radius and actual
    all-future magnetic floor, retaining gauge and every prefix.

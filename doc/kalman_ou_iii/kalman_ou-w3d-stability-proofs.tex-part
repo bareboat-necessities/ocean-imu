@@ -971,9 +971,219 @@ $A(a)^TGA(a)\preceq(1-.00027)G$. The proposed additive caps give
 $G$-norm charge at most $7841/12000000000$, strictly less than the radial
 margin $.006(.00027)/2=.00000081$. Thus those hypotheses imply retention
 of $\|z\|_G\le.006$, without assuming the raw quaternion has unit norm.
-The one-step caps and initialization are not yet source-bound for every
-literal float execution; this calculation is explicitly CONDITIONAL, not
-proof of all-time frontend or magnetic admission.
+The original caps alone are CONDITIONAL. The following source calculation
+discharges them under explicit arithmetic qualifications; it does not certify
+an arbitrary target libm, the MEKF domain, or magnetic admission.
+
+\subsection{Inherited private-frontend domain and reference cone}
+\label{app:planar-frontend-domain}
+This component enters the complete finite-error inequality through reference
+geometry and the one-way generator domain, never as a MEKF contraction factor.
+Assume binary32 round-to-nearest with gradual underflow and no unsafe
+reassociation, correctly rounded square root, and relative error at most
+$2u$ for the fixed guard exponential arguments, where $u=2^{-24}$.
+These are explicit implementation qualifications, not consequences of the
+C++ language standard. The target-toolchain qualification is OPEN.
+Delivered samples here are componentwise rounded samples of the specified
+exact planar source; qualification of a different sensor/libm generator is
+separate. No physical premise is strengthened.
+
+The guard can be retained without replacing its output by an assumed raw
+input. The source derivative bound in the guard certificate gives a sample
+increment $d<1/3000$, including $20u$ for component rounding.
+Taylor lower bounds on $\exp(x)$ and $3.14159<\pi<22/7$ give the represented
+detector factor $0<\gamma<1/2$ and RMS factor
+$1/1000<\beta<1/100$ under the stated exponential qualification.
+The first detector state stays componentwise below $20$; its scalar LP
+operation error is less than $100u$. If $e_k=a_k-s_k$ denotes its unrounded
+high-pass output, then
+\[
+ |e_k|\le\tfrac12(|e_{k-1}|+d)+100u<1/1000
+ \quad\hbox{when }|e_{k-1}|\le1/1000.
+\]
+The represented output is below $11/10000$. The second LP state remains below
+$11/5000$, so its output is below $1/250$ componentwise. Each RMS-square
+state remains in $[0,1/10000]$: the inward margin
+$(1/1000)(1/10000-1/250^2)$ exceeds the roundoff charge
+$20u/10000+2^{-140}$. Thus the vector RMS is strictly below $.03$,
+target and seeded weight stay exactly zero, and the guard returns the raw
+input at every prefix. These are all-time inductive bounds, not sampled checks.
+
+For seeding, the two planar vector normalizations introduce at most
+$\gamma_{12}=12u/(1-12u)$ relative component error, plus the separately
+bounded subnormal charge. The dot product in Eigen's positive-dot
+\texttt{FromTwoVectors} branch exceeds $.9997$. Its actual formulas are
+$s=\sqrt{2(1+c)}$, $q_y=-v_x/s$, $q_w=s/2$; the opposite-vector/SVD branch
+is not reached. Rounding these expressions contributes at most another
+$\gamma_{12}$. If $d_v=d_s=\gamma_{12}$, their direction error is bounded by
+\[
+ .022\left(\frac{2d_v}{1-d_v}
+       +d_s\frac{1+d_v}{1-d_v}\right)+2^{-130}<\gamma_{64}.
+\]
+Indeed $2\arctan(q_y/q_w)$ has derivative at most two in its ratio,
+and the ratio magnitude is below $.011$. Before the last rounding, the
+squared norm differs from one by
+$(\|v\|^2-1)/(2(1+c))$; its absolute value is bounded by
+$(2d_v+d_v^2)/3.9$. Including $d_s$ still gives less than $\gamma_{64}$.
+The physical acceleration-angle offset is bounded by
+\[
+ \delta_* = \frac{(1/50)(11/35)^2}{g(39999/40001)}+4u<1/4000.
+\]
+Consequently the actual seed has $|e_0|<.001$, zero integral, and raw squared
+norm in $(.995,1.001)$. It lies strictly inside $\|z\|_G\le.006$.
+This argument applies to a literal reset and reseed if one occurs; proof-word
+boundaries do not reset the observer.
+
+Let $e_k=2\operatorname{atan2}(q_y,q_w)-\psi(t_k)$ immediately before sample
+$k$ is processed, and $i_k$ be the inherited integral. Use the exact dyadic
+shipping values $h=\operatorname{RN}(.005)$,
+$k_p=\operatorname{RN}(.2)$, $k_i=\operatorname{RN}(.02)$.
+The previous bit-seed proof extends to pre-normalization squared norm
+$[1/4,128]$ by even exponent shifts; all intermediates stay normal and the
+same three cubic strata apply. This covers the accelerometer, whose squared
+norm is between $81$ and $100$, as well as the quaternion.
+Before the final component multiplies its normalization factor $\kappa$
+satisfies $.995<\kappa^2<1.001$. The linked ideal feedback is
+\[
+ f_k=\tfrac12\|q_k\|^2\kappa_k\sin(\delta_k-e_k)
+     =a_k(\delta_k-e_k),\qquad .49<a_k<.51.
+\]
+The lower bound uses $\operatorname{sinc}(x)\ge1-x^2/6$ on
+$|x|\le.0021+.00025$; it never normalizes the raw Mahony quaternion to one.
+
+The source scalar DAG, including the \emph{new} integral in the corrected
+gyro, now gives
+\[
+ z_{k+1}=A(a_k)z_k+B(a_k)\delta_k+\epsilon_k,
+ \quad |\epsilon_{k,1}|<46\,10^{-9},\quad
+ |\epsilon_{k,2}|<2\,10^{-9}.
+\]
+Here $A,B$ use the dyadic gains above. These caps are evaluated as exact
+rationals in \texttt{planar\_frontend\_domain.py}. For auditability, every
+scalar RN charge uses $u|v|+2^{-150}$. Within the cell,
+$|q_w|\le1.001$, $|q_y|\le.0112$, $q_w>.997$;
+the pre-component normalized acceleration obeys $|a_x|\le.0203$,
+$|a_z|\le1.001$. Product and sum charges are propagated through half-gravity,
+feedback, the two integral products, integral addition, gyro additions and
+Euler products in source order. Their corrected-rate bound is $.0067$.
+If $E_w,E_y$ are the resulting Euler-component error bounds, its directional
+charge is at most $2(E_y+.012E_w)/.996$. The common final inverse-square-root
+scalar cancels from the ratio, leaving at most
+$.048u/(1-u)+2^{-130}$ from its two component multiplies.
+Finally add
+\[
+ \tfrac12(1/200)^2(1/50)(11/35)^2
+ +|h-1/200|(11/1750)+h^3(.0067)^3/12
+\]
+for source quadrature, represented step and arctangent defect. In particular
+there is no accumulating source-phase error approximation.
+
+Exact rational endpoint LDL checks with the dyadic gains prove
+$A^TGA\preceq(1-.00027)G$ and $\|B\|_G<.002$.
+Matrix convexity covers every intermediate $a_k$.
+The source-derived charge is strictly below $.006(.00027)/2$.
+The inverse metric is
+$G^{-1}=\left[\begin{smallmatrix}3/25&1/25\\1/25&2/25\end{smallmatrix}\right]$,
+giving $|e|<.0021$, $|i|<.00017$. The Euler norm identity, with a conservative
+$10^{-5}$ rounding allowance, places the next pre-normalization squared norm
+between $.995-10^{-5}$ and
+$1.001(1+(h(.0067)/2)^2)+10^{-5}$, strictly inside $[1/4,4]$.
+This closes the simultaneous raw-norm/pitch/integral induction, under the
+stated arithmetic qualifications, from the actual seed and at every prefix.
+
+For a magnetic packet at the current source phase, the update has advanced
+the observer once; hence the direction error is below
+$.0021+(1/200)(11/1750)<a_*=11/5000$.
+In exact reference arithmetic each levelled magnetic vector therefore has
+$x$ component at least $75(1-a_*^2/2)$ and $|z|\le75a_*$.
+Nonnegative same-history weighted means preserve these bounds, as does the
+canonical horizontal-heading choice. With the proved zero hard-iron branch,
+\[
+ B_x\ge75(1-a_*^2/2),\quad |B_z|\le75a_*,\quad \|B\|\le75.
+\]
+This is a reference \emph{cone} for every nonempty accepted mean; it does not
+prove finite acquisition, float accumulation, continuous-offset arithmetic,
+or the nominal MEKF invariant domain. Those remain OPEN.
+Structures preserved: raw Mahony, literal guard, seed and gain order, source
+phase and inherited integral. Relaxations introduced: explicit rational
+roundoff majorants and a qualified arithmetic model. No MEKF gain is inferred.
+
+\subsection{Linked residual charge and complete-word storage}
+\label{app:planar-complete-word-storage}
+For an unmasked regular correction set $C=P-PH^TS^{-1}HP$, $A=I-KH$.
+The actual tangent correction contains $f=dK\,r$. With $J=P^{-1}$,
+$C^{-1}A=J$ gives the exact identity
+\[
+ \|Ae+f\|_{C^{-1}}^2=\|e\|_J^2-\|He\|_{S^{-1}}^2
+                   +2e^TJf+\|f\|_{C^{-1}}^2.
+\]
+Thus the missing residual term cannot be removed by citing the homogeneous
+factor word. Its covariance-induced part admits a useful \emph{linked}
+bound with an exact constant:
+\[
+ f_P=A\,dP\,H^TS^{-1}r,\qquad
+ \boxed{\|f_P\|_{C^{-1}}^2\le\tfrac12(r^TS^{-1}r)L_P},
+\]
+where
+$L_P=\operatorname{tr}(P^{-1}dP P^{-1}dP)
+-\operatorname{tr}(C^{-1}A dP A^TC^{-1}A dP A^T)$.
+To prove this, put $Z=P^{-1/2}dP P^{-1/2}$,
+$D=P^{-1/2}CP^{-1/2}$ and $E=I-D\succeq0$.
+Then $D\succeq0$, and
+\[
+ L_P=2\operatorname{tr}(ZDZE)+\operatorname{tr}(ZEZE)
+     \ge2\operatorname{tr}(ZDZE)\ge0.
+\]
+Writing $B=P^{1/2}H^TS^{-1/2}$ gives $BB^T=E$.
+The $f_P$ energy is $v^TB^TZDZBv$, $v=S^{-1/2}r$;
+it is at most $\|v\|^2\operatorname{tr}(ZDZE)$, proving the claim.
+All operands are from the same literal operation; no unrelated maxima are
+multiplied. In particular the covariance and mean ports are not independent.
+
+For only this port, let $n=r^TS^{-1}r$, $V_P=\|Z\|_F^2$,
+$L_x=\|He\|_{S^{-1}}^2$. Young's inequality yields, for $\lambda>0$,
+\[
+ W^+\le(1+n/\lambda)(V_x-L_x)+\lambda V_P
+                   -\tfrac12(\lambda-n)L_P.
+\]
+The $nL_P/2$ square charge is retained. The remaining $dH,dR$, prediction,
+reset, projection, AW and quotient-chart terms must still be included.
+The optimal-correction identity is \emph{not} applied to the held-BA branch
+with different gain and innovation operands.
+
+For the complete coupled transverse-mean/covariance word write
+$v_{i+1}=A_i v_i+B_i w$, with $w$ the \emph{same} persistent root/history
+coordinate, including gauge forcing and curvature.
+The literal nonlinear and arithmetic remainders are retained in this history
+forcing when using the identity for finite deviations. Set
+$M=A_{N-1}\cdots A_0$, $N_w=\sum_i A_{N-1}\cdots A_{i+1}B_i$.
+For endpoint metrics $J_0,J_N\succ0$ the exact storage identity is
+\[
+ W_N-W_0=-v_0^TQv_0+2v_0^TXw+w^TZ_w w,
+\]
+where $Q=J_0-M^TJ_NM$, $X=M^TJ_NN_w$ and $Z_w=N_w^TJ_NN_w$.
+Equivalently, $Q=\sum_i T_i^T(J_i-A_i^TJ_{i+1}A_i)T_i$, with actual ordered
+prefixes $T_i$. This retains word cancellation and every cross term, including
+moving precision-normalized quotient projectors; it is not an AW norm product.
+If the inherited causal domain proves $Q\succeq\varepsilon J_0$, $0<\varepsilon\le1$,
+then the derived complete-word inequality is
+\[
+ W_N\le(1-\varepsilon/2)W_0+
+ w^T\left[Z_w+\frac2\varepsilon X^TJ_0^{-1}X\right]w.
+\]
+The same identities apply at every prefix. Their exact rational implementation
+is \texttt{planar\_complete\_word\_storage.py}.
+
+\textbf{Closure remains OPEN.} The frontend cone does not bound nominal
+$\hat a_w$, innovation NIS, precision, or the linked $dH$/reset/AW word terms.
+Consequently no positive uniform $\varepsilon$ has been established on the
+inherited shipping domain. The result is an analytical loss/charge identity
+and sufficient inequality, not a complete-word contraction certificate.
+This is a D sufficient-bound limitation, not a shipping counterexample.
+No radius or all-future magnetic floor is solved from an uncertified margin.
+Structures preserved: full coupled derivative, actual covariance/innovation,
+physical gauge and same-history forcing. Relaxations introduced: fixed regular
+branches for differential identities; face crossings require finite inclusions.
 
 \subsection{Same-record full covariance comparison}
 Identical initial estimator state and delivered prefixes imply identical complete

@@ -285,3 +285,29 @@ The numerical profile above is the existing planar probe configuration of the
 shipping wrapper (sigma_a=.2, adaptive S cadence). The AtomS3R sketch explicitly
 uses sigma_a=.12 and fixed S cadence, as well as its own gravity/magnetic-start
 settings. No transfer of the carried floor to that distinct profile is proved.
+
+
+## Qualified frontend domain and linked storage
+
+**PROVED — analytical implication under explicit arithmetic qualifications:**
+`planar_frontend_domain.py` derives the literal scalar rounding charges and
+closes private pitch/integral retention from the actual seed. It retains the
+non-unit raw quaternion, guard, represented gains and source sample phase.
+The real learned-reference cone has angle at most 11/5000, with
+`Bx>=75*(1-(11/5000)^2/2)`, `|Bz|<=75*(11/5000)`, and norm at most 75.
+Target-toolchain sqrt/exp qualification and float reference acquisition/averaging
+remain separate; this is not the complete inherited MEKF domain.
+
+**PROVED — analytical:** the same-operation covariance-induced gain-residual
+charge is at most `NIS*L_P/2` in posterior precision, where `L_P` is the actual
+homogeneous covariance Fisher-storage loss. The unmasked optimal correction
+proof retains P/H/r correlation. Held-BA, dH/dR, prediction, reset, AW,
+projection, moving quotient and gauge terms remain in the full word.
+`planar_complete_word_storage.py` derives its exact linked storage identity
+and supply matrix. A positive uniform word gap is **OPEN**: no frontend gain,
+finite NIS or factor-product gain supplies it. Radius and all-future service
+are not solved ahead of this missing inequality.
+
+Structures preserved: inherited source, frontend, reference and full joint
+mean/P word, including C_Q alpha. Relaxations introduced: stated arithmetic
+qualification and fixed regular branches for differential identities.

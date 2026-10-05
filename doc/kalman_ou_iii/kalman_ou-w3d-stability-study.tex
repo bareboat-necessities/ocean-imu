@@ -742,8 +742,13 @@ Thus a normalized input quaternion has a strictly positive pre-normalization nor
 Moreover, for the literal binary32 bit seed and one Newton step, a represented
 pre-normalization squared norm in $[1/4,4]$ implies raw output squared norm
 in $(.995,1.001)$ under the IEEE premises proved in
-Appendix~\ref{app:planar-causal-calculus}. This is a local arithmetic result;
-all-time pitch/integral containment and initialization remain separate.
+Appendix~\ref{app:planar-causal-calculus}. The exponent argument also covers
+the accelerometer domain $[1/4,128]$.
+Appendix~\ref{app:planar-frontend-domain} derives the literal scalar error
+charges and proves private pitch/integral retention from the seed under its
+explicit sqrt/exp and binary32 qualifications. The resulting real reference
+cone has angle below $11/5000$; target-toolchain qualification, float reference
+accumulation and the inherited MEKF domain are separate and remain OPEN.
 \end{lemma}
 
 \begin{lemma}[Vibration-guard LP/raw recurrence --- PROVED]
@@ -853,6 +858,12 @@ magnetic-information resolvent bound is proved, but its uniform center floor,
 storage contraction and inherited radius remain OPEN. Physical acceleration
 is not substituted for nominal $a_w$, and a finite information floor is not
 a theorem constant.
+Appendix~\ref{app:planar-complete-word-storage} proves the same-operation
+residual bound $\|A\,dP\,H^TS^{-1}r\|_{C^{-1}}^2\le
+(r^TS^{-1}r)L_P/2$, with $L_P$ the covariance Fisher-storage loss, on the
+unmasked optimal branch. It also derives the exact complete-word linked
+storage identity, retaining gauge and cross terms. No positive uniform word
+margin is certified; the nominal domain and strict contraction remain OPEN.
 \end{lemma}
 
 \begin{lemma}[Planar guard inactivity --- PROVED in real arithmetic]

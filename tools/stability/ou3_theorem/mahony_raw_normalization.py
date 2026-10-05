@@ -64,6 +64,11 @@ def certificate():
     raw_lower = lower/(1+dot_rel)*(1-U)**2 - 16*tiny
     raw_upper = upper/(1-dot_rel)*(1+U)**2 + 16*tiny
     assert raw_lower > F(995, 1000) and raw_upper < F(1001, 1000)
+    # The same exponent reduction and dot-product bound apply through 128.
+    # x/2 and all seed/Newton intermediates remain normal. This includes the
+    # planar accelerometer (norm squared near 96), not only quaternions.
+    scalar_lower, scalar_upper = lower/(1+dot_rel), upper/(1-dot_rel)
+    assert scalar_lower > F(995, 1000) and scalar_upper < F(1001, 1000)
     return {
         "qualification": "OU3_MAHONY_RAW_NORMALIZATION_RATIONAL_V1",
         "result_type": "PROVED — analytical",
@@ -78,6 +83,9 @@ def certificate():
         "newton_x_y_squared_bounds": [str(lower), str(upper)],
         "raw_output_squared_norm_bounds": [str(raw_lower), str(raw_upper)],
         "certified_coarse_raw_squared_norm_interval": ["199/200", "1001/1000"],
+        "extended_input_squared_norm_domain": ["1/4", "128"],
+        "extended_domain_argument": "even exponent shifts leave s*y_seed^2 unchanged; all intermediate products remain normal; identical dot/rounding bound",
+        "pre_component_scalar_squared_norm_bounds": [str(scalar_lower), str(scalar_upper)],
         "structures_preserved": ["literal magic constant", "one Newton step", "raw quaternion", "rounding charges"],
         "relaxations_introduced": ["seed parity error enclosed by its interval", "rounding error outer bounds"],
         "all_time_pre_normalization_domain_verified": False,
