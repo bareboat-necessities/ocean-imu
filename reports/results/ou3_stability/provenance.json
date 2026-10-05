@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "faf379bc26c055f50936251e6bbf129a146c65ec"
+      "git_blob_sha": "c919a8c6156a11df97d7459e982047d0a0658265"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -733,6 +733,18 @@
     {
       "path": "tools/stability/ou3_theorem/world_frame_source_diagnostic.py",
       "git_blob_sha": "706ffc2d42c5eddb3e541d1c7b27b87fcf8b5463"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_joint_phase_cell.py",
+      "git_blob_sha": "6d3d33dc89f07fdbedaaa4b06c21efa88ccfffa3"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_joint_phase_cell.py",
+      "git_blob_sha": "63e35050f4e838809b0bd23e371fa25730f3ca48"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-joint-phase-cell-threshold.json",
+      "git_blob_sha": "80bad81486ffafedf5877b9c1e5210c608e95ce3"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -759,5 +771,16 @@
     "untapped_complete_tail_samples_bitwise_equal": true,
     "all_time_magnetic_service_verified": false,
     "source_binding_notes": "Raw private Mahony normalization and literal frontend/tuner chronology are not bound by the old ideal interval replica. Shipping generation is fail-closed; no physical assumptions or shipping files changed."
+  },
+  "planar_joint_phase_cell_threshold": {
+    "result_type": "FINITE/CONDITIONAL FEASIBILITY THRESHOLD ONLY",
+    "covariance_partial_gain_max": 0.8738212970667966,
+    "mahony_homogeneous_20s_gain": 0.582705763926933,
+    "coupling_product_budget": 0.05265364544920159,
+    "symmetric_coupling_norm_budget": 0.22946382165649032,
+    "weyl_information_perturbation_budget_to_muM_1": 6.024764605642485,
+    "generated_mean_coefficient_couplings_bounded": false,
+    "joint_phase_cell_forward_invariant": false,
+    "all_time_magnetic_service_verified": false
   }
 }
