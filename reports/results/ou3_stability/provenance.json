@@ -809,6 +809,10 @@
     {
       "path": "tools/stability/ou3_theorem/planar_parity_mean_tangent.py",
       "git_blob_sha": "9f6e0b9fd98239ad7a8fbb3c1a5defaae578c2d6"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_compatibility_quotient_mean.py",
+      "git_blob_sha": "fedae5da49eb4e1511c9c60e46b0735130af9762"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
