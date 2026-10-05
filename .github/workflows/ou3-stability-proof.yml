@@ -277,7 +277,7 @@ jobs:
       - name: Verify analytical algebra and fail-closed bindings
         run: |
           python3 -m unittest discover -s tests/validation -p 'test_ou3_planar_service_*.py' -v
-          python3 -m unittest tests.validation.test_ou3_planar_information_ceilings tests.validation.test_ou3_planar_joint_phase_cell tests.validation.test_ou3_planar_generated_port_structure tests.validation.test_ou3_planar_every_root_service tests.validation.test_ou3_planar_mean_covariance_ports tests.validation.test_ou3_planar_common_norm_radius tests.validation.test_ou3_causal_tuner_interval -v
+          python3 -m unittest tests.validation.test_ou3_planar_information_ceilings tests.validation.test_ou3_planar_joint_phase_cell tests.validation.test_ou3_planar_generated_port_structure tests.validation.test_ou3_planar_every_root_service tests.validation.test_ou3_planar_mean_covariance_ports tests.validation.test_ou3_planar_common_norm_radius tests.validation.test_ou3_planar_linked_riccati_mean tests.validation.test_ou3_causal_tuner_interval -v
           python3 -m tools.stability.ou3_theorem.build_evidence
       - name: Export and audit actual planar word with untapped control
         run: |
