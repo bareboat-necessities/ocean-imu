@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "0773a38954c2c8b9c2a7bd560b2ebf348109391cfc12f8807298a9f9c02942b1",
-  "results_file_count": 462,
+  "replay_fingerprint": "3b04dd793b1866898689539e531115de1f957b751ce8436458a89ce8ed420d6a",
+  "results_file_count": 464,
   "results_files": [
     {
       "kind": "file",
@@ -830,13 +830,18 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
+      "sha256": "ca4a916d56e6b968e057ed7b8bbb2f2cd31c12e2e04a2b6a6e39d2a222698cc3"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/ou3_stability/interval-riccati-status.json",
       "sha256": "688726be5330e138c05d1c3f6fbc3b0a75f32bce237d524d4015ad4e620462e7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "sha256": "3dc88cb86bb61be6a04981cb80d74b2453bb983a2e8168843ab94b18605945e5"
+      "sha256": "c12524c52ceb6bde56adc691ca1b88bd02f81bf2a3b1ef5b16c23ce88ed243ab"
     },
     {
       "kind": "file",
@@ -910,6 +915,11 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/ou3_stability/planar-innovation-storage-certificate.json",
+      "sha256": "14f6b75bc15b223bd8dfb2bbceb5635ee839741f310f896171b038e79c4ec533"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/ou3_stability/planar-joint-phase-cell-threshold.json",
       "sha256": "0bd8ddc8b723b0b5b8d1d5c05b855b98c9e44856554c107ea8195dc0c727d5c5"
     },
@@ -976,7 +986,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "a4339405e9ebbe767d966ebdb13c7343731df10bda60489cbbd78b507ae18247"
+      "sha256": "a72adbcf86506d3b5003dc1d937fb8822cd794baf6d94c8616d556b9dfb4f4e9"
     },
     {
       "kind": "file",
@@ -1036,7 +1046,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "sha256": "1ea92d5d3d4ad994f9364016feafde30ecc14cd00d6d536901e17dd2278d06f8"
+      "sha256": "19a3fc36efc40a2065fdc9fe53b9170d4e71651dda3e00188b3282dec2a37226"
     },
     {
       "kind": "file",
@@ -1076,7 +1086,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "9bde8d5c298ee003eb37d3bdf0388e28b3d9f67db57e525483c551ee32167c86"
+      "sha256": "1dd820fd128d55d0358eb2e68a4e334ba714b5d35f2c837db9622c09a2af40a1"
     },
     {
       "kind": "file",
@@ -1146,57 +1156,57 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "db41a48a3be8686aa54c9e5fdd726b7e6d27389ecd58618d96aa8b825579d574"
+      "sha256": "4243db4ce443b91f6bcbff5dc467375c8c4fe4150b51b027c275ae0d83f6a4d8"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "28f3aff07b2450e59bcf6151dd95453417d9f0b9e74da97e19a560ea3c98b8a5"
+      "sha256": "62f5720a51ceb1735f15ec4317107ac4c0e7f1e54a92032dbdf7dc0b4d0acdff"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "98125fdd41f9c10218b677c50283dcff43a08df6029f415854e3fec4b7e2780c"
+      "sha256": "99c7ef477889f1efead7a3727a2c280c9a9c05a8378dff076e2a51d3d0fe74dd"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "cc35a228f399273f94f4042f6da38181e414b1325104479b95853c8a6a9307a5"
+      "sha256": "5ab6975e8337f3e7f8d67b934a348b71e734ebad8d4dea35ec5fd510ec2c75c0"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "3f458c7793ad4d14af5e9835589c83fb4a17c77fa365145665d68db66d498cd2"
+      "sha256": "49fac3d17349eb620f7b8dfcc2bcf46db58929a73314c5d120588095d3affffa"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "0c970c301d1b40c022c2d839c013e77db7ca4ace50fd12de5c659305ac7b2392"
+      "sha256": "f622ef90d70f5c0eb5bf41a8102edfb5065bc12d700ca4218cc0f1ca6a893bce"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "7f853f3fca3e205a57bcb3b0d895c9b051f58a33583be844c2983f7a273aafc0"
+      "sha256": "edbfc08555be3a03ce296773223f4fb42eb6185fdd2f042559e884297c922c74"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "52f92ca6be0738a25612837b3510919d4a89d766ae14e7573b722b584c6a4cc0"
+      "sha256": "500e838fedafc6e6ae0dae18856d65d0b4b72ffb58a452b6648f44f6d21f2ed1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "a563f594061ffeebdff103df617581b79672034507094a17f4b5897bb45facae"
+      "sha256": "d834dc0b03874bedb1b6e0e22c0615dd616a04fac8a30aff0435cee1c6497506"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "d0ff48c30f60683cf606c1e7cade98fd076c994b4628c46b578d138c9906b298"
+      "sha256": "091c1520dc424e44d8496cb7af1d10c15e044d2d3dd4a8b5e703daf5998ad93f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "23738a6a38f97ab66d378e1e8b407eccb998d716f3ddfa4a7b0876acaeabf56b"
+      "sha256": "24396135a876674a919f5303924b841aeffe6fb5f2ded04dd9d5daa1f4efb478"
     },
     {
       "kind": "file",
@@ -1216,7 +1226,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "5aa7358f91a76a5d35a802b0315c10b264fb6582c5d25b5982bd3f0b795dac44"
+      "sha256": "617e3ea4f7f60a08cd8a30bc7c156f08092310023ec3ca863c03c3cb6e554fe4"
     },
     {
       "kind": "file",
@@ -2314,13 +2324,13 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "682343ed7c952a93f93d6057c4d6e6e21da636ca2b60978d10bf5609883de195",
+  "results_fingerprint": "e12cf9d745985e7edce4f600dce6a8ce8ef375ea02a1cccfdfb7690b2eaf47ab",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 749,
+  "tracked_replay_file_count": 753,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2365,7 +2375,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou3-stability-proof.yml",
-      "sha256": "bfc4c9ebcf408d6b91907060cbb909291ead3bdcdc2a063ba5f30b39c645ba36"
+      "sha256": "9d9b8fe28ae3a50e89b6e6455fea45fdaaff0c93ac4030312f4027b0814a4648"
     },
     {
       "mode": "100644",
@@ -3954,6 +3964,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_information_shear_word.py",
+      "sha256": "f4723c4c2de4170616b5b76d3ff56754d916817db9eb7d99900bcfd0405e4c31"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_inj_block_algebra.py",
       "sha256": "ee686ce411c6e321052eb089abe2a4f2d979242747431021f16d24c5b6745c15"
     },
@@ -4196,6 +4211,11 @@
       "mode": "100644",
       "path": "tests/validation/test_ou3_planar_information_ceilings.py",
       "sha256": "a2a3909fb3368d8f0a6bf96229e03d3ee2c462bd46caf0710beb9426d4b53964"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_innovation_storage.py",
+      "sha256": "d0b710fe657b003b1e8e272728a6835e03346cf02560a8fcf4c67d96347ffc42"
     },
     {
       "mode": "100644",
@@ -5025,7 +5045,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "sha256": "d5cc59ab71a46263d08c539286b1603182f4707c02ba23dda4674501b8a9add4"
+      "sha256": "7a5872e44dbfdc444ef94510859bb068137e4ec522d9d1445319f63b03792bad"
     },
     {
       "mode": "100644",
@@ -5281,6 +5301,11 @@
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/information_ratio_source_diagnostic.py",
       "sha256": "db2a8a3c581aea9720fcb0ca368921318357d8bfc79d23ffb698bc16312154f3"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/information_shear_word.py",
+      "sha256": "b236b4f7696981f92ca06d31a86f04e1dd55e9b5053981b4bfd757ee33b6a55f"
     },
     {
       "mode": "100644",
@@ -5616,6 +5641,11 @@
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_information_ceilings.py",
       "sha256": "390ed0d58958d7fcdd366ecc4787d0ff2e26e65ab65bc6afecf531aa9c8a537a"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_innovation_storage.py",
+      "sha256": "025785485d96d44cfab2e8a6222a2d661237e624e7db5c29adc91adc44d80930"
     },
     {
       "mode": "100644",
@@ -5990,7 +6020,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "sha256": "d0dc541b1c779d34a130abf093fe67ad0394794e3c9973633b66e9e0dfd7fe1c"
+      "sha256": "7a61419762e010a3b0bab62982e36aaf8b2caf7d0a3476e8ee913aeb1009b73d"
     },
     {
       "mode": "100644",
