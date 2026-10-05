@@ -124,7 +124,7 @@ int main(int argc,char**argv) {
     Fusion f;f.begin(cfg);
     constexpr double g=9.80665,sn=400./40001,cs=39999./40001;
     const double nu=std::acos(-1.)/10;
-    int live=-1,refined=-1,active=-1,accepted=0,root=-1,windows=0,min_mags=10000;
+    int live=-1,refined=-1,active=-1,accepted=0,root=-1,windows=0,min_mags=10000;\n    int root_stride=1;
     double service_min=1e100,service_max=0;
     for(int k=1;k<=steps;++k) {
         sample_index=k;export_enabled=k>=first_export;
@@ -154,7 +154,7 @@ int main(int argc,char**argv) {
             ++windows;min_mags=std::min(min_mags,word_mags);
             moving_recording=false;
         }
-        if(active>=0&&k>=active+3400&&!moving_recording) {
+        if(active>=0&&k>=active+3400&&!moving_recording&&((k-(active+3400))%root_stride==0)) {
             phi.setZero();information.setZero();word_mags=0;root=k;
             for(int sign=0;sign<2;++sign) {
                 Eigen::Vector3d d=U*Eigen::Vector3d(0,sign?-sn:sn,cs);
