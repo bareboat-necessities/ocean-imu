@@ -928,7 +928,8 @@ The end-to-end theorem follows from the proved lemmas above once the conditional
 \begingroup
 % The proof appendix has more than 26 subsections; IEEEtran's default
 % alphabetic subsection counter cannot represent the full lemma chain.
-\renewcommand{\thesubsection}{\arabic{subsection}}
+\renewcommand{\thesubsection}{\thesection-\arabic{subsection}}
+\renewcommand{\thesubsectiondis}{\arabic{subsection}.}
 \input{kalman_ou-w3d-stability-proofs.tex-part}
 \endgroup
 

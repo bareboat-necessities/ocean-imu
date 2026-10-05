@@ -155,7 +155,8 @@ No result is transferred between profiles. Physical S is never reset by S=0.
 
 * **E, manuscript tooling:** the proof appendix exceeded IEEEtran's 26-letter
   subsection counter (`Counter too large` at the final implication). Scoped
-  numeric appendix subsection numbering removes that rendering limit; no
+  numeric appendix reference and display numbering removes that rendering
+  limit (IEEEtran uses separate `thesubsection` and `thesubsectiondis` hooks); no
   mathematical condition is changed. The remaining proof limiter is the
   inherited prefix domain and positive complete-word gap.
 * **E, corrected algebra:** the partial joint bound must retain the square
@@ -189,8 +190,9 @@ No result is transferred between profiles. Physical S is never reset by S=0.
   to be rejected, its information lower bound is exactly zero. This does not
   prove rejection or exclusion for the reached planar family.
 * Two-/three-epoch physical BA separation is refuted by exact compatibility.
-* Local TeX rendering was previously blocked by missing IEEEtran.cls. Use the
-  existing manuscript-render CI; do not report an unobserved local build pass.
+* Full local TeX rendering lacks `newtxtext.sty`. A minimal 27-subsection
+  regression with the CTAN IEEEtran class passes both numbering hooks; use the
+  full manuscript-render CI for the actual document.
 
 ## Retained facts
 
