@@ -13,6 +13,7 @@ def status_report() -> dict:
         "planar_moving_all_time_magnetic_service_admission":False,
         "planar_admission_cell_transport_algebra":True,
         "planar_guard_inactive_all_time_real_arithmetic":True,
+        "planar_generated_tuner_clock_feedback_ports_one_way":True,
         "planar_guard_float32_transfer":False,
         "planar_literal_frontend_interval_binding":False,
         "planar_private_Mahony_tube_source_bound":False,
