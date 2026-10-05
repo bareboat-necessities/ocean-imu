@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "f39b180a7528a1ee99c389c923f8b3b2ffa3a0fa35cf7864fd3a2442e2402447",
-  "results_file_count": 456,
+  "replay_fingerprint": "1a3dce0db36b0192a7f0b99e4a0805c0ef3fa6e22128a4d7b3b3e32ebf6d9a4e",
+  "results_file_count": 460,
   "results_files": [
     {
       "kind": "file",
@@ -836,7 +836,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "sha256": "68de228f692b2491623d4d8cc1f0d0ee31945239897e6eea71cc2b5c8dbf0db5"
+      "sha256": "2e9b5208a2980a1b68aa7b9e49ccce1e7d73c3bff5634018bc774af9414e7577"
     },
     {
       "kind": "file",
@@ -847,6 +847,11 @@
       "kind": "file",
       "path": "reports/results/ou3_stability/linked-finite-supply-feasibility.json",
       "sha256": "acd3955ee8998642bac52b73d8f6cf1bff23ba69ef3cee822523c801c0a1d5c5"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/mahony-raw-normalization-certificate.json",
+      "sha256": "ceafc126e65579a8047bfda3241c6c2c8f06593f5c6f350ab4f5fed345c933a8"
     },
     {
       "kind": "file",
@@ -880,6 +885,11 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/ou3_stability/planar-causal-calculus-certificate.json",
+      "sha256": "3b193689c78c3f1cbdfaf62e8c337582a76088dc69a96f7cba7ca0e158a2e2cf"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/ou3_stability/planar-every-root-service-diagnostic.json",
       "sha256": "0cb6d5ca53afb56af0f99aac2094ae786f499e201b5dad414923c7e0ddcbce7b"
     },
@@ -892,6 +902,16 @@
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-joint-phase-cell-threshold.json",
       "sha256": "0bd8ddc8b723b0b5b8d1d5c05b855b98c9e44856554c107ea8195dc0c727d5c5"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-linked-riccati-mean-certificate.json",
+      "sha256": "c56e04210b3795801db200e513055c7666b40d4322841ffb5f704bae7a2e1d04"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-mean-covariance-ports.json",
+      "sha256": "f8b4b9824dbd0da59eeb8eb4047de5d8455ca93cea275d4e81942f4e278146e8"
     },
     {
       "kind": "file",
@@ -946,7 +966,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "5c6c61111e27470aa6cfa3e140c3cc05ccf50930112cf2f4c021fafca3f4100a"
+      "sha256": "b8afc6fea41a919316bed321ddb5c4a313f0a7fa02f7142e57f7012b47ff106e"
     },
     {
       "kind": "file",
@@ -1006,7 +1026,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "sha256": "51e6c8fededb4205eb75b49b9f08cb7abebb8f928729ce1bdef0bcb1c92122ed"
+      "sha256": "ba100652b5caf1328e1f53546c60e832d604e6f95de3a6dfcebd185d8637b635"
     },
     {
       "kind": "file",
@@ -1046,7 +1066,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "6f52c39e9dad6046d2be89cf6b89c75077c1a4e9f8319eaf9f9924986235bb25"
+      "sha256": "2b85615182124cf68a1be55f99ead14be8cc7b6c8750681b159565c24556b05a"
     },
     {
       "kind": "file",
@@ -1141,7 +1161,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "d55067fc334c395724893964b97493af9ba2ad3cde3e7b7601ce5f5149f74e17"
+      "sha256": "6e7eefeabb03a275e682212710d4daf5508fff9412e7f13d7c564aadf11adbad"
     },
     {
       "kind": "file",
@@ -2284,13 +2304,13 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "3d6ceabeda298e021cb79b1e85cd9dc3dfdf580057153352d019e227de746c4d",
+  "results_fingerprint": "c3cc17932937517a2921da25db408baafb46e9d9c108f271f095b00cde5e8d97",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 741,
+  "tracked_replay_file_count": 745,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2335,7 +2355,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou3-stability-proof.yml",
-      "sha256": "da742b67c7ace5c0fec2b83ecc33e5186cf085019adf1e5da0f9211af5819f49"
+      "sha256": "bfc4c9ebcf408d6b91907060cbb909291ead3bdcdc2a063ba5f30b39c645ba36"
     },
     {
       "mode": "100644",
@@ -4034,6 +4054,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_mahony_raw_normalization.py",
+      "sha256": "d0d1018ab7bd222bc09b78fd30fc2de0a31a383986112a9cd514400854a0a2ae"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_marine_30s_qualification.py",
       "sha256": "62909cbb1615affa04d0240cd3082a44c7d1417a481902a7f7ab4194f4d680af"
     },
@@ -4124,6 +4149,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_causal_calculus.py",
+      "sha256": "d048fb10478d3548b98796d1dac7db3f1981e142014b028ed21d194260424378"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_planar_common_norm_radius.py",
       "sha256": "c314ed0574b976af31805acdefa1da11c01cf1da1218ca29473ed793026e2db6"
     },
@@ -4155,12 +4185,12 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_planar_linked_riccati_mean.py",
-      "sha256": "6445d8aeb94f719874866585d8e2810be0a28bd3258afbecc90924a27514bfad"
+      "sha256": "85d96390d7c7cad4b83e0ecd6a892dcad8dd348616e0968e422ed5475d1424a6"
     },
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_planar_mean_covariance_ports.py",
-      "sha256": "2a209c46194d9fa789d0bbe1ef1dbe78fd16062b9c1c6ada25d6d14b8fd53134"
+      "sha256": "6621fbc145cc0b2dfec7e7357a450cfed0352d41c4ae20c00c277bd0f32da081"
     },
     {
       "mode": "100644",
@@ -4535,7 +4565,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_workflow_contract.py",
-      "sha256": "475221bc52f4201c144b78c4a4da4f7e37b0aebc58dbe3ce41413369251fd40a"
+      "sha256": "d243e5817f934df40fa2b7d149d5754bdcacc40d7dc7c394562261b7c27a66ac"
     },
     {
       "mode": "100644",
@@ -4975,7 +5005,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "sha256": "afe05c2f98bf7c519855df6e571cf61e4fb4913a9e9258279b3e0d4e4ad3e65f"
+      "sha256": "e5770996e4de2bb34c276934bf26605903986f2dcd939dc19c25ec067bb21286"
     },
     {
       "mode": "100644",
@@ -5379,6 +5409,11 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/mahony_raw_normalization.py",
+      "sha256": "f43492439da5a52a6350410a80925e8fd54f9b717462d6e2ed9e9035f3ce790a"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/marine_30s_qualification.py",
       "sha256": "46eeb41f94a9a8abc7326d8e74e62e52ccf7c9805d84e2cc012cdd1872c8c36d"
     },
@@ -5514,6 +5549,11 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_causal_calculus.py",
+      "sha256": "17c5b34bcb6eeacb093f0ef79fe715a8f180f8cf5ecbf7c58fd2480a76780564"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_common_norm_radius.py",
       "sha256": "cc1304ee09716191d2d81ef0c6eed9cc0d27e77c457ead56460dd3439221d62f"
     },
@@ -5560,12 +5600,12 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_linked_riccati_mean.py",
-      "sha256": "eda626278f333a0190436f62e0462ab0e9646b2866edb096216e5e660018c558"
+      "sha256": "a786c327b7b80d2c2a2027e1d5242f80fd6b4ed55ee37f64558f1162c8423a5b"
     },
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_mean_covariance_ports.py",
-      "sha256": "7a5b294bfaff594bbdbe0d2deda45a6e49a1b7876464c4e47d451c34ca6b9b60"
+      "sha256": "f41cfdc7825bab8caa46f4cf6523670478636a21f91e936a646539cc2998f047"
     },
     {
       "mode": "100644",
@@ -5920,7 +5960,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "sha256": "4a421c143a474a95ad7a899eaf33104fc1f9222f49f848cee66f942bba5c60c0"
+      "sha256": "03487f6c8a79936930e26f2ce05e350c4c7d343c9aa4509c1403d615a3af2fbc"
     },
     {
       "mode": "100644",
