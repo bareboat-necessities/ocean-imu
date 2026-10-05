@@ -1,0 +1,19 @@
+{
+  "qualification": "OU3_PLANAR_JOINT_PHASE_CELL_THRESHOLD_V1",
+  "result_type": "FINITE/CONDITIONAL FEASIBILITY THRESHOLD ONLY",
+  "covariance_partial_gain_max": 0.8738212970667966,
+  "mahony_homogeneous_20s_gain": 0.582705763926933,
+  "mahony_steps": 4000,
+  "joint_two_block_small_gain_condition": "b*c < (1-a)*(1-d), in one common normalized comparison norm",
+  "coupling_product_budget": 0.05265364544920159,
+  "symmetric_coupling_norm_budget": 0.22946382165649032,
+  "carried_physical_2x2_service_floor": 7.024764605642485,
+  "weyl_information_perturbation_budget_to_muM_1": 6.024764605642485,
+  "required_information_condition": "for each physical +/- 2x2 block, ||I_cell-I_carried||_2 < carried_floor-1",
+  "additive_mahony_charge_retained_separately": true,
+  "generated_mean_coefficient_couplings_bounded": false,
+  "joint_phase_cell_forward_invariant": false,
+  "every_placed_window_magnetic_service_verified": false,
+  "all_time_magnetic_service_verified": false,
+  "theorem_closed": false
+}
