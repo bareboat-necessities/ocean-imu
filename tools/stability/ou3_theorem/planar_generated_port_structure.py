@@ -56,9 +56,9 @@ def certificate():
       "every_placed_window_magnetic_service_verified":False,
       "all_time_magnetic_service_verified":False,
       "theorem_closed":False,
-      "source_git_blob_sha":{
+      "source_git_blob_sha":{k:v for k,v in sorted({
         str(WRAPPER.relative_to(ROOT)):git_blob_sha(WRAPPER),
-        str(FRONT.relative_to(ROOT)):git_blob_sha(FRONT)}
+        str(FRONT.relative_to(ROOT)):git_blob_sha(FRONT)}.items())}
     }
 
 if __name__=="__main__":
