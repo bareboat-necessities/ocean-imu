@@ -1,0 +1,59 @@
+% Conventional heave baselines. Drop into Sec. VI (Evaluation Methodology).
+% Replace the \eqref targets with the article's labels for Eqs. (73), (80), (86).
+
+\subsection{Conventional heave baselines}
+\label{sec:conventional-baselines}
+
+Two conventional estimators receive the same measurement-only vertical
+acceleration $a^{P}_{\uparrow}$ of \eqref{eq:proxy-vertical-acc} and, when
+period-scaled, the same period estimate $\widehat{T}_z$ of
+\eqref{eq:log-period}. Neither uses reference motion online.
+
+\paragraph{Causal high-pass double integration (HPDI)}
+Let $c_k$ be the normalized Butterworth coefficients of order $n$ and
+$\omega_c$ the cutoff, with
+\begin{equation}
+  D(s)=\sum_{k=0}^{n} c_k\,\omega_c^{\,n-k} s^k,\qquad
+  R(s)=\sum_{k=0}^{m-1} c_k\,\omega_c^{\,n-k} s^k .
+\end{equation}
+The heave estimate is
+\begin{equation}
+  \hat z(s)=\frac{1}{s^2}\Bigl[1-\frac{R(s)}{D(s)}\Bigr]\,a^{P}_{\uparrow}(s),
+  \label{eq:hpdi}
+\end{equation}
+whose poles are those of $D$. The choice $m=n$ gives the classic cascaded
+high-pass double integrator, for which $|G-1|\simeq c_{n-1}\,\omega_c/\omega$
+above the corner. The choice $m<n$ gives a phase-compensated form with
+$|G-1|=\mathcal{O}\bigl((\omega_c/\omega)^{\,n-m+1}\bigr)$, at the cost of gain
+peaking near $\omega_c$. Any $m\ge 3$ yields zero steady-state heave for a
+constant accelerometer bias and bounded variance for a random-walk bias. The
+member $n=3$, $m=2$, $\omega_c=\omega_R$ coincides with the reduced
+integral-regularizer response \eqref{eq:reduced-G}, so the family contains
+OU--III's own scalar reduction. The cutoff is either fixed or
+$\omega_c=2\pi\rho_c/\widehat{T}_z$, smoothed in log-frequency over
+$0.75\,\widehat{T}_z$ and held for \SI{0.1}{s} between refreshes, as for the
+OU--III schedule. Discretization uses the bilinear transform at the IMU rate.
+
+\paragraph{Frequency-domain double integration (FDDI)}
+Each record is mean-removed and reflect-padded by \SI{120}{s}. The estimate is
+\begin{equation}
+  \hat Z(f)=-\frac{W(f)}{(2\pi f)^2}\,A^{P}_{\uparrow}(f),
+\end{equation}
+where $W$ is a raised cosine rising from $f_1$ to $\kappa f_1$, and $f_1$ is
+either fixed or $\rho_1/\operatorname{median}\widehat{T}_z$. FDDI is zero-phase
+and non-causal, so it is reported as an offline reference rather than a
+real-time competitor.
+
+\paragraph{Selection protocol}
+Parameters are selected on the development draws by minimizing the mean
+normalized vertical RMS, then frozen. The search spaces are
+$(n,m,\text{mode},\omega_c\text{ or }\rho_c)$ for HPDI, with
+$3\le m\le n\le 6$, and $(\text{mode},f_1\text{ or }\rho_1,\kappa)$ for FDDI.
+The best classic ($m=n$) and best compensated ($m<n$) HPDI are both reported.
+Evaluation uses the ten paired seed triplets and the bootstrap of
+Sec.~\ref{sec:paired-protocol}.
+
+% Table rows (fill from tools/heave_baselines.py evaluate):
+% HPDI (classic, $n=\cdot$)          & ... \\
+% HPDI (compensated, $n=\cdot,m=\cdot$) & ... \\
+% FDDI (offline, non-causal)         & ... \\
