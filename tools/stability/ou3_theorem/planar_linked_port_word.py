@@ -38,8 +38,10 @@ def calculate(stream:Path):
    "required_source_tangent_exports":[
      "uniformize exact dH_acc/d(mean) over the candidate cell",
      "uniformize exact dH_mag/d(mean) over the candidate cell",
-     "dK/dP linked through the same S,H,P at each correction",
+     "propagate dK/dP linked through the same S,H,P at each correction",
      "same-boundary affine mean charge under fixed measurement history"],
+   "tangent_block_initialization":{"D_xx":"I","D_Px":"0","D_xP":"0","D_PP":"I"},
+   "endpoint_blocks_requested":["D_xx","D_Px","D_xP","D_PP"],
    "local_operation_residual_max":max(a["maximum_absolute_operation_residuals"].values()),
    "classification":"OPEN; finite point tangent is not a uniform cell bound",
    "joint_cell_forward_invariant":False,"all_time_magnetic_service_verified":False,
