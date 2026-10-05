@@ -8,7 +8,7 @@ point derivatives to uniform bounds.
 from __future__ import annotations
 import argparse,json
 from pathlib import Path
-from .planar_service_frechet import frechet
+from .planar_service_frechet import diagnostic as frechet
 from .planar_service_audit import audit
 from .planar_service_stream import records,expand
 import numpy as np
