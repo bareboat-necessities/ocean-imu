@@ -153,6 +153,11 @@ No result is transferred between profiles. Physical S is never reset by S=0.
 
 ## Failed approaches / DEAD_ENDS
 
+* **E, manuscript tooling:** the proof appendix exceeded IEEEtran's 26-letter
+  subsection counter (`Counter too large` at the final implication). Scoped
+  numeric appendix subsection numbering removes that rendering limit; no
+  mathematical condition is changed. The remaining proof limiter is the
+  inherited prefix domain and positive complete-word gap.
 * **E, corrected algebra:** the partial joint bound must retain the square
   gain-residual charge `NIS*L_P/2`. Its covariance loss coefficient is
   `(lambda-NIS)/2`, not `lambda/2`. An exact regression rejects the omitted

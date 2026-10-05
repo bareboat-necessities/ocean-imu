@@ -1200,11 +1200,11 @@ literal attitude injection, covariance reset and estimate projections.
 \paragraph{Innovation comparison without independent residual maxima.}
 For the actual innovation rows $H$, $P\succ0$, $R\succ0$, and
 $S=HPH^T+R$, completion of the square gives, for every $z$,
-\begin{align*}
- z^TP^{-1}z+(r-Hz)^TR^{-1}(r-Hz)
- &=r^TS^{-1}r\\
- &\quad +(z-Kr)^T(P^{-1}+H^TR^{-1}H)(z-Kr).
-\end{align*}
+\begin{gather*}
+ J_c=P^{-1}+H^TR^{-1}H,\\
+ \mathcal E(z)=\|z\|_{P^{-1}}^2+\|r-Hz\|_{R^{-1}}^2,\\
+ \mathcal E(z)-r^TS^{-1}r=\|z-Kr\|_{J_c}^2.
+\end{gather*}
 Indeed the quadratic has Hessian $2(P^{-1}+H^TR^{-1}H)$ and minimizer
 $(P^{-1}+H^TR^{-1}H)^{-1}H^TR^{-1}r=Kr$; substitution gives the stated minimum.
 In held BA, $H$ here is the \emph{innovation} row including BA. Its virtual
@@ -1274,14 +1274,14 @@ $A_0=(1/50)(11/35)^2$ and $v_0=(1/50)(11/35)$, using $3<\pi<22/7$.
 The \emph{inherited} physical primitive is
 $S(t)=(1/50)(1-\cos(\pi t/10))/(\pi/10)$, so $\|S(t)\|<2/15$.
 For every possible handoff phase the full 21-state comparison therefore obeys
-\[
- V_{\rm hand}\le
+\begin{align*}
+ V_{\rm hand}\le{}&
  \frac{a_*^2}{\widehat{.035}^{\,2}}+v_0^2+
- \frac{(1/50)^2}{400}+\frac{(2/15)^2}{2500}
- +\frac{A_0^2}{\widehat{.05}^{\,2}}
+ \frac{(1/50)^2}{400}+\frac{(2/15)^2}{2500}\\
+ &+\frac{A_0^2}{\widehat{.05}^{\,2}}
  +\frac{[g(1-c)]^2}{\widehat{.004}^{\,2}}
  <\frac{21}{1000}.
-\]
+\end{align*}
 Each cap applies to the same physical phase; this scalar outer majorant
 does not declare independently chosen component extrema reachable. The
 nonzero central BA and physical primitive charges are retained.
@@ -1331,17 +1331,19 @@ For the intermediate additive correction let $e$ now denote
 nominal-minus-comparison state, where the comparison is unchanged during this
 instantaneous operation. This sign convention is distinct from the physical
 comparison $z$ above. Define the invertible tangent shear
-\[
- \eta=de-dP P^{-1}e=P\,d(P^{-1}e),\qquad
+\begin{gather*}
+ \eta=de-dP P^{-1}e=P\,d(P^{-1}e),\\
  W_{\rm sh}=\|\eta\|_{P^{-1}}^2+
        \lambda\|P^{-1/2}dP P^{-1/2}\|_F^2.
-\]
+\end{gather*}
 For the unmasked optimal additive correction $e^+=e+Kr$ and $C=(P^{-1}+H^TR^{-1}H)^{-1}$,
 $C^{-1}e^+=P^{-1}e+H^TR^{-1}(He+r)$. Differentiate this identity, including
 $dH,dR,dr$, and multiply by $C$ to obtain, with $a=He+r$,
 \[
- \boxed{\eta^+=A\eta+C\,dH^TR^{-1}a+K\,dH e
-                 -K\,dR R^{-1}a+K(dr+H\,de).}
+ \boxed{\begin{aligned}
+ \eta^+={}&A\eta+C\,dH^TR^{-1}a+K\,dH e\\
+         &-K\,dR R^{-1}a+K(dr+H\,de).
+ \end{aligned}}
 \]
 In the fixed-row, fixed-noise additive block, $dr=-H\,de$ gives
 $\eta^+=A\eta$ for \emph{arbitrary} residual. The covariance-induced $dK\,r$
