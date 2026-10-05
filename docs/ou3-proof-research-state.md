@@ -7,7 +7,7 @@ MOVING compatible family. Neither admission nor exclusion has been proved.
 Do not return to generic A21 entry or gravity-span/BA separation.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR #653 head: `b28268b11e2c1d98e4d3c787fd9c1cae716bcab3`.
+Verified starting PR #653 head: `cbf6f711be560fb56b0f2c403dbc83a05bf143ed`.
 The PR is draft, open and mergeable. Both current proof runs, including
 planar-service-cell, passed. CI chronology belongs in PR metadata.
 
@@ -67,6 +67,36 @@ retains the shared gauge/source forcing and all cross terms. If its matrix gap
 is uniformly at least `epsilon*J0`, Young's inequality yields rho=1-epsilon/2
 with an explicit linked supply matrix. **No positive uniform epsilon is proved.**
 
+**PROVED — analytical identities and qualified first-boundary implication:**
+`planar_innovation_storage.py` proves the exact variational NIS identity
+`NIS=min_z z'P^-1 z+(r-Hz)'R^-1(r-Hz)`. The default accelerometer rotation
+remainder gives `NIS<=V+(kappa V+d)^2/R_min` when the same actual P proves
+`B<=kappa P^-1`. At the literal first-Live boundary, the central beta=0 fibre
+has `V<21/1000`, retaining its small nonzero BA and inherited physical S.
+The bound is phase-uniform exact rational algebra in the real-operation lift,
+conditional on the retained private-angle/reference cone and handoff. The
+boundary-operand acc/mag NIS bounds are `<21/1000` and `<13/200` respectively.
+They do not bound the next prediction/correction, prove finite acquisition,
+or qualify float reference/covariance arithmetic. They are not an A21 restart.
+
+**PROVED — analytical reachable H18 structure:** default hold decouples BA;
+prediction, masked corrections, reset and AW preserve the zero cross blocks
+and constant held BA covariance. The active 18-state Joseph block is optimal
+with `R_eff=R_acc+P_BA`, retaining `dR_eff=dR_acc+dP_BA` and the held BA
+comparison/source port. This does not apply to arbitrary held cross blocks
+or discard the three BA coordinates after release.
+
+**PROVED — analytical coupled storage identity:** the invertible tangent shear
+`eta=de-dP P^-1 e` cancels covariance-induced `dK*r` exactly for fixed-row,
+fixed-noise additive corrections. Its full identity retains dH/dR and the
+literal `dr+H de` mismatch. The comparison must be inherited; resetting it
+would destroy the cancellation. Prediction has its own exact shear formula
+including physical OU mismatch, dF and dQ; its fixed-coefficient zero-source
+port has the linked charge `L_mean*L_cov/2`. Actual source terms remain.
+Uniform coercivity requires a bound on the comparison precision energy.
+Quaternion injection/reset, AW/projection and the moving physical quotient
+must still be composed. **No complete-word gap is inferred from this block.**
+
 **PROVED — analytical:** the magnetic-information differential and finite
 resolvent bound are derived for complete same-history probe words. For stacked
 center rows bounded by b, stacked row difference bounded by d, and relative
@@ -105,7 +135,10 @@ phase-uniform center magnetic-information floor. The exact missing domains are:
 
 The precise storage limiter is the sign of the complete-word matrix gap after
 including dH/dR, reset/AW/projection and moving quotient terms. The new 1/2
-residual-loss bound still needs a uniform same-history NIS/domain bound. No
+residual-loss bound still needs a uniform same-history NIS/domain bound.
+The new first-Live bound does not establish its propagation. The information
+shear avoids an independent residual charge on one exact correction block,
+but dH/dR, physical transport and actual reset terms still control the gap. No
 finite NIS maximum or private-frontend decrement is substituted for it. Radius
 and all-future service calculations are deliberately not performed first.
 
@@ -175,7 +208,11 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 This is an analytical obligation, not another simulation: establish the
 inherited nominal MEKF/innovation/precision domain and float reference chronology,
-then prove a positive uniform margin in the derived complete-word storage inequality using the literal linked calculus and moving quotient
+carrying the proved first-Live central-fibre bound through the actual H18 word.
+Compose the information shear with literal attitude injection/reset, inherited
+physical transport and the held-BA effective-noise differential; keep those
+linked terms before bounding the complete-word matrix gap. Then prove a
+positive uniform margin using the literal linked calculus and moving quotient
 projector. Retain C_Q alpha, covariance coupling, fibre curvature, arithmetic
 and every-prefix branch/phase containment. Only after solving its radius may
 the compact center information inequality and perturbation bound be evaluated
@@ -184,10 +221,11 @@ center recurrence alone closes this chain.
 
 ## Verification scope
 
-All 729 tests in the first complete OU-III run pass, together with the Python
-quality gate and synchronized proof-evidence validator. One additional exact
-regression checks the gain-residual square charge. No new replay, secant, phase
-grid or sampled covariance cell is generated. No shipping C/C++ is changed.
+Exact rational regressions cover variational NIS, coupled correction/prediction
+identities, held-BA Joseph structure, first-boundary bounds and fail-closed
+domain checks. No new replay, secant, phase grid or sampled covariance cell is
+generated. No shipping C/C++ is changed. Current test/CI results are recorded
+in the PR metadata.
 
 ## Shipping-faithfulness handoff
 

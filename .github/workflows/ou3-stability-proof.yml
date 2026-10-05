@@ -312,6 +312,8 @@ jobs:
           python3 -m tools.stability.ou3_theorem.build_evidence
       - name: Verify exact causal calculus and raw normalization
         run: python3 -m unittest tests.validation.test_ou3_planar_causal_calculus tests.validation.test_ou3_mahony_raw_normalization -v
+      - name: Verify inherited innovation and linked storage identities
+        run: python3 -m unittest tests.validation.test_ou3_planar_innovation_storage tests.validation.test_ou3_planar_complete_word_storage -v
       - name: Export and audit actual planar word with untapped control
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: |

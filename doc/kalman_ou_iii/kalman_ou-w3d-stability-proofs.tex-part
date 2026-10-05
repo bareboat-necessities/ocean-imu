@@ -1190,6 +1190,212 @@ Structures preserved: full coupled derivative, actual covariance/innovation,
 physical gauge and same-history forcing. Relaxations introduced: fixed regular
 branches for differential identities; face crossings require finite inclusions.
 
+\subsection{Inherited innovation comparison and coupled information coordinates}
+\label{app:planar-innovation-storage}
+These results enter the nominal-domain and complete-word-gap prerequisites,
+\emph{before} any invariant-radius calculation. They neither assume a positive
+word margin nor establish one. All correction identities below precede the
+literal attitude injection, covariance reset and estimate projections.
+
+\paragraph{Innovation comparison without independent residual maxima.}
+For the actual innovation rows $H$, $P\succ0$, $R\succ0$, and
+$S=HPH^T+R$, completion of the square gives, for every $z$,
+\begin{align*}
+ z^TP^{-1}z+(r-Hz)^TR^{-1}(r-Hz)
+ &=r^TS^{-1}r\\
+ &\quad +(z-Kr)^T(P^{-1}+H^TR^{-1}H)(z-Kr).
+\end{align*}
+Indeed the quadratic has Hessian $2(P^{-1}+H^TR^{-1}H)$ and minimizer
+$(P^{-1}+H^TR^{-1}H)^{-1}H^TR^{-1}r=Kr$; substitution gives the stated minimum.
+In held BA, $H$ here is the \emph{innovation} row including BA. Its virtual
+minimizer need not be the applied masked gain. No gain is replaced.
+If a physical comparison $z$ has $V=z^TP^{-1}z$ and
+$r=Hz+\nu$, the immediate bound is
+\[
+ \mathrm{NIS}\le V+\nu^TR^{-1}\nu.
+\]
+There is no triangle-inequality cross charge between these two terms.
+
+For the default zero-lever-arm, zero-temperature-slope accelerometer model,
+write $R_{\rm true}=\exp([\vartheta]_\times)\widehat R$ and
+$\delta a=a_{\rm true}-\hat a_w$. The physical-minus-nominal comparison
+contains $\vartheta,\delta a$ and the SLOW BA difference. Its exact nonlinear
+remainder, apart from delivered FAST/noise/arithmetic forcing, is
+\[
+ \nu_a=(e^{[\vartheta]_\times}-I-[\vartheta]_\times)
+              \widehat R(a_{\rm true}-g e_z)
+          +[\vartheta]_\times\widehat R\delta a.
+\]
+The integral Taylor formula and orthogonality of $e^{t[\vartheta]_\times}$ give
+$\|e^{[\vartheta]_\times}-I-[\vartheta]_\times\|_2\le\|\vartheta\|^2/2$.
+Hence, for a physical acceleration cap $A$,
+\[
+ \|\nu_a\|\le (g+A)\|\vartheta\|^2/2+\|\vartheta\|\|\delta a\|
+                  \le z^TB_s z,
+\]
+where $s>0$, $(B_s)_{\theta\theta}=(g+A+s)I/2$,
+$(B_s)_{aw,aw}=I/(2s)$, and other blocks are zero. This retains nominal AW
+through $\delta a$; the physical cap has not been substituted for $\hat a_w$.
+If the represented estimator gravity differs from physical $g$ by $\delta g$,
+the additional exact term is $(I+[\vartheta]_\times)\widehat R\delta g e_z$;
+it is included in the forcing cap, not absorbed into physical acceleration.
+On a domain proving $B_s\preceq\kappa P^{-1}$, $R\succeq R_{\min}I$ and
+additional residual forcing at most $d$, it follows analytically that
+\[
+ \boxed{\mathrm{NIS}\le V+(\kappa V+d)^2/R_{\min}.}
+\]
+The matrix domination uses the same actual covariance, including cross terms.
+It is not a sampled covariance box. A uniform bound on $V$ and domination on
+every inherited prefix are still required.
+
+\paragraph{The literal first-Live boundary.}
+One part of that inherited domain can be bounded without a replay. Consider
+the central $\beta=0$ physical member with
+$b_{a,s}=g(1-c)R_y(-\psi)e_z$, $c=39999/40001$, and physical $S(0)=0$ at
+construction. This is the existing same-record family, not a new sensor
+source. Work in the real-operation lift with represented configuration
+scalars. Assume the retained private pitch/reference implication at handoff,
+with $a_*=11/5000$; finite acquisition and float reference arithmetic are
+not asserted here. The planar yaw is zero. Before first handoff, the wrapper
+uses \texttt{updateFrontEnd}: it does not predict or correct the MEKF mean.
+Thus the constructor's zero BG, BA and LIN means persist. The actual
+\texttt{initialize\_from\_attitude} and \texttt{enterLive\_} then leave those
+means intact, set the tilt/yaw covariance, seat AW on its current stationary
+covariance, and keep BA held. No state is reseeded at a proof boundary.
+
+Let $\widehat s$ denote the exact binary32 representation of the literal
+configuration scalar $s$. The pitch axis is orthogonal to world down in
+body coordinates, so its variance is $\widehat{.035}^{\,2}$ even though the
+attitude block is anisotropic. The default horizontal factor is one and
+the literal AW standard-deviation floor is $\widehat{.05}$. BA variance is
+$\widehat{.004}^{\,2}$. All these blocks are decoupled at this boundary;
+the untouched $v,p,S$ variances are $1,400,2500$. Put
+$A_0=(1/50)(11/35)^2$ and $v_0=(1/50)(11/35)$, using $3<\pi<22/7$.
+The \emph{inherited} physical primitive is
+$S(t)=(1/50)(1-\cos(\pi t/10))/(\pi/10)$, so $\|S(t)\|<2/15$.
+For every possible handoff phase the full 21-state comparison therefore obeys
+\[
+ V_{\rm hand}\le
+ \frac{a_*^2}{\widehat{.035}^{\,2}}+v_0^2+
+ \frac{(1/50)^2}{400}+\frac{(2/15)^2}{2500}
+ +\frac{A_0^2}{\widehat{.05}^{\,2}}
+ +\frac{[g(1-c)]^2}{\widehat{.004}^{\,2}}
+ <\frac{21}{1000}.
+\]
+Each cap applies to the same physical phase; this scalar outer majorant
+does not declare independently chosen component extrema reachable. The
+nonzero central BA and physical primitive charges are retained.
+At these boundary operands, $\nu_a$ is bounded by
+$(g+A_0)a_*^2/2+a_*A_0+(1+a_*)|\widehat{9.80665}-g|$.
+The real reference cone implies
+$\|B-75e_x\|\le75a_*(1+a_*^2/8)$, since
+$\sqrt{1+a_*^2/4}\le1+a_*^2/8$. The magnetic remainder is at most
+$75a_*^2/2+(1+a_*)75a_*(1+a_*^2/8)$.
+Using $R_a=\widehat{.2}^{\,2}I$, $R_m=\widehat{.8}^{\,2}I$ in the
+variational identity gives exact rational bounds
+\[
+ \mathrm{NIS}_{a,\rm hand}<21/1000,\qquad
+ \mathrm{NIS}_{m,\rm hand}<13/200.
+\]
+These concern a correction evaluated at the first-Live boundary, before the
+next prediction or other operation. They are \emph{not} bounds on a later
+sample, on the whole H18 interval, or on A21. They establish neither a finite
+handoff time nor float32 transfer. In particular they do not admit the physical
+family or assert entry of its other compatible members into this small ball.
+
+\paragraph{Reachable held-BA block.}
+The literal hold setter zeros all BA--active cross covariances. Construction
+already has that property. While held, prediction uses $\phi_{BA}=1$, adds no
+BA process covariance and propagates zero cross blocks to zero. The default
+CoG accelerometer update has $P=\operatorname{diag}(P_X,P_b)$, $X$ the other
+18 coordinates, and literal operands
+\[
+ S=H_XP_XH_X^T+R_a+P_b,\quad
+ B=\begin{bmatrix}P_XH_X^T\\0\end{bmatrix},\quad K=BS^{-1}.
+\]
+Substitution in the actual Joseph expression
+$P-KB^T-BK^T+KSK^T$ shows that $P_b$ is unchanged and cross blocks stay zero.
+Magnetic and $S$ corrections have no BA columns and preserve the same property;
+reset acts on attitude only, AW sync adds to AW only, and estimate projections
+do not change covariance. Default zero held BA mean is also preserved.
+This proves the invariant block property by induction on literal operations
+until release, excluding external covariance writes. On this reachable
+manifold the active correction is optimal with $R_{\rm eff}=R_a+P_b$.
+Thus the linked residual-loss lemma may be applied to this active block with
+$dR_{\rm eff}=dR_a+dP_b$ retained. It may \emph{not} be applied to an arbitrary
+held covariance with cross blocks, or extended past release by this argument.
+All 21 states remain: held BA comparison error is still a residual/source port.
+
+\paragraph{Coupled information coordinate.}
+For the intermediate additive correction let $e$ now denote
+nominal-minus-comparison state, where the comparison is unchanged during this
+instantaneous operation. This sign convention is distinct from the physical
+comparison $z$ above. Define the invertible tangent shear
+\[
+ \eta=de-dP P^{-1}e=P\,d(P^{-1}e),\qquad
+ W_{\rm sh}=\|\eta\|_{P^{-1}}^2+
+       \lambda\|P^{-1/2}dP P^{-1/2}\|_F^2.
+\]
+For the unmasked optimal additive correction $e^+=e+Kr$ and $C=(P^{-1}+H^TR^{-1}H)^{-1}$,
+$C^{-1}e^+=P^{-1}e+H^TR^{-1}(He+r)$. Differentiate this identity, including
+$dH,dR,dr$, and multiply by $C$ to obtain, with $a=He+r$,
+\[
+ \boxed{\eta^+=A\eta+C\,dH^TR^{-1}a+K\,dH e
+                 -K\,dR R^{-1}a+K(dr+H\,de).}
+\]
+In the fixed-row, fixed-noise additive block, $dr=-H\,de$ gives
+$\eta^+=A\eta$ for \emph{arbitrary} residual. The covariance-induced $dK\,r$
+has cancelled algebraically against the derivative of precision; it has not
+been discarded or bounded by unrelated maxima. The actual mean-dependent
+rows and chart mismatch remain in the displayed formula. This is not an
+additive model of finite physical attitude error: literal quaternion injection,
+reset, projection and changing charts must be composed afterwards. Setting
+$e^+=0$ by choosing a fresh comparison would destroy the identity.
+
+If $e^TP^{-1}e\le E$ and $\lambda>0$, put
+$C_E=\max(2,1+2E/\lambda)$. For
+$W_0=\|de\|_{P^{-1}}^2+\lambda\|P^{-1/2}dP P^{-1/2}\|_F^2$,
+\[
+ C_E^{-1}W_0\le W_{\rm sh}\le C_E W_0.
+\]
+This follows twice from $\|u+v\|^2\le2\|u\|^2+2\|v\|^2$ and
+$\|P^{-1/2}dP P^{-1}e\|^2\le E\|P^{-1/2}dP P^{-1/2}\|_F^2$.
+Consequently the shear does not remove a direction, but uniform coercivity
+still needs the inherited comparison domain. When $dP=0$ it leaves the physical
+gauge tangent unchanged. Moving quotient projection, $C_Q\alpha$ and fibre
+curvature must still be transported; they do not vanish in these coordinates.
+
+For prediction $e^-=Fe+d$, $P^-=FPF^T+Q$, direct differentiation gives
+\begin{align*}
+ \eta^-={}&F\eta+F\,dP(Je-F^TJ^-e^-)
+       +dF(e-PF^TJ^-e^-)\\
+       &-FP\,dF^TJ^-e^-+dd-dQJ^-e^-.
+\end{align*}
+This retains the physical OU mismatch $d$ and its differential $dd$.
+For the fixed-$F,Q$, zero-$d$ subblock only, its covariance port obeys
+$\|f_P\|_{J^-}^2\le L_e L_P/2$, where
+$L_e=e^TJe-(Fe)^TJ^-(Fe)$ and $L_P$ is the same prediction's Fisher loss.
+To prove it put $U=(P^-)^{-1/2}FP^{1/2}$, $D=U^TU$, $E_0=I-D\succeq0$,
+$Z=P^{-1/2}dP P^{-1/2}$ and $v=P^{-1/2}e$.
+The port is $UZE_0v$, $L_e=v^TE_0v$, and
+$L_P=2\operatorname{tr}(ZDZE_0)+\operatorname{tr}(ZE_0ZE_0)$.
+Cauchy--Schwarz and the trace bound yield the claim. The zero-source subblock
+does not impose the estimator OU model on physical truth; the other displayed
+terms remain compulsory in the complete word.
+
+The exact rational module \texttt{planar\_innovation\_storage.py} reproduces
+these identities and boundary bounds. \textbf{OPEN:} carry that boundary
+through actual H18, reference refinement, release and A21 with uniformly
+coercive metrics, and bound the complete ordered word including all remaining
+ports. No positive source-uniform $\varepsilon$ follows from the cancellation
+or the first-boundary constants alone. No radius calculation is performed.
+Structures preserved: actual innovation/gain/Joseph distinction, all states,
+inherited physical primitive and BA, same-history covariance/residual, moving
+gauge and literal reset/AW chronology. Relaxations introduced: explicitly
+qualified real-operation identities, scalar outer boundary majorants and
+Young's quadratic rotation-remainder bound. Failure classification for the
+unclosed complete-word sufficient inequality remains D, not instability.
+
 \subsection{Same-record full covariance comparison}
 Identical initial estimator state and delivered prefixes imply identical complete
 internal executions by induction, including frontend, parameters, covariance,

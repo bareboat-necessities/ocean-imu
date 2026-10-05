@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "19e7740a313f833b81aefc78448ef028273bd659"
+      "git_blob_sha": "65fd3f97304aef5778b584664032a705a901f40c"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "23b8b2932f1b5fb27282b36c014eeb701227144f"
+      "git_blob_sha": "0e6e1573605303ac2045c112e72082ed0c9cafad"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "a844a167574f296e20cecf077489a697ac0f225f"
+      "git_blob_sha": "8aaaadf2dfd066d367e2d0d02884d0e672c1e331"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "bc66690d2852241ef12c5812534b9b18c72b4ece"
+      "git_blob_sha": "cd45801212bf463197e22585e0d06071b0c27be9"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -512,7 +512,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "d9003ec226b92edc61f411be63e2934347b100b1"
+      "git_blob_sha": "a46be8f91e027bdc35284f18b324acfd2facd325"
     },
     {
       "path": "tools/stability/ou3_theorem/causal_tuner_interval.py",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "2e57b40358453371bc324cf6979e3f78619bf276"
+      "git_blob_sha": "090ebb3df4bdd2c166d400ad92af7ed2cc6e9f8c"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "809501e3be676a369cb43ba00071e687614bc33a"
+      "git_blob_sha": "5fb72211ecd21e56162c8f2475c0a9a8ef0d09dd"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -933,6 +933,18 @@
     {
       "path": "reports/results/ou3_stability/planar-complete-word-storage-certificate.json",
       "git_blob_sha": "97e06fddd5ac6e1f029c5385cfac7e3b0d29c0a0"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_innovation_storage.py",
+      "git_blob_sha": "9c95f5a2c085e7292dd567c5a14ea3f1a1919102"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_innovation_storage.py",
+      "git_blob_sha": "45d09148a265257dd22ff8cfc1e668ae5ea96d4c"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-innovation-storage-certificate.json",
+      "git_blob_sha": "eaf753c818b1e1bc8396385a9c77c7c65712a855"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1003,7 +1015,7 @@
     "result_type": "FINITE DIAGNOSTIC ONLY",
     "starting_PR_653_head": "4d387d19849aa177e1b84dae5d28a8eb3a80cf40"
   },
-  "reconciled_pr_head": "ad9676a0e9f2ebb29fca98467fec92e4c2f1b5e8",
+  "reconciled_pr_head": "fb7163180a3f725bc3feeb99f9fd4e4ec2a38723",
   "planar_moving_center_audit": {
     "result_type": "FINITE DIAGNOSTIC ONLY",
     "starting_main": "59959d1bf33a3c5f4f70331104546a6486468df6",
@@ -1040,12 +1052,14 @@
     "result_type": "OPEN",
     "proof_appendix_sections": [
       "app:planar-frontend-domain",
-      "app:planar-complete-word-storage"
+      "app:planar-complete-word-storage",
+      "app:planar-innovation-storage"
     ],
     "analytical_certificates": [
       "mahony-raw-normalization-certificate.json",
       "planar-frontend-domain-certificate.json",
-      "planar-complete-word-storage-certificate.json"
+      "planar-complete-word-storage-certificate.json",
+      "planar-innovation-storage-certificate.json"
     ],
     "finite_exploration_performed": false,
     "shipping_sources_changed": false,
@@ -1056,6 +1070,11 @@
     "linked_covariance_residual_loss_constant": "1/2",
     "uniform_complete_word_storage_margin": null,
     "radius_or_floor_solve_performed": false,
-    "all_time_magnetic_service_verified": false
+    "all_time_magnetic_service_verified": false,
+    "qualified_first_handoff_real_precision_bound": "21/1000",
+    "first_handoff_bound_is_prefix_invariant": false,
+    "held_BA_reachable_active_block_reduction": true,
+    "fixed_row_information_shear_residual_cancellation": true,
+    "source_uniform_nominal_NIS_cap": null
   }
 }
