@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "4e7e62c9a2103e4f7928ce9a10265ba90296d01c"
+      "git_blob_sha": "5344dd5f928dff01fb307c858f57ec7a8667ce47"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "c8ef819b79c4bc10f57dad51c6ca35b2dedd7aca"
+      "git_blob_sha": "73fe6358765122397f98e80d934e16973d0f240c"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -152,7 +152,7 @@
     },
     {
       "path": "docs/ou3-moving-quiet-compatibility.md",
-      "git_blob_sha": "95fc979f9a7924324b22c70d43eef67fef50a441"
+      "git_blob_sha": "d30dc04ecc77bd616a5e91584f19e6a07f4d7117"
     },
     {
       "path": "docs/ou3-moving-six-pivots.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "ae497f77318d14e91defeb219fb52e86fe9345c9"
+      "git_blob_sha": "7b6cf8a5276ed475763a76b8df11c9b00c561cff"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "3ef457a2c19c8f551ece9fc54abf253aa118427b"
+      "git_blob_sha": "ed9ebc3c988144f508b1c9a0b9b178165d973cd6"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -400,7 +400,7 @@
     },
     {
       "path": "tests/validation/test_ou3_moving_quiet_compatibility.py",
-      "git_blob_sha": "c810b0d252164d5b275de5dbb4e139e732d368d4"
+      "git_blob_sha": "abd28b66cae2a36ae86dd9e5e8455f5e81e5bb07"
     },
     {
       "path": "tests/validation/test_ou3_nuisance_upper_certificate.py",
@@ -512,7 +512,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "8692d2bbb8eb95d0efd16653835466cfc451c4a5"
+      "git_blob_sha": "6f34b27ee0e26ca6734d111d293748c24c08cca9"
     },
     {
       "path": "tools/stability/ou3_theorem/causal_tuner_interval.py",
@@ -600,7 +600,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/moving_quiet_compatibility.py",
-      "git_blob_sha": "644fbebf56ff446e97cf55068b85dba2cb4731ee"
+      "git_blob_sha": "5b01671629554ae843dce7410f97c2735c897622"
     },
     {
       "path": "tools/stability/ou3_theorem/moving_transport_source_diagnostic.py",
@@ -636,7 +636,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_service_frontend_binding.py",
-      "git_blob_sha": "b7cae36b72f787938e2ec52a676f557476ff8c10"
+      "git_blob_sha": "60449ec0df109005b15e3f3512cce4d8d90e4371"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_service_guard.py",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "3be3294c673a0cb94fc302430e6d6ca8ab7594a4"
+      "git_blob_sha": "2de39b55395d0c77541b89e6c77729cdc4e87690"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "49a3820b43dc88b3360d5f4eb210483d888c38fd"
+      "git_blob_sha": "2d321b0e0d9b10d7fb71b11a99954787cdff3e0f"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -768,7 +768,7 @@
     },
     {
       "path": "tests/validation/test_ou3_planar_every_root_service.py",
-      "git_blob_sha": "c47df755069febfd576321638e615ddb3e3bbbfd"
+      "git_blob_sha": "5ea3842849feecc765095aa7eee88bdb1679d1bc"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_mean_covariance_ports.py",
@@ -804,7 +804,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_coupled_tangent.py",
-      "git_blob_sha": "7b167b259ffe5755b980cefbe9d813729cf88eca"
+      "git_blob_sha": "d5c54554042e2dec9635f011352599b78a3d3a30"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_parity_mean_tangent.py",
@@ -816,7 +816,7 @@
     },
     {
       "path": "docs/ou3-planar-parity-service.md",
-      "git_blob_sha": "95f994220e3faa9f747a0ca2db5e7e8b76834547"
+      "git_blob_sha": "a1821aab6c656a92f26e6f03d5563944f274a25f"
     },
     {
       "path": "reports/results/ou3_stability/planar-every-root-service-diagnostic.json",
@@ -852,7 +852,7 @@
     },
     {
       "path": "tests/validation/test_ou3_planar_service_verify.py",
-      "git_blob_sha": "241c30dba494543e87da8f309cb3e3fe30d94afc"
+      "git_blob_sha": "4fb3a4dc116dd6827ded360545d8711887b2016f"
     },
     {
       "path": "tools/stability/ou3_theorem/compatibility_quotient.py",
@@ -865,6 +865,18 @@
     {
       "path": "tools/stability/ou3_theorem/planar_native_secants.py",
       "git_blob_sha": "d8561e6d54397d560f6b1db00e9bebf495a6cc9a"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_moving_center.py",
+      "git_blob_sha": "e59db41a4372a1462f311796edd277c30078ec45"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-moving-center-diagnostic.json",
+      "git_blob_sha": "d96aac0db69cc13fcbe4ea3186fcfa0f3fe00a67"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_moving_center.py",
+      "git_blob_sha": "b7b138b332b51bf4cbda430bfd3e2fc225071049"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -935,5 +947,16 @@
     "result_type": "FINITE DIAGNOSTIC ONLY",
     "starting_PR_653_head": "4d387d19849aa177e1b84dae5d28a8eb3a80cf40"
   },
-  "reconciled_pr_head": "323ce41f7c6a5934f27006a7ddb272877ecbe02a"
+  "reconciled_pr_head": "67f4cb8d0b4916cc9d5342298ed41aeb6b63ac9e",
+  "planar_moving_center_audit": {
+    "result_type": "FINITE DIAGNOSTIC ONLY",
+    "starting_main": "59959d1bf33a3c5f4f70331104546a6486468df6",
+    "starting_PR_653_head": "67f4cb8d0b4916cc9d5342298ed41aeb6b63ac9e",
+    "diagnostic": "planar-moving-center-diagnostic.json",
+    "center_uses_observed_future_H_and_G": true,
+    "autonomous_future_enclosure": false,
+    "physical_arc_certificate": "moving-quiet-compatibility-certificate.json",
+    "physical_angle_is_normalized_gauge_amplitude": false,
+    "all_time_magnetic_service_verified": false
+  }
 }

@@ -121,6 +121,38 @@ No independent reimplementation of the 12x12 LIN prediction is needed. The proof
 
 ## Complete phase-aware causal cell: OPEN
 
+`planar_moving_center.py` implements a conditional moving covariance center
+on the complete observed 40000->48000 word, inherited without reseeding at
+44000. It recomputes each gain from the center's linked P,H,R, and retains
+the exact observed F/Q, resets, AW targets and S/AW event placements.
+**FINITE DIAGNOSTIC ONLY:** relative Frobenius center defects are .0003693294
+at 44000 and .0006158214 at 48000; the maximum over all 8000 sample prefixes
+is .0006179245. The corresponding fixed-initial-center drifts are .5378221
+and .4473738. BA-y variance grows by factors 1.13510 and 1.26914. The AW ages
+at these endpoints are 20 and 9 samples, with S elapsed times .0878590 and
+.0428655 seconds. They are coordinates from one observed chronology, not
+independent phase boxes or evidence of a 20-second return.
+
+This reference still consumes the observed future H and reset G. Therefore
+its small defect cannot be inserted as a uniform q_P or used to build an
+autonomous all-time center. The calculation isolates finite transport defect
+from center drift; the next missing object is a linked future coefficient and
+arithmetic enclosure, plus the nonlinear mean/physical-gauge chart. The
+physical arc and its quadratic bias remainder are derived in M2a of
+`ou3-moving-quiet-compatibility.md`; its physical angle cap is not the required
+precision-normalized amplitude. No proof count or admission status changes.
+
+The same diagnostic evaluates the **curved** physical arc in each exported
+actual-P metric. Over the finite 8000-prefix tail, the largest central-physical-
+chart gauge amplitude is 16.6316254 (sample 40001), and the largest transverse
+curvature is .184909934 (sample 47992). Both arc endpoints are tested as a
+linked one-parameter family. The transverse extremum formula is justified
+because t-sin(t) and 1-cos(t) increase for 0<=t<=theta; maximizing over the
+sign of beta makes the mixed term nonnegative. A positive gauge-coordinate
+derivative comparison validates its endpoint extrema. These floating results
+are **FINITE DIAGNOSTIC ONLY**, and the central physical chart is not the
+actual nominal-error chart. Neither supplies an all-time gauge/curvature bound.
+
 The exact covariance decomposition is 12+9, but these blocks are NOT independent
 causal histories. A forward-invariant cell must retain the planar mean, both
 covariances, private raw Mahony quaternion/integral, guard, frequency/variance,

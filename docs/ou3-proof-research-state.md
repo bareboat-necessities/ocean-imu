@@ -7,13 +7,14 @@ MOVING sensor-compatible pair. Admission and exclusion remain open. Do not retur
 to generic A21 entry or the refuted gravity-span/BA-separation argument.
 
 Verified starting main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified PR #653 starting HEAD: `4d387d19849aa177e1b84dae5d28a8eb3a80cf40`.
-The generated-validation update at
-`323ce41f7c6a5934f27006a7ddb272877ecbe02a` is retained; it changes no shipping
-or proof source. Main remains at the verified SHA above.
-The initial `ou3-stability-proof` run 37264050881 failed in
-`planar-service-cell` job 111617009894 at the quotient projector identity check;
-native export, source verification, untapped control and every-root sweep passed.
+Verified PR #653 starting HEAD: `67f4cb8d0b4916cc9d5342298ed41aeb6b63ac9e`.
+That generated-validation commit is retained; relative to its parent
+`2ef0dfab3683be2312ab5529960f058e2c8ccf90`, it changes no shipping or proof
+source. Main remains at the verified SHA above. At this starting head the
+workflow runs report `action_required` without jobs. The parent's
+`planar-service-cell` job 111630607626 passed. Its Python quality job
+111630607212 failed on eight unused-import/variable findings; those are
+removed without changing any calculation or proof condition.
 
 Manifest counts remain **25 PROVED, 4 CONDITIONAL, 1 OPEN**. No result in this
 continuation promotes a lemma or closes the regional theorem. The retained
@@ -57,8 +58,15 @@ r_theta=Ry(-psi)e_x, r_ba=-g e_y. At phase zero this is theta_x=1, ba_y=-g.
 The positive-BA seed uses the wrong relative sign in that chart. The chart
 conversion follows dR_wb R_wb'=-[Ry(-psi)e_x] d(alpha), db_a=g e_y d(alpha),
 and the literal accelerometer/magnetic rows annihilate the converted tangent
-at the central physical family. This first-order statement is not a nonlinear
-fibre certificate for the finite +/- pair.
+at the central physical family. **PROVED analytical theorem:** M2a now
+integrates this tangent into a continuous physical arc. With n=Ry(-psi)e_z,
+use constant physical beta in [-theta,theta] and
+b_a,s=g sin(beta)e_y+g(cos(beta)-cos(theta))n. Formal polynomial cancellation
+and rational bounds establish identical full records, slow norm at most
+g sin(theta), slow rate below 3.081e-6, and unchanged MARINE spans. The physical
+angle is below .01 on the arc; the principal zero-FAST family's SLOW cap also
+implies |beta|<.023. Neither is a normalized gauge bound. The bias remainder
+has squared norm at most g^2(beta^6/36+beta^4/4).
 
 The 20-dimensional homogeneous quotient has gain 0.8731196877 and
 ||C_Q||=0.000229012279. A 60-digit endpoint calculation agrees, but does not
@@ -94,12 +102,28 @@ r_P<1. This is a **D_SUFFICIENT_BOUND_FAILURE** of the fixed-root ball, not
 an admitted counterexample. Endpoint metric contraction alone does not repair it.
 A linked phase/history-dependent covariance center or anisotropic cell is needed.
 
+**FINITE DIAGNOSTIC ONLY:** the implemented conditional moving center uses
+the observed F,Q,H,R,G and S/AW chronology, recomputing K from its linked
+center covariance without reseeding. On 40000->48000 the maximum sample-relative
+Frobenius defect is .0006179245 (endpoints .0003693294 and .0006158214).
+However, it consumes observed future H/G: it is not an autonomous future center
+and cannot supply a uniform q_P. BA-y variance ratios 1.13510 and 1.26914 and
+different S/AW phases preclude a sensor-phase-only periodic center. Future
+linked coefficients, not scalar radius arithmetic, are the missing object.
+The finite actual-P central-physical-chart arc has maximum normalized gauge
+16.6316254 and transverse curvature .184909934. This is neither a uniform
+future bound nor an actual nominal-error chart enclosure; it demonstrates
+why the raw physical .01-radian cap cannot replace metric gauge/curvature.
+
 There are still no uniform linked b_Q,c_Q,q_P,q_Q, physical gauge-amplitude
 bound, complete literal frontend/clock cell, nonlinear remainder enclosure,
 every-prefix retention certificate or all-future information perturbation bound.
-The native secants also expose gauge-to-P forcing (~.00133 in the common root
-metric), which must enter q_P unless a justified structural argument removes it.
-C_Q alpha remains in q_Q. A finite affine drift is not a future forcing bound.
+Native gauge-to-P secants (~.00133 in the common root metric) perturb nominal
+MEKF state; they are not total derivatives along the physical same-record arc,
+whose estimator/P is identical by deterministic prefix induction. No error-word
+term is deleted: C_Q alpha, nonlinear fibre curvature and correlated physical
+OU mismatch still need actual nominal/precision-chart bounds. A finite drift
+is not a future forcing bound.
 
 The carried planar probe is a specified shipping-wrapper configuration: sigma_a=.2
 and tau-scaled S cadence enabled. The AtomS3R sketch instead configures sigma_a=.12,
@@ -113,6 +137,9 @@ Its shipping entry remains fail-closed. The conditional private-Mahony tube is
 not a MEKF mean/quotient contraction constant.
 
 ## Failed approaches / DEAD_ENDS
+
+* **E tooling:** the prior Python gate rejected eight unused imports/variables.
+  Removing them repairs synchronization without weakening proof checks.
 
 * **E:** absolute ||Pi'J-JPi||<=2e-10 rejected the native root at about
   2.00557e-10 while ||J|| was about 1e8. Dimensionless Cholesky-whitened projector
@@ -166,27 +193,34 @@ all nonlinear correction and prediction differentials to the literal program,
 including dK*r, dH, BG dependence, reset, projection and AW faces; retain the
 one-way frontend forcing rather than a false small-gain return edge. Before any
 outward subdivision, show quantitative common-storage radius feasibility with
-physical gauge forcing and future-center drift. Then enclose the cell and
+physical gauge forcing, nonlinear fibre curvature and future-center drift.
+The conditional observed-coefficient center now has a small finite defect;
+the next experiment must close its mean-dependent H/G and one-way frontend
+coefficient enclosure, not repeat a fixed-anchor radius or smaller secants.
+Then enclose the cell and
 propagate every placed physical +/- 2x2 one-second information probe, requiring
 Delta I_max<6.024764605642485 at every future word/root. Until then admission,
 exclusion and regional theorem selection remain OPEN.
 
 ## Verification scope
 
-All 708 `test_ou3*.py` tests pass locally. Source-bound native verification,
-operation audit, every-root sweep and provenance validation pass. The full
-native secant calculation and its one step-halving refinement completed with
-inherited state and finite controls. `make all` is running with the installed
-Eigen include path; the new native probe already compiles and runs. Local
-`latexmk -pdf -interaction=nonstopmode -halt-on-error` cannot render the study
-until `IEEEtran.cls` is available. None of these checks promotes a theorem.
+The fresh source-bound native stream reproduces the committed SHA256 with
+untapped control; parity and quotient outputs reproduce the retained values.
+The new conditional moving-center and continuous-fibre checks run locally
+and in planar CI. No C/C++ source or shipping behavior changes in this
+continuation. The prior `make all` completion was not retained and is not
+claimed; the parent planar job and manuscript rendering passed in CI.
+All 714 OU-III unit tests pass locally, including the linked center, nonlinear
+arc and non-promotion checks. Source/provenance validation passes with theorem
+closure false. None of these checks promotes a theorem.
 
 ## Shipping-faithfulness handoff
 
 1. Preserved: the literal shipping program, full state/P/K and complete inherited
    construction-to-A21 history; no constants, assumptions or gates changed.
-2. Relaxations: homogeneous partial factors, finite neighbourhood secants and
-   one candidate relative ball, each explicitly non-promoting.
+2. Relaxations: homogeneous partial factors, finite neighbourhood secants,
+   a failed relative ball and an observed-coefficient moving reference;
+   each explicitly non-promoting. No relaxation in the physical arc identity.
 3. Failures: E projector/chart/scope/promotion bugs and finite-difference
    conditioning; D fixed-root-ball and earlier norm-product failures.
 4. Admitted counterexample: none; all-time MOVING admission/exclusion OPEN.

@@ -1,0 +1,93 @@
+{
+  "all_time_magnetic_service_verified": false,
+  "center_gain_recomputed_from_linked_covariance": true,
+  "center_is_autonomous_future_construction": false,
+  "center_reseeded_at_word_boundaries": false,
+  "center_uses_observed_future_H_and_G": true,
+  "central_physical_chart_is_actual_nominal_error_chart": false,
+  "driver_sha256": "bd433758d2d8e464ec743cad8c09199aead3c118e187e6e7fe6e968229878c44",
+  "entry_in_radius_inequality": "center defect contributes to q_P only after a uniform same-history future coefficient and arithmetic enclosure; physical C_Q alpha remains separate",
+  "finite_actual_P_physical_arc_coordinates": {
+    "central_physical_chart_gauge_amplitude": {
+      "sample": 40001,
+      "value": 16.631625411396925
+    },
+    "central_physical_chart_transverse_curvature": {
+      "sample": 47992,
+      "value": 0.18490993339522752
+    },
+    "gauge_coordinate_derivative_lower": {
+      "sample": 48000,
+      "value": 1476.0879828695054
+    }
+  },
+  "initial_phase": {
+    "AW_samples_since_observed_sync": null,
+    "S_elapsed": 0.13285112380981445,
+    "S_period": 0.1363605111837387
+  },
+  "joint_cell_forward_invariant": false,
+  "maximum_sample_relative_center_defect": 0.0006179244757125163,
+  "nonlinear_mean_covariance_cell_verified": false,
+  "physical_arc_metric_amplitude_uniform_in_time": false,
+  "qualification": "OU3_PLANAR_CONDITIONAL_MOVING_CENTER_V1",
+  "relaxations_introduced": "conditional real-algebra covariance reference driven by finite actual F,Q,H,R,G/targets; no independent coefficient ranges or future extension",
+  "result_type": "FINITE DIAGNOSTIC ONLY",
+  "sample_range": [
+    40000,
+    48000
+  ],
+  "stream_sha256": "a1d0baed42d44034e71f9291fd4e4d6d363ddcb1e9db230335ec978562776cf5",
+  "structures_preserved": "all 21 covariance coordinates, inherited center, actual ordered prediction/correction/reset/AW events and joint S/AW chronology",
+  "theorem_closed": false,
+  "uniform_center_defect_bound_verified": false,
+  "word_samples": 4000,
+  "words": [
+    {
+      "AW_variances_over_initial": [
+        0.7847462701539772,
+        0.8515503338887107,
+        0.7369687868021696
+      ],
+      "BA_y_variance_over_initial": 1.1351017930158174,
+      "end_sample": 44000,
+      "fixed_initial_center_drift": 0.5378221031628815,
+      "inherited_center_defect": 0.0003693294002463679,
+      "operation_counts_so_far": {
+        "AW": 190,
+        "S": 147,
+        "acc": 4000,
+        "mag": 500,
+        "prediction": 4000
+      },
+      "phase": {
+        "AW_samples_since_observed_sync": 20,
+        "S_elapsed": 0.08785898983478546,
+        "S_period": 0.1363605111837387
+      }
+    },
+    {
+      "AW_variances_over_initial": [
+        1.029340586346984,
+        1.0069851500919074,
+        1.0376261594867195
+      ],
+      "BA_y_variance_over_initial": 1.2691389992173385,
+      "end_sample": 48000,
+      "fixed_initial_center_drift": 0.4473738086889324,
+      "inherited_center_defect": 0.0006158213633235773,
+      "operation_counts_so_far": {
+        "AW": 381,
+        "S": 294,
+        "acc": 8000,
+        "mag": 1000,
+        "prediction": 8000
+      },
+      "phase": {
+        "AW_samples_since_observed_sync": 9,
+        "S_elapsed": 0.04286551848053932,
+        "S_period": 0.1363605111837387
+      }
+    }
+  ]
+}

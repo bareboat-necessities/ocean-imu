@@ -35,6 +35,36 @@ class MovingQuietCompatibilityTests(unittest.TestCase):
         self.assertTrue(result['formal_polynomial_difference_zero'])
         self.assertEqual(result['two_epoch_difference_exact'],'0')
 
+    def test_continuous_arc_and_physical_angle_are_not_metric_amplitude(self):
+        c = certificate()['continuous_moving_fibre']
+        self.assertTrue(c['formal_sensor_polynomial_identity'])
+        self.assertTrue(c['slow_amplitude_verified'])
+        self.assertTrue(c['slow_rate_verified'])
+        self.assertLess(F(c['slow_bias_rate_upper']), F(1, 1000))
+        self.assertLess(4*F(c['principal_family_tan_half_angle_squared_upper']), F(23, 1000)**2)
+        self.assertFalse(c['physical_angle_bound_is_normalized_gauge_bound'])
+        self.assertFalse(c['C_Q_alpha_may_be_dropped_from_error_word'])
+
+    def test_nonlinear_fibre_measurement_and_curvature(self):
+        # Independent geometric regression of the formal identity and its
+        # nonzero quadratic transverse term, including the two endpoints.
+        import numpy as np
+        g = 9.80665
+        theta = 2*math.atan(1/200)
+        for alpha in (-theta, -theta/2, 0., theta/2, theta):
+            for psi in (-.02, .007, .02):
+                Ry = np.array([[math.cos(psi), 0, math.sin(psi)], [0, 1, 0],
+                               [-math.sin(psi), 0, math.cos(psi)]])
+                Rx = np.array([[1, 0, 0], [0, math.cos(alpha), -math.sin(alpha)],
+                               [0, math.sin(alpha), math.cos(alpha)]])
+                n = Ry.T @ np.array([0., 0., 1.])
+                bias = g*math.sin(alpha)*np.array([0., 1., 0.])+g*(math.cos(alpha)-math.cos(theta))*n
+                measured = (Rx @ Ry).T @ np.array([.001, 0., -g])+bias
+                np.testing.assert_allclose(measured, Ry.T @ np.array([.001, 0., -g*math.cos(theta)]), atol=3e-15)
+                remainder = bias-g*(1-math.cos(theta))*n-g*alpha*np.array([0., 1., 0.])
+                bound = g*g*(alpha**6/36+alpha**4/4)
+                self.assertLessEqual(float(remainder @ remainder), bound+1e-17)
+
     def test_covariance_bound_uses_full_metric_marginal_comparison(self):
         c=certificate()['same_estimator_pair_metric']
         self.assertEqual(F(c['BA_marginal_ceiling']),F(1,1600))

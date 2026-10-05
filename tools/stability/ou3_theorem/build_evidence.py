@@ -116,7 +116,10 @@ def validate() -> dict:
     except (OSError, ValueError, KeyError, TypeError) as error:
         failures.append("finite planar evidence verification failed: "+str(error))
     from tools.stability.ou3_theorem.planar_native_secants import verify_report as verify_native_secants
+    from tools.stability.ou3_theorem.planar_moving_center import verify_report as verify_moving_center
     try:
+        verify_moving_center(json.loads((STATUS.parent/'planar-moving-center-diagnostic.json').read_text()),
+                            json.loads((STATUS.parent/'planar-service-stream-diagnostic.json').read_text())['stream_sha256'])
         verify_native_secants(json.loads((STATUS.parent/"planar-native-secants-diagnostic.json").read_text()))
         quotient=json.loads((STATUS.parent/"planar-quotient-mean-diagnostic.json").read_text())
         if quotient.get("result_type")!="FINITE DIAGNOSTIC ONLY" or quotient.get("quotient_dimension")!=20:

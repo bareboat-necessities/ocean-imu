@@ -1,4 +1,4 @@
-import copy,json,unittest
+import json,unittest
 from pathlib import Path
 from tools.stability.ou3_theorem.planar_service_verify import verify
 

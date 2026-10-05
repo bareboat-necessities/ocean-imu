@@ -383,7 +383,7 @@
       "latex_title": "MOVING constant-bias sensor compatibility --- PROVED",
       "status": "PROVED",
       "assumptions": [
-        "explicit planar physical family",
+        "explicit planar physical pair and continuous constant-roll SLOW-bias arc",
         "current MARINE and SLOW+FAST constants",
         "ideal fixed physical magnetic field; no all-time applied-service claim"
       ],
@@ -532,11 +532,13 @@
         "quiet-compatible practical boundedness",
         "physically justified MOVING target after all-time planar admission audit",
         "uniform linked quotient/covariance derivatives, physical gauge amplitude and C_Q alpha (plus covariance gauge forcing)",
-        "same-history moving-center cell covering S/AW phases and all future physical magnetic information windows"
+        "same-history moving-center cell covering S/AW phases and all future physical magnetic information windows",
+        "nominal/precision-chart enclosure of continuous physical fibre curvature; future H/G and arithmetic enclosure for conditional moving center"
       ],
       "finite_diagnostics_not_certificates": [
         "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
-        "reports/results/ou3_stability/planar-native-secants-diagnostic.json"
+        "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
+        "reports/results/ou3_stability/planar-moving-center-diagnostic.json"
       ]
     }
   ]

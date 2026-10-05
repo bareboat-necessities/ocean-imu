@@ -391,6 +391,11 @@ def status_report() -> dict:
             "finite_replay_is_all_time_certificate":False,
             "finite_homogeneous_quotient_diagnostic":"planar-quotient-mean-diagnostic.json",
             "finite_complete_native_secants":"planar-native-secants-diagnostic.json",
+            "continuous_same_record_physical_arc_verified":True,
+            "physical_angle_cap_is_precision_gauge_bound":False,
+            "nonlinear_fibre_remainder_requires_metric_bound":True,
+            "finite_conditional_moving_center":"planar-moving-center-diagnostic.json",
+            "conditional_center_is_autonomous_future_enclosure":False,
             "homogeneous_factor_product_is_complete_nonlinear_derivative":False,
             "private_Mahony_gain_is_complete_mean_gain":False,
             "scalar_radius_solver_can_certify_admission":False,
@@ -409,6 +414,7 @@ def status_report() -> dict:
             "The fresh 240/1200-s replays and final-cycle all-IMU-root service sweep are non-promoting finite evidence; the tail sweep remains above 7 but is not an interval/all-time certificate. "
             "Keep construction/H18/refinement/release, the full persistent HistoryCell, coupled tuner, actual covariance/gains and BA physical forcing. "
             "Finite quotient contraction and full native central secants do not enclose the nonlinear derivative or future forcing. Retain C_Q alpha and any covariance gauge forcing. A fixed-root relative covariance ball fails finite feasibility: drift .537822 with covariance gain about .991 requires radius above 60. Use linked phase/history-dependent centers, not another smaller finite-difference step or independent generated boxes. "
+            "The continuous physical same-record arc and raw angle/curvature bounds are proved; conversion to the nominal precision-normalized tube is OPEN. Its total estimator variation is zero and is not a nominal-root secant. The conditional moving-center defect is below .000618 on the finite exported tail, but uses observed future H/G and is not an autonomous all-time enclosure. "
             "Homogeneous kernel/action results and completed-square algebra remain valid but do not identify the physical tilt/BA decomposition. "
             "All-time device qualification, nonlinear/prefix retention, float32 transfer and regime composition remain OPEN."
         ),

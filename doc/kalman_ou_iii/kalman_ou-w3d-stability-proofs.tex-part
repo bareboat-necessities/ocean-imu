@@ -493,8 +493,47 @@ $r_\theta=R_y(-\psi)e_x$, $r_{b_a}=-g e_y$ and all other coordinates zero.
 Indeed with $R=R_y(-\psi)$, $f=R(a_xe_x-ge_z)$ and $B=75Re_x$,
 $-[f]_\times r_\theta+r_{b_a}=0$ and $-[B]_\times r_\theta=0$.
 This derives the line from physical equations, not singular-vector selection.
-It is a tangent at the central family, not a nonlinear finite-pair fibre
-certificate or a bound on the nominal measurement residual.
+The following continuous physical arc integrates this tangent, without
+bounding the nominal measurement residual. Write $c=\cos\theta$ and
+$n=R_y(-\psi)e_z$. For constant $|\beta|\le\theta$, set
+\[
+ b_{a,s,\beta}=g\sin\beta\,e_y+g(\cos\beta-c)n.
+\]
+Substitution cancels both the $e_y$ and variable $\cos\beta$ terms in the
+accelerometer record, leaving $R_y(-\psi)(a_xe_x-gce_z)$. The magnetic and
+gyro identities are unchanged. Moreover
+\[
+ \|b_{a,s,\beta}\|^2=g^2(1+c^2-2c\cos\beta)\le g^2\sin^2\theta,
+\]
+and $\|\dot b_{a,s,\beta}\|\le g(1-c)(.02)\pi/10<3.081\cdot10^{-6}$.
+The pitch-extrema gravity chord is $2\cos\beta\sin(.02)$, no smaller than
+the already certified endpoint chord. Thus this arc preserves the current
+MARINE and SLOW+FAST bounds; only its endpoints have constant accelerometer
+bias. The certificate reproduces the formal sensor polynomial identity and
+the exact rational membership bounds.
+
+For this principal constant-roll, zero-FAST family, the slow amplitude cap
+$B$ implies $\cos\beta\ge C=(1+c^2-(B/g)^2)/(2c)$, hence
+$\tan^2(\beta/2)\le(1-C)/(1+C)$ and $|\beta|<.023$ by a rational comparison.
+On the constructed arc the sharper $|\beta|<.01$ holds. Relative to the
+central physical rotation, the attitude logarithm is exactly
+$-\beta R_y(-\psi)e_x$, while the bias remainder from its tangent is
+\[
+ \eta_b=g(\sin\beta-\beta)e_y+g(\cos\beta-1)n,
+ \quad \|\eta_b\|^2\le g^2(\beta^6/36+\beta^4/4).
+\]
+Conversion into the actual nominal-error and precision chart requires
+same-history chart and metric bounds. In particular the physical angle cap
+is not a bound on the normalized gauge amplitude, and this curved fibre is
+not replaced by its tangent line.
+
+Deterministic prefix induction gives identical complete estimator executions
+along this physical arc. Its total estimator/P variation is zero. A secant
+formed by perturbing the nominal root at fixed record is a different
+variation, so its gauge-to-P block is not that total physical derivative.
+This distinction does not remove $C_Q\alpha$ or the linked physical forcing
+from the error word. Physical magnetic probe directions also vary with
+$\beta$; no all-time service follows from record identity alone.
 
 For actual SPD endpoint covariances $P_i=L_iL_i^T$, put
 $u_i=L_i^{-1}r_i/\|L_i^{-1}r_i\|$, and let $U_i$ be an orthonormal
@@ -550,6 +589,25 @@ therefore never certifies admission. Structures preserved: complete state,
 actual $P,K$, source chronology and same-history clocks. Relaxations: supplied
 homogeneous factors, finite off-orbit secants and a rejected relative ball.
 All-time magnetic admission and exclusion remain OPEN.
+The finite conditional moving-center calculation retains the observed
+$F,Q,H,R,G$, AW targets and exact event order, recomputing each gain from
+its own center covariance. Without reseeding over samples 40000--48000,
+the maximum sampled relative Frobenius defect is $0.000617925$, compared
+with fixed-center drift $0.537822$ over the first 20 seconds. BA-y variance
+increases by factors $1.13510$ and $1.26914$ at the two endpoints, whose AW
+ages and $S$ phases differ. This is FINITE DIAGNOSTIC ONLY. Because the
+center consumes observed future $H,G$, it is not an autonomous future
+construction and its defect is not a uniform $q_P$ bound. Linked future
+coefficients, nonlinear mean/gauge curvature and arithmetic still require
+enclosure before any every-future-window information claim.
+In the actual covariances of these 8000 prefixes, the curved physical arc has
+maximum central-chart gauge amplitude $16.6316254$ and transverse curvature
+$0.184909934$. These are finite floating diagnostics. For a fixed metric,
+the transverse maximum occurs at an arc endpoint: $t-\sin t$ and $1-\cos t$
+are nonnegative increasing, and maximizing over the sign makes their mixed
+term nonnegative. Gauge endpoints are valid after a positive derivative
+comparison. This is still the central physical chart; transport to the actual
+nominal-error chart and uniformity over future covariances remain open.
 The numerical word uses the inherited probe profile ($\sigma_a=.2$, adaptive
 $S$ cadence). The AtomS3R sketch uses $\sigma_a=.12$ and fixed $S$ cadence
 with distinct startup/gravity settings; this finite floor does not transfer

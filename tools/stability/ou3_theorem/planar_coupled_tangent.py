@@ -16,7 +16,7 @@ from .planar_compatibility_quotient_mean import SCOPE,word
 def diagnostic(path:Path,start=40000,end=44000):
     # Independent strict complete-word/paired-operand audit.
     checked,_,_=word(path,start,end)
-    M=np.eye(21); counts={"prediction":0,"correction":0,"reset":0}; tangent=iter(())
+    M=np.eye(21); counts={"prediction":0,"correction":0,"reset":0}
     pending=[]
     for kind,k,a in records(path):
         if k<=start:continue

@@ -8,7 +8,6 @@ from __future__ import annotations
 from fractions import Fraction as F
 from pathlib import Path
 import hashlib
-import struct
 
 ROOT=Path(__file__).resolve().parents[3]
 

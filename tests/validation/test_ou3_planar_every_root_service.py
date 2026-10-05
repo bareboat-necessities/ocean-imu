@@ -1,7 +1,5 @@
-import struct,tempfile,unittest
-from pathlib import Path
+import unittest
 import numpy as np
-from tools.stability.ou3_theorem.planar_service_stream import MAGIC,SIZES
 from tools.stability.ou3_theorem.planar_every_root_service import initial_phi
 class EveryRootServiceTest(unittest.TestCase):
  def test_initial_physical_columns_have_expected_norms(self):
