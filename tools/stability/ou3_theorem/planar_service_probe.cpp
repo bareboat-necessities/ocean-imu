@@ -27,7 +27,7 @@ static int word_mags=0;
 static Eigen::Matrix<float,21,21> before_prediction;
 static bool have_prediction_root=false;
 static double parity_defect=0;
-static int root_service_windows=0;
+
 
 static void emit(std::uint32_t kind,const std::vector<float>& values) {
     if (!export_enabled) return;
@@ -152,7 +152,7 @@ int main(int argc,char**argv) {
                 service_min=std::min(service_min,v);service_max=std::max(service_max,v);
             }
             ++windows;min_mags=std::min(min_mags,word_mags);
-            ++root_service_windows; moving_recording=false;
+            moving_recording=false;
         }
         if(active>=0&&k>=active+3400&&!moving_recording) {
             phi.setZero();information.setZero();word_mags=0;root=k;
@@ -183,7 +183,7 @@ int main(int argc,char**argv) {
       <<",\"service_min\":"<<service_min<<",\"service_max\":"<<service_max
       <<",\"service_windows\":"<<windows<<",\"service_mags_min\":"<<min_mags
       <<",\"live_step\":"<<live<<",\"refined_step\":"<<refined<<",\"active_step\":"<<active
-      <<",\"accepted_mag\":"<<accepted<<",\"parity_max_abs\":"<<parity_defect<<",\"root_service_windows\":"<<root_service_windows
+      <<",\"accepted_mag\":"<<accepted<<",\"parity_max_abs\":"<<parity_defect
       <<",\"terminal_state\":[";
     bool first=true;
     auto put=[&](double x){if(!first)std::cout<<",";first=false;std::cout<<x;};
