@@ -769,6 +769,14 @@
     {
       "path": "tests/validation/test_ou3_planar_every_root_service.py",
       "git_blob_sha": "c47df755069febfd576321638e615ddb3e3bbbfd"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_mean_covariance_ports.py",
+      "git_blob_sha": "dbdc17ed61398c9df7cff95584a5493314882efb"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_mean_covariance_ports.py",
+      "git_blob_sha": "76e73d91841a1249af242b90a7ec08ab9ae9dc14"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
