@@ -5,7 +5,7 @@ class JointPhaseCellThresholdTest(unittest.TestCase):
     def test_positive_fail_closed_budgets(self):
         f={"result_type":"FINITE DIAGNOSTIC ONLY","parity_blocks":{
             "even":{"relative_Frobenius_gain":0.7426143368769409},
-            "odd":{"relative_Frobenius_gain":0.8738212970667966}}}
+            "odd":{"relative_Frobenius_gain":0.8738212970667967}}}
         m={"all_time_frontend_tube_verified":False,
            "squared_norm_decrement_lower":"27/100000",
            "h_binary32_exact":"5368709/1073741824"}
