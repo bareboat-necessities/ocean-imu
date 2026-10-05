@@ -22,7 +22,7 @@ def calculate(stream:Path):
    P=expand(z[:225]);H=z[225:288].reshape(3,21);S=z[288:297].reshape(3,3)
    K=z[297:360].reshape(21,3);res=z[360:363];x=z[363:384]
    # Exact point norms of the operands entering the linked differential.
-   tangents.append({"sample":k,"P_norm":float(np.linalg.norm(P,2)),
+   tangents.append({"sample":k,"sensor_record_index":len(tangents),"P_norm":float(np.linalg.norm(P,2)),
      "H_norm":float(np.linalg.norm(H,2)),"Sinv_norm":float(np.linalg.norm(np.linalg.inv(S),2)),
      "K_norm":float(np.linalg.norm(K,2)),"residual_norm":float(np.linalg.norm(res)),
      "state_norm":float(np.linalg.norm(x))})
@@ -32,7 +32,7 @@ def calculate(stream:Path):
  return {"qualification":"OU3_PLANAR_LINKED_PORT_WORD_V1",
    "result_type":"FINITE POINT TANGENT + OPEN UNIFORM PORTS",
    "word_samples":[f["root_sample"],f["end_sample"]],"rho_P_point":rho,
-   "point_tangent_records":len(tangents),"point_operand_norm_maxima":maxima,
+   "point_tangent_records":len(tangents),"point_operand_norm_maxima":maxima,"same_operation_operands_exported":True,
    "b_mean_to_P_uniform":None,"c_P_to_mean_uniform":None,
    "q_P_uniform":None,"q_mean_uniform":None,
    "required_source_tangent_exports":[
