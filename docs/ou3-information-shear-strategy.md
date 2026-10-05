@@ -282,6 +282,15 @@ mean mismatch, actual correction-frame jump and all OU/reset/AW-face ports.
 Do not return to an independent per-operation AW-row norm charge, omit its
 endpoint derivative, or sum magnetic losses from different storage frames.
 
+The complete-word frame continuation in `app:aw-frame-word` now cancels internal
+connection terms through the **full** suffix formula, leaving an explicit
+signed endpoint quadratic. Its three-row Schur test uses conditional AW
+precision and actual endpoint tangent maps. This removes per-jump accumulation,
+not physical forcing or the need for a positive uniform gap. Do not mix
+input-frame action with transformed-frame work, or treat the marginal AW floor
+as a conditional precision bound. These refinements preserve the governing
+order above and do not authorize another numerical search.
+
 ## Scope and handoff rules
 
 Only after the positive gap and actual charges are proved may an invariant

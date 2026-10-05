@@ -128,6 +128,29 @@ observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
 
+**PROVED — analytical complete-word frame reduction:**
+`app:aw-frame-word` composes the AW frame jump with all subsequent literal
+operations and generated covariance suffix scores. Internal frame connections
+cancel in the full action-minus-work balance, leaving `Phi_N-Phi_0` only.
+The endpoint work is exactly `Phi=2 h' daw+daw' Q daw`, with `Q>0` and
+`Phi=(daw+Q^-1 h)'Q(daw+Q^-1 h)-h'Q^-1 h >= -W`. This is a signed identity
+and lower bound, not a free deletion or upper bound on terminal work.
+[The exact three-row Schur test](ou3-measurement-frame-loss.md#complete-word-frame-cancellation-and-directional-endpoint-absorption)
+retains the actual endpoint tangent maps and moving gauge. Its threshold is
+one, with the complementary block required positive. No margin is certified.
+The per-jump accumulation obligation is removed. In addition, the actual
+PSD AW synchronization adds its increment exactly to the conditional AW
+covariance. Conditional precision, conditional comparison energy and the
+Fisher connection-square coefficient cannot increase at that operation.
+The same-history endpoint-square bound is `(V_cond+2 lambda)*K(daw)`;
+this monotone coefficient is not a second decrement or a bound on signed h. Remaining activation for this
+term uses actual **conditional AW precision** `(P^-1)_aw,aw`, full attitude
+covariance, and linked comparison/tangent rows. Neither the marginal AW floor
+nor the pitch-only ceiling proves those bounds. Uniform absorption together
+with physical prediction/reset/reference/source work remains **OPEN**; no
+radius, new gauge dimension or independent covariance box is introduced.
+
+
 **PROVED — analytical AW shear reduction:** the full-state invertible frame
 `L=I-E_aw[aw]x E_theta^T` makes the nominal-world accelerometer row constant.
 The remaining AW-row covariance port is exactly
@@ -250,6 +273,9 @@ Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
 
+* **E, formatting gate:** `git diff --check` caught trailing whitespace in the
+  new endpoint proof. Removed; no mathematical premise or check was weakened.
+
 * **E, validation synchronization:** a certificate scope clarification was
   written while the full test process still held the older module in memory.
   Its fail-closed provenance tests rejected the mismatch. Freeze the source
@@ -330,15 +356,16 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
-An analytical obligation: use the AW shear to form the combined linked
-measurement mismatch and actual applied-increment frame work, including every
-generated covariance suffix score. Keep literal OU/BG/LIN and attitude-frame
-discrepancies, reset, AW face, noise/reference and physical/source ports.
-Absorb that combined work against magnetic/S/process action on a justified
-transverse lift, using the inherited comparison-supply budget. The covariance
-row derivative is now an exact connection difference, not another independent
-norm to bound. Prove only the activation and finite-precision facts required
-by that estimate. Uniform c and planar all-time admission remain OPEN.
+An analytical obligation: bound the three-row endpoint Schur expression in
+`app:aw-frame-word` using the actual inherited conditional AW precision and
+attitude covariance, retaining signed physical word work and actual causal
+endpoint tangent maps. First establish positivity of its complementary block
+from process/S/magnetic action on a justified lift. Do not bound separate frame
+jumps, replace conditional precision by inverse marginal covariance, or invert
+an indefinite complementary block. The exact threshold is one; no enclosure
+should be launched without a derived compact domain and a reason it can cross
+that threshold. Full transverse c and planar admission remain separate OPEN
+obligations.
 
 ## Verification scope
 
@@ -362,7 +389,7 @@ in the PR metadata.
 4. Admitted counterexample: none; all-time admission/exclusion remains OPEN.
 5. Retained: 25 proved entries, qualified local theorem and exact compatibility
    obstruction; qualified frontend and linked storage proofs extend entries without count promotion.
-6. Next: absorb the linked measurement mismatch and applied-increment frame
-   ports, with literal prediction/reset work and the suffix-score budget;
+6. Next: absorb the exact endpoint quadratic and physical word work through
+   the three-row Schur test, retaining conditional precision and suffix scores;
    prove only their required activation bounds.
    The uniform transverse gap and planar admission remain separate obligations.

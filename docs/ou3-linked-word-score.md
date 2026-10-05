@@ -253,3 +253,9 @@ shipping execution and no admitted counterexample. **Next calculation:** use
 (3)-(4) to form the *combined* acc/AW-row and prediction/reset coefficient work,
 then bound its signed action and comparison-loss/source score on the minimal
 inherited activation domain. The missing uniform margin is not a NIS maximum.
+
+The frame continuation `app:aw-frame-word` applies (3)-(4) to both endpoint
+frames of every operation. It proves exact cancellation of internal connection
+terms, including generated covariance suffix scores, and derives the signed
+three-dimensional AW endpoint quadratic. Its absorption remains open; it does
+not delete the physical/reference/noise/reset/AW-face ports in (4).

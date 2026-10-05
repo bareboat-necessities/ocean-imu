@@ -303,3 +303,113 @@ covariance block, actual physical force/rotation and existing source bounds
 are needed for this port. Uniform activation and absorption together with the
 applied-increment frame jump remain OPEN. This is a derived bound, not a
 sampled covariance enclosure or a complete-word contraction assertion.
+
+## Complete-word frame cancellation and directional endpoint absorption
+
+**PROVED — analytical**, `app:aw-frame-word`. For every regular finite word,
+with SPD actual covariances and differentiable linked frame/history, put
+`C_i=L_i^-1 dL_i`, `Z_i=C_i P_i+P_i C_i'`. In the suffix-score normal form,
+
+```
+Btilde_i = L_(i+1) B_i L_i^-1
+Utilde_i  = L_(i+1) (U_i+Z_(i+1)-B_i Z_i B_i') L_(i+1)'
+vtilde_i = L_(i+1) (v_i+C_(i+1)e_(i+1)-B_i C_i e_i-B_i Z_i d_i)
+dtilde_i = L_i^-T d_i.
+```
+
+The last term in `vtilde` is compulsory. Substitution into the **complete**
+normal form, including `U_i q_(i+1,N)`, cancels all internal connections.
+The terminal differential is exactly the derivative of the terminal frame.
+Thus the net storage change is
+
+\[
+\widetilde W_N-\widetilde W_0
+=-\mathcal A_W+\mathcal F_W+\Phi_N-\Phi_0.
+\]
+
+This equality refers to the input-frame action and work. It does **not** permit
+keeping transformed improved action while deleting the associated connection
+work. Cancellation is in the complete action-minus-work expression, not in
+isolated nonnegative port charges. Physical mismatch, OU/BG/LIN, reference,
+noise, reset/projection, AW-face and source/gauge work all remain literal.
+
+For the AW shear alone, write `a=daw`, `C_j=N(e_j)`, `D=dP`, `J=P^-1`:
+
+\[
+\Phi=2h^Ta+a^TQa,
+\quad h_j=-e^TJC_j\eta+2\lambda\operatorname{tr}(DJC_j),
+\]
+\[
+Q_{jk}=e^TJC_jPC_k^TJe+2\lambda\operatorname{tr}(JC_jPC_k^T).
+\]
+
+`Q` is positive definite because `N(a)` is nonzero for every nonzero a and
+its Fisher square is strictly positive. Exact completion gives
+
+\[
+\Phi=(a+Q^{-1}h)^TQ(a+Q^{-1}h)-h^TQ^{-1}h
+\ge-h^TQ^{-1}h\ge-W.
+\]
+
+This is a lower bound; it is not an affordable upper bound on terminal work.
+The actual a is inherited and cannot be replaced by the formal minimizer.
+Writing `j_a=(Je)_aw`, the coefficient simplifies to
+
+\[
+Q_{jk}=\operatorname{tr}[(j_a j_a^T+2\lambda J_{aw,aw})
+[e_j]_\times P_{\theta\theta}[e_k]_\times^T].
+\]
+
+This removes any separate domain obligation for every intermediate frame
+increment. The remaining endpoint calculation uses **conditional AW precision**
+`J_aw,aw`, the actual attitude covariance block and linked tangent rows. An AW
+marginal floor does not prove a conditional-covariance floor; the existing
+pitch ceiling does not bound the other attitude directions. Both parities
+remain, including on the planar nominal stratum.
+
+On a justified stored root lift let `h_i=H_i^L w`, `a_i=A_i^L w`. The endpoint
+work matrices are `K_i=(A_i^L)'Q_i A_i^L+(H_i^L)'A_i^L+(A_i^L)'H_i^L`.
+Let G be the exact input-frame word gap, Gamma the **transformed** gauge-energy
+matrices, and Jperp the transformed transverse root metric. For a proposed c,
+set
+
+```
+Z   = A_N^L + Q_N^-1 H_N^L
+R_c = G + K_0 + (H_N^L)'Q_N^-1 H_N^L - Gamma_0 + Gamma_N - c Jperp.
+```
+
+If `R_c>0`, the complete remaining endpoint test is exactly
+
+\[
+Q_N^{-1}-Z R_c^{-1}Z^T\succeq0.
+\]
+
+This is a three-row Schur test, with threshold one for the squared singular
+norm of `Q_N^(1/2) Z R_c^(-1/2)`. If `R_c` is not positive, retain the full
+signed matrix; a pseudoinverse must not remove kernel forcing. No uniform c,
+positive complementary block or threshold margin is established here.
+
+**Dependency discharged:** separate accumulation/absorption of internal
+applied-increment frame derivatives. **Remaining OPEN:** absorb the explicit
+endpoint quadratic together with actual physical word work; prove the required
+conditional precision, reference/chart/source activation and service-to-coupled
+comparison on the same history. This is not a new source assumption, an extra
+gauge quotient, a radius proof, or an all-time planar admission certificate.
+
+**Structures preserved:** complete state/P/K/Joseph/masks, physical mismatch,
+all generated covariance scores, both parity blocks and endpoint frames.
+**Relaxations:** regular real-operation derivatives; the formal completion
+supplies only its stated algebraic lower bound. **Failure:** D for unclosed
+uniform absorption, not an admitted counterexample. No numerical campaign.
+
+**PROVED — analytical AW boundary monotonicity.** For the actual PSD increment
+Delta, let `V_a=P_aa-P_ao P_oo^-1 P_oa` and `v_a=e_a-P_ao P_oo^-1 e_o`.
+The shipping AW synchronization gives exactly `V_a+=V_a+Delta`, leaving v_a
+and the attitude covariance unchanged. Hence `J_aa+=(V_a+Delta)^-1<=J_aa`
+and `V_cond=v_a'J_aa v_a` do not increase. The endpoint Fisher coefficient
+`K(a)=tr(J_aa [a]x P_theta,theta [a]x')` also does not increase. Moreover
+`a'Q a <= (V_cond+2 lambda) K(a)` by same-history Cauchy--Schwarz.
+This is a monotone coefficient bound, not an extra storage decrement or an
+upper bound on the signed h term. The floor is still evaluated on P_aa;
+dDelta retains the original target/face derivative. Prediction/reset and
+corrections still require inherited conditional-precision control.

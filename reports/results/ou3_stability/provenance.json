@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "d9cff2802ec8396afc6f1d71ec1747bd85b23c0a"
+      "git_blob_sha": "fcd8f4ec7da92a8f9d72cf678e7140e7d6f172e3"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "c4ae289ea4aa614fb22c83a93eb89dd8ddcec92d"
+      "git_blob_sha": "b2084b1e4d8548d17f0169c33c9eb001da21c403"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "bca9afc01c7263dd653bcc8a4e160c7182ec541f"
+      "git_blob_sha": "b610e95480d35913e216954fa8185984792ca9b3"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "19e14970dd1c8b3165b254ec02f1df75fce7d620"
+      "git_blob_sha": "106d2357be874ea8a49b4e4209abb74c95f28234"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "2dc8ba29a348c82a0975dd17850cae0f25a3f8ea"
+      "git_blob_sha": "b9ebfa36c9fa940b40ccc5eced3d2d99701e88a3"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "bc64c164cb7145013ba46d6463499c87850ebbac"
+      "git_blob_sha": "99cf476cf89d168369ed2508cd0f400862d16f86"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -956,7 +956,7 @@
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "0c329caed4c0ba3483dc936e5ba285e6a8d53683"
+      "git_blob_sha": "573346fee0e99f13d0d9d20e19bff48c6e3deea7"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
@@ -964,23 +964,23 @@
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "10944703afd24bd60f521c2372e931d0fa5f9cc2"
+      "git_blob_sha": "b5f4f070a99fa02ec587eb675ce697e7ae1cd53c"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "6b4f0e70c3e6d248ebf777a38e4311d05562b387"
+      "git_blob_sha": "e74f8c37b217e49da08633d3f2d6ec9633d194ce"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
-      "git_blob_sha": "315e1cd25fd736629eb586ec9356ba5537a1cc88"
+      "git_blob_sha": "6da19624041c360731e1e9ac1038bb7b5a4103e2"
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "078f6a89c3f13dda0bc03b37be824b04ec9c3db1"
+      "git_blob_sha": "a01c1e6a9f25a1344a23074a97c46a61d9ef0c6c"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
-      "git_blob_sha": "d1a3fa752d139b002b31c46d1d43fdffa0f76f54"
+      "git_blob_sha": "7d629bff7d086d88996879af551a4aa0a7b0fa88"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1174,6 +1174,15 @@
     "AW_shear_tooling_failure": "E: missing display-math terminator caught by local compilation and corrected; no proof condition changed",
     "central_planar_physical_acc_curvature_charge_verified": true,
     "acc_charge_preserves_pitch_AW_cross_covariance": true,
-    "acc_curvature_requires_nominal_AW_BA_box": false
+    "acc_curvature_requires_nominal_AW_BA_box": false,
+    "complete_word_internal_frame_cancellation_verified": true,
+    "AW_signed_endpoint_quadratic_verified": true,
+    "AW_endpoint_three_row_Schur_identity_verified": true,
+    "AW_endpoint_conditional_precision_replaced_by_marginal_inverse": false,
+    "AW_endpoint_uniform_absorption_verified": false,
+    "AW_frame_word_proof": "app:aw-frame-word",
+    "actual_AW_sync_conditional_precision_nonincrease": true,
+    "actual_AW_sync_conditional_comparison_nonincrease": true,
+    "actual_AW_sync_Fisher_connection_square_nonincrease": true
   }
 }

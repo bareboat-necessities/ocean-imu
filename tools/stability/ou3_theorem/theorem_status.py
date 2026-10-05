@@ -431,6 +431,10 @@ def status_report() -> dict:
             "AW_row_covariance_port_coboundary_verified":True,
             "AW_shear_applied_increment_frame_derivative_retained":True,
             "AW_shear_combined_port_absorption_verified":False,
+            "AW_internal_frame_word_cancellation_verified":True,
+            "AW_frame_endpoint_quadratic_verified":True,
+            "AW_frame_endpoint_absorption_verified":False,
+            "actual_AW_sync_conditional_precision_nonincrease":True,
             "central_planar_acc_physical_curvature_charge_verified":True,
             "central_planar_acc_charge_uses_nominal_AW_BA_boxes":False,
             "qualified_planar_magnetic_coupled_loss_fraction":"9/10",
@@ -460,7 +464,8 @@ def status_report() -> dict:
             "The exact suffix-score normal form cancels optimal additive local scores and retains all generated covariance suffix ports. "
             "Its loss-generated score charge is bounded by inherited root comparison energy plus signed source work minus realized NIS; physical/kernel forcing remains. "
             "The AW shear makes the accelerometer row constant and cancels its covariance row port as an exact connection difference, preserving qualified magnetic loss. "
-            "Absorb linked mean mismatch and actual applied-increment frame derivatives with OU/BG/LIN, reset, noise/reference and AW-face work; use only their required activation bounds. "
+            "Internal frame connections now cancel in the complete suffix word, leaving an exact three-dimensional signed AW endpoint quadratic. "
+            "Absorb that endpoint work and remaining physical work through the three-row Schur test, retaining conditional AW precision, both parities, actual endpoint derivatives and moving gauge; no uniform margin is certified. "
             "Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes "
             "to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. "
             "The physical same-record tangent is forced and is not automatically the homogeneous or action kernel. "

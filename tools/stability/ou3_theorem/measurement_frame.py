@@ -9,7 +9,7 @@ from fractions import Fraction as F
 
 from .information_shear_word import zeros, trace
 from .lin_path_certificate import inverse
-from .matrix_certificates import add, identity, ldlt, transpose
+from .matrix_certificates import add, identity, is_psd, ldlt, transpose
 from .planar_linked_riccati_mean import product
 from .world_frame import skew
 
@@ -268,6 +268,93 @@ def planar_acc_mismatch_charge(P, e, daw, omega, divided_force, source, Rnoise):
             'source_square': square, 'full_mismatch_energy': total}
 
 
+def moving_frame_word_ports(B, P, C, e, ep, d, U, v, L, Lnext, connection0, connection1):
+    """Exact port conjugacy, including the generated-covariance gain score.
+
+    connection_i=L_i^-1 dL_i. All operands/ports are linked to ONE history.
+    This helper changes coordinates; it does not certify a shipping domain.
+    No invertibility of B or optimal-correction hypothesis is needed.
+    """
+    Li = inverse(L)
+    Z0 = add(product(connection0, P), product(P, transpose(connection0)))
+    Z1 = add(product(connection1, C), product(C, transpose(connection1)))
+    Uinside = add(add(U, Z1), product(B, Z0, transpose(B)), -1)
+    vinside = add(add(v, product(connection1, ep)), product(B, connection0, e), -1)
+    vinside = add(vinside, product(B, Z0, d), -1)
+    return {'base': product(Lnext, B, Li),
+            'gain_score': product(transpose(Li), d),
+            'covariance_port': product(Lnext, Uinside, transpose(Lnext)),
+            'mean_port': product(Lnext, vinside)}
+
+
+def aw_frame_boundary_work(P, e, eta, dP, daw, weight=F(1)):
+    """Exact three-dimensional endpoint quadratic, NOT an absorption claim.
+
+    W_tilde-W=2 h' daw+daw' Q daw. Internal connection work telescopes
+    only together with transformed action/ports, never on its own.
+    Q uses the actual conditional AW precision J_aw,aw, not P_aw,aw^-1.
+    """
+    ldlt(P)
+    if len(P) != 21 or weight <= 0 or dP != transpose(dP):
+        raise ValueError('complete symmetric tangent and positive weight required')
+    J, Gamma = inverse(P), aw_connection(daw)
+    Je = product(J, e)
+    Cg = add(product(Gamma, P), product(P, transpose(Gamma)))
+    shifted_eta = add(eta, product(P, transpose(Gamma), Je), -1)
+    shifted_dP = add(dP, Cg)
+    old = product(transpose(eta), J, eta)[0][0]+weight*trace(product(J, dP, J, dP))
+    new = product(transpose(shifted_eta), J, shifted_eta)[0][0]
+    new += weight*trace(product(J, shifted_dP, J, shifted_dP))
+    generators = [aw_connection([F(i == j) for i in range(3)]) for j in range(3)]
+    h, Q = zeros(3, 1), zeros(3, 3)
+    for j, Gj in enumerate(generators):
+        h[j][0] = -product(transpose(Je), Gj, eta)[0][0]+2*weight*trace(product(dP, J, Gj))
+        for k, Gk in enumerate(generators):
+            Q[j][k] = product(transpose(Je), Gj, P, transpose(Gk), Je)[0][0]
+            Q[j][k] += 2*weight*trace(product(J, Gj, P, transpose(Gk)))
+    ldlt(Q)
+    a = [[x] for x in daw]
+    work = 2*product(transpose(h), a)[0][0]+product(transpose(a), Q, a)[0][0]
+    minimizer = [[-x for x in row] for row in product(inverse(Q), h)]
+    lower = -product(transpose(h), inverse(Q), h)[0][0]
+    completed = product(transpose(add(a, minimizer, -1)), Q, add(a, minimizer, -1))[0][0]+lower
+    assert new-old == work == completed and work >= lower >= -old
+    return {'linear_coefficient': h, 'quadratic_coefficient': Q,
+            'signed_boundary_work': work, 'completed_square_lower': lower,
+            'unconstrained_minimizer': minimizer,
+            'initial_storage': old, 'transformed_storage': new}
+
+
+def aw_conditional_sync(P, e, increment, daw):
+    """Actual PSD AW increment improves conditional precision, not a new floor.
+
+    The caller must supply the shipping same-history increment. This algebra
+    does not qualify a face/target, branch derivative or inherited upper bound.
+    The connection-square decrease is bookkeeping, not an additional W loss.
+    """
+    ldlt(P)
+    if len(P) != 21 or not is_psd(increment) or len(increment) != 3:
+        raise ValueError('full covariance and actual 3 by 3 PSD AW increment required')
+    a, o = list(range(15, 18)), list(range(15))+list(range(18, 21))
+    def block(rows, cols):
+        return [[P[i][j] for j in cols] for i in rows]
+    regression = product(block(a, o), inverse(block(o, o)))
+    conditional = add(block(a, a), product(regression, block(o, a)), -1)
+    Jaa, Jnext = inverse(conditional), inverse(add(conditional, increment))
+    precision_loss = add(Jaa, Jnext, -1)
+    assert is_psd(precision_loss)
+    residual = add([e[i] for i in a], product(regression, [e[i] for i in o]), -1)
+    V = product(transpose(residual), Jaa, residual)[0][0]
+    Vnext = product(transpose(residual), Jnext, residual)[0][0]
+    sa = skew(daw)
+    connection_loss = trace(product(precision_loss, sa, block(range(3), range(3)), transpose(sa)))
+    assert Vnext <= V and connection_loss >= 0
+    return {'conditional_covariance': conditional, 'conditional_precision': Jaa,
+            'next_conditional_precision': Jnext, 'conditional_comparison_energy': V,
+            'next_conditional_comparison_energy': Vnext,
+            'Fisher_connection_square_decrease': connection_loss}
+
+
 def certificate():
     return {
         'qualification': 'OU3_MEASUREMENT_FRAME_V2',
@@ -300,6 +387,15 @@ def certificate():
         'AW_shear_correction_balance': 'Delta W=-||H eta-m||_(S^-1)^2-lambda L_P+||m||_(R^-1)^2; m is linked, not independent noise',
         'AW_shear_post_correction_jump': 'L(aw+)L(aw)^-1=I+N(K_aw r); dJump=N(dK_aw r+K_aw dr)',
         'AW_shear_uniform_port_absorption_verified': False,
+        'AW_frame_word_proof': 'app:aw-frame-word',
+        'internal_frame_connections_cancel_in_complete_word': True,
+        'frame_cancellation_requires_generated_covariance_suffix_score': True,
+        'AW_frame_storage_difference': 'Phi_N-Phi_0; Phi=2 h^T daw+daw^T Q daw, Q positive definite',
+        'AW_frame_endpoint_precision': 'J_aw,aw is conditional precision, not inverse marginal AW covariance',
+        'AW_frame_endpoint_absorption_test': 'R_c>0 and Q_N^-1-Z R_c^-1 Z^T>=0; actual linked root maps, uniform margin OPEN',
+        'AW_frame_endpoint_absorption_verified': False,
+        'actual_AW_sync_conditional_precision_nonincrease': True,
+        'actual_AW_sync_connection_square_nonincrease': True,
         'AW_shear_floor_face_uses_original_recovered_marginal': True,
         'AW_shear_preserves_qualified_planar_magnetic_loss': True,
         'planar_acc_physical_mismatch': 'm=J_y[t daw+omega e_aw-omega t D(t)(a_phys-g)-omega nu], D(t)=(R_y(-t)-I)/t',

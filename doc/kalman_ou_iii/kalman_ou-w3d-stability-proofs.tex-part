@@ -2393,6 +2393,253 @@ regular real-operation CoG scope and explicitly conditional activation only;
 no estimator behavior or assumption change. Exact-rational regressions check
 the noncommuting identities; this derivation, not the tests, proves them.
 
+\subsection{Complete-word frame cancellation and the three-row endpoint test}
+\label{app:aw-frame-word}
+
+\paragraph{Lemma, quantifiers and role --- PROVED analytical.}
+For every finite regular real-operation word, every differentiable linked
+variation of its one inherited history, and every differentiable invertible
+proof frame $L_i$, the following identities hold. Covariances are SPD and
+$\lambda>0$. No source-uniform covariance ceiling, comparison-energy bound,
+or contraction is assumed. This extends (AS7) through the whole literal word,
+including prediction, BG/LIN coupling, reset, projection, reference/noise and
+AW-face derivatives. It removes an accumulation of internal frame charges;
+it does not remove their endpoint cost or any physical operation port.
+Nonregular branch changes and arithmetic still require their own transfer.
+
+Use (WS1), with $D_i=dP_i$, base $B_i$, gain score $d_i$ and actual linked
+ports $U_i,v_i$. Set $C_i^L=L_i^{-1}dL_i$ and
+$Z_i=C_i^LP_i+P_i(C_i^L)^T$. Direct differentiation, with no estimate, gives
+\[
+ \begin{split}
+ \widetilde B_i&=L_{i+1}B_iL_i^{-1},\quad
+ \widetilde d_i=L_i^{-T}d_i,\\
+ \widetilde U_i&=L_{i+1}(U_i+Z_{i+1}-B_iZ_iB_i^T)L_{i+1}^T,\\
+ \widetilde v_i&=L_{i+1}\{v_i+C_{i+1}^Le_{i+1}-B_iC_i^Le_i
+                                      -B_iZ_i d_i\}.
+ \end{split}                                                     \tag{FW1}
+\]
+Indeed substitute $\widetilde D_i=L_i(D_i+Z_i)L_i^T$ and
+$d\widetilde e_i=L_i(de_i+C_i^Le_i)$ into both recurrences in (WS1).
+The $-B_iZ_i d_i$ term is required by the covariance-dependent mean update;
+it is not part of a frozen congruence. The local/suffix scores satisfy
+$\widetilde a_i=L_i^{-T}a_i$ and
+$\widetilde q_{i,N}=L_i^{-T}q_{i,N}$, since point comparison transforms by
+$\widetilde e_i=L_i e_i$ and $\widetilde J_i=L_i^{-T}J_iL_i^{-1}$.
+
+Iterating (FW1), or substituting it into (WS5)--(WS6), cancels every internal
+$Z_i,C_i^L$. The exact terminal formulas are
+\[
+ \begin{split}
+ \widetilde D_N&=L_N(D_N+Z_N)L_N^T,\\
+ \widetilde\eta_N&=L_N\{\eta_N-P_N(C_N^L)^TJ_Ne_N\}.
+ \end{split}                                                     \tag{FW2}
+\]
+This proof includes the term $U_iq_{i+1,N}$: deleting it prevents the
+cancellation of generated covariance in the mean. It needs no invertibility
+of the base $B_i$ and no optimality of an arbitrary masked operation. The
+actual masked derivative, physical OU mismatch, $dF,dQ$, chart discrepancy,
+projection and reference/face/target ports stay in $U_i,v_i$. In particular,
+(AS8) is not replaced by a block-diagonal surrogate. The AW floor is still
+computed on the recovered original marginal. The rotation-frame derivative
+can either be included in a composed $L_i$ or retained in the input word;
+these choices must not both be charged.
+
+\paragraph{Exact boundary storage, with its sign retained.}
+For a boundary put $J=P^{-1}$, $D=dP$, $C=L^{-1}dL$. Expanding (FW2) gives
+$\widetilde W=W+\Phi$, where
+\[
+ \begin{split}
+ \Phi={}&-2e^TJC\eta+e^TJCPC^TJe\\
+ &+4\lambda\operatorname{tr}(DJC)
+ +2\lambda\operatorname{tr}(C^2)
+ +2\lambda\operatorname{tr}(JCPC^T).
+ \end{split}                                                     \tag{FW3}
+\]
+For verification, write $y=P^{-1/2}\eta$, $z=P^{-1/2}e$,
+$X=P^{-1/2}DP^{-1/2}$, $A=P^{-1/2}CP^{1/2}$. Then
+\[
+ \widetilde W=\|y-A^Tz\|^2+\lambda\|X+A+A^T\|_F^2.
+\]
+Expanding this sum proves (FW3), including the transpose in the covariance
+cross term. Thus for the complete word, and for every prefix,
+\[
+ \boxed{\widetilde W_N-\widetilde W_0
+              =-\mathcal A_W+\mathcal F_W+\Phi_N-\Phi_0.}        \tag{FW4}
+\]
+Here $\mathcal A_W,\mathcal F_W$ are the linked action and work in the input
+frame. Alternatively one may use their fully transformed counterparts.
+One may not keep the improved action in one frame while discarding its
+corresponding work or the boundary difference. Internal connection ports do
+not telescope as separate nonnegative charges: cancellation requires the
+whole action-minus-work expression. Equation (FW4) removes an obligation to
+bound the sum of individual frame jumps, not the remaining physical work.
+
+\paragraph{AW specialization: exact three-dimensional signed quadratic.}
+For the AW shear $C=N(a)$, $a=d\widehat a_w$, and $C^2=0$.
+Let $C_j=N(e_j)$ for the three Euclidean basis vectors. Define
+\[
+ \begin{split}
+ h_j&=-e^TJC_j\eta+2\lambda\operatorname{tr}(DJC_j),\\
+ Q_{jk}&=e^TJC_jPC_k^TJe+2\lambda\operatorname{tr}(JC_jPC_k^T).
+ \end{split}                                                     \tag{FW5}
+\]
+Then, exactly,
+\[
+ \begin{split}
+ \Phi&=2h^Ta+a^TQa\\
+     &=(a+Q^{-1}h)^TQ(a+Q^{-1}h)-h^TQ^{-1}h,\\
+ \Phi&\ge-h^TQ^{-1}h\ge-W.
+ \end{split}                                                     \tag{FW6}
+\]
+For $a\ne0$, $N(a)\ne0$, so the Fisher term gives
+$a^TQa\ge2\lambda\|P^{-1/2}N(a)P^{1/2}\|_F^2>0$.
+Hence $Q\succ0$. The last inequality follows by minimizing the displayed
+nonnegative sum for $\widetilde W$ over the three formal connection variables.
+This is only an algebraic bound; the actual $a$ is the inherited nominal
+variation. The minimizer is not asserted reachable or introduced as a free
+input. In particular (FW6) supplies a lower bound, not an affordable upper
+bound for terminal work.
+
+There is a smaller exact set of operands. Put $j_a=(Je)_{aw}$,
+$J_{aa}=J_{aw,aw}$ and $B=(DJ)_{\theta,aw}$. Then
+\[
+ \begin{split}
+ h_j&=j_a^T[e_j]_\times\eta_\theta
+                            -2\lambda\operatorname{tr}(B[e_j]_\times),\\
+ Q_{jk}&=\operatorname{tr}\{(j_a j_a^T+2\lambda J_{aa})
+                   [e_j]_\times P_{\theta\theta}[e_k]_\times^T\}.
+ \end{split}                                                     \tag{FW7}
+\]
+These formulas follow by inserting the AW/attitude selectors in (FW5).
+They retain all covariance correlations through the actual precision.
+In particular $J_{aa}$ is the inverse of the conditional covariance
+\[
+ P_{aa}-P_{ao}P_{oo}^{-1}P_{oa},\qquad o=\hbox{all non-AW coordinates},
+\]
+not $P_{aa}^{-1}$. The shipping marginal AW floor alone is not a proof of a
+lower bound on this Schur complement. The qualified pitch variance ceiling
+alone also does not bound the full $P_{\theta\theta}$ in (FW7). Even on the
+planar stratum, $N(a)$ acts on both covariance parities; neither block is
+silently deleted. No independent marginal maxima have been substituted.
+
+\paragraph{Actual AW synchronization improves the required precision --- PROVED analytical.}
+For every actual default PSD AW increment $\Delta\succeq0$, all non-AW and
+cross blocks remain unchanged. With $o$ the non-AW coordinates put
+$T=P_{ao}P_{oo}^{-1}$, $V_a=P_{aa}-TP_{oa}$ and
+$v_a=e_a-Te_o$. Block inversion gives exactly
+\[
+ J_{aa}=V_a^{-1},\qquad (Je)_a=V_a^{-1}v_a,\qquad
+ e^TJe=e_o^TP_{oo}^{-1}e_o+v_a^TV_a^{-1}v_a.
+\]
+The shipping synchronization changes $V_a$ to $V_a+\Delta$, while $T,v_a$
+and $P_{\theta\theta}$ are unchanged. Consequently
+\[
+ \begin{split}
+ J_{aa}^+&=(V_a+\Delta)^{-1}\preceq J_{aa},\\
+ V_{cond}^+&=v_a^TJ_{aa}^+v_a\le v_a^TJ_{aa}v_a=V_{cond},\\
+ \mathcal K^-(a)-\mathcal K^+(a)
+ &=\operatorname{tr}\{(J_{aa}-J_{aa}^+)[a]_\times
+                        P_{\theta\theta}[a]_\times^T\}\ge0,
+ \end{split}                                                     \tag{FW7a}
+\]
+where $\mathcal K(a)=\operatorname{tr}(JN(a)PN(a)^T)$ is the exact
+Fisher connection-square coefficient from (FW3). These inequalities follow
+from inverse order for SPD matrices and the trace of a product of PSD
+matrices. They hold for every face, including zero/rank-deficient increments;
+no strict loss is asserted on inactive directions. Further, Cauchy--Schwarz
+in the same conditional covariance gives
+\[
+ (Je)_a(Je)_a^T\preceq V_{cond}J_{aa},\qquad
+ a^TQa\le(V_{cond}+2\lambda)\mathcal K(a).                       \tag{FW7b}
+\]
+Thus the actual AW synchronization cannot increase either factor in this
+particular same-history endpoint-square majorant. This is a proved use of the
+shipping floor; it does not replace its law by a floor on $V_a$, nor prove
+an inherited numerical ceiling. The signed cross term $h$ and the complete
+$Q$ need not be monotone. The nonincrease in (FW7a) is not a second decrement
+to add to an already-accounted joint-storage loss.
+
+At a differentiable active face, retain
+\[
+ \begin{split}
+ dV_a={}&dP_{aa}-dP_{ao}P_{oo}^{-1}P_{oa}
+                -P_{ao}P_{oo}^{-1}dP_{oa}\\
+        &+P_{ao}P_{oo}^{-1}dP_{oo}P_{oo}^{-1}P_{oa},\\
+ dJ_{aa}^+={}&-J_{aa}^+(dV_a+d\Delta)J_{aa}^+.
+ \end{split}
+\]
+Here $\Delta=\Pi_+(\Sigma_{pending}-P_{aa})$ remains the literal recovered
+original-marginal increment, including target/face and clock dependence.
+The finite monotonicity statement does not assert differentiability at a
+face crossing. Prediction, corrections and reset can change the conditional
+blocks, so (FW7a) cannot be restarted as a universal precision bound.
+
+\paragraph{A directional absorption threshold, not a new scalar campaign.}
+Restrict every matrix below to the same justified stored root lift; auxiliary
+directions with zero root energy remain forcing unless given justified storage.
+On this lift write $h_i=H_i^L w$ and
+$a_i=A_i^L w$, using the actual complete prefix derivatives, including
+auxiliary/source coordinates where retained. Set
+\[
+ K_i^L=(A_i^L)^TQ_iA_i^L+(H_i^L)^TA_i^L+(A_i^L)^TH_i^L.
+\]
+Let $G$ be the input-frame exact word gap, and let $\Gamma_i$ now denote the
+\emph{transformed} endpoint gauge-energy matrices. On stored transverse
+coordinates with root metric $\mathcal J_\perp\succ0$, the required gap is
+\[
+ G+K_0^L-K_N^L-\Gamma_0+\Gamma_N\succeq c\mathcal J_\perp.
+                                                               \tag{FW8}
+\]
+Completing (FW6) at the terminal endpoint defines
+\[
+ \begin{split}
+ Z&=A_N^L+Q_N^{-1}H_N^L,\\
+ R_c&=G+K_0^L+(H_N^L)^TQ_N^{-1}H_N^L
+                  -\Gamma_0+\Gamma_N-c\mathcal J_\perp.
+ \end{split}
+\]
+If $R_c\succ0$, (FW8) is equivalent to the \emph{three-row} test
+\[
+ \boxed{Q_N^{-1}-Z R_c^{-1}Z^T\succeq0.}                       \tag{FW9}
+\]
+Proof: (FW8) is $R_c-Z^TQ_N Z\succeq0$; apply the two Schur complements
+of $\left(\begin{smallmatrix}R_c&Z^T\\Z&Q_N^{-1}\end{smallmatrix}\right)$.
+The exact threshold is one for the squared singular norm of
+$Q_N^{1/2} ZR_c^{-1/2}$, not an independent bound on each increment.
+A common margin $\delta>0$ in
+$Z R_c^{-1}Z^T\preceq(1-\delta)Q_N^{-1}$ would further give
+$R_c-Z^TQ_N Z\succeq\delta R_c$.
+No positive uniform $c$ or $\delta$ is certified here. If $R_c$ is not positive,
+use the full signed (FW8); no inverse/pseudoinverse may erase a kernel.
+Physical gauge amplitude and source directions are not optimized away by
+this algebra, and frozen held BA still requires retention rather than strict
+contraction.
+
+\paragraph{Dependency removed and precise remaining obstruction.}
+The need to price every $dB_L=N(dK_{aw}r+K_{aw}dr)$ separately is discharged:
+(FW1)--(FW4) combine it with prediction and subsequent corrections before
+norms, preserving every generated covariance score. The endpoint matrix
+(FW7), its actual three-row tangent map and the remaining signed physical word
+work are now the objects that must be absorbed. This calculation proves no
+uniform domination of them by process/$S$/magnetic action. The unavailable
+facts are the inherited conditional AW precision and attitude-block bounds
+actually needed by (FW7), the same-history comparison/source budget and
+complete prefix derivatives, and the quantitative service-to-coupled-action
+comparison giving a positive $R_c$ with the margin in (FW9). They are proof
+obligations, not new physical premises. Reference/gates, finite-error chart,
+arithmetic, moving compatibility and every-prefix activation remain required.
+
+Structures preserved: full 21-state covariance and literal ports, both endpoint
+frames, both parity blocks, held masks, actual AW face, same-history source and
+all suffix scores. Relaxations: regular real-operation derivatives; the formal
+completion in (FW6) supplies only its stated algebraic lower bound. No new
+numerical exploration or independent reachable box is used. The complete-gap
+attempt remains D (insufficient proved bound), not a shipping counterexample.
+The qualified magnetic and physical-curvature results remain valid; they must
+be evaluated in one consistent storage. General service-conditioned stability
+and special planar all-time admission are still separate open obligations.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

@@ -3,7 +3,7 @@ from fractions import Fraction as F
 from pathlib import Path
 import unittest
 
-from tools.stability.ou3_theorem.information_shear_word import zeros
+from tools.stability.ou3_theorem.information_shear_word import zeros, word_score_normal_form
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import add, identity, transpose
 from tools.stability.ou3_theorem.measurement_frame import (
@@ -13,6 +13,8 @@ from tools.stability.ou3_theorem.measurement_frame import (
     row_differentials, world_rows, aw_connection, aw_shear,
     aw_shear_differentials, row_connection_coboundary, fixed_row_joint_balance,
     planar_acc_mismatch_charge,
+    moving_frame_word_ports, aw_frame_boundary_work,
+    aw_conditional_sync,
 )
 from tools.stability.ou3_theorem.planar_innovation_storage import information_shear_correction
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import product
@@ -153,6 +155,10 @@ class MeasurementFrameTests(unittest.TestCase):
         self.assertIn('float b0  = 1e-10f;', config)
         self.assertIn('c.Pq0, c.Pb0, c.b0, c.R_S_noise', wrapper)
         self.assertIn('cfg.sigma_g.setConstant(.00135f);cfg.sigma_m.setConstant(.8f);', probe)
+        for literal in ('Matrix3 Delta = aw_covariance_floor_target_ - P_aw;',
+                        'evals(i) = std::max(T(0), evals(i));',
+                        'Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;'):
+            self.assertIn(literal, core)
 
     def test_aw_shear_fixes_acc_row_and_preserves_full_held_joseph(self):
         aw, g = [F(1, 5), 0, F(-1, 7)], [0, 0, 10]
@@ -270,6 +276,98 @@ class MeasurementFrameTests(unittest.TestCase):
         uncoupled[1][15] = uncoupled[15][1] = F(0)
         other = planar_acc_mismatch_charge(uncoupled, e, da, omega, df, nu, self.noise)
         self.assertNotEqual(out['linked_covariance_form'], other['linked_covariance_form'])
+
+    def test_complete_word_connections_cancel_only_with_generated_score(self):
+        # Formal rational operands for the universal port-conjugacy identity.
+        # Neither this word nor its covariance is asserted shipping-reachable.
+        B = [[[F(1), F(1, 3)], [0, F(4, 5)]],
+             [[F(2, 3), 0], [F(1, 7), F(1)]]]
+        P = [identity(2), [[F(2), F(1, 5)], [F(1, 5), F(3)]], identity(2)]
+        e = [[[F(1, 4)], [F(-1, 5)]], [[F(2, 7)], [F(1, 3)]], [[F(1, 9)], [F(2, 5)]]]
+        d = [[[F(1, 6)], [F(2, 7)]], [[F(-1, 8)], [F(1, 5)]]]
+        U = [[[F(1, 7), F(1, 8)], [F(1, 8), F(-1, 9)]], zeros(2, 2)]
+        v = [[[F(1, 11)], [F(2, 13)]], [[F(1, 17)], [F(-1, 19)]]]
+        D = [[F(1, 3), F(1, 5)], [F(1, 5), F(-1, 7)]]
+        de = [[F(2, 9)], [F(-1, 4)]]
+        L = [[[F(1), 0], [F(1, 3), F(1)]],
+             [[F(1), F(1, 5)], [0, F(1)]], [[F(2), 0], [F(1, 7), F(1)]]]
+        G = [[[0, F(1, 7)], [F(1, 11), 0]],
+             [[0, F(1, 13)], [F(1, 17), 0]], [[0, F(1, 19)], [F(1, 23), 0]]]
+        old = word_score_normal_form(B, P, e, d, U, v, D, de)
+        ports = [moving_frame_word_ports(B[i], P[i], P[i+1], e[i], e[i+1],
+                 d[i], U[i], v[i], L[i], L[i+1], G[i], G[i+1]) for i in range(2)]
+        connectionD = add(product(G[0], P[0]), product(P[0], transpose(G[0])))
+        D0 = product(L[0], add(D, connectionD), transpose(L[0]))
+        de0 = product(L[0], add(de, product(G[0], e[0])))
+        pp = [product(l, p, transpose(l)) for l, p in zip(L, P)]
+        ee = [product(l, x) for l, x in zip(L, e)]
+        new = word_score_normal_form([x['base'] for x in ports], pp, ee,
+            [x['gain_score'] for x in ports], [x['covariance_port'] for x in ports],
+            [x['mean_port'] for x in ports], D0, de0)
+        expected_eta = product(L[-1], add(old['eta_terminal'],
+            product(P[-1], transpose(G[-1]), inverse(P[-1]), e[-1]), -1))
+        expected_D = product(L[-1], add(add(old['covariance_tangent_terminal'],
+            product(G[-1], P[-1])), product(P[-1], transpose(G[-1]))), transpose(L[-1]))
+        self.assertEqual(new['eta_terminal'], expected_eta)
+        self.assertEqual(new['covariance_tangent_terminal'], expected_D)
+        # Covariance created at the first step has a nonzero future-score term.
+        omitted = product(new['base_suffixes'][1], ports[0]['covariance_port'], new['suffix_scores'][1])
+        self.assertNotEqual(omitted, zeros(2, 1))
+
+    def test_aw_boundary_work_exact_completion_and_conditional_precision(self):
+        e, eta, D = zeros(21, 1), zeros(21, 1), zeros(21, 21)
+        e[1][0], e[17][0], eta[1][0] = F(1, 20), F(1, 9), F(1, 7)
+        D[1][17] = D[17][1] = F(1, 11)
+        da = [F(1, 13), 0, F(-1, 17)]
+        P = [r[:] for r in self.P]
+        P[1][17] = P[17][1] = F(1, 3)
+        out = aw_frame_boundary_work(P, e, eta, D, da)
+        de = add(eta, product(D, inverse(P), e))
+        moved = aw_shear_differentials([F(2, 7), 0, F(-1, 5)], da, P, D, e, de)
+        Jm = inverse(moved['P'])
+        from tools.stability.ou3_theorem.information_shear_word import trace
+        actual = product(transpose(moved['eta']), Jm, moved['eta'])[0][0]
+        actual += trace(product(Jm, moved['dP'], Jm, moved['dP']))
+        self.assertEqual(actual, out['transformed_storage'])
+        zero = aw_frame_boundary_work(P, e, eta, D, [0, 0, 0])
+        self.assertEqual(zero['signed_boundary_work'], 0)
+        # Q is controlled by conditional precision, not the AW marginal inverse.
+        J = inverse(P)
+        self.assertNotEqual([r[15:18] for r in J[15:18]],
+                            inverse([r[15:18] for r in P[15:18]]))
+        ja = product(J, e)[15:18]
+        jaa = [r[15:18] for r in J[15:18]]
+        ptt = [r[:3] for r in P[:3]]
+        B = [r[15:18] for r in product(D, J)[:3]]
+        V = add(product(ja, transpose(ja)), [[2*x for x in r] for r in jaa])
+        for j in range(3):
+            Sj = skew([F(i == j) for i in range(3)])
+            hj = product(transpose(ja), Sj, eta[:3])[0][0]-2*trace(product(B, Sj))
+            self.assertEqual(hj, out['linear_coefficient'][j][0])
+            for k in range(3):
+                Sk = skew([F(i == k) for i in range(3)])
+                self.assertEqual(trace(product(V, Sj, ptt, transpose(Sk))),
+                                 out['quadratic_coefficient'][j][k])
+        self.assertGreaterEqual(out['completed_square_lower'], -out['initial_storage'])
+
+    def test_actual_aw_increment_decreases_conditional_connection_coefficient(self):
+        e = zeros(21, 1)
+        e[1][0], e[15][0], e[17][0] = F(1, 7), F(1, 9), F(-1, 11)
+        # A rank-deficient PSD increment checks the zero-face scope. Its
+        # reachability/target is NOT inferred from this identity regression.
+        increment = [[F(1, 5), 0, F(1, 10)], [0, 0, 0], [F(1, 10), 0, F(1, 20)]]
+        out = aw_conditional_sync(self.P, e, increment, [F(1, 3), 0, F(1, 7)])
+        Pnext = [r[:] for r in self.P]
+        for i in range(3):
+            for j in range(3):
+                Pnext[15+i][15+j] += increment[i][j]
+        self.assertEqual(out['next_conditional_precision'],
+                         [r[15:18] for r in inverse(Pnext)[15:18]])
+        drop = product(transpose(e), add(inverse(self.P), inverse(Pnext), -1), e)[0][0]
+        self.assertEqual(drop, out['conditional_comparison_energy']-out['next_conditional_comparison_energy'])
+        self.assertGreater(out['Fisher_connection_square_decrease'], 0)
+        self.assertEqual(aw_conditional_sync(self.P, e, zeros(3, 3), [1, 0, 0])[
+                         'Fisher_connection_square_decrease'], 0)
 
 
 if __name__ == '__main__':
