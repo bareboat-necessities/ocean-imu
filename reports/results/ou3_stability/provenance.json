@@ -124,7 +124,7 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "2c28c67e3e4754ffe7a9e1a8013fb526747a0ecf"
+      "git_blob_sha": "19e7740a313f833b81aefc78448ef028273bd659"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "ef143d806e81d27692605d2df03aff647596f3f8"
+      "git_blob_sha": "a844a167574f296e20cecf077489a697ac0f225f"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -816,7 +816,7 @@
     },
     {
       "path": "docs/ou3-planar-parity-service.md",
-      "git_blob_sha": "9d75919860d4dc37e09e4c3bbec62745aa5a4a5a"
+      "git_blob_sha": "970fadd9a6f6b2de97b1b7a827060c6253b55c4d"
     },
     {
       "path": "reports/results/ou3_stability/planar-every-root-service-diagnostic.json",
@@ -912,7 +912,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_frontend_domain.py",
-      "git_blob_sha": "504ee1bb30f81f35bdeb1ad86a2ca3eb70f8bac7"
+      "git_blob_sha": "250fb66e4d4db3d5a6cc6d33817c86266e1b48c5"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_complete_word_storage.py",
@@ -920,7 +920,7 @@
     },
     {
       "path": "tests/validation/test_ou3_planar_frontend_domain.py",
-      "git_blob_sha": "ed1879b0313db09a5ce8c0b035048660e047ac85"
+      "git_blob_sha": "e2fea24ef7cf474d47fefc8926e113827bc7c4ae"
     },
     {
       "path": "tests/validation/test_ou3_planar_complete_word_storage.py",
@@ -928,7 +928,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-frontend-domain-certificate.json",
-      "git_blob_sha": "d5ca37e0899c3570ccc804fc983aafb5738be0a1"
+      "git_blob_sha": "c81c6c15f9d102aeed63c57b231496959ede282a"
     },
     {
       "path": "reports/results/ou3_stability/planar-complete-word-storage-certificate.json",

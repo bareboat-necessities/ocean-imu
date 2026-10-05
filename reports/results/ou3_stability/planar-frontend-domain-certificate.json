@@ -79,11 +79,12 @@
   ],
   "reference_float_accumulation_and_acquisition_verified": false,
   "reference_geometry_real": {
-    "Bx_lower": "149999637/2000000",
-    "abs_Bz_upper": "33/200",
+    "Bx_lower": "503315231974191/6710886400000",
+    "abs_Bz_upper": "553648161/3355443200",
     "angle_cap": "11/5000",
-    "norm_upper": "75",
-    "scope": "any nonempty same-history nonnegative weighted mean; default zero hard iron; exact tilt normalization"
+    "norm_upper": "1258291275/16777216",
+    "scope": "rounded delivered magnetic samples; exact tilt normalization and reference arithmetic; nonempty same-history nonnegative weighted mean; zero hard iron",
+    "source_magnetic_rounding_charge_retained": true
   },
   "relaxations_introduced": [
     "rational directed error majorants of scalar operation DAG",

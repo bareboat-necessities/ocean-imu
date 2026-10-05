@@ -1093,14 +1093,19 @@ stated arithmetic qualifications, from the actual seed and at every prefix.
 
 For a magnetic packet at the current source phase, the update has advanced
 the observer once; hence the direction error is below
-$.0021+(1/200)(11/1750)<a_*=11/5000$.
+$.0021+(1/200)(11/1750)$. The delivered magnetic vector has norm in
+$[75(1-u),75(1+u)]$ and directional rounding error below $4u$; adding that
+error still gives a cone angle below $a_*=11/5000$.
 In exact reference arithmetic each levelled magnetic vector therefore has
-$x$ component at least $75(1-a_*^2/2)$ and $|z|\le75a_*$.
+$x$ component at least $75(1-u)(1-a_*^2/2)$ and $|z|\le75(1+u)a_*$.
 Nonnegative same-history weighted means preserve these bounds, as does the
 canonical horizontal-heading choice. With the proved zero hard-iron branch,
 \[
- B_x\ge75(1-a_*^2/2),\quad |B_z|\le75a_*,\quad \|B\|\le75.
+ B_x\ge75(1-u)(1-a_*^2/2),\quad |B_z|\le75(1+u)a_*,\quad
+ \|B\|\le75(1+u).
 \]
+For the exact-real unrounded magnetic record the factors $1\pm u$ disappear,
+recovering the earlier norm bound $75$.
 This is a reference \emph{cone} for every nonempty accepted mean; it does not
 prove finite acquisition, float accumulation, continuous-offset arithmetic,
 or the nominal MEKF invariant domain. Those remain OPEN.

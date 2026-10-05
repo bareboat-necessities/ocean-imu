@@ -183,8 +183,11 @@ def certificate():
     # physical sample from the pre-update error coordinate.
     reference_angle = F(21, 10000)+F(1, 200)*F(11, 1750)
     reference_cap = F(11, 5000)
-    assert reference_angle < reference_cap
-    mu_x = 75*(1-reference_cap**2/2)
+    # The delivered magnetic vector is rounded too. Its norm lies between
+    # 75(1-u) and 75(1+u); its directional error is below 4u. Do not silently
+    # reuse the exact-real source norm 75 for these represented samples.
+    assert reference_angle+4*U < reference_cap
+    mu_x = 75*(1-U)*(1-reference_cap**2/2)
     return {
         'qualification': 'OU3_PLANAR_FRONTEND_DOMAIN_V1',
         'result_type': 'PROVED — analytical conditional domain implication',
@@ -205,8 +208,9 @@ def certificate():
         'pitch_error_cap': '21/10000', 'integral_cap': '17/100000',
         'all_prefix_frontend_retention_under_premises': True,
         'reference_geometry_real': {'angle_cap': str(reference_cap), 'Bx_lower': str(mu_x),
-            'abs_Bz_upper': str(75*reference_cap), 'norm_upper': '75',
-            'scope': 'any nonempty same-history nonnegative weighted mean; default zero hard iron; exact tilt normalization'},
+            'abs_Bz_upper': str(75*(1+U)*reference_cap), 'norm_upper': str(75*(1+U)),
+            'source_magnetic_rounding_charge_retained': True,
+            'scope': 'rounded delivered magnetic samples; exact tilt normalization and reference arithmetic; nonempty same-history nonnegative weighted mean; zero hard iron'},
         'guard_real_certificate': guard_certificate()['qualification'],
         'guard_and_seed_rational_margins': guard_and_seed(),
         'initialization_and_guard_transfer_under_arithmetic_premises': True,

@@ -294,7 +294,9 @@ settings. No transfer of the carried floor to that distinct profile is proved.
 closes private pitch/integral retention from the actual seed. It retains the
 non-unit raw quaternion, guard, represented gains and source sample phase.
 The real learned-reference cone has angle at most 11/5000, with
-`Bx>=75*(1-(11/5000)^2/2)`, `|Bz|<=75*(11/5000)`, and norm at most 75.
+`Bx>=75*(1-u)*(1-(11/5000)^2/2)`, `|Bz|<=75*(1+u)*(11/5000)`, and norm
+at most `75*(1+u)`, `u=2^-24`, retaining delivered magnetic-sample rounding.
+For exact-real unrounded samples the previous norm bound 75 still holds.
 Target-toolchain sqrt/exp qualification and float reference acquisition/averaging
 remain separate; this is not the complete inherited MEKF domain.
 

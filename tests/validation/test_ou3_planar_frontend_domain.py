@@ -16,6 +16,9 @@ class FrontendDomainTests(unittest.TestCase):
         self.assertFalse(c['target_toolchain_libm_qualification_verified'])
         self.assertFalse(c['complete_word_storage_contraction_verified'])
         self.assertFalse(c['all_time_magnetic_service_verified'])
+        ref = c['reference_geometry_real']
+        self.assertTrue(ref['source_magnetic_rounding_charge_retained'])
+        self.assertEqual(F(ref['norm_upper']), 75*(1+F(1, 2**24)))
 
     def test_accelerometer_normalization_is_in_proved_exponent_domain(self):
         c = norm_certificate()

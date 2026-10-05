@@ -50,7 +50,10 @@ actual target-toolchain libm qualification remains OPEN. It is not a MEKF gain.
 
 **PROVED — analytical reference-cone implication:** within that private domain,
 exact normalized tilt and nonnegative same-history reference averaging give
-`a*=11/5000`, `Bx>=75*(1-a*^2/2)`, `|Bz|<=75*a*`, `||B||<=75`.
+`a*=11/5000`, `Bx>=75*(1-u)*(1-a*^2/2)`, `|Bz|<=75*(1+u)*a*`,
+`||B||<=75*(1+u)`, where `u=2^-24`. Delivered magnetic-sample rounding is
+retained even before charging reference arithmetic. For the exact-real
+unrounded record the earlier norm bound 75 is unchanged.
 Exact planar hard-iron symmetry retains its zero information direction.
 Float reference accumulation, continuous-offset arithmetic, finite acquisition
 and the complete inherited nominal MEKF domain remain OPEN.
