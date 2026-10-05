@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "3b04dd793b1866898689539e531115de1f957b751ce8436458a89ce8ed420d6a",
-  "results_file_count": 464,
+  "replay_fingerprint": "a5c477572c976fa6a3b01d8c455c0f5e7fe53d0815f3925869806e2be62540f1",
+  "results_file_count": 465,
   "results_files": [
     {
       "kind": "file",
@@ -841,7 +841,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "sha256": "c12524c52ceb6bde56adc691ca1b88bd02f81bf2a3b1ef5b16c23ce88ed243ab"
+      "sha256": "8a175d181d93b7ef44b837d96b0f966b8530ab93fe49fc6e60c4ecac78586f76"
     },
     {
       "kind": "file",
@@ -857,6 +857,11 @@
       "kind": "file",
       "path": "reports/results/ou3_stability/mahony-raw-normalization-certificate.json",
       "sha256": "fa27adccecbd67d271700805618c826c81e8cf68d5c52acb1741bcbae1d38536"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
+      "sha256": "04c1891a45468de53f7d70cff6182d9e0bae76fe9383e4e134ab7143559ee987"
     },
     {
       "kind": "file",
@@ -986,7 +991,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "a72adbcf86506d3b5003dc1d937fb8822cd794baf6d94c8616d556b9dfb4f4e9"
+      "sha256": "b0c1d4173210c63ff3470255244ab8843865e11105c617aee694cf2e01ddd341"
     },
     {
       "kind": "file",
@@ -1046,7 +1051,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "sha256": "19a3fc36efc40a2065fdc9fe53b9170d4e71651dda3e00188b3282dec2a37226"
+      "sha256": "7d14efad06a0a31123f6c2097ea18bc25457a7c3218d5af2cc671437698c2240"
     },
     {
       "kind": "file",
@@ -1086,7 +1091,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "1dd820fd128d55d0358eb2e68a4e334ba714b5d35f2c837db9622c09a2af40a1"
+      "sha256": "debcba2c11d727bd08c80416adcfc1efbb9cc80e1a45220b19eb135f86bdc73f"
     },
     {
       "kind": "file",
@@ -1156,57 +1161,57 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "4243db4ce443b91f6bcbff5dc467375c8c4fe4150b51b027c275ae0d83f6a4d8"
+      "sha256": "7e34fcd17289d4529bf5b1cdfe877bbfa5ef4f4b6ab9b1d13a95f749185ae0ba"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "62f5720a51ceb1735f15ec4317107ac4c0e7f1e54a92032dbdf7dc0b4d0acdff"
+      "sha256": "76341fcf0339a6954a72b4929a6a402c1eefe9454ded35ce613475da9f9a69c4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "99c7ef477889f1efead7a3727a2c280c9a9c05a8378dff076e2a51d3d0fe74dd"
+      "sha256": "dd927e92e7588e99704a7e71adff2b3a18a14c8c9ae61de7410894b5a11b6e6d"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "5ab6975e8337f3e7f8d67b934a348b71e734ebad8d4dea35ec5fd510ec2c75c0"
+      "sha256": "fc88ddfb27f36363a7f4ecaf08511ad9bdd63191a903687c85be6c69ac3e60f5"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "49fac3d17349eb620f7b8dfcc2bcf46db58929a73314c5d120588095d3affffa"
+      "sha256": "159ec3376e5659d4ebef74d0199a5c35adb4b73eab51141c24066958bbc22e69"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "f622ef90d70f5c0eb5bf41a8102edfb5065bc12d700ca4218cc0f1ca6a893bce"
+      "sha256": "39000a57c38d4f05380f9412229a4c284f2b740eefc95fc735e30d3adc1d32f9"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "edbfc08555be3a03ce296773223f4fb42eb6185fdd2f042559e884297c922c74"
+      "sha256": "7a8eb2abeed66ea624830a21d55c3a117b375fef16dba3c25832d7c8995755c6"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "500e838fedafc6e6ae0dae18856d65d0b4b72ffb58a452b6648f44f6d21f2ed1"
+      "sha256": "52f92ca6be0738a25612837b3510919d4a89d766ae14e7573b722b584c6a4cc0"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "d834dc0b03874bedb1b6e0e22c0615dd616a04fac8a30aff0435cee1c6497506"
+      "sha256": "219a7802a00af09eaa23022bf48fe364398e6c6e7ab28f77c43cadf1df685f86"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "091c1520dc424e44d8496cb7af1d10c15e044d2d3dd4a8b5e703daf5998ad93f"
+      "sha256": "6944d1e912d1866b2503cc267aafeb21ec9bc064be7c7c3b802b379e50ee42c1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "24396135a876674a919f5303924b841aeffe6fb5f2ded04dd9d5daa1f4efb478"
+      "sha256": "218f982c23601eca865b352527959fd6da32c8b0f7ff4b8f6b0f552085bf42bf"
     },
     {
       "kind": "file",
@@ -1226,7 +1231,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "617e3ea4f7f60a08cd8a30bc7c156f08092310023ec3ca863c03c3cb6e554fe4"
+      "sha256": "059d07aea0f273f6f280eef3d047deb8305f6928ba8cb1003f3eb72049fd0d7b"
     },
     {
       "kind": "file",
@@ -2324,13 +2329,13 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "e12cf9d745985e7edce4f600dce6a8ce8ef375ea02a1cccfdfb7690b2eaf47ab",
+  "results_fingerprint": "353cbf4c5d730c9886a7f93291ed868a9a9543b1f04e7ac7496a489d6ff005b4",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 753,
+  "tracked_replay_file_count": 755,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2375,7 +2380,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou3-stability-proof.yml",
-      "sha256": "9d9b8fe28ae3a50e89b6e6455fea45fdaaff0c93ac4030312f4027b0814a4648"
+      "sha256": "328b1b0193ba428962174ec215fb9989ba52b5bbaf884115727eed778346a171"
     },
     {
       "mode": "100644",
@@ -4099,6 +4104,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_measurement_frame.py",
+      "sha256": "177f6be6de632cfdc35b0ca533c5f31234156f8620bb8943f176145860c58194"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_moving_pivots.py",
       "sha256": "3c62fd21e7221bcd4a8978219ad476f3db69cc6e1a25fc0e3a595d766ad36295"
     },
@@ -5045,7 +5055,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "sha256": "7a5872e44dbfdc444ef94510859bb068137e4ec522d9d1445319f63b03792bad"
+      "sha256": "660ea17c0315f9e4ac1b08fc680a3dc9edd23a05b5cedb8493aa199d0d56b047"
     },
     {
       "mode": "100644",
@@ -5476,6 +5486,11 @@
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/matrix_certificates.py",
       "sha256": "10a50ab2a6aeb7f4d9fb302a754f035f234037847d251cf145643d421cb5cb7c"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/measurement_frame.py",
+      "sha256": "4e4c58015d1a90f7abfc762f7ab3b579f6df977c1ff4cdf12f678a23255a0d31"
     },
     {
       "mode": "100644",
@@ -6020,7 +6035,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "sha256": "7a61419762e010a3b0bab62982e36aaf8b2caf7d0a3476e8ee913aeb1009b73d"
+      "sha256": "73a956161cf9d84c538c1a5a5db8fe0148f7fd038b42219fb16c2acb3bb7e42d"
     },
     {
       "mode": "100644",
