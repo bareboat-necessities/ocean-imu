@@ -124,7 +124,7 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "0ed4bf602c8f7455095ce64c7bc0da6d024bac36"
+      "git_blob_sha": "eda5aa87bf8f835505776a50fc2dfbcbb4ec1fcd"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "9b2b323c6365de549a92cc452a0aca0eb964f0f5"
+      "git_blob_sha": "c3797e833ed968f5734bde4a537926d6d7874f65"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "3c86332bdbb546df98340acf0b93483b0a7ae740"
+      "git_blob_sha": "14449c980c6180076ebbeeacf83887518892d762"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -757,6 +757,10 @@
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
       "git_blob_sha": "421d32535a35cea7ea5a35390d96ed5c16889c70"
+    },
+    {
+      "path": "reports/results/ou3_stability/theorem-status.json",
+      "git_blob_sha": "7e1ab6d2fdd1d4866d4544188c23db92d0216e1f"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
