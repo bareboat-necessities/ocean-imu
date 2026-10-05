@@ -454,6 +454,32 @@ chronology. It changes no physical constants and does not require a new
 excitation condition. It is an all-time \emph{real-arithmetic component}
 result; the float32 rounding transfer and the rest of admission remain open.
 
+\subsection{Generated tuner and clock ports are one-way}
+\label{sec:planar-generated-port-structure}
+On the deployed default Complementary wave-period input, the adaptation path is
+measurement-only.  The literal per-sample order is: commit the candidate staged
+on the previous sample; condition the accelerometer; advance the private Mahony
+observer; execute the MEKF; read the private vertical channel; stage
+$(\tau,\sigma_{aw},R_S)$ from that measurement-only channel; advance the
+wave-period/direction stage.  The wave-period input used by the tuner is the
+private complementary channel, not the MEKF-levelled ablation.
+
+Therefore the Fr\'echet derivatives from the MEKF mean or covariance to the
+generated tuner tuple, to the progress-preserving $S$ period, and to the AW
+stationary target are exactly zero on this deployed branch.  The direction
+branch may read MEKF attitude and accelerometer bias, but it has no return edge
+to the tuner/model schedule.  Thus tuner and clock variation is a one-way
+same-history forcing into the covariance recursion; it is not a bidirectional
+small-gain loop with $P$.  The remaining bidirectional loop is internal to the
+MEKF: $P$ changes $K$ and hence the mean, while attitude/$a_w$ change the
+accelerometer and magnetic Jacobians and hence the covariance map.
+
+This structural statement is proved by
+\texttt{planar\_generated\_port\_structure.py} and reproduced by
+\texttt{planar-generated-port-structure.json}.  It does \emph{not} certify
+all-time coefficient ranges, the remaining mean--covariance loop, scheduler
+branch containment, or magnetic service.
+
 \subsection{Private frontend binding and conditional pitch--integral tube}
 The old interval frontend is not a literal implementation certificate.
 \texttt{Mahony\_AHRS<float>::invSqrt} uses a bit seed and one Newton step,
