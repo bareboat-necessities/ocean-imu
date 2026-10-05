@@ -22,7 +22,7 @@ from .planar_parity import EVEN, ODD
 PROBE = Path(__file__).with_name("planar_service_probe.cpp")
 MAGIC = b"OU3EVT1\0"
 # prediction; acc, mag, S; pre-reset; post-AW-sync; sample; post-reset
-SIZES = {1: 912, 2: 435, 3: 435, 4: 435, 5: 228, 6: 235, 7: 293, 8: 225}
+SIZES = {1: 912, 2: 435, 3: 435, 4: 435, 5: 228, 6: 235, 7: 293, 8: 225, 9: 882}
 
 
 def instrument(text: str) -> str:
@@ -42,7 +42,7 @@ def instrument(text: str) -> str:
         old = f'moving_correction("{kind}",H.data(),S_mat.data(),K.data());'
         if s.count(old) != 1:
             raise ValueError(f"{kind} correction tap changed")
-        s = s.replace(old, f'moving_correction("{kind}",H.data(),S_mat.data(),K.data(),Pext.data(),{noise}.data(),PCt.data(),r.data());')
+        s = s.replace(old, f'planar_mean_tangent("{kind}",H.data(),S_mat.data(),K.data(),Pext.data(),r.data(),xext.data()); moving_correction("{kind}",H.data(),S_mat.data(),K.data(),Pext.data(),{noise}.data(),PCt.data(),r.data());')
     old = "        apply_pending_aw_covariance_inflation_();"
     if s.count(old) != 1:
         raise ValueError("AW inflation tap changed")
