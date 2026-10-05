@@ -315,3 +315,12 @@ not a surrogate trajectory. Nonsmooth, nonlinear and arithmetic closure is OPEN.
 no shipping counterexample. Retained analytical identities and qualified local
 results remain valid. Next: derive the linked service-to-shear comparison on
 justified compatibility strata, then only its necessary activation bounds.
+
+
+The conditional AW decomposition in `app:aw-conditional-loss` now supplies
+positive **base process** loss on the directions missed by mag/S additive
+rows, with a qualified finite conditional precision bound. Continue from the
+net signed mixed-block Schur comparison; do not re-prove finiteness, identify
+those algebraic directions as physical gauges, or promote their block
+coefficient to a complete-word margin. All generated covariance scores and
+signed LIN/AG/source work remain in that comparison.

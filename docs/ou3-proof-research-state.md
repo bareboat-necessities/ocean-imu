@@ -128,6 +128,32 @@ observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
 
+**PROVED — analytical conditional AW process loss:**
+`app:aw-conditional-loss` splits joint storage into conditional AW and
+complementary terms with all covariance cross terms retained. Optimal additive
+mag/S substeps leave the conditional term invariant, even with non-AW row/noise
+ports. Their endpoint-square coefficient decreases through the actual attitude
+covariance loss. The three mean/six covariance directions missed by those rows
+are not physical gauges: the full integrated OU noise gives a positive uniform
+base-action loss `c_aw W_cond`, with exact rational `c_aw>10^-14` on the existing
+qualified isotropic regular profile. This is not complete tangent contraction;
+process-generated covariance scores and all signed mixed work remain.
+The existing 16-second LIN path matrix supplies conditional precision
+`J_aw,aw<15942618 I` on its qualified A21 domain. Finiteness there is no longer
+the blocker. The exact process recurrence (CA6)--(CA7) retains signed
+integrated-chain and attitude/BG covariance work.
+
+**OPEN — actual endpoint Schur margin:** no positive net complementary block
+or full-word c has been proved. The precise missing comparison is between
+these same-history signed mixed blocks (including covariance suffix scores,
+reference/source and moving gauge) and the actual process/S/magnetic action.
+A positive base conditional block cannot replace the net signed block in a
+Schur complement. This is D, insufficient proved domination; no violating
+shipping history or numerical failure is inferred. The new block coefficient
+is not a reason to launch a scalar refinement campaign. See the
+[minimal activation table](ou3-measurement-frame-loss.md#conditional-aw-action-and-the-endpoint-schur-blocker).
+
+
 **PROVED — analytical complete-word frame reduction:**
 `app:aw-frame-word` composes the AW frame jump with all subsequent literal
 operations and generated covariance suffix scores. Internal frame connections
@@ -146,7 +172,8 @@ The same-history endpoint-square bound is `(V_cond+2 lambda)*K(daw)`;
 this monotone coefficient is not a second decrement or a bound on signed h. Remaining activation for this
 term uses actual **conditional AW precision** `(P^-1)_aw,aw`, full attitude
 covariance, and linked comparison/tangent rows. Neither the marginal AW floor
-nor the pitch-only ceiling proves those bounds. Uniform absorption together
+nor the pitch-only ceiling proves those bounds. The qualified LIN-path
+conditional precision bound above supplies only its stated component. Uniform absorption together
 with physical prediction/reset/reference/source work remains **OPEN**; no
 radius, new gauge dimension or independent covariance box is introduced.
 
@@ -356,16 +383,18 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
-An analytical obligation: bound the three-row endpoint Schur expression in
-`app:aw-frame-word` using the actual inherited conditional AW precision and
-attitude covariance, retaining signed physical word work and actual causal
-endpoint tangent maps. First establish positivity of its complementary block
-from process/S/magnetic action on a justified lift. Do not bound separate frame
-jumps, replace conditional precision by inverse marginal covariance, or invert
-an indefinite complementary block. The exact threshold is one; no enclosure
-should be launched without a derived compact domain and a reason it can cross
-that threshold. Full transverse c and planar admission remain separate OPEN
-obligations.
+An analytical obligation: assemble the **net** conditional/complementary
+blocks of the complete signed word gap, using (CA3)--(CA9), actual covariance
+suffix scores and endpoint tangent maps. Prove positivity and the relative
+Schur comparison `D_a-c I>0`, `D_o-c I-X' (D_a-c I)^-1 X>=0`
+in root-metric orthonormal coordinates.
+The conditional base process block now has a proved positive coefficient;
+its mixed work is not bounded by that fact. Keep the actual S and magnetic
+closed-loop transports and signed LIN/AG boundary work. Do not replace G in
+(FW9) by an assumed positive gap or use a pseudoinverse to erase a kernel.
+Only enclose a compact inequality once its activation and threshold are
+mathematically derived. Full transverse c and planar admission remain
+separate OPEN obligations.
 
 ## Verification scope
 
@@ -381,7 +410,9 @@ in the PR metadata.
    gauge, nonlinear fibre, both covariance parities, frontend/reference/clocks.
 2. Relaxations: fixed regular real-operation branches for derivatives and
    explicit norm/rounding majorants, qualified sqrt/exp and exact reference arithmetic; no arbitrary independent generated inputs.
-3. Failures: E proof-helper scope/derivative, source-anchor/display-delimiter bugs and a corrected
+3. Failures: E misplaced equation tags in the new conditional-loss display
+   caught by local LaTeX compilation and moved outside split; a new unsupported
+   math-font command was replaced by the existing font; E proof-helper scope/derivative, source-anchor/display-delimiter bugs and a corrected
    covariance-variable name collision with the retired-architecture guard, and
    unavailable local IEEEtran class (full rendering delegated to retained CI); D incomplete
    sufficient cell, fixed-root ball and AW norm-product tactics. No instability
@@ -389,7 +420,7 @@ in the PR metadata.
 4. Admitted counterexample: none; all-time admission/exclusion remains OPEN.
 5. Retained: 25 proved entries, qualified local theorem and exact compatibility
    obstruction; qualified frontend and linked storage proofs extend entries without count promotion.
-6. Next: absorb the exact endpoint quadratic and physical word work through
-   the three-row Schur test, retaining conditional precision and suffix scores;
-   prove only their required activation bounds.
+6. Next: retain the newly proved conditional base process loss in the full
+   signed mixed-block comparison, including covariance suffix scores and
+   source/gauge work; establish the net Schur margin before radius algebra.
    The uniform transverse gap and planar admission remain separate obligations.

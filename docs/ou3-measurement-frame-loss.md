@@ -413,3 +413,95 @@ This is a monotone coefficient bound, not an extra storage decrement or an
 upper bound on the signed h term. The floor is still evaluated on P_aa;
 dDelta retains the original target/face derivative. Prediction/reset and
 corrections still require inherited conditional-precision control.
+
+## Conditional AW action and the endpoint Schur blocker
+
+**PROVED — analytical, qualified:** Appendix `app:aw-conditional-loss`
+splits the actual joint storage without dropping cross covariance. In the
+partition `o=non-AW, a=AW`, let `B=P_oo`, `T=P_ao B^-1`,
+`C=P_aa-T P_oa`, `s=J eta`, and `ell=s_o+T' s_a`. Then
+
+```
+W_a = s_a' C s_a + lambda tr(C^-1 dC C^-1 dC)
+W_o = ell' B ell + lambda tr(B^-1 dB B^-1 dB)
+      + 2 lambda tr(C^-1 dT B dT')
+W = W_a + W_o.
+```
+
+Every optimal additive mag/S correction has `H_aw=0`, so `C,T,j_aw`
+and their linked variations are invariant. Thus `W_a` is invariant, including
+non-AW row/noise/reference/residual variations. The held-BA branch requires
+its reached active-block reduction. Subsequent reset/frame/face operations
+remain explicit. The endpoint coefficient decreases exactly by
+
+`a'(Q-Q+)a = tr((j_aw j_aw'+2 lambda J_aw,aw) [a] K_theta S K_theta' [a]') >= 0`.
+
+This is coefficient bookkeeping, not another loss to add to the 9/10 result.
+For the actual `b=d(K_aw r)`, the endpoint work still includes
+`2a'(h+-h)+2b'(Q+ a+h+)+b'Q+ b` with its signs intact.
+
+For the homogeneous base action, conditional directions
+`eta=E_aw C s_aw`, `dP=E_aw dC E_aw'` are missed by all such mag/S rows.
+They are three mean and six symmetric-covariance directions, **not physical
+gauges**. Literal integrated OU noise controls them: with
+`Q_process >= F E_aw q_* E_aw' F'` and the existing `C<=m I`,
+
+`A_process,conditional >= c_aw W_a`,
+`c_aw=q_*/(m+q_*) > 1/100000000000000`.
+
+The exact rational coefficient is
+`248188600375173268173354737 / 2611278820575057006547769109785667114737`.
+This is a uniform **base-action block** bound on the existing qualified real
+isotropic regular profile, not a complete process-tangent or word contraction.
+The proof shorts the full integrated OU covariance against the actual
+AW-to-v/p/S column, using the existing small-argument source defect and AW
+ceiling. It retains the covariance-generated prediction score; that score
+belongs to the remaining signed word work. No sampled enclosure is used.
+
+The exact conditional precision recurrence further preserves
+
+```
+phi^2 Jnext_aa = J_aa - L_aa - C_LIN
+L = J - F' Jnext F
+C_LIN = phi (Jnext_ao B_F+B_F' Jnext_oa)+B_F' Jnext_oo B_F
+B_F = E_o' F E_aw.
+```
+
+The resulting connection-square balance contains a positive process loss,
+signed integrated-chain work, and signed attitude/BG covariance work (CA7).
+It does not discard the latter two terms. Source variation of phi retains
+`aw*dphi` and its cross-plus-square charge.
+
+The existing LIN path matrix also gives
+`J_aw,aw <= (A_44/16) I < 15942618 I` after its qualified regular 16-second
+A21 window. This includes cross covariance; a conditional precision ceiling
+is now available on that domain. It does not automatically cover H18,
+startup, another profile or float32.
+
+| Required fact | Role | Current status |
+|---|---|---|
+| Actual P SPD, regular operation branch | Define precision and tangent | Qualified premise; global arithmetic/branch retention OPEN |
+| Existing isotropic AW ceiling and LIN process range | Positive conditional base loss | PROVED analytical implication on the bound profile |
+| Qualified 16-second LIN path activation | Finite conditional precision | PROVED analytical implication; chronology/other-profile transfer separate |
+| Applied mag/S rows and reached masks | Complementary measurement action | Exact identities; existing service assumed for general theorem |
+| Actual net mixed blocks and endpoint tangent maps | Positive complementary Schur block | OPEN |
+| Reference/noise, physical/source/gauge and generated covariance work | Absorption in the same storage | OPEN |
+| Finite-error chart and target arithmetic | Nonlinear every-prefix theorem | OPEN |
+
+**OPEN — endpoint Schur margin:** the preceding facts remove a zero-action
+block and establish conditional precision finiteness, but do not prove
+`R_c>0` or `Q_N^-1-Z R_c^-1 Z'>=0`. In particular `G` in that expression is
+already the full signed gap, not a known positive input. For net block matrix
+`[[D_a,X],[X',D_o]]` in root-metric orthonormal coordinates, the exact
+threshold for a proposed c is `D_a-c I>0` and
+`D_o-c I-X' (D_a-c I)^-1 X >= 0`. Both are **net signed** blocks. The base loss above
+cannot be substituted for that net block while discarding its work or X.
+No constant-tightening campaign or radius calculation is justified by this
+small positive block coefficient.
+
+Structures preserved: all conditional covariance correlations, actual
+integrated OU noise, actual mag/S gains, held reduction, AW floor, frame and
+suffix chronology. Relaxations: existing regular real/profile qualifications
+and a conservative lower bound for one base-action block. The incomplete
+Schur domination is D, not a shipping counterexample. All-time planar
+admission remains separate OPEN.

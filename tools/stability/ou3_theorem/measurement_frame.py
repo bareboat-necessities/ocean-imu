@@ -355,6 +355,119 @@ def aw_conditional_sync(P, e, increment, daw):
             'Fisher_connection_square_decrease': connection_loss}
 
 
+def conditional_aw_storage(P, e, eta, dP, weight=F(1)):
+    """Exact conditional/complementary joint storage, all cross blocks retained.
+
+    A Gaussian block identity for the actual covariance, not a replacement
+    observer or a new physical compatibility quotient.
+    """
+    ldlt(P)
+    if len(P) != 21 or dP != transpose(dP) or weight <= 0:
+        raise ValueError('full symmetric covariance tangent and positive weight required')
+    a, o = list(range(15, 18)), list(range(15))+list(range(18, 21))
+    def block(M, rows, cols):
+        return [[M[i][j] for j in cols] for i in rows]
+    B, dB = block(P, o, o), block(dP, o, o)
+    Binv = inverse(B)
+    T = product(block(P, a, o), Binv)
+    C = add(block(P, a, a), product(T, block(P, o, a)), -1)
+    dT = product(add(block(dP, a, o), product(T, dB), -1), Binv)
+    dC = add(add(add(block(dP, a, a), product(block(dP, a, o), transpose(T)), -1),
+                 product(T, block(dP, o, a)), -1), product(T, dB, transpose(T)))
+    J, Cinv = inverse(P), inverse(C)
+    j, s = product(J, e), product(J, eta)
+    sa, so = [s[i] for i in a], [s[i] for i in o]
+    ell = add(so, product(transpose(T), sa))
+    conditional = product(transpose(sa), C, sa)[0][0]+weight*trace(product(Cinv, dC, Cinv, dC))
+    complementary = product(transpose(ell), B, ell)[0][0]+weight*trace(product(Binv, dB, Binv, dB))
+    complementary += 2*weight*trace(product(Cinv, dT, B, transpose(dT)))
+    total = product(transpose(eta), J, eta)[0][0]+weight*trace(product(J, dP, J, dP))
+    assert total == conditional+complementary and min(conditional, complementary) >= 0
+    return {'regression': T, 'conditional_covariance': C, 'd_regression': dT,
+            'd_conditional_covariance': dC, 'conditional_information': [j[i] for i in a],
+            'conditional_score': sa, 'conditional_storage': conditional,
+            'complementary_storage': complementary, 'total_storage': total}
+
+
+def aw_precision_process_balance(P, Fmap, process, phi, daw):
+    """Same-operation conditional precision / OU-S-chain action balance.
+
+    Nominal-root default one-way tuner scope gives daw+=phi*daw. Source
+    variations of phi and both physical/chart discrepancies remain ports.
+    The signed integrated-chain and AG terms are not replaced by maxima.
+    """
+    ldlt(P)
+    if len(P) != 21 or not is_psd(process):
+        raise ValueError('complete covariance and actual PSD process required')
+    a, o = list(range(15, 18)), list(range(15))+list(range(18, 21))
+    for i in range(3):
+        if Fmap[15+i] != [phi*F(j == 15+i) for j in range(21)]:
+            raise ValueError('literal shared scalar OU AW row required')
+    C = add(product(Fmap, P, transpose(Fmap)), process)
+    J, Jnext = inverse(P), inverse(C)
+    loss = add(J, product(transpose(Fmap), Jnext, Fmap), -1)
+    assert is_psd(loss)
+    def block(M, rows, cols):
+        return [[M[i][j] for j in cols] for i in rows]
+    Jaa, Jaa_next, Qa = block(J, a, a), block(Jnext, a, a), block(loss, a, a)
+    B = block(Fmap, o, a)
+    cross = product(block(Jnext, a, o), B)
+    chain = add([[phi*x for x in row] for row in add(cross, transpose(cross))],
+                product(transpose(B), block(Jnext, o, o), B))
+    assert [[phi*phi*x for x in row] for row in Jaa_next] == add(add(Jaa, Qa, -1), chain, -1)
+    S = skew(daw)
+    old_theta, new_theta = block(P, range(3), range(3)), block(C, range(3), range(3))
+    old = trace(product(Jaa, S, old_theta, transpose(S)))
+    new = phi*phi*trace(product(Jaa_next, S, new_theta, transpose(S)))
+    positive_loss = trace(product(Qa, S, new_theta, transpose(S)))
+    chain_work = -trace(product(chain, S, new_theta, transpose(S)))
+    ag_work = trace(product(Jaa, S, add(new_theta, old_theta, -1), transpose(S)))
+    assert positive_loss >= 0 and new-old == -positive_loss+chain_work+ag_work
+    return {'conditional_precision': Jaa, 'next_conditional_precision': Jaa_next,
+            'AW_process_action': Qa, 'integrated_chain_precision_term': chain,
+            'connection_before': old, 'connection_after': new,
+            'positive_connection_loss': positive_loss,
+            'signed_chain_work': chain_work, 'signed_AG_work': ag_work}
+
+
+def qualified_aw_precision_ceiling():
+    """Corollary of the existing scaled LIN path certificate, not new sampling."""
+    from .lin_matrix_certificate import action_matrix, SCALES
+    value = action_matrix()[3][3]/F(SCALES[3])**2
+    upper = F(15942618)
+    assert 0 < value < upper
+    return {'exact_upper': str(value), 'integer_upper': str(upper),
+            'scope': 'same qualified real regular A21 16-second LIN-path profile and activation; no automatic H18/profile/float transfer',
+            'conditional_not_marginal_precision': True,
+            'sufficient_for_endpoint_Schur_margin': False}
+
+
+def conditional_aw_process_coercivity():
+    """Rational positive loss on the conditional AW zero-action block only.
+
+    Uses the literal integrated OU column/noise, its proved polynomial defect
+    and existing isotropic regular-profile AW ceiling. This is not a bound on
+    remaining signed work or a complete-word Schur margin. See app:aw-conditional-loss.
+    """
+    from .lin_path_certificate import small_x_source_defect
+    from .aw_covariance_ceiling import ceiling
+    eps, _, gram0, _ = small_x_source_defect()
+    inverse_norm = max(sum(abs(v) for v in row) for row in inverse(gram0))
+    assert inverse_norm == 81060
+    # sigma^2*x >= (.05)^2*(.004/12), x<=.3, and ||D_h^-1 F e_a||^2<=4.
+    shorted_noise = (1-eps)*F(1, 1200000)/(4*F(13, 10)**2*inverse_norm)
+    c = shorted_noise/(ceiling(eps)+shorted_noise)
+    assert F(1, 10**14) < c < 1
+    return {'shorted_process_noise_lower': str(shorted_noise),
+            'conditional_covariance_upper': str(ceiling(eps)),
+            'mean_loss_fraction_lower': str(c),
+            'covariance_loss_fraction_lower': str(2*c-c*c),
+            'simple_loss_fraction_lower': '1/100000000000000',
+            'scope': 'base process action on conditional AW mean/covariance directions; existing real isotropic regular profile, h in [.004,.006], tau in [.02,12], sigma in [.05,4]',
+            'mixed_block_or_signed_work_absorption': False,
+            'uniform_complete_word_gap': False}
+
+
 def certificate():
     return {
         'qualification': 'OU3_MEASUREMENT_FRAME_V2',
@@ -396,6 +509,13 @@ def certificate():
         'AW_frame_endpoint_absorption_verified': False,
         'actual_AW_sync_conditional_precision_nonincrease': True,
         'actual_AW_sync_connection_square_nonincrease': True,
+        'conditional_AW_joint_storage_decomposition': True,
+        'non_AW_measurement_conditional_storage_invariant': True,
+        'non_AW_measurement_endpoint_square_matrix_decreases': True,
+        'linked_OU_conditional_precision_and_connection_balance': True,
+        'qualified_AW_conditional_precision_ceiling': qualified_aw_precision_ceiling(),
+        'conditional_AW_process_coercivity': conditional_aw_process_coercivity(),
+        'conditional_AW_loss_proof': 'app:aw-conditional-loss',
         'AW_shear_floor_face_uses_original_recovered_marginal': True,
         'AW_shear_preserves_qualified_planar_magnetic_loss': True,
         'planar_acc_physical_mismatch': 'm=J_y[t daw+omega e_aw-omega t D(t)(a_phys-g)-omega nu], D(t)=(R_y(-t)-I)/t',

@@ -439,7 +439,8 @@
         "moving-frame row calculus and qualified planar 9/10 magnetic loss are proved in app:measurement-frame-loss; the covariance reader assumes prior applied service and qualified reference geometry, while inherited chart/energy activation and full word coercivity remain OPEN",
         "app:linked-word-score proves the exact suffix-score normal form, range-aware Fisher-loss charge and inherited comparison-energy/supply budget, retaining internally generated covariance ports and physical S; uniform signed supply, full port absorption and transverse coercivity remain OPEN",
         "app:aw-shear-loss proves the invertible AW shear, covariance row-port connection difference, linked joint substep balance and central-planar physical curvature charge using the actual pitch/AW covariance block; applied-increment frame, OU/BG/LIN/noise/source ports and uniform absorption remain OPEN",
-        "app:aw-frame-word proves exact cancellation of internal frame connections in the complete suffix word and the signed three-dimensional AW endpoint quadratic; conditional AW precision, complementary positivity and uniform endpoint/physical-work absorption remain OPEN"
+        "app:aw-frame-word proves exact cancellation of internal frame connections in the complete suffix word and the signed three-dimensional AW endpoint quadratic; qualified conditional AW precision is supplied by the LIN path; complementary positivity and uniform endpoint/physical-work absorption remain OPEN",
+        "app:aw-conditional-loss proves the exact conditional storage split, mag/S invariance, linked OU precision balance, and uniform conditional base process loss >1e-14 on the existing isotropic regular profile; this is not a complete tangent/word gap and does not absorb signed mixed work or establish inherited activation"
       ],
       "proof_modules": [
         "tools/stability/ou3_theorem/planar_service_cell.py",

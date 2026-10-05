@@ -25,6 +25,18 @@
   "anisotropic_noise_port": "dRbar=R^T dRnoise R-[omega]Rbar+Rbar[omega]",
   "attitude_row_derivative": "exactly zero in the moving frame for both measurements",
   "coefficient_8_is_uniform_algebraic_constant": true,
+  "conditional_AW_joint_storage_decomposition": true,
+  "conditional_AW_loss_proof": "app:aw-conditional-loss",
+  "conditional_AW_process_coercivity": {
+    "conditional_covariance_upper": "248198254120826731826645263/15512089203000000000000000",
+    "covariance_loss_fraction_lower": "1296179271335651607623221768719956810940790729968822206224722579169/6818777078783860763312272150046815517371789003742017627281447333845162322579169",
+    "mean_loss_fraction_lower": "248188600375173268173354737/2611278820575057006547769109785667114737",
+    "mixed_block_or_signed_work_absorption": false,
+    "scope": "base process action on conditional AW mean/covariance directions; existing real isotropic regular profile, h in [.004,.006], tau in [.02,12], sigma in [.05,4]",
+    "shorted_process_noise_lower": "248188600375173268173354737/163201752333608002560000000000000000000",
+    "simple_loss_fraction_lower": "1/100000000000000",
+    "uniform_complete_word_gap": false
+  },
   "covariance_frame_derivative": "dPbar=T^T dP T-Omega Pbar+Pbar Omega",
   "default_AW_map_unchanged_in_frame": true,
   "frame": "T=diag(R,R,I,I,I,I,R), R=actual nominal world-to-body rotation",
@@ -33,10 +45,13 @@
   "held_mask_congruence": true,
   "internal_frame_connections_cancel_in_complete_word": true,
   "isotropic_fixed_noise_rotation_port": "0",
+  "linked_OU_conditional_precision_and_connection_balance": true,
   "mag_connection_energy": "v^T (Rbar^-1-Sbar^-1) v, v=[omega]rbar+Hbar Omega ebar",
   "mag_mean_connection_port": "-Kbar([omega] rbar+Hbar Omega ebar)",
   "mag_row": "Hbar_mag=[-[Bref]x,0,0,0,0,0,0]",
   "nominal_aw_cap_needed_for_dH_coefficient": false,
+  "non_AW_measurement_conditional_storage_invariant": true,
+  "non_AW_measurement_endpoint_square_matrix_decreases": true,
   "planar_12_plus_9_parity_preserved": true,
   "planar_acc_charge_requires_nominal_AW_or_BA_box": false,
   "planar_acc_charge_retains_pitch_AW_cross_covariance": true,
@@ -99,6 +114,13 @@
   "positive_magnetic_loss_scope": "nominal planar invariant stratum, even mean and parity-block covariance; not all nominal perturbations",
   "profile": "planar wrapper sigma_a=.2, sigma_g=.00135, sigma_m=.8, b0=1e-10, adaptive S; no AtomS3R transfer",
   "qualification": "OU3_MEASUREMENT_FRAME_V2",
+  "qualified_AW_conditional_precision_ceiling": {
+    "conditional_not_marginal_precision": true,
+    "exact_upper": "310844177745382626262453835516876046051643556226902836662649035914313887596127/19497687926716367455706454615274952388429201571827117432885811200000000",
+    "integer_upper": "15942618",
+    "scope": "same qualified real regular A21 16-second LIN-path profile and activation; no automatic H18/profile/float transfer",
+    "sufficient_for_endpoint_Schur_margin": false
+  },
   "relaxations_introduced": [
     "regular real-operation derivatives; finite precision and branch crossings separate",
     "CoG profile stated; nonzero lever-arm Jacobian needs its own retained port"

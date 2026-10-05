@@ -435,6 +435,11 @@ def status_report() -> dict:
             "AW_frame_endpoint_quadratic_verified":True,
             "AW_frame_endpoint_absorption_verified":False,
             "actual_AW_sync_conditional_precision_nonincrease":True,
+            "conditional_AW_storage_split_verified":True,
+            "mag_S_conditional_AW_storage_invariant":True,
+            "qualified_conditional_AW_precision_upper":"15942618",
+            "qualified_conditional_AW_base_process_loss_lower":"1/100000000000000",
+            "conditional_AW_base_loss_is_complete_gap":False,
             "central_planar_acc_physical_curvature_charge_verified":True,
             "central_planar_acc_charge_uses_nominal_AW_BA_boxes":False,
             "qualified_planar_magnetic_coupled_loss_fraction":"9/10",
@@ -465,7 +470,10 @@ def status_report() -> dict:
             "Its loss-generated score charge is bounded by inherited root comparison energy plus signed source work minus realized NIS; physical/kernel forcing remains. "
             "The AW shear makes the accelerometer row constant and cancels its covariance row port as an exact connection difference, preserving qualified magnetic loss. "
             "Internal frame connections now cancel in the complete suffix word, leaving an exact three-dimensional signed AW endpoint quadratic. "
-            "Absorb that endpoint work and remaining physical work through the three-row Schur test, retaining conditional AW precision, both parities, actual endpoint derivatives and moving gauge; no uniform margin is certified. "
+            "Conditional AW storage is invariant under optimal additive mag/S rows; literal integrated OU noise gives a qualified positive base-action block loss greater than 1e-14. "
+            "The existing LIN path gives conditional AW precision below 15942618 on its qualified regular A21 domain. "
+            "Assemble the net signed conditional/complementary blocks, retaining integrated-chain/AG work, generated covariance scores and endpoint gauge. "
+            "Their relative Schur domination, not conditional precision finiteness alone, remains unproved; no uniform complete margin is certified. "
             "Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes "
             "to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. "
             "The physical same-record tangent is forced and is not automatically the homogeneous or action kernel. "

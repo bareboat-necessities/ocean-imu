@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "fcd8f4ec7da92a8f9d72cf678e7140e7d6f172e3"
+      "git_blob_sha": "a32a8fdbb3f2df9734815fa8a2484090fc02a76d"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "b2084b1e4d8548d17f0169c33c9eb001da21c403"
+      "git_blob_sha": "9272cf27b58c232bdc695865165fdb6d8aef3717"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "b610e95480d35913e216954fa8185984792ca9b3"
+      "git_blob_sha": "b00e774e7a6a693d3d63a6431561eeea3a7f1d34"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "106d2357be874ea8a49b4e4209abb74c95f28234"
+      "git_blob_sha": "83fb4033f56d12452022b1f3437b8f7caef985bb"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "b9ebfa36c9fa940b40ccc5eced3d2d99701e88a3"
+      "git_blob_sha": "8ae6f262b92188ef0e82f2d526600267ecb9d3bd"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "99cf476cf89d168369ed2508cd0f400862d16f86"
+      "git_blob_sha": "a370a92b36eaf6c84799d8ec3323a4a50cdf9d5a"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -956,7 +956,7 @@
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "573346fee0e99f13d0d9d20e19bff48c6e3deea7"
+      "git_blob_sha": "c1000b89a6f8e9ca1639cb96e16b9ab06a84bcce"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
@@ -964,19 +964,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "b5f4f070a99fa02ec587eb675ce697e7ae1cd53c"
+      "git_blob_sha": "de4e61416e7167ee3f04fe0b464318fd50d6123b"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "e74f8c37b217e49da08633d3f2d6ec9633d194ce"
+      "git_blob_sha": "c17686e3594f53fb68ceb8b041a9958f6dee2293"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
-      "git_blob_sha": "6da19624041c360731e1e9ac1038bb7b5a4103e2"
+      "git_blob_sha": "8f63dce4c175c3c0736245d037183fba2b89c417"
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "a01c1e6a9f25a1344a23074a97c46a61d9ef0c6c"
+      "git_blob_sha": "84cf7c41b6d55cb4ef81cb7a20c993bd28ba67aa"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
@@ -1163,7 +1163,8 @@
       "pre_correction_window_bookkeeping": "E, corrected using strictly prior IMU-rooted windows",
       "unclosed_complete_word_gap": "D, no shipping counterexample",
       "local_evidence_test_dependency": "E, Eigen 3.4.0 supplied through existing EIGEN_INCLUDE_DIR",
-      "test_process_stale_certificate": "E, scope metadata edited during a running suite; freeze artifacts and rerun"
+      "test_process_stale_certificate": "E, scope metadata edited during a running suite; freeze artifacts and rerun",
+      "conditional_loss_latex": "E, equation tags moved outside split and unsupported new math-font command replaced; local compilation then passed"
     },
     "AW_shear_constant_acc_row_verified": true,
     "AW_row_covariance_port_connection_difference_verified": true,
@@ -1183,6 +1184,14 @@
     "AW_frame_word_proof": "app:aw-frame-word",
     "actual_AW_sync_conditional_precision_nonincrease": true,
     "actual_AW_sync_conditional_comparison_nonincrease": true,
-    "actual_AW_sync_Fisher_connection_square_nonincrease": true
+    "actual_AW_sync_Fisher_connection_square_nonincrease": true,
+    "conditional_AW_loss_proof": "app:aw-conditional-loss",
+    "conditional_AW_storage_decomposition_verified": true,
+    "mag_S_conditional_AW_storage_invariant": true,
+    "linked_OU_conditional_precision_balance_verified": true,
+    "qualified_conditional_AW_precision_ceiling": "15942618",
+    "qualified_conditional_AW_base_process_loss_lower": "1/100000000000000",
+    "conditional_AW_base_loss_is_complete_word_gap": false,
+    "remaining_Schur_obligation": "net signed conditional/complementary blocks including generated covariance scores, integrated-chain/AG, reference/source and endpoint gauge work; no positive uniform margin certified"
   }
 }

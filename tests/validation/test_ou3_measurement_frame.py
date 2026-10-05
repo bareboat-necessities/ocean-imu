@@ -15,6 +15,8 @@ from tools.stability.ou3_theorem.measurement_frame import (
     planar_acc_mismatch_charge,
     moving_frame_word_ports, aw_frame_boundary_work,
     aw_conditional_sync,
+    conditional_aw_storage, aw_precision_process_balance, qualified_aw_precision_ceiling,
+    conditional_aw_process_coercivity,
 )
 from tools.stability.ou3_theorem.planar_innovation_storage import information_shear_correction
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import product
@@ -368,6 +370,107 @@ class MeasurementFrameTests(unittest.TestCase):
         self.assertGreater(out['Fisher_connection_square_decrease'], 0)
         self.assertEqual(aw_conditional_sync(self.P, e, zeros(3, 3), [1, 0, 0])[
                          'Fisher_connection_square_decrease'], 0)
+
+    def test_mag_S_conditional_storage_invariant_with_row_noise_ports(self):
+        e, de, D = zeros(21, 1), zeros(21, 1), zeros(21, 21)
+        e[1][0], e[15][0], e[12][0] = F(1, 7), F(2, 9), F(1, 5)
+        de[1][0], de[15][0] = F(1, 11), F(2, 13)
+        D[1][15] = D[15][1] = F(1, 17)
+        eta = add(de, product(D, inverse(self.P), e), -1)
+        old = conditional_aw_storage(self.P, e, eta, D)
+        Hs = zeros(3, 21)
+        for i in range(3):
+            Hs[i][12+i] = F(1)
+        for H in (self.mag, Hs):
+            # dH_aw=0: arbitrary linked non-AW row/noise/residual ports are
+            # allowed by the identity. These operands are not a reached cell.
+            dH, dR = zeros(3, 21), zeros(3, 3)
+            dH[0][1], dR[0][0] = F(1, 19), F(1, 23)
+            dr = [[F(1, 29)], [F(-1, 31)], [F(2, 37)]]
+            op = correction(self.P, H, self.noise, self.r)
+            out = information_shear_correction(self.P, H, self.noise, e, self.r,
+                D, de, dH, dR, dr)
+            dk = gain_differential(self.P, H, op['K'], inverse(op['S']), D, dH, dR)
+            ep = add(e, op['increment'])
+            dep = add(add(de, product(dk, self.r)), product(op['K'], dr))
+            Dp = out['posterior_covariance_tangent']
+            etap = add(dep, product(Dp, inverse(op['C']), ep), -1)
+            new = conditional_aw_storage(op['C'], ep, etap, Dp)
+            for key in ('regression', 'conditional_covariance', 'd_regression',
+                        'd_conditional_covariance', 'conditional_information',
+                        'conditional_score', 'conditional_storage'):
+                self.assertEqual(old[key], new[key], key)
+            beforeQ = aw_frame_boundary_work(self.P, e, eta, D, [0, 0, 0])['quadratic_coefficient']
+            afterQ = aw_frame_boundary_work(op['C'], ep, etap, Dp, [0, 0, 0])['quadratic_coefficient']
+            from tools.stability.ou3_theorem.matrix_certificates import is_psd
+            self.assertTrue(is_psd(add(beforeQ, afterQ, -1)))
+
+    def test_literal_OU_row_keeps_integrated_chain_in_precision_balance(self):
+        phi, Fmap, Q = F(4, 5), identity(21), identity(21)
+        for i in range(3):
+            Fmap[15+i][15+i] = phi
+            Fmap[i][3+i] = F(1, 9)
+            for row, coefficient in ((6, F(2, 7)), (9, F(1, 11)), (12, F(1, 13))):
+                Fmap[row+i][15+i] = coefficient
+        out = aw_precision_process_balance(self.P, Fmap, Q, phi, [F(1, 7), 0, F(-1, 9)])
+        self.assertGreater(out['positive_connection_loss'], 0)
+        self.assertNotEqual(out['signed_chain_work'], 0)
+        self.assertNotEqual(out['signed_AG_work'], 0)
+        self.assertEqual(out['connection_after']-out['connection_before'],
+            -out['positive_connection_loss']+out['signed_chain_work']+out['signed_AG_work'])
+        Fmap[15][6] = F(1, 17)
+        with self.assertRaises(ValueError):
+            aw_precision_process_balance(self.P, Fmap, Q, phi, [1, 0, 0])
+
+    def test_existing_path_certificate_bounds_conditional_AW_precision(self):
+        out = qualified_aw_precision_ceiling()
+        self.assertLess(F(out['exact_upper']), F(15942618))
+        self.assertTrue(out['conditional_not_marginal_precision'])
+        self.assertFalse(out['sufficient_for_endpoint_Schur_margin'])
+
+    def test_conditional_AW_process_loss_is_positive_but_not_full_gap(self):
+        out = conditional_aw_process_coercivity()
+        q, m = F(out['shorted_process_noise_lower']), F(out['conditional_covariance_upper'])
+        c = F(out['mean_loss_fraction_lower'])
+        self.assertEqual(c, q/(m+q))
+        self.assertGreater(c, F(1, 10**14))
+        self.assertEqual(F(out['covariance_loss_fraction_lower']), 2*c-c*c)
+        self.assertFalse(out['mixed_block_or_signed_work_absorption'])
+        self.assertFalse(out['uniform_complete_word_gap'])
+
+    def test_conditional_process_comparison_retains_full_cross_covariance(self):
+        from tools.stability.ou3_theorem.information_shear_word import trace
+        from tools.stability.ou3_theorem.matrix_certificates import is_psd
+        # Formal exact operands verify CA8/CA9; no reached-domain claim.
+        E = zeros(21, 3)
+        for i in range(3):
+            E[15+i][i] = F(1)
+        Fmap = identity(21)
+        for i in range(3):
+            Fmap[15+i][15+i] = F(4, 5)
+            Fmap[6+i][15+i], Fmap[9+i][15+i] = F(1, 7), F(1, 13)
+            Fmap[12+i][15+i] = F(1, 19)
+        J = inverse(self.P)
+        C = inverse(product(transpose(E), J, E))
+        q = F(1, 20)
+        noise = add(product(Fmap, E, [[q*x for x in r] for r in identity(3)],
+                            transpose(E), transpose(Fmap)), identity(21))
+        Jnext = inverse(add(product(Fmap, self.P, transpose(Fmap)), noise))
+        compressed = product(transpose(E), transpose(Fmap), Jnext, Fmap, E)
+        upper = inverse(add(C, [[q*x for x in r] for r in identity(3)]))
+        self.assertTrue(is_psd(add(upper, compressed, -1)))
+        m = max(sum(abs(x) for x in r) for r in C)
+        c = q/(m+q)
+        sa = [[F(1, 7)], [F(-1, 11)], [F(2, 13)]]
+        dC = [[F(1, 17), F(1, 19), 0], [F(1, 19), F(-1, 23), 0], [0, 0, F(1, 29)]]
+        eta, D = product(E, C, sa), product(E, dC, transpose(E))
+        mean0 = product(transpose(eta), J, eta)[0][0]
+        mean1 = product(transpose(eta), transpose(Fmap), Jnext, Fmap, eta)[0][0]
+        fisher0 = trace(product(J, D, J, D))
+        Dnext = product(Fmap, D, transpose(Fmap))
+        fisher1 = trace(product(Jnext, Dnext, Jnext, Dnext))
+        self.assertGreaterEqual(mean0-mean1, c*mean0)
+        self.assertGreaterEqual(fisher0-fisher1, (2*c-c*c)*fisher0)
 
 
 if __name__ == '__main__':

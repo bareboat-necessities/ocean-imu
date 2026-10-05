@@ -2622,9 +2622,10 @@ The need to price every $dB_L=N(dK_{aw}r+K_{aw}dr)$ separately is discharged:
 norms, preserving every generated covariance score. The endpoint matrix
 (FW7), its actual three-row tangent map and the remaining signed physical word
 work are now the objects that must be absorbed. This calculation proves no
-uniform domination of them by process/$S$/magnetic action. The unavailable
-facts are the inherited conditional AW precision and attitude-block bounds
-actually needed by (FW7), the same-history comparison/source budget and
+uniform domination of them by process/$S$/magnetic action. Appendix~\ref{app:aw-conditional-loss} supplies conditional precision on the
+qualified LIN-path domain and positive base process loss on its conditional
+AW block. The unavailable facts are the inherited activation and full
+attitude-block comparisons actually needed by (FW7), the same-history comparison/source budget and
 complete prefix derivatives, and the quantitative service-to-coupled-action
 comparison giving a positive $R_c$ with the margin in (FW9). They are proof
 obligations, not new physical premises. Reference/gates, finite-error chart,
@@ -2639,6 +2640,244 @@ attempt remains D (insufficient proved bound), not a shipping counterexample.
 The qualified magnetic and physical-curvature results remain valid; they must
 be evaluated in one consistent storage. General service-conditioned stability
 and special planar all-time admission are still separate open obligations.
+
+\subsection{Conditional AW storage, linked process loss and the unresolved endpoint margin}
+\label{app:aw-conditional-loss}
+
+\paragraph{Quantifiers and role.}
+The block identities below hold at every regular real-operation boundary with
+actual $P\succ0$, symmetric $D=dP$, $\lambda>0$, and linked comparison
+$e,\eta=de-DP^{-1}e$. The strictly positive process bound additionally uses
+exactly the existing isotropic regular-profile AW-ceiling and LIN-process
+qualifications: $h\in[.004,.006]$, $\tau\in[.02,12]$,
+$\sigma\in[.05,4]$, default additive AW synchronization and no reconfiguration.
+They are implications on that inherited domain, not capture, float32, H18
+release, or arbitrary-profile results. The obligation addressed is the
+conditional AW block of (FW8), including the covariance tangent; the complete
+endpoint Schur margin remains a separate signed matrix comparison.
+
+\paragraph{Exact conditional decomposition.}
+Reorder coordinates as $(o,a)$, where $a$ is the three AW coordinates and
+$o$ contains the other eighteen. Define
+\[
+\begin{gathered}
+ B=P_{oo},\quad T=P_{ao}B^{-1},\quad C=P_{aa}-TP_{oa},\\
+ j=Je,\quad s=J\eta=d(Je),\quad \ell=s_o+T^Ts_a.
+\end{gathered}
+\]
+Here $J_{aa}=C^{-1}$ is conditional precision. With $D=dP$,
+\[
+ dT=(D_{ao}-TD_{oo})B^{-1},\quad
+ dC=D_{aa}-D_{ao}T^T-TD_{oa}+TD_{oo}T^T.
+\]
+The full joint storage splits exactly, with no deleted directions:
+\[
+\begin{split}
+ W&=W_a+W_o,\\
+ W_a&=s_a^TCs_a+\lambda\operatorname{tr}(C^{-1}dC C^{-1}dC),\\
+ W_o&=\ell^TB\ell+\lambda\operatorname{tr}(B^{-1}dB B^{-1}dB)
+       +2\lambda\operatorname{tr}(C^{-1}dT B dT^T).
+\end{split}                                                     \tag{CA1}
+\]
+To prove this, factor
+$P=\left(\begin{smallmatrix}I&0\\T&I\end{smallmatrix}\right)
+\operatorname{diag}(B,C)
+\left(\begin{smallmatrix}I&T^T\\0&I\end{smallmatrix}\right)$.
+Congruence of $D$ by the inverse triangular factor gives diagonal blocks
+$dB,dC$ and off-diagonal blocks $BdT^T,dTB$. The two off-diagonal products
+in the Fisher trace give the factor two in (CA1). Expansion of $s^TPs$
+gives its mean terms. All terms are nonnegative. This is a covariance
+conditional decomposition, not a physical compatibility quotient.
+
+\paragraph{What actual magnetic and integral corrections control.}
+For every optimal additive correction with $H=[H_o,0]$,
+\[
+ J^+=J+H^TR^{-1}H,\qquad
+ j^+=j+H^TR^{-1}(r+He).                                      \tag{CA2}
+\]
+Thus $J_{aa},J_{ao},j_a$ are unchanged, and consequently $C,T,j_a$
+are unchanged. Differentiating this identity proves that $dC,dT,s_a$ and
+$W_a$ are unchanged even for linked $dH_o,dR,dr$, provided $H_a=dH_a=0$.
+The nominal-world magnetic and $S$ rows satisfy this restriction. The held-BA
+case requires the reached active-block/effective-noise reduction; arbitrary
+masked corrections are not covered. Injection/reset, changing world frame,
+projection and branch crossings remain subsequent literal ports.
+
+The endpoint coefficient in (FW7) has the form
+\[
+ Q_{jk}=\operatorname{tr}\{(j_aj_a^T+2\lambda J_{aa})
+                 [e_j]_\times P_{\theta\theta}[e_k]_\times^T\}.
+\]
+The weight $j_aj_a^T+2\lambda J_{aa}$ is invariant in (CA2). Since the same
+actual update has $P_{\theta\theta}-P^+_{\theta\theta}=K_\theta S K_\theta^T$,
+for every $a\in\mathbb R^3$,
+\[
+ a^T(Q-Q^+)a=\operatorname{tr}\{(j_aj_a^T+2\lambda J_{aa})
+ [a]_\times K_\theta S K_\theta^T[a]_\times^T\}\ge0.             \tag{CA3}
+\]
+This coefficient decrease is not a second storage decrement to add to the
+already proved magnetic loss. In particular, the actual endpoint direction
+changes by $b=d(K_{aw}r)$, so its signed work obeys instead
+\[
+ \Phi^+-\Phi=-a^T(Q-Q^+)a+2a^T(h^+-h)
+       +2b^T(Q^+a+h^+)+b^TQ^+b.                              \tag{CA4}
+\]
+All quantities here belong to the same correction; $b$ is not a new input.
+For fixed rows/noise on the additive substep, $\eta^+=(I-KH)\eta+Km$ and
+$D^+J^+=(I-KH)DJ$ give the additional exact relation
+\[
+ h_j^+-h_j=-j_a^T[e_j]_\times K_\theta(H\eta-m)
+       +2\lambda\operatorname{tr}(K_\theta HDJE_a[e_j]_\times).
+                                                               \tag{CA5}
+\]
+Row/noise/reference variations add their literal derivative terms; (CA5)
+does not discard them or apply unchanged when those operands vary.
+
+For homogeneous fixed-row/noise additive transport, the subspace
+$\ell=0,dB=0,dT=0$ is zero-action for all such non-AW measurements:
+$\eta=E_aCs_a$ and $D=E_a dC E_a^T$ are unchanged by their base action.
+It has three mean and six symmetric covariance coordinates. These are
+algebraic storage directions, not nine physical gauges. They are retained,
+and process action supplies their missing loss as follows.
+
+\paragraph{Literal process comparison, including the integrated chain.}
+Let $P^+=FPF^T+Q_p$, $J^+=(P^+)^{-1}$ and
+$\mathcal L=J-F^TJ^+F\succeq0$. The actual AW row is
+$E_a^TF=\phi E_a^T$, whereas $B_F=E_o^TFE_a$ includes the integrated
+$v,p,S$ columns. Exact block expansion gives
+\[
+ \phi^2J^+_{aa}=J_{aa}-\mathcal L_{aa}-\mathcal C_{LIN},\qquad
+ \mathcal C_{LIN}=\phi(J^+_{ao}B_F+B_F^TJ^+_{oa})+B_F^TJ^+_{oo}B_F.
+                                                               \tag{CA6}
+\]
+For $\mathcal K(P,a)=\operatorname{tr}(J_{aa}[a]_\times
+P_{\theta\theta}[a]_\times^T)$ this yields
+\[
+\begin{split}
+ \mathcal K(P^+,\phi a)-\mathcal K(P,a)
+ ={}&-\operatorname{tr}(\mathcal L_{aa}[a]_\times P^+_{\theta\theta}[a]_\times^T)\\
+ &-\operatorname{tr}(\mathcal C_{LIN}[a]_\times P^+_{\theta\theta}[a]_\times^T)\\
+ &+\operatorname{tr}(J_{aa}[a]_\times
+             (P^+_{\theta\theta}-P_{\theta\theta})[a]_\times^T).
+\end{split}                                                     \tag{CA7}
+\]
+The first term is loss. The other terms retain their signs and actual LIN/AG
+correlations; BG coupling remains in $F$ and the full $J^+$. The relation
+$da^+=\phi da$ applies to nominal-root variations on the proved one-way tuner
+branch. A source/auxiliary variation adds $\widehat a\,d\phi$ and its exact
+cross-plus-square work. It cannot be dropped from a source-uniform word.
+
+\paragraph{A positive uniform process loss on the missed conditional block.}
+There is a direct comparison stronger than merely asserting pointwise rank.
+If the actual process matrix satisfies
+\[
+ Q_p\succeq FE_a q E_a^TF^T,\qquad q\succ0,
+\]
+then inverse order (the regular $F$ is invertible) gives
+\[
+ E_a^TF^TJ^+FE_a\preceq(C+q)^{-1},\qquad
+ \mathcal L_{aa}\succeq C^{-1}-(C+q)^{-1}.                    \tag{CA8}
+\]
+The first identity uses the Schur complement of $P+E_aqE_a^T$;
+it does not replace $C$ by the AW marginal.
+For $q\succeq q_*I$, $C\preceq mI$, put $c_a=q_* /(m+q_*)$.
+On the conditional block $\eta=E_aCs_a,D=E_adCE_a^T$,
+\[
+ \mathcal A_{p,a}\ge c_a s_a^TCs_a
+   +(2c_a-c_a^2)\lambda\operatorname{tr}(C^{-1}dC C^{-1}dC)
+   \ge c_a W_a.                                             \tag{CA9}
+\]
+Indeed $C^{1/2}E_a^TF^TJ^+FE_aC^{1/2}\preceq(1-c_a)I$ bounds
+the mean quadratic and both sides of the symmetric Fisher tangent, hence
+its squared factor $(1-c_a)^2$. This proves coercivity on the stated block;
+for a general tangent, cross terms with its complement must still be kept.
+
+Here $q_*$ can be made uniform using existing source bounds, without a new
+sampled enclosure. Let $x=h/\tau$, $D_h=\operatorname{diag}(h,h^2,h^3,1)$,
+and $f=D_h^{-1}F_{LIN}e_a$. The literal transition has $|f_i|\le1$:
+for the exponential branch these are integrated exponential kernels;
+for $x<.01$ the literal entries are
+$1/2-x/6+x^2/24$ and $1/6-x/24+x^2/120$, both in $(0,1)$.
+Let $B_0$ be the normalized zero-argument OU Gram matrix with entries
+$2/(m!n!(m+n+1))$, $(m,n)\in\{1,2,3,0\}^2$.
+Its exact inverse absolute row bound is $M=81060$.
+The Volterra resolvent identity for the integrated exponential kernels gives
+$B(x)\succeq B_0/(1+x)^2$: apply
+$\|u+xVu\|_2\le(1+x)\|u\|_2$ with $\|V\|\le1$ to each kernel combination.
+The existing literal small-$x$ certificate gives the relative covariance
+error $\varepsilon<1$; outside that branch no truncation error is charged.
+Consequently
+\[
+\begin{gathered}
+ Q_{axis}^{ship}\succeq
+ \sigma^2x\frac{1-\varepsilon}{(1+x)^2}D_hB_0D_h,\\
+ (F_{LIN}e_a)^T(Q_{axis}^{ship})^{-1}F_{LIN}e_a
+ \le\frac{4(13/10)^2M}{(1-\varepsilon)/1200000}.
+\end{gathered}
+\]
+The rank-one Schur complement therefore proves the required process
+comparison, with the integrated column intact, for
+\[
+ q_* =\frac{(1-\varepsilon)/1200000}{4(13/10)^2\,81060}>0.
+                                                               \tag{CA10}
+\]
+The full process is block diagonal between LIN and AG/BA; their nonnegative
+process contributions preserve this comparison, including held-BA zeros.
+The existing isotropic AW ceiling gives
+$C\preceq P_{aa}\preceq mI$, $m=16(1+\varepsilon)$ on its qualified
+inherited profile. Exact rational evaluation gives
+\[
+ c_a=\frac{248188600375173268173354737}
+ {2611278820575057006547769109785667114737}>10^{-14}.             \tag{CA11}
+\]
+This small but strictly positive base-action bound removes the unquantified
+process-loss premise on the conditional AW block. It is not $c_{complete}$,
+not an affordable bound on remaining work, and not a reason to run a scalar
+constant-tightening campaign. No reachability of independently extreme tuner
+values is asserted: (CA10) is a valid conservative lower bound for every
+jointly generated tuple in the existing qualified range.
+
+\paragraph{Conditional precision is finite on the qualified path domain.}
+The existing 16-second LIN path certificate has scales $(2.4,18,132,4)$ and
+matrix $A$, so $D_{LIN}E_{LIN}^TJE_{LIN}D_{LIN}\preceq A\otimes I$.
+Thus $J_{aa}\preceq(A_{44}/16)I\prec15942618I$. The rational calculation
+uses the committed path matrix, not a replay. Cross covariance is included;
+this is a conditional precision bound, not $P_{aa}^{-1}$. Its regular A21
+activation, noise floors and profile bindings must be inherited. It is not
+an all-time H18/reference/chart or target-toolchain arithmetic theorem.
+
+\paragraph{The exact obstruction remaining in the Schur test.}
+(CA3), (CA7) and (CA9) give signed linked measurement/process terms and positive
+conditional-block base loss. They do not establish $R_c\succ0$ in (FW9).
+In particular, $G$ in that formula is the full action minus remaining linked
+work, not an already positive matrix. On a justified stored lift use a
+root-metric orthonormal basis, first for its intersection with the conditional
+subspace and then its complement. Write the actual signed gap
+$\mathcal G=G+K_0^L-K_N^L-\Gamma_0+\Gamma_N$ in that basis as
+$\left(\begin{smallmatrix}D_a&X\\X^T&D_o\end{smallmatrix}\right)$.
+For a proposed common $c>0$, the exact Schur conditions are
+\[
+ D_a-cI\succ0,\qquad
+ D_o-cI-X^T(D_a-cI)^{-1}X\succeq0.                            \tag{CA12}
+\]
+If the first block is not positive, retain the full matrix inequality;
+no inverse may erase a kernel. These are \emph{net signed} blocks, not
+(CA9)'s base loss alone. The conditional block dimension on a constrained
+lift is its actual intersection dimension, not an assumed new gauge rank. No bound on $X$
+or the signed reductions of $D_a,D_o$ is supplied by a magnetic probe floor
+alone. The still-unbounded terms are (CA4)--(CA7)'s coupled work, generated
+covariance suffix scores, reference/noise/physical supply and moving gauge.
+Frozen held-BA and un-stored auxiliary directions remain explicit retention
+or forcing coordinates. Thus the positive endpoint Schur margin is OPEN.
+Failure classification D: insufficient proved domination, no violating
+shipping execution, no inferred instability and no invariant-radius claim.
+
+Structures preserved: actual conditional precision and all cross covariance,
+full integrated OU process, literal mag/$S$ gains, held effective-noise scope,
+AW original-marginal floor, both frame endpoints, suffix scores and physical
+history. Relaxations: regular real arithmetic; explicit existing profile
+qualifications; a conservative rational lower bound only for the base process
+block. No new physical assumption, gauge deletion, restart or runtime change.
 
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
