@@ -454,6 +454,24 @@
       "open_dependencies": []
     },
     {
+      "id": "planar_generated_port_structure",
+      "kind": "lemma",
+      "latex_title": "Planar generated tuner/clock feedback ports are one-way --- PROVED",
+      "status": "PROVED",
+      "assumptions": [
+        "deployed default Complementary wave-period input",
+        "literal updateCore_ chronology",
+        "no runtime ablation to MEKF-levelled period input"
+      ],
+      "proof_modules": [
+        "tools/stability/ou3_theorem/planar_generated_port_structure.py"
+      ],
+      "certificates": [
+        "reports/results/ou3_stability/planar-generated-port-structure.json"
+      ],
+      "open_dependencies": []
+    },
+    {
       "id": "completed_square",
       "kind": "lemma",
       "latex_title": "Finite-error completed-square entry --- PROVED as an algebraic implication",
