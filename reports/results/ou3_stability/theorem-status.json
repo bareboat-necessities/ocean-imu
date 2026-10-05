@@ -329,7 +329,8 @@
     "word_diameter_composition_and_slow_fast_factorization": true,
     "word_riccati_diameter_identity": true,
     "world_frame_historical_row_factorization": true,
-    "zero_translation_moving_alias_excluded": true
+    "zero_translation_moving_alias_excluded": true,
+    "planar_generated_tuner_clock_feedback_ports_one_way": true
   },
   "one_prediction_gyro_transport_real_source_floor": true,
   "parallel_no_magnetometer_stability_path": false,
