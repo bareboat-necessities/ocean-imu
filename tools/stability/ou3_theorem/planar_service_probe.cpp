@@ -28,7 +28,6 @@ static Eigen::Matrix<float,21,21> before_prediction;
 static bool have_prediction_root=false;
 static double parity_defect=0;
 
-
 static void emit(std::uint32_t kind,const std::vector<float>& values) {
     if (!export_enabled) return;
     const std::uint32_t header[3]={kind,sample_index,static_cast<std::uint32_t>(values.size())};
@@ -151,8 +150,7 @@ int main(int argc,char**argv) {
                 double v=es.eigenvalues().minCoeff();
                 service_min=std::min(service_min,v);service_max=std::max(service_max,v);
             }
-            ++windows;min_mags=std::min(min_mags,word_mags);
-            moving_recording=false;
+            ++windows;min_mags=std::min(min_mags,word_mags);moving_recording=false;
         }
         if(active>=0&&k>=active+3400&&!moving_recording) {
             phi.setZero();information.setZero();word_mags=0;root=k;
