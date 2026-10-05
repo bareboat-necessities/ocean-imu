@@ -16,6 +16,8 @@ class JointPhaseCellThresholdTest(unittest.TestCase):
         self.assertLess(out["symmetric_coupling_norm_budget"],0.230)
         self.assertAlmostEqual(out["weyl_information_perturbation_budget_to_muM_1"],
                                6.024764605642485)
+        self.assertTrue(out["generated_reverse_feedback_ports_zero"])
+        self.assertEqual(out["remaining_bidirectional_loop"],"MEKF mean <-> covariance through state-dependent H and P-dependent K")
         self.assertFalse(out["joint_phase_cell_forward_invariant"])
         self.assertFalse(out["every_placed_window_magnetic_service_verified"])
         self.assertFalse(out["theorem_closed"])
