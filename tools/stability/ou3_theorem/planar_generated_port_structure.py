@@ -17,6 +17,11 @@ ROOT=Path(__file__).resolve().parents[3]
 WRAPPER=ROOT/"src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 FRONT=ROOT/"src/kalman_common/MarineWaveFrontEnd.h"
 
+def git_blob_sha(path):
+    data=path.read_bytes(); h=hashlib.sha1()
+    h.update(f"blob {len(data)}\\0".encode("ascii")); h.update(data)
+    return h.hexdigest()
+
 def certificate():
     w=WRAPPER.read_text(); f=FRONT.read_text()
     required_wrapper=[
@@ -51,9 +56,9 @@ def certificate():
       "every_placed_window_magnetic_service_verified":False,
       "all_time_magnetic_service_verified":False,
       "theorem_closed":False,
-      "source_sha256":{
-        str(WRAPPER.relative_to(ROOT)):hashlib.sha256(WRAPPER.read_bytes()).hexdigest(),
-        str(FRONT.relative_to(ROOT)):hashlib.sha256(FRONT.read_bytes()).hexdigest()}
+      "source_git_blob_sha":{
+        str(WRAPPER.relative_to(ROOT)):git_blob_sha(WRAPPER),
+        str(FRONT.relative_to(ROOT)):git_blob_sha(FRONT)}
     }
 
 if __name__=="__main__":
