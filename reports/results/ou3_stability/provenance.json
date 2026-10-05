@@ -789,6 +789,14 @@
     {
       "path": "tools/stability/ou3_theorem/planar_linked_port_word.py",
       "git_blob_sha": "9e673cd2fd27233ddb2f8f0e5b793befb9673a1c"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_linked_riccati_mean.py",
+      "git_blob_sha": "5352b696e89997398fed8b3050c4488f45475c80"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_linked_riccati_mean.py",
+      "git_blob_sha": "e34f53e9489baefc750084b254d78c0fd941a93c"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
