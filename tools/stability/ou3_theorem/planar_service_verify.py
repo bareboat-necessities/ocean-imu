@@ -73,10 +73,12 @@ def verify(stream: dict, audit: dict, frechet: dict) -> dict:
         _finite(count, f'count {kind}', 1, 10**8)
         if audit['counts'].get(kind) != count:
             raise ValueError('operation coverage mismatch')
-    if set(counts) != set(map(str, range(1, 9))):
+    if set(counts) != set(map(str, range(1, 10))):
         raise ValueError('missing operation kind')
     if not (counts['1'] == counts['2'] == counts['6'] == counts['7']):
         raise ValueError('sample/prediction/accelerometer/AW coverage mismatch')
+    if counts['9'] != sum(counts[k] for k in ('2','3','4')):
+        raise ValueError('mean tangent/correction coverage mismatch')
     if counts['5'] != counts['8'] or counts['5'] != sum(counts[k] for k in ('2', '3', '4')):
         raise ValueError('correction/reset coverage mismatch')
     first, last = audit['sample_range']
