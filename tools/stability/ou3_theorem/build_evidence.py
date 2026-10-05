@@ -66,6 +66,7 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.planar_service_guard import certificate as planar_guard_certificate
     from tools.stability.ou3_theorem.planar_service_frontend_binding import certificate as planar_frontend_binding_certificate
     from tools.stability.ou3_theorem.planar_service_mahony_tube import certificate as planar_mahony_tube_certificate
+    from tools.stability.ou3_theorem.planar_generated_port_structure import certificate as planar_generated_port_certificate
     from tools.stability.ou3_theorem.planar_joint_phase_cell import calculate as planar_joint_threshold
     def planar_joint_threshold_certificate():
         return planar_joint_threshold(
@@ -77,6 +78,7 @@ def validate() -> dict:
         ("planar-service-guard-certificate.json",planar_guard_certificate),
         ("planar-service-frontend-binding.json",planar_frontend_binding_certificate),
         ("planar-service-mahony-tube.json",planar_mahony_tube_certificate),
+        ("planar-generated-port-structure.json",planar_generated_port_certificate),
         ("planar-joint-phase-cell-threshold.json",planar_joint_threshold_certificate),
         ("moving-quiet-compatibility-certificate.json",compatibility_certificate),
         ("imu-two-timescale-certificate.json",imu_certificate),
