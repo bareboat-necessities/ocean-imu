@@ -1,0 +1,20 @@
+{
+  "qualification": "OU3_PLANAR_GENERATED_PORT_STRUCTURE_V1",
+  "result_type": "PROVED analytical source-control-flow theorem",
+  "default_wave_period_input": "Complementary/private Mahony measurement-only path",
+  "mekf_mean_or_covariance_to_tuner_gain": 0,
+  "mekf_mean_or_covariance_to_S_period_gain": 0,
+  "mekf_mean_or_covariance_to_AW_target_gain": 0,
+  "tuner_to_covariance_is_one_way": true,
+  "direction_branch_reads_mekf_but_returns_to_tuner": false,
+  "remaining_bidirectional_loop": "MEKF mean <-> P via state-dependent acc/mag H and P-dependent K",
+  "coefficient_ranges_all_time_certified": false,
+  "joint_mean_covariance_cell_forward_invariant": false,
+  "every_placed_window_magnetic_service_verified": false,
+  "all_time_magnetic_service_verified": false,
+  "theorem_closed": false,
+  "source_sha256": {
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "sha256-bound-by-generator",
+    "src/kalman_common/MarineWaveFrontEnd.h": "sha256-bound-by-generator"
+  }
+}
