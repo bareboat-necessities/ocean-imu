@@ -277,7 +277,7 @@ jobs:
       - name: Verify analytical algebra and fail-closed bindings
         run: |
           python3 -m unittest discover -s tests/validation -p 'test_ou3_planar_service_*.py' -v
-          python3 -m unittest tests.validation.test_ou3_planar_information_ceilings tests.validation.test_ou3_causal_tuner_interval -v
+          python3 -m unittest tests.validation.test_ou3_planar_information_ceilings tests.validation.test_ou3_planar_joint_phase_cell tests.validation.test_ou3_causal_tuner_interval -v
           python3 -m tools.stability.ou3_theorem.build_evidence
       - name: Export and audit actual planar word with untapped control
         run: |
@@ -285,6 +285,8 @@ jobs:
           python3 -m tools.stability.ou3_theorem.planar_service_audit --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-operation-audit.json
           python3 -m tools.stability.ou3_theorem.planar_service_frechet --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-frechet.json
           python3 -m tools.stability.ou3_theorem.planar_service_verify --stream-report /tmp/ou3-planar-stream.json --operation-audit /tmp/ou3-planar-operation-audit.json --frechet /tmp/ou3-planar-frechet.json
+          python3 -m tools.stability.ou3_theorem.planar_service_mahony_tube > /tmp/ou3-planar-mahony.json
+          python3 -m tools.stability.ou3_theorem.planar_joint_phase_cell --frechet /tmp/ou3-planar-frechet.json --mahony /tmp/ou3-planar-mahony.json --service-floor 7.024764605642485 --output /tmp/ou3-planar-joint-threshold.json
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
@@ -293,5 +295,6 @@ jobs:
             /tmp/ou3-planar-stream.json
             /tmp/ou3-planar-operation-audit.json
             /tmp/ou3-planar-frechet.json
+            /tmp/ou3-planar-joint-threshold.json
           retention-days: 7
           if-no-files-found: error
