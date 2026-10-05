@@ -801,6 +801,10 @@
     {
       "path": "tests/validation/test_ou3_planar_service_stream.py",
       "git_blob_sha": "112c1869993dafca0a1575f2803e559da36becc8"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_coupled_tangent.py",
+      "git_blob_sha": "65069935cd997afdfcc10542cfabbe3af5e4f9c4"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
