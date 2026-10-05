@@ -77,6 +77,34 @@ z=(pitch error,10*integralFBy), G=[[10,-5],[-5,15]], effective feedback in
 .00000081. Literal initialization and every-step float residual caps are not
 bound yet. Raw quaternion norm is not assumed one.
 
+## Joint phase-cell threshold calculation
+
+A new fail-closed comparison calculation converts the existing literal 20-s
+covariance partial derivative and exact conditional private-Mahony decrement
+into a quantitative coupling target.  The worst parity covariance gain is
+0.8738212970667966.  Ignoring additive charge only for the homogeneous
+comparison, the exact .00027 one-step squared-norm decrement over 4000 samples
+gives a 20-s Mahony homogeneous gain 0.582705763926933.  Thus a normalized
+nonnegative two-block comparison [[a,b],[c,d]] is contractive whenever
+
+    b*c < (1-a)(1-d) = 0.05265364544920159.
+
+For symmetric coupling this is ||coupling|| < 0.22946382165649032.  This is a
+FEASIBILITY THRESHOLD, not a bound on the generated mean/tuner coupling; those
+ports are still open and the additive Mahony charge is retained separately in
+the radius calculation.
+
+The same calculation exposes the exact service perturbation budget.  Starting
+from the carried physical +/- 2x2 floor 7.024764605642485 and mu_M=1, Weyl's
+inequality leaves spectral-norm budget 6.024764605642485 for the complete
+joint-cell information perturbation in each physical 2x2 block.  Therefore the
+remaining every-placed-window proof does not need to reproduce the carried
+floor tightly: it needs a same-history outward cell plus
+||I_cell-I_carried||_2 < 6.024764605642485 uniformly.  Neither inequality is
+promoted because generated coefficient couplings, continuous/root placement,
+and forward containment are not yet certified.  See
+planar_joint_phase_cell.py and planar-joint-phase-cell-threshold.json.
+
 ## Current limiter
 
 The joint mean/covariance/frontend/tuner/clock cell is NOT constructed or proved
