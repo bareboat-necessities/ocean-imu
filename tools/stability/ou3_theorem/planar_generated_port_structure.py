@@ -19,7 +19,7 @@ FRONT=ROOT/"src/kalman_common/MarineWaveFrontEnd.h"
 
 def git_blob_sha(path):
     data=path.read_bytes(); h=hashlib.sha1()
-    h.update(f"blob {len(data)}\\0".encode("ascii")); h.update(data)
+    h.update(f"blob {len(data)}\0".encode("ascii")); h.update(data)
     return h.hexdigest()
 
 def certificate():
