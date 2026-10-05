@@ -48,6 +48,9 @@ def calculate(frechet: dict, mahony: dict, service_floor: float) -> dict:
       "required_information_condition":
         "for each physical +/- 2x2 block, ||I_cell-I_carried||_2 < carried_floor-1",
       "additive_mahony_charge_retained_separately":True,
+      "generated_reverse_feedback_ports_zero":True,
+      "generated_one_way_coefficient_ranges_all_time_bounded":False,
+      "remaining_bidirectional_loop":"MEKF mean <-> covariance through state-dependent H and P-dependent K",
       "generated_mean_coefficient_couplings_bounded":False,
       "joint_phase_cell_forward_invariant":False,
       "every_placed_window_magnetic_service_verified":False,
