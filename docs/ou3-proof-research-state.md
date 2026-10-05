@@ -10,7 +10,7 @@ before resolving this question. Base inspected: main
 
 The theorem remains unclosed: `theorem_closed=false`,
 `regional_practical_stability_claimed=false`, `certified_capture_time=null`.
-The manifest now has **24 PROVED, 4 CONDITIONAL, 1 OPEN**; the two new proved
+The manifest now has **25 PROVED, 4 CONDITIONAL, 1 OPEN**; the two new proved
 items are local admission-cell algebra and planar guard inactivity in real
 arithmetic. Neither is an all-time service certificate. Conditional obligations
 remain `joint_kernel`, `physical_nominal_bridge`, `h18_release`, `compact_outer`.
@@ -104,6 +104,17 @@ floor tightly: it needs a same-history outward cell plus
 promoted because generated coefficient couplings, continuous/root placement,
 and forward containment are not yet certified.  See
 planar_joint_phase_cell.py and planar-joint-phase-cell-threshold.json.
+
+## Generated-port feedback reduction
+
+The deployed default period/tuner path is now source-proved measurement-only.
+The literal chronology gives exactly zero MEKF-mean/covariance -> tuner gain,
+zero MEKF -> S-period gain, and zero MEKF -> AW-target gain.  Tuner/clocks are
+therefore one-way same-history forcing into P, not the missing reverse side of
+the small-gain loop.  This promotes one structural lemma only; it does not
+bound their all-time ranges.  The remaining bidirectional joint-cell loop is
+MEKF mean <-> covariance through P-dependent K and mean-dependent accelerometer
+and magnetic Jacobians.  The manifest is now 25 PROVED / 4 CONDITIONAL / 1 OPEN.
 
 ## Current limiter
 
