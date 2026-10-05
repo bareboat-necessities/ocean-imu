@@ -26,7 +26,7 @@ def calculate(frechet: dict, mahony: dict, service_floor: float) -> dict:
     steps=round(20.0/float(h))
     # Homogeneous common-quadratic comparison only.  The certified additive
     # charge is NOT discarded; it belongs in the invariant-radius inequality.
-    d=math.sqrt(1.0-float(delta))**steps
+    d=math.exp(0.5*steps*math.log1p(-float(delta)))
     # For nonnegative comparison matrix [[a,b],[c,d]], rho<1 iff
     # a<1,d<1 and b*c < (1-a)(1-d).
     coupling_product_budget=(1.0-a)*(1.0-d)
