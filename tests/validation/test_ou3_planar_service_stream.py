@@ -12,7 +12,7 @@ class PlanarServiceStreamTests(unittest.TestCase):
         return struct.pack('<III',kind,sample,len(a))+np.asarray(a,dtype='<f4').tobytes()
     def test_every_operation_layout_is_accepted(self):
         data=MAGIC+b''.join(self.record(k,i+1,np.zeros(n)) for i,(k,n) in enumerate(SIZES.items()))
-        self.assertEqual(len(self.read(data)),8)
+        self.assertEqual(len(self.read(data)),9)
     def test_bad_or_partial_evidence_fails_closed(self):
         bad=[b'badmagic',MAGIC+b'\x00',MAGIC+struct.pack('<III',1,1,2),
              MAGIC+self.record(1,1,np.zeros(SIZES[1]))[:-1],
@@ -31,6 +31,8 @@ class PlanarServiceStreamTests(unittest.TestCase):
         self.assertIn('Pext.data(),R_S.data(),pseudo_update_elapsed_s_',s)
         self.assertIn('planar_after_sync(Pext.data(),aw_covariance_floor_target_.data(),planar_sync_pending)',s)
         self.assertIn('planar_after_reset(Pext.data())',s)
+        self.assertIn('planar_mean_tangent(\"acc\"',s)
+        self.assertIn('planar_mean_tangent(\"mag\"',s)
         with self.assertRaises(ValueError):instrument('wrong source')
 
 if __name__=='__main__':unittest.main()
