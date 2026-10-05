@@ -42,7 +42,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "proof/ou3-planar-service-phase",
-  "git_commit": "b28268b11e2c1d98e4d3c787fd9c1cae716bcab3",
+  "git_commit": "cbf6f711be560fb56b0f2c403dbc83a05bf143ed",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -325,8 +325,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-10-05T15:43:00+00:00",
-    "git_commit": "b28268b11e2c1d98e4d3c787fd9c1cae716bcab3",
+    "generated_at": "2026-10-05T16:37:33+00:00",
+    "git_commit": "cbf6f711be560fb56b0f2c403dbc83a05bf143ed",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -509,7 +509,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "37330510337",
+      "run_id": "37336536436",
       "workflow": "ou-full-evidence-branch"
     }
   },
