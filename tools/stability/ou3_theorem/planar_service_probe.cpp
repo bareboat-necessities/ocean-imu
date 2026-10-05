@@ -72,6 +72,18 @@ static void planar_after_sync(const float* p,const float* target,bool was_pendin
     std::vector<float> out;out.reserve(235);parity(out,p);dense(out,target,3,3);
     out.push_back(was_pending?1.f:0.f);emit(6,out);
 }
+static void planar_mean_tangent(const char* kind,const float* h,const float* s,
+                                const float* k,const float* p,const float* residual,
+                                const float* state) {
+    // Read-only local operands for the linked mean<->covariance tangent.
+    // Payload: P,H,S,K,r,x.  No estimator storage is written.
+    std::vector<float> out;out.reserve(882);
+    parity(out,p);dense(out,h,3,21);dense(out,s,3,3);dense(out,k,21,3);
+    dense(out,residual,3,1);dense(out,state,21,1);
+    // Pad to a fixed strict record size for forward-compatible tangent fields.
+    while(out.size()<882)out.push_back(0.f);
+    emit(9,out);
+}
 static void moving_correction(const char* kind,const float* h,const float* s,
                               const float* k,const float* p,const float* rnoise,
                               const float* pct,const float* residual) {
