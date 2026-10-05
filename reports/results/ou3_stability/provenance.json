@@ -777,6 +777,14 @@
     {
       "path": "tests/validation/test_ou3_planar_mean_covariance_ports.py",
       "git_blob_sha": "76e73d91841a1249af242b90a7ec08ab9ae9dc14"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_common_norm_radius.py",
+      "git_blob_sha": "ef6108722fe28c53a01a4677ac094dda9f2873f1"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_common_norm_radius.py",
+      "git_blob_sha": "777bc7ce77a024e493fd66e5987e27eccc01b12e"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
