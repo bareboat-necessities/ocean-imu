@@ -14,7 +14,7 @@ from .planar_service_stream import records,expand
 import numpy as np
 
 def calculate(stream:Path):
- f=frechet(stream); a=audit(stream)
+ f=frechet(stream,40000,44000); a=audit(stream)
  rho=max(v["relative_Frobenius_gain"] for v in f["parity_blocks"].values())
  tangents=[]
  for kind,k,z in records(stream):
