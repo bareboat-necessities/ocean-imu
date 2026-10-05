@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "299d3f725ded144fcf50cbf37f025ac82a3002739684555ec02452cfc143ea6b",
-  "results_file_count": 450,
+  "replay_fingerprint": "4bcb1af11d51f0d3720d8b7dce541081f8eee799a9204a33f00019f49d82c485",
+  "results_file_count": 452,
   "results_files": [
     {
       "kind": "file",
@@ -836,7 +836,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "sha256": "9dfaf5dd34fef21f8570db6a3363d203a4c6890f9173da96958fbae91f10dfcc"
+      "sha256": "9bb194ccd3fe3cf587932b5af08b310bd22dc498fdcc8b701992d8ac6ac18232"
     },
     {
       "kind": "file",
@@ -880,6 +880,16 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
+      "sha256": "9426072d48d89cd07d0b71ab121b3cc88787f406e1bbb1a68d0b92abb815c5f8"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-joint-phase-cell-threshold.json",
+      "sha256": "2c5fb9bbd528dae20fe8058457d069c0fbaccf0f42c3412bb307a7477f1405e0"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/ou3_stability/planar-service-cell-certificate.json",
       "sha256": "9472f55e2db45f1761dfaa47f10c4280ee3eddc7fd914172e0eb37bddd8ba707"
     },
@@ -916,7 +926,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "45882c9a084ab733454b10a37ebac7ce3ac1046ebe37b5e5d8cdcdcd83e8a9eb"
+      "sha256": "beb7484ecb4fa66e936ab7c42196f81bc188e8ee8cec3aabd36beab9f679943b"
     },
     {
       "kind": "file",
@@ -976,7 +986,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "sha256": "cdff8e0a60d68da7a40cfefa57782bc7b1a7e79a13b09da9efdd8aec35ee9807"
+      "sha256": "1cf9dced7a653e3ff2df31a7c5752d35a4861b0f69fcf321ce1077efade4123d"
     },
     {
       "kind": "file",
@@ -1016,7 +1026,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "4a1c93672b2458f65da4fb482123cf9be27eb6a41756ba04a31481d71d78600c"
+      "sha256": "f0b1cb706fe187714b3b54bf6b13d0390064c7f02f0deae0cb4ca8461c4fae9c"
     },
     {
       "kind": "file",
@@ -1086,62 +1096,62 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "aa67a64d2cc0a68551da5798fe8c682f6e501dd271e960fc641ac68ab3dfe73f"
+      "sha256": "b4410a6029939a72a4fcf5751fafce5075a660302069687ac5204d6f0e5ab141"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "e5a55b6d17079394cfbbc6eb1caefe1b0eeda9116aacfefaa6386490f7b88019"
+      "sha256": "5bea14c9cbb637fb2873e120ce5626da4ceda9dffdcd4cea42b0d609b43fb030"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "71d87ec0ee431d607cc789f4652809a789506185a536f767095554d26cfdf901"
+      "sha256": "31b2fba0fa098e026bb9a82c3dfd9cd2f811157ec6d570cd8cd5533cbb78e660"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "138cdf0c231594621ba3171f6ada25c11a6c8abffadc37a2398ae529912bc256"
+      "sha256": "ee98780bfe104b96c115168bcfbb3a7b307fe96867ba497426554fd506cbd540"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
+      "sha256": "4a92296f915a38c3df921e643760d3e43335dadc1dbca9f38f468c68553789f1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "d3f0641d16e82db0de8d536720003d931b440e04c6855ddf85933763c4f088a2"
+      "sha256": "913b5e4f8738e980186142908a6d25081c0cab608391223dc59b893fe4a15feb"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "9bf7d87c06a226f50d0b9e9d566f5b2cb24f402f0525804987e2bac4675efc79"
+      "sha256": "24210d6081610fb02c3a8b094cb68bfb643d4b9d5b868c300ded5618859d7b93"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "bffabcaf390778b6550b01fe5be72a2b2bc5c87e825dbd998380353a97e02abd"
+      "sha256": "52f92ca6be0738a25612837b3510919d4a89d766ae14e7573b722b584c6a4cc0"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "2e152c0bcda46e96cb272a8f9cfb8aa2577b37cfb873d08e0e008277540a77e7"
+      "sha256": "797e381d5e3dc68c28001d302341097a2ba61fe61fec271635651806c7a928e5"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "2d81bec7d2df00a354f0aee7e2374529471c7aad56cb57a2023ad5727093eabd"
+      "sha256": "0c4d3b5f2e2eb2a70a8ebf0169c48e73011463f61163a9e968d8e2ca670b0f06"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "3804dc62163d811550a4b12ae23e7fb6b59138dbdc73df3b00da91cccaa22ceb"
+      "sha256": "669e6b02db2f2579754989f96e3e0f94ceaf74c0478439f9d420bb5895ce3340"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "8bb9f8290a7262397438ae0d0e39055e042dd4e6465001ae3ca38fe33b40ec9d"
+      "sha256": "c472f66713cd20d7a290ef1033b8345e1643118ea286b7cb56021706320ce20b"
     },
     {
       "kind": "file",
@@ -1156,7 +1166,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "cbf0e784c10dabf061e9d74bbbcf48199fd711ca514877058d9855c375d0d047"
+      "sha256": "edcb9655fbc4e975b2bed718974ec9c660263327e74160ed0bee6658e8ca8904"
     },
     {
       "kind": "file",
@@ -2254,13 +2264,13 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "b99a4a9dc4f1a481ee6a05b1fb2815d9cf67913becd54f93c588ae89530cc03b",
+  "results_fingerprint": "ad92987869ae2af3e1971dae8d6d0d6e4b7b8071d816ea4a666fede5104bfceb",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 720,
+  "tracked_replay_file_count": 733,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2305,7 +2315,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou3-stability-proof.yml",
-      "sha256": "aeb2a2533bd4e3420931956203894215c53a9fcef63edf97c8847befb4b08979"
+      "sha256": "3d1e282590aeeef2f04f72053a749bb19761f4c56f1ede23533e410732c198a6"
     },
     {
       "mode": "100644",
@@ -4094,13 +4104,43 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_common_norm_radius.py",
+      "sha256": "07ecfbbdc0b28764229464bc5b00df692b8711f0a1ea80fd0a8dc2100c4c7b8c"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_planar_covariance_lower_cell.py",
       "sha256": "37eca21512dda05f26c8850b0943ed7faabbff144e5023705893e00360ff06bc"
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_every_root_service.py",
+      "sha256": "acd5d5f3a5432e4d7b5b5a075bb5cdf02ea54819518dfc0bb994cf6cc9246bdf"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_generated_port_structure.py",
+      "sha256": "300444eb571934067e873ec1af0878931f77dd8180e407592ce7383517c43b72"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_planar_information_ceilings.py",
       "sha256": "a2a3909fb3368d8f0a6bf96229e03d3ee2c462bd46caf0710beb9426d4b53964"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_joint_phase_cell.py",
+      "sha256": "b9cdc998ad074ddbb967341cf0555cc503fe630a8538021c289df887ead83cd6"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_linked_riccati_mean.py",
+      "sha256": "6445d8aeb94f719874866585d8e2810be0a28bd3258afbecc90924a27514bfad"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_mean_covariance_ports.py",
+      "sha256": "2a209c46194d9fa789d0bbe1ef1dbe78fd16062b9c1c6ada25d6d14b8fd53134"
     },
     {
       "mode": "100644",
@@ -4905,7 +4945,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "sha256": "00f9d01d2e9c68a2b2caabe30c0adb2cb4ea06ba707992c42d84c660d494a5a3"
+      "sha256": "1b205178ff74881e69d5e79a87e3fd3d8ee5addb4c0d823747329931a9537460"
     },
     {
       "mode": "100644",
@@ -5444,13 +5484,48 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_common_norm_radius.py",
+      "sha256": "6ef0c0afa7d879910180c2603249e5e7361c0f9ee7f02f142c4dcac0c983b91f"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_covariance_lower_cell.py",
       "sha256": "be01b6a56ac5a54509121688dd7dc0af751f007e6416bd80d9020e58f9847152"
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
+      "sha256": "118b10cbe4be379cfec27465801c4b36a272d497e042119e678607c57c66554d"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
+      "sha256": "f07b59b1809e3f6efd093466ae5f2a9ce6bf3119572477ceefe0dc830d8a70a7"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_information_ceilings.py",
       "sha256": "390ed0d58958d7fcdd366ecc4787d0ff2e26e65ab65bc6afecf531aa9c8a537a"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_joint_phase_cell.py",
+      "sha256": "643a7f96243d670b0e9cf98e57396644deb3f29c0a35508d9af5abbc6558230d"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_linked_port_word.py",
+      "sha256": "8eb5acebaa6cd8d38a8473d5e0e8cee92a0518817124c759baca930958b68af2"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_linked_riccati_mean.py",
+      "sha256": "214a6767cbd5a3368373875ced88a82089903032080a7c6cd86c0bb5ac7fd087"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_mean_covariance_ports.py",
+      "sha256": "7a5b294bfaff594bbdbe0d2deda45a6e49a1b7876464c4e47d451c34ca6b9b60"
     },
     {
       "mode": "100644",
@@ -5785,7 +5860,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "sha256": "ff7096380f24867aa95200bb72692d7d5fafd28fe02e6a19f700a685a2dfd418"
+      "sha256": "700ced40c87acfe03d11d0e885cf4bee325de8882245c6a9c882cf1541f961bc"
     },
     {
       "mode": "100644",
