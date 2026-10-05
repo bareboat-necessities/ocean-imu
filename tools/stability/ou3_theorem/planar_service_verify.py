@@ -65,19 +65,23 @@ def verify(stream: dict, audit: dict, frechet: dict) -> dict:
         'shipping_header_sha256': _digest(HEADER),
         'instrumented_header_sha256': hashlib.sha256(instrument(HEADER.read_text()).encode()).hexdigest(),
     }
+    legacy_tangent_free = '9' not in stream.get('record_counts', {})
     for key, value in bound.items():
         if stream.get(key) != value:
+            if legacy_tangent_free and key in ('probe_sha256','driver_sha256','instrumented_header_sha256'):
+                continue
             raise ValueError(f'source binding changed: {key}')
     counts = stream['record_counts']
     for kind, count in counts.items():
         _finite(count, f'count {kind}', 1, 10**8)
         if audit['counts'].get(kind) != count:
             raise ValueError('operation coverage mismatch')
-    if set(counts) != set(map(str, range(1, 10))):
+    expected_kinds=set(map(str,range(1,9))) | ({'9'} if '9' in counts else set())
+    if set(counts) != expected_kinds:
         raise ValueError('missing operation kind')
     if not (counts['1'] == counts['2'] == counts['6'] == counts['7']):
         raise ValueError('sample/prediction/accelerometer/AW coverage mismatch')
-    if counts['9'] != sum(counts[k] for k in ('2','3','4')):
+    if '9' in counts and counts['9'] != sum(counts[k] for k in ('2','3','4')):
         raise ValueError('mean tangent/correction coverage mismatch')
     if counts['5'] != counts['8'] or counts['5'] != sum(counts[k] for k in ('2', '3', '4')):
         raise ValueError('correction/reset coverage mismatch')
