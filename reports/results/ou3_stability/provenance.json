@@ -512,7 +512,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "47ceea4ca06888b8912abe3882be3eace8a46f36"
+      "git_blob_sha": "c1dc612e0b12b3ddd06f3d46827dfc638c276f6b"
     },
     {
       "path": "tools/stability/ou3_theorem/causal_tuner_interval.py",
@@ -745,6 +745,18 @@
     {
       "path": "reports/results/ou3_stability/planar-joint-phase-cell-threshold.json",
       "git_blob_sha": "80bad81486ffafedf5877b9c1e5210c608e95ce3"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
+      "git_blob_sha": "9d7a062de3496d497fb5d75e003c36a3300e71f7"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_generated_port_structure.py",
+      "git_blob_sha": "5206277ddebe672ae2e8bd178580131225ec54d3"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
+      "git_blob_sha": "421d32535a35cea7ea5a35390d96ed5c16889c70"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -781,6 +793,14 @@
     "weyl_information_perturbation_budget_to_muM_1": 6.024764605642485,
     "generated_mean_coefficient_couplings_bounded": false,
     "joint_phase_cell_forward_invariant": false,
+    "all_time_magnetic_service_verified": false
+  },
+  "planar_generated_port_structure": {
+    "result_type": "PROVED analytical source-control-flow theorem",
+    "mekf_mean_or_covariance_to_tuner_gain": 0,
+    "mekf_mean_or_covariance_to_S_period_gain": 0,
+    "mekf_mean_or_covariance_to_AW_target_gain": 0,
+    "remaining_bidirectional_loop": "MEKF mean <-> P via state-dependent acc/mag H and P-dependent K",
     "all_time_magnetic_service_verified": false
   }
 }
