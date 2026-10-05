@@ -736,7 +736,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_joint_phase_cell.py",
-      "git_blob_sha": "f7b63d3e03f2d663204ba62ae8837c4995e57800"
+      "git_blob_sha": "ecc9134fb217be92fa9907fa926fcc5949b20d44"
     },
     {
       "path": "tests/validation/test_ou3_planar_joint_phase_cell.py",
@@ -744,7 +744,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-joint-phase-cell-threshold.json",
-      "git_blob_sha": "b2be610235ccf134c78e832c1728de7d1d8b5546"
+      "git_blob_sha": "b874655bf3f1fd21fbc5e670928fcaa4f6ebe9da"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
