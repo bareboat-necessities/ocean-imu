@@ -12,12 +12,9 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting head for this continuation:
-`27cff7c73c614777f873a62a6bbd9a3bd1eef5d2`.
-The automated evidence refresh `2db51d0079f630e5494fed7be683f8d1b6783605`
-was incorporated before publishing. Main is already incorporated; PR #653 is
-open and mergeable. Current CI
-chronology belongs in PR metadata.
+Verified starting PR head: `d4d5700ae0f2963c62a8085f1f8bcb8857319db5`.
+Main is already incorporated; PR #653 is open and mergeable. Automated evidence
+changes are preserved. Current CI chronology belongs in PR metadata.
 
 Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
 `theorem_closed=false`, `regional_practical_stability_claimed=false`,
@@ -130,6 +127,37 @@ The observed-coefficient center defect .0006179245 is finite and uses future
 observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
+
+**PROVED — analytical linked suffix-score normal form:**
+[The word-score proof and minimal activation table](ou3-linked-word-score.md)
+regroup the exact complete tangent before norms. Every optimal additive
+correction has zero local information score for arbitrary residual. The word
+retains all generated covariance ports, including the essential `U_i q_(i+1,N)`
+term. For a score in the base-action range, `Gz=q` gives the exact linked bound
+`||M dP q||_J_N^2 <= (q'z/2)*L_P`. Its process/AW loss-generated part satisfies
+`q'z <= sum e_i'Q_i e_i` on the same history. Physical/source/chart score and
+any component outside the action range remain forcing. No NIS cap or new
+nominal p/v box is required for these identities.
+
+**PROVED — analytical inherited comparison budget:** telescoping the literal
+optimal correction and prediction/AW/reset/projection comparison energy gives
+`chi_loss <= E_loss = V0-VN+Supply_W-sum NIS`. The supply retains signed
+source/chart work and actual correction defect energy. At `S=0` its defect is
+`-S_physical`, not zero. Thus the loss-generated score needs root comparison
+energy plus linked source supply, not separate all-time bounds on intermediate
+nominal coordinates. Realized NIS is not a transverse observability bound.
+Uniform supply, source-score kernel forcing and generated-port absorption
+remain OPEN. First-Live energy cannot be reseeded at later roots.
+
+**CONDITIONAL root-block threshold:** if a justified base action has margin
+`c>0` and combined score charge at most `chi_*`, then
+`chi_* < 2*c*lambda` makes the root mean/covariance-loss block positive.
+This does not cover the remaining generated ports or prove covariance
+coercivity. Uniform `c`, the linked comparison-loss/source-score budget and
+signed absorption of the complete `U,v` work remain **OPEN**. Apply this
+regrouping to the existing word identity, not as a second charge for magnetic
+feedback already absorbed below. The physical fibre is not equated with an
+action kernel. An out-of-range score cannot be discarded by a pseudoinverse.
 
 **New analytical progress, qualified uniform magnetic loss:**
 [Moving-frame loss and its activation table](ou3-measurement-frame-loss.md)
@@ -271,15 +299,16 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
-An analytical obligation: absorb the remaining accelerometer AW-row,
-prediction/reset/frame and AW/projection work against the exact process/S
-loss and the newly retained magnetic loss. Preserve complete-word signs and
-the covariance-dependent square charges. Compare the resulting action to
-existing physical service on justified compatible strata, keeping physical
-OU/gauge/source forcing. Establish only the reference/chart/energy and
-branch retention required for that estimate. No radius before a positive
-complete-word gap. Planar admission remains separate and cannot be inferred
-from finite floors, callback counts or the service-conditioned general theorem.
+An analytical obligation: form the combined acc/AW-row and prediction/reset
+coefficient work using the suffix-score normal form, including each generated
+covariance port's later score. Bound the same-history process/AW comparison
+loss and physical/source/chart score, preserving its range and kernel parts.
+Compare the resulting coupled action to existing physical service on justified
+compatible strata, including complementary process/S loss and endpoint gauge
+work. Prove only the reference/chart/energy and branch activation required by
+that estimate. The uniform margin is still OPEN; it is not supplied by a NIS
+maximum, a positive magnetic row constant or passing identity tests. No radius
+before the complete-word gap. Planar admission remains a separate obligation.
 
 ## Verification scope
 
@@ -295,12 +324,15 @@ in the PR metadata.
    gauge, nonlinear fibre, both covariance parities, frontend/reference/clocks.
 2. Relaxations: fixed regular real-operation branches for derivatives and
    explicit norm/rounding majorants, qualified sqrt/exp and exact reference arithmetic; no arbitrary independent generated inputs.
-3. Failures: E proof-helper scope/derivative and source-anchor bugs; D incomplete
+3. Failures: E proof-helper scope/derivative, source-anchor bugs and a corrected
+   covariance-variable name collision with the retired-architecture guard, and
+   unavailable local IEEEtran class (full rendering delegated to retained CI); D incomplete
    sufficient cell, fixed-root ball and AW norm-product tactics. No instability
    claim follows from any of these.
 4. Admitted counterexample: none; all-time admission/exclusion remains OPEN.
 5. Retained: 25 proved entries, qualified local theorem and exact compatibility
    obstruction; qualified frontend and linked storage proofs extend entries without count promotion.
-6. Next: absorb acc/AW-row and prediction/reset/frame work against process/S
-   and retained magnetic loss; prove only its required activation bounds.
+6. Next: bound the linked suffix-score budget and combined generated acc/AW,
+   prediction/reset/frame ports against process/S and retained magnetic loss;
+   prove only their required activation bounds.
    The uniform transverse gap and planar admission remain separate obligations.

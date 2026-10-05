@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "11b9fae2571d8fac09e5029a2adb13bd988c7650"
+      "git_blob_sha": "5d8d8ef87e309caaa9c6fb37e7b38a9ebfd7a59f"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "fba2935166974059217283f25a26d1b3d937658f"
+      "git_blob_sha": "14332e7802bebe49a24525d871204542f6b4978f"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "de5c8fa73fabf4d0ea8bb8ddb35cf626074a1abf"
+      "git_blob_sha": "ccf739c5abd59086c36668bea6c2723ead96c93d"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "9cd90dffb5dd80dba3d01d76b209ae2d6860d804"
+      "git_blob_sha": "e5ee22e5d24b7833e646363be65385ade2828242"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "142987771d97a80e32aa9d280b47752a06219053"
+      "git_blob_sha": "2b96671b6b51213d82a3466d46461f32e80d7137"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "ceae6e6f6432a286648259b3622696792e9e7852"
+      "git_blob_sha": "e18143135a366a6b0567500ca6765c425ceb7e0e"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -948,19 +948,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/information_shear_word.py",
-      "git_blob_sha": "a162b432f9dc5d3a95612f28e71af0f55c62b7eb"
+      "git_blob_sha": "f3c0dc6416a34354efc6778efda19abd721fb309"
     },
     {
       "path": "tests/validation/test_ou3_information_shear_word.py",
-      "git_blob_sha": "a4f094d79cdc8b18fada399c50f64cf134cc1b97"
+      "git_blob_sha": "8842c93b8a37898a7ef587eadb0fdaf605a20d74"
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "bf781050b6343399f9ce36ce2da17a2348df9ba9"
+      "git_blob_sha": "4d79e39455f459a498037100394b46c0309d5029"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
-      "git_blob_sha": "7bcf36fc53bd9cc19eab675ff6e912c6a9a3136b"
+      "git_blob_sha": "47c63afd222e28bc7b2e572c2a1d2321ca0b4e15"
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
@@ -972,11 +972,15 @@
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
-      "git_blob_sha": "4bdc16e5661ebd46cc9496c8861b52e4ca37f50d"
+      "git_blob_sha": "719e8679f304a94c9e3759e0b2a5666a5bea429b"
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
       "git_blob_sha": "0d978ff7458adc7f45a17ac0c8e5c796b229688b"
+    },
+    {
+      "path": "docs/ou3-linked-word-score.md",
+      "git_blob_sha": "d1a3fa752d139b002b31c46d1d43fdffa0f76f54"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1122,7 +1126,19 @@
     "finite_exploration_performed": false,
     "shipping_sources_changed": false,
     "radius_solve_performed": false,
-    "all_time_planar_admission_verified": false
+    "all_time_planar_admission_verified": false,
+    "word_score_note": "docs/ou3-linked-word-score.md",
+    "suffix_score_normal_form_verified": true,
+    "generated_covariance_suffix_ports_retained": true,
+    "range_aware_Fisher_loss_charge_verified": true,
+    "loss_generated_score_comparison_budget_verified": true,
+    "uniform_combined_suffix_score_charge": null,
+    "complete_generated_port_absorption_verified": false,
+    "word_score_scope": "regular real-operation identity; range-aware bound; no new reachability or uniform contraction assertion",
+    "inherited_comparison_supply_identity_verified": true,
+    "physical_S_not_reset": true,
+    "uniform_signed_comparison_supply_bound": null,
+    "word_score_tooling_failures": "E: covariance variable collided with retired-architecture guard, renamed without changing guard; local IEEEtran class unavailable, retained CI performs full rendering"
   },
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",

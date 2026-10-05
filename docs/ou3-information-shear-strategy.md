@@ -263,6 +263,18 @@ uses them. No all-time compactness is assumed to prove its own retention.
 The planar wrapper uses σ_a=.2 and adaptive S; AtomS3R uses σ_a=.12 at its reference rate and fixed S.
 This note does not transfer a theorem between them.
 
+## Complete-word score continuation
+
+The [linked suffix-score proof](ou3-linked-word-score.md) is the current
+regrouping of the word balance. Optimal additive corrections have zero local
+score; prediction/AW loss and physical/source/chart mismatch remain. Covariance
+variations created inside the word retain their suffix-score term. The exact
+range-aware Fisher-loss charge is `(chi/2)*L_P`, with its loss-generated score
+budgeted by the same-history comparison loss. This replaces independent
+covariance-gain/residual charges, not the actual derivative. The uniform score
+budget, generated-port absorption and full transverse action remain OPEN.
+Do not count magnetic work twice or erase score forcing in an action kernel.
+
 ## Scope and handoff rules
 
 Only after the positive gap and actual charges are proved may an invariant

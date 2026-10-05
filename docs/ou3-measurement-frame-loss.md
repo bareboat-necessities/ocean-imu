@@ -165,6 +165,10 @@ bound. These enlarge only the stated inequalities, not the physical premises.
 **Failure record:** E for the corrected pre-correction window endpoint
 bookkeeping; the current implementation uses strictly prior windows. D remains
 for the unclosed complete-word sufficient gap. No admitted counterexample.
+**Word continuation:** [linked suffix scores](ou3-linked-word-score.md) regroup
+this same exact word work, retaining covariance variations created inside it.
+They do not add a second magnetic charge.
+
 **Next calculation:** absorb the accelerometer AW-row port and prediction/reset
 work against the linked process/S and retained magnetic loss, keeping physical
 gauge/source forcing. Prove precisely the activation facts that estimate uses.

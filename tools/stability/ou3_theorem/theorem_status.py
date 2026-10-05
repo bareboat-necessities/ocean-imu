@@ -417,6 +417,12 @@ def status_report() -> dict:
             "information_shear_complete_word_gap_verified":False,
             "information_shear_word_balance_certificate":"information-shear-word-certificate.json",
             "information_shear_word_action_kernel_characterized":True,
+            "linked_suffix_score_normal_form_verified":True,
+            "generated_covariance_suffix_score_retained":True,
+            "score_range_aware_Fisher_loss_bound_verified":True,
+            "uniform_linked_suffix_score_charge":None,
+            "inherited_comparison_score_supply_identity_verified":True,
+            "uniform_signed_comparison_supply_bound":None,
             "general_service_conditioned_theorem_waits_for_planar_admission":False,
             "general_compatible_strata_and_uniform_transverse_gap_verified":False,
             "measurement_frame_loss_certificate":"measurement-frame-loss-certificate.json",
@@ -445,7 +451,9 @@ def status_report() -> dict:
             "The exact information-shear word balance and action kernel are proved, with reset/AW/projection and moving-projector ports retained. "
             "The moving-frame planar magnetic substep retains 9/10 of linked mean/covariance loss on its stated activation domain; "
             "prior-observation readers derive pitch/BG covariance ceilings and quantitative pitch-row loss. "
-            "Absorb remaining accelerometer AW-row, prediction/reset/frame/AW/projection work while proving only required activation bounds. "
+            "The exact suffix-score normal form cancels optimal additive local scores and retains all generated covariance suffix ports. "
+            "Its loss-generated score charge is bounded by inherited root comparison energy plus signed source work minus realized NIS; physical/kernel forcing remains. "
+            "Bound the linked comparison-loss/source score and absorb combined accelerometer AW-row, prediction/reset/frame/AW/projection work while proving only required activation bounds. "
             "Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes "
             "to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. "
             "The physical same-record tangent is forced and is not automatically the homogeneous or action kernel. "

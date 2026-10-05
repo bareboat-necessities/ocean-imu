@@ -1,26 +1,34 @@
 {
   "all_time_planar_magnetic_service_verified": false,
+  "comparison_supply": "sum corrections ||r+H e||_(R^-1)^2 plus actual prediction/reset/projection signed cross-plus-square work",
+  "comparison_word_budget": "chi_loss <= E_loss = V_0-V_N+Supply_W-sum NIS <= V_0+Supply_W-sum NIS",
   "covariance_zero_loss": "(I-U^T U) Z=0, Z=P^-1/2 dP P^-1/2",
   "full_literal_derivative_domain_certified": false,
   "general_theorem_assumes_existing_magnetic_service": true,
   "general_theorem_waits_for_planar_admission": false,
+  "generated_covariance_suffix_score_retained": true,
   "governing_strategy": "symmetry/kernel -> justified quotient/tube -> linked dissipation -> forcing -> minimal activation domain",
   "minimal_obligations_note": "docs/ou3-information-shear-strategy.md",
   "moving_projector_differential_retained": true,
   "nonlinear_remainder_and_precision_transfer_certified": false,
+  "optimal_additive_local_score": "J e+H^T S^-1 r-A^T C^-1(e+K r)=0",
   "optimal_correction_zero_loss": "H eta=0 and H dP=0; reached held BA uses active block and retained held ports",
+  "physical_S_reset_by_pseudo_measurement": false,
   "physical_compatibility_equals_homogeneous_kernel": false,
   "port_scope": "literal linked state-dependent/source ports, not independent disturbances; inherited auxiliary tangents remain causal",
   "proof_appendix_label": "app:information-shear-word",
-  "qualification": "OU3_INFORMATION_SHEAR_WORD_V1",
+  "qualification": "OU3_INFORMATION_SHEAR_WORD_V2",
   "quotient_balance": "Wperp_N-Wperp_0=-A_W+F_W+gauge_energy_0-gauge_energy_N",
   "radius_solve_performed": false,
+  "realized_NIS_is_observability_lower_bound": false,
   "relative_Schur_obligation": "for G-cJ=[[A,B],[B^T,N]], N>0 and A-B N^-1 B^T>=0 on justified service-coordinate strata; actual cross precision retained",
   "relaxations_introduced": [
     "regular real-operation tangent identities; nonsmooth/arithmetic closure remains separate",
     "dissipative base plus exact signed ports is an identity, not a surrogate execution"
   ],
   "result_type": "PROVED \u2014 analytical balance and kernel characterization; uniform coercivity OPEN",
+  "score_loss_charge": "G z=q implies ||M X q||_(J_N)^2 <= (q^T z/2) L_P(X), G=J_0-M^T J_N M>=0",
+  "score_outside_action_range": "retain kernel component as forcing; never discard it by pseudoinverse",
   "source_uniform_coercivity_requirement": "B^T[G_action-G_port-G_gauge,0+G_gauge,N]B >= c B^T Jperp,0 B, c>0, on a justified transverse lift and every admitted activated word",
   "storage": "W=eta^T J eta+lambda tr(J dP J dP), eta=de-dP J e, lambda>0",
   "structures_preserved": [
@@ -35,6 +43,10 @@
   ],
   "theorem_closed": false,
   "uniform_c": null,
+  "uniform_suffix_score_charge": null,
   "word_action_kernel": "intersection_i ker(Q_i T_i) for ACTUAL complete causal prefix tangents T_i",
-  "word_balance": "W_N-W_0=-sum v_i^T Q_i v_i+sum[2(L_i v_i)^T J_(i+1) p_i+p_i^T J_(i+1) p_i]"
+  "word_balance": "W_N-W_0=-sum v_i^T Q_i v_i+sum[2(L_i v_i)^T J_(i+1) p_i+p_i^T J_(i+1) p_i]",
+  "word_score_normal_form": "eta_N=M eta_0+M dP_0 q_0+sum M_(N,i+1)[v_i-U_i J_(i+1)e_(i+1)+U_i q_(i+1)]",
+  "word_score_note": "docs/ou3-linked-word-score.md",
+  "word_score_proof": "app:linked-word-score"
 }
