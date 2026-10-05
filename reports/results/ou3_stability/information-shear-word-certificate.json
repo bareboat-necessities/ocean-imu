@@ -1,0 +1,40 @@
+{
+  "all_time_planar_magnetic_service_verified": false,
+  "covariance_zero_loss": "(I-U^T U) Z=0, Z=P^-1/2 dP P^-1/2",
+  "full_literal_derivative_domain_certified": false,
+  "general_theorem_assumes_existing_magnetic_service": true,
+  "general_theorem_waits_for_planar_admission": false,
+  "governing_strategy": "symmetry/kernel -> justified quotient/tube -> linked dissipation -> forcing -> minimal activation domain",
+  "minimal_obligations_note": "docs/ou3-information-shear-strategy.md",
+  "moving_projector_differential_retained": true,
+  "nonlinear_remainder_and_precision_transfer_certified": false,
+  "optimal_correction_zero_loss": "H eta=0 and H dP=0; reached held BA uses active block and retained held ports",
+  "physical_compatibility_equals_homogeneous_kernel": false,
+  "port_scope": "literal linked state-dependent/source ports, not independent disturbances; inherited auxiliary tangents remain causal",
+  "proof_appendix_label": "app:information-shear-word",
+  "qualification": "OU3_INFORMATION_SHEAR_WORD_V1",
+  "quotient_balance": "Wperp_N-Wperp_0=-A_W+F_W+gauge_energy_0-gauge_energy_N",
+  "radius_solve_performed": false,
+  "relative_Schur_obligation": "for G-cJ=[[A,B],[B^T,N]], N>0 and A-B N^-1 B^T>=0 on justified service-coordinate strata; actual cross precision retained",
+  "relaxations_introduced": [
+    "regular real-operation tangent identities; nonsmooth/arithmetic closure remains separate",
+    "dissipative base plus exact signed ports is an identity, not a surrogate execution"
+  ],
+  "result_type": "PROVED \u2014 analytical balance and kernel characterization; uniform coercivity OPEN",
+  "source_uniform_coercivity_requirement": "B^T[G_action-G_port-G_gauge,0+G_gauge,N]B >= c B^T Jperp,0 B, c>0, on a justified transverse lift and every admitted activated word",
+  "storage": "W=eta^T J eta+lambda tr(J dP J dP), eta=de-dP J e, lambda>0",
+  "structures_preserved": [
+    "complete 21-state mean and covariance",
+    "literal Joseph/masks and effective held noise",
+    "prediction mismatch and dF/dQ",
+    "dH/dR/dr",
+    "injection/reset and bias projection",
+    "default AW pending-target/face differential",
+    "inherited reference/gates/clocks",
+    "same-history gauge/source and moving projectors"
+  ],
+  "theorem_closed": false,
+  "uniform_c": null,
+  "word_action_kernel": "intersection_i ker(Q_i T_i) for ACTUAL complete causal prefix tangents T_i",
+  "word_balance": "W_N-W_0=-sum v_i^T Q_i v_i+sum[2(L_i v_i)^T J_(i+1) p_i+p_i^T J_(i+1) p_i]"
+}

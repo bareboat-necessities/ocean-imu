@@ -58,7 +58,7 @@ Before calling a witness a shipping counterexample, explicitly answer YES to all
 
 ## Established results remain controlling
 
-Retain the exact operation identities, complete-word kernel reductions and qualified local theorem. Use the current lemma manifest for source-uniform status: the physical/nominal bridge, joint-kernel cover, H18 release and compact outer region are CONDITIONAL. Their algebraic implications do not establish completion of construction/release or physical gauge separation. Neither quiet absolute entry nor scalar-span MOVING bias separation may be revived. The exact MOVING pair's all-time actually applied service audit remains controlling; no generic A21 argument substitutes for that admission calculation.
+Retain the exact operation identities, complete-word kernel reductions and qualified local theorem. Use the current lemma manifest for source-uniform status: the physical/nominal bridge, joint-kernel cover, H18 release and compact outer region are CONDITIONAL. Their algebraic implications do not establish completion of construction/release or physical gauge separation. Neither quiet absolute entry nor scalar-span MOVING bias separation may be revived. The general quotient/tube dissipation theorem assumes the existing MAGNETIC SERVICE premise on admitted histories and need not wait for the special planar witness. The exact MOVING pair's all-time actually applied service audit remains a separate necessary admission calculation; no generic A21 argument substitutes for it. The persistent governing order is in `ou3-information-shear-strategy.md`: symmetry/kernels, justified quotient/tube, linked dissipation, actual forcing, then only necessary activation bounds.
 
 ## PR #643 standing interpretation
 

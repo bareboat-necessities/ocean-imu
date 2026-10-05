@@ -434,7 +434,8 @@
         "default additive AW floor",
         "fixed-coefficient partial factors and separately derived linked real-operation identities; uniform causal word bounds OPEN",
         "same-operation covariance residual loss bound is for unmasked optimal corrections; complete linked word identity does not assert a positive uniform margin",
-        "variational NIS, reachable held-BA reduction and information-shear identities are local analytical results; first-Live comparison bounds are qualified real-operation implications, not prefix containment"
+        "variational NIS, reachable held-BA reduction and information-shear identities are local analytical results; first-Live comparison bounds are qualified real-operation implications, not prefix containment",
+        "information-shear word balance, base-action kernel and moving-quotient identities apply on regular real-operation branches; general compatible strata and uniform transverse coercivity remain OPEN under existing MAGNETIC SERVICE"
       ],
       "proof_modules": [
         "tools/stability/ou3_theorem/planar_service_cell.py",
@@ -443,14 +444,16 @@
         "tools/stability/ou3_theorem/planar_causal_calculus.py",
         "tools/stability/ou3_theorem/planar_mean_covariance_ports.py",
         "tools/stability/ou3_theorem/planar_complete_word_storage.py",
-        "tools/stability/ou3_theorem/planar_innovation_storage.py"
+        "tools/stability/ou3_theorem/planar_innovation_storage.py",
+        "tools/stability/ou3_theorem/information_shear_word.py"
       ],
       "certificates": [
         "reports/results/ou3_stability/planar-service-cell-certificate.json",
         "reports/results/ou3_stability/planar-causal-calculus-certificate.json",
         "reports/results/ou3_stability/planar-mean-covariance-ports.json",
         "reports/results/ou3_stability/planar-complete-word-storage-certificate.json",
-        "reports/results/ou3_stability/planar-innovation-storage-certificate.json"
+        "reports/results/ou3_stability/planar-innovation-storage-certificate.json",
+        "reports/results/ou3_stability/information-shear-word-certificate.json"
       ],
       "open_dependencies": []
     },

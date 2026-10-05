@@ -415,6 +415,10 @@ def status_report() -> dict:
             "held_BA_reachable_active_block_reduction":True,
             "fixed_row_information_shear_residual_cancellation":True,
             "information_shear_complete_word_gap_verified":False,
+            "information_shear_word_balance_certificate":"information-shear-word-certificate.json",
+            "information_shear_word_action_kernel_characterized":True,
+            "general_service_conditioned_theorem_waits_for_planar_admission":False,
+            "general_compatible_strata_and_uniform_transverse_gap_verified":False,
             "source_uniform_nominal_NIS_cap":None,
             "uniform_complete_word_storage_margin":None,
             "uniform_center_service_floor":None,
@@ -428,18 +432,20 @@ def status_report() -> dict:
             "extra_physical_assumptions_adopted":False,
         },
         "next_controlling_obligation":(
-            "First settle all-time actual MAGNETIC SERVICE for the exact planar MOVING pair. "
-            "The exact planar MOVING pair satisfies current 30-s span and SLOW+FAST limits with constant bias and identical sensor records; "
-            "the proposed two-epoch span/bias separation has an exact zero direction. "
-            "The ideal mean execution and covariance admit an exact 12+9 parity factorization. A 20-s point return is invalid because the progress-preserving S scheduler phase does not return; the invariant cell must carry that phase. "
-            "Certify a forward-invariant causal skew-product enclosure and phase-uniform one-second actually applied MAGNETIC SERVICE for that SAME shipping history before declaring "
-            "a fully admitted MOVING obstruction or asserting absolute inner entry from the existing assumptions. "
-            "The retained historical 240/1200-s replays and final-cycle all-IMU-root service sweep are non-promoting finite evidence; the tail sweep remains above 7 but is not an interval/all-time certificate. "
-            "Keep construction/H18/refinement/release, the full persistent HistoryCell, coupled tuner, actual covariance/gains and BA physical forcing. "
-            "Finite quotient contraction and full native central secants do not enclose the nonlinear derivative or future forcing. Retain C_Q alpha and any covariance gauge forcing. A fixed-root relative covariance ball fails finite feasibility: drift .537822 with covariance gain about .991 requires radius above 60. Use linked phase/history-dependent centers, not another smaller finite-difference step or independent generated boxes. "
-            "The continuous physical same-record arc and raw angle/curvature bounds are proved; conversion to the nominal precision-normalized tube is OPEN. Its total estimator variation is zero and is not a nominal-root secant. The conditional moving-center defect is below .000618 on the finite exported tail, but uses observed future H/G and is not an autonomous all-time enclosure. "
-            "Analytical continuation only: derive the inherited nominal aw/reference/gate domain and linked complete-word storage; no further replay, secant or sampled-cell exploration. Local dR/held-PCt/gain/reset identities and the rational raw Mahony normalization bound do not close that domain. "
-            "Homogeneous kernel/action results and completed-square algebra remain valid but do not identify the physical tilt/BA decomposition. "
-            "All-time device qualification, nonlinear/prefix retention, float32 transfer and regime composition remain OPEN."
+            "Follow docs/ou3-information-shear-strategy.md: identify symmetry/kernels, justify compatible strata/tubes, "
+            "derive linked dissipation, bound actual forcing, then prove only necessary activation facts. "
+            "The exact information-shear word balance and action kernel are proved, with reset/AW/projection and moving-projector ports retained. "
+            "Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes "
+            "to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. "
+            "The physical same-record tangent is forced and is not automatically the homogeneous or action kernel. "
+            "A positive uniform c, branchwise compatibility relation, required metric/reference/chart bounds and actual source/gauge/arithmetic charges remain OPEN. "
+            "Only after those dependencies close may radius and every-prefix practical stability be established. "
+            "General service-conditioned dissipativity does not wait for special planar admission. Separately prove or disprove the planar family's "
+            "all-time applied magnetic service; finite floors near 7.02 do not certify it. Full admission rules out eventual retention "
+            "in the specified absolute V<.0225 ball, not divergence or every larger absolute practical bound. "
+            "Preserve construction/H18/refinement/release, physical S, held BA, reference/gates and S/AW clocks without restart. "
+            "Qualified first-Live bounds are boundary implications only. No replay, secant, sampled grid or empirical contraction campaign. "
+            "Nonlinear retention, target arithmetic and STILL/TRANSITION/MOVING composition remain OPEN."
+
         ),
     }

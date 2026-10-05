@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "9ae6e0b2a8a3dc065f0cd15d689b155d3c0ae6ff"
+      "git_blob_sha": "b6e1668551b1f3164dfbc67f480511fbb6287e52"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "af571afdf528f2dd822f6e79a646289daa26b11a"
+      "git_blob_sha": "1cd6616ed7c50b10b5e3b6d57b0df1408ad0bde7"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "237c26616763c24754c9a797f66b49054dcb4d47"
+      "git_blob_sha": "b08411391353508bacff37274a939b31b7c07742"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "cd45801212bf463197e22585e0d06071b0c27be9"
+      "git_blob_sha": "9bafd4820240616bd329f42f2bab32d4638a2f1f"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -512,7 +512,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "a46be8f91e027bdc35284f18b324acfd2facd325"
+      "git_blob_sha": "7327031d228998bdff75ad02f2616a44eb6be565"
     },
     {
       "path": "tools/stability/ou3_theorem/causal_tuner_interval.py",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "090ebb3df4bdd2c166d400ad92af7ed2cc6e9f8c"
+      "git_blob_sha": "75cf1261aaa3c09a8189c56690614c3cb8cbe6aa"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "5fb72211ecd21e56162c8f2475c0a9a8ef0d09dd"
+      "git_blob_sha": "00c6233545d801e4befed359577058e90e96baa2"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -945,6 +945,22 @@
     {
       "path": "reports/results/ou3_stability/planar-innovation-storage-certificate.json",
       "git_blob_sha": "eaf753c818b1e1bc8396385a9c77c7c65712a855"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/information_shear_word.py",
+      "git_blob_sha": "a162b432f9dc5d3a95612f28e71af0f55c62b7eb"
+    },
+    {
+      "path": "tests/validation/test_ou3_information_shear_word.py",
+      "git_blob_sha": "a4f094d79cdc8b18fada399c50f64cf134cc1b97"
+    },
+    {
+      "path": "docs/ou3-information-shear-strategy.md",
+      "git_blob_sha": "b1a0543da09a855b53839c9f5cd2e5c2b2d0edbe"
+    },
+    {
+      "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
+      "git_blob_sha": "7bcf36fc53bd9cc19eab675ff6e912c6a9a3136b"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1015,7 +1031,7 @@
     "result_type": "FINITE DIAGNOSTIC ONLY",
     "starting_PR_653_head": "4d387d19849aa177e1b84dae5d28a8eb3a80cf40"
   },
-  "reconciled_pr_head": "fb7163180a3f725bc3feeb99f9fd4e4ec2a38723",
+  "reconciled_pr_head": "9c904b670c0175f91b8d7164623c1ce712375a4f",
   "planar_moving_center_audit": {
     "result_type": "FINITE DIAGNOSTIC ONLY",
     "starting_main": "59959d1bf33a3c5f4f70331104546a6486468df6",
@@ -1076,5 +1092,20 @@
     "held_BA_reachable_active_block_reduction": true,
     "fixed_row_information_shear_residual_cancellation": true,
     "source_uniform_nominal_NIS_cap": null
+  },
+  "information_shear_word_audit": {
+    "strategy": "docs/ou3-information-shear-strategy.md",
+    "certificate": "information-shear-word-certificate.json",
+    "general_theorem_assumes_existing_magnetic_service": true,
+    "general_theorem_waits_for_planar_admission": false,
+    "exact_word_action_and_signed_work_identity": true,
+    "actual_prefix_action_kernel_characterized": true,
+    "physical_compatibility_equated_to_homogeneous_kernel": false,
+    "uniform_transverse_c": null,
+    "minimal_activation_dependencies_identified": true,
+    "finite_exploration_performed": false,
+    "shipping_sources_changed": false,
+    "radius_solve_performed": false,
+    "all_time_planar_admission_verified": false
   }
 }

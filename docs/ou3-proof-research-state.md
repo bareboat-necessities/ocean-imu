@@ -2,25 +2,31 @@
 
 ## Current hypothesis
 
-**OPEN:** settle all-time actually applied MAGNETIC SERVICE for the exact planar
-MOVING compatible family. Neither admission nor exclusion has been proved.
-Do not return to generic A21 entry or gravity-span/BA separation.
+**GOVERNING STRATEGY:** symmetry/kernels → justified quotient/tube → exact
+linked information dissipation → actual forcing → only necessary activation
+bounds. [The persistent strategy and derivation](ou3-information-shear-strategy.md)
+must accompany future handoffs. This supersedes “enclose the entire nominal
+state first” and “wait for planar admission before general dissipativity.”
+The general theorem assumes existing MAGNETIC SERVICE on admitted histories;
+all-time service for the special planar witness remains a separate OPEN lemma.
+No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR #653 head: `cbf6f711be560fb56b0f2c403dbc83a05bf143ed`.
-The PR is draft, open and mergeable. Both current proof runs, including
-planar-service-cell, passed. CI chronology belongs in PR metadata.
+Verified starting head for this continuation:
+`9c904b670c0175f91b8d7164623c1ce712375a4f`.
+Main is already incorporated; PR #653 is open and mergeable. Current CI
+chronology belongs in PR metadata.
 
-Manifest counts remain **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
-`theorem_closed=false`, `regional_practical_stability_claimed=false`.
-Existing operation lemmas are extended with actual analytical proofs; no new
-lemma count or all-time result is claimed.
+Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
+`theorem_closed=false`, `regional_practical_stability_claimed=false`,
+`certified_capture_time=null`. Existing proved algebra is extended without
+promoting uniform coercivity, entry or admission.
 
-The active work policy is analytical only: exact algebra/rationals, rigorous
-compact-inequality enclosures after derivation, and identity/source regressions.
-No new replay, secant, sampled phase/covariance grid or empirical contraction
-factor is authorized. Historical finite diagnostics are opt-in in proof CI;
-all theorem/provenance/identity and shipping regression gates remain.
+Analytical work only: exact algebra/rationals, rigorous compact inequalities
+after derivation, and identity/source regressions. No new replay, secant,
+sampled grid or empirical factor. Before substantial calculations state the
+lemma/quantifiers, finite-error role, literal dissipation structure, required
+proved/open bounds and avoidance of recorded dead ends. Required CI remains.
 
 ## Evidence
 
@@ -94,8 +100,8 @@ would destroy the cancellation. Prediction has its own exact shear formula
 including physical OU mismatch, dF and dQ; its fixed-coefficient zero-source
 port has the linked charge `L_mean*L_cov/2`. Actual source terms remain.
 Uniform coercivity requires a bound on the comparison precision energy.
-Quaternion injection/reset, AW/projection and the moving physical quotient
-must still be composed. **No complete-word gap is inferred from this block.**
+The word balance below now composes reset/AW/projection and moving quotient
+ports; their uniform absorption remains OPEN. **No positive gap follows.**
 
 **PROVED — analytical:** the magnetic-information differential and finite
 resolvent bound are derived for complete same-history probe words. For stacked
@@ -123,35 +129,39 @@ observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
 
-The analytical identities do not yet establish a common-storage rho<1,
-nonlinear/source/arithmetic charges, an inherited invariant radius, or a
-phase-uniform center magnetic-information floor. The exact missing domains are:
+**PROVED — analytical word balance and kernel characterization:**
+`information_shear_word.py` extends the coupled shear through literal
+reset discrepancy, default AW increment, bias projection and moving-projector
+transport. With actual causal prefixes, the nonnegative action has kernel
+`intersection ker(Q_i T_i)`. The exact word balance retains signed port work,
+its square charge and endpoint gauge-energy difference. No endogenous port is
+reclassified as independent noise. The physical same-record tangent is a
+forced comparison, not automatically the homogeneous or action kernel.
 
-* nominal aw, actual innovations/precision and their linked complete-word bounds;
-* startup/capture/H18/refinement/release and every-prefix gate/solver margins;
-* target libm qualification, float reference arithmetic/acquisition, period/variance/tuner state and both clocks;
-* actual nominal-chart/precision conversion of gauge amplitude and curvature;
-* complete linked mean/P/reference word derivatives and nonlinear remainders.
+**OPEN:** for every activated admitted word on a justified compatible stratum,
+prove the linked transverse matrix gap in the strategy note with one common
+`c>0`. Existing magnetic service controls its physical probes; a quantitative
+comparison to the actual coupled shear action, process/S action and absorption
+of signed work/projector terms is missing. Pointwise rank is insufficient.
+The general compatible-set/stratum relation must also be justified, rather
+than extrapolating the planar fibre. These are proof dependencies, not new
+physical assumptions.
 
-The precise storage limiter is the sign of the complete-word matrix gap after
-including dH/dR, reset/AW/projection and moving quotient terms. The new 1/2
-residual-loss bound still needs a uniform same-history NIS/domain bound.
-The new first-Live bound does not establish its propagation. The information
-shear avoids an independent residual charge on one exact correction block,
-but dH/dR, physical transport and actual reset terms still control the gap. No
-finite NIS maximum or private-frontend decrement is substituted for it. Radius
-and all-future service calculations are deliberately not performed first.
+The strategy note's activation table limits domain work to the quantities used
+by that comparison: required metric/innovation ratios, comparison energy and
+row geometry, reference/gates, reset chart, AW/clock branch coverage and source/
+gauge/arithmetic charges. The first-Live central-fibre bound is only a boundary
+lemma. No all-time compactness is assumed to prove its own retention. Uniform
+`c`, actual charges and every-prefix bounds must precede radius algebra.
 
-The corrected row helper takes explicit nominal-aw, reference and noise-cell
-bounds. Missing bounds return null. Physical acceleration was incorrectly used
-as nominal aw; the old point innovation floor was not a proof bound; rotation
-of the accelerometer aw block also contributes to dH. Those defaults are removed.
-
-The source profile remains sigma_a=.2 and adaptive S for the planar probe.
-The AtomS3R deployment has sigma_a=.12, fixed S and other distinct settings.
-No result is transferred between profiles. Physical S is never reset by S=0.
+The planar profile is sigma_a=.2 with adaptive S; AtomS3R uses sigma_a=.12 at
+its reference rate with fixed S and differing settings. No profile transfer.
+Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
+
+* **E, regression tooling:** the new word module had one unused import; removed
+  after the lint gate identified it. No mathematical condition changed.
 
 * **E, manuscript tooling:** the proof appendix exceeded IEEEtran's 26-letter
   subsection counter (`Counter too large` at the final implication). Scoped
@@ -205,26 +215,25 @@ remain. No genuine admitted shipping counterexample has been established.
 
 ## Alternatives
 
-All-time admission of this family would rule out universal absolute MOVING
-entry and force the compatibility quotient/tube target. Analytical service
+All-time admission of this family would rule out universal eventual retention
+in the specified absolute V<.0225 ball on that profile and require a
+compatibility quotient/tube for that target. It would not prove divergence or
+exclude every larger absolute practical bound. Analytical service
 failure would exclude the pair. Neither branch is selected from replay.
 STILL retains compatible-tube boundedness with the existing centered-window
 persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
-This is an analytical obligation, not another simulation: establish the
-inherited nominal MEKF/innovation/precision domain and float reference chronology,
-carrying the proved first-Live central-fibre bound through the actual H18 word.
-Compose the information shear with literal attitude injection/reset, inherited
-physical transport and the held-BA effective-noise differential; keep those
-linked terms before bounding the complete-word matrix gap. Then prove a
-positive uniform margin using the literal linked calculus and moving quotient
-projector. Retain C_Q alpha, covariance coupling, fibre curvature, arithmetic
-and every-prefix branch/phase containment. Only after solving its radius may
-the compact center information inequality and perturbation bound be evaluated
-rigorously over all placed windows. Neither a finite floor nor a conditional
-center recurrence alone closes this chain.
+An analytical obligation: compare the existing actually-applied physical
+magnetic-service probes to the full coupled information-shear action on
+justified compatibility strata, preserving the complete signed port sum.
+Prove a uniform positive transverse gap or exhibit its exact unabsorbed term.
+Then prove only the inherited metric/reference/chart/branch bounds required
+by that comparison, using a noncircular construction/H18/release bootstrap.
+Retain gauge-to-transverse forcing, covariance coupling and fibre curvature.
+Planar all-time admission proceeds separately and cannot be inferred from
+finite floors, callback counts or the service-conditioned general theorem.
 
 ## Verification scope
 
@@ -246,5 +255,5 @@ in the PR metadata.
 4. Admitted counterexample: none; all-time admission/exclusion remains OPEN.
 5. Retained: 25 proved entries, qualified local theorem and exact compatibility
    obstruction; qualified frontend and linked storage proofs extend entries without count promotion.
-6. Next: source-uniform inherited causal-center storage/radius and actual
-   all-future magnetic floor, retaining gauge and every prefix.
+6. Next: uniform linked service-to-shear transverse gap, then its minimal
+   activation and forcing bounds; planar admission stays separate.

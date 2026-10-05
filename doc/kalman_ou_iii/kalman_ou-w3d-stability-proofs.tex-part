@@ -1398,6 +1398,196 @@ qualified real-operation identities, scalar outer boundary majorants and
 Young's quadratic rotation-remainder bound. Failure classification for the
 unclosed complete-word sufficient inequality remains D, not instability.
 
+\subsection{Information-shear word action and compatible-tube transport}
+\label{app:information-shear-word}
+The governing order is symmetry/kernel identification, justified quotient or
+compatible tube, linked dissipation, forcing, then the necessary activation
+bounds. The general theorem assumes the existing MAGNETIC SERVICE premise;
+it does not wait for the separate planar witness admission lemma.
+
+\paragraph{Quantifiers and storage.}
+For every finite regular real-operation shipping word, every differentiable
+variation of its inherited history, actual positive covariance and innovation
+matrices, and fixed $\lambda>0$, set
+\[
+ J=P^{-1},\quad \eta=de-dPJe,\qquad
+ W=\eta^TJ\eta+\lambda\operatorname{tr}(JdPJdP).
+\]
+The comparison $e$ is inherited. This is a tangent identity; finite-error,
+branch-crossing and arithmetic closure are not asserted. Write
+$v=(\eta,\operatorname{vecsym}dP)$ and its metric as $\mathcal J$.
+Split each actual operation exactly as $v^+=Lv+p$. The port $p$ includes
+endogenous row/noise/source/reference dependence; it is not independent noise.
+Auxiliary tangents are propagated causally or retained in the augmented root.
+
+For a regular optimal correction, $L(\eta,dP)=(A\eta,A dP A^T)$,
+$A=I-KH$, $C=AP$. With $a=He+r$, its ports are
+\begin{align*}
+ p_\eta={}&C\,dH^TR^{-1}a+K\,dH e-K\,dR R^{-1}a
+                  +K(dr+Hde),\\
+ p_P={}&-K\,dH C-C\,dH^TK^T+K\,dR K^T.
+\end{align*}
+These follow from Appendix~\ref{app:planar-innovation-storage} and the literal
+optimal Joseph differential. Fixed rows/noise with $dr=-Hde$ cancel the
+covariance-induced $dK\,r$ term. Reached held BA uses the active block with
+$R_{\rm eff}=R_a+P_{BA}$, retaining $dR_{\rm eff}$ and held-bias ports;
+the held covariance block has zero base loss. Arbitrary masked gains are not
+replaced by optimal ones. Rejected corrections have identity transport;
+solver repairs require their literal branch terms.
+
+Prediction uses $L(\eta,dP)=(F\eta,FdPF^T)$ and the already-derived shear
+port with physical OU mismatch, $dF,dQ$. Its covariance port is
+$dFPF^T+FPdF^T+dQ$. For reset write the actual finite comparison as
+$e^+=Ge+t$, $P^+=GPG^T$, with invertible shipping covariance reset $G$.
+Direct differentiation, with no replacement of the finite injection by $G$,
+gives
+\[
+ \eta^+=G\eta-GP\,dG^TG^{-T}Je+dt-dP^+(P^+)^{-1}t.
+\]
+The covariance port is $dGPG^T+GPdG^T$; the base congruence is an isometry.
+Default AW has actual $P^+=P+U$, $U\succeq0$, $e^+=e$ and base identity:
+\[
+ \eta^+=\eta+dP(J-J^+)e-dU J^+e,\qquad dP^+=dP+dU.
+\]
+Here $dU$ retains the pending target and spectral face dependence. A face
+crossing needs a directional or finite-increment inclusion. Bias projection
+leaves $P$ unchanged: for its literal mean shift $s$,
+$\eta^+=\eta+ds-dPJs$. No full-metric nonexpansiveness of Euclidean projection
+is assumed. BG projection precedes injection; BA projection follows reset.
+Reference/tuner/clock transitions retain their own tangents and branch choices.
+The one-way Complementary result does not delete reference/gate feedback.
+Watchdog jumps and unsupported covariance writes are outside this regular-word
+identity until their literal maps are supplied.
+
+\paragraph{Dissipation and its exact kernel.}
+For prediction, correction or AW put
+$U_0=(P^+)^{-1/2}BP^{1/2}$, respectively $B=F,A,I$.
+Then $D=U_0^TU_0$ satisfies $0\preceq D\preceq I$; reset has $D=I$.
+Set $E=I-D$, $y=P^{-1/2}\eta$, $Z=P^{-1/2}dPP^{-1/2}$.
+The base storage decrement is
+\[
+ \ell(v)=y^TEy+\lambda\{2\operatorname{tr}(ZDZE)
+                              +\operatorname{tr}(ZEZE)\}\ge0.
+\]
+Indeed the covariance output energy is $\operatorname{tr}(ZDZD)$;
+expanding $I=D+E$ proves the formula. The two traces are respectively
+$\|D^{1/2}ZE^{1/2}\|_F^2$ and $\|E^{1/2}ZE^{1/2}\|_F^2$.
+Their simultaneous vanishing implies $ZE^{1/2}=0$, since $D+E=I$.
+Hence zero loss is equivalent to $Ey=0$ and $ZE=0$. For optimal correction
+this is exactly $H\eta=0$ and $H dP=0$. This characterizes base action,
+not physical identifiability.
+
+With $Q_i=\mathcal J_i-L_i^T\mathcal J_{i+1}L_i\succeq0$, expansion gives
+\begin{align*}
+ W_N-W_0&=-\mathcal A_W+\mathcal F_W,\\
+ \mathcal A_W&=\sum_i v_i^TQ_iv_i,\\
+ \mathcal F_W&=\sum_i\{2(L_iv_i)^T\mathcal J_{i+1}p_i
+                                  +p_i^T\mathcal J_{i+1}p_i\}.
+\end{align*}
+No norm or independent extremum is taken. The square charge is compulsory.
+The nonsheared alternative retains $\|f_P\|^2\le\mathrm{NIS}L_P/2$ only on
+covered branches, with partial coefficient $(\lambda-\mathrm{NIS})/2$.
+Variational NIS controls realized residual work, not arbitrary-direction
+observability.
+
+For actual causal prefix maps $v_i=T_i a$ in one augmented root/history
+coordinate, define $E_i=T_{i+1}-L_iT_i$. Then
+\begin{align*}
+ G_A&=\sum_iT_i^TQ_iT_i,\\
+ G_F&=\sum_i\{(L_iT_i)^T\mathcal J_{i+1}E_i+
+                  E_i^T\mathcal J_{i+1}L_iT_i+
+                  E_i^T\mathcal J_{i+1}E_i\},\\
+ G_A-G_F&=T_0^T\mathcal J_0T_0-T_N^T\mathcal J_NT_N.
+\end{align*}
+The zero-action space is $\bigcap_i\ker(Q_iT_i)$, since every summand is
+positive semidefinite. A trivial action kernel does not imply a positive full
+gap until signed port work is controlled. The $T_i$ are complete coupled
+prefix derivatives, not frozen $F/(I-KH)/G$ products.
+
+\paragraph{Physical compatibility and moving quotient.}
+A same-record physical variation leaves the deterministic estimator and $P$
+unchanged. Its physical-error tangent need not vanish. In A21 the planar BA
+tangent is constant while the estimator homogeneous transition multiplies it
+by $\phi_{OU}$; the comparison therefore carries
+$(1-\phi_{OU})r_{BA}$ as source. Thus it is not a homogeneous BA solution.
+Where a regular A21 prediction has positive full process covariance, any
+nonzero such tangent has positive base process loss; its forced work must
+remain. This neither removes physical ambiguity nor proves instability.
+
+On a proved fixed-rank compatible stratum let
+$\Pi_G=R_G(R_G^TJR_G)^{-1}R_G^TJ$, $\Pi_\perp=I-\Pi_G$,
+$\gamma=\Pi_G\eta$ and $\xi=\Pi_\perp\eta$. Then exactly
+\[
+ W_{\perp,N}-W_{\perp,0}=-\mathcal A_W+\mathcal F_W
+                  +\|\gamma_0\|_{J_0}^2-\|\gamma_N\|_{J_N}^2.
+\]
+The terminal transverse map retains $\Pi_{\perp,N}M_{\eta\eta}R_{G,0}\alpha_0$
+and all covariance/source ports. Rank changes need strata or a compatible-set
+formulation. The planar line is not a universal gauge basis.
+For $U=(R_G^TJR_G)^{-1}$ direct differentiation gives
+\begin{align*}
+ d\Pi_G={}&dR_GUR_G^TJ+R_GU\,dR_G^TJ+R_GUR_G^TdJ\\
+           &-R_GU\,d(R_G^TJR_G)UR_G^TJ.
+\end{align*}
+In particular $d(\Pi_\perp e)=\Pi_\perp\eta+\Pi_\perp dPJe-d\Pi_Ge$.
+The shear quotient therefore needs this conversion to physical distance,
+including angle-to-precision bounds and the proved nonlinear fibre curvature.
+For fixed source variation, the physical same-record tangent relation is an
+affine forced relation; it is not asserted equal to the homogeneous kernel.
+
+\paragraph{Precisely isolated uniform obligation --- OPEN.}
+Let $\Gamma_i=T_i^T\operatorname{diag}(\Pi_{G,i}^TJ_i\Pi_{G,i},0)T_i$,
+$J_{\perp,0}=T_0^T\mathcal J_0T_0-\Gamma_0$. On a justified root transverse
+lift $B$ with $B^TJ_{\perp,0}B\succ0$, the required single linked inequality is
+\[
+ B^T(G_A-G_F-\Gamma_0+\Gamma_N)B
+       \succeq c B^TJ_{\perp,0}B,\qquad c>0,
+\]
+uniformly for every activated admitted word. Auxiliary directions with zero
+root storage must be retained as linked forcing or assigned justified storage.
+MAGNETIC SERVICE supplies its specified transported physical-probe action;
+the missing dependency is a quantitative comparison to this coupled sheared
+action, together with process/$S$ action and absorption of signed work and
+projector terms. No such uniform $c$ is certified here.
+
+Where the two physical service directions have independent images in a
+justified transverse stratum, complete them to root coordinates $(s,n)$.
+Write $G=B^T(G_A-G_F-\Gamma_0+\Gamma_N)B$ and
+$J=B^TJ_{\perp,0}B$, and partition $G-cJ$ as
+$\left[\begin{smallmatrix}A_c&B_c\\B_c^T&N_c\end{smallmatrix}\right]$.
+For $N_c\succ0$, the exact square completion is
+\begin{align*}
+ (s,n)^T(G-cJ)(s,n)
+ ={}&(n+N_c^{-1}B_c^Ts)^TN_c(n+N_c^{-1}B_c^Ts)\\
+ &+s^T(A_c-B_cN_c^{-1}B_c^T)s.
+\end{align*}
+Thus the missing uniform test is equivalently the positive complementary
+block and positive semidefinite relative Schur complement on this branch.
+A principal service floor does not bound that complement: actual cross terms
+can cancel it. The blocks retain all signed shear work and cross precision.
+If the service images lose rank, this coordinate stratum is not available.
+No uniform constant is supplied by the algebraic reduction.
+
+Only bounds needed for that comparison are activation obligations: required
+precision/innovation comparisons; comparison energy and row geometry;
+reference alignment and actual gates; injection chart and reset size;
+AW/clock branch coverage; source/gauge and arithmetic charges; and finite
+bootstrap with every-prefix containment. The qualified first-Live bound is
+only a boundary lemma. No all-time compactness is assumed to prove itself.
+The complete dependency table and persistent strategy are in
+\texttt{docs/ou3-information-shear-strategy.md}; exact rational identities are
+implemented by \texttt{information\_shear\_word.py}.
+
+Structures preserved: all 21 mean states and covariance, actual optimal/held
+Joseph distinction, physical forcing, injection/reset/projection/AW,
+reference/gates/clocks and same-history moving compatibility.
+Relaxations introduced: regular real-operation tangent scope with exact signed
+ports; no surrogate execution or uniform finite-error theorem is asserted.
+The unresolved sufficient uniform gap is classification D, not an admitted
+counterexample. Invariant-radius and all-time planar service closure remain
+open. Full planar admission would rule out universal eventual retention in the
+specified absolute $V<.0225$ ball, not divergence or every larger practical bound.
+
 \subsection{Same-record full covariance comparison}
 Identical initial estimator state and delivered prefixes imply identical complete
 internal executions by induction, including frontend, parameters, covariance,
