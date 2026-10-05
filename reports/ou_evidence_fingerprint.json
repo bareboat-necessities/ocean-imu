@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "81302e266b5b4855f1c15e939a436923d613898874e0dbb215572016fa87fd50",
-  "results_file_count": 452,
+  "replay_fingerprint": "34cc56fc416e23b257db2793935d4e29a5d4aa567c20dc4081883af6f88447ca",
+  "results_file_count": 455,
   "results_files": [
     {
       "kind": "file",
@@ -836,7 +836,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "sha256": "9bb194ccd3fe3cf587932b5af08b310bd22dc498fdcc8b701992d8ac6ac18232"
+      "sha256": "4ba1cd7d778b6798abc0ca802bc82500806bc095a061ad86bae74c26e9060a23"
     },
     {
       "kind": "file",
@@ -880,13 +880,28 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/ou3_stability/planar-every-root-service-diagnostic.json",
+      "sha256": "0cb6d5ca53afb56af0f99aac2094ae786f499e201b5dad414923c7e0ddcbce7b"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
       "sha256": "9426072d48d89cd07d0b71ab121b3cc88787f406e1bbb1a68d0b92abb815c5f8"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-joint-phase-cell-threshold.json",
-      "sha256": "2c5fb9bbd528dae20fe8058457d069c0fbaccf0f42c3412bb307a7477f1405e0"
+      "sha256": "0bd8ddc8b723b0b5b8d1d5c05b855b98c9e44856554c107ea8195dc0c727d5c5"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
+      "sha256": "069b5525463bce3a72e40d028a07cfdd271d8a37d8566abf4c1cc63f0273073d"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
+      "sha256": "8424eb11653d7ab52433b0702c26e6e64699056335c002d5367b6051467a3af1"
     },
     {
       "kind": "file",
@@ -896,7 +911,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-service-frechet-diagnostic.json",
-      "sha256": "13559dde849830f2e59a09e4c1969f2e5ca2688b9729c0d2eb8c0893964da10a"
+      "sha256": "fd4e75b0b8370ef33581379a4b8123de6ed007c7bbae361b11bf0f425b1f0f5b"
     },
     {
       "kind": "file",
@@ -916,17 +931,17 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-service-operation-audit.json",
-      "sha256": "62b83d92cea7f939719e32b8d65a9ba2635ff70045b8706ab0ddfec7e96156ea"
+      "sha256": "cf64296d1eaa74c17e9e94fbc582844ca64c2532c7d5ff9bae1fb2f43f6483a4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
-      "sha256": "63a710bcb63cde172f3becc42a52953b3523f9a806643c5f3d83620723bf5776"
+      "sha256": "d76954cb5f426c34f068a125d95fa41bdb85eb94ebe832334b932786e714308f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "19ab0473a2f43e8150d9fb8d3d29e25e863d8a9701fbb73f512c93bf63b33623"
+      "sha256": "1862da73592efe7b2c1470e47cd086423fcd90e1aa5c217fec8257f848f40a95"
     },
     {
       "kind": "file",
@@ -986,7 +1001,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "sha256": "1cf9dced7a653e3ff2df31a7c5752d35a4861b0f69fcf321ce1077efade4123d"
+      "sha256": "7409696b9eb4704353472fb51346eb290b2ed74269c2f2cbcd2e003dc89468ff"
     },
     {
       "kind": "file",
@@ -1026,7 +1041,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "b47059e412efcf67906e6b83cb7b527607fc44b0f3d14d0ef12cf7620631c1e5"
+      "sha256": "a18b21e5b690702c0d538d21a3d9a9b62e5a3be1a655c414c42348788d501967"
     },
     {
       "kind": "file",
@@ -1096,37 +1111,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "336647056113f524b0e4a582f8a9b8095102d71904f8bb34447347855c180875"
+      "sha256": "aa67a64d2cc0a68551da5798fe8c682f6e501dd271e960fc641ac68ab3dfe73f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "b6255d767ec3bf04b3efe262e8b3bdb7c087e45ea291e03f72e6d34ead7a81f7"
+      "sha256": "e5a55b6d17079394cfbbc6eb1caefe1b0eeda9116aacfefaa6386490f7b88019"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "73f95cb5473e13f19d23ceb1b73f93328e3d118cbd5026c97acd69d2f8253e34"
+      "sha256": "71d87ec0ee431d607cc789f4652809a789506185a536f767095554d26cfdf901"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "7c13b6f2a3e1698ea8dea9914c6c73ae1a8e19f0cb090ec32fbae8483a0a4e23"
+      "sha256": "138cdf0c231594621ba3171f6ada25c11a6c8abffadc37a2398ae529912bc256"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "a1caf91d614d1b38401206649aa9865bf0af67a6c45af28beb8b1aa2edf52353"
+      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "59eff8d255989dfe2e19a80fe25fb5d504325d484de0cfe6524064e8fd14ced7"
+      "sha256": "9d22bc7b87c414dbba12f9f0c57a433f2b44013563576b90c157807bb8efb862"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "5034c6a5d161d71fe54b06fbad00df4a450416d9750074bcdb6b759a3d4fde30"
+      "sha256": "9bf7d87c06a226f50d0b9e9d566f5b2cb24f402f0525804987e2bac4675efc79"
     },
     {
       "kind": "file",
@@ -1136,12 +1151,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "e568149e1c57b5f13ffe2470a180165f8f335239c584d65d731e5e976ffc62c5"
+      "sha256": "2e152c0bcda46e96cb272a8f9cfb8aa2577b37cfb873d08e0e008277540a77e7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "d1d4404baeb3220ad560b97235163fcd4be6b2fbd295842b254857361bcadb3a"
+      "sha256": "2d81bec7d2df00a354f0aee7e2374529471c7aad56cb57a2023ad5727093eabd"
     },
     {
       "kind": "file",
@@ -1166,7 +1181,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "76f24f9588f0a19da5377aec572b4ef80607b3d8f18ea6ba8e9c996838791461"
+      "sha256": "cbf0e784c10dabf061e9d74bbbcf48199fd711ca514877058d9855c375d0d047"
     },
     {
       "kind": "file",
@@ -2264,13 +2279,13 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "85fca6c46e47cc1dc5cabacaafab35fa12877357bedf65154e6f67915eb8d407",
+  "results_fingerprint": "27ae85eb8ab93b7d20d9c21ee3cc420eb03eec999e3d09f037aa6a224bddca73",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 736,
+  "tracked_replay_file_count": 739,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2315,7 +2330,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou3-stability-proof.yml",
-      "sha256": "f1f4b22bef1bc5d3877767b12957363b95faf2a9767291d0ab352debb1a09ec8"
+      "sha256": "73cca63d91eac5ef07faf2cbc21b5f0794fccd6fcb650008faf9866914172c8b"
     },
     {
       "mode": "100644",
@@ -3805,7 +3820,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_compatibility_quotient.py",
-      "sha256": "42612d8587cbd0f33ed4fb1e7a25e523810f0497da3717d2613c2e299966db8b"
+      "sha256": "7b246afb956bcf078c54b0cb4297aa6d33241432d13efbf0b772c1ed6953acea"
     },
     {
       "mode": "100644",
@@ -4105,7 +4120,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_planar_common_norm_radius.py",
-      "sha256": "07ecfbbdc0b28764229464bc5b00df692b8711f0a1ea80fd0a8dc2100c4c7b8c"
+      "sha256": "c314ed0574b976af31805acdefa1da11c01cf1da1218ca29473ed793026e2db6"
     },
     {
       "mode": "100644",
@@ -4130,7 +4145,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_planar_joint_phase_cell.py",
-      "sha256": "b9cdc998ad074ddbb967341cf0555cc503fe630a8538021c289df887ead83cd6"
+      "sha256": "8d9b77b17a821ef64d6946da9118ff005c22bedfcfa22e5b08f05196a84f14ad"
     },
     {
       "mode": "100644",
@@ -4146,6 +4161,11 @@
       "mode": "100644",
       "path": "tests/validation/test_ou3_planar_moving_symmetry.py",
       "sha256": "25f8d10339b6c204250265beec9b750365411c97d44e5eaa08b90fd01e440ffc"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_native_secants.py",
+      "sha256": "7fe039730cb684d951123191a068f52ac51aca673b08c342ff92751c7b2c4b3d"
     },
     {
       "mode": "100644",
@@ -4195,7 +4215,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_planar_service_verify.py",
-      "sha256": "6b681a4c671c73ff5c6ec8af18ac026ab6ef0782b0583c31de5a0ba50483d961"
+      "sha256": "ec9b3315428278b17f9abaacb4ebfa170350c3285ac4e1b10d2bdfa6609a720f"
     },
     {
       "mode": "100644",
@@ -4945,7 +4965,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "sha256": "1b205178ff74881e69d5e79a87e3fd3d8ee5addb4c0d823747329931a9537460"
+      "sha256": "4580662126a29578a0a3b5496a1ea161219bb84812e9aa84a1cc6dc1b7456ea2"
     },
     {
       "mode": "100644",
@@ -5005,7 +5025,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/compatibility_quotient.py",
-      "sha256": "f4ff7fd544da7e645a7231a090233d3a114f57175cf1ea02f09f65bf7bf3a22b"
+      "sha256": "3cbd88c3ee893edc143a92049b5b2b051f7b3c2482b3298db99591748718eaf4"
     },
     {
       "mode": "100644",
@@ -5485,17 +5505,17 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_common_norm_radius.py",
-      "sha256": "6ef0c0afa7d879910180c2603249e5e7361c0f9ee7f02f142c4dcac0c983b91f"
+      "sha256": "cc1304ee09716191d2d81ef0c6eed9cc0d27e77c457ead56460dd3439221d62f"
     },
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_compatibility_quotient_mean.py",
-      "sha256": "13445f27e4fff9433ecc06cb2ce0c5f7d100feb4810939fac611d3953601985e"
+      "sha256": "2c527457dcc9fb1eb6de6ffb57d332cf3c945bd7a9ee7b2d2f71eb6c81e64837"
     },
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_coupled_tangent.py",
-      "sha256": "d2bb8bd390b7c4d0bbee602b3ef4f5b7726708fe2be1a54c5a5a5290a9bfd9ee"
+      "sha256": "d1baf4de6b6611e61887b2d69e8320e61dc2e7da6e94a29bdf23c158cf2e9b13"
     },
     {
       "mode": "100644",
@@ -5520,7 +5540,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_joint_phase_cell.py",
-      "sha256": "643a7f96243d670b0e9cf98e57396644deb3f29c0a35508d9af5abbc6558230d"
+      "sha256": "1a7d3f8fd130bcd3e8391bcd277c08c4886fd943b770cef0854295a7231fac66"
     },
     {
       "mode": "100644",
@@ -5530,7 +5550,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_linked_riccati_mean.py",
-      "sha256": "214a6767cbd5a3368373875ced88a82089903032080a7c6cd86c0bb5ac7fd087"
+      "sha256": "eda626278f333a0190436f62e0462ab0e9646b2866edb096216e5e660018c558"
     },
     {
       "mode": "100644",
@@ -5541,6 +5561,16 @@
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_moving_symmetry.py",
       "sha256": "8f775f753d9297e8f23ea5de5a81adeb6fd3eec6f1866f00ca29eaf5ccd5a6a5"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_native_secant_probe.cpp",
+      "sha256": "92bebdb53e441abc8279efabfed48ef92756e91241751db1398864b7a729f8f2"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_native_secants.py",
+      "sha256": "b83e4f13a463ace38b2011410e1a198c875eab85629416f3acca8eb6176a1733"
     },
     {
       "mode": "100644",
@@ -5555,7 +5585,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_parity_mean_tangent.py",
-      "sha256": "fd8f3d0545d94d5d0ee544c55af317fc39aeaec2868f8e49912e7e2b6d1273f5"
+      "sha256": "f39e0cfc26cc9e5035bc43f2e202befeee99c13cb1fd1532fdbbf18a7e8e6937"
     },
     {
       "mode": "100644",
@@ -5625,7 +5655,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_service_verify.py",
-      "sha256": "9446ab97519cc5ca3eba582fdc4b5bf267a35cdaafce63c5231445771d39201c"
+      "sha256": "8b8d2ba20f6019f14b49319c7fa3d0cb3e52e251c21fd0d825e8718931cff02e"
     },
     {
       "mode": "100644",
@@ -5875,7 +5905,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "sha256": "700ced40c87acfe03d11d0e885cf4bee325de8882245c6a9c882cf1541f961bc"
+      "sha256": "9e8608bd23195c016991c87fb7d8b9d88bd3a4d3e7efb570d03218713304893b"
     },
     {
       "mode": "100644",
