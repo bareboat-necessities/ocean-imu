@@ -288,6 +288,7 @@ jobs:
           python3 -m tools.stability.ou3_theorem.planar_every_root_service --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-every-root.json
           python3 -m tools.stability.ou3_theorem.planar_linked_port_word --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-linked-ports.json
           python3 -m tools.stability.ou3_theorem.planar_coupled_tangent --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-coupled-tangent.json
+          python3 -m tools.stability.ou3_theorem.planar_parity_mean_tangent --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-parity-mean.json
           python3 -m tools.stability.ou3_theorem.planar_common_norm_radius --output /tmp/ou3-planar-radius.json
           python3 -m tools.stability.ou3_theorem.planar_service_mahony_tube > /tmp/ou3-planar-mahony.json
           python3 -m tools.stability.ou3_theorem.planar_joint_phase_cell --frechet /tmp/ou3-planar-frechet.json --mahony /tmp/ou3-planar-mahony.json --service-floor 7.024764605642485 --output /tmp/ou3-planar-joint-threshold.json
@@ -304,5 +305,6 @@ jobs:
             /tmp/ou3-planar-radius.json
             /tmp/ou3-planar-linked-ports.json
             /tmp/ou3-planar-coupled-tangent.json
+            /tmp/ou3-planar-parity-mean.json
           retention-days: 7
           if-no-files-found: error
