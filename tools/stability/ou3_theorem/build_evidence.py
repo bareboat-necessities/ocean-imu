@@ -81,7 +81,9 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.planar_complete_word_storage import certificate as word_storage_certificate
     from tools.stability.ou3_theorem.planar_innovation_storage import certificate as innovation_storage_certificate
     from tools.stability.ou3_theorem.information_shear_word import certificate as shear_word_certificate
+    from tools.stability.ou3_theorem.measurement_frame import certificate as frame_loss_certificate
     for name, generate in (
+        ("measurement-frame-loss-certificate.json",frame_loss_certificate),
         ("information-shear-word-certificate.json",shear_word_certificate),
         ("planar-innovation-storage-certificate.json",innovation_storage_certificate),
         ("planar-frontend-domain-certificate.json",frontend_domain_certificate),

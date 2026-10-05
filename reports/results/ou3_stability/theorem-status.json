@@ -58,6 +58,7 @@
     "complete_word_storage_identity_certificate": "planar-complete-word-storage-certificate.json",
     "conditional_center_is_autonomous_future_enclosure": false,
     "continuous_same_record_physical_arc_verified": true,
+    "exact_moving_frame_measurement_feedback_reduction": true,
     "extra_physical_assumptions_adopted": false,
     "finite_complete_native_secants": "planar-native-secants-diagnostic.json",
     "finite_conditional_moving_center": "planar-moving-center-diagnostic.json",
@@ -75,7 +76,9 @@
     "innovation_storage_certificate": "planar-innovation-storage-certificate.json",
     "innovation_variational_identity": true,
     "linked_noise_and_held_gain_differentials_verified": true,
+    "magnetic_loss_activation_domain_forward_invariant": false,
     "matrix_lower_factor_correction_transport": true,
+    "measurement_frame_loss_certificate": "measurement-frame-loss-certificate.json",
     "moving_full_premise_absolute_entry_refuted": false,
     "moving_two_epoch_span_bias_separation_refuted": true,
     "nonlinear_fibre_remainder_requires_metric_bound": true,
@@ -94,7 +97,15 @@
     "private_frontend_target_libm_qualification_verified": false,
     "qualified_first_handoff_bound_is_prefix_invariant": false,
     "qualified_first_handoff_real_comparison_bound": "21/1000",
+    "qualified_planar_magnetic_coupled_loss_fraction": "9/10",
+    "qualified_planar_magnetic_loss_is_complete_word_contraction": false,
+    "qualified_planar_pitch_row_loss_coefficients": [
+      "1125",
+      "1260"
+    ],
     "qualified_private_frontend_domain_certificate": "planar-frontend-domain-certificate.json",
+    "qualified_service_BG_y_variance_upper": "1/4000",
+    "qualified_service_pitch_variance_upper": "3/5000",
     "quiet_universal_absolute_entry_refuted": true,
     "raw_mahony_all_time_input_domain_verified": false,
     "raw_mahony_local_normalization_certificate": "mahony-raw-normalization-certificate.json",
@@ -112,7 +123,7 @@
     "uniform_center_service_floor": null,
     "uniform_complete_word_storage_margin": null
   },
-  "next_controlling_obligation": "Follow docs/ou3-information-shear-strategy.md: identify symmetry/kernels, justify compatible strata/tubes, derive linked dissipation, bound actual forcing, then prove only necessary activation facts. The exact information-shear word balance and action kernel are proved, with reset/AW/projection and moving-projector ports retained. Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. The physical same-record tangent is forced and is not automatically the homogeneous or action kernel. A positive uniform c, branchwise compatibility relation, required metric/reference/chart bounds and actual source/gauge/arithmetic charges remain OPEN. Only after those dependencies close may radius and every-prefix practical stability be established. General service-conditioned dissipativity does not wait for special planar admission. Separately prove or disprove the planar family's all-time applied magnetic service; finite floors near 7.02 do not certify it. Full admission rules out eventual retention in the specified absolute V<.0225 ball, not divergence or every larger absolute practical bound. Preserve construction/H18/refinement/release, physical S, held BA, reference/gates and S/AW clocks without restart. Qualified first-Live bounds are boundary implications only. No replay, secant, sampled grid or empirical contraction campaign. Nonlinear retention, target arithmetic and STILL/TRANSITION/MOVING composition remain OPEN.",
+  "next_controlling_obligation": "Follow docs/ou3-information-shear-strategy.md: identify symmetry/kernels, justify compatible strata/tubes, derive linked dissipation, bound actual forcing, then prove only necessary activation facts. The exact information-shear word balance and action kernel are proved, with reset/AW/projection and moving-projector ports retained. The moving-frame planar magnetic substep retains 9/10 of linked mean/covariance loss on its stated activation domain; prior-observation readers derive pitch/BG covariance ceilings and quantitative pitch-row loss. Absorb remaining accelerometer AW-row, prediction/reset/frame/AW/projection work while proving only required activation bounds. Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. The physical same-record tangent is forced and is not automatically the homogeneous or action kernel. A positive uniform c, branchwise compatibility relation, required metric/reference/chart bounds and actual source/gauge/arithmetic charges remain OPEN. Only after those dependencies close may radius and every-prefix practical stability be established. General service-conditioned dissipativity does not wait for special planar admission. Separately prove or disprove the planar family's all-time applied magnetic service; finite floors near 7.02 do not certify it. Full admission rules out eventual retention in the specified absolute V<.0225 ball, not divergence or every larger absolute practical bound. Preserve construction/H18/refinement/release, physical S, held BA, reference/gates and S/AW clocks without restart. Qualified first-Live bounds are boundary implications only. No replay, secant, sampled grid or empirical contraction campaign. Nonlinear retention, target arithmetic and STILL/TRANSITION/MOVING composition remain OPEN.",
   "no_heading_service_result_role": "necessity lemma only",
   "obligations": {
     "A21_covariance_hard_event_compactness": false,

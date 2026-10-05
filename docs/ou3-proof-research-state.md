@@ -13,8 +13,10 @@ No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
 Verified starting head for this continuation:
-`9c904b670c0175f91b8d7164623c1ce712375a4f`.
-Main is already incorporated; PR #653 is open and mergeable. Current CI
+`27cff7c73c614777f873a62a6bbd9a3bd1eef5d2`.
+The automated evidence refresh `2db51d0079f630e5494fed7be683f8d1b6783605`
+was incorporated before publishing. Main is already incorporated; PR #653 is
+open and mergeable. Current CI
 chronology belongs in PR metadata.
 
 Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
@@ -129,6 +131,35 @@ observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
 
+**New analytical progress, qualified uniform magnetic loss:**
+[Moving-frame loss and its activation table](ou3-measurement-frame-loss.md)
+derives the exact transformed measurement rows, retaining their moving-frame
+connection. In the planar nominal stratum the coupled magnetic correction
+loses at least `9/10*(L_eta+L_P)` when the qualified reference cone, retained
+six-degree chart and comparison energy `E<=100` hold. The rational loss-matrix
+margin is `4673/1250000>0`, including the covariance-induced square charge.
+This is an operation loss fraction, **not** a complete-word contraction rate.
+
+A prior-observation covariance reader proves `P_pitch,pitch<3/5000` and
+`P_BG_y,BG_y<1/4000` after `753/250` seconds of regular planar applied service,
+without an initial covariance ceiling. The windows precede the correction
+being analyzed. Together with the qualified reference cone this gives `t<6`;
+the retained chart gives `|kappa|<3/500`. Hence the covered coupled correction
+loses at least `1125*eta_pitch^2+1260*(dP J dP)_pitch,pitch`. These are derived
+uniform row constants, not finite observations. The wrapper's `b0=1e-10f`
+comes through `initialize_ext`; do not use the different standalone default.
+The S substep retains its exact coupled loss on the one-way fixed-noise path.
+
+**OPEN activation:** the reader assumes existing service and the qualified
+reference cone, and does not prove the planar witness admitted. Chart/energy
+retention, float reference acquisition and arithmetic transfer remain open.
+The nominal planar stratum is not the physical roll/BA compatibility fibre.
+The improved word action absorbs the covered magnetic/S ports; accelerometer
+AW-row feedback, prediction/reset/frame/AW/projection work and source/gauge
+terms remain linked. The precise missing gap is the improved action minus
+that remaining signed work and endpoint gauge transport, uniformly positive
+on a justified transverse root lift. No unrelated p/v box is required.
+
 **PROVED — analytical word balance and kernel characterization:**
 `information_shear_word.py` extends the coupled shear through literal
 reset discrepancy, default AW increment, bias projection and moving-projector
@@ -159,6 +190,21 @@ its reference rate with fixed S and differing settings. No profile transfer.
 Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
+
+* **E, validation synchronization:** a certificate scope clarification was
+  written while the full test process still held the older module in memory.
+  Its fail-closed provenance tests rejected the mismatch. Freeze the source
+  and certificate together before rerunning; no mathematical condition changes.
+
+* **E, local test dependency:** the full evidence test initially could not find
+  Eigen. The installed runtime Eigen 3.4.0 is supplied through the existing
+  `EIGEN_INCLUDE_DIR` option; no source, test or proof condition is weakened.
+
+* **E, corrected proof bookkeeping:** draft reader windows ending at the current
+  correction could count that upcoming operation. They now start at prior IMU
+  roots with an explicit `hmax` offset; separation, age and process charges are
+  recomputed exactly. The strict covariance bounds survive. This is neither
+  an admitted counterexample nor a weakened service requirement.
 
 * **E, regression tooling:** the new word module had one unused import; removed
   after the lint gate identified it. No mathematical condition changed.
@@ -225,15 +271,15 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
-An analytical obligation: compare the existing actually-applied physical
-magnetic-service probes to the full coupled information-shear action on
-justified compatibility strata, preserving the complete signed port sum.
-Prove a uniform positive transverse gap or exhibit its exact unabsorbed term.
-Then prove only the inherited metric/reference/chart/branch bounds required
-by that comparison, using a noncircular construction/H18/release bootstrap.
-Retain gauge-to-transverse forcing, covariance coupling and fibre curvature.
-Planar all-time admission proceeds separately and cannot be inferred from
-finite floors, callback counts or the service-conditioned general theorem.
+An analytical obligation: absorb the remaining accelerometer AW-row,
+prediction/reset/frame and AW/projection work against the exact process/S
+loss and the newly retained magnetic loss. Preserve complete-word signs and
+the covariance-dependent square charges. Compare the resulting action to
+existing physical service on justified compatible strata, keeping physical
+OU/gauge/source forcing. Establish only the reference/chart/energy and
+branch retention required for that estimate. No radius before a positive
+complete-word gap. Planar admission remains separate and cannot be inferred
+from finite floors, callback counts or the service-conditioned general theorem.
 
 ## Verification scope
 
@@ -255,5 +301,6 @@ in the PR metadata.
 4. Admitted counterexample: none; all-time admission/exclusion remains OPEN.
 5. Retained: 25 proved entries, qualified local theorem and exact compatibility
    obstruction; qualified frontend and linked storage proofs extend entries without count promotion.
-6. Next: uniform linked service-to-shear transverse gap, then its minimal
-   activation and forcing bounds; planar admission stays separate.
+6. Next: absorb acc/AW-row and prediction/reset/frame work against process/S
+   and retained magnetic loss; prove only its required activation bounds.
+   The uniform transverse gap and planar admission remain separate obligations.

@@ -1614,6 +1614,316 @@ Structures preserved: the complete shipping record/chronology and full covarianc
 metric. Relaxations: only the explicitly stated quiet bias-charge ball outer;
 no relaxation is used in the MOVING record identity or pair lower comparison.
 
+\subsection{Moving-frame feedback and positive planar magnetic loss}
+\label{app:measurement-frame-loss}
+\paragraph{Quantifiers, role and scope.}
+The following are analytical identities and qualified inequalities for every
+regular real-operation word of the complete shipping CoG estimator. The
+positive magnetic-loss assertion is restricted to nominal variations within
+the proved planar stratum, with its even mean and block-diagonal even/odd
+covariance. It is not a claim about all perturbations of a planar orbit.
+Covariances and innovations are SPD. For held BA use the reached zero-cross
+manifold, not an arbitrary masked covariance. Source, reference/noise and
+branch variations not explicitly fixed below remain ports in the linked
+word of Appendix~\ref{app:information-shear-word}. No estimator state is
+reseeded, no physical premise is strengthened, and no replay constant is used.
+
+\paragraph{Exact frame and differential.}
+Let $R$ be the actual nominal world-to-body rotation and set
+\[
+ T=\operatorname{diag}(R,R,I,I,I,I,R),\quad
+ \bar P=T^TPT,\quad \bar H=R^THT,\quad
+ \bar R_m=R^TR_mR,\quad \bar r=R^Tr.
+\]
+Here the three rotating blocks are attitude, BG and BA; world $v,p,S,a_w$
+are unchanged. The literal CoG rows become
+\[
+ \bar H_a=[-[\hat a_w-g e_z]_\times,0,0,0,0,I,I],\qquad
+ \bar H_m=[-[B]_\times,0,0,0,0,0,0].
+\]
+The innovation, gain, increment and Joseph covariance transform by their
+corresponding exact orthogonal congruences. The held BA row/column mask
+commutes with $T$, so this assertion also holds for literal masked Joseph;
+it does not turn an arbitrary masked update into an optimal Riccati update.
+For $dR=R\omega$, $\omega=[d\vartheta]_\times$, and
+$\Omega=\operatorname{diag}(\omega,\omega,0,0,0,0,\omega)$, differentiation gives
+\begin{align*}
+ d\bar P&=T^TdPT-\Omega\bar P+\bar P\Omega,\\
+ d\bar H&=R^TdHT-\omega\bar H+\bar H\Omega,\\
+ d\bar R_m&=R^TdR_mR-\omega\bar R_m+\bar R_m\omega,\\
+ d\bar r&=R^Tdr-\omega\bar r.
+\end{align*}
+Thus the attitude-dependent row differential cancels exactly:
+$d\bar H_a=[-[d\hat a_w]_\times,0,\ldots,0]$ and
+$d\bar H_m=[-[dB]_\times,0,\ldots,0]$. Fixed isotropic measurement noise
+has zero rotational noise differential. Anisotropic or changing noise does not.
+Writing $\bar e=T^Te$, $\bar J=\bar P^{-1}$, the sheared coordinate satisfies
+\[
+ \bar\eta=T^T\eta-\bar P\Omega\bar J\bar e.
+\]
+Indeed $d\bar e=T^Tde-\Omega\bar e$; substitution of $d\bar P$ proves the
+formula. Consequently the moving differential frame is not merely an
+orthogonal transformation of $\eta$. Prediction/reset endpoint factors are
+$T_{i+1}^TF_iT_i$ and $T_{i+1}^TG_iT_i$, with their full derivatives retained.
+The AW covariance increment stays in the unrotated world AW block.
+
+For fixed world $B$ and isotropic $R_m$, the magnetic additive substep has
+\[
+ \bar\eta^+=\bar A\bar\eta-
+ \bar K(\omega\bar r+\bar H_m\Omega\bar e),\qquad
+ d\bar P^+=\bar A\,d\bar P\,\bar A^T.                 \tag{MF1}
+\]
+This uses the literal same-model differential $dr=-H_mde$ in the pre-injection
+chart; any additional chart/source mismatch is retained separately. It follows
+by inserting the preceding pullbacks into the exact shear correction formula.
+For every optimal correction,
+\[
+ K^TC^{-1}K=R_m^{-1}-S^{-1}=:D_m\succeq0.
+\]
+The magnetic port energy is therefore exactly $v^TD_mv$, with
+$v=\omega r+H_m\Omega e$, rather than a product of independent gain and
+residual bounds. Similarly the row-induced covariance port
+$q=-K\,dH\,C-C\,dH^TK^T$ satisfies
+\[
+ \operatorname{tr}(C^{-1}qC^{-1}q)
+ \le4\operatorname{tr}(C\,dH^TD_m dH).
+\]
+To prove it, write the whitened port as $-(X+X^T)$ and use
+$\|X+X^T\|_F^2\le4\|X\|_F^2$. For the transformed accelerometer row this is
+at most $8\lambda_{\max}(C_{\theta\theta})|d\hat a_w|^2/r_{\min}$, since
+$D_m\preceq R_m^{-1}\preceq I/r_{\min}$ and
+$\|[d\hat a_w]_\times\|_F^2=2|d\hat a_w|^2$.
+The coefficient needs no independent nominal $a_w$ cap. Its absorption into
+linked process/S loss, including the mean port, remains open.
+
+\paragraph{Prior-observation covariance reader.}
+On the regular planar branch the actual pitch/BG marginal has transition
+\[
+ F_y(h)=\begin{pmatrix}1&h\\0&1\end{pmatrix},\qquad
+ Q_y(h)=\begin{pmatrix}q_g h+q_bh^3/3&q_bh^2/2\\
+ q_bh^2/2&q_bh\end{pmatrix},                         \tag{MF2}
+\]
+where $q_g=\operatorname{RN}_{32}(.00135)^2$ and
+$q_b=\operatorname{RN}_{32}(10^{-10})$. These are wrapper-profile constants:
+\texttt{ProxyStartupFusionConfig::b0} is forwarded by
+\texttt{initialize\_ext}; the standalone core default is different.
+The positive BG cross sign is literal. About the $y$ axis, $R_{step,yy}=1$,
+$B_{step,yy}=h$ and the Simpson integral of $s^2$ is exact. The pitch block
+is positive definite and decoupled from the other four AG coordinates;
+real spectral PSD repair does not alter its positive eigenvalues.
+An additional $\varepsilon I_2$ per prediction, with
+$\varepsilon=\operatorname{RN}_{32}(10^{-12})$, is a harmless covariance upper
+relaxation, not a bound on floating-point eigensolver error.
+
+A planar reset acts identically on pitch/BG covariance; AW changes neither
+coordinate. BA/BG estimate projection does not change covariance. Other
+optimal corrections decrease this marginal, also under the reached held-BA
+active reduction. Each applied magnetic correction is a scalar pitch
+observation with effective variance $\sigma_m^2/|B|^2$,
+$\sigma_m=\operatorname{RN}_{32}(.8)$. Full cross covariance is retained in
+this statement: the pitch marginal magnetic update depends only on that
+marginal by parity. Riccati monotonicity therefore bounds it from above by a
+magnetic-only two-state recursion with the same actual event times and noise.
+An unbiased linear reader bounds that recursion regardless of the inherited
+root covariance. This is covariance algebra; no physical history is required
+to follow a Gaussian model or the estimator OU prior.
+
+For observations at $t_1<t_2\le t$, put $\Delta=t_2-t_1$, $L=t-t_2$.
+The reader
+\[
+ \hat\theta_t=(1+L/\Delta)y_2-(L/\Delta)y_1,\qquad
+ \hat b_t=(y_2-y_1)/\Delta
+\]
+exactly reproduces $F_y(\Delta+L)$ on the two root coordinates, so its
+root error is zero. If both observation variances are at most $r_m$, its
+respective noise variances are at most
+$[(1+L/\Delta)^2+(L/\Delta)^2]r_m$ and $2r_m/\Delta^2$.
+For process noise between the events and after the second event, direct
+integration of the reader kernels gives
+\begin{align*}
+ V_\theta^{proc}&=q_g(L^2/\Delta+L)+q_b(L^2\Delta+L^3)/3,\\
+ V_b^{proc}&=q_g/\Delta+q_b(\Delta/3+L).                 \tag{MF3}
+\end{align*}
+For example, a BG impulse at age $s\in[0,\Delta]$ after the first observation
+has pitch-error coefficient $-Ls/\Delta$ and bias-error coefficient
+$-s/\Delta$. The corresponding gyro coefficients are $L/\Delta$ and
+$1/\Delta$; on the tail the pitch/BG kernels are the usual integrator kernels.
+Squaring and integrating proves (MF3), including their correlation.
+
+The service premise supplies an applied event in each required one-second
+IMU-rooted window. Set $h_{max}=3/500$ and choose the last IMU roots no later
+than $t-3-h_{max}$ and $t-1-h_{max}$. Each lags its target by at most
+$h_{max}$. Their windows end strictly before the correction at $t$. Hence
+\[
+ d_-=497/500\le\Delta\le d_+=1503/500,\qquad
+ 0\le L\le l=253/250.
+\]
+The required inherited service segment begins at least $3+2h_{max}=753/250$
+seconds earlier; it contains no hard reset or unsupported covariance write.
+The total reader horizon is less than four seconds. Every extra
+$\varepsilon I_2$ has squared reader coefficient at most $3$, giving the
+conservative charge $f=3\varepsilon(4/.004+2)$ for either variance.
+With the retained cone $u=2^{-24}$, $a_*=11/5000$, put
+\[
+ b_-=75(1-u)(1-a_*^2/2),\quad b_+=75(1+u),\quad
+ r_m=\sigma_m^2/b_-^2,\quad q=l/d_-.
+\]
+Substituting the endpoint bounds in the nonnegative expressions gives the
+exact rational inequalities
+\begin{align*}
+ P_{\theta_y\theta_y}
+ &\le[(1+q)^2+q^2]r_m+q_g(l^2/d_-+l)
+       +q_b(l^2d_++l^3)/3+f<3/5000,\\
+ P_{b_{g,y}b_{g,y}}
+ &\le2r_m/d_-^2+q_g/d_-+q_b(d_+/3+l)+f<1/4000.       \tag{MF4}
+\end{align*}
+These bounds use no initial covariance ceiling and no nominal tilt bound.
+The reference cone and service segment are qualified premises, not a proof
+of planar admission or reference acquisition. Full arithmetic transfer is open.
+
+\paragraph{Radial feedback and a strict linked correction loss.}
+Now restrict the nominal variation and the inherited central-fibre comparison
+to the planar stratum, keep the reference/noise fixed during this substep,
+and omit bars. The comparison pitch and nominal pitch variation are both
+along $e_y$, while $B,r$ lie in the $xz$ plane. Thus $H_m\Omega e=0$.
+Also $KB=0$ for isotropic noise. With
+\[
+ \kappa=B^Tr/|B|^2,
+\]
+projection onto $B^\perp$ gives $K\omega r=\kappa KH_mde$ exactly.
+Write the even-sector scalar row as $h$, its noise variance as $R_m$,
+$s=hPh^T+R_m$, $t=hPh^T/R_m$, and $A=I-Kh$. Then (MF1) becomes
+\[
+ \eta^+=A\eta-\kappa Kh(\eta+dPJe),\qquad dP^+=A\,dP A^T.\tag{MF5}
+\]
+This retains the covariance-dependent work, not just the homogeneous mean
+factor. The odd covariance block has its ordinary nonnegative Fisher loss.
+The nominal tangent restriction does not discard that block or make claims
+about nonplanar nominal directions.
+
+Let $E=e^TJe$, $x=h\eta$, $z=h\,dPJe$,
+$L_\eta=x^2/s$ and
+$L_P=\operatorname{tr}(JdPJdP)-\operatorname{tr}(C^{-1}dP^+C^{-1}dP^+)$.
+Whiten with $Z=P^{-1/2}dPP^{-1/2}$ and unit
+$u_h=P^{1/2}h^T/\sqrt{hPh^T}$. Setting $v=P^{-1/2}e$ and
+$\zeta=t/(1+t)$, the rank-one covariance loss is
+\[
+ L_P=2\zeta|Zu_h|^2-\zeta^2(u_h^TZu_h)^2
+ \ge\zeta(2-\zeta)|Zu_h|^2,
+ \qquad z^2/s\le E\frac{1+t}{2+t}L_P.                \tag{MF6}
+\]
+The $h=0$ case is immediate; all planar magnetic rows here are nonzero.
+Expansion of (MF5), using $A^TC^{-1}K=h^T/s$ and
+$K^TC^{-1}K=t/s$, proves, for covariance weight $\lambda>0$,
+\[
+ W^+-W=-aL_\eta-\lambda L_P
+ -2\kappa(1-\kappa t)xz/s+\kappa^2t z^2/s,
+ \qquad a=1+2\kappa-\kappa^2t.                       \tag{MF7}
+\]
+In particular the last square charge cannot be removed. Using (MF6), the
+loss is bounded below by the quadratic form in
+$(\sqrt{L_\eta},\sqrt{L_P})$ with matrix
+\[
+ \begin{pmatrix}a&-b\\-b&\lambda-\mu\end{pmatrix},\quad
+ b^2=\kappa^2E\frac{1+t}{2+t}(1-\kappa t)^2,\quad
+ \mu=\kappa^2Et\frac{1+t}{2+t}.
+\]
+The exact cancellation
+$a\mu+b^2=\kappa^2E(1+t)^2/(2+t)$ illustrates why independent $K/r/P$
+extrema lose the relevant structure.
+
+For the retained six-degree nominal/central-physical pitch chart,
+$|\alpha|\le\pi/30<11/105$. The reference angle is at most
+$a_R=(1+u)a_*/[(1-u)(1-a_*^2/2)]$.
+Componentwise magnetic sample rounding gives a vector error at most $75u$.
+The radial ratio consequently obeys
+\[
+ \frac{1-(11/105+a_R)^2/2}{1+u}-\frac{75u}{b_-}-1
+ \le\kappa\le\frac{75(1+u)}{b_-}-1,
+ \qquad |\kappa|<3/500.                              \tag{MF8}
+\]
+This uses actual reference geometry, not the magnetic sensor-error bound as
+an innovation bound. Equation (MF4) gives
+$t\le b_+^2(3/5000)/\sigma_m^2<6$.
+On the additional sufficient activation domain $E\le100$, choose $\lambda=1$.
+Uniform rational bounds are
+\[
+ a\ge123473/125000,\quad \mu\le189/10000,\quad
+ b^2\le4226103/1250000000.
+\]
+Both diagonal entries of the loss matrix minus $(9/10)I$ are positive;
+its determinant is at least
+\[
+ (123473/125000-9/10)(1-189/10000-9/10)
+ -4226103/1250000000=4673/1250000>0.
+\]
+Therefore
+\[
+ \boxed{W^+-W\le-\tfrac9{10}(L_\eta+L_P).}           \tag{MF9}
+\]
+This is a uniform positive \emph{operation loss fraction}, not a complete-word
+contraction factor. The six-degree and $E\le100$ domain is not asserted
+forward invariant; first-Live bounds cannot substitute for its retention.
+Furthermore (MF4)--(MF6) imply
+\[
+ L_\eta\ge\frac{b_-^2}{7\sigma_m^2}\eta_{\theta_y}^2
+ >1250\eta_{\theta_y}^2,
+ \quad
+ L_P\ge\frac{8b_-^2}{49\sigma_m^2}(dPJdP)_{\theta_y\theta_y}
+ \ge1400(dPJdP)_{\theta_y\theta_y}.
+\]
+Use non-strict inequalities when the row vanishes. Thus (MF9) controls the
+pitch row by $1125\eta_{\theta_y}^2+1260(dPJdP)_{\theta_y\theta_y}$.
+These rational constants are derived here, not imported from finite evidence.
+
+\paragraph{Word balance, zero action and exact remaining obligation.}
+For the world $S$ row, $H_S\Omega=0$. On the proved default one-way tuner
+path, MEKF-root variation has $dR_S=0$, so the additive $S$ substep loses
+exactly $L_\eta+L_P$; source/noise and held-BA variations remain ports.
+Split correction, injection and frame transport into their literal order.
+With the same actual causal prefixes, (MF9) and the exact linked balance give
+\[
+ W_N-W_0\le-\widetilde{\mathcal A}_W+\mathcal F_{rem},\qquad
+ \widetilde{\mathcal A}_W=
+ \tfrac9{10}\sum_{mag}(L_\eta+L_P)
+ +\sum_S(L_\eta+L_P)+\sum_{other}\ell_i.             \tag{MF10}
+\]
+The remaining work retains all signed cross and square terms from acc/AW-row
+feedback, prediction and physical OU mismatch, $dF,dQ$, reset/frame changes,
+projection, AW faces/targets, reference/noise changes and moving projectors.
+It is not independent additive noise. At a covered magnetic substep the
+coupled storage loss vanishes exactly when $h\eta=0$ and $h\,dP=0$ in the
+even sector, together with the ordinary odd covariance loss kernel. Indeed
+(MF6)--(MF9) force these conditions; conversely they give $z=0$ and zero
+feedback in (MF5). Positive weights preserve the base word-action kernel.
+This does not identify it with the forced physical compatibility family.
+Same-record physical variation has $dR_{nom}=dP=0$, and carries physical
+OU mismatch; its roll/BA direction is not the nominal planar-pitch direction.
+
+For a justified transverse root lift $B_\perp$, use the action Gram
+$G_{\widetilde A}$ from (MF10), the exact remaining signed work $G_{rem}$
+and endpoint gauge-energy matrices $\Gamma_i$. The missing uniform statement
+is precisely
+\[
+ B_\perp^T(G_{\widetilde A}-G_{rem}-\Gamma_0+\Gamma_N)B_\perp
+ \succeq c B_\perp^TJ_{\perp,0}B_\perp,\qquad c>0.
+\]
+Positive pitch-row coercivity does not control all complementary directions.
+Their process/S action and absorption of remaining work are open, as are
+inherited reference/chart/energy activation, branchwise compatibility,
+every-prefix nonlinear/float32 retention and source/gauge charges. No radius
+is solved before those facts. General stability continues to assume existing
+MAGNETIC SERVICE; this lemma neither proves nor disproves all-time admission
+of the planar physical family.
+
+Structures preserved: all 21 states, actual P/K/Joseph/masks, frame derivative,
+reference/noise correlation, complete chronology and physical forcing.
+Relaxations introduced: regular real-operation scope, qualified planar domain,
+unbiased-reader covariance upper bound and rational Schur sufficient bound.
+Neither arbitrary covariance nor independent physical histories replaces the
+shipping execution. The exact algebra and rational certificates are reproduced
+by \texttt{measurement\_frame.py}; tests alone are not the proof.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

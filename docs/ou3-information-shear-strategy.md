@@ -230,6 +230,18 @@ linked blocks on the same histories; no numerical c is supplied. This is the
 existing relative-Schur identity applied to the new full shear gap, not a
 new arbitrary covariance enclosure or a claim that the service premise fails.
 
+## Positive planar measurement loss now available
+
+[The moving-frame continuation](ou3-measurement-frame-loss.md) proves a
+qualified `9/10` coupled magnetic operation loss, including its square charge,
+and derives pitch/BG covariance ceilings from two strictly prior applied
+observations without an inherited covariance upper bound. Its exact rational
+pitch-row coercivity improves the word action; it is not a full transverse
+contraction. Use the improved action and its explicit remaining signed work
+in the boxed gap above. The note identifies the still-open activation facts
+and distinguishes the nominal planar stratum from physical compatibility.
+The controlling order and separate general/service-admission tasks are unchanged.
+
 ## Minimal activation obligations
 
 | Required fact | Source and exact role | Current status |

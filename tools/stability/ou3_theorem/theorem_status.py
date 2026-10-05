@@ -419,6 +419,14 @@ def status_report() -> dict:
             "information_shear_word_action_kernel_characterized":True,
             "general_service_conditioned_theorem_waits_for_planar_admission":False,
             "general_compatible_strata_and_uniform_transverse_gap_verified":False,
+            "measurement_frame_loss_certificate":"measurement-frame-loss-certificate.json",
+            "exact_moving_frame_measurement_feedback_reduction":True,
+            "qualified_planar_magnetic_coupled_loss_fraction":"9/10",
+            "qualified_planar_magnetic_loss_is_complete_word_contraction":False,
+            "qualified_service_pitch_variance_upper":"3/5000",
+            "qualified_service_BG_y_variance_upper":"1/4000",
+            "qualified_planar_pitch_row_loss_coefficients":["1125","1260"],
+            "magnetic_loss_activation_domain_forward_invariant":False,
             "source_uniform_nominal_NIS_cap":None,
             "uniform_complete_word_storage_margin":None,
             "uniform_center_service_floor":None,
@@ -435,6 +443,9 @@ def status_report() -> dict:
             "Follow docs/ou3-information-shear-strategy.md: identify symmetry/kernels, justify compatible strata/tubes, "
             "derive linked dissipation, bound actual forcing, then prove only necessary activation facts. "
             "The exact information-shear word balance and action kernel are proved, with reset/AW/projection and moving-projector ports retained. "
+            "The moving-frame planar magnetic substep retains 9/10 of linked mean/covariance loss on its stated activation domain; "
+            "prior-observation readers derive pitch/BG covariance ceilings and quantitative pitch-row loss. "
+            "Absorb remaining accelerometer AW-row, prediction/reset/frame/AW/projection work while proving only required activation bounds. "
             "Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes "
             "to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. "
             "The physical same-record tangent is forced and is not automatically the homogeneous or action kernel. "
