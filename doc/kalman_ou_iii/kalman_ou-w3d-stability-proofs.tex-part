@@ -893,7 +893,11 @@ For a complete literal probe word $T=L_{n-1}\cdots L_0$,
 \[
  dT=\sum_i L_{n-1}\cdots L_{i+1}\,dL_i\,L_{i-1}\cdots L_0.
 \]
-The suffix/prefix products are formed before norms. Each applied magnetic
+The suffix/prefix products are formed before norms. For the physical
+two-column root $B_k$, the actual probe is $\Phi_{j,k}=T_{\rm word}B_k$,
+so $d\Phi_{j,k}=dT_{\rm word}B_k+T_{\rm word}dB_k$. The last term retains
+source-phase changes of the physical heading/BG root. In the information
+formula below, $T_{j,k}$ denotes this complete rooted probe. Each applied magnetic
 term uses $Y_j=H_{m,j}T_{j,k}$ and contributes
 \[
  dI_j=dY_j^T S_j^{-1}Y_j+Y_j^T S_j^{-1}dY_j

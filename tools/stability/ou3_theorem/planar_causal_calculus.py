@@ -34,6 +34,12 @@ def information_differential(y, sinv, dy, ds):
                product(transpose(y), sinv, ds, sinv, y), -1)
 
 
+def probe_word_differential(factors, differentials, root, droot):
+    """Transport the physical two-column root, including its source-phase change."""
+    value, delta = word_differential(factors, differentials)
+    return product(value, root), add(product(delta, root), product(value, droot))
+
+
 def information_perturbation_bound(*, center_stack_norm, stack_difference_norm,
                                    relative_innovation_radius):
     """Exact rational evaluation AFTER domain-dependent bounds are proved.
@@ -76,6 +82,7 @@ def certificate():
         'center_compact_forward_domain_certified': False,
         'gain_and_noise_calculus': 'planar-linked-riccati-mean-certificate.json',
         'mag_information_differential': "dI=sum(dY' S^-1 Y+Y' S^-1 dY-Y' S^-1 dS S^-1 Y)",
+        'physical_probe_root_differential': 'dPhi=dT_word B_root+T_word dB_root; retain source phase and physical heading/BG roots',
         'mag_information_perturbation_bound': '(e*b^2+2*b*d+d^2)/(1-e)',
         'gauge_rule': 'retain C_Q alpha, covariance coupling and moving-projector differential',
         'physical_curvature_squared_bound': 'g^2*(beta^6/36+beta^4/4); nominal-chart and J bounds still required',

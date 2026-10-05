@@ -124,7 +124,7 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "384b7fcea639789ca4ca888b17b6a2979d642364"
+      "git_blob_sha": "41f816c1cc70d5fabd3fd0e49e53cc77930edf13"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
@@ -884,11 +884,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_causal_calculus.py",
-      "git_blob_sha": "48471fbf01511b5423592ddb1c618044d355fd01"
+      "git_blob_sha": "7f293cf8f1bc75213b0f455ca310ca69e5ee6daa"
     },
     {
       "path": "tests/validation/test_ou3_planar_causal_calculus.py",
-      "git_blob_sha": "4f31f2107a91350f2172060a50f033294ff3f5bf"
+      "git_blob_sha": "7cd914887a2715eb079bcab32af0f9427339112e"
     },
     {
       "path": "tests/validation/test_ou3_mahony_raw_normalization.py",
@@ -904,7 +904,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-causal-calculus-certificate.json",
-      "git_blob_sha": "028b7ec8e6d13e76723a7faf7f3816f50fba1d45"
+      "git_blob_sha": "b485eb765e01eabc8e3125eeae134865ebe7793d"
     },
     {
       "path": "reports/results/ou3_stability/planar-mean-covariance-ports.json",

@@ -4,7 +4,7 @@ from tools.stability.ou3_theorem.matrix_certificates import add, transpose
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import product
 from tools.stability.ou3_theorem.planar_causal_calculus import (
     certificate, covariance_prediction_differential, word_differential,
-    information_differential, information_perturbation_bound,
+    information_differential, information_perturbation_bound, probe_word_differential,
 )
 from tests.validation.test_ou3_planar_linked_riccati_mean import jet, deriv, inverse2
 
@@ -17,6 +17,9 @@ class CausalCalculusTests(unittest.TestCase):
         dp = [[F(1, 11), F(1, 13)], [F(1, 13), F(1, 17)]]
         _, dw = word_differential([a, p, transpose(a)], [da, dp, transpose(da)])
         self.assertEqual(dw, deriv(product(transpose(jet(a, da)), jet(p, dp), jet(a, da))))
+        root, droot = [[F(1)], [F(2)]], [[F(1, 3)], [F(-1, 5)]]
+        _, dprobe = probe_word_differential([a, p], [da, dp], root, droot)
+        self.assertEqual(dprobe, deriv(product(jet(p, dp), jet(a, da), jet(root, droot))))
         dq = [[F(1, 100), F(0)], [F(0), F(1, 200)]]
         self.assertEqual(covariance_prediction_differential(a, p, da, dp, dq),
                          add(deriv(product(jet(a, da), jet(p, dp), transpose(jet(a, da)))), dq))

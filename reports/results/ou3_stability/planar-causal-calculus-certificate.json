@@ -21,6 +21,7 @@
   ],
   "one_way_scope": "Complementary tuner/S-period/AW-target only; reference/gate feedback is retained",
   "physical_curvature_squared_bound": "g^2*(beta^6/36+beta^4/4); nominal-chart and J bounds still required",
+  "physical_probe_root_differential": "dPhi=dT_word B_root+T_word dB_root; retain source phase and physical heading/BG roots",
   "planar_reference_real_bound": {
     "continuous_information_gate_value": "0",
     "float32_transfer_verified": false,
