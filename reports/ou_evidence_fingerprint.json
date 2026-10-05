@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "f272343428d8c00e3d4c100f4669f086864a1e07e9a3cb9696d92bc51e723805",
+  "replay_fingerprint": "81302e266b5b4855f1c15e939a436923d613898874e0dbb215572016fa87fd50",
   "results_file_count": 452,
   "results_files": [
     {
@@ -926,7 +926,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "7a9cd2277e35286a5b8a49c95cdaa4165ecf932708cbc77a892da7d62bc42b4d"
+      "sha256": "19ab0473a2f43e8150d9fb8d3d29e25e863d8a9701fbb73f512c93bf63b33623"
     },
     {
       "kind": "file",
@@ -1026,7 +1026,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "70121a9f87b8e33b4f089013efaf9481cbf3b7151992289fd81728af0743f2f9"
+      "sha256": "b47059e412efcf67906e6b83cb7b527607fc44b0f3d14d0ef12cf7620631c1e5"
     },
     {
       "kind": "file",
@@ -1096,37 +1096,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "ae4a1bb2013e98a1541d7b9759371c3db3f1cdcd6823a2a811203c1612fe33e9"
+      "sha256": "336647056113f524b0e4a582f8a9b8095102d71904f8bb34447347855c180875"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "6c2e72869d096a4494f5b9cdd3fb807ab586674b9281a4da04622fb0cffd2b9e"
+      "sha256": "b6255d767ec3bf04b3efe262e8b3bdb7c087e45ea291e03f72e6d34ead7a81f7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "bf571f0afa8b71d71274324cf320f834f926b06ab62721fc7d030f99caa05b0c"
+      "sha256": "73f95cb5473e13f19d23ceb1b73f93328e3d118cbd5026c97acd69d2f8253e34"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "cb819e3faccbde97c9f303a8d672197455ed14c08463999e63ba22a9c402fd3a"
+      "sha256": "7c13b6f2a3e1698ea8dea9914c6c73ae1a8e19f0cb090ec32fbae8483a0a4e23"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
+      "sha256": "a1caf91d614d1b38401206649aa9865bf0af67a6c45af28beb8b1aa2edf52353"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "31d62cf2519ae5bb844ae7f84bbe9d629b29943b0fc53c4d4ce468ada0745ee4"
+      "sha256": "59eff8d255989dfe2e19a80fe25fb5d504325d484de0cfe6524064e8fd14ced7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "931b1bce34421bae96d490012ce1655f2e5e50451a10a69459fbc7db3946ebfe"
+      "sha256": "5034c6a5d161d71fe54b06fbad00df4a450416d9750074bcdb6b759a3d4fde30"
     },
     {
       "kind": "file",
@@ -1136,12 +1136,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "84123034c892f91ee8bc09e38a943804b0ee2b43579839b0b1fa8eed4c03a68c"
+      "sha256": "e568149e1c57b5f13ffe2470a180165f8f335239c584d65d731e5e976ffc62c5"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "21da1e4b942c67f7d24c8267c4e682a7cb4e4ffba6ea965a1d60ac7fc3d50f68"
+      "sha256": "d1d4404baeb3220ad560b97235163fcd4be6b2fbd295842b254857361bcadb3a"
     },
     {
       "kind": "file",
@@ -1166,7 +1166,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "a673a4190fb05a42c8297f3c49cf7866c559d54d61d28d4f9432c3260ee6dad0"
+      "sha256": "76f24f9588f0a19da5377aec572b4ef80607b3d8f18ea6ba8e9c996838791461"
     },
     {
       "kind": "file",
@@ -2264,13 +2264,13 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "de412f1abed000c64253fd7162a90c9d16d8c8e7b722dd3d995c8d0177590871",
+  "results_fingerprint": "85fca6c46e47cc1dc5cabacaafab35fa12877357bedf65154e6f67915eb8d407",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 733,
+  "tracked_replay_file_count": 736,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2315,7 +2315,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou3-stability-proof.yml",
-      "sha256": "3d1e282590aeeef2f04f72053a749bb19761f4c56f1ede23533e410732c198a6"
+      "sha256": "f1f4b22bef1bc5d3877767b12957363b95faf2a9767291d0ab352debb1a09ec8"
     },
     {
       "mode": "100644",
@@ -5489,6 +5489,16 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_compatibility_quotient_mean.py",
+      "sha256": "13445f27e4fff9433ecc06cb2ce0c5f7d100feb4810939fac611d3953601985e"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_coupled_tangent.py",
+      "sha256": "d2bb8bd390b7c4d0bbee602b3ef4f5b7726708fe2be1a54c5a5a5290a9bfd9ee"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_covariance_lower_cell.py",
       "sha256": "be01b6a56ac5a54509121688dd7dc0af751f007e6416bd80d9020e58f9847152"
     },
@@ -5515,7 +5525,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_linked_port_word.py",
-      "sha256": "afd6322ac2c8965da15c650473bb6bd4ffd32589f30d8c187bd597dd1648c097"
+      "sha256": "f6b1403f9f42747813c052188791a0f74f26f546d60962b56f2aff47cb82ab2c"
     },
     {
       "mode": "100644",
@@ -5541,6 +5551,11 @@
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_parity.py",
       "sha256": "e694a235eb5c135b61b9d50598d0ccbc1cefdc208663bc37bc51bbc6795e4499"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_parity_mean_tangent.py",
+      "sha256": "fd8f3d0545d94d5d0ee544c55af317fc39aeaec2868f8e49912e7e2b6d1273f5"
     },
     {
       "mode": "100644",
