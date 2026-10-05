@@ -739,6 +739,11 @@ For the literal Euler quaternion increment,
 \norm{q^+}^2=\norm q^2\left(1+\frac{\Delta t^2}{4}\norm{\omega_c}^2\right).
 \]
 Thus a normalized input quaternion has a strictly positive pre-normalization norm; component-interval decorrelation cannot create a physical zero quaternion.
+Moreover, for the literal binary32 bit seed and one Newton step, a represented
+pre-normalization squared norm in $[1/4,4]$ implies raw output squared norm
+in $(.995,1.001)$ under the IEEE premises proved in
+Appendix~\ref{app:planar-causal-calculus}. This is a local arithmetic result;
+all-time pitch/integral containment and initialization remain separate.
 \end{lemma}
 
 \begin{lemma}[Vibration-guard LP/raw recurrence --- PROVED]
@@ -840,6 +845,14 @@ adds at most the target difference norm. The complete covariance partial
 derivative retains every prediction, Joseph correction, reset and active AW
 marginal replacement. No self-containing joint causal cell or magnetic-service
 floor is concluded from these algebraic statements.
+Appendix~\ref{app:planar-causal-calculus} extends the operation calculus to
+linked $dP,dH,dR$, the literal held-BA gain operand, $dK\,r$, reset and
+finite gain remainders. It constructs a causal center recurrence from current
+state and inherited clocks, with no future observed $H,G,K$. The analytical
+magnetic-information resolvent bound is proved, but its uniform center floor,
+storage contraction and inherited radius remain OPEN. Physical acceleration
+is not substituted for nominal $a_w$, and a finite information floor is not
+a theorem constant.
 \end{lemma}
 
 \begin{lemma}[Planar guard inactivity --- PROVED in real arithmetic]

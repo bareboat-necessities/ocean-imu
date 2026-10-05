@@ -37,13 +37,16 @@
       "status": "PROVED",
       "assumptions": [
         "positive innovation covariance",
-        "literal H,R,K"
+        "literal H,R,K",
+        "derivative extension uses literal held-BA H_gain distinct from H_S and fixed regular branch"
       ],
       "proof_modules": [
-        "tools/stability/ou3_theorem/corrected_word.py"
+        "tools/stability/ou3_theorem/corrected_word.py",
+        "tools/stability/ou3_theorem/planar_linked_riccati_mean.py"
       ],
       "certificates": [
-        "reports/results/ou3_stability/corrected-word-certificate.json"
+        "reports/results/ou3_stability/corrected-word-certificate.json",
+        "reports/results/ou3_stability/planar-linked-riccati-mean-certificate.json"
       ],
       "open_dependencies": []
     },
@@ -259,12 +262,16 @@
       "latex_title": "Mahony quaternion norm identity --- PROVED",
       "status": "PROVED",
       "assumptions": [
-        "literal Mahony Euler update"
+        "literal Mahony Euler update",
+        "local raw-normalization extension: represented pre-norm squared in [1/4,4], stated IEEE binary32 premises; no all-time input-domain claim"
       ],
       "proof_modules": [
-        "tools/stability/ou3_theorem/causal_tuner_interval.py"
+        "tools/stability/ou3_theorem/causal_tuner_interval.py",
+        "tools/stability/ou3_theorem/mahony_raw_normalization.py"
       ],
-      "certificates": [],
+      "certificates": [
+        "reports/results/ou3_stability/mahony-raw-normalization-certificate.json"
+      ],
       "open_dependencies": []
     },
     {
@@ -422,15 +429,19 @@
         "positive covariance and innovation matrices",
         "same-history local operation factors",
         "default additive AW floor",
-        "fixed-coefficient partial derivative, not full joint causal Jacobian"
+        "fixed-coefficient partial factors and separately derived linked real-operation identities; uniform causal word bounds OPEN"
       ],
       "proof_modules": [
         "tools/stability/ou3_theorem/planar_service_cell.py",
         "tools/stability/ou3_theorem/scheduler_s_shift_bound.py",
-        "tools/stability/ou3_theorem/planar_service_frechet.py"
+        "tools/stability/ou3_theorem/planar_service_frechet.py",
+        "tools/stability/ou3_theorem/planar_causal_calculus.py",
+        "tools/stability/ou3_theorem/planar_mean_covariance_ports.py"
       ],
       "certificates": [
-        "reports/results/ou3_stability/planar-service-cell-certificate.json"
+        "reports/results/ou3_stability/planar-service-cell-certificate.json",
+        "reports/results/ou3_stability/planar-causal-calculus-certificate.json",
+        "reports/results/ou3_stability/planar-mean-covariance-ports.json"
       ],
       "open_dependencies": []
     },
@@ -533,7 +544,7 @@
         "physically justified MOVING target after all-time planar admission audit",
         "uniform linked quotient/covariance derivatives, physical gauge amplitude and C_Q alpha (plus covariance gauge forcing)",
         "same-history moving-center cell covering S/AW phases and all future physical magnetic information windows",
-        "nominal/precision-chart enclosure of continuous physical fibre curvature; future H/G and arithmetic enclosure for conditional moving center"
+        "inherited causal-center nominal aw/reference/gate domain and complete linked common storage; no future observed H/G/K or empirical theorem constants"
       ],
       "finite_diagnostics_not_certificates": [
         "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",

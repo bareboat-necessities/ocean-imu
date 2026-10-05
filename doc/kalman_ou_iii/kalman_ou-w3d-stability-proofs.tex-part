@@ -613,6 +613,334 @@ $S$ cadence). The AtomS3R sketch uses $\sigma_a=.12$ and fixed $S$ cadence
 with distinct startup/gravity settings; this finite floor does not transfer
 to that deployment without a separate binding and certificate.
 
+\subsection{Causal planar operation calculus and the remaining cell obligation}
+\label{app:planar-causal-calculus}
+\textbf{PROVED --- analytical (operation identities); invariant cell OPEN.}
+These identities supply the linear term and the finite nonlinear remainder in
+$\delta z^+=A\delta z+N(\delta z)+d$; they do not supply an empirical
+contraction constant. All maps below are real lifts of the literal source
+operations on the stated branch, with arithmetic charged separately.
+
+\paragraph{Causal state and parity.}
+Write $e=(q_y,b_{g,y},v_{xz},p_{xz},S_{xz},a_{w,xz},b_{a,xz})$ for the
+12 local mean coordinates (the attitude-error slot is reset after injection).
+On the planar regular branch the other nine mean coordinates vanish, while
+\[
+ P=P_E\oplus P_O,\qquad \dim P_E=12,\quad\dim P_O=9.
+\]
+Let $\eta$ contain the raw private Mahony quaternion and integral, every guard
+LP/detector/weight state, band/frequency/variance/period statistics, staged
+and committed tuner values, internally filtered model/noise parameters,
+$S$ elapsed time and period, and AW time, pending flag and target.
+Let $\chi$ contain the startup stage, saved sensor samples, gravity/watchdog
+states, magnetic acquisition/refinement and continuous hard-iron sufficient
+statistics, reference, applied offset, and all validity/solver/hold flags.
+The source phase and magnetic packet residue are $\phi$ and $k\bmod8$ for the
+stated $200$ Hz/$25$ Hz record. Absolute implementation clocks remain in the
+state: they are not replaced by a periodic phase if their arithmetic matters.
+The source-bound causal state is $(\phi,\eta,\chi,e,P_E,P_O)$.
+
+The Complementary tuner/S-period/AW-target generator has no reverse edge
+from $(e,P)$; this statement does not delete reference or gate feedback.
+On a fixed regular parity-preserving branch, $r_y=0$, and $K r$ uses only
+$P_E$. Thus $(e,P_E,\chi)$ drives $P_O$ without a return through the regular
+nonzero mean correction. Solver failures, watchdog resets and reference/gate
+branches must still be carried and enclosed. This is a reduction of an
+invariant manifold, not permission to delete odd perturbations or the
+physical compatibility gauge. Both covariance blocks are necessary for
+magnetic service. The branch requires planar initialization/reference and the
+stated zero-lever-arm/deheel profile; no assertion is made that an arbitrary
+initial state lies on it.
+
+\paragraph{A real-arithmetic reference bound from the same history.}
+The specified profile leaves startup hard-iron estimation disabled. In the
+continuous estimator let $w$ be its weight and $A$ its weighted mean of
+normalized private tilt rotations. Every such planar rotation fixes $e_y$
+on both sides; the literal common forgetting recurrence preserves
+$Ae_y=A^Te_y=e_y$. Thus $(I-A^TA)e_y=0$ and the un-ridged minimum-information
+gate fails in exact real arithmetic: its information is zero, below the
+unchanged positive threshold. The applied offset remains zero. At acquisition
+or refinement the learned mean is a convex weighted mean of rotations of the
+same norm-$75$ record; canonicalizing it to $(\sqrt{m_x^2+m_y^2},0,m_z)$
+preserves its norm. Hence every such committed reference has
+$\|B_{\rm ref}\|\le75$. This is an analytical upper bound, not a replay
+value. It does not prove the required reference alignment/lower geometry,
+finite completion of acquisition/refinement, or float32 transfer. Those
+remain in the inherited cell obligation.
+
+\paragraph{Literal event maps.}
+The IMU ordering is previous staged-tune commit, clock increments, guard,
+private Mahony, noise inflation, MEKF prediction, pending AW synchronization,
+due $S=0$ correction, accelerometer correction, watchdog, band/tuner update,
+AW-target staging, and period/direction update. The outer wrapper then updates
+the gravity/startup state; a delivered magnetic packet runs acquisition,
+refinement and offset/reference logic before an eligible Live correction.
+Pre-Live updates keep the MEKF held until literal handoff. In particular,
+$S$ is not reset in the physical history.
+
+For prediction, let $W=[\omega]_{\times}$ with
+$\omega=u_g-\operatorname{proj}_{BG}(b_g)$ and $h$ the supplied step.
+The source matrices use
+\[
+ R_h=I-hg_0W+h^2g_1W^2,\quad
+ B_h=hI-h^2g_1W+h^3g_2W^2,\quad
+ IB_h=\tfrac12h^2I-h^3g_2W+h^4g_3W^2.
+\]
+The $g_i$ are the actual finite-polynomial branches for $|h\omega|<1$ and
+literal trigonometric branches otherwise, not substituted exact exponentials.
+Together with the literal integrated-OU $F_{LL}$ and process $Q$, these give
+$P^-=FPF^T+Q$; the BA multiplier is $1$ when held and the shipping OU
+multiplier when active. Nominal $(v,p,S,a_w)$ uses its same integrated OU
+map. Quaternion prediction left-multiplies by the source's normalized
+increment at $-h\omega$. At $\|d\|<.01$ that increment is
+\[
+ p(d)=\left(1-s/8+s^2/384,
+ (1/2-s/48+s^2/3840)d\right),\quad s=d^Td,\quad Q(d)=p/\|p\|.
+\]
+The other branch uses $(\cos(\sqrt s/2),\sin(\sqrt s/2)d/\sqrt s)$ and
+normalizes it. Literal casts/FMA/rounding have separate defects.
+
+For the default zero-lever-arm profile the measurement predictions are
+\[
+ h_a=R(q)(a_w-ge_z)+b_a,\qquad h_m=R(q)B_{\rm ref},\qquad h_S=S.
+\]
+Temperature terms, when present, are the same literal known input terms.
+For active A21 let $H=Dh$, $S_i=HPH^T+R_i$, $B=PH^T$ and $K=BS_i^{-1}$.
+The literal correction is $x_c=x+Kr$ and
+$C=P-KB^T-BK^T+KS_iK^T$, followed by quaternion injection, mean projections
+and $P^+=GCG^T$, where $G_\theta=I+[d\theta_{\rm inj}]_\times/2$.
+In H18, distinguish $H_g$ in $B=M P H_g^T$ from $H_s$ in
+$S_i=H_sPH_s^T+R_i$. For held accelerometer updates, $H_g$ omits BA columns,
+$M$ masks BA rows, and $H_s$ retains the BA uncertainty and cross terms.
+The gain is still $BS_i^{-1}$ and the literal Joseph expression still applies.
+The regular unmasked optimal-covariance identity must not be used here.
+A taken LDLT diagonal bump is included in $S_i$; a failed solve is its literal
+rejection branch. Successful factorization alone is not an SPD proof.
+
+The pending AW map is
+\[
+ P^+=P+E_A(\Sigma_A-E_A^TPE_A)_+E_A^T,
+\]
+with the same staged target. It clears the pending flag in the literal order.
+The progress-preserving period update maps the inherited elapsed/period pair
+by the shipping rescaling and due-event rule; an event is determined from
+that state, never selected independently from a phase interval.
+All remaining $\eta,\chi$ events are the corresponding named source methods
+with their complete sufficient statistics and branches retained.
+
+\paragraph{A causal center, without future observed operands.}
+For an inherited center state $\bar z_{k_0}$ define
+\[
+ \bar z_{k+1}=\mathcal F^{\rm real}_{\bar\sigma_k}(\bar z_k,u(\phi_k)),
+ \qquad \bar\sigma_k=\operatorname{branch}(\bar z_k,u(\phi_k)).
+\]
+Every $\bar H,\bar K,\bar G$, reference and target is evaluated from the
+current center state in source order. The one-way generator may be shared
+exactly when comparing MEKF perturbations of the same represented sensor
+history; then its clock/target differences are zero. For real-versus-float
+comparison its arithmetic differences must instead be enclosed. No future
+observed coefficient is an input. This defines a causal skew-product center
+and proves its well-definedness on regular branches by induction; it does not
+prove a compact forward domain or a service floor. A $20$-second return is
+neither required nor asserted. The observed-coefficient center remains a
+separate FINITE DIAGNOSTIC ONLY artifact.
+
+\paragraph{Complete linked differentials.}
+On a fixed branch,
+\[
+\begin{split}
+ dS_i&=dH\,PH^T+H\,dP\,H^T+HP\,dH^T+dR_i,\\
+ dK&=(dP\,H^T+P\,dH^T-K\,dS_i)S_i^{-1},\\
+ dC&=A\,dP\,A^T-K\,dH\,C-C\,dH^T K^T+K\,dR_i\,K^T,
+ \quad A=I-KH,\ C=AP,\\
+ dx_c&=dx+dK\,r+K\,dr.
+\end{split}
+\]
+The $dC$ formula is only the unmasked optimal branch. In H18 differentiate
+$P-KB^T-BK^T+KS_iK^T$ term by term with
+$dB=M(dP\,H_g^T+P\,dH_g^T)$ and $dK=(dB-KdS_i)S_i^{-1}$.
+Thus $dR_i$ is not silently zero when the frontend/noise state varies.
+If comparing only MEKF perturbations with a shared one-way generator,
+the corresponding generated $dR_i$ is exactly zero by causality, not by an
+independent extremization.
+
+For $f=R(q)(a_w-ge_z)$ in the left chart,
+$df=-[f]_\times d\theta+R\,da_w$ and $dr_a=-df-db_a$ for a fixed sample.
+Hence $dH_{a,\theta}=-[df]_\times$, $dH_{a,aw}=[d\theta]_\times R$.
+Similarly $dm=-[m]_\times d\theta+R\,dB_{\rm ref}$,
+$dH_{m,\theta}=-[dm]_\times$, and $dr_m=-dm$ plus any same-history
+applied-offset variation. In particular $dr\ne-dH\,x$.
+If $\|a_w\|\le\widehat A$ and $\|B_{\rm ref}\|\le B_*$ on a cell,
+\[
+ \|dH_a\|\le\sqrt{(g+\widehat A)^2+1}\,\|d\theta\|+\|da_w\|,
+ \qquad \|dH_m\|\le B_*\|d\theta\|+\|dB_{\rm ref}\|.
+\]
+The $+1$ retains the varying rotation block. Physical acceleration amplitude
+is not a bound on nominal $a_w$, and physical field norm is not automatically
+a bound on the learned reference. If $P\succeq0$ and $R_i\succeq rI>0$,
+$\|S_i^{-1}\|\le1/r$ analytically. A carried point innovation floor is not
+used as a cell bound.
+
+There is an exact finite gain remainder. Write $\Delta S_i=S_1+S_2$, where
+$S_1$ is the displayed differential with finite increments and
+\[
+ S_2=\Delta H\Delta P H^T+H\Delta P\Delta H^T+
+       \Delta H P\Delta H^T+\Delta H\Delta P\Delta H^T.
+\]
+If $DK=(\Delta P H^T+P\Delta H^T-KS_1)S_i^{-1}$, then
+\[
+ \Delta K-DK=(\Delta P\Delta H^T-KS_2-DK\Delta S_i)
+                   (S_i+\Delta S_i)^{-1}.
+\]
+Proof: multiply $K+\Delta K$ by $S_i+\Delta S_i$, subtract $KS_i=PH^T$,
+and then subtract $DK(S_i+\Delta S_i)$. Thus, for a proven inverse bound $s_*$,
+\[
+ \|\Delta K-DK\|\le s_*\|
+       \Delta P\Delta H^T-KS_2-DK\Delta S_i\|.
+\]
+This keeps the linked numerator before taking a norm. For any two linearized
+increments, the missing bilinear covariance/row/noise interactions are present.
+
+Prediction has
+$dP^-=dF\,PF^T+F\,dP\,F^T+FP\,dF^T+dQ$.
+Here $dW=-[db_g]_\times$ after the appropriate projection differential;
+for example
+\[
+ dR_h=-h(dg_0 W+g_0dW)+h^2(dg_1W^2+g_1(dW W+W dW)).
+\]
+The $dg_i$, $dF_{LL}$ and $dQ$ follow the same finite polynomial/exponential
+source branches and their current parameter state; they are not frozen in a
+complete derivative. For the small quaternion branch, $ds=2d^T\delta d$,
+$\delta p=(w'(s)ds,k(s)\delta d+k'(s)ds\,d)$ and
+$\delta Q=(I-QQ^T)\delta p/\|p\|$. Reset contributes
+\[
+ dP^+=G\,dC\,G^T+dG\,C\,G^T+GC\,dG^T,
+ \qquad dG_\theta=[d(d\theta_{\rm inj})]_\times/2.
+\]
+Radial BA projection has derivative $I$ inside its ball and
+$B\|b\|^{-1}(I-uu^T)$ outside. At its boundary use its finite nonexpansive
+inclusion, not a nonexistent ordinary derivative. BG additionally retains the
+literal inward factor, finite checks and nextafter branch. For AW, at a
+nonzero spectral face $X=U\operatorname{diag}(\lambda)U^T$, the derivative of
+$X_+$ is $U(L\circ U^T\delta X U)U^T$ with
+$L_{ij}=(\lambda_i^+-\lambda_j^+)/(\lambda_i-\lambda_j)$ and the diagonal
+limit. At zero eigenvalues use the proven positive-part Lipschitz inclusion.
+No global twice-differentiable AW/reset/projection/scheduler model is asserted.
+
+\paragraph{Raw Mahony normalization: exact rational local bound.}
+The IEEE binary32 premise here is round-to-nearest with gradual underflow,
+without unsafe reassociation, and represented pre-normalization squared norm
+in $[1/4,4]$. Set $M=2^{23}$, $C=\texttt{0x5f375a86}$ and $u=2^{-24}$.
+Power-of-four scaling reduces the positive normal inverse-square-root input
+to $s\in[1,4)$. The bit seed on its three exponent strata has form
+$y_0=a-bs+\epsilon$, with respectively
+\[
+ (a,b,\epsilon_{\max})=
+ (C/(2M)-94,1/4,1/(4M)),\quad
+ (C/(2M)-377/4,1/8,1/(4M)),\quad
+ (C/(4M)-375/8,1/16,1/(8M)).
+\]
+With $d=C-190M$, the second stratum ends at
+$2(1+(2d+1)/M)$ and the third starts at $2(1+(2d+2)/M)$.
+The exact rational extrema of $s(a-bs+\epsilon)^2$ occur at endpoints or
+$s=(a+\epsilon)/(3b)$; positivity makes it monotone in $\epsilon$.
+The certificate evaluates only these analytic extrema and proves
+$93/100\le z=s y_0^2\le108/100$. No mantissas are sampled.
+
+The literal single Newton step, including rounding, satisfies
+\[
+ x y^2=\tfrac14 z(3-tz)^2v,\qquad
+ (1-u)^2\le t\le(1+u)^2,\quad (1-u)^4\le v\le(1+u)^4.
+\]
+The repeated $z$ remains linked. This cubic has only an interior maximum at
+$z=1/t$ in this domain; it decreases with $t$. The rational lower bound is
+$\min_{z\in\{.93,1.08\}}z(3-(1+u)^2z)^2(1-u)^4/4$, and an upper bound
+is $(1+u)^4/(1-u)^2$. A four-component rounded dot product has relative
+error at most $\gamma_4=4u/(1-4u)$ plus the conservatively bounded gradual
+underflow charge $64\,2^{-149}$ relative to the stated norm floor.
+Final component products add squared relative factors $(1\pm u)^2$ and
+absolute charge at most $16\,2^{-149}$. Exact rational comparison gives
+\[
+                  0.995<\|q_{\rm out}^{M}\|^2<1.001.
+\]
+This extends the pre-normalization norm lemma; it does not prove every future
+input is in $[1/4,4]$, bind the pitch/integral additive caps, or close the tuner.
+For a fixed seed the real normalization map is
+$f(q)=y_0(3/2-y_0^2\|q\|^2/2)q$ and
+\[
+ Df(q)e=y(q)e-y_0^3q(q^Te),\quad
+ f(q+e)-f(q)-Df(q)e
+ =-y_0^3((q^Te)e+\tfrac12\|e\|^2q+\tfrac12\|e\|^2e).
+\]
+Its norm is at most $\tfrac32y_0^3\|q\|\|e\|^2+
+\tfrac12y_0^3\|e\|^3$. A bit-seed change is a hybrid branch change and must
+be enclosed, not differentiated through as a smooth map.
+
+\paragraph{Quotient, storage and service perturbation.}
+Retain the exact physical gauge $r_0=(R_y(-\psi)e_x,0,\ldots,-ge_y)$,
+$J=P^{-1}$, $r=r_0/\sqrt{r_0^TJr_0}$ and $\Pi_Q=rr^TJ$.
+The moving metric contributes $dJ=-J\,dP\,J$ and
+$d\Pi_Q=dr\,r^TJ+r\,dr^TJ+rr^T dJ$; it is not legitimate to freeze this
+projector in the coupled derivative. The exact transported relation retains
+$M_Q\xi+C_Q\alpha+b_Q$ and any covariance coupling. The physical bias
+curvature bound $g^2(\beta^6/36+\beta^4/4)$ gives the conditional central-chart
+metric bound $\|J_{ba,ba}\|g^2(\beta^6/36+\beta^4/4)$; the actual nominal
+chart needs its own transport/remainder bound. Neither a physical angle cap
+nor zero total estimator variation along identical records substitutes for
+that metric conversion.
+
+For a complete literal probe word $T=L_{n-1}\cdots L_0$,
+\[
+ dT=\sum_i L_{n-1}\cdots L_{i+1}\,dL_i\,L_{i-1}\cdots L_0.
+\]
+The suffix/prefix products are formed before norms. Each applied magnetic
+term uses $Y_j=H_{m,j}T_{j,k}$ and contributes
+\[
+ dI_j=dY_j^T S_j^{-1}Y_j+Y_j^T S_j^{-1}dY_j
+       -Y_j^TS_j^{-1}dS_jS_j^{-1}Y_j.
+\]
+This transports the actual service probe, not the nonlinear mean tangent.
+For a finite perturbation, stack
+$\bar Y_j=\bar S_j^{-1/2}\bar H_j\bar T_j$ and
+$D_j=\bar S_j^{-1/2}(H_jT_j-\bar H_j\bar T_j)$.
+If the complete window has $\|\bar Y\|\le b$, $\|D\|\le d$ and every
+$E_j=\bar S_j^{-1/2}(S_j-\bar S_j)\bar S_j^{-1/2}$ has norm at most $e<1$,
+the block-diagonal resolvent identity proves
+\[
+ \|I-\bar I\|\le\frac{e b^2+2bd+d^2}{1-e}.
+\]
+Indeed $\|(I+E)^{-1}\|\le(1-e)^{-1}$ and
+$\|(I+E)^{-1}-I\|\le e/(1-e)$; expand the same stacked quadratic.
+Consequently a \emph{proved} center floor $\mu_0$ would give
+$\lambda_{\min}I\ge\mu_0-(e b^2+2bd+d^2)/(1-e)$.
+The planar parity further gives
+$I_\pm=\cos^2\theta\,I_O+\sin^2\theta\,I_E$ for the two physical probes,
+where $I_O,I_E$ here use unit $R_y(-\psi)e_z,e_y$ roots, respectively,
+not the scaled sum/difference columns. The original BG scaling is retained
+and the cross term is zero. It preserves,
+rather than discards, the odd service dynamics.
+
+\textbf{Attempt to close the cell: OPEN.}
+The derived identities do not yet yield source-uniform $\rho<1$, $c_2,c_3,d$
+for a common storage, or an inherited radius. In particular the nominal
+$\widehat A$, learned-reference alignment domain, gate margins and uniform center
+information floor have no proven compact bounds from construction/release.
+The local inverse bound alone cannot supply these. Over an enlargement that
+permits rejection of every magnetic correction, the information sum is
+exactly zero; failure on that enlargement is class D and is not exclusion of
+the planar physical history. No value near $7.02$ is inserted as $\mu_0$.
+The radius and floor fields are deliberately null, not filled from replay.
+The missing next proof is a complete-word storage inequality on the causal
+center's inherited reference/nominal-state domain, together with branch and
+every-prefix containment. No new physical premise is adopted to supply it.
+
+Structures preserved: both actual covariance blocks, all 21 error coordinates,
+physical gauge/curvature, held and active corrections, OU/BG dependence,
+Joseph/reset/projections/AW, same-history generator and clocks, learned
+reference and actually applied service. Relaxations introduced: real-operation
+lifts on fixed regular branches and explicit norm upper bounds after linked
+algebra. No all-time service, exclusion or regional theorem is promoted.
+
 \subsection{Private frontend binding and conditional pitch--integral tube}
 The old interval frontend is not a literal implementation certificate.
 \texttt{Mahony\_AHRS<float>::invSqrt} uses a bit seed and one Newton step,

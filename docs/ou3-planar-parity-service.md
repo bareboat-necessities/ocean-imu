@@ -1,8 +1,8 @@
 # Planar covariance parity and service reduction
 
 Status: analytical real-arithmetic factorization. The forward-invariant interval
-cell and all-time service lower bound remain OPEN until their numerical
-containment certificates are produced.
+cell and all-time service lower bound remain OPEN. The continuation is
+analytical only; finite replay and secants cannot supply containment constants.
 
 For the exact planar MOVING record, all nominal rotations are about body Y and
 all delivered accelerometer/magnetometer vectors lie in the XZ plane. In the
@@ -119,6 +119,31 @@ This is not yet a shipping service proof. Promotion requires a formal Schur/cond
 
 No independent reimplementation of the 12x12 LIN prediction is needed. The proof instrumentation already receives F_LL and Q_LL after the shipping calls to IntegratedOUChain::transition/process_covariance, together with F_AA,Q_AA, the BA phi/Q block and every correction/reset in operation order. The factor stream therefore treats those callback matrices as the literal coefficients. Likewise S=0 is observed only when the shipping time_update calls periodic_update_due and then applyIntegralZeroPseudoMeas; the factor stream consumes that actual correction event instead of approximating a cadence. This removes the surrogate F_LL/Q_LL and scheduler chronology from the intended certificate. A temporary non-promoting diagnostic exports the first-200 literal prediction retention and S-event count to verify plumbing before interval promotion.
 
+## Analytical causal recurrence and local bounds
+
+**PROVED — analytical:** Appendix `app:planar-causal-calculus` derives the
+source-bound causal state, same-history moving-center recurrence and linked
+prediction/correction/reset calculus. The center computes its own H/K/G from
+current state. It does not consume the observed-coefficient diagnostic below.
+The regular nonzero planar mean uses the even covariance block; the odd block
+remains driven by that mean and remains essential for magnetic service.
+Reference/gate feedback is retained separately from the one-way tuner ports.
+
+The correction differential retains dR and dK*r. In held-BA accelerometer
+corrections the innovation row retains BA uncertainty while the gain row omits
+BA columns and masks BA rows; the unmasked Riccati formula cannot replace that
+literal Joseph map. The exact finite gain remainder keeps its linked numerator
+before norms. Nominal aw requires a nominal bound, not physical acceleration.
+
+The literal raw Mahony normalization has an exact-rational local output norm
+squared bound (.995,1.001) on represented input norm squared [1/4,4], under the
+stated IEEE premises. This does not close the pitch/integral or startup tube.
+The magnetic-information resolvent bound is `(e*b^2+2*b*d+d^2)/(1-e)` for
+proven complete-window row and relative-innovation bounds. The required uniform
+center floor and common-storage radius remain null/OPEN. No new replay, secant,
+phase grid or covariance box is used to fill them. Historical finite diagnostic
+CI steps require explicit manual opt-in; analytical and regression gates remain.
+
 ## Complete phase-aware causal cell: OPEN
 
 `planar_moving_center.py` implements a conditional moving covariance center
@@ -218,7 +243,8 @@ dtheta=-Ry(-psi)e_x d(alpha), whereas db_a=g e_y d(alpha). Orienting the line
 with positive roll therefore gives r=(Ry(-psi)e_x,0,...,-g e_y). The positive
 BA-y handoff seed must not be used unchanged in this chart. At the central
 physical family the literal acc and mag rows annihilate this first-order line;
-this does not identify a nonlinear fibre around the finite +/- pair.
+the exact continuous nonlinear fibre is established separately in the physical
+compatibility certificate and its curvature must be retained.
 
 For P=L L', whiten by L^-1 and normalize u=L^-1 r/||L^-1 r||. Check uu' and
 I-uu' at the original dimensionless tolerance. This avoids the false absolute

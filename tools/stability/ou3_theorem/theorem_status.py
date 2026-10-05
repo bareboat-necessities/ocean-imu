@@ -396,6 +396,13 @@ def status_report() -> dict:
             "nonlinear_fibre_remainder_requires_metric_bound":True,
             "finite_conditional_moving_center":"planar-moving-center-diagnostic.json",
             "conditional_center_is_autonomous_future_enclosure":False,
+            "causal_center_recurrence_defined":True,
+            "causal_center_compact_domain_verified":False,
+            "linked_noise_and_held_gain_differentials_verified":True,
+            "raw_mahony_local_normalization_certificate":"mahony-raw-normalization-certificate.json",
+            "raw_mahony_all_time_input_domain_verified":False,
+            "uniform_center_service_floor":None,
+            "analytical_invariant_radius":None,
             "homogeneous_factor_product_is_complete_nonlinear_derivative":False,
             "private_Mahony_gain_is_complete_mean_gain":False,
             "scalar_radius_solver_can_certify_admission":False,
@@ -409,12 +416,13 @@ def status_report() -> dict:
             "The exact planar MOVING pair satisfies current 30-s span and SLOW+FAST limits with constant bias and identical sensor records; "
             "the proposed two-epoch span/bias separation has an exact zero direction. "
             "The ideal mean execution and covariance admit an exact 12+9 parity factorization. A 20-s point return is invalid because the progress-preserving S scheduler phase does not return; the invariant cell must carry that phase. "
-            "Certify a forward-invariant one-period enclosure and phase-uniform one-second actually applied MAGNETIC SERVICE for that SAME shipping history before declaring "
+            "Certify a forward-invariant causal skew-product enclosure and phase-uniform one-second actually applied MAGNETIC SERVICE for that SAME shipping history before declaring "
             "a fully admitted MOVING obstruction or asserting absolute inner entry from the existing assumptions. "
-            "The fresh 240/1200-s replays and final-cycle all-IMU-root service sweep are non-promoting finite evidence; the tail sweep remains above 7 but is not an interval/all-time certificate. "
+            "The retained historical 240/1200-s replays and final-cycle all-IMU-root service sweep are non-promoting finite evidence; the tail sweep remains above 7 but is not an interval/all-time certificate. "
             "Keep construction/H18/refinement/release, the full persistent HistoryCell, coupled tuner, actual covariance/gains and BA physical forcing. "
             "Finite quotient contraction and full native central secants do not enclose the nonlinear derivative or future forcing. Retain C_Q alpha and any covariance gauge forcing. A fixed-root relative covariance ball fails finite feasibility: drift .537822 with covariance gain about .991 requires radius above 60. Use linked phase/history-dependent centers, not another smaller finite-difference step or independent generated boxes. "
             "The continuous physical same-record arc and raw angle/curvature bounds are proved; conversion to the nominal precision-normalized tube is OPEN. Its total estimator variation is zero and is not a nominal-root secant. The conditional moving-center defect is below .000618 on the finite exported tail, but uses observed future H/G and is not an autonomous all-time enclosure. "
+            "Analytical continuation only: derive the inherited nominal aw/reference/gate domain and linked complete-word storage; no further replay, secant or sampled-cell exploration. Local dR/held-PCt/gain/reset identities and the rational raw Mahony normalization bound do not close that domain. "
             "Homogeneous kernel/action results and completed-square algebra remain valid but do not identify the physical tilt/BA decomposition. "
             "All-time device qualification, nonlinear/prefix retention, float32 transfer and regime composition remain OPEN."
         ),

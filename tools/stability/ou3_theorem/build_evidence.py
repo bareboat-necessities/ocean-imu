@@ -73,7 +73,15 @@ def validate() -> dict:
             json.loads((STATUS.parent/"planar-service-frechet-diagnostic.json").read_text()),
             planar_mahony_tube_certificate(),
             7.024764605642485)
+    from tools.stability.ou3_theorem.mahony_raw_normalization import certificate as raw_norm_certificate
+    from tools.stability.ou3_theorem.planar_linked_riccati_mean import certificate as linked_calculus_certificate
+    from tools.stability.ou3_theorem.planar_causal_calculus import certificate as causal_calculus_certificate
+    from tools.stability.ou3_theorem.planar_mean_covariance_ports import certificate as mean_ports_certificate
     for name, generate in (
+        ("mahony-raw-normalization-certificate.json",raw_norm_certificate),
+        ("planar-linked-riccati-mean-certificate.json",linked_calculus_certificate),
+        ("planar-causal-calculus-certificate.json",causal_calculus_certificate),
+        ("planar-mean-covariance-ports.json",mean_ports_certificate),
         ("planar-service-cell-certificate.json",planar_cell_certificate),
         ("planar-service-guard-certificate.json",planar_guard_certificate),
         ("planar-service-frontend-binding.json",planar_frontend_binding_certificate),

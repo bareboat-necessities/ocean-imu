@@ -1,30 +1,44 @@
-"""Analytical Lipschitz bounds for the remaining MEKF mean<->P loop.
+"""Cell-dependent inequalities; physical acceleration is NOT nominal aw.
 
-These are local same-history inequalities used by the planar joint-cell proof.
-They deliberately do not declare a radius or forward-invariant cell.
+No point-orbit innovation floor or magnetic reference norm is a default proof
+constant. Bounds must be proved on the same causal cell before application.
 """
 from __future__ import annotations
-import math
 
-def certificate(g=9.80665,aw_max=.02*(math.pi/10)**2,mag_norm=75.0,innovation_floor=.040976330637931824):
-    # ||[x]x-[y]x||_2 <= ||x-y||.  For f=R(q)(aw-g), first-order row
-    # variation is bounded by |aw-g|*attitude + aw-state variation.
-    force=g+aw_max
-    # Magnetic predicted vector has fixed norm 75; row variation <=75*dtheta.
+
+def certificate(*, g=None, nominal_aw_bound=None,
+                reference_norm_bound=None, measurement_noise_floor=None):
+    values = (g, nominal_aw_bound, reference_norm_bound, measurement_noise_floor)
+    supplied = all(x is not None for x in values)
+    if any(x is not None and x < 0 for x in values):
+        raise ValueError("cell bounds must be nonnegative")
+    if measurement_noise_floor is not None and measurement_noise_floor <= 0:
+        raise ValueError("a positive noise floor is required")
+    # H_acc=[-[R(aw-g)]x,0,...,R,...,I]. Both the skew and R blocks vary.
+    # ||dH|| <= sqrt((g+Ahat)^2+1)||dtheta||+||daw||.
+    force = None if g is None or nominal_aw_bound is None else g + nominal_aw_bound
     return {
-      "qualification":"OU3_PLANAR_MEAN_COVARIANCE_PORT_BOUNDS_V1",
-      "result_type":"PROVED analytical local inequalities; radius application OPEN",
-      "acc_H_lipschitz_attitude":force,
-      "acc_H_lipschitz_aw":1.0,
-      "mag_H_lipschitz_attitude":mag_norm,
-      "innovation_inverse_norm_upper_from_carried_floor":1.0/innovation_floor,
-      "gain_identity":"K=P H^T (H P H^T+R)^-1",
-      "gain_difference_bound":
-        "dK=dP H^T S^-1 + P dH^T S^-1 - P H^T S^-1(dH P H^T + H dP H^T + H P dH^T)S^-1",
-      "same_history_required":True,
-      "joint_cell_forward_invariant":False,
-      "all_time_magnetic_service_verified":False,
-      "theorem_closed":False}
+        "qualification": "OU3_PLANAR_MEAN_COVARIANCE_PORT_BOUNDS_V2",
+        "result_type": "CONDITIONAL",
+        "inequalities_status": "PROVED — analytical",
+        "acc_H_attitude_coefficient_squared": None if force is None else str(force**2 + 1),
+        "acc_H_lipschitz_aw": "1",
+        "mag_H_lipschitz_attitude": None if reference_norm_bound is None else str(reference_norm_bound),
+        "innovation_inverse_bound": None if measurement_noise_floor is None else str(1 / measurement_noise_floor),
+        "symbolic_acc_H_bound": "||dH_acc|| <= sqrt((g+Ahat)^2+1)||dtheta||+||daw||",
+        "symbolic_mag_H_bound": "||dH_mag|| <= Bref||dtheta||+||dBref||",
+        "symbolic_inverse_bound": "P>=0 and R>=rI>0 imply ||S^-1||<=1/r",
+        "cell_bounds_supplied": supplied,
+        "cell_bounds_certified": False,
+        "physical_acceleration_substituted_for_nominal_aw": False,
+        "carried_point_innovation_floor_used": False,
+        "same_history_required": True,
+        "joint_cell_forward_invariant": False,
+        "all_time_magnetic_service_verified": False,
+        "theorem_closed": False,
+    }
 
-if __name__=="__main__":
- import json;print(json.dumps(certificate(),indent=2,sort_keys=True))
+
+if __name__ == "__main__":
+    import json
+    print(json.dumps(certificate(), indent=2, sort_keys=True))

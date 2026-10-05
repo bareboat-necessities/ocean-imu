@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "5344dd5f928dff01fb307c858f57ec7a8667ce47"
+      "git_blob_sha": "384b7fcea639789ca4ca888b17b6a2979d642364"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "73fe6358765122397f98e80d934e16973d0f240c"
+      "git_blob_sha": "c49b9e236a57e8eaba5bcefc6350692da6a9add0"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "7b6cf8a5276ed475763a76b8df11c9b00c561cff"
+      "git_blob_sha": "4877e51c626ed60692a74bd168a0805567fa6abd"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "ed9ebc3c988144f508b1c9a0b9b178165d973cd6"
+      "git_blob_sha": "6f4c1fbf6cbfd88a38c7172e630dd0f21c4bdfe9"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -512,7 +512,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "6f34b27ee0e26ca6734d111d293748c24c08cca9"
+      "git_blob_sha": "52a691df159082186f5eed1d4faa4627a9966d15"
     },
     {
       "path": "tools/stability/ou3_theorem/causal_tuner_interval.py",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "2de39b55395d0c77541b89e6c77729cdc4e87690"
+      "git_blob_sha": "101097b8f09a1e790a548aa37c2c465a2b73c218"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "2d321b0e0d9b10d7fb71b11a99954787cdff3e0f"
+      "git_blob_sha": "5526d3bcab5a64d613dffb87ff3721ad5d6f4e5e"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -772,11 +772,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_mean_covariance_ports.py",
-      "git_blob_sha": "dbdc17ed61398c9df7cff95584a5493314882efb"
+      "git_blob_sha": "c38a89083b3b02b0d98f78e881012756e28bbe14"
     },
     {
       "path": "tests/validation/test_ou3_planar_mean_covariance_ports.py",
-      "git_blob_sha": "76e73d91841a1249af242b90a7ec08ab9ae9dc14"
+      "git_blob_sha": "9ff31d18a50f6a2fbd66b5aab94e0af55f5148b8"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_common_norm_radius.py",
@@ -792,11 +792,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_linked_riccati_mean.py",
-      "git_blob_sha": "772c815483408be344b956e4a8e4368ffe3f3ccf"
+      "git_blob_sha": "c874e9f22594b88a1aa5e4e139084ee1987f8a57"
     },
     {
       "path": "tests/validation/test_ou3_planar_linked_riccati_mean.py",
-      "git_blob_sha": "e34f53e9489baefc750084b254d78c0fd941a93c"
+      "git_blob_sha": "1fc32cc8820abe6d6ded045bc853580411d160b2"
     },
     {
       "path": "tests/validation/test_ou3_planar_service_stream.py",
@@ -816,7 +816,7 @@
     },
     {
       "path": "docs/ou3-planar-parity-service.md",
-      "git_blob_sha": "a1821aab6c656a92f26e6f03d5563944f274a25f"
+      "git_blob_sha": "57c3487bf56f3e169a4c5cb5f1d03c881301b317"
     },
     {
       "path": "reports/results/ou3_stability/planar-every-root-service-diagnostic.json",
@@ -877,6 +877,38 @@
     {
       "path": "tests/validation/test_ou3_planar_moving_center.py",
       "git_blob_sha": "b7b138b332b51bf4cbda430bfd3e2fc225071049"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/mahony_raw_normalization.py",
+      "git_blob_sha": "31aa290336c6a9ce44317277224a79b2c052bba3"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_causal_calculus.py",
+      "git_blob_sha": "48471fbf01511b5423592ddb1c618044d355fd01"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_causal_calculus.py",
+      "git_blob_sha": "4f31f2107a91350f2172060a50f033294ff3f5bf"
+    },
+    {
+      "path": "tests/validation/test_ou3_mahony_raw_normalization.py",
+      "git_blob_sha": "63bf7142c4b169a079ee59c98fda712fdb4e6522"
+    },
+    {
+      "path": "reports/results/ou3_stability/mahony-raw-normalization-certificate.json",
+      "git_blob_sha": "8afad01a6c4429201935f296d39cb59291daa99c"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-linked-riccati-mean-certificate.json",
+      "git_blob_sha": "a125bd34e8bf41045d9951159e8a572555797acc"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-causal-calculus-certificate.json",
+      "git_blob_sha": "028b7ec8e6d13e76723a7faf7f3816f50fba1d45"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-mean-covariance-ports.json",
+      "git_blob_sha": "cfdb3a0dfeb05ffa98c2549270d202e2d8d5ff7b"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -947,7 +979,7 @@
     "result_type": "FINITE DIAGNOSTIC ONLY",
     "starting_PR_653_head": "4d387d19849aa177e1b84dae5d28a8eb3a80cf40"
   },
-  "reconciled_pr_head": "67f4cb8d0b4916cc9d5342298ed41aeb6b63ac9e",
+  "reconciled_pr_head": "649a3555d28c21913596371db2320a3b25c0b7e0",
   "planar_moving_center_audit": {
     "result_type": "FINITE DIAGNOSTIC ONLY",
     "starting_main": "59959d1bf33a3c5f4f70331104546a6486468df6",
@@ -958,5 +990,26 @@
     "physical_arc_certificate": "moving-quiet-compatibility-certificate.json",
     "physical_angle_is_normalized_gauge_amplitude": false,
     "all_time_magnetic_service_verified": false
+  },
+  "analytical_causal_cell_audit": {
+    "result_type": "OPEN",
+    "proof_appendix_section": "app:planar-causal-calculus",
+    "local_analytical_certificates": [
+      "mahony-raw-normalization-certificate.json",
+      "planar-linked-riccati-mean-certificate.json",
+      "planar-causal-calculus-certificate.json",
+      "planar-mean-covariance-ports.json"
+    ],
+    "finite_exploration_performed": false,
+    "shipping_sources_changed": false,
+    "uniform_storage_contraction": null,
+    "invariant_radius": null,
+    "center_information_floor": null,
+    "all_time_magnetic_service_verified": false,
+    "proof_helper_scope_corrections": [
+      "nominal aw is not physical acceleration",
+      "dR and varying acc rotation block retained",
+      "held accelerometer H_gain differs from H_S"
+    ]
   }
 }
