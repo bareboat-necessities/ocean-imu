@@ -128,7 +128,7 @@
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "adc2e638abdd8a81fe57fa174ffc62289cc1ca44"
+      "git_blob_sha": "90bd04e9fd22daba624328202349e1e8ac651318"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -748,7 +748,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
-      "git_blob_sha": "b1545dd197e9058c696ccb87cb2fcfa89294985f"
+      "git_blob_sha": "e2dc425723210140e1bd570a0e22bcc516ef2d30"
     },
     {
       "path": "tests/validation/test_ou3_planar_generated_port_structure.py",
