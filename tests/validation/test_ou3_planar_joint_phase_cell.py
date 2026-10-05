@@ -10,10 +10,9 @@ class JointPhaseCellThresholdTest(unittest.TestCase):
            "squared_norm_decrement_lower":"27/100000",
            "h_binary32_exact":"5368709/1073741824"}
         out=calculate(f,m,7.024764605642485)
-        self.assertGreater(out["coupling_product_budget"],0.052)
-        self.assertLess(out["coupling_product_budget"],0.053)
-        self.assertGreater(out["symmetric_coupling_norm_budget"],0.229)
-        self.assertLess(out["symmetric_coupling_norm_budget"],0.230)
+        self.assertIsNone(out["coupling_product_budget"])
+        self.assertIsNone(out["symmetric_coupling_norm_budget"])
+        self.assertFalse(out["mahony_gain_used_as_mekf_mean_gain"])
         self.assertAlmostEqual(out["weyl_information_perturbation_budget_to_muM_1"],
                                6.024764605642485)
         self.assertTrue(out["generated_reverse_feedback_ports_zero"])

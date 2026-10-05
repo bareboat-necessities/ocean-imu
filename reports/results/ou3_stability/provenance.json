@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "eda5aa87bf8f835505776a50fc2dfbcbb4ec1fcd"
+      "git_blob_sha": "4e7e62c9a2103e4f7928ce9a10265ba90296d01c"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "90bd04e9fd22daba624328202349e1e8ac651318"
+      "git_blob_sha": "c8ef819b79c4bc10f57dad51c6ca35b2dedd7aca"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "5eee2bcc2ead58656b48a05362d9e16cdbf958d8"
+      "git_blob_sha": "ae497f77318d14e91defeb219fb52e86fe9345c9"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "c3797e833ed968f5734bde4a537926d6d7874f65"
+      "git_blob_sha": "3ef457a2c19c8f551ece9fc54abf253aa118427b"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -512,7 +512,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "git_blob_sha": "c1dc612e0b12b3ddd06f3d46827dfc638c276f6b"
+      "git_blob_sha": "8692d2bbb8eb95d0efd16653835466cfc451c4a5"
     },
     {
       "path": "tools/stability/ou3_theorem/causal_tuner_interval.py",
@@ -656,7 +656,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_service_verify.py",
-      "git_blob_sha": "9a95ecbbefe77c0001c5dd2923b00d5fd4b46716"
+      "git_blob_sha": "245cd4e893a0eb5adfdd6bd68ddaba320e60f193"
     },
     {
       "path": "tools/stability/ou3_theorem/rank_loss_interval_factor.py",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "14449c980c6180076ebbeeacf83887518892d762"
+      "git_blob_sha": "3be3294c673a0cb94fc302430e6d6ca8ab7594a4"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -736,15 +736,15 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_joint_phase_cell.py",
-      "git_blob_sha": "ecc9134fb217be92fa9907fa926fcc5949b20d44"
+      "git_blob_sha": "be19c55e05dbfb20958dfa6834bd8e678de69000"
     },
     {
       "path": "tests/validation/test_ou3_planar_joint_phase_cell.py",
-      "git_blob_sha": "8f17510f398b264f1d90d92c21bde44f919a8535"
+      "git_blob_sha": "9512dbbe996885965569c0b92a303c9990d7da51"
     },
     {
       "path": "reports/results/ou3_stability/planar-joint-phase-cell-threshold.json",
-      "git_blob_sha": "b874655bf3f1fd21fbc5e670928fcaa4f6ebe9da"
+      "git_blob_sha": "368f17155691b54ad3b71e421b397dd9d606ea66"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "7e1ab6d2fdd1d4866d4544188c23db92d0216e1f"
+      "git_blob_sha": "49a3820b43dc88b3360d5f4eb210483d888c38fd"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -780,11 +780,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_common_norm_radius.py",
-      "git_blob_sha": "ef6108722fe28c53a01a4677ac094dda9f2873f1"
+      "git_blob_sha": "ed9056b802873dd7e4d675d85c004cec7afed3d3"
     },
     {
       "path": "tests/validation/test_ou3_planar_common_norm_radius.py",
-      "git_blob_sha": "777bc7ce77a024e493fd66e5987e27eccc01b12e"
+      "git_blob_sha": "e83c9c78bc4c1b4816d071c2248ce7c5e1aaf202"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_linked_port_word.py",
@@ -792,7 +792,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_linked_riccati_mean.py",
-      "git_blob_sha": "5352b696e89997398fed8b3050c4488f45475c80"
+      "git_blob_sha": "772c815483408be344b956e4a8e4368ffe3f3ccf"
     },
     {
       "path": "tests/validation/test_ou3_planar_linked_riccati_mean.py",
@@ -804,15 +804,67 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_coupled_tangent.py",
-      "git_blob_sha": "65069935cd997afdfcc10542cfabbe3af5e4f9c4"
+      "git_blob_sha": "7b167b259ffe5755b980cefbe9d813729cf88eca"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_parity_mean_tangent.py",
-      "git_blob_sha": "9f6e0b9fd98239ad7a8fbb3c1a5defaae578c2d6"
+      "git_blob_sha": "03649130c52f88e78c6cd51fc880a4be6c7f23b4"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_compatibility_quotient_mean.py",
-      "git_blob_sha": "fedae5da49eb4e1511c9c60e46b0735130af9762"
+      "git_blob_sha": "2b30946d59650ab688e770dacef51983a418fba7"
+    },
+    {
+      "path": "docs/ou3-planar-parity-service.md",
+      "git_blob_sha": "95f994220e3faa9f747a0ca2db5e7e8b76834547"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-every-root-service-diagnostic.json",
+      "git_blob_sha": "daa79eb8a64914cf2d3b20032a723ef2700b8702"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
+      "git_blob_sha": "3400f1b3bb033c6a6b33196c03ed23c81f3bd2e1"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
+      "git_blob_sha": "48bec279fddba41eca29688f736c667f113f1644"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-service-frechet-diagnostic.json",
+      "git_blob_sha": "bb4502416b8d504eea4d2e912eeb0954969dd60d"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-service-operation-audit.json",
+      "git_blob_sha": "4695c5abcbfcd6c042c369b4bfef53738630409d"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
+      "git_blob_sha": "061e8534c4b3015936921bda84738261e0130a12"
+    },
+    {
+      "path": "tests/validation/test_ou3_compatibility_quotient.py",
+      "git_blob_sha": "7bbe63ea08602b1ca3cc7df45781b32902f40400"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_native_secants.py",
+      "git_blob_sha": "beb6ecfdd6b242da1e5ee25b2abae062035dae4a"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_service_verify.py",
+      "git_blob_sha": "241c30dba494543e87da8f309cb3e3fe30d94afc"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/compatibility_quotient.py",
+      "git_blob_sha": "ef3be39ffdfa9340ec673b1350b6709a9ee405af"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_native_secant_probe.cpp",
+      "git_blob_sha": "2522ee7cf410d1f13e8c92d20e1e663f1d6bfeaa"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/planar_native_secants.py",
+      "git_blob_sha": "d8561e6d54397d560f6b1db00e9bebf495a6cc9a"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -835,21 +887,35 @@
     "finite_native_record": "planar-service-stream-diagnostic.json",
     "finite_operation_audit": "planar-service-operation-audit.json",
     "finite_covariance_partial_derivative": "planar-service-frechet-diagnostic.json",
-    "operation_stream_sha256": "ac31f983e09b7f2c8182c24474450dcd20efd31348b47bed7f25b0f32c8b3efc",
+    "operation_stream_sha256": "a1d0baed42d44034e71f9291fd4e4d6d363ddcb1e9db230335ec978562776cf5",
     "untapped_complete_tail_samples_bitwise_equal": true,
     "all_time_magnetic_service_verified": false,
     "source_binding_notes": "Raw private Mahony normalization and literal frontend/tuner chronology are not bound by the old ideal interval replica. Shipping generation is fail-closed; no physical assumptions or shipping files changed."
   },
   "planar_joint_phase_cell_threshold": {
-    "result_type": "FINITE/CONDITIONAL FEASIBILITY THRESHOLD ONLY",
-    "covariance_partial_gain_max": 0.8738212970667966,
+    "result_type": "CONDITIONAL",
+    "covariance_partial_gain_max": 0.8738212970667967,
     "mahony_homogeneous_20s_gain": 0.5827057639270218,
-    "coupling_product_budget": 0.05265364544919034,
-    "symmetric_coupling_norm_budget": 0.22946382165646578,
+    "coupling_product_budget": null,
+    "symmetric_coupling_norm_budget": null,
     "weyl_information_perturbation_budget_to_muM_1": 6.024764605642485,
     "generated_mean_coefficient_couplings_bounded": false,
     "joint_phase_cell_forward_invariant": false,
-    "all_time_magnetic_service_verified": false
+    "all_time_magnetic_service_verified": false,
+    "additive_mahony_charge_retained_separately": true,
+    "carried_physical_2x2_service_floor": 7.024764605642485,
+    "every_placed_window_magnetic_service_verified": false,
+    "gauge_forcing_required": "C_Q alpha, with amplitude from the physical SLOW+FAST constraints",
+    "generated_one_way_coefficient_ranges_all_time_bounded": false,
+    "generated_reverse_feedback_ports_zero": true,
+    "joint_two_block_small_gain_condition": "b_Q*c_Q < (1-rho_P)*(1-rho_Q), with certified linked quotient blocks",
+    "mahony_gain_used_as_mekf_mean_gain": false,
+    "mahony_steps": 4000,
+    "qualification": "OU3_PLANAR_JOINT_PHASE_CELL_THRESHOLD_V1",
+    "remaining_bidirectional_loop": "MEKF mean <-> covariance through state-dependent H and P-dependent K",
+    "required_information_condition": "for each physical +/- 2x2 block, ||I_cell-I_carried||_2 < carried_floor-1",
+    "rho_quotient_uniform": null,
+    "theorem_closed": false
   },
   "planar_generated_port_structure": {
     "result_type": "PROVED analytical source-control-flow theorem",
@@ -858,5 +924,16 @@
     "mekf_mean_or_covariance_to_AW_target_gain": 0,
     "remaining_bidirectional_loop": "MEKF mean <-> P via state-dependent acc/mag H and P-dependent K",
     "all_time_magnetic_service_verified": false
-  }
+  },
+  "planar_quotient_audit": {
+    "all_time_magnetic_service_verified": false,
+    "coupling_and_radius_limits": "endpoint gains are not common-metric containment; finite b_Q is step sensitive and fixed-root ball fails",
+    "native_scope": "existing planar wrapper profile, not distinct AtomS3R device overrides",
+    "native_secants": "planar-native-secants-diagnostic.json",
+    "physical_line_chart": "shipping left world-to-body: theta=Ry(-psi)e_x, ba_y=-g",
+    "quotient": "planar-quotient-mean-diagnostic.json",
+    "result_type": "FINITE DIAGNOSTIC ONLY",
+    "starting_PR_653_head": "4d387d19849aa177e1b84dae5d28a8eb3a80cf40"
+  },
+  "reconciled_pr_head": "323ce41f7c6a5934f27006a7ddb272877ecbe02a"
 }

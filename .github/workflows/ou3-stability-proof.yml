@@ -276,6 +276,7 @@ jobs:
           sudo apt-get install -y clang libeigen3-dev
       - name: Verify analytical algebra and fail-closed bindings
         run: |
+          python3 -m unittest tests.validation.test_ou3_compatibility_quotient tests.validation.test_ou3_planar_native_secants -v
           python3 -m unittest discover -s tests/validation -p 'test_ou3_planar_service_*.py' -v
           python3 -m unittest tests.validation.test_ou3_planar_information_ceilings tests.validation.test_ou3_planar_joint_phase_cell tests.validation.test_ou3_planar_generated_port_structure tests.validation.test_ou3_planar_every_root_service tests.validation.test_ou3_planar_mean_covariance_ports tests.validation.test_ou3_planar_common_norm_radius tests.validation.test_ou3_planar_linked_riccati_mean tests.validation.test_ou3_causal_tuner_interval -v
           python3 -m tools.stability.ou3_theorem.build_evidence
@@ -293,6 +294,8 @@ jobs:
           python3 -m tools.stability.ou3_theorem.planar_common_norm_radius --output /tmp/ou3-planar-radius.json
           python3 -m tools.stability.ou3_theorem.planar_service_mahony_tube > /tmp/ou3-planar-mahony.json
           python3 -m tools.stability.ou3_theorem.planar_joint_phase_cell --frechet /tmp/ou3-planar-frechet.json --mahony /tmp/ou3-planar-mahony.json --service-floor 7.024764605642485 --output /tmp/ou3-planar-joint-threshold.json
+      - name: Compare complete shipping secants at two perturbation sizes without promotion
+        run: python3 -m tools.stability.ou3_theorem.planar_native_secants --cxx clang++ --eigen /usr/include/eigen3 --output /tmp/ou3-planar-native-secants.json
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
@@ -308,5 +311,6 @@ jobs:
             /tmp/ou3-planar-coupled-tangent.json
             /tmp/ou3-planar-parity-mean.json
             /tmp/ou3-planar-quotient-mean.json
+            /tmp/ou3-planar-native-secants.json
           retention-days: 7
           if-no-files-found: error

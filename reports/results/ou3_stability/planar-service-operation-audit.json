@@ -13,6 +13,7 @@
     "6": 8000,
     "7": 8000,
     "8": 9294,
+    "9": 9294,
     "aw_fully_active": 381,
     "aw_pending": 381
   },
@@ -191,6 +192,6 @@
   "scheduler_phase_cell_forward_invariant": false,
   "smallest_covariance_eigenvalue_observed": 1.6741008657809843e-08,
   "smallest_innovation_eigenvalue_observed": 0.040976330637931824,
-  "stream_sha256": "ac31f983e09b7f2c8182c24474450dcd20efd31348b47bed7f25b0f32c8b3efc",
+  "stream_sha256": "a1d0baed42d44034e71f9291fd4e4d6d363ddcb1e9db230335ec978562776cf5",
   "theorem_closed": false
 }

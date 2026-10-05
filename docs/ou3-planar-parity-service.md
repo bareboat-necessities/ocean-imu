@@ -177,3 +177,53 @@ covariance cells are explicitly subordinate blocks/outer sets, not reachable
 shipping trajectories. Numerical spectra and reference oracles are finite
 feasibility diagnostics only. No physical assumption, estimator parameter or
 quality gate has changed.
+
+## Quotient chart, metrics and complete native secants
+
+Status: **FINITE DIAGNOSTIC ONLY** for the numerical word. The physical line is
+fixed before any SVD. For R_bw=Rx(alpha)Ry(psi), the shipping left W->B error has
+dtheta=-Ry(-psi)e_x d(alpha), whereas db_a=g e_y d(alpha). Orienting the line
+with positive roll therefore gives r=(Ry(-psi)e_x,0,...,-g e_y). The positive
+BA-y handoff seed must not be used unchanged in this chart. At the central
+physical family the literal acc and mag rows annihilate this first-order line;
+this does not identify a nonlinear fibre around the finite +/- pair.
+
+For P=L L', whiten by L^-1 and normalize u=L^-1 r/||L^-1 r||. Check uu' and
+I-uu' at the original dimensionless tolerance. This avoids the false absolute
+precision-scale failure in Pi'J-JPi; it does not relax SPD. If U spans u's
+orthogonal complement, T=L_N^-1 M L_0 gives
+M_Q=U_N' T U_0, C_Q=U_N' T u_0, and b_Q=U_N' L_N^-1 b. Retain
+xi_N=M_Q xi_0+b_Q+C_Q alpha_0 and a physical bound on alpha.
+
+On 40000 -> 44000 the F/(I-KH)/G homogeneous product has Euclidean gain 122.66,
+full covariance-metric gain .93478409 and quotient gain .87311969, with
+||C_Q||=.00022901228. The legacy positive-BA seed gives .87160337 and .48225195.
+A 60-digit endpoint check agrees; it does not enclose the rounded product.
+The homogeneous product omits nonlinear dK*r and prediction/injection/reset
+terms, so it is not the complete mean/P Jacobian. The private Mahony gain
+.58270576 is also not a MEKF mean gain; its old .05265365 coupling budget is
+withdrawn.
+
+The new native secant probe forks the complete inherited execution and runs the
+unchanged wrapper for all 21 mean and 231 covariance perturbations, at epsilon
+.01 and .005. Endpoint-metric quotient gains are about .87312274; the b_Q
+secant changes from .00253837 to .00425304, c_Q is about .0585573, and the full
+matrix step-halving difference is .01714895. Float secants are not derivatives
+or uniform bounds. The null fork is bitwise identical and the forcing/clock
+hashes match for these finite runs.
+
+A fixed-root covariance metric changes the comparison materially: rho_P about
+.991 and point drift q_P=.537822 require an optimistic zero-gauge relative
+radius above 60. A two-sided relative SPD ball requires radius below one.
+This **D_SUFFICIENT_BOUND_FAILURE** rejects that candidate representation,
+not the estimator or all possible phase/history-dependent tubes. Both gauge
+injections must be retained where present (native root-metric C_P about .00133,
+C_Q about .00022527). The scalar radius solver never promotes its algebra to
+forward invariance or service. Uniform derivatives, physical gauge amplitude,
+future forcing/center drift, exact S/AW phase coverage and every-window
+Delta I<6.024764605642485 remain OPEN.
+
+The numerical profile above is the existing planar probe configuration of the
+shipping wrapper (sigma_a=.2, adaptive S cadence). The AtomS3R sketch explicitly
+uses sigma_a=.12 and fixed S cadence, as well as its own gravity/magnetic-start
+settings. No transfer of the carried floor to that distinct profile is proved.

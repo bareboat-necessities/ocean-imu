@@ -409,6 +409,28 @@ Loewner monotone, so positive-noise Riccati monotonicity alone is insufficient.
 The old ideal-normalization frontend replica is not a shipping certificate.
 Finite replay diagnostics are not used as theorem premises.
 
+\paragraph{Quotient feasibility does not yet give admission.}
+The homogeneous factor product $F/(I-KH)/G$ on samples $40000\to44000$
+has Euclidean norm $122.66$ but covariance-metric norm $0.93478409$.
+Its physical-line quotient has dimension 20, norm $0.87311969$ and
+$\|C_Q\|=0.00022901228$. These are \emph{FINITE DIAGNOSTIC ONLY};
+the product omits residual-weighted gain and other nonlinear derivatives.
+The physical body-to-world family must be converted to the shipping left
+world-to-body chart: the tangent line is
+$r_\theta=R_y(-\psi)e_x$, $r_{b_a}=-g e_y$, with other coordinates zero.
+The private Mahony gain $0.58270576$ is not a MEKF mean gain.
+
+Complete native wrapper secants, including all 21 mean and 231 covariance
+directions, give similar endpoint-metric quotient gains. Their small
+mean-to-covariance block is sensitive to step halving. In one fixed root
+metric, covariance gain about $0.991$ and point drift $0.537822$ require a
+relative radius above 60 even with optimistic zero gauge forcing; a symmetric
+relative SPD ball requires radius below one. This sufficient-bound failure
+rejects that cell representation, not shipping stability. A moving-center,
+same-history phase cell and uniform nonlinear/arithmetic bounds remain open.
+The tube must retain $C_Q\alpha$ and any covariance gauge forcing; see the
+explicit quotient algebra and scope in Appendix~\ref{sec:planar-quotient-audit}.
+
 \section{Proofs of the structural lemmas}
 This section records the mathematical arguments used by the machine
 certificates.  The certificates check the literal implementation and numerical

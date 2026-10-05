@@ -480,6 +480,81 @@ This structural statement is proved by
 all-time coefficient ranges, the remaining mean--covariance loop, scheduler
 branch containment, or magnetic service.
 
+\subsection{Physical quotient chart and non-promoting word calculation}
+\label{sec:planar-quotient-audit}
+The shipping attitude chart is a left error on world-to-body rotation.
+For $R_{bw}=R_x(\alpha)R_y(\psi)$,
+\[
+ (\partial_\alpha R_{wb})R_{wb}^T=-[R_y(-\psi)e_x]_\times,
+ \qquad \partial_\alpha b_a\big|_{\alpha=0}=g e_y.
+\]
+Thus an oriented first-order compatibility line has
+$r_\theta=R_y(-\psi)e_x$, $r_{b_a}=-g e_y$ and all other coordinates zero.
+Indeed with $R=R_y(-\psi)$, $f=R(a_xe_x-ge_z)$ and $B=75Re_x$,
+$-[f]_\times r_\theta+r_{b_a}=0$ and $-[B]_\times r_\theta=0$.
+This derives the line from physical equations, not singular-vector selection.
+It is a tangent at the central family, not a nonlinear finite-pair fibre
+certificate or a bound on the nominal measurement residual.
+
+For actual SPD endpoint covariances $P_i=L_iL_i^T$, put
+$u_i=L_i^{-1}r_i/\|L_i^{-1}r_i\|$, and let $U_i$ be an orthonormal
+complement. In raw coordinates the precision-orthogonal gauge projector is
+$L_i u_i u_i^T L_i^{-1}=\bar r_i\bar r_i^TP_i^{-1}$, where
+$\bar r_i^TP_i^{-1}\bar r_i=1$.
+For a supplied affine word $e_N=Me_0+b$, direct substitution gives exactly
+\[
+\begin{split}
+ \xi_N&=M_Q\xi_0+b_Q+C_Q\alpha_0,\\
+ M_Q&=U_N^TL_N^{-1}ML_0U_0,\qquad
+ C_Q=U_N^TL_N^{-1}ML_0u_0,\\
+ b_Q&=U_N^TL_N^{-1}b.
+\end{split}
+\]
+Whitened projector checks are dimensionless; an absolute residual in
+$\Pi^TJ-J\Pi$ depends on covariance units and falsely rejected the finite
+native word. The same numerical tolerance is retained in the whitened audit.
+No such floating identity check is an interval theorem.
+
+\textbf{FINITE DIAGNOSTIC ONLY.} On the exported 20-second word the
+homogeneous $F/(I-KH)/G$ product has full metric norm $0.93478409$,
+quotient norm $0.87311969$ and gauge injection $0.00022901228$.
+The unconverted positive-BA seed gives quotient norm $0.87160337$ and
+injection $0.48225195$. A 60-digit endpoint calculation agrees but does not
+enclose the accumulated product. This homogeneous product is not the complete
+nonlinear derivative: $\delta K\,r$, $\delta H$, BG-dependent prediction,
+exact quaternion injection and the $\delta G$ covariance terms are needed.
+The conditional private-Mahony homogeneous gain cannot supply $\rho_Q$.
+
+The native secant calculation instead forks the entire inherited wrapper
+execution and runs all 21 mean and 231 symmetric covariance perturbations
+through the unchanged shipping implementation. It preserves actual nonlinear
+gains, Joseph/reset, projections, frontend and clocks. It reports finite
+central secants of a binary32 program, not a derivative enclosure or reachable
+physical neighbourhood. Step halving changes the matrix norm by $0.01714895$.
+In a fixed root metric, point covariance drift $0.537822$ and gain about
+$0.991$ require candidate radius above 60 even before gauge charge. A relative
+ball $P=P_0+L_0EL_0^T$, $\|E\|_F\le r_P$, has a uniformly positive lower
+face only for $r_P<1$. Hence this proposed sufficient ball fails feasibility.
+
+A valid future comparison must bound the physical gauge amplitude and retain
+both $C_Q\alpha$ and any $C_P\alpha$ covariance forcing. Its charged quantities
+$q_Q,q_P$ then enter
+\[
+ D=(1-\rho_P)(1-\rho_Q)-b_Qc_Q>0,
+ \quad r_P=\frac{(1-\rho_Q)q_P+b_Qq_Q}{D},
+ \quad r_Q=\frac{c_Qq_P+(1-\rho_P)q_Q}{D}.
+\]
+This algebra alone cannot prove inherited entry, prefix/branch/phase coverage,
+a physical gauge bound or uniform information perturbation. The scalar solver
+therefore never certifies admission. Structures preserved: complete state,
+actual $P,K$, source chronology and same-history clocks. Relaxations: supplied
+homogeneous factors, finite off-orbit secants and a rejected relative ball.
+All-time magnetic admission and exclusion remain OPEN.
+The numerical word uses the inherited probe profile ($\sigma_a=.2$, adaptive
+$S$ cadence). The AtomS3R sketch uses $\sigma_a=.12$ and fixed $S$ cadence
+with distinct startup/gravity settings; this finite floor does not transfer
+to that deployment without a separate binding and certificate.
+
 \subsection{Private frontend binding and conditional pitch--integral tube}
 The old interval frontend is not a literal implementation certificate.
 \texttt{Mahony\_AHRS<float>::invSqrt} uses a bit seed and one Newton step,

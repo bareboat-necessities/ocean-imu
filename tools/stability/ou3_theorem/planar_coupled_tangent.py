@@ -1,9 +1,9 @@
-"""Point coupled mean/covariance tangent over the literal planar 20-s word.
+"""Homogeneous factor audit over the literal planar 20-s word.
 
-FINITE DIAGNOSTIC ONLY. This propagates the covariance->mean cross tangent
-through the exact same-operation K(P,H,S), residual and correction chronology.
-Mean->covariance requires dH/dmean and remains explicitly open until that local
-tensor is exported/bound. No point norm is promoted to a uniform cell bound.
+FINITE DIAGNOSTIC ONLY. This does NOT propagate either coupled cross tangent.
+The product F/(I-KH)/G omits dK*r, mean-dependent prediction/measurement
+coefficients and exact quaternion-injection derivatives. No point norm is a
+uniform cell bound or a complete nonlinear mean derivative.
 """
 from __future__ import annotations
 import argparse,json
@@ -11,11 +11,11 @@ from pathlib import Path
 import numpy as np
 from .planar_service_stream import records,expand
 from .planar_service_audit import reset_matrix
+from .planar_compatibility_quotient_mean import SCOPE,word
 
 def diagnostic(path:Path,start=40000,end=44000):
-    # Mean tangent wrt initial mean and a scalar covariance perturbation basis is
-    # represented after the covariance tangent basis is available.  Here we
-    # certify chronology and the homogeneous mean factor product from literal K,H.
+    # Independent strict complete-word/paired-operand audit.
+    checked,_,_=word(path,start,end)
     M=np.eye(21); counts={"prediction":0,"correction":0,"reset":0}; tangent=iter(())
     pending=[]
     for kind,k,a in records(path):
@@ -32,14 +32,16 @@ def diagnostic(path:Path,start=40000,end=44000):
         elif kind==5:
             G=reset_matrix(a[225:228]);M=G@M;counts["reset"]+=1
     if pending:raise ValueError("unconsumed tangent corrections")
+    if not np.array_equal(M,checked):raise ValueError("homogeneous products disagree")
     s=np.linalg.svd(M,compute_uv=False)
     return {"qualification":"OU3_PLANAR_POINT_COUPLED_TANGENT_V1",
       "result_type":"FINITE DIAGNOSTIC ONLY","word_samples":[start,end],
+      "operator_scope":SCOPE,"complete_nonlinear_mean_derivative_computed":False,
       "literal_mean_homogeneous_gain_2norm":float(s[0]),
       "literal_mean_homogeneous_leading_singular_values":s[:8].tolist(),
       "operation_counts":counts,
       "D_Px_point":None,"D_xP_point":None,
-      "missing_for_cross_blocks":"dH/dmean tensor and covariance symmetric-basis tangent at each correction",
+      "missing_for_cross_blocks":"linked dK*r, dH, dF/dBG, dQ/dBG, injection/reset differentials and branch/forcing enclosure",
       "uniform_b":None,"uniform_c":None,"uniform_q_P":None,"uniform_q_x":None,
       "joint_cell_forward_invariant":False,"all_time_magnetic_service_verified":False,
       "theorem_closed":False}

@@ -18,6 +18,10 @@ def status_report() -> dict:
         "planar_literal_frontend_interval_binding":False,
         "planar_private_Mahony_tube_source_bound":False,
         "planar_joint_mean_covariance_tuner_clock_cell":False,
+        "planar_complete_nonlinear_derivative_certified":False,
+        "planar_uniform_quotient_covariance_cross_gains":False,
+        "planar_uniform_physical_gauge_amplitude_bound":False,
+        "planar_all_future_service_information_perturbation":False,
         "ideal_frontend_reference_recursions_available":True,
         "planar_moving_full_shipping_counterexample_admitted":False,
         "two_timescale_accel_and_gyro_contract_formulation":True,
@@ -376,7 +380,8 @@ def status_report() -> dict:
             "twenty_second_point_poincare_invalid_due_scheduler_phase":True,
             "scheduler_phase_coordinate_invariant":True,
             "oracle_rational_service_margin":True,
-            "paired_correction_storage_invariant":True,
+            "paired_correction_storage_invariant":False,
+            "paired_correction_storage_loss_identity":True,
             "paired_prediction_loss_identity":True,
             "planar_anisotropic_root_factors":True,
             "matrix_lower_factor_correction_transport":True,
@@ -384,13 +389,18 @@ def status_report() -> dict:
             "scheduler_phase_augmented_invariant_cell":False,
             "all_time_actual_magnetic_service_for_planar_pair":False,
             "finite_replay_is_all_time_certificate":False,
+            "finite_homogeneous_quotient_diagnostic":"planar-quotient-mean-diagnostic.json",
+            "finite_complete_native_secants":"planar-native-secants-diagnostic.json",
+            "homogeneous_factor_product_is_complete_nonlinear_derivative":False,
+            "private_Mahony_gain_is_complete_mean_gain":False,
+            "scalar_radius_solver_can_certify_admission":False,
             "homogeneous_kernel_results_imply_physical_identifiability":False,
             "physical_bias_OU_mismatch_retained":True,
             "shipping_instability_claimed":False,
             "extra_physical_assumptions_adopted":False,
         },
         "next_controlling_obligation":(
-            "Prove forcing-aware quiet-compatible boundedness using the exact constant-record fibre and persistent source charges. "
+            "First settle all-time actual MAGNETIC SERVICE for the exact planar MOVING pair. "
             "The exact planar MOVING pair satisfies current 30-s span and SLOW+FAST limits with constant bias and identical sensor records; "
             "the proposed two-epoch span/bias separation has an exact zero direction. "
             "The ideal mean execution and covariance admit an exact 12+9 parity factorization. A 20-s point return is invalid because the progress-preserving S scheduler phase does not return; the invariant cell must carry that phase. "
@@ -398,6 +408,7 @@ def status_report() -> dict:
             "a fully admitted MOVING obstruction or asserting absolute inner entry from the existing assumptions. "
             "The fresh 240/1200-s replays and final-cycle all-IMU-root service sweep are non-promoting finite evidence; the tail sweep remains above 7 but is not an interval/all-time certificate. "
             "Keep construction/H18/refinement/release, the full persistent HistoryCell, coupled tuner, actual covariance/gains and BA physical forcing. "
+            "Finite quotient contraction and full native central secants do not enclose the nonlinear derivative or future forcing. Retain C_Q alpha and any covariance gauge forcing. A fixed-root relative covariance ball fails finite feasibility: drift .537822 with covariance gain about .991 requires radius above 60. Use linked phase/history-dependent centers, not another smaller finite-difference step or independent generated boxes. "
             "Homogeneous kernel/action results and completed-square algebra remain valid but do not identify the physical tilt/BA decomposition. "
             "All-time device qualification, nonlinear/prefix retention, float32 transfer and regime composition remain OPEN."
         ),

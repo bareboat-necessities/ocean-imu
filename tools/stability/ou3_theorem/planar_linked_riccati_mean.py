@@ -1,9 +1,10 @@
 """Exact local differential identities for the remaining mean<->covariance port.
 
 For C(P,H)=P-PH'(HPH'+R)^-1HP, differentiate without independent extrema.
-For the mean correction x+=K r, K=PH'S^-1, retain dK and dr=-dH*x_model
-through the same local operands.  These identities are the tangent recurrence
-used by the literal 20-s port-word exporter.
+For the additive mean correction x+=K r, K=PH'S^-1, retain dK and dr=-dh(x)
+through the same literal measurement model (not dr=-dH*x). Quaternion injection
+and covariance reset have additional linked differentials. The exporter records
+the operands; it does not yet implement the complete nonlinear recurrence.
 """
 from __future__ import annotations
 

@@ -2,227 +2,195 @@
 
 ## Current hypothesis
 
-The controlling objective is **all-time actually-applied MAGNETIC SERVICE for
-the exact planar MOVING sensor-compatible pair**. Admission and exclusion are
-both OPEN. Do not return to scalar-span bias separation or generic A21 entry
-before resolving this question. Base inspected: main
-`59959d1bf33a3c5f4f70331104546a6486468df6` (newer than PR #651).
+**OPEN:** settle all-time actually applied MAGNETIC SERVICE for the exact planar
+MOVING sensor-compatible pair. Admission and exclusion remain open. Do not return
+to generic A21 entry or the refuted gravity-span/BA-separation argument.
 
-The theorem remains unclosed: `theorem_closed=false`,
-`regional_practical_stability_claimed=false`, `certified_capture_time=null`.
-The manifest now has **25 PROVED, 4 CONDITIONAL, 1 OPEN**; the two new proved
-items are local admission-cell algebra and planar guard inactivity in real
-arithmetic. Neither is an all-time service certificate. Conditional obligations
-remain `joint_kernel`, `physical_nominal_bridge`, `h18_release`, `compact_outer`.
-The qualified local real-arithmetic result at sqrt(V)<=0.15 is retained, not
-outer capture. Literal construction/capture/H18/refinement/release/A21 chronology
-and physical S are inherited throughout.
+Verified starting main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
+Verified PR #653 starting HEAD: `4d387d19849aa177e1b84dae5d28a8eb3a80cf40`.
+The generated-validation update at
+`323ce41f7c6a5934f27006a7ddb272877ecbe02a` is retained; it changes no shipping
+or proof source. Main remains at the verified SHA above.
+The initial `ou3-stability-proof` run 37264050881 failed in
+`planar-service-cell` job 111617009894 at the quotient projector identity check;
+native export, source verification, untapped control and every-root sweep passed.
+
+Manifest counts remain **25 PROVED, 4 CONDITIONAL, 1 OPEN**. No result in this
+continuation promotes a lemma or closes the regional theorem. The retained
+qualified local radius is sqrt(V)<=0.15. Construction, capture, H18,
+refinement/release, A21 and physical S are inherited without restarting them.
 
 ## Evidence
 
-**PROVED analytical / exact rational checks.** The planar pair has the same
-complete sensor record for all time, with current MARINE/SLOW+FAST bounds and
-constant tilt-induced BA difference. The same-prefix metric comparison is
-max(V_plus,V_minus)>=1600(g sin(theta))^2>15.38649 on the specified SPD default
-BA branch. It does not establish all-time magnetic admission.
+**PROVED analytical theorem:** the exact MOVING pair shares the complete
+sensor record while max(V+,V-)>=1600(g sin(theta))^2>15.38649. MARINE and
+SLOW+FAST membership are retained; all-time magnetic admission is not proved.
+The 12+9 parity, linked local Riccati/S-shift algebra, nonexpansive fixed-target
+AW floor in Frobenius norm, and real-arithmetic guard inactivity remain valid.
+AW-floor synchronization is not Loewner monotone. Every correction consumes
+paired probe storage. Shipping reset is I+(1/2)[dtheta]x.
 
-The exact covariance parity remains 12+9. Service is reconstructed for the two
-physical 2x2 +/- probes: after the orthogonal sum/difference transform each is
-(I_E+I_O)/2, not min(lambda_min(I_E),lambda_min(I_O)). Actual acc and S updates
-consume paired probe storage just as magnetic updates do.
+**PROVED analytical theorem:** the default Complementary tuner, S-period and
+AW-target ports have zero reverse derivative from the MEKF mean/P. They remain
+one-way forcing from the SAME history. The internal mean/P coupling persists.
 
-`planar_service_cell.py` proves the same-P linked local prediction/S resolvent
-identity, rank <=4/even and <=2/odd, and the fixed-target Frobenius
-nonexpansiveness of the literal additive AW floor. AW synchronization is **not
-Loewner monotone**. Actual reset is I+(1/2)[dtheta]x. Fixed-coefficient covariance
-partial derivatives retain prediction, Joseph, reset and every active AW
-marginal replacement; generated-mean/coefficient derivatives are separate open
-ports. These identities enter the invariant admission cell, not a substitute
-outer-tail theorem.
+**FINITE DIAGNOSTIC ONLY:** the source-bound 240-s native export and untapped
+control agree bitwise on every exported sample. The exhaustive one-second
+sweep covers 7800 complete IMU roots, with minimum physical +/- 2x2 information
+7.027301810736887 at sample 40008 (25 applied mag corrections). The conservative
+carried floor 7.024764605642485 leaves the unchanged Weyl budget
+6.024764605642485. No callback count substitutes for this information action.
 
-`planar_service_guard.py` proves all-time inactivity of the seeded default guard
-for this exact source in real arithmetic: detector RMS <=0.000530491526<0.03.
-It retains both detector stages, per-axis EW squares, slew and rail parking.
-Float32 transfer remains open.
+The fixed-coefficient covariance partial gains on 40000 -> 44000 remain
+0.7426143368769409 (even) and 0.8738212970667966 (odd), in different endpoint
+metrics. The 4647 same-operation taps preserve P,H,S,K,r,x.
 
-**FINITE DIAGNOSTIC ONLY.** A fresh 240-s full shipping replay gives minimum
-actual transported/innovation-whitened one-second magnetic information
-7.024764605642485, 3756 accepted magnetic updates and 102 disjoint service words.
-The inherited final-20-s sweep checked 4001 sample roots with minimum
-7.0275431864. Neither sweep covers all future histories/phases.
+**FINITE DIAGNOSTIC ONLY:** the homogeneous factor product F/(I-KH)/G has
+Euclidean norm 122.65988565385788 (even 29.84981, odd 122.65989), but covariance
+metric norm 0.93478409. This product is NOT the complete nonlinear mean
+Jacobian: it omits dK*r, mean-dependent prediction/measurement coefficients and
+exact injection/reset differentials. Euclidean expansion is a metric mismatch
+for this word, not an instability theorem.
 
-The new `planar_service_stream.py` exporter uses the true pre-prediction P and
-literal F/Q/R_S, every correction H/R/innovation/K/PCt/residual, pre/post reset,
-AW target/pending operation, and sample means/covariances/tuner outputs. An
-untapped control matches every complete tail sample bit-for-bit. The 200--240-s
-word has 8000 predictions/acc corrections, 1000 mag corrections, 294 S events,
-and 381 pending AW synchronizations. Parity cross-blocks are exactly zero in
-that replay. All 381 AW faces are active; observed target-minus-prior AW
-minimum eigenvalue is 0.0008455758. This is not a uniform active-face certificate.
+The physical seed must be expressed in the shipping left world-to-body chart:
+r_theta=Ry(-psi)e_x, r_ba=-g e_y. At phase zero this is theta_x=1, ba_y=-g.
+The positive-BA seed uses the wrong relative sign in that chart. The chart
+conversion follows dR_wb R_wb'=-[Ry(-psi)e_x] d(alpha), db_a=g e_y d(alpha),
+and the literal accelerometer/magnetic rows annihilate the converted tangent
+at the central physical family. This first-order statement is not a nonlinear
+fibre certificate for the finite +/- pair.
 
-The corrected local S/prediction defects have maximum relative norms
-0.0008993008/even and 0.0016318965/odd. Linked one-percent-cell formula evaluations
-are 0.0016300211 and 0.0025795765. These floating local bounds are not complete
-scheduler-word or outward-rounded bounds.
+The 20-dimensional homogeneous quotient has gain 0.8731196877 and
+||C_Q||=0.000229012279. A 60-digit endpoint calculation agrees, but does not
+enclose the accumulated floating product. The original positive-BA seed is
+also reported: gain 0.8716033706, injection 0.4822519465. No SVD direction is
+removed. The complete transverse relation retains M_Q xi+b_Q+C_Q alpha.
 
-Whole 200--220-s covariance partial-derivative gains are 0.7426143369 and
-0.8738212971 in the actual, different root/end covariance metrics, with all
-AW derivatives retained. This is promising fixed-coefficient feasibility, not
-a full joint derivative, periodic return or invariant-cell certificate.
+**FINITE DIAGNOSTIC ONLY:** `planar_native_secants.py` forks the entire reached
+shipping wrapper at sample 40000, perturbs 21 mean and 231 full symmetric-P
+directions, and continues to 44000. It uses the unchanged shipping source,
+not a factor surrogate. A null fork matches the parent bitwise. Generated
+forcing/clock hashes and applied-mag cadence agree across every finite
+perturbation. Neighbourhood points are NOT asserted reachable physical states.
 
-**CONDITIONAL exact calculation.** `planar_service_mahony_tube.py` uses
-z=(pitch error,10*integralFBy), G=[[10,-5],[-5,15]], effective feedback in
-[.49,.51], and radius .006. Exact endpoint LDL checks give squared decrement
-.00027; proposed forcing caps give charge 7841/12000000000, below radial margin
-.00000081. Literal initialization and every-step float residual caps are not
-bound yet. Raw quaternion norm is not assumed one.
+| Endpoint-metric quantity | epsilon=.01 | epsilon=.005 |
+|---|---:|---:|
+| Quotient mean secant | 0.873122742 | 0.873122741 |
+| Coupled covariance secant | 0.873205859 | 0.872806673 |
+| Mean-to-P secant b_Q | 0.002538366 | 0.004253037 |
+| P-to-quotient secant c_Q | 0.058557406 | 0.058557186 |
+| Comparison determinant | 0.015938653 | 0.015888895 |
 
-## Joint phase-cell threshold calculation
-
-A new fail-closed comparison calculation converts the existing literal 20-s
-covariance partial derivative and exact conditional private-Mahony decrement
-into a quantitative coupling target.  The worst parity covariance gain is
-0.8738212970667966.  Ignoring additive charge only for the homogeneous
-comparison, the exact .00027 one-step squared-norm decrement over 4000 samples
-gives a 20-s Mahony homogeneous gain 0.582705763926933.  Thus a normalized
-nonnegative two-block comparison [[a,b],[c,d]] is contractive whenever
-
-    b*c < (1-a)(1-d) = 0.05265364544920159.
-
-For symmetric coupling this is ||coupling|| < 0.22946382165649032.  This is a
-FEASIBILITY THRESHOLD, not a bound on the generated mean/tuner coupling; those
-ports are still open and the additive Mahony charge is retained separately in
-the radius calculation.
-
-The same calculation exposes the exact service perturbation budget.  Starting
-from the carried physical +/- 2x2 floor 7.024764605642485 and mu_M=1, Weyl's
-inequality leaves spectral-norm budget 6.024764605642485 for the complete
-joint-cell information perturbation in each physical 2x2 block.  Therefore the
-remaining every-placed-window proof does not need to reproduce the carried
-floor tightly: it needs a same-history outward cell plus
-||I_cell-I_carried||_2 < 6.024764605642485 uniformly.  Neither inequality is
-promoted because generated coefficient couplings, continuous/root placement,
-and forward containment are not yet certified.  See
-planar_joint_phase_cell.py and planar-joint-phase-cell-threshold.json.
-
-## Generated-port feedback reduction
-
-The deployed default period/tuner path is now source-proved measurement-only.
-The literal chronology gives exactly zero MEKF-mean/covariance -> tuner gain,
-zero MEKF -> S-period gain, and zero MEKF -> AW-target gain.  Tuner/clocks are
-therefore one-way same-history forcing into P, not the missing reverse side of
-the small-gain loop.  This promotes one structural lemma only; it does not
-bound their all-time ranges.  The remaining bidirectional joint-cell loop is
-MEKF mean <-> covariance through P-dependent K and mean-dependent accelerometer
-and magnetic Jacobians.  The manifest is now 25 PROVED / 4 CONDITIONAL / 1 OPEN.
+These are secants of the binary32 program, not rigorous derivatives. The matrix
+changes by 0.017148952 in spectral norm under step halving. Do not promote b_Q
+or repeat smaller steps as a substitute for source differential/arithmetic bounds.
 
 ## Current limiter
 
-The joint mean/covariance/frontend/tuner/clock cell is NOT constructed or proved
-forward invariant. A 20-s source period is not an S or AW clock return. The cell
-must include the planar mean, P_even/P_odd, private **raw** Mahony quaternion and
-integral, guard, frequency/variance/period, staged/applied joint tuner tuple,
-S elapsed, AW clock and pending target, and reference/refinement/gate state.
-A tuple of independent observed marginal intervals is not a reachable family.
+A single fixed-root metric gives rho_P about .991, rho_Q about .82634,
+q_P(point drift)=.5378221032 and q_Q(point drift)=.0059057319. Even optimistic
+zero-gauge forcing gives candidate r_P>60, outside the relative SPD-ball domain
+r_P<1. This is a **D_SUFFICIENT_BOUND_FAILURE** of the fixed-root ball, not
+an admitted counterexample. Endpoint metric contraction alone does not repair it.
+A linked phase/history-dependent covariance center or anisotropic cell is needed.
 
-The inherited interval frontend was not source faithful: exact instead of fast
-float inverse square root, omitted gravity subtraction, missing literal tilt
-seeding/readiness, incorrect period/tuner ordering and unbound constants/clocks.
-`planar_service_frontend_binding.py` gives an exact binary32 counterexample to
-unit norm after normalization. The reference HistoryCell entry now fails closed
-as **E_IMPLEMENTATION_FAILURE**, not a D subdivision failure. The old reference
-recurrences remain available only as explicitly selected reference diagnostics.
-The pre-normalization quaternion identity itself is unaffected.
+There are still no uniform linked b_Q,c_Q,q_P,q_Q, physical gauge-amplitude
+bound, complete literal frontend/clock cell, nonlinear remainder enclosure,
+every-prefix retention certificate or all-future information perturbation bound.
+The native secants also expose gauge-to-P forcing (~.00133 in the common root
+metric), which must enter q_P unless a justified structural argument removes it.
+C_Q alpha remains in q_Q. A finite affine drift is not a future forcing bound.
+
+The carried planar probe is a specified shipping-wrapper configuration: sigma_a=.2
+and tau-scaled S cadence enabled. The AtomS3R sketch instead configures sigma_a=.12,
+fixed S cadence, zero magnetic delay, magnetic norm gate 5 and local calibrated
+gravity. The existing 7.0273 floor does not certify that distinct deployment
+profile. No profile/physical constant is silently changed in this continuation.
+
+The old ideal interval frontend is not shipping-bound (fast inverse square
+root, gravity subtraction, seeding/readiness, period/tuner order and clocks).
+Its shipping entry remains fail-closed. The conditional private-Mahony tube is
+not a MEKF mean/quotient contraction constant.
 
 ## Failed approaches / DEAD_ENDS
 
-* **E:** unpopulated prior-covariance tap made the old S-shift field zero, with
-  hard-coded rather than actual R_S. Retired field is not evidence; use the new
-  operation stream and linked shift audit.
-* **E:** P<=Pupper does not imply ||PH'||<=||Pupper H'||. Exact SPD counterexample
-  gives D11=500/3 against the old bound 1/20. Fixed with PSD block Cauchy and the
-  linked rank factorization. This is not a physical counterexample.
-* **E:** the orientation-free rank-three accelerometer outer product has false
-  null directions. Use actual exported rows; its optional generic majorant is
-  now an explicitly relaxed block-diagonal Young bound. S noise floors include
-  the literal (.72,.50,1) axis factors.
-* **E:** paired covariance/probe equality without measurement loss, an AW
-  Loewner-monotonicity assumption, and an exact-normalization frontend replica
-  are invalid. Corrected/scoped in code, status, manuscript and parity note.
-* **D:** products of local relative-Frobenius AW norms lose whole-word
-  cancellation. Per-AW odd log-product was 77.7623; one grouping refinement over
-  complete between-sync words still gave 38.3687. Do not repeat this norm-product
-  tactic; use the complete operator and preserve cross-blocks.
-* **D:** generic-root scalar and anisotropic prediction-only product lower
-  factors (3.759e-16 and 1.859e-13) cannot establish the service floor and omit
-  intervening nonmagnetic losses if multiplied by a replay floor. Retired.
-* **D:** scalar completed-square relaxation exceeded the absolute local-entry
-  budget by more than six orders of magnitude. It is not shipping instability.
-* The two-/three-epoch or longer-window physical BA separation mechanism is
-  refuted by the exact constant-difference MOVING record. No interval sharpening
-  repairs it. Do not remove physical BA forcing or strengthen excitation.
-
-No genuine admitted shipping counterexample (A) has been established. The
-absolute-entry impossibility remains conditional on full MOVING admission;
-quiet absolute-entry obstruction is already retained independently.
+* **E:** absolute ||Pi'J-JPi||<=2e-10 rejected the native root at about
+  2.00557e-10 while ||J|| was about 1e8. Dimensionless Cholesky-whitened projector
+  checks retain the same tolerance and reject invalid metrics. This repairs
+  tooling, without weakening a proof condition.
+* **E:** the positive roll/BA seed was not converted to the shipping attitude
+  chart. Both old and corrected diagnostics are retained explicitly.
+* **E:** calling F/(I-KH)/G the complete nonlinear mean tangent, or using private
+  Mahony gain .582705764 as rho_mean, was invalid. The .052653645 coupling budget
+  is withdrawn. Finite secants implement the next literal feasibility object.
+* **E:** scalar radius algebra formerly set forward-invariance/service flags
+  true. It now reports candidate algebra only, requires explicit gauge charges,
+  and never certifies admission from scalars. Negative/nonfinite inputs fail.
+* **E numerical limitation:** one native secant calculation plus its step-halving
+  refinement did not stabilize the small b_Q block. Retain all observed operands;
+  next use linked source derivatives with arithmetic charges, not smaller steps.
+* **E infrastructure:** local manuscript rendering stops at missing
+  `IEEEtran.cls`; this does not invalidate the mathematics. Dependency installation
+  via `apt-get update` is unavailable because `setgroups`/`seteuid` is denied.
+  The existing manuscript CI is the remaining rendering gate.
+* **D:** the fixed-root relative covariance ball needs r_P>60 even before gauge
+  forcing. Reject this representation; no interval subdivision is justified.
+* **D:** local AW norm products lost complete-word cancellation (odd log-products
+  77.7623, then 38.3687 after grouping). Do not repeat this tactic.
+* **E:** AW Loewner monotonicity, loss-free paired corrections, the old
+  orientation-free accelerometer ceiling and P<=Pupper => ||PH'||<=||Pupper H'||
+  are false. Corrected linked algebra remains.
+* Exact two-/three-epoch physical BA separation is refuted by the MOVING pair.
+  No stronger excitation premise or removal of physical forcing is authorized.
 
 ## Retained facts
 
-Preserve all manifest-proved operation/kernel/source lemmas, the full 21-state
-implementation, literal covariance/gains/Joseph/reset/AW sync, BA/BG projection,
-Mahony/reference acquisition, guard, frequency/variance, joint tuning and
-progress-preserving S scheduling. Physical S is never reset by S=0 corrections.
-The four conditional bridges have not been promoted. Quiet compatible-tube
-boundedness, H18 release completion, quotient source-uniform action/supply,
-every-prefix retention, nonlinear remainder, float32 and regime composition
-remain open as recorded in the manifest/status.
+All shipping source, tuning, constants, assumptions and gates are unchanged.
+Retain complete 21-state covariance/mean, actual K/Joseph/reset, BA/BG forcing
+and projection, literal OU, acc/mag/S corrections, raw Mahony, vibration guard,
+frequency/variance, joint adaptation, AW synchronization, magnetic acquisition
+and both same-history clocks. Physical S is never reset by estimator S=0.
+No genuine admitted shipping counterexample has been established.
 
 ## Alternatives
 
-If all-time admission closes, the surviving physical gauge must remain in the
-covariance-metric compatibility quotient/tube, with explicit gauge-to-transverse
-C_Q alpha forcing. If literal service instead fails, prove that failure on the
-same history before excluding the pair. Neither branch is selected yet.
+An all-time admitted pair forces a measurement-compatible quotient/tube theorem,
+not universal absolute physical-state entry. A rigorous failure of actual
+MAGNETIC SERVICE could exclude the pair; none has been proved. STILL retains
+compatible-tube boundedness with the existing centered SLOW+FAST source charges.
 
 ## Next falsifiable experiment
 
-Bind the conditional raw-Mahony pitch/integral cell and complete literal tuner
-and clocks; do not use the retired ideal frontend output. Complete the joint
-mean/coefficient sensitivity around the exported parity covariance operator,
-including S-placement switches, AW active-face/target changes and reset effects.
-Form an outward-rounded **joint** source/clock-phase cell and check containment
-and every-prefix gates. Then sweep every placed one-second physical +/- service
-root and prove its 2x2 floor exceeds one. A failure remains D unless it supplies
-a fully admitted violating execution; no generic A21 detour is authorized.
+Use a linked moving covariance center with exact inherited S/AW phases. Bind
+all nonlinear correction and prediction differentials to the literal program,
+including dK*r, dH, BG dependence, reset, projection and AW faces; retain the
+one-way frontend forcing rather than a false small-gain return edge. Before any
+outward subdivision, show quantitative common-storage radius feasibility with
+physical gauge forcing and future-center drift. Then enclose the cell and
+propagate every placed physical +/- 2x2 one-second information probe, requiring
+Delta I_max<6.024764605642485 at every future word/root. Until then admission,
+exclusion and regional theorem selection remain OPEN.
 
 ## Verification scope
 
-The source-pinned local OU-III suite passed all 691 tests. The regenerated
-manifest/status/provenance validator passes with theorem_closed=false. The
-240-s native export passed an untapped-control, bit-for-bit comparison of every
-recorded tail sample and terminal state; the operation audit and covariance
-partial-derivative verifier pass without theorem promotion. The authoritative
-LaTeX study and appendix compile together with no overfull boxes.
-
-The retired ideal frontend now causes the release and physical-subdivision
-entry points to return an explicit E_IMPLEMENTATION_FAILURE, rather than
-claiming a shipping HistoryCell. This is a deliberate fail-closed model-binding
-check, not a proof of physical failure. The first local `make all` attempt failed
-at missing Eigen headers. A retry uses the separately retrieved Eigen include
-tree without changing repository build flags; the broad build is not counted as
-a pass here. CI and broad-build completion are reported separately in PR status.
+All 708 `test_ou3*.py` tests pass locally. Source-bound native verification,
+operation audit, every-root sweep and provenance validation pass. The full
+native secant calculation and its one step-halving refinement completed with
+inherited state and finite controls. `make all` is running with the installed
+Eigen include path; the new native probe already compiles and runs. Local
+`latexmk -pdf -interaction=nonstopmode -halt-on-error` cannot render the study
+until `IEEEtran.cls` is available. None of these checks promotes a theorem.
 
 ## Shipping-faithfulness handoff
 
-1. Preserved: all shipping source files, constants, assumptions and quality
-   gates; literal 21-state execution and inherited physical/filter history.
-2. Relaxations: declared local covariance cells, fixed-coefficient covariance
-   partial derivative, and a conditional frontend perturbation tube. None is
-   promoted to a reachable shipping family.
-3. Failures: E proof-model/instrumentation/inequality errors and D norm-product
-   failures above; native network/source-access limitations are infrastructure E.
-4. Admitted counterexample: none. MOVING admission/exclusion still OPEN.
-5. Retained: qualified local theorem, exact pair/source/metric results and
-   manifest-proved lemmas. Two new component lemmas do not close the theorem.
-6. Next: actual joint causal phase-cell containment and physical 2x2 service
-   floor, retaining mean, raw Mahony, both clocks, AW sync and every correction.
+1. Preserved: the literal shipping program, full state/P/K and complete inherited
+   construction-to-A21 history; no constants, assumptions or gates changed.
+2. Relaxations: homogeneous partial factors, finite neighbourhood secants and
+   one candidate relative ball, each explicitly non-promoting.
+3. Failures: E projector/chart/scope/promotion bugs and finite-difference
+   conditioning; D fixed-root-ball and earlier norm-product failures.
+4. Admitted counterexample: none; all-time MOVING admission/exclusion OPEN.
+5. Retained: existing 25 proved lemmas, qualified local theorem, exact physical
+   pair and pair-error lower bound; no PROVED count increment.
+6. Next: linked moving-center, quotient/P/physical-gauge/clock containment and
+   every-future-window physical magnetic information; no generic A21 detour.

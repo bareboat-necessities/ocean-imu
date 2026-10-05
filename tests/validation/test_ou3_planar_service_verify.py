@@ -28,6 +28,11 @@ class PlanarServiceVerifyTests(unittest.TestCase):
         a,b,c=self.data();c['stream_sha256']='0'*64
         with self.assertRaises(ValueError):verify(a,b,c)
 
+    def test_tangent_free_reports_cannot_bypass_source_binding(self):
+        a,b,c=self.data();a['record_counts'].pop('9',None)
+        a['driver_sha256']='0'*64
+        with self.assertRaises(ValueError):verify(a,b,c)
+
     def test_rejects_nan_gain_and_missing_reset(self):
         a,b,c=self.data();c['parity_blocks']['odd']['relative_Frobenius_gain']=float('nan')
         with self.assertRaises(ValueError):verify(a,b,c)

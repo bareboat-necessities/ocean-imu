@@ -1,8 +1,8 @@
 """Fail-closed joint phase-cell feasibility thresholds.
 
 This calculation does not certify the joint cell.  It converts the measured
-fixed-coefficient covariance contraction and the exact conditional Mahony
-quadratic decrement into explicit coupling budgets, and converts the carried
+fixed-coefficient covariance contraction into a reported point quantity.
+The private Mahony decrement is reported separately and supplies no MEKF budget, and converts the carried
 physical 2x2 magnetic floor into the exact Weyl perturbation budget that a
 source-uniform joint cell must beat.
 
@@ -29,20 +29,24 @@ def calculate(frechet: dict, mahony: dict, service_floor: float) -> dict:
     d=math.exp(0.5*steps*math.log1p(-float(delta)))
     # For nonnegative comparison matrix [[a,b],[c,d]], rho<1 iff
     # a<1,d<1 and b*c < (1-a)(1-d).
-    coupling_product_budget=(1.0-a)*(1.0-d)
+    # d is a PRIVATE MAHONY gain, not the MEKF mean or quotient gain.
+    coupling_product_budget=None
     service_weyl_budget=float(service_floor)-1.0
-    if not (0<a<1 and 0<d<1 and coupling_product_budget>0 and service_weyl_budget>0):
+    if not (0<a<1 and 0<d<1 and service_weyl_budget>0):
         raise ValueError("feasibility margin is not positive")
     return {
       "qualification":"OU3_PLANAR_JOINT_PHASE_CELL_THRESHOLD_V1",
-      "result_type":"FINITE/CONDITIONAL FEASIBILITY THRESHOLD ONLY",
+      "result_type":"CONDITIONAL",
       "covariance_partial_gain_max":a,
       "mahony_homogeneous_20s_gain":d,
       "mahony_steps":steps,
       "joint_two_block_small_gain_condition":
-        "b*c < (1-a)*(1-d), in one common normalized comparison norm",
+        "b_Q*c_Q < (1-rho_P)*(1-rho_Q), with certified linked quotient blocks",
       "coupling_product_budget":coupling_product_budget,
-      "symmetric_coupling_norm_budget":math.sqrt(coupling_product_budget),
+      "symmetric_coupling_norm_budget":None,
+      "rho_quotient_uniform":None,
+      "mahony_gain_used_as_mekf_mean_gain":False,
+      "gauge_forcing_required":"C_Q alpha, with amplitude from the physical SLOW+FAST constraints",
       "carried_physical_2x2_service_floor":float(service_floor),
       "weyl_information_perturbation_budget_to_muM_1":service_weyl_budget,
       "required_information_condition":

@@ -115,6 +115,19 @@ def validate() -> dict:
             "planar-service-frechet-diagnostic.json")))
     except (OSError, ValueError, KeyError, TypeError) as error:
         failures.append("finite planar evidence verification failed: "+str(error))
+    from tools.stability.ou3_theorem.planar_native_secants import verify_report as verify_native_secants
+    try:
+        verify_native_secants(json.loads((STATUS.parent/"planar-native-secants-diagnostic.json").read_text()))
+        quotient=json.loads((STATUS.parent/"planar-quotient-mean-diagnostic.json").read_text())
+        if quotient.get("result_type")!="FINITE DIAGNOSTIC ONLY" or quotient.get("quotient_dimension")!=20:
+            raise ValueError("invalid finite physical quotient diagnostic")
+        if quotient.get("stream_sha256")!=json.loads((STATUS.parent/"planar-service-stream-diagnostic.json").read_text())["stream_sha256"]:
+            raise ValueError("quotient and native word are not linked")
+        for key in ("complete_nonlinear_mean_derivative_computed","source_uniform_quotient_action_certified",
+                    "joint_cell_forward_invariant","all_time_magnetic_service_verified","theorem_closed"):
+            if quotient.get(key) is not False:raise ValueError("finite quotient promotion: "+key)
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        failures.append("finite quotient/secant evidence verification failed: "+str(error))
     from tools.stability.ou3_theorem.construction_history_diagnostic import driver_source, zero_true_bias_storage_audit
     construction=json.loads((STATUS.parent/"construction-history-feasibility.json").read_text())
     if construction.get("generated_driver_sha256") != hashlib.sha256(driver_source().encode()).hexdigest():
