@@ -648,11 +648,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_service_probe.cpp",
-      "git_blob_sha": "24dfeebf4de47fe087d29cb6be9591fce0931fa4"
+      "git_blob_sha": "2c66a199bfea5748070ab85d7aac4646c48f293f"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_service_stream.py",
-      "git_blob_sha": "c00be7ff60f24e30fe3094ed4a18699de555776a"
+      "git_blob_sha": "d53e5d7c2e7eed1ae2f76ec177592e920e4f6ab7"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_service_verify.py",
@@ -788,7 +788,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_linked_port_word.py",
-      "git_blob_sha": "9e673cd2fd27233ddb2f8f0e5b793befb9673a1c"
+      "git_blob_sha": "253ca3663e56ac5ea2c3d952823113a96b0aca9c"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_linked_riccati_mean.py",
@@ -797,6 +797,10 @@
     {
       "path": "tests/validation/test_ou3_planar_linked_riccati_mean.py",
       "git_blob_sha": "e34f53e9489baefc750084b254d78c0fd941a93c"
+    },
+    {
+      "path": "tests/validation/test_ou3_planar_service_stream.py",
+      "git_blob_sha": "112c1869993dafca0a1575f2803e559da36becc8"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
