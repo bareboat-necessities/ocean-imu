@@ -10,18 +10,34 @@ import argparse,json
 from pathlib import Path
 from .planar_service_frechet import frechet
 from .planar_service_audit import audit
+from .planar_service_stream import records,expand
+import numpy as np
 
 def calculate(stream:Path):
  f=frechet(stream); a=audit(stream)
  rho=max(v["relative_Frobenius_gain"] for v in f["parity_blocks"].values())
+ tangents=[]
+ for kind,k,z in records(stream):
+  if kind==9 and f["root_sample"] < k <= f["end_sample"]:
+   P=expand(z[:225]);H=z[225:288].reshape(3,21);S=z[288:297].reshape(3,3)
+   K=z[297:360].reshape(21,3);res=z[360:363];x=z[363:384]
+   # Exact point norms of the operands entering the linked differential.
+   tangents.append({"sample":k,"P_norm":float(np.linalg.norm(P,2)),
+     "H_norm":float(np.linalg.norm(H,2)),"Sinv_norm":float(np.linalg.norm(np.linalg.inv(S),2)),
+     "K_norm":float(np.linalg.norm(K,2)),"residual_norm":float(np.linalg.norm(res)),
+     "state_norm":float(np.linalg.norm(x))})
+ if not tangents: raise ValueError("missing read-only mean tangent records")
+ maxima={key:max(t[key] for t in tangents) for key in
+         ("P_norm","H_norm","Sinv_norm","K_norm","residual_norm","state_norm")}
  return {"qualification":"OU3_PLANAR_LINKED_PORT_WORD_V1",
    "result_type":"FINITE POINT TANGENT + OPEN UNIFORM PORTS",
    "word_samples":[f["root_sample"],f["end_sample"]],"rho_P_point":rho,
+   "point_tangent_records":len(tangents),"point_operand_norm_maxima":maxima,
    "b_mean_to_P_uniform":None,"c_P_to_mean_uniform":None,
    "q_P_uniform":None,"q_mean_uniform":None,
    "required_source_tangent_exports":[
-     "dH_acc/d(mean) at each literal accepted accelerometer correction",
-     "dH_mag/d(mean) at each literal accepted magnetic correction",
+     "uniformize exact dH_acc/d(mean) over the candidate cell",
+     "uniformize exact dH_mag/d(mean) over the candidate cell",
      "dK/dP linked through the same S,H,P at each correction",
      "same-boundary affine mean charge under fixed measurement history"],
    "local_operation_residual_max":max(a["maximum_absolute_operation_residuals"].values()),
