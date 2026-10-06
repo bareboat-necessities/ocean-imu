@@ -3528,6 +3528,144 @@ checked, with unsupported directions retained separately. The augmented
 factorization is exact algebra, not a surrogate history. No new shipping
 counterexample or numerical exploration is introduced.
 
+\subsection{Uniform held-bias score and the minimal remaining budget domain}
+\label{app:held-score-boundary}
+
+\paragraph{Quantifiers and role.}
+Consider every finite regular word wholly inside the reached default CoG
+held-BA branch, with no release, external covariance write, or initialization
+jump inside the word. The nominal held bias is constant and feasible for its
+projection, and $P_b\succ0$ is its actual frozen covariance. Physical bias is
+the same SLOW history throughout, with amplitude $B_s$ and rate $D_s$ from
+the retained contract; FAST remains delivered measurement forcing. This
+lemma bounds an unsupported score without charging it against active process
+loss. It is not an A21 gap, nor a theorem that held bias becomes observable.
+No compactness of nominal AW, reference or attitude error is needed for this
+held-coordinate statement. Those open domains are not silently assumed for
+the active budget below.
+
+\paragraph{Literal block structure and signed boundary cancellation.}
+The reached hold proof above gives, in active/held coordinates,
+\[
+ P_i=\operatorname{diag}(P_{X,i},P_b),\quad
+ B_i=\operatorname{diag}(B_{X,i},I),\quad X\in\mathbb R^{18}.       \tag{HB1}
+\]
+The additive accelerometer base uses $H_X$ and $R_{\rm eff}=R_a+P_b$,
+not an unmasked 21-state gain. Its gain score has zero held component.
+Prediction has identity BA transition and zero BA noise; reset, AW, magnetic
+and $S$ operations preserve (HB1). Physical held BA increments can therefore
+be separated algebraically from prediction as mean shifts in that block.
+They commute with its active operation; no new estimator operation is added.
+For $e_{b,i}=\widehat b-b_s(t_i)$ the complete held score is consequently
+\[
+ q_{u,b}=\sum_iP_b^{-1}(e_{b,i}-e_{b,i+1})
+       =P_b^{-1}\{b_s(t_N)-b_s(t_0)\},\qquad q_{u,X}=0.          \tag{HB2}
+\]
+This is exact telescoping, not a sum of absolute increments. For any proved
+actual comparison $P_b^{-1}\preceq j_b I$ and word duration $T$,
+\[
+ \boxed{q_{u,b}^TP_bq_{u,b}\le
+ j_b\min\{D_s^2T^2,4B_s^2\}.}                                \tag{HB3}
+\]
+Indeed the increment is the integral of the same rate-bounded SLOW history
+and the difference of two amplitude-bounded endpoints. A return of that
+history to its initial value gives zero score, however many intermediate
+increments occurred. The bound is independent of event count and of the
+time already spent in H18. For the unchanged real core initialization
+$\sigma_{bacc,0}=.004$, when that covariance is inherited unchanged,
+$j_b=62500$; at $T=60$ and $D_s=.001$ the rate part is exactly $225$.
+This is a qualified core-profile value, not a replacement for a caller's
+actual $P_b$, a binary32 rounding certificate, or an affordability claim.
+
+On a differentiable family staying in (HB1), $dP_i$ is block diagonal and
+$U_i=\operatorname{diag}(U_{X,i},0)$. Thus neither $M dP_0q_{u}$ nor any
+generated $M_{N,i+1}U_iq_{u,i+1}$ has an active component. The AW shear acts
+only inside $X$, so the conclusion is unchanged in consistent AW coordinates.
+It does \emph{not} remove the physical held bias from $r$, $dr$, or
+$\delta_X=r+H_Xe_X$, and does not remove $dP_b$ from $dR_{\rm eff}$.
+Those are genuine active correction ports and remain in the full suffix word.
+There is no assertion that a moving physical quotient projector preserves
+this active/held split.
+
+\paragraph{The held work is a boundary term, not active dissipation.}
+Let $\Delta b=b_s(t_N)-b_s(t_0)$ and, along such a differentiable family,
+$h=d\Delta b-dP_bP_b^{-1}\Delta b$. The held Fisher storage is unchanged,
+and direct substitution in the information shear gives
+\[
+ \eta_{b,N}=\eta_{b,0}-h,\qquad
+ W_{b,N}-W_{b,0}=-2\eta_{b,0}^TP_b^{-1}h+h^TP_b^{-1}h.          \tag{HB4}
+\]
+All intermediate signed cross/square work cancels to this one boundary
+expression. The time-rate bound on $b_s$ bounds $\Delta b$, not the derivative
+$d\Delta b$ with respect to an arbitrary history-family parameter. Such
+source tangents need their specified source coordinates/charge; neither a
+pseudoinverse nor the active Schur loss may erase them. This distinction is
+necessary even though the finite physical score bound (HB3) is uniform.
+
+\paragraph{A precise necessary activation quantity for the active budget.}
+For every supported process substep of (PS1), write $J_+=(FPF^T+Q)^{-1}$,
+$L=J-F^TJ_+F$, and define
+\[
+ E_i=e^TLe,\quad S_i=s^TQ^\dagger s-s^TJ_+s,\quad
+ C_i=e^TF^TJ_+s.                                               \tag{HB5}
+\]
+The range hypothesis is checked before using $Q^\dagger$. Applying (PS1)
+also at $e=0$ proves $S_i\ge0$ and that $F^TJ_+s$ is in the range of $L$,
+with squared dual loss norm $S_i$. Consequently, on the actual covered word,
+\[
+ \begin{gathered}
+ E_L=\sum E_i,\quad S_q=\sum S_i,\quad C_W=\sum C_i,\\
+ \boxed{B_W=E_L+S_q-2C_W},\qquad C_W^2\le E_LS_q,\\
+ (\sqrt{E_L}-\sqrt{S_q})^2\le B_W
+                  \le(\sqrt{E_L}+\sqrt{S_q})^2.                \tag{HB6}
+ \end{gathered}
+\]
+Proof: expand the squared loss norm of $Le-F^TJ_+s$ and apply Cauchy--Schwarz
+only to the stacked same-operation loss vectors. The middle equality retains
+every signed comparison/source cross term. The outer bounds are used here to
+identify the missing domain, not to price the final Schur gap. If $S_q$ has a
+uniform finite cap, a uniform finite $B_W$ exists if and only if the
+\emph{process-loss projection energy} $E_L$ has a uniform finite cap.
+For example $E_L\le2B_W+2S_q$ and $B_W\le2E_L+2S_q$ prove both implications.
+This does not require a box for every coordinate or a bound on loss-kernel
+components, but neither does positive process loss supply its own bound on
+the comparison occupying those directions.
+
+On the held stratum use (HB5)--(HB6) on $X$ with the actual active process.
+The exact signed telescope is
+\[
+ \begin{split}
+ B_{X,W}={}&V_{X,0}-V_{X,N}+\sum_{\rm covered}s_X^TQ_X^\dagger s_X\\
+ &+\sum_{\rm correction}(\delta_X^TR_{\rm eff}^{-1}\delta_X-\mathrm{NIS})
+   +\sum_{\rm uncovered}(V_{X,i+1}-V_{X,i}).
+ \end{split}                                                   \tag{HB7}
+\]
+For non-accelerometer corrections $R_{\rm eff}$ denotes their actual noise.
+No $V_{b,0}$ penalty or sum of held-bias variation energies is needed in
+(HB7). The physical $S$ defect remains $-S_{\rm physical}$. BG projection,
+reset/chart mismatch and release are not covered by (HB2); their scores and
+signed work remain explicit.
+
+\paragraph{What the attempted uniform closure does not establish.}
+The source-only supported LIN action has its existing finite sampling-fidelity
+bound, but the general activated word lacks a proved cap on $E_L$ and on the
+remaining AG/chart/source support terms. The first-Live energy implication
+does not supply these recurring bounds. Held LIN BIBO does not, by itself,
+bound the full AG/reference/precision comparisons or their causal tangents.
+In particular (HB6) cannot be promoted to a numerical uniform $B_W$ by
+substituting the source-only action for $E_L$.
+
+The grouped process work (PS8), including its feedback cross term, must still
+be composed with correction, BG/reset, reference/noise, AW and gauge work
+against the exact complementary Schur loss (CP5). (HB4) removes repeated
+pricing of held-coordinate work, not this remaining active domination.
+No positive uniform directional score margin or complete gap is established.
+The unclosed sufficient proof is class D, not a shipping counterexample.
+No radius is calculated. Structures preserved: all 21 states, reached masks,
+actual effective noise, complete generated suffixes, inherited SLOW/FAST and
+physical $S$, and both AW frames. Relaxations: regular real-operation scope
+and an explicitly qualified held-covariance ceiling; no new physical premise.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

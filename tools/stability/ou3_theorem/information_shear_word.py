@@ -354,13 +354,22 @@ def process_source_score(P, B, Q, e, s):
     witness = add(e, product(P, transpose(B), t), -1)
     source_action = product(transpose(s), t)[0][0]
     charge = product(transpose(score), witness)[0][0]
+    comparison_loss = product(transpose(e), G, e)[0][0]
+    source_score_charge = source_action-product(transpose(s), Jnext, s)[0][0]
+    signed_cross = product(transpose(e), transpose(B), Jnext, s)[0][0]
     change_budget = (product(transpose(e), J, e)[0][0]+source_action
                      - product(transpose(ep), Jnext, ep)[0][0])
     if not is_psd(G) or product(G, witness) != score or charge != change_budget or charge < 0:
         raise ArithmeticError('combined process/source score identity failed')
+    if (source_score_charge < 0 or signed_cross**2 > comparison_loss*source_score_charge
+            or charge != comparison_loss+source_score_charge-2*signed_cross):
+        raise ArithmeticError('linked comparison/source score decomposition failed')
     return {'covariance_next': C, 'comparison_next': ep, 'mean_loss': G,
             'combined_score': score, 'range_witness': witness,
-            'physical_process_action': source_action, 'combined_score_charge': charge}
+            'physical_process_action': source_action, 'combined_score_charge': charge,
+            'comparison_loss_energy': comparison_loss,
+            'source_only_score_charge': source_score_charge,
+            'signed_comparison_source_cross': signed_cross}
 
 
 def source_qualified_word_score(base_maps, covariances, comparisons, corrections,
@@ -379,6 +388,7 @@ def source_qualified_word_score(base_maps, covariances, comparisons, corrections
         raise ValueError('disjoint valid process and correction indices required')
     prefix, score, uncovered_score = identity(n), zeros(n, 1), zeros(n, 1)
     budget = source_action = uncovered_change = F(0)
+    comparison_loss = source_score_charge = signed_cross = F(0)
     local_charges = []
     for i, B in enumerate(base_maps):
         P, C, e, ep = covariances[i], covariances[i+1], comparisons[i], comparisons[i+1]
@@ -390,6 +400,9 @@ def source_qualified_word_score(base_maps, covariances, comparisons, corrections
             score = add(score, product(transpose(prefix), local['combined_score']))
             budget += local['combined_score_charge']
             source_action += local['physical_process_action']
+            comparison_loss += local['comparison_loss_energy']
+            source_score_charge += local['source_only_score_charge']
+            signed_cross += local['signed_comparison_source_cross']
             local_charges.append(local['combined_score_charge'])
         elif i not in corrections:
             a = add(product(J, e), product(transpose(B), Jnext, ep), -1)
@@ -410,6 +423,9 @@ def source_qualified_word_score(base_maps, covariances, comparisons, corrections
                  correction_action-old['innovation_dissipation']+uncovered_change)
     if budget != telescope or not 0 <= charge <= budget:
         raise ArithmeticError('source-qualified word score budget failed')
+    if (budget != comparison_loss+source_score_charge-2*signed_cross
+            or signed_cross**2 > comparison_loss*source_score_charge):
+        raise ArithmeticError('grouped signed score budget failed')
     if not is_psd(add([[budget*x for x in row] for row in G], product(score, transpose(score)), -1)):
         raise ArithmeticError('directional score Gram bound failed')
     total = add(score, uncovered_score)
@@ -421,7 +437,46 @@ def source_qualified_word_score(base_maps, covariances, comparisons, corrections
             'linked_budget': budget, 'physical_process_action': source_action,
             'correction_defect_action': correction_action,
             'uncovered_signed_energy_change': uncovered_change,
+            'comparison_loss_energy': comparison_loss,
+            'source_only_score_charge': source_score_charge,
+            'signed_comparison_source_cross': signed_cross,
             'uniform_budget_verified': False}
+
+
+def held_bias_boundary_score(Pb, bias_initial, bias_final, duration,
+                             slow_amplitude, slow_rate, precision_ceiling):
+    """Exact unsupported score on the reached, entirely held BA stratum.
+
+    Structural hypotheses are proved from shipping in app:held-score-boundary:
+    P=diag(P_X,Pb), B=diag(B_X,I), constant held nominal BA and Pb. This
+    helper checks the physical endpoint bounds and the ACTUAL Pb comparison.
+    It does not remove BA residuals/dR_eff or cover an A21/release word.
+    """
+    ldlt(Pb)
+    duration, slow_amplitude, slow_rate, precision_ceiling = map(
+        F, (duration, slow_amplitude, slow_rate, precision_ceiling))
+    if min(duration, slow_amplitude, slow_rate) < 0 or precision_ceiling <= 0:
+        raise ValueError('nonnegative physical bounds and positive precision ceiling required')
+    Jb = inverse(Pb)
+    if not is_psd(add([[precision_ceiling*x for x in row] for row in identity(len(Pb))], Jb, -1)):
+        raise ValueError('actual held precision exceeds the supplied ceiling')
+    for b in (bias_initial, bias_final):
+        if product(transpose(b), b)[0][0] > slow_amplitude**2:
+            raise ValueError('physical SLOW endpoint exceeds amplitude contract')
+    delta = add(bias_final, bias_initial, -1)
+    cap_squared = min(slow_rate**2*duration**2, 4*slow_amplitude**2)
+    if product(transpose(delta), delta)[0][0] > cap_squared:
+        raise ValueError('physical SLOW increment exceeds same-history contract')
+    q = product(Jb, delta)
+    energy = product(transpose(q), Pb, q)[0][0]
+    upper = precision_ceiling*cap_squared
+    if energy > upper:
+        raise ArithmeticError('held unsupported boundary score cap failed')
+    return {'held_score': q, 'held_score_energy': energy,
+            'uniform_boundary_upper': upper,
+            'active_score_component_identically_zero': True,
+            'held_bias_remains_in_residual_and_effective_noise': True,
+            'release_or_active_BA_covered': False}
 
 
 def process_augmented_shear(P, B, Q, e, s, D, de, dB, dQ, ds, weight):
@@ -643,6 +698,11 @@ def certificate():
         'generated_process_cross_absorbed': False,
         'combined_process_score_budget_AW_frame_invariant': True,
         'uniform_combined_process_source_budget': None,
+        'held_score_boundary_proof': 'app:held-score-boundary',
+        'held_BA_unsupported_score_uniform_boundary_bound': True,
+        'held_BA_unsupported_score_active_component_zero': True,
+        'held_BA_residual_and_effective_noise_ports_retained': True,
+        'active_process_budget_minimal_domain': 'B_W=E_L+S_q-2 C; C^2<=E_L S_q. With bounded S_q, uniform B_W iff uniform comparison loss energy E_L; neither cap is supplied for general activated A21 words.',
         'uniform_conditional_score_margin_verified': False,
         'uniform_generated_packet_absorption_verified': False,
         'comparison_word_budget': 'chi_loss <= E_loss = V_0-V_N+Supply_W-sum NIS <= V_0+Supply_W-sum NIS',

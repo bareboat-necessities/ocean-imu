@@ -12,7 +12,7 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `d46fe24795506b28ffee94882a1778b9f4f1d6b1`.
+Verified starting PR head: `1d12556fb6cdd74bd49edf33a9d911b271f59c57`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved. Current CI chronology belongs in PR metadata.
 
@@ -127,6 +127,24 @@ The observed-coefficient center defect .0006179245 is finite and uses future
 observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
+
+**PROVED — analytical uniform held-score reduction:**
+`app:held-score-boundary` telescopes the unsupported physical held-BA score
+to `P_b^-1 Delta b_s`, with energy at most
+`j_b min(D_s^2 T^2,4 B_s^2)`. Its active/AW component and generated active
+suffix contributions vanish on the reached zero-cross stratum. Residual,
+`dr`, and `dR_eff=dR_acc+dP_b` ports remain. Held tangent cross/square work
+also telescopes to one exact boundary term; no active contraction of held
+coordinates is asserted and release/A21 are not covered.
+
+**Precise remaining budget domain:** the same-operation identity
+`B_W=E_L+S_q-2 C_W`, `C_W^2<=E_L S_q`, shows that with uniformly bounded
+source-only score action, uniform B_W control is equivalent to control of
+the actual process-loss comparison energy E_L. No general activated cap on
+E_L is proved. This is less than a full state box, but is not supplied by
+positive base loss, physical source amplitudes or first-Live energy alone.
+The remaining unsupported AG/chart scores and grouped signed active
+auxiliary/cross work against the exact Schur loss are still OPEN.
 
 **PROVED — analytical combined process/source score:**
 `app:process-source-score` gives `score' L^dagger score=V-V+ +s' Q^dagger s`
@@ -372,6 +390,19 @@ Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
 
+* **D, uniform budget closure not established:** physical process action and
+  the first-Live bound do not supply a recurring bound on E_L in the exact
+  B_W decomposition. Retained: signed cross cancellation and uniform held
+  boundary-score bound. Limiter: inherited active comparison-loss projection
+  and actual auxiliary/source work. Next is a non-circular bound on those
+  quantities, not a radius or independent port maxima.
+* **E, regression call:** the new effective-noise test initially omitted the
+  gain differential's inverse-innovation operand. Corrected to the literal
+  seven-operand identity; no proof condition was weakened.
+* **E, regression path:** the full suite runs from tests/validation, exposing
+  a working-directory-relative source path in the new test. It now resolves
+  from the test file's repository root; no source-faithfulness check removed.
+
 * **E, formatting gate:** `git diff --check` caught trailing whitespace in the
   new endpoint proof. Removed; no mathematical premise or check was weakened.
 
@@ -455,17 +486,15 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
-An analytical obligation: bound the directional score reader
-`E_q G_F^-1 E_q'` against `lambda K^-1` on the actual inherited words, using
-the linked comparison-loss/signed-supply identity. Then compare the single
-aggregate `P_self+2 P_mix-endpoint_adjustment` from CM10 with actual
-complementary process/S/magnetic loss and retained conditional half-loss.
-Do not independently maximize the generated ports, substitute the small
-base c_aw for the net margin, or assume isotropic conditional covariance.
-Actual causal packet maps, suffix scores and source/gauge signs remain.
-Only enclose a compact inequality after deriving its domain and an affordable
-threshold. Full transverse c and planar admission remain separate OPEN
-obligations; no radius solve precedes them.
+An analytical obligation: establish the inherited process-loss comparison
+energy bound E_L needed by the exact B_W identity, retaining S_q and C_W from
+the same history. Use the held-score boundary cancellation only before release.
+Then control the actual directional reader and grouped active signed remainder
+against the full retained Schur loss. The fixed half-charge sufficient bound
+is not a required milestone. Do not independently maximize ports, substitute
+base c_aw for the net margin, or silently bound causal source tangents by
+physical time-rate limits. No compact enclosure without a derived domain and
+affordable threshold; no radius before the full gap and charges are proved.
 
 ## Verification scope
 

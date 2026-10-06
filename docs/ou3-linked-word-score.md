@@ -601,3 +601,68 @@ OU mismatch, causal auxiliary/source derivatives, supported/unsupported
 forcing and endpoint frames. Relaxations: regular real-operation derivatives,
 with SPD Q required only for the augmented identity. No new assumption on
 physical histories, numerical exploration, or admitted counterexample.
+
+## Uniform held score; exact remaining active-budget obligation
+
+**PROVED — analytical**, `app:held-score-boundary`. On every reached CoG word
+wholly before BA release, with constant feasible held nominal bias and frozen
+actual `P_b`, all base maps and covariances split into active 18 and held 3.
+Consequently the unsupported physical SLOW-bias score is exactly
+
+```
+q_u,b = P_b^-1 (b_s(t_N)-b_s(t_0)),    q_u,X = 0,
+q_u,b' P_b q_u,b <= j_b min(D_s^2 T^2,4 B_s^2),  P_b^-1 <= j_b I.
+```
+
+This is uniform in time already spent in hold and in the number of operations.
+It retains signed cancellation: a bias excursion returning to its initial
+value has zero score. No sum of increment norms is used. With the unchanged
+real core `.004` standard deviation inherited, `j_b=62500`; the 60-second
+rate contribution is exactly 225. Check actual caller covariance and arithmetic
+before using that profile-specific value; it is not an affordability result.
+
+Reached tangents have block-diagonal dP and `U=diag(U_X,0)`, so both root and
+generated covariance/suffix-score terms from this held score have **zero
+active component**. This is also true in consistent AW coordinates. Physical
+held bias still enters the accelerometer residual and `dr`, and `dP_b` still
+enters `dR_eff=dR_acc+dP_b`. No active port is deleted. The result does not
+cover release/A21, arbitrary masked covariance, BG projection or chart shifts.
+
+The held tangent work itself is one signed boundary expression. With
+`h=d(Delta b)-dP_b P_b^-1 Delta b`,
+
+`W_b,N-W_b,0 = -2 eta_b,0' P_b^-1 h+h' P_b^-1 h`.
+
+It cannot be charged to active Schur loss. Physical time-rate bounds do not
+bound differentiation with respect to an arbitrary family parameter; source
+tangents require their explicit causal coordinates/charge.
+
+For the supported active process terms define, using actual same-operation
+operands,
+
+```
+E_L = sum e' (J-F' J+ F) e
+S_q = sum (s' Q^dagger s-s' J+ s)
+C_W = sum e' F' J+ s.
+B_W = E_L+S_q-2 C_W,    C_W^2 <= E_L S_q.
+```
+
+These equalities preserve the source signs. They imply that, **given a finite
+uniform S_q cap**, a uniform B_W cap is equivalent to a uniform cap on E_L.
+The required quantity is the process-loss projection of the inherited
+comparison, not an independent box for all coordinates. Source action alone
+does not bound it. The active signed telescope uses V_X, not V_X+V_b, and
+retains correction defect minus NIS and every uncovered active energy change.
+
+**Attempt outcome: D, incomplete sufficient proof.** The held unsupported
+score and its repeated work are now bounded/regrouped, but no general
+activated E_L cap, remaining unsupported AG/chart-score cap, or affordable
+domination of grouped active process/correction/reference/AW/gauge work is
+proved. First-Live energy is not a recurring bound; held LIN BIBO does not
+close all those causal/precision directions. No claim that the remaining task
+is merely scalar tightening, no uniform complete margin, and no radius.
+
+Structures preserved: all states, actual reached hold/masks, effective noise,
+suffix covariance terms, inherited physical SLOW/FAST and S, consistent frames.
+Relaxations: regular real-operation held scope, with an explicit actual-P_b
+comparison for its numeric specialization; no new physical assumption.

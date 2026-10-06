@@ -9,6 +9,7 @@ from tools.stability.ou3_theorem.information_shear_word import (
     projector_differential, score_loss_charge, word_score_normal_form, zeros,
     conditional_mixed_coefficients, conditional_word_mixed_bound,
     process_source_score, source_qualified_word_score, process_augmented_shear,
+    held_bias_boundary_score,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import add, identity, is_psd, ldlt, transpose
@@ -397,6 +398,10 @@ class InformationShearWordTests(unittest.TestCase):
         self.assertEqual(out['physical_process_action'], F(3, 49))
         self.assertEqual(out['correction_defect_action'], product(transpose(add(r, ep)), inverse(R), add(r, ep))[0][0])
         self.assertGreaterEqual(out['linked_budget'], out['covered_score_charge'])
+        self.assertEqual(out['linked_budget'], out['comparison_loss_energy']+
+                         out['source_only_score_charge']-2*out['signed_comparison_source_cross'])
+        self.assertLessEqual(out['signed_comparison_source_cross']**2,
+                             out['comparison_loss_energy']*out['source_only_score_charge'])
         direct = word_score_normal_form(maps, covs, errors,
             [zeros(1, 1), product(transpose(H), inverse(add(C, R)), r), zeros(1, 1), zeros(1, 1)],
             [zeros(1, 1)]*4, [zeros(1, 1)]*4, zeros(1, 1), zeros(1, 1))
@@ -439,6 +444,59 @@ class InformationShearWordTests(unittest.TestCase):
         self.assertEqual(moved['combined_score'], product(transpose(inverse(root)), out['combined_score']))
         self.assertEqual(moved['combined_score_charge'], out['combined_score_charge'])
         self.assertEqual(moved['physical_process_action'], out['physical_process_action'])
+
+    def test_held_unsupported_bias_score_has_uniform_boundary_cap(self):
+        Pb = [[F(1, 62500)*x for x in row] for row in identity(3)]
+        b0, b1 = zeros(3, 1), [[F(3, 50)], [0], [0]]
+        out = held_bias_boundary_score(Pb, b0, b1, 60, F(22516660498395405, 10**17),
+                                       F(1, 1000), 62500)
+        self.assertEqual(out['uniform_boundary_upper'], F(225))
+        self.assertEqual(out['held_score_energy'], F(225))
+        # Return along the same admissible piecewise-linear SLOW history:
+        # signed local scores cancel; accumulating their norms would not.
+        back = held_bias_boundary_score(Pb, b1, b0, 60, F(1, 4), F(1, 1000), 62500)
+        whole = held_bias_boundary_score(Pb, b0, b0, 120, F(1, 4), F(1, 1000), 62500)
+        self.assertEqual(add(out['held_score'], back['held_score']), whole['held_score'])
+        self.assertEqual(whole['held_score_energy'], 0)
+        with self.assertRaisesRegex(ValueError, 'precision exceeds'):
+            held_bias_boundary_score(Pb, b0, b0, 60, F(1, 4), F(1, 1000), 1)
+        with self.assertRaisesRegex(ValueError, 'same-history'):
+            held_bias_boundary_score(Pb, b0, b1, 1, F(1, 4), F(1, 1000), 62500)
+
+    def test_held_score_does_not_enter_active_generated_suffixes(self):
+        # Algebra regression on the proved block stratum, not a reached replay.
+        n, Pb = 3, F(1, 9)
+        B = [[1, F(1, 3), 0], [0, F(4, 5), 0], [0, 0, 1]]
+        P = [[2, F(1, 5), 0], [F(1, 5), 1, 0], [0, 0, Pb]]
+        Q = [[F(1, 7), 0, 0], [0, F(1, 11), 0], [0, 0, 0]]
+        PN = add(product(B, P, transpose(B)), Q)
+        e0, e1, e2 = [[F(1, 7)], [F(1, 11)], [F(1, 13)]], None, None
+        e1 = add(product(B, e0), [[0], [0], [F(1, 17)]])
+        e2 = add(e1, [[0], [0], [F(-1, 19)]])
+        U = [[F(1, 23), F(1, 29), 0], [F(1, 29), F(-1, 31), 0], [0, 0, 0]]
+        D = [[F(1, 37), 0, 0], [0, F(1, 41), 0], [0, 0, F(1, 43)]]
+        kwargs = ([B, identity(n)], [P, PN, PN], None, [zeros(n, 1)]*2,
+                  [U, zeros(n, n)], [zeros(n, 1)]*2, D, zeros(n, 1))
+        out = word_score_normal_form(*kwargs[:2], [e0, e1, e2], *kwargs[3:])
+        constant = [e0, [e1[0], e1[1], e0[2]], [e2[0], e2[1], e0[2]]]
+        ref = word_score_normal_form(*kwargs[:2], constant, *kwargs[3:])
+        self.assertEqual(out['eta_terminal'][:2], ref['eta_terminal'][:2])
+        self.assertEqual(out['retained_ports'], ref['retained_ports'])
+        self.assertEqual(out['suffix_scores'][0][2][0], (e0[2][0]-e2[2][0])/Pb)
+        self.assertNotEqual(out['eta_terminal'][2], ref['eta_terminal'][2])
+
+    def test_held_source_binding_and_effective_noise_are_not_deleted(self):
+        src = (Path(__file__).resolve().parents[2] /
+               'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h').read_text()
+        for literal in ('Pext.template block<3,BASE_N>(OFF_BA, 0).setZero();',
+                        'if (!use_ba) freeze_acc_bias_rows_(PCt);',
+                        'S_mat.noalias() += P_ba_ba;', 'T sigma_bacc0_ = T(0.004);'):
+            self.assertIn(literal, src)
+        # dPb remains a REAL active gain port through dR_eff, even though
+        # the unsupported physical held score has zero active component.
+        gain = gain_differential([[F(2)]], [[F(1)]], [[F(2, 5)]], [[F(1, 5)]],
+                                 [[F(0)]], [[F(0)]], [[F(1)]])
+        self.assertEqual(gain, [[F(-2, 25)]])
 
 
 if __name__ == '__main__':

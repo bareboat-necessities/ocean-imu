@@ -356,3 +356,12 @@ process balance for dF/dQ/ds through the causal auxiliary lift; keep its
 signed auxiliary, Fisher and feedback terms together. The feedback-square
 bound does not also pay its cross term. Both identities hold in consistent
 AW coordinates and do not establish a uniform complete-word gap by themselves.
+
+`app:held-score-boundary` now closes the unsupported physical held-BA score
+by exact endpoint cancellation, with zero active/AW score contribution on the
+reached stratum; effective-noise and residual derivatives remain. It does not
+extend across release. For the active budget retain `B_W=E_L+S_q-2 C_W`.
+With bounded source-only score action, uniform B_W requires and is implied by
+uniform process-loss comparison energy E_L. Proving that inherited projection
+bound and the remaining grouped active signed-work domination is still a real
+dependency, not a consequence of positive base loss or physical source bounds.

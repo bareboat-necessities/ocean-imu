@@ -465,7 +465,8 @@
         "reports/results/ou3_stability/measurement-frame-loss-certificate.json"
       ],
       "open_dependencies": [
-        "app:process-source-score proves the supported combined physical process score identity and inherited directional word budget, plus a causal dF/dQ/ds augmented process balance and linked Fisher feedback-square bound. Unsupported source scores and the signed auxiliary/feedback cross work remain explicit; uniform budget and complete-gap absorption remain OPEN."
+        "app:process-source-score proves the supported combined physical process score identity and inherited directional word budget, plus a causal dF/dQ/ds augmented process balance and linked Fisher feedback-square bound. Unsupported source scores and the signed auxiliary/feedback cross work remain explicit; uniform budget and complete-gap absorption remain OPEN.",
+        "app:held-score-boundary proves the uniform unsupported held-BA boundary-score cap and zero active suffix contribution on the reached held stratum, retaining physical residual and effective-noise ports. The exact B_W=E_L+S_q-2C_W decomposition isolates the required process-loss comparison bound; that general activated bound and remaining grouped active signed-work absorption remain OPEN. No count promotion, release extension or radius."
       ]
     },
     {
