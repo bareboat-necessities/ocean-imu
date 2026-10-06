@@ -666,3 +666,30 @@ Structures preserved: all states, actual reached hold/masks, effective noise,
 suffix covariance terms, inherited physical SLOW/FAST and S, consistent frames.
 Relaxations: regular real-operation held scope, with an explicit actual-P_b
 comparison for its numeric specialization; no new physical assumption.
+
+## Fixed-input planar prediction: a genuine zero port, with its literal residue
+
+`app:planar-even-process-work` proves analytically that the original even
+process block has `dF_E=dQ_E=0` for same-input MEKF-root variations on the
+planar stratum. The axis identities `W e_y=W^2 e_y=0` retain both literal
+rotation coefficient branches and the Simpson noise construction; private
+tuning is one-way. This is not true of the odd block or source/private-state
+variations.
+
+The nominal quaternion polynomial prevents the stronger claim `ds_E=0`.
+Its actual normalized angle alpha has
+
+`1-alpha'(x)=x^6(1920-80x^2+x^4)/(14745600*(w^2+v^2))`.
+
+Thus the remaining original even auxiliary charge is exactly
+`h*(1-alpha')^2/(q_g+q_b*h^2/12)*(d BG_y)^2`, below
+`1e-27*(d BG_y)^2` on the stated regular real profile. The complete even
+prediction still contains the combined signed work
+
+`2 <F eta, F dP score+ds>_Jnext + |F dP score+ds|_Jnext^2`.
+
+No separate maxima of these terms are used. Moving-frame coefficient ports
+remain the exact connection differences until the whole word is composed.
+This bound does not control inherited E_L, prove score/Schur domination, or
+qualify the odd, reference, reset, AW, source and arithmetic contributions.
+Those requested uniform bounds remain OPEN; no radius is computed.

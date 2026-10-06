@@ -12,7 +12,7 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `1d12556fb6cdd74bd49edf33a9d911b271f59c57`.
+Verified starting PR head: `52e20186dcd49acfef269ce5a6268de3b8fee70a`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved. Current CI chronology belongs in PR metadata.
 
@@ -127,6 +127,20 @@ The observed-coefficient center defect .0006179245 is finite and uses future
 observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
+
+**PROVED — analytical fixed-input even prediction reduction:**
+`app:planar-even-process-work` proves `dF_E=dQ_E=0` for MEKF-root variations
+on the exact planar stratum, using the literal rotation/integral axis kernel
+and one-way private tuning. It does NOT prove `ds_E=0`: the normalized shipping
+quaternion polynomial has angle derivative defect at most `x^6/7680` on
+`|x|<.01`. Its remaining even auxiliary process charge is bounded by
+`1e-27*(d BG_y)^2` on the stated real-operation profile. The process score
+feedback and its signed cross with that residual remain grouped; the constant
+is not a complete-word decrement. Odd blocks, varying source/private histories,
+projection, reset, reference and AW work are not eliminated. In moving AW
+coordinates the coefficient derivatives remain connection differences until
+complete-word composition. This removes a fictitious independent even-process
+parameter charge, not the requested inherited E_L or full active-work bound.
 
 **PROVED — analytical uniform held-score reduction:**
 `app:held-score-boundary` telescopes the unsupported physical held-BA score
@@ -389,6 +403,18 @@ its reference rate with fixed S and differing settings. No profile transfer.
 Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
+
+* **E, manuscript tooling:** the new section had a missing EP4 closing delimiter
+  and tags inside EP6/EP7 split environments. Standalone compilation caught
+  these; delimiter/tag placement was repaired without changing the argument
+  or any check. The inherited E_L/Schur-work limiter is unchanged;
+  validation is a compile and source-evidence regeneration, not a new bound.
+
+* **E, source-calculus shortcut rejected before promotion:** planar commuting
+  rotations do not make the literal nominal pitch transition exactly equal
+  to its covariance transition. Normalizing the implemented small-angle
+  quaternion polynomial leaves the explicit (EP4)--(EP5) derivative defect.
+  Retain it; the odd process block and causal source variations are not zero.
 
 * **D, uniform budget closure not established:** physical process action and
   the first-Live bound do not supply a recurring bound on E_L in the exact

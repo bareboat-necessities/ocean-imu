@@ -468,6 +468,44 @@ def conditional_aw_process_coercivity():
             'uniform_complete_word_gap': False}
 
 
+def planar_pitch_prediction_calculus(step, angle, gyro_density, bias_density):
+    """Literal real-operation pitch/BG process, not a uniform word-gap test.
+
+    On the fixed-input planar stratum the polynomial rotation/integral terms
+    annihilate e_y. F_E,Q_E have zero MEKF-root derivative. The NORMALIZED
+    small-angle quaternion is not an exact exponential: its mean derivative
+    leaves the rank-one ds port derived in app:planar-even-process-work.
+    Rounded-coefficient/FMA/libm defects remain separate.
+    """
+    h, x, qg, qb = map(F, (step, angle, gyro_density, bias_density))
+    if h <= 0 or abs(x) >= F(1, 100) or min(qg, qb) <= 0:
+        raise ValueError('positive process densities and literal small-angle branch required')
+    w = 1-x*x/8+x**4/384
+    v = x/2-x**3/48+x**5/3840
+    dw = -x/4+x**3/96
+    dv = F(1, 2)-x*x/16+x**4/768
+    norm2 = w*w+v*v
+    angle_derivative = 2*(w*dv-v*dw)/norm2
+    defect = x**6*(1920-80*x*x+x**4)/(14745600*norm2)
+    if angle_derivative != 1-defect or not 0 <= defect <= x**6/7680:
+        raise ArithmeticError('literal normalized quaternion derivative bound failed')
+    Q = [[qg*h+qb*h**3/3, qb*h*h/2], [qb*h*h/2, qb*h]]
+    ldlt(Q)
+    source_reader = h*h*defect*defect*inverse(Q)[0][0]
+    source_upper = h*defect*defect/qg
+    if source_reader > source_upper:
+        raise ArithmeticError('linked pitch process charge bound failed')
+    return {'pitch_BG_transition': [[F(1), h], [F(0), F(1)]],
+            'pitch_BG_process': Q, 'quaternion_norm_squared': norm2,
+            'literal_angle_derivative': angle_derivative,
+            'mean_covariance_transition_defect': -h*defect,
+            'auxiliary_charge_per_squared_BG_variation': source_reader,
+            'auxiliary_charge_upper': source_upper,
+            'even_process_covariance_port_zero_fixed_input': True,
+            'odd_process_port_zero': False,
+            'uniform_complete_gap_verified': False}
+
+
 def certificate():
     return {
         'qualification': 'OU3_MEASUREMENT_FRAME_V2',
@@ -517,6 +555,12 @@ def certificate():
         'qualified_AW_conditional_precision_ceiling': qualified_aw_precision_ceiling(),
         'conditional_AW_process_coercivity': conditional_aw_process_coercivity(),
         'conditional_AW_loss_proof': 'app:aw-conditional-loss',
+        'planar_even_process_work_proof': 'app:planar-even-process-work',
+        'planar_fixed_input_even_dF_dQ_zero': True,
+        'planar_fixed_input_even_ds_identically_zero': False,
+        'planar_quaternion_polynomial_derivative_defect_retained': True,
+        'planar_even_auxiliary_charge_BG_coefficient_upper_real': '1/1000000000000000000000000000',
+        'planar_even_auxiliary_charge_scope': 'h<=.006, |h omega_y|<.01, q_g>=1e-6, fixed source/private state; original coordinates before separate projection/AW/reset operations; not a bound for full word work',
         'AW_shear_floor_face_uses_original_recovered_marginal': True,
         'AW_shear_preserves_qualified_planar_magnetic_loss': True,
         'planar_acc_physical_mismatch': 'm=J_y[t daw+omega e_aw-omega t D(t)(a_phys-g)-omega nu], D(t)=(R_y(-t)-I)/t',

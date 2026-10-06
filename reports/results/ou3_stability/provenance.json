@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "8dc83014be87e929eb45c6f56ede97f29f7dfb8b"
+      "git_blob_sha": "e472ec4dafe97da98c08102f657ec7c317c34ca5"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "6615c59732f4610a5cd367b2d16042aada636c69"
+      "git_blob_sha": "5eabb75b95af788f3a83d203d4902392ab610119"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "b7d413e282133004bf74231160431210bfb8be6b"
+      "git_blob_sha": "64361005c89b67023635fe9651585d085a1b4f24"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "91963e63e56c9d50973d98c8932d3ffbc1326d55"
+      "git_blob_sha": "985cd9bcc4dc75737455adcf38276311bf53dbaa"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "e1e6f8495710d7ba68fe5d7f18c87dd9a7b11c92"
+      "git_blob_sha": "2990b09d7907755f478d89b0b12a5eaf8eab7a1c"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "6cbda259046f9c19df7b595aea3f5fd7eefe3a4b"
+      "git_blob_sha": "1e9718c8d03a5ebcccd02a1d55cf30fc5b0d5f70"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -964,11 +964,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "01ac54a0e1717d73f5dc0d3c2ebd51f2fb8c0c86"
+      "git_blob_sha": "c9c2804150bd40067096ed50c74a45441cee0cdb"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "c356db561a7a60bdf80ee1f4ac8e01ea8fbfb46c"
+      "git_blob_sha": "959a564520e4f20b330d5a79f8b43009d6eff142"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
@@ -976,11 +976,11 @@
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "d6657af25b82f8bc9c7c5bbb29d55fd04dc0eb91"
+      "git_blob_sha": "aa3adcfaa2bd8c8a8246650e9c2c7614a32c97f7"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
-      "git_blob_sha": "be2d3487c8b1ca0d05d14f66df09922131cdb237"
+      "git_blob_sha": "ee55e64eeea139dceaaf09e889baf6560e1bb04f"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1225,6 +1225,12 @@
     "qualified_conditional_AW_base_process_loss_lower": "1/100000000000000",
     "conditional_AW_base_loss_is_complete_word_gap": false,
     "remaining_Schur_obligation": "net signed conditional/complementary blocks including generated covariance scores, integrated-chain/AG, reference/source and endpoint gauge work; no positive uniform margin certified",
-    "conditional_AW_storage_and_mixed_reader_frame_invariant": true
+    "conditional_AW_storage_and_mixed_reader_frame_invariant": true,
+    "planar_even_process_work_proof": "app:planar-even-process-work",
+    "planar_fixed_input_even_dF_dQ_zero": true,
+    "planar_fixed_input_even_ds_identically_zero": false,
+    "planar_even_auxiliary_charge_BG_coefficient_upper_real": "1/1000000000000000000000000000",
+    "planar_even_process_work_fully_absorbed": false,
+    "uniform_inherited_comparison_loss_energy": null
   }
 }

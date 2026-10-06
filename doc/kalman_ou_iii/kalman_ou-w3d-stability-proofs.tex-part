@@ -3666,6 +3666,131 @@ actual effective noise, complete generated suffixes, inherited SLOW/FAST and
 physical $S$, and both AW frames. Relaxations: regular real-operation scope
 and an explicitly qualified held-covariance ceiling; no new physical premise.
 
+\subsection{Planar even prediction work without independent parameter charges}
+\label{app:planar-even-process-work}
+
+\paragraph{Scope and finite-error role.}
+For every regular real-operation prediction on the exact planar stratum,
+consider MEKF-root variations preserving that stratum, with the same delivered
+record and inherited private frontend, tuner and clocks. Project BG first as
+shipping does, and differentiate the prediction from that boundary. Keep
+projection, pending AW synchronization, $S$ events, release and reference/gate
+changes as separate literal operations. This result reduces the actual process
+work in (PS8); it does not bound the inherited $E_L$ or the complete Schur gap.
+It is not a claim about general 21-state perturbations or varying source/private
+histories. The odd covariance block and its BG-dependent ports remain present.
+
+\paragraph{Exact coefficient cancellation.}
+Let $w=\omega_y e_y$ and $W=[w]_\times$. The literal Rodrigues/integral
+formulas are polynomials in $I,W,W^2$ with their implemented coefficient
+functions. Since $We_y=W^2e_y=0$, both coefficient branches give exactly
+\[
+ R(h)e_y=e_y,\quad B(h)e_y=h e_y,\quad
+ \left(\int_0^h B(s)\,ds\right)e_y=\tfrac12h^2e_y.             \tag{EP1}
+\]
+With the stated isotropic gyro/bias process densities $q_g,q_b>0$, the
+implemented Simpson rule integrates the squared pitch entry $s^2$ exactly.
+The pitch/BG block is therefore
+\[
+ F_y=\begin{bmatrix}1&h\\0&1\end{bmatrix},\qquad
+ Q_y=\begin{bmatrix}q_gh+q_bh^3/3&q_bh^2/2\\q_bh^2/2&q_bh\end{bmatrix}.
+                                                                    \tag{EP2}
+\]
+Its determinant is $q_gq_bh^2+q_b^2h^4/12>0$. A regular real spectral repair
+of another parity block leaves this positive invariant block unchanged;
+solver failure and arithmetic repair defects are not covered by that statement.
+The fast $Q_{base}h$ option is also independent of $\omega_y$, but (EP2) uses
+the deployed structured option. Literal LIN and BA process coefficients use
+the same committed parameters and fixed activation branch. The proved one-way
+private-tuner dependence consequently gives, on the 12-dimensional even block,
+\[
+ dF_E=0,\qquad dQ_E=0.                                       \tag{EP3}
+\]
+Held BA uses the active block and retained held ports. There is no independent
+$d\tau$, $d\sigma$, or $d\Sigma_{aw}$ charge for this fixed-input variation.
+There is also no assertion $dF_O=dQ_O=0$: the odd block contains $W$ itself.
+
+\paragraph{The literal quaternion prevents setting $ds_E=0$.}
+On $|x|<1/100$, with signed $x=h\omega_y$, the source normalizes the quaternion
+with scalar and signed vector components
+\[
+ w_q=1-x^2/8+x^4/384,\qquad v_q=x/2-x^3/48+x^5/3840.
+\]
+Its real-operation lifted angle is $\alpha(x)=2\arctan(v_q/w_q)$,
+not exactly $x$. Exact differentiation and polynomial multiplication give
+\[
+ \begin{gathered}
+ D_q=w_q^2+v_q^2=1+x^6/23040-x^8/245760+x^{10}/14745600,\\
+ 1-\alpha'(x)=
+ \frac{x^6(1920-80x^2+x^4)}{14745600D_q},\qquad
+ 0\le1-\alpha'(x)\le\frac{x^6}{7680}.                         \tag{EP4}
+ \end{gathered}
+\]
+Indeed $D_q\ge1$, and the numerator's parenthesis lies in $(0,1920]$ on
+this branch. The normalization cancels from the angle ratio; it is not ignored.
+The exact planar delivered gyro has $|\omega_{meas,y}|\le\pi/500<.007$;
+post-projection $|\widehat b_{g,y}|\le.5$ and $h\le.006$ imply this branch.
+This is real-operation algebra; rounded coefficients, FMA and normalization
+error still require the separate shipping float32 transfer.
+
+Use the local comparison chart whose homogeneous pitch/BG covariance
+transport is (EP2). With physical history fixed, all even model-defect
+derivatives vanish except the mean/covariance pitch discrepancy
+\[
+ ds_E=h\{\alpha'(x)-1\}\,E_{\theta_y}\,d\widehat b_{g,y}.     \tag{EP5}
+\]
+Here $d\widehat b_{g,y}$ is taken \emph{after} the literal BG projection;
+its derivative is not assumed to be one across a projection face. Chart wraps
+and event-branch changes require their separate finite-increment treatment.
+
+\paragraph{Uniform auxiliary charge and the signed terms still unpaid.}
+Substitute (EP3)--(EP5) into (PS7), in these original process coordinates.
+The entire even auxiliary charge reduces to
+\[
+ \begin{split}
+ \mathcal A_{aux,E}
+ &=\frac{h\{1-\alpha'(x)\}^2}{q_g+q_bh^2/12}
+                  (d\widehat b_{g,y})^2\\
+ &\le\frac{h x^{12}}{7680^2q_g}(d\widehat b_{g,y})^2
+ <10^{-27}(d\widehat b_{g,y})^2.
+ \end{split}
+ \tag{EP6}
+\]
+The last strict rational inequality uses $h\le3/500$, $|x|<1/100$ and
+$q_g\ge10^{-6}$, satisfied by the stated $.00135$ gyro-density profile.
+No extremum of $P$, $K$, residual, or tuner component was multiplied into it.
+The exact denominator retains the same pitch/BG process covariance.
+
+This does \emph{not} pay the process score feedback. With $a_E$ the actual
+combined score from (PS1), $u_E=ds_E$, and $D_E=dP_E$, the direct grouped
+identity is
+\[
+ \begin{split}
+ W_E^+-W_E={}&-\ell_{mean,E}(\eta_E)-\lambda\ell_{P,E}(D_E)\\
+ &+2\langle F_E\eta_E,F_ED_Ea_E+u_E\rangle_{J_E^+}
+             +\|F_ED_Ea_E+u_E\|_{J_E^+}^2.
+ \end{split}
+ \tag{EP7}
+\]
+In particular the cross term between $F_ED_Ea_E$ and $u_E$ remains signed.
+For varying physical/private histories, use the full causal $dF,dQ,ds$ from
+(PS10), not (EP3). In AW coordinates these zero original coefficient ports
+become the exact frame-connection differences (PS11); they cancel only upon
+the full consistent word composition, with both endpoints retained.
+
+The desired uniform bound on $E_L$, the odd and varying-source work, and the
+domination of (EP7) plus correction/reset/reference/AW/gauge work by (CP5)
+are still \textbf{OPEN}. The number in (EP6) is not a contraction constant.
+In particular $d\widehat b_{g,y}=\eta_{g,y}+(dPJe)_{g,y}$; converting its
+square to joint storage still uses the inherited comparison and actual metric.
+No independent-maxima estimate or invariant radius is substituted for that
+missing comparison. Structures preserved: all states/parities, literal process
+polynomials and normalized quaternion, causal tuner, physical model mismatch,
+and separate projection/reset/AW chronology. Relaxations: explicitly fixed
+input, planar, regular real-operation derivative scope only; no physical
+assumption or runtime change. The tempting $ds_E=0$ shortcut is invalidated
+by the source algebra, not adopted as a surrogate.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

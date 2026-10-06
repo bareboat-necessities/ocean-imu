@@ -58,6 +58,11 @@
   "planar_acc_charge_retains_pitch_AW_cross_covariance": true,
   "planar_acc_curvature_charge": "||m0||_(R^-1)^2 <= (e^T P^-1 e) tr(R^-1 J_y B_v P B_v^T J_y^T)",
   "planar_acc_physical_mismatch": "m=J_y[t daw+omega e_aw-omega t D(t)(a_phys-g)-omega nu], D(t)=(R_y(-t)-I)/t",
+  "planar_even_auxiliary_charge_BG_coefficient_upper_real": "1/1000000000000000000000000000",
+  "planar_even_auxiliary_charge_scope": "h<=.006, |h omega_y|<.01, q_g>=1e-6, fixed source/private state; original coordinates before separate projection/AW/reset operations; not a bound for full word work",
+  "planar_even_process_work_proof": "app:planar-even-process-work",
+  "planar_fixed_input_even_dF_dQ_zero": true,
+  "planar_fixed_input_even_ds_identically_zero": false,
   "planar_magnetic_loss": {
     "activation_domain_forward_invariant": false,
     "covariance_square_charge_upper": "189/10000",
@@ -112,6 +117,7 @@
     "service_assumed_not_proved_for_planar_witness": true,
     "tilt_scope": "existing 6-degree retained nominal/central-physical comparison chart"
   },
+  "planar_quaternion_polynomial_derivative_defect_retained": true,
   "positive_magnetic_loss_scope": "nominal planar invariant stratum, even mean and parity-block covariance; not all nominal perturbations",
   "profile": "planar wrapper sigma_a=.2, sigma_g=.00135, sigma_m=.8, b0=1e-10, adaptive S; no AtomS3R transfer",
   "qualification": "OU3_MEASUREMENT_FRAME_V2",

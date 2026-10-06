@@ -18,6 +18,7 @@ from tools.stability.ou3_theorem.measurement_frame import (
     aw_conditional_sync,
     conditional_aw_storage, aw_precision_process_balance, qualified_aw_precision_ceiling,
     conditional_aw_process_coercivity,
+    planar_pitch_prediction_calculus,
 )
 from tools.stability.ou3_theorem.planar_innovation_storage import information_shear_correction
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import product
@@ -26,6 +27,51 @@ from tools.stability.ou3_theorem.world_frame import quaternion_rotation, skew
 
 
 class MeasurementFrameTests(unittest.TestCase):
+    def test_literal_planar_pitch_process_and_quaternion_defect(self):
+        h, x, qg, qb = F(3, 500), F(7, 1000), F(135, 100000)**2, F(1, 10**10)
+        out = planar_pitch_prediction_calculus(h, x, qg, qb)
+        self.assertEqual(out['pitch_BG_transition'], [[1, h], [0, 1]])
+        self.assertEqual(out['quaternion_norm_squared'],
+                         1+x**6/F(23040)-x**8/F(245760)+x**10/F(14745600))
+        self.assertLess(out['literal_angle_derivative'], 1)
+        self.assertLess(out['auxiliary_charge_upper'], F(1, 10**27))
+        # Symbolically derived cap evaluated with exact rationals, not a grid.
+        self.assertLess(F(3, 500)*F(1, 7680*10**12)**2/F(1, 10**6), F(1, 10**27))
+        at_zero = planar_pitch_prediction_calculus(h, 0, qg, qb)
+        self.assertEqual(at_zero['literal_angle_derivative'], 1)
+        with self.assertRaisesRegex(ValueError, 'small-angle'):
+            planar_pitch_prediction_calculus(h, F(1, 100), qg, qb)
+
+    def test_planar_axis_annihilates_all_literal_integral_coefficients(self):
+        # Arbitrary rational coefficients test the coefficient-free identity
+        # W e_y=W^2 e_y=0, including either literal coefficient branch.
+        h, w = F(3, 500), F(7, 13)
+        W, ey = skew([0, w, 0]), [[0], [1], [0]]
+        W2 = product(W, W)
+        g0, g1, g2, g3 = F(2, 7), F(3, 11), F(-1, 13), F(5, 17)
+        scale = lambda A, a: [[a*x for x in row] for row in A]
+        R = add(add(identity(3), scale(W, -h*g0)), scale(W2, h*h*g1))
+        B = add(add(scale(identity(3), h), scale(W, -h*h*g1)), scale(W2, h**3*g2))
+        IB = add(add(scale(identity(3), h*h/2), scale(W, -h**3*g2)), scale(W2, h**4*g3))
+        self.assertEqual(product(R, ey), ey)
+        self.assertEqual(product(B, ey), scale(ey, h))
+        self.assertEqual(product(IB, ey), scale(ey, h*h/2))
+        self.assertNotEqual(R[0][2], 0)  # odd block is NOT constant in w
+
+    def test_planar_process_calculus_is_bound_to_literal_source(self):
+        root = Path(__file__).resolve().parents[2]
+        core = (root/'src/kalman_ou_common/KalmanOUCoreMath.h').read_text()
+        shipping = (root/'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h').read_text()
+        for text in ('w = std::fma(-t2, T(1)/T(8), w);',
+                     'w = std::fma( t4, T(1)/T(384), w);',
+                     'k = std::fma(-t2, T(1)/T(48), k);',
+                     'k = std::fma( t4, T(1)/T(3840), k);', 'q.normalize();'):
+            self.assertIn(text, core)
+        for text in ('F_AA.template block<3,3>(0,3) = Bstep;',
+                     'Qbg = Qbase.template bottomRightCorner<3,3>();',
+                     'I_BB = simpson_B_Q_BT_(w, Ts, Qbg);'):
+            self.assertIn(text, shipping)
+
     def setUp(self):
         self.R = quaternion_rotation([5, 0, 1, 0])
         self.T = frame(self.R)
