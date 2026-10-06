@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "fe8816408a393f5487b131441bc7c00726b679313d47834241d4f19019e17cc9",
-  "results_file_count": 443,
+  "replay_fingerprint": "cadf8f863ab29121b9f4bfec8fa6bae82cc3925aa00ad2e6a14b0b7719b560a7",
+  "results_file_count": 451,
   "results_files": [
     {
       "kind": "file",
@@ -580,6 +580,46 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/heave_baselines/checks.json",
+      "sha256": "122f92c0cc40e8a5026a0f0925457fd520c8fd9193bf6725c61490b43a81ffcf"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/heave_baselines/contrasts.json",
+      "sha256": "30c13dcbca5807313700d77e3cfaa5629cfbd82800e227cf27ada7e3b5d566e7"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/heave_baselines/frozen.json",
+      "sha256": "6539d5adf4a714d79e65d0020cdfcf98fbe7de40a965033808217ea576678c04"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/heave_baselines/heave_baselines_long.csv",
+      "sha256": "6030ceb8783d10b7f1f2733516e1707c03d334c0e5fab2daa494d4336943f5d4"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/heave_baselines/heave_baselines_table.tex",
+      "sha256": "e49773995104df3fd5d5564f8ae7343fc6195134784be2464a25b87ad6132422"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/heave_baselines/heave_baselines_vertical.svg",
+      "sha256": "2f9df2b3a8fa3b08b8cc145bd6fba86640f3b0ec3a5c16960aabf2ae879f4e16"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/heave_baselines/manifest.csv",
+      "sha256": "4456849db9da23c0fb9034dd5dcc3ee454b814d1ac2a69815f37a09c57ca0be4"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/heave_baselines/summary.md",
+      "sha256": "0d079a0d60d531d0863a785ab9cedd00d13e323a561568fad7006e3a2adca12f"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/low_wave_noise/acceleration-error-spectra.png",
       "sha256": "00f0c6a97c75c0c3c45df172ed1bc20251eeac2dd234ddf55bc2c638049aaa8d"
     },
@@ -981,7 +1021,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "125b5dcb80dfbf8ce691b26b233feed2aaada10982dfa29b92c933bc5848e18c"
+      "sha256": "ce998e62e91ec20e9499c1a9b97e7352dfee255a471d3fd53b4f53d7d3603cb6"
     },
     {
       "kind": "file",
@@ -1051,62 +1091,62 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "b49f17a7200416f7c72638311e97c947958229e5f8e08b6b4d9aefed1d9c7b73"
+      "sha256": "aa67a64d2cc0a68551da5798fe8c682f6e501dd271e960fc641ac68ab3dfe73f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "5e7f790ac3c224e8825bde5cf7b93de768f8e4f137a7646e1e6ac4096bc1d725"
+      "sha256": "e5a55b6d17079394cfbbc6eb1caefe1b0eeda9116aacfefaa6386490f7b88019"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "9e07891b794f114c94cda082534c21c968b9ee87aaabd9ac261485e87a0e9f77"
+      "sha256": "71d87ec0ee431d607cc789f4652809a789506185a536f767095554d26cfdf901"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "a13723fd72baeebe724406de071f79c59ddbf92048651f5c49985bf0b9dc12e1"
+      "sha256": "138cdf0c231594621ba3171f6ada25c11a6c8abffadc37a2398ae529912bc256"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "ec68dc502964057d27d68e47ed1d9c56dcca29bfc4e54f2cf6fdc2ec8b12c798"
+      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "81ac5228ea0af5366f186522868c2bab9a334d7fc83f419be7c467f8fd3c5293"
+      "sha256": "ce5592e8675a4eb2f12f2979b87a825c2be40aad4b483d4b968b35bcba0a1ca2"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "1a62977df6d1e8c192d7176f7a6c1162e55837efcd69526c7f1cd1ded99e353f"
+      "sha256": "9bf7d87c06a226f50d0b9e9d566f5b2cb24f402f0525804987e2bac4675efc79"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "52f92ca6be0738a25612837b3510919d4a89d766ae14e7573b722b584c6a4cc0"
+      "sha256": "bffabcaf390778b6550b01fe5be72a2b2bc5c87e825dbd998380353a97e02abd"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "0adea48c28b32fa20da419f608a3ead6f7b9921ce05f683f55c75fe517bbf856"
+      "sha256": "2e152c0bcda46e96cb272a8f9cfb8aa2577b37cfb873d08e0e008277540a77e7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "14dd221799c416928a2f8c2902c5b88914bb153b901b1f172e2ef930cc73e0e4"
+      "sha256": "2d81bec7d2df00a354f0aee7e2374529471c7aad56cb57a2023ad5727093eabd"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "7175ccedc25ceb82ff821a7bcd79b769c03e73383fcd0f5309859f722537a795"
+      "sha256": "3804dc62163d811550a4b12ae23e7fb6b59138dbdc73df3b00da91cccaa22ceb"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "8bb9f8290a7262397438ae0d0e39055e042dd4e6465001ae3ca38fe33b40ec9d"
+      "sha256": "c472f66713cd20d7a290ef1033b8345e1643118ea286b7cb56021706320ce20b"
     },
     {
       "kind": "file",
@@ -1121,7 +1161,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "3d324b6c6b8d5cfd19c002d3ac88b2d3da33ec22cf3c40e1538170321c65176c"
+      "sha256": "cbf0e784c10dabf061e9d74bbbcf48199fd711ca514877058d9855c375d0d047"
     },
     {
       "kind": "file",
@@ -2219,7 +2259,7 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "4991e01bc391da07e991c8991910ec534723a25d3fef0b6172595e6838bd710b",
+  "results_fingerprint": "e87a2584f14acc4658be3c21d91a94d270bd43f32cc48634bd6a09f6bbf38f25",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
@@ -4580,7 +4620,7 @@
     {
       "mode": "100644",
       "path": "tools/heave_baseline_study.py",
-      "sha256": "3d3fd971f8c452e7199478ef3638a70d94553aca18de5c5af974700d9ad5d538"
+      "sha256": "6209d922db0e09c5c07bc88291203f89881a20c9befc6e1ef027fc78f296a3cb"
     },
     {
       "mode": "100644",
