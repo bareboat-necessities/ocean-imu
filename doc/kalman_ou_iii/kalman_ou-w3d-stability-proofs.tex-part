@@ -3136,6 +3136,154 @@ assumption, runtime change or numerical exploration. D remains the status of
 the unclosed uniform domination, not a shipping counterexample. A singular
 score margin is retained as an obstruction to this inverse, not removed.
 
+\subsection{Directional score limitation and automatic base-packet absorption}
+\label{app:conditional-packet-absorption}
+
+\paragraph{Scope and finite-error role.}
+The following analytical result applies to every regular word covered by
+(CM1), in either the input coordinates or the consistent AW coordinates
+(CM11)--(CM12). It discharges absorption of the complementary packets of
+its actual dissipative base transport. It does not replace the complete
+tangent by that transport. A uniform directional score margin, endogenous
+port absorption, quotient endpoint work and finite-error retention remain
+separate obligations. No extra physical assumption or numerical enclosure
+is used. In particular, positivity of the conditional process loss cannot
+by itself establish those obligations.
+
+\paragraph{Unequal directional losses do not share the isotropic cancellation.}
+The limitation is an exact algebraic one. In the coordinates of (CM5), take
+\[
+ T=\operatorname{diag}(1-\varepsilon,1/2,1/2),\quad
+ e_a=(0,a,0)^T,\quad q_a=(I-T)e_a=(0,a/2,0)^T,
+ \qquad 0<\varepsilon<1.
+\]
+This preserves the loss-generated score relation; it does not choose a
+score independently of its loss. Both $K$ and $B_q$ are diagonal. Equation
+(CM5) gives the three eigenvalues of $K^{1/2}B_qK^{1/2}$ exactly:
+\[
+ a^2\frac{1-\varepsilon}{4\varepsilon(1+\varepsilon)},
+ \qquad \frac{a^2}{3},\qquad\frac{a^2}{6}.                 \tag{CP1}
+\]
+Thus the strict score criterion requires $\lambda$ greater than their
+maximum. In contrast, $q_a^T(I-T)^{-1}q_a=a^2/2$ is independent of
+$\varepsilon$. The off-diagonal covariance variation linking coordinates
+one and two transmits the strong-direction score into the weak mean loss.
+A bound on comparison energy alone does not give a loss-independent
+threshold. The existing positive $c_{aw}$ precludes taking
+$\varepsilon\to0$ within its qualified fixed domain; it does not provide
+the missing actual score bound. Equation (CP1) is a test of the logical
+sufficiency of the retained matrix premises, not a reached shipping word,
+an admitted counterexample, or a reason to tune $\lambda$ by a scalar search.
+Its implication is to retain the actual directional reader and signed
+supply; (CM6) cannot be extrapolated to anisotropic conditional losses.
+
+\paragraph{Automatic absorption of complementary base packets.}
+Equip the full mean/symmetric-covariance tangent space with the joint metric
+$\mathcal H_i$ of $W_i$. Let
+\[
+ \mathcal T_0(\eta,D)=(M\eta,MDM^T)
+\]
+be the actual base transport, and choose root lifts $R_c,R_o$ with
+$R_c(u,Y)=(Eu,EYE^T)$ and $R_c^T\mathcal H_0R_o=0$.
+Keep the entire complementary space; it is not a physical-gauge quotient.
+Set
+\[
+ D_b=\begin{pmatrix}A&0\\0&\lambda G_F\end{pmatrix},\quad
+ B=R_c^T\mathcal T_0^T\mathcal H_N\mathcal T_0R_o,\quad
+ H_o=R_o^T\mathcal H_0R_o,\quad
+ Q_o=R_o^T\mathcal T_0^T\mathcal H_N\mathcal T_0R_o.
+\]
+Conditional process loss gives $D_b\succ0$. Full base nonexpansion gives
+\[
+ \mathcal H_0-\mathcal T_0^T\mathcal H_N\mathcal T_0\succeq0.
+                                                               \tag{CP2}
+\]
+For completeness, whiten $M$ to $U=P_N^{-1/2}MP_0^{1/2}$.
+The actual process/Joseph/reset/AW base inequalities give $U^TU\preceq I$;
+hence $|U\eta|^2\le|\eta|^2$ and
+$\|UZU^T\|_F^2\le\|Z\|_F^2$. This proves (CP2) on both mean and
+covariance coordinates, including all cross-covariance entries. Held
+coordinates remain, using only the reached optimal active reduction.
+Congruence by $(R_c,R_o)$ and Schur complementation prove
+\[
+ \boxed{S_b:=H_o-Q_o-B^TD_b^{-1}B\succeq0.}                 \tag{CP3}
+\]
+Equivalently, for every complementary root $w$, the base packet energies
+obey the actual joint inequality
+\[
+ \boxed{\mathcal P_{self,b}+\mathcal P_{mix,b}\le W_o,}
+ \quad \mathcal P_{self,b}=w^TQ_ow,\quad
+ \mathcal P_{mix,b}=w^TB^TD_b^{-1}Bw.                        \tag{CP4}
+\]
+This is source-uniform on the stated regular base domain with exact
+coefficient one, requiring no full covariance ceiling or new service
+constant. Equality and base kernels are allowed. It is not a positive
+uniform transverse gap. The exact retained base loss is
+\[
+ W_0-W_{N,b}=\|z-D_b^{-1}Bw\|_{D_b}^2+w^TS_bw.             \tag{CP5}
+\]
+Thus one should not independently price propagation of the complementary
+root a second time as generated forcing.
+
+\paragraph{Why the fixed half-charge route is not a necessary test.}
+A rational algebraic specialization suffices to check the loss of margin.
+Take $P_0=P_N=I_2$, $E=(1,0)^T$, $q=0$, no covariance tangent or generated
+ports, and
+\[
+ M=\begin{pmatrix}3/4&1/5\\1/5&3/4\end{pmatrix},\qquad
+ \eta_0=(0,1)^T.
+\]
+The base eigenvalues are $19/20,11/20$, so the full base gap is strictly
+positive. Nevertheless (CM10) with $\beta=1/2$ gives
+\[
+ W_0-W_N=\frac{159}{400},\quad
+ \mathcal P_{self}=\frac{241}{400},\quad
+ \mathcal P_{mix}=\frac{12}{53},\quad
+ W_o-\mathcal P_{self}-2\mathcal P_{mix}
+       =-\frac{1173}{21200}<0.                              \tag{CP6}
+\]
+The exact Schur remainder instead is
+$159/400-12/53=3627/21200>0$. This formal test does not assert that these
+matrices are shipping-reachable. It establishes a \textbf{D sufficient-bound
+failure}: strict base contraction and the exact consistent-coordinate
+identities alone do not imply the fixed half-charge domination. That
+sufficient inequality remains valid, but must not be made a necessary
+milestone or repeatedly tightened as if its sign were the true gap.
+
+\paragraph{Exact remaining work and activation.}
+Write the complete actual endpoint tangent, in the same coordinates, as
+$\mathcal T_0v+\mathcal R(v,s)$, where $v=R_cz+R_ow$ and $s$ retains the
+inherited auxiliary/source variation. The remainder includes $MD_0q$,
+every generated $U_iq_{i+1,N}$, row/noise/reference derivatives, reset,
+projection, original-marginal AW faces and endpoint connection terms.
+No independence between these quantities is asserted. From (CP5),
+\[
+\begin{split}
+ W_0-W_N={}&\|z-D_b^{-1}Bw\|_{D_b}^2+w^TS_bw\\
+ &-2\langle\mathcal T_0v,\mathcal R(v,s)\rangle_{\mathcal H_N}
+   -\|\mathcal R(v,s)\|_{\mathcal H_N}^2.
+\end{split} \tag{CP7}
+\]
+In consistent AW coordinates add only $-\Gamma_0+\Gamma_N$ for the quotient.
+The AW endpoint connection already belongs to $\mathcal R$ and the root
+metric; it is not charged again. The unresolved threshold is domination
+of the \emph{signed combined last two terms} and gauge work by (CP5),
+with a strictly positive uniform remainder on a justified transverse lift.
+Uniform score control still needs the inherited comparison and signed
+source budget; first-Live energy cannot be restarted. Complementary
+coercivity needs actual process/$S$/magnetic transport, not only magnetic
+row rank. Auxiliary directions outside stored coordinates need their causal
+lift or an explicit source/storage treatment. All-time branch activation,
+nonlinear retention and arithmetic remain open. No radius is computed.
+
+Structures preserved: full actual base covariance metric and transports,
+all conditional/complementary covariance entries, complete signed generated
+ports and endpoint frame/gauge work. Relaxations: (CP1),(CP6) are explicitly
+formal tests of sufficient matrix implications, not models of the filter;
+(CP2)--(CP7) use the proved regular real-operation identities without new
+physical assumptions. No shipping counterexample is found. The uniform
+score and complete signed-work gap are \textbf{OPEN}.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

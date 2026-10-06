@@ -12,7 +12,7 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `5b030f42265afcce3d8983f37bc344a0c070b57d`.
+Verified starting PR head: `f15314d42b8d9eb8184f19a2dede05cc838f9775`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved. Current CI chronology belongs in PR metadata.
 
@@ -127,6 +127,32 @@ The observed-coefficient center defect .0006179245 is finite and uses future
 observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
+
+**E — rendering corrected:** the new CP7 equation tag was initially inside
+`split`; moved it outside. No formula, premise or validation gate changed.
+The exact-rational checks and source-bound evidence remain controlling.
+
+**PROVED — analytical complementary base-packet absorption:**
+`app:conditional-packet-absorption` proves `P_self,b+P_mix,b <= W_complement`
+from the exact full joint base Schur loss. It retains all covariance cross
+entries and consistent AW coordinates. This removes independent pricing of
+base complementary-root propagation; it does not absorb the actual score
+or generated coefficient/source ports. The remaining signed work is exactly
+`2<T_base v,R>+|R|^2`, with all suffix scores and endpoint gauge retained.
+
+**D — sufficient-bound failure and formulation review:** the fixed half-charge
+criterion is negative (`-1173/21200`) on an exact formal strictly contractive
+base specialization whose actual loss is `159/400`; the exact base Schur
+remainder is `3627/21200>0`. This is not a reached shipping word. Therefore
+half-charge domination is optional, not a necessary milestone. Separately,
+the linked anisotropic score `q=(I-T)e` has the exact directional threshold
+`a^2(1-epsilon)/(4 epsilon(1+epsilon))` in a weak direction, despite fixed
+loss-score energy `a^2/2`. The isotropic cancellation cannot be extrapolated.
+No shipping counterexample, failed replay, or interval instability is inferred.
+Retain the actual directional reader and complete signed matrix; do not launch
+a scalar tightening campaign. Uniform score and remaining signed-work margins
+are OPEN. See [the proof and activation table](ou3-linked-word-score.md#complementary-base-packets-are-already-paid-for).
+
 
 **PROVED — analytical actual conditional mixed-block completion:**
 `app:conditional-mixed-word` now evaluates the root mean/covariance score

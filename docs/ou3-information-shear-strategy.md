@@ -332,3 +332,17 @@ half of its net root form. This retains U*q_suffix and both frame/gauge
 endpoints. Its packets remain endogenous; do not substitute independent
 inputs, and do not use the already-positive base process block as proof of a
 positive net score margin. Uniform score and packet domination remain OPEN.
+
+
+### Retain the base Schur cancellation before pricing packets
+
+The proof in `app:conditional-packet-absorption` pays for complementary
+base packets exactly with the full joint Schur loss. The fixed half-charge
+criterion remains a sufficient option, not a required proof milestone:
+a formal strictly contractive base already makes it negative. This D failure
+requires retaining the signed cross block, not a tighter scalar search.
+The unequal-loss directional score formula likewise prevents extrapolating
+the isotropic cancellation. Prove the actual directional score and remaining
+signed generated-work margins; do not count base propagation or AW frame
+work again. The [precise balance and dependency table](ou3-linked-word-score.md#complementary-base-packets-are-already-paid-for)
+are controlling. Uniform coercivity, activation, and the radius remain open.

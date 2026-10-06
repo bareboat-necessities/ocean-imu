@@ -10,7 +10,7 @@ from tools.stability.ou3_theorem.information_shear_word import (
     conditional_mixed_coefficients, conditional_word_mixed_bound,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
-from tools.stability.ou3_theorem.matrix_certificates import add, identity, is_psd, transpose
+from tools.stability.ou3_theorem.matrix_certificates import add, identity, is_psd, ldlt, transpose
 from tools.stability.ou3_theorem.planar_complete_word_storage import product
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import (
     gain_differential, optimal_covariance_differential,
@@ -319,6 +319,48 @@ class InformationShearWordTests(unittest.TestCase):
         self.assertNotEqual(bound['aggregate_mean_packet'], zeros(4, 1))
         self.assertNotEqual(product(out['base_suffixes'][1], U, out['suffix_scores'][1]), zeros(4, 1))
         self.assertFalse(bound['uniform_margin_verified'])
+
+
+    def test_anisotropic_linked_score_has_cross_direction_threshold(self):
+        # CP1 exact rational substitution of the symbolic formula; no search,
+        # independent-score maximization, or shipping reachability assertion.
+        eps, amplitude = F(1, 100), F(2, 3)
+        T = [[1-eps, 0, 0], [0, F(1, 2), 0], [0, 0, F(1, 2)]]
+        e = [[0], [amplitude], [0]]
+        q = product(add(identity(3), T, -1), e)
+        out = conditional_mixed_coefficients(identity(3), T, q, F(1))
+        critical = product(out['completed_score_weight'], out['directional_score_reader'])
+        expected = [amplitude**2*(1-eps)/(4*eps*(1+eps)),
+                    amplitude**2/3, amplitude**2/6]
+        self.assertEqual(critical, [[expected[i]*F(i == j) for j in range(3)] for i in range(3)])
+        self.assertEqual(product(transpose(q), inverse(add(identity(3), T, -1)), q)[0][0], amplitude**2/2)
+
+    def test_base_schur_absorbs_complement_where_fixed_half_charge_fails(self):
+        # CP3--CP6: exact formal base map, NOT an admitted shipping execution.
+        M = [[F(3, 4), F(1, 5)], [F(1, 5), F(3, 4)]]
+        ldlt(add(identity(2), product(transpose(M), M), -1))
+        eta = [[0], [F(1)]]
+        out = conditional_word_mixed_bound(identity(2), identity(2), M,
+            zeros(2, 1), eta, zeros(2, 2), product(M, eta), zeros(2, 2),
+            [[F(1)], [0]], F(1), F(0))
+        self.assertEqual(out['actual_signed_gap'], F(159, 400))
+        self.assertEqual(out['packet_self_energy'], F(241, 400))
+        self.assertEqual(out['linked_mixed_coupling_charge'], F(12, 53))
+        self.assertEqual(out['half_loss_lower_bound'], -F(1173, 21200))
+        self.assertEqual(out['linked_lower_bound'], F(3627, 21200))
+        # Check the full joint mean/Fisher base Schur identity, including
+        # off-diagonal covariance variation, not only the displayed mean slice.
+        H = joint_metric(identity(2), F(1))
+        transport = joint_congruence(M)
+        gap = add(H, product(transpose(transport), H, transport), -1)
+        c, o = [0, 2], [1, 3, 4]  # eta_0,D_00 and their metric complement
+        take = lambda rows, cols: [[gap[i][j] for j in cols] for i in rows]
+        A, cross, complement = take(c, c), take(c, o), take(o, o)
+        schur = add(complement, product(transpose(cross), inverse(A), cross), -1)
+        ldlt(A)
+        ldlt(schur)
+        self.assertEqual(A[0][0], F(159, 400))
+        self.assertEqual(schur[0][0], F(3627, 21200))
 
 
 if __name__ == '__main__':

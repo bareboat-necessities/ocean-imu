@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "9181c0338b856d8bfb416c54b728a816dcef2072"
+      "git_blob_sha": "c8197431de21f661f97fc8d2446a0b9ddc10b7ab"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "513a45b270bb056e8d7eaafd51645510788f2dd2"
+      "git_blob_sha": "776bd14a082fac23c4779f7e2408740d0afb97d4"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "6274917d14ecb437c03df88ee7dfc681e928cd54"
+      "git_blob_sha": "b801a021f7060077ad64b9ba30fa81594b6fb5d6"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "50a82a6d4dd707384b8216b6a8a509db73d4f94e"
+      "git_blob_sha": "d26bb75485b06d33fe93f4e0f5b5a4eeb2f3dada"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "1ff73dba9f2c846cfa8c08d911fb0e7ab0f7c268"
+      "git_blob_sha": "b04cfa3c20e6c9ff5c93f792d2175a4fa1e29410"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "fdf38b9c6becd32fa5ba0a80f87ac790a6ee4da8"
+      "git_blob_sha": "9bdfa4ff56a0401dc7069749e423aacbb683c6f3"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -948,19 +948,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/information_shear_word.py",
-      "git_blob_sha": "2b7092cee54a71b6dd3aa8c5b0c1504efcbb1594"
+      "git_blob_sha": "efd5b0c64ea7a4256cb35d6ac8b9a11971c0a0be"
     },
     {
       "path": "tests/validation/test_ou3_information_shear_word.py",
-      "git_blob_sha": "612fcbab21b3640d073adaf71e3779415e540644"
+      "git_blob_sha": "523fa9c75d5c9925467a70bad26250d4f8e3abdd"
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "377d5820ee667c4138bcb78ee987c59586ad19fc"
+      "git_blob_sha": "d40ba88e4ce1971a7119fc78fc259006092c3875"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
-      "git_blob_sha": "4314eaf7ebee44a1980f65de96783863f00bd219"
+      "git_blob_sha": "fcc3442b3098f5faf550ecf666850536445c1984"
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
@@ -980,7 +980,7 @@
     },
     {
       "path": "docs/ou3-linked-word-score.md",
-      "git_blob_sha": "6be5caa98b6bb3a8ba069f8325a544863a8ccc53"
+      "git_blob_sha": "ea839ca785d9e920d51e9f4895a27e1919ab21cb"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1149,7 +1149,13 @@
     "uniform_generated_packet_absorption_verified": false,
     "required_endpoint_adjustment": "input-frame packets: Phi_0-Phi_N-Gamma_0+Gamma_N; already transformed packets: -Gamma_0+Gamma_N; no double counting",
     "mixed_word_tooling_failure": "E: a proof-text replacement escape was corrected before successful appendix compilation; no proof premise changed",
-    "conditional_AW_frame_invariance_verified": true
+    "conditional_AW_frame_invariance_verified": true,
+    "conditional_packet_absorption_proof": "app:conditional-packet-absorption",
+    "complementary_base_packet_Schur_absorption_verified": true,
+    "fixed_half_charge_domination_is_necessary": false,
+    "isotropic_score_cancellation_extends_to_anisotropic_loss": false,
+    "scope_check_failure_class": "D_SUFFICIENT_BOUND_FAILURE: formal matrix implications only; no shipping-reachability assertion",
+    "packet_absorption_tooling_failure": "E: CP7 tag moved outside split after local amsmath error; formula and proof conditions unchanged"
   },
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",

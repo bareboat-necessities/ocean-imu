@@ -409,3 +409,80 @@ packets, the explicit Phi_0-Phi_N adjustment remains mandatory. Packet
 dependence on conditional coordinates is not removed by this invariance.
 This discharges separate AW-frame pricing within the consistent bound, not
 uniform packet absorption or the full endpoint Schur margin.
+
+## Complementary base packets are already paid for
+
+**PROVED — analytical**, `app:conditional-packet-absorption`: on every regular
+word covered by the conditional process lemma, let `H_i` be the full joint
+mean/Fisher metric and `T_0(eta,D)=(M eta,M D M')` its actual base transport.
+Take the conditional lift `R_c(u,Y)=(E u,E Y E')` and its full root-metric
+orthogonal complement `R_o`. Define
+
+```
+D_b = diag(A, lambda G_F)
+B   = R_c' T_0' H_N T_0 R_o
+H_o = R_o' H_0 R_o
+Q_o = R_o' T_0' H_N T_0 R_o.
+```
+
+Actual base nonexpansion gives `H_0-T_0' H_N T_0 >= 0`. Since the qualified
+conditional process loss proves `D_b>0`, its exact Schur complement proves
+
+`S_b = H_o-Q_o-B' D_b^-1 B >= 0`.
+
+Consequently **base complementary packets satisfy
+`P_self,b+P_mix,b <= W_o`**, with exact coefficient one, uniformly on this
+regular domain. This includes all covariance cross entries, requires no new
+covariance ceiling, and does not assume a positive full transverse gap.
+It removes the need to charge propagation of the complementary root as if
+it were newly generated forcing. It does not absorb the score or generated
+ports, and does not replace the complete tangent by M.
+
+For `v=R_c z+R_o w` and the complete remainder
+`R(v,s)=actual_terminal_tangent-T_0 v`, the exact remaining balance is
+
+```
+W_0-W_N = |z-D_b^-1 B w|_D_b^2 + w' S_b w
+          -2 <T_0 v,R(v,s)>_H_N - |R(v,s)|_H_N^2.
+```
+
+All `M D_0 q`, generated `U_i q_suffix`, reference/noise/reset/AW-face and
+source contributions remain linked in R. In consistent AW coordinates add
+only the signed quotient term `-Gamma_0+Gamma_N`. Frame work is already in
+the actual coordinates and remainder. No physical gauge is deleted.
+
+### Two algebraic scope checks change the next obligation
+
+These are exact rational/symbolic tests of matrix implications, **not
+shipping-reachable histories or numerical experiments**.
+
+1. With `C=I`, `T=diag(1-epsilon,1/2,1/2)` and the linked score
+   `q=(I-T)(0,a,0)'`, the directional critical weights are exactly
+   `a^2(1-epsilon)/(4 epsilon(1+epsilon)), a^2/3, a^2/6`.
+   The loss-score energy is only `a^2/2`. Thus the isotropic cancellation
+   cannot be used across unequal loss directions. The fixed qualified
+   `c_aw>0` remains valid; this does not assert arbitrarily small shipping
+   loss or impossibility of choosing a common lambda.
+2. The strictly contractive formal base
+   `M=[[3/4,1/5],[1/5,3/4]]`, `P_0=P_N=I`, `q=0`, and complementary
+   mean root `(0,1)` has true loss `159/400`, but the fixed half-charge
+   lower bound is `-1173/21200`. Its exact base Schur remainder is positive,
+   `3627/21200`. Thus fixed half-charge domination is not a necessary
+   milestone. The bound remains mathematically valid.
+
+The failed promotion of base loss to those sufficient margins is **D**.
+Do not tighten the half-charge relaxation repeatedly or infer shipping
+instability. The architecture review returns to the exact signed combined
+work above, retaining the already-proved base absorption. No radius is solved.
+
+| Remaining bound | Exact role | Status |
+|---|---|---|
+| Actual directional score reader for one lambda | Controls off-diagonal covariance-to-mean transfer across unequal losses | OPEN; inherited signed supply and source score not bounded uniformly |
+| Complementary base Schur loss | Pays for base complementary packets | PROVED, semidefinite; strict transverse comparison remains OPEN |
+| Combined remainder and quotient work | Must be dominated by retained squares/Schur loss with positive uniform remainder | OPEN; actual causal auxiliary/source maps retained |
+| Branch/precision/entry and finite error | Activates regular identities and transfers tangent gap | OPEN; no all-time compactness or first-Live restart assumed |
+
+Structures preserved: actual full-state base P/gain/Joseph/reset/AW chronology,
+full Fisher metric, all generated suffix ports and consistent frame/gauge.
+Relaxations: explicit formal matrix scope checks only; no shipping equation
+or physical assumption changed. No admitted counterexample was found.
