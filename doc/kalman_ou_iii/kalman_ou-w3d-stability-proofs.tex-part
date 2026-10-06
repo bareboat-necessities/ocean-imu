@@ -3970,6 +3970,117 @@ formal scalar scope test. The uniform shipping comparison/word gap remains
 or use a uniformly coercive storage; mere monotonicity of $\mathcal W$ does
 not suffice.
 
+\subsection{Causal restoration is the original gap, not an extra reserve}
+\label{app:bordered-causal-restoration}
+
+\paragraph{Lemma, quantifiers and exact obligation.}
+For every finite regular word covered by the preceding bordered lift, propagate
+the \emph{complete actual} tangent, including inherited auxiliary/source
+coordinates, and start its bookkeeping scalar with $c_0>0$, $dc_0=0$.
+Unsupported operations use the explicit slack-preserving bookkeeping and
+their full signed work. Let $\mathcal A_B$ be the sum of the nonnegative
+bordered base losses from (BC4),(BC6), and let $\mathcal F_B$ be the sum of
+all remaining signed work, including (BC7), noise, reset, projection and AW
+faces. These are evaluated at actual prefixes, not frozen base products.
+Their exact balance is $\mathcal W_N-\mathcal W_0=-\mathcal A_B+
+\mathcal F_B$. The proposed refinement asks whether restoring fixed slack
+can be paid without the original uniform gap. The following identity answers
+that question without estimating any term independently.
+
+\paragraph{Restoration equivalence --- PROVED analytical.}
+Put $\lambda=c_0/2$ and retain the original joint storage
+$W_\lambda=\eta^TJ\eta+\lambda\operatorname{tr}(JdPJdP)$.
+At the root (BC1) gives $\mathcal W_0=2W_{\lambda,0}/c_0$.
+At the terminal boundary set $c_N=c_0+B_W$, $dc_N=dB_W$ and let
+$\mathcal R_W$ be the signed restoration cost (BC8). Substitution gives
+\[
+ \boxed{W_{\lambda,0}-W_{\lambda,N}
+ =\frac{c_0}{2}\{\mathcal A_B-\mathcal F_B-\mathcal R_W\}.}
+                                                               \tag{BR1}
+\]
+Indeed the terminal $+(dB_W/c_N)^2$ in $\mathcal W_N$ cancels the negative
+square in $\mathcal R_W$, and the two mean coefficients sum to $2/c_0$.
+No source, covariance or budget derivative is bounded or discarded.
+For the justified quotient, append $-\Gamma_0+\Gamma_N$ to (BR1), using
+the \emph{original} gauge-energy units. Frame terms are retained in whichever
+consistent coordinates are used; no magnetic decrement from a different
+storage is added.
+
+Thus proving that bordered loss pays restoration and actual work with a
+positive uniform reserve is \emph{exactly} the existing fixed-weight gap.
+The negative budget-derivative square cannot also be counted as new available
+dissipation. This equivalence is valid for the actual shipping causal lift;
+it is not a fixed-coefficient approximation. It neither disproves that gap
+nor pays it. Normalizing a proof scalar changes no physical history or state.
+
+\paragraph{Uniform coercivity must be checked on the causal image.}
+For one fixed, justified causal root/source lift with coordinate $a$, let
+$X_N a=\operatorname{vec}(J_N^{1/2}dP_NJ_N^{1/2})$ (both off-diagonal
+entries retained), $Y_Na=J_N^{1/2}\eta_N$, and $b_Na=dc_N$.
+All three maps are derivatives of the same inherited execution. For a proposed
+$\gamma>0$, uniform domination $\mathcal W_N\ge\gamma W_{\lambda,N}$
+requires, and is pointwise equivalent to,
+\[
+ (1-\gamma\lambda)X_N^TX_N+
+ (2/c_N-\gamma)Y_N^TY_N+c_N^{-2}b_N^Tb_N\succeq0           \tag{BR2}
+\]
+on that lift's allowed coordinate space. Unstored auxiliary inputs are not
+silently turned into stored root coordinates. If an allowed $a$ satisfies
+$X_Na=0$, $b_Na=0$ and $Y_Na\ne0$, its exact storage ratio is $2/c_N$.
+Therefore the scalar budget derivative can recover at most one missing
+direction; it cannot automatically control a covariance-invisible mean
+subspace of dimension at least two. This is a necessary test, not a claim
+that the shipping causal image has that dimension. Proving (BR2) on the
+actual compatible stratum still needs a quantitative causal comparison.
+Existing magnetic physical-probe service is not such a covariance-tangent
+comparison.
+
+\paragraph{A propagated-root scope test, not a freely chosen endpoint.}
+The previous ambient test can be strengthened to an exact causal one.
+Take two copies of its scalar covariance model:
+\[
+ P_0=I_2/2,\quad F=I_2/2,\quad Q=7I_2/8,\quad
+ H=R=I_2,\quad s=e_1/2,\quad\delta=e_1.
+\]
+All coefficients and source operands stay fixed. Vary only the comparison
+root $e_0(\varepsilon)=e_1+\varepsilon e_2$, with $P_0$ unchanged and
+$\kappa_0(\varepsilon)=e_0(\varepsilon)^TP_0^{-1}e_0(\varepsilon)+c_0$.
+The actual prediction and gain $K=I_2/2$ give the exact word map
+\[
+ e_{n+1}=\tfrac14e_n+\tfrac34e_1,\qquad P_{n+1}=P_n=I_2/2.
+                                                               \tag{BR3}
+\]
+At $\varepsilon=0$, $e_n=e_1$, $r_n=0$ and $c_n=c_0+9n/7$.
+Differentiation of this \emph{same} causal recurrence gives
+$dP_n=0$, $de_n=4^{-n}e_2$. The process scalar increment is source-fixed;
+the innovation-square derivative vanishes at $r_n=0$. Since
+$d\kappa_0=dV_0=0$, induction gives $d\kappa_n=dc_n=0$. Hence
+\[
+ \eta_n^TJ_n\eta_n=2\,16^{-n}>0,\qquad
+ \frac{\mathcal W_n}{W_{\lambda,n}}
+       =\frac{2}{c_0+9n/7}\longrightarrow0.                \tag{BR4}
+\]
+No terminal direction was independently selected or rescaled. The example
+has strictly positive process and observation action and a decaying mean
+tangent, yet no uniform metric equivalence on its causal lift. It is a formal
+linear covariance example, \emph{not} an OU-III admitted counterexample.
+It disproves the inference ``causal propagation alone restores coercivity'';
+the actual shipping (BR2) is still OPEN.
+
+\paragraph{Outcome and stopping rule for this refinement.}
+Neither (BR1) nor (BR2) supplies the requested uniform bound. This is the one
+mathematically motivated refinement of the bordered candidate: its restoration
+returns exactly to the original gap, and causality alone does not repair its
+metric degeneration. Classification \textbf{D}: an insufficient proof route,
+not filter instability. Do not continue growing/resetting the scalar or
+tightening isolated coefficients as a substitute for the original linked
+comparison. A new argument must bound the actual net word work or establish
+a quantitative comparison on the actual causal image. Preserved structures:
+all states, actual $P/K$/Joseph and supported process, full derivative and
+source/reference/reset/AW/gauge chronology. Relaxations: regular real-operation
+scope and the explicitly formal scope test only. No physical premise, runtime
+behavior, proof status count, invariant radius or all-time admission changes.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

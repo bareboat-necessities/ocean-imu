@@ -714,6 +714,37 @@ promotion to uniform retention; the lift and conditional loss identities are
 PROVED analytical. No radius, new physical assumption, full endogenous-work
 absorption or theorem-count increase is claimed.
 
+The exact restoration audit in `app:bordered-causal-restoration` closes a
+possible loophole in this interpretation. For `lambda=c_0/2`, the full causal
+word obeys
+
+```
+W_lambda,0-W_lambda,N = (c_0/2)*(A_B-F_B-R_W).
+```
+
+The negative `(dB_W)^2` in restoration cancels its terminal stored square.
+It cannot be credited again to absorb causal work. Endpoint quotient energies
+remain `-Gamma_0+Gamma_N` in the original storage units.
+
+On an actual root/source lift, write covariance, mean-shear and slack tangent
+maps as `X_N,Y_N,b_N`, respectively, in the endpoint precision coordinates.
+Uniform equivalence with constant gamma requires exactly
+
+```
+(1-gamma*lambda) X_N'X_N + (2/c_N-gamma) Y_N'Y_N
+  + b_N'b_N/c_N^2 >= 0.
+```
+
+This is a condition on the propagated causal image, not independently chosen
+endpoint tangents. A two-dimensional fixed-coefficient extension of the scope
+test propagates `de_0=e_2` to `de_n=4^-n e_2` with `dP_n=dc_n=0`; its exact
+storage ratio is `2/(c_0+9n/7)`. Thus causal propagation alone does not imply
+uniform equivalence. This example does not assert OU-III reachability or
+magnetic admission. The actual shipping inequality and net signed absorption
+remain OPEN. The bordered candidate has used its one motivated refinement;
+further work needs a quantitative shipping mechanism, not another scalar
+restoration or norm search.
+
 ## Fixed-input planar prediction: a genuine zero port, with its literal residue
 
 `app:planar-even-process-work` proves analytically that the original even

@@ -12,7 +12,7 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `4564d21fcdea897b27e22bfd2d773508cfff7479`.
+Verified starting PR head: `a6fb21c152308f1742472345e2cdf60b491e2a81`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved. Current CI chronology belongs in PR metadata.
 
@@ -28,6 +28,18 @@ lemma/quantifiers, finite-error role, literal dissipation structure, required
 proved/open bounds and avoidance of recorded dead ends. Required CI remains.
 
 ## Evidence
+
+**PROVED — analytical, restoration audit:** `app:bordered-causal-restoration`
+proves `W_lambda,0-W_lambda,N=(c_0/2)*(A_B-F_B-R_W)` for the full causal
+derivative, with `lambda=c_0/2`. The negative budget-derivative square in
+restoration cancels the square already stored at the terminal point; it is
+not additional dissipation. Paying restoration and all causal work is exactly
+the original fixed-weight gap, not a weaker obligation. The actual causal
+lift admits the necessary-and-sufficient Gram criterion (BR2); no positive
+uniform constant for shipping has been proved. A fixed-coefficient rational
+example propagates one nonzero root tangent with `dP=dc=0` and metric ratio
+`2/(c_0+9n/7)`, so causality alone cannot supply that constant. This is a
+formal scope test, not an admitted shipping history. No radius calculation.
 
 **PROVED — analytical, new storage test:** `app:bordered-comparison-storage`
 lifts the actual comparison into `M=[[P,e],[e',kappa]]`, with positive slack
@@ -431,6 +443,14 @@ Physical S is never reset by the estimator pseudo-measurement.
   coercive storage. No constant-source/covariance assumption is imposed on
   shipping. Retain the exact lift and two nonnegative correction losses;
   reject nonexpansion alone as physical comparison retention.
+  The one permitted refinement now retains the exact restoration and restricts
+  tangents to a causal lift. (BR1) recovers the original unpaid gap, and the
+  propagated-root scope test refutes automatic coercivity from causality.
+  Stop this route as a shortcut: another scalar reset, accumulated-budget cap,
+  or isolated coefficient tightening supplies no new mechanism. Retain the
+  identities; the next falsifiable obligation is a quantitative shipping
+  bound on `A_B-F_B-R_W` or the actual-lift Gram inequality (BR2), including
+  reference/source coordinates and endpoint gauge energy. Both remain OPEN.
 * **E, storage-test lint:** an unused innovation binding was removed after
   ruff flagged it; algebra tests passed and no check or condition was weakened.
 * **E, storage manuscript:** the standalone compile rejected an unavailable

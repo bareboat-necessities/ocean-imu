@@ -734,6 +734,35 @@ def bordered_correction(P, e, kappa, H, R, delta):
             'innovation': S, 'regression': regression}
 
 
+def bordered_restoration(P, e, D, de, initial_slack, budget, dbudget):
+    """Exact same-endpoint restoration, including the causal budget tangent.
+
+    This is bookkeeping only: P,e,D,de do not change. Paying restoration
+    recovers the original fixed-weight storage exactly, not a new margin.
+    """
+    c, b, db = F(initial_slack), F(budget), F(dbudget)
+    if c <= 0 or b < 0:
+        raise ValueError('positive initial slack and nonnegative supported budget required')
+    J = inverse(P)
+    V = product(transpose(e), J, e)[0][0]
+    dV = 2*product(transpose(e), J, de)[0][0]-product(transpose(e), J, D, J, e)[0][0]
+    before = bordered_comparison_storage(P, e, V+c+b, D, de, dV+db)
+    after = bordered_comparison_storage(P, e, V+c, D, de, dV)
+    eta = add(de, product(D, J, e), -1)
+    mean = product(transpose(eta), J, eta)[0][0]
+    covariance = trace(product(J, D, J, D))
+    charge = 2*b*mean/(c*(c+b))-db**2/(c+b)**2
+    fixed = mean+c*covariance/2
+    if after['Fisher_storage']-before['Fisher_storage'] != charge:
+        raise ArithmeticError('signed restoration charge failed')
+    if c*(before['Fisher_storage']+charge)/2 != fixed:
+        raise ArithmeticError('restoration did not recover the original storage')
+    return {'before': before['Fisher_storage'], 'after': after['Fisher_storage'],
+            'signed_charge': charge, 'fixed_weight_storage': fixed,
+            'budget_derivative_square_is_extra_dissipation': False,
+            'uniform_absorption_verified': False}
+
+
 def certificate():
     return {
         'qualification': 'OU3_INFORMATION_SHEAR_WORD_V2',
@@ -796,6 +825,11 @@ def certificate():
         'bordered_slack_balance': 'c_N=c_0+B_W on a covered process/correction word; no physical or estimator restart',
         'bordered_storage_uniform_coercivity_verified': False,
         'bordered_storage_full_endogenous_work_absorbed': False,
+        'bordered_restoration_proof': 'app:bordered-causal-restoration',
+        'bordered_restoration_equals_original_fixed_weight_gap': True,
+        'bordered_negative_budget_square_supplies_extra_gap': False,
+        'causality_alone_implies_bordered_uniform_coercivity': False,
+        'actual_shipping_causal_lift_uniform_coercivity_verified': False,
         'comparison_word_budget': 'chi_loss <= E_loss = V_0-V_N+Supply_W-sum NIS <= V_0+Supply_W-sum NIS',
         'comparison_supply': 'sum corrections ||r+H e||_(R^-1)^2 plus actual prediction/reset/projection signed cross-plus-square work',
         'physical_S_reset_by_pseudo_measurement': False,

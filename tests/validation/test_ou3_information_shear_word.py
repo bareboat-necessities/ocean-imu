@@ -10,6 +10,7 @@ from tools.stability.ou3_theorem.information_shear_word import (
     conditional_mixed_coefficients, conditional_word_mixed_bound,
     process_source_score, source_qualified_word_score, process_augmented_shear,
     held_bias_boundary_score, bordered_comparison_storage, bordered_process, bordered_correction,
+    bordered_restoration,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import add, identity, is_psd, ldlt, transpose
@@ -114,6 +115,42 @@ class InformationShearWordTests(unittest.TestCase):
         reader = [identity(3)[i]+[-x for x in B[i]] for i in range(3)]
         self.assertEqual(direct['tangent'], product(reader, dY, transpose(reader)))
         self.assertEqual(direct['slack_tangent'], old['slack_tangent'])
+
+    def test_bordered_restoration_recovers_original_storage_with_signed_budget(self):
+        out = bordered_restoration(self.P, self.e, self.dP, self.de, F(3), F(5, 7), F(-2, 9))
+        self.assertEqual(F(3, 2)*out['after'], out['fixed_weight_storage'])
+        self.assertEqual(F(3, 2)*(out['before']+out['signed_charge']), out['fixed_weight_storage'])
+        self.assertFalse(out['budget_derivative_square_is_extra_dissipation'])
+        negative = bordered_restoration(identity(2), [[F(1)], [F(0)]], zeros(2, 2),
+                                         zeros(2, 1), F(1), F(2), F(3))
+        self.assertEqual(negative['signed_charge'], F(-1))
+        self.assertEqual(negative['before']+negative['signed_charge'], 0)
+
+    def test_causal_mean_root_direction_does_not_automatically_restore_coercivity(self):
+        # One exact recurrence establishes the induction used in BR4; no replay
+        # or arbitrary terminal tangent. This is a formal KF, not shipping.
+        P, e = [[F(1, 2), F(0)], [F(0), F(1, 2)]], [[F(1)], [F(0)]]
+        D, de = zeros(2, 2), [[F(0)], [F(1)]]
+        B = [[F(1, 2), F(0)], [F(0), F(1, 2)]]
+        Q = [[F(7, 8), F(0)], [F(0), F(7, 8)]]
+        s, H, R, delta = [[F(1, 2)], [F(0)]], identity(2), identity(2), e
+        pred = bordered_process(P, e, F(3), B, Q, s)
+        post = bordered_correction(pred['P_next'], pred['e_next'], pred['kappa_next'], H, R, delta)
+        # Fixed coefficients imply dP=0. Fixed physical source means dr=-H de^-.
+        dep = product(B, de)
+        Si = inverse(post['innovation'])
+        K = product(pred['P_next'], transpose(H), Si)
+        dr = [[-x for x in row] for row in product(H, dep)]
+        den = add(dep, product(K, dr))
+        r = add(delta, product(H, pred['e_next']), -1)
+        dk = -2*product(transpose(r), Si, dr)[0][0]
+        end = bordered_comparison_storage(P, e, post['kappa_next'], D, den, dk)
+        self.assertEqual(den, [[F(0)], [F(1, 4)]])
+        self.assertEqual(end['slack_tangent'], 0)
+        self.assertEqual(end['slack'], F(1)+F(9, 7))
+        mean_energy = product(transpose(den), inverse(P), den)[0][0]
+        self.assertEqual(end['Fisher_storage']/mean_energy, 2/end['slack'])
+        self.assertFalse(certificate()['actual_shipping_causal_lift_uniform_coercivity_verified'])
 
     def test_optimal_action_kernel_includes_covariance_rows(self):
         P, H, R = identity(2), [[F(1), F(0)]], [[F(1)]]
