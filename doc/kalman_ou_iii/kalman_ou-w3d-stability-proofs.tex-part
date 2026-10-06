@@ -6036,6 +6036,10 @@ prefixes are exactly (CR31)--(CR32), including the actual $g,Q_{ao}$
 and $D_i h_S^T,D_i h_{mag}^T,D_i h_{acc}^T$.
 It satisfies $y^T\bar H y=\mu^T\bar D\mu>0$;
 the zero-action/kernel results do not exclude it.
+Also $y^TH_0y>0$ on this injective pure covariance slice. By (OF4)'s
+zero endpoint gauge derivative, this stored covariance direction cannot
+be discarded as an allowed mean/physical gauge tangent. Neither its
+normalization nor that gauge qualification forces its receipt to zero.
 Even nonnegative odd action at that root would require
 $B_0^Tt=0$ for full linear-slice positivity: otherwise setting
 $u=-\epsilon B_0^Tt$ and $k=-K_0^\sharp X_0u$ in (CR42)
