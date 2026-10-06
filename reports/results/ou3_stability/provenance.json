@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "59a46aa7a7444dd8e47e56af4f829f79aaf4178a"
+      "git_blob_sha": "ca6935044efd91999f289ab9064f17b313822727"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "12621bbab115930ebfe91ec037342bc88811249d"
+      "git_blob_sha": "251336e6e86ef3fe794678f6de345ff5b873a613"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "8c5623b860999187bab3fa722bfab63f8949c42e"
+      "git_blob_sha": "d063416db514962e8310bacc19f94a2693bb3ca3"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "f6063039f11a9d904c9735f1f1fc0c24993f9908"
+      "git_blob_sha": "7ac09625e623dc3a963710abc6a1016288bd4a28"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "ffb02e7aa15bf1a5b7e0a9f2f98036fbfbe32fbc"
+      "git_blob_sha": "0045a460fac957f715d32e5b8849e97def7725ba"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "fb6090b5ad325f89469cce71c64f84dc53567626"
+      "git_blob_sha": "9433ad412734e08c11d597009d5560c8f11480f1"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -956,7 +956,7 @@
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "df1aa6a3b823ba57e5ffe922c24f9e26b5eb1b52"
+      "git_blob_sha": "362047b53f3c21bcc689bfe241b5cf8dbbe65346"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
@@ -964,23 +964,23 @@
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "2f031f65335c2ed9e17258f53c0f06a807666b45"
+      "git_blob_sha": "44fc4a28921d4721bb3c38597856fb2d51efd22b"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "838f8bd91a4936d451b5d1b0aa160f60e62ce690"
+      "git_blob_sha": "60b7e0e668bbb8059b1ce3af484f99758a0ed951"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
-      "git_blob_sha": "856602e0358bb983309391e5c902b4935650289e"
+      "git_blob_sha": "08beb542261e77d9caa706251e7743029501d7e5"
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "804f6867f115f3e5e18f4c85645b9e67069d4c4c"
+      "git_blob_sha": "5719caccaaccd35b8ed327a97dd5fb13c9116d4c"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
-      "git_blob_sha": "c2583adb1f0b5e7ee1080ce3cee962fbb6ae91b2"
+      "git_blob_sha": "a84aee1789219d2d4f7d4f0de121a96f2c8b0935"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1318,63 +1318,88 @@
       "uniform_relative_reader_margin": null
     },
     "causal_aw_deficit_gap": {
-      "active_face_completion": "q^2-(C/Cplus*q-mu/Cplus)^2+regression_loss",
-      "actual_acc_floor_payment": {
-        "actual_kernel_nontriviality_verified": false,
-        "complete_same_storage_matrix": "G_OO/lambda=H_acc-R_acc^T Omega R_acc; paired acc loss removed once",
-        "conditional_B_covariance_reader_retained": true,
-        "kernel_scope": "actual CR12 image, nuisance-supported root, ker R_acc and zero-gap compatibility; first prediction included after 17 s qualified default regular A21",
-        "kernel_signed_reserve_lower": "1/10000000000000000000000000000000000000",
-        "linked_remaining_reader": "b+(eta/omega)*t; b=d_beta_face/Cplus, t=dT_acc B_acc (h_o+T_acc)^T/Cplus",
-        "odd_AW_blocker_resolved": false,
-        "paid_fraction": "eta=2*C*(2*s-r-C)/(s*(2*s-r)); 1>eta>C/s>0",
-        "proof": "CR18--CR24",
-        "relative_reader_threshold": "Omega^-1-R_acc*(H_acc-c_O*H_0)^-1*R_acc^T>=0; H_acc-c_O*H_0>0",
-        "remaining_weight": "omega=1-eta=[C*r+(R+r)*(2*R+r)]/[s*(2*s-r)]>0",
-        "same_acc_Fisher_completion": "L_P=utilde^T K_u utilde+eta*(v/C)^2; v/C=t-b",
-        "same_prefix_boundary_constraint": "dC_acc_prefix=-d_beta_face; C_acc_prefix=Cplus_face",
-        "scope": "CR12 regular planar pure covariance fibre; actual active floor then applied acc in the same cycle, with only qualified non-AW S/block resets between",
-        "uniform_paid_fraction": null,
-        "uniform_relative_reader_margin": null,
-        "unpaired_faces_and_zero_gap_directional_maps_retained": true
-      },
+      "proof": "app:correlated-complete-gap, CR4--CR28",
+      "result_type": "joint actual-process/nonzero-receipt inequality and scalar directional branches; full AW absorption OPEN",
+      "scope": "same qualified regular planar odd-covariance fibre; full correlated cross/target ports retained",
       "actual_process_AA_row": "p_minus=phi^2*p+actual_q_aa",
-      "common_tangent_matrix_identity_verified": true,
-      "common_tangent_unsplit_matrix": "H_mu+Q_mu^T L_mu+L_mu^T Q_mu-L_mu^T L_mu; every row from the same actual prefix",
+      "queued_process_target_lag_retained": true,
+      "stationary_Q_aa_identity_assumed_on_all_source_branches": false,
       "fixed_private_causal_receipt": "mu=-sum actual_prediction_weights*dI_a after an actual active fixed-target face",
-      "full_cross_remainder": "CR17: A_c-X_c^T N_c^-1 X_c >= 0, with all root metric cross entries retained",
-      "full_word_OPEN_dependencies_discharged": [],
+      "same_correction_sharp_reader": "(dI_cov)^2 <= I_a*(2P_aa-I_a)*L_P",
+      "signed_row_noise_target_tuner_ports_retained": true,
+      "active_face_completion": "q^2-(C/Cplus*q-mu/Cplus)^2+regression_loss",
       "negative_completed_reader": "mu^2/[Delta*(2C+Delta)], Delta>0 only",
-      "new_storage_constructed": false,
       "non_AW_payment": "I_a=T*(B-Bplus)*T^T; dI_a and dC share actual dB,dT",
+      "common_tangent_unsplit_matrix": "H_mu+Q_mu^T L_mu+L_mu^T Q_mu-L_mu^T L_mu; every row from the same actual prefix",
+      "common_tangent_matrix_identity_verified": true,
+      "partial_origin_zero_energy_kernel_test_verified": true,
+      "partial_origin_uniform_parameterization_verified": false,
       "nuisance_receipt_kernel": {
-        "actual_kernel_dimension_verified": false,
-        "full_homogeneous_gap_verified": false,
-        "m_n": "45331392703331023352281/128000000000",
         "q_n": "248188600375173268173354737/10161261447480073450406250000000000000000000000000000",
-        "scope": "CR12 pure odd covariance causal image, nuisance-supported root and zero target-relative receipt at every active or zero-gap face; nonempty word includes first prediction at root after 17 s regular default A21",
+        "m_n": "45331392703331023352281/128000000000",
         "signed_kernel_reserve": "1786275919960390815486407874891208875923333544586059434996148824580916979343442896840339169/12950109371095572978920465702623562423409136730522616873817141460977083516045713637612757070646783590205916979343442896840339169",
         "signed_kernel_reserve_lower": "1/10000000000000000000000000000000000000",
+        "scope": "CR12 pure odd covariance causal image, nuisance-supported root and zero target-relative receipt at every active or zero-gap face; nonempty word includes first prediction at root after 17 s regular default A21",
+        "zero_gap_target_relative_tangent_required": true,
+        "actual_kernel_dimension_verified": false,
         "whole_odd_gap_verified": false,
-        "zero_gap_target_relative_tangent_required": true
+        "full_homogeneous_gap_verified": false
       },
-      "partial_origin_uniform_parameterization_verified": false,
-      "partial_origin_zero_energy_kernel_test_verified": true,
-      "proof": "app:correlated-complete-gap, CR4--CR24",
-      "queued_process_target_lag_retained": true,
-      "receipt_only_inverse_uniformly_qualified": false,
+      "full_cross_remainder": "CR17: A_c-X_c^T N_c^-1 X_c >= 0, with all root metric cross entries retained",
       "receipt_only_remainder": "CR17a: Z^-1+QY+Y^T Q^T-E^T E-Q K_sharp Q^T >= 0; actual dependent receipts retained",
+      "receipt_only_inverse_uniformly_qualified": false,
       "receipt_only_remainder_uniformly_verified": false,
+      "actual_process_face_nonzero_receipt_payment": {
+        "proof": "CR25--CR28",
+        "process_short": {
+          "full_short_lower": "248188600375173268173354737/2384245604254842931200000000000000",
+          "allocated_short": "248188600375173268173354737/4768491208509685862400000000000000",
+          "allocated_short_lower": "0.000000052",
+          "normalized_inverse_AA_entry": "8",
+          "scope": "existing regular real isotropic profile: h in [.004,.006], tau in [.02,12], sigma in [.05,4]; literal polynomial Q and PSD repair",
+          "stationary_Q_AA_identity_used": false,
+          "full_integrated_cross_covariance_retained": true,
+          "uniform_signed_word_margin": null
+        },
+        "common_root_joint_signed_inequality_verified": true,
+        "joint_completion": "L_rem+(1-a_star^2)*(dC/C_star+a_star*mu/[A*(1-a_star^2)])^2+2*(1/C_star-1/A)*dT B dT^T-mu^2/[(Delta+q_aw)*(A+C_star)]",
+        "same_complete_matrix": "G_OO/lambda=H_pmu-L_pmu^T D_pmu L_pmu; preceding process allocated once",
+        "retained_receipt_square_discarded": false,
+        "scalar_zero_gap_branch_accounting_verified": true,
+        "zero_gap_active_guard": "actual prefix mu<=0: AA deletion; mu>=0: identity; maps agree at mu=0",
+        "actual_causal_image_or_rank_assumed": false,
+        "original_CR17a_matrix_sign_changed": false,
+        "relative_reader_threshold": "D_pmu^-1-L_pmu*(H_pmu-c_O H_0)^-1*L_pmu^T>=0; inverse qualification and cone feasibility required",
+        "uniform_receipt_remainder_verified": false,
+        "uniform_signed_word_margin": null,
+        "odd_AW_blocker_resolved": false
+      },
+      "actual_acc_floor_payment": {
+        "proof": "CR18--CR24",
+        "scope": "CR12 regular planar pure covariance fibre; actual active floor then applied acc in the same cycle, with only qualified non-AW S/block resets between",
+        "same_prefix_boundary_constraint": "dC_acc_prefix=-d_beta_face; C_acc_prefix=Cplus_face",
+        "same_acc_Fisher_completion": "L_P=utilde^T K_u utilde+eta*(v/C)^2; v/C=t-b",
+        "paid_fraction": "eta=2*C*(2*s-r-C)/(s*(2*s-r)); 1>eta>C/s>0",
+        "remaining_weight": "omega=1-eta=[C*r+(R+r)*(2*R+r)]/[s*(2*s-r)]>0",
+        "linked_remaining_reader": "b+(eta/omega)*t; b=d_beta_face/Cplus, t=dT_acc B_acc (h_o+T_acc)^T/Cplus",
+        "complete_same_storage_matrix": "G_OO/lambda=H_acc-R_acc^T Omega R_acc; paired acc loss removed once",
+        "relative_reader_threshold": "Omega^-1-R_acc*(H_acc-c_O*H_0)^-1*R_acc^T>=0; H_acc-c_O*H_0>0",
+        "uniform_paid_fraction": null,
+        "uniform_relative_reader_margin": null,
+        "conditional_B_covariance_reader_retained": true,
+        "unpaired_faces_and_zero_gap_directional_maps_retained": true,
+        "kernel_signed_reserve_lower": "1/10000000000000000000000000000000000000",
+        "kernel_scope": "actual CR12 image, nuisance-supported root, ker R_acc and zero-gap compatibility; first prediction included after 17 s qualified default regular A21",
+        "actual_kernel_nontriviality_verified": false,
+        "odd_AW_blocker_resolved": false
+      },
       "released_coordinate_Schur_relative_charge": "(2alpha-I)/(2alpha-I-2beta)>1 for beta>0",
       "released_coordinate_failure_class": "D_SUFFICIENT_BOUND_FAILURE",
       "released_direction_proved_shipping_reachable": false,
-      "result_type": "shared-tangent acc payment and qualified signed kernel reserves; full AW absorption OPEN",
-      "same_correction_sharp_reader": "(dI_cov)^2 <= I_a*(2P_aa-I_a)*L_P",
-      "scope": "same qualified regular planar odd-covariance fibre; full correlated cross/target ports retained",
-      "signed_row_noise_target_tuner_ports_retained": true,
-      "stationary_Q_aa_identity_assumed_on_all_source_branches": false,
       "uniform_actual_linked_deficit_reader_margin": null,
-      "uniform_full_homogeneous_gap": null
+      "uniform_full_homogeneous_gap": null,
+      "full_word_OPEN_dependencies_discharged": [],
+      "new_storage_constructed": false
     }
   },
   "coupled_signed_gap_audit": {
@@ -1404,7 +1429,7 @@
     "observed_starting_PR_head": "fdc6f3719ee87439da8989cb8d80a00225508fa5",
     "observed_starting_main": "59959d1bf33a3c5f4f70331104546a6486468df6",
     "intervening_automated_evidence_preserved": "0e8313729b5605b561e9a145c03e88fd25796478",
-    "proof": "app:correlated-complete-gap, CR1--CR24",
+    "proof": "app:correlated-complete-gap, CR1--CR28",
     "controlling_inequality": "LR8/LR9 homogeneous correlated G>=c J_root with c>0 before genuine exogenous supply",
     "matrix": "CR2: actual complete prefixes and endpoint gauge, [[G,H],[H^T,-S]]",
     "inherited_endogenous_auxiliary_externalized": false,
@@ -1423,7 +1448,7 @@
     "shipping_sources_changed": false,
     "numerical_search_or_new_replay_performed": false,
     "radius_capture_or_activation_promotion_performed": false,
-    "tooling_failures": "E: guessed read paths, mismatched document patch contexts and TeX/JavaScript literal delimiters were corrected before those edits. A provenance sync initially replaced a summary audit; original fields were restored before validation. Missing mpmath/ruff were installed in scratch; existing runtime Eigen is supplied through EIGEN_INCLUDE_DIR. No mathematical premise or validation gate changed. Earlier classified tooling failures remain in the ledger.",
+    "tooling_failures": "E: guessed read paths, mismatched document patch contexts and TeX/JavaScript literal delimiters were corrected before those edits. A provenance sync initially replaced a summary audit; original fields were restored before validation. Missing mpmath/ruff were installed in scratch; existing runtime Eigen is supplied through EIGEN_INCLUDE_DIR. No mathematical premise or validation gate changed. Earlier classified tooling failures remain in the ledger. Nonzero-process calculation: E guessed lin_source.py read path resolved to lin_path_certificate.py; focused error-message regression repaired by restoring the existing strictly-active wording, without changing its test or validation gate. Appendix render failed at CR25 with Display math should end with $$; the missing closing display delimiter was restored before final validation. Guessed optional render paths doc/kalman_ou_iii/Makefile, tools/render* and tools/*latex* were absent; the existing render workflow was read directly. The corrected complete appendix renders; unavailable local IEEEtran/newtx/siunitx packages leave the full article render to the existing exact-head CI workflow.",
     "actual_shared_tangent_unsplit_matrix_verified": true,
     "actual_shared_tangent_matrix": "H_mu+Q_mu^T L_mu+L_mu^T Q_mu-L_mu^T L_mu",
     "partial_origin_zero_energy_kernel_test_verified": true,
@@ -1439,8 +1464,8 @@
       "whole_odd_gap_verified": false,
       "full_homogeneous_gap_verified": false
     },
-    "remaining_receipt_operator": "CR17a: Z^-1+QY+Y^T Q^T-E^T E-Q K_sharp Q^T>=0; K and Z inverses must be qualified",
-    "remaining_full_cross_operator": "CR17: A_c-X_c^T N_c^-1 X_c>=0, 0<c<1e-37; all root-metric cross entries retained",
+    "remaining_receipt_operator": "CR17a on feasible nonzero receipts, equivalently CR28 where its inverse is justified; same-root completed square, residual process, acc/S/magnetic losses retained",
+    "remaining_full_cross_operator": "CR17 actual Gbar_EE-Gbar_EO*Gbar_OO^-1*Gbar_OE>=0 with a proved positive odd block and all metric cross entries; no scalar gamma_n substitution",
     "uniform_actual_receipt_operator_verified": false,
     "odd_AW_blocker_resolved": false,
     "complete_homogeneous_gap_proved": false,
@@ -1476,6 +1501,40 @@
     "conditional_B_covariance_reader_retained": true,
     "acc_alone_uniform_absorption_failure_class": "D_SUFFICIENT_BOUND_FAILURE",
     "uniform_acc_coupled_remainder_verified": false,
-    "intervening_acc_payment_evidence_preserved": "46ec65a86e320ea142d732b6df14797af0aeafcc"
+    "intervening_acc_payment_evidence_preserved": "46ec65a86e320ea142d732b6df14797af0aeafcc",
+    "observed_PR_head_before_nonzero_process_payment": "5c6b8c7dffe88f4932f15734d62e8e1ece29346f",
+    "intervening_nonzero_process_evidence_preserved": "ab7c9fecc16e8671a6ba29c8437d21b4101e4f93",
+    "actual_process_face_nonzero_receipt_payment": {
+      "proof": "CR25--CR28",
+      "process_short": {
+        "full_short_lower": "248188600375173268173354737/2384245604254842931200000000000000",
+        "allocated_short": "248188600375173268173354737/4768491208509685862400000000000000",
+        "allocated_short_lower": "0.000000052",
+        "normalized_inverse_AA_entry": "8",
+        "scope": "existing regular real isotropic profile: h in [.004,.006], tau in [.02,12], sigma in [.05,4]; literal polynomial Q and PSD repair",
+        "stationary_Q_AA_identity_used": false,
+        "full_integrated_cross_covariance_retained": true,
+        "uniform_signed_word_margin": null
+      },
+      "common_root_joint_signed_inequality_verified": true,
+      "joint_completion": "L_rem+(1-a_star^2)*(dC/C_star+a_star*mu/[A*(1-a_star^2)])^2+2*(1/C_star-1/A)*dT B dT^T-mu^2/[(Delta+q_aw)*(A+C_star)]",
+      "same_complete_matrix": "G_OO/lambda=H_pmu-L_pmu^T D_pmu L_pmu; preceding process allocated once",
+      "retained_receipt_square_discarded": false,
+      "scalar_zero_gap_branch_accounting_verified": true,
+      "zero_gap_active_guard": "actual prefix mu<=0: AA deletion; mu>=0: identity; maps agree at mu=0",
+      "actual_causal_image_or_rank_assumed": false,
+      "original_CR17a_matrix_sign_changed": false,
+      "relative_reader_threshold": "D_pmu^-1-L_pmu*(H_pmu-c_O H_0)^-1*L_pmu^T>=0; inverse qualification and cone feasibility required",
+      "uniform_receipt_remainder_verified": false,
+      "uniform_signed_word_margin": null,
+      "odd_AW_blocker_resolved": false
+    },
+    "actual_process_face_nonzero_receipt_inequality_substituted_into_original_signed_gap": true,
+    "allocated_process_loss_counted_once": true,
+    "scalar_odd_zero_gap_nonzero_directional_branches_accounted": true,
+    "full_mixed_AW_spectral_crossings_certified": false,
+    "zero_gap_partial_constraint_scope": "retained CR16/CR23 kernels only; new nonzero scalar branch calculation retains the actual cone guards instead",
+    "fresh_process_alone_uniform_absorption_failure_class": "D_SUFFICIENT_BOUND_FAILURE",
+    "uniform_process_face_signed_receipt_margin": null
   }
 }

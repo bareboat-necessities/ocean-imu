@@ -24,6 +24,7 @@ from tools.stability.ou3_theorem.measurement_frame import (
     scalar_aw_innovation_reader, covariance_partial_word,
     receipt_kernel_nuisance_margin, coupled_receipt_schur,
     scalar_acc_conditional_fisher,
+    actual_aw_process_short, prediction_face_fisher_balance,
 )
 from tools.stability.ou3_theorem.planar_innovation_storage import information_shear_correction
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import product
@@ -32,6 +33,102 @@ from tools.stability.ou3_theorem.world_frame import quaternion_rotation, skew
 
 
 class MeasurementFrameTests(unittest.TestCase):
+    def test_integrated_process_AW_short_is_a_source_uniform_Schur_comparison(self):
+        from tools.stability.ou3_theorem.lin_path_certificate import small_x_source_defect
+        from tools.stability.ou3_theorem.matrix_certificates import is_psd
+        eps, _, b0, _ = small_x_source_defect()
+        # Full four-kernel Gram, including every AW/v/p/S cross entry.
+        self.assertEqual(inverse(b0)[3][3], 8)
+        boundary = [row[:] for row in b0]
+        boundary[3][3] -= F(1, 8)
+        self.assertTrue(is_psd(boundary))
+        half = [row[:] for row in b0]
+        half[3][3] -= F(1, 16)
+        self.assertTrue(is_psd(half))
+        out = actual_aw_process_short()
+        q = F(out['allocated_short'])
+        xmin = F(1, 3000)
+        self.assertEqual(q, F('.05')**2*xmin*(1-eps)/(16*(1+xmin)**2))
+        self.assertGreater(q, F('5.2e-8'))
+        self.assertFalse(out['stationary_Q_AA_identity_used'])
+        self.assertIsNone(out['uniform_signed_word_margin'])
+
+    def test_process_face_receipt_completion_retains_nonzero_work_and_all_cross_blocks(self):
+        # Coefficient-slot polarization only. No origin or service admission
+        # is inferred. In particular both mu and d(beta) are nonzero.
+        a, h = 7, F(1, 200)
+        f = identity(9)
+        f[0][2] = f[1][3] = h
+        f[4][a], f[5][a], f[6][a] = h, h*h/2, h**3/6
+        f[5][4], f[6][4], f[6][5] = h, h*h/2, h
+        f[a][a] = F(399, 400)
+        column = [[f[i][a]] for i in range(9)]
+        noise = add([[x/1000 for x in row] for row in identity(9)],
+                    product(column, transpose(column)), F(1, 100))
+        p = identity(9)
+        p[a][8] = p[8][a] = F(1, 5)
+        ds = [zeros(9, 9) for _ in range(3)]
+        ds[0][a][a], ds[1][a][8], ds[1][8][a], ds[2][8][8] = F(1), F(1), F(1), F(1)
+        target = F(6, 5)
+        out = covariance_partial_word(p, ds, [
+            {'kind': 'prediction', 'F': f, 'Q': noise},
+            {'kind': 'floor', 'target': target}], a)
+        readers = out['process_face_receipt_rows']
+        weight = out['process_face_receipt_weights'][0]
+        self.assertNotEqual(readers[0][0], 0)
+        self.assertEqual(add(out['process_face_positive_action'],
+                            product(transpose(readers), readers), -weight), out['signed_gap'])
+        q = F(actual_aw_process_short()['allocated_short'])
+        for d in ds:
+            pair = prediction_face_fisher_balance(p, f, noise, d, target, a, q)
+            self.assertEqual(pair['joint_gap'], pair['remaining_process_Fisher_loss']
+                             + pair['coupled_conditional_action']-pair['joint_receipt_charge'])
+            self.assertGreater(pair['effective_gap'], q)
+            self.assertGreater(pair['receipt_denominator'], 3*q*q)
+            self.assertFalse(pair['uniform_signed_word_margin_verified'])
+        pair = prediction_face_fisher_balance(p, f, noise, ds[1], target, a, q)
+        self.assertNotEqual(pair['d_beta'], 0)
+        self.assertFalse(out['inherited_causal_image_qualified'])
+        bad_noise = zeros(9, 9)
+        with self.assertRaisesRegex(ValueError, 'at least twice'):
+            prediction_face_fisher_balance(p, f, bad_noise, ds[0], target, a, q)
+
+    def test_nonzero_zero_gap_receipts_retain_actual_directional_cones(self):
+        p = [[F(2), F(1, 4)], [F(1, 4), F(1)]]
+        ds = [[[F(1), F(1, 3)], [F(1, 3), F(-1)]],
+              [[F(0), F(-1, 5)], [F(-1, 5), F(2)]]]
+        f, noise = identity(2), [[F(1, 100), F(1, 1000)], [F(1, 1000), F(1, 100)]]
+        target = F(101, 100)
+        active = covariance_partial_word(p, ds, [
+            {'kind': 'prediction', 'F': f, 'Q': noise},
+            {'kind': 'floor', 'target': target, 'zero_gap_branch': 'active'}], 1)
+        inactive = covariance_partial_word(p, ds, [
+            {'kind': 'prediction', 'F': f, 'Q': noise},
+            {'kind': 'floor', 'target': target, 'zero_gap_branch': 'inactive'}], 1)
+        self.assertEqual(active['zero_gap_branch_guards'][0]['receipt_row'], [F(-1), F(2)])
+        self.assertEqual(active['zero_gap_branch_guards'][0]['relation'], '<=0')
+        self.assertEqual(inactive['zero_gap_branch_guards'][0]['relation'], '>=0')
+        self.assertEqual(active['boundaries'], inactive['boundaries'])
+        q = F(actual_aw_process_short()['allocated_short'])
+        self.assertEqual(active['process_face_payments'][0]['effective_gap'], q)
+        self.assertEqual(inactive['process_face_payments'], [])
+        self.assertNotEqual(active['signed_gap'], inactive['signed_gap'])
+        # On the guard boundary the actual two derivatives agree. This does
+        # not assert either linear extension on the opposite half-cone.
+        y = [[F(2)], [F(1)]]
+        for i in range(len(active['prefixes'])):
+            da = add([[2*x for x in row] for row in active['prefixes'][i][0]],
+                     active['prefixes'][i][1])
+            di = add([[2*x for x in row] for row in inactive['prefixes'][i][0]],
+                     inactive['prefixes'][i][1])
+            self.assertEqual(da, di)
+        self.assertEqual(product(transpose(y), active['signed_gap'], y),
+                         product(transpose(y), inactive['signed_gap'], y))
+        with self.assertRaisesRegex(ValueError, 'directional map'):
+            covariance_partial_word(p, ds, [
+                {'kind': 'prediction', 'F': f, 'Q': noise},
+                {'kind': 'floor', 'target': target}], 1)
+
     def test_acc_floor_payment_retains_nonzero_receipt_and_same_S_prefix(self):
         # Nine-state coefficient-slot identity, not a reachable-word or
         # contraction witness. The actual generator propagates AA deletion,

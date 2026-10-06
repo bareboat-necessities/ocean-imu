@@ -621,3 +621,21 @@ face derivative automatically. The actual reader comparison, full even/source
 cross Schur work, inherited activation and uniform complete margin remain
 **OPEN**. Existing frame cancellation, magnetic loss and conditional process
 results are unchanged. No new storage, physical assumption or radius.
+
+
+CR25--CR28 attack NONZERO receipts with the actual preceding integrated
+process. Its full Q Schur short allocates q_aw>5.2e-8 uniformly on the
+existing real regular isotropic profile. The same process/face signed
+expression keeps the coupled dC/mu square and replaces the face-only
+singular gap by Delta+q_aw>=q_aw. Nothing is reset at a proof boundary.
+Actual scalar zero-gap branches retain their prefix guards (mu<=0 AA
+deletion, mu>=0 identity), including nonzero directions; their matrices
+are valid on those tangent cones, not on an invented unconstrained image.
+
+This is the original odd gap `H_pmu-L_pmu' D_pmu L_pmu`, with full
+residual process and actual acc/S/magnetic losses counted once. The
+original CR17a matrix and conditional cross cost are unchanged. CR28's
+same-root weighted receipt comparison, its inverse/common positive
+reserve, inherited-origin feasibility and full endogenous Schur cost
+remain OPEN. A finite process-paid receipt weight is not AW absorption.
+No new kernel result, storage, observer, physical assumption or promotion.

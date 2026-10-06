@@ -548,7 +548,8 @@ def scalar_aw_innovation_reader(P, D, h, noise, aw_index, dh=None, dnoise=0):
             'coefficient_port_absorption_verified': False}
 
 
-def scalar_aw_face_fisher_balance(P, D, target, aw_index, dtarget=0):
+def scalar_aw_face_fisher_balance(P, D, target, aw_index, dtarget=0,
+                                 zero_gap_active=False):
     """Exact active scalar face in the EXISTING Fisher metric (OF2).
 
     Shipping use: AW_y in the planar odd block, fixed inherited target and
@@ -561,8 +562,9 @@ def scalar_aw_face_fisher_balance(P, D, target, aw_index, dtarget=0):
     """
     ldlt(P)
     n, a, target, dtarget = len(P), aw_index, F(target), F(dtarget)
-    if not 0 <= a < n or D != transpose(D) or target <= P[a][a]:
-        raise ValueError('symmetric tangent and strictly active scalar AW face required')
+    if (not 0 <= a < n or D != transpose(D) or target < P[a][a]
+            or (target == P[a][a] and not zero_gap_active)):
+        raise ValueError('symmetric tangent and strictly active scalar AW face required; zero gap needs its directional branch')
     o = [i for i in range(n) if i != a]
     B = [[P[i][j] for j in o] for i in o]
     dB = [[D[i][j] for j in o] for i in o]
@@ -580,10 +582,12 @@ def scalar_aw_face_fisher_balance(P, D, target, aw_index, dtarget=0):
     adverse = ((d_beta-dtarget)/Cnext)**2
     assert before-after == positive-adverse and positive >= 0
     delta, ratio, q, mu = target-P[a][a], C/Cnext, dC/C, D[a][a]-dtarget
-    retained = (1-ratio**2)*(q+ratio*mu/(Cnext*(1-ratio**2)))**2
-    retained += 2*(1/C-1/Cnext)*product(dT, B, transpose(dT))[0][0]
-    deficit_charge = mu**2/(delta*(2*C+delta))
-    assert before-after == retained-deficit_charge
+    retained = deficit_charge = None
+    if delta > 0:
+        retained = (1-ratio**2)*(q+ratio*mu/(Cnext*(1-ratio**2)))**2
+        retained += 2*(1/C-1/Cnext)*product(dT, B, transpose(dT))[0][0]
+        deficit_charge = mu**2/(delta*(2*C+delta))
+        assert before-after == retained-deficit_charge
     return {'P_next': Pnext, 'D_next': Dnext, 'B': B, 'T': T,
             'C': C, 'C_next': Cnext, 'beta': beta, 'd_beta': d_beta,
             'dC': dC, 'dT': dT, 'positive_face_action': positive,
@@ -591,6 +595,83 @@ def scalar_aw_face_fisher_balance(P, D, target, aw_index, dtarget=0):
             'AA_target_relative_tangent': mu, 'retained_coupled_square': retained,
             'deficit_reader_charge': deficit_charge,
             'gap': before-after}
+
+
+def actual_aw_process_short():
+    """CR25: short the FULL integrated process onto the original AW row.
+
+    The normalized inverse AA entry is 8, rather than the unrelated full
+    inverse row bound. This is an existing-process comparison, not a second
+    covariance recursion. Its use below retains the unsplit receipt square.
+    """
+    from .lin_path_certificate import small_x_source_defect
+    eps, _, b0, _ = small_x_source_defect()
+    assert inverse(b0)[3][3] == 8
+    xmin = F(1, 3000)
+    full = F('.05')**2*xmin*(1-eps)/(8*(1+xmin)**2)
+    q = full/2  # Q-q ee' >= Q/2; no inverse of a singular residual noise.
+    assert q > F('5.2e-8')
+    return {'full_short_lower': str(full), 'allocated_short': str(q),
+            'allocated_short_lower': '0.000000052',
+            'normalized_inverse_AA_entry': '8',
+            'scope': 'existing regular real isotropic profile: h in [.004,.006], tau in [.02,12], sigma in [.05,4]; literal polynomial Q and PSD repair',
+            'stationary_Q_AA_identity_used': False,
+            'full_integrated_cross_covariance_retained': True,
+            'uniform_signed_word_margin': None}
+
+
+def prediction_face_fisher_balance(P, f, noise, D, target, aw_index, q_aw,
+                                   zero_gap_active=False):
+    """CR26: SAME process/face tangent, including a nonzero AA receipt.
+
+    The literal process is split algebraically as Q-q ee' then q ee'.
+    No process loss is added twice and no intermediate covariance is stored
+    or used by the estimator. The actual row/cross blocks stay in f and Q.
+    A zero-gap active formula is a linear extension valid only on mu<=0;
+    callers must retain that cone, not apply it to all root coordinates.
+    """
+    a, q = aw_index, F(q_aw)
+    n = len(P)
+    if not 0 <= a < n or q <= 0:
+        raise ValueError('positive allocated AW process short required')
+    if any(f[a][j] for j in range(n) if j != a):
+        raise ValueError('literal autonomous AW prediction row required')
+    allocated = zeros(n, n)
+    allocated[a][a] = q
+    if not is_psd(add(noise, allocated, -2)):
+        raise ValueError('actual full process must supply at least twice the allocated AW short')
+    px, dx = product(f, P, transpose(f)), product(f, D, transpose(f))
+    pm = add(px, noise)
+    intermediate = add(pm, allocated, -1)
+    ldlt(px)
+    ldlt(intermediate)
+    face = scalar_aw_face_fisher_balance(pm, dx, target, a,
+                                        zero_gap_active=zero_gap_active)
+    def fisher(p, d):
+        j = inverse(p)
+        return trace(product(j, d, j, d))
+    residual = fisher(px, dx)-fisher(intermediate, dx)
+    assert residual >= 0 and fisher(px, dx) == fisher(P, D)
+    c0, A = face['C']-q, face['C_next']
+    dc, mu, dt, B = face['dC'], face['AA_target_relative_tangent'], face['dT'], face['B']
+    assert c0 > q and A > c0
+    regression = 2*(1/c0-1/A)*product(dt, B, transpose(dt))[0][0]
+    joint = residual+(dc/c0)**2-((dc-mu)/A)**2+regression
+    ratio = c0/A
+    denominator = (A-c0)*(A+c0)
+    coupled_row = dc/c0+ratio*mu/(A*(1-ratio**2))
+    retained = (1-ratio**2)*coupled_row**2+regression
+    charge = mu**2/denominator
+    direct = fisher(P, D)-fisher(face['P_next'], face['D_next'])
+    assert direct == joint == residual+retained-charge
+    return {**face, 'C_before_allocated_noise': c0,
+            'allocated_process_short': q, 'remaining_process_Fisher_loss': residual,
+            'effective_gap': A-c0, 'receipt_denominator': denominator,
+            'effective_ratio': ratio, 'coupled_receipt_row': coupled_row,
+            'coupled_conditional_action': retained,
+            'joint_receipt_charge': charge, 'joint_gap': direct,
+            'zero_gap_active_cone': 'mu<=0' if zero_gap_active else None,
+            'uniform_signed_word_margin_verified': False}
 
 
 def scalar_acc_conditional_fisher(P, D, h, noise, aw_index):
@@ -644,7 +725,7 @@ def scalar_acc_conditional_fisher(P, D, h, noise, aw_index):
 
 
 def covariance_word_signed_matrix(boundaries, prefixes, active_faces, aw_index,
-                                  acc_face_pairs=()):
+                                  acc_face_pairs=(), zero_gap_active_faces=()):
     """Verify OF4 from supplied SAME-word covariance/tangent prefix maps.
 
     prefixes[i][j] is the entire actual D_i for root coordinate j; after a
@@ -659,6 +740,9 @@ def covariance_word_signed_matrix(boundaries, prefixes, active_faces, aw_index,
     if not d or any(len(ds) != d for ds in prefixes):
         raise ValueError('one common root-coordinate basis required')
     faces = set(active_faces)
+    zero_faces = set(zero_gap_active_faces)
+    if not zero_faces <= faces:
+        raise ValueError('zero-gap active branches must be actual supplied face maps')
     if any(i < 0 or i >= len(boundaries)-1 for i in faces):
         raise ValueError('active face outside word')
     grams = []
@@ -681,7 +765,8 @@ def covariance_word_signed_matrix(boundaries, prefixes, active_faces, aw_index,
             ordinary.append(loss)
             continue
         fs = [scalar_aw_face_fisher_balance(boundaries[i], D,
-              boundaries[i+1][aw_index][aw_index], aw_index) for D in prefixes[i]]
+              boundaries[i+1][aw_index][aw_index], aw_index,
+              zero_gap_active=i in zero_faces) for D in prefixes[i]]
         if any(f['P_next'] != boundaries[i+1] or f['D_next'] != prefixes[i+1][j]
                for j, f in enumerate(fs)):
             raise ValueError('face must retain cross covariance and its actual target-fixed derivative')
@@ -723,7 +808,8 @@ def covariance_word_signed_matrix(boundaries, prefixes, active_faces, aw_index,
         ps = [scalar_acc_conditional_fisher(boundaries[corr], D, h, noise, aw_index)
               for D in prefixes[corr]]
         fs = [scalar_aw_face_fisher_balance(boundaries[face], D,
-              boundaries[face+1][aw_index][aw_index], aw_index) for D in prefixes[face]]
+              boundaries[face+1][aw_index][aw_index], aw_index,
+              zero_gap_active=face in zero_faces) for D in prefixes[face]]
         if any(p['C'] != f['C_next'] or p['dC'] != -f['d_beta'] for p, f in zip(ps, fs)):
             raise ValueError('same conditional covariance/tangent must survive floor-to-acc interval')
         p0, eta, omega = ps[0], ps[0]['paid_fraction'], ps[0]['remaining_weight']
@@ -773,6 +859,7 @@ def covariance_partial_word(P, root_tangents, operations, aw_index):
     lift and are not silently set to zero by this routine.
     """
     boundaries, prefixes, faces = [[row[:] for row in P]], [root_tangents], []
+    zero_faces, branch_guards = [], []
     a, n = aw_index, len(P)
     if not 0 <= a < n or not root_tangents:
         raise ValueError('nonempty common covariance root and AW selector required')
@@ -802,8 +889,21 @@ def covariance_partial_word(P, root_tangents, operations, aw_index):
                 Pnext[a][a] = target
                 for D in dn:
                     D[a][a] = F(0)
-            elif target == P[a][a] and any(D[a][a] for D in ds):
-                raise ValueError('zero-gap crossing needs its actual directional map')
+            elif target == P[a][a]:
+                branch = event.get('zero_gap_branch')
+                if branch not in (None, 'active', 'inactive'):
+                    raise ValueError('zero-gap directional branch must be active or inactive')
+                if branch is None and any(D[a][a] for D in ds):
+                    raise ValueError('zero-gap crossing needs its actual directional map')
+                if branch is not None:
+                    branch_guards.append({'operation': len(boundaries)-1,
+                                          'receipt_row': [D[a][a] for D in ds],
+                                          'relation': '<=0' if branch == 'active' else '>=0'})
+                if branch == 'active':
+                    faces.append(len(boundaries)-1)
+                    zero_faces.append(len(boundaries)-1)
+                    for D in dn:
+                        D[a][a] = F(0)
         else:
             raise ValueError('unsupported covariance partial operation')
         boundaries.append(Pnext)
@@ -824,8 +924,77 @@ def covariance_partial_word(P, root_tangents, operations, aw_index):
                     break
             else:
                 break  # no pairing across prediction, another floor or a proof reset
-    out = covariance_word_signed_matrix(boundaries, prefixes, faces, a, pairs)
+    out = covariance_word_signed_matrix(boundaries, prefixes, faces, a, pairs, zero_faces)
+    # Allocate each actual preceding prediction once, retaining every
+    # completed q/mu square on the common root. Do not release coordinates.
+    joint_action = zeros(len(root_tangents), len(root_tangents))
+    joint_readers, joint_weights, joint_data, used = [], [], [], set()
+    q = F(actual_aw_process_short()['allocated_short'])
+    for face in faces:
+        if face == 0 or operations[face-1]['kind'] != 'prediction':
+            continue  # proof boundary is not a process or a floor event
+        pred = face-1
+        allocation = zeros(n, n)
+        allocation[a][a] = 2*q
+        if not is_psd(add(operations[pred]['Q'], allocation, -1)):
+            continue  # outside CR25's profile: retain original exact OF4
+        used.update((pred, face))
+        ps = [prediction_face_fisher_balance(
+            boundaries[pred], operations[pred]['F'], operations[pred]['Q'], D,
+            operations[face]['target'], a, q, face in zero_faces) for D in prefixes[pred]]
+        p0 = ps[0]
+        if any(p['D_next'] != prefixes[face+1][j] or p['P_next'] != boundaries[face+1]
+               for j, p in enumerate(ps)):
+            raise ValueError('process and face must use their complete common prefix')
+        # Polarize the residual PSD addition by its actual two Fisher Grams.
+        px = product(operations[pred]['F'], boundaries[pred], transpose(operations[pred]['F']))
+        intermediate = [row[:] for row in boundaries[face]]
+        intermediate[a][a] -= q
+        jx, jr = inverse(px), inverse(intermediate)
+        dx = prefixes[face]
+        residual = [[trace(product(jx, d, jx, e))-trace(product(jr, d, jr, e))
+                     for e in dx] for d in dx]
+        positive = [[(1-p0['effective_ratio']**2)*p['coupled_receipt_row']*r['coupled_receipt_row']
+                     + 2*(1/p0['C_before_allocated_noise']-1/p0['C_next'])
+                     * product(p['dT'], p0['B'], transpose(r['dT']))[0][0]
+                     for r in ps] for p in ps]
+        joint_action = add(joint_action, add(residual, positive))
+        joint_readers.append([p['AA_target_relative_tangent'] for p in ps])
+        joint_weights.append(1/p0['receipt_denominator'])
+        joint_data.append({'prediction': pred, 'face': face,
+                           'allocated_process_short': q,
+                           'effective_gap': p0['effective_gap'],
+                           'receipt_denominator': p0['receipt_denominator']})
+    for i in range(len(operations)):
+        if i in used:
+            continue
+        if i in faces:
+            slot = faces.index(i)
+            fs = [scalar_aw_face_fisher_balance(boundaries[i], D, operations[i]['target'], a,
+                                                zero_gap_active=i in zero_faces) for D in prefixes[i]]
+            positive = [[p['dC']*r['dC']/fs[0]['C']**2
+                         + 2*(1/fs[0]['C']-1/fs[0]['C_next'])
+                         * product(p['dT'], fs[0]['B'], transpose(r['dT']))[0][0]
+                         for r in fs] for p in fs]
+            joint_action = add(joint_action, positive)
+            joint_readers.append(out['face_reader'][slot])
+            joint_weights.append(F(1))
+        else:
+            ji, jn = inverse(boundaries[i]), inverse(boundaries[i+1])
+            loss = [[trace(product(ji, d, ji, e))-trace(product(jn, dn, jn, en))
+                     for e, en in zip(prefixes[i], prefixes[i+1])]
+                    for d, dn in zip(prefixes[i], prefixes[i+1])]
+            joint_action = add(joint_action, loss)
+    adverse = zeros(len(root_tangents), len(root_tangents))
+    for row, weight in zip(joint_readers, joint_weights):
+        adverse = add(adverse, product(transpose([row]), [row]), weight)
+    assert add(joint_action, adverse, -1) == out['signed_gap']
     out.update({'boundaries': boundaries, 'prefixes': prefixes, 'active_faces': faces,
+                'zero_gap_branch_guards': branch_guards,
+                'process_face_positive_action': joint_action,
+                'process_face_receipt_rows': joint_readers,
+                'process_face_receipt_weights': joint_weights,
+                'process_face_payments': joint_data,
                 'inherited_causal_image_qualified': False})
     return out
 
@@ -993,8 +1162,8 @@ def certificate():
             'scope_check': odd_covariance_gap_scope_check(),
         },
         'causal_aw_deficit_gap': {
-            'proof': 'app:correlated-complete-gap, CR4--CR24',
-            'result_type': 'shared-tangent acc payment and qualified signed kernel reserves; full AW absorption OPEN',
+            'proof': 'app:correlated-complete-gap, CR4--CR28',
+            'result_type': 'joint actual-process/nonzero-receipt inequality and scalar directional branches; full AW absorption OPEN',
             'scope': 'same qualified regular planar odd-covariance fibre; full correlated cross/target ports retained',
             'actual_process_AA_row': 'p_minus=phi^2*p+actual_q_aa',
             'queued_process_target_lag_retained': True,
@@ -1014,6 +1183,22 @@ def certificate():
             'receipt_only_remainder': 'CR17a: Z^-1+QY+Y^T Q^T-E^T E-Q K_sharp Q^T >= 0; actual dependent receipts retained',
             'receipt_only_inverse_uniformly_qualified': False,
             'receipt_only_remainder_uniformly_verified': False,
+            'actual_process_face_nonzero_receipt_payment': {
+                'proof': 'CR25--CR28',
+                'process_short': actual_aw_process_short(),
+                'common_root_joint_signed_inequality_verified': True,
+                'joint_completion': 'L_rem+(1-a_star^2)*(dC/C_star+a_star*mu/[A*(1-a_star^2)])^2+2*(1/C_star-1/A)*dT B dT^T-mu^2/[(Delta+q_aw)*(A+C_star)]',
+                'same_complete_matrix': 'G_OO/lambda=H_pmu-L_pmu^T D_pmu L_pmu; preceding process allocated once',
+                'retained_receipt_square_discarded': False,
+                'scalar_zero_gap_branch_accounting_verified': True,
+                'zero_gap_active_guard': 'actual prefix mu<=0: AA deletion; mu>=0: identity; maps agree at mu=0',
+                'actual_causal_image_or_rank_assumed': False,
+                'original_CR17a_matrix_sign_changed': False,
+                'relative_reader_threshold': 'D_pmu^-1-L_pmu*(H_pmu-c_O H_0)^-1*L_pmu^T>=0; inverse qualification and cone feasibility required',
+                'uniform_receipt_remainder_verified': False,
+                'uniform_signed_word_margin': None,
+                'odd_AW_blocker_resolved': False,
+            },
             'actual_acc_floor_payment': {
                 'proof': 'CR18--CR24',
                 'scope': 'CR12 regular planar pure covariance fibre; actual active floor then applied acc in the same cycle, with only qualified non-AW S/block resets between',
