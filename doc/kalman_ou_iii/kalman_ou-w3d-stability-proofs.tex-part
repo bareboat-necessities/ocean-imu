@@ -5593,6 +5593,228 @@ applied acc/$S$/magnetic chronology and endpoint gauge. Relaxations:
 the existing qualified real planar partial fibre; explicit actual
 directional cones at scalar zero gaps, without a reachability assertion.
 
+\paragraph{The constrained dangerous direction, before a compactness argument.}
+Keep exactly (CR27)'s matrix and write $H=H_{p\mu}$,
+$L=L_{p\mu}$, $\mathcal D=D_{p\mu}$ and
+$M=H-L^T\mathcal D L$. The following calculation restricts these
+\emph{existing} operators; it introduces no state, storage or change of
+coordinates. Use any justified nonzero linear history-tangent slice of
+(CR12), in its existing injective root coordinates. Intersect it with
+the actual scalar face cones, written $Vy\ge0$. Their rows are the
+signed target-relative readers on that branch's actual prefixes:
+$-\mu_i$ at an active zero-gap extension and $+\mu_i$ at an inactive
+extension. Write $Uy=0$ only for already justified inherited linear
+constraints. A finite constraint description of the entire inherited
+image is not asserted. If an image is not closed, the following
+attainment statements apply to a justified closed slice, not to an
+unproved enlargement of that image.
+
+On one fixed qualified word, $H\succ0$ on every such injective slice.
+Indeed its first prediction is present. If allocated to a face, its
+retained process covariance is
+$Q^{ship}-q_{aw}E_aE_a^T\succeq Q^{ship}/2\succ0$; otherwise retain
+the ordinary full process loss. Invertible $F_O$ and the already proved
+strict process Fisher loss make this first positive Gram strict.
+All other entries of $H$ are nonnegative. This justifies the ordinary
+inverse in (CR28) at $c_O=0$ on that slice, immediately, without a
+uniform covariance upper bound. It does not justify a common positive
+$c_O$ or a uniform inverse bound.
+
+For the requested root-normalized optimization, put
+$r=\min y^TMy$ subject to $y^TH_0y=1$, $Uy=0$, $Vy\ge0$ on a
+closed slice. Compactness of this \emph{fixed-word} ellipsoid proves
+attainment. Its constrained Euler equations are
+\[
+\begin{gathered}
+ (H-L^T\mathcal D L-rH_0)y+U^T\nu-V^T\kappa=0,\\
+ \mu=Ly,\qquad Uy=0,\quad Vy\ge0,\quad
+ \kappa\ge0,\quad \kappa_j(Vy)_j=0 .
+\end{gathered}                                               \tag{CR29}
+\]
+To obtain them, differentiate the quadratic with a multiplier for its
+normalization and the actual linear guards; multiplication by $y^T$
+identifies the normalization multiplier as $r$. Active guard gradients
+annihilate $y$, whereas $y^TH_0y=1$, so normalization does not add a
+constraint-qualification failure. In particular an interior nonpositive
+minimizer satisfies
+$(H-rH_0)y=L^T\mathcal D\mu$, with $H-rH_0\succ0$.
+Thus its conditional and service coordinates cannot be optimized
+independently of its receipts.
+
+There is a lossless receipt-space characterization of the sign, with
+the cones retained. Maximize instead
+$\chi=y^TL^T\mathcal D Ly/(y^THy)$ over the \emph{same} nonzero
+feasible tangents. A nonpositive original gap exists if and only if
+this maximum is at least one. For a maximizer with $\chi>0$, let $\mathcal F$
+be the linear subspace given by $Uy=0$ and the guard rows that vanish
+at that tangent. Restrict the existing forms to $\mathcal F$, retaining
+all receipt rows, including dependent ones, and put
+\[
+\begin{gathered}
+ t=\mathcal D^{1/2}L_{\mathcal F}y,\qquad
+ \mathcal A_{\mathcal F}
+ =\mathcal D^{1/2}L_{\mathcal F}H_{\mathcal F}^{-1}
+                      L_{\mathcal F}^T\mathcal D^{1/2},\\
+ \mathcal A_{\mathcal F}t=\chi t,\qquad
+ y=\chi^{-1}H_{\mathcal F}^{-1}
+                         L_{\mathcal F}^T\mathcal D^{1/2}t .
+\end{gathered}                                               \tag{CR30}
+\]
+These equations follow by varying the quotient along $\mathcal F$;
+the constraint normals vanish on those variations. Conversely, any
+nonzero eigenpair in (CR30) with $\chi\ge1$ whose reconstructed $y$
+is actually in the inherited image and satisfies \emph{all} branch
+guards gives
+$y^THy=\|t\|^2/\chi$ and
+$y^TMy=(\chi^{-1}-1)\|t\|^2\le0$.
+This is an exact necessary-and-sufficient fixed-word sign test on the
+stated closed cone. An ambient eigenpair with infeasible $y$ proves
+nothing. No eigenpair or inherited-image rank is assumed or computed.
+At $\chi=1$ it is precisely the feasible saturation direction of
+(CR28). No positive sign is inferred. For a full linear image the
+guard restrictions are absent.
+
+\paragraph{The same tangent in shipping conditional coordinates.}
+At every pre-face prefix let $w=(-T^T,1)^T$ in the existing $(o,a)$
+partition, and write $D_{oo}=dB$. Differentiating $P_{ao}=TB$ and
+$P_{aa}=C+TBT^T$ gives the required simultaneous relations
+\[
+\begin{gathered}
+ dT=(D_{ao}-T\,dB)B^{-1},\qquad dC=w^TDw,\\
+ d\beta=T\,dB\,T^T+2dT\,BT^T,\qquad
+ \mu=dC+d\beta=D_{aa} .
+\end{gathered}                                               \tag{CR31}
+\]
+The last equality is only the fixed-target partial fibre; (CR5)
+retains its actual inherited first receipt and all previous corrections.
+An active floor then gives $dC^+=dC-\mu$, $dT^+=dT$ and $dB^+=dB$.
+These relations are inserted in (CR29)--(CR30)'s actual $H,L$;
+$dC,dT,\mu$ are not additional free directions.
+
+In (CR24) put $U_p=F_{oo}+gT$ and
+$N_p=\phi TBU_p^T+\phi Cg^T+Q_{ao}$, so that
+$T^-=N_p(B^-)^{-1}$. Its full fixed-operand differentiation is
+\[
+\begin{split}
+ dB^-={}&U_p\,dB\,U_p^T+g\,dT\,BU_p^T
+                       +U_pB\,dT^Tg^T+dC\,gg^T,\\
+ dN_p={}&\phi\{dT\,BU_p^T+T\,dB\,U_p^T
+                              +TB\,dT^Tg^T+dC\,g^T\},\\
+ dT^-={}&(dN_p-T^-dB^-)(B^-)^{-1},\\
+ dC^-={}&\phi^2(dC+d\beta)-d\beta^- .
+\end{split}                                                 \tag{CR32}
+\]
+Here $d\beta^-$ is (CR31) at the resulting prefix. The nonzero
+$g=(\phi_{va},\phi_{pa}^{ship},\phi_{Sa}^{ship})$ and full linked
+$Q_{ao}$ remain in $U_p,N_p,B^-,T^-$ and the process precision in $H$.
+$dQ_{ao}=0$ on this partial fibre does not delete $Q_{ao}$.
+No stationary scalar OU identity is used.
+
+For a non-AW $S$/magnetic correction the same tangent has
+$dB^+=A_o dB A_o^T$, $dT^+=dT$, $dC^+=dC$ and the exact
+$dI_a$ of (CR7). Its response is
+$Dh^T=(dB h_o^T,\;T dB h_o^T+dT B h_o^T)^T$.
+For the actual acc row $h=[h_o,1]$ this response instead has the
+conditional components
+$u=dB(h_o+T)^T+B dT^T$ and
+$v=dC+dT B(h_o+T)^T$, with loss (CR19) and successor
+$(dC^{acc},dT^{acc})$ from (CR18). All subsequent response columns
+use those successors, the actual reset and the next (CR32).
+In particular the prediction's next $S$ response is exactly
+$D^-h_S^T=F_OD(F_O^Th_S^T)$, with
+$(F_O^Th_S^T)_{v,p,S,a}=(h^2/2,h,1,\phi_{Sa}^{ship})^T$.
+For each actually applied magnetic event keep
+$h_m=(-v_z,v_x,0,\ldots,0)$ and its actual innovation.
+The physical service probe remains $h_m\Phi_i/\sqrt{s_i}$;
+the covariance response remains $D_i h_m^T$. They are different
+readers of this same word, not interchangeable column families.
+
+\paragraph{Equality conditions and the precise failed near-kernel implication.}
+The positive terms' individual zero conditions are explicit:
+ordinary or residual full process loss vanishes only at $D^-=0$;
+an actual scalar correction loss vanishes only at $Dh^T=0$.
+For non-AW rows the latter requires both
+$dB h_o^T=0$ and $dT B h_o^T=0$; for acc it requires $u=v=0$.
+At a paired face, the two positive conditional terms vanish only if
+\[
+ dT=0,\qquad
+ dC=-\frac{C_*^2}{A^2-C_*^2}\mu,\qquad
+ T\,dB\,T^T=\frac{A^2}{A^2-C_*^2}\mu .                  \tag{CR33}
+\]
+Thus simultaneous zero of \emph{all} positive terms would give
+$D_0=0$ through the first process, and hence zero receipt. This uses
+the existing process/kernel result; it is not a new kernel theorem.
+
+But (CR33) and the correction zero conditions are \emph{not}
+consequences of a zero \emph{signed} gap. At any nonzero balanced
+direction from (CR30), the actual equality is
+\[
+ y^THy=\mu^T\mathcal D\mu>0,
+ \qquad H_{\mathcal F}y=L_{\mathcal F}^T\mathcal D\mu .     \tag{CR34}
+\]
+Its first process loss is strictly positive. The other positive losses
+and completed squares need not vanish; their sum pays exactly the
+nonzero receipt square. For a convergent sequence with vanishing signed
+margin on a justified qualified limit, only the first equality in
+(CR34) follows automatically. The stationary equation also holds for
+minimizers when their justified stratum/constraint limits preserve those
+equations. Neither statement implies $Hy=0$.
+There is no proved decomposition assigning the negative receipt to
+particular positive rows with a remaining nonnegative reserve.
+Assuming such a decomposition would assume the disputed CR28 sign.
+
+The one surviving stationary mode can also be written without root
+coordinate notation. Let $\mathsf P_i$ be the actual covariance prefix
+to receipt $i$, and $\mathcal H_{\mathcal F}$ the operator of the
+\emph{existing} $H_{\mathcal F}$ quadratic under the trace pairing on
+symmetric shipping root tangents. At saturation it is
+\[
+\begin{gathered}
+ D_0^{bal}=\mathcal H_{\mathcal F}^{-1}
+      \left[\sum_i\mathcal D_{ii}\mu_i
+                 (\mathsf P_i|_{\mathcal F})^*(e_ae_a^T)\right],\\
+ D_i^{bal}=\mathsf P_iD_0^{bal},\qquad
+ \mu_i=e_a^TD_i^{bal}e_a .
+\end{gathered}                                               \tag{CR35}
+\]
+For an unpaired original regression receipt use its actual row in
+place of $e_ae_a^T$. The prefix adjoints here are literally
+$F_O^TXF_O$, $A_O^TXA_O$, $G_O^TXG_O$, and
+$X-e_ae_a^TX_{aa}$ at active scalar faces, in reverse call order.
+They retain the actual integrated process, corrections and earlier AA
+deletions. Equation (CR35) is a constraint on a potentially dangerous
+root, not an asserted reached witness or a new evolution law.
+
+The current shipping mechanisms exclude zero action with a nonzero
+receipt. They do not exclude (CR34)--(CR35), which have nonzero action.
+MAGNETIC SERVICE supplies its physical probes, but no proved implication
+turns (CR34) into $D_i h_m^T=0$, or makes its linked receipt reader
+strictly below threshold one. Full $g,Q_{ao}$ and recurring $S$/acc
+action appear explicitly in $\mathcal H_{\mathcal F}$ and
+$\mathsf P_i$; their positivity alone gives no such implication.
+Classification \textbf{D}: the proposed automatic
+``signed near-zero implies complete zero-action'' step is an invalid
+sufficient-proof inference, not a negative shipping word.
+
+This leaves exactly the feasible receipt-driven balance mode (CR30),
+or (CR35) at saturation, to exclude or pay using the same shipping
+$H,L,\mathcal D$. Its feasibility and threshold are not settled here.
+No uniform odd margin or full homogeneous margin is proved. Compactness
+could promote \emph{proved pointwise strictness} on a justified compact
+closed normalized history-image family; it cannot supply that strictness.
+Only fixed-word ellipsoid compactness was used above. Neither full
+forward retention nor a compact closure with justified inherited-image
+rank/branch limits is assumed. The full cross Schur cost (CR17), including
+metric cross entries, generated suffixes, (OF1a), reset/projection,
+inherited source/reference work and endpoint gauge, remains intact.
+There is no source completion or radius calculation.
+Structures preserved: the original signed matrix, all actual causal
+prefixes, integrated $g,Q_{ao}$, queued-target lag, directional
+$S$/acc/magnetic action and scalar face cones.
+Relaxations introduced: none in these identities; the existing real
+planar partial scope and explicitly justified closed-slice attainment
+qualification remain. No full-image parameterization is invented.
+
 \paragraph{Source supply requires a retained contraction reserve.}
 Only \emph{after} proving the homogeneous margin may one assign a
 finite-error supply. If $W_{\perp,0}=v_0^TJ_rv_0$ on the justified

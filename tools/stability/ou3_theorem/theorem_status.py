@@ -500,6 +500,10 @@ def status_report() -> dict:
             "qualified_original_AW_process_short_lower":"0.000000052",
             "scalar_odd_AW_nonzero_zero_gap_branches_accounted":True,
             "process_face_receipt_completed_square_retained":True,
+            "constrained_AW_dangerous_direction_equations_derived":True,
+            "fixed_word_AW_receipt_zero_reserve_inverse_justified":True,
+            "zero_signed_AW_gap_implies_zero_Fisher_action":False,
+            "feasible_balanced_AW_receipt_eigenmode_excluded":False,
             "uniform_process_face_signed_receipt_margin":None,
             "uniform_causal_AW_deficit_reader_margin":None,
             "causal_AW_deficit_reader_uniformly_absorbed":False,
@@ -546,6 +550,7 @@ def status_report() -> dict:
             "Use the exact complementary base Schur absorption; the fixed half-charge domination is sufficient, not necessary, and fails a strictly contractive formal base specialization. Use the combined supported process/source score budget and causal augmented process balance, retaining unsupported scores and the unabsorbed feedback cross term. Prove a uniform directional score margin and domination of the remaining grouped signed work, retaining generated covariance suffix scores and endpoint gauge. "
             "These net comparisons, not conditional precision finiteness, remain unproved; no uniform complete margin is certified. "
             "CR25--CR28 combine the actual full integrated-process AW short with nonzero face receipts, retaining the completed square and scalar zero-gap directional cones; the effective gap is Delta+q_aw>=q_aw>5.2e-8. This finite joint charge is not a positive receipt margin: the original CR17a cross cost and full endogenous Schur sign remain OPEN. "
+            "CR29--CR35 solve the constrained dangerous-direction stationarity equations on justified fixed-word inherited slices and actual scalar face cones. The retained full process justifies H_pmu^-1 at zero reserve on each nonzero slice, not a common positive reserve. A nonpositive gap requires a feasible reconstructed receipt eigenmode with chi>=1; saturation has H y=L^T D mu and positive Fisher action equal to nonzero receipt work. Zero signed gap does not imply zero action, so the existing complete-word kernel results do not exclude that balanced mode. Exclude or pay this single feasible receipt-driven mode using the exact integrated OU/S/acc/magnetic matrix; no compact forward domain or uniform inherited-image closure is assumed. "
             "Use OF1a's same process information matrix to keep E_L,S_q,-2C_W and generated work coupled before any norm. "
             "The actual central-planar pure odd-covariance partial matrix is lambda*(H_W-R_W^T R_W), with full transported process/S/magnetic Fisher loss and the original AW-face regression reader d(TBT^T)/(C+Delta). "
             "Its exact relative Schur threshold is one; a formal anisotropic correction--prediction--floor scope test exceeds one even with D_AA,0=0 and positive process. This D failure is not shipping reachability or instability. "

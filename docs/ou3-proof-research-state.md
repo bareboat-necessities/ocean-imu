@@ -12,7 +12,7 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `5c6b8c7dffe88f4932f15734d62e8e1ece29346f`.
+Verified starting PR head: `e362f9dfbec57784725baf789501274f8b3392a0`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved, including ab7c9fecc16e8671a6ba29c8437d21b4101e4f93
 fetched during this continuation. Current CI chronology belongs in PR metadata.
@@ -29,6 +29,37 @@ lemma/quantifiers, finite-error role, literal dissipation structure, required
 proved/open bounds and avoidance of recorded dead ends. Required CI remains.
 
 ## Evidence
+
+**Constrained dangerous direction — CR29--CR35; no margin promotion.**
+The requested root-normalized minimization now has its actual constrained
+Euler equations, including inherited linear constraints and scalar face
+guards read from the SAME prefixes. On each justified closed fixed-word
+history-tangent slice, the first retained full process makes H_pmu invertible
+at zero reserve; this is inserted immediately into CR28. It does not give a
+common positive reserve or assume full covariance/image compactness.
+
+The sign test reduces losslessly to feasible receipt eigenmodes:
+`A_F t=chi t`, `A_F=D^1/2 L_F H_F^-1 L_F' D^1/2`,
+`y=H_F^-1 L_F' D^1/2 t/chi`, with the actual inherited image and all
+branch guards enforced. A nonpositive gap exists on a closed slice iff
+such a reconstructed feasible mode has `chi>=1`. All dependent receipts
+remain. No actual eigenmode is asserted feasible or excluded.
+CR31--CR32 give its simultaneous dB/dT/dC/mu and differentiated full
+integrated g/Q_ao relations; actual transported S/acc/magnetic columns
+are retained. At saturation the mode is the inverse of the EXISTING
+H action applied to adjoint-transported AW receipt rows (CR35).
+
+**D — the automatic near-kernel contradiction fails at a precise step.**
+A zero signed gap gives `y'H y=mu'D mu>0`, not zero positive action.
+Its first process loss is strictly positive; correction losses and the
+completed square need not vanish. Existing zero-action/kernel theorems
+exclude zero action with nonzero receipts, but do not exclude this balanced
+receipt-driven mode. Treating its individual losses as zero would assume
+the disputed domination. No shipping-negative tangent or impossibility
+is established. The ONE immediate remaining blocker is to exclude/pay
+the reconstructed feasible `chi>=1` mode in CR30; its saturation is CR35.
+The full CR17 cost is preserved for substitution after a proved odd margin.
+AW blocker: NO. Complete homogeneous gap: NO. Counts remain 25/4/1.
 
 **Nonzero receipts with the literal preceding process — CR25--CR28.**
 The full four-kernel integrated covariance, including Q_ao, has normalized
@@ -385,6 +416,16 @@ observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
 
+The immediate sign question is the feasible receipt-driven stationary mode
+(CR30)/(CR35), not the complete-word zero-action kernel. A balanced signed
+zero has nonzero receipt and positive first process loss. Existing
+MAGNETIC SERVICE and integrated OU/S/acc action enter the exact constrained
+reader but do not prove its feasible eigenvalues below one. Fixed-word
+zero-reserve inverses are now justified; no uniform positive reserve or
+inherited-image/branch closure is inferred. Do not try to derive individual
+zero-loss conditions from signed equality. After odd positivity, substitute
+the actual full cross cost in CR17 before completing any exogenous supply.
+
 The first decisive test is now explicitly (CR3) for the ACTUAL correlated
 homogeneous lift, with true exogenous variation set to zero and inherited
 endogenous columns retained. No uniform positive remainder has been proved.
@@ -686,6 +727,25 @@ Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
 
+* **D, signed near-kernel implies zero-action shortcut:** exact failed
+  inference: `y'(H-L'DL)y -> 0` implies every positive process/service
+  loss tends to zero. The actual limiting equation is CR34,
+  `y'H y=mu'D mu>0`; the stationary balance mode is CR35.
+  Retained: all exact CR25--CR28 accounting, constrained equations,
+  integrated same-tangent and directional service losses. Limiter: exclude
+  or pay the feasible receipt-driven eigenmode at threshold one. Next:
+  insert actual image/cone and linked service restrictions in CR30.
+  No independent norms, tiny kernel reserve, toy witness or new storage.
+* **E, local tooling:** corrected guessed appendix/optional filenames and
+  a JavaScript call delimiter before edits; an unsupported encoded branch
+  read did not replace the successful PR/head fetch. Missing local mpmath
+  and ruff were installed in scratch for the unchanged required checks.
+  The scratch appendix wrapper first lacked the article's norm macro;
+  importing the existing macro let the full appendix compile unchanged.
+  Native git push lacked a GitHub credential; publish the identical
+  validated tree through the connected API with an expected-head check.
+  No mathematical premise or validation gate changed.
+
 * **D, process-short-only sign inference:** CR26's positive effective gap
   does not prove the complete nonzero receipt remainder nonnegative.
   Exact unpaid quantity: CR28, equivalently CR17a, on the actual inherited
@@ -938,6 +998,16 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
+Decide the ONE feasible receipt-driven eigenmode in CR30/CR35 using the
+existing actual H_pmu,L_pmu,D_pmu and inherited image/cone restrictions.
+At threshold one its positive process/service action balances the receipt;
+it is not in the complete zero-action kernel. Use CR32's full integrated
+g/Q_ao and the SAME transported S/acc/magnetic covariance columns to
+exclude or pay that mode. No actual negative mode has been exhibited.
+Compactness is usable only after pointwise strictness and justified
+closed normalized history-image limits; no forward retention is assumed.
+Then substitute the positive odd block into the full CR17 cross remainder.
+
 Attack CR28/CR17a on feasible NONZERO receipts, using CR25--CR27's
 joint process/face inequality and actual scalar directional cones.
 Keep the completed receipt square, full residual process and directional
@@ -994,7 +1064,8 @@ in the PR metadata.
    explicitly releases shared tangent coordinates.
    No source-origin graph, reachability, service coverage or storage is invented.
 3. Failures: D for (CR9)--(CR10), automatic acc/floor uniform payment and
-   process-short-only inference of complete receipt positivity,
+   process-short-only inference of complete receipt positivity and
+   signed-near-zero-to-zero-action inference,
    not the actual
    complete shipping gap. E for corrected path/patch/quoting/whitespace
    tooling and the zero-gap certificate qualification; prior classified
@@ -1006,7 +1077,8 @@ in the PR metadata.
    suffix/generated-score, complementary Schur, coupled process/source,
    conditional AW/reader, frame, qualified magnetic, held and even-process
    results under their original hypotheses. No theorem/count promotion.
-6. Next: pay CR28/CR17a's NONZERO receipt matrix with the literal residual
+6. Next: exclude or pay CR30/CR35's feasible nonzero balanced receipt mode
+   in CR28/CR17a with the literal residual
    process and transported acc/S/magnetic action, using only necessary
    actual inherited-image constraints; no paid-kernel rank detour.
    Keep CR22/CR24's linked acc/regression and integrated process accounting,
