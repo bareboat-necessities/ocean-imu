@@ -818,6 +818,9 @@ Physical S is never reset by the estimator pseudo-measurement.
   Full Schur continuation: guessed optional module paths were corrected
   to tools/stability/ou3_theorem. A render redirect found no scratch
   directory; creating that directory and rerunning rendered the appendix.
+  Publication verification briefly read the remote ref before its fetch
+  finished. After waiting for that fetch, the fetched tree matched the
+  already validated/API-verified tree exactly; no branch update was forced.
   No mathematical premise or validation gate changed.
 
 * **D, process-short-only sign inference:** CR26's positive effective gap
