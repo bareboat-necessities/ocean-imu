@@ -19,6 +19,10 @@ TEST_DIRS := \
 	$(REPO_ROOT)/tests/wave_dir \
 	$(REPO_ROOT)/tests/wave_sim
 
+# Suites that need no simulation data, kept out of the sim-data fan-out below.
+UNIT_TEST_DIRS := \
+	$(REPO_ROOT)/tests/hpdi
+
 SIM_DATA_VERSION ?= v1.2.1
 SIM_DATA_REPO ?= bareboat-necessities/oceanography-waves-lib
 SIM_DATA_ZIP_NAME ?= sim-data-files-vessel-rao-28ft.zip
@@ -29,7 +33,7 @@ all: build test
 
 build:
 	@set -e; \
-	for d in $(TEST_DIRS); do \
+	for d in $(TEST_DIRS) $(UNIT_TEST_DIRS); do \
 		$(MAKE) -C $$d build; \
 	done
 
@@ -43,7 +47,7 @@ quality-gates:
 
 clean:
 	@set -e; \
-	for d in $(TEST_DIRS); do \
+	for d in $(TEST_DIRS) $(UNIT_TEST_DIRS); do \
 		$(MAKE) -C $$d clean >/dev/null 2>&1 || true; \
 	done
 
@@ -55,7 +59,7 @@ fetch-sim-data ensure-sim-data:
 
 run-tests:
 	@set -e; \
-	for d in $(TEST_DIRS); do \
+	for d in $(TEST_DIRS) $(UNIT_TEST_DIRS); do \
 		if [ -f "$$d/run_tests.sh" ]; then \
 			echo "Running $$d/run_tests.sh"; \
 			( cd "$$d" && bash -e ./run_tests.sh ); \

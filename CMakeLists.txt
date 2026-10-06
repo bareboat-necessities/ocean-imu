@@ -67,3 +67,8 @@ add_executable(tfg_handoff_heave-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_han
 add_executable(tfg_device_heave-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_device_heave-test.cpp")
 add_executable(tfg_device_tempcomp-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_device_tempcomp-test.cpp")
 add_executable(detrend-log-frequency-test "${OCEAN_IMU_TESTS_DIR}/detrend/detrend-log-frequency-test.cpp")
+
+# Conventional heave baselines (src/hpdi). The per-family heave_export
+# binaries need link-time wrapping and are built by tests/hpdi/Makefile only.
+add_executable(test_heave_hpdi "${OCEAN_IMU_TESTS_DIR}/hpdi/test_heave_hpdi.cpp")
+add_executable(hpdi_replay "${CMAKE_CURRENT_SOURCE_DIR}/tools/hpdi_replay.cpp")
