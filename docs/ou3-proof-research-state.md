@@ -528,6 +528,14 @@ Physical S is never reset by the estimator pseudo-measurement.
   the first lint/evidence invocations; installed the required dependencies and
   reran unchanged gates. Two rejected patch contexts changed no files and were
   corrected. No mathematical premise or test was weakened.
+* **E, publication credentials:** `git push origin HEAD:refs/heads/proof/ou3-planar-service-phase`
+  failed with `could not read Username for 'https://github.com': No such device or address`.
+  Published the identical validated tree through the connected repository API
+  using a non-forced expected-head update. Preserved the intervening evidence
+  commit; no proof premise, shipping equation or check changed. Full local
+  evidence contracts pass: 1,107 tests, two existing skips. Current-head CI
+  must be inspected separately; neither a parent pass nor local validation is
+  promoted to current-head CI success.
 
 * **D, bordered-storage uniform-coercivity failure:** the new Fisher lift pays
   covered fixed-operand score work but accumulates `B_W` in its slack and can
