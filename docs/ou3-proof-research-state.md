@@ -404,6 +404,27 @@ Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
 
+* **D, recurring comparison/work closure still not obtained:** composing the
+  actual supported process balance with the applied acc/S/magnetic comparison
+  identities gives exactly (HB7), not a new uniform bound. The unpaid quantity
+  is `V_X,0-V_X,N+process_source_action+correction_defect_action-NIS+
+  uncovered_signed_change`. The negative innovation and terminal terms must
+  stay paired with their source terms; dropping them does not solve the root
+  comparison problem. At S updates the defect remains `-S_physical`.
+  Separately, (CP7) leaves the complete causal remainder in one signed
+  cross-plus-square expression. Positive (CP5) does not bound its coefficient
+  maps or the inherited comparison. This attempt discharges neither obligation
+  and adds no theorem or count. First-Live, held LIN BIBO and magnetic physical
+  probe service do not alone supply the missing recurring comparison-to-action
+  estimate. Retained: the exact balances and all source/covariance cancellation.
+  Architecture review is required before another refinement of this mechanism:
+  exhibit a non-circular finite-error comparison retention estimate on the
+  required loss projection, or a storage formulation that controls the actual
+  endogenous ports without presupposing that estimate. Another boundary
+  telescope, smaller auxiliary coefficient or independent-maxima enclosure is
+  not a discharge. No radius, new numerical exploration or admitted
+  counterexample results from this attempt.
+
 * **E, manuscript tooling:** the new section had a missing EP4 closing delimiter
   and tags inside EP6/EP7 split environments. Standalone compilation caught
   these; delimiter/tag placement was repaired without changing the argument
