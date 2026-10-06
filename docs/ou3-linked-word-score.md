@@ -810,3 +810,41 @@ remain the exact connection differences until the whole word is composed.
 This bound does not control inherited E_L, prove score/Schur domination, or
 qualify the odd, reference, reset, AW, source and arithmetic contributions.
 Those requested uniform bounds remain OPEN; no radius is computed.
+
+## Direct coupled-matrix attack and the AW regression obstruction
+
+Appendix `app:odd-covariance-signed-gap` (OF1)--(OF1a) forms the entire
+signed quadratic in the existing justified root/source coordinates. For each
+process it keeps `f=T X Lambda z` and
+`z'Lambda z=E_i+S_i-2C_i` inside the same polarized Fisher/cross/square
+expression. The scalar-budget equivalence in (HB6) does not require bounding
+E_L separately before forming that matrix. Complementary base propagation is
+already paid by (CP4); generated `U_i q_suffix` and the complete source,
+reference, reset, projection, AW and endpoint gauge derivatives remain.
+
+On the qualified central-planar A21 pure odd-covariance partial derivative,
+actual parity, zero odd residual and one-way private history prove zero mean
+and non-AW generated self-ports. The score reader is zero on this block even
+when the full E_L is nonzero. This fibre fixes inherited input/auxiliary
+state; it is not substituted for their correlated variations on a general
+construction lift. The 45-dimensional ambient covariance block is restricted
+to the actual justified causal image.
+
+The original AW_y floor retains cross covariance. In the existing conditional
+coordinates its actual tangent is `dC_plus=-d(T B T')`. The exact same-storage
+word matrix becomes `G_OO=lambda*(H_W-R_W'R_W)`, with actual transported
+process/S/magnetic Fisher action and rows `d(T B T')/C_plus` at active faces.
+The exact relative reader threshold is one, after subtracting the proposed
+root-metric margin. No independent scalar maxima, extra base charge or new
+metric is used.
+
+**D — failed automatic absorption.** The exact formal correction--prediction--
+pending-floor word (OF6)--(OF7) exceeds that threshold even with D_AA,0=0,
+an optimal non-AW correction and positive process. Its offending direction is
+`(-10,3,1,0,0)` in `(dB11,dB12,dB22,dT1,dT2)`. The signed gap is
+`-691428110973/567390082009`. This three-state formal process is not
+shipping-reached or MAGNETIC-SERVICE-admitted; no instability is inferred.
+What is needed is the quantitative same-word regression reader comparison
+with the actual integrated process and directional S/magnetic losses,
+followed by the retained even/source/gauge cross Schur cost. Uniform margins
+and the full machine-readable OPEN dependency remain unproved.

@@ -201,6 +201,25 @@ than a larger Cartesian reachable box, is the next mathematical target.
 
 ### Relative Schur form of the exact missing comparison
 
+The direct attack in Appendix `app:odd-covariance-signed-gap` now supplies
+the common-coordinate matrix (OF1) and the coupled process entry (OF1a).
+Keep `E_L+S_q-2C_W` inside the same process information/Fisher/cross form;
+an independent E_L cap is not a mandatory prerequisite for this attack.
+The exact complementary-base Schur absorption remains inserted with
+coefficient one.
+
+On the qualified pure odd-covariance partial derivative, the complete matrix
+is `lambda*(H_W-R_W'R_W)`. The one remaining endogenous self-work operator
+is the stacked active-AW regression reader `d(T B T')/C_plus`, with
+transported process/S/magnetic Fisher action in H_W. Its relative Schur
+threshold is one; no uniform reader margin has been proved. A formal exact
+scope check violates the threshold even on a fixed-AA root fibre with positive
+process. This is D, not shipping instability or a new physical restriction.
+Next use the literal integrated-chain/correction maps to pay that reader on
+the actual causal image, retaining the even/source/gauge cross Schur cost.
+The general service-conditioned theorem still does not wait for planar
+all-time admission.
+
 On a stratum where the two physical service root directions have independent
 images in the justified transverse lift, complete them to coordinates (s,n).
 If they do not, use a different stratum; do not invent a two-column lift.

@@ -506,6 +506,136 @@ def planar_pitch_prediction_calculus(step, angle, gyro_density, bias_density):
             'uniform_complete_gap_verified': False}
 
 
+def scalar_aw_face_fisher_balance(P, D, target, aw_index):
+    """Exact active scalar face in the EXISTING Fisher metric (OF2).
+
+    Shipping use: AW_y in the planar odd block, fixed inherited target and
+    source/private state, regular A21 branch. No replacement covariance law,
+    independent cross-covariance bound, or reachability assertion is supplied.
+    A varying target, held effective-noise port, or off-parity tangent needs
+    the full causal derivative instead of this specialization.
+    """
+    ldlt(P)
+    n, a, target = len(P), aw_index, F(target)
+    if not 0 <= a < n or D != transpose(D) or target <= P[a][a]:
+        raise ValueError('symmetric tangent and strictly active scalar AW face required')
+    o = [i for i in range(n) if i != a]
+    B = [[P[i][j] for j in o] for i in o]
+    dB = [[D[i][j] for j in o] for i in o]
+    T = product([[P[a][j] for j in o]], inverse(B))
+    dT = product(add([[D[a][j] for j in o]], product(T, dB), -1), inverse(B))
+    beta = product(T, B, transpose(T))[0][0]
+    d_beta = (product(T, dB, transpose(T))[0][0]
+              + 2*product(dT, B, transpose(T))[0][0])
+    C, Cnext, dC = P[a][a]-beta, target-beta, D[a][a]-d_beta
+    Pnext, Dnext = [row[:] for row in P], [row[:] for row in D]
+    Pnext[a][a], Dnext[a][a] = target, F(0)
+    J, Jnext = inverse(P), inverse(Pnext)
+    before, after = trace(product(J, D, J, D)), trace(product(Jnext, Dnext, Jnext, Dnext))
+    positive = dC*dC/(C*C)+2*(1/C-1/Cnext)*product(dT, B, transpose(dT))[0][0]
+    adverse = (d_beta/Cnext)**2
+    assert before-after == positive-adverse and positive >= 0
+    return {'P_next': Pnext, 'D_next': Dnext, 'B': B, 'T': T,
+            'C': C, 'C_next': Cnext, 'beta': beta, 'd_beta': d_beta,
+            'dC': dC, 'dT': dT, 'positive_face_action': positive,
+            'regression_reader': d_beta/Cnext, 'adverse_face_work': adverse,
+            'gap': before-after}
+
+
+def covariance_word_signed_matrix(boundaries, prefixes, active_faces, aw_index):
+    """Verify OF4 from supplied SAME-word covariance/tangent prefix maps.
+
+    prefixes[i][j] is the entire actual D_i for root coordinate j; after a
+    face it includes AA deletion, not a frozen congruence product. Ordinary
+    steps must be the proved fixed-operand process/Joseph/congruence steps.
+    This small exact-algebra helper does not construct or qualify a shipping
+    word, an inherited root lift, magnetic service, or a uniform margin.
+    """
+    if len(boundaries) < 2 or len(prefixes) != len(boundaries):
+        raise ValueError('linked covariance and tangent boundaries required')
+    d = len(prefixes[0])
+    if not d or any(len(ds) != d for ds in prefixes):
+        raise ValueError('one common root-coordinate basis required')
+    faces = set(active_faces)
+    if any(i < 0 or i >= len(boundaries)-1 for i in faces):
+        raise ValueError('active face outside word')
+    grams = []
+    for P, ds in zip(boundaries, prefixes):
+        ldlt(P)
+        if any(D != transpose(D) or len(D) != len(P) for D in ds):
+            raise ValueError('symmetric same-dimension covariance tangents required')
+        J = inverse(P)
+        JD = [product(J, D) for D in ds]
+        grams.append([[trace(product(x, y)) for y in JD] for x in JD])
+    positive, readers, ordinary = zeros(d, d), [], []
+    for i in range(len(boundaries)-1):
+        if i not in faces:
+            loss = add(grams[i], grams[i+1], -1)
+            if not is_psd(loss):
+                raise ValueError('ordinary step lacks the stated Fisher base-loss qualification')
+            positive = add(positive, loss)
+            ordinary.append(loss)
+            continue
+        fs = [scalar_aw_face_fisher_balance(boundaries[i], D,
+              boundaries[i+1][aw_index][aw_index], aw_index) for D in prefixes[i]]
+        if any(f['P_next'] != boundaries[i+1] or f['D_next'] != prefixes[i+1][j]
+               for j, f in enumerate(fs)):
+            raise ValueError('face must retain cross covariance and its actual target-fixed derivative')
+        f0 = fs[0]
+        face_action = [[f['dC']*g['dC']/f0['C']**2
+                       + 2*(1/f0['C']-1/f0['C_next'])*product(f['dT'], f0['B'], transpose(g['dT']))[0][0]
+                       for g in fs] for f in fs]
+        positive = add(positive, face_action)
+        readers.append([f['regression_reader'] for f in fs])
+    adverse = product(transpose(readers), readers) if readers else zeros(d, d)
+    gap = add(positive, adverse, -1)
+    assert gap == add(grams[0], grams[-1], -1)
+    return {'root_metric': grams[0], 'positive_action': positive,
+            'ordinary_losses': ordinary, 'face_reader': readers,
+            'adverse_face_work': adverse, 'signed_gap': gap}
+
+
+def odd_covariance_gap_scope_check():
+    """One exact D-class implication check, NOT a shipping execution (OF7).
+
+    It even retains the fixed-root AW marginal tangent D_aa=0. The correction
+    precedes prediction and its pending floor, as the shipping chronology can.
+    F=I and Q=I/1000 are a stated formal relaxation, not the OU process.
+    """
+    P = [[F(1), F(0), F(1)], [F(0), F(1), F(1)], [F(1), F(1), F(3)]]
+    H, R = [[F(0), F(1), F(0)]], [[F(1)]]
+    S = add(product(H, P, transpose(H)), R)
+    A = add(identity(3), product(P, transpose(H), inverse(S), H), -1)
+    Pc = product(A, P)
+    Q = [[F(i == j, 1000) for j in range(3)] for i in range(3)]
+    Pp = add(Pc, Q)
+    Pn = [row[:] for row in Pp]
+    Pn[2][2] = F(3)
+    # Coordinates (dB11,dB12,dB22,dT1,dT2), inherited fixed P_aa=3.
+    ds = []
+    for X, u in (([[F(1), F(0)], [F(0), F(0)]], [[F(0), F(0)]]),
+                 ([[F(0), F(1)], [F(1), F(0)]], [[F(0), F(0)]]),
+                 ([[F(0), F(0)], [F(0), F(1)]], [[F(0), F(0)]]),
+                 (zeros(2, 2), [[F(1), F(0)]]),
+                 (zeros(2, 2), [[F(0), F(1)]])):
+        b = add(product(X, [[F(1)], [F(1)]]), transpose(u))
+        ds.append([X[0]+b[0], X[1]+b[1], [b[0][0], b[1][0], F(0)]])
+    dc = [product(A, D, transpose(A)) for D in ds]
+    dn = [scalar_aw_face_fisher_balance(Pp, D, F(3), 2)['D_next'] for D in dc]
+    word = covariance_word_signed_matrix([P, Pc, Pp, Pn], [ds, dc, dc, dn], [2], 2)
+    ldlt(word['positive_action'])
+    reader = product(word['face_reader'], inverse(word['positive_action']), transpose(word['face_reader']))[0][0]
+    direction = [[F(-10)], [F(3)], [F(1)], [F(0)], [F(0)]]
+    gap = product(transpose(direction), word['signed_gap'], direction)[0][0]
+    assert reader > 1 and gap == -F(691428110973, 567390082009)
+    return {'classification': 'D_SUFFICIENT_BOUND_FAILURE', 'shipping_counterexample': False,
+            'root_AW_marginal_tangent_zero': True, 'strict_positive_process': True,
+            'ordinary_and_face_chronology_retained': True,
+            'relative_reader_threshold': '1', 'relative_reader_exact': str(reader),
+            'negative_direction': ['-10', '3', '1', '0', '0'], 'signed_gap': str(gap),
+            'relaxation': 'formal three-state covariance word; F=I,Q=I/1000, not shipping-reached or service-admitted'}
+
+
 def certificate():
     return {
         'qualification': 'OU3_MEASUREMENT_FRAME_V2',
@@ -555,6 +685,23 @@ def certificate():
         'qualified_AW_conditional_precision_ceiling': qualified_aw_precision_ceiling(),
         'conditional_AW_process_coercivity': conditional_aw_process_coercivity(),
         'conditional_AW_loss_proof': 'app:aw-conditional-loss',
+        'odd_covariance_complete_gap': {
+            'proof': 'app:odd-covariance-signed-gap',
+            'result_type': 'PROVED analytical restriction and exact Schur obstruction; uniform gap OPEN',
+            'scope': 'regular central-planar A21 continuation after refinement, fixed delivered/private inherited history and target; actual causal root image must be retained',
+            'ambient_symmetric_dimension': 45,
+            'non_AW_generated_self_ports_zero': True,
+            'E_L_and_source_score_priced_separately': False,
+            'actual_AW_face_derivative_retained': True,
+            'signed_matrix': 'lambda*(H_W-R_W^T R_W), evaluated on actual covariance prefixes',
+            'remaining_operator': 'stacked d(T B T^T)/(C+Delta) at actual active AW_y faces',
+            'magnetic_and_S_loss': 'same-operation directional Fisher Grams, transported through actual prefix including AW deletion',
+            'relative_Schur_threshold': 'I-R_W*(H_W-c*H_0)^-1*R_W^T >= 0, H_W-c*H_0 > 0',
+            'uniform_relative_reader_margin': None,
+            'uniform_odd_covariance_gap': None,
+            'full_even_odd_source_cross_blocks_discarded': False,
+            'scope_check': odd_covariance_gap_scope_check(),
+        },
         'planar_even_process_work_proof': 'app:planar-even-process-work',
         'planar_fixed_input_even_dF_dQ_zero': True,
         'planar_fixed_input_even_ds_identically_zero': False,

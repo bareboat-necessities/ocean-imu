@@ -515,3 +515,41 @@ then bounds aggregate generated-port work while retaining half the net root
 loss. The endpoint adjustment remains explicit. The process lower bound
 justifies the base inverses; uniform signed score/packet absorption remains
 OPEN and no radius is solved.
+
+## Complete odd-covariance gap: retain the active-face derivative
+
+Appendix `app:odd-covariance-signed-gap` specializes the **same** fixed-weight
+complete signed gap to a regular central-planar A21 pure odd-covariance fibre,
+with inherited delivered/private state fixed. Literal parity and zero odd
+residual give zero mean/reference/score and non-AW generated self-ports.
+This is a partial derivative on the justified causal image, not a substitute
+for the full correlated root/source lift or for arbitrary odd mean variations.
+
+For scalar AW_y, the existing conditional decomposition gives
+`beta=T B T'` and `C_plus=C+Delta`. The actual active floor retains B and T
+and gives `dC_plus=-d(beta)`. Its signed Fisher decrement is
+
+```
+(W-W_plus)/lambda = (dC/C)^2
+  + 2*(1/C-1/C_plus)*dT B dT' - (d(beta)/C_plus)^2.
+```
+
+After all literal covariance prefixes, including every active AA deletion,
+the complete odd partial matrix is `lambda*(H_W-R_W'R_W)`. H_W contains
+actual process, acc, recurring S and applied magnetic Fisher losses plus the
+positive face terms; R_W contains only the remaining regression rows.
+For a scalar applied mag/S row h the directional Fisher action is exactly
+`(D h')'*(2 J/S-h'h/S^2)*(D h')`, with the same actual covariance/noise and
+chronology as the innovation-whitened service probes. This retains the
+transported weak directions and does not promote a two-column physical
+service floor to a full covariance floor.
+
+If `H_W-c H_0>0`, the exact uniform-margin candidate requires
+`I-R_W*(H_W-c H_0)^-1*R_W' >=0`; its threshold is one. A formal anisotropic
+correction--prediction--floor scope test exceeds one even with fixed root
+AA tangent and positive process. Classification **D**, not a reached
+shipping counterexample. Conditional precision nonincrease cannot pay the
+face derivative automatically. The actual reader comparison, full even/source
+cross Schur work, inherited activation and uniform complete margin remain
+**OPEN**. Existing frame cancellation, magnetic loss and conditional process
+results are unchanged. No new storage, physical assumption or radius.

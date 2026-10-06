@@ -466,6 +466,16 @@ def status_report() -> dict:
             "held_BA_unsupported_score_uniform_boundary_bound":True,
             "held_BA_unsupported_score_active_component_zero":True,
             "uniform_active_comparison_loss_energy":None,
+            "coupled_process_score_generated_matrix_identity_verified":True,
+            "independent_E_L_cap_required_before_coupled_matrix":False,
+            "planar_odd_covariance_complete_signed_matrix_identity_verified":True,
+            "planar_odd_covariance_non_AW_generated_self_ports_zero":True,
+            "planar_odd_covariance_fibre_scope":"central planar regular A21 pure covariance partial derivative, fixed inherited source/private state; restrict to justified causal image, preserve other cross blocks",
+            "planar_odd_covariance_actual_AW_regression_reader_retained":True,
+            "uniform_planar_odd_covariance_regression_reader_margin":None,
+            "uniform_planar_odd_covariance_storage_margin":None,
+            "planar_odd_covariance_automatic_face_absorption_verified":False,
+            "planar_odd_covariance_scope_failure_class":"D_SUFFICIENT_BOUND_FAILURE",
             "planar_fixed_input_even_process_dF_dQ_zero":True,
             "planar_quaternion_process_mean_defect_retained":True,
             "planar_even_process_auxiliary_charge_real_bound":True,
@@ -507,6 +517,10 @@ def status_report() -> dict:
             "The state-dependent AW frame preserves the conditional storage and score reader; endpoint frame work stays in transformed complementary packets without double counting. "
             "Use the exact complementary base Schur absorption; the fixed half-charge domination is sufficient, not necessary, and fails a strictly contractive formal base specialization. Use the combined supported process/source score budget and causal augmented process balance, retaining unsupported scores and the unabsorbed feedback cross term. Prove a uniform directional score margin and domination of the remaining grouped signed work, retaining generated covariance suffix scores and endpoint gauge. "
             "These net comparisons, not conditional precision finiteness, remain unproved; no uniform complete margin is certified. "
+            "Use OF1a's same process information matrix to keep E_L,S_q,-2C_W and generated work coupled before any norm. "
+            "The actual central-planar pure odd-covariance partial matrix is lambda*(H_W-R_W^T R_W), with full transported process/S/magnetic Fisher loss and the original AW-face regression reader d(TBT^T)/(C+Delta). "
+            "Its exact relative Schur threshold is one; a formal anisotropic correction--prediction--floor scope test exceeds one even with D_AA,0=0 and positive process. This D failure is not shipping reachability or instability. "
+            "Prove the reader comparison on the actual causal image and retain its full even/source/gauge cross Schur cost; no independent E_L cap is imposed as a prerequisite. "
             "Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes "
             "to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. "
             "The physical same-record tangent is forced and is not automatically the homogeneous or action kernel. "

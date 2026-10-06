@@ -12,7 +12,7 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `f553a1f3f6efc2a0ff734f0047124e84c40e6039`.
+Verified starting PR head: `dcb1105005e25035643df031b7c6fb36b1b5e3ea`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved. Current CI chronology belongs in PR metadata.
 
@@ -28,6 +28,55 @@ lemma/quantifiers, finite-error role, literal dissipation structure, required
 proved/open bounds and avoidance of recorded dead ends. Required CI remains.
 
 ## Evidence
+
+**Direct signed-gap attack — analytical, no new storage:** Appendix
+`app:odd-covariance-signed-gap` writes the common-coordinate complete matrix
+(OF1) and substitutes the combined process/source/generated matrix (OF1a).
+Its `z'Lambda z=E_i+S_i-2C_i` stays inside the cross/square work. An independent
+uniform E_L cap is not imposed as a prerequisite for this matrix calculation.
+The existing complementary-base Schur absorption is inserted with coefficient
+one. All even/source/reference/reset/AW/gauge cross terms remain.
+
+On the qualified central-planar regular A21 **pure odd-covariance partial
+derivative**, the actual causal equations give zero mean, score, coefficient,
+reference and non-AW generated self-ports. This is not the claim that arbitrary
+odd mean or even BG variations have zero coefficient work. The ambient block
+has 45 symmetric coordinates; restrict it to the actual justified causal
+image, preserving inherited root/auxiliary correlations. Full E_L may be
+nonzero, but its reader on this partial block vanishes exactly.
+
+At an actual active AW_y face, in the existing conditional coordinates,
+`beta=T B T'`, `C+=C+Delta`, and `dC+=-d(beta)` for this fixed-target fibre.
+The **same** Fisher decrement is
+
+```
+(W-W+)/lambda = (dC/C)^2
+  +2*(1/C-1/C+)*dT B dT' - (d(beta)/C+)^2.
+G_OO = lambda*(H_W-R_W'R_W).
+```
+
+H_W contains the complete transported process, acc, S and actually applied
+magnetic Fisher losses plus the positive face terms. R_W stacks the actual
+regression rows after every preceding face derivative. The directional
+mag/S loss is `2*h D J D h'/S-(h D h')^2/S^2`, retaining actual whitening,
+covariance and chronology; no weakest-eigenvalue service replacement is used.
+The exact threshold is `I-R_W*(H_W-c H_0)^-1*R_W' >=0`, when that inverse
+is legitimate. Neither its uniform margin nor the full cross-block Schur
+margin is proved.
+
+**D — exact obstruction to automatic face absorption:** conditional precision
+nonincrease does not pay this regression square. Even a root with D_AA=0
+can fail after an anisotropic non-AW correction and pending sync. The exact
+formal word in (OF6)--(OF7), including a positive process Q=I/1000, has signed
+gap `-691428110973/567390082009` and relative reader
+`3600981887018337723830924642750000/2360546894727403698724996038046493 > 1`.
+This tests the sufficiency of the available matrix premises. Its F=I,
+three-state process and observation are explicitly **not shipping-reached
+or service-admitted**. No shipping counterexample or instability follows.
+The missing shipping comparison is now the actual AW regression reader
+against the same integrated process and transported S/magnetic action.
+No machine-readable full-word OPEN dependency is discharged; counts and
+all promotion flags remain unchanged.
 
 **PROVED — analytical, actual causal reference reduction:**
 `app:locked-live-causal-reference` proves that on the magnetically locked Live
@@ -631,15 +680,22 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
-An analytical obligation: establish the inherited process-loss comparison
-energy bound E_L needed by the exact B_W identity, retaining S_q and C_W from
-the same history. Use the held-score boundary cancellation only before release.
-Then control the actual directional reader and grouped active signed remainder
-against the full retained Schur loss. The fixed half-charge sufficient bound
-is not a required milestone. Do not independently maximize ports, substitute
-base c_aw for the net margin, or silently bound causal source tangents by
-physical time-rate limits. No compact enclosure without a derived domain and
-affordable threshold; no radius before the full gap and charges are proved.
+Use the complete matrix (OF1)--(OF1a), keeping E_L, S_q and C_W coupled.
+For its now-isolated odd-covariance partial block, propagate the actual
+AW regression through integrated prediction and anisotropic Joseph updates;
+test (OF5)'s single stacked reader against the same-word directional Fisher
+Gram. A common relative threshold below one, with positive action coercivity,
+would pay that block; then its actual even/source cross Schur cost must remain.
+Do not infer the threshold from precision monotonicity, D_AA=0 at one root,
+or the formal failed word. A justified causal image might exclude the formal
+offending direction; that exclusion itself must be proved.
+
+Use the held-score boundary cancellation only before release. The independent
+E_L cap remains an OPEN sufficient-budget route, not a mandatory first step
+for the full coupled gap. Neither the fixed half-charge test nor base c_aw
+is a net-margin milestone. Do not independently maximize ports or bound
+source tangents by physical time-rate limits. No compact enclosure without
+a derived domain and affordable threshold; no radius before the full gap.
 Use the now-proved locked-Live causal split: no homogeneous reverse reference
 charge on that lift, and the paired source reader (LR6)--(LR7) in the full
 remaining work. Reacquisition and source variations do not inherit a zero port.
@@ -664,12 +720,16 @@ in the PR metadata.
    math-font command was replaced by the existing font; E proof-helper scope/derivative, source-anchor/display-delimiter bugs and a corrected
    covariance-variable name collision with the retired-architecture guard, and
    unavailable local IEEEtran class (full rendering delegated to retained CI); D incomplete
-   sufficient cell, fixed-root ball and AW norm-product tactics. No instability
+   sufficient cell, fixed-root ball and AW norm-product tactics; D the exact
+   coupled formal AW regression reader exceeds one even with D_AA,0=0 and
+   positive process. E optional symbolic dependencies were unavailable; the
+   existing exact Fraction algebra was used, and patch quoting and TeX line
+   breaks/tags were corrected before validation. No instability
    claim follows from any of these.
 4. Admitted counterexample: none; all-time admission/exclusion remains OPEN.
 5. Retained: 25 proved entries, qualified local theorem and exact compatibility
    obstruction; qualified frontend and linked storage proofs extend entries without count promotion.
-6. Next: use the explicit conditional score reader and aggregate packet
-   bound, with actual comparison supply, suffix scores and source/gauge work,
-   to establish a uniform net margin before radius algebra.
+6. Next: pay the explicit AW regression reader with actual transported
+   process/S/magnetic Fisher action on the justified causal image; retain the
+   even/source cross Schur cost, conditional score reader, suffixes and gauge.
    The uniform transverse gap and planar admission remain separate obligations.

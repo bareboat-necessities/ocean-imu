@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "e47d03c208d7a7861f09f75245424e9d132c6105"
+      "git_blob_sha": "bd7446a2d58736b8c4ee0fdf7243ae561340390a"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "70dbcb12c58562ec24cb36616cce9e177d5157e2"
+      "git_blob_sha": "fbda463d6a638c6e92a4822d766199e0114d5908"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "c6c4fb310a51ba6c5aba094ba3833792f85fd818"
+      "git_blob_sha": "45df5662909be403df7d84fd474cff196c3afdc6"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "369b869235cf68ac16ad7a5275acdb90184bdd44"
+      "git_blob_sha": "8e1fb989dd0d0d3c47b5e3abf2d0edcec560d426"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "9d4fb35524dc8801832bcbf28ede0437c45f6e79"
+      "git_blob_sha": "3b4bb1f8b78fec0e78035c20e9e225a836ab998a"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "3ab18de3c8f852a3345b3e1b8c211a55f4f290be"
+      "git_blob_sha": "24f4bb734a298efa832c061f67e10f6e1168bc82"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -948,39 +948,39 @@
     },
     {
       "path": "tools/stability/ou3_theorem/information_shear_word.py",
-      "git_blob_sha": "2be3b136df22fdc38a4faf0cd59414cc434960d2"
+      "git_blob_sha": "e2e731cefe59eb1d90c7799bb4408215edc800b8"
     },
     {
       "path": "tests/validation/test_ou3_information_shear_word.py",
-      "git_blob_sha": "f9a611cc7501e59afc241527cb2ee01f38bbaa07"
+      "git_blob_sha": "ab726491a82473db9493000e5a65f3d1d4e53ff3"
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "499c0dca9019f8aceb7b1aaeadc37b425b02138d"
+      "git_blob_sha": "acb755d08ad4644a51b4c391e05da8ff57585c5a"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
-      "git_blob_sha": "8266387d70d57680b01cfd35d733ab9406c7fdf0"
+      "git_blob_sha": "6764779329a64658f4670f33c51afe71c120a051"
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "c9c2804150bd40067096ed50c74a45441cee0cdb"
+      "git_blob_sha": "3a4bbb74b8dff2b19657f3e502880749bff7db73"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "959a564520e4f20b330d5a79f8b43009d6eff142"
+      "git_blob_sha": "259b0f5a3ee4608a3a8ad9bc9647bdf8a8761a89"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
-      "git_blob_sha": "d8a5c020e126d1b3cbe7bdc274eb4b87b4a14451"
+      "git_blob_sha": "f070cdecd0cb98d41265544e9aa294332474304f"
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "aa3adcfaa2bd8c8a8246650e9c2c7614a32c97f7"
+      "git_blob_sha": "81e6347a4bae93765e3b5ca3d3768c7d7c546a78"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
-      "git_blob_sha": "422cb2b38746391e7a2e58fcad2dbb6538b2edcb"
+      "git_blob_sha": "377713dda7a4c799b33b19a267a962fcf5f3ecb3"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1201,7 +1201,12 @@
     "locked_live_reference_proof": "app:locked-live-causal-reference",
     "paired_reference_source_statistics_cancellation_verified": true,
     "remaining_MEKF_net_work_uniformly_dominated": false,
-    "locked_live_fixed_auxiliary_reference_work_is_zero": true
+    "locked_live_fixed_auxiliary_reference_work_is_zero": true,
+    "complete_process_score_generated_matrix_proof": "app:odd-covariance-signed-gap, OF1a",
+    "independent_E_L_cap_required_before_coupled_matrix": false,
+    "planar_odd_covariance_complete_signed_matrix_identity_verified": true,
+    "uniform_planar_odd_covariance_regression_reader_margin": null,
+    "full_word_OPEN_dependency_discharged_by_odd_partial_block": false
   },
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",
@@ -1262,6 +1267,63 @@
     "planar_fixed_input_even_ds_identically_zero": false,
     "planar_even_auxiliary_charge_BG_coefficient_upper_real": "1/1000000000000000000000000000",
     "planar_even_process_work_fully_absorbed": false,
-    "uniform_inherited_comparison_loss_energy": null
+    "uniform_inherited_comparison_loss_energy": null,
+    "odd_covariance_complete_gap": {
+      "E_L_and_source_score_priced_separately": false,
+      "actual_AW_face_derivative_retained": true,
+      "ambient_symmetric_dimension": 45,
+      "full_even_odd_source_cross_blocks_discarded": false,
+      "magnetic_and_S_loss": "same-operation directional Fisher Grams, transported through actual prefix including AW deletion",
+      "non_AW_generated_self_ports_zero": true,
+      "proof": "app:odd-covariance-signed-gap",
+      "relative_Schur_threshold": "I-R_W*(H_W-c*H_0)^-1*R_W^T >= 0, H_W-c*H_0 > 0",
+      "remaining_operator": "stacked d(T B T^T)/(C+Delta) at actual active AW_y faces",
+      "result_type": "PROVED analytical restriction and exact Schur obstruction; uniform gap OPEN",
+      "scope": "regular central-planar A21 continuation after refinement, fixed delivered/private inherited history and target; actual causal root image must be retained",
+      "scope_check": {
+        "classification": "D_SUFFICIENT_BOUND_FAILURE",
+        "negative_direction": [
+          "-10",
+          "3",
+          "1",
+          "0",
+          "0"
+        ],
+        "ordinary_and_face_chronology_retained": true,
+        "relative_reader_exact": "3600981887018337723830924642750000/2360546894727403698724996038046493",
+        "relative_reader_threshold": "1",
+        "relaxation": "formal three-state covariance word; F=I,Q=I/1000, not shipping-reached or service-admitted",
+        "root_AW_marginal_tangent_zero": true,
+        "shipping_counterexample": false,
+        "signed_gap": "-691428110973/567390082009",
+        "strict_positive_process": true
+      },
+      "signed_matrix": "lambda*(H_W-R_W^T R_W), evaluated on actual covariance prefixes",
+      "uniform_odd_covariance_gap": null,
+      "uniform_relative_reader_margin": null
+    }
+  },
+  "coupled_signed_gap_audit": {
+    "observed_starting_PR_head": "dcb1105005e25035643df031b7c6fb36b1b5e3ea",
+    "observed_starting_main": "59959d1bf33a3c5f4f70331104546a6486468df6",
+    "proof": "app:odd-covariance-signed-gap",
+    "controlling_storage": "existing fixed-weight information-shear/Schur storage; no new metric or coordinate lift",
+    "full_matrix": "OF1 with coupled process entry OF1a; all actual source/reference/reset/AW/gauge cross terms retained",
+    "partial_matrix": "OF4: lambda*(H_W-R_W^T R_W), on qualified pure odd-covariance causal fibre",
+    "same_storage_directional_process_S_magnetic_action": true,
+    "actual_AW_regression_reader_and_all_prefix_faces_retained": true,
+    "independent_E_L_upper_bound_imposed": false,
+    "uniform_relative_reader_margin": null,
+    "uniform_complete_word_margin": null,
+    "full_word_OPEN_dependencies_discharged": [],
+    "failure_class": "D_SUFFICIENT_BOUND_FAILURE",
+    "formal_scope_check_is_shipping_reached_or_service_admitted": false,
+    "shipping_counterexample_found": false,
+    "shipping_sources_changed": false,
+    "new_proof_storage_or_observer_constructed": false,
+    "numerical_search_or_new_replay_performed": false,
+    "radius_or_capture_time_solve_performed": false,
+    "all_time_planar_admission_promoted": false,
+    "automated_evidence_commit_preserved_before_push": "d8435c292120a9d482541ebbd4c49d2b2dc9e1b0"
   }
 }

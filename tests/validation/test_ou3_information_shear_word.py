@@ -22,6 +22,24 @@ from tools.stability.ou3_theorem.planar_linked_riccati_mean import (
 
 
 class InformationShearWordTests(unittest.TestCase):
+    def test_coupled_source_score_can_cancel_nonzero_comparison_loss_before_any_cap(self):
+        # Exact formal identity, no asserted shipping source relation.
+        P, B, Q = identity(2), identity(2), identity(2)
+        e, s = [[F(1)], [F(0)]], [[F(1)], [F(0)]]
+        score = process_source_score(P, B, Q, e, s)
+        self.assertEqual(score['comparison_loss_energy'], F(1, 2))
+        self.assertEqual(score['source_only_score_charge'], F(1, 2))
+        self.assertEqual(score['signed_comparison_source_cross'], F(1, 2))
+        self.assertEqual(score['combined_score_charge'], 0)
+        self.assertEqual(score['combined_score'], zeros(2, 1))
+        D = [[F(1), F(2, 3)], [F(2, 3), F(-1, 5)]]
+        out = process_augmented_shear(P, B, Q, e, s, D, [[F(2)], [F(1)]],
+                                     zeros(2, 2), zeros(2, 2), zeros(2, 1), F(1))
+        self.assertEqual(out['feedback_square'], 0)
+        self.assertEqual(out['signed_feedback_cross'], 0)
+        self.assertGreater(out['augmented_Fisher_loss'], 0)
+        self.assertFalse(certificate()['independent_E_L_cap_required_before_coupled_matrix'])
+
     def test_paired_reference_keeps_shared_statistics_and_anchor_ports(self):
         out = paired_reference_tangent(
             identity(3), [[F(5)], [F(12)], [F(7)]],

@@ -4270,6 +4270,319 @@ and endpoint gauge. Relaxations: qualified regular Live derivative and
 explicit real-arithmetic reference bounds; no estimator or premise changes.
 The unclosed complete-gap attempt remains class D, not instability.
 
+\subsection{The complete coupled process matrix and an actual AW-face obstruction}
+\label{app:odd-covariance-signed-gap}
+
+\paragraph{Six questions before the calculation.}
+(1) The controlling inequality is still
+\[
+ B^T(G_{action}-G_{port}-\Gamma_0+\Gamma_N)B
+                 \succeq c_{complete}B^T\mathcal J_{\perp,0}B,
+ \qquad c_{complete}>0.                                    \tag{OF0}
+\]
+Equivalently use the exact signed balance (CP7), with its already-paid
+complementary base packets. (2) The attacked terms are the combined process
+score, its generated cross/square work, and the original-marginal AW-face
+derivative inside that same matrix. (3) The calculation is substituted into
+the process entries of (OF0) and its central-planar odd-covariance partial
+block, not into a second storage. (4) On the qualified pure odd-covariance
+fibre the score and every non-AW generated self-port vanish by the shipping
+equations; the remaining AW work is one explicit stacked regression reader.
+It is retained with the actual transported process/$S$/magnetic Fisher action.
+(5) Its exact relative Schur threshold is one in (OF5) below, with a common
+positive reserve required for a uniform margin. (6) This reduces the
+generated-port obligation on that partial block to a specified operator.
+It does not discharge the machine-readable full-word OPEN dependency:
+the even/source cross blocks and the shipping reader bound remain unproved.
+An explicit D-class failure of automatic absorption is proved below.
+
+\paragraph{One common coordinate matrix, before any norm.}
+Choose a basis of the \emph{existing justified} root/source tangent lift;
+write its coordinate as $a$. Include the inherited auxiliary coordinates and
+their causal maps from (PS10),(LR2),(LR9), rather than setting their correlated
+root derivatives to zero. For the $j$th basis vector retain the complete
+prefix $\eta_{i,j},D_{i,j}$ and all literal ports. With $\mathsf L_i$ the
+joint dissipative base and $p_{i,j}$ its complete signed port, put
+$\mathcal Q_i=\mathcal J_i-\mathsf L_i^T\mathcal J_{i+1}\mathsf L_i$.
+The full matrix
+has entries exactly
+\[
+\begin{split}
+ (G_{action}-G_{port})_{jk}=\sum_i\{&
+ v_{i,j}^T\mathcal Q_i v_{i,k}\\
+ &-(\mathsf L_iv_{i,j})^T\mathcal J_{i+1}p_{i,k}
+   -p_{i,j}^T\mathcal J_{i+1}\mathsf L_iv_{i,k}
+   -p_{i,j}^T\mathcal J_{i+1}p_{i,k}\}.
+\end{split}                                                   \tag{OF1}
+\]
+Here $v=(\eta,D)$, with both off-diagonal covariance entries counted.
+Append $-\Gamma_0+\Gamma_N$ without discarding its source derivatives.
+The actual prefix is used, including pending/face, scheduler and projection
+state. The suffix implementation is (WS5)--(WS6), including $U_iq_{i+1,N}$.
+Thus (OF1) retains process mismatch, coefficient derivatives, $dK r$,
+source/reference/noise, correction defects, reset/projection, AW and endpoint
+gauge work on the same coordinates. No frozen-factor product defines $v_i$.
+
+There is a useful explicit process entry. Use \emph{exactly} (PS5)--(PS8)'s
+$\Sigma,T=[F,I],\Lambda,z=(e,s),X_j,\zeta_j$, and put
+$f_j=T X_j\Lambda z$. Its entry in the local gap is
+\[
+\begin{split}
+ &\zeta_j^T\Lambda\zeta_k+
+ \lambda\operatorname{tr}(\Sigma^{-1}X_j\Sigma^{-1}X_k)\\
+ &\quad-\lambda\operatorname{tr}(J^+TX_jT^TJ^+TX_kT^T)\\
+ &\quad-(\mathcal A_{aux})_{jk}\\
+ &\quad-(T\zeta_j)^TJ^+f_k-f_j^TJ^+T\zeta_k-f_j^TJ^+f_k.
+\end{split}
+                                                               \tag{OF1a}
+\]
+$(\mathcal A_{aux})_{jk}$ is the polarization of the actual (PS7) quadratic,
+including $dF,dQ,ds$. The same process information matrix satisfies
+$z^T\Lambda z=\chi=E_i+S_i-2C_i$. Consequently (OF1a) combines
+$E_L,S_q,-2C_W$ with generated cross/square work \emph{before} using the
+Fisher square bound. It needs no independent cap on $E_L$ to be formed.
+The equivalence between finite caps in (HB6) is a statement about that
+\emph{scalar budget}, not a necessary intermediate step for every possible
+proof of (OF0). No full-gap sign is inferred from this observation.
+
+For the conditional/complementary partition of the existing root lift,
+insert (CP3)--(CP5) in (OF1). This removes base complementary propagation
+from the adverse budget with coefficient one. It retains $S_b$ and every
+actual generated cross term; neither a half-charge nor another propagation
+penalty is added. Use (CM4) when its actual $C,T,q_a$ reader is needed.
+Its uniform margin remains OPEN. The analysis now asks what (OF1) actually
+does on one invariant causal partial block.
+
+\paragraph{The shipping pure odd-covariance fibre.}
+Take a regular central $\beta=0$ planar CoG A21 continuation after refinement,
+with no external write, Cold/reacquisition, hold/release or frame-retargeting
+jump inside the word. Keep the actual delivered/private/reference/tuner,
+$S$/AW clocks, pending target and physical history fixed, with isotropic
+default AW target. The odd indices are
+$(0,2,3,5,7,10,13,16,19)$; the nominal mean and central comparison have zero
+odd component and $P$ is parity block diagonal. Vary only symmetric $P_O$.
+Apply this partial derivative on its intersection with the actual justified
+causal lift. Its ambient symmetric dimension is 45; this is \emph{not} a
+claim that construction admits 45 independent covariance inputs. Inherited
+auxiliary/root correlations on other directions still use (LR9).
+
+At acc/mag corrections the odd measurement channel is $y$, while $r_y=0$;
+at $S$ the same conclusion is $r_{S,y}=0$. The innovation and gain split by
+parity, so $dK_O r_y=0$ and the even gain/residual are unchanged. All nominal
+mean, BG/BA projections, attitude injections and reset operands therefore
+remain identical. The sensor-only tuner and locked reference remain identical
+by their proved causal zero edges. Induction in literal call order gives
+$de=0,dF=dQ=dH=dR=dG=ds=0$ on this fibre. The statement about odd process
+coefficients is limited to this \emph{pure covariance} variation: even
+$d\widehat b_{g,y}$ still generates odd coefficient work in the other blocks.
+No held effective-noise derivative is deleted; the present fibre is A21.
+Solver repair, gate/face crossings and arithmetic are separately qualified.
+
+Since $e_O=0$, $DJe=0$, $\eta=0$, and $q_O=0$ at every suffix. Thus the
+process score and each generated $U_iq_{i+1,N}$ have zero odd self-block
+contribution, including the AW increment's score contribution. The nominal
+\emph{full} $E_L$ need not be zero or bounded: its score reader on this
+fibre is zero. Every non-AW covariance operation has the actual differential
+$D^+=F_ODF_O^T$, $D^+=A_OD A_O^T$, or $D^+=G_ODG_O^T$.
+These are the \emph{complete partial derivatives}, because the possible
+coefficient feedback has just been proved zero, not assumed frozen.
+They retain the actual integrated $a_w\to v\to p\to S$ chain and all nine
+odd covariance coordinates. Reset is a Fisher isometry on its invertible
+branch. Mean projection preserves covariance on this fibre.
+
+Both existing proof frames have $dL=0$ here. Fisher congruence invariance
+therefore evaluates the same $W$ in the recovered original odd coordinates;
+there is no extra endpoint connection or mean gauge energy on this fibre.
+No new metric equivalence, physical quotient or gauge deletion is used.
+
+\paragraph{Exact completion of the actual active face.}
+In $P_O$, take $a=AW_y$ and $o=$ its other eight coordinates. Use the
+\emph{existing} (CA1) $B,T,C$, and denote the regression energy by
+$\beta=TBT^T$ here; this is not the physical roll parameter above.
+At a strictly active target-fixed face let $\Delta=\sigma^2-P_{aa}>0$.
+Shipping retains $B,P_{ao}$ and sets $P_{aa}^+=\sigma^2$; hence
+\[
+ C^+=C+\Delta=\sigma^2-\beta,\quad T^+=T,\quad
+ dC^+=-d\beta,\quad
+ d\beta=T,dB,T^T+2dT,B,T^T.                              \tag{OF2}
+\]
+In original coordinates this is precisely $D^+=D-E_aD_{aa}E_a^T$,
+the derivative of the \emph{additive PSD increment}, not legacy replacement
+of cross covariance. Substitute (OF2) into (CA1), with $\eta=0$:
+\[
+ \boxed{\frac{W-W^+}{\lambda}
+ =\left(\frac{dC}{C}\right)^2
+  +2\left(\frac1C-\frac1{C^+}\right)dT B dT^T
+  -\left(\frac{d\beta}{C^+}\right)^2.}                       \tag{OF3}
+\]
+This is an exact conditional/complementary block completion. The conditional
+covariance square is positive and has no cross term; all remaining adverse
+face work is the one scalar regression derivative. Inactive scalar faces are
+the identity. At zero gap use actual finite/directional inclusions, not an
+asserted differentiable branch. A varying causal target has
+$dC^+=d\sigma^2-d\beta$ and belongs to the full source/cross blocks.
+
+\paragraph{The complete odd matrix, including quantitative directional service.}
+On any allowed odd root basis write $D_i=\sum_j y_jD_{i,j}$, where the prefix
+maps include \emph{every} preceding AA deletion (OF2). Let $H_0$ be its root
+Fisher Gram. At an ordinary operation use the polarized exact Fisher loss
+$\operatorname{tr}(J_iD_{i,j}J_iD_{i,k})-
+\operatorname{tr}(J_{i+1}D_{i+1,j}J_{i+1}D_{i+1,k})$.
+Sum these process and actual acc/$S$/magnetic losses, together with the two
+positive face forms in (OF3), into $H_W$. At the actual active faces stack
+the rows $(R_W)_{ij}=d\beta_i(D_{i,j})/C_i^+$.
+Telescoping proves the exact \emph{complete} partial matrix
+\[
+ \boxed{G_{OO}=\lambda(H_W-R_W^TR_W),\qquad
+ W_0-W_N=\lambda y^T(H_W-R_W^TR_W)y.}                         \tag{OF4}
+\]
+There is no complementary-base self/mix charge left to pay: these are actual
+complete prefixes, and (CP4)'s base propagation is already included in the
+telescoped losses. This is a restriction of (OF1), not a different storage.
+
+In particular, for an applied odd scalar magnetic channel the actual row is
+$h_m=(-v_z,v_x,0,\ldots,0)$ on $(\theta_x,\theta_z,\ldots)$, with
+$v=R B_r$; the actual $S$ row is $h_S=E_{S_y}^T$. For either channel put
+$S=hPh^T+R$, using that operation's inherited covariance/noise. Its Fisher
+loss, with no radial residual feedback on this fibre, is exactly
+\[
+ L_{cov}(D)=\frac{2}{S}hD J D h^T-
+                       \frac{(hD h^T)^2}{S^2}
+ = (Dh^T)^T\left(\frac{2J}{S}-\frac{h^Th}{S^2}\right)(Dh^T).
+                                                               \tag{OF4a}
+\]
+The middle matrix is positive, since $hPh^T<S$. Its actual matrix square
+root times $D_{i,j}h_i^T$ gives the \emph{directional} columns in $H_W$.
+Thus $S$ and magnetic service enter quantitatively with their actual
+innovation whitening and transported directions. On the odd heading/BG
+physical probes $\Phi_i$, the service reader is $h_{m,i}\Phi_i/\sqrt{S_i}$;
+(OF4a) keeps this same $h_{m,i},S_i$ and chronology, together with the full
+covariance prefix. It does not replace that prefix by $\Phi_iX\Phi_i^T$
+after a face, nor convert the two-column service floor into a full 45-column
+floor. The qualified $9/10$ even magnetic decrement remains in (OF1)'s other
+blocks; it is not charged again here. Process loss in $H_W$ retains both AG
+and integrated LIN/BA noise. On a regular A21 step with full odd $Q\succ0$
+and invertible $F_O$, it is strictly positive on every nonzero covariance
+tangent. If this process's complete prefix is injective, it establishes
+pointwise $H_W\succ0$ on an injective root basis,
+not a uniform margin or an affordable face bound.
+
+For a candidate $c>0$, if $H_W-cH_0\succ0$, two exact Schur complements give
+\[
+ \boxed{G_{OO}\succeq c\lambda H_0
+ \quad\Longleftrightarrow\quad
+ I-R_W(H_W-cH_0)^{-1}R_W^T\succeq0.}                         \tag{OF5}
+\]
+The threshold is one for the squared relative singular norm, evaluated on
+one word. A common strict reserve plus uniform coercivity of the retained
+positive action is needed for a uniform $c$. If the inverse is unjustified,
+retain (OF4); do not remove a kernel by pseudoinverse. On the full existing
+lift the exact cross block with even/source coordinates remains in (OF1).
+After any proved positive $G_{OO}-c\mathcal J_{O,0}$, its Schur reduction
+subtracts $G_{EO}(G_{OO}-c\mathcal J_{O,0})^{-1}G_{OE}$ from the remaining
+block. Neither the partial zero port nor (OF5) deletes those causal terms.
+
+\paragraph{Analytic offending direction and a failed causal shortcut.}
+The remaining reader has a literal generator. In the original odd
+$(o,a)$ partition, $F_{ao}=0,F_{aa}=\phi$, while $F_{oa}$ is the nonzero
+integrated $v,p,S$ column. Shipping prediction gives
+\[
+ P_{ao}^-=\phi(P_{ao}F_{oo}^T+P_{aa}F_{oa}^T)+Q_{ao}.        \tag{OF5a}
+\]
+Its tangent uses the same fixed coefficients on this fibre. At a non-AW
+mag/$S$ correction, (CA2) gives
+$B^+=(B^{-1}+h_o^TR^{-1}h_o)^{-1}$,
+$dB^+=A_o dB A_o^T$, while $T,dT,C,dC$ are unchanged.
+Thus $d\beta^+=T dB^+T^T+2dT B^+T^T$ is linked to the exact action
+(OF4a). The acc row also observes AW and uses its full ordinary Fisher map.
+Equations (OF5a),(CA2),(OF2), in actual service order, generate $R_W$.
+No unrelated extrema of the regression, covariance or service directions
+may replace them.
+
+At a single face with $T\ne0$, take $dT=dC=0$ and $T dB T^T\ne0$.
+(OF3) is strictly negative. Conditional-precision nonincrease cannot imply
+Fisher-tangent nonincrease. More importantly, imposing $D_{aa,0}=0$ at an
+inherited target does not automatically remove the negative direction after
+an anisotropic correction. Here is one exact \emph{formal implication test},
+not a shipping-reached or service-admitted history:
+\[
+ \begin{gathered}
+ P_0=\begin{pmatrix}1&0&1\\0&1&1\\1&1&3\end{pmatrix},\quad
+ H=(0,1,0),\ R=1,\\
+ D_0=\begin{pmatrix}-10&3&-7\\3&1&4\\-7&4&0\end{pmatrix}.
+ \end{gathered}
+                                                               \tag{OF6}
+\]
+The AW coordinate is the third. Initially $T=(1,1),C=1$, $dT=0$ and
+$dC=-d\beta=3$, with the required $D_{aa,0}=0$. The actual optimal
+non-AW correction gives
+\[
+ P_c=\begin{pmatrix}1&0&1\\0&1/2&1/2\\1&1/2&5/2\end{pmatrix},\quad
+ D_c=\begin{pmatrix}-10&3/2&-17/2\\3/2&1/4&7/4\\-17/2&7/4&-15/4\end{pmatrix}.
+\]
+With no process, floor its AA entry back to 3. On the three $dB$ coordinates,
+the exact net matrix is
+\[
+ \begin{pmatrix}5/9&14/9&8/9\\14/9&41/9&17/9\\8/9&17/9&31/18\end{pmatrix}.
+\]
+Its first two pivots are $5/9,1/5$, and the remaining Schur pivot is $-3/2$.
+The direction $(-10,3,1)$ has net gap $-3/2$, although the correction
+has dissipated $39/4$. This is the signed regression term, not independently
+maximized positive or auxiliary energies.
+
+Even a strictly positive process does not make that inference valid. Follow
+the correction by the explicitly \emph{formal} $F=I,Q=I/1000$, then the
+target-3 floor. This order retains correction--prediction--pending-sync
+chronology. Direct rational substitution, or (OF3)--(OF4), gives
+\[
+ \begin{gathered}
+ \frac{W_0-W_N}{\lambda}
+       =-\frac{691428110973}{567390082009}<0,\\
+ R_WH_W^{-1}R_W^T=
+ \frac{3600981887018337723830924642750000}
+ {2360546894727403698724996038046493}>1.
+ \end{gathered}                                             \tag{OF7}
+\]
+Here $H_W\succ0$, and the root-fixed-AA tangent space has five coordinates
+$(dB_{11},dB_{12},dB_{22},dT_1,dT_2)$. The offending root direction is
+$(-10,3,1,0,0)$. Thus the \emph{exact coupled} Schur threshold fails even
+with positive process and an optimal non-AW correction. There is no norm
+product or failed isotropic sufficient replacement. The relaxation is
+precisely this formal three-state process/observation; it has not been
+substituted for the shipping OU process or MAGNETIC SERVICE.
+
+\paragraph{Outcome and shipping-faithfulness record.}
+Classification \textbf{D}: the existing positive-process, conditional-precision,
+non-AW-correction and causal-fixed-target facts alone do not close the
+identified AW regression reader. No lossless shipping impossibility or
+shipping instability is asserted. The missing shipping mechanism is the
+quantitative same-word comparison (OF5), using the actual covariance
+regression, integrated process and recurring $S$/magnetic directional losses;
+the formal violating direction must be excluded or paid on the actual causal
+image. The full even/reference/source/reset/gauge cross blocks remain in
+(OF1). Neither a positive uniform odd margin nor $c_{complete}>0$ is proved.
+The new exact restriction removes process-score and non-AW generated
+\emph{self}-work on its stated fibre; it does not prove the full machine
+flag \texttt{uniform\_generated\_packet\_absorption\_verified}.
+
+(1) Preserved: all 21 states and both parities, actual $P/K$/Joseph, integrated
+OU/BG/BA process, applied magnetic and $S$ rows, pending AW face, literal
+reset/projection, complete generated suffixes and inherited histories.
+(2) Relaxations: qualified regular real A21 planar partial derivative with
+fixed delivered/private history; explicit formal scope test only. The actual
+causal image and correlated complementary/source directions are retained.
+(3) Failed calculation: D for the absorption implication (OF7); no shipping
+proof premise is weakened. (4) Genuine shipping counterexample: none.
+(5) Existing suffix, complementary Schur, supported process/source, conditional
+AW, frame cancellation, qualified magnetic, held endpoint, even-process and
+locked-reference results remain valid. (6) Next calculation: bound the actual
+stacked regression reader against (OF4a)'s transported service and the full
+integrated process on the same causal image, then retain its full cross Schur
+cost. No independent $E_L$ maximization, new storage, numerical search,
+planar-admission promotion, capture or invariant-radius calculation occurs.
+Exact-rational regressions verify these entries; the preceding derivation is
+the proof.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

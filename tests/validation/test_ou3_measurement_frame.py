@@ -19,6 +19,8 @@ from tools.stability.ou3_theorem.measurement_frame import (
     conditional_aw_storage, aw_precision_process_balance, qualified_aw_precision_ceiling,
     conditional_aw_process_coercivity,
     planar_pitch_prediction_calculus,
+    scalar_aw_face_fisher_balance, covariance_word_signed_matrix,
+    odd_covariance_gap_scope_check,
 )
 from tools.stability.ou3_theorem.planar_innovation_storage import information_shear_correction
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import product
@@ -27,6 +29,73 @@ from tools.stability.ou3_theorem.world_frame import quaternion_rotation, skew
 
 
 class MeasurementFrameTests(unittest.TestCase):
+    def test_actual_scalar_face_retains_signed_regression_work(self):
+        # Identity operands, not a reached shipping covariance or target.
+        P = [[F(1), F(1)], [F(1), F(2)]]
+        D = [[F(1), F(1)], [F(1), F(1)]]
+        out = scalar_aw_face_fisher_balance(P, D, F(4), 1)
+        self.assertEqual(out['dC'], 0)
+        self.assertEqual(out['dT'], [[F(0)]])
+        self.assertEqual(out['positive_face_action'], 0)
+        self.assertEqual(out['adverse_face_work'], F(1, 9))
+        self.assertEqual(out['gap'], -F(1, 9))
+        self.assertEqual(out['D_next'], [[F(1), F(1)], [F(1), F(0)]])
+        with self.assertRaisesRegex(ValueError, 'strictly active'):
+            scalar_aw_face_fisher_balance(P, D, F(2), 1)
+        # A cross-covariance replacement is not this shipping increment.
+        with self.assertRaisesRegex(ValueError, 'retain cross covariance'):
+            covariance_word_signed_matrix(
+                [P, [[F(1), F(0)], [F(0), F(4)]]],
+                [[D], [out['D_next']]], [0], 1)
+
+    def test_complete_signed_word_fails_automatic_face_absorption_on_fixed_AA_fibre(self):
+        out = odd_covariance_gap_scope_check()
+        self.assertEqual(out['signed_gap'], '-691428110973/567390082009')
+        self.assertGreater(F(out['relative_reader_exact']), 1)
+        self.assertTrue(out['root_AW_marginal_tangent_zero'])
+        self.assertTrue(out['strict_positive_process'])
+        self.assertEqual(out['classification'], 'D_SUFFICIENT_BOUND_FAILURE')
+        self.assertFalse(out['shipping_counterexample'])
+        self.assertIsNone(certificate()['odd_covariance_complete_gap']['uniform_odd_covariance_gap'])
+
+    def test_odd_covariance_gain_port_cannot_change_planar_mean(self):
+        # Both covariance parities retained. Literal acc/mag/S row pattern
+        # and r_y=0 give the source proof's exact dK*r cancellation.
+        odd = (0, 2, 3, 5, 7, 10, 13, 16, 19)
+        D = zeros(21, 21)
+        for j, i in enumerate(odd):
+            D[i][i] = F(j+1, 17)
+            D[i][odd[(j+1) % 9]] = D[odd[(j+1) % 9]][i] = F(1, 19)
+        acc, mag = world_rows([F(1, 5), 0, -10], [7, 0, F(1, 9)])
+        Hs = zeros(3, 21)
+        for j in range(3):
+            Hs[j][12+j] = F(1)
+        P, R, r = self.P, self.noise, [[F(2, 5)], [F(0)], [F(3, 8)]]
+        for H in (acc, mag, Hs):
+            S = add(product(H, P, transpose(H)), R)
+            K = product(P, transpose(H), inverse(S))
+            dK = gain_differential(P, H, K, inverse(S), D, zeros(3, 21), zeros(3, 3))
+            self.assertEqual(product(dK, r), zeros(21, 1))
+            A = add(identity(21), product(K, H), -1)
+            Dnext = product(A, D, transpose(A))
+            self.assertTrue(all(Dnext[i][j] == 0 for i in range(21) if i not in odd
+                                for j in range(21)))
+
+    def test_same_operation_directional_mag_S_Fisher_loss(self):
+        P = [[F(2), F(1, 3)], [F(1, 3), F(1)]]
+        D = [[F(1, 5), F(-2, 7)], [F(-2, 7), F(1, 4)]]
+        h, R = [[F(1), F(2, 3)]], [[F(4, 5)]]
+        S = add(product(h, P, transpose(h)), R)
+        A = add(identity(2), product(P, transpose(h), inverse(S), h), -1)
+        Pn, Dn = product(A, P), product(A, D, transpose(A))
+        out = covariance_word_signed_matrix([P, Pn], [[D], [Dn]], [], 1)
+        J, s = inverse(P), S[0][0]
+        expected = (2*product(h, D, J, D, transpose(h))[0][0]/s
+                    - product(h, D, transpose(h))[0][0]**2/s**2)
+        self.assertEqual(out['positive_action'][0][0], expected)
+        self.assertEqual(out['signed_gap'], out['positive_action'])
+        self.assertGreater(expected, 0)
+
     def test_literal_planar_pitch_process_and_quaternion_defect(self):
         h, x, qg, qb = F(3, 500), F(7, 1000), F(135, 100000)**2, F(1, 10**10)
         out = planar_pitch_prediction_calculus(h, x, qg, qb)
