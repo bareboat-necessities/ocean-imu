@@ -2,6 +2,8 @@
 
 The OU-II, OU-III and TFG facades estimate an additive body-fixed magnetometer offset continuously. The OU simulators expose the matched ablation as `SF_MAG_CONT_HI=0`; TFG exposes `TFG_MAG_HARD_IRON=0`. The correction starts after magnetic startup acquisition, using statistics accumulated from the first sample.
 
+The OU-II AtomS3R sketch (`atomS3R_ins_kalman_ou2.ino`) sets `mag_continuous_hard_iron = false`. Under heel excitation the additive-offset fit absorbs calibration residuals (axis gain, soft iron, magnetometer latency) as an offset with a horizontal component, and applying it rotates magnetic north until the memory window clears.
+
 ## Estimator and observability
 
 `src/tuner/ContinuousMagHardIronEstimator.h` accumulates exponentially weighted magnetometer and yaw-stripped private-observer tilt statistics. With `Abar = mean(R_i)`, it solves the regularized system
