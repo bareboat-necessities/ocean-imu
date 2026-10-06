@@ -5948,6 +5948,120 @@ reset transport, nonzero receipts and original complete signed matrix.
 Relaxations introduced: none in this completion; the existing qualified
 real planar partial scope and inherited-image qualifications remain.
 
+\paragraph{Eliminate the paid odd receipt kernel in the full homogeneous gap.}
+The remaining linked action has not supplied a sign for (CR39).
+In particular its full residual process, $S$/magnetic columns and
+$\widetilde u$ loss remain in $\bar H$; none is forced to vanish by
+(CR40). The following elimination inserts that \emph{same} $\bar H$
+into the full (CR2), rather than assuming a positive odd block or
+starting another storage. It uses the receipt completion already used
+in (CR17a), now retaining the endogenous cross block.
+
+On a justified fixed linear part of the inherited lift, let $y$ be its
+pure odd covariance coordinates and $u$ the remaining endogenous root
+coordinates. Set genuine exogenous variation to zero, and retain
+\[
+ G-cJ_r=\begin{pmatrix}N_c&X_c\\X_c^T&A_c\end{pmatrix},\qquad
+ N_c=K_c-\lambda L^T\bar D L,\quad
+ K_c=\lambda\bar H-cJ_{r,OO},\quad
+ X_c=G_{OU}-cJ_{r,OU},\quad A_c=G_{UU}-cJ_{r,UU}.
+\]
+Here $J_{r,OO}=\lambda H_0$ on this fibre; the metric cross entries are
+not set to zero. At $c=0$, $K_c\succ0$ by the retained first full
+process on an injective fixed-word slice. A proposed common $c>0$
+requires its own qualification; fixed-word invertibility does not
+establish that qualification uniformly.
+
+Select independent rows $L_0$ of the existing $L$, retaining
+$L=E L_0$ with every dependent receipt. For $K_c\succ0$ put
+\[
+\begin{gathered}
+ Z_c=L_0K_c^{-1}L_0^T,\quad
+ Y_c=K_c^{-1}L_0^TZ_c^{-1},\quad
+ K_c^\sharp=K_c^{-1}-Y_cZ_cY_c^T,\\
+ S_c=Z_c^{-1}-\lambda E^T\bar D E,\quad
+ B_c=Y_c^TX_c,\quad
+ T_c=A_c-X_c^TK_c^\sharp X_c,\qquad
+ \mathcal R_W(c)=\begin{pmatrix}S_c&B_c\\B_c^T&T_c\end{pmatrix}.
+\end{gathered}                                                 \tag{CR41}
+\]
+Use the existing (CR17a) algebra $t=L_0y$, $k=y-Y_ct$;
+these are receipts and a kernel component of the original root, not
+independent states or a changed proof frame. In particular $L_0k=0$.
+Direct completion gives the full identity
+\[
+\boxed{\begin{split}
+ \binom{y}{u}^T(G-cJ_r)\binom{y}{u}
+ ={}&(k+K_c^\sharp X_cu)^TK_c(k+K_c^\sharp X_cu)\\
+ &+\binom{t}{u}^T\mathcal R_W(c)\binom{t}{u} .
+\end{split}}                                                   \tag{CR42}
+\]
+Indeed $K_cY_c=L_0^TZ_c^{-1}$, $L_0K_c^\sharp=0$ and
+$K_c^\sharp K_cK_c^\sharp=K_c^\sharp$. Thus the kernel/receipt
+cross term vanishes, $y^TK_cy=k^TK_ck+t^TZ_c^{-1}t$, and completion
+of $2k^TX_cu$ subtracts exactly $X_c^TK_c^\sharp X_c$.
+The kernel payment is already part of $\bar H$: it is not added a
+second time or priced by the $10^{-37}$ restricted reserve.
+
+On a full justified linear slice this is a lossless elimination:
+choose $k=-K_c^\sharp X_cu$ to attain every residual quadratic.
+Consequently $G-cJ_r\succeq0$ if and only if
+$\mathcal R_W(c)\succeq0$ there. On a scalar directional cone,
+(CR42) remains exact, but this minimizing $k$ must satisfy the actual
+inherited-image and prefix guard restrictions. Positivity on an
+unrestricted receipt/complement space is sufficient, not automatically
+necessary for that cone. No history image or guard is enlarged for a
+claimed sign. If $L$ has no nonzero rows, use $K_c^\sharp=K_c^{-1}$
+and the usual remainder $A_c-X_c^TK_c^{-1}X_c$.
+
+This also finishes the algebra of the requested full Schur step.
+If $S_c\succ0$, then $N_c\succ0$ and
+\[
+\boxed{\begin{gathered}
+ N_c^{-1}=K_c^\sharp+Y_cS_c^{-1}Y_c^T,\\
+ A_c-X_c^TN_c^{-1}X_c
+       =T_c-B_c^TS_c^{-1}B_c .
+\end{gathered}}                                                \tag{CR43}
+\]
+The first equality follows from the same kernel/receipt split, and
+substitution proves the second. Hence the odd receipt comparison and
+its full endogenous cross cost are the two linked blocks of one
+existing remainder $\mathcal R_W(c)$, rather than separately affordable
+budgets. This is not a proof that either block has the required sign.
+
+At $c=0$, a potentially feasible $t\ne0$ with $S_0t=0$ reconstructs
+the threshold-one odd root $y=Y_0t$, with raw receipts $\mu=Et$.
+Its shipping covariance is $D_0=\sum_j(Y_0t)_jD_{0,j}$ and its
+prefixes are exactly (CR31)--(CR32), including the actual $g,Q_{ao}$
+and $D_i h_S^T,D_i h_{mag}^T,D_i h_{acc}^T$.
+It satisfies $y^T\bar H y=\mu^T\bar D\mu>0$;
+the zero-action/kernel results do not exclude it.
+Even nonnegative odd action at that root would require
+$B_0^Tt=0$ for full linear-slice positivity: otherwise setting
+$u=-\epsilon B_0^Tt$ and $k=-K_0^\sharp X_0u$ in (CR42)
+gives $-2\epsilon\|B_0^Tt\|^2+O(\epsilon^2)<0$.
+That direction is a shipping witness only if the reconstructed full
+root is in the actual inherited image and all guards are satisfied;
+neither feasibility nor such a $t$ is asserted here.
+
+All entries of $X_c,A_c$ are the original (OF1),(OF1a),(CR2):
+actual metric cross terms, generated covariance suffix scores,
+$E_L+S_q-2C_W$ and generated process cross/square work,
+reset/projection, inherited auxiliary/reference dependence and both
+endpoint gauge Grams remain. Actual physical MAGNETIC SERVICE supplies
+its stated probes, not a sign for $S_c$ or $\mathcal R_W(c)$.
+The one remaining mathematical comparison is now
+$\mathcal R_W(c)\succeq0$ on the justified full inherited family for
+one common $c>0$, with the stated inverse/cone qualifications.
+Its receipt corner is exactly the unpaid (CR39), so this reduction
+does not decide that corner or promote any margin. No compact forward
+domain, closed normalized inherited-image family or uniform inverse
+is assumed. AW blocker: NO. Complete homogeneous gap: NO.
+Structures preserved: the same shipping operators, full endogenous
+lift, dependent receipts, scalar cones and all signed cross work.
+Relaxations introduced: none in the identity; unrestricted-slice sign
+equivalence is explicitly confined to a justified linear slice.
+
 \paragraph{Source supply requires a retained contraction reserve.}
 Only \emph{after} proving the homogeneous margin may one assign a
 finite-error supply. If $W_{\perp,0}=v_0^TJ_rv_0$ on the justified

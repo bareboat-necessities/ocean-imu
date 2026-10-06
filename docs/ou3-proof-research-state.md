@@ -12,10 +12,10 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `0cbbd5a3270ff988c6642324ff8ebb303034dc80`.
-Verified continuation starting PR head: `4e0dd57d8ecdb2fd97df12dabcea0b0d6d1f381d`.
-The newer PR evidence bundle at `33f5ac0d0eb7229ebca36a4becad79eebced3431`
-is preserved as one complete bundle while incorporating main's earlier
-automated evidence commit. No shipping source changes in this continuation.
+Verified continuation starting PR head: `3729fe0c365752766e00b2b4800383a0b44468d2`.
+That automated evidence commit on `3b8fac19` is preserved in full.
+Main's earlier automated evidence commit is already incorporated.
+No shipping source changes in this continuation.
 Current mergeability and exact-head CI belong in PR metadata.
 
 Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
@@ -40,6 +40,37 @@ not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
+
+**Full endogenous receipt/kernel elimination — CR41--CR43; sign OPEN.**
+Insert the SAME reassembled Hbar and all remaining linked process/S/mag/
+acc utilde action into the original full homogeneous block. With
+`K_c=lambda*Hbar-c*J_r_OO`, independent actual receipt rows `L=E*L0`,
+`Z_c=L0*K_c^-1*L0'`, `Y_c=K_c^-1*L0'*Z_c^-1` and
+`K_c_sharp=K_c^-1-Y_c*Z_c*Y_c'`, eliminate the paid odd receipt kernel.
+The single existing remainder is
+`R_W(c)=[[S_c,Y_c'*X_c],[X_c'*Y_c,A_c-X_c'*K_c_sharp*X_c]]`,
+`S_c=Z_c^-1-lambda*E'*Dbar*E`.
+The quadratic identity is lossless on a justified linear inherited slice;
+on scalar cones the minimizing kernel component must retain actual guards.
+The first full process qualifies K_0 at each fixed word, not a uniform
+positive-reserve inverse. No tiny restricted-kernel margin prices the cross.
+If S_c>0, the actual full Schur remainder is exactly
+`T_c-B_c'*S_c^-1*B_c`, with `B_c=Y_c'*X_c` and
+`T_c=A_c-X_c'*K_c_sharp*X_c`. Metric cross entries, generated suffixes,
+linked process/source and cross/square work, reset/projection, inherited
+auxiliary/reference and endpoint gauge are all retained.
+
+The remaining linked action has NOT decided the receipt corner. A possible
+feasible S_0*t=0 mode reconstructs y=Y_0*t, mu=E*t, with positive first
+process action balancing the receipt. It does not force transported service
+columns to vanish. Even such an odd zero would require B_0'*t=0 for full
+linear-slice positivity. No actual such mode is exhibited or excluded.
+Existing zero-action and physical service premises do not supply that
+quantitative sign. AW blocker: NO. Complete homogeneous gap: NO.
+This is a full-gap reduction, not the requested positivity breakthrough.
+No uniform compact forward domain, inherited-image closure or flag/count
+promotion is assumed. One remaining comparison: feasible R_W(c)>=0 for
+one common c>0, with its existing inverse and cone qualifications.
 
 **Joint process/face/acc receipt payment — CR36--CR40; sign still OPEN.**
 Complete the existing dC and entire same transported dT jointly, keeping
@@ -451,16 +482,15 @@ observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
 
-The immediate sign question is CR30's reconstructed feasible eigenmode
-using CR39's reassembled Hbar and strictly reduced Dbar, with the SAME
-L_pmu and actual image/branch guards. The joint process/face/acc payment
-changes both the positive Gram and weight, and CR40 leaves threshold-one
-stationary directions invariant. Their nonzero receipt balances positive
-first process loss; no particular mode is asserted feasible or excluded.
-Existing MAGNETIC SERVICE and integrated OU/S/acc action enter the exact
-reader but do not yet prove feasible eigenvalues uniformly below one.
-No compact forward domain or image/branch closure is assumed. After odd
-positivity, pay the actual full CR17 cross cost before exogenous supply.
+The one remaining comparison is CR41--CR43's full feasible R_W(c)>=0
+for one common c>0. Its receipt corner is exactly CR39/CR30 using
+Hbar,Dbar,L_pmu and the actual inherited image/guards; the remaining
+linked full process/S/magnetic and acc utilde action has not decided it.
+No particular threshold-one mode is asserted feasible or excluded.
+The full endogenous cost is retained in the same remainder and becomes
+T_c-B_c'*S_c^-1*B_c after receipt positivity. Its common-reserve inverse
+and sign are unproved; no compact forward domain or image closure is
+assumed. Source completion cannot start before this comparison closes.
 
 The first decisive test is now explicitly (CR3) for the ACTUAL correlated
 homogeneous lift, with true exogenous variation set to zero and inherited
@@ -785,6 +815,9 @@ Physical S is never reset by the estimator pseudo-measurement.
   reads. Ledger/provenance conflicts were reconciled, preserving all proof
   work and the upstream device configuration. The regular planar equations
   and margins are unchanged; no shipping configuration was authored here.
+  Full Schur continuation: guessed optional module paths were corrected
+  to tools/stability/ou3_theorem. A render redirect found no scratch
+  directory; creating that directory and rerunning rendered the appendix.
   No mathematical premise or validation gate changed.
 
 * **D, process-short-only sign inference:** CR26's positive effective gap
@@ -1039,24 +1072,16 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
-Decide CR39's feasible receipt eigenmode with the same actual L_pmu and
-the jointly paid `(Hbar,Dbar)`. The completion has already used all of the
-paired conditional and regression squares; sharpening its coefficient
-alone cannot decide the unchanged signed matrix or remove CR40's balance.
-Use the remaining linked full process/S/magnetic and acc utilde action on
-the SAME inherited tangent to exclude or pay it, then substitute the
-proved odd margin into the full CR17 remainder. No extra storage, causal
-reset, compact retention premise or empirical search is authorized.
-
-Decide the ONE feasible receipt-driven eigenmode in CR30/CR35 using the
-existing actual H_pmu,L_pmu,D_pmu and inherited image/cone restrictions.
-At threshold one its positive process/service action balances the receipt;
-it is not in the complete zero-action kernel. Use CR32's full integrated
-g/Q_ao and the SAME transported S/acc/magnetic covariance columns to
-exclude or pay that mode. No actual negative mode has been exhibited.
-Compactness is usable only after pointwise strictness and justified
-closed normalized history-image limits; no forward retention is assumed.
-Then substitute the positive odd block into the full CR17 cross remainder.
+Decide the actual feasible receipt corner S_c in CR41 with the remaining
+linked action in the SAME Hbar. If positive, pay the full endogenous
+T_c-B_c'*S_c^-1*B_c immediately. Equivalently decide the one combined
+R_W(c)>=0 on the justified full inherited image for one common c>0.
+CR42 retains the actual cone constraints when eliminating the kernel;
+its unconstrained residual cannot be silently treated as reached.
+No actual positive or negative receipt eigenmode has been established.
+Another completion, positive-action statement or zero-kernel argument
+without a sign for this remainder is not a next step. No new storage,
+reset, proof frame, compact retention premise or empirical search.
 
 Attack CR28/CR17a on feasible NONZERO receipts, using CR25--CR27's
 joint process/face inequality and actual scalar directional cones.
@@ -1128,11 +1153,10 @@ in the PR metadata.
    suffix/generated-score, complementary Schur, coupled process/source,
    conditional AW/reader, frame, qualified magnetic, held and even-process
    results under their original hypotheses. No theorem/count promotion.
-6. Next: exclude or pay CR30/CR40's feasible nonzero balanced receipt mode
-   in CR39/CR28/CR17a with the literal residual
-   process and transported acc/S/magnetic action, using only necessary
-   actual inherited-image constraints; no paid-kernel rank detour.
-   Keep CR22/CR24's linked acc/regression and integrated process accounting,
-   then certify the full (CR17) cross remainder. Endogenous auxiliary
+6. Next: decide CR41's feasible receipt corner using the linked residual
+   process and transported acc/S/magnetic action, and its full Schur cost
+   CR43, equivalently the ONE full R_W(c) comparison in CR42.
+   The conditional algebra is not a sign or uniform margin; all inherited
+   image and actual guard qualifications remain. Endogenous auxiliary
    columns cannot be relabeled external supply. General dissipativity and
    special planar all-time admission remain separate.

@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "1005c3313c45bc462d88b08ea61899f5e01580a5"
+      "git_blob_sha": "0e7aba4a03c2fd2c2e4b67e93847e99685ef3523"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "9a314c346f9bd0caa975e66c31c958173b770bef"
+      "git_blob_sha": "341f589b8d9b9d7abad855e6f21d585810de8914"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "f027cf71fa038738dd5dfd411930945ad36e7617"
+      "git_blob_sha": "c9f39ff065d432725c16f41b0a9fe7b26cb79d9c"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "0d4dc6faad2e14fd6422e1c27a35bf1d3c080ab9"
+      "git_blob_sha": "4ac5d41407ba6b0f44014da23b92dbefd5d17b9a"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "b4a0e8e4416ff7f8742482f50c5e8d4ff8d8ccb7"
+      "git_blob_sha": "55cf475a9b3947929dbde7c34e4c5e6a7ce51837"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "4acb162f08949146044cc72fd7e87a1c12b1e5ba"
+      "git_blob_sha": "046d2c4fc72d1ade45a43d90d9b75cdedb21e037"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -964,7 +964,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "88181dc91eddc4e0ea59cf6490182c9dd080e2f6"
+      "git_blob_sha": "e4dbdebb7e8a87b497a39f2f88697059c765705b"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
@@ -976,7 +976,7 @@
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "e50a58a4f80735862f745c9d2a83bf1a76c27c7d"
+      "git_blob_sha": "6263e1e981e038964f8a45ebb3148a238aa06b46"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
@@ -1429,7 +1429,7 @@
     "observed_starting_PR_head": "e362f9dfbec57784725baf789501274f8b3392a0",
     "observed_starting_main": "59959d1bf33a3c5f4f70331104546a6486468df6",
     "intervening_automated_evidence_preserved": "0e8313729b5605b561e9a145c03e88fd25796478",
-    "proof": "app:correlated-complete-gap, CR1--CR40",
+    "proof": "app:correlated-complete-gap, CR1--CR43",
     "controlling_inequality": "LR8/LR9 homogeneous correlated G>=c J_root with c>0 before genuine exogenous supply",
     "matrix": "CR2: actual complete prefixes and endpoint gauge, [[G,H],[H^T,-S]]",
     "inherited_endogenous_auxiliary_externalized": false,
@@ -1448,7 +1448,7 @@
     "shipping_sources_changed": false,
     "numerical_search_or_new_replay_performed": false,
     "radius_capture_or_activation_promotion_performed": false,
-    "tooling_failures": "E: guessed read paths, mismatched document patch contexts and TeX/JavaScript literal delimiters were corrected before those edits. A provenance sync initially replaced a summary audit; original fields were restored before validation. Missing mpmath/ruff were installed in scratch; existing runtime Eigen is supplied through EIGEN_INCLUDE_DIR. No mathematical premise or validation gate changed. Earlier classified tooling failures remain in the ledger. Nonzero-process calculation: E guessed lin_source.py read path resolved to lin_path_certificate.py; focused error-message regression repaired by restoring the existing strictly-active wording, without changing its test or validation gate. Appendix render failed at CR25 with Display math should end with $$; the missing closing display delimiter was restored before final validation. Guessed optional render paths doc/kalman_ou_iii/Makefile, tools/render* and tools/*latex* were absent; the existing render workflow was read directly. The corrected complete appendix renders; unavailable local IEEEtran/newtx/siunitx packages leave the full article render to the existing exact-head CI workflow. Joint receipt calculation: E optional sympy was absent in both Python environments; installed in scratch before exact symbolic checks. Generated-evidence merge conflicts were resolved by preserving the complete newer PR bundle rather than mixing reports from the earlier main regeneration. No validation gate changed.",
+    "tooling_failures": "E: guessed read paths, mismatched document patch contexts and TeX/JavaScript literal delimiters were corrected before those edits. A provenance sync initially replaced a summary audit; original fields were restored before validation. Missing mpmath/ruff were installed in scratch; existing runtime Eigen is supplied through EIGEN_INCLUDE_DIR. No mathematical premise or validation gate changed. Earlier classified tooling failures remain in the ledger. Nonzero-process calculation: E guessed lin_source.py read path resolved to lin_path_certificate.py; focused error-message regression repaired by restoring the existing strictly-active wording, without changing its test or validation gate. Appendix render failed at CR25 with Display math should end with $$; the missing closing display delimiter was restored before final validation. Guessed optional render paths doc/kalman_ou_iii/Makefile, tools/render* and tools/*latex* were absent; the existing render workflow was read directly. The corrected complete appendix renders; unavailable local IEEEtran/newtx/siunitx packages leave the full article render to the existing exact-head CI workflow. Joint receipt calculation: E optional sympy was absent in both Python environments; installed in scratch before exact symbolic checks. Generated-evidence merge conflicts were resolved by preserving the complete newer PR bundle rather than mixing reports from the earlier main regeneration. No validation gate changed. Full Schur continuation: E guessed optional module paths under tests/validation were corrected to tools/stability/ou3_theorem; no file or gate changed as a result. The appendix-render redirect initially found no scratch directory; it was created and the unchanged compile succeeded.",
     "actual_shared_tangent_unsplit_matrix_verified": true,
     "actual_shared_tangent_matrix": "H_mu+Q_mu^T L_mu+L_mu^T Q_mu-L_mu^T L_mu",
     "partial_origin_zero_energy_kernel_test_verified": true,
@@ -1464,8 +1464,8 @@
       "whole_odd_gap_verified": false,
       "full_homogeneous_gap_verified": false
     },
-    "remaining_receipt_operator": "CR39/CR30 reconstructed feasible receipt eigenmode at chi>=1 using Hbar,L_pmu,Dbar on the actual inherited image and scalar guards; threshold-one stationarity invariant by CR40; full endogenous CR17 cross cost retained",
-    "remaining_full_cross_operator": "CR17 actual Gbar_EE-Gbar_EO*Gbar_OO^-1*Gbar_OE>=0 with a proved positive odd block and all metric cross entries; no scalar gamma_n substitution",
+    "remaining_receipt_operator": "CR41 receipt corner S_c=Z_c^-1-lambda*E^T*Dbar*E with actual remaining linked process/S/magnetic and acc utilde action in Hbar, independent receipt rows retaining L=E*L0, and inherited image/cone restrictions; feasible sign and a common positive reserve unproved",
+    "remaining_full_cross_operator": "CR41--CR43 single full R_W(c)=[[S_c,B_c],[B_c^T,T_c]]; if S_c>0 the actual full Schur cost is T_c-B_c^T*S_c^-1*B_c; on scalar cones retain CR42 and minimizing-kernel feasibility, all metric/generated/process/source/reset/inherited/gauge cross work",
     "uniform_actual_receipt_operator_verified": false,
     "odd_AW_blocker_resolved": false,
     "complete_homogeneous_gap_proved": false,
@@ -1586,6 +1586,25 @@
     "intervening_joint_receipt_evidence_preserved": "33f5ac0d0eb7229ebca36a4becad79eebced3431",
     "incorporated_automated_main_evidence": "0cbbd5a3270ff988c6642324ff8ebb303034dc80",
     "evidence_reconciliation": "Kept the complete newer PR evidence bundle from 33f5ac0 after incorporating main 0cbbd5a; main only regenerated the earlier validation bundle and contains no additional shipping source changes.",
-    "joint_weight_reduction_alone_uniform_gap_failure_class": "D_SUFFICIENT_BOUND_FAILURE"
+    "joint_weight_reduction_alone_uniform_gap_failure_class": "D_SUFFICIENT_BOUND_FAILURE",
+    "observed_PR_head_before_full_receipt_schur_reduction": "3729fe0c365752766e00b2b4800383a0b44468d2",
+    "intervening_full_receipt_schur_evidence_preserved": "3729fe0c365752766e00b2b4800383a0b44468d2",
+    "full_endogenous_receipt_schur_reduction": {
+      "proof": "CR41--CR43",
+      "scope": "justified fixed linear part of the existing inherited endogenous lift; scalar cones retain actual image and prefix guard feasibility",
+      "positive_pivot": "K_c=lambda*Hbar-c*J_r_OO; K_0>0 on each injective fixed-word odd slice, common c>0 not qualified",
+      "dependent_receipts": "L=E*L0; L0 consists of independent actual receipt rows",
+      "receipt_corner": "S_c=(L0*K_c^-1*L0^T)^-1-lambda*E^T*Dbar*E",
+      "full_remainder": "R_W(c)=[[S_c,Y_c^T*X_c],[X_c^T*Y_c,A_c-X_c^T*K_c_sharp*X_c]]",
+      "full_schur_when_receipt_corner_positive": "A_c-X_c^T*N_c^-1*X_c=T_c-B_c^T*S_c^-1*B_c; N_c^-1=K_c_sharp+Y_c*S_c^-1*Y_c^T",
+      "all_metric_generated_source_reset_inherited_gauge_cross_work_retained": true,
+      "restricted_kernel_margin_used_to_price_cross_work": false,
+      "odd_margin_assumed_to_form_remainder": false,
+      "uniform_positive_reserve_inverse_qualified": false,
+      "actual_feasible_receipt_corner_sign_decided": false,
+      "full_remainder_uniformly_nonnegative": false,
+      "odd_AW_blocker_resolved": false,
+      "complete_homogeneous_gap_proved": false
+    }
   }
 }
