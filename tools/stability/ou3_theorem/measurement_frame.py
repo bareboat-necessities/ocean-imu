@@ -506,17 +506,61 @@ def planar_pitch_prediction_calculus(step, angle, gyro_density, bias_density):
             'uniform_complete_gap_verified': False}
 
 
-def scalar_aw_face_fisher_balance(P, D, target, aw_index):
+def scalar_aw_innovation_reader(P, D, h, noise, aw_index, dh=None, dnoise=0):
+    """Actual scalar correction's AA decrement and SAME Fisher reader (CR6).
+
+    Fixed h/R covariance part satisfies dI_cov^2 <= I*(2 P_aa-I)*L_P.
+    Literal row/noise variations are retained as one signed coefficient port;
+    they are not included in that bound or classified as external by this tool.
+    Scalar odd acc/mag/S channels use the same operation's P,h,R and tangent.
+    """
+    ldlt(P)
+    n, a, noise = len(P), aw_index, F(noise)
+    if (not 0 <= a < n or D != transpose(D) or noise <= 0
+            or len(h) != 1 or len(h[0]) != n):
+        raise ValueError('regular scalar row/noise and symmetric same-operation tangent required')
+    dh = zeros(1, n) if dh is None else dh
+    J = inverse(P)
+    s = product(h, P, transpose(h))[0][0]+noise
+    b = product(P, transpose(h))[a][0]
+    db_cov = product(D, transpose(h))[a][0]
+    ds_cov = product(h, D, transpose(h))[0][0]
+    db_port = product(P, transpose(dh))[a][0]
+    ds_port = 2*product(dh, P, transpose(h))[0][0]+F(dnoise)
+    I = b*b/s
+    di_cov = 2*b*db_cov/s-b*b*ds_cov/(s*s)
+    di_port = 2*b*db_port/s-b*b*ds_port/(s*s)
+    loss = (2*product(h, D, J, D, transpose(h))[0][0]/s
+            - ds_cov*ds_cov/(s*s))
+    K = add([[2*x for x in row] for row in J],
+            [[x/s for x in row] for row in product(transpose(h), h)], -1)
+    reader = [[2*F(i == a)-b*h[0][i]/s for i in range(n)]]
+    reader_norm = product(reader, inverse(K), transpose(reader))[0][0]
+    assert reader_norm == 2*P[a][a]-I
+    assert di_cov*di_cov <= I*reader_norm*loss
+    return {'innovation': s, 'AA_information_decrement': I,
+            'AA_decrement_covariance_tangent': di_cov,
+            'AA_decrement_coefficient_port': di_port,
+            'AA_decrement_full_tangent': di_cov+di_port,
+            'same_operation_Fisher_loss': loss,
+            'sharp_reader_norm_squared': reader_norm,
+            'sharp_charge_coefficient': I*reader_norm,
+            'coefficient_port_absorption_verified': False}
+
+
+def scalar_aw_face_fisher_balance(P, D, target, aw_index, dtarget=0):
     """Exact active scalar face in the EXISTING Fisher metric (OF2).
 
     Shipping use: AW_y in the planar odd block, fixed inherited target and
-    source/private state, regular A21 branch. No replacement covariance law,
+    source/private state, regular A21 branch. A supplied target tangent stays
+    in the same signed gap; this tool does not classify its causal origin.
+    No replacement covariance law,
     independent cross-covariance bound, or reachability assertion is supplied.
-    A varying target, held effective-noise port, or off-parity tangent needs
-    the full causal derivative instead of this specialization.
+    Held effective-noise ports and off-parity tangents need the full causal
+    derivative instead of this scalar specialization.
     """
     ldlt(P)
-    n, a, target = len(P), aw_index, F(target)
+    n, a, target, dtarget = len(P), aw_index, F(target), F(dtarget)
     if not 0 <= a < n or D != transpose(D) or target <= P[a][a]:
         raise ValueError('symmetric tangent and strictly active scalar AW face required')
     o = [i for i in range(n) if i != a]
@@ -529,16 +573,23 @@ def scalar_aw_face_fisher_balance(P, D, target, aw_index):
               + 2*product(dT, B, transpose(T))[0][0])
     C, Cnext, dC = P[a][a]-beta, target-beta, D[a][a]-d_beta
     Pnext, Dnext = [row[:] for row in P], [row[:] for row in D]
-    Pnext[a][a], Dnext[a][a] = target, F(0)
+    Pnext[a][a], Dnext[a][a] = target, dtarget
     J, Jnext = inverse(P), inverse(Pnext)
     before, after = trace(product(J, D, J, D)), trace(product(Jnext, Dnext, Jnext, Dnext))
     positive = dC*dC/(C*C)+2*(1/C-1/Cnext)*product(dT, B, transpose(dT))[0][0]
-    adverse = (d_beta/Cnext)**2
+    adverse = ((d_beta-dtarget)/Cnext)**2
     assert before-after == positive-adverse and positive >= 0
+    delta, ratio, q, mu = target-P[a][a], C/Cnext, dC/C, D[a][a]-dtarget
+    retained = (1-ratio**2)*(q+ratio*mu/(Cnext*(1-ratio**2)))**2
+    retained += 2*(1/C-1/Cnext)*product(dT, B, transpose(dT))[0][0]
+    deficit_charge = mu**2/(delta*(2*C+delta))
+    assert before-after == retained-deficit_charge
     return {'P_next': Pnext, 'D_next': Dnext, 'B': B, 'T': T,
             'C': C, 'C_next': Cnext, 'beta': beta, 'd_beta': d_beta,
             'dC': dC, 'dT': dT, 'positive_face_action': positive,
-            'regression_reader': d_beta/Cnext, 'adverse_face_work': adverse,
+            'regression_reader': (d_beta-dtarget)/Cnext, 'adverse_face_work': adverse,
+            'AA_target_relative_tangent': mu, 'retained_coupled_square': retained,
+            'deficit_reader_charge': deficit_charge,
             'gap': before-after}
 
 
@@ -701,6 +752,27 @@ def certificate():
             'uniform_odd_covariance_gap': None,
             'full_even_odd_source_cross_blocks_discarded': False,
             'scope_check': odd_covariance_gap_scope_check(),
+        },
+        'causal_aw_deficit_gap': {
+            'proof': 'app:correlated-complete-gap, CR4--CR10',
+            'result_type': 'analytical causal substitution into existing signed gap; uniform margin OPEN',
+            'scope': 'same qualified regular planar odd-covariance fibre; full correlated cross/target ports retained',
+            'actual_process_AA_row': 'p_minus=phi^2*p+actual_q_aa',
+            'queued_process_target_lag_retained': True,
+            'stationary_Q_aa_identity_assumed_on_all_source_branches': False,
+            'fixed_private_causal_receipt': 'mu=-sum actual_prediction_weights*dI_a after an actual active fixed-target face',
+            'same_correction_sharp_reader': '(dI_cov)^2 <= I_a*(2P_aa-I_a)*L_P',
+            'signed_row_noise_target_tuner_ports_retained': True,
+            'active_face_completion': 'q^2-(C/Cplus*q-mu/Cplus)^2+regression_loss',
+            'negative_completed_reader': 'mu^2/[Delta*(2C+Delta)], Delta>0 only',
+            'non_AW_payment': 'I_a=T*(B-Bplus)*T^T; dI_a and dC share actual dB,dT',
+            'released_coordinate_Schur_relative_charge': '(2alpha-I)/(2alpha-I-2beta)>1 for beta>0',
+            'released_coordinate_failure_class': 'D_SUFFICIENT_BOUND_FAILURE',
+            'released_direction_proved_shipping_reachable': False,
+            'uniform_actual_linked_deficit_reader_margin': None,
+            'uniform_full_homogeneous_gap': None,
+            'full_word_OPEN_dependencies_discharged': [],
+            'new_storage_constructed': False,
         },
         'planar_even_process_work_proof': 'app:planar-even-process-work',
         'planar_fixed_input_even_dF_dQ_zero': True,

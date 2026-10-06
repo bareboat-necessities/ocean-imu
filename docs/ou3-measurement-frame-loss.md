@@ -518,6 +518,35 @@ OPEN and no radius is solved.
 
 ## Complete odd-covariance gap: retain the active-face derivative
 
+The causal substitution in app:correlated-complete-gap is now the next
+controlling calculation. Let p=P_aa, alpha_f be the actual queued target,
+mu=D_aa-dalpha_f, C_plus=C+Delta, q=dC/C and a=C/C_plus.
+The SAME Fisher face decrement has the exact linked completion
+
+\[
+ L_{\rm face}=(1-a^2)
+ \left(q+\frac{a\mu}{C_+(1-a^2)}\right)^2
+ +2(1/C-1/C_+)dT B dT^T
+ -\frac{\mu^2}{\Delta(2C+\Delta)}.
+\]
+
+This scalar formula requires a strictly active face; it supplies no
+uniform face gap or differentiable crossing. Before polarization, use
+the actual AA receipt (CR5). On the qualified fixed-input covariance
+fibre after an actual active floor, mu is exactly the weighted sum
+of prior negative information-decrement derivatives. The sharp bound
+(dI_cov)^2 <= I_a*(2P_aa-I_a)*L_P uses that same actual acc/S/magnetic
+correction and its directional Fisher loss. Row/noise and target/tuner
+ports are retained by causal origin, including the queued target lag
+and literal polynomial/PSD-repaired process Q_aa.
+
+The S/magnetic regression identities (CR7) link dI and dC to the same
+dB,dT and actual cross covariance. Releasing that link yields the
+D-class failed Schur payment (CR9)--(CR10); no scalar tightening or
+shipping instability inference follows. The actual linked image must
+pass (OF5) and the full homogeneous cross Schur test (CR3).
+Neither uniform margin is proved.
+
 Appendix `app:odd-covariance-signed-gap` specializes the **same** fixed-weight
 complete signed gap to a regular central-planar A21 pure odd-covariance fibre,
 with inherited delivered/private state fixed. Literal parity and zero odd

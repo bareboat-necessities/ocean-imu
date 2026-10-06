@@ -813,6 +813,29 @@ Those requested uniform bounds remain OPEN; no radius is computed.
 
 ## Direct coupled-matrix attack and the AW regression obstruction
 
+The continuation in app:correlated-complete-gap partitions the complete
+LR8/LR9 lift into endogenous root and genuine admissible physical/source
+columns before forming [[G,H],[H',-S]]. All endpoint gauge cross entries
+remain. An inherited auxiliary direction is endogenous unless its actual
+history-origin map proves it comes from admissible exogenous forcing.
+The zero reverse locked-reference edge does not establish that partition.
+The full homogeneous G is tested first; completing a source square with
+G alone leaves no contraction reserve. A later linked supply must use
+G-theta J_root with 0<theta<c after a positive margin has been proved.
+
+The signed AW regression work now uses the causal target-relative receipt
+(CR5), not an independent AW budget. On the qualified fixed-input
+covariance fibre after an actual active floor, mu=-sum w_j dI_a,j.
+Each dI_cov is an exact directional reader of the SAME scalar correction's
+Fisher loss, with sharp coefficient I_a*(2P_aa-I_a). Literal row/noise,
+inherited target, staged-tuner and queued/process target-lag ports remain.
+The face completion (CR8) keeps these readers coupled to dC and dT.
+Its released-coordinate Schur test (CR9) fails analytically for nonzero
+cross regression; class D, no reached shipping direction or instability.
+The actual S/magnetic map (CR7) restores the omitted shared-tangent link.
+Uniform domination of that full linked operator and its cross Schur cost
+remain OPEN; no dependency or status count is promoted.
+
 Appendix `app:odd-covariance-signed-gap` (OF1)--(OF1a) forms the entire
 signed quadratic in the existing justified root/source coordinates. For each
 process it keeps `f=T X Lambda z` and

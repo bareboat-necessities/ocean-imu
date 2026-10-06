@@ -4583,6 +4583,336 @@ planar-admission promotion, capture or invariant-radius calculation occurs.
 Exact-rational regressions verify these entries; the preceding derivation is
 the proof.
 
+\subsection{Correlated endogenous gap and the causal AW-deficit reader}
+\label{app:correlated-complete-gap}
+
+\paragraph{Six questions, and the controlling test.}
+(1) The starting balance is (LR8), with (LR9)'s actual correlated
+lift, and the target is its homogeneous gap
+$G\succeq c\mathcal J_{\perp,0}$, $c>0$, uniformly on activated
+service-qualified words. (2) The attacked term is the signed AW-face
+covariance work inside that gap, including its inherited root and coefficient
+dependence, rather than an independent maximum of $E_L$.
+(3) The calculation below is inserted into (OF1)'s actual prefixes and its
+already-qualified odd-covariance partial block (OF4).
+(4) It eliminates an independent AW-marginal tangent from that partial
+block: its face deficit derivative is an exact causal sum of the same
+corrections' information-decrement readers. It also prevents inherited
+endogenous work from being moved to external supply.
+(5) The required threshold remains the relative Schur test for the full
+$G-c\mathcal J_{\perp,0}$; on (OF4), it is (OF5)'s threshold one,
+with a common strict reserve and coercivity. (6) The new receipt is
+substituted below and the resulting Schur relaxation is tested analytically.
+It reduces the unresolved partial operator to actual correction readers
+and target/coefficient ports, but does \emph{not} discharge a full-word
+OPEN dependency. A reader identity by itself is not a contraction theorem.
+
+\paragraph{Causal origin before the block partition.}
+Let $a_0$ be the actual inherited auxiliary tangent in (LR2), including
+reference, frontend/variance/frequency, staged tuner, scheduler, pending
+AW target, bias mode and source histories. A fixed regular word has the
+literal causal linear recursion obtained by differentiating its shipping
+operations. Source columns are derivatives of one admissible physical and
+delivered history, including its SLOW/FAST and primitive constraints.
+They are not arbitrary independent values of $a_0$ or of each event port.
+When that recursion proves
+$da_0=\Lambda v_0+A_d d$, insert $\mathsf R_a\Lambda$ in
+$\mathsf M_{\rm lift}$, and $\mathsf R_aA_d d$ in the source reader.
+If a graph is not proved, retain the endogenous part of $da_0$ in an
+augmented root. The coordinate $d$ contains \emph{only} genuine admissible
+exogenous variation. The locked-Live zero reverse edge (LR1) does not
+justify $\Lambda=0$ or externalization of inherited endogenous variation.
+Past physical forcing may explain an auxiliary column only through its
+actual inherited causal history map. No history is restarted.
+
+There is a necessary check if the augmented stored-root Gram $J_r$ is
+semidefinite. Let $T_{N,e}$ be the complete homogeneous terminal map,
+and $J_{\perp,N}$ the justified transverse terminal metric. Positivity
+$G\succeq cJ_r$ requires
+\[
+ u\in\ker J_r\quad\Longrightarrow\quad
+ J_{\perp,N}^{1/2}T_{N,e}u=0.                              \tag{CR1}
+\]
+Indeed, otherwise the exact gap on $(u,0)$ is strictly negative, although
+its initial stored energy is zero. This is a test of the \emph{chosen
+causal root family}, not a claim that arbitrary independent auxiliary
+variations are shipping reachable. An unproved inherited graph cannot
+be repaired by declaring those columns to be disturbance or by deleting
+them. Neither (CR1) nor a source-origin qualification is established for
+the entire shipping family here.
+
+\paragraph{One matrix, including the endpoint gauge.}
+Use the existing complete prefix map $T_i$ in (OF1), now partitioned
+$T_i=[T_{i,e},T_{i,d}]$ on $z=(v_0,d)$ after the preceding causal-origin
+qualification. Pull the \emph{same} endpoint gauge subenergy back to
+these coordinates, denoting its Gram by $\Gamma_i$.
+It may have root/source cross entries. Define
+\[
+ \begin{split}
+ I_i&=T_i^T\mathcal J_iT_i-\Gamma_i,\\
+ Q_W&=G_{action}-G_{port}-\Gamma_0+\Gamma_N
+          =I_0-I_N
+          =\begin{pmatrix}G&H\\H^T&-S\end{pmatrix}.
+ \end{split}                                               \tag{CR2}
+\]
+Then the exact tangent balance is $W_{\perp,0}-W_{\perp,N}=z^TQ_Wz$.
+In particular $G=(I_0-I_N)_{ee}$, $H=(I_0-I_N)_{ed}$,
+$S=(I_N-I_0)_{dd}$: no positive source supply or sign for $S$ is
+asserted before this partition is justified.
+On (LR9)'s graph this specializes to
+$G=\mathcal J_0-\mathsf M_{\rm lift}^T\mathcal J_N
+\mathsf M_{\rm lift}-\Gamma_{0,ee}+\Gamma_{N,ee}$ and
+$H=-\mathsf M_{\rm lift}^T\mathcal J_N F_d
+-\Gamma_{0,ed}+\Gamma_{N,ed}$, when the initial source columns vanish.
+Otherwise retain all entries of $I_0$.
+
+Evaluate (CR2) by (OF1),(OF1a), not frozen-factor products. It includes
+process information and covariance Fisher loss, integrated OU/AW loss,
+actual recurring $S$ and applied magnetic loss and the qualified $9/10$
+linked magnetic result only on its stated stratum. (CP4) pays complementary
+base propagation once. (CA1)--(CA8) and (CM1)--(CM8) supply the conditional
+blocks and actual $(C,T,q)$ reader, with cross precision retained.
+(WS5)--(WS6) retain generated $U_iq_{i+1,N}$; (PS5)--(PS8) retain
+$E_L+S_q-2C_W$ with the generated process cross and square.
+The AW row/frame coboundary, held-BA endpoint and fixed-input even-process
+results remove only their stated charges. Reset/projection, $dK r$,
+$dH,dR,dr$, physical OU/$S$/bias mismatch, source/reference and gauge work,
+refinement yaw and unqualified reacquisition remain. The moving-projector
+derivative used for physical distance is first-order work, not a discarded
+nonlinear remainder. Fixed-word differentiability does not prove scheduler
+branch retention or target arithmetic.
+
+After forming this matrix, $d=0$ leaves \emph{all} endogenous lift columns.
+For a justified conditional/complementary partition of $G-cJ_r$,
+\[
+ G-cJ_r=\begin{pmatrix}A&X\\X^T&N\end{pmatrix},\qquad
+ N\succ0,\quad A-XN^{-1}X^T\succeq0                       \tag{CR3}
+\]
+is the exact relative Schur condition. Separate positivity of $A,N$
+does not suffice. Physical magnetic-service probes remain transported
+through this same causal $T_i$. A two-column service floor does not
+supply (CR3) on all mean, covariance and inherited auxiliary directions.
+
+\paragraph{Return to the literal generator of the AW work.}
+On the qualified regular central-planar odd-covariance fibre of (OF2),
+write $a=AW_y$, $p=P_{aa}$, $\alpha^f$ for the \emph{queued} floor
+target and $q_{aa}$ for the \emph{actually applied} process entry.
+The scalar shipping AW row is $F_{ao}=0,F_{aa}=\phi$; hence
+\[
+ \begin{array}{ll}
+ p^-=\phi^2p+q_{aa},&
+ D_{aa}^-=\phi^2D_{aa}+2\phi\,d\phi\,p+dq_{aa},\\
+ p^+=p-I_a,\quad I_a=b^2/s,&
+ dI_a=2b\,db/s-b^2\,ds/s^2,
+ \end{array}                                               \tag{CR4}
+\]
+at a scalar correction, where $b=(Ph^T)_a$, $s=hPh^T+R$.
+The odd acc, magnetic and $S$ channels use their actual rows and noises.
+Attitude reset and bias projection have unchanged AA covariance row on
+this qualified fibre; other branches/repairs must keep their actual ports.
+In \texttt{IntegratedOUChain<T,2>::process\_covariance}, the small-step
+AA entry is a degree-nine polynomial, followed by PSD regularization.
+Consequently do \emph{not} replace $q_{aa}$ universally by
+$(1-\phi^2)\sigma^2$. All integrated process blocks stay in (OF1).
+
+Between two \emph{actual active} floor events, let $w_j$ be the product
+of all subsequent prediction factors $\phi^2$ up to the next pre-face
+boundary, with $w_0$ the full product. Expansion of the literal AA row
+gives
+\[
+ \begin{split}
+ p_N^-&=w_0\alpha_0^f+
+             \sum_{\rm pred}w_jq_{aa,j}
+             -\sum_{\rm corr}w_j I_{a,j},\\
+ \Delta_N&=\alpha_N^f-p_N^-
+             =D_{\rm sched}+\sum_{\rm corr}w_j I_{a,j},\\
+ D_{\rm sched}&=\alpha_N^f-w_0\alpha_0^f
+                         -\sum_{\rm pred}w_jq_{aa,j},\\
+ \mu_N&=D_{aa,N}^- -d\alpha_N^f\\
+ &=w_0d\alpha_0^f+
+       \sum_{\rm pred}w_j(2\phi_jd\phi_jp_j+dq_{aa,j})
+       -\sum_{\rm corr}w_jdI_{a,j}-d\alpha_N^f .
+ \end{split}                                               \tag{CR5}
+\]
+The local $2\phi d\phi p$ terms already differentiate the causal weights;
+do not differentiate $w_j$ a second time in this tangent formula.
+Before the first active face replace $\alpha_0^f,d\alpha_0^f$ by the
+actual inherited $p_0,D_{aa,0}$. Inactive faces leave that history intact.
+The wrapper commits a staged tuner before prediction, whereas a pending
+floor was queued at the previous covariance-maintenance event. Their
+targets need not agree. Thus $D_{\rm sched}$ is signed, not deleted,
+nor independently bounded by a Cartesian tuner box.
+
+For the fixed-input/private \emph{partial covariance} variation, after
+an actual fixed-target active face $D_{aa,0}=0$ and $d\phi=dq_{aa}
+=d\alpha^f=0$. Equation (CR5) then proves the nontrivial substitution
+$\mu_N=-\sum_{\rm corr}w_jdI_{a,j}$.
+It does not set these ports to zero on a correlated auxiliary/root lift.
+On that lift each term of (CR5) is partitioned by its actual causal origin
+and inserted into (CR2), including inherited target and tuner work.
+
+\paragraph{Exact directional payment by the same correction.}
+Separate only the algebraic covariance and row/noise parts,
+not their causal origins:
+\[
+ \begin{split}
+ dI_a&=r_a(D)+\pi_a,\\
+ r_a(D)&=2b(Dh^T)_a/s-b^2(hDh^T)/s^2,\\
+ \pi_a&=2b(P\,dh^T)_a/s
+          -b^2(2\,dh\,Ph^T+dR)/s^2 .
+ \end{split}
+\]
+Put $K=2J-h^Th/s\succ0$, $\ell=2e_a-(b/s)h^T$.
+The actual scalar Fisher loss (OF4a) is
+$L_P=(Dh^T)^TK(Dh^T)/s$, and
+$r_a=(b/\sqrt{s})\ell^T(Dh^T/\sqrt{s})$.
+Sherman--Morrison gives
+$K^{-1}=P/2+Ph^ThP/[2(s+R)]$, whence direct cancellation yields
+\[
+ \boxed{\ell^TK^{-1}\ell=2p-I_a,\qquad
+ r_a(D)^2\le I_a(2p-I_a)L_P
+                 =[p^2-(p-I_a)^2]L_P.}                    \tag{CR6}
+\]
+This constant is sharp on symmetric covariance tangents for $h\ne0$:
+every vector $v=Dh^T$ is realized by a symmetric $D$, in particular
+$v=K^{-1}\ell$. If $b=0$, both $I_a$ and $r_a$ vanish.
+The signed $\pi_a$ remains a causal coefficient port; it is neither
+paid by (CR6) nor automatically external.
+
+For non-AW $S$/magnetic rows use (CA2) quantitatively:
+$B^+=(B^{-1}+h_o^TR^{-1}h_o)^{-1}$, $C^+=C,T^+=T$.
+Writing $\delta B=B-B^+$, the \emph{same} correction satisfies
+\[
+ \begin{split}
+ I_a&=T\delta B T^T,\\
+ dI_a&=T(dB-dB^+)T^T+2dT\,\delta B T^T,\\
+ L_{\rm cov,actual}&=\operatorname{tr}(B^{-1}dB B^{-1}dB)
+   -\operatorname{tr}((B^+)^{-1}dB^+(B^+)^{-1}dB^+)
+   +2dT\,\delta B\,dT^T/C .
+ \end{split}                                               \tag{CR7}
+\]
+Here row/noise variation stays inside the actual $dB^+$ and its signed
+ports. Only the fixed-row/noise version of this decrement is the
+nonnegative $L_P$ in (CR6), with $dB^+=A_o dB A_o^T$; the difference
+remains signed work in (OF1).
+Thus recurring $S$ and applied magnetic action supply directional
+regression and covariance payment with the same $T,B,h,R$ and chronology,
+not merely a weakest scalar service eigenvalue. The acc row, which
+observes AW itself, uses (CR6) with its full actual row.
+
+\paragraph{Insert the receipt into the signed face block.}
+With $\beta=TBT^T$, $C=p-\beta$, $C^+=C+\Delta$,
+set $q=dC/C$, $a=C/C^+$ and $\mu=D_{aa}-d\alpha^f$.
+The actual face gives $dC^+=dC-\mu$, including target variation.
+The \emph{same} Fisher part of its gap is therefore
+\[
+ \begin{split}
+ L_{\rm face}
+ &=q^2-(a q-\mu/C^+)^2+
+             2(1/C-1/C^+)dT B dT^T\\
+ &=(1-a^2)\left(q+\frac{a\mu}{C^+(1-a^2)}\right)^2
+       +2(1/C-1/C^+)dT B dT^T
+       -\frac{\mu^2}{\Delta(2C+\Delta)} .
+ \end{split}                                               \tag{CR8}
+\]
+This is completion of the actual signed block, not a new storage.
+On every actual root/source column use (CR5) for $\mu$ \emph{before}
+polarizing (CR8). Sum the ordinary process/acc/$S$/magnetic Fisher
+Grams and these exact face Grams on the actual prefixes. This reproduces
+(OF4) exactly on its qualified partial fibre; all other entries of (CR2)
+remain. In particular, the negative row is now generated by the actual
+innovation derivatives, coefficient/target ports and inherited receipt,
+rather than an independent auxiliary energy.
+
+The completion must not discard $q$--$\mu$ correlation. At $\Delta=0$
+its denominators are invalid; use the first line and actual directional
+face map. No uniform active-face gap or differentiable crossing is assumed.
+
+\paragraph{Attempted Schur payment, failure, and the omitted link.}
+For the fixed-covariance partial receipt, temporarily enlarge the image
+by freeing $q$ and the individual loss coordinates.
+Using (CR6) to minimize $\sum_j L_{P,j}$ at fixed
+$\mu=-\sum_jw_jr_{a,j}$, the released-coordinate Schur condition is
+\[
+ \sum_j w_j^2 I_{a,j}(2p_j-I_{a,j})
+                 \le \Delta(2C+\Delta).                  \tag{CR9}
+\]
+This is \emph{not} an independent supremum of shipping parameters:
+its operands are those of the same word. But it is a sufficient
+relaxation because it deletes shared-tangent and conditional correlations
+and leaves other process/regression action unpaid. Its structural failure
+is already visible with one non-AW correction and fixed target
+$p_0=\alpha$, followed by a face, without intervening process.
+Here $\Delta=I_a$, $p=\alpha-I_a$, $\beta=T B^+T^T>0$, $C=p-\beta$,
+and the attempted relative charge is exactly
+\[
+ \frac{I_a(2\alpha-I_a)}{I_a(2C+I_a)}
+      =\frac{2\alpha-I_a}{2\alpha-I_a-2\beta}>1.            \tag{CR10}
+\]
+No scalar tightening of (CR6) can repair this test: its constant is sharp.
+The released negative direction is the same-operation Fisher reader
+$Dh^T\parallel K^{-1}\ell$, together with
+$q=-a\mu/[C^+(1-a^2)]$, with regression variation provisionally free.
+It mixes complementary covariance and AW cross-regression; this is
+\emph{not} a proved root direction of a reached shipping word.
+
+Classification \textbf{D}: (CR10) invalidates only that Schur relaxation.
+The loss removed by releasing $q,r_a$ is visible in the literal equations
+(CR7): $dI_a$ and $dC=D_{aa}-d(TBT^T)$ come from the same $dB,dT$.
+Returning to those equations and substituting (CR5),(CR7) in (CR8)
+retains that link, including the actual integrated process, acc and
+rotating service directions. One cannot demand zero response to
+physical forcing, but this fixed-private covariance reader is endogenous
+and cannot be made external supply. Nor does (CR10) show that the
+shipping linked Schur remainder fails.
+
+The exact unresolved partial operator is now the stacked causal
+$\mu_i$ of (CR5), jointly with $q_i,dT_i$, against the full transported
+Fisher Gram in (OF5). A uniform reserve below threshold one on the
+actual inherited image, and the full cross cost in (CR3), remain
+unproved. No admitted eigen-direction with a negative complete
+shipping gap has been established. This calculation answers where
+S/magnetic payment enters and why independent payment fails; it does
+not prove that their complete complementary coverage is sufficient.
+
+\paragraph{Source supply requires a retained contraction reserve.}
+Only \emph{after} proving the homogeneous margin may one assign a
+finite-error supply. If $W_{\perp,0}=v_0^TJ_rv_0$ on the justified
+coordinates, choose $0<\theta<c$ and $G_\theta=G-\theta J_r\succ0$.
+Exact completion gives
+\[
+ z^TQ_Wz=\theta v_0^TJ_rv_0+
+ (v_0+G_\theta^{-1}Hd)^TG_\theta
+                (v_0+G_\theta^{-1}Hd)
+ -d^T(S+H^TG_\theta^{-1}H)d .                             \tag{CR11}
+\]
+Thus that \emph{directional} supply would retain contraction
+$1-\theta$. Completion with $G^{-1}$ alone consumes the entire
+homogeneous margin and yields no positive contraction reserve.
+If the initial transverse Gram has source/cross entries, keep them
+as well; do not assert the displayed root-only identity.
+No such positive $c$, source supply certificate, nonlinear/prefix
+retention, arithmetic transfer, capture time or radius is proved here.
+
+\paragraph{Shipping-faithfulness and outcome.}
+(1) Preserved: actual 21-state/P/gain/Joseph chronology, both covariance
+parities, OU/BG/BA and integrated AW--$v$--$p$--$S$, actual acc/$S$/mag
+rows, default floor, staged tuner/queue lag, reference and inherited
+physical/source histories, reset/projection and endpoint gauge.
+(2) Relaxations: fixed regular real-operation tangent identities,
+the qualified planar partial fibre and the explicitly released
+coordinates in (CR9); no shipping word or service assumption is replaced.
+(3) Failure: D for (CR9)--(CR10), not a failed exact shipping gap.
+(4) Genuine shipping counterexample: none.
+(5) Retained: all prior suffix, complementary Schur, combined process/source,
+conditional AW/directional score, frame, held endpoint, qualified magnetic,
+even-process and locked-reference results, under their original hypotheses.
+(6) Next calculation: (CR5),(CR7),(CR8) on the same inherited image
+with the actual integrated process and transported service; certify
+(OF5) and then the full (CR3) cross remainder. No uniform margin,
+full-word OPEN dependency or status count is promoted. The metric,
+fixed weight and physical/transverse equivalence obligation are unchanged.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

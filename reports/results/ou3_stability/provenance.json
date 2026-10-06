@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "c42f9c850f5df09d767c1894a61a1a357f595ec3"
+      "git_blob_sha": "9d07d986ff7799f55ea5059e26495bdb32cba667"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "fbda463d6a638c6e92a4822d766199e0114d5908"
+      "git_blob_sha": "e4c522d62d85169a08dfcecde46b63079fc493f8"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "d0ae13b867f454d11d53cb68a0feeeb75d41c352"
+      "git_blob_sha": "91e7d0983ebac09c60067153a421e01e3dfcad5b"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "8e1fb989dd0d0d3c47b5e3abf2d0edcec560d426"
+      "git_blob_sha": "99007b32ee11c932e41ee7dada77981c073198d5"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "3b4bb1f8b78fec0e78035c20e9e225a836ab998a"
+      "git_blob_sha": "b27c4a4b5316795eec66f77fbbe7be6ef7d70f7c"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "24f4bb734a298efa832c061f67e10f6e1168bc82"
+      "git_blob_sha": "f4f9054f6cab02443fc3e26acaec9207d92a11f9"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -948,39 +948,39 @@
     },
     {
       "path": "tools/stability/ou3_theorem/information_shear_word.py",
-      "git_blob_sha": "e2e731cefe59eb1d90c7799bb4408215edc800b8"
+      "git_blob_sha": "5c2871d42f0989fcc63291495a7df6c30798bdc5"
     },
     {
       "path": "tests/validation/test_ou3_information_shear_word.py",
-      "git_blob_sha": "ab726491a82473db9493000e5a65f3d1d4e53ff3"
+      "git_blob_sha": "d1e8ccc0f548ba06c76944423d690470c87494e6"
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "acb755d08ad4644a51b4c391e05da8ff57585c5a"
+      "git_blob_sha": "e887715d5201297a182798e03c9757867e0fd554"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
-      "git_blob_sha": "6764779329a64658f4670f33c51afe71c120a051"
+      "git_blob_sha": "c170b1f54b8a677e5afb135e74a4e9507e5263d9"
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "3a4bbb74b8dff2b19657f3e502880749bff7db73"
+      "git_blob_sha": "a737bea306aa16c5275c0fbc9b81f8b439b580b2"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "259b0f5a3ee4608a3a8ad9bc9647bdf8a8761a89"
+      "git_blob_sha": "1934d5d583bae0ee4f00254b6684a75d3921a98e"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
-      "git_blob_sha": "f070cdecd0cb98d41265544e9aa294332474304f"
+      "git_blob_sha": "f993c55a82e7794c76b1b8cc79696600e15fe49d"
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "81e6347a4bae93765e3b5ca3d3768c7d7c546a78"
+      "git_blob_sha": "369d5a7cdaeec8adc22c3394c74fa13a549f0ebc"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
-      "git_blob_sha": "377713dda7a4c799b33b19a267a962fcf5f3ecb3"
+      "git_blob_sha": "18b9becf5fac7c0d62ec94c0e10fff20dc0cb7cb"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1069,7 +1069,7 @@
     "result_type": "FINITE DIAGNOSTIC ONLY",
     "starting_PR_653_head": "4d387d19849aa177e1b84dae5d28a8eb3a80cf40"
   },
-  "reconciled_pr_head": "2db51d0079f630e5494fed7be683f8d1b6783605",
+  "reconciled_pr_head": "21463f710ac8ffd08ba9a504bf934ab2f74233f4",
   "planar_moving_center_audit": {
     "result_type": "FINITE DIAGNOSTIC ONLY",
     "starting_main": "59959d1bf33a3c5f4f70331104546a6486468df6",
@@ -1206,7 +1206,22 @@
     "independent_E_L_cap_required_before_coupled_matrix": false,
     "planar_odd_covariance_complete_signed_matrix_identity_verified": true,
     "uniform_planar_odd_covariance_regression_reader_margin": null,
-    "full_word_OPEN_dependency_discharged_by_odd_partial_block": false
+    "full_word_OPEN_dependency_discharged_by_odd_partial_block": false,
+    "correlated_complete_gap": {
+      "proof": "app:correlated-complete-gap, CR1--CR3",
+      "matrix": "Q_W=I_0-I_N=[[G,H],[H^T,-S]], I_i=T_i^T J_i T_i-Gamma_i",
+      "complete_prefix_and_gauge_cross_entries_retained": true,
+      "inherited_endogenous_auxiliary_externalized": false,
+      "causal_origin_partition_proved_by_algebra_helper": false,
+      "uniform_inherited_origin_graph_qualification": false,
+      "augmented_zero_root_storage_check": "ker J_root must map to ker terminal transverse metric at d=0",
+      "homogeneous_test": "G >= c J_root, c>0; actual conditional/complementary cross Schur retained",
+      "uniform_homogeneous_margin": null,
+      "source_supply_certified": false,
+      "source_completion_reserve": "only after G>=c J_root, reserve G-theta J_root for 0<theta<c",
+      "new_storage_or_causal_coordinate_graph_constructed": false,
+      "full_word_OPEN_dependencies_discharged": []
+    }
   },
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",
@@ -1301,6 +1316,27 @@
       "signed_matrix": "lambda*(H_W-R_W^T R_W), evaluated on actual covariance prefixes",
       "uniform_odd_covariance_gap": null,
       "uniform_relative_reader_margin": null
+    },
+    "causal_aw_deficit_gap": {
+      "proof": "app:correlated-complete-gap, CR4--CR10",
+      "result_type": "analytical causal substitution into existing signed gap; uniform margin OPEN",
+      "scope": "same qualified regular planar odd-covariance fibre; full correlated cross/target ports retained",
+      "actual_process_AA_row": "p_minus=phi^2*p+actual_q_aa",
+      "queued_process_target_lag_retained": true,
+      "stationary_Q_aa_identity_assumed_on_all_source_branches": false,
+      "fixed_private_causal_receipt": "mu=-sum actual_prediction_weights*dI_a after an actual active fixed-target face",
+      "same_correction_sharp_reader": "(dI_cov)^2 <= I_a*(2P_aa-I_a)*L_P",
+      "signed_row_noise_target_tuner_ports_retained": true,
+      "active_face_completion": "q^2-(C/Cplus*q-mu/Cplus)^2+regression_loss",
+      "negative_completed_reader": "mu^2/[Delta*(2C+Delta)], Delta>0 only",
+      "non_AW_payment": "I_a=T*(B-Bplus)*T^T; dI_a and dC share actual dB,dT",
+      "released_coordinate_Schur_relative_charge": "(2alpha-I)/(2alpha-I-2beta)>1 for beta>0",
+      "released_coordinate_failure_class": "D_SUFFICIENT_BOUND_FAILURE",
+      "released_direction_proved_shipping_reachable": false,
+      "uniform_actual_linked_deficit_reader_margin": null,
+      "uniform_full_homogeneous_gap": null,
+      "full_word_OPEN_dependencies_discharged": [],
+      "new_storage_constructed": false
     }
   },
   "coupled_signed_gap_audit": {
@@ -1325,5 +1361,30 @@
     "radius_or_capture_time_solve_performed": false,
     "all_time_planar_admission_promoted": false,
     "automated_evidence_commit_preserved_before_push": "d8435c292120a9d482541ebbd4c49d2b2dc9e1b0"
+  },
+  "correlated_complete_gap_audit": {
+    "observed_starting_PR_head": "9220703e6d28e34ee53a67cda31b1424025e6429",
+    "observed_starting_main": "59959d1bf33a3c5f4f70331104546a6486468df6",
+    "intervening_automated_evidence_preserved": "21463f710ac8ffd08ba9a504bf934ab2f74233f4",
+    "proof": "app:correlated-complete-gap, CR1--CR11",
+    "controlling_inequality": "LR8/LR9 homogeneous correlated G>=c J_root with c>0 before genuine exogenous supply",
+    "matrix": "CR2: actual complete prefixes and endpoint gauge, [[G,H],[H^T,-S]]",
+    "inherited_endogenous_auxiliary_externalized": false,
+    "uniform_inherited_origin_graph_qualification": false,
+    "causal_AW_deficit_receipt_and_sharp_Fisher_reader_substituted": true,
+    "actual_process_Q_aa_and_queued_target_lag_retained": true,
+    "actual_S_magnetic_dB_dT_link_substituted": true,
+    "attempted_released_coordinate_threshold": "CR9; CR10 relative charge >1 whenever beta>0",
+    "failure_class": "D_SUFFICIENT_BOUND_FAILURE",
+    "offending_released_direction_proved_shipping_reachable": false,
+    "uniform_homogeneous_margin": null,
+    "linked_exogenous_supply_certified": false,
+    "full_word_OPEN_dependencies_discharged": [],
+    "shipping_counterexample_found": false,
+    "new_storage_or_observer_constructed": false,
+    "shipping_sources_changed": false,
+    "numerical_search_or_new_replay_performed": false,
+    "radius_capture_or_activation_promotion_performed": false,
+    "tooling_failures": "E: guessed paths, rejected patch/context/JavaScript delimiters and trailing whitespace corrected; full evidence architecture guard caught a covariance-test variable name colliding with a retired token, renamed descriptively with guard unchanged. No premise or test weakened. Publication payload Unicode scalar/UTF-16 length mismatch corrected; final Git tree equality check retained."
   }
 }

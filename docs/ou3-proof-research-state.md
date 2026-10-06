@@ -12,7 +12,7 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `dcb1105005e25035643df031b7c6fb36b1b5e3ea`.
+Verified starting PR head: `9220703e6d28e34ee53a67cda31b1424025e6429`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved. Current CI chronology belongs in PR metadata.
 
@@ -28,6 +28,51 @@ lemma/quantifiers, finite-error role, literal dissipation structure, required
 proved/open bounds and avoidance of recorded dead ends. Required CI remains.
 
 ## Evidence
+
+**Current LR8/LR9 attack — the homogeneous gap is NOT closed.**
+Appendix app:correlated-complete-gap constructs the exact block
+[[G,H],[H',-S]] by polarizing the actual complete prefixes and pulling back
+both endpoint gauge energies. Only actual admissible physical/source
+columns may enter d. Inherited endogenous auxiliary columns are folded into
+the justified graph M+R_a Lambda or retained in the endogenous augmented
+root. A zero reverse locked-reference edge does not set that graph to zero.
+An augmented root with zero stored energy must satisfy (CR1)'s terminal
+kernel test; the uniform inherited origin/graph qualification is not proved.
+The homogeneous test is the full relative Schur remainder (CR3), before
+source supply. Completing with G alone would consume the entire contraction
+margin; a later supply must reserve G-theta J_root.
+
+The unpaid AW-face work is substituted into that same signed gap using the
+literal marginal receipt (CR4)--(CR5). After an actual active fixed-target
+face on the qualified pure covariance fibre, its target-relative tangent is
+mu=-sum w_j dI_a,j. Each scalar acc/S/magnetic correction has the sharp
+same-operation directional Fisher reader
+(dI_cov)^2 <= I_a*(2P_aa-I_a)*L_P.
+Row/noise derivatives remain signed causal ports. General inherited
+tuner/target/source variation remains in (CR5); it is not set to zero or
+called independent external forcing. The queued floor target may lag the
+newly committed process target. Actual Q_aa includes its small-step
+polynomial and PSD repair; exact stationary variance is not imposed.
+
+Exact face completion (CR8) retains dC, dT and mu together. Freeing their
+shared-tangent correlations gives the attempted Schur condition (CR9).
+Its one-correction fixed-target specialization has relative charge
+(2alpha-I)/(2alpha-I-2beta)>1 for beta>0. **D**, sufficient-bound failure:
+this analytic released-coordinate test is not a reached shipping
+eigen-direction or a service-admitted word. The sharp reader cannot be
+tightened to fix that relaxation. Returning to the literal S/magnetic
+equations (CR7) shows the omitted link: dI and dC depend on the SAME dB,dT.
+That link is now inserted along with actual integrated process and service
+directions, but its uniform positive Schur remainder remains unproved.
+
+No numerical search, new replay or new storage is used. No full-word OPEN
+dependency is discharged. The complete homogeneous margin, admissible
+linked supply, finite-error/prefix/arithmetic transfer and activation are
+still OPEN. Counts stay 25/4/1 and all promotion flags stay false/null.
+Intervening automated evidence 21463f710ac8ffd08ba9a504bf934ab2f74233f4
+was fetched and incorporated without changing the proof edits or shipping
+source. The general service-conditioned result and special planar
+all-time admission remain separate.
 
 **Direct signed-gap attack — analytical, no new storage:** Appendix
 `app:odd-covariance-signed-gap` writes the common-coordinate complete matrix
@@ -234,6 +279,18 @@ The observed-coefficient center defect .0006179245 is finite and uses future
 observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
+
+The first decisive test is now explicitly (CR3) for the ACTUAL correlated
+homogeneous lift, with true exogenous variation set to zero and inherited
+endogenous columns retained. No uniform positive remainder has been proved.
+On the qualified odd covariance restriction the unpaid operator is the
+causal AW-deficit reader (CR5) coupled to dC,dB,dT in (CR8), with the same
+integrated process and S/magnetic Fisher action. The shared-tangent link
+(CR7) is retained, but its affordable uniform Schur comparison is unproved.
+Actual target/tuner and inherited auxiliary origin/graph qualifications,
+other mean/covariance cross entries, source/reference and endpoint gauge
+remain. A released-coordinate direction is not a shipping obstruction.
+No finite-error, capture, arithmetic, radius or regime promotion follows.
 
 On the qualified locked-Live lift, do not retain a fictitious reference-to-MEKF
 feedback loop: (LR1) removes its reverse edge exactly. Source/reference
@@ -517,6 +574,28 @@ Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
 
+* **D, sharp-reader payment with released coordinates:** (CR9)'s attempted
+  Schur remainder has exact relative charge greater than one in (CR10)
+  for nonzero AW cross regression. The invalidated implication is that
+  paying each actual information-decrement reader independently suffices
+  to pay the face. Retained: sharp same-correction Fisher reader, literal
+  AA receipt, actual S/magnetic conditional equations and all integrated
+  process action. Limiter: their shared covariance tangent must satisfy
+  the uniform full linked Schur condition on the actual inherited image.
+  Next: use (CR5),(CR7),(CR8) together, without releasing dC/dB/dT or
+  classifying the endogenous reader as external supply.
+* **E, read/edit tooling:** guessed proof/source paths and rejected patch
+  invocations failed before modification (context mismatch and an
+  unescaped Markdown delimiter in JavaScript). Exact paths/contexts were
+  inspected and corrected; a trailing TeX space caught by diff validation
+  was removed. The full evidence suite's architecture guard caught a
+  covariance-test variable name colliding with a retired architecture
+  token; it was renamed to describe prediction, with the guard unchanged.
+  The publication payload gate compared Python Unicode scalar counts with
+  JavaScript UTF-16 lengths; it was corrected to compare scalar counts.
+  The final Git tree equality check remains mandatory and unchanged.
+  No mathematical premise or test was changed to bypass a failure.
+
 * **D, complete causal-work domination still open:** the source audit removes
   homogeneous reference feedback and proves a non-circular reference amplitude
   bound. It does not bound the actual MEKF mean/covariance feedback, inherited
@@ -688,15 +767,17 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
-Use the complete matrix (OF1)--(OF1a), keeping E_L, S_q and C_W coupled.
-For its now-isolated odd-covariance partial block, propagate the actual
-AW regression through integrated prediction and anisotropic Joseph updates;
-test (OF5)'s single stacked reader against the same-word directional Fisher
-Gram. A common relative threshold below one, with positive action coercivity,
-would pay that block; then its actual even/source cross Schur cost must remain.
-Do not infer the threshold from precision monotonicity, D_AA=0 at one root,
-or the formal failed word. A justified causal image might exclude the formal
-offending direction; that exclusion itself must be proved.
+Use LR8/LR9's correlated homogeneous block (CR2)--(CR3), keeping E_L,
+S_q and C_W together in (OF1a). On the qualified odd covariance block,
+substitute (CR5)'s actual target-relative receipt and (CR7)'s shared
+S/magnetic covariance/regression map into (CR8). Test the resulting
+same-word operator by (OF5), retaining integrated process, acc action
+and transported service chronology, then its actual full cross Schur cost.
+Do not repeat the released-coordinate bound (CR9): its sharp reader
+already fails structurally. Do not infer a margin from precision
+monotonicity, a fixed AA tangent or the formal failed word. The inherited
+endogenous image and admissible physical source-origin map require proof;
+neither can be replaced by arbitrary independent auxiliary noise.
 
 Use the held-score boundary cancellation only before release. The independent
 E_L cap remains an OPEN sufficient-budget route, not a mandatory first step
@@ -718,26 +799,23 @@ in the PR metadata.
 
 ## Shipping-faithfulness handoff
 
-1. Preserved: literal full state/P/K, inherited chronology, physical history,
-   gauge, nonlinear fibre, both covariance parities, frontend/reference/clocks.
-2. Relaxations: fixed regular real-operation branches for derivatives and
-   explicit norm/rounding majorants, qualified sqrt/exp and exact reference arithmetic; no arbitrary independent generated inputs.
-3. Failures: E a proof-text replacement escape was corrected before successful
-   compilation; E misplaced equation tags in the new conditional-loss display
-   caught by local LaTeX compilation and moved outside split; a new unsupported
-   math-font command was replaced by the existing font; E proof-helper scope/derivative, source-anchor/display-delimiter bugs and a corrected
-   covariance-variable name collision with the retired-architecture guard, and
-   unavailable local IEEEtran class (full rendering delegated to retained CI); D incomplete
-   sufficient cell, fixed-root ball and AW norm-product tactics; D the exact
-   coupled formal AW regression reader exceeds one even with D_AA,0=0 and
-   positive process. E optional symbolic dependencies were unavailable; the
-   existing exact Fraction algebra was used, and patch quoting and TeX line
-   breaks/tags and a product-spacing typo were corrected before validation. No instability
-   claim follows from any of these.
-4. Admitted counterexample: none; all-time admission/exclusion remains OPEN.
-5. Retained: 25 proved entries, qualified local theorem and exact compatibility
-   obstruction; qualified frontend and linked storage proofs extend entries without count promotion.
-6. Next: pay the explicit AW regression reader with actual transported
-   process/S/magnetic Fisher action on the justified causal image; retain the
-   even/source cross Schur cost, conditional score reader, suffixes and gauge.
-   The uniform transverse gap and planar admission remain separate obligations.
+1. Preserved: all 21 states, actual P/gain/Joseph/masks, OU/BG/BA and
+   AW--v--p--S, applied acc/S/magnetic rows, inherited causal auxiliary/source
+   history, staged-tuner/queued-target lag, reset/projection and endpoint gauge.
+2. Relaxations: regular real-operation derivative and qualified planar
+   covariance fibre; (CR9) explicitly releases shared tangent coordinates.
+   No source-origin graph, reachability, service coverage or storage is invented.
+3. Failures: D for (CR9)--(CR10)'s attempted Schur payment, not the actual
+   complete shipping gap. E for corrected path/patch/quoting/whitespace
+   tooling; prior classified failures remain in DEAD_ENDS. No check weakened.
+4. Genuine admitted shipping counterexample: none; no lossless impossibility
+   or actual shipping negative eigen-direction has been established.
+5. Retained: all 25 proved entries, locked-reference zero port/amplitude,
+   suffix/generated-score, complementary Schur, coupled process/source,
+   conditional AW/reader, frame, qualified magnetic, held and even-process
+   results under their original hypotheses. No theorem/count promotion.
+6. Next: pay the actual causal deficit reader with (CR5),(CR7),(CR8) and
+   transported integrated process/S/magnetic action on the inherited image,
+   then certify the full (CR3) cross Schur remainder. Endogenous auxiliary
+   columns cannot be relabeled external supply. General dissipativity and
+   special planar all-time admission remain separate.

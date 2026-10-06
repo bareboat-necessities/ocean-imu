@@ -21,6 +21,7 @@ from tools.stability.ou3_theorem.measurement_frame import (
     planar_pitch_prediction_calculus,
     scalar_aw_face_fisher_balance, covariance_word_signed_matrix,
     odd_covariance_gap_scope_check,
+    scalar_aw_innovation_reader,
 )
 from tools.stability.ou3_theorem.planar_innovation_storage import information_shear_correction
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import product
@@ -29,6 +30,56 @@ from tools.stability.ou3_theorem.world_frame import quaternion_rotation, skew
 
 
 class MeasurementFrameTests(unittest.TestCase):
+    def test_AW_marginal_innovation_reader_uses_same_directional_Fisher_loss(self):
+        P = [[F(2), F(1, 3)], [F(1, 3), F(1)]]
+        h, R, a = [[F(1), F(2, 3)]], F(4, 5), 1
+        s = product(h, P, transpose(h))[0][0]+R
+        b = product(P, transpose(h))[a][0]
+        K = add([[2*x for x in row] for row in inverse(P)],
+                [[x/s for x in row] for row in product(transpose(h), h)], -1)
+        reader = [[2*F(i == a)-b*h[0][i]/s for i in range(2)]]
+        v = product(inverse(K), transpose(reader))
+        hh = product(h, transpose(h))[0][0]
+        # Symmetric D h'=v attains the exact reader constant.
+        D = add([[x/hh for x in row] for row in add(product(v, h), product(transpose(h), transpose(v)))],
+                [[x*product(h, v)[0][0]/(hh*hh) for x in row]
+                 for row in product(transpose(h), h)], -1)
+        out = scalar_aw_innovation_reader(P, D, h, R, a)
+        self.assertEqual(out['AA_decrement_covariance_tangent']**2,
+                         out['sharp_charge_coefficient']*out['same_operation_Fisher_loss'])
+        self.assertEqual(out['sharp_charge_coefficient'],
+                         P[a][a]**2-(P[a][a]-out['AA_information_decrement'])**2)
+
+    def test_AW_information_reader_retains_row_noise_ports_and_zero_information(self):
+        P, D = [[F(2), F(1, 3)], [F(1, 3), F(1)]], identity(2)
+        out = scalar_aw_innovation_reader(P, D, [[F(1), F(1)]], F(1), 1,
+                                          [[F(1, 7), F(-1, 9)]], F(1, 11))
+        self.assertNotEqual(out['AA_decrement_coefficient_port'], 0)
+        self.assertEqual(out['AA_decrement_full_tangent'],
+                         out['AA_decrement_covariance_tangent']+out['AA_decrement_coefficient_port'])
+        self.assertFalse(out['coefficient_port_absorption_verified'])
+        zero = scalar_aw_innovation_reader(identity(2), D, [[F(1), F(0)]], F(1), 1)
+        self.assertEqual(zero['AA_information_decrement'], 0)
+        self.assertEqual(zero['AA_decrement_covariance_tangent'], 0)
+
+    def test_literal_AW_prediction_marginal_receipt_retains_target_lag(self):
+        # Exact identity operands for the literal AA row, not an admitted word.
+        p0, dp0, alpha, phi = F(3), F(0), F(7, 2), F(4, 5)
+        # Use the applied q_aa, including a possible polynomial/PSD-repair
+        # discrepancy; stationarity is not an identity of every source branch.
+        q_aa = (1-phi**2)*alpha+F(1, 1000)
+        I, dI, queued_target = F(1, 2), F(2, 7), F(3)
+        p_corrected, dp_corrected = p0-I, dp0-dI
+        p_predicted = phi**2*p_corrected+q_aa
+        dp_predicted = phi**2*dp_corrected
+        sched = queued_target-(phi**2*p0+q_aa)
+        self.assertEqual(queued_target-p_predicted, sched+phi**2*I)
+        self.assertEqual(dp_predicted, -phi**2*dI)
+        self.assertLess(sched, 0)
+        self.assertGreater(queued_target-p_predicted, 0)
+        # A queued target is not silently replaced by current process alpha.
+        self.assertNotEqual(queued_target, alpha)
+
     def test_actual_scalar_face_retains_signed_regression_work(self):
         # Identity operands, not a reached shipping covariance or target.
         P = [[F(1), F(1)], [F(1), F(2)]]
@@ -47,6 +98,17 @@ class MeasurementFrameTests(unittest.TestCase):
             covariance_word_signed_matrix(
                 [P, [[F(1), F(0)], [F(0), F(4)]]],
                 [[D], [out['D_next']]], [0], 1)
+
+    def test_face_completion_keeps_actual_target_tangent_in_the_same_gap(self):
+        P = [[F(2), F(1, 3)], [F(1, 3), F(1)]]
+        D = [[F(1), F(2, 7)], [F(2, 7), F(3, 5)]]
+        out = scalar_aw_face_fisher_balance(P, D, F(7, 5), 1, F(2, 9))
+        self.assertEqual(out['D_next'][1][1], F(2, 9))
+        self.assertEqual(out['AA_target_relative_tangent'], F(3, 5)-F(2, 9))
+        self.assertEqual(out['gap'],
+                         out['retained_coupled_square']-out['deficit_reader_charge'])
+        self.assertEqual(out['regression_reader'],
+                         (out['d_beta']-F(2, 9))/out['C_next'])
 
     def test_complete_signed_word_fails_automatic_face_absorption_on_fixed_AA_fibre(self):
         out = odd_covariance_gap_scope_check()

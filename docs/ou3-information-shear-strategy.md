@@ -183,10 +183,14 @@ J_perp,0=T_0ᵀ𝒥_0T_0−Γ_0. On the root subspace where BᵀJ_perp,0B is SPD
 \]
 
 The required c is one common constant for **every activated admitted word**,
-with inherited source, covariance, clock, reference and branch state. Unstored
-auxiliary directions with zero root storage must be retained as linked forcing
-or given their own justified storage; they cannot be hidden in B. This is a
-single linked domination obligation, not a product of independent suprema.
+with inherited source, covariance, clock, reference and branch state.
+Only genuine admissible exogenous physical/source columns may become supply.
+Inherited endogenous auxiliary directions must be folded into the actual
+correlated lift or retained as endogenous augmented root coordinates. If their
+root storage is zero, the terminal transverse map must annihilate that kernel;
+this is a necessary origin/coercivity check, not permission to reclassify them.
+This is a single linked domination obligation, not a product of independent
+suprema.
 It is equivalent to a positive homogeneous transverse word gap on that lift.
 It does not assert that a suitable B or c has been established for all histories.
 
@@ -200,6 +204,28 @@ No new physical assumption is adopted. This missing linked comparison, rather
 than a larger Cartesian reachable box, is the next mathematical target.
 
 ### Relative Schur form of the exact missing comparison
+
+Appendix app:correlated-complete-gap now writes LR8/LR9 as the exact
+matrix [[G,H],[H',-S]] on already justified endogenous/source coordinates,
+including endpoint gauge cross entries. This algebra does not prove the
+inherited causal graph or the admissible source-origin partition uniformly.
+Set true external forcing to zero while retaining the endogenous auxiliary
+lift. The first test is G >= c J_root, c>0, using the actual cross Schur
+remainder. The source square may be completed only after that test, reserving
+G-theta J_root for 0<theta<c; completing with G alone consumes the
+contraction margin.
+
+The current signed AW work is inserted using the actual AA receipt (CR5),
+including queued/process target lag and literal polynomial/PSD-repaired
+Q_aa. Its target-relative tangent is a causal sum of correction information
+readers on the qualified fixed-input covariance fibre. The sharp reader
+(dI_cov)^2 <= I_a*(2P_aa-I_a)*L_P uses the same operation's directional
+Fisher action. Exact face completion (CR8) retains this reader jointly with
+dC and dT. Freeing those correlated directions leads to the D-class Schur
+failure (CR10); tightening unrelated scalar bounds cannot repair it.
+Return to the actual S/magnetic regression equations (CR7), integrated
+process and full covariance prefixes. Their uniform coverage and the full
+cross margin are unproved; no OPEN dependency is discharged.
 
 The direct attack in Appendix `app:odd-covariance-signed-gap` now supplies
 the common-coordinate matrix (OF1) and the coupled process entry (OF1a).

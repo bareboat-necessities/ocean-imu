@@ -111,6 +111,39 @@ def precision_projector(J, basis):
     return product(basis, inverse(gram), transpose(basis), J)
 
 
+def correlated_root_source_balance(base_maps, metrics, prefix_maps, gauge_grams, endogenous_dimension):
+    """Polarize LR8/LR9 on an ALREADY justified causal (root,source) basis.
+
+    Inherited endogenous auxiliary columns belong to the first block. Only
+    actual admissible physical/source coordinates belong to the second block;
+    this helper neither establishes that partition nor invents Lambda. The
+    complete prefixes include every generated port and inherited correlation.
+    A degenerate root metric is returned intact, never regularized or pruned.
+    """
+    word = linked_action_balance(base_maps, metrics, prefix_maps)
+    r = len(word['gap'])
+    e = endogenous_dimension
+    if not 0 < e < r or len(gauge_grams) != len(metrics):
+        raise ValueError('paired gauge Grams and nonempty endogenous/source blocks required')
+    for T, J, gamma in zip(prefix_maps, metrics, gauge_grams):
+        if (len(gamma) != r or any(len(row) != r for row in gamma)
+                or not is_psd(gamma)
+                or not is_psd(add(product(transpose(T), J, T), gamma, -1))):
+            raise ValueError('gauge Gram must be a subenergy of this same complete prefix')
+    gap = add(add(word['gap'], gauge_grams[0], -1), gauge_grams[-1])
+    initial = add(word['initial'], gauge_grams[0], -1)
+    terminal = add(word['terminal'], gauge_grams[-1], -1)
+    assert gap == add(initial, terminal, -1)
+    G = [row[:e] for row in gap[:e]]
+    H = [row[e:] for row in gap[:e]]
+    S = [[-x for x in row[e:]] for row in gap[e:]]
+    return {**word, 'transverse_initial': initial, 'transverse_terminal': terminal,
+            'transverse_gap': gap, 'homogeneous_gap': G, 'root_source_cross': H,
+            'signed_source_block': S, 'root_metric': [row[:e] for row in initial[:e]],
+            'causal_origin_partition_proved_by_helper': False,
+            'uniform_homogeneous_margin': None}
+
+
 def projector_differential(J, basis, dJ, dbasis):
     """Exact dPi, retaining precision and physical-basis transport."""
     gram = product(transpose(basis), J, basis)
@@ -858,6 +891,21 @@ def certificate():
         'odd_covariance_non_AW_generated_self_ports_zero_scope': 'central planar regular A21 pure covariance partial derivative, fixed inherited delivered/private history; not arbitrary odd mean or source variations',
         'odd_covariance_actual_AW_regression_reader_retained': True,
         'uniform_odd_covariance_regression_reader_margin': None,
+        'correlated_complete_gap': {
+            'proof': 'app:correlated-complete-gap, CR1--CR3',
+            'matrix': 'Q_W=I_0-I_N=[[G,H],[H^T,-S]], I_i=T_i^T J_i T_i-Gamma_i',
+            'complete_prefix_and_gauge_cross_entries_retained': True,
+            'inherited_endogenous_auxiliary_externalized': False,
+            'causal_origin_partition_proved_by_algebra_helper': False,
+            'uniform_inherited_origin_graph_qualification': False,
+            'augmented_zero_root_storage_check': 'ker J_root must map to ker terminal transverse metric at d=0',
+            'homogeneous_test': 'G >= c J_root, c>0; actual conditional/complementary cross Schur retained',
+            'uniform_homogeneous_margin': None,
+            'source_supply_certified': False,
+            'source_completion_reserve': 'only after G>=c J_root, reserve G-theta J_root for 0<theta<c',
+            'new_storage_or_causal_coordinate_graph_constructed': False,
+            'full_word_OPEN_dependencies_discharged': [],
+        },
         'uniform_conditional_score_margin_verified': False,
         'uniform_generated_packet_absorption_verified': False,
         'bordered_comparison_storage_proof': 'app:bordered-comparison-storage',

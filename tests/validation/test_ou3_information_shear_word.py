@@ -12,6 +12,7 @@ from tools.stability.ou3_theorem.information_shear_word import (
     held_bias_boundary_score, bordered_comparison_storage, bordered_process, bordered_correction,
     bordered_restoration,
     paired_reference_tangent,
+    correlated_root_source_balance,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import add, identity, is_psd, ldlt, transpose
@@ -22,6 +23,32 @@ from tools.stability.ou3_theorem.planar_linked_riccati_mean import (
 
 
 class InformationShearWordTests(unittest.TestCase):
+    def test_complete_endogenous_source_blocks_keep_correlated_columns_and_gauge_cross(self):
+        # Polarization of supplied causal maps, not a shipping reachability test.
+        L = [[F(1, 2), F(0)], [F(0), F(3, 4)]]
+        T0 = [[F(1), F(0), F(0)], [F(0), F(1), F(0)]]
+        TN = [[F(1, 2), F(1, 5), F(2, 5)], [F(1, 10), F(3, 5), F(3, 10)]]
+        gamma = [product(transpose([T[1]]), [T[1]]) for T in (T0, TN)]
+        out = correlated_root_source_balance([L], [identity(2), identity(2)],
+                                             [T0, TN], gamma, 2)
+        self.assertEqual(out['homogeneous_gap'], [[F(3, 4), F(-1, 10)],
+                                                 [F(-1, 10), F(-1, 25)]])
+        self.assertEqual(out['root_source_cross'], [[F(-1, 5)], [F(-2, 25)]])
+        self.assertEqual(out['signed_source_block'], [[F(4, 25)]])
+        self.assertEqual(out['root_metric'], [[F(1), F(0)], [F(0), F(0)]])
+        self.assertIsNone(out['uniform_homogeneous_margin'])
+        self.assertFalse(out['causal_origin_partition_proved_by_helper'])
+
+    def test_augmented_endogenous_zero_storage_direction_is_not_externalized(self):
+        T0 = [[F(1), F(0), F(0)]]
+        TN = [[F(1, 2), F(1), F(1, 3)]]
+        out = correlated_root_source_balance([[[F(1, 2)]]], [[[F(1)]], [[F(1)]]],
+                                             [T0, TN], [zeros(3, 3)]*2, 2)
+        self.assertEqual(out['homogeneous_gap'][1][1], F(-1))
+        self.assertEqual(out['root_metric'][1][1], F(0))
+        # The semantic partition is an input obligation, not a free source label.
+        self.assertFalse(out['causal_origin_partition_proved_by_helper'])
+
     def test_coupled_source_score_can_cancel_nonzero_comparison_loss_before_any_cap(self):
         # Exact formal identity, no asserted shipping source relation.
         P, B, Q = identity(2), identity(2), identity(2)
