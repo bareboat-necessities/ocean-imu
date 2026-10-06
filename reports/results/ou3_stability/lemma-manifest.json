@@ -464,7 +464,9 @@
         "reports/results/ou3_stability/information-shear-word-certificate.json",
         "reports/results/ou3_stability/measurement-frame-loss-certificate.json"
       ],
-      "open_dependencies": []
+      "open_dependencies": [
+        "app:process-source-score proves the supported combined physical process score identity and inherited directional word budget, plus a causal dF/dQ/ds augmented process balance and linked Fisher feedback-square bound. Unsupported source scores and the signed auxiliary/feedback cross work remain explicit; uniform budget and complete-gap absorption remain OPEN."
+      ]
     },
     {
       "id": "planar_guard_inactivity",

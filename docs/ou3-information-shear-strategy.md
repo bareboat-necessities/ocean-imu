@@ -346,3 +346,13 @@ the isotropic cancellation. Prove the actual directional score and remaining
 signed generated-work margins; do not count base propagation or AW frame
 work again. The [precise balance and dependency table](ou3-linked-word-score.md#complementary-base-packets-are-already-paid-for)
 are controlling. Uniform coercivity, activation, and the radius remain open.
+
+
+Use `app:process-source-score` to combine the supported physical process
+score with its actual process loss before bounding it. Its inherited budget
+retains process action, correction defects minus NIS, and signed uncovered
+changes. Unsupported scores are never dropped. Use the exact augmented
+process balance for dF/dQ/ds through the causal auxiliary lift; keep its
+signed auxiliary, Fisher and feedback terms together. The feedback-square
+bound does not also pay its cross term. Both identities hold in consistent
+AW coordinates and do not establish a uniform complete-word gap by themselves.

@@ -486,3 +486,118 @@ Structures preserved: actual full-state base P/gain/Joseph/reset/AW chronology,
 full Fisher metric, all generated suffix ports and consistent frame/gauge.
 Relaxations: explicit formal matrix scope checks only; no shipping equation
 or physical assumption changed. No admitted counterexample was found.
+
+## Combined physical process score and causal generated work
+
+**PROVED — analytical**, `app:process-source-score`. For each literal regular
+prediction/addition with `C=F P F'+Q`, `e+=F e+s`, define
+
+```
+L = J-F' J+ F
+score = J e-F' J+ e+.
+```
+
+When `Q t=s` is solvable, the explicit vector `z=e-P F' t` satisfies
+
+`L z=score`, and `score' z=V-V+ + s' t >= 0`.
+
+This controls the **combined** process/model-mismatch score. It improves the
+older budget for only `L e`, followed by a separate source score. No OU law
+is imposed on physical truth. An unsupported defect is rejected by the range
+check and remains explicit, notably physical held-BA evolution or a chart
+shift with zero process noise. No pseudoinverse removes it.
+
+Across the actual covered word, with all unsupported local scores retained
+as `q_u`, the exact inherited budget is
+
+```
+q = q_c+q_u
+q_c q_c' <= B_W G
+B_W = V_0-V_N + sum s' Q^dagger s
+      +sum (delta' R^-1 delta-NIS) +sum_uncovered (V_next-V).
+```
+
+Every signed term belongs to the same history. Physical S contributes
+`delta=-S_physical`; the estimator pseudo-update does not reset it. Compressing
+this matrix bound to AW gives `q_c,a q_c,a' <= B_W A`. The actual directional
+reader still uses `q_c,a+q_u,a`, including both signed cross terms. This does
+not justify the failed isotropic-loss substitution or prove a common lambda.
+
+### The derivative ports share one process Fisher loss
+
+For SPD Q, put `F_1=dF`, `Q_1=dQ`, `s_1=ds` and form
+
+```
+Sigma = diag(P,Q)             T = [F,I]
+X = [[dP,P F_1'],[F_1 P,Q_1]]
+nu = s_1-Q_1 Q^-1 s
+zeta = (eta-P F_1' Q^-1 s, nu)
+Lambda = Sigma^-1-T' C^-1 T
+f = T X Lambda (e,s).
+```
+
+Exact multiplication reproduces **all** terms of the actual prediction
+`dP+=F dP F'+dF P F'+F P dF'+dQ` and
+`de+=F de+dF e+ds`. In particular, `eta+=T zeta+f`.
+The algebraic augmentation is not a new stochastic input or surrogate filter.
+With `chi=V+s'Q^-1s-V+` and the same augmented Fisher loss `ell_P`,
+
+`|f|_(C^-1)^2 <= (chi/2) ell_P`.
+
+The exact signed joint balance is
+
+```
+W+-W = A_aux-ell_mean-lambda ell_P
+       +2 <T zeta,f>_(C^-1)+|f|_(C^-1)^2,
+
+A_aux = -2 eta' F_1' Q^-1 s
+        +s' Q^-1 F_1 P F_1' Q^-1 s +nu' Q^-1 nu
+        +2 lambda tr(Q^-1 F_1 P F_1')
+        +lambda tr(Q^-1 Q_1 Q^-1 Q_1).
+```
+
+Thus the feedback square consumes `chi/2` of that same Fisher loss. The signed
+cross term is **not** absorbed by this statement. Keep `A_aux`, the augmented
+loss and this cross term grouped: separate maxima can destroy coordinate
+cancellations. This is alternative accounting of the actual process step,
+not another decrement to add to the old base loss.
+
+### Causal coordinates and remaining threshold
+
+All derivatives are formed through the literal auxiliary/source recurrence.
+The private default tuner has its proved zero reverse MEKF edge; reference
+and gate feedback do not inherit that deletion. Actual BG enters the AG
+transition/noise; the same committed tuple enters both LIN transition/noise;
+BA release/hold changes its actual process support. BG projection, pending AW
+sync, scheduler and corrections retain their source order and separate maps.
+Branch crossings require qualified finite-increment treatment.
+
+For endpoint AW frames, transform the entire tuple:
+
+```
+dF_tilde = L+ (dF+Omega+ F-F Omega) L^-1
+dQ_tilde = L+ (dQ+Omega+ Q+Q Omega+') L+'
+ds_tilde = L+ (ds+Omega+ s).
+```
+
+The combined score budget is frame invariant. The full differential balance
+retains the frame connections in its actual inputs; no second frame penalty
+is added. Only the quotient gauge adjustment remains separate. All internally
+generated covariance suffix scores survive downstream composition.
+
+**Discharged:** separate loss/source-score pricing for supported process
+forcing; independent pricing of the process covariance-induced square from
+`dP,dF,dQ`; missing explicit causal process work in this accounting.
+
+**Still OPEN:** a uniform bound on the inherited budget and uncovered scores;
+affordable domination of the grouped signed auxiliary/cross work and the
+remaining correction/reset/AW/gauge work by the exact Schur loss; activation
+and finite-error/arithmetic transfer. No positive complete gap or radius is
+claimed. The general theorem still assumes actual magnetic service; planar
+all-time admission is separate.
+
+Structures preserved: all literal states and process coefficients, physical
+OU mismatch, causal auxiliary/source derivatives, supported/unsupported
+forcing and endpoint frames. Relaxations: regular real-operation derivatives,
+with SPD Q required only for the augmented identity. No new assumption on
+physical histories, numerical exploration, or admitted counterexample.

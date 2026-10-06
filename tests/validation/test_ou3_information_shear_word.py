@@ -8,6 +8,7 @@ from tools.stability.ou3_theorem.information_shear_word import (
     joint_metric, linked_action_balance, mean_shift_shear, precision_projector,
     projector_differential, score_loss_charge, word_score_normal_form, zeros,
     conditional_mixed_coefficients, conditional_word_mixed_bound,
+    process_source_score, source_qualified_word_score, process_augmented_shear,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import add, identity, is_psd, ldlt, transpose
@@ -361,6 +362,83 @@ class InformationShearWordTests(unittest.TestCase):
         ldlt(schur)
         self.assertEqual(A[0][0], F(159, 400))
         self.assertEqual(schur[0][0], F(3627, 21200))
+
+    def test_combined_process_score_preserves_supported_physical_defect(self):
+        P = [[F(2), F(1, 3)], [F(1, 3), F(1)]]
+        B = [[F(1), F(1, 5)], [0, F(4, 5)]]
+        Q = [[F(1, 2), 0], [0, 0]]
+        e, s = [[F(1, 7)], [F(-1, 11)]], [[F(2, 9)], [0]]
+        out = process_source_score(P, B, Q, e, s)
+        self.assertEqual(out['physical_process_action'], F(8, 81))
+        self.assertEqual(product(out['mean_loss'], out['range_witness']), out['combined_score'])
+        loss_only = product(out['mean_loss'], e)
+        self.assertNotEqual(out['combined_score'], loss_only)
+        with self.assertRaisesRegex(ValueError, 'outside process-noise range'):
+            process_source_score(P, B, Q, e, [[0], [F(1, 19)]])
+
+    def test_combined_word_score_keeps_uncovered_chart_and_S_defect(self):
+        # Exact formal prediction/S-correction/chart/AW word. Physical S is
+        # nonzero: delta=r+H e is retained, never reset by the pseudo-update.
+        P, B, Q = [[F(2)]], [[F(4, 5)]], [[F(1, 3)]]
+        e, s = [[F(1, 4)]], [[F(-1, 7)]]
+        proc = process_source_score(P, B, Q, e, s)
+        C, ep = proc['covariance_next'], proc['comparison_next']
+        H, R, r = [[F(1)]], [[F(2)]], [[F(-1, 5)]]
+        K = product(C, transpose(H), inverse(add(product(H, C, transpose(H)), R)))
+        A = add(identity(1), product(K, H), -1)
+        PC = product(A, C)
+        ec = add(ep, product(K, r))
+        shifted = add(ec, [[F(1, 13)]])
+        PN = add(PC, [[F(1, 17)]])
+        maps, covs = [B, A, identity(1), identity(1)], [P, C, PC, PC, PN]
+        errors = [e, ep, ec, shifted, shifted]
+        out = source_qualified_word_score(maps, covs, errors, {1: (H, R, r)}, [0, 3])
+        self.assertNotEqual(out['uncovered_score'], zeros(1, 1))
+        self.assertEqual(out['physical_process_action'], F(3, 49))
+        self.assertEqual(out['correction_defect_action'], product(transpose(add(r, ep)), inverse(R), add(r, ep))[0][0])
+        self.assertGreaterEqual(out['linked_budget'], out['covered_score_charge'])
+        direct = word_score_normal_form(maps, covs, errors,
+            [zeros(1, 1), product(transpose(H), inverse(add(C, R)), r), zeros(1, 1), zeros(1, 1)],
+            [zeros(1, 1)]*4, [zeros(1, 1)]*4, zeros(1, 1), zeros(1, 1))
+        self.assertEqual(out['actual_total_score'], direct['suffix_scores'][0])
+
+    def test_augmented_prediction_retains_all_causal_derivative_ports(self):
+        # Exact noncommuting derivative identity, not a sampled coefficient box.
+        P = [[F(2), F(1, 5)], [F(1, 5), F(1)]]
+        B = [[F(1), F(1, 4)], [0, F(4, 5)]]
+        Q = [[F(1, 2), F(1, 9)], [F(1, 9), F(1, 3)]]
+        e, s = [[F(2, 7)], [F(-1, 11)]], [[F(1, 13)], [F(1, 17)]]
+        D = [[F(1, 19), F(1, 23)], [F(1, 23), F(-1, 29)]]
+        de, ds = [[F(1, 31)], [F(1, 37)]], [[F(-1, 41)], [F(1, 43)]]
+        dB = [[0, F(1, 47)], [0, F(1, 53)]]
+        dQ = [[F(1, 59), F(-1, 61)], [F(-1, 61), F(1, 67)]]
+        out = process_augmented_shear(P, B, Q, e, s, D, de, dB, dQ, ds, F(2))
+        self.assertLessEqual(out['feedback_square'], out['feedback_square_upper'])
+        self.assertEqual(out['actual_storage_change'], out['signed_auxiliary_work']-
+                         out['hidden_mean_loss']-2*out['augmented_Fisher_loss']+
+                         out['signed_feedback_cross']+out['feedback_square'])
+        self.assertNotEqual(out['signed_feedback_cross'], 0)
+        no_aux = process_augmented_shear(P, B, Q, e, s, D, de,
+                                         zeros(2, 2), zeros(2, 2), zeros(2, 1), F(2))
+        self.assertEqual(no_aux['signed_auxiliary_work'], 0)
+        self.assertNotEqual(out['shear_next'], no_aux['shear_next'])
+        self.assertFalse(out['uniform_absorption_verified'])
+
+
+
+    def test_supported_process_score_is_invariant_in_endpoint_frames(self):
+        P = [[F(2), F(1, 3)], [F(1, 3), F(1)]]
+        B = [[F(1), F(1, 5)], [0, F(4, 5)]]
+        Q = [[F(1, 2), 0], [0, 0]]
+        e, s = [[F(1, 7)], [F(-1, 11)]], [[F(2, 9)], [0]]
+        root, end = [[1, 0], [F(1, 13), 1]], [[1, 0], [F(-1, 17), 1]]
+        out = process_source_score(P, B, Q, e, s)
+        moved = process_source_score(product(root, P, transpose(root)),
+            product(end, B, inverse(root)), product(end, Q, transpose(end)),
+            product(root, e), product(end, s))
+        self.assertEqual(moved['combined_score'], product(transpose(inverse(root)), out['combined_score']))
+        self.assertEqual(moved['combined_score_charge'], out['combined_score_charge'])
+        self.assertEqual(moved['physical_process_action'], out['physical_process_action'])
 
 
 if __name__ == '__main__':

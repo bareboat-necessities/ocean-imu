@@ -3284,6 +3284,250 @@ formal tests of sufficient matrix implications, not models of the filter;
 physical assumptions. No shipping counterexample is found. The uniform
 score and complete signed-work gap are \textbf{OPEN}.
 
+\subsection{Combined physical process score and causal generated-port loss}
+\label{app:process-source-score}
+
+\paragraph{Quantifiers and role.}
+For every finite regular real-operation word on one inherited shipping
+history, the identities below control the process score \emph{including}
+its physical model defect. They then place $dF,dQ,ds$ inside a single
+joint process balance, rather than independently estimating a gain,
+residual and covariance. Boundary covariances are SPD. The score identity
+allows PSD process covariance when the stated range condition holds;
+the augmented differential identity below requires SPD process covariance.
+Neither identity proves a uniform numerical budget or a complete positive
+gap. They serve the remaining signed-work comparison with (CP5), without
+reintroducing the failed half-charge test or an isotropic loss assumption.
+
+\paragraph{The process score includes the physical defect.}
+For actual operands write
+\[
+ C=FPF^T+Q\succ0,\quad e^+=Fe+s,\quad J=P^{-1},\quad J^+=C^{-1},
+ \quad L=J-F^TJ^+F\succeq0,\quad a=Je-F^TJ^+e^+.
+\]
+Here $s$ is the \emph{actual} physical/model/chart comparison defect;
+it is not zero merely because the estimator predicts with an OU model.
+Assume $Q\succeq0$ and exhibit $t$ with $Qt=s$. Then
+\[
+ z=e-PF^Tt,\qquad Lz=a,\qquad
+ \boxed{a^Tz=V-V^++s^Tt\ge0.}                              \tag{PS1}
+\]
+Proof: $LPF^T=F^TJ^+Q$, so $Lz=Le-F^TJ^+s=a$.
+Expand $a^Tz$, using $FPF^T=C-Q$, to obtain
+$e^TLe-2e^TF^TJ^+s+s^Tt-s^TJ^+s=V-V^++s^Tt$.
+Since $L\succeq0$, $a^Tz=z^TLz\ge0$.
+Thus $a\in\operatorname{range}(L)$ and
+$a^TL^\dagger a=V-V^++s^TQ^\dagger s$, where both generalized-inverse
+notations denote the already-verified range solutions, never kernel deletion.
+The result is independent of the chosen solutions. No invertibility of $F$
+is needed. Unsupported held-BA physical forcing, zero-noise chart shifts,
+and projection defects do not satisfy this premise and remain explicit.
+
+The positive $s^TQ^\dagger s$ is a physical comparison action, not an
+assumption that physical truth is drawn from the estimator's process noise.
+The existing source-qualified LIN action bounds use the actual committed
+$\tau_k,\Sigma_{aw,k}$ and the identity
+$u(t)=\dot a(t)+a(t)/\tau_k$, with the retained literal transition/noise
+polynomial defects. They can be applied to this same action on their stated
+domain. Their scalar amplitude relaxation is not asserted affordable for
+the new complete-word margin.
+
+\paragraph{A directional word bound without splitting loss and source scores.}
+Let $\mathcal C$ be the covered process/PSD-addition operations, and let
+$M_{i,0}$ be the actual base prefixes. Define
+\[
+ q_c=\sum_{i\in\mathcal C}M_{i,0}^Ta_i,\quad
+ G=J_0-M_{N,0}^TJ_NM_{N,0},\quad
+ B_W=\sum_{i\in\mathcal C}a_i^TL_i^\dagger a_i.
+\]
+Actual optimal additive corrections have zero local suffix score, as proved
+in the preceding appendix. Collect all uncovered local scores, including
+chart/held/projection terms, in $q_u$; the total score is $q=q_c+q_u$.
+Then
+\[
+ \boxed{q_cq_c^T\preceq B_W G,\qquad
+ q_c\in\operatorname{range}(G),\qquad
+ q_c^TG^\dagger q_c\le B_W.}                                \tag{PS2}
+\]
+For a proof, set $X_i=L_i^{1/2}M_{i,0}$ and
+$h_i=L_i^{1/2}z_i$, where $L_iz_i=a_i$ from (PS1).
+After stacking, $q_c=X^Th$, $|h|^2=B_W$, and
+$X^TX\preceq G$ by exact telescoping of all base losses. Cauchy--Schwarz
+in \emph{each retained direction} proves (PS2). This controls the combined
+physical score, rather than only the old loss-generated part.
+
+Let $\mathcal M$ be the optimal additive substeps and $\mathcal U$ the
+uncovered operations. The budget also telescopes exactly:
+\[
+\begin{split}
+ B_W={}&V_0-V_N+\sum_{i\in\mathcal C}s_i^TQ_i^\dagger s_i\\
+ &+\sum_{i\in\mathcal M}
+   (\delta_i^TR_i^{-1}\delta_i-\mathrm{NIS}_i)
+   +\sum_{i\in\mathcal U}(V_{i+1}-V_i),\qquad
+ \delta_i=r_i+H_ie_i.
+\end{split}                                                   \tag{PS3}
+\]
+This follows by summing (PS1) and the existing correction comparison identity.
+The last sum is signed. It is not dropped, estimated by unrelated coordinate
+maxima, or silently set to zero. In particular, the $S=0$ physical defect is
+$-S_{physical}$. Initialization and every physical/source primitive are
+inherited. The first-Live bound cannot be reapplied at a later word root.
+
+For the conditional AW selector $E$, (PS2) yields
+$(E^Tq_c)(E^Tq_c)^T\preceq B_W A$. The \emph{actual} directional reader in
+(CM4) must still use $q_a=E^Tq_c+E^Tq_u$. Because $E_q$ is linear in $q$,
+its reader includes both signed bilinear terms
+\[
+ E_{q_c}G_F^{-1}E_{q_u}^T+E_{q_u}G_F^{-1}E_{q_c}^T
+\]
+(with the conditional projections understood), as well as both squares.
+No pseudoinverse or independent score cap removes these terms. In particular,
+(PS2) is not itself the anisotropic strict margin (CM4).
+
+\paragraph{One factorization of all literal generated process ports.}
+Now assume $Q\succ0$ on the covered substep, and write
+$D=dP$, $F_1=dF$, $Q_1=dQ$, $s_1=ds$. The actual derivative is
+\[
+ D^+=FDF^T+F_1PF^T+FPF_1^T+Q_1,\qquad
+ de^+=Fde+F_1e+s_1.                                         \tag{PS4}
+\]
+These derivatives are generated by the same full history, not independent
+perturbations. Introduce only an \emph{algebraic} augmented covariance and
+linear channel:
+\[
+ \Sigma=\begin{pmatrix}P&0\\0&Q\end{pmatrix},\quad
+ X=\begin{pmatrix}D&PF_1^T\\F_1P&Q_1\end{pmatrix},\quad
+ T=[F\ I],\quad z=\binom e s,
+\]
+\[
+ \nu=s_1-Q_1Q^{-1}s,\qquad
+ \zeta=\binom{\eta-PF_1^TQ^{-1}s}{\nu},\qquad
+ \Lambda=\Sigma^{-1}-T^TC^{-1}T\succeq0.
+\]
+Direct multiplication gives the complete identities
+\[
+ D^+=TXT^T,\qquad \eta^+=T\zeta+f,\qquad f=TX\Lambda z.     \tag{PS5}
+\]
+For verification, the augmented mean derivative is
+$(de,s_1+F_1e)$ and its information shear is precisely $\zeta$;
+applying $T$ then yields (PS4)--(PS5). This factorization does not introduce
+an independent random input, change the estimator, or omit $dF$.
+
+Let
+\[
+ \ell_m=\zeta^T\Lambda\zeta,\qquad
+ \ell_P=\operatorname{tr}(\Sigma^{-1}X\Sigma^{-1}X)
+      -\operatorname{tr}(C^{-1}TXT^TC^{-1}TXT^T),
+\]
+\[
+ \chi=z^T\Lambda z=V+s^TQ^{-1}s-V^+.
+\]
+All three are nonnegative. Moreover,
+\[
+ \boxed{\|f\|_{C^{-1}}^2\le\frac{\chi}{2}\ell_P.}          \tag{PS6}
+\]
+To prove this without independent norms, whiten the channel to
+$U=C^{-1/2}T\Sigma^{1/2}$. Since $UU^T=I$, $\Pi=I-U^TU$ is an orthogonal
+projector. With $Z=\Sigma^{-1/2}X\Sigma^{-1/2}$ and
+$h=\Pi\Sigma^{-1/2}z$, one has $|h|^2=\chi$ and
+\[
+ \ell_P=2\|UZ\Pi\|_F^2+\|\Pi Z\Pi\|_F^2,\qquad
+ \|f\|_{C^{-1}}^2=|UZh|^2.
+\]
+These two formulas prove (PS6), keeping $D,F_1,Q_1$ together inside the
+same lost covariance directions.
+
+\paragraph{Signed causal work, not a new independent disturbance.}
+Expansion of the augmented input storage gives $W+\mathcal A_{aux}$, where
+\[
+\begin{split}
+ \mathcal A_{aux}={}&-2\eta^TF_1^TQ^{-1}s
+ +s^TQ^{-1}F_1PF_1^TQ^{-1}s+\nu^TQ^{-1}\nu\\
+ &+2\lambda\operatorname{tr}(Q^{-1}F_1PF_1^T)
+ +\lambda\operatorname{tr}(Q^{-1}Q_1Q^{-1}Q_1).
+\end{split}                                                   \tag{PS7}
+\]
+Consequently the literal process joint storage obeys
+\[
+ \boxed{W^+-W=\mathcal A_{aux}-\ell_m-\lambda\ell_P
+       +2\langle T\zeta,f\rangle_{C^{-1}}+\|f\|_{C^{-1}}^2.} \tag{PS8}
+\]
+In particular,
+\[
+ W^+-W\le\mathcal A_{aux}-\ell_m
+       -(\lambda-\chi/2)\ell_P
+       +2\langle T\zeta,f\rangle_{C^{-1}}.                  \tag{PS9}
+\]
+The signed cross term is still present in (PS9); it has \emph{not} been
+absorbed for free. Any further Young inequality consumes additional loss.
+Likewise the positive terms in (PS7) must not be maximized separately from
+$\ell_P$ or the cross term: they can contain cancelling coordinate work.
+Equations (PS7)--(PS8) are the consistent grouping for that comparison.
+This is an alternative exact accounting of the same process substep, not
+an additional decrement to add to its earlier base loss.
+
+\paragraph{Consistent state-dependent AW coordinates.}
+For the retained endpoint frames $\mathsf L,\mathsf L^+$, use
+$\widetilde F=\mathsf L^+F\mathsf L^{-1}$,
+$\widetilde Q=\mathsf L^+Q(\mathsf L^+)^T$ and
+$\widetilde s=\mathsf L^+s$. Then (PS1)--(PS3) are coordinate invariant:
+$\widetilde a=\mathsf L^{-T}a$, the action transforms by congruence,
+and $\chi,s^TQ^\dagger s$ are unchanged (the supported-action interpretation
+is essential for singular Q). With $\Omega=\mathsf L^{-1}d\mathsf L$, retain
+\[
+\begin{split}
+ d\widetilde F&=\mathsf L^+(dF+\Omega^+F-F\Omega)\mathsf L^{-1},\\
+ d\widetilde Q&=\mathsf L^+(dQ+\Omega^+Q+Q(\Omega^+)^T)(\mathsf L^+)^T,\\
+ d\widetilde s&=\mathsf L^+(ds+\Omega^+s).
+\end{split}                                                   \tag{PS11}
+\]
+Substitute these \emph{together} with the full transformed input derivatives
+in (PS8). All endpoint connection work is then already in the storage and
+signed auxiliary terms. Add only the retained quotient gauge adjustment;
+there is no second independent frame penalty. On a regular operation its
+terminal frame is causally available from that operation, not a replayed
+future coefficient.
+
+\paragraph{Causal auxiliary and source lift.}
+Let $\kappa_i$ contain the actual private frontend/tuner, reference, gate,
+clock and pending-target variables. On a fixed regular event stratum their
+literal update $\kappa_{i+1}=g_i(x_i,P_i,\kappa_i,u_i)$ gives
+\[
+ d\kappa_{i+1}=D_xg_i\,dx_i+D_Pg_i\,D_i
+                    +D_\kappa g_i\,d\kappa_i+D_ug_i\,du_i. \tag{PS10}
+\]
+Initial auxiliary/source variations and FAST primitive endpoints are carried,
+not reset. The proved one-way default Complementary tuner permits deleting
+$D_xg_i,D_Pg_i$ only for that private tuner/clock/target subpath; it does not
+delete reference/gate feedback. In (PS4), use derivatives of the literal
+coefficient maps composed with (PS10). In particular, shipping
+\texttt{time\_update} uses $\omega=gyr-\widehat b_g$ in its actual AG
+transition/noise branches, the same committed $(\tau,\Sigma_{aw},h)$ in
+both integrated LIN maps, and the actual active/held BA transition and noise.
+BG projection precedes these maps; pending AW covariance addition and the
+progress-preserving $S$ event follow them. They stay separate in this word.
+No ideal Rodrigues or ideal OU coefficients replace the literal polynomial
+branches. The derivative $s_1$ retains physical comparison/model and chart
+terms and the same source variation. At a branch crossing use a qualified
+finite increment, not (PS10) without a proved branch margin.
+
+Substitution of this one causal lift into (PS8), together with the retained
+correction/reset/AW/quotient identities, bounds the \emph{same} generated
+remainder in (CP7). All covariance ports created now still enter later
+$U_iq_{i+1,N}$ terms. The required uniform estimates are now on the combined
+budget (PS3) and signed grouped work (PS8), not independently on $dK,r,P$,
+loss/source scores, or auxiliary coordinates. Their source-uniform upper
+bounds and comparison with the strictly transverse part of (CP5) remain
+\textbf{OPEN}. No positive $c_{complete}$ or invariant radius is asserted.
+
+Structures preserved: literal prediction and physical mismatch, all 21
+coordinates, actual noise/transition branches, causal auxiliary/source
+variations, held support and full generated covariance suffixes. Relaxations:
+regular real-operation derivatives; supported-noise restriction explicitly
+checked, with unsupported directions retained separately. The augmented
+factorization is exact algebra, not a surrogate history. No new shipping
+counterexample or numerical exploration is introduced.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

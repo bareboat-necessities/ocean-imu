@@ -447,6 +447,12 @@ def status_report() -> dict:
             "complementary_base_packet_Schur_absorption_verified":True,
             "fixed_half_charge_domination_is_necessary":False,
             "isotropic_score_cancellation_extends_to_anisotropic_loss":False,
+            "supported_process_source_score_identity_verified":True,
+            "combined_process_word_directional_budget_verified":True,
+            "causal_generated_process_augmented_balance_verified":True,
+            "generated_process_square_Fisher_charge_verified":True,
+            "generated_process_cross_absorbed":False,
+            "uniform_combined_process_source_budget":None,
             "uniform_conditional_score_margin_verified":False,
             "uniform_generated_packet_absorption_verified":False,
             "central_planar_acc_physical_curvature_charge_verified":True,
@@ -483,7 +489,7 @@ def status_report() -> dict:
             "The existing LIN path gives conditional AW precision below 15942618 on its qualified regular A21 domain. "
             "The actual conditional root score block now has an explicit three-row Schur reader in C,T,q, and exact completion bounds generated mixed work by one linked packet while retaining half the net conditional root form. "
             "The state-dependent AW frame preserves the conditional storage and score reader; endpoint frame work stays in transformed complementary packets without double counting. "
-            "Use the exact complementary base Schur absorption; the fixed half-charge domination is sufficient, not necessary, and fails a strictly contractive formal base specialization. Prove the actual directional score margin and remaining signed combined work bound, retaining integrated-chain/AG work, generated covariance suffix scores and endpoint gauge. "
+            "Use the exact complementary base Schur absorption; the fixed half-charge domination is sufficient, not necessary, and fails a strictly contractive formal base specialization. Use the combined supported process/source score budget and causal augmented process balance, retaining unsupported scores and the unabsorbed feedback cross term. Prove a uniform directional score margin and domination of the remaining grouped signed work, retaining generated covariance suffix scores and endpoint gauge. "
             "These net comparisons, not conditional precision finiteness, remain unproved; no uniform complete margin is certified. "
             "Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes "
             "to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. "

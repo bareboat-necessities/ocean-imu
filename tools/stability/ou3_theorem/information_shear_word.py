@@ -331,6 +331,164 @@ def comparison_word_budget(base_maps, covariances, comparisons, corrections):
             'root_plus_supply_budget': initial+supply-nis}
 
 
+def process_source_score(P, B, Q, e, s):
+    """Combined process/source score on the ACTUAL PSD-noise support.
+
+    No OU prior is imposed on physical truth. Q t=s is checked exactly;
+    unsupported held/chart forcing must be retained outside this identity.
+    All values are real-operation operands from one causal history.
+    """
+    ldlt(P)
+    if Q != transpose(Q) or not is_psd(Q):
+        raise ValueError('actual PSD process covariance required')
+    try:
+        t = _range_solution(Q, s)
+    except ValueError as exc:
+        raise ValueError('physical defect outside process-noise range; retain explicit unsupported forcing') from exc
+    C = add(product(B, P, transpose(B)), Q)
+    ldlt(C)
+    J, Jnext = inverse(P), inverse(C)
+    ep = add(product(B, e), s)
+    G = add(J, product(transpose(B), Jnext, B), -1)
+    score = add(product(J, e), product(transpose(B), Jnext, ep), -1)
+    witness = add(e, product(P, transpose(B), t), -1)
+    source_action = product(transpose(s), t)[0][0]
+    charge = product(transpose(score), witness)[0][0]
+    change_budget = (product(transpose(e), J, e)[0][0]+source_action
+                     - product(transpose(ep), Jnext, ep)[0][0])
+    if not is_psd(G) or product(G, witness) != score or charge != change_budget or charge < 0:
+        raise ArithmeticError('combined process/source score identity failed')
+    return {'covariance_next': C, 'comparison_next': ep, 'mean_loss': G,
+            'combined_score': score, 'range_witness': witness,
+            'physical_process_action': source_action, 'combined_score_charge': charge}
+
+
+def source_qualified_word_score(base_maps, covariances, comparisons, corrections,
+                                covered_process_indices):
+    """Linked total process score budget; uncovered scores are NEVER dropped.
+
+    covered_process_indices selects actual prediction/PSD-addition substeps.
+    Corrections use the reached optimal additive branch; chart shifts and
+    unsupported held forcing are separate, retained operations. The inherited
+    source budget is an identity, not a uniform numerical cap.
+    """
+    old = comparison_word_budget(base_maps, covariances, comparisons, corrections)
+    N, n = len(base_maps), len(covariances[0])
+    covered = set(covered_process_indices)
+    if covered.intersection(corrections) or any(i not in range(N) for i in covered):
+        raise ValueError('disjoint valid process and correction indices required')
+    prefix, score, uncovered_score = identity(n), zeros(n, 1), zeros(n, 1)
+    budget = source_action = uncovered_change = F(0)
+    local_charges = []
+    for i, B in enumerate(base_maps):
+        P, C, e, ep = covariances[i], covariances[i+1], comparisons[i], comparisons[i+1]
+        J, Jnext = inverse(P), inverse(C)
+        if i in covered:
+            Q = add(C, product(B, P, transpose(B)), -1)
+            s = add(ep, product(B, e), -1)
+            local = process_source_score(P, B, Q, e, s)
+            score = add(score, product(transpose(prefix), local['combined_score']))
+            budget += local['combined_score_charge']
+            source_action += local['physical_process_action']
+            local_charges.append(local['combined_score_charge'])
+        elif i not in corrections:
+            a = add(product(J, e), product(transpose(B), Jnext, ep), -1)
+            uncovered_score = add(uncovered_score, product(transpose(prefix), a))
+            uncovered_change += (product(transpose(ep), Jnext, ep)[0][0]
+                                  - product(transpose(e), J, e)[0][0])
+        prefix = product(B, prefix)
+    G = add(inverse(covariances[0]), product(transpose(prefix), inverse(covariances[-1]), prefix), -1)
+    witness = _range_solution(G, score)
+    charge = product(transpose(score), witness)[0][0]
+    # Only correction defect action; old signed_supply also includes process
+    # cross work, which is already included in the new combined local charges.
+    correction_action = F(0)
+    for i, (H, R, r) in corrections.items():
+        delta = add(r, product(H, comparisons[i]))
+        correction_action += product(transpose(delta), inverse(R), delta)[0][0]
+    telescope = (old['initial_energy']-old['terminal_energy']+source_action+
+                 correction_action-old['innovation_dissipation']+uncovered_change)
+    if budget != telescope or not 0 <= charge <= budget:
+        raise ArithmeticError('source-qualified word score budget failed')
+    if not is_psd(add([[budget*x for x in row] for row in G], product(score, transpose(score)), -1)):
+        raise ArithmeticError('directional score Gram bound failed')
+    total = add(score, uncovered_score)
+    if total != add(old['loss_generated_score'], old['source_chart_score']):
+        raise ArithmeticError('uncovered score was lost')
+    return {'covered_score': score, 'uncovered_score': uncovered_score,
+            'actual_total_score': total, 'mean_action': G,
+            'covered_score_charge': charge, 'local_score_charges': local_charges,
+            'linked_budget': budget, 'physical_process_action': source_action,
+            'correction_defect_action': correction_action,
+            'uncovered_signed_energy_change': uncovered_change,
+            'uniform_budget_verified': False}
+
+
+def process_augmented_shear(P, B, Q, e, s, D, de, dB, dQ, ds, weight):
+    """Exact same-operation generated process-port balance, including dB/dQ/ds.
+
+    An algebraic augmentation factors the literal derivative; it is NOT an
+    independent stochastic-source model or a replacement observer. Q must be
+    SPD here. H18 unsupported coordinates and nonsmooth faces stay explicit.
+    Derivatives must be the outputs of the same causal auxiliary/source lift.
+    """
+    ldlt(P)
+    ldlt(Q)
+    if weight <= 0 or D != transpose(D) or dQ != transpose(dQ):
+        raise ValueError('positive weight and symmetric covariance derivatives required')
+    n, J, Qinv = len(P), inverse(P), inverse(Q)
+    C = add(product(B, P, transpose(B)), Q)
+    Jnext = inverse(C)
+    ep = add(product(B, e), s)
+    DP = add(add(add(product(B, D, transpose(B)), product(dB, P, transpose(B))),
+                 product(B, P, transpose(dB))), dQ)
+    dep = add(add(product(B, de), product(dB, e)), ds)
+    eta = add(de, product(D, J, e), -1)
+    etap = add(dep, product(DP, Jnext, ep), -1)
+    Sigma, X = zeros(2*n, 2*n), zeros(2*n, 2*n)
+    cross = product(P, transpose(dB))
+    for i in range(n):
+        for j in range(n):
+            Sigma[i][j], Sigma[n+i][n+j] = P[i][j], Q[i][j]
+            X[i][j], X[n+i][n+j] = D[i][j], dQ[i][j]
+            X[i][n+j], X[n+j][i] = cross[i][j], cross[i][j]
+    Sinv, channel = inverse(Sigma), [B[i]+identity(n)[i] for i in range(n)]
+    z = e+s
+    nu = add(ds, product(dQ, Qinv, s), -1)
+    aeta = add(eta, product(P, transpose(dB), Qinv, s), -1)+nu
+    action = add(Sinv, product(transpose(channel), Jnext, channel), -1)
+    score = product(action, z)
+    feedback = product(channel, X, score)
+    base_eta = product(channel, aeta)
+    if etap != add(base_eta, feedback) or DP != product(channel, X, transpose(channel)):
+        raise ArithmeticError('literal process derivative augmentation failed')
+    auxiliary_work = -2*product(transpose(eta), transpose(dB), Qinv, s)[0][0]
+    auxiliary_work += product(transpose(s), Qinv, dB, P, transpose(dB), Qinv, s)[0][0]
+    auxiliary_work += product(transpose(nu), Qinv, nu)[0][0]
+    auxiliary_work += weight*(2*trace(product(Qinv, dB, P, transpose(dB)))+
+                              trace(product(Qinv, dQ, Qinv, dQ)))
+    mean_loss = product(transpose(aeta), action, aeta)[0][0]
+    Fisher_loss = trace(product(Sinv, X, Sinv, X))-trace(product(Jnext, DP, Jnext, DP))
+    mixed = 2*product(transpose(base_eta), Jnext, feedback)[0][0]
+    square = product(transpose(feedback), Jnext, feedback)[0][0]
+    chi = product(transpose(z), action, z)[0][0]
+    initial = product(transpose(eta), J, eta)[0][0]+weight*trace(product(J, D, J, D))
+    terminal = product(transpose(etap), Jnext, etap)[0][0]+weight*trace(product(Jnext, DP, Jnext, DP))
+    if terminal-initial != auxiliary_work-mean_loss-weight*Fisher_loss+mixed+square:
+        raise ArithmeticError('signed augmented process balance failed')
+    if min(mean_loss, Fisher_loss, chi, square) < 0 or square > chi*Fisher_loss/2:
+        raise ArithmeticError('linked augmented process Fisher charge failed')
+    if chi != process_source_score(P, B, Q, e, s)['combined_score_charge']:
+        raise ArithmeticError('process/source charge mismatch')
+    return {'covariance_tangent_next': DP, 'shear_next': etap,
+            'signed_auxiliary_work': auxiliary_work, 'hidden_mean_loss': mean_loss,
+            'augmented_Fisher_loss': Fisher_loss, 'signed_feedback_cross': mixed,
+            'feedback_square': square, 'combined_process_score_charge': chi,
+            'feedback_square_upper': chi*Fisher_loss/2,
+            'actual_storage_change': terminal-initial,
+            'uniform_absorption_verified': False}
+
+
 def conditional_mixed_coefficients(C, T, q, weight):
     """Exact conditional root mean/Fisher Schur operator, not a uniform bound.
 
@@ -476,6 +634,15 @@ def certificate():
         'complementary_base_packet_Schur_absorption_verified': True,
         'fixed_half_charge_domination_is_necessary': False,
         'isotropic_score_cancellation_extends_to_anisotropic_loss': False,
+        'process_source_score_proof': 'app:process-source-score',
+        'supported_process_source_score_identity_verified': True,
+        'combined_process_word_directional_budget_verified': True,
+        'unsupported_source_score_discarded': False,
+        'causal_generated_process_augmented_balance_verified': True,
+        'generated_process_square_Fisher_charge_verified': True,
+        'generated_process_cross_absorbed': False,
+        'combined_process_score_budget_AW_frame_invariant': True,
+        'uniform_combined_process_source_budget': None,
         'uniform_conditional_score_margin_verified': False,
         'uniform_generated_packet_absorption_verified': False,
         'comparison_word_budget': 'chi_loss <= E_loss = V_0-V_N+Supply_W-sum NIS <= V_0+Supply_W-sum NIS',

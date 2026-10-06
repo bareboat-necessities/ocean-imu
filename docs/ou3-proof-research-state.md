@@ -12,7 +12,7 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `f15314d42b8d9eb8184f19a2dede05cc838f9775`.
+Verified starting PR head: `d46fe24795506b28ffee94882a1778b9f4f1d6b1`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved. Current CI chronology belongs in PR metadata.
 
@@ -127,6 +127,28 @@ The observed-coefficient center defect .0006179245 is finite and uses future
 observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
+
+**PROVED — analytical combined process/source score:**
+`app:process-source-score` gives `score' L^dagger score=V-V+ +s' Q^dagger s`
+with exact support checks. Thus the covered complete score satisfies
+`q_c q_c' <= B_W G`, where B_W telescopes root/terminal comparison energy,
+actual physical process action, correction defect action minus NIS, and
+signed uncovered energy changes. Unsupported held/chart/projection scores
+remain explicitly in q_u; first-Live energy is not restarted. This replaces
+separate loss/source-score bounds on the covered process substeps.
+
+**PROVED — analytical causal generated-process square control:** an exact
+algebraic factorization puts dP,dF,dQ,ds into one process Fisher loss and
+proves `|f|^2 <= (chi/2)*ell_P`. Its complete storage identity retains signed
+auxiliary work, mean loss, the feedback cross term and square. Derivatives
+include actual BG, jointly generated tuning and auxiliary/source recurrence;
+consistent AW-frame derivatives retain all endpoint connections. It is not
+an independent source model or an extra decrement. Do not separately maximize
+the auxiliary charges and lose their cancellation with Fisher/cross work.
+The [exact formulas and scope](ou3-linked-word-score.md#combined-physical-process-score-and-causal-generated-work)
+are controlling. Uniform B_W/uncovered-score bounds and affordable signed
+work absorption against the exact Schur loss remain OPEN. No radius is solved.
+
 
 **E — rendering corrected:** the new CP7 equation tag was initially inside
 `split`; moved it outside. No formula, premise or validation gate changed.

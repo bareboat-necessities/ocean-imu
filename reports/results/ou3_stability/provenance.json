@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "c8197431de21f661f97fc8d2446a0b9ddc10b7ab"
+      "git_blob_sha": "0e09e9fee56bd8508bee6bc4f2d6fa67d521d2ee"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "776bd14a082fac23c4779f7e2408740d0afb97d4"
+      "git_blob_sha": "11ba70d9fa81468f0940b0a3c82e45a96f2a7d89"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "b801a021f7060077ad64b9ba30fa81594b6fb5d6"
+      "git_blob_sha": "3880fd8d3d461f8b742ac54a483f1cf4f8b233dd"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "d26bb75485b06d33fe93f4e0f5b5a4eeb2f3dada"
+      "git_blob_sha": "f8dd218e27d8785c35c2605b736f02d9322f8033"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "b04cfa3c20e6c9ff5c93f792d2175a4fa1e29410"
+      "git_blob_sha": "71e93fa43a6d1cce4aa1c86102b2e9b80c2d22e6"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "9bdfa4ff56a0401dc7069749e423aacbb683c6f3"
+      "git_blob_sha": "01bf6c0b5f23ce09b22f4145bb6987cbbfdb34ae"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -948,19 +948,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/information_shear_word.py",
-      "git_blob_sha": "efd5b0c64ea7a4256cb35d6ac8b9a11971c0a0be"
+      "git_blob_sha": "db2e3b8904283c1a08bbdaf556c654e1f23eeb4a"
     },
     {
       "path": "tests/validation/test_ou3_information_shear_word.py",
-      "git_blob_sha": "523fa9c75d5c9925467a70bad26250d4f8e3abdd"
+      "git_blob_sha": "a38f98d078e4105a5b0f192b1cdb5fc56db299dd"
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "d40ba88e4ce1971a7119fc78fc259006092c3875"
+      "git_blob_sha": "86f2951e0e1c3bdce99bb52e60d8d7bde1bfc816"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
-      "git_blob_sha": "fcc3442b3098f5faf550ecf666850536445c1984"
+      "git_blob_sha": "6b9b741b38b22fce603a67bed08d1c84c47bd96f"
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
@@ -980,7 +980,7 @@
     },
     {
       "path": "docs/ou3-linked-word-score.md",
-      "git_blob_sha": "ea839ca785d9e920d51e9f4895a27e1919ab21cb"
+      "git_blob_sha": "662a3c7c2c7a46ddbf056a3539aa028b4af2f0a4"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1155,7 +1155,15 @@
     "fixed_half_charge_domination_is_necessary": false,
     "isotropic_score_cancellation_extends_to_anisotropic_loss": false,
     "scope_check_failure_class": "D_SUFFICIENT_BOUND_FAILURE: formal matrix implications only; no shipping-reachability assertion",
-    "packet_absorption_tooling_failure": "E: CP7 tag moved outside split after local amsmath error; formula and proof conditions unchanged"
+    "packet_absorption_tooling_failure": "E: CP7 tag moved outside split after local amsmath error; formula and proof conditions unchanged",
+    "process_source_score_proof": "app:process-source-score",
+    "supported_process_source_score_identity_verified": true,
+    "combined_process_word_directional_budget_verified": true,
+    "causal_generated_process_augmented_balance_verified": true,
+    "generated_process_square_Fisher_charge_verified": true,
+    "generated_process_cross_absorbed": false,
+    "combined_process_score_budget_AW_frame_invariant": true,
+    "uniform_combined_process_source_budget": null
   },
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",
