@@ -425,6 +425,13 @@ private:
 
     fcfg.gravity_magnitude = g_local;
 
+    // No continuous hard-iron learning in Live.  Heel excitation lets the
+    // additive-offset fit absorb calibration residuals (axis gain, soft iron,
+    // mag latency) as a fake offset with a horizontal component, and applying
+    // it rotates magnetic north; the error persists after the motion stops.
+    // North stays on the startup/refined magnetic reference instead.
+    fcfg.mag_continuous_hard_iron = false;
+
     fcfg.acc_vibration_guard_hz = ACC_VIBRATION_GUARD_HZ;
 
     fusion_.begin(fcfg);

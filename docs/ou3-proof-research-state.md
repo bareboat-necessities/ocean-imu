@@ -11,7 +11,7 @@ The general theorem assumes existing MAGNETIC SERVICE on admitted histories;
 all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
-Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
+Verified main: `96906092196c05d625b0fcb0231f14fc1acf650e`.
 Verified starting PR head: `e362f9dfbec57784725baf789501274f8b3392a0`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved, including ab7c9fecc16e8671a6ba29c8437d21b4101e4f93
@@ -27,6 +27,16 @@ after derivation, and identity/source regressions. No new replay, secant,
 sampled grid or empirical factor. Before substantial calculations state the
 lemma/quantifiers, finite-error role, literal dissipation structure, required
 proved/open bounds and avoidance of recorded dead ends. Required CI remains.
+
+Shipping magnetic configuration: the OU-III AtomS3R sketch sets
+`mag_continuous_hard_iron = false`. After refinement the applied hard-iron offset
+and the magnetic reference stay at their refined values, so the MR1--MR2
+continuous-reference transport and its MR9 proxy-tilt premise no longer arise on
+the shipping path; the facade default and simulators keep the continuous path.
+A refined-reference error from calibration residuals (axis gain, soft iron,
+latency) must be charged to the stated magnetic residual envelopes; that fit is
+not verified here and no constant is changed. The
+provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
 
@@ -744,6 +754,11 @@ Physical S is never reset by the estimator pseudo-measurement.
   importing the existing macro let the full appendix compile unchanged.
   Native git push lacked a GitHub credential; publish the identical
   validated tree through the connected API with an expected-head check.
+  Main advanced through PR #655. Two thin fetches reported unresolved
+  deltas; missing repository blobs were restored through hash-verified API
+  reads. Ledger/provenance conflicts were reconciled, preserving all proof
+  work and the upstream device configuration. The regular planar equations
+  and margins are unchanged; no shipping configuration was authored here.
   No mathematical premise or validation gate changed.
 
 * **D, process-short-only sign inference:** CR26's positive effective gap

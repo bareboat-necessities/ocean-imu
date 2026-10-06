@@ -1,6 +1,6 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "59959d1bf33a3c5f4f70331104546a6486468df6",
+  "base_main_commit": "96906092196c05d625b0fcb0231f14fc1acf650e",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
@@ -41,7 +41,7 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "2e3d1578a5d7d37913eb9ddaef72a65bb3e2c7b3"
+      "git_blob_sha": "90bda5eeba4b1ccf94af698662df85877bbb7bc7"
     }
   ],
   "semantic_bindings": {
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "53c8d6a1eeba69f51de38714867cb8be750e8cb4"
+      "git_blob_sha": "81c8abf1cc2d262f5f39191a8e31959c17b2f1ee"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -1559,6 +1559,8 @@
     },
     "near_kernel_inference_failure_class": "D_SUFFICIENT_PROOF_INFERENCE_FAILURE",
     "zero_signed_gap_implies_complete_zero_action": false,
-    "intervening_dangerous_direction_evidence_preserved": "18f2ceb69902e3de6bb62975b66d326817e81464"
+    "intervening_dangerous_direction_evidence_preserved": "18f2ceb69902e3de6bb62975b66d326817e81464",
+    "incorporated_main_after_PR655": "96906092196c05d625b0fcb0231f14fc1acf650e",
+    "upstream_shipping_configuration_preserved": "PR655 disables continuous hard-iron learning in AtomS3R sketches; no session-authored shipping change and no alteration of the regular planar covariance profile"
   }
 }

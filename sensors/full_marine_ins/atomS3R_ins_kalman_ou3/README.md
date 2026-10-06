@@ -17,6 +17,7 @@ Open the sketch: [`atomS3R_ins_kalman_ou3.ino`](atomS3R_ins_kalman_ou3.ino).
 - learns tilt during startup while the vessel may already be moving;
 - performs a one-shot magnetic north lock inside the sea-state fusion filter;
 - uses filter yaw as the primary heading after north lock while retaining tilt-compensated magnetic heading for diagnostics;
+- keeps north on the startup/refined magnetic reference: continuous hard-iron learning is disabled, because heel motion makes it absorb calibration residuals as a heading offset;
 - estimates 3-D marine motion with the OU-III wave/process model and higher-order integral regularization;
 - adapts the sea-state-dependent estimator parameters used by the full filter;
 - provides on-device graphics and serial/NMEA output;
