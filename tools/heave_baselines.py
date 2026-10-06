@@ -19,6 +19,15 @@ Subcommands
   tune       grid-search both baselines on the dev split, freeze parameters
   evaluate   score frozen parameters on the eval split; optional paired
              bootstrap against another method's per-record results
+  rescore    score every exported err_<method> column with the same scorer
+
+Scoring is the W3D simulation harness's own (util/W3dSimCommon.cpp): the last
+N = floor(float(window) / float(dt)) samples, float error estimate - reference,
+squares accumulated in order into a float with a fused multiply-add,
+rms = sqrt(sum / N) in float, and %Hs = rms * (100 / Hs) in float. A baseline
+estimate is rounded to float before the subtraction, as a float estimator's
+output is. Records exported by tests/hpdi/heave_export therefore score here
+exactly as the simulators score them.
 
 Manifest CSV columns: path, family, hs, split (dev|eval), seed (optional).
 Record CSV columns (names configurable): t, a_up, z_ref, Tz_hat (optional).
@@ -31,10 +40,11 @@ import csv
 import json
 import math
 import os
+import struct
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -107,12 +117,75 @@ def load_record(path: Path, cols: Columns) -> Record:
     return Record(t, a, z, tz)
 
 
-def score_mask(t: np.ndarray, score_last: float) -> np.ndarray:
-    return t >= t[-1] - score_last
+HARNESS_DT_S = 1.0 / 200.0
+
+
+def harness_count(n: int, window_s: float, dt: float = HARNESS_DT_S) -> int:
+    """Samples in the harness's trailing window: size_t(float(window) / float(dt))."""
+    requested = int(np.float32(window_s) / np.float32(dt))
+    return min(n, max(requested, 1))
+
+
+def harness_index(t_s: float, dt: float = HARNESS_DT_S) -> int:
+    """Sample index of a harness segment bound: size_t(float(t) / float(dt))."""
+    return int(np.float32(t_s) / np.float32(dt))
+
+
+_PACK_F, _UNPACK_F = struct.Struct("f").pack, struct.Struct("f").unpack
+
+
+def _to_f32(x: float) -> float:
+    return _UNPACK_F(_PACK_F(x))[0]
+
+
+def fma32_sum_squares(err32: np.ndarray) -> float:
+    """sum = fmaf(e, e, sum) over err32 in order, exactly.
+
+    e * e is exact in double and the double sum is rounded once more to float.
+    That double rounding can only differ from the single rounding of a fused
+    multiply-add when the double sum lands exactly halfway between two floats;
+    those ties are resolved with the exact residual of the double addition.
+    """
+    acc = 0.0
+    for e in err32.tolist():
+        prod = e * e
+        dsum = prod + acc
+        rounded = _to_f32(dsum)
+        if rounded != dsum:
+            other = float(np.nextafter(np.float32(rounded), np.float32(np.inf if dsum > rounded else -np.inf)))
+            if dsum - rounded == other - dsum:
+                back = dsum - prod
+                residual = (prod - (dsum - back)) + (acc - back)
+                if residual != 0.0 and (residual > 0.0) == (dsum > rounded):
+                    rounded = other
+        acc = rounded
+    return acc
+
+
+def harness_rms(err32: np.ndarray) -> float:
+    """The harness RMSReport over err32 (float32, in record order)."""
+    total = np.float32(fma32_sum_squares(np.asarray(err32, dtype=np.float32)))
+    return float(np.sqrt(total / np.float32(err32.size)))
 
 
 def pct_hs(rms: float, hs: float) -> float:
-    return 100.0 * rms / hs
+    """rms * (100 / Hs), in float as the harness computes it."""
+    return float(np.float32(rms) * (np.float32(100.0) / np.float32(hs)))
+
+
+def float_error(estimate: np.ndarray, reference: np.ndarray) -> np.ndarray:
+    return np.asarray(estimate, dtype=np.float32) - np.asarray(reference, dtype=np.float32)
+
+
+def window_rms(estimate: np.ndarray, reference: np.ndarray, window_s: float) -> float:
+    k = harness_count(reference.size, window_s)
+    return harness_rms(float_error(estimate[-k:], reference[-k:]))
+
+
+def segment_rms(estimate: np.ndarray, reference: np.ndarray, t0: float, t1: float) -> float:
+    i0 = min(reference.size, harness_index(t0))
+    i1 = min(reference.size, harness_index(t1))
+    return harness_rms(float_error(estimate[i0:i1], reference[i0:i1]))
 
 
 # --------------------------------------------------------------------------- FDDI
@@ -170,10 +243,11 @@ class FDDI:
         return y if self.uniform else np.interp(self.t, self.tu, y)
 
 
-def fddi_cutoff(cfg: dict, rec: Record, mask: np.ndarray) -> float:
+def fddi_cutoff(cfg: dict, rec: Record, score_last: float) -> float:
     if cfg["mode"] == "fixed":
         return cfg["value"]
-    tz = rec.tz[mask] if rec.tz is not None else np.array([])
+    k = harness_count(rec.t.size, score_last)
+    tz = rec.tz[-k:] if rec.tz is not None else np.array([])
     tz = tz[np.isfinite(tz) & (tz > 0)]
     if tz.size == 0:
         raise ValueError("period mode needs a finite Tz_hat column")
@@ -191,24 +265,29 @@ def fddi_grid(has_tz: bool) -> list[dict]:
     return grid
 
 
-def fddi_scores(entries: list[Entry], cols: Columns, grid: list[dict], score_last: float, pad_s: float):
-    """Returns array [config, record] of % H_s."""
-    out = np.full((len(grid), len(entries)), np.nan)
-    for j, e in enumerate(entries):
-        rec = load_record(e.path, cols)
-        if rec.z is None:
-            sys.exit(f"{e.path}: reference column '{cols.z}' missing")
-        mask = score_mask(rec.t, score_last)
-        eng = FDDI(rec.t, rec.a, pad_s)
-        for i, cfg in enumerate(grid):
-            try:
-                f1 = fddi_cutoff(cfg, rec, mask)
-            except ValueError:
-                continue
-            y = eng.displacement(f1, cfg["taper"])
-            err = y[mask] - rec.z[mask]
-            out[i, j] = pct_hs(float(np.sqrt(np.nanmean(err ** 2))), e.hs)
+def _fddi_record_scores(args) -> np.ndarray:
+    e, cols, grid, score_last, pad_s = args
+    rec = load_record(e.path, cols)
+    if rec.z is None:
+        sys.exit(f"{e.path}: reference column '{cols.z}' missing")
+    eng = FDDI(rec.t, rec.a, pad_s)
+    out = np.full(len(grid), np.nan)
+    for i, cfg in enumerate(grid):
+        try:
+            f1 = fddi_cutoff(cfg, rec, score_last)
+        except ValueError:
+            continue
+        out[i] = pct_hs(window_rms(eng.displacement(f1, cfg["taper"]), rec.z, score_last), e.hs)
     return out
+
+
+def fddi_scores(entries: list[Entry], cols: Columns, grid: list[dict], score_last: float, pad_s: float,
+                jobs: int = 1):
+    """Returns array [config, record] of % H_s."""
+    tasks = [(e, cols, grid, score_last, pad_s) for e in entries]
+    with cf.ProcessPoolExecutor(max_workers=max(1, jobs)) as ex:
+        columns = list(ex.map(_fddi_record_scores, tasks))
+    return np.stack(columns, axis=1)
 
 
 # --------------------------------------------------------------------------- HPDI
@@ -247,7 +326,8 @@ def hpdi_scores(entries: list[Entry], cols: Columns, grid: list[dict], opts: arg
 
         def one(e: Entry) -> np.ndarray:
             cmd = replay_args(binary, cols, opts) + ["--in", str(e.path), "--grid", str(gpath),
-                                                     "--score-last", str(opts.score_last)]
+                                                     "--harness-window", repr(opts.score_last),
+                                                     "--harness-dt", repr(HARNESS_DT_S)]
             res = subprocess.run(cmd, capture_output=True, text=True)
             if res.returncode != 0:
                 raise RuntimeError(f"hpdi_replay failed on {e.path}: {res.stderr.strip()}")
@@ -289,7 +369,7 @@ def cmd_tune(opts: argparse.Namespace) -> None:
     print(f"tuning on {len(entries)} dev records; period-scaled modes {'on' if has_tz else 'off (no T_z column)'}")
 
     fgrid = fddi_grid(has_tz)
-    fs = fddi_scores(entries, cols, fgrid, opts.score_last, opts.pad)
+    fs = fddi_scores(entries, cols, fgrid, opts.score_last, opts.pad, opts.jobs)
     fbest, fobj = select(fs, fgrid)
     edge_warning("FDDI", fbest, fgrid)
 
@@ -374,19 +454,16 @@ def cmd_evaluate(opts: argparse.Namespace) -> None:
     rows: list[dict] = []
 
     fcfg = frozen["FDDI"]
-    for e in entries:
-        rec = load_record(e.path, cols)
-        mask = score_mask(rec.t, opts.score_last)
-        y = FDDI(rec.t, rec.a, opts.pad).displacement(fddi_cutoff(fcfg, rec, mask), fcfg["taper"])
-        rms = float(np.sqrt(np.nanmean((y[mask] - rec.z[mask]) ** 2)))
-        rows.append(result_row("FDDI", fcfg, e, rms))
+    fscores = fddi_scores(entries, cols, [fcfg], opts.score_last, opts.pad, opts.jobs)[0]
+    for j, e in enumerate(entries):
+        rows.append(result_row("FDDI", fcfg, e, fscores[j]))
 
     hnames = [k for k in ("HPDI-classic", "HPDI-compensated") if k in frozen]
     hgrid = [frozen[k] for k in hnames]
     hs = hpdi_scores(entries, cols, [{k: g[k] for k in ("n", "m", "mode", "value")} for g in hgrid], opts)
     for i, name in enumerate(hnames):
         for j, e in enumerate(entries):
-            rows.append(result_row(name, hgrid[i], e, hs[i, j] * e.hs / 100.0))
+            rows.append(result_row(name, hgrid[i], e, hs[i, j]))
 
     with open(opts.out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()), lineterminator="\n")
@@ -399,9 +476,9 @@ def cmd_evaluate(opts: argparse.Namespace) -> None:
             paired_compare(rows, Path(opts.compare_csv), opts.compare_method, fam, opts.bootstrap)
 
 
-def result_row(method: str, cfg: dict, e: Entry, rms: float) -> dict:
+def result_row(method: str, cfg: dict, e: Entry, pct: float) -> dict:
     return {"method": method, "config": describe(cfg), "family": e.family, "hs": e.hs, "seed": e.seed,
-            "path": str(e.path), "rms_m": f"{rms:.6g}", "pct_hs": f"{pct_hs(rms, e.hs):.4f}"}
+            "path": str(e.path), "rms_m": f"{pct * e.hs / 100.0:.9g}", "pct_hs": f"{pct:.9g}"}
 
 
 def summarize(rows: list[dict]) -> None:
@@ -412,6 +489,44 @@ def summarize(rows: list[dict]) -> None:
                       if r["method"] == meth and r["family"] == fam and float(r["hs"]) == hs])
         sd = v.std(ddof=1) if v.size > 1 else float("nan")
         print(f"{meth:18s} {fam:10s} {hs:6.2f} {v.mean():9.3f} {sd:6.3f} {v.size:3d}")
+
+
+def parse_segments(text: str) -> list[tuple[str, float, float]]:
+    out = []
+    for item in filter(None, (x.strip() for x in (text or "").split(","))):
+        name, t0, t1 = item.split(":")
+        out.append((name, float(t0), float(t1)))
+    return out
+
+
+def cmd_rescore(opts: argparse.Namespace) -> None:
+    """Score every err_<method> column of every manifest record (harness scorer)."""
+    entries = read_manifest(Path(opts.manifest))
+    if opts.split:
+        entries = [e for e in entries if e.split == opts.split]
+    segments = parse_segments(opts.segments)
+    rows = []
+    for e in entries:
+        with open(e.path) as fh:
+            header = [h.strip() for h in fh.readline().strip().split(",")]
+        names = [h for h in header if h.startswith("err_")]
+        data = np.loadtxt(e.path, delimiter=",", skiprows=1, usecols=[header.index(h) for h in names],
+                          ndmin=2).astype(np.float32)
+        for i, name in enumerate(names):
+            err = data[:, i]
+            k = harness_count(err.size, opts.score_last)
+            windows = [("", err[-k:])] + [(seg, err[min(err.size, harness_index(t0)):min(err.size, harness_index(t1))])
+                                           for seg, t0, t1 in segments]
+            for seg, part in windows:
+                rms = harness_rms(part)
+                rows.append({"method": name[4:], "family": e.family, "hs": e.hs, "seed": e.seed, "split": e.split,
+                             "segment": seg, "path": str(e.path), "rms_m": f"{rms:.9g}",
+                             "pct_hs": f"{pct_hs(rms, e.hs):.9g}"})
+    with open(opts.out, "w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()), lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+    print(f"{len(rows)} scores -> {opts.out}")
 
 
 # --------------------------------------------------------------------------- selfcheck
@@ -454,9 +569,57 @@ def cmd_selfcheck(opts: argparse.Namespace) -> None:
             good = rel < 1e-6
             ok &= good
             print(f"  n={n} m={m} fc={fc}: relative RMS difference {rel:.2e} {'ok' if good else 'FAIL'}")
+    ok &= _selfcheck_scorer(opts.hpdi_bin)
     if not ok:
         sys.exit(1)
-    print("selfcheck passed: hpdi_replay == bilinear(H(s))")
+    print("selfcheck passed: hpdi_replay == bilinear(H(s)); harness scorer exact")
+
+
+def _selfcheck_scorer(hpdi_bin: str) -> bool:
+    from fractions import Fraction
+
+    def exact(err32: np.ndarray) -> float:
+        acc = np.float32(0.0)
+        for e in err32.tolist():
+            value = Fraction(e) * Fraction(e) + Fraction(float(acc))
+            lo = np.float32(float(value))  # candidate; fix the rounding exactly below
+            cands = [lo, np.nextafter(lo, np.float32(-np.inf)), np.nextafter(lo, np.float32(np.inf))]
+            dist = [abs(Fraction(float(c)) - value) for c in cands]
+            best = min(dist)
+            ties = [c for c, d in zip(cands, dist) if d == best]
+            acc = ties[0] if len(ties) == 1 else min(ties, key=lambda c: int(np.float32(c).view(np.uint32)) & 1)
+        return float(acc)
+
+    rng = np.random.default_rng(20260317)
+    ok = True
+    cases = [rng.standard_normal(4000).astype(np.float32) * np.float32(0.05),
+             (rng.standard_normal(4000) * 2.0 ** rng.integers(-24, 8, 4000)).astype(np.float32)]
+    for err in cases:
+        good = fma32_sum_squares(err) == exact(err)
+        ok &= good
+        print(f"  fma32 sum of squares, n={err.size}: {'ok' if good else 'FAIL'}")
+    with tempfile.TemporaryDirectory() as td:
+        t = np.arange(240000) / 200.0
+        a = np.sin(2 * np.pi * t / 7.0) + 0.01 * rng.standard_normal(t.size)
+        z = -np.sin(2 * np.pi * t / 7.0) / (2 * np.pi / 7.0) ** 2
+        rec = Path(td) / "rec.csv"
+        np.savetxt(rec, np.column_stack([t, a, z]), delimiter=",", header="t,a_up,z_ref", comments="",
+                   fmt=["%.6f", "%.9g", "%.9g"])
+        grid = Path(td) / "grid.txt"
+        grid.write_text("4 3 fixed 0.04\n")
+        out = Path(td) / "dump.csv"
+        subprocess.run([hpdi_bin, "--in", str(rec), "--tz-col", "none", "--dump", str(out), "--n", "4", "--m", "3",
+                        "--mode", "fixed", "--value", "0.04"], check=True)
+        res = subprocess.run([hpdi_bin, "--in", str(rec), "--tz-col", "none", "--grid", str(grid),
+                              "--harness-window", "900"], check=True, capture_output=True, text=True)
+        cpp = float(list(csv.DictReader(res.stdout.splitlines()))[0]["rms_m"])
+        y = np.loadtxt(out, delimiter=",", skiprows=1, usecols=1)
+        zr = np.loadtxt(rec, delimiter=",", skiprows=1, usecols=2)
+        py = window_rms(y, zr, 900.0)
+        good = np.float32(cpp) == np.float32(py)
+        ok &= good
+        print(f"  hpdi_replay --harness-window == python scorer: {cpp!r} vs {py!r} {'ok' if good else 'FAIL'}")
+    return ok
 
 
 # --------------------------------------------------------------------------- synth
@@ -550,6 +713,13 @@ def main() -> None:
     p.add_argument("--compare-method", default="OU-III")
     p.add_argument("--bootstrap", type=int, default=10000)
     p.set_defaults(func=cmd_evaluate)
+
+    p = sub.add_parser("rescore")
+    common(p)
+    p.add_argument("--split", default="", help="limit to one split")
+    p.add_argument("--segments", default="", help="extra harness segments name:t0:t1,...")
+    p.add_argument("--out", default="rescored.csv")
+    p.set_defaults(func=cmd_rescore)
 
     p = sub.add_parser("selfcheck")
     p.add_argument("--hpdi-bin", default="build/hpdi_replay")

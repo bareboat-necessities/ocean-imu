@@ -10,7 +10,15 @@
 //
 // Modes:
 //   --dump OUT.csv  with --n --m --mode --value     writes t,z_hat,v_hat,fc_hz
-//   --grid CFG.txt  --score-last S | --score-from T writes one score row per config
+//   --grid CFG.txt  --harness-window S | --score-last S | --score-from T
+//                   writes one score row per config
+//
+// --harness-window S scores the trailing window exactly as the W3D simulation
+// harness does (util/W3dSimCommon.cpp): the last N = floor(float(S) /
+// float(dt)) rows (dt = --harness-dt, default 1/200 s), float error
+// z_hat - z_ref, squares accumulated in order into a float with a fused
+// multiply-add, rms = sqrt(sum / N) in float. The other two windows
+// accumulate in double.
 //
 // Grid file: one config per line, "n m mode value" (mode: fixed|period;
 // value: cutoff Hz or cutoff ratio f_c*T_z). '#' starts a comment.
@@ -24,11 +32,14 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <vector>
 
 namespace {
+
+constexpr double kNaN = std::numeric_limits<double>::quiet_NaN();
 
 struct Args {
   std::string in, dump, grid, out = "-";
@@ -37,6 +48,7 @@ struct Args {
   std::string mode = "period";
   double value = 0.15;
   double score_from = NAN, score_last = NAN;
+  double harness_window = NAN, harness_dt = 1.0 / 200.0;
   double prime_seconds = 0.0;
   double smoothing_periods = 0.75, refresh_s = 0.1, fallback_period_s = 6.0;
   bool flip_z = false, use_float = false;
@@ -52,7 +64,7 @@ void usage() {
                "usage: hpdi_replay --in REC.csv (--dump OUT.csv | --grid CFG.txt [--out SCORES.csv])\n"
                "  [--t-col t] [--a-col a_up] [--z-col z_ref] [--tz-col Tz_hat|none]\n"
                "  [--n 4] [--m 3] [--mode fixed|period] [--value 0.15]\n"
-               "  [--score-last 900 | --score-from 300] [--prime-seconds 0] [--flip-z]\n"
+               "  [--harness-window 900 [--harness-dt 0.005] | --score-last 900 | --score-from 300] [--prime-seconds 0] [--flip-z]\n"
                "  [--smoothing-periods 0.75] [--refresh 0.1] [--fallback-period 6] [--float]\n");
 }
 
@@ -86,6 +98,8 @@ Args parse(int argc, char** argv) {
     else if (k == "--value") a.value = toDouble(next("--value"), "--value");
     else if (k == "--score-from") a.score_from = toDouble(next("--score-from"), "--score-from");
     else if (k == "--score-last") a.score_last = toDouble(next("--score-last"), "--score-last");
+    else if (k == "--harness-window") a.harness_window = toDouble(next("--harness-window"), "--harness-window");
+    else if (k == "--harness-dt") a.harness_dt = toDouble(next("--harness-dt"), "--harness-dt");
     else if (k == "--prime-seconds") a.prime_seconds = toDouble(next("--prime-seconds"), "--prime-seconds");
     else if (k == "--smoothing-periods") a.smoothing_periods = toDouble(next("--smoothing-periods"), "--smoothing-periods");
     else if (k == "--refresh") a.refresh_s = toDouble(next("--refresh"), "--refresh");
@@ -139,7 +153,7 @@ Record load(const Args& args) {
     if (line.empty()) continue;
     const auto cells = splitCsv(line);
     if (static_cast<int>(cells.size()) <= need) die("short row " + std::to_string(row));
-    auto num = [&](int idx) { return idx < 0 ? NAN : std::strtod(cells[idx].c_str(), nullptr); };
+    auto num = [&](int idx) { return idx < 0 ? kNaN : std::strtod(cells[idx].c_str(), nullptr); };
     r.t.push_back(num(it));
     r.a.push_back(num(ia));
     r.z.push_back(args.flip_z ? -num(iz) : num(iz));
@@ -238,7 +252,7 @@ int main(int argc, char** argv) {
     if (!fp) die("cannot write " + args.dump);
     std::fprintf(fp, "t,z_hat,v_hat,fc_hz\n");
     for (size_t k = 0; k < rec.t.size(); ++k)
-      std::fprintf(fp, "%.6f,%.9g,%.9g,%.9g\n", rec.t[k], o.z[k], o.v[k], o.fc[k]);
+      std::fprintf(fp, "%.6f,%.17g,%.9g,%.9g\n", rec.t[k], o.z[k], o.v[k], o.fc[k]);
     if (fp != stdout) std::fclose(fp);
     return 0;
   }
@@ -246,7 +260,14 @@ int main(int argc, char** argv) {
   if (!rec.has_z) die("grid scoring needs the reference column '" + args.z_col + "'");
   double t0 = args.score_from;
   if (std::isfinite(args.score_last)) t0 = rec.t.back() - args.score_last;
-  if (!std::isfinite(t0)) die("give --score-last or --score-from");
+  const bool harness = std::isfinite(args.harness_window);
+  if (!harness && !std::isfinite(t0)) die("give --harness-window, --score-last or --score-from");
+  size_t first = 0;
+  if (harness) {
+    if (!(args.harness_window > 0.0) || !(args.harness_dt > 0.0)) die("harness window and dt must be positive");
+    const auto requested = static_cast<size_t>(static_cast<float>(args.harness_window) / static_cast<float>(args.harness_dt));
+    first = rec.t.size() - std::min(rec.t.size(), std::max<size_t>(requested, 1));
+  }
 
   const auto grid = loadGrid(args.grid);
   FILE* fp = args.out == "-" ? stdout : std::fopen(args.out.c_str(), "w");
@@ -256,16 +277,26 @@ int main(int argc, char** argv) {
     if (c.period && !rec.has_tz) die("period mode needs the T_z column ('" + args.tz_col + "')");
     const RunOut o = runAny(rec, c, args, false);
     double se = 0.0, sm = 0.0;
+    float se_f = 0.0f;
     size_t cnt = 0;
-    for (size_t k = 0; k < rec.t.size(); ++k) {
+    for (size_t k = first; k < rec.t.size(); ++k) {
+      if (harness) {
+        const float e = static_cast<float>(o.z[k]) - static_cast<float>(rec.z[k]);
+        se_f = std::fma(e, e, se_f);
+        sm += static_cast<double>(e);
+        ++cnt;
+        continue;
+      }
       if (rec.t[k] < t0 || !std::isfinite(rec.z[k]) || !std::isfinite(o.z[k])) continue;
       const double e = o.z[k] - rec.z[k];
       se += e * e;
       sm += e;
       ++cnt;
     }
-    const double rms = cnt ? std::sqrt(se / static_cast<double>(cnt)) : NAN;
-    const double mean = cnt ? sm / static_cast<double>(cnt) : NAN;
+    const double rms = !cnt ? kNaN
+                       : harness ? static_cast<double>(std::sqrt(se_f / static_cast<float>(cnt)))
+                                 : std::sqrt(se / static_cast<double>(cnt));
+    const double mean = cnt ? sm / static_cast<double>(cnt) : kNaN;
     std::fprintf(fp, "%d,%d,%s,%.9g,%.9g,%.9g,%zu,%u\n", c.n, c.m, c.period ? "period" : "fixed", c.value, rms, mean,
                  cnt, o.rejected);
   }
