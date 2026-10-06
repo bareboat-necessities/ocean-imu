@@ -353,11 +353,13 @@ def select(scores: np.ndarray, grid: list[dict], keep=lambda g: True) -> tuple[d
     return dict(grid[best]), float(obj[best])
 
 
-def edge_warning(name: str, best: dict, grid: list[dict]) -> None:
+def edge_warning(name: str, best: dict, grid: list[dict]) -> bool:
     same = [g["value"] for g in grid if g["mode"] == best["mode"]
             and all(g.get(k) == best.get(k) for k in ("n", "m", "taper") if k in best)]
     if same and best["value"] in (min(same), max(same)):
         print(f"  warning: {name} optimum at grid edge ({best['mode']} {best['value']:.4g}); widen the grid")
+        return True
+    return False
 
 
 def cmd_tune(opts: argparse.Namespace) -> None:
@@ -371,15 +373,15 @@ def cmd_tune(opts: argparse.Namespace) -> None:
     fgrid = fddi_grid(has_tz)
     fs = fddi_scores(entries, cols, fgrid, opts.score_last, opts.pad, opts.jobs)
     fbest, fobj = select(fs, fgrid)
-    edge_warning("FDDI", fbest, fgrid)
+    fedge = edge_warning("FDDI", fbest, fgrid)
 
     hgrid = hpdi_grid(has_tz)
     hs = hpdi_scores(entries, cols, hgrid, opts)
     hbest, hobj = select(hs, hgrid)
     cbest, cobj = select(hs, hgrid, lambda g: g["m"] == g["n"])
     pbest, pobj = select(hs, hgrid, lambda g: g["m"] < g["n"])
-    for name, b in (("HPDI", hbest), ("HPDI-classic", cbest), ("HPDI-compensated", pbest)):
-        edge_warning(name, b, hgrid)
+    edges = {name: edge_warning(name, b, hgrid)
+             for name, b in (("HPDI-best", hbest), ("HPDI-classic", cbest), ("HPDI-compensated", pbest))}
 
     frozen = {
         "protocol": {"score_last_s": opts.score_last, "dev_records": [str(e.path) for e in entries],
@@ -387,10 +389,10 @@ def cmd_tune(opts: argparse.Namespace) -> None:
                      "fddi_pad_s": opts.pad, "hpdi_smoothing_periods": opts.smoothing_periods,
                      "hpdi_refresh_s": opts.refresh, "hpdi_fallback_period_s": opts.fallback_period,
                      "hpdi_float32": bool(opts.float32)},
-        "FDDI": {**fbest, "dev_pct_hs": fobj},
-        "HPDI-classic": {**cbest, "dev_pct_hs": cobj},
-        "HPDI-compensated": {**pbest, "dev_pct_hs": pobj},
-        "HPDI-best": {**hbest, "dev_pct_hs": hobj},
+        "FDDI": {**fbest, "dev_pct_hs": fobj, "grid_edge": fedge},
+        "HPDI-classic": {**cbest, "dev_pct_hs": cobj, "grid_edge": edges["HPDI-classic"]},
+        "HPDI-compensated": {**pbest, "dev_pct_hs": pobj, "grid_edge": edges["HPDI-compensated"]},
+        "HPDI-best": {**hbest, "dev_pct_hs": hobj, "grid_edge": edges["HPDI-best"]},
     }
     Path(opts.out).write_text(json.dumps(frozen, indent=2))
     for k in ("FDDI", "HPDI-classic", "HPDI-compensated"):

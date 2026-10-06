@@ -43,67 +43,108 @@ stays float-accurate at ω_c·h ≈ 10⁻³. `selfcheck` verifies agreement with
 ## Build and test
 
 ```sh
-mkdir -p build
-g++ -std=c++14 -O2 -Wall -Wextra -I src tests/hpdi/test_heave_hpdi.cpp -o build/test_heave_hpdi
-./build/test_heave_hpdi            # 67 checks
-g++ -std=c++14 -O2 -I src tools/hpdi_replay.cpp -o build/hpdi_replay
-python3 tools/heave_baselines.py selfcheck --hpdi-bin build/hpdi_replay
+make -C tests/hpdi            # unit test (67 checks), bilinear and scorer self-checks
 ```
 
+`tests/hpdi` is part of `make all` and needs no simulation data. CMake builds
+`test_heave_hpdi` and `hpdi_replay`, and the CI `cmake` job runs both checks.
 The header compiles cleanly from C++11 through C++20 under `-Wconversion
 -Wdouble-promotion`.
 
-## Harness export (one change in the replay harness)
+## Scoring
 
-For each scored record, write a CSV with these columns:
+Every method is scored with the simulation harness's own scorer
+(`util/W3dSimCommon.cpp`), so baseline and estimator numbers are directly
+comparable:
+
+- window: the last `floor(float(900) / float(1/200))` = 180000 samples; a
+  segment `[t0, t1)` covers samples `floor(float(t0)/float(dt))` to
+  `floor(float(t1)/float(dt))`;
+- error: `float(estimate) - float(z_ref)`;
+- RMS: squares accumulated in order into a float with a fused multiply-add
+  (the harness compiles to `vfmadd231ss` under `-march=native`), then
+  `sqrt(sum / N)` in float;
+- `%Hs = rms * (100 / Hs)` in float, with `Hs` the record's nominal height.
+
+`hpdi_replay --harness-window 900` and `heave_baselines.py` both implement it;
+`selfcheck` tests the Python FMA emulation against exact rationals and against
+`hpdi_replay`.
+
+## Harness export
+
+`tests/hpdi/heave_export-<family>` (OU-III, OU-II, TFG, PII, TVG-NLO) replays
+one record through the shipped estimator and writes its per-sample vertical
+error. Each build compiles that family's simulator source unchanged and runs its
+own `main()`; two link-time wraps observe it (see `heave_export.cpp`). No
+simulator, estimator or evidence-closure file changes, and the OU-III, OU-II
+and TFG builds print `VALIDATION_METRICS` lines byte-identical to the shipped
+simulators'. The OU-III build also exports, from that same filter's front end
+after each sample:
 
 | Column | Content |
 |---|---|
-| `t` | time, s |
-| `a_up` | Mahony-proxy up-positive vertical acceleration, gravity removed (Eq. 73), after the same vibration prefilter OU–III sees |
-| `Tz_hat` | canonical period from the measurement-only estimator (Eq. 80); NaN before its startup gate |
-| `z_ref` | reference heave; pass `--flip-z` if it is NED-down |
+| `a_up` | Mahony-proxy up-positive vertical acceleration, gravity removed (Eq. 73), after the vibration guard OU–III sees |
+| `Tz_hat` | canonical log-period estimate (Eq. 80); NaN before its startup-usable gate |
+| `z_ref` | the record's `disp_z`, which the harness scores as up-positive |
 
-Use the same seed triplets as the OU–III runs so the comparison stays paired.
+The study driver merges the five exports into one CSV per record:
+`t, a_up, Tz_hat, z_ref, err_<F>, zhat_<F>` for each family `F`. `err_<F>` is
+the harness's float error; `zhat_<F>` is `err_<F> + z_ref` in double.
 
-Then write a manifest listing every record:
+## Study
 
-```csv
-path,family,hs,split,seed
-rec/jonswap_hs0.27_s11.csv,JONSWAP,0.27,eval,11
-rec/jonswap_hs0.27_d1.csv,JONSWAP,0.27,dev,d1
+```sh
+python3 tools/heave_baseline_study.py run --work runs/heave_baselines
+python3 tools/heave_baseline_study.py analyze --work runs/heave_baselines
 ```
 
-`split=dev` holds the additional draws used for comparator selection, as in
-Table VIII. `split=eval` holds the ten paired seed triplets.
+`run` builds the binaries, replays every record, verifies the export, tunes,
+freezes and evaluates; `analyze` rebuilds the statistics, `summary.md` and the
+plot from the work directory. Results go to `reports/results/heave_baselines/`.
 
-## Run
+| Split | Records | Draws |
+|---|---|---|
+| eval | 8 stationary RAO records, controlled crossfade, low–high–low; Hs = 0.05 m and 30 s ramp (secondary) | the ten predeclared seed triplets of `tools/ou_validation.py`, phase-randomized as there |
+| eval | 8 pinned records: default draw, noise-free (`--no-noise`), nominal-cruise engine vibration | simulator default |
+| dev | 8 pinned records | comparator-retuning draws `default, 11, 23, 61001, 62003` (`W3D_IMU_SEED = W3D_INIT_SEED`) |
+
+The dev wave histories (the pinned records, not phase-randomized) and sensor
+draws are disjoint from eval's; they share the hull and the incident spectra,
+as the comparator retuning did. The default draw is also a dev draw, so the
+baselines' default-draw (Table X layout) entries are in-sample.
+
+The driver checks, and fails otherwise, that:
+- the Python rescoring of every exported error series equals the harness's
+  printed %Hs in float32, for the whole window and every segment;
+- the export builds' metric lines equal the shipped simulators' byte for byte;
+- the CLI `evaluate` path and the driver score the frozen baselines identically;
+- no tuned optimum lies on a grid edge.
+
+It also records how the replayed metrics compare with the committed evidence
+bundles, the sign of `z_ref` against `a_up`, and where the baseline code reads
+reference motion.
+
+## Standalone use
 
 ```sh
 python3 tools/heave_baselines.py tune --manifest runs/manifest.csv --out runs/hpdi_fddi_frozen.json
 python3 tools/heave_baselines.py evaluate --manifest runs/manifest.csv \
     --params runs/hpdi_fddi_frozen.json --out runs/hpdi_fddi_results.csv \
     --compare-csv runs/ou3_results.csv --compare-method OU-III
+python3 tools/heave_baselines.py rescore --manifest runs/manifest.csv --out runs/rescored.csv
 ```
 
-**What `tune` does.** It grid-searches both baselines on the dev split and
-freezes three configurations:
-- FDDI: fixed or period-scaled cutoff, crossed with the taper ratio.
-- HPDI-classic: the best configuration with m = n.
-- HPDI-compensated: the best configuration with m < n.
-
-It warns when an optimum lands on a grid edge.
-
-**What `evaluate` does.** It scores the frozen configurations on the eval split
-and writes long-format per-record rows (method, family, hs, seed, pct_hs). With
-`--compare-csv` it also reports the seed-level paired contrast:
-- percentile bootstrap, 10,000 resamples, PCG64 seed 20260317;
-- exact sign-flip p-value.
-
-This matches the primary-endpoint protocol. The compare CSV needs the columns
-`method,family,hs,seed,pct_hs`.
-
-Add `--float32` to replay HPDI in single precision, as deployed on the ESP32-S3.
+The manifest lists `path,family,hs,split,seed` (extra columns are ignored);
+`split=dev` records select the frozen parameters and `split=eval` records score
+them. `tune` grid-searches FDDI (fixed or period-scaled cutoff, crossed with the
+taper ratio) and HPDI (`3 <= m <= n <= 6`, fixed or period-scaled cutoff), and
+freezes FDDI, the best `m = n` (classic) and the best `m < n` (compensated)
+HPDI; it flags an optimum on a grid edge in the frozen file. `evaluate` writes
+long-format per-record rows and, with `--compare-csv` (columns
+`method,family,hs,seed,pct_hs`), a seed-level paired contrast with a 10,000
+resample percentile bootstrap (PCG64 seed 20260317) and an exact sign-flip test.
+`--float32` replays HPDI in single precision, as deployed on the ESP32-S3.
+`--flip-z` negates a NED-down reference.
 
 ## Reporting notes
 
