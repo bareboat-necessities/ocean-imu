@@ -15,8 +15,9 @@ Open the sketch: [`atomS3R_ins_tfg.ino`](atomS3R_ins_tfg.ino).
 - reads and calibrates the AtomS3R IMU using the shared device layer;
 - runs the estimator at 200 Hz;
 - learns tilt during startup through the filter's private Mahony proxy, so the boat may already be moving at power-on;
-- performs a one-shot magnetic north lock inside the fusion filter, with continuous hard-iron estimation;
+- performs a one-shot magnetic north lock inside the fusion filter;
 - uses filter yaw as the primary heading after north lock while retaining tilt-compensated magnetic heading for diagnostics;
+- keeps north on the startup/refined magnetic reference: continuous hard-iron learning is disabled, because heel motion makes it absorb calibration residuals as a heading offset;
 - estimates 3-D marine motion on the two-frame group, with the OU integral chain and its spectral-MSE regularizer;
 - adapts the sea-state-dependent estimator parameters from the canonical period statistics;
 - arms the accelerometer vibration guard by default, so machinery noise does not rectify into a standing tilt error;

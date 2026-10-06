@@ -17,6 +17,7 @@ Open the sketch: [`atomS3R_ins_kalman_ou2.ino`](atomS3R_ins_kalman_ou2.ino).
 - learns tilt during startup rather than requiring a perfectly stationary boot;
 - performs the filter’s one-shot magnetic north lock;
 - uses filter yaw as the main heading output after north lock;
+- keeps north on the startup/refined magnetic reference: continuous hard-iron learning is disabled, because heel motion makes it absorb calibration residuals as a heading offset;
 - estimates vessel motion using the adaptive OU-II process and integral-drift regularization;
 - provides graphical UI plus serial/NMEA output;
 - includes the shared IMU calibration wizard by default.
