@@ -648,6 +648,92 @@ def conditional_word_mixed_bound(P, PN, M, q, eta0, D0, etaN, DN,
             'linked_lower_bound': lower, 'uniform_margin_verified': False}
 
 
+def bordered_comparison_storage(P, e, kappa, D, de, dkappa):
+    """Exact bordered Fisher metric; no uniform equivalence is asserted.
+
+    kappa is proof bookkeeping, never an estimator state. Its Schur slack
+    must be positive. Every covariance entry and the scalar tangent remain.
+    """
+    ldlt(P)
+    n, J = len(P), inverse(P)
+    M = [P[i][:]+[e[i][0]] for i in range(n)]+[[x[0] for x in e]+[kappa]]
+    dM = [D[i][:]+[de[i][0]] for i in range(n)]+[[x[0] for x in de]+[dkappa]]
+    V = product(transpose(e), J, e)[0][0]
+    c = kappa-V
+    if c <= 0:
+        raise ValueError('positive bordered comparison slack required')
+    ldlt(M)
+    eta = add(de, product(D, J, e), -1)
+    dc = (dkappa-2*product(transpose(e), J, de)[0][0]
+          +product(transpose(e), J, D, J, e)[0][0])
+    fisher = trace(product(inverse(M), dM, inverse(M), dM))
+    split = trace(product(J, D, J, D))+2*product(transpose(eta), J, eta)[0][0]/c+(dc/c)**2
+    if fisher != split:
+        raise ArithmeticError('bordered Fisher decomposition failed')
+    return {'matrix': M, 'tangent': dM, 'slack': c, 'slack_tangent': dc,
+            'Fisher_storage': fisher, 'mean_weight': 2/c,
+            'uniform_coercivity_verified': False}
+
+
+def bordered_process(P, e, kappa, B, Q, s):
+    """Literal supported process as a PSD addition on the bordered matrix."""
+    n = len(P)
+    old = bordered_comparison_storage(P, e, kappa, zeros(n, n), zeros(n, 1), F(0))
+    p = process_source_score(P, B, Q, e, s)
+    kp = kappa+p['physical_process_action']
+    new = bordered_comparison_storage(p['covariance_next'], p['comparison_next'], kp,
+                                     zeros(n, n), zeros(n, 1), F(0))
+    A = [row[:]+[F(0)] for row in B]+[[F(0)]*n+[F(1)]]
+    U = [Q[i][:]+[s[i][0]] for i in range(n)]
+    U += [[x[0] for x in s]+[p['physical_process_action']]]
+    if not is_psd(U) or new['matrix'] != add(product(A, old['matrix'], transpose(A)), U):
+        raise ArithmeticError('bordered process addition failed')
+    if new['slack']-old['slack'] != p['combined_score_charge']:
+        raise ArithmeticError('bordered slack/score identity failed')
+    return {'P_next': p['covariance_next'], 'e_next': p['comparison_next'],
+            'kappa_next': kp, 'matrix_next': new['matrix'], 'base': A,
+            'addition': U, 'slack_next': new['slack'],
+            'slack_increment': p['combined_score_charge']}
+
+
+def bordered_correction(P, e, kappa, H, R, delta):
+    """Optimal additive correction as one joint covariance Schur complement.
+
+    delta=r+H e is the ACTUAL comparison defect, including -S_physical.
+    Fixed operands yield Fisher loss; dH,dR,d(delta) require the full lift
+    derivative. Arbitrary held masks are not optimal corrections.
+    """
+    n, m = len(P), len(R)
+    ldlt(R)
+    old = bordered_comparison_storage(P, e, kappa, zeros(n, n), zeros(n, 1), F(0))
+    S = add(product(H, P, transpose(H)), R)
+    K = product(P, transpose(H), inverse(S))
+    r = add(delta, product(H, e), -1)
+    C = add(P, product(K, H, P), -1)
+    ep = add(e, product(K, r))
+    kp = (kappa+product(transpose(delta), inverse(R), delta)[0][0]
+          -product(transpose(r), inverse(S), r)[0][0])
+    new = bordered_comparison_storage(C, ep, kp, zeros(n, n), zeros(n, 1), F(0))
+    Sigma, L = zeros(n+1+m, n+1+m), identity(n+1+m)
+    for i in range(n+1):
+        Sigma[i][:n+1] = old['matrix'][i][:]
+    for i in range(m):
+        Sigma[n+1+i][n+1:] = R[i][:]
+        L[n+1+i][:n] = H[i][:]
+    t = product(inverse(R), delta)
+    L[n][n+1:] = [-row[0] for row in t]
+    Y = product(L, Sigma, transpose(L))
+    cross = [row[n+1:] for row in Y[:n+1]]
+    regression = product(cross, inverse(S))
+    schur = add([row[:n+1] for row in Y[:n+1]], product(regression, transpose(cross)), -1)
+    if schur != new['matrix'] or new['slack'] != old['slack']:
+        raise ArithmeticError('bordered correction Schur/slack identity failed')
+    return {'P_next': C, 'e_next': ep, 'kappa_next': kp,
+            'matrix_next': new['matrix'], 'slack_next': new['slack'],
+            'input': Sigma, 'lift': L, 'joint': Y,
+            'innovation': S, 'regression': regression}
+
+
 def certificate():
     return {
         'qualification': 'OU3_INFORMATION_SHEAR_WORD_V2',
@@ -705,6 +791,11 @@ def certificate():
         'active_process_budget_minimal_domain': 'B_W=E_L+S_q-2 C; C^2<=E_L S_q. With bounded S_q, uniform B_W iff uniform comparison loss energy E_L; neither cap is supplied for general activated A21 words.',
         'uniform_conditional_score_margin_verified': False,
         'uniform_generated_packet_absorption_verified': False,
+        'bordered_comparison_storage_proof': 'app:bordered-comparison-storage',
+        'bordered_process_correction_score_absorption': 'PROVED for fixed process/row/noise/comparison-defect operands; causal variations remain signed ports',
+        'bordered_slack_balance': 'c_N=c_0+B_W on a covered process/correction word; no physical or estimator restart',
+        'bordered_storage_uniform_coercivity_verified': False,
+        'bordered_storage_full_endogenous_work_absorbed': False,
         'comparison_word_budget': 'chi_loss <= E_loss = V_0-V_N+Supply_W-sum NIS <= V_0+Supply_W-sum NIS',
         'comparison_supply': 'sum corrections ||r+H e||_(R^-1)^2 plus actual prediction/reset/projection signed cross-plus-square work',
         'physical_S_reset_by_pseudo_measurement': False,

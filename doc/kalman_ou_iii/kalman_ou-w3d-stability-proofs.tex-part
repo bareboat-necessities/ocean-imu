@@ -3791,6 +3791,185 @@ input, planar, regular real-operation derivative scope only; no physical
 assumption or runtime change. The tempting $ds_E=0$ shortcut is invalidated
 by the source algebra, not adopted as a surrogate.
 
+\subsection{Bordered comparison storage and its coercivity obstruction}
+\label{app:bordered-comparison-storage}
+
+\paragraph{Scope, obligation and qualifications.}
+For every finite regular real-operation history with actual SPD covariance,
+write $V=e^TP^{-1}e$ and introduce a \emph{proof scalar} $\kappa$, not an
+estimator state. Start once with $\kappa_0=V_0+c_0$, $c_0>0$. No upper bound
+on $V_0$ is assumed. The following analytical identities absorb the complete
+covariance-induced score work on fixed-operand prediction and optimal additive
+correction substeps. They do not assume that the actual coefficient/source
+derivatives vanish. Reached held BA uses the proved active reduction and its
+effective noise; unsupported held/source directions remain separate. The
+purpose is to test a new storage rather than repeat the unclosed scalar
+budget estimate. All-time coercivity and full endogenous-work absorption are
+tested below, not inferred from a nonincreasing expression.
+
+\paragraph{Exact storage --- PROVED analytical.}
+Define
+\[
+ \mathcal P=\begin{pmatrix}P&e\\e^T&\kappa\end{pmatrix},\quad
+ c=\kappa-V>0,\quad \mathcal D=d\mathcal P,
+ \quad \mathcal W=\operatorname{tr}(\mathcal P^{-1}\mathcal D
+                                      \mathcal P^{-1}\mathcal D).
+\]
+Block elimination, with $J=P^{-1}$, gives
+\[
+ \mathcal P=\begin{pmatrix}I&0\\e^TJ&1\end{pmatrix}
+       \operatorname{diag}(P,c)
+       \begin{pmatrix}I&Je\\0&1\end{pmatrix}.
+\]
+Differentiate this factorization and retain the regression derivative
+$d(Je)=J\eta$, where $\eta=de-dPJe$. Its diagonal and off-diagonal
+Fisher blocks are orthogonal, so
+\[
+ \boxed{\mathcal W=\operatorname{tr}(JdPJdP)
+       +\frac{2}{c}\eta^TJ\eta+\left(\frac{dc}{c}\right)^2,\qquad
+ dc=d\kappa-2e^TJde+e^TJdPJe.}                         \tag{BC1}
+\]
+This retains every covariance cross entry and the proof-scalar tangent.
+Deleting $dc$ or holding this state-dependent decomposition fixed is invalid.
+
+\paragraph{Prediction absorbs its score without a separate residual cap.}
+For $P^+=FPF^T+Q$, $e^+=Fe+s$, require $Qt=s$ to be solvable and set
+$\kappa^+=\kappa+s^Tt$. Then exactly
+\[
+ \mathcal P^+=\mathcal A\mathcal P\mathcal A^T+\mathcal U,
+ \quad\mathcal A=\operatorname{diag}(F,1),\qquad
+ \mathcal U=\begin{pmatrix}Q&s\\s^T&s^Tt\end{pmatrix}\succeq0.
+                                                               \tag{BC2}
+\]
+Indeed $\mathcal U=\binom{I}{t^T}Q(I,t)$. From (PS1),
+\[
+ c^+=c+\chi,\qquad \chi=V+s^Tt-V^+\ge0.                  \tag{BC3}
+\]
+For fixed $F,Q,s$ along the considered variation,
+$\mathcal D^+=\mathcal A\mathcal D\mathcal A^T$ and
+$\mathcal W^+\le\mathcal W$. To prove it, whiten $\mathcal A$ to
+$U=(\mathcal P^+)^{-1/2}\mathcal A\mathcal P^{1/2}$.
+(BC2) gives $U^TU\preceq I$; for symmetric $Z$,
+$\|UZU^T\|_F\le\|Z\|_F$. Thus the entire process score, including
+its mixed and square terms, is absorbed in this qualified storage identity.
+There is no independent $dP$ times score estimate.
+
+For the actual causal derivatives, put
+$\mathcal D_b^+=\mathcal A\mathcal D\mathcal A^T$ and
+$\mathcal E=d\mathcal A\mathcal P\mathcal A^T+
+\mathcal A\mathcal P d\mathcal A^T+d\mathcal U$.
+The exact replacement is
+\[
+ \mathcal W^+-\mathcal W=-\ell_b+
+ 2\operatorname{tr}(\mathcal J^+\mathcal D_b^+\mathcal J^+\mathcal E)
+ +\operatorname{tr}(\mathcal J^+\mathcal E\mathcal J^+\mathcal E),
+ \quad \ell_b\ge0.                                        \tag{BC4}
+\]
+Here $d\mathcal U$ retains $dQ,ds,d(s^Tt)$ through their actual supported
+recurrence; no derivative across a changing support is asserted. These signed
+terms are not independent noise or already absorbed work.
+
+\paragraph{Correction is an exact conditional-covariance loss.}
+For an actual optimal additive correction define
+$S=HPH^T+R$, $K=PH^TS^{-1}$, $r=\delta-He$ and
+$\delta=r+He$. Set
+\[
+ \kappa^+=\kappa+\delta^TR^{-1}\delta-r^TS^{-1}r.           \tag{BC5}
+\]
+Form $\Sigma=\operatorname{diag}(\mathcal P,R)$ and the invertible map
+\[
+ L=\begin{pmatrix}I&0&0\\0&1&-\delta^TR^{-1}\\H&0&I\end{pmatrix},
+ \qquad Y=L\Sigma L^T.
+\]
+Partition the last measurement coordinates from the first $n+1$ coordinates.
+The measurement block is $S$, the cross block is
+$Y_{ay}=\binom{PH^T}{e^TH^T-\delta^T}$, and the Schur complement is
+exactly $\mathcal P^+$ with the literal posterior $P^+=P-KHP$ and
+$e^+=e+Kr$. The comparison identity gives $c^+=c>0$.
+With $B=Y_{ay}S^{-1}$, a second block elimination proves
+\[
+ \mathcal W(Y)=\mathcal W(\mathcal P^+)
+ +\operatorname{tr}(S^{-1}dS S^{-1}dS)
+ +2\operatorname{tr}((\mathcal P^+)^{-1}dB S dB^T).         \tag{BC6}
+\]
+For fixed $H,R,\delta$, congruence invariance gives
+$\mathcal W(Y)=\mathcal W(\mathcal P)$, so both displayed losses are
+nonnegative. This accounts for the actual gain/residual work with no separate
+NIS bound and composes with (BC2) on the same covered word.
+The previous $9/10$ magnetic decrement uses a different storage and is not
+added here; (BC6) is the correction loss for this candidate.
+
+For actual varying operands set $\Omega=L^{-1}dL$ and
+$Z=\Omega\Sigma+\Sigma\Omega^T$. The exact additional input work is
+\[
+ \operatorname{tr}(R^{-1}dR R^{-1}dR)
+ +2\operatorname{tr}(\Sigma^{-1}d\Sigma\Sigma^{-1}Z)
+ +\operatorname{tr}(\Sigma^{-1}Z\Sigma^{-1}Z).              \tag{BC7}
+\]
+This follows by pulling $dY$ back to $d\Sigma+Z$ before squaring.
+It retains $dH,dR,d\delta$ with their signs. In particular $d\delta$
+contains endogenous curvature and source/reference changes; it is not set
+to zero merely because the delivered record is fixed. At the literal $S=0$
+update $\delta=-S_{physical}$, and held accelerometer $R$ is its reached
+$R_{eff}$ with $dR_{eff}$ retained. No arbitrary masked update is made optimal.
+
+\paragraph{Chronology and the limitation of the candidate.}
+Default AW addition is (BC2) with $F=I$, $s=0$, $Q$ its actual PSD increment;
+its face/target derivative stays in (BC4). At unsupported projection or
+chart/reset steps keep the actual $P^+,e^+$ and choose the bookkeeping update
+$\kappa^+=\kappa+V^+-V$, preserving $c$; their full derivatives remain signed
+work. This changes no physical or estimator state and supplies no free loss.
+Reference, tuner and clocks keep their inherited causal derivatives.
+
+Consequently a covered process/correction word has the exact slack balance
+$c_N=c_0+B_W$. This is non-circular positive definiteness at every covered
+prefix, \emph{not} uniform comparison retention. It also shows why this
+candidate cannot be promoted: the coefficient $2/c_N$ in (BC1) can decrease
+without any proved positive lower bound. A bound on each word's $B_W$ alone
+does not bound its cumulative sum over infinitely many words.
+
+An exact formal scope test makes this defect explicit. Take the scalar word
+\[
+ P_0=\tfrac12,\quad e_0=1,\quad F=\tfrac12,\quad
+ Q=\tfrac78,\quad s=\tfrac12,\quad H=R=\delta=1.
+\]
+Prediction gives $P^-=1,e^-=1$, $\chi=2+2/7-1=9/7$.
+The correction has $r=0$ and returns $P^+=1/2,e^+=1$, but increases
+$\kappa$ by another $1$ and leaves its new slack unchanged. Repeating this
+\emph{algebraic} word therefore gives $c_n=c_0+9n/7$ while $V_n=2$.
+On $dP=dc=0$, $de=1$, (BC1) equals $4/c_n\to0$ despite fixed mean
+comparison tangent energy $2$. This is not a shipping-reachable or admitted
+counterexample; it refutes automatic uniform equivalence of the candidate
+metric, even for a bounded comparison and a positive observation each word.
+This is a comparison on the ambient tangent space. It does not exclude
+coercivity on a separately justified restricted causal lift; proving that
+comparison, including the scalar tangent, would be an additional obligation.
+
+Nor can the scalar be reset for free. If $c_0$ is fixed along a variation,
+restoring $c_N=c_0+B_W$ to $c_0$ with $P_N,e_N$ unchanged changes storage by
+\[
+ \Delta\mathcal W_{restore}=
+ \frac{2B_W}{c_0(c_0+B_W)}\|\eta_N\|_{J_N}^2
+ -\frac{(dB_W)^2}{(c_0+B_W)^2}.                            \tag{BC8}
+\]
+Both terms must stay linked and be paid by actual loss. This proof-only
+normalization is not a physical reset or a retention certificate.
+
+\paragraph{Outcome and shipping-faithfulness record.}
+The bordered identity genuinely absorbs covered fixed-operand process and
+correction score work in one storage. The \textbf{D sufficient-bound failure}
+is its unproved uniform coercivity, together with unabsorbed actual ports
+(BC4),(BC7), reset/projection/AW and gauge work. It is not an alternative
+proof of the regional theorem or a reason to weaken physical assumptions.
+No radius is computed. Preserved: complete actual $P,e$, gains, supported
+physical/model forcing, Joseph/held qualifications, causal auxiliary history
+and every scalar/frame derivative. Relaxations: regular real-operation scope;
+fixed operands only for the stated nonexpansion implication, and a clearly
+formal scalar scope test. The uniform shipping comparison/word gap remains
+\textbf{OPEN}. A useful continuation must pay (BC8) and actual causal work,
+or use a uniformly coercive storage; mere monotonicity of $\mathcal W$ does
+not suffice.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

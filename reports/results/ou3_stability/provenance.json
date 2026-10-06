@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "e472ec4dafe97da98c08102f657ec7c317c34ca5"
+      "git_blob_sha": "15a7b85d8b3a5136796a6ab27f0e3c6cdc109b2e"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "5eabb75b95af788f3a83d203d4902392ab610119"
+      "git_blob_sha": "f4774381ce532f63c37088279f5ccdb3e64cb0f3"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "651f69fce2f72f998b83850d6d990cb6cb8fca11"
+      "git_blob_sha": "4466ab3e26542ff6f14f1f2ba9c14be37c057fa7"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "985cd9bcc4dc75737455adcf38276311bf53dbaa"
+      "git_blob_sha": "76d0f15beb3d743ef09aaaf9558a89254f46526a"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "2990b09d7907755f478d89b0b12a5eaf8eab7a1c"
+      "git_blob_sha": "bbac747d178bd74c77fb37758dce6082f82abef0"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "1e9718c8d03a5ebcccd02a1d55cf30fc5b0d5f70"
+      "git_blob_sha": "397963b22d8c6714a8e358402fa48164ab9e7824"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -948,11 +948,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/information_shear_word.py",
-      "git_blob_sha": "8c8b3387e63d9cfb16e2c1dd4c4815378363e1e6"
+      "git_blob_sha": "3733e12abbfbff6a1800d541fee96ac6b6db8c08"
     },
     {
       "path": "tests/validation/test_ou3_information_shear_word.py",
-      "git_blob_sha": "d97e3434db9bf835cc7f77f99d88a8ae72be0f01"
+      "git_blob_sha": "3d366bb2c966b646daa510e98935a93ec3f97f6e"
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
@@ -960,7 +960,7 @@
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
-      "git_blob_sha": "c5bd50a4617feb97272595b4250ad96faa377a8b"
+      "git_blob_sha": "f71de1c7c8cec7a1e407d079ecf402a736a7fc5f"
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
@@ -980,7 +980,7 @@
     },
     {
       "path": "docs/ou3-linked-word-score.md",
-      "git_blob_sha": "ee55e64eeea139dceaaf09e889baf6560e1bb04f"
+      "git_blob_sha": "e1cad731d99c06c8432a6df9fe65af41c3c663b9"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1170,7 +1170,11 @@
     "held_BA_residual_and_effective_noise_ports_retained": true,
     "uniform_active_comparison_loss_energy": null,
     "uniform_remaining_unsupported_scores": null,
-    "held_score_tooling_failure": "E: corrected gain derivative regression signature and cwd-relative source-test path; no proof premise or source-faithfulness check changed"
+    "held_score_tooling_failure": "E: corrected gain derivative regression signature and cwd-relative source-test path; no proof premise or source-faithfulness check changed",
+    "bordered_comparison_storage_proof": "app:bordered-comparison-storage",
+    "bordered_fixed_operand_score_absorption": true,
+    "bordered_uniform_coercivity_verified": false,
+    "bordered_full_endogenous_work_absorption_verified": false
   },
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",

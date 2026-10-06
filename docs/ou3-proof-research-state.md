@@ -12,7 +12,7 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `52e20186dcd49acfef269ce5a6268de3b8fee70a`.
+Verified starting PR head: `4564d21fcdea897b27e22bfd2d773508cfff7479`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved. Current CI chronology belongs in PR metadata.
 
@@ -28,6 +28,25 @@ lemma/quantifiers, finite-error role, literal dissipation structure, required
 proved/open bounds and avoidance of recorded dead ends. Required CI remains.
 
 ## Evidence
+
+**PROVED — analytical, new storage test:** `app:bordered-comparison-storage`
+lifts the actual comparison into `M=[[P,e],[e',kappa]]`, with positive slack
+`c=kappa-e'P^-1 e`. Its Fisher storage is exactly
+`tr(J dP J dP)+2 eta'J eta/c+(dc/c)^2`. Supported prediction is a PSD addition
+and optimal correction is a joint-covariance Schur complement. With fixed
+process/row/noise/comparison-defect operands both operations dissipate this
+ONE storage, absorbing their full covariance-induced score work without a
+separate residual or comparison maximum. This is a proof lift, not a runtime
+observer. Causal dF/dQ/ds and dH/dR/d(delta), plus reset/projection/AW and gauge
+terms, remain exact signed work. Held masks require the reached reduction.
+
+**Not a retention theorem:** slack obeys `c_N=c_0+B_W`. An exact formal
+process/correction word keeps `P=1/2,e=1,V=2` but adds `9/7` to slack each word;
+the mean weight tends to zero. No shipping reachability is asserted for that
+scope test. Restoring fixed slack costs exactly (BC8), including its negative
+`(dB_W)^2` term; it is not a free proof reset. Uniform equivalence and actual
+causal-port absorption remain OPEN. Do not replace the original Schur-gap
+obligation with monotonicity of this degenerating metric.
 
 **PROVED — analytical:** the continuous exact MOVING physical fibre has identical
 complete records and preserves the stated MARINE/SLOW+FAST conditions. The pair
@@ -403,6 +422,20 @@ its reference rate with fixed S and differing settings. No profile transfer.
 Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
+
+* **D, bordered-storage uniform-coercivity failure:** the new Fisher lift pays
+  covered fixed-operand score work but accumulates `B_W` in its slack and can
+  lose all uniform mean weight. A per-word budget cap does not bound its
+  cumulative sum. The precise unpaid alternatives are the signed restoration
+  charge (BC8) and actual causal work (BC4),(BC7), or a different uniformly
+  coercive storage. No constant-source/covariance assumption is imposed on
+  shipping. Retain the exact lift and two nonnegative correction losses;
+  reject nonexpansion alone as physical comparison retention.
+* **E, storage-test lint:** an unused innovation binding was removed after
+  ruff flagged it; algebra tests passed and no check or condition was weakened.
+* **E, storage manuscript:** the standalone compile rejected an unavailable
+  script-font command; standard mathcal notation replaces it, without adding
+  a rendering dependency or changing the proof.
 
 * **D, recurring comparison/work closure still not obtained:** composing the
   actual supported process balance with the applied acc/S/magnetic comparison

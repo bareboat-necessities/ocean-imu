@@ -667,6 +667,53 @@ suffix covariance terms, inherited physical SLOW/FAST and S, consistent frames.
 Relaxations: regular real-operation held scope, with an explicit actual-P_b
 comparison for its numeric specialization; no new physical assumption.
 
+## Bordered comparison storage: score absorption is not uniform retention
+
+`app:bordered-comparison-storage` gives a new analytical storage test, rather
+than another independent score bound. For the actual comparison define
+
+```
+M = [[P,e],[e',kappa]],  c=kappa-e'P^-1 e>0,
+F_M = tr(J dP J dP)+2 eta'J eta/c+(dc/c)^2.
+```
+
+Start the proof scalar once at `kappa_0=V_0+c_0`. It is not an estimator
+variable and does not reset physical S or history. Supported prediction updates
+`kappa+=s'Q^dagger s`; the lifted matrix is exactly a congruence plus a PSD
+addition. An optimal correction updates
+`kappa+=delta'R^-1 delta-NIS`, with the literal `delta=r+H e`; its lifted
+matrix is exactly a joint covariance's Schur complement. The same Fisher
+storage is nonincreasing for both substeps when these coefficient/source
+operands are fixed along the variation. This absorbs their covariance-induced
+score work jointly. Correction loss is the sum of the innovation Fisher loss
+and the conditional-regression Fisher loss, both nonnegative.
+
+The actual derivatives are not silently frozen: (BC4) retains the process
+coefficient/source port, and (BC7) retains the full dH/dR/d(delta) connection
+and noise work before norms. Reference, projection, reset, original AW face,
+held effective noise, physical source and gauge contributions remain. The
+fixed-operand implication is not a theorem for the entire shipping derivative.
+
+The crucial obstruction is now exact: `c_N=c_0+B_W`. The metric's mean weight
+`2/c_N` has no proved uniform lower bound. A formal rational word with
+`F=1/2,Q=7/8,H=R=delta=1,s=1/2` returns `P=1/2,e=1` every word but grows
+slack by `9/7`. This is an algebraic scope test, not a shipping counterexample.
+Even bounded comparison energy does not stop this metric from degenerating.
+
+Restoring slack to c_0 at a word boundary, with actual P,e unchanged, costs
+
+```
+2 B_W/(c_0*(c_0+B_W)) * eta_N' J_N eta_N
+ - (dB_W)^2/(c_0+B_W)^2.
+```
+
+The negative derivative square stays linked; no independent extrema are used.
+Restoration is not free. This candidate therefore does not bypass the needed
+uniform comparison/Schur-work estimate. Classification D concerns the failed
+promotion to uniform retention; the lift and conditional loss identities are
+PROVED analytical. No radius, new physical assumption, full endogenous-work
+absorption or theorem-count increase is claimed.
+
 ## Fixed-input planar prediction: a genuine zero port, with its literal residue
 
 `app:planar-even-process-work` proves analytically that the original even

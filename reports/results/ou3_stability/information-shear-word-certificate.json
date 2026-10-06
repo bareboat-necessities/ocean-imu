@@ -1,6 +1,11 @@
 {
   "active_process_budget_minimal_domain": "B_W=E_L+S_q-2 C; C^2<=E_L S_q. With bounded S_q, uniform B_W iff uniform comparison loss energy E_L; neither cap is supplied for general activated A21 words.",
   "all_time_planar_magnetic_service_verified": false,
+  "bordered_comparison_storage_proof": "app:bordered-comparison-storage",
+  "bordered_process_correction_score_absorption": "PROVED for fixed process/row/noise/comparison-defect operands; causal variations remain signed ports",
+  "bordered_slack_balance": "c_N=c_0+B_W on a covered process/correction word; no physical or estimator restart",
+  "bordered_storage_full_endogenous_work_absorbed": false,
+  "bordered_storage_uniform_coercivity_verified": false,
   "causal_generated_process_augmented_balance_verified": true,
   "combined_process_score_budget_AW_frame_invariant": true,
   "combined_process_word_directional_budget_verified": true,

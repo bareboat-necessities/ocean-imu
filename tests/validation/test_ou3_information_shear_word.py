@@ -9,7 +9,7 @@ from tools.stability.ou3_theorem.information_shear_word import (
     projector_differential, score_loss_charge, word_score_normal_form, zeros,
     conditional_mixed_coefficients, conditional_word_mixed_bound,
     process_source_score, source_qualified_word_score, process_augmented_shear,
-    held_bias_boundary_score,
+    held_bias_boundary_score, bordered_comparison_storage, bordered_process, bordered_correction,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import add, identity, is_psd, ldlt, transpose
@@ -25,6 +25,95 @@ class InformationShearWordTests(unittest.TestCase):
         self.dP = [[F(1, 5), F(-2, 7)], [F(-2, 7), F(1, 4)]]
         self.e, self.de = [[F(2, 3)], [F(-1, 5)]], [[F(1, 7)], [F(3, 8)]]
         self.w = F(3, 5)
+
+    def test_bordered_storage_and_supported_process_absorb_full_score(self):
+        a = bordered_comparison_storage(self.P, self.e, F(5), self.dP, self.de, F(2, 7))
+        B, Q, s = [[F(1), F(1, 3)], [F(0), F(4, 5)]], identity(2), [[F(1, 8)], [F(-1, 9)]]
+        p = bordered_process(self.P, self.e, F(5), B, Q, s)
+        Dnext = product(p['base'], a['tangent'], transpose(p['base']))
+        Jnext = inverse(p['matrix_next'])
+        after = sum(product(Jnext, Dnext, Jnext, Dnext)[i][i] for i in range(3))
+        self.assertGreaterEqual(a['Fisher_storage']-after, 0)
+        self.assertGreater(p['slack_increment'], 0)
+        with self.assertRaisesRegex(ValueError, 'positive bordered'):
+            bordered_comparison_storage(self.P, self.e, F(0), self.dP, self.de, F(0))
+        with self.assertRaisesRegex(ValueError, 'outside process-noise range'):
+            bordered_process(self.P, self.e, F(5), B, zeros(2, 2), s)
+
+    def test_bordered_correction_has_exact_two_nonnegative_losses(self):
+        a = bordered_comparison_storage(self.P, self.e, F(5), self.dP, self.de, F(2, 7))
+        H, R, delta = [[F(1), F(2, 3)]], [[F(4, 5)]], [[F(-3, 7)]]
+        c = bordered_correction(self.P, self.e, F(5), H, R, delta)
+        dSigma = zeros(4, 4)
+        for i in range(3):
+            dSigma[i][:3] = a['tangent'][i][:]
+        dY = product(c['lift'], dSigma, transpose(c['lift']))
+        S, K = c['innovation'], c['regression']
+        dS, dcross = [row[3:] for row in dY[3:]], [row[3:] for row in dY[:3]]
+        dK = product(add(dcross, product(K, dS), -1), inverse(S))
+        T = [identity(3)[i]+[-x for x in K[i]] for i in range(3)]
+        dC = product(T, dY, transpose(T))
+        Jc = inverse(c['matrix_next'])
+        out = sum(product(Jc, dC, Jc, dC)[i][i] for i in range(3))
+        loss = product(inverse(S), dS, inverse(S), dS)[0][0]
+        regression_loss = 2*sum(product(Jc, dK, S, transpose(dK))[i][i] for i in range(3))
+        self.assertEqual(a['Fisher_storage']-out, loss+regression_loss)
+        self.assertGreaterEqual(loss, 0)
+        self.assertGreaterEqual(regression_loss, 0)
+        self.assertEqual(c['slack_next'], a['slack'])
+
+    def test_bordered_slack_growth_prevents_automatic_uniform_equivalence(self):
+        # Exact formal process/correction word, NOT a shipping admission witness.
+        # The comparison and P return; proof slack does not. No replay sweep.
+        P, e, kappa = [[F(1, 2)]], [[F(1)]], F(3)
+        p = bordered_process(P, e, kappa, [[F(1, 2)]], [[F(7, 8)]], [[F(1, 2)]])
+        c = bordered_correction(p['P_next'], p['e_next'], p['kappa_next'],
+                                [[F(1)]], [[F(1)]], [[F(1)]])
+        self.assertEqual(c['P_next'], P)
+        self.assertEqual(c['e_next'], e)
+        self.assertEqual(c['slack_next'], F(1)+F(9, 7))
+        self.assertEqual(c['kappa_next']-kappa, F(9, 7))
+        # On dc=0, D=0, de=1 the Fisher weight is 4/c versus fixed mean energy 2.
+        a = bordered_comparison_storage(P, e, c['kappa_next'], [[F(0)]], [[F(1)]], F(4))
+        self.assertEqual(a['slack_tangent'], 0)
+        self.assertEqual(a['Fisher_storage'], 4/c['slack_next'])
+        self.assertFalse(certificate()['bordered_storage_uniform_coercivity_verified'])
+
+    def test_bordered_actual_row_noise_and_defect_derivatives_are_retained(self):
+        P, D, e, de = self.P, self.dP, self.e, self.de
+        H, dH = [[F(1), F(2, 3)]], [[F(-1, 7), F(1, 5)]]
+        R, dR, delta, ddelta = [[F(4, 5)]], [[F(1, 9)]], [[F(-3, 7)]], [[F(2, 9)]]
+        k, dk = F(5), F(2, 7)
+        old = bordered_comparison_storage(P, e, k, D, de, dk)
+        out = bordered_correction(P, e, k, H, R, delta)
+        Si, Ri = inverse(out['innovation']), inverse(R)
+        K = product(P, transpose(H), Si)
+        r = add(delta, product(H, e), -1)
+        dr = add(add(ddelta, product(dH, e), -1), product(H, de), -1)
+        dS = add(add(add(product(dH, P, transpose(H)), product(H, D, transpose(H))),
+                     product(H, P, transpose(dH))), dR)
+        dK = gain_differential(P, H, K, Si, D, dH, dR)
+        dC = optimal_covariance_differential(P, H, K, D, dH, dR)
+        dep = add(add(de, product(dK, r)), product(K, dr))
+        dkp = (dk+2*product(transpose(delta), Ri, ddelta)[0][0]
+               -product(transpose(delta), Ri, dR, Ri, delta)[0][0]
+               -2*product(transpose(r), Si, dr)[0][0]
+               +product(transpose(r), Si, dS, Si, r)[0][0])
+        direct = bordered_comparison_storage(out['P_next'], out['e_next'], out['kappa_next'], dC, dep, dkp)
+        dSigma, dL = zeros(4, 4), zeros(4, 4)
+        for i in range(3):
+            dSigma[i][:3] = old['tangent'][i][:]
+        dSigma[3][3] = dR[0][0]
+        dL[3][:2] = dH[0][:]
+        dt = product(Ri, add(ddelta, product(dR, Ri, delta), -1))
+        dL[2][3] = -dt[0][0]
+        L, Sigma = out['lift'], out['input']
+        dY = add(add(product(L, dSigma, transpose(L)), product(dL, Sigma, transpose(L))),
+                 product(L, Sigma, transpose(dL)))
+        B = out['regression']
+        reader = [identity(3)[i]+[-x for x in B[i]] for i in range(3)]
+        self.assertEqual(direct['tangent'], product(reader, dY, transpose(reader)))
+        self.assertEqual(direct['slack_tangent'], old['slack_tangent'])
 
     def test_optimal_action_kernel_includes_covariance_rows(self):
         P, H, R = identity(2), [[F(1), F(0)]], [[F(1)]]
