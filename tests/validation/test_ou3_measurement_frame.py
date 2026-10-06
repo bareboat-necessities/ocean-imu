@@ -4,6 +4,7 @@ from pathlib import Path
 import unittest
 
 from tools.stability.ou3_theorem.information_shear_word import zeros, word_score_normal_form
+from tools.stability.ou3_theorem.information_shear_word import conditional_mixed_coefficients
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import add, identity, transpose
 from tools.stability.ou3_theorem.measurement_frame import (
@@ -471,6 +472,39 @@ class MeasurementFrameTests(unittest.TestCase):
         fisher1 = trace(product(Jnext, Dnext, Jnext, Dnext))
         self.assertGreaterEqual(mean0-mean1, c*mean0)
         self.assertGreaterEqual(fisher0-fisher1, (2*c-c*c)*fisher0)
+
+    def test_conditional_mixed_reader_is_invariant_under_state_dependent_AW_frame(self):
+        e, de, D = zeros(21, 1), zeros(21, 1), zeros(21, 21)
+        e[1][0], e[17][0], de[1][0], de[15][0] = F(1, 7), F(1, 11), F(1, 13), F(1, 17)
+        D[1][17] = D[17][1] = F(1, 19)
+        aw, daw = [F(1, 5), 0, F(1, 7)], [F(1, 17), 0, F(-1, 23)]
+        moved = aw_shear_differentials(aw, daw, self.P, D, e, de)
+        eta = add(de, product(D, inverse(self.P), e), -1)
+        original = conditional_aw_storage(self.P, e, eta, D)
+        changed = conditional_aw_storage(moved['P'], moved['e'], moved['eta'], moved['dP'])
+        for key in ('conditional_covariance', 'd_conditional_covariance',
+                    'conditional_score', 'conditional_storage'):
+            self.assertEqual(original[key], changed[key], key)
+        boundary = aw_frame_boundary_work(self.P, e, eta, D, daw)
+        self.assertEqual(changed['complementary_storage']-original['complementary_storage'],
+                         boundary['signed_boundary_work'])
+        # Endpoint congruence of the BASE word; state-dependent derivatives
+        # above remain in the actual complementary packets, never frozen.
+        E = zeros(21, 3)
+        for i in range(3):
+            E[15+i][i] = F(1)
+        M, PN = identity(21), add(self.P, identity(21))
+        LN, L0 = aw_shear([F(1, 3), F(1, 11), F(-1, 7)]), moved['L']
+        Mt, PNt = product(LN, M, inverse(L0)), product(LN, PN, transpose(LN))
+        q = zeros(21, 1)
+        q[15][0], q[1][0] = F(1, 101), F(1, 103)
+        qt = product(transpose(inverse(L0)), q)
+        L, Lt = product(M, E), product(Mt, E)
+        before = conditional_mixed_coefficients(original['conditional_covariance'],
+            product(transpose(L), inverse(PN), L), product(transpose(E), q), F(2))
+        after = conditional_mixed_coefficients(changed['conditional_covariance'],
+            product(transpose(Lt), inverse(PNt), Lt), product(transpose(E), qt), F(2))
+        self.assertEqual(before, after)
 
 
 if __name__ == '__main__':

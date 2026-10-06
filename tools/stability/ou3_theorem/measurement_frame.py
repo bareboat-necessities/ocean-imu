@@ -510,6 +510,7 @@ def certificate():
         'actual_AW_sync_conditional_precision_nonincrease': True,
         'actual_AW_sync_connection_square_nonincrease': True,
         'conditional_AW_joint_storage_decomposition': True,
+        'conditional_AW_storage_and_mixed_reader_frame_invariant': True,
         'non_AW_measurement_conditional_storage_invariant': True,
         'non_AW_measurement_endpoint_square_matrix_decreases': True,
         'linked_OU_conditional_precision_and_connection_balance': True,

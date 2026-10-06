@@ -37,6 +37,7 @@
     "simple_loss_fraction_lower": "1/100000000000000",
     "uniform_complete_word_gap": false
   },
+  "conditional_AW_storage_and_mixed_reader_frame_invariant": true,
   "covariance_frame_derivative": "dPbar=T^T dP T-Omega Pbar+Pbar Omega",
   "default_AW_map_unchanged_in_frame": true,
   "frame": "T=diag(R,R,I,I,I,I,R), R=actual nominal world-to-body rotation",

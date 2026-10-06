@@ -324,3 +324,11 @@ net signed mixed-block Schur comparison; do not re-prove finiteness, identify
 those algebraic directions as physical gauges, or promote their block
 coefficient to a complete-word margin. All generated covariance scores and
 signed LIN/AG/source work remain in that comparison.
+
+
+The next reduction is `app:conditional-mixed-word`: evaluate the actual
+conditional score reader, then use the linked aggregate-packet bound retaining
+half of its net root form. This retains U*q_suffix and both frame/gauge
+endpoints. Its packets remain endogenous; do not substitute independent
+inputs, and do not use the already-positive base process block as proof of a
+positive net score margin. Uniform score and packet domination remain OPEN.

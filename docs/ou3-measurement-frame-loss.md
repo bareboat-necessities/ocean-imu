@@ -505,3 +505,13 @@ suffix chronology. Relaxations: existing regular real/profile qualifications
 and a conservative lower bound for one base-action block. The incomplete
 Schur domination is D, not a shipping counterexample. All-time planar
 admission remains separate OPEN.
+
+
+The signed mixed-block continuation is now derived in
+[the complete suffix-score note](ou3-linked-word-score.md#actual-conditional-mixed-block-bound)
+and `app:conditional-mixed-word`. It uses the actual conditional C, transported
+precision T and linked score to give an explicit three-row root-score test,
+then bounds aggregate generated-port work while retaining half the net root
+loss. The endpoint adjustment remains explicit. The process lower bound
+justifies the base inverses; uniform signed score/packet absorption remains
+OPEN and no radius is solved.

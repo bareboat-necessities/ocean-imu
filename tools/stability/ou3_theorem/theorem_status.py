@@ -440,6 +440,12 @@ def status_report() -> dict:
             "qualified_conditional_AW_precision_upper":"15942618",
             "qualified_conditional_AW_base_process_loss_lower":"1/100000000000000",
             "conditional_AW_base_loss_is_complete_gap":False,
+            "conditional_mixed_word_completion_verified":True,
+            "conditional_mixed_reader_AW_frame_invariant":True,
+            "conditional_directional_score_reader_verified":True,
+            "conditional_linked_half_loss_bound_verified":True,
+            "uniform_conditional_score_margin_verified":False,
+            "uniform_generated_packet_absorption_verified":False,
             "central_planar_acc_physical_curvature_charge_verified":True,
             "central_planar_acc_charge_uses_nominal_AW_BA_boxes":False,
             "qualified_planar_magnetic_coupled_loss_fraction":"9/10",
@@ -472,8 +478,10 @@ def status_report() -> dict:
             "Internal frame connections now cancel in the complete suffix word, leaving an exact three-dimensional signed AW endpoint quadratic. "
             "Conditional AW storage is invariant under optimal additive mag/S rows; literal integrated OU noise gives a qualified positive base-action block loss greater than 1e-14. "
             "The existing LIN path gives conditional AW precision below 15942618 on its qualified regular A21 domain. "
-            "Assemble the net signed conditional/complementary blocks, retaining integrated-chain/AG work, generated covariance scores and endpoint gauge. "
-            "Their relative Schur domination, not conditional precision finiteness alone, remains unproved; no uniform complete margin is certified. "
+            "The actual conditional root score block now has an explicit three-row Schur reader in C,T,q, and exact completion bounds generated mixed work by one linked packet while retaining half the net conditional root form. "
+            "The state-dependent AW frame preserves the conditional storage and score reader; endpoint frame work stays in transformed complementary packets without double counting. "
+            "Prove one uniform directional score margin and aggregate-packet domination, retaining integrated-chain/AG work, generated covariance suffix scores and endpoint gauge. "
+            "These net comparisons, not conditional precision finiteness, remain unproved; no uniform complete margin is certified. "
             "Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes "
             "to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. "
             "The physical same-record tangent is forced and is not automatically the homogeneous or action kernel. "

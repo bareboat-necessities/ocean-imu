@@ -2879,6 +2879,263 @@ history. Relaxations: regular real arithmetic; explicit existing profile
 qualifications; a conservative rational lower bound only for the base process
 block. No new physical assumption, gauge deletion, restart or runtime change.
 
+\subsection{Actual signed conditional mixed blocks and a linked packet bound}
+\label{app:conditional-mixed-word}
+
+\paragraph{Lemma, quantifiers and activation.}
+Consider any finite regular real-operation shipping word, beginning with a
+prediction qualified by (CA8)--(CA11), followed by the actual dissipative
+base maps and their complete linked ports. All boundary covariances are SPD;
+reached held-BA reductions and invertible reset branches retain their stated
+scope. Use one inherited history and the same fixed $\lambda>0$ throughout.
+This lemma bounds the conditional-root mean/covariance mixed block and its
+coupling to the remainder of the \emph{complete} tangent. It is subordinate
+to the uniform finite-error word gap, not a finite-error theorem itself.
+The process result proves invertibility of the base loss matrices used below;
+it does not prove the signed score margin (CM4). No source, reference, reset,
+AW-face or moving-gauge derivative is omitted. No enclosure or new physical
+premise is used.
+
+\paragraph{Actual three-dimensional compression.}
+Let $E=E_{aw}$, $J_0=P_0^{-1}$, $J_N=P_N^{-1}$, and use the existing complete
+suffix formula to define $M=M_{N,0}$ and $q=q_{0,N}$. Set
+\[
+ C=(E^TJ_0E)^{-1},\quad L=ME,\quad T=L^TJ_NL,\quad q_a=E^Tq,
+ \qquad A=C^{-1}-T.                                           \tag{CM1}
+\]
+The full integrated process supplies
+$A\succeq c_{aw}C^{-1}\succ0$: subsequent actual base maps satisfy
+$B_i^TJ_{i+1}B_i\preceq J_i$, so their inclusion can only decrease $T$.
+Thus this comparison includes actual process/$S$/magnetic closed-loop
+transports and their whitening. It is not an open-loop row Gramian or a
+replacement for the full tangent. On regular invertible base branches $T\succ0$.
+
+For a symmetric conditional covariance variation $Y$ define
+\[
+ \mathcal F(Y)=C^{-1}YC^{-1}-TYT,\qquad
+ K=T+TA^{-1}T=(T^{-1}-C)^{-1}.                               \tag{CM2}
+\]
+The previous process bound gives
+$\langle Y,\mathcal F(Y)\rangle\ge
+(2c_{aw}-c_{aw}^2)\operatorname{tr}(C^{-1}YC^{-1}Y)$.
+All inverses in (CM2) therefore have a proved base-action justification on
+this domain, rather than relying on pointwise numerical rank.
+
+Choose the unscaled symmetric basis $E_j$ (both off-diagonal entries equal
+one). Let $Y=\sum_j y_jE_j$, and define the actual six-dimensional Fisher
+Gram and three-row score map by
+\[
+ (G_F)_{ij}=\operatorname{tr}(C^{-1}E_iC^{-1}E_j-TE_iTE_j),
+ \qquad E_q y=Yq_a.
+\]
+For conditional mean coordinate $u$ and covariance coordinate $y$, the root
+part of the signed word gap is exactly
+\[
+ \binom{u}{y}^T\mathcal D\binom{u}{y},\qquad
+ \mathcal D=
+ \begin{pmatrix}
+ A&-TE_q\\
+ -E_q^TT&\lambda G_F-E_q^TTE_q
+ \end{pmatrix}.                                               \tag{CM3}
+\]
+This follows by subtracting the terminal energies of $L(u+Yq_a)$ and
+$LYL^T$ from $u^TC^{-1}u+\lambda\operatorname{tr}(C^{-1}YC^{-1}Y)$.
+In particular, the square of the covariance-generated mean score remains.
+Completing the mean square leaves
+\[
+ S_\lambda=\lambda G_F-E_q^TKE_q.
+\]
+Since $A,G_F,K\succ0$, the two Schur complements of
+$\left(\begin{smallmatrix}\lambda G_F&E_q^T\\E_q&K^{-1}\end{smallmatrix}\right)$
+prove the exact equivalence
+\[
+ \boxed{\mathcal D\succ0\ \Longleftrightarrow\
+ S_\lambda\succ0\ \Longleftrightarrow\
+ \lambda K^{-1}-E_qG_F^{-1}E_q^T\succ0.}                       \tag{CM4}
+\]
+Non-strict inequalities give the corresponding semidefinite equivalence,
+but a singular $S_\lambda$ does not justify the later inverse. No score is
+removed by a pseudoinverse. Unlike (FW9), this test does not take the unknown
+\emph{full net word gap} as an input: it uses explicit actual $C,T,q_a$ to
+resolve just the conditional root score coupling. It does not resolve the
+remaining generated ports.
+
+\paragraph{Directional formula and a cancellation check.}
+In coordinates making $C=I$ and $T=\operatorname{diag}(r_i)$, $0<r_i<1$,
+the reader $B_q=E_qG_F^{-1}E_q^T$ is explicit:
+\[
+ (B_q)_{i\ell}=\frac{\delta_{i\ell}}2
+       \sum_j\frac{q_{a,j}^2}{1-r_ir_j}
+       +\frac{q_{a,i}q_{a,\ell}}{2(1-r_ir_\ell)}.              \tag{CM5}
+\]
+Indeed the inverse Fisher operator maps a symmetric entry $Z_{ij}$ to
+$Z_{ij}/(1-r_ir_j)$, and the adjoint of $Y\mapsto Yq_a$ is
+$v\mapsto(vq_a^T+q_av^T)/2$. This proves (CM5), including the essential
+half factors for off-diagonal coordinates. Orthogonal diagonalization here
+is an algebraic evaluation, not deletion of an inconvenient direction.
+
+As a precisely delimited check, if $T=rI$ and the linked score is
+$q_a=(1-r)e_a$, (CM4) is equivalent to
+\[
+ \lambda>\frac{r}{1+r}|e_a|^2.                               \tag{CM6}
+\]
+The factor $1-r$ cancels exactly. Replacing the score and process loss by
+independent extrema would lose this cancellation. Equation (CM6) is an
+algebraic isotropic relative-loss case; the shipping conditional covariance
+is not asserted isotropic at every word. Use (CM4), not (CM6), generally.
+
+\paragraph{All generated covariance and source ports in one linked packet.}
+For the actual root tangent set
+\[
+ u=CE^TJ_0\eta_0,\quad
+ Y=CE^TJ_0D_0J_0EC,\quad
+ \eta_o=\eta_0-Eu,\quad D_o=D_0-EYE^T.
+\]
+The conditional decomposition (CA1) makes these complementary in the root
+joint storage. Define from the complete actual terminal tangent
+\[
+ t=\eta_N-L(u+Yq_a),\qquad Z=D_N-LYL^T.                       \tag{CM7}
+\]
+Equivalently, using the proved suffix formula,
+\[
+\begin{split}
+ t={}&M(\eta_o+D_oq)
+ +\sum_iM_{N,i+1}\{v_i-U_iJ_{i+1}e_{i+1}+U_iq_{i+1,N}\},\\
+ Z={}&MD_oM^T+\sum_iM_{N,i+1}U_iM_{N,i+1}^T.
+\end{split}
+\]
+Every $U_i,v_i$ is the derivative of the literal operation on this same
+history. In particular, $t,Z$ can depend on $u,Y$ as well as complementary,
+source and auxiliary coordinates. They are not independent disturbances.
+These formulas retain row/noise/reference variation, physical OU mismatch,
+BG/LIN coupling, reset/projection and original-marginal AW-face derivatives.
+They also retain source-score components outside the full base-action range.
+No physical $S$, bias history or comparison state is restarted.
+
+Put
+\[
+ b=L^TJ_Nt,\quad V=L^TJ_NZJ_NL,\quad
+ h_j=q_a^TE_j(I+TA^{-1})b+\lambda\operatorname{tr}(E_jV).
+\]
+Let $W_o$ be the complementary root storage in (CA1). Direct subtraction
+of the \emph{complete} terminal storage gives
+\[
+\begin{split}
+ W_0-W_N={}&u^TAu-2u^T(TYq_a+b)
+ +\lambda y^TG_Fy-q_a^TYTYq_a-2q_a^TYb\\
+ &-2\lambda\operatorname{tr}(YV)+W_o
+       -t^TJ_Nt-\lambda\operatorname{tr}(J_NZJ_NZ).
+\end{split} \tag{CM8}
+\]
+Assuming the \emph{actual} strict score margin (CM4), two exact completions
+now give
+\[
+\begin{split}
+ W_0-W_N={}&\|u-A^{-1}(TYq_a+b)\|_A^2
+          +\|y-S_\lambda^{-1}h\|_{S_\lambda}^2\\
+ &+W_o-\mathcal P_{self}-\mathcal P_{mix},\\
+ \mathcal P_{self}={}&t^TJ_Nt+\lambda\operatorname{tr}(J_NZJ_NZ),\\
+ \mathcal P_{mix}={}&b^TA^{-1}b+h^TS_\lambda^{-1}h.
+\end{split} \tag{CM9}
+\]
+The displayed identity remains exact after substituting the endogenous
+functions $t(u,Y,\ldots),Z(u,Y,\ldots)$. It is not an optimization over
+unreachable independent packets. Signs and cancellations are retained in
+$t,Z,b,h$ before their linked quadratic charges are formed.
+
+One may retain an explicit fraction of the positive root form rather than
+merely drop the two completed squares. With $z=(u,y)$, the coupling vector
+in (CM8) is
+$\ell=(b,E_q^Tb+\lambda(\operatorname{tr}(E_jV))_j)$.
+Block elimination proves
+$\ell^T\mathcal D^{-1}\ell=\mathcal P_{mix}$.
+For any $0<\beta<1$, the square
+$\|\sqrt\beta z-\mathcal D^{-1}\ell/\sqrt\beta\|_{\mathcal D}^2$
+therefore proves the rigorous actual mixed-work bound
+\[
+ W_0-W_N\ge(1-\beta)z^T\mathcal Dz+W_o
+                  -\mathcal P_{self}-\beta^{-1}\mathcal P_{mix}.
+                                                               \tag{CM10}
+\]
+In particular, $\beta=1/2$ gives one-half of the net conditional root loss
+and exactly twice the linked mixed charge. This is not a product of
+independent $K,r,P$ or per-operation suprema.
+
+\paragraph{The conditional mixed reader is invariant under the actual AW frame.}
+There is a further exact cancellation; it does not require a fixed frame.
+Write $\mathsf L_i=I+N(\widehat a_i)$ and
+$\Omega_i=\mathsf L_i^{-1}d\mathsf L_i=N(d\widehat a_i)$.
+The literal shear has $\mathsf L_iE=\mathsf L_i^{-1}E=E$ and
+$\Omega_iE=0$. Using the complete frame differential from (FW1),
+\[
+ \widetilde P_i=\mathsf L_iP_i\mathsf L_i^T,\qquad
+ \widetilde\eta_i=\mathsf L_i(\eta_i-P_i\Omega_i^TJ_ie_i).
+\]
+It follows directly that
+\[
+ \widetilde C_i=C_i,\qquad d\widetilde C_i=dC_i,\qquad
+ E^T\widetilde J_i\widetilde\eta_i=E^TJ_i\eta_i.
+                                                               \tag{CM11}
+\]
+The last equality uses $E^T\Omega_i^T=(\Omega_iE)^T=0$;
+it does not set $d\mathsf L_i=0$. Consequently the conditional coordinates
+$u,Y$ and conditional joint storage are invariant. The complementary
+storage changes by exactly $\Phi_i$, the previously retained frame work.
+
+The exact base/score conjugacy also gives
+$\widetilde M=\mathsf L_NM\mathsf L_0^{-1}$ and
+$\widetilde q=\mathsf L_0^{-T}q$. Thus $C,T,q_a$, and hence every matrix in
+(CM2)--(CM4), are unchanged. The actual transformed packets are instead
+\[
+\begin{split}
+ \widetilde t&=\mathsf L_N(t-P_N\Omega_N^TJ_Ne_N),\\
+ \widetilde Z&=\mathsf L_N(Z+\Omega_NP_N+P_N\Omega_N^T)\mathsf L_N^T.
+\end{split}                                                    \tag{CM12}
+\]
+These terminal connection terms are retained before forming the packet
+quadratics. Equations (CM9)--(CM10) can therefore be used entirely in the
+AW frame with the same conditional root matrix $\mathcal D$, transformed
+complementary root storage and transformed packets. No additional independent
+AW endpoint penalty is needed in that accounting. This is not permission to
+drop $\Phi_N-\Phi_0$ from the input-frame bound: it has moved into the actual
+complementary storage and packets. Their endogenous dependence on $u,Y$
+remains, so (CM11) alone does not prove a net block contraction.
+
+\paragraph{Endpoint frame, quotient and remaining uniform obligations.}
+When (CM9)--(CM10) are evaluated in the input frame, the AW-frame quotient
+requires the exact adjustment
+$\mathcal E=\Phi_0-\Phi_N-\Gamma_0+\Gamma_N$. When evaluated directly
+with the transformed packets (CM12), add only $-\Gamma_0+\Gamma_N$;
+the frame work is already included and must not be counted twice.
+This retains actual endpoint frame derivatives, moving gauge and its forcing;
+it does not claim that the conditional AW subspace is a physical gauge.
+On a fixed justified lifted stratum, all packets and root coordinates are
+linear maps of the same complete variation. Thus (CM10) is also a Loewner
+lower bound on the corresponding actual signed mixed-block matrix, with
+$\mathcal E$ kept as its signed root quadratic. It can be restricted to a
+justified transverse lift, but no new lift or compatible-set rank is inferred.
+
+The dependencies removed are the independent root mean/covariance score
+estimate and separate bounds on each generated-port cross term. They are
+replaced by the explicit three-row reader (CM4) and the aggregate quadratic
+charges (CM9)--(CM10). The unresolved facts are a common strict (CM4) margin
+for one $\lambda$ on the activated histories, and a same-history comparison
+of $\mathcal P_{self}+2\mathcal P_{mix}-\mathcal E$ against complementary
+process/$S$/magnetic loss and the retained conditional half-loss. The previous
+$c_{aw}>10^{-14}$ proves $A,G_F\succ0$, not either of these net margins.
+Inherited signed comparison supply bounds, reference/gates and arithmetic
+activation remain open. In particular no positive $c_{complete}$, invariant
+radius, finite-error retention or all-time planar admission is asserted.
+
+Structures preserved: actual conditional precision, full covariance Fisher
+metric, actual transported process/$S$/magnetic action, covariance created
+inside the word and its suffix scores, original AW face, source/history and
+both endpoint frames. Relaxations: regular real-operation branches and the
+explicit sufficient inequality (CM10); no independent packet model, physical
+assumption, runtime change or numerical exploration. D remains the status of
+the unclosed uniform domination, not a shipping counterexample. A singular
+score margin is retained as an obstruction to this inverse, not removed.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 

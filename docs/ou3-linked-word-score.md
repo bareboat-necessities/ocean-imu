@@ -259,3 +259,153 @@ frames of every operation. It proves exact cancellation of internal connection
 terms, including generated covariance suffix scores, and derives the signed
 three-dimensional AW endpoint quadratic. Its absorption remains open; it does
 not delete the physical/reference/noise/reset/AW-face ports in (4).
+
+## Actual conditional mixed-block bound
+
+**PROVED — analytical identity and qualified inequality.** The complete
+argument is `app:conditional-mixed-word`. For every regular causal word
+beginning with a qualified prediction, let `E=E_aw`, `M=M_N,0`, and `q=q_0,N`
+from the complete suffix formula. Set
+
+```
+C = (E' J_0 E)^-1       L = M E
+T = L' J_N L           q_a = E' q
+A = C^-1-T             K = T+T A^-1 T.
+```
+
+The existing conditional process loss proves `A>=c_aw C^-1>0`. Subsequent
+actual dissipative base maps, including S and magnetic corrections, preserve
+that inequality. This uses their actual gains and whitening; M is still only
+a base transport. No complete derivative has been replaced by M.
+
+For an unscaled symmetric basis `E_j`, write `Y=sum y_j E_j` and define
+
+```
+(G_F)_ij = tr(C^-1 E_i C^-1 E_j-T E_i T E_j)
+E_q y = Y q_a.
+```
+
+The Fisher Gram is positive by the same process loss. The **actual conditional
+root** mean/covariance signed block is
+
+```
+D = [[A,        -T E_q],
+     [-E_q' T,  lambda G_F-E_q' T E_q]].
+```
+
+Its Schur complement is `S_lambda=lambda G_F-E_q' K E_q`. The exact test is
+
+`D>0 <=> S_lambda>0 <=> lambda K^-1-E_q G_F^-1 E_q'>0`.
+
+This explicit three-row test uses C,T,q rather than the unknown full signed
+word gap. It resolves the root covariance-score coupling without independently
+bounding q and the weak process loss. It **does not certify** a uniform margin
+on shipping histories. Singular margins fail closed; no pseudoinverse deletes
+forcing or an unobserved direction.
+
+For clarity, after whitening C and diagonalizing T with eigenvalues r_i, the
+reader has entries
+
+`B_q[i,l] = delta[i,l]/2 sum_j q_j^2/(1-r_i r_j) + q_i q_l/(2(1-r_i r_l))`.
+
+In the precisely restricted case `T=r I`, `q=(1-r)e`, the threshold reduces
+to `lambda > r/(1+r) |e|^2`: the small loss cancels exactly. This checks the
+same-history mechanism; isotropic OU noise does **not** make the reached
+conditional covariance isotropic, so this simplification is not imposed on
+the general shipping word.
+
+### Generated ports remain in a single linked quadratic
+
+Decompose the actual root tangent with the conditional metric:
+
+```
+u = C E' J_0 eta_0        Y = C E' J_0 dP_0 J_0 E C
+eta_o = eta_0-E u         D_o = dP_0-E Y E'.
+```
+
+Let `W_o` be the complementary root storage from CA1. Define from the **full**
+terminal tangent
+
+```
+t = eta_N-L(u+Y q_a)
+  = M(eta_o+D_o q)+sum M_N,i+1 [v_i-U_i J_i+1 e_i+1+U_i q_i+1,N]
+Z = dP_N-L Y L'
+  = M D_o M'+sum M_N,i+1 U_i M_N,i+1'.
+```
+
+These packets can depend on u,Y and all inherited auxiliary/source coordinates.
+They are not independent disturbances. Define
+
+```
+b = L' J_N t
+V = L' J_N Z J_N L
+h_j = q_a' E_j (I+T A^-1)b + lambda tr(E_j V)
+P_self = t' J_N t + lambda tr(J_N Z J_N Z)
+P_mix = b' A^-1 b + h' S_lambda^-1 h.
+```
+
+When the actual strict score margin holds, the exact signed completion is
+
+```
+W_0-W_N = |u-A^-1(T Y q_a+b)|_A^2
+          +|y-S_lambda^-1 h|_S_lambda^2
+          +W_o-P_self-P_mix.
+```
+
+In particular, with `z=(u,y)`, the new **mixed-work bound** retains half the
+net conditional root loss:
+
+`W_0-W_N >= (1/2) z' D z + W_o - P_self - 2 P_mix`.
+
+Proof: the linear coupling vector is
+`ell=(b,E_q' b+lambda [tr(E_j V)]_j)`, and exact block elimination gives
+`ell' D^-1 ell=P_mix`. Complete the square with half of D. This bounds the
+actual signed mixed terms **after** aggregation, preserving cancellation
+between source work and internally generated covariance contributions.
+It does not require an independent bound for each U, v, residual or gain.
+
+For the AW-frame quotient, add the exact signed
+`Phi_0-Phi_N-Gamma_0+Gamma_N` to the right side. No endpoint term, physical
+S, source-score kernel component or gauge amplitude is discarded. The helper
+requires this adjustment explicitly. The bound is a matrix inequality on a
+justified lifted stratum after substituting its actual linear packet maps;
+endogenous packet dependence must not be replaced by an independent maximizer.
+
+**Remaining OPEN:** one fixed lambda and uniform positive three-row score
+margin on the activated histories; domination of
+`P_self+2 P_mix-Phi_0+Phi_N+Gamma_0-Gamma_N` by complementary process/S/magnetic
+loss and the retained conditional half-loss. The previously proved c_aw
+justifies the base inverses, not these net assertions. The inherited comparison
+identity `E_loss=V_0-V_N+Supply-sum NIS` remains the score budget; no first-Live
+restart or sampled NIS cap supplies a uniform bound. No radius is calculated.
+
+Structures preserved: all 21-state/covariance coordinates, actual conditional
+precision and closed-loop transports, held reduction, full suffix ports,
+reference/noise/reset/AW/source chronology and endpoint gauge. Relaxations:
+regular real branches and the explicit half-loss sufficient bound; no new
+physical premise. D remains the unclosed uniform domination, not instability.
+
+
+### No separate AW-frame penalty in the consistent packet coordinates
+
+**PROVED — analytical:** for the actual state-dependent shear L_i, both
+`L_i E_aw=E_aw` and `(L_i^-1 dL_i)E_aw=0`. The full differential therefore
+preserves conditional C, dC, `E_aw' J eta`, u,Y and conditional joint storage.
+Base/score conjugacy gives `M_tilde=L_N M L_0^-1`, `q_tilde=L_0^-T q`, so
+**C,T,q_a and the mixed reader are unchanged**. This does not freeze dL.
+
+The endpoint connection remains in the actual transformed packets:
+
+```
+t_tilde = L_N (t-P_N Omega_N' J_N e_N)
+Z_tilde = L_N (Z+Omega_N P_N+P_N Omega_N') L_N'.
+```
+
+The complementary root storage changes by Phi_0. Hence the packet bound can
+be evaluated entirely in the AW frame with the same conditional root matrix;
+then only the signed quotient gauge adjustment is added. A second independent
+Phi penalty would double-count the same frame work. If using input-frame
+packets, the explicit Phi_0-Phi_N adjustment remains mandatory. Packet
+dependence on conditional coordinates is not removed by this invariance.
+This discharges separate AW-frame pricing within the consistent bound, not
+uniform packet absorption or the full endpoint Schur margin.

@@ -128,6 +128,30 @@ observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
 
+**PROVED — analytical actual conditional mixed-block completion:**
+`app:conditional-mixed-word` now evaluates the root mean/covariance score
+coupling in the actual conditional metric. Its exact three-row test is
+`lambda K^-1-E_q G_F^-1 E_q'>0`, with C,T,q from the same word. It does not
+use the unknown full gap as an input or replace the score by an independent
+maximum. All internally generated covariance terms, including U*q_suffix,
+remain in aggregate terminal packets t,Z. Exact completion gives the bound
+`gap >= (1/2) z' D z+W_complement-P_self-2 P_mix+endpoint_adjustment`.
+The packet terms are endogenous functions of the same inherited variation,
+not independent disturbances. The state-dependent AW frame preserves C,dC,
+u,Y,T,q_a and this mixed reader, even with dL retained. Its endpoint work
+is exactly in the transformed complementary storage and packet terms (CM12).
+Use those consistently without adding a second independent frame penalty;
+input-frame accounting still needs Phi_0-Phi_N. Gauge work remains signed.
+
+**OPEN:** a uniform positive actual score margin for one lambda, and linked
+packet absorption against the remaining process/S/magnetic action. The
+proved c_aw makes the base inverses legitimate; it does not establish this
+net margin. The exact isotropic relative-loss identity cancels the small
+loss from the score threshold, but is not imposed on general reached
+conditional covariances. No radius or numerical search is performed.
+See [the explicit mixed-work bound](ou3-linked-word-score.md#actual-conditional-mixed-block-bound).
+
+
 **PROVED — analytical conditional AW process loss:**
 `app:aw-conditional-loss` splits joint storage into conditional AW and
 complementary terms with all covariance cross terms retained. Optimal additive
@@ -383,18 +407,17 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
-An analytical obligation: assemble the **net** conditional/complementary
-blocks of the complete signed word gap, using (CA3)--(CA9), actual covariance
-suffix scores and endpoint tangent maps. Prove positivity and the relative
-Schur comparison `D_a-c I>0`, `D_o-c I-X' (D_a-c I)^-1 X>=0`
-in root-metric orthonormal coordinates.
-The conditional base process block now has a proved positive coefficient;
-its mixed work is not bounded by that fact. Keep the actual S and magnetic
-closed-loop transports and signed LIN/AG boundary work. Do not replace G in
-(FW9) by an assumed positive gap or use a pseudoinverse to erase a kernel.
-Only enclose a compact inequality once its activation and threshold are
-mathematically derived. Full transverse c and planar admission remain
-separate OPEN obligations.
+An analytical obligation: bound the directional score reader
+`E_q G_F^-1 E_q'` against `lambda K^-1` on the actual inherited words, using
+the linked comparison-loss/signed-supply identity. Then compare the single
+aggregate `P_self+2 P_mix-endpoint_adjustment` from CM10 with actual
+complementary process/S/magnetic loss and retained conditional half-loss.
+Do not independently maximize the generated ports, substitute the small
+base c_aw for the net margin, or assume isotropic conditional covariance.
+Actual causal packet maps, suffix scores and source/gauge signs remain.
+Only enclose a compact inequality after deriving its domain and an affordable
+threshold. Full transverse c and planar admission remain separate OPEN
+obligations; no radius solve precedes them.
 
 ## Verification scope
 
@@ -410,7 +433,8 @@ in the PR metadata.
    gauge, nonlinear fibre, both covariance parities, frontend/reference/clocks.
 2. Relaxations: fixed regular real-operation branches for derivatives and
    explicit norm/rounding majorants, qualified sqrt/exp and exact reference arithmetic; no arbitrary independent generated inputs.
-3. Failures: E misplaced equation tags in the new conditional-loss display
+3. Failures: E a proof-text replacement escape was corrected before successful
+   compilation; E misplaced equation tags in the new conditional-loss display
    caught by local LaTeX compilation and moved outside split; a new unsupported
    math-font command was replaced by the existing font; E proof-helper scope/derivative, source-anchor/display-delimiter bugs and a corrected
    covariance-variable name collision with the retired-architecture guard, and
@@ -420,7 +444,7 @@ in the PR metadata.
 4. Admitted counterexample: none; all-time admission/exclusion remains OPEN.
 5. Retained: 25 proved entries, qualified local theorem and exact compatibility
    obstruction; qualified frontend and linked storage proofs extend entries without count promotion.
-6. Next: retain the newly proved conditional base process loss in the full
-   signed mixed-block comparison, including covariance suffix scores and
-   source/gauge work; establish the net Schur margin before radius algebra.
+6. Next: use the explicit conditional score reader and aggregate packet
+   bound, with actual comparison supply, suffix scores and source/gauge work,
+   to establish a uniform net margin before radius algebra.
    The uniform transverse gap and planar admission remain separate obligations.

@@ -331,6 +331,110 @@ def comparison_word_budget(base_maps, covariances, comparisons, corrections):
             'root_plus_supply_budget': initial+supply-nis}
 
 
+def conditional_mixed_coefficients(C, T, q, weight):
+    """Exact conditional root mean/Fisher Schur operator, not a uniform bound.
+
+    C is actual conditional root covariance, T=L' J_N L, q=E_aw' q_word.
+    Positive C^-1-T comes from the qualified first process loss, retained
+    through subsequent dissipative base maps. Full signed ports are separate.
+    Unscaled symmetric coordinates retain BOTH off-diagonal trace terms.
+    """
+    ldlt(C)
+    ldlt(T)
+    if weight <= 0:
+        raise ValueError('positive covariance weight required')
+    Jc = inverse(C)
+    A = add(Jc, T, -1)
+    ldlt(A)
+    K = add(T, product(T, inverse(A), T))
+    basis = symmetric_basis(len(C))
+    G = [[trace(add(product(Jc, X, Jc, Y), product(T, X, T, Y), -1))
+          for Y in basis] for X in basis]
+    ldlt(G)
+    columns = [product(X, q) for X in basis]
+    E = [[col[i][0] for col in columns] for i in range(len(C))]
+    reader = product(E, inverse(G), transpose(E))
+    margin = add([[weight*x for x in row] for row in inverse(K)], reader, -1)
+    operator = add([[weight*x for x in row] for row in G],
+                   product(transpose(E), K, E), -1)
+    # Two Schur complements of [[lambda G, E'],[E,K^-1]].
+    assert is_psd(operator) == is_psd(margin)
+    return {'mean_loss': A, 'Fisher_loss_Gram': G, 'score_map': E,
+            'completed_score_weight': K, 'directional_score_reader': reader,
+            'three_row_margin': margin, 'net_conditional_Fisher_operator': operator}
+
+
+def conditional_word_mixed_bound(P, PN, M, q, eta0, D0, etaN, DN,
+                                 selector, weight, endpoint_adjustment):
+    """Sharp linked-packet bound for the full actual suffix-word operands.
+
+    etaN,DN MUST be the complete tangent, including generated U*q suffixes.
+    The aggregate packets can depend on ALL root/source/auxiliary coordinates;
+    completion is a pointwise identity, not minimization over independent noise.
+    For input-frame operands endpoint_adjustment is Phi_0-Phi_N-Gamma_0+Gamma_N;
+    for already transformed operands it is only -Gamma_0+Gamma_N. Never count
+    frame work twice. Callers retain it explicitly (zero for an unquotiented
+    identity). No shipping margin/domain is inferred here.
+    """
+    ldlt(P)
+    ldlt(PN)
+    if D0 != transpose(D0) or DN != transpose(DN):
+        raise ValueError('symmetric actual covariance tangents required')
+    J, JN = inverse(P), inverse(PN)
+    C = inverse(product(transpose(selector), J, selector))
+    u = product(C, transpose(selector), J, eta0)
+    Y = product(C, transpose(selector), J, D0, J, selector, C)
+    L = product(M, selector)
+    T, qa = product(transpose(L), JN, L), product(transpose(selector), q)
+    coeff = conditional_mixed_coefficients(C, T, qa, weight)
+    A, S = coeff['mean_loss'], coeff['net_conditional_Fisher_operator']
+    try:
+        ldlt(S)
+    except (ValueError, ArithmeticError, ZeroDivisionError) as exc:
+        raise ValueError('D_SUFFICIENT_BOUND_FAILURE: conditional signed Fisher margin is not positive; no kernel deletion') from exc
+    t = add(etaN, product(L, add(u, product(Y, qa))), -1)
+    Z = add(DN, product(L, Y, transpose(L)), -1)
+    b = product(transpose(L), JN, t)
+    v = product(transpose(L), JN, Z, JN, L)
+    hmean = product(add(identity(len(C)), product(T, inverse(A))), b)
+    basis = symmetric_basis(len(C))
+    h = [[product(transpose(qa), X, hmean)[0][0]+weight*trace(product(X, v))]
+         for X in basis]
+    y = [[Y[i][j]] for i in range(len(C)) for j in range(i, len(C))]
+    shifted_mean = add(u, product(inverse(A), add(product(T, Y, qa), b)), -1)
+    shifted_covariance = add(y, product(inverse(S), h), -1)
+    mean_square = product(transpose(shifted_mean), A, shifted_mean)[0][0]
+    covariance_square = product(transpose(shifted_covariance), S, shifted_covariance)[0][0]
+    initial = product(transpose(eta0), J, eta0)[0][0]+weight*trace(product(J, D0, J, D0))
+    terminal = product(transpose(etaN), JN, etaN)[0][0]+weight*trace(product(JN, DN, JN, DN))
+    Jc = inverse(C)
+    conditional = product(transpose(u), Jc, u)[0][0]+weight*trace(product(Jc, Y, Jc, Y))
+    complement = initial-conditional
+    packet_self = product(transpose(t), JN, t)[0][0]+weight*trace(product(JN, Z, JN, Z))
+    coupling = product(transpose(b), inverse(A), b)[0][0]
+    coupling += product(transpose(h), inverse(S), h)[0][0]
+    packet = packet_self+coupling
+    net_conditional = product(transpose(u), A, u)[0][0]
+    net_conditional -= 2*product(transpose(u), T, Y, qa)[0][0]
+    net_conditional -= product(transpose(qa), Y, T, Y, qa)[0][0]
+    net_conditional += weight*product(transpose(y), coeff['Fisher_loss_Gram'], y)[0][0]
+    lower = complement-packet+endpoint_adjustment
+    half_lower = net_conditional/2+complement-packet_self-2*coupling+endpoint_adjustment
+    gap = initial-terminal+endpoint_adjustment
+    assert complement >= 0 and min(mean_square, covariance_square) >= 0
+    assert gap == mean_square+covariance_square+lower
+    assert net_conditional >= 0 and gap >= half_lower
+    return {**coeff, 'conditional_covariance': C, 'conditional_root_mean': u,
+            'conditional_root_covariance_tangent': Y, 'aggregate_mean_packet': t,
+            'aggregate_covariance_packet': Z, 'linked_packet_charge': packet,
+            'packet_self_energy': packet_self, 'linked_mixed_coupling_charge': coupling,
+            'net_conditional_root_form': net_conditional, 'half_loss_lower_bound': half_lower,
+            'complementary_root_storage': complement,
+            'retained_mean_square': mean_square, 'retained_covariance_square': covariance_square,
+            'endpoint_adjustment': endpoint_adjustment, 'actual_signed_gap': gap,
+            'linked_lower_bound': lower, 'uniform_margin_verified': False}
+
+
 def certificate():
     return {
         'qualification': 'OU3_INFORMATION_SHEAR_WORD_V2',
@@ -359,6 +463,17 @@ def certificate():
         'score_loss_charge': 'G z=q implies ||M X q||_(J_N)^2 <= (q^T z/2) L_P(X), G=J_0-M^T J_N M>=0',
         'score_outside_action_range': 'retain kernel component as forcing; never discard it by pseudoinverse',
         'uniform_suffix_score_charge': None,
+        'conditional_mixed_word_proof': 'app:conditional-mixed-word',
+        'conditional_mixed_mean_Fisher_completion': True,
+        'conditional_directional_score_test': 'lambda K^-1-E_q G_F^-1 E_q^T>0; actual C,T,q, not scalar chi/c',
+        'conditional_generated_packets': 't=eta_N-L(u+Y q_a), Z=dP_N-L Y L^T; complete actual tangents required',
+        'conditional_linked_packet_bound': 'gap=mean_square+covariance_square+W_complement-PacketCharge+endpoint_adjustment',
+        'conditional_half_loss_bound': 'gap>=net_conditional/2+W_complement-packet_self-2 linked_mixed_charge+endpoint_adjustment',
+        'conditional_packet_independence_assumed': False,
+        'conditional_AW_state_dependent_frame_invariance': True,
+        'conditional_frame_work_retained_in_complementary_packets': True,
+        'uniform_conditional_score_margin_verified': False,
+        'uniform_generated_packet_absorption_verified': False,
         'comparison_word_budget': 'chi_loss <= E_loss = V_0-V_N+Supply_W-sum NIS <= V_0+Supply_W-sum NIS',
         'comparison_supply': 'sum corrections ||r+H e||_(R^-1)^2 plus actual prediction/reset/projection signed cross-plus-square work',
         'physical_S_reset_by_pseudo_measurement': False,

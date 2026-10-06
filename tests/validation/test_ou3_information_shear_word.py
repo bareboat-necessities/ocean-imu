@@ -7,6 +7,7 @@ from tools.stability.ou3_theorem.information_shear_word import (
     certificate, comparison_word_budget, congruence_shear, covariance_increment_shear, joint_congruence,
     joint_metric, linked_action_balance, mean_shift_shear, precision_projector,
     projector_differential, score_loss_charge, word_score_normal_form, zeros,
+    conditional_mixed_coefficients, conditional_word_mixed_bound,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import add, identity, is_psd, transpose
@@ -247,6 +248,77 @@ class InformationShearWordTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'literal optimal additive'):
             comparison_word_budget([A], [identity(1), A],
                                    [[[F(2)]], [[F(10, 3)]]], {0: (H, R, r)})
+
+    def test_conditional_score_reader_matches_directional_closed_form(self):
+        # Exact diagonal-coordinate identity, not sampled shipping covariances.
+        r, q = [F(9, 10), F(1, 2), F(1, 3)], [[F(1, 7)], [F(-1, 11)], [F(1, 13)]]
+        T = [[r[i]*F(i == j) for j in range(3)] for i in range(3)]
+        out = conditional_mixed_coefficients(identity(3), T, q, F(2))
+        reader = [[q[i][0]*q[j][0]/(2*(1-r[i]*r[j])) for j in range(3)] for i in range(3)]
+        for i in range(3):
+            reader[i][i] += sum(q[j][0]**2/(2*(1-r[i]*r[j])) for j in range(3))
+        self.assertEqual(out['directional_score_reader'], reader)
+
+    def test_linked_process_score_cancels_small_loss_in_isotropic_limit(self):
+        # q=(1-r)e preserves the score/loss link. Exact threshold is
+        # lambda > r/(1+r)|e|^2, not a product of independent extrema.
+        r, q = F(9, 10), [[F(1, 30)], [F(0)], [F(0)]]
+        T = [[r*x for x in row] for row in identity(3)]
+        boundary = F(1, 19)
+        at = conditional_mixed_coefficients(identity(3), T, q, boundary)
+        below = conditional_mixed_coefficients(identity(3), T, q, boundary-F(1, 1000))
+        self.assertTrue(is_psd(at['three_row_margin']))
+        self.assertEqual(at['three_row_margin'][0][0], 0)
+        self.assertFalse(is_psd(below['three_row_margin']))
+        self.assertFalse(is_psd(below['net_conditional_Fisher_operator']))
+        PN = [[F(10, 9)*x for x in row] for row in identity(3)]
+        with self.assertRaisesRegex(ValueError, 'D_SUFFICIENT_BOUND_FAILURE'):
+            conditional_word_mixed_bound(identity(3), PN, identity(3), q,
+                zeros(3, 1), identity(3), q, identity(3), identity(3), boundary, F(0))
+
+    def test_mixed_word_bound_keeps_generated_covariance_and_endpoint_work(self):
+        # Formal rational word: prediction, optimal non-AW correction, AW
+        # addition. Tests the exact complete tangent; not an admission replay.
+        P = [[F(2), F(1, 5), 0, 0], [F(1, 5), F(3), F(1, 7), 0],
+             [0, F(1, 7), F(2), F(1, 9)], [0, 0, F(1, 9), F(1)]]
+        Fmap = identity(4)
+        Fmap[0][1], Fmap[1][1], Fmap[2][2], Fmap[3][3] = F(1, 5), F(4, 5), F(4, 5), F(4, 5)
+        predicted = add(product(Fmap, P, transpose(Fmap)), identity(4))
+        H, R, residual = [[F(1), 0, 0, 0]], [[F(2)]], [[F(1, 7)]]
+        S = add(product(H, predicted, transpose(H)), R)
+        K = product(predicted, transpose(H), inverse(S))
+        A = add(identity(4), product(K, H), -1)
+        corrected = product(A, predicted)
+        terminal = add(corrected, identity(4))
+        e = [[F(1, 10)], [F(-1, 11)], [F(1, 13)], [F(1, 17)]]
+        ep = add(product(Fmap, e), [[F(1, 19)], [0], [0], [0]])
+        ec = add(ep, product(K, residual))
+        D, de = zeros(4, 4), [[F(1, 23)], [F(1, 29)], [0], [0]]
+        D[0][1] = D[1][0] = F(1, 31)
+        D[1][2] = D[2][1] = F(1, 37)
+        dF = zeros(4, 4)
+        dF[0][1] = F(1, 41)
+        U = add(product(dF, P, transpose(Fmap)), product(Fmap, P, transpose(dF)))
+        Ua = zeros(4, 4)
+        Ua[1][1] = F(1, 43)
+        out = word_score_normal_form([Fmap, A, identity(4)], [P, predicted, corrected, terminal],
+            [e, ep, ec, ec], [zeros(4, 1), product(transpose(H), inverse(S), residual), zeros(4, 1)],
+            [U, zeros(4, 4), Ua], [product(dF, e), zeros(4, 1), zeros(4, 1)], D, de)
+        selector = [[F(i == j+1) for j in range(3)] for i in range(4)]
+        eta0 = add(de, product(D, inverse(P), e), -1)
+        bound = conditional_word_mixed_bound(P, terminal, out['base_suffixes'][0], out['suffix_scores'][0],
+            eta0, D, out['eta_terminal'], out['covariance_tangent_terminal'], selector, F(2), F(3, 47))
+        self.assertGreaterEqual(bound['actual_signed_gap'], bound['linked_lower_bound'])
+        self.assertGreaterEqual(bound['actual_signed_gap'], bound['half_loss_lower_bound'])
+        self.assertEqual(bound['half_loss_lower_bound'], bound['net_conditional_root_form']/2+
+                         bound['complementary_root_storage']-bound['packet_self_energy']-
+                         2*bound['linked_mixed_coupling_charge']+bound['endpoint_adjustment'])
+        self.assertEqual(bound['actual_signed_gap'], bound['linked_lower_bound']+
+                         bound['retained_mean_square']+bound['retained_covariance_square'])
+        self.assertEqual(bound['endpoint_adjustment'], F(3, 47))
+        self.assertNotEqual(bound['aggregate_mean_packet'], zeros(4, 1))
+        self.assertNotEqual(product(out['base_suffixes'][1], U, out['suffix_scores'][1]), zeros(4, 1))
+        self.assertFalse(bound['uniform_margin_verified'])
 
 
 if __name__ == '__main__':
