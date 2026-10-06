@@ -5815,6 +5815,139 @@ Relaxations introduced: none in these identities; the existing real
 planar partial scope and explicitly justified closed-slice attainment
 qualification remain. No full-image parameterization is invented.
 
+\paragraph{Joint payment of the receipt by its process regression and acc loss.}
+The target remains (CR28), followed by the full (CR17) remainder. On
+each of (CR18)'s actually paired prediction--face--acc triples, the
+following calculation changes the existing positive Gram and diagonal
+receipt weight, keeping the same raw receipt row. It does not introduce
+a storage or a new tangent coordinate. Unpaired operations keep their
+previous terms. Use (CR25)'s allocation once and write
+$b=C_*$, $A=C^+$, $x=dC$, $t=(dT_{face})^T$ and
+$\gamma=1/b-1/A>0$. At the acc prefix keep the actual $k,r,s,K_u$,
+$\eta,\omega$ of (CR19)--(CR20), with conditional variance $A$.
+Between face and acc only the already qualified non-AW $S$/block-reset
+operations are allowed. Let $\mathsf U_T$ denote their literal regression
+transport, so $dT_{acc}=dT_{face}\mathsf U_T$, and put
+\[
+\begin{gathered}
+ \ell=\mathsf U_T B_{acc}k^T,\qquad z=t^T\ell,
+ \qquad \kappa=\ell^TB_{face}^{-1}\ell\ge0,\\
+ v=x-\mu+z,\qquad
+ \Xi=A^2-\omega b^2>0,\qquad \Omega_2=A^2-b^2>0.
+\end{gathered}                                               \tag{CR36}
+\]
+Here $\mathsf U_T$ is the existing product of complementary reset
+inverses; an $S$ correction leaves $dT$ unchanged. It is not another
+proof frame. Inverse order for those same $S$ updates gives
+$B_{acc}\preceq\mathsf U_T^{-1}B_{face}\mathsf U_T^{-T}$,
+and hence $0\le\kappa\le r$. This directional comparison is inserted
+in the weight below; no full covariance ceiling is asserted.
+
+Retain the $\widetilde u$ square of (CR20). The remaining conditional
+part of the joint process/face/acc work is exactly
+\[
+ \frac{x^2}{b^2}-\frac{(x-\mu)^2}{A^2}
+       +\eta\frac{(x-\mu+z)^2}{A^2}
+       +2\gamma t^TB_{face}t.
+\]
+Complete $x$ first. Its coefficient is $\Xi/(A^2b^2)$; the
+remaining $t$ matrix is
+\[
+ K_T=2\gamma B_{face}
+          +\frac{\eta\Omega_2}{A^2\Xi}\ell\ell^T\succ0.
+\]
+Completing this entire existing $dT$ vector, rather than releasing $z$
+from its regression, proves
+\[
+\boxed{\begin{split}
+ L_{P,pred}+L_{face}+L_{P,acc}
+ ={}&L_{rem}+\widetilde u^TK_u\widetilde u\\
+ &+\frac{\Xi}{A^2b^2}
+     \left(x+\frac{b^2(\omega\mu+\eta z)}{\Xi}\right)^2\\
+ &+\left(t-\frac{\eta\mu}{\Xi}K_T^{-1}\ell\right)^T
+       K_T\left(t-\frac{\eta\mu}{\Xi}K_T^{-1}\ell\right)
+       -\bar d\,\mu^2 .
+\end{split}}                                               \tag{CR37}
+\]
+The $\widetilde u$ reader still contains the same $dB,dT,dC,\mu$.
+It is neither dropped nor independently minimized. The $S$ losses
+between these operations, and the later magnetic loss, remain separate
+positive terms in the word. Sherman--Morrison applied to $K_T$ gives
+the exact reduced receipt price
+\[
+\boxed{\begin{gathered}
+ \bar d=\frac{2\gamma\omega+\eta\kappa/A^2}
+                {2\gamma\Xi+\eta\Omega_2\kappa/A^2}>0,\\
+ \bar d^{-1}=\Omega_2+
+       \frac{\eta A^2}{\omega+\eta\kappa/(2\gamma A^2)}
+       >\Omega_2=d^{-1},\qquad d=(D_{p\mu})_{ii},\\
+ d-\bar d=
+ \frac{2\gamma\eta A^2}
+      {\Omega_2(2\gamma\Xi+\eta\Omega_2\kappa/A^2)}>0.
+\end{gathered}}                                             \tag{CR38}
+\]
+There is no division by $\kappa$. In particular $k=0$ gives
+$\kappa=0$ and $\bar d=\omega/(A^2-\omega b^2)$, so the
+complementary $T\,dB\,T^T$ receipt is retained with a strictly lower
+price, rather than required to vanish. Substituting $\kappa\le r$
+in the displayed inverse gives the legitimate same-prefix lower bound
+$\bar d^{-1}\ge\Omega_2+
+\eta A^2/[\omega+\eta r/(2\gamma A^2)]$.
+This is not a uniform positive word margin. The allocation ensures
+$\gamma>0$ also on the active scalar zero-gap cone, whose guard remains
+the actual preceding-prefix $\mu\le0$. Inactive branches keep their
+ordinary process and correction work.
+
+Polarize (CR37) immediately on the same shipping roots. Replace every
+paired process/face/acc positive group by its displayed positive squares,
+and set $\bar D_{ii}=\bar d_i$ there; all other weights and terms are
+unchanged. Keep $L=L_{p\mu}$, including every dependent receipt.
+The resulting positive Gram $\bar H$ satisfies exactly
+\[
+\begin{gathered}
+ G_{OO}/\lambda=\bar H-L^T\bar D L,
+ \qquad
+ \bar H=H_{p\mu}-L^T(D_{p\mu}-\bar D)L,\\
+ \bar D^{-1}-L(\bar H-c_OH_0)^{-1}L^T\succeq0
+ \quad\text{when }\bar H-c_OH_0\succ0.                    \tag{CR39}
+\end{gathered}
+\]
+The first full residual process remains strict, so $\bar H^{-1}$ is
+justified at zero reserve on the same nonzero fixed-word slices as
+before. No common positive-reserve inverse is inferred. Full integrated
+$g,Q_{ao}$ are retained in $L_{rem}$ and all actual prefixes of
+(CR32); no independent AW process is substituted. The magnetic/$S$
+directional columns and all inherited constraints and scalar guards
+are unchanged. No loss is charged twice.
+
+This payment does not itself decide the feasible eigenmode. At
+saturation the stationary condition is invariant:
+\[
+ H_{p\mu,\mathcal F}y=L_{\mathcal F}^TD_{p\mu}\mu
+ \quad\Longleftrightarrow\quad
+ \bar H_{\mathcal F}y=L_{\mathcal F}^T\bar D\mu,
+ \qquad \mu=L_{\mathcal F}y .                             \tag{CR40}
+\]
+For example the new positive conditional/regression squares vanish
+only at $t=\eta\mu K_T^{-1}\ell/\Xi$ and
+$x=-b^2(\omega\mu+\eta z)/\Xi$, with the linked
+$\widetilde u=0$. Signed equality need not impose those conditions:
+$y^T\bar H y=\mu^T\bar D\mu>0$ still permits positive process
+and service work. In particular no actual threshold-one mode is
+exhibited or excluded by (CR40). Interpreting the strictly lower price
+alone as a uniform gap would be class D: the positive Gram has changed
+on those same receipt directions as well.
+The one remaining sign obligation is (CR30) with $(\bar H,L,\bar D)$
+on the actual inherited image and all branch guards, with a common
+positive root reserve. The full endogenous (CR17) Schur subtraction
+cannot yet be invoked using an unproved positive odd block. No source
+supply or radius calculation follows.
+Structures preserved: the literal coupled prediction, same-cycle
+$S$/acc/magnetic chronology, all shared conditional tangents, actual
+reset transport, nonzero receipts and original complete signed matrix.
+Relaxations introduced: none in this completion; the existing qualified
+real planar partial scope and inherited-image qualifications remain.
+
 \paragraph{Source supply requires a retained contraction reserve.}
 Only \emph{after} proving the homogeneous margin may one assign a
 finite-error supply. If $W_{\perp,0}=v_0^TJ_rv_0$ on the justified

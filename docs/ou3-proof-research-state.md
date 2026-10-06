@@ -11,11 +11,12 @@ The general theorem assumes existing MAGNETIC SERVICE on admitted histories;
 all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
-Verified main: `96906092196c05d625b0fcb0231f14fc1acf650e`.
-Verified starting PR head: `e362f9dfbec57784725baf789501274f8b3392a0`.
-Main is already incorporated; PR #653 is open and mergeable. Automated evidence
-changes are preserved, including ab7c9fecc16e8671a6ba29c8437d21b4101e4f93
-fetched during this continuation. Current CI chronology belongs in PR metadata.
+Verified main: `0cbbd5a3270ff988c6642324ff8ebb303034dc80`.
+Verified continuation starting PR head: `4e0dd57d8ecdb2fd97df12dabcea0b0d6d1f381d`.
+The newer PR evidence bundle at `33f5ac0d0eb7229ebca36a4becad79eebced3431`
+is preserved as one complete bundle while incorporating main's earlier
+automated evidence commit. No shipping source changes in this continuation.
+Current mergeability and exact-head CI belong in PR metadata.
 
 Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
 `theorem_closed=false`, `regional_practical_stability_claimed=false`,
@@ -39,6 +40,30 @@ not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
+
+**Joint process/face/acc receipt payment — CR36--CR40; sign still OPEN.**
+Complete the existing dC and entire same transported dT jointly, keeping
+the linked acc utilde square and all process/S/magnetic work. For each
+actually paired triple this gives the strictly lower negative weight
+`dbar^-1=A^2-C_star^2+eta*A^2/[omega+eta*kappa/(2*gamma*A^2)]`,
+where `gamma=1/C_star-1/A>0` and
+`kappa=ell' B_face^-1 ell<=r`, with `ell=U_T B_acc k'` from the actual
+intervening S/reset transport. There is no division by kappa, no restriction
+to zero receipts and no independent minimization of dB or a loss coordinate.
+Insert immediately as `G_OO/lambda=Hbar-L_pmu' Dbar L_pmu`,
+`Hbar=H_pmu-L_pmu' (D_pmu-Dbar) L_pmu`; other weights stay unchanged.
+The first retained full process still justifies a fixed-word zero-reserve
+inverse. Symbolic expansion verifies the completion and strict weight
+difference; no numerical contraction search was performed.
+
+The price reduction does not exclude the balanced shipping direction:
+`H y=L' D mu` iff `Hbar y=L' Dbar mu` at threshold one.
+No particular eigenvector was previously proved feasible, and none is
+exhibited or excluded here. Treating the smaller weight alone as a positive
+margin would be D: the positive Gram has decreased on the same reader
+directions. The ONE sign obligation remains the feasible CR30 eigenmode
+with `(Hbar,L_pmu,Dbar)`, followed by the full endogenous CR17 cost.
+AW blocker: NO. Complete homogeneous gap: NO. No flag/count promotion.
 
 **Constrained dangerous direction — CR29--CR35; no margin promotion.**
 The requested root-normalized minimization now has its actual constrained
@@ -426,15 +451,16 @@ observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
 
-The immediate sign question is the feasible receipt-driven stationary mode
-(CR30)/(CR35), not the complete-word zero-action kernel. A balanced signed
-zero has nonzero receipt and positive first process loss. Existing
-MAGNETIC SERVICE and integrated OU/S/acc action enter the exact constrained
-reader but do not prove its feasible eigenvalues below one. Fixed-word
-zero-reserve inverses are now justified; no uniform positive reserve or
-inherited-image/branch closure is inferred. Do not try to derive individual
-zero-loss conditions from signed equality. After odd positivity, substitute
-the actual full cross cost in CR17 before completing any exogenous supply.
+The immediate sign question is CR30's reconstructed feasible eigenmode
+using CR39's reassembled Hbar and strictly reduced Dbar, with the SAME
+L_pmu and actual image/branch guards. The joint process/face/acc payment
+changes both the positive Gram and weight, and CR40 leaves threshold-one
+stationary directions invariant. Their nonzero receipt balances positive
+first process loss; no particular mode is asserted feasible or excluded.
+Existing MAGNETIC SERVICE and integrated OU/S/acc action enter the exact
+reader but do not yet prove feasible eigenvalues uniformly below one.
+No compact forward domain or image/branch closure is assumed. After odd
+positivity, pay the actual full CR17 cross cost before exogenous supply.
 
 The first decisive test is now explicitly (CR3) for the ACTUAL correlated
 homogeneous lift, with true exogenous variation set to zero and inherited
@@ -1013,6 +1039,15 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
+Decide CR39's feasible receipt eigenmode with the same actual L_pmu and
+the jointly paid `(Hbar,Dbar)`. The completion has already used all of the
+paired conditional and regression squares; sharpening its coefficient
+alone cannot decide the unchanged signed matrix or remove CR40's balance.
+Use the remaining linked full process/S/magnetic and acc utilde action on
+the SAME inherited tangent to exclude or pay it, then substitute the
+proved odd margin into the full CR17 remainder. No extra storage, causal
+reset, compact retention premise or empirical search is authorized.
+
 Decide the ONE feasible receipt-driven eigenmode in CR30/CR35 using the
 existing actual H_pmu,L_pmu,D_pmu and inherited image/cone restrictions.
 At threshold one its positive process/service action balances the receipt;
@@ -1080,7 +1115,8 @@ in the PR metadata.
    No source-origin graph, reachability, service coverage or storage is invented.
 3. Failures: D for (CR9)--(CR10), automatic acc/floor uniform payment and
    process-short-only inference of complete receipt positivity and
-   signed-near-zero-to-zero-action inference,
+   signed-near-zero-to-zero-action inference and the unsupported inference
+   that a lower joint receipt weight alone gives a gap,
    not the actual
    complete shipping gap. E for corrected path/patch/quoting/whitespace
    tooling and the zero-gap certificate qualification; prior classified
@@ -1092,8 +1128,8 @@ in the PR metadata.
    suffix/generated-score, complementary Schur, coupled process/source,
    conditional AW/reader, frame, qualified magnetic, held and even-process
    results under their original hypotheses. No theorem/count promotion.
-6. Next: exclude or pay CR30/CR35's feasible nonzero balanced receipt mode
-   in CR28/CR17a with the literal residual
+6. Next: exclude or pay CR30/CR40's feasible nonzero balanced receipt mode
+   in CR39/CR28/CR17a with the literal residual
    process and transported acc/S/magnetic action, using only necessary
    actual inherited-image constraints; no paid-kernel rank detour.
    Keep CR22/CR24's linked acc/regression and integrated process accounting,
