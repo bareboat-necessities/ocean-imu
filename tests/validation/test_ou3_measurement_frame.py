@@ -23,6 +23,7 @@ from tools.stability.ou3_theorem.measurement_frame import (
     odd_covariance_gap_scope_check,
     scalar_aw_innovation_reader, covariance_partial_word,
     receipt_kernel_nuisance_margin, coupled_receipt_schur,
+    scalar_acc_conditional_fisher,
 )
 from tools.stability.ou3_theorem.planar_innovation_storage import information_shear_correction
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import product
@@ -31,6 +32,87 @@ from tools.stability.ou3_theorem.world_frame import quaternion_rotation, skew
 
 
 class MeasurementFrameTests(unittest.TestCase):
+    def test_acc_floor_payment_retains_nonzero_receipt_and_same_S_prefix(self):
+        # Nine-state coefficient-slot identity, not a reachable-word or
+        # contraction witness. The actual generator propagates AA deletion,
+        # integrated cross terms, S, acc, mag and a lagged queued target.
+        a, step = 7, F(1, 200)
+        f = identity(9)
+        f[0][2] = f[1][3] = step
+        f[4][a], f[5][4], f[5][a] = step, step, step**2/2
+        f[6][4], f[6][5], f[6][a] = step**2/2, step, step**3/6
+        f[a][a], f[8][8] = F(399, 400), F(999999, 1000000)
+        column = [[f[i][a]] for i in range(9)]
+        q = add([[x/1000 for x in row] for row in identity(9)],
+                product(column, transpose(column)), F(1, 100))
+        P = identity(9)
+        P[a][8] = P[8][a] = F(1, 5)
+        ds = [zeros(9, 9) for _ in range(3)]
+        ds[0][a][a], ds[1][8][8] = F(1), F(1)
+        ds[2][a][8] = ds[2][8][a] = F(1)
+        hs, ha, hm = zeros(1, 9), zeros(1, 9), zeros(1, 9)
+        hs[0][6] = F(1)
+        ha[0][0], ha[0][a], ha[0][8] = F(49, 5), F(1), F(1)
+        hm[0][0], hm[0][1] = F(2, 5), F(-1, 5)
+        events = [
+            {'kind': 'prediction', 'F': f, 'Q': q},
+            {'kind': 'floor', 'target': F(6, 5)},
+            {'kind': 'correction', 'h': hs, 'noise': F(3, 2)},
+            {'kind': 'correction', 'h': ha, 'noise': F(1, 25)},
+            {'kind': 'correction', 'h': hm, 'noise': F(1, 100)},
+        ]
+        out = covariance_partial_word(P, ds, events, a)
+        self.assertEqual([(p['face'], p['correction']) for p in out['acc_face_payments']], [(1, 3)])
+        self.assertNotEqual(out['normalized_receipt_rows'][0][0], 0)
+        payment = out['acc_face_payments'][0]
+        self.assertGreater(payment['paid_fraction'], 0)
+        self.assertLess(payment['remaining_weight'], 1)
+        reader, weight = out['acc_paired_face_reader'], out['acc_paired_reader_weights'][0]
+        self.assertEqual(add(out['acc_paired_positive_action'],
+                            product(transpose(reader), reader), -weight), out['signed_gap'])
+        # Check the conditional alignment and its derivative against the
+        # actual Joseph output, not an independently chosen loss coordinate.
+        for j in range(3):
+            result = scalar_acc_conditional_fisher(
+                out['boundaries'][3], out['prefixes'][3][j], ha, F(1, 25), a)
+            after = scalar_acc_conditional_fisher(
+                out['boundaries'][4], out['prefixes'][4][j], ha, F(1, 25), a)
+            self.assertEqual(result['C_after'], after['C'])
+            self.assertEqual(result['T_after'], after['T'])
+            rho = F(1, 25)/(F(1, 25)+result['C'])
+            self.assertEqual(after['dC'], rho**2*result['dC'])
+            self.assertEqual(after['dT'], add(
+                [[rho*x for x in row] for row in result['dT']],
+                [[rho**2*result['dC']*x/F(1, 25) for x in row]
+                 for row in result['alignment']], -1))
+            self.assertGreater(result['paid_fraction'], result['C']/result['innovation'])
+            face = scalar_aw_face_fisher_balance(out['boundaries'][1], out['prefixes'][1][j],
+                                                F(6, 5), a)
+            self.assertEqual(result['conditional_residual']/result['C'],
+                             result['linked_regression_reader']-face['regression_reader'])
+        # Pairing across the next integrated prediction would break dC's
+        # exact boundary relation; it is rejected, not made into a port cap.
+        unpaired = covariance_partial_word(P, ds, events[:2]+[
+            {'kind': 'prediction', 'F': f, 'Q': q}, events[3]], a)
+        self.assertEqual(unpaired['acc_face_payments'], [])
+        with self.assertRaisesRegex(ValueError, 'conditional covariance/tangent'):
+            covariance_word_signed_matrix(unpaired['boundaries'], unpaired['prefixes'],
+                                          unpaired['active_faces'], a, [(1, 3, ha, F(1, 25))])
+        self.assertFalse(out['inherited_causal_image_qualified'])
+
+    def test_acc_completion_and_shipping_chronology_are_bound_to_actual_AW_row(self):
+        P = [[F(2), F(1, 3)], [F(1, 3), F(1)]]
+        D = [[F(1), F(2, 5)], [F(2, 5), F(-1, 3)]]
+        with self.assertRaisesRegex(ValueError, 'AW-observing'):
+            scalar_acc_conditional_fisher(P, D, [[F(1), F(0)]], F(1), 1)
+        root = Path(__file__).resolve().parents[2]
+        core = (root/'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h').read_text()
+        wrapper = (root/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h').read_text()
+        acc = core[core.index('void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_acc_only('):]
+        self.assertIn('const Matrix3 J_aw  =  R_wb();', acc)
+        self.assertIn('PCt.noalias() += P_all_aw * J_aw.transpose();', acc)
+        self.assertLess(wrapper.index('mekf_->time_update'), wrapper.index('mekf_->measurement_update_acc_only'))
+
     def test_shared_prefix_receipt_uses_integrated_prediction_and_both_correction_rows(self):
         # Rational coefficient-slot regression, not an admitted shipping word.
         # All nine odd coordinates and integrated AW cross blocks are retained.
@@ -436,6 +518,12 @@ class MeasurementFrameTests(unittest.TestCase):
         self.assertFalse(aw['partial_origin_uniform_parameterization_verified'])
         self.assertFalse(aw['nuisance_receipt_kernel']['actual_kernel_dimension_verified'])
         self.assertFalse(aw['receipt_only_remainder_uniformly_verified'])
+        payment = aw['actual_acc_floor_payment']
+        self.assertIsNone(payment['uniform_paid_fraction'])
+        self.assertIsNone(payment['uniform_relative_reader_margin'])
+        self.assertTrue(payment['conditional_B_covariance_reader_retained'])
+        self.assertFalse(payment['actual_kernel_nontriviality_verified'])
+        self.assertFalse(payment['odd_AW_blocker_resolved'])
         self.assertIsNone(aw['uniform_actual_linked_deficit_reader_margin'])
         self.assertEqual(aw['full_word_OPEN_dependencies_discharged'], [])
 

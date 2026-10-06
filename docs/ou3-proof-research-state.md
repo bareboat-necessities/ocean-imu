@@ -12,9 +12,10 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `fdc6f3719ee87439da8989cb8d80a00225508fa5`.
+Verified starting PR head: `774d9a2904db5517faa5f5175b382c21c0f4e772`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
-changes are preserved. Current CI chronology belongs in PR metadata.
+changes are preserved, including 46ec65a86e320ea142d732b6df14797af0aeafcc
+fetched during this continuation. Current CI chronology belongs in PR metadata.
 
 Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
 `theorem_closed=false`, `regional_practical_stability_claimed=false`,
@@ -28,6 +29,42 @@ lemma/quantifiers, finite-error role, literal dissipation structure, required
 proved/open bounds and avoidance of recorded dead ends. Required CI remains.
 
 ## Evidence
+
+**Actual acc/floor coupled payment — CR18--CR24.** The literal same-cycle
+floor--S--acc--mag order and the planar acc AW coefficient one supply a new
+payment inside OF4. After actual S/block resets, C_acc=Cplus_face and
+dC_acc=-d(beta_face) on the SAME covariance tangent. Exact completion of
+the applied acc Fisher loss proves `L_P=utilde' K_u utilde+eta*(t-b)^2`,
+with `1>eta>Cplus/s>0`, `b=d(beta_face)/Cplus`, and
+`t=dT_acc B_acc (h_o+T_acc)'/Cplus`. Thus the combined face/acc work is
+its original positive face action plus `utilde'K_u utilde+eta/omega*t^2`
+minus `omega*(b+eta/omega*t)^2`, where omega=1-eta>0. No independent
+receipt, released q, scalar maximum or new storage is used.
+
+This pays a strictly positive fraction of the original b-square coefficient,
+but retains its exact endogenous b/t cross cost. Paired acc loss is removed
+once from H_W. The original full odd gap becomes
+`G_OO/lambda=H_acc-R_acc' Omega R_acc`; actual process/S/magnetic action,
+earlier AA deletions, unpaired faces, queued target lag and full integrated
+Q remain. The unpaid threshold is
+`Omega^-1-R_acc*(H_acc-c_O H_0)^-1*R_acc'>=0`, with its inverse qualified.
+Uniform innovation/reader coverage on the actual inherited image is NOT
+proved. At k=h_o+T=0 the surviving weight is [R/(R+Cplus)]^2, and the
+complementary `T dB T'` reader remains. Actual S/magnetic covariance-column
+payment, generated through the nonzero integrated g and linked Q_ao in
+CR24, must cover it; the physical two-column service floor is insufficient
+as a certificate. No shipping-negative direction is asserted.
+
+CR23 retains the existing >1e-37 whole signed reserve on the ACTUAL
+nuisance-supported image intersected with ker R_acc and zero-gap
+compatibility, after 17 s default regular A21 with the first prediction.
+Unlike a zero-receipt assertion this can pay nonzero mu, when the actual
+linked-reader constraint holds. The intersection may be empty; its rank,
+uniform parameterization and full cross Schur cost remain unproved.
+The odd AW blocker and complete homogeneous gap remain NO; no OPEN
+dependency, count, source supply, capture, radius or arithmetic flag is
+promoted. Exact-rational tests check the whole matrix polarization using
+the existing prefix generator, not an empirical contraction search.
 
 **Current shared-tangent AW attack — the odd blocker and homogeneous gap
 are NOT closed.** CR12 defines the actual construction-history image
@@ -318,11 +355,13 @@ The first decisive test is now explicitly (CR3) for the ACTUAL correlated
 homogeneous lift, with true exogenous variation set to zero and inherited
 endogenous columns retained. No uniform positive remainder has been proved.
 On the qualified odd covariance restriction the actual common-tangent
-matrix (CR13a) is assembled, and (CR16) pays its nuisance receipt kernel.
-The unpaid nonzero-receipt operator is (CR17a)'s exact signed matrix,
-including QY+Y'Q' and the cross cost Q K_sharp Q'. The actual integrated
-process and S/magnetic Grams have not been proved to make it nonnegative
-uniformly. Neither the inherited image/rank nor the full cross remainder
+matrix (CR13a) is assembled; CR20--CR21 now pay a directional fraction
+of its active regression square with the actual same-cycle acc correction.
+The unpaid weighted reader is (CR22), including the linked dT B(h_o+T)'
+cross cost; (CR17a) remains an equivalent earlier receipt elimination.
+The actual CR24 integrated process and S/magnetic covariance Grams have
+not been proved to make the complete remainder nonnegative uniformly.
+Neither the inherited image/rank nor the full cross remainder
 (CR17) has been certified. No independent receipt bound repairs this gap.
 Actual target/tuner and inherited auxiliary origin/graph qualifications,
 other mean/covariance cross entries, source/reference and endpoint gauge
@@ -611,6 +650,27 @@ Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
 
+* **D, direct AW observation as automatic uniform floor absorption:** CR20
+  pays eta>Cplus/s, but the full remaining reader is
+  b+(eta/omega)t, with t generated by the SAME regression tangent.
+  Invalidated implication: a positive local paid fraction proves the
+  uniform complete-word covariance margin. Retained: CR18--CR21 exact
+  shipping correction/floor payment and CR23 qualified signed reserve.
+  Limiter: CR22's actual covariance service/readers and full CR17 cross
+  remainder, plus inherited origin/rank. No admitted negative word or
+  instability is established. Next: use CR24's full integrated generator
+  and actual S/magnetic Dh columns to cross CR22's threshold, without
+  independent maximization of eta, t or b.
+* **E, continuation tooling:** a read requested nonexistent guessed status/
+  manifest module paths; exact current paths were then resolved. TeX quote
+  delimiters and mismatched document patch contexts failed before those edits;
+  exact contexts and ordinary emphasis fixed the literals. A provenance sync
+  initially replaced a summary audit; its existing fields were restored before
+  validation, with only the new scoped result updated. Missing mpmath/ruff were
+  installed in a scratch dependency directory; existing runtime Eigen is
+  supplied through EIGEN_INCLUDE_DIR. No mathematical result or gate changed.
+  The exact identities and fail-closed validation remain controlling.
+
 * **D, sharp-reader payment with released coordinates:** (CR9)'s attempted
   Schur remainder has exact relative charge greater than one in (CR10)
   for nonzero AW cross regression. The invalidated implication is that
@@ -820,6 +880,14 @@ persistent SLOW+FAST source charge, without a restart at regime transitions.
 
 ## Next falsifiable experiment
 
+Attack CR22's actual weighted reader using CR24's integrated process
+generator and the directional S/magnetic covariance losses. CR18's
+regression alignment is regenerated by g and Q_ao, not a free independent
+parameter. Pay the surviving T dB T' and linked dT B(h_o+T)' on ONE
+inherited tangent, retaining the full cross remainder CR17. A uniform
+innovation ratio alone would not pay that cross cost. No source completion
+or activation promotion follows from CR20's positive fraction.
+
 Use LR8/LR9's correlated homogeneous block (CR2), keeping E_L,
 S_q and C_W together in (OF1a). Establish only the needed
 construction-to-root image/rank facts in (CR12); propagate its literal
@@ -861,7 +929,8 @@ in the PR metadata.
    its nonempty rank is not assumed. (CR9) is a rejected relaxation that
    explicitly releases shared tangent coordinates.
    No source-origin graph, reachability, service coverage or storage is invented.
-3. Failures: D for (CR9)--(CR10)'s attempted Schur payment, not the actual
+3. Failures: D for (CR9)--(CR10) and automatic acc/floor uniform payment,
+   not the actual
    complete shipping gap. E for corrected path/patch/quoting/whitespace
    tooling and the zero-gap certificate qualification; prior classified
    failures remain in DEAD_ENDS. No check weakened.
@@ -871,8 +940,8 @@ in the PR metadata.
    suffix/generated-score, complementary Schur, coupled process/source,
    conditional AW/reader, frame, qualified magnetic, held and even-process
    results under their original hypotheses. No theorem/count promotion.
-6. Next: qualify the actual inherited image/rank and pay the nonzero-receipt
-   Schur matrix (CR17a) with transported integrated process/S/magnetic action,
+6. Next: qualify the actual inherited image/rank and pay the acc-coupled
+   reader matrix (CR22) with CR24's integrated process/S/magnetic action,
    then certify the full (CR17) cross remainder. Endogenous auxiliary
    columns cannot be relabeled external supply. General dissipativity and
    special planar all-time admission remain separate.

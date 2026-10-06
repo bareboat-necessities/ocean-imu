@@ -5167,6 +5167,249 @@ gap. The exact remaining threshold is (CR17) on the actual inherited
 image, with its activation and nontrivial kernel qualification still open.
 There is no radius, capture, nonlinear or arithmetic promotion.
 
+\paragraph{Actual accelerometer payment of a nonzero face reader.}
+This continues the attack on (CR2), not the bordered route.
+The six questions are: (1) the target is still
+$G_{OO}\succeq c_O\lambda H_0$ inside the full correlated homogeneous
+gap; (2) the term attacked is the negative regression square in (OF2);
+(3) substitute the actual \emph{subsequent} accelerometer Fisher loss
+into (OF4) on the same prefixes; (4) it pays a strictly positive,
+directional fraction of that square, retaining the resulting regression
+cross term exactly; (5) the remaining relative reader must satisfy
+(CR22) below with one common $c_O>0$; (6) this reduces the signed
+operator in the existing OPEN dependency, but neither its uniform sign
+nor the full cross cost is established by the calculation.
+
+The domain and quantifiers remain (CR12): every regular central-planar
+A21 pure odd-covariance partial tangent of one actual inherited history,
+with the delivered/private continuation fixed, and with the same
+zero-gap qualification wherever that directional event occurs.
+The identities below hold for every symmetric tangent on each such
+operation, so their restriction does not require an invented origin
+graph. In the nominal-world odd scalar accelerometer channel
+$h=[h_o,1]$, using the actual attitude/nominal-AW and BA entries in
+$h_o$ and the actual applied $R>0$. This follows from the literal
+$J_{aw}=R_{wb}$ and the planar $y$ axis, not from replacing physical
+acceleration with AW. The optimal Joseph substep is the active A21
+one; held masks and coefficient/source variations outside (CR12)
+retain their full signed ports in (CR2).
+
+The literal wrapper order is prediction (including the queued floor and
+any due $S$ correction), then accelerometer, then magnetic correction.
+Pair an active floor only with its actually applied accelerometer
+substep in this same cycle. Between them, actual non-AW $S$ corrections
+and qualified block resets leave $C,dC$ unchanged. A reset transports
+$B,T,dB,dT$ by its actual complementary congruence; it does not set them
+to zero. No pairing crosses a prediction, another floor, rejection,
+unqualified projection or proof boundary. An unpaired face retains
+its original reader. No recurrent active floor is assumed.
+
+At the accelerometer prefix use its actual $B,T,C,dB,dT,dC$ and put
+\[
+ k=h_o+T,\quad r=kBk^T,\quad s=R+C+r,\qquad
+ u=dB k^T+B dT^T,\quad v=dC+dT Bk^T .
+\]
+Here $u=(Dh^T)_o$ and $v=(Dh^T)_a-Tu$ are existing conditional
+components of the \emph{same} tangent, not new dynamic coordinates.
+The information update gives
+\[
+ C^{acc}=\frac{RC}{R+C},\qquad
+ T^{acc}+h_o=\frac R{R+C}(T+h_o).                         \tag{CR18}
+\]
+Indeed $J^{acc}=J+h^Th/R$, $J_{aa}=1/C$ and $J_{ao}=-T/C$.
+For fixed row/noise, differentiation gives, with $\rho=R/(R+C)$,
+\[
+ dC^{acc}=\rho^2 dC,\qquad
+ dT^{acc}=\rho dT-\frac{\rho^2}{R}k\,dC .
+\]
+These are complete fixed-operand derivatives on (CR12), not a
+frozen-factor claim for the full filter. In particular the row still
+depends on attitude and nominal AW in the other blocks.
+
+The actual same-correction covariance Fisher loss is
+\[
+ L_{P,acc}
+ =\frac2s\left(u^TB^{-1}u+\frac{v^2}{C}\right)
+       -\frac{(ku+v)^2}{s^2}.                            \tag{CR19}
+\]
+To verify this, use (OF4a) and the conditional precision factorization
+(CA1), which gives $(Dh^T)^TJ(Dh^T)=u^TB^{-1}u+v^2/C$ and
+$hDh^T=ku+v$. Define
+\[
+\begin{gathered}
+ K_u=\frac2s B^{-1}-\frac{k^Tk}{s^2}\succ0,\qquad
+ \widetilde u=u-\frac{Bk^T}{2s-r}v,\\
+ \eta=\frac{2C(2s-r-C)}{s(2s-r)},\qquad
+ \omega=1-\eta
+ =\frac{Cr+(R+r)(2R+r)}{s(2s-r)} .
+\end{gathered}
+\]
+The inverse used in this completion is legitimate: $B\succ0$ and
+$r<s$ imply $2s-r>0$ and $K_u\succ0$.
+Sherman--Morrison gives $K_u^{-1}k^T/s^2=Bk^T/(2s-r)$.
+Expansion, including its signed $u$--$v$ cross term, proves
+\[
+ \boxed{L_{P,acc}=\widetilde u^TK_u\widetilde u
+                     +\eta(v/C)^2,\qquad
+        1>\eta>\frac C{s}>0.}                           \tag{CR20}
+\]
+The strict last inequality follows from
+$\eta-C/s=C(2R+r)/[s(2s-r)]>0$.
+This is a directional payment by the actual AW-observing correction;
+no independently maximized receipt or released loss coordinate appears.
+
+For a paired floor $i$, write $A_i=C_i^+$, with its actual queued
+target and nominal gap, and let $B_i^{acc},T_i^{acc}$ denote the
+transported complementary covariance at the subsequent acc prefix.
+On the fixed-target partial fibre $C^{acc-prefix}=A_i$ and
+$dC^{acc-prefix}=-d\beta_i$. Thus, using that prefix for $k_i,u_i,v_i$,
+\[
+ b_i=\frac{d\beta_i}{A_i},\qquad
+ t_i=\frac{dT_i^{acc}B_i^{acc}k_i^T}{A_i},\qquad
+ v_i/A_i=t_i-b_i .
+\]
+The last equality is the causal boundary constraint preserved by the
+actual intervening $S$/reset maps. It is checked on every common root
+column. It is not a choice minimizing $dC$ or the receipt.
+Let
+$\mathcal A_{face,i}=(dC_i/C_i)^2+
+ 2(1/C_i-1/A_i)dT_iB_i dT_i^T$ be exactly (OF2)'s positive face part.
+Combining the floor and acc losses \emph{before} taking a bound gives
+\[
+\begin{split}
+ L_{face,i}+L_{P,acc(i)}
+ ={}&\mathcal A_{face,i}
+       +\widetilde u_i^TK_{u,i}\widetilde u_i
+       +\frac{\eta_i}{\omega_i}t_i^2\\
+    &-\omega_i\left(b_i+\frac{\eta_i}{\omega_i}t_i\right)^2 .
+\end{split}                                                   \tag{CR21}
+\]
+Here $\omega_i>0$ because the applied noise is positive, not because
+the floor gap has a positive lower bound. The completion uses no
+$1/\Delta_i$ and remains an exact formula at arbitrarily small positive
+gaps. Zero-gap events still need their actual directional map;
+(CR21) does not delete an unsupported crossing.
+
+This pays the fraction $\eta_i$ of the original $b_i^2$ diagonal
+charge, while retaining the exact new $b_i$--$t_i$ cross term.
+It does not assert that the new reader has smaller operator norm:
+the signed cross term is endogenous and can spend that payment.
+If the existing conditional precision bound applies at this prefix,
+$A_i^{-1}<15942618$, then
+$\eta_i>1/(15942618\,s_i)$ on that same operation.
+There is no proved uniform upper bound for the \emph{complete}
+innovation $s_i$ here, nor a uniform affordable bound for the transported
+$t_i$ cross operator. Therefore this directional inequality is not
+$c_O$ and is not a uniform AW-absorption certificate.
+
+\paragraph{Substitution into the complete word and its remaining threshold.}
+Polarize (CR21) on the actual coordinates $y$ in (CR12).
+Starting from $H_W$ in (OF4), remove each paired acc-loss Gram exactly
+once and add its displayed $\widetilde u$ and $(\eta/\omega)t^2$
+positive Grams. Call the resulting positive matrix $H_{acc}$.
+It still contains all actual process, $S$, magnetic and unpaired
+acc losses and positive face terms. Replace the paired face row
+$b_i$ by $b_i+(\eta_i/\omega_i)t_i$, with weight $\omega_i$;
+unpaired rows keep weight one. Denote the full row stack by $R_{acc}$
+and the diagonal weight matrix by $\Omega$. Then the \emph{original}
+fixed-weight signed gap is exactly
+\[
+ \boxed{G_{OO}/\lambda=H_{acc}-R_{acc}^T\Omega R_{acc}.}
+\]
+All these matrices use the actual prefixes, including every earlier AA
+deletion and the full integrated process. They do not add another
+decrement or another metric. For $K_c=H_{acc}-c_OH_0\succ0$,
+the still-unpaid lossless relative test is
+\[
+ \boxed{\Omega^{-1}
+            -R_{acc}K_c^{-1}R_{acc}^T\succeq0.}           \tag{CR22}
+\]
+A common positive $c_O$, the inverse qualification and the uniform
+nonnegative remainder are \emph{not proved}. This test retains the
+same $y$ in every face, $S$, magnetic and acc row; the term to be
+controlled is precisely the displayed operator, not an independent
+cap on $\mu$, $E_L$ or a magnetic weakest eigenvalue.
+
+For completeness, this substitution gives a strict whole-word result
+on an explicitly qualified part of the actual image. Intersect (CR12)
+with nuisance-supported roots, $\ker R_{acc}$ and the zero-gap
+compatibility constraints. On that intersection every paired expression
+(CR21) is nonnegative, even when its original $\mu_i$ is nonzero.
+Unpaired readers vanish. Retaining the first actual prediction in
+$H_{acc}$ and using (CR15) proves
+\[
+ y^TG_{OO}y\ge\gamma_n\lambda y^TH_0y,\qquad\gamma_n>10^{-37}.
+                                                               \tag{CR23}
+\]
+This is a different, possibly empty intersection from (CR16); no
+inclusion, nonzero rank or independent root direction is asserted.
+It pays nonzero-receipt directions only when the actual image satisfies
+the displayed linked-reader constraint. On an actually nonempty such
+block, (CR17)'s full Schur accounting applies with all metric cross
+entries. Its remaining $A_c-X_c^TN_c^{-1}X_c$ is still unpaid.
+It is not permissible to infer that the whole odd block or full
+homogeneous lift has this reserve.
+
+\paragraph{Return to the shipping generator of the unpaid direction.}
+For $h_a=0$, actual $S$/magnetic Fisher action is, in these same
+conditional variables,
+\[
+ \frac2s\left(h_o dB B^{-1}dB h_o^T
+                   +(dT B h_o^T)^2/C\right)
+               -(h_o dB h_o^T)^2/s^2 .
+\]
+Thus they pay specific complementary covariance and regression
+directions, not an arbitrary 45-column Gram. Their actual transported
+rows must control the residual in (CR22), including the $T dB T^T$
+part of $d\beta$. This is the exact surviving endogenous work.
+
+The literal integrated prediction in (CR12a) makes this link explicit:
+\[
+\begin{split}
+ B^-&=(F_{oo}+gT)B(F_{oo}+gT)^T+Cgg^T+Q_{oo},\\
+ T^-&=\{\phi TB(F_{oo}+gT)^T+\phi Cg^T+Q_{ao}\}(B^-)^{-1},\\
+ dT^-&=\{\phi(D_{ao}F_{oo}^T+D_{aa}g^T)-T^-dB^-\}(B^-)^{-1}.
+\end{split}                                                   \tag{CR24}
+\]
+The last line is on the fixed-operand partial fibre; the full lift
+retains the actual coefficient/process ports. The nonzero integrated
+$g$ and linked $Q_{ao}$ regenerate $k=h_o+T$ between corrections.
+(CR18) alone therefore does not justify setting $k=0$ on later words.
+Small-step polynomial and PSD repair entries remain in the applied
+$Q$, and the queued target is not replaced by the committed process
+target. These are the shipping equations whose directional process/
+$S$/magnetic payment must still cross threshold one in (CR22).
+
+There is an exact diagnostic boundary of this attempted payment.
+If an actual prefix has $k=0$, then $t=0$,
+$\omega=[R/(R+A)]^2>0$, and the remaining face reader is
+$\sqrt{\omega}\,d\beta/A$. In particular a complementary covariance
+variation with $dT=0$ retains $T dB T^T/A$ even though the acc row
+observes the conditional AW residual and supplies no $dB$ loss.
+For any \emph{actual common-root} direction with that geometry and
+zero pre-face $dC$, the other process/service action must pay this
+remaining square plus the desired root reserve. Existence of such a
+direction in (CR12) is not asserted or excluded. This is not another
+formal covariance counterexample. It identifies the surviving
+complementary covariance reader and the literal mechanism needed to
+control it.
+
+The attempted conclusion that actual direct AW observation automatically
+absorbs the floor with a uniform positive gap is unsupported:
+classification D, insufficient complete directional payment, not a
+negative admitted shipping word or filter instability. No uniform
+positive or negative sign for (CR22) on the actual causal image has
+been obtained. The strict local payment (CR20)--(CR21) and qualified
+whole-word reserve (CR23) remain valid; the odd AW blocker, full
+endogenous cross gap, origin/rank, source, activation and arithmetic
+obligations remain OPEN. No nonlinear, capture or radius promotion
+follows. Structures preserved: literal floor--$S$--acc--mag chronology,
+actual row/gain/Joseph, full integrated covariance, inherited auxiliary
+and source dependence outside the stated partial fibre, queued target
+lag and all endpoint terms. Relaxations introduced: the existing
+regular real-operation partial fibre and explicitly constrained
+kernel in (CR23); neither is asserted to be the full reached domain.
+
 \paragraph{Source supply requires a retained contraction reserve.}
 Only \emph{after} proving the homogeneous margin may one assign a
 finite-error supply. If $W_{\perp,0}=v_0^TJ_rv_0$ on the justified

@@ -567,6 +567,25 @@ every dependent face row. Its inverse qualification and nonnegative
 uniform sign remain unproved. The complete odd blocker and homogeneous
 gap are OPEN.
 
+CR18--CR24 now pair an active face with the actual same-cycle applied acc
+correction, including the intervening S/reset transport. The acc row's AW
+coefficient is one. Its conditional Fisher completion pays a fraction
+`eta=2*Cplus*(2*s-r-Cplus)/(s*(2*s-r))>Cplus/s>0`, with
+`r=(h_o+T_acc) B_acc (h_o+T_acc)'`. The exact shared constraint is
+`dC_acc=-d(beta_face)`. Combined work retains the positive completed acc
+square and `eta/omega*t^2`, subtracting
+`omega*(b+eta/omega*t)^2`, where omega=1-eta, b=d(beta_face)/Cplus and
+t=dT_acc B_acc(h_o+T_acc)'/Cplus. This is the original Fisher storage.
+
+The complete weighted reader threshold (CR22) and full cross remainder
+remain unproved. Actual process/S/magnetic losses stay in H_acc and pay
+their transported covariance columns; the acc loss is counted once.
+At h_o+T_acc=0 a weighted T dB T' reader survives. CR24's actual integrated
+cross-covariance generator, not a generic positive-noise model, must link
+that reader to service loss. Neither the pointwise fraction nor CR23's
+possibly empty constrained-kernel reserve closes the AW blocker. No uniform
+margin, inherited origin/rank, source, activation or arithmetic promotion.
+
 Appendix `app:odd-covariance-signed-gap` specializes the **same** fixed-weight
 complete signed gap to a regular central-planar A21 pure odd-covariance fibre,
 with inherited delivered/private state fixed. Literal parity and zero odd

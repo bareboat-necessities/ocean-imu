@@ -593,7 +593,58 @@ def scalar_aw_face_fisher_balance(P, D, target, aw_index, dtarget=0):
             'gap': before-after}
 
 
-def covariance_word_signed_matrix(boundaries, prefixes, active_faces, aw_index):
+def scalar_acc_conditional_fisher(P, D, h, noise, aw_index):
+    """CR18--CR20: actual AW-observing row, one shared covariance tangent.
+
+    The planar odd acc row has h_a=1. This is an exact completion of its
+    existing Fisher loss, not an independent bound on the floor receipt.
+    Row/noise/auxiliary variations outside the CR12 partial fibre remain
+    in the full correlated gap. No uniform innovation bound is asserted.
+    """
+    n, a, noise = len(P), aw_index, F(noise)
+    if (not 0 <= a < n or D != transpose(D) or noise <= 0
+            or len(h) != 1 or len(h[0]) != n or h[0][a] != 1):
+        raise ValueError('actual scalar AW-observing acc row and symmetric tangent required')
+    ldlt(P)
+    o = [i for i in range(n) if i != a]
+    B, dB = [[P[i][j] for j in o] for i in o], [[D[i][j] for j in o] for i in o]
+    Binv = inverse(B)
+    T = product([[P[a][j] for j in o]], Binv)
+    dT = product(add([[D[a][j] for j in o]], product(T, dB), -1), Binv)
+    beta = product(T, B, transpose(T))[0][0]
+    d_beta = product(T, dB, transpose(T))[0][0]+2*product(dT, B, transpose(T))[0][0]
+    C, dC = P[a][a]-beta, D[a][a]-d_beta
+    k = add([[h[0][j] for j in o]], T)
+    r = product(k, B, transpose(k))[0][0]
+    s = noise+C+r
+    u = add(product(dB, transpose(k)), product(B, transpose(dT)))
+    t = product(dT, B, transpose(k))[0][0]/C
+    v = dC+C*t
+    Ku = add([[2*x/s for x in row] for row in Binv],
+             [[x/(s*s) for x in row] for row in product(transpose(k), k)], -1)
+    ldlt(Ku)
+    residual = add(u, [[x*v/(2*s-r) for x in row]
+                      for row in product(B, transpose(k))], -1)
+    eta = 2*C*(2*s-r-C)/(s*(2*s-r))
+    omega = 1-eta
+    assert 0 < eta < 1 and omega > 0
+    square = product(transpose(residual), Ku, residual)[0][0]
+    loss = scalar_aw_innovation_reader(P, D, h, noise, a)['same_operation_Fisher_loss']
+    assert loss == square+eta*(v/C)**2
+    rho = noise/(noise+C)
+    return {'B': B, 'T': T, 'C': C, 'dC': dC, 'dT': dT,
+            'alignment': k, 'alignment_variance': r, 'innovation': s,
+            'u': u, 'conditional_residual': v, 'linked_regression_reader': t,
+            'positive_matrix': Ku, 'positive_residual': residual,
+            'positive_square': square, 'paid_fraction': eta,
+            'remaining_weight': omega, 'same_operation_Fisher_loss': loss,
+            'C_after': rho*C, 'T_after': add([[rho*x for x in row] for row in k],
+                                            [[h[0][j] for j in o]], -1),
+            'uniform_paid_fraction_verified': False}
+
+
+def covariance_word_signed_matrix(boundaries, prefixes, active_faces, aw_index,
+                                  acc_face_pairs=()):
     """Verify OF4 from supplied SAME-word covariance/tangent prefix maps.
 
     prefixes[i][j] is the entire actual D_i for root coordinate j; after a
@@ -658,12 +709,56 @@ def covariance_word_signed_matrix(boundaries, prefixes, active_faces, aw_index):
                       product(transpose(receipt_rows), conditional_rows))
         coupled = add(coupled, product(transpose(receipt_rows), receipt_rows), -1)
         assert coupled == gap
+    # Pair a floor only with its actual subsequent acc substep. Between
+    # them CR7 S corrections and qualified block resets preserve C,dC.
+    # Validate that constraint on every SAME prefix; never free the receipt.
+    paired_action, paired_readers = [row[:] for row in positive], [row[:] for row in readers]
+    weights, paired_corrections = [F(1) for _ in readers], set()
+    pair_data = []
+    for face, corr, h, noise in acc_face_pairs:
+        if face not in faces or not face < corr < len(boundaries)-1 or corr in paired_corrections:
+            raise ValueError('disjoint actual floor-to-acc chronology required')
+        paired_corrections.add(corr)
+        slot = sorted(faces).index(face)
+        ps = [scalar_acc_conditional_fisher(boundaries[corr], D, h, noise, aw_index)
+              for D in prefixes[corr]]
+        fs = [scalar_aw_face_fisher_balance(boundaries[face], D,
+              boundaries[face+1][aw_index][aw_index], aw_index) for D in prefixes[face]]
+        if any(p['C'] != f['C_next'] or p['dC'] != -f['d_beta'] for p, f in zip(ps, fs)):
+            raise ValueError('same conditional covariance/tangent must survive floor-to-acc interval')
+        p0, eta, omega = ps[0], ps[0]['paid_fraction'], ps[0]['remaining_weight']
+        lp = add(grams[corr], grams[corr+1], -1)
+        paid = [[product(transpose(p['positive_residual']), p0['positive_matrix'],
+                         q['positive_residual'])[0][0]
+                 + eta*(p['linked_regression_reader']-f['regression_reader'])
+                      *(q['linked_regression_reader']-g['regression_reader'])
+                 for q, g in zip(ps, fs)] for p, f in zip(ps, fs)]
+        if lp != paid:
+            raise ValueError('acc loss must be its complete fixed-operand same-prefix Fisher loss')
+        positive_part = [[product(transpose(p['positive_residual']), p0['positive_matrix'],
+                                  q['positive_residual'])[0][0]
+                          + eta/omega*p['linked_regression_reader']*q['linked_regression_reader']
+                          for q in ps] for p in ps]
+        paired_action = add(add(paired_action, lp, -1), positive_part)
+        paired_readers[slot] = [f['regression_reader']+eta/omega*p['linked_regression_reader']
+                                for p, f in zip(ps, fs)]
+        weights[slot] = omega
+        pair_data.append({'face': face, 'correction': corr, 'paid_fraction': eta,
+                          'remaining_weight': omega, 'alignment_variance': p0['alignment_variance'],
+                          'innovation': p0['innovation']})
+    paired_adverse = zeros(d, d)
+    for reader, weight in zip(paired_readers, weights):
+        paired_adverse = add(paired_adverse, product(transpose([reader]), [reader]), weight)
+    assert add(paired_action, paired_adverse, -1) == gap
     return {'root_metric': grams[0], 'positive_action': positive,
             'ordinary_losses': ordinary, 'face_reader': readers,
             'unsplit_receipt_action': receipt_action,
             'normalized_receipt_rows': receipt_rows,
             'conditional_receipt_cross_rows': conditional_rows,
-            'adverse_face_work': adverse, 'signed_gap': gap}
+            'adverse_face_work': adverse, 'signed_gap': gap,
+            'acc_paired_positive_action': paired_action,
+            'acc_paired_face_reader': paired_readers,
+            'acc_paired_reader_weights': weights, 'acc_face_payments': pair_data}
 
 
 def covariance_partial_word(P, root_tangents, operations, aw_index):
@@ -713,7 +808,23 @@ def covariance_partial_word(P, root_tangents, operations, aw_index):
             raise ValueError('unsupported covariance partial operation')
         boundaries.append(Pnext)
         prefixes.append(dn)
-    out = covariance_word_signed_matrix(boundaries, prefixes, faces, a)
+    pairs = []
+    for face in faces:
+        for j in range(face+1, len(operations)):
+            event = operations[j]
+            if event['kind'] == 'correction':
+                if event['h'][0][a] == 1:
+                    pairs.append((face, j, event['h'], event['noise']))
+                    break
+                if event['h'][0][a] != 0:
+                    break
+            elif event['kind'] == 'reset':
+                g = event['G']
+                if (g[a] != identity(n)[a] or any(g[i][a] for i in range(n) if i != a)):
+                    break
+            else:
+                break  # no pairing across prediction, another floor or a proof reset
+    out = covariance_word_signed_matrix(boundaries, prefixes, faces, a, pairs)
     out.update({'boundaries': boundaries, 'prefixes': prefixes, 'active_faces': faces,
                 'inherited_causal_image_qualified': False})
     return out
@@ -882,8 +993,8 @@ def certificate():
             'scope_check': odd_covariance_gap_scope_check(),
         },
         'causal_aw_deficit_gap': {
-            'proof': 'app:correlated-complete-gap, CR4--CR17a',
-            'result_type': 'exact shared-tangent matrix and qualified signed receipt-kernel reserve; full AW absorption OPEN',
+            'proof': 'app:correlated-complete-gap, CR4--CR24',
+            'result_type': 'shared-tangent acc payment and qualified signed kernel reserves; full AW absorption OPEN',
             'scope': 'same qualified regular planar odd-covariance fibre; full correlated cross/target ports retained',
             'actual_process_AA_row': 'p_minus=phi^2*p+actual_q_aa',
             'queued_process_target_lag_retained': True,
@@ -903,6 +1014,25 @@ def certificate():
             'receipt_only_remainder': 'CR17a: Z^-1+QY+Y^T Q^T-E^T E-Q K_sharp Q^T >= 0; actual dependent receipts retained',
             'receipt_only_inverse_uniformly_qualified': False,
             'receipt_only_remainder_uniformly_verified': False,
+            'actual_acc_floor_payment': {
+                'proof': 'CR18--CR24',
+                'scope': 'CR12 regular planar pure covariance fibre; actual active floor then applied acc in the same cycle, with only qualified non-AW S/block resets between',
+                'same_prefix_boundary_constraint': 'dC_acc_prefix=-d_beta_face; C_acc_prefix=Cplus_face',
+                'same_acc_Fisher_completion': 'L_P=utilde^T K_u utilde+eta*(v/C)^2; v/C=t-b',
+                'paid_fraction': 'eta=2*C*(2*s-r-C)/(s*(2*s-r)); 1>eta>C/s>0',
+                'remaining_weight': 'omega=1-eta=[C*r+(R+r)*(2*R+r)]/[s*(2*s-r)]>0',
+                'linked_remaining_reader': 'b+(eta/omega)*t; b=d_beta_face/Cplus, t=dT_acc B_acc (h_o+T_acc)^T/Cplus',
+                'complete_same_storage_matrix': 'G_OO/lambda=H_acc-R_acc^T Omega R_acc; paired acc loss removed once',
+                'relative_reader_threshold': 'Omega^-1-R_acc*(H_acc-c_O*H_0)^-1*R_acc^T>=0; H_acc-c_O*H_0>0',
+                'uniform_paid_fraction': None,
+                'uniform_relative_reader_margin': None,
+                'conditional_B_covariance_reader_retained': True,
+                'unpaired_faces_and_zero_gap_directional_maps_retained': True,
+                'kernel_signed_reserve_lower': '1/10000000000000000000000000000000000000',
+                'kernel_scope': 'actual CR12 image, nuisance-supported root, ker R_acc and zero-gap compatibility; first prediction included after 17 s qualified default regular A21',
+                'actual_kernel_nontriviality_verified': False,
+                'odd_AW_blocker_resolved': False,
+            },
             'released_coordinate_Schur_relative_charge': '(2alpha-I)/(2alpha-I-2beta)>1 for beta>0',
             'released_coordinate_failure_class': 'D_SUFFICIENT_BOUND_FAILURE',
             'released_direction_proved_shipping_reachable': False,

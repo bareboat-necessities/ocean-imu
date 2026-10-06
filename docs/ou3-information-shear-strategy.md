@@ -432,7 +432,7 @@ dependency, not a consequence of positive base loss or physical source bounds.
 
 ### Current common-tangent AW threshold
 
-The controlling AW calculation is now (CR12)--(CR17a) in
+The controlling AW calculation is now (CR12)--(CR24) in
 app:correlated-complete-gap. Restrict to the ACTUAL inherited history image
 before constructing all covariance prefixes. The unsplit matrix is
 `H_mu+Q_mu' L_mu+L_mu' Q_mu-L_mu' L_mu`; q, mu, dT and correction
@@ -452,3 +452,18 @@ Neither threshold has a uniform certificate. The two-column physical
 MAGNETIC SERVICE premise cannot simply be used as a covariance-column Gram
 floor. No new storage, scalar receipt payment, image-rank assumption or
 activation/retention claim is introduced.
+
+CR18--CR21 insert the actual subsequent AW-observing acc correction,
+after the same-cycle due S/reset maps. The conditional boundary constraint
+is C_acc=Cplus_face, dC_acc=-d(beta_face), on the SAME tangent. Its Fisher
+loss pays eta>Cplus/s>0 of the regression-square coefficient and retains
+the exact b/t cross term. The original odd matrix is
+`H_acc-R_acc' Omega R_acc`, with reader b+(eta/omega)t and omega=1-eta.
+The controlling remaining threshold is CR22:
+`Omega^-1-R_acc*(H_acc-c_O H_0)^-1*R_acc'>=0`, with the inverse justified.
+There is no uniform innovation bound, affordable cross cost or positive
+complete margin certificate. CR23's >1e-37 reserve applies only on the
+actual nuisance-supported reader kernel; its nonzero rank is unknown.
+Use the actual integrated g/Q_ao recurrence CR24 and directional S/magnetic
+covariance columns to pay the surviving T dB T' reader. No independent
+maximization, new metric or deletion of unpaired/crossing faces follows.

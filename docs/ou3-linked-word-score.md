@@ -6,6 +6,18 @@ not a new contraction search. The authoritative proof is
 exact rationals. It extends the existing `planar_cell_transport` entry without
 promoting its open uniform premises.
 
+CR18--CR24 additionally substitute the actual same-cycle acc Fisher loss
+after the queued floor and due S/reset maps. The shared boundary equation
+is dC_acc=-d(beta_face). Exact conditional completion pays eta>Cplus/s>0
+of the face regression-square coefficient and retains the b/t cross work,
+with t=dT_acc B_acc(h_o+T_acc)'/Cplus. The original odd signed matrix is
+`H_acc-R_acc' Omega R_acc`, not a new storage. Its remaining threshold is
+`Omega^-1-R_acc*(H_acc-c_O H_0)^-1*R_acc'>=0`, with that inverse qualified.
+No generated suffix, process/source cross or endpoint gauge is removed
+from the other blocks. Source supply still requires G-theta J_root.
+The transported complementary T dB T' reader and full cross cost remain
+unpaid; no uniform AW blocker or homogeneous-margin flag is promoted.
+
 ## Precise lemma and role
 
 **PROVED — analytical.** For every finite regular real-operation word on one
