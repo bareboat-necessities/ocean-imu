@@ -231,7 +231,11 @@ def run_unit(unit: Unit, work: Path, check_shipped: bool) -> dict[str, Any]:
     else:
         columns, data = generate(unit)
         ov.write_wave_csv(wave, columns, data)
-    times = data[:, columns.index("time")]
+    # The harness steps every estimator at dt = 1/200 s and never reads the
+    # record's time column (which the pinned records print with six
+    # significant digits, so it repeats after 1000 s). The baselines get the
+    # same sample clock.
+    times = np.arange(data.shape[0]) / 200.0
     del data
     meta: dict[str, Any] = {"unit": asdict(unit), "families": {}}
     columns_text: dict[str, list[list[str]]] = {}
