@@ -429,3 +429,23 @@ With bounded source-only score action, uniform B_W requires and is implied by
 uniform process-loss comparison energy E_L. Proving that inherited projection
 bound and the remaining grouped active signed-work domination is still a real
 dependency, not a consequence of positive base loss or physical source bounds.
+
+### Current common-tangent AW threshold
+
+The controlling AW calculation is now (CR12)--(CR17a) in
+app:correlated-complete-gap. Restrict to the ACTUAL inherited history image
+before constructing all covariance prefixes. The unsplit matrix is
+`H_mu+Q_mu' L_mu+L_mu' Q_mu-L_mu' L_mu`; q, mu, dT and correction
+losses are never released. The whole signed word has reserve greater than
+`10^-37` only on its nuisance-supported zero-receipt intersection after
+the existing 17-second regular A21 qualification. Actual rank is unknown.
+This pays that intersection in the original fixed-weight gap; all other
+endogenous directions and metric cross entries remain in (CR17).
+
+The nonzero-receipt threshold is the actual signed matrix
+`Z^-1+QY+Y'Q'-E'E-Q K_sharp Q' >= 0`, when its inverse is justified,
+followed by the full cross remainder `A_c-X_c' N_c^-1 X_c>=0`.
+Neither threshold has a uniform certificate. The two-column physical
+MAGNETIC SERVICE premise cannot simply be used as a covariance-column Gram
+floor. No new storage, scalar receipt payment, image-rank assumption or
+activation/retention claim is introduced.

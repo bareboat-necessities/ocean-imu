@@ -619,12 +619,14 @@ def covariance_word_signed_matrix(boundaries, prefixes, active_faces, aw_index):
         JD = [product(J, D) for D in ds]
         grams.append([[trace(product(x, y)) for y in JD] for x in JD])
     positive, readers, ordinary = zeros(d, d), [], []
+    receipt_action, receipt_rows, conditional_rows = zeros(d, d), [], []
     for i in range(len(boundaries)-1):
         if i not in faces:
             loss = add(grams[i], grams[i+1], -1)
             if not is_psd(loss):
                 raise ValueError('ordinary step lacks the stated Fisher base-loss qualification')
             positive = add(positive, loss)
+            receipt_action = add(receipt_action, loss)
             ordinary.append(loss)
             continue
         fs = [scalar_aw_face_fisher_balance(boundaries[i], D,
@@ -638,12 +640,135 @@ def covariance_word_signed_matrix(boundaries, prefixes, active_faces, aw_index):
                        for g in fs] for f in fs]
         positive = add(positive, face_action)
         readers.append([f['regression_reader'] for f in fs])
+        ratio = f0['C']/f0['C_next']
+        face_unsplit_positive = [
+            [(1-ratio**2)*f['dC']*g['dC']/f0['C']**2
+             + 2*(1/f0['C']-1/f0['C_next'])
+             * product(f['dT'], f0['B'], transpose(g['dT']))[0][0]
+             for g in fs] for f in fs]
+        receipt_action = add(receipt_action, face_unsplit_positive)
+        receipt_rows.append([f['AA_target_relative_tangent']/f0['C_next'] for f in fs])
+        conditional_rows.append([ratio*f['dC']/f0['C'] for f in fs])
     adverse = product(transpose(readers), readers) if readers else zeros(d, d)
     gap = add(positive, adverse, -1)
     assert gap == add(grams[0], grams[-1], -1)
+    if receipt_rows:
+        coupled = add(add(receipt_action,
+                          product(transpose(conditional_rows), receipt_rows)),
+                      product(transpose(receipt_rows), conditional_rows))
+        coupled = add(coupled, product(transpose(receipt_rows), receipt_rows), -1)
+        assert coupled == gap
     return {'root_metric': grams[0], 'positive_action': positive,
             'ordinary_losses': ordinary, 'face_reader': readers,
+            'unsplit_receipt_action': receipt_action,
+            'normalized_receipt_rows': receipt_rows,
+            'conditional_receipt_cross_rows': conditional_rows,
             'adverse_face_work': adverse, 'signed_gap': gap}
+
+
+def covariance_partial_word(P, root_tangents, operations, aw_index):
+    """Construct all prefixes from the CR12 fixed-operand partial recursion.
+
+    Operands must come from ONE qualified nominal shipping history. F/Q are
+    the full odd prediction including integrated cross blocks and repairs;
+    scalar h/R are the applied odd acc/S/mag channels. This routine does not
+    select coefficients, qualify an inherited image, or assert reachability.
+    Unlike supplied-prefix checking, every preceding AA deletion is propagated.
+    General coefficient/target/mean/auxiliary variations require CR2's full
+    lift and are not silently set to zero by this routine.
+    """
+    boundaries, prefixes, faces = [[row[:] for row in P]], [root_tangents], []
+    a, n = aw_index, len(P)
+    if not 0 <= a < n or not root_tangents:
+        raise ValueError('nonempty common covariance root and AW selector required')
+    for event in operations:
+        P, ds = boundaries[-1], prefixes[-1]
+        kind = event['kind']
+        if kind == 'prediction':
+            f, q = event['F'], event['Q']
+            if any(f[a][j] for j in range(n) if j != a) or not is_psd(q):
+                raise ValueError('literal autonomous AW row and PSD applied process required')
+            Pnext = add(product(f, P, transpose(f)), q)
+            dn = [product(f, D, transpose(f)) for D in ds]
+        elif kind == 'correction':
+            h, noise = event['h'], F(event['noise'])
+            out = correction(P, h, [[noise]], [[F(0)]])
+            A = add(identity(n), product(out['K'], h), -1)
+            Pnext, dn = out['C'], [product(A, D, transpose(A)) for D in ds]
+        elif kind == 'reset':
+            g = event['G']
+            Pnext, dn = product(g, P, transpose(g)), [
+                product(g, D, transpose(g)) for D in ds]
+        elif kind == 'floor':
+            target = F(event['target'])
+            Pnext, dn = [row[:] for row in P], [[row[:] for row in D] for D in ds]
+            if target > P[a][a]:
+                faces.append(len(boundaries)-1)
+                Pnext[a][a] = target
+                for D in dn:
+                    D[a][a] = F(0)
+            elif target == P[a][a] and any(D[a][a] for D in ds):
+                raise ValueError('zero-gap crossing needs its actual directional map')
+        else:
+            raise ValueError('unsupported covariance partial operation')
+        boundaries.append(Pnext)
+        prefixes.append(dn)
+    out = covariance_word_signed_matrix(boundaries, prefixes, faces, a)
+    out.update({'boundaries': boundaries, 'prefixes': prefixes, 'active_faces': faces,
+                'inherited_causal_image_qualified': False})
+    return out
+
+
+def receipt_kernel_nuisance_margin():
+    """CR16: signed WHOLE-word reserve on the actual nuisance/receipt kernel.
+
+    All face work is nonnegative on that kernel, so the first process loss
+    can be retained. No reserve is asserted off the kernel; its actual rank,
+    origin and 17-second regular A21 activation are separate qualifications.
+    """
+    from .lin_path_certificate import small_x_source_defect
+    from .nuisance_upper_certificate import bounds
+    from .root_covariance_certificate import process_floors
+    eps, _, normalized, _ = small_x_source_defect()
+    inverse_bound = max(sum(abs(x) for x in row) for row in inverse(normalized))
+    hmin, hmax = F('.004'), F('.006')
+    lin = ((1-eps)*F('.05')**2*(hmin/12)*hmin**6
+           / ((1+hmax/F('.02'))**2*inverse_bound))
+    q = min(lin, process_floors()[1])/F('1.01')**2
+    m = max(bounds()[-1])
+    delta = q/(m+q)
+    reserve = delta*(2-delta)
+    assert F('1.37935e-37') < reserve < F('1.37936e-37')
+    return {'q_n': str(q), 'm_n': str(m), 'signed_kernel_reserve': str(reserve),
+            'signed_kernel_reserve_lower': '1/10000000000000000000000000000000000000',
+            'scope': 'CR12 pure odd covariance causal image, nuisance-supported root and zero actual receipt at every active face; pre-prediction root after 17 s regular default A21',
+            'actual_kernel_dimension_verified': False,
+            'whole_odd_gap_verified': False,
+            'full_homogeneous_gap_verified': False}
+
+
+def coupled_receipt_schur(K, L, Qfull, embedding):
+    """CR17a exact common-root elimination; ordinary inverses only.
+
+    L consists of independent ACTUAL receipt rows; embedding*L retains all
+    faces. Qfull contains their actual conditional cross rows. Supplying this
+    algebra neither proves those origins nor K>0 at a uniform root reserve.
+    """
+    ldlt(K)
+    Ki = inverse(K)
+    Z = product(L, Ki, transpose(L))
+    ldlt(Z)
+    Zi = inverse(Z)
+    Y = product(Ki, transpose(L), Zi)
+    shorted = add(Ki, product(Y, L, Ki), -1)
+    Q = product(transpose(embedding), Qfull)
+    remainder = add(add(add(add(Zi, product(Q, Y)),
+                            product(transpose(Y), transpose(Q))),
+                        product(transpose(embedding), embedding), -1),
+                    product(Q, shorted, transpose(Q)), -1)
+    return {'receipt_remainder': remainder, 'receipt_lift': Y,
+            'kernel_inverse': shorted, 'conditional_rows': Q,
+            'uniform_actual_remainder_verified': False}
 
 
 def odd_covariance_gap_scope_check():
@@ -754,8 +879,8 @@ def certificate():
             'scope_check': odd_covariance_gap_scope_check(),
         },
         'causal_aw_deficit_gap': {
-            'proof': 'app:correlated-complete-gap, CR4--CR10',
-            'result_type': 'analytical causal substitution into existing signed gap; uniform margin OPEN',
+            'proof': 'app:correlated-complete-gap, CR4--CR17a',
+            'result_type': 'exact shared-tangent matrix and qualified signed receipt-kernel reserve; full AW absorption OPEN',
             'scope': 'same qualified regular planar odd-covariance fibre; full correlated cross/target ports retained',
             'actual_process_AA_row': 'p_minus=phi^2*p+actual_q_aa',
             'queued_process_target_lag_retained': True,
@@ -766,6 +891,15 @@ def certificate():
             'active_face_completion': 'q^2-(C/Cplus*q-mu/Cplus)^2+regression_loss',
             'negative_completed_reader': 'mu^2/[Delta*(2C+Delta)], Delta>0 only',
             'non_AW_payment': 'I_a=T*(B-Bplus)*T^T; dI_a and dC share actual dB,dT',
+            'common_tangent_unsplit_matrix': 'H_mu+Q_mu^T L_mu+L_mu^T Q_mu-L_mu^T L_mu; every row from the same actual prefix',
+            'common_tangent_matrix_identity_verified': True,
+            'partial_origin_zero_energy_kernel_test_verified': True,
+            'partial_origin_uniform_parameterization_verified': False,
+            'nuisance_receipt_kernel': receipt_kernel_nuisance_margin(),
+            'full_cross_remainder': 'CR17: A_c-X_c^T N_c^-1 X_c >= 0, with all root metric cross entries retained',
+            'receipt_only_remainder': 'CR17a: Z^-1+QY+Y^T Q^T-E^T E-Q K_sharp Q^T >= 0; actual dependent receipts retained',
+            'receipt_only_inverse_uniformly_qualified': False,
+            'receipt_only_remainder_uniformly_verified': False,
             'released_coordinate_Schur_relative_charge': '(2alpha-I)/(2alpha-I-2beta)>1 for beta>0',
             'released_coordinate_failure_class': 'D_SUFFICIENT_BOUND_FAILURE',
             'released_direction_proved_shipping_reachable': False,

@@ -4875,6 +4875,280 @@ shipping gap has been established. This calculation answers where
 S/magnetic payment enters and why independent payment fails; it does
 not prove that their complete complementary coverage is sufficient.
 
+\paragraph{The inherited image and the actual shared-tangent generator.}
+Continue on precisely (OF2)'s regular central-planar A21 partial fibre,
+after refinement, with the future delivered/private history fixed. A word
+root is immediately before a prediction, after at least 17 seconds of the
+regular default A21 segment used by the existing nuisance comparison.
+No new capture or retention premise is proved by choosing that location.
+The word may have inactive floors or no floor. Do not require an active
+floor at its root or a positive lower bound on any floor gap.
+
+Here is the causal-origin restriction used below. Let $\xi$ be a tangent
+of an admitted construction-to-root history, with its actual initialization,
+H18 updates, release, physical primitives and auxiliary recurrences.
+Differentiate that whole inherited history. Denote its odd covariance
+reader by $\mathsf R_0$, and the readers of all coordinates fixed by the
+partial fibre by $\mathsf C_0$. These include the root mean, even and
+off-parity covariance, physical comparison, private/reference/tuner state,
+pending target, clocks, mode and the delivered continuation. The allowed
+odd root is
+\[
+ {\cal Y}_0=\{\mathsf R_0\xi:\ \mathsf C_0\xi=0,\
+                 \xi\hbox{ is an admissible history tangent}\}.
+                                                               \tag{CR12}
+\]
+This is an intersection with the differentiated shipping history, not a
+45-dimensional independent input family. The constructor seeds covariance
+from the fixed configuration; it has no arbitrary covariance setter.
+The actual first-Live AW cross deletion and hold/release writes are included
+in $\mathsf R_0,\mathsf C_0$. They are not repeated at later roots.
+The dimension and a uniform parameterization of (CR12) are still unproved.
+In particular this definition is not a proof that a selected ambient
+negative direction is excluded.
+
+The partial fibre does pass its zero-energy test: if
+$\mathsf R_0\xi=0$ and $\mathsf C_0\xi=0$, the complete stored and auxiliary
+root and future inputs have zero variation. Differentiated determinism
+then gives zero terminal variation. Thus coordinates on the image itself
+lose no terminal response. This proves (CR1) on this partial fibre only;
+outside it, retain all inherited endogenous columns and (LR9). It proves
+neither a general single-valued auxiliary graph nor a nonzero image rank.
+
+Choose any injective coordinates $y$ on a linear part of (CR12). The
+shipping covariance recursion constructs, rather than independently selects,
+all $D_{i,j}$. On this fixed-operand partial fibre its ordinary maps are
+$D^-=F_ODF_O^T$, $D^{\rm corr}=A_OD A_O^T$, and
+$D^{\rm reset}=G_ODG_O^T$. At an active fixed-target face set only its
+AA entry to zero. The covariances in these maps are the covariances
+obtained from the same nominal recursion, including every earlier floor.
+In particular the prediction has
+\[
+ F_O=\begin{pmatrix}F_{oo}&g\\0&\phi\end{pmatrix},\quad
+ g_{(v_y,p_y,S_y)}
+   =(\phi_{va},\phi_{pa}^{ship},\phi_{Sa}^{ship})^T,\qquad
+ P_{ao}^-=\phi(P_{ao}F_{oo}^T+p g^T)+Q_{ao}.                \tag{CR12a}
+\]
+The other entries of $g$ vanish, not the integrated three-column chain.
+Use the actual small-step coefficients, full $Q_O$ and its repair. At
+each non-AW $S$/magnetic step use (CR7), with its actual $dB^+$; the acc
+row retains its AW entry. At each face obtain
+\[
+ q_i=l_{q,i}y,\quad \mu_i=l_{\mu,i}y,\quad
+ (dT_i)^T=L_{T,i}y
+                                                               \tag{CR12b}
+\]
+from this same prefix. The row $l_{\mu,i}$ also satisfies (CR5) on each
+root column, including its inherited first receipt and target lag.
+There is no second derivative of the prediction weights.
+No restriction on earlier auxiliary correlations follows from zero future
+partial coefficient ports. The general causal derivatives of these
+operands remain in the other blocks of (CR2).
+
+\paragraph{Six questions for the new inequality.}
+(1) The target is still (CR2)--(CR3), and in the partial block
+$G_{OO}\succeq c_O\lambda H_0$.
+(2) The attacked work is the active-face regression/deficit on the common
+prefix (CR12b).
+(3) Substitute the following forms into (OF4), without another storage.
+(4) They pay all face work on the kernel of the \emph{actual} receipts;
+the remaining receipt/root cross terms are eliminated exactly below.
+(5) The proved kernel reserve is greater than $10^{-37}$ relative to its
+original root Fisher Gram. Closing the rest requires the signed Schur
+operator (CR17) to be nonnegative at one common $0<c<10^{-37}$.
+(6) This removes an unpaid part of the odd signed matrix, but does not
+discharge the regional theorem's OPEN dependency: the remaining operator,
+actual image rank and activation are not yet uniformly controlled.
+An empty actual intersection supplies no contraction breakthrough.
+
+\paragraph{Unsplit face polarization and whole-word kernel payment.}
+Let $H_{\rm ord}$ be the sum of the ordinary operation Fisher-loss Grams
+on those prefixes. With $a_i=C_i/C_i^+$, define
+\[
+\begin{split}
+ H_\mu={}&H_{\rm ord}+\sum_i\{(1-a_i^2)l_{q,i}^Tl_{q,i}
+       +2(1/C_i-1/C_i^+)L_{T,i}^TB_iL_{T,i}\},\\
+ (\mathsf L_\mu)_i={}&l_{\mu,i}/C_i^+,\qquad
+ (\mathsf Q_\mu)_i=a_i l_{q,i}.
+\end{split}                                                   \tag{CR13}
+\]
+Indices in these sums are the actual active faces. Direct polarization
+of the first line of (CR8) gives the exact matrix
+\[
+\begin{split}
+ F_i={}&
+ \binom{l_{q,i}}{l_{\mu,i}}^T
+ \begin{pmatrix}1-a_i^2&a_i/C_i^+\\
+                 a_i/C_i^+&-1/(C_i^+)^2\end{pmatrix}
+ \binom{l_{q,i}}{l_{\mu,i}}\\
+ &+2(1/C_i-1/C_i^+)L_{T,i}^TB_iL_{T,i},\\
+ G_{OO}/\lambda={}&H_\mu+
+   \mathsf Q_\mu^T\mathsf L_\mu+
+   \mathsf L_\mu^T\mathsf Q_\mu-
+   \mathsf L_\mu^T\mathsf L_\mu .
+\end{split}                                                   \tag{CR13a}
+\]
+This is (OF4), not an extra action term. In particular the $q$--$\mu$
+cross entry has positive sign. All the rows act on the same $y$.
+Neither $q$ nor a correction-loss coordinate is minimized independently.
+There is no division by $\Delta$ here.
+
+For $y\in\ker\mathsf L_\mu$ every actual face has $D_{aa}=0$ on this
+fixed-target partial fibre. Its full tangent is unchanged by the floor.
+Inverse order, or (CR8), proves its Fisher loss nonnegative.
+Consequently the following is a source-uniform inequality for the
+\emph{complete} actual word, not for each correction--floor pair:
+\[
+ y^TG_{OO}y\ \ge\ \lambda y^TH_{\rm ord}y
+                  \quad(y\in\ker\mathsf L_\mu).              \tag{CR14}
+\]
+If a scalar gap is zero the directional floor derivative also leaves
+this tangent unchanged, since the target-relative AA derivative is zero.
+Inactive faces and absent faces add no constraint. Thus (CR14) requires
+neither recurrent active floors nor an artificial proof reset.
+Ordinary magnetic and $S$ losses in $H_{\rm ord}$ remain exactly
+(OF4a), using $D_i h_i^T$ and actual innovations on the same prefixes.
+Their physical service probes are not substituted for those columns.
+
+\paragraph{A uniform signed reserve on the qualified nuisance intersection.}
+Let $n=(v_y,p_y,S_y,AW_y,BA_y)$ inside the nine-dimensional odd block.
+Restrict (CR14) further to roots with
+$D_0=E_n D_nE_n^T$; do not delete other root directions.
+Write $\mathcal K_n$ for this support intersection with (CR12) and
+$\ker\mathsf L_\mu$. Its dimension is whatever the actual history image
+and actual receipt rows permit.
+
+The existing recurring nuisance proof gives
+$P_{nn}\preceq U_n$, at \emph{every} such pre-prediction root after
+17 seconds. Put $m_n=\max\operatorname{diag}U_n$ using its five-block
+comparison, and let $\varepsilon$ and $M=81060$ be (CA10)'s process
+defect and normalized inverse bound. The literal full integrated process
+gives, with $h_-=.004,h_+=.006$,
+\[
+\begin{split}
+ q_{\rm LIN}&=
+ \frac{(1-\varepsilon)(.05)^2(h_-/12)h_-^6}
+                 {(1+h_+/.02)^2M},\\
+ q_{\rm BA}&=\frac{(2.5\,10^{-7})h_-}{1+2h_-/5000},\\
+ q_n&=\frac{\min(q_{\rm LIN},q_{\rm BA})}{(101/100)^2}.
+\end{split}                                                   \tag{CR15}
+\]
+These are existing source-uniform process comparisons; no stationary
+$Q_{aa}$ identity is imposed. The nuisance prediction block has both row
+and column sums at most $1+h_++h_+^2+h_+^3<101/100$:
+this follows from the literal integrated coefficient bounds in (CA10),
+$\phi,\phi_b\le1$, and the neutral integrator entries.
+Prediction does not mix AG and nuisance. Hence
+$Q_O\succeq F_OE_nq_nE_n^TF_O^T$.
+
+Here the needed inverse is the actual \emph{conditional} nuisance covariance
+$C_n=(E_n^TP_0^{-1}E_n)^{-1}\preceq P_{nn}\preceq m_nI$.
+Inverse order proves
+\[
+ E_n^TF_O^TJ_1F_OE_n\preceq(C_n+q_nI)^{-1}
+          \preceq(1-\delta_n)C_n^{-1},\quad
+ \delta_n=\frac{q_n}{m_n+q_n}.
+\]
+Whitening this one Fisher congruence bounds its squared tangent factor
+by $(1-\delta_n)^2$. The first process therefore dissipates at least
+$\gamma_n=\delta_n(2-\delta_n)$ of the \emph{original} supported root
+Fisher energy. Every later ordinary operation and every face in (CR14)
+has nonnegative loss. This proves
+\[
+ \boxed{y^TG_{OO}y\ge\gamma_n\lambda y^TH_0y
+       \quad(y\in\mathcal K_n),\qquad \gamma_n>10^{-37}.}       \tag{CR16}
+\]
+Exact-rational evaluation of (CR15) and the already proved $U_n$ gives
+$m_n=45331392703331023352281/128000000000$ and
+$\gamma_n\in(1.37935,1.37936)10^{-37}$.
+This deliberately coarse reserve is affordable because no adverse face
+work remains on $\mathcal K_n$. It is not a scalar bound on the unpaid
+receipt or on the full covariance reader. It pays part of the actual
+signed gap, rather than adding another isolated base decrement.
+The proof uses the nuisance bound's persistent 17-second qualification,
+not a first-Live bound restarted at successive roots.
+
+\paragraph{Exact cross cost and the remaining shipping operator.}
+Put the coordinates of $\mathcal K_n$ first in the actual endogenous lift
+of (CR2). Include \emph{all} other odd, even, mean and endogenous auxiliary
+directions in the remaining coordinates. No exogenous source is completed.
+Use the full root metric $J_r$, retaining its cross entries. For
+$0<c<10^{-37}$ write
+\[
+ G-cJ_r=\begin{pmatrix}N_c&X_c\\X_c^T&A_c\end{pmatrix}.
+\]
+If the actual kernel intersection has positive dimension and SPD root
+Gram, (CR16) proves
+$N_c\succeq(\gamma_n-c)J_{r,kk}\succ0$. Complete the square
+in these actual coordinates. The remaining homogeneous matrix test
+after this payment is exactly
+\[
+ \boxed{\mathcal R_W(c)=A_c-X_c^TN_c^{-1}X_c\succeq0.}        \tag{CR17}
+\]
+The subtracted cross cost is exactly the displayed matrix, not a norm
+maximum. Its useful qualification is
+$X_c^TN_c^{-1}X_c\preceq
+(\gamma_n-c)^{-1}X_c^TJ_{r,kk}^{-1}X_c$; at
+$c=1/(2\,10^{37})$ the coefficient is less than $2\,10^{37}$.
+No affordability is inferred from this large comparison. If
+$\mathcal K_n=\{0\}$, retain the entire original matrix instead of
+asserting a nonempty paid block. Semidefinite remaining origins still
+require (CR1).
+
+The covariance receipt part can also be eliminated exactly, when its
+positive action has an ordinary inverse. This exposes which correlation
+a future bound must preserve. For $K=H_\mu-cH_0\succ0$, select independent
+rows $L$ of the \emph{actual} $\mathsf L_\mu$, and retain
+$\mathsf L_\mu=E L$ with every dependent face present. Put
+\[
+\begin{gathered}
+ Z=LK^{-1}L^T,\quad Y=K^{-1}L^TZ^{-1},\quad Q=E^T\mathsf Q_\mu,\\
+ K^\sharp=K^{-1}-K^{-1}L^TZ^{-1}LK^{-1}.
+\end{gathered}
+\]
+Here $Z\succ0$, $LY=I$, $LK^\sharp=0$ and
+$K^\sharp K k=k$ for $k\in\ker L$. With $t=Ly$, $k=y-Yt$,
+ordinary completion of the common-root quadratic (CR13a) gives
+\[
+\begin{split}
+ y^T(G_{OO}/\lambda-cH_0)y
+ ={}&(k+K^\sharp Q^Tt)^TK(k+K^\sharp Q^Tt)\\
+ &+t^T\{Z^{-1}+QY+Y^TQ^T-E^TE-QK^\sharp Q^T\}t .
+\end{split}                                                   \tag{CR17a}
+\]
+The braces must be positive semidefinite; their last term is the exact
+conditional/receipt cross cost. This is not (CR9): the shared
+$q$--$\mu$ correlation remains in $QY+Y^TQ^T$ and in that cross cost.
+No dependent receipt is dropped and no correction-loss coordinate is
+released. If $K\succ0$ is not established at the proposed uniform $c$,
+use (CR17), whose paid block has the proved reserve, rather than invoking
+this inverse. With no active faces the receipt terms are absent.
+
+In the odd self part of $A_c,X_c$, (CR13a) shows exactly what survives:
+the signed common-tangent terms
+$\mathsf Q_\mu^T\mathsf L_\mu+
+\mathsf L_\mu^T\mathsf Q_\mu-\mathsf L_\mu^T\mathsf L_\mu$,
+plus their actual process/service cross cost. Equation (CR5) makes each
+row a correction-information receipt, and (CR7),(CR12a) generate the
+associated conditional and integrated-chain directions. Thus an actual
+negative direction, if one is eventually proved, must have a nonzero
+receipt or an unpaid AG/cross component; the paid nuisance receipt
+kernel cannot cause it. The current physical two-column MAGNETIC SERVICE
+floor does not bound these covariance-column Schur costs or prove the
+dimension of (CR12). No admitted negative direction or uniform positive
+remainder for (CR17) has been established.
+
+The other entries of $\mathcal R_W$ remain (OF1),(OF1a): process
+$E_L+S_q-2C_W$ and generated feedback cross/square work stay linked,
+complementary base propagation is paid once, all generated suffixes and
+both endpoint gauge Grams stay, and the qualified magnetic and locked-Live
+results retain their original hypotheses. Inherited tuner/target,
+reference, reset/projection and source correlations are not externalized.
+Hence (CR16) does not resolve the odd AW blocker or the full homogeneous
+gap. The exact remaining threshold is (CR17) on the actual inherited
+image, with its activation and nontrivial kernel qualification still open.
+There is no radius, capture, nonlinear or arithmetic promotion.
+
 \paragraph{Source supply requires a retained contraction reserve.}
 Only \emph{after} proving the homogeneous margin may one assign a
 finite-error supply. If $W_{\perp,0}=v_0^TJ_rv_0$ on the justified
@@ -4900,17 +5174,21 @@ parities, OU/BG/BA and integrated AW--$v$--$p$--$S$, actual acc/$S$/mag
 rows, default floor, staged tuner/queue lag, reference and inherited
 physical/source histories, reset/projection and endpoint gauge.
 (2) Relaxations: fixed regular real-operation tangent identities,
-the qualified planar partial fibre and the explicitly released
-coordinates in (CR9); no shipping word or service assumption is replaced.
+the qualified planar partial fibre and its nuisance/receipt-kernel
+intersection; its rank is not presumed. The explicitly released
+coordinates in (CR9) remain a failed relaxation, not the new calculation.
+No shipping word or service assumption is replaced.
 (3) Failure: D for (CR9)--(CR10), not a failed exact shipping gap.
 (4) Genuine shipping counterexample: none.
 (5) Retained: all prior suffix, complementary Schur, combined process/source,
 conditional AW/directional score, frame, held endpoint, qualified magnetic,
 even-process and locked-reference results, under their original hypotheses.
-(6) Next calculation: (CR5),(CR7),(CR8) on the same inherited image
-with the actual integrated process and transported service; certify
-(OF5) and then the full (CR3) cross remainder. No uniform margin,
-full-word OPEN dependency or status count is promoted. The metric,
+(6) Next calculation: qualify the actual image (CR12) and use its
+literal prefix generator in (CR13a). The signed reserve (CR16) pays
+only its nuisance receipt kernel. Certify the actual receipt/service
+remainder (CR17a), where its inverse is legitimate, and the full
+cross remainder (CR17). No complete uniform margin, full-word OPEN
+dependency or status count is promoted. The metric,
 fixed weight and physical/transverse equivalence obligation are unchanged.
 
 \subsection{Local theorem and final open implication}

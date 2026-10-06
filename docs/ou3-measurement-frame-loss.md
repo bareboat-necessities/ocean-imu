@@ -518,20 +518,19 @@ OPEN and no radius is solved.
 
 ## Complete odd-covariance gap: retain the active-face derivative
 
-The causal substitution in app:correlated-complete-gap is now the next
+The common-tangent substitution in app:correlated-complete-gap is the
 controlling calculation. Let p=P_aa, alpha_f be the actual queued target,
 mu=D_aa-dalpha_f, C_plus=C+Delta, q=dC/C and a=C/C_plus.
-The SAME Fisher face decrement has the exact linked completion
+The SAME Fisher face decrement is kept unsplit:
 
 \[
- L_{\rm face}=(1-a^2)
- \left(q+\frac{a\mu}{C_+(1-a^2)}\right)^2
- +2(1/C-1/C_+)dT B dT^T
- -\frac{\mu^2}{\Delta(2C+\Delta)}.
+ L_{\rm face}=q^2-(a q-\mu/C_+)^2
+ +2(1/C-1/C_+)dT B dT^T.
 \]
 
-This scalar formula requires a strictly active face; it supplies no
-uniform face gap or differentiable crossing. Before polarization, use
+There is no division by Delta or independent minimization over q and mu.
+At zero gap use the actual directional map, without asserting a smooth
+crossing. Before polarization, use
 the actual AA receipt (CR5). On the qualified fixed-input covariance
 fibre after an actual active floor, mu is exactly the weighted sum
 of prior negative information-decrement derivatives. The sharp bound
@@ -546,6 +545,23 @@ D-class failed Schur payment (CR9)--(CR10); no scalar tightening or
 shipping instability inference follows. The actual linked image must
 pass (OF5) and the full homogeneous cross Schur test (CR3).
 Neither uniform margin is proved.
+
+CR12 constructs all prefixes from one inherited tangent on the actual
+history-image intersection; its rank and uniform parameterization are not
+proved by an ambient covariance basis. CR13a pulls this unsplit formula
+back to
+`G_OO/lambda=H_mu+Q_mu' L_mu+L_mu' Q_mu-L_mu' L_mu`.
+Its whole-word signed reserve exceeds `10^-37` on the nuisance-supported
+zero-receipt intersection after 17 s regular default A21. Inactive and
+absent floors add no constraint. This is a conditional subspace result,
+not uniform deficit absorption or a nonempty-image certificate.
+
+CR17 retains the exact full cross cost `X_c' N_c^-1 X_c` and root-metric
+cross entries. CR17a's lossless receipt matrix is
+`Z^-1+QY+Y'Q'-E'E-Q K_sharp Q'`; it keeps the signed q/mu link and
+every dependent face row. Its inverse qualification and nonnegative
+uniform sign remain unproved. The complete odd blocker and homogeneous
+gap are OPEN.
 
 Appendix `app:odd-covariance-signed-gap` specializes the **same** fixed-weight
 complete signed gap to a regular central-planar A21 pure odd-covariance fibre,

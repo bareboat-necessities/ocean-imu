@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "9d07d986ff7799f55ea5059e26495bdb32cba667"
+      "git_blob_sha": "51642844079c8db2a931ebbe7b65e0150cdd3b65"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "e4c522d62d85169a08dfcecde46b63079fc493f8"
+      "git_blob_sha": "66b14a03091beac3d6b0ab30ad769c31cd50ae5b"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "91e7d0983ebac09c60067153a421e01e3dfcad5b"
+      "git_blob_sha": "18ab4460953cda707516047da86ab5bd206fc5af"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "99007b32ee11c932e41ee7dada77981c073198d5"
+      "git_blob_sha": "008faa5a3148bc2be4e4debc55b33903fe312f70"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "b27c4a4b5316795eec66f77fbbe7be6ef7d70f7c"
+      "git_blob_sha": "be8b1886f1fb61a05b52163473d3164a483e2c41"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "f4f9054f6cab02443fc3e26acaec9207d92a11f9"
+      "git_blob_sha": "9ed5bed1aac181cd5d2e889c77975b47bf7d4f30"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -956,7 +956,7 @@
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "e887715d5201297a182798e03c9757867e0fd554"
+      "git_blob_sha": "51ac00a96b3708530cbf7e8b735cd66e3348cf5b"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
@@ -964,23 +964,23 @@
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "a737bea306aa16c5275c0fbc9b81f8b439b580b2"
+      "git_blob_sha": "039514d730aea43f6f3389ea74ef3375bd008eb9"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "1934d5d583bae0ee4f00254b6684a75d3921a98e"
+      "git_blob_sha": "3e403b1c6c682ab305b68ffc252ff2de65b6796d"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
-      "git_blob_sha": "f993c55a82e7794c76b1b8cc79696600e15fe49d"
+      "git_blob_sha": "b78ef7427c046e3bd8119db5187cc5fe78fc69c8"
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "369d5a7cdaeec8adc22c3394c74fa13a549f0ebc"
+      "git_blob_sha": "210fbdb04198fb73fac6f69371fa693ed50b4da3"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
-      "git_blob_sha": "18b9becf5fac7c0d62ec94c0e10fff20dc0cb7cb"
+      "git_blob_sha": "6c77aa0c59fcf454df285edc9cd63075342e2139"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1363,10 +1363,10 @@
     "automated_evidence_commit_preserved_before_push": "d8435c292120a9d482541ebbd4c49d2b2dc9e1b0"
   },
   "correlated_complete_gap_audit": {
-    "observed_starting_PR_head": "9220703e6d28e34ee53a67cda31b1424025e6429",
+    "observed_starting_PR_head": "fdc6f3719ee87439da8989cb8d80a00225508fa5",
     "observed_starting_main": "59959d1bf33a3c5f4f70331104546a6486468df6",
-    "intervening_automated_evidence_preserved": "21463f710ac8ffd08ba9a504bf934ab2f74233f4",
-    "proof": "app:correlated-complete-gap, CR1--CR11",
+    "intervening_automated_evidence_preserved": "0e8313729b5605b561e9a145c03e88fd25796478",
+    "proof": "app:correlated-complete-gap, CR1--CR17a",
     "controlling_inequality": "LR8/LR9 homogeneous correlated G>=c J_root with c>0 before genuine exogenous supply",
     "matrix": "CR2: actual complete prefixes and endpoint gauge, [[G,H],[H^T,-S]]",
     "inherited_endogenous_auxiliary_externalized": false,
@@ -1385,6 +1385,26 @@
     "shipping_sources_changed": false,
     "numerical_search_or_new_replay_performed": false,
     "radius_capture_or_activation_promotion_performed": false,
-    "tooling_failures": "E: guessed paths, rejected patch/context/JavaScript delimiters and trailing whitespace corrected; full evidence architecture guard caught a covariance-test variable name colliding with a retired token, renamed descriptively with guard unchanged. No premise or test weakened. Publication payload Unicode scalar/UTF-16 length mismatch corrected; final Git tree equality check retained."
+    "tooling_failures": "E: guessed paths and TeX dollar/brace JavaScript interpolation failed before modification and were corrected. sympy was absent in both Python runtimes; that proposed symbolic simplification was not used as evidence. Exact-rational identity/source regressions and validation gates were unchanged. Earlier classified tooling failures remain in the research ledger.",
+    "actual_shared_tangent_unsplit_matrix_verified": true,
+    "actual_shared_tangent_matrix": "H_mu+Q_mu^T L_mu+L_mu^T Q_mu-L_mu^T L_mu",
+    "partial_origin_zero_energy_kernel_test_verified": true,
+    "actual_origin_uniform_parameterization_verified": false,
+    "qualified_signed_nuisance_receipt_kernel": {
+      "q_n": "248188600375173268173354737/10161261447480073450406250000000000000000000000000000",
+      "m_n": "45331392703331023352281/128000000000",
+      "signed_kernel_reserve": "1786275919960390815486407874891208875923333544586059434996148824580916979343442896840339169/12950109371095572978920465702623562423409136730522616873817141460977083516045713637612757070646783590205916979343442896840339169",
+      "signed_kernel_reserve_lower": "1/10000000000000000000000000000000000000",
+      "scope": "CR12 pure odd covariance causal image, nuisance-supported root and zero actual receipt at every active face; pre-prediction root after 17 s regular default A21",
+      "actual_kernel_dimension_verified": false,
+      "whole_odd_gap_verified": false,
+      "full_homogeneous_gap_verified": false
+    },
+    "remaining_receipt_operator": "CR17a: Z^-1+QY+Y^T Q^T-E^T E-Q K_sharp Q^T>=0; K and Z inverses must be qualified",
+    "remaining_full_cross_operator": "CR17: A_c-X_c^T N_c^-1 X_c>=0, 0<c<1e-37; all root-metric cross entries retained",
+    "uniform_actual_receipt_operator_verified": false,
+    "odd_AW_blocker_resolved": false,
+    "complete_homogeneous_gap_proved": false,
+    "new_metric_or_coordinate_lift_constructed": false
   }
 }

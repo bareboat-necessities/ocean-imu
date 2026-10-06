@@ -21,7 +21,8 @@ from tools.stability.ou3_theorem.measurement_frame import (
     planar_pitch_prediction_calculus,
     scalar_aw_face_fisher_balance, covariance_word_signed_matrix,
     odd_covariance_gap_scope_check,
-    scalar_aw_innovation_reader,
+    scalar_aw_innovation_reader, covariance_partial_word,
+    receipt_kernel_nuisance_margin, coupled_receipt_schur,
 )
 from tools.stability.ou3_theorem.planar_innovation_storage import information_shear_correction
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import product
@@ -30,6 +31,114 @@ from tools.stability.ou3_theorem.world_frame import quaternion_rotation, skew
 
 
 class MeasurementFrameTests(unittest.TestCase):
+    def test_shared_prefix_receipt_uses_integrated_prediction_and_both_correction_rows(self):
+        # Rational coefficient-slot regression, not an admitted shipping word.
+        # All nine odd coordinates and integrated AW cross blocks are retained.
+        # The proof binds these slots to the literal joint nominal history.
+        h, phi, a = F(1, 200), F(399, 400), 7
+        f = identity(9)
+        f[0][2] = f[1][3] = h  # zero-rate attitude/BG branch
+        f[4][a], f[5][4], f[5][a] = h, h, h*h/2
+        f[6][4], f[6][5], f[6][a] = h*h/2, h, h**3/6
+        f[a][a], f[8][8] = phi, F(999999, 1000000)
+        q = [[x/1000 for x in row] for row in identity(9)]
+        # Linked positive process cross covariance, rather than diagonal AW.
+        column = [[f[i][a]] for i in range(9)]
+        q = add(q, product(column, transpose(column)), F(1, 100))
+        P = identity(9)
+        Dv, Db = zeros(9, 9), zeros(9, 9)
+        Dv[4][4], Db[8][8] = F(1), F(1)
+        hs, ha = zeros(1, 9), zeros(1, 9)
+        hs[0][6] = F(1)
+        ha[0][0], ha[0][a], ha[0][8] = F(49, 5), F(1), F(1)
+        events = [
+            {'kind': 'prediction', 'F': f, 'Q': q},
+            {'kind': 'correction', 'h': hs, 'noise': F(3, 2)},
+            {'kind': 'correction', 'h': ha, 'noise': F(1, 25)},
+            {'kind': 'prediction', 'F': f, 'Q': q},
+            {'kind': 'floor', 'target': F(6, 5)},
+            {'kind': 'prediction', 'F': f, 'Q': q},
+        ]
+        out = covariance_partial_word(P, [Dv, Db], events, a)
+        self.assertEqual(out['active_faces'], [4])
+        for j in range(2):
+            receipt = F(0)  # inherited root AA tangent, not a root reset
+            for i, event in enumerate(events[:4]):
+                if event['kind'] == 'prediction':
+                    receipt *= phi**2
+                else:
+                    reader = scalar_aw_innovation_reader(
+                        out['boundaries'][i], out['prefixes'][i][j],
+                        event['h'], event['noise'], a)
+                    receipt -= reader['AA_decrement_covariance_tangent']
+            self.assertEqual(receipt, out['prefixes'][4][j][a][a])
+            self.assertEqual(out['prefixes'][5][j][a][a], 0)
+            face = scalar_aw_face_fisher_balance(
+                out['boundaries'][4], out['prefixes'][4][j], F(6, 5), a)
+            self.assertEqual(out['normalized_receipt_rows'][0][j],
+                             receipt/face['C_next'])
+            # The face deletion, including retained cross covariance, is
+            # carried into the actual subsequent integrated derivative.
+            self.assertEqual(out['prefixes'][6][j],
+                             product(f, out['prefixes'][5][j], transpose(f)))
+        self.assertFalse(out['inherited_causal_image_qualified'])
+
+    def test_unsplit_zero_gap_and_inactive_face_do_not_reset_a_receipt(self):
+        P, D = identity(2), [[F(1), F(1, 3)], [F(1, 3), F(0)]]
+        out = covariance_partial_word(
+            P, [D], [{'kind': 'floor', 'target': F(1)}], 1)
+        self.assertEqual(out['signed_gap'], [[F(0)]])
+        self.assertEqual(out['normalized_receipt_rows'], [])
+        active_tangent = identity(2)
+        inactive = covariance_partial_word(
+            P, [active_tangent], [{'kind': 'floor', 'target': F(1, 2)}], 1)
+        self.assertEqual(inactive['prefixes'][-1], [active_tangent])
+        with self.assertRaisesRegex(ValueError, 'directional map'):
+            covariance_partial_word(
+                P, [active_tangent], [{'kind': 'floor', 'target': F(1)}], 1)
+
+    def test_receipt_schur_retains_common_cross_and_dependent_faces(self):
+        # Exact polarization regression, not a shipping counterexample.
+        K = [[F(3), F(1, 5), F(0)],
+             [F(1, 5), F(2), F(1, 7)], [F(0), F(1, 7), F(4)]]
+        L, E = [[F(1), F(2, 3), F(-1, 5)]], [[F(1)], [F(2)]]
+        Q = [[F(1, 2), F(1, 7), F(1, 3)],
+             [F(-1, 9), F(2, 5), F(1, 11)]]
+        out = coupled_receipt_schur(K, L, Q, E)
+        full_receipts = product(E, L)
+        signed = add(add(add(K, product(transpose(Q), full_receipts)),
+                         product(transpose(full_receipts), Q)),
+                     product(transpose(full_receipts), full_receipts), -1)
+        # Verify the full matrix congruence, not a scalar test direction.
+        residual_map = add(identity(3), product(out['receipt_lift'], L), -1)
+        completed = add(residual_map,
+                        product(out['kernel_inverse'],
+                                transpose(out['conditional_rows']), L))
+        reconstructed = add(product(transpose(completed), K, completed),
+                            product(transpose(L), out['receipt_remainder'], L))
+        self.assertEqual(reconstructed, signed)
+        self.assertEqual(product(L, out['kernel_inverse']), zeros(1, 3))
+        self.assertFalse(out['uniform_actual_remainder_verified'])
+        with self.assertRaisesRegex(ValueError, 'positive definite'):
+            coupled_receipt_schur(K, [L[0], L[0]], Q, identity(2))
+
+    def test_signed_receipt_kernel_reserve_is_scoped_and_not_promoted(self):
+        out = receipt_kernel_nuisance_margin()
+        self.assertGreater(F(out['signed_kernel_reserve']), F(1, 10**37))
+        self.assertLess(F(out['signed_kernel_reserve']), F('1.37936e-37'))
+        self.assertFalse(out['actual_kernel_dimension_verified'])
+        self.assertFalse(out['whole_odd_gap_verified'])
+        self.assertFalse(out['full_homogeneous_gap_verified'])
+        source = Path(__file__).resolve().parents[2]
+        shipping = (source/'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h').read_text()
+        self.assertLess(shipping.index('apply_pending_aw_covariance_inflation_();'),
+                        shipping.index('periodic_update_due(Ts,'))
+        common = (source/'src/kalman_ou_common/KalmanOUCoreMath.h').read_text()
+        for entry in ('Phi(0,3)=phi_va;', 'Phi(1,3)=coeffs.phi_pa;',
+                      'Phi(2,3)=coeffs.phi_Sa;', 'Qd(2,3)=qSa;',
+                      'regularize_psd_if_needed<T,4>(Qd);'):
+            self.assertIn(entry, common)
+
     def test_AW_marginal_innovation_reader_uses_same_directional_Fisher_loss(self):
         P = [[F(2), F(1, 3)], [F(1, 3), F(1)]]
         h, R, a = [[F(1), F(2, 3)]], F(4, 5), 1
@@ -321,6 +430,13 @@ class MeasurementFrameTests(unittest.TestCase):
         self.assertFalse(c['all_time_planar_magnetic_service_verified'])
         self.assertFalse(c['theorem_closed'])
         self.assertEqual(c['planar_magnetic_loss']['retained_fraction'], '9/10')
+        aw = c['causal_aw_deficit_gap']
+        self.assertTrue(aw['common_tangent_matrix_identity_verified'])
+        self.assertFalse(aw['partial_origin_uniform_parameterization_verified'])
+        self.assertFalse(aw['nuisance_receipt_kernel']['actual_kernel_dimension_verified'])
+        self.assertFalse(aw['receipt_only_remainder_uniformly_verified'])
+        self.assertIsNone(aw['uniform_actual_linked_deficit_reader_margin'])
+        self.assertEqual(aw['full_word_OPEN_dependencies_discharged'], [])
 
     def test_literal_profile_and_prediction_bindings(self):
         root = Path(__file__).resolve().parents[2]

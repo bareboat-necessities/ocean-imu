@@ -836,6 +836,25 @@ The actual S/magnetic map (CR7) restores the omitted shared-tangent link.
 Uniform domination of that full linked operator and its cross Schur cost
 remain OPEN; no dependency or status count is promoted.
 
+The current shared-tangent continuation (CR12)--(CR17a) constructs every
+prefix from the actual fixed-operand covariance recursion, including its
+integrated AW--v--p--S cross blocks and AA deletions. Pulling back q, mu,
+dT and all losses gives
+`G_OO/lambda=H_mu+Q_mu' L_mu+L_mu' Q_mu-L_mu' L_mu`.
+The exact signed reserve on the actual nuisance-supported zero-receipt
+intersection is `gamma_n in (1.37935,1.37936)*10^-37`, at pre-prediction
+roots after the existing 17-second regular default A21 qualification.
+The intersection's dimension is unproved; it is not the whole odd block.
+
+This reserve is inserted into the same full G, with no source square
+completed. The remaining threshold is `A_c-X_c' N_c^-1 X_c>=0`.
+On nonzero receipt coordinates the lossless common-root completion
+retains `Z^-1+QY+Y'Q'-E'E-Q K_sharp Q'`. Its last term is the exact
+receipt/conditional cross cost. Both the inverse qualification and uniform
+sign remain OPEN. Generated suffixes, linked process/source work and both
+endpoint gauge Grams remain in the other blocks; no scalar E_L cap or
+second complementary-base charge is added.
+
 Appendix `app:odd-covariance-signed-gap` (OF1)--(OF1a) forms the entire
 signed quadratic in the existing justified root/source coordinates. For each
 process it keeps `f=T X Lambda z` and
