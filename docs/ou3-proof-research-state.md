@@ -295,6 +295,16 @@ Relevant detailed notes: `ou3-shipping-faithfulness-protocol.md`,
 The lemma manifest, manuscript and generated theorem status carry the current
 proved/conditional/open distinctions.
 
+Shipping magnetic configuration: the OU-III AtomS3R sketch sets
+`mag_continuous_hard_iron = false`. After refinement the applied hard-iron offset
+and the magnetic reference stay at their refined values, so the MR1--MR2
+continuous-reference transport and its MR9 proxy-tilt premise no longer arise on
+the shipping path; the facade default and simulators keep the continuous path.
+A refined-reference error from calibration residuals (axis gain, soft iron,
+latency) must be charged to the stated magnetic residual envelopes; that fit is
+not verified here and no constant is changed. The
+provenance pin is updated (classification E: stale binding, not mathematics).
+
 ## Alternatives and next falsifiable experiment
 
 Use the planar parity structure to enclose the same actual covariance and applied
