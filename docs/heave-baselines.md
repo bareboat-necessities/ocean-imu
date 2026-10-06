@@ -154,3 +154,12 @@ resample percentile bootstrap (PCG64 seed 20260317) and an exact sign-flip test.
   keep OU–III's 3-D and attitude outputs as a separate claim.
 - `synth` writes idealized vertical-only records: no RAO, no tilt, no proxy, and
   the true T_z. Use them for plumbing tests only; they are not evidence.
+
+## Results
+
+`reports/results/heave_baselines/summary.md` holds every table, contrast and
+check; `heave_baselines_long.csv` holds one row per method, record and scoring
+interval; `frozen.json` the selected parameters; `heave_baselines_vertical.svg`
+the article's Fig. 6 layout with the baselines added. On the primary-style
+stationary JONSWAP endpoint the causal HPDI forms are worse than OU-III and the
+offline FDDI reference is better; see the summary for the intervals.

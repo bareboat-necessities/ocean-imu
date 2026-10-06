@@ -1,0 +1,137 @@
+{
+ "rescore": {
+  "scores_checked": 1670,
+  "max_relative_difference": 4.7959496374261334e-09,
+  "exact_float32_equality": true,
+  "a_up_vs_d2z_ref_correlation_min": 0.9072565550255552,
+  "z_ref_sign": "up-positive (no --flip-z)"
+ },
+ "shipped_metric_lines_identical": true,
+ "committed": {
+  "ou_validation committed OU_III": {
+   "n": 130,
+   "max_relative_difference": 0.0,
+   "identical": 130
+  },
+  "ou_validation committed OU_II": {
+   "n": 130,
+   "max_relative_difference": 7.005802873027989e-05,
+   "identical": 4
+  },
+  "ou_validation reproduced on this machine OU_III": {
+   "n": 130,
+   "max_relative_difference": 0.0,
+   "identical": 130
+  },
+  "ou_validation reproduced on this machine OU_II": {
+   "n": 130,
+   "max_relative_difference": 0.0,
+   "identical": 130
+  },
+  "tfg_comparison committed OU_III+TFG": {
+   "n": 180,
+   "max_relative_difference": 0.0,
+   "identical": 180
+  },
+  "ou_robustness committed OU_III (Hs 0.05, 30 s ramp)": {
+   "n": 20,
+   "max_relative_difference": 0.0017303603242808663,
+   "identical": 0
+  },
+  "ou_rs_law committed low-high-low OU_III (seed 11-101-1009)": {
+   "n": 7,
+   "max_relative_difference": 4.4091636604015605e-06,
+   "identical": 0
+  }
+ },
+ "article_primary": {
+  "jonswap": {
+   "OU_III": [
+    4.352058052999999,
+    0.10199562401894156
+   ],
+   "OU_II": [
+    6.3359396105000005,
+    0.16588768666930098
+   ],
+   "difference": -1.9838815574999997,
+   "bootstrap_ci95": [
+    -2.0529793437625004,
+    -1.91432685124375
+   ],
+   "sign_flip_p": 0.001953125
+  },
+  "pmstokes": {
+   "OU_III": [
+    4.2975775597500006,
+    0.08403630992814014
+   ],
+   "OU_II": [
+    6.19643486675,
+    0.1465772426879666
+   ],
+   "difference": -1.8988573069999997,
+   "bootstrap_ci95": [
+    -1.96227424933125,
+    -1.8345623521374999
+   ],
+   "sign_flip_p": 0.001953125
+  }
+ },
+ "leakage_audit": {
+  "src/hpdi/HeaveHPDI.h": [],
+  "tools/hpdi_replay.cpp": [
+   "19: // z_hat - z_ref, squares accumulated in order into a float with a fused",
+   "46: std::string t_col = \"t\", a_col = \"a_up\", z_col = \"z_ref\", tz_col = \"Tz_hat\";",
+   "65: \"  [--t-col t] [--a-col a_up] [--z-col z_ref] [--tz-col Tz_hat|none]\\n\"",
+   "93: else if (k == \"--z-col\") a.z_col = next(\"--z-col\");",
+   "143: const int iz = find(args.z_col), itz = args.tz_col == \"none\" ? -1 : find(args.tz_col);",
+   "159: r.z.push_back(args.flip_z ? -num(iz) : num(iz));",
+   "255: std::fprintf(fp, \"%.6f,%.17g,%.9g,%.9g\\n\", rec.t[k], o.z[k], o.v[k], o.fc[k]);",
+   "260: if (!rec.has_z) die(\"grid scoring needs the reference column '\" + args.z_col + \"'\");",
+   "284: const float e = static_cast<float>(o.z[k]) - static_cast<float>(rec.z[k]);",
+   "290: if (rec.t[k] < t0 || !std::isfinite(rec.z[k]) || !std::isfinite(o.z[k])) continue;",
+   "291: const double e = o.z[k] - rec.z[k];"
+  ],
+  "tools/heave_baselines.py": [
+   "33: Record CSV columns (names configurable): t, a_up, z_ref, Tz_hat (optional).",
+   "77: z: str = \"z_ref\"",
+   "271: if rec.z is None:",
+   "280: out[i] = pct_hs(window_rms(eng.displacement(f1, cfg[\"taper\"]), rec.z, score_last), e.hs)",
+   "608: np.savetxt(rec, np.column_stack([t, a, z]), delimiter=\",\", header=\"t,a_up,z_ref\", comments=\"\",",
+   "668: header=\"t,a_up,z_ref,Tz_hat\", comments=\"\", fmt=\"%.8g\")",
+   "681: return Columns(opts.t_col, opts.a_col, opts.z_col, opts.tz_col, opts.flip_z)",
+   "693: p.add_argument(\"--z-col\", default=\"z_ref\")"
+  ]
+ },
+ "zero_reference_test": {
+  "eval_stationary_jonswap_H1_500_L50_710_A_30_00_P120_00_11-101-1009.csv": true,
+  "eval_crossfade_11-101-1009.csv": true,
+  "dev_stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00_11.csv": true
+ },
+ "provenance": {
+  "git_commit": "93087978a51ee7010273d8542b185859f1f6bd94",
+  "sources_sha256": {
+   "tools/heave_baseline_study.py": "6209d922db0e09c5c07bc88291203f89881a20c9befc6e1ef027fc78f296a3cb",
+   "tools/heave_baselines.py": "44b94b73966656b33f82b0b263be28875e1719960bf8ea528fd32ac66d63e728",
+   "tools/hpdi_replay.cpp": "ae8f34e5894e292c568ecac30171209b841070cadcb02887b4e64a266b3887ed",
+   "src/hpdi/HeaveHPDI.h": "2c413309e84f669f3b90d81b42152de0dc1ea11651cf648cf9153ce6baf0c4be",
+   "tests/hpdi/heave_export.cpp": "3404d2df288b44779a57547afb568464a7a3ce2c61355808dcc86bc1438f17e1",
+   "tests/hpdi/heave_export_shipped.cpp": "9a1a627fc7345ca8989c2ad1ee3cb93ea5dd776b56a4aeb762cbd4a0d163b1cb"
+  },
+  "binaries_sha256": {
+   "heave_export-ou3": "ffe69473762c2a26cccadcd0de4a5336f8b088c793f97b7bd36b32f48bee47f7",
+   "heave_export-ou2": "8bce23bd856de389a7417d0c95325ac47150567c54460f6be4a125fc0b0f9e14",
+   "heave_export-tfg": "ae43bbf7edce32c5f097cc7862a08168405b73b5b00a16fae3e1d0264ddb16ac",
+   "heave_export-pii": "d6303472e36f4c1184bd8dea6655b54d5917ead5541620329057d4289353ed6f",
+   "heave_export-nlo": "b0d6b28d589708dbdabf27956a33b79253480007b99479dc510111971c674d88",
+   "kalman_ou_iii-sim": "a5f8d0c4ef5fca34f2283e6ded9de3a182916d49920ee5b8093e9f4ccebaa68c",
+   "kalman_ou_ii-sim": "439b610bca3aede638293533534ec32cfe786a3cc1e70af1907513acf8f5f9df",
+   "kalman_tfg-sim": "37bf08d05abd6f43091272a336571ac50d81bc2a787957297618b9b0d8ee5e81",
+   "hpdi_replay": "d41cc992ab73690af822cab0f79dd5f569754ef060e88071ddb067a6dabedb59"
+  },
+  "dataset": "oceanography-waves-lib v1.2.1, sim-data-files-vessel-rao-28ft.zip (make fetch-sim-data)",
+  "python": "3.12.3",
+  "numpy": "1.26.4"
+ }
+}

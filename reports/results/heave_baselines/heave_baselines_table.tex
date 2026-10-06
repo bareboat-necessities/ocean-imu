@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\caption{Ten-seed vertical-displacement RMS error over the final \SI{900}{s} (\% of $H_s$), seed-level means over the four stationary seas of each spectrum (mean$\pm$sd, $n=10$), and the paired difference from OU--III with its percentile-bootstrap 95\% interval. Baseline parameters were frozen on development draws. FDDI is non-causal and is an offline reference.}
+\label{tab:conventional-baselines}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{JONSWAP} & \multicolumn{2}{c}{PM--Stokes} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Method & \% $H_s$ & $-$OU--III [pp] & \% $H_s$ & $-$OU--III [pp] \\
+\midrule
+OU--III & 4.35$\pm$0.10 & -- & 4.30$\pm$0.08 & -- \\
+TFG & 4.40$\pm$0.10 & $+$0.05 [$+$0.04, $+$0.05] & 4.34$\pm$0.08 & $+$0.04 [$+$0.03, $+$0.05] \\
+OU--II & 6.34$\pm$0.17 & $+$1.98 [$+$1.91, $+$2.05] & 6.20$\pm$0.15 & $+$1.90 [$+$1.83, $+$1.96] \\
+Adaptive PII & 5.93$\pm$0.18 & $+$1.58 [$+$1.45, $+$1.69] & 6.09$\pm$0.27 & $+$1.80 [$+$1.63, $+$1.97] \\
+TVG--NLO & 7.80$\pm$1.31 & $+$3.45 [$+$2.79, $+$4.33] & 7.69$\pm$1.31 & $+$3.39 [$+$2.84, $+$4.28] \\
+HPDI (classic, $n=3$) & 8.20$\pm$0.80 & $+$3.85 [$+$3.37, $+$4.36] & 8.33$\pm$0.80 & $+$4.03 [$+$3.55, $+$4.52] \\
+HPDI (compensated, $n=5,m=3$) & 6.26$\pm$1.16 & $+$1.91 [$+$1.21, $+$2.63] & 6.52$\pm$1.12 & $+$2.22 [$+$1.54, $+$2.90] \\
+FDDI (offline, non-causal) & 1.59$\pm$0.81 & $-$2.76 [$-$3.19, $-$2.22] & 1.66$\pm$0.78 & $-$2.64 [$-$3.05, $-$2.12] \\
+\bottomrule
+\end{tabular}
+\end{table}
