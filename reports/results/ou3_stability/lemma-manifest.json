@@ -469,7 +469,8 @@
         "app:held-score-boundary proves the uniform unsupported held-BA boundary-score cap and zero active suffix contribution on the reached held stratum, retaining physical residual and effective-noise ports. The exact B_W=E_L+S_q-2C_W decomposition isolates the required process-loss comparison bound; that general activated bound and remaining grouped active signed-work absorption remain OPEN. No count promotion, release extension or radius.",
         "app:planar-even-process-work proves zero original even dF/dQ for fixed-input planar MEKF variations and bounds the actual normalized-quaternion ds residue. Signed score cross work, odd/source/private-state ports, inherited E_L and full Schur domination remain OPEN; no zero-ds surrogate or contraction constant is substituted.",
         "app:bordered-comparison-storage proves an exact bordered Fisher lift and nonexpansion for covered fixed-operand process/correction maps, retaining causal derivative ports. Its slack accumulates B_W and can lose uniform mean coercivity; restoration has the exact signed charge BC8. Full shipping retention and endogenous-work absorption remain OPEN; no count promotion.",
-        "app:bordered-causal-restoration proves exact restoration equivalence to the original fixed-weight gap and the necessary-and-sufficient causal-lift Gram criterion. A propagated-root formal example rules out automatic coercivity from causality alone. Actual shipping causal-lift coercivity and net signed-work absorption remain OPEN; no radius or count promotion."
+        "app:bordered-causal-restoration proves exact restoration equivalence to the original fixed-weight gap and the necessary-and-sufficient causal-lift Gram criterion. A propagated-root formal example rules out automatic coercivity from causality alone. Actual shipping causal-lift coercivity and net signed-work absorption remain OPEN; no radius or count promotion.",
+        "app:locked-live-causal-reference removes homogeneous reference-feedback work only on the qualified locked-Live lift; paired reference/offset source, refinement yaw, actual MEKF feedback and endpoint gauge remain in LR8. Their complete net-work domination remains OPEN."
       ]
     },
     {
@@ -499,15 +500,21 @@
       "assumptions": [
         "deployed default Complementary wave-period input",
         "literal updateCore_ chronology",
-        "no runtime ablation to MEKF-levelled period input"
+        "no runtime ablation to MEKF-levelled period input",
+        "locked-Live reference extension: magnetic lock and both stages Live, inherited private/reference state and delivered history fixed, no Cold/reacquisition or external reconfiguration",
+        "default real reference amplitude corollary: startup hard iron disabled, apply fraction one, actual accepted-bias gate and acquisition; float accumulation separate"
       ],
       "proof_modules": [
-        "tools/stability/ou3_theorem/planar_generated_port_structure.py"
+        "tools/stability/ou3_theorem/planar_generated_port_structure.py",
+        "tools/stability/ou3_theorem/information_shear_word.py"
       ],
       "certificates": [
-        "reports/results/ou3_stability/planar-generated-port-structure.json"
+        "reports/results/ou3_stability/planar-generated-port-structure.json",
+        "reports/results/ou3_stability/information-shear-word-certificate.json"
       ],
-      "open_dependencies": []
+      "open_dependencies": [
+        "app:locked-live-causal-reference proves the zero reverse reference port on its actual causal lift and the linked canonical-map/source differential, including the real default 27/20 amplitude bound. Actual remaining MEKF gap, grouped forced/gauge work, branch activation, reference alignment and arithmetic qualification remain OPEN; no count promotion."
+      ]
     },
     {
       "id": "completed_square",

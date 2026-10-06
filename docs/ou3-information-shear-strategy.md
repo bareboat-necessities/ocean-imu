@@ -244,6 +244,25 @@ The controlling order and separate general/service-admission tasks are unchanged
 
 ## Minimal activation obligations
 
+The current source-control-flow refinement is
+`app:locked-live-causal-reference`. With magnetic lock and both stages Live,
+fixed inherited auxiliary state and delivered history make the active learned
+reference/offset stream independent of MEKF-root variations, including finite
+ones. The gravity gate's Live MEKF readout only controls reacquisition; it does
+not gate locked refinement/slew. Its feedback is not globally removed.
+Refinement yaw writes, watchdog/reset branches, source-dependent reference
+changes and endpoint gauge work remain literal. On this qualified lift the
+homogeneous reverse reference work is exactly zero. Default real reference
+amplitude is bounded by `27*M_mag/20` through the shared-statistics map and
+convex slew; reference alignment/float accumulation remain separate. Use the
+paired source differential (LR6), not independent reference/offset extrema.
+This removes those causal/amplitude dependencies, not the full MEKF gap.
+The zero reverse edge does not erase inherited correlations. If the actual
+root lift has `da_0=Lambda*v_0+zeta`, its homogeneous terminal map is
+`M_lift=M+R_a*Lambda`, with the full signed cross work retained. If that graph
+is not justified, keep the augmented lift. Only the fixed-auxiliary fibre has
+the zero total reference variation; no construction or source state is reset.
+
 | Required fact | Source and exact role | Current status |
 |---|---|---|
 | Existing actually-applied MAGNETIC SERVICE | Current source contract; supplies its specified physical probe lower action only | Assumed for the general theorem; special planar admission OPEN |

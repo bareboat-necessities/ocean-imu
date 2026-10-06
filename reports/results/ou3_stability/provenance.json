@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "ad877f90e39d5e635dfdea2ac85bceb8bd3a19eb"
+      "git_blob_sha": "e47d03c208d7a7861f09f75245424e9d132c6105"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "05660daebdd5b5c75a14c8499e6c6668f3a39b65"
+      "git_blob_sha": "70dbcb12c58562ec24cb36616cce9e177d5157e2"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "81d00c14118515561bc20081db8443daa8ca88c6"
+      "git_blob_sha": "c6c4fb310a51ba6c5aba094ba3833792f85fd818"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "52cf517d1cd5e7c6c3365e9e05ab124a6f45bcb5"
+      "git_blob_sha": "369b869235cf68ac16ad7a5275acdb90184bdd44"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "e36cbeceeff1dcd34d5956dc0945dc8b14d528e1"
+      "git_blob_sha": "9d4fb35524dc8801832bcbf28ede0437c45f6e79"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -748,19 +748,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
-      "git_blob_sha": "28d341de2dc0f9680bfbdd46ab29cf6248d9c2ac"
+      "git_blob_sha": "7df4ece9753135b4c495846ee999caa865ef1c59"
     },
     {
       "path": "tests/validation/test_ou3_planar_generated_port_structure.py",
-      "git_blob_sha": "5206277ddebe672ae2e8bd178580131225ec54d3"
+      "git_blob_sha": "d9214c99e5339ac7a4267a73ff7f1b23af11f4de"
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "8babf5abf68d4db6fbc63f9a7127fce3de8dfe75"
+      "git_blob_sha": "ec9c8aa2eb23f8b8c06ef3621f301bfd03ccbefe"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "587309f122771d858cf4b7a6a35ab8dc8ec54946"
+      "git_blob_sha": "3ab18de3c8f852a3345b3e1b8c211a55f4f290be"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -884,7 +884,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_causal_calculus.py",
-      "git_blob_sha": "7f293cf8f1bc75213b0f455ca310ca69e5ee6daa"
+      "git_blob_sha": "825ce47ca4c1062cda2608a09ad3935ee31d5528"
     },
     {
       "path": "tests/validation/test_ou3_planar_causal_calculus.py",
@@ -904,7 +904,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-causal-calculus-certificate.json",
-      "git_blob_sha": "b485eb765e01eabc8e3125eeae134865ebe7793d"
+      "git_blob_sha": "c5e0dda9adc7b4ec1f6ef4a690765ae156340ecb"
     },
     {
       "path": "reports/results/ou3_stability/planar-mean-covariance-ports.json",
@@ -948,19 +948,19 @@
     },
     {
       "path": "tools/stability/ou3_theorem/information_shear_word.py",
-      "git_blob_sha": "f161930d194acf5f8fb1c54183820c78ba12d955"
+      "git_blob_sha": "2be3b136df22fdc38a4faf0cd59414cc434960d2"
     },
     {
       "path": "tests/validation/test_ou3_information_shear_word.py",
-      "git_blob_sha": "48b67d6a671442e310c5e9e1e77a692bb1897f49"
+      "git_blob_sha": "f9a611cc7501e59afc241527cb2ee01f38bbaa07"
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "ab82b9057098645b76468552f5c8d9079b09c9f3"
+      "git_blob_sha": "499c0dca9019f8aceb7b1aaeadc37b425b02138d"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
-      "git_blob_sha": "32c6e10e11245adf97f40c096f0b9f0cb51df9ce"
+      "git_blob_sha": "8266387d70d57680b01cfd35d733ab9406c7fdf0"
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
@@ -980,7 +980,7 @@
     },
     {
       "path": "docs/ou3-linked-word-score.md",
-      "git_blob_sha": "8be42922b64ccc0c738817ab7ea6907153600f89"
+      "git_blob_sha": "422cb2b38746391e7a2e58fcad2dbb6538b2edcb"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1039,7 +1039,25 @@
     "mekf_mean_or_covariance_to_S_period_gain": 0,
     "mekf_mean_or_covariance_to_AW_target_gain": 0,
     "remaining_bidirectional_loop": "MEKF mean <-> P via state-dependent acc/mag H and P-dependent K",
-    "all_time_magnetic_service_verified": false
+    "all_time_magnetic_service_verified": false,
+    "locked_live_reference": {
+      "proof": "app:locked-live-causal-reference",
+      "locked_Live_reference_reverse_MEKF_port": 0,
+      "locked_Live_corrected_mag_reverse_MEKF_port": 0,
+      "same_input_finite_MEKF_root_changes_preserve_reference_execution": true,
+      "scope": "magnetically locked Live continuation, inherited auxiliary state and delivered history fixed; default Complementary path, no Cold/reacquisition/external reconfiguration",
+      "live_gravity_gate_reads_MEKF": true,
+      "live_gravity_gate_controls_locked_refinement_or_slew": false,
+      "refinement_yaw_write_remains_actual_estimator_jump": true,
+      "source_reference_derivatives_discarded": false,
+      "inherited_auxiliary_root_correlations_discarded": false,
+      "actual_correlated_lift_map": "M_lift=M+R_a*Lambda if da_0=Lambda*v_0+zeta is proved; otherwise retain augmented lift",
+      "canonical_reference_map_global_Lipschitz_constant": 1,
+      "reference_increment_bound": "|B_ref-B_anchor| <= |A (b-b_anchor)| <= |b-b_anchor| at the SAME statistics",
+      "default_real_reference_norm_bound": "(1+7/20)*M_mag after the actual acquisition/refinement, startup hard iron disabled and initial applied offset zero",
+      "float_reference_accumulation_qualified": false,
+      "uniform_complete_net_work_domination": false
+    }
   },
   "planar_quotient_audit": {
     "all_time_magnetic_service_verified": false,
@@ -1179,7 +1197,11 @@
     "bordered_restoration_equals_original_fixed_weight_gap": true,
     "bordered_negative_budget_square_supplies_extra_gap": false,
     "causality_alone_implies_bordered_uniform_coercivity": false,
-    "actual_shipping_causal_lift_uniform_coercivity_verified": false
+    "actual_shipping_causal_lift_uniform_coercivity_verified": false,
+    "locked_live_reference_proof": "app:locked-live-causal-reference",
+    "paired_reference_source_statistics_cancellation_verified": true,
+    "remaining_MEKF_net_work_uniformly_dominated": false,
+    "locked_live_fixed_auxiliary_reference_work_is_zero": true
   },
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",

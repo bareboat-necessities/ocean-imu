@@ -76,7 +76,7 @@ def certificate():
                                         'proof': 'weighted normalized pitch rotations fix e_y; (I-A^T A)e_y=0; canonical reference preserves weighted-mean norm',
                                         'reference_alignment_lower_bound': None,
                                         'float32_transfer_verified': False},
-        'one_way_scope': 'Complementary tuner/S-period/AW-target only; reference/gate feedback is retained',
+        'one_way_scope': 'Complementary tuner/S-period/AW-target; locked-Live reference has a separate zero-reverse-port proof in app:locked-live-causal-reference; reacquisition/gate/reset and source ports remain qualified separately',
         'causal_center': 'same literal real-operation maps evaluated on center state and inherited same-history generator; no observed future H/G/K',
         'center_constructed_by_recurrence': True,
         'center_compact_forward_domain_certified': False,

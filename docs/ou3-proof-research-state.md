@@ -12,7 +12,7 @@ all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
 Verified main: `59959d1bf33a3c5f4f70331104546a6486468df6`.
-Verified starting PR head: `a6fb21c152308f1742472345e2cdf60b491e2a81`.
+Verified starting PR head: `f553a1f3f6efc2a0ff734f0047124e84c40e6039`.
 Main is already incorporated; PR #653 is open and mergeable. Automated evidence
 changes are preserved. Current CI chronology belongs in PR metadata.
 
@@ -28,6 +28,33 @@ lemma/quantifiers, finite-error role, literal dissipation structure, required
 proved/open bounds and avoidance of recorded dead ends. Required CI remains.
 
 ## Evidence
+
+**PROVED — analytical, actual causal reference reduction:**
+`app:locked-live-causal-reference` proves that on the magnetically locked Live
+default-Complementary continuation, fixed inherited auxiliary state and
+delivered history give identical reference/offset executions for finite MEKF
+root variations. The active reverse reference port and its homogeneous word
+work are exactly zero. The Live gravity gate still reads MEKF attitude, but
+its acquisition guard is inactive while lock holds. Refinement uses private
+Mahony; its yaw write remains an actual MEKF jump. Cold/reacquisition,
+watchdog branch qualification and external reconfiguration are not covered
+by deleting that gate. This is a proved causal reduction, not an assumption
+that every reference is exogenous on every chronology.
+
+The same-source canonical map gives `|B_ref-B_anchor| <= |A*(b-b_anchor)|`.
+Convex slew and the actual accepted-bias gate prove, in the default real lift
+after acquisition, `|B_ref|, |m-b| <= (27/20)*M_mag`. This supplies reference
+amplitude finiteness without assuming comparison retention. It does not supply
+alignment, acquisition time, horizontal derivative denominators, finite
+arithmetic qualification, or an affordable complete-word charge. The complete
+source differential groups shared statistics before norms (LR6); its gain,
+Joseph and generated suffix work and endpoint gauge terms remain in (LR8).
+The actual homogeneous MEKF gap and grouped forced-work domination remain
+OPEN. No radius or count promotion.
+Inherited auxiliary/root correlations are retained: (LR9) uses
+`M_lift=M+R_a*Lambda` when the actual causal graph is proved, otherwise the
+full augmented lift. The zero reverse edge is not zero total derivative for
+an auxiliary state inherited from a MEKF-dependent acquisition.
 
 **PROVED — analytical, restoration audit:** `app:bordered-causal-restoration`
 proves `W_lambda,0-W_lambda,N=(c_0/2)*(A_B-F_B-R_W)` for the full causal
@@ -158,6 +185,12 @@ The observed-coefficient center defect .0006179245 is finite and uses future
 observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
+
+On the qualified locked-Live lift, do not retain a fictitious reference-to-MEKF
+feedback loop: (LR1) removes its reverse edge exactly. Source/reference
+variations are still the linked (LR6)--(LR7) ports, including anchor history.
+The unpaid target is (LR8)'s actual MEKF quadratic gap and grouped source/gauge
+work; the new finite reference amplitude bound alone cannot make it positive.
 
 **PROVED — analytical fixed-input even prediction reduction:**
 `app:planar-even-process-work` proves `dF_E=dQ_E=0` for MEKF-root variations
@@ -435,6 +468,18 @@ Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
 
+* **D, complete causal-work domination still open:** the source audit removes
+  homogeneous reference feedback and proves a non-circular reference amplitude
+  bound. It does not bound the actual MEKF mean/covariance feedback, inherited
+  comparison energy, or terminal source/gauge quadratic in (LR8). The target
+  remains a positive uniform gap after those terms. Retain the exact zero
+  port and paired-source cancellation; do not promote the amplitude bound to
+  reference alignment, low NIS, or complete storage contraction.
+* **E, local verification environment:** missing ruff/mpmath packages prevented
+  the first lint/evidence invocations; installed the required dependencies and
+  reran unchanged gates. Two rejected patch contexts changed no files and were
+  corrected. No mathematical premise or test was weakened.
+
 * **D, bordered-storage uniform-coercivity failure:** the new Fisher lift pays
   covered fixed-operand score work but accumulates `B_W` in its slack and can
   lose all uniform mean weight. A per-word budget cap does not bound its
@@ -595,6 +640,9 @@ is not a required milestone. Do not independently maximize ports, substitute
 base c_aw for the net margin, or silently bound causal source tangents by
 physical time-rate limits. No compact enclosure without a derived domain and
 affordable threshold; no radius before the full gap and charges are proved.
+Use the now-proved locked-Live causal split: no homogeneous reverse reference
+charge on that lift, and the paired source reader (LR6)--(LR7) in the full
+remaining work. Reacquisition and source variations do not inherit a zero port.
 
 ## Verification scope
 

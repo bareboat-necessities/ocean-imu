@@ -981,6 +981,17 @@ exactly zero.  The direction branch may read MEKF state but has no return edge
 to the tuner.  Generated coefficients and the $S$/AW phases remain same-history
 one-way forcing; their all-time ranges and the remaining MEKF mean--covariance
 cell are separate obligations.
+On a magnetically locked Live continuation of the default Complementary
+profile, Appendix~\ref{app:locked-live-causal-reference} further proves zero
+reverse MEKF dependence of refinement and continuous offset/reference updates.
+The Live gravity-gate readout is passive while lock holds; reacquisition is
+excluded and the refinement yaw write remains an actual estimator jump.
+The same-statistics reference map obeys
+$\|B_r-B_a\|\le\|A(b-b_a)\|\le\|b-b_a\|$, giving the default real-operation
+bound $\|B_r\|\le(27/20)M$ from the existing delivered-field envelope $M$.
+Its complete paired source differential and endpoint gauge work are retained.
+This removes the homogeneous reference-feedback port, not the remaining
+complete MEKF storage-gap obligation or float reference qualification.
 \end{lemma}
 
 \begin{lemma}[Finite-error completed-square entry --- PROVED as an algebraic implication]

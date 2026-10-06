@@ -667,6 +667,45 @@ suffix covariance terms, inherited physical SLOW/FAST and S, consistent frames.
 Relaxations: regular real-operation held scope, with an explicit actual-P_b
 comparison for its numeric specialization; no new physical assumption.
 
+## Actual locked-Live reference work and paired source forcing
+
+The actual causal reduction following the bordered audit is
+`app:locked-live-causal-reference`, not another scalar-storage refinement.
+For a locked-Live word with fixed inherited private/reference state and input,
+the reference/offset stream is identical for all qualified MEKF-root
+variations. Its homogeneous reverse port work is exactly zero. Refinement's
+MEKF-dependent yaw write remains in the actual derivative, and the gravity
+gate remains relevant to reacquisition outside this scope.
+
+For source variations, the literal continuous update is
+`B_ref=B_anchor+c(w-A*b)-c(w-A*b_anchor)`, where
+`c(v)=(|v_xy|,0,v_z)`. Its global one-Lipschitz property proves
+`|B_ref-B_anchor|<=|A*(b-b_anchor)|<=|b-b_anchor|` on the same statistics.
+The default real accepted-bias cap and convex slew then give
+`|B_ref|,|m-b|<=27*M_mag/20` after actual acquisition. No small-angle or
+comparison-energy bound is assumed for this amplitude result.
+
+Writing `C=Dc(w-A*b)`, `C_a=Dc(w-A*b_anchor)`, `Delta=b-b_anchor`, its
+complete regular source derivative is
+
+```
+dB_ref = dB_anchor + (C-C_a)*(dw-dA*b_anchor-A*db_anchor)
+         - C*(dA*Delta+A*dDelta).
+```
+
+The shared-statistics term cancels when `Delta=dDelta=0`; otherwise retain it.
+The magnetic source residual and row changes remain paired and feed the full
+`v_i-U_i J e_i+U_i q_suffix` expression. The homogeneous MEKF derivative is
+still the complete causal one, not frozen factors. In (LR8), the terminal
+source response, its signed cross term and `-Gamma_0+Gamma_N` all remain.
+Uniform domination of those terms and a positive complete gap are OPEN.
+In particular, on a construction-correlated lift `da_0=Lambda*v_0+zeta`, use
+`M_lift=M+R_a*Lambda`; that inherited contribution remains endogenous (LR9).
+The zero reverse recurrence edge does not set the total inherited derivative
+to zero. A lift with no proved graph retains its full auxiliary coordinates.
+This source-bound reduction neither pays the bordered restoration nor revives
+that exhausted shortcut. Float accumulation and reacquisition remain open.
+
 ## Bordered comparison storage: score absorption is not uniform retention
 
 `app:bordered-comparison-storage` gives a new analytical storage test, rather

@@ -11,6 +11,7 @@ from tools.stability.ou3_theorem.information_shear_word import (
     process_source_score, source_qualified_word_score, process_augmented_shear,
     held_bias_boundary_score, bordered_comparison_storage, bordered_process, bordered_correction,
     bordered_restoration,
+    paired_reference_tangent,
 )
 from tools.stability.ou3_theorem.lin_path_certificate import inverse
 from tools.stability.ou3_theorem.matrix_certificates import add, identity, is_psd, ldlt, transpose
@@ -21,6 +22,32 @@ from tools.stability.ou3_theorem.planar_linked_riccati_mean import (
 
 
 class InformationShearWordTests(unittest.TestCase):
+    def test_paired_reference_keeps_shared_statistics_and_anchor_ports(self):
+        out = paired_reference_tangent(
+            identity(3), [[F(5)], [F(12)], [F(7)]],
+            [[F(2)], [F(8)], [F(5)]], zeros(3, 1),
+            [[F(1, 9), F(0), F(0)], [F(0), F(-1, 7), F(0)], [F(0), F(0), F(1, 5)]],
+            [[F(1)], [F(2)], [F(3)]], [[F(1, 3)], [F(1, 4)], [F(1, 5)]],
+            [[F(1, 6)], [F(1, 7)], [F(1, 8)]], [[F(1, 11)], [F(0)], [F(1, 13)]],
+            F(5), F(13))
+        self.assertNotEqual(out['shared_statistics_port'], zeros(3, 1))
+        self.assertNotEqual(out['offset_port'], zeros(3, 1))
+        self.assertEqual(out['reference_tangent'][1], [F(0)])
+
+    def test_paired_reference_exactly_cancels_shared_statistic_variation_at_anchor(self):
+        bias = [[F(2)], [F(1)], [F(0)]]
+        dbias = [[F(1, 3)], [F(1, 4)], [F(1, 5)]]
+        anchor_port = [[F(1)], [F(0)], [F(2)]]
+        out = paired_reference_tangent(identity(3), [[F(5)], [F(5)], [F(7)]],
+            bias, bias, identity(3), [[F(3)], [F(-5)], [F(8)]],
+            dbias, dbias, anchor_port, F(5), F(5))
+        self.assertEqual(out['reference_tangent'], anchor_port)
+        self.assertEqual(out['shared_statistics_port'], zeros(3, 1))
+        self.assertEqual(out['offset_port'], zeros(3, 1))
+        with self.assertRaises(ValueError):
+            paired_reference_tangent(identity(3), zeros(3, 1), zeros(3, 1), zeros(3, 1),
+                zeros(3, 3), zeros(3, 1), zeros(3, 1), zeros(3, 1), zeros(3, 1), F(0), F(0))
+
     def setUp(self):
         self.P = [[F(2), F(1, 3)], [F(1, 3), F(1)]]
         self.dP = [[F(1, 5), F(-2, 7)], [F(-2, 7), F(1, 4)]]

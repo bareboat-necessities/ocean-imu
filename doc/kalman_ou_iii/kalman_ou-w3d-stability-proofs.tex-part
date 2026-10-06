@@ -4081,6 +4081,195 @@ source/reference/reset/AW/gauge chronology. Relaxations: regular real-operation
 scope and the explicitly formal scope test only. No physical premise, runtime
 behavior, proof status count, invariant radius or all-time admission changes.
 
+\subsection{The actual locked-Live reference port and its linked source work}
+\label{app:locked-live-causal-reference}
+
+\paragraph{Quantifiers and finite-error role.}
+Consider any finite continuation on the deployed default Complementary path
+with wrapper and inner stages Live, magnetic lock already set, inherited
+auxiliary state, and no Cold/reacquisition or external reconfiguration.
+The word may contain the scheduled refinement and subsequent continuous
+hard-iron updates. Use the actual regular branch derivatives when forming
+storage; branch retention itself is not asserted. The following result pays
+the \emph{reference-feedback part} of the homogeneous linked work exactly.
+It does not assert contraction of the remaining MEKF block. Unlike the failed
+bordered-storage shortcut, it uses literal causal dependencies, not a new
+bookkeeping reservoir or a uniform equivalence assumption.
+
+\paragraph{Zero reverse reference port --- PROVED analytical.}
+Hold fixed the delivered sensor/time history and inherited private frontend,
+magnetic acquisition, reference, hard-iron and tuning state. Then throughout
+such a continuation, the derivative from the MEKF root mean/covariance to the
+reference $B_r$, applied offset $b$, and corrected magnetic input is zero:
+\[
+ D_{(\widehat x_0,P_0)}(B_{r,i},b_i,m_i-b_i)=0.             \tag{LR1}
+\]
+This statement concerns parameter/input derivatives. It does \emph{not} set
+the attitude-dependent magnetic row or innovation derivative to zero.
+
+Here is the source proof, including the apparent reverse gate. In
+\texttt{ProxyStartupFusion::updateTime}, the gravity gate does read
+\texttt{attitudeReferenceQuat\_()}, which returns the MEKF attitude in Live.
+Its \texttt{gravity\_trusted} result, however, guards only the
+\texttt{!mag\_ref\_set\_} acquisition block in \texttt{updateMag}.
+That block is inactive on this continuation. Refinement uses
+\texttt{impl\_.startupProxyTiltQuat()}, the cached delivered acc/gyro,
+corrected magnetic samples, its own statistics and clocks. The private tilt
+is the measurement-only Mahony state. Refinement's eligibility, reference
+write and completion/hold-release flags have no MEKF reader. Its subsequent
+\texttt{writeMekfYaw\_} \emph{does} read current MEKF tilt: that is an actual
+estimator jump, retained in the MEKF map, not an input to the learned reference.
+
+Continuous accumulation uses the same private tilt and \emph{raw} magnetic
+sample. Its solve, validity flags and slew use only these statistics, the
+inherited applied offset/anchor/reference, and time. The wrapper's mirror
+\texttt{mag\_world\_ref\_uT\_} is written by
+\texttt{setMagWorldRef\_}, never read back from the MEKF. In Live the tilt
+watchdog's reset preserves the Live stage and does not call the Cold frontend
+reset. Its timing, state jump and branch margins remain estimator obligations.
+The direction output has no return into the default tuner. Induction over
+the actual call order proves (LR1), including refinement and release.
+In fact the induction gives equality of the entire reference executions for
+finite MEKF root changes whenever both continuations stay in this qualified
+family. Thus no finite-error remainder is hidden in this zero reverse port.
+Equivalently, the active auxiliary state $a$ and estimator state $x$ have
+the causal form
+\[
+ a_{i+1}=f_i(a_i,u_i),\qquad x_{i+1}=g_i(x_i,a_i,u_i),\qquad
+ \begin{pmatrix}dx_{i+1}\\ da_{i+1}\end{pmatrix}=
+ \begin{pmatrix}A_i&B_i\\0&C_i\end{pmatrix}
+ \begin{pmatrix}dx_i\\da_i\end{pmatrix}
+ +\begin{pmatrix}D_i\\E_i\end{pmatrix}du_i.              \tag{LR2}
+\]
+Here $x$ retains all MEKF coordinates and endogenous switching/reset state;
+$a$ excludes the passive gravity-gate readout while lock holds. These are
+\emph{complete} derivatives of the literal maps, not frozen Riccati factors.
+The zero lower-left block is not a claim that inherited $a_0$ is independent
+of the stored root on every construction-generated lift. Its actual correlated
+variation must be propagated, as specified below.
+Thus $da_0=du_i=0$ implies $da_i=0$ and exactly zero homogeneous reference
+port work, uniformly over this entire qualified family. Reacquisition in
+Live may use the MEKF frame and is explicitly outside this proof.
+
+\paragraph{The source reference is paired, not frozen.}
+For the real-operation lift of the continuous tracker, write its normalized
+same-history statistics as $A=\sum_j w_jR_j/\sum_jw_j$ and
+$w=\sum_jw_jR_jm_j/\sum_jw_j$, with $w_j\ge0$ and $R_j$ normalized private
+tilt rotations. Define $c(v)=(\|v_{xy}\|,0,v_z)^T$ and retain the actual
+anchor $b_a,B_a$. The literal code evaluates both levels against the
+\emph{current same statistics}, giving exactly
+\[
+ B_r=B_a+c(w-Ab)-c(w-Ab_a).                                \tag{LR3}
+\]
+Canonicalization is globally nonexpansive:
+$\|c(v)-c(v')\|^2=(\|v_{xy}\|-\|v'_{xy}\|)^2+(v_z-v'_z)^2
+\le\|v-v'\|^2$. Since $\|A\|\le1$ by its rotation average,
+\[
+ \boxed{\|B_r-B_a\|\le\|A(b-b_a)\|\le\|b-b_a\|.}       \tag{LR4}
+\]
+This uniform finite-increment bound remains valid at zero horizontal level;
+no derivative of a zero norm is used. It retains correlation of the two
+level evaluations and proves no reference alignment or magnetic service.
+
+One required domain fact now follows without comparison retention. If the
+existing delivered magnetic envelope is $\|m_i\|\le M$, the tracker's
+nonnegative exponential statistics give its field RMS at most $M$. Every
+accepted estimate obeys the literal $\|b_{\rm est}\|\le\beta M$ gate.
+For the default apply fraction one and real $0\le\alpha\le1$, the slew is
+a convex combination; rejected updates leave the applied offset unchanged.
+Starting from the actual zero applied offset therefore gives
+$\|b_i\|\le\beta M$ at every prefix. With default startup hard iron disabled,
+acquisition/refinement use nonnegative weighted means of normalized rotations
+of the raw record, so $\|B_a\|\le M$. Continuous application starts only
+after refinement, hence $b_a=0$ at the first anchor. No subsequent reanchor
+occurs on this continuation. Using the represented default
+$\beta=\mathrm{RN}_{32}(.35)<7/20$ in (LR4) proves
+\[
+ \|B_{r,i}\|\le\frac{27}{20}M,\qquad
+ \|m_i-b_i\|\le\frac{27}{20}M.                            \tag{LR5}
+\]
+This is a real-operation, default-configuration amplitude bound conditional
+on actual acquisition, not a bound on its time, horizontal alignment, float
+accumulation, NIS affordability, or the complete MEKF domain. It introduces
+no new physical magnetic envelope. Nondefault startup offsets retain their
+actual anchor terms instead of using (LR5).
+
+For the full source derivative let $\ell=w-Ab$, $\ell_a=w-Ab_a$,
+$C=Dc(\ell)$, $C_a=Dc(\ell_a)$ and $\Delta b=b-b_a$. Where both horizontal
+norms are nonzero, direct differentiation of (LR3) and regrouping prove
+\[
+ \boxed{dB_r=dB_a+(C-C_a)(dw-dA\,b_a-A\,db_a)
+                 -C(dA\,\Delta b+A\,d\Delta b).}          \tag{LR6}
+\]
+Here $Dc(v)$ has first row $(v_x,v_y,0)/\|v_{xy}\|$, zero second row and
+third row $(0,0,1)$. Shared-statistics work cancels exactly when
+$\Delta b=d\Delta b=0$, even when $dA,dw$ are nonzero. Away from that case,
+neither it nor $dB_a$ is deleted. Zero horizontal norms require (LR4) or a
+valid directional/finite-increment treatment; the final-reference acceptance
+gate alone does not bound these two intermediate horizontal denominators.
+
+At the literal magnetic boundary with world-to-body rotation $R$ and fixed
+deheel rotation $D_h$, the paired input/reference source port is
+\[
+ dr\big|_{\rm source}=D_h(dm-db)-R\,dB_r,\qquad
+ dH\big|_{\rm source}=-[R\,dB_r]_\times E_\theta^T.        \tag{LR7}
+\]
+Its gain/innovation and Joseph derivatives still use the same actual $P$.
+Propagate these linked ports through the complete suffix formula, including
+every generated $U_iq_{i+1,N}$; (LR4)--(LR5) are not permission to maximize
+the terms in (LR7) independently.
+
+\paragraph{What this removes from the word gap.}
+On a justified transverse root lift, let $\mathsf M$ be the complete
+homogeneous MEKF derivative with inherited $a_0,u$ fixed, and let $f$ be
+the terminal response to the actual causal auxiliary/source/gauge variation,
+so $v_N=\mathsf Mv_0+f$. All internally generated covariance ports remain
+in $\mathsf M$ and $f$. With the same joint metrics $\mathcal J_i$, the
+exact transverse gap is
+\[
+ W_{\perp,0}-W_{\perp,N}
+ =v_0^T(\mathcal J_0-\mathsf M^T\mathcal J_N\mathsf M)v_0
+ -2(\mathsf Mv_0)^T\mathcal J_N f-f^T\mathcal J_N f
+ -\Gamma_0+\Gamma_N.                                     \tag{LR8}
+\]
+Use the actual endpoint gauge energies, with source/reference dependence
+retained; $C_Q\alpha$ belongs to $f$ when gauge is separated from the
+transverse root. The physical-distance conversion still requires the moving
+projector derivative. If the reference is varied, its contribution to $f$
+is (LR6)--(LR7), not zero. If it is fixed on the homogeneous lift, the
+reference-feedback part is zero by (LR1). Neither statement deletes attitude
+row feedback, reset work or physical OU/S/bias forcing.
+Inherited endogenous switch/clock directions not included in the stored root
+are retained in $f$; (LR8) makes no mean/$P$-only Markov claim across unproved
+branch changes. In the planar wrapper $D_h=I$; no transfer to another profile
+or varying installation transform is implicit.
+
+Specifically, propagate the lower block of (LR2) causally and let
+$\mathsf R_a$ denote the resulting terminal joint-state reader of $da_0$.
+If the \emph{actual} inherited lift has $da_0=\Lambda v_0+\zeta$, then
+\[
+ \mathsf M_{\rm lift}=\mathsf M+\mathsf R_a\Lambda,
+ \qquad f_{\rm lift}=\mathsf R_a\zeta+f_{\rm later\ source}. \tag{LR9}
+\]
+Use these two objects in (LR8). The generated root contribution
+$\mathsf R_a\Lambda v_0$ is endogenous and keeps all its signed cross terms;
+it cannot be charged as independent source noise or set to zero by (LR1).
+If no such single-valued graph is justified, retain the full augmented lift
+instead of inventing $\Lambda$. In particular an acquisition first reached
+in Live can inherit MEKF-frame dependence even though the subsequent locked
+reference recurrence has no reverse edge. No construction state is restarted.
+
+\textbf{Remaining obstruction:} no uniform positive margin for the first
+quadratic form in (LR8) on the justified transverse lift, nor affordable
+domination of its grouped source/gauge terms, has been established. The new
+zero port and amplitude bound discharge specific causal/domain dependencies;
+they are not the requested complete net-work domination. No radius is solved.
+Structures preserved: all shipping states/covariance/gains, reference/offset
+pairing, refinement yaw write, watchdog and branch conditions, source history
+and endpoint gauge. Relaxations: qualified regular Live derivative and
+explicit real-arithmetic reference bounds; no estimator or premise changes.
+The unclosed complete-gap attempt remains class D, not instability.
+
 \subsection{Local theorem and final open implication}
 The retained local LaSalle theorem is used only under its qualified local hypotheses. Its proof consists of the literal covariance-metric dissipation identity, characterization of the zero-action set, magnetic/accelerometer field-axis exclusion on the retained domain, and LaSalle invariance; the committed local certificates supply the stated numerical inequalities. No step of the outer proof assumes that the local radius is automatically reached.
 
