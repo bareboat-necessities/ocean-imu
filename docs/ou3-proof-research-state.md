@@ -724,7 +724,7 @@ in the PR metadata.
    coupled formal AW regression reader exceeds one even with D_AA,0=0 and
    positive process. E optional symbolic dependencies were unavailable; the
    existing exact Fraction algebra was used, and patch quoting and TeX line
-   breaks/tags were corrected before validation. No instability
+   breaks/tags and a product-spacing typo were corrected before validation. No instability
    claim follows from any of these.
 4. Admitted counterexample: none; all-time admission/exclusion remains OPEN.
 5. Retained: 25 proved entries, qualified local theorem and exact compatibility
