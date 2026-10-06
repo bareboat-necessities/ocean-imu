@@ -514,6 +514,11 @@ def contrast(rows, left: str, right: str, cohort: str, family: str, segment: str
     rng = np.random.default_rng(STATS_SEED)
     low, high = ov._bootstrap_mean_ci(d, RESAMPLES, rng)
     inference = ov.paired_inference(d, np.random.default_rng(STATS_SEED))
+    # Exact sign-flip with a relative tie tolerance: ov.paired_inference's
+    # absolute 1e-15 can drop the observed pattern itself at large magnitudes.
+    signs = 1.0 - 2.0 * ((np.arange(2 ** d.size)[:, None] >> np.arange(d.size)) & 1)
+    flipped = np.abs(signs @ d) / d.size
+    inference["randomization_p_value"] = float(np.mean(flipped >= abs(d.mean()) * (1.0 - 1e-12)))
     return {"left": left, "right": right, "cohort": cohort, "family": family, "segment": segment,
             "n_seeds": len(keys), "left_mean": float(np.mean([a[k] for k in keys])),
             "right_mean": float(np.mean([b[k] for k in keys])), "mean_difference": float(np.mean(d)),
@@ -622,8 +627,8 @@ def analyze(work: Path, out: Path) -> dict[str, Any]:
                 if left in ("TFG", "PII", "TVG-NLO") and right == "OU-II":
                     continue
                 contrasts.append(contrast(rows, left, right, cohort, family, segment))
+        contrasts.append(contrast(rows, "OU-II", "OU-III", cohort, family, segment))
         if cohort == "stationary" and family == "JONSWAP":
-            contrasts.append(contrast(rows, "OU-III", "OU-II", cohort, family, segment))
             contrasts.append(contrast(rows, "HPDI-compensated", "HPDI-classic", cohort, family, segment))
             contrasts.append(contrast(rows, "FDDI", "HPDI-compensated", cohort, family, segment))
     for cohort, family in (("low_motion", "JONSWAP"), ("ramp", "Crossfade")):
@@ -631,7 +636,64 @@ def analyze(work: Path, out: Path) -> dict[str, Any]:
             for left in BASELINES:
                 contrasts.append(contrast(rows, left, "OU-III", cohort, family))
     (out / "contrasts.json").write_text(json.dumps(contrasts, indent=1))
+    checks = json.loads((out / "checks.json").read_text())
+    checks["zero_reference_test"] = zero_reference_test(work)
+    checks["provenance"] = provenance()
+    (out / "checks.json").write_text(json.dumps(checks, indent=1))
     return {"contrasts": contrasts, "rows": rows}
+
+
+def provenance() -> dict[str, Any]:
+    def sha(path: Path) -> str:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    files = [TOOLS / n for n in ("heave_baseline_study.py", "heave_baselines.py", "hpdi_replay.cpp")] + [
+        ROOT / "src/hpdi/HeaveHPDI.h", HPDI_TESTS / "heave_export.cpp", HPDI_TESTS / "heave_export_shipped.cpp"]
+    return {"git_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+            "sources_sha256": {str(f.relative_to(ROOT)): sha(f) for f in files},
+            "binaries_sha256": {b.name: sha(b) for b in [*EXPORT.values(), *SHIPPED.values(), HPDI_BIN]
+                                if b.exists()},
+            "dataset": "oceanography-waves-lib v1.2.1, sim-data-files-vessel-rao-28ft.zip (make fetch-sim-data)",
+            "python": sys.version.split()[0], "numpy": np.__version__}
+
+
+def zero_reference_test(work: Path) -> dict[str, Any]:
+    """Replace z_ref by zeros in eval records; every frozen baseline estimate must not move."""
+    frozen = json.loads((work / "frozen.json").read_text())
+    picks = sorted((work / "records").glob("eval_stationary_jonswap_H1_500*.csv"))[:1] + \
+        sorted((work / "records").glob("eval_crossfade_*.csv"))[:1] + \
+        sorted((work / "records").glob("dev_stationary_pmstokes_H8_500*.csv"))[:1]
+    result = {}
+    for path in picks:
+        zeroed = work / "zero_reference.csv"
+        with open(path) as src, open(zeroed, "w") as dst:
+            header = src.readline()
+            dst.write(header)
+            iz = header.strip().split(",").index("z_ref")
+            for line in src:
+                cells = line.rstrip("\n").split(",")
+                cells[iz] = "0"
+                dst.write(",".join(cells) + "\n")
+        a = baseline_record_scores_estimates(path, frozen)
+        b = baseline_record_scores_estimates(zeroed, frozen)
+        result[path.name] = all(np.array_equal(a[k], b[k]) for k in a)
+        zeroed.unlink()
+    if not all(result.values()):
+        raise SystemExit(f"a baseline estimate depends on z_ref: {result}")
+    return result
+
+
+def baseline_record_scores_estimates(path: Path, frozen: dict[str, Any]) -> dict[str, np.ndarray]:
+    rec = hb.load_record(Path(path), hb.Columns())
+    fcfg = frozen["FDDI"]
+    est = {"FDDI": hb.FDDI(rec.t, rec.a, frozen["protocol"]["fddi_pad_s"]).displacement(
+        hb.fddi_cutoff(fcfg, rec, WINDOW_S), fcfg["taper"])}
+    for name in ("HPDI-classic", "HPDI-compensated"):
+        cfg = frozen[name]
+        res = subprocess.run([str(HPDI_BIN), "--in", str(path), "--dump", "-", "--n", str(cfg["n"]), "--m",
+                              str(cfg["m"]), "--mode", cfg["mode"], "--value", repr(cfg["value"])],
+                             capture_output=True, text=True, check=True)
+        est[name] = np.loadtxt(res.stdout.splitlines()[1:], delimiter=",", usecols=1)
+    return est
 
 
 def segment_table(rows, methods, cohort: str, family: str, segments: Sequence[str]) -> list[str]:
@@ -714,6 +776,55 @@ def write_tex(out: Path, result: dict[str, Any]) -> None:
     (out / "heave_baselines_table.tex").write_text("\n".join(lines) + "\n")
 
 
+def wording_and_assumptions(cs, frozen) -> list[str]:
+    def c(left, right, cohort="stationary", family="JONSWAP"):
+        x = find(cs, left, right, cohort, family)
+        return (f"{x['mean_difference']:+.2f} pp (95% bootstrap interval [{x['bootstrap_ci95_low']:+.2f}, "
+                f"{x['bootstrap_ci95_high']:+.2f}], exact sign-flip p = {x['sign_flip_p_value']:.3f})")
+    hc, hp = frozen["HPDI-classic"], frozen["HPDI-compensated"]
+    return ["", "## Proposed article wording (for review; no article source was edited)", "",
+            "> Two conventional heave estimators receive the same measurement-only inputs as OU--III: the "
+            "Mahony-proxy vertical acceleration and the canonical period estimate. Their parameters were selected "
+            "on the comparator-retuning draws and frozen before the ten paired seed triplets were scored. On the "
+            "stationary JONSWAP endpoint, the best classic causal high-pass double integrator "
+            f"($n=m={hc['n']}$) is {c('HPDI-classic', 'OU-III')} worse than OU--III, and the best phase-compensated "
+            f"form ($n={hp['n']}$, $m={hp['m']}$) is {c('HPDI-compensated', 'OU-III')} worse; the compensated form "
+            f"is statistically indistinguishable from OU--II ({c('HPDI-compensated', 'OU-II')}). Offline "
+            "zero-phase frequency-domain double integration of the same acceleration, which uses the whole record "
+            f"including future samples, is {c('FDDI', 'OU-III')} relative to OU--III, i.e. substantially better. "
+            "It is an offline reference for what the vertical channel can recover from these inputs, not a "
+            "real-time competitor. Among the causal estimators compared, OU--III has the lowest pooled error "
+            "(adaptive PII is lower at the smallest seas). PM--Stokes, the controlled crossfade and the "
+            "low--high--low record order both baselines the same way relative to OU--III, while the compensated "
+            "HPDI falls behind OU--II on the two non-stationary records "
+            "(Table~\\ref{tab:conventional-baselines}).",
+            "",
+            "## Assumptions and limits", "",
+            "- Dev split: the eight pinned records with the comparator-retuning draws default, 11, 23, 61001 and "
+            "62003 (`reports/results/comparator_rao_retuning/selection.json`; `W3D_IMU_SEED = W3D_INIT_SEED`). "
+            "The comparators used default/11/23 for selection and 61001/62003 as holdout; the baselines use all "
+            "five for selection because the ten eval triplets are their holdout. Dev waves are the pinned "
+            "histories, eval waves phase-randomized surrogates of the same records: disjoint realizations of the "
+            "same hull and spectra, as for the comparators.",
+            "- Adaptive settings: OU-III/OU-II `W3D_TUNING_MODE=adaptive`, `W3D_AW_COV_SYNC=periodic` "
+            "(tools/ou_validation.py Adaptive); TFG `TFG_TUNING=adaptive`, `TFG_AW_COV_SYNC=1` "
+            "(tools/tfg_comparison.py); PII and TVG-NLO shipped defaults.",
+            "- PII and TVG-NLO ran per seed on the same records (their simulators' own process functions); there "
+            "is no committed per-seed evidence to compare them with, but the default-draw cells reproduce "
+            "Table X to its printed precision.",
+            "- Baseline time base: the harness's fixed 1/200 s sample clock, which every estimator also uses.",
+            "- The HPDI search space is the patch's predeclared 3 <= m <= n <= 6 with fixed or period-scaled "
+            f"cutoff. The classic optimum n = m = {hc['n']} is the smallest classic order in it (m >= 3 is the "
+            "bias-rejecting design constraint); the cutoff optima are interior.",
+            "- Low-motion (Hs = 0.05 m): both HPDI forms diverge to several hundred percent of Hs; they use the "
+            "frozen period-scaled cutoff, which is reported as is rather than retuned for that cell.",
+            "- Engine cell: 2400 rpm, 0.60 m/s^2, 80 Hz (tools/engine_noise_degradation.py nominal), deployed "
+            "vibration guard, default draw; the guard conditions a_up, so the baselines see the guarded signal.",
+            "- FDDI selects its period-scaled cutoff from the median Tz_hat over the scored window, and pads by "
+            "reflection; it is non-causal by construction.",
+            ]
+
+
 def write_summary(work: Path, out: Path, result: dict[str, Any]) -> None:
     rows, cs = result["rows"], result["contrasts"]
     checks = json.loads((out / "checks.json").read_text())
@@ -750,7 +861,18 @@ def write_summary(work: Path, out: Path, result: dict[str, Any]) -> None:
     for name, c in checks["committed"].items():
         L.append(f"| {name} | {c['n']} | {c['identical']} | "
                  f"{'–' if c['max_relative_difference'] is None else format(c['max_relative_difference'], '.2e')} |")
-    L += ["", "Reference motion in the baseline code paths (the only reads are the scoring and selection code):", ""]
+    L += ["", "The two non-identical committed bundles are explained, not drifts of this replay:",
+          "- `ou_robustness` runs its Adaptive arm with `W3D_AW_COV_SYNC=reconfigure` (the `ov.run_simulator` "
+          "default); the primary validation, the deployed filter and this study use `periodic`. Replayed with "
+          "`reconfigure`, the Hs = 0.05 m record of triplet 11-101-1009 reproduces the committed 17.518856 exactly.",
+          "- `ou_rs_law` (low-high-low) was produced at commit 02adc1b; the OU-III simulator, tuner and harness "
+          "have changed since.",
+          "- OU-II rows depend on the CPU under `-march=native`: they reproduce exactly on one machine but not "
+          "across machines (OU-III and TFG rows are identical across the original runner, the branch CI runner and "
+          "this machine). No published OU-III or primary-endpoint number is affected.", "",
+          "Zero-reference test: with `z_ref` replaced by zeros, every frozen baseline estimate is bitwise unchanged "
+          f"({', '.join(f'{k}: {v}' for k, v in checks.get('zero_reference_test', {}).items())}).", "",
+          "Reference motion in the baseline code paths (the only reads are the scoring and selection code):", ""]
     for rel, hits in checks["leakage_audit"].items():
         L.append(f"- `{rel}`: " + ("; ".join(f"`{h}`" for h in hits) if hits else "no reads"))
     proto = frozen["protocol"]
@@ -798,6 +920,7 @@ def write_summary(work: Path, out: Path, result: dict[str, Any]) -> None:
           "The pinned records with the simulators' default sensor draw. This draw is one of the dev draws, so "
           "the baseline entries here are in-sample (as the comparators' were during their retuning).", ""]
     L += deterministic_table(rows, main_methods, "default_draw")
+    L += wording_and_assumptions(cs, frozen)
     (out / "summary.md").write_text("\n".join(L) + "\n")
 
 
@@ -861,7 +984,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         if mismatches:
             raise SystemExit(f"{len(mismatches)} baseline scores differ between evaluate and the driver")
         write_long_csv(a.out / "heave_baselines_long.csv", rows)
-        shutil.copy(a.work / "frozen.json", a.out / "frozen.json")
+        frozen = json.loads((a.work / "frozen.json").read_text())
+        frozen["protocol"]["dev_records"] = [str(Path(r).relative_to(a.work))
+                                             for r in frozen["protocol"]["dev_records"]]
+        (a.out / "frozen.json").write_text(json.dumps(frozen, indent=2) + "\n")
+        shutil.copy(a.work / "manifest.csv", a.out / "manifest.csv")
         (a.out / "checks.json").write_text(json.dumps(checks, indent=1))
     result = analyze(a.work, a.out)
     write_plot(result["rows"], a.out / "heave_baselines_vertical.svg")
