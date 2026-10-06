@@ -48,7 +48,8 @@ nonnegative sign are not proved by the physical two-column service floor.
 The strongest strict result is (CR16):
 `y'G_OO y >= gamma_n*lambda*y'H_0 y`,
 `gamma_n in (1.37935,1.37936)*10^-37`, on the ACTUAL nuisance-supported
-image intersected with zero receipts at every active face, at pre-prediction
+image intersected with zero target-relative receipts at every active or
+zero-gap face, at pre-prediction
 roots after 17 s of the existing regular default A21 qualification.
 Process information loss pays this whole signed word because face work is
 nonnegative on that intersection. Inactive/absent faces do not reset it.
@@ -56,7 +57,11 @@ Its actual dimension is unknown; an empty intersection proves no strict
 sub-block. Other directions remain in the full matrix. Substitution gives
 the exact remaining test `A_c-X_c' N_c^-1 X_c>=0` (CR17), with metric
 cross entries retained, for one common `0<c<10^-37`. No affordability of
-that cross cost or absorption of nonzero receipts is inferred.
+that cross cost or absorption of nonzero receipts is inferred. The nonempty
+word includes the first prediction. At a zero-gap face the actual AA
+directional map is `D_aa_plus=max(D_aa,0)`, so active receipt rows alone
+do not qualify that crossing. All partial matrices use the same
+zero-gap-compatible image. Other crossing directions remain unresolved.
 
 **LR8/LR9 remains controlling.**
 Appendix app:correlated-complete-gap constructs the exact block
@@ -633,6 +638,16 @@ Physical S is never reset by the estimator pseudo-measurement.
   symbolic simplification could not import sympy in either Python runtime;
   it was not used as evidence or replaced by a numerical search. The
   exact-rational CR15--CR17a calculations and unchanged gates remain.
+* **E, receipt-kernel certificate scope:** the initial CR14/CR16 statement
+  did not explicitly require zero target-relative tangent at zero-gap
+  faces, although the prefix helper rejects the unsupported crossing.
+  Invalidated implication: zero strictly-active receipts automatically
+  qualify a zero-gap event. Repaired using the literal directional map
+  and the SAME zero-gap constraints in all partial matrices. The reserve
+  is unchanged on that qualified intersection; nonzero crossing directions
+  and its actual rank remain open. No physical or shipping assumption is
+  strengthened. Next: qualify the actual directional history image before
+  testing its receipt/full Schur sign; no cross direction is deleted.
 
 * **D, complete causal-work domination still open:** the source audit removes
   homogeneous reference feedback and proves a non-circular reference amplitude
@@ -848,7 +863,8 @@ in the PR metadata.
    No source-origin graph, reachability, service coverage or storage is invented.
 3. Failures: D for (CR9)--(CR10)'s attempted Schur payment, not the actual
    complete shipping gap. E for corrected path/patch/quoting/whitespace
-   tooling; prior classified failures remain in DEAD_ENDS. No check weakened.
+   tooling and the zero-gap certificate qualification; prior classified
+   failures remain in DEAD_ENDS. No check weakened.
 4. Genuine admitted shipping counterexample: none; no lossless impossibility
    or actual shipping negative eigen-direction has been established.
 5. Retained: all 25 proved entries, locked-reference zero port/amplitude,

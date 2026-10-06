@@ -486,7 +486,7 @@ def status_report() -> dict:
             "causal_AW_common_tangent_unsplit_matrix_verified":True,
             "fixed_private_partial_origin_zero_energy_kernel_test_verified":True,
             "qualified_nuisance_receipt_kernel_signed_gap_lower":"1/10000000000000000000000000000000000000",
-            "qualified_nuisance_receipt_kernel_scope":"CR12 actual pure odd covariance image, nuisance-supported root, zero receipt at every active face; pre-prediction root after 17 s regular default A21",
+            "qualified_nuisance_receipt_kernel_scope":"CR12 actual pure odd covariance image, nuisance-supported root, zero target-relative receipt at every active or zero-gap face; nonempty word includes first prediction at root after 17 s regular default A21",
             "actual_nuisance_receipt_kernel_nontriviality_verified":False,
             "actual_receipt_cross_Schur_remainder_uniformly_verified":False,
             "uniform_causal_AW_deficit_reader_margin":None,

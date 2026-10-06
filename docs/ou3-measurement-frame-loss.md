@@ -552,8 +552,12 @@ proved by an ambient covariance basis. CR13a pulls this unsplit formula
 back to
 `G_OO/lambda=H_mu+Q_mu' L_mu+L_mu' Q_mu-L_mu' L_mu`.
 Its whole-word signed reserve exceeds `10^-37` on the nuisance-supported
-zero-receipt intersection after 17 s regular default A21. Inactive and
-absent floors add no constraint. This is a conditional subspace result,
+zero-receipt intersection after 17 s regular default A21, including the first
+prediction. Zero-gap faces also require zero target-relative AA tangent;
+that does not follow from the strictly active receipt rows. All partial
+matrices use the same zero-gap-compatible image; nonzero crossing directions
+remain unresolved. Strictly inactive and absent floors add no constraint.
+This is a conditional subspace result,
 not uniform deficit absorption or a nonempty-image certificate.
 
 CR17 retains the exact full cross cost `X_c' N_c^-1 X_c` and root-metric

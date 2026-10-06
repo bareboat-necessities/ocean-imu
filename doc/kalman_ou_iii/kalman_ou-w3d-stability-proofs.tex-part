@@ -4881,8 +4881,9 @@ after refinement, with the future delivered/private history fixed. A word
 root is immediately before a prediction, after at least 17 seconds of the
 regular default A21 segment used by the existing nuisance comparison.
 No new capture or retention premise is proved by choosing that location.
-The word may have inactive floors or no floor. Do not require an active
-floor at its root or a positive lower bound on any floor gap.
+The nonempty word includes that prediction and may have inactive floors
+or no floor. Do not require an active floor at its root or a positive
+lower bound on any floor gap.
 
 Here is the causal-origin restriction used below. Let $\xi$ be a tangent
 of an admitted construction-to-root history, with its actual initialization,
@@ -4945,6 +4946,18 @@ No restriction on earlier auxiliary correlations follows from zero future
 partial coefficient ports. The general causal derivatives of these
 operands remain in the other blocks of (CR2).
 
+At a zero-gap face the actual directional AA map is
+$D_{aa}^+=\max(D_{aa},0)$ for the fixed target. It is not a linear map
+on the unrestricted image. For the following common linear partial matrix,
+require $D_{aa}=0$ at every such event. Write $\mathsf L_0y=0$ for those
+target-relative readers obtained from the same prefix. Equivalently work
+on a regular face stratum, or on its zero-relative-tangent intersection.
+Other crossing directions retain their actual directional maps in the
+unresolved full problem. Neither $\ker\mathsf L_\mu$ nor inactivity at
+another event implies this additional condition.
+All matrices below are pulled back consistently to this partial space;
+$\mathsf L_0$ has no rows on a strict regular face stratum.
+
 \paragraph{Six questions for the new inequality.}
 (1) The target is still (CR2)--(CR3), and in the partial block
 $G_{OO}\succeq c_O\lambda H_0$.
@@ -4993,18 +5006,19 @@ cross entry has positive sign. All the rows act on the same $y$.
 Neither $q$ nor a correction-loss coordinate is minimized independently.
 There is no division by $\Delta$ here.
 
-For $y\in\ker\mathsf L_\mu$ every actual face has $D_{aa}=0$ on this
+For $y\in\ker\mathsf L_\mu\cap\ker\mathsf L_0$ every active or
+zero-gap face has $D_{aa}=0$ on this
 fixed-target partial fibre. Its full tangent is unchanged by the floor.
 Inverse order, or (CR8), proves its Fisher loss nonnegative.
 Consequently the following is a source-uniform inequality for the
 \emph{complete} actual word, not for each correction--floor pair:
 \[
  y^TG_{OO}y\ \ge\ \lambda y^TH_{\rm ord}y
-                  \quad(y\in\ker\mathsf L_\mu).              \tag{CR14}
+       \quad(y\in\ker\mathsf L_\mu\cap\ker\mathsf L_0).       \tag{CR14}
 \]
 If a scalar gap is zero the directional floor derivative also leaves
 this tangent unchanged, since the target-relative AA derivative is zero.
-Inactive faces and absent faces add no constraint. Thus (CR14) requires
+Strictly inactive faces and absent faces add no constraint. Thus (CR14) requires
 neither recurrent active floors nor an artificial proof reset.
 Ordinary magnetic and $S$ losses in $H_{\rm ord}$ remain exactly
 (OF4a), using $D_i h_i^T$ and actual innovations on the same prefixes.
@@ -5014,8 +5028,8 @@ Their physical service probes are not substituted for those columns.
 Let $n=(v_y,p_y,S_y,AW_y,BA_y)$ inside the nine-dimensional odd block.
 Restrict (CR14) further to roots with
 $D_0=E_n D_nE_n^T$; do not delete other root directions.
-Write $\mathcal K_n$ for this support intersection with (CR12) and
-$\ker\mathsf L_\mu$. Its dimension is whatever the actual history image
+Write $\mathcal K_n$ for this support intersection with (CR12),
+$\ker\mathsf L_\mu$ and $\ker\mathsf L_0$. Its dimension is whatever the actual history image
 and actual receipt rows permit.
 
 The existing recurring nuisance proof gives
@@ -5077,6 +5091,10 @@ $0<c<10^{-37}$ write
 \[
  G-cJ_r=\begin{pmatrix}N_c&X_c\\X_c^T&A_c\end{pmatrix}.
 \]
+Here the full matrix is on a justified regular/directional linear branch.
+An unrestricted crossing cannot be given this matrix merely by deleting
+its nonzero target-relative AA direction; that branch qualification remains
+part of the original full-word obligation.
 If the actual kernel intersection has positive dimension and SPD root
 Gram, (CR16) proves
 $N_c\succeq(\gamma_n-c)J_{r,kk}\succ0$. Complete the square

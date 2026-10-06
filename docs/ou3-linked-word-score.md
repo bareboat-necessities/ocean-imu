@@ -845,6 +845,10 @@ The exact signed reserve on the actual nuisance-supported zero-receipt
 intersection is `gamma_n in (1.37935,1.37936)*10^-37`, at pre-prediction
 roots after the existing 17-second regular default A21 qualification.
 The intersection's dimension is unproved; it is not the whole odd block.
+The word includes its first prediction. Zero-gap faces also require zero
+target-relative AA tangent; all partial matrices use that same intersection.
+The active receipt kernel alone does not qualify a crossing. Other crossing
+directions retain their actual directional map in the full obligation.
 
 This reserve is inserted into the same full G, with no source square
 completed. The remaining threshold is `A_c-X_c' N_c^-1 X_c>=0`.

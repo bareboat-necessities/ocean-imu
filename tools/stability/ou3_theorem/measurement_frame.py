@@ -723,7 +723,9 @@ def receipt_kernel_nuisance_margin():
     """CR16: signed WHOLE-word reserve on the actual nuisance/receipt kernel.
 
     All face work is nonnegative on that kernel, so the first process loss
-    can be retained. No reserve is asserted off the kernel; its actual rank,
+    can be retained. Zero-gap events also require zero target-relative AA
+    tangent: active-receipt rows alone do not imply that crossing condition.
+    No reserve is asserted off this intersection; its actual rank,
     origin and 17-second regular A21 activation are separate qualifications.
     """
     from .lin_path_certificate import small_x_source_defect
@@ -741,7 +743,8 @@ def receipt_kernel_nuisance_margin():
     assert F('1.37935e-37') < reserve < F('1.37936e-37')
     return {'q_n': str(q), 'm_n': str(m), 'signed_kernel_reserve': str(reserve),
             'signed_kernel_reserve_lower': '1/10000000000000000000000000000000000000',
-            'scope': 'CR12 pure odd covariance causal image, nuisance-supported root and zero actual receipt at every active face; pre-prediction root after 17 s regular default A21',
+            'scope': 'CR12 pure odd covariance causal image, nuisance-supported root and zero target-relative receipt at every active or zero-gap face; nonempty word includes first prediction at root after 17 s regular default A21',
+            'zero_gap_target_relative_tangent_required': True,
             'actual_kernel_dimension_verified': False,
             'whole_odd_gap_verified': False,
             'full_homogeneous_gap_verified': False}

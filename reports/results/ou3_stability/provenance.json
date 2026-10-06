@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "51642844079c8db2a931ebbe7b65e0150cdd3b65"
+      "git_blob_sha": "782c9e44757a57bd7194f2dbf92c3b8200dfcb3e"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "66b14a03091beac3d6b0ab30ad769c31cd50ae5b"
+      "git_blob_sha": "b4751fdca68b44d3f42ac03a3d5d3b9e07a69f15"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "18ab4460953cda707516047da86ab5bd206fc5af"
+      "git_blob_sha": "73b029988752b39e294104cc8dba80f368b27a8f"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "008faa5a3148bc2be4e4debc55b33903fe312f70"
+      "git_blob_sha": "031439156afcff9854452282ce717d3c64d52e45"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "be8b1886f1fb61a05b52163473d3164a483e2c41"
+      "git_blob_sha": "268518ad62a0d3275bc5deb589baf9e7bc3d9e37"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "9ed5bed1aac181cd5d2e889c77975b47bf7d4f30"
+      "git_blob_sha": "0cd0bab98a8a536e79a4ed385c37f0a5d60346a0"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -956,7 +956,7 @@
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "51ac00a96b3708530cbf7e8b735cd66e3348cf5b"
+      "git_blob_sha": "35f4ef33fbefb3fbb1a8da5023a556b12f5db8b4"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
@@ -964,23 +964,23 @@
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "039514d730aea43f6f3389ea74ef3375bd008eb9"
+      "git_blob_sha": "ce37d6d0a0691c5c967e35ecbd451c6eafb8a19b"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "3e403b1c6c682ab305b68ffc252ff2de65b6796d"
+      "git_blob_sha": "db78fd79345b33b1c43b67ed2a70c1bf2724289b"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
-      "git_blob_sha": "b78ef7427c046e3bd8119db5187cc5fe78fc69c8"
+      "git_blob_sha": "9cf4949079f3b26458695fa3e085f6fc1ba5d214"
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "210fbdb04198fb73fac6f69371fa693ed50b4da3"
+      "git_blob_sha": "d01c848d38a4c6c4981c8a40129da7977f207331"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
-      "git_blob_sha": "6c77aa0c59fcf454df285edc9cd63075342e2139"
+      "git_blob_sha": "e8ea178bc42f7e6e290172cbc23cdbb24587d369"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1395,7 +1395,8 @@
       "m_n": "45331392703331023352281/128000000000",
       "signed_kernel_reserve": "1786275919960390815486407874891208875923333544586059434996148824580916979343442896840339169/12950109371095572978920465702623562423409136730522616873817141460977083516045713637612757070646783590205916979343442896840339169",
       "signed_kernel_reserve_lower": "1/10000000000000000000000000000000000000",
-      "scope": "CR12 pure odd covariance causal image, nuisance-supported root and zero actual receipt at every active face; pre-prediction root after 17 s regular default A21",
+      "scope": "CR12 pure odd covariance causal image, nuisance-supported root and zero target-relative receipt at every active or zero-gap face; nonempty word includes first prediction at root after 17 s regular default A21",
+      "zero_gap_target_relative_tangent_required": true,
       "actual_kernel_dimension_verified": false,
       "whole_odd_gap_verified": false,
       "full_homogeneous_gap_verified": false
@@ -1405,6 +1406,10 @@
     "uniform_actual_receipt_operator_verified": false,
     "odd_AW_blocker_resolved": false,
     "complete_homogeneous_gap_proved": false,
-    "new_metric_or_coordinate_lift_constructed": false
+    "new_metric_or_coordinate_lift_constructed": false,
+    "zero_gap_partial_constraint_retained": true,
+    "nonzero_crossing_directions_discarded_from_full_obligation": false,
+    "certificate_scope_correction": "E: active receipt kernel alone did not qualify zero-gap faces. Repaired with actual directional AA map Daa_plus=max(Daa,0) and zero target-relative tangent at every zero-gap event, on the SAME partial space in all matrices. Prefix helper already rejected unsupported crossings; gates unchanged. Other crossing directions remain open. Nonempty word includes first prediction.",
+    "observed_PR_head_before_scope_correction": "ed75b31b481738552ea61cfb5fa0015746b7ec92"
   }
 }

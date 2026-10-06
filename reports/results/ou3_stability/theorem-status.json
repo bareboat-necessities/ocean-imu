@@ -157,7 +157,7 @@
     "qualified_conditional_AW_precision_upper": "15942618",
     "qualified_first_handoff_bound_is_prefix_invariant": false,
     "qualified_first_handoff_real_comparison_bound": "21/1000",
-    "qualified_nuisance_receipt_kernel_scope": "CR12 actual pure odd covariance image, nuisance-supported root, zero receipt at every active face; pre-prediction root after 17 s regular default A21",
+    "qualified_nuisance_receipt_kernel_scope": "CR12 actual pure odd covariance image, nuisance-supported root, zero target-relative receipt at every active or zero-gap face; nonempty word includes first prediction at root after 17 s regular default A21",
     "qualified_nuisance_receipt_kernel_signed_gap_lower": "1/10000000000000000000000000000000000000",
     "qualified_planar_magnetic_coupled_loss_fraction": "9/10",
     "qualified_planar_magnetic_loss_is_complete_word_contraction": false,

@@ -438,7 +438,10 @@ before constructing all covariance prefixes. The unsplit matrix is
 `H_mu+Q_mu' L_mu+L_mu' Q_mu-L_mu' L_mu`; q, mu, dT and correction
 losses are never released. The whole signed word has reserve greater than
 `10^-37` only on its nuisance-supported zero-receipt intersection after
-the existing 17-second regular A21 qualification. Actual rank is unknown.
+the existing 17-second regular A21 qualification, for a nonempty word
+including its first prediction. Zero-gap faces ALSO require zero
+target-relative tangent, consistently in every partial matrix. Nonzero
+crossing directions remain in the unresolved full problem. Actual rank is unknown.
 This pays that intersection in the original fixed-weight gap; all other
 endogenous directions and metric cross entries remain in (CR17).
 

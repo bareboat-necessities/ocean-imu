@@ -129,6 +129,7 @@ class MeasurementFrameTests(unittest.TestCase):
         self.assertFalse(out['actual_kernel_dimension_verified'])
         self.assertFalse(out['whole_odd_gap_verified'])
         self.assertFalse(out['full_homogeneous_gap_verified'])
+        self.assertTrue(out['zero_gap_target_relative_tangent_required'])
         source = Path(__file__).resolve().parents[2]
         shipping = (source/'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h').read_text()
         self.assertLess(shipping.index('apply_pending_aw_covariance_inflation_();'),

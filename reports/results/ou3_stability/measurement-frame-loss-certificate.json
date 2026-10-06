@@ -40,10 +40,11 @@
       "full_homogeneous_gap_verified": false,
       "m_n": "45331392703331023352281/128000000000",
       "q_n": "248188600375173268173354737/10161261447480073450406250000000000000000000000000000",
-      "scope": "CR12 pure odd covariance causal image, nuisance-supported root and zero actual receipt at every active face; pre-prediction root after 17 s regular default A21",
+      "scope": "CR12 pure odd covariance causal image, nuisance-supported root and zero target-relative receipt at every active or zero-gap face; nonempty word includes first prediction at root after 17 s regular default A21",
       "signed_kernel_reserve": "1786275919960390815486407874891208875923333544586059434996148824580916979343442896840339169/12950109371095572978920465702623562423409136730522616873817141460977083516045713637612757070646783590205916979343442896840339169",
       "signed_kernel_reserve_lower": "1/10000000000000000000000000000000000000",
-      "whole_odd_gap_verified": false
+      "whole_odd_gap_verified": false,
+      "zero_gap_target_relative_tangent_required": true
     },
     "partial_origin_uniform_parameterization_verified": false,
     "partial_origin_zero_energy_kernel_test_verified": true,
