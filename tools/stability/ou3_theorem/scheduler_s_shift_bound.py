@@ -25,16 +25,27 @@ def identity_rhs(P,F,Q,H,R):
  return F@P@H.T@np.linalg.solve(A,H@P)@F.T-C@H.T@np.linalg.solve(B,H@C)
 
 def norm_bound(Plo,Phi,F,Q,H,R):
- """Rigorous but possibly loose spectral bound over Plo<=P<=Phi.
+ """Valid two-term spectral bound, evaluated in ordinary floating arithmetic.
 
- Uses ||PH'|| <= ||Phi H'|| and innovation inverse <= 1/lambda_min(R).
- Bounds each rank-3 removal term separately. This is an interval-free outer
- bound; a linked difference bound can sharpen it if needed.
+ P<=Phi does NOT imply ||P H'||<=||Phi H'||. Instead PSD block Cauchy
+ gives ||F P H'||^2 <= ||F Phi F'|| ||H Phi H'||. Each removal is
+ also bounded by its complete prior covariance. Take the smaller of these
+ two analytical ceilings; no directed-rounding or all-time claim is made.
  """
- C_hi=F@Phi@F.T+Q
- rmin=float(np.linalg.eigvalsh(R).min())
- t1=np.linalg.norm(F@Phi@H.T,2)**2/rmin
- t2=np.linalg.norm(C_hi@H.T,2)**2/rmin
+ Plo,Phi,F,Q,H,R=map(np.asarray,(Plo,Phi,F,Q,H,R))
+ sym=lambda a:(a+a.T)/2
+ if np.linalg.eigvalsh(sym(Plo)).min() < -1e-12:
+  raise ValueError("PSD lower covariance required")
+ if np.linalg.eigvalsh(sym(Phi-Plo)).min() < -1e-12:
+  raise ValueError("ordered covariance faces required")
+ if np.linalg.eigvalsh(sym(Q)).min() < -1e-12:
+  raise ValueError("PSD process covariance required")
+ rmin=float(np.linalg.eigvalsh(sym(R)).min())
+ if rmin<=0:raise ValueError("positive measurement noise required")
+ prior=F@Phi@F.T;C_hi=prior+Q
+ norm=lambda a:float(np.linalg.norm(a,2))
+ t1=min(norm(prior),norm(prior)*norm(H@Phi@H.T)/rmin)
+ t2=min(norm(C_hi),norm(C_hi)*norm(H@C_hi@H.T)/rmin)
  return float(t1+t2)
 
 def certificate():

@@ -1,0 +1,27 @@
+{
+  "S2": "DeltaH DeltaP H'+H DeltaP DeltaH'+DeltaH P DeltaH'+DeltaH DeltaP DeltaH'",
+  "covariance_differential": "dC=A dP A'-K dH C-C dH' K'+K dR K'; A=I-KH; C=AP",
+  "finite_gain_remainder": "DeltaK-DK=(DeltaP DeltaH'-K S2-DK DeltaS)(S+DeltaS)^-1",
+  "finite_word_uniform_bound_closed": false,
+  "gain_differential": "dK=(dP H'+P dH'-K dS) S^-1",
+  "held_ba_rule": "use B=M P H_gain', dB=M(dP H_gain'+P dH_gain'); held accelerometer H_gain omits BA, H_S retains BA; do not use the unmasked optimal identity",
+  "independent_extrema_used": false,
+  "innovation_differential": "dS=dH P H'+H dP H'+H P dH'+dR",
+  "mean_differential": "d(x+)=d(x)+dK*r+K*dr; dr is differentiated from the same measurement model",
+  "noise_is_same_history": true,
+  "qualification": "OU3_PLANAR_LINKED_RICCATI_MEAN_DIFFERENTIAL_V2",
+  "relaxations_introduced": [
+    "real operation lift; arithmetic charge separate",
+    "fixed branch for differentials"
+  ],
+  "reset_differential": "d(G C G')=G dC G'+dG C G'+G C dG'; dG_theta=0.5[d(injected theta)]x",
+  "result_type": "PROVED \u2014 analytical",
+  "scope": "local real-operation identities on a fixed regular branch; no uniform orbit bound",
+  "structures_preserved": [
+    "actual P,H,R,S,K,r",
+    "held-BA PCt mask",
+    "Joseph",
+    "reset"
+  ],
+  "theorem_closed": false
+}

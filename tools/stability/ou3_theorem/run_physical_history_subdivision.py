@@ -5,6 +5,7 @@ from .source_uniform_root import root_cells
 from .literal_history_leaf_propagator import propagate_history_cell
 from .physical_history_subdivision import split_guard_failure,assert_no_generated_coordinates
 from .enclosure_failure import EnclosureFailure
+from .planar_service_frontend_binding import ShippingBindingFailure
 
 def failure_time(msg):
  m=re.search(r"t=([0-9.]+)",msg);return float(m.group(1)) if m else 0.
@@ -18,6 +19,11 @@ def main(depth=6):
    try:
     propagate_history_cell(cell,60.,.005)
     trace.append({"level":level,"status":"history_leaf_survived","token":cell.prefix_token})
+   except ShippingBindingFailure as e:
+    print(json.dumps({"verified":False,"classification":"E_IMPLEMENTATION_FAILURE",
+                      "stage":"shipping_frontend_binding","reason":str(e),
+                      "subdivision_attempted":False},indent=2))
+    return 1
    except (EnclosureFailure,ArithmeticError,ValueError,OverflowError) as e:
     t=e.time if isinstance(e,EnclosureFailure) and e.time is not None else failure_time(str(e));z=split_guard_failure(cell,t)
     trace.append({"level":level,"status":"split","failure_time":t,

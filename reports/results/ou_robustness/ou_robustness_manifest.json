@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "e653d30b62e4c307e400d902a527c171bc221173",
+  "git_branch": "fix/main-ci-build-errors",
+  "git_commit": "01d13f4850d0b785b78138623cf457ca5e2ec536",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -325,8 +325,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-10-07T02:09:12+00:00",
-    "git_commit": "e653d30b62e4c307e400d902a527c171bc221173",
+    "generated_at": "2026-10-07T08:10:40+00:00",
+    "git_commit": "01d13f4850d0b785b78138623cf457ca5e2ec536",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -509,8 +509,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "37555336837",
-      "workflow": "build"
+      "run_id": "37588333796",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {

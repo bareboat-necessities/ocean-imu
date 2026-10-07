@@ -1,0 +1,20 @@
+{
+  "acc_H_attitude_coefficient_squared": null,
+  "acc_H_lipschitz_aw": "1",
+  "all_time_magnetic_service_verified": false,
+  "carried_point_innovation_floor_used": false,
+  "cell_bounds_certified": false,
+  "cell_bounds_supplied": false,
+  "inequalities_status": "PROVED \u2014 analytical",
+  "innovation_inverse_bound": null,
+  "joint_cell_forward_invariant": false,
+  "mag_H_lipschitz_attitude": null,
+  "physical_acceleration_substituted_for_nominal_aw": false,
+  "qualification": "OU3_PLANAR_MEAN_COVARIANCE_PORT_BOUNDS_V2",
+  "result_type": "CONDITIONAL",
+  "same_history_required": true,
+  "symbolic_acc_H_bound": "||dH_acc|| <= sqrt((g+Ahat)^2+1)||dtheta||+||daw||",
+  "symbolic_inverse_bound": "P>=0 and R>=rI>0 imply ||S^-1||<=1/r",
+  "symbolic_mag_H_bound": "||dH_mag|| <= Bref||dtheta||+||dBref||",
+  "theorem_closed": false
+}

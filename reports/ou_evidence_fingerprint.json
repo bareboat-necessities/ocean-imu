@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "77521ad71cfe41d5c81c7885afc076e521f19bdb256d4613711893c88bf5b281",
-  "results_file_count": 443,
+  "replay_fingerprint": "115faee58a331d700baebc6d64916ea730c266202c7d18d80fe6382958531ede",
+  "results_file_count": 465,
   "results_files": [
     {
       "kind": "file",
@@ -830,13 +830,18 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
+      "sha256": "0f1fee473239be5049749f8dac3549eb51cc716ddbe79dc2315f2f48a767dfa1"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/ou3_stability/interval-riccati-status.json",
       "sha256": "688726be5330e138c05d1c3f6fbc3b0a75f32bce237d524d4015ad4e620462e7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "sha256": "bc79e582e36824e9fe8b8a54d18d64515dfe64dc6637cb01000e562dc0a161c7"
+      "sha256": "8c9f7e3a34420206a138581296e39e498dc127ca260acb88c15779f5b1c50500"
     },
     {
       "kind": "file",
@@ -847,6 +852,16 @@
       "kind": "file",
       "path": "reports/results/ou3_stability/linked-finite-supply-feasibility.json",
       "sha256": "acd3955ee8998642bac52b73d8f6cf1bff23ba69ef3cee822523c801c0a1d5c5"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/mahony-raw-normalization-certificate.json",
+      "sha256": "fa27adccecbd67d271700805618c826c81e8cf68d5c52acb1741bcbae1d38536"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
+      "sha256": "533125b917b6b522ce389cf3fe20a3970b08875c90e868df26d2efcb6ad43222"
     },
     {
       "kind": "file",
@@ -866,7 +881,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-quiet-compatibility-certificate.json",
-      "sha256": "cc7cbd431f48bb6b86079d20058da61efabb969734566acb1f3b26570f1f1a0c"
+      "sha256": "6479658e717d8c82d27b4cf3c31e31df55c2067ae7d6d957c847b14d5d9a10c7"
     },
     {
       "kind": "file",
@@ -880,8 +895,103 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/ou3_stability/planar-causal-calculus-certificate.json",
+      "sha256": "2689c78538b26603e286a666a3bf8a0496b2676ceea40ec31021ae592f0c8c02"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-complete-word-storage-certificate.json",
+      "sha256": "8e8f734997b6ab3a5d04575b4e7a64e2513c58982e4809923c5aa840f3d624cf"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-every-root-service-diagnostic.json",
+      "sha256": "0cb6d5ca53afb56af0f99aac2094ae786f499e201b5dad414923c7e0ddcbce7b"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-frontend-domain-certificate.json",
+      "sha256": "15472e18fe5b8ff8cb9423eb4cc2e54e413aa59ca964348c5abd594cd38c7442"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
+      "sha256": "a1a2bf965b2ad152567be3d337f29aaee7ede79b24a2c8e16b0d81e53d8f0997"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-innovation-storage-certificate.json",
+      "sha256": "14f6b75bc15b223bd8dfb2bbceb5635ee839741f310f896171b038e79c4ec533"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-joint-phase-cell-threshold.json",
+      "sha256": "0bd8ddc8b723b0b5b8d1d5c05b855b98c9e44856554c107ea8195dc0c727d5c5"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-linked-riccati-mean-certificate.json",
+      "sha256": "c56e04210b3795801db200e513055c7666b40d4322841ffb5f704bae7a2e1d04"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-mean-covariance-ports.json",
+      "sha256": "f8b4b9824dbd0da59eeb8eb4047de5d8455ca93cea275d4e81942f4e278146e8"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-moving-center-diagnostic.json",
+      "sha256": "891a51b6646ea1a0b3f7450f6ee7d9c17cfdb73ee1a35a3985160f7349dbbfca"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
+      "sha256": "30d12fb59d0a6ebc58a8725f0bf80b9084649cb7bcdda77e8f7dd0910b3ae45a"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
+      "sha256": "8424eb11653d7ab52433b0702c26e6e64699056335c002d5367b6051467a3af1"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-service-cell-certificate.json",
+      "sha256": "9472f55e2db45f1761dfaa47f10c4280ee3eddc7fd914172e0eb37bddd8ba707"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-service-frechet-diagnostic.json",
+      "sha256": "fd4e75b0b8370ef33581379a4b8123de6ed007c7bbae361b11bf0f425b1f0f5b"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-service-frontend-binding.json",
+      "sha256": "aeb81afa7c7cfd3dfd465ab0dde6d7dac8c94a5a51ba7db267c1227158687121"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-service-guard-certificate.json",
+      "sha256": "09105a2bb8d991cef990ffa89d4ad16bcc0ea46d8fe33778fe76a04a7f76a607"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-service-mahony-tube.json",
+      "sha256": "61b5c86cb0510df09f7cab87b4d934a9b12941b929fccc6716154e6e681c7e28"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-service-operation-audit.json",
+      "sha256": "cf64296d1eaa74c17e9e94fbc582844ca64c2532c7d5ff9bae1fb2f43f6483a4"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
+      "sha256": "d76954cb5f426c34f068a125d95fa41bdb85eb94ebe832334b932786e714308f"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "0c0397e16322ef438d32d54c6f43d1aebcf196d3b53de5f3e3271489c319bc8d"
+      "sha256": "ac44f225ccd96f6111e89c11f569e36c19deec4d2fb661693e49916a6892e381"
     },
     {
       "kind": "file",
@@ -941,7 +1051,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "sha256": "3ba898915955bed137cfa7fbe21988b10db37deecff09a4a7b6a63a6e6b06e44"
+      "sha256": "4d1e5da6b20a44b59cd6e314e5ccf2ac454e3f13d26c650da5bfb5c79186d0d0"
     },
     {
       "kind": "file",
@@ -981,7 +1091,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "5c8cdbc000fdb0f2f08b5f2d02f12bd71ed44d29de3b663496db8c025ac27a1e"
+      "sha256": "4d225ca5c1e38d84d2f2c7e079ac9e46ad7bc550664345019a0317cb4a887b27"
     },
     {
       "kind": "file",
@@ -1051,37 +1161,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "73407a9c769dbdc2bf660d25421295908a248cae102a78691f5e8bc2d7353521"
+      "sha256": "c87e844cea3479c24fdb59411bfc5a14e7ddc1616796f7f861ee0b4118e29682"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "ce97a3656073ad989c2e1470ea47e158c71093e1881c7174a62f6ab67ad242ad"
+      "sha256": "9274148225997cb69d79d5748e93a0c8dfb9c6227b326a7428b3bb142a397934"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "cf50cfb039d700fe86912ab13e639c292151eda36abee125d0e4ca0f7d5985c7"
+      "sha256": "c95b017773ab7fe24344f1e666a26ac2617db1a8cbd0eab1fdbf4e052ea3c814"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "f60f55583d21827af2bc4589375c9c3173dd4d628c14d99794dfd2158da2a093"
+      "sha256": "1a2e6f6b62449f8445d59485f74401fa1b5d6b6dc37c7ba73dce559c9903eb49"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "71bfca358214d074a7a7594b52cd79ff26f2209fae7d6e2cb0cf3551a2932600"
+      "sha256": "ec68dc502964057d27d68e47ed1d9c56dcca29bfc4e54f2cf6fdc2ec8b12c798"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "8074cab2714ebc5ce0ad3bcc0f1f9ec3c9dfefa6fd595df96bdf997a302ebef7"
+      "sha256": "d2295a9b6d508ab55ee4b78ddef4492fe4b342bd9d230a37d12131184cbc752c"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "7f162404c94da6a23be01d5ff4bc7a9451d8de861027f81217a56bffcd3811ae"
+      "sha256": "9e8cb2a8810c1e208015cbd46efbd450b1227d2a9d7fe275a983ce23e625b446"
     },
     {
       "kind": "file",
@@ -1091,17 +1201,17 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "ced577eb077b98c1d969223b303486acc9881451cb50e2ed52a8f7d63ce1bcc4"
+      "sha256": "f299c1f8f09c95a5e557503dc7c6ea920e06c8f4f0969f36cced18d838a28a85"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "4784aa43d14bcc3acba0443c2b82a2b716f430263da22377f546912e5c053811"
+      "sha256": "34166c3deb66b9d4f5aa4c2f1c4a258de70f7e445a5cf96c5e8f1fc4d1a97041"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "9f6eb9280e124d317a9bd1732b898a69d0a4b9a30f91e51f9360d5fe178533e8"
+      "sha256": "7175ccedc25ceb82ff821a7bcd79b769c03e73383fcd0f5309859f722537a795"
     },
     {
       "kind": "file",
@@ -1121,7 +1231,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "8fe9145bc8a4e78b12cbf697bfd2092d263642c26c83d7146b25814a215bc10c"
+      "sha256": "75da58368e6252d9ebfa160902055f77667dc07bcd22392a40f4d2b5a3365eb9"
     },
     {
       "kind": "file",
@@ -2219,13 +2329,13 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "5d92b0694d535ff2be28d9d77dbd2eae6d212245caa540d630ebd7430d590b1f",
+  "results_fingerprint": "3ee094b11f80fc0a4c49a03abb25b5056068879d8f493e6d477be7893c1e4c9c",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60"
   },
-  "tracked_replay_file_count": 711,
+  "tracked_replay_file_count": 759,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2270,7 +2380,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou3-stability-proof.yml",
-      "sha256": "667d65c0cd9de61821a9d55729e48234d59d897f143bf2da16d3e2d1244b8ba6"
+      "sha256": "328b1b0193ba428962174ec215fb9989ba52b5bbaf884115727eed778346a171"
     },
     {
       "mode": "100644",
@@ -2510,42 +2620,42 @@
     {
       "mode": "100644",
       "path": "sensors/compass_ahrs/atomS3R_compass_qmekf/atomS3R_compass_qmekf.ino",
-      "sha256": "cd8319b55283d3d5faa4f6bef2462591e539860f4f44a7a9939e5ca755aee17e"
+      "sha256": "4c267a0e9b9a0758d7e252de7d1e799e34e89b3eaf97d0f6874f97c887ee0c78"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou2/atomS3R_ins_kalman_ou2.ino",
-      "sha256": "37ed8bb32b38af9ec0924738e8a219b6a6e3b8707b31f85770c220ac8bd79c30"
+      "sha256": "326bc4f9d0c825844da40648226cc5349a90186da5a88e1a834ed476c8ca6966"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "sha256": "9a9457e7c776a640915499559eb8226adff37d00599836168619edf4600e2d14"
+      "sha256": "70901de42c51f6c694c234a559bb2f05a8ad2dea9661b9d7f380d83f2cbf174e"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_nlo/atomS3R_ins_nlo.ino",
-      "sha256": "29d8af9217d1cc3fa1c713298f28ba60918f5554fb6b530429eed6ffe4406992"
+      "sha256": "41553799fb92b61bc42693dab5434c3f8aedbfa56d4176ead50198fe772ad3ab"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_pii_observer/atomS3R_ins_pii_observer.ino",
-      "sha256": "a5e3a5d02b3268efdcbcb64240e20d11190a25efa1dc83384b5e37e1f9de8e0d"
+      "sha256": "11c34129de52c8b1d641b7544df69eeadb349bce9b1f77af35a1d1e6f1151e83"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino",
-      "sha256": "f4c2a4e8143773144d3077ecdaa3d9cb56904c91f7dde0a42d5a81326089683d"
+      "sha256": "6a3524265b5e2fb7ef030a947b7c503f99e3303d869090abc81b075a70cba2c3"
     },
     {
       "mode": "100644",
       "path": "sensors/imu_basic/atomS3R_imu_m5_basic/atomS3R_imu_m5_basic.ino",
-      "sha256": "f51ecf2d5c6b45908810ef41d7c6d1e30eae61412e4dbfa12b6ccba514d3dac5"
+      "sha256": "f170b7386260627f279a79f92661ccf98bedf9a5ad41550b35f2ae1c801712a3"
     },
     {
       "mode": "100644",
       "path": "sensors/imu_basic/atomS3R_mag_diagnostics/atomS3R_mag_diagnostics.ino",
-      "sha256": "3cfb2916363664d25ff5cd2e829bbb72046ea63ee90485edb306fdb4f2988088"
+      "sha256": "08a42d85290c91614555810024631adb7a9dd16d7c01efe9bf2fc20c558c54b0"
     },
     {
       "mode": "100644",
@@ -2555,7 +2665,12 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_Bmm150AuxPreset.h",
-      "sha256": "91a1c89e138f8efef9fbed2e4f95d3be1076622719c859a26d8d9eb2be04d4f5"
+      "sha256": "5c7ea177d9ac74c12d0012683619c12dfad892008fd97ba295da1d175100c9ce"
+    },
+    {
+      "mode": "100644",
+      "path": "src/AtomS3R/AtomS3R_Bmm150Compensation.h",
+      "sha256": "fa8d569b218c7818b49cbe06c1d56bdc30498cb655915844087873f43fb214ac"
     },
     {
       "mode": "100644",
@@ -2565,7 +2680,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_CompassAppBase.h",
-      "sha256": "7c5d08f095af915be23183a1412817c0f9167f000244fbea6fe04b422f9c807a"
+      "sha256": "f97d32de10265ff91987aec5bde8b3960cc76920bed30c3d8d960260fcb343ca"
     },
     {
       "mode": "100644",
@@ -2580,17 +2695,17 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCal.h",
-      "sha256": "cc5e264b5f0144a81ffad55cbd9cab204b4327d3a474bb55b852b1e588cd2df4"
+      "sha256": "7a924c4785ce98ee2716ebd6cf03154c817ad70a693ff46d05a8b8dac051cc3d"
     },
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCalBlob.h",
-      "sha256": "3d99ff8ad2d4e9b69059b522e16b8b6f3c6aa35eaa5e4f6f5464cee69b0be480"
+      "sha256": "41bc96a4240a3297ddf1b583c7eb39ca0438331539903973e264a3ef49ace334"
     },
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCalWizard.h",
-      "sha256": "5a5bd370192b233f4871df155354ab74d5d1082749d2fffe628bb4717dae6324"
+      "sha256": "01ac194bb7cf5f75c7e7902a9f6a6fcf06349a25b0d29ca22c50b4f74585ce87"
     },
     {
       "mode": "100644",
@@ -2606,11 +2721,6 @@
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_M5Ui.h",
       "sha256": "9840fc37dae82f6fe889a46eda23fbba58aa4148019667ffeeb70eb1ea6e3c09"
-    },
-    {
-      "mode": "100644",
-      "path": "src/AtomS3R/AtomS3R_MagCalMode.h",
-      "sha256": "bd550bcaa863db05b37caef19b8fb14f6ae161a38f39b4b43639ea63aaa8d39f"
     },
     {
       "mode": "100644",
@@ -3115,7 +3225,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/Makefile",
-      "sha256": "9c2e8ffda321e18c96f475e87e1bafde92ea21b73f3ed7376b691b706422c6bc"
+      "sha256": "a33421a6fe013f52b32ef16441c53e82c43d977eaafe609a19e1b8bd4af15c5d"
     },
     {
       "mode": "100644",
@@ -3125,7 +3235,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/accel_cal-test.cpp",
-      "sha256": "548dbcd680bca3d89ce1b2ba11c5858fcd0f65854df9ab33cbded07a959c3d07"
+      "sha256": "0afb6e7860372d39a3180b96f521b3fe7b698cb7b7ed205f8d2231e9ef978cbb"
     },
     {
       "mode": "100644",
@@ -3160,7 +3270,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/calibration_workflow-test.cpp",
-      "sha256": "65f09f8c780e19d924d3e7472a8196e7ba88bc27a97e555bcd6aa348321bd3a8"
+      "sha256": "97fbb7a5e59f1506c777f7f28656c3ec2f5c18146bd54b918a9605ed87d18f5c"
     },
     {
       "mode": "100755",
@@ -3175,7 +3285,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/mag_diagnostics-test.cpp",
-      "sha256": "8a1df12d84871747432f21b700b9e4f729ad42f4ee7020ea09e5ebecc5c3001a"
+      "sha256": "86c17f92d75bce5a709f44ecc57093f28c9919d63d852bdc14f83ead30c4028f"
     },
     {
       "mode": "100644",
@@ -3780,7 +3890,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_compatibility_quotient.py",
-      "sha256": "42612d8587cbd0f33ed4fb1e7a25e523810f0497da3717d2613c2e299966db8b"
+      "sha256": "7b246afb956bcf078c54b0cb4297aa6d33241432d13efbf0b772c1ed6953acea"
     },
     {
       "mode": "100644",
@@ -3876,6 +3986,11 @@
       "mode": "100644",
       "path": "tests/validation/test_ou3_imu_temporal.py",
       "sha256": "45057746d5a4b2f06171a96e854e55f7ac9ab8aae5d5b1d7fef6ae153e117f65"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_information_shear_word.py",
+      "sha256": "4016a52df2ed232a7889ec9688c096394912c1c9a433bfc597ad2f946ca0d63d"
     },
     {
       "mode": "100644",
@@ -3989,6 +4104,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_mahony_raw_normalization.py",
+      "sha256": "d0d1018ab7bd222bc09b78fd30fc2de0a31a383986112a9cd514400854a0a2ae"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_marine_30s_qualification.py",
       "sha256": "62909cbb1615affa04d0240cd3082a44c7d1417a481902a7f7ab4194f4d680af"
     },
@@ -4004,13 +4124,18 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_measurement_frame.py",
+      "sha256": "56c3d85615b749ecc2f926af3f4e8308f6a06142d18376c2bcf77ae580a0bba1"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_moving_pivots.py",
       "sha256": "3c62fd21e7221bcd4a8978219ad476f3db69cc6e1a25fc0e3a595d766ad36295"
     },
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_moving_quiet_compatibility.py",
-      "sha256": "e8ff3484765fdc5343401b6e060de18c742158fedc898e01fd78670166a59d02"
+      "sha256": "e6f3b055cd822605fd4021628979b6210410148335c9911b3e810119308b8d27"
     },
     {
       "mode": "100644",
@@ -4079,18 +4204,78 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_causal_calculus.py",
+      "sha256": "d048fb10478d3548b98796d1dac7db3f1981e142014b028ed21d194260424378"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_common_norm_radius.py",
+      "sha256": "c314ed0574b976af31805acdefa1da11c01cf1da1218ca29473ed793026e2db6"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_complete_word_storage.py",
+      "sha256": "97d3385f96cff63188970f088a0f6deb3d01828da44313fa4398ea56a6e143e1"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_planar_covariance_lower_cell.py",
       "sha256": "37eca21512dda05f26c8850b0943ed7faabbff144e5023705893e00360ff06bc"
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_every_root_service.py",
+      "sha256": "42a0184d8c572f44ca77952ac85c9e0745efc3e15a010932d38c5d2deea74464"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_frontend_domain.py",
+      "sha256": "ab96e5e212333c1803f26c56478435a650e6fba950f0b85f4141a013416b4f16"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_generated_port_structure.py",
+      "sha256": "6e8ffefbca9539e18a0f2e3fec2559a07d09803aa9b6a9dad6faba4047ba58f5"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_planar_information_ceilings.py",
-      "sha256": "848c5d87efd130836e117a375aa4704012a1379c1c0c9c9a142de7a2c83b235a"
+      "sha256": "a2a3909fb3368d8f0a6bf96229e03d3ee2c462bd46caf0710beb9426d4b53964"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_innovation_storage.py",
+      "sha256": "d0b710fe657b003b1e8e272728a6835e03346cf02560a8fcf4c67d96347ffc42"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_joint_phase_cell.py",
+      "sha256": "8d9b77b17a821ef64d6946da9118ff005c22bedfcfa22e5b08f05196a84f14ad"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_linked_riccati_mean.py",
+      "sha256": "85d96390d7c7cad4b83e0ecd6a892dcad8dd348616e0968e422ed5475d1424a6"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_mean_covariance_ports.py",
+      "sha256": "6621fbc145cc0b2dfec7e7357a450cfed0352d41c4ae20c00c277bd0f32da081"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_moving_center.py",
+      "sha256": "e36e754f6797b7f5652ef446217e0971219b708212311264618b29b5622db987"
     },
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_planar_moving_symmetry.py",
       "sha256": "25f8d10339b6c204250265beec9b750365411c97d44e5eaa08b90fd01e440ffc"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_native_secants.py",
+      "sha256": "7fe039730cb684d951123191a068f52ac51aca673b08c342ff92751c7b2c4b3d"
     },
     {
       "mode": "100644",
@@ -4105,7 +4290,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_planar_periodic_covariance_tube.py",
-      "sha256": "7e46fa4dc0b465dbb8ad1e1de985ec0ce898e7b857ee4a70c1357f7528713e61"
+      "sha256": "232659d0e33dcf11336a7ba7ac0da47ba9765d0935ad41ebe4e51e11566d472e"
     },
     {
       "mode": "100644",
@@ -4119,8 +4304,28 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_service_cell.py",
+      "sha256": "8b266c5023fbca4b341db7da8fd35c0b19747c3e49a435f7c206200ca7021795"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_ou3_planar_service_enclosure.py",
       "sha256": "aa88741f41735a5f96994ba912cd123d2f9e19dcb4e6104ac3b71d3dc03da256"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_service_frontend.py",
+      "sha256": "cc2d86cd3ef80c1225f3db19ab40c227869b88c102338269ba75050712cb579d"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_service_stream.py",
+      "sha256": "4f1cbb4f71c55ff1f6e8137514a1c863a6824c03e6f08d9dc0f674ab814e23b6"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_planar_service_verify.py",
+      "sha256": "e48d586269dc2b67104fa244a3d5e5fdd1d07e9882731770a74b42a3bf58556c"
     },
     {
       "mode": "100644",
@@ -4430,7 +4635,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_workflow_contract.py",
-      "sha256": "475221bc52f4201c144b78c4a4da4f7e37b0aebc58dbe3ce41413369251fd40a"
+      "sha256": "d243e5817f934df40fa2b7d149d5754bdcacc40d7dc7c394562261b7c27a66ac"
     },
     {
       "mode": "100644",
@@ -4870,7 +5075,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/build_evidence.py",
-      "sha256": "843ad73433e05dfc2f925427ed6a1e77b2e6e317f6cddab962239685d1bbb810"
+      "sha256": "660ea17c0315f9e4ac1b08fc680a3dc9edd23a05b5cedb8493aa199d0d56b047"
     },
     {
       "mode": "100644",
@@ -4900,7 +5105,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/causal_tuner_interval.py",
-      "sha256": "066fd472ba657f00c73aaa16a36e7cda00a1e96ecf9792bd8e7484c9c1d3e4fe"
+      "sha256": "e7ea1f032aca11e94de42cd06f172828c6dac9419d18d65b3e5f71e3bda43607"
     },
     {
       "mode": "100644",
@@ -4930,7 +5135,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/compatibility_quotient.py",
-      "sha256": "f4ff7fd544da7e645a7231a090233d3a114f57175cf1ea02f09f65bf7bf3a22b"
+      "sha256": "3cbd88c3ee893edc143a92049b5b2b051f7b3c2482b3298db99591748718eaf4"
     },
     {
       "mode": "100644",
@@ -5129,6 +5334,11 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/information_shear_word.py",
+      "sha256": "17c31d5b1ef0af91b5185e5f6b3a2900c95db06f152f685f5b02a395128a8f9f"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/inj_block_algebra.py",
       "sha256": "0d2c66ad02ce357f2ef7df153fac6fc92ed9d237de9d8162c1b25bb161273818"
     },
@@ -5225,7 +5435,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/literal_history_leaf_propagator.py",
-      "sha256": "1459f5b85a02e76ec1255206a4979e7c845f4c18670220e2133415637f62e5bb"
+      "sha256": "9436c50f5ea0aec4e18c86ad37670a24fa15011408f30c217df4e4265175bdd8"
     },
     {
       "mode": "100644",
@@ -5274,6 +5484,11 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/mahony_raw_normalization.py",
+      "sha256": "84004555f1f10c212d9c1233fe95896c23c16fbcc4a9e48fa6b7107cac976cb5"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/marine_30s_qualification.py",
       "sha256": "46eeb41f94a9a8abc7326d8e74e62e52ccf7c9805d84e2cc012cdd1872c8c36d"
     },
@@ -5294,6 +5509,11 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/measurement_frame.py",
+      "sha256": "c2e8e3252ae4da3c668bb3451dfcf2c539dedd0a6ebe14c5b0147dbf0bd6204f"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/moving_compatibility_diagnostic.py",
       "sha256": "131424868a94049dc694037a1f79f721be2b059940bf19cd99b2b0956a143a5e"
     },
@@ -5310,7 +5530,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/moving_quiet_compatibility.py",
-      "sha256": "cf15872a63c6bacf88e9d35880ae124d95f595073c02460a2d0e1e8eb4afe1d7"
+      "sha256": "d134b0bded6dbbb4075e797f0011fb7d41c411456c5884c4c27d5b114987db8b"
     },
     {
       "mode": "100644",
@@ -5409,18 +5629,98 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_causal_calculus.py",
+      "sha256": "11c5ff7ff9fed6fdf1b41b6ed0ba3ffb7ed3febecf3f1ebe4c5700c7100e85e0"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_common_norm_radius.py",
+      "sha256": "cc1304ee09716191d2d81ef0c6eed9cc0d27e77c457ead56460dd3439221d62f"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_compatibility_quotient_mean.py",
+      "sha256": "2c527457dcc9fb1eb6de6ffb57d332cf3c945bd7a9ee7b2d2f71eb6c81e64837"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_complete_word_storage.py",
+      "sha256": "2741c8b5e8e2bcc8472411d2ba1f9b39c233e33b68ddbbe63549b910675fd0a4"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_coupled_tangent.py",
+      "sha256": "96bec35b63a996dc5f26a6e9d12f910ad0dc466003c29e437a71c33ac349700f"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_covariance_lower_cell.py",
       "sha256": "be01b6a56ac5a54509121688dd7dc0af751f007e6416bd80d9020e58f9847152"
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
+      "sha256": "118b10cbe4be379cfec27465801c4b36a272d497e042119e678607c57c66554d"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_frontend_domain.py",
+      "sha256": "7194182134f54c22fa39326dcd79be1f4e33f83bc8257156c4f6f6e0b399ec90"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
+      "sha256": "9d470b20459a3352543ce19c330f0bba2f7ad758a4042d0adfdf84ea5cfd0ae8"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_information_ceilings.py",
-      "sha256": "cf8e1e3881a3fb4bf143c25f3bc34f307c690b103e7bfe858fa9d35fe54e2a75"
+      "sha256": "390ed0d58958d7fcdd366ecc4787d0ff2e26e65ab65bc6afecf531aa9c8a537a"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_innovation_storage.py",
+      "sha256": "025785485d96d44cfab2e8a6222a2d661237e624e7db5c29adc91adc44d80930"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_joint_phase_cell.py",
+      "sha256": "1a7d3f8fd130bcd3e8391bcd277c08c4886fd943b770cef0854295a7231fac66"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_linked_port_word.py",
+      "sha256": "f6b1403f9f42747813c052188791a0f74f26f546d60962b56f2aff47cb82ab2c"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_linked_riccati_mean.py",
+      "sha256": "a786c327b7b80d2c2a2027e1d5242f80fd6b4ed55ee37f64558f1162c8423a5b"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_mean_covariance_ports.py",
+      "sha256": "f41cfdc7825bab8caa46f4cf6523670478636a21f91e936a646539cc2998f047"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_moving_center.py",
+      "sha256": "bd433758d2d8e464ec743cad8c09199aead3c118e187e6e7fe6e968229878c44"
     },
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_moving_symmetry.py",
       "sha256": "8f775f753d9297e8f23ea5de5a81adeb6fd3eec6f1866f00ca29eaf5ccd5a6a5"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_native_secant_probe.cpp",
+      "sha256": "92bebdb53e441abc8279efabfed48ef92756e91241751db1398864b7a729f8f2"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_native_secants.py",
+      "sha256": "b83e4f13a463ace38b2011410e1a198c875eab85629416f3acca8eb6176a1733"
     },
     {
       "mode": "100644",
@@ -5434,8 +5734,13 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_parity_mean_tangent.py",
+      "sha256": "f39e0cfc26cc9e5035bc43f2e202befeee99c13cb1fd1532fdbbf18a7e8e6937"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_periodic_covariance_tube.py",
-      "sha256": "9d93b5c9e747ae0f4882411c5630c86ffbd056db72e707886c0309341217ffe9"
+      "sha256": "703e04e250d45184ea90050ae415b17fffc1bf3fa8287b4a196e01f380562f8d"
     },
     {
       "mode": "100644",
@@ -5454,8 +5759,53 @@
     },
     {
       "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_service_audit.py",
+      "sha256": "29996080878e305c24857f62503527b96e9ad29c0d58dded9a00ff8895d536e2"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_service_cell.py",
+      "sha256": "774f5c8cf9a16147e61865ba5753968ae335f335cdc00d2b80bfd9e6fc31ab38"
+    },
+    {
+      "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_service_enclosure.py",
       "sha256": "64d5c023df0e933b79d5da8cf9c4a3de751f5a9e670f239d629d7e4788e50498"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_service_frechet.py",
+      "sha256": "2021b8c51d03890a4dde168e0333853a45f1bcd8c23fd22ef646defcb60572fb"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_service_frontend_binding.py",
+      "sha256": "f2937953c72f91266b66f5ae12bb00a49a8996b14ad7fbd2c617e92fe76e4da2"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_service_guard.py",
+      "sha256": "c9204e25d1777cb3bb58bad5ded3099d1fad6fe9175706055690f84fcf3d94c3"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_service_mahony_tube.py",
+      "sha256": "d1426e7f2f7b4d9197f5058a9adc955ab372a99c018d2231f807f8f360c17b44"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_service_probe.cpp",
+      "sha256": "825592ab73ee8bff5eed9d65cd87e73c6d6dae0ecc87052b8209ccdf2d40b4ce"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_service_stream.py",
+      "sha256": "63bda8f97e1205c88fbd244a11e36c206848b0a421628bc4a21903ebf1b8e492"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/stability/ou3_theorem/planar_service_verify.py",
+      "sha256": "8b8d2ba20f6019f14b49319c7fa3d0cb3e52e251c21fd0d825e8718931cff02e"
     },
     {
       "mode": "100644",
@@ -5560,7 +5910,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/run_physical_history_subdivision.py",
-      "sha256": "1f062efcb9f29e7b4a8ee35173853a1d6fbb162a037f36aaab5a54654db7bc93"
+      "sha256": "db3e7c09f1de32fe96a7bdcd4d863d44e25ecfeef8db34a6b061aca2cca4da84"
     },
     {
       "mode": "100644",
@@ -5590,7 +5940,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/scheduler_s_shift_bound.py",
-      "sha256": "77eaff1062364747f7ee850290f49af15d45a46c53592d3b9287ce121f45698a"
+      "sha256": "50cf4dad0873402d85cec520e9077dc4344a1faeb4f4d3375ff7cf29a43e4b04"
     },
     {
       "mode": "100644",
@@ -5705,7 +6055,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "sha256": "b203ce21468011c1438b0e3aa56da7b4346b8039f96229022414af06a8a893e8"
+      "sha256": "3f5fa6bb851987ecf565d8a20b8c088fb0a86ba04d0605490161d2f73263df22"
     },
     {
       "mode": "100644",

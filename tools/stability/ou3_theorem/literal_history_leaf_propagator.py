@@ -29,7 +29,7 @@ def initial_adaptation():
   BandBox(z,z,z,z,z),VarianceBox(z,z,z,z),
   ShippingTunerBox(I(1.1,1.1),I(.1,.1),I(.5,.5)))
 
-def propagate_history_cell(cell,horizon_s=60.,dt=.005):
+def propagate_history_cell(cell,horizon_s=60.,dt=.005,*,reference_diagnostic=False):
  """Return integration payload or fail closed.
 
  A complete ConstructiveLeaf additionally needs literal initial covariance,
@@ -37,6 +37,9 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
  Those are not theorem-input knot coordinates and MUST be supplied by the
  certified release-state propagator; absence is reported rather than invented.
  """
+ if not reference_diagnostic:
+  from .planar_service_frontend_binding import require_shipping_binding
+  require_shipping_binding()
  n=int(round(horizon_s/dt));times=[i*dt for i in range(n+1)]
  samples=sample_history(cell,times,C);physical_acc=physical_acceleration_history(cell,times,C);adapt=initial_adaptation();guard=initial_guard();trace=[];fast_acc=[];racc=[];conditioned_acc=[];guard_weights=[]
  vel=[];pos=[];acc=[];jerk=[];grav=[];mag=[]
@@ -84,8 +87,10 @@ def propagate_history_cell(cell,horizon_s=60.,dt=.005):
  payload={"root":cell,"samples":samples,"adaptation_trace":trace,"physical_acceleration":physical_acc,"fast_accel":fast_acc,"conditioned_accel":conditioned_acc,"Racc_interval":racc,"guard_weight":guard_weights,
          "physical":{"velocity":vel,"position":pos,"acceleration":acc,"jerk":jerk,"gravity":grav},
          "aggregate_magnetic_service":mag_service,
-         "complete_constructive_leaf":False}
+         "complete_constructive_leaf":False,
+         "shipping_frontend_binding_verified":False,
+         "result_type":"REFERENCE DIAGNOSTIC ONLY"}
  release=connect_release_chronology(payload)
  payload["release_chronology"]=release
- payload["reason"]="same-history attitude/measurement geometry and residual/local-defect stream not yet attached; explicit goLive seed and aggregate magnetic service are available"
+ payload["reason"]="ideal frontend reference is not shipping-bound; same-history attitude/measurement geometry and residual/local-defect stream not yet attached; explicit goLive seed and aggregate magnetic service are available"
  return payload

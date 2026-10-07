@@ -1,9 +1,12 @@
 """Causal interval propagation for the measurement-only OU-III tuner path.
 
-Implements rigorous scalar interval recurrences for Mahony algebra (given a
-verified quaternion/input cell), adaptive wave band, variance moments, operating
-point and one-sample staged tuner commit. Nonlinear normalization fails closed
-when its denominator interval reaches zero. Generated quantities are outputs.
+Parameterized interval-reference recurrences; NOT a certified shipping frontend.
+MahonyBox uses exact inverse-square-root normalization, while Mahony_AHRS<float>
+uses a bit seed plus one Newton step. The raw private quaternion drives the
+vertical signal. Initial state, gravity subtraction, wave-period update order,
+tuner constants and clocks also require literal binding. These classes remain
+useful for algebra tests only. See planar_service_frontend_binding.py; do not
+consume their output as a shipping HistoryCell until that binding is verified. Generated quantities are outputs.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -31,7 +34,9 @@ class I:
  def sq(self):
   if self.lo<=0<=self.hi:return I(0,math.nextafter(max(self.lo*self.lo,self.hi*self.hi),math.inf))
   return self*self
- def clamp(self,a,b): return I(max(a,self.lo),min(b,self.hi))
+ def clamp(self,a,b):
+  if not(math.isfinite(a) and math.isfinite(b) and a<=b):raise ValueError("bad clamp rails")
+  return I(min(b,max(a,self.lo)),min(b,max(a,self.hi)))
 def iv(x): return x if isinstance(x,I) else I(float(x),float(x))
 def expi(x): return I(math.nextafter(math.exp(x.lo),-math.inf),math.nextafter(math.exp(x.hi),math.inf))
 def sqrti(x):
@@ -75,7 +80,7 @@ class MahonyBox:
   nn=I(max(nn.lo,self.q_norm_lower*self.q_norm_lower),nn.hi)
   rinv=recip(sqrti(nn))
   self.q=(n0*rinv,n1*rinv,n2q*rinv,n3*rinv);self.integ=tuple(ints);self.initialized=True
-  # Shipping normalization returns unit norm in exact arithmetic.
+  # This IDEAL reference normalization returns unit norm. Shipping float does not.
   self.q_norm_lower=1.0
   # down row dot original specific force
   q0,q1,q2,q3=self.q
@@ -135,7 +140,7 @@ def spectral_mse_RS(tau:I,sigma:I,TS:I,c_sigma=0.90,cj=.0538,
 
 @dataclass
 class ShippingTunerBox:
- """Applied/staged tuple including deployed SpectralMSE R_S channel."""
+ """Parameterized staged reference tuple; literal profile/clock binding is OPEN."""
  tau:I; sigma:I; RS:I; pending:tuple[I,I,I]|None=None
  def stage(self,dt:I,f:I,var:I,noise:I,tau_coeff:float,sigma_coeff:float,
            alpha:I,alpha_rs:I):
