@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "d07e3411fd97d0983ff438581fc1929817bbd1ca"
+      "git_blob_sha": "bb8a572aab1ea36cfde659428ddbaac4bc5f508d"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "341f589b8d9b9d7abad855e6f21d585810de8914"
+      "git_blob_sha": "286302ce16db2064704ff40a0efc7ecf5d01ef56"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "536be3f2b254d84e41da2ab918585ed1953ecb29"
+      "git_blob_sha": "d0f8db344f65184345907e75b63dcf3742a22c9a"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "4ac5d41407ba6b0f44014da23b92dbefd5d17b9a"
+      "git_blob_sha": "375ace7b7a7cfc5c599f7eea42d8789b22177dc5"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "55cf475a9b3947929dbde7c34e4c5e6a7ce51837"
+      "git_blob_sha": "af3108afc74e20c4f9109c73ed7d6db9d613adbb"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "046d2c4fc72d1ade45a43d90d9b75cdedb21e037"
+      "git_blob_sha": "88b00983f39fde20067b931eb8df2ce324363e6f"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -824,7 +824,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "d7ed3ba4130f62ba39f3a200a9f0bc34a1f2dd02"
+      "git_blob_sha": "635637a1b2f64b828d689e118e74144ab26b1327"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -964,11 +964,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "e4dbdebb7e8a87b497a39f2f88697059c765705b"
+      "git_blob_sha": "8df6957d768d4392970aeada6c2acd0fecde9790"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "60b7e0e668bbb8059b1ce3af484f99758a0ed951"
+      "git_blob_sha": "61c4079552bed5ebd64de05676ddd443492d94c4"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
@@ -976,7 +976,7 @@
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "6263e1e981e038964f8a45ebb3148a238aa06b46"
+      "git_blob_sha": "e7d00d2152788706206d2e9f105174c199e76cd0"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
@@ -1400,6 +1400,17 @@
       "uniform_full_homogeneous_gap": null,
       "full_word_OPEN_dependencies_discharged": [],
       "new_storage_constructed": false
+    },
+    "full_residual_process_receipt_payment": {
+      "proof": "CR44--CR45",
+      "same_history_nonzero_receipt_lower_inequality_verified": true,
+      "uniform_coefficient": null,
+      "receipt_blocker_resolved": false,
+      "full_endogenous_Schur_cost_paid": false,
+      "complete_homogeneous_gap_proved": false,
+      "full_word_OPEN_dependencies_discharged": [],
+      "allocation_ceiling": "alpha*v^2<=Qr_aa*(Qr_aa+4*v)/(Qr_aa+2*v)^2; same-prefix inverse Cauchy bound d/v>=v/Qr_aa",
+      "allocation_ceiling_is_total_action_upper_bound": false
     }
   },
   "coupled_signed_gap_audit": {
@@ -1650,5 +1661,9 @@
     "receipt_corner_decided": false,
     "full_Schur_cost_paid": false,
     "common_positive_reserve_proved": false
-  }
+  },
+  "receipt_schur_continuation_base_main_commit": "a47da994b85f2ec844b199d27b619a7fcc553adb",
+  "receipt_schur_continuation_incorporated_main_commit": "59171c1a4aef654bb9808629e8856e4a56edfcc8",
+  "receipt_schur_continuation_automated_evidence_preserved": "944f7bdffa379e3381e4ebfc7b3f2d77722d1990",
+  "receipt_schur_continuation_earlier_automated_evidence_preserved": "070e7de3633f396dac2636d1783f735f9ea87d4c"
 }

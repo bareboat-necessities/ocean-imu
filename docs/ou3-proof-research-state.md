@@ -11,22 +11,15 @@ The general theorem assumes existing MAGNETIC SERVICE on admitted histories;
 all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
-Verified main: `8cecdf39e60e0802182f0c1b5bc9bab74d4cb558`.
-Verified mergeability continuation starting PR head:
-`ca3bd78d255d1e1b1e5eaceadf4c3f405aa50946`.
-Its complete 20-file automated evidence commit on `b92c5e307` is preserved.
-New main changes add AtomS3R BMM150 compensation and make runtime magnetic
-source selection follow the saved calibration. The shipping OU-III
-prediction/correction/floor operators and all 34 native-probe shipping
-dependencies remain byte-identical to the preserved original source.
-Main's additions, including its OU-III sketch initialization, are incorporated
-into the PR branch; no estimator behavior, assumption, tuning or gate is
-authored in this continuation. Upstream calibration/source changes do not
-verify magnetic residual envelopes or strengthen MAGNETIC SERVICE.
-Current mergeability and exact-head CI belong in PR metadata.
-The concise continuation handoff is [ou3-ai-handoff.md](ou3-ai-handoff.md).
-The user authorized publication and merge of PR #653 after validation;
-that publication does not decide the remaining mathematical sign.
+Verified merged main: `a47da994b85f2ec844b199d27b619a7fcc553adb`.
+PR #653 is merged. This continuation uses the NEW branch
+`proof/ou3-receipt-schur-continuation` from that exact main.
+Concurrent main `59171c1a4aef654bb9808629e8856e4a56edfcc8` is incorporated,
+including PR #663, version 2.4.0 and the automatic evidence bundle.
+Its separate mechanical repair is `9b951b6ac`; current publication and CI
+are PR metadata. Upstream calibration, BMM150 compensation and saved magnetic
+source selection are preserved. No merge is authorized for the follow-up.
+The concise current handoff is [ou3-ai-handoff.md](ou3-ai-handoff.md).
 
 Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
 `theorem_closed=false`, `regional_practical_stability_claimed=false`,
@@ -50,6 +43,101 @@ not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
+
+**D — an inverse-domain estimate alone does not settle the linked receipt.**
+The exact failed sufficient step is promoting CR45's covariance-column
+payment to `alpha>=dbar` without checking the SAME prefix's threshold.
+Cauchy with full Qr proves `d/v>=v/Qr_aa`; monotonicity of
+`(4r+1)/(2r+1)^2` gives the allocation ceiling
+`alpha*v^2<=Qr_aa*(Qr_aa+4v)/(Qr_aa+2v)^2`.
+If `k=dbar*v^2` exceeds it, no upper energy estimate can cross the
+allocation threshold. This is a conditional failure of that sufficient
+method, not a proved occurrence or negative mode in the admitted family.
+Retained facts: CR44--CR45 and every linked full-process/transverse,
+conditional/regression/acc/S/magnetic term; the ceiling is NOT an upper
+bound on their total. Current limiter: no quantified retained-action
+comparison excludes all feasible CR30 chi>=1 modes, and no common root
+reserve is established. Next falsifiable test: derive that comparison
+from CR5/CR31--CR32 and the literal applied columns on the actual inherited
+image, retaining first marginal, target lag and every prefix guard; only
+then test the complete CR43 remainder at the same reserve. No sign,
+rank, inverse, OPEN dependency or broader flag is promoted.
+
+**E — dependency installation failed before compilation.** Exact head
+`5ecbe504d0d9` push build run 37644598944 failed jobs 112872753415
+(imu_calibrate) and 112872753700 (OU-III): `apt-get did not succeed after
+3 attempts` at Install build dependencies. The Ubuntu mirror download
+timed out; no compilation or proof check failed in those jobs. Retry only
+failed jobs; retain successful checks and inspect each new exact head.
+The PR build still running rejected individual job reruns; do not infer
+a successful retry. A transient GitHub fetch 502 and an overwrite attempt
+on read-only Git objects were recovered by fetching the complete clone
+and copying only missing objects. The full automatic evidence commits
+`070e7de3633f` and `944f7bdffa37` are preserved; no scientific payload is
+manually replaced. At `944f7bdffa37`, build run 37657130742, OU-II job
+112925147621 again exits before compilation: `apt-get did not succeed
+after 3 attempts` while downloading texlive-fonts-extra. This is E,
+not a proof failure; retry failed jobs after the workflow completes.
+The mistaken test-file path was corrected by repository search to
+`tests/validation/test_ou3_measurement_frame.py`; no result used that read.
+
+**E — exact-head two-column render counter repaired.** At `17c53af4b5ac`,
+PR run 37643337778 / job 112867577478 fails `lualatex` with
+`LaTeX Error: Counter too large` at the final shipping-audit paragraph.
+The added paragraph exceeds IEEEtran's alphabetic paragraph counter;
+the article-class wrapper does not test that display qualification.
+Use numeric paragraph reference/display forms inside the already scoped
+appendix group and split the new displays to fit columns. The arguments,
+equations, status and shipping operations stay unchanged. The next test
+is the exact-head IEEEtran two-column render, not another proof estimate.
+
+**CR44--CR45 — quantitative nonzero receipt payment; uniform sign OPEN.**
+The SAME L_rem in CR37 pays alpha*mu^2 with
+`alpha=(4d+v)/(v*(2d+v)^2)>0`, `X=F P F'`, `Qr=Q_ship-q_aw ee'`,
+`v=X_aa`, `d=(X e)' Qr^-1 (X e)`. Its full retained noise is at least
+Qr/2; the transverse Fisher square is retained. This prices every actual
+nonzero receipt with full integrated Q, earlier deletions and actual prefix
+covariance, without the coarse kernel reserve. Substitute L_rem once in Hbar;
+all acc/S/magnetic action and complete endogenous cross cost stay linked.
+The direct allocation crosses its individual threshold only if
+`k=dbar*v^2<1` and `d/v<=sqrt(1-k)/(2*(1-sqrt(1-k)))`.
+No uniform bound on the actual covariance-column energy
+`d/v=(P e)' F' Qr^-1 F (P e)/P_aa` crossing that threshold is proved.
+The remaining grouped word action may pay its residual charge. Pointwise
+alpha>0 does not exclude ALL feasible chi>=1 modes: promoting it would be
+D, insufficient domination. Receipt blocker NO; full Schur NO; homogeneous
+margin NO; no OPEN dependency discharged or count/flag promotion. Structures
+preserved: same complete process/face/acc/S/magnetic prefixes and common tangent.
+Relaxations: none in this inequality; existing real partial-fibre/cone scope.
+
+
+**E — merged-main binding and warning repair.** Fresh main is `a47da994`;
+new work uses `proof/ou3-receipt-schur-continuation`, never the merged branch.
+Exact reproduction confirms the two reported binding failures. The native
+profile still includes the same 34 shipping files: 33 are byte-identical;
+the Mahony constant declaration changes only whitespace. Compiler preprocessing
+differs only by that exact line-wrap replacement, proving token identity under
+the unchanged C++20/O1/Eigen profile. Refresh the two affected bindings with
+all diagnostic payloads, false flags and original audits retained. Main's
+calibration/compensation/source-selection behavior stays intact. The separate
+warnings job also rejected uninitialized output arrays in the magnetometer
+test; value-initialize those test buffers, retaining its success and accuracy
+checks. These repairs change no shipping operator or proof margin. Next:
+reproduce evidence and the affected warning/test commands, then attack the
+same nonzero receipt inequality and full endogenous cost.
+
+The incorporated main restores the original Mahony declaration wrapping.
+Its native dependency closure and full exact-profile preprocessing match the
+earlier valid baseline byte for byte; rebind the affected source fields with
+the mechanical refresh and all earlier audits retained. No original finite
+payload or upstream automatic evidence is replaced. Required parallel make
+failed by launching tests before binaries existed. The first serial command
+exited 2 with no final diagnostic in its saved log, whose last line reports
+passing TFG Jacobians. Classification E; no proof or shipping behavior is
+invalidated. The subsequent serial `make all` at `0779e7d2a61d` completed with live
+exit 0 and 1123 validation cases; CMake configuration was skipped because
+CMake is unavailable locally. Do not credit the incomplete invocation as
+a pass or transfer that completed run to a later head.
 
 **E — status-path lookup corrected during handoff preparation.**
 The command searching `docs/ou3-theorem-status.md` failed with
@@ -542,6 +630,12 @@ The observed-coefficient center defect .0006179245 is finite and uses future
 observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
+
+CR45 now pays an explicit part of each nonzero receipt from the already
+retained full process. Its covariance-column energy and the remaining linked
+receipt charge have no uniform sign certificate. Keep the original CR41--CR43
+remainder; alpha is not a common reserve and supplies no full Schur sign.
+
 
 The one remaining comparison is CR41--CR43's full feasible R_W(c)>=0
 for one common c>0. Its receipt corner is exactly CR39/CR30 using
