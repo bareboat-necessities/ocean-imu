@@ -109,10 +109,10 @@
       "spectrum": "PM-Stokes"
     }
   ],
-  "simulation_data": "oceanography-waves-lib v1.2.1 vessel-rao-28ft",
+  "simulation_data": "oceanography-waves-lib v1.2.3 vessel-rao-28ft",
   "simulation_provenance": {
     "archive": "sim-data-files-vessel-rao-28ft.zip",
-    "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+    "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
     "input_sha256": {
       "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
       "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
@@ -124,9 +124,9 @@
       "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
     },
     "motion_model": "VESSEL_RAO_28FT",
-    "release": "v1.2.1"
+    "release": "v1.2.3"
   },
-  "source_commit": "02adc1b0d12b34ff91b1c30952aef2f53d68db4f",
+  "source_commit": "de7f2861a7f3c157baac3fec26cfa7274e2bf6fc",
   "study": "engine-noise mitigation (OU-III accelerometer vibration guard)",
   "total_replays": 192,
   "window_sec": 900.0
