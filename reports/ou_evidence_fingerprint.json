@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "bf00a85c8692f84512d9cef40f0e645def409abc380af80192a8447b0a1d67a4",
+  "replay_fingerprint": "c0bcbf2550c7f825491acbdee28fe7261e8e3897609619d78ea6dcd83d88d135",
   "results_file_count": 465,
   "results_files": [
     {
@@ -861,7 +861,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "sha256": "072d3ab11d30c10e6e9ea0fc0dc8eed62b3a60cf7b8380ac49ef4b41377a94c6"
+      "sha256": "65b448eca4bc9f65a23f4e146d733ae65374604ef84d4710ac1df224caa5c6cb"
     },
     {
       "kind": "file",
@@ -991,7 +991,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "83894d8e805bff08b2fbbf0e0ab40baa893ec971671c6be8f3716f0cd63b06bd"
+      "sha256": "e546ae5d446ecb53003f7ad5c813d7b48ebe1bd8f2fa6f8fdb7d1b182b7cdf0c"
     },
     {
       "kind": "file",
@@ -1091,7 +1091,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "e2ed5b993ea69d8f952daf999f9c0fa670bea72ed59398469c4f58b2704c4147"
+      "sha256": "f34faec0904e7224c698c7bfbdf109b6c8642aa3cea09d4cfd0e8290202c0349"
     },
     {
       "kind": "file",
@@ -1161,57 +1161,57 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "db41a48a3be8686aa54c9e5fdd726b7e6d27389ecd58618d96aa8b825579d574"
+      "sha256": "aa67a64d2cc0a68551da5798fe8c682f6e501dd271e960fc641ac68ab3dfe73f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "28f3aff07b2450e59bcf6151dd95453417d9f0b9e74da97e19a560ea3c98b8a5"
+      "sha256": "e5a55b6d17079394cfbbc6eb1caefe1b0eeda9116aacfefaa6386490f7b88019"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "98125fdd41f9c10218b677c50283dcff43a08df6029f415854e3fec4b7e2780c"
+      "sha256": "71d87ec0ee431d607cc789f4652809a789506185a536f767095554d26cfdf901"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "cc35a228f399273f94f4042f6da38181e414b1325104479b95853c8a6a9307a5"
+      "sha256": "138cdf0c231594621ba3171f6ada25c11a6c8abffadc37a2398ae529912bc256"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "3f458c7793ad4d14af5e9835589c83fb4a17c77fa365145665d68db66d498cd2"
+      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "3ee3506335af27018044e3db3714030a8f05fe1de057a14e7a735174107785fc"
+      "sha256": "89dc42fc25e3386b5a6ff0f5da13beda6320eea8bf4e7a9edd286e029e5f8e17"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "7f853f3fca3e205a57bcb3b0d895c9b051f58a33583be844c2983f7a273aafc0"
+      "sha256": "9bf7d87c06a226f50d0b9e9d566f5b2cb24f402f0525804987e2bac4675efc79"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "52f92ca6be0738a25612837b3510919d4a89d766ae14e7573b722b584c6a4cc0"
+      "sha256": "bffabcaf390778b6550b01fe5be72a2b2bc5c87e825dbd998380353a97e02abd"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "a563f594061ffeebdff103df617581b79672034507094a17f4b5897bb45facae"
+      "sha256": "2e152c0bcda46e96cb272a8f9cfb8aa2577b37cfb873d08e0e008277540a77e7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "d0ff48c30f60683cf606c1e7cade98fd076c994b4628c46b578d138c9906b298"
+      "sha256": "2d81bec7d2df00a354f0aee7e2374529471c7aad56cb57a2023ad5727093eabd"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "23738a6a38f97ab66d378e1e8b407eccb998d716f3ddfa4a7b0876acaeabf56b"
+      "sha256": "3804dc62163d811550a4b12ae23e7fb6b59138dbdc73df3b00da91cccaa22ceb"
     },
     {
       "kind": "file",
@@ -1231,7 +1231,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "5aa7358f91a76a5d35a802b0315c10b264fb6582c5d25b5982bd3f0b795dac44"
+      "sha256": "cbf0e784c10dabf061e9d74bbbcf48199fd711ca514877058d9855c375d0d047"
     },
     {
       "kind": "file",
@@ -2329,7 +2329,7 @@
       "sha256": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
     }
   ],
-  "results_fingerprint": "f11ced39bceb4924823bdd96770cb8c6adde584e90917970da1f87d5c50e6b69",
+  "results_fingerprint": "9eb054aba8d4709b3b60828467efdcc32979c000182d35bcbe6ffce0a6436313",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
@@ -4125,7 +4125,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "sha256": "dff5b6fce38f0cad39eba62e403d5708b220adf645c22400667f988cffc884b3"
+      "sha256": "4bb6dad0e42e13aa014eb3d68e9baa68434252af2abbfbf6b0095daeda2aeb51"
     },
     {
       "mode": "100644",
@@ -5510,7 +5510,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "sha256": "5ee4abda38fed59c239097df5ab32d2715ba57237bf8182ea04a329f13aec6ed"
+      "sha256": "b1e84bc8bcf10e73c1ad735ef65ccde0e148720d09ee4836872cb789a7738238"
     },
     {
       "mode": "100644",
