@@ -68,7 +68,16 @@ class QmekfBackend : public IAttitudeBackend {
     if (an > 1e-6f) a_att *= (ImuCalCfg::g_cal_local / an);
     mekf_->measurement_update_acc_only(a_att);
 
-    if (s.mag_ok && s.mag_fresh) mekf_->measurement_update_mag_only(s.m_unit);
+    if (s.mag_ok && s.mag_fresh) {
+      // Field reference rebuilt from this reading, as in Mahony: its own dip,
+      // pointing to magnetic north. A reference frozen at start keeps the
+      // dip error of that one sample (local disturbance, motion at boot),
+      // which tilts the attitude and turns the heading at east/west when pitched.
+      const auto qc = mekf_->quaternion();  // x, y, z, w
+      const Vector3f mw = Eigen::Quaternionf(qc(3), qc(0), qc(1), qc(2)) * s.m_unit;
+      mekf_->set_mag_world_ref(Vector3f(sqrtf(mw.x() * mw.x() + mw.y() * mw.y()), 0.0f, mw.z()));
+      mekf_->measurement_update_mag_only(s.m_unit);
+    }
 
     const auto q = mekf_->quaternion();
     out = makeAttitudeFromQuat(q(0), q(1), q(2), q(3));
