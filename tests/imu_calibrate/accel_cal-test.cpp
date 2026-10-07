@@ -1552,6 +1552,21 @@ void testGravityConvention(std::ostream& rep) {
           "the mag source survives save and load");
     RuntimeCals comp2; comp2.rebuildFromBlob(cld);
     check(comp2.mag.ok && !comp2.mag_source_mismatch, "a compensated mag fit applies to compensated data");
+    // With a source follower (the firmware), loading a fit switches the
+    // running source to the one it was fitted on, so it keeps applying.
+    atoms3r_ical::magSourceFollower() = [](uint8_t source) {
+      atoms3r_ical::activeMagSource() = source;
+      return true;
+    };
+    RuntimeCals follow; follow.rebuildFromBlob(ld);
+    check(follow.mag.ok && !follow.mag_source_mismatch &&
+              atoms3r_ical::activeMagSource() == atoms3r_ical::MAG_SOURCE_M5_RAW,
+          "an uncompensated fit switches the firmware to uncompensated data and applies");
+    atoms3r_ical::magSourceFollower() = [](uint8_t) { return false; };
+    atoms3r_ical::activeMagSource() = atoms3r_ical::MAG_SOURCE_BMM150_COMPENSATED;
+    RuntimeCals stuck; stuck.rebuildFromBlob(ld);
+    check(!stuck.mag.ok && stuck.mag_source_mismatch, "a source the firmware cannot deliver is not applied");
+    atoms3r_ical::magSourceFollower() = nullptr;
     atoms3r_ical::activeMagSource() = atoms3r_ical::MAG_SOURCE_M5_RAW;
   }
 }

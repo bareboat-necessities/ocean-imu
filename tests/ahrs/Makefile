@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = ahrs-qmekf-sim qmekf-heading-test
+TARGETS = ahrs-qmekf-sim
 
 all: build test
 
@@ -35,11 +35,6 @@ ensure-sim-data:
 
 ahrs-qmekf-sim: ahrs-qmekf-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-
-qmekf-heading-test: qmekf-heading-test.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-
-qmekf-heading-test.o: $(REPO_ROOT)/src/ahrs/KalmanQMEKF.h
 
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -c $< -o $@

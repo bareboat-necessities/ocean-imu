@@ -177,10 +177,11 @@ static void magCommand(char cmd) {
 
 // 'c': switch between Bosch-compensated and uncompensated data (re-applies the
 // low-noise setting). The saved calibration applies only to data from the
-// source it was fitted on.
+// source it was fitted on; the choice here is kept, not switched back to it.
 static void toggleCompensation() {
   const bool on = !atoms3rMagSource().compensated;
   if (configureAtomS3RMag(Serial, on)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
+  magSourceFollower() = nullptr;
   cals.rebuildFromBlob(blob);
   saved_ok = cals.mag.ok;
   saved_model.A = cals.mag.A;
