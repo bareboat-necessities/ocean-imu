@@ -347,8 +347,9 @@ static void analyzeTask(void*) {
 static void onSample(const ImuSample& s) {
   const float dt = last_sample_us ? (s.sample_us - last_sample_us) * 1e-6f : 1.0f / LOOP_HZ;
   last_sample_us = s.sample_us;
-  a_cal = cals.applyAccel(s.a, s.tempC);
-  w_cal = cals.applyGyro(s.w, s.tempC);
+  const float tempC = s.tempC;
+  a_cal = cals.applyAccel(s.a, tempC);
+  w_cal = cals.applyGyro(s.w, tempC);
   if (dt > 0.0f && dt < 0.05f) {
     const V3 dth = w_cal * dt;
     const float ang = dth.norm();
