@@ -898,6 +898,17 @@ Physical S is never reset by the estimator pseudo-measurement.
   The calibration rebuild initially repeated a relative -C path inside that
   same test-directory cwd; use make build there instead. The failed invocation
   performed no build or test, and no validation gate was changed.
+  The first make all session later became unavailable with no final exit
+  status; its log stops during OU-III local-gravity compilation after the
+  primary build completed. This is incomplete local validation, not a test
+  pass or a mathematical failure. Rerun the unchanged target using its
+  existing build artifacts and require a recorded exit status. That repeated
+  make all completed with recorded exit status 0, including 1122 evidence
+  tests (one existing skip). No test or validation gate was changed.
+  A publication preparation found its cached base-file contents unavailable
+  and stopped before creating a tree or updating the remote branch. Re-read
+  immutable API file contents and require native/API tree equality before
+  publishing the validation record.
 
 * **D, process-short-only sign inference:** CR26's positive effective gap
   does not prove the complete nonzero receipt remainder nonnegative.

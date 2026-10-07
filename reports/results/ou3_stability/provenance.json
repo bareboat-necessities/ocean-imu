@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "06902e541950252b435909f2818eade5f1ec392e"
+      "git_blob_sha": "0eca260f672589dfb115021e11c66914cc7115f4"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -1619,6 +1619,16 @@
     "generated_evidence_resolution": "Preserve the entire newer 21-file PR regeneration bundle; retain main diagnostic additions.",
     "earlier_incorporated_main": "d315ae2ad1dc5659f9e6341a02ebddb68dc4be33",
     "changed_source_files_outside_probe_closure": 6,
-    "upstream_configuration_retained": "PR #658 low-noise BMM150 setting at calibration/runtime, including OU-III sketch initialization; no new residual/service claim."
+    "upstream_configuration_retained": "PR #658 low-noise BMM150 setting at calibration/runtime, including OU-III sketch initialization; no new residual/service claim.",
+    "local_validation": {
+      "make_all_exit_status": 0,
+      "initial_full_session_incomplete": true,
+      "repeat_unchanged_target": true,
+      "additional_focused_provenance_archive_tests_passed": 10,
+      "mathematical_margin_promoted": false,
+      "evidence_tests_run": 1122,
+      "evidence_test_skips": 1,
+      "evidence_test_failures": 0
+    }
   }
 }
