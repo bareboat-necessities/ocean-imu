@@ -23,8 +23,7 @@ class Mahony_AHRS {
 public:
     static constexpr T twoKpDef = T(2) * T(1);   // 2 * proportional gain
     static constexpr T twoKiDef = T(2) * T(0);   // 2 * integral gain
-    static constexpr T kRadToDeg =
-        T(57.295779513082320876798154814105L);
+    static constexpr T kRadToDeg = T(57.295779513082320876798154814105L);
 
     T twoKp       = twoKpDef;
     T twoKi       = twoKiDef;
