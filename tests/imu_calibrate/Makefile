@@ -76,7 +76,7 @@ calibration_accuracy-test.o: $(CAL_HEADERS)
 mag_field_consistency-test.o: $(CAL_HEADERS)
 mag_hand_motion-test.o: $(CAL_HEADERS)
 calibration_safety-test.o: $(SRC_DIR)/imu_calibrate/MagCalCapture.h $(CAL_HEADERS)
-calibration_workflow-test.o: $(CAL_HEADERS) $(SRC_DIR)/AtomS3R/AtomS3R_CalLog.h $(SRC_DIR)/AtomS3R/AtomS3R_MagCalMode.h
+calibration_workflow-test.o: $(CAL_HEADERS) $(SRC_DIR)/AtomS3R/AtomS3R_CalLog.h
 imu_calibrate-test.o: $(CAL_HEADERS)
 accel_cal-test.o: accel_cal_sim.h accel_cal_replay.h ../common/GravityChain.h $(CAL_HEADERS)
 accel_cal-replay.o: accel_cal_replay.h $(CAL_HEADERS)

@@ -93,6 +93,7 @@
 // Blob layout, CRC, runtime application and the generic store
 // (host-testable, no Arduino dependency).
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
+#include "AtomS3R/AtomS3R_Bmm150AuxPreset.h"
 
 namespace atoms3r_ical {
 
@@ -327,6 +328,28 @@ static inline void clearM5UnifiedImuCalibration() {
   // Clears runtime offsets and any stored "offset data" M5Unified may apply.
   M5.Imu.setCalibration(0, 0, 0);
   M5.Imu.clearOffsetData();
+}
+
+// Low-noise BMM150 setting used for both calibration and runtime on AtomS3R:
+// 47 XY / 41 Z repetitions at M5Unified's 30 Hz output rate (instead of the
+// 1/1 reset value M5Unified leaves). Applied through the BMI270 AUX interface
+// with read-back (AtomS3R_Bmm150AuxPreset.h). Call after every M5Unified IMU
+// initialisation, because M5Unified soft-resets the BMM150. Other IMUs are
+// left untouched. Returns true when the low-noise setting is active.
+static inline bool configureAtomS3RMagLowNoise(Print& log) {
+  auto* imu0 = M5.Imu.getImuInstancePtr(0);
+  if (M5.Imu.getType() != m5::imu_bmi270 || !imu0) return false;
+  using Preset = Bmm150AuxPreset<m5::IMU_Base>;
+  Preset aux(imu0, [](uint32_t ms) { delay(ms); });
+  Bmm150RegState before, after;
+  const bool ok = aux.apply(Preset::LOW_NOISE_REP_XY, Preset::LOW_NOISE_REP_Z, before, after);
+  if (ok) {
+    log.printf("[MAGCFG] BMM150 low-noise: %u/%u repetitions (was %u/%u), mode=0x%02X\n",
+               after.nXY(), after.nZ(), before.nXY(), before.nZ(), after.mode);
+  } else {
+    log.printf("[MAGCFG] BMM150 low-noise setting FAILED (%s); driver setting kept\n", aux.failure());
+  }
+  return ok;
 }
 
 
