@@ -25,6 +25,7 @@ from tools.stability.ou3_theorem.measurement_frame import (
     receipt_kernel_nuisance_margin, coupled_receipt_schur,
     scalar_acc_conditional_fisher,
     actual_aw_process_short, prediction_face_fisher_balance,
+    residual_process_receipt_payment,
 )
 from tools.stability.ou3_theorem.planar_innovation_storage import information_shear_correction
 from tools.stability.ou3_theorem.planar_linked_riccati_mean import product
@@ -89,9 +90,52 @@ class MeasurementFrameTests(unittest.TestCase):
         pair = prediction_face_fisher_balance(p, f, noise, ds[1], target, a, q)
         self.assertNotEqual(pair['d_beta'], 0)
         self.assertFalse(out['inherited_causal_image_qualified'])
+        paid = out['process_face_receipt_process_paid_weights'][0]
+        self.assertGreater(paid, 0)
+        self.assertEqual(out['process_face_receipt_weights_after_process_payment'][0], weight-paid)
+        self.assertEqual(add(out['process_face_retained_positive_action'],
+                            product(transpose(readers), readers), -(weight-paid)), out['signed_gap'])
         bad_noise = zeros(9, 9)
         with self.assertRaisesRegex(ValueError, 'at least twice'):
             prediction_face_fisher_balance(p, f, bad_noise, ds[0], target, a, q)
+
+    def test_full_residual_process_prices_nonzero_receipt_without_releasing_cross_tangent(self):
+        # Exact slot regression for the inequality; these operands are not
+        # asserted to be an inherited, service-admitted shipping history.
+        x = [[F(3), F(1, 2), F(1, 3)],
+             [F(1, 2), F(2), F(1, 4)],
+             [F(1, 3), F(1, 4), F(1)]]
+        q = [[F(1, 4), F(1, 20), F(1, 30)],
+             [F(1, 20), F(1, 5), F(1, 40)],
+             [F(1, 30), F(1, 40), F(1, 6)]]
+        d = [[F(1), F(-1, 3), F(2, 5)],
+             [F(-1, 3), F(2), F(-1, 4)],
+             [F(2, 5), F(-1, 4), F(3)]]
+        out = residual_process_receipt_payment(x, q, d, 2)
+        mu, alpha = out['same_prefix_receipt'], out['paid_receipt_coefficient']
+        self.assertNotEqual(mu, 0)
+        self.assertGreater(alpha, 0)
+        v = out['marginal_before_process']
+        ceiling = q[2][2]*(q[2][2]+4*v)/(v*v*(q[2][2]+2*v)**2)
+        self.assertEqual(out['allocated_coefficient_same_prefix_ceiling'], ceiling)
+        self.assertLess(alpha, ceiling)  # full inverse correlation retained
+        self.assertEqual(out['full_residual_process_Fisher_loss'],
+                         alpha*mu*mu+out['retained_transverse_Fisher_loss']
+                         +out['retained_full_process_Fisher_loss'])
+        # This verifies the full Q inverse, rather than a Q_aa-only substitute.
+        w = [[row[2]] for row in x]
+        self.assertEqual(out['full_process_directional_inverse_charge'],
+                         product(transpose(w), inverse(q), w)[0][0])
+        off = [[F(0), F(1), F(-1)], [F(1), F(2), F(1, 2)],
+               [F(-1), F(1, 2), F(0)]]
+        # Polarization checks simultaneous nonzero receipts, dB and dT;
+        # a single conveniently selected eigenvector is not used as evidence.
+        for tangent in (d, off, add(d, off), add(d, off, -1)):
+            r = residual_process_receipt_payment(x, q, tangent, 2)
+            self.assertGreaterEqual(r['retained_full_process_Fisher_loss'], 0)
+            self.assertGreaterEqual(r['retained_transverse_Fisher_loss'], 0)
+        self.assertIsNone(out['uniform_paid_coefficient'])
+        self.assertFalse(out['uniform_receipt_domination_verified'])
 
     def test_nonzero_zero_gap_receipts_retain_actual_directional_cones(self):
         p = [[F(2), F(1, 4)], [F(1, 4), F(1)]]

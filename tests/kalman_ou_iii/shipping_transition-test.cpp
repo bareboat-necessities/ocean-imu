@@ -55,12 +55,12 @@ static void test_attempt_is_not_acceptance(){
     require(f.accel_bias_locked_,"Live entry did not start magnetically locked");
     const float nan=std::numeric_limits<float>::quiet_NaN();
     f.updateMag(V3(nan,0.0f,0.0f));
-    require(f.magUpdatesAttempted()==1,"forwarded magnetic attempt counter did not advance");
-    require(f.magCorrectionsApplied()==0,"a rejected magnetic call was counted as an applied correction");
+    require(f.mag_service_.attempted==1,"forwarded magnetic attempt counter did not advance");
+    require(f.mag_service_.applied==0,"a rejected magnetic call was counted as an applied correction");
     require(!f.mekf().lastMagDiag().accepted,"invalid magnetic attempt was reported as an applied correction");
     const V3 gyro=V3::Zero(), acc(0.0f,0.0f,-g_std); const float dt=.005f;
     for(int k=0;k<300;++k){f.updateTime(dt,gyro,acc); f.updateMag(V3::Zero());}
-    require(f.magUpdatesAttempted()==301&&f.magCorrectionsApplied()==0,"zero-field calls were counted as applied corrections");
+    require(f.mag_service_.attempted==301&&f.mag_service_.applied==0,"zero-field calls were counted as applied corrections");
     require(f.accel_bias_locked_&&!f.mekf().acc_bias_updates_enabled(),"rejected magnetic calls released the accelerometer-bias lock");
     int applied=0;
     for(int k=0;k<400&&f.accel_bias_locked_;++k){
@@ -69,7 +69,7 @@ static void test_attempt_is_not_acceptance(){
         ++applied;
     }
     require(!f.accel_bias_locked_&&f.mekf().acc_bias_updates_enabled(),"applied magnetic corrections did not release the lock");
-    require(f.magCorrectionsApplied()==applied&&applied>=f.magUpdatesToUnlockAccBias(),"release preceded the applied-correction threshold");
+    require(f.mag_service_.applied==applied&&applied>=f.magUpdatesToUnlockAccBias(),"release preceded the applied-correction threshold");
 }
 
 // Primitive parity sentinels, not a claim of startup reachability.

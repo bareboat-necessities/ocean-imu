@@ -497,6 +497,8 @@ def status_report() -> dict:
             "qualified_acc_paired_reader_kernel_signed_gap_lower":"1/10000000000000000000000000000000000000",
             "actual_acc_paired_reader_kernel_nontriviality_verified":False,
             "actual_process_face_nonzero_receipt_joint_inequality_verified":True,
+            "full_residual_process_nonzero_receipt_lower_bound_verified":True,
+            "uniform_full_residual_process_receipt_coefficient":None,
             "qualified_original_AW_process_short_lower":"0.000000052",
             "scalar_odd_AW_nonzero_zero_gap_branches_accounted":True,
             "process_face_receipt_completed_square_retained":True,

@@ -6068,6 +6068,142 @@ lift, dependent receipts, scalar cones and all signed cross work.
 Relaxations introduced: none in the identity; unrestricted-slice sign
 equivalence is explicitly confined to a justified linear slice.
 
+\paragraph{A quantitative payment for every nonzero receipt from the retained full process.}
+The term controlled here is the adverse $\bar d_i\mu_i^2$ in (CR39),
+using \emph{only} the $L_{rem,i}$ already present in (CR37).
+No service or process action is added to $\bar H$.
+At an actually allocated preceding prediction put
+$X=F_OP_OF_O^T$, $D=F_OD_{old}F_O^T$ and
+$Q_r=Q^{ship}-q_{aw}e_ae_a^T\succ0$.
+These are the same complete prefixes as (CR31)--(CR32), including every
+earlier AA deletion, inherited first marginal and actual queued/committed
+lag. On this fixed-target partial fibre $\mu=D_{aa}$.
+Define
+\[
+\begin{gathered}
+ w=Xe_a,\qquad v=X_{aa}>0,\\
+ d=w^TQ_r^{-1}w>0,\qquad R=\frac{ww^T}{2d},\\
+ Q_r-R\succeq Q_r/2\succ0,\qquad
+ \alpha=\frac{4d+v}{v(2d+v)^2}>0 .
+\end{gathered}                                                   \tag{CR44}
+\]
+The covariance inequality follows from
+$(u^Tw)^2\le(u^TQ_ru)(w^TQ_r^{-1}w)$ for every $u$.
+This is an algebraic split of the \emph{existing} residual addition,
+not a new process, covariance recursion or reachable intermediate state.
+In particular its inverse is the full literal process inverse, retaining
+$Q_{ao}$, AG/BG/BA, integrated OU kernels, polynomial defects and qualified
+PSD repair. Neither $Q_{aa}^{-1}$ nor an independent process box replaces it.
+
+Here is a complete proof of its receipt payment. Put
+$Z=X^{-1/2}DX^{-1/2}$ and $z=X^{1/2}e_a/\sqrt v$, so
+$z^Tz=1$, $z^TZz=\mu/v$. The relative rank-one addition is
+$X^{-1/2}RX^{-1/2}=(v/(2d))zz^T$. With $s=v/(2d+v)$,
+its inverse is $I-szz^T$. Therefore its actual Fisher loss is
+\[
+\begin{aligned}
+ L_R&=\operatorname{tr}(Z^2)\\
+ &\quad-\operatorname{tr}((I-szz^T)Z(I-szz^T)Z)\\
+ &=(2s-s^2)(z^TZz)^2\\
+ &\quad+2s\|(I-zz^T)Zz\|^2\\
+ &=\alpha\mu^2+2s\|(I-zz^T)Zz\|^2 .
+\end{aligned}
+\]
+The remainder from $X+R$ to $X+Q_r$ is the ordinary full
+positive-addition Fisher loss, denoted $L_{full,r}\ge0$.
+Consequently the \emph{same} residual process satisfies
+\[
+\boxed{L_{rem}=\alpha\mu^2+
+ 2s\|(I-zz^T)Zz\|^2+L_{full,r}\ \ge\ \alpha\mu^2.}       \tag{CR45}
+\]
+Both retained terms are evaluated on $D$; none of $dB,dT,dC,\mu$ is freed.
+Because $Q_r-R\succeq Q_r/2$, the remaining full process loss is strict
+for any nonzero $D$. This is fixed-word strictness, not a uniform root reserve.
+The claim covers every nonzero receipt and every allowed scalar zero-gap
+active direction with its actual prefix guard. It assumes no receipt rank
+and applies simultaneously to all common-root columns by polarization.
+
+Substitute (CR45) \emph{once} in (CR37). With $\mathcal P_i$ its two
+already-retained conditional/regression squares and
+$\widetilde u_i^TK_{u,i}\widetilde u_i$, that original triple has the
+signed lower inequality
+\[
+ L_{pred,i}+L_{face,i}+L_{acc,i}
+ \ge \mathcal P_i+(\alpha_i-\bar d_i)\mu_i^2,
+\]
+with the transverse and full residual process losses retained in the exact
+expression. All actual intervening $S$ and subsequent magnetic losses stay
+in the original word. On a common root let $C_\alpha$ have diagonal
+$\alpha_i$ for these allocated raw receipt rows and zero for unpaired rows.
+The constructive proof gives $\bar H-L^TC_\alpha L\succeq0$.
+It does \emph{not} assert $C_\alpha\succeq\bar D$ or a sign for (CR39).
+A possibly feasible $\chi\ge1$ mode must still pay its remaining charge
+$\mu^T(\bar D-C_\alpha)\mu$ with those exact retained terms.
+They may be positive at signed equality. No zero-action inference is used.
+
+The quantitative threshold for this particular directional payment is
+explicit, without a scalar parameter search. Write $k=\bar d\,v^2$.
+Since $\alpha v^2=1-(2d/(2d+v))^2<1$, this payment alone cannot cover
+$k\ge1$. For $0<k<1$ it covers its receipt exactly when
+\[
+ \frac d v\le
+ \frac{\sqrt{1-k}}{2(1-\sqrt{1-k})}.
+\]
+This is only a sufficient per-receipt allocation, not a necessary word
+condition: its other full-process, transverse, acc, $S$ and magnetic terms
+have been retained, rather than discarded to declare a negative word.
+The literal autonomous AW row further gives
+\[
+\begin{gathered}
+ \frac d v=\frac{p_a^TF_O^TQ_r^{-1}F_Op_a}{P_{aa}},\qquad p_a=P_Oe_a,\\
+ v=\phi^2P_{aa},\qquad w=\phi F_Op_a.
+\end{gathered}
+\]
+Thus the needed inverse-domain estimate is on one \emph{actual inherited
+covariance column} with its full integrated-process precision. It is not
+an arbitrary covariance input or a smallest-eigenvalue bound on all $P$.
+There is also a necessary ceiling on this particular allocation that must
+be checked before attempting such an estimate. Put $q_r=(Q_r)_{aa}>0$.
+Cauchy in the same $Q_r$ gives
+$v^2=(e_a^Tw)^2\le q_r d$, hence $d/v\ge v/q_r$.
+The function $f(r)=(4r+1)/(2r+1)^2$ has
+$f'(r)=-8r/(2r+1)^3<0$. Consequently
+\[
+ \alpha v^2=f(d/v)\le
+ \frac{q_r(q_r+4v)}{(q_r+2v)^2}.
+\]
+If the actual same-prefix $k=\bar d v^2$ exceeds the right-hand side,
+\emph{no} upper estimate for its covariance-column energy can make
+(CR45)'s allocated receipt coefficient reach $\bar d$. Both operands
+are generated by that prefix; no independently extreme tuner tuple is
+used. This ceiling concerns only the allocated coefficient, not the
+complete $L_{rem}$ or the total signed gap. Its transverse and remaining
+full-process work, the linked conditional/regression and $\widetilde u$
+squares, and all intervening $S$/magnetic action remain available once
+in $\bar H$. It neither exhibits a feasible dangerous mode nor excludes
+one. In particular a bound on $d/v$ alone cannot replace the required
+comparison of that retained joint action with the remaining receipt
+charge on the actual image. Classification D applies to that proposed
+energy-only sufficient payment wherever the displayed ceiling fails;
+no occurrence on an admitted shipping history is asserted here.
+A uniform bound crossing the displayed threshold has \emph{not} been
+proved from the coupled tuner and applied service history; nor has the
+remaining grouped word action paid the residual charge. Pointwise
+$\alpha>0$ cannot settle all feasible (CR30) modes or a common $c_O>0$.
+Interpreting it that way would be class D, insufficient domination.
+
+The full endogenous Schur obligation remains (CR41)--(CR43), including
+$X_c,A_c$, metric cross entries, generated suffix scores, $dK r$,
+$E_L+S_q-2C_W$, reset/projection, inherited auxiliary/reference correlations
+and both endpoint gauge terms. No ordinary inverse at a common positive
+reserve, $S_c\succ0$, or affordable $B_c^TS_c^{-1}B_c$ follows from (CR45).
+No source completion, nonlinear/prefix retention or regional claim follows.
+Structures preserved: the same shipping process/face/acc/$S$/magnetic word,
+full $Q$ and same inherited tangent. Relaxations introduced: none in the
+inequality; the existing qualified real planar partial fibre and actual
+scalar cones remain. No admitted counterexample or full OPEN dependency
+is discharged.
+
 \paragraph{Source supply requires a retained contraction reserve.}
 Only \emph{after} proving the homogeneous margin may one assign a
 finite-error supply. If $W_{\perp,0}=v_0^TJ_rv_0$ on the justified
@@ -6102,11 +6238,12 @@ No shipping word or service assumption is replaced.
 (5) Retained: all prior suffix, complementary Schur, combined process/source,
 conditional AW/directional score, frame, held endpoint, qualified magnetic,
 even-process and locked-reference results, under their original hypotheses.
-(6) Next calculation: qualify the actual image (CR12) and use its
-literal prefix generator in (CR13a). The signed reserve (CR16) pays
-only its nuisance receipt kernel. Certify the actual receipt/service
-remainder (CR17a), where its inverse is legitimate, and the full
-cross remainder (CR17). No complete uniform margin, full-word OPEN
+(6) Next calculation: control the same-history covariance-column energy
+in (CR44)--(CR45) and its retained joint receipt action to settle every
+feasible (CR30) mode. Keep the actual image and every prefix guard.
+Then pay the full (CR41)--(CR43) endogenous remainder at the same
+common positive reserve. The restricted (CR16) reserve does not pay
+those receipt or cross costs. No complete uniform margin, full-word OPEN
 dependency or status count is promoted. The metric,
 fixed weight and physical/transverse equivalence obligation are unchanged.
 

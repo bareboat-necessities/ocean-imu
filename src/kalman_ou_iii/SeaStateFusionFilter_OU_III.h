@@ -249,10 +249,9 @@ public:
             [this]() { apply_ou_tune_(true); });
     }
 
-    void initialize_from_acc(const Eigen::Vector3f& acc_body_ned) {
-        if (mekf_) {
-            mekf_->initialize_from_acc(acc_body_ned);
-        }
+    // False when there is no filter or the input cannot define an attitude.
+    bool initialize_from_acc(const Eigen::Vector3f& acc_body_ned) {
+        return mekf_ ? mekf_->initialize_from_acc(acc_body_ned) : false;
     }
 
     // Time update (IMU integration + frequency tracking).
@@ -443,11 +442,6 @@ public:
             }
         }
     }
-
-    // Calls forwarded to the core since the last cold entry, and the subset
-    // the core applied.  Only the latter feeds the accelerometer-bias gate.
-    int magUpdatesAttempted() const noexcept { return mag_service_.attempted; }
-    int magCorrectionsApplied() const noexcept { return mag_service_.applied; }
 
     void setWithMag(bool with_mag) {
         with_mag_ = with_mag;

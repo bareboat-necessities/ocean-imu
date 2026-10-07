@@ -269,7 +269,7 @@ static void testCompensation() {
 
   // RHALL tracks temperature: the Z offset term moves with it, so the same
   // raw Z gives different compensated values at different RHALL.
-  float a[3], b[3];
+  float a[3]{}, b[3]{};
   bytes(100, 100, 2000, 6500, d); atoms3r_ical::bmm150Compensate(Bmm150Raw::fromData(d), t, a);
   bytes(100, 100, 2000, 7100, d); atoms3r_ical::bmm150Compensate(Bmm150Raw::fromData(d), t, b);
   require(std::fabs(a[2] - b[2]) > 1.0f, "RHALL changes the compensated Z");
