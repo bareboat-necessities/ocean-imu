@@ -53,6 +53,16 @@ class Bmm150AuxPreset {
     return leave_() && ok;
   }
 
+  // Reads count consecutive BMM150 registers starting at first (e.g. the
+  // factory trim block 0x5D..0x71) in manual AUX mode.
+  bool readBlock(uint8_t first, uint8_t count, uint8_t* out) {
+    if (!enter_()) return false;
+    bool ok = true;
+    for (uint8_t i = 0; ok && i < count; ++i) ok = auxRead_(uint8_t(first + i), out[i]);
+    if (!ok) failure_ = "AUX read failed";
+    return leave_() && ok;
+  }
+
   // Applies the repetitions, keeping the current output-data-rate bits and
   // returning to normal mode. before/after are the read-back configurations.
   bool apply(uint8_t rep_xy, uint8_t rep_z, Bmm150RegState& before, Bmm150RegState& after) {

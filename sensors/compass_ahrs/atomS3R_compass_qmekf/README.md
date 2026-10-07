@@ -14,7 +14,7 @@ Open the sketch: [`atomS3R_compass_qmekf.ino`](atomS3R_compass_qmekf.ino).
 
 - quaternion attitude estimation with explicit accelerometer, gyro, and magnetometer noise parameters;
 - initialization from accelerometer plus magnetometer when magnetic data are available, otherwise accelerometer-only initialization;
-- accelerometer correction each filter cycle and fresh-magnetometer updates when available;
+- accelerometer correction each filter cycle and fresh-magnetometer updates when available; as in the Mahony compass, the magnetic reference is rebuilt from each reading (its own dip, pointing to magnetic north), so a disturbed or moving first reading cannot tilt the attitude or bend headings later;
 - graphical compass UI by default;
 - NMEA 0183 serial output by default through the shared compass application;
 - the common AtomS3R IMU calibration workflow.

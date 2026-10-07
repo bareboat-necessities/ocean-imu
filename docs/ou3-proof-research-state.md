@@ -11,15 +11,18 @@ The general theorem assumes existing MAGNETIC SERVICE on admitted histories;
 all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
-Verified main: `cafdc627797b11fdb3bb14ab964d7184c63733e4`.
-Verified continuation starting PR head: `108ce145623f98d4fb6269172ef26d173b9bcb41`.
-That automated evidence commit on `45efd074` is preserved in full.
-New main changes concern AtomS3R magnetic diagnostics and the PR #658
-low-noise BMM150 runtime/calibration preset; the shipping OU-III
-prediction/correction/floor operators read for this calculation are unchanged.
+Verified main: `8cecdf39e60e0802182f0c1b5bc9bab74d4cb558`.
+Verified mergeability continuation starting PR head:
+`ca3bd78d255d1e1b1e5eaceadf4c3f405aa50946`.
+Its complete 20-file automated evidence commit on `b92c5e307` is preserved.
+New main changes add AtomS3R BMM150 compensation and make runtime magnetic
+source selection follow the saved calibration. The shipping OU-III
+prediction/correction/floor operators and all 34 native-probe shipping
+dependencies remain byte-identical to the preserved original source.
 Main's additions, including its OU-III sketch initialization, are incorporated
 into the PR branch; no estimator behavior, assumption, tuning or gate is
-authored in this continuation.
+authored in this continuation. Upstream calibration/source changes do not
+verify magnetic residual envelopes or strengthen MAGNETIC SERVICE.
 Current mergeability and exact-head CI belong in PR metadata.
 
 Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
@@ -44,6 +47,28 @@ not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
+
+**E — current-head workflow admission and source-binding repair.**
+At `ca3bd78d255d1e1b1e5eaceadf4c3f405aa50946`, all six PR workflows
+reported `action_required`, with no check runs; the sole commit status was
+successful. Thus prior-head CI success does not certify this automated head.
+The PR was open and conflict-free, but main had advanced to `8cecdf39`.
+Incorporate that main without dropping either history or any of the newer
+20-file evidence bundle. Its full-src digest is
+`94f68621549fce3b83bd04652f3ce6cf9789a72173eccffba4cef27b04272222`;
+the preceding diagnostic binding was
+`9186fa4aa6133ad3822daaec94466e252a5dfb3d89a31be6a5091e871b22f592`.
+The exact-profile compiler include closure still has 34 shipping files,
+all byte-identical to immutable `108ce145`; the eight source paths changed
+since that original are outside the closure. Refresh only the provenance
+binding, preserving the previous audit and all finite diagnostic results.
+The literal OU-III sketch now calls `configureAtomS3RMag`, as main requires;
+update that audited sketch binding separately. No replay or gate change.
+This is an infrastructure/provenance failure, not a shipping counterexample.
+No mathematical premise or proof flag changes; the AW and complete-gap
+blockers remain OPEN. Required next verification: `make all` and exact-head
+CI after publication. The next mathematical calculation remains the SAME
+feasible linked `R_W(c)` sign, with the complete CR43 Schur cost retained.
 
 **E — source-identity repair of merge CI; no mathematical promotion.**
 The PR-head proof checks on `45efd074` passed, but its merge checks failed

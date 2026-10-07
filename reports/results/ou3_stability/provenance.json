@@ -1,6 +1,6 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "cafdc627797b11fdb3bb14ab964d7184c63733e4",
+  "base_main_commit": "8cecdf39e60e0802182f0c1b5bc9bab74d4cb558",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
@@ -41,7 +41,7 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "651eb4954fecaae0ab6b1bd558268d047d2006f3"
+      "git_blob_sha": "4e90f69c59251f61b99c4ccbc804a9aaf8ea1675"
     }
   ],
   "semantic_bindings": {
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "0eca260f672589dfb115021e11c66914cc7115f4"
+      "git_blob_sha": "681a857a8b5550bba8d2f7e0be9e5c70e3a61952"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -824,7 +824,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "5b279dc50a944e7d345ff67f17f4cdd030c76783"
+      "git_blob_sha": "d7ed3ba4130f62ba39f3a200a9f0bc34a1f2dd02"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1630,5 +1630,20 @@
       "evidence_test_skips": 1,
       "evidence_test_failures": 0
     }
+  },
+  "mergeability_continuation": {
+    "starting_pr_head": "ca3bd78d255d1e1b1e5eaceadf4c3f405aa50946",
+    "incorporated_main": "8cecdf39e60e0802182f0c1b5bc9bab74d4cb558",
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "starting_exact_head_workflows": "six action_required; no check runs",
+    "source_identity_record": "reports/results/ou3_stability/planar-native-secants-diagnostic.json:source_binding_refresh",
+    "original_source_commit": "108ce145623f98d4fb6269172ef26d173b9bcb41",
+    "shipping_dependencies_byte_identical": 34,
+    "changed_source_files_outside_probe_closure": 8,
+    "generated_evidence_preserved": "Entire 20-file ca3bd78d regeneration commit; no generated conflicts on this merge.",
+    "upstream_configuration_retained": "BMM150 compensation and runtime source selection following saved calibration, including OU-III sketch initialization; no new residual/service claim.",
+    "replay_performed": false,
+    "validation_gate_changed": false,
+    "mathematical_margin_promoted": false
   }
 }

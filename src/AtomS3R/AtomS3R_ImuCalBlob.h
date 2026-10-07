@@ -40,6 +40,27 @@ using Matrix3f = Eigen::Matrix<float,3,3>;
 static constexpr uint32_t IMU_CAL_MAGIC = 0x434C554D; // 'MULC'
 static constexpr uint8_t  IMU_CAL_MODE_M5_IMU_API = 1;
 
+// Units the magnetometer calibration was fitted in (ImuCalBlobV4::mag_source).
+// A calibration is applied only to data from the same source.
+static constexpr uint8_t MAG_SOURCE_M5_RAW = 0;               // M5Unified uncompensated values
+static constexpr uint8_t MAG_SOURCE_BMM150_COMPENSATED = 1;   // Bosch trim/RHALL compensated uT
+
+// Source the running firmware delivers; set by configureAtomS3RMag().
+inline uint8_t& activeMagSource() {
+  static uint8_t source = MAG_SOURCE_M5_RAW;
+  return source;
+}
+
+// Switches the running source to the one a saved calibration was fitted on
+// (installed by configureAtomS3RMag(); returns true when it now matches), so
+// a calibration made before compensation keeps applying until the
+// magnetometer is recalibrated. Null: the source is fixed.
+using MagSourceFollower = bool (*)(uint8_t source);
+inline MagSourceFollower& magSourceFollower() {
+  static MagSourceFollower follower = nullptr;
+  return follower;
+}
+
 struct ImuCalBlobV4 {
   static constexpr uint32_t IMU_CAL_MAGIC   = atoms3r_ical::IMU_CAL_MAGIC;
   static constexpr uint16_t IMU_CAL_VERSION = 4;
@@ -66,7 +87,8 @@ struct ImuCalBlobV4 {
   float    gyro_k[3]{};
 
   uint8_t  mag_ok = 0;
-  uint8_t  pad_m[3]{};
+  uint8_t  mag_source = MAG_SOURCE_M5_RAW;  // units the mag fit used (MAG_SOURCE_*)
+  uint8_t  pad_m[2]{};
   float    mag_A[9]{};
   float    mag_b[3]{};
   float    mag_field_uT = 0.0f;
@@ -353,6 +375,9 @@ struct RuntimeCals {
   // Set when the blob holds an accelerometer calibration fitted against a
   // different gravity than this firmware's g_cal_local; it is then not applied.
   bool accel_gravity_mismatch = false;
+  // Set when the blob's magnetometer fit was made from a different data source
+  // than this firmware delivers; it is then not applied.
+  bool mag_source_mismatch = false;
 
   void rebuildFromBlob(const ImuCalBlobV4& b, float g_cfg = ImuCalCfg::g_cal_local) {
     accel_gravity_mismatch = (b.accel_ok != 0) && !accelGravityMatches(b, g_cfg);
@@ -383,7 +408,13 @@ struct RuntimeCals {
     gyr.temperature_information = b.gyro_temperature_information;
     gyr.slope_sigma = Vector3f(b.gyro_k_sigma[0], b.gyro_k_sigma[1], b.gyro_k_sigma[2]);
 
-    mag.ok = magSetValid(b);
+    // Read the magnetometer the way the saved fit was made when the firmware
+    // can; a fit made in other units (e.g. before Bosch compensation) that
+    // the firmware cannot deliver is not applied.
+    if (magSetValid(b) && b.mag_source != activeMagSource() && magSourceFollower())
+      magSourceFollower()(b.mag_source);
+    mag_source_mismatch = magSetValid(b) && b.mag_source != activeMagSource();
+    mag.ok = magSetValid(b) && !mag_source_mismatch;
     mag.A  = mat_from_rowmajor9_(b.mag_A);
     mag.b  = Vector3f(b.mag_b[0], b.mag_b[1], b.mag_b[2]);
     mag.field_uT = b.mag_field_uT;

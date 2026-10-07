@@ -107,7 +107,7 @@ calibration. Short captures normally remain bias-only.
 
 On AtomS3R the BMM150 sits behind the BMI270 AUX interface only. M5Unified 0.2.13
 soft-resets it, selects 30 Hz output and leaves one XY and one Z repetition, its
-noisiest setting. Every sketch therefore calls `configureAtomS3RMagLowNoise()`
+noisiest setting. Every sketch therefore calls `configureAtomS3RMag()`
 after initialisation, and the wizard calls it again before magnetic capture, so
 calibration and runtime use the same setting: 47 XY / 41 Z repetitions at 30 Hz
 (28.3 ms per measurement, [Bosch BMM150 datasheet, sections 5.6/5.8](https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmm150-ds001.pdf)).
@@ -117,6 +117,22 @@ previous repetitions and the driver setting is kept. A `[MAGCFG]` line reports
 the result. Other IMU types keep their driver settings. The 45-second capture
 minimum and all magnetic quality limits are unchanged; independent verification
 still needs at least 56 seconds and 140 independent averaged observations.
+
+The BMM150 data registers hold uncompensated Hall readings; M5Unified 0.2.13
+discards RHALL and never reads the factory trim registers. `configureAtomS3RMag()`
+also reads the trim block (0x5D..0x71) once, and every new reading is re-read
+from the BMI270 AUX data mirror together with its RHALL value and compensated
+with Bosch's formulas (BMM150 datasheet section 4.3, Sensor API
+`compensate_x/y/z`, floating-point form) into microtesla. RHALL follows the
+sensor temperature, so this is the sensor's own compensation of the
+temperature dependence of sensitivity and of the Z offset. Saved magnetometer
+calibrations record the data source they were fitted on (`mag_source`), and
+loading one switches the firmware to that source: a fit made on uncompensated
+data keeps applying to uncompensated data (compensation off) until the
+magnetometer is recalibrated, which records a compensated fit. A run of the
+wizard that does not save returns to the saved fit's source. A fit whose
+source the firmware cannot deliver (compensated fit, trim read failed) is not
+applied. Accelerometer and gyro calibrations are unaffected.
 
 The ellipsoid metric determines `A^T A`, not an arbitrary sensor-to-body
 rotation. The correction uses the SPD square root as an initializer, then
