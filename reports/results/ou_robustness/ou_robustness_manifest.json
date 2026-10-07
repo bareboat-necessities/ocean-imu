@@ -42,8 +42,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "claude/kalman-filter-issues-e74rv5",
-  "git_commit": "6ee1625fe98a252ac5697dec3d5ee8ea33bc4143",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 32138 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1592 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   988 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   164 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1854 +-\n 6 files changed, 18677 insertions(+), 18679 deletions(-)",
+  "git_commit": "52f7e45dc16671b8790b1316054c7c30bc3112a5",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -122,8 +122,8 @@
       "sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-      "bytes": 56282,
-      "sha256": "1248a1bcb8677854101b9a460c17d3678f51f43dc12af83625ce99402b52a2cf"
+      "bytes": 56032,
+      "sha256": "15269fbd15f757c6fe9b9f7464b6c025bef3a0ed7c9fe2759c3a3cad7d32776d"
     },
     "src/tuner/AccelVibrationGuard.h": {
       "bytes": 11977,
@@ -325,8 +325,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-10-07T21:51:44+00:00",
-    "git_commit": "6ee1625fe98a252ac5697dec3d5ee8ea33bc4143",
+    "generated_at": "2026-10-07T22:47:09+00:00",
+    "git_commit": "52f7e45dc16671b8790b1316054c7c30bc3112a5",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -405,8 +405,8 @@
         "size_bytes": 95583
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-        "sha256": "1248a1bcb8677854101b9a460c17d3678f51f43dc12af83625ce99402b52a2cf",
-        "size_bytes": 56282
+        "sha256": "15269fbd15f757c6fe9b9f7464b6c025bef3a0ed7c9fe2759c3a3cad7d32776d",
+        "size_bytes": 56032
       },
       "src/tuner/AccelVibrationGuard.h": {
         "sha256": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
@@ -509,7 +509,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "37686944182",
+      "run_id": "37694377067",
       "workflow": "ou-full-evidence-branch"
     }
   },

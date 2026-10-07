@@ -36,9 +36,9 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.1"
   },
-  "generated_utc": "2026-10-07T21:18:15+00:00",
-  "git_commit": "6ee1625fe98a252ac5697dec3d5ee8ea33bc4143",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   10 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   24 +-\n reports/results/tfg_comparison/paired_summary.json | 3990 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3228 ++++++++--------\n 5 files changed, 3806 insertions(+), 3806 deletions(-)",
+  "generated_utc": "2026-10-07T22:22:17+00:00",
+  "git_commit": "52f7e45dc16671b8790b1316054c7c30bc3112a5",
+  "git_diff_stat": "",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -161,7 +161,7 @@
     "src/kalman_common/SeaStateOUFamilyDefaults.h": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
     "src/kalman_ou_common/KalmanOUCoreMath.h": "714524883769572a141971074317d2aa62ad23f6cf022eb1f2ec735375b09be2",
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",
-    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "1248a1bcb8677854101b9a460c17d3678f51f43dc12af83625ce99402b52a2cf",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "15269fbd15f757c6fe9b9f7464b6c025bef3a0ed7c9fe2759c3a3cad7d32776d",
     "src/kalman_tfg/Kalman3D_Wave_TFG.h": "4e6f1cafa61bf4d3442cba1ab5196699fae76cb0fc962ace8a0d45c9106e557d",
     "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "42bc3dd373913ac6022d98f498e5c74d830c5761c92762055a7bdea052015255",
     "src/lie/SO3Jacobians.h": "d18671481a90114aa2ae8c49bd6bd60fa598c281b18a9f961a04a59e5690eb1a",
@@ -195,7 +195,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "37686944182",
+    "run_id": "37694377067",
     "workflow": "ou-full-evidence-branch"
   }
 }
