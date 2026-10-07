@@ -1100,7 +1100,7 @@ def main() -> int:
     manifest = {
         "study": "OU-III IMU lever-arm installation",
         "source_commit": source_commit(),
-        "simulation_data": "oceanography-waves-lib v1.2.1 vessel-rao-28ft",
+        "simulation_data": "oceanography-waves-lib v1.2.3 vessel-rao-28ft",
         "simulation_provenance": dataset,
         "mode": args.mode,
         "scoring_window_sec": args.window_sec,

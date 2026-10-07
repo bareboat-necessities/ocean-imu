@@ -9,7 +9,7 @@ that regularize the OU-II integration chain.  Its result is a pair of *shapes*,
     r_v = C_V q_eff^(1/10) sigma_a,B^(4/5) tau^(7/5)  / sqrt(T_S),
 
 This driver evaluates diagnostic coefficients for the shapes using the derivation's
-own stationarity conditions on the eight v1.2.1 vessel CG-heave periodograms
+own stationarity conditions on the eight v1.2.3 vessel CG-heave periodograms
 at the operating points in the current five-draw OU-II startup study. The diagnostic
 does not replace the selected deployed coefficients.
 

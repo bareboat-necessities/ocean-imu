@@ -8,9 +8,9 @@ from pathlib import Path
 import subprocess
 import zipfile
 
-RELEASE = 'v1.2.1'
+RELEASE = 'v1.2.3'
 ARCHIVE = 'sim-data-files-vessel-rao-28ft.zip'
-SHA256 = '6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60'
+SHA256 = '87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c'
 REPOSITORY = 'bareboat-necessities/oceanography-waves-lib'
 URL = f'https://github.com/{REPOSITORY}/releases/download/{RELEASE}/{ARCHIVE}'
 DESCRIPTION = f'oceanography-waves-lib {RELEASE}, estimated 28 ft fin-keel sailboat RAO at CG'
@@ -31,7 +31,7 @@ def input_provenance(paths) -> dict:
         path = Path(path)
         actual = digest(path)
         if REFERENCE_CSV_SHA256.get(path.name) != actual:
-            raise ValueError(f'{path}: input is not a pinned v1.2.1 vessel RAO reference')
+            raise ValueError(f'{path}: input is not a pinned {RELEASE} vessel RAO reference')
         records[path.name] = actual
     return {'release': RELEASE, 'archive': ARCHIVE, 'archive_sha256': SHA256,
             'motion_model': 'VESSEL_RAO_28FT', 'input_sha256': records}
