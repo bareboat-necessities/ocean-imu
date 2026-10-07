@@ -391,9 +391,10 @@ private:
   // MAG stage with retry loop. Returns true on success; false with redo_all
   // set when the user asked to restart, false otherwise on abort.
   bool runMagStage_(bool& redo_all) {
-    // Calibrate in the same BMM150 setting every sketch runs with. Re-applying
-    // is idempotent; on failure the driver setting is used, as at runtime.
-    configureAtomS3RMagLowNoise(Serial);
+    // Calibrate in the same BMM150 setting and units every sketch runs with.
+    // Re-applying is idempotent; on failure the driver values are used, as at
+    // runtime, and the saved calibration records which source it was fitted on.
+    configureAtomS3RMag(Serial);
     return runMagCaptureStage_(redo_all);
   }
 
@@ -624,7 +625,7 @@ private:
   bool readMagSample_(Vector3f& m_out) {
     (void)M5.Imu.update();
     const auto data = M5.Imu.getImuData();
-    m_out = map_mag_to_body_uT_(data.mag);
+    m_out = readMagBody_(data.mag);
     return finite3_(m_out);
   }
 
@@ -807,6 +808,7 @@ private:
     fillGyroFromFit(blob, gyr_out_);
 
     blob.mag_ok = mag_out_.ok ? 1 : 0;
+    blob.mag_source = activeMagSource();
     mat_to_rowmajor9_(mag_out_.A, blob.mag_A);
     blob.mag_b[0]=mag_out_.b.x(); blob.mag_b[1]=mag_out_.b.y(); blob.mag_b[2]=mag_out_.b.z();
     blob.mag_field_uT = mag_out_.field_uT;

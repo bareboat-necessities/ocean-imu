@@ -4,10 +4,11 @@
   AtomS3R magnetometer diagnostics.
 
   Never writes the saved calibration. Like every sketch, it starts the BMM150
-  in the low-noise setting (configureAtomS3RMagLowNoise). Serial commands:
-  'q' reads the BMM150 configuration, 'o' switches back to the M5Unified
-  driver default (1/1 repetitions, until reboot) for comparison, 'p' restores
-  the low-noise setting, and 'd' monitors the untouched board (raw field and
+  in the low-noise setting with Bosch trim/RHALL compensation
+  (configureAtomS3RMag). Serial commands: 'q' reads the BMM150 configuration,
+  'o' switches to the M5Unified driver default (1/1 repetitions, until
+  reboot) for comparison, 'p' restores the low-noise setting, 'c' toggles
+  Bosch compensation, and 'd' monitors the untouched board (field and
   temperature every 5 s). Tap the screen
   (or send 'n' over serial) to advance:
 
@@ -129,6 +130,14 @@ static uint32_t dr_start_ms = 0;
 // Magnetometer repetition setting in use, for labelling results.
 static char mag_mode[48] = "driver default (1/1 reps)";
 
+// Repetition setting plus data source, for labelling results.
+static const char* magLabel() {
+  static char label[96];
+  snprintf(label, sizeof(label), "%s, %s", mag_mode,
+           atoms3rMagSource().compensated ? "Bosch-compensated" : "uncompensated");
+  return label;
+}
+
 static void waitMs(uint32_t ms) { delay(ms); }
 
 static void printMagState(const char* tag, const Bmm150RegState& r) {
@@ -164,6 +173,21 @@ static void magCommand(char cmd) {
   } else {
     Serial.printf("[MAGCFG] change FAILED: %s (previous setting kept)\n", aux.failure());
   }
+}
+
+// 'c': switch between Bosch-compensated and uncompensated data (re-applies the
+// low-noise setting). The saved calibration applies only to data from the
+// source it was fitted on.
+static void toggleCompensation() {
+  const bool on = !atoms3rMagSource().compensated;
+  if (configureAtomS3RMag(Serial, on)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
+  cals.rebuildFromBlob(blob);
+  saved_ok = cals.mag.ok;
+  saved_model.A = cals.mag.A;
+  saved_model.b = cals.mag.b;
+  have_m = false;
+  Serial.printf("[MAGCFG] magnetometer now: %s; saved mag calibration %s\n", magLabel(),
+                saved_ok ? "applies" : (cals.mag_source_mismatch ? "NOT applied (fitted on the other source)" : "not available"));
 }
 
 static void printMat(const char* tag, const Matrix3f& A) {
@@ -247,7 +271,7 @@ static void enter(Phase p) {
     case Phase::STILL:
       st_raw = Stats3{}; st_cal = Stats3{}; st_acc = Stats3{}; st_gyr = Stats3{}; st_dip = Stats3{};
       st_hdg_c = st_hdg_s = 0;
-      Serial.printf("[STILL] magnetometer mode: %s\n", mag_mode);
+      Serial.printf("[STILL] magnetometer mode: %s\n", magLabel());
       st_intervals = 0; st_int_min = UINT32_MAX; st_int_max = 0; st_int_sum = 0;
       mask_ag = mask_g_only = mask_a_only = mask_none = mask_mag = 0;
       ui.title("STILL");
@@ -294,7 +318,7 @@ static void enter(Phase p) {
       ui.line("for 3+ minutes");
       ui.line("tap or 'd' to stop");
       Serial.printf("[DRIFT] monitoring the untouched board every %u s (magnetometer mode: %s); tap or 'd' to stop\n",
-                    (unsigned)(DRIFT_PERIOD_MS / 1000), mag_mode);
+                    (unsigned)(DRIFT_PERIOD_MS / 1000), magLabel());
       break;
   }
 }
@@ -308,7 +332,7 @@ static void liveColumns(const MagModel& model, const Matrix3f& R, float& hdg, fl
 }
 
 static void analyzeTask(void*) {
-  Serial.printf("[FIT] fitting fresh calibration (magnetometer mode: %s)...\n", mag_mode);
+  Serial.printf("[FIT] fitting fresh calibration (magnetometer mode: %s)...\n", magLabel());
   fresh = imu_cal::MagCalibration<float>{};
   fresh_ok = magCal.fit(fresh, 3, 0.15f, 1e-6f, &fresh_reason);
   const auto& q = magCal.quality;
@@ -392,7 +416,7 @@ static void analyzeTask(void*) {
 
   // Verdicts.
   Serial.println("[VERDICT] ------------------------------------------------");
-  Serial.printf("[VERDICT] magnetometer setting during this run: %s\n", mag_mode);
+  Serial.printf("[VERDICT] magnetometer setting during this run: %s\n", magLabel());
   if (ax.pairs < 50) {
     Serial.printf("[VERDICT] axes: INCONCLUSIVE (%d rotating pairs; turn more during ROTATE)\n", ax.pairs);
   } else if (ax.best == 0 && ax.identity_rms < 0.5f * ax.second_rms) {
@@ -568,7 +592,8 @@ void setup() {
   auto cfg = M5.config();
   M5.begin(cfg);
   clearM5UnifiedImuCalibration();
-  if (configureAtomS3RMagLowNoise(Serial)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
+  if (configureAtomS3RMag(Serial)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
+  Serial.printf("[DIAG] magnetometer: %s\n", magLabel());
   delay(250);
   ui.begin();
 
@@ -603,9 +628,10 @@ void loop() {
     // Register access only between captures, never while sampling.
     const bool idle = phase == Phase::WAIT_STILL || phase == Phase::WAIT_ROTATE || phase == Phase::LIVE;
     const char lc = char(tolower(c));
-    if ((lc == 'p' || lc == 'q' || lc == 'o') && !idle)
-      Serial.println("[MAGCFG] busy; send 'p'/'o'/'q' while waiting for a tap or in LIVE");
+    if ((lc == 'p' || lc == 'q' || lc == 'o' || lc == 'c') && !idle)
+      Serial.println("[MAGCFG] busy; send 'p'/'o'/'q'/'c' while waiting for a tap or in LIVE");
     else if (lc == 'p' || lc == 'q' || lc == 'o') magCommand(lc);
+    else if (lc == 'c') toggleCompensation();
     else if ((c == 'd' || c == 'D') && phase == Phase::DRIFT) enter(dr_return);
     else if (c == 'd' || c == 'D') { dr_return = idle ? phase : Phase::WAIT_STILL; if (idle) enter(Phase::DRIFT); else Serial.println("[DRIFT] busy; send 'd' while waiting for a tap or in LIVE"); }
   }
