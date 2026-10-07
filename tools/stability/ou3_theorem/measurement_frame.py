@@ -620,6 +620,53 @@ def actual_aw_process_short():
             'uniform_signed_word_margin': None}
 
 
+def residual_process_receipt_payment(X, process, D, aw_index):
+    """CR44: price a NONZERO marginal receipt with the full residual Q.
+
+    X=F P F', process=Q_ship-q_aw ee', D=F dP F' are the SAME
+    preceding prediction already retained in CR37's L_rem. No process loss
+    is added. The rank-one split is only an algebraic comparison of that
+    full addition; its complementary half and transverse square remain.
+    It is not an independently reachable covariance or a new recursion.
+    """
+    n, a = len(X), aw_index
+    if not 0 <= a < n or D != transpose(D):
+        raise ValueError('same symmetric prediction tangent and AW selector required')
+    ldlt(X)
+    ldlt(process)
+    v, mu = X[a][a], D[a][a]
+    w = [[X[i][a]] for i in range(n)]
+    d = product(transpose(w), inverse(process), w)[0][0]
+    allocation = [[x/(2*d) for x in row] for row in product(w, transpose(w))]
+    remainder = add(process, allocation, -1)
+    # w w'/d <= process by Cauchy in the actual process precision.
+    assert is_psd(add(remainder, [[x/2 for x in row] for row in process], -1))
+    ldlt(remainder)
+    middle, terminal = add(X, allocation), add(X, process)
+    J, Jmid, Jend = inverse(X), inverse(middle), inverse(terminal)
+    fisher = lambda j: trace(product(j, D, j, D))
+    paid = (4*d+v)/(v*(2*d+v)**2)
+    s = v/(2*d+v)
+    # ||(I-zz') X^-1/2 D X^-1/2 z||^2, evaluated without square roots.
+    transverse = product([[D[a][j] for j in range(n)]], J,
+                         [[D[i][a]] for i in range(n)])[0][0]/v-mu*mu/(v*v)
+    assert transverse >= 0
+    rank_loss = fisher(J)-fisher(Jmid)
+    full_remainder = fisher(Jmid)-fisher(Jend)
+    assert rank_loss == paid*mu*mu+2*s*transverse
+    assert full_remainder >= 0
+    return {'marginal_before_process': v, 'same_prefix_receipt': mu,
+            'full_process_directional_inverse_charge': d,
+            'paid_receipt_coefficient': paid,
+            'rank_one_allocation': allocation,
+            'retained_process_covariance': remainder,
+            'retained_transverse_Fisher_loss': 2*s*transverse,
+            'retained_full_process_Fisher_loss': full_remainder,
+            'full_residual_process_Fisher_loss': rank_loss+full_remainder,
+            'uniform_paid_coefficient': None,
+            'uniform_receipt_domination_verified': False}
+
+
 def prediction_face_fisher_balance(P, f, noise, D, target, aw_index, q_aw,
                                    zero_gap_active=False):
     """CR26: SAME process/face tangent, including a nonzero AA receipt.
@@ -664,12 +711,19 @@ def prediction_face_fisher_balance(P, f, noise, D, target, aw_index, q_aw,
     charge = mu**2/denominator
     direct = fisher(P, D)-fisher(face['P_next'], face['D_next'])
     assert direct == joint == residual+retained-charge
+    payment = residual_process_receipt_payment(px, add(noise, allocated, -1), dx, a)
+    assert payment['full_residual_process_Fisher_loss'] == residual
+    unpaid = 1/denominator-payment['paid_receipt_coefficient']
+    assert direct == (payment['retained_full_process_Fisher_loss']
+                      + payment['retained_transverse_Fisher_loss']+retained-unpaid*mu*mu)
     return {**face, 'C_before_allocated_noise': c0,
             'allocated_process_short': q, 'remaining_process_Fisher_loss': residual,
             'effective_gap': A-c0, 'receipt_denominator': denominator,
             'effective_ratio': ratio, 'coupled_receipt_row': coupled_row,
             'coupled_conditional_action': retained,
             'joint_receipt_charge': charge, 'joint_gap': direct,
+            'residual_process_receipt_payment': payment,
+            'receipt_weight_after_residual_payment': unpaid,
             'zero_gap_active_cone': 'mu<=0' if zero_gap_active else None,
             'uniform_signed_word_margin_verified': False}
 
@@ -929,6 +983,7 @@ def covariance_partial_word(P, root_tangents, operations, aw_index):
     # completed q/mu square on the common root. Do not release coordinates.
     joint_action = zeros(len(root_tangents), len(root_tangents))
     joint_readers, joint_weights, joint_data, used = [], [], [], set()
+    receipt_process_payments = []
     q = F(actual_aw_process_short()['allocated_short'])
     for face in faces:
         if face == 0 or operations[face-1]['kind'] != 'prediction':
@@ -961,6 +1016,7 @@ def covariance_partial_word(P, root_tangents, operations, aw_index):
         joint_action = add(joint_action, add(residual, positive))
         joint_readers.append([p['AA_target_relative_tangent'] for p in ps])
         joint_weights.append(1/p0['receipt_denominator'])
+        receipt_process_payments.append(p0['residual_process_receipt_payment']['paid_receipt_coefficient'])
         joint_data.append({'prediction': pred, 'face': face,
                            'allocated_process_short': q,
                            'effective_gap': p0['effective_gap'],
@@ -979,6 +1035,7 @@ def covariance_partial_word(P, root_tangents, operations, aw_index):
             joint_action = add(joint_action, positive)
             joint_readers.append(out['face_reader'][slot])
             joint_weights.append(F(1))
+            receipt_process_payments.append(F(0))  # no invented preceding process
         else:
             ji, jn = inverse(boundaries[i]), inverse(boundaries[i+1])
             loss = [[trace(product(ji, d, ji, e))-trace(product(jn, dn, jn, en))
@@ -989,12 +1046,26 @@ def covariance_partial_word(P, root_tangents, operations, aw_index):
     for row, weight in zip(joint_readers, joint_weights):
         adverse = add(adverse, product(transpose([row]), [row]), weight)
     assert add(joint_action, adverse, -1) == out['signed_gap']
+    paid_action = zeros(len(root_tangents), len(root_tangents))
+    for row, payment in zip(joint_readers, receipt_process_payments):
+        paid_action = add(paid_action, product(transpose([row]), [row]), payment)
+    residual_action = add(joint_action, paid_action, -1)
+    assert is_psd(residual_action)
+    residual_weights = [weight-payment for weight, payment
+                        in zip(joint_weights, receipt_process_payments)]
+    residual_charge = zeros(len(root_tangents), len(root_tangents))
+    for row, weight in zip(joint_readers, residual_weights):
+        residual_charge = add(residual_charge, product(transpose([row]), [row]), weight)
+    assert add(residual_action, residual_charge, -1) == out['signed_gap']
     out.update({'boundaries': boundaries, 'prefixes': prefixes, 'active_faces': faces,
                 'zero_gap_branch_guards': branch_guards,
                 'process_face_positive_action': joint_action,
                 'process_face_receipt_rows': joint_readers,
                 'process_face_receipt_weights': joint_weights,
                 'process_face_payments': joint_data,
+                'process_face_receipt_process_paid_weights': receipt_process_payments,
+                'process_face_retained_positive_action': residual_action,
+                'process_face_receipt_weights_after_process_payment': residual_weights,
                 'inherited_causal_image_qualified': False})
     return out
 
@@ -1238,6 +1309,20 @@ def certificate():
                 'weight_reduction_alone_implies_positive_margin': False,
                 'uniform_receipt_margin': None,
                 'odd_AW_blocker_resolved': False,
+                'complete_homogeneous_gap_proved': False,
+            },
+            'full_residual_process_receipt_payment': {
+                'proof': 'CR44--CR45',
+                'scope': 'CR12 actual fixed-target partial fibre, preceding full integrated prediction allocated once as in CR25; nonzero and scalar zero-gap receipts retain their actual guards',
+                'actual_operands': "X=F*P*F^T; Qr=Q_ship-q_aw*e_a*e_a^T; v=X_aa; d=e_a^T*X*Qr^-1*X*e_a",
+                'paid_receipt_coefficient': 'alpha=(4*d+v)/(v*(2*d+v)^2)>0',
+                'signed_substitution': 'L_rem=alpha*mu^2+retained_transverse_loss+retained_full_process_loss; replace L_rem once in the SAME Hbar',
+                'full_process_remaining_lower': 'Qr-rank_one_allocation >= Qr/2 > 0',
+                'full_integrated_Q_ao_and_all_prefix_deletions_retained': True,
+                'nonzero_receipt_lower_inequality_verified': True,
+                'uniform_paid_coefficient': None,
+                'receipt_threshold_crossed': False,
+                'full_endogenous_Schur_cost_paid': False,
                 'complete_homogeneous_gap_proved': False,
             },
             'full_endogenous_receipt_schur_reduction': {

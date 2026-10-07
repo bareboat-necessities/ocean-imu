@@ -11,22 +11,13 @@ The general theorem assumes existing MAGNETIC SERVICE on admitted histories;
 all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
-Verified main: `8cecdf39e60e0802182f0c1b5bc9bab74d4cb558`.
-Verified mergeability continuation starting PR head:
-`ca3bd78d255d1e1b1e5eaceadf4c3f405aa50946`.
-Its complete 20-file automated evidence commit on `b92c5e307` is preserved.
-New main changes add AtomS3R BMM150 compensation and make runtime magnetic
-source selection follow the saved calibration. The shipping OU-III
-prediction/correction/floor operators and all 34 native-probe shipping
-dependencies remain byte-identical to the preserved original source.
-Main's additions, including its OU-III sketch initialization, are incorporated
-into the PR branch; no estimator behavior, assumption, tuning or gate is
-authored in this continuation. Upstream calibration/source changes do not
-verify magnetic residual envelopes or strengthen MAGNETIC SERVICE.
-Current mergeability and exact-head CI belong in PR metadata.
-The concise continuation handoff is [ou3-ai-handoff.md](ou3-ai-handoff.md).
-The user authorized publication and merge of PR #653 after validation;
-that publication does not decide the remaining mathematical sign.
+Verified merged main: `a47da994b85f2ec844b199d27b619a7fcc553adb`.
+PR #653 is merged. This continuation uses the NEW branch
+`proof/ou3-receipt-schur-continuation` from that exact main.
+Its separate mechanical repair is `9b951b6ac`; current publication and CI
+are PR metadata. Upstream calibration, BMM150 compensation and saved magnetic
+source selection are preserved. No merge is authorized for the follow-up.
+The concise current handoff is [ou3-ai-handoff.md](ou3-ai-handoff.md).
 
 Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
 `theorem_closed=false`, `regional_practical_stability_claimed=false`,
@@ -50,6 +41,26 @@ not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
+
+**CR44--CR45 — quantitative nonzero receipt payment; uniform sign OPEN.**
+The SAME L_rem in CR37 pays alpha*mu^2 with
+`alpha=(4d+v)/(v*(2d+v)^2)>0`, `X=F P F'`, `Qr=Q_ship-q_aw ee'`,
+`v=X_aa`, `d=(X e)' Qr^-1 (X e)`. Its full retained noise is at least
+Qr/2; the transverse Fisher square is retained. This prices every actual
+nonzero receipt with full integrated Q, earlier deletions and actual prefix
+covariance, without the coarse kernel reserve. Substitute L_rem once in Hbar;
+all acc/S/magnetic action and complete endogenous cross cost stay linked.
+The direct allocation crosses its individual threshold only if
+`k=dbar*v^2<1` and `d/v<=sqrt(1-k)/(2*(1-sqrt(1-k)))`.
+No uniform bound on the actual covariance-column energy
+`d/v=(P e)' F' Qr^-1 F (P e)/P_aa` crossing that threshold is proved.
+The remaining grouped word action may pay its residual charge. Pointwise
+alpha>0 does not exclude ALL feasible chi>=1 modes: promoting it would be
+D, insufficient domination. Receipt blocker NO; full Schur NO; homogeneous
+margin NO; no OPEN dependency discharged or count/flag promotion. Structures
+preserved: same complete process/face/acc/S/magnetic prefixes and common tangent.
+Relaxations: none in this inequality; existing real partial-fibre/cone scope.
+
 
 **E — merged-main binding and warning repair.** Fresh main is `a47da994`;
 new work uses `proof/ou3-receipt-schur-continuation`, never the merged branch.
@@ -557,6 +568,12 @@ The observed-coefficient center defect .0006179245 is finite and uses future
 observed H/G. None of these numbers is a source-uniform theorem constant.
 
 ## Current limiter
+
+CR45 now pays an explicit part of each nonzero receipt from the already
+retained full process. Its covariance-column energy and the remaining linked
+receipt charge have no uniform sign certificate. Keep the original CR41--CR43
+remainder; alpha is not a common reserve and supplies no full Schur sign.
+
 
 The one remaining comparison is CR41--CR43's full feasible R_W(c)>=0
 for one common c>0. Its receipt corner is exactly CR39/CR30 using

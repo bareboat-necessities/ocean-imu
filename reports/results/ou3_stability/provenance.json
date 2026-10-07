@@ -124,7 +124,7 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "d07e3411fd97d0983ff438581fc1929817bbd1ca"
+      "git_blob_sha": "b05aed872d063ad87544cf5c89c8d152ed569a5d"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "6256f7daf7bdb43f2bbcfc723af1575eeaf8c7d9"
+      "git_blob_sha": "61ed1847c6f2e1cdb5130c572c5206bd3f440cfd"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "git_blob_sha": "4ac5d41407ba6b0f44014da23b92dbefd5d17b9a"
+      "git_blob_sha": "375ace7b7a7cfc5c599f7eea42d8789b22177dc5"
     },
     {
       "path": "reports/results/ou3_stability/moving-pivots-certificate.json",
@@ -716,7 +716,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "55cf475a9b3947929dbde7c34e4c5e6a7ce51837"
+      "git_blob_sha": "af3108afc74e20c4f9109c73ed7d6db9d613adbb"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -760,7 +760,7 @@
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "046d2c4fc72d1ade45a43d90d9b75cdedb21e037"
+      "git_blob_sha": "88b00983f39fde20067b931eb8df2ce324363e6f"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -964,11 +964,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
-      "git_blob_sha": "e4dbdebb7e8a87b497a39f2f88697059c765705b"
+      "git_blob_sha": "e9c17f4a468a3e1c8393cadc64c225f622298414"
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "60b7e0e668bbb8059b1ce3af484f99758a0ed951"
+      "git_blob_sha": "cc6d2531073315f14d3660452b87db8ac41b8bf6"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
@@ -976,7 +976,7 @@
     },
     {
       "path": "reports/results/ou3_stability/measurement-frame-loss-certificate.json",
-      "git_blob_sha": "6263e1e981e038964f8a45ebb3148a238aa06b46"
+      "git_blob_sha": "09b234b1c945f991990fd576afc0cb12cea8e7b7"
     },
     {
       "path": "docs/ou3-linked-word-score.md",
@@ -1400,6 +1400,15 @@
       "uniform_full_homogeneous_gap": null,
       "full_word_OPEN_dependencies_discharged": [],
       "new_storage_constructed": false
+    },
+    "full_residual_process_receipt_payment": {
+      "proof": "CR44--CR45",
+      "same_history_nonzero_receipt_lower_inequality_verified": true,
+      "uniform_coefficient": null,
+      "receipt_blocker_resolved": false,
+      "full_endogenous_Schur_cost_paid": false,
+      "complete_homogeneous_gap_proved": false,
+      "full_word_OPEN_dependencies_discharged": []
     }
   },
   "coupled_signed_gap_audit": {

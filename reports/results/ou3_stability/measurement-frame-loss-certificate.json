@@ -113,6 +113,20 @@
       "scope": "justified fixed linear part of the existing inherited endogenous lift; scalar cones retain actual image and prefix guard feasibility",
       "uniform_positive_reserve_inverse_qualified": false
     },
+    "full_residual_process_receipt_payment": {
+      "actual_operands": "X=F*P*F^T; Qr=Q_ship-q_aw*e_a*e_a^T; v=X_aa; d=e_a^T*X*Qr^-1*X*e_a",
+      "complete_homogeneous_gap_proved": false,
+      "full_endogenous_Schur_cost_paid": false,
+      "full_integrated_Q_ao_and_all_prefix_deletions_retained": true,
+      "full_process_remaining_lower": "Qr-rank_one_allocation >= Qr/2 > 0",
+      "nonzero_receipt_lower_inequality_verified": true,
+      "paid_receipt_coefficient": "alpha=(4*d+v)/(v*(2*d+v)^2)>0",
+      "proof": "CR44--CR45",
+      "receipt_threshold_crossed": false,
+      "scope": "CR12 actual fixed-target partial fibre, preceding full integrated prediction allocated once as in CR25; nonzero and scalar zero-gap receipts retain their actual guards",
+      "signed_substitution": "L_rem=alpha*mu^2+retained_transverse_loss+retained_full_process_loss; replace L_rem once in the SAME Hbar",
+      "uniform_paid_coefficient": null
+    },
     "full_word_OPEN_dependencies_discharged": [],
     "joint_process_face_acc_receipt_reduction": {
       "complete_homogeneous_gap_proved": false,
