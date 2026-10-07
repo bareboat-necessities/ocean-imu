@@ -41,7 +41,7 @@ static constexpr float LOOP_HZ = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US = (uint32_t)(1000000.0f / LOOP_HZ);
 static constexpr uint32_t STILL_MS = 10000;
 static constexpr uint32_t ROTATE_MAX_MS = 180000;
-static constexpr uint32_t POSE_WINDOW_MS = 400;
+static constexpr uint32_t POSE_WINDOW_MS = 200;
 static constexpr int MAX_POSES = 400;
 static constexpr int MAX_PAIRS = 1000;
 
@@ -67,6 +67,7 @@ static uint32_t phase_ms = 0, next_tick_us = 0, last_sample_us = 0, last_print_m
 
 // Latest calibrated sample and magnetometer freshness tracking.
 static Vector3f a_cal = Vector3f::Zero(), w_cal = Vector3f::Zero(), m_raw = Vector3f::Zero();
+static float last_temp_c = NAN;
 static Vector3f last_distinct_m = Vector3f::Zero();
 static bool have_m = false;
 static uint32_t last_m_change_us = 0;
@@ -80,6 +81,9 @@ static int ring_n = 0, ring_head = 0;
 
 // STILL statistics.
 static Stats3 st_raw, st_cal, st_acc, st_gyr;
+// Heading/dip scatter of individual readings with the saved calibration.
+static double st_hdg_c = 0, st_hdg_s = 0;
+static Stats3 st_dip;
 static uint32_t st_intervals = 0, st_int_min = 0, st_int_max = 0;
 static uint64_t st_int_sum = 0;
 static uint32_t mask_ag = 0, mask_g_only = 0, mask_a_only = 0, mask_none = 0, mask_mag = 0;
@@ -97,6 +101,10 @@ static uint32_t pw_start_ms = 0;
 static MagModel saved_model, fresh_model;
 static bool saved_ok = false, fresh_ok = false;
 static Alignment fresh_align;
+// Previous run's fresh fit: a second run at the same place measures repeatability.
+static MagModel prev_model;
+static bool prev_ok = false;
+static float prev_temp_c = NAN;
 static volatile bool analysis_done = false;
 
 static void printMat(const char* tag, const Matrix3f& A) {
@@ -179,15 +187,16 @@ static void enter(Phase p) {
       Serial.println("[DIAG] next: STILL. Lay the board flat, screen up, away from metal; tap and do not touch.");
       break;
     case Phase::STILL:
-      st_raw = Stats3{}; st_cal = Stats3{}; st_acc = Stats3{}; st_gyr = Stats3{};
+      st_raw = Stats3{}; st_cal = Stats3{}; st_acc = Stats3{}; st_gyr = Stats3{}; st_dip = Stats3{};
+      st_hdg_c = st_hdg_s = 0;
       st_intervals = 0; st_int_min = UINT32_MAX; st_int_max = 0; st_int_sum = 0;
       mask_ag = mask_g_only = mask_a_only = mask_none = mask_mag = 0;
       ui.title("STILL");
       ui.line("Do not touch");
       break;
     case Phase::WAIT_ROTATE:
-      drawWait("ROTATE", "Tap, then turn and", "tilt in ALL ways:", "upside down, edges");
-      Serial.println("[DIAG] next: ROTATE. Turn and tilt slowly through every direction, pausing briefly in many poses.");
+      drawWait("ROTATE", "Tap, then SLOWLY", "turn + tilt ALL ways:", "upside down, edges");
+      Serial.println("[DIAG] next: ROTATE. Turn and tilt slowly (under ~45 deg/s) through every direction, including upside down.");
       break;
     case Phase::ROTATE:
       magCal.clear();
@@ -208,7 +217,7 @@ static void enter(Phase p) {
       pw_mag = Stats3{}; pw_acc = Stats3{}; pw_max_gyro = 0; pw_start_ms = millis();
       ui.title("ROTATE");
       ui.line("Turn + tilt slowly");
-      ui.line("pause in many poses");
+      ui.line("turn slowly");
       ui.line("tap to stop early");
       break;
     case Phase::ANALYZE:
@@ -252,7 +261,13 @@ static void analyzeTask(void*) {
     }
   }
 
-  Serial.printf("[FIELD] still poses collected: %d (each a %u ms window with little motion)\n", n_poses,
+  if (fresh_ok && prev_ok) {
+    Serial.printf("[FIT] previous-run-vs-fresh: |dA|/|A|=%.3f |db|=%.2f b_prev=[%.2f %.2f %.2f] temp %.1f -> %.1f C\n",
+                  (double)((prev_model.A - fresh_model.A).norm() / fresh_model.A.norm()),
+                  (double)(prev_model.b - fresh_model.b).norm(), prev_model.b.x(), prev_model.b.y(), prev_model.b.z(),
+                  (double)prev_temp_c, (double)last_temp_c);
+  }
+  Serial.printf("[FIELD] poses collected: %d (each a %u ms window turning slower than 57 deg/s)\n", n_poses,
                 (unsigned)POSE_WINDOW_MS);
   FieldStats fs_saved, fs_fresh;
   if (saved_ok) {
@@ -266,6 +281,16 @@ static void analyzeTask(void*) {
     Serial.printf("[FIELD] fresh: |m| mean=%.2f sd=%.2f min=%.2f max=%.2f spread=%.1f%% dip mean=%.1f sd=%.1f\n",
                   fs_fresh.norm_mean, fs_fresh.norm_sd, fs_fresh.norm_min, fs_fresh.norm_max,
                   100.0 * fs_fresh.spread(), fs_fresh.dip_mean, fs_fresh.dip_sd);
+  }
+
+  if (saved_ok && fresh_ok && n_poses > 0) {
+    double sc = 0, ss = 0;
+    for (int i = 0; i < n_poses; ++i) {
+      const float d = wrap180(headingDeg(poses[i].a, saved_model.apply(poses[i].m_raw)) -
+                              headingDeg(poses[i].a, fresh_model.apply(poses[i].m_raw))) / kRadToDeg;
+      if (std::isfinite(d)) { sc += cos(d); ss += sin(d); }
+    }
+    Serial.printf("[FIELD] mean heading difference saved-minus-fresh over poses: %.1f deg\n", atan2(ss, sc) * kRadToDeg);
   }
 
   // Axis test needs offsets removed; prefer the fresh fit made here.
@@ -311,16 +336,17 @@ static void analyzeTask(void*) {
                   best_txt, ax.best_rms, ax.identity_rms);
   }
   auto fits = [](const FieldStats& f) { return f.n >= 20 && f.spread() < 0.10f && f.dip_sd < 3.0f; };
+  auto verdict = [&](const FieldStats& f) { return f.n < 20 ? "INCONCLUSIVE (too few poses)" : (fits(f) ? "FITS" : "DOES NOT FIT"); };
   if (saved_ok) {
     Serial.printf("[VERDICT] saved calibration here: %s (|m| spread %.1f%%, dip %.1f+-%.1f, expected %.1f)\n",
-                  fits(fs_saved) ? "FITS" : "DOES NOT FIT", 100.0 * fs_saved.spread(), fs_saved.dip_mean,
+                  verdict(fs_saved), 100.0 * fs_saved.spread(), fs_saved.dip_mean,
                   fs_saved.dip_sd, (double)DIAG_EXPECTED_DIP_DEG);
   } else {
     Serial.println("[VERDICT] saved calibration here: NONE / not applied");
   }
   if (fresh_ok) {
     Serial.printf("[VERDICT] fresh calibration here: %s (|m| spread %.1f%%, dip %.1f+-%.1f)\n",
-                  fits(fs_fresh) ? "FITS" : "DOES NOT FIT", 100.0 * fs_fresh.spread(), fs_fresh.dip_mean,
+                  verdict(fs_fresh), 100.0 * fs_fresh.spread(), fs_fresh.dip_mean,
                   fs_fresh.dip_sd);
   } else {
     Serial.printf("[VERDICT] fresh calibration here: FIT FAILED (%s); capture more directions\n",
@@ -334,12 +360,15 @@ static void analyzeTask(void*) {
                   (double)DIAG_EXPECTED_DIP_DEG,
                   fabsf(fresh_align.dip_deg - DIAG_EXPECTED_DIP_DEG) > 5.0f ? " (CHECK local field / nearby metal)" : "");
   }
-  if (saved_ok && fresh_ok && fits(fs_fresh) && !fits(fs_saved)) {
+  if (fs_fresh.n < 20) {
+    Serial.println("[VERDICT] => field checks need more poses: turn more slowly during ROTATE.");
+  } else if (saved_ok && fresh_ok && fits(fs_fresh) && !fits(fs_saved)) {
     Serial.println("[VERDICT] => the saved calibration is stale for this place/mounting; rerun the wizard here.");
   } else if (fresh_ok && !fits(fs_fresh)) {
     Serial.println("[VERDICT] => even a fresh fit does not describe this sensor; capture/fit or sensor problem.");
   }
   Serial.println("[VERDICT] ------------------------------------------------");
+  if (fresh_ok) { prev_model = fresh_model; prev_ok = true; prev_temp_c = last_temp_c; }
   analysis_done = true;
   vTaskDelete(nullptr);
 }
@@ -348,6 +377,7 @@ static void onSample(const ImuSample& s) {
   const float dt = last_sample_us ? (s.sample_us - last_sample_us) * 1e-6f : 1.0f / LOOP_HZ;
   last_sample_us = s.sample_us;
   const float tempC = s.tempC;
+  last_temp_c = tempC;
   a_cal = cals.applyAccel(s.a, tempC);
   w_cal = cals.applyGyro(s.w, tempC);
   if (dt > 0.0f && dt < 0.05f) {
@@ -391,7 +421,11 @@ static void onSample(const ImuSample& s) {
     st_gyr.add(w_cal);
     if (fresh_m) {
       st_raw.add(s.m);
-      st_cal.add(cals.applyMag(s.m));
+      const Vector3f mc = cals.applyMag(s.m);
+      st_cal.add(mc);
+      const float h = headingDeg(a_cal, mc) / kRadToDeg;
+      if (std::isfinite(h)) { st_hdg_c += cosf(h); st_hdg_s += sinf(h); }
+      st_dip.add(V3(dipDeg(mc, a_cal), 0, 0));
     }
   }
 
@@ -400,9 +434,12 @@ static void onSample(const ImuSample& s) {
     Vector3f mean;
     Eigen::Matrix3f cov;
     const bool valid = s.m.allFinite() && s.m.norm() > 1.0f;
-    const bool averaged = window.update(now, valid ? &s.m : nullptr, mean, cov);
-    cap_status = capture->update(now, averaged ? &mean : nullptr, valid ? &s.m : nullptr,
-                                 averaged ? &cov : nullptr);
+    // Like the wizard, stop adding fit samples once the capture is complete.
+    if (cap_status != imu_cal::MagCaptureStatus::READY) {
+      const bool averaged = window.update(now, valid ? &s.m : nullptr, mean, cov);
+      cap_status = capture->update(now, averaged ? &mean : nullptr, valid ? &s.m : nullptr,
+                                   averaged ? &cov : nullptr);
+    }
     // Still-pose windows for the field, dip and alignment checks.
     if (fresh_m) pw_mag.add(s.m);
     pw_acc.add(a_cal);
@@ -410,7 +447,8 @@ static void onSample(const ImuSample& s) {
     pw_max_gyro = wn > pw_max_gyro ? wn : pw_max_gyro;
     if (uint32_t(now - pw_start_ms) >= POSE_WINDOW_MS) {
       const float an = pw_acc.avg().norm();
-      if (pw_mag.n >= 6 && pw_max_gyro < 0.35f && fabsf(an - ImuCalCfg::g_cal_local) < 0.6f) {
+      // Slow hand motion is fine: magnetometer lag at 1 rad/s is a few degrees.
+      if (pw_mag.n >= 3 && pw_max_gyro < 1.0f && fabsf(an - ImuCalCfg::g_cal_local) < 1.0f) {
         poses[pose_slot] = Pose{pw_mag.avg(), pw_acc.avg()};
         pose_slot = (pose_slot + 1) % MAX_POSES;
         n_poses = n_poses < MAX_POSES ? n_poses + 1 : MAX_POSES;
@@ -439,6 +477,9 @@ static void finishStill() {
                 am.x(), am.y(), am.z(), am.norm(),
                 acosf(fminf(1.0f, fabsf(am.z()) / fmaxf(am.norm(), 1e-6f))) * kRadToDeg,
                 st_gyr.avg().x() * kRadToDeg, st_gyr.avg().y() * kRadToDeg, st_gyr.avg().z() * kRadToDeg);
+  const double R = st_raw.n ? sqrt(st_hdg_c * st_hdg_c + st_hdg_s * st_hdg_s) / st_raw.n : 0.0;
+  Serial.printf("[STILL] single-reading scatter with saved cal: heading sd=%.1f deg, dip sd=%.1f deg; temp=%.1f C\n",
+                R > 0 ? sqrt(-2.0 * log(R)) * kRadToDeg : NAN, st_dip.sd().x(), (double)last_temp_c);
   Serial.printf("[STILL] dip with saved cal=%.1f (expected %.1f), heading=%.1f; accel D is %s (screen %s)\n",
                 dipDeg(mc, am), (double)DIAG_EXPECTED_DIP_DEG, headingDeg(am, mc),
                 am.z() < 0 ? "negative" : "positive", am.z() < 0 ? "up" : "down");
@@ -531,7 +572,8 @@ void loop() {
                       n_poses, n_pairs, stale ? " (magnetometer stream STALE)" : "");
         enter(Phase::ANALYZE);
         analysis_done = false;
-        xTaskCreatePinnedToCore(analyzeTask, "magdiag", 32768 / sizeof(StackType_t), nullptr, 1, nullptr, 0);
+        // Priority 0 time-slices with IDLE0, so the task watchdog stays fed during the fit.
+        xTaskCreatePinnedToCore(analyzeTask, "magdiag", 32768 / sizeof(StackType_t), nullptr, tskIDLE_PRIORITY, nullptr, 0);
       }
       break;
     }

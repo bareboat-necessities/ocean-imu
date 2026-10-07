@@ -15,11 +15,11 @@ Open the sketch: [`atomS3R_mag_diagnostics.ino`](atomS3R_mag_diagnostics.ino).
 Open Serial Monitor at **115200 baud**. Tap the screen, or send `n`, to advance.
 
 1. **Boot report** (`[DIAG]`): whether the BMM150 answers on the main I2C bus or only behind the BMI270 AUX bus (the wizard's high-accuracy preset can only be written in the first case), the BMI270 AUX polling rate, and the saved calibration.
-2. **STILL**, 10 s (`[STILL]`): lay the board flat, screen up, away from metal and do not touch it. Reports the magnetometer update interval, raw and calibrated noise, the IMU update mask counts, and the dip angle with the saved calibration.
-3. **ROTATE** (`[ROT]`): turn and tilt slowly through every direction, including upside down and on each edge, pausing briefly in many poses. This uses the calibration wizard's capture and fit code, and also records still poses and gyro-measured rotations. It ends by itself when the capture is complete (or tap to stop, or after 3 minutes).
+2. **STILL**, 10 s (`[STILL]`): lay the board flat, screen up, away from metal and do not touch it. Reports the magnetometer update interval, raw and calibrated noise, the heading and dip scatter of single readings, the IMU temperature and update mask counts, and the dip angle with the saved calibration.
+3. **ROTATE** (`[ROT]`): turn and tilt slowly (under about 45°/s) through every direction, including upside down and on each edge. This uses the calibration wizard's capture and fit code, and also records slow-motion poses and gyro-measured rotations. It ends by itself when the capture is complete (or tap to stop, or after 3 minutes).
 4. **Analysis** (`[FIT]`, `[FIELD]`, `[AXIS]`, `[ALIGN]`, `[VERDICT]`):
-   - a fresh calibration fitted here, compared with the saved one;
-   - field-strength spread and dip angle across the still poses for both calibrations (a calibration that fits keeps both nearly constant);
+   - a fresh calibration fitted here, compared with the saved one (and with the previous run's fit, so a second run at the same place measures calibration repeatability);
+   - field-strength spread and dip angle across those poses for both calibrations (a calibration that fits keeps both nearly constant);
    - an axis test that checks every signed axis permutation of the magnetometer against the rotation the gyro measured;
    - the rotation between the magnetometer and accelerometer frames that an ellipsoid fit cannot see, and the heading error it causes.
 5. **LIVE** (`[LIVE]`): headings from the saved, fresh, and fresh-plus-alignment models. Hold the board level, then tilt it about ±20° at each cardinal direction; a correct model keeps the heading steady. Tap to run again.
