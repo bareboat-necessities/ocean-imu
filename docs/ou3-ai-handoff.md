@@ -104,7 +104,10 @@ exploratory replay, sampled contraction search or secant sweep was added.
    fibre and actual scalar cones remain. Regression slot operands do not
    certify reachability, admission or uniformity.
 3. Failures: E for stale bindings, warning buffers and local dependency/path
-   handling; repaired without weakening checks. Parallel make all started
+   handling; repaired without weakening checks. Exact-head IEEEtran rendering
+   exceeded the alphabetic paragraph counter; scope numeric counters to the
+   appendix and recheck the actual class (the article wrapper was insufficient).
+   Parallel make all started
    tests before binaries existed. The first serial command exited 2 with no
    final diagnostic in its saved log (last line: passing TFG Jacobians);
    repeat with live capture on the integrated tree. D if pointwise alpha>0 is

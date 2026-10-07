@@ -6079,7 +6079,7 @@ lag. On this fixed-target partial fibre $\mu=D_{aa}$.
 Define
 \[
 \begin{gathered}
- w=Xe_a,\qquad v=X_{aa}>0,\qquad
+ w=Xe_a,\qquad v=X_{aa}>0,\\
  d=w^TQ_r^{-1}w>0,\qquad R=\frac{ww^T}{2d},\\
  Q_r-R\succeq Q_r/2\succ0,\qquad
  \alpha=\frac{4d+v}{v(2d+v)^2}>0 .
@@ -6099,12 +6099,13 @@ $z^Tz=1$, $z^TZz=\mu/v$. The relative rank-one addition is
 $X^{-1/2}RX^{-1/2}=(v/(2d))zz^T$. With $s=v/(2d+v)$,
 its inverse is $I-szz^T$. Therefore its actual Fisher loss is
 \[
-\begin{split}
- \operatorname{tr}(Z^2)
- -\operatorname{tr}((I-szz^T)Z(I-szz^T)Z)
- &=(2s-s^2)(z^TZz)^2+2s\|(I-zz^T)Zz\|^2\\
+\begin{aligned}
+ L_R&=\operatorname{tr}(Z^2)\\
+ &\quad-\operatorname{tr}((I-szz^T)Z(I-szz^T)Z)\\
+ &=(2s-s^2)(z^TZz)^2\\
+ &\quad+2s\|(I-zz^T)Zz\|^2\\
  &=\alpha\mu^2+2s\|(I-zz^T)Zz\|^2 .
-\end{split}
+\end{aligned}
 \]
 The remainder from $X+R$ to $X+Q_r$ is the ordinary full
 positive-addition Fisher loss, denoted $L_{full,r}\ge0$.
@@ -6151,9 +6152,10 @@ condition: its other full-process, transverse, acc, $S$ and magnetic terms
 have been retained, rather than discarded to declare a negative word.
 The literal autonomous AW row further gives
 \[
- \frac d v=
- \frac{p_a^TF_O^TQ_r^{-1}F_Op_a}{P_{aa}},\qquad p_a=P_Oe_a,
- \quad v=\phi^2P_{aa},\quad w=\phi F_Op_a.
+\begin{gathered}
+ \frac d v=\frac{p_a^TF_O^TQ_r^{-1}F_Op_a}{P_{aa}},\qquad p_a=P_Oe_a,\\
+ v=\phi^2P_{aa},\qquad w=\phi F_Op_a.
+\end{gathered}
 \]
 Thus the needed inverse-domain estimate is on one \emph{actual inherited
 covariance column} with its full integrated-process precision. It is not
@@ -6210,11 +6212,12 @@ No shipping word or service assumption is replaced.
 (5) Retained: all prior suffix, complementary Schur, combined process/source,
 conditional AW/directional score, frame, held endpoint, qualified magnetic,
 even-process and locked-reference results, under their original hypotheses.
-(6) Next calculation: qualify the actual image (CR12) and use its
-literal prefix generator in (CR13a). The signed reserve (CR16) pays
-only its nuisance receipt kernel. Certify the actual receipt/service
-remainder (CR17a), where its inverse is legitimate, and the full
-cross remainder (CR17). No complete uniform margin, full-word OPEN
+(6) Next calculation: control the same-history covariance-column energy
+in (CR44)--(CR45) and its retained joint receipt action to settle every
+feasible (CR30) mode. Keep the actual image and every prefix guard.
+Then pay the full (CR41)--(CR43) endogenous remainder at the same
+common positive reserve. The restricted (CR16) reserve does not pay
+those receipt or cross costs. No complete uniform margin, full-word OPEN
 dependency or status count is promoted. The metric,
 fixed weight and physical/transverse equivalence obligation are unchanged.
 

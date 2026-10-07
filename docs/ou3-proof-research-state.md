@@ -44,6 +44,16 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
 
+**E — exact-head two-column render counter repaired.** At `17c53af4b5ac`,
+PR run 37643337778 / job 112867577478 fails `lualatex` with
+`LaTeX Error: Counter too large` at the final shipping-audit paragraph.
+The added paragraph exceeds IEEEtran's alphabetic paragraph counter;
+the article-class wrapper does not test that display qualification.
+Use numeric paragraph reference/display forms inside the already scoped
+appendix group and split the new displays to fit columns. The arguments,
+equations, status and shipping operations stay unchanged. The next test
+is the exact-head IEEEtran two-column render, not another proof estimate.
+
 **CR44--CR45 — quantitative nonzero receipt payment; uniform sign OPEN.**
 The SAME L_rem in CR37 pays alpha*mu^2 with
 `alpha=(4d+v)/(v*(2d+v)^2)>0`, `X=F P F'`, `Qr=Q_ship-q_aw ee'`,

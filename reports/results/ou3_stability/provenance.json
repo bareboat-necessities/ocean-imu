@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "b05aed872d063ad87544cf5c89c8d152ed569a5d"
+      "git_blob_sha": "6d6610b6f5211b7ed944bdd2f24bd969755ee4d4"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "341f589b8d9b9d7abad855e6f21d585810de8914"
+      "git_blob_sha": "286302ce16db2064704ff40a0efc7ecf5d01ef56"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "ea889f2a7cfd3349eb26f4334fb5f78eb62b4382"
+      "git_blob_sha": "0aa9502c717b719422751cc79ec9703e253b0739"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -1659,5 +1659,7 @@
     "receipt_corner_decided": false,
     "full_Schur_cost_paid": false,
     "common_positive_reserve_proved": false
-  }
+  },
+  "receipt_schur_continuation_base_main_commit": "a47da994b85f2ec844b199d27b619a7fcc553adb",
+  "receipt_schur_continuation_incorporated_main_commit": "59171c1a4aef654bb9808629e8856e4a56edfcc8"
 }
