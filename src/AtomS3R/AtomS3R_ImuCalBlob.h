@@ -51,6 +51,16 @@ inline uint8_t& activeMagSource() {
   return source;
 }
 
+// Switches the running source to the one a saved calibration was fitted on
+// (installed by configureAtomS3RMag(); returns true when it now matches), so
+// a calibration made before compensation keeps applying until the
+// magnetometer is recalibrated. Null: the source is fixed.
+using MagSourceFollower = bool (*)(uint8_t source);
+inline MagSourceFollower& magSourceFollower() {
+  static MagSourceFollower follower = nullptr;
+  return follower;
+}
+
 struct ImuCalBlobV4 {
   static constexpr uint32_t IMU_CAL_MAGIC   = atoms3r_ical::IMU_CAL_MAGIC;
   static constexpr uint16_t IMU_CAL_VERSION = 4;
@@ -398,7 +408,11 @@ struct RuntimeCals {
     gyr.temperature_information = b.gyro_temperature_information;
     gyr.slope_sigma = Vector3f(b.gyro_k_sigma[0], b.gyro_k_sigma[1], b.gyro_k_sigma[2]);
 
-    // A fit made in other units (e.g. before Bosch compensation) is not applied.
+    // Read the magnetometer the way the saved fit was made when the firmware
+    // can; a fit made in other units (e.g. before Bosch compensation) that
+    // the firmware cannot deliver is not applied.
+    if (magSetValid(b) && b.mag_source != activeMagSource() && magSourceFollower())
+      magSourceFollower()(b.mag_source);
     mag_source_mismatch = magSetValid(b) && b.mag_source != activeMagSource();
     mag.ok = magSetValid(b) && !mag_source_mismatch;
     mag.A  = mat_from_rowmajor9_(b.mag_A);

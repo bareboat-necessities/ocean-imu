@@ -384,12 +384,34 @@ static inline void clearM5UnifiedImuCalibration() {
 //    reading is compensated with its RHALL value (AtomS3R_Bmm150Compensation.h).
 // Both go through the BMI270 AUX interface with read-back. Other IMUs, or a
 // failed trim read, keep M5Unified's uncompensated values. activeMagSource()
-// records which units the runtime delivers, so a saved magnetometer
-// calibration made in other units is not applied.
+// records which units the runtime delivers. Loading a saved magnetometer
+// calibration (RuntimeCals::rebuildFromBlob) switches to the source it was
+// fitted on, so a calibration made before compensation keeps applying,
+// uncompensated, until the magnetometer is recalibrated.
+static inline bool followMagSource_(uint8_t source) {
+  auto& src = atoms3rMagSource();
+  if (source == activeMagSource()) return true;
+  if (source == MAG_SOURCE_M5_RAW) {
+    src.compensated = false;
+  } else if (source == MAG_SOURCE_BMM150_COMPENSATED && src.trim.valid && src.bmi270) {
+    src.compensated = true;
+  } else {
+    return false;
+  }
+  src.have_last = false;
+  src.last_body = Vector3f(NAN, NAN, NAN);
+  activeMagSource() = source;
+  Serial.printf("[MAGCFG] saved magnetometer calibration was fitted on %s data: Bosch compensation %s%s\n",
+                src.compensated ? "Bosch-compensated" : "uncompensated", src.compensated ? "on" : "off",
+                src.compensated ? "" : " until the magnetometer is recalibrated");
+  return true;
+}
+
 static inline bool configureAtomS3RMag(Print& log, bool compensate = true) {
   auto& src = atoms3rMagSource();
   src = AtomS3RMagSource{};
   activeMagSource() = MAG_SOURCE_M5_RAW;
+  magSourceFollower() = nullptr;
   auto* imu0 = M5.Imu.getImuInstancePtr(0);
   if (M5.Imu.getType() != m5::imu_bmi270 || !imu0) return false;
   using Preset = Bmm150AuxPreset<m5::IMU_Base>;
@@ -418,6 +440,7 @@ static inline bool configureAtomS3RMag(Print& log, bool compensate = true) {
   src.bmi270 = imu0;
   src.compensated = true;
   activeMagSource() = MAG_SOURCE_BMM150_COMPENSATED;
+  magSourceFollower() = &followMagSource_;
   log.printf("[MAGCFG] BMM150 Bosch compensation on: x1=%d y1=%d x2=%d y2=%d xy1=%u xy2=%d "
              "z1=%u z2=%d z3=%d z4=%d xyz1=%u\n",
              trim.dig_x1, trim.dig_y1, trim.dig_x2, trim.dig_y2, trim.dig_xy1, trim.dig_xy2,

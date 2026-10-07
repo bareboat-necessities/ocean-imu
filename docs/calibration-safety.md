@@ -126,10 +126,13 @@ with Bosch's formulas (BMM150 datasheet section 4.3, Sensor API
 `compensate_x/y/z`, floating-point form) into microtesla. RHALL follows the
 sensor temperature, so this is the sensor's own compensation of the
 temperature dependence of sensitivity and of the Z offset. Saved magnetometer
-calibrations record the data source they were fitted on (`mag_source`); a fit
-made on uncompensated data is not applied to compensated data, and the
-magnetometer must be recalibrated once. Accelerometer and gyro calibrations
-are unaffected.
+calibrations record the data source they were fitted on (`mag_source`), and
+loading one switches the firmware to that source: a fit made on uncompensated
+data keeps applying to uncompensated data (compensation off) until the
+magnetometer is recalibrated, which records a compensated fit. A run of the
+wizard that does not save returns to the saved fit's source. A fit whose
+source the firmware cannot deliver (compensated fit, trim read failed) is not
+applied. Accelerometer and gyro calibrations are unaffected.
 
 The ellipsoid metric determines `A^T A`, not an arbitrary sensor-to-body
 rotation. The correction uses the SPD square root as an initializer, then

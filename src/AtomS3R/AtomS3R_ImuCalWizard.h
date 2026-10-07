@@ -102,6 +102,17 @@ public:
   // abort before SAVE leaves storage untouched. Failed writes report whether
   // recovery was actually verified; storage failure can also prevent rollback.
   bool runAndSave(ImuCalBlobV4& out_saved) {
+    if (runAndSave_(out_saved)) return true;
+    // The magnetometer stage switches to the calibration source; a run that
+    // did not save keeps the previous calibration, so read the magnetometer
+    // the way that one was fitted again.
+    ImuCalBlobV4 prev{};
+    if (store_.load(prev) && magSetValid(prev) && magSourceFollower()) magSourceFollower()(prev.mag_source);
+    return false;
+  }
+
+private:
+  bool runAndSave_(ImuCalBlobV4& out_saved) {
     Serial.println("[WIZ] start");
 
     for (;;) {
@@ -228,7 +239,6 @@ public:
     }
   }
 
-private:
   using AccelProc = imu_cal::AccelCalProcedure<ImuCalWizardCfg::ACCEL_MAX_OBS, ImuCalWizardCfg::ACCEL_MAX_HOLDS>;
 
   // Screens, samples and the fit task for the accelerometer procedure.
