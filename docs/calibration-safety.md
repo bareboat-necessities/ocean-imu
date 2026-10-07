@@ -105,25 +105,18 @@ calibration. Short captures normally remain bias-only.
 
 ## Magnetometer direction and capture
 
-On AtomS3R, magnetic capture and independent verification attempt to use the BMM150
-high-accuracy preset: 47 XY repetitions, 83 Z repetitions, and 20 Hz output.
-The wizard checks register writes and restores the original repetition counts
-and output rate on completion, cancellation, or failure. If the optional preset
-is unavailable, capture continues through the existing M5Unified driver, provided
-no registers changed or rollback has been verified. An unverified restoration
-stops calibration without saving. Missing/frozen magnetic samples still fail the
-normal capture checks, and all fit/verification quality limits apply to fallback
-samples. Best-effort `[MAGCFG]` diagnostics identify the failed setup check and
-whether the preset or driver settings are used. Other IMU types retain their
-driver settings. The 45-second capture minimum and all magnetic quality limits
-remain unchanged; independent verification still needs at least 56 seconds
-and 140 independent averaged observations.
-
-M5Unified 0.2.13 sets the BMM150 output rate without configuring repetitions.
-Ordinary sensor noise can therefore fail the residual-inlier gate even in a
-stable field. The UI reports noisy samples rather than claiming that this gate
-detects external interference. The preset and its 20 Hz limit come from the
-[Bosch BMM150 datasheet, table 3 and sections 5.6/5.8](https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmm150-ds001.pdf).
+On AtomS3R the BMM150 sits behind the BMI270 AUX interface only. M5Unified 0.2.13
+soft-resets it, selects 30 Hz output and leaves one XY and one Z repetition, its
+noisiest setting. Every sketch therefore calls `configureAtomS3RMagLowNoise()`
+after initialisation, and the wizard calls it again before magnetic capture, so
+calibration and runtime use the same setting: 47 XY / 41 Z repetitions at 30 Hz
+(28.3 ms per measurement, [Bosch BMM150 datasheet, sections 5.6/5.8](https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmm150-ds001.pdf)).
+The registers are written in AUX manual mode and read back, and the AUX
+data-mode configuration is restored exactly; a failed read-back restores the
+previous repetitions and the driver setting is kept. A `[MAGCFG]` line reports
+the result. Other IMU types keep their driver settings. The 45-second capture
+minimum and all magnetic quality limits are unchanged; independent verification
+still needs at least 56 seconds and 140 independent averaged observations.
 
 The ellipsoid metric determines `A^T A`, not an arbitrary sensor-to-body
 rotation. The correction uses the SPD square root as an initializer, then

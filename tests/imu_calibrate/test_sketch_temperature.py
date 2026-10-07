@@ -15,7 +15,7 @@ for sketch in sorted((root / "sensors").rglob("*.ino")):
     assert re.search(r"applyAccel\([^;]+,\s*tempC\)", text), sketch
     assert re.search(r"applyGyro\([^;]+,\s*tempC\)", text), sketch
     checked.append(sketch.relative_to(root))
-assert len(checked) == 5, f"Review new external calibration consumers: {checked}"
+assert len(checked) == 6, f"Review new external calibration consumers: {checked}"
 compass = (root / "src/AtomS3R/AtomS3R_CompassAppBase.h").read_text()
 assert "runtime_.applyAccel(s.a, s.tempC)" in compass
 assert "runtime_.applyGyro(s.w, s.tempC)" in compass
@@ -24,4 +24,4 @@ assert "runtime_.applyGyro(s.w, s.tempC)" in compass
 tfg = (root / "sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino").read_text()
 assert "fusion_.update(dt_, w_cal_, a_cal_, 35.0f);" in tfg
 assert "updateWaveDirection_(q_bw, 35.0f, dt_);" in tfg
-print(f"test_sketch_temperature: {len(checked)} INS sketches + compass preserve temperature validity; TFG reference arguments intact")
+print(f"test_sketch_temperature: {len(checked)} INS/diagnostic sketches + compass preserve temperature validity; TFG reference arguments intact")

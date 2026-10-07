@@ -11,17 +11,20 @@ The general theorem assumes existing MAGNETIC SERVICE on admitted histories;
 all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
-Verified main: `e653d30b62e4c307e400d902a527c171bc221173`.
-Verified continuation starting PR head: `352c91bdc1bc5e1b62f02c51176d9fa5a6e889ac`.
-That automated evidence commit on `c03816c0` is preserved in full.
-New main changes concern AtomS3R magnetic diagnostics; the shipping OU-III
+Verified main: `cafdc627797b11fdb3bb14ab964d7184c63733e4`.
+Verified continuation starting PR head: `108ce145623f98d4fb6269172ef26d173b9bcb41`.
+That automated evidence commit on `45efd074` is preserved in full.
+New main changes concern AtomS3R magnetic diagnostics and the PR #658
+low-noise BMM150 runtime/calibration preset; the shipping OU-III
 prediction/correction/floor operators read for this calculation are unchanged.
-No shipping source changes in this continuation.
+Main's additions, including its OU-III sketch initialization, are incorporated
+into the PR branch; no estimator behavior, assumption, tuning or gate is
+authored in this continuation.
 Current mergeability and exact-head CI belong in PR metadata.
 
 Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
 `theorem_closed=false`, `regional_practical_stability_claimed=false`,
-`certified_capture_time=null`. Existing proved algebra is extended without
+`certified_capture_time=null`. Existing proved algebra is retained without
 promoting uniform coercivity, entry or admission.
 
 Analytical work only: exact algebra/rationals, rigorous compact inequalities
@@ -41,6 +44,26 @@ not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
+
+**E — source-identity repair of merge CI; no mathematical promotion.**
+The PR-head proof checks on `45efd074` passed, but its merge checks failed
+with `finite quotient/secant evidence verification failed: shipping source
+tree changed`. Main added two AtomS3R diagnostic headers. The actual native
+secant probe's compiler include closure has 34 shipping dependencies; every
+dependency has identical bytes to the preserved PR source, and neither added
+header is in that closure. The old report's whole-src digest also matches
+that immutable PR source. Refresh only the full-src provenance binding,
+retaining the old binding, exact dependency hashes and explicit no-replay
+record in the existing diagnostic. All diagnostic payloads and false
+qualification flags remain. The validator and its full-src gate are unchanged.
+Resolve generated-evidence conflicts with the complete newer PR bundle,
+including its nonconflicting transition file, and retain main's diagnostic
+code. The source-identity argument is a CI repair, not an AW sign proof.
+Main then advanced through PR #658. Its additional source edits and deletion
+are also outside the same 34-file include closure. Recheck their bytes,
+retain the earlier refresh in the audit, refresh the literal OU-III sketch
+binding and retain main's low-noise calibration/runtime setup. This does not
+verify its magnetic residual envelopes or strengthen MAGNETIC SERVICE.
 
 **Full endogenous receipt/kernel elimination — CR41--CR43; sign OPEN.**
 Insert the SAME reassembled Hbar and all remaining linked process/S/mag/
@@ -857,6 +880,24 @@ Physical S is never reset by the estimator pseudo-measurement.
   paths; it failed before writing. Its consequent test rerun again rejected
   the stale hash. Use the absolute repository root for the refresh/validator, and
   launch the focused test only after successful validation.
+  Merge-CI continuation: the four failed merge jobs rejected the old finite
+  secant whole-src binding after main's two AtomS3R header additions.
+  Compiler dependency inspection proves those headers are not read by that
+  probe; all 34 shipping dependencies are byte-identical. Rebind with an
+  explicit retained original digest and source-identity audit, not another
+  secant/replay run or a weakened validator. A guessed
+  planar_native_secants.cpp read was corrected to the driver's literal
+  planar_native_secant_probe.cpp path. No mathematical premise was inferred
+  from the absent path. A later guessed docs/ou3-theorem-status.md read was
+  corrected with rg --files to reports/results/ou3_stability/theorem-status.json.
+  The optional repository dataset archive was absent; the unchanged required
+  make all target remains responsible for fetching and verifying that input.
+  Main's subsequent PR #658 is incorporated without discarding either
+  history; its calibration/runtime edits do not enter the native probe's
+  shipping include closure. The previous source-refresh record is retained.
+  The calibration rebuild initially repeated a relative -C path inside that
+  same test-directory cwd; use make build there instead. The failed invocation
+  performed no build or test, and no validation gate was changed.
 
 * **D, process-short-only sign inference:** CR26's positive effective gap
   does not prove the complete nonzero receipt remainder nonnegative.

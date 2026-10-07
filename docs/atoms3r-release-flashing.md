@@ -28,6 +28,7 @@ Expand **Assets** and choose the ZIP for exactly one sketch:
 | Sketch name (`SKETCH` below) | Application |
 | --- | --- |
 | `atomS3R_imu_m5_basic` | Raw/calibrated IMU diagnostics |
+| `atomS3R_mag_diagnostics` | Guided magnetometer/compass diagnostics |
 | `atomS3R_compass_mahony` | Mahony compass / AHRS |
 | `atomS3R_compass_qmekf` | Quaternion-MEKF compass / AHRS |
 | `atomS3R_ins_kalman_ou2` | OU-II marine INS |

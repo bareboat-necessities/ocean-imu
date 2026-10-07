@@ -1,6 +1,6 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "0cbbd5a3270ff988c6642324ff8ebb303034dc80",
+  "base_main_commit": "cafdc627797b11fdb3bb14ab964d7184c63733e4",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
@@ -41,7 +41,7 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "90bda5eeba4b1ccf94af698662df85877bbb7bc7"
+      "git_blob_sha": "651eb4954fecaae0ab6b1bd558268d047d2006f3"
     }
   ],
   "semantic_bindings": {
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "ae75d4b86ec69ecf503ba6514ac19d068acf8cc0"
+      "git_blob_sha": "06902e541950252b435909f2818eade5f1ec392e"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -824,7 +824,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "3400f1b3bb033c6a6b33196c03ed23c81f3bd2e1"
+      "git_blob_sha": "5b279dc50a944e7d345ff67f17f4cdd030c76783"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1606,5 +1606,19 @@
       "odd_AW_blocker_resolved": false,
       "complete_homogeneous_gap_proved": false
     }
+  },
+  "receipt_corner_merge_ci_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "starting_pr_head": "108ce145623f98d4fb6269172ef26d173b9bcb41",
+    "incorporated_main": "cafdc627797b11fdb3bb14ab964d7184c63733e4",
+    "source_identity_record": "reports/results/ou3_stability/planar-native-secants-diagnostic.json:source_binding_refresh",
+    "shipping_dependencies_byte_identical": 34,
+    "replay_performed": false,
+    "validation_gate_changed": false,
+    "mathematical_margin_promoted": false,
+    "generated_evidence_resolution": "Preserve the entire newer 21-file PR regeneration bundle; retain main diagnostic additions.",
+    "earlier_incorporated_main": "d315ae2ad1dc5659f9e6341a02ebddb68dc4be33",
+    "changed_source_files_outside_probe_closure": 6,
+    "upstream_configuration_retained": "PR #658 low-noise BMM150 setting at calibration/runtime, including OU-III sketch initialization; no new residual/service claim."
   }
 }
