@@ -1,0 +1,53 @@
+{
+  "Q": "J_0-M^T J_N M",
+  "X": "M^T J_N N",
+  "Z": "N^T J_N N",
+  "all_time_magnetic_service_verified": false,
+  "constant_scope": "unmasked optimal correction with actual same-operation P,H,R,r; dH/dR and held-BA terms retained separately",
+  "controlling_inequality": "W_N <= rho W_0 + c_d ||d||^2, rho<1, with every-prefix retention",
+  "covariance_homogeneous_metric": "||C^-1/2 A dP A^T C^-1/2||_F<=||P^-1/2 dP P^-1/2||_F on regular optimal correction",
+  "derived_partial_joint_inequality": "Wplus <= (1+NIS/lambda)*(Vmean-Lmean)+lambda*Vcov-((lambda-NIS)/2)*Lcov, lambda>0, for only the covariance-induced gain residual port",
+  "derived_storage_inequality": "W_N <= (1-epsilon/2) W_0 + w^T [Z+(2/epsilon) X^T J_0^-1 X] w",
+  "exact_storage_identity": "W_N-W_0=-v^T Q v+2 v^T X w+w^T Z w",
+  "exact_telescoping": "Q=sum T_i^T (J_i-A_i^T J_(i+1) A_i) T_i",
+  "failed_closure": {
+    "classification": "D_SUFFICIENT_BOUND_FAILURE",
+    "exact_uncertified_quantity": "the complete-word cross term from dK*r, mean-dependent rows, reset/AW/quotient derivatives in Q",
+    "not_a_shipping_counterexample": true,
+    "reason": "available inherited domain does not bound nominal aw, actual innovations, precision, or their linked word action"
+  },
+  "frontend_gain_is_MEKF_gain": false,
+  "linked_gain_residual_bound": "||A dP H^T S^-1 r||_(C^-1)^2 <= (r^T S^-1 r)/2 * [||dP||_P^2-||A dP A^T||_C^2]",
+  "linked_gain_residual_constant": "1/2",
+  "linked_terms_required": [
+    "dK*r",
+    "same-model dr and dH",
+    "dR and dF/dQ",
+    "held-BA distinct gain/innovation rows",
+    "actual injection/reset differential",
+    "AW divided differences and active-face inclusion",
+    "BA/BG projection faces",
+    "moving P-normalized quotient chart",
+    "C_Q alpha and physical curvature",
+    "literal nonlinear and arithmetic remainders in persistent history forcing",
+    "inherited generator/reference/gates and every-prefix switching"
+  ],
+  "qualification": "OU3_PLANAR_COMPLETE_WORD_STORAGE_IDENTITY_V1",
+  "radius_solve_performed": false,
+  "regular_correction_identity": "eplus^T C^-1 eplus=e^T P^-1 e-(H e)^T S^-1 H e+2 e^T P^-1 f+f^T C^-1 f, f=dK*r",
+  "relaxations_introduced": [
+    "fixed differentiable operation branches for local identities; face crossings need finite inclusions"
+  ],
+  "result_type": "PROVED \u2014 analytical identity; strict complete-word inequality OPEN",
+  "strict_complete_word_storage_verified": false,
+  "strict_margin_requirement": "Q >= epsilon J_0 uniformly on inherited same-history domain, epsilon>0; then bound the linked forcing quadratic",
+  "structures_preserved": [
+    "full joint quotient/covariance derivative",
+    "persistent gauge/source forcing",
+    "actual ordered word and endpoint precision metrics",
+    "all linked cross terms"
+  ],
+  "theorem_closed": false,
+  "uniform_epsilon": null,
+  "word": "M=A_(N-1)...A_0; N=sum ordered_suffix_i B_i; one shared persistent root/history input"
+}

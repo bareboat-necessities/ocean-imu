@@ -19,10 +19,10 @@ SLOW+FAST delivered-IMU and MAGNETIC SERVICE assumptions.  A retained local
 real-arithmetic stability theorem is proved on $\sqrt V\le0.15$, together
 with the structural prediction, correction, reset, kernel, covariance and
 same-history source lemmas required by the outer argument.  The measurement
-map possesses a genuine attitude/accelerometer-bias compatibility fibre, so a
-regional theorem cannot require universal convergence of the absolute physical
-decomposition.  The appropriate outer statement combines bounded motion along
-the compatible gauge with strict contraction transverse to it.  The regional
+map possesses a genuine attitude/accelerometer-bias compatibility fibre.
+Indefinite STILL therefore requires a compatible-tube target. For MOVING,
+the exact same-record pair still requires an all-time magnetic-admission
+decision before its absolute-entry target can be ruled out.  The regional
 theorem remains open only on the explicitly listed source-uniform release,
 magnetic-admission, quotient-coercivity, finite-error, nonlinear and
 finite-precision premises.
@@ -31,8 +31,11 @@ finite-precision premises.
 \section{Shipping model and theorem scope}
 The sole proof path is
 \[
-\boxed{\text{construction}\to\text{capture}\to H18\to
-\text{release}\to A21\to\text{regional practical stability}.}
+\begin{gathered}
+\text{construction}\to\text{capture}\to H18\\
+\to\text{refinement/release}\to A21\\
+\to\text{regional practical stability}.
+\end{gathered}
 \]
 One execution \(h\) belongs to
 \[
@@ -110,9 +113,10 @@ Let \(p,v,a\in\R^3\), \(R\in{\rm SO}(3)\), and body rate \(\omega\) satisfy
 \]
 almost everywhere, with
 \[
-\norm p\le P_{\max},\quad\norm v\le V_{\max},\quad
-\norm a\le A_{\max},\quad\norm\omega\le\Omega_{\max},\quad
-\norm{\dot a}\le J_{\max}.
+\begin{gathered}
+\norm p\le P_{\max},\quad\norm v\le V_{\max},\quad\norm a\le A_{\max},\\
+\norm\omega\le\Omega_{\max},\quad\norm{\dot a}\le J_{\max}.
+\end{gathered}
 \]
 Complete physical stillness may persist arbitrarily long. Otherwise every complete moving window of duration \(T_E\) has gravity-direction span at least \(\theta_E\), and every complete moving window of duration \(T_P\) has displacement diameter at least \(P_E\). The constructive candidate values are
 \[
@@ -127,14 +131,18 @@ e_a=b_{a,s}+b_{a,f},\qquad e_g=b_{g,s}+b_{g,f}.
 \]
 The slow components obey amplitude and derivative bounds
 \[
-\norm{b_{a,s}}\le B_{a,s},\quad\norm{\dot b_{a,s}}\le D_{a,s},\qquad
+\begin{gathered}
+\norm{b_{a,s}}\le B_{a,s},\quad\norm{\dot b_{a,s}}\le D_{a,s},\\
 \norm{b_{g,s}}\le B_{g,s},\quad\norm{\dot b_{g,s}}\le D_{g,s}.
+\end{gathered}
 \]
 FAST components obey instantaneous envelopes and, for every placed
 \(0<T\le H_i\),
 \[
-\norm{\int_t^{t+T}b_{a,f}\,ds}\le\min(B_{a,f}T,C_a),\qquad
+\begin{gathered}
+\norm{\int_t^{t+T}b_{a,f}\,ds}\le\min(B_{a,f}T,C_a),\\
 \norm{\int_t^{t+T}b_{g,f}\,ds}\le\min(B_{g,f}T,C_g).
+\end{gathered}
 \]
 The candidate temporal constants are
 \[
@@ -215,8 +223,11 @@ The translational model retains the chain \(v\to p\to S\), the OU wave-accelerat
 
 The regular chronology is
 \[
-\text{prediction}\to S=0\to\text{accelerometer correction}
+\begin{gathered}
+\text{prediction and pending AW sync}\to S=0\\
+\to\text{accelerometer correction}\\
 \to\text{accepted magnetic correction},
+\end{gathered}
 \]
 with shipping attitude resets after the applicable corrections. The accelerometer residual is generated from the same mean cell,
 \[
@@ -281,7 +292,7 @@ A typed enclosure failure records stage, actual failure time and physical-input 
 \section{Construction, capture and H18}
 Construction establishes a compact shipping-reachable seed with the implemented covariance, bias projection, tuner and scheduler states. Capture uses the literal accelerometer and magnetic chronology. H18 retains attitude and gyro bias jointly with LIN and accelerometer bias.
 
-Complete-word homogeneous compatibility is evaluated on literal factors. The regular-word kernel reduction, recurring magnetic service, active accelerometer-bias geometry and the same-history physical-to-nominal bridge are used to exclude persistent nonzero compatibility directions. The proof does not invoke a separate observability-Gramian assumption.
+Complete-word homogeneous compatibility is evaluated on literal factors. The regular-word kernel reduction, magnetic-service strata and active accelerometer-bias geometry are retained with their stated qualifications. They do not identify the physical attitude/BA decomposition or exclude the exact planar physical gauge. The source-uniform physical-to-nominal bridge remains conditional, and the MOVING pair first requires an all-time admission decision. No separate observability-Gramian assumption is introduced.
 
 \section{Release and recurring A21}
 Release starts from the explicit goLive seed and advances the same mean and covariance history through the literal operation stream. The mean is carried as
@@ -353,15 +364,19 @@ All coefficients, forcing and prefix metrics must remain on one reachable histor
 Put \(s=400/40001\), \(c=39999/40001\),
 \(\psi(t)=0.02\sin(\pi t/10)\), and
 \[
-R_\pm=R_x(\pm\theta)R_y(\psi),\quad
+\begin{gathered}
+R_\pm=R_x(\pm\theta)R_y(\psi),\\
 p=0.02\sin(\pi t/10)e_x,\quad b_{a,\pm}=\pm gs e_y,
+\end{gathered}
 \]
 where \(\sin\theta=s\), \(\cos\theta=c\), all gyro biases and FAST errors
 are zero, and \(B=75e_x\). Both complete physical histories have the same
 sensor record
 \[
-y_a=R_y(-\psi)(a_xe_x-gce_z),\quad
+\begin{gathered}
+y_a=R_y(-\psi)(a_xe_x-gce_z),\\
 y_g=\dot\psi e_y,\quad y_m=75R_y(-\psi)e_x.
+\end{gathered}
 \]
 Every 30-second window has displacement span \(0.04\) m and gravity span
 \(2\arcsin(c\sin0.02)>2^\circ\), but
@@ -388,8 +403,33 @@ Gramians; the parity transform is used only to factor propagation.
 The exact planar branch preserves the covariance parity split described above.
 Because the progress-preserving $S=0$ scheduler need not return to its initial
 phase after one physical source period, an all-time covariance/service proof
-must carry scheduler phase as part of its invariant cell.  Finite replay
-diagnostics are not used as theorem premises.
+must carry scheduler phase as part of its invariant cell.  The cell must also retain the AW-synchronization clock, pending targets,
+planar mean and raw private Mahony state. The default AW-floor map is not
+Loewner monotone, so positive-noise Riccati monotonicity alone is insufficient.
+The old ideal-normalization frontend replica is not a shipping certificate.
+Finite replay diagnostics are not used as theorem premises.
+
+\paragraph{Quotient feasibility does not yet give admission.}
+The homogeneous factor product $F/(I-KH)/G$ on samples $40000\to44000$
+has Euclidean norm $122.66$ but covariance-metric norm $0.93478409$.
+Its physical-line quotient has dimension 20, norm $0.87311969$ and
+$\|C_Q\|=0.00022901228$. These are \emph{FINITE DIAGNOSTIC ONLY};
+the product omits residual-weighted gain and other nonlinear derivatives.
+The physical body-to-world family must be converted to the shipping left
+world-to-body chart: the tangent line is
+$r_\theta=R_y(-\psi)e_x$, $r_{b_a}=-g e_y$, with other coordinates zero.
+The private Mahony gain $0.58270576$ is not a MEKF mean gain.
+
+Complete native wrapper secants, including all 21 mean and 231 covariance
+directions, give similar endpoint-metric quotient gains. Their small
+mean-to-covariance block is sensitive to step halving. In one fixed root
+metric, covariance gain about $0.991$ and point drift $0.537822$ require a
+relative radius above 60 even with optimistic zero gauge forcing; a symmetric
+relative SPD ball requires radius below one. This sufficient-bound failure
+rejects that cell representation, not shipping stability. A moving-center,
+same-history phase cell and uniform nonlinear/arithmetic bounds remain open.
+The tube must retain $C_Q\alpha$ and any covariance gauge forcing; see the
+explicit quotient algebra and scope in Appendix~\ref{sec:planar-quotient-audit}.
 
 \section{Proofs of the structural lemmas}
 This section records the mathematical arguments used by the machine
@@ -402,14 +442,17 @@ gives $a_w(t+h)=e^{-h/\tau}a_w(t)+\int_0^h e^{-(h-s)/\tau}\xi(t+s)\,ds$.
 Integrating successively through $\dot v=a_w$, $\dot p=v$ and $\dot S=p$
 gives the shipping coefficients
 \[
- \phi=e^{-x},\quad
- \phi_{pa}=\tau^2(x+\operatorname{expm1}(-x)),\quad
- \phi_{Sa}=\tau^3\!\left(\tfrac12x^2-x-\operatorname{expm1}(-x)\right),
- \qquad x=h/\tau .
+\begin{aligned}
+ \phi&=e^{-x},\qquad x=h/\tau,\\
+ \phi_{pa}&=\tau^2(x+\operatorname{expm1}(-x)),\\
+ \phi_{Sa}&=\tau^3\!\left(\tfrac12x^2-x-\operatorname{expm1}(-x)\right).
+\end{aligned}
 \]
-Their Taylor series at $x=0$ are exactly the implemented small-$x$ branches.
-The discrete process covariance is an integral
-$\int_0^h\Phi(s)LQ_cL^T\Phi(s)^Tds$ and is therefore positive semidefinite.
+The implemented small-$x$ branches are finite truncations, not equalities
+to these formulas away from zero. The existing exact-rational source-defect
+certificate retains $\Delta\Phi$ and bounds the process difference relative
+to the positive ideal OU Gram. Its positive relative margin establishes PSD
+for the qualified literal branch; float32 transfer remains separate.
 \end{proposition}
 
 \begin{proposition}[Joseph correction/storage identity]
@@ -441,7 +484,7 @@ Consequently
 \[
  (G\xi)^T(GPG^T)^{-1}(G\xi)=\xi^TP^{-1}\xi .
 \]
-For the implemented attitude block $G_\theta=I-\frac12[d\theta]_\times$,
+For the implemented attitude block $G_\theta=I+\frac12[d\theta]_\times$,
 \[
 G_\theta^TG_\theta
 =I+\tfrac14(\norm{d\theta}^2I-d\theta d\theta^T),
@@ -461,8 +504,8 @@ therefore
 \]
 The identity BA block precludes strict contraction of the complete H18 state
 in a fixed quadratic metric.  Treating held BA as a bounded input and H18 as
-a finite bridge is therefore necessary and sufficient for the later release
-argument.
+a finite bridge avoids that particular contraction obstruction. Uniform
+boundedness and finite release still require their separate proofs.
 \end{proposition}
 
 \begin{proposition}[No-heading-service obstruction]
@@ -606,6 +649,7 @@ Frontend force/quaternion/guard lemmas & PROVED & MARINE + IMU qualification & s
 FAST Abel / linked reader bounds & PROVED & signed FAST primitive, same-history reader & Appendix\\
 Quiet compatibility fibre/source charge & PROVED & STILL, persistent SLOW+FAST split & Appendix\\
 MOVING same-record pair & PROVED & explicit planar family, current source constants & Appendix\\
+Planar cell algebra / guard inactivity & PROVED & fixed same-history factors / exact planar source, real arithmetic & Appendix: admission-cell algebra and guard\\
 All-time magnetic admission of MOVING pair & OPEN & literal MAGNETIC SERVICE & current controlling admission certificate\\
 Completed-square implication & PROVED & $G_\gamma\succ0$, same-history coefficients & structural proof above; Appendix\\
 Retained local theorem & PROVED locally & $\sqrt V\le0.15$ and local gates & Appendix / local certificates\\
@@ -618,7 +662,7 @@ Regional practical stability & OPEN & all preceding conditional/open premises & 
 The labels below are part of the theorem statement.  \textbf{PROVED} means the implication is established under the hypotheses stated here. \textbf{CONDITIONAL} means the algebraic implication is proved but one or more source-uniform premises remain to be certified on the full reachable class. \textbf{OPEN PREMISE} is a required statement not yet proved.  None of these labels promotes an end-to-end theorem.
 
 \begin{lemma}[Shipping OU prediction identities --- PROVED]
-For every qualified positive shipping step and applied \(\tau\), the discrete OU coefficients used for \(a_w\), \(v\), \(p\), and \(S\) are the exact integrals of the continuous OU chain, with the shipping small-argument branches equal to their analytic limits.  The associated process covariance is positive semidefinite.
+On the qualified step/tuner domain, the OU integral identities define the comparison coefficients for \(a_w,v,p,S\). The literal finite small-argument polynomials retain their certified transition defect and relative process defect; they are not replaced by their ideal limits. The existing positive relative process margin proves PSD in real arithmetic on this domain. Float32 transfer is not asserted.
 \end{lemma}
 
 \begin{lemma}[Joseph correction action --- PROVED]
@@ -695,6 +739,16 @@ For the literal Euler quaternion increment,
 \norm{q^+}^2=\norm q^2\left(1+\frac{\Delta t^2}{4}\norm{\omega_c}^2\right).
 \]
 Thus a normalized input quaternion has a strictly positive pre-normalization norm; component-interval decorrelation cannot create a physical zero quaternion.
+Moreover, for the literal binary32 bit seed and one Newton step, a represented
+pre-normalization squared norm in $[1/4,4]$ implies raw output squared norm
+in $(.995,1.001)$ under the IEEE premises proved in
+Appendix~\ref{app:planar-causal-calculus}. The exponent argument also covers
+the accelerometer domain $[1/4,128]$.
+Appendix~\ref{app:planar-frontend-domain} derives the literal scalar error
+charges and proves private pitch/integral retention from the seed under its
+explicit sqrt/exp and binary32 qualifications. The resulting real reference
+cone has angle below $11/5000$; target-toolchain qualification, float reference
+accumulation and the inherited MEKF domain are separate and remain OPEN.
 \end{lemma}
 
 \begin{lemma}[Vibration-guard LP/raw recurrence --- PROVED]
@@ -738,8 +792,10 @@ For a constant ideal magnetic record and physical stillness, let
 when \(\norm{d_a(R)}\le B_{a,s}+C_a/H_a\). For
 \(y_a=-g_me_z\), \(y_m=B=75e_x\), the attitude fibre is
 \[
-R=R_x(\theta),\qquad
+\begin{gathered}
+R=R_x(\theta),\\
 (g-g_m)^2+4gg_m\sin^2(\theta/2)\le(B_{a,s}+C_a/H_a)^2.
+\end{gathered}
 \]
 This is the ideal constant-record source fibre, not a full estimator boundedness theorem.
 \end{lemma}
@@ -764,6 +820,14 @@ records. Its tilt-induced bias difference is constant. Thus scalar gravity
 span plus bias temporal regularity does not imply a strictly positive
 physical two-epoch separation charge. Actual all-time shipping magnetic
 service is a separate admission obligation, not a conclusion of this lemma.
+The pair extends to a continuous same-record arc: for constant
+$|\beta|\le\theta$, let $n=R_y(-\psi)e_z$ and
+$b_{a,s,\beta}=g\sin\beta\,e_y+g(\cos\beta-\cos\theta)n$.
+Its slow-bias norm is at most $g\sin\theta$ and its rate is below
+$3.081\cdot10^{-6}$, within the existing limits. The central tangent has a
+quadratic transverse bias remainder; a physical angle bound is not a
+precision-normalized gauge bound. This extension does not assert magnetic
+admission or remove $C_Q\alpha$ from a finite-error word.
 \end{lemma}
 
 \begin{lemma}[Same-record full-metric pair lower bound --- PROVED]
@@ -775,6 +839,247 @@ covariance branch \(P_{b_ay,b_ay}\le1/1600\),
 The bound retains the full covariance metric and does not require a nominal
 symmetry assumption. It rules out simultaneous eventual retained inner
 entry if both complete continuations satisfy every theorem premise.
+\end{lemma}
+
+\begin{lemma}[Planar admission-cell transport algebra --- PROVED]
+For fixed same-history covariance/measurement factors, the local prediction--$S$
+commutator has the linked resolvent representation and ranks at most four/two
+on the 12/9 parity blocks. The literal additive AW-floor map is not Loewner
+monotone, but is Frobenius nonexpansive for a fixed target; changing its target
+adds at most the target difference norm. The complete covariance partial
+derivative retains every prediction, Joseph correction, reset and active AW
+marginal replacement. No self-containing joint causal cell or magnetic-service
+floor is concluded from these algebraic statements.
+Appendix~\ref{app:planar-causal-calculus} extends the operation calculus to
+linked $dP,dH,dR$, the literal held-BA gain operand, $dK\,r$, reset and
+finite gain remainders. It constructs a causal center recurrence from current
+state and inherited clocks, with no future observed $H,G,K$. The analytical
+magnetic-information resolvent bound is proved, but its uniform center floor,
+storage contraction and inherited radius remain OPEN. Physical acceleration
+is not substituted for nominal $a_w$, and a finite information floor is not
+a theorem constant.
+Appendix~\ref{app:planar-complete-word-storage} proves the same-operation
+residual bound $\|A\,dP\,H^TS^{-1}r\|_{C^{-1}}^2\le
+(r^TS^{-1}r)L_P/2$, with $L_P$ the covariance Fisher-storage loss, on the
+unmasked optimal branch. It also derives the exact complete-word linked
+storage identity, retaining gauge and cross terms. No positive uniform word
+margin is certified; the nominal domain and strict contraction remain OPEN.
+Appendix~\ref{app:planar-innovation-storage} further proves the variational
+NIS identity, an inherited first-Live real-operation comparison bound
+$V<21/1000$ for the central physical fibre under the stated frontend/handoff
+premises, and the reachable held-BA active-block reduction with
+$R_{\rm eff}=R_a+P_{BA}$. It derives an invertible coupled information
+coordinate that cancels covariance-induced $dK\,r$ on the fixed-row additive
+correction block while retaining $dH,dR$, chart, reset and physical forcing.
+The first-boundary constants do not certify later prefixes, finite capture,
+float32 reference/covariance transfer, or a positive complete-word gap.
+Appendix~\ref{app:information-shear-word} extends this to the exact linked
+word action, signed port work, reset/AW/projection transport and moving
+quotient balance. It characterizes the base zero-action kernel without
+identifying it with physical compatibility, and isolates the uniform linked
+transverse gap still required. General dissipativity assumes existing
+MAGNETIC SERVICE; special planar admission remains a separate open lemma.
+Appendix~\ref{app:linked-word-score} telescopes all optimal additive
+correction scores to zero and derives the exact suffix-score word normal
+form, retaining covariance variations created inside the word. Its linked
+Fisher-loss charge is $\|M X q\|_{J_N}^2\le\chi L_P(X)/2$ when the
+score lies in the base-action range; kernel forcing is retained explicitly.
+The loss-generated score has a same-history process/AW comparison-loss
+budget, bounded by root comparison energy plus signed source work minus
+realized innovation dissipation. Physical $S$ is not reset. Uniform source
+budgets, generated-port absorption and transverse
+coercivity remain OPEN; this does not promote a complete-word contraction.
+Appendix~\ref{app:measurement-frame-loss} derives the exact moving-frame
+measurement feedback and a positive coupled magnetic substep loss fraction
+$9/10$ on the stated planar reference/chart/energy domain. A prior-observation
+reader proves $P_{\theta_y\theta_y}<3/5000$ and
+$P_{b_{g,y}b_{g,y}}<1/4000$ after the qualified service horizon without an
+initial covariance ceiling. The row coercivity is quantitative; the full
+transverse word gap, inherited activation and arithmetic transfer remain open.
+Appendix~\ref{app:aw-shear-loss} removes the remaining nominal AW dependence
+of the accelerometer row by an invertible full-state shear. Its row-variation
+covariance port is an exact connection difference; the transformed additive
+correction retains its full covariance Fisher loss and explicit linked mean
+mismatch. The qualified magnetic loss survives, but the actual post-correction
+frame jump, OU/BG/LIN couplings and all source/precision ports remain. Exact
+central-planar physical substitution bounds the mean curvature with the linked
+pitch/AW covariance block and comparison energy, without nominal AW/BA boxes.
+Appendix~\ref{app:aw-frame-word} composes every frame connection through the
+exact suffix-score word: internal connections reduce to a signed endpoint
+storage difference. Its AW contribution is an exact three-dimensional
+quadratic, retaining conditional AW precision and covariance cross terms.
+The actual PSD AW increment decreases conditional precision and its Fisher
+connection-square coefficient. A three-row Schur test expresses the remaining
+absorption threshold; no
+positive uniform margin or inherited activation is yet proved.
+Appendix~\ref{app:aw-conditional-loss} gives the exact conditional AW storage
+split, mag/$S$ invariance of that component, and a positive uniform base
+process loss $c_{aw}>10^{-14}$ on its qualified regular profile. This
+controls the conditional directions missed by those rows; they are not
+physical gauges. The qualified LIN path gives conditional precision
+$J_{aw,aw}\prec15942618I$. Signed mixed work, generated covariance scores
+and endpoint gauge transport still prevent a proved full Schur margin.
+Appendix~\ref{app:conditional-mixed-word} resolves the conditional root
+mean/covariance cross terms by an exact three-row directional score test and
+bounds all remaining generated-port mixed work through one linked quadratic
+packet, retaining half of the net conditional root loss. The conditional
+storage and mixed reader are invariant under the actual state-dependent AW
+frame; its endpoint work remains in the transformed complementary packets,
+without a second independent penalty. All covariance suffix scores and gauge
+endpoints remain. Uniform positivity of that
+score test and domination of the packet charge are not yet proved.
+Appendix~\ref{app:conditional-packet-absorption} proves automatic absorption
+of complementary base packets by their exact joint Schur loss. It also shows
+why unequal directional losses do not inherit the isotropic score cancellation,
+and why the fixed half-charge bound is not a necessary contraction test.
+Appendix~\ref{app:process-source-score} further controls the combined
+process/model-mismatch score by its exact inherited minimum-action budget,
+with unsupported forcing retained. A single augmented process identity
+includes all causal $dF,dQ,ds$ terms and bounds its feedback square by the
+same Fisher loss. Its auxiliary and feedback cross work remain signed.
+Uniform budget control and full signed-work absorption remain OPEN.
+Appendix~\ref{app:held-score-boundary} bounds unsupported held-BA scores
+uniformly by their physical SLOW-bias endpoint difference and cancels their
+repeated held-coordinate work. Active residual/effective-noise ports remain.
+The exact active budget $B_W=E_L+S_q-2C_W$ identifies the remaining inherited
+process-loss comparison bound for that scalar-budget route; it is not yet
+supplied by the source contract. It is not an obligatory independent maximum
+before forming the complete coupled matrix.
+Appendix~\ref{app:planar-even-process-work} removes independent even-process
+$dF,dQ$ charges for fixed-input planar MEKF variations, while retaining the
+normalized quaternion's exact mean-transition defect and the unpaid signed
+score work. It does not supply the inherited comparison bound or full gap.
+Appendix~\ref{app:bordered-comparison-storage} tests a different storage:
+the Fisher metric of the bordered actual comparison matrix absorbs covered
+fixed-operand process/correction score work together. Its exact slack grows
+by $B_W$, however, so nonexpansion alone loses uniform mean coercivity.
+The causal coefficient/source ports and the signed cost of restoring slack
+are explicit; full endogenous-work absorption and retention remain OPEN.
+Appendix~\ref{app:bordered-causal-restoration} proves that paying this exact
+restoration and causal work recovers the original fixed-weight storage gap.
+The negative budget-derivative square is not extra dissipation. It also gives
+the exact Gram criterion for coercivity on the actual causal lift. A propagated
+root variation in a formal fixed-coefficient example disproves automatic
+coercivity from causality alone, without asserting shipping reachability.
+Neither the shipping Gram margin nor the net signed-work bound is closed.
+Appendix~\ref{app:odd-covariance-signed-gap} directly substitutes the coupled
+process/source/generated work into the original fixed-weight signed matrix.
+On the qualified pure odd-covariance A21 fibre, literal causal cancellation
+removes score and non-AW generated self-ports. The complete partial matrix is
+$\lambda(H_W-R_W^TR_W)$: $H_W$ retains actual process/$S$/magnetic Fisher
+action and $R_W$ is the actual stacked active-AW regression reader
+$d(TBT^T)/(C+\Delta)$. Its exact relative Schur threshold is one.
+An explicit formal anisotropic correction--prediction--floor word exceeds
+that threshold even with a fixed root AW marginal tangent and positive process.
+This D-class sufficient-premise failure is not a shipping counterexample.
+The shipping reader bound, justified causal image and full even/source/gauge
+cross Schur margin remain OPEN. No positive $c_{complete}$ or radius is claimed.
+Appendix~\ref{app:correlated-complete-gap} partitions (LR8)--(LR9) by
+actual causal origin into one endogenous/source/gauge quadratic matrix.
+Inherited endogenous auxiliary directions are folded into the actual lift
+or retained in its root, never declared independent disturbance.
+It substitutes the literal AW marginal receipt into the signed face block:
+the target-relative tangent is a causal sum of prior information-decrement
+readers and inherited tuner/target ports. Each covariance reader has the
+sharp same-correction bound
+$(dI_a|_{\rm cov})^2\le I_a(2P_{aa}-I_a)L_P$.
+The actual queued/process target lag and polynomial/PSD-repaired $Q_{aa}$
+remain. A released-coordinate Schur payment fails structurally when AW
+cross regression is nonzero; the actual $S$/magnetic conditional equations
+retain the shared tangent omitted by that D-class relaxation.
+On this qualified fibre, (CR12)--(CR13a) propagate one inherited
+history tangent through every literal covariance step and active AA deletion
+before polarizing the unsplit face formula. On its nuisance-supported
+intersection with zero target-relative receipts at all active and zero-gap
+faces, (CR16) proves the
+complete signed inequality
+$y^TG_{OO}y\ge\gamma_n\lambda y^TH_0y$,
+$\gamma_n\in(1.37935,1.37936)10^{-37}$, at pre-prediction roots after
+17 seconds of regular default A21. The actual intersection's rank is
+unproved; other directions are retained. Its substitution leaves exactly
+the full Schur cost (CR17); the nonzero-receipt directions require (CR17a)'s
+signed matrix, with its actual conditional cross terms. No uniform sign
+or inverse at a common positive reserve has been established.
+Equations (CR18)--(CR24) also insert the actual subsequent acc correction
+after the floor and due $S$/reset maps. Its same-tangent Fisher loss pays
+a fraction $1>\eta_i>C_i^+/s_i>0$ of the face regression-square coefficient,
+retaining the linked regression cross term. The original matrix is exactly
+$G_{OO}/\lambda=H_{acc}-R_{acc}^T\Omega R_{acc}$; paired acc loss is counted
+once. The weighted relative threshold (CR22), and the complementary
+$T dB T^T$ reader it retains, have no uniform certificate on the actual
+inherited image. (CR23)'s $>10^{-37}$ signed reserve applies only to its
+possibly empty nuisance-supported linked-reader kernel; no rank or full
+cross-margin promotion follows.
+The complete homogeneous correlated-lift margin and its full cross Schur
+remainder remain unproved. No source supply, finite-error or activation
+dependency is promoted from this calculation.
+For nonzero receipts, (CR25)--(CR28) short the actual full integrated
+process onto the original AW row and combine its Fisher loss with the
+following face. The allocated amount is uniformly greater than
+$5.2\,10^{-8}$ on the existing real regular profile. The exact joint
+completion retains the same inherited receipt and its coupled square,
+with effective gap $\Delta+q_{aw}\ge q_{aw}$.
+Actual active/inactive tangent cones cover nonzero scalar zero-gap
+directions; no receipt-kernel restriction is used in this calculation.
+The original matrix and (CR17a)'s conditional cross cost remain unchanged.
+The finite weighted receipt comparison (CR28) still has no uniform
+positive certificate; this is not closure of the odd blocker or full gap.
+Equations (CR29)--(CR35) derive the constrained dangerous-direction
+equations on justified fixed-word inherited slices and actual scalar
+face cones. The first retained full process justifies the zero-reserve
+inverse there. A nonpositive gap requires a feasible reconstructed
+receipt eigenmode at threshold one or above. At saturation its positive
+process/service action balances a nonzero receipt; zero signed gap does
+not imply zero action. Thus the complete-word zero-action kernel does
+not exclude this mode, and compactness alone does not establish its sign.
+Its actual shipping feasibility/payment and the full cross margin remain
+OPEN; no common positive reserve or compact forward domain is assumed.
+The joint completion (CR36)--(CR40) now uses the actual subsequent acc
+loss together with the process-backed regression form. It strictly lowers
+each paired negative receipt weight, retaining the same raw receipt row
+and every shared positive square in the original complete signed matrix.
+This changes both $D_{p\mu}$ and its positive Gram; threshold-one stationary
+directions remain invariant. Their feasible shipping exclusion and the
+full endogenous Schur sign are still unproved.
+Equations (CR41)--(CR43) insert that same positive action into the full
+homogeneous matrix and eliminate its odd receipt kernel, retaining every
+endogenous cross term. The resulting single remainder has receipt corner
+$S_c=Z_c^{-1}-\lambda E^T\bar D E$ and full Schur cost
+$T_c-B_c^TS_c^{-1}B_c$ when $S_c\succ0$. The identity is lossless on a
+justified linear slice; actual cones retain their feasibility restrictions.
+Neither sign nor a common positive reserve is proved.
+\end{lemma}
+
+\begin{lemma}[Planar guard inactivity --- PROVED in real arithmetic]
+For the specified exact planar MOVING record sampled at $h=1/200$ seconds,
+the literal seeded 25-Hz two-stage detector has RMS below $0.000531$ at every
+prefix. With the unchanged $0.03$ engagement threshold, the guard weight is
+identically zero, and conditioning returns the raw record for all time.
+This is a real-arithmetic source/guard component result, not a float32 or
+all-time magnetic-admission theorem.
+\end{lemma}
+
+\begin{lemma}[Planar generated tuner/clock feedback ports are one-way --- PROVED]
+On the deployed default Complementary wave-period path, the private Mahony,
+period estimator and tuner are measurement-only.  The literal schedule commits
+the previously staged tuple before the current MEKF innovation and stages the
+next tuple from the private vertical channel.  Hence the derivatives from MEKF
+mean or covariance to $(\tau,\sigma_{aw},R_S,T_S)$ and the AW target are
+exactly zero.  The direction branch may read MEKF state but has no return edge
+to the tuner.  Generated coefficients and the $S$/AW phases remain same-history
+one-way forcing; their all-time ranges and the remaining MEKF mean--covariance
+cell are separate obligations.
+On a magnetically locked Live continuation of the default Complementary
+profile, Appendix~\ref{app:locked-live-causal-reference} further proves zero
+reverse MEKF dependence of refinement and continuous offset/reference updates.
+The Live gravity-gate readout is passive while lock holds; reacquisition is
+excluded and the refinement yaw write remains an actual estimator jump.
+The same-statistics reference map obeys
+$\|B_r-B_a\|\le\|A(b-b_a)\|\le\|b-b_a\|$, giving the default real-operation
+bound $\|B_r\|\le(27/20)M$ from the existing delivered-field envelope $M$.
+Its complete paired source differential and endpoint gauge work are retained.
+This removes the homogeneous reference-feedback port, not the remaining
+complete MEKF storage-gap obligation or float reference qualification.
 \end{lemma}
 
 \begin{lemma}[Finite-error completed-square entry --- PROVED as an algebraic implication]
@@ -806,7 +1111,13 @@ This theorem is an inner-region result and does not by itself prove capture or e
 The end-to-end theorem follows from the proved lemmas above once the conditional source-uniform premises are discharged: finite construction/capture and H18 release, complete physical HistoryCell enclosure of the release/A21 chronology, strict recurring finite-error A21 contraction with every-prefix retention, forcing-aware quiet-tube boundedness, a justified MOVING target after the planar admission audit, nonlinear remainder control, float32 transfer, and regime composition.  These premises are not yet all certified; therefore regional practical stability is not yet claimed.
 \end{theorem}
 
+\begingroup
+% The proof appendix has more than 26 subsections; IEEEtran's default
+% alphabetic subsection counter cannot represent the full lemma chain.
+\renewcommand{\thesubsection}{\thesection-\arabic{subsection}}
+\renewcommand{\thesubsectiondis}{\arabic{subsection}.}
 \input{kalman_ou-w3d-stability-proofs.tex-part}
+\endgroup
 
 \section{Open theorem dependencies}
 The regional theorem is intentionally stated as OPEN until the following
@@ -851,10 +1162,14 @@ The shipping OU--III estimator is analyzed without replacing its state,
 adaptive tuning, covariance, correction chronology, bias projection or
 scheduler by a surrogate system.  The local real-arithmetic theorem and the
 structural lemmas listed above are proved under the stated qualifications.
-Absolute convergence of the physical attitude/accelerometer-bias decomposition
-is not an admissible global target because the measurement map has a genuine
-compatibility fibre.  The regional theorem is therefore formulated through
-bounded compatible motion and transverse contraction.  It remains open
+Universal absolute entry of the physical attitude/accelerometer-bias
+decomposition is already obstructed on indefinite STILL. A compatible tube
+is the required target there. For MOVING, whether the exact same-record pair
+is admitted for all time remains undecided. Its admission is required to
+exclude universal eventual retention in the specified absolute inner ball;
+this does not exclude every larger practical bound. The general justified
+quotient/tube theorem proceeds under existing MAGNETIC SERVICE independently
+of that witness admission. Uniform linked transverse coercivity remains open
 precisely on the dependencies listed above; no numerical diagnostic is used
 to fill an unproved implication.
 

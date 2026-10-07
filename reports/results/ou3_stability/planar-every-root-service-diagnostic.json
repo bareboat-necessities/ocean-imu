@@ -1,0 +1,20 @@
+{
+  "all_time_magnetic_service_verified": false,
+  "complete_one_second_roots": 7800,
+  "finite_margin_above_mu_M": 6.027301810736885,
+  "information_cell_perturbation_certified": false,
+  "joint_cell_forward_invariant": false,
+  "minimum_physical_plus_minus_2x2_information": 7.027301810736885,
+  "mu_M": 1.0,
+  "qualification": "OU3_PLANAR_EVERY_ROOT_SERVICE_DIAGNOSTIC_V1",
+  "result_type": "FINITE DIAGNOSTIC ONLY",
+  "root_stride_samples": 1,
+  "sample_range": [
+    40001,
+    48000
+  ],
+  "stream_sha256": "a1d0baed42d44034e71f9291fd4e4d6d363ddcb1e9db230335ec978562776cf5",
+  "theorem_closed": false,
+  "worst_root_accepted_magnetic_events": 25,
+  "worst_root_sample": 40008
+}

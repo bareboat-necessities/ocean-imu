@@ -1,8 +1,8 @@
 # Planar covariance parity and service reduction
 
 Status: analytical real-arithmetic factorization. The forward-invariant interval
-cell and all-time service lower bound remain OPEN until their numerical
-containment certificates are produced.
+cell and all-time service lower bound remain OPEN. The continuation is
+analytical only; finite replay and secants cannot supply containment constants.
 
 For the exact planar MOVING record, all nominal rotations are about body Y and
 all delivered accelerometer/magnetometer vectors lie in the XZ plane. In the
@@ -91,17 +91,19 @@ However, the desired service comparison is not a free monotonicity theorem. Stro
 
 ## Paired covariance--probe correction identity
 
-The correct same-history comparison variable is now explicit. For any positive-noise linear correction with S=HPH'+R, K=PH'S^-1, Joseph covariance P+=(I-KH)P(I-KH)'+KRK', and homogeneous probe Phi+=(I-KH)Phi, the information-form identity P+^-1=P^-1+H'R^-1H and I-KH=P+P^-1 imply exactly
+For S=HPH'+R, K=PH'S^-1, Joseph Pplus and Phi_plus=(I-KH)Phi,
 
-    Phi+' P+^-1 Phi+ = Phi-' P^-1 Phi-.
+    Phi_plus' Pplus^-1 Phi_plus = Phi' P^-1 Phi - (H Phi)' S^-1 (H Phi).
 
-Thus literal accelerometer and S=0 corrections do not consume covariance-metric heading/BG probe storage when P and Phi are propagated together. This is stronger and cleaner than trying to order covariance or gains separately. The Schur identity above explains how nuisance enters the correction, but no additional nuisance-loss charge is needed for this paired storage.
-
-This does not by itself prove the next magnetic service summand: prediction adds process covariance and therefore can reduce Phi'P^-1Phi, the magnetic row rotates with the nominal attitude, and reset changes coordinates. Those are now the only comparison losses that must be bounded between magnetic events. The reset singular values are given below. The remaining prediction loss should be evaluated directly from the literal Q/F factors on each 5-ms step, preserving the two parity blocks and scheduler phase.
+Every accelerometer, S and magnetic correction consumes its PSD action. Reset
+congruence preserves paired storage; prediction generally consumes additional
+storage. A product of prediction-retention factors times a replay service
+minimum is not a magnetic-service lower bound. All intervening correction
+losses must be carried. The old equality without the loss was erroneous.
 
 ## Attitude reset metric
 
-The shipping first-order attitude covariance/probe reset uses G=I-(1/2)[dtheta]x on the attitude block. Because [dtheta]x is real skew-symmetric, G'G=I+(1/4)(||dtheta||^2 I-dtheta dtheta'). Its singular values are exactly 1 and sqrt(1+||dtheta||^2/4) (twice). Thus the reset is invertible, has sigma_min=1, and its inverse has sigma_min=1/sqrt(1+||dtheta||^2/4). This closes the coordinate-conditioning formula needed by the comparison; a uniform numerical dtheta bound must still come from the same-history correction cell rather than an independent clamp.
+The shipping first-order attitude covariance/probe reset uses G=I+(1/2)[dtheta]x on the attitude block. Because [dtheta]x is real skew-symmetric, G'G=I+(1/4)(||dtheta||^2 I-dtheta dtheta'). Its singular values are exactly 1 and sqrt(1+||dtheta||^2/4) (twice). Thus the reset is invertible, has sigma_min=1, and its inverse has sigma_min=1/sqrt(1+||dtheta||^2/4). This closes the coordinate-conditioning formula needed by the comparison; a uniform numerical dtheta bound must still come from the same-history correction cell rather than an independent clamp.
 
 ## Scheduler coordinate is structurally invariant
 
@@ -117,31 +119,197 @@ This is not yet a shipping service proof. Promotion requires a formal Schur/cond
 
 No independent reimplementation of the 12x12 LIN prediction is needed. The proof instrumentation already receives F_LL and Q_LL after the shipping calls to IntegratedOUChain::transition/process_covariance, together with F_AA,Q_AA, the BA phi/Q block and every correction/reset in operation order. The factor stream therefore treats those callback matrices as the literal coefficients. Likewise S=0 is observed only when the shipping time_update calls periodic_update_due and then applyIntegralZeroPseudoMeas; the factor stream consumes that actual correction event instead of approximating a cadence. This removes the surrogate F_LL/Q_LL and scheduler chronology from the intended certificate. A temporary non-promoting diagnostic exports the first-200 literal prediction retention and S-event count to verify plumbing before interval promotion.
 
-## Remaining Poincare certificate
+## Analytical causal recurrence and local bounds
 
-The same-history enclosure now needs two independent parity cells rather than a
-generic 21x21 box. It must also carry the filtered adaptive parameters and
-pseudo-measurement phase because those are causal scheduling variables. For one
-20-s source period define the exact literal maps F_E,F_O on those cells.
+**PROVED — analytical:** Appendix `app:planar-causal-calculus` derives the
+source-bound causal state, same-history moving-center recurrence and linked
+prediction/correction/reset calculus. The center computes its own H/K/G from
+current state. It does not consume the observed-coefficient diagnostic below.
+The regular nonzero planar mean uses the even covariance block; the odd block
+remains driven by that mean and remains essential for magnetic service.
+Reference/gate feedback is retained separately from the one-way tuner ports.
 
-A valid certificate must provide outward-rounded cells C_E,C_O,C_T such that
+The correction differential retains dR and dK*r. In held-BA accelerometer
+corrections the innovation row retains BA uncertainty while the gain row omits
+BA columns and masks BA rows; the unmasked Riccati formula cannot replace that
+literal Joseph map. The exact finite gain remainder keeps its linked numerator
+before norms. Nominal aw requires a nominal bound, not physical acceleration.
 
-    F_E(C_E,C_T) subset int(C_E),
-    F_O(C_O,C_T) subset int(C_O),
-    F_T(C_T)     subset int(C_T),
+The literal raw Mahony normalization has an exact-rational local output norm
+squared bound (.995,1.001) on represented input norm squared [1/4,4], under the
+stated IEEE premises. This does not close the pitch/integral or startup tube.
+The magnetic-information resolvent bound is `(e*b^2+2*b*d+d^2)/(1-e)` for
+proven complete-window row and relative-innovation bounds. The required uniform
+center floor and common-storage radius remain null/OPEN. No new replay, secant,
+phase grid or covariance box is used to fill them. Historical finite diagnostic
+CI steps require explicit manual opt-in; analytical and regression gates remain.
 
-and then propagate each 2x2 service probe through every sample root in a
-one-second placed window. The phase-uniform result is
+## Complete phase-aware causal cell: OPEN
 
-    min_phi min(lambda_min(I_E(phi)),lambda_min(I_O(phi))) > 1.
+`planar_moving_center.py` implements a conditional moving covariance center
+on the complete observed 40000->48000 word, inherited without reseeding at
+44000. It recomputes each gain from the center's linked P,H,R, and retains
+the exact observed F/Q, resets, AW targets and S/AW event placements.
+**FINITE DIAGNOSTIC ONLY:** relative Frobenius center defects are .0003693294
+at 44000 and .0006158214 at 48000; the maximum over all 8000 sample prefixes
+is .0006179245. The corresponding fixed-initial-center drifts are .5378221
+and .4473738. BA-y variance grows by factors 1.13510 and 1.26914. The AW ages
+at these endpoints are 20 and 9 samples, with S elapsed times .0878590 and
+.0428655 seconds. They are coordinates from one observed chronology, not
+independent phase boxes or evidence of a 20-second return.
 
-The 1200-s replay is only a seed-selection diagnostic. Tail sample-root sweeping
-and 20-s Poincare drift are recorded separately and are not theorem evidence
-until the interval inclusion above succeeds.
+This reference still consumes the observed future H and reset G. Therefore
+its small defect cannot be inserted as a uniform q_P or used to build an
+autonomous all-time center. The calculation isolates finite transport defect
+from center drift; the next missing object is a linked future coefficient and
+arithmetic enclosure, plus the nonlinear mean/physical-gauge chart. The
+physical arc and its quadratic bias remainder are derived in M2a of
+`ou3-moving-quiet-compatibility.md`; its physical angle cap is not the required
+precision-normalized amplitude. No proof count or admission status changes.
 
-Structures preserved: literal 21-state chronology through an exact invariant
-permutation; actual covariance/gain/Joseph/reset; actual accepted magnetic
-events; coupled tuner/scheduler.
+The same diagnostic evaluates the **curved** physical arc in each exported
+actual-P metric. Over the finite 8000-prefix tail, the largest central-physical-
+chart gauge amplitude is 16.6316254 (sample 40001), and the largest transverse
+curvature is .184909934 (sample 47992). Both arc endpoints are tested as a
+linked one-parameter family. The transverse extremum formula is justified
+because t-sin(t) and 1-cos(t) increase for 0<=t<=theta; maximizing over the
+sign of beta makes the mixed term nonnegative. A positive gauge-coordinate
+derivative comparison validates its endpoint extrema. These floating results
+are **FINITE DIAGNOSTIC ONLY**, and the central physical chart is not the
+actual nominal-error chart. Neither supplies an all-time gauge/curvature bound.
 
-Relaxations introduced: none in the parity factorization. Any interval hull used
-later must be recorded as an explicit outer enclosure.
+The exact covariance decomposition is 12+9, but these blocks are NOT independent
+causal histories. A forward-invariant cell must retain the planar mean, both
+covariances, private raw Mahony quaternion/integral, guard, frequency/variance,
+staged/applied joint tuner tuple, S phase, AW synchronization clock and pending
+target, reference/refinement state and gates. The S interval alone is invariant;
+that is not covariance or service containment.
+
+Default AW synchronization is P -> P+Ew(Sigma-Pww)_+Ew'. It is not Loewner
+monotone. `planar_service_cell.py` proves its fixed-target Frobenius bound and
+the rank-4/even, rank-2/odd linked S/prediction commutator. The old scalar-norm
+bound from P<=Pupper and the orientation-independent rank-three accelerometer
+ceiling were false; corrected bounds and exact counterexamples are documented
+in the appendix. These are proof-code failures, not shipping counterexamples.
+
+`planar_service_stream.py` exports the true pre-prediction P, literal F/Q/R_S,
+all actual correction H/R/S/K/PCt/residuals, pre/post reset, AW target/pending
+state and sample state in operation order. `planar_service_audit.py` checks this
+word before measuring local defects. Its S/prediction commutator is not the
+complete scheduler-cell difference, which must also traverse acc/reset and
+possibly mag/AW operations and future mean-dependent coefficients.
+
+The entire covariance partial derivative, retaining all AW replacements, has
+finite twenty-second relative Frobenius gains approximately 0.74261434 and
+0.87382130. This is a frozen-coefficient Jacobian block in different root/end
+metrics, not a self-containing shipping cell. The full same-history mean and
+coefficient feedback remains open. Products of one-step/sync-local norms lose
+this cancellation and are retired after the failed grouping refinement.
+
+The literal private float Mahony observer is not exactly normalized. Its raw
+quaternion is used to produce vertical acceleration. The old interval reference
+also omitted gravity subtraction and lacks literal seeding/period/tuner/clock
+binding; it must not feed a shipping HistoryCell. The default entry now fails
+closed with an implementation-binding error. A conditional pitch/integral
+quadratic tube has an exact positive margin, but its every-step error and
+initialization caps still need source binding.
+
+One all-time component has closed: `planar_service_guard.py` proves that the
+exact planar record's seeded guard stays inactive in real arithmetic, since its
+detector RMS is below 0.000531<0.03. Float32 transfer is not inferred from this.
+
+For service, the orthogonal plus/minus transform gives parity information
+matrices I_E and I_O with each physical pair I_+=I_-=(I_E+I_O)/2. Therefore the
+required lower floor is for those physical 2x2 matrices, not the minimum of the
+parity eigenvalues and not a 4x4 eigenvalue. Every placed window/root and all
+future scheduler/adaptation phases must be covered after complete causal
+self-inclusion. Current all-time admission and exclusion remain OPEN.
+
+Structures preserved: full 21-state literal execution; parity is a lossless
+permutation; actual gains, Joseph, resets, AW synchronization and both clocks;
+physical bias/S histories are inherited and never reset by proof boundaries.
+
+Relaxations introduced: fixed-coefficient covariance derivatives and local
+covariance cells are explicitly subordinate blocks/outer sets, not reachable
+shipping trajectories. Numerical spectra and reference oracles are finite
+feasibility diagnostics only. No physical assumption, estimator parameter or
+quality gate has changed.
+
+## Quotient chart, metrics and complete native secants
+
+Status: **FINITE DIAGNOSTIC ONLY** for the numerical word. The physical line is
+fixed before any SVD. For R_bw=Rx(alpha)Ry(psi), the shipping left W->B error has
+dtheta=-Ry(-psi)e_x d(alpha), whereas db_a=g e_y d(alpha). Orienting the line
+with positive roll therefore gives r=(Ry(-psi)e_x,0,...,-g e_y). The positive
+BA-y handoff seed must not be used unchanged in this chart. At the central
+physical family the literal acc and mag rows annihilate this first-order line;
+the exact continuous nonlinear fibre is established separately in the physical
+compatibility certificate and its curvature must be retained.
+
+For P=L L', whiten by L^-1 and normalize u=L^-1 r/||L^-1 r||. Check uu' and
+I-uu' at the original dimensionless tolerance. This avoids the false absolute
+precision-scale failure in Pi'J-JPi; it does not relax SPD. If U spans u's
+orthogonal complement, T=L_N^-1 M L_0 gives
+M_Q=U_N' T U_0, C_Q=U_N' T u_0, and b_Q=U_N' L_N^-1 b. Retain
+xi_N=M_Q xi_0+b_Q+C_Q alpha_0 and a physical bound on alpha.
+
+On 40000 -> 44000 the F/(I-KH)/G homogeneous product has Euclidean gain 122.66,
+full covariance-metric gain .93478409 and quotient gain .87311969, with
+||C_Q||=.00022901228. The legacy positive-BA seed gives .87160337 and .48225195.
+A 60-digit endpoint check agrees; it does not enclose the rounded product.
+The homogeneous product omits nonlinear dK*r and prediction/injection/reset
+terms, so it is not the complete mean/P Jacobian. The private Mahony gain
+.58270576 is also not a MEKF mean gain; its old .05265365 coupling budget is
+withdrawn.
+
+The new native secant probe forks the complete inherited execution and runs the
+unchanged wrapper for all 21 mean and 231 covariance perturbations, at epsilon
+.01 and .005. Endpoint-metric quotient gains are about .87312274; the b_Q
+secant changes from .00253837 to .00425304, c_Q is about .0585573, and the full
+matrix step-halving difference is .01714895. Float secants are not derivatives
+or uniform bounds. The null fork is bitwise identical and the forcing/clock
+hashes match for these finite runs.
+
+A fixed-root covariance metric changes the comparison materially: rho_P about
+.991 and point drift q_P=.537822 require an optimistic zero-gauge relative
+radius above 60. A two-sided relative SPD ball requires radius below one.
+This **D_SUFFICIENT_BOUND_FAILURE** rejects that candidate representation,
+not the estimator or all possible phase/history-dependent tubes. Both gauge
+injections must be retained where present (native root-metric C_P about .00133,
+C_Q about .00022527). The scalar radius solver never promotes its algebra to
+forward invariance or service. Uniform derivatives, physical gauge amplitude,
+future forcing/center drift, exact S/AW phase coverage and every-window
+Delta I<6.024764605642485 remain OPEN.
+
+The numerical profile above is the existing planar probe configuration of the
+shipping wrapper (sigma_a=.2, adaptive S cadence). The AtomS3R sketch explicitly
+uses sigma_a=.12 and fixed S cadence, as well as its own gravity/magnetic-start
+settings. No transfer of the carried floor to that distinct profile is proved.
+
+
+## Qualified frontend domain and linked storage
+
+**PROVED — analytical implication under explicit arithmetic qualifications:**
+`planar_frontend_domain.py` derives the literal scalar rounding charges and
+closes private pitch/integral retention from the actual seed. It retains the
+non-unit raw quaternion, guard, represented gains and source sample phase.
+The real learned-reference cone has angle at most 11/5000, with
+`Bx>=75*(1-u)*(1-(11/5000)^2/2)`, `|Bz|<=75*(1+u)*(11/5000)`, and norm
+at most `75*(1+u)`, `u=2^-24`, retaining delivered magnetic-sample rounding.
+For exact-real unrounded samples the previous norm bound 75 still holds.
+Target-toolchain sqrt/exp qualification and float reference acquisition/averaging
+remain separate; this is not the complete inherited MEKF domain.
+
+**PROVED — analytical:** the same-operation covariance-induced gain-residual
+charge is at most `NIS*L_P/2` in posterior precision, where `L_P` is the actual
+homogeneous covariance Fisher-storage loss. The unmasked optimal correction
+proof retains P/H/r correlation. Held-BA, dH/dR, prediction, reset, AW,
+projection, moving quotient and gauge terms remain in the full word.
+`planar_complete_word_storage.py` derives its exact linked storage identity
+and supply matrix. A positive uniform word gap is **OPEN**: no frontend gain,
+finite NIS or factor-product gain supplies it. Radius and all-future service
+are not solved ahead of this missing inequality.
+
+Structures preserved: inherited source, frontend, reference and full joint
+mean/P word, including C_Q alpha. Relaxations introduced: stated arithmetic
+qualification and fixed regular branches for differential identities.

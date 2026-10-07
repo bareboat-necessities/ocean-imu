@@ -103,6 +103,78 @@ window must be contained in one quiet interval and have L <= H.
     return cap / length + rate * length / 4 + rate * max_step
 
 
+def continuous_fibre(g: F, cosine: F, sine: F, amplitude: F, nu_hi: F,
+                     slow_cap: F, slow_rate: F) -> dict:
+    """An exact same-record arc, not a family of perturbed estimator states.
+
+    alpha is constant on each complete physical history. Only the endpoints
+    have constant BA. The intermediate slow bias is a smooth body-frame
+    history; it is never imposed as an estimator OU law.
+    """
+    # Formal cancellation with cos(alpha),sin(alpha) left indeterminate.
+    # Monomials: cos(psi),sin(psi),a_x,cos(alpha),sin(alpha).
+    z = (0,)*5
+    def scalar(x):
+        return {z: F(x)} if x else {}
+    def variable(i):
+        m = list(z); m[i] = 1
+        return {tuple(m): F(1)}
+    c, s, ax, ca, sa = map(variable, range(5))
+    U = [[c, {}, _scale(s, -1)], [{}, scalar(1), {}], [s, {}, c]]
+    force = _mv(U, [ax, _scale(sa, -g), _scale(ca, -g)])
+    normal = [_scale(s, -1), {}, c]
+    bias = [_scale(_mul(_add(ca, scalar(-cosine)), n), g) for n in normal]
+    bias[1] = _add(bias[1], _scale(sa, g))
+    delivered = [_add(x, y) for x, y in zip(force, bias)]
+    expected = _mv(U, [ax, {}, scalar(-g*cosine)])
+    if delivered != expected:
+        raise ValueError('continuous physical sensor identity failed')
+    norm2 = (g*sine)**2
+    rate = g*(1-cosine)*amplitude*nu_hi
+    # On the principal constant-roll family, the exact slow-amplitude cap is
+    # cos(alpha)>=(1+c^2-(B/g)^2)/(2c). This is a necessary family bound,
+    # not a characterization of every compatible SLOW+FAST history.
+    cap_cos = (1+cosine*cosine-(slow_cap/g)**2)/(2*cosine)
+    if not 0 < cap_cos < 1:
+        raise ValueError('principal small-roll amplitude comparison unavailable')
+    cap_tan2 = (1-cap_cos)/(1+cap_cos)
+    angle_cap = F(23, 1000)
+    if 4*cap_tan2 >= angle_cap**2:
+        raise ValueError('principal-roll rational angle cap changed')
+    # theta=2 atan(1/200)<1/100. At the central physical chart the
+    # attitude increment is exactly -alpha Ry(-psi)e_x. BA adds curvature.
+    arc_angle = F(1, 100)
+    curvature2 = g*g*(arc_angle**6/36+arc_angle**4/4)
+    return {
+        'result_type': 'PROVED analytical theorem',
+        'parameter': 'constant alpha in [-theta,theta], tan(theta/2)=1/200',
+        'rotation': 'R_alpha=Rx(alpha) Ry(psi)',
+        'slow_bias': 'g sin(alpha) e_y + g (cos(alpha)-cos(theta)) Ry(-psi) e_z',
+        'fast_and_gyro_bias': 'identically zero',
+        'formal_sensor_polynomial_identity': delivered == expected,
+        'bias_norm_squared_identity': 'g^2 (1+c^2-2c cos(alpha)), c=cos(theta)',
+        'slow_bias_norm_squared_upper': str(norm2),
+        'slow_bias_rate_upper': str(rate),
+        'slow_amplitude_verified': norm2 <= slow_cap**2,
+        'slow_rate_verified': rate <= slow_rate,
+        'gravity_span_lower_unchanged': True,
+        'principal_family_slow_cap_cos_alpha_lower': str(cap_cos),
+        'principal_family_tan_half_angle_squared_upper': str(cap_tan2),
+        'principal_family_abs_angle_upper_rad': str(angle_cap),
+        'arc_abs_angle_upper_rad': str(arc_angle),
+        'arc_BA_tangent_remainder_norm_squared_upper': str(curvature2),
+        'BA_tangent_remainder': 'g (sin(alpha)-alpha) e_y + g (cos(alpha)-1) Ry(-psi) e_z',
+        'physical_angle_bound_is_normalized_gauge_bound': False,
+        'same_record_total_estimator_variation': 'zero, by deterministic prefix induction',
+        'nominal_root_perturbation_is_physical_fibre_variation': False,
+        'C_Q_alpha_may_be_dropped_from_error_word': False,
+        'uniform_precision_metric_gauge_bound_verified': False,
+        'actually_applied_magnetic_service_all_time_verified': False,
+        'structures_preserved': 'one complete physical history per alpha; identical delivered record and complete shipping state/mean/P/K/frontend/clocks',
+        'relaxations_introduced': 'none in the physical arc identity; all-time shipping admission remains open',
+    }
+
+
 def certificate() -> dict:
     limits = json.loads(CONSTANTS.read_text())
     m, b, mag = (limits[k] for k in ("marine_motion", "imu_bias", "magnetic_service"))
@@ -176,6 +248,8 @@ def certificate() -> dict:
         "physical_membership_checks": checks,
         "marine_and_slow_fast_verified": all(checks.values()),
         "sensor_identity": sensor_polynomial_identity(g, sine, cosine),
+        "continuous_moving_fibre": continuous_fibre(g, cosine, sine, amplitude, nu_hi,
+                                                     q(b['B_a_s_mps2']), da),
         "quiet_constant_record": {
             "scope": "ideal fixed magnetic record; projection onto attitude, not a full estimator boundedness theorem",
             "effective_total_bias_cap_mps2": str(effective_bias),

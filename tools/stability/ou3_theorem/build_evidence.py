@@ -62,7 +62,42 @@ def validate() -> dict:
     from tools.stability.ou3_theorem.word_diameter import certificate as diameter_certificate
     from tools.stability.ou3_theorem.imu_two_timescale_certificate import certificate as imu_certificate
     from tools.stability.ou3_theorem.moving_quiet_compatibility import certificate as compatibility_certificate
+    from tools.stability.ou3_theorem.planar_service_cell import certificate as planar_cell_certificate
+    from tools.stability.ou3_theorem.planar_service_guard import certificate as planar_guard_certificate
+    from tools.stability.ou3_theorem.planar_service_frontend_binding import certificate as planar_frontend_binding_certificate
+    from tools.stability.ou3_theorem.planar_service_mahony_tube import certificate as planar_mahony_tube_certificate
+    from tools.stability.ou3_theorem.planar_generated_port_structure import certificate as planar_generated_port_certificate
+    from tools.stability.ou3_theorem.planar_joint_phase_cell import calculate as planar_joint_threshold
+    def planar_joint_threshold_certificate():
+        return planar_joint_threshold(
+            json.loads((STATUS.parent/"planar-service-frechet-diagnostic.json").read_text()),
+            planar_mahony_tube_certificate(),
+            7.024764605642485)
+    from tools.stability.ou3_theorem.mahony_raw_normalization import certificate as raw_norm_certificate
+    from tools.stability.ou3_theorem.planar_linked_riccati_mean import certificate as linked_calculus_certificate
+    from tools.stability.ou3_theorem.planar_causal_calculus import certificate as causal_calculus_certificate
+    from tools.stability.ou3_theorem.planar_mean_covariance_ports import certificate as mean_ports_certificate
+    from tools.stability.ou3_theorem.planar_frontend_domain import certificate as frontend_domain_certificate
+    from tools.stability.ou3_theorem.planar_complete_word_storage import certificate as word_storage_certificate
+    from tools.stability.ou3_theorem.planar_innovation_storage import certificate as innovation_storage_certificate
+    from tools.stability.ou3_theorem.information_shear_word import certificate as shear_word_certificate
+    from tools.stability.ou3_theorem.measurement_frame import certificate as frame_loss_certificate
     for name, generate in (
+        ("measurement-frame-loss-certificate.json",frame_loss_certificate),
+        ("information-shear-word-certificate.json",shear_word_certificate),
+        ("planar-innovation-storage-certificate.json",innovation_storage_certificate),
+        ("planar-frontend-domain-certificate.json",frontend_domain_certificate),
+        ("planar-complete-word-storage-certificate.json",word_storage_certificate),
+        ("mahony-raw-normalization-certificate.json",raw_norm_certificate),
+        ("planar-linked-riccati-mean-certificate.json",linked_calculus_certificate),
+        ("planar-causal-calculus-certificate.json",causal_calculus_certificate),
+        ("planar-mean-covariance-ports.json",mean_ports_certificate),
+        ("planar-service-cell-certificate.json",planar_cell_certificate),
+        ("planar-service-guard-certificate.json",planar_guard_certificate),
+        ("planar-service-frontend-binding.json",planar_frontend_binding_certificate),
+        ("planar-service-mahony-tube.json",planar_mahony_tube_certificate),
+        ("planar-generated-port-structure.json",planar_generated_port_certificate),
+        ("planar-joint-phase-cell-threshold.json",planar_joint_threshold_certificate),
         ("moving-quiet-compatibility-certificate.json",compatibility_certificate),
         ("imu-two-timescale-certificate.json",imu_certificate),
         ("word-diameter-certificate.json",diameter_certificate),
@@ -91,6 +126,29 @@ def validate() -> dict:
         artifact=STATUS.parent/name
         if not artifact.is_file() or json.loads(artifact.read_text())!=generate():
             failures.append(f"committed {name} differs from exact reproduction")
+    from tools.stability.ou3_theorem.planar_service_verify import verify as verify_planar
+    try:
+        verify_planar(*(json.loads((STATUS.parent/name).read_text()) for name in (
+            "planar-service-stream-diagnostic.json", "planar-service-operation-audit.json",
+            "planar-service-frechet-diagnostic.json")))
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        failures.append("finite planar evidence verification failed: "+str(error))
+    from tools.stability.ou3_theorem.planar_native_secants import verify_report as verify_native_secants
+    from tools.stability.ou3_theorem.planar_moving_center import verify_report as verify_moving_center
+    try:
+        verify_moving_center(json.loads((STATUS.parent/'planar-moving-center-diagnostic.json').read_text()),
+                            json.loads((STATUS.parent/'planar-service-stream-diagnostic.json').read_text())['stream_sha256'])
+        verify_native_secants(json.loads((STATUS.parent/"planar-native-secants-diagnostic.json").read_text()))
+        quotient=json.loads((STATUS.parent/"planar-quotient-mean-diagnostic.json").read_text())
+        if quotient.get("result_type")!="FINITE DIAGNOSTIC ONLY" or quotient.get("quotient_dimension")!=20:
+            raise ValueError("invalid finite physical quotient diagnostic")
+        if quotient.get("stream_sha256")!=json.loads((STATUS.parent/"planar-service-stream-diagnostic.json").read_text())["stream_sha256"]:
+            raise ValueError("quotient and native word are not linked")
+        for key in ("complete_nonlinear_mean_derivative_computed","source_uniform_quotient_action_certified",
+                    "joint_cell_forward_invariant","all_time_magnetic_service_verified","theorem_closed"):
+            if quotient.get(key) is not False:raise ValueError("finite quotient promotion: "+key)
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        failures.append("finite quotient/secant evidence verification failed: "+str(error))
     from tools.stability.ou3_theorem.construction_history_diagnostic import driver_source, zero_true_bias_storage_audit
     construction=json.loads((STATUS.parent/"construction-history-feasibility.json").read_text())
     if construction.get("generated_driver_sha256") != hashlib.sha256(driver_source().encode()).hexdigest():

@@ -159,6 +159,61 @@ do not split the indefinite moving episode. In native float32 replay, delivered
 rounding is a separate sensor/arithmetic charge; the exact all-time identities are
 statements in real arithmetic, not claims of an all-time native certificate.
 
+## M2a. Continuous same-record physical arc
+
+**PROVED analytical theorem.** Put c=cos(theta), n(t)=Ry(-psi(t))e_z.
+For each constant beta in [-theta,theta], keep the same p(t), physical field
+and zero gyro/FAST biases, and set
+
+`R_beta=Rx(beta)Ry(psi), b_a,s,beta=g sin(beta)e_y+g(cos(beta)-c)n(t)`.
+
+The accelerometer record is exactly `Ry(-psi)(a_x e_x-g c e_z)` for every
+beta; the added n(t) term cancels the change in cos(beta). The gyro and magnetic
+records are unchanged because the constant left roll fixes e_x and does not
+alter R' dot(R). The endpoints are the original constant-bias pair. Interior
+biases are smooth SLOW histories, not physical OU priors. Orthogonality gives
+
+`||b_a,s,beta||^2=g^2(1+c^2-2c cos(beta)) <= g^2 sin(theta)^2`,
+
+`||dot b_a,s,beta|| <= g(1-c)*.02*pi/10 < 3.081e-6 < .001`.
+
+The gravity chord at the pitch extrema is `2 cos(beta) sin(.02)`, bounded
+below by the existing endpoint chord. All remaining MARINE bounds and every
+FAST primitive are unchanged. The certificate checks the sensor cancellation
+as a formal polynomial identity and the membership bounds as rationals.
+
+For this zero-FAST, constant-roll family on the principal angle branch, the
+SLOW amplitude cap B implies `cos(beta)>=(1+c^2-(B/g)^2)/(2c)=C` and
+`tan(beta/2)^2 <= (1-C)/(1+C)`. Exact rational comparison gives
+`|beta| < .023`. On the constructed arc, `|beta|<=theta<.01` is stronger.
+These physical angle bounds are **not** bounds on a precision-normalized gauge.
+
+In the left world-to-body chart relative to the central physical rotation,
+the attitude difference is exactly `-beta Ry(-psi)e_x`. The bias difference
+equals `g beta e_y` plus
+
+`eta_b=g(sin(beta)-beta)e_y+g(cos(beta)-1)n(t)`,
+
+with `||eta_b||^2 <= g^2(beta^6/36+beta^4/4)`. Thus the certified curve has
+transverse curvature; it is not its tangent line. Converting this remainder
+and beta to the actual nominal-error/precision chart still needs a uniform
+same-history metric and chart bound. It contributes to q_Q alongside the
+explicit `C_Q alpha` in `xi_N=M_Q xi_0+b_Q+C_Q alpha_0`.
+
+Identical records imply identical complete shipping executions by deterministic
+prefix induction, including P/K and every frontend/clock state. Hence the
+**total** estimator variation along this physical arc is zero. Native secants
+that perturb the nominal root at fixed record are different variations; their
+nonzero gauge-to-P block is not a total physical-arc derivative. This distinction
+does not delete `C_Q alpha`, OU mismatch, or correlated physical forcing from
+an error word. Nor does it establish service: the physical heading/BG probe
+directions depend on beta, and actual all-time information remains OPEN.
+
+Structures preserved: one persistent physical history per beta, identical full
+sensor records, all shipping state and physical source constraints. Relaxations
+introduced: none in this physical identity; no future estimator enclosure is
+inferred from it.
+
 ## M3. Full covariance metric: a lower comparison without deleting cross terms
 
 A deterministic shipping execution from the same initial state and identical
@@ -318,37 +373,27 @@ object; it is not substituted for the shipping channel and cannot itself
 promote admission.
 
 
-### M5a. Exact planar block to enclose
+### M5a. Exact parity blocks and physical probe restriction
 
-The small reference/full discrepancy is not accidental.  The witness record has
-gyro only on \(e_y\), all mean attitude propagation is therefore by rotations
-about \(e_y\), and the carried symmetry has no \(x/z\) quaternion component.
-The magnetic field and gravity/heading vectors both lie in the rotating \(x/z\)
-plane and remain orthogonal.  In the basis
-\[
- e_B(t)=R_y(-\psi)e_x,\qquad e_H(t)=R_y(-\psi)(0,\pm\sin\theta,\cos\theta),
- \qquad e_y,
-\]
-the magnetic heading residual is scalar: \(H_m e_H\) is parallel to \(e_y\)
-with norm 75.
+The scalar reference does not identify an invariant seven-state shipping block.
+The physical heading axis has a nonzero Y component on each member of the pair;
+it is not contained in the nominal XZ plane. Prediction, accelerometer/AW/BA
+coupling and resets retain both attitude/BG directions in the odd block.
+The lossless invariant covariance decomposition is the full 12+9 parity
+partition in `ou3-planar-parity-service.md`, with all within-parity cross terms.
 
-The literal accelerometer Jacobian has the same closure property.  Its
-\(e_y\)-residual couples the heading attitude coordinate to the \(e_y\)
-world-AW and body-BA coordinates; the S pseudo-row couples the corresponding
-\(v_y,p_y,S_y,a_{w,y}\) chain.  Thus the service calculation is contained in
-the seven-coordinate block
-\[
- (\theta_H,\ b_{g,H},\ v_y,\ p_y,\ S_y,\ a_{w,y},\ b_{a,y}).
-\]
-The complementary coordinates can affect this statement only if the literal
-prediction, Joseph updates or reset congruence create cross-block covariance.
-The next certificate must therefore verify algebraically, operation by
-operation, that the planar symmetry preserves this block (or enclose the
-off-block leakage if float32 arithmetic is included).  Once that is done, the
-all-time service problem reduces to a 7x7 causal Riccati/mean-factor recurrence
-with a 2-column heading/BG probe, rather than a 21-state interval enclosure.
+An orthogonal sum/difference transformation splits the four auxiliary probe
+columns into two two-column parity probes. This diagonalizes the auxiliary
+4x4 information. For either physical history, the two-column service matrix
+is the restriction back to that physical heading/BG plane: with the repository's
+sum/difference normalization it is `(I_even+I_odd)/2`, not either block alone
+and not the smallest eigenvalue of the auxiliary 4x4 matrix.
 
-This reduction does not delete the accelerometer, S, AW or BA structure:
-those four mechanisms are precisely why the block is seven-dimensional rather
-than the scalar 2x2 reference.  It also does not use the observed zero
-\(\hat b_{a,y}\) as an assumption.
+The covariance and mean evolve with the literal frontend, magnetic reference,
+S scheduler and separate AW-sync clock. A 20-second source period does not
+reset those phases. Positive-noise Riccati correction is Loewner monotone, but
+the actual additive AW floor is not; the linked cell algebra supplies the
+appropriate Frobenius bound. Corrected finite operation replay includes every
+prediction, correction, reset and AW event, with an untapped control.
+These facts do not constitute all-time gate/covariance continuation or the
+phase-uniform service certificate; those obligations remain OPEN.

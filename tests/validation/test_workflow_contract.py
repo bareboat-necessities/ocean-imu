@@ -261,6 +261,27 @@ class WorkflowContractTests(unittest.TestCase):
             end = proof.find("\n      - ", start + 1)
             self.assertNotIn("continue-on-error", proof[start:end if end >= 0 else None])
 
+    def test_proof_exploration_requires_explicit_dispatch(self):
+        proof = PROOF_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("run_finite_diagnostics:", proof)
+        self.assertIn("default: false", proof)
+        for name in (
+            "Export and audit actual planar word with untapped control",
+            "Compare complete shipping secants at two perturbation sizes without promotion",
+            "Replay actual accepted magnetic information without promotion",
+            "Diagnose 16s 30s 60s 100s linked prospective supply",
+        ):
+            start = proof.index("- name: " + name)
+            end = proof.find("\n      - ", start + 1)
+            block = proof[start:end if end >= 0 else None]
+            self.assertIn("github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics", block)
+        for name in ("Verify analytical algebra and fail-closed bindings",
+                     "Verify exact causal calculus and raw normalization",
+                     "Validate provenance and fail-closed status"):
+            start = proof.index("- name: " + name)
+            end = proof.find("\n      - ", start + 1)
+            self.assertNotIn("run_finite_diagnostics", proof[start:end if end >= 0 else None])
+
     def test_commit_job_validates_against_the_regenerated_commit(self):
         """The bundles are made at github.sha, so the gate must see that tree.
 

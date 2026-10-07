@@ -1,0 +1,98 @@
+{
+  "all_time_magnetic_service_verified": false,
+  "all_time_pre_normalization_domain_verified": false,
+  "certified_coarse_raw_squared_norm_interval": [
+    "199/200",
+    "1001/1000"
+  ],
+  "extended_domain_argument": "even exponent shifts leave s*y_seed^2 unchanged; all intermediate products remain normal; identical dot/rounding bound",
+  "extended_input_squared_norm_domain": [
+    "1/4",
+    "128"
+  ],
+  "linked_seed_squared_enclosure": [
+    "93/100",
+    "27/25"
+  ],
+  "magic_hex": "0x5f375a86",
+  "method": "exact rational extrema of three cubic strata; no sampled mantissas",
+  "newton_x_y_squared_bounds": [
+    "624777278860168757094868081269432437312194258625751581738643/627710173538668076383578942320766641610235544446403451289600",
+    "79228181403731957922052177921/79228153069531653329230233600"
+  ],
+  "pitch_integral_tube_verified": false,
+  "pre_component_scalar_squared_norm_bounds": [
+    "2620505215055042398389276477872624280115848315536765736541135550829/2632807291713929667447950692091760807972377621131995629844692992000",
+    "4388012152856393552220018568678783257050259966664640356604182528/4388009537397758053585735310570332403895442518741059762519714475"
+  ],
+  "premises": [
+    "IEEE binary32, round-to-nearest, gradual underflow, no unsafe reassociation",
+    "represented pre-normalization quaternion has exact squared norm in [1/4,4]",
+    "literal bit seed followed by exactly one Newton step"
+  ],
+  "qualification": "OU3_MAHONY_RAW_NORMALIZATION_RATIONAL_V1",
+  "raw_output_squared_norm_bounds": [
+    "2076177882978868627217196783958741676366405315807132011050589198848313743210143408467117867009/2085924839766513752338888384931203236916703822186083697516584288964261967205338006368152453120",
+    "195711905228487575566740199215947164370371595122000930467652475360010712162951003882359165154382365011389099/195711765244459267470581211285982701947578398007525988023119366772695188317525912329713293434623626523443200"
+  ],
+  "relaxations_introduced": [
+    "seed parity error enclosed by its interval",
+    "rounding error outer bounds"
+  ],
+  "result_type": "PROVED \u2014 analytical",
+  "seed_strata": [
+    {
+      "input_interval": [
+        "1",
+        "16777215/8388608"
+      ],
+      "s_seed_squared_bounds": [
+        "65695612510089/70368744177664",
+        "2517258125549000350223/2361183241434822606848"
+      ],
+      "seed": {
+        "a": "10202435/8388608",
+        "b": "1/4",
+        "epsilon_max": "1/33554432"
+      }
+    },
+    {
+      "input_interval": [
+        "2",
+        "15643917/4194304"
+      ],
+      "s_seed_squared_bounds": [
+        "4403370648315701933325/4722366482869645213696",
+        "34078821153556646559637/31875973759370105192448"
+      ],
+      "seed": {
+        "a": "8105283/8388608",
+        "b": "1/8",
+        "epsilon_max": "1/33554432"
+      }
+    },
+    {
+      "input_interval": [
+        "7821959/2097152",
+        "16777215/4194304"
+      ],
+      "s_seed_squared_bounds": [
+        "2201685464895322544775/2361183241434822606848",
+        "119083498972403727302549/127503895037480420769792"
+      ],
+      "seed": {
+        "a": "12299587/16777216",
+        "b": "1/16",
+        "epsilon_max": "1/67108864"
+      }
+    }
+  ],
+  "source": "src/ahrs/Mahony_AHRS.h: invSqrt<float> and update normalization",
+  "structures_preserved": [
+    "literal magic constant",
+    "one Newton step",
+    "raw quaternion",
+    "rounding charges"
+  ],
+  "theorem_closed": false
+}

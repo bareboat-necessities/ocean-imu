@@ -1,0 +1,34 @@
+{
+  "all_time_magnetic_service_verified": false,
+  "detector_RMS_upper_mps2": 0.0005304915255371991,
+  "detector_decay_upper": "23/50",
+  "engage_floor_mps2": "3/100",
+  "exp_lower_polynomial": "57955437298817837190256045931456272205682537467521/26424115200000000000000000000000000000000000000000",
+  "first_detector_output_norm_upper": "2456441009/9261000000000",
+  "float32_guard_transfer_verified": false,
+  "force_derivative_norm_upper": "106801783/1715000000",
+  "physical_or_shipping_constants_changed": false,
+  "proof_induction": [
+    "h1_k=gamma(h1_(k-1)+a_k-a_(k-1)), with h1_0=0",
+    "second detector LP is a convex average of h1, hence ||h2||<=2 sup ||h1||",
+    "sum of per-axis squared-output EWs is a convex average of ||h2||^2",
+    "RMS<engage_lo gives target=0, so seeded weight=0 and conditioned acceleration equals raw acceleration forever"
+  ],
+  "qualification": "OU3_PLANAR_GUARD_INACTIVITY_V1",
+  "relaxations_introduced": [
+    "source derivative and detector norm upper bounds only; no independently selected filter state"
+  ],
+  "result_type": "PROVED analytical theorem in real arithmetic; exact rational margins",
+  "scope": "specified planar source at h=1/200 s; seeded literal guard at default detector/engagement settings",
+  "second_detector_output_norm_upper": "2456441009/4630500000000",
+  "source_frequency_upper_rad_s": "11/35",
+  "strict_RMS_margin": "136458558991/4630500000000",
+  "structures_preserved": [
+    "same continuous source",
+    "seeded two-stage detector",
+    "per-axis RMS EW sum",
+    "literal target and weight slew"
+  ],
+  "successive_sample_force_difference_upper": "106801783/343000000000",
+  "theorem_closed": false
+}

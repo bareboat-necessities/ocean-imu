@@ -1,0 +1,49 @@
+{
+  "all_time_magnetic_service_verified": false,
+  "binary32_scope": "round-to-nearest ties-to-even, literal non-fused scalar evaluation",
+  "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+  "exact_operation_values": [
+    "1",
+    "8105283/8388608",
+    "1/2",
+    "8105283/16777216",
+    "15663055/33554432",
+    "2166787/2097152",
+    "16748831/16777216"
+  ],
+  "input_bits": "0x3f800000",
+  "inverse_sqrt_bits": "0x3f7f911f",
+  "pre_normalization_quaternion_identity_retained": true,
+  "qualification": "OU3_PLANAR_FRONTEND_BINDING_AUDIT_V1",
+  "raw_quaternion_squared_norm": "280523339866561/281474976710656",
+  "raw_quaternion_squared_norm_float": 0.9966191067667332,
+  "required_cell_coordinates": [
+    "planar nominal mean",
+    "P_even",
+    "P_odd",
+    "raw private Mahony quaternion and integral",
+    "guard detector/conditioning state",
+    "frequency/variance/period state",
+    "staged and applied joint tuner tuple",
+    "S scheduler elapsed",
+    "AW synchronization clock and pending target",
+    "reference/refinement/gate state"
+  ],
+  "result_type": "PROVED exact arithmetic counterexample to an idealized proof replica",
+  "shipping_counterexample": false,
+  "shipping_frontend_interval_binding_verified": false,
+  "source_sha256": {
+    "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "a5d00d557843dee246bf5bcb5cc1823097db7f66f0aa3f62852bfae2e9c7c6f9",
+    "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6"
+  },
+  "theorem_closed": false,
+  "unbound_reference_operations": [
+    "MahonyBox substitutes exact reciprocal square roots for the shipping float bit seed/Newton map",
+    "MahonyBox returns -down.dot(acc) without the shipping gravity subtraction",
+    "initial_adaptation does not execute the literal accelerometer tilt seeding/readiness gates",
+    "ClosedCausalAdaptationBox advances period before tuner use instead of the literal staged chronology",
+    "tuner profile constants, S cadence and independent AW-sync clock are not source-bound"
+  ],
+  "unit_norm_after_shipping_float_normalization": false
+}

@@ -11,6 +11,18 @@ def status_report() -> dict:
         "moving_constant_bias_sensor_compatibility":True,
         "same_record_full_metric_pair_lower_comparison":True,
         "planar_moving_all_time_magnetic_service_admission":False,
+        "planar_admission_cell_transport_algebra":True,
+        "planar_guard_inactive_all_time_real_arithmetic":True,
+        "planar_generated_tuner_clock_feedback_ports_one_way":True,
+        "planar_guard_float32_transfer":False,
+        "planar_literal_frontend_interval_binding":False,
+        "planar_private_Mahony_tube_source_bound":False,
+        "planar_joint_mean_covariance_tuner_clock_cell":False,
+        "planar_complete_nonlinear_derivative_certified":False,
+        "planar_uniform_quotient_covariance_cross_gains":False,
+        "planar_uniform_physical_gauge_amplitude_bound":False,
+        "planar_all_future_service_information_perturbation":False,
+        "ideal_frontend_reference_recursions_available":True,
         "planar_moving_full_shipping_counterexample_admitted":False,
         "two_timescale_accel_and_gyro_contract_formulation":True,
         "two_epoch_same_history_bias_envelope":True,
@@ -127,9 +139,9 @@ def status_report() -> dict:
         "source_uniform_shaped_physical_supply_numeric":False,
         "dependency_preserving_history_cell_schema":True,
         "joint_shaped_dissipation_supply_identity":True,
-        "causal_mahony_variance_tuner_interval_propagator":True,
-        "literal_wave_period_interval_propagator":True,
-        "sensor_to_joint_tuner_causal_chain_closed":True,
+        "causal_mahony_variance_tuner_interval_propagator":False,
+        "literal_wave_period_interval_propagator":False,
+        "sensor_to_joint_tuner_causal_chain_closed":False,
         "literal_covariance_gain_joint_supply_propagator":True,
         "causal_history_interval_propagator_complete":False,
         "verified_full_21_precision_enclosure":True,
@@ -147,7 +159,7 @@ def status_report() -> dict:
         "interval_source_coefficients_consumed_by_qcqp":True,
         "marine_existential_window_logic":True,
         "source_uniform_history_cover_generator":True,
-        "literal_history_cell_sample_propagator":True,
+        "literal_history_cell_sample_propagator":False,
         "explicit_release_set_gap_audited":True,
         "literal_golive_constructive_seed":True,
         "numeric_release_AG_BG_BA_partial":True,
@@ -368,7 +380,8 @@ def status_report() -> dict:
             "twenty_second_point_poincare_invalid_due_scheduler_phase":True,
             "scheduler_phase_coordinate_invariant":True,
             "oracle_rational_service_margin":True,
-            "paired_correction_storage_invariant":True,
+            "paired_correction_storage_invariant":False,
+            "paired_correction_storage_loss_identity":True,
             "paired_prediction_loss_identity":True,
             "planar_anisotropic_root_factors":True,
             "matrix_lower_factor_correction_transport":True,
@@ -376,21 +389,186 @@ def status_report() -> dict:
             "scheduler_phase_augmented_invariant_cell":False,
             "all_time_actual_magnetic_service_for_planar_pair":False,
             "finite_replay_is_all_time_certificate":False,
+            "finite_homogeneous_quotient_diagnostic":"planar-quotient-mean-diagnostic.json",
+            "finite_complete_native_secants":"planar-native-secants-diagnostic.json",
+            "continuous_same_record_physical_arc_verified":True,
+            "physical_angle_cap_is_precision_gauge_bound":False,
+            "nonlinear_fibre_remainder_requires_metric_bound":True,
+            "finite_conditional_moving_center":"planar-moving-center-diagnostic.json",
+            "conditional_center_is_autonomous_future_enclosure":False,
+            "causal_center_recurrence_defined":True,
+            "causal_center_compact_domain_verified":False,
+            "linked_noise_and_held_gain_differentials_verified":True,
+            "raw_mahony_local_normalization_certificate":"mahony-raw-normalization-certificate.json",
+            "raw_mahony_all_time_input_domain_verified":False,
+            "qualified_private_frontend_domain_certificate":"planar-frontend-domain-certificate.json",
+            "private_frontend_source_derived_error_caps":True,
+            "private_frontend_target_libm_qualification_verified":False,
+            "real_reference_cone_angle_cap":"11/5000",
+            "reference_float_accumulation_and_acquisition_verified":False,
+            "complete_word_storage_identity_certificate":"planar-complete-word-storage-certificate.json",
+            "same_operation_covariance_residual_loss_bound":True,
+            "innovation_storage_certificate":"planar-innovation-storage-certificate.json",
+            "innovation_variational_identity":True,
+            "qualified_first_handoff_real_comparison_bound":"21/1000",
+            "qualified_first_handoff_bound_is_prefix_invariant":False,
+            "held_BA_reachable_active_block_reduction":True,
+            "fixed_row_information_shear_residual_cancellation":True,
+            "information_shear_complete_word_gap_verified":False,
+            "information_shear_word_balance_certificate":"information-shear-word-certificate.json",
+            "information_shear_word_action_kernel_characterized":True,
+            "linked_suffix_score_normal_form_verified":True,
+            "generated_covariance_suffix_score_retained":True,
+            "score_range_aware_Fisher_loss_bound_verified":True,
+            "uniform_linked_suffix_score_charge":None,
+            "inherited_comparison_score_supply_identity_verified":True,
+            "bordered_comparison_process_correction_storage_identity":True,
+            "bordered_comparison_storage_uniform_coercivity":False,
+            "bordered_comparison_full_endogenous_absorption":False,
+            "bordered_restoration_equals_original_fixed_weight_gap":True,
+            "bordered_negative_budget_square_supplies_extra_gap":False,
+            "actual_shipping_causal_lift_uniform_coercivity_verified":False,
+            "locked_live_fixed_auxiliary_reference_work_is_zero":True,
+            "locked_live_reference_source_pairing_verified":True,
+            "locked_live_default_reference_real_amplitude_bound":"27/20 times delivered magnetic envelope; actual acquisition and stated defaults",
+            "remaining_MEKF_net_work_uniformly_dominated":False,
+            "uniform_signed_comparison_supply_bound":None,
+            "general_service_conditioned_theorem_waits_for_planar_admission":False,
+            "general_compatible_strata_and_uniform_transverse_gap_verified":False,
+            "measurement_frame_loss_certificate":"measurement-frame-loss-certificate.json",
+            "exact_moving_frame_measurement_feedback_reduction":True,
+            "AW_shear_constant_acc_row_verified":True,
+            "AW_row_covariance_port_coboundary_verified":True,
+            "AW_shear_applied_increment_frame_derivative_retained":True,
+            "AW_shear_combined_port_absorption_verified":False,
+            "AW_internal_frame_word_cancellation_verified":True,
+            "AW_frame_endpoint_quadratic_verified":True,
+            "AW_frame_endpoint_absorption_verified":False,
+            "actual_AW_sync_conditional_precision_nonincrease":True,
+            "conditional_AW_storage_split_verified":True,
+            "mag_S_conditional_AW_storage_invariant":True,
+            "qualified_conditional_AW_precision_upper":"15942618",
+            "qualified_conditional_AW_base_process_loss_lower":"1/100000000000000",
+            "conditional_AW_base_loss_is_complete_gap":False,
+            "conditional_mixed_word_completion_verified":True,
+            "conditional_mixed_reader_AW_frame_invariant":True,
+            "conditional_directional_score_reader_verified":True,
+            "conditional_linked_half_loss_bound_verified":True,
+            "complementary_base_packet_Schur_absorption_verified":True,
+            "fixed_half_charge_domination_is_necessary":False,
+            "isotropic_score_cancellation_extends_to_anisotropic_loss":False,
+            "supported_process_source_score_identity_verified":True,
+            "combined_process_word_directional_budget_verified":True,
+            "causal_generated_process_augmented_balance_verified":True,
+            "generated_process_square_Fisher_charge_verified":True,
+            "generated_process_cross_absorbed":False,
+            "uniform_combined_process_source_budget":None,
+            "held_BA_unsupported_score_uniform_boundary_bound":True,
+            "held_BA_unsupported_score_active_component_zero":True,
+            "uniform_active_comparison_loss_energy":None,
+            "coupled_process_score_generated_matrix_identity_verified":True,
+            "independent_E_L_cap_required_before_coupled_matrix":False,
+            "planar_odd_covariance_complete_signed_matrix_identity_verified":True,
+            "planar_odd_covariance_non_AW_generated_self_ports_zero":True,
+            "planar_odd_covariance_fibre_scope":"central planar regular A21 pure covariance partial derivative, fixed inherited source/private state; restrict to justified causal image, preserve other cross blocks",
+            "planar_odd_covariance_actual_AW_regression_reader_retained":True,
+            "uniform_planar_odd_covariance_regression_reader_margin":None,
+            "uniform_planar_odd_covariance_storage_margin":None,
+            "planar_odd_covariance_automatic_face_absorption_verified":False,
+            "planar_odd_covariance_scope_failure_class":"D_SUFFICIENT_BOUND_FAILURE",
+            "correlated_root_source_endpoint_matrix_identity_verified":True,
+            "inherited_endogenous_auxiliary_classified_as_external_supply":False,
+            "uniform_inherited_causal_origin_graph_qualification":False,
+            "uniform_correlated_homogeneous_storage_margin":None,
+            "causal_AW_marginal_receipt_identity_verified":True,
+            "same_correction_AW_information_Fisher_reader_verified":True,
+            "queued_process_AW_target_lag_retained":True,
+            "causal_AW_common_tangent_unsplit_matrix_verified":True,
+            "fixed_private_partial_origin_zero_energy_kernel_test_verified":True,
+            "qualified_nuisance_receipt_kernel_signed_gap_lower":"1/10000000000000000000000000000000000000",
+            "qualified_nuisance_receipt_kernel_scope":"CR12 actual pure odd covariance image, nuisance-supported root, zero target-relative receipt at every active or zero-gap face; nonempty word includes first prediction at root after 17 s regular default A21",
+            "actual_nuisance_receipt_kernel_nontriviality_verified":False,
+            "actual_receipt_cross_Schur_remainder_uniformly_verified":False,
+            "actual_acc_floor_common_tangent_payment_verified":True,
+            "actual_acc_floor_directional_paid_fraction_lower":"Cplus/s; same operation, not a uniform word margin",
+            "uniform_actual_acc_floor_paid_fraction":None,
+            "actual_acc_floor_linked_regression_cross_retained":True,
+            "actual_acc_floor_complete_reader_uniformly_verified":False,
+            "qualified_acc_paired_reader_kernel_signed_gap_lower":"1/10000000000000000000000000000000000000",
+            "actual_acc_paired_reader_kernel_nontriviality_verified":False,
+            "actual_process_face_nonzero_receipt_joint_inequality_verified":True,
+            "qualified_original_AW_process_short_lower":"0.000000052",
+            "scalar_odd_AW_nonzero_zero_gap_branches_accounted":True,
+            "process_face_receipt_completed_square_retained":True,
+            "constrained_AW_dangerous_direction_equations_derived":True,
+            "fixed_word_AW_receipt_zero_reserve_inverse_justified":True,
+            "zero_signed_AW_gap_implies_zero_Fisher_action":False,
+            "feasible_balanced_AW_receipt_eigenmode_excluded":False,
+            "joint_process_face_acc_receipt_weight_reduction_verified":True,
+            "joint_receipt_weight_reduction_uniform_gap_verified":False,
+            "uniform_process_face_signed_receipt_margin":None,
+            "uniform_causal_AW_deficit_reader_margin":None,
+            "causal_AW_deficit_reader_uniformly_absorbed":False,
+            "linked_exogenous_supply_matrix_certified":False,
+            "planar_fixed_input_even_process_dF_dQ_zero":True,
+            "planar_quaternion_process_mean_defect_retained":True,
+            "planar_even_process_auxiliary_charge_real_bound":True,
+            "uniform_conditional_score_margin_verified":False,
+            "uniform_generated_packet_absorption_verified":False,
+            "central_planar_acc_physical_curvature_charge_verified":True,
+            "central_planar_acc_charge_uses_nominal_AW_BA_boxes":False,
+            "qualified_planar_magnetic_coupled_loss_fraction":"9/10",
+            "qualified_planar_magnetic_loss_is_complete_word_contraction":False,
+            "qualified_service_pitch_variance_upper":"3/5000",
+            "qualified_service_BG_y_variance_upper":"1/4000",
+            "qualified_planar_pitch_row_loss_coefficients":["1125","1260"],
+            "magnetic_loss_activation_domain_forward_invariant":False,
+            "source_uniform_nominal_NIS_cap":None,
+            "uniform_complete_word_storage_margin":None,
+            "uniform_center_service_floor":None,
+            "analytical_invariant_radius":None,
+            "homogeneous_factor_product_is_complete_nonlinear_derivative":False,
+            "private_Mahony_gain_is_complete_mean_gain":False,
+            "scalar_radius_solver_can_certify_admission":False,
             "homogeneous_kernel_results_imply_physical_identifiability":False,
             "physical_bias_OU_mismatch_retained":True,
             "shipping_instability_claimed":False,
             "extra_physical_assumptions_adopted":False,
         },
         "next_controlling_obligation":(
-            "Prove forcing-aware quiet-compatible boundedness using the exact constant-record fibre and persistent source charges. "
-            "The exact planar MOVING pair satisfies current 30-s span and SLOW+FAST limits with constant bias and identical sensor records; "
-            "the proposed two-epoch span/bias separation has an exact zero direction. "
-            "The ideal mean execution and covariance admit an exact 12+9 parity factorization. A 20-s point return is invalid because the progress-preserving S scheduler phase does not return; the invariant cell must carry that phase. "
-            "Certify a forward-invariant one-period enclosure and phase-uniform one-second actually applied MAGNETIC SERVICE for that SAME shipping history before declaring "
-            "a fully admitted MOVING obstruction or asserting absolute inner entry from the existing assumptions. "
-            "The fresh 240/1200-s replays and final-cycle all-IMU-root service sweep are non-promoting finite evidence; the tail sweep remains above 7 but is not an interval/all-time certificate. "
-            "Keep construction/H18/refinement/release, the full persistent HistoryCell, coupled tuner, actual covariance/gains and BA physical forcing. "
-            "Homogeneous kernel/action results and completed-square algebra remain valid but do not identify the physical tilt/BA decomposition. "
-            "All-time device qualification, nonlinear/prefix retention, float32 transfer and regime composition remain OPEN."
+            "Follow docs/ou3-information-shear-strategy.md: identify symmetry/kernels, justify compatible strata/tubes, "
+            "derive linked dissipation, bound actual forcing, then prove only necessary activation facts. "
+            "The exact information-shear word balance and action kernel are proved, with reset/AW/projection and moving-projector ports retained. "
+            "The moving-frame planar magnetic substep retains 9/10 of linked mean/covariance loss on its stated activation domain; "
+            "prior-observation readers derive pitch/BG covariance ceilings and quantitative pitch-row loss. "
+            "The exact suffix-score normal form cancels optimal additive local scores and retains all generated covariance suffix ports. "
+            "Its loss-generated score charge is bounded by inherited root comparison energy plus signed source work minus realized NIS; physical/kernel forcing remains. "
+            "The AW shear makes the accelerometer row constant and cancels its covariance row port as an exact connection difference, preserving qualified magnetic loss. "
+            "Internal frame connections now cancel in the complete suffix word, leaving an exact three-dimensional signed AW endpoint quadratic. "
+            "Conditional AW storage is invariant under optimal additive mag/S rows; literal integrated OU noise gives a qualified positive base-action block loss greater than 1e-14. "
+            "The existing LIN path gives conditional AW precision below 15942618 on its qualified regular A21 domain. "
+            "The actual conditional root score block now has an explicit three-row Schur reader in C,T,q, and exact completion bounds generated mixed work by one linked packet while retaining half the net conditional root form. "
+            "The state-dependent AW frame preserves the conditional storage and score reader; endpoint frame work stays in transformed complementary packets without double counting. "
+            "Use the exact complementary base Schur absorption; the fixed half-charge domination is sufficient, not necessary, and fails a strictly contractive formal base specialization. Use the combined supported process/source score budget and causal augmented process balance, retaining unsupported scores and the unabsorbed feedback cross term. Prove a uniform directional score margin and domination of the remaining grouped signed work, retaining generated covariance suffix scores and endpoint gauge. "
+            "These net comparisons, not conditional precision finiteness, remain unproved; no uniform complete margin is certified. "
+            "CR25--CR28 combine the actual full integrated-process AW short with nonzero face receipts, retaining the completed square and scalar zero-gap directional cones; the effective gap is Delta+q_aw>=q_aw>5.2e-8. This finite joint charge is not a positive receipt margin: the original CR17a cross cost and full endogenous Schur sign remain OPEN. "
+            "CR29--CR35 derive the constrained dangerous-direction stationarity equations on justified fixed-word inherited slices and actual scalar face cones. The retained full process justifies H_pmu^-1 at zero reserve on each nonzero slice, not a common positive reserve. A nonpositive gap requires a reconstructed feasible receipt eigenmode with chi>=1; no particular eigenvector is proved feasible. Saturation has H y=L^T D mu and positive Fisher action equal to nonzero receipt work, so the existing zero-action kernel does not exclude it. CR36--CR40 jointly complete the same process/face/acc conditional and regression losses, strictly lower every actually paired receipt weight, retain the same L_pmu reader and all shared positive squares, and substitute Hbar-L_pmu^T Dbar L_pmu into CR28. Threshold-one stationary directions are invariant because the positive Gram changes on those same receipt directions. Exclude or pay the feasible eigenmode using that exact integrated OU/S/acc/magnetic matrix; no uniform gap or compact forward domain is inferred. "
+            "Use OF1a's same process information matrix to keep E_L,S_q,-2C_W and generated work coupled before any norm. "
+            "CR41--CR43 eliminate the paid odd receipt kernel in that same full endogenous matrix, with K_0=lambda*Hbar positive on each justified injective fixed-word slice. The single remainder R_W(c) retains the receipt corner S_c=Z_c^-1-lambda*E^T*Dbar*E and every metric/generated/process/source/reset/inherited/gauge cross term; when S_c>0 its remaining full Schur cost is T_c-B_c^T*S_c^-1*B_c. Neither receipt sign nor the full remainder or a common positive-reserve inverse is proved. Decide this one feasible full remainder using the same shipping operators, retaining actual cone restrictions; no odd margin or compact forward domain is assumed. "
+            "The actual central-planar pure odd-covariance partial matrix is lambda*(H_W-R_W^T R_W), with full transported process/S/magnetic Fisher loss and the original AW-face regression reader d(TBT^T)/(C+Delta). "
+            "Its exact relative Schur threshold is one; a formal anisotropic correction--prediction--floor scope test exceeds one even with D_AA,0=0 and positive process. This D failure is not shipping reachability or instability. "
+            "Prove the reader comparison on the actual causal image and retain its full even/source/gauge cross Schur cost; no independent E_L cap is imposed as a prerequisite. "
+            "Prove the single linked transverse gap uniformly under existing MAGNETIC SERVICE: compare its actual physical probes "
+            "to the complete coupled sheared action, retain process/S action, and absorb signed endogenous work and gauge transport. "
+            "The physical same-record tangent is forced and is not automatically the homogeneous or action kernel. "
+            "A positive uniform c, branchwise compatibility relation, required metric/reference/chart bounds and actual source/gauge/arithmetic charges remain OPEN. "
+            "Only after those dependencies close may radius and every-prefix practical stability be established. "
+            "General service-conditioned dissipativity does not wait for special planar admission. Separately prove or disprove the planar family's "
+            "all-time applied magnetic service; finite floors near 7.02 do not certify it. Full admission rules out eventual retention "
+            "in the specified absolute V<.0225 ball, not divergence or every larger absolute practical bound. "
+            "Preserve construction/H18/refinement/release, physical S, held BA, reference/gates and S/AW clocks without restart. "
+            "Qualified first-Live bounds are boundary implications only. No replay, secant, sampled grid or empirical contraction campaign. "
+            "Nonlinear retention, target arithmetic and STILL/TRANSITION/MOVING composition remain OPEN."
+
         ),
     }

@@ -2,6 +2,11 @@ name: ou3-stability-proof
 # proof-source attribution refresh
 on:
   workflow_dispatch:
+    inputs:
+      run_finite_diagnostics:
+        description: "Explicitly rerun historical finite diagnostics (never theorem certificates)"
+        type: boolean
+        default: false
   pull_request:
     paths:
       - "AGENTS.md"
@@ -13,6 +18,7 @@ on:
       - "tests/kalman_ou_iii/**"
       - "docs/ou3-*.md"
       - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
+      - "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part"
       - "reports/results/ou3_stability/**"
       - ".github/workflows/ou3-stability-proof.yml"
   push:
@@ -26,6 +32,7 @@ on:
       - "tests/kalman_ou_iii/**"
       - "docs/ou3-*.md"
       - "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex"
+      - "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part"
       - "reports/results/ou3_stability/**"
       - ".github/workflows/ou3-stability-proof.yml"
 concurrency:
@@ -35,6 +42,7 @@ permissions:
   contents: read
 jobs:
   periodic-witness:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -74,39 +82,47 @@ jobs:
       - name: Compile theorem tooling
         run: python3 -m py_compile tools/stability/ou3_theorem/*.py
       - name: Run source-uniform interval release diagnostic
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         continue-on-error: true
         run: |
           set -o pipefail
           python3 -m tools.stability.ou3_theorem.run_interval_release | tee /tmp/ou3-interval-release.json
 
       - name: Diagnose physical HistoryCell subdivision
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         continue-on-error: true
         run: |
           set -o pipefail
           python3 -m tools.stability.ou3_theorem.run_physical_history_subdivision | tee /tmp/ou3-physical-subdivision.json
 
       - name: Compute literal A21 release outer storage first
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
           python3 -m tools.stability.ou3_theorem.release_outer_storage_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-release-outer-early.json
           cat /tmp/ou3-release-outer-early.json
       - name: Audit literal A21 release outer storage without theorem promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
           python3 -m tools.stability.ou3_theorem.release_outer_storage_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-release-outer.json
           cat /tmp/ou3-release-outer.json
       - name: Diagnose held-BA 17-s LIN word without theorem promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: |
           python3 -m tools.stability.ou3_theorem.held_ba_lin_word_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-held-ba-lin-word.json
           cat /tmp/ou3-held-ba-lin-word.json
       - name: Audit carried source readout without promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: python3 -m tools.stability.ou3_theorem.ag_readout_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-source-readout.json
       - name: Diagnose 16s 30s 60s 100s linked prospective supply
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: |
           rm -rf /tmp/ou3-linked-horizons
           python3 -m tools.stability.ou3_theorem.linked_supply_source_diagnostic --export --directory /tmp/ou3-linked-horizons --output /tmp/ou3-linked-horizons.json --eigen /usr/include/eigen3 --horizons 16,30,60,100
           cat /tmp/ou3-linked-horizons.json
       - name: Diagnose shipping shaped Q on 60s and 100s words
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: |
           python3 -m tools.stability.ou3_theorem.adaptive_shaped_storage_diagnostic --directory /tmp/ou3-linked-horizons --output /tmp/ou3-shaped-storage.json --horizons 16,30,60,100
           python3 -m tools.stability.ou3_theorem.adaptive_shaped_q_diagnostic --directory /tmp/ou3-linked-horizons --output /tmp/ou3-shaped-q.json --horizons 60,100
@@ -150,6 +166,7 @@ jobs:
           retention-days: 7
           if-no-files-found: error
       - name: Probe commensurate periodic fast-gyro candidate without promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
           python3 -m tools.stability.ou3_theorem.periodic_fast_gyro_counterexample --native --eigen /usr/include/eigen3 > /tmp/ou3-periodic-fast-gyro.json
@@ -171,33 +188,45 @@ jobs:
       - name: Run literal shipping regressions
         run: ./tests/kalman_ou_iii/shipping_contract-test && ./tests/kalman_ou_iii/shipping_transition-test && ./tests/kalman_ou_iii/sampled_capture-test && ./tests/kalman_ou_iii/regime_ambiguity-test && ./tests/kalman_ou_iii/gyro_bias_projection-test
       - name: Diagnose 17-s terminal-AW D2 reader ratio without promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: python3 -m tools.stability.ou3_theorem.aw_port_17s_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-aw-port-17s.json
       - name: Diagnose paired physical source bridge without promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: |
           python3 -m tools.stability.ou3_theorem.paired_two_abel_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-paired-physical.json
           cat /tmp/ou3-paired-physical.json
       - name: Diagnose linked finite-supply ratio without promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: |
           mkdir -p /tmp/ou3-linked
           python3 -m tools.stability.ou3_theorem.linked_supply_source_diagnostic --directory /tmp/ou3-linked --output /tmp/ou3-linked.json --export --eigen /usr/include/eigen3
           cat /tmp/ou3-linked.json
       - name: Audit exact same-cell moving row groups without promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: python3 -m tools.stability.ou3_theorem.moving_transport_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-moving-transport.json
       - name: Reproduce the committed world-frame audit without promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: python3 -m tools.stability.ou3_theorem.world_frame_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-world-frame.json --expect reports/results/ou3_stability/world-frame-source-feasibility.json
       - name: Reproduce the committed AW tracking audit without promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: python3 -m tools.stability.ou3_theorem.aw_tracking_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-aw-tracking.json --expect reports/results/ou3_stability/aw-tracking-source-feasibility.json
       - name: Check carried signed AW reader against analytic margin
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: python3 -m tools.stability.ou3_theorem.aw_signed_mean_reader_diagnostic
       - name: Reproduce the committed information-ratio audit without promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: python3 -m tools.stability.ou3_theorem.information_ratio_source_diagnostic --eigen /usr/include/eigen3 --output /tmp/ou3-information-ratio.json --expect reports/results/ou3_stability/information-ratio-source-feasibility.json
       - name: Check signed adjoint compatibility on the carried word
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: python3 -m tools.stability.ou3_theorem.signed_temporal_diagnostic --output /tmp/ou3-signed-adjoint.json
       - name: Check the forced signed balance on a carried moving word
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: python3 -m tools.stability.ou3_theorem.signed_temporal_balance --export --directory /tmp/ou3-signed-balance --output /tmp/ou3-signed-balance.json
       - name: Audit carried construction stress history without theorem promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: python3 -m tools.stability.ou3_theorem.construction_history_diagnostic --output /tmp/ou3-construction.json
       - name: Enclose carried mean action and record the failed uniform separation attempt
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: |
           python3 -m tools.stability.ou3_theorem.construction_mean_action --export --directory /tmp/ou3-mean --output /tmp/ou3-mean-diagnostic.json
           python3 -m tools.stability.ou3_theorem.construction_mean_action --intervals --directory /tmp/ou3-mean --output /tmp/ou3-mean-enclosure.json
@@ -242,15 +271,84 @@ jobs:
           python3 -m tools.stability.ou3_theorem.build_evidence
           python3 -m unittest discover -s tests/validation -p 'test_ou3_*.py' -v
       - name: Install native diagnostic dependencies
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: sudo apt-get update -qq && sudo apt-get install -y g++ libeigen3-dev
       - name: Replay actual accepted magnetic information without promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         run: |
           python3 -m tools.stability.ou3_theorem.moving_compatibility_diagnostic --eigen /usr/include/eigen3 --duration 1200 --output /tmp/ou3-moving-compatibility.json
           cat /tmp/ou3-moving-compatibility.json
       - uses: actions/upload-artifact@v6
-        if: ${{ always() }}
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
         with:
           name: ou3-moving-compatibility-carried
           path: /tmp/ou3-moving-compatibility.json
           retention-days: 7
           if-no-files-found: warn
+
+  planar-service-cell:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install planar audit dependencies
+        run: |
+          python3 -m pip install numpy scipy mpmath
+          sudo apt-get update -qq
+          sudo apt-get install -y clang libeigen3-dev
+      - name: Verify analytical algebra and fail-closed bindings
+        run: |
+          python3 -m unittest tests.validation.test_ou3_planar_moving_center tests.validation.test_ou3_moving_quiet_compatibility -v
+          python3 -m unittest tests.validation.test_ou3_compatibility_quotient tests.validation.test_ou3_planar_native_secants -v
+          python3 -m unittest discover -s tests/validation -p 'test_ou3_planar_service_*.py' -v
+          python3 -m unittest tests.validation.test_ou3_planar_information_ceilings tests.validation.test_ou3_planar_joint_phase_cell tests.validation.test_ou3_planar_generated_port_structure tests.validation.test_ou3_planar_every_root_service tests.validation.test_ou3_planar_mean_covariance_ports tests.validation.test_ou3_planar_common_norm_radius tests.validation.test_ou3_planar_linked_riccati_mean tests.validation.test_ou3_causal_tuner_interval -v
+          python3 -m tools.stability.ou3_theorem.build_evidence
+      - name: Verify exact causal calculus and raw normalization
+        run: python3 -m unittest tests.validation.test_ou3_planar_causal_calculus tests.validation.test_ou3_mahony_raw_normalization -v
+      - name: Verify inherited innovation and linked storage identities
+        run: python3 -m unittest tests.validation.test_ou3_measurement_frame tests.validation.test_ou3_information_shear_word tests.validation.test_ou3_planar_innovation_storage tests.validation.test_ou3_planar_complete_word_storage -v
+      - name: Export and audit actual planar word with untapped control
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
+        run: |
+          python3 -m tools.stability.ou3_theorem.planar_service_stream --cxx clang++ --eigen /usr/include/eigen3 --duration 240 --tail 40 --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-stream.json
+          python3 -m tools.stability.ou3_theorem.planar_service_audit --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-operation-audit.json
+          python3 -m tools.stability.ou3_theorem.planar_service_frechet --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-frechet.json
+          python3 -m tools.stability.ou3_theorem.planar_moving_center --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-moving-center.json
+          python3 -m tools.stability.ou3_theorem.planar_service_verify --stream-report /tmp/ou3-planar-stream.json --operation-audit /tmp/ou3-planar-operation-audit.json --frechet /tmp/ou3-planar-frechet.json
+          python3 -m tools.stability.ou3_theorem.planar_every_root_service --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-every-root.json
+          python3 -m tools.stability.ou3_theorem.planar_linked_port_word --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-linked-ports.json
+          python3 -m tools.stability.ou3_theorem.planar_coupled_tangent --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-coupled-tangent.json
+          python3 -m tools.stability.ou3_theorem.planar_parity_mean_tangent --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-parity-mean.json
+          python3 -m tools.stability.ou3_theorem.planar_compatibility_quotient_mean --stream /tmp/ou3-planar-operations.bin --output /tmp/ou3-planar-quotient-mean.json
+          python3 -m tools.stability.ou3_theorem.planar_common_norm_radius --output /tmp/ou3-planar-radius.json
+          python3 -m tools.stability.ou3_theorem.planar_service_mahony_tube > /tmp/ou3-planar-mahony.json
+          python3 -m tools.stability.ou3_theorem.planar_joint_phase_cell --frechet /tmp/ou3-planar-frechet.json --mahony /tmp/ou3-planar-mahony.json --service-floor 7.024764605642485 --output /tmp/ou3-planar-joint-threshold.json
+      - name: Compare complete shipping secants at two perturbation sizes without promotion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
+        run: python3 -m tools.stability.ou3_theorem.planar_native_secants --cxx clang++ --eigen /usr/include/eigen3 --output /tmp/ou3-planar-native-secants.json
+      - uses: actions/upload-artifact@v6
+        if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.run_finite_diagnostics }}
+        with:
+          name: ou3-planar-service-cell-diagnostics
+          path: |
+            /tmp/ou3-planar-stream.json
+            /tmp/ou3-planar-operation-audit.json
+            /tmp/ou3-planar-frechet.json
+            /tmp/ou3-planar-joint-threshold.json
+            /tmp/ou3-planar-every-root.json
+            /tmp/ou3-planar-radius.json
+            /tmp/ou3-planar-linked-ports.json
+            /tmp/ou3-planar-coupled-tangent.json
+            /tmp/ou3-planar-parity-mean.json
+            /tmp/ou3-planar-quotient-mean.json
+            /tmp/ou3-planar-native-secants.json
+            /tmp/ou3-planar-moving-center.json
+          retention-days: 7
+          if-no-files-found: error

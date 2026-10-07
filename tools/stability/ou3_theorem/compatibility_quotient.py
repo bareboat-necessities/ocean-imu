@@ -7,27 +7,45 @@ not assert that the line is admitted for all time under MAGNETIC SERVICE.
 from __future__ import annotations
 import numpy as np
 
-def quotient(P,line,tol=2e-10):
-    P=np.asarray(P,float); r=np.asarray(line,float).reshape(-1)
-    if P.ndim!=2 or P.shape[0]!=P.shape[1] or P.shape[0]!=r.size:
+def whitened_line(P,line,tol=2e-10):
+    """P=L L', y=L^-1 x; check projector identities in this J-isometry.
+
+    An absolute residual in Pi' J-J Pi depends on the units/scale of P and
+    falsely rejected the shipping word.  The same tolerance is applied to
+    dimensionless whitened identities, without relaxing the SPD requirement.
+    """
+    P=np.asarray(P,float); line=np.asarray(line,float).reshape(-1)
+    if P.ndim!=2 or P.shape[0]!=P.shape[1] or P.shape[0]!=line.size:
         raise ValueError("dimension mismatch")
-    J=np.linalg.inv(P)
-    q=float(r@J@r)
-    if not(q>0 and np.isfinite(q)): raise ValueError("nonzero finite line in SPD metric")
-    r=r/np.sqrt(q)
-    PiQ=np.outer(r,r@J); Pperp=np.eye(r.size)-PiQ
-    checks={"idempotent_Q":np.linalg.norm(PiQ@PiQ-PiQ)<=tol,
-            "idempotent_perp":np.linalg.norm(Pperp@Pperp-Pperp)<=tol,
-            "J_orthogonal":np.linalg.norm(PiQ.T@J-J@PiQ)<=tol,
-            "annihilates_line":np.linalg.norm(Pperp@r)<=tol}
+    if not np.all(np.isfinite(P)) or not np.all(np.isfinite(line)):
+        raise ValueError("finite covariance and line required")
+    if not np.allclose(P,P.T,rtol=0,atol=tol*np.linalg.norm(P,2)):
+        raise ValueError("symmetric covariance required")
+    L=np.linalg.cholesky((P+P.T)/2)
+    y=np.linalg.solve(L,line)
+    norm=np.linalg.norm(y)
+    if not (norm>0 and np.isfinite(norm)):
+        raise ValueError("nonzero finite line in SPD metric")
+    y=y/norm
+    Q=np.outer(y,y); N=np.eye(line.size)-Q
+    checks={"idempotent_Q":bool(np.linalg.norm(Q@Q-Q)<=tol),
+            "idempotent_perp":bool(np.linalg.norm(N@N-N)<=tol),
+            "J_orthogonal":bool(np.linalg.norm(Q.T-Q)<=tol),
+            "annihilates_line":bool(np.linalg.norm(N@y)<=tol)}
     if not all(checks.values()): raise ArithmeticError("quotient projector identities")
-    return J,r,PiQ,Pperp,checks
+    return L,y,Q,N,checks
+
+def quotient(P,line,tol=2e-10):
+    L,y,Q,N,checks=whitened_line(P,line,tol)
+    W=np.linalg.solve(L,np.eye(len(y)))
+    return W.T@W,L@y,L@Q@W,L@N@W,checks
 
 def decompose(P,line,error):
-    J,r,PiQ,Pperp,checks=quotient(P,line)
+    L,y,_,N,checks=whitened_line(P,line)
     e=np.asarray(error,float).reshape(-1)
-    alpha=float(r@J@e); ep=Pperp@e
-    V=float(e@J@e); Vp=float(ep@J@ep)
+    z=np.linalg.solve(L,e); zp=N@z
+    alpha=float(y@z)
+    V=float(z@z); Vp=float(zp@zp)
     defect=abs(V-(alpha*alpha+Vp))
     scale=max(1.,abs(V),abs(alpha*alpha+Vp))
     if defect>5e-10*scale: raise ArithmeticError("storage decomposition")
@@ -36,16 +54,16 @@ def decompose(P,line,error):
 
 def quotient_terminal_map(P0,line0,PN,lineN,M,b):
     """Return transverse map and gauge-to-transverse injection in orthonormal J coordinates."""
-    J0,r0,_,_,_=quotient(P0,line0); JN,rN,_,_,_=quotient(PN,lineN)
-    L0=np.linalg.cholesky(J0); LN=np.linalg.cholesky(JN)
-    y0=L0.T@r0; yN=LN.T@rN
+    L0,y0,_,_,_=whitened_line(P0,line0); LN,yN,_,_,_=whitened_line(PN,lineN)
     from .kernel_restricted_action import householder_complement
     U0=householder_complement(y0); UN=householder_complement(yN)
-    E0=np.linalg.solve(L0.T,U0)
     M=np.asarray(M,float); b=np.asarray(b,float).reshape(-1)
-    MQ=UN.T@LN.T@M@E0
-    CQ=UN.T@LN.T@M@r0
-    bQ=UN.T@LN.T@b
+    if M.shape!=L0.shape or b.shape!=y0.shape or not np.all(np.isfinite(M)) or not np.all(np.isfinite(b)):
+        raise ValueError("finite terminal map with matching dimension required")
+    T=np.linalg.solve(LN,M@L0)
+    MQ=UN.T@T@U0
+    CQ=UN.T@T@y0
+    bQ=UN.T@np.linalg.solve(LN,b)
     return {"M_Q":MQ,"C_Q":CQ,"b_Q":bQ,
             "gauge_injection_norm":float(np.linalg.norm(CQ)),
-            "quotient_dimension":len(r0)-1}
+            "quotient_dimension":len(y0)-1}

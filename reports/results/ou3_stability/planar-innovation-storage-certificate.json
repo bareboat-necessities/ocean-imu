@@ -1,0 +1,79 @@
+{
+  "NIS_domain_bound": "NIS<=V+(kappa V+d)^2/R_floor when remainder<=e^T B e+d and B<=kappa P^-1",
+  "NIS_identity": "NIS=min_z z^T P^-1 z+(r-Hz)^T R^-1(r-Hz)",
+  "NIS_square_gap": "(z-Kr)^T (P^-1+H^T R^-1 H) (z-Kr)",
+  "acceleration_remainder": "||(exp([theta])-I-[theta]) Rhat(a_true-g)+[theta] Rhat delta_aw|| <= (g+Aphysical)|theta|^2/2+|theta||delta_aw|",
+  "all_time_magnetic_service_verified": false,
+  "coercivity_factor": "max(2,1+2 E/lambda) when e^T P^-1 e<=E and lambda>0",
+  "comparison_reseed_allowed": false,
+  "controlling_inequality": "positive complete-word gap before any radius or all-future service floor",
+  "exact_sheared_correction": "eta+=A eta+C dH^T R^-1 a+K dH e-K dR R^-1 a+K(dr+H de), a=H e+r",
+  "exact_sheared_prediction": "F eta+F dP(J e-F^T Jnext enext)+dF(e-P F^T Jnext enext)-F P dF^T Jnext enext+dsource-dQ Jnext enext",
+  "fixed_row_covariance_residual_cancellation": "dH=dR=0 and dr=-H de imply eta+=A eta for arbitrary same-operation residual",
+  "held_BA_effective_noise": "R_eff=R_acc+P_BA; dR_eff=dR_acc+dP_BA; held BA mean error remains a residual/source port",
+  "held_BA_reachable_manifold": "P_active,BA=0; P_BA constant while held; default held BA mean remains zero",
+  "held_BA_scope": "regular default CoG branch from construction or explicit hold decoupling, before release, without external covariance writes",
+  "information_shear": "eta=de-dP P^-1 e=P d(P^-1 e)",
+  "inherited_first_handoff": {
+    "NIS_scope": "hypothetical immediate boundary correction using boundary operands, not the following sample",
+    "accelerometer_NIS_strict_upper": "21/1000",
+    "accelerometer_NIS_upper_exact": "14158999894304492631257221721833614519450428878389085544859538988298569/687811305486072954387739753689599577665817432014461063385009765625000000",
+    "arithmetic": "real operation lift with represented configuration scalars; reference averaging real",
+    "binary32_reference_covariance_transfer_verified": false,
+    "boundary": "after first goLive/enterLive and before next estimator operation",
+    "comparison": "beta=0 central physical fibre; no physical/estimator restart",
+    "finite_handoff_time_verified": false,
+    "magnetic_NIS_strict_upper": "13/200",
+    "magnetic_NIS_upper_exact": "514284151359427575285969058340053779254399378236264741474160163659165557/8110982376015011254572402755773579925304450849227135181427001953125000000",
+    "post_handoff_prefix_invariance_verified": false,
+    "precision_energy_strict_upper": "21/1000",
+    "precision_energy_terms": {
+      "attitude": "136233888727957504/34480684940656640625",
+      "gyro_bias": "0",
+      "physical_S": "1/140625",
+      "position": "1/1000000",
+      "slow_BA_central_fibre": "692980650477645484288638976/46119170437191922384462890625",
+      "velocity": "121/3062500",
+      "world_acceleration": "263748808577325727744/168955359805833253515625"
+    },
+    "precision_energy_upper_exact": "2319808295101961396261384467818668127071316708175045239076961/112691004290838192846887281244503994804767528061249300625000000",
+    "premises": [
+      "default planar source and no external state/covariance writes",
+      "private pitch error and reference cone with a=11/5000 at handoff",
+      "zero planar yaw and default S_factor=1",
+      "physical S(0)=0 at construction"
+    ],
+    "represented_gravity_mismatch": "53/327680000"
+  },
+  "linked_process_port_bound": "fixed F,Q and zero source: ||f_P||_(Pnext^-1)^2<=L_mean L_P/2; actual physical source/dF/dQ retained separately",
+  "physical_attitude_additive_assumption": false,
+  "qualification": "OU3_PLANAR_INNOVATION_STORAGE_V1",
+  "radius_solve_performed": false,
+  "relaxations_introduced": [
+    "regular real-operation branch",
+    "Young quadratic bound on the exact rotation remainder; no inherited cap supplied"
+  ],
+  "remaining_ports": [
+    "mean-dependent dH",
+    "same-history dR and dP_BA in H18",
+    "prediction/source reference transport",
+    "literal attitude injection and reset",
+    "BA/BG projection",
+    "AW faces and pending targets",
+    "moving quotient projector",
+    "physical gauge and nonlinear fibre curvature",
+    "arithmetic"
+  ],
+  "result_type": "PROVED \u2014 analytical operation identities and conditional domain bounds; inherited domain OPEN",
+  "source_uniform_nominal_domain_verified": false,
+  "structures_preserved": [
+    "actual innovation rows, P, R and residual",
+    "held masked gain and literal Joseph",
+    "all 21 coordinates with invertible tangent shear",
+    "same-history comparison and residual dependence",
+    "physical compatibility gauge"
+  ],
+  "theorem_closed": false,
+  "uniform_NIS_cap": null,
+  "uniform_complete_word_epsilon": null
+}

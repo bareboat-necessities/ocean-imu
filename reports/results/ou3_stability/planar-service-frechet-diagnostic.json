@@ -1,0 +1,59 @@
+{
+  "all_AW_sync_derivatives_retained": true,
+  "all_time_magnetic_service_verified": false,
+  "compressed_congruence_segments": 191,
+  "end_sample": 44000,
+  "forward_invariant_cell_certified": false,
+  "generated_mean_coefficient_variations_included": false,
+  "observed_active_AW_floor_gap_min": 0.0008455758215859532,
+  "parity_blocks": {
+    "even": {
+      "leading_singular_values": [
+        0.7426143368769409,
+        0.5979905914655379,
+        0.48153161011833145,
+        0.461743492439251,
+        0.3718188645142434,
+        0.2871031763364053,
+        0.016189814236717802,
+        0.01303684961078738
+      ],
+      "relative_Frobenius_gain": 0.7426143368769409,
+      "same_root_end_covariance_used": false,
+      "symmetric_dimension": 78
+    },
+    "odd": {
+      "leading_singular_values": [
+        0.8738212970667967,
+        0.816138220600481,
+        0.8054982931274921,
+        0.7622742895444834,
+        0.7523253695123181,
+        0.7425173801705801,
+        0.004872959517945444,
+        0.004554089100325532
+      ],
+      "relative_Frobenius_gain": 0.8738212970667967,
+      "same_root_end_covariance_used": false,
+      "symmetric_dimension": 45
+    }
+  },
+  "qualification": "OU3_PLANAR_COVARIANCE_FRECHET_DIAGNOSTIC_V1",
+  "result_type": "FINITE DIAGNOSTIC ONLY",
+  "retained_operations": {
+    "1": 4000,
+    "2": 4000,
+    "3": 500,
+    "4": 147,
+    "5": 4647,
+    "6": 4000,
+    "7": 4000,
+    "8": 4647,
+    "9": 4647
+  },
+  "root_sample": 40000,
+  "rounding_certified": false,
+  "scheduler_branch_coverage_certified": false,
+  "stream_sha256": "a1d0baed42d44034e71f9291fd4e4d6d363ddcb1e9db230335ec978562776cf5",
+  "theorem_closed": false
+}
