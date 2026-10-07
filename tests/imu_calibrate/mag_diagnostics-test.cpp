@@ -4,10 +4,12 @@
 #define EIGEN_NON_ARDUINO
 #include "AtomS3R/AtomS3R_MagDiagnostics.h"
 #include "AtomS3R/AtomS3R_Bmm150AuxPreset.h"
+#include "AtomS3R/AtomS3R_Bmm150Compensation.h"
 #include <cmath>
 #include <string>
 #include <cstdio>
 #include <random>
+#include <algorithm>
 
 using namespace atoms3r_magdiag;
 static int failures = 0;
@@ -188,7 +190,120 @@ static void testAuxPreset() {
   require(!wrong.apply(23, 40, before, after) && other.bmm[0x51] == 0, "no writes without a BMM150 chip id");
 }
 
+// Bosch BMM150 Sensor API integer compensation (bmm150.c), used as an
+// independent reference for the floating-point implementation.
+static int boschX(int16_t x, uint16_t rhall, int8_t dx1, int8_t dx2, const atoms3r_ical::Bmm150Trim& t) {
+  const uint16_t x0 = rhall ? rhall : t.dig_xyz1;
+  const int32_t x1 = int32_t(t.dig_xyz1) * 16384;
+  const uint16_t x2 = uint16_t(uint16_t(x1 / x0) - uint16_t(0x4000));
+  int16_t r = int16_t(x2);
+  const int32_t x3 = int32_t(r) * int32_t(r);
+  const int32_t x4 = int32_t(t.dig_xy2) * (x3 / 128);
+  const int32_t x5 = int32_t(int16_t(t.dig_xy1) * 128);
+  const int32_t x6 = int32_t(r) * x5;
+  const int32_t x7 = ((x4 + x6) / 512) + int32_t(0x100000);
+  const int32_t x8 = int32_t(int16_t(dx2) + int16_t(0xA0));
+  const int32_t x9 = (x7 * x8) / 4096;
+  const int32_t x10 = int32_t(x) * x9;
+  r = int16_t(x10 / 8192);
+  return (r + int16_t(dx1) * 8) / 16;
+}
+static int boschZ(int16_t z, uint16_t rhall, const atoms3r_ical::Bmm150Trim& t) {
+  const int32_t z0 = int32_t(z) - int32_t(t.dig_z4);
+  const int32_t z1 = int32_t(rhall) - int32_t(t.dig_xyz1);
+  const int32_t z2 = int32_t(t.dig_z3) * z1;
+  const int32_t z3 = int32_t(t.dig_z1) * (int32_t(rhall) * 2);
+  const int32_t z4 = (z3 + (1 << 15)) / 65536;
+  const int32_t z5 = (z0 * 131072) - z2;
+  const int32_t z6 = z5 / ((z4 + int32_t(t.dig_z2)) * 4);
+  return int(z6 / 16);
+}
+
+static void testCompensation() {
+  using atoms3r_ical::Bmm150Trim;
+  using atoms3r_ical::Bmm150Raw;
+  // Representative factory trim block (registers 0x5D..0x71).
+  uint8_t regs[Bmm150Trim::COUNT]{};
+  auto set = [&](uint8_t reg, uint8_t v) { regs[reg - Bmm150Trim::FIRST_REG] = v; };
+  auto set16 = [&](uint8_t reg, int v) { set(reg, uint8_t(v & 0xFF)); set(reg + 1, uint8_t((v >> 8) & 0xFF)); };
+  set(0x5D, uint8_t(int8_t(-2))); set(0x5E, 3); set16(0x62, -12); set(0x64, 26); set(0x65, 24);
+  set16(0x68, 749); set16(0x6A, 24747); set16(0x6C, 0x8000 | 6800); set16(0x6E, -60);
+  set(0x70, uint8_t(int8_t(-3))); set(0x71, 29);
+  const Bmm150Trim t = Bmm150Trim::fromRegisters(regs);
+  require(t.valid && t.dig_x1 == -2 && t.dig_y1 == 3 && t.dig_z4 == -12 && t.dig_x2 == 26 && t.dig_y2 == 24 &&
+          t.dig_z2 == 749 && t.dig_z1 == 24747 && t.dig_xyz1 == 6800 && t.dig_z3 == -60 && t.dig_xy2 == -3 &&
+          t.dig_xy1 == 29, "trim registers parse (xyz1 MSB bit 7 masked)");
+
+  // Data bytes as the BMI270 AUX mirror holds them.
+  auto bytes = [](int x, int y, int z, int rhall, uint8_t d[8]) {
+    const uint16_t bx = uint16_t(x << 3), by = uint16_t(y << 3), bz = uint16_t(z << 1), br = uint16_t(rhall << 2) | 1u;
+    d[0] = bx & 0xFF; d[1] = bx >> 8; d[2] = by & 0xFF; d[3] = by >> 8;
+    d[4] = bz & 0xFF; d[5] = bz >> 8; d[6] = br & 0xFF; d[7] = br >> 8;
+  };
+  uint8_t d[8];
+  bytes(-1234, 987, -3456, 6789, d);
+  const Bmm150Raw r = Bmm150Raw::fromData(d);
+  require(r.x == -1234 && r.y == 987 && r.z == -3456 && r.rhall == 6789, "data registers parse with sign");
+
+  std::mt19937 rng(7);
+  std::uniform_int_distribution<int> xy(-1500, 1500), zz(-6000, 6000), rh(5500, 8200);
+  double worst = 0, mean_err = 0, signed_err = 0;
+  for (int i = 0; i < 2000; ++i) {
+    bytes(xy(rng), xy(rng), zz(rng), rh(rng), d);
+    const Bmm150Raw q = Bmm150Raw::fromData(d);
+    float f[3];
+    require(atoms3r_ical::bmm150Compensate(q, t, f), "valid samples compensate");
+    const double ex = std::fabs(f[0] - boschX(q.x, q.rhall, t.dig_x1, t.dig_x2, t));
+    const double ey = std::fabs(f[1] - boschX(q.y, q.rhall, t.dig_y1, t.dig_y2, t));
+    const double ez = std::fabs(f[2] - boschZ(q.z, q.rhall, t));
+    worst = std::max(worst, std::max(ex, std::max(ey, ez)));
+    mean_err += (ex + ey + ez) / 3.0;
+    signed_err += (f[0] - boschX(q.x, q.rhall, t.dig_x1, t.dig_x2, t)) + (f[2] - boschZ(q.z, q.rhall, t));
+  }
+  mean_err /= 2000; signed_err /= 4000;
+  std::printf("compensation vs Bosch integer: worst %.3f mean %.3f signed %.3f uT\n", worst, mean_err, signed_err);
+  // The integer reference truncates at three stages (1/8192, 1/16 and the
+  // final integer uT), so differences up to about 1.2 uT are rounding; a
+  // formula error would grow with the field and bias the mean.
+  require(worst < 1.25 && mean_err < 0.6, "float compensation matches Bosch's integer reference within its rounding");
+
+  // RHALL tracks temperature: the Z offset term moves with it, so the same
+  // raw Z gives different compensated values at different RHALL.
+  float a[3], b[3];
+  bytes(100, 100, 2000, 6500, d); atoms3r_ical::bmm150Compensate(Bmm150Raw::fromData(d), t, a);
+  bytes(100, 100, 2000, 7100, d); atoms3r_ical::bmm150Compensate(Bmm150Raw::fromData(d), t, b);
+  require(std::fabs(a[2] - b[2]) > 1.0f, "RHALL changes the compensated Z");
+
+  float o[3];
+  bytes(-4096, 0, 0, 6500, d);
+  require(!atoms3r_ical::bmm150Compensate(Bmm150Raw::fromData(d), t, o), "X overflow is rejected");
+  bytes(0, 0, -16384, 6500, d);
+  require(!atoms3r_ical::bmm150Compensate(Bmm150Raw::fromData(d), t, o), "Z overflow is rejected");
+  bytes(10, 10, 10, 0, d);
+  require(!atoms3r_ical::bmm150Compensate(Bmm150Raw::fromData(d), t, o), "missing RHALL is rejected");
+  uint8_t erased[Bmm150Trim::COUNT]{};
+  require(!Bmm150Trim::fromRegisters(erased).valid, "an all-zero trim block is not used");
+
+  // Body mapping must agree in sign with M5Unified's AtomS3R path:
+  // M5 (-x, y, -z) then map_sensor_xyz_to_body_ned_ (sy, sx, -sz).
+  int agree = 0, total = 0;
+  for (int i = 0; i < 500; ++i) {
+    const int x = xy(rng), y = xy(rng), z = zz(rng);
+    if (std::abs(x) < 200 || std::abs(y) < 200 || std::abs(z) < 600) continue;
+    bytes(x, y, z, t.dig_xyz1, d);
+    float s3[3], body[3];
+    atoms3r_ical::bmm150Compensate(Bmm150Raw::fromData(d), t, s3);
+    atoms3r_ical::bmm150SensorToAtomS3RBody(s3, body);
+    const float m5[3] = {float(-x), float(y), float(-z)};
+    const float m5body[3] = {m5[1], m5[0], -m5[2]};
+    ++total;
+    agree += (body[0] > 0) == (m5body[0] > 0) && (body[1] > 0) == (m5body[1] > 0) && (body[2] > 0) == (m5body[2] > 0);
+  }
+  require(total > 50 && agree == total, "compensated body axes have M5Unified's AtomS3R signs");
+}
+
 int main() {
+  testCompensation();
   testAuxPreset();
   testFieldStats();
   testAxisConsistency();

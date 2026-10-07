@@ -1539,6 +1539,20 @@ void testGravityConvention(std::ostream& rep) {
     check(rt.applyAccel(probe, 25.0f) == probe, "accelerometer passes raw, not rescaled");
     RuntimeCals same; same.rebuildFromBlob(ld, ImuCalCfg::g_std);
     check(same.acc.ok, "a firmware configured with that gravity applies it");
+
+    // (10) A magnetometer fit is applied only to data from the source it was
+    // fitted on (uncompensated M5Unified values vs Bosch-compensated uT).
+    atoms3r_ical::activeMagSource() = atoms3r_ical::MAG_SOURCE_BMM150_COMPENSATED;
+    RuntimeCals comp; comp.rebuildFromBlob(ld);
+    check(!comp.mag.ok && comp.mag_source_mismatch && comp.gyr.ok,
+          "an uncompensated mag fit is not applied to compensated data; gyro stays in use");
+    ImuCalBlobV4 cb = ld; cb.mag_source = atoms3r_ical::MAG_SOURCE_BMM150_COMPENSATED;
+    ImuCalBlobV4 crb, cld;
+    check(store.saveVerified(cb, crb) && store.load(cld) && cld.mag_source == cb.mag_source,
+          "the mag source survives save and load");
+    RuntimeCals comp2; comp2.rebuildFromBlob(cld);
+    check(comp2.mag.ok && !comp2.mag_source_mismatch, "a compensated mag fit applies to compensated data");
+    atoms3r_ical::activeMagSource() = atoms3r_ical::MAG_SOURCE_M5_RAW;
   }
 }
 
