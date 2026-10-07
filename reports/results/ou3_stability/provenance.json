@@ -48,7 +48,7 @@
     "accelerometer_bias_estimator_prior": "OU mean predictor while active; held while disabled",
     "accelerometer_bias_estimate_projection_radius_mps2": 0.4,
     "magnetometer_acceptance": "lastMagDiag().accepted becomes true only after the correction is actually applied",
-    "magnetic_attempt_counter": "the wrapper control counter advances after a forwarded attempt and is not an informative-service certificate",
+    "magnetic_attempt_counter": "the wrapper counts forwarded attempts and applied corrections separately; only applied corrections advance the release count and its 1-s clock, and neither count is an informative-service certificate",
     "live_handoff": "the certified tail inherits the actual reached execution",
     "accel_bias_release": "release enables estimator bias dynamics and does not reset physical accelerometer bias",
     "magnetic_information_covariance": "lastMagDiag().S records the actual innovation covariance factored by an applied shipping magnetometer correction and is the covariance used by MAGNETIC SERVICE whitening",
@@ -107,7 +107,7 @@
     "projection_storage_guard": "Inherited P_ba,ba <= I/1600 implies actual projection inactive if pre-projection sqrt(V) <= 6, with .02483339501604595 m/s^2 slack; every-prefix retention and entry remain open.",
     "construction_history_stress": "One continuous diagonal-wave history has exact physical envelopes and is run from begin through Live/refinement/release to 600 s without reseeding. Its finite tail tilt about 8.21 degrees and nominal acceleration 9.7764 do not certify all-time magnetic service or refute eventual capture. No nominal-state cap or six-degree entry is inferred.",
     "construction_endpoint_storage": "Recorded full 21x21 covariance is exactly SPD. Zero true BA gives V >= e_ba^T P_ba,ba^-1 e_ba >11492.6752, with all cross covariance retained, excluding V<=36 at this finite endpoint. This is not all-time service, eventual-capture refutation, or active-projection proof.",
-    "construction_mean_action": "The full carried BG/AW mean action retains actual six-row rank-three gains and innovation correlations, with explicit recorded mean rounding. Outward intervals and rational LDL certify gyro norm <1 at all recorded prefixes; exact binary checks give force/field sine >2/5 at 40000 tail acc observations. The energy-only pointwise uniform exclusion fails with margin [-817884.048495,-817884.048494]; this is an enclosure failure, not a reachable collinear history, source-uniform B_* or contraction. Fresh observer checks every actual gyro projection is inactive; only then is the affine unprojected mean replay analyzed.",
+    "construction_mean_action": "The full carried BG/AW mean action retains actual six-row rank-three gains and innovation correlations, with explicit recorded mean rounding. Outward intervals and rational LDL certify gyro norm <1 at all recorded prefixes; exact binary checks give force/field sine >2/5 at 40000 tail acc observations. The energy-only pointwise uniform exclusion fails with margin [-817884.035305,-817884.035304]; this is an enclosure failure, not a reachable collinear history, source-uniform B_* or contraction. Fresh observer checks every actual gyro projection is inactive; only then is the affine unprojected mean replay analyzed.",
     "gyro_bias_estimator_invariant": "Implemented residual-bias ball R_g=.5 rad/s, separate from physical B_g=.02. Qualified rate includes Omega_max+B_g+N_g+R_g=1.1508652381980153; h in [.004,.006] gives argument .0069051914291880918 and real-source angle <.007. The API does not enforce dt_max.",
     "one_prediction_gyro_transport": "The retained ideal-rotation comparison has transverse singular floor .003999991833333333... s. Shipping dimensionless coefficient series require the remainder transfer described in so3_coefficient_transfer. Complete-turn nominal bias relaxation is excluded. Full signed temporal Delta_gyr, force/field separation and word float32 totality remain open.",
     "marine_complete_moving_window_excitation": "Every complete T_E window contained in one maximal physical moving episode has gravity span >=theta_E>0. Nondegenerate rest intervals define episode boundaries; isolated zero-rate instants do not restart them. Boundary-crossing windows require transition retention, not immediate excitation. Numerical qualification remains open.",
@@ -136,11 +136,11 @@
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "fd91e965b15fb921c8e6a5f6d3952269c16b061c"
+      "git_blob_sha": "caafcc14aa11810a1c3f296d5d78ad34864fbc51"
     },
     {
       "path": "docs/ou3-construction-mean-action.md",
-      "git_blob_sha": "f5a5e844b51cb18c87bc303696d0899683bc3d49"
+      "git_blob_sha": "bc0b1641d7b641b954acc15c2bb651705f222eac"
     },
     {
       "path": "docs/ou3-corrected-word-proof.md",
@@ -184,7 +184,7 @@
     },
     {
       "path": "docs/ou3-signed-temporal-continuation.md",
-      "git_blob_sha": "1e71e9ff72b5b8e689ffbec7f1204b2b6dd3bc52"
+      "git_blob_sha": "8acc00a9d0b78ed660933e4bc124c88da40ebe77"
     },
     {
       "path": "docs/ou3-stationary-detectability.md",
@@ -1010,7 +1010,7 @@
   },
   "planar_joint_phase_cell_threshold": {
     "result_type": "CONDITIONAL",
-    "covariance_partial_gain_max": 0.8738212970667967,
+    "covariance_partial_gain_max": 0.8738212970667968,
     "mahony_homogeneous_20s_gain": 0.5827057639270218,
     "coupling_product_budget": null,
     "symmetric_coupling_norm_budget": null,
