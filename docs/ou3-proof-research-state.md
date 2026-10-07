@@ -24,6 +24,9 @@ into the PR branch; no estimator behavior, assumption, tuning or gate is
 authored in this continuation. Upstream calibration/source changes do not
 verify magnetic residual envelopes or strengthen MAGNETIC SERVICE.
 Current mergeability and exact-head CI belong in PR metadata.
+The concise continuation handoff is [ou3-ai-handoff.md](ou3-ai-handoff.md).
+The user authorized publication and merge of PR #653 after validation;
+that publication does not decide the remaining mathematical sign.
 
 Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
 `theorem_closed=false`, `regional_practical_stability_claimed=false`,
@@ -47,6 +50,15 @@ not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
+
+**E — status-path lookup corrected during handoff preparation.**
+The command searching `docs/ou3-theorem-status.md` failed with
+`No such file or directory`. The maintained record is
+`reports/results/ou3_stability/theorem-status.json`, with its generating
+source `tools/stability/ou3_theorem/theorem_status.py`. This invalidates
+only the guessed documentation path. The current status and manifest were
+then read; all proof flags/counts and CR41--CR43's unpaid sign are retained.
+Use those actual paths in the next focused receipt/Schur calculation.
 
 **E — current-head workflow admission and source-binding repair.**
 At `ca3bd78d255d1e1b1e5eaceadf4c3f405aa50946`, all six PR workflows

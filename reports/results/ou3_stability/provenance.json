@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "681a857a8b5550bba8d2f7e0be9e5c70e3a61952"
+      "git_blob_sha": "536be3f2b254d84e41da2ab918585ed1953ecb29"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -1644,6 +1644,11 @@
     "upstream_configuration_retained": "BMM150 compensation and runtime source selection following saved calibration, including OU-III sketch initialization; no new residual/service claim.",
     "replay_performed": false,
     "validation_gate_changed": false,
-    "mathematical_margin_promoted": false
+    "mathematical_margin_promoted": false,
+    "handoff_document": "docs/ou3-ai-handoff.md",
+    "merge_authorized_by_user": true,
+    "receipt_corner_decided": false,
+    "full_Schur_cost_paid": false,
+    "common_positive_reserve_proved": false
   }
 }
