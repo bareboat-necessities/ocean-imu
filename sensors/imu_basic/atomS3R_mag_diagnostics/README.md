@@ -6,7 +6,7 @@
   <img src="../../../img/devices/AtomS3R_device.svg" width="240" alt="M5Stack AtomS3R">
 </p>
 
-Use this sketch when a compass reads wrong headings and you need to know whether the cause is the magnetometer wiring/axes, the saved calibration, the calibration location, or the alignment between the magnetometer and the accelerometer. It is read-only: it never changes the saved calibration or any sensor register.
+Use this sketch when a compass reads wrong headings and you need to know whether the cause is the magnetometer wiring/axes, the saved calibration, the calibration location, or the alignment between the magnetometer and the accelerometer. It never changes the saved calibration, and it changes a sensor register only when you ask (see [Low-noise magnetometer test](#low-noise-magnetometer-test)).
 
 Open the sketch: [`atomS3R_mag_diagnostics.ino`](atomS3R_mag_diagnostics.ino).
 
@@ -25,6 +25,15 @@ Open Serial Monitor at **115200 baud**. Tap the screen, or send `n`, to advance.
 5. **LIVE** (`[LIVE]`): headings from the saved, fresh, and fresh-plus-alignment models. Hold the board level, then tilt it about ±20° at each cardinal direction; a correct model keeps the heading steady. Tap to run again.
 
 The verdicts compare the dip with `DIAG_EXPECTED_DIP_DEG` (default 66.5°, Fair Lawn NJ). Look up your local inclination (NOAA magnetic field calculator) and build with `-DDIAG_EXPECTED_DIP_DEG=<deg>`; use a negative value in the southern hemisphere.
+
+## Low-noise magnetometer test
+
+M5Unified leaves the BMM150 at one repetition per axis, its noisiest setting. While the sketch waits for a tap (or in LIVE), send over serial:
+
+- `q`: read the BMM150 configuration (`[MAGCFG] current`);
+- `p`: switch to 47 XY / 41 Z repetitions at the same 30 Hz output rate (`[MAGCFG] before`/`after`).
+
+The setting is written through the BMI270 AUX interface in manual mode, read back, and the AUX data-mode configuration is restored exactly. It lasts until the next reboot, when M5Unified resets the BMM150. Compare a run before `p` with two runs after it: `[STILL]` noise should drop, and `[FIT] previous-run-vs-fresh` between the two later runs shows whether calibration becomes repeatable. Every `[STILL]` and `[FIT]` block names the mode in use.
 
 ## Install and upload
 

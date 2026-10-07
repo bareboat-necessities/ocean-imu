@@ -3,8 +3,10 @@
 
   AtomS3R magnetometer diagnostics.
 
-  Read-only: never writes the saved calibration and never changes sensor
-  registers. Tap the screen (or send 'n' over serial) to advance:
+  Never writes the saved calibration. Sensor registers change only on request:
+  send 'p' to switch the BMM150 to the low-noise 30 Hz repetition preset
+  (until the next reboot) and 'q' to read its configuration. Tap the screen
+  (or send 'n' over serial) to advance:
 
     1. Boot report    sensor wiring, BMI270 AUX settings, saved calibration
     2. STILL (10 s)   board flat and untouched: update rate, noise, dip
@@ -15,7 +17,10 @@
     5. LIVE           headings with saved, fresh and aligned-fresh models for
                       the tilt test; tap to run again
 
-  All results are printed on USB serial (115200) as [DIAG], [STILL], [ROT],
+  Compare runs before and after 'p': noise in [STILL], and the fits of two
+  consecutive runs in [FIT] previous-run-vs-fresh.
+
+  All results are printed on USB serial (115200) as [DIAG], [MAGCFG], [STILL], [ROT],
   [FIT], [FIELD], [AXIS], [ALIGN], [VERDICT] and [LIVE] lines.
 */
 
@@ -26,6 +31,7 @@
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #include "AtomS3R/AtomS3R_MagDiagnostics.h"
+#include "AtomS3R/AtomS3R_Bmm150AuxPreset.h"
 #include "imu_calibrate/MagCalSampling.h"
 
 // Local field dip used only for the verdicts. Fair Lawn NJ is about +66.5;
@@ -107,6 +113,41 @@ static bool prev_ok = false;
 static float prev_temp_c = NAN;
 static volatile bool analysis_done = false;
 
+// Magnetometer repetition setting in use, for labelling results.
+static char mag_mode[48] = "driver default (1/1 reps, not queried)";
+
+static void waitMs(uint32_t ms) { delay(ms); }
+
+static void printMagState(const char* tag, const Bmm150RegState& r) {
+  Serial.printf("[MAGCFG] %s: chip=0x%02X power=0x%02X mode=0x%02X rep_xy=%u (n=%u) rep_z=%u (n=%u)\n", tag,
+                r.chip_id, r.power, r.mode, r.rep_xy, r.nXY(), r.rep_z, r.nZ());
+}
+
+static void magCommand(bool apply) {
+  auto* imu0 = M5.Imu.getImuInstancePtr(0);
+  if (M5.Imu.getType() != m5::imu_bmi270 || !imu0) {
+    Serial.println("[MAGCFG] not a BMI270 + AUX BMM150 board; nothing done");
+    return;
+  }
+  Bmm150AuxPreset<m5::IMU_Base> aux(imu0, waitMs);
+  Bmm150RegState before, after;
+  if (!apply) {
+    if (aux.query(before)) printMagState("current", before);
+    else Serial.printf("[MAGCFG] query failed: %s\n", aux.failure());
+    return;
+  }
+  const bool ok = aux.apply(Bmm150AuxPreset<m5::IMU_Base>::LOW_NOISE_REP_XY,
+                            Bmm150AuxPreset<m5::IMU_Base>::LOW_NOISE_REP_Z, before, after);
+  printMagState("before", before);
+  if (ok) {
+    printMagState("after", after);
+    snprintf(mag_mode, sizeof(mag_mode), "low-noise (%u/%u reps, 30 Hz)", after.nXY(), after.nZ());
+    Serial.printf("[MAGCFG] low-noise preset ACTIVE until reboot; rerun STILL and ROTATE (twice) to compare\n");
+  } else {
+    Serial.printf("[MAGCFG] low-noise preset FAILED: %s (driver setting kept)\n", aux.failure());
+  }
+}
+
 static void printMat(const char* tag, const Matrix3f& A) {
   Serial.printf("%s [%.5f %.5f %.5f; %.5f %.5f %.5f; %.5f %.5f %.5f]\n", tag,
                 A(0,0), A(0,1), A(0,2), A(1,0), A(1,1), A(1,2), A(2,0), A(2,1), A(2,2));
@@ -185,10 +226,12 @@ static void enter(Phase p) {
     case Phase::WAIT_STILL:
       drawWait("STILL", "Lay flat, screen up", "away from metal,", "then tap: 10 s");
       Serial.println("[DIAG] next: STILL. Lay the board flat, screen up, away from metal; tap and do not touch.");
+      Serial.println("[DIAG] (send 'q' to read the magnetometer setting, 'p' for the low-noise preset)");
       break;
     case Phase::STILL:
       st_raw = Stats3{}; st_cal = Stats3{}; st_acc = Stats3{}; st_gyr = Stats3{}; st_dip = Stats3{};
       st_hdg_c = st_hdg_s = 0;
+      Serial.printf("[STILL] magnetometer mode: %s\n", mag_mode);
       st_intervals = 0; st_int_min = UINT32_MAX; st_int_max = 0; st_int_sum = 0;
       mask_ag = mask_g_only = mask_a_only = mask_none = mask_mag = 0;
       ui.title("STILL");
@@ -239,7 +282,7 @@ static void liveColumns(const MagModel& model, const Matrix3f& R, float& hdg, fl
 }
 
 static void analyzeTask(void*) {
-  Serial.println("[FIT] fitting fresh calibration with the wizard's capture data and fit code...");
+  Serial.printf("[FIT] fitting fresh calibration (magnetometer mode: %s)...\n", mag_mode);
   fresh = imu_cal::MagCalibration<float>{};
   fresh_ok = magCal.fit(fresh, 3, 0.15f, 1e-6f, &fresh_reason);
   const auto& q = magCal.quality;
@@ -526,6 +569,12 @@ void loop() {
   while (Serial.available()) {
     const int c = Serial.read();
     if (c == 'n' || c == 'N') advance = true;
+    // Register access only between captures, never while sampling.
+    const bool idle = phase == Phase::WAIT_STILL || phase == Phase::WAIT_ROTATE || phase == Phase::LIVE;
+    if ((c == 'p' || c == 'P' || c == 'q' || c == 'Q') && !idle)
+      Serial.println("[MAGCFG] busy; send 'p'/'q' while waiting for a tap or in LIVE");
+    else if (c == 'p' || c == 'P') magCommand(true);
+    else if (c == 'q' || c == 'Q') magCommand(false);
   }
 
   const uint32_t sample_us = micros();

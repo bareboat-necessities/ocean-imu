@@ -3,6 +3,7 @@
 // statistics, the gyro axis-sign test and magnetometer/accelerometer alignment.
 #define EIGEN_NON_ARDUINO
 #include "AtomS3R/AtomS3R_MagDiagnostics.h"
+#include "AtomS3R/AtomS3R_Bmm150AuxPreset.h"
 #include <cmath>
 #include <string>
 #include <cstdio>
@@ -133,7 +134,62 @@ static void testHeadingError() {
   require(std::fabs(flat - 90.0f) < 1e-3f, "level board with field to its left heads east");
 }
 
+// BMI270 with a BMM150 behind its AUX interface, as configured by M5Unified.
+struct FakeBmi270 {
+  uint8_t reg[128]{};
+  uint8_t bmm[128]{};
+  int manual_ops_in_data_mode = 0;
+  bool fail_rep_write = false;
+  FakeBmi270() {
+    reg[0x4B] = 0x20; reg[0x4C] = 0x4F; reg[0x4D] = 0x42; reg[0x7D] = 0x0F;
+    bmm[0x40] = 0x32; bmm[0x4B] = 0x01; bmm[0x4C] = 0x38; bmm[0x51] = 0; bmm[0x52] = 0;
+  }
+  bool manual() const { return (reg[0x4C] & 0x80) && !(reg[0x7D] & 0x01); }
+  bool readRegister(uint8_t r, uint8_t* b, size_t n) { for (size_t i = 0; i < n; ++i) b[i] = reg[r + i]; return true; }
+  bool writeRegister8(uint8_t r, uint8_t v) {
+    reg[r] = v;
+    if (r == 0x4E) {  // AUX_WR_ADDR triggers the write of AUX_WR_DATA
+      if (!manual()) ++manual_ops_in_data_mode;
+      else if (!(fail_rep_write && v == 0x52)) bmm[v] = reg[0x4F];
+    }
+    if (r == 0x4D && manual()) reg[0x04] = bmm[v];  // AUX_RD_ADDR triggers a read
+    return true;
+  }
+};
+static void noWait(uint32_t) {}
+
+static void testAuxPreset() {
+  using atoms3r_ical::Bmm150AuxPreset;
+  using atoms3r_ical::Bmm150RegState;
+  FakeBmi270 dev;
+  Bmm150AuxPreset<FakeBmi270> preset(&dev, noWait);
+  Bmm150RegState q;
+  require(preset.query(q) && q.chip_id == 0x32 && q.nXY() == 1 && q.nZ() == 1 && q.mode == 0x38,
+          "query reads the M5Unified default configuration");
+  require(dev.reg[0x4C] == 0x4F && dev.reg[0x4D] == 0x42 && dev.reg[0x7D] == 0x0F, "query restores data mode");
+
+  Bmm150RegState before, after;
+  require(preset.apply(23, 40, before, after), "low-noise preset applies");
+  require(after.nXY() == 47 && after.nZ() == 41 && after.mode == 0x38, "preset reads back at 30 Hz normal mode");
+  require(dev.bmm[0x51] == 23 && dev.bmm[0x52] == 40 && dev.bmm[0x4C] == 0x38, "sensor holds the preset");
+  require(dev.reg[0x4C] == 0x4F && dev.reg[0x4D] == 0x42 && dev.reg[0x7D] == 0x0F, "apply restores data mode");
+  require(dev.manual_ops_in_data_mode == 0, "AUX writes happen only in manual mode");
+
+  FakeBmi270 bad;
+  bad.fail_rep_write = true;
+  Bmm150AuxPreset<FakeBmi270> failing(&bad, noWait);
+  require(!failing.apply(23, 40, before, after), "a failed readback is reported");
+  require(bad.bmm[0x51] == 0 && bad.bmm[0x4C] == 0x38, "a failed apply restores the old repetitions");
+  require(bad.reg[0x4C] == 0x4F && bad.reg[0x7D] == 0x0F, "a failed apply still restores data mode");
+
+  FakeBmi270 other;
+  other.bmm[0x40] = 0x00;
+  Bmm150AuxPreset<FakeBmi270> wrong(&other, noWait);
+  require(!wrong.apply(23, 40, before, after) && other.bmm[0x51] == 0, "no writes without a BMM150 chip id");
+}
+
 int main() {
+  testAuxPreset();
   testFieldStats();
   testAxisConsistency();
   testAlignment();
