@@ -11,10 +11,11 @@ The general theorem assumes existing MAGNETIC SERVICE on admitted histories;
 all-time service for the special planar witness remains a separate OPEN lemma.
 No general theorem substitutes for that witness's admission proof.
 
-Verified main: `0cbbd5a3270ff988c6642324ff8ebb303034dc80`.
-Verified continuation starting PR head: `3729fe0c365752766e00b2b4800383a0b44468d2`.
-That automated evidence commit on `3b8fac19` is preserved in full.
-Main's earlier automated evidence commit is already incorporated.
+Verified main: `e653d30b62e4c307e400d902a527c171bc221173`.
+Verified continuation starting PR head: `352c91bdc1bc5e1b62f02c51176d9fa5a6e889ac`.
+That automated evidence commit on `c03816c0` is preserved in full.
+New main changes concern AtomS3R magnetic diagnostics; the shipping OU-III
+prediction/correction/floor operators read for this calculation are unchanged.
 No shipping source changes in this continuation.
 Current mergeability and exact-head CI belong in PR metadata.
 
@@ -793,6 +794,26 @@ Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
 
+* **D, receipt-corner decision using qualitative linked action:** the
+  requested sign of CR41's `S_c` was NOT established. The integrated
+  `g,Q_ao` recurrence and the actual transported `D h_S'`, `D h_mag'`
+  and `D h_acc'` were checked on the same CR31--CR32 tangent. At the
+  possible threshold mode, CR40 still gives
+  `Hbar*y=L_pmu'*Dbar*mu`, `mu=L_pmu*y`, and
+  `y'*Hbar*y=mu'*Dbar*mu>0`. Its first process loss is positive;
+  no zero-loss condition on the measurement columns follows. These losses
+  are already included in Hbar. Treating them as an additional reserve
+  would double-charge the original gap, and qualitative service/kernel
+  facts alone did not prove the required quantitative comparison.
+  No actual feasible threshold mode was exhibited or excluded, and no
+  shipping sign or impossibility is asserted. Retained: CR39's exact
+  signed matrix and CR41--CR43's full cross cost. The ONE blocker remains
+  a common positive-reserve sign for feasible `R_W(c)`; its receipt corner
+  is the first unpaid part. No new completion, bound, storage or flag.
+  Next falsifiable calculation: prove that the SAME shipping covariance
+  action excludes every reconstructed feasible CR30 mode with `chi>=1`,
+  then pay the actual CR43 cross subtraction. Another zero-action argument
+  or conditional Schur identity cannot settle that comparison.
 * **D, signed near-kernel implies zero-action shortcut:** exact failed
   inference: `y'(H-L'DL)y -> 0` implies every positive process/service
   loss tends to zero. The actual limiting equation is CR34,
@@ -822,6 +843,20 @@ Physical S is never reset by the estimator pseudo-measurement.
   finished. After waiting for that fetch, the fetched tree matched the
   already validated/API-verified tree exactly; no branch update was forced.
   No mathematical premise or validation gate changed.
+  Receipt-corner continuation: a guessed KalmanOU*.h filename matched no
+  OU-III file; rg --files identified Kalman3D_Wave_OU_III.h and the actual
+  floor, integrated prediction, S and accelerometer operations were read.
+  No mathematical conclusion was taken from the failed read.
+  An optional provenance.py path was absent; the actual build_evidence.py
+  validator was used. The first `make -C tests/validation evidence-test`
+  ran 1122 tests and failed eight provenance assertions because the edited
+  ledger's bound blob hash had not yet been refreshed. The unchanged
+  fail-closed gate detected that stale binding; refresh it and rerun the
+  affected provenance tests. This is E, not a mathematical sign failure.
+  The first refresh command used the test-directory cwd for repository-relative
+  paths; it failed before writing. Its consequent test rerun again rejected
+  the stale hash. Use the absolute repository root for the refresh/validator, and
+  launch the focused test only after successful validation.
 
 * **D, process-short-only sign inference:** CR26's positive effective gap
   does not prove the complete nonzero receipt remainder nonnegative.
