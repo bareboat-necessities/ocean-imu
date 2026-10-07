@@ -251,7 +251,7 @@ static void testCompensation() {
   for (int i = 0; i < 2000; ++i) {
     bytes(xy(rng), xy(rng), zz(rng), rh(rng), d);
     const Bmm150Raw q = Bmm150Raw::fromData(d);
-    float f[3];
+    float f[3]{};
     require(atoms3r_ical::bmm150Compensate(q, t, f), "valid samples compensate");
     const double ex = std::fabs(f[0] - boschX(q.x, q.rhall, t.dig_x1, t.dig_x2, t));
     const double ey = std::fabs(f[1] - boschX(q.y, q.rhall, t.dig_y1, t.dig_y2, t));
@@ -269,7 +269,7 @@ static void testCompensation() {
 
   // RHALL tracks temperature: the Z offset term moves with it, so the same
   // raw Z gives different compensated values at different RHALL.
-  float a[3], b[3];
+  float a[3]{}, b[3]{};
   bytes(100, 100, 2000, 6500, d); atoms3r_ical::bmm150Compensate(Bmm150Raw::fromData(d), t, a);
   bytes(100, 100, 2000, 7100, d); atoms3r_ical::bmm150Compensate(Bmm150Raw::fromData(d), t, b);
   require(std::fabs(a[2] - b[2]) > 1.0f, "RHALL changes the compensated Z");
@@ -291,7 +291,7 @@ static void testCompensation() {
     const int x = xy(rng), y = xy(rng), z = zz(rng);
     if (std::abs(x) < 200 || std::abs(y) < 200 || std::abs(z) < 600) continue;
     bytes(x, y, z, t.dig_xyz1, d);
-    float s3[3], body[3];
+    float s3[3]{}, body[3]{};
     atoms3r_ical::bmm150Compensate(Bmm150Raw::fromData(d), t, s3);
     atoms3r_ical::bmm150SensorToAtomS3RBody(s3, body);
     const float m5[3] = {float(-x), float(y), float(-z)};

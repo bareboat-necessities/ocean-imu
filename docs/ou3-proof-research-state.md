@@ -51,6 +51,21 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
 
+**E — merged-main binding and warning repair.** Fresh main is `a47da994`;
+new work uses `proof/ou3-receipt-schur-continuation`, never the merged branch.
+Exact reproduction confirms the two reported binding failures. The native
+profile still includes the same 34 shipping files: 33 are byte-identical;
+the Mahony constant declaration changes only whitespace. Compiler preprocessing
+differs only by that exact line-wrap replacement, proving token identity under
+the unchanged C++20/O1/Eigen profile. Refresh the two affected bindings with
+all diagnostic payloads, false flags and original audits retained. Main's
+calibration/compensation/source-selection behavior stays intact. The separate
+warnings job also rejected uninitialized output arrays in the magnetometer
+test; value-initialize those test buffers, retaining its success and accuracy
+checks. These repairs change no shipping operator or proof margin. Next:
+reproduce evidence and the affected warning/test commands, then attack the
+same nonzero receipt inequality and full endogenous cost.
+
 **E — status-path lookup corrected during handoff preparation.**
 The command searching `docs/ou3-theorem-status.md` failed with
 `No such file or directory`. The maintained record is
