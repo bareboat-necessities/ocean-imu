@@ -14,6 +14,8 @@ No general theorem substitutes for that witness's admission proof.
 Verified merged main: `a47da994b85f2ec844b199d27b619a7fcc553adb`.
 PR #653 is merged. This continuation uses the NEW branch
 `proof/ou3-receipt-schur-continuation` from that exact main.
+Concurrent main `59171c1a4aef654bb9808629e8856e4a56edfcc8` is incorporated,
+including PR #663, version 2.4.0 and the automatic evidence bundle.
 Its separate mechanical repair is `9b951b6ac`; current publication and CI
 are PR metadata. Upstream calibration, BMM150 compensation and saved magnetic
 source selection are preserved. No merge is authorized for the follow-up.
@@ -76,6 +78,17 @@ test; value-initialize those test buffers, retaining its success and accuracy
 checks. These repairs change no shipping operator or proof margin. Next:
 reproduce evidence and the affected warning/test commands, then attack the
 same nonzero receipt inequality and full endogenous cost.
+
+The incorporated main restores the original Mahony declaration wrapping.
+Its native dependency closure and full exact-profile preprocessing match the
+earlier valid baseline byte for byte; rebind the affected source fields with
+the mechanical refresh and all earlier audits retained. No original finite
+payload or upstream automatic evidence is replaced. Required parallel make
+failed by launching tests before binaries existed. The first serial command
+exited 2 with no final diagnostic in its saved log, whose last line reports
+passing TFG Jacobians. Classification E; no proof or shipping behavior is
+invalidated. Repeat `make all` with live output capture on the integrated tree;
+do not credit the incomplete invocation as a pass.
 
 **E — status-path lookup corrected during handoff preparation.**
 The command searching `docs/ou3-theorem-status.md` failed with

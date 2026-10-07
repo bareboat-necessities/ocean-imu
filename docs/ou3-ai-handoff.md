@@ -5,6 +5,8 @@
 PR #653 is merged. Verified starting main: `a47da994b85f2ec844b199d27b619a7fcc553adb`.
 Follow-up branch: `proof/ou3-receipt-schur-continuation`; never reuse the old branch.
 Mechanical repair commit: `9b951b6ac`.
+Concurrent main `59171c1a4aef654bb9808629e8856e4a56edfcc8` is incorporated,
+including PR #663, version 2.4.0 and its automatic validation/robustness bundle.
 
 Exact main reproduction rejected frontend binding and the finite secant whole-src
 binding. The 34-file native compiler closure is unchanged in membership: 33 files
@@ -15,6 +17,10 @@ previous audits. Validators and fail-closed checks are unchanged. Upstream
 AtomS3R calibration, compensation and source selection remain. The separate
 warnings job's uninitialized test outputs are value-initialized; its compensation
 regression passes with `-O2 -Wall -Wextra -Wpedantic -Werror`.
+Concurrent main restores the earlier declaration wrapping and initializes the
+same failing buffers. The final 34-file closure and complete preprocessing
+match the earlier valid baseline exactly. Rebind only the affected source
+fields and retain both repair audits; no upstream behavior is reverted.
 
 ## New inequality, with its limitation
 
@@ -88,7 +94,8 @@ profile is not inferred from the planar facade/native profile.
 
 Final make/evidence/appendix results, published SHA and exact-head/merge-tree CI
 belong in the new PR metadata and must be fetched again. Parent passes do not
-certify a new head. No numerical exploration, replay or secant sweep was run.
+certify a new head. Only required source/evidence regressions were run; no
+exploratory replay, sampled contraction search or secant sweep was added.
 
 1. Preserved: all 21 states/P/K/Joseph/masks, full integrated OU/BG/BA/S,
    floors/queued lag, scheduler, actual corrections, tuner/reference/source
@@ -98,7 +105,9 @@ certify a new head. No numerical exploration, replay or secant sweep was run.
    certify reachability, admission or uniformity.
 3. Failures: E for stale bindings, warning buffers and local dependency/path
    handling; repaired without weakening checks. Parallel make all started
-   tests before binaries existed; rerun serially. D if pointwise alpha>0 is
+   tests before binaries existed. The first serial command exited 2 with no
+   final diagnostic in its saved log (last line: passing TFG Jacobians);
+   repeat with live capture on the integrated tree. D if pointwise alpha>0 is
    promoted to uniform receipt domination: no threshold-crossing bound exists.
 4. Genuine shipping counterexample: none; no A/B conclusion is asserted.
 5. Retained: all 25 existing proved entries and qualifications, CR25--CR43;
