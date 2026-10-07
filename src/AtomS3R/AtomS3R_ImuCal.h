@@ -94,6 +94,7 @@
 // (host-testable, no Arduino dependency).
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
 #include "AtomS3R/AtomS3R_Bmm150AuxPreset.h"
+#include "AtomS3R/AtomS3R_Bmm150Compensation.h"
 
 namespace atoms3r_ical {
 
@@ -196,6 +197,11 @@ static __attribute__((noinline)) void printBlobSummary(Print& out, const ImuCalB
   if (b.build_mode == IMU_CAL_MODE_M5_IMU_API) mode = "m5_imu_api";
   out.printf("  build_mode: %s\n", mode);
   out.printf("  ok: A=%d G=%d M=%d\n", (int)b.accel_ok, (int)b.gyro_ok, (int)b.mag_ok);
+  if (b.mag_ok && b.mag_source != activeMagSource()) {
+    out.printf("  mag: fitted on %s data, firmware delivers %s: NOT applied, recalibrate the magnetometer\n",
+               b.mag_source == MAG_SOURCE_BMM150_COMPENSATED ? "Bosch-compensated" : "uncompensated",
+               activeMagSource() == MAG_SOURCE_BMM150_COMPENSATED ? "Bosch-compensated" : "uncompensated");
+  }
   if (b.accel_ok && !accelGravityMatches(b)) {
     out.printf("  accel: fitted for g=%.7f, firmware g_cal_local=%.7f m/s^2: NOT applied, recalibrate\n",
                (double)b.accel_g, (double)ImuCalCfg::g_cal_local);
@@ -293,6 +299,46 @@ struct ImuSample {
 
 static constexpr uint32_t kImuMaskAccelGyro = (ATOMS3R_IMU_MASK_ACCEL | ATOMS3R_IMU_MASK_GYRO);
 
+// Bosch-compensated magnetometer source (see configureAtomS3RMag()).
+struct AtomS3RMagSource {
+  bool compensated = false;      // deliver Bosch trim/RHALL compensated uT
+  Bmm150Trim trim{};
+  m5::IMU_Base* bmi270 = nullptr;
+  m5::imu_3d_t last_m5{};        // M5Unified's cached value of the last reading
+  Vector3f last_body = Vector3f(NAN, NAN, NAN);
+  bool have_last = false;
+};
+inline AtomS3RMagSource& atoms3rMagSource() {
+  static AtomS3RMagSource source;
+  return source;
+}
+
+// Magnetometer in body axes, uT. With compensation active, a new reading
+// (M5Unified's cached value changed) is re-read from the BMI270 AUX data
+// registers together with RHALL and compensated; otherwise the previous
+// compensated value is repeated, exactly like M5Unified's cache. Without
+// compensation this is M5Unified's uncompensated value.
+static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
+  auto& src = atoms3rMagSource();
+  if (!src.compensated) return map_mag_to_body_uT_(m5_mag);
+  const bool changed = !src.have_last || m5_mag.x != src.last_m5.x || m5_mag.y != src.last_m5.y ||
+                       m5_mag.z != src.last_m5.z;
+  if (changed) {
+    uint8_t d[8];
+    float s[3], b[3];
+    // BMI270 AUX_DATA_0..7 mirror BMM150 0x42..0x49 (X, Y, Z, RHALL).
+    if (src.bmi270 && src.bmi270->readRegister(0x04, d, sizeof(d)) &&
+        bmm150Compensate(Bmm150Raw::fromData(d), src.trim, s)) {
+      bmm150SensorToAtomS3RBody(s, b);
+      src.last_body = Vector3f(b[0], b[1], b[2]);
+      src.last_m5 = m5_mag;
+      src.have_last = true;
+    }
+  }
+  // Never mix units: until the first compensated reading this is NaN (invalid).
+  return src.last_body;
+}
+
 // Reads M5.Imu, applies AtomS3R axis mapping and unit conversion, but does NOT calibrate.
 static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out) {
   out.sample_us = sample_us;
@@ -310,7 +356,7 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, ui
   // magnetometer-update bit across deployed builds. Runtime/calibration
   // freshness is therefore determined by the existing cadence/distinct-value
   // gates rather than the update mask.
-  out.m = map_mag_to_body_uT_(data.mag);
+  out.m = readMagBody_(data.mag);
 
   return true;
 }
@@ -330,27 +376,53 @@ static inline void clearM5UnifiedImuCalibration() {
   M5.Imu.clearOffsetData();
 }
 
-// Low-noise BMM150 setting used for both calibration and runtime on AtomS3R:
-// 47 XY / 41 Z repetitions at M5Unified's 30 Hz output rate (instead of the
-// 1/1 reset value M5Unified leaves). Applied through the BMI270 AUX interface
-// with read-back (AtomS3R_Bmm150AuxPreset.h). Call after every M5Unified IMU
-// initialisation, because M5Unified soft-resets the BMM150. Other IMUs are
-// left untouched. Returns true when the low-noise setting is active.
-static inline bool configureAtomS3RMagLowNoise(Print& log) {
+// AtomS3R magnetometer setup used for both calibration and runtime. Call after
+// every M5Unified IMU initialisation (M5Unified soft-resets the BMM150):
+//  - low-noise setting: 47 XY / 41 Z repetitions at M5Unified's 30 Hz output
+//    rate instead of the 1/1 reset value (AtomS3R_Bmm150AuxPreset.h);
+//  - Bosch compensation: reads the factory trim registers once, then every
+//    reading is compensated with its RHALL value (AtomS3R_Bmm150Compensation.h).
+// Both go through the BMI270 AUX interface with read-back. Other IMUs, or a
+// failed trim read, keep M5Unified's uncompensated values. activeMagSource()
+// records which units the runtime delivers, so a saved magnetometer
+// calibration made in other units is not applied.
+static inline bool configureAtomS3RMag(Print& log, bool compensate = true) {
+  auto& src = atoms3rMagSource();
+  src = AtomS3RMagSource{};
+  activeMagSource() = MAG_SOURCE_M5_RAW;
   auto* imu0 = M5.Imu.getImuInstancePtr(0);
   if (M5.Imu.getType() != m5::imu_bmi270 || !imu0) return false;
   using Preset = Bmm150AuxPreset<m5::IMU_Base>;
   Preset aux(imu0, [](uint32_t ms) { delay(ms); });
   Bmm150RegState before, after;
-  const bool ok = aux.apply(Preset::LOW_NOISE_REP_XY, Preset::LOW_NOISE_REP_Z, before, after);
-  if (ok) {
+  const bool low = aux.apply(Preset::LOW_NOISE_REP_XY, Preset::LOW_NOISE_REP_Z, before, after);
+  if (low) {
     log.printf("[MAGCFG] BMM150 low-noise: %u/%u repetitions (was %u/%u), mode=0x%02X\n",
                after.nXY(), after.nZ(), before.nXY(), before.nZ(), after.mode);
   } else {
     log.printf("[MAGCFG] BMM150 low-noise setting FAILED (%s); driver setting kept\n", aux.failure());
   }
-  return ok;
+  if (!compensate) {
+    log.println("[MAGCFG] BMM150 compensation off: uncompensated M5Unified values");
+    return low;
+  }
+  uint8_t regs[Bmm150Trim::COUNT];
+  const bool read = aux.readBlock(Bmm150Trim::FIRST_REG, Bmm150Trim::COUNT, regs);
+  const Bmm150Trim trim = read ? Bmm150Trim::fromRegisters(regs) : Bmm150Trim{};
+  if (!trim.valid) {
+    log.printf("[MAGCFG] BMM150 trim %s; uncompensated M5Unified values kept\n",
+               read ? "registers invalid" : aux.failure());
+    return false;
+  }
+  src.trim = trim;
+  src.bmi270 = imu0;
+  src.compensated = true;
+  activeMagSource() = MAG_SOURCE_BMM150_COMPENSATED;
+  log.printf("[MAGCFG] BMM150 Bosch compensation on: x1=%d y1=%d x2=%d y2=%d xy1=%u xy2=%d "
+             "z1=%u z2=%d z3=%d z4=%d xyz1=%u\n",
+             trim.dig_x1, trim.dig_y1, trim.dig_x2, trim.dig_y2, trim.dig_xy1, trim.dig_xy2,
+             trim.dig_z1, trim.dig_z2, trim.dig_z3, trim.dig_z4, trim.dig_xyz1);
+  return low;
 }
-
 
 } // namespace atoms3r_ical

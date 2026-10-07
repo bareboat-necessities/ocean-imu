@@ -81,7 +81,7 @@ imu_calibrate-test.o: $(CAL_HEADERS)
 accel_cal-test.o: accel_cal_sim.h accel_cal_replay.h ../common/GravityChain.h $(CAL_HEADERS)
 accel_cal-replay.o: accel_cal_replay.h $(CAL_HEADERS)
 accel_cal_gravity_override-test.o: ../common/GravityChain.h $(CAL_HEADERS)
-mag_diagnostics-test.o: $(SRC_DIR)/AtomS3R/AtomS3R_MagDiagnostics.h $(SRC_DIR)/AtomS3R/AtomS3R_Bmm150AuxPreset.h
+mag_diagnostics-test.o: $(SRC_DIR)/AtomS3R/AtomS3R_MagDiagnostics.h $(SRC_DIR)/AtomS3R/AtomS3R_Bmm150AuxPreset.h $(SRC_DIR)/AtomS3R/AtomS3R_Bmm150Compensation.h
 
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -c $< -o $@

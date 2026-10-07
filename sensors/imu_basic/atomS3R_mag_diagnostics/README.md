@@ -28,11 +28,12 @@ The verdicts compare the dip with `DIAG_EXPECTED_DIP_DEG` (default 66.5°, Fair 
 
 ## Magnetometer setting and drift
 
-Every AtomS3R sketch, the calibration wizard and this one start the BMM150 in a low-noise setting: 47 XY / 41 Z repetitions at M5Unified's 30 Hz output rate, instead of the single repetition M5Unified leaves after reset. While the sketch waits for a tap (or in LIVE), send over serial:
+Every AtomS3R sketch, the calibration wizard and this one start the BMM150 in a low-noise setting (47 XY / 41 Z repetitions at M5Unified's 30 Hz output rate, instead of the single repetition M5Unified leaves after reset) and apply Bosch's trim-register compensation with RHALL, the sensor's own temperature compensation. While the sketch waits for a tap (or in LIVE), send over serial:
 
 - `q`: read the BMM150 configuration (`[MAGCFG] current`);
 - `o`: switch to the M5Unified driver default (1/1 repetitions) until the next reboot, to compare;
 - `p`: switch back to the low-noise setting;
+- `c`: toggle Bosch trim/RHALL compensation (on by default in every sketch); the saved calibration applies only to the data source it was fitted on;
 - `d`: drift monitor. Leave the board untouched; every 5 s it prints the average raw field, its change since the start, noise, and IMU temperature (`[DRIFT]`). A change that follows temperature is sensor drift; a stable field means heading changes come from where the board is placed. Tap or send `d` again to stop.
 
 Every `[STILL]`, `[FIT]` and `[VERDICT]` block names the setting in use. Two consecutive runs in the same setting show calibration repeatability in `[FIT] previous-run-vs-fresh`.
