@@ -115,6 +115,10 @@ class MeasurementFrameTests(unittest.TestCase):
         mu, alpha = out['same_prefix_receipt'], out['paid_receipt_coefficient']
         self.assertNotEqual(mu, 0)
         self.assertGreater(alpha, 0)
+        v = out['marginal_before_process']
+        ceiling = q[2][2]*(q[2][2]+4*v)/(v*v*(q[2][2]+2*v)**2)
+        self.assertEqual(out['allocated_coefficient_same_prefix_ceiling'], ceiling)
+        self.assertLess(alpha, ceiling)  # full inverse correlation retained
         self.assertEqual(out['full_residual_process_Fisher_loss'],
                          alpha*mu*mu+out['retained_transverse_Fisher_loss']
                          +out['retained_full_process_Fisher_loss'])

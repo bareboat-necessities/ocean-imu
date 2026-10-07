@@ -61,6 +61,12 @@ It must be controlled from the SAME coupled tuner/process/acc/S/magnetic
 history, not independently boxed. No actual feasible chi>=1 mode has been
 exhibited or excluded. Positive process action at zero signed gap remains
 possible; no zero-action argument or compactness shortcut is used.
+Before trying that inverse-domain estimate, check its necessary allocation
+ceiling: `alpha*v^2 <= q*(q+4*v)/(q+2*v)^2`, `q=Qr_aa`, since
+`d/v>=v/q`. If the same-prefix `k` exceeds it, the estimate cannot make
+CR45's allocated coefficient pay dbar. This is NOT a ceiling on total
+process/joint action or an admitted negative word. The remaining linked
+action must pay the residual; no quantitative all-mode bound is proved.
 
 ## Full endogenous cost and status
 
@@ -112,6 +118,8 @@ exploratory replay, sampled contraction search or secant sweep was added.
    final diagnostic in its saved log (last line: passing TFG Jacobians);
    repeat with live capture on the integrated tree. D if pointwise alpha>0 is
    promoted to uniform receipt domination: no threshold-crossing bound exists.
+   Push build 37644598944 failed in apt-get before compilation; only failed
+   jobs were retried. This E failure supplies no mathematical sign evidence.
 4. Genuine shipping counterexample: none; no A/B conclusion is asserted.
 5. Retained: all 25 existing proved entries and qualifications, CR25--CR43;
    plus the nonzero-receipt lower inequality, without margin/count promotion.

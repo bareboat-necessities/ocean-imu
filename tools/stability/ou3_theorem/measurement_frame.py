@@ -646,6 +646,12 @@ def residual_process_receipt_payment(X, process, D, aw_index):
     J, Jmid, Jend = inverse(X), inverse(middle), inverse(terminal)
     fisher = lambda j: trace(product(j, D, j, D))
     paid = (4*d+v)/(v*(2*d+v)**2)
+    # Necessary ceiling on THIS allocation, using the same full-Q column.
+    # It is not an upper bound on the retained total process/action loss.
+    q_aa = process[a][a]
+    ceiling = q_aa*(q_aa+4*v)/(v*v*(q_aa+2*v)**2)
+    assert d*q_aa >= v*v
+    assert paid <= ceiling
     s = v/(2*d+v)
     # ||(I-zz') X^-1/2 D X^-1/2 z||^2, evaluated without square roots.
     transverse = product([[D[a][j] for j in range(n)]], J,
@@ -658,6 +664,7 @@ def residual_process_receipt_payment(X, process, D, aw_index):
     return {'marginal_before_process': v, 'same_prefix_receipt': mu,
             'full_process_directional_inverse_charge': d,
             'paid_receipt_coefficient': paid,
+            'allocated_coefficient_same_prefix_ceiling': ceiling,
             'rank_one_allocation': allocation,
             'retained_process_covariance': remainder,
             'retained_transverse_Fisher_loss': 2*s*transverse,
@@ -1316,6 +1323,8 @@ def certificate():
                 'scope': 'CR12 actual fixed-target partial fibre, preceding full integrated prediction allocated once as in CR25; nonzero and scalar zero-gap receipts retain their actual guards',
                 'actual_operands': "X=F*P*F^T; Qr=Q_ship-q_aw*e_a*e_a^T; v=X_aa; d=e_a^T*X*Qr^-1*X*e_a",
                 'paid_receipt_coefficient': 'alpha=(4*d+v)/(v*(2*d+v)^2)>0',
+                'allocation_ceiling': 'alpha*v^2<=Qr_aa*(Qr_aa+4*v)/(Qr_aa+2*v)^2; d/v>=v/Qr_aa from the SAME full-Q column',
+                'allocation_ceiling_is_total_action_upper_bound': False,
                 'signed_substitution': 'L_rem=alpha*mu^2+retained_transverse_loss+retained_full_process_loss; replace L_rem once in the SAME Hbar',
                 'full_process_remaining_lower': 'Qr-rank_one_allocation >= Qr/2 > 0',
                 'full_integrated_Q_ao_and_all_prefix_deletions_retained': True,

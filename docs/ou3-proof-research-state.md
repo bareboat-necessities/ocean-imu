@@ -44,6 +44,39 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
 
+**D — an inverse-domain estimate alone does not settle the linked receipt.**
+The exact failed sufficient step is promoting CR45's covariance-column
+payment to `alpha>=dbar` without checking the SAME prefix's threshold.
+Cauchy with full Qr proves `d/v>=v/Qr_aa`; monotonicity of
+`(4r+1)/(2r+1)^2` gives the allocation ceiling
+`alpha*v^2<=Qr_aa*(Qr_aa+4v)/(Qr_aa+2v)^2`.
+If `k=dbar*v^2` exceeds it, no upper energy estimate can cross the
+allocation threshold. This is a conditional failure of that sufficient
+method, not a proved occurrence or negative mode in the admitted family.
+Retained facts: CR44--CR45 and every linked full-process/transverse,
+conditional/regression/acc/S/magnetic term; the ceiling is NOT an upper
+bound on their total. Current limiter: no quantified retained-action
+comparison excludes all feasible CR30 chi>=1 modes, and no common root
+reserve is established. Next falsifiable test: derive that comparison
+from CR5/CR31--CR32 and the literal applied columns on the actual inherited
+image, retaining first marginal, target lag and every prefix guard; only
+then test the complete CR43 remainder at the same reserve. No sign,
+rank, inverse, OPEN dependency or broader flag is promoted.
+
+**E — dependency installation failed before compilation.** Exact head
+`5ecbe504d0d9` push build run 37644598944 failed jobs 112872753415
+(imu_calibrate) and 112872753700 (OU-III): `apt-get did not succeed after
+3 attempts` at Install build dependencies. The Ubuntu mirror download
+timed out; no compilation or proof check failed in those jobs. Retry only
+failed jobs; retain successful checks and inspect each new exact head.
+The PR build still running rejected individual job reruns; do not infer
+a successful retry. A transient GitHub fetch 502 and an overwrite attempt
+on read-only Git objects were recovered by fetching the complete clone
+and copying only missing objects. The full automatic evidence commit
+`070e7de3633f` is preserved; no scientific payload is manually replaced.
+The mistaken test-file path was corrected by repository search to
+`tests/validation/test_ou3_measurement_frame.py`; no result used that read.
+
 **E — exact-head two-column render counter repaired.** At `17c53af4b5ac`,
 PR run 37643337778 / job 112867577478 fails `lualatex` with
 `LaTeX Error: Counter too large` at the final shipping-audit paragraph.

@@ -115,6 +115,8 @@
     },
     "full_residual_process_receipt_payment": {
       "actual_operands": "X=F*P*F^T; Qr=Q_ship-q_aw*e_a*e_a^T; v=X_aa; d=e_a^T*X*Qr^-1*X*e_a",
+      "allocation_ceiling": "alpha*v^2<=Qr_aa*(Qr_aa+4*v)/(Qr_aa+2*v)^2; d/v>=v/Qr_aa from the SAME full-Q column",
+      "allocation_ceiling_is_total_action_upper_bound": false,
       "complete_homogeneous_gap_proved": false,
       "full_endogenous_Schur_cost_paid": false,
       "full_integrated_Q_ao_and_all_prefix_deletions_retained": true,
