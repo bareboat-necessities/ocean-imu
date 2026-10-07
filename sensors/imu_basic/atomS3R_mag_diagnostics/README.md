@@ -32,6 +32,7 @@ M5Unified leaves the BMM150 at one repetition per axis, its noisiest setting. Wh
 
 - `q`: read the BMM150 configuration (`[MAGCFG] current`);
 - `p`: switch to 47 XY / 41 Z repetitions at the same 30 Hz output rate (`[MAGCFG] before`/`after`).
+- `d`: drift monitor. Leave the board untouched; every 5 s it prints the average raw field, its change since the start, noise, and IMU temperature (`[DRIFT]`). A change that follows temperature is sensor drift; a stable field means heading changes come from where the board is placed. Tap or send `d` again to stop.
 
 The setting is written through the BMI270 AUX interface in manual mode, read back, and the AUX data-mode configuration is restored exactly. It lasts until the next reboot, when M5Unified resets the BMM150. Compare a run before `p` with two runs after it: `[STILL]` noise should drop, and `[FIT] previous-run-vs-fresh` between the two later runs shows whether calibration becomes repeatable. Every `[STILL]` and `[FIT]` block names the mode in use.
 
