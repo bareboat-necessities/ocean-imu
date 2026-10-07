@@ -5,16 +5,14 @@
 */
 
 // Global-scope names of the shared defaults exported by
-// SeaStateFusionFilter_OU_II.h and SeaStateFusionFilter_OU_III.h.  The two OU
-// headers are never included in the same translation unit (their estimator
-// constants and TuneState share names), so each includes this once; the TFG
-// orchestrator reads seastate::common::defaults directly and keeps the global
-// namespace clean.
+// SeaStateFusionFilter_OU_II.h and SeaStateFusionFilter_OU_III.h; the TFG
+// orchestrator reads seastate::common::defaults directly.
 //
 // Values and their provenance live in SeaStateFusionDefaults.h.  Constants
 // that differ between the two OU families (MAX_TUNE_FREQ_HZ, MAX_SIGMA_A,
-// PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT, the regularizer bounds, ...) are defined
-// in each family's own header.
+// PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT, the regularizer bounds, ...) and each
+// family's TuneState live in ocean_imu::ou2 / ocean_imu::ou3, so both
+// families can share a translation unit.
 
 #include "kalman_common/SeaStateFusionDefaults.h"
 

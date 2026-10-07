@@ -17,6 +17,7 @@
 
 #include "util/W3dSimCommon.h"
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+using namespace ocean_imu::ou3;
 
 using Eigen::Quaternionf;
 using Eigen::Vector3f;

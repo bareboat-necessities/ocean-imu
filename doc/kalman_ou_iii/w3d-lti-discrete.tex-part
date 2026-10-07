@@ -56,7 +56,7 @@ Given $(\hat{\vct{x}}_k,\mat{P}_k)$ at $t_k$,
 \mat{P}_{k+1|k} &= \matg{\Phi}(h)\,\mat{P}_k\,\matg{\Phi}(h)^\top \;+\; \matg{Q}_d(h).
 \end{align}
 The OU-driven kinematic transition and covariance are analytic, including the
-small-step branch; Eqs.~\eqref{eq:ba-ou-phi}--\eqref{eq:ba-ou-Qd} handle the
+series branch for $h/\tau<1$; Eqs.~\eqref{eq:ba-ou-phi}--\eqref{eq:ba-ou-Qd} handle the
 residual bias.  The attitude/gyro-bias transition is exact for constant angular
 rate, with Simpson quadrature used only for anisotropic attitude-noise and
 bias-driven covariance integrals as described next.

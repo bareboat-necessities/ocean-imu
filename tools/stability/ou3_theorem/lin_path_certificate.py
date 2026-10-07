@@ -72,11 +72,13 @@ def rational_record(q):
 
 
 def small_x_source_defect():
-    """Relative Q error and F defect for the literal degree-truncated branches.
+    """Relative Q error and F defect allowances for truncated branches.
 
     In natural step units D_h=diag(h,h^2,h^3,1), Q/(sigma^2*x)
     has entries 2 sum_r (-x)^r c_mnr. The coefficient and tail majorants
-    below are rational. Only x<.01 needs a truncation allowance.
+    below are rational: the allowance of a degree-nine x<.01 branch. The
+    shipped |x|<1 series branch truncates much later; series_branch_defect()
+    proves its defects are below these allowances for every |x|<1.
     """
     order = (1, 2, 3, 0)
     degrees = ((6,5,4,7), (5,4,3,6), (4,3,2,5), (7,6,5,8))
@@ -102,6 +104,49 @@ def small_x_source_defect():
     j_defect = inverse_norm*x**5*(F(1,120)**2+F(1,720)**2)/F('.05')**2
     return eps_q, j_defect, b0, degrees
 
+
+# Taylor terms kept by the shipped |x|<1 branch of IntegratedOUChain
+# (src/kalman_ou_common/KalmanOUCoreMath.h), keyed by (v,p,S,a) entry, and of
+# the phi_pa/phi_Sa transition coefficients.
+SHIPPED_SERIES_TERMS = {
+    ('v','v'):23, ('v','p'):23, ('v','S'):22, ('v','a'):24, ('p','p'):22,
+    ('p','S'):21, ('p','a'):24, ('S','S'):21, ('S','a'):23, ('a','a'):25,
+}
+SHIPPED_TRANSITION_TERMS = {'phi_pa':19, 'phi_Sa':18}
+
+
+def series_branch_defect(x=F(1)):
+    """Majorants of the shipped series branch at |x|<=x, in the units of
+    small_x_source_defect(), and whether both lie below its allowances.
+
+    The Q tail uses the same rational coefficient/geometric majorant. Each
+    transition series sum_k (-1)^k x^(k+n)/(k+n)! is alternating with
+    decreasing terms for x<=1, so its first omitted term bounds the error.
+    """
+    if not F(0) < x <= F(1):
+        raise ValueError('series branch is |x|<1')
+    eps_q, j_defect, b0, _ = small_x_source_defect()
+    order, names = (1, 2, 3, 0), 'vpSa'
+    inverse_norm = max(sum(abs(v) for v in row) for row in inverse(b0))*(1+x)**2
+    rows = []
+    for i, m in enumerate(order):
+        row = []
+        for j, n in enumerate(order):
+            key = (names[i], names[j])
+            r = SHIPPED_SERIES_TERMS.get(key) or SHIPPED_SERIES_TERMS[key[::-1]]
+            c = sum((F(2, factorial(m+k)*factorial(n+r-k)*(m+n+r+1))
+                     for k in range(r+1)), F(0))
+            row.append(c*x**r/(1-F(2)*x/F(r+1)))
+        rows.append(row)
+    series_q = inverse_norm*max(sum(row) for row in rows)
+    # First omitted transition terms in natural step units (divided by h^2,
+    # h^3), charged as small_x_source_defect() charges its own (x^5 there is
+    # its (x^3)^2 terms over the x of Q/(sigma^2*x)).
+    pa = x**SHIPPED_TRANSITION_TERMS['phi_pa']/factorial(SHIPPED_TRANSITION_TERMS['phi_pa']+2)
+    sa = x**SHIPPED_TRANSITION_TERMS['phi_Sa']/factorial(SHIPPED_TRANSITION_TERMS['phi_Sa']+3)
+    series_j = inverse_norm*(pa**2+sa**2)/x/F('.05')**2
+    return {'q': series_q, 'j': series_j,
+            'within_allowance': series_q <= eps_q and series_j <= j_defect}
 
 def certificate(scales=("5.5", "8.1", "1100", "4")):
     tmin, tmax, dtmin = F(16), F('16.006'), F('.004')

@@ -28,11 +28,10 @@
 #include <limits>
 #include <cmath>
 #include <algorithm>
-#include <stdexcept>
-
-using Eigen::Matrix;
 
 #include "kalman_ou_common/KalmanOUCoreMath.h"
+
+namespace ocean_imu::kalman {
 
 template <typename T = float, bool with_gyro_bias = true, bool with_accel_bias = true>
 class Kalman3D_Wave_OU_III {
@@ -55,16 +54,16 @@ class Kalman3D_Wave_OU_III {
     static constexpr int OFF_BA  = with_accel_bias ? (BASE_N + 12) : -1;
 
 
-    typedef Matrix<T, 3, 1> Vector3;
-    typedef Matrix<T, BASE_N, BASE_N> MatrixBaseN;
-    typedef Matrix<T, NX, NX> MatrixNX;
-    typedef Matrix<T, 3, 3> Matrix3;
+    typedef Eigen::Matrix<T, 3, 1> Vector3;
+    typedef Eigen::Matrix<T, BASE_N, BASE_N> MatrixBaseN;
+    typedef Eigen::Matrix<T, NX, NX> MatrixNX;
+    typedef Eigen::Matrix<T, 3, 3> Matrix3;
 
     // Fixed-size helpers for internal scratch
-    typedef Matrix<T, 12, 12> Matrix12;
-    typedef Matrix<T, 12,  1> Vector12;
-    typedef Matrix<T, BASE_N, 12> MatrixBaseN12;
-    typedef Matrix<T, NX,  3> MatrixNX3;
+    typedef Eigen::Matrix<T, 12, 12> Matrix12;
+    typedef Eigen::Matrix<T, 12,  1> Vector12;
+    typedef Eigen::Matrix<T, BASE_N, 12> MatrixBaseN12;
+    typedef Eigen::Matrix<T, NX,  3> MatrixNX3;
 
     static constexpr T STD_GRAVITY = T(9.80665);  // standard gravity acceleration m/s²
     static constexpr T tempC_ref = T(35.0); // Reference temperature for temperature related accel bias drift °C
@@ -87,11 +86,14 @@ class Kalman3D_Wave_OU_III {
                   T Pq0 = T(5e-4), T Pb0 = T(1e-6), T b0 = T(1e-11), T R_S_noise_var = T(1.5),
                   T gravity_magnitude = T(STD_GRAVITY));
 
-    // Initialization / measurement API
-    void initialize_from_acc_mag(Vector3 const& acc, Vector3 const& mag);
-    void initialize_from_acc(Vector3 const& acc);
-    void initialize_from_acc_preserve_yaw(Vector3 const& acc);
-    void initialize_from_attitude(Eigen::Quaternion<T> const& q_bw,
+    // Initialization / measurement API.  The initializers return false, with
+    // no exception, when the input cannot define an attitude (non-finite or
+    // near-zero vectors, field parallel to gravity) and leave the filter state
+    // unchanged.
+    bool initialize_from_acc_mag(Vector3 const& acc, Vector3 const& mag);
+    bool initialize_from_acc(Vector3 const& acc);
+    bool initialize_from_acc_preserve_yaw(Vector3 const& acc);
+    bool initialize_from_attitude(Eigen::Quaternion<T> const& q_bw,
                                   T tilt_sigma_rad,
                                   T yaw_sigma_rad);
     static Eigen::Quaternion<T> quaternion_from_acc(Vector3 const& acc);
@@ -611,7 +613,7 @@ class Kalman3D_Wave_OU_III {
     Vector3 v2ref = Vector3::UnitX();
 
     // Extended full state xext and Pext (NX x NX)
-    Matrix<T, NX, 1> xext; // [ δθ(3), (gyro bias 3 optional), v(3), p(3), S(3), a_w(3), (accel bias 3 optional) ]
+    Eigen::Matrix<T, NX, 1> xext; // [ δθ(3), (gyro bias 3 optional), v(3), p(3), S(3), a_w(3), (accel bias 3 optional) ]
     MatrixNX Pext;
 
     Vector3 last_gyr_bias_corrected{};  // Last gyro
@@ -1276,24 +1278,26 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::set_aw_stationary
 //   acc_body  — accelerometer specific force in body frame (NED)
 //   mag_body  — magnetometer measurement in body frame (NED)
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_acc_mag(
+bool Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_acc_mag(
     Vector3 const& acc_body,
     Vector3 const& mag_body)
 {
-    project_gyro_bias_();
     const Vector3 acc = deheel_vector_(acc_body);
     const Vector3 mag = deheel_vector_(mag_body);
+    if (!acc.allFinite() || !mag.allFinite()) {
+        return false;
+    }
 
     // use acc & mag as if they are BODY-frame (interpreted as B').
     // Normalize accelerometer
     const T anorm = acc.norm();
-    if (anorm < T(1e-8)) {
-        throw std::runtime_error("Invalid accelerometer vector: norm too small for initialization");
+    if (!(anorm >= T(1e-8))) {
+        return false;
     }
 
     const T mnorm = mag.norm();
-    if (mnorm < T(1e-8)) {
-        throw std::runtime_error("Invalid magnetometer vector: norm too small for initialization");
+    if (!(mnorm >= T(1e-8))) {
+        return false;
     }
 
     const Vector3 acc_n = acc / anorm;
@@ -1303,10 +1307,11 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
 
     Vector3 mag_h = mag - (mag.dot(z_world)) * z_world;
     const T mh = mag_h.norm();
-    if (mh < T(1e-8)) {
-        throw std::runtime_error("Magnetometer vector parallel to gravity - cannot initialize yaw");
+    if (!(mh >= T(1e-8))) {
+        return false;
     }
     mag_h /= mh;
+    project_gyro_bias_();  // only once the input is accepted
 
     const Vector3 x_world = mag_h;                    // magnetic north in body coords
     const Vector3 y_world = z_world.cross(x_world).normalized();
@@ -1351,6 +1356,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
     }
 
     symmetrize_Pext_();
+    return true;
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
@@ -1389,16 +1395,16 @@ Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::quaternion_from_acc(Ve
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_acc(Vector3 const& acc_body)
+bool Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_acc(Vector3 const& acc_body)
 {
-    project_gyro_bias_();
     const Vector3 acc = deheel_vector_(acc_body);
 
     const T anorm = acc.norm();
-    if (anorm < T(1e-8)) {
-       throw std::runtime_error("Invalid accelerometer vector: norm too small for initialization");
+    if (!acc.allFinite() || !(anorm >= T(1e-8))) {
+       return false;
     }
     const Vector3 acc_n = acc / anorm;
+    project_gyro_bias_();  // only once the input is accepted
 
     // Use accelerometer to align z axis, yaw remains arbitrary
     qref = quaternion_from_acc(acc_n);
@@ -1423,6 +1429,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
     }
 
     symmetrize_Pext_();
+    return true;
 }
 
 // Seed the filter from an attitude solved outside it.
@@ -1442,18 +1449,16 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
 // since a correlation learned against the discarded attitude does not describe
 // the new one.
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_attitude(
+bool Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_attitude(
     Eigen::Quaternion<T> const& q_bw,
     T tilt_sigma_rad,
     T yaw_sigma_rad)
 {
     if (!q_bw.coeffs().allFinite()) {
-        throw std::runtime_error(
-            "Invalid attitude quaternion for initialization: not finite");
+        return false;
     }
     if (!(q_bw.norm() > T(1e-8))) {
-        throw std::runtime_error(
-            "Invalid attitude quaternion for initialization: norm too small");
+        return false;
     }
 
     // Writes qref through the un-heel composition and zeroes the attitude
@@ -1483,18 +1488,18 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
     }
 
     symmetrize_Pext_();
+    return true;
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_acc_preserve_yaw(
+bool Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_acc_preserve_yaw(
     Vector3 const& acc_body)
 {
     const Eigen::Quaternion<T> q_old_bw = quaternion_boat();
     if (!std::isfinite(q_old_bw.x()) || !std::isfinite(q_old_bw.y()) ||
         !std::isfinite(q_old_bw.z()) || !std::isfinite(q_old_bw.w()))
     {
-        initialize_from_acc(acc_body);
-        return;
+        return initialize_from_acc(acc_body);
     }
 
     const T ox = q_old_bw.x();
@@ -1506,11 +1511,11 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
     const T yaw_old = std::atan2(siny_cosp, cosy_cosp);
 
     // Re-lock tilt from accelerometer first.
-    initialize_from_acc(acc_body);
+    if (!initialize_from_acc(acc_body)) return false;
 
     Eigen::Quaternion<T> q_tilt_bw = quaternion_boat();
     const T nq_tilt = q_tilt_bw.norm();
-    if (!(nq_tilt > T(1e-8))) return;
+    if (!(nq_tilt > T(1e-8))) return true;
     q_tilt_bw.normalize();
 
     const T tx = q_tilt_bw.x();
@@ -1533,6 +1538,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
     Eigen::Quaternion<T> q_new_bw = q_yaw * q_pitch * q_roll;
     q_new_bw.normalize();
     set_quaternion_boat(q_new_bw);
+    return true;
 }
 
 template <typename T, bool with_gyro_bias, bool with_accel_bias>
@@ -2214,7 +2220,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 // specific force prediction (BODY'):
 //   f_b' = R_wb (a_w − g) + α^{B'} × r_imu^{B'} + ω^{B'} × (ω^{B'} × r_imu^{B'}) + b_a(temp)
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
-Matrix<T,3,1>
+Eigen::Matrix<T,3,1>
 Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::accelerometer_measurement_func(T tempC) const {
     const Vector3 g_world(0,0,+gravity_magnitude_);
     const Vector3 aw = xext.template segment<3>(OFF_AW);
@@ -2243,7 +2249,7 @@ Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::accelerometer_measurem
 
 // utility functions
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
-Matrix<T, 3, 3> Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const {
+Eigen::Matrix<T, 3, 3> Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const {
     Matrix3 M;
     M << 0, -vec(2), vec(1),
          vec(2), 0, -vec(0),
@@ -2508,3 +2514,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::QdAxis4x1_analyti
     ocean_imu::kalman::ou_detail::IntegratedOUChain<T, 3>::process_covariance(
         tau, h, sigma2, Qd_axis);
 }
+
+} // namespace ocean_imu::kalman
+
+// Source compatibility for existing callers of the unqualified name.
+using ocean_imu::kalman::Kalman3D_Wave_OU_III;

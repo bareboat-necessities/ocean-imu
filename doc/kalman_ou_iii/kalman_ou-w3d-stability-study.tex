@@ -43,6 +43,35 @@ h\in{\cal M}_{\rm marine}\cap{\cal B}_{\rm IMU}\cap{\cal S}_{\rm mag}.
 \]
 The same \(h\) determines physical motion, delivered sensors, frontend and tuner state, covariance, accepted events, scheduler state and estimator mean. Generated filter quantities are functions of this history, not independent theorem inputs. No estimator behavior, tuning law, physical constant, quality gate, measurement cadence, MARINE MOTION condition, MAGNETIC SERVICE condition, or IMU qualification is changed for the proof.
 
+\subsection{Relation to classical results}
+The attitude/accelerometer-bias compatibility fibre is the marine form of a
+classical inertial-navigation fact.  With gravity as the only specific-force
+reference, a horizontal accelerometer bias is indistinguishable from a tilt
+error of about $b_h/g$; the pair separates only when the error dynamics are
+excited, classically by changes of heading or other maneuvers
+\cite{TittertonWeston2004_Strapdown,GoshenMeskin1992_PWCSTheory,GoshenMeskin1992_PWCSAlignment,Hong2005_GPSINSObservability}.
+A magnetometer fixes heading but adds no specific-force reference, so it does
+not remove this direction.  Absolute-state stability is therefore unavailable
+on histories without such excitation; this is why the target is regional and
+practical, and why indefinite STILL needs a compatible-tube target.
+
+Standard EKF stability results do not apply directly.  For the discrete-time
+EKF, the estimation error is exponentially bounded in mean square and bounded
+with probability one when the error covariance is uniformly bounded above and
+below, the linearization error is bounded, and the initial error and noises
+are small \cite{Reif1999_EKFStochasticStability}; deterministic local-observer
+results have the same structure \cite{Boutayeb1997_EKFObserverConvergence}.
+For linear filters the covariance bounds follow from uniform observability or
+detectability \cite{Jazwinski1970_Filtering,AndersonMoore1981_DetectabilityStabilizability},
+and invariant EKFs obtain stability from group-affine structure
+\cite{BarrauBonnabel2017_IEKF}.  Uniform observability fails exactly on the
+compatibility fibre, the marine model is not group affine, and the shipping
+estimator adds adaptation, gating, projection and mode switching outside
+these frameworks.  The study therefore proves its results on the literal
+estimator; the classical hypotheses identify what must be supplied instead:
+a uniform information condition (MAGNETIC SERVICE together with MARINE
+MOTION), covariance bounds, and a small-error domain.
+
 \section{Assumptions and numerical qualification}
 Table~\ref{tab:assumptions} collects the deterministic source and service
 constants used by the proof.  These are theorem qualifications; where assembled
@@ -1174,4 +1203,6 @@ precisely on the dependencies listed above; no numerical diagnostic is used
 to fill an unproved implication.
 
 \balance
+\bibliographystyle{IEEEtran}
+\bibliography{w3d-stability,w3d,w3d-iss,w3d-modern}
 \end{document}

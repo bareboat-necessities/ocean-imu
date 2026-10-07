@@ -17,10 +17,12 @@
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
 template <TrackerType T> using Inner = SeaStateFusionFilter_OU_II<T>;
 template <TrackerType T> using Outer = SeaStateFusion_OU_II<T>;
+using namespace ocean_imu::ou2;
 #else
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 template <TrackerType T> using Inner = SeaStateFusionFilter_OU_III<T>;
 template <TrackerType T> using Outer = SeaStateFusion_OU_III<T>;
+using namespace ocean_imu::ou3;
 #endif
 #include "SyntheticMarineHistory.h"
 

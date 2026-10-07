@@ -74,16 +74,19 @@ with
 \phi_{pa}&=\tau^2\left(x+\operatorname{expm1}(-x)\right),\\
 \phi_{Sa}&=\tau^3\left(\tfrac12x^2-x-\operatorname{expm1}(-x)\right).
 \end{align}
-For $|x|<10^{-2}$, cancellation-sensitive coefficients are evaluated as
+These closed forms subtract $O(1)$ terms to leave $O(x^2)$ and $O(x^3)$, so
+their relative rounding error grows like $x^{-2}$ and $x^{-3}$ ulp. For
+$|x|<1$ they are evaluated from their Taylor series,
 \begin{align}
-\phi_{pa}&=\tau^2\left(\tfrac12x^2-\tfrac16x^3+\tfrac1{24}x^4\right),\\
-\phi_{Sa}&=\tau^3\left(\tfrac16x^3-\tfrac1{24}x^4+\tfrac1{120}x^5\right).
+\phi_{pa}&=\tau^2\sum_{k\ge0}\frac{(-1)^k x^{k+2}}{(k+2)!},&
+\phi_{Sa}&=\tau^3\sum_{k\ge0}\frac{(-1)^k x^{k+3}}{(k+3)!},
 \end{align}
+truncated where the remainder is below $2^{-60}$ relative at $|x|=1$.
 The reported simulations use $h=\SI{0.005}{s}$. Across the applied and fixed
 operating points recorded for the scored windows, the minimum correlation time
 is $\SI{0.944}{s}$, so $x\le 5.30\times10^{-3}$ and these recorded operating
-points use the small-step branch. The exact closed form remains necessary when
-the update cadence or admissible correlation-time range is changed.
+points use the series branch. The closed form is used for $|x|\ge1$, where its
+cancellation is bounded.
 
 In group-first three-dimensional ordering
 $[\vct{v},\vct{p},\vct{S},\vct{a}_w]$, the transition is
@@ -110,7 +113,7 @@ q_c
 \Phi_{\mathrm{axis}}^{\top}(t)\,dt.
 \label{eq:q-axis-integral}
 \end{equation}
-For $|x|>10^{-2}$, write
+For $|x|\ge1$, write
 $\matg{Q}_{d,\mathrm{axis}}=q_c\,\scomp(\mat{U})$, where $\mat{U}$ stores the
 following upper-triangular coefficients in $[v,p,S,a]$ ordering:
 \begin{equation}
@@ -138,8 +141,11 @@ U_{Sa}&=\tfrac12\tau^4[\alpha^2-\alpha(x^2+2)+1],\\
 U_{aa}&=\tfrac12\tau(1-\alpha^2).
 \end{align}
 
-\subsubsection{Complete small-step branch}
-For $|x|\le10^{-2}$, let $\lambda=1/\tau$ and associate the state order
+\subsubsection{Series branch}
+Each $U_{ij}$ is $\tau^{m}x^{p}G_{ij}(x)$ with $G_{ij}$ entire and $p$ up to
+seven, so the closed forms above lose about $x^{-p}$ ulp; in single precision
+the $S$ rows are wrong by orders of magnitude for $x$ well inside the deployed
+range.  For $|x|<1$, let $\lambda=1/\tau$ and associate the state order
 $[v,p,S,a]$ with integration indices
 \[
 (m_v,m_p,m_S,m_a)=(1,2,3,0).
@@ -153,12 +159,12 @@ g_i(t)=\sum_{r=0}^{\infty}
 \end{equation}
 Substitution into
 $Q_{ij}=2\sigma^2\lambda\int_0^h g_i(t)g_j(t)\,dt$
-gives every covariance entry through ninth order in one expression:
+gives every covariance entry in one expression:
 \begin{equation}
 \begin{aligned}
-Q_{ij}^{(9)}
+Q_{ij}
  &=2\sigma^2\lambda
- \sum_{\substack{r,s\ge0\\d_{ijrs}\le9}}
+ \sum_{r,s\ge0}
  \frac{(-\lambda)^{r+s}h^{d_{ijrs}}}
  {(r+m_i)!(s+m_j)!\,d_{ijrs}},\\
 d_{ijrs}&=r+s+m_i+m_j+1,
@@ -166,9 +172,12 @@ d_{ijrs}&=r+s+m_i+m_j+1,
 \end{aligned}
 \label{eq:ou-small-step-compact}
 \end{equation}
-The matrix is completed by symmetry.  Equation~\eqref{eq:ou-small-step-compact}
-contains all terms retained in the ninth-order expansion; for example, it
-produces the leading orders $Q_{aa}=2\sigma^2\lambda h+O(h^2)$,
+Grouped by powers of $x$, this is the Taylor series of $G_{ij}$; the
+implementation evaluates it by Horner's rule in $x$, truncated where the
+remainder is below $2^{-60}$ relative at $|x|=1$ (21 to 25 terms; the
+$e^{-2x}$ content makes the coefficients decay like $2^k/k!$).
+The matrix is completed by symmetry.  For example, the series has the
+leading orders $Q_{aa}=2\sigma^2\lambda h+O(h^2)$,
 $Q_{va}=\sigma^2\lambda h^2+O(h^3)$, and
 $Q_{SS}=\sigma^2\lambda h^7/126+O(h^8)$.
 The $[v,p,a]$ principal marginal is computed from the same OU-II formulas and

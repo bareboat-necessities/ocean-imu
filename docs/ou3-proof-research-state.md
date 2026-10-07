@@ -1184,9 +1184,14 @@ The H18-to-A21 magnetic release gate counts only corrections the core
 actually applied (`seastate::common::MagServiceCount`); rejected calls advance
 neither the count nor its 1-s clock. This is the accepted-update count already
 charged in [the release bound](ou3-h18-release-compactness.md); executions
-whose forwarded magnetic calls are all applied are unchanged. All other
-shipping source, behavior, constants, gates and physical assumptions are
-unchanged. Retain complete state/P/K, OU, BA/BG forcing/projection, actual
+whose forwarded magnetic calls are all applied are unchanged. For
+x=h/tau<1 the integrated-OU Q and phi_pa/phi_Sa are Taylor series truncated
+below 2^-60 relative (in float the old closed forms were wrong by orders
+of magnitude in the S rows for x in [.01,1)); `series_branch_defect` proves
+the literal defect lies inside the charged `small_x_source_defect` allowance
+for every x<1, so no certificate value changes. Invalid initializer inputs return false instead of throwing.
+All other shipping source, behavior, constants, gates and physical
+assumptions are unchanged. Retain complete state/P/K, OU, BA/BG forcing/projection, actual
 acc/mag/S correction, Joseph/reset/AW, Mahony/guard/frequency/variance, coupled
 adaptation, reference acquisition/refinement and both same-history clocks.
 The local qualified sqrt(V)<=.15 theorem and all existing proved components
@@ -1256,8 +1261,9 @@ remaining work. Reacquisition and source variations do not inherit a zero port.
 Exact rational regressions cover variational NIS, coupled correction/prediction
 identities, held-BA Joseph structure, first-boundary bounds and fail-closed
 domain checks. No new replay, secant, phase grid or sampled covariance cell is
-generated. The only shipping C/C++ change is the applied-correction release count
-under Retained facts. Current test/CI results are recorded
+generated. The shipping C/C++ changes are the applied-correction release count, the
+series branch and the non-throwing initializers under Retained facts; the
+native source diagnostics were re-run against them. Current test/CI results are recorded
 in the PR metadata.
 
 ## Shipping-faithfulness handoff

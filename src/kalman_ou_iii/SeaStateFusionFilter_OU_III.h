@@ -82,14 +82,13 @@
 #include "kalman_common/ProxyStartupFusion.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 
-// Ceiling for the wave-band tuning frequency.  MAX_FREQ_HZ is the tracker's
-// bound and does not belong in the adaptation path: with the tuning frequency
-// read from the wave band, setFreqBounds() is a wave-direction knob and must
-// not move the OU operating point.  Neither bound binds on any reference
-// record -- the wave band spans 0.12 to 0.40 Hz -- so this is a safety limit,
-// not a tuning surface.  1.2 Hz is a 0.83 s zero-crossing period, shorter than
-// any sea a hull responds to while reducing the theorem-only high-frequency tail.
-// OU-II and TFG keep 1.5 Hz.
+namespace ocean_imu::ou3 {
+
+// Ceiling for the wave-band tuning frequency: a safety limit, not a tuning
+// surface.  MAX_FREQ_HZ is the tracker's bound and does not belong in the
+// adaptation path; setFreqBounds() is a wave-direction knob and must not move
+// the OU operating point.  1.2 Hz is a 0.83 s zero-crossing period, shorter
+// than any sea a hull responds to.  OU-II and TFG keep 1.5 Hz.
 constexpr float MAX_TUNE_FREQ_HZ = 1.2f;
 
 constexpr float MIN_TAU_S   = 0.02f;
@@ -104,14 +103,9 @@ constexpr float MIN_R_S     = 0.15f;
 // cadence normalization, at fixed acceleration scale.
 constexpr float MAX_R_S     = 100.0f;
 
-// Smoothing horizon of the r_S channel, in units of tau_target.  Measured on
-// the versioned records against synthesized sea-state transitions: the error
-// during a transition falls monotonically as this shortens while the worst
-// single realization degrades monotonically the other way, and the value is
-// where the mean gain and the worst-record loss cross.  r_S grows at least as
-// fast as tau^3 (tau^3 under Cubic, tau^(24/7) under SpectralMSE, before the
-// cadence), so it amplifies tau noise by at least the third power, which is
-// why this stays above the horizon a tau^1 channel would want.  The common
+// Smoothing horizon of the r_S channel, in units of tau_target.  Shorter
+// tracks transitions faster; longer filters tau noise, which r_S amplifies by
+// at least the third power (it grows at least as fast as tau^3).  The common
 // tau/sigma_aw EMA (ADAPT_TAU_SEA_PERIODS) and the activation cadence
 // (ADAPT_EVERY_SECS) are shared; see SeaStateFusionDefaults.h.
 constexpr float ADAPT_RS_MULT              = 1.5f;   // dimensionless
@@ -126,86 +120,30 @@ constexpr float ADAPT_RS_SLEW_LOG          = 0.0f;   // ln units
 constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f;
 
 
-// Integral-regularizer adaptation laws.  The first three place the drift-band
-// regularization pole of the reduced Riccati model; they differ in which
-// asymptotic branch of the posterior acceleration-noise intensity
-//     q_eff = 2 r_a (1 - 1/sqrt(1+zeta)),   zeta = 2 sigma_aw^2 tau / r_a
-// they assume, where r_a ~ R_a*dt is the acceleration measurement noise
-// spectral density seen by the reduced scalar model.
+// Integral-regularizer adaptation laws.  Derivations and the calibration
+// evidence are in the OU-III paper (Sec. "Implemented SpectralMSE schedule").
+// r_a ~ R_a*dt is the acceleration-noise density of the reduced scalar model
+// and q_eff = 2 r_a (1 - 1/sqrt(1+zeta)), zeta = 2 sigma_aw^2 tau / r_a, its
+// posterior acceleration-noise intensity.
 //
-//   Cubic            r_S,base = C_R sqrt(R_a) tau^3, then renormalized by
-//                    sqrt(T_0/T_S).  With the self-similar cadence
-//                    T_S = c_T tau this is effectively r_S ~ tau^(5/2).
-//   StrongRiccati    q_eff = 2 r_a: r_S = sqrt(2 r_a) tau^3 / (sqrt(T_S) k^3),
-//                    with no leading-order sigma_aw dependence.  At the
-//                    analytical C_R this is the *same schedule* as Cubic, not
-//                    merely the same shape; see below.
-//   PosteriorRiccati the full transition law, reducing to
-//                    r_S ~ sigma_aw tau^(7/2) / sqrt(T_S) as zeta -> 0
-//                    and to StrongRiccati as
-//                    zeta -> infinity.
-//
-// The deployed envelope has zeta ~ 1e5..1e7 against the bench sensor floor, so
-// the strong-observation branch q_eff ~ 2 r_a is the applicable one and the
-// drift-driving error is set by the *sensor*, not by the sea.  The base
-// schedule takes its acceleration scale accordingly: R_a is the accelerometer
-// measurement-noise variance, and sqrt(R_a) tau^3 carries the required units of
-// m*s.  The wave amplitude still enters the filter through the OU prior,
-// sigma_aw = c_sigma sigma_a,B.  SpectralMSE also uses the physical wave
-// amplitude in its displacement-distortion cost.
-//
-// Writing the base this way makes C_R a pole placement rather than a gain.
-// With r_a = R_a h, the cadence-normalized base is
-//     C_R sqrt(R_a) tau^3 sqrt(T_0/T_S) = sqrt(2 r_a) tau^3 / (kappa^3 sqrt(T_S))
-// exactly when C_R = sqrt(2h/T_0)/kappa^3, so C_R and the normalized corner
-// kappa = omega_R tau are two spellings of one number and the Cubic and
-// StrongRiccati laws coincide there.  R_S_COEFF_ANALYTICAL_REFERENCE is that
-// value for kappa = 0.3627.  The applied C_R comes from a complete-MEKF sweep
-// against it, because the scalar reduction omits attitude/gravity leakage,
-// residual bias, three-axis covariance coupling and the cadence clamps.
-//
-// The amplitude tilt of the Riccati laws is a one-parameter ablation:
-// p = 0 leaves the Riccati schedule unchanged; p = 1 adds a normalized
-// sigma_aw factor.  This tilt does not apply to SpectralMSE.
-//   SpectralMSE      the bias-variance law.  The three above all answer "what
-//                    r_S holds a chosen normalized pole?"; none answers "what
-//                    pole minimizes displacement error for a sea of amplitude
-//                    sigma_a?".  The pseudo-measurement both suppresses
-//                    integration drift and distorts the real wave, and the
-//                    second cost scales with physical wave energy, so
-//                        J(omega_R) = 3 q_eff / (2 omega_R^3) + J_wave,
-//                        J_wave = (1/2pi) int |G(jw)-1|^2 S_eta^(2) dw,
-//                    with |G(jw)-1|^2 = (1+4x^2)/(1+x^6), x = w/omega_R.  Well
-//                    below the wave band |G-1|^2 -> 4/x^4, so J_wave -> 4 m_-4
-//                    omega_R^4 and the balance gives
-//                        omega_R*^7 = (9/32) q_eff / m_-4.
-//                    For a self-similar sea m_-4 ~ sigma_a^2 tau^8, hence
-//                        r_S* ~ C_J q_eff^(1/14) sigma_a^(6/7) tau^(24/7)
-//                               / sqrt(T_S),
-//                    i.e. tau^(41/14) away from cadence clamps.  This is where
-//                    sigma_a belongs analytically: not in the noise floor, but
-//                    in the penalty for suppressing genuine displacement.
+//   Cubic            r_S,base = C_R sqrt(R_a) tau^3, renormalized by
+//                    sqrt(T_0/T_S).  C_R places the normalized regularizer
+//                    corner kappa = omega_R tau: C_R = sqrt(2h/T_0)/kappa^3.
+//                    No transcendental per tuner update, so it is the
+//                    supported low-cost configuration for targets without
+//                    hardware powf; it needs C_R rather than C_J.
+//   StrongRiccati    the strong-observation branch q_eff = 2 r_a:
+//                    r_S = sqrt(2 r_a) tau^3 / (sqrt(T_S) kappa^3), the same
+//                    schedule as Cubic at the analytical C_R.
+//   PosteriorRiccati the full q_eff law; r_S ~ sigma_aw tau^(7/2)/sqrt(T_S)
+//                    as zeta -> 0 and StrongRiccati as zeta -> infinity.
+//   SpectralMSE      the pole minimizing drift plus wave-distortion error,
+//                        r_S ~ C_J q_eff^(1/14) sigma_a^(6/7) tau^(24/7)
+//                              / sqrt(T_S).
 //                    DEPLOYED DEFAULT.
 //
-// Cubic and SpectralMSE are the two laws intended for deployment, and the
-// choice between them is a cost/accuracy trade rather than a right/wrong one.
-// Over the calibrated envelope the two schedules differ only by
-//     r_S,MSE / r_S,Cubic ~ (tau^3 / sigma_aw)^(1/7),
-// a seventh root that compresses the exponent difference to about 1.3x across
-// the whole H_s = 0.27..8.5 m range, and along the calibrated sea-state
-// trajectory (sigma_aw ~ tau^1.1) to a ratio varying only as tau^0.27.  The
-// measured difference is correspondingly small but real: SpectralMSE improves
-// the paired ten-seed vertical endpoint by 0.0263 +/- 0.0137 %Hs.
-//
-// SpectralMSE costs one powf per tuner update where Cubic costs none:
-// 19.8 ns versus 3.2 ns per evaluation on x86-64 (-O3 -march=native), a factor
-// of 6.  On a microcontroller without hardware transcendentals the ratio is
-// far larger, and the tuner update is one of the few places the filter calls
-// one at all.  Cubic is therefore the supported low-cost configuration for
-// embedded targets, and it is a documented operating point rather than a
-// deprecated one: on this evidence it gives up well under 1 % of the vertical
-// endpoint.  Select it with setRSLaw(RSAdaptationLaw::Cubic), which also needs
-// R_S_coeff (C_R) rather than C_J.
+// The Riccati laws take a one-parameter amplitude tilt (p = 0: none; p = 1:
+// a normalized sigma_aw factor).  It does not apply to SpectralMSE.
 enum class RSAdaptationLaw : uint8_t {
     Cubic = 0,
     StrongRiccati = 1,
@@ -230,23 +168,16 @@ constexpr float R_S_POLE_KAPPA_DEFAULT = 0.3627f;
 // (0.0148 m/s^2)^2 at the nominal 200 Hz sample interval.
 constexpr float R_S_ACCEL_NOISE_DENSITY_DEFAULT = 0.0148f * 0.0148f * FREQ_SMOOTHER_DT;
 // Analytical pole-placement value of C_R, Eq. (adapt-cR-kappa) of the OU-III
-// paper: C_R = sqrt(2h/T_S,0) / kappa^3.  With h = 5 ms (200 Hz), T_S,0 = 15 ms
-// and kappa = 0.3627 this is 17.112.  It is the value at which the deployed
-// Cubic base, after the sqrt(T_S,0/T_S) cadence renormalization, is *identical*
-// to the StrongRiccati law -- the cubic base and the pole-placement law are two
-// spellings of the same schedule, and C_R is the spelling that names the corner
-// directly.  Quoted here as the reference the calibration sweep is measured
-// against, not as the applied value.
+// paper: C_R = sqrt(2h/T_S,0) / kappa^3 with h = 5 ms (200 Hz), T_S,0 = 15 ms
+// and kappa = 0.3627.  At this value the Cubic base, after cadence
+// renormalization, is identical to the StrongRiccati law.
 constexpr float R_S_COEFF_ANALYTICAL_REFERENCE = 17.112f;
 
 // Coefficient C_J of the SpectralMSE law,
 //     r_S = C_J q_eff^(1/14) sigma_a,B^(6/7) tau^(24/7) / sqrt(T_S).
 // It absorbs the dimensionless spectral moment int x^-8 Phi_a(x) dx of the
-// self-similar acceleration spectrum, raised to 3/7.  Evaluating that moment on
-// the eight reference spectra and solving the exact balance record by record
-// gives C_J ~ 0.054, so the default is an analytical prediction rather than a
-// fitted number; the sweep is what decides whether it is the complete-MEKF
-// optimum.
+// self-similar acceleration spectrum, raised to 3/7; the default is that
+// analytical value, not a fit.
 constexpr float R_S_MSE_COEFF_DEFAULT = 0.0538f;
 
 struct TuneState {
@@ -296,7 +227,7 @@ public:
                     const Eigen::Vector3f& sigma_g,
                     const Eigen::Vector3f& sigma_m)
     {
-        mekf_ = std::make_unique<Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m);
+        mekf_ = std::make_unique<kalman::Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m);
         seastate::common::finalizeInitialization(
             mekf_,
             [this]() { enterCold_(); },
@@ -311,7 +242,7 @@ public:
                         float gravity_magnitude)
     {
         gravity_mps2_ = gravity_magnitude;
-        mekf_ = std::make_unique<Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise, gravity_magnitude);
+        mekf_ = std::make_unique<kalman::Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise, gravity_magnitude);
         seastate::common::finalizeInitialization(
             mekf_,
             [this]() { enterCold_(); },
@@ -1217,12 +1148,9 @@ private:
 
     bool congruent_aw_cov_sync_ = false;
 
-    // SpectralMSE is the deployed law: it is the only one of the four that
-    // answers which regularization corner minimizes displacement error rather
-    // than merely how to hold a corner once chosen, and it is the only
-    // configuration measured on this branch that improves the primary endpoint
-    // against main (-0.0263 +/- 0.0137 %Hs, n = 90) while passing all eight
-    // deterministic quality gates.  Its coefficient is analytical, not fitted.
+    // SpectralMSE is the deployed law: the only one of the four that chooses
+    // the regularization corner minimizing displacement error rather than
+    // holding a chosen corner.  Its coefficient is analytical, not fitted.
     RSAdaptationLaw rs_law_ = RSAdaptationLaw::SpectralMSE;
     float rs_pole_kappa_ = R_S_POLE_KAPPA_DEFAULT;
     float rs_accel_noise_density_ = R_S_ACCEL_NOISE_DENSITY_DEFAULT;
@@ -1238,42 +1166,11 @@ private:
 
     // Per-axis horizontal integral-regularization scale, against the vertical
     // one.  The factors are independent because surge and sway have different
-    // vessel responses; the calibrated defaults are 0.72 for X and 0.50 for Y.
-    //
-    // A fixed +/-30 degree projection puts the same ratio in every record:
-    // cos30/sin30 = 1.732 in RMS, independent of sea state.  The records do not
-    // do that.  Horizontal displacement RMS x/y runs
-    //
-    //   H0.27  2.246 / 2.049      H4.0  1.880 / 1.858      (JONSWAP / PM-Stokes)
-    //   H1.5   2.332 / 2.214      H8.5  1.613 / 1.684
-    //
-    // falling monotonically with wavelength and reaching the geometric value
-    // only in the longest waves.  Geometry alone cannot vary with period; a
-    // hull response can, and this is the shape of one.  The dataset's vessel
-    // carries a keel: sway is resisted by it and surge is not, so the hull
-    // suppresses lateral motion at short periods and follows the orbit at long
-    // ones.  The direction-RAO profile for these records says the same thing
-    // from the other side, carrying separate horizontal time constants (1.0 s
-    // and 0.7 s) rather than one.
-    //
-    // Every record also holds yaw at exactly 0 -- mean 0.000, sd 0.000, all
-    // eight -- so world x and y ARE the vessel's surge and sway here, and this
-    // knob pair is the surge/sway split rather than a world-frame accident.
-    // rho_y = 0.50 gives the keel-damped axis the
-    // tighter integral anchor.  Pooled over four fresh IMU draws and the eight
-    // records: pitch -17 percent, y accelerometer bias -21 percent, 3D
-    // accelerometer bias -2 percent, yaw unchanged at 1.003, against roll +4
-    // percent and x bias +5 percent.  The vertical channels do not move at all
-    // (1.000).  An isotropic 0.5 costs yaw 5 percent on the same draws,
-    // which the split does not.
-    //
-    // The frame matters: the keel's anisotropy
-    // is a body-frame property and R_S is applied in world NED, so these two
-    // numbers only coincide with surge/sway while the vessel heads north, as it
-    // does in every record here.  Rotating the anisotropy into the body frame
-    // by the estimated heading is the deployment-general form of this and is
-    // not attempted here: with yaw pinned at 0 these records cannot tell the
-    // rotation from the constant, so it would ship unmeasured.
+    // vessel responses: a keel resists sway, so the Y axis gets the tighter
+    // integral anchor.  R_S is applied in world NED while the anisotropy is a
+    // body-frame property, so the two coincide with surge/sway only when the
+    // vessel heads north, as in the calibration records; rotating the
+    // anisotropy by the estimated heading is not attempted.
     float R_S_x_factor_ = 0.72f;
     float R_S_y_factor_ = 0.50f;
     // Horizontal stationary acceleration scale relative to the vertical one.
@@ -1296,13 +1193,7 @@ private:
     // R_S_coeff is C_R, and it is not a bare gain: by Eq. (adapt-cR-kappa) it
     // places the normalized regularizer corner, kappa = omega_R tau =
     // (sqrt(2h/T_S,0)/C_R)^(1/3).  The applied value is the analytical
-    // pole-placement value itself, and that is a measured outcome rather than a
-    // deference to the theory: C_R = 17.11 is the argmin of every c_sigma row
-    // of the coarse calibration sweep, and on the paired multi-seed harness it
-    // beats the deterministic sweep argmin C_R = 14.4 on the primary endpoint
-    // and on pitch.  The scalar reduction that predicts it omits
-    // attitude/gravity leakage, residual bias, three-axis covariance coupling
-    // and the cadence clamps, so this agreement was checked, not assumed.
+    // pole-placement value; the paper records the calibration that checked it.
     //
     // sigma_coeff sets the OU prior scale.  SpectralMSE divides that coefficient
     // back out when recovering physical wave RMS for its distortion cost.
@@ -1310,7 +1201,7 @@ private:
     float tau_coeff_    = 1.0f;
     float sigma_coeff_  = 0.9f;
 
-    std::unique_ptr<Kalman3D_Wave_OU_III<float>>  mekf_;
+    std::unique_ptr<kalman::Kalman3D_Wave_OU_III<float>>  mekf_;
 };
 
 // Deployed OU-III front end: proxy bootstrap, two-stage magnetic acquisition,
@@ -1345,3 +1236,10 @@ public:
         return this->impl_.getEulerNautical();
     }
 };
+
+} // namespace ocean_imu::ou3
+
+// Source compatibility for existing callers of the unqualified names.
+using ocean_imu::ou3::SeaStateFusionFilter_OU_III;
+using ocean_imu::ou3::SeaStateFusionConfig_OU_III;
+using ocean_imu::ou3::SeaStateFusion_OU_III;

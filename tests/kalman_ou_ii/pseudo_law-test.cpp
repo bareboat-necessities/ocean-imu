@@ -10,6 +10,7 @@
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
 #undef private
 #undef protected
+using namespace ocean_imu::ou2;
 
 using Filter = SeaStateFusionFilter_OU_II<TrackerType::KALMANF>;
 
