@@ -36,7 +36,7 @@ class QmekfBackend : public IAttitudeBackend {
 
     Vector3f sigma_a; sigma_a <<  0.06f * g,  0.06f * g,   0.06f * g;
     Vector3f sigma_g; sigma_g <<    0.0030f,    0.0030f,     0.0030f;
-    Vector3f sigma_m; sigma_m << kSigmaMag, kSigmaMag, kSigmaMag;
+    Vector3f sigma_m; sigma_m <<     0.020f,     0.020f,      0.020f;
 
     if (mekf_) {
       mekf_->~QuaternionMEKF<float, true>();
@@ -49,16 +49,15 @@ class QmekfBackend : public IAttitudeBackend {
 
   void step(const CalibratedSample& s, AttitudeSolution& out) override {
     if (!inited_) {
-      // A compass needs its magnetic reference: initializing from the
-      // accelerometer alone would leave the filter's field reference unset.
-      if (!s.mag_ok) {
-        out = AttitudeSolution{};
-        return;
-      }
       Vector3f a_init = s.a_cal;
       const float an0 = a_init.norm();
       if (an0 > 1e-6f) a_init *= (ImuCalCfg::g_cal_local / an0);  // reference at the physical static norm
-      mekf_->initialize_from_acc_mag(a_init, s.m_unit);
+
+      if (s.mag_ok)
+        mekf_->initialize_from_acc_mag(a_init, s.m_unit);
+      else
+        mekf_->initialize_from_acc(a_init);
+
       inited_ = true;
     }
 
@@ -69,18 +68,7 @@ class QmekfBackend : public IAttitudeBackend {
     if (an > 1e-6f) a_att *= (ImuCalCfg::g_cal_local / an);
     mekf_->measurement_update_acc_only(a_att);
 
-    // Heading-only magnetic correction, as in a tilt-compensated compass: the
-    // field's dip never pulls roll/pitch, which stay with the accelerometer.
-    if (s.mag_ok && s.mag_fresh) mekf_->measurement_update_mag_heading(s.m_unit, kSigmaMag);
-
-#if !COMPASS_SERIAL_NMEA
-    if (++debug_count_ >= 200) {  // about once per second at 200 Hz
-      debug_count_ = 0;
-      const Vector3f b = mekf_->gyroscope_bias() * RAD_TO_DEG;
-      Serial.printf("[QMEKF] gyro bias estimate [%+.3f %+.3f %+.3f] deg/s\n", (double)b.x(), (double)b.y(),
-                    (double)b.z());
-    }
-#endif
+    if (s.mag_ok && s.mag_fresh) mekf_->measurement_update_mag_only(s.m_unit);
 
     const auto q = mekf_->quaternion();
     out = makeAttitudeFromQuat(q(0), q(1), q(2), q(3));
@@ -89,8 +77,6 @@ class QmekfBackend : public IAttitudeBackend {
   bool isValid() const override { return inited_; }
 
  private:
-  static constexpr float kSigmaMag = 0.020f;  // per component of the unit field vector
-  int debug_count_ = 0;
   alignas(QuaternionMEKF<float, true>) uint8_t storage_[sizeof(QuaternionMEKF<float, true>)];
   QuaternionMEKF<float, true>* mekf_ = nullptr;
   bool inited_ = false;

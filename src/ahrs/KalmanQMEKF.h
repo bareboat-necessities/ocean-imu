@@ -79,16 +79,6 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     void measurement_update_acc_only(Vector3 const& acc);
     void measurement_update_acc_only(T const acc[3]);
     void measurement_update_mag_only(Vector3 const& mag);
-
-    // Heading-only magnetometer update (compass use): only the rotation about
-    // the world vertical is observed, as the horizontal angle between the
-    // measured field (rotated to world with the current attitude) and the
-    // reference v2ref. The field's dip never pulls roll/pitch, so a dip
-    // mismatch (calibration residual, mag/accel misalignment) cannot tilt the
-    // attitude. sigma is the 1-sigma noise of one component of mag (same
-    // units as mag); the heading noise is sigma over the horizontal field.
-    // Returns false when either horizontal component is too small.
-    bool measurement_update_mag_heading(Vector3 const& mag, T sigma);
     void measurement_update_mag_only(T const mag[3]);
     Vector4 const& quaternion() const;
     MatrixN const& covariance() const;
@@ -365,37 +355,6 @@ template<typename T, bool with_bias>
 void QuaternionMEKF<T, with_bias>::measurement_update_mag_only(Vector3 const& mag) {
   Vector3 const v2hat = magnetometer_measurement_func();
   measurement_update_partial(mag, v2hat, Rmag);
-}
-
-template<typename T, bool with_bias>
-bool QuaternionMEKF<T, with_bias>::measurement_update_mag_heading(Vector3 const& mag, T sigma) {
-  Vector3 const mw = qref * mag;  // measured field in world axes
-  T const hm = std::hypot(mw.x(), mw.y());
-  T const hr = std::hypot(v2ref.x(), v2ref.y());
-  T const mn = mag.norm(), rn = v2ref.norm();
-  if (!(hm > T(0.05) * mn) || !(hr > T(0.05) * rn) || !(sigma > T(0))) return false;
-  T const sigma_rad = sigma / hm;
-  // A yaw error psi (true = estimate rotated by +psi about world z) turns the
-  // world-axes measurement by -psi, so the innovation is ref angle - measured angle.
-  T r = std::atan2(v2ref.y(), v2ref.x()) - std::atan2(mw.y(), mw.x());
-  T const pi = T(3.14159265358979323846);
-  while (r > pi) r -= 2 * pi;
-  while (r < -pi) r += 2 * pi;
-  // Body-frame error rotation for a world-vertical rotation: R^T z.
-  Vector3 const zb = qref.inverse() * Vector3(0, 0, 1);
-  Matrix<T, 1, N> H = Matrix<T, 1, N>::Zero();
-  H.template head<3>() = zb.transpose();
-  T const S = (H * P * H.transpose())(0, 0) + sigma_rad * sigma_rad;
-  if (!(S > T(0))) return false;
-  Matrix<T, N, 1> const K = P * H.transpose() / S;
-  x += K * r;
-  MatrixN const temp = MatrixN::Identity() - K * H;
-  P = temp * P * temp.transpose() + K * (sigma_rad * sigma_rad) * K.transpose();
-  applyQuaternionCorrectionFromErrorState();
-  x(0) = 0;
-  x(1) = 0;
-  x(2) = 0;
-  return true;
 }
 
 template<typename T, bool with_bias>
