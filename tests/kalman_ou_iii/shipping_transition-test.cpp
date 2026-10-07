@@ -32,16 +32,44 @@ static void test_live_and_bias_release_inherit_state(){
     require(same(m.covariance_full().block<18,18>(0,0),p_hold.block<18,18>(0,0)),"H18-to-A21 release reset inherited covariance");
 }
 
+static void test_mag_service_count(){
+    seastate::common::MagServiceCount c;
+    c.record(false,0.0f); c.record(false,5.0f);
+    require(c.attempted==2&&c.applied==0&&!std::isfinite(c.first_applied_sec),"rejected calls counted as service");
+    require(!c.sufficient(0,100.0f),"release without any applied correction");
+    c.record(true,10.0f); c.record(true,10.5f);
+    require(c.applied==2&&c.first_applied_sec==10.0f,"applied clock did not start at the first applied correction");
+    require(!c.sufficient(2,11.0f)&&c.sufficient(2,11.01f)&&!c.sufficient(3,20.0f),"release span/count rule");
+    c.applied=std::numeric_limits<int>::max(); c.record(true,12.0f);
+    require(c.applied==std::numeric_limits<int>::max(),"applied count overflowed");
+    c.reset();
+    require(c.attempted==0&&c.applied==0&&!std::isfinite(c.first_applied_sec),"reset left service state");
+}
+
+// Attempts, applied corrections and the release gate are separate: only
+// corrections the core actually applied may open the accelerometer-bias lock.
 static void test_attempt_is_not_acceptance(){
     Filter f(true); f.initialize(V3::Constant(.2f),V3::Constant(.01f),V3::Constant(.3f));
     f.setMagDelaySec(0.0f); f.mekf().set_mag_world_ref(V3(20.0f,0.0f,40.0f));
     f.goLive(Eigen::Quaternionf::Identity(),.035f,.087f,false);
-    const int before=f.mag_updates_applied_; const float nan=std::numeric_limits<float>::quiet_NaN();
+    require(f.accel_bias_locked_,"Live entry did not start magnetically locked");
+    const float nan=std::numeric_limits<float>::quiet_NaN();
     f.updateMag(V3(nan,0.0f,0.0f));
-    require(f.mag_updates_applied_==before+1,"forwarded magnetic attempt counter did not advance");
+    require(f.magUpdatesAttempted()==1,"forwarded magnetic attempt counter did not advance");
+    require(f.magCorrectionsApplied()==0,"a rejected magnetic call was counted as an applied correction");
     require(!f.mekf().lastMagDiag().accepted,"invalid magnetic attempt was reported as an applied correction");
-    f.updateMag(V3(20.0f,0.0f,40.0f));
-    require(f.mekf().lastMagDiag().accepted,"finite valid magnetic correction was not reported as applied");
+    const V3 gyro=V3::Zero(), acc(0.0f,0.0f,-g_std); const float dt=.005f;
+    for(int k=0;k<300;++k){f.updateTime(dt,gyro,acc); f.updateMag(V3::Zero());}
+    require(f.magUpdatesAttempted()==301&&f.magCorrectionsApplied()==0,"zero-field calls were counted as applied corrections");
+    require(f.accel_bias_locked_&&!f.mekf().acc_bias_updates_enabled(),"rejected magnetic calls released the accelerometer-bias lock");
+    int applied=0;
+    for(int k=0;k<400&&f.accel_bias_locked_;++k){
+        f.updateTime(dt,gyro,acc); f.updateMag(V3(20.0f,0.0f,40.0f));
+        require(f.mekf().lastMagDiag().accepted,"finite valid magnetic correction was not reported as applied");
+        ++applied;
+    }
+    require(!f.accel_bias_locked_&&f.mekf().acc_bias_updates_enabled(),"applied magnetic corrections did not release the lock");
+    require(f.magCorrectionsApplied()==applied&&applied>=f.magUpdatesToUnlockAccBias(),"release preceded the applied-correction threshold");
 }
 
 // Primitive parity sentinels, not a claim of startup reachability.
@@ -164,7 +192,7 @@ static void test_held_bias_is_invariant_across_a_served_window(){
             "held accelerometer-bias cross-covariances reappeared");
 }
 
-int main(){test_live_and_bias_release_inherit_state();test_attempt_is_not_acceptance();
+int main(){test_live_and_bias_release_inherit_state();test_mag_service_count();test_attempt_is_not_acceptance();
     test_bias_prediction_correction_and_projection();
     test_held_bias_is_invariant_across_a_served_window();
     std::cout<<"OU3_SHIPPING_TRANSITION_PASS="<<(failures==0?"true":"false")<<'\n';return failures?1:0;}

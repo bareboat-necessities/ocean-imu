@@ -1017,16 +1017,16 @@ struct GyroCalibrator {
     for a float-precision magnetometer with 200 sample capacity:
 
     \begin{lstlisting}
-#include "imu_cal.h"
+#include "imu_calibrate/CalibrateIMU.h"
 using namespace imu_cal;
 
 MagCalibrator<float, 200> cal;
 
 // -- collection phase (rotate device freely) --
-while (!cal.buf.n < 100) {
+while (cal.buf.n < 100) {
   Eigen::Vector3f m_raw;
   readMag(m_raw);          // application-specific
-  cal.addSample(m_raw);
+  cal.addSample(m_raw);    // rejects non-finite/out-of-range
 }
 
 // -- fitting phase --
@@ -1037,7 +1037,9 @@ if (!cal.fit(result, 3, 0.15f, 1e-6f, &why)) {
   return;
 }
 
-// -- application phase --
+// -- application phase (each new reading) --
+Eigen::Vector3f m_raw;
+readMag(m_raw);
 Eigen::Vector3f m_cal = result.apply(m_raw);
     \end{lstlisting}
 

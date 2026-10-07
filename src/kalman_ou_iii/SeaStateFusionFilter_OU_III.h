@@ -492,23 +492,16 @@ public:
         if (time_ < mag_delay_sec_) return;
 
         mekf_->measurement_update_mag_only(mag_body_ned);
-        // Keep counting attempts up to the largest configurable threshold.
-        // Measurements and release checks continue after saturation.
-        if (mag_updates_applied_ < std::numeric_limits<int>::max()) {
-            ++mag_updates_applied_;
-        }
+        // Only corrections the core actually applied count toward the gate;
+        // see seastate::common::MagServiceCount.
+        const float t = static_cast<float>(time_);
+        mag_service_.record(mekf_->lastMagDiag().accepted, t);
 
-        if (!std::isfinite(first_mag_update_time_)) {
-            first_mag_update_time_ = static_cast<float>(time_);
-        }
-
-        // We can "unlock" once mag has had a few updates, but we DO NOT
-        // enable accel-bias learning unless we're already Live.
+        // We can "unlock" once mag has had a few applied corrections, but we
+        // DO NOT enable accel-bias learning unless we're already Live.
         if (accel_bias_locked_ &&
             startup_stage_ == StartupStage::Live &&
-            mag_updates_applied_ >= mag_updates_to_unlock_ &&
-            std::isfinite(first_mag_update_time_) &&
-            (static_cast<float>(time_) - first_mag_update_time_) > 1.0f) // 1s guard
+            mag_service_.sufficient(mag_updates_to_unlock_, t))
         {
             accel_bias_locked_ = false;
 
@@ -519,6 +512,11 @@ public:
             }
         }
     }
+
+    // Calls forwarded to the core since the last cold entry, and the subset
+    // the core applied.  Only the latter feeds the accelerometer-bias gate.
+    int magUpdatesAttempted() const noexcept { return mag_service_.attempted; }
+    int magCorrectionsApplied() const noexcept { return mag_service_.applied; }
 
     void setWithMag(bool with_mag) {
         with_mag_ = with_mag;
@@ -1142,9 +1140,8 @@ private:
 
         if (!mekf_) return;
 
-        accel_bias_locked_   = with_mag_;
-        mag_updates_applied_ = 0;
-        first_mag_update_time_  = NAN;
+        accel_bias_locked_ = with_mag_;
+        mag_service_.reset();
 
         mekf_->set_acc_bias_updates_enabled(false);
     }
@@ -1200,14 +1197,13 @@ private:
     Eigen::Vector3f Racc_nominal_     = Eigen::Vector3f::Constant(0.0f);
 
     bool accel_bias_locked_ = true;
-    int  mag_updates_applied_ = 0;
+    seastate::common::MagServiceCount mag_service_{};
     static constexpr int MAG_UPDATES_TO_UNLOCK = 250;
     int  mag_updates_to_unlock_ = MAG_UPDATES_TO_UNLOCK;
     bool acc_bias_hold_ = false;
 
     bool  with_mag_;
     float mag_delay_sec_ = MAG_DELAY_SEC;
-    float first_mag_update_time_ = NAN;
 
     seastate::common::TiltResetWatchdog tilt_watchdog_{};
 
