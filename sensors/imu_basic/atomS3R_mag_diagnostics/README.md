@@ -6,7 +6,7 @@
   <img src="../../../img/devices/AtomS3R_device.svg" width="240" alt="M5Stack AtomS3R">
 </p>
 
-Use this sketch when a compass reads wrong headings and you need to know whether the cause is the magnetometer wiring/axes, the saved calibration, the calibration location, or the alignment between the magnetometer and the accelerometer. It never changes the saved calibration, and it changes a sensor register only when you ask (see [Low-noise magnetometer test](#low-noise-magnetometer-test)).
+Use this sketch when a compass reads wrong headings and you need to know whether the cause is the magnetometer wiring/axes, the saved calibration, the calibration location, or the alignment between the magnetometer and the accelerometer. It never changes the saved calibration (see [Magnetometer setting and drift](#magnetometer-setting-and-drift) for the sensor setting).
 
 Open the sketch: [`atomS3R_mag_diagnostics.ino`](atomS3R_mag_diagnostics.ino).
 
@@ -14,7 +14,7 @@ Open the sketch: [`atomS3R_mag_diagnostics.ino`](atomS3R_mag_diagnostics.ino).
 
 Open Serial Monitor at **115200 baud**. Tap the screen, or send `n`, to advance.
 
-1. **Boot report** (`[DIAG]`): whether the BMM150 answers on the main I2C bus or only behind the BMI270 AUX bus (the wizard's high-accuracy preset can only be written in the first case), the BMI270 AUX polling rate, and the saved calibration.
+1. **Boot report** (`[DIAG]`): whether the BMM150 answers on the main I2C bus or only behind the BMI270 AUX bus, the BMI270 AUX polling rate, the magnetometer setting, and the saved calibration.
 2. **STILL**, 10 s (`[STILL]`): lay the board flat, screen up, away from metal and do not touch it. Reports the magnetometer update interval, raw and calibrated noise, the heading and dip scatter of single readings, the IMU temperature and update mask counts, and the dip angle with the saved calibration.
 3. **ROTATE** (`[ROT]`): turn and tilt slowly (under about 45°/s) through every direction, including upside down and on each edge. This uses the calibration wizard's capture and fit code, and also records slow-motion poses and gyro-measured rotations. It ends by itself when the capture is complete (or tap to stop, or after 3 minutes).
 4. **Analysis** (`[FIT]`, `[FIELD]`, `[AXIS]`, `[ALIGN]`, `[VERDICT]`):
@@ -26,14 +26,16 @@ Open Serial Monitor at **115200 baud**. Tap the screen, or send `n`, to advance.
 
 The verdicts compare the dip with `DIAG_EXPECTED_DIP_DEG` (default 66.5°, Fair Lawn NJ). Look up your local inclination (NOAA magnetic field calculator) and build with `-DDIAG_EXPECTED_DIP_DEG=<deg>`; use a negative value in the southern hemisphere.
 
-## Low-noise magnetometer test
+## Magnetometer setting and drift
 
-M5Unified leaves the BMM150 at one repetition per axis, its noisiest setting. While the sketch waits for a tap (or in LIVE), send over serial:
+Every AtomS3R sketch, the calibration wizard and this one start the BMM150 in a low-noise setting: 47 XY / 41 Z repetitions at M5Unified's 30 Hz output rate, instead of the single repetition M5Unified leaves after reset. While the sketch waits for a tap (or in LIVE), send over serial:
 
 - `q`: read the BMM150 configuration (`[MAGCFG] current`);
-- `p`: switch to 47 XY / 41 Z repetitions at the same 30 Hz output rate (`[MAGCFG] before`/`after`).
+- `o`: switch to the M5Unified driver default (1/1 repetitions) until the next reboot, to compare;
+- `p`: switch back to the low-noise setting;
+- `d`: drift monitor. Leave the board untouched; every 5 s it prints the average raw field, its change since the start, noise, and IMU temperature (`[DRIFT]`). A change that follows temperature is sensor drift; a stable field means heading changes come from where the board is placed. Tap or send `d` again to stop.
 
-The setting is written through the BMI270 AUX interface in manual mode, read back, and the AUX data-mode configuration is restored exactly. It lasts until the next reboot, when M5Unified resets the BMM150. Compare a run before `p` with two runs after it: `[STILL]` noise should drop, and `[FIT] previous-run-vs-fresh` between the two later runs shows whether calibration becomes repeatable. Every `[STILL]` and `[FIT]` block names the mode in use.
+Every `[STILL]`, `[FIT]` and `[VERDICT]` block names the setting in use. Two consecutive runs in the same setting show calibration repeatability in `[FIT] previous-run-vs-fresh`.
 
 ## Install and upload
 

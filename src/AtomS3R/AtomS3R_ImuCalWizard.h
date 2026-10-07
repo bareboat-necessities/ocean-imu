@@ -32,7 +32,6 @@
 #include "AtomS3R/AtomS3R_ImuCal.h"         // ImuSample, axis mapping conventions, blob/store/runtime helpers
 #include "AtomS3R/AtomS3R_M5Ui.h"           // UI + Input + clamp01_
 #include "AtomS3R/AtomS3R_CalLog.h"         // best-effort pose diagnostics
-#include "AtomS3R/AtomS3R_MagCalMode.h"     // lower sensor noise during MAG calibration
 #include "imu_calibrate/CalibrateIMU.h"     // imu_cal::* + FitFail
 #include "imu_calibrate/AccelCalCapture.h"  // accelerometer procedure (host-tested)
 #include "imu_calibrate/MagCalSampling.h"   // magnetic moments and capture
@@ -392,27 +391,10 @@ private:
   // MAG stage with retry loop. Returns true on success; false with redo_all
   // set when the user asked to restart, false otherwise on abort.
   bool runMagStage_(bool& redo_all) {
-    // The AtomS3R's BMI270 is paired with a BMM150 in sensor slot 1.
-    auto* sensor = M5.Imu.getType() == m5::imu_bmi270 ?
-                   M5.Imu.getImuInstancePtr(1) : nullptr;
-    MagCalMode<m5::IMU_Base> mode(sensor, [](uint32_t ms) { delay(ms); });
-    redo_all = false;
-    // Failed optional setup must not prevent capture through a working driver.
-    // prepare() permits fallback only before writes or after verified rollback.
-    const bool prepared = mode.prepare();
-    char diagnostic[128];
-    snprintf(diagnostic, sizeof(diagnostic), "[MAGCFG] %s; setup=%s",
-             mode.highAccuracy() ? "high accuracy" : (prepared ? "driver settings" : "restore failed"),
-             mode.setupFailure());
-    tryCalLogLine(Serial, diagnostic);
-    const bool ok = prepared && runMagCaptureStage_(redo_all);
-    const bool restored = mode.restore();
-    if (!prepared || !restored) {
-      mag_verified_ = false;
-      ui_.fail("MAG", "Sensor restore failed");
-      return false;
-    }
-    return ok;
+    // Calibrate in the same BMM150 setting every sketch runs with. Re-applying
+    // is idempotent; on failure the driver setting is used, as at runtime.
+    configureAtomS3RMagLowNoise(Serial);
+    return runMagCaptureStage_(redo_all);
   }
 
   bool runMagCaptureStage_(bool& redo_all) {

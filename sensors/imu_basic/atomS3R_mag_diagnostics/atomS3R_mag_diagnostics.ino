@@ -3,9 +3,12 @@
 
   AtomS3R magnetometer diagnostics.
 
-  Never writes the saved calibration. Sensor registers change only on request:
-  send 'p' to switch the BMM150 to the low-noise 30 Hz repetition preset
-  (until the next reboot) and 'q' to read its configuration. Tap the screen
+  Never writes the saved calibration. Like every sketch, it starts the BMM150
+  in the low-noise setting (configureAtomS3RMagLowNoise). Serial commands:
+  'q' reads the BMM150 configuration, 'o' switches back to the M5Unified
+  driver default (1/1 repetitions, until reboot) for comparison, 'p' restores
+  the low-noise setting, and 'd' monitors the untouched board (raw field and
+  temperature every 5 s). Tap the screen
   (or send 'n' over serial) to advance:
 
     1. Boot report    sensor wiring, BMI270 AUX settings, saved calibration
@@ -17,7 +20,7 @@
     5. LIVE           headings with saved, fresh and aligned-fresh models for
                       the tilt test; tap to run again
 
-  Compare runs before and after 'p': noise in [STILL], and the fits of two
+  Compare runs in both settings: noise in [STILL], and the fits of two
   consecutive runs in [FIT] previous-run-vs-fresh.
 
   All results are printed on USB serial (115200) as [DIAG], [MAGCFG], [STILL], [ROT],
@@ -51,14 +54,13 @@ static constexpr uint32_t POSE_WINDOW_MS = 200;
 static constexpr int MAX_POSES = 400;
 static constexpr int MAX_PAIRS = 1000;
 
-enum class Phase : uint8_t { WAIT_STILL, STILL, WAIT_ROTATE, ROTATE, ANALYZE, LIVE };
+enum class Phase : uint8_t { WAIT_STILL, STILL, WAIT_ROTATE, ROTATE, ANALYZE, LIVE, DRIFT };
 
 static M5Ui ui;
 static ImuCalStoreNvs store;
 static ImuCalBlobV4 blob{};
 static RuntimeCals cals{};
 static bool have_blob = false;
-static bool preset_reachable = false;
 
 static imu_cal::MagCalibrator<float, 400> magCal;
 static imu_cal::MagCalibration<float> fresh{};
@@ -113,8 +115,19 @@ static bool prev_ok = false;
 static float prev_temp_c = NAN;
 static volatile bool analysis_done = false;
 
+// DRIFT monitor: untouched board, 5 s averages of raw field and temperature.
+static constexpr uint32_t DRIFT_PERIOD_MS = 5000;
+static Stats3 dr_raw, dr_acc;
+static double dr_temp_sum = 0;
+static int dr_temp_n = 0;
+static V3 dr_first_raw = V3::Zero();
+static float dr_first_temp = NAN;
+static bool dr_have_first = false;
+static Phase dr_return = Phase::WAIT_STILL;
+static uint32_t dr_start_ms = 0;
+
 // Magnetometer repetition setting in use, for labelling results.
-static char mag_mode[48] = "driver default (1/1 reps, not queried)";
+static char mag_mode[48] = "driver default (1/1 reps)";
 
 static void waitMs(uint32_t ms) { delay(ms); }
 
@@ -123,7 +136,8 @@ static void printMagState(const char* tag, const Bmm150RegState& r) {
                 r.chip_id, r.power, r.mode, r.rep_xy, r.nXY(), r.rep_z, r.nZ());
 }
 
-static void magCommand(bool apply) {
+// 'q' query, 'p' low-noise, 'o' driver default.
+static void magCommand(char cmd) {
   auto* imu0 = M5.Imu.getImuInstancePtr(0);
   if (M5.Imu.getType() != m5::imu_bmi270 || !imu0) {
     Serial.println("[MAGCFG] not a BMI270 + AUX BMM150 board; nothing done");
@@ -131,20 +145,24 @@ static void magCommand(bool apply) {
   }
   Bmm150AuxPreset<m5::IMU_Base> aux(imu0, waitMs);
   Bmm150RegState before, after;
-  if (!apply) {
+  if (cmd == 'q') {
     if (aux.query(before)) printMagState("current", before);
     else Serial.printf("[MAGCFG] query failed: %s\n", aux.failure());
     return;
   }
-  const bool ok = aux.apply(Bmm150AuxPreset<m5::IMU_Base>::LOW_NOISE_REP_XY,
-                            Bmm150AuxPreset<m5::IMU_Base>::LOW_NOISE_REP_Z, before, after);
+  const bool low = cmd == 'p';
+  const bool ok = low ? aux.apply(Bmm150AuxPreset<m5::IMU_Base>::LOW_NOISE_REP_XY,
+                                  Bmm150AuxPreset<m5::IMU_Base>::LOW_NOISE_REP_Z, before, after)
+                      : aux.apply(0, 0, before, after);
   printMagState("before", before);
   if (ok) {
     printMagState("after", after);
-    snprintf(mag_mode, sizeof(mag_mode), "low-noise (%u/%u reps, 30 Hz)", after.nXY(), after.nZ());
-    Serial.printf("[MAGCFG] low-noise preset ACTIVE until reboot; rerun STILL and ROTATE (twice) to compare\n");
+    snprintf(mag_mode, sizeof(mag_mode), "%s (%u/%u reps, 30 Hz)", low ? "low-noise" : "driver default",
+             after.nXY(), after.nZ());
+    Serial.printf("[MAGCFG] %s setting active (driver default lasts until reboot); rerun STILL and ROTATE to compare\n",
+                  low ? "low-noise" : "driver default");
   } else {
-    Serial.printf("[MAGCFG] low-noise preset FAILED: %s (driver setting kept)\n", aux.failure());
+    Serial.printf("[MAGCFG] change FAILED: %s (previous setting kept)\n", aux.failure());
   }
 }
 
@@ -178,8 +196,6 @@ static void bootReport() {
   }
 
   // M5Unified creates instance 1 only for a BMM150 answering on the main bus.
-  // The wizard's high-accuracy preset is written through that instance.
-  preset_reachable = (mag1 != nullptr);
   if (mag1) {
     uint8_t id = 0, pw = 0, mode = 0, rxy = 0, rz = 0;
     mag1->readRegister(0x40, &id, 1);
@@ -226,7 +242,7 @@ static void enter(Phase p) {
     case Phase::WAIT_STILL:
       drawWait("STILL", "Lay flat, screen up", "away from metal,", "then tap: 10 s");
       Serial.println("[DIAG] next: STILL. Lay the board flat, screen up, away from metal; tap and do not touch.");
-      Serial.println("[DIAG] (send 'q' to read the magnetometer setting, 'p' for the low-noise preset)");
+      Serial.println("[DIAG] (serial: 'q' read mag setting, 'o' driver default, 'p' low-noise, 'd' drift monitor)");
       break;
     case Phase::STILL:
       st_raw = Stats3{}; st_cal = Stats3{}; st_acc = Stats3{}; st_gyr = Stats3{}; st_dip = Stats3{};
@@ -269,6 +285,16 @@ static void enter(Phase p) {
       break;
     case Phase::LIVE:
       Serial.println("[DIAG] LIVE: hold level and tilt +-20 deg at E/W/N/S; compare hdg columns. Tap to run again.");
+      break;
+    case Phase::DRIFT:
+      dr_raw = Stats3{}; dr_acc = Stats3{}; dr_temp_sum = 0; dr_temp_n = 0; dr_have_first = false;
+      dr_start_ms = millis();
+      ui.title("DRIFT");
+      ui.line("Do not touch");
+      ui.line("for 3+ minutes");
+      ui.line("tap or 'd' to stop");
+      Serial.printf("[DRIFT] monitoring the untouched board every %u s (magnetometer mode: %s); tap or 'd' to stop\n",
+                    (unsigned)(DRIFT_PERIOD_MS / 1000), mag_mode);
       break;
   }
 }
@@ -366,9 +392,7 @@ static void analyzeTask(void*) {
 
   // Verdicts.
   Serial.println("[VERDICT] ------------------------------------------------");
-  Serial.printf("[VERDICT] preset: wizard high-accuracy preset %s\n",
-                preset_reachable ? "CAN reach the BMM150 (main-bus instance exists)"
-                                 : "CANNOT reach the BMM150; calibration and runtime use the same driver mode");
+  Serial.printf("[VERDICT] magnetometer setting during this run: %s\n", mag_mode);
   if (ax.pairs < 50) {
     Serial.printf("[VERDICT] axes: INCONCLUSIVE (%d rotating pairs; turn more during ROTATE)\n", ax.pairs);
   } else if (ax.best == 0 && ax.identity_rms < 0.5f * ax.second_rms) {
@@ -459,6 +483,12 @@ static void onSample(const ImuSample& s) {
   }
   m_raw = s.m;
 
+  if (phase == Phase::DRIFT) {
+    dr_acc.add(a_cal);
+    if (fresh_m) dr_raw.add(s.m);
+    if (std::isfinite(tempC)) { dr_temp_sum += tempC; ++dr_temp_n; }
+  }
+
   if (phase == Phase::STILL) {
     st_acc.add(a_cal);
     st_gyr.add(w_cal);
@@ -538,6 +568,7 @@ void setup() {
   auto cfg = M5.config();
   M5.begin(cfg);
   clearM5UnifiedImuCalibration();
+  if (configureAtomS3RMagLowNoise(Serial)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
   delay(250);
   ui.begin();
 
@@ -571,10 +602,12 @@ void loop() {
     if (c == 'n' || c == 'N') advance = true;
     // Register access only between captures, never while sampling.
     const bool idle = phase == Phase::WAIT_STILL || phase == Phase::WAIT_ROTATE || phase == Phase::LIVE;
-    if ((c == 'p' || c == 'P' || c == 'q' || c == 'Q') && !idle)
-      Serial.println("[MAGCFG] busy; send 'p'/'q' while waiting for a tap or in LIVE");
-    else if (c == 'p' || c == 'P') magCommand(true);
-    else if (c == 'q' || c == 'Q') magCommand(false);
+    const char lc = char(tolower(c));
+    if ((lc == 'p' || lc == 'q' || lc == 'o') && !idle)
+      Serial.println("[MAGCFG] busy; send 'p'/'o'/'q' while waiting for a tap or in LIVE");
+    else if (lc == 'p' || lc == 'q' || lc == 'o') magCommand(lc);
+    else if ((c == 'd' || c == 'D') && phase == Phase::DRIFT) enter(dr_return);
+    else if (c == 'd' || c == 'D') { dr_return = idle ? phase : Phase::WAIT_STILL; if (idle) enter(Phase::DRIFT); else Serial.println("[DRIFT] busy; send 'd' while waiting for a tap or in LIVE"); }
   }
 
   const uint32_t sample_us = micros();
@@ -628,6 +661,29 @@ void loop() {
     }
     case Phase::ANALYZE:
       if (analysis_done) enter(Phase::LIVE);
+      break;
+    case Phase::DRIFT:
+      if (advance) { enter(dr_return); break; }
+      if (now - phase_ms >= DRIFT_PERIOD_MS && dr_raw.n > 0) {
+        const V3 r = dr_raw.avg(), a = dr_acc.avg(), c = cals.applyMag(r);
+        const float temp = dr_temp_n ? float(dr_temp_sum / dr_temp_n) : NAN;
+        if (!dr_have_first) { dr_first_raw = r; dr_first_temp = temp; dr_have_first = true; }
+        const V3 d = r - dr_first_raw;
+        Serial.printf("[DRIFT] t=%5.0fs temp=%.2f C (d%+.2f) raw=[%7.2f %7.2f %7.2f] d=[%+6.2f %+6.2f %+6.2f] "
+                      "noise=[%.2f %.2f %.2f] hdg=%.1f dip=%.1f |m|=%.2f tilt=%.1f\n",
+                      (now - dr_start_ms) / 1000.0, (double)temp, (double)(temp - dr_first_temp),
+                      r.x(), r.y(), r.z(), d.x(), d.y(), d.z(), dr_raw.sd().x(), dr_raw.sd().y(), dr_raw.sd().z(),
+                      headingDeg(a, c), dipDeg(c, a), c.norm(),
+                      acosf(fminf(1.0f, fabsf(a.z()) / fmaxf(a.norm(), 1e-6f))) * kRadToDeg);
+        if (now - last_draw_ms >= 1000) {
+          ui.title("DRIFT");
+          M5.Display.printf("T %.2f C\n\ndz %+.2f uT\ndx %+.2f\ndy %+.2f\n\ntap: stop\n",
+                            (double)temp, (double)d.z(), (double)d.x(), (double)d.y());
+          last_draw_ms = now;
+        }
+        dr_raw = Stats3{}; dr_acc = Stats3{}; dr_temp_sum = 0; dr_temp_n = 0;
+        phase_ms = now;
+      }
       break;
     case Phase::LIVE: {
       if (advance) { enter(Phase::WAIT_STILL); break; }

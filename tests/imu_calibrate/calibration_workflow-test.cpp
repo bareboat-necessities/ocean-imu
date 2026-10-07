@@ -8,7 +8,6 @@
 #include "imu_calibrate/AccelCalCapture.h"
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
 #include "AtomS3R/AtomS3R_CalLog.h"
-#include "AtomS3R/AtomS3R_MagCalMode.h"
 #include <cstdio>
 #include <cstring>
 #include <random>
@@ -27,98 +26,6 @@ static V direction(float i) {
 }
 static M distortion() {M d;d<<1.2,.18,.09,.18,.9,.12,.09,.12,1.05;return d;}
 static const V offset(8,-5,3);
-
-// Register fake also models a write whose acknowledgement is lost.
-struct MagDevice {
-  uint8_t reg[256]{};
-  int operations=0, fail_at=0, fail_from=0, writes=0;
-  bool bad_preset_readback=false;
-  MagDevice() {reg[0x40]=0x32;reg[0x4B]=1;reg[0x4C]=0x38;reg[0x51]=1;reg[0x52]=2;}
-  bool readRegister(uint8_t r,uint8_t* out,size_t n) {
-    ++operations;
-    if(operations==fail_at || (fail_from && operations>=fail_from))return false;
-    std::memcpy(out,reg+r,n);
-    if(bad_preset_readback && r==0x51 && reg[r]==23)*out=22;
-    return true;
-  }
-  bool writeRegister8(uint8_t r,uint8_t v) {
-    ++writes;reg[r]=v;++operations;return operations!=fail_at && (!fail_from || operations<fail_from);
-  }
-  bool original() const {return reg[0x4C]==0x38 && reg[0x51]==1 && reg[0x52]==2;}
-};
-static void magWait(uint32_t ms) {check(ms>=50,"allow the previous magnetic conversion to finish");}
-static void testMagSensorMode() {
-  using Mode=atoms3r_ical::MagCalMode<MagDevice>;
-  MagDevice dev;
-  {
-    Mode mode(&dev,magWait);
-    check(mode.begin(),"high-accuracy magnetic preset configures");
-    check(dev.reg[0x4C]==0x28 && dev.reg[0x51]==23 && dev.reg[0x52]==82,
-          "47/83 repetitions run at compatible 20 Hz");
-  }
-  check(dev.original(),"normal exit or abort restores the original magnetic preset");
-  for(int fault=1;fault<=12;++fault) {
-    MagDevice d;d.fail_at=fault;
-    {Mode mode(&d,magWait);check(!mode.begin(),"failed setup/readback cannot proceed to capture");}
-    check(d.original(),"partial setup and lost acknowledgements restore original registers");
-  }
-  {
-    Mode mode(&dev,magWait);check(mode.begin(),"preset can be entered again");
-    dev.fail_at=dev.operations+2;
-    check(!mode.restore(),"restore errors are reported");
-    check(dev.reg[0x4C]==0x2E,"incomplete restoration does not resume an incompatible ODR");
-  }
-  check(dev.original(),"scope exit retries restoration after a transient bus failure");
-  dev.reg[0x40]=0;dev.writes=0;
-  {Mode mode(&dev,magWait);check(!mode.begin() && dev.writes==0,"wrong chip is never configured");}
-  Mode other(nullptr,magWait);check(other.begin() && other.restore(),"other IMU drivers are untouched");
-}
-
-static void testMagSetupFallback() {
-  using Mode=atoms3r_ical::MagCalMode<MagDevice>;
-  for(int fault=1;fault<=12;++fault) {
-    MagDevice d;d.fail_at=fault;
-    Mode mode(&d,magWait);
-    check(mode.prepare() && !mode.highAccuracy(),"optional preset failure does not block restored driver capture");
-    check(d.original(),"fallback starts only with original sensor settings");
-    check(std::strcmp(mode.setupFailure(),"none")!=0,"failed setup check is retained for diagnostics");
-  }
-  MagDevice d;
-  {
-    Mode mode(&d,magWait);
-    check(mode.prepare() && mode.highAccuracy(),"supported preset remains enabled through capture and verification");
-  }
-  check(d.original(),"successful preset restores after calibration");
-  d.bad_preset_readback=true;
-  {
-    Mode mode(&d,magWait);
-    check(mode.prepare() && !mode.highAccuracy() && d.original(),"preset readback mismatch safely rolls back");
-  }
-  d.bad_preset_readback=false;d.operations=0;d.fail_from=7;
-  {
-    Mode mode(&d,magWait);
-    check(!mode.prepare(),"persistent bus failure after a write cannot enter fallback capture");
-    d.fail_from=0;
-  }
-  check(d.original(),"restoration remains retryable after a bus failure");
-  for(uint8_t driver_mode : {0x3A,0x3E}) {
-    d.reg[0x4C]=driver_mode;d.writes=0;
-    Mode mode(&d,magWait);
-    check(mode.prepare() && !mode.highAccuracy() && d.writes==0 && d.reg[0x4C]==driver_mode,
-          "other driver modes can capture without raw-register reconfiguration");
-  }
-  d.reg[0x40]=0;d.writes=0;
-  Mode mode(&d,magWait);
-  check(mode.prepare() && !mode.highAccuracy() && d.writes==0,"unrecognized register interface remains driver-owned");
-  // The same capture/fit path must still qualify observations, not just setup.
-  MC cal;imu_cal::MagCapture<float,400> cap(cal);cap.begin(0);
-  MS status=MS::CAPTURING;
-  for(int i=0;i<=563;++i) {V m=50*distortion()*direction(i)+offset;status=cap.update(80*i,&m);}
-  imu_cal::MagCalibration<float> out;
-  check(status==MS::READY && cal.fit(out),"driver fallback reaches and passes ordinary capture/fit gates");
-  Mode absent(nullptr,magWait);
-  check(absent.prepare() && !absent.highAccuracy(),"missing register interface is left to the normal availability probe");
-}
 
 static void testMagSampleWindows() {
   imu_cal::MagSampleWindow window;window.begin();
@@ -543,7 +450,7 @@ static void testAccelCompletionLogging() {
 }
 
 int main() {
-  testMagSensorMode();testMagSetupFallback();testMagSampleWindows();testGyroBmmNoise();testMagSensorNoise();testMagneticQuality();testGuidance();testGyroCapture();testGyroMagneticNoise();testGyroMagneticInterruptions();
+  testMagSampleWindows();testGyroBmmNoise();testMagSensorNoise();testMagneticQuality();testGuidance();testGyroCapture();testGyroMagneticNoise();testGyroMagneticInterruptions();
   testAccelPoseProgress();testAccelCompletionLogging();
   std::printf("calibration_workflow-test: %d/%d checks passed\n",checks-failures,checks);
   return failures?1:0;
