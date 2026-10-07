@@ -569,7 +569,7 @@ execution and runs all 21 mean and 231 symmetric covariance perturbations
 through the unchanged shipping implementation. It preserves actual nonlinear
 gains, Joseph/reset, projections, frontend and clocks. It reports finite
 central secants of a binary32 program, not a derivative enclosure or reachable
-physical neighbourhood. Step halving changes the matrix norm by $0.01714895$.
+physical neighbourhood. Step halving changes the matrix norm by $0.01710403$.
 In a fixed root metric, point covariance drift $0.537822$ and gain about
 $0.991$ require candidate radius above 60 even before gauge charge. A relative
 ball $P=P_0+L_0EL_0^T$, $\|E\|_F\le r_P$, has a uniformly positive lower
