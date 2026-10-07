@@ -72,8 +72,12 @@ failed jobs; retain successful checks and inspect each new exact head.
 The PR build still running rejected individual job reruns; do not infer
 a successful retry. A transient GitHub fetch 502 and an overwrite attempt
 on read-only Git objects were recovered by fetching the complete clone
-and copying only missing objects. The full automatic evidence commit
-`070e7de3633f` is preserved; no scientific payload is manually replaced.
+and copying only missing objects. The full automatic evidence commits
+`070e7de3633f` and `944f7bdffa37` are preserved; no scientific payload is
+manually replaced. At `944f7bdffa37`, build run 37657130742, OU-II job
+112925147621 again exits before compilation: `apt-get did not succeed
+after 3 attempts` while downloading texlive-fonts-extra. This is E,
+not a proof failure; retry failed jobs after the workflow completes.
 The mistaken test-file path was corrected by repository search to
 `tests/validation/test_ou3_measurement_frame.py`; no result used that read.
 
@@ -130,8 +134,10 @@ payload or upstream automatic evidence is replaced. Required parallel make
 failed by launching tests before binaries existed. The first serial command
 exited 2 with no final diagnostic in its saved log, whose last line reports
 passing TFG Jacobians. Classification E; no proof or shipping behavior is
-invalidated. Repeat `make all` with live output capture on the integrated tree;
-do not credit the incomplete invocation as a pass.
+invalidated. The subsequent serial `make all` at `0779e7d2a61d` completed with live
+exit 0 and 1123 validation cases; CMake configuration was skipped because
+CMake is unavailable locally. Do not credit the incomplete invocation as
+a pass or transfer that completed run to a later head.
 
 **E — status-path lookup corrected during handoff preparation.**
 The command searching `docs/ou3-theorem-status.md` failed with

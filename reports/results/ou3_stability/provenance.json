@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "53d2d4dc09f6ad7a4452d05889909dc7d2f40ab7"
+      "git_blob_sha": "d0f8db344f65184345907e75b63dcf3742a22c9a"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -1664,5 +1664,6 @@
   },
   "receipt_schur_continuation_base_main_commit": "a47da994b85f2ec844b199d27b619a7fcc553adb",
   "receipt_schur_continuation_incorporated_main_commit": "59171c1a4aef654bb9808629e8856e4a56edfcc8",
-  "receipt_schur_continuation_automated_evidence_preserved": "070e7de3633f396dac2636d1783f735f9ea87d4c"
+  "receipt_schur_continuation_automated_evidence_preserved": "944f7bdffa379e3381e4ebfc7b3f2d77722d1990",
+  "receipt_schur_continuation_earlier_automated_evidence_preserved": "070e7de3633f396dac2636d1783f735f9ea87d4c"
 }

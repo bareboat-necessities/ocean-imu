@@ -7,6 +7,10 @@ Follow-up branch: `proof/ou3-receipt-schur-continuation`; never reuse the old br
 Mechanical repair commit: `9b951b6ac`.
 Concurrent main `59171c1a4aef654bb9808629e8856e4a56edfcc8` is incorporated,
 including PR #663, version 2.4.0 and its automatic validation/robustness bundle.
+The branch also retains automatic evidence commits `070e7de3633f` and
+`944f7bdffa37` in full. The latter was generated from mathematical head
+`0779e7d2a61d`; its validation outputs are regression evidence, not a
+receipt-sign or homogeneous-margin certificate.
 
 Exact main reproduction rejected frontend binding and the finite secant whole-src
 binding. The 34-file native compiler closure is unchanged in membership: 33 files
@@ -113,10 +117,8 @@ exploratory replay, sampled contraction search or secant sweep was added.
    handling; repaired without weakening checks. Exact-head IEEEtran rendering
    exceeded the alphabetic paragraph counter; scope numeric counters to the
    appendix and recheck the actual class (the article wrapper was insufficient).
-   Parallel make all started
-   tests before binaries existed. The first serial command exited 2 with no
-   final diagnostic in its saved log (last line: passing TFG Jacobians);
-   repeat with live capture on the integrated tree. D if pointwise alpha>0 is
+   Earlier incomplete make invocations are not credited; the subsequent
+   serial `make all` completed with live exit 0 at `0779e7d2a61d`. D if pointwise alpha>0 is
    promoted to uniform receipt domination: no threshold-crossing bound exists.
    Push build 37644598944 failed in apt-get before compilation; only failed
    jobs were retried. This E failure supplies no mathematical sign evidence.
