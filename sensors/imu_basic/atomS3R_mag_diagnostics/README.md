@@ -6,7 +6,7 @@
   <img src="../../../img/devices/AtomS3R_device.svg" width="240" alt="M5Stack AtomS3R">
 </p>
 
-Use this sketch when a compass reads wrong headings and you need to know whether the cause is the magnetometer wiring/axes, the saved calibration, the calibration location, or the alignment between the magnetometer and the accelerometer. It is read-only: it never changes the saved calibration or any sensor register.
+Use this sketch when a compass reads wrong headings and you need to know whether the cause is the magnetometer wiring/axes, the saved calibration, the calibration location, or the alignment between the magnetometer and the accelerometer. It never changes the saved calibration, and it changes a sensor register only when you ask (see [Low-noise magnetometer test](#low-noise-magnetometer-test)).
 
 Open the sketch: [`atomS3R_mag_diagnostics.ino`](atomS3R_mag_diagnostics.ino).
 
@@ -15,16 +15,25 @@ Open the sketch: [`atomS3R_mag_diagnostics.ino`](atomS3R_mag_diagnostics.ino).
 Open Serial Monitor at **115200 baud**. Tap the screen, or send `n`, to advance.
 
 1. **Boot report** (`[DIAG]`): whether the BMM150 answers on the main I2C bus or only behind the BMI270 AUX bus (the wizard's high-accuracy preset can only be written in the first case), the BMI270 AUX polling rate, and the saved calibration.
-2. **STILL**, 10 s (`[STILL]`): lay the board flat, screen up, away from metal and do not touch it. Reports the magnetometer update interval, raw and calibrated noise, the IMU update mask counts, and the dip angle with the saved calibration.
-3. **ROTATE** (`[ROT]`): turn and tilt slowly through every direction, including upside down and on each edge, pausing briefly in many poses. This uses the calibration wizard's capture and fit code, and also records still poses and gyro-measured rotations. It ends by itself when the capture is complete (or tap to stop, or after 3 minutes).
+2. **STILL**, 10 s (`[STILL]`): lay the board flat, screen up, away from metal and do not touch it. Reports the magnetometer update interval, raw and calibrated noise, the heading and dip scatter of single readings, the IMU temperature and update mask counts, and the dip angle with the saved calibration.
+3. **ROTATE** (`[ROT]`): turn and tilt slowly (under about 45°/s) through every direction, including upside down and on each edge. This uses the calibration wizard's capture and fit code, and also records slow-motion poses and gyro-measured rotations. It ends by itself when the capture is complete (or tap to stop, or after 3 minutes).
 4. **Analysis** (`[FIT]`, `[FIELD]`, `[AXIS]`, `[ALIGN]`, `[VERDICT]`):
-   - a fresh calibration fitted here, compared with the saved one;
-   - field-strength spread and dip angle across the still poses for both calibrations (a calibration that fits keeps both nearly constant);
+   - a fresh calibration fitted here, compared with the saved one (and with the previous run's fit, so a second run at the same place measures calibration repeatability);
+   - field-strength spread and dip angle across those poses for both calibrations (a calibration that fits keeps both nearly constant);
    - an axis test that checks every signed axis permutation of the magnetometer against the rotation the gyro measured;
    - the rotation between the magnetometer and accelerometer frames that an ellipsoid fit cannot see, and the heading error it causes.
 5. **LIVE** (`[LIVE]`): headings from the saved, fresh, and fresh-plus-alignment models. Hold the board level, then tilt it about ±20° at each cardinal direction; a correct model keeps the heading steady. Tap to run again.
 
 The verdicts compare the dip with `DIAG_EXPECTED_DIP_DEG` (default 66.5°, Fair Lawn NJ). Look up your local inclination (NOAA magnetic field calculator) and build with `-DDIAG_EXPECTED_DIP_DEG=<deg>`; use a negative value in the southern hemisphere.
+
+## Low-noise magnetometer test
+
+M5Unified leaves the BMM150 at one repetition per axis, its noisiest setting. While the sketch waits for a tap (or in LIVE), send over serial:
+
+- `q`: read the BMM150 configuration (`[MAGCFG] current`);
+- `p`: switch to 47 XY / 41 Z repetitions at the same 30 Hz output rate (`[MAGCFG] before`/`after`).
+
+The setting is written through the BMI270 AUX interface in manual mode, read back, and the AUX data-mode configuration is restored exactly. It lasts until the next reboot, when M5Unified resets the BMM150. Compare a run before `p` with two runs after it: `[STILL]` noise should drop, and `[FIT] previous-run-vs-fresh` between the two later runs shows whether calibration becomes repeatable. Every `[STILL]` and `[FIT]` block names the mode in use.
 
 ## Install and upload
 
