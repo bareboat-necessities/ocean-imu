@@ -14,11 +14,11 @@
     },
     "central_physical_chart_transverse_curvature": {
       "sample": 47992,
-      "value": 0.18490993339522752
+      "value": 0.18490992200711698
     },
     "gauge_coordinate_derivative_lower": {
       "sample": 48000,
-      "value": 1476.0879828695054
+      "value": 1476.0879831797863
     }
   },
   "initial_phase": {
@@ -27,7 +27,7 @@
     "S_period": 0.1363605111837387
   },
   "joint_cell_forward_invariant": false,
-  "maximum_sample_relative_center_defect": 0.0006179244757125163,
+  "maximum_sample_relative_center_defect": 0.0006178005591755742,
   "nonlinear_mean_covariance_cell_verified": false,
   "physical_arc_metric_amplitude_uniform_in_time": false,
   "qualification": "OU3_PLANAR_CONDITIONAL_MOVING_CENTER_V1",
@@ -37,7 +37,7 @@
     40000,
     48000
   ],
-  "stream_sha256": "a1d0baed42d44034e71f9291fd4e4d6d363ddcb1e9db230335ec978562776cf5",
+  "stream_sha256": "d1d511551e3ddeb25adcf9fa1c742533d3d9fed2710842f2dbc0be29471c8be9",
   "structures_preserved": "all 21 covariance coordinates, inherited center, actual ordered prediction/correction/reset/AW events and joint S/AW chronology",
   "theorem_closed": false,
   "uniform_center_defect_bound_verified": false,
@@ -51,8 +51,8 @@
       ],
       "BA_y_variance_over_initial": 1.1351017930158174,
       "end_sample": 44000,
-      "fixed_initial_center_drift": 0.5378221031628815,
-      "inherited_center_defect": 0.0003693294002463679,
+      "fixed_initial_center_drift": 0.5378220661462014,
+      "inherited_center_defect": 0.00036874188463660796,
       "operation_counts_so_far": {
         "AW": 190,
         "S": 147,
@@ -74,8 +74,8 @@
       ],
       "BA_y_variance_over_initial": 1.2691389992173385,
       "end_sample": 48000,
-      "fixed_initial_center_drift": 0.4473738086889324,
-      "inherited_center_defect": 0.0006158213633235773,
+      "fixed_initial_center_drift": 0.4473738005158542,
+      "inherited_center_defect": 0.0006158338089080871,
       "operation_counts_so_far": {
         "AW": 381,
         "S": 294,
