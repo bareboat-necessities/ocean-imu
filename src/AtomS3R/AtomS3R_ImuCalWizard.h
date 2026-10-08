@@ -208,7 +208,7 @@ private:
 
       // The stored float set, rebuilt through the runtime path, must reproduce
       // the fit before it is written...
-      if (!validateStored_(blob, "candidate")) {
+      if (!validateStoredOnTask_(blob, "candidate")) {
         ui_.fail("SAVE", "Float check failed");
         return false;
       }
@@ -219,7 +219,7 @@ private:
       ImuCalBlobV4 rb{};
       const bool saved = store_.saveVerified(blob, rb);
       // ...and again after the read-back, which must be byte-identical to it.
-      const bool rb_ok = saved && validateStored_(rb, "readback");
+      const bool rb_ok = saved && validateStoredOnTask_(rb, "readback");
       Serial.printf("[SAVE] verified=%d readback_valid=%d\n", (int)saved, (int)rb_ok);
       if (!saved || !rb_ok) {
         if (store_.lastSaveStatus() == ImuCalStoreNvs::SaveStatus::RECOVERY_FAILED) {
@@ -449,7 +449,7 @@ private:
 
 private:
   // FIT task machinery
-  enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2, MAG_VERIFY=3 };
+  enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2, MAG_VERIFY=3, SAVE_CHECK=4 };
 
   struct FitCtx {
     // Publish fitted coefficients across cores before the UI consumes them.
@@ -458,6 +458,8 @@ private:
     imu_cal::FitFail reason = imu_cal::FitFail::BAD_ARG;
     FitKind kind = FitKind::GYRO;
     imu_cal::AccelFitJob* job = nullptr;
+    const ImuCalBlobV4* blob = nullptr;   // SAVE_CHECK
+    const char* blob_what = "";
 
     ImuCalWizard* wiz = nullptr;
     TaskHandle_t  task = nullptr;
@@ -477,6 +479,25 @@ private:
     Serial.printf("[ACC] stack_hwm=%luB\n", (unsigned long)hwmBytes_());
     ctx->done = true;
     vTaskDelete(nullptr);
+  }
+
+  // Pre-save check of a stored blob. It includes the magnetometer quality
+  // check, which needs more stack than the Arduino loop task provides.
+  static void fitTaskSaveCheck_(void* p) {
+    FitCtx* ctx = (FitCtx*)p;
+    ctx->reason = imu_cal::FitFail::OK;
+    ctx->ok = ctx->blob && ctx->wiz->validateStored_(*ctx->blob, ctx->blob_what);
+    Serial.printf("[SAVE] stack_hwm=%luB\n", (unsigned long)hwmBytes_());
+    ctx->done = true;
+    vTaskDelete(nullptr);
+  }
+
+  bool validateStoredOnTask_(const ImuCalBlobV4& b, const char* what) {
+    fit_.blob = &b;
+    fit_.blob_what = what;
+    const bool ok = runFitTask_(FitKind::SAVE_CHECK, "SAVE check", false);
+    fit_.blob = nullptr;
+    return ok;
   }
 
   static void fitTaskGyro_(void* p) {
@@ -548,6 +569,7 @@ private:
       case FitKind::GYRO:  fn = &ImuCalWizard::fitTaskGyro_;  break;
       case FitKind::MAG:   fn = &ImuCalWizard::fitTaskMag_;   break;
       case FitKind::MAG_VERIFY: fn = &ImuCalWizard::fitTaskMagVerify_; break;
+      case FitKind::SAVE_CHECK: fn = &ImuCalWizard::fitTaskSaveCheck_; break;
       default:             fn = &ImuCalWizard::fitTaskGyro_;  break;
     }
 
