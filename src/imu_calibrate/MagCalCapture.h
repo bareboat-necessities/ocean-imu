@@ -66,7 +66,7 @@ public:
     if (fresh && isfinite3(*fresh) && fresh->norm() >= cal_.min_norm_uT && fresh->norm() <= cal_.max_norm_uT &&
         (!have_change_ || (*fresh-last_changed_).norm() >= T(cfg_.min_delta_uT))) {
       last_changed_=*fresh;last_change_=now;have_change_=true;
-      if (fixed_) addRaw_(*fresh);
+      if (fixed_ && raw) addRaw_(*raw);  // window means are not single readings
     }
     if (m && isfinite3(*m)) {
       const T norm = m->norm();
