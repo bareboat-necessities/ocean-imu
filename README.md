@@ -296,7 +296,7 @@ Some validation and simulation workflows depend on data released in:
 
 - https://github.com/bareboat-necessities/oceanography-waves-lib
 
-All simulations use release `v1.2.3` and `sim-data-files-vessel-rao-28ft.zip`: an estimated stationary 28 ft fin-keel sailboat RAO at the CG. Motion CSVs contain vessel response; spectrum CSVs and filename heights describe the incident sea. The preset is analytical, not a measured hull response. `make ensure-sim-data` verifies the pinned SHA-256 and replaces stale surface inputs. The eight motion CSVs are byte-identical to `v1.2.1`; only two PM-Stokes spectrum files changed, in subnormal values.
+All simulations use release `v1.2.3` and `sim-data-files-vessel-rao-28ft.zip`: an estimated stationary 28 ft fin-keel sailboat RAO at the CG. Motion CSVs contain vessel response; spectrum CSVs and filename heights describe the incident sea. The preset is analytical, not a measured hull response. `make ensure-sim-data` verifies the pinned SHA-256 and replaces stale surface inputs. 
 
 You can fetch and unpack this data for local runs with:
 
