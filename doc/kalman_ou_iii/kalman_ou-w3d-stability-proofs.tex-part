@@ -569,7 +569,7 @@ execution and runs all 21 mean and 231 symmetric covariance perturbations
 through the unchanged shipping implementation. It preserves actual nonlinear
 gains, Joseph/reset, projections, frontend and clocks. It reports finite
 central secants of a binary32 program, not a derivative enclosure or reachable
-physical neighbourhood. Step halving changes the matrix norm by $0.01714895$.
+physical neighbourhood. Step halving changes the matrix norm by $0.01710403$.
 In a fixed root metric, point covariance drift $0.537822$ and gain about
 $0.991$ require candidate radius above 60 even before gauge charge. A relative
 ball $P=P_0+L_0EL_0^T$, $\|E\|_F\le r_P$, has a uniformly positive lower
@@ -4710,8 +4710,10 @@ at a scalar correction, where $b=(Ph^T)_a$, $s=hPh^T+R$.
 The odd acc, magnetic and $S$ channels use their actual rows and noises.
 Attitude reset and bias projection have unchanged AA covariance row on
 this qualified fibre; other branches/repairs must keep their actual ports.
-In \texttt{IntegratedOUChain<T,2>::process\_covariance}, the small-step
-AA entry is a degree-nine polynomial, followed by PSD regularization.
+In \texttt{IntegratedOUChain<T,2>::process\_covariance}, the AA entry for
+$|x|<1$ is its Taylor series truncated after 25 terms, followed by PSD
+regularization; its defect is inside the charged allowance
+(\texttt{series\_branch\_defect}).
 Consequently do \emph{not} replace $q_{aa}$ universally by
 $(1-\phi^2)\sigma^2$. All integrated process blocks stay in (OF1).
 

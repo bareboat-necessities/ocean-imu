@@ -175,7 +175,7 @@
             "kappa_covariance": 19380.0,
             "kappa_information": 19380.0,
             "kappa_information_exceeds": null,
-            "relative_difference": 1.735e-06,
+            "relative_difference": 8.989e-07,
             "slow_marginal": 19380.0
           },
           "exact_margin": 0.06967,
@@ -195,12 +195,12 @@
           },
           "kernel_bounded_diameter": {
             "c_nu": 0.0621,
-            "kappa_nu": 198.3,
+            "kappa_nu": 198.4,
             "kernel_rotation_rad": 0.008794,
             "kernel_set_invariant": true,
-            "margin_mu_equals_inverse_c": 0.005042,
+            "margin_mu_equals_inverse_c": 0.005041,
             "next_root_kernel_ceiling": 0.06405,
-            "propagated_next_kernel_variance": 0.06353,
+            "propagated_next_kernel_variance": 0.06355,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
@@ -246,7 +246,7 @@
             "kappa_covariance": 509.3,
             "kappa_information": 509.3,
             "kappa_information_exceeds": null,
-            "relative_difference": 2.073e-07,
+            "relative_difference": 9.735e-08,
             "slow_marginal": 509.3
           },
           "exact_margin": 0.2355,
@@ -266,12 +266,12 @@
           },
           "kernel_bounded_diameter": {
             "c_nu": 0.0621,
-            "kappa_nu": 45.92,
+            "kappa_nu": 45.93,
             "kernel_rotation_rad": 0.004768,
             "kernel_set_invariant": true,
-            "margin_mu_equals_inverse_c": 0.02178,
+            "margin_mu_equals_inverse_c": 0.02177,
             "next_root_kernel_ceiling": 0.06138,
-            "propagated_next_kernel_variance": 0.0555,
+            "propagated_next_kernel_variance": 0.05551,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
@@ -328,7 +328,7 @@
             "kappa_covariance": 570.5,
             "kappa_information": 570.5,
             "kappa_information_exceeds": null,
-            "relative_difference": 1.033e-05,
+            "relative_difference": 3.572e-06,
             "slow_marginal": 570.5
           },
           "exact_margin": 0.1056,
@@ -348,12 +348,12 @@
           },
           "kernel_bounded_diameter": {
             "c_nu": 0.001046,
-            "kappa_nu": 461.7,
+            "kappa_nu": 461.6,
             "kernel_rotation_rad": 0.00944,
             "kernel_set_invariant": true,
             "margin_mu_equals_inverse_c": 0.002166,
             "next_root_kernel_ceiling": 0.001012,
-            "propagated_next_kernel_variance": 0.000289,
+            "propagated_next_kernel_variance": 0.0002889,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
@@ -399,7 +399,7 @@
             "kappa_covariance": 37.52,
             "kappa_information": 37.52,
             "kappa_information_exceeds": null,
-            "relative_difference": 2.652e-06,
+            "relative_difference": 9.164e-07,
             "slow_marginal": 37.52
           },
           "exact_margin": 0.3432,
@@ -483,7 +483,7 @@
             "kappa_covariance": 436.2,
             "kappa_information": 436.2,
             "kappa_information_exceeds": null,
-            "relative_difference": 9.655e-06,
+            "relative_difference": 7.162e-06,
             "slow_marginal": 436.2
           },
           "exact_margin": 0.1159,
@@ -554,7 +554,7 @@
             "kappa_covariance": 20.1,
             "kappa_information": 20.1,
             "kappa_information_exceeds": null,
-            "relative_difference": 3.918e-06,
+            "relative_difference": 6.855e-07,
             "slow_marginal": 20.1
           },
           "exact_margin": 0.3838,
@@ -700,7 +700,7 @@
               "ba": 0.705,
               "theta": 0.295
             },
-            "fast_given_slow": 1.002,
+            "fast_given_slow": 1.001,
             "finite_kernel_observable": false,
             "gyro_persistence_cap": 4.449,
             "k0_margin": 0.0,
@@ -789,7 +789,7 @@
             "kappa_covariance": 18850.0,
             "kappa_information": 18850.0,
             "kappa_information_exceeds": null,
-            "relative_difference": 1.366e-06,
+            "relative_difference": 3.438e-06,
             "slow_marginal": 18850.0
           },
           "exact_margin": 0.022,
@@ -860,7 +860,7 @@
             "kappa_covariance": 505.9,
             "kappa_information": 505.9,
             "kappa_information_exceeds": null,
-            "relative_difference": 1.541e-07,
+            "relative_difference": 4.08e-07,
             "slow_marginal": 505.9
           },
           "exact_margin": 0.09301,
@@ -880,7 +880,7 @@
           },
           "kernel_bounded_diameter": {
             "c_nu": 0.06229,
-            "kappa_nu": 45.88,
+            "kappa_nu": 45.89,
             "kernel_rotation_rad": 0.004896,
             "kernel_set_invariant": true,
             "margin_mu_equals_inverse_c": 0.02179,
@@ -922,7 +922,7 @@
     }
   ],
   "driver_sha256": "ef3e961053be3602b1377c8ae6376ff8fd8b03520889a1e2753e11b56bda5f76",
-  "header_sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
+  "header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",
   "history_s": 64,
   "kernel_set_invariant_on_every_word": true,
   "kill_criterion": {

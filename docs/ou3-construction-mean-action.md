@@ -119,9 +119,9 @@ The other coordinates are minimized out by a full-covariance Schur identity;
 their cross terms are retained, rather than set to zero. Separation would
 require `E_col-E > 0`. The executed 80-digit values are
 
-`E=817885.0623259853033`, `E_col=1.0138313892264883`,
+`E=817885.0491358636820`, `E_col=1.0138313801855788`,
 
-so the margin is approximately **-817884.0484945961**. The rational interval
+so the margin is approximately **-817884.0353044835**. The rational interval
 certificate confirms the strict negative sign. This energy ellipsoid admits
 collinear means even on the recorded physical history whose actual tail
 force/field sine stays above .443. It is the enclosure that fails, not a

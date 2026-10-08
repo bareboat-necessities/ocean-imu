@@ -6,7 +6,7 @@ residual, not pure plant-model mismatch. Eight equal-length stationary records
 are pooled over their final \SI{900}{s}.
 
 OU--III vertical and 3-D RMS are $0.145$ and $0.312$~m, versus $0.249$ and
-$0.440$~m for OU--II and $0.145$ and $0.315$~m for TFG
+$0.440$~m for OU--II and $0.145$ and $0.342$~m for TFG
 (Fig.~\ref{fig:model-mismatch-floor}). Nonzero estimated bias with zero
 true bias demonstrates absorption of model residuals.
 Fig.~\ref{fig:model-mismatch-scaling}
@@ -26,7 +26,7 @@ vessel's heave height.
     \midrule
     OU--II & 0.308 & 0.192 & 0.249 & 0.440 & 20.46 \\
     OU--III & 0.240 & 0.136 & 0.145 & 0.312 & 11.89 \\
-    TFG & 0.234 & 0.153 & 0.145 & 0.315 & 11.95 \\
+    TFG & 0.258 & 0.171 & 0.145 & 0.342 & 11.95 \\
     \bottomrule
   \end{tabular}
 \end{table}

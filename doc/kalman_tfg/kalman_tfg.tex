@@ -212,17 +212,23 @@ For specific-force measurement $\bm{f}_m$, the world-frame residual is
 \begin{equation}
 \bm{r}_a=\hat {\bm{R}}(\bm{f}_m-\hat {\bm{b}}_a)-(\hat {\bm{a}}_w-\bm{g}).
 \end{equation}
-At a consistent state the invariant-style Jacobian is
+At a consistent state the invariant-style Jacobian of the default two-frame estimator is
 \begin{equation}
 \bm{H}_a=\begin{bmatrix}
-\Skew{\bm{g}}&0&0&0&0&-\bm{I}&-\hat {\bm{R}}
+\Skew{\bm{g}}&0&0&0&0&-\bm{I}&-\bm{I}
 \end{bmatrix}.
 \end{equation}
+The final block is $-\bm{I}$ because the two-frame bias error $\bm{\beta}_a=\bm{R}(\hat {\bm{b}}_a-\bm{b}_a)$ is already world-referred.
 The body-frame accelerometer covariance is rotated into the residual frame:
 \begin{equation}
 \bm{R}_a^w=\hat {\bm{R}} \bm{R}_a^b\hat {\bm{R}}^T.
 \end{equation}
-For the full two-frame bias geometry the bias error is already world-referred; the implementation also retains an additive body-bias ablation mode for comparison.
+The implementation also retains an additive body-bias ablation mode for comparison. There the bias error $\hat {\bm{b}}_a-\bm{b}_a$ stays in body coordinates and only the final block changes:
+\begin{equation}
+\bm{H}_a^{\mathrm{add}}=\begin{bmatrix}
+\Skew{\bm{g}}&0&0&0&0&-\bm{I}&-\hat {\bm{R}}
+\end{bmatrix}.
+\end{equation}
 
 Differentiation away from consistency reveals the approximation explicitly:
 \begin{equation}

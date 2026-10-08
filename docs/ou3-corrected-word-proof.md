@@ -529,7 +529,7 @@ What the table shows:
   (67–93% BA share), except gyro bias on the 16-s sync-locked word.
   `kappa_W` equals the slow-marginal diameter up to a fast-given-slow factor
   ≤1.078, and exceeds the persistence cap on every word.
-- **Invariance.** At the `10^-3` tilt premise `kappa_nu` is 195.8–461.7
+- **Invariance.** At the `10^-3` tilt premise `kappa_nu` is 195.8–461.6
   (16 s) and 15.7–49.2 (64 s). The kernel set propagates on every word,
   checked against the next root's kernel.
 

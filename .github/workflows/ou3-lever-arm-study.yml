@@ -80,7 +80,7 @@ jobs:
         run: |
           MODE="${{ inputs.mode || 'full' }}"
           COMPARE=""
-          if [ "$MODE" = "full" ] && python3 -c 'import json; d=json.load(open("reports/results/ou3_lever_arm_study/manifest.json")); assert d.get("simulation_data") == "oceanography-waves-lib v1.2.1 vessel-rao-28ft"'; then
+          if [ "$MODE" = "full" ] && python3 -c 'import json; d=json.load(open("reports/results/ou3_lever_arm_study/manifest.json")); assert d.get("simulation_data") == "oceanography-waves-lib v1.2.3 vessel-rao-28ft"'; then
             COMPARE="--compare-to /tmp/ou3-lever-committed"
           fi
           python3 -u tools/ou3_lever_arm_study.py \

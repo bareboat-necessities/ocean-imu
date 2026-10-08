@@ -1,5 +1,6 @@
 """Regression checks for accidental surface-data reuse during RAO migration."""
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -32,6 +33,25 @@ class SimDatasetTests(unittest.TestCase):
         self.assertIn('tools/sim_dataset.py', source)
         self.assertIn('--dest $(TEST_DIRS)', source)
         self.assertNotIn('SIM_DATA_CHECK_FILE', source)
+
+    def test_committed_results_consumed_the_pinned_motion_bytes(self):
+        # Older bundles name the release they were run from; their inputs must
+        # still be byte-identical to the motion CSVs of the pinned release.
+        checked = 0
+        for path in (ROOT/'reports').rglob('*.json'):
+            stack = [json.loads(path.read_text())]
+            while stack:
+                node = stack.pop()
+                if isinstance(node, list):
+                    stack.extend(node)
+                elif isinstance(node, dict):
+                    inputs = node.get('input_sha256')
+                    if node.get('archive') == D.ARCHIVE and isinstance(inputs, dict):
+                        for name, sha in inputs.items():
+                            self.assertEqual(D.REFERENCE_CSV_SHA256.get(name), sha, f'{path}: {name}')
+                        checked += 1
+                    stack.extend(node.values())
+        self.assertGreater(checked, 0)
 
 
 if __name__ == '__main__':

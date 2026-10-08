@@ -340,10 +340,8 @@ public:
         //
         // What this window does *not* fix is the standing yaw error.  That
         // residual is a property of the learned reference vector rather than
-        // of the one-time gauge: seeding the handoff with a yaw variance from
-        // 5 deg to 90 deg moves the scored yaw by under 1e-4 deg (OU-III), so
-        // the filter is not converging to the gauge, it is converging to the
-        // reference.  maybeRefineMagReference_() is what re-learns it.
+        // of the one-time gauge: the filter converges to the reference, not
+        // to the gauge.  maybeRefineMagReference_() is what re-learns it.
         if (!mag_ref_set_ && t_ < cfg_.proxy_mag_settle_sec) {
             return;
         }

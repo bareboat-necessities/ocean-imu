@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "f530fb3328eeca39d6661822af2a75e017d878872ba84d09e9a56309a04ef145",
-    "TFG": "eea0cc0d6ee5f8cf0a796384045723e146935b28ad82fe1a20225428022ebbf2"
+    "OU_III": "c5ac0cc6609d5fd551bc532f558ae3e1eb83dad2ba89dfde8bb7b619d532c547",
+    "TFG": "3ee109292a19c906980ee4d69d9024cee644bebc3ead0a92a612d0f7eb3e2db8"
   },
   "build_environment": {
     "compiler": {
@@ -22,7 +22,7 @@
   },
   "dataset": {
     "archive": "sim-data-files-vessel-rao-28ft.zip",
-    "archive_sha256": "6d6eb92db78e97f1d2456c6b92387993bf23be14a9a6cf26943f0a22fc6fee60",
+    "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
     "input_sha256": {
       "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
       "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
@@ -34,11 +34,11 @@
       "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
     },
     "motion_model": "VESSEL_RAO_28FT",
-    "release": "v1.2.1"
+    "release": "v1.2.3"
   },
-  "generated_utc": "2026-09-28T20:17:22+00:00",
-  "git_commit": "2924e7374c3754ddd551fe1a424d5da3eb2afc23",
-  "git_diff_stat": "",
+  "generated_utc": "2026-10-08T00:33:03+00:00",
+  "git_commit": "bd61fae5bb6e6583ba1e6bad6fec315804549333",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   12 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   24 +-\n reports/results/tfg_comparison/paired_summary.json | 3788 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  192 +-\n reports/results/tfg_comparison/raw_runs.json       | 1644 ++++-----\n 5 files changed, 2830 insertions(+), 2830 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -134,11 +134,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "8f7fdea0ac4a037de34717a05d8e362553edf98d415cdcaf1d2a72e1161b2653",
+    "comparison.tex": "54ce0d359b57fbee288fa87e8545655dbb326eb9102adce6b27ef075d313adfc",
     "gate_diagnostics.json": "c4fda3f250132db7967a1349758683604fc0f87b45005ed041a3d50b8b51261f",
-    "paired_summary.json": "d6a15e9e2d4e104924da6552b726a25d9458dcb9b5809ccc40a0359dbd7b70e9",
-    "raw_runs.csv": "5ff12269692dc1551b24ac157cec21ceb265cd1a91f7e887ee4718021e5706b8",
-    "raw_runs.json": "630f48c51eed661699a51c9edadf124c8e854c10d5c290eba9ceb1d37de7734c"
+    "paired_summary.json": "19d0c7a84504aee59ca493ed9e65959ba913315cfa3ef0a2ec4b0f2632dbb8e6",
+    "raw_runs.csv": "c1c9bbfddbf0dedabc0fadb46b116f1093d97c743d1da68e7dd9b6c56c95a9a0",
+    "raw_runs.json": "948cf40818672c2660561dde906e6935d1ed5175ae891ec6c6052b5fc3066b81"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -154,19 +154,19 @@
     "src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
     "src/kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
     "src/kalman_common/MarineWaveFrontEnd.h": "52a20e03b14f22d438050eb9b9b3c36ddf9dd39e9f43ab0b6692baf64e453943",
-    "src/kalman_common/ProxyStartupFusion.h": "078b1d08259f94e58a31356e9936a9c3b52db8651c2f4b2b1ccfb48876a8c11b",
+    "src/kalman_common/ProxyStartupFusion.h": "40c182d5451a4f0f13cbdfdf2b08554841f91335a889bab167aba0363501bbba",
     "src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
-    "src/kalman_common/SeaStateFusionDefaults.h": "37831f74a5a69ca4514d4f180c79cae235794d49afee8370719fc7be86b711c1",
-    "src/kalman_common/SeaStateFusionFilterCommon.h": "a753702b3ceae1ca529d6b71cc1b6c1ab5b6542740059e87975aab5ae95cdddd",
-    "src/kalman_common/SeaStateOUFamilyDefaults.h": "8c23ee6f8147977cd0a137b62568c66c95820c6327a44bb0ebbd90c56370b567",
-    "src/kalman_ou_common/KalmanOUCoreMath.h": "e923d24e69765c415e42bc5fdc480c1ca8cc545287197ccdddce220affa45842",
-    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
-    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "a5d00d557843dee246bf5bcb5cc1823097db7f66f0aa3f62852bfae2e9c7c6f9",
-    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "33d937422f8672ad117a542e76d92e5134f558d41ab15c5e130cb79e0050dc59",
+    "src/kalman_common/SeaStateFusionDefaults.h": "e58da410e895754e8c18a478e4f131da232f23b8134cd55abf560a54e334fecf",
+    "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
+    "src/kalman_common/SeaStateOUFamilyDefaults.h": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
+    "src/kalman_ou_common/KalmanOUCoreMath.h": "714524883769572a141971074317d2aa62ad23f6cf022eb1f2ec735375b09be2",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "15269fbd15f757c6fe9b9f7464b6c025bef3a0ed7c9fe2759c3a3cad7d32776d",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "4e6f1cafa61bf4d3442cba1ab5196699fae76cb0fc962ace8a0d45c9106e557d",
     "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "42bc3dd373913ac6022d98f498e5c74d830c5761c92762055a7bdea052015255",
     "src/lie/SO3Jacobians.h": "d18671481a90114aa2ae8c49bd6bd60fa598c281b18a9f961a04a59e5690eb1a",
     "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
-    "src/tuner/AccelVibrationGuard.h": "ab541742bbd539bbad295a7be2b3022ed8aee9c2718fa9544e506902a3454a43",
+    "src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
     "src/tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
     "src/tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
     "src/tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
@@ -184,18 +184,18 @@
     "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
     "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
     "tests/kalman_ou_iii/Makefile": "45832334387f7fda2f93f1695d12b9ca0f25049d7062a0040a23effd1a970363",
-    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "6dbc870b94f687ca4f0f93ae654db0e9045c0e03b6aa755965ac640c9b985600",
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "f904e44fcd8bb1d6db921bd751a11f44b9c9b5fb3afdb8168766171ead2d6a9a",
     "tests/kalman_tfg/Makefile": "a53bd04e2eb29cdb8572521a0f5c0905e8ed3849993e0490bf96056cbd209eae",
     "tests/kalman_tfg/kalman_tfg-sim.cpp": "32f4f8d63bf12e2e73b457285073bd69827bd2615c26f6719c809233fc40e841",
     "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
-    "tools/ou_validation.py": "274a13b3443df30d9a64ddfd2925e8ad51ec9f0a8870d7da20752b21dbeaead1",
-    "tools/sim_dataset.py": "9dc2556daa2eafde5de9860963e68c4449d722ab68b41823a44c138ac417dc30",
+    "tools/ou_validation.py": "891c5c8de1d44f260b15b8ee04c301ea592c3000757d5605dcc1477c5508009a",
+    "tools/sim_dataset.py": "c68e23d1ed393ae5573d1199377000258cadf825f564dbd2ac42526c9878ed53",
     "tools/tfg_comparison.py": "fc334121afd0385606c336a1e5145bf07e8ba63b3427672d7b905dd89016f302"
   },
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "36476493538",
-    "workflow": "build"
+    "run_id": "37707229765",
+    "workflow": "ou-full-evidence-branch"
   }
 }

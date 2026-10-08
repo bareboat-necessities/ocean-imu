@@ -8,6 +8,7 @@
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 #undef private
 #undef protected
+using namespace ocean_imu::ou3;
 
 const float g_std = 9.80665f;
 using Filter = SeaStateFusionFilter_OU_III<TrackerType::KALMANF>;

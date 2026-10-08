@@ -14,8 +14,11 @@ using V=Eigen::Vector3f;using M=Eigen::Matrix3f;
 struct Rng {
  uint64_t state;
  double u(){state=state*6364136223846793005ULL+1442695040888963407ULL;return double((state>>11)+1)/9007199254740993.0;}
- float n(){return float(std::sqrt(-2*std::log(u()))*std::cos(6.283185307179586*u()));}
- V noise(){return V(n(),n(),n());}
+ // Draws are sequenced explicitly: operands and constructor arguments are
+ // unsequenced in C++, so inline calls replay different histories per compiler.
+ // This order reproduces the histories the v2.3.2 baseline below was taken on.
+ float n(){const double r=u(),c=u();return float(std::sqrt(-2*std::log(r))*std::cos(6.283185307179586*c));}
+ V noise(){const float z=n(),y=n(),x=n();return V(x,y,z);}
 };
 static V direction(float t) {float z=.94f*std::sin(.25f*t),p=.45f*t;return V(std::sqrt(1-z*z)*std::cos(p),std::sqrt(1-z*z)*std::sin(p),z);}
 static M distortion(){M d;d<<1.2,.18,.09,.18,.9,.12,.09,.12,1.05;return d;}

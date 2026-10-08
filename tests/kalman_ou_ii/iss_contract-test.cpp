@@ -11,6 +11,7 @@
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
 #undef private
 #undef protected
+using namespace ocean_imu::ou2;
 
 const float g_std = 9.80665f;
 

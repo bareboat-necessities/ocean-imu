@@ -52,14 +52,9 @@ inline constexpr float MIN_TUNE_FREQ_HZ = 0.03f;
 //
 // It has to be a constant: the whole point of the wave-band source is that no
 // part of the adaptation path reads the acceleration-band tracker, and a
-// constant is trivially exogenous.  0.2 Hz is a 5 s zero-crossing period, and
-// the estimator reports 2.3-8.4 s across the reference family, so the prior is
-// within roughly a factor of two across those records.  The prior remains
-// active until the wave-period estimator provides a valid estimate.
-// Sensitivity to it was measured by sweeping it over 0.1-0.4 Hz, which leaves
-// every scored 900 s metric unchanged to four decimal places in both OU
-// families, because the estimator has replaced it 250 s before the window
-// opens.
+// constant is trivially exogenous.  0.2 Hz is a 5 s zero-crossing period.  The
+// prior remains active only until the wave-period estimator provides a valid
+// estimate.
 inline constexpr float TUNE_FREQ_PRIOR_HZ = 0.2f;
 
 // JONSWAP-similar acceleration-variance band.  Away from the absolute safety
@@ -143,9 +138,8 @@ inline constexpr float ACC_VIBRATION_RACC_GAIN = 0.75f;
 // Common tau/sigma_aw EMA.  A positive sea-period multiplier makes it
 // self-similar:
 //     tau_ema = ADAPT_TAU_SEA_PERIODS * T_sea,  T_sea = T_z/2.
-// The measured default 0.40 is the 0.20*T_z winner from the paired OU-III
-// sweep.  Zero selects the fixed-second ADAPT_TAU_SEC path, available
-// for controlled ablations.
+// The default 0.40 is 0.20*T_z.  Zero selects the fixed-second ADAPT_TAU_SEC
+// path, available for controlled ablations.
 inline constexpr float ADAPT_TAU_SEC         = 1.8f;
 inline constexpr float ADAPT_TAU_SEA_PERIODS = 0.40f;
 

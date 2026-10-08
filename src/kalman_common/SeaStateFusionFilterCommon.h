@@ -12,6 +12,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 #include "tuner/SeaStateFusionTunerCommon.h"
 #include "tuner/SeaStateAdaptationLimits.h"
@@ -468,6 +469,45 @@ struct TiltResetWatchdog {
             return true;
         }
         return false;
+    }
+};
+
+// Magnetic-service accounting behind the accelerometer-bias release gate of
+// the OU wrappers.  A call forwarded to the MEKF is an attempt; only a
+// correction the MEKF actually applied counts as service.  A rejected call
+// (non-finite or near-zero field, unfactorable innovation covariance) neither
+// advances the applied count nor starts its clock.  Both counts saturate.
+struct MagServiceCount {
+    static constexpr float MIN_SPAN_SEC = 1.0f;
+
+    int   attempted = 0;
+    int   applied   = 0;
+    float first_applied_sec = NAN;
+
+    void reset() {
+        attempted = 0;
+        applied = 0;
+        first_applied_sec = NAN;
+    }
+
+    void record(bool accepted, float t_sec) {
+        saturatingIncrement_(attempted);
+        if (!accepted) return;
+        saturatingIncrement_(applied);
+        if (!std::isfinite(first_applied_sec)) first_applied_sec = t_sec;
+    }
+
+    // At least `required` applied corrections, the first more than
+    // MIN_SPAN_SEC before t_sec.
+    bool sufficient(int required, float t_sec) const {
+        return applied >= required &&
+               std::isfinite(first_applied_sec) &&
+               (t_sec - first_applied_sec) > MIN_SPAN_SEC;
+    }
+
+private:
+    static void saturatingIncrement_(int& n) {
+        if (n < std::numeric_limits<int>::max()) ++n;
     }
 };
 

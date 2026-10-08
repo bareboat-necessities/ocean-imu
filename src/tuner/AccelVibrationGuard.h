@@ -72,17 +72,12 @@ public:
     // guard hardest in big seas -- exactly backwards.
     static constexpr float kDetectHzDefault = 25.0f;
 
-    // Engagement band, in detector-band RMS.  Defaults are set from this
-    // repository's measurements.  Over the eight stationary records the clean
-    // deployed configuration reads 0.00796 to 0.00805 m/s^2 here -- a one
-    // percent spread across a 31:1 range of significant wave height, which is
-    // what a detector above the sea should look like -- and it is essentially
-    // all accelerometer white noise.  With the engine running the same reading
-    // is 0.037 at the quietest level swept, 0.087 at idle, and 0.144 at the
-    // nominal cruise condition.
+    // Engagement band, in detector-band RMS.  On a clean installation the
+    // detector reads essentially the accelerometer white-noise floor,
+    // independent of sea state; engine vibration raises it several-fold.
     //
-    // The lower rail is therefore placed at about four times the clean floor,
-    // and the band is nearer that floor than the midpoint because the two
+    // The lower rail is placed at about four times the clean floor, and the
+    // band is nearer that floor than the midpoint because the two
     // errors are not symmetric: engaging spuriously costs delay in exactly the
     // big seas where the estimator matters most, while failing to engage at the
     // bottom of the vibration range costs little, since that is also where the

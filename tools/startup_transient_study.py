@@ -2,7 +2,7 @@
 """Startup transient of NLO, TFG, PII, OU-II, and OU-III under engine noise.
 
 The truth is vessel motion, not the sea surface: every record is the pinned
-oceanography-waves-lib v1.2.1 wave field passed through the estimated 28 ft
+oceanography-waves-lib v1.2.3 wave field passed through the estimated 28 ft
 fin-keel sailboat RAO at the CG (``tools/sim_dataset.py``), and that motion is
 what the simulated IMU measures.
 

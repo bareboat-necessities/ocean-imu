@@ -1,7 +1,7 @@
 {
   "AW_target_minus_prior_eigenvalue_range": [
     0.0008455758215859532,
-    0.0013998093879384263
+    0.0013998093879384295
   ],
   "all_time_magnetic_service_verified": false,
   "counts": {
@@ -76,45 +76,45 @@
     "actually_S_due_tested_predictions": {
       "even": {
         "absolute": {
-          "max": 2.099149684085607e-05,
+          "max": 2.0991496840865758e-05,
           "sample": 40438
         },
         "linked_one_percent_cell_bound": {
-          "max": 0.0016300210594681315,
+          "max": 0.001630021175508416,
           "sample": 40438
         },
         "linked_point_bound": {
-          "max": 0.001591962544546223,
+          "max": 0.0015919626580097115,
           "sample": 40438
         },
         "relative": {
-          "max": 0.0008993007742085211,
+          "max": 0.0008993007742083997,
           "sample": 40438
         },
         "two_term_bound": {
-          "max": 0.015503704519149005,
+          "max": 0.015503704593650008,
           "sample": 40138
         }
       },
       "odd": {
         "absolute": {
-          "max": 4.054784464580457e-05,
+          "max": 4.0547844645801906e-05,
           "sample": 40138
         },
         "linked_one_percent_cell_bound": {
-          "max": 0.0025795764728999433,
+          "max": 0.002579576472899799,
           "sample": 40138
         },
         "linked_point_bound": {
-          "max": 0.002518081276995247,
+          "max": 0.002518081276995106,
           "sample": 40138
         },
         "relative": {
-          "max": 0.0016318964965439287,
+          "max": 0.0016318964965438404,
           "sample": 40138
         },
         "two_term_bound": {
-          "max": 0.013399896210416685,
+          "max": 0.013399896210416665,
           "sample": 40138
         }
       },
@@ -123,45 +123,45 @@
     "all_tested_predictions": {
       "even": {
         "absolute": {
-          "max": 2.099149684085607e-05,
+          "max": 2.0991496840865758e-05,
           "sample": 40438
         },
         "linked_one_percent_cell_bound": {
-          "max": 0.0016300210594681315,
+          "max": 0.001630021175508416,
           "sample": 40438
         },
         "linked_point_bound": {
-          "max": 0.001591962544546223,
+          "max": 0.0015919626580097115,
           "sample": 40438
         },
         "relative": {
-          "max": 0.0008993007742085211,
+          "max": 0.0008993007742083997,
           "sample": 40438
         },
         "two_term_bound": {
-          "max": 0.015503704519149005,
+          "max": 0.015503704593650008,
           "sample": 40138
         }
       },
       "odd": {
         "absolute": {
-          "max": 4.054784464580457e-05,
+          "max": 4.0547844645801906e-05,
           "sample": 40138
         },
         "linked_one_percent_cell_bound": {
-          "max": 0.0025795764728999433,
+          "max": 0.002579576472899799,
           "sample": 40138
         },
         "linked_point_bound": {
-          "max": 0.002518081276995247,
+          "max": 0.002518081276995106,
           "sample": 40138
         },
         "relative": {
-          "max": 0.0016318964965439287,
+          "max": 0.0016318964965438404,
           "sample": 40138
         },
         "two_term_bound": {
-          "max": 0.013399896210416685,
+          "max": 0.013399896210416665,
           "sample": 40138
         }
       },
@@ -170,16 +170,16 @@
   },
   "local_commutator_is_complete_scheduler_word_defect": false,
   "maximum_absolute_operation_residuals": {
-    "PHt": 4.1692748212196484e-10,
+    "PHt": 4.160178672905912e-10,
     "aw_sync": 4.656612877414201e-10,
     "correction_input": 1.4210854715202004e-14,
-    "gain_solve": 1.0412428280703878e-09,
+    "gain_solve": 1.0412429425621372e-09,
     "innovation": 3.121931668736977e-08,
-    "joseph": 1.324608849689879e-09,
-    "linked_even_identity": 1.0526925468476445e-17,
-    "linked_odd_identity": 6.528929957436147e-18,
+    "joseph": 1.3246088739760076e-09,
+    "linked_even_identity": 1.1189305233229307e-17,
+    "linked_odd_identity": 5.827586677109586e-18,
     "next_prediction_input": 0.0,
-    "prediction": 1.830381780171253e-09,
+    "prediction": 1.8467235900210266e-09,
     "reset_congruence": 2.7732804388450744e-12,
     "sample_output": 0.0
   },
@@ -190,8 +190,8 @@
     48000
   ],
   "scheduler_phase_cell_forward_invariant": false,
-  "smallest_covariance_eigenvalue_observed": 1.6741008657809843e-08,
+  "smallest_covariance_eigenvalue_observed": 1.6741008656555163e-08,
   "smallest_innovation_eigenvalue_observed": 0.040976330637931824,
-  "stream_sha256": "a1d0baed42d44034e71f9291fd4e4d6d363ddcb1e9db230335ec978562776cf5",
+  "stream_sha256": "d1d511551e3ddeb25adcf9fa1c742533d3d9fed2710842f2dbc0be29471c8be9",
   "theorem_closed": false
 }

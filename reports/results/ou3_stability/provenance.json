@@ -5,19 +5,19 @@
   "authoritative_shipping_sources": [
     {
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "git_blob_sha": "7ac767209ad3a48918b4e2acc86062ce268784fa"
+      "git_blob_sha": "300fe9a8d448479d069358d97877fffd46b963c1"
     },
     {
       "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
-      "git_blob_sha": "91b8260b23ab19f0c25fe0c8d90a7f34ced16d07"
+      "git_blob_sha": "5796b962fbf9d1081a8d42b9efbded0295d30265"
     },
     {
       "path": "src/kalman_common/SeaStateFusionDefaults.h",
-      "git_blob_sha": "fee003cf975ad1fbcc33fd9bc094bd0ee640d932"
+      "git_blob_sha": "875e2e7c1cfb28adda11121b6a10a2515e23178b"
     },
     {
       "path": "src/kalman_common/SeaStateOUFamilyDefaults.h",
-      "git_blob_sha": "a5eafeeaab2e3ae47b6cc979a6ff4ceafb2dd9d3"
+      "git_blob_sha": "480602a4db3121d0aa8f21cded939047eb00b376"
     },
     {
       "path": "src/kalman_common/AccelVibrationConditioning.h",
@@ -33,7 +33,7 @@
     },
     {
       "path": "src/kalman_common/ProxyStartupFusion.h",
-      "git_blob_sha": "742843dc47a916cdd77b154fc05574bdcb2859c7"
+      "git_blob_sha": "7dd0a689bb27a366ac9246e493ea6f8c1f674971"
     },
     {
       "path": "src/kalman_common/MagneticStartupCommon.h",
@@ -48,7 +48,7 @@
     "accelerometer_bias_estimator_prior": "OU mean predictor while active; held while disabled",
     "accelerometer_bias_estimate_projection_radius_mps2": 0.4,
     "magnetometer_acceptance": "lastMagDiag().accepted becomes true only after the correction is actually applied",
-    "magnetic_attempt_counter": "the wrapper control counter advances after a forwarded attempt and is not an informative-service certificate",
+    "magnetic_attempt_counter": "the wrapper counts forwarded attempts and applied corrections separately; only applied corrections advance the release count and its 1-s clock, and neither count is an informative-service certificate",
     "live_handoff": "the certified tail inherits the actual reached execution",
     "accel_bias_release": "release enables estimator bias dynamics and does not reset physical accelerometer bias",
     "magnetic_information_covariance": "lastMagDiag().S records the actual innovation covariance factored by an applied shipping magnetometer correction and is the covariance used by MAGNETIC SERVICE whitening",
@@ -107,7 +107,7 @@
     "projection_storage_guard": "Inherited P_ba,ba <= I/1600 implies actual projection inactive if pre-projection sqrt(V) <= 6, with .02483339501604595 m/s^2 slack; every-prefix retention and entry remain open.",
     "construction_history_stress": "One continuous diagonal-wave history has exact physical envelopes and is run from begin through Live/refinement/release to 600 s without reseeding. Its finite tail tilt about 8.21 degrees and nominal acceleration 9.7764 do not certify all-time magnetic service or refute eventual capture. No nominal-state cap or six-degree entry is inferred.",
     "construction_endpoint_storage": "Recorded full 21x21 covariance is exactly SPD. Zero true BA gives V >= e_ba^T P_ba,ba^-1 e_ba >11492.6752, with all cross covariance retained, excluding V<=36 at this finite endpoint. This is not all-time service, eventual-capture refutation, or active-projection proof.",
-    "construction_mean_action": "The full carried BG/AW mean action retains actual six-row rank-three gains and innovation correlations, with explicit recorded mean rounding. Outward intervals and rational LDL certify gyro norm <1 at all recorded prefixes; exact binary checks give force/field sine >2/5 at 40000 tail acc observations. The energy-only pointwise uniform exclusion fails with margin [-817884.048495,-817884.048494]; this is an enclosure failure, not a reachable collinear history, source-uniform B_* or contraction. Fresh observer checks every actual gyro projection is inactive; only then is the affine unprojected mean replay analyzed.",
+    "construction_mean_action": "The full carried BG/AW mean action retains actual six-row rank-three gains and innovation correlations, with explicit recorded mean rounding. Outward intervals and rational LDL certify gyro norm <1 at all recorded prefixes; exact binary checks give force/field sine >2/5 at 40000 tail acc observations. The energy-only pointwise uniform exclusion fails with margin [-817884.035305,-817884.035304]; this is an enclosure failure, not a reachable collinear history, source-uniform B_* or contraction. Fresh observer checks every actual gyro projection is inactive; only then is the affine unprojected mean replay analyzed.",
     "gyro_bias_estimator_invariant": "Implemented residual-bias ball R_g=.5 rad/s, separate from physical B_g=.02. Qualified rate includes Omega_max+B_g+N_g+R_g=1.1508652381980153; h in [.004,.006] gives argument .0069051914291880918 and real-source angle <.007. The API does not enforce dt_max.",
     "one_prediction_gyro_transport": "The retained ideal-rotation comparison has transverse singular floor .003999991833333333... s. Shipping dimensionless coefficient series require the remainder transfer described in so3_coefficient_transfer. Complete-turn nominal bias relaxation is excluded. Full signed temporal Delta_gyr, force/field separation and word float32 totality remain open.",
     "marine_complete_moving_window_excitation": "Every complete T_E window contained in one maximal physical moving episode has gravity span >=theta_E>0. Nondegenerate rest intervals define episode boundaries; isolated zero-rate instants do not restart them. Boundary-crossing windows require transition retention, not immediate excitation. Numerical qualification remains open.",
@@ -124,11 +124,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "bb8a572aab1ea36cfde659428ddbaac4bc5f508d"
+      "git_blob_sha": "be57fd3b2b39c24351223e85b5a98c8f5f243cf6"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "286302ce16db2064704ff40a0efc7ecf5d01ef56"
+      "git_blob_sha": "d411df359b9aac31ccc0e125b4f6f8646092a7a5"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -136,15 +136,15 @@
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
-      "git_blob_sha": "fd91e965b15fb921c8e6a5f6d3952269c16b061c"
+      "git_blob_sha": "caafcc14aa11810a1c3f296d5d78ad34864fbc51"
     },
     {
       "path": "docs/ou3-construction-mean-action.md",
-      "git_blob_sha": "f5a5e844b51cb18c87bc303696d0899683bc3d49"
+      "git_blob_sha": "bc0b1641d7b641b954acc15c2bb651705f222eac"
     },
     {
       "path": "docs/ou3-corrected-word-proof.md",
-      "git_blob_sha": "3944e79c2df2f70cb9b395e2c7abc0f854d57c64"
+      "git_blob_sha": "a63eb2f0527a5e4196662d5d8d6d88422dec3f4c"
     },
     {
       "path": "docs/ou3-factor-loss.md",
@@ -164,7 +164,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "d0f8db344f65184345907e75b63dcf3742a22c9a"
+      "git_blob_sha": "17124871c9a4a0da73ee32db9bad27260ff1edf8"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -184,7 +184,7 @@
     },
     {
       "path": "docs/ou3-signed-temporal-continuation.md",
-      "git_blob_sha": "1e71e9ff72b5b8e689ffbec7f1204b2b6dd3bc52"
+      "git_blob_sha": "8acc00a9d0b78ed660933e4bc124c88da40ebe77"
     },
     {
       "path": "docs/ou3-stationary-detectability.md",
@@ -212,7 +212,7 @@
     },
     {
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "git_blob_sha": "77809d942e6f71fcbc1899911268887c6cbd9091"
+      "git_blob_sha": "eba3766d8532535ad2fdea85230a9b3db11ec2da"
     },
     {
       "path": "reports/results/ou3_stability/construction-history-feasibility.json",
@@ -220,11 +220,11 @@
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "git_blob_sha": "ca2ff0fad3d61494d2cb715527ed88f2bcc7d552"
+      "git_blob_sha": "28ba73e5cc0297f41c16be35bf9f931846e2e7fa"
     },
     {
       "path": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
-      "git_blob_sha": "66a8f244b3470c077a0470bdae4b6987189eac38"
+      "git_blob_sha": "99678b2eb85c0eb2b3e410192242ad8664450a62"
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
@@ -236,7 +236,7 @@
     },
     {
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "git_blob_sha": "c066ce7de5316f6eecebe5d2dd142e477be63a65"
+      "git_blob_sha": "987bd08b43f3f276eca287a8baa36337af11688b"
     },
     {
       "path": "reports/results/ou3_stability/regime-certificate.json",
@@ -248,11 +248,11 @@
     },
     {
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "git_blob_sha": "5b512946edf39ad1ae5ce515ebeae1ae3669c054"
+      "git_blob_sha": "0907bc38e517134667b3e88c41891aadc318b5e4"
     },
     {
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "git_blob_sha": "4ece469a985dd3fbfccac7e256db4849f5383dd1"
+      "git_blob_sha": "8ba128d746624c65d9ad122f829eb9c30908310a"
     },
     {
       "path": "reports/results/ou3_stability/signed-injection-certificate.json",
@@ -276,15 +276,15 @@
     },
     {
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "git_blob_sha": "38ce083d486db6335bc4dcd3c2f1438ed324947f"
+      "git_blob_sha": "30137e23f9f8626c9c58030b5de372c175341cf1"
     },
     {
       "path": "src/kalman_common/SeaStateFusionFilterCommon.h",
-      "git_blob_sha": "c8650e4314c1109bf75f99eb1c5e23d39141fc43"
+      "git_blob_sha": "abe2d03c2a9e420851b09bc04f5b57de1c0690f3"
     },
     {
       "path": "src/kalman_ou_common/KalmanOUCoreMath.h",
-      "git_blob_sha": "24073567959bf2941f26bcc5e67608b2c5414f76"
+      "git_blob_sha": "532bc2b48b08e6d75d7a19ffc74d502759967537"
     },
     {
       "path": "src/tuner/AdaptiveWaveBandPass.h",
@@ -324,7 +324,7 @@
     },
     {
       "path": "tests/kalman_ou_iii/shipping_transition-test.cpp",
-      "git_blob_sha": "acad46645ae564c90dd2307828b7e2b1871fa2ab"
+      "git_blob_sha": "4ce9fb5390f5ea7672f1cc13eb981eff3652bb28"
     },
     {
       "path": "tests/validation/test_ou3_ag_readout.py",
@@ -384,7 +384,7 @@
     },
     {
       "path": "tests/validation/test_ou3_lin_path_certificate.py",
-      "git_blob_sha": "a4b57b6da1775f9837f87cf49c4d0b835794d0d7"
+      "git_blob_sha": "3b781ff29f83ee0d7089661498ce0840ee093a3d"
     },
     {
       "path": "tests/validation/test_ou3_magnetic_service.py",
@@ -568,7 +568,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/lin_path_certificate.py",
-      "git_blob_sha": "40136c9e07555255d00c09b25a1b8f7efbeb6a93"
+      "git_blob_sha": "5ce37de38ab57c19f1f3bd8db05fefd0f5346378"
     },
     {
       "path": "tools/stability/ou3_theorem/literal_history_leaf_propagator.py",
@@ -744,7 +744,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-joint-phase-cell-threshold.json",
-      "git_blob_sha": "368f17155691b54ad3b71e421b397dd9d606ea66"
+      "git_blob_sha": "818183a89b3b411b393e5c69186cbc0024888582"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
@@ -756,7 +756,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "ec9c8aa2eb23f8b8c06ef3621f301bfd03ccbefe"
+      "git_blob_sha": "d9bdaacda4355fb63b3ab81641ad5fe6cd4fe594"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -820,27 +820,27 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-every-root-service-diagnostic.json",
-      "git_blob_sha": "daa79eb8a64914cf2d3b20032a723ef2700b8702"
+      "git_blob_sha": "b32f0da1728fe125ec0e2e1c567d1774a540416a"
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "635637a1b2f64b828d689e118e74144ab26b1327"
+      "git_blob_sha": "f3f0f0efbaf55ae80f26bec169637c6251ba17ad"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
-      "git_blob_sha": "48bec279fddba41eca29688f736c667f113f1644"
+      "git_blob_sha": "7a0317b3a074175ddbec9974501816109783148c"
     },
     {
       "path": "reports/results/ou3_stability/planar-service-frechet-diagnostic.json",
-      "git_blob_sha": "bb4502416b8d504eea4d2e912eeb0954969dd60d"
+      "git_blob_sha": "59f6338e9779c9f45c7c9f631f75bb8d959c477a"
     },
     {
       "path": "reports/results/ou3_stability/planar-service-operation-audit.json",
-      "git_blob_sha": "4695c5abcbfcd6c042c369b4bfef53738630409d"
+      "git_blob_sha": "db44e5eb6423a6d135911aff9b3d6a87a930300a"
     },
     {
       "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
-      "git_blob_sha": "061e8534c4b3015936921bda84738261e0130a12"
+      "git_blob_sha": "eb57f6b5e0db084a694540a5628973b9d75d6d77"
     },
     {
       "path": "tests/validation/test_ou3_compatibility_quotient.py",
@@ -872,7 +872,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-moving-center-diagnostic.json",
-      "git_blob_sha": "d96aac0db69cc13fcbe4ea3186fcfa0f3fe00a67"
+      "git_blob_sha": "e0e4434820c0d1f1984f7bbf121ce3e9bfdababc"
     },
     {
       "path": "tests/validation/test_ou3_planar_moving_center.py",
@@ -1010,7 +1010,7 @@
   },
   "planar_joint_phase_cell_threshold": {
     "result_type": "CONDITIONAL",
-    "covariance_partial_gain_max": 0.8738212970667967,
+    "covariance_partial_gain_max": 0.8738212970667968,
     "mahony_homogeneous_20s_gain": 0.5827057639270218,
     "coupling_product_budget": null,
     "symmetric_coupling_norm_budget": null,

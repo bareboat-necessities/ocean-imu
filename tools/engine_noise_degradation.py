@@ -1080,7 +1080,7 @@ def main() -> int:
     manifest = {
         "study": "engine-noise degradation",
         "source_commit": commit,
-        "simulation_data": "oceanography-waves-lib v1.2.1 vessel-rao-28ft",
+        "simulation_data": "oceanography-waves-lib v1.2.3 vessel-rao-28ft",
         "simulation_provenance": dataset,
         "families": list(FAMILIES),
         "records": [record.__dict__ for record in RECORDS],

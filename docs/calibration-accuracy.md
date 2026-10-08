@@ -42,7 +42,11 @@ offset, smooth three-dimensional turns, repeated 200 Hz polls of 20/30 Hz
 magnetic readings, 0.3 µT quantization, and an additional correlated-noise
 component. The noisy magnetic cases use per-axis white noise of 1/1/1.4 µT;
 the quiet case uses 0.3/0.3/0.3 µT. Angular error is measured on 1,000 unseen
-clean field directions, including appreciable pitch and roll.
+clean field directions, including appreciable pitch and roll. The driver
+sequences its random draws explicitly, so GCC and Clang replay identical
+histories. The 90/90 counts belong to those histories: three alternative draw
+orders of the same noise model each leave one noisy 30 µT session failing
+independent verification (89/90).
 
 | Metric | v2.3.2 | Current |
 | --- | ---: | ---: |

@@ -6,7 +6,8 @@ import unittest
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 from tools.stability.ou3_theorem.lin_path_certificate import (
-    certificate, derivative, hermite_basis, small_x_source_defect, sqrt_floor,
+    certificate, derivative, hermite_basis, series_branch_defect, small_x_source_defect,
+    sqrt_floor,
 )
 
 
@@ -23,6 +24,12 @@ class LinPathCertificateTests(unittest.TestCase):
         self.assertGreater(error,0)
         self.assertLess(error,F('0.00002'))
         self.assertGreater(j,0)
+
+    def test_shipped_series_branch_is_inside_the_charged_allowance(self):
+        for x in (F(1,100),F(3,10),F(1)):
+            r=series_branch_defect(x)
+            self.assertTrue(r['within_allowance'])
+            self.assertGreater(r['q'],0)
 
     def test_rational_factor_covers_full_mesh_and_tau_domain(self):
         r=certificate()

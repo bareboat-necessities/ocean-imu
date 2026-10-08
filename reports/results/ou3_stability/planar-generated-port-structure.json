@@ -32,9 +32,9 @@
   "source_git_blob_sha": {
     "src/kalman_common/MagneticStartupCommon.h": "da00c8831719b80026321605965fbbc6f26bc1aa",
     "src/kalman_common/MarineWaveFrontEnd.h": "9bdb44c2a6b00466e528b714153884e4426f7bbf",
-    "src/kalman_common/ProxyStartupFusion.h": "742843dc47a916cdd77b154fc05574bdcb2859c7",
-    "src/kalman_common/SeaStateFusionDefaults.h": "fee003cf975ad1fbcc33fd9bc094bd0ee640d932",
-    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "91b8260b23ab19f0c25fe0c8d90a7f34ced16d07",
+    "src/kalman_common/ProxyStartupFusion.h": "7dd0a689bb27a366ac9246e493ea6f8c1f674971",
+    "src/kalman_common/SeaStateFusionDefaults.h": "875e2e7c1cfb28adda11121b6a10a2515e23178b",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "5796b962fbf9d1081a8d42b9efbded0295d30265",
     "src/tuner/ContinuousMagHardIronEstimator.h": "8c53e63344e3532a7231195f51fc0e75549abcff",
     "src/tuner/MagAutoTuner.h": "a1ccc503d3ae0623545e8e005e790d1f90f62a42"
   },

@@ -4,7 +4,7 @@
     {
       "active_step": 24064,
       "all_six_pivot_budget": "0.3010813587116822840605018218810017510858",
-      "exported_trace_sha256": "fe7a93fbaeb5533db48a9f7d025146627e8a7439c4f69671a54b84cadea6388b",
+      "exported_trace_sha256": "b9972ccbbca894a35abc85048eeceec2d6903e1169fa3fe0e8007031566b6b94",
       "groups": 8,
       "input_profile": "0",
       "interanchor_attitude_norm": "1.0",
@@ -29,15 +29,15 @@
     },
     {
       "active_step": 24016,
-      "all_six_pivot_budget": "0.2686214777675998155336426152342218244105",
-      "exported_trace_sha256": "53f70febae6546e88f791a9e49a72e909ed1c1513169cb6563778f72bb65bd89",
+      "all_six_pivot_budget": "0.2686214777688132694210042484561951698749",
+      "exported_trace_sha256": "2e436a140b1bde5c95141eaa7d26478a399cbe17e9d852344f9ee311ab001e22",
       "groups": 8,
       "input_profile": "wave",
-      "interanchor_attitude_norm": "1.000000053495880351616354572261784991869",
-      "interanchor_gyro_singular_value": "0.2799999311426562959548957130361942602503",
+      "interanchor_attitude_norm": "1.000000053495880603530056006018261824536",
+      "interanchor_gyro_singular_value": "0.2799999311426523815271683266767870537518",
       "literal_terminal_parity": true,
       "live_step": 6368,
-      "minimum_group_attitude_singular_value": "8.749387368551455743700747850004474109206",
+      "minimum_group_attitude_singular_value": "8.749387368591087942386239161761738240434",
       "real_trajectory_enclosed": false,
       "refined_step": 24016,
       "row_defect_exactly_zero": true,
@@ -50,15 +50,15 @@
         344
       ],
       "source_uniform_verified": false,
-      "two_group_actual_singular_value": "1.717587282443913211698507502019454615833",
-      "two_group_six_column_budget": "1.074485911070399262134570460936887297642"
+      "two_group_actual_singular_value": "1.71758728246026770907555478433427586946",
+      "two_group_six_column_budget": "1.0744859110752530776840169938247806795"
     }
   ],
   "decimal_digits": 80,
   "driver_sha256": "6183382d7e6943cf6ad73c3867dd4d26a1954954ebd3a6edcb30fb7ee3e5dee1",
-  "observer_header_sha256": "15a4d2fce3caea83c8bc3947e3f260b6dc955032551cb859d8c838d77e3c6e5a",
+  "observer_header_sha256": "2aa9b137af444bf2c2ba4a64061bb3e7cb23045deda47ad570827d5e422b167b",
   "qualification": "OU3_CARRIED_SAME_CELL_GROUP_DIAGNOSTIC_V1",
-  "shipping_header_sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
+  "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",
   "source_uniform_verified": false,
   "theorem_closed": false
 }

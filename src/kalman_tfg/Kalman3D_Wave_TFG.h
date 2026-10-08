@@ -74,20 +74,17 @@ inline void integral_transition_axis(T tau, T h, Eigen::Matrix<T,4,4>& Psi) {
     Psi(2,1) = T(0.5) * h * h;
     Psi(2,2) = h;
 
-    if (std::abs(x) < T(1e-2)) {
-        const T x2 = x*x, x3 = x2*x, x4 = x3*x, x5 = x4*x;
-        const T x6 = x5*x, x7 = x6*x, x8 = x7*x;
-        Psi(3,3) = tau  * (x - x2/T(2) + x3/T(6) - x4/T(24) + x5/T(120) - x6/T(720));
-        Psi(0,3) = tau2 * (x2/T(2) - x3/T(6) + x4/T(24) - x5/T(120) + x6/T(720)
-                           - x7/T(5040));
-        Psi(1,3) = tau3 * (x3/T(6) - x4/T(24) + x5/T(120) - x6/T(720)
-                           + x7/T(5040) - x8/T(40320));
-        Psi(2,3) = tau4 * (x4/T(24) - x5/T(120) + x6/T(720) - x7/T(5040)
-                           + x8/T(40320));
+    // Psi(3,3) = -tau expm1(-x) has no cancellation; the other columns do.
+    // See ou_detail::ou_series.
+    const T em1 = std::expm1(-x);
+    Psi(3,3) = -tau * em1;
+    if (std::abs(x) < T(1)) {
+        const T x2 = x*x;
+        Psi(0,3) = tau2 * x2 * ou_detail::ou_series<T>(ou_detail::ou_series_phi_pa, x);
+        Psi(1,3) = tau3 * (x2*x) * ou_detail::ou_series<T>(ou_detail::ou_series_phi_Sa, x);
+        Psi(2,3) = tau4 * (x2*x2) * ou_detail::ou_series<T>(ou_detail::ou_series_phi_Ia, x);
     } else {
-        const T em1 = std::expm1(-x);
         const T x2 = x*x, x3 = x2*x;
-        Psi(3,3) = -tau  * em1;
         Psi(0,3) =  tau2 * (em1 + x);
         Psi(1,3) =  tau3 * (x2/T(2) - em1 - x);
         Psi(2,3) =  tau4 * (x3/T(6) - x2/T(2) + em1 + x);

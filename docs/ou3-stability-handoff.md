@@ -209,7 +209,7 @@ matrix, and encloses actual mean rounding. Rational interval factors prove
 closures are not a uniform exclusion or readout action ceiling.
 
 The energy-only enclosure itself fails `E_col-E>0` with exact margin in
-[-817884.048495,-817884.048494], even though the actual finite tail remains
+[-817884.035305,-817884.035304], even though the actual finite tail remains
 separated. No new physical counterexample follows. Retain the signed
 innovation relations and physical/nominal integral dynamics in the next
 whole-window argument; do not tighten this failed pointwise ellipsoid or

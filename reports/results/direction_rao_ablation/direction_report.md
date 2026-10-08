@@ -7,13 +7,13 @@ Each row is an unweighted mean across eight full-record replays, scored over the
 | OU-II | 0 | unconditioned | 11.70 | 76.16 | 19.55 | 71.81 | 0.41 | 27.77 |
 | OU-II | 0 | guard-only | 11.70 | 76.16 | 19.55 | 71.81 | 0.41 | 27.77 |
 | OU-II | 0 | guard-and-rao | 2.36 | 73.02 | 16.35 | 69.60 | 0.23 | 30.17 |
-| OU-II | 2400 | unconditioned | 52.46 | 85.09 | 91.44 | 6.63 | 4.37 | 89.00 |
+| OU-II | 2400 | unconditioned | 52.46 | 85.09 | 91.40 | 6.63 | 4.36 | 89.01 |
 | OU-II | 2400 | guard-only | 11.24 | 75.31 | 25.61 | 64.08 | 0.73 | 35.18 |
 | OU-II | 2400 | guard-and-rao | 17.76 | 72.63 | -- | 68.23 | 0.24 | 31.54 |
 | OU-III | 0 | unconditioned | 11.74 | 75.98 | 19.64 | 71.79 | 0.42 | 27.79 |
 | OU-III | 0 | guard-only | 11.74 | 75.98 | 19.64 | 71.79 | 0.42 | 27.79 |
 | OU-III | 0 | guard-and-rao | 2.16 | 72.95 | 15.93 | 69.46 | 0.21 | 30.33 |
-| OU-III | 2400 | unconditioned | 47.65 | 77.50 | 88.50 | 5.79 | 2.38 | 91.84 |
+| OU-III | 2400 | unconditioned | 47.65 | 77.50 | 88.59 | 5.78 | 2.39 | 91.83 |
 | OU-III | 2400 | guard-only | 10.98 | 75.09 | 22.99 | 64.33 | 0.81 | 34.86 |
 | OU-III | 2400 | guard-and-rao | 18.70 | 72.55 | -- | 68.13 | 0.23 | 31.65 |
 
