@@ -830,6 +830,15 @@ private:
           delay(5);
           continue;
         }
+        if (verify) {
+          // The window statistics can hide field changes inside a window;
+          // score the fresh single readings with the frozen candidate too.
+          const auto raw = capture.rawResidual();
+          char line[96];
+          snprintf(line, sizeof(line), "[MAG RAW] n=%d rms=%.3f tail=%d ok=%d", raw.n, raw.rms, raw.tail, (int)raw.ok);
+          tryCalLogLine(Serial, line);
+          if (!raw.ok) { out_why = "Field inconsistent"; return false; }
+        }
         if (!verify) ui_.showOkAuto("MAG", "Captured");
         return true;
       }

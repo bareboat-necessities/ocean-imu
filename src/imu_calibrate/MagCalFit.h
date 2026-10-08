@@ -27,6 +27,14 @@ struct MagFitLimits {
   static double rmsLimit(double field) { return std::max(0.35, 0.015 * field); }
   static double inlierLimit(double field) { return std::max(0.6, 0.025 * field); }
   static double driftLimit(double field) { return std::max(0.35, 0.01 * field); }
+  // Individual fresh readings of the independent check against the frozen
+  // candidate: window limits plus raw sensor noise and the axis skew of one
+  // measurement while turning. A window's moments can hide field changes
+  // inside it; single readings cannot.
+  static double rawRmsLimit(double field) { return std::max(2.0, 0.04 * field); }
+  static double rawTailLimit(double field) { return std::max(5.0, 0.1 * field); }
+  static constexpr double max_raw_tail_fraction = 0.05;
+  static constexpr int min_raw_samples = 100;
 };
 
 enum class MagFitGate : uint8_t { NONE, BAD_DATA, MATRIX, RESIDUAL, INLIERS, COVERAGE, INFORMATION, FIELD_CHANGED };

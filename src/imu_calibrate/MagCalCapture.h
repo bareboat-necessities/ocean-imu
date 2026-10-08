@@ -31,6 +31,12 @@ public:
     int cells = 0;
     bool ok = false;
   };
+  // Verification only: fresh raw readings scored with the frozen candidate.
+  struct RawResidual {
+    int n = 0, tail = 0;
+    double rms = 0;
+    bool ok = false;
+  };
 
   explicit MagCapture(MagCalibrator<T,N>& cal, const MagCaptureCfg& cfg = {},
                       const MagCalibration<T>* fixed = nullptr) : cal_(cal), cfg_(cfg), fixed_(fixed) {}
@@ -40,6 +46,7 @@ public:
     start_ = last_change_ = last_observation_ = now;
     seen_ = 0; random_ = 0x6d2b79f5u;
     have_change_ = have_observation_ = false;
+    raw_n_ = raw_tail_ = 0; raw_sse_ = 0;
     coverage_dirty_ = true;
     hint_ = "Turn slowly"; hint_ms_ = now;
   }
@@ -59,6 +66,7 @@ public:
     if (fresh && isfinite3(*fresh) && fresh->norm() >= cal_.min_norm_uT && fresh->norm() <= cal_.max_norm_uT &&
         (!have_change_ || (*fresh-last_changed_).norm() >= T(cfg_.min_delta_uT))) {
       last_changed_=*fresh;last_change_=now;have_change_=true;
+      if (fixed_) addRaw_(*fresh);
     }
     if (m && isfinite3(*m)) {
       const T norm = m->norm();
@@ -89,6 +97,17 @@ public:
   }
 
   uint32_t observations() const { return seen_; }
+
+  RawResidual rawResidual() const {
+    RawResidual r;
+    r.n = raw_n_; r.tail = raw_tail_;
+    if (!fixed_ || raw_n_ == 0) return r;
+    const double field = double(fixed_->field_uT);
+    r.rms = std::sqrt(raw_sse_ / raw_n_);
+    r.ok = raw_n_ >= MagFitLimits::min_raw_samples && r.rms <= MagFitLimits::rawRmsLimit(field) &&
+           raw_tail_ <= MagFitLimits::max_raw_tail_fraction * raw_n_;
+    return r;
+  }
 
   Coverage coverage() const {
     if (!coverage_dirty_) return coverage_;
@@ -171,6 +190,14 @@ public:
 private:
   Vec3 mapped_(const Vec3& m) const { return fixed_ ? fixed_->apply(m) : m; }
 
+  void addRaw_(const Vec3& m) {
+    const double field = double(fixed_->field_uT);
+    const double e = double(fixed_->apply(m).norm()) - field;
+    if (!std::isfinite(e)) return;
+    ++raw_n_; raw_sse_ += e * e;
+    if (std::fabs(e) > MagFitLimits::rawTailLimit(field)) ++raw_tail_;
+  }
+
   int replacement_(const Vec3& m) const {
     Vec3 lo=mapped_(cal_.buf.v[0]),hi=lo;
     for(int i=1;i<N;++i) { const Vec3 v=mapped_(cal_.buf.v[i]);lo=lo.cwiseMin(v);hi=hi.cwiseMax(v); }
@@ -196,6 +223,8 @@ private:
   const char* hint_ = "Turn slowly";
   uint32_t hint_ms_ = 0;
   uint32_t start_ = 0, last_change_ = 0, last_observation_ = 0, seen_ = 0, random_ = 0;
+  int raw_n_ = 0, raw_tail_ = 0;
+  double raw_sse_ = 0;
   Vec3 last_changed_ = Vec3::Zero(), last_observed_ = Vec3::Zero();
   bool have_change_ = false, have_observation_ = false;
 };

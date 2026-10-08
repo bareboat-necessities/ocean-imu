@@ -4,6 +4,7 @@
 #define EIGEN_NON_ARDUINO
 #include "AtomS3R/AtomS3R_MagDiagnostics.h"
 #include "AtomS3R/AtomS3R_Bmm150AuxPreset.h"
+#include "AtomS3R/AtomS3R_MagAcquisition.h"
 #include "AtomS3R/AtomS3R_Bmm150Compensation.h"
 #include <cmath>
 #include <string>
@@ -161,6 +162,21 @@ struct FakeBmi270 {
   }
 };
 static void noWait(uint32_t) {}
+
+// One good reading, then the stream stalls (failed AUX reads) for 35 s: the
+// cached vector stops counting as a magnetometer value after MAX_AGE_MS.
+static void testMagAcquisitionAge() {
+  atoms3r_ical::MagAcquisition acq;
+  require(!acq.fresh(0), "no reading yet is not fresh");
+  acq.acquired(1000);
+  int fresh = 0;
+  for (int i = 1; i <= 1000; ++i) fresh += acq.fresh(1000u + uint32_t(i) * 35u);
+  require(fresh == int(atoms3r_ical::MagAcquisition::MAX_AGE_MS / 35), "a stalled stream expires after MAX_AGE_MS");
+  acq.acquired(40000);
+  require(acq.fresh(40000 + atoms3r_ical::MagAcquisition::MAX_AGE_MS), "a new reading is fresh again");
+  acq.acquired(0xFFFFFFF0u);
+  require(acq.fresh(0x50u), "the age survives millis() wrap-around");
+}
 
 static void testAuxPreset() {
   using atoms3r_ical::Bmm150AuxPreset;
@@ -329,6 +345,7 @@ static void testCompensation() {
 int main() {
   testCompensation();
   testAuxPreset();
+  testMagAcquisitionAge();
   testFieldStats();
   testAxisConsistency();
   testAlignment();
