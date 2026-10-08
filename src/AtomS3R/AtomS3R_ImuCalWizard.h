@@ -173,8 +173,22 @@ private:
         Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,1\n", (double)gyr_out_.biasT.b0.x(), (double)gyr_out_.biasT.b0.y(),
                       (double)gyr_out_.biasT.b0.z());
 
-        // If mag is unavailable, skip MAG stage cleanly.
-        if (!magAvailable_()) {
+        // If mag is unavailable, skip MAG stage cleanly. A saved magnetometer
+        // calibration is never dropped that way: the user retries the probe
+        // or aborts (previous calibration kept).
+        bool mag_present = magAvailable_();
+        while (!mag_present && have_prev && magSetValid(prev)) {
+          Serial.println("[MAG] not responding; saved mag calibration exists -> retry or abort");
+          const auto act = ui_.magFailMenu("MAG not responding", "Abort keeps old cal");
+          if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; break; }
+          if (act != M5Ui::MagFailAction::RETRY_MAG) return false;
+          mag_present = magAvailable_();
+        }
+        if (redo_all) {
+          Serial.println("[WIZ] redo all requested");
+          continue;
+        }
+        if (!mag_present) {
           Serial.println("[MAG] unavailable -> skipping mag calibration");
           mag_out_.ok = false;
         } else if (!runMagStage_(redo_all)) {
@@ -208,7 +222,7 @@ private:
 
       // The stored float set, rebuilt through the runtime path, must reproduce
       // the fit before it is written...
-      if (!validateStored_(blob, "candidate")) {
+      if (!validateStoredOnTask_(blob, "candidate")) {
         ui_.fail("SAVE", "Float check failed");
         return false;
       }
@@ -219,7 +233,7 @@ private:
       ImuCalBlobV4 rb{};
       const bool saved = store_.saveVerified(blob, rb);
       // ...and again after the read-back, which must be byte-identical to it.
-      const bool rb_ok = saved && validateStored_(rb, "readback");
+      const bool rb_ok = saved && validateStoredOnTask_(rb, "readback");
       Serial.printf("[SAVE] verified=%d readback_valid=%d\n", (int)saved, (int)rb_ok);
       if (!saved || !rb_ok) {
         if (store_.lastSaveStatus() == ImuCalStoreNvs::SaveStatus::RECOVERY_FAILED) {
@@ -449,7 +463,7 @@ private:
 
 private:
   // FIT task machinery
-  enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2, MAG_VERIFY=3 };
+  enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2, MAG_VERIFY=3, SAVE_CHECK=4 };
 
   struct FitCtx {
     // Publish fitted coefficients across cores before the UI consumes them.
@@ -458,6 +472,8 @@ private:
     imu_cal::FitFail reason = imu_cal::FitFail::BAD_ARG;
     FitKind kind = FitKind::GYRO;
     imu_cal::AccelFitJob* job = nullptr;
+    const ImuCalBlobV4* blob = nullptr;   // SAVE_CHECK
+    const char* blob_what = "";
 
     ImuCalWizard* wiz = nullptr;
     TaskHandle_t  task = nullptr;
@@ -477,6 +493,25 @@ private:
     Serial.printf("[ACC] stack_hwm=%luB\n", (unsigned long)hwmBytes_());
     ctx->done = true;
     vTaskDelete(nullptr);
+  }
+
+  // Pre-save check of a stored blob. It includes the magnetometer quality
+  // check, which needs more stack than the Arduino loop task provides.
+  static void fitTaskSaveCheck_(void* p) {
+    FitCtx* ctx = (FitCtx*)p;
+    ctx->reason = imu_cal::FitFail::OK;
+    ctx->ok = ctx->blob && ctx->wiz->validateStored_(*ctx->blob, ctx->blob_what);
+    Serial.printf("[SAVE] stack_hwm=%luB\n", (unsigned long)hwmBytes_());
+    ctx->done = true;
+    vTaskDelete(nullptr);
+  }
+
+  bool validateStoredOnTask_(const ImuCalBlobV4& b, const char* what) {
+    fit_.blob = &b;
+    fit_.blob_what = what;
+    const bool ok = runFitTask_(FitKind::SAVE_CHECK, "SAVE check", false);
+    fit_.blob = nullptr;
+    return ok;
   }
 
   static void fitTaskGyro_(void* p) {
@@ -548,6 +583,7 @@ private:
       case FitKind::GYRO:  fn = &ImuCalWizard::fitTaskGyro_;  break;
       case FitKind::MAG:   fn = &ImuCalWizard::fitTaskMag_;   break;
       case FitKind::MAG_VERIFY: fn = &ImuCalWizard::fitTaskMagVerify_; break;
+      case FitKind::SAVE_CHECK: fn = &ImuCalWizard::fitTaskSaveCheck_; break;
       default:             fn = &ImuCalWizard::fitTaskGyro_;  break;
     }
 
@@ -793,6 +829,15 @@ private:
           // Keep guiding until coverage is sufficient or the bounded timeout.
           delay(5);
           continue;
+        }
+        if (verify) {
+          // The window statistics can hide field changes inside a window;
+          // score the fresh single readings with the frozen candidate too.
+          const auto raw = capture.rawResidual();
+          char line[96];
+          snprintf(line, sizeof(line), "[MAG RAW] n=%d rms=%.3f tail=%d ok=%d", raw.n, raw.rms, raw.tail, (int)raw.ok);
+          tryCalLogLine(Serial, line);
+          if (!raw.ok) { out_why = "Field inconsistent"; return false; }
         }
         if (!verify) ui_.showOkAuto("MAG", "Captured");
         return true;

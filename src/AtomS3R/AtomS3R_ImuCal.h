@@ -94,6 +94,7 @@
 // (host-testable, no Arduino dependency).
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
 #include "AtomS3R/AtomS3R_Bmm150AuxPreset.h"
+#include "AtomS3R/AtomS3R_MagAcquisition.h"
 #include "AtomS3R/AtomS3R_Bmm150Compensation.h"
 
 namespace atoms3r_ical {
@@ -307,6 +308,7 @@ struct AtomS3RMagSource {
   m5::imu_3d_t last_m5{};        // M5Unified's cached value of the last reading
   Vector3f last_body = Vector3f(NAN, NAN, NAN);
   bool have_last = false;
+  MagAcquisition acquisition{};  // last new, successfully read reading
 };
 inline AtomS3RMagSource& atoms3rMagSource() {
   static AtomS3RMagSource source;
@@ -317,12 +319,23 @@ inline AtomS3RMagSource& atoms3rMagSource() {
 // (M5Unified's cached value changed) is re-read from the BMI270 AUX data
 // registers together with RHALL and compensated; otherwise the previous
 // compensated value is repeated, exactly like M5Unified's cache. Without
-// compensation this is M5Unified's uncompensated value.
+// compensation this is M5Unified's uncompensated value. Either way, without a
+// new successfully read reading for MagAcquisition::MAX_AGE_MS the result is
+// NaN (no magnetometer value), never an old reading presented as current.
 static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
   auto& src = atoms3rMagSource();
-  if (!src.compensated) return map_mag_to_body_uT_(m5_mag);
+  const uint32_t now = millis();
+  const Vector3f none(NAN, NAN, NAN);
   const bool changed = !src.have_last || m5_mag.x != src.last_m5.x || m5_mag.y != src.last_m5.y ||
                        m5_mag.z != src.last_m5.z;
+  if (!src.compensated) {
+    if (changed) {
+      src.last_m5 = m5_mag;
+      src.have_last = true;
+      src.acquisition.acquired(now);
+    }
+    return src.acquisition.fresh(now) ? map_mag_to_body_uT_(m5_mag) : none;
+  }
   if (changed) {
     uint8_t d[8];
     float s[3], b[3];
@@ -333,10 +346,11 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
       src.last_body = Vector3f(b[0], b[1], b[2]);
       src.last_m5 = m5_mag;
       src.have_last = true;
+      src.acquisition.acquired(now);
     }
   }
   // Never mix units: until the first compensated reading this is NaN (invalid).
-  return src.last_body;
+  return src.acquisition.fresh(now) ? src.last_body : none;
 }
 
 // Reads M5.Imu, applies AtomS3R axis mapping and unit conversion, but does NOT calibrate.
@@ -400,6 +414,7 @@ static inline bool followMagSource_(uint8_t source) {
   }
   src.have_last = false;
   src.last_body = Vector3f(NAN, NAN, NAN);
+  src.acquisition = MagAcquisition{};
   activeMagSource() = source;
   Serial.printf("[MAGCFG] saved magnetometer calibration was fitted on %s data: Bosch compensation %s%s\n",
                 src.compensated ? "Bosch-compensated" : "uncompensated", src.compensated ? "on" : "off",
