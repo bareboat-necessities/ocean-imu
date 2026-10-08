@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "aeb2b2eafdae55960fbe93ff396532c1610af5dede103e66cc5d1631d1f16813",
+  "replay_fingerprint": "b2754ed379026d25d0223e7a4535d2d078549ae1e35b6d6d86c1be073db1fff8",
   "results_file_count": 465,
   "results_files": [
     {
@@ -946,7 +946,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "63f9122af5e636796ecbbfdd7ee34f89803695fd47e3789022c7033e0d64af9a"
+      "sha256": "7aa6d813105d8b0ba6e01337be1ccc1beea68ccd01ef7827e3c982b7655b5d87"
     },
     {
       "kind": "file",
@@ -991,7 +991,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "4f624678f6c5cd974bf81e64d385a7865e171c2707c3dd46d0a6b2e1aec8ac0c"
+      "sha256": "a86f6d15aaf6d439e87e720441da3e8ed79f290211578b3b4f75bd2380fba411"
     },
     {
       "kind": "file",
@@ -1091,7 +1091,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "c71c0ac754a44329f343e3730759f223ec532b62d46f1eff2279cbe2bed7d432"
+      "sha256": "d9f4a42d001ac82b9b9326aa8e379cc0984e2a52eb9bf1e6d68c7ad14e9e9f31"
     },
     {
       "kind": "file",
@@ -1161,37 +1161,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "7de6b59e936a811bd0b68960c334b0ee7470d991c6cfac46663e2773592b05e7"
+      "sha256": "eba64aa2d44828a1d5e3411d0f3f25df7b174c8f0a47402eb7185c3a26820d65"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "087119c9e065925bbf44cba28b7c71ab257c3dd983b7099a54636bd667445362"
+      "sha256": "4fcf03d4f253b614888b9056b0fac76ee2fbe4f343cff489b027d0b76b814cbb"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "302e329eefe7510355b8290a28d91d9b2a35a075132496509e0432788a326ccc"
+      "sha256": "b41cc4d2d7662843c2359dae927e183bcac3eacadb93de6bc36d03138af7bd73"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "93462ca21244a5da65f85d90906e4f78e41358ba93568ca5f5e27a27f447ea79"
+      "sha256": "2abdc9b666b42d491ae2822467e34afbe67d79e71827693bb67dfd5a3fc2eb52"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "09083ce02583c6ca3457b94b51bf3857b1b288ce2268e211e5e4e5b35d308d65"
+      "sha256": "3f458c7793ad4d14af5e9835589c83fb4a17c77fa365145665d68db66d498cd2"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "f2a5a4a336621605381099ef267734153e41e09a7846e4dcf5b967985a8c7246"
+      "sha256": "1676ede482eace48531a31f2b02968bed483a472bc95625b252416f11c7ee0d0"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "d1b1cbc95afb9ca68efdf00b27ab411050bf0fd878ef9201e23c42f440931694"
+      "sha256": "664efc1a3bb9b0d0e71e9590a5eb0d895e14367db2d299267472148204f327e8"
     },
     {
       "kind": "file",
@@ -1201,22 +1201,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "d906fce6dfbd2308d7c4cf5da3c9b0600fb346e7fe6ecd73645fd1141b349efa"
+      "sha256": "73bbe956c0b1f7a6c154fd12673b9e899fc6385f627ddaa9f25168027d107a34"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "4b0d24f01a8012f11967823ba4f055223962ca2a157958ec7cb5317346b67984"
+      "sha256": "a1b61a4fdb67921251a8c4036ecdc40aff2ae4b02a4b77532b376fa2763aef31"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "56fccd880ba83d1bb8df7c15e7c14ae85f227722aaf1cc6d12b758b5353cd06c"
+      "sha256": "b87654441d96bf41cf2e58701638bcf1d1ef05d227672b41498d833d7e778470"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "fd89867d9bafe74249c93eedbccf7aac16efa586c48126057d8c678ba6c1472b"
+      "sha256": "9a55af1bfd72a44fd07a995a1424f9c7dd256159c4fc94c1f23066b6bc92ac5a"
     },
     {
       "kind": "file",
@@ -1231,7 +1231,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "6d06a7ebd76222121c8e57dd30168a94298a37203ae02d248c11c5f67c6cec19"
+      "sha256": "9bea8621f1663b043d80b3e27c02f22f1f8be7ab88d1eb1e6d52755c4969a905"
     },
     {
       "kind": "file",
@@ -2329,13 +2329,13 @@
       "sha256": "948cf40818672c2660561dde906e6935d1ed5175ae891ec6c6052b5fc3066b81"
     }
   ],
-  "results_fingerprint": "96add4eb54e70b4c902181f58497f5037f670102e55ef2f451fee3ac864d3575",
+  "results_fingerprint": "20947df7fe4fe04b0f443942385d1a372460ee34a4253ed786b985cb338adeca",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 759,
+  "tracked_replay_file_count": 760,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2665,7 +2665,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_Bmm150AuxPreset.h",
-      "sha256": "5c7ea177d9ac74c12d0012683619c12dfad892008fd97ba295da1d175100c9ce"
+      "sha256": "2acfbfe9945b7dd3d665c592ea74b7293dbf5393171cb3f39885ddc4e3ee2cb5"
     },
     {
       "mode": "100644",
@@ -2695,7 +2695,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCal.h",
-      "sha256": "7a924c4785ce98ee2716ebd6cf03154c817ad70a693ff46d05a8b8dac051cc3d"
+      "sha256": "fb31c2f328cf53bf767c358f36223b5d6cf4fd170aa8979a995a9103c1de6fe6"
     },
     {
       "mode": "100644",
@@ -2705,7 +2705,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCalWizard.h",
-      "sha256": "01ac194bb7cf5f75c7e7902a9f6a6fcf06349a25b0d29ca22c50b4f74585ce87"
+      "sha256": "e63cf901364e48a0459ea1c1a270cc53cdd35aa88161845a66be0649a7b26c9a"
     },
     {
       "mode": "100644",
@@ -2721,6 +2721,11 @@
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_M5Ui.h",
       "sha256": "9840fc37dae82f6fe889a46eda23fbba58aa4148019667ffeeb70eb1ea6e3c09"
+    },
+    {
+      "mode": "100644",
+      "path": "src/AtomS3R/AtomS3R_MagAcquisition.h",
+      "sha256": "daea4bed08c390f6e8346c8df81664aa65ec8c49f6c6ed2f32d2bd69686217b9"
     },
     {
       "mode": "100644",
@@ -2850,12 +2855,12 @@
     {
       "mode": "100644",
       "path": "src/imu_calibrate/MagCalCapture.h",
-      "sha256": "8aaef96ec2ee5616289118615adc064cc7eaa7e4129141e8e28fa97b71257860"
+      "sha256": "547fcdcccbe28123c4a36aa83e29f09945c912ec5f6d4563c6a5cef0112a373b"
     },
     {
       "mode": "100644",
       "path": "src/imu_calibrate/MagCalFit.h",
-      "sha256": "a2ec040e828f712fc9c2be1a972257c0ac948739043b7c469225145250944898"
+      "sha256": "0bcb9855bafa9c7b5c6e998e82572653f6bcc5d16089729673e4d4f261b41e2f"
     },
     {
       "mode": "100644",
@@ -3225,7 +3230,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/Makefile",
-      "sha256": "a33421a6fe013f52b32ef16441c53e82c43d977eaafe609a19e1b8bd4af15c5d"
+      "sha256": "f5d3540c01569e99c0dbe278c7335ca1a7935adfe19dff249aca0b0a5c466a42"
     },
     {
       "mode": "100644",
@@ -3285,7 +3290,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/mag_diagnostics-test.cpp",
-      "sha256": "ac1fa741923c736296d95095463edb0c467fa8c048b8c7b8452a0a45e08c60a1"
+      "sha256": "17379ff4d74a76c4ba577c42f4df83db0e6bca2ffdcc19f04a2927d14565408f"
     },
     {
       "mode": "100644",
@@ -3295,7 +3300,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/mag_hand_motion-test.cpp",
-      "sha256": "7a83027baa07d1dc8af5fe0bd5c0fb10b447d45f21b044d85a1fd148e2001bc1"
+      "sha256": "9a66cd500b1b54c12faf6f32aacb74481083f81ce8fbdd750306c9a8f9635b4d"
     },
     {
       "mode": "100644",
