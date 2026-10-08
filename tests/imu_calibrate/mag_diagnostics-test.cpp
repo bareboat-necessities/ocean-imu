@@ -142,6 +142,7 @@ struct FakeBmi270 {
   uint8_t bmm[128]{};
   int manual_ops_in_data_mode = 0;
   bool fail_rep_write = false;
+  int writes = 0, fail_write_at = -1;  // fail_write_at: index of one bus write that fails
   FakeBmi270() {
     reg[0x4B] = 0x20; reg[0x4C] = 0x4F; reg[0x4D] = 0x42; reg[0x7D] = 0x0F;
     bmm[0x40] = 0x32; bmm[0x4B] = 0x01; bmm[0x4C] = 0x38; bmm[0x51] = 0; bmm[0x52] = 0;
@@ -149,6 +150,7 @@ struct FakeBmi270 {
   bool manual() const { return (reg[0x4C] & 0x80) && !(reg[0x7D] & 0x01); }
   bool readRegister(uint8_t r, uint8_t* b, size_t n) { for (size_t i = 0; i < n; ++i) b[i] = reg[r + i]; return true; }
   bool writeRegister8(uint8_t r, uint8_t v) {
+    if (writes++ == fail_write_at) return false;
     reg[r] = v;
     if (r == 0x4E) {  // AUX_WR_ADDR triggers the write of AUX_WR_DATA
       if (!manual()) ++manual_ops_in_data_mode;
@@ -188,6 +190,28 @@ static void testAuxPreset() {
   other.bmm[0x40] = 0x00;
   Bmm150AuxPreset<FakeBmi270> wrong(&other, noWait);
   require(!wrong.apply(23, 40, before, after) && other.bmm[0x51] == 0, "no writes without a BMM150 chip id");
+
+  // One failed bus write anywhere (entering manual mode, the AUX access, or a
+  // restore write) never leaves AUX polling off or the interface in manual mode.
+  for (int op = 0; op < 3; ++op) {
+    FakeBmi270 probe;
+    Bmm150AuxPreset<FakeBmi270> counted(&probe, noWait);
+    uint8_t trim[4];
+    const bool clean = op == 0 ? counted.query(q) : op == 1 ? counted.apply(23, 40, before, after)
+                                                            : counted.readBlock(0x5D, 4, trim);
+    require(clean, "the operation succeeds without bus failures");
+    bool all_restored = true;
+    for (int k = 0; k < probe.writes; ++k) {
+      FakeBmi270 d;
+      d.fail_write_at = k;
+      Bmm150AuxPreset<FakeBmi270> p(&d, noWait);
+      if (op == 0) (void)p.query(q);
+      else if (op == 1) (void)p.apply(23, 40, before, after);
+      else (void)p.readBlock(0x5D, 4, trim);
+      all_restored = all_restored && d.reg[0x4C] == 0x4F && d.reg[0x4D] == 0x42 && d.reg[0x7D] == 0x0F;
+    }
+    require(all_restored, "data mode is restored after any single failed write");
+  }
 }
 
 // Bosch BMM150 Sensor API integer compensation (bmm150.c), used as an

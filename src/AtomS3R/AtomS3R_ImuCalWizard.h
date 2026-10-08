@@ -173,8 +173,22 @@ private:
         Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,1\n", (double)gyr_out_.biasT.b0.x(), (double)gyr_out_.biasT.b0.y(),
                       (double)gyr_out_.biasT.b0.z());
 
-        // If mag is unavailable, skip MAG stage cleanly.
-        if (!magAvailable_()) {
+        // If mag is unavailable, skip MAG stage cleanly. A saved magnetometer
+        // calibration is never dropped that way: the user retries the probe
+        // or aborts (previous calibration kept).
+        bool mag_present = magAvailable_();
+        while (!mag_present && have_prev && magSetValid(prev)) {
+          Serial.println("[MAG] not responding; saved mag calibration exists -> retry or abort");
+          const auto act = ui_.magFailMenu("MAG not responding", "Abort keeps old cal");
+          if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; break; }
+          if (act != M5Ui::MagFailAction::RETRY_MAG) return false;
+          mag_present = magAvailable_();
+        }
+        if (redo_all) {
+          Serial.println("[WIZ] redo all requested");
+          continue;
+        }
+        if (!mag_present) {
           Serial.println("[MAG] unavailable -> skipping mag calibration");
           mag_out_.ok = false;
         } else if (!runMagStage_(redo_all)) {

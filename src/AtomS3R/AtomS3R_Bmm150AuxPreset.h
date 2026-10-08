@@ -125,22 +125,39 @@ class Bmm150AuxPreset {
     if (if_conf_ & AUX_MANUAL_EN) { failure_ = "AUX already in manual mode"; return false; }
     failure_ = "AUX manual entry failed";
     // Same sequence M5Unified uses: stop AUX data polling, then manual access.
-    if (!wr_(PWR_CTRL, uint8_t(pwr_ & ~PWR_AUX_EN))) return false;
-    wait_(2);
-    entered_ = wr_(AUX_IF_CONF, AUX_MANUAL_EN);
-    return entered_;
+    // From the first write on, the data-mode configuration must be restored,
+    // also when entering fails part-way.
+    entered_ = true;
+    bool ok = wr_(PWR_CTRL, uint8_t(pwr_ & ~PWR_AUX_EN));
+    if (ok) {
+      wait_(2);
+      ok = wr_(AUX_IF_CONF, AUX_MANUAL_EN);
+    }
+    if (!ok) leave_();
+    return ok;
   }
 
   bool leave_() {
     if (!entered_) return false;
     entered_ = false;
     // Restore the data-mode configuration exactly, then resume AUX polling.
-    const bool ok = wr_(AUX_IF_CONF, if_conf_) && wr_(AUX_RD_ADDR, rd_addr_) && wr_(PWR_CTRL, pwr_);
-    uint8_t a = 0, b = 0, c = 0;
-    const bool verified = ok && rd_(AUX_IF_CONF, a) && rd_(AUX_RD_ADDR, b) && rd_(PWR_CTRL, c) &&
-                          a == if_conf_ && b == rd_addr_ && c == pwr_;
+    // Every register is restored even when an earlier one fails.
+    const bool conf = restore_(AUX_IF_CONF, if_conf_);
+    const bool addr = restore_(AUX_RD_ADDR, rd_addr_);
+    const bool pwr = restore_(PWR_CTRL, pwr_);
+    const bool verified = conf && addr && pwr;
     if (!verified) failure_ = "AUX data-mode restore failed";
     return verified;
+  }
+
+  // Writes and reads back one register, retrying transient bus failures.
+  bool restore_(uint8_t reg, uint8_t v) {
+    for (int i = 0; i < 3; ++i) {
+      uint8_t r = 0;
+      if (wr_(reg, v) && rd_(reg, r) && r == v) return true;
+      wait_(1);
+    }
+    return false;
   }
 
   bool auxRead_(uint8_t reg, uint8_t& v) {
