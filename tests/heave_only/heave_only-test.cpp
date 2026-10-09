@@ -11,9 +11,9 @@
 
 #define EIGEN_NON_ARDUINO
 
-#include "heave_only/GodhavnHeaveFilter.h"
-#include "heave_only/RichterHeaveFilter.h"
-#include "heave_only/KuchlerHeaveEKF.h"
+#include "GodhavnHeaveFilter.h"
+#include "RichterHeaveFilter.h"
+#include "KuchlerHeaveEKF.h"
 
 using namespace heave_only;
 

@@ -37,9 +37,9 @@
 
 #include "util/W3dSimCommon.h"
 #include "pii_observer/AdaptiveVerticalPIIMahony.h"
-#include "heave_only/GodhavnHeaveFilter.h"
-#include "heave_only/RichterHeaveFilter.h"
-#include "heave_only/KuchlerHeaveEKF.h"
+#include "GodhavnHeaveFilter.h"
+#include "RichterHeaveFilter.h"
+#include "KuchlerHeaveEKF.h"
 #include "kalman_common/SeaStateFusionDefaults.h"
 
 using Eigen::Quaternionf;

@@ -1,6 +1,7 @@
 # Heave-only filters
 
-`src/heave_only/` implements three published heave-only filters. Each
+`tests/heave_only/` implements three published heave-only filters as
+comparison baselines (outside `src/`, which holds only shipping code). Each
 estimates vertical displacement from the levelled vertical acceleration
 alone, and all are compared with the OU filters on the same replay:
 

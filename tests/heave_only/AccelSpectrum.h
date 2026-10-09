@@ -94,8 +94,8 @@ public:
         }
         std::vector<T> Zs(Z);
         for (int k = 1; k < half - 1; ++k) {
-            Zs[static_cast<size_t>(k)] = (Z[static_cast<size_t>(k - 1)] + T(2) * Z[static_cast<size_t>(k)] +
-                                          Z[static_cast<size_t>(k + 1)]) / T(4);
+            Zs[static_cast<size_t>(k)] = (Z[static_cast<size_t>(k) - 1] + T(2) * Z[static_cast<size_t>(k)] +
+                                          Z[static_cast<size_t>(k) + 1]) / T(4);
         }
 
         T zmax = T(0);
@@ -104,12 +104,12 @@ public:
 
         for (int k = k_lo; k <= k_hi; ++k) {
             const T c = Zs[static_cast<size_t>(k)];
-            if (c > Zs[static_cast<size_t>(k - 1)] && c >= Zs[static_cast<size_t>(k + 1)] &&
+            if (c > Zs[static_cast<size_t>(k) - 1] && c >= Zs[static_cast<size_t>(k) + 1] &&
                 c >= rel_threshold * zmax)
             {
-                const T l = std::log(Zs[static_cast<size_t>(k - 1)]);
+                const T l = std::log(Zs[static_cast<size_t>(k) - 1]);
                 const T m = std::log(c);
-                const T r = std::log(Zs[static_cast<size_t>(k + 1)]);
+                const T r = std::log(Zs[static_cast<size_t>(k) + 1]);
                 const T den = l - T(2) * m + r;
                 const T d = (den < T(0)) ? std::clamp(T(0.5) * (l - r) / den, T(-0.5), T(0.5)) : T(0);
                 out.push_back({T(2) * std::numbers::pi_v<T> * df * (T(k) + d), c});

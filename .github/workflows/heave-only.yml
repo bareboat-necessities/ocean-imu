@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
     paths:
-      - "src/heave_only/**"
       - "src/pii_observer/**"
       - "src/ahrs/Mahony_AHRS.h"
       - "src/util/W3dSimCommon.*"
@@ -14,7 +13,6 @@ on:
       - ".github/workflows/heave-only.yml"
   pull_request:
     paths:
-      - "src/heave_only/**"
       - "src/pii_observer/**"
       - "src/ahrs/Mahony_AHRS.h"
       - "src/util/W3dSimCommon.*"
@@ -23,6 +21,9 @@ on:
       - "Makefile"
       - ".github/workflows/heave-only.yml"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: heave-only-${{ github.event.pull_request.number || github.ref }}
@@ -35,6 +36,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Install dependencies
         timeout-minutes: 20

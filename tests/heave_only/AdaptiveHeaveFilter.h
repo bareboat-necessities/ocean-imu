@@ -45,7 +45,7 @@
 #include <limits>
 #include <type_traits>
 
-#include "heave_only/AccelSpectrum.h"
+#include "AccelSpectrum.h"
 
 namespace heave_only {
 

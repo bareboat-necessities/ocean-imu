@@ -61,7 +61,7 @@
 
 #include <Eigen/Dense>
 
-#include "heave_only/AccelSpectrum.h"
+#include "AccelSpectrum.h"
 
 namespace heave_only {
 

@@ -42,7 +42,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "heave_only/AdaptiveHeaveFilter.h"
+#include "AdaptiveHeaveFilter.h"
 
 namespace heave_only {
 
