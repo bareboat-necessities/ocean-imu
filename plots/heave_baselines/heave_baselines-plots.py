@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heave over the last 30 s: literature baselines against the OU families.
+"""Heave over the last 60 s: literature baselines against the OU families.
 
 Reads the time series the simulators write with W3D_WRITE_TIMESERIES=1:
   tests/kalman_ou_iii/*_fusion_ou3.csv, tests/kalman_ou_ii/*_fusion_ou2.csv,
@@ -31,7 +31,7 @@ configure_svg(mpl)
 import matplotlib.pyplot as plt  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
-PLOT_WINDOW_S = 30.0
+PLOT_WINDOW_S = 60.0
 PLOT_STEP = 4  # 200 Hz -> 50 Hz
 GROUPS = {"low": 0.27, "medium": 1.50, "high": 8.50}
 WAVES = ("jonswap", "pmstokes")
@@ -49,7 +49,7 @@ SOURCES = {
 BASELINES = ("godhavn", "godhavn_ext", "richter_zd", "kuchler", "pii")
 FRONTENDS = {
     "mahony": ("", "baselines levelled by the shipped Mahony"),
-    "mahony_slow": ("_mahony_slow", "baselines levelled by the slow IMU-only Mahony"),
+    "proxy": ("_proxy", "baselines levelled by the shared IMU-only proxy Mahony"),
     "truth": ("_truth", "baselines levelled with the true attitude"),
 }
 NAME = re.compile(r"w3d_(?P<wave>[a-z]+)_H(?P<h>[0-9.]+)_")

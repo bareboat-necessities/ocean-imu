@@ -84,8 +84,8 @@ real-time error, and propose moving one of its zeros off the origin (Eq. 23):
 
 On their test bench, Richter et al. report this filter at 59.6 % of the
 standard filter's RMS error (Table 1). Their pole-zero filter reaches 43.4 %.
-Here, with a good vertical reference, it reaches 60 % (4.98 % against
-8.33 % of Hs).
+Here, with a good vertical reference, it reaches 60 % (5.11 % against
+8.45 % of Hs).
 
 ## Küchler et al. 2011
 
@@ -137,38 +137,63 @@ OU-III and TFG simulators. It uses:
 It scores vertical displacement over the same trailing 900 s window. The
 baselines need a vertical reference (`--frontend`):
 
-- **`mahony` (default).** The PII observer's Mahony AHRS as shipped:
-  sea-state-adaptive gains with a time constant of about 1 s, plus
-  magnetometer correction.
-- **`mahony_slow`.** The same AHRS with fixed gains (`2Kp = 0.05`, a 40 s tilt
-  time constant, critically damped integral) and no magnetometer.
+- **`mahony` (default).** The PII observer's Mahony AHRS as shipped.
+- **`proxy`.** The same Mahony core, IMU-only, at the gains of the private
+  Mahony observer that OU-II, OU-III and TFG share
+  (`defaults::STARTUP_PROXY_TWO_KP = 0.2`, `STARTUP_PROXY_TWO_KI = 0.02`).
+  No new tuning is introduced.
 - **`truth`.** The measured accelerometer, still noisy and biased, levelled
   with the record's true attitude. This is an ideal VRU. PII is left out of
   this mode, because it carries its own attitude estimator.
 
-Z RMS error, % of Hs, with the slow front end:
+Z RMS error, % of Hs, with the `proxy` front end:
 
 | Record | OU-III | OU-II | TFG | PII | Richter zero-displacement | Godhavn ext | Küchler | Godhavn published law |
 |---|---|---|---|---|---|---|---|---|
-| JONSWAP 0.27 m | 4.25 | 6.02 | 4.38 | 3.71 | 4.58 | 6.83 | 4.79 | 22.04 |
-| JONSWAP 1.5 m | 4.10 | 6.63 | 4.19 | 5.23 | 5.13 | 8.04 | 10.80 | 94.61 |
-| JONSWAP 4 m | 4.02 | 6.35 | 4.03 | 5.86 | 5.05 | 8.54 | 15.00 | 224 |
-| JONSWAP 8.5 m | 3.71 | 6.05 | 3.73 | 6.02 | 4.94 | 9.28 | 16.91 | 382 |
-| PM-Stokes 0.27 m | 4.21 | 5.81 | 4.33 | 3.81 | 5.00 | 7.27 | 5.26 | 29.05 |
-| PM-Stokes 1.5 m | 4.02 | 6.43 | 4.09 | 4.75 | 5.29 | 8.28 | 12.63 | 162 |
-| PM-Stokes 4 m | 3.96 | 6.20 | 3.98 | 5.54 | 4.79 | 8.20 | 15.41 | 314 |
-| PM-Stokes 8.5 m | 3.70 | 5.98 | 3.73 | 5.91 | 5.05 | 10.17 | 18.99 | 492 |
-| **Mean** | **4.00** | **6.18** | **4.06** | **5.10** | **4.98** | **8.33** | **12.47** | **215** |
-| Worst | 4.25 | 6.63 | 4.38 | 6.02 | 5.29 | 10.17 | 18.99 | 492 |
+| JONSWAP 0.27 m | 4.25 | 6.02 | 4.38 | 3.71 | 4.58 | 6.83 | 4.79 | 22.05 |
+| JONSWAP 1.5 m | 4.10 | 6.63 | 4.19 | 5.22 | 5.15 | 8.06 | 10.81 | 94.40 |
+| JONSWAP 4 m | 4.02 | 6.35 | 4.03 | 5.81 | 5.03 | 8.58 | 13.61 | 223 |
+| JONSWAP 8.5 m | 3.71 | 6.05 | 3.73 | 5.99 | 5.31 | 9.77 | 16.91 | 387 |
+| PM-Stokes 0.27 m | 4.21 | 5.81 | 4.33 | 3.81 | 5.00 | 7.28 | 5.27 | 28.98 |
+| PM-Stokes 1.5 m | 4.02 | 6.43 | 4.09 | 4.75 | 5.33 | 8.28 | 12.33 | 162 |
+| PM-Stokes 4 m | 3.96 | 6.20 | 3.98 | 5.49 | 4.74 | 8.16 | 16.04 | 313 |
+| PM-Stokes 8.5 m | 3.70 | 5.98 | 3.73 | 5.87 | 5.75 | 10.64 | 17.93 | 507 |
+| **Mean** | **4.00** | **6.18** | **4.06** | **5.08** | **5.11** | **8.45** | **12.21** | **217** |
+| Worst | 4.25 | 6.63 | 4.38 | 5.99 | 5.75 | 10.64 | 17.93 | 507 |
 
 How each method changes with the front end. Tilt error is the angle between
 the estimated and true gravity directions:
 
 | Mean (worst) % of Hs | Tilt error, mean (worst) | PII | Richter zero-displacement | Godhavn ext | Küchler | Godhavn published law |
 |---|---|---|---|---|---|---|
-| Mahony as shipped (adaptive gains, magnetometer) | 2.94° (6.73°) | 5.99 (8.94) | 10.63 (22.84) | 13.38 (26.52) | 12.59 (20.47) | 232 (551) |
-| Slow IMU-only Mahony | 0.47° (0.76°) | 5.10 (6.02) | 4.98 (5.29) | 8.33 (10.17) | 12.47 (18.99) | 215 (492) |
-| True vertical | 0.00° (0.00°) | – | 5.00 (5.33) | 8.23 (9.65) | 12.61 (20.12) | 215 (492) |
+| `mahony`: PII Mahony as shipped | 2.94° (6.73°) | 5.99 (8.94) | 10.63 (22.84) | 13.38 (26.52) | 12.59 (20.47) | 232 (551) |
+| `proxy`: shared IMU-only Mahony | 0.58° (1.18°) | 5.08 (5.99) | 5.11 (5.75) | 8.45 (10.64) | 12.21 (17.93) | 217 (507) |
+| `truth`: true vertical | 0.00° (0.00°) | – | 5.00 (5.33) | 8.23 (9.65) | 12.61 (20.12) | 215 (492) |
+
+### Mahony settings across the repository
+
+Every Mahony instance here runs the same `ahrs/Mahony_AHRS.h` core. What
+differs is the gains, whether the magnetometer is used, and what the
+attitude feeds. The correction corner is about `2Kp/2` rad/s.
+
+| User | 2Kp | 2Ki | Corner | Magnetometer | Role |
+|---|---|---|---|---|---|
+| PII observer (`AdaptiveVerticalPIIMahony`) | 1.2–1.7, adapted to sea state | 0.009–0.0125 | 0.6–0.85 rad/s (0.10–0.14 Hz) | yes | the attitude its heave channel is levelled with |
+| OU-II, OU-III, TFG (`VerticalAccelComplementary`, `SeaStateFusionDefaults.h`) | 0.2 | 0.02 | 0.1 rad/s (0.016 Hz) | no | levels the wave-period/tuner channel and seeds the startup attitude; the MEKF supplies the attitude used for heave |
+| TVG-NLO (`TimeVarGainNLO_Adapter`) | 0.35 | – | 0.18 rad/s | no | 2–6 s bootstrap only, then the NLO takes over |
+| Baselines, `proxy` | 0.2 | 0.02 | 0.1 rad/s | no | the attitude every baseline is levelled with |
+
+The wave band of these records is 0.11–0.42 Hz. The PII corner sits inside
+it, so each wave's horizontal acceleration pulls the estimated vertical.
+`SeaStateFusionDefaults.h` already states the rule the shared observer
+follows: `2Kp` "must stay an order of magnitude below the wave band, or the
+observer levels itself against the orbital specific force instead of
+gravity".
+
+A sweep of IMU-only fixed gains found heave error flat for `2Kp` from 0.03
+to 0.2. At `2Kp = 0.01` the gyro carries attitude too long and tilt reaches
+4.4°. A slower setting (`2Kp = 0.05`) gave 4.98 % for `richter_zd`,
+against 5.11 % at the shared gains, which is not worth a separate tuning.
 
 ### Where the error comes from
 
@@ -185,11 +210,10 @@ vertical acceleration, then adding one corruption at a time.
     there (about 235 m per m/s² at 0.01 Hz for Godhavn) turns it into metres
     of drift.
   - *The fix.* The repository's QMEKF AHRS does no better (3.9–4.3° at
-    Hs 8.5 m). A slow, IMU-only Mahony, which averages the zero-mean wave
-    acceleration over many periods, brings tilt to 0.47°. That makes it as
-    good as a true vertical for every heave filter here. The sweep put the
-    best gain anywhere in `2Kp` = 0.03–0.12. The PII observer also improves,
-    from 5.99 % to 5.10 % of Hs.
+    Hs 8.5 m). Using the OU filters' own private Mahony settings instead
+    (IMU-only, corner below the wave band) brings tilt to 0.58°. That is as
+    good as a true vertical for every heave filter here. The PII observer
+    also improves, from 5.99 % to 5.08 % of Hs.
   - *Why OU-III differs.* OU-III estimates attitude and wave motion jointly.
 - **Bias instability (the published Godhavn law).**
   - On exact acceleration the law gives under 2 % of Hs.
@@ -200,7 +224,7 @@ vertical acceleration, then adding one corruption at a time.
     2 points of the best fixed cutoff for each record.
 - **Phase lead (standard filter).** Even with a perfect vertical, the
   standard structure stays at about 8 % of Hs. Richter's zero-displacement
-  filter removes most of that lead and reaches 5.0 %.
+  filter removes most of that lead and reaches 5.0–5.1 %.
 - **The model (Küchler).**
   - *The symptom.* On exact, noise-free acceleration the EKF fits the
     acceleration to under 1 %. Yet its heave error is 33–41 % (Hs 1.5 m) and
@@ -238,16 +262,16 @@ vertical acceleration, then adding one corruption at a time.
   against Hs was reported. The ACC 2011 attitude paper (Küchler, Pregizer,
   Eberharter, Schneider, Sawodny, pp. 2411–2416) could not be retrieved here.
 
-### Heave over the last 30 s
+### Heave over the last 60 s
 
-The charts below show the reference against every estimate over the last 30 s
-of the replay. The legends give each method's RMS error over that 30 s window.
+The charts below show the reference against every estimate over the last 60 s
+of the replay. The legends give each method's RMS error over that 60 s window.
 
-With the slow IMU-only Mahony:
+With the shared `proxy` Mahony:
 
-![JONSWAP Hs 1.5 m](../reports/results/heave_baselines/heave_baselines_mahony_slow_jonswap_medium.svg)
+![JONSWAP Hs 1.5 m](../reports/results/heave_baselines/heave_baselines_proxy_jonswap_medium.svg)
 
-![JONSWAP Hs 8.5 m](../reports/results/heave_baselines/heave_baselines_mahony_slow_jonswap_high.svg)
+![JONSWAP Hs 8.5 m](../reports/results/heave_baselines/heave_baselines_proxy_jonswap_high.svg)
 
 With the Mahony as shipped:
 
@@ -255,7 +279,7 @@ With the Mahony as shipped:
 
 All records, for both front ends, are in
 [`reports/results/heave_baselines/`](../reports/results/heave_baselines/).
-`heave_baselines_mahony_slow_*` are the slow front end; the others are the
+`heave_baselines_proxy_*` use the `proxy` front end; the others use the
 Mahony as shipped.
 
 ## Reproduce
@@ -272,7 +296,8 @@ cd plots/heave_baselines && ./draw_plots.sh   # all front ends; --png adds previ
 and heave rate per baseline.
 
 These variables change the defaults for sweeps:
-- `HB_MAHONY_TWOKP` and `HB_MAHONY_TWOKI` set fixed front-end gains;
+- `HB_MAHONY_TWOKP` and `HB_MAHONY_TWOKI` set fixed front-end gains
+  (`2Ki` defaults to 0);
 - `HB_GODHAVN_FIXED_WC`, `HB_GODHAVN_BIAS_TERM`, `HB_GODHAVN_SUBTRACT_MEAN`
   and `HB_GODHAVN_ZD`;
 - `HB_KUCHLER_ZETA_Q`, `HB_KUCHLER_OMEGA_RW`, `HB_KUCHLER_BODY_Z` and

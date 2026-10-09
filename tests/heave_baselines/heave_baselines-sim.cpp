@@ -39,6 +39,7 @@
 #include "pii_observer/AdaptiveVerticalPIIMahony.h"
 #include "heave_baselines/GodhavnHeaveFilter.h"
 #include "heave_baselines/KuchlerHeaveEKF.h"
+#include "kalman_common/SeaStateFusionDefaults.h"
 
 using Eigen::Quaternionf;
 using Eigen::Vector3f;
@@ -61,20 +62,21 @@ const char* method_name(Method m) {
 }
 
 constexpr double kDt = 1.0 / 200.0;
-// Mahony 2*Kp of the slow front end: a 40 s tilt time constant.
-constexpr double kMahonySlowTwoKp = 0.05;
+namespace sfd = seastate::common::defaults;
 
 // Vertical reference of the baselines:
 //   mahony       the PII observer's AHRS as shipped: sea-state-adaptive gains
 //                (time constant ~1 s) and magnetometer correction;
-//   mahony_slow  the same AHRS, IMU-only, with fixed slow gains (the
-//                magnetometer cannot steer tilt; wave accelerations average
-//                out over the ~40 s time constant);
+//   proxy        the same Mahony core, IMU-only, at the gains of the private
+//                Mahony observer OU-II, OU-III and TFG level their vertical
+//                channel with (defaults::STARTUP_PROXY_TWO_KP/KI): the
+//                correction corner sits an order of magnitude below the wave
+//                band and the magnetometer cannot steer tilt;
 //   truth        the measured accelerometer levelled with the record's true
 //                attitude, an ideal VRU that isolates the heave filter.
 // The record's attitude is loaded in every mode: it scores the tilt error and
 // is consumed one sample per IMU step in the runner's order.
-enum class Levelling { Mahony, MahonySlow, Truth };
+enum class Levelling { Mahony, Proxy, Truth };
 Levelling g_frontend = Levelling::Mahony;
 std::vector<Quaternionf> g_truth_q;
 std::vector<float> g_tilt_deg;
@@ -82,7 +84,7 @@ std::vector<float> g_tilt_deg;
 const char* frontend_name(Levelling f) {
     switch (f) {
         case Levelling::Mahony: return "mahony";
-        case Levelling::MahonySlow: return "mahony_slow";
+        case Levelling::Proxy: return "proxy";
         case Levelling::Truth: return "truth";
     }
     return "?";
@@ -123,12 +125,12 @@ constexpr HeaveLimits GODHAVN_LIMITS{431.5f, 553.8f};     // worst 429.3 / 551.0
 constexpr HeaveLimits GODHAVN_EXT_LIMITS{21.20f, 26.66f}; // worst 21.09 / 26.52 (H8.5)
 constexpr HeaveLimits KUCHLER_LIMITS{18.00f, 20.58f};     // worst 17.91 / 20.47 (H8.5)
 constexpr HeaveLimits RICHTER_ZD_LIMITS{17.61f, 22.96f};    // worst 17.52 / 22.84 (H8.5)
-// Slow IMU-only Mahony (--frontend mahony_slow).
-constexpr HeaveLimits PII_SLOW_LIMITS{6.05f, 5.94f};           // worst 6.02 / 5.91
-constexpr HeaveLimits GODHAVN_SLOW_LIMITS{384.0f, 494.5f};      // worst 382.1 / 492.0
-constexpr HeaveLimits GODHAVN_EXT_SLOW_LIMITS{9.33f, 10.22f};   // worst 9.28 / 10.17
-constexpr HeaveLimits KUCHLER_SLOW_LIMITS{17.00f, 19.09f};      // worst 16.91 / 18.99
-constexpr HeaveLimits RICHTER_ZD_SLOW_LIMITS{5.16f, 5.32f};     // worst 5.13 / 5.29
+// Shared proxy Mahony (--frontend proxy).
+constexpr HeaveLimits PII_PROXY_LIMITS{6.02f, 5.90f};          // worst 5.99 / 5.87
+constexpr HeaveLimits GODHAVN_PROXY_LIMITS{388.8f, 509.1f};     // worst 386.8 / 506.5
+constexpr HeaveLimits GODHAVN_EXT_PROXY_LIMITS{9.82f, 10.70f};  // worst 9.77 / 10.64
+constexpr HeaveLimits KUCHLER_PROXY_LIMITS{17.00f, 18.02f};     // worst 16.91 / 17.93
+constexpr HeaveLimits RICHTER_ZD_PROXY_LIMITS{5.34f, 5.78f};    // worst 5.31 / 5.75
 // Ideal vertical reference (--frontend truth).
 constexpr HeaveLimits GODHAVN_TRUTH_LIMITS{386.0f, 495.0f};    // worst 384.0 / 492.4 (H8.5)
 constexpr HeaveLimits GODHAVN_EXT_TRUTH_LIMITS{9.03f, 9.70f};  // worst 8.98 / 9.65 (H8.5)
@@ -286,14 +288,17 @@ private:
         Frontend::Config cfg{};
         cfg.gravity_mps2 = g_std;
         cfg.use_mag = with_mag && g_frontend == Levelling::Mahony;
-        // Fixed Mahony gains: the slow front end, or a sweep override.  The
-        // integral gain defaults to critical damping, twoKi = twoKp^2 / 8.
+        // Fixed Mahony gains: the shared proxy gains, or a sweep override.
+        if (g_frontend == Levelling::Proxy) {
+            cfg.adapt_mahony_gains = false;
+            cfg.mahony_twoKp = sfd::STARTUP_PROXY_TWO_KP;
+            cfg.mahony_twoKi = sfd::STARTUP_PROXY_TWO_KI;
+        }
         double kp = 0.0, ki = 0.0;
-        if (g_frontend == Levelling::MahonySlow) kp = kMahonySlowTwoKp;
-        if (env_double("HB_MAHONY_TWOKP", kp) || kp > 0.0) {
+        if (env_double("HB_MAHONY_TWOKP", kp)) {
             cfg.adapt_mahony_gains = false;
             cfg.mahony_twoKp = float(kp);
-            cfg.mahony_twoKi = env_double("HB_MAHONY_TWOKI", ki) ? float(ki) : float(kp * kp / 8.0);
+            cfg.mahony_twoKi = env_double("HB_MAHONY_TWOKI", ki) ? float(ki) : 0.0f;
         }
         return cfg;
     }
@@ -345,11 +350,11 @@ void summarize(Method method, const W3dSimulationRunResult& r, float dt) {
         ? (method == Method::Godhavn ? GODHAVN_TRUTH_LIMITS
            : method == Method::GodhavnExt ? GODHAVN_EXT_TRUTH_LIMITS
            : method == Method::RichterZd ? RICHTER_ZD_TRUTH_LIMITS : KUCHLER_TRUTH_LIMITS)
-        : g_frontend == Levelling::MahonySlow
-        ? (method == Method::PII ? PII_SLOW_LIMITS
-           : method == Method::Godhavn ? GODHAVN_SLOW_LIMITS
-           : method == Method::GodhavnExt ? GODHAVN_EXT_SLOW_LIMITS
-           : method == Method::RichterZd ? RICHTER_ZD_SLOW_LIMITS : KUCHLER_SLOW_LIMITS)
+        : g_frontend == Levelling::Proxy
+        ? (method == Method::PII ? PII_PROXY_LIMITS
+           : method == Method::Godhavn ? GODHAVN_PROXY_LIMITS
+           : method == Method::GodhavnExt ? GODHAVN_EXT_PROXY_LIMITS
+           : method == Method::RichterZd ? RICHTER_ZD_PROXY_LIMITS : KUCHLER_PROXY_LIMITS)
         : (method == Method::PII ? PII_LIMITS
            : method == Method::Godhavn ? GODHAVN_LIMITS
            : method == Method::GodhavnExt ? GODHAVN_EXT_LIMITS
@@ -397,7 +402,7 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--frontend" && i + 1 < argc) {
             const std::string f = argv[++i];
             if (f == "truth") g_frontend = Levelling::Truth;
-            else if (f == "mahony_slow") g_frontend = Levelling::MahonySlow;
+            else if (f == "proxy") g_frontend = Levelling::Proxy;
             else if (f != "mahony") {
                 std::cerr << "ERROR: unknown frontend " << f << "\n";
                 return 2;
@@ -415,7 +420,7 @@ int main(int argc, char* argv[]) {
             }
         } else {
             std::cerr << "Usage: " << argv[0]
-                      << " [--nomag] [--no-noise] [--frontend mahony|mahony_slow|truth]"
+                      << " [--nomag] [--no-noise] [--frontend mahony|proxy|truth]"
                          " [--method pii|godhavn|godhavn_ext|richter_zd|kuchler|all]"
                          " [--input PATH]...\n";
             return 2;
