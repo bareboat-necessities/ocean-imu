@@ -25,24 +25,26 @@ void check(bool ok, const char* what, double value, double limit) {
     if (!ok) ++failures;
 }
 
-// Two-tone heave with a constant accelerometer bias and white noise at the
-// simulator's 200 Hz sensor level.  Returns the steady-state heave RMS error
-// over the last half of a 20-minute record, relative to the heave RMS.
+constexpr double kDt = 0.005;
+constexpr double kW1 = 2.0 * std::numbers::pi / 8.0;
+constexpr double kW2 = 2.0 * std::numbers::pi / 5.0;
+
+// Two-tone heave (1 m at 8 s, 0.3 m at 5 s) with a constant accelerometer
+// bias and white noise at the simulator's 200 Hz sensor level.  Returns the
+// heave RMS error over the last half of a 20-minute record, relative to the
+// heave RMS.
 template <typename Filter>
 double relative_rms(Filter& f, double bias) {
-    const double dt = 0.005;
-    const double A1 = 1.0, w1 = 2.0 * std::numbers::pi / 8.0;
-    const double A2 = 0.3, w2 = 2.0 * std::numbers::pi / 5.0;
     std::mt19937 rng(7);
     std::normal_distribution<double> n(0.0, 0.0148);
-    const int steps = static_cast<int>(1200.0 / dt);
+    const int steps = static_cast<int>(1200.0 / kDt);
     double se = 0.0, sr = 0.0;
     for (int k = 0; k < steps; ++k) {
-        const double t = k * dt;
-        const double z = A1 * std::cos(w1 * t + 0.3) + A2 * std::cos(w2 * t + 1.1);
-        const double a = -A1 * w1 * w1 * std::cos(w1 * t + 0.3)
-                         - A2 * w2 * w2 * std::cos(w2 * t + 1.1);
-        const double zh = f.update(a + bias + n(rng), dt);
+        const double t = k * kDt;
+        const double z = std::cos(kW1 * t + 0.3) + 0.3 * std::cos(kW2 * t + 1.1);
+        const double a = -kW1 * kW1 * std::cos(kW1 * t + 0.3)
+                         - 0.3 * kW2 * kW2 * std::cos(kW2 * t + 1.1);
+        const double zh = f.update(a + bias + n(rng), kDt);
         if (t > 600.0) { se += (zh - z) * (zh - z); sr += z * z; }
     }
     return std::sqrt(se / sr);
@@ -51,26 +53,47 @@ double relative_rms(Filter& f, double bias) {
 } // namespace
 
 int main() {
+    using G = GodhavnHeaveFilter<double>;
     {
-        // The error budget's sinusoid term tends to (2 sqrt2 w_c / w_p)^2 A^2/2
-        // for w_c << w_p (Richter et al. 2014, Eq. 9).
-        const double wc = 0.01, wp = 1.0, A = 1.0;
-        const double J = GodhavnHeaveFilter<double>::errorBudget(wc, A, wp, 0.0, 0.0);
-        const double ref = 0.5 * A * A * 8.0 * (wc / wp) * (wc / wp);
-        check(std::abs(J / ref - 1.0) < 0.02, "godhavn sinusoid error term ratio", J / ref, 0.02);
+        // Richter et al. 2014, Eq. 7: e -> 2 sqrt2 w_c / w_p for w_p >> w_c.
+        const double r = G::relativeError(0.01, 1.0) / (2.0 * std::sqrt(2.0) * 0.01);
+        check(std::abs(r - 1.0) < 0.01, "godhavn Eq. 7 asymptote ratio", r, 0.01);
     }
     {
-        // The bias is rejected and what remains is the high-pass phase lead,
-        // |1 - s^2 H| ~ 2 sqrt2 w_c / w per tone, at the adapted cutoff.
-        GodhavnHeaveFilter<double> g;
+        // Eq. 12 is the minimiser of Eq. 11.
+        const double q = 1.1e-6, wp = 0.8, Ap = 1.2;
+        const double wc = G::optimalCutoff(q, wp, Ap);
+        const double J0 = G::errorBound(wc, wp, Ap, q, 0.0);
+        const bool ok = J0 < G::errorBound(wc * 1.02, wp, Ap, q, 0.0) &&
+                        J0 < G::errorBound(wc / 1.02, wp, Ap, q, 0.0);
+        check(ok, "godhavn Eq. 12 minimises Eq. 11, w_c", wc, 0.0);
+    }
+    {
+        // Fixed cutoff: the bias is rejected and what remains is the phase
+        // lead of Eq. 7 on each tone.
+        G::Config cfg;
+        cfg.adaptive = false;
+        cfg.wc_init = 0.07;
+        G g(cfg);
         const double r = relative_rms(g, 0.05);
-        const double wc = g.cutoff();
-        check(wc > 0.04 && wc < 0.12, "godhavn adapted cutoff rad/s", wc, 0.12);
-        const double e1 = 1.0 * 2.0 * std::sqrt(2.0) * wc / (2.0 * std::numbers::pi / 8.0);
-        const double e2 = 0.3 * 2.0 * std::sqrt(2.0) * wc / (2.0 * std::numbers::pi / 5.0);
-        const double theory = std::sqrt((e1 * e1 + e2 * e2) / (1.0 + 0.09));
-        check(std::abs(r / theory - 1.0) < 0.10, "godhavn heave rms / phase-lead theory",
-              r / theory, 1.10);
+        const double e1 = G::relativeError(0.07, kW1);
+        const double e2 = 0.3 * G::relativeError(0.07, kW2);
+        const double theory = std::sqrt((e1 * e1 + e2 * e2) / 1.09);
+        check(std::abs(r / theory - 1.0) < 0.05, "godhavn heave rms / Eq. 7 theory",
+              r / theory, 1.05);
+    }
+    {
+        // Adaptation identifies the dominant heave frequency and the Eq. 14
+        // wave height of the 8 s tone.
+        G g;
+        relative_rms(g, 0.05);
+        check(std::abs(g.dominantFrequency() / kW1 - 1.0) < 0.03,
+              "godhavn identified w_p / true", g.dominantFrequency() / kW1, 1.03);
+        // Eq. 14 attributes all acceleration energy to w_p.
+        const double a_rms2 = 0.5 * (std::pow(kW1, 4) + std::pow(0.3 * kW2 * kW2, 2));
+        const double Ap = std::sqrt(2.0 * a_rms2) / (kW1 * kW1);
+        check(std::abs(g.meanWaveHeight() / Ap - 1.0) < 0.05,
+              "godhavn Eq. 14 A_p / expected", g.meanWaveHeight() / Ap, 1.05);
     }
     {
         // Two undamped tones are exactly the EKF's model: with small process

@@ -18,9 +18,12 @@
   sea-state-adaptive one of the PII observer, and differ only in how they turn
   its levelled vertical acceleration into heave:
 
-    pii      AdaptiveVerticalPII (this repository's non-Kalman observer)
-    godhavn  Godhavn 1998 adaptive fourth-order heave filter
-    kuchler  Kuchler et al. 2011 FFT-identified harmonic-mode EKF
+    pii          AdaptiveVerticalPII (this repository's non-Kalman observer)
+    godhavn      Godhavn 1998 adaptive fourth-order heave filter, cutoff law
+                 of Richter et al. 2014 (Eqs. 11-12) as published
+    godhavn_ext  the same filter with the bias-instability term and input
+                 mean subtraction (not in the papers)
+    kuchler      Kuchler et al. 2011 FFT-identified harmonic-mode EKF
 */
 
 #define EIGEN_NON_ARDUINO
@@ -41,15 +44,23 @@ namespace {
 
 constexpr float RMS_WINDOW_SEC = 900.0f;
 
-enum class Method { PII, Godhavn, Kuchler };
+enum class Method { PII, Godhavn, GodhavnExt, Kuchler };
 
 const char* method_name(Method m) {
     switch (m) {
         case Method::PII: return "pii";
         case Method::Godhavn: return "godhavn";
+        case Method::GodhavnExt: return "godhavn_ext";
         case Method::Kuchler: return "kuchler";
     }
     return "?";
+}
+
+constexpr double kDt = 1.0 / 200.0;
+
+bool env_flag(const char* name) {
+    const char* s = std::getenv(name);
+    return s != nullptr && std::string(s) != "0";
 }
 
 bool env_double(const char* name, double& out) {
@@ -64,9 +75,10 @@ bool env_double(const char* name, double& out) {
 // targets: the worst Z RMS (%Hs) of each method across the scored records plus
 // about half a percent.
 struct HeaveLimits { float jonswap; float pmstokes; };
-constexpr HeaveLimits PII_LIMITS{7.74f, 8.99f};       // worst 7.70 / 8.94 (H8.5)
-constexpr HeaveLimits GODHAVN_LIMITS{14.80f, 18.03f}; // worst 14.72 / 17.94 (H8.5)
-constexpr HeaveLimits KUCHLER_LIMITS{16.25f, 18.52f}; // worst 16.17 / 18.42 (H8.5)
+constexpr HeaveLimits PII_LIMITS{7.74f, 8.99f};           // worst 7.70 / 8.94 (H8.5)
+constexpr HeaveLimits GODHAVN_LIMITS{431.5f, 553.8f};     // worst 429.3 / 551.0 (H8.5)
+constexpr HeaveLimits GODHAVN_EXT_LIMITS{21.20f, 26.66f}; // worst 21.09 / 26.52 (H8.5)
+constexpr HeaveLimits KUCHLER_LIMITS{18.00f, 20.58f};     // worst 17.91 / 20.47 (H8.5)
 
 template <Method M>
 class HeaveBaselineAdapter final : public IW3dFusionAdapter {
@@ -83,20 +95,31 @@ public:
         (void)sigma_g;
         (void)sigma_m;
 
+        // Datasheet white noise of the simulated accelerometer, the same
+        // figure both papers take from the sensor data sheet.
+        const double accel_noise_std = 1.51e-3 * double(g_std);
+
         heave_baselines::GodhavnHeaveFilter<double>::Config g{};
+        g.noise_density = accel_noise_std * accel_noise_std * kDt;
         double wc = 0.0;
         if (env_double("HB_GODHAVN_FIXED_WC", wc)) {
             g.adaptive = false;
             g.wc_init = wc;
         }
+        // godhavn: Richter's Eqs. 11-12 as published.  godhavn_ext adds the
+        // bias-instability variance and the input-mean subtraction.
+        g.bias_instability_term = M == Method::GodhavnExt || env_flag("HB_GODHAVN_BIAS_TERM");
+        g.subtract_input_mean = M == Method::GodhavnExt || env_flag("HB_GODHAVN_SUBTRACT_MEAN");
         godhavn_ = heave_baselines::GodhavnHeaveFilter<double>(g);
 
         heave_baselines::KuchlerHeaveEKF<double>::Config k{};
-        // Datasheet white noise of the simulated accelerometer.
-        k.accel_noise_std = 1.51e-3 * double(g_std);
+        k.accel_noise_std = accel_noise_std;
         env_double("HB_KUCHLER_ZETA_Q", k.zeta_q);
         env_double("HB_KUCHLER_OMEGA_RW", k.omega_rw);
+        k.offset_from_fit = env_flag("HB_KUCHLER_OFFSET_FIT");
         kuchler_ = heave_baselines::KuchlerHeaveEKF<double>(k);
+        // The paper feeds the body-z accelerometer and neglects roll/pitch.
+        kuchler_body_z_ = env_flag("HB_KUCHLER_BODY_Z");
     }
 
     void updateMag(const Vector3f& mag_body_ned) override {
@@ -124,11 +147,12 @@ public:
         if constexpr (M == Method::PII) {
             heave_ = frontend_.displacement();
             vel_ = frontend_.velocity();
-        } else if constexpr (M == Method::Godhavn) {
+        } else if constexpr (M == Method::Godhavn || M == Method::GodhavnExt) {
             heave_ = godhavn_.update(a_up, dt);
             vel_ = godhavn_.heaveRate();
         } else {
-            heave_ = kuchler_.update(a_up, dt);
+            const double a_in = kuchler_body_z_ ? double(a.z()) - double(g_std) : a_up;
+            heave_ = kuchler_.update(a_in, dt);
             vel_ = kuchler_.heaveRate();
         }
     }
@@ -146,10 +170,10 @@ public:
         yaw = with_mag_ ? wrapDeg(yaw + 2.0f * MagSim_WMM::default_declination_deg) : 0.0f;
         s.euler_nautical_deg = Vector3f(roll, pitch, yaw);
 
-        if constexpr (M == Method::Godhavn) {
+        if constexpr (M == Method::Godhavn || M == Method::GodhavnExt) {
             s.tuning_applied = float(godhavn_.cutoff());
             s.tuning_target = float(godhavn_.cutoffTarget());
-            const double wp = godhavn_.waveFrequencyEstimate();
+            const double wp = godhavn_.dominantFrequency();
             s.freq_hz = float(wp / (2.0 * M_PI));
         } else if constexpr (M == Method::Kuchler) {
             s.tuning_applied = float(kuchler_.modeCount());
@@ -182,6 +206,7 @@ private:
     Frontend frontend_;
     heave_baselines::GodhavnHeaveFilter<double> godhavn_;
     heave_baselines::KuchlerHeaveEKF<double> kuchler_;
+    bool kuchler_body_z_ = false;
     double heave_ = 0.0;
     double vel_ = 0.0;
 };
@@ -213,7 +238,8 @@ void summarize(Method method, const W3dSimulationRunResult& r, float dt) {
               << " final_tuning=" << r.final_tuning_applied << "\n";
 
     const HeaveLimits lim = method == Method::PII ? PII_LIMITS
-        : method == Method::Godhavn ? GODHAVN_LIMITS : KUCHLER_LIMITS;
+        : method == Method::Godhavn ? GODHAVN_LIMITS
+        : method == Method::GodhavnExt ? GODHAVN_EXT_LIMITS : KUCHLER_LIMITS;
     const float limit = r.wave_type == WaveType::JONSWAP ? lim.jonswap : lim.pmstokes;
     if (!(z_pct <= limit)) {
         std::cerr << "ERROR: " << method_name(method) << " Z RMS above limit ("
@@ -237,10 +263,10 @@ std::optional<W3dSimulationRunResult> run_file(const std::string& file, float dt
 } // namespace
 
 int main(int argc, char* argv[]) {
-    const float dt = 1.0f / 200.0f;
+    const float dt = float(kDt);
     bool with_mag = true;
     bool add_noise = true;
-    std::vector<Method> methods{Method::PII, Method::Godhavn, Method::Kuchler};
+    std::vector<Method> methods{Method::PII, Method::Godhavn, Method::GodhavnExt, Method::Kuchler};
     std::vector<std::string> files;
 
     for (int i = 1; i < argc; ++i) {
@@ -255,6 +281,7 @@ int main(int argc, char* argv[]) {
             const std::string m = argv[++i];
             if (m == "pii") methods = {Method::PII};
             else if (m == "godhavn") methods = {Method::Godhavn};
+            else if (m == "godhavn_ext") methods = {Method::GodhavnExt};
             else if (m == "kuchler") methods = {Method::Kuchler};
             else if (m != "all") {
                 std::cerr << "ERROR: unknown method " << m << "\n";
@@ -262,7 +289,7 @@ int main(int argc, char* argv[]) {
             }
         } else {
             std::cerr << "Usage: " << argv[0]
-                      << " [--nomag] [--no-noise] [--method pii|godhavn|kuchler|all]"
+                      << " [--nomag] [--no-noise] [--method pii|godhavn|godhavn_ext|kuchler|all]"
                          " [--input PATH]...\n";
             return 2;
         }
@@ -290,6 +317,9 @@ int main(int argc, char* argv[]) {
                     break;
                 case Method::Godhavn:
                     r = run_file<Method::Godhavn>(file, dt, with_mag, add_noise, seeds, write_timeseries);
+                    break;
+                case Method::GodhavnExt:
+                    r = run_file<Method::GodhavnExt>(file, dt, with_mag, add_noise, seeds, write_timeseries);
                     break;
                 case Method::Kuchler:
                     r = run_file<Method::Kuchler>(file, dt, with_mag, add_noise, seeds, write_timeseries);

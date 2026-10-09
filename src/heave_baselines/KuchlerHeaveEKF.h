@@ -3,58 +3,65 @@
 /*
   Copyright 2026, Mikhail Grushinskiy
 
-  Literature baseline: the harmonic-mode heave EKF of
+  Literature baseline: the harmonic-mode heave observer of
 
-    S. Kuchler, C. Pregizer, J. K. Eberharter, K. Schneider, O. Sawodny,
-    "Real-Time Estimation of a Ship's Attitude", IFAC World Congress 2011
-    (heave part, Sections 3-4).
+    S. Kuchler, J. K. Eberharter, K. Langer, K. Schneider, O. Sawodny,
+    "Heave motion estimation of a vessel using acceleration measurements",
+    18th IFAC World Congress, pp. 14742-14747, 2011.
 
-  Heave is a sum of N_m undamped modes z = sum_j z_j, each with state
-  x_j = [z_j, z_j', w_j] and dynamics
+  Equation numbers below are the paper's.
 
-      z_j'' = -w_j^2 z_j,   w_j' = 0 (random walk),
+  Heave is a sum of N_m undamped modes (Eqs. 1, 3), each with state
+  x_j = [z_j, z_j', w_j] and dynamics (Eq. 5)
 
-  plus one random-walk offset state that absorbs gravity and accelerometer
-  bias.  The EKF starts at the first identification; the offset is seeded by
-  the fitted constant of the identification buffer.  The measurement is the vertical acceleration
+      z_j'' = -w_j^2 z_j,   w_j random walk,   y_j = -w_j^2 z_j,
 
-      y = sum_j (-w_j^2 z_j) + x_off + noise.
+  plus a random-walk offset state for gravity and sensor bias (Eq. 8).  The
+  measurement is y = sum_j y_j + y_off (Eqs. 7, 9).  The input here is the
+  levelled vertical acceleration with gravity removed, so the paper's
+  x_off,0 = -g becomes x_off,0 = 0.  Each mode is discretised exactly for the
+  current w_j (Eq. 6): the frequency first, then the linear oscillator.
 
-  The oscillator is discretised exactly for the current w_j (a rotation in the
-  (z, z'/w) plane), which is the paper's exact discretisation.
+  Identification (Section 2.2, Fig. 2): an FFT of the buffered acceleration
+  gives the heave amplitude spectrum |A_acc(w)| / w^2 (Eq. 2), whose peaks set
+  the number of modes and their frequencies.  The EKF starts at the first
+  identification.  The identification repeats at fixed intervals; a peak that
+  matches no existing mode extends the model and only the new mode's states
+  are initialised, all others keep their estimates (Section 2.3).  A mode
+  whose frequency approaches zero is removed and two modes whose frequencies
+  approach each other are merged (observability conditions, Eq. 11).
+  Process noise penalises position and velocity of higher-frequency modes
+  more; the frequency and offset states are slow; R is the datasheet sensor
+  noise (Section 2.3).
 
-  Identification: the vertical acceleration is block-averaged to fs_ident_hz
-  into a ring buffer.  Every ident_period_s an FFT of the Hann-windowed buffer
-  gives the acceleration amplitude spectrum; dividing by w^2 gives the heave
-  spectrum, whose peaks set the number of modes and their frequencies.  Peaks
-  that match no existing mode are appended to the EKF.  Only the new states
-  are seeded; existing states keep their estimates.  The seeds (amplitude and
-  phase at the current instant) come from a joint least-squares fit of the
-  buffer at the peak frequencies.  The paper reads them off the FFT bins;
-  the fit is the same quantity without the bin-phase ambiguity.  Observability
-  maintenance follows the paper: a mode whose frequency leaves the admissible
-  band is removed, and two modes whose frequencies converge are merged.
-
-  Tuning follows the paper's pattern (higher process noise for higher
-  frequency modes, slow frequency and offset states, R from the sensor
-  datasheet).  Two choices are made here; the paper fixes neither:
-  the velocity process-noise intensity of mode j is
-  q_j = 4 zeta_q w_j^3 (A_j^2/2), the intensity that holds a damped
-  oscillator of damping zeta_q at the identified amplitude A_j, so one
-  setting serves every sea state; when all mode slots are occupied, a much
-  stronger new peak replaces the weakest mode.
+  Choices the paper leaves open, made here:
+    - new modes are seeded with amplitude and phase from a joint
+      least-squares fit of the buffer at the peak frequencies (the paper
+      reads them off the FFT bins, Eq. 2; the fit avoids the bin-phase error
+      of an off-bin peak);
+    - "approaches zero" is w_j below f_min_hz; modes above f_max_hz are also
+      removed;
+    - at most MaxModes modes; a new peak replace_ratio times stronger than
+      the weakest mode replaces it;
+    - velocity process noise q_j = 4 zeta_q w_j^3 (A_j^2/2), the intensity
+      that holds a damped oscillator of damping zeta_q at the identified
+      amplitude A_j, so one setting serves every sea state.
+  The paper uses the raw body-z accelerometer and neglects roll and pitch
+  (cos(phi) cos(theta) ~ 1); the replay feeds levelled acceleration, which
+  only removes that approximation's error.
 */
 
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <complex>
 #include <limits>
 #include <numbers>
 #include <type_traits>
 #include <vector>
 
 #include <Eigen/Dense>
+
+#include "heave_baselines/AccelSpectrum.h"
 
 namespace heave_baselines {
 
@@ -86,34 +93,32 @@ public:
         T zeta_q = T(0.01);
         T omega_rw = T(0.002);           // relative frequency random walk, 1/sqrt(s)
         T offset_rw = T(1e-3);           // m/s^2/sqrt(s)
-        T offset_init_std = T(0.02);     // m/s^2, about the fitted buffer mean
+        T offset_init_std = T(0.1);      // m/s^2
+        // Seed the offset from the fitted buffer constant instead of the
+        // paper's known-gravity value (0 after gravity removal).
+        bool offset_from_fit = false;
         T seed_rel_std = T(0.5);         // initial amplitude uncertainty
         T seed_omega_rel_std = T(0.05);
     };
 
     KuchlerHeaveEKF() : KuchlerHeaveEKF(Config{}) {}
-    explicit KuchlerHeaveEKF(const Config& cfg) : cfg_(cfg) { reset(); }
+    explicit KuchlerHeaveEKF(const Config& cfg)
+        : cfg_(cfg), spectrum_(cfg.fs_ident_hz, cfg.fft_size) { reset(); }
 
     void reset() {
         x_.setZero();
         P_.setZero();
         active_.fill(false);
         q_.fill(T(0));
-        t_ = T(0);
-        block_sum_ = T(0);
-        block_n_ = 0;
-        ring_.assign(static_cast<size_t>(cfg_.fft_size), T(0));
-        ring_head_ = 0;
-        ring_count_ = 0;
         since_ident_ = T(0);
         started_ = false;
         identifications_ = 0;
+        spectrum_ = AccelSpectrum<T>(cfg_.fs_ident_hz, cfg_.fft_size);
     }
 
-    // a_up: levelled vertical specific force minus gravity, m/s^2, z up.
+    // a_up: vertical specific force minus gravity, m/s^2, z up.
     T update(T a_up, T dt) {
         if (!(dt > T(0)) || !std::isfinite(a_up)) return heave();
-        t_ += dt;
 
         if (started_) {
             predict_(dt);
@@ -121,21 +126,9 @@ public:
             prune_();
         }
 
-        // Identification buffer.
-        block_sum_ += a_up;
-        ++block_n_;
-        const int block_len = std::max(1, static_cast<int>(std::lround(T(1) / (cfg_.fs_ident_hz * dt))));
-        if (block_n_ >= block_len) {
-            push_(block_sum_ / T(block_n_));
-            block_sum_ = T(0);
-            block_n_ = 0;
-            block_dt_ = T(block_len) * dt;
-            raw_dt_ = dt;
-        }
+        const bool pushed = spectrum_.add(a_up, dt);
         since_ident_ += dt;
-        if (ring_count_ >= cfg_.fft_size &&
-            since_ident_ >= cfg_.ident_period_s && block_n_ == 0)
-        {
+        if (pushed && spectrum_.full() && since_ident_ >= cfg_.ident_period_s) {
             identify_();
             since_ident_ = T(0);
         }
@@ -175,7 +168,7 @@ public:
     int identifications() const { return identifications_; }
 
 private:
-    struct Peak { T w; T amp; T zc; T zs; };
+    struct Seed { T w; T amp; T z; T v; };
 
     T modeAmplitude_(int j) const {
         const T w = x_(3 * j + 2);
@@ -278,109 +271,27 @@ private:
         deactivate_(b);
     }
 
-    void push_(T a) {
-        ring_[static_cast<size_t>(ring_head_)] = a;
-        ring_head_ = (ring_head_ + 1) % cfg_.fft_size;
-        ring_count_ = std::min(ring_count_ + 1, cfg_.fft_size);
-    }
-
-    static void fft_(std::vector<std::complex<T>>& a) {
-        const size_t n = a.size();
-        for (size_t i = 1, j = 0; i < n; ++i) {
-            size_t bit = n >> 1;
-            for (; j & bit; bit >>= 1) j ^= bit;
-            j ^= bit;
-            if (i < j) std::swap(a[i], a[j]);
-        }
-        for (size_t len = 2; len <= n; len <<= 1) {
-            const T ang = -T(2) * std::numbers::pi_v<T> / T(len);
-            const std::complex<T> wl(std::cos(ang), std::sin(ang));
-            for (size_t i = 0; i < n; i += len) {
-                std::complex<T> w(1);
-                for (size_t k = 0; k < len / 2; ++k) {
-                    const auto u = a[i + k];
-                    const auto v = a[i + k + len / 2] * w;
-                    a[i + k] = u + v;
-                    a[i + k + len / 2] = u - v;
-                    w *= wl;
-                }
-            }
-        }
-    }
-
     void identify_() {
-        const int n = cfg_.fft_size;
-        std::vector<T> buf(static_cast<size_t>(n));
-        T mean = T(0);
-        for (int k = 0; k < n; ++k) {
-            buf[static_cast<size_t>(k)] = ring_[static_cast<size_t>((ring_head_ + k) % n)];
-            mean += buf[static_cast<size_t>(k)];
-        }
-        mean /= T(n);
-
-        std::vector<std::complex<T>> X(static_cast<size_t>(n));
-        for (int k = 0; k < n; ++k) {
-            const T w = T(0.5) - T(0.5) * std::cos(T(2) * std::numbers::pi_v<T> * T(k) / T(n));
-            X[static_cast<size_t>(k)] = std::complex<T>(w * (buf[static_cast<size_t>(k)] - mean), T(0));
-        }
-        fft_(X);
-
-        // Heave amplitude spectrum, lightly smoothed.
-        const T df = cfg_.fs_ident_hz / T(n);
-        const int k_lo = std::max(2, static_cast<int>(std::ceil(cfg_.f_min_hz / df)));
-        const int k_hi = std::min(n / 2 - 2, static_cast<int>(std::floor(cfg_.f_max_hz / df)));
-        if (k_hi <= k_lo + 2) return;
-        std::vector<T> Z(static_cast<size_t>(n / 2), T(0));
-        for (int k = 1; k < n / 2; ++k) {
-            const T w = T(2) * std::numbers::pi_v<T> * df * T(k);
-            Z[static_cast<size_t>(k)] = std::abs(X[static_cast<size_t>(k)]) / (w * w);
-        }
-        std::vector<T> Zs(Z);
-        for (int k = 1; k < n / 2 - 1; ++k)
-            Zs[static_cast<size_t>(k)] = (Z[static_cast<size_t>(k - 1)] + T(2) * Z[static_cast<size_t>(k)] + Z[static_cast<size_t>(k + 1)]) / T(4);
-
-        T zmax = T(0);
-        for (int k = k_lo; k <= k_hi; ++k) zmax = std::max(zmax, Zs[static_cast<size_t>(k)]);
-        if (!(zmax > T(0))) return;
-
-        std::vector<std::pair<T, T>> cand;  // (height, w)
-        for (int k = k_lo; k <= k_hi; ++k) {
-            const T c = Zs[static_cast<size_t>(k)];
-            if (c > Zs[static_cast<size_t>(k - 1)] && c >= Zs[static_cast<size_t>(k + 1)] &&
-                c >= cfg_.peak_rel_threshold * zmax)
-            {
-                // Parabolic refinement on log magnitude.
-                const T l = std::log(Zs[static_cast<size_t>(k - 1)]);
-                const T m = std::log(c);
-                const T r = std::log(Zs[static_cast<size_t>(k + 1)]);
-                const T den = l - T(2) * m + r;
-                const T d = (den < T(0)) ? std::clamp(T(0.5) * (l - r) / den, T(-0.5), T(0.5)) : T(0);
-                cand.emplace_back(c, T(2) * std::numbers::pi_v<T> * df * (T(k) + d));
-            }
-        }
-        std::sort(cand.begin(), cand.end(), [](auto& a, auto& b) { return a.first > b.first; });
-        if (static_cast<int>(cand.size()) > MaxModes) cand.resize(static_cast<size_t>(MaxModes));
-        if (cand.empty()) return;
-
-        T offset_fit = mean;
-        std::vector<Peak> peaks = fit_(buf, mean, cand, offset_fit);
+        const auto peaks = spectrum_.peaks(cfg_.f_min_hz, cfg_.f_max_hz,
+                                           cfg_.peak_rel_threshold, MaxModes);
+        if (peaks.empty()) return;
+        T offset_fit = T(0);
+        const std::vector<Seed> seeds = fit_(peaks, offset_fit);
         ++identifications_;
         if (!started_) {
-            // The EKF starts at the first identification, with the offset
-            // seeded by the fitted constant of the buffer.
-            x_(OFF) = offset_fit;
+            x_(OFF) = cfg_.offset_from_fit ? offset_fit : T(0);
             P_(OFF, OFF) = cfg_.offset_init_std * cfg_.offset_init_std;
             started_ = true;
         }
 
-        for (const auto& pk : peaks) {
+        for (const auto& sd : seeds) {
             int match = -1;
             for (int j = 0; j < MaxModes; ++j) {
                 if (!active_[j]) continue;
-                if (std::abs(x_(3 * j + 2) - pk.w) < cfg_.match_tol * x_(3 * j + 2)) { match = j; break; }
+                if (std::abs(x_(3 * j + 2) - sd.w) < cfg_.match_tol * x_(3 * j + 2)) { match = j; break; }
             }
             if (match >= 0) {
-                q_[match] = processNoise_(x_(3 * match + 2), pk.amp);
+                q_[match] = processNoise_(x_(3 * match + 2), sd.amp);
                 continue;
             }
             int slot = -1;
@@ -392,13 +303,12 @@ private:
                     const T a = modeAmplitude_(j);
                     if (a < amin) { amin = a; weakest = j; }
                 }
-                if (weakest >= 0 && pk.amp > cfg_.replace_ratio * amin) {
+                if (weakest >= 0 && sd.amp > cfg_.replace_ratio * amin) {
                     deactivate_(weakest);
                     slot = weakest;
                 }
             }
-            if (slot < 0) continue;
-            seed_(slot, pk);
+            if (slot >= 0) seed_(slot, sd);
         }
     }
 
@@ -406,78 +316,68 @@ private:
         return T(4) * cfg_.zeta_q * w * w * w * T(0.5) * amp * amp;
     }
 
-    void seed_(int j, const Peak& pk) {
+    void seed_(int j, const Seed& sd) {
         const int i = 3 * j;
         active_[j] = true;
-        x_(i) = pk.zc;
-        x_(i + 1) = pk.zs;
-        x_(i + 2) = pk.w;
+        x_(i) = sd.z;
+        x_(i + 1) = sd.v;
+        x_(i + 2) = sd.w;
         P_.template middleRows<3>(i).setZero();
         P_.template middleCols<3>(i).setZero();
-        const T sa = cfg_.seed_rel_std * pk.amp;
+        const T sa = cfg_.seed_rel_std * sd.amp;
         P_(i, i) = sa * sa;
-        P_(i + 1, i + 1) = sa * sa * pk.w * pk.w;
-        const T sw = cfg_.seed_omega_rel_std * pk.w;
+        P_(i + 1, i + 1) = sa * sa * sd.w * sd.w;
+        const T sw = cfg_.seed_omega_rel_std * sd.w;
         P_(i + 2, i + 2) = sw * sw;
-        q_[j] = processNoise_(pk.w, pk.amp);
+        q_[j] = processNoise_(sd.w, sd.amp);
     }
 
     // Joint least squares of the buffer on cos/sin at each peak frequency plus
     // a constant, with time measured from the current instant.  Block averages
     // are stamped at their centres.  Returns heave and heave rate at the
     // current instant for each peak (z = -a/w^2).
-    std::vector<Peak> fit_(const std::vector<T>& buf, T mean,
-                           const std::vector<std::pair<T, T>>& cand,
+    std::vector<Seed> fit_(const std::vector<typename AccelSpectrum<T>::Peak>& peaks,
                            T& offset) const
     {
+        const std::vector<T> buf = spectrum_.samples();
         const int n = static_cast<int>(buf.size());
-        const int m = static_cast<int>(cand.size());
+        const int m = static_cast<int>(peaks.size());
         const int p = 2 * m + 1;
+        const T bdt = spectrum_.blockDt();
+        const T rdt = spectrum_.rawDt();
         Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> A(n, p);
         Eigen::Matrix<T, Eigen::Dynamic, 1> b(n);
         for (int k = 0; k < n; ++k) {
-            // Sample k is the block ending (n-1-k) blocks before now.
-            const T tk = -(T(n - 1 - k) * block_dt_ + T(0.5) * (block_dt_ - raw_dt_));
+            const T tk = -(T(n - 1 - k) * bdt + T(0.5) * (bdt - rdt));
             for (int c = 0; c < m; ++c) {
-                const T w = cand[static_cast<size_t>(c)].second;
+                const T w = peaks[static_cast<size_t>(c)].w;
                 A(k, 2 * c) = std::cos(w * tk);
                 A(k, 2 * c + 1) = std::sin(w * tk);
             }
             A(k, p - 1) = T(1);
-            b(k) = buf[static_cast<size_t>(k)] - mean;
+            b(k) = buf[static_cast<size_t>(k)];
         }
         const Eigen::Matrix<T, Eigen::Dynamic, 1> sol = A.colPivHouseholderQr().solve(b);
-        offset = mean + sol(p - 1);
-        std::vector<Peak> out;
+        offset = sol(p - 1);
+        std::vector<Seed> out;
         for (int c = 0; c < m; ++c) {
-            const T w = cand[static_cast<size_t>(c)].second;
+            const T w = peaks[static_cast<size_t>(c)].w;
             const T ac = sol(2 * c), as = sol(2 * c + 1);
             // a(t) = ac cos(w t) + as sin(w t); z = -a / w^2.
-            Peak pk;
-            pk.w = w;
-            pk.zc = -ac / (w * w);
-            pk.zs = -as * w / (w * w);
-            pk.amp = std::sqrt(ac * ac + as * as) / (w * w);
-            out.push_back(pk);
+            out.push_back({w, std::sqrt(ac * ac + as * as) / (w * w),
+                           -ac / (w * w), -as / w});
         }
         return out;
     }
 
     Config cfg_;
+    AccelSpectrum<T> spectrum_;
     Vec x_ = Vec::Zero();
     Mat P_ = Mat::Zero();
     std::array<bool, MaxModes> active_{};
     std::array<T, MaxModes> q_{};
-    T t_ = T(0);
-    bool started_ = false;
-    T block_sum_ = T(0);
-    int block_n_ = 0;
-    T block_dt_ = T(0.25);
-    T raw_dt_ = T(0.005);
-    std::vector<T> ring_;
-    int ring_head_ = 0;
-    int ring_count_ = 0;
     T since_ident_ = T(0);
+    bool started_ = false;
     int identifications_ = 0;
 };
 
