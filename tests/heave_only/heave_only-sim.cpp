@@ -121,16 +121,16 @@ bool env_double(const char* name, double& out) {
 // targets: the worst Z RMS (%Hs) of each method across the scored records plus
 // about half a percent.
 struct HeaveLimits { float jonswap; float pmstokes; };
-constexpr HeaveLimits PII_LIMITS{7.74f, 8.99f};           // worst 7.70 / 8.94 (H8.5)
-constexpr HeaveLimits GODHAVN_LIMITS{431.5f, 553.8f};     // worst 429.3 / 551.0 (H8.5)
-constexpr HeaveLimits GODHAVN_EXT_LIMITS{21.20f, 26.66f}; // worst 21.09 / 26.52 (H8.5)
-constexpr HeaveLimits KUCHLER_LIMITS{18.00f, 20.58f};     // worst 17.91 / 20.47 (H8.5)
-constexpr HeaveLimits RICHTER_ZD_LIMITS{17.61f, 22.96f};    // worst 17.52 / 22.84 (H8.5)
+constexpr HeaveLimits PII_LIMITS{7.55f, 8.80f};           // worst 7.51 / 8.75 (H8.5)
+constexpr HeaveLimits GODHAVN_LIMITS{356.8f, 388.4f};     // worst 355.0 / 386.4 (H8.5)
+constexpr HeaveLimits GODHAVN_EXT_LIMITS{22.50f, 28.77f}; // worst 22.39 / 28.63 (H8.5)
+constexpr HeaveLimits KUCHLER_LIMITS{15.66f, 18.96f};     // worst 15.58 / 18.87 (H8.5)
+constexpr HeaveLimits RICHTER_ZD_LIMITS{19.21f, 24.68f};    // worst 19.11 / 24.56 (H8.5)
 // Shared proxy Mahony (--frontend proxy).
 constexpr HeaveLimits PII_PROXY_LIMITS{6.02f, 5.90f};          // worst 5.99 / 5.87
 constexpr HeaveLimits GODHAVN_PROXY_LIMITS{388.8f, 509.1f};     // worst 386.8 / 506.5
 constexpr HeaveLimits GODHAVN_EXT_PROXY_LIMITS{9.82f, 10.70f};  // worst 9.77 / 10.64
-constexpr HeaveLimits KUCHLER_PROXY_LIMITS{17.00f, 18.02f};     // worst 16.91 / 17.93
+constexpr HeaveLimits KUCHLER_PROXY_LIMITS{15.93f, 18.68f};     // worst 15.85 / 18.59
 constexpr HeaveLimits RICHTER_ZD_PROXY_LIMITS{5.34f, 5.78f};    // worst 5.31 / 5.75
 // Ideal vertical reference (--frontend truth).
 constexpr HeaveLimits GODHAVN_TRUTH_LIMITS{386.0f, 495.0f};    // worst 384.0 / 492.4 (H8.5)
@@ -200,10 +200,10 @@ public:
                 float temperature_c) override
     {
         (void)temperature_c;
-        const Vector3f g = ned_to_mahony_body_(gyr_meas_ned);
-        const Vector3f a = ned_to_mahony_body_(acc_meas_ned);
+        const Vector3f g = ned_to_mahony_(gyr_meas_ned);
+        const Vector3f a = ned_to_mahony_(acc_meas_ned);
         if (with_mag_ && have_mag_ && g_frontend == Levelling::Mahony) {
-            const Vector3f m = ned_to_mahony_mag_(last_mag_body_ned_);
+            const Vector3f m = ned_to_mahony_(last_mag_body_ned_);
             frontend_.updateIMUMag(g.x(), g.y(), g.z(), a.x(), a.y(), a.z(),
                                    m.x(), m.y(), m.z(), dt);
         } else {
@@ -251,7 +251,9 @@ public:
         quat_wb_zu_to_euler_nautical(
             Quaternionf(float(q.w), float(q.x), float(q.y), float(q.z)), roll, pitch, yaw);
         // Same magnetic-frame yaw convention as the PII simulator.
-        yaw = with_mag_ ? wrapDeg(yaw + 2.0f * MagSim_WMM::default_declination_deg) : 0.0f;
+        // The firmware's heading convention: Mahony yaw is CCW-positive about
+        // z up, compass heading CW-positive (atomS3R_ins_pii_observer.ino).
+        yaw = with_mag_ ? wrapDeg(-yaw) : 0.0f;
         s.euler_nautical_deg = Vector3f(roll, pitch, yaw);
 
         if constexpr (M == Method::Godhavn || M == Method::GodhavnExt ||
@@ -285,17 +287,18 @@ private:
                               2.0f * float(q.w * q.x + q.y * q.z),
                               float(q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z));
         const Vector3f up_zu = q_body_to_world.conjugate() * Vector3f::UnitZ();
-        const Vector3f up_true(-up_zu.x(), -up_zu.y(), up_zu.z());
+        // ZU body (x, y, z) is NED body (y, x, -z), i.e. Mahony (y, -x, z).
+        const Vector3f up_true(up_zu.y(), -up_zu.x(), up_zu.z());
         const float c = std::clamp(up_est.normalized().dot(up_true), -1.0f, 1.0f);
         return float(std::acos(c) * 180.0 / M_PI);
     }
 
-    static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
-        const Vector3f v_zu = ned_to_zu(v_ned);
-        return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
-    }
-
-    static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
+    // Body NED -> the Mahony body frame [N, -E, -D] (x forward, y left,
+    // z up), the mapping the PII firmware applies to all three sensors.  One
+    // mapping for gyro, accelerometer and magnetometer keeps them in the same
+    // body frame; a magnetometer in a different frame would rotate
+    // inconsistently with the gyro and steer tilt.
+    static Vector3f ned_to_mahony_(const Vector3f& v_ned) {
         return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
     }
 
@@ -342,11 +345,12 @@ void summarize(Method method, const W3dSimulationRunResult& r, float dt) {
         return;
     }
     const size_t start = r.errs_z.size() - n_last;
-    RMSReport rz, rref, rtilt;
+    RMSReport rz, rref, rtilt, ryaw;
     for (size_t i = start; i < r.errs_z.size(); ++i) {
         rz.add(r.errs_z[i]);
         rref.add(r.ref_z[i]);
         if (i < g_tilt_deg.size()) rtilt.add(g_tilt_deg[i]);
+        ryaw.add(r.errs_yaw[i]);
     }
     const float z_pct = 100.0f * rz.rms() / r.wave_params.height;
     std::vector<float> f(r.freq_hist.begin() + long(start), r.freq_hist.end());
@@ -358,6 +362,7 @@ void summarize(Method method, const W3dSimulationRunResult& r, float dt) {
               << " z_pct_hs=" << z_pct
               << " heave_ref_rms_m=" << rref.rms()
               << " tilt_rms_deg=" << rtilt.rms()
+              << " yaw_rms_deg=" << ryaw.rms()
               << " freq_hz_median=" << median_vec(f)
               << " final_tuning=" << r.final_tuning_applied << "\n";
 

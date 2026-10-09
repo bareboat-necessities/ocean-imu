@@ -145,7 +145,9 @@ OU-III and TFG simulators. It uses:
 It scores vertical displacement over the same trailing 900 s window. The
 heave-only filters need a vertical reference (`--frontend`):
 
-- **`mahony` (default).** The PII observer's Mahony AHRS as shipped.
+- **`mahony` (default).** The PII observer's Mahony AHRS as shipped: its
+  adaptive gains, the magnetometer, and the firmware's sensor mapping, with
+  gyro, accelerometer and magnetometer all mapped `[N, -E, -D]`.
 - **`proxy`.** The same Mahony core, IMU-only, at the gains of the private
   Mahony observer that OU-II, OU-III and TFG share
   (`defaults::STARTUP_PROXY_TWO_KP = 0.2`, `STARTUP_PROXY_TWO_KI = 0.02`).
@@ -161,21 +163,21 @@ Z RMS error, % of Hs, with the `proxy` front end:
 | JONSWAP 0.27 m | 4.25 | 6.02 | 4.38 | 3.71 | 4.58 | 6.83 | 4.79 | 22.05 |
 | JONSWAP 1.5 m | 4.10 | 6.63 | 4.19 | 5.22 | 5.15 | 8.06 | 10.81 | 94.40 |
 | JONSWAP 4 m | 4.02 | 6.35 | 4.03 | 5.81 | 5.03 | 8.58 | 13.61 | 223 |
-| JONSWAP 8.5 m | 3.71 | 6.05 | 3.73 | 5.99 | 5.31 | 9.77 | 16.91 | 387 |
+| JONSWAP 8.5 m | 3.71 | 6.05 | 3.73 | 5.99 | 5.31 | 9.77 | 15.85 | 387 |
 | PM-Stokes 0.27 m | 4.21 | 5.81 | 4.33 | 3.81 | 5.00 | 7.28 | 5.27 | 28.98 |
 | PM-Stokes 1.5 m | 4.02 | 6.43 | 4.09 | 4.75 | 5.33 | 8.28 | 12.33 | 162 |
-| PM-Stokes 4 m | 3.96 | 6.20 | 3.98 | 5.49 | 4.74 | 8.16 | 16.04 | 313 |
-| PM-Stokes 8.5 m | 3.70 | 5.98 | 3.73 | 5.87 | 5.75 | 10.64 | 17.93 | 507 |
-| **Mean** | **4.00** | **6.18** | **4.06** | **5.08** | **5.11** | **8.45** | **12.21** | **217** |
-| Worst | 4.25 | 6.63 | 4.38 | 5.99 | 5.75 | 10.64 | 17.93 | 507 |
+| PM-Stokes 4 m | 3.96 | 6.20 | 3.98 | 5.49 | 4.74 | 8.16 | 15.98 | 313 |
+| PM-Stokes 8.5 m | 3.70 | 5.98 | 3.73 | 5.87 | 5.75 | 10.64 | 18.59 | 507 |
+| **Mean** | **4.00** | **6.18** | **4.06** | **5.08** | **5.11** | **8.45** | **12.15** | **217** |
+| Worst | 4.25 | 6.63 | 4.38 | 5.99 | 5.75 | 10.64 | 18.59 | 507 |
 
 How each method changes with the front end. Tilt error is the angle between
 the estimated and true gravity directions:
 
 | Mean (worst) % of Hs | Tilt error, mean (worst) | PII | Richter zero-displacement | Godhavn ext | Küchler | Godhavn published law |
 |---|---|---|---|---|---|---|
-| `mahony`: PII Mahony as shipped | 2.94° (6.73°) | 5.99 (8.94) | 10.63 (22.84) | 13.38 (26.52) | 12.59 (20.47) | 232 (551) |
-| `proxy`: shared IMU-only Mahony | 0.58° (1.18°) | 5.08 (5.99) | 5.11 (5.75) | 8.45 (10.64) | 12.21 (17.93) | 217 (507) |
+| `mahony`: PII Mahony as shipped | 1.25° (2.75°) | 5.96 (8.75) | 11.08 (24.56) | 14.09 (28.63) | 12.27 (18.87) | 195 (386) |
+| `proxy`: shared IMU-only Mahony | 0.58° (1.18°) | 5.08 (5.99) | 5.11 (5.75) | 8.45 (10.64) | 12.15 (18.59) | 217 (507) |
 | `truth`: true vertical | 0.00° (0.00°) | – | 5.00 (5.33) | 8.23 (9.65) | 12.61 (20.12) | 215 (492) |
 
 ### Mahony settings across the repository
@@ -222,28 +224,57 @@ averaged over the eight records.
 | TFG | 0.05/0.0003 | 4.03 (4.27) | 1.13 / 0.19 | 3-D gates fail |
 | TFG | 0.1/0.005 | 4.05 (4.35) | 0.56 / 0.09 | worse attitude |
 | NLO | bootstrap 0.35 (default), 0.2, 0.05 | 6.96 (7.32) | 0.25 / 0.14 | none |
-| PII | adaptive 1.2–1.7, magnetometer (default) | 5.90 (8.75) | – | – |
-| PII | default gains, no magnetometer | 5.52 (7.56) | – | better |
-| PII | 0.2/0.02, magnetometer | 6.42 (13.30) | – | worse |
-| PII | 0.2/0.02, no magnetometer | **5.02 (5.91)** | – | better |
-| PII | 0.05/0.0003, no magnetometer | 5.03 (5.92) | – | better |
+| PII | adaptive 1.2–1.7, textbook magnetometer (default) | 5.82 (8.46) | – | – |
+| PII | adaptive 1.2–1.7, heading-only magnetometer | 5.52 (7.55) | – | better |
+| PII | 0.2/0.02, textbook magnetometer | 5.04 (5.91) | – | better |
+| PII | 0.2/0.02, no magnetometer | 5.01 (5.91) | – | better, but no heading |
+| PII | 0.2/0.02, heading-only magnetometer | **5.01 (5.88)** | – | better, heading 2.7° RMS |
 
 - **OU-II, OU-III, TFG.** The private observer only seeds the startup
   attitude and levels the wave-period/tuner input. Heave uses the MEKF
   attitude, so slower settings do not help, and the slowest one delays the
   startup attitude enough to hurt attitude and accelerometer-bias estimates.
 - **NLO.** Its Mahony runs only during the 2–6 s bootstrap.
-- **PII.** The one filter whose heave is levelled by its Mahony. Taking the
-  magnetometer out of the tilt loop and using the shared gains cuts its mean
-  error by 15 % and its worst case by a third.
-  - Slow gains with the magnetometer still in the loop are worse than the
-    default.
-  - PII also reports yaw, which then needs the magnetometer to correct
-    heading only.
-  - The PII sim runs at its own noise model (5 mg accelerometer bias, 20 Hz
-    magnetometer), so its numbers differ slightly from the `heave_only`
-    table.
+- **PII.** The one filter whose heave is levelled by its Mahony.
+  - The gains are what matter: the shared 0.2/0.02 cut its mean error from
+    5.82 % to about 5.0 % and its worst case by a third.
+  - With the magnetometer in the right frame it costs at most 0.03 points.
+    Restricting it to heading makes it free, while keeping a 2.7° heading.
+  - The PII rows come from its own simulator with the sensor mapping
+    corrected to the firmware's (next section). That simulator runs its own
+    noise model (5 mg accelerometer bias, 20 Hz magnetometer), so its numbers
+    differ slightly from the `heave_only` table.
   - The shipped PII defaults are not changed here.
+
+### Why dropping the magnetometer first looked like an improvement
+
+More information should not make the estimate worse. Two defects made it
+look that way.
+
+- **A sensor-frame bug in the simulator adapter.** The PII simulator
+  (`tests/pii_observer/pii_observer-adaptive.cpp`) maps gyro and
+  accelerometer to `(-E, -N, -D)` but the magnetometer to `(N, -E, -D)`.
+  That puts the magnetometer in a body frame turned 90° about z, which then
+  rotates inconsistently with the gyro once the boat rolls and pitches. A
+  comment there records that this mapping was chosen to fix a yaw error, and
+  the yaw report adds twice the declination to compensate. This simulator
+  first copied the same adapter.
+  - The firmware (`atomS3R_ins_pii_observer.ino`) maps all three sensors
+    `[N, -E, -D]` and reports heading as `-yaw`. With that mapping the
+    shipped configuration's tilt error falls from 2.94° to 1.25° (worst
+    6.73° to 2.75°), and its heading error is 2.6° RMS. `heave_only-sim`
+    now uses the firmware mapping. The PII simulator still has the bug.
+- **Textbook Mahony lets the magnetometer steer tilt.** Its magnetometer
+  error enters all three axes with the same gain as the accelerometer error.
+  The magnetometer carries little tilt information, but its residual
+  calibration errors (2 µT hard iron, 1.5 % scale, 1 % cross-axis, 1°
+  misalignment in this replay) tilt the estimate.
+  - Projecting the magnetometer error onto the estimated vertical, so it
+    corrects heading only, fixes this. At the shared gains, tilt error goes
+    from 0.63° (textbook) to 0.56°, against 0.58° without the magnetometer.
+    Richter's filter goes from 5.22 % to 5.09 % of Hs (5.11 % without).
+  - That change is in `ahrs/Mahony_AHRS.h`, which the firmware uses, so it is
+    not made here.
 
 ### Where the error comes from
 
@@ -253,17 +284,16 @@ vertical acceleration, then adding one corruption at a time.
 - **Levelling.**
   - *What goes wrong.* The shipped Mahony settings are tuned for a fast AHRS.
     A ~1 s time constant lets every wave's horizontal acceleration tilt the
-    vertical. The magnetometer also steers tilt in this Mahony update, and its
-    reference does not match the replay's field.
-  - *The result.* Tilt error reaches 6.7°. Leaked horizontal acceleration
-    leaves about 0.01 m/s² of error below 0.05 Hz. The heave filters' gain
-    there (about 235 m per m/s² at 0.01 Hz for Godhavn) turns it into metres
-    of drift.
+    vertical.
+  - *The result.* Tilt error reaches 2.75°. Leaked horizontal acceleration
+    leaves a low-frequency vertical error. The heave filters' gain there
+    (about 235 m per m/s² at 0.01 Hz for Godhavn) turns it into metres of
+    drift.
   - *The fix.* The repository's QMEKF AHRS does no better (3.9–4.3° at
     Hs 8.5 m). Using the OU filters' own private Mahony settings instead
     (IMU-only, corner below the wave band) brings tilt to 0.58°. That is as
     good as a true vertical for every heave filter here. The PII observer
-    also improves, from 5.99 % to 5.08 % of Hs.
+    also improves, from 5.96 % to 5.08 % of Hs.
   - *Why OU-III differs.* OU-III estimates attitude and wave motion jointly.
 - **Bias instability (the published Godhavn law).**
   - On exact acceleration the law gives under 2 % of Hs.
