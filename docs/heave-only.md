@@ -389,10 +389,13 @@ The simulator gates each method on its own regression sentinel.
 ## References
 
 - J.-M. Godhavn, "Adaptive tuning of heave filter in motion sensor",
-  OCEANS'98 Conference Proceedings, vol. 1, pp. 174–178, 1998.
+  OCEANS'98 Conference Proceedings, vol. 1, pp. 174–178, 1998. No open
+  copy; implemented as specified by Richter et al. 2014.
 - M. Richter, K. Schneider, D. Walser, O. Sawodny, "Real-time heave motion
   estimation using adaptive filtering techniques", 19th IFAC World Congress,
   pp. 10119–10125, 2014.
+  [PDF](https://skoge.folk.ntnu.no/prost/proceedings/ifac2014/media/files/0111.pdf)
 - S. Küchler, J. K. Eberharter, K. Langer, K. Schneider, O. Sawodny, "Heave
   motion estimation of a vessel using acceleration measurements", 18th IFAC
   World Congress, pp. 14742–14747, 2011.
+  [PDF](https://skoge.folk.ntnu.no/prost/proceedings/ifac11-proceedings/data/html/papers/1935.pdf)

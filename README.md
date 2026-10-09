@@ -27,6 +27,12 @@ INS Filters:
 
 - [Non-Linear Observer NLO](https://torarnj.folk.ntnu.no/TimeVarGain.pdf)
 
+Heave-only filters (comparison baselines, see [docs/heave-only.md](docs/heave-only.md)):
+
+- [Godhavn Standard Heave Filter and Richter Zero-Displacement Filter](https://skoge.folk.ntnu.no/prost/proceedings/ifac2014/media/files/0111.pdf)
+
+- [Küchler Harmonic-Mode EKF](https://skoge.folk.ntnu.no/prost/proceedings/ifac11-proceedings/data/html/papers/1935.pdf)
+
 Research Studies:
 
 - [Wave Direction](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman-wave-dir.pdf)
