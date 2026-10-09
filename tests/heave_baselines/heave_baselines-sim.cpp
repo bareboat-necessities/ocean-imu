@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -23,6 +24,8 @@
                  of Richter et al. 2014 (Eqs. 11-12) as published
     godhavn_ext  the same filter with the bias-instability term and input
                  mean subtraction (not in the papers)
+    richter_zd   Richter et al. 2014 zero-displacement filter (Section 3.2)
+                 with the same two extensions
     kuchler      Kuchler et al. 2011 FFT-identified harmonic-mode EKF
 */
 
@@ -44,29 +47,50 @@ namespace {
 
 constexpr float RMS_WINDOW_SEC = 900.0f;
 
-enum class Method { PII, Godhavn, GodhavnExt, Kuchler };
+enum class Method { PII, Godhavn, GodhavnExt, RichterZd, Kuchler };
 
 const char* method_name(Method m) {
     switch (m) {
         case Method::PII: return "pii";
         case Method::Godhavn: return "godhavn";
         case Method::GodhavnExt: return "godhavn_ext";
+        case Method::RichterZd: return "richter_zd";
         case Method::Kuchler: return "kuchler";
     }
     return "?";
 }
 
 constexpr double kDt = 1.0 / 200.0;
+// Mahony 2*Kp of the slow front end: a 40 s tilt time constant.
+constexpr double kMahonySlowTwoKp = 0.05;
 
-// Ideal vertical reference: when set, the baselines level the measured
-// accelerometer with the record's true attitude instead of the Mahony
-// estimate.  The quaternions are the record's own, consumed one per IMU
-// sample in the runner's order.
-bool g_truth_frontend = false;
+// Vertical reference of the baselines:
+//   mahony       the PII observer's AHRS as shipped: sea-state-adaptive gains
+//                (time constant ~1 s) and magnetometer correction;
+//   mahony_slow  the same AHRS, IMU-only, with fixed slow gains (the
+//                magnetometer cannot steer tilt; wave accelerations average
+//                out over the ~40 s time constant);
+//   truth        the measured accelerometer levelled with the record's true
+//                attitude, an ideal VRU that isolates the heave filter.
+// The record's attitude is loaded in every mode: it scores the tilt error and
+// is consumed one sample per IMU step in the runner's order.
+enum class Levelling { Mahony, MahonySlow, Truth };
+Levelling g_frontend = Levelling::Mahony;
 std::vector<Quaternionf> g_truth_q;
+std::vector<float> g_tilt_deg;
+
+const char* frontend_name(Levelling f) {
+    switch (f) {
+        case Levelling::Mahony: return "mahony";
+        case Levelling::MahonySlow: return "mahony_slow";
+        case Levelling::Truth: return "truth";
+    }
+    return "?";
+}
 
 void load_truth_attitude(const std::string& file) {
     g_truth_q.clear();
+    g_tilt_deg.clear();
     WaveDataCSVReader reader(file);
     reader.for_each_record([](const Wave_Data_Sample& rec) {
         Quaternionf q(rec.imu.q_wb_zu_w, rec.imu.q_wb_zu_x, rec.imu.q_wb_zu_y, rec.imu.q_wb_zu_z);
@@ -98,10 +122,18 @@ constexpr HeaveLimits PII_LIMITS{7.74f, 8.99f};           // worst 7.70 / 8.94 (
 constexpr HeaveLimits GODHAVN_LIMITS{431.5f, 553.8f};     // worst 429.3 / 551.0 (H8.5)
 constexpr HeaveLimits GODHAVN_EXT_LIMITS{21.20f, 26.66f}; // worst 21.09 / 26.52 (H8.5)
 constexpr HeaveLimits KUCHLER_LIMITS{18.00f, 20.58f};     // worst 17.91 / 20.47 (H8.5)
+constexpr HeaveLimits RICHTER_ZD_LIMITS{17.61f, 22.96f};    // worst 17.52 / 22.84 (H8.5)
+// Slow IMU-only Mahony (--frontend mahony_slow).
+constexpr HeaveLimits PII_SLOW_LIMITS{6.05f, 5.94f};           // worst 6.02 / 5.91
+constexpr HeaveLimits GODHAVN_SLOW_LIMITS{384.0f, 494.5f};      // worst 382.1 / 492.0
+constexpr HeaveLimits GODHAVN_EXT_SLOW_LIMITS{9.33f, 10.22f};   // worst 9.28 / 10.17
+constexpr HeaveLimits KUCHLER_SLOW_LIMITS{17.00f, 19.09f};      // worst 16.91 / 18.99
+constexpr HeaveLimits RICHTER_ZD_SLOW_LIMITS{5.16f, 5.32f};     // worst 5.13 / 5.29
 // Ideal vertical reference (--frontend truth).
 constexpr HeaveLimits GODHAVN_TRUTH_LIMITS{386.0f, 495.0f};    // worst 384.0 / 492.4 (H8.5)
 constexpr HeaveLimits GODHAVN_EXT_TRUTH_LIMITS{9.03f, 9.70f};  // worst 8.98 / 9.65 (H8.5)
 constexpr HeaveLimits KUCHLER_TRUTH_LIMITS{16.62f, 20.23f};    // worst 16.53 / 20.12 (H8.5)
+constexpr HeaveLimits RICHTER_ZD_TRUTH_LIMITS{5.21f, 5.36f};   // worst 5.18 / 5.33
 
 template <Method M>
 class HeaveBaselineAdapter final : public IW3dFusionAdapter {
@@ -131,8 +163,12 @@ public:
         }
         // godhavn: Richter's Eqs. 11-12 as published.  godhavn_ext adds the
         // bias-instability variance and the input-mean subtraction.
-        g.bias_instability_term = M == Method::GodhavnExt || env_flag("HB_GODHAVN_BIAS_TERM");
-        g.subtract_input_mean = M == Method::GodhavnExt || env_flag("HB_GODHAVN_SUBTRACT_MEAN");
+        // richter_zd is Richter's zero-displacement filter with the same two
+        // extensions.
+        constexpr bool ext = M == Method::GodhavnExt || M == Method::RichterZd;
+        g.bias_instability_term = ext || env_flag("HB_GODHAVN_BIAS_TERM");
+        g.subtract_input_mean = ext || env_flag("HB_GODHAVN_SUBTRACT_MEAN");
+        g.zero_displacement = M == Method::RichterZd || env_flag("HB_GODHAVN_ZD");
         godhavn_ = heave_baselines::GodhavnHeaveFilter<double>(g);
 
         heave_baselines::KuchlerHeaveEKF<double>::Config k{};
@@ -158,7 +194,7 @@ public:
         (void)temperature_c;
         const Vector3f g = ned_to_mahony_body_(gyr_meas_ned);
         const Vector3f a = ned_to_mahony_body_(acc_meas_ned);
-        if (with_mag_ && have_mag_) {
+        if (with_mag_ && have_mag_ && g_frontend == Levelling::Mahony) {
             const Vector3f m = ned_to_mahony_mag_(last_mag_body_ned_);
             frontend_.updateIMUMag(g.x(), g.y(), g.z(), a.x(), a.y(), a.z(),
                                    m.x(), m.y(), m.z(), dt);
@@ -166,19 +202,24 @@ public:
             frontend_.updateIMU(g.x(), g.y(), g.z(), a.x(), a.y(), a.z(), dt);
         }
 
+        if (sample_ >= g_truth_q.size())
+            throw std::runtime_error("truth attitude shorter than the IMU stream");
+        const Quaternionf& q_true = g_truth_q[sample_];
         double a_up = frontend_.verticalWorldAccelUp();
-        if (g_truth_frontend) {
-            if (sample_ >= g_truth_q.size())
-                throw std::runtime_error("truth attitude shorter than the IMU stream");
-            const Vector3f f_world = g_truth_q[sample_] * ned_to_zu(acc_meas_ned);
+        if (g_frontend == Levelling::Truth) {
+            const Vector3f f_world = q_true * ned_to_zu(acc_meas_ned);
             a_up = double(f_world.z()) - double(g_std);
+            g_tilt_deg.push_back(0.0f);
+        } else {
+            g_tilt_deg.push_back(tilt_error_deg_(q_true));
         }
         ++sample_;
         input_ = a_up;
         if constexpr (M == Method::PII) {
             heave_ = frontend_.displacement();
             vel_ = frontend_.velocity();
-        } else if constexpr (M == Method::Godhavn || M == Method::GodhavnExt) {
+        } else if constexpr (M == Method::Godhavn || M == Method::GodhavnExt ||
+                             M == Method::RichterZd) {
             heave_ = godhavn_.update(a_up, dt);
             vel_ = godhavn_.heaveRate();
         } else {
@@ -203,7 +244,8 @@ public:
         yaw = with_mag_ ? wrapDeg(yaw + 2.0f * MagSim_WMM::default_declination_deg) : 0.0f;
         s.euler_nautical_deg = Vector3f(roll, pitch, yaw);
 
-        if constexpr (M == Method::Godhavn || M == Method::GodhavnExt) {
+        if constexpr (M == Method::Godhavn || M == Method::GodhavnExt ||
+                      M == Method::RichterZd) {
             s.tuning_applied = float(godhavn_.cutoff());
             s.tuning_target = float(godhavn_.cutoffTarget());
             const double wp = godhavn_.dominantFrequency();
@@ -217,6 +259,20 @@ public:
     }
 
 private:
+    // Angle between the estimated and true gravity directions in the body
+    // frame: the levelling error that leaks horizontal acceleration into the
+    // vertical channel, independent of yaw.
+    float tilt_error_deg_(const Quaternionf& q_body_to_world) const {
+        const auto q = frontend_.quaternionWorldToBody();
+        const Vector3f up_est(2.0f * float(q.x * q.z - q.w * q.y),
+                              2.0f * float(q.w * q.x + q.y * q.z),
+                              float(q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z));
+        const Vector3f up_zu = q_body_to_world.conjugate() * Vector3f::UnitZ();
+        const Vector3f up_true(-up_zu.x(), -up_zu.y(), up_zu.z());
+        const float c = std::clamp(up_est.normalized().dot(up_true), -1.0f, 1.0f);
+        return float(std::acos(c) * 180.0 / M_PI);
+    }
+
     static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
         const Vector3f v_zu = ned_to_zu(v_ned);
         return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
@@ -229,7 +285,16 @@ private:
     static Frontend::Config make_frontend_config_(bool with_mag) {
         Frontend::Config cfg{};
         cfg.gravity_mps2 = g_std;
-        cfg.use_mag = with_mag;
+        cfg.use_mag = with_mag && g_frontend == Levelling::Mahony;
+        // Fixed Mahony gains: the slow front end, or a sweep override.  The
+        // integral gain defaults to critical damping, twoKi = twoKp^2 / 8.
+        double kp = 0.0, ki = 0.0;
+        if (g_frontend == Levelling::MahonySlow) kp = kMahonySlowTwoKp;
+        if (env_double("HB_MAHONY_TWOKP", kp) || kp > 0.0) {
+            cfg.adapt_mahony_gains = false;
+            cfg.mahony_twoKp = float(kp);
+            cfg.mahony_twoKi = env_double("HB_MAHONY_TWOKI", ki) ? float(ki) : float(kp * kp / 8.0);
+        }
         return cfg;
     }
 
@@ -256,29 +321,39 @@ void summarize(Method method, const W3dSimulationRunResult& r, float dt) {
         return;
     }
     const size_t start = r.errs_z.size() - n_last;
-    RMSReport rz, rref;
+    RMSReport rz, rref, rtilt;
     for (size_t i = start; i < r.errs_z.size(); ++i) {
         rz.add(r.errs_z[i]);
         rref.add(r.ref_z[i]);
+        if (i < g_tilt_deg.size()) rtilt.add(g_tilt_deg[i]);
     }
     const float z_pct = 100.0f * rz.rms() / r.wave_params.height;
     std::vector<float> f(r.freq_hist.begin() + long(start), r.freq_hist.end());
     std::cout << "HEAVE_BASELINE method=" << method_name(method)
-              << " frontend=" << (g_truth_frontend ? "truth" : "mahony")
+              << " frontend=" << frontend_name(g_frontend)
               << " record=" << r.input_name
               << " Hs=" << r.wave_params.height
               << " z_rms_m=" << rz.rms()
               << " z_pct_hs=" << z_pct
               << " heave_ref_rms_m=" << rref.rms()
+              << " tilt_rms_deg=" << rtilt.rms()
               << " freq_hz_median=" << median_vec(f)
               << " final_tuning=" << r.final_tuning_applied << "\n";
 
-    const HeaveLimits lim = g_truth_frontend
+    const HeaveLimits lim =
+        g_frontend == Levelling::Truth
         ? (method == Method::Godhavn ? GODHAVN_TRUTH_LIMITS
-           : method == Method::GodhavnExt ? GODHAVN_EXT_TRUTH_LIMITS : KUCHLER_TRUTH_LIMITS)
+           : method == Method::GodhavnExt ? GODHAVN_EXT_TRUTH_LIMITS
+           : method == Method::RichterZd ? RICHTER_ZD_TRUTH_LIMITS : KUCHLER_TRUTH_LIMITS)
+        : g_frontend == Levelling::MahonySlow
+        ? (method == Method::PII ? PII_SLOW_LIMITS
+           : method == Method::Godhavn ? GODHAVN_SLOW_LIMITS
+           : method == Method::GodhavnExt ? GODHAVN_EXT_SLOW_LIMITS
+           : method == Method::RichterZd ? RICHTER_ZD_SLOW_LIMITS : KUCHLER_SLOW_LIMITS)
         : (method == Method::PII ? PII_LIMITS
            : method == Method::Godhavn ? GODHAVN_LIMITS
-           : method == Method::GodhavnExt ? GODHAVN_EXT_LIMITS : KUCHLER_LIMITS);
+           : method == Method::GodhavnExt ? GODHAVN_EXT_LIMITS
+           : method == Method::RichterZd ? RICHTER_ZD_LIMITS : KUCHLER_LIMITS);
     const float limit = r.wave_type == WaveType::JONSWAP ? lim.jonswap : lim.pmstokes;
     if (!(z_pct <= limit)) {
         std::cerr << "ERROR: " << method_name(method) << " Z RMS above limit ("
@@ -294,8 +369,8 @@ std::optional<W3dSimulationRunResult> run_file(const std::string& file, float dt
                                                bool write_timeseries)
 {
     const std::string suffix = std::string("_heave_") + method_name(M) +
-        (g_truth_frontend ? "_truth" : "");
-    if (g_truth_frontend) load_truth_attitude(file);
+        (g_frontend == Levelling::Mahony ? "" : std::string("_") + frontend_name(g_frontend));
+    load_truth_attitude(file);
     return process_wave_file_for_tracker<HeaveBaselineAdapter<M>>(
         file, dt, with_mag, add_noise, 25.0f,
         suffix, suffix + "_nomag", seeds, write_timeseries);
@@ -307,7 +382,8 @@ int main(int argc, char* argv[]) {
     const float dt = float(kDt);
     bool with_mag = true;
     bool add_noise = true;
-    std::vector<Method> methods{Method::PII, Method::Godhavn, Method::GodhavnExt, Method::Kuchler};
+    std::vector<Method> methods{Method::PII, Method::Godhavn, Method::GodhavnExt,
+                                Method::RichterZd, Method::Kuchler};
     std::vector<std::string> files;
 
     for (int i = 1; i < argc; ++i) {
@@ -320,7 +396,8 @@ int main(int argc, char* argv[]) {
             files.emplace_back(argv[++i]);
         } else if (arg == "--frontend" && i + 1 < argc) {
             const std::string f = argv[++i];
-            if (f == "truth") g_truth_frontend = true;
+            if (f == "truth") g_frontend = Levelling::Truth;
+            else if (f == "mahony_slow") g_frontend = Levelling::MahonySlow;
             else if (f != "mahony") {
                 std::cerr << "ERROR: unknown frontend " << f << "\n";
                 return 2;
@@ -330,6 +407,7 @@ int main(int argc, char* argv[]) {
             if (m == "pii") methods = {Method::PII};
             else if (m == "godhavn") methods = {Method::Godhavn};
             else if (m == "godhavn_ext") methods = {Method::GodhavnExt};
+            else if (m == "richter_zd") methods = {Method::RichterZd};
             else if (m == "kuchler") methods = {Method::Kuchler};
             else if (m != "all") {
                 std::cerr << "ERROR: unknown method " << m << "\n";
@@ -337,8 +415,8 @@ int main(int argc, char* argv[]) {
             }
         } else {
             std::cerr << "Usage: " << argv[0]
-                      << " [--nomag] [--no-noise] [--frontend mahony|truth]"
-                         " [--method pii|godhavn|godhavn_ext|kuchler|all]"
+                      << " [--nomag] [--no-noise] [--frontend mahony|mahony_slow|truth]"
+                         " [--method pii|godhavn|godhavn_ext|richter_zd|kuchler|all]"
                          " [--input PATH]...\n";
             return 2;
         }
@@ -357,7 +435,7 @@ int main(int argc, char* argv[]) {
     }
     if (files.empty()) files = collect_wave_data_files(".");
     // PII carries its own attitude estimator; it has no truth-levelled form.
-    if (g_truth_frontend) std::erase(methods, Method::PII);
+    if (g_frontend == Levelling::Truth) std::erase(methods, Method::PII);
 
     for (const auto& file : files) {
         for (Method m : methods) {
@@ -371,6 +449,9 @@ int main(int argc, char* argv[]) {
                     break;
                 case Method::GodhavnExt:
                     r = run_file<Method::GodhavnExt>(file, dt, with_mag, add_noise, seeds, write_timeseries);
+                    break;
+                case Method::RichterZd:
+                    r = run_file<Method::RichterZd>(file, dt, with_mag, add_noise, seeds, write_timeseries);
                     break;
                 case Method::Kuchler:
                     r = run_file<Method::Kuchler>(file, dt, with_mag, add_noise, seeds, write_timeseries);

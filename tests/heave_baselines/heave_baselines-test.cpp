@@ -70,6 +70,38 @@ int main() {
         check(ok, "godhavn Eq. 12 minimises Eq. 11, w_c", wc, 0.0);
     }
     {
+        // Richter et al. 2014, Eq. 29 minimises Eq. 28.
+        const double q = 1.1e-6, wp = 0.8, Ap = 1.2;
+        const double wc = G::optimalCutoffZd(q, wp, Ap);
+        const double J0 = G::errorBoundZd(wc, wp, Ap, q, 0.0);
+        const bool ok = J0 < G::errorBoundZd(wc * 1.02, wp, Ap, q, 0.0) &&
+                        J0 < G::errorBoundZd(wc / 1.02, wp, Ap, q, 0.0);
+        check(ok, "zero-displacement Eq. 29 minimises Eq. 28, w_c", wc, 0.0);
+    }
+    {
+        // Eq. 26: with a from Eq. 25 the zero-displacement filter's error on a
+        // tone falls to |e| -> 4 (w_c/w_p)^2, far below the standard filter.
+        // Noise-free: Hzd amplifies white noise ~9x more (Eq. 27), which would
+        // swamp the structural error this checks.
+        G::Config cfg;
+        cfg.adaptive = false;
+        cfg.wc_init = 0.07;
+        cfg.zero_displacement = true;
+        G g(cfg);
+        double se = 0.0, sr = 0.0;
+        for (int k = 0; k < static_cast<int>(1200.0 / kDt); ++k) {
+            const double t = k * kDt;
+            const double z = std::cos(kW1 * t);
+            const double zh = g.update(-kW1 * kW1 * z + 0.05, kDt);
+            if (t > 600.0) { se += (zh - z) * (zh - z); sr += z * z; }
+        }
+        // a uses the unidentified w_p (asymptotic Eq. 25), so allow 2x of Eq. 26.
+        const double r = std::sqrt(se / sr);
+        const double theory = 4.0 * (0.07 / kW1) * (0.07 / kW1);
+        check(r < 2.0 * theory && r < 0.5 * G::relativeError(0.07, kW1),
+              "zero-displacement tone error vs Eq. 26", r, 2.0 * theory);
+    }
+    {
         // Fixed cutoff: the bias is rejected and what remains is the phase
         // lead of Eq. 7 on each tone.
         G::Config cfg;

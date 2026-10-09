@@ -43,11 +43,20 @@
   datasheet (Eq. 8).  The determined parameters are strongly low-pass
   filtered (here: relaxation of log w_c with param_tau_s).
 
+  Zero-displacement variant (zero_displacement, Richter et al. Section 3.2):
+  one zero of H moves off the origin, Hzd(s) = s (s + a) / D(s)^2 (Eq. 23),
+  which removes most of the phase lead; a follows Eq. 25,
+  a = 2 sqrt2 w_c (1 - w_c^2 / w_p^2), and the cutoff minimises (Eq. 28)
+  Jzd = 16 A_p^2 (w_c/w_p)^4 + (9 sqrt2/16) sigma_n^2 / w_c^3, i.e. (Eq. 29)
+  w_c^7 = (27 sqrt2 / 1024) sigma_n^2 w_p^4 / A_p^2.  Since s/D^2 is already
+  the second section's position state, p_zd = p + a x2.
+
   Two extensions, both off by default and not in the papers:
     bias_instability_term  adds the variance q_b / (2^(7/2) w_c^5) that an
                            accelerometer bias random walk of intensity q_b
                            leaves after H (exact for this H), and minimises
-                           the extended J numerically;
+                           the extended J numerically (for Hzd the term is
+                           q_b sqrt2/16 (w_c^-5 + 3 a^2 w_c^-7), also exact);
     subtract_input_mean    removes a slow running mean of the input ahead of
                            H so a retune does not move the DC state.
 */
@@ -83,6 +92,9 @@ public:
         T f_min_hz = T(0.04);
         T f_max_hz = T(1.0);
         T param_tau_s = T(60);
+
+        // Richter et al. 2014 zero-displacement filter (Section 3.2).
+        bool zero_displacement = false;
 
         // Extensions (see the header comment).
         bool bias_instability_term = false;
@@ -151,6 +163,28 @@ public:
                std::pow(T(3) * noise_density * wp * wp / (Ap * Ap), T(0.2));
     }
 
+    // Eq. 25.
+    static T zeroDisplacementA(T wc, T wp) {
+        const T r = std::isfinite(wp) && wp > T(0) ? wc / wp : T(0);
+        return T(2) * std::sqrt(T(2)) * wc * std::max(T(0), T(1) - r * r);
+    }
+
+    // Eq. 29.
+    static T optimalCutoffZd(T noise_density, T wp, T Ap) {
+        return std::pow(T(27) * std::sqrt(T(2)) / T(1024) * noise_density *
+                        wp * wp * wp * wp / (Ap * Ap), T(1) / T(7));
+    }
+
+    // Eq. 28, plus the optional bias-instability variance of Hzd.
+    static T errorBoundZd(T wc, T wp, T Ap, T noise_density, T bias_rw_density) {
+        const T r = wc / wp;
+        const T a = zeroDisplacementA(wc, wp);
+        const T wc3 = wc * wc * wc, wc5 = wc3 * wc * wc, wc7 = wc5 * wc * wc;
+        return T(16) * Ap * Ap * r * r * r * r +
+               T(9) * std::sqrt(T(2)) / T(16) * noise_density / wc3 +
+               bias_rw_density * std::sqrt(T(2)) / T(16) * (T(1) / wc5 + T(3) * a * a / wc7);
+    }
+
     // Eq. 11, plus the optional bias-instability variance.
     static T errorBound(T wc, T wp, T Ap, T noise_density, T bias_rw_density) {
         const T k = std::pow(T(2), T(3.5));
@@ -179,7 +213,8 @@ private:
 
         T target;
         if (!cfg_.bias_instability_term) {
-            target = optimalCutoff(cfg_.noise_density, wp, Ap);
+            target = cfg_.zero_displacement ? optimalCutoffZd(cfg_.noise_density, wp, Ap)
+                                            : optimalCutoff(cfg_.noise_density, wp, Ap);
         } else {
             constexpr int N = 160;
             const T lo = std::log(cfg_.wc_min), hi = std::log(cfg_.wc_max);
@@ -187,7 +222,9 @@ private:
             target = wc_target_;
             for (int i = 0; i < N; ++i) {
                 const T w = std::exp(lo + (hi - lo) * T(i) / T(N - 1));
-                const T j = errorBound(w, wp, Ap, cfg_.noise_density, cfg_.bias_rw_density);
+                const T j = cfg_.zero_displacement
+                    ? errorBoundZd(w, wp, Ap, cfg_.noise_density, cfg_.bias_rw_density)
+                    : errorBound(w, wp, Ap, cfg_.noise_density, cfg_.bias_rw_density);
                 if (j < best) { best = j; target = w; }
             }
         }
@@ -217,6 +254,11 @@ private:
             s_[i] += dt / T(6) * (k1[i] + T(2) * k2[i] + T(2) * k3[i] + k4[i]);
         heave_ = s_[3];
         vel_ = s_[1] - std::sqrt(T(2)) * wc_ * s_[3] - wc_ * wc_ * s_[2];
+        if (cfg_.zero_displacement) {
+            const T a = zeroDisplacementA(wc_, wp_);
+            vel_ += a * s_[3];
+            heave_ += a * s_[2];
+        }
     }
 
     Config cfg_;
