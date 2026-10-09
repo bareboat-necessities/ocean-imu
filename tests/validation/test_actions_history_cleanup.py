@@ -24,6 +24,12 @@ class TestActionsHistoryCleanupSource(unittest.TestCase):
         self.assertIn('enumerate_status(conclusion)', source)
         self.assertIn('(\"cancelled\", \"skipped\")', source)
 
+    def test_cancelled_cleanup_has_no_per_branch_retention(self):
+        source = SCRIPT.read_text()
+        # Keeping the newest cancelled run per workflow+branch protected the
+        # whole backlog, since most PR branches own a single cancelled run.
+        self.assertNotIn("protected", source)
+
     def test_large_backlog_is_deleted_in_bounded_batches(self):
         workflow = WORKFLOW.read_text()
         source = SCRIPT.read_text()
