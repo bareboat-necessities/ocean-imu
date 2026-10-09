@@ -339,7 +339,7 @@ bool any_gate_failed = false;
 
 void summarize(Method method, const W3dSimulationRunResult& r, float dt) {
     const size_t n_last = static_cast<size_t>(RMS_WINDOW_SEC / dt);
-    if (r.errs_z.size() <= n_last) {
+    if (r.errs_z.size() < n_last) {
         std::cout << "QUALITY_GATE: SKIPPED REASON=record_shorter_than_900s_window RECORD="
                   << r.output_name << "\n";
         return;
