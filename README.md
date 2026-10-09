@@ -251,6 +251,7 @@ src/                 core algorithms and reusable components
   detrend/           detrending helpers
   discrete/          discrete-time utilities
   freq/              frequency-domain utilities
+  heave_baselines/   literature heave baselines (Godhavn 1998, Kuchler et al. 2011)
   imu_calibrate/     IMU calibration logic
   kalman_ou_ii/      OU-II Kalman model components
   kalman_ou_iii/     OU-III Kalman model components
@@ -266,6 +267,7 @@ tests/               module-level build and validation targets
   ahrs/              AHRS-focused tests and examples
   detrend/           detrending tests
   freq/              builds freq-track
+  heave_baselines/   builds heave_baselines-sim (see docs/heave-baselines.md)
   imu_calibrate/     IMU calibration tests
   kalman_ou_ii/      builds kalman_ou_ii-sim
   kalman_ou_iii/     builds kalman_ou_iii-sim

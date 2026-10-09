@@ -6,6 +6,7 @@ TEST_DIRS := \
 	$(REPO_ROOT)/tests/ahrs \
 	$(REPO_ROOT)/tests/detrend \
 	$(REPO_ROOT)/tests/freq \
+	$(REPO_ROOT)/tests/heave_baselines \
 	$(REPO_ROOT)/tests/imu_calibrate \
 	$(REPO_ROOT)/tests/kalman_ou_ii \
 	$(REPO_ROOT)/tests/kalman_ou_iii \
