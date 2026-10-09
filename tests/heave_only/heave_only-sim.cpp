@@ -10,12 +10,12 @@
 /*
   Copyright 2026, Mikhail Grushinskiy
 
-  Literature heave baselines on the OU-II/OU-III replay.
+  Heave-only filters on the OU-II/OU-III replay.
 
   Every method sees the same corrupted IMU stream as the OU-III simulator:
   the record, the noise template (process_wave_file_for_tracker) and the
   seeds are shared, and the scored window is the same trailing 900 s.
-  The three baselines share one Mahony attitude front end, the tuned,
+  The heave-only filters share one Mahony attitude front end, the tuned,
   sea-state-adaptive one of the PII observer, and differ only in how they turn
   its levelled vertical acceleration into heave:
 
@@ -37,8 +37,9 @@
 
 #include "util/W3dSimCommon.h"
 #include "pii_observer/AdaptiveVerticalPIIMahony.h"
-#include "heave_baselines/GodhavnHeaveFilter.h"
-#include "heave_baselines/KuchlerHeaveEKF.h"
+#include "heave_only/GodhavnHeaveFilter.h"
+#include "heave_only/RichterHeaveFilter.h"
+#include "heave_only/KuchlerHeaveEKF.h"
 #include "kalman_common/SeaStateFusionDefaults.h"
 
 using Eigen::Quaternionf;
@@ -64,7 +65,7 @@ const char* method_name(Method m) {
 constexpr double kDt = 1.0 / 200.0;
 namespace sfd = seastate::common::defaults;
 
-// Vertical reference of the baselines:
+// Vertical reference of the heave-only filters:
 //   mahony       the PII observer's AHRS as shipped: sea-state-adaptive gains
 //                (time constant ~1 s) and magnetometer correction;
 //   proxy        the same Mahony core, IMU-only, at the gains of the private
@@ -138,11 +139,11 @@ constexpr HeaveLimits KUCHLER_TRUTH_LIMITS{16.62f, 20.23f};    // worst 16.53 / 
 constexpr HeaveLimits RICHTER_ZD_TRUTH_LIMITS{5.21f, 5.36f};   // worst 5.18 / 5.33
 
 template <Method M>
-class HeaveBaselineAdapter final : public IW3dFusionAdapter {
+class HeaveOnlyAdapter final : public IW3dFusionAdapter {
 public:
     using Frontend = marine_obs::AdaptiveVerticalPIIMahony<float, true, TrackerType::PLL>;
 
-    HeaveBaselineAdapter(bool with_mag,
+    HeaveOnlyAdapter(bool with_mag,
                          const Vector3f& sigma_a_init,
                          const Vector3f& sigma_g,
                          const Vector3f& sigma_m)
@@ -156,31 +157,36 @@ public:
         // figure both papers take from the sensor data sheet.
         const double accel_noise_std = 1.51e-3 * double(g_std);
 
-        heave_baselines::GodhavnHeaveFilter<double>::Config g{};
-        g.noise_density = accel_noise_std * accel_noise_std * kDt;
-        double wc = 0.0;
-        if (env_double("HB_GODHAVN_FIXED_WC", wc)) {
-            g.adaptive = false;
-            g.wc_init = wc;
-        }
         // godhavn: Richter's Eqs. 11-12 as published.  godhavn_ext adds the
         // bias-instability variance and the input-mean subtraction.
         // richter_zd is Richter's zero-displacement filter with the same two
         // extensions.
         constexpr bool ext = M == Method::GodhavnExt || M == Method::RichterZd;
-        g.bias_instability_term = ext || env_flag("HB_GODHAVN_BIAS_TERM");
-        g.subtract_input_mean = ext || env_flag("HB_GODHAVN_SUBTRACT_MEAN");
-        g.zero_displacement = M == Method::RichterZd || env_flag("HB_GODHAVN_ZD");
-        godhavn_ = heave_baselines::GodhavnHeaveFilter<double>(g);
+        const auto configure = [&](auto& c) {
+            c.noise_density = accel_noise_std * accel_noise_std * kDt;
+            double wc = 0.0;
+            if (env_double("HO_FIXED_WC", wc)) {
+                c.adaptive = false;
+                c.wc_init = wc;
+            }
+            c.bias_instability_term = ext || env_flag("HO_BIAS_TERM");
+            c.subtract_input_mean = ext || env_flag("HO_SUBTRACT_MEAN");
+        };
+        heave_only::GodhavnHeaveFilter<double>::Config g{};
+        configure(g);
+        godhavn_ = heave_only::GodhavnHeaveFilter<double>(g);
+        heave_only::RichterHeaveFilter<double>::Config rz{};
+        configure(rz);
+        richter_ = heave_only::RichterHeaveFilter<double>(rz);
 
-        heave_baselines::KuchlerHeaveEKF<double>::Config k{};
+        heave_only::KuchlerHeaveEKF<double>::Config k{};
         k.accel_noise_std = accel_noise_std;
-        env_double("HB_KUCHLER_ZETA_Q", k.zeta_q);
-        env_double("HB_KUCHLER_OMEGA_RW", k.omega_rw);
-        k.offset_from_fit = env_flag("HB_KUCHLER_OFFSET_FIT");
-        kuchler_ = heave_baselines::KuchlerHeaveEKF<double>(k);
+        env_double("HO_KUCHLER_ZETA_Q", k.zeta_q);
+        env_double("HO_KUCHLER_OMEGA_RW", k.omega_rw);
+        k.offset_from_fit = env_flag("HO_KUCHLER_OFFSET_FIT");
+        kuchler_ = heave_only::KuchlerHeaveEKF<double>(k);
         // The paper feeds the body-z accelerometer and neglects roll/pitch.
-        kuchler_body_z_ = env_flag("HB_KUCHLER_BODY_Z");
+        kuchler_body_z_ = env_flag("HO_KUCHLER_BODY_Z");
     }
 
     void updateMag(const Vector3f& mag_body_ned) override {
@@ -220,10 +226,12 @@ public:
         if constexpr (M == Method::PII) {
             heave_ = frontend_.displacement();
             vel_ = frontend_.velocity();
-        } else if constexpr (M == Method::Godhavn || M == Method::GodhavnExt ||
-                             M == Method::RichterZd) {
+        } else if constexpr (M == Method::Godhavn || M == Method::GodhavnExt) {
             heave_ = godhavn_.update(a_up, dt);
             vel_ = godhavn_.heaveRate();
+        } else if constexpr (M == Method::RichterZd) {
+            heave_ = richter_.update(a_up, dt);
+            vel_ = richter_.heaveRate();
         } else {
             const double a_in = kuchler_body_z_ ? double(a.z()) - double(g_std) : a_up;
             heave_ = kuchler_.update(a_in, dt);
@@ -235,7 +243,7 @@ public:
         FilterSnapshot s;
         s.disp_est_zu = Vector3f(0.0f, 0.0f, float(heave_));
         s.vel_est_zu = Vector3f(0.0f, 0.0f, float(vel_));
-        // The levelled vertical acceleration every baseline consumes.
+        // The levelled vertical acceleration every heave-only filter consumes.
         s.acc_est_zu = Vector3f(0.0f, 0.0f, float(input_));
 
         const auto q = frontend_.quaternionWorldToBody();
@@ -248,9 +256,10 @@ public:
 
         if constexpr (M == Method::Godhavn || M == Method::GodhavnExt ||
                       M == Method::RichterZd) {
-            s.tuning_applied = float(godhavn_.cutoff());
-            s.tuning_target = float(godhavn_.cutoffTarget());
-            const double wp = godhavn_.dominantFrequency();
+            const auto& f = adaptive_();
+            s.tuning_applied = float(f.cutoff());
+            s.tuning_target = float(f.cutoffTarget());
+            const double wp = f.dominantFrequency();
             s.freq_hz = float(wp / (2.0 * M_PI));
         } else if constexpr (M == Method::Kuchler) {
             s.tuning_applied = float(kuchler_.modeCount());
@@ -261,6 +270,12 @@ public:
     }
 
 private:
+    // The adaptive double-integrating filter this method runs.
+    const auto& adaptive_() const {
+        if constexpr (M == Method::RichterZd) return richter_;
+        else return godhavn_;
+    }
+
     // Angle between the estimated and true gravity directions in the body
     // frame: the levelling error that leaks horizontal acceleration into the
     // vertical channel, independent of yaw.
@@ -295,10 +310,10 @@ private:
             cfg.mahony_twoKi = sfd::STARTUP_PROXY_TWO_KI;
         }
         double kp = 0.0, ki = 0.0;
-        if (env_double("HB_MAHONY_TWOKP", kp)) {
+        if (env_double("HO_MAHONY_TWOKP", kp)) {
             cfg.adapt_mahony_gains = false;
             cfg.mahony_twoKp = float(kp);
-            cfg.mahony_twoKi = env_double("HB_MAHONY_TWOKI", ki) ? float(ki) : 0.0f;
+            cfg.mahony_twoKi = env_double("HO_MAHONY_TWOKI", ki) ? float(ki) : 0.0f;
         }
         return cfg;
     }
@@ -307,8 +322,9 @@ private:
     bool have_mag_ = false;
     Vector3f last_mag_body_ned_ = Vector3f::Zero();
     Frontend frontend_;
-    heave_baselines::GodhavnHeaveFilter<double> godhavn_;
-    heave_baselines::KuchlerHeaveEKF<double> kuchler_;
+    heave_only::GodhavnHeaveFilter<double> godhavn_;
+    heave_only::RichterHeaveFilter<double> richter_;
+    heave_only::KuchlerHeaveEKF<double> kuchler_;
     bool kuchler_body_z_ = false;
     double heave_ = 0.0;
     double vel_ = 0.0;
@@ -334,7 +350,7 @@ void summarize(Method method, const W3dSimulationRunResult& r, float dt) {
     }
     const float z_pct = 100.0f * rz.rms() / r.wave_params.height;
     std::vector<float> f(r.freq_hist.begin() + long(start), r.freq_hist.end());
-    std::cout << "HEAVE_BASELINE method=" << method_name(method)
+    std::cout << "HEAVE_ONLY method=" << method_name(method)
               << " frontend=" << frontend_name(g_frontend)
               << " record=" << r.input_name
               << " Hs=" << r.wave_params.height
@@ -376,7 +392,7 @@ std::optional<W3dSimulationRunResult> run_file(const std::string& file, float dt
     const std::string suffix = std::string("_heave_") + method_name(M) +
         (g_frontend == Levelling::Mahony ? "" : std::string("_") + frontend_name(g_frontend));
     load_truth_attitude(file);
-    return process_wave_file_for_tracker<HeaveBaselineAdapter<M>>(
+    return process_wave_file_for_tracker<HeaveOnlyAdapter<M>>(
         file, dt, with_mag, add_noise, 25.0f,
         suffix, suffix + "_nomag", seeds, write_timeseries);
 }

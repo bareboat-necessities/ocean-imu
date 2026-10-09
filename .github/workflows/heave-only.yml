@@ -1,31 +1,31 @@
-name: heave-baselines
+name: heave-only
 
 on:
   push:
     branches: [main]
     paths:
-      - "src/heave_baselines/**"
+      - "src/heave_only/**"
       - "src/pii_observer/**"
       - "src/ahrs/Mahony_AHRS.h"
       - "src/util/W3dSimCommon.*"
-      - "tests/heave_baselines/**"
+      - "tests/heave_only/**"
       - "tools/sim_dataset.py"
       - "Makefile"
-      - ".github/workflows/heave-baselines.yml"
+      - ".github/workflows/heave-only.yml"
   pull_request:
     paths:
-      - "src/heave_baselines/**"
+      - "src/heave_only/**"
       - "src/pii_observer/**"
       - "src/ahrs/Mahony_AHRS.h"
       - "src/util/W3dSimCommon.*"
-      - "tests/heave_baselines/**"
+      - "tests/heave_only/**"
       - "tools/sim_dataset.py"
       - "Makefile"
-      - ".github/workflows/heave-baselines.yml"
+      - ".github/workflows/heave-only.yml"
   workflow_dispatch:
 
 concurrency:
-  group: heave-baselines-${{ github.event.pull_request.number || github.ref }}
+  group: heave-only-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -45,16 +45,16 @@ jobs:
       - name: Build with warnings
         shell: bash
         run: |
-          log="${RUNNER_TEMP}/heave-baselines-build.log"
-          if ! make -C tests/heave_baselines build >"${log}" 2>&1; then
+          log="${RUNNER_TEMP}/heave-only-build.log"
+          if ! make -C tests/heave_only build >"${log}" 2>&1; then
             grep -nE '(^|[[:space:]])(error:|warning:|fatal error:)|make(\[[0-9]+\])?: \*\*\*' "${log}" || tail -n 160 "${log}"
             exit 1
           fi
 
       # Unit checks, then both front ends of the replay against their
       # regression sentinels.
-      - name: Run heave baseline tests
+      - name: Run heave-only filter tests
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           W3D_COLLECT_ALL_GATES: "1"
-        run: make -C tests/heave_baselines test
+        run: make -C tests/heave_only test

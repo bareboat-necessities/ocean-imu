@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Heave over the last 60 s: literature baselines against the OU families.
+"""Heave over the last 60 s: literature heave-only filters against the OU families.
 
 Reads the time series the simulators write with W3D_WRITE_TIMESERIES=1:
   tests/kalman_ou_iii/*_fusion_ou3.csv, tests/kalman_ou_ii/*_fusion_ou2.csv,
-  tests/kalman_tfg/*_fusion_tfg.csv and tests/heave_baselines/*_heave_*.csv
+  tests/kalman_tfg/*_fusion_tfg.csv and tests/heave_only/*_heave_*.csv
 (the latter for pii, godhavn, godhavn_ext, richter_zd and kuchler, per
 levelling front end).  All share one noise
 realisation per record, so the traces are directly comparable.
 
 For each JONSWAP / PM-Stokes record at the low, medium and high heights it
-writes heave_baselines_<wave>_<group>.svg (reference and every estimate,
-plus the error) and <method>_<wave>_<group>_zkin.svg for each baseline
+writes heave_only_<wave>_<group>.svg (reference and every estimate,
+plus the error) and <method>_<wave>_<group>_zkin.svg for each heave-only filter
 (heave and heave rate against the reference); --png adds PNG previews.
 """
 
@@ -40,17 +40,17 @@ SOURCES = {
     "ou3": ("kalman_ou_iii", "_fusion_ou3.csv", "OU-III"),
     "ou2": ("kalman_ou_ii", "_fusion_ou2.csv", "OU-II"),
     "tfg": ("kalman_tfg", "_fusion_tfg.csv", "TFG"),
-    "pii": ("heave_baselines", "_heave_pii.csv", "PII"),
-    "godhavn": ("heave_baselines", "_heave_godhavn.csv", "Godhavn (published cutoff law)"),
-    "godhavn_ext": ("heave_baselines", "_heave_godhavn_ext.csv", "Godhavn + bias term"),
-    "richter_zd": ("heave_baselines", "_heave_richter_zd.csv", "Richter zero-displacement"),
-    "kuchler": ("heave_baselines", "_heave_kuchler.csv", "Küchler EKF"),
+    "pii": ("heave_only", "_heave_pii.csv", "PII"),
+    "godhavn": ("heave_only", "_heave_godhavn.csv", "Godhavn (published cutoff law)"),
+    "godhavn_ext": ("heave_only", "_heave_godhavn_ext.csv", "Godhavn + bias term"),
+    "richter_zd": ("heave_only", "_heave_richter_zd.csv", "Richter zero-displacement"),
+    "kuchler": ("heave_only", "_heave_kuchler.csv", "Küchler EKF"),
 }
-BASELINES = ("godhavn", "godhavn_ext", "richter_zd", "kuchler", "pii")
+HEAVE_ONLY_METHODS = ("godhavn", "godhavn_ext", "richter_zd", "kuchler", "pii")
 FRONTENDS = {
-    "mahony": ("", "baselines levelled by the shipped Mahony"),
-    "proxy": ("_proxy", "baselines levelled by the shared IMU-only proxy Mahony"),
-    "truth": ("_truth", "baselines levelled with the true attitude"),
+    "mahony": ("", "heave-only filters levelled by the shipped Mahony"),
+    "proxy": ("_proxy", "heave-only filters levelled by the shared IMU-only proxy Mahony"),
+    "truth": ("_truth", "heave-only filters levelled with the true attitude"),
 }
 NAME = re.compile(r"w3d_(?P<wave>[a-z]+)_H(?P<h>[0-9.]+)_")
 
@@ -60,7 +60,7 @@ FRONTEND = "mahony"
 
 def find(tests_dir: Path, method: str, wave: str, height: float):
     sub, suffix, _ = SOURCES[method]
-    if method in BASELINES:
+    if method in HEAVE_ONLY_METHODS:
         suffix = suffix.replace(".csv", FRONTENDS[FRONTEND][0] + ".csv")
     # The glob ends in the full suffix, so *_heave_godhavn.csv never matches
     # *_heave_godhavn_ext.csv and the Mahony series never match the others.
@@ -108,7 +108,7 @@ def overview(dfs: dict, wave: str, group: str, height: float, out: Path):
                  f"{levelling} (window RMS error in legend)")
     panels = (
         (axes[0], ("ou3", "ou2", "tfg", "pii"), "OU families and PII" if "pii" in est else "OU families"),
-        (axes[1], ("richter_zd", "godhavn_ext", "kuchler"), "Literature baselines"),
+        (axes[1], ("richter_zd", "godhavn_ext", "kuchler"), "Literature heave-only filters"),
         (axes[2], ("godhavn",), "Godhavn, published cutoff law (own scale)"),
     )
     styles = {"ou3": "-", "ou2": "-.", "tfg": (0, (3, 1, 1, 1)), "pii": ":",
@@ -130,7 +130,7 @@ def overview(dfs: dict, wave: str, group: str, height: float, out: Path):
     axes[3].set_xlabel("Time [s]")
     axes[3].grid(True)
     axes[3].legend(loc="upper right", fontsize=7, ncol=3)
-    save(fig, out / f"heave_baselines{FRONTENDS[FRONTEND][0]}_{wave}_{group}")
+    save(fig, out / f"heave_only{FRONTENDS[FRONTEND][0]}_{wave}_{group}")
 
 
 def zkin(df: pd.DataFrame, method: str, wave: str, group: str, height: float, out: Path):
@@ -153,7 +153,7 @@ def main():
     ap.add_argument("--output-dir", type=Path, default=Path("."))
     ap.add_argument("--png", action="store_true", help="also write PNG previews")
     ap.add_argument("--frontend", choices=tuple(FRONTENDS), default="mahony",
-                    help="which levelling the baseline series used")
+                    help="which levelling the heave-only filter series used")
     args = ap.parse_args()
     global WRITE_PNG, FRONTEND
     WRITE_PNG = args.png
@@ -168,11 +168,11 @@ def main():
                 path = find(args.tests_dir, m, wave, height)
                 if path is not None:
                     dfs[m] = tail(path)
-            if not any(m in dfs for m in BASELINES):
-                print(f"skip {wave} {group}: no baseline time series")
+            if not any(m in dfs for m in HEAVE_ONLY_METHODS):
+                print(f"skip {wave} {group}: no heave-only filter time series")
                 continue
             overview(dfs, wave, group, height, args.output_dir)
-            for m in BASELINES:
+            for m in HEAVE_ONLY_METHODS:
                 if m in dfs:
                     zkin(dfs[m], m, wave, group, height, args.output_dir)
             print(f"{wave} {group}: {', '.join(sorted(dfs))}")

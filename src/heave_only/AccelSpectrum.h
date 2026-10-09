@@ -3,7 +3,7 @@
 /*
   Copyright 2026, Mikhail Grushinskiy
 
-  Shared identification front end of the literature heave baselines: the
+  Shared identification front end of the heave-only filters: the
   vertical acceleration is block-averaged into a ring buffer, and the buffer's
   Hann-windowed FFT gives the heave amplitude spectrum |A_acc(w)| / w^2
   (Kuchler et al. 2011, Eq. 2) and its peaks.
@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 
-namespace heave_baselines {
+namespace heave_only {
 
 template <typename T>
 class AccelSpectrum {
@@ -156,4 +156,4 @@ private:
     T raw_dt_ = T(0.005);
 };
 
-} // namespace heave_baselines
+} // namespace heave_only

@@ -1,17 +1,25 @@
-# Literature heave baselines
+# Heave-only filters
 
-`src/heave_baselines/` implements two published IMU heave estimators for
-comparison with the OU filters on the same replay:
+`src/heave_only/` implements three published heave-only filters. Each
+estimates vertical displacement from the levelled vertical acceleration
+alone, and all are compared with the OU filters on the same replay:
 
 - `GodhavnHeaveFilter.h`: the standard adaptive heave filter of Godhavn
   (OCEANS'98). It is implemented as specified by Richter et al. (IFAC 2014),
-  Sections 2.2–2.4, because the original paper is not openly available. The
-  same header also provides Richter's zero-displacement filter (Section 3.2).
+  Sections 2.2–2.4, because the original paper is not openly available.
+- `RichterHeaveFilter.h`: the zero-displacement heave filter of Richter et
+  al. (IFAC 2014), Section 3.2.
 - `KuchlerHeaveEKF.h`: the harmonic-mode EKF of Küchler et al. (IFAC 2011).
-- `AccelSpectrum.h`: the shared FFT identification front end.
+
+Two support headers:
+
+- `AdaptiveHeaveFilter.h`: the engine the Godhavn and Richter filters share.
+  It holds the cascaded sections, the identification of `w_p` and `A_p`, and
+  cutoff retuning. Each filter supplies its own structure law.
+- `AccelSpectrum.h`: the FFT identification front end.
 
 The filters take the levelled vertical acceleration (z up, gravity removed)
-and return heave. In `tests/heave_baselines` they share one attitude front
+and return heave. In `tests/heave_only` they share one attitude front
 end with the PII observer, which runs alongside them. Equation numbers below
 are those of the cited papers.
 
@@ -62,7 +70,7 @@ presumably negligible.
 With both, the adapted cutoff runs from 0.17 rad/s (Hs 0.27 m) down to
 0.032 rad/s (Hs 8.5 m).
 
-### Zero-displacement filter (Richter et al. 2014, Section 3.2)
+## Richter et al. 2014: zero-displacement filter (Section 3.2)
 
 Richter et al. identify the standard filter's phase lead as its main
 real-time error, and propose moving one of its zeros off the origin (Eq. 23):
@@ -120,13 +128,13 @@ Choices the paper leaves open:
   replay (mean 12.1–17.4 % of Hs over the range tried). Using 8 modes did not
   help.
 - **Input.** The paper uses the raw body-z accelerometer and neglects roll
-  and pitch. `HB_KUCHLER_BODY_Z=1` reproduces that: the mean error is
-  13.7 %, against 12.6 % with levelled input. `HB_KUCHLER_OFFSET_FIT=1`
+  and pitch. `HO_KUCHLER_BODY_Z=1` reproduces that: the mean error is
+  13.7 %, against 12.6 % with levelled input. `HO_KUCHLER_OFFSET_FIT=1`
   seeds the offset from the buffer fit instead (12.4 %).
 
 ## Comparison on the OU replay
 
-`tests/heave_baselines/heave_baselines-sim` runs every method through
+`tests/heave_only/heave_only-sim` runs every method through
 `process_wave_file_for_tracker`, the noise template and seeds of the OU-II,
 OU-III and TFG simulators. It uses:
 
@@ -135,7 +143,7 @@ OU-III and TFG simulators. It uses:
 - a 25 Hz magnetometer.
 
 It scores vertical displacement over the same trailing 900 s window. The
-baselines need a vertical reference (`--frontend`):
+heave-only filters need a vertical reference (`--frontend`):
 
 - **`mahony` (default).** The PII observer's Mahony AHRS as shipped.
 - **`proxy`.** The same Mahony core, IMU-only, at the gains of the private
@@ -181,7 +189,7 @@ attitude feeds. The correction corner is about `2Kp/2` rad/s.
 | PII observer (`AdaptiveVerticalPIIMahony`) | 1.2–1.7, adapted to sea state | 0.009–0.0125 | 0.6–0.85 rad/s (0.10–0.14 Hz) | yes | the attitude its heave channel is levelled with |
 | OU-II, OU-III, TFG (`VerticalAccelComplementary`, `SeaStateFusionDefaults.h`) | 0.2 | 0.02 | 0.1 rad/s (0.016 Hz) | no | levels the wave-period/tuner channel and seeds the startup attitude; the MEKF supplies the attitude used for heave |
 | TVG-NLO (`TimeVarGainNLO_Adapter`) | 0.35 | – | 0.18 rad/s | no | 2–6 s bootstrap only, then the NLO takes over |
-| Baselines, `proxy` | 0.2 | 0.02 | 0.1 rad/s | no | the attitude every baseline is levelled with |
+| Heave-only filters, `proxy` | 0.2 | 0.02 | 0.1 rad/s | no | the attitude every heave-only filter is levelled with |
 
 The wave band of these records is 0.11–0.42 Hz. The PII corner sits inside
 it, so each wave's horizontal acceleration pulls the estimated vertical.
@@ -194,6 +202,48 @@ A sweep of IMU-only fixed gains found heave error flat for `2Kp` from 0.03
 to 0.2. At `2Kp = 0.01` the gyro carries attitude too long and tilt reaches
 4.4°. A slower setting (`2Kp = 0.05`) gave 4.98 % for `richter_zd`,
 against 5.11 % at the shared gains, which is not worth a separate tuning.
+
+### Do these settings help the other filters?
+
+Each filter was rerun on its own simulator (OU-II, OU-III, TFG, NLO at the
+OU noise model; PII at its own) with only the Mahony settings changed. Z RMS
+error is in % of Hs and roll/pitch RMS is in degrees, over the last 900 s,
+averaged over the eight records.
+
+| Filter | Mahony variant | Z mean (worst) | Roll / pitch | Effect |
+|---|---|---|---|---|
+| OU-III | private observer 0.2/0.02 (default) | 4.00 (4.25) | 0.25 / 0.13 | – |
+| OU-III | 0.05/0.0003 | 3.98 (4.19) | 0.71 / 0.22 | attitude and accelerometer-bias gates fail |
+| OU-III | 0.1/0.005 | 4.00 (4.25) | 0.23 / 0.13 | none |
+| OU-II | 0.2/0.02 (default) | 6.18 (6.63) | 0.19 / 0.18 | – |
+| OU-II | 0.05/0.0003 | 6.19 (6.66) | 0.33 / 0.21 | slightly worse |
+| OU-II | 0.1/0.005 | 6.18 (6.63) | 0.18 / 0.18 | none |
+| TFG | 0.2/0.02 (default) | 4.06 (4.38) | 0.29 / 0.06 | – |
+| TFG | 0.05/0.0003 | 4.03 (4.27) | 1.13 / 0.19 | 3-D gates fail |
+| TFG | 0.1/0.005 | 4.05 (4.35) | 0.56 / 0.09 | worse attitude |
+| NLO | bootstrap 0.35 (default), 0.2, 0.05 | 6.96 (7.32) | 0.25 / 0.14 | none |
+| PII | adaptive 1.2–1.7, magnetometer (default) | 5.90 (8.75) | – | – |
+| PII | default gains, no magnetometer | 5.52 (7.56) | – | better |
+| PII | 0.2/0.02, magnetometer | 6.42 (13.30) | – | worse |
+| PII | 0.2/0.02, no magnetometer | **5.02 (5.91)** | – | better |
+| PII | 0.05/0.0003, no magnetometer | 5.03 (5.92) | – | better |
+
+- **OU-II, OU-III, TFG.** The private observer only seeds the startup
+  attitude and levels the wave-period/tuner input. Heave uses the MEKF
+  attitude, so slower settings do not help, and the slowest one delays the
+  startup attitude enough to hurt attitude and accelerometer-bias estimates.
+- **NLO.** Its Mahony runs only during the 2–6 s bootstrap.
+- **PII.** The one filter whose heave is levelled by its Mahony. Taking the
+  magnetometer out of the tilt loop and using the shared gains cuts its mean
+  error by 15 % and its worst case by a third.
+  - Slow gains with the magnetometer still in the loop are worse than the
+    default.
+  - PII also reports yaw, which then needs the magnetometer to correct
+    heading only.
+  - The PII sim runs at its own noise model (5 mg accelerometer bias, 20 Hz
+    magnetometer), so its numbers differ slightly from the `heave_only`
+    table.
+  - The shipped PII defaults are not changed here.
 
 ### Where the error comes from
 
@@ -269,39 +319,39 @@ of the replay. The legends give each method's RMS error over that 60 s window.
 
 With the shared `proxy` Mahony:
 
-![JONSWAP Hs 1.5 m](../reports/results/heave_baselines/heave_baselines_proxy_jonswap_medium.svg)
+![JONSWAP Hs 1.5 m](../reports/results/heave_only/heave_only_proxy_jonswap_medium.svg)
 
-![JONSWAP Hs 8.5 m](../reports/results/heave_baselines/heave_baselines_proxy_jonswap_high.svg)
+![JONSWAP Hs 8.5 m](../reports/results/heave_only/heave_only_proxy_jonswap_high.svg)
 
 With the Mahony as shipped:
 
-![PM-Stokes Hs 8.5 m](../reports/results/heave_baselines/heave_baselines_pmstokes_high.svg)
+![PM-Stokes Hs 8.5 m](../reports/results/heave_only/heave_only_pmstokes_high.svg)
 
 All records, for both front ends, are in
-[`reports/results/heave_baselines/`](../reports/results/heave_baselines/).
-`heave_baselines_proxy_*` use the `proxy` front end; the others use the
+[`reports/results/heave_only/`](../reports/results/heave_only/).
+`heave_only_proxy_*` use the `proxy` front end; the others use the
 Mahony as shipped.
 
 ## Reproduce
 
 ```bash
 make ensure-sim-data
-for d in kalman_ou_iii kalman_ou_ii kalman_tfg heave_baselines; do
+for d in kalman_ou_iii kalman_ou_ii kalman_tfg heave_only; do
   (cd tests/$d && make build && W3D_WRITE_TIMESERIES=1 ./run_tests.sh)
 done
-cd plots/heave_baselines && ./draw_plots.sh   # all front ends; --png adds previews
+cd plots/heave_only && ./draw_plots.sh   # all front ends; --png adds previews
 ```
 
 `draw_plots.sh` also writes `<method>_<wave>_<group>_zkin.svg`, with heave
-and heave rate per baseline.
+and heave rate per heave-only filter.
 
 These variables change the defaults for sweeps:
-- `HB_MAHONY_TWOKP` and `HB_MAHONY_TWOKI` set fixed front-end gains
+- `HO_MAHONY_TWOKP` and `HO_MAHONY_TWOKI` set fixed front-end gains
   (`2Ki` defaults to 0);
-- `HB_GODHAVN_FIXED_WC`, `HB_GODHAVN_BIAS_TERM`, `HB_GODHAVN_SUBTRACT_MEAN`
-  and `HB_GODHAVN_ZD`;
-- `HB_KUCHLER_ZETA_Q`, `HB_KUCHLER_OMEGA_RW`, `HB_KUCHLER_BODY_Z` and
-  `HB_KUCHLER_OFFSET_FIT`.
+- `HO_FIXED_WC`, `HO_BIAS_TERM` and `HO_SUBTRACT_MEAN` for the Godhavn and
+  Richter filters;
+- `HO_KUCHLER_ZETA_Q`, `HO_KUCHLER_OMEGA_RW`, `HO_KUCHLER_BODY_Z` and
+  `HO_KUCHLER_OFFSET_FIT`.
 
 The simulator gates each method on its own regression sentinel.
 

@@ -11,10 +11,11 @@
 
 #define EIGEN_NON_ARDUINO
 
-#include "heave_baselines/GodhavnHeaveFilter.h"
-#include "heave_baselines/KuchlerHeaveEKF.h"
+#include "heave_only/GodhavnHeaveFilter.h"
+#include "heave_only/RichterHeaveFilter.h"
+#include "heave_only/KuchlerHeaveEKF.h"
 
-using namespace heave_baselines;
+using namespace heave_only;
 
 namespace {
 
@@ -55,27 +56,30 @@ double relative_rms(Filter& f, double bias) {
 
 int main() {
     using G = GodhavnHeaveFilter<double>;
+    using GL = GodhavnLaw<double>;
+    using Rz = RichterHeaveFilter<double>;
+    using RL = RichterZeroDisplacementLaw<double>;
     {
         // Richter et al. 2014, Eq. 7: e -> 2 sqrt2 w_c / w_p for w_p >> w_c.
-        const double r = G::relativeError(0.01, 1.0) / (2.0 * std::sqrt(2.0) * 0.01);
+        const double r = GL::relativeError(0.01, 1.0) / (2.0 * std::sqrt(2.0) * 0.01);
         check(std::abs(r - 1.0) < 0.01, "godhavn Eq. 7 asymptote ratio", r, 0.01);
     }
     {
         // Eq. 12 is the minimiser of Eq. 11.
         const double q = 1.1e-6, wp = 0.8, Ap = 1.2;
-        const double wc = G::optimalCutoff(q, wp, Ap);
-        const double J0 = G::errorBound(wc, wp, Ap, q, 0.0);
-        const bool ok = J0 < G::errorBound(wc * 1.02, wp, Ap, q, 0.0) &&
-                        J0 < G::errorBound(wc / 1.02, wp, Ap, q, 0.0);
+        const double wc = GL::optimalCutoff(q, wp, Ap);
+        const double J0 = GL::errorBound(wc, wp, Ap, q, 0.0);
+        const bool ok = J0 < GL::errorBound(wc * 1.02, wp, Ap, q, 0.0) &&
+                        J0 < GL::errorBound(wc / 1.02, wp, Ap, q, 0.0);
         check(ok, "godhavn Eq. 12 minimises Eq. 11, w_c", wc, 0.0);
     }
     {
         // Richter et al. 2014, Eq. 29 minimises Eq. 28.
         const double q = 1.1e-6, wp = 0.8, Ap = 1.2;
-        const double wc = G::optimalCutoffZd(q, wp, Ap);
-        const double J0 = G::errorBoundZd(wc, wp, Ap, q, 0.0);
-        const bool ok = J0 < G::errorBoundZd(wc * 1.02, wp, Ap, q, 0.0) &&
-                        J0 < G::errorBoundZd(wc / 1.02, wp, Ap, q, 0.0);
+        const double wc = RL::optimalCutoff(q, wp, Ap);
+        const double J0 = RL::errorBound(wc, wp, Ap, q, 0.0);
+        const bool ok = J0 < RL::errorBound(wc * 1.02, wp, Ap, q, 0.0) &&
+                        J0 < RL::errorBound(wc / 1.02, wp, Ap, q, 0.0);
         check(ok, "zero-displacement Eq. 29 minimises Eq. 28, w_c", wc, 0.0);
     }
     {
@@ -83,11 +87,10 @@ int main() {
         // tone falls to |e| -> 4 (w_c/w_p)^2, far below the standard filter.
         // Noise-free: Hzd amplifies white noise ~9x more (Eq. 27), which would
         // swamp the structural error this checks.
-        G::Config cfg;
+        Rz::Config cfg;
         cfg.adaptive = false;
         cfg.wc_init = 0.07;
-        cfg.zero_displacement = true;
-        G g(cfg);
+        Rz g(cfg);
         double se = 0.0, sr = 0.0;
         for (int k = 0; k < static_cast<int>(1200.0 / kDt); ++k) {
             const double t = k * kDt;
@@ -98,7 +101,7 @@ int main() {
         // a uses the unidentified w_p (asymptotic Eq. 25), so allow 2x of Eq. 26.
         const double r = std::sqrt(se / sr);
         const double theory = 4.0 * (0.07 / kW1) * (0.07 / kW1);
-        check(r < 2.0 * theory && r < 0.5 * G::relativeError(0.07, kW1),
+        check(r < 2.0 * theory && r < 0.5 * GL::relativeError(0.07, kW1),
               "zero-displacement tone error vs Eq. 26", r, 2.0 * theory);
     }
     {
@@ -109,8 +112,8 @@ int main() {
         cfg.wc_init = 0.07;
         G g(cfg);
         const double r = relative_rms(g, 0.05);
-        const double e1 = G::relativeError(0.07, kW1);
-        const double e2 = 0.3 * G::relativeError(0.07, kW2);
+        const double e1 = GL::relativeError(0.07, kW1);
+        const double e2 = 0.3 * GL::relativeError(0.07, kW2);
         const double theory = std::sqrt((e1 * e1 + e2 * e2) / 1.09);
         check(std::abs(r / theory - 1.0) < 0.05, "godhavn heave rms / Eq. 7 theory",
               r / theory, 1.05);

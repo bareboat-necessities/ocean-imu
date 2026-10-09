@@ -3,7 +3,7 @@
 /*
   Copyright 2026, Mikhail Grushinskiy
 
-  Literature baseline: the harmonic-mode heave observer of
+  Heave-only filter: the harmonic-mode heave observer of
 
     S. Kuchler, J. K. Eberharter, K. Langer, K. Schneider, O. Sawodny,
     "Heave motion estimation of a vessel using acceleration measurements",
@@ -61,9 +61,9 @@
 
 #include <Eigen/Dense>
 
-#include "heave_baselines/AccelSpectrum.h"
+#include "heave_only/AccelSpectrum.h"
 
-namespace heave_baselines {
+namespace heave_only {
 
 template <typename T = double, int MaxModes = 4>
 class KuchlerHeaveEKF {
@@ -381,4 +381,4 @@ private:
     int identifications_ = 0;
 };
 
-} // namespace heave_baselines
+} // namespace heave_only

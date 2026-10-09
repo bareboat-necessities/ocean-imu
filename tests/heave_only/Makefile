@@ -20,7 +20,7 @@ LDFLAGS =
 
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = heave_baselines-sim heave_baselines-test
+TARGETS = heave_only-sim heave_only-test
 
 all: build test
 
@@ -32,10 +32,10 @@ test: ensure-sim-data $(TARGETS)
 ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
 
-heave_baselines-sim: heave_baselines-sim.o W3dSimCommon.o
+heave_only-sim: heave_only-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-heave_baselines-test: heave_baselines-test.o
+heave_only-test: heave_only-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
