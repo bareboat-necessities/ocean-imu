@@ -13,6 +13,7 @@
 #include <cmath>
 #include <complex>
 #include <numbers>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -26,7 +27,12 @@ public:
         T height;  // smoothed heave amplitude spectrum at the peak
     };
 
+    // size is the FFT length; the radix-2 transform needs a power of two.
     AccelSpectrum(T fs_hz, int size) : fs_hz_(fs_hz), n_(size) {
+        if (size < 8 || (size & (size - 1)) != 0) {
+            throw std::invalid_argument("AccelSpectrum: size must be a power of two >= 8");
+        }
+        if (!(fs_hz > T(0))) throw std::invalid_argument("AccelSpectrum: fs_hz must be positive");
         ring_.assign(static_cast<size_t>(n_), T(0));
     }
 

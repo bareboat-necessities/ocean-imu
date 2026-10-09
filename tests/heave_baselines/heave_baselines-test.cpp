@@ -3,6 +3,7 @@
 #include <iostream>
 #include <numbers>
 #include <random>
+#include <stdexcept>
 
 /*
   Copyright 2026, Mikhail Grushinskiy
@@ -107,6 +108,18 @@ int main() {
         check(std::abs(k.offset() - 0.05) < 0.005, "kuchler offset error m/s^2",
               std::abs(k.offset() - 0.05), 0.005);
         check(k.modeCount() >= 1, "kuchler active modes", k.modeCount(), 1);
+    }
+    {
+        // The radix-2 FFT needs a power-of-two length.
+        bool threw = false;
+        try {
+            KuchlerHeaveEKF<double>::Config cfg;
+            cfg.fft_size = 500;
+            KuchlerHeaveEKF<double> k(cfg);
+        } catch (const std::invalid_argument&) {
+            threw = true;
+        }
+        check(threw, "non-power-of-two fft_size rejected", threw, 1);
     }
     return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
