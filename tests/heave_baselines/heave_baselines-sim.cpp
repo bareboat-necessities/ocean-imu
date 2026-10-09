@@ -58,6 +58,25 @@ const char* method_name(Method m) {
 
 constexpr double kDt = 1.0 / 200.0;
 
+// Ideal vertical reference: when set, the baselines level the measured
+// accelerometer with the record's true attitude instead of the Mahony
+// estimate.  The quaternions are the record's own, consumed one per IMU
+// sample in the runner's order.
+bool g_truth_frontend = false;
+std::vector<Quaternionf> g_truth_q;
+
+void load_truth_attitude(const std::string& file) {
+    g_truth_q.clear();
+    WaveDataCSVReader reader(file);
+    reader.for_each_record([](const Wave_Data_Sample& rec) {
+        Quaternionf q(rec.imu.q_wb_zu_w, rec.imu.q_wb_zu_x, rec.imu.q_wb_zu_y, rec.imu.q_wb_zu_z);
+        if (!(q.norm() > 1e-6f) || !std::isfinite(q.norm())) q = Quaternionf::Identity();
+        // The record's q_wb_zu maps world vectors into the body frame (the
+        // runner builds the body magnetometer with it); keep body -> world.
+        g_truth_q.push_back(q.normalized().conjugate());
+    });
+}
+
 bool env_flag(const char* name) {
     const char* s = std::getenv(name);
     return s != nullptr && std::string(s) != "0";
@@ -79,6 +98,10 @@ constexpr HeaveLimits PII_LIMITS{7.74f, 8.99f};           // worst 7.70 / 8.94 (
 constexpr HeaveLimits GODHAVN_LIMITS{431.5f, 553.8f};     // worst 429.3 / 551.0 (H8.5)
 constexpr HeaveLimits GODHAVN_EXT_LIMITS{21.20f, 26.66f}; // worst 21.09 / 26.52 (H8.5)
 constexpr HeaveLimits KUCHLER_LIMITS{18.00f, 20.58f};     // worst 17.91 / 20.47 (H8.5)
+// Ideal vertical reference (--frontend truth).
+constexpr HeaveLimits GODHAVN_TRUTH_LIMITS{386.0f, 495.0f};    // worst 384.0 / 492.4 (H8.5)
+constexpr HeaveLimits GODHAVN_EXT_TRUTH_LIMITS{9.03f, 9.70f};  // worst 8.98 / 9.65 (H8.5)
+constexpr HeaveLimits KUCHLER_TRUTH_LIMITS{16.62f, 20.23f};    // worst 16.53 / 20.12 (H8.5)
 
 template <Method M>
 class HeaveBaselineAdapter final : public IW3dFusionAdapter {
@@ -143,7 +166,15 @@ public:
             frontend_.updateIMU(g.x(), g.y(), g.z(), a.x(), a.y(), a.z(), dt);
         }
 
-        const double a_up = frontend_.verticalWorldAccelUp();
+        double a_up = frontend_.verticalWorldAccelUp();
+        if (g_truth_frontend) {
+            if (sample_ >= g_truth_q.size())
+                throw std::runtime_error("truth attitude shorter than the IMU stream");
+            const Vector3f f_world = g_truth_q[sample_] * ned_to_zu(acc_meas_ned);
+            a_up = double(f_world.z()) - double(g_std);
+        }
+        ++sample_;
+        input_ = a_up;
         if constexpr (M == Method::PII) {
             heave_ = frontend_.displacement();
             vel_ = frontend_.velocity();
@@ -161,6 +192,8 @@ public:
         FilterSnapshot s;
         s.disp_est_zu = Vector3f(0.0f, 0.0f, float(heave_));
         s.vel_est_zu = Vector3f(0.0f, 0.0f, float(vel_));
+        // The levelled vertical acceleration every baseline consumes.
+        s.acc_est_zu = Vector3f(0.0f, 0.0f, float(input_));
 
         const auto q = frontend_.quaternionWorldToBody();
         float roll = 0.0f, pitch = 0.0f, yaw = 0.0f;
@@ -209,6 +242,8 @@ private:
     bool kuchler_body_z_ = false;
     double heave_ = 0.0;
     double vel_ = 0.0;
+    double input_ = 0.0;
+    size_t sample_ = 0;
 };
 
 bool any_gate_failed = false;
@@ -229,6 +264,7 @@ void summarize(Method method, const W3dSimulationRunResult& r, float dt) {
     const float z_pct = 100.0f * rz.rms() / r.wave_params.height;
     std::vector<float> f(r.freq_hist.begin() + long(start), r.freq_hist.end());
     std::cout << "HEAVE_BASELINE method=" << method_name(method)
+              << " frontend=" << (g_truth_frontend ? "truth" : "mahony")
               << " record=" << r.input_name
               << " Hs=" << r.wave_params.height
               << " z_rms_m=" << rz.rms()
@@ -237,9 +273,12 @@ void summarize(Method method, const W3dSimulationRunResult& r, float dt) {
               << " freq_hz_median=" << median_vec(f)
               << " final_tuning=" << r.final_tuning_applied << "\n";
 
-    const HeaveLimits lim = method == Method::PII ? PII_LIMITS
-        : method == Method::Godhavn ? GODHAVN_LIMITS
-        : method == Method::GodhavnExt ? GODHAVN_EXT_LIMITS : KUCHLER_LIMITS;
+    const HeaveLimits lim = g_truth_frontend
+        ? (method == Method::Godhavn ? GODHAVN_TRUTH_LIMITS
+           : method == Method::GodhavnExt ? GODHAVN_EXT_TRUTH_LIMITS : KUCHLER_TRUTH_LIMITS)
+        : (method == Method::PII ? PII_LIMITS
+           : method == Method::Godhavn ? GODHAVN_LIMITS
+           : method == Method::GodhavnExt ? GODHAVN_EXT_LIMITS : KUCHLER_LIMITS);
     const float limit = r.wave_type == WaveType::JONSWAP ? lim.jonswap : lim.pmstokes;
     if (!(z_pct <= limit)) {
         std::cerr << "ERROR: " << method_name(method) << " Z RMS above limit ("
@@ -254,7 +293,9 @@ std::optional<W3dSimulationRunResult> run_file(const std::string& file, float dt
                                                const W3dRandomSeeds& seeds,
                                                bool write_timeseries)
 {
-    const std::string suffix = std::string("_heave_") + method_name(M);
+    const std::string suffix = std::string("_heave_") + method_name(M) +
+        (g_truth_frontend ? "_truth" : "");
+    if (g_truth_frontend) load_truth_attitude(file);
     return process_wave_file_for_tracker<HeaveBaselineAdapter<M>>(
         file, dt, with_mag, add_noise, 25.0f,
         suffix, suffix + "_nomag", seeds, write_timeseries);
@@ -277,6 +318,13 @@ int main(int argc, char* argv[]) {
             add_noise = false;
         } else if (arg == "--input" && i + 1 < argc) {
             files.emplace_back(argv[++i]);
+        } else if (arg == "--frontend" && i + 1 < argc) {
+            const std::string f = argv[++i];
+            if (f == "truth") g_truth_frontend = true;
+            else if (f != "mahony") {
+                std::cerr << "ERROR: unknown frontend " << f << "\n";
+                return 2;
+            }
         } else if (arg == "--method" && i + 1 < argc) {
             const std::string m = argv[++i];
             if (m == "pii") methods = {Method::PII};
@@ -289,7 +337,8 @@ int main(int argc, char* argv[]) {
             }
         } else {
             std::cerr << "Usage: " << argv[0]
-                      << " [--nomag] [--no-noise] [--method pii|godhavn|godhavn_ext|kuchler|all]"
+                      << " [--nomag] [--no-noise] [--frontend mahony|truth]"
+                         " [--method pii|godhavn|godhavn_ext|kuchler|all]"
                          " [--input PATH]...\n";
             return 2;
         }
@@ -307,6 +356,8 @@ int main(int argc, char* argv[]) {
         write_timeseries = std::string(v) != "0";
     }
     if (files.empty()) files = collect_wave_data_files(".");
+    // PII carries its own attitude estimator; it has no truth-levelled form.
+    if (g_truth_frontend) std::erase(methods, Method::PII);
 
     for (const auto& file : files) {
         for (Method m : methods) {

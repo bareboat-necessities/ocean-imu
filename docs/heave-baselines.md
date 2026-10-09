@@ -110,45 +110,86 @@ OU-III and TFG simulators. It uses:
 - a 25 Hz magnetometer.
 
 It scores vertical displacement over the same trailing 900 s window. The
-table gives Z RMS error, as metres and as a percentage of Hs:
+baselines need a vertical reference, and two are compared:
 
-| Record | OU-III | OU-II | TFG | PII | Godhavn (published law) | Godhavn ext | Küchler |
-|---|---|---|---|---|---|---|---|
-| JONSWAP Hs 0.27 m | 1.1 cm (4.25%) | 1.6 cm (6.02%) | 1.2 cm (4.38%) | 1.0 cm (3.74%) | 5.9 cm (22.0%) | 1.9 cm (6.95%) | 1.3 cm (4.79%) |
-| JONSWAP Hs 1.5 m | 6.1 cm (4.10%) | 9.9 cm (6.63%) | 6.3 cm (4.19%) | 8.4 cm (5.58%) | 150 cm (100%) | 15.3 cm (10.19%) | 16.1 cm (10.75%) |
-| JONSWAP Hs 4 m | 16.1 cm (4.02%) | 25.4 cm (6.35%) | 16.1 cm (4.03%) | 25.2 cm (6.31%) | 899 cm (225%) | 44.8 cm (11.21%) | 55.4 cm (13.86%) |
-| JONSWAP Hs 8.5 m | 31.5 cm (3.71%) | 51.4 cm (6.05%) | 31.7 cm (3.73%) | 65.5 cm (7.70%) | 3649 cm (429%) | 179 cm (21.09%) | 152 cm (17.91%) |
-| PM-Stokes Hs 0.27 m | 1.1 cm (4.21%) | 1.6 cm (5.81%) | 1.2 cm (4.33%) | 1.0 cm (3.83%) | 7.9 cm (29.1%) | 2.0 cm (7.38%) | 1.4 cm (5.27%) |
-| PM-Stokes Hs 1.5 m | 6.0 cm (4.02%) | 9.6 cm (6.43%) | 6.1 cm (4.09%) | 8.3 cm (5.51%) | 279 cm (186%) | 18.1 cm (12.10%) | 17.3 cm (11.54%) |
-| PM-Stokes Hs 4 m | 15.8 cm (3.96%) | 24.8 cm (6.20%) | 15.9 cm (3.98%) | 25.2 cm (6.31%) | 1258 cm (315%) | 46.5 cm (11.62%) | 64.7 cm (16.18%) |
-| PM-Stokes Hs 8.5 m | 31.5 cm (3.70%) | 50.8 cm (5.98%) | 31.7 cm (3.73%) | 76.0 cm (8.94%) | 4684 cm (551%) | 225 cm (26.52%) | 174 cm (20.47%) |
-| **Mean** | **4.00%** | **6.18%** | **4.06%** | **5.99%** | **232%** | **13.38%** | **12.59%** |
-| Worst | 4.25% | 6.63% | 4.38% | 8.94% | 551% | 26.52% | 20.47% |
-| RMS error / OU-III (geometric mean) | 1.00× | 1.55× | 1.02× | 1.44× | 36× | 3.03× | 2.82× |
+- **Mahony (default).** The PII observer's sea-state-adaptive Mahony AHRS,
+  a deployable standalone front end.
+- **True vertical (`--frontend truth`).** The measured accelerometer, still
+  carrying its noise and bias, is levelled with the record's true attitude.
+  This represents an ideal VRU and isolates the heave filter. PII is left out
+  of this mode, because it carries its own attitude estimator.
 
-Both workable baselines are closest to OU-III on the smallest,
-shortest-period sea. Their error grows with wave period:
+Z RMS error, % of Hs:
 
-- **Godhavn ext** has the fixed-structure trade between phase lead and
-  low-frequency drift.
-- **Küchler** forces a broadband sea into a few undamped modes. A mode that
-  goes wrong rings rather than decays, as in the Hs 8.5 m chart below.
+| Record | OU-III | OU-II | TFG | PII | Godhavn published law (Mahony) | Godhavn ext (Mahony) | Küchler (Mahony) | Godhavn published law (true vertical) | Godhavn ext (true vertical) | Küchler (true vertical) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| JONSWAP 0.27 m | 4.25 | 6.02 | 4.38 | 3.74 | 22.03 | 6.95 | 4.79 | 22.07 | 6.83 | 4.79 |
+| JONSWAP 1.5 m | 4.10 | 6.63 | 4.19 | 5.58 | 100 | 10.19 | 10.75 | 94.47 | 8.09 | 10.81 |
+| JONSWAP 4 m | 4.02 | 6.35 | 4.03 | 6.31 | 225 | 11.21 | 13.86 | 224 | 8.54 | 13.63 |
+| JONSWAP 8.5 m | 3.71 | 6.05 | 3.73 | 7.70 | 429 | 21.09 | 17.91 | 384 | 8.98 | 16.53 |
+| PM-Stokes 0.27 m | 4.21 | 5.81 | 4.33 | 3.83 | 29.10 | 7.38 | 5.27 | 29.01 | 7.28 | 5.27 |
+| PM-Stokes 1.5 m | 4.02 | 6.43 | 4.09 | 5.51 | 186 | 12.10 | 11.54 | 162 | 8.31 | 12.85 |
+| PM-Stokes 4 m | 3.96 | 6.20 | 3.98 | 6.31 | 315 | 11.62 | 16.18 | 312 | 8.15 | 16.91 |
+| PM-Stokes 8.5 m | 3.70 | 5.98 | 3.73 | 8.94 | 551 | 26.52 | 20.47 | 492 | 9.65 | 20.12 |
+| **Mean** | **4.00** | **6.18** | **4.06** | **5.99** | **232** | **13.38** | **12.59** | **215** | **8.23** | **12.61** |
+| Worst | 4.25 | 6.63 | 4.38 | 8.94 | 551 | 26.52 | 20.47 | 492 | 9.65 | 20.12 |
+
+### Where the baseline error comes from
+
+I separated the error sources offline by feeding the filters the record's
+own vertical acceleration, then adding one corruption at a time. Errors are
+given as a percentage of heave RMS, which is about Hs/4.
+
+- **Levelling, for Godhavn.** Mahony's tilt error reaches 5.6° RMS at
+  Hs 8.5 m; OU-III's is about 0.3°. The leaked horizontal acceleration
+  leaves a 0.01 m/s² error below 0.05 Hz, correlated 0.47 with the squared
+  horizontal acceleration. Godhavn's filter amplifies it by its low-frequency
+  gain, which is about 235 m per m/s² at 0.01 Hz. The repository's QMEKF AHRS
+  does no better (3.9–4.3° pitch error at Hs 8.5 m). Any standalone AHRS
+  that corrects tilt with the accelerometer is dragged by wave acceleration.
+  OU-III estimates attitude and wave motion jointly, which is a large part of
+  its lead. With a true vertical, Godhavn ext falls from 13.4 % to 8.2 % of
+  Hs.
+- **Bias instability, for the published Godhavn law.** On exact acceleration
+  the published law gives 5.5–8 % of heave RMS (below 2 % of Hs). Adding the
+  bias random walk takes it to 360–2000 %. Eq. 12 then chooses
+  0.010–0.03 rad/s, and a slow bias drift passes almost unattenuated into
+  heave. A fixed-cutoff sweep with a true vertical puts the best achievable
+  standard filter at 6.9–7.6 % of Hs at Hs 1.5–8.5 m. The ext law lands
+  within about 2 points of that.
+- **The model, for Küchler.** On exact, noise-free acceleration the EKF still
+  has 33–41 % (Hs 1.5 m) and 58–69 % (Hs 8.5 m) of heave RMS error, while
+  fitting the acceleration to under 1 %. It gives the same numbers with 4 to
+  27 modes and any tuning tried, and on a synthetic three-tone sea it reaches
+  3.3 %. The limit is the model:
+  - This boat's heave is nearly as broadband as the sea. 78 % of heave energy
+    lies at 0.05–0.12 Hz, but 75 % of acceleration energy lies at 0.12–0.4 Hz.
+  - The measurement `-w_j^2 z_j` sees only each mode's spring acceleration.
+    The process noise that lets the modes follow a random sea adds
+    acceleration the measurement never sees, and that integrates into heave
+    error.
+  - Küchler et al. validated on a 175 m ship, whose response narrows the heave
+    spectrum.
+
+  Levelling therefore barely changes Küchler's result.
 
 ### Heave over the last 30 s
 
 The charts below show the reference against every estimate over the last 30 s
 of the replay. The legends give each method's RMS error over that 30 s window.
 
+With Mahony levelling:
+
 ![JONSWAP Hs 1.5 m](../reports/results/heave_baselines/heave_baselines_jonswap_medium.svg)
 
 ![PM-Stokes Hs 8.5 m](../reports/results/heave_baselines/heave_baselines_pmstokes_high.svg)
 
-Charts for the other records:
+With a true vertical:
 
-- [JONSWAP 0.27 m](../reports/results/heave_baselines/heave_baselines_jonswap_low.svg)
-- [JONSWAP 8.5 m](../reports/results/heave_baselines/heave_baselines_jonswap_high.svg)
-- [PM-Stokes 0.27 m](../reports/results/heave_baselines/heave_baselines_pmstokes_low.svg)
-- [PM-Stokes 1.5 m](../reports/results/heave_baselines/heave_baselines_pmstokes_medium.svg)
+![JONSWAP Hs 8.5 m, true vertical](../reports/results/heave_baselines/heave_baselines_truth_jonswap_high.svg)
+
+The other records, Mahony and true vertical (`heave_baselines_truth_*`), are
+in [`reports/results/heave_baselines/`](../reports/results/heave_baselines/).
 
 ## Reproduce
 
@@ -157,7 +198,7 @@ make ensure-sim-data
 for d in kalman_ou_iii kalman_ou_ii kalman_tfg heave_baselines; do
   (cd tests/$d && make build && W3D_WRITE_TIMESERIES=1 ./run_tests.sh)
 done
-cd plots/heave_baselines && ./draw_plots.sh   # add --png to the script call for previews
+cd plots/heave_baselines && ./draw_plots.sh   # both front ends; --png adds previews
 ```
 
 `draw_plots.sh` also writes `<method>_<wave>_<group>_zkin.svg`, with heave

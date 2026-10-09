@@ -48,13 +48,22 @@ BASELINES = ("godhavn", "godhavn_ext", "kuchler", "pii")
 NAME = re.compile(r"w3d_(?P<wave>[a-z]+)_H(?P<h>[0-9.]+)_")
 
 
+FRONTEND_SUFFIX = ""
+
+
 def find(tests_dir: Path, method: str, wave: str, height: float):
     sub, suffix, _ = SOURCES[method]
+    if method in BASELINES and FRONTEND_SUFFIX:
+        if method == "pii":
+            return None  # PII carries its own attitude estimator
+        suffix = suffix.replace(".csv", FRONTEND_SUFFIX + ".csv")
     for path in sorted((tests_dir / sub).glob(f"w3d_{wave}_H*{suffix}")):
         m = NAME.match(path.name)
         if m and abs(float(m.group("h")) - height) < 1e-6 and path.name.endswith(suffix):
-            # *_heave_godhavn.csv must not pick up *_heave_godhavn_ext.csv.
-            if path.name[: -len(suffix)].endswith(("_heave", "_heave_godhavn")):
+            # *_heave_godhavn*.csv must not pick up *_heave_godhavn_ext*.csv,
+            # nor the Mahony series the truth-levelled ones.
+            stem = path.name[: -len(suffix)]
+            if stem.endswith(("_heave", "_heave_godhavn")) or stem.endswith("_truth"):
                 continue
             return path
     return None
@@ -92,10 +101,12 @@ def overview(dfs: dict, wave: str, group: str, height: float, out: Path):
         return f"{SOURCES[m][2]} ({rms(est[m] - ref_z) * 100:.1f} cm)"
 
     fig, axes = plt.subplots(4, 1, figsize=(10, 10.5), sharex=True)
-    fig.suptitle(f"{wave.upper()} Hs = {height:g} m: heave, last {PLOT_WINDOW_S:.0f} s "
-                 "(window RMS error in legend)")
+    levelling = ("baselines levelled with the true attitude" if FRONTEND_SUFFIX
+                 else "baselines levelled by Mahony")
+    fig.suptitle(f"{wave.upper()} Hs = {height:g} m: heave, last {PLOT_WINDOW_S:.0f} s; "
+                 f"{levelling} (window RMS error in legend)")
     panels = (
-        (axes[0], ("ou3", "ou2", "tfg", "pii"), "OU families and PII"),
+        (axes[0], ("ou3", "ou2", "tfg", "pii"), "OU families and PII" if "pii" in est else "OU families"),
         (axes[1], ("godhavn_ext", "kuchler"), "Literature baselines"),
         (axes[2], ("godhavn",), "Godhavn, published cutoff law (own scale)"),
     )
@@ -118,7 +129,7 @@ def overview(dfs: dict, wave: str, group: str, height: float, out: Path):
     axes[3].set_xlabel("Time [s]")
     axes[3].grid(True)
     axes[3].legend(loc="upper right", fontsize=7, ncol=3)
-    save(fig, out / f"heave_baselines_{wave}_{group}")
+    save(fig, out / f"heave_baselines{FRONTEND_SUFFIX}_{wave}_{group}")
 
 
 def zkin(df: pd.DataFrame, method: str, wave: str, group: str, height: float, out: Path):
@@ -132,7 +143,7 @@ def zkin(df: pd.DataFrame, method: str, wave: str, group: str, height: float, ou
         ax.grid(True)
         ax.legend(loc="upper right", fontsize=8)
     axes[-1].set_xlabel("Time [s]")
-    save(fig, out / f"{method}_{wave}_{group}_zkin")
+    save(fig, out / f"{method}{FRONTEND_SUFFIX}_{wave}_{group}_zkin")
 
 
 def main():
@@ -140,9 +151,12 @@ def main():
     ap.add_argument("--tests-dir", type=Path, default=REPO / "tests")
     ap.add_argument("--output-dir", type=Path, default=Path("."))
     ap.add_argument("--png", action="store_true", help="also write PNG previews")
+    ap.add_argument("--frontend", choices=("mahony", "truth"), default="mahony",
+                    help="which levelling the baseline series used")
     args = ap.parse_args()
-    global WRITE_PNG
+    global WRITE_PNG, FRONTEND_SUFFIX
     WRITE_PNG = args.png
+    FRONTEND_SUFFIX = "_truth" if args.frontend == "truth" else ""
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     made = 0
