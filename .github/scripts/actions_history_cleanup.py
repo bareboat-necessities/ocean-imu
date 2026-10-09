@@ -219,9 +219,11 @@ if not DRY and budget > 0 and final > KEEP_FAILED:
     )
 
 # Cancelled/skipped retention. Enumerate ALL cancelled/skipped runs, including
-# the superseded PR checks that dominate this repository's backlog, preserve
-# the newest run for each workflow+branch pair, and drain the old remainder in
-# explicit DELETE batches.
+# the superseded PR checks that dominate this repository's backlog, and delete
+# every one older than MIN_AGE (except this cleanup run itself) in explicit
+# DELETE batches. A cancelled/skipped run carries no result worth keeping, and
+# most PR branches own only one such run, so per-branch retention would keep
+# nearly the entire backlog.
 cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=MIN_AGE)
 pool = []
 for conclusion in ("cancelled", "skipped"):
@@ -232,44 +234,25 @@ for conclusion in ("cancelled", "skipped"):
         and run.get("conclusion") in ("cancelled", "skipped")
     ]
 pool = {int(run["id"]): run for run in pool}.values()
-ordered = sorted(
-    pool,
-    key=lambda run: (
-        int(run["workflow_id"]),
-        run.get("head_branch") or "-",
-        run["updated_at"],
-        int(run["id"]),
-    ),
-    reverse=True,
-)
-protected = set()
-seen = set()
-for run in ordered:
-    key = (int(run["workflow_id"]), run.get("head_branch") or "-")
-    if key not in seen:
-        seen.add(key)
-        protected.add(int(run["id"]))
 self_id = int(os.getenv("SELF_RUN_ID", "0") or 0)
 eligible = [
     run
-    for run in ordered
-    if int(run["id"]) not in protected
-    and int(run["id"]) != self_id
-    and parse(run["updated_at"]) < cutoff
+    for run in pool
+    if int(run["id"]) != self_id and parse(run["updated_at"]) < cutoff
 ]
 eligible.sort(key=lambda run: (run["updated_at"], int(run["id"])))
 selected_cancelled = [int(run["id"]) for run in eligible[:MAX]]
 deleted_cancelled = delete(selected_cancelled, "cancelled/skipped")
 print(
-    f"Cancelled/skipped eligible={len(eligible)} selected={len(selected_cancelled)} "
-    f"deleted={deleted_cancelled} protected={len(protected)}"
+    f"Cancelled/skipped total={len(pool)} eligible={len(eligible)} "
+    f"selected={len(selected_cancelled)} deleted={deleted_cancelled}"
 )
 summary(
     [
         "### Cancelled/skipped cleanup",
         "",
-        f"- Eligible old non-retained runs: `{len(eligible)}`",
-        f"- Protected newest workflow/branch runs: `{len(protected)}`",
+        f"- Cancelled/skipped runs found: `{len(pool)}`",
+        f"- Eligible runs older than {MIN_AGE} min: `{len(eligible)}`",
         f"- Delete batch size: `{BATCH}`",
         f"- Whole runs deleted: `{deleted_cancelled}`",
     ]
