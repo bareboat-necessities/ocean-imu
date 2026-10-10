@@ -72,7 +72,12 @@ anchors now distinguish legacy and timed ports, and the operation audit plus
 bitwise native controls justify the legacy binding refresh. An initial patch
 context and one diagnostic filename were corrected before application. Git
 HTTPS push had no credential; the authorized GitHub connector publishes the
-same reviewed trees. These are not mathematical counterexamples. Current
+same reviewed trees. `make -C tests/validation evidence-test` also rejects
+the old publication manifests with `replay dependency differs from replay
+provenance` and the new `MagneticRotation.h` dependency. The full branch
+evidence publisher must regenerate those empirical bundles; the gate is not
+weakened or bypassed. Initial-stage CI's stale sketch/source-tree fingerprints
+are the same class E failure. These are not mathematical counterexamples. Current
 limiter: hardware conversion timing and the new endogenous transport ports.
 Next falsifiable work: capture DRDY/AUX/read phases, audit applied service and
 bound those same-history ports without changing the estimator or sensor model.

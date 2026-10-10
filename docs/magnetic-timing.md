@@ -14,8 +14,10 @@ timestamp. There is no wired/serviced BMM150 DRDY interrupt in this path.
 BMM150 has a DRDY pin and register `0x48` bit 0; reading data over AUX clears
 the sensor flag. BMI270 has separate AUX-ready flags; the pinned driver reads
 `INT_STATUS_1`, then a 20-byte AUX/accel/gyro burst. It updates its magnetic
-cache on AUX-ready. A second eight-byte AUX read supplies RHALL for Bosch
-compensation. These two reads can straddle an AUX refresh. A change in the
+cache on AUX-ready. A second eight-byte AUX read supplies XYZ and RHALL
+together for Bosch compensation; XYZ is not mixed with RHALL from another
+burst. The cache read and this read can straddle an AUX refresh, so the cache
+change is not necessarily the compensated vector's conversion identity. A change in the
 cached XYZ detects a new candidate, not a unique conversion identifier.
 Identical quantized conversions are indistinguishable in the existing API.
 
@@ -125,7 +127,8 @@ qualified measurement times, as exercised by the native replay tests.
 The source keeps a read bracket and a monotonically increasing host observation
 sequence. The sketch retains the 35 ms spacing limit, submits an observation
 at most once, and rejects only invalid input or unavailable/too-old/gapped
-rotation history (120 ms cap, 20 ms maximum gyro interval). Equal quantized
+rotation history (120 ms cap, 20 ms maximum gyro interval), or a duplicate/
+out-of-order/invalid gyro epoch at correction. Equal quantized
 conversions and the two-read AUX race remain source-identity limitations;
 these sequences must not be described as hardware conversion IDs. Typically
 25 Hz source observations pass once each. The previous artificial repeated
