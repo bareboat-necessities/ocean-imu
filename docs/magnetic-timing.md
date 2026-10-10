@@ -128,7 +128,9 @@ The source keeps a read bracket and a monotonically increasing host observation
 sequence. The sketch retains the 35 ms spacing limit, submits an observation
 at most once, and rejects only invalid input or unavailable/too-old/gapped
 rotation history (120 ms cap, 20 ms maximum gyro interval), or a duplicate/
-out-of-order/invalid gyro epoch at correction. Equal quantized
+out-of-order/invalid gyro epoch at correction. Such an epoch also clears the
+transport chain, because the existing estimator clock's substituted dt must
+not be bridged on the next update. Equal quantized
 conversions and the two-read AUX race remain source-identity limitations;
 these sequences must not be described as hardware conversion IDs. Typically
 25 Hz source observations pass once each. The previous artificial repeated

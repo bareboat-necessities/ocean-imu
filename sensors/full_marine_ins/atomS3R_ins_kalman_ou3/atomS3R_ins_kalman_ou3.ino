@@ -566,6 +566,11 @@ private:
     const Vector3f residual_bias = core.gyroscope_bias_body();
     const auto history_status = mag_history_.push(s.sample_us, w_cal_ - residual_bias,
         magnetic::covarianceBound(core.gyroscope_bias_covariance_body()));
+    const bool bad_gyro_epoch = history_status == magnetic::Status::Duplicate ||
+        history_status == magnetic::Status::OutOfOrder || history_status == magnetic::Status::Invalid;
+    // The existing estimator clock can substitute a nominal dt on a repeated
+    // timestamp. Do not bridge that unqualified step with later transport.
+    if (bad_gyro_epoch) mag_history_.reset();
     if (s.mag_timing.have && s.mag_timing.sequence != mag_diag_sequence_) {
       magnetic::Uncertainty uncertainty;
       uncertainty.gyro_density = mag_gyro_density_;
@@ -607,8 +612,6 @@ private:
     if (mag_ok_ && mag_fresh_) {
       const uint32_t correction_start_us = micros();
 #if SEA_STATE_MAG_HOST_ALIGNMENT
-      const bool bad_gyro_epoch = history_status == magnetic::Status::Duplicate ||
-          history_status == magnetic::Status::OutOfOrder || history_status == magnetic::Status::Invalid;
       const auto status = bad_gyro_epoch ? history_status :
           mag_history_.between(s.mag_timing.frame_us, s.sample_us, mag_observation_.rotation);
       mag_applied_ = false;
