@@ -40,8 +40,8 @@ struct Score {
     }
 };
 static void paired(const char* name,int delay_ms,int motion,bool jitter=false,bool bias=false,
-                   bool soft=false,bool interference=false) {
-    auto rows=magneticMotion(delay_ms,motion,jitter,bias,soft,interference);
+                   bool soft=false,bool interference=false,uint32_t imu_us=5000) {
+    auto rows=magneticMotion(delay_ms,motion,jitter,bias,soft,interference,imu_us);
     const int N=int(rows.size())-1;
     auto legacy=std::make_unique<Core>(core()), aligned=std::make_unique<Core>(core()), ref=std::make_unique<Core>(core());
     // Test-only rewind snapshots. 40 slots comfortably exceed 40 ms delay.
@@ -113,6 +113,7 @@ static void runPairedMagneticTests() {
     paired("soft_iron_residual",20,2,false,false,true);
     paired("interference_recovery",20,1,false,false,false,true);
     paired("quiet",40,0,true);
+    paired("accepted_100hz",40,2,true,false,false,false,10000);
 }
 static void covarianceCompatibility() {
     auto a=std::make_unique<Core>(core()), b=std::make_unique<Core>(core());

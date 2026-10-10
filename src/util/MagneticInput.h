@@ -47,9 +47,10 @@ public:
             have_source_ = true;
             Uncertainty u = observation_.uncertainty;
             u.bias_variance = bias_variance;
-            // Unqualified conversion aperture/completion phase + host poll.
+            // Unqualified conversion aperture/completion phase + accepted-frame gap.
             // Advisory diagnostics only; never injected as a guessed delay.
-            u.from_time_sigma = u.to_time_sigma = .028295f + 1.0f/30.0f + .005f;
+            u.from_time_sigma = u.to_time_sigma = .028295f + 1.0f/30.0f +
+                float(RotationHistory<>::MaxGapUs) * 1e-6f;
             diagnostic_ = consistency_.observe(history_, source_sequence_, source_us_,
                 calibrated, hard_iron, observation_.covariance, u);
             if (!uncertainty_known_) {

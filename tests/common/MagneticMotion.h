@@ -28,14 +28,14 @@ static float heading(const Q& q) {
 static double error(const Q& q,const Q& truth) {
     return double(std::remainder(heading(q)-heading(truth),2*float(M_PI)))*180/M_PI;
 }
-static std::vector<Row> magneticMotion(int delay_ms,int motion,bool jitter,bool bias,bool soft,bool interference) {
-    constexpr int N=5200;
+static std::vector<Row> magneticMotion(int delay_ms,int motion,bool jitter,bool bias,bool soft,bool interference,uint32_t imu_us=5000) {
+    const int N=int(26000000u/imu_us);
     std::vector<Row> rows(N+1);
     std::mt19937 rng(45321); std::normal_distribution<float> normal(0,1);
     Q truth=Q::Identity(); uint32_t t=0,next_mag=40000;
     for(int i=1;i<=N;++i) {
         Row& r=rows[size_t(i)];
-        const uint32_t us=jitter ? uint32_t(4000+(i*773)%2001) : 5000u;
+        const uint32_t us=jitter ? uint32_t(imu_us*4/5+(i*773)%(imu_us*2/5+1)) : imu_us;
         t+=us; r.time=t; r.dt=float(us)*1e-6f; const float s=float(t)*1e-6f;
         V3 w=V3::Zero();
         if(motion==1) w=V3(0,0,.8f);

@@ -45,8 +45,8 @@ struct ContinuousScore {
     }
 };
 static void continuousPaired(const char* name,int delay,int motion,bool jitter=false,bool bias=false,
-                             bool soft=false,bool interference=false) {
-    auto rows=magneticMotion(delay,motion,jitter,bias,soft,interference);
+                             bool soft=false,bool interference=false,uint32_t imu_us=5000) {
+    auto rows=magneticMotion(delay,motion,jitter,bias,soft,interference,imu_us);
     auto legacy=std::make_unique<ContinuousMachine>(), aligned=std::make_unique<ContinuousMachine>();
     auto oracle=std::make_unique<ContinuousMachine>();
     std::vector<std::optional<ContinuousMachine>> snapshots(40);
@@ -96,4 +96,5 @@ static void runContinuousMagneticTests() {
     continuousPaired("soft_iron_residual",20,2,false,false,true);
     continuousPaired("interference_recovery",20,1,false,false,false,true);
     continuousPaired("quiet",40,0,true);
+    continuousPaired("accepted_100hz",40,2,true,false,false,false,10000);
 }

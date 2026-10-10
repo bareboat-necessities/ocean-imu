@@ -114,6 +114,12 @@ under transport covariance weighting; this is a finite approximation limit,
 not a theorem counterexample. Shared histories and diagnostics now cover all
 seven magnetic-aided AtomS3R frontends. Continuous observers retain every-tick
 feedback and report no normalized confidence without a bias covariance.
+The standalone proof-subset invocation also omitted the repository import
+path in its first three modules; rerunning those with `PYTHONPATH=../..` passes
+(7 tests), along with 18 magnetic-binding/article checks. The other 813 proof
+tests passed in the initial subset run. Source audit distinguishes 200 Hz
+host polling from accepted accel+gyro frames; a nominal 100 Hz replay and
+20 ms diagnostic endpoint allowance cover the admitted history cadence.
 Retained facts: original gains/legacy correction equations and the OU-III
 operation audit. Limiter/next experiment remain physical timing qualification
 and same-history transport-port/service bounds.

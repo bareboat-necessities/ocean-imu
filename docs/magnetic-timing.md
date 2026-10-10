@@ -22,7 +22,15 @@ cached XYZ detects a new candidate, not a unique conversion identifier.
 Identical quantized conversions are indistinguishable in the existing API.
 
 `sample_us` is host **read-start**, before `M5.Imu.update()`, not sensor sample
-time. `readImuMapped` then reads temperature and maps/calibrates the sensors.
+time. Gyro and accelerometer values have the same host timestamp, with no
+BMI270 sensor-time/FIFO timestamp read. `readImuMapped` accepts only frames
+whose accel **and** gyro ready bits are set. The pinned driver does not
+override `ACC_CONF=0xA8` (100 Hz reset) or `GYR_CONF=0xA9` (200 Hz reset).
+Thus 200 Hz is the host loop target, not evidence of 200 accepted estimator
+frames per second; source/default inspection suggests about 100 Hz accepted
+frames pending register readback and hardware measurement. The history uses
+actual accepted-frame intervals and does not change this acquisition policy.
+`readImuMapped` then reads temperature and maps/calibrates the sensors.
 The magnetic source repeats its last successful reading, for at most 200 ms.
 The OU-II, OU-III and TFG sketches' 35 ms spacing gates can accept a held
 sample repeatedly; they do not track source identity. The standalone qMEKF
@@ -154,7 +162,9 @@ covariance, not the state architecture. MAGNETIC SERVICE still means actually
 applied informative updates; candidates, duplicate packets and diagnostic
 success do not establish it. Hardware conversion delay, proxy timing error,
 calibration residual and shared gyro/state correlation remain proof-side
-dependencies. This work does not close the stability theorem or its open
+dependencies. The study's nominal 5 ms discretization also needs actual
+accepted-frame cadence qualification; the additional 100 Hz replay is a
+finite diagnostic, not a transfer of that theorem premise. This work does not close the stability theorem or its open
 receipt/Schur, capture, physical qualification or all-time service obligations.
 
 ## Deployment stages and remaining synchronization limit
@@ -198,7 +208,8 @@ bounds above then cover correlation with the magnetic noises. This remains a
 first-order statistical model; it is not a proof of the physical bias limits.
 The live transport uses the measured host read bracket; unobserved conversion
 phase/aperture is separate. The observation-only consistency score uses a
-conservative 28.295 + 33.333 + 5 ms endpoint allowance for normal host polling,
+conservative 28.295 + 33.333 + 20 ms endpoint allowance, using the maximum accepted
+gyro interval admitted by the history,
 not a claimed measured distribution or a bound through arbitrary host stalls.
 
 Stage C is deliberately not enabled. Under constant angular velocity a fixed
@@ -268,7 +279,8 @@ measured differences are below 0.044 deg.
 
 Coverage includes pure yaw; combined roll/pitch/yaw with variable rates; all
 5/10/20/40 ms delays; asynchronous 4–6 ms gyro and 33–37 ms magnetic schedules
-with 0–5 ms delivery jitter; gyro-bias error; subtraction before rotation;
+with 0–5 ms delivery jitter, plus 8–12 ms accepted IMU intervals at nominal
+100 Hz; gyro-bias error; subtraction before rotation;
 fixed soft-iron error and corrected calibration; sudden interference/removal;
 quiet/no-excitation ambiguity; duplicate, missing, stale, future, out-of-order,
 invalid/nonfinite samples; partial intervals; and uint32 clock wrap.
@@ -299,7 +311,7 @@ corrections. These have different meanings and are not pooled.
 | PII | 1.976 | 0.271 | 0.270 |
 | NLO | 3.096 | 0.711 | 0.741 |
 
-All 273 paired rows preserve valid magnetic correction/feedback availability.
+All 294 paired rows preserve valid magnetic correction/feedback availability.
 Results are filter-specific, not a universal heading improvement claim.
 TFG's post-interference tail RMS is 9.169 / 5.415 / 8.110 degrees; its recovery
 is incomplete within this fixture. The qMEKF compass interference RMS is
@@ -331,15 +343,16 @@ and vector/quaternion operations. Continuous observers only rotate the held
 vector on each tick, without covariance transforms; trigonometric diagnostic angles run only
 on a new host observation. Serial output uses the existing low-rate stream.
 
-The isolated `-O3` x86-64 benchmark recorded 25.4 ns/push, 181.9 ns/maximum-age
-lookup, 105.5 ns/alignment and 293.4 ns/consistency-with-push. These are native
+The isolated `-O3` x86-64 benchmark recorded 24.7 ns/push, 188.5 ns/maximum-age
+lookup, 103.3 ns/alignment and 246.9 ns/consistency-with-push. These are native
 constant-rate microbenchmarks, **not MCU bounds or whole-loop timings**; the
 raw output is in [native-resources.txt](../reports/results/magnetic_timing/native-resources.txt).
-GCC `-fstack-usage` reports individual static frames of 48 bytes (increment),
-160–208 (push), 160 (lookup), 240 (alignment) and 560 (consistency), plus called
-helpers and the existing estimator frames. They are not a bound on the whole
-AtomS3R call stack. The design keeps constant per-gyro work and bounded
-per-magnetic work within the 5 ms schedule; actual loop worst-case time,
+GCC `-fstack-usage` reports individual compiler-estimated frames of 48 bytes (increment),
+160–224 (push), 176 (lookup), 240–256 (alignment), 560 (consistency),
+32 (prepare), 80 (current field/correction wrapper) and 288 (input advance),
+plus called helpers and the existing estimator frames. They are not a bound on the whole
+AtomS3R call stack. The work is bounded independently of run duration. Meeting the 5 ms host
+loop schedule still requires hardware validation; actual loop worst-case time,
 flash/RAM change and task-stack high-water marks remain hardware/board-build
 qualification items. No physical 200 Hz guarantee is claimed.
 
