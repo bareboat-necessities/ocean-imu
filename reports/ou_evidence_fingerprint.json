@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "cd2985775ffafe1aa94130f58ed5d66737bae933e28668783bb47e904be815ec",
+  "replay_fingerprint": "6d697c65c70e274ddf70e6a18cfed987c20306aeb276f4f32a28cb04bb697ec5",
   "results_file_count": 465,
   "results_files": [
     {
@@ -946,7 +946,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "7aa6d813105d8b0ba6e01337be1ccc1beea68ccd01ef7827e3c982b7655b5d87"
+      "sha256": "69d1145d440624d4ec34c1d64eec18a94b52d1f75f86123fe3cb143c03264e83"
     },
     {
       "kind": "file",
@@ -991,7 +991,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "a86f6d15aaf6d439e87e720441da3e8ed79f290211578b3b4f75bd2380fba411"
+      "sha256": "584510e541788ff4daedc3fd04ec17366b56e198866d29ed6b40e69ca3595554"
     },
     {
       "kind": "file",
@@ -1091,7 +1091,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "65b2f5f52e167e9d237118c66cd6afed88a0a9663d007a59fd14a92e6474d730"
+      "sha256": "c5caef670f3fdae67c747d0aa6cc45f8dc7977d293147bbadec2b6575c194ab2"
     },
     {
       "kind": "file",
@@ -1161,37 +1161,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "df6c3e82b5cc113b6a9e96e9b2a45862d10ba74c04892d52f7cdf2c96ad3a3c2"
+      "sha256": "7de6b59e936a811bd0b68960c334b0ee7470d991c6cfac46663e2773592b05e7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "d05942d8f6c7339370fbbb532b316c981ce1ae2144c586a631edec17ba18a8bc"
+      "sha256": "087119c9e065925bbf44cba28b7c71ab257c3dd983b7099a54636bd667445362"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "fc42f0688232868bc6705efefac8e0a5d22b6ed0c4771368bb8b8e227cc86220"
+      "sha256": "302e329eefe7510355b8290a28d91d9b2a35a075132496509e0432788a326ccc"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "48de64c07f2e07fa80ee226b3867526f8829436829299f67a93234ce7c445168"
+      "sha256": "93462ca21244a5da65f85d90906e4f78e41358ba93568ca5f5e27a27f447ea79"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "c86fd3c68060902b3a64b67f54d32c3eb1340a7253bc2df864ae7f46c4b875ac"
+      "sha256": "09083ce02583c6ca3457b94b51bf3857b1b288ce2268e211e5e4e5b35d308d65"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "359cf85f4a144625ad778bd365ec9a71c893b3e56199f89c0c3585cba4fc285d"
+      "sha256": "ea515308aede81952ec99231214d1682dfaa01b1bfd3e068313d09921642500b"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "2356cab91efe070073e10fe00b3fa67f3c93e4fa1410460850758aeb994e1991"
+      "sha256": "d1b1cbc95afb9ca68efdf00b27ab411050bf0fd878ef9201e23c42f440931694"
     },
     {
       "kind": "file",
@@ -1201,22 +1201,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "5a104fb99d03474495b874befab5ccd802924dc05e7ca9d7f66b0d4bcb33ec8c"
+      "sha256": "d906fce6dfbd2308d7c4cf5da3c9b0600fb346e7fe6ecd73645fd1141b349efa"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "4b5832682c3fa485ea6150bea91484fd6a2bbdf4c8417e2216032b47de56d939"
+      "sha256": "4b0d24f01a8012f11967823ba4f055223962ca2a157958ec7cb5317346b67984"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "599b8b59c4c338b39f5bb8c6c3ff6c30e506d8823d6bb0ac57a3731d72ab03e6"
+      "sha256": "56fccd880ba83d1bb8df7c15e7c14ae85f227722aaf1cc6d12b758b5353cd06c"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "9a55af1bfd72a44fd07a995a1424f9c7dd256159c4fc94c1f23066b6bc92ac5a"
+      "sha256": "fd89867d9bafe74249c93eedbccf7aac16efa586c48126057d8c678ba6c1472b"
     },
     {
       "kind": "file",
@@ -1231,7 +1231,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "a29b440c5a9f55f9464e32a250d5123d308cc06dacd073bd77ef6679b23081fb"
+      "sha256": "6d06a7ebd76222121c8e57dd30168a94298a37203ae02d248c11c5f67c6cec19"
     },
     {
       "kind": "file",
@@ -2329,13 +2329,13 @@
       "sha256": "948cf40818672c2660561dde906e6935d1ed5175ae891ec6c6052b5fc3066b81"
     }
   ],
-  "results_fingerprint": "4daebf4137d633eea627be3393345490dae73b02c7c8678e1e2a2bbfa6bfc31b",
+  "results_fingerprint": "82f041b963a1c8e7a72205028b5f2bd9ebf85fe15a48d7fc850bdf39c9fcda15",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 760,
+  "tracked_replay_file_count": 761,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2754,6 +2754,11 @@
     },
     {
       "mode": "100644",
+      "path": "src/ahrs/MahonyHeadingMag.h",
+      "sha256": "3e6221a95615135044278f09bf53e03f5386adff567c5619db2985ddae5ea9b4"
+    },
+    {
+      "mode": "100644",
       "path": "src/ahrs/Mahony_AHRS.h",
       "sha256": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7"
     },
@@ -2985,7 +2990,7 @@
     {
       "mode": "100644",
       "path": "src/pii_observer/AdaptiveVerticalPIIMahony.h",
-      "sha256": "16e6d79b6d3391a03551e38471ff4dff334a61c4b3680ee3152b4c88dda5f1e3"
+      "sha256": "fc08242e0af657ea6e320b23ab677e4494e33a0df988c9c62b954cc5fd1a0692"
     },
     {
       "mode": "100644",
@@ -3665,7 +3670,7 @@
     {
       "mode": "100644",
       "path": "tests/pii_observer/pii_observer-adaptive.cpp",
-      "sha256": "caa757f6b9245e7bd4b311aacae61470e5f92c5e8489b7be6f43ef3feda31dc2"
+      "sha256": "7120f9dfb8ed7ac9a36d681b13070e99aef71c1ca2164bbebbefa7e5cd04d479"
     },
     {
       "mode": "100644",
