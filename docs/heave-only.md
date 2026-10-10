@@ -147,7 +147,8 @@ It scores vertical displacement over the same trailing 900 s window. The
 heave-only filters need a vertical reference (`--frontend`):
 
 - **`mahony` (default).** The PII observer's Mahony AHRS as shipped: its
-  adaptive gains, the magnetometer, and the firmware's sensor mapping, with
+  adaptive gains, the heading-only magnetometer correction
+  (`ahrs/MahonyHeadingMag.h`), and the firmware's sensor mapping, with
   gyro, accelerometer and magnetometer all mapped `[N, -E, -D]`.
 - **`proxy`.** The same Mahony core, IMU-only, at the gains of the private
   Mahony observer that OU-II, OU-III and TFG share
@@ -177,7 +178,7 @@ the estimated and true gravity directions:
 
 | Mean (worst) % of Hs | Tilt error, mean (worst) | PII | Richter zero-displacement | Godhavn ext | Küchler | Godhavn published law |
 |---|---|---|---|---|---|---|
-| `mahony`: PII Mahony as shipped | 1.25° (2.75°) | 5.96 (8.75) | 11.08 (24.56) | 14.09 (28.63) | 12.27 (18.87) | 195 (386) |
+| `mahony`: PII Mahony as shipped | 1.53° (3.36°) | 5.64 (7.81) | 9.08 (18.46) | 11.88 (21.99) | 12.51 (19.88) | 203 (422) |
 | `proxy`: shared IMU-only Mahony | 0.58° (1.18°) | 5.08 (5.99) | 5.11 (5.75) | 8.45 (10.64) | 12.15 (18.59) | 217 (507) |
 | `truth`: true vertical | 0.00° (0.00°) | – | 5.00 (5.33) | 8.23 (9.65) | 12.61 (20.12) | 215 (492) |
 
@@ -253,18 +254,19 @@ More information should not make the estimate worse. Two defects made it
 look that way.
 
 - **A sensor-frame bug in the simulator adapter.** The PII simulator
-  (`tests/pii_observer/pii_observer-adaptive.cpp`) maps gyro and
+  (`tests/pii_observer/pii_observer-adaptive.cpp`) mapped gyro and
   accelerometer to `(-E, -N, -D)` but the magnetometer to `(N, -E, -D)`.
-  That puts the magnetometer in a body frame turned 90° about z, which then
-  rotates inconsistently with the gyro once the boat rolls and pitches. A
-  comment there records that this mapping was chosen to fix a yaw error, and
-  the yaw report adds twice the declination to compensate. This simulator
+  That put the magnetometer in a body frame turned 90° about z, which then
+  rotated inconsistently with the gyro once the boat rolled and pitched. A
+  comment there recorded that this mapping was chosen to fix a yaw error, and
+  the yaw report added twice the declination to compensate. This simulator
   first copied the same adapter.
   - The firmware (`atomS3R_ins_pii_observer.ino`) maps all three sensors
     `[N, -E, -D]` and reports heading as `-yaw`. With that mapping the
-    shipped configuration's tilt error falls from 2.94° to 1.25° (worst
-    6.73° to 2.75°), and its heading error is 2.6° RMS. `heave_only-sim`
-    now uses the firmware mapping. The PII simulator still has the bug.
+    configuration's tilt error, with the textbook magnetometer correction,
+    falls from 2.94° to 1.25° (worst 6.73° to 2.75°), and its heading error
+    is 2.6° RMS. `heave_only-sim` and the PII simulator now use the firmware
+    mapping.
 - **Textbook Mahony lets the magnetometer steer tilt.** Its magnetometer
   error enters all three axes with the same gain as the accelerometer error.
   The magnetometer carries little tilt information, but its residual
@@ -274,8 +276,14 @@ look that way.
     corrects heading only, fixes this. At the shared gains, tilt error goes
     from 0.63° (textbook) to 0.56°, against 0.58° without the magnetometer.
     Richter's filter goes from 5.22 % to 5.09 % of Hs (5.11 % without).
-  - That change is in `ahrs/Mahony_AHRS.h`, which the firmware uses, so it is
-    not made here.
+  - The shipped PII observer applies this projection
+    (`ahrs/MahonyHeadingMag.h`; `Mahony_AHRS.h` is unchanged). At the PII's
+    own fast adaptive gains it is a trade-off. The magnetometer carries
+    acceleration-free tilt information about the axis normal to the field,
+    and the projection drops it, so the `mahony` front end's tilt error rises
+    from 1.25° to 1.53° (worst 2.75° to 3.36°). Heave still improves for PII
+    (5.96 % to 5.64 % of Hs), Richter (11.08 % to 9.08 %) and Godhavn ext
+    (14.09 % to 11.88 %); Küchler's worst case rises from 18.87 % to 19.88 %.
 
 ### Where the error comes from
 
@@ -286,7 +294,7 @@ vertical acceleration, then adding one corruption at a time.
   - *What goes wrong.* The shipped Mahony settings are tuned for a fast AHRS.
     A ~1 s time constant lets every wave's horizontal acceleration tilt the
     vertical.
-  - *The result.* Tilt error reaches 2.75°. Leaked horizontal acceleration
+  - *The result.* Tilt error reaches 3.36°. Leaked horizontal acceleration
     leaves a low-frequency vertical error. The heave filters' gain there
     (about 235 m per m/s² at 0.01 Hz for Godhavn) turns it into metres of
     drift.
@@ -294,7 +302,7 @@ vertical acceleration, then adding one corruption at a time.
     Hs 8.5 m). Using the OU filters' own private Mahony settings instead
     (IMU-only, corner below the wave band) brings tilt to 0.58°. That is as
     good as a true vertical for every heave filter here. The PII observer
-    also improves, from 5.96 % to 5.08 % of Hs.
+    also improves, from 5.64 % to 5.08 % of Hs.
   - *Why OU-III differs.* OU-III estimates attitude and wave motion jointly.
 - **Bias instability (the published Godhavn law).**
   - On exact acceleration the law gives under 2 % of Hs.

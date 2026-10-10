@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "81b4156ad15db7e37ba67d5018a6440ec92eddb23260bc557c174ce2a4123ea9",
+  "replay_fingerprint": "99c2131c9cd16114dcb5fee5810d8d20ba88662aa04e342674b6afa72ababbf8",
   "results_file_count": 477,
   "results_files": [
     {
@@ -581,32 +581,32 @@
     {
       "kind": "file",
       "path": "reports/results/heave_only/heave_only_jonswap_high.svg",
-      "sha256": "7d71a5efa56d6fd689440ff12761b9e5d8f8d9c9c18983bce42f909baac616e0"
+      "sha256": "5b89f83227e69df9ccc5561a9689d8a35a9137506b6eae79fb00ee3bbf38abea"
     },
     {
       "kind": "file",
       "path": "reports/results/heave_only/heave_only_jonswap_low.svg",
-      "sha256": "efd66e0562c1d8819065a8048a3e0d2f30474e09c76966c927ec2f8833438e1b"
+      "sha256": "2bed4b0bdc61a0f50202c93a8f0fcfd26adee856a438237d81277b043717e936"
     },
     {
       "kind": "file",
       "path": "reports/results/heave_only/heave_only_jonswap_medium.svg",
-      "sha256": "48b995dd587cce24a50a67f3d8cd081b470245006938bfc36588820fde722800"
+      "sha256": "1ba1a2113ae7ce4623dd2f24b869e33b3aca53c685c4ce96255fbc6fdc0ed737"
     },
     {
       "kind": "file",
       "path": "reports/results/heave_only/heave_only_pmstokes_high.svg",
-      "sha256": "0dbc325b7bb336708a9cc880b7be058bf172a8e99ce4f7ed8c03d549f33f3812"
+      "sha256": "3f46032fc3f740e9724c030b35f4d83e594900e6b71df16efcab4e639d3de15d"
     },
     {
       "kind": "file",
       "path": "reports/results/heave_only/heave_only_pmstokes_low.svg",
-      "sha256": "99197ac25b428dfafe8b0c73a94cfc603d8b43e8f1fc4fc5e908ca5cb259ef4a"
+      "sha256": "091d4c64127405dc6a232987df99618fec31046f5bd29208de5f0beedf3289df"
     },
     {
       "kind": "file",
       "path": "reports/results/heave_only/heave_only_pmstokes_medium.svg",
-      "sha256": "34d6a4d1a5f75623b163b242797426f8173505ef877b39770b5dd1ed9574ec61"
+      "sha256": "f17cfa2029ab7f7eab2c97bdf0248b5e793110e02c342043d35c7842ec443333"
     },
     {
       "kind": "file",
@@ -1006,7 +1006,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "7aa6d813105d8b0ba6e01337be1ccc1beea68ccd01ef7827e3c982b7655b5d87"
+      "sha256": "69d1145d440624d4ec34c1d64eec18a94b52d1f75f86123fe3cb143c03264e83"
     },
     {
       "kind": "file",
@@ -1051,7 +1051,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "a86f6d15aaf6d439e87e720441da3e8ed79f290211578b3b4f75bd2380fba411"
+      "sha256": "584510e541788ff4daedc3fd04ec17366b56e198866d29ed6b40e69ca3595554"
     },
     {
       "kind": "file",
@@ -1151,7 +1151,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "9c9de67508d74c4ceb7fb8a97734c7da5f93177e93db7efc45642b837900aaeb"
+      "sha256": "2b5e513e8f7b862439e0912c7c2dbc2a29a87a84faf8d01045c56fb2e9324482"
     },
     {
       "kind": "file",
@@ -1246,7 +1246,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "4ba1b6f17d9321962abaa5207ee219749093ae3ddefd43f624582afc93beba18"
+      "sha256": "c0fa0f76272ee22102c537bd7b96187a08433e53117102aac112659f2c916d4a"
     },
     {
       "kind": "file",
@@ -2389,13 +2389,13 @@
       "sha256": "948cf40818672c2660561dde906e6935d1ed5175ae891ec6c6052b5fc3066b81"
     }
   ],
-  "results_fingerprint": "a807956730159a954dba21538b83414f02fa845787f8cd7ebf9b9d8d556ce2d8",
+  "results_fingerprint": "a704417eb8bb12d740d318cf3b73e17ea7dc9611b16c1a252c600231b3439ae9",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 772,
+  "tracked_replay_file_count": 773,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2829,6 +2829,11 @@
     },
     {
       "mode": "100644",
+      "path": "src/ahrs/MahonyHeadingMag.h",
+      "sha256": "3e6221a95615135044278f09bf53e03f5386adff567c5619db2985ddae5ea9b4"
+    },
+    {
+      "mode": "100644",
       "path": "src/ahrs/Mahony_AHRS.h",
       "sha256": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7"
     },
@@ -3060,7 +3065,7 @@
     {
       "mode": "100644",
       "path": "src/pii_observer/AdaptiveVerticalPIIMahony.h",
-      "sha256": "16e6d79b6d3391a03551e38471ff4dff334a61c4b3680ee3152b4c88dda5f1e3"
+      "sha256": "fc08242e0af657ea6e320b23ab677e4494e33a0df988c9c62b954cc5fd1a0692"
     },
     {
       "mode": "100644",
@@ -3335,7 +3340,7 @@
     {
       "mode": "100644",
       "path": "tests/heave_only/heave_only-sim.cpp",
-      "sha256": "63189dd3555cd9535873c4bddad1e37a8361beb10120faed5950ba62db29e0f0"
+      "sha256": "75070919b906250e75e56ce79b22af11495ec402724d9f98987b8b485ffd2eb5"
     },
     {
       "mode": "100644",
@@ -3785,7 +3790,7 @@
     {
       "mode": "100644",
       "path": "tests/pii_observer/pii_observer-adaptive.cpp",
-      "sha256": "caa757f6b9245e7bd4b311aacae61470e5f92c5e8489b7be6f43ef3feda31dc2"
+      "sha256": "7120f9dfb8ed7ac9a36d681b13070e99aef71c1ca2164bbebbefa7e5cd04d479"
     },
     {
       "mode": "100644",
