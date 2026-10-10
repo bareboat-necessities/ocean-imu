@@ -248,42 +248,6 @@ averaged over the eight records.
     differ slightly from the `heave_only` table.
   - The shipped PII defaults are not changed here.
 
-### Why dropping the magnetometer first looked like an improvement
-
-More information should not make the estimate worse. Two defects made it
-look that way.
-
-- **A sensor-frame bug in the simulator adapter.** The PII simulator
-  (`tests/pii_observer/pii_observer-adaptive.cpp`) mapped gyro and
-  accelerometer to `(-E, -N, -D)` but the magnetometer to `(N, -E, -D)`.
-  That put the magnetometer in a body frame turned 90° about z, which then
-  rotated inconsistently with the gyro once the boat rolled and pitched. A
-  comment there recorded that this mapping was chosen to fix a yaw error, and
-  the yaw report added twice the declination to compensate. This simulator
-  first copied the same adapter.
-  - The firmware (`atomS3R_ins_pii_observer.ino`) maps all three sensors
-    `[N, -E, -D]` and reports heading as `-yaw`. With that mapping the
-    configuration's tilt error, with the textbook magnetometer correction,
-    falls from 2.94° to 1.25° (worst 6.73° to 2.75°), and its heading error
-    is 2.6° RMS. `heave_only-sim` and the PII simulator now use the firmware
-    mapping.
-- **Textbook Mahony lets the magnetometer steer tilt.** Its magnetometer
-  error enters all three axes with the same gain as the accelerometer error.
-  The magnetometer carries little tilt information, but its residual
-  calibration errors (2 µT hard iron, 1.5 % scale, 1 % cross-axis, 1°
-  misalignment in this replay) tilt the estimate.
-  - Projecting the magnetometer error onto the estimated vertical, so it
-    corrects heading only, fixes this. At the shared gains, tilt error goes
-    from 0.63° (textbook) to 0.56°, against 0.58° without the magnetometer.
-    Richter's filter goes from 5.22 % to 5.09 % of Hs (5.11 % without).
-  - The shipped PII observer applies this projection
-    (`ahrs/MahonyHeadingMag.h`; `Mahony_AHRS.h` is unchanged). At the PII's
-    own fast adaptive gains it is a trade-off. The magnetometer carries
-    acceleration-free tilt information about the axis normal to the field,
-    and the projection drops it, so the `mahony` front end's tilt error rises
-    from 1.25° to 1.53° (worst 2.75° to 3.36°). Heave still improves for PII
-    (5.96 % to 5.64 % of Hs), Richter (11.08 % to 9.08 %) and Godhavn ext
-    (14.09 % to 11.88 %); Küchler's worst case rises from 18.87 % to 19.88 %.
 
 ### Where the error comes from
 
