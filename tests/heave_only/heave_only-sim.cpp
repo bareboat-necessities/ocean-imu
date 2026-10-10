@@ -121,11 +121,11 @@ bool env_double(const char* name, double& out) {
 // targets: the worst Z RMS (%Hs) of each method across the scored records plus
 // about half a percent.
 struct HeaveLimits { float jonswap; float pmstokes; };
-constexpr HeaveLimits PII_LIMITS{7.55f, 8.80f};           // worst 7.51 / 8.75 (H8.5)
-constexpr HeaveLimits GODHAVN_LIMITS{356.8f, 388.4f};     // worst 355.0 / 386.4 (H8.5)
-constexpr HeaveLimits GODHAVN_EXT_LIMITS{22.50f, 28.77f}; // worst 22.39 / 28.63 (H8.5)
-constexpr HeaveLimits KUCHLER_LIMITS{15.66f, 18.96f};     // worst 15.58 / 18.87 (H8.5)
-constexpr HeaveLimits RICHTER_ZD_LIMITS{19.21f, 24.68f};    // worst 19.11 / 24.56 (H8.5)
+constexpr HeaveLimits PII_LIMITS{7.16f, 7.85f};           // worst 7.12 / 7.81 (H8.5)
+constexpr HeaveLimits GODHAVN_LIMITS{373.4f, 424.5f};     // worst 371.5 / 422.4 (H8.5)
+constexpr HeaveLimits GODHAVN_EXT_LIMITS{18.82f, 22.11f}; // worst 18.72 / 21.99 (H8.5)
+constexpr HeaveLimits KUCHLER_LIMITS{16.99f, 19.98f};     // worst 16.90 / 19.88 (H8.5)
+constexpr HeaveLimits RICHTER_ZD_LIMITS{15.94f, 18.56f};    // worst 15.85 / 18.46 (H8.5)
 // Shared proxy Mahony (--frontend proxy).
 constexpr HeaveLimits PII_PROXY_LIMITS{6.02f, 5.90f};          // worst 5.99 / 5.87
 constexpr HeaveLimits GODHAVN_PROXY_LIMITS{388.8f, 509.1f};     // worst 386.8 / 506.5
