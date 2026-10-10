@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "438b70e5d718fe8e27565503fe80f4fcf430106361166026837b825858cf5f51",
-  "results_file_count": 480,
+  "replay_fingerprint": "db5fcba6c9745eaa0e8bb1d7704286bd4513e0fd95529177c2de99f8f635648d",
+  "results_file_count": 488,
   "results_files": [
     {
       "kind": "file",
@@ -695,13 +695,53 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/magnetic_timing/atoms3r-resources.csv",
+      "sha256": "41024302e5bc4dde30326f07c0cff8e4757c5dcc4e97e66dd9b28fc5281d04b8"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/magnetic_timing/atoms3r-resources.json",
+      "sha256": "a9665819be4cb42d0abbae7a522c0006525623406f2104765f06e374a32e5144"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/magnetic_timing/mahony-replay.csv",
+      "sha256": "7bc6ce0b2744f06c09e2557a5b865e9c03f4d60ff158c0583c9978aa46f1ec71"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/magnetic_timing/native-resources.txt",
-      "sha256": "548ec4d597c0e346536428cd167b43992e8320b81921af3de72cb5f45268b34d"
+      "sha256": "581aba8dcd07f1d822684ccda41fc01c53bd30af103c0600f8e57388b2629fa4"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/magnetic_timing/nlo-replay.csv",
+      "sha256": "91dfe0c9fc71d1d4775542fa650a73b25d700a107758fb611456271a9783bc0a"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/magnetic_timing/ou2-replay.csv",
+      "sha256": "6cf22848e2d627de2bb0a7284a86baae4d7d5b9ff303d19bb8abb2ac0d87dc2f"
     },
     {
       "kind": "file",
       "path": "reports/results/magnetic_timing/paired-replay.csv",
-      "sha256": "4a4d6f2cdc5f94e91f8657efa0a86bf0999e4e58e8b85128ad8650dfea01585c"
+      "sha256": "901c19fbb965245a261bd9e98af5f30a8fd54dde62d0909eab546368e4d0ceb9"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/magnetic_timing/pii-replay.csv",
+      "sha256": "42089bf734d1e71e7f3ac06f2c9fabc1ce1e37673f88b5027d85808cfb1160f1"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/magnetic_timing/qmekf-replay.csv",
+      "sha256": "b9601921a63307ce63e9855e42ca475f6582c0ad32c51746bbd299851957f98c"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/magnetic_timing/tfg-replay.csv",
+      "sha256": "1cf7c3a2d16c9512bc1f91a3b01ed304533f4cdad31fdd7b0d759c6fe1b0c1c9"
     },
     {
       "kind": "file",
@@ -851,7 +891,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "sha256": "f0de755deb29c6510d050ca2c83fcc1712ccb26e5f4b646987832e39100c27df"
+      "sha256": "3cd3db9fce9cd6a5c80d9c241a3fc38e1821f37e97def05c1529bc555dd1edd5"
     },
     {
       "kind": "file",
@@ -866,7 +906,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "sha256": "479c2fdb8108e81ee44b0753b497745a7738abf0b6e4ad81ad94c367f413bb7b"
+      "sha256": "9cc9ae68ca9a3e70f48a300d738f9ef79dd01ce6ad22b5a20f3af624dba0d912"
     },
     {
       "kind": "file",
@@ -896,7 +936,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
-      "sha256": "e02c0fa5983411731dd6e268027766fe91f00877c2d8d5962c9a1caa70958509"
+      "sha256": "83306068ef5aed717f88fc5d97f8df6dff9338417312b77a33f3d57451e2dd34"
     },
     {
       "kind": "file",
@@ -926,7 +966,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/magnetic-timing-legacy-binding.json",
-      "sha256": "2143f5753772cf71b5cb9b1e4f91a3af44aa1a38ce1cc190d0256b1265d98afb"
+      "sha256": "e616de32cc2260c2d62e1e0ed6d9d0caf00dbc3fed677e2d170b1132cc255ec9"
     },
     {
       "kind": "file",
@@ -941,12 +981,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-compatibility-carried-1200s.json",
-      "sha256": "b60b20c12b691f2d91860b7ca56efc00e38f1612c8d481257761dc9baf5cd461"
+      "sha256": "8d6f3f9b05c920fa92ef74a3ef45c21bb0c966513d50f7cfc6ec3b052d8b42f2"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-compatibility-carried.json",
-      "sha256": "3f3c85f5af6b416c524a6bd872743cbc9414de51e19ace755df1934dca8d4bf5"
+      "sha256": "50373412f1aac3b6391df1f91d08ca07a93b475e52b2c7c1dbf90f5271bdc465"
     },
     {
       "kind": "file",
@@ -956,12 +996,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-quiet-compatibility-certificate.json",
-      "sha256": "3de67cc39c1cd43added3aedf716862fb83424af0be06c2ebef2df9c38582bac"
+      "sha256": "26ca3cc5c6148bbd2a7b7aef06664c203184dd1174d05a61f74e02c7ac01d80b"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "sha256": "2cccc7f3bc6493d1f816e23c07a604643811445b1349fe179bb88fe7f5871fc4"
+      "sha256": "2d2fe4484557390a07b3f9ca47acb9f9c62075ca2939196558d8b8166a3665cb"
     },
     {
       "kind": "file",
@@ -1021,7 +1061,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "da3d95446ee5e4eb7949d067ce1942de61372341b7e677b753f1878366cef09f"
+      "sha256": "51df0ddf4c90a6fa6a5a9a962b854d66fc55212c56aabfd46e93159ff6766956"
     },
     {
       "kind": "file",
@@ -1061,12 +1101,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
-      "sha256": "aff1e2ac06e320d81aad896382ff544f250a8e997ecf4adf6251cf875a1bd7e0"
+      "sha256": "445c717372c0f0e7b91825680373117576733e6d1de285460aebfd707561c0ca"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "babdbbae55395e1880e38b29d91f54db627ed7a3f910c389523fea4bd8e34a36"
+      "sha256": "52162ee60b8614d53d83b3e26213f6822796c594b871cae9cdd1046c0773c0d9"
     },
     {
       "kind": "file",
@@ -1101,12 +1141,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "sha256": "4e08ab8feb34cc0bd010aa9f280bfcad99e8430c52675f7ab43a527a343996be"
+      "sha256": "5b963120002c129baa04865bd6f0f1da39cc44c12e0d0ffc66ff6189428c8642"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "sha256": "2600dd60a1555d85e77a8c9f447367ca486bc190d9ef22ccfeece254ff4cc89e"
+      "sha256": "6ca7211cc6b53089e3af0370fb9fa153dbe08b89159d054fc607f9b9651404b8"
     },
     {
       "kind": "file",
@@ -1146,7 +1186,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "sha256": "b71a0e710d0b348e4d2dc3f0e1fff41b983145cffeee5325f22fe80074358571"
+      "sha256": "e63395df445dec206b4152c1424e9147d9cb9c772c954adb9b1244d5948ed436"
     },
     {
       "kind": "file",
@@ -1166,7 +1206,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "0cd5f5f3cb0d2741dfe3fb794e01d1667ac2bca1c205e5149c4851d2e0bfd7d2"
+      "sha256": "ef3d122449bb6bd429f720a6aa149d9db1c4b49c1cc11278f8f01f9b93cdca2d"
     },
     {
       "kind": "file",
@@ -1261,7 +1301,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "b7e940f927a227bb01791226bc8c05156e88d8db2256823044c6a05c2615d392"
+      "sha256": "a3624be5ebd3e1bc572277350c8c0d04736b3d73c25b2d225a09ed7d44274339"
     },
     {
       "kind": "file",
@@ -2386,31 +2426,31 @@
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/manifest.json",
-      "sha256": "637c1a801d7b900d9aa8c8b30f0a439f5c36df4f2e99539b5b77292ac13d787a"
+      "sha256": "6dbb1ee9a9aa89e9593e3c75985b8aac7235b9d1dbdd27614ac337626d18b71a"
     },
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/paired_summary.json",
-      "sha256": "0dca5bae318d7269d0b48f36bbd9921c8df190accb8994a01b9370bcd9aa77fc"
+      "sha256": "4d4d5c428a6f0b32af1733fb0f1ceba810dbef9d7aae5f843cefa8a28835291e"
     },
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/raw_runs.csv",
-      "sha256": "5f37b68fbf972beb2744ed95b66fa32d1ab1af0e85d7eb7d2efb11f27d37d543"
+      "sha256": "2e2157abe7ac624fbfe2a41e7094d9326a9bf63a22bc9ec2a295729d6f9a9d39"
     },
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/raw_runs.json",
-      "sha256": "68e769ade9694add85285403b006dfaf71069054a3c644d46aea76fa33a5a39e"
+      "sha256": "bc1cb0425e6464e7891562b44738e083cb81734196a325b33ef0fbd263bff132"
     }
   ],
-  "results_fingerprint": "912cbfff6baad960f0d188eedb8791bc444f5d901276b3c8184fcdb9fe371a9f",
+  "results_fingerprint": "550c62fe077e28874c1f930cec865c8bd7fc084094e89abd6fc144d9edc4bbab",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 778,
+  "tracked_replay_file_count": 791,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2465,7 +2505,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/quality-gates.yml",
-      "sha256": "1f52e443ee3b67aeb05e8f18e73abbc3040f63fb9b574618a5faea7b1b102b11"
+      "sha256": "cb511510373d0ee4748b7ace1cbd951025b4808247ba708b423cc9d4d0e592cb"
     },
     {
       "mode": "100644",
@@ -2705,37 +2745,37 @@
     {
       "mode": "100644",
       "path": "sensors/compass_ahrs/atomS3R_compass_mahony/atomS3R_compass_mahony.ino",
-      "sha256": "1da7a46a5816e9aa28af712e7ceadff322e4b06d5b9b378526bdb67e0f5f8b8c"
+      "sha256": "8cff5cd56eb6d2ff84da24142b1cc06421700c38c49b9da03cae0ed977862fe2"
     },
     {
       "mode": "100644",
       "path": "sensors/compass_ahrs/atomS3R_compass_qmekf/atomS3R_compass_qmekf.ino",
-      "sha256": "4c267a0e9b9a0758d7e252de7d1e799e34e89b3eaf97d0f6874f97c887ee0c78"
+      "sha256": "8b6ffcfb3397aad59c5de24e6a15a8c1ec64f4113200e108c9aa8da0fd714d78"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou2/atomS3R_ins_kalman_ou2.ino",
-      "sha256": "326bc4f9d0c825844da40648226cc5349a90186da5a88e1a834ed476c8ca6966"
+      "sha256": "28af44f7ba67a0d907ce9e52eb96cadeb542c8fdd9d998f3f5114774aac408c2"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "sha256": "075f1956031395e79ca5b3dfae06fb51ac0bd1973bce134a97dbdec662b82378"
+      "sha256": "199566b83510d77b4e2854ab8231d57b509f9713b357fd9d386bfb048ee24c8c"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_nlo/atomS3R_ins_nlo.ino",
-      "sha256": "41553799fb92b61bc42693dab5434c3f8aedbfa56d4176ead50198fe772ad3ab"
+      "sha256": "ba2450f923cf24e0e15519956294371dc05b986ec78b6a7fe37c67ca7ec62dc5"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_pii_observer/atomS3R_ins_pii_observer.ino",
-      "sha256": "11c34129de52c8b1d641b7544df69eeadb349bce9b1f77af35a1d1e6f1151e83"
+      "sha256": "30d990efc85c0f5407a5a45ccefda52f2dc9291eb33d802b6d9d346fe4732c01"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino",
-      "sha256": "6a3524265b5e2fb7ef030a947b7c503f99e3303d869090abc81b075a70cba2c3"
+      "sha256": "c28d3ccf883e98b32708b4d11d7aecbafa3f9586dd89aae3cbe772f8f86912e6"
     },
     {
       "mode": "100644",
@@ -2770,7 +2810,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_CompassAppBase.h",
-      "sha256": "f97d32de10265ff91987aec5bde8b3960cc76920bed30c3d8d960260fcb343ca"
+      "sha256": "1a9e92e08046a1710c85c8a271b6e818c7f087583ae09da8ca6bd9996afa459f"
     },
     {
       "mode": "100644",
@@ -2840,7 +2880,7 @@
     {
       "mode": "100644",
       "path": "src/ahrs/KalmanQMEKF.h",
-      "sha256": "f0108e104cb5779fca965ce083287a9658e9d2cf40646ff5bbeebcf36a5dae90"
+      "sha256": "6cd0354c530d86e521bdbf15b518f6810c0980f650275e37cc80ca7193b5bf10"
     },
     {
       "mode": "100644",
@@ -3010,17 +3050,17 @@
     {
       "mode": "100644",
       "path": "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h",
-      "sha256": "8762c6a8891cb5ba5f3d0757d3f467b0ec3a5faba6009b826bd23d89e5dbfa47"
+      "sha256": "f10c1a5e151ba1915963d712f9fdc3a9335e2dcf7fb3df385034effcab64aced"
     },
     {
       "mode": "100644",
       "path": "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h",
-      "sha256": "c8a6d1914f8cf50362bdefbe43daa45eeb1672f5e0087a01b06e3d0a79e4cbe2"
+      "sha256": "48a172de3bceb8a06fcf52d4779df5e52e9a5361a3e2468c38f6ddcf90be3a05"
     },
     {
       "mode": "100644",
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "sha256": "fe71dd571df5d0ea493c3394c1bfd634b6b42fc0dbefc11267895d7ec98946d5"
+      "sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
     },
     {
       "mode": "100644",
@@ -3030,12 +3070,12 @@
     {
       "mode": "100644",
       "path": "src/kalman_tfg/Kalman3D_Wave_TFG.h",
-      "sha256": "4e6f1cafa61bf4d3442cba1ab5196699fae76cb0fc962ace8a0d45c9106e557d"
+      "sha256": "1e109ab58914002955731de7aec2fe1d290cfdbb4b638b9234362138ebf325f9"
     },
     {
       "mode": "100644",
       "path": "src/kalman_tfg/SeaStateFusionFilter_TFG.h",
-      "sha256": "42bc3dd373913ac6022d98f498e5c74d830c5761c92762055a7bdea052015255"
+      "sha256": "d72c90936d2bca99075044d035c011edb73e3738b21c46e90c79a259d07c448e"
     },
     {
       "mode": "100644",
@@ -3050,7 +3090,7 @@
     {
       "mode": "100644",
       "path": "src/nlo/TimeVarGainNLO_Adapter.h",
-      "sha256": "2b4724ac195e85581e3034153352ffc84ad1cb61c20bccae0e2831813f58bbe4"
+      "sha256": "434f006c5ca1117ecbca681450db1f2e0b578b0785734d83a5c6b43e01119f68"
     },
     {
       "mode": "100644",
@@ -3154,8 +3194,18 @@
     },
     {
       "mode": "100644",
+      "path": "src/util/MagneticInput.h",
+      "sha256": "bf0a0b65a29474143f62dc6c9d138fa034b3609b9a4ad60ec8c08d5cd1d3b1f1"
+    },
+    {
+      "mode": "100644",
       "path": "src/util/MagneticRotation.h",
-      "sha256": "2ca9f8577ce4706cdd488966b91988a94ee091a66a9a3e336590600b10a2f8bf"
+      "sha256": "5918386ac102430bb3c4e979b51efa08f1d652528d2a9edf73cf488eb124363a"
+    },
+    {
+      "mode": "100644",
+      "path": "src/util/MeasurementCovariance.h",
+      "sha256": "829634df89a5c32a5cad90beccc3a706590e659423179f87f9788dbf7431aad1"
     },
     {
       "mode": "100644",
@@ -3220,7 +3270,7 @@
     {
       "mode": "100644",
       "path": "tests/ahrs/Makefile",
-      "sha256": "3ecf9ee348f6551e5c3709bfe0133a07b5747eeee71df7f830652ff47cb1d58c"
+      "sha256": "2da5cabbf0a8d556f8aa17c93dd26358de27f26149d8eec7d3b13ef45fabe45c"
     },
     {
       "mode": "100644",
@@ -3229,8 +3279,18 @@
     },
     {
       "mode": "100644",
+      "path": "tests/ahrs/mag_continuous-test.cpp",
+      "sha256": "043af164e9089f70ab917f856fc21f92200249070b9b42a777a2128ac575a848"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/ahrs/mag_timing-test.cpp",
+      "sha256": "5a41dd20d671065d7e1e0071202698a6c1b2f4d1b85716fa615519c47d8eb1d4"
+    },
+    {
+      "mode": "100644",
       "path": "tests/ahrs/run_tests.sh",
-      "sha256": "62bb6cf606524165ff7774bd9836c4268e900caa42324b4ec3f26b4b185e9fd0"
+      "sha256": "98aade809f47b46d8b2f020b80b201c8cef18178dd9e4d9c403926333cae20c2"
     },
     {
       "mode": "100644",
@@ -3256,6 +3316,26 @@
       "mode": "100644",
       "path": "tests/common/LocalGravityRegression.mk",
       "sha256": "20653d005967930b6ed72e0156ee3065dbdf0ee65ff4d09930146764491bf1d9"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/common/MagneticContinuousReplay.h",
+      "sha256": "a8fffcf30ed54e38070a5b856bf5994a775976345bf7cbb142b90c8a88617071"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/common/MagneticFacadeIdentity.h",
+      "sha256": "c99167e619e4f6658532777ea23d515f97d7ec5d1e76e7db398b2e705e4e524c"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/common/MagneticMotion.h",
+      "sha256": "4cddc4e86312bc35028d9d7e1128829350635355bb97ef2571ee497554fda48c"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/common/MagneticTimingReplay.h",
+      "sha256": "02f852ba93cb9d4274129f9fc0c3079cf462129ebf21f02c916fc909d6c02cf0"
     },
     {
       "mode": "100644",
@@ -3375,7 +3455,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/Makefile",
-      "sha256": "54ad8add641dcf203da29b833cf19d459eab66b5a72473a99ece5d0bd4208235"
+      "sha256": "76621fb9210bce5aacd2f47920aebd0268e424ab6d94a634ea9103ed896d5cfa"
     },
     {
       "mode": "100644",
@@ -3449,13 +3529,18 @@
     },
     {
       "mode": "100644",
+      "path": "tests/imu_calibrate/mag_input-test.cpp",
+      "sha256": "8ff847534186e87d1c6a882eb38aeb120d1c87c2806af4e41808c8966c576a03"
+    },
+    {
+      "mode": "100644",
       "path": "tests/imu_calibrate/mag_rotation-test.cpp",
       "sha256": "e8b1e461fac728f0ae9e57cfb0e8709bb8bcf5989782fb161bdf5ee1f98c68fa"
     },
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/run_tests.sh",
-      "sha256": "6d2e8cd7f9c8fc8564c2b56e180adbbe0b563acad46aff06ca33be40bdfb2980"
+      "sha256": "842a4983faf46b2606a47a9ab5ced0edd2d83aed252791a60dc9d32bd8dd8044"
     },
     {
       "mode": "100644",
@@ -3475,7 +3560,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_ou_ii/Makefile",
-      "sha256": "991c6e64ca7008f8f38010b5118fd1fb8cfa655159a645a46389ae2200e8669d"
+      "sha256": "903b7908c0e76c8f975cdce30e86f0c8b67a305f4e982a40043942662c87cdfb"
     },
     {
       "mode": "100644",
@@ -3499,6 +3584,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/kalman_ou_ii/mag_timing-test.cpp",
+      "sha256": "e062bb8479a6854106bed45404b01a5c87a9a59774054e369e4b5b3caf24db39"
+    },
+    {
+      "mode": "100644",
       "path": "tests/kalman_ou_ii/pseudo_law-test.cpp",
       "sha256": "1e88876df59bf54787afb1aa1d689d0db9cb46c4e1364c9ff04672e7afa22264"
     },
@@ -3510,7 +3600,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_ou_ii/run_tests.sh",
-      "sha256": "6c3558b51261871af47e518de630eabd56d7ac253cfba5323d72dd55fb56c6af"
+      "sha256": "1ba681d16645ba3f0334e9055707eb98c2061a7a98890631ee9c85515d0760b3"
     },
     {
       "mode": "100644",
@@ -3595,7 +3685,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_ou_iii/mag_timing-test.cpp",
-      "sha256": "e95e5f6cc9fa63fd9c32736791666d9cd21343d2c2f2dcd5d8fee2e88388e254"
+      "sha256": "f85668f460e0fcead855e57e1c453ec15907ead477e42efd42ad53bdb46815e1"
     },
     {
       "mode": "100644",
@@ -3670,7 +3760,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_tfg/Makefile",
-      "sha256": "a53bd04e2eb29cdb8572521a0f5c0905e8ed3849993e0490bf96056cbd209eae"
+      "sha256": "309c5b7e2c6136eba32d53a112df493f83af8fe057d83fd24944e94e35965d0c"
     },
     {
       "mode": "100644",
@@ -3704,6 +3794,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/kalman_tfg/mag_timing-test.cpp",
+      "sha256": "6cd1a73baad138bc418ff20128a1ab016438986db550a0d91cf15a23e6ac2bed"
+    },
+    {
+      "mode": "100644",
       "path": "tests/kalman_tfg/ou_chain_identity-test.cpp",
       "sha256": "0a9a3c4774775a6ab5c1fa7c6cf6034bf1802da69044673edf601464cb3c8a10"
     },
@@ -3720,7 +3815,7 @@
     {
       "mode": "100755",
       "path": "tests/kalman_tfg/run_tests.sh",
-      "sha256": "1e7b9de05ad68193347bb7c96d80f1a2bc626c938a231de2fb9cbb5a90bc3669"
+      "sha256": "9746d562254edf397a9a08fd7a7f3be45518fcf8c72a8f3de02be803791b13f5"
     },
     {
       "mode": "100644",
@@ -3780,7 +3875,7 @@
     {
       "mode": "100644",
       "path": "tests/nlo/Makefile",
-      "sha256": "4eb1e68aef0a5b72e1e708d46b20441f4e6bbd3f93bf10904d1899619fd880aa"
+      "sha256": "8c6c3d710c0eb2d8f1fb9f487847c4444dd48cff3b90867a9c5337597c5ddbfc"
     },
     {
       "mode": "100644",
@@ -3791,6 +3886,11 @@
       "mode": "100644",
       "path": "tests/nlo/local_gravity-test.cpp",
       "sha256": "2a30ac8838f96683cf5c8b521ea87d97312f714055470746edc204ccbbd43e17"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/nlo/mag_continuous-test.cpp",
+      "sha256": "b3c7f295185e89cfd5f5e48113703cbdc827ef7398390df667c2bbe093a7ea86"
     },
     {
       "mode": "100644",
@@ -3805,17 +3905,22 @@
     {
       "mode": "100644",
       "path": "tests/nlo/run_tests.sh",
-      "sha256": "ac94c47b6c5acf8de1643c3f833d8b611dd42ecd19d9b6ec2cae3ff2b5b013f1"
+      "sha256": "b0864fbc58c47b83a5ee331e91ac463b54c4b0e8b89f2a1211dd1cdee71e8056"
     },
     {
       "mode": "100644",
       "path": "tests/pii_observer/Makefile",
-      "sha256": "5a24bb8049b382f89a4f2fb87d7c119b710071634d43a99193b1f140e02591ad"
+      "sha256": "6f9a151c293961ea9176ebdb74de94c8be19f37a9b6700deb4a41829e9ca4d97"
     },
     {
       "mode": "100644",
       "path": "tests/pii_observer/local_gravity-test.cpp",
       "sha256": "1aec206a0dba370ae96b1d91f3e9f4dad004f6b60a796399012913aab1ec425e"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/pii_observer/mag_continuous-test.cpp",
+      "sha256": "eb425a9c8250dd975e1770c67195da904f2c6bcc50ef556f07ee1f5569150ae2"
     },
     {
       "mode": "100644",
@@ -3825,7 +3930,7 @@
     {
       "mode": "100644",
       "path": "tests/pii_observer/run_tests.sh",
-      "sha256": "381e4ac0237e4226e9cb1062e0cf88b4cb538d507f3af5b9d5a34d5fe5942713"
+      "sha256": "3c4696f61046c265fcc21dbec81c1ab9771b65105f5d20526923d7d296f59269"
     },
     {
       "mode": "100644",
@@ -4690,7 +4795,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou_paper_code_parity.py",
-      "sha256": "b328b609af98fd7cfe4921eaeb97f9f6d954738bd6436b27b93fc44212f4a203"
+      "sha256": "a1a5aa9d03b41c8fd16c1691568a5f9b1d9da643ab53b499062289f1725a212a"
     },
     {
       "mode": "100644",
@@ -5650,7 +5755,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/magnetic_timing_legacy_binding.py",
-      "sha256": "0b0f9dd789ea75357393a072efea70538b3bd498b6d4b863d4b600839c25d8c3"
+      "sha256": "ff00cfb007f14b26a87a4e29b9c4bb860ea060b2b83c2c17fd9e950af8c07dd9"
     },
     {
       "mode": "100644",

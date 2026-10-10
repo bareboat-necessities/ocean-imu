@@ -168,8 +168,8 @@
     }
   },
   "git_branch": "feature/mag-timing-consistency",
-  "git_commit": "7d2f135ff230bacdccaac884fe570bd58c76d8c5",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 49943 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   324 +-\n .../ou_validation/ou_validation_covsync.svg        |  1134 +-\n .../ou_validation/ou_validation_displacement.svg   |   324 +-\n .../results/ou_validation/ou_validation_macros.tex |    30 +-\n .../ou_validation/ou_validation_paired_effects.csv |  2432 +-\n .../ou_validation/ou_validation_publication.tex    |     6 +-\n .../results/ou_validation/ou_validation_raw.csv    |   740 +-\n .../ou_validation/ou_validation_summary.csv        |  2366 +-\n .../results/ou_validation/ou_validation_table.tex  |     4 +-\n .../ou_validation/ou_validation_transition.csv     |   564 +-\n .../ou_validation/ou_validation_vertical.svg       |  1026 +-\n 12 files changed, 29446 insertions(+), 29447 deletions(-)",
+  "git_commit": "1c69ccf1105bec3930dde37f9805b9d64ef94ce8",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json            | 3 +--\n reports/results/ou_validation/ou_validation_publication.tex | 2 +-\n 2 files changed, 2 insertions(+), 3 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -244,16 +244,16 @@
       "sha256": "714524883769572a141971074317d2aa62ad23f6cf022eb1f2ec735375b09be2"
     },
     "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h": {
-      "bytes": 93505,
-      "sha256": "8762c6a8891cb5ba5f3d0757d3f467b0ec3a5faba6009b826bd23d89e5dbfa47"
+      "bytes": 94868,
+      "sha256": "f10c1a5e151ba1915963d712f9fdc3a9335e2dcf7fb3df385034effcab64aced"
     },
     "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": {
-      "bytes": 52073,
-      "sha256": "c8a6d1914f8cf50362bdefbe43daa45eeb1672f5e0087a01b06e3d0a79e4cbe2"
+      "bytes": 52508,
+      "sha256": "48a172de3bceb8a06fcf52d4779df5e52e9a5361a3e2468c38f6ddcf90be3a05"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-      "bytes": 97142,
-      "sha256": "fe71dd571df5d0ea493c3394c1bfd634b6b42fc0dbefc11267895d7ec98946d5"
+      "bytes": 96945,
+      "sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
       "bytes": 56467,
@@ -296,8 +296,12 @@
       "sha256": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5"
     },
     "src/util/MagneticRotation.h": {
-      "bytes": 12441,
-      "sha256": "2ca9f8577ce4706cdd488966b91988a94ee091a66a9a3e336590600b10a2f8bf"
+      "bytes": 13133,
+      "sha256": "5918386ac102430bb3c4e979b51efa08f1d652528d2a9edf73cf488eb124363a"
+    },
+    "src/util/MeasurementCovariance.h": {
+      "bytes": 840,
+      "sha256": "829634df89a5c32a5cad90beccc3a706590e659423179f87f9788dbf7431aad1"
     },
     "src/util/W3dSimCommon.cpp": {
       "bytes": 102294,
@@ -332,8 +336,8 @@
       "sha256": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2"
     },
     "tests/kalman_ou_ii/Makefile": {
-      "bytes": 1819,
-      "sha256": "991c6e64ca7008f8f38010b5118fd1fb8cfa655159a645a46389ae2200e8669d"
+      "bytes": 1921,
+      "sha256": "903b7908c0e76c8f975cdce30e86f0c8b67a305f4e982a40043942662c87cdfb"
     },
     "tests/kalman_ou_ii/kalman_ou_ii-sim.cpp": {
       "bytes": 33141,
@@ -495,8 +499,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-10-10T19:17:13+00:00",
-    "git_commit": "7d2f135ff230bacdccaac884fe570bd58c76d8c5",
+    "generated_at": "2026-10-10T21:33:17+00:00",
+    "git_commit": "1c69ccf1105bec3930dde37f9805b9d64ef94ce8",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -571,16 +575,16 @@
         "size_bytes": 29967
       },
       "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h": {
-        "sha256": "8762c6a8891cb5ba5f3d0757d3f467b0ec3a5faba6009b826bd23d89e5dbfa47",
-        "size_bytes": 93505
+        "sha256": "f10c1a5e151ba1915963d712f9fdc3a9335e2dcf7fb3df385034effcab64aced",
+        "size_bytes": 94868
       },
       "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": {
-        "sha256": "c8a6d1914f8cf50362bdefbe43daa45eeb1672f5e0087a01b06e3d0a79e4cbe2",
-        "size_bytes": 52073
+        "sha256": "48a172de3bceb8a06fcf52d4779df5e52e9a5361a3e2468c38f6ddcf90be3a05",
+        "size_bytes": 52508
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-        "sha256": "fe71dd571df5d0ea493c3394c1bfd634b6b42fc0dbefc11267895d7ec98946d5",
-        "size_bytes": 97142
+        "sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0",
+        "size_bytes": 96945
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
         "sha256": "64d5419f9b4018ab165fda234eaf7282dbd271b60bdb30c4e05d3940ebccdb32",
@@ -623,8 +627,12 @@
         "size_bytes": 12170
       },
       "src/util/MagneticRotation.h": {
-        "sha256": "2ca9f8577ce4706cdd488966b91988a94ee091a66a9a3e336590600b10a2f8bf",
-        "size_bytes": 12441
+        "sha256": "5918386ac102430bb3c4e979b51efa08f1d652528d2a9edf73cf488eb124363a",
+        "size_bytes": 13133
+      },
+      "src/util/MeasurementCovariance.h": {
+        "sha256": "829634df89a5c32a5cad90beccc3a706590e659423179f87f9788dbf7431aad1",
+        "size_bytes": 840
       },
       "src/util/W3dSimCommon.cpp": {
         "sha256": "67295d71862932c6ebba34c761715043a855cbe9aa663159209b8bdb70578b45",
@@ -659,8 +667,8 @@
         "size_bytes": 2765
       },
       "tests/kalman_ou_ii/Makefile": {
-        "sha256": "991c6e64ca7008f8f38010b5118fd1fb8cfa655159a645a46389ae2200e8669d",
-        "size_bytes": 1819
+        "sha256": "903b7908c0e76c8f975cdce30e86f0c8b67a305f4e982a40043942662c87cdfb",
+        "size_bytes": 1921
       },
       "tests/kalman_ou_ii/kalman_ou_ii-sim.cpp": {
         "sha256": "f8d417510d9a82ab59abd9b2ed3d59ebe218c91ea5c43eb8bb12d65501422888",
@@ -715,7 +723,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "38076823900",
+      "run_id": "38085477023",
       "workflow": "ou-full-evidence-branch"
     }
   },
