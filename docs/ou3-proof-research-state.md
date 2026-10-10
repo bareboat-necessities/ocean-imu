@@ -141,6 +141,23 @@ Retained facts: original gains/legacy correction equations and the OU-III
 operation audit. Limiter/next experiment remain physical timing qualification
 and same-history transport-port/service bounds.
 
+**E — interrupted local workspace.** At `cd8a079a`,
+`make all EIGEN_DIR=/usr/include/eigen3 CPPFLAGS=-O1
+SIM_DATA_ZIP=/workspace/scratch/a374d05f94d8/sim-data-files-vessel-rao-28ft.zip`
+completed every native suite through `util`, then exited 2 in validation:
+14 assertions and 220 errors followed the disappearance of the entire local
+checkout (including unchanged workflow, article and result files). This
+invalidates a claim that that single command completed, not the prior native
+passes or the committed artifacts. A fresh clone of the identical commit and
+the SHA-verified pinned dataset restores the missing inputs. The resumed
+`make -C tests/validation test` passes 1,128 tests (one local CMake-availability
+skip); the remaining `wave_dir` and `wave_sim` scripts also pass. CMake passes
+in CI. No estimator, test, evidence value or acceptance condition is changed.
+Retained: all magnetic comparisons and original proof scope. Limiter: physical
+timing qualification and same-history transport/service bounds, as above.
+Next falsifiable checks: validate this ledger's refreshed provenance and the
+final published tree; hardware timing remains the next physical experiment.
+
 ## Evidence
 
 **D — an inverse-domain estimate alone does not settle the linked receipt.**
