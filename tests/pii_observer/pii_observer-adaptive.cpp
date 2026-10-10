@@ -40,9 +40,9 @@ static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 // scored records plus about half a percent, rounded up in the last digit the
 // channel is quoted in
 static constexpr W3dFailureLimits FAIL_LIMITS {
-    .err_limit_percent_z_jonswap = 8.91f,   // worst 8.8651 (jonswap H8.5)
-    .err_limit_percent_z_pmstokes = 9.41f,  // worst 9.3622 (pmstokes H8.5)
-    .err_limit_yaw_deg = 10.84f,            // worst 10.7801 (pmstokes H8.5)
+    .err_limit_percent_z_jonswap = 7.36f,   // worst 7.3149 (jonswap H8.5)
+    .err_limit_percent_z_pmstokes = 8.51f,  // worst 8.4582 (pmstokes H8.5)
+    .err_limit_yaw_deg = 4.15f,             // worst 4.1266 (pmstokes H8.5)
 };
 
 class FusionAdapterAdaptivePIIMahony final : public IW3dFusionAdapter {
@@ -80,7 +80,7 @@ public:
 
         // Reuse latest mag sample at every IMU step until a new one arrives.
         if (with_mag_ && have_mag_) {
-            const Vector3f mag_body_m = ned_to_mahony_mag_(last_mag_body_ned_);
+            const Vector3f mag_body_m = ned_to_mahony_body_(last_mag_body_ned_);
 
             filter_.updateIMUMag(
                 gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
@@ -108,13 +108,14 @@ public:
         s.vel_est_zu  = Vector3f(0.0f, 0.0f, filter_.velocity());
         s.acc_est_zu  = Vector3f(0.0f, 0.0f, filter_.accelFiltered());
 
-        const auto& q_wb = hs.q_world_to_body;
-        Quaternionf q_wb_zu(
-            float(q_wb.w),
-            float(q_wb.x),
-            float(q_wb.y),
-            float(q_wb.z)
-        );
+        // Mahony's quaternion read as an Eigen rotation maps its body frame
+        // (N, -E, -D) to its world frame (magnetic N, W, Up).  Both frames are
+        // the runner's Z-up frames (E, N, Up) turned -90 deg about the
+        // vertical, so C_bw_zu = P^T C_bw_m P with P = Rz(-90 deg).
+        const auto& q = hs.q_world_to_body;
+        const Quaternionf q_bw_m(float(q.w), float(q.x), float(q.y), float(q.z));
+        const Quaternionf q_turn(Eigen::AngleAxisf(-0.5f * float(M_PI), Vector3f::UnitZ()));
+        const Quaternionf q_wb_zu = (q_turn.conjugate() * q_bw_m * q_turn).conjugate();
 
         float roll_sim_deg  = 0.0f;
         float pitch_sim_deg = 0.0f;
@@ -129,22 +130,6 @@ public:
 
         if (!with_mag_) {
             yaw_sim_deg = 0.0f;
-        } else {
-            // W3dSimCommon compares against magnetic-frame reported yaw:
-            //
-            //   y_ref_mag_reported = y_ref_true_reported + declination
-            //
-            // With this Mahony mag convention, the decoded quaternion yaw lands on
-            // the opposite declination side:
-            //
-            //   y_mahony_reported ≈ y_ref_true_reported - declination
-            //
-            // Convert Mahony's reported yaw to the same magnetic-frame reference:
-            //
-            //   y_mahony_fixed = y_mahony_reported + 2*declination
-            yaw_sim_deg = wrapDeg(
-                yaw_sim_deg + 2.0f * MagSim_WMM::default_declination_deg
-            );
         }
 
         s.euler_nautical_deg = Vector3f(
@@ -230,18 +215,10 @@ public:
     }
 
 private:
+    // Body NED (North, East, Down) -> the Mahony body frame (N, -E, -D), the
+    // mapping the firmware (atomS3R_ins_pii_observer.ino) applies to all three
+    // sensors.  Gyro, accelerometer and magnetometer must share one frame.
     static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
-        // body NED (North, East, Down) -> body Z-up nautical axes used by Mahony.
-        const Vector3f v_zu = ned_to_zu(v_ned);
-        return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
-    }
-
-    static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
-        // Do NOT use ned_to_mahony_body_() for magnetometer.
-        //
-        // This Mahony mag path expects magnetic north on +X with this convention.
-        // Using the accel/gyro body conversion here flips the magnetic horizontal
-        // convention and causes a large yaw error.
         return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
     }
 

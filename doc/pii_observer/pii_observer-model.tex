@@ -813,41 +813,32 @@
 
     \subsection{Frame Mapping in the Simulation Adapter}
 
-    The simulation runner provides body NED data, and the adapter converts it to
-    the Mahony body convention. Inertial and magnetic channels use
-    \emph{different} mappings, and the code says so explicitly, because sharing
-    one of them causes a large yaw error. For gyro and accelerometer,
+    The simulation runner provides body NED data, and the adapter maps all
+    three sensors with the one mapping the firmware uses,
     \begin{equation}
     (x,y,z)_{\mathrm{NED}}
     \mapsto
-    (-y,-x,-z)_{\mathrm{Mahony}},
+    (x,-y,-z)_{\mathrm{Mahony}}.
     \end{equation}
-    which is the \(Z\)-up conversion \((x,y,z)\mapsto(y,x,-z)\) followed by
-    negation of the two horizontal axes. At rest and level the runner's
-    accelerometer reads \((0,0,-g)_{\mathrm{NED}}\), which maps to
-    \((0,0,+g)_{\mathrm{Mahony}}\) as the Mahony convention requires.
+    At rest and level the runner's accelerometer reads
+    \((0,0,-g)_{\mathrm{NED}}\), which maps to \((0,0,+g)_{\mathrm{Mahony}}\) as
+    the Mahony convention requires, and magnetic north stays on \(+X\).
+    Gyro, accelerometer and magnetometer must share one body frame: a
+    magnetometer in a frame turned about the vertical rotates inconsistently
+    with the gyro once the hull rolls and pitches. The latest magnetometer
+    sample is cached and reused at every IMU step until a new one arrives,
+    since the mag ODR (\SI{20}{Hz} in the runs below) is well under the
+    \SI{200}{Hz} IMU rate.
 
-    For the magnetometer,
+    For RMS reporting back in the simulator convention, the adapter converts
+    the Mahony attitude to the runner's \(Z\)-up frames. Read as a rotation,
+    the stored quaternion maps the Mahony body frame to the Mahony world frame
+    (magnetic north, west, up); both are the runner's \(Z\)-up frames turned
+    by \(P=R_z(-90^\circ)\), so
     \begin{equation}
-    (x,y,z)_{\mathrm{NED}}
-    \mapsto
-    (x,-y,-z)_{\mathrm{Mahony}},
+        C^{\mathrm{zu}}_{bw} = P^{\top} R(\hat{q})\, P,
     \end{equation}
-    so magnetic north stays on \(+X\), which is what this Mahony mag path
-    expects. The latest magnetometer sample is cached and reused at every IMU
-    step until a new one arrives, since the mag ODR (\SI{20}{Hz} in the runs
-    below) is well under the \SI{200}{Hz} IMU rate.
-
-    For RMS reporting back in the simulator convention, the adapter decodes the
-    Mahony quaternion to nautical Euler angles. Yaw needs one further
-    correction: the reference trace is reported in the magnetic frame as
-    \(\psi_{\mathrm{ref}}+\delta\) while the decoded Mahony yaw lands on
-    \(\psi_{\mathrm{ref}}-\delta\), so the adapter reports
-    \begin{equation}
-        \psi_{\mathrm{sim}} = \mathrm{wrap}\bigl(\psi_{\mathrm{Mahony}}
-        + 2\delta\bigr),
-    \end{equation}
-    with \(\delta\) the simulated declination. Without magnetometer aiding the
+    which is decoded to nautical Euler angles. Without magnetometer aiding the
     reported yaw is forced to zero rather than scored.
 
     The adapter also republishes observer telemetry for the plots: the active
@@ -862,9 +853,9 @@
     The simulation code checks the last \SI{900}{s} of each \SI{1200}{s} run and
     applies quality gates:
     \begin{itemize}[leftmargin=1.4em]
-        \item Z RMS \(< 9.0\%\) of \(H_s\) for JONSWAP cases,
-        \item Z RMS \(< 9.5\%\) of \(H_s\) for PM-Stokes cases,
-        \item yaw RMS \(< 10.9^\circ\) when magnetometer is used.
+        \item Z RMS \(< 7.36\%\) of \(H_s\) for JONSWAP cases,
+        \item Z RMS \(< 8.51\%\) of \(H_s\) for PM-Stokes cases,
+        \item yaw RMS \(< 4.15^\circ\) when magnetometer is used.
     \end{itemize}
     A record shorter than the scoring window is reported as skipped rather than
     scored, so the silence of a short record cannot read as a pass.
