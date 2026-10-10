@@ -254,12 +254,12 @@ More information should not make the estimate worse. Two defects made it
 look that way.
 
 - **A sensor-frame bug in the simulator adapter.** The PII simulator
-  (`tests/pii_observer/pii_observer-adaptive.cpp`) maps gyro and
+  (`tests/pii_observer/pii_observer-adaptive.cpp`) mapped gyro and
   accelerometer to `(-E, -N, -D)` but the magnetometer to `(N, -E, -D)`.
-  That puts the magnetometer in a body frame turned 90° about z, which then
-  rotates inconsistently with the gyro once the boat rolls and pitches. A
-  comment there records that this mapping was chosen to fix a yaw error, and
-  the yaw report adds twice the declination to compensate. This simulator
+  That put the magnetometer in a body frame turned 90° about z, which then
+  rotated inconsistently with the gyro once the boat rolled and pitched. A
+  comment there recorded that this mapping was chosen to fix a yaw error, and
+  the yaw report added twice the declination to compensate. This simulator
   first copied the same adapter.
   - The firmware (`atomS3R_ins_pii_observer.ino`) maps all three sensors
     `[N, -E, -D]` and reports heading as `-yaw`. With that mapping the
