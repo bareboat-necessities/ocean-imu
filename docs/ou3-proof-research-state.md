@@ -77,7 +77,18 @@ the old publication manifests with `replay dependency differs from replay
 provenance` and the new `MagneticRotation.h` dependency. The full branch
 evidence publisher must regenerate those empirical bundles; the gate is not
 weakened or bypassed. Initial-stage CI's stale sketch/source-tree fingerprints
-are the same class E failure. These are not mathematical counterexamples. Current
+are the same class E failure. The complete 820-test proof suite additionally
+found stale header bindings in the 240 s and 1,200 s moving-compatibility
+records (three assertions); their legacy payloads are retained under the same
+operation-equivalence receipt, with no timed-path claim. Local `make all`
+with a command-line `CXXFLAGS` override omitted the TFG test-only Lie++ include:
+`lie_group-test.cpp:31: fatal error: groups/SEn3.hpp: No such file or directory`.
+The rerun uses `CPPFLAGS=-O1`, preserving each Makefile's dependency flags
+(class E invocation error, no TFG code change). Full Python validation also
+exposed a literal-string proxy-tilt anchor; it now checks both the unchanged
+legacy proxy and the saved exogenous observation proxy. The remaining
+publication failures require the full replay above (class E, not a numerical
+regression). These are not mathematical counterexamples. Current
 limiter: hardware conversion timing and the new endogenous transport ports.
 Next falsifiable work: capture DRDY/AUX/read phases, audit applied service and
 bound those same-history ports without changing the estimator or sensor model.

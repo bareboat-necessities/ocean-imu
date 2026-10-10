@@ -257,7 +257,12 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn(r"\SI{45}{s} time", self.ou3_mag)
 
     def test_ou3_magnetic_refinement_uses_independent_proxy_tilt(self):
-        self.assertIn("const Eigen::Quaternionf q_tilt_bw = impl_.startupProxyTiltQuat();", self.ou3_wrap)
+        # The timed entry carries the actual exogenous proxy at observation
+        # time; the legacy entry still reads the current independent proxy.
+        compact = " ".join(self.ou3_wrap.split())
+        self.assertIn("const Eigen::Quaternionf q_tilt_bw = observation ? yawRemovedBoatQuat(observation->proxy_bw) : impl_.startupProxyTiltQuat();", compact)
+        sketch = (ROOT / "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino").read_text()
+        self.assertIn("mag_observation_.proxy_bw = fusion_.raw().startupProxyQuat();", sketch)
         self.assertIn("Magnetic acquisition uses proxy tilt rather than the MEKF", self.ou3_init)
         self.assertIn("later\nindependent acquisition refines that reference", self.ou3_init)
 
