@@ -169,7 +169,7 @@ class Kalman3D_Wave_TFG {
     [[nodiscard]] Vector3 gyroscope_bias() const            { return X_.B.col(0); }
     [[nodiscard]] Vector3 gyroscope_bias_body() const { return gyroscope_bias(); }
     [[nodiscard]] Matrix3 gyroscope_bias_covariance_body() const {
-        const Matrix3 p = P_.template block<3,3>(OFF_BG, OFF_BG);
+        Matrix3 p = P_.template block<3,3>(OFF_BG, OFF_BG);
         if constexpr (two_frame_bias) return X_.R.transpose() * p * X_.R;
         return p;
     }

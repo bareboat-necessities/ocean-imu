@@ -1,0 +1,26 @@
+{
+  "scope": "Compiled ESP32-S3 image sizes; no hardware loop/stack timing measured",
+  "baseline_commit": "5bfce5da8d475e7fa728e92536b50efe46fe24c2",
+  "baseline_runtime_equivalent_to_audited_main": "2c534feb423a627c40f475daed40b4274d3dd2b8",
+  "baseline_equivalence_paths": [
+    "src",
+    "sensors",
+    ".github/workflows/build.yml",
+    "library.properties",
+    "third_party"
+  ],
+  "source_commit": "90e3f8c6b3d48fb1698225ed978a6bf0135f4eaf",
+  "baseline_build_run": 38064387731,
+  "current_build_run": 38080809891,
+  "baseline_marine_job": 114249072943,
+  "baseline_compass_job": 114249072897,
+  "current_marine_job": 114297265873,
+  "current_compass_job": 114297265856,
+  "fqbn": "esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc",
+  "esp32_platform": "3.3.7",
+  "xtensa_toolchain": "esp-x32/2511",
+  "M5Unified": "0.2.13",
+  "M5GFX": "0.2.19",
+  "numeric_table": "atoms3r-resources.csv",
+  "Eigen_Arduino_library": "0.3.2"
+}

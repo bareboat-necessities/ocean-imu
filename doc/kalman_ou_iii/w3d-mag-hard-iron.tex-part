@@ -66,8 +66,12 @@ Physical conversion latency remains an unqualified residual.
 For physical-body rotation $\mat D=\mat R_{b_k b_m}$, the final input is
 \begin{equation}
  \vct m_k=\mat D(\vct m_m-\widehat{\vct b}_m),\qquad
- \mat R_k=\mat D\mat R_m\mat D^\top+\mat R_{\rm tr}.
+ \mat R_k=\alpha(\mat D\mat R_m\mat D^\top+\mat R_{\rm tr}).
 \end{equation}
+For independent magnetic and transport noise, $\alpha=1$. The shipping
+timed entry uses $\alpha=2$ when the transport interval or endpoint timing
+allowance is nonzero, bounding unknown cross covariance; the exact identity
+case uses $\alpha=1$.
 Both saved calibration and the applied residual hard-iron offset are removed
 before rotation. Reference acquisition and optional hard-iron accumulation
 use the raw calibrated field with the saved observation-time proxy tilt;

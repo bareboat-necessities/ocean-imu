@@ -9,7 +9,8 @@ sets 47 XY / 41 Z repetitions. Bosch's conversion-time formula gives
 `145*47 + 500*41 + 980 = 28295 us`. This is a conversion aperture, **not an
 instantaneous vector or a known group delay**. Axis effective times need not
 coincide. Neither the acquisition API nor the board code exports a conversion
-timestamp. There is no wired/serviced BMM150 DRDY interrupt in this path.
+timestamp. Shipping code does not service the BMM150 DRDY pin; it receives
+no conversion timestamp.
 
 BMM150 has a DRDY pin and register `0x48` bit 0; reading data over AUX clears
 the sensor flag. BMI270 has separate AUX-ready flags; the pinned driver reads
@@ -97,6 +98,13 @@ chronologically gives `D = R_bk,bm = R_wb(tk) R_wb(tm)^T`. Thus
 body-fixed offset must also be applied before transport. De-heeling occurs
 inside the MEKF; transport is in physical sensor/body axes.
 
+TFG and the standalone qMEKF expose body-to-world attitudes with positive
+body-rate propagation. For that convention, the same physical transport is
+`D=R_bw(tk)^T R_bw(tm)`, hence the negative-angle field increment. Mahony
+integral feedback is added to the gyro, so its bias estimate is its negative.
+PII's `diag(1,-1,-1)` axis map is applied to that estimate before the shared
+physical-body transport, and to the transported field afterwards.
+
 `RotationHistory` stores fixed-capacity time intervals, bias-corrected rates
 and their negative-angle quaternion increments. It uses the same end-sample
 piecewise-constant rate convention as shipping prediction, composes rotations
@@ -179,7 +187,7 @@ qualified measurement times, as exercised by the native replay tests.
 
 The source keeps a read bracket and a monotonically increasing host observation
 sequence. The discrete frontends retain their spacing limits, submit an observation
-at most once, and rejects only invalid input or unavailable/too-old/gapped
+at most once, and reject only invalid input or unavailable/too-old/gapped
 rotation history (120 ms cap, 20 ms maximum gyro interval), or a duplicate/
 out-of-order/invalid gyro epoch at correction. Such an epoch also clears the
 transport chain, because the existing estimator clock's substituted dt must
@@ -219,8 +227,10 @@ also need independent checks. High residuals identify unexplained change,
 not its unique cause. Neither synthetic statistics nor the advisory chi-square
 reference justifies removing real-vessel magnetic service.
 
-The diagnostic serial row is emitted only by the existing low-rate serial
-stream, never at gyro rate. `host_age_ms` and `read_to_update_ms` are host
+The diagnostic serial row is emitted only by the existing low-rate debug
+serial stream, never at gyro rate. Select the existing non-NMEA, non-plotter
+debug branch (`SEA_STATE_SERIAL_NMEA=0`, `ARDUINO_PLOTTER=0`) in the marine
+sketches to capture it; the compass uses its existing debug serial branch. `host_age_ms` and `read_to_update_ms` are host
 measurements; `jitter_range_ms` is the running min/max range of the latter,
 not physical sensor jitter. Rotation angles are in radians, residual in uT,
 `d2` is dimensionless, and `applied` is the last attempted correction's actual
@@ -239,8 +249,11 @@ one immutable motion/noise record and three paths: legacy delayed input,
 current-time transport, and test-only rewind/replay. The reference restores
 the pre-sample state/covariance and repeats every gyro/S/acc/magnetic operation
 at its original epoch; it never consumes future samples. It is not deployed.
-The OU/TFG tests keep the shipping gyro density (0.00135 rad/sqrt(s)) and magnetic
-standard deviation (0.8 uT). Synthetic magnetic noise is 0.15 uT per axis; the
+The OU/TFG core fixtures use the unchanged tuning reference values: gyro
+density 0.00135 rad/sqrt(s) and magnetic standard deviation 0.8 uT at 25 Hz.
+The actual sketches retain their existing rate scaling (including the 35 ms
+magnetic spacing scale); these isolated core comparisons are not a replay of
+the complete vessel/frontend/tuner history. Synthetic magnetic noise is 0.15 uT per axis; the
 low resulting NIS is expected, not grounds for retuning shipping constants.
 
 The 26 s fixtures score heading after 3 s. All paths receive identical
@@ -329,7 +342,8 @@ The history is fixed at 32 intervals: 1,552 bytes with the native ABI, versus
 zero history bytes on main. The observation snapshot is 176 bytes, previous
 magnetic sample/covariance 60 bytes and diagnostic row 28 bytes. The complete
 shared `Input` including history, snapshots, counters and configuration is
-1,888 bytes with the native ABI; actual Xtensa alignment/linker totals must come from the board build.
+1,888 bytes with the native ABI; the board builds below report actual linked
+image/global-RAM totals.
 No heap allocation occurs in history, transport or consistency calculations.
 The source's extra sequence/read-bracket fields add 16 bytes per metadata
 copy. No second 21-state estimator or replay buffer is shipped.
@@ -352,9 +366,34 @@ GCC `-fstack-usage` reports individual compiler-estimated frames of 48 bytes (in
 32 (prepare), 80 (current field/correction wrapper) and 288 (input advance),
 plus called helpers and the existing estimator frames. They are not a bound on the whole
 AtomS3R call stack. The work is bounded independently of run duration. Meeting the 5 ms host
-loop schedule still requires hardware validation; actual loop worst-case time,
-flash/RAM change and task-stack high-water marks remain hardware/board-build
-qualification items. No physical 200 Hz guarantee is claimed.
+loop schedule still requires hardware validation; actual loop worst-case time
+and task-stack high-water marks remain hardware qualification items. No physical 200 Hz guarantee is claimed.
+
+The repository's AtomS3R ESP32-S3 builds pass for all seven frontends. Both
+sides use ESP32 platform 3.3.7, esp-x32/2511, M5Unified 0.2.13 and M5GFX
+0.2.19, with the repository's unchanged board/options. These are linker/image
+measurements, not execution times or task-stack high-water measurements.
+
+| Firmware | Flash before, bytes | Flash after, bytes | Flash delta | Global RAM before, bytes | Global RAM after, bytes | RAM delta |
+|---|---:|---:|---:|---:|---:|---:|
+| OU-II | 1,053,975 | 1,065,923 | +11,948 | 31,332 | 33,076 | +1,744 |
+| OU-III | 1,116,147 | 1,127,427 | +11,280 | 31,316 | 33,060 | +1,744 |
+| TFG | 1,035,003 | 1,045,503 | +10,500 | 41,020 | 42,772 | +1,752 |
+| NLO | 803,883 | 811,331 | +7,448 | 29,932 | 31,676 | +1,744 |
+| PII | 797,115 | 804,995 | +7,880 | 30,124 | 31,868 | +1,744 |
+| Mahony compass | 774,819 | 783,895 | +9,076 | 105,716 | 107,492 | +1,776 |
+| qMEKF compass | 796,563 | 805,655 | +9,092 | 105,716 | 107,492 | +1,776 |
+
+The baseline build at `5bfce5da8d475e7fa728e92536b50efe46fe24c2` has an
+empty diff against audited main `2c534feb423a627c40f475daed40b4274d3dd2b8`
+for source, sketches, board workflow, library metadata and vendored dependencies.
+The new sizes are from runtime source `90e3f8c6b3d48fb1698225ed978a6bf0135f4eaf`.
+See the [machine-readable table](../reports/results/magnetic_timing/atoms3r-resources.csv)
+and [build provenance](../reports/results/magnetic_timing/atoms3r-resources.json),
+[baseline CI](https://github.com/bareboat-necessities/ocean-imu/actions/runs/38064387731)
+and [current CI](https://github.com/bareboat-necessities/ocean-imu/actions/runs/38080809891).
+Global RAM deltas include frontend metadata and ABI padding; they are not an
+inference from the native `sizeof(Input)` value.
 
 ## Shipping-faithful handoff
 

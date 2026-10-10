@@ -120,6 +120,16 @@ path in its first three modules; rerunning those with `PYTHONPATH=../..` passes
 tests passed in the initial subset run. Source audit distinguishes 200 Hz
 host polling from accepted accel+gyro frames; a nominal 100 Hz replay and
 20 ms diagnostic endpoint allowance cover the admitted history cadence.
+Clang-tidy rejected the new TFG covariance accessor with
+`performance-no-automatic-move`: a const local blocked moving its returned
+matrix. Removing that local qualifier preserves the covariance equation and
+repairs this class E implementation issue; clang-tidy 18.1.8 then reports
+no actionable diagnostics, and no gate is suppressed.
+A standalone TFG rebuild without the Makefile's native/unroll flags passed
+all assertions but failed bytewise CSV comparison (maximum heading RMS
+difference 0.000408 degrees). This class E comparison-profile mismatch does
+not establish a runtime regression; the recorded Makefile profile reproduces
+the complete 42-row output byte-for-byte after the fix.
 Retained facts: original gains/legacy correction equations and the OU-III
 operation audit. Limiter/next experiment remain physical timing qualification
 and same-history transport-port/service bounds.
