@@ -69,6 +69,7 @@ constexpr float FREQ_GUESS = 0.3f;
 #include "util/AngleUtils.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
+#include "util/MagneticRotation.h"
 #include "util/QuaternionUtils.h"
 #include "wave_dir/WaveDirectionReport.h"
 
@@ -251,6 +252,15 @@ private:
   Fusion fusion_{};
 
   ins::MagFreshGate mag_gate_{};
+  ocean_imu::magnetic::RotationHistory<> mag_history_{};
+  ocean_imu::magnetic::RotationConsistency mag_consistency_{};
+  ocean_imu::magnetic::Consistency mag_rotation_diag_{};
+  float mag_host_age_ms_ = NAN, mag_read_to_update_ms_ = NAN;
+  float mag_latency_min_ms_ = NAN, mag_latency_max_ms_ = NAN;
+  bool mag_applied_ = false;
+  uint32_t mag_diag_sequence_ = 0;
+  Eigen::Matrix3f mag_input_covariance_ = Eigen::Matrix3f::Identity();
+  float mag_gyro_density_ = 0;
 
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
@@ -378,6 +388,13 @@ private:
     fcfg.sigma_a = sigma_a;
     fcfg.sigma_g = sigma_g;
     fcfg.sigma_m = sigma_m;
+    mag_input_covariance_ = sigma_m.array().square().matrix().asDiagonal();
+    mag_gyro_density_ = sigma_g.maxCoeff();
+    mag_history_.reset();
+    mag_consistency_.reset();
+    mag_diag_sequence_ = 0;
+    mag_rotation_diag_ = {};
+    mag_latency_min_ms_ = mag_latency_max_ms_ = NAN;
 
     fcfg.mag_delay_sec = 0.0f;
     fcfg.mag_init_min_mag_norm = 5.0f;
@@ -530,6 +547,24 @@ private:
     w_cal_ = runtime_.applyGyro(w_raw, tempC);
     m_cal_ = runtime_.applyMag(s.m);
 
+    // Observation only. The source timestamp is first host observation, not
+    // the physical conversion time; no invented fixed latency is subtracted.
+    namespace magnetic = ocean_imu::magnetic;
+    const auto& core = fusion_.raw().mekf();
+    const Vector3f residual_bias = core.gyroscope_bias(); // shipping sketch heel is zero
+    mag_history_.push(s.sample_us, w_cal_ - residual_bias);
+    if (s.mag_timing.have && s.mag_timing.sequence != mag_diag_sequence_) {
+      magnetic::Uncertainty uncertainty;
+      uncertainty.gyro_density = mag_gyro_density_;
+      uncertainty.bias_variance = magnetic::covarianceBound(core.covariance_base().block<3,3>(3,3));
+      // Whole normal-mode conversion + completion phase + 5 ms host poll.
+      // A bound used as sigma, not a qualified Gaussian timing distribution.
+      uncertainty.from_time_sigma = uncertainty.to_time_sigma = (0.028295f + 1.0f/30.0f + 0.005f);
+      mag_rotation_diag_ = mag_consistency_.observe(mag_history_, s.mag_timing.sequence,
+          s.mag_timing.frame_us, m_cal_, fusion_.magHardIronBodyUT(), mag_input_covariance_, uncertainty);
+      mag_diag_sequence_ = s.mag_timing.sequence;
+    }
+
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
     mag_fresh_ = mag_gate_.update(mag_ok_, millis());
@@ -538,6 +573,12 @@ private:
     fusion_.update(dt_, w_cal_, a_cal_);
     if (mag_ok_ && mag_fresh_) {
       fusion_.updateMag(m_cal_);
+      mag_applied_ = fusion_.isLive() && fusion_.hasMagNorthLock() && core.lastMagDiag().accepted;
+      mag_host_age_ms_ = float(uint32_t(s.sample_us - s.mag_timing.frame_us)) * 0.001f;
+      mag_read_to_update_ms_ = float(uint32_t(micros() - s.mag_timing.read_end_us)) * 0.001f;
+      if (!std::isfinite(mag_latency_min_ms_)) mag_latency_min_ms_ = mag_latency_max_ms_ = mag_read_to_update_ms_;
+      mag_latency_min_ms_ = std::min(mag_latency_min_ms_, mag_read_to_update_ms_);
+      mag_latency_max_ms_ = std::max(mag_latency_max_ms_, mag_read_to_update_ms_);
     }
 
     // Keep startup attitude and startup compass tilt explicitly on the
@@ -745,6 +786,14 @@ private:
       static_cast<double>(m_cal_.x()),
       static_cast<double>(m_cal_.y()),
       static_cast<double>(m_cal_.z()));
+    Serial.printf("[MAGTIME] host_age_ms=%.3f read_to_update_ms=%.3f jitter_range_ms=%.3f "
+                  "rot_pred_rad=%.5f rot_seen_rad=%.5f residual_uT=%.4f d2=%.3f snr=%.3f applied=%u status=%u\n",
+        double(mag_host_age_ms_), double(mag_read_to_update_ms_),
+        double(mag_latency_max_ms_ - mag_latency_min_ms_),
+        double(mag_rotation_diag_.predicted_angle_rad), double(mag_rotation_diag_.observed_angle_rad),
+        double(mag_rotation_diag_.residual_uT), double(mag_rotation_diag_.nis),
+        double(mag_rotation_diag_.rotation_signal_to_noise), unsigned(mag_applied_),
+        unsigned(mag_rotation_diag_.status));
   #endif
 #endif
   }

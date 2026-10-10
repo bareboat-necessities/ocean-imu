@@ -9,6 +9,7 @@ python3 test_wizard_config.py
 ./calibration_workflow-test
 ./calibration_safety-test
 ./mag_diagnostics-test
+./mag_rotation-test
 python3 test_sketch_temperature.py
 ./imu_calibrate-test
 ./accel_cal-test

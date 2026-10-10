@@ -20,8 +20,16 @@ struct MagAcquisition {
 
   bool have = false;
   uint32_t last_ms = 0;
+  // Host observation metadata, NOT a BMM150 conversion timestamp. Sequence
+  // identifies successful distinct cache observations, not physical DRDY.
+  uint32_t sequence = 0, frame_us = 0, read_start_us = 0, read_end_us = 0;
 
   void acquired(uint32_t now_ms) { have = true; last_ms = now_ms; }
+  void acquired(uint32_t now_ms, uint32_t frame, uint32_t start, uint32_t end) {
+    acquired(now_ms);
+    ++sequence;
+    frame_us = frame; read_start_us = start; read_end_us = end;
+  }
   bool fresh(uint32_t now_ms) const { return have && uint32_t(now_ms - last_ms) <= MAX_AGE_MS; }
 };
 
