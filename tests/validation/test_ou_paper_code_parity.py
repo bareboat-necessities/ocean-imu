@@ -262,7 +262,10 @@ class OUPaperCodeParityTests(unittest.TestCase):
         compact = " ".join(self.ou3_wrap.split())
         self.assertIn("const Eigen::Quaternionf q_tilt_bw = observation ? yawRemovedBoatQuat(observation->proxy_bw) : impl_.startupProxyTiltQuat();", compact)
         sketch = (ROOT / "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino").read_text()
-        self.assertIn("mag_observation_.proxy_bw = fusion_.raw().startupProxyQuat();", sketch)
+        self.assertIn("mag_input_.capture(fusion_.raw().startupProxyQuat(), fusion_.attitudeQuat(), a_cal_, w_cal_);", sketch)
+        shared_input = (ROOT / "src/util/MagneticInput.h").read_text()
+        self.assertIn("if (!new_source_) return;", shared_input)
+        self.assertIn("observation_.proxy_bw = proxy_bw;", shared_input)
         self.assertIn("Magnetic acquisition uses proxy tilt rather than the MEKF", self.ou3_init)
         self.assertIn("later\nindependent acquisition refines that reference", self.ou3_init)
 

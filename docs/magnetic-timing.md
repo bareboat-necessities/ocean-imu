@@ -24,8 +24,12 @@ Identical quantized conversions are indistinguishable in the existing API.
 `sample_us` is host **read-start**, before `M5.Imu.update()`, not sensor sample
 time. `readImuMapped` then reads temperature and maps/calibrates the sensors.
 The magnetic source repeats its last successful reading, for at most 200 ms.
-The OU-III sketch's 35 ms spacing gate can accept a held sample repeatedly;
-it does not track source identity. The filter performs gyro prediction,
+The OU-II, OU-III and TFG sketches' 35 ms spacing gates can accept a held
+sample repeatedly; they do not track source identity. The standalone qMEKF
+compass also performs discrete corrections on a gated held value. NLO, PII
+and standalone Mahony instead use continuous direction feedback on every IMU
+tick: repeated feedback there is intentional, but its held vector is in old
+body axes. The filter performs gyro prediction,
 scheduled S/accelerometer work, then magnetic correction at the latest
 attitude. No magnetic rotation transport or latency covariance was present.
 
@@ -49,6 +53,33 @@ Primary sources: [pinned M5 driver](https://github.com/m5stack/M5Unified/blob/a6
 [BMM150 datasheet, sections 4.2–4.3 and 4.6](https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmm150-ds001.pdf),
 [BMI270 datasheet, AUX interface and AUX_CONF](https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmi270-ds000.pdf).
 
+## One shared input layer across all AtomS3R filters
+
+`src/util/MagneticInput.h` owns source identity, timing counters, snapshots,
+rotation history, consistency diagnostics and input preparation. The seven
+sketches supply only their bias/covariance and existing correction callback.
+`MagneticRotation.h` contains the single transport/uncertainty implementation;
+`MeasurementCovariance.h` contains shared covariance validation/installation.
+There is no per-filter copy of the history, residual or timing algorithm.
+
+| Shipping frontend | Shared input use | Bias and uncertainty convention |
+|---|---|---|
+| OU-II, OU-III | Distinct observations; final offset subtraction then vector/covariance transport | Undo core de-heeling for body gyro bias and covariance |
+| TFG | Same discrete path; saved independent proxy for reference/HI | Nominal bias is body-fixed; Level-2 bias covariance is world-referred and transformed by `R^T P_bg R` |
+| Standalone qMEKF compass | Distinct observations; transport before unit-vector normalization | Body bias; original discrete angle-step process variance, not gyro noise density |
+| NLO | Transport held field on every IMU tick | Existing boot/live bias estimate; no bias covariance is available |
+| PII | Transport held field on every IMU tick | Negative Mahony integral feedback, transformed back from Mahony axes |
+| Standalone Mahony compass | Transport held field on every IMU tick | Negative integral feedback in body axes |
+
+NLO, PII and Mahony keep their continuous feedback cadence and observer gains.
+They report vector residuals and rotation angles, but `d2` and rotation SNR
+are unavailable (`NaN`, `uncertainty_known=0`): these observers do not provide
+a qualified bias covariance. A placeholder covariance is never presented as
+a calibrated confidence score or used to gate their field. The serial label
+is `offered`, not a claim of discrete informative Kalman service. Raw sensor
+and calibration sketches consume measurements without magnetic attitude
+aiding and therefore do not need this preprocessing.
+
 ## Relative rotation and uncertainty
 
 Shipping `qref` maps world to unheeled body B'; prediction left-multiplies
@@ -69,10 +100,22 @@ less than half the uint32 range. History and query latency are separately bounde
 For a transported vector `v`, the first-order rotation Jacobian has covariance
 `[v]x Q_theta [v]x^T`. An orientation-independent upper bound is
 
-`Q_theta <= I (q_g*T + lambda_b*T^2 + (|omega_m| sigma_tm + |omega_k| sigma_tk)^2)`.
+`Q_theta <= I (q_g*T + sum_j f_j^2 Q_step,j + lambda_b*T^2 + (|omega_m| sigma_tm + |omega_k| sigma_tk)^2)`.
 
 Here `q_g` is the largest gyro noise-density variance, `lambda_b` bounds the
 residual bias covariance eigenvalue, and timing errors may be fully correlated.
+The qMEKF compass adds its configured `Q` once per prediction without a dt
+factor: its unchanged 0.003 rad process standard deviation is represented by
+`Q_step=0.003^2`, with `q_g=0`. OU/TFG use their continuous density and zero
+step variance. `f_j` is the fraction of a sampled, piecewise-constant increment
+used at a boundary; its same angle error scales by `f_j`, so variance scales
+by `f_j^2`. Independent process increments are summed; correlations with bias,
+magnetic noise and adjacent residuals are handled separately below. For the
+unit-vector compass the original 0.020 unit-vector standard deviation is
+first expressed in physical units, transported, then divided by field norm
+squared. Retaining the original radial variance instead of projecting it out
+is conservative and preserves its original zero-delay covariance.
+
 The bias term is quadratic in time because the same unknown bias persists;
 it is not re-drawn at each IMU sample. The endpoint timing bound uses Cauchy,
 not an independence assumption. This linearization requires small angular
@@ -116,8 +159,8 @@ receipt/Schur, capture, physical qualification or all-time service obligations.
 
 ## Deployment stages and remaining synchronization limit
 
-The first implementation commit is observation-only (Stage A). In the final
-OU-III sketch, `SEA_STATE_MAG_HOST_ALIGNMENT=0` selects that behavior for an
+The first implementation commit is observation-only (Stage A). Across the shared
+frontends, `SEA_STATE_MAG_HOST_ALIGNMENT=0` selects that behavior for an
 A/B capture. The default Stage B transports only the **known host-cache age**
 from the first observation frame to the present IMU frame. It does not subtract
 an invented 14 ms or 33 ms sensor delay. Consequently physical BMM150 timing
@@ -125,7 +168,7 @@ mismatch is **not fully corrected**. The same transport API accepts externally
 qualified measurement times, as exercised by the native replay tests.
 
 The source keeps a read bracket and a monotonically increasing host observation
-sequence. The sketch retains the 35 ms spacing limit, submits an observation
+sequence. The discrete frontends retain their spacing limits, submit an observation
 at most once, and rejects only invalid input or unavailable/too-old/gapped
 rotation history (120 ms cap, 20 ms maximum gyro interval), or a duplicate/
 out-of-order/invalid gyro epoch at correction. Such an epoch also clears the
@@ -144,7 +187,7 @@ The proxy is never reconstructed using the MEKF bias estimate. After the
 existing hard-iron/reference operations, the applied body offset is subtracted,
 then the final MEKF input and its covariance are transported. No magnetic
 reference gate, startup window, release count or continuous-estimator setting
-is changed. The sketch still disables continuous hard iron; the identity
+is changed. The OU-III sketch still disables continuous hard iron; the identity
 transport regression also covers the facade's enabled default.
 
 For covariance transport, the history retains the largest bias uncertainty
@@ -179,12 +222,13 @@ latency or 200 Hz timing guarantee is inferred from host benchmarks.
 
 ## Deterministic validation and results
 
-`tests/kalman_ou_iii/mag_timing-test.cpp` drives the actual 21-state core with
+`tests/common/MagneticTimingReplay.h` drives the actual OU-II, OU-III, TFG
+and standalone qMEKF cores through small per-core drivers, with
 one immutable motion/noise record and three paths: legacy delayed input,
 current-time transport, and test-only rewind/replay. The reference restores
 the pre-sample state/covariance and repeats every gyro/S/acc/magnetic operation
 at its original epoch; it never consumes future samples. It is not deployed.
-The test keeps the shipping gyro density (0.00135 rad/sqrt(s)) and magnetic
+The OU/TFG tests keep the shipping gyro density (0.00135 rad/sqrt(s)) and magnetic
 standard deviation (0.8 uT). Synthetic magnetic noise is 0.15 uT per axis; the
 low resulting NIS is expected, not grounds for retuning shipping constants.
 
@@ -233,18 +277,47 @@ million gyro samples (10,000 s), spanning two micros wraps. The independent
 white-noise marginal check gives mean d2=3.034858 for 4,999 residuals, with four
 above the chi-square advisory reference; adjacent values are not iid. A
 constant-delay uniform-yaw case explicitly demonstrates the diagnostic's
-timing blind spot. A 130 s facade comparison covers startup, reference
+timing blind spot. A shared 130 s facade comparison covers OU-II/OU-III/TFG startup, reference
 refinement and the enabled continuous-hard-iron default at identity transport.
 Existing calibration/continuous-hard-iron and shipping-contract regressions
 are retained. No estimator tuning constant is changed to meet these checks.
+
+The shared continuous-observer replay additionally snapshots the actual
+Mahony/PII/NLO observer and its magnetic hold/history, replays all IMU feedback
+steps, and never inserts a measurement before it has arrived. All seven
+variants use `MagneticMotion.h` and identical seeds/motion/noise. Continuous
+results count unavailable feedback ticks; discrete results count rejected
+corrections. These have different meanings and are not pooled.
+
+| Filter, yaw / 40 ms | Legacy RMS, deg | Aligned RMS, deg | Replay RMS, deg |
+|---|---:|---:|---:|
+| OU-II | 1.842 | 0.196 | 0.204 |
+| OU-III | 1.825 | 0.211 | 0.230 |
+| TFG | 2.262 | 0.435 | 0.450 |
+| qMEKF compass | 1.826 | 0.093 | 0.105 |
+| Mahony compass | 2.351 | 0.270 | 0.269 |
+| PII | 1.976 | 0.271 | 0.270 |
+| NLO | 3.096 | 0.711 | 0.741 |
+
+All 273 paired rows preserve valid magnetic correction/feedback availability.
+Results are filter-specific, not a universal heading improvement claim.
+TFG's post-interference tail RMS is 9.169 / 5.415 / 8.110 degrees; its recovery
+is incomplete within this fixture. The qMEKF compass interference RMS is
+41.972 / 42.970 / 41.769 degrees, and tail RMS is 5.915 / 6.758 / 5.220:
+transport/covariance weighting makes this case worse. Quiet OU-II, Mahony,
+PII and NLO cases also slightly worsen. These observations retain the original
+observer gains and large-disturbance limitations; no threshold is relaxed or
+filter tuned to manufacture a common recovery time. Complete vectors, peaks,
+recovery and replay differences are in the per-filter CSVs under
+[magnetic_timing](../reports/results/magnetic_timing/).
 
 ## Embedded resource assessment
 
 The history is fixed at 32 intervals: 1,552 bytes with the native ABI, versus
 zero history bytes on main. The observation snapshot is 176 bytes, previous
-magnetic sample/covariance 60 bytes and diagnostic row 28 bytes. With metadata,
-counters and configuration the added persistent storage is approximately
-2 KiB; actual Xtensa alignment/linker totals must come from the board build.
+magnetic sample/covariance 60 bytes and diagnostic row 28 bytes. The complete
+shared `Input` including history, snapshots, counters and configuration is
+1,888 bytes with the native ABI; actual Xtensa alignment/linker totals must come from the board build.
 No heap allocation occurs in history, transport or consistency calculations.
 The source's extra sequence/read-bracket fields add 16 bytes per metadata
 copy. No second 21-state estimator or replay buffer is shipped.
@@ -253,12 +326,13 @@ Every gyro sample adds one 3-vector bias subtraction, fixed-size bias-frame
 access/covariance bound, one norm, sine/cosine, normalized quaternion and ring
 write. Lookup inspects at most 32 intervals, multiplies at most 32 quaternions
 and evaluates at most two partial-interval exponentials. It never scans an
-unbounded queue. Magnetic work adds fixed 3x3 covariance transforms/LLT solves
-and vector/quaternion operations; trigonometric diagnostic angles run only
+unbounded queue. Discrete magnetic work adds fixed 3x3 covariance transforms/LLT solves
+and vector/quaternion operations. Continuous observers only rotate the held
+vector on each tick, without covariance transforms; trigonometric diagnostic angles run only
 on a new host observation. Serial output uses the existing low-rate stream.
 
-The isolated `-O3` x86-64 benchmark recorded 20.5 ns/push, 206.7 ns/maximum-age
-lookup, 115.5 ns/alignment and 295.8 ns/consistency-with-push. These are native
+The isolated `-O3` x86-64 benchmark recorded 25.4 ns/push, 181.9 ns/maximum-age
+lookup, 105.5 ns/alignment and 293.4 ns/consistency-with-push. These are native
 constant-rate microbenchmarks, **not MCU bounds or whole-loop timings**; the
 raw output is in [native-resources.txt](../reports/results/magnetic_timing/native-resources.txt).
 GCC `-fstack-usage` reports individual static frames of 48 bytes (increment),

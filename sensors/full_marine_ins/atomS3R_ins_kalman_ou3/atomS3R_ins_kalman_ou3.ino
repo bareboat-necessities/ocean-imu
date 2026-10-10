@@ -69,7 +69,7 @@ constexpr float FREQ_GUESS = 0.3f;
 #include "util/AngleUtils.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
-#include "util/MagneticRotation.h"
+#include "util/MagneticInput.h"
 
 // Set to 0 to reproduce Stage A observation-only behavior. This transports
 // host-cache delay only; no BMM150 conversion epoch is guessed.
@@ -258,19 +258,7 @@ private:
   Fusion fusion_{};
 
   ins::MagFreshGate mag_gate_{};
-  ocean_imu::magnetic::RotationHistory<> mag_history_{};
-  ocean_imu::magnetic::RotationConsistency mag_consistency_{};
-  ocean_imu::magnetic::Consistency mag_rotation_diag_{};
-  float mag_host_age_ms_ = NAN, mag_read_to_update_ms_ = NAN;
-  float mag_latency_min_ms_ = NAN, mag_latency_max_ms_ = NAN;
-  bool mag_applied_ = false;
-  uint32_t mag_diag_sequence_ = 0;
-  Eigen::Matrix3f mag_input_covariance_ = Eigen::Matrix3f::Identity();
-  float mag_gyro_density_ = 0;
-  ocean_imu::magnetic::Observation mag_observation_{};
-  uint32_t mag_observation_sequence_ = 0, mag_submitted_sequence_ = 0;
-  bool mag_have_observation_ = false, mag_have_submitted_ = false;
-  uint32_t mag_duplicate_count_ = 0, mag_history_miss_count_ = 0;
+  ocean_imu::magnetic::Input mag_input_{};
 
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
@@ -398,15 +386,7 @@ private:
     fcfg.sigma_a = sigma_a;
     fcfg.sigma_g = sigma_g;
     fcfg.sigma_m = sigma_m;
-    mag_input_covariance_ = sigma_m.array().square().matrix().asDiagonal();
-    mag_gyro_density_ = sigma_g.maxCoeff();
-    mag_history_.reset();
-    mag_consistency_.reset();
-    mag_diag_sequence_ = 0;
-    mag_rotation_diag_ = {};
-    mag_latency_min_ms_ = mag_latency_max_ms_ = NAN;
-    mag_have_observation_ = mag_have_submitted_ = false;
-    mag_duplicate_count_ = mag_history_miss_count_ = 0;
+    mag_input_.reset(sigma_g.maxCoeff(), sigma_m.array().square().matrix().asDiagonal());
 
     fcfg.mag_delay_sec = 0.0f;
     fcfg.mag_init_min_mag_norm = 5.0f;
@@ -559,85 +539,19 @@ private:
     w_cal_ = runtime_.applyGyro(w_raw, tempC);
     m_cal_ = runtime_.applyMag(s.m);
 
-    // Observation only. The source timestamp is first host observation, not
-    // the physical conversion time; no invented fixed latency is subtracted.
-    namespace magnetic = ocean_imu::magnetic;
     const auto& core = fusion_.raw().mekf();
-    const Vector3f residual_bias = core.gyroscope_bias_body();
-    const auto history_status = mag_history_.push(s.sample_us, w_cal_ - residual_bias,
-        magnetic::covarianceBound(core.gyroscope_bias_covariance_body()));
-    const bool bad_gyro_epoch = history_status == magnetic::Status::Duplicate ||
-        history_status == magnetic::Status::OutOfOrder || history_status == magnetic::Status::Invalid;
-    // The existing estimator clock can substitute a nominal dt on a repeated
-    // timestamp. Do not bridge that unqualified step with later transport.
-    if (bad_gyro_epoch) mag_history_.reset();
-    if (s.mag_timing.have && s.mag_timing.sequence != mag_diag_sequence_) {
-      magnetic::Uncertainty uncertainty;
-      uncertainty.gyro_density = mag_gyro_density_;
-      uncertainty.bias_variance = magnetic::covarianceBound(core.gyroscope_bias_covariance_body());
-      // Whole normal-mode conversion + completion phase + 5 ms host poll.
-      // A bound used as sigma, not a qualified Gaussian timing distribution.
-      uncertainty.from_time_sigma = uncertainty.to_time_sigma = (0.028295f + 1.0f/30.0f + 0.005f);
-      mag_rotation_diag_ = mag_consistency_.observe(mag_history_, s.mag_timing.sequence,
-          s.mag_timing.frame_us, m_cal_, fusion_.magHardIronBodyUT(), mag_input_covariance_, uncertainty);
-      mag_diag_sequence_ = s.mag_timing.sequence;
-    }
+    mag_input_.advance(s.sample_us, w_cal_ - core.gyroscope_bias_body(),
+        ocean_imu::magnetic::covarianceBound(core.gyroscope_bias_covariance_body()),
+        s.mag_timing, m_cal_, fusion_.magHardIronBodyUT());
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
-    mag_fresh_ = false;
-#if SEA_STATE_MAG_HOST_ALIGNMENT
-    const bool source_new = s.mag_timing.have && (!mag_have_submitted_ ||
-        static_cast<int32_t>(s.mag_timing.sequence - mag_submitted_sequence_) > 0);
-    if (!mag_ok_) mag_gate_.update(false, millis());
-    else if (source_new) mag_fresh_ = mag_gate_.update(true, millis());
-    else ++mag_duplicate_count_;
-#else
-    mag_fresh_ = mag_gate_.update(mag_ok_, millis());
-#endif
+    mag_fresh_ = mag_input_.due(mag_gate_, mag_ok_, millis());
     if (mag_fresh_) rates_.countMag();
 
     fusion_.update(dt_, w_cal_, a_cal_);
-    if (s.mag_timing.have && (!mag_have_observation_ || s.mag_timing.sequence != mag_observation_sequence_)) {
-      // Capture actual exogenous proxy state now, not a MEKF-biased rewind of
-      // that proxy later. Raw magnetic and hard-iron fitting use this epoch.
-      mag_observation_.proxy_bw = fusion_.raw().startupProxyQuat();
-      mag_observation_.attitude_bw = fusion_.attitudeQuat();
-      mag_observation_.accel = a_cal_;
-      mag_observation_.gyro = w_cal_;
-      mag_observation_.covariance = mag_input_covariance_;
-      mag_observation_sequence_ = s.mag_timing.sequence;
-      mag_have_observation_ = true;
-    }
-    if (mag_ok_ && mag_fresh_) {
-      const uint32_t correction_start_us = micros();
-#if SEA_STATE_MAG_HOST_ALIGNMENT
-      const auto status = bad_gyro_epoch ? history_status :
-          mag_history_.between(s.mag_timing.frame_us, s.sample_us, mag_observation_.rotation);
-      mag_applied_ = false;
-      if (status == magnetic::Status::Ready) {
-        auto& uncertainty = mag_observation_.uncertainty;
-        uncertainty.gyro_density = mag_gyro_density_;
-        uncertainty.bias_variance = magnetic::covarianceBound(core.gyroscope_bias_covariance_body());
-        // Host bracket only. The unobserved BMM150 aperture/phase remains a
-        // separate residual; treating this as a physical timestamp is wrong.
-        uncertainty.from_time_sigma = float(uint32_t(s.mag_timing.read_end_us - s.mag_timing.frame_us)) * 1e-6f;
-        uncertainty.to_time_sigma = 0;
-        fusion_.updateMagTransported(m_cal_, mag_observation_);
-        mag_applied_ = fusion_.lastMagUpdateApplied();
-      } else ++mag_history_miss_count_;
-      mag_submitted_sequence_ = s.mag_timing.sequence;
-      mag_have_submitted_ = true;
-#else
-      fusion_.updateMag(m_cal_);
-      mag_applied_ = fusion_.lastMagUpdateApplied();
-#endif
-      mag_host_age_ms_ = float(uint32_t(s.sample_us - s.mag_timing.frame_us)) * 0.001f;
-      mag_read_to_update_ms_ = float(uint32_t(correction_start_us - s.mag_timing.read_end_us)) * 0.001f;
-      if (!std::isfinite(mag_latency_min_ms_)) mag_latency_min_ms_ = mag_latency_max_ms_ = mag_read_to_update_ms_;
-      mag_latency_min_ms_ = std::min(mag_latency_min_ms_, mag_read_to_update_ms_);
-      mag_latency_max_ms_ = std::max(mag_latency_max_ms_, mag_read_to_update_ms_);
-    }
+    mag_input_.capture(fusion_.raw().startupProxyQuat(), fusion_.attitudeQuat(), a_cal_, w_cal_);
+    if (mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
 
     // Keep startup attitude and startup compass tilt explicitly on the
     // yaw-free Mahony proxy. Its yaw is unobservable and must never become a
@@ -844,15 +758,7 @@ private:
       static_cast<double>(m_cal_.x()),
       static_cast<double>(m_cal_.y()),
       static_cast<double>(m_cal_.z()));
-    Serial.printf("[MAGTIME] host_age_ms=%.3f read_to_update_ms=%.3f jitter_range_ms=%.3f "
-                  "rot_pred_rad=%.5f rot_seen_rad=%.5f residual_uT=%.4f d2=%.3f snr=%.3f applied=%u status=%u duplicates=%lu history_miss=%lu\n",
-        double(mag_host_age_ms_), double(mag_read_to_update_ms_),
-        double(mag_latency_max_ms_ - mag_latency_min_ms_),
-        double(mag_rotation_diag_.predicted_angle_rad), double(mag_rotation_diag_.observed_angle_rad),
-        double(mag_rotation_diag_.residual_uT), double(mag_rotation_diag_.nis),
-        double(mag_rotation_diag_.rotation_signal_to_noise), unsigned(mag_applied_),
-        unsigned(mag_rotation_diag_.status), static_cast<unsigned long>(mag_duplicate_count_),
-        static_cast<unsigned long>(mag_history_miss_count_));
+    mag_input_.print(Serial);
   #endif
 #endif
   }

@@ -84,7 +84,14 @@ operation-equivalence receipt, with no timed-path claim. Local `make all`
 with a command-line `CXXFLAGS` override omitted the TFG test-only Lie++ include:
 `lie_group-test.cpp:31: fatal error: groups/SEn3.hpp: No such file or directory`.
 The rerun uses `CPPFLAGS=-O1`, preserving each Makefile's dependency flags
-(class E invocation error, no TFG code change). Full Python validation also
+(class E invocation error, no TFG code change). That run reached an unrelated
+Kuchler heave gate: `21.2379% > 19.98%` on the H8.5 PM/Stokes record. The
+unchanged main archive reproduces the identical failure with the same `-O1`
+flags and input. Rebuilding this benchmark with its normal `-O3` flags yields
+19.8724%, below the unchanged limit. This is class E compiler-profile
+sensitivity in an existing benchmark, not a magnetic regression; no tuning
+or gate changes are made. The full run resumes with that normal-profile
+benchmark. Full Python validation also
 exposed a literal-string proxy-tilt anchor; it now checks both the unchanged
 legacy proxy and the saved exogenous observation proxy. The remaining
 publication failures require the full replay above (class E, not a numerical
@@ -92,6 +99,24 @@ regression). These are not mathematical counterexamples. Current
 limiter: hardware conversion timing and the new endogenous transport ports.
 Next falsifiable work: capture DRDY/AUX/read phases, audit applied service and
 bound those same-history ports without changing the estimator or sensor model.
+
+**E — shared frontend extension.** Source-string parity checks were updated
+to follow the centralized `Input.capture` call and saved proxy assignment.
+An in-flight `make all` read a `run_tests.sh` while it was being edited and
+reported a shell syntax error; the valid frozen script is rerun. Initial
+new harness builds exposed a Mahony method-name typo, C versus C++ linking
+in the NLO target and qMEKF private-type name collisions; these were harness
+repairs, not estimator changes. The TFG extension initially reused OU-III's
+2-degree recovery assertion and measured 5.415 degrees. That assumption was
+invalid: the 2-degree qualification remains OU-III-only, with other filters'
+recovery reported without tuning. The qMEKF large-interference case worsens
+under transport covariance weighting; this is a finite approximation limit,
+not a theorem counterexample. Shared histories and diagnostics now cover all
+seven magnetic-aided AtomS3R frontends. Continuous observers retain every-tick
+feedback and report no normalized confidence without a bias covariance.
+Retained facts: original gains/legacy correction equations and the OU-III
+operation audit. Limiter/next experiment remain physical timing qualification
+and same-history transport-port/service bounds.
 
 ## Evidence
 

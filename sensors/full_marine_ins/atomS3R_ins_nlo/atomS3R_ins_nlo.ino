@@ -86,6 +86,7 @@
 #include <ArduinoOceanImu.h>
 
 #include "AtomS3R/AtomS3R_CompassUI.h"
+#include "util/MagneticInput.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #if SEA_STATE_ENABLE_WIZARD
@@ -287,6 +288,7 @@ class FusionApp {
   Fusion fusion_{};
 
   ins::MagFreshGate mag_gate_{MAG_UPDATE_SPACING_MS};
+  ocean_imu::magnetic::Input mag_input_{};
   uint32_t last_mag_correction_ms_ = 0;
 
   Vector3f a_cal_ = Vector3f::Zero();
@@ -388,6 +390,9 @@ class FusionApp {
   }
 
   void resetFusion_() {
+    // No bias covariance exists in this observer: report vector residuals,
+    // and mark NIS/SNR unavailable rather than inventing uncertainty.
+    mag_input_.reset(0.0f, Eigen::Matrix3f::Identity());
     auto& cfg = fusion_.config();
 
     /*
@@ -547,6 +552,11 @@ class FusionApp {
     a_cal_ = runtime_.applyAccel(s.a, tempC);
     w_cal_ = runtime_.applyGyro(s.w, tempC);
     m_cal_ = runtime_.applyMag(s.m);
+    const Vector3f rotation_bias = fusion_.gyroscopeBiasBody();
+    mag_input_.advance(s.sample_us, w_cal_ - rotation_bias, 0.0f,
+        s.mag_timing, m_cal_, Vector3f::Zero(), false);
+    Vector3f magnetic_now = m_cal_;
+    const bool magnetic_time_ok = mag_input_.currentField(Vector3f::Zero(), magnetic_now);
 
     mag_norm_uT_ = m_cal_.norm();
 
@@ -564,9 +574,9 @@ class FusionApp {
     if (mag_fresh_) rates_.countMag();
 
 #if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
-    const bool mag_usable = mag_present_ && mag_field_sane_;
+    const bool mag_usable = mag_present_ && mag_field_sane_ && magnetic_time_ok;
 #else
-    const bool mag_usable = mag_present_;
+    const bool mag_usable = mag_present_ && magnetic_time_ok;
 #endif
 
     mag_used_ = mag_usable;
@@ -575,19 +585,21 @@ class FusionApp {
       The observer consumes the magnetometer as a continuous DIRECTION
       reference: the horizontal projection of m_b is compared against the
       magnetic reference vector in NED on every update, which is a
-      zero-order hold on the latest reading, not an incremental measurement
+      hold of the latest reading transported by gyro rotation, not an incremental measurement
       that could be double-counted. So the current calibrated sample is
       offered on every IMU tick and only the gate decides, rather than the
       ~25 Hz freshness gate the discrete Kalman updates next door need.
     */
+    const uint32_t magnetic_update_start_us = micros();
     if (mag_usable) {
-      fusion_.setMagBody(m_cal_, true);
+      fusion_.setMagBody(magnetic_now, true);
       last_mag_correction_ms_ = now_ms;
     } else {
       fusion_.clearMag();
     }
 
     fusion_.update(dt_, w_cal_, a_cal_);
+    if (mag_usable) mag_input_.complete(magnetic_update_start_us, true);
 
     const auto snap = fusion_.snapshot();
 
@@ -844,6 +856,7 @@ class FusionApp {
         static_cast<double>(nlo_theta_),
         static_cast<double>(gyro_bias_norm_),
         static_cast<double>(dt_ * 1000.0f));
+    mag_input_.print(Serial, "offered");
 
   #endif
 

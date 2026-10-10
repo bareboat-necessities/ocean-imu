@@ -25,6 +25,7 @@ def tokens(source):
 
 def project(path, source):
     if path == PATHS[0]:
+        source = source.replace('#include "util/MeasurementCovariance.h"', '')
         start = source.index('    // Full covariance in physical body axes')
         end = source.index('    // Extended-only API:', start)
         source = source[:start] + '\n' + source[end:]

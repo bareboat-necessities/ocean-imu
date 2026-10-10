@@ -63,6 +63,7 @@
 #include <ArduinoOceanImu.h>
 
 #include "AtomS3R/AtomS3R_CompassUI.h"
+#include "util/MagneticInput.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #if SEA_STATE_ENABLE_WIZARD
@@ -253,6 +254,7 @@ class FusionApp {
   Fusion fusion_{};
 
   ins::MagFreshGate mag_gate_{MAG_UPDATE_SPACING_MS};
+  ocean_imu::magnetic::Input mag_input_{};
   uint32_t last_mag_correction_ms_ = 0;
 
   Vector3f a_cal_ = Vector3f::Zero();
@@ -413,6 +415,9 @@ class FusionApp {
   }
 
   void resetFusion_() {
+    // No bias covariance exists in this observer: report vector residuals,
+    // and mark NIS/SNR unavailable rather than inventing uncertainty.
+    mag_input_.reset(0.0f, Eigen::Matrix3f::Identity());
     Fusion::Config cfg{};
 
     /*
@@ -541,6 +546,14 @@ class FusionApp {
     a_cal_ = runtime_.applyAccel(s.a, tempC);
     w_cal_ = runtime_.applyGyro(s.w, tempC);
     m_cal_ = runtime_.applyMag(s.m);
+    const auto& mahony = fusion_.mahonyState();
+    // Mahony ADDS integral feedback: its bias estimate is -I, in its axes.
+    const Vector3f rotation_bias = ned_to_mahony_body_(
+        Vector3f(-mahony.integralFBx, -mahony.integralFBy, -mahony.integralFBz));
+    mag_input_.advance(s.sample_us, w_cal_ - rotation_bias, 0.0f,
+        s.mag_timing, m_cal_, Vector3f::Zero(), false);
+    Vector3f magnetic_now = m_cal_;
+    const bool magnetic_time_ok = mag_input_.currentField(Vector3f::Zero(), magnetic_now);
 
     mag_norm_uT_ = m_cal_.norm();
 
@@ -558,16 +571,16 @@ class FusionApp {
     if (mag_fresh_) rates_.countMag();
 
 #if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
-    const bool mag_usable = mag_present_ && mag_field_sane_;
+    const bool mag_usable = mag_present_ && mag_field_sane_ && magnetic_time_ok;
 #else
-    const bool mag_usable = mag_present_;
+    const bool mag_usable = mag_present_ && magnetic_time_ok;
 #endif
 
     mag_used_ = mag_usable;
 
     const Vector3f gyr_body_m = ned_to_mahony_body_(w_cal_);
     const Vector3f acc_body_m = ned_to_mahony_body_(a_cal_);
-    const Vector3f mag_body_m = ned_to_mahony_body_(m_cal_);
+    const Vector3f mag_body_m = ned_to_mahony_body_(magnetic_now);
 
     if (!mahony_seeded_ && mag_usable) {
       const float a_norm = a_cal_.norm();
@@ -580,6 +593,7 @@ class FusionApp {
       }
     }
 
+    const uint32_t magnetic_update_start_us = micros();
     if (mag_usable) {
       fusion_.updateIMUMag(gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
                            acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
@@ -592,6 +606,8 @@ class FusionApp {
                         acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
                         dt_);
     }
+
+    if (mag_usable) mag_input_.complete(magnetic_update_start_us, true);
 
     roll_deg_ = fusion_.rollDeg();
     pitch_deg_ = -fusion_.pitchDeg();
@@ -821,6 +837,7 @@ class FusionApp {
         static_cast<double>(fusion_.envelopeAccelVariance()),
         static_cast<double>(fusion_.envelopeTauApplied()),
         static_cast<double>(fusion_.envelopeSigmaApplied()));
+    mag_input_.print(Serial, "offered");
 
   #endif
 

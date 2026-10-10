@@ -30,6 +30,7 @@
 #include <algorithm>
 
 #include "kalman_ou_common/KalmanOUCoreMath.h"
+#include "util/MeasurementCovariance.h"
 
 namespace ocean_imu::kalman {
 
@@ -112,17 +113,12 @@ class Kalman3D_Wave_OU_III {
     // The legacy overload, Jacobian, injection and reset remain unchanged.
     void measurement_update_mag_only(const Vector3& mag, const Matrix3& covariance_body) {
         last_mag_diag_ = MeasDiag3{};
-        if (!covariance_body.allFinite() ||
-            !covariance_body.isApprox(covariance_body.transpose(), T(1e-5)) ||
-            Eigen::LLT<Matrix3>(covariance_body).info() != Eigen::Success) return;
         Matrix3 d;
         d.col(0) = deheel_vector_(Vector3::UnitX());
         d.col(1) = deheel_vector_(Vector3::UnitY());
         d.col(2) = deheel_vector_(Vector3::UnitZ());
-        const Matrix3 saved = Rmag;
-        Rmag = d * covariance_body * d.transpose();
-        measurement_update_mag_only(mag);
-        Rmag = saved; // per-observation covariance; no tuning/state-API change
+        const Matrix3 covariance = d * covariance_body * d.transpose();
+        ocean_imu::withMeasurementCovariance(Rmag, covariance, [&] { measurement_update_mag_only(mag); });
     }
 
     // Extended-only API:

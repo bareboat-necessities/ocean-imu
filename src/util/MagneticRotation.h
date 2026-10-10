@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include "MeasurementCovariance.h"
 
 namespace ocean_imu::magnetic {
 using V3 = Eigen::Vector3f;
@@ -42,6 +43,7 @@ public:
         uint32_t begin = 0, end = 0;
         V3 omega = V3::Zero(); // calibrated physical-body rate minus residual bias
         float bias_variance = 0;
+        float gyro_angle_variance = 0; // optional discrete angle-noise variance
         Q dq = Q::Identity();
     };
     struct Rotation {
@@ -50,12 +52,14 @@ public:
         float start_speed = 0, end_speed = 0;
         float bias_variance = 0;
         unsigned visited = 0;
+        float gyro_angle_variance = 0;
     };
 
     void reset() { count_ = next_ = 0; have_time_ = false; }
-    Status push(uint32_t t, const V3& omega, float bias_variance = 0) {
+    Status push(uint32_t t, const V3& omega, float bias_variance = 0, float gyro_angle_variance = 0) {
         if (!omega.allFinite() || !std::isfinite(omega.squaredNorm()) ||
-            !std::isfinite(bias_variance) || bias_variance < 0) {
+            !std::isfinite(bias_variance) || bias_variance < 0 ||
+            !std::isfinite(gyro_angle_variance) || gyro_angle_variance < 0) {
             reset(); return Status::Invalid;
         }
         if (!have_time_) { last_ = t; have_time_ = true; return Status::First; }
@@ -67,7 +71,7 @@ public:
         }
         const Q dq = increment(omega, float(delta) * 1e-6f);
         if (!dq.coeffs().allFinite()) { reset(); return Status::Invalid; }
-        data_[next_] = Segment{last_, t, omega, bias_variance, dq};
+        data_[next_] = Segment{last_, t, omega, bias_variance, gyro_angle_variance, dq};
         next_ = (next_ + 1) % Capacity;
         count_ = std::min(count_ + 1, Capacity);
         last_ = t;
@@ -104,6 +108,10 @@ public:
             if (!covered) out.start_speed = s.omega.norm();
             out.end_speed = s.omega.norm();
             out.bias_variance = std::max(out.bias_variance, s.bias_variance);
+            if (s.gyro_angle_variance > 0) {
+                const float fraction = us == s.end-s.begin ? 1.0f : float(us) / float(s.end-s.begin);
+                out.gyro_angle_variance += fraction * fraction * s.gyro_angle_variance;
+            }
             covered += us;
         }
         if (covered != uint32_t(to - from)) return Status::NoHistory;
@@ -139,7 +147,7 @@ inline float covarianceBound(const M3& p) {
 template <class Rotation>
 inline M3 rotationNoise(const V3& transported, const Rotation& r, const Uncertainty& u) {
     const float time_angle = r.start_speed * u.from_time_sigma + r.end_speed * u.to_time_sigma;
-    const float gyro_sd = u.gyro_density * std::sqrt(r.seconds);
+    const float gyro_sd = std::sqrt(u.gyro_density * u.gyro_density * r.seconds + r.gyro_angle_variance);
     const float bias_sd = std::sqrt(std::max(u.bias_variance, r.bias_variance)) * r.seconds;
     const float variance = u.correlated ? (gyro_sd + bias_sd + time_angle) * (gyro_sd + bias_sd + time_angle)
         : gyro_sd * gyro_sd + bias_sd * bias_sd + time_angle * time_angle;
@@ -147,7 +155,7 @@ inline M3 rotationNoise(const V3& transported, const Rotation& r, const Uncertai
 }
 
 inline bool covarianceValid(const M3& r) {
-    return r.allFinite() && r.isApprox(r.transpose(), 1e-5f) && Eigen::LLT<M3>(r).info() == Eigen::Success;
+    return ocean_imu::validMeasurementCovariance(r);
 }
 
 template <class Rotation>
@@ -159,6 +167,7 @@ inline bool align(const V3& calibrated, const V3& body_hard_iron, const M3& samp
         !std::isfinite(r.start_speed) || r.start_speed < 0 ||
         !std::isfinite(r.end_speed) || r.end_speed < 0 ||
         !std::isfinite(r.bias_variance) || r.bias_variance < 0 ||
+        !std::isfinite(r.gyro_angle_variance) || r.gyro_angle_variance < 0 ||
         std::abs(r.q.squaredNorm() - 1.0f) > 1e-3f) return false;
     field = r.q * (calibrated - body_hard_iron); // subtract body-fixed offset FIRST
     const M3 d = r.q.toRotationMatrix();
@@ -194,6 +203,7 @@ struct Observation {
             std::isfinite(rotation.start_speed) && rotation.start_speed>=0 &&
             std::isfinite(rotation.end_speed) && rotation.end_speed>=0 &&
             std::isfinite(rotation.bias_variance) && rotation.bias_variance>=0 &&
+            std::isfinite(rotation.gyro_angle_variance) && rotation.gyro_angle_variance>=0 &&
             rotation.q.coeffs().allFinite() && std::abs(rotation.q.squaredNorm()-1.0f)<1e-3f;
     }
 };

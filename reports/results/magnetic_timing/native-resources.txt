@@ -1,4 +1,6 @@
+Native x86-64 GCC 13.3, -O3; microbenchmarks, not AtomS3R timing.
+Shared magnetic input PASS; sizeof(Input)=1888
 quiet_white_noise,n=4999,mean_d2=3.034858,exceedances=4
-resources,history_bytes=1552,diagnostic_bytes=60,push_ns=20.5,lookup_ns=206.7,checksum=99737.3
-resources,observation_bytes=176,rotation_bytes=48,uncertainty_bytes=20,diagnostic_row_bytes=28,align_ns=115.5,diagnostic_with_push_ns=295.8,checksum=3070908.8
+resources,history_bytes=1552,diagnostic_bytes=60,push_ns=25.4,lookup_ns=181.9,checksum=99737.3
+resources,observation_bytes=176,rotation_bytes=48,uncertainty_bytes=20,diagnostic_row_bytes=28,align_ns=105.5,diagnostic_with_push_ns=293.4,checksum=3070908.8
 magnetic rotation contracts PASS (Eigen allocation disabled)

@@ -27,7 +27,10 @@ TARGETS = calibration_accuracy-test mag_field_consistency-test mag_hand_motion-t
 
 all: build test
 
-TARGETS += mag_rotation-test
+TARGETS += mag_rotation-test mag_input-test
+mag_input-test: mag_input-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+mag_input-test.o: ../../src/util/MagneticInput.h ../../src/util/MagneticRotation.h ../../src/AtomS3R/AtomS3R_MagAcquisition.h
 mag_rotation-test: mag_rotation-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 mag_rotation-test.o: ../../src/util/MagneticRotation.h ../../src/AtomS3R/AtomS3R_MagAcquisition.h
