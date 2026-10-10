@@ -378,7 +378,7 @@ measurements, not execution times or task-stack high-water measurements.
 |---|---:|---:|---:|---:|---:|---:|
 | OU-II | 1,053,975 | 1,065,923 | +11,948 | 31,332 | 33,076 | +1,744 |
 | OU-III | 1,116,147 | 1,127,427 | +11,280 | 31,316 | 33,060 | +1,744 |
-| TFG | 1,035,003 | 1,045,503 | +10,500 | 41,020 | 42,772 | +1,752 |
+| TFG | 1,035,003 | 1,045,507 | +10,504 | 41,020 | 42,772 | +1,752 |
 | NLO | 803,883 | 811,331 | +7,448 | 29,932 | 31,676 | +1,744 |
 | PII | 797,115 | 804,995 | +7,880 | 30,124 | 31,868 | +1,744 |
 | Mahony compass | 774,819 | 783,895 | +9,076 | 105,716 | 107,492 | +1,776 |
@@ -387,11 +387,11 @@ measurements, not execution times or task-stack high-water measurements.
 The baseline build at `5bfce5da8d475e7fa728e92536b50efe46fe24c2` has an
 empty diff against audited main `2c534feb423a627c40f475daed40b4274d3dd2b8`
 for source, sketches, board workflow, library metadata and vendored dependencies.
-The new sizes are from runtime source `90e3f8c6b3d48fb1698225ed978a6bf0135f4eaf`.
+The new sizes are from runtime source `f236e561888045556391ae8ba820f69833ab1890`.
 See the [machine-readable table](../reports/results/magnetic_timing/atoms3r-resources.csv)
 and [build provenance](../reports/results/magnetic_timing/atoms3r-resources.json),
 [baseline CI](https://github.com/bareboat-necessities/ocean-imu/actions/runs/38064387731)
-and [current CI](https://github.com/bareboat-necessities/ocean-imu/actions/runs/38080809891).
+and [current CI](https://github.com/bareboat-necessities/ocean-imu/actions/runs/38083240211).
 Global RAM deltas include frontend metadata and ABI padding; they are not an
 inference from the native `sizeof(Input)` value.
 

@@ -130,6 +130,13 @@ all assertions but failed bytewise CSV comparison (maximum heading RMS
 difference 0.000408 degrees). This class E comparison-profile mismatch does
 not establish a runtime regression; the recorded Makefile profile reproduces
 the complete 42-row output byte-for-byte after the fix.
+The complete CI clang-tidy sweep on `f236e561` was cancelled at its 30-minute
+job limit (analysis 20:19:00--20:48:58 UTC, no reported code diagnostic).
+This class E budget failure invalidates completion of that sweep, not the
+focused clean check or the other passing gates. Give clang-tidy 45 minutes
+while retaining every translation unit, check and warnings-as-errors setting;
+the next falsifiable check is completion of the unchanged sweep within that
+budget. Other static-analysis jobs retain their 30-minute limit.
 Retained facts: original gains/legacy correction equations and the OU-III
 operation audit. Limiter/next experiment remain physical timing qualification
 and same-history transport-port/service bounds.
