@@ -53,3 +53,33 @@ measurement and reference remain unchanged.
 Fixed-heading data cannot generally identify soft iron or sensor misalignment.
 Those terms may pass the additive residual gate and can degrade correction;
 Sec.~\ref{sec:mag-hi-results} reports the evaluated draw.
+
+\subsection{Asynchronous magnetic input}
+\label{sec:mag-timing}
+The AtomS3R frontend records the first host observation of each distinct
+magnetic cache value and transports its subsequent cache delay with a bounded
+history of bias-corrected gyro increments. This host epoch is not a BMM150
+conversion timestamp. The 30 Hz sensor and 25 Hz AUX poll have independent
+phases; the configured conversion aperture is approximately 28.3 ms.
+Physical conversion latency remains an unqualified residual.
+
+For physical-body rotation $\mat D=\mat R_{b_k b_m}$, the final input is
+\begin{equation}
+ \vct m_k=\mat D(\vct m_m-\widehat{\vct b}_m),\qquad
+ \mat R_k=\mat D\mat R_m\mat D^\top+\mat R_{\rm tr}.
+\end{equation}
+Both saved calibration and the applied residual hard-iron offset are removed
+before rotation. Reference acquisition and optional hard-iron accumulation
+use the raw calibrated field with the saved observation-time proxy tilt;
+only the corrected MEKF input is transported. The original magnetic Jacobian,
+injection, reset, tuning and startup gates are retained.
+
+A first-order rotation-noise bound includes gyro density, the largest carried
+bias-covariance bound over the interval, and endpoint timestamp uncertainty.
+Unknown cross correlations are bounded conservatively; the transported input
+can still correlate with the MEKF state. Native tests compare this approximation
+with timestamp-correct rewind/replay, without claiming hardware accuracy.
+A normalized consecutive-field residual is diagnostic only. Duplicate host
+observations and uncovered gyro intervals cannot supply magnetic service;
+no new interference gate is enabled. Detailed assumptions, replay results and
+remaining hardware qualification are in \texttt{docs/magnetic-timing.md}.

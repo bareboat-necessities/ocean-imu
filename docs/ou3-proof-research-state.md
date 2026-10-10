@@ -42,6 +42,41 @@ latency) must be charged to the stated magnetic residual envelopes; that fit is
 not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
+## Magnetic-input timing scope
+
+The AtomS3R OU-III frontend now transports known host-cache delay and suppresses
+repeated host observations. The BMM150 conversion epoch/aperture is not known;
+physical timestamp qualification remains OPEN. The 21-state core, Jacobian,
+OU/S/SpectralMSE/tuner/BA dynamics and injection/reset are retained. Reference
+and hard-iron accumulation use saved exogenous proxy snapshots. Timed MEKF
+input and covariance depend on carried gyro-bias estimates/covariances: LR1's
+zero corrected-input reverse port applies to the legacy API only. The timed
+ports, physical latency envelopes and source-uniform actually applied service
+must enter the same finite-error supply inequality before transferring the
+local result. No theorem, entry or service-completion flag is promoted.
+
+The legacy API's complete operation source reduces token-for-token to main
+`2c534feb423a627c40f475daed40b4274d3dd2b8`; see
+`magnetic_timing_legacy_binding.py`. Independently compiled baseline/current
+240 s native executions produced the identical complete 40 s tail stream
+(also identical to the previously committed stream) with both untapped controls.
+Binding refreshes preserve every older finite numerical payload and scope flag;
+the receipt records old/new bindings and unchanged-payload hashes. This does
+not transfer those finite diagnostics to the timed-input API.
+
+**E — implementation/validation repairs in this change.** The first replay
+harness tried assigning a core with a const gravity member; copy construction
+repairs its exact failing operation. Missing local mpmath was installed.
+Literal source anchors and source hashes detected the added optional interface;
+anchors now distinguish legacy and timed ports, and the operation audit plus
+bitwise native controls justify the legacy binding refresh. An initial patch
+context and one diagnostic filename were corrected before application. Git
+HTTPS push had no credential; the authorized GitHub connector publishes the
+same reviewed trees. These are not mathematical counterexamples. Current
+limiter: hardware conversion timing and the new endogenous transport ports.
+Next falsifiable work: capture DRDY/AUX/read phases, audit applied service and
+bound those same-history ports without changing the estimator or sensor model.
+
 ## Evidence
 
 **D — an inverse-domain estimate alone does not settle the linked receipt.**

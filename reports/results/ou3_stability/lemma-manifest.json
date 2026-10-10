@@ -518,7 +518,8 @@
         "literal updateCore_ chronology",
         "no runtime ablation to MEKF-levelled period input",
         "locked-Live reference extension: magnetic lock and both stages Live, inherited private/reference state and delivered history fixed, no Cold/reacquisition or external reconfiguration",
-        "default real reference amplitude corollary: startup hard iron disabled, apply fraction one, actual accepted-bias gate and acquisition; float accumulation separate"
+        "default real reference amplitude corollary: startup hard iron disabled, apply fraction one, actual accepted-bias gate and acquisition; float accumulation separate",
+        "zero corrected-input reverse port applies to legacy updateMag only; timestamp transport adds endogenous gyro-bias/covariance ports"
       ],
       "proof_modules": [
         "tools/stability/ou3_theorem/planar_generated_port_structure.py",
@@ -529,7 +530,8 @@
         "reports/results/ou3_stability/information-shear-word-certificate.json"
       ],
       "open_dependencies": [
-        "app:locked-live-causal-reference proves the zero reverse reference port on its actual causal lift and the linked canonical-map/source differential, including the real default 27/20 amplitude bound. Actual remaining MEKF gap, grouped forced/gauge work, branch activation, reference alignment and arithmetic qualification remain OPEN; no count promotion."
+        "app:locked-live-causal-reference proves the zero reverse reference port on its actual causal lift and the linked canonical-map/source differential, including the real default 27/20 amplitude bound. Actual remaining MEKF gap, grouped forced/gauge work, branch activation, reference alignment and arithmetic qualification remain OPEN; no count promotion.",
+        "uniform transport/state-noise correlation and actually applied service for AtomS3R host-cache preprocessing remain OPEN; see magnetic_timing_preprocessing in theorem-status.json"
       ]
     },
     {

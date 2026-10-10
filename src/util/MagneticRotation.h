@@ -41,18 +41,21 @@ public:
     struct Segment {
         uint32_t begin = 0, end = 0;
         V3 omega = V3::Zero(); // calibrated physical-body rate minus residual bias
+        float bias_variance = 0;
         Q dq = Q::Identity();
     };
     struct Rotation {
         Q q = Q::Identity(); // B_to <- B_from
         float seconds = 0;
         float start_speed = 0, end_speed = 0;
+        float bias_variance = 0;
         unsigned visited = 0;
     };
 
     void reset() { count_ = next_ = 0; have_time_ = false; }
-    Status push(uint32_t t, const V3& omega) {
-        if (!omega.allFinite() || !std::isfinite(omega.squaredNorm())) {
+    Status push(uint32_t t, const V3& omega, float bias_variance = 0) {
+        if (!omega.allFinite() || !std::isfinite(omega.squaredNorm()) ||
+            !std::isfinite(bias_variance) || bias_variance < 0) {
             reset(); return Status::Invalid;
         }
         if (!have_time_) { last_ = t; have_time_ = true; return Status::First; }
@@ -64,7 +67,7 @@ public:
         }
         const Q dq = increment(omega, float(delta) * 1e-6f);
         if (!dq.coeffs().allFinite()) { reset(); return Status::Invalid; }
-        data_[next_] = Segment{last_, t, omega, dq};
+        data_[next_] = Segment{last_, t, omega, bias_variance, dq};
         next_ = (next_ + 1) % Capacity;
         count_ = std::min(count_ + 1, Capacity);
         last_ = t;
@@ -86,6 +89,10 @@ public:
         for (unsigned j = 0; j < count_; ++j) {
             const auto& s = data_[(oldest + j) % Capacity];
             ++out.visited;
+            if (from == to && static_cast<int32_t>(from-s.begin) >= 0 &&
+                static_cast<int32_t>(s.end-from) >= 0) {
+                out.start_speed = out.end_speed = s.omega.norm();
+            }
             const int32_t start = std::max(int32_t(0), static_cast<int32_t>(from - s.begin));
             const int32_t stop = std::min(static_cast<int32_t>(s.end - s.begin),
                                           static_cast<int32_t>(to - s.begin));
@@ -96,6 +103,7 @@ public:
             out.q = dq * out.q;
             if (!covered) out.start_speed = s.omega.norm();
             out.end_speed = s.omega.norm();
+            out.bias_variance = std::max(out.bias_variance, s.bias_variance);
             covered += us;
         }
         if (covered != uint32_t(to - from)) return Status::NoHistory;
@@ -131,8 +139,10 @@ inline float covarianceBound(const M3& p) {
 template <class Rotation>
 inline M3 rotationNoise(const V3& transported, const Rotation& r, const Uncertainty& u) {
     const float time_angle = r.start_speed * u.from_time_sigma + r.end_speed * u.to_time_sigma;
-    const float variance = u.gyro_density * u.gyro_density * r.seconds +
-        u.bias_variance * r.seconds * r.seconds + time_angle * time_angle;
+    const float gyro_sd = u.gyro_density * std::sqrt(r.seconds);
+    const float bias_sd = std::sqrt(std::max(u.bias_variance, r.bias_variance)) * r.seconds;
+    const float variance = u.correlated ? (gyro_sd + bias_sd + time_angle) * (gyro_sd + bias_sd + time_angle)
+        : gyro_sd * gyro_sd + bias_sd * bias_sd + time_angle * time_angle;
     return variance * (transported.squaredNorm() * M3::Identity() - transported * transported.transpose());
 }
 
@@ -145,12 +155,16 @@ inline bool align(const V3& calibrated, const V3& body_hard_iron, const M3& samp
                   const Rotation& r, const Uncertainty& u, V3& field, M3& covariance) {
     if (!calibrated.allFinite() || !body_hard_iron.allFinite() || !u.valid() ||
         !covarianceValid(sample_covariance) || !r.q.coeffs().allFinite() ||
+        !std::isfinite(r.seconds) || r.seconds < 0 || r.seconds > .120001f ||
+        !std::isfinite(r.start_speed) || r.start_speed < 0 ||
+        !std::isfinite(r.end_speed) || r.end_speed < 0 ||
+        !std::isfinite(r.bias_variance) || r.bias_variance < 0 ||
         std::abs(r.q.squaredNorm() - 1.0f) > 1e-3f) return false;
     field = r.q * (calibrated - body_hard_iron); // subtract body-fixed offset FIRST
     const M3 d = r.q.toRotationMatrix();
     covariance = d * sample_covariance * d.transpose() + rotationNoise(field, r, u);
     // Cov(x+y) <= 2 Cov(x)+2 Cov(y) for unknown cross-correlation.
-    if (u.correlated && r.seconds > 0) covariance *= 2.0f;
+    if (u.correlated && (r.seconds > 0 || u.from_time_sigma > 0 || u.to_time_sigma > 0)) covariance *= 2.0f;
     return field.allFinite() && covarianceValid(covariance);
 }
 
@@ -160,6 +174,28 @@ struct Consistency {
     float predicted_angle_rad = NAN, observed_angle_rad = NAN;
     float rotation_signal_to_noise = NAN;
     bool unexplained = false; // advisory ONLY, never estimator acceptance
+};
+
+// Attitude/IMU snapshots belong to the observation epoch. In particular the
+// proxy snapshot must be exogenous: never rewind it with MEKF bias estimates.
+struct Observation {
+    RotationHistory<>::Rotation rotation{};
+    Uncertainty uncertainty{};
+    M3 covariance = M3::Identity();
+    Q proxy_bw = Q::Identity(), attitude_bw = Q::Identity();
+    V3 accel = V3::Zero(), gyro = V3::Zero();
+    bool valid() const {
+        return uncertainty.valid() && covarianceValid(covariance) &&
+            proxy_bw.coeffs().allFinite() && attitude_bw.coeffs().allFinite() &&
+            std::abs(proxy_bw.squaredNorm()-1.0f)<1e-3f &&
+            std::abs(attitude_bw.squaredNorm()-1.0f)<1e-3f &&
+            accel.allFinite() && gyro.allFinite() &&
+            std::isfinite(rotation.seconds) && rotation.seconds>=0 && rotation.seconds<=.120001f &&
+            std::isfinite(rotation.start_speed) && rotation.start_speed>=0 &&
+            std::isfinite(rotation.end_speed) && rotation.end_speed>=0 &&
+            std::isfinite(rotation.bias_variance) && rotation.bias_variance>=0 &&
+            rotation.q.coeffs().allFinite() && std::abs(rotation.q.squaredNorm()-1.0f)<1e-3f;
+    }
 };
 
 inline float angle(const V3& a, const V3& b) {
