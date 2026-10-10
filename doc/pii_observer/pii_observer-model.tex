@@ -612,15 +612,23 @@
     what the wrapper uses for its trust metric below.
 
     With magnetometer aiding, the reference field \(\vct{b}=[b_x\;0\;b_z]^\top\)
-    is recomputed each sample from the measured field, its predicted body
-    direction \(\vct{w}_{1/2}\) is formed the same way, and the innovation
-    becomes
+    is recomputed each sample from the measured field and its predicted body
+    direction \(\vct{w}_{1/2}\) is formed the same way. The wrapper keeps only
+    the component of the magnetometer innovation about the estimated vertical
+    (\texttt{ahrs/MahonyHeadingMag.h}),
     \begin{equation}
         \vct{e}_{1/2}
         = \hat{\vct{a}}_b \times \vct{v}_{1/2}
-        + \hat{\vct{m}}_b \times \vct{w}_{1/2}.
+        + \frac{\vct{v}_{1/2}\vct{v}_{1/2}^{\top}}{\|\vct{v}_{1/2}\|^2}
+          \bigl(\hat{\vct{m}}_b \times \vct{w}_{1/2}\bigr),
     \end{equation}
-    An all-zero magnetometer sample falls back to the IMU-only branch.
+    so the magnetometer steers heading only and roll and pitch come from the
+    accelerometer alone. Calibration residuals of the magnetometer (hard and
+    soft iron, misalignment) would otherwise tilt the attitude and leak gravity
+    into the vertical channel. The projection discards the magnetometer's tilt
+    information about the axis normal to the field, which linear acceleration
+    does not disturb, so in rough seas pitch can be slightly worse while heave
+    improves. An all-zero magnetometer sample falls back to the IMU-only branch.
 
     \subsection{Mahony Kinematics}
 
@@ -853,9 +861,9 @@
     The simulation code checks the last \SI{900}{s} of each \SI{1200}{s} run and
     applies quality gates:
     \begin{itemize}[leftmargin=1.4em]
-        \item Z RMS \(< 7.36\%\) of \(H_s\) for JONSWAP cases,
-        \item Z RMS \(< 8.51\%\) of \(H_s\) for PM-Stokes cases,
-        \item yaw RMS \(< 4.15^\circ\) when magnetometer is used.
+        \item Z RMS \(< 6.98\%\) of \(H_s\) for JONSWAP cases,
+        \item Z RMS \(< 7.59\%\) of \(H_s\) for PM-Stokes cases,
+        \item yaw RMS \(< 4.28^\circ\) when magnetometer is used.
     \end{itemize}
     A record shorter than the scoring window is reported as skipped rather than
     scored, so the silence of a short record cannot read as a pass.

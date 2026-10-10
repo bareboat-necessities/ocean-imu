@@ -40,9 +40,9 @@ static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 // scored records plus about half a percent, rounded up in the last digit the
 // channel is quoted in
 static constexpr W3dFailureLimits FAIL_LIMITS {
-    .err_limit_percent_z_jonswap = 7.36f,   // worst 7.3149 (jonswap H8.5)
-    .err_limit_percent_z_pmstokes = 8.51f,  // worst 8.4582 (pmstokes H8.5)
-    .err_limit_yaw_deg = 4.15f,             // worst 4.1266 (pmstokes H8.5)
+    .err_limit_percent_z_jonswap = 6.98f,   // worst 6.9415 (jonswap H8.5)
+    .err_limit_percent_z_pmstokes = 7.59f,  // worst 7.5517 (pmstokes H8.5)
+    .err_limit_yaw_deg = 4.28f,             // worst 4.2582 (pmstokes H8.5)
 };
 
 class FusionAdapterAdaptivePIIMahony final : public IW3dFusionAdapter {

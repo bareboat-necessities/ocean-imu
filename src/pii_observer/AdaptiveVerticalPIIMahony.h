@@ -10,6 +10,7 @@
 #include <type_traits>
 
 #include "ahrs/Mahony_AHRS.h"
+#include "ahrs/MahonyHeadingMag.h"
 #include "pii_observer/AdaptiveVerticalPII.h"
 
 namespace marine_obs {
@@ -198,12 +199,12 @@ public:
         T roll_deg  = T(0);
         T yaw_deg   = T(0);
 
-        mahony_AHRS_update_mag(&mahony_,
-                               gx_rad_s, gy_rad_s, gz_rad_s,
-                               ax_mps2, ay_mps2, az_mps2,
-                               mx, my, mz,
-                               &pitch_deg, &roll_deg, &yaw_deg,
-                               dt_s);
+        mahony_AHRS_update_heading_mag(&mahony_,
+                                       gx_rad_s, gy_rad_s, gz_rad_s,
+                                       ax_mps2, ay_mps2, az_mps2,
+                                       mx, my, mz,
+                                       &pitch_deg, &roll_deg, &yaw_deg,
+                                       dt_s);
 
         last_pitch_deg_ = pitch_deg;
         last_roll_deg_  = roll_deg;
