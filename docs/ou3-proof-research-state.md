@@ -158,6 +158,24 @@ timing qualification and same-history transport/service bounds, as above.
 Next falsifiable checks: validate this ledger's refreshed provenance and the
 final published tree; hardware timing remains the next physical experiment.
 
+**E — redundant publication compilation.** On `7e784a00`, build run
+`38092208530`, OU-III job `114375666507`, passed its regression step but
+was cancelled at the 45-minute job limit during `Generate PGF plots`.
+The log shows `draw_plots.sh` rebuilding the complete OU-III test suite
+after cleanup even though the transition generator needs only
+`kalman_ou_iii-sim`: that second build began at 03:46:23 UTC and was
+still compiling `sampled_capture-test.cpp` at cancellation, 03:53:36.
+This invalidates publication completion within that budget, not the passed
+regressions or estimator behavior. Build the existing simulator target only
+at this point; retain the earlier complete test run, comparison observers,
+transition regeneration, publication gates and 45-minute limit. Structures
+preserved: all shipping equations, proof premises and numerical checks.
+Relaxations introduced: none. No shipping counterexample or theorem promotion.
+Limiter: duplicated compilation in the publication path; the physical timing
+and same-history proof limits above remain. Next falsifiable check: the
+unchanged article job completes within 45 minutes with this redundant work
+removed, and the refreshed source-bound evidence validates on its exact head.
+
 ## Evidence
 
 **D — an inverse-domain estimate alone does not settle the linked receipt.**
