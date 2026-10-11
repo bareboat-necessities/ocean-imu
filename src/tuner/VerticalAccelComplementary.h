@@ -101,6 +101,8 @@ public:
         up_ms2_ = 0.0f;
     }
 
+    void setAidingEnabled(bool enabled) { ahrs_.setAidingEnabled(enabled); }
+
     void setGains(float two_kp, float two_ki) {
         two_kp_ = two_kp;
         two_ki_ = two_ki;
@@ -125,7 +127,7 @@ public:
         // of (0,0,-g) at rest points up, so the observer is fed -acc.
         const float acc_norm = acc.norm();
         if (!initialized_) {
-            if (!(acc_norm > 1e-3f)) return;
+            if (!ahrs_.aidingEnabled() || !(acc_norm > 1e-3f)) return;
             seed_from_acc_(acc / acc_norm);
             initialized_ = true;
         }

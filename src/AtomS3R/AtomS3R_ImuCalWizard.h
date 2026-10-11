@@ -665,7 +665,9 @@ private:
 
   // Capture steps
   bool readSample_(ImuSample& s) {
-    return readImuMapped(M5.Imu, s);
+    // Calibration statistics count independent acceleration observations;
+    // gyro-only delivery is useful to fusion, but must not duplicate a pose.
+    return readImuMapped(M5.Imu, s) && s.accel_fresh;
   }
 
   bool readMagSample_(Vector3f& m_out) {

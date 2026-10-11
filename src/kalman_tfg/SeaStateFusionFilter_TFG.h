@@ -243,6 +243,12 @@ public:
         mekf_.reset_aw_covariance_to_stationary();
     }
 
+    void setAttitudeAidingEnabled(bool enabled) {
+        mekf_.set_attitude_aiding_enabled(enabled);
+        vertical_complementary_.setAidingEnabled(enabled);
+    }
+    void setAccelerometerFresh(bool fresh) { mekf_.set_accelerometer_fresh(fresh); }
+
     void update(float dt, const Vector3f& gyro, const Vector3f& acc, float tempC = 35.0f) {
         if (!(dt > 0.0f) || !std::isfinite(dt) || !gyro.allFinite() || !acc.allFinite()) return;
 
@@ -272,7 +278,7 @@ public:
         last_acc_body_ = acc;
         last_gyro_body_ = gyro;
         have_last_imu_ = true;
-        updateProxyGravityQuality_(dt, gyro, acc);
+        if (mekf_.attitude_aiding_enabled()) updateProxyGravityQuality_(dt, gyro, acc);
 
         const float a_up = vertical_complementary_.verticalAccelUpMs2();
         // OU-III feeds the canonical period estimator every sample.  Readiness
@@ -288,6 +294,7 @@ public:
         }
 
         if (stage_ == StartupStage::Cold) {
+            if (!mekf_.attitude_aiding_enabled()) return;
             if (cfg_.startup_init_policy == StartupInitPolicy::MahonyProxy) {
                 tryProxyHandoff_();
             } else {

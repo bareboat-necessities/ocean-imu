@@ -327,6 +327,8 @@ public:
         return ok;
     }
 
+    void setAttitudeAidingEnabled(bool enabled) { attitude_aiding_enabled_ = enabled; }
+
     void setQuaternionBodyToNED(const Quat& q_nb) {
         q_nb_ = q_nb;
         q_nb_.normalize();
@@ -463,6 +465,8 @@ private:
             sigma_b_ =
                 computeNoGnssAttitudeSigmaBody(f_b, fhat_n_, aux, R_nb_before);
         }
+
+        if (!attitude_aiding_enabled_) sigma_b_.setZero();
 
         Vec3 bias_dot =
             projectBallDerivative(
@@ -655,6 +659,7 @@ private:
     R vartheta2_ = R(1);
     R vartheta_ = R(1);
 
+    bool attitude_aiding_enabled_ = true;
     Vec3 sigma_b_ = Vec3::Zero();
 
     /*

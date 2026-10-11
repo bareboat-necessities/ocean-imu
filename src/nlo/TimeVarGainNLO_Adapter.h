@@ -680,6 +680,18 @@ public:
         }
     }
 
+    void setAttitudeAidingEnabled(bool enabled) {
+        attitude_aiding_enabled_ = enabled;
+        filter_.setAttitudeAidingEnabled(enabled);
+    }
+    void reacquireAttitude(const Quat& q) {
+        filter_.setQuaternionBodyToNED(q);
+        boot_q_nb_ = q.normalized();
+        // The trim's measurement history belongs to the previous attitude.
+        have_down_lpf_ = false;
+        last_tilt_err_norm_ = last_tilt_correction_norm_ = R(0);
+    }
+
     void setQuaternionBodyToNED(const Quat& q_nb) {
         filter_.setQuaternionBodyToNED(q_nb);
         initialized_ = true;
@@ -715,6 +727,7 @@ public:
         time_s_ += dt;
 
         if (!initialized_) {
+            if (!attitude_aiding_enabled_) return false;
             updateInitialization_(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
 
             if (!initialized_ && !cfg_.run_filter_before_initialized) {
@@ -724,7 +737,7 @@ public:
             time_since_init_s_ += dt;
         }
 
-        if (cfg_.tilt_bias_enabled) {
+        if (attitude_aiding_enabled_ && cfg_.tilt_bias_enabled) {
             Vec3 current = filter_.gyroBiasBody();
             current.x() = tilt_bias_b_.x();
             current.y() = tilt_bias_b_.y();
@@ -744,7 +757,7 @@ public:
 
         updateReportHighpass_(dt, hasUsableGNSS_(aux));
 
-        if (initialized_) {
+        if (attitude_aiding_enabled_ && initialized_) {
             applyOptionalTiltTrim_(dt, gyro_b_rad_s, specific_force_b_mps2);
         }
 
@@ -849,6 +862,7 @@ private:
     R last_wave_freq_conf_ = R(0);
     bool last_wave_freq_locked_ = false;
 
+    bool attitude_aiding_enabled_ = true;
     bool initialized_ = false;
 
     R time_s_ = R(0);

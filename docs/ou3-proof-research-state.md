@@ -26,9 +26,11 @@ Recomputed manifest: **25 PROVED, 4 CONDITIONAL, 1 OPEN**;
 `certified_capture_time=null`. Existing proved algebra is retained without
 promoting uniform coercivity, entry or admission.
 
-Analytical work only: exact algebra/rationals, rigorous compact inequalities
+The stability proof uses exact algebra/rationals, rigorous compact inequalities
 after derivation, and identity/source regressions. No new replay, secant,
-sampled grid or empirical factor. Before substantial calculations state the
+sampled grid or empirical factor is promoted to a proof result. Runtime
+engineering regressions and ordinary-aiding source reproductions below are
+separate from this proof path. Before substantial calculations state the
 lemma/quantifiers, finite-error role, literal dissipation structure, required
 proved/open bounds and avoidance of recorded dead ends. Required CI remains.
 
@@ -41,6 +43,114 @@ A refined-reference error from calibration residuals (axis gain, soft iron,
 latency) must be charged to the stated magnetic residual envelopes; that fit is
 not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
+
+## Rapid-motion runtime repair scope
+
+The device motion guard, selective gain-row holds and settled attitude
+reacquisition are new runtime operations. The existing local identities remain
+applicable to the ordinary aiding branch only; no capture or stability theorem
+is transferred to the guarded or recovery branch. Skipped corrections do not
+establish MAGNETIC SERVICE. Covariance recovery clears attitude cross terms
+while preserving the navigation/bias means and the established world reference.
+Structures preserved: literal gyro propagation, measured specific force for
+translation, OU/S and tuner chronology, magnetic calibration and frame.
+Relaxations introduced: rapid-motion host tests use synthetic pivot-motion
+histories, with ideal and seeded noisy sensor cases; they are engineering
+regressions, not admitted theorem histories. There is no hardware qualification.
+Classification E: the initial new replay build omitted the acquisition header
+and referred to a nonexistent TFG proxy-initialization accessor. This invalidated
+only that test build, retained all existing mathematical results, and was repaired
+by including the production acquisition type and using the facade's tilt accessor.
+The first protected qMEKF ramp reached 14.2504 degrees at 180 deg/s and a
+15 cm pivot: classification E, incomplete motion detection. The rate-only
+threshold fired after tangential acceleration had already entered the filter.
+A 30 ms filtered angular-acceleration gate closes that interval; the same
+unchanged 12-degree excursion bound is rerun. The next falsifiable check is the
+common seven-backend motion replay followed by `make all`.
+A second, distinct engineering failure was a 17.4363-degree OU-III excursion
+2.886 s after the 720 deg/s turn ended. Literal-operation tracing located the
+rotation in S=0 corrections after ordinary aiding resumed, while physical
+acceleration was already quiet. A trial S-residual threshold still gave 17.1241 degrees (E); residual magnitude
+alone did not bound the attitude cross-covariance effect. That trial is removed.
+The architecture review instead keeps the selective hold until the independent
+settled reacquisition window closes after **every** dynamic interval, even with
+small heading error. Its attitude covariance reset removes the stale cross
+terms before S can affect attitude again; navigation means remain intact. The
+unchanged seven-backend excursion and recovery bounds passed for OU-III.
+A vessel need not stop completely: extra settling hold is bounded at two seconds
+unless a large error is pending. At re-entry all three Kalman cores remove
+cross-correlations between held attitude/bias and driven navigation blocks,
+preserving means, marginal covariances and PSD. The moving-after-turn case checks
+that normal vessel motion regains aiding without a stationary reset.
+Classification E also covers the initial test linkage omissions (`g_std`, C++
+link driver), the parallel compiler OOM, and a toolchain archive checksum failure;
+none is evidence about filter stability. Rebuild with less concurrency and
+verify the archive against its pinned checksum before retrying. The new OU-II
+covariance test initially called an OU-III-only integral-displacement accessor;
+the build failure invalidated only that test. OU-II's navigation block has nine
+states, not OU-III's twelve; its projection bounds and preservation checks use
+that layout. A mixed-version M5GFX installation failed compilation and was
+replaced by a clean installation of the CI-pinned dependency. These are E.
+Compiler diagnostics also exposed a dangling Eigen expression in the new
+noise-generator lambda. Its return now materializes a vector; earlier noisy
+case results are discarded and all seven are rerun with the corrected generator.
+The AW source diagnostic stopped with `shipping accelerometer anchor changed`
+after adding the freshness guard (E: stale instrumentation anchor). Its tap now
+retains that guard and records only a fresh correction attempt; unique-anchor
+and untapped-control parity checks remain mandatory. The full evidence contract
+also rejects the old replay/source hashes after these implementation edits;
+full validation, robustness and TFG replays regenerate their source provenance.
+The 1200-second compatibility probe's `g++ -O1` compilation exceeded its
+90-second subprocess timeout under concurrent validation load (E). No replay
+or mathematical comparison ran in that attempt; repeat the unchanged probe
+after reducing compiler contention, retaining its existing parity checks.
+The first full replay regeneration stalled in the rolling transition-plot
+convolution with nine BLAS threads competing for eight CPU cores (E: execution
+configuration). The same 240001-by-12000 convolution took 0.94 seconds with
+one BLAS thread. Regeneration uses one numerical-library thread and six
+independent simulator jobs; its protocol, seeds and acceptance criteria are
+unchanged. Incomplete first-attempt outputs are not used as replay evidence.
+The complete validation, robustness and TFG studies now reproduce locally.
+`python3 tools/tfg_comparison.py --check --require-ci --publish` still fails
+with `ValueError: publication requires CI replay provenance` (E: missing CI
+execution). The same bundle passes `--check`; no workflow identity is invented,
+and no publication gate is weakened. The remaining step is an actual CI replay
+after branch publication is authorized. Final `make all` passes the preceding
+C++/simulation suites and stops at the same gate, invoked as
+`python3 ../../tools/tfg_comparison.py --check --require-ci` in `tests/validation`.
+The complete Python suite and the two downstream wave suites pass separately
+(one CMake configuration check is skipped because CMake is unavailable).
+The diagnostic-sketch host test first
+failed extraction with `Missing definition: onSample` because the helper allowed
+`static inline` but not `static` alone (E). The helper now accepts both valid
+declarations; the actual extracted integration/freshness code passes its gap,
+NaN and repeated-frame cases. No estimator inference depended on the failed
+test invocation.
+Source-bound native diagnostics were rerun with their untapped control and
+carried-state checks. The signed-balance, construction-mean and planar-service
+exports reproduced the committed trace bytes exactly. Their unchanged
+deterministic high-precision reductions are retained on those identical inputs;
+the native source fingerprints come from the new executions. This is not a
+relabelled historical replay or qualification of the new guarded branch.
+The broader Python suite exposed an obsolete unconditional legacy-operation
+projection and a publication table still containing 18.371 instead of the
+fresh replay's 18.372 (both E). The source audit now explicitly specializes
+the always-enabled aiding/fresh-acceleration, no-external-reacquisition domain;
+all three original token hashes remain unchanged. Mutation tests reject altered
+defaults or ordinary operations. Its receipt binds the freshly regenerated
+native records, without claiming that every numeric payload stayed unchanged.
+The mutation test initially expected a token-hash mismatch for an edit that the
+stricter unique-anchor check already rejected (E: test expectation). It now
+asserts both rejection paths; neither audit rule was loosened.
+After the table matched, the same publication check exposed stale generated
+macros (including 12.523 versus 12.525, E: incomplete publication mirroring).
+Both the table and macro definitions are copied from the new evidence. These repairs retain the original
+ordinary-branch identities and do not qualify guarded/recovery execution.
+No shipping theorem counterexample is asserted. Existing algebraic identities
+retain their original hypotheses; guarded intervals, covariance decorrelation
+and global reacquisition need separate analysis. The next falsifiable runtime
+check is the same replay on each final binary and an instrumented hardware turn
+with fresh-sample, elapsed-time, magnetic-age and `[ATT]` diagnostics.
 
 ## Magnetic-input timing scope
 
@@ -55,7 +165,8 @@ ports, physical latency envelopes and source-uniform actually applied service
 must enter the same finite-error supply inequality before transferring the
 local result. No theorem, entry or service-completion flag is promoted.
 
-The legacy API's complete operation source reduces token-for-token to main
+With aiding and fresh acceleration always enabled and no external
+reacquisition, the legacy API's complete operation source reduces token-for-token to main
 `2c534feb423a627c40f475daed40b4274d3dd2b8`; see
 `magnetic_timing_legacy_binding.py`. Independently compiled baseline/current
 240 s native executions produced the identical complete 40 s tail stream
@@ -1408,11 +1519,11 @@ remaining work. Reacquisition and source variations do not inherit a zero port.
 
 Exact rational regressions cover variational NIS, coupled correction/prediction
 identities, held-BA Joseph structure, first-boundary bounds and fail-closed
-domain checks. No new replay, secant, phase grid or sampled covariance cell is
-generated. The shipping C/C++ changes are the applied-correction release count, the
-series branch and the non-throwing initializers under Retained facts; the
-native source diagnostics were re-run against them. Current test/CI results are recorded
-in the PR metadata.
+domain checks. The source-bound native diagnostics are reproduced against
+the ordinary-aiding branch after the runtime changes above. Their local
+identities do not cover the new motion guard or recovery transitions. Rapid
+motion replays are engineering evidence only. Current test/CI results are
+recorded in the PR metadata.
 
 ## Shipping-faithfulness handoff
 

@@ -36,7 +36,7 @@ inline void mahony_AHRS_update_heading_mag(Mahony_AHRS<T>* m,
 {
     const bool acc_ok = !((ax == T(0)) && (ay == T(0)) && (az == T(0)));
     const bool mag_ok = !((mx == T(0)) && (my == T(0)) && (mz == T(0)));
-    if (acc_ok && mag_ok) {
+    if (m->aidingEnabled() && acc_ok && mag_ok) {
         const T recipNorm = Mahony_AHRS<T>::invSqrt(mx * mx + my * my + mz * mz);
         mx *= recipNorm;
         my *= recipNorm;

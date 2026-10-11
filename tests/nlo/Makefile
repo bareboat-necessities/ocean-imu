@@ -37,6 +37,11 @@ mag_continuous-test: mag_continuous-test.o
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 mag_continuous-test.o: ../common/MagneticContinuousReplay.h ../common/MagneticMotion.h ../../src/util/MagneticInput.h ../../src/util/MagneticRotation.h
 
+TARGETS += rapid_motion-test
+rapid_motion-test: rapid_motion-test.o
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+rapid_motion-test.o: ../common/RapidMotionReplay.h ../common/RapidMotionBackends.h ../../src/util/AttitudeProtection.h ../../src/util/ImuFreshness.h
+
 build: $(TARGETS)
 
 test: ensure-sim-data $(TARGETS)

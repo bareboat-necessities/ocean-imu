@@ -76,6 +76,7 @@
 */
 
 #include <Arduino.h>
+#include "util/ImuFreshness.h"
 #include <M5Unified.h>
 #include <Preferences.h>
 
@@ -276,6 +277,7 @@ struct ImuSample {
   float tempC;    // deg C
   uint32_t mask;  // M5.Imu.update() mask
   uint32_t sample_us; // micros() timestamp captured at imu.update()
+  bool accel_fresh = true; // a new accelerometer sample since the previous delivered gyro
   MagAcquisition mag_timing; // first host observation and AUX read bracket
 };
 
@@ -303,6 +305,8 @@ static constexpr uint32_t kImuMaskAccelGyro = (ATOMS3R_IMU_MASK_ACCEL | ATOMS3R_
 
 // Bosch-compensated magnetometer source (see configureAtomS3RMag()).
 struct AtomS3RMagSource {
+  ocean_imu::ImuFreshness imu_freshness{};
+  uint8_t last_aux[8]{};
   bool compensated = false;      // deliver Bosch trim/RHALL compensated uT
   Bmm150Trim trim{};
   m5::IMU_Base* bmi270 = nullptr;
@@ -316,10 +320,10 @@ inline AtomS3RMagSource& atoms3rMagSource() {
   return source;
 }
 
-// Magnetometer in body axes, uT. With compensation active, a new reading
-// (M5Unified's cached value changed) is re-read from the BMI270 AUX data
-// registers together with RHALL and compensated; otherwise the previous
-// compensated value is repeated, exactly like M5Unified's cache. Without
+// Magnetometer in body axes, uT. With compensation active, XYZ and RHALL
+// come from one AUX burst, and that same burst determines freshness. Do not
+// gate this read on M5Unified's separate cache: a conversion between the two
+// reads would give the value and its freshness different source epochs. Without
 // compensation this is M5Unified's uncompensated value. Either way, without a
 // new successfully read reading for MagAcquisition::MAX_AGE_MS the result is
 // NaN (no magnetometer value), never an old reading presented as current.
@@ -338,13 +342,15 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag, uint32_t frame_u
     }
     return src.acquisition.fresh(now) ? map_mag_to_body_uT_(m5_mag) : none;
   }
-  if (changed) {
+  {
     uint8_t d[8];
     float s[3], b[3];
     // BMI270 AUX_DATA_0..7 mirror BMM150 0x42..0x49 (X, Y, Z, RHALL).
     if (src.bmi270 && src.bmi270->readRegister(0x04, d, sizeof(d)) &&
+        (!src.have_last || memcmp(d, src.last_aux, sizeof(d)) != 0) &&
         bmm150Compensate(Bmm150Raw::fromData(d), src.trim, s)) {
       bmm150SensorToAtomS3RBody(s, b);
+      memcpy(src.last_aux, d, sizeof(d));
       src.last_body = Vector3f(b[0], b[1], b[2]);
       src.last_m5 = m5_mag;
       src.have_last = true;
@@ -363,7 +369,9 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
 static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out) {
   out.sample_us = sample_us;
   out.mask = update_mask;
-  if ((out.mask & kImuMaskAccelGyro) != kImuMaskAccelGyro) return false;
+  if (!atoms3rMagSource().imu_freshness.observe(
+      (out.mask & ATOMS3R_IMU_MASK_ACCEL) != 0,
+      (out.mask & ATOMS3R_IMU_MASK_GYRO) != 0, out.accel_fresh)) return false;
 
   const auto data = imu.getImuData();
   out.tempC = NAN;

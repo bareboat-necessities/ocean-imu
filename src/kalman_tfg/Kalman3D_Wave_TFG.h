@@ -247,6 +247,44 @@ class Kalman3D_Wave_TFG {
     // this into apply_world_yaw_gauge() would rotate v, p and S along with R
     // and corrupt the displacement history the correction has nothing to say
     // about. Covariance is left alone, matching OU-III's set_quaternion_boat().
+    void set_attitude_aiding_enabled(bool enabled) {
+        if (enabled && !attitude_aiding_enabled_) {
+            // Preserve each block and its means; discard manoeuvre-era
+            // correlations before the navigation model can drive attitude.
+            for (int i = 0; i < NX; ++i) {
+                if (i >= OFF_V && i < OFF_V + 12) continue;
+                for (int j = OFF_V; j < OFF_V + 12; ++j)
+                    P_(i,j) = P_(j,i) = T(0);
+            }
+        }
+        attitude_aiding_enabled_ = enabled;
+    }
+    bool attitude_aiding_enabled() const { return attitude_aiding_enabled_; }
+    void set_accelerometer_fresh(bool fresh) { accelerometer_fresh_ = fresh; }
+
+    // Correct attitude in the existing world frame, retaining navigation and
+    // biases. The old local attitude covariance cannot describe a large reset.
+    bool reacquire_attitude(const Eigen::Quaternion<T>& q, T sigma = T(0.05)) {
+        if (!q.coeffs().allFinite() || !std::isfinite(q.norm()) ||
+            !(q.norm() > T(1e-6)) || !std::isfinite(sigma) || !(sigma > T(0))) return false;
+        const Matrix3 target = q.normalized().toRotationMatrix();
+        if constexpr (two_frame_bias) {
+            // Bias-error coordinates are world-expressed in this chart.
+            // Retain their physical body covariance when changing R alone.
+            MatrixNX& transport = scratch_a_;
+            transport.setIdentity();
+            const Matrix3 turn = target * X_.R.transpose();
+            transport.template block<3,3>(OFF_BG, OFF_BG) = turn;
+            if constexpr (with_accel_bias) transport.template block<3,3>(OFF_BA, OFF_BA) = turn;
+            P_ = (transport * P_ * transport.transpose()).eval();
+        }
+        X_.R = target;
+        P_.template topRows<3>().setZero();
+        P_.template leftCols<3>().setZero();
+        P_.template topLeftCorner<3,3>() = Matrix3::Identity() * sigma * sigma;
+        return true;
+    }
+
     void set_attitude_yaw_absolute(T yaw_abs_rad) {
         if (!std::isfinite(yaw_abs_rad)) return;
         const Matrix3 R = X_.R;
@@ -677,14 +715,14 @@ class Kalman3D_Wave_TFG {
     }
 
     bool measurement_update_acc_only(const Vector3& acc_meas_body, T tempC = T(35)) {
-        if (!acc_meas_body.allFinite()) { last_acc_diag_ = MeasDiag3{}; return false; }
+        if (!accelerometer_fresh_ || !acc_meas_body.allFinite()) { last_acc_diag_ = MeasDiag3{}; return false; }
         Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
         accel_residual(acc_meas_body, tempC, r, H, Rw);
         return apply_update3_(r, H, Rw, last_acc_diag_);
     }
 
     bool measurement_update_mag_only(const Vector3& mag_meas_body) {
-        if (!have_mag_reference_ || !mag_meas_body.allFinite() ||
+        if (!attitude_aiding_enabled_ || !have_mag_reference_ || !mag_meas_body.allFinite() ||
             !(mag_meas_body.norm() > T(1e-9))) {
             last_mag_diag_ = MeasDiag3{};
             return false;
@@ -820,6 +858,9 @@ class Kalman3D_Wave_TFG {
         J.template block<3,3>(off, OFF_PHI) = reset_cross_block_(phi, z);
     }
 
+    bool attitude_aiding_enabled_ = true;
+    bool accelerometer_fresh_ = true;
+
     bool apply_update3_(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
                         const Matrix3& Rw, MeasDiag3& diag) {
         diag = MeasDiag3{};
@@ -845,6 +886,11 @@ class Kalman3D_Wave_TFG {
         Eigen::Matrix<T,NX,3>& K = scratch_nx3_b_;
         K = ldlt.solve(PHt.transpose()).transpose();
         if (!K.allFinite()) return false;
+        if (!attitude_aiding_enabled_) {
+            K.template topRows<3>().setZero();
+            if constexpr (with_gyro_bias) K.template middleRows<3>(OFF_BG).setZero();
+            if constexpr (with_accel_bias) K.template middleRows<3>(OFF_BA).setZero();
+        }
 
         const Tangent correction = K * r;
         // I - K H, accumulated in place.  Eigen folds the -1 into the packed

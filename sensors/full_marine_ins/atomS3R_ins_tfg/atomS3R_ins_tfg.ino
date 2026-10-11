@@ -64,6 +64,7 @@
 #include <ArduinoOceanImu.h>
 
 #include "util/MagneticInput.h"
+#include "util/AttitudeProtection.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #if SEA_STATE_ENABLE_WIZARD
@@ -266,6 +267,8 @@ private:
 
   ins::MagFreshGate mag_gate_{};
   ocean_imu::magnetic::Input mag_input_{};
+  ocean_imu::attitude::Protection attitude_protection_{};
+  ocean_imu::attitude::AccelHold accel_hold_{};
 
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
@@ -391,6 +394,8 @@ private:
     mag_gate_.reset();
     rates_.reset(millis());
     sample_dt_.reset();
+    attitude_protection_.reset();
+    accel_hold_.reset();
   }
 
   void resetFusion_() {
@@ -484,6 +489,8 @@ private:
 
     stale_frame_count_ = 0;
     sample_dt_.reset();
+    attitude_protection_.reset();
+    accel_hold_.reset();
     heave_speed_mps_     = 0.0f;
     heave_raw_m_         = 0.0f;
     heave_baseline_m_    = 0.0f;
@@ -622,12 +629,23 @@ private:
     w_cal_ = runtime_.applyGyro(w_raw, tempC);
     m_cal_ = runtime_.applyMag(s.m);
     const auto& core = fusion_.mekf();
+    a_cal_ = accel_hold_.update(a_cal_, s.accel_fresh,
+        w_cal_ - core.gyroscope_bias_body(), dt_);
     mag_input_.advance(s.sample_us, w_cal_ - core.gyroscope_bias_body(),
         ocean_imu::magnetic::covarianceBound(core.gyroscope_bias_covariance_body()),
         s.mag_timing, m_cal_, fusion_.magHardIronBodyUT());
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
+    Vector3f magnetic_now = Vector3f::Zero();
+    const bool field_valid = mag_input_.currentField(fusion_.magHardIronBodyUT(), magnetic_now);
+    const Vector3f& reference = core.magnetic_reference_world();
+    const auto motion = attitude_protection_.step(dt_, w_cal_, core.gyroscope_bias_body(),
+        a_cal_, g_local, fusion_.quaternion(), magnetic_now, mag_ok_ && field_valid,
+        mag_input_.newSource(), s.sample_us, std::atan2(reference.y(), reference.x()),
+        fusion_.isLive() && core.has_magnetic_reference());
+    fusion_.setAttitudeAidingEnabled(!motion.hold_attitude);
+    fusion_.setAccelerometerFresh(s.accel_fresh);
     mag_fresh_ = mag_input_.due(mag_gate_, mag_ok_, millis());
     if (mag_fresh_) rates_.countMag();
 
@@ -640,7 +658,8 @@ private:
     // tempC) when they intentionally model an internal temperature bias.
     fusion_.update(dt_, w_cal_, a_cal_, 35.0f);
     mag_input_.capture(fusion_.startupProxyQuat(), fusion_.quaternion(), a_cal_, w_cal_);
-    if (mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
+    if (!motion.hold_attitude && mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
+    if (motion.reacquire) fusion_.mekf().reacquire_attitude(motion.target);
 
     // During startup the MEKF is deliberately held. Publish the Mahony proxy
     // attitude instead; switch atomically to the fused attitude at Live.
@@ -852,6 +871,7 @@ private:
       static_cast<double>(m_cal_.y()),
       static_cast<double>(m_cal_.z()));
     mag_input_.print(Serial);
+    attitude_protection_.print(Serial);
   #endif
 #endif
   }

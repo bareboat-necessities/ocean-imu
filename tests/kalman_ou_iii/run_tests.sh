@@ -1,4 +1,6 @@
 #!/bin/bash -e
+
+./rapid_motion-test
 set -e
 make -f Makefile -f ../common/GyroBiasProjectionRegression.mk gyro_bias_projection-test
 ./gyro_bias_projection-test
