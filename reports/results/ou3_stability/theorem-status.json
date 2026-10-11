@@ -48,6 +48,18 @@
     "stronger_EXCITED_MOVING_adopted": false,
     "temporal_numerical_qualification": "user-specified H_a=H_g=60,C_a=.05,C_g=.002; assembled validation OPEN"
   },
+  "magnetic_timing_preprocessing": {
+    "audit": "docs/magnetic-timing.md",
+    "disturbance_residual_gating_enabled": false,
+    "duplicate_host_observations_count_as_service": false,
+    "existing_local_results_scope": "retain stated qualified operators; timing/bias/covariance feedback and actual applied service must be included before extending to this preprocessing path",
+    "hardware_latency_and_jitter_qualified": false,
+    "host_cache_rotation_alignment_enabled": true,
+    "legacy_reference_port_result_covers_endogenous_transport": false,
+    "physical_BMM150_conversion_timestamp_known": false,
+    "source_uniform_postprocessing_service_verified": false,
+    "transport_state_noise_correlation_uniformly_bounded": false
+  },
   "moving_quiet_compatibility": {
     "AW_frame_endpoint_absorption_verified": false,
     "AW_frame_endpoint_quadratic_verified": true,

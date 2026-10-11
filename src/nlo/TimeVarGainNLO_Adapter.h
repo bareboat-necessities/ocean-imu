@@ -623,6 +623,9 @@ public:
         }
     }
 
+    // Same body-rate bias used by the active observer, including bootstrap.
+    Vec3 gyroscopeBiasBody() const { return initialized_ ? filter_.gyroBiasBody() : boot_bias_b_; }
+
     void setMagBody(const Vec3& mag_b, bool valid = true) {
         if constexpr (Mag == NloMagType::Magnetometer) {
             aux_.mag_b = mag_b;

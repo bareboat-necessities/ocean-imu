@@ -439,10 +439,18 @@ private:
 public:
     // Magnetometer correction
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
+        updateMagImpl_(mag_body_ned, nullptr);
+    }
+    void updateMag(const Eigen::Vector3f& mag_body_ned, const Eigen::Matrix3f& covariance_body) {
+        updateMagImpl_(mag_body_ned, &covariance_body);
+    }
+private:
+    void updateMagImpl_(const Eigen::Vector3f& mag_body_ned, const Eigen::Matrix3f* covariance_body) {
         if (!with_mag_ || !mekf_) return;
         if (time_ < mag_delay_sec_) return;
 
-        mekf_->measurement_update_mag_only(mag_body_ned);
+        if (covariance_body) mekf_->measurement_update_mag_only(mag_body_ned, *covariance_body);
+        else mekf_->measurement_update_mag_only(mag_body_ned);
         // Only corrections the core actually applied count toward the gate;
         // see seastate::common::MagServiceCount.
         const float t = static_cast<float>(time_);
@@ -464,6 +472,7 @@ public:
         }
     }
 
+public:
     void setWithMag(bool with_mag) { with_mag_ = with_mag; }
 
     // Anisotropy configuration (runtime)

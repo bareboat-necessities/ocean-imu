@@ -13,6 +13,7 @@
 
 #include "AtomS3R/AtomS3R_ImuCalWizard.h"
 #include "AtomS3R/AtomS3R_CompassUI.h"
+#include "util/MagneticInput.h"
 #include "nmea/NmeaCompass.h"
 
 namespace atoms3r_compass {
@@ -63,6 +64,7 @@ struct CalibratedSample {
   bool mag_fresh = false;
   float mag_norm_uT = 0.0f;
   Vector3f m_unit = Vector3f::Zero();
+  Eigen::Matrix3f mag_covariance_unit = Eigen::Matrix3f::Identity();
 };
 
 struct AttitudeSolution {
@@ -258,6 +260,13 @@ class IAttitudeBackend {
   virtual void reset() = 0;
   virtual void step(const CalibratedSample& s, AttitudeSolution& out) = 0;
   virtual bool isValid() const = 0;
+  virtual Vector3f gyroBiasBody() const = 0;
+  virtual bool discreteMagneticCorrections() const { return false; }
+  virtual float gyroBiasVariance() const { return 0.0f; }
+  virtual float gyroNoiseDensity() const { return 0.0f; }
+  virtual float gyroStepVariance() const { return 0.0f; }
+  virtual float magneticUnitSigma() const { return 0.0f; }
+  virtual bool lastMagApplied() const { return false; }
 };
 
 class CompassAppBase {
@@ -419,6 +428,7 @@ class CompassAppBase {
 
   void resetPipeline_() {
     backend_->reset();
+    mag_input_.reset(backend_->gyroNoiseDensity(), Eigen::Matrix3f::Identity());
     mag_gate_.reset();
     rot_.reset();
     outputs_ = CompassOutputs{};
@@ -445,19 +455,37 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   out.mag_norm_uT = out.m_cal.norm();
   out.mag_ok = (out.mag_norm_uT > 5.0f && out.mag_norm_uT < 200.0f);
 
-  if (out.mag_ok && out.mag_norm_uT > 1e-6f) out.m_unit = out.m_cal / out.mag_norm_uT;
+  const bool discrete = backend_->discreteMagneticCorrections();
+  const float sigma_unit = backend_->magneticUnitSigma();
+  if (discrete && out.mag_ok) {
+    const float sigma = sigma_unit * out.mag_norm_uT;
+    mag_input_.setCovariance(sigma * sigma * Eigen::Matrix3f::Identity());
+  }
+  mag_input_.advance(s.sample_us, out.w_cal - backend_->gyroBiasBody(), backend_->gyroBiasVariance(),
+      s.mag_timing, out.m_cal, Vector3f::Zero(), discrete, backend_->gyroStepVariance());
+  // Keep the existing spacing/stuck diagnostic, but only a distinct source
+  // observation can supply another discrete Kalman correction.
+  out.mag_fresh = (!SEA_STATE_MAG_HOST_ALIGNMENT || !discrete || mag_input_.pending()) &&
+      mag_gate_.update(out.m_cal, out.mag_ok, millis());
+  Vector3f field;
+  Eigen::Matrix3f covariance;
+  if (out.mag_ok) out.mag_ok = mag_input_.currentField(Vector3f::Zero(), field,
+      discrete && out.mag_fresh ? &covariance : nullptr);
+  if (out.mag_ok) {
+    out.m_unit = field.normalized();
+    if (discrete && out.mag_fresh) out.mag_covariance_unit = covariance / field.squaredNorm();
+  }
 
-  // M5Unified's update mask is the freshness authority. The 200 Hz loop sees
-  // cached BMM150 values between real AUX updates; never manufacture magnetic
-  // observations from elapsed wall time.
-  out.mag_fresh = mag_gate_.update(out.m_cal, out.mag_ok, millis());
-  
   return out;
 }
 
   void updateOutputs_(const ImuSample& s) {
     sample_ = makeCalibratedSample_(s);
+    const uint32_t correction_start_us = micros();
     backend_->step(sample_, outputs_.att);
+    if (sample_.mag_ok && (!backend_->discreteMagneticCorrections() || sample_.mag_fresh))
+      mag_input_.complete(correction_start_us,
+          backend_->discreteMagneticCorrections() ? backend_->lastMagApplied() : true);
     outputs_.rot_dpm = rot_.update(sample_.dt, sample_.a_cal, sample_.w_cal, outputs_.att);
   }
 
@@ -538,6 +566,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
     Serial.printf("|a_raw|=%.4f |a_cal|=%.4f ", (double)sample_.a_raw_norm, (double)sample_.a_cal.norm());
     Serial.printf("wC:%+.4f,%+.4f,%+.4f ", (double)sample_.w_cal.x(), (double)sample_.w_cal.y(), (double)sample_.w_cal.z());
     Serial.println();
+    mag_input_.print(Serial, backend_->discreteMagneticCorrections() ? "applied" : "offered");
 #endif
   }
 
@@ -550,6 +579,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
 
   std::unique_ptr<IAttitudeBackend> backend_;
   MagGate mag_gate_;
+  ocean_imu::magnetic::Input mag_input_{};
   RotEstimator rot_;
 
   bool have_blob_ = false;

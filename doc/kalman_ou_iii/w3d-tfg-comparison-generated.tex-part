@@ -5,13 +5,13 @@
 \begin{tabular}{@{}lrrr@{}}\toprule
 Metric & OU--III & TFG & Difference\\\midrule
 Z RMS [$\%H_s$] & 4.423 & 4.459 & +0.0364\\
-Z RMS [m] & 0.1565 & 0.1569 & +0.000404\\
-3-D RMS [m] & 0.3262 & 0.3307 & +0.00442\\
+Z RMS [m] & 0.1565 & 0.1569 & +0.000405\\
+3-D RMS [m] & 0.3262 & 0.3307 & +0.00443\\
 Roll RMS [deg] & 0.2456 & 0.2894 & +0.0438\\
-Pitch RMS [deg] & 0.2602 & 0.3199 & +0.0597\\
-Yaw RMS [deg] & 1.852 & 1.886 & +0.0338\\
-Accel. RMS [m/s$^2$] & 0.02736 & 0.0289 & +0.00154\\
-Accel. bias [m/s$^2$] & 0.06175 & 0.07732 & +0.0156\\
+Pitch RMS [deg] & 0.2602 & 0.32 & +0.0598\\
+Yaw RMS [deg] & 1.852 & 1.886 & +0.0341\\
+Accel. RMS [m/s$^2$] & 0.02736 & 0.0289 & +0.00155\\
+Accel. bias [m/s$^2$] & 0.06175 & 0.07733 & +0.0156\\
 Gyro bias [rad/s] & 0.0001216 & 0.0001038 & -1.78e-05\\
 \bottomrule\end{tabular}\end{table}
 The companion JONSWAP heave difference is +0.036 percentage points of $H_s$ (paired-bootstrap 95\% interval [+0.031, +0.043]; paired Student-$t$ interval [+0.029, +0.044]). The exact sign and sign-flip $p$-values are 0.0020 and 0.0020, respectively. OU--III has lower mean normalized heave error in this ensemble.

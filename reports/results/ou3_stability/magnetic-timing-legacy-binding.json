@@ -1,0 +1,156 @@
+{
+  "baseline_commit": "2c534feb423a627c40f475daed40b4274d3dd2b8",
+  "bitwise_native_control": {
+    "baseline_current_and_prior_stream_equal": true,
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "record_counts": {
+      "1": 8000,
+      "2": 8000,
+      "3": 1000,
+      "4": 294,
+      "5": 9294,
+      "6": 8000,
+      "7": 8000,
+      "8": 9294,
+      "9": 9294
+    },
+    "scope": "240 s carried legacy execution; complete last 40 s operation stream; both untapped controls match",
+    "stream_sha256": "d1d511551e3ddeb25adcf9fa1c742533d3d9fed2710842f2dbc0be29471c8be9"
+  },
+  "legacy_api_operation_projection_verified": true,
+  "qualification": "MAGNETIC_TIMING_LEGACY_API_OPERATION_REBIND_V1",
+  "rebound_records": {
+    "aw-tracking-source-feasibility.json": {
+      "new_bindings": {
+        "header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
+      },
+      "old_bindings": {
+        "header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
+      },
+      "unchanged_payload_sha256": "dbcfd0f0b5fdfb815a2a9da7125bc82449411db4e9125913b26a90bc972db64b"
+    },
+    "construction-mean-action.json": {
+      "new_bindings": {
+        "instrumented_header_sha256": "1a57b327386c987a0642573ee757ef03c1c720dd435c39d0f5161dec0af49b6a"
+      },
+      "old_bindings": {
+        "instrumented_header_sha256": "972c29338ecec1713f429fc4878d82d86e5a65ed0fcbeb0f2235c96abadfab4c"
+      },
+      "unchanged_payload_sha256": "22716bbb12c797566e95debb51d8f6bd8a7ce2b7d68609088c93a8314dd36261"
+    },
+    "information-ratio-source-feasibility.json": {
+      "new_bindings": {
+        "header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
+      },
+      "old_bindings": {
+        "header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
+      },
+      "unchanged_payload_sha256": "836709b8f412af079a76c14a94dcb424bcefb0807e132082d5de2867e50cbac9"
+    },
+    "moving-compatibility-carried-1200s.json": {
+      "new_bindings": {
+        "instrumented_header_sha256": "39b44a9c08cc3b9687fc890c3e87f8a8f6040a8bb4db3db76b489813de1131b3",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
+      },
+      "old_bindings": {
+        "instrumented_header_sha256": "0ce6b4a4781cba068eb8845dd17f4abf53a48a506edd2ef6f3b59e5ec7be1534",
+        "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
+      },
+      "unchanged_payload_sha256": "542ea4651dbcbfaf13491859a29f1b89591ef908a41737dee59201e3356ac1fd"
+    },
+    "moving-compatibility-carried.json": {
+      "new_bindings": {
+        "instrumented_header_sha256": "39b44a9c08cc3b9687fc890c3e87f8a8f6040a8bb4db3db76b489813de1131b3",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
+      },
+      "old_bindings": {
+        "instrumented_header_sha256": "0ce6b4a4781cba068eb8845dd17f4abf53a48a506edd2ef6f3b59e5ec7be1534",
+        "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
+      },
+      "unchanged_payload_sha256": "d8bbf2d042063f6806cda37b1b3640abed5bfbf5cfac70ecca072d4539af2133"
+    },
+    "moving-transport-source-feasibility.json": {
+      "new_bindings": {
+        "observer_header_sha256": "9553ef279fbca2d82ed7b4b0a22106bee73ab10fe313c2fab3b72b25c4aecafe",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
+      },
+      "old_bindings": {
+        "observer_header_sha256": "2aa9b137af444bf2c2ba4a64061bb3e7cb23045deda47ad570827d5e422b167b",
+        "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
+      },
+      "unchanged_payload_sha256": "9700d1ef2ae1ec0577efbf551df4896f8be07e375231542384b3e5f85cdb2702"
+    },
+    "planar-native-secants-diagnostic.json": {
+      "new_bindings": {
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0",
+        "shipping_source_tree_sha256": "74ff4bedfe9cf68811e6db13198878bca5cb835f8bab5dce4f9826eced0694cc"
+      },
+      "old_bindings": {
+        "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",
+        "shipping_source_tree_sha256": "9bc9e50a47cd8373041aba49823d6533ada30a024d61910380bcbfcaa96bbac1"
+      },
+      "unchanged_payload_sha256": "1371e373a7187aa254c9ce3c534d1d6f075936af181eaf7b1f860f3a606b3ffe"
+    },
+    "planar-service-stream-diagnostic.json": {
+      "new_bindings": {
+        "instrumented_header_sha256": "3ce2366c744b6097cac0bf82b4d3f3cf0fc780b5dd0b7967a69aaa1b87f2fa89",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
+      },
+      "old_bindings": {
+        "instrumented_header_sha256": "1df62f5c479e0031a6370fe030237be9da4207412a6a302fc4264e600a9cc44f",
+        "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
+      },
+      "unchanged_payload_sha256": "9b6883e81c538be03f674c7d5ed716524cf83ad1f73854a4d0b5b9c39145f138"
+    },
+    "signed-adjoint-diagnostic.json": {
+      "new_bindings": {
+        "instrumented_header_sha256": "9553ef279fbca2d82ed7b4b0a22106bee73ab10fe313c2fab3b72b25c4aecafe",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
+      },
+      "old_bindings": {
+        "instrumented_header_sha256": "2aa9b137af444bf2c2ba4a64061bb3e7cb23045deda47ad570827d5e422b167b",
+        "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
+      },
+      "unchanged_payload_sha256": "f9941b98f10998d08a4e6d7a833a3c0e4c3535575d49e33d4e20316069d02ac7"
+    },
+    "signed-balance-diagnostic.json": {
+      "new_bindings": {
+        "instrumented_header_sha256": "050f51cb6a5de331f32cc1f59bbd84d6a596418ae2d873de40c676c839b5132a",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
+      },
+      "old_bindings": {
+        "instrumented_header_sha256": "b15ded5a95fd2e4a6a5017b379502533178db7be79d43fe3327b0bcabc6e9dff",
+        "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
+      },
+      "unchanged_payload_sha256": "58307e7db92dd90f58d8aac8c045849c605207a13af8027e2d2380d906791e22"
+    },
+    "world-frame-source-feasibility.json": {
+      "new_bindings": {
+        "observer_header_sha256": "ce4fe438faea9e35babb2e260fb2697828dc51866cb3c70e10ed39d6bbc4c2d6",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
+      },
+      "old_bindings": {
+        "observer_header_sha256": "5474edcdf0ce3f0b7f0ecc0d4da677fda29c1fc24c5c724f23384435eb84c654",
+        "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
+      },
+      "unchanged_payload_sha256": "4ef2d8b1ef0d2de374cf755cea1f83e602ecafa684a1218014987d22b7ce54c0"
+    }
+  },
+  "scope": "Source-operation equivalence for the legacy API and unchanged finite payloads; no timed-API, hardware or theorem qualification",
+  "sources": {
+    "src/kalman_common/ProxyStartupFusion.h": {
+      "legacy_operation_tokens_sha256": "f1b7878da196a2439d81e0343414456c5398ad27f6365d0235c8ea45415377a1",
+      "source_sha256": "d7bc77901adfbe788617222ed7ab1f281c679c0d20a5abab8a799acd10370a87"
+    },
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
+      "legacy_operation_tokens_sha256": "f87f7b5d533701df304744b36b5e08005dc4688e78e60b9e1ffb11b3a78cbe2a",
+      "source_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
+    },
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
+      "legacy_operation_tokens_sha256": "c797f8f614f38e616ce095dc4bbbcab11c4aa724b176f0a67f5e524f0fa2af76",
+      "source_sha256": "64d5419f9b4018ab165fda234eaf7282dbd271b60bdb30c4e05d3940ebccdb32"
+    }
+  },
+  "theorem_closed": false,
+  "timed_api_equivalence_claimed": false
+}

@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/mahony-heading-mag",
-  "git_commit": "6a20c44ff1660eaedcacfe1becbe0325a733596b",
+  "git_branch": "feature/mag-timing-consistency",
+  "git_commit": "e3aa9fa132ba9886054639ecde5d3f3a6fbeab69",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -94,8 +94,8 @@
       "sha256": "52a20e03b14f22d438050eb9b9b3c36ddf9dd39e9f43ab0b6692baf64e453943"
     },
     "src/kalman_common/ProxyStartupFusion.h": {
-      "bytes": 42810,
-      "sha256": "40c182d5451a4f0f13cbdfdf2b08554841f91335a889bab167aba0363501bbba"
+      "bytes": 45212,
+      "sha256": "d7bc77901adfbe788617222ed7ab1f281c679c0d20a5abab8a799acd10370a87"
     },
     "src/kalman_common/SeaStateAdaptationCommon.h": {
       "bytes": 21011,
@@ -118,12 +118,12 @@
       "sha256": "714524883769572a141971074317d2aa62ad23f6cf022eb1f2ec735375b09be2"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-      "bytes": 95583,
-      "sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
+      "bytes": 96945,
+      "sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-      "bytes": 56032,
-      "sha256": "15269fbd15f757c6fe9b9f7464b6c025bef3a0ed7c9fe2759c3a3cad7d32776d"
+      "bytes": 56467,
+      "sha256": "64d5419f9b4018ab165fda234eaf7282dbd271b60bdb30c4e05d3940ebccdb32"
     },
     "src/tuner/AccelVibrationGuard.h": {
       "bytes": 11977,
@@ -160,6 +160,14 @@
     "src/tuner/WavePeriodEstimator.h": {
       "bytes": 12170,
       "sha256": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5"
+    },
+    "src/util/MagneticRotation.h": {
+      "bytes": 13133,
+      "sha256": "5918386ac102430bb3c4e979b51efa08f1d652528d2a9edf73cf488eb124363a"
+    },
+    "src/util/MeasurementCovariance.h": {
+      "bytes": 840,
+      "sha256": "829634df89a5c32a5cad90beccc3a706590e659423179f87f9788dbf7431aad1"
     },
     "src/util/W3dSimCommon.cpp": {
       "bytes": 102294,
@@ -325,8 +333,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-10-10T04:58:02+00:00",
-    "git_commit": "6a20c44ff1660eaedcacfe1becbe0325a733596b",
+    "generated_at": "2026-10-11T04:37:44+00:00",
+    "git_commit": "e3aa9fa132ba9886054639ecde5d3f3a6fbeab69",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -377,8 +385,8 @@
         "size_bytes": 18846
       },
       "src/kalman_common/ProxyStartupFusion.h": {
-        "sha256": "40c182d5451a4f0f13cbdfdf2b08554841f91335a889bab167aba0363501bbba",
-        "size_bytes": 42810
+        "sha256": "d7bc77901adfbe788617222ed7ab1f281c679c0d20a5abab8a799acd10370a87",
+        "size_bytes": 45212
       },
       "src/kalman_common/SeaStateAdaptationCommon.h": {
         "sha256": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
@@ -401,12 +409,12 @@
         "size_bytes": 29967
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-        "sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",
-        "size_bytes": 95583
+        "sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0",
+        "size_bytes": 96945
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-        "sha256": "15269fbd15f757c6fe9b9f7464b6c025bef3a0ed7c9fe2759c3a3cad7d32776d",
-        "size_bytes": 56032
+        "sha256": "64d5419f9b4018ab165fda234eaf7282dbd271b60bdb30c4e05d3940ebccdb32",
+        "size_bytes": 56467
       },
       "src/tuner/AccelVibrationGuard.h": {
         "sha256": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
@@ -443,6 +451,14 @@
       "src/tuner/WavePeriodEstimator.h": {
         "sha256": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
         "size_bytes": 12170
+      },
+      "src/util/MagneticRotation.h": {
+        "sha256": "5918386ac102430bb3c4e979b51efa08f1d652528d2a9edf73cf488eb124363a",
+        "size_bytes": 13133
+      },
+      "src/util/MeasurementCovariance.h": {
+        "sha256": "829634df89a5c32a5cad90beccc3a706590e659423179f87f9788dbf7431aad1",
+        "size_bytes": 840
       },
       "src/util/W3dSimCommon.cpp": {
         "sha256": "67295d71862932c6ebba34c761715043a855cbe9aa663159209b8bdb70578b45",
@@ -509,7 +525,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "38024135160",
+      "run_id": "38110014345",
       "workflow": "ou-full-evidence-branch"
     }
   },

@@ -47,7 +47,9 @@ jobs:
   static-analysis:
     name: ${{ matrix.gate }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # The shared magnetic replays instantiate all seven filter variants. The
+    # complete clang-tidy sweep exceeded 30 minutes; retain every TU/check.
+    timeout-minutes: ${{ matrix.gate == 'clang-tidy' && 45 || 30 }}
     strategy:
       fail-fast: false
       matrix:

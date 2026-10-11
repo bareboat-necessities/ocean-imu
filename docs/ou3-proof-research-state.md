@@ -42,6 +42,140 @@ latency) must be charged to the stated magnetic residual envelopes; that fit is
 not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
+## Magnetic-input timing scope
+
+The AtomS3R OU-III frontend now transports known host-cache delay and suppresses
+repeated host observations. The BMM150 conversion epoch/aperture is not known;
+physical timestamp qualification remains OPEN. The 21-state core, Jacobian,
+OU/S/SpectralMSE/tuner/BA dynamics and injection/reset are retained. Reference
+and hard-iron accumulation use saved exogenous proxy snapshots. Timed MEKF
+input and covariance depend on carried gyro-bias estimates/covariances: LR1's
+zero corrected-input reverse port applies to the legacy API only. The timed
+ports, physical latency envelopes and source-uniform actually applied service
+must enter the same finite-error supply inequality before transferring the
+local result. No theorem, entry or service-completion flag is promoted.
+
+The legacy API's complete operation source reduces token-for-token to main
+`2c534feb423a627c40f475daed40b4274d3dd2b8`; see
+`magnetic_timing_legacy_binding.py`. Independently compiled baseline/current
+240 s native executions produced the identical complete 40 s tail stream
+(also identical to the previously committed stream) with both untapped controls.
+Binding refreshes preserve every older finite numerical payload and scope flag;
+the receipt records old/new bindings and unchanged-payload hashes. This does
+not transfer those finite diagnostics to the timed-input API.
+
+**E — implementation/validation repairs in this change.** The first replay
+harness tried assigning a core with a const gravity member; copy construction
+repairs its exact failing operation. Missing local mpmath was installed.
+Literal source anchors and source hashes detected the added optional interface;
+anchors now distinguish legacy and timed ports, and the operation audit plus
+bitwise native controls justify the legacy binding refresh. An initial patch
+context and one diagnostic filename were corrected before application. Git
+HTTPS push had no credential; the authorized GitHub connector publishes the
+same reviewed trees. `make -C tests/validation evidence-test` also rejects
+the old publication manifests with `replay dependency differs from replay
+provenance` and the new `MagneticRotation.h` dependency. The full branch
+evidence publisher must regenerate those empirical bundles; the gate is not
+weakened or bypassed. Initial-stage CI's stale sketch/source-tree fingerprints
+are the same class E failure. The complete 820-test proof suite additionally
+found stale header bindings in the 240 s and 1,200 s moving-compatibility
+records (three assertions); their legacy payloads are retained under the same
+operation-equivalence receipt, with no timed-path claim. Local `make all`
+with a command-line `CXXFLAGS` override omitted the TFG test-only Lie++ include:
+`lie_group-test.cpp:31: fatal error: groups/SEn3.hpp: No such file or directory`.
+The rerun uses `CPPFLAGS=-O1`, preserving each Makefile's dependency flags
+(class E invocation error, no TFG code change). That run reached an unrelated
+Kuchler heave gate: `21.2379% > 19.98%` on the H8.5 PM/Stokes record. The
+unchanged main archive reproduces the identical failure with the same `-O1`
+flags and input. Rebuilding this benchmark with its normal `-O3` flags yields
+19.8724%, below the unchanged limit. This is class E compiler-profile
+sensitivity in an existing benchmark, not a magnetic regression; no tuning
+or gate changes are made. The full run resumes with that normal-profile
+benchmark. Full Python validation also
+exposed a literal-string proxy-tilt anchor; it now checks both the unchanged
+legacy proxy and the saved exogenous observation proxy. The remaining
+publication failures require the full replay above (class E, not a numerical
+regression). These are not mathematical counterexamples. Current
+limiter: hardware conversion timing and the new endogenous transport ports.
+Next falsifiable work: capture DRDY/AUX/read phases, audit applied service and
+bound those same-history ports without changing the estimator or sensor model.
+
+**E — shared frontend extension.** Source-string parity checks were updated
+to follow the centralized `Input.capture` call and saved proxy assignment.
+An in-flight `make all` read a `run_tests.sh` while it was being edited and
+reported a shell syntax error; the valid frozen script is rerun. Initial
+new harness builds exposed a Mahony method-name typo, C versus C++ linking
+in the NLO target and qMEKF private-type name collisions; these were harness
+repairs, not estimator changes. The TFG extension initially reused OU-III's
+2-degree recovery assertion and measured 5.415 degrees. That assumption was
+invalid: the 2-degree qualification remains OU-III-only, with other filters'
+recovery reported without tuning. The qMEKF large-interference case worsens
+under transport covariance weighting; this is a finite approximation limit,
+not a theorem counterexample. Shared histories and diagnostics now cover all
+seven magnetic-aided AtomS3R frontends. Continuous observers retain every-tick
+feedback and report no normalized confidence without a bias covariance.
+The standalone proof-subset invocation also omitted the repository import
+path in its first three modules; rerunning those with `PYTHONPATH=../..` passes
+(7 tests), along with 18 magnetic-binding/article checks. The other 813 proof
+tests passed in the initial subset run. Source audit distinguishes 200 Hz
+host polling from accepted accel+gyro frames; a nominal 100 Hz replay and
+20 ms diagnostic endpoint allowance cover the admitted history cadence.
+Clang-tidy rejected the new TFG covariance accessor with
+`performance-no-automatic-move`: a const local blocked moving its returned
+matrix. Removing that local qualifier preserves the covariance equation and
+repairs this class E implementation issue; clang-tidy 18.1.8 then reports
+no actionable diagnostics, and no gate is suppressed.
+A standalone TFG rebuild without the Makefile's native/unroll flags passed
+all assertions but failed bytewise CSV comparison (maximum heading RMS
+difference 0.000408 degrees). This class E comparison-profile mismatch does
+not establish a runtime regression; the recorded Makefile profile reproduces
+the complete 42-row output byte-for-byte after the fix.
+The complete CI clang-tidy sweep on `f236e561` was cancelled at its 30-minute
+job limit (analysis 20:19:00--20:48:58 UTC, no reported code diagnostic).
+This class E budget failure invalidates completion of that sweep, not the
+focused clean check or the other passing gates. Give clang-tidy 45 minutes
+while retaining every translation unit, check and warnings-as-errors setting;
+the next falsifiable check is completion of the unchanged sweep within that
+budget. Other static-analysis jobs retain their 30-minute limit.
+Retained facts: original gains/legacy correction equations and the OU-III
+operation audit. Limiter/next experiment remain physical timing qualification
+and same-history transport-port/service bounds.
+
+**E — interrupted local workspace.** At `cd8a079a`,
+`make all EIGEN_DIR=/usr/include/eigen3 CPPFLAGS=-O1
+SIM_DATA_ZIP=/workspace/scratch/a374d05f94d8/sim-data-files-vessel-rao-28ft.zip`
+completed every native suite through `util`, then exited 2 in validation:
+14 assertions and 220 errors followed the disappearance of the entire local
+checkout (including unchanged workflow, article and result files). This
+invalidates a claim that that single command completed, not the prior native
+passes or the committed artifacts. A fresh clone of the identical commit and
+the SHA-verified pinned dataset restores the missing inputs. The resumed
+`make -C tests/validation test` passes 1,128 tests (one local CMake-availability
+skip); the remaining `wave_dir` and `wave_sim` scripts also pass. CMake passes
+in CI. No estimator, test, evidence value or acceptance condition is changed.
+Retained: all magnetic comparisons and original proof scope. Limiter: physical
+timing qualification and same-history transport/service bounds, as above.
+Next falsifiable checks: validate this ledger's refreshed provenance and the
+final published tree; hardware timing remains the next physical experiment.
+
+**E — redundant publication compilation.** On `7e784a00`, build run
+`38092208530`, OU-III job `114375666507`, passed its regression step but
+was cancelled at the 45-minute job limit during `Generate PGF plots`.
+The log shows `draw_plots.sh` rebuilding the complete OU-III test suite
+after cleanup even though the transition generator needs only
+`kalman_ou_iii-sim`: that second build began at 03:46:23 UTC and was
+still compiling `sampled_capture-test.cpp` at cancellation, 03:53:36.
+This invalidates publication completion within that budget, not the passed
+regressions or estimator behavior. Build the existing simulator target only
+at this point; retain the earlier complete test run, comparison observers,
+transition regeneration, publication gates and 45-minute limit. Structures
+preserved: all shipping equations, proof premises and numerical checks.
+Relaxations introduced: none. No shipping counterexample or theorem promotion.
+Limiter: duplicated compilation in the publication path; the physical timing
+and same-history proof limits above remain. Next falsifiable check: the
+unchanged article job completes within 45 minutes with this redundant work
+removed, and the refreshed source-bound evidence validates on its exact head.
+
 ## Evidence
 
 **D — an inverse-domain estimate alone does not settle the linked receipt.**

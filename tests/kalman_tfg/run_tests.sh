@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
+./mag_timing-test
 # The shebang's -e is ignored when this is invoked as `bash run_tests.sh`,
 # which is how the root Makefile runs it. Set it explicitly so a failing test
 # actually fails the build.

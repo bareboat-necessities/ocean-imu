@@ -51,6 +51,7 @@
 #include "kalman_ou_common/KalmanOUCoreMath.h"
 #include "lie/SO3Jacobians.h"
 #include "lie/TwoFrameGroup.h"
+#include "util/MeasurementCovariance.h"
 
 namespace ocean_imu::kalman {
 
@@ -166,6 +167,12 @@ class Kalman3D_Wave_TFG {
     [[nodiscard]] Vector3 get_integral_displacement() const { return X_.X.col(2); }
     [[nodiscard]] Vector3 get_world_accel() const           { return X_.X.col(3); }
     [[nodiscard]] Vector3 gyroscope_bias() const            { return X_.B.col(0); }
+    [[nodiscard]] Vector3 gyroscope_bias_body() const { return gyroscope_bias(); }
+    [[nodiscard]] Matrix3 gyroscope_bias_covariance_body() const {
+        Matrix3 p = P_.template block<3,3>(OFF_BG, OFF_BG);
+        if constexpr (two_frame_bias) return X_.R.transpose() * p * X_.R;
+        return p;
+    }
     [[nodiscard]] Vector3 get_acc_bias() const {
         if constexpr (with_accel_bias) return X_.B.col(1);
         return Vector3::Zero();
@@ -685,6 +692,14 @@ class Kalman3D_Wave_TFG {
         Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
         mag_residual(mag_meas_body, r, H, Rw);
         return apply_update3_(r, H, Rw, last_mag_diag_);
+    }
+
+    bool measurement_update_mag_only(const Vector3& mag, const Matrix3& covariance_body) {
+        last_mag_diag_ = MeasDiag3{};
+        bool accepted = false;
+        ocean_imu::withMeasurementCovariance(Rmag_, covariance_body,
+            [&] { accepted = measurement_update_mag_only(mag); });
+        return accepted;
     }
 
     bool applyIntegralZeroPseudoMeas() {

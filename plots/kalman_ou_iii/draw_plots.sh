@@ -156,7 +156,9 @@ find . -maxdepth 1 -type f -name 'wave_data_*.csv' \
   -exec cp -f {} ../../tests/kalman_ou_iii/ \;
 (
   cd ../../tests/kalman_ou_iii
-  make build
+  # Regression tests already ran before plotting; the transition needs only
+  # this simulator, not a second compilation of the complete test suite.
+  make kalman_ou_iii-sim
 )
 python3 ../../tools/ou_roundtrip_transition.py \
   --output-dir ../../reports/results/ou_rs_law

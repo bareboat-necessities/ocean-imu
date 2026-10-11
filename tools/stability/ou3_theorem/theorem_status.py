@@ -264,7 +264,19 @@ def status_report() -> dict:
     }
     return {
         "qualification":"OU3_SINGLE_MARINE_IMU_MAGNETIC_STABILITY_ARCHITECTURE_V3_SLOW_FAST",
-        "principal_assumptions":["MARINE MOTION","IMU BIAS","MAGNETIC SERVICE"],
+        "magnetic_timing_preprocessing":{
+            "audit":"docs/magnetic-timing.md",
+            "host_cache_rotation_alignment_enabled":True,
+            "physical_BMM150_conversion_timestamp_known":False,
+            "disturbance_residual_gating_enabled":False,
+            "duplicate_host_observations_count_as_service":False,
+            "legacy_reference_port_result_covers_endogenous_transport":False,
+            "transport_state_noise_correlation_uniformly_bounded":False,
+            "hardware_latency_and_jitter_qualified":False,
+            "source_uniform_postprocessing_service_verified":False,
+            "existing_local_results_scope":"retain stated qualified operators; timing/bias/covariance feedback and actual applied service must be included before extending to this preprocessing path"
+        },
+        "principal_assumptions":[ "MARINE MOTION","IMU BIAS","MAGNETIC SERVICE"],
         "quantifier":"one persistent physical execution belongs to all three assumption classes simultaneously",
         "proof_path":["construction","startup/capture","finite magnetically informed Live/H18 bridge",
                       "finite reference refinement","H18-to-A21 release",
