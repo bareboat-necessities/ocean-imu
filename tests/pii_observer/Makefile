@@ -25,6 +25,11 @@ TARGETS = pii_observer-adaptive local_gravity-test
 
 all: build test
 
+TARGETS += mag_continuous-test
+mag_continuous-test: mag_continuous-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+mag_continuous-test.o: ../common/MagneticContinuousReplay.h ../common/MagneticMotion.h ../../src/util/MagneticInput.h ../../src/util/MagneticRotation.h
+
 build: $(TARGETS)
 
 test: ensure-sim-data $(TARGETS)

@@ -4084,6 +4084,16 @@ behavior, proof status count, invariant radius or all-time admission changes.
 \subsection{The actual locked-Live reference port and its linked source work}
 \label{app:locked-live-causal-reference}
 
+\paragraph{Timestamp-preprocessing scope.}
+The zero corrected-input derivative below concerns the legacy
+\texttt{updateMag} interface. The AtomS3R host-cache transport path adds
+$D(\widehat b_g)(m-b)$ and a covariance depending on the carried gyro-bias
+covariance. Their mean/covariance derivatives are endogenous ports and are
+not zero by (LR1). Saved exogenous proxy snapshots preserve the reference
+argument, but transfer of the complete contraction calculation to this
+preprocessor remains OPEN. Actual applied service must be requalified;
+no new theorem completion is asserted.
+
 \paragraph{Quantifiers and finite-error role.}
 Consider any finite continuation on the deployed default Complementary path
 with wrapper and inner stages Live, magnetic lock already set, inherited

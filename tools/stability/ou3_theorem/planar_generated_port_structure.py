@@ -40,7 +40,8 @@ def locked_live_reference_audit():
     refinement=p[begin:end]
     for anchor in ['if (!mag_ref_set_) return;',
                    'if (stage_ != Stage::Live) return;',
-                   'const Eigen::Quaternionf q_tilt_bw = impl_.startupProxyTiltQuat();',
+                   'observation ? yawRemovedBoatQuat(observation->proxy_bw)',
+                   ': impl_.startupProxyTiltQuat();',
                    'mag_body_ned - mag_hard_iron_body_uT_',
                    'setMagWorldRef_(mag_world_ref_uT);',
                    'writeMekfYaw_(wrapPi(-mag_tilt_yaw_rad), mag_tilt_yaw_rad);']:
@@ -50,10 +51,10 @@ def locked_live_reference_audit():
         raise ValueError('refinement acquired an unproved MEKF/gate dependency')
     for anchor in ['gravity_gate_.step(attitudeReferenceQuat_()',
                    'if (!mag_ref_set_) {',
-                   'impl_.startupProxyTiltQuat(), mag_body_ned);',
-                   'maybeRefineMagReference_(mag_body_ned);',
+                   'observation ? yawRemovedBoatQuat(observation->proxy_bw) : impl_.startupProxyTiltQuat(),',
+                   'maybeRefineMagReference_(mag_body_ned, observation, sample_t);',
                    'maybeApplyContinuousHardIron_();',
-                   'impl_.updateMag(mag_body_ned - mag_hard_iron_body_uT_);']:
+                   'last_mag_applied_ = correct(mag_body_ned - mag_hard_iron_body_uT_);']:
         if anchor not in p:
             raise ValueError('locked Live magnetic chronology changed')
     for anchor in ['estimator.update(dt_mag, q_tilt_bw, mag_body_uT);',
@@ -76,7 +77,8 @@ def locked_live_reference_audit():
         'locked_Live_reference_reverse_MEKF_port': 0,
         'locked_Live_corrected_mag_reverse_MEKF_port': 0,
         'same_input_finite_MEKF_root_changes_preserve_reference_execution': True,
-        'scope': 'magnetically locked Live continuation, inherited auxiliary state and delivered history fixed; default Complementary path, no Cold/reacquisition/external reconfiguration',
+        'timed_input_endogenous_transport_covered': False,
+        'scope': 'legacy updateMag interface only; timed magnetic preprocessing adds gyro-bias/covariance ports requiring separate bounds. Magnetically locked Live continuation, inherited auxiliary state and delivered history fixed; default Complementary path, no Cold/reacquisition/external reconfiguration',
         'live_gravity_gate_reads_MEKF': True,
         'live_gravity_gate_controls_locked_refinement_or_slew': False,
         'refinement_yaw_write_remains_actual_estimator_jump': True,

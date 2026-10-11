@@ -17,6 +17,9 @@ LDFLAGS =
 VPATH = $(REPO_ROOT)/src/util
 TARGETS = kalman_ou_iii-sim accel_vibration_guard-test imu_lever_arm-test kalman_ou_common-test ou_core_numerics-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test shipping_contract-test shipping_transition-test rs_law-test startup_init-test sampled_capture-test
 all: build test
+TARGETS += mag_timing-test
+mag_timing-test: mag_timing-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 build: $(TARGETS)
 test: ensure-sim-data $(TARGETS)
 	bash ./run_tests.sh

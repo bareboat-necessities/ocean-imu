@@ -25,6 +25,15 @@ TARGETS = ahrs-qmekf-sim
 
 all: build test
 
+TARGETS += mag_continuous-test
+TARGETS += mag_timing-test
+mag_timing-test: mag_timing-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+mag_timing-test.o: ../common/MagneticTimingReplay.h ../common/MagneticMotion.h ../../src/ahrs/KalmanQMEKF.h ../../src/util/MeasurementCovariance.h ../../src/util/MagneticRotation.h
+mag_continuous-test: mag_continuous-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+mag_continuous-test.o: ../common/MagneticContinuousReplay.h ../common/MagneticMotion.h ../../src/util/MagneticInput.h ../../src/util/MagneticRotation.h
+
 build: $(TARGETS)
 
 test: ensure-sim-data $(TARGETS)

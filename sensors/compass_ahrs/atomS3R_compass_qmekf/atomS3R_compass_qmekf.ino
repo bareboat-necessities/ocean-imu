@@ -35,8 +35,8 @@ class QmekfBackend : public IAttitudeBackend {
     const float g = ImuCalCfg::g_std;  // noise below is specified in nominal g (unit conversion)
 
     Vector3f sigma_a; sigma_a <<  0.06f * g,  0.06f * g,   0.06f * g;
-    Vector3f sigma_g; sigma_g <<    0.0030f,    0.0030f,     0.0030f;
-    Vector3f sigma_m; sigma_m <<     0.020f,     0.020f,      0.020f;
+    Vector3f sigma_g; sigma_g << .0030f, .0030f, .0030f;
+    Vector3f sigma_m; sigma_m << magneticUnitSigma(), magneticUnitSigma(), magneticUnitSigma();
 
     if (mekf_) {
       mekf_->~QuaternionMEKF<float, true>();
@@ -45,9 +45,11 @@ class QmekfBackend : public IAttitudeBackend {
 
     mekf_ = new (storage_) QuaternionMEKF<float, true>(sigma_a, sigma_g, sigma_m, 0.5f, 1e-2f, 1e-9f);
     inited_ = false;
+    mag_applied_ = false;
   }
 
   void step(const CalibratedSample& s, AttitudeSolution& out) override {
+    mag_applied_ = false;
     if (!inited_) {
       Vector3f a_init = s.a_cal;
       const float an0 = a_init.norm();
@@ -76,7 +78,9 @@ class QmekfBackend : public IAttitudeBackend {
       const auto qc = mekf_->quaternion();  // x, y, z, w
       const Vector3f mw = Eigen::Quaternionf(qc(3), qc(0), qc(1), qc(2)) * s.m_unit;
       mekf_->set_mag_world_ref(Vector3f(sqrtf(mw.x() * mw.x() + mw.y() * mw.y()), 0.0f, mw.z()));
-      mekf_->measurement_update_mag_only(s.m_unit);
+      if (SEA_STATE_MAG_HOST_ALIGNMENT)
+        mag_applied_ = mekf_->measurement_update_mag_only(s.m_unit, s.mag_covariance_unit);
+      else { mekf_->measurement_update_mag_only(s.m_unit); mag_applied_ = true; }
     }
 
     const auto q = mekf_->quaternion();
@@ -84,11 +88,22 @@ class QmekfBackend : public IAttitudeBackend {
   }
 
   bool isValid() const override { return inited_; }
+  Vector3f gyroBiasBody() const override { return mekf_->gyroscope_bias(); }
+  bool discreteMagneticCorrections() const override { return true; }
+  // This core adds Q each sample, without dt. Its sigma_g is an angle-step
+  // process standard deviation, not a continuous noise density.
+  float gyroStepVariance() const override { return .0030f * .0030f; }
+  float magneticUnitSigma() const override { return 0.020f; }
+  float gyroBiasVariance() const override {
+    return ocean_imu::magnetic::covarianceBound(mekf_->covariance().template bottomRightCorner<3,3>());
+  }
+  bool lastMagApplied() const override { return mag_applied_; }
 
  private:
   alignas(QuaternionMEKF<float, true>) uint8_t storage_[sizeof(QuaternionMEKF<float, true>)];
   QuaternionMEKF<float, true>* mekf_ = nullptr;
   bool inited_ = false;
+  bool mag_applied_ = false;
 };
 
 class QmekfCompassApp : public CompassAppBase {

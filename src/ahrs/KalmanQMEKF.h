@@ -36,6 +36,8 @@
 #include <ArduinoEigenDense.h>
 #endif
 
+#include "util/MeasurementCovariance.h"
+
 using Eigen::Matrix;
 using Eigen::Map;
 
@@ -79,6 +81,11 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     void measurement_update_acc_only(Vector3 const& acc);
     void measurement_update_acc_only(T const acc[3]);
     void measurement_update_mag_only(Vector3 const& mag);
+    bool measurement_update_mag_only(Vector3 const& mag, Matrix3 const& covariance_body) {
+        if (!mag.allFinite() || !(mag.norm() > T(1e-9)) ||
+            !ocean_imu::validMeasurementCovariance(covariance_body)) return false;
+        return measurement_update_partial(mag, magnetometer_measurement_func(), covariance_body);
+    }
     void measurement_update_mag_only(T const mag[3]);
     Vector4 const& quaternion() const;
     MatrixN const& covariance() const;
@@ -103,7 +110,7 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     const MatrixM R;
     const MatrixN Q;
 
-    void measurement_update_partial(const Eigen::Ref<const Vector3>& meas, const Eigen::Ref<const Vector3>& vhat, const Eigen::Ref<const Matrix3>& Rm);
+    bool measurement_update_partial(const Eigen::Ref<const Vector3>& meas, const Eigen::Ref<const Vector3>& vhat, const Eigen::Ref<const Matrix3>& Rm);
     void set_transition_matrix(const Eigen::Ref<const Vector3>& gyr, T Ts);
     Matrix3 skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const;
     void applyQuaternionCorrectionFromErrorState();
@@ -301,7 +308,7 @@ void QuaternionMEKF<T, with_bias>::measurement_update(T const acc[3], T const ma
 }
 
 template<typename T, bool with_bias>
-void QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3 const> const& meas, Eigen::Ref<Vector3 const> const& vhat, Eigen::Ref<Matrix3 const>const& Rm) {
+bool QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3 const> const& meas, Eigen::Ref<Vector3 const> const& vhat, Eigen::Ref<Matrix3 const>const& Rm) {
   Matrix3 const C1 = skew_symmetric_matrix(vhat);
 
   Matrix<T, 3, N> C;
@@ -337,7 +344,9 @@ void QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3
     x(0) = 0;
     x(1) = 0;
     x(2) = 0;
+    return true;
   }
+  return false;
 }
 
 template<typename T, bool with_bias>

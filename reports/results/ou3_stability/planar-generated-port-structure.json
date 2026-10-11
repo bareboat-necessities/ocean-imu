@@ -19,8 +19,9 @@
     "reference_increment_bound": "|B_ref-B_anchor| <= |A (b-b_anchor)| <= |b-b_anchor| at the SAME statistics",
     "refinement_yaw_write_remains_actual_estimator_jump": true,
     "same_input_finite_MEKF_root_changes_preserve_reference_execution": true,
-    "scope": "magnetically locked Live continuation, inherited auxiliary state and delivered history fixed; default Complementary path, no Cold/reacquisition/external reconfiguration",
+    "scope": "legacy updateMag interface only; timed magnetic preprocessing adds gyro-bias/covariance ports requiring separate bounds. Magnetically locked Live continuation, inherited auxiliary state and delivered history fixed; default Complementary path, no Cold/reacquisition/external reconfiguration",
     "source_reference_derivatives_discarded": false,
+    "timed_input_endogenous_transport_covered": false,
     "uniform_complete_net_work_domination": false
   },
   "mekf_mean_or_covariance_to_AW_target_gain": 0,
@@ -32,9 +33,9 @@
   "source_git_blob_sha": {
     "src/kalman_common/MagneticStartupCommon.h": "da00c8831719b80026321605965fbbc6f26bc1aa",
     "src/kalman_common/MarineWaveFrontEnd.h": "9bdb44c2a6b00466e528b714153884e4426f7bbf",
-    "src/kalman_common/ProxyStartupFusion.h": "7dd0a689bb27a366ac9246e493ea6f8c1f674971",
+    "src/kalman_common/ProxyStartupFusion.h": "36fd7eb05d0ff379ad284548e325c535aa08dcd1",
     "src/kalman_common/SeaStateFusionDefaults.h": "875e2e7c1cfb28adda11121b6a10a2515e23178b",
-    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "5796b962fbf9d1081a8d42b9efbded0295d30265",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "87372a6e726eda68e160a8c4ac4a1bd571bfa9a3",
     "src/tuner/ContinuousMagHardIronEstimator.h": "8c53e63344e3532a7231195f51fc0e75549abcff",
     "src/tuner/MagAutoTuner.h": "a1ccc503d3ae0623545e8e005e790d1f90f62a42"
   },

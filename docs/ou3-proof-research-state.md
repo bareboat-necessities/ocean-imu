@@ -42,6 +42,60 @@ latency) must be charged to the stated magnetic residual envelopes; that fit is
 not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
+## Magnetic-input timing scope
+
+The AtomS3R OU-III frontend now transports known host-cache delay and suppresses
+repeated host observations. The BMM150 conversion epoch/aperture is not known;
+physical timestamp qualification remains OPEN. The 21-state core, Jacobian,
+OU/S/SpectralMSE/tuner/BA dynamics and injection/reset are retained. Reference
+and hard-iron accumulation use saved exogenous proxy snapshots. Timed MEKF
+input and covariance depend on carried gyro-bias estimates/covariances: LR1's
+zero corrected-input reverse port applies to the legacy API only. The timed
+ports, physical latency envelopes and source-uniform actually applied service
+must enter the same finite-error supply inequality before transferring the
+local result. No theorem, entry or service-completion flag is promoted.
+
+The legacy API's complete operation source reduces token-for-token to main
+`2c534feb423a627c40f475daed40b4274d3dd2b8`; see
+`magnetic_timing_legacy_binding.py`. Independently compiled baseline/current
+240 s native executions produced the identical complete 40 s tail stream
+(also identical to the previously committed stream) with both untapped controls.
+Binding refreshes preserve every older finite numerical payload and scope flag;
+the receipt records old/new bindings and unchanged-payload hashes. This does
+not transfer those finite diagnostics to the timed-input API.
+
+**E — magnetic-input audit and configuration defects.** The original
+operation digest erased whitespace/comment-looking text inside C++ literals:
+`tokens('return "a b";') == tokens('return "ab";')`. It could not establish the
+claimed lexical identity. The audit now preserves literal contents and token
+boundaries; all three legacy projections match the baseline under that stronger
+comparison, and literal/comment/operator regressions reject those collisions.
+The sketch's A/B definition also followed the header's default, so editing it
+to zero still selected one. Its definition now precedes all includes. Default
+shipping behavior and compiler-provided overrides are unchanged.
+
+**Retained validation scope.** All seven magnetic frontends share the bounded
+history and diagnostics. Continuous observers retain every-tick feedback and
+make no normalized-confidence claim without bias covariance. The finite TFG
+interference result does not satisfy OU-III's two-degree recovery criterion;
+standalone qMEKF interference and some quiet-motion results also worsen. The
+paired metrics remain unchanged and no tuning or recovery gate is relaxed.
+Prior class E harness, dependency, compiler-profile, workspace, publication
+and source-binding failures and their exact commands/results are recorded in
+PR #670. They establish no mathematical or shipping counterexample. The
+legacy operation identity and retained numerical payloads apply only to the
+legacy API, not the endogenous timed-input ports.
+
+**Current limiter and next falsifiable check.** Physical BMM150 conversion
+phase/aperture, AtomS3R timing/stack use, and the same-history transport-port
+and actually applied service bounds remain unqualified. Capture DRDY/AUX/read
+phases and applied service, then charge the resulting timing and correlated
+transport uncertainties in the existing finite-error supply inequality.
+Structures preserved: 21 states, shipping correction/reset chronology,
+OU/S/tuner/bias equations, calibration, reference gates and proof premises.
+Relaxations introduced: none in these review repairs; the previously documented
+first-order transport approximation remains. No theorem or entry claim changes.
+
 ## Evidence
 
 **D — an inverse-domain estimate alone does not settle the linked receipt.**

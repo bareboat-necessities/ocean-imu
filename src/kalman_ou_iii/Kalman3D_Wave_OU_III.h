@@ -30,6 +30,7 @@
 #include <algorithm>
 
 #include "kalman_ou_common/KalmanOUCoreMath.h"
+#include "util/MeasurementCovariance.h"
 
 namespace ocean_imu::kalman {
 
@@ -108,6 +109,17 @@ class Kalman3D_Wave_OU_III {
     // Measurement updates preserved (operate on extended state internally)
     void measurement_update_acc_only(Vector3 const& acc, T tempC = tempC_ref);
     void measurement_update_mag_only(Vector3 const& mag);
+    // Full covariance in physical body axes, for time-transported input only.
+    // The legacy overload, Jacobian, injection and reset remain unchanged.
+    void measurement_update_mag_only(const Vector3& mag, const Matrix3& covariance_body) {
+        last_mag_diag_ = MeasDiag3{};
+        Matrix3 d;
+        d.col(0) = deheel_vector_(Vector3::UnitX());
+        d.col(1) = deheel_vector_(Vector3::UnitY());
+        d.col(2) = deheel_vector_(Vector3::UnitZ());
+        const Matrix3 covariance = d * covariance_body * d.transpose();
+        ocean_imu::withMeasurementCovariance(Rmag, covariance, [&] { measurement_update_mag_only(mag); });
+    }
 
     // Extended-only API:
     // Apply zero pseudo-measurement on S (integral drift correction)
@@ -172,6 +184,22 @@ class Kalman3D_Wave_OU_III {
         } else {
             return Vector3::Zero();
         }
+    }
+
+    [[nodiscard]] Vector3 gyroscope_bias_body() const {
+        const Vector3 b = gyroscope_bias();
+        return Vector3(b.x(), cos_unheel_x_ * b.y() + sin_unheel_x_ * b.z(),
+                       -sin_unheel_x_ * b.y() + cos_unheel_x_ * b.z());
+    }
+    [[nodiscard]] Matrix3 gyroscope_bias_covariance_body() const {
+        if constexpr (with_gyro_bias) {
+            Matrix3 d;
+            d.col(0) = deheel_vector_(Vector3::UnitX());
+            d.col(1) = deheel_vector_(Vector3::UnitY());
+            d.col(2) = deheel_vector_(Vector3::UnitZ());
+            return d.transpose() * Pext.template block<3,3>(3,3) * d;
+        }
+        return Matrix3::Zero();
     }
 
     [[nodiscard]] Vector3 get_acc_bias() const {

@@ -276,6 +276,7 @@ struct ImuSample {
   float tempC;    // deg C
   uint32_t mask;  // M5.Imu.update() mask
   uint32_t sample_us; // micros() timestamp captured at imu.update()
+  MagAcquisition mag_timing; // first host observation and AUX read bracket
 };
 
 #ifndef ATOMS3R_IMU_MASK_ACCEL
@@ -322,9 +323,10 @@ inline AtomS3RMagSource& atoms3rMagSource() {
 // compensation this is M5Unified's uncompensated value. Either way, without a
 // new successfully read reading for MagAcquisition::MAX_AGE_MS the result is
 // NaN (no magnetometer value), never an old reading presented as current.
-static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
+static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag, uint32_t frame_us) {
   auto& src = atoms3rMagSource();
   const uint32_t now = millis();
+  const uint32_t read_start_us = micros();
   const Vector3f none(NAN, NAN, NAN);
   const bool changed = !src.have_last || m5_mag.x != src.last_m5.x || m5_mag.y != src.last_m5.y ||
                        m5_mag.z != src.last_m5.z;
@@ -332,7 +334,7 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
     if (changed) {
       src.last_m5 = m5_mag;
       src.have_last = true;
-      src.acquisition.acquired(now);
+      src.acquisition.acquired(now, frame_us, read_start_us, micros());
     }
     return src.acquisition.fresh(now) ? map_mag_to_body_uT_(m5_mag) : none;
   }
@@ -346,11 +348,15 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
       src.last_body = Vector3f(b[0], b[1], b[2]);
       src.last_m5 = m5_mag;
       src.have_last = true;
-      src.acquisition.acquired(now);
+      src.acquisition.acquired(now, frame_us, read_start_us, micros());
     }
   }
   // Never mix units: until the first compensated reading this is NaN (invalid).
   return src.acquisition.fresh(now) ? src.last_body : none;
+}
+
+static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
+  return readMagBody_(m5_mag, micros());
 }
 
 // Reads M5.Imu, applies AtomS3R axis mapping and unit conversion, but does NOT calibrate.
@@ -370,7 +376,8 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, ui
   // magnetometer-update bit across deployed builds. Runtime/calibration
   // freshness is therefore determined by the existing cadence/distinct-value
   // gates rather than the update mask.
-  out.m = readMagBody_(data.mag);
+  out.m = readMagBody_(data.mag, sample_us);
+  out.mag_timing = atoms3rMagSource().acquisition;
 
   return true;
 }

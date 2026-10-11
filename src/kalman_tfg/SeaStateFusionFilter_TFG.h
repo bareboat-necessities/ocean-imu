@@ -47,6 +47,7 @@
 #include "kalman_common/MagneticStartupCommon.h"
 #include "kalman_common/SeaStateFusionDefaults.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
+#include "util/MagneticRotation.h"
 #include "kalman_tfg/Kalman3D_Wave_TFG.h"
 #include "tuner/AdaptiveWaveBandPass.h"
 #include "tuner/ContinuousMagHardIronEstimator.h"
@@ -203,6 +204,8 @@ public:
     };
 
     void begin(const Config& cfg) {
+        mag_observation_ = nullptr;
+        last_mag_applied_ = false;
         cfg_ = cfg;
         mekf_ = Mekf(cfg.gyro_noise_density, cfg.gravity_magnitude);
         mekf_.initialize_identity(cfg.initial_covariance);
@@ -325,6 +328,7 @@ public:
     }
 
     void updateMag(const Vector3f& mag_body) {
+        last_mag_applied_ = false;
         if (!cfg_.with_mag || !mag_body.allFinite()) return;
         if (!(mag_body.norm() > 1e-9f)) return;
         if (elapsed_sec_ < cfg_.mag_delay_sec) return;
@@ -337,7 +341,8 @@ public:
         if (stage_ == StartupStage::Cold) return;
 
         if (!mekf_.has_magnetic_reference()) {
-            const Vector3f b_world = mekf_.R_bw() * mag_body;
+            const Vector3f b_world = mag_observation_
+                ? Vector3f(mag_observation_->attitude_bw * mag_body) : Vector3f(mekf_.R_bw() * mag_body);
             const float horiz = std::hypot(b_world.x(), b_world.y());
             if (horiz > 1e-9f) {
                 const float psi = std::atan2(b_world.y(), b_world.x());
@@ -346,8 +351,18 @@ public:
             mekf_.set_magnetic_reference_world(Vector3f(horiz, 0.0f, b_world.z()));
             return;
         }
-        mekf_.measurement_update_mag_only(mag_body);
+        correctMag_(mag_body);
     }
+
+    void updateMagTransported(const Vector3f& mag_body, const ocean_imu::magnetic::Observation& observation) {
+        last_mag_applied_ = false;
+        if (!observation.valid() || !mag_body.allFinite()) return;
+        mag_observation_ = &observation;
+        updateMag(mag_body);
+        mag_observation_ = nullptr;
+    }
+    [[nodiscard]] bool lastMagUpdateApplied() const { return last_mag_applied_; }
+    [[nodiscard]] Eigen::Quaternionf startupProxyQuat() const { return vertical_complementary_.quaternion(); }
 
     [[nodiscard]] bool magReferenceLearned() const noexcept { return mag_reference_learned_; }
     [[nodiscard]] bool magReferenceRefined() const noexcept { return mag_refine_done_; }
@@ -501,6 +516,22 @@ public:
     [[nodiscard]] Vector3f get_world_accel() const { return mekf_.get_world_accel(); }
 
 private:
+    const ocean_imu::magnetic::Observation* mag_observation_ = nullptr; // valid only during the call
+    bool last_mag_applied_ = false;
+    float magSampleTime_() const { return mag_observation_ ? elapsed_sec_ - mag_observation_->rotation.seconds : elapsed_sec_; }
+    Eigen::Quaternionf magProxyQuat_() const { return mag_observation_ ? mag_observation_->proxy_bw : vertical_complementary_.quaternion(); }
+    Vector3f magAccel_() const { return mag_observation_ ? mag_observation_->accel : last_acc_body_; }
+    Vector3f magGyro_() const { return mag_observation_ ? mag_observation_->gyro : last_gyro_body_; }
+    void correctMag_(const Vector3f& field) {
+        if (!mag_observation_) { last_mag_applied_ = mekf_.measurement_update_mag_only(field); return; }
+        Vector3f aligned;
+        Eigen::Matrix3f covariance;
+        const auto& o = *mag_observation_;
+        if (ocean_imu::magnetic::align(field, Vector3f::Zero(), o.covariance,
+                o.rotation, o.uncertainty, aligned, covariance))
+            last_mag_applied_ = mekf_.measurement_update_mag_only(aligned, covariance);
+    }
+
     void beginMagAcquisition_() {
         mag_auto_tuner_.setConfig(::seastate::common::magAutoTunerConfig(cfg_));
         hard_iron_.configure(cfg_);
@@ -760,13 +791,13 @@ private:
         maybeRefineMagReference_(mag_body);
         maybeApplyContinuousHardIron_();
         if (mag_reference_learned_ && stage_ == StartupStage::Live) {
-            mekf_.measurement_update_mag_only(mag_body - mag_hard_iron_body_uT_);
+            correctMag_(mag_body - mag_hard_iron_body_uT_);
         }
     }
 
     void learnMagReferenceWindowed_(const Vector3f& mag_body) {
         const float dt_mag = ::seastate::common::advanceSampleClock(
-            last_mag_sample_t_, elapsed_sec_, cfg_.mag_sample_dt_sec);
+            last_mag_sample_t_, magSampleTime_(), cfg_.mag_sample_dt_sec);
 
         Eigen::Quaternionf q_north;
         float sample_gauge;
@@ -776,9 +807,9 @@ private:
         // is invariant to both real turns and unobservable proxy yaw drift.
         // The optional joint bias solve retains its independent world frame.
         const Eigen::Quaternionf q_accum = cfg_.mag_estimate_hard_iron
-            ? vertical_complementary_.quaternion() : q_north;
+            ? magProxyQuat_() : q_north;
         if (!mag_auto_tuner_.addSampleWithWorldQuatDt(
-                dt_mag, q_accum, last_acc_body_, last_gyro_body_, mag_body)) return;
+                dt_mag, q_accum, magAccel_(), magGyro_(), mag_body)) return;
 
         Vector3f ref;
         if (!mag_auto_tuner_.getMagWorldRef(ref) || !ref.allFinite() ||
@@ -821,15 +852,15 @@ private:
         }
 
         const float dt_mag = ::seastate::common::advanceSampleClock(
-            last_mag_sample_t_, elapsed_sec_, cfg_.mag_sample_dt_sec);
+            last_mag_sample_t_, magSampleTime_(), cfg_.mag_sample_dt_sec);
         const Vector3f mag_corrected = mag_body - mag_hard_iron_body_uT_;
         Eigen::Quaternionf q_north;
         float sample_gauge;
         if (!northFrameForMag_(mag_corrected, q_north, sample_gauge)) return;
         const Eigen::Quaternionf q_accum = cfg_.mag_estimate_hard_iron
-            ? vertical_complementary_.quaternion() : q_north;
+            ? magProxyQuat_() : q_north;
         if (!mag_auto_tuner_.addSampleWithWorldQuatDt(
-                dt_mag, q_accum, last_acc_body_, last_gyro_body_, mag_corrected)) return;
+                dt_mag, q_accum, magAccel_(), magGyro_(), mag_corrected)) return;
 
         Vector3f ref;
         if (!mag_auto_tuner_.getMagWorldRef(ref) || !ref.allFinite() ||
@@ -851,7 +882,7 @@ private:
     bool northFrameForMag_(const Vector3f& mag_body, Eigen::Quaternionf& q_north,
                            float& gauge) const {
         if (!mag_body.allFinite()) return false;
-        const Eigen::Quaternionf q_proxy = vertical_complementary_.quaternion();
+        const Eigen::Quaternionf q_proxy = magProxyQuat_();
         const Vector3f field = q_proxy * mag_body;
         const float norm = field.norm();
         const float horizontal = field.head<2>().norm();
@@ -882,8 +913,9 @@ private:
     void accumulateContinuousHardIron_(const Vector3f& mag_body) {
         if (!cfg_.mag_continuous_hard_iron || !usingProxyInit_()) return;
         if (!vertical_complementary_.isInitialized()) return;
-        hard_iron_.accumulate(elapsed_sec_, cfg_.mag_sample_dt_sec,
-                              vertical_complementary_.tiltQuaternion(), mag_body);
+        hard_iron_.accumulate(magSampleTime_(), cfg_.mag_sample_dt_sec,
+                              mag_observation_ ? ::seastate::common::yawRemovedBoatQuat(mag_observation_->proxy_bw)
+                                               : vertical_complementary_.tiltQuaternion(), mag_body);
     }
 
     void maybeApplyContinuousHardIron_() {

@@ -25,6 +25,10 @@ TARGETS = kalman_ou_ii-sim tuner_schedule-test iss_contract-test startup_init-te
 
 all: build test
 
+TARGETS += mag_timing-test
+mag_timing-test: mag_timing-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
 build: $(TARGETS)
 
 test: ensure-sim-data $(TARGETS)

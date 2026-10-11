@@ -44,6 +44,7 @@
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 #include "tuner/ContinuousMagHardIronEstimator.h"
 #include "tuner/MagAutoTuner.h"
+#include "util/MagneticRotation.h"
 
 // Nominal standard gravity: the generic default of gravity_magnitude.  A
 // calibrated deployment passes its local gravity (g_cal_local) instead.
@@ -320,6 +321,37 @@ public:
     }
 
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
+        updateMagImpl_(mag_body_ned, nullptr, [this](const Eigen::Vector3f& field) {
+            impl_.updateMag(field);
+            return impl_.mekf().lastMagDiag().accepted;
+        });
+    }
+
+    // Raw calibrated observation and contemporaneous reference snapshots.
+    // Only the final MEKF input is rotated, AFTER the applied body offset is
+    // subtracted. Reference/HI accumulation stays at the observation epoch.
+    void updateMagTransported(const Eigen::Vector3f& mag_body_ned,
+                              const ocean_imu::magnetic::Observation& observation) {
+        last_mag_applied_ = false;
+        if (!observation.valid() || !mag_body_ned.allFinite()) return;
+        updateMagImpl_(mag_body_ned, &observation, [this, &observation](const Eigen::Vector3f& field) {
+            Eigen::Vector3f aligned;
+            Eigen::Matrix3f covariance;
+            if (ocean_imu::magnetic::align(field, Eigen::Vector3f::Zero(), observation.covariance,
+                    observation.rotation, observation.uncertainty, aligned, covariance)) {
+                impl_.updateMag(aligned, covariance);
+                return impl_.mekf().lastMagDiag().accepted;
+            }
+            return false;
+        });
+    }
+    bool lastMagUpdateApplied() const { return last_mag_applied_; }
+
+private:
+    template <typename Correction>
+    void updateMagImpl_(const Eigen::Vector3f& mag_body_ned,
+                        const ocean_imu::magnetic::Observation* observation, Correction correct) {
+        last_mag_applied_ = false;
         if (!begun_ || !cfg_.with_mag) return;
         // There is no withheld stage to wait out: the observer has been
         // levelling since the first sample, and learning north before the MEKF
@@ -331,7 +363,8 @@ public:
         // estimator wants the whole magnetometer record, not the part the
         // startup machinery was willing to average, and it is reading a frame
         // the startup machinery does not own.
-        accumulateContinuousHardIron_(mag_body_ned);
+        const float sample_t = observation ? t_ - observation->rotation.seconds : t_;
+        accumulateContinuousHardIron_(mag_body_ned, observation, sample_t);
 
         // Hold the whole magnetometer path off until the startup observer has
         // settled.  This sits ahead of the eligibility clock deliberately, so
@@ -365,7 +398,7 @@ public:
 
             if (have_last_imu_) {
                 const float dt_mag = advanceSampleClock(
-                    last_mag_sample_t_, t_, cfg_.mag_sample_dt_sec);
+                    last_mag_sample_t_, sample_t, cfg_.mag_sample_dt_sec);
 
                 // Accumulate in a tilt frame with yaw removed.
                 //
@@ -384,13 +417,13 @@ public:
                 // gauge are locked once here; the refinement stage replaces
                 // them.
                 const Eigen::Quaternionf q_tilt_bw =
-                    yawRemovedBoatQuat(attitudeReferenceQuat_());
+                    yawRemovedBoatQuat(observation ? observation->attitude_bw : attitudeReferenceQuat_());
 
                 if (mag_auto_tuner_.addSampleWithTiltQuatDt(
                         dt_mag,
                         q_tilt_bw,
-                        last_acc_body_ned_,
-                        last_gyro_body_ned_,
+                        observation ? observation->accel : last_acc_body_ned_,
+                        observation ? observation->gyro : last_gyro_body_ned_,
                         mag_body_ned))
                 {
                     Eigen::Vector3f mag_world_ref_uT;
@@ -450,16 +483,17 @@ public:
             }
         }
 
-        maybeRefineMagReference_(mag_body_ned);
+        maybeRefineMagReference_(mag_body_ned, observation, sample_t);
         maybeApplyContinuousHardIron_();
 
         // Magnetometer corrections go to the MEKF only once it owns the
         // attitude.  Before handoff its state is not the one being solved.
         if (mag_ref_set_ && stage_ == Stage::Live) {
-            impl_.updateMag(mag_body_ned - mag_hard_iron_body_uT_);
+            last_mag_applied_ = correct(mag_body_ned - mag_hard_iron_body_uT_);
         }
     }
 
+public:
     bool hasMagNorthLock() const noexcept { return mag_ref_set_; }
 
     // True once the second-stage acquisition has replaced the provisional
@@ -545,6 +579,7 @@ protected:
         cfg_ = cfg;
 
         begun_ = true;
+        last_mag_applied_ = false;
         stage_ = Stage::Bootstrap;
         t_ = 0.0f;
 
@@ -683,11 +718,13 @@ private:
 
     // Raw magnetometer in the observer's tilt frame; see
     // ContinuousHardIronTracker::accumulate().
-    void accumulateContinuousHardIron_(const Eigen::Vector3f& mag_body_ned) {
+    void accumulateContinuousHardIron_(const Eigen::Vector3f& mag_body_ned,
+                                       const ocean_imu::magnetic::Observation* observation, float sample_t) {
         if (!cfg_.mag_continuous_hard_iron) return;
         if (!impl_.startupProxyInitialized()) return;
-        hard_iron_.accumulate(t_, cfg_.mag_sample_dt_sec,
-                              impl_.startupProxyTiltQuat(), mag_body_ned);
+        hard_iron_.accumulate(sample_t, cfg_.mag_sample_dt_sec,
+                              observation ? yawRemovedBoatQuat(observation->proxy_bw) : impl_.startupProxyTiltQuat(),
+                              mag_body_ned);
     }
 
     // Applied only once the startup acquisition, including refinement, has
@@ -722,7 +759,8 @@ private:
     // write is a step, and deliberately so: it is the coarse-to-fine alignment
     // correction, it happens once, and it lands well before the scored window
     // opens.
-    void maybeRefineMagReference_(const Eigen::Vector3f& mag_body_ned) {
+    void maybeRefineMagReference_(const Eigen::Vector3f& mag_body_ned,
+                                 const ocean_imu::magnetic::Observation* observation, float sample_t) {
         if (!cfg_.mag_refine_enabled) return;
         if (mag_refine_done_) return;
         if (!mag_ref_set_) return;
@@ -737,7 +775,7 @@ private:
             last_mag_sample_t_  = NAN;
         }
 
-        const float dt_mag = advanceSampleClock(last_mag_sample_t_, t_, cfg_.mag_sample_dt_sec);
+        const float dt_mag = advanceSampleClock(last_mag_sample_t_, sample_t, cfg_.mag_sample_dt_sec);
 
         // The observer's tilt, not the MEKF's, for the same reason the first
         // stage used it -- and here the reason has teeth.
@@ -751,15 +789,16 @@ private:
         //
         // The observer never saw the reference, so its tilt is independent of
         // it, and by refinement time it has long since converged.
-        const Eigen::Quaternionf q_tilt_bw = impl_.startupProxyTiltQuat();
+        const Eigen::Quaternionf q_tilt_bw = observation ? yawRemovedBoatQuat(observation->proxy_bw)
+                                                        : impl_.startupProxyTiltQuat();
 
         // Feed the same corrected stream the MEKF sees, so a hard-iron offset
         // already removed is not re-learned into the new reference.
         const Eigen::Vector3f mag_corrected = mag_body_ned - mag_hard_iron_body_uT_;
 
         if (!mag_auto_tuner_.addSampleWithTiltQuatDt(
-                dt_mag, q_tilt_bw, last_acc_body_ned_,
-                last_gyro_body_ned_, mag_corrected)) {
+                dt_mag, q_tilt_bw, observation ? observation->accel : last_acc_body_ned_,
+                observation ? observation->gyro : last_gyro_body_ned_, mag_corrected)) {
             return;
         }
 
@@ -888,6 +927,7 @@ private:
 
     // Mag-init state.
     bool mag_ref_set_ = false;
+    bool last_mag_applied_ = false;
     Eigen::Vector3f mag_hard_iron_body_uT_ = Eigen::Vector3f::Zero();
     MagAutoTuner mag_auto_tuner_{};
 
