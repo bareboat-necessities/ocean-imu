@@ -30,8 +30,9 @@ J_r(\phi)=I-\frac{1-\cos\theta}{\theta^2}[\phi]_\times
 
 The old code instead used the upper-left 3x3 block of its **4x4 quaternion**
 propagator. That block is `cos(theta/2) I - sin(theta/2) [u]x`. Its spin-axis
-eigenvalue is `cos(theta/2)`, rather than one. With `P=I`, zero process noise,
-no observations, 720 deg/s and 5 ms samples, five seconds of prediction gives
+eigenvalue is `cos(theta/2)`, rather than one. In the bias-free layout, with
+`P=I`, zero process noise, no observations, 720 deg/s and 5 ms samples,
+five seconds of prediction gives
 axial variance **0.3726473193**, rather than one. A deterministic rotation
 cannot create that information. Transverse errors also rotate by the wrong
 angle; the bias cross block must integrate that rotation rather than use
