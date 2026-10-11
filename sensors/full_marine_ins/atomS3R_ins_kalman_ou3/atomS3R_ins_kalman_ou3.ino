@@ -14,6 +14,13 @@
     - runtime_.apply* already includes temperature compensation.
 */
 
+// Set to 0 to reproduce Stage A observation-only behavior. This transports
+// host-cache delay only; no BMM150 conversion epoch is guessed.
+// Keep this before all includes so the shared input sees the selected value.
+#ifndef SEA_STATE_MAG_HOST_ALIGNMENT
+#define SEA_STATE_MAG_HOST_ALIGNMENT 1
+#endif
+
 #include <Arduino.h>
 
 #ifndef SEA_STATE_ENABLE_WIZARD
@@ -71,11 +78,6 @@ constexpr float FREQ_GUESS = 0.3f;
 #include "util/MagneticHeading.h"
 #include "util/MagneticInput.h"
 
-// Set to 0 to reproduce Stage A observation-only behavior. This transports
-// host-cache delay only; no BMM150 conversion epoch is guessed.
-#ifndef SEA_STATE_MAG_HOST_ALIGNMENT
-#define SEA_STATE_MAG_HOST_ALIGNMENT 1
-#endif
 #include "util/QuaternionUtils.h"
 #include "wave_dir/WaveDirectionReport.h"
 

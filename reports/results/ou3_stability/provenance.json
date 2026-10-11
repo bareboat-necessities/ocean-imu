@@ -41,7 +41,7 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "111d05a9f3face6234465f5b25880b3f646ef619"
+      "git_blob_sha": "12663e96d151835a5986cf0f86b9a7134c9efd3d"
     }
   ],
   "semantic_bindings": {
@@ -165,7 +165,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "d7c5a68f6ceada1f6a93010ffae95b12720ed016"
+      "git_blob_sha": "81d0c6a6474840ed54bba3b8da6c1aeb08741c76"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",

@@ -8,6 +8,7 @@ timed entry, compiler roundoff in a different profile, or hardware sampling.
 """
 from pathlib import Path
 import hashlib
+import json
 import re
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -15,12 +16,29 @@ BASE_COMMIT = '2c534feb423a627c40f475daed40b4274d3dd2b8'
 PATHS = ('src/kalman_ou_iii/Kalman3D_Wave_OU_III.h',
          'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h',
          'src/kalman_common/ProxyStartupFusion.h')
-EXPECTED = {'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h': 'f87f7b5d533701df304744b36b5e08005dc4688e78e60b9e1ffb11b3a78cbe2a', 'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h': 'c797f8f614f38e616ce095dc4bbbcab11c4aa724b176f0a67f5e524f0fa2af76', 'src/kalman_common/ProxyStartupFusion.h': 'f1b7878da196a2439d81e0343414456c5398ad27f6365d0235c8ea45415377a1'}
+EXPECTED = {'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h': '95aa5cd90dd8d0e1345964095cc6d851d5a337d9b1ce2906fe29f5f1a93999e9', 'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h': '41a2b0524f0174880f9045f8e8128ebb45260e39b659be5d8c48354c59a69f0d', 'src/kalman_common/ProxyStartupFusion.h': 'b2b061bbfc22a4ebe4236412ae179909a991dffcd0460bc370749e96e1c8d1cd'}
+
+
+_TOKEN = re.compile(
+    r'(?P<ignored>\s+|//[^\n]*|/\*.*?\*/)'
+    r'|(?:u8|u|U|L)?R"(?P<delimiter>[^ ()\\\t\r\n]{0,16})\(.*?\)(?P=delimiter)"'
+    r'|(?:u8|u|U|L)?(?:"(?:\\.|[^"\\\r\n])*"|\'(?:\\.|[^\'\\\r\n])*\')'
+    r'|(?:[0-9]|\.[0-9])(?:[eEpP][+-]|[a-zA-Z0-9_.\'])*'
+    r'|[a-zA-Z_][a-zA-Z0-9_]*'
+    r'|%:%:|>>=|<<=|<=>|->\*|\.\.\.|##|::|\.\*|->|\+\+|--|<<|>>'
+    r'|<=|>=|==|!=|&&|\|\||[+*/%&|^!-]=|<:|:>|<%|%>|%:|.',
+    re.S,
+)
 
 
 def tokens(source):
-    source = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.S)
-    return re.sub(r'\s+', '', source)
+    """Serialize lexical tokens, retaining literal bytes and token boundaries.
+
+    Comments/spacing outside literals are insignificant to this source audit.
+    This is not preprocessing or a general C++ semantic-equivalence proof.
+    """
+    return json.dumps([match.group() for match in _TOKEN.finditer(source)
+                       if match.group('ignored') is None], separators=(',', ':'))
 
 
 def project(path, source):

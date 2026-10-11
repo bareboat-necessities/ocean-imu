@@ -139,15 +139,15 @@
   "scope": "Source-operation equivalence for the legacy API and unchanged finite payloads; no timed-API, hardware or theorem qualification",
   "sources": {
     "src/kalman_common/ProxyStartupFusion.h": {
-      "legacy_operation_tokens_sha256": "f1b7878da196a2439d81e0343414456c5398ad27f6365d0235c8ea45415377a1",
+      "legacy_operation_tokens_sha256": "b2b061bbfc22a4ebe4236412ae179909a991dffcd0460bc370749e96e1c8d1cd",
       "source_sha256": "d7bc77901adfbe788617222ed7ab1f281c679c0d20a5abab8a799acd10370a87"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-      "legacy_operation_tokens_sha256": "f87f7b5d533701df304744b36b5e08005dc4688e78e60b9e1ffb11b3a78cbe2a",
+      "legacy_operation_tokens_sha256": "95aa5cd90dd8d0e1345964095cc6d851d5a337d9b1ce2906fe29f5f1a93999e9",
       "source_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-      "legacy_operation_tokens_sha256": "c797f8f614f38e616ce095dc4bbbcab11c4aa724b176f0a67f5e524f0fa2af76",
+      "legacy_operation_tokens_sha256": "41a2b0524f0174880f9045f8e8128ebb45260e39b659be5d8c48354c59a69f0d",
       "source_sha256": "64d5419f9b4018ab165fda234eaf7282dbd271b60bdb30c4e05d3940ebccdb32"
     }
   },
