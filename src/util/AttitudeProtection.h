@@ -54,11 +54,20 @@ public:
     // calibrated, offset-corrected field at the current gyro epoch in uT.
     // reference_yaw is the azimuth of the existing world magnetic reference.
     // No reference, calibration, navigation state or bias is relearned here.
-    Decision step(float dt, const Vec& gyro, const Vec& bias, const Vec& acc,
+    Decision step(float dt, const Vec& gyro, const Vec& bias, const Vec& acc, bool accel_fresh,
                   float gravity, const Quat& q_before, const Vec& field,
                   bool magnetic_valid, bool magnetic_new, uint32_t now_us,
                   float reference_yaw = 0.0f, bool can_reacquire = true) {
         Decision d;
+        // AccelHold transports a vector; it does not create gravity evidence.
+        // Allow the normal 100 Hz accel / 200 Hz gyro phase offset, but discard
+        // any capture window interrupted by more than 20 ms without a sample.
+        const bool accel_gap = !have_accel_ || uint32_t(now_us - last_accel_us_) > 20000u;
+        if (accel_gap) clearWindow_();
+        if (accel_fresh && acc.allFinite() && acc.squaredNorm() > 1e-6f) {
+            have_accel_ = true; last_accel_us_ = now_us;
+        }
+        const bool accel_recent = have_accel_ && uint32_t(now_us - last_accel_us_) <= 20000u;
         const bool finite = std::isfinite(dt) && dt > 0 && dt < 1.0f &&
             gyro.allFinite() && acc.allFinite() && bias.allFinite() &&
             std::isfinite(gravity) && gravity > 0;
@@ -78,7 +87,7 @@ public:
         }
         // The rate gate also covers acceleration whose norm happens to equal
         // g. A norm-only test cannot distinguish that from true gravity.
-        const bool hazard = !finite || dt > .020001f || speed > 1.5f || angular_acceleration > 2.0f || norm_error > .20f;
+        const bool hazard = !finite || !accel_recent || dt > .020001f || speed > 1.5f || angular_acceleration > 2.0f || norm_error > .20f;
         if (hazard) { dynamic_ = true; post_dynamic_ = true; clear_sec_ = recovery_wait_ = 0; }
         else if (dynamic_) {
             clear_sec_ = speed < .75f && angular_acceleration < 1.0f && norm_error < .08f ? clear_sec_ + dt : 0;
@@ -94,7 +103,7 @@ public:
         d.hold_attitude = dynamic_ || post_dynamic_;
         const bool q_ok = q_before.coeffs().allFinite() && q_before.norm() > 1e-6f;
         if (!can_reacquire) { post_dynamic_ = pending_ = false; d.hold_attitude = dynamic_; }
-        if (!finite || acc.norm() < 1e-3f || !std::isfinite(reference_yaw) || !q_ok || !magnetic_valid || !field.allFinite() || !can_reacquire) {
+        if (!finite || !accel_recent || acc.norm() < 1e-3f || !std::isfinite(reference_yaw) || !q_ok || !magnetic_valid || !field.allFinite() || !can_reacquire) {
             clearWindow_(); d.hold_attitude = dynamic_ || pending_ || post_dynamic_; return d;
         }
         Quat predicted = q_before.normalized() * rotation(Vec((gyro - bias) * dt));
@@ -121,8 +130,8 @@ public:
             (std::abs(fn / field_norm_ - 1) < .20f && std::abs(dip - field_dip_) < .12f);
         const bool settled = !dynamic_ && speed < .12f && norm_error < .04f && field_matches;
         if (!settled) { clearWindow_(); return d; }
-        // Held values never establish a fresh recovery window. Timeout also
-        // prevents accumulating elapsed time across a missing magnetic stream.
+        // Both source streams must remain fresh throughout the window.
+        // Gyro transport alone never establishes recovery observations.
         if (have_window_ && uint32_t(now_us - last_new_us_) > 120000u) clearWindow_();
         if (!magnetic_new) return d;
         const bool consistent = have_window_ &&
@@ -151,12 +160,13 @@ public:
 private:
     void clearWindow_() { have_window_ = false; count_ = 0; }
     bool post_dynamic_ = false;
+    bool have_accel_ = false;
     bool have_rate_ = false;
     Vec rate_lpf_ = Vec::Zero(), angular_accel_lpf_ = Vec::Zero();
     bool dynamic_ = false, pending_ = false, have_field_ = false, have_window_ = false;
     float recovery_wait_ = 0;
     float clear_sec_ = 0, field_norm_ = 0, field_dip_ = 0, window_norm_ = 0;
     Vec window_down_ = Vec::Zero(), window_field_ = Vec::Zero();
-    uint32_t window_start_us_ = 0, last_new_us_ = 0, count_ = 0, recoveries_ = 0;
+    uint32_t last_accel_us_ = 0, window_start_us_ = 0, last_new_us_ = 0, count_ = 0, recoveries_ = 0;
 };
 } // namespace ocean_imu::attitude

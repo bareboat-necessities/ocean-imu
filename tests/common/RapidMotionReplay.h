@@ -35,7 +35,7 @@ struct Trial {
         magnetic.advance(now,w-b->bias(),0,timing,field,V::Zero(),false);
         V current=V::Zero();
         const bool mag_ok=valid && magnetic.currentField(V::Zero(),current);
-        const auto decision=protection.step(dt,w,b->bias(),a,gravity,b->attitude(),current,
+        const auto decision=protection.step(dt,w,b->bias(),a,fresh_acc,gravity,b->attitude(),current,
             mag_ok,magnetic.newSource(),now);
         const V old_bias=b->bias();
         const bool hold=enabled && decision.hold_attitude; last_held=hold;
@@ -119,6 +119,42 @@ static void staleAndDisturbance() {
             t.tick(.005f,Q::Identity(),V::Zero(),V(0,0,-gravity),field,mode!=0 && i%8==0,true,mode!=1);
         }
         require(t.protection.recoveryCount()==0,"stale/invalid/disturbed field caused recovery");
+    }
+}
+static void accelerometerDropout() {
+    for (int mode=0; mode<3; ++mode) {
+        Trial t;
+        t.now=0xffe00000u; // Exercise source-age arithmetic across micros() wrap.
+        const V gravity_body(0,0,-gravity);
+        if (mode!=2)
+            for (int i=0;i<400;++i)
+                t.tick(.005f,Q::Identity(),V::Zero(),gravity_body,earth,i%8==0,i%2==0);
+        t.b->recover(Q(Eigen::AngleAxisf(float(M_PI),V::UnitZ())));
+        if (mode==0) {
+            // A last measured force can have gravity's norm and a false tilt.
+            const V contaminated=rotation(V(0,10*rad,0))*gravity_body;
+            t.tick(.005f,Q::Identity(),V::Zero(),contaminated,earth,true,true);
+        }
+        // Establish the dropout before the next new magnetic observation;
+        // a still-fresh pre-dropout gravity sample is valid recovery evidence.
+        for (int i=0;i<6;++i)
+            t.tick(.005f,Q::Identity(),V::Zero(),gravity_body,earth,false,false);
+        for (int i=0;i<600;++i) {
+            // No acceleration; isolated frames; or no initial acceleration.
+            const bool fresh_acc=mode==1 && i%40==0;
+            t.tick(.005f,Q::Identity(),V::Zero(),gravity_body,earth,i%8==0,fresh_acc);
+            require(t.protection.recoveryCount()==0,"missing acceleration caused global recovery");
+            if (i>4) require(t.last_held,"accelerometer dropout resumed attitude/bias aiding");
+        }
+        for (int i=0;i<600;++i) {
+            // The 100 Hz acceleration stream need not coincide with 25 Hz mag.
+            t.tick(.005f,Q::Identity(),V::Zero(),gravity_body,earth,i%8==0,i%2==1);
+            if (i<140)
+                require(t.protection.recoveryCount()==0,"recovery bridged an acceleration gap");
+        }
+        require(t.protection.recoveryCount()==1,"fresh acceleration did not restore recovery");
+        require(t.tail<3,"dropout recovery installed false tilt or heading");
+        std::printf("accel-dropout,%d,%d,%.5f,%u\n",RAPID_BACKEND,mode,t.tail,t.protection.recoveryCount());
     }
 }
 static void movingAfterTurn() {
@@ -232,7 +268,7 @@ int main() {
     rapid(720,.15f,false,false,false);
     for(float a:{90.0f,150.0f,179.99f,180.0f,180.01f,-179.99f}) for(float h:{0.0f,137.0f}) capture(a,h);
     for(float h:{0.0f,137.0f}) capture(180,h,true);
-    staleAndDisturbance(); movingAfterTurn();
+    staleAndDisturbance(); accelerometerDropout(); movingAfterTurn();
 #if RAPID_BACKEND >= 3 && RAPID_BACKEND <= 5
     selectiveCovarianceAndRecovery();
     facadeProtection();

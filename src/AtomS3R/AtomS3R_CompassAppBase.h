@@ -487,7 +487,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
 
   const auto& q = outputs_.att;
   out.motion = attitude_protection_.step(out.dt, out.w_cal, backend_->gyroBiasBody(),
-      out.a_cal, ImuCalCfg::g_cal_local, Eigen::Quaternionf(q.w, q.x, q.y, q.z),
+      out.a_cal, s.accel_fresh, ImuCalCfg::g_cal_local, Eigen::Quaternionf(q.w, q.x, q.y, q.z),
       field, out.mag_ok, mag_input_.newSource(), s.sample_us, 0.0f, backend_->isValid());
   return out;
 }

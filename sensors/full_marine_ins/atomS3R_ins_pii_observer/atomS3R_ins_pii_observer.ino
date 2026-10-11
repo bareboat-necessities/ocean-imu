@@ -586,7 +586,7 @@ class FusionApp {
 
     const Eigen::Quaternionf q_before(mahony.q0, mahony.q1, -mahony.q2, -mahony.q3);
     const auto motion = attitude_protection_.step(dt_, w_cal_, rotation_bias,
-        a_cal_, APP_G_LOCAL, q_before, magnetic_now, mag_usable,
+        a_cal_, s.accel_fresh, APP_G_LOCAL, q_before, magnetic_now, mag_usable,
         mag_input_.newSource(), s.sample_us, 0.0f, mahony_seeded_);
     fusion_.mahonyState().setAidingEnabled(!motion.hold_attitude);
     mag_used_ = mag_usable && !motion.hold_attitude;

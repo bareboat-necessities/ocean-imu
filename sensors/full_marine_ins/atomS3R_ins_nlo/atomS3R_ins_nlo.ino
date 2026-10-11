@@ -588,7 +588,7 @@ class FusionApp {
 #endif
 
     const auto motion = attitude_protection_.step(dt_, w_cal_, rotation_bias,
-        a_cal_, APP_G_LOCAL, fusion_.snapshot().q_nb, magnetic_now, mag_usable,
+        a_cal_, s.accel_fresh, APP_G_LOCAL, fusion_.snapshot().q_nb, magnetic_now, mag_usable,
         mag_input_.newSource(), s.sample_us,
         fusion_.filter().config().magnetic_declination_rad, fusion_.initialized());
     fusion_.setAttitudeAidingEnabled(!motion.hold_attitude);

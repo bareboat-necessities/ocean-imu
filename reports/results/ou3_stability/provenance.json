@@ -41,11 +41,11 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "851b44a651187afeef2eef837626efec050782fe"
+      "git_blob_sha": "9db0262ffb64bd24befaef5eb8e58a4aa47bc4bc"
     },
     {
       "path": "src/util/AttitudeProtection.h",
-      "git_blob_sha": "4d599390184f509674dce6cb1f2c92d53b4b36f0"
+      "git_blob_sha": "fed29c67acfe86c4048dffa13b9ee712e8ed43b2"
     },
     {
       "path": "src/util/ImuFreshness.h",
@@ -185,7 +185,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "dfc6f44686b1025e9faaccff7ca1de235355f0c5"
+      "git_blob_sha": "d0e995f0fac30c1db17e512832abb648f9957e4f"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "5b8f2cbaa0fbdae52c76fce84aa38878b7621f93"
+      "git_blob_sha": "19462389512351549b2af80d523e7033423f8673"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1009,7 +1009,7 @@
     },
     {
       "path": "reports/results/ou3_stability/magnetic-timing-legacy-binding.json",
-      "git_blob_sha": "5ac2044ba7255012bafd4e56fc46bc6edcf6662c"
+      "git_blob_sha": "8463b429ef53cf4a6bb11da364fcaa1a68842ffa"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",

@@ -14,6 +14,19 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class RapidMotionWiringTest(unittest.TestCase):
+    def test_backend_scripts_stop_on_rapid_failure(self):
+        for backend in ('ahrs', 'kalman_ou_ii', 'kalman_ou_iii', 'kalman_tfg', 'nlo', 'pii_observer'):
+            script = ROOT / 'tests' / backend / 'run_tests.sh'
+            first = next(line for line in script.read_text().splitlines()
+                         if line.startswith('./rapid_motion-'))
+            with self.subTest(backend=backend), tempfile.TemporaryDirectory() as tmp:
+                stub = Path(tmp) / first.removeprefix('./')
+                stub.write_text('#!/bin/sh\nexit 23\n')
+                stub.chmod(0o755)
+                result = subprocess.run(['bash', str(script)], cwd=tmp,
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 23, result.stderr)
+
     def test_diagnostic_rotation_and_freshness(self):
         """Exercise the diagnostic's actual integration and source-epoch code."""
         eigen = Path(os.environ.get('EIGEN_INCLUDE_DIR', '/usr/include/eigen3'))
@@ -113,6 +126,8 @@ int main(){
                 self.assertIn('if (motion.reacquire)', update)
                 self.assertNotIn('LOOP_HZ, 0.05f', code)
                 policy = update.index('attitude_protection_.step(')
+                policy_end = update.index(';', policy)
+                self.assertIn('a_cal_, s.accel_fresh,', update[policy:policy_end])
                 imu_update = update.index('fusion_.update')
                 self.assertLess(policy, imu_update)
                 if 'kalman_ou' in path.name or 'tfg' in path.name:
@@ -126,6 +141,7 @@ int main(){
             self.assertIn('s.motion.reacquire', code)
         base = (ROOT / 'src/AtomS3R/AtomS3R_CompassAppBase.h').read_text()
         self.assertIn('out.accel_fresh = s.accel_fresh', base)
+        self.assertIn('out.a_cal, s.accel_fresh, ImuCalCfg::g_cal_local', base)
         self.assertNotIn('clampf_(out.dt', base)
         self.assertIn('!sample_.motion.hold_attitude && sample_.mag_ok', base)
 

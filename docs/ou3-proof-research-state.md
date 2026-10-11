@@ -111,11 +111,15 @@ one BLAS thread. Regeneration uses one numerical-library thread and six
 independent simulator jobs; its protocol, seeds and acceptance criteria are
 unchanged. Incomplete first-attempt outputs are not used as replay evidence.
 The complete validation, robustness and TFG studies now reproduce locally.
-`python3 tools/tfg_comparison.py --check --require-ci --publish` still fails
+`python3 tools/tfg_comparison.py --check --require-ci --publish` initially failed
 with `ValueError: publication requires CI replay provenance` (E: missing CI
 execution). The same bundle passes `--check`; no workflow identity is invented,
-and no publication gate is weakened. The remaining step is an actual CI replay
-after branch publication is authorized. Final `make all` passes the preceding
+and no publication gate is weakened. PR #671's initial `evidence-contract` and
+`ou-validation` jobs fail at this same command. Full branch replay
+`38176210485` supplies the genuine TFG artifact, with source and byte hashes
+verified; that artifact passes the unchanged `--check --require-ci` gate.
+Full OU CI regeneration and final-head validation remain required.
+The earlier `make all` passes the preceding
 C++/simulation suites and stops at the same gate, invoked as
 `python3 ../../tools/tfg_comparison.py --check --require-ci` in `tests/validation`.
 The complete Python suite and the two downstream wave suites pass separately
@@ -146,6 +150,29 @@ After the table matched, the same publication check exposed stale generated
 macros (including 12.523 versus 12.525, E: incomplete publication mirroring).
 Both the table and macro definitions are copied from the new evidence. These repairs retain the original
 ordinary-branch identities and do not qualify guarded/recovery execution.
+PR review exposed two further E implementation failures: capture used held
+acceleration without an age bound, and standalone backend scripts could hide a
+failed first rapid-motion test because explicit `set -e` came later or was absent.
+The qMEKF regression reproduced `missing acceleration caused global recovery`.
+The shared policy now receives actual accelerometer freshness, holds aiding after
+20 ms without a sample, and clears capture across any such gap. A valid 100 Hz
+acceleration stream may be out of phase with 25 Hz magnetic observations. The
+same three dropout/resumption cases run on all seven backends, including clock
+wrap and a last contaminated force with gravity's norm. The initial intermittent
+test allowed capture before the dropout began (E: test chronology); it now starts
+the gap before the next magnetic frame. All six scripts enable errexit before
+their first executable test; injected exit-23 failures verify propagation.
+All seven backends pass their 22 rapid-motion, 14 large-angle and three dropout
+cases after the repair. The dropout recovery tail is below 0.23 degrees in every
+case, against the unchanged 3-degree bound. Full `make all` and firmware builds
+are rerun on the repaired source; their completion remains a validation gate.
+These repairs retain navigation/bias state and gyro propagation. No proof
+identity or bound changes; only guarded-path engineering claims are involved.
+The source-tree gate then reports `finite quotient/secant evidence verification
+failed: shipping source tree changed` (E: stale diagnostic binding). Both native
+secant runs were repeated on the new source tree with all fork/forcing controls;
+their native byte hashes and numerical results reproduce exactly. The new
+record and its receipt retain the finite-diagnostic scope and all open premises.
 No shipping theorem counterexample is asserted. Existing algebraic identities
 retain their original hypotheses; guarded intervals, covariance decorrelation
 and global reacquisition need separate analysis. The next falsifiable runtime

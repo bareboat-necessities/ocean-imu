@@ -1,9 +1,8 @@
 #!/bin/bash -e
+set -e
 
 ./rapid_motion-test
 
-# Callers use `bash run_tests.sh`, which ignores the shebang's -e.
-set -e
 
 ./mag_continuous-test
 ./device_heave-test

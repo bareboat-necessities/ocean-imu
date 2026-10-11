@@ -27,7 +27,8 @@ pseudo measurements and recovery transitions as well as the accelerometer.
 The guard suspends attitude and bias aiding when angular rate exceeds 1.5 rad/s,
 filtered angular acceleration exceeds 2 rad/s², specific-force magnitude differs
 from local gravity by more than 20%, or an update gap exceeds 20 ms. Angular
-rate and its derivative each have a 30 ms low-pass filter. Release requires
+rate threshold uses the raw gyro norm, so a short rate spike also triggers a
+hold. Two 30 ms low-pass stages estimate angular acceleration. Release requires
 500 ms below the lower rate, angular-acceleration and force thresholds.
 
 Gyro propagation continues with the learned bias. Mahony retains its integral
@@ -41,7 +42,11 @@ A large discrepancy (35 degrees) starts independent attitude capture; the
 15-degree lower threshold provides hysteresis. Capture uses gravity and the
 horizontal magnetic direction directly, so the antipodal heading has no
 zero-innovation trap. It requires a stable window of at least 750 ms and twelve
-new magnetic observations, with no gap over 120 ms. Angular rate must be below
+new magnetic observations, with no magnetic gap over 120 ms and no acceleration
+gap over 20 ms. Gyro-transported held acceleration is not new gravity evidence;
+an acceleration dropout holds attitude/bias aiding and clears the capture window.
+Acceleration and magnetic observations need not arrive on the same tick.
+Angular rate must be below
 0.12 rad/s and acceleration within 4% of local gravity. Field strength, horizontal
 observability, direction consistency, and the previously established field
 strength/dip fingerprint must also pass.
@@ -92,6 +97,9 @@ adapters of the production estimator implementations. The suite is part of
   stale, invalid and strength-disturbed fields.
 - Continued moderate roll and wave acceleration after a turn, bias preservation,
   covariance validity, navigation-state preservation and protected startup.
+- Accelerometer dropout after a contaminated sample, isolated acceleration
+  frames, and a missing initial acceleration stream, including clock wrap and
+  recovery after asynchronous fresh acceleration resumes, across all seven backends.
 - Actual acquisition function bodies with controlled driver masks and AUX reads,
   and the diagnostic's integration and freshness code with gaps and invalid data.
 

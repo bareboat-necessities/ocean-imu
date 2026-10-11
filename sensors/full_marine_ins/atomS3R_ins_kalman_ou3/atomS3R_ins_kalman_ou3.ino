@@ -561,7 +561,7 @@ private:
     const bool field_valid = mag_input_.currentField(fusion_.magHardIronBodyUT(), magnetic_now);
     const Vector3f& reference = core.magnetic_reference_world();
     const auto motion = attitude_protection_.step(dt_, w_cal_, core.gyroscope_bias_body(),
-        a_cal_, g_local, fusion_.attitudeQuat(), magnetic_now, mag_ok_ && field_valid,
+        a_cal_, s.accel_fresh, g_local, fusion_.attitudeQuat(), magnetic_now, mag_ok_ && field_valid,
         mag_input_.newSource(), s.sample_us, std::atan2(reference.y(), reference.x()),
         fusion_.isLive() && fusion_.hasMagNorthLock());
     fusion_.raw().setAttitudeAidingEnabled(!motion.hold_attitude);

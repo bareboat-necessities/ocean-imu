@@ -1,23 +1,24 @@
 {
   "binary_sha256": {
-    "OU_III": "7a0fe1a5d8d71eb1c19057e2300f7b12c0014242aa510c8da3c11e85777ac69d",
-    "TFG": "d4a3b1dcf1a290b268e4bc55d7d3f458f7085491bb8fa5b3691a991a0e626a28"
+    "OU_III": "666ae3fcc39caa3d78c32b2c85ef8516de390020c2612eece3247cfe8542f29f",
+    "TFG": "d2e16a2cfacdb16558df82c8a3c2b4bea56e932bc37ecdb04f5095c128f341ac"
   },
   "build_environment": {
     "compiler": {
       "CPPFLAGS_env": "",
       "CXXFLAGS_env": "",
-      "banner": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+      "banner": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
       "command": "g++",
       "version": "13.3.0"
     },
     "eigen": {
-      "path": "unavailable",
-      "version": "unavailable"
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
+      "version": "3.4.0"
     },
-    "numpy": "2.3.5",
-    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
-    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]"
+    "numpy": "1.26.4",
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "dataset": {
     "archive": "sim-data-files-vessel-rao-28ft.zip",
@@ -35,9 +36,9 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.3"
   },
-  "generated_utc": "2026-10-11T20:52:51+00:00",
-  "git_commit": "e2888fb2ae4f53d67ee32f6b0b8e8519032f1ddc",
-  "git_diff_stat": "docs/ou3-proof-research-state.md                   |     16 +\n docs/rapid-motion-heading.md                       |     18 +\n .../aw-tracking-source-feasibility.json            |      2 +-\n .../ou3_stability/construction-mean-action.json    |      2 +-\n .../information-ratio-source-feasibility.json      |     24 +-\n .../moving-compatibility-carried-1200s.json        |      6 +-\n .../moving-compatibility-carried.json              |      6 +-\n .../moving-quiet-compatibility-certificate.json    |      2 +-\n .../moving-transport-source-feasibility.json       |      4 +-\n .../planar-generated-port-structure.json           |      4 +-\n .../planar-native-secants-diagnostic.json          |     38 +-\n .../planar-service-frontend-binding.json           |      6 +-\n .../planar-service-stream-diagnostic.json          |      6 +-\n reports/results/ou3_stability/provenance.json      |     71 +-\n .../ou3_stability/signed-adjoint-diagnostic.json   |      4 +-\n .../ou3_stability/signed-balance-diagnostic.json   |      4 +-\n .../world-frame-source-feasibility.json            |      4 +-\n reports/results/ou_robustness/ou_robustness.json   |  37920 +++---\n .../ou_robustness/ou_robustness_manifest.json      |    480 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |   1590 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |    620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   1966 +-\n .../results/ou_robustness/ou_robustness_stress.svg |    580 +-\n .../ou_robustness/ou_robustness_summary.csv        |   1880 +-\n reports/results/ou_validation/ou_validation.json   | 122025 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |   1410 +-\n .../ou_validation/ou_validation_covsync.svg        |   1524 +-\n .../ou_validation/ou_validation_displacement.svg   |   1372 +-\n .../results/ou_validation/ou_validation_macros.tex |     74 +-\n .../ou_validation/ou_validation_manifest.json      |    678 +-\n .../ou_validation/ou_validation_paired_effects.csv |   5098 +-\n .../ou_validation/ou_validation_publication.tex    |     34 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   5572 +-\n .../results/ou_validation/ou_validation_table.tex  |     16 +-\n .../ou_validation/ou_validation_transition.csv     |  24000 ++--\n .../ou_validation/ou_validation_transition.svg     |  23346 ++--\n .../ou_validation/ou_validation_tuning_points.tex  |      2 +-\n .../ou_validation/ou_validation_vertical.svg       |   1286 +-\n reports/results/tfg_comparison/comparison.tex      |     10 +-\n .../results/tfg_comparison/gate_diagnostics.json   |    360 +-\n reports/results/tfg_comparison/paired_summary.json |   3998 +-\n reports/results/tfg_comparison/raw_runs.csv        |    360 +-\n reports/results/tfg_comparison/raw_runs.json       |   3592 +-\n tests/common/RapidMotionReplay.h                   |     17 +-\n .../ou3_theorem/aw_tracking_source_diagnostic.py   |      2 +\n 46 files changed, 120492 insertions(+), 121217 deletions(-)",
+  "generated_utc": "2026-10-11T21:40:08+00:00",
+  "git_commit": "ad2cbc66cdee95c7d51949581d0bfc1dc7208503",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   10 +-\n .../results/tfg_comparison/gate_diagnostics.json   |  360 +-\n reports/results/tfg_comparison/paired_summary.json | 3858 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 2022 +++++-----\n 5 files changed, 3305 insertions(+), 3305 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -133,11 +134,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "dec4b0ed355f763e387844e5b8e3c8e161ecbae6d7d4998d02b0918beba73598",
-    "gate_diagnostics.json": "db2c74975de0ddf9f84ea978ee5c30c022a2d783ac4d888f61b256fbe693d45b",
-    "paired_summary.json": "085e903c8eb25da1684963d1c186e30fbed830a5424d567a59e46ef6a0e24a6e",
-    "raw_runs.csv": "4bb84b84254b599edf91d967ae9221206b3ae6df6119275d37e0454df56e3e39",
-    "raw_runs.json": "85459d8c42645c47de56b23452fd641290df3aefa79a8f19ff355c3a3a95a0d4"
+    "comparison.tex": "7a0008b18cc37f11e41ce6ed1ca2954c0dd6d39a7e5c76bf15b37d9e0549c726",
+    "gate_diagnostics.json": "1afc82442f84a8d2651e5e5a0b3492a6bce3b1c5ef5e1bc9359928b2b796aaa8",
+    "paired_summary.json": "fdd28d54e39aadc0af7babddbd12b88bb8053001b5d426777d7d77e0b62aedb6",
+    "raw_runs.csv": "2a19f93aa8cc6f774d425efef48bdb8de05d953180427f3d520375a72de763dd",
+    "raw_runs.json": "2935ab17c6ce803fc0bc4aac963fca1e59cb7ba22e76deeed921b2fb3ffc1c5c"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -193,5 +194,10 @@
     "tools/sim_dataset.py": "c68e23d1ed393ae5573d1199377000258cadf825f564dbd2ac42526c9878ed53",
     "tools/tfg_comparison.py": "fc334121afd0385606c336a1e5145bf07e8ba63b3427672d7b905dd89016f302"
   },
-  "workflow": null
+  "workflow": {
+    "job": "tfg_companion",
+    "run_attempt": "1",
+    "run_id": "38176210485",
+    "workflow": "ou-full-evidence-branch"
+  }
 }

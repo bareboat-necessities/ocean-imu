@@ -1,7 +1,7 @@
 #!/bin/bash -e
+set -e
 
 ./rapid_motion-test
-set -e
 make -f Makefile -f ../common/GyroBiasProjectionRegression.mk gyro_bias_projection-test
 ./gyro_bias_projection-test
 make -f Makefile -f ../common/StationaryDeviceRegression.mk stationary_device-test
