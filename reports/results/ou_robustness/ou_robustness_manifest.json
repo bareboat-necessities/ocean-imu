@@ -42,7 +42,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "feature/mag-timing-consistency",
-  "git_commit": "6d48e0a40be07dc0964b0cc0ec44e02e5a9d8d6d",
+  "git_commit": "e3aa9fa132ba9886054639ecde5d3f3a6fbeab69",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -333,8 +333,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-10-10T22:37:18+00:00",
-    "git_commit": "6d48e0a40be07dc0964b0cc0ec44e02e5a9d8d6d",
+    "generated_at": "2026-10-11T04:37:44+00:00",
+    "git_commit": "e3aa9fa132ba9886054639ecde5d3f3a6fbeab69",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -525,7 +525,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "38089991563",
+      "run_id": "38110014345",
       "workflow": "ou-full-evidence-branch"
     }
   },
