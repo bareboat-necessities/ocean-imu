@@ -6,11 +6,14 @@
 #include "util/MagneticInput.h"
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <deque>
 #include <memory>
 #include <random>
 using ocean_imu::attitude::rotation;
 constexpr float rad = .017453292519943295f;
+static bool diagnosis_mode=false;
+static bool known_force_control=false;
 static void require(bool ok,const char* reason) {
     if (!ok) { std::fprintf(stderr,"Rapid backend %d: %s\n",RAPID_BACKEND,reason); std::exit(1); }
 }
@@ -23,7 +26,9 @@ struct Trial {
     uint32_t now=1000;
     V field=earth,acc=V(0,0,-gravity);
     float peak=0,tail=0,max_bias=0;
+    float peak_heading=0,tail_heading=0,peak_tilt=0,tail_tilt=0;
     uint32_t peak_time=0; bool peak_held=false, last_held=false;
+    unsigned applied_recoveries=0;
     bool enabled=true;
     Trial() { magnetic.reset(.00135f,Eigen::Matrix3f::Identity()); }
     void tick(float dt,const Q& truth,const V& w,const V& measured_acc,const V& measured_mag,
@@ -43,10 +48,18 @@ struct Trial {
         if (hold) require((b->bias()-old_bias).norm()<2e-6f,"bias changed while protected");
         if (enabled && decision.reacquire) {
             b->recover(decision.target);
+            ++applied_recoveries;
             require((b->bias()-old_bias).norm()<2e-6f,"recovery changed learned bias");
         }
         require(b->finite() && b->attitude().coeffs().allFinite() && b->bias().allFinite(),"nonfinite state");
         tail=b->attitude().angularDistance(truth)/rad;
+        const V forward=b->attitude()*V::UnitX(), true_forward=truth*V::UnitX();
+        tail_heading=std::abs(std::remainder(std::atan2(forward.y(),forward.x())-
+            std::atan2(true_forward.y(),true_forward.x()),2*float(M_PI)))/rad;
+        const V down=b->attitude().conjugate()*V::UnitZ();
+        const V true_down=truth.conjugate()*V::UnitZ();
+        tail_tilt=std::atan2(down.cross(true_down).norm(),down.dot(true_down))/rad;
+        peak_heading=std::max(peak_heading,tail_heading); peak_tilt=std::max(peak_tilt,tail_tilt);
         if (tail>peak) { peak_time=now; peak_held=hold; }
         peak=std::max(peak,tail); max_bias=std::max(max_bias,b->bias().norm());
     }
@@ -73,11 +86,21 @@ static void rapid(float rate,float radius,bool combined,bool gap=false,bool enab
         mag_history.push_back(truth.conjugate()*earth);
         if(int(mag_history.size())>mag_delay+1) mag_history.pop_front();
         const V wm=w+(noisy ? V(noise(.019f)+V(.005f,-.004f,.008f)) : V::Zero());
-        const V am=a+(noisy ? V(noise(.12f)) : V::Zero());
+        // A causal control only: supply the exact omitted rigid-body force
+        // term, keeping every estimator correction active. This uses the
+        // specified physical pivot and truth, not an inferred hardware pivot.
+        const V rotational_force=alpha.cross(lever)+w.cross(w.cross(lever));
+        const V am=a-(known_force_control ? rotational_force : V::Zero())+
+            (noisy ? V(noise(.12f)) : V::Zero());
         const V mm=mag_history.front()+(noisy ? V(noise(.5f)) : V::Zero());
         t.tick(dt,truth,wm,am,mm,i%8==0,i%2==0);
     }
-    std::printf("rapid,%d,%d,%.0f,%.2f,%d,%d,%d,%.5f,%.5f,%.6f,%u,%d\n",RAPID_BACKEND,enabled,rate,radius,combined,gap,mag_delay*5,t.peak,t.tail,t.max_bias,t.protection.recoveryCount(),noisy);
+    if (diagnosis_mode)
+        std::printf("%d,%.0f,%.2f,%d,%d,%d,%d,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.6f,%u\n",
+            RAPID_BACKEND,rate,radius,combined,gap,mag_delay*5,noisy,
+            t.peak,t.tail,t.peak_heading,t.tail_heading,t.peak_tilt,t.tail_tilt,t.max_bias,t.applied_recoveries);
+    else
+        std::printf("rapid,%d,%d,%.0f,%.2f,%d,%d,%d,%.5f,%.5f,%.6f,%u,%d\n",RAPID_BACKEND,enabled,rate,radius,combined,gap,mag_delay*5,t.peak,t.tail,t.max_bias,t.applied_recoveries,noisy);
     if(enabled) {
         if(t.peak>=12) std::fprintf(stderr,"peak at %.3fs held=%d\n",float(t.peak_time)*1e-6f,t.peak_held);
         require(t.peak<12,"rapid-motion attitude excursion exceeds 12 degrees");
@@ -181,6 +204,27 @@ static void acquisition() {
     clock.update(0xfffff000u);
     require(std::abs(clock.update(uint32_t(0xfffff000u+75000u))-.075f)<1e-6f,"wrap/gap elapsed time lost");
 }
+static void antipodalInnovation() {
+    const V saved_field=earth;
+    earth=V(50,0,0);
+    // Exact antipode, without sin(pi)'s floating-point perturbation. Gravity
+    // and field are perpendicular: each local vector residual has zero
+    // tangential correction even though the heading is exactly wrong.
+    const Q wrong(0,0,0,1);
+    for (bool protected_run:{false,true}) {
+        Trial t; t.enabled=protected_run;
+        t.b->recover(wrong);
+        for (int i=0;i<600;++i)
+            t.tick(.005f,Q::Identity(),V::Zero(),V(0,0,-gravity),earth,i%8==0,i%2==0);
+        std::printf("antipode,%d,%d,%.6f,%u\n",RAPID_BACKEND,protected_run,t.tail,t.applied_recoveries);
+        if (protected_run) {
+            require(t.applied_recoveries==1 && t.tail<3,"global capture did not escape zero-tangent antipode");
+        } else {
+            require(t.applied_recoveries==0 && t.tail>179,"local antipode control did not retain its wrong equilibrium");
+        }
+    }
+    earth=saved_field;
+}
 #if RAPID_BACKEND >= 3 && RAPID_BACKEND <= 5
 static void selectiveCovarianceAndRecovery() {
     auto b=std::make_unique<Backend>(); auto& f=b->f;
@@ -257,8 +301,23 @@ static void facadeProtection() {
     require(proxy().angularDistance(expected)<.01f,"private tilt proxy chased dynamic acceleration");
 }
 #endif
-int main() {
-    acquisition();
+int main(int argc, char** argv) {
+    // Causal controls: every ordinary correction remains enabled, with exact
+    // delivered gyro/field. Vary only the physical lever arm/rate or one named
+    // timing/noise condition. No guard or reacquisition acts on the filter.
+    if (argc==2 && (std::strcmp(argv[1],"--diagnose")==0 ||
+                   std::strcmp(argv[1],"--diagnose-force-equation")==0)) {
+        diagnosis_mode=true;
+        known_force_control=std::strcmp(argv[1],"--diagnose-force-equation")==0;
+        std::puts("backend,rate_deg_s,radius_m,combined,gap_75ms,mag_delay_ms,noisy,peak_attitude_deg,tail_attitude_deg,peak_heading_deg,tail_heading_deg,peak_tilt_deg,tail_tilt_deg,max_bias_rad_s,applied_recoveries");
+        for (float rate:{180.0f,360.0f,720.0f}) for (float r:{0.0f,.05f,.15f})
+            for (bool combined:{false,true}) rapid(rate,r,combined,false,false);
+        rapid(720,0,false,true,false); rapid(720,.15f,false,true,false);
+        rapid(720,0,true,false,false,8); rapid(720,.15f,true,false,false,8);
+        rapid(720,0,false,false,false,0,true); rapid(720,.15f,false,false,false,0,true);
+        return 0;
+    }
+    acquisition(); antipodalInnovation();
     for(float rate:{180.0f,360.0f,720.0f}) for(float r:{0.0f,.05f,.15f})
         for(bool combined:{false,true}) rapid(rate,r,combined);
     rapid(720,.15f,false,true); rapid(720,.15f,true,false,true,8);

@@ -9,6 +9,13 @@ no estimator.
 
 ## Failure mechanism
 
+The [equation audit and causal controls](rapid-motion-math.md) distinguish the
+actual qMEKF covariance errors from the acceleration-model and antipodal
+correction failures. The corrected qMEKF propagates its right attitude error
+with the full SO(3) rotation and exact bias integral, then transports covariance
+after finite quaternion injection. These algebraic repairs do not by themselves
+remove the acceleration-driven flip.
+
 The common host replay reproduces large attitude errors with exact gyro and
 magnetic measurements. Rotation about a displaced sensor produces tangential
 and centripetal acceleration. Treating its direction as gravity can corrupt
@@ -100,6 +107,8 @@ adapters of the production estimator implementations. The suite is part of
 - Accelerometer dropout after a contaminated sample, isolated acceleration
   frames, and a missing initial acceleration stream, including clock wrap and
   recovery after asynchronous fresh acceleration resumes, across all seven backends.
+- Exactly antipodal, horizontal-field controls: ordinary local updates remain
+  at 180 degrees, while finite-angle capture escapes the equilibrium in all seven.
 - Actual acquisition function bodies with controlled driver masks and AUX reads,
   and the diagnostic's integration and freshness code with gaps and invalid data.
 
@@ -110,8 +119,9 @@ end below 5 degrees after seven seconds, and keep gyro-bias magnitude below
 alongside protected results. These are engineering regression bounds, not a
 stability theorem or a hardware accuracy specification.
 
-The common suite on implementation commit `eab4a46` passed all 22 protected
-rapid cases and all fourteen large-angle cases per backend. The maxima below
+The [source-bound replay manifest](../reports/results/rapid_motion/manifest.json)
+records all 22 protected rapid cases and all fourteen large-angle cases per backend.
+The maxima below
 include ideal and noisy cases in both categories. Capture error is measured three
 seconds after introducing the heading error; rapid tail error is measured
 seven seconds after the turn ends. Values are total attitude error in degrees,
@@ -119,13 +129,13 @@ rounded upward to two decimals.
 
 | Backend | Peak during rapid replay | Rapid tail | Large-angle capture tail |
 | --- | ---: | ---: | ---: |
-| qMEKF | 2.93 | 0.52 | 0.56 |
-| Mahony | 4.29 | 0.91 | 0.75 |
-| OU-II | 4.60 | 1.40 | 0.95 |
-| OU-III | 6.15 | 2.85 | 1.61 |
-| TFG | 2.24 | 0.69 | 1.09 |
-| NLO | 8.10 | 2.67 | 2.11 |
-| PII | 5.21 | 2.07 | 1.39 |
+| qMEKF | 3.57 | 0.53 | 0.56 |
+| Mahony | 3.78 | 0.91 | 0.75 |
+| OU-II | 4.16 | 1.46 | 0.95 |
+| OU-III | 6.60 | 2.66 | 1.61 |
+| TFG | 4.08 | 0.60 | 1.09 |
+| NLO | 7.06 | 2.80 | 2.11 |
+| PII | 3.53 | 2.09 | 1.39 |
 
 ## Qualification limits
 

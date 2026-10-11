@@ -46,6 +46,42 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Rapid-motion runtime repair scope
 
+The mathematical audit is recorded in `docs/rapid-motion-math.md`. Two qMEKF
+implementation errors are independently reproduced (classification E): the
+quaternion half-angle propagator block was used as an SO(3) attitude-error
+transition, and covariance was not transported after finite error injection.
+The no-noise/no-observation spin test incorrectly contracted unit axial
+variance to 0.3726473193. Central differences of the physical right-error flow
+and reset reject the original header and pass the corrected implementation.
+These qMEKF changes do not alter OU-III's ordinary-aiding equations.
+The offset-turn flip remains without protection after those repairs, so the
+hypothesis that they alone explain the common failure is rejected. Matched
+known-force controls isolate the invalid gravity assumption, while exact
+antipodal controls isolate the local zero-tangent correction equilibrium.
+The physical hardware cause and conversion epochs remain unqualified.
+The source-wide secant gate requires a rerun after the qMEKF change; both
+native byte hashes and all numerical results reproduce exactly on that rerun.
+`make all` then stopped in `python3 -m unittest discover -v -p 'test_*.py'`
+with eight provenance-test failures caused by the two newly regenerated
+record hashes (E). The actual rerun records are rebound, preserving all numerical
+payloads and open theorem flags; the unchanged evidence builder passes.
+An interrupted Arduino compile left a zero-byte NLO object, causing
+`undefined reference to setup` and `loop` at link (E). Removing that generated
+object and recompiling the unchanged source passes. A diagnosis run also found
+an old executable after an overlapping header edit; its incomplete controls
+are discarded. The diagnosis driver now freshly compiles its targets. AHRS
+simulation dependencies explicitly include the qMEKF header; the current
+geometry and wave suites pass after rebuilding. An extra compile with
+`-Wall -Wextra -Wshadow -Wconversion -Werror` failed on pre-existing `R`/`M`
+shadowing in qMEKF (E: stricter diagnostic configuration). The repository's
+`-Wall -Wextra -Wpedantic -Werror` flags pass without unrelated source changes.
+All 336 matched causal controls and the seven-backend protection/recovery matrix
+complete from fresh builds. Every exact-antipode local control stays at 180
+degrees; each finite-angle recovery escapes with one capture. Full validation
+status belongs in PR metadata. The next physical qualification is a timestamped
+hardware turn. No admitted theorem counterexample is claimed; these runtime
+cases remain finite engineering evidence.
+
 The device motion guard, selective gain-row holds and settled attitude
 reacquisition are new runtime operations. The existing local identities remain
 applicable to the ordinary aiding branch only; no capture or stability theorem

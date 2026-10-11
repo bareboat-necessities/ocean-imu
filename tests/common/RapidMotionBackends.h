@@ -8,7 +8,7 @@ using V = Eigen::Vector3f;
 using Q = Eigen::Quaternionf;
 constexpr float gravity = 9.80665f;
 extern const float g_std = gravity;
-const V earth(20.3f, 0, 46.8f);
+V earth(20.3f, 0, 46.8f);
 
 #if RAPID_BACKEND == 1
 #include "ahrs/KalmanQMEKF.h"
