@@ -1,4 +1,13 @@
 {
+  "inherited_state_recovery": {
+    "scope": "Ordinary aiding through the 720 deg/s, 15 cm turn; paired continuations retain every state. Protection is enabled only after t=11 s in the late-protection arm. No reseeding. This deliberately bypasses prevention during the turn.",
+    "cases": 28,
+    "csv_sha256": "b97df456d472258c8581cf61ce5d081a8453b35d2faf3dfe115eb013e2fe8a3b",
+    "tail_seconds_after_turn": 7,
+    "diagnostic_target_deg": 5,
+    "late_protection_cases_above_target": 3,
+    "qualification": "Diagnostic, not a recovery acceptance gate."
+  },
   "scope": "Production cores and matched delivery adapters; ordinary aiding enabled, no protection/reacquisition applied. Synthetic motion, not complete device execution or hardware qualification.",
   "cases_per_backend": 48,
   "force_equation_control": "Subtract exact alpha cross r + omega cross (omega cross r) from the accelerometer input. Known-truth causal control, not a shipping algorithm for an unknown moving pivot.",
@@ -98,18 +107,18 @@
     "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
     "src/wave_dir/WaveDirectionReport.h": "abd1b0d45320d79096bc61eec7ea284ff0501d74d568a17c0deadcaea166c06a",
     "src/wave_dir/WaveEncounter.h": "61b7e882f0b2dd338954994465c493746cfd89b3672879ed5f4798b1031301a6",
-    "tests/common/RapidMotionReplay.h": "7f6d5654274b42d31395ed830b0d143529ff81cec0e2ab37e4146beba2d7e86e",
+    "tests/common/RapidMotionReplay.h": "338a30c464fcbd856de175135221e9f90435f45d8599abe0ab6cee08a4bb46af",
     "tests/common/RapidMotionBackends.h": "b6b35779c8c02210907b763b2e09c4f89a68ced052964100cefcc8e8acde5825",
-    "tools/rapid_motion_diagnosis.py": "d67e85792e8cfdc29acf47c307e2b9fc345f33d56d90f8984e71a36f0ecc67d3"
+    "tools/rapid_motion_diagnosis.py": "d3048547f98a011916d77626831b72c24302910b82b0be57139b382fb1902ca0"
   },
   "binary_sha256": {
-    "tests/ahrs/rapid_motion-qmekf": "affff8f2bf4daceae56c223cc9ac3e71b7d4c79a7edfe77f4c0a5641c7c8cfe0",
-    "tests/ahrs/rapid_motion-mahony": "1545577ce6fab3b7c543610b548837a95894c15ab93ca49f57bfaa6f6c87ae72",
-    "tests/kalman_ou_ii/rapid_motion-test": "cd91c84ca9c3748675d80be7698a4c3bd09976105b496281855f3ef74e7c12a3",
-    "tests/kalman_ou_iii/rapid_motion-test": "cff5a8a78c9c632a7a54299dc946b8db994ed67599f11db1e45f9591e056c9d0",
-    "tests/kalman_tfg/rapid_motion-test": "8a89c2a05feb4a097bda1f82bddf8b5c9701347f3f04c6c12fdae2c4edece30e",
-    "tests/nlo/rapid_motion-test": "c614cd2fe55c613f97483e9e83c1f5c43d7b3adb60fe0292fb082ec14923fb96",
-    "tests/pii_observer/rapid_motion-test": "84e5ab60de8360889b679423be26793843a6327af90b5d9122e3f73dac50ed25"
+    "tests/ahrs/rapid_motion-qmekf": "71423e93afacc6754b746f340ee2ae34cd7fb869568e16c7e3e6dd3196b244b0",
+    "tests/ahrs/rapid_motion-mahony": "aa0c9259fc08ee780e8535640d68180fec8efbc68ffcd0473b18b14144a93cbb",
+    "tests/kalman_ou_ii/rapid_motion-test": "c105c0902a0fe6419038e772861774b1f907fb5a5dcf1921d4234266ca5d77c9",
+    "tests/kalman_ou_iii/rapid_motion-test": "eff0c2181472653923465329fc12871eb5ae19d0fbcf4dd207c6e87410b948f0",
+    "tests/kalman_tfg/rapid_motion-test": "51614e67eff406a9e4592691b2557f4302862555020f6187c4311b53ef2ce418",
+    "tests/nlo/rapid_motion-test": "324c061b1679dc05e3bea0e2b69bd3438314d7384564ccf7e3f796262859e0e1",
+    "tests/pii_observer/rapid_motion-test": "f8ec1d08332d7ce7d2dc6530a6472c2f9724b88b85a9968221542cb1772fa07c"
   },
   "protection_regressions": {
     "qMEKF": {

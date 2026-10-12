@@ -14,6 +14,7 @@ using ocean_imu::attitude::rotation;
 constexpr float rad = .017453292519943295f;
 static bool diagnosis_mode=false;
 static bool known_force_control=false;
+static bool recovery_diagnosis_mode=false;
 static void require(bool ok,const char* reason) {
     if (!ok) { std::fprintf(stderr,"Rapid backend %d: %s\n",RAPID_BACKEND,reason); std::exit(1); }
 }
@@ -64,8 +65,9 @@ struct Trial {
         peak=std::max(peak,tail); max_bias=std::max(max_bias,b->bias().norm());
     }
 };
-static void rapid(float rate,float radius,bool combined,bool gap=false,bool enabled=true,int mag_delay=0,bool noisy=false) {
+static void rapid(float rate,float radius,bool combined,bool gap=false,bool enabled=true,int mag_delay=0,bool noisy=false,bool protect_after_turn=false) {
     Trial t; t.enabled=enabled; Q truth=Q::Identity(); V prev=V::Zero();
+    float inherited_error=0, inherited_bias=0;
     std::deque<V> mag_history;
     std::mt19937 rng(7193); std::normal_distribution<float> normal(0,1);
     // Materialize before returning: an Eigen expression would retain a
@@ -73,6 +75,9 @@ static void rapid(float rate,float radius,bool combined,bool gap=false,bool enab
     auto noise=[&](float sigma) -> V { return sigma*V(normal(rng),normal(rng),normal(rng)); };
     for(int i=1;i<=3600;++i) {
         const float time=float(i)*.005f;
+        // Continue the very same estimator, covariance, bias, field reference,
+        // frontend and guard history. No attitude injection at this boundary.
+        if (protect_after_turn && i==2201) t.enabled=true;
         float envelope=0;
         if(time>5 && time<5.5f) envelope=.5f-.5f*std::cos((time-5)*2*float(M_PI));
         else if(time>=5.5f && time<=10.5f) envelope=1;
@@ -94,8 +99,13 @@ static void rapid(float rate,float radius,bool combined,bool gap=false,bool enab
             (noisy ? V(noise(.12f)) : V::Zero());
         const V mm=mag_history.front()+(noisy ? V(noise(.5f)) : V::Zero());
         t.tick(dt,truth,wm,am,mm,i%8==0,i%2==0);
+        if (i==2200) { inherited_error=t.tail; inherited_bias=t.b->bias().norm(); }
     }
-    if (diagnosis_mode)
+    if (recovery_diagnosis_mode)
+        std::printf("%d,%d,%d,%.5f,%.6f,%.5f,%.6f,%u,%d\n",RAPID_BACKEND,
+            combined,protect_after_turn,inherited_error,inherited_bias,t.tail,
+            t.b->bias().norm(),t.applied_recoveries,t.last_held);
+    else if (diagnosis_mode)
         std::printf("%d,%.0f,%.2f,%d,%d,%d,%d,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.6f,%u\n",
             RAPID_BACKEND,rate,radius,combined,gap,mag_delay*5,noisy,
             t.peak,t.tail,t.peak_heading,t.tail_heading,t.peak_tilt,t.tail_tilt,t.max_bias,t.applied_recoveries);
@@ -302,6 +312,13 @@ static void facadeProtection() {
 }
 #endif
 int main(int argc, char** argv) {
+    if (argc==2 && std::strcmp(argv[1],"--diagnose-recovery")==0) {
+        recovery_diagnosis_mode=true;
+        std::puts("backend,combined,protection_after_turn,entry_attitude_deg,entry_bias_rad_s,tail_attitude_deg,tail_bias_rad_s,applied_recoveries,tail_held");
+        for (bool combined:{false,true}) for (bool late:{false,true})
+            rapid(720,.15f,combined,false,false,0,false,late);
+        return 0; // Diagnostic measurements, not a passing recovery assertion.
+    }
     // Causal controls: every ordinary correction remains enabled, with exact
     // delivered gyro/field. Vary only the physical lever arm/rate or one named
     // timing/noise condition. No guard or reacquisition acts on the filter.

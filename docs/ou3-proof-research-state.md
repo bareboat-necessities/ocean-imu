@@ -46,6 +46,22 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Rapid-motion runtime repair scope
 
+The inherited-state recovery coverage omission is classification E (diagnostic
+incompleteness): artificial heading injection did not establish recovery from
+the covariance, bias, navigation and reference history produced by a failed
+turn. `--diagnose-recovery` now compares ordinary and late-protected tails
+without reseeding those states. The qMEKF late-protected yaw tail is 16.54773
+degrees after seven seconds, with one capture and 1.158784 rad/s retained bias;
+the five-degree diagnostic target fails. The hypothesis that healthy-state
+capture tests suffice for corrupted-state recovery is rejected. The two qMEKF
+geometry fixes and always-protected replay bounds remain valid. This is a
+deliberately unprotected-prefix engineering control, not an admitted shipping
+theorem counterexample. Current limiter: carried-state recovery qualification.
+Next falsifiable experiment: isolate inherited bias and reference contributions
+at the same recovery boundary, retaining covariance/navigation histories;
+then qualify any proposed recovery change against moderate-motion false capture.
+No theorem status or shipping runtime equation is changed by this diagnostic.
+
 The mathematical audit is recorded in `docs/rapid-motion-math.md`. Two qMEKF
 implementation errors are independently reproduced (classification E): the
 quaternion half-angle propagator block was used as an SO(3) attitude-error

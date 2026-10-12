@@ -139,6 +139,14 @@ rounded upward to two decimals.
 
 ## Qualification limits
 
+The [inherited-state recovery controls](rapid-motion-math.md#inherited-state-recovery-is-a-separate-incomplete-qualification)
+show that successful prevention and capture of an artificial attitude error do
+not establish recovery from corrupted bias/covariance/reference history.
+They bypass protection during the turn and enable it only afterward, preserving
+every carried state. qMEKF still exceeds 16 degrees after seven seconds despite
+one capture; the TFG yaw case remains near 14 degrees. This recovery qualification remains open; the diagnostic output is
+not counted as passing recovery evidence.
+
 Hardware turn tests remain necessary. The BMM150 conversion epoch is still
 unknown; a host read timestamp does not identify it. A gyro sample cannot
 reconstruct motion that occurred during an unobserved gap. The guard cannot

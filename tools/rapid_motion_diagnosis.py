@@ -34,6 +34,7 @@ def main():
                         default=ROOT / "reports/results/rapid_motion")
     args = parser.parse_args()
     rows = []
+    recovery_rows = []
     binaries = {}
     regressions = {}
     for number, (name, directory, target) in enumerate(BACKENDS, 1):
@@ -45,6 +46,18 @@ def main():
             command.append("EIGEN_DIR=" + args.eigen)
         subprocess.run(command, check=True)
         binary = folder / target
+        recovery = subprocess.run([str(binary), "--diagnose-recovery"], check=True,
+                                  capture_output=True, text=True)
+        cases = list(csv.DictReader(io.StringIO(recovery.stdout)))
+        if len(cases) != 4 or any(int(r["backend"]) != number for r in cases):
+            raise ValueError(f"{name}: incomplete inherited-state controls")
+        for row in cases:
+            row["backend"] = name
+        for start in (0, 2):
+            if any(cases[start][key] != cases[start+1][key] for key in
+                   ("entry_attitude_deg", "entry_bias_rad_s")):
+                raise ValueError(f"{name}: recovery pair inherited different states")
+        recovery_rows.extend(cases)
         for mode in ("--diagnose", "--diagnose-force-equation"):
             replay = subprocess.run([str(binary), mode], check=True,
                                     capture_output=True, text=True)
@@ -87,7 +100,26 @@ def main():
         ROOT / "tests/common/RapidMotionBackends.h",
         Path(__file__).resolve(),
     ]
+    recovery_output = args.output / "recovery-controls.csv"
+    with recovery_output.open("w", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(recovery_rows[0]))
+        writer.writeheader()
+        writer.writerows(recovery_rows)
     manifest = {
+        "inherited_state_recovery": {
+            "scope": "Ordinary aiding through the 720 deg/s, 15 cm turn; paired "
+                     "continuations retain every state. Protection is enabled "
+                     "only after t=11 s in the late-protection arm. No reseeding. "
+                     "This deliberately bypasses prevention during the turn.",
+            "cases": len(recovery_rows),
+            "csv_sha256": sha(recovery_output),
+            "tail_seconds_after_turn": 7,
+            "diagnostic_target_deg": 5,
+            "late_protection_cases_above_target": sum(
+                int(r["protection_after_turn"]) == 1 and
+                float(r["tail_attitude_deg"]) >= 5 for r in recovery_rows),
+            "qualification": "Diagnostic, not a recovery acceptance gate.",
+        },
         "scope": "Production cores and matched delivery adapters; ordinary aiding "
                  "enabled, no protection/reacquisition applied. Synthetic motion, "
                  "not complete device execution or hardware qualification.",

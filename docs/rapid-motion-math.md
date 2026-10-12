@@ -156,12 +156,47 @@ feedback. The combined-axis, centered controls vary only magnetic delay and
 also develop large heading errors. A host read timestamp does not identify the
 BMM150 conversion epoch or each axis's measurement aperture.
 
+## Inherited-state recovery is a separate, incomplete qualification
+
+`--diagnose-recovery` runs ordinary aiding through the same noiseless
+720 deg/s, 15 cm turn, then compares two continuations from identical histories:
+ordinary aiding throughout, or protection enabled after the turn at 11 seconds.
+Neither arm reconstructs the filter or injects an artificial heading error.
+Bias, covariance, navigation, magnetic reference, delivery and guard histories
+all continue. The CSV records the inherited attitude and bias errors, the tail
+seven seconds later, actual captures and the final hold state.
+
+The corrected qMEKF still fails the five-degree diagnostic recovery target:
+its yaw-turn tail is 13.77477 degrees with ordinary aiding and 16.54773 degrees
+with late protection. The latter performs one capture. Both inherit a
+1.821243 rad/s gyro-bias estimate from the turn; the late-protection tail still
+has 1.158784 rad/s of estimated bias although the physical gyro bias is zero.
+The combined-axis late-protection tail is 17.24282 degrees. Preserving a
+previously corrupted bias estimate is therefore not the same qualification as
+preserving a healthy learned bias during attitude capture.
+
+TFG's yaw-turn tail is also above target: 13.96484 degrees with late protection,
+versus 16.81752 degrees with ordinary aiding. All fourteen late-protection cases
+apply one capture; three remain above five degrees (both qMEKF cases and TFG
+yaw). The other eleven tails meet this diagnostic target. The original 336
+causal controls and all protected-regression metrics reproduce unchanged.
+
+This deliberately disables prevention during the turn; it does **not** refute
+the always-protected turn regressions or identify an actual device failure.
+It does refute interpreting those regressions and artificial-angle capture
+tests as sufficient evidence of recovery from every failed-turn state.
+The diagnostic reports failures without converting them into passing acceptance
+assertions. The source-bound results are in
+[`recovery-controls.csv`](../reports/results/rapid_motion/recovery-controls.csv).
+Recovery of corrupted carried state remains open; no runtime bias reset is
+justified by these controls alone.
+
 ## Reproduction and scope
 
 Run `python3 tools/rapid_motion_diagnosis.py --eigen <Eigen include directory>`.
 The driver freshly builds each backend, runs 24 ordinary-aiding controls and
-their 24 known-force-equation counterparts, and runs the protection/recovery
-regressions. Source and executable hashes accompany
+their 24 known-force-equation counterparts, four inherited-state recovery
+controls, and the protection/recovery regressions. Source and executable hashes accompany
 `reports/results/rapid_motion/causal-controls.csv`. Recovery counts record
 operations actually applied, not decisions calculated by a disabled guard.
 
