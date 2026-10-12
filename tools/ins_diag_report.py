@@ -64,6 +64,9 @@ class Boot:
     registers: dict[str, str] = field(default_factory=dict)
     calibration: tuple[str, str] | None = None
     sketch: str = ""
+    fifo_setup: dict[str, str] = field(default_factory=dict)   # F line (FIFO timing sketch)
+    passes: list[dict[str, str]] = field(default_factory=list)  # P lines
+    fits: list[dict[str, str]] = field(default_factory=list)    # X lines
 
 
 def parse(lines) -> list[Boot]:
@@ -113,6 +116,16 @@ def parse(lines) -> list[Boot]:
             target.sketch = dict(t.split("=", 1) for t in tokens if "=" in t).get("sketch", "")
         elif tag == "E":
             target.events.append(",".join(tokens))
+        elif tag in "FPX":
+            values = dict(t.split("=", 1) for t in tokens if "=" in t)
+            if tag == "F" and not target.fifo_setup:
+                target.fifo_setup = values
+            elif tag == "P":
+                target.passes.append(values)
+            elif tag == "X":
+                target.fits.append(values)
+    if not boots and (pre.state or pre.passes):
+        boots.append(pre)  # a replay's output: state lines without R frames
     return boots
 
 
@@ -160,6 +173,33 @@ def report_boot(index: int, boot: Boot, out) -> None:
         w(f"calibration: stored blob {'yes' if boot.calibration[0] == '1' else 'NO (raw sensor values)'}\n")
     for e in boot.events:
         w(f"event: {e}\n")
+    if boot.fifo_setup:
+        f = boot.fifo_setup
+        w(f"FIFO acquisition setup: {'ok' if f.get('ok') == '1' else 'FAILED (' + f.get('failure', '?') + ')'};"
+          f" ACC_CONF {f.get('acc_conf', '?')}, GYR_CONF {f.get('gyr_conf', '?')}, AUX_CONF {f.get('aux_conf', '?')},"
+          f" trigger-to-readout {f.get('aux_offset_ms', '?')} ms, magnetometer calibration"
+          f" {'applied' if f.get('mag_cal') == '1' else 'not applied'}\n")
+    if boot.passes:
+        p = boot.passes[-1]
+        def flag(key: str) -> str:
+            return "PASS" if p.get(key) == "1" else "fail"
+        w(f"pass criteria after {p.get('window_s', '?')} s:\n"
+          f"  rate     {flag('rate_ok')}  {p.get('rate_hz')} Hz, lost {p.get('lost')}\n"
+          f"  no loss  {flag('no_loss_ok')}  {p.get('stalls')} display bursts, longest {p.get('stall_max_ms')} ms,"
+          f" FIFO peak {p.get('fifo_max_bytes')} B\n"
+          f"  spacing  {flag('spacing_ok')}  {p.get('spacing_min_us')}..{p.get('spacing_max_us')} us,"
+          f" sensor clock {p.get('clock_ppm')} ppm\n"
+          f"  mag      {flag('mag_ok')}  {p.get('aux_hz')} Hz, data-ready failures {p.get('drdy_fail')},"
+          f" repeats {p.get('mag_repeat')}, off-grid intervals {p.get('aux_interval_bad')}\n"
+          f"  delay    {flag('delay_ok')}  {p.get('delay_ms')} ms over {p.get('delay_fits')} fits,"
+          f" spread {p.get('delay_spread_ms')} ms\n"
+          f"  overall  {flag('all_ok')}\n")
+    if boot.fits:
+        ok = [as_float(x.get("delay_ms")) for x in boot.fits if x.get("ok") == "1"]
+        reasons = sorted({x.get("reason", "?") for x in boot.fits if x.get("ok") != "1"})
+        w(f"delay fits: {len(ok)} of {len(boot.fits)} valid"
+          f"{', ' + ' '.join(f'{d:.0f}' for d in ok[:12]) + ' ms' if ok else ''}"
+          f"{'; rejected: ' + ', '.join(reasons) if reasons else ''}\n")
 
     n = len(boot.seqs)
     if n:

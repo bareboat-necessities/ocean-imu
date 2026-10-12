@@ -1025,6 +1025,16 @@ Physical S is never reset by the estimator pseudo-measurement.
   readback, every accepted frame bit-exact, loop health, gate/covariance
   internals; `docs/ins-device-diagnostics.md`) replayed through the unchanged
   sketch by `ins_sketch_replay-test`, whose round trip is bit-exact on host.
+  Acquisition candidate: `atomS3R_imu_fifo_timing` (BMI270 FIFO, both sensors
+  200 Hz, sample times from the sensor clock, BMI270-triggered forced-mode
+  BMM150). Against a simulated BMI270 it delivered 4.990--5.020 ms spacing,
+  lost no frame through 1.5 s stalls, and fitted a stable magnetometer delay;
+  device qualification is OPEN. Replaying that 200 Hz synthetic history,
+  OU-II/OU-III/TFG reached Live only at the 150 s timeout. During 50 s of sway
+  without heave the tuner was not ready, although the gravity gate was trusted
+  from 12 s and north locked at 27 s. Under 1 Hz +-29 deg rocking the gate's
+  30 deg/s veto held its hold time at zero. These are synthetic observations
+  of startup gating, not an attributed device cause.
 
 * **E, device motion gate removed (runtime engineering, not mathematics):**
   the 2.4.3 shared attitude protection held force-derived attitude and bias

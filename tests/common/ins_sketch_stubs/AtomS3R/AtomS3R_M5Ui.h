@@ -3,6 +3,13 @@
 #include <M5Unified.h>
 namespace atoms3r_ical {
 struct M5UiCfg { static constexpr uint32_t MENU_TAP_WINDOW_MS = 600; };
+// A test sets tap() to press the screen once.
+struct Input {
+  static bool& tap() { static bool pressed = false; return pressed; }
+  static void update() { edge() = tap(); tap() = false; }
+  static bool tapPressed() { return edge(); }
+  static bool& edge() { static bool e = false; return e; }
+};
 struct M5Ui {
   template <class... T> void begin(T...) {}
   template <class... T> void setReadRotation(T...) {}

@@ -14,6 +14,12 @@
 //                                          lines (D/M/H/I/C, no R) to stdout
 //     --segment N    replay the N-th boot in the capture (default 0)
 //     --allow-gaps   continue across missing R lines (no longer exact)
+//     --expect-ready fail unless the fused output is ready at the end
+//
+// A capture must come from the same sketch, or from the acquisition-only
+// FIFO timing sketch (atomS3R_imu_fifo_timing, H line "acquisition=fifo"):
+// its frames are what this sketch would receive from the FIFO acquisition,
+// so any INS sketch can be replayed on them.
 //
 // What is exact: every frame's sensor values, magnetometer acquisition record
 // and host sample time are the device's, bit for bit, and the calibration blob
@@ -71,7 +77,7 @@ struct Segment {  // one boot: R sequence starting at 0 (or the capture start)
 };
 
 struct Capture {
-  std::string sketch;
+  std::string sketch, acquisition;
   std::vector<Segment> segments;
   long lines = 0, bad_lines = 0, d_lines = 0;
 };
@@ -163,6 +169,7 @@ Capture parseCapture(std::istream& in) {
       }
       case 'H':
         if (c.sketch.empty()) c.sketch = keyValue(tok, "sketch");
+        if (c.acquisition.empty()) c.acquisition = keyValue(tok, "acquisition");
         break;
       case 'E':
         if (tok.size() >= 2 && tok[1] == "reset_fusion" && !c.segments.empty()) {
@@ -414,10 +421,11 @@ int selfTest(const char* capture_path) {
 int replayFile(int argc, char** argv) {
   const char* path = argv[1];
   size_t segment = 0;
-  bool allow_gaps = false;
+  bool allow_gaps = false, expect_ready = false;
   for (int i = 2; i < argc; ++i) {
     if (!std::strcmp(argv[i], "--segment") && i + 1 < argc) segment = size_t(std::atoi(argv[++i]));
     else if (!std::strcmp(argv[i], "--allow-gaps")) allow_gaps = true;
+    else if (!std::strcmp(argv[i], "--expect-ready")) expect_ready = true;
     else { std::fprintf(stderr, "unknown option %s\n", argv[i]); return 2; }
   }
   std::ifstream in(path);
@@ -425,7 +433,10 @@ int replayFile(int argc, char** argv) {
   const Capture cap = parseCapture(in);
   std::fprintf(stderr, "capture: %ld lines, %ld malformed, %zu boot segment(s), sketch '%s'\n",
                cap.lines, cap.bad_lines, cap.segments.size(), cap.sketch.c_str());
-  if (!cap.sketch.empty() && !std::strstr(INS_SKETCH_FILE, cap.sketch.c_str())) {
+  if (cap.acquisition == "fifo") {
+    std::fprintf(stderr, "FIFO acquisition capture from %s, replayed through %s\n", cap.sketch.c_str(),
+                 INS_SKETCH_FILE);
+  } else if (!cap.sketch.empty() && !std::strstr(INS_SKETCH_FILE, cap.sketch.c_str())) {
     std::fprintf(stderr, "capture is from %s; this replay binary runs %s\n", cap.sketch.c_str(),
                  INS_SKETCH_FILE);
     return 2;
@@ -438,13 +449,20 @@ int replayFile(int argc, char** argv) {
                          "from a fresh filter, not the device's state\n", seg.frames.front().seq);
   }
   std::string serial;
-  const bool ok = replay(seg, allow_gaps, nullptr, &serial);
+  std::vector<Outputs> outputs;
+  const bool ok = replay(seg, allow_gaps, &outputs, &serial);
+  const auto first_ready = std::find_if(outputs.begin(), outputs.end(), [](const Outputs& o) { return o.ready; });
+  const bool ready_at_end = !outputs.empty() && outputs.back().ready;
+  std::fprintf(stderr, "replayed %zu frames; fused output %s, ready at end: %s\n", outputs.size(),
+               first_ready == outputs.end() ? "never ready"
+                                            : ("ready from frame " + std::to_string(first_ready - outputs.begin())).c_str(),
+               ready_at_end ? "yes" : "no");
   // The replayed sketch's own stream, without the R lines it echoes.
   std::istringstream lines(serial);
   std::string line;
   while (std::getline(lines, line))
     if (line.rfind("R,", 0) != 0) std::printf("%s\n", line.c_str());
-  return ok ? 0 : 1;
+  return ok && (!expect_ready || ready_at_end) ? 0 : 1;
 }
 
 }  // namespace

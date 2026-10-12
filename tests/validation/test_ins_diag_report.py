@@ -84,6 +84,28 @@ class InsDiagReportTest(unittest.TestCase):
         self.assertIn("large tilt", text)
         self.assertIn("reset_fusion", text)
 
+    def test_fifo_timing_lines(self):
+        lines = [r_line(0, 1000), r_line(1, 6000),
+                 "F,ok=1,failure=none,acc_conf=0xa9,gyr_conf=0xa9,aux_conf=0x06,aux_offset_ms=40.0,mag_cal=1",
+                 "X,ok=1,delay_ms=28.0,width_ms=2.0,reason=Delay validated",
+                 "X,ok=0,delay_ms=0.0,width_ms=0.0,reason=Weak timing signal",
+                 "P,window_s=120.0,rate_hz=199.600,lost=0,stalls=12,stall_max_ms=1500,fifo_max_bytes=4200,"
+                 "spacing_min_us=4995.0,spacing_max_us=5015.0,clock_ppm=2000,aux_hz=25.000,drdy_fail=0,"
+                 "mag_repeat=3,aux_interval_bad=0,delay_fits=4,delay_ms=28.5,delay_spread_ms=2.0,"
+                 "rate_ok=1,no_loss_ok=1,spacing_ok=1,mag_ok=1,delay_ok=1,all_ok=1"]
+        boots = report.parse(lines)
+        out = io.StringIO()
+        report.report_boot(0, boots[0], out)
+        text = out.getvalue()
+        self.assertIn("FIFO acquisition setup: ok", text)
+        self.assertIn("overall  PASS", text)
+        self.assertIn("delay fits: 1 of 2 valid, 28 ms; rejected: Weak timing signal", text)
+
+    def test_replay_output_without_frames(self):
+        boots = report.parse([d_line(1000), d_line(1100)])
+        self.assertEqual(len(boots), 1)
+        self.assertEqual(len(boots[0].state), 2)
+
     def test_new_boot_starts_new_segment(self):
         lines = [r_line(0, 1000), r_line(1, 11000), "E,reset_fusion,seq=0", r_line(0, 5000), r_line(1, 15000)]
         boots = report.parse(lines)

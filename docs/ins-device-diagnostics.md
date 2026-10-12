@@ -115,10 +115,12 @@ make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_replay-test
 The replay loads the captured calibration blob and magnetometer source. It
 then feeds every R frame into the sketch at the frame's own host time and
 prints the replayed sketch's D/M/H/I/C lines. Those lines can be reported or
-compared with the device's. The capture must come from the same sketch.
-Replay stops at a missing R line (`--allow-gaps` continues, inexactly) and at
-a filter reset logged after boot. `--segment N` selects a later boot in the
-same file.
+compared with the device's. The capture must come from the same sketch, or
+from the FIFO timing sketch (below). Replay stops at a missing R line
+(`--allow-gaps` continues, inexactly) and at a filter reset logged after boot.
+`--segment N` selects a later boot in the same file. `--expect-ready` fails
+unless the fused output is ready at the end. The summary on stderr names the
+first ready frame.
 
 The replay reproduces the device's sensor inputs, magnetometer acquisition
 records, calibration and frame times bit for bit. Two things differ. Host time
@@ -127,3 +129,29 @@ microseconds there. Polls that delivered no frame are not replayed. The
 self-test captures a synthetic 240 s run, parses it back and replays it.
 Every frame's published outputs must match bit for bit. It runs in each INS
 family's `run_tests.sh`.
+
+## FIFO acquisition captures
+
+`sensors/imu_basic/atomS3R_imu_fifo_timing` reads the IMU the way the INS
+sketches are meant to: 200 Hz through the BMI270 FIFO, sample times from the
+sensor clock, and a BMI270-triggered magnetometer (`docs/magnetic-timing.md`).
+It writes the same stream, with `acquisition=fifo` on its H line. Its R lines
+are every delivered frame in `readImuMapped()` units, so a capture from it
+replays through any INS sketch:
+
+```
+./ins_sketch_replay-test fifo.log --expect-ready > replay.log
+```
+
+This shows what each estimator does with the FIFO acquisition before any INS
+sketch is changed. The sketch also writes:
+
+- an F line: the FIFO setup read-back;
+- X lines: magnetometer-delay fits;
+- P lines: its pass criteria.
+
+`ins_diag_report.py` summarises all three. The OU-III test directory runs the
+sketch against a simulated BMI270 (`fifo_timing_sketch-test`). It then
+replays that capture through OU-III and requires its fused output to be ready
+at the end.
+

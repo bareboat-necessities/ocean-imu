@@ -31,6 +31,9 @@ Thus 200 Hz is the host loop target, not evidence of 200 accepted estimator
 frames per second; source/default inspection suggests about 100 Hz accepted
 frames pending register readback and hardware measurement. The history uses
 actual accepted-frame intervals and does not change this acquisition policy.
+(A FIFO acquisition with sensor-clock sample times and a BMI270-triggered
+magnetometer is available as a diagnostic sketch; see the FIFO section below.
+The INS sketches do not use it.)
 `readImuMapped` then reads temperature and maps/calibrates the sensors.
 The magnetic source repeats its last successful reading, for at most 200 ms.
 The OU-II, OU-III and TFG sketches' 35 ms spacing gates can accept a held
@@ -240,6 +243,89 @@ Hardware qualification still needs logic-analyzer/DRDY evidence of conversion,
 AUX and host read phases, per-axis aperture and timestamp uncertainty, plus
 AtomS3R loop/stack measurements under display and USB load. No measured hardware
 latency or 200 Hz timing guarantee is inferred from host benchmarks.
+
+## FIFO acquisition with a BMI270-triggered magnetometer (diagnostic sketch)
+
+`sensors/imu_basic/atomS3R_imu_fifo_timing` runs a different acquisition, so it
+can be measured on the device before any estimator depends on it. The INS
+sketches above are unchanged and keep the polling path. The setup and parsing
+code is `src/AtomS3R/AtomS3R_Bmi270Fifo.h`.
+
+**Configuration.** The setup takes the BMI270 over after M5Unified's
+initialisation and `configureAtomS3RMag()`, and writes:
+
+- `ACC_CONF=GYR_CONF=0xA9`: both 200 Hz, normal filter, performance mode;
+- ranges ±8 g and ±2000 °/s: the ranges M5Unified's conversion assumes, so
+  samples are bit-identical to `readImuMapped()` units;
+- `FIFO_DOWNS=0x88`: filtered data, no down-sampling;
+- header-mode FIFO with accelerometer, gyro and AUX (`FIFO_CONFIG_1=0xF0`),
+  overwrite on full, no sensortime frame.
+
+For the BMM150, it sleeps the sensor in manual AUX mode, keeps the low-noise
+repetitions, then writes one forced-mode command. It then sets
+`AUX_IF_CONF=0x4F` (data mode, FCU write, 8-byte burst from `0x42`) and
+`AUX_CONF=0x06` (25 Hz, offset 0).
+
+With FCU write enabled, the BMI270 repeats that forced-mode command on every
+AUX cycle and reads the previous conversion. With offset 0, the readout comes
+a full 40 ms after the command, longer than the 28.3 ms conversion. Every
+register is read back and checked, as is `ERR_REG`.
+
+**Sample time.** Frame k was written at `T0 + 128 k` sensortime ticks
+(25.6 kHz).
+
+- **Pinning the grid:** each loop reads sensortime and the FIFO length in one
+  burst, then exactly that many bytes. That bounds `T0` from both sides, and
+  dithered read times tighten the bounds. Frames are delivered only after
+  `T0` is pinned to within 4 ticks (a counted warm-up).
+- **Mapping to host time:** a line fitted between sensortime and `micros()`
+  over the whole run, re-anchored continuously.
+- **Lost frames:** skip frames, and frames lost without one (more elapsed
+  sensortime than the count covers), are counted. Later frames keep their
+  place on the grid.
+- **Result:** delivered sample spacing is the sensor-clock period, not loop
+  timing. A host stall delays frames but does not move their times.
+
+**Magnetometer time.** An AUX payload in a combined frame takes that frame's
+time; an AUX-only frame takes the midpoint to the previous frame. That is the
+readout's place on the sensor clock, **not the conversion epoch**. The
+data-ready bit must be set in every payload, and reading the data clears it.
+So a set bit proves that each readout is a new conversion, and consecutive
+readouts must be exactly 8 frames (40 ms) apart.
+
+**Delay measurement.** The effective delay is fitted on the device by
+`MagTimingCal` from hand rotation, the calibration wizard's fit. It uses the
+shipping rotation-history convention (a gyro sample is the rate over the
+interval ending at it). It therefore includes the conversion aperture, the
+conversion-to-readout time and the gyro filter delay: the transport delay an
+estimator would apply. The sketch requires three fits within 4 ms. Its P line
+reports rate, loss under display bursts, spacing (4.9–5.1 ms), magnetometer
+cadence and the delay.
+
+**Host evidence only.** In the host run against a simulated BMI270
+(`tests/common/FifoTimingSketch.cpp`):
+
+- simulation: sensor clock +2000 ppm, a forced-mode BMM150 whose field lags
+  its readout by 26 ms, 1.5 s and 400 ms display stalls;
+- spacing: every delivered spacing was 4.990–5.020 ms;
+- rate: 199.60 Hz on the host clock;
+- loss: no frame lost;
+- clock: +2000 ppm recovered;
+- magnetometer: 25.00 Hz;
+- delay: 28.6–29.3 ms fitted, spread 2 ms. In the convention above, 29 ms
+  is expected (26 ms, half a frame, and the simulated gyro's 0.5 ms
+  forward difference).
+
+No AtomS3R measurement exists yet. Four things remain open:
+
+- that the FIFO, AUX and FCU behave on the device as configured;
+- the device delay;
+- the sensor-clock error;
+- FIFO capacity under real stalls.
+
+A 5.0 ms sensor-clock spacing would be inside the ≤ 6 ms IMU interval that
+`ou3-sampling-fidelity.md` admits. The deployed INS sketches stay outside it
+until they adopt this acquisition.
 
 ## Optional dynamic timing calibration record
 
