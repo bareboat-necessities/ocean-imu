@@ -241,22 +241,42 @@ latency or 200 Hz timing guarantee is inferred from host benchmarks.
 ## Dynamic timing calibration and persistence
 
 After gyro and magnetic spatial calibration the wizard records two separate
-14-second motion segments. Rock, turn and reverse direction about multiple
-axes, varying speed, away from metal. The second segment is held out from delay
-selection. A failed fit offers retry, redo or abort; it cannot save a magnetic
-calibration with an invented or missing delay.
+motion segments, each lasting at least 14 seconds and extending to 45 seconds
+when more evidence is needed. Tilt left and right in a comfortable back-and-forth
+rhythm (roughly one rocking cycle per second), away from metal. Full rotations
+and simultaneous all-axis motion are not required. The display shows usable
+pair count and the current fit limitation instead of just elapsed time.
+The second segment is held out from training-delay selection. Its quality can
+end capture but cannot change the frozen training delay. A failed first segment
+reports its reason immediately; a failed second segment can be retried while
+retaining the first. Retry, redo and abort remain available; a failed fit cannot
+save a magnetic calibration with an invented or missing delay.
 
 `MagTimingCal.h` compares normalized calibrated fields using gyro rotations
 between both observation times shifted by each candidate lag (0..80 ms in
 2 ms steps). Each candidate sees exactly the same non-overlapping 120..180 ms
 intervals; neighbouring intervals share an endpoint and are not treated as iid.
 A bounded loss limits isolated disturbances. Acceptance requires at least 50
-pairs per segment, rate variation in at least two axes, an interior minimum,
+pairs per segment, an informative delay profile, an interior minimum,
 minimum separation at +/-10 ms, a narrow profile including disconnected minima,
 training/validation lag agreement within 8 ms, residual RMS below .05 rad and
 at least 5% held-out improvement over zero lag. These are engineering acceptance
 thresholds, not hardware-qualified confidence guarantees. Constant rate and
-stillness do not identify a delay and are rejected.
+stillness do not identify a delay and are rejected. Variable-speed single-axis
+rocking can identify this scalar delay: shifting both interval endpoints changes
+the integrated angle when their rates differ. Gyro covariance rank is therefore
+not a necessary acceptance condition. Rotation about the magnetic field itself
+remains unobservable and fails profile separation. The existing residual,
+profile-width, improvement and held-out agreement limits remain in force.
+
+The calibration history query budget is 280 ms: up to 180 ms between paired
+observations plus the largest 80 ms candidate lag and 20 ms of frame margin.
+Runtime transport age/gap limits are unchanged. Serial diagnostics include the
+specific failed criterion, both usable-pair counts, gyro discontinuities and
+missing-history pairs. A weak signal, out-of-range lag, conflicting captures,
+field mismatch and excessive timing noise no longer share a generic motion
+failure message. These diagnostics do not establish which condition occurred
+on a device running an older build.
 
 The v5 record (`blob_m5v5`, 372 bytes) contains spatial coefficients, effective
 lag, profile width, residual-to-time allowance, fit/validation RMS, improvement,
@@ -278,7 +298,9 @@ single fitted shift. DRDY/AUX hardware measurements, reboot/load experiments and
 real-device heading validation remain necessary.
 
 `mag_timing_cal-test` covers noisy injected 20/40/60 ms lags, asynchronous
-+/-10 ms jitter, unobservable/insufficient motion, held-out disagreement, clock
++/-10 ms jitter, noisy 100 Hz single-axis rocking with pauses, field-axis
+unobservability, 180 ms observation pairs, validation-only retry,
+unobservable/insufficient motion, held-out disagreement, clock
 wrap, historical proxy snapshots, covariance propagation and v5 storage
 corruption/binding/version rejection. These are synthetic tests, not AtomS3R
 measurement evidence.
@@ -389,7 +411,7 @@ estimator. History, fitting, transport and consistency use fixed-size Eigen
 operations without heap allocation.
 
 Lookup and fitting work are bounded independently of run duration. Timing
-capture redraws at 4 Hz and prints its summary only after capture. All seven
+capture redraws at 2 Hz and prints its summary only after capture. All seven
 frontend MCU builds and real-device loop/stack measurements must validate this
 configuration; native timings do not establish a 200 Hz device guarantee.
 

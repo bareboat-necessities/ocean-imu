@@ -208,8 +208,9 @@ private:
       }
 
       if (!accel_only && mag_out_.ok) {
+        timing_cal_.reset();
         while (!gyr_out_.ok || !captureMagTiming_()) {
-          const auto action=ui_.magFailMenu("Timing not identified", "Retry varying speed");
+          const auto action=ui_.magFailMenu("Timing not identified", imu_cal::magTimingReason(timing_fit_.reason));
           if (action==M5Ui::MagFailAction::RETRY_MAG) continue;
           if (action==M5Ui::MagFailAction::REDO_ALL) { redo_all=true; break; }
           return false;
@@ -885,17 +886,21 @@ private:
 
   bool captureMagTiming_() {
     if (!activeMagTimingConfiguration()) return false;
-    timing_cal_.reset();
-    for (unsigned segment=0; segment<2; ++segment) {
-      ui_.waitTap(segment ? "CHECK TIME" : "MAG TIME", "Rock, turn, reverse", "Vary speed, all axes");
+    timing_fit_ = {};
+    const unsigned first = timing_cal_.segmentQuality(0).ok ? 1 : 0;
+    for (unsigned segment=first; segment<2; ++segment) {
+      timing_cal_.resetSegment(segment);
+      ui_.waitTap(segment ? "CHECK TIME" : "MAG TIME", "Rock back and forth", "One rock per second");
       ui_.title("MAG TIME");
-      ui_.line("Avoid metal");
-      ui_.line("Rock + turn briskly");
-      ui_.line("Change direction");
+      ui_.line("Away from metal");
+      ui_.line("Tilt left / right");
+      ui_.line("Pause, then reverse");
       ui_.line("Tap to cancel");
       const uint32_t start=millis();
       uint32_t draw=start;
-      while (uint32_t(millis()-start)<14000) {
+      // Keep collecting usable evidence after pauses or dropped frames. The
+      // first segment freezes before the independent validation capture.
+      while (uint32_t(millis()-start)<45000) {
         Input::update();
         if (Input::tapPressed()) return false;
         ImuSample sample;
@@ -905,23 +910,37 @@ private:
           timing_cal_.add(sample.sample_us,w,sample.mag_timing.have,
               sample.mag_timing.sequence,sample.mag_timing.frame_us,m,segment);
         }
-        if (uint32_t(millis()-draw)>=250) {
-          draw=millis(); ui_.bar01(float(uint32_t(draw-start))/14000.f);
+        if (uint32_t(millis()-draw)>=500) {
+          draw=millis();
+          const auto quality=timing_cal_.segmentQuality(segment);
+          char progress[32];
+          snprintf(progress,sizeof(progress),"Pairs %u/50  %lus",timing_cal_.pairs(segment),
+                   static_cast<unsigned long>((draw-start)/1000));
+          ui_.lineAt(82,progress);
+          ui_.lineAt(94,imu_cal::magTimingReason(quality.reason));
+          ui_.bar01(float(timing_cal_.pairs(segment))/50.f);
+          if (uint32_t(draw-start)>=14000 && quality.ok) break;
         }
         delay(1);
       }
+      const auto quality=timing_cal_.segmentQuality(segment);
+      if (!quality.ok) {
+        timing_fit_=quality;
+        break; // Show the actual failure without demanding a second capture.
+      }
     }
-    timing_fit_=timing_cal_.fit();
-    Serial.printf("[MAGTIME FIT] ok=%u delay_ms=%.1f width_ms=%.1f allowance_ms=%.1f "
-                  "train_rad=%.5f validation_rad=%.5f improvement=%.3f pairs=%lu/%lu\n",
-        unsigned(timing_fit_.ok),double(timing_fit_.delay_us)*.001,
+    if (timing_cal_.segmentQuality(0).ok && timing_cal_.segmentQuality(1).ok)
+      timing_fit_=timing_cal_.fit();
+    Serial.printf("[MAGTIME FIT] ok=%u reason=%s delay_ms=%.1f width_ms=%.1f allowance_ms=%.1f "
+                  "train_rad=%.5f validation_rad=%.5f improvement=%.3f pairs=%lu/%lu gaps=%u history=%u\n",
+        unsigned(timing_fit_.ok),imu_cal::magTimingReason(timing_fit_.reason),double(timing_fit_.delay_us)*.001,
         double(timing_fit_.fit_width_s)*1000,double(timing_fit_.residual_time_s)*1000,
         double(timing_fit_.train_rms_rad),double(timing_fit_.validation_rms_rad),
-        double(timing_fit_.improvement),static_cast<unsigned long>(timing_fit_.train_pairs),
-        static_cast<unsigned long>(timing_fit_.validation_pairs));
+        double(timing_fit_.improvement),static_cast<unsigned long>(timing_cal_.pairs(0)),
+        static_cast<unsigned long>(timing_cal_.pairs(1)),timing_cal_.gaps(),timing_cal_.missingHistory());
     ui_.waitTap(timing_fit_.ok ? "TIME OK" : "TIME FAIL",
-        timing_fit_.ok ? "Delay validated" : "Motion not conclusive",
-        timing_fit_.ok ? "Will save with cal" : "Repeat calibration");
+        imu_cal::magTimingReason(timing_fit_.reason),
+        timing_fit_.ok ? "Will save with cal" : "Retry TIME stage");
     return timing_fit_.ok;
   }
 

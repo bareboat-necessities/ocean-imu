@@ -12,7 +12,7 @@
 using namespace ocean_imu::magnetic;
 using namespace atoms3r_ical;
 static void check(bool v,const char* why) { if(!v) { std::fprintf(stderr,"FAIL %s\n",why); std::exit(1); } }
-static imu_cal::MagTimingFit replay(unsigned mode, unsigned lag=40000, uint32_t origin=1000000) {
+static imu_cal::MagTimingFit replay(unsigned mode, unsigned lag=40000, uint32_t origin=1000000, unsigned mag_stride=8, unsigned imu_stride=1) {
     imu_cal::MagTimingCal cal;
     Q q=Q::Identity(); std::array<Q,64> poses{};
     V3 field(20,0,45), observed=field;
@@ -23,22 +23,30 @@ static imu_cal::MagTimingFit replay(unsigned mode, unsigned lag=40000, uint32_t 
         if(mode==1) w=V3(0,0,1);
         if(mode==2) w.setZero();
         if(mode==5) w=V3(0,0,std::sin(3*t));
+        if(mode==6) w=field.normalized()*std::sin(3*t);
+        if(mode==7) w=V3(.9f*std::sin(3.8f*t),0,0); // +/-14 degree rocking
+        if(mode==8) w=V3(.9f*std::sin(3.8f*t),0,0);
+        if(mode==8 && std::fmod(t,15.f)<10.f) w.setZero(); // long pauses
         if(n) q=(increment(w,.005f)*q).normalized();
         poses[n%64]=q;
         const uint32_t now=origin+n*5000;
-        if(n>=24 && n%8==0) {
+        if(n>=24 && n%mag_stride==0) {
             unsigned delay=lag/5000;
-            if(mode==3) delay+=unsigned((n/8)%5)-2; // +/-10 ms phase variation
+            if(mode==3 || mode==7 || mode==8) delay+=unsigned((n/8)%5)-2; // +/-10 ms phase variation
             if(mode==4 && n>=3000) delay+=6; // validation disagrees by 30 ms
             observed=poses[(n-delay)%64]*field;
-            if(mode==0 || mode==3) observed+=V3(.10f*std::sin(11*t),.13f*std::cos(17*t),.1f*std::sin(23*t));
+            if(mode==0 || mode==3 || mode>=6) observed+=V3(.10f*std::sin(11*t),.13f*std::cos(17*t),.1f*std::sin(23*t));
             stamp=now; ++seq;
         }
-        cal.add(now,w,seq!=0,seq,stamp,observed,n>=3000 ? 1 : 0);
+        if(n%imu_stride==0) cal.add(now,w,seq!=0,seq,stamp,observed,n>=3000 ? 1 : 0);
     }
     const auto r=cal.fit();
-    std::printf("mode=%u lag=%u ok=%d fit=%u width=%g allowance=%g rms=%g improve=%g pairs=%u/%u\n",
-        mode,lag,r.ok,r.delay_us,r.fit_width_s,r.residual_time_s,r.validation_rms_rad,r.improvement,r.train_pairs,r.validation_pairs);
+    std::printf("mode=%u lag=%u ok=%d reason=%s fit=%u width=%g allowance=%g rms=%g improve=%g pairs=%u/%u\n",
+        mode,lag,r.ok,imu_cal::magTimingReason(r.reason),r.delay_us,r.fit_width_s,r.residual_time_s,r.validation_rms_rad,r.improvement,r.train_pairs,r.validation_pairs);
+    const auto train_pairs=cal.pairs(0);
+    cal.resetSegment(1);
+    check(cal.pairs(0)==train_pairs && cal.pairs(1)==0 && !cal.fit().ok,
+          "validation retry preserves training, cannot save without new validation");
     return r;
 }
 struct KV {
@@ -127,8 +135,15 @@ int main() {
     }
     check(!replay(1).ok,"constant-rate ambiguity");
     check(!replay(2).ok,"stillness ambiguity");
-    check(!replay(5).ok,"single-axis excitation insufficient");
+    check(replay(5).ok,"varying single-axis motion identifies scalar delay");
     check(!replay(4).ok,"held-out disagreement");
+    check(!replay(6).ok,"variable field-axis spin remains unobservable");
+    for(unsigned mode:{7u,8u}) {
+        const auto human=replay(mode,40000,1000000,8,2);
+        check(human.ok && std::abs(int(human.delay_us)-40000)<=6000,
+              "100 Hz moderate rocking with noise, phase jitter and pauses");
+    }
+    check(replay(0,40000,1000000,36,2).ok,"180 ms pairs need 260 ms history for all candidates");
     const auto jitter=replay(3); check(jitter.ok && std::abs(int(jitter.delay_us)-40000)<=6000,"asynchronous jitter");
     check(replay(0,40000,0xffff0000u).ok,"calibration clock wrap");
     runtime();

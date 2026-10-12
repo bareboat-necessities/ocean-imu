@@ -44,6 +44,20 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Magnetic-input timing scope
 
+Calibration usability regressions (**E: implementation/diagnostic failure**)
+reject the old hypothesis that scalar delay identification needs rank-two gyro
+covariance: variable-rate single-axis rocking identifies an injected 40 ms lag.
+A separate 180 ms pair needs 260 ms history at the largest candidate delay,
+exceeding the former 250 ms query budget. Native noisy 100 Hz rocking/pauses and
+180 ms pair regressions now pass; stillness, constant rate, field-axis rotation
+and held-out disagreement remain rejected. Structures preserved: runtime
+estimator/tuner/covariance, transport, v5 binding and all residual/profile/
+held-out limits. Relaxations introduced: none to the stability argument;
+synthetic tests remain finite diagnostics. No stability counterexample or
+promoted theorem follows. Current limiter: no device trace identifies the
+reported generic failure's exact gate. Next falsifiable experiment: capture
+on-device reason/pair/gap diagnostics and verify a saved fit across reboot/load.
+
 Calibration now identifies an effective magnetic delay relative to the delivered
 gyro clock and stores it in the mandatory v5 record. Exact physical conversion
 timing remains OPEN. CI rejected stale sketch/whole-source fingerprints after
