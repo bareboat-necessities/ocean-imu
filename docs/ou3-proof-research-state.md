@@ -81,6 +81,8 @@ omitted the receiver's unaligned API; adding that required method repairs only
 the test build. A cleanup-script assertion also matched a comment rather than
 an identifier; no mathematical result depended on that script failure.
 
+**E (validation):** `EIGEN_INCLUDE_DIR=EIGEN_DIR python3 -m unittest discover -s tests/validation -v -p 'test_*.py'` ran 1,137 tests: five failures and two errors. Six outcomes reject committed OU validation/robustness bundles whose immutable replay dependencies no longer match; a full replay is required, not a statistical restatement. The initial CI TFG build also failed because `recovery_geometry-test.cpp` still called the deleted recovery APIs; that protection-only test and target are now removed. The remaining Python failure asserted the obsolete `new_source_` snapshot rule; it now checks pending-packet capture, covered by the compiled magnetic-input test. Earlier overlapping local Arduino attempts exhausted compiler memory (`Killed signal terminated program cc1plus`); the subsequent single default-flags OU-III build linked successfully (1,138,575 flash bytes). Neither failure is mathematical evidence. Current limiter is regenerated branch evidence plus all-sketch builds and hardware comparison.
+
 **Current limiter / next falsifiable experiment.** Validate actual paired
 runtime startup, heading and heave on one persistent sensor history; verify
 that an unavailable transport/snapshot does not consume a discrete magnetic

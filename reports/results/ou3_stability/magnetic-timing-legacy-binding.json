@@ -155,10 +155,10 @@
       }
     },
     "planar-native-secants-diagnostic.json": {
-      "record_sha256": "948babb6bd62b226485a77ee1509b6b59aef983b2b96e1144e5e813a3f9dd1ed",
+      "record_sha256": "168b8a82c0a2272440dc98c8990921eae3c9c45310df370ef9bad8df588983f2",
       "source_bindings": {
         "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0",
-        "shipping_source_tree_sha256": "6f14064342f456213da2b3b85b218ce1f40a0c8c4299eab052b1502d45e465e0"
+        "shipping_source_tree_sha256": "cd677c9c9b3255c284af35a25445e2ecba6862836cd00a8e8984918f790347c6"
       }
     },
     "planar-service-stream-diagnostic.json": {
@@ -192,7 +192,7 @@
   },
   "release_runtime_revalidation": {
     "complete_stream_bitwise_equal": true,
-    "current_source_tree_sha256": "6f14064342f456213da2b3b85b218ce1f40a0c8c4299eab052b1502d45e465e0",
+    "current_source_tree_sha256": "cd677c9c9b3255c284af35a25445e2ecba6862836cd00a8e8984918f790347c6",
     "ordinary_operation_tokens_unchanged": true,
     "scope": "Fresh native probes validate restored ordinary facade operations. They do not qualify paired device sampling, physical magnetic timing or all-time stability. No theorem promotion.",
     "two_epsilon_numerical_runs_unchanged": true

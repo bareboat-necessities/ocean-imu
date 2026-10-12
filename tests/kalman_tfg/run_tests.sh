@@ -1,7 +1,6 @@
 #!/bin/bash -e
 set -e
 
-./recovery_geometry-test
 
 ./mag_timing-test
 

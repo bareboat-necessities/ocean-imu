@@ -70,8 +70,6 @@ void replay(float roll,float pitch) {
         magnetic.advance(now,gyro-core.gyroscope_bias_body(),
             ocean_imu::magnetic::covarianceBound(core.gyroscope_bias_covariance_body()),
             timing,field,fusion->magHardIronBodyUT());
-        V current_field=V::Zero();
-        const bool field_valid=magnetic.currentField(fusion->magHardIronBodyUT(),current_field);
         const bool due=magnetic.due(gate,true,now/1000);
         fusion->update(frame_dt,gyro,measured);
         magnetic.capture(fusion->raw().startupProxyQuat(),fusion->attitudeQuat(),measured,gyro);

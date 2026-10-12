@@ -264,7 +264,7 @@ class OUPaperCodeParityTests(unittest.TestCase):
         sketch = (ROOT / "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino").read_text()
         self.assertIn("mag_input_.capture(fusion_.raw().startupProxyQuat(), fusion_.attitudeQuat(), a_cal_, w_cal_);", sketch)
         shared_input = (ROOT / "src/util/MagneticInput.h").read_text()
-        self.assertIn("if (!new_source_) return;", shared_input)
+        self.assertIn("if (!pending() || snapshot_ready_) return;", shared_input)
         self.assertIn("Snapshot current{now_, proxy_bw, attitude_bw, accel, gyro}", shared_input)
         self.assertIn("a.proxy.slerp(f,b.proxy)", shared_input)
         self.assertIn("observation_.proxy_bw=s.proxy;", shared_input)
