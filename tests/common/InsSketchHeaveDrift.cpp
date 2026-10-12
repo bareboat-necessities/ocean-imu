@@ -151,7 +151,10 @@ void run(const Scenario& s) {
 
   const float warmup_s = s.duration_s * 0.5f;
   const float window_s = 60.0f;
-  double err2 = 0, truth2 = 0, max_heave = 0, max_horizontal = 0;
+  double err2 = 0, truth2 = 0, max_heave = 0;
+#ifdef INS_DISPLACEMENT_UP
+  double max_horizontal = 0;
+#endif
   double sum_last = 0, sum_prev = 0;
   long n = 0, n_last = 0, n_prev = 0;
   bool finite = true;
