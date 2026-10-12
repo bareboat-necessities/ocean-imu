@@ -35,6 +35,7 @@
 #include "imu_calibrate/CalibrateIMU.h"     // imu_cal::* + FitFail
 #include "imu_calibrate/AccelCalCapture.h"  // accelerometer procedure (host-tested)
 #include "imu_calibrate/MagCalSampling.h"   // magnetic moments and capture
+#include "imu_calibrate/MagTimingCal.h"
 #include "imu_calibrate/GyroCalCapture.h"   // continuous quiet hold
 
 // Set to 1 to stream every raw accel/gyro sample as [ACCRAW] lines for
@@ -101,18 +102,22 @@ public:
   // out_saved is filled with the saved blob (readback-validated). On any
   // abort before SAVE leaves storage untouched. Failed writes report whether
   // recovery was actually verified; storage failure can also prevent rollback.
-  bool runAndSave(ImuCalBlobV4& out_saved) {
+  bool runAndSave(ImuCalBlobV5& out_saved) {
     if (runAndSave_(out_saved)) return true;
     // The magnetometer stage switches to the calibration source; a run that
     // did not save keeps the previous calibration, so read the magnetometer
     // the way that one was fitted again.
-    ImuCalBlobV4 prev{};
-    if (store_.load(prev) && magSetValid(prev) && magSourceFollower()) magSourceFollower()(prev.mag_source);
+    ImuCalBlobV5 prev{};
+    activeMagTiming() = {};
+    if (store_.load(prev)) {
+      if (magSetValid(prev) && magSourceFollower()) magSourceFollower()(prev.mag_source);
+      if (magTimingLoader()) magTimingLoader()(prev);
+    }
     return false;
   }
 
 private:
-  bool runAndSave_(ImuCalBlobV4& out_saved) {
+  bool runAndSave_(ImuCalBlobV5& out_saved) {
     Serial.println("[WIZ] start");
 
     for (;;) {
@@ -128,11 +133,12 @@ private:
       gyr_out_ = imu_cal::GyroCalibration<float>{};
       mag_out_ = imu_cal::MagCalibration<float>{};
       mag_verified_ = false;
+      timing_fit_ = {}; timing_saved_ = false;
 
       // Previous calibration: source of the preserved gyro/mag
       // (accelerometer-only mode), a compatible thermal slope, and the
       // stationary gyro level used by the rotation gate.
-      ImuCalBlobV4 prev{};
+      ImuCalBlobV5 prev{};
       const bool have_prev = store_.load(prev);
       const bool can_accel_only = have_prev && prev.gyro_ok;
 
@@ -200,6 +206,16 @@ private:
         }
       }
 
+      if (!accel_only && mag_out_.ok) {
+        while (!gyr_out_.ok || !captureMagTiming_()) {
+          const auto action=ui_.magFailMenu("Timing not identified", "Retry varying speed");
+          if (action==M5Ui::MagFailAction::RETRY_MAG) continue;
+          if (action==M5Ui::MagFailAction::REDO_ALL) { redo_all=true; break; }
+          return false;
+        }
+        if (redo_all) continue;
+      }
+
       // Later rechecks (thermal evidence + held-out verification), final fit.
       if (!accel_.runRecheckStage(io)) return accelFail_();
       if (!accel_.runFinalFit(io)) return accelFail_();
@@ -209,7 +225,7 @@ private:
       imu_cal::AccelCalibration<float> fc;
       AccelProc::Fitter::toFloat(accel_.result(), accel_fcfg_.g, fc);
       const uint32_t capture_s = accel_.totalHoldMs() / 1000u;
-      ImuCalBlobV4 blob;
+      ImuCalBlobV5 blob;
       if (accel_only) {
         blob = accelOnlyCandidate(prev, accel_.result(), fc, capture_s, sensor_id_lo_, sensor_id_hi_, imu_type_);
       } else {
@@ -218,6 +234,16 @@ private:
         blob.sensor_id_lo = sensor_id_lo_;
         blob.sensor_id_hi = sensor_id_hi_;
         blob.imu_type = imu_type_;
+        if (blob.mag_ok) {
+          auto& t=blob.mag_timing;
+          t.version=1; t.binding=magTimingBinding(blob); t.configuration=activeMagTimingConfiguration();
+          t.delay_us=timing_fit_.delay_us; t.fit_width_s=timing_fit_.fit_width_s;
+          t.residual_time_s=timing_fit_.residual_time_s;
+          t.train_rms_rad=timing_fit_.train_rms_rad; t.validation_rms_rad=timing_fit_.validation_rms_rad;
+          t.improvement=timing_fit_.improvement;
+          t.train_pairs=timing_fit_.train_pairs; t.validation_pairs=timing_fit_.validation_pairs;
+          t.crc=magTimingCrc(t);
+        }
       }
 
       // The stored float set, rebuilt through the runtime path, must reproduce
@@ -230,7 +256,7 @@ private:
       ui_.setReadRotation();
       ui_.title("SAVE");
       ui_.line("Writing...");
-      ImuCalBlobV4 rb{};
+      ImuCalBlobV5 rb{};
       const bool saved = store_.saveVerified(blob, rb);
       // ...and again after the read-back, which must be byte-identical to it.
       const bool rb_ok = saved && validateStoredOnTask_(rb, "readback");
@@ -246,6 +272,9 @@ private:
         return false;
       }
 
+      timing_saved_ = rb.mag_ok && magTimingValid(rb.mag_timing);
+      activeMagTiming() = {};
+      if (magTimingLoader()) magTimingLoader()(rb);
       out_saved = rb;
       showDone_(rb);
       Serial.println("[WIZ] done");
@@ -376,7 +405,7 @@ private:
 
   // Rebuilds RuntimeCals from `b` and re-validates the accelerometer set on
   // the retained observations (float, exactly as applied at runtime).
-  bool validateStored_(const ImuCalBlobV4& b, const char* what) {
+  bool validateStored_(const ImuCalBlobV5& b, const char* what) {
     RuntimeCals rc;
     rc.rebuildFromBlob(b);
     imu_cal::AccelFullFitResult r = accel_.result();
@@ -391,11 +420,12 @@ private:
     return ok;
   }
 
-  void showDone_(const ImuCalBlobV4& rb) {
+  void showDone_(const ImuCalBlobV5& rb) {
     ui_.setReadRotation();
     ui_.title("DONE");
     M5.Display.printf("A:%d G:%d M:%d\n", (int)rb.accel_ok, (int)rb.gyro_ok, (int)rb.mag_ok);
     ui_.line("Saved OK");
+    ui_.line(timing_saved_ ? "MAG timing: saved" : "MAG timing: unknown");
     char l[22];
     float bs = rb.accel_bias_sigma[0];
     if (rb.accel_bias_sigma[1] > bs) bs = rb.accel_bias_sigma[1];
@@ -472,7 +502,7 @@ private:
     imu_cal::FitFail reason = imu_cal::FitFail::BAD_ARG;
     FitKind kind = FitKind::GYRO;
     imu_cal::AccelFitJob* job = nullptr;
-    const ImuCalBlobV4* blob = nullptr;   // SAVE_CHECK
+    const ImuCalBlobV5* blob = nullptr;   // SAVE_CHECK
     const char* blob_what = "";
 
     ImuCalWizard* wiz = nullptr;
@@ -506,7 +536,7 @@ private:
     vTaskDelete(nullptr);
   }
 
-  bool validateStoredOnTask_(const ImuCalBlobV4& b, const char* what) {
+  bool validateStoredOnTask_(const ImuCalBlobV5& b, const char* what) {
     fit_.blob = &b;
     fit_.blob_what = what;
     const bool ok = runFitTask_(FitKind::SAVE_CHECK, "SAVE check", false);
@@ -852,13 +882,55 @@ private:
     return false;
   }
 
+  bool captureMagTiming_() {
+    if (!activeMagTimingConfiguration()) return false;
+    timing_cal_.reset();
+    for (unsigned segment=0; segment<2; ++segment) {
+      ui_.waitTap(segment ? "CHECK TIME" : "MAG TIME", "Rock, turn, reverse", "Vary speed, all axes");
+      ui_.title("MAG TIME");
+      ui_.line("Avoid metal");
+      ui_.line("Rock + turn briskly");
+      ui_.line("Change direction");
+      ui_.line("Tap to cancel");
+      const uint32_t start=millis();
+      uint32_t draw=start;
+      while (uint32_t(millis()-start)<14000) {
+        Input::update();
+        if (Input::tapPressed()) return false;
+        ImuSample sample;
+        if (readSample_(sample)) {
+          const Vector3f w=gyr_out_.apply(sample.w,sample.tempC);
+          const Vector3f m=mag_out_.apply(sample.m);
+          timing_cal_.add(sample.sample_us,w,sample.mag_timing.have,
+              sample.mag_timing.sequence,sample.mag_timing.frame_us,m,segment);
+        }
+        if (uint32_t(millis()-draw)>=250) {
+          draw=millis(); ui_.bar01(float(uint32_t(draw-start))/14000.f);
+        }
+        delay(1);
+      }
+    }
+    timing_fit_=timing_cal_.fit();
+    Serial.printf("[MAGTIME FIT] ok=%u delay_ms=%.1f width_ms=%.1f allowance_ms=%.1f "
+                  "train_rad=%.5f validation_rad=%.5f improvement=%.3f pairs=%lu/%lu\n",
+        unsigned(timing_fit_.ok),double(timing_fit_.delay_us)*.001,
+        double(timing_fit_.fit_width_s)*1000,double(timing_fit_.residual_time_s)*1000,
+        double(timing_fit_.train_rms_rad),double(timing_fit_.validation_rms_rad),
+        double(timing_fit_.improvement),static_cast<unsigned long>(timing_fit_.train_pairs),
+        static_cast<unsigned long>(timing_fit_.validation_pairs));
+    ui_.waitTap(timing_fit_.ok ? "TIME OK" : "TIME UNKNOWN",
+        timing_fit_.ok ? "Delay validated" : "Motion not conclusive",
+        timing_fit_.ok ? "Will save with cal" : "Repeat calibration");
+    return timing_fit_.ok;
+  }
+
   // Gyro and magnetometer fields of a full-wizard candidate (the accelerometer
   // set is filled by fillAccelFromFit()).
-  void fillGyroMag_(ImuCalBlobV4& blob) {
+  void fillGyroMag_(ImuCalBlobV5& blob) {
     memset((void*)&blob, 0, sizeof(blob));
-    blob.magic = ImuCalBlobV4::IMU_CAL_MAGIC;
-    blob.version = ImuCalBlobV4::IMU_CAL_VERSION;
-    blob.size_bytes = sizeof(ImuCalBlobV4);
+    blob.magic = ImuCalBlobV5::IMU_CAL_MAGIC;
+    blob.version = ImuCalBlobV5::IMU_CAL_VERSION;
+    blob.size_bytes = sizeof(ImuCalBlobV5);
 
     fillGyroFromFit(blob, gyr_out_);
 
@@ -886,6 +958,9 @@ public:
   imu_cal::MagCalibration<float>   mag_out_{};
   imu_cal::MagFitQuality mag_verify_quality_{};
   bool mag_verified_ = false;
+  imu_cal::MagTimingCal timing_cal_{}; // fixed storage, never on the loop stack
+  imu_cal::MagTimingFit timing_fit_{};
+  bool timing_saved_ = false;
 
   uint32_t sensor_id_lo_ = 0, sensor_id_hi_ = 0;
   uint8_t imu_type_ = 0;

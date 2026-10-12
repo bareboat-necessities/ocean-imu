@@ -33,11 +33,11 @@ enum class Status : uint8_t { Ready, First, Duplicate, OutOfOrder, Invalid, Gap,
 
 // micros() wrap is supported; comparisons require intervals below 2^31 us.
 // 32 slots cover 160 ms at 200 Hz; queries are additionally capped at 120 ms.
-template <unsigned Capacity = 32>
+template <unsigned Capacity = 32, uint32_t QueryAgeUs = 120000>
 class RotationHistory {
     static_assert(Capacity > 1, "rotation history needs at least two slots");
 public:
-    static constexpr uint32_t MaxAgeUs = 120000;
+    static constexpr uint32_t MaxAgeUs = QueryAgeUs;
     static constexpr uint32_t MaxGapUs = 20000;
     struct Segment {
         uint32_t begin = 0, end = 0;

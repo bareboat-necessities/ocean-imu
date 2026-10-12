@@ -18,7 +18,7 @@
     #include "AtomS3R/AtomS3R_ImuCal.h"
 
     atoms3r_ical::ImuCalStoreNvs store;
-    atoms3r_ical::ImuCalBlobV4   blob;
+    atoms3r_ical::ImuCalBlobV5   blob;
     atoms3r_ical::RuntimeCals    cals;
 
     void setup() {
@@ -193,7 +193,7 @@ static __attribute__((noinline)) void printMatHeader(Print& out, const char* nam
 }
 
 // Print helpers (startup serial)
-static __attribute__((noinline)) void printBlobSummary(Print& out, const ImuCalBlobV4& b) {
+static __attribute__((noinline)) void printBlobSummary(Print& out, const ImuCalBlobV5& b) {
   const char* mode = "unknown";
   if (b.build_mode == IMU_CAL_MODE_M5_IMU_API) mode = "m5_imu_api";
   out.printf("  build_mode: %s\n", mode);
@@ -209,7 +209,7 @@ static __attribute__((noinline)) void printBlobSummary(Print& out, const ImuCalB
   }
 }
 
-static __attribute__((noinline)) void printBlobDetail(Print& out, const ImuCalBlobV4& b) {
+static __attribute__((noinline)) void printBlobDetail(Print& out, const ImuCalBlobV5& b) {
   // ACCEL
   out.printf("  accel: g=%.7f (%s) T0=%.2f rms_mag=%.4f\n", (double)b.accel_g,
              accelGravityMatches(b) ? "matches g_cal_local" : "differs from g_cal_local",
@@ -309,6 +309,7 @@ struct AtomS3RMagSource {
   m5::imu_3d_t last_m5{};        // M5Unified's cached value of the last reading
   Vector3f last_body = Vector3f(NAN, NAN, NAN);
   bool have_last = false;
+  uint8_t last_aux[8]{};
   MagAcquisition acquisition{};  // last new, successfully read reading
 };
 inline AtomS3RMagSource& atoms3rMagSource() {
@@ -316,13 +317,8 @@ inline AtomS3RMagSource& atoms3rMagSource() {
   return source;
 }
 
-// Magnetometer in body axes, uT. With compensation active, a new reading
-// (M5Unified's cached value changed) is re-read from the BMI270 AUX data
-// registers together with RHALL and compensated; otherwise the previous
-// compensated value is repeated, exactly like M5Unified's cache. Without
-// compensation this is M5Unified's uncompensated value. Either way, without a
-// new successfully read reading for MagAcquisition::MAX_AGE_MS the result is
-// NaN (no magnetometer value), never an old reading presented as current.
+// Compensated XYZ/RHALL and change detection use the SAME AUX burst. These
+// are distinct byte observations, still not hardware conversion identifiers.
 static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag, uint32_t frame_us) {
   auto& src = atoms3rMagSource();
   const uint32_t now = millis();
@@ -338,18 +334,20 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag, uint32_t frame_u
     }
     return src.acquisition.fresh(now) ? map_mag_to_body_uT_(m5_mag) : none;
   }
-  if (changed) {
-    uint8_t d[8];
-    float s[3], b[3];
-    // BMI270 AUX_DATA_0..7 mirror BMM150 0x42..0x49 (X, Y, Z, RHALL).
-    if (src.bmi270 && src.bmi270->readRegister(0x04, d, sizeof(d)) &&
-        bmm150Compensate(Bmm150Raw::fromData(d), src.trim, s)) {
-      bmm150SensorToAtomS3RBody(s, b);
-      src.last_body = Vector3f(b[0], b[1], b[2]);
-      src.last_m5 = m5_mag;
-      src.have_last = true;
-      src.acquisition.acquired(now, frame_us, read_start_us, micros());
-    }
+  uint8_t d[8];
+  float sensor[3], body[3];
+  const bool read = src.bmi270 && src.bmi270->readRegister(0x04, d, sizeof(d));
+  if (read) { // ignore DRDY/self-test status bits when comparing magnetic payloads
+    d[0] &= 0xf8; d[2] &= 0xf8; d[4] &= 0xfe; d[6] &= 0xfc;
+  }
+  if (read &&
+      (!src.have_last || memcmp(d, src.last_aux, sizeof(d)) != 0) &&
+      bmm150Compensate(Bmm150Raw::fromData(d), src.trim, sensor)) {
+    bmm150SensorToAtomS3RBody(sensor, body);
+    src.last_body = Vector3f(body[0], body[1], body[2]);
+    memcpy(src.last_aux, d, sizeof(d));
+    src.have_last = true;
+    src.acquisition.acquired(now, frame_us, read_start_us, micros());
   }
   // Never mix units: until the first compensated reading this is NaN (invalid).
   return src.acquisition.fresh(now) ? src.last_body : none;
@@ -378,6 +376,11 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, ui
   // gates rather than the update mask.
   out.m = readMagBody_(data.mag, sample_us);
   out.mag_timing = atoms3rMagSource().acquisition;
+  const auto& timing = activeMagTiming();
+  if (magTimingValid(timing) && timing.configuration == activeMagTimingConfiguration()) {
+    out.mag_timing.delay_us = timing.delay_us;
+    out.mag_timing.timing_allowance_s = timing.fit_width_s + timing.residual_time_s;
+  }
 
   return true;
 }
@@ -423,15 +426,43 @@ static inline bool followMagSource_(uint8_t source) {
   src.last_body = Vector3f(NAN, NAN, NAN);
   src.acquisition = MagAcquisition{};
   activeMagSource() = source;
+  activeMagTiming() = {};
+  activeMagTimingConfiguration() = 0; // source switch needs a new qualified configuration
   Serial.printf("[MAGCFG] saved magnetometer calibration was fitted on %s data: Bosch compensation %s%s\n",
                 src.compensated ? "Bosch-compensated" : "uncompensated", src.compensated ? "on" : "off",
                 src.compensated ? "" : " until the magnetometer is recalibrated");
   return true;
 }
 
+// Read timing-sensitive configuration without changing the running clocks.
+// Version 1 is tied to this coherent AUX reader and its host timestamp convention.
+static inline uint32_t magTimingConfiguration_(m5::IMU_Base* dev, const Bmm150RegState& mag) {
+  uint8_t regs[6]; // ACC_CONF/RANGE, GYR_CONF/RANGE, AUX_CONF, FIFO_DOWNS
+  uint8_t aux[3];  // AUX device, interface and read address
+  if (!dev || !dev->readRegister(0x40,regs,sizeof(regs)) || !dev->readRegister(0x4B,aux,sizeof(aux))) return 0;
+  const uint8_t header[]={1,mag.chip_id,mag.power,mag.mode,mag.rep_xy,mag.rep_z,activeMagSource()};
+  uint32_t c=crc32_ieee_(header,sizeof(header));
+  c=crc32_ieee_(regs,sizeof(regs),c);
+  return ~crc32_ieee_(aux,sizeof(aux),c);
+}
+static inline void loadMagTiming_(const ImuCalBlobV5& b) {
+  const uint64_t id=ESP.getEfuseMac();
+  if (b.sensor_id_lo!=uint32_t(id) || b.sensor_id_hi!=uint32_t(id>>32) ||
+      b.imu_type!=uint8_t(M5.Imu.getType())) return;
+  if (magTimingValid(b.mag_timing) && b.mag_timing.binding==magTimingBinding(b) &&
+      b.mag_timing.configuration==activeMagTimingConfiguration()) activeMagTiming()=b.mag_timing;
+  const auto& t=activeMagTiming();
+  Serial.printf("[MAGTIME CAL] valid=%u delay_ms=%.1f allowance_ms=%.1f\n",
+      unsigned(magTimingValid(t)), double(t.delay_us)*.001,
+      double(t.fit_width_s+t.residual_time_s)*1000);
+}
+
 static inline bool configureAtomS3RMag(Print& log, bool compensate = true) {
   auto& src = atoms3rMagSource();
   src = AtomS3RMagSource{};
+  activeMagTiming() = {};
+  activeMagTimingConfiguration() = 0;
+  magTimingLoader() = nullptr;
   activeMagSource() = MAG_SOURCE_M5_RAW;
   magSourceFollower() = nullptr;
   auto* imu0 = M5.Imu.getImuInstancePtr(0);
@@ -463,6 +494,8 @@ static inline bool configureAtomS3RMag(Print& log, bool compensate = true) {
   src.compensated = true;
   activeMagSource() = MAG_SOURCE_BMM150_COMPENSATED;
   magSourceFollower() = &followMagSource_;
+  if (low) activeMagTimingConfiguration() = magTimingConfiguration_(imu0, after);
+  magTimingLoader() = &loadMagTiming_;
   log.printf("[MAGCFG] BMM150 Bosch compensation on: x1=%d y1=%d x2=%d y2=%d xy1=%u xy2=%d "
              "z1=%u z2=%d z3=%d z4=%d xyz1=%u\n",
              trim.dig_x1, trim.dig_y1, trim.dig_x2, trim.dig_y2, trim.dig_xy1, trim.dig_xy2,

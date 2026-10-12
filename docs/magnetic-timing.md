@@ -15,12 +15,11 @@ no conversion timestamp.
 BMM150 has a DRDY pin and register `0x48` bit 0; reading data over AUX clears
 the sensor flag. BMI270 has separate AUX-ready flags; the pinned driver reads
 `INT_STATUS_1`, then a 20-byte AUX/accel/gyro burst. It updates its magnetic
-cache on AUX-ready. A second eight-byte AUX read supplies XYZ and RHALL
-together for Bosch compensation; XYZ is not mixed with RHALL from another
-burst. The cache read and this read can straddle an AUX refresh, so the cache
-change is not necessarily the compensated vector's conversion identity. A change in the
-cached XYZ detects a new candidate, not a unique conversion identifier.
-Identical quantized conversions are indistinguishable in the existing API.
+cache on AUX-ready. A separate eight-byte AUX read supplies XYZ and RHALL together for Bosch
+compensation. Change detection compares that same burst, excluding status bits,
+so the M5 cache and compensated vector no longer supply conflicting identities.
+Identical quantized payloads remain indistinguishable: a sequence identifies a
+host observation, not a physical conversion.
 
 `sample_us` is host **read-start**, before `M5.Imu.update()`, not sensor sample
 time. Gyro and accelerometer values have the same host timestamp, with no
@@ -177,13 +176,12 @@ receipt/Schur, capture, physical qualification or all-time service obligations.
 
 ## Deployment stages and remaining synchronization limit
 
-The first implementation commit is observation-only (Stage A). Across the shared
-frontends, `SEA_STATE_MAG_HOST_ALIGNMENT=0` selects that behavior for an
-A/B capture. The default Stage B transports only the **known host-cache age**
-from the first observation frame to the present IMU frame. It does not subtract
-an invented 14 ms or 33 ms sensor delay. Consequently physical BMM150 timing
-mismatch is **not fully corrected**. The same transport API accepts externally
-qualified measurement times, as exercised by the native replay tests.
+`SEA_STATE_MAG_HOST_ALIGNMENT=0` remains an explicit diagnostic A/B option.
+Normal AtomS3R operation requires the current v5 calibration. For a magnetic
+calibration its qualified relative lag is subtracted from the first observation
+time, then the shared input transports from that effective epoch. This estimates
+alignment against the delivered gyro clock; it does not establish an absolute
+BMM150 physical epoch. The acquisition and gyro still lack hardware timestamps.
 
 The source keeps a read bracket and a monotonically increasing host observation
 sequence. The discrete frontends retain their spacing limits, submit an observation
@@ -192,21 +190,20 @@ rotation history (120 ms cap, 20 ms maximum gyro interval), or a duplicate/
 out-of-order/invalid gyro epoch at correction. Such an epoch also clears the
 transport chain, because the existing estimator clock's substituted dt must
 not be bridged on the next update. Equal quantized
-conversions and the two-read AUX race remain source-identity limitations;
+conversions remain a source-identity limitation;
 these sequences must not be described as hardware conversion IDs. Typically
 25 Hz source observations pass once each. The previous artificial repeated
 corrections during a stall disappear, so the previous service count cannot be
 carried over without auditing actually applied events.
 
-At first observation, the frontend saves its actual private proxy quaternion,
-attitude, accelerometer and gyro. Initial reference/refinement and optional
-continuous hard-iron accumulation use those snapshots and observation time.
-The proxy is never reconstructed using the MEKF bias estimate. After the
-existing hard-iron/reference operations, the applied body offset is subtracted,
-then the final MEKF input and its covariance are transported. No magnetic
-reference gate, startup window, release count or continuous-estimator setting
-is changed. The OU-III sketch still disables continuous hard iron; the identity
-transport regression also covers the facade's enabled default.
+Every accepted IMU frame contributes its actual independent proxy quaternion,
+attitude, accelerometer and gyro to a fixed snapshot history. On a new magnetic
+observation the shared layer interpolates these at the calibrated effective
+epoch. It refuses missing/gapped history and large attitude discontinuities;
+it never rewinds the proxy with a MEKF bias estimate. Reference/refinement and
+continuous hard-iron accumulation use the historical snapshots and time. Body
+offsets are subtracted before final vector/covariance transport. All seven
+frontends share the same input implementation.
 
 For covariance transport, the history retains the largest bias uncertainty
 encountered, rather than assuming that the smaller current posterior bounded
@@ -214,8 +211,8 @@ all past increments. With unknown correlations inside the rotation error its
 standard deviations are added before squaring. The factor-two/factor-three
 bounds above then cover correlation with the magnetic noises. This remains a
 first-order statistical model; it is not a proof of the physical bias limits.
-The live transport uses the measured host read bracket; unobserved conversion
-phase/aperture is separate. The observation-only consistency score uses a
+Live transport adds the measured host read bracket to the saved timing model
+allowance. Finite aperture and axis-dependent effective times remain model errors. The observation-only consistency score uses a
 conservative 28.295 + 33.333 + 20 ms endpoint allowance, using the maximum accepted
 gyro interval admitted by the history,
 not a claimed measured distribution or a bound through arbitrary host stalls.
@@ -240,6 +237,51 @@ Hardware qualification still needs logic-analyzer/DRDY evidence of conversion,
 AUX and host read phases, per-axis aperture and timestamp uncertainty, plus
 AtomS3R loop/stack measurements under display and USB load. No measured hardware
 latency or 200 Hz timing guarantee is inferred from host benchmarks.
+
+## Dynamic timing calibration and persistence
+
+After gyro and magnetic spatial calibration the wizard records two separate
+14-second motion segments. Rock, turn and reverse direction about multiple
+axes, varying speed, away from metal. The second segment is held out from delay
+selection. A failed fit offers retry, redo or abort; it cannot save a magnetic
+calibration with an invented or missing delay.
+
+`MagTimingCal.h` compares normalized calibrated fields using gyro rotations
+between both observation times shifted by each candidate lag (0..80 ms in
+2 ms steps). Each candidate sees exactly the same non-overlapping 120..180 ms
+intervals; neighbouring intervals share an endpoint and are not treated as iid.
+A bounded loss limits isolated disturbances. Acceptance requires at least 50
+pairs per segment, rate variation in at least two axes, an interior minimum,
+minimum separation at +/-10 ms, a narrow profile including disconnected minima,
+training/validation lag agreement within 8 ms, residual RMS below .05 rad and
+at least 5% held-out improvement over zero lag. These are engineering acceptance
+thresholds, not hardware-qualified confidence guarantees. Constant rate and
+stillness do not identify a delay and are rejected.
+
+The v5 record (`blob_m5v5`, 372 bytes) contains spatial coefficients, effective
+lag, profile width, residual-to-time allowance, fit/validation RMS, improvement,
+pair counts, configuration fingerprint and checksums. The timing binding covers
+magnetic and gyro calibration plus device identity. Read-back verifies the whole
+record. Earlier keys/layouts are not read, migrated or used as fallbacks: perform
+a new full calibration after installing this firmware. Accelerometer-only
+recalibration can retain a compatible v5 timing fit. Runtime fingerprints BMM150
+mode/repetitions, BMI270 acc/gyro/range/AUX configuration and the acquisition
+convention; incompatibility requires recalibration before estimator operation.
+
+The residual-to-time allowance has a 25 ms floor for asynchronous phase. It is
+added to profile width and the measured host read bracket in transport
+uncertainty; it is not a measured jitter standard deviation or an absolute
+worst-case bound. Excessive allowance (>60 ms before profile width) rejects the
+fit. No polling phase or absolute boot timestamp is persisted. Fast rotation
+within the 28.295 ms conversion aperture cannot be made instantaneous by a
+single fitted shift. DRDY/AUX hardware measurements, reboot/load experiments and
+real-device heading validation remain necessary.
+
+`mag_timing_cal-test` covers noisy injected 20/40/60 ms lags, asynchronous
++/-10 ms jitter, unobservable/insufficient motion, held-out disagreement, clock
+wrap, historical proxy snapshots, covariance propagation and v5 storage
+corruption/binding/version rejection. These are synthetic tests, not AtomS3R
+measurement evidence.
 
 ## Deterministic validation and results
 
@@ -338,69 +380,25 @@ recovery and replay differences are in the per-filter CSVs under
 
 ## Embedded resource assessment
 
-The history is fixed at 32 intervals: 1,552 bytes with the native ABI, versus
-zero history bytes on main. The observation snapshot is 176 bytes, previous
-magnetic sample/covariance 60 bytes and diagnostic row 28 bytes. The complete
-shared `Input` including history, snapshots, counters and configuration is
-1,888 bytes with the native ABI; the board builds below report actual linked
-image/global-RAM totals.
-No heap allocation occurs in history, transport or consistency calculations.
-The source's extra sequence/read-bracket fields add 16 bytes per metadata
-copy. No second 21-state estimator or replay buffer is shipped.
+The runtime uses a fixed 32-interval rotation history and 32 proxy/IMU
+snapshots. `sizeof(Input)` is 4,480 bytes on the tested native ABI; MCU layout
+and task-stack high-water marks require device verification. The calibration
+fitter retains a fixed 128-interval history and two 41-candidate score arrays
+inside the heap-owned wizard. It stores neither a complete capture nor a second
+estimator. History, fitting, transport and consistency use fixed-size Eigen
+operations without heap allocation.
 
-Every gyro sample adds one 3-vector bias subtraction, fixed-size bias-frame
-access/covariance bound, one norm, sine/cosine, normalized quaternion and ring
-write. Lookup inspects at most 32 intervals, multiplies at most 32 quaternions
-and evaluates at most two partial-interval exponentials. It never scans an
-unbounded queue. Discrete magnetic work adds fixed 3x3 covariance transforms/LLT solves
-and vector/quaternion operations. Continuous observers only rotate the held
-vector on each tick, without covariance transforms; trigonometric diagnostic angles run only
-on a new host observation. Serial output uses the existing low-rate stream.
-
-The isolated `-O3` x86-64 benchmark recorded 24.7 ns/push, 188.5 ns/maximum-age
-lookup, 103.3 ns/alignment and 246.9 ns/consistency-with-push. These are native
-constant-rate microbenchmarks, **not MCU bounds or whole-loop timings**; the
-raw output is in [native-resources.txt](../reports/results/magnetic_timing/native-resources.txt).
-GCC `-fstack-usage` reports individual compiler-estimated frames of 48 bytes (increment),
-160–224 (push), 176 (lookup), 240–256 (alignment), 560 (consistency),
-32 (prepare), 80 (current field/correction wrapper) and 288 (input advance),
-plus called helpers and the existing estimator frames. They are not a bound on the whole
-AtomS3R call stack. The work is bounded independently of run duration. Meeting the 5 ms host
-loop schedule still requires hardware validation; actual loop worst-case time
-and task-stack high-water marks remain hardware qualification items. No physical 200 Hz guarantee is claimed.
-
-The repository's AtomS3R ESP32-S3 builds pass for all seven frontends. Both
-sides use ESP32 platform 3.3.7, esp-x32/2511, M5Unified 0.2.13 and M5GFX
-0.2.19, with the repository's unchanged board/options. These are linker/image
-measurements, not execution times or task-stack high-water measurements.
-
-| Firmware | Flash before, bytes | Flash after, bytes | Flash delta | Global RAM before, bytes | Global RAM after, bytes | RAM delta |
-|---|---:|---:|---:|---:|---:|---:|
-| OU-II | 1,053,975 | 1,065,923 | +11,948 | 31,332 | 33,076 | +1,744 |
-| OU-III | 1,116,147 | 1,127,427 | +11,280 | 31,316 | 33,060 | +1,744 |
-| TFG | 1,035,003 | 1,045,507 | +10,504 | 41,020 | 42,772 | +1,752 |
-| NLO | 803,883 | 811,331 | +7,448 | 29,932 | 31,676 | +1,744 |
-| PII | 797,115 | 804,995 | +7,880 | 30,124 | 31,868 | +1,744 |
-| Mahony compass | 774,819 | 783,895 | +9,076 | 105,716 | 107,492 | +1,776 |
-| qMEKF compass | 796,563 | 805,655 | +9,092 | 105,716 | 107,492 | +1,776 |
-
-The baseline build at `5bfce5da8d475e7fa728e92536b50efe46fe24c2` has an
-empty diff against audited main `2c534feb423a627c40f475daed40b4274d3dd2b8`
-for source, sketches, board workflow, library metadata and vendored dependencies.
-The new sizes are from runtime source `f236e561888045556391ae8ba820f69833ab1890`.
-See the [machine-readable table](../reports/results/magnetic_timing/atoms3r-resources.csv)
-and [build provenance](../reports/results/magnetic_timing/atoms3r-resources.json),
-[baseline CI](https://github.com/bareboat-necessities/ocean-imu/actions/runs/38064387731)
-and [current CI](https://github.com/bareboat-necessities/ocean-imu/actions/runs/38083240211).
-Global RAM deltas include frontend metadata and ABI padding; they are not an
-inference from the native `sizeof(Input)` value.
+Lookup and fitting work are bounded independently of run duration. Timing
+capture redraws at 4 Hz and prints its summary only after capture. All seven
+frontend MCU builds and real-device loop/stack measurements must validate this
+configuration; native timings do not establish a 200 Hz device guarantee.
 
 ## Shipping-faithful handoff
 
 1. Preserved: all 21 states, literal prediction/S/acc/mag/reset ordering,
    OU chain, coupled tuner/SpectralMSE/R_S, bias dynamics, Jacobian and
    reference acquisition/release conditions. Only magnetic input preparation
-   and host-observation identity change.
+   and acquisition, timing calibration and input identity change.
 2. Relaxations: first-order rotation uncertainty, conservative unknown-cross-
    covariance bounds and current-time correction. Synthetic point timestamps
    omit the BMM150 finite aperture. These tests do not admit or certify the

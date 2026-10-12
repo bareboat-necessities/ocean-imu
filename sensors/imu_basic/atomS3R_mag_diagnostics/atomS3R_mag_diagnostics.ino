@@ -59,7 +59,7 @@ enum class Phase : uint8_t { WAIT_STILL, STILL, WAIT_ROTATE, ROTATE, ANALYZE, LI
 
 static M5Ui ui;
 static ImuCalStoreNvs store;
-static ImuCalBlobV4 blob{};
+static ImuCalBlobV5 blob{};
 static RuntimeCals cals{};
 static bool have_blob = false;
 

@@ -11,6 +11,7 @@ python3 test_wizard_config.py
 ./mag_diagnostics-test
 ./mag_rotation-test
 ./mag_input-test
+./mag_timing_cal-test
 python3 test_sketch_temperature.py
 ./imu_calibrate-test
 ./accel_cal-test

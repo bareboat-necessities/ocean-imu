@@ -309,9 +309,9 @@ class CompassAppBase {
 
     reloadBlobAndRuntime_();
 
-    if (!have_blob_) {
-      Serial.println("[BOOT] No saved calibration. Starting wizard...");
-      ImuCalBlobV4 saved{};
+    while (!have_blob_) {
+      Serial.println("[BOOT] Current calibration required. Starting wizard...");
+      ImuCalBlobV5 saved{};
       if (wizard_.runAndSave(saved)) {
         Serial.println("[BOOT] Wizard saved calibration. Loaded:");
         printBlobSummary(Serial, saved);
@@ -320,7 +320,7 @@ class CompassAppBase {
         have_blob_ = true;
         runtime_.rebuildFromBlob(blob_);
       } else {
-        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
+        Serial.println("[BOOT] Calibration required; repeat the latest wizard before operation.");
       }
     } else {
       Serial.println("[BOOT] Found saved calibration:");
@@ -390,6 +390,7 @@ class CompassAppBase {
     have_blob_ = store_.load(blob_);
     if (!have_blob_) memset(&blob_, 0, sizeof(blob_));
     runtime_.rebuildFromBlob(blob_);
+    have_blob_ = have_blob_ && !runtime_.mag_source_mismatch && !runtime_.mag_timing_mismatch;
   }
 
   void handleErase_() {
@@ -410,7 +411,7 @@ class CompassAppBase {
   void handleRunWizard_() {
     Serial.println("[HOME] single tap => RUN WIZARD");
 
-    ImuCalBlobV4 saved{};
+    ImuCalBlobV5 saved{};
     if (!wizard_.runAndSave(saved)) {
       ui_.notSavedNotice();
       return;
@@ -480,6 +481,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
 }
 
   void updateOutputs_(const ImuSample& s) {
+    if (!have_blob_) return;
     sample_ = makeCalibratedSample_(s);
     const uint32_t correction_start_us = micros();
     backend_->step(sample_, outputs_.att);
@@ -583,7 +585,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   RotEstimator rot_;
 
   bool have_blob_ = false;
-  ImuCalBlobV4 blob_{};
+  ImuCalBlobV5 blob_{};
 
   bool use_graphics_ = (COMPASS_UI_DEFAULT_GRAPHICS != 0);
   bool compass_ui_ready_ = false;
