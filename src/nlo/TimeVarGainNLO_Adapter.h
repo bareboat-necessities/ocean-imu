@@ -680,22 +680,6 @@ public:
         }
     }
 
-    /** @brief Enable or hold core attitude feedback, initialization, and adapter tilt trimming. */
-    void setAttitudeAidingEnabled(bool enabled) {
-        attitude_aiding_enabled_ = enabled;
-        filter_.setAttitudeAidingEnabled(enabled);
-    }
-    /** @brief Install a valid nonzero body-to-NED quaternion and discard old tilt-trim history.
-     * Preserve navigation state and learned biases.
-     */
-    void reacquireAttitude(const Quat& q) {
-        filter_.setQuaternionBodyToNED(q);
-        boot_q_nb_ = q.normalized();
-        // The trim's measurement history belongs to the previous attitude.
-        have_down_lpf_ = false;
-        last_tilt_err_norm_ = last_tilt_correction_norm_ = R(0);
-    }
-
     void setQuaternionBodyToNED(const Quat& q_nb) {
         filter_.setQuaternionBodyToNED(q_nb);
         initialized_ = true;
@@ -719,9 +703,6 @@ public:
         return update(dt, gyro_b_rad_s, specific_force_b_mps2, aux_);
     }
 
-    /** @brief Advance initialization, NLO fusion, and reporting using elapsed seconds and auxiliary data.
-     * Return false for invalid dt or deferred initialization; honor the aiding hold.
-     */
     bool update(R dt,
                 const Vec3& gyro_b_rad_s,
                 const Vec3& specific_force_b_mps2,
@@ -734,7 +715,6 @@ public:
         time_s_ += dt;
 
         if (!initialized_) {
-            if (!attitude_aiding_enabled_) return false;
             updateInitialization_(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
 
             if (!initialized_ && !cfg_.run_filter_before_initialized) {
@@ -744,7 +724,7 @@ public:
             time_since_init_s_ += dt;
         }
 
-        if (attitude_aiding_enabled_ && cfg_.tilt_bias_enabled) {
+        if (cfg_.tilt_bias_enabled) {
             Vec3 current = filter_.gyroBiasBody();
             current.x() = tilt_bias_b_.x();
             current.y() = tilt_bias_b_.y();
@@ -764,7 +744,7 @@ public:
 
         updateReportHighpass_(dt, hasUsableGNSS_(aux));
 
-        if (attitude_aiding_enabled_ && initialized_) {
+        if (initialized_) {
             applyOptionalTiltTrim_(dt, gyro_b_rad_s, specific_force_b_mps2);
         }
 
@@ -869,7 +849,6 @@ private:
     R last_wave_freq_conf_ = R(0);
     bool last_wave_freq_locked_ = false;
 
-    bool attitude_aiding_enabled_ = true;
     bool initialized_ = false;
 
     R time_s_ = R(0);

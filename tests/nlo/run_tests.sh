@@ -1,11 +1,12 @@
 #!/bin/bash -e
+
+# Callers use `bash run_tests.sh`, which ignores the shebang's -e.
 set -e
-
-./rapid_motion-test
-
 
 ./mag_continuous-test
 ./device_heave-test
+make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_heave-test
+./ins_sketch_heave-test
 ./nlo-sim
 ./local_gravity-test
 ./mag_turns-test

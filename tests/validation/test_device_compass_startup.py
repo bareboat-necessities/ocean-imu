@@ -36,60 +36,6 @@ def function(source: str, name: str) -> str:
 
 
 class DeviceCompassStartupTest(unittest.TestCase):
-    def test_compass_boot_retries_until_current_calibration_is_saved(self):
-        source = (ROOT / "src/AtomS3R/AtomS3R_CompassAppBase.h").read_text()
-        # Compile the actual boot function with hardware stubs. A cancelled
-        # wizard must not reach the running pipeline; an existing v5 skips it.
-        cpp = r'''
-#include <cassert>
-#include <cstdint>
-void delay(int) {}
-uint32_t micros() { return 1; }
-struct SerialStub {
-    void setTxBufferSize(int) {} void begin(int) {} void setTxTimeoutMs(int) {}
-    template<class... T> void println(T...) {}
-    template<class... T> void printf(T...) {}
-} Serial;
-struct M5Stub {
-    struct { bool isEnabled() { return true; } } Imu;
-    int config() { return 0; } void begin(int) {}
-} M5;
-void clearM5UnifiedImuCalibration() {}
-void configureAtomS3RMag(SerialStub&) {}
-struct ImuCalBlobV5 {};
-void printBlobSummary(SerialStub&, ImuCalBlobV5&) {}
-void printBlobDetail(SerialStub&, ImuCalBlobV5&) {}
-struct App {
-    struct UI { void begin() {} void setReadRotation() {}
-        void fail(const char*,const char*) {} bool ok() { return true; } } ui_, compass_ui_;
-    struct Wizard { int calls=0; bool runAndSave(ImuCalBlobV5&) { return ++calls==3; } } wizard_;
-    struct Runtime { int rebuilds=0; void rebuildFromBlob(ImuCalBlobV5&) { ++rebuilds; } } runtime_;
-    const char* boot_name_="test";
-    bool use_graphics_=true, compass_ui_ready_=false, have_blob_=false, stored=false;
-    uint32_t start_us_=0, next_tick_us_=0, last_update_us_=0;
-    ImuCalBlobV5 blob_;
-    int resets=0;
-    void reloadBlobAndRuntime_() { have_blob_=stored; }
-    void resetPipeline_() { assert(have_blob_); ++resets; }
-    void drawHomeStatic_() {}
-''' + function(source, "begin") + r'''
-};
-int main() {
-    App missing; missing.begin();
-    assert(missing.wizard_.calls==3 && missing.runtime_.rebuilds==1 && missing.resets==1);
-    App current; current.stored=true; current.begin();
-    assert(current.wizard_.calls==0 && current.resets==1);
-}
-'''
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "boot.cpp"
-            exe = Path(tmp) / "boot"
-            path.write_text(cpp)
-            subprocess.run([*shlex.split(os.environ.get("CXX", "g++")),
-                            "-std=c++17", "-Wall", "-Wextra", "-Werror",
-                            str(path), "-o", str(exe)], check=True)
-            subprocess.run([str(exe)], check=True, timeout=5)
-
     def test_startup_compass_then_fused_live_output(self):
         for path in SKETCHES:
             with self.subTest(sketch=path.name):
@@ -109,10 +55,10 @@ int main() {
                 self.assertIn("fusion_.isLive()", serial)
                 self.assertRegex(update, r"WaveDirectionReport::from\([^;]*fusion_\.isLive\(\)\);")
                 self.assertIn("runWizardFlow_(true)", function(source, "begin"))
-                self.assertIn("while (!have_blob_)", function(source, "begin"))
-                self.assertIn("if (!have_blob_) return;", update)
-                reload = function(source, "reloadBlobAndRuntime_")
-                self.assertIn("!runtime_.mag_timing_mismatch", reload)
+                # A missing or cancelled calibration must not stop operation.
+                self.assertIn("if (!have_blob_)", function(source, "begin"))
+                self.assertNotIn("while (!have_blob_)", function(source, "begin"))
+                self.assertNotIn("if (!have_blob_) return;", update)
                 if "kalman_ou" in path.name:
                     self.assertIn("fusion_.attitudeQuat()", update)
                     self.assertIn("startupProxyQuat()", update)

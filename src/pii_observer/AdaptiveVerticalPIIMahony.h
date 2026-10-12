@@ -245,15 +245,6 @@ public:
     Core& core() { return core_; }
     const Core& core() const { return core_; }
 
-    // Attitude-only recovery: preserve the vertical observer and bias integral.
-    /** @brief Install scalar-first Mahony quaternion components and refresh cached Euler angles.
-     * Preserve the vertical observer and bias integral.
-     */
-    void reacquireAttitude(T w, T x, T y, T z) {
-        mahony_.setQuaternion(w, x, y, z);
-        mahony_.predictOnly(T(0), T(0), T(0), &last_pitch_deg_, &last_roll_deg_, &last_yaw_deg_, T(0));
-    }
-
     Mahony_AHRS<T>& mahonyState() { return mahony_; }
     const Mahony_AHRS<T>& mahonyState() const { return mahony_; }
 

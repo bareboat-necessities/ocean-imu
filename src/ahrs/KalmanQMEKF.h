@@ -73,39 +73,8 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
         v2ref = B_world;
     }
 
-    /** @brief Install a body-to-world attitude and reset its local covariance to sigma squared.
-     * Preserve bias state; return false without changes for invalid quaternion or
-     * nonpositive/nonfinite sigma (attitude standard deviation in radians).
-     */
-    bool reacquire_attitude(const Eigen::Quaternion<T>& q_bw, T sigma = T(0.05)) {
-        if (!q_bw.coeffs().allFinite() || !std::isfinite(q_bw.norm()) ||
-            !(q_bw.norm() > T(1e-6)) || !std::isfinite(sigma) || !(sigma > T(0))) return false;
-        qref = q_bw.normalized();
-        x.template head<3>().setZero();
-        P.template topRows<3>().setZero();
-        P.template leftCols<3>().setZero();
-        P.template topLeftCorner<3,3>() = Matrix3::Identity()*sigma*sigma;
-        return true;
-    }
-
     static Eigen::Quaternion<T> quaternion_from_acc(Vector3 const& acc);
-    /** @brief Replace a qualified gross gyro-bias error, resetting its covariance.
-     * Bias and sigma are in rad/s; preserve attitude and reject invalid inputs.
-     */
-    bool reacquire_gyro_bias(const Vector3& bias, T sigma = T(0.03)) {
-        if constexpr (!with_bias) return false;
-        else {
-            if (!bias.allFinite() || !std::isfinite(sigma) || !(sigma > T(0))) return false;
-            x.template tail<3>() = bias;
-            P.template bottomRows<3>().setZero();
-            P.template rightCols<3>().setZero();
-            P.template bottomRightCorner<3,3>() = Matrix3::Identity()*sigma*sigma;
-            return true;
-        }
-    }
     void time_update(Vector3 const& gyr, T Ts);
-    /** @brief Freeze learned gyro bias while retaining magnetic attitude corrections. */
-    void set_bias_updates_enabled(bool enabled) { bias_updates_enabled_ = enabled; }
     void time_update(T const gyr[3], T Ts);
     void measurement_update(Vector3 const& acc, Vector3 const& mag);
     void measurement_update(T const acc[3], T const mag[3]);
@@ -123,7 +92,6 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     Vector3 gyroscope_bias() const;
 
   private:
-    bool bias_updates_enabled_ = true;
     Eigen::Quaternion<T> qref;
 
     Vector3 v1ref;
@@ -370,14 +338,7 @@ bool QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3
   // Which can be solved with the code below
   Eigen::FullPivLU<Matrix3> lu(s);
   if (lu.isInvertible()) {
-    Matrix<T, N, 3> K = P * C.transpose() * lu.inverse();
-    if constexpr (with_bias) {
-      if (!bias_updates_enabled_) {
-        K.template bottomRows<3>().setZero();
-        const Vector3 down = qref.conjugate() * Vector3::UnitZ();
-        K.template topRows<3>() = (down * (down.transpose() * K.template topRows<3>())).eval();
-      }
-    }
+    Matrix<T, N, 3> const K = P * C.transpose() * lu.inverse();
 
     x += K * inno;
 

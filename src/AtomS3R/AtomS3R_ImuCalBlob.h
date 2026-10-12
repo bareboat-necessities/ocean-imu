@@ -304,6 +304,14 @@ inline bool magTimingValid(const MagTimingRecord& r) {
       std::isfinite(r.improvement) && r.improvement>=.05f && r.improvement<=1 &&
       r.train_pairs>=50 && r.validation_pairs>=50;
 }
+// The timing record is optional. An absent record has every field zero (the
+// layout version may be 0 or 1); a present record must be qualified and bound
+// to the saved gyro/mag set. Runtime magnetic corrections never apply it.
+inline bool magTimingAbsent(const MagTimingRecord& r) {
+  MagTimingRecord unversioned = r, none{};
+  unversioned.version = none.version = 0;
+  return memcmp(&unversioned, &none, sizeof(none)) == 0;
+}
 inline bool magTimingCompatible(const ImuCalBlobV5& b, uint32_t id_lo, uint32_t id_hi,
                                 uint8_t imu_type, uint8_t source, uint32_t configuration) {
   return gyroSetValid(b) && magSetValid(b) && b.sensor_id_lo==id_lo &&
@@ -324,7 +332,8 @@ static inline bool validateBlob(const ImuCalBlobV5& b) {
   if (b.build_mode != IMU_CAL_MODE_M5_IMU_API) return false;
   if (computeBlobCrc(b) != b.crc) return false;
   if (b.gyro_ok && !gyroSetValid(b)) return false;
-  if (b.mag_ok && (!magSetValid(b) || !magTimingValid(b.mag_timing) ||
+  if (b.mag_ok && !magSetValid(b)) return false;
+  if (!magTimingAbsent(b.mag_timing) && (!b.mag_ok || !magTimingValid(b.mag_timing) ||
       b.mag_timing.binding!=magTimingBinding(b))) return false;
   // Coefficients the runtime will apply must be finite.
   if (b.accel_ok && !(allFinite_(b.accel_S, 9) && allFinite_(b.accel_b0, 3) && allFinite_(b.accel_k, 3) &&
@@ -420,7 +429,6 @@ struct RuntimeCals {
   // Set when the blob's magnetometer fit was made from a different data source
   // than this firmware delivers; it is then not applied.
   bool mag_source_mismatch = false;
-  bool mag_timing_mismatch = false;
 
   void rebuildFromBlob(const ImuCalBlobV5& b, float g_cfg = ImuCalCfg::g_cal_local) {
     accel_gravity_mismatch = (b.accel_ok != 0) && !accelGravityMatches(b, g_cfg);
@@ -462,11 +470,9 @@ struct RuntimeCals {
     mag.b  = Vector3f(b.mag_b[0], b.mag_b[1], b.mag_b[2]);
     mag.field_uT = b.mag_field_uT;
     mag.rms      = b.mag_rms;
+    // Report the optional timing record; it does not change runtime behaviour.
     activeMagTiming() = {};
     if (mag.ok && gyr.ok && magTimingLoader()) magTimingLoader()(b);
-    mag_timing_mismatch = b.mag_ok && (!magTimingValid(b.mag_timing) ||
-        b.mag_timing.binding!=magTimingBinding(b) ||
-        (magTimingLoader() && !magTimingValid(activeMagTiming())));
   }
 
   Vector3f applyAccel(const Vector3f& a_raw, float tempC) const { return acc.ok ? acc.apply(a_raw, tempC) : a_raw; }

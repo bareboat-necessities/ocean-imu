@@ -283,7 +283,7 @@ public:
         // still converging toward.  The gate reads the raw accelerometer: it
         // averages over twelve seconds, far below the machinery band the
         // inner filter's vibration guard removes.
-        if (impl_.mekf().attitude_aiding_enabled()) gravity_gate_.step(attitudeReferenceQuat_(), acc_body_ned, gyro_body_ned, dt,
+        gravity_gate_.step(attitudeReferenceQuat_(), acc_body_ned, gyro_body_ned, dt,
                            cfg_.mag_gravity_align_world_tau_sec,
                            cfg_.mag_gravity_align_world_warmup_sec,
                            cfg_.mag_gravity_align_max_sin,
@@ -831,7 +831,7 @@ private:
     // stands behind.  Waiting for all three is what lets the MEKF skip the
     // staged warmup entirely -- there is nothing left for it to converge.
     void maybeHandOffToMekf_() {
-        if (!begun_ || !impl_.mekf().attitude_aiding_enabled()) return;
+        if (!begun_) return;
 
         const bool proxy_ready = impl_.startupProxyInitialized();
 

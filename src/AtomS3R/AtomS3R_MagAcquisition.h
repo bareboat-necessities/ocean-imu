@@ -24,11 +24,6 @@ struct MagAcquisition {
   // identifies successful distinct cache observations, not physical DRDY.
   uint32_t sequence = 0, frame_us = 0, read_start_us = 0, read_end_us = 0;
 
-  // Qualified effective lag relative to the delivered gyro clock. Zero means
-  // host-only fallback, not a known zero physical delay.
-  uint32_t delay_us = 0;
-  float timing_allowance_s = 0;
-
   void acquired(uint32_t now_ms) { have = true; last_ms = now_ms; }
   void acquired(uint32_t now_ms, uint32_t frame, uint32_t start, uint32_t end) {
     acquired(now_ms);

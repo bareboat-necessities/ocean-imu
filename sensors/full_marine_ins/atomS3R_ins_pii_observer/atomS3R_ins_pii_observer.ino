@@ -64,7 +64,6 @@
 
 #include "AtomS3R/AtomS3R_CompassUI.h"
 #include "util/MagneticInput.h"
-#include "util/AttitudeProtection.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #if SEA_STATE_ENABLE_WIZARD
@@ -168,13 +167,13 @@ class FusionApp {
     reloadBlobAndRuntime_();
 
 #if SEA_STATE_ENABLE_WIZARD
-    while (!have_blob_) {
-      Serial.println("[BOOT] Current calibration required. Starting wizard...");
+    if (!have_blob_) {
+      Serial.println("[BOOT] No saved calibration. Starting wizard...");
       const bool saved = runWizardFlow_(true);
       if (saved) {
         Serial.println("[BOOT] Wizard saved calibration.");
       } else {
-        Serial.println("[BOOT] Calibration required; repeat the latest wizard before operation.");
+        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
       }
     }
 #endif
@@ -256,8 +255,6 @@ class FusionApp {
 
   ins::MagFreshGate mag_gate_{MAG_UPDATE_SPACING_MS};
   ocean_imu::magnetic::Input mag_input_{};
-  ocean_imu::attitude::Protection attitude_protection_{};
-  ocean_imu::attitude::AccelHold accel_hold_{};
   uint32_t last_mag_correction_ms_ = 0;
 
   Vector3f a_cal_ = Vector3f::Zero();
@@ -294,7 +291,7 @@ class FusionApp {
   float imu_temp_c_ = NAN;
 
   uint16_t stale_frame_count_ = 0;
-  ins::SampleDtTracker sample_dt_{1.0f / LOOP_HZ};
+  ins::SampleDtTracker sample_dt_{1.0f / LOOP_HZ, 0.05f};
 
   ins::StillGyroBiasEma gyro_bias_{ROT_BIAS_TAU_S, ROT_STILL_G_TOL_FRAC, ROT_STILL_GYRO_RAD_S};
   ins::RateOfTurnFilter rot_{};
@@ -384,7 +381,6 @@ class FusionApp {
       std::memset(&blob_, 0, sizeof(blob_));
     }
     runtime_.rebuildFromBlob(blob_);
-    have_blob_ = have_blob_ && !runtime_.mag_source_mismatch && !runtime_.mag_timing_mismatch;
   }
 
   bool runWizardFlow_(bool boot_mode) {
@@ -405,7 +401,6 @@ class FusionApp {
     return false;
   }
 
-  /** @brief Check IMU availability and reset sample timing, motion protection, and held acceleration. */
   void reinitImu_() {
     if (!M5.Imu.isEnabled()) {
       Serial.println("[BOOT] M5.Imu is not enabled");
@@ -417,11 +412,8 @@ class FusionApp {
     last_mag_correction_ms_ = 0;
     rates_.reset(millis());
     sample_dt_.reset();
-    attitude_protection_.reset();
-    accel_hold_.reset();
   }
 
-  /** @brief Reset fusion and acquisition history, then restore the configured estimator settings. */
   void resetFusion_() {
     // No bias covariance exists in this observer: report vector residuals,
     // and mark NIS/SNR unavailable rather than inventing uncertainty.
@@ -487,8 +479,6 @@ class FusionApp {
 
     stale_frame_count_ = 0;
     sample_dt_.reset();
-    attitude_protection_.reset();
-    accel_hold_.reset();
 
     heave_m_ = 0.0f;
     heave_speed_mps_ = 0.0f;
@@ -543,9 +533,7 @@ class FusionApp {
   }
 #endif
 
-  /** @brief Calibrate a delivered IMU frame and update fusion with freshness and motion protection. */
   void updateFilter_(const ImuSample& s) {
-    if (!have_blob_) return; // latest calibration required, including wizard-disabled builds
     const uint32_t now_ms = millis();
 
     dt_ = sample_dt_.update(s.sample_us);
@@ -562,7 +550,6 @@ class FusionApp {
     // Mahony ADDS integral feedback: its bias estimate is -I, in its axes.
     const Vector3f rotation_bias = ned_to_mahony_body_(
         Vector3f(-mahony.integralFBx, -mahony.integralFBy, -mahony.integralFBz));
-    a_cal_ = accel_hold_.update(a_cal_, s.accel_fresh, w_cal_ - rotation_bias, dt_);
     mag_input_.advance(s.sample_us, w_cal_ - rotation_bias, 0.0f,
         s.mag_timing, m_cal_, Vector3f::Zero(), false);
     Vector3f magnetic_now = m_cal_;
@@ -589,21 +576,13 @@ class FusionApp {
     const bool mag_usable = mag_present_ && magnetic_time_ok;
 #endif
 
-    const Eigen::Quaternionf q_before(mahony.q0, mahony.q1, -mahony.q2, -mahony.q3);
-    const auto motion = attitude_protection_.step(dt_, w_cal_, rotation_bias,
-        a_cal_, s.accel_fresh, APP_G_LOCAL, q_before, magnetic_now, mag_usable,
-        mag_input_.newSource(), s.sample_us, 0.0f, mahony_seeded_);
-    fusion_.mahonyState().setAidingEnabled(!motion.hold_attitude);
-    // A force/rate hazard disables gravity feedback and bias learning, not a
-    // healthy time-aligned compass. PII applies its magnetic feedback only
-    // about the estimated vertical and preserves the bias integral in a hold.
     mag_used_ = mag_usable;
 
     const Vector3f gyr_body_m = ned_to_mahony_body_(w_cal_);
     const Vector3f acc_body_m = ned_to_mahony_body_(a_cal_);
     const Vector3f mag_body_m = ned_to_mahony_body_(magnetic_now);
 
-    if (!mahony_seeded_ && mag_used_) {
+    if (!mahony_seeded_ && mag_usable) {
       const float a_norm = a_cal_.norm();
       const bool accel_seed_ok =
           std::isfinite(a_norm) &&
@@ -615,7 +594,7 @@ class FusionApp {
     }
 
     const uint32_t magnetic_update_start_us = micros();
-    if (mag_used_) {
+    if (mag_usable) {
       fusion_.updateIMUMag(gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
                            acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
                            mag_body_m.x(), mag_body_m.y(), mag_body_m.z(),
@@ -628,11 +607,7 @@ class FusionApp {
                         dt_);
     }
 
-    if (mag_used_) mag_input_.complete(magnetic_update_start_us, true);
-    if (motion.reacquire) {
-      const auto& q = motion.target;
-      fusion_.reacquireAttitude(q.w(), q.x(), -q.y(), -q.z());
-    }
+    if (mag_usable) mag_input_.complete(magnetic_update_start_us, true);
 
     roll_deg_ = fusion_.rollDeg();
     pitch_deg_ = -fusion_.pitchDeg();
@@ -789,7 +764,6 @@ class FusionApp {
                       static_cast<double>(a_cal_.norm()));
   }
 
-  /** @brief Emit the enabled NMEA outputs and optional sensor, fusion, and motion diagnostics. */
   void streamSerial_() {
     const uint32_t now_ms = millis();
 
@@ -864,7 +838,6 @@ class FusionApp {
         static_cast<double>(fusion_.envelopeTauApplied()),
         static_cast<double>(fusion_.envelopeSigmaApplied()));
     mag_input_.print(Serial, "offered");
-    attitude_protection_.print(Serial);
 
   #endif
 
