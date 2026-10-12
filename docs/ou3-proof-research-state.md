@@ -1025,6 +1025,11 @@ Physical S is never reset by the estimator pseudo-measurement.
   readback, every accepted frame bit-exact, loop health, gate/covariance
   internals; `docs/ins-device-diagnostics.md`) replayed through the unchanged
   sketch by `ins_sketch_replay-test`, whose round trip is bit-exact on host.
+  Binding: with the switch at its default 0 the OU-III sketch preprocesses
+  token-identically to the previously bound sketch, and the added `src/AtomS3R`
+  definitions lie outside the native secant probe's include closure; the
+  rerun probe reproduced every numerical value, so only the sketch, ledger and
+  `src` tree hashes were rebound.
 
 * **E, device motion gate removed (runtime engineering, not mathematics):**
   the 2.4.3 shared attitude protection held force-derived attitude and bias
