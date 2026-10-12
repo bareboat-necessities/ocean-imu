@@ -3,6 +3,7 @@
 #define EIGEN_NON_ARDUINO
 #include "imu_calibrate/MagCalCapture.h"
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
+#include "../common/MagTimingFixture.h"
 #include <algorithm>
 #include <cstdio>
 #include <map>
@@ -78,8 +79,8 @@ static GC gyroHeld(float span, const V& slope = V::Zero()) {
         "temperature holds populate all bins with the expected centroid information");
   return out;
 }
-static ImuCalBlobV4 gyroBlob(const GC& g) {
-  ImuCalBlobV4 b;
+static ImuCalBlobV5 gyroBlob(const GC& g) {
+  ImuCalBlobV5 b;
   fillGyroFromFit(b, g);
   return Store::sealed_(b);
 }
@@ -90,7 +91,7 @@ static void testGyro() {
     check(c.biasT.k.isZero(0), "narrow temperature has EXACT zero slope");
     check(std::fabs(c.biasT.T0 - (25+span/2)) < 1e-5, "reference temperature is measured");
     check((c.biasT.b0 - V(.01f,-.008f,.003f)).norm() < 1e-5, "all stationary samples estimate reference bias");
-    Store store; ImuCalBlobV4 rb;
+    Store store; ImuCalBlobV5 rb;
     check(store.saveVerified(gyroBlob(c), rb), "bias-only float blob validates and round-trips");
     RuntimeCals rc; rc.rebuildFromBlob(rb);
     for (float t : {-100.f, 35.f, 100.f, std::numeric_limits<float>::quiet_NaN()})
@@ -171,7 +172,7 @@ static void testGyro() {
         edge.slope_sigma.maxCoeff() <= GL::max_slope_sigma &&
         (edge.biasT.k - held_slope).cwiseAbs().maxCoeff() < 3e-6,
         "constant-derived informative capture learns the slope with all gates intact");
-  Store held_store; ImuCalBlobV4 held_blob;
+  Store held_store; ImuCalBlobV5 held_blob;
   check(held_store.saveVerified(gyroBlob(edge), held_blob) && validateBlob(held_blob),
         "constant-derived qualified fit survives persisted-float validation");
 
@@ -182,7 +183,7 @@ static void testGyro() {
   check(c.biasT.T0 > 24.99f && c.biasT.T0 < 25.01f, "regression centered on measured bin temperatures");
   check(c.slope_sigma.maxCoeff() < GL::max_slope_sigma, "slope uncertainty is qualified");
   check(c.temperature_information >= GL::min_information, "temperature information qualified");
-  Store store; ImuCalBlobV4 rb;
+  Store store; ImuCalBlobV5 rb;
   check(store.saveVerified(gyroBlob(c), rb) && validateBlob(rb), "learned float blob save/readback");
   RuntimeCals rc; rc.rebuildFromBlob(rb);
   for (float t : {-100.f, 5.f, 25.f, 45.f, 100.f})
@@ -200,21 +201,21 @@ static void testGyro() {
     boundary = std::nextafter(boundary, std::numeric_limits<float>::infinity());
   for (float information : {std::nextafter(boundary, 0.f), boundary,
                             std::nextafter(boundary, std::numeric_limits<float>::infinity())}) {
-    ImuCalBlobV4 candidate = rb;
+    ImuCalBlobV5 candidate = rb;
     candidate.gyro_temperature_information = information;
     candidate.gyro_coeff_crc = gyroCoeffCrc(candidate);
     candidate = Store::sealed_(candidate);
     const bool expected = double(information) >= GL::min_information;
     check(gyroSetValid(candidate) == expected && validateBlob(candidate) == expected,
           "stored information uses the inclusive header threshold at adjacent float values");
-    Store boundary_store; ImuCalBlobV4 readback;
+    Store boundary_store; ImuCalBlobV5 readback;
     check(boundary_store.saveVerified(candidate, readback) == expected,
           "save/readback applies the same information boundary");
     RuntimeCals boundary_runtime; boundary_runtime.rebuildFromBlob(candidate);
     check(boundary_runtime.gyr.ok == expected,
           "runtime reconstruction applies the same information boundary");
   }
-  ImuCalBlobV4 corrupt = rb;
+  ImuCalBlobV5 corrupt = rb;
   corrupt.gyro_T_hi += 10; corrupt = Store::sealed_(corrupt);
   check(!validateBlob(corrupt), "outer CRC cannot bless unbound gyro metadata");
   corrupt.gyro_coeff_crc = gyroCoeffCrc(corrupt); corrupt = Store::sealed_(corrupt);
@@ -267,10 +268,11 @@ static void testMag(const char* name, const M& distortion, const V& bias, bool n
   check((c.A-c.A.transpose()).norm() < 1e-6, "soft iron correction is symmetric");
   Eigen::SelfAdjointEigenSolver<M> es(c.A);
   check(es.eigenvalues().minCoeff()>0, "soft iron correction is positive definite");
-  ImuCalBlobV4 b; b.mag_ok=1; mat_to_rowmajor9_(c.A,b.mag_A);
+  ImuCalBlobV5 b; b.mag_ok=1; mat_to_rowmajor9_(c.A,b.mag_A);
   for(int j=0;j<3;++j) b.mag_b[j]=c.b[j];
   b.mag_field_uT=c.field_uT; b.mag_rms=c.rms;
-  Store store; ImuCalBlobV4 rb;
+  bindTimingFixture(b);
+  Store store; ImuCalBlobV5 rb;
   check(store.saveVerified(b,rb), "direction-sensitive mag coefficients survive serialization");
   RuntimeCals rc; rc.rebuildFromBlob(rb);
   float heading_max=0, direction_max=0, norm_max=0;
@@ -343,7 +345,7 @@ static void testCapture() {
 }
 
 static void testStorageAndMissingTemp() {
-  ImuCalBlobV4 old=gyroBlob(gyro(5,40,V(.00035f,-.00021f,.00017f)));
+  ImuCalBlobV5 old=gyroBlob(gyro(5,40,V(.00035f,-.00021f,.00017f)));
   old.accel_ok=1; old.accel_g=ImuCalCfg::g_cal_local; old.accel_T0=25;
   old.accel_S[0]=old.accel_S[4]=old.accel_S[8]=1;
   old.accel_b0[0]=.1f; old.accel_k[0]=.003f;
@@ -356,9 +358,9 @@ static void testStorageAndMissingTemp() {
   }
   check((rc.applyAccel(V::Zero(),35)-rc.applyAccel(V::Zero(),NAN)).norm()>.01,
         "missing-temp regression would detect a fabricated 35 C input");
-  ImuCalBlobV4 cand=old; cand.gyro_b0[0]+=.001f; cand.gyro_coeff_crc=gyroCoeffCrc(cand); cand=Store::sealed_(cand);
+  ImuCalBlobV5 cand=old; cand.gyro_b0[0]+=.001f; cand.gyro_coeff_crc=gyroCoeffCrc(cand); cand=Store::sealed_(cand);
   for(int fault=0;fault<5;++fault) {
-    Store store; ImuCalBlobV4 rb, after;
+    Store store; ImuCalBlobV5 rb, after;
     check(store.saveVerified(old,rb), "storage fixture saves valid old calibration");
     if(fault==0) store.kv.drop=true;
     if(fault==1) store.kv.corrupt=1;
@@ -375,12 +377,12 @@ static void testStorageAndMissingTemp() {
     }
   }
   for(bool pretend : {false,true}) {
-    Store store; ImuCalBlobV4 rb;
+    Store store; ImuCalBlobV5 rb;
     store.kv.corrupt=1; store.kv.fail_remove=!pretend; store.kv.pretend_remove=pretend;
     check(!store.saveVerified(cand,rb) && store.lastSaveStatus()==Store::SaveStatus::RECOVERY_FAILED,
           "failed and falsely successful cleanup detected");
   }
-  Store store; ImuCalBlobV4 rb;
+  Store store; ImuCalBlobV5 rb;
   store.saveVerified(old,rb); int writes=store.kv.writes;
   store.kv.fail_read_number=store.kv.reads+1;
   check(!store.saveVerified(cand,rb) && store.kv.writes==writes &&

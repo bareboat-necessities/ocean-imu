@@ -1334,7 +1334,7 @@ struct GyroCalibrator {
     }
     out.temperature_information = T(information);
     // Qualify the exact precision that will be persisted and revalidated.
-    // This avoids a double-precision boundary pass becoming a V4 save failure.
+    // This avoids a double-precision boundary pass becoming a stored-float save failure.
     const double stored_span = double(T(temps[nb-1])) - double(T(temps[0]));
     const double stored_information = double(out.temperature_information);
     if (stored_span < Limits::min_span) {

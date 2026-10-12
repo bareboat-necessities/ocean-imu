@@ -186,7 +186,7 @@ static void testMagneticQuality() {
   check(cal.fit(out),"uneven directions remain identifiable with balanced fitting");
   if(out.ok)check((out.b-offset).norm()<.01f,"balanced fit retains offset accuracy");
   // Stored coefficients are checked at runtime too, without new blob layout.
-  atoms3r_ical::ImuCalBlobV4 b;b.mag_ok=1;b.mag_field_uT=50;b.mag_A[0]=b.mag_A[4]=b.mag_A[8]=1;
+  atoms3r_ical::ImuCalBlobV5 b;b.mag_ok=1;b.mag_field_uT=50;b.mag_A[0]=b.mag_A[4]=b.mag_A[8]=1;
   check(atoms3r_ical::magSetValid(b),"ordinary stored magnetic coefficients validate");
   b.mag_rms=3.22f;check(!atoms3r_ical::magSetValid(b),"poor stored fit RMS cannot bypass acceptance");
   b.mag_rms=0;b.mag_A[8]=.001f;check(!atoms3r_ical::magSetValid(b),"implausible stored matrix cannot bypass acceptance");

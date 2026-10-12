@@ -17,6 +17,22 @@
     "scope": "240 s carried legacy execution; complete last 40 s operation stream; both untapped controls match",
     "stream_sha256": "d1d511551e3ddeb25adcf9fa1c742533d3d9fed2710842f2dbc0be29471c8be9"
   },
+  "calibration_timing_revalidation": {
+    "baseline_commit": "453a1dfa66c7f90f4936f50940443fb0844d7959",
+    "command": "python3 -m tools.stability.ou3_theorem.planar_native_secants --eigen EIGEN_DIR --output OUTPUT",
+    "complete_two_epsilon_replay_performed": true,
+    "current_source_tree_sha256": "106c1af9b22a574939243741835eac3fd88642a4f0a336ba50fbbee4ed2a4326",
+    "derived_analysis_matches_rtol": 1e-12,
+    "native_secant_bytes_exactly_equal": true,
+    "original_numerical_payload_preserved": true,
+    "post_replay_changes_outside_compiler_dependency_closure": [
+      "src/AtomS3R/AtomS3R_ImuCal.h",
+      "src/AtomS3R/AtomS3R_ImuCalBlob.h",
+      "src/AtomS3R/AtomS3R_ImuCalWizard.h"
+    ],
+    "previous_source_tree_sha256": "74ff4bedfe9cf68811e6db13198878bca5cb835f8bab5dce4f9826eced0694cc",
+    "timed_api_equivalence_claimed": false
+  },
   "legacy_api_operation_projection_verified": true,
   "qualification": "MAGNETIC_TIMING_LEGACY_API_OPERATION_REBIND_V1",
   "rebound_records": {
@@ -83,7 +99,7 @@
     "planar-native-secants-diagnostic.json": {
       "new_bindings": {
         "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0",
-        "shipping_source_tree_sha256": "74ff4bedfe9cf68811e6db13198878bca5cb835f8bab5dce4f9826eced0694cc"
+        "shipping_source_tree_sha256": "106c1af9b22a574939243741835eac3fd88642a4f0a336ba50fbbee4ed2a4326"
       },
       "old_bindings": {
         "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",

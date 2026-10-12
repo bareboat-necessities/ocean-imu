@@ -41,7 +41,7 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "12663e96d151835a5986cf0f86b9a7134c9efd3d"
+      "git_blob_sha": "b845ac65184caf525eace31e9aacd54827ab8167"
     }
   ],
   "semantic_bindings": {
@@ -165,7 +165,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "81d0c6a6474840ed54bba3b8da6c1aeb08741c76"
+      "git_blob_sha": "1882b2c6425eec3e9a90b7d81b8468d356e77a33"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -825,7 +825,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "ad056d70bcf31f26f7f60f5f9885343e38b18a76"
+      "git_blob_sha": "055d9750000c20deab3227b2f7095aed9c7595d2"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1666,5 +1666,14 @@
   "receipt_schur_continuation_base_main_commit": "a47da994b85f2ec844b199d27b619a7fcc553adb",
   "receipt_schur_continuation_incorporated_main_commit": "59171c1a4aef654bb9808629e8856e4a56edfcc8",
   "receipt_schur_continuation_automated_evidence_preserved": "944f7bdffa379e3381e4ebfc7b3f2d77722d1990",
-  "receipt_schur_continuation_earlier_automated_evidence_preserved": "070e7de3633f396dac2636d1783f735f9ea87d4c"
+  "receipt_schur_continuation_earlier_automated_evidence_preserved": "070e7de3633f396dac2636d1783f735f9ea87d4c",
+  "magnetic_delay_calibration_scope": {
+    "format": 5,
+    "full_recalibration_required": true,
+    "effective_delay_relative_to_delivered_gyro": true,
+    "absolute_physical_epoch_known": false,
+    "legacy_native_secant_replay": "both epsilon replays reproduce identical native bytes; original numerical payload retained",
+    "timed_path_theorem_promoted": false,
+    "failure_classification": "E: stale source bindings after calibration/runtime changes; no mathematical counterexample"
+  }
 }

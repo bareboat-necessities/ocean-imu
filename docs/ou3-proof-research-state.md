@@ -44,6 +44,19 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Magnetic-input timing scope
 
+Calibration now identifies an effective magnetic delay relative to the delivered
+gyro clock and stores it in the mandatory v5 record. Exact physical conversion
+timing remains OPEN. CI rejected stale sketch/whole-source fingerprints after
+this change (**E: implementation/diagnostic failure**); the hypothesis that the
+old bindings described the current tree was invalid. Both complete native
+secant replays reproduce identical raw bytes; original finite numerical payloads
+and all non-promotion flags are retained. No mathematical counterexample or new
+stability result follows. Structures preserved: the legacy core, covariance,
+tuner, OU/S, resets and carried native histories. Relaxations introduced: none
+beyond the existing finite off-orbit diagnostic. The limiter remains the timed
+path's physical timestamp/service qualification; the next falsifiable check is
+device timing under reboot and display/USB load, with applied-service records.
+
 The AtomS3R OU-III frontend now transports known host-cache delay and suppresses
 repeated host observations. The BMM150 conversion epoch/aperture is not known;
 physical timestamp qualification remains OPEN. The 21-state core, Jacobian,
