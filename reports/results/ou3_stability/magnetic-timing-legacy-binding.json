@@ -25,6 +25,11 @@
       "src/AtomS3R/AtomS3R_ImuCalWizard.h",
       "src/imu_calibrate/MagTimingCal.h"
     ],
+    "comment_only_paths_token_identical": [
+      "src/AtomS3R/AtomS3R_ImuCalWizard.h",
+      "src/imu_calibrate/MagTimingCal.h",
+      "tests/imu_calibrate/mag_timing_cal-test.cpp"
+    ],
     "compiler_dependency_command": [
       "g++",
       "-std=c++20",
@@ -38,8 +43,9 @@
       "tools/stability/ou3_theorem/planar_native_secant_probe.cpp"
     ],
     "native_replay_performed": false,
-    "new_source_tree_sha256": "55e721d0dfa5b86eb179162dbdd91672d0d8bda21d1fb92d5ac0878fcf072f02",
+    "new_source_tree_sha256": "d01cb0ce5333e0e46542c7fd75801c7257901c43996da5adce5dd8f91cfb3f59",
     "numerical_payload_changed": false,
+    "previous_refresh_source_tree_sha256": "55e721d0dfa5b86eb179162dbdd91672d0d8bda21d1fb92d5ac0878fcf072f02",
     "scope": "Calibration-only source binding refresh; exact probe dependencies are unchanged, no timed-path or theorem promotion.",
     "shipping_dependency_sha256": {
       "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
@@ -79,6 +85,7 @@
       "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
       "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2"
     },
+    "subsequent_comment_only_commit": "fe46068263aa77d56b33eaeee32b4fe1cb5f31d8",
     "unchanged_payload_sha256": "1371e373a7187aa254c9ce3c534d1d6f075936af181eaf7b1f860f3a606b3ffe"
   },
   "calibration_timing_revalidation": {
@@ -163,7 +170,7 @@
     "planar-native-secants-diagnostic.json": {
       "new_bindings": {
         "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0",
-        "shipping_source_tree_sha256": "55e721d0dfa5b86eb179162dbdd91672d0d8bda21d1fb92d5ac0878fcf072f02"
+        "shipping_source_tree_sha256": "d01cb0ce5333e0e46542c7fd75801c7257901c43996da5adce5dd8f91cfb3f59"
       },
       "old_bindings": {
         "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",
