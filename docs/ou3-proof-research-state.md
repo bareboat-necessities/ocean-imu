@@ -46,6 +46,22 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Rapid-motion runtime repair scope
 
+Runtime qualification failure **E**: the shared protection's pending-capture
+latch could suppress aiding indefinitely during continued motion. The pinned
+OU-III startup/device-order regression at large physical heel holds aiding for
+411.58 seconds, applies no magnetic corrections in its final 30 seconds, and
+reaches 93.38 degrees of attitude error and 139.51 m raw heave with the original
+policy. The corrected execution ends at 3.94 degrees and bounds raw heave to
+1.70 m. This invalidates the claim that the previous rapid-motion core
+tests qualified continued Live operation with a pending capture. It does not
+refute a regional stability theorem: the handheld large-heel execution is
+outside its retained domain. The capture-only hold is now bounded to two seconds;
+the request remains available for later qualified capture. Existing core,
+covariance and local proof identities are retained. Current limiter: AtomS3R
+bench confirmation. Next falsifiable experiment: repeat the same physical
+tilt/turn sequence while recording `[ATT]`, magnetic service, heading and raw
+heave; verify no non-dynamic pending hold starves accepted corrections.
+
 Current recovery hypothesis: qualified two-vector/gyro bias repair,
 physical-coordinate TFG covariance reset, and explicit treatment of corrupted
 navigation feedback close the finite inherited-state recovery cases. qMEKF's

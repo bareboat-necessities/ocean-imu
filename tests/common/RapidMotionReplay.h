@@ -234,6 +234,36 @@ static void movingAfterTurn() {
     require(!t.last_held,"normal vessel motion was left indefinitely without aiding");
     require(t.tail<5,"moving recovery tail exceeds 5 degrees");
 }
+/** @brief Bound an unsuccessful capture hold and retain later qualified recovery. */
+static void pendingCaptureDuringMotion() {
+    ocean_imu::attitude::Protection policy;
+    Q truth=Q::Identity();
+    const Q discrepancy(Eigen::AngleAxisf(.8f,V::UnitZ()));
+    uint32_t now=1000;
+    bool held=false, resumed=false, captured=false;
+    policy.step(.005f,V(0,0,.18f),V::Zero(),V(0,0,-gravity),true,
+        gravity,truth,earth,true,true,now);
+    for(int i=1;i<=2000;++i) {
+        now+=5000;
+        // Above the capture rate limit, below every dynamic-motion threshold.
+        // A capture cannot complete during these five seconds of valid aiding.
+        const float rate=i<=1000 ? .18f : std::max(0.0f,.18f*float(1100-i)/100.0f);
+        const V w(0,0,rate);
+        truth=(truth*rotation(V(w*.005f))).normalized();
+        const auto d=policy.step(.005f,w,V::Zero(),truth.conjugate()*V(0,0,-gravity),
+            i%2==0,gravity,discrepancy*truth,truth.conjugate()*earth,true,i%8==0,now);
+        require(!d.dynamic,"ordinary moving capture was classified as hazardous");
+        if(i<=1000) {
+            require(!d.reacquire,"unsettled observations installed an attitude");
+            held=held||d.hold_attitude;
+            if(i>500) {require(!d.hold_attitude,"pending capture starved aiding beyond two seconds");resumed=true;}
+        } else if(d.reacquire) {
+            require(d.target.angularDistance(truth)<1e-5f,"late settled capture changed the north frame");
+            captured=true; break;
+        }
+    }
+    require(held&&resumed&&captured,"bounded hold did not retain qualified recovery");
+}
 /** @brief Check single-use acceleration freshness and elapsed time across clock wrap and gaps. */
 static void acquisition() {
     ocean_imu::ImuFreshness f; bool fresh;
@@ -411,7 +441,7 @@ int main(int argc, char** argv) {
         rapid(720,0,false,false,false,0,true); rapid(720,.15f,false,false,false,0,true);
         return 0;
     }
-    acquisition(); biasRecoveryPolicy(); antipodalInnovation();
+    acquisition(); biasRecoveryPolicy(); antipodalInnovation(); pendingCaptureDuringMotion();
     for(float rate:{180.0f,360.0f,720.0f}) for(float r:{0.0f,.05f,.15f})
         for(bool combined:{false,true}) rapid(rate,r,combined);
     rapid(720,.15f,false,true); rapid(720,.15f,true,false,true,8);

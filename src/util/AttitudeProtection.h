@@ -68,9 +68,14 @@ public:
     /** @brief Print the hold, dynamic-motion, and recovery-count diagnostics. */
     template<class Print> void print(Print& out) const {
         out.printf("[ATT] hold=%d dynamic=%d recoveries=%lu\n",
-            int(dynamic_ || pending_ || post_dynamic_), int(dynamic_), static_cast<unsigned long>(recoveries_));
+            int(holdAttitude_()), int(dynamic_), static_cast<unsigned long>(recoveries_));
     }
 private:
+    // A requested capture must not starve ordinary aiding indefinitely when
+    // continuing motion prevents the settled observation window from closing.
+    bool holdAttitude_() const {
+        return dynamic_ || ((pending_ || post_dynamic_) && recovery_wait_ < 2.0f);
+    }
     /** @brief Discard accumulated recovery observations and restart the sample count. */
     void clearWindow_() { have_window_ = false; count_ = 0; }
     bool post_dynamic_ = false;

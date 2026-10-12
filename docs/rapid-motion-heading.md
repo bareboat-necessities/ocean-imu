@@ -60,8 +60,12 @@ strength/dip fingerprint must also pass.
 
 After a dynamic interval the filter also attempts this settled capture when
 the discrepancy is small. Extra settling hold is limited to two seconds once
-the dynamic latch clears, unless a large error remains pending. Thus ordinary
-vessel motion can regain aiding without coming to rest. The three navigation
+the dynamic latch clears. A newly detected large discrepancy also permits at
+most two seconds of capture-only hold. If continued motion prevents capture,
+ordinary aiding resumes while the capture request remains pending; a later
+qualified settled window may still replace attitude. An unqualified discrepancy
+must not permanently disable magnetic service or the coupled OU/heave corrections.
+Thus ordinary vessel motion can regain aiding without coming to rest. The three navigation
 Kalman filters discard cross-covariance between held attitude/bias and driven
 navigation blocks when aiding resumes. This preserves means and physical marginal
 covariances and keeps covariance positive semidefinite. TFG performs that
@@ -118,6 +122,10 @@ adapters of the production estimator implementations. The suite is part of
   stale, invalid and strength-disturbed fields.
 - Continued moderate roll and wave acceleration after a turn, bias preservation,
   covariance validity, navigation-state preservation and protected startup.
+- An unsuccessful large-angle capture during continued motion, bounded hold,
+  and later settled recovery across all seven backends. OU-III additionally runs
+  complete startup and 450 seconds of device-rate motion at large physical heel,
+  checking recurring magnetic corrections, final attitude, and raw heave.
 - Accelerometer dropout after a contaminated sample, isolated acceleration
   frames, and a missing initial acceleration stream, including clock wrap and
   recovery after asynchronous fresh acceleration resumes, across all seven backends.
