@@ -243,17 +243,6 @@ public:
         mekf_.reset_aw_covariance_to_stationary();
     }
 
-    /** @brief Set the aiding policy for both the core and private vertical-acceleration observer. */
-    void setAttitudeAidingEnabled(bool enabled) {
-        mekf_.set_attitude_aiding_enabled(enabled);
-        vertical_complementary_.setAidingEnabled(enabled);
-    }
-    /** @brief Forward acceleration freshness to the core measurement-update gate. */
-    void setAccelerometerFresh(bool fresh) { mekf_.set_accelerometer_fresh(fresh); }
-
-    /** @brief Advance frontend tuning and fusion from body gyro and specific force.
-     * Use dt in seconds and tempC in degrees C; defer cold-start capture while held.
-     */
     void update(float dt, const Vector3f& gyro, const Vector3f& acc, float tempC = 35.0f) {
         if (!(dt > 0.0f) || !std::isfinite(dt) || !gyro.allFinite() || !acc.allFinite()) return;
 
@@ -283,7 +272,7 @@ public:
         last_acc_body_ = acc;
         last_gyro_body_ = gyro;
         have_last_imu_ = true;
-        if (mekf_.attitude_aiding_enabled()) updateProxyGravityQuality_(dt, gyro, acc);
+        updateProxyGravityQuality_(dt, gyro, acc);
 
         const float a_up = vertical_complementary_.verticalAccelUpMs2();
         // OU-III feeds the canonical period estimator every sample.  Readiness
@@ -299,7 +288,6 @@ public:
         }
 
         if (stage_ == StartupStage::Cold) {
-            if (!mekf_.attitude_aiding_enabled()) return;
             if (cfg_.startup_init_policy == StartupInitPolicy::MahonyProxy) {
                 tryProxyHandoff_();
             } else {

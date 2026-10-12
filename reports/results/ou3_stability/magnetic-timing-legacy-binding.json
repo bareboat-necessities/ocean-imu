@@ -97,7 +97,7 @@
     "previous_source_tree_sha256": "74ff4bedfe9cf68811e6db13198878bca5cb835f8bab5dce4f9826eced0694cc",
     "timed_api_equivalence_claimed": false
   },
-  "execution_scope": "legacy API; aiding always enabled; every acceleration fresh; no external reacquisition",
+  "execution_scope": "legacy API ordinary operations; removed motion switches forbidden",
   "guarded_or_recovery_equivalence_claimed": false,
   "legacy_api_operation_projection_verified": true,
   "previous_binding_commit": "453a1dfa66c7f90f4936f50940443fb0844d7959",
@@ -116,93 +116,100 @@
   },
   "regenerated_records": {
     "aw-tracking-source-feasibility.json": {
-      "record_sha256": "89d31ec4a8878be0db978794e3e437ef94f857bfb7062faa754188c948583ff4",
+      "record_sha256": "3cd3db9fce9cd6a5c80d9c241a3fc38e1821f37e97def05c1529bc555dd1edd5",
       "source_bindings": {
-        "header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
       }
     },
     "construction-mean-action.json": {
-      "record_sha256": "e02fd1c9b8300061462ac2f97b0771dd3b4b00b455a78e6d4df030e1f9535eeb",
+      "record_sha256": "9cc9ae68ca9a3e70f48a300d738f9ef79dd01ce6ad22b5a20f3af624dba0d912",
       "source_bindings": {
-        "instrumented_header_sha256": "6728ec1d8cff60f922819a0ec86e202cac35a8c2f3ff5eff4e4296beca62ebb5"
+        "instrumented_header_sha256": "1a57b327386c987a0642573ee757ef03c1c720dd435c39d0f5161dec0af49b6a"
       }
     },
     "information-ratio-source-feasibility.json": {
-      "record_sha256": "558df4442b4767c2ef82f79304ee55d1b90b7aba731c4bbdddc700fe613cc4ce",
+      "record_sha256": "1cddab690bfbac913e1c70e4bca54c994d1beb4fbca64407b829c64c81fe4f9d",
       "source_bindings": {
-        "header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
       }
     },
     "moving-compatibility-carried-1200s.json": {
-      "record_sha256": "2a67edb9beb7dcd8c14933d55a2dc4f0b9ab7bc7f40341a363d50d09c53a48c1",
+      "record_sha256": "b1e4515cecfa6792d1df8c663c7572c09d13b30c4d6ab6ac6ae22195f4aa0ebd",
       "source_bindings": {
-        "instrumented_header_sha256": "09f62ace3c48abf8d80159d69860b5d0174b552d49995eaf76ce12d0b31dcc17",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "instrumented_header_sha256": "39b44a9c08cc3b9687fc890c3e87f8a8f6040a8bb4db3db76b489813de1131b3",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
       }
     },
     "moving-compatibility-carried.json": {
-      "record_sha256": "f8ca2734be56d24ee5304a0025ffa0511ad29237077fdbfc597e76f34a452c2a",
+      "record_sha256": "efe1fc4c31b633548bd25c02bfe1a83df0751fd28e61081ba1a524c0bdc79d48",
       "source_bindings": {
-        "instrumented_header_sha256": "09f62ace3c48abf8d80159d69860b5d0174b552d49995eaf76ce12d0b31dcc17",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "instrumented_header_sha256": "39b44a9c08cc3b9687fc890c3e87f8a8f6040a8bb4db3db76b489813de1131b3",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
       }
     },
     "moving-transport-source-feasibility.json": {
-      "record_sha256": "46d11637e2f6c29e6776acc0ea6d33677baf5b97f33b8907c7050bfa4ca153f3",
+      "record_sha256": "2d2fe4484557390a07b3f9ca47acb9f9c62075ca2939196558d8b8166a3665cb",
       "source_bindings": {
-        "observer_header_sha256": "cd6a6b5f638bf454f00b53caa237a576393f821154f3fb2fde420f6307590438",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "observer_header_sha256": "9553ef279fbca2d82ed7b4b0a22106bee73ab10fe313c2fab3b72b25c4aecafe",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
       }
     },
     "planar-native-secants-diagnostic.json": {
-      "record_sha256": "df94aedbb0f1fe1f8bd8ae3d33516a35c9eb3d47b9943f6eb9d0f83ac1d03b24",
+      "record_sha256": "948babb6bd62b226485a77ee1509b6b59aef983b2b96e1144e5e813a3f9dd1ed",
       "source_bindings": {
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b",
-        "shipping_source_tree_sha256": "8306ab60058e3cc8629164ad554d828ff2fcaff8c37ee203df4eb1c1a25a37b0"
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0",
+        "shipping_source_tree_sha256": "6f14064342f456213da2b3b85b218ce1f40a0c8c4299eab052b1502d45e465e0"
       }
     },
     "planar-service-stream-diagnostic.json": {
-      "record_sha256": "954f3a04db9f4f258ffb7a55ef0b661b594e1e8d2f00ffc122065b85da732f34",
+      "record_sha256": "2ee5c8395c00f527cee463e5440f66bc6b938d47bd87a427c61dae3804185e00",
       "source_bindings": {
-        "instrumented_header_sha256": "11f61197c6b3c65fbe7e7640e99275dd9811ba4753121d806036ba8641dd3989",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "instrumented_header_sha256": "3ce2366c744b6097cac0bf82b4d3f3cf0fc780b5dd0b7967a69aaa1b87f2fa89",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
       }
     },
     "signed-adjoint-diagnostic.json": {
-      "record_sha256": "6c958bf9c58ea2865dea7598e3b47dabaf3e15363eef2414f64737ff139a9d08",
+      "record_sha256": "5b963120002c129baa04865bd6f0f1da39cc44c12e0d0ffc66ff6189428c8642",
       "source_bindings": {
-        "instrumented_header_sha256": "cd6a6b5f638bf454f00b53caa237a576393f821154f3fb2fde420f6307590438",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "instrumented_header_sha256": "9553ef279fbca2d82ed7b4b0a22106bee73ab10fe313c2fab3b72b25c4aecafe",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
       }
     },
     "signed-balance-diagnostic.json": {
-      "record_sha256": "1dd633f83a2c3e152886b8c4b80caf9cca8b7791d409cea744b2775c40b58c60",
+      "record_sha256": "6ca7211cc6b53089e3af0370fb9fa153dbe08b89159d054fc607f9b9651404b8",
       "source_bindings": {
-        "instrumented_header_sha256": "75dc0b3c4ee6dccc0c2ad73714db9d13b6007eaae2bbb0601f0b3bfed35f900a",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "instrumented_header_sha256": "050f51cb6a5de331f32cc1f59bbd84d6a596418ae2d873de40c676c839b5132a",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
       }
     },
     "world-frame-source-feasibility.json": {
-      "record_sha256": "878f575c7bc1e77245956fc34b5048861c4c60fc7ce00ddaf1130ca9bd75585a",
+      "record_sha256": "e63395df445dec206b4152c1424e9147d9cb9c772c954adb9b1244d5948ed436",
       "source_bindings": {
-        "observer_header_sha256": "ddb0d399d9f629d24aad500667666933aeee68d7b522a729902b07141b1efd08",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "observer_header_sha256": "ce4fe438faea9e35babb2e260fb2697828dc51866cb3c70e10ed39d6bbc4c2d6",
+        "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
       }
     }
+  },
+  "release_runtime_revalidation": {
+    "complete_stream_bitwise_equal": true,
+    "current_source_tree_sha256": "6f14064342f456213da2b3b85b218ce1f40a0c8c4299eab052b1502d45e465e0",
+    "ordinary_operation_tokens_unchanged": true,
+    "scope": "Fresh native probes validate restored ordinary facade operations. They do not qualify paired device sampling, physical magnetic timing or all-time stability. No theorem promotion.",
+    "two_epsilon_numerical_runs_unchanged": true
   },
   "scope": "Fixed-token operation identity only under the stated ordinary-aiding execution scope; current native diagnostics were regenerated with control parity. Guard, recovery, timed API, hardware and theorem qualification remain open.",
   "sources": {
     "src/kalman_common/ProxyStartupFusion.h": {
       "legacy_operation_tokens_sha256": "b2b061bbfc22a4ebe4236412ae179909a991dffcd0460bc370749e96e1c8d1cd",
-      "source_sha256": "7912dcb39e279aeac83e23b7afe794a648ca368c80d112df8486262f489da781"
+      "source_sha256": "d7bc77901adfbe788617222ed7ab1f281c679c0d20a5abab8a799acd10370a87"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
       "legacy_operation_tokens_sha256": "95aa5cd90dd8d0e1345964095cc6d851d5a337d9b1ce2906fe29f5f1a93999e9",
-      "source_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+      "source_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
       "legacy_operation_tokens_sha256": "41a2b0524f0174880f9045f8e8128ebb45260e39b659be5d8c48354c59a69f0d",
-      "source_sha256": "a4a39611098ed1ae5e3668eae11a4dfc8165057b2a17e5b5665a9bc698aafa22"
+      "source_sha256": "64d5419f9b4018ab165fda234eaf7282dbd271b60bdb30c4e05d3940ebccdb32"
     }
   },
   "theorem_closed": false,

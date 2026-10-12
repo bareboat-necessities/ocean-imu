@@ -104,8 +104,6 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
         }
     }
     void time_update(Vector3 const& gyr, T Ts);
-    /** @brief Freeze learned gyro bias while retaining magnetic attitude corrections. */
-    void set_bias_updates_enabled(bool enabled) { bias_updates_enabled_ = enabled; }
     void time_update(T const gyr[3], T Ts);
     void measurement_update(Vector3 const& acc, Vector3 const& mag);
     void measurement_update(T const acc[3], T const mag[3]);
@@ -123,7 +121,6 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     Vector3 gyroscope_bias() const;
 
   private:
-    bool bias_updates_enabled_ = true;
     Eigen::Quaternion<T> qref;
 
     Vector3 v1ref;
@@ -370,14 +367,7 @@ bool QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3
   // Which can be solved with the code below
   Eigen::FullPivLU<Matrix3> lu(s);
   if (lu.isInvertible()) {
-    Matrix<T, N, 3> K = P * C.transpose() * lu.inverse();
-    if constexpr (with_bias) {
-      if (!bias_updates_enabled_) {
-        K.template bottomRows<3>().setZero();
-        const Vector3 down = qref.conjugate() * Vector3::UnitZ();
-        K.template topRows<3>() = (down * (down.transpose() * K.template topRows<3>())).eval();
-      }
-    }
+    Matrix<T, N, 3> const K = P * C.transpose() * lu.inverse();
 
     x += K * inno;
 

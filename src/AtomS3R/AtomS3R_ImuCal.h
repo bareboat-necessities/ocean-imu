@@ -368,7 +368,7 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
  * Return false when no frame is ready; out.accel_fresh marks acceleration
  * not yet consumed by a previous delivered gyro frame.
  */
-static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out) {
+static inline bool readImuGyroMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out) {
   out.sample_us = sample_us;
   out.mask = update_mask;
   if (!atoms3rMagSource().imu_freshness.observe(
@@ -395,6 +395,19 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, ui
   }
 
   return true;
+}
+
+// Estimator input contract from v2.4.2: fresh accel AND gyro in this update.
+// Acquisition still observes the AUX burst at every delivered gyro epoch, so
+// magnetic timing calibration and runtime use the same host-observation clock.
+static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out) {
+  const bool available = readImuGyroMapped(imu, update_mask, sample_us, out);
+  return available && (update_mask & kImuMaskAccelGyro) == kImuMaskAccelGyro;
+}
+
+static inline bool readImuGyroMapped(decltype(M5.Imu)& imu, ImuSample& out) {
+  const uint32_t sample_us = micros();
+  return readImuGyroMapped(imu, imu.update(), sample_us, out);
 }
 
 static inline bool readImuMapped(decltype(M5.Imu)& imu, ImuSample& out) {

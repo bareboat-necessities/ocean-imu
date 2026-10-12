@@ -29,11 +29,9 @@ from .ag_readout_source_diagnostic import HEADER, REPO
 
 DRIVER = REPO/'tools/stability/aw_tracking_source.cpp'
 TAP_ANCHOR = '''    last_acc_diag_.accepted = false;
-    if (!accelerometer_fresh_) return;
 
     // Reject invalid corrections'''
 TAP = '''    last_acc_diag_.accepted = false;
-    if (!accelerometer_fresh_) return;
     trace_aw_pre = xext.template segment<3>(OFF_AW).template cast<double>();
     if (aw_event_rec) std::printf("A %.17g %.17g %.17g\\n", trace_aw_pre.x(), trace_aw_pre.y(), trace_aw_pre.z());
 

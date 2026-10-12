@@ -25,7 +25,7 @@ HEADERS = \
 	$(REPO_ROOT)/src/wave_dir/WaveDirectionReport.h \
 	$(REPO_ROOT)/src/detrend/AdaptiveWaveDetrender.h
 
-TARGETS = ins-helpers-test
+TARGETS = ins-helpers-test magnetic_input-test
 
 all: build test
 build: $(TARGETS)
@@ -37,3 +37,6 @@ ins-helpers-test: ins-helpers-test.cpp $(HEADERS)
 
 clean:
 	rm -f $(TARGETS) $(addsuffix .exe,$(TARGETS)) *.o
+
+magnetic_input-test: magnetic_input-test.cpp $(REPO_ROOT)/src/util/MagneticInput.h $(REPO_ROOT)/src/util/MagneticRotation.h
+	$(CXX) $(CXXFLAGS) -o $@ $<

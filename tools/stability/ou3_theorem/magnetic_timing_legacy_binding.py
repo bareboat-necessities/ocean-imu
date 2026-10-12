@@ -1,12 +1,10 @@
 """Mechanical legacy-API operation audit for magnetic preprocessing.
 
 Partial-evaluate the original updateMag entry (null observation/covariance and
-the unchanged magnetic-correction callback) with attitude aiding and fresh
-acceleration always enabled and no external reacquisition. Remove read-only
-diagnostics and uncalled overloads/accessors. The complete resulting three
-headers must match the pre-change source token-for-token. This does not cover
-the motion guard, recovery, timed entry, different-profile compiler roundoff,
-or hardware sampling.
+its unchanged correction callback). Remove read-only diagnostics and uncalled
+overloads/accessors. The complete resulting headers must match the pre-change
+source token-for-token. Removed motion switches are rejected, not projected
+away. Timed APIs, compiler roundoff and hardware sampling are outside this audit.
 """
 from pathlib import Path
 import hashlib
@@ -51,37 +49,11 @@ def replace_once(source, old, new=''):
 
 
 def ordinary_aiding(path, source):
-    """Specialize only the declared true flags; the final token hash is fixed."""
-    if path == PATHS[0]:
-        # The setters are excluded from this execution domain. Verify the
-        # actual initializers before eliminating the constant true guards.
-        for flag in ('attitude_aiding_enabled_', 'accelerometer_fresh_'):
-            source = replace_once(source, '    bool ' + flag + ' = true;\n')
-        start = source.index('    // Device motion policy:')
-        end = source.index('    void time_update(', start)
-        source = source[:start] + source[end:]
-        source = replace_once(source, '''        if (!attitude_aiding_enabled_) {
-            K.template topRows<3>().setZero();
-            if constexpr (with_gyro_bias) K.template middleRows<3>(3).setZero();
-            if constexpr (with_accel_bias) K.template middleRows<3>(OFF_BA).setZero();
-        }
-''')
-        source = replace_once(source, '    if (!accelerometer_fresh_) return;\n')
-        source = replace_once(source, '    if (!attitude_aiding_enabled_) return;\n')
-        source = replace_once(source, '''        const bool held = !attitude_aiding_enabled_ &&
-            (i < BASE_N || (with_accel_bias && i >= OFF_BA));
-        K(i) = held ? T(0) : PCt(i) / S;''', '        K(i) = PCt(i) / S;')
-    elif path == PATHS[1]:
-        source = replace_once(source, '''    void setAttitudeAidingEnabled(bool enabled) {
-        mekf_->set_attitude_aiding_enabled(enabled);
-        this->vertical_accel_comp_.setAidingEnabled(enabled);
-    }
-    void setAccelerometerFresh(bool fresh) { mekf_->set_accelerometer_fresh(fresh); }
-''')
-        source = replace_once(source, 'drive_mekf && mekf_->attitude_aiding_enabled() &&', 'drive_mekf &&')
-    elif path == PATHS[2]:
-        source = replace_once(source, 'if (impl_.mekf().attitude_aiding_enabled()) gravity_gate_.step(', 'gravity_gate_.step(')
-        source = replace_once(source, 'if (!begun_ || !impl_.mekf().attitude_aiding_enabled()) return;', 'if (!begun_) return;')
+    """Reject reintroduction of the removed motion-policy execution switches."""
+    forbidden = ('attitude_aiding_enabled_', 'accelerometer_fresh_',
+                 'setAttitudeAidingEnabled', 'setAccelerometerFresh')
+    if any(flag in source for flag in forbidden):
+        raise ValueError('removed motion policy reintroduced: ' + path)
     return source
 
 
@@ -145,6 +117,6 @@ def audit():
         result[path] = {'source_sha256': hashlib.sha256(source.encode()).hexdigest(),
                         'legacy_operation_tokens_sha256': sha}
     return {'baseline_commit': BASE_COMMIT, 'legacy_api_operation_projection_verified': True,
-            'execution_scope': 'legacy API; aiding always enabled; every acceleration fresh; no external reacquisition',
+            'execution_scope': 'legacy API ordinary operations; removed motion switches forbidden',
             'guarded_or_recovery_equivalence_claimed': False,
             'timed_api_equivalence_claimed': False, 'theorem_closed': False, 'sources': result}

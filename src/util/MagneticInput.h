@@ -95,16 +95,15 @@ public:
         snapshots_[snapshot_next_] = current;
         snapshot_next_ = (snapshot_next_ + 1) % snapshots_.size();
         snapshot_count_ = std::min(snapshot_count_ + 1, unsigned(snapshots_.size()));
-        if (!new_source_) return;
-        if (!delay_us_) { installSnapshot(current); return; }
+        if (!pending() || snapshot_ready_) return;
+        if (measurement_us_ == now_) { installSnapshot(current); return; }
         const unsigned oldest = (snapshot_next_ + snapshots_.size() - snapshot_count_) % snapshots_.size();
         for (unsigned j=1; j<snapshot_count_; ++j) {
             const auto& a = snapshots_[(oldest+j-1)%snapshots_.size()];
             const auto& b = snapshots_[(oldest+j)%snapshots_.size()];
             if (int32_t(measurement_us_-a.time)<0 || int32_t(b.time-measurement_us_)<0) continue;
             const uint32_t dt=b.time-a.time;
-            if (!dt || dt>RotationHistory<>::MaxGapUs ||
-                a.proxy.angularDistance(b.proxy)>.35f || a.attitude.angularDistance(b.attitude)>.35f) return;
+            if (!dt || dt>RotationHistory<>::MaxGapUs) return;
             const float f=float(uint32_t(measurement_us_-a.time))/float(dt);
             installSnapshot(Snapshot{measurement_us_, a.proxy.slerp(f,b.proxy),
                 a.attitude.slerp(f,b.attitude), a.accel+f*(b.accel-a.accel), a.gyro+f*(b.gyro-a.gyro)});
@@ -141,14 +140,13 @@ public:
     }
     template <class Fusion>
     void correct(Fusion& fusion, uint32_t correction_start_us) {
-        bool applied = false;
-        if (!SEA_STATE_MAG_HOST_ALIGNMENT) {
-            fusion.updateMag(field_); applied = fusion.lastMagUpdateApplied();
-        } else if (snapshot_ready_ && prepare()) {
-            fusion.updateMagTransported(field_, observation_);
-            applied = fusion.lastMagUpdateApplied();
-        }
-        complete(correction_start_us, applied);
+        applied_ = false;
+        if (SEA_STATE_MAG_HOST_ALIGNMENT && (!pending() || !snapshot_ready_ || !prepare())) return;
+        if (!SEA_STATE_MAG_HOST_ALIGNMENT) fusion.updateMag(field_);
+        else fusion.updateMagTransported(field_, observation_);
+        // A callback may consume the observation for reference/bias learning
+        // even before a core correction is applied. Offer it exactly once.
+        complete(correction_start_us, fusion.lastMagUpdateApplied());
     }
     void complete(uint32_t correction_start_us, bool applied) {
         applied_ = applied; submitted_sequence_ = source_sequence_; have_submitted_ = true;

@@ -87,7 +87,6 @@
 
 #include "AtomS3R/AtomS3R_CompassUI.h"
 #include "util/MagneticInput.h"
-#include "util/AttitudeProtection.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #if SEA_STATE_ENABLE_WIZARD
@@ -290,8 +289,6 @@ class FusionApp {
 
   ins::MagFreshGate mag_gate_{MAG_UPDATE_SPACING_MS};
   ocean_imu::magnetic::Input mag_input_{};
-  ocean_imu::attitude::Protection attitude_protection_{};
-  ocean_imu::attitude::AccelHold accel_hold_{};
   uint32_t last_mag_correction_ms_ = 0;
 
   Vector3f a_cal_ = Vector3f::Zero();
@@ -380,7 +377,7 @@ class FusionApp {
     return false;
   }
 
-  /** @brief Check IMU availability and reset sample timing, motion protection, and held acceleration. */
+  /** @brief Check IMU availability and reset sample timing. */
   void reinitImu_() {
     if (!M5.Imu.isEnabled()) {
       Serial.println("[BOOT] M5.Imu is not enabled");
@@ -392,8 +389,6 @@ class FusionApp {
     last_mag_correction_ms_ = 0;
     rates_.reset(millis());
     sample_dt_.reset();
-    attitude_protection_.reset();
-    accel_hold_.reset();
   }
 
   /** @brief Reset fusion and acquisition history, then restore the configured estimator settings. */
@@ -481,8 +476,6 @@ class FusionApp {
 
     stale_frame_count_ = 0;
     sample_dt_.reset();
-    attitude_protection_.reset();
-    accel_hold_.reset();
 
     heave_m_ = 0.0f;
     heave_speed_mps_ = 0.0f;
@@ -547,7 +540,7 @@ class FusionApp {
   }
 #endif
 
-  /** @brief Calibrate a delivered IMU frame and update fusion with freshness and motion protection. */
+  /** @brief Calibrate a delivered IMU frame and update fusion. */
   void updateFilter_(const ImuSample& s) {
     if (!have_blob_) return; // latest calibration required, including wizard-disabled builds
     const uint32_t now_ms = millis();
@@ -565,7 +558,6 @@ class FusionApp {
     w_cal_ = runtime_.applyGyro(s.w, tempC);
     m_cal_ = runtime_.applyMag(s.m);
     const Vector3f rotation_bias = fusion_.gyroscopeBiasBody();
-    a_cal_ = accel_hold_.update(a_cal_, s.accel_fresh, w_cal_ - rotation_bias, dt_);
     mag_input_.advance(s.sample_us, w_cal_ - rotation_bias, 0.0f,
         s.mag_timing, m_cal_, Vector3f::Zero(), false);
     Vector3f magnetic_now = m_cal_;
@@ -592,11 +584,6 @@ class FusionApp {
     const bool mag_usable = mag_present_ && magnetic_time_ok;
 #endif
 
-    const auto motion = attitude_protection_.step(dt_, w_cal_, rotation_bias,
-        a_cal_, s.accel_fresh, APP_G_LOCAL, fusion_.snapshot().q_nb, magnetic_now, mag_usable,
-        mag_input_.newSource(), s.sample_us,
-        fusion_.filter().config().magnetic_declination_rad, fusion_.initialized());
-    fusion_.setAttitudeAidingEnabled(!motion.hold_attitude);
     mag_used_ = mag_usable;
 
     /*
@@ -618,7 +605,6 @@ class FusionApp {
 
     fusion_.update(dt_, w_cal_, a_cal_);
     if (mag_used_) mag_input_.complete(magnetic_update_start_us, true);
-    if (motion.reacquire) fusion_.reacquireAttitude(motion.target);
 
     const auto snap = fusion_.snapshot();
 
@@ -877,7 +863,6 @@ class FusionApp {
         static_cast<double>(gyro_bias_norm_),
         static_cast<double>(dt_ * 1000.0f));
     mag_input_.print(Serial, "offered");
-    attitude_protection_.print(Serial);
 
   #endif
 

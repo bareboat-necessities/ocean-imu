@@ -921,7 +921,7 @@ private:
         ImuSample sample;
         // Timing uses every fresh gyro delivery, including gyro-only frames.
         // The acceleration-freshness gate is for spatial calibration poses.
-        if (readImuMapped(M5.Imu, sample)) {
+        if (readImuGyroMapped(M5.Imu, sample)) {
           const Vector3f w=gyr_out_.apply(sample.w,sample.tempC);
           const Vector3f m=mag_out_.apply(sample.m);
           timing_cal_.add(sample.sample_us,w,sample.mag_timing.have,

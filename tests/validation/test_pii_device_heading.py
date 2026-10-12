@@ -78,7 +78,7 @@ int main(){
                             '-o', str(binary)], check=True, capture_output=True, text=True)
             subprocess.run([str(binary)], check=True, timeout=5)
 
-    def test_pii_sketch_keeps_healthy_magnetic_heading_during_gravity_hold(self):
+    def test_pii_sketch_heading_through_rotation_and_field_outage(self):
         eigen = Path(os.environ.get('EIGEN_INCLUDE_DIR', '/usr/include/eigen3'))
         if not (eigen / 'Eigen/Dense').is_file():
             eigen = ROOT / 'third_party/eigen'
@@ -90,7 +90,6 @@ extern const float g_std=9.80665f;
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include "pii_observer/AdaptiveVerticalPIIMahony.h"
-#include "util/AttitudeProtection.h"
 #include "util/MagneticInput.h"
 #include "util/MagneticHeading.h"
 #include "util/ImuLoopHelpers.h"
@@ -115,8 +114,6 @@ struct App {
  mag_fresh_=false,mag_used_=false,heading_valid_=false;
  struct Runtime {Vector3f applyAccel(const Vector3f& a,float){return a;}
  Vector3f applyGyro(const Vector3f& w,float){return w;}Vector3f applyMag(const Vector3f& m){return m;}} runtime_;
- ocean_imu::attitude::AccelHold accel_hold_;
- ocean_imu::attitude::Protection attitude_protection_;
  ocean_imu::magnetic::Input mag_input_;
  ins::MagFreshGate mag_gate_;
  ins::SampleDtTracker sample_dt_{.005f};
@@ -136,20 +133,19 @@ struct App {
 int main(){
  App app;ImuSample s;
  Quaternionf truth(Eigen::AngleAxisf(137.f/57.295779513f,Vector3f::UnitZ()));
- bool saw_hold=false,timed_out=false,resumed=false;
+ bool timed_out=false,resumed=false;
  for(int i=1;i<=5000;++i){
    clock_us+=5000;s.sample_us=clock_us;s.accel_fresh=i%2==0;
    const float rate=i>1000&&i<=1400?3.14159265f:0;
    const Vector3f w(0,0,rate);
-   truth=(truth*ocean_imu::attitude::rotation(Vector3f(w*.005f))).normalized();
+   truth=(truth*Quaternionf(Eigen::AngleAxisf(rate*.005f,Vector3f::UnitZ()))).normalized();
    s.a=truth.conjugate()*Vector3f(0,0,-APP_G_LOCAL);s.w=w;
    const bool field_available=i<=4000||i>4800;
    if(i%8==0&&field_available){s.m=truth.conjugate()*Vector3f(20.3f,0,46.8f);
      s.mag_timing.acquired(clock_us/1000,clock_us,clock_us,clock_us);}
-   app.updateFilter_(s);
+   if(s.accel_fresh) app.updateFilter_(s);
    if(i==999)assert(app.heading_valid_&&std::abs(app.heading_deg_-137)<1);
    if(i>1000&&i<=2000){
-     saw_hold=saw_hold||!app.fusion_.mahonyState().aidingEnabled();
      assert(app.mag_used_&&app.heading_valid_);
      const float actual=std::atan2((truth*Vector3f::UnitX()).y(),(truth*Vector3f::UnitX()).x())*57.295779513f;
      assert(std::abs(std::remainder(app.heading_deg_-actual,360.f))<2);
@@ -157,7 +153,7 @@ int main(){
    if(i>4600&&i<=4800){assert(!app.mag_used_&&!app.heading_valid_);timed_out=true;}
    if(i>4900&&app.heading_valid_)resumed=true;
  }
- assert(saw_hold&&timed_out&&resumed&&app.mahony_seeded_);
+ assert(timed_out&&resumed&&app.mahony_seeded_);
  assert(std::abs(std::remainder(app.heading_deg_-137,360.f))<2);
 }
 '''
@@ -167,6 +163,6 @@ int main(){
             path.write_text(cpp)
             subprocess.run(['g++', '-std=c++20', '-O1', '-I'+str(ROOT/'src'),
                             '-isystem', str(eigen), str(path),
-                            str(ROOT/'src/util/AttitudeProtection.cpp'), '-o', str(binary)],
+                            '-o', str(binary)],
                            check=True, capture_output=True, text=True)
             subprocess.run([str(binary)], check=True, timeout=10)

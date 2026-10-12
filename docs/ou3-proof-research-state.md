@@ -44,351 +44,50 @@ latency) must be charged to the stated magnetic residual envelopes; that fit is
 not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
-## Rapid-motion runtime repair scope
+## Runtime restoration to v2.4.2
 
-Runtime qualification failure **E**: the shared protection's pending-capture
-latch could suppress aiding indefinitely during continued motion. The pinned
-OU-III startup/device-order regression at large physical heel holds aiding for
-411.58 seconds, applies no magnetic corrections in its final 30 seconds, and
-reaches 93.38 degrees of attitude error and 139.51 m raw heave with the original
-policy. The corrected execution, with magnetic heading feedback retained during holds,
-ends at 3.99 degrees and bounds raw heave to 1.52 m. This invalidates the claim that the previous rapid-motion core
-tests qualified continued Live operation with a pending capture. It does not
-refute a regional stability theorem: the handheld large-heel execution is
-outside its retained domain. The capture-only hold is now bounded to two seconds;
-the request remains available for later qualified capture. Existing core,
-covariance and local proof identities are retained. Current limiter: AtomS3R
-bench confirmation. Next falsifiable experiment: repeat the same physical
-tilt/turn sequence while recording `[ATT]`, magnetic service, heading and raw
-heave; verify no ordinary-bias non-dynamic pending hold starves accepted corrections.
+**E (infrastructure):** The first local Arduino compile could not initialize because official builtin discovery and `arduino:dfu-util@0.11.0-arduino5` tools were absent. Installing checksum-verified official tools is the next check; no source change follows from this failure. Focused Python tests require execution from `tests/validation` with `EIGEN_INCLUDE_DIR` set to the pinned Eigen tree; invocation without those prerequisites failed before compilation.
 
-The first timeout trial also released a grossly corrupted qMEKF gyro bias before
-its noise-qualified capture closed, leaving a 20.49-degree inherited-state tail
-(**E**, invalid timeout scope). The existing 0.08 rad/s gross-bias threshold now
-retains that protected repair window; the two-second bound applies to ordinary
-bias estimates. No measurement/covariance or capture-quality threshold is relaxed.
-PR #671 also conflated force-derived tilt/bias protection with magnetic
-validity in all seven backends. Healthy time-aligned magnetic heading feedback
-now remains active through a force hold, while tilt/bias protection remains.
-The first unrestricted 3D-magnetic trial exposed 34.13 degrees of excursion in
-a 720 deg/s case with an unmodelled 40 ms field delay (**E**, invalid timing
-qualification). This invalidates using a turn-long magnetic veto as evidence
-that an incorrectly timestamped field is harmless. Protected latency tests
-use the existing calibrated delay and transport; ordinary-aiding unmodelled
-latency controls remain visible. A subsequent OU-III inherited-state trial ended at 16.52 degrees because
-magnetic navigation gain rows carried corrupt turn cross-covariance into
-retained navigation means (**E**, heading-only repair was incomplete). Held
-magnetic corrections now retain physical navigation means as well as tilt
-and bias. For TFG, the invariant rho=[x]phi correction cancels the finite
-rotation of the retained physical navigation vector; the modified gain is
-used in Joseph covariance and reset. A new held-field/absent-field comparison
-checks informative magnetic service, tilt preservation and bias preservation
-across the production backends. Its initial arbitrary 20% two-second response
-criterion rejected OU-II despite a measured 17.19-to-14.45-degree improvement
-(**E**, observer-independent rate assumption). The service check instead
-requires a resolved 0.01 rad improvement without prescribing a common rate.
-The NLO scheduling-gap case initially peaked at 17.80 degrees because an
-end-of-gap field was reused as feedback during every intervening substep
-(**E**, magnetic-epoch mismatch). Held NLO propagation now applies the current
-field only on the final bounded substep rather than inventing magnetic
-observations through the unobserved gap. Healthy NLO heading feedback also
-resolved a 90-degree error before capture qualification; the old exactly-one
-capture assertion rejected an already accurate 0.01-degree heading (**E**,
-obsolete control-flow expectation). Large-angle tails still must be below
-three degrees with at most one capture, and the zero-innovation antipode still
-requires one independent capture. The PII sketch's actual update-body replay retains healthy magnetic service
-through a 137-degree start and a full protected turn; a genuine field outage
-still expires service and fresh fields restore it. Its graphical timeout
-previously drew `0 / N` with no visible invalid-status strip. The shared
-renderer now suppresses the unavailable needle and shows `--- / WAIT`; actual
-zero-degree headings remain valid. These are runtime/output repairs, not proof
-results. Hardware qualification remains the limiter. Local full-suite validation also
-exhausted the temporary filesystem while writing reproducible replay CSV
-outputs (**E**, infrastructure); completed outputs can be discarded between
-backend runs without changing any estimator or quality gate. Required CI
-correctly rejects stale proof/publication source bindings after these source
-changes. Those records need exact regeneration before this draft can be merged;
-their older ordinary-aiding results do not certify the new held-magnetic path.
+**Current hypothesis.** The post-release motion/recovery layer and gyro-only
+estimator updates changed the deployed coupled system. Remove that layer and
+restore the paired accelerometer/gyro estimator-input contract from v2.4.2.
+Gyro-only acquisition remains available for magnetic timing calibration; all
+seven estimator backends use the same paired-input reader. No equivalent-rate
+window, transported held acceleration, motion-category profile or inferred
+stillness is introduced.
 
-Current recovery hypothesis: qualified two-vector/gyro bias repair,
-physical-coordinate TFG covariance reset, and explicit treatment of corrupted
-navigation feedback close the finite inherited-state recovery cases. qMEKF's
-quiet seven-second tails are below 0.00003 degrees; TFG yaw/combined tails are
-0.34495/0.92293 degrees. Ten qMEKF and ten TFG continuations include sensor
-noise, resumed vessel motion, sixty-second quiet tails and calibrated 40 ms
-magnetic delay; all remain below
-five degrees in the fresh optimized build (maxima 0.48445/2.92141 degrees).
-All fourteen seven-backend late-protection cases pass. Aiding resumes and
-healthy biases survive. The 336 ordinary causal controls change by at most
-0.00079 degrees across the combined-source rebuild; their mechanism conclusions
-are unchanged. The native OU-III rerun reproduces every numerical value and both
-native byte hashes exactly.
-Fresh full-matrix evidence and full-suite status are recorded in PR metadata.
+**Structures preserved.** OU-II, OU-III, TFG, NLO, PII and the private Mahony
+frontend/core headers are restored byte-for-byte to v2.4.2 where their only
+post-release differences were protection/recovery operations. This restores
+ordinary gains, bias updates, startup handoff and actual covariance cross-terms.
+Current v5 spatial/timing calibration, coherent AUX acquisition and the qMEKF
+SO(3) covariance/injection corrections remain. The latter are documented in
+`docs/qmekf-error-geometry.md` and checked by finite differences/quadrature.
 
-Failed recovery approaches / DEAD_ENDS (all class E, engineering qualification):
-- Attitude-only capture retained 16.54773/17.24282-degree qMEKF tails and a
-  13.96484-degree TFG yaw tail. Artificial-angle injection did not qualify
-  carried bias/covariance/navigation recovery.
-- Gyro-bias repair alone left TFG yaw at 13.77418 degrees; physical covariance
-  mapping alone left 16.45352 degrees. Operation tracing isolated S=0 feedback.
-  TFG now masks its attitude/bias gain rows after gross repair, retaining
-  navigation updates, until explicit estimator initialization.
-- Endpoint differentiation rejected a noisy stationary bias candidate; a
-  short-arc least-squares fit had 0.04747 rad/s error. Regression residuals now
-  qualify slope noise before replacement; slow observed motion is subtracted.
-  A fixed two-second delay gave a 6.99196-degree TFG yaw tail; noise-qualified
-  delay alone gave 8.16057 degrees. The retained acceleration confidence mattered.
-- Adding `(2g)^2 I` world-acceleration uncertainty passed seven-second/noisy
-  recovery but left 12.09322 degrees at sixty seconds. Adding only acceleration-
-  bias uncertainty still left 5.93086 degrees. Quiet force cannot identify tilt
-  and bias independently; further covariance tuning is rejected. The recovery
-  now explicitly returns only a gross learned acceleration bias outside 4% of g
-  to the calibrated zero-residual prior, with matching uncertainty. This prior
-  is the same calibration assumption required by gravity capture, not a new
-  observability theorem. Navigation means are retained and the actual runtime
-  reset, rather than an artificial replay-boundary reseed, is tested.
-- The independent finite-difference covariance test's absolute 1e-8 cross-term
-  tolerance failed after the large PSD uncertainty charge. Its tolerance now
-  scales with covariance norm and finite-difference roundoff; mean preservation,
-  physical marginals, selective S rows, initialization and PSD remain checked.
+**Relaxations introduced.** Native finite replays and algebraic tests do not
+qualify hardware clocks, conversion epochs, all-time magnetic service, IMU
+bias histories or end-to-end stability. Restoring paired device updates does
+not transfer a proof-side 5-ms sampling premise to a 10-ms device execution.
+The effective magnetic epoch retains its stated uncertainty. Historical
+reference snapshots remain numerical interpolation, not exact state replay.
 
-Retained facts: qMEKF's independent SO(3) geometry fixes, protected replay bounds
-and OU-III ordinary-aiding identities remain valid. No admitted shipping theorem
-counterexample was found and no theorem flag is promoted. Current limiter is
-hardware/calibration qualification, not the reproduced finite quiet tails.
-Next falsifiable qualification: timestamped turns with calibrated force residuals,
-raw gyro, magnetic epochs and recovery state; test the explicit calibration prior
-and retained-state behavior on device. Main `c9c41de` (effective magnetic-delay
-calibration) and intervening PR documentation `8e3e5d8` are incorporated. AUX
-status-bit masking and the required latest calibration format are preserved.
-The source-wide native diagnostic is rerun on this combined source tree.
-The final local `make all EIGEN_DIR=... SIM_DATA_ZIP=...` stopped compiling
-`tests/imu_calibrate/accel_cal-test.o` with `error writing to /tmp/...s: No space
-left on device`; the qMEKF Arduino compile and subsequent git fetch hit the
-same storage exhaustion (E: infrastructure, not a code regression). Dispose
-only of ignored generated CSV outputs, retain pinned inputs/source/evidence,
-then retry unchanged code while cleaning completed directories' transient output.
-Both AtomS3R retries pass: qMEKF uses 823747 flash / 116276 RAM bytes; TFG
-uses 1069043 flash / 45028 RAM bytes. Full native-suite retry is in progress;
-its outcome and the required CI gates remain PR metadata.
-The combined-tree `make -C tests/validation test` stops at
-`python3 ../../tools/ou_evidence_contract.py --auto`: validation replay provenance
-mismatches `src/ahrs/Mahony_AHRS.h`,
-`src/kalman_ou_ii/Kalman3D_Wave_OU_II.h`,
-`src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h`,
-`src/tuner/VerticalAccelComplementary.h` and `src/util/MagneticRotation.h`;
-robustness provenance mismatches the Mahony, vertical-complementary and magnetic-
-rotation paths (E: stale full-replay evidence). The new rapid-motion controls and
-ordinary-aiding native proof diagnostics pass their own source bindings, but do
-not refresh these separate statistical replays. The current merge limiter is
-genuine full OU/TFG evidence regeneration and validation of its published tree;
-the branch's automatic full-evidence CI is queued. Do not replace old replay
-hashes without rerunning their simulations or weaken the publication gate.
-The direct Python suite runs 1137 tests: four failures and two errors concern
-those stale replay bundles; one CMake check is skipped because CMake is absent.
-A fifth failure expected one synthetic stale-source error but saw two because
-this ledger changed during the test (E: overlapping edit/test execution).
-All three provenance tests pass when rerun on a stable tree. The interrupted
-parallel-build attempt could schedule top-level tests before build completion;
-its output is discarded. The retry keeps top-level build/test ordering and
-parallelizes only recursive compilation, with no source or threshold change.
-The unchanged evidence builder rejects stale source/record hashes after the
-merge (E); refresh only the bindings backed by this new replay and the unchanged
-legacy-operation audit. No numerical record or theorem gate is weakened.
-Integration tests caught duplicate AUX cache storage from the automatic merge
-and fixture omissions for the new timing configuration (E). The shared storage
-is deduplicated; tests retain new main's status-bit masking and verify calibrated
-delay delivery and configuration mismatch, alongside gyro/acceleration freshness.
+**Failed approaches / DEAD_ENDS (E).** The prior engineering motion guard,
+selective gain rows, covariance erasure and settled capture were not justified
+by passing their own protection/recovery tests. Those operations, their tests
+and source-bound reports are removed. No admitted shipping theorem
+counterexample was established. The independent qMEKF covariance errors and
+corrected operation identities remain valid. A new magnetic-input test first
+omitted the receiver's unaligned API; adding that required method repairs only
+the test build. A cleanup-script assertion also matched a comment rather than
+an identifier; no mathematical result depended on that script failure.
 
-Documentation validation exposed missing sandbox `mpmath` and `numpy`
-dependencies (classification E). The workflow dependencies are installed and
-all three provenance tests pass. The source-tree gate also rejected stale byte
-bindings after comment/docstring edits (E); refreshed source and linked-record
-hashes pass the unchanged gate. Executable C++ tokens and Python ASTs excluding
-docstrings match the prior revision, so the existing numerical evidence and
-open theorem flags are retained. This rebind reuses the existing native run;
-it does not claim a new replay or alter a mathematical hypothesis. The next
-physical qualification remains the timestamped hardware turn below.
-The full native build passes; dataset verification initially failed because
-Python 3.9 lacks `hashlib.file_digest` (E: sandbox runtime mismatch).
-Python 3.11 verifies the pinned archive. The full test run then stops in
-`./heave_only-sim`: Küchler Mahony-frontend Z RMS is 17.2632% > 16.99% for
-JONSWAP Hs=8.5 and 20.2382% > 19.98% for PMSTOKES Hs=8.5 (E: numerical
-regression-gate failure). Clean PR code reproduces these values under GCC
-11.5/Eigen 3.3.9; documentation did not introduce them. Existing source/token
-identities and theorem flags remain valid. Current limiter: heave regression
-qualification in this toolchain; next experiment is comparison under the CI
-toolchain with the same pinned inputs. No threshold or estimator is changed.
-
-The mathematical audit is recorded in `docs/rapid-motion-math.md`. Two qMEKF
-implementation errors are independently reproduced (classification E): the
-quaternion half-angle propagator block was used as an SO(3) attitude-error
-transition, and covariance was not transported after finite error injection.
-The no-noise/no-observation spin test incorrectly contracted unit axial
-variance to 0.3726473193. Central differences of the physical right-error flow
-and reset reject the original header and pass the corrected implementation.
-These qMEKF changes do not alter OU-III's ordinary-aiding equations.
-The offset-turn flip remains without protection after those repairs, so the
-hypothesis that they alone explain the common failure is rejected. Matched
-known-force controls isolate the invalid gravity assumption, while exact
-antipodal controls isolate the local zero-tangent correction equilibrium.
-The physical hardware cause and conversion epochs remain unqualified.
-The source-wide secant gate requires a rerun after the qMEKF change; both
-native byte hashes and all numerical results reproduce exactly on that rerun.
-`make all` then stopped in `python3 -m unittest discover -v -p 'test_*.py'`
-with eight provenance-test failures caused by the two newly regenerated
-record hashes (E). The actual rerun records are rebound, preserving all numerical
-payloads and open theorem flags; the unchanged evidence builder passes.
-An interrupted Arduino compile left a zero-byte NLO object, causing
-`undefined reference to setup` and `loop` at link (E). Removing that generated
-object and recompiling the unchanged source passes. A diagnosis run also found
-an old executable after an overlapping header edit; its incomplete controls
-are discarded. The diagnosis driver now freshly compiles its targets. AHRS
-simulation dependencies explicitly include the qMEKF header; the current
-geometry and wave suites pass after rebuilding. An extra compile with
-`-Wall -Wextra -Wshadow -Wconversion -Werror` failed on pre-existing `R`/`M`
-shadowing in qMEKF (E: stricter diagnostic configuration). The repository's
-`-Wall -Wextra -Wpedantic -Werror` flags pass without unrelated source changes.
-All 336 matched causal controls and the seven-backend protection/recovery matrix
-complete from fresh builds. Every exact-antipode local control stays at 180
-degrees; each finite-angle recovery escapes with one capture. Full validation
-status belongs in PR metadata. The next physical qualification is a timestamped
-hardware turn. No admitted theorem counterexample is claimed; these runtime
-cases remain finite engineering evidence.
-
-The device motion guard, selective gain-row holds and settled attitude
-reacquisition are new runtime operations. The existing local identities remain
-applicable to the ordinary aiding branch only; no capture or stability theorem
-is transferred to the guarded or recovery branch. Skipped corrections do not
-establish MAGNETIC SERVICE. Covariance recovery clears attitude cross terms
-while preserving navigation means and the established world reference. Bias
-means are preserved except for the explicitly qualified qMEKF/TFG repair above.
-Structures preserved: literal gyro propagation, measured specific force for
-translation, OU/S and tuner chronology, magnetic calibration and frame.
-Relaxations introduced: rapid-motion host tests use synthetic pivot-motion
-histories, with ideal and seeded noisy sensor cases; they are engineering
-regressions, not admitted theorem histories. There is no hardware qualification.
-Classification E: the initial new replay build omitted the acquisition header
-and referred to a nonexistent TFG proxy-initialization accessor. This invalidated
-only that test build, retained all existing mathematical results, and was repaired
-by including the production acquisition type and using the facade's tilt accessor.
-The first protected qMEKF ramp reached 14.2504 degrees at 180 deg/s and a
-15 cm pivot: classification E, incomplete motion detection. The rate-only
-threshold fired after tangential acceleration had already entered the filter.
-A 30 ms filtered angular-acceleration gate closes that interval; the same
-unchanged 12-degree excursion bound is rerun. The next falsifiable check is the
-common seven-backend motion replay followed by `make all`.
-A second, distinct engineering failure was a 17.4363-degree OU-III excursion
-2.886 s after the 720 deg/s turn ended. Literal-operation tracing located the
-rotation in S=0 corrections after ordinary aiding resumed, while physical
-acceleration was already quiet. A trial S-residual threshold still gave 17.1241 degrees (E); residual magnitude
-alone did not bound the attitude cross-covariance effect. That trial is removed.
-The architecture review instead keeps the selective hold until the independent
-settled reacquisition window closes after **every** dynamic interval, even with
-small heading error. Its attitude covariance reset removes the stale cross
-terms before S can affect attitude again; navigation means remain intact. The
-unchanged seven-backend excursion and recovery bounds passed for OU-III.
-A vessel need not stop completely: extra settling hold is bounded at two seconds
-unless a large error is pending. At re-entry all three Kalman cores remove
-cross-correlations between held attitude/bias and driven navigation blocks,
-preserving means, marginal covariances and PSD. The moving-after-turn case checks
-that normal vessel motion regains aiding without a stationary reset.
-Classification E also covers the initial test linkage omissions (`g_std`, C++
-link driver), the parallel compiler OOM, and a toolchain archive checksum failure;
-none is evidence about filter stability. Rebuild with less concurrency and
-verify the archive against its pinned checksum before retrying. The new OU-II
-covariance test initially called an OU-III-only integral-displacement accessor;
-the build failure invalidated only that test. OU-II's navigation block has nine
-states, not OU-III's twelve; its projection bounds and preservation checks use
-that layout. A mixed-version M5GFX installation failed compilation and was
-replaced by a clean installation of the CI-pinned dependency. These are E.
-Compiler diagnostics also exposed a dangling Eigen expression in the new
-noise-generator lambda. Its return now materializes a vector; earlier noisy
-case results are discarded and all seven are rerun with the corrected generator.
-The AW source diagnostic stopped with `shipping accelerometer anchor changed`
-after adding the freshness guard (E: stale instrumentation anchor). Its tap now
-retains that guard and records only a fresh correction attempt; unique-anchor
-and untapped-control parity checks remain mandatory. The full evidence contract
-also rejects the old replay/source hashes after these implementation edits;
-full validation, robustness and TFG replays regenerate their source provenance.
-The 1200-second compatibility probe's `g++ -O1` compilation exceeded its
-90-second subprocess timeout under concurrent validation load (E). No replay
-or mathematical comparison ran in that attempt; repeat the unchanged probe
-after reducing compiler contention, retaining its existing parity checks.
-The first full replay regeneration stalled in the rolling transition-plot
-convolution with nine BLAS threads competing for eight CPU cores (E: execution
-configuration). The same 240001-by-12000 convolution took 0.94 seconds with
-one BLAS thread. Regeneration uses one numerical-library thread and six
-independent simulator jobs; its protocol, seeds and acceptance criteria are
-unchanged. Incomplete first-attempt outputs are not used as replay evidence.
-The complete validation, robustness and TFG studies now reproduce locally.
-`python3 tools/tfg_comparison.py --check --require-ci --publish` initially failed
-with `ValueError: publication requires CI replay provenance` (E: missing CI
-execution). The same bundle passes `--check`; no workflow identity is invented,
-and no publication gate is weakened. PR #671's initial `evidence-contract` and
-`ou-validation` jobs fail at this same command. Full branch replay
-`38176210485` supplies the genuine TFG artifact, with source and byte hashes
-verified; that artifact passes the unchanged `--check --require-ci` gate.
-Full OU CI regeneration and final-head validation remain required.
-The earlier `make all` passes the preceding
-C++/simulation suites and stops at the same gate, invoked as
-`python3 ../../tools/tfg_comparison.py --check --require-ci` in `tests/validation`.
-The complete Python suite and the two downstream wave suites pass separately
-(one CMake configuration check is skipped because CMake is unavailable).
-The diagnostic-sketch host test first
-failed extraction with `Missing definition: onSample` because the helper allowed
-`static inline` but not `static` alone (E). The helper now accepts both valid
-declarations; the actual extracted integration/freshness code passes its gap,
-NaN and repeated-frame cases. No estimator inference depended on the failed
-test invocation.
-Source-bound native diagnostics were rerun with their untapped control and
-carried-state checks. The signed-balance, construction-mean and planar-service
-exports reproduced the committed trace bytes exactly. Their unchanged
-deterministic high-precision reductions are retained on those identical inputs;
-the native source fingerprints come from the new executions. This is not a
-relabelled historical replay or qualification of the new guarded branch.
-The broader Python suite exposed an obsolete unconditional legacy-operation
-projection and a publication table still containing 18.371 instead of the
-fresh replay's 18.372 (both E). The source audit now explicitly specializes
-the always-enabled aiding/fresh-acceleration, no-external-reacquisition domain;
-all three original token hashes remain unchanged. Mutation tests reject altered
-defaults or ordinary operations. Its receipt binds the freshly regenerated
-native records, without claiming that every numeric payload stayed unchanged.
-The mutation test initially expected a token-hash mismatch for an edit that the
-stricter unique-anchor check already rejected (E: test expectation). It now
-asserts both rejection paths; neither audit rule was loosened.
-After the table matched, the same publication check exposed stale generated
-macros (including 12.523 versus 12.525, E: incomplete publication mirroring).
-Both the table and macro definitions are copied from the new evidence. These repairs retain the original
-ordinary-branch identities and do not qualify guarded/recovery execution.
-PR review exposed two further E implementation failures: capture used held
-acceleration without an age bound, and standalone backend scripts could hide a
-failed first rapid-motion test because explicit `set -e` came later or was absent.
-The qMEKF regression reproduced `missing acceleration caused global recovery`.
-The shared policy now receives actual accelerometer freshness, holds aiding after
-20 ms without a sample, and clears capture across any such gap. A valid 100 Hz
-acceleration stream may be out of phase with 25 Hz magnetic observations. The
-same three dropout/resumption cases run on all seven backends, including clock
-wrap and a last contaminated force with gravity's norm. The initial intermittent
-test allowed capture before the dropout began (E: test chronology); it now starts
-the gap before the next magnetic frame. All six scripts enable errexit before
-their first executable test; injected exit-23 failures verify propagation.
-All seven backends pass their 22 rapid-motion, 14 large-angle and three dropout
-cases after the repair. The dropout recovery tail is below 0.23 degrees in every
-case, against the unchanged 3-degree bound. Full `make all` and firmware builds
-are rerun on the repaired source; their completion remains a validation gate.
-These repairs retain navigation/bias state and gyro propagation. No proof
-identity or bound changes; only guarded-path engineering claims are involved.
-The source-tree gate then reports `finite quotient/secant evidence verification
-failed: shipping source tree changed` (E: stale diagnostic binding). Both native
-secant runs were repeated on the new source tree with all fork/forcing controls;
-their native byte hashes and numerical results reproduce exactly. The new
-record and its receipt retain the finite-diagnostic scope and all open premises.
-No shipping theorem counterexample is asserted. Existing algebraic identities
-retain their original hypotheses; guarded intervals, covariance decorrelation
-and global reacquisition need separate analysis. The next falsifiable runtime
-check is the same replay on each final binary and an instrumented hardware turn
-with fresh-sample, elapsed-time, magnetic-age and `[ATT]` diagnostics.
+**Current limiter / next falsifiable experiment.** Validate actual paired
+runtime startup, heading and heave on one persistent sensor history; verify
+that an unavailable transport/snapshot does not consume a discrete magnetic
+packet, and that finite legitimate rotation is not a magnetic rejection rule.
+Then rerun source-bound native diagnostics, `make all`, firmware builds and
+recorded-device comparison with v2.4.2. No detector or acceptance threshold is
+added to force a replay to pass, and no theorem is promoted.
 
 ## Magnetic-input timing scope
 
@@ -494,11 +193,10 @@ gyro-bias/accel-bias OU-III `time_update` after PRs #671/#673. This invalidates
 the assumption that successful native tests and the older Linux MCU profile
 qualify the Windows IDE build. Prediction equations, state layout, covariance,
 scheduler and prior mathematical results are retained; no instability is
-inferred. The build repair compiles the new non-template protection policy
-and held-acceleration transport in a shared library source, retaining the
-estimator's existing template organization. Local `make all` encountered storage and
-compiler-memory exhaustion (class E), so incomplete runs are not passing
-validation. Next falsifiable check: link every shipped sketch on Windows and
+inferred. The protection and held-acceleration code is now removed; the
+estimator template equations match v2.4.2. Earlier local `make all` runs
+encountered storage and compiler-memory exhaustion (class E), so incomplete
+runs are not passing validation. Next falsifiable check: link every shipped sketch on Windows and
 Linux with the reported core and default IDE flags. No theorem is promoted.
 
 **D — an inverse-domain estimate alone does not settle the linked receipt.**
@@ -1812,10 +1510,10 @@ remaining work. Reacquisition and source variations do not inherit a zero port.
 Exact rational regressions cover variational NIS, coupled correction/prediction
 identities, held-BA Joseph structure, first-boundary bounds and fail-closed
 domain checks. The source-bound native diagnostics are reproduced against
-the ordinary-aiding branch after the runtime changes above. Their local
-identities do not cover the new motion guard or recovery transitions. Rapid
-motion replays are engineering evidence only. Current test/CI results are
-recorded in the PR metadata.
+the restored ordinary operations after the runtime changes above. Their
+local identities do not qualify hardware timing, transport approximations
+or device heave performance. Current test/CI results are recorded in the
+PR metadata.
 
 ## Shipping-faithfulness handoff
 
