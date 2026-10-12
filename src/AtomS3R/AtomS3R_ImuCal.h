@@ -96,6 +96,7 @@
 #include "AtomS3R/AtomS3R_Bmm150AuxPreset.h"
 #include "AtomS3R/AtomS3R_MagAcquisition.h"
 #include "AtomS3R/AtomS3R_Bmm150Compensation.h"
+#include "AtomS3R/AtomS3R_InsDiag.h"
 
 namespace atoms3r_ical {
 
@@ -502,6 +503,38 @@ static inline bool configureAtomS3RMag(Print& log, bool compensate = true) {
              trim.dig_x1, trim.dig_y1, trim.dig_x2, trim.dig_y2, trim.dig_xy1, trim.dig_xy2,
              trim.dig_z1, trim.dig_z2, trim.dig_z3, trim.dig_z4, trim.dig_xyz1);
   return low;
+}
+
+// Read-only snapshot of the BMI270/BMM150 timing configuration for the
+// diagnostic I line. The BMI270 block is a plain register read. Reading the
+// BMM150 goes through the AUX interface in manual mode and restores data mode
+// afterwards, exactly as configureAtomS3RMag() does, so call it at boot, not
+// while sampling.
+static inline ImuTimingRegisters readImuTimingRegisters(bool include_bmm150) {
+  ImuTimingRegisters r;
+  auto* imu0 = M5.Imu.getImuInstancePtr(0);
+  if (M5.Imu.getType() != m5::imu_bmi270 || !imu0) return r;
+  uint8_t conf[6];  // ACC_CONF, ACC_RANGE, GYR_CONF, GYR_RANGE, AUX_CONF, FIFO_DOWNS
+  uint8_t aux[3];   // AUX_DEV_ID, AUX_IF_CONF, AUX_RD_ADDR
+  uint8_t pwr[2];   // PWR_CONF, PWR_CTRL
+  r.bmi270 = imu0->readRegister(0x40, conf, sizeof(conf)) && imu0->readRegister(0x4B, aux, sizeof(aux)) &&
+             imu0->readRegister(0x7C, pwr, sizeof(pwr));
+  if (r.bmi270) {
+    r.acc_conf = conf[0]; r.acc_range = conf[1]; r.gyr_conf = conf[2]; r.gyr_range = conf[3];
+    r.aux_conf = conf[4]; r.fifo_downs = conf[5];
+    r.aux_dev_id = aux[0]; r.aux_if_conf = aux[1]; r.aux_rd_addr = aux[2];
+    r.pwr_conf = pwr[0]; r.pwr_ctrl = pwr[1];
+  }
+  if (include_bmm150) {
+    Bmm150AuxPreset<m5::IMU_Base> preset(imu0, [](uint32_t ms) { delay(ms); });
+    Bmm150RegState bmm;
+    r.bmm150 = preset.query(bmm);
+    if (r.bmm150) {
+      r.bmm_chip_id = bmm.chip_id; r.bmm_power = bmm.power; r.bmm_mode = bmm.mode;
+      r.bmm_rep_xy = bmm.rep_xy; r.bmm_rep_z = bmm.rep_z;
+    }
+  }
+  return r;
 }
 
 } // namespace atoms3r_ical

@@ -7,6 +7,8 @@ set -e
 ./device_heave-test
 make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_heave-test
 ./ins_sketch_heave-test
+make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_replay-test
+./ins_sketch_replay-test
 ./nlo-sim
 ./local_gravity-test
 ./mag_turns-test

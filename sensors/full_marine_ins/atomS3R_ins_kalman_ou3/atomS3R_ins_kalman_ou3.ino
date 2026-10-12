@@ -61,6 +61,14 @@
   #define SEA_STATE_NMEA_TALKER "II"
 #endif
 
+// 1 replaces the NMEA/plotter output with the diagnostic stream described in
+// src/AtomS3R/AtomS3R_InsDiag.h: every accepted IMU frame bit-exact (for host
+// replay) plus loop health and estimator internals ten times a second.
+// Capture it with tools/ins_diag_capture.py.
+#ifndef SEA_STATE_SERIAL_DIAG
+  #define SEA_STATE_SERIAL_DIAG 0
+#endif
+
 // Nominal-g unit (also the generic default the filter headers declare as
 // extern g_std). Physical gravity is g_local: the calibration target, and the
 // gravity the fusion filter removes (Fusion::Config::gravity_magnitude).
@@ -151,6 +159,9 @@ public:
     Serial.setTxBufferSize(4096);
     Serial.begin(115200);
     Serial.setTxTimeoutMs(0);
+#if SEA_STATE_SERIAL_DIAG
+    Diag::waitForReader(Serial, 5000);
+#endif
     delay(100);
 
     auto cfg = M5.config();
@@ -185,6 +196,9 @@ public:
     reinitImu_();
     resetFusion_();
     drawHomeStatic_();
+#if SEA_STATE_SERIAL_DIAG
+    diag_.boot(readImuTimingRegisters(true), have_blob_, activeMagSource(), blob_);
+#endif
 
     delay(100);
   }
@@ -225,9 +239,16 @@ public:
         Serial.printf("[IMU] waiting: stale=%u\n", static_cast<unsigned>(stale_frame_count_));
       }
     }
+#if SEA_STATE_SERIAL_DIAG
+    diag_.poll(Serial, update_mask, ATOMS3R_IMU_MASK_ACCEL, ATOMS3R_IMU_MASK_GYRO,
+               got_sample ? &sample : nullptr, w_cal_, a_cal_, g_local);
+#endif
 
     updateUI_();
     streamSerial_();
+#if SEA_STATE_SERIAL_DIAG
+    diag_.tick(micros() - loop_start_us, LOOP_PERIOD_US);
+#endif
     waitForNextLoopTick_(loop_start_us);
   }
 
@@ -299,6 +320,21 @@ private:
   ins::StillGyroBiasEma gyro_bias_{ROT_BIAS_TAU_S, ROT_STILL_G_TOL_FRAC, ROT_STILL_GYRO_RAD_S};
   ins::RateOfTurnFilter rot_{};
   bool acc_bias_estimating_ = false;
+
+#if SEA_STATE_SERIAL_DIAG
+  using Diag = atoms3r_ical::InsDiagStream<ImuCalBlobV5>;
+  Diag diag_{"atomS3R_ins_kalman_ou3", LOOP_HZ};
+  // Read-only replica of the wrapper's startup gravity gate, stepped on the
+  // same attitude, specific force, rate and dt, with the same configuration.
+  seastate::common::WorldGravityGate diag_gate_{};
+  Fusion::Config diag_cfg_{};
+  using DiagStage = decltype(std::declval<Fusion&>().raw().getStartupStage());
+  DiagStage diag_stage_ = DiagStage::Cold;
+  atoms3r_ical::AttitudeReseedDetector diag_reseed_{};
+  bool     diag_was_live_ = false;
+  float    diag_yaw_sd_deg_ = NAN, diag_tilt_sd_deg_ = NAN;
+  uint32_t diag_mag_attempts_ = 0, diag_mag_applied_ = 0;
+#endif
 
 private:
   static void waitForNextLoopTick_(uint32_t loop_start_us) {
@@ -405,6 +441,14 @@ private:
     fcfg.enable_displacement_detrend = true;
 
     fusion_.begin(fcfg);
+#if SEA_STATE_SERIAL_DIAG
+    diag_cfg_ = fcfg;
+    diag_gate_.reset();
+    diag_stage_ = fusion_.raw().getStartupStage();
+    diag_reseed_.reset();
+    diag_was_live_ = false;
+    diag_.event(Serial, "reset_fusion");
+#endif
 
     auto& ff = fusion_.raw();
     ff.enableTuner(true);
@@ -552,6 +596,9 @@ private:
     if (mag_fresh_) rates_.countMag();
 
     fusion_.update(dt_, w_cal_, a_cal_);
+#if SEA_STATE_SERIAL_DIAG
+    diagAfterUpdate_();
+#endif
     mag_input_.capture(fusion_.raw().startupProxyQuat(), fusion_.attitudeQuat(), a_cal_, w_cal_);
     if (mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
 
@@ -607,7 +654,73 @@ private:
     heave_baseline_m_   = displacement_det_out.baseline_slow.z();
     heave_wave_raw_m_   = displacement_det_out.wave_raw.z();
     heave_wave_clean_m_ = displacement_det_out.wave_clean.z();
+#if SEA_STATE_SERIAL_DIAG
+    diagAfterFilter_();
+#endif
   }
+
+#if SEA_STATE_SERIAL_DIAG
+  // Magnetic corrections offered and applied this frame.
+  void diagAfterFilter_() {
+    if (mag_ok_ && mag_fresh_) {
+      ++diag_mag_attempts_;
+      if (mag_input_.lastApplied()) ++diag_mag_applied_;
+    }
+  }
+
+  // Right after the IMU update, before any magnetometer correction: the
+  // gravity-gate replica steps on the attitude the filter's own gate used
+  // (they differ only on the frame of the handoff to Live), and a re-seed of
+  // the attitude covariance is seen before a magnetic update in the same
+  // frame shrinks it again.
+  void diagAfterUpdate_() {
+    const auto stage = fusion_.raw().getStartupStage();
+    if (stage != diag_stage_ && stage == DiagStage::Cold) diag_gate_.reset();
+    diag_stage_ = stage;
+    diag_gate_.step(fusion_.attitudeQuat(), a_cal_, w_cal_, dt_,
+                    diag_cfg_.mag_gravity_align_world_tau_sec,
+                    diag_cfg_.mag_gravity_align_world_warmup_sec,
+                    diag_cfg_.mag_gravity_align_max_sin,
+                    diag_cfg_.mag_extreme_gyro_dps);
+
+    const auto& mekf = fusion_.raw().mekf();
+    const Eigen::Matrix3f P_att = mekf.covariance_base().topLeftCorner<3, 3>();
+    atoms3r_ical::attitudeSigmaDeg(P_att, mekf.quaternion().conjugate() * Vector3f::UnitZ(),
+                                   diag_yaw_sd_deg_, diag_tilt_sd_deg_);
+    const bool live = fusion_.isLive();
+    if (live && diag_was_live_) diag_reseed_.update(diag_yaw_sd_deg_);
+    else diag_reseed_.last_yaw_sigma_deg = diag_yaw_sd_deg_;
+    diag_was_live_ = live;
+  }
+
+  void streamDiag_() {
+    const uint32_t now_ms = millis();
+    diag_.periodic(Serial, now_ms, [this](atoms3r_ical::DiagLine& m) { mag_input_.print(m); });
+    if (!diag_.stateDue(now_ms)) return;
+    auto& d = diag_.beginState(now_ms);
+    d.kv("imu_hz", rates_.imuHz(), 1).kv("mag_hz", rates_.magHz(), 1).kv("dt_ms", dt_ * 1000.0f, 2)
+     .kv("live", fusion_.isLive()).kv("north", fusion_.hasMagNorthLock())
+     .kv("refined", fusion_.hasRefinedMagReference())
+     .kv("proxy", fusion_.raw().startupProxyInitialized()).kv("tuner", fusion_.raw().isTunerReady())
+     .kv("gate_good_s", diag_gate_.good_sec, 2).kv("gate_aligned", diag_gate_.aligned_branch)
+     .kv("gate_trusted", diag_gate_.trusted(diag_cfg_.mag_gravity_align_hold_sec))
+     .kv("roll", roll_deg_, 2).kv("pitch", pitch_deg_, 2)
+     .kv("hdg", heading_deg_, 2).kv("hdg_ok", heading_valid_).kv("hdg_fused", heading_fused_)
+     .kv("hdg_mag", heading_mag_deg_, 2)
+     .kv("hdg_cmp", atoms3r_ical::compassHeadingFromRollPitchDeg(roll_deg_, pitch_deg_, m_cal_), 2)
+     .kv("yaw_sd", diag_yaw_sd_deg_, 2).kv("tilt_sd", diag_tilt_sd_deg_, 3)
+     .kv("reseeds", static_cast<unsigned long>(diag_reseed_.count))
+     .kv("mag_uT", mag_norm_uT_, 2).kv("mag_ok", mag_ok_)
+     .kv("mag_tries", static_cast<unsigned long>(diag_mag_attempts_))
+     .kv("mag_applied", static_cast<unsigned long>(diag_mag_applied_))
+     .kv("acc_bias", acc_bias_estimating_)
+     .kv("heave", heave_raw_m_, 4).kv("heave_clean", heave_wave_clean_m_, 4)
+     .kv("heave_speed", heave_speed_mps_, 4).kv("env", wave_envelope_m_, 4).kv("wave_hz", wave_hz_, 3)
+     .kv("a_norm", a_cal_.norm(), 3).kv("temp_c", imu_temp_c_, 2);
+    diag_.emitState(Serial, d);
+    diag_mag_attempts_ = diag_mag_applied_ = 0;
+  }
+#endif
 
   void drawHomeStatic_() {
     ui_.setReadRotation();
@@ -676,6 +789,10 @@ private:
   }
 
   void streamSerial_() {
+#if SEA_STATE_SERIAL_DIAG
+    streamDiag_();
+    return;
+#endif
     const uint32_t now_ms = millis();
 
 #if SEA_STATE_SERIAL_NMEA

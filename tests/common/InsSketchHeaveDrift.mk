@@ -1,6 +1,9 @@
-# Heave/displacement drift regression for this family's shipped INS sketch.
-# The unchanged .ino is compiled against host stand-ins for Arduino/M5 in
-# ins_sketch_stubs/ and driven by InsSketchHeaveDrift.cpp.
+# Host builds of this family's shipped INS sketch. The unchanged .ino is
+# compiled against host stand-ins for Arduino/M5 in ins_sketch_stubs/:
+#   ins_sketch_heave-test   heave/displacement drift regression
+#                           (InsSketchHeaveDrift.cpp, default serial output)
+#   ins_sketch_replay-test  diagnostic stream round trip and device-capture
+#                           replay (InsSketchReplay.cpp, SEA_STATE_SERIAL_DIAG=1)
 # Invoke from a family's run_tests.sh, like the other shared regressions.
 INS_SKETCH_ROOT := $(REPO_ROOT)/sensors/full_marine_ins
 INS_FAMILY := $(notdir $(CURDIR))
@@ -41,3 +44,14 @@ ins_sketch_heave-test: ins_sketch_heave-test.o
 	$(CXX) $(INS_SKETCH_FLAGS) -o $@ $< $(REPO_ROOT)/src/util/W3dSimCommon.cpp $(LDFLAGS)
 
 -include ins_sketch_heave-test.o.d
+
+ins_sketch_replay-test.o: $(REPO_ROOT)/tests/common/InsSketchReplay.cpp $(INS_SKETCH_FILE) \
+		$(wildcard $(REPO_ROOT)/tests/common/ins_sketch_stubs/*.h $(REPO_ROOT)/tests/common/ins_sketch_stubs/AtomS3R/*.h)
+	$(if $(INS_SKETCH_NAME),,$(error no INS sketch is mapped to $(INS_FAMILY)))
+	$(CXX) $(INS_SKETCH_FLAGS) -DSEA_STATE_SERIAL_DIAG=1 -MMD -MP -MF $@.d -MT $@ -c -o $@ \
+		$(REPO_ROOT)/tests/common/InsSketchReplay.cpp
+
+ins_sketch_replay-test: ins_sketch_replay-test.o
+	$(CXX) $(INS_SKETCH_FLAGS) -o $@ $< $(REPO_ROOT)/src/util/W3dSimCommon.cpp $(LDFLAGS)
+
+-include ins_sketch_replay-test.o.d

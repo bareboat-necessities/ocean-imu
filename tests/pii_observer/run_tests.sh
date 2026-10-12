@@ -8,3 +8,5 @@ set -e
 ./local_gravity-test
 make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_heave-test
 ./ins_sketch_heave-test
+make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_replay-test
+./ins_sketch_replay-test

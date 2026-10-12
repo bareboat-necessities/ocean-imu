@@ -9,6 +9,10 @@
 #include <vector>
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
 #include "AtomS3R/AtomS3R_MagAcquisition.h"
+#include "AtomS3R/AtomS3R_InsDiag.h"
+
+#define ATOMS3R_IMU_MASK_ACCEL (1u << 0)
+#define ATOMS3R_IMU_MASK_GYRO (1u << 1)
 
 namespace atoms3r_ical {
 using Vector3f = Eigen::Vector3f;
@@ -23,8 +27,9 @@ struct ImuSample {
   MagAcquisition mag_timing;
 };
 
-// Supplied by the test driver: fill a, w, m, tempC and mag_timing for sample_us.
-using SampleSource = void (*)(uint32_t sample_us, ImuSample& out);
+// Supplied by the test driver: fill a, w, m, tempC and mag_timing for sample_us
+// and return true, or return false for a poll that has no new frame.
+using SampleSource = bool (*)(uint32_t sample_us, ImuSample& out);
 inline SampleSource& sampleSource() { static SampleSource source = nullptr; return source; }
 
 template <class Imu>
@@ -32,8 +37,7 @@ inline bool readImuMapped(Imu&, uint32_t update_mask, uint32_t sample_us, ImuSam
   out.sample_us = sample_us;
   out.mask = update_mask;
   if (!sampleSource()) return false;
-  sampleSource()(sample_us, out);
-  return true;
+  return sampleSource()(sample_us, out);
 }
 
 struct MemoryKv {
@@ -54,6 +58,7 @@ struct MemoryKv {
 class ImuCalStoreNvs : public ImuCalStoreT<MemoryKv> {};
 
 inline void clearM5UnifiedImuCalibration() {}
+inline ImuTimingRegisters readImuTimingRegisters(bool) { return {}; }
 inline bool configureAtomS3RMag(Print&, bool = true) { return true; }
 inline void printBlobSummary(Print&, const ImuCalBlobV5&) {}
 inline void printBlobDetail(Print&, const ImuCalBlobV5&) {}

@@ -39,3 +39,15 @@ jobs:
               --fqbn esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc \
               --library "$GITHUB_WORKSPACE" "$(dirname "$sketch")"
           done < <(find sensors examples -name '*.ino' -print0 | sort -z)
+      - name: Link the INS sketches with the diagnostic stream on
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for sketch in sensors/full_marine_ins/*/*.ino; do
+            echo "Compiling $sketch with SEA_STATE_SERIAL_DIAG=1"
+            arduino-cli compile --jobs 1 --warnings default \
+              --fqbn esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc \
+              --build-property "compiler.cpp.extra_flags=-DSEA_STATE_SERIAL_DIAG=1" \
+              --library "$GITHUB_WORKSPACE" "$(dirname "$sketch")"
+          done

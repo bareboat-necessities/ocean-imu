@@ -131,7 +131,10 @@ struct Sensors {
 };
 
 Sensors* g_sensors = nullptr;
-void sampleSource(uint32_t sample_us, atoms3r_ical::ImuSample& out) { g_sensors->fill(sample_us, out); }
+bool sampleSource(uint32_t sample_us, atoms3r_ical::ImuSample& out) {
+  g_sensors->fill(sample_us, out);
+  return true;
+}
 
 int failures = 0;
 void check(bool ok, const char* scenario, const char* what, double value, double limit) {

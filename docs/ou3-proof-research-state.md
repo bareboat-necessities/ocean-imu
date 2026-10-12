@@ -1004,6 +1004,28 @@ Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
 
+* **E, post-2.4.3 AtomS3R reports not yet attributed (instrumentation):**
+  on the bench, OU-III/OU-II heading is reported wrong after large heels and
+  flips, OU-III does not reach Live under motion, PII heave and envelope stop
+  updating while its heading keeps working, PII/TFG heave drift is high in
+  Live, and a north/south swap is still reported. Failed quantity: none
+  measured; no device history has been replayed. The unchanged sketches on
+  synthetic 100 Hz paired frames held heading through 80 deg heels, 180 deg
+  roll flips and 88 deg pitch, and PII did not freeze through flips or
+  0.3--30 s frame gaps; none of the reports reproduced. Invalidated
+  hypothesis: synthetic sketch regressions suffice to attribute device
+  behaviour. Retained facts: no estimator equation changed since v2.4.2; by
+  driver-source inspection the device stays at the default 100 Hz
+  accelerometer / 200 Hz gyro rates and accepts paired frames only, so its
+  nominal accepted interval (about 10 ms, register readback and measurement
+  pending) lies outside the <= 6 ms IMU interval admitted by
+  `ou3-sampling-fidelity.md` -- a premise mismatch to resolve at acquisition,
+  not by enlarging the proof. Current limiter: device histories. Next
+  falsifiable experiment: `SEA_STATE_SERIAL_DIAG=1` captures (register
+  readback, every accepted frame bit-exact, loop health, gate/covariance
+  internals; `docs/ins-device-diagnostics.md`) replayed through the unchanged
+  sketch by `ins_sketch_replay-test`, whose round trip is bit-exact on host.
+
 * **E, device motion gate removed (runtime engineering, not mathematics):**
   the 2.4.3 shared attitude protection held force-derived attitude and bias
   corrections whenever |omega| > 1.5 rad/s, filtered angular acceleration

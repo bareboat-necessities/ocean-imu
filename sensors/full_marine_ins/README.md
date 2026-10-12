@@ -30,6 +30,8 @@ Follow the common [Arduino installation instructions](../README.md#arduino-insta
 
 The full sketches enable the shared IMU calibration wizard by default through `SEA_STATE_ENABLE_WIZARD=1`. They also default to graphical UI and NMEA serial output; those behaviors can be changed with the compile-time switches near the top of each sketch.
 
+To report or investigate device behaviour, build a sketch with `SEA_STATE_SERIAL_DIAG=1`. The serial port then carries a diagnostic stream instead of NMEA: every IMU frame bit-exact, the sensor configuration read back from the chip, and estimator internals ten times a second. A capture can be summarised and replayed through the same sketch on a PC; see [`docs/ins-device-diagnostics.md`](../../docs/ins-device-diagnostics.md).
+
 ## Which should I use?
 
 Start with **OU-III** if you want the project’s primary full 3-D marine navigation estimator. Try **OU-II** when you prefer its more direct drift regularization and adaptation response. Try **TFG** when you want the same state and wave model with a geometrically consistent attitude correction, and can mount close to the centre of gravity. Use the **PII observer** when MCU cost and simplicity matter more than the full Kalman-state solution. Use the **NLO** when you want the observer-based alternative to the Kalman filters: explicit injection terms with published, frequency-scheduled gains rather than a propagated covariance.

@@ -7,6 +7,8 @@ make -f Makefile -f ../common/StationaryDeviceRegression.mk stationary_device-te
 ./stationary_device-test
 make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_heave-test
 ./ins_sketch_heave-test
+make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_replay-test
+./ins_sketch_replay-test
 make -f Makefile -f ../common/LocalGravityRegression.mk local_gravity-test
 ./local_gravity-test
 sim_status=0

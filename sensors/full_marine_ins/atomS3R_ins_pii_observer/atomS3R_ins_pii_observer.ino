@@ -88,6 +88,14 @@
   #define SEA_STATE_NMEA_TALKER "II"
 #endif
 
+// 1 replaces the NMEA/plotter output with the diagnostic stream described in
+// src/AtomS3R/AtomS3R_InsDiag.h: every accepted IMU frame bit-exact (for host
+// replay) plus loop health and estimator internals ten times a second.
+// Capture it with tools/ins_diag_capture.py.
+#ifndef SEA_STATE_SERIAL_DIAG
+  #define SEA_STATE_SERIAL_DIAG 0
+#endif
+
 #ifndef SEA_STATE_OUTPUT_TRUE_HEADING
   #define SEA_STATE_OUTPUT_TRUE_HEADING 0
 #endif
@@ -146,6 +154,9 @@ class FusionApp {
     Serial.setTxBufferSize(4096);
     Serial.begin(115200);
     Serial.setTxTimeoutMs(0);
+#if SEA_STATE_SERIAL_DIAG
+    Diag::waitForReader(Serial, 5000);
+#endif
     delay(100);
 
     auto cfg = M5.config();
@@ -181,6 +192,9 @@ class FusionApp {
     reinitImu_();
     resetFusion_();
     drawHomeStatic_();
+#if SEA_STATE_SERIAL_DIAG
+    diag_.boot(readImuTimingRegisters(true), have_blob_, activeMagSource(), blob_);
+#endif
 
     delay(100);
   }
@@ -220,9 +234,16 @@ class FusionApp {
     } else if (stale_frame_count_ < 0xFFFFu) {
       stale_frame_count_++;
     }
+#if SEA_STATE_SERIAL_DIAG
+    diag_.poll(Serial, update_mask, ATOMS3R_IMU_MASK_ACCEL, ATOMS3R_IMU_MASK_GYRO,
+               got_sample ? &sample : nullptr, w_cal_, a_cal_, APP_G_LOCAL);
+#endif
 
     updateUI_();
     streamSerial_();
+#if SEA_STATE_SERIAL_DIAG
+    diag_.tick(micros() - loop_start_us, LOOP_PERIOD_US);
+#endif
     waitForNextLoopTick_(loop_start_us);
   }
 
@@ -301,6 +322,11 @@ class FusionApp {
   bool mahony_seeded_ = false;
 
   AdaptiveWaveDetrender z_detrender_{};
+
+#if SEA_STATE_SERIAL_DIAG
+  using Diag = atoms3r_ical::InsDiagStream<ImuCalBlobV5>;
+  Diag diag_{"atomS3R_ins_pii_observer", LOOP_HZ};
+#endif
 
  private:
   static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
@@ -418,6 +444,9 @@ class FusionApp {
     // No bias covariance exists in this observer: report vector residuals,
     // and mark NIS/SNR unavailable rather than inventing uncertainty.
     mag_input_.reset(0.0f, Eigen::Matrix3f::Identity());
+#if SEA_STATE_SERIAL_DIAG
+    diag_.event(Serial, "reset_fusion");
+#endif
     Fusion::Config cfg{};
 
     /*
@@ -667,6 +696,38 @@ class FusionApp {
     rates_.update(now_ms);
   }
 
+#if SEA_STATE_SERIAL_DIAG
+  void streamDiag_() {
+    const uint32_t now_ms = millis();
+    diag_.periodic(Serial, now_ms,
+                   [this](atoms3r_ical::DiagLine& m) { mag_input_.print(m, "offered"); });
+    if (!diag_.stateDue(now_ms)) return;
+    const auto hs = fusion_.snapshot();
+    const auto& o = hs.core.observer;
+    auto& d = diag_.beginState(now_ms);
+    d.kv("imu_hz", rates_.imuHz(), 1).kv("mag_hz", rates_.magHz(), 1).kv("dt_ms", dt_ * 1000.0f, 2)
+     .kv("seeded", mahony_seeded_)
+     .kv("roll", roll_deg_, 2).kv("pitch", pitch_deg_, 2).kv("yaw", yaw_mahony_deg_, 2)
+     .kv("hdg", heading_deg_, 2).kv("hdg_ok", heading_valid_)
+     .kv("hdg_cmp", atoms3r_ical::compassHeadingFromRollPitchDeg(roll_deg_, pitch_deg_, m_cal_), 2)
+     .kv("mag_uT", mag_norm_uT_, 2).kv("mag_present", mag_present_).kv("mag_sane", mag_field_sane_)
+     .kv("mag_used", mag_used_)
+     .kv("trust", fusion_.mahonyAccelTrust(), 3).kv("two_kp", fusion_.mahonyTwoKpActive(), 3)
+     .kv("a_vert", fusion_.verticalWorldAccelUp(), 4)
+     .kv("a_f", o.a_f, 4).kv("v", o.v, 4).kv("p", o.p, 4).kv("S", o.S, 4).kv("d", o.d, 4)
+     .kv("b", o.b, 5).kv("r", o.r, 4).kv("kv", o.kv, 4).kv("kp", o.kp, 4).kv("ks", o.ks, 5)
+     .kv("acc_sigma", hs.core.accel_sigma, 4).kv("acc_hz", hs.core.accel_freq_hz, 3)
+     .kv("acc_locked", hs.core.accel_freq_locked)
+     .kv("env_ready", hs.core.envelope_ready).kv("env_var", hs.core.envelope_accel_var, 5)
+     .kv("env_sigma", hs.core.envelope_sigma_applied, 4).kv("env_tau", hs.core.envelope_tau_applied, 3)
+     .kv("env_hz", hs.core.envelope_freq_hz, 3)
+     .kv("heave", heave_raw_m_, 4).kv("heave_clean", heave_wave_clean_m_, 4)
+     .kv("heave_speed", heave_speed_mps_, 4).kv("env", wave_envelope_m_, 4).kv("wave_hz", wave_hz_, 3)
+     .kv("a_norm", a_cal_.norm(), 3).kv("temp_c", imu_temp_c_, 2);
+    diag_.emitState(Serial, d);
+  }
+#endif
+
   void drawHomeStatic_() {
     ui_.setReadRotation();
     ui_.title("COMPASS");
@@ -765,6 +826,10 @@ class FusionApp {
   }
 
   void streamSerial_() {
+#if SEA_STATE_SERIAL_DIAG
+    streamDiag_();
+    return;
+#endif
     const uint32_t now_ms = millis();
 
 #if SEA_STATE_SERIAL_NMEA
