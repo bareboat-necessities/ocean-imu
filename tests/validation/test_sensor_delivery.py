@@ -1,4 +1,4 @@
-"""All estimator sketches must carry the shared motion/freshness policy.
+"""Sensor delivery: estimator frame masks, AUX magnetic freshness and diagnostics.
 
 The acquisition test compiles definitions extracted from the shipping header;
 its fake driver controls arrival masks and AUX bursts, not estimator behavior.
@@ -13,21 +13,7 @@ from test_device_compass_startup import function
 ROOT = Path(__file__).resolve().parents[2]
 
 
-class RapidMotionWiringTest(unittest.TestCase):
-    def test_backend_scripts_stop_on_rapid_failure(self):
-        """Verify every backend test script stops when its rapid-motion replay fails."""
-        for backend in ('ahrs', 'kalman_ou_ii', 'kalman_ou_iii', 'kalman_tfg', 'nlo', 'pii_observer'):
-            script = ROOT / 'tests' / backend / 'run_tests.sh'
-            first = next(line for line in script.read_text().splitlines()
-                         if line.startswith('./rapid_motion-'))
-            with self.subTest(backend=backend), tempfile.TemporaryDirectory() as tmp:
-                stub = Path(tmp) / first.removeprefix('./')
-                stub.write_text('#!/bin/sh\nexit 23\n')
-                stub.chmod(0o755)
-                result = subprocess.run(['bash', str(script)], cwd=tmp,
-                                        capture_output=True, text=True)
-                self.assertEqual(result.returncode, 23, result.stderr)
-
+class SensorDeliveryTest(unittest.TestCase):
     def test_diagnostic_rotation_and_freshness(self):
         """Exercise the diagnostic's actual integration and source-epoch code."""
         eigen = Path(os.environ.get('EIGEN_INCLUDE_DIR', '/usr/include/eigen3'))
@@ -112,44 +98,6 @@ int main(){
                             str(path), '-o', str(binary)], check=True, capture_output=True, text=True)
             subprocess.run([str(binary)], check=True)
 
-    def test_all_estimator_sketches(self):
-        """Check every estimator sketch wires motion protection and sensor freshness."""
-        full = sorted((ROOT / 'sensors/full_marine_ins').glob('*/*.ino'))
-        compass = sorted((ROOT / 'sensors/compass_ahrs').glob('*/*.ino'))
-        self.assertEqual(len(full), 5, 'Add new INS backends to the common rapid-motion replay')
-        self.assertEqual(len(compass), 2, 'Add new compass backends to the common rapid-motion replay')
-        for path in full:
-            with self.subTest(sketch=path.name):
-                code = path.read_text()
-                update = function(code, 'updateFilter_')
-                self.assertIn('attitude_protection_.step(', update)
-                self.assertIn('accel_hold_.update(a_cal_, s.accel_fresh', update)
-                self.assertIn('mag_input_.newSource()', update)
-                self.assertIn('if (motion.reacquire)', update)
-                self.assertNotIn('LOOP_HZ, 0.05f', code)
-                policy = update.index('attitude_protection_.step(')
-                policy_end = update.index(';', policy)
-                self.assertIn('a_cal_, s.accel_fresh,', update[policy:policy_end])
-                imu_update = update.index('fusion_.update')
-                self.assertLess(policy, imu_update)
-                if 'kalman_ou' in path.name or 'tfg' in path.name:
-                    self.assertIn('setAccelerometerFresh(s.accel_fresh)', update)
-                    self.assertIn('if (mag_ok_ && mag_fresh_)', update)
-                elif 'pii_observer' in path.name:
-                    self.assertIn('mag_used_ = mag_usable;', update)
-                    self.assertNotIn('mag_used_ = mag_usable && !motion.hold_attitude', update)
-                else:
-                    self.assertIn('mag_used_ = mag_usable;', update)
-        for path in compass:
-            code = path.read_text()
-            self.assertIn('s.motion.hold_attitude', code)
-            self.assertIn('s.motion.reacquire', code)
-        base = (ROOT / 'src/AtomS3R/AtomS3R_CompassAppBase.h').read_text()
-        self.assertIn('out.accel_fresh = s.accel_fresh', base)
-        self.assertIn('out.a_cal, s.accel_fresh, ImuCalCfg::g_cal_local', base)
-        self.assertNotIn('clampf_(out.dt', base)
-        self.assertIn('if (sample_.mag_ok', base)
-
     def test_shipping_acquisition_mask_and_single_burst(self):
         """Compile shipping acquisition helpers and check delivery masks and AUX freshness."""
         eigen = Path(os.environ.get('EIGEN_INCLUDE_DIR', '/usr/include/eigen3'))
@@ -166,7 +114,6 @@ int main(){
 #include <cmath>
 #include <cstring>
 #include <cstdlib>
-#include "util/ImuFreshness.h"
 #include "AtomS3R/AtomS3R_MagAcquisition.h"
 using Vector3f=Eigen::Vector3f;
 uint32_t clock_us=1000;
@@ -184,11 +131,6 @@ struct Data {m5::imu_3d_t accel,gyro,mag;};
 struct Driver {Data d;Data getImuData(){return d;} bool getTemp(float* t){*t=35;return true;}};
 struct {Driver Imu;} M5;
 namespace atoms3r_ical {
-struct Timing {uint32_t delay_us=10000,configuration=7;float fit_width_s=.001f,residual_time_s=.002f;};
-Timing timing;
-const Timing& activeMagTiming(){return timing;}
-bool magTimingValid(const Timing&){return true;}
-uint32_t activeMagTimingConfiguration(){return 7;}
 struct Bmm150Trim {};
 struct Bmm150Raw {uint8_t x; static Bmm150Raw fromData(const uint8_t* d){return {d[0]};}};
 bool bmm150Compensate(Bmm150Raw r,const Bmm150Trim&,float* v){v[0]=r.x;v[1]=20;v[2]=40;return true;}
@@ -198,6 +140,7 @@ Vector3f map_gyr_to_body_ned_(m5::imu_3d_t v){return {v.x,v.y,v.z};}
 Vector3f map_mag_to_body_uT_(m5::imu_3d_t v){return {v.x,v.y,v.z};}
 #define ATOMS3R_IMU_MASK_ACCEL 1u
 #define ATOMS3R_IMU_MASK_GYRO 2u
+constexpr uint32_t kImuMaskAccelGyro=3u;
 ''' + struct('ImuSample') + '\n' + struct('AtomS3RMagSource') + r'''
 AtomS3RMagSource source;
 AtomS3RMagSource& atoms3rMagSource(){return source;}
@@ -208,28 +151,30 @@ int main(){
   using namespace atoms3r_ical;
   m5::IMU_Base aux;source.compensated=true;source.bmi270=&aux;
   ImuSample s;
+  // Estimators receive only frames with a new accelerometer AND gyro sample;
+  // a rejected frame does not read the AUX magnetometer.
   require(!readImuMapped(M5.Imu,2,clock_us,s));
   require(!readImuMapped(M5.Imu,1,clock_us,s));
-  require(readImuMapped(M5.Imu,2,clock_us,s)&&s.accel_fresh);
+  require(aux.reads==0 && source.acquisition.sequence==0);
+  // Magnetic timing capture admits gyro-only frames explicitly.
+  require(readImuMapped(M5.Imu,2,clock_us,s,true));
   require(s.m.x()==8 && source.acquisition.sequence==1);
-  require(s.mag_timing.delay_us==10000 && std::abs(s.mag_timing.timing_allowance_s-.003f)<1e-6f);
   clock_us+=5000;
-  require(readImuMapped(M5.Imu,2,clock_us,s)&&!s.accel_fresh);
-  require(source.acquisition.sequence==1);
+  require(readImuMapped(M5.Imu,3,clock_us,s));
+  require(source.acquisition.sequence==1 && s.m.x()==8);
   // M5's magnetic cache did not change; the actual AUX burst did.
   aux.bytes[0]=17;clock_us+=5000;
-  require(readImuMapped(M5.Imu,3,clock_us,s)&&s.accel_fresh);
+  require(readImuMapped(M5.Imu,3,clock_us,s));
   require(s.m.x()==16 && source.acquisition.sequence==2);
   require(source.acquisition.frame_us==clock_us);
   // AUX status bits are not a new magnetic payload.
   aux.bytes[0]=19;clock_us+=5000;
-  require(readImuMapped(M5.Imu,2,clock_us,s));
+  require(readImuMapped(M5.Imu,3,clock_us,s));
   require(source.acquisition.sequence==2 && s.m.x()==16);
-  timing.configuration=8;clock_us+=5000;
-  require(readImuMapped(M5.Imu,2,clock_us,s) && s.mag_timing.delay_us==0);
   aux.good=false;clock_us+=5000;
-  require(readImuMapped(M5.Imu,2,clock_us,s));
+  require(readImuMapped(M5.Imu,3,clock_us,s));
   require(source.acquisition.sequence==2);
+  // Without a new reading for MagAcquisition::MAX_AGE_MS the field is NaN.
   clock_us+=300000;
   require(readImuMapped(M5.Imu,3,clock_us,s));
   require(!s.m.allFinite());

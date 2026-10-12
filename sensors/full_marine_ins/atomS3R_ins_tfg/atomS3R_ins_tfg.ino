@@ -64,7 +64,6 @@
 #include <ArduinoOceanImu.h>
 
 #include "util/MagneticInput.h"
-#include "util/AttitudeProtection.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #if SEA_STATE_ENABLE_WIZARD
@@ -167,13 +166,13 @@ public:
     reloadBlobAndRuntime_();
 
 #if SEA_STATE_ENABLE_WIZARD
-    while (!have_blob_) {
-      Serial.println("[BOOT] Current calibration required. Starting wizard...");
+    if (!have_blob_) {
+      Serial.println("[BOOT] No saved calibration. Starting wizard...");
       const bool saved = runWizardFlow_(true);
       if (saved) {
         Serial.println("[BOOT] Wizard saved calibration.");
       } else {
-        Serial.println("[BOOT] Calibration required; repeat the latest wizard before operation.");
+        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
       }
     }
 #endif
@@ -267,8 +266,6 @@ private:
 
   ins::MagFreshGate mag_gate_{};
   ocean_imu::magnetic::Input mag_input_{};
-  ocean_imu::attitude::Protection attitude_protection_{};
-  ocean_imu::attitude::AccelHold accel_hold_{};
 
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
@@ -360,7 +357,6 @@ private:
       std::memset(&blob_, 0, sizeof(blob_));
     }
     runtime_.rebuildFromBlob(blob_);
-    have_blob_ = have_blob_ && !runtime_.mag_source_mismatch && !runtime_.mag_timing_mismatch;
   }
 
   bool runWizardFlow_(bool boot_mode) {
@@ -385,7 +381,6 @@ private:
 #endif
   }
 
-  /** @brief Check IMU availability and reset sample timing, motion protection, and held acceleration. */
   void reinitImu_() {
     if (!M5.Imu.isEnabled()) {
       Serial.println("[BOOT] M5.Imu is not enabled");
@@ -396,11 +391,8 @@ private:
     mag_gate_.reset();
     rates_.reset(millis());
     sample_dt_.reset();
-    attitude_protection_.reset();
-    accel_hold_.reset();
   }
 
-  /** @brief Reset fusion and acquisition history, then restore the configured estimator settings. */
   void resetFusion_() {
     constexpr float IMU_TUNE_REF_HZ = 200.0f;
     constexpr float MAG_TUNE_REF_HZ = 25.0f;
@@ -492,8 +484,6 @@ private:
 
     stale_frame_count_ = 0;
     sample_dt_.reset();
-    attitude_protection_.reset();
-    accel_hold_.reset();
     heave_speed_mps_     = 0.0f;
     heave_raw_m_         = 0.0f;
     heave_baseline_m_    = 0.0f;
@@ -617,9 +607,7 @@ private:
         : (heading_mag_ok_ ? heading_mag_deg_ : NAN);
   }
 
-  /** @brief Calibrate a delivered IMU frame and update fusion with freshness and motion protection. */
   void updateFilter_(const ImuSample& s) {
-    if (!have_blob_) return; // latest calibration required, including wizard-disabled builds
     dt_ = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
     imu_temp_c_ = tempC;
@@ -634,23 +622,12 @@ private:
     w_cal_ = runtime_.applyGyro(w_raw, tempC);
     m_cal_ = runtime_.applyMag(s.m);
     const auto& core = fusion_.mekf();
-    a_cal_ = accel_hold_.update(a_cal_, s.accel_fresh,
-        w_cal_ - core.gyroscope_bias_body(), dt_);
     mag_input_.advance(s.sample_us, w_cal_ - core.gyroscope_bias_body(),
         ocean_imu::magnetic::covarianceBound(core.gyroscope_bias_covariance_body()),
         s.mag_timing, m_cal_, fusion_.magHardIronBodyUT());
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
-    Vector3f magnetic_now = Vector3f::Zero();
-    const bool field_valid = mag_input_.currentField(fusion_.magHardIronBodyUT(), magnetic_now);
-    const Vector3f& reference = core.magnetic_reference_world();
-    const auto motion = attitude_protection_.step(dt_, w_cal_, core.gyroscope_bias_body(),
-        a_cal_, s.accel_fresh, g_local, fusion_.quaternion(), magnetic_now, mag_ok_ && field_valid,
-        mag_input_.newSource(), s.sample_us, std::atan2(reference.y(), reference.x()),
-        fusion_.isLive() && core.has_magnetic_reference());
-    fusion_.setAttitudeAidingEnabled(!motion.hold_attitude);
-    fusion_.setAccelerometerFresh(s.accel_fresh);
     mag_fresh_ = mag_input_.due(mag_gate_, mag_ok_, millis());
     if (mag_fresh_) rates_.countMag();
 
@@ -664,10 +641,6 @@ private:
     fusion_.update(dt_, w_cal_, a_cal_, 35.0f);
     mag_input_.capture(fusion_.startupProxyQuat(), fusion_.quaternion(), a_cal_, w_cal_);
     if (mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
-    if (motion.reacquire) {
-      fusion_.mekf().reacquire_attitude(motion.target);
-      if (motion.repair_gyro_bias) fusion_.mekf().recover_corrupted_biases(motion.gyro_bias);
-    }
 
     // During startup the MEKF is deliberately held. Publish the Mahony proxy
     // attitude instead; switch atomically to the fused attitude at Live.
@@ -792,7 +765,6 @@ private:
     ui_.line("");
   }
 
-  /** @brief Emit the enabled NMEA outputs and optional sensor, fusion, and motion diagnostics. */
   void streamSerial_() {
     const uint32_t now_ms = millis();
 
@@ -880,7 +852,6 @@ private:
       static_cast<double>(m_cal_.y()),
       static_cast<double>(m_cal_.z()));
     mag_input_.print(Serial);
-    attitude_protection_.print(Serial);
   #endif
 #endif
   }

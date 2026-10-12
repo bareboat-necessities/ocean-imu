@@ -146,8 +146,11 @@ private:
       ImuCalBlobV5 prev{};
       const bool have_prev = store_.load(prev);
       sensorIdentity_();
-      const bool can_accel_only = have_prev && magTimingCompatible(prev,
-          sensor_id_lo_,sensor_id_hi_,imu_type_,activeMagSource(),activeMagTimingConfiguration());
+      // Preserved gyro/mag fields must belong to this sensor and source. The
+      // optional timing record is carried unchanged; it stays bound to them.
+      const bool can_accel_only = have_prev && gyroSetValid(prev) &&
+          prev.sensor_id_lo == sensor_id_lo_ && prev.sensor_id_hi == sensor_id_hi_ &&
+          prev.imu_type == imu_type_ && (!prev.mag_ok || prev.mag_source == activeMagSource());
 
       const M5Ui::StartAction start = ui_.startMenu(can_accel_only);
       if (start == M5Ui::StartAction::CANCEL) {
@@ -212,15 +215,16 @@ private:
         }
       }
 
-      if (!accel_only && mag_out_.ok) {
+      // Optional magnetic timing record. It is stored for diagnostics only;
+      // runtime magnetic corrections do not apply it.
+      if (!accel_only && mag_out_.ok && gyr_out_.ok && activeMagTimingConfiguration()) {
         timing_cal_.reset();
-        while (!gyr_out_.ok || !captureMagTiming_()) {
-          const auto action=ui_.magFailMenu("Timing not identified", imu_cal::magTimingReason(timing_fit_.reason));
-          if (action==M5Ui::MagFailAction::RETRY_MAG) continue;
-          if (action==M5Ui::MagFailAction::REDO_ALL) { redo_all=true; break; }
+        while (!captureMagTiming_()) {
+          const auto action=ui_.timingFailMenu("Timing not identified", imu_cal::magTimingReason(timing_fit_.reason));
+          if (action==M5Ui::TimingFailAction::RETRY) continue;
+          if (action==M5Ui::TimingFailAction::SKIP) { timing_fit_ = {}; break; }
           return false;
         }
-        if (redo_all) continue;
       }
 
       // Later rechecks (thermal evidence + held-out verification), final fit.
@@ -241,7 +245,8 @@ private:
         blob.sensor_id_lo = sensor_id_lo_;
         blob.sensor_id_hi = sensor_id_hi_;
         blob.imu_type = imu_type_;
-        if (blob.mag_ok) {
+        blob.mag_timing = {};
+        if (blob.mag_ok && timing_fit_.ok) {
           auto& t=blob.mag_timing;
           t.version=1; t.binding=magTimingBinding(blob); t.configuration=activeMagTimingConfiguration();
           t.delay_us=timing_fit_.delay_us; t.fit_width_s=timing_fit_.fit_width_s;
@@ -432,7 +437,7 @@ private:
     ui_.title("DONE");
     M5.Display.printf("A:%d G:%d M:%d\n", (int)rb.accel_ok, (int)rb.gyro_ok, (int)rb.mag_ok);
     ui_.line("Saved OK");
-    ui_.line(timing_saved_ ? "MAG timing: saved" : "MAG timing: unknown");
+    ui_.line(timing_saved_ ? "MAG timing: saved" : "MAG timing: not saved");
     char l[22];
     float bs = rb.accel_bias_sigma[0];
     if (rb.accel_bias_sigma[1] > bs) bs = rb.accel_bias_sigma[1];
@@ -701,11 +706,8 @@ private:
   }
 
   // Capture steps
-  /** @brief Return a mapped sample only when it contains fresh acceleration for calibration. */
   bool readSample_(ImuSample& s) {
-    // Calibration statistics count independent acceleration observations;
-    // gyro-only delivery is useful to fusion, but must not duplicate a pose.
-    return readImuMapped(M5.Imu, s) && s.accel_fresh;
+    return readImuMapped(M5.Imu, s);
   }
 
   bool readMagSample_(Vector3f& m_out) {
@@ -919,9 +921,8 @@ private:
         Input::update();
         if (Input::tapPressed()) return false;
         ImuSample sample;
-        // Timing uses every fresh gyro delivery, including gyro-only frames.
-        // The acceleration-freshness gate is for spatial calibration poses.
-        if (readImuMapped(M5.Imu, sample)) {
+        // Timing uses every gyro delivery, including gyro-only frames.
+        if (readImuMapped(M5.Imu, sample, true)) {
           const Vector3f w=gyr_out_.apply(sample.w,sample.tempC);
           const Vector3f m=mag_out_.apply(sample.m);
           timing_cal_.add(sample.sample_us,w,sample.mag_timing.have,

@@ -117,7 +117,3 @@ reports/coverage/
 *.gcov
 
 .sim-data/
-
-# Host rapid-motion regression executables
-tests/ahrs/rapid_motion-qmekf
-tests/ahrs/rapid_motion-mahony

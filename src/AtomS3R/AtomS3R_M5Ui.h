@@ -168,6 +168,25 @@ public:
     return MagFailAction::RETRY_MAG;
   }
 
+  enum class TimingFailAction : uint8_t { RETRY = 0, SKIP = 1, ABORT = 2 };
+
+  // Magnetic timing is optional: skipping saves the calibration without it.
+  TimingFailAction timingFailMenu(const char* why1, const char* why2 = nullptr) {
+    setReadRotation();
+    title("TIME FAIL");
+    if (why1) line(why1);
+    if (why2) line(why2);
+    line("");
+    line("Tap: retry TIME");
+    line("Tap x2: skip TIME");
+    line("Tap x3: abort");
+
+    const uint8_t taps = waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+    if (taps >= 3) return TimingFailAction::ABORT;
+    if (taps == 2) return TimingFailAction::SKIP;
+    return TimingFailAction::RETRY;
+  }
+
   // Failure screen with up to three short lines.
   void failLines(const char* where, const char* why1, const char* why2 = nullptr, const char* why3 = nullptr) {
     setReadRotation();

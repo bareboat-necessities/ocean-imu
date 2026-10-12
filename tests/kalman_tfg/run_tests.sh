@@ -1,13 +1,15 @@
 #!/bin/bash -e
-set -e
-
-./rapid_motion-test
-./recovery_geometry-test
 
 ./mag_timing-test
+# The shebang's -e is ignored when this is invoked as `bash run_tests.sh`,
+# which is how the root Makefile runs it. Set it explicitly so a failing test
+# actually fails the build.
+set -e
 
 make -f Makefile -f ../common/StationaryDeviceRegression.mk stationary_device-test
 ./stationary_device-test
+make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_heave-test
+./ins_sketch_heave-test
 make -f Makefile -f ../common/LocalGravityRegression.mk local_gravity-test
 ./local_gravity-test
 

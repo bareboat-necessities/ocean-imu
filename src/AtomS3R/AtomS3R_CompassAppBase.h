@@ -14,7 +14,6 @@
 #include "AtomS3R/AtomS3R_ImuCalWizard.h"
 #include "AtomS3R/AtomS3R_CompassUI.h"
 #include "util/MagneticInput.h"
-#include "util/AttitudeProtection.h"
 #include "nmea/NmeaCompass.h"
 
 namespace atoms3r_compass {
@@ -54,8 +53,6 @@ static inline Vector3f quatRotateBodyToWorld_(float x, float y, float z, float w
 }
 
 struct CalibratedSample {
-  bool accel_fresh = true;
-  ocean_imu::attitude::Decision motion{};
   float dt = 0.0f;
   float a_raw_norm = 0.0f;
 
@@ -312,21 +309,24 @@ class CompassAppBase {
 
     reloadBlobAndRuntime_();
 
-    while (!have_blob_) {
-      Serial.println("[BOOT] Current calibration required. Starting wizard...");
+    if (!have_blob_) {
+      Serial.println("[BOOT] No saved calibration. Starting wizard...");
       ImuCalBlobV5 saved{};
       if (wizard_.runAndSave(saved)) {
-        Serial.println("[BOOT] Wizard saved calibration.");
+        Serial.println("[BOOT] Wizard saved calibration. Loaded:");
+        printBlobSummary(Serial, saved);
+        printBlobDetail(Serial, saved);
         blob_ = saved;
         have_blob_ = true;
         runtime_.rebuildFromBlob(blob_);
       } else {
-        Serial.println("[BOOT] Calibration required; repeat the latest wizard before operation.");
+        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
       }
+    } else {
+      Serial.println("[BOOT] Found saved calibration:");
+      printBlobSummary(Serial, blob_);
+      printBlobDetail(Serial, blob_);
     }
-    Serial.println("[BOOT] Loaded current calibration:");
-    printBlobSummary(Serial, blob_);
-    printBlobDetail(Serial, blob_);
 
     resetPipeline_();
     drawHomeStatic_();
@@ -390,7 +390,6 @@ class CompassAppBase {
     have_blob_ = store_.load(blob_);
     if (!have_blob_) memset(&blob_, 0, sizeof(blob_));
     runtime_.rebuildFromBlob(blob_);
-    have_blob_ = have_blob_ && !runtime_.mag_source_mismatch && !runtime_.mag_timing_mismatch;
   }
 
   void handleErase_() {
@@ -427,11 +426,8 @@ class CompassAppBase {
     resetPipeline_();
   }
 
-  /** @brief Reset the backend, sensor gates, motion history, outputs, and sample clock. */
   void resetPipeline_() {
     backend_->reset();
-    attitude_protection_.reset();
-    accel_hold_.reset();
     mag_input_.reset(backend_->gyroNoiseDensity(), Eigen::Matrix3f::Identity());
     mag_gate_.reset();
     rot_.reset();
@@ -440,7 +436,6 @@ class CompassAppBase {
     last_update_us_ = 0;
   }
 
-/** @brief Return calibrated body-frame readings, elapsed seconds, and aiding/recovery decisions. */
 CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   CalibratedSample out{};
   out.a_raw_norm = s.a.norm();
@@ -455,11 +450,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
     out.dt = (s.sample_us - last_update_us_) * 1e-6f;
   }
   last_update_us_ = s.sample_us;
-  // Preserve measured elapsed time through a scheduling stall.
-  if (!(out.dt > 0.0f)) out.dt = 1.0f / LOOP_HZ;
-  out.accel_fresh = s.accel_fresh;
-  out.a_cal = accel_hold_.update(out.a_cal, s.accel_fresh,
-      out.w_cal - backend_->gyroBiasBody(), out.dt);
+  out.dt = clampf_(out.dt, 0.0010f, 0.0200f);
 
   out.mag_norm_uT = out.m_cal.norm();
   out.mag_ok = (out.mag_norm_uT > 5.0f && out.mag_norm_uT < 200.0f);
@@ -476,7 +467,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   // observation can supply another discrete Kalman correction.
   out.mag_fresh = (!SEA_STATE_MAG_HOST_ALIGNMENT || !discrete || mag_input_.pending()) &&
       mag_gate_.update(out.m_cal, out.mag_ok, millis());
-  Vector3f field = Vector3f::Zero();
+  Vector3f field;
   Eigen::Matrix3f covariance;
   if (out.mag_ok) out.mag_ok = mag_input_.currentField(Vector3f::Zero(), field,
       discrete && out.mag_fresh ? &covariance : nullptr);
@@ -485,16 +476,10 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
     if (discrete && out.mag_fresh) out.mag_covariance_unit = covariance / field.squaredNorm();
   }
 
-  const auto& q = outputs_.att;
-  out.motion = attitude_protection_.step(out.dt, out.w_cal, backend_->gyroBiasBody(),
-      out.a_cal, s.accel_fresh, ImuCalCfg::g_cal_local, Eigen::Quaternionf(q.w, q.x, q.y, q.z),
-      field, out.mag_ok, mag_input_.newSource(), s.sample_us, 0.0f, backend_->isValid());
   return out;
 }
 
-  /** @brief Advance the backend and derived compass outputs from a calibrated, protected sample. */
   void updateOutputs_(const ImuSample& s) {
-    if (!have_blob_) return;
     sample_ = makeCalibratedSample_(s);
     const uint32_t correction_start_us = micros();
     backend_->step(sample_, outputs_.att);
@@ -557,7 +542,6 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
     }
   }
 
-  /** @brief Emit the enabled NMEA outputs and optional sensor, fusion, and motion diagnostics. */
   void streamSerial_() {
     const uint32_t now_ms = millis();
 
@@ -583,7 +567,6 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
     Serial.printf("wC:%+.4f,%+.4f,%+.4f ", (double)sample_.w_cal.x(), (double)sample_.w_cal.y(), (double)sample_.w_cal.z());
     Serial.println();
     mag_input_.print(Serial, backend_->discreteMagneticCorrections() ? "applied" : "offered");
-    attitude_protection_.print(Serial);
 #endif
   }
 
@@ -597,8 +580,6 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   std::unique_ptr<IAttitudeBackend> backend_;
   MagGate mag_gate_;
   ocean_imu::magnetic::Input mag_input_{};
-  ocean_imu::attitude::Protection attitude_protection_{};
-  ocean_imu::attitude::AccelHold accel_hold_{};
   RotEstimator rot_;
 
   bool have_blob_ = false;

@@ -76,7 +76,11 @@ static void persistence() {
     b.sensor_id_lo=123; b.imu_type=3;
     check(gyroSetValid(b) && magSetValid(b),"spatial fixture");
     ImuCalBlobV5 loaded;
-    check(!store.save(b),"v5 magnetic calibration requires timing");
+    check(magTimingAbsent(b.mag_timing),"default timing record is absent");
+    check(store.saveVerified(b,loaded) && store.load(loaded) && magTimingAbsent(loaded.mag_timing),
+          "timing record is optional");
+    auto partial=b; partial.mag_timing.delay_us=40000;
+    check(!store.save(partial),"present timing record must be qualified");
     bindTimingFixture(b);
     check(store.saveVerified(b,loaded) && store.load(loaded),"complete v5 record round trip");
     check(loaded.mag_timing.delay_us==40000,"saved delay survives reload");
@@ -114,32 +118,7 @@ static void persistence() {
     check(!store.load(loaded),"old version in new key rejected");
 
 }
-static void runtime() {
-    Input input; input.reset(.00135f,.64f*M3::Identity());
-    MagAcquisition timing;
-    const V3 w(.5f,.3f,.7f), field(20,0,45), hard(8,-6,3);
-    const uint32_t origin=0xffff0000u;
-    Q expected=Q::Identity();
-    for(unsigned n=0;n<=20;++n) {
-        const uint32_t now=origin+n*5000;
-        if(n==20) { timing.acquired(100,now,now,now+100); timing.delay_us=40000; timing.timing_allowance_s=.027f; }
-        input.advance(now,w,1e-6f,timing,field+hard,hard);
-        const Q proxy=increment(V3(.2f,0,0),-float(n)*.005f);
-        input.capture(proxy,proxy,V3(float(n),0,-9.8f),w);
-        if(n==12) expected=proxy;
-    }
-    V3 aligned; M3 covariance;
-    check(input.currentField(hard,aligned,&covariance),"calibrated transport across clock wrap");
-    check((aligned-increment(w,.04f)*field).norm()<1e-4f,"lag applied once before transport");
-    check(input.observation().proxy_bw.angularDistance(expected)<1e-5f,"actual historical independent proxy");
-    check(std::abs(input.observation().accel.x()-12)<1e-5f,"historical acceleration snapshot");
-    check(input.observation().uncertainty.from_time_sigma>=.027f,"timing allowance propagated");
-    check(covariance.trace()>1.92f,"uncertainty added to measurement covariance");
-    timing.acquired(110,origin+110000,origin+110000,origin+110100); timing.delay_us=90000;
-    input.advance(origin+110000,w,0,timing,field,hard);
-    check(!input.currentField(hard,aligned),"invalid lag rejected");
-}
-/** Run delay, ambiguity, runtime and persistence regressions; exit on any failure. */
+/** Run delay, ambiguity and persistence regressions; exit on any failure. */
 int main() {
     Eigen::internal::set_is_malloc_allowed(false);
     for(unsigned lag:{20000u,40000u,60000u}) {
@@ -158,7 +137,6 @@ int main() {
     check(replay(0,40000,1000000,36,2).ok,"180 ms pairs need 260 ms history for all candidates");
     const auto jitter=replay(3); check(jitter.ok && std::abs(int(jitter.delay_us)-40000)<=6000,"asynchronous jitter");
     check(replay(0,40000,0xffff0000u).ok,"calibration clock wrap");
-    runtime();
     Eigen::internal::set_is_malloc_allowed(true);
     persistence();
     std::puts("Magnetic timing calibration PASS");

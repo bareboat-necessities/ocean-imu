@@ -26,11 +26,6 @@
 
 #include "ahrs/Mahony_AHRS.h"
 
-/** @brief Apply heading-only magnetic feedback followed by the Mahony IMU update.
- * Use body gyro rates in rad/s and elapsed seconds; write Euler angles in
- * degrees. Heading-only feedback during a gravity hold preserves the
- * learned bias integral; the held IMU path still omits accelerometer feedback.
- */
 template<typename T>
 inline void mahony_AHRS_update_heading_mag(Mahony_AHRS<T>* m,
                                            T gx, T gy, T gz,
@@ -76,7 +71,7 @@ inline void mahony_AHRS_update_heading_mag(Mahony_AHRS<T>* m,
             const T k = (emx * halfvx + emy * halfvy + emz * halfvz) / vn2;
             const T ehx = k * halfvx, ehy = k * halfvy, ehz = k * halfvz;
 
-            if (m->aidingEnabled() && m->twoKi > T(0)) {
+            if (m->twoKi > T(0)) {
                 m->integralFBx += m->twoKi * ehx * delta_t_sec;
                 m->integralFBy += m->twoKi * ehy * delta_t_sec;
                 m->integralFBz += m->twoKi * ehz * delta_t_sec;

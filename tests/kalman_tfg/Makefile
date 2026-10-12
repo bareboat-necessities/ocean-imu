@@ -28,18 +28,9 @@ TARGETS = lie_group-test convention-test ou_chain_identity-test tfg_propagation-
 
 all: build test
 
-TARGETS += recovery_geometry-test
-recovery_geometry-test: recovery_geometry-test.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-
 TARGETS += mag_timing-test
 mag_timing-test: mag_timing-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-
-TARGETS += rapid_motion-test
-rapid_motion-test: rapid_motion-test.o AttitudeProtection.o
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-rapid_motion-test.o: ../common/RapidMotionReplay.h ../common/RapidMotionBackends.h ../../src/util/AttitudeProtection.h ../../src/util/ImuFreshness.h
 
 build: $(TARGETS)
 

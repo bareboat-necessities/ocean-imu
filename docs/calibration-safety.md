@@ -264,15 +264,18 @@ environment or failed check offers a MAG retry before any write. Final candidate
 and read-back coefficients are rebuilt through the runtime path and checked
 again against this independent sweep, including its retained covariances.
 Stored matrix plausibility and RMS are
-also checked on ordinary load. The dynamic timing stage follows this sweep;
-see [magnetic timing](magnetic-timing.md#dynamic-timing-calibration-and-persistence).
+also checked on ordinary load. The optional dynamic timing stage follows this
+sweep; see [magnetic timing](magnetic-timing.md#dynamic-timing-calibration-and-persistence).
 
 ## Persistence and failure reporting
 
 `ImuCalBlobV5` is a 372-byte explicitly laid-out record under `blob_m5v5`.
-Its outer CRC covers all metadata, including the required magnetic timing fit
-when magnetometer calibration is present. Timing has a configuration/gyro/mag/
-device binding and its own CRC; all coefficients and timing are saved together. A separate gyro binding covers coefficients,
+Its outer CRC covers all metadata, including the optional magnetic timing
+record. An absent record is all zero; a present one must be qualified and carry
+its configuration/gyro/mag/device binding and its own CRC. The record is
+calibration evidence only: runtime magnetic corrections do not apply it. A
+failed timing stage can be retried or skipped; skipping saves the spatial
+calibration without timing. A separate gyro binding covers coefficients,
 thermal evidence, slope uncertainty, qualification and runtime bounds together.
 Older keys/layouts are not migrated or interpreted: installation requires a
 new full wizard calibration. This also prevents loading a legacy rotated

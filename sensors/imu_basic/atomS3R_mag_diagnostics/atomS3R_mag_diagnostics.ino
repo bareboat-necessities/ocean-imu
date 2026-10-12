@@ -515,13 +515,13 @@ static void onSample(const ImuSample& s) {
   m_raw = s.m;
 
   if (phase == Phase::DRIFT) {
-    if (s.accel_fresh) dr_acc.add(a_cal);
+    dr_acc.add(a_cal);
     if (fresh_m) dr_raw.add(s.m);
     if (std::isfinite(tempC)) { dr_temp_sum += tempC; ++dr_temp_n; }
   }
 
   if (phase == Phase::STILL) {
-    if (s.accel_fresh) st_acc.add(a_cal);
+    st_acc.add(a_cal);
     st_gyr.add(w_cal);
     if (fresh_m) {
       st_raw.add(s.m);
@@ -546,7 +546,7 @@ static void onSample(const ImuSample& s) {
     }
     // Still-pose windows for the field, dip and alignment checks.
     if (fresh_m) pw_mag.add(s.m);
-    if (s.accel_fresh) pw_acc.add(a_cal);
+    pw_acc.add(a_cal);
     const float wn = w_cal.norm();
     pw_max_gyro = wn > pw_max_gyro ? wn : pw_max_gyro;
     if (uint32_t(now - pw_start_ms) >= POSE_WINDOW_MS) {

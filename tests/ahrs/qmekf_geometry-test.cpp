@@ -108,16 +108,6 @@ int main() {
     for (int i=0; i<1000; ++i) f.time_update(Vec(0,0,4*M_PI),.005);
     check((f.covariance()-Mat::Identity()).norm(),1e-10,"rotation cannot create information");
     reset(false); reset(true);
-    QuaternionMEKF<double,true> bias_filter(Vec::Ones(),Vec::Zero(),Vec::Ones(),.7,.4,0);
-    bias_filter.time_update(Vec(.4,.1,-.2),.1);
-    const Quat q_before(bias_filter.quaternion());
-    const Mat attitude_cov=bias_filter.covariance().topLeftCorner<3,3>();
-    bias_filter.reacquire_gyro_bias(Vec(.01,-.02,.005));
-    check(Quat(bias_filter.quaternion()).angularDistance(q_before),1e-12,"bias repair preserved attitude");
-    check((bias_filter.covariance().topLeftCorner<3,3>()-attitude_cov).norm(),1e-12,"bias repair preserved attitude covariance");
-    check(bias_filter.covariance().topRightCorner<3,3>().norm(),1e-12,"bias repair removed stale cross covariance");
-    check((bias_filter.covariance().bottomRightCorner<3,3>()-.0009*Mat::Identity()).norm(),1e-12,"bias repair covariance floor");
-    check((bias_filter.gyroscope_bias()-Vec(.01,-.02,.005)).norm(),1e-12,"bias repair mean");
     if (failures) return EXIT_FAILURE;
     std::puts("qMEKF prediction and reset agree with finite-differenced right-error geometry");
     return EXIT_SUCCESS;

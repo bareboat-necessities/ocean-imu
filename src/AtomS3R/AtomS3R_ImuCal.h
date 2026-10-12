@@ -76,7 +76,6 @@
 */
 
 #include <Arduino.h>
-#include "util/ImuFreshness.h"
 #include <M5Unified.h>
 #include <Preferences.h>
 
@@ -277,7 +276,6 @@ struct ImuSample {
   float tempC;    // deg C
   uint32_t mask;  // M5.Imu.update() mask
   uint32_t sample_us; // micros() timestamp captured at imu.update()
-  bool accel_fresh = true; // a new accelerometer sample since the previous delivered gyro
   MagAcquisition mag_timing; // first host observation and AUX read bracket
 };
 
@@ -305,7 +303,6 @@ static constexpr uint32_t kImuMaskAccelGyro = (ATOMS3R_IMU_MASK_ACCEL | ATOMS3R_
 
 // Bosch-compensated magnetometer source (see configureAtomS3RMag()).
 struct AtomS3RMagSource {
-  ocean_imu::ImuFreshness imu_freshness{};
   uint8_t last_aux[8]{};
   bool compensated = false;      // deliver Bosch trim/RHALL compensated uT
   Bmm150Trim trim{};
@@ -364,16 +361,15 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
 }
 
 // Reads M5.Imu, applies AtomS3R axis mapping and unit conversion, but does NOT calibrate.
-/** @brief Deliver a mapped gyro frame once acceleration is available.
- * Return false when no frame is ready; out.accel_fresh marks acceleration
- * not yet consumed by a previous delivered gyro frame.
- */
-static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out) {
+// Estimators receive only frames carrying both a new accelerometer and gyro
+// sample. gyro_only admits gyro-only frames for magnetic timing capture, which
+// does not use acceleration.
+static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out,
+                                 bool gyro_only = false) {
   out.sample_us = sample_us;
   out.mask = update_mask;
-  if (!atoms3rMagSource().imu_freshness.observe(
-      (out.mask & ATOMS3R_IMU_MASK_ACCEL) != 0,
-      (out.mask & ATOMS3R_IMU_MASK_GYRO) != 0, out.accel_fresh)) return false;
+  const uint32_t required = gyro_only ? uint32_t(ATOMS3R_IMU_MASK_GYRO) : kImuMaskAccelGyro;
+  if ((out.mask & required) != required) return false;
 
   const auto data = imu.getImuData();
   out.tempC = NAN;
@@ -388,19 +384,14 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, ui
   // gates rather than the update mask.
   out.m = readMagBody_(data.mag, sample_us);
   out.mag_timing = atoms3rMagSource().acquisition;
-  const auto& timing = activeMagTiming();
-  if (magTimingValid(timing) && timing.configuration == activeMagTimingConfiguration()) {
-    out.mag_timing.delay_us = timing.delay_us;
-    out.mag_timing.timing_allowance_s = timing.fit_width_s + timing.residual_time_s;
-  }
 
   return true;
 }
 
-static inline bool readImuMapped(decltype(M5.Imu)& imu, ImuSample& out) {
+static inline bool readImuMapped(decltype(M5.Imu)& imu, ImuSample& out, bool gyro_only = false) {
   const uint32_t sample_us = micros();
   const uint32_t update_mask = imu.update();
-  return readImuMapped(imu, update_mask, sample_us, out);
+  return readImuMapped(imu, update_mask, sample_us, out, gyro_only);
 }
 
 // "No collisions" helper
@@ -462,7 +453,7 @@ static inline void loadMagTiming_(const ImuCalBlobV5& b) {
   if (magTimingCompatible(b,uint32_t(id),uint32_t(id>>32),uint8_t(M5.Imu.getType()),
       activeMagSource(),activeMagTimingConfiguration())) activeMagTiming()=b.mag_timing;
   const auto& t=activeMagTiming();
-  Serial.printf("[MAGTIME CAL] valid=%u delay_ms=%.1f allowance_ms=%.1f\n",
+  Serial.printf("[MAGTIME CAL] valid=%u delay_ms=%.1f allowance_ms=%.1f applied=0\n",
       unsigned(magTimingValid(t)), double(t.delay_us)*.001,
       double(t.fit_width_s+t.residual_time_s)*1000);
 }

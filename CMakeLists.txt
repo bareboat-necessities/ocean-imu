@@ -27,10 +27,6 @@ endif()
 
 set(W3D_SIM_COMMON "${OCEAN_IMU_SRC_DIR}/util/W3dSimCommon.cpp")
 
-# Shared device protection is compiled once, including on the native route.
-add_library(ocean_imu_attitude_protection STATIC
-  "${OCEAN_IMU_SRC_DIR}/util/AttitudeProtection.cpp")
-
 add_executable(ahrs-qmekf-sim "${OCEAN_IMU_TESTS_DIR}/ahrs/ahrs-qmekf-sim.cpp" ${W3D_SIM_COMMON})
 add_executable(detrend-basic-test "${OCEAN_IMU_TESTS_DIR}/detrend/detrend-basic-test.cpp")
 add_executable(freq-track "${OCEAN_IMU_TESTS_DIR}/freq/freq-track.cpp")
