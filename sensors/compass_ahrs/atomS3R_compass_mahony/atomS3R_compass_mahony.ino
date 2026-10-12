@@ -44,7 +44,11 @@ class MahonyBackend : public IAttitudeBackend {
     valid_ = true;
   }
 
+  /** @brief Advance the compass backend and fill the attitude solution.
+   * Honor the sample motion hold and apply a qualified recovery target when requested.
+   */
   void step(const CalibratedSample& s, AttitudeSolution& out) override {
+    mahony_.setAidingEnabled(!s.motion.hold_attitude);
     Vector3f a_att = -s.a_cal;
     const float an = a_att.norm();
     if (an > 1e-6f) a_att *= (ImuCalCfg::g_cal_local / an);  // direction only, at the physical static norm
@@ -58,6 +62,10 @@ class MahonyBackend : public IAttitudeBackend {
       mahony_AHRS_update(&mahony_, s.w_cal.x(), s.w_cal.y(), s.w_cal.z(), a_att.x(), a_att.y(), a_att.z(), &pd, &rd, &yd, s.dt);
     }
 
+    if (s.motion.reacquire) {
+      const auto& q = s.motion.target;
+      mahony_.setQuaternion(q.w(), q.x(), q.y(), q.z());
+    }
     out = makeAttitudeFromQuat(mahony_.q1, mahony_.q2, mahony_.q3, mahony_.q0);
   }
 

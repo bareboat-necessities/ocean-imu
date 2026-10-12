@@ -73,7 +73,36 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
         v2ref = B_world;
     }
 
+    /** @brief Install a body-to-world attitude and reset its local covariance to sigma squared.
+     * Preserve bias state; return false without changes for invalid quaternion or
+     * nonpositive/nonfinite sigma (attitude standard deviation in radians).
+     */
+    bool reacquire_attitude(const Eigen::Quaternion<T>& q_bw, T sigma = T(0.05)) {
+        if (!q_bw.coeffs().allFinite() || !std::isfinite(q_bw.norm()) ||
+            !(q_bw.norm() > T(1e-6)) || !std::isfinite(sigma) || !(sigma > T(0))) return false;
+        qref = q_bw.normalized();
+        x.template head<3>().setZero();
+        P.template topRows<3>().setZero();
+        P.template leftCols<3>().setZero();
+        P.template topLeftCorner<3,3>() = Matrix3::Identity()*sigma*sigma;
+        return true;
+    }
+
     static Eigen::Quaternion<T> quaternion_from_acc(Vector3 const& acc);
+    /** @brief Replace a qualified gross gyro-bias error, resetting its covariance.
+     * Bias and sigma are in rad/s; preserve attitude and reject invalid inputs.
+     */
+    bool reacquire_gyro_bias(const Vector3& bias, T sigma = T(0.03)) {
+        if constexpr (!with_bias) return false;
+        else {
+            if (!bias.allFinite() || !std::isfinite(sigma) || !(sigma > T(0))) return false;
+            x.template tail<3>() = bias;
+            P.template bottomRows<3>().setZero();
+            P.template rightCols<3>().setZero();
+            P.template bottomRightCorner<3,3>() = Matrix3::Identity()*sigma*sigma;
+            return true;
+        }
+    }
     void time_update(Vector3 const& gyr, T Ts);
     void time_update(T const gyr[3], T Ts);
     void measurement_update(Vector3 const& acc, Vector3 const& mag);
@@ -113,6 +142,7 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     bool measurement_update_partial(const Eigen::Ref<const Vector3>& meas, const Eigen::Ref<const Vector3>& vhat, const Eigen::Ref<const Matrix3>& Rm);
     void set_transition_matrix(const Eigen::Ref<const Vector3>& gyr, T Ts);
     Matrix3 skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const;
+    Matrix3 right_jacobian(const Vector3& angle) const;
     void applyQuaternionCorrectionFromErrorState();
     Vector3 accelerometer_measurement_func() const;
     Vector3 magnetometer_measurement_func() const;
@@ -220,27 +250,35 @@ void QuaternionMEKF<T, with_bias>::initialize_from_acc(T const acc[3]) {
   initialize_from_acc(Map<Matrix<T, 3, 1>>(acc));
 }
 
+/** @brief Propagate attitude and right-error covariance using body gyro rates in rad/s.
+ * Ts is elapsed seconds; the bias-enabled layout subtracts its learned gyro bias.
+ */
 template <typename T, bool with_bias>
 void QuaternionMEKF<T, with_bias>::time_update(Vector3 const& gyr, T Ts) {
+  Vector3 rate = gyr;
   if constexpr (with_bias) {
-    set_transition_matrix(gyr - x.tail(3), Ts);
+    rate -= x.template tail<3>();
   }
-  else {
-    set_transition_matrix(gyr, Ts);
-  }
+  set_transition_matrix(rate, Ts);
 
   // Quaternionf.coeffs() get the components in [x,y,z,w] order
   qref = F * qref.coeffs();
   qref.normalize();
 
+  // q_true = qref * Exp(delta_theta): the three-dimensional error rotates
+  // through the FULL body rotation. A block of the four-dimensional quaternion
+  // propagator uses the half angle and spuriously contracts axial variance.
+  const Vector3 angle = rate * Ts;
+  const Matrix3 Jr = right_jacobian(angle);
+  const Matrix3 rotation = Matrix3::Identity() - skew_symmetric_matrix(angle) * Jr;
   MatrixN F_a;
-  // Slice 3x3 block from F
   if constexpr (with_bias) {
-    F_a << F.block(0, 0, 3, 3), (-Matrix3::Identity()*Ts),
+    // Integral of Exp(-[rate]x s), for a constant body gyro-bias error.
+    F_a << rotation, (-Ts * Jr),
            Matrix3::Zero(), Matrix3::Identity();
   }
   else {
-    F_a = F.block(0, 0, 3, 3);
+    F_a = rotation;
   }
   P = F_a * P * F_a.transpose() + Q;
 }
@@ -407,8 +445,32 @@ Matrix<T, 3, 3> QuaternionMEKF<T, with_bias>::skew_symmetric_matrix(const Eigen:
   return M;
 }
 
+/** @brief Return the SO(3) right Jacobian for a rotation vector in radians.
+ * Use a series near zero to avoid cancellation.
+ */
+template <typename T, bool with_bias>
+typename QuaternionMEKF<T, with_bias>::Matrix3
+QuaternionMEKF<T, with_bias>::right_jacobian(const Vector3& angle) const {
+    const T theta2 = angle.squaredNorm();
+    T a, b;
+    if (theta2 < T(1e-4)) {
+        // Avoid cancellation in 1-cos(theta) and theta-sin(theta).
+        a = T(0.5) - theta2/T(24) + theta2*theta2/T(720);
+        b = T(1)/T(6) - theta2/T(120) + theta2*theta2/T(5040);
+    } else {
+        const T theta = std::sqrt(theta2);
+        a = (T(1)-std::cos(theta))/theta2;
+        b = (theta-std::sin(theta))/(theta2*theta);
+    }
+    const Matrix3 A = skew_symmetric_matrix(angle);
+    return Matrix3::Identity() - a*A + b*A*A;
+}
+
 // Apply full exponential-map quaternion correction from current error-state x(0..2).
 // Safe for both small and large |δθ|.
+/** @brief Inject the attitude error into the quaternion and transport its covariance.
+ * Clear the attitude error coordinates after changing the local error chart.
+ */
 template<typename T, bool with_bias>
 void QuaternionMEKF<T, with_bias>::applyQuaternionCorrectionFromErrorState() {
     Eigen::Matrix<T,3,1> dtheta = x.template head<3>();
@@ -431,6 +493,13 @@ void QuaternionMEKF<T, with_bias>::applyQuaternionCorrectionFromErrorState() {
 
     qref = qref * corr;
     qref.normalize();
+
+    // Injection changes the error chart. The derivative of
+    // Log(Exp(-dtheta) Exp(dtheta + epsilon)) at epsilon=0 is Jr(dtheta).
+    // Transport attitude/bias cross-covariance as well as the attitude block.
+    MatrixN reset = MatrixN::Identity();
+    reset.template topLeftCorner<3,3>() = right_jacobian(dtheta);
+    P = reset * P * reset.transpose();
 
     // Reset attitude error part of the state
     x.template head<3>().setZero();

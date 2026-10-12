@@ -4,8 +4,8 @@
 \label{tab:tfg-paired}\setlength{\tabcolsep}{3pt}
 \begin{tabular}{@{}lrrr@{}}\toprule
 Metric & OU--III & TFG & Difference\\\midrule
-Z RMS [$\%H_s$] & 4.423 & 4.459 & +0.0364\\
-Z RMS [m] & 0.1565 & 0.1569 & +0.000405\\
+Z RMS [$\%H_s$] & 4.423 & 4.459 & +0.0365\\
+Z RMS [m] & 0.1565 & 0.1569 & +0.000406\\
 3-D RMS [m] & 0.3262 & 0.3307 & +0.00443\\
 Roll RMS [deg] & 0.2456 & 0.2894 & +0.0438\\
 Pitch RMS [deg] & 0.2602 & 0.32 & +0.0598\\

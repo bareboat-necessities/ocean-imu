@@ -36,6 +36,45 @@ public:
     T integralFBy = T(0);
     T integralFBz = T(0);   // integral error terms scaled by Ki
 
+    // Aiding can be suspended without discarding an already learned bias.
+    /** @brief Enable sensor feedback or retain gyro-only propagation with the saved bias integral. */
+    void setAidingEnabled(bool enabled) { aiding_enabled_ = enabled; }
+    /** @brief Return whether accelerometer and magnetometer feedback is enabled. */
+    bool aidingEnabled() const { return aiding_enabled_; }
+
+    /** @brief Normalize and install scalar-first quaternion components.
+     * Ignore a zero or nonfinite norm and preserve the bias integral.
+     */
+    void setQuaternion(T w, T x, T y, T z) {
+        const T n = std::sqrt(w*w + x*x + y*y + z*z);
+        if (!(n > T(0)) || !std::isfinite(n)) return;
+        q0=w/n; q1=x/n; q2=y/n; q3=z/n;
+    }
+
+    // Exact constant-rate propagation on the protected path. Applying the
+    // saved integral here matters: the legacy zero-accel path omits it.
+    /** @brief Propagate constant body gyro rates in rad/s using the saved bias integral.
+     * Use dt in seconds and write pitch, roll, and yaw in degrees to non-null pointers.
+     */
+    void predictOnly(T gx, T gy, T gz, T* pitch, T* roll, T* yaw, T dt) {
+        gx += integralFBx; gy += integralFBy; gz += integralFBz;
+        const T n = std::sqrt(gx*gx + gy*gy + gz*gz);
+        const T h = T(0.5)*dt;
+        const T s = n > T(1e-8) ? std::sin(n*h)/n : h;
+        const T c = std::cos(n*h), x=gx*s, y=gy*s, z=gz*s;
+        setQuaternion(q0*c-q1*x-q2*y-q3*z,
+                      q0*x+q1*c+q2*z-q3*y,
+                      q0*y-q1*z+q2*c+q3*x,
+                      q0*z+q1*y-q2*x+q3*c);
+        const T sp = -T(2)*q1*q3 + T(2)*q0*q2;
+        *pitch = std::asin(sp < T(-1) ? T(-1) : (sp > T(1) ? T(1) : sp))*kRadToDeg;
+        *roll = std::atan2(T(2)*(q2*q3+q0*q1), T(1)-T(2)*(q1*q1+q2*q2))*kRadToDeg;
+        *yaw = std::atan2(T(2)*(q1*q2+q0*q3), q0*q0+q1*q1-q2*q2-q3*q3)*kRadToDeg;
+    }
+
+private:
+    bool aiding_enabled_ = true;
+public:
     // Fast inverse square root.
     // Uses memcpy for type-punning — well-defined in both C and C++.
     // Magic constant 0x5f375a86 (Lomont) gives ~0.18% error after one
@@ -80,11 +119,18 @@ public:
     }
 
     // update()  (IMU-only, no magnetometer)
+    /** @brief Integrate body gyro rates in rad/s with gravity-vector feedback when enabled.
+     * Use delta_t_sec in seconds and write pitch, roll, and yaw in degrees.
+     */
     void update(T gx, T gy, T gz,
                 T ax, T ay, T az,
                 T* pitch, T* roll, T* yaw,
                 T delta_t_sec)
     {
+        if (!aiding_enabled_) {
+            predictOnly(gx, gy, gz, pitch, roll, yaw, delta_t_sec);
+            return;
+        }
         T recipNorm;
         T halfvx, halfvy, halfvz;
         T halfex, halfey, halfez;
@@ -168,12 +214,20 @@ public:
     }
 
     // updateMag()  (IMU + magnetometer)
+    /** @brief Integrate body gyro rates with gravity and magnetic feedback when enabled.
+     * Use elapsed seconds and write Euler angles in degrees; an all-zero field
+     * falls back to the IMU-only update.
+     */
     void updateMag(T gx, T gy, T gz,
                    T ax, T ay, T az,
                    T mx, T my, T mz,
                    T* pitch, T* roll, T* yaw,
                    T delta_t_sec)
     {
+        if (!aiding_enabled_) {
+            predictOnly(gx, gy, gz, pitch, roll, yaw, delta_t_sec);
+            return;
+        }
         // Fall back to IMU-only if magnetometer is all-zero.
         if ((mx == T(0)) && (my == T(0)) && (mz == T(0))) {
             update(gx, gy, gz, ax, ay, az, pitch, roll, yaw, delta_t_sec);
