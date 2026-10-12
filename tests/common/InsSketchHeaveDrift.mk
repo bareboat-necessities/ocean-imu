@@ -30,8 +30,14 @@ INS_SKETCH_FLAGS := -O2 -std=c++20 -fno-finite-math-only -DSEA_STATE_ENABLE_WIZA
 	'-DINS_SKETCH_FILE="$(INS_SKETCH_FILE)"' '-DINS_READY(app)=$(INS_READY_$(INS_FAMILY))' \
 	$(if $(INS_DISPLACEMENT),'-DINS_DISPLACEMENT_UP(app)=$(INS_DISPLACEMENT)')
 
-ins_sketch_heave-test: $(REPO_ROOT)/tests/common/InsSketchHeaveDrift.cpp $(INS_SKETCH_FILE) \
+# The sketch includes the real estimator headers; the driver object records
+# them so an edited header rebuilds the harness instead of a stale binary.
+ins_sketch_heave-test.o: $(REPO_ROOT)/tests/common/InsSketchHeaveDrift.cpp $(INS_SKETCH_FILE) \
 		$(wildcard $(REPO_ROOT)/tests/common/ins_sketch_stubs/*.h $(REPO_ROOT)/tests/common/ins_sketch_stubs/AtomS3R/*.h)
 	$(if $(INS_SKETCH_NAME),,$(error no INS sketch is mapped to $(INS_FAMILY)))
-	$(CXX) $(INS_SKETCH_FLAGS) -o $@ $(REPO_ROOT)/tests/common/InsSketchHeaveDrift.cpp \
-		$(REPO_ROOT)/src/util/W3dSimCommon.cpp $(LDFLAGS)
+	$(CXX) $(INS_SKETCH_FLAGS) -MMD -MP -MF $@.d -MT $@ -c -o $@ $(REPO_ROOT)/tests/common/InsSketchHeaveDrift.cpp
+
+ins_sketch_heave-test: ins_sketch_heave-test.o
+	$(CXX) $(INS_SKETCH_FLAGS) -o $@ $< $(REPO_ROOT)/src/util/W3dSimCommon.cpp $(LDFLAGS)
+
+-include ins_sketch_heave-test.o.d

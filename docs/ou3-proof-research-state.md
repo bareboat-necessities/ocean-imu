@@ -45,7 +45,9 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 ## Magnetic-input timing scope
 
 The AtomS3R OU-III frontend now transports known host-cache delay and suppresses
-repeated host observations. The BMM150 conversion epoch/aperture is not known;
+repeated host observations. It applies no calibrated relative lag and no
+historical snapshot interpolation; the optional v5 timing record is
+calibration evidence only. The BMM150 conversion epoch/aperture is not known;
 physical timestamp qualification remains OPEN. The 21-state core, Jacobian,
 OU/S/SpectralMSE/tuner/BA dynamics and injection/reset are retained. Reference
 and hard-iron accumulation use saved exogenous proxy snapshots. Timed MEKF
