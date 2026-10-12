@@ -663,7 +663,7 @@ private:
     // tempC) when they intentionally model an internal temperature bias.
     fusion_.update(dt_, w_cal_, a_cal_, 35.0f);
     mag_input_.capture(fusion_.startupProxyQuat(), fusion_.quaternion(), a_cal_, w_cal_);
-    if (!motion.hold_attitude && mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
+    if (mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
     if (motion.reacquire) {
       fusion_.mekf().reacquire_attitude(motion.target);
       if (motion.repair_gyro_bias) fusion_.mekf().recover_corrupted_biases(motion.gyro_bias);

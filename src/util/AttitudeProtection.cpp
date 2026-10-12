@@ -38,6 +38,11 @@ Decision Protection::step(float dt, const Vec& gyro, const Vec& bias, const Vec&
             std::isfinite(gravity) && gravity > 0;
         const float norm_error = finite ? std::abs(acc.norm() / gravity - 1) : 1;
         const float speed = finite ? gyro.norm() : 100;
+        // The existing gross-bias repair needs a noise-qualified observed-rate
+        // fit. Keep that corrupt state protected until the fit closes; the
+        // ordinary-bias timeout must not resume corrections that would
+        // invalidate its inherited-state recovery window.
+        gross_bias_ = bias.allFinite() && bias.norm() > .08f;
         // A ramp can create tangential acceleration well before the rate
         // threshold is reached. Filter both rate and its derivative at 30 ms to avoid
         // treating sample-to-sample gyro noise as angular acceleration.
@@ -59,17 +64,19 @@ Decision Protection::step(float dt, const Vec& gyro, const Vec& bias, const Vec&
             if (clear_sec_ >= .5f) dynamic_ = false;
         }
         // A vessel need not become completely stationary after a turn.
-        // Bound the extra settling hold; a known large attitude error still
-        // requires independent magnetic capture. Kalman adapters discard the
-        // held/navigation cross-covariances when ordinary aiding resumes.
+        // Bound the extra settling hold, including a requested large-angle
+        // capture that continuing motion cannot qualify. Capture remains
+        // pending after release; only settled observations can reset attitude.
+        // Kalman adapters discard held/navigation cross-covariances when
+        // ordinary aiding resumes.
         if (!dynamic_) recovery_wait_ += dt;
-        if (post_dynamic_ && !pending_ && recovery_wait_ >= 2.0f) post_dynamic_ = false;
+        if (post_dynamic_ && recovery_wait_ >= 2.0f) post_dynamic_ = false;
         d.dynamic = dynamic_;
-        d.hold_attitude = dynamic_ || post_dynamic_;
+        d.hold_attitude = holdAttitude_();
         const bool q_ok = q_before.coeffs().allFinite() && q_before.norm() > 1e-6f;
         if (!can_reacquire) { post_dynamic_ = pending_ = false; d.hold_attitude = dynamic_; }
         if (!finite || !accel_recent || acc.norm() < 1e-3f || !std::isfinite(reference_yaw) || !q_ok || !magnetic_valid || !field.allFinite() || !can_reacquire) {
-            clearWindow_(); d.hold_attitude = dynamic_ || pending_ || post_dynamic_; return d;
+            clearWindow_(); d.hold_attitude = holdAttitude_(); return d;
         }
         Quat predicted = q_before.normalized() * rotation(Vec((gyro - bias) * dt));
         predicted.normalize();
@@ -78,18 +85,21 @@ Decision Protection::step(float dt, const Vec& gyro, const Vec& bias, const Vec&
         const Vec horizontal = field - down * down.dot(field);
         const float hn = horizontal.norm();
         if (!(fn > 5 && fn < 200 && hn > 5 && hn > .1f * fn)) {
-            clearWindow_(); d.hold_attitude = dynamic_ || pending_ || post_dynamic_; return d;
+            clearWindow_(); d.hold_attitude = holdAttitude_(); return d;
         }
         const Vec north = horizontal / hn, east = down.cross(north);
         Eigen::Matrix3f axes;
         axes.col(0) = north; axes.col(1) = east; axes.col(2) = down;
         const Quat target = Quat(Eigen::AngleAxisf(reference_yaw, Vec::UnitZ())) * Quat(axes.transpose());
         const float error = predicted.angularDistance(target);
-        // Outside a local correction's capture region, wait for independent
-        // settled measurements instead of learning the discrepancy as bias.
-        if (!dynamic_ && error > .61f) pending_ = true; // 35 degrees
+        // Give independent settled measurements a bounded capture-only window.
+        // A pending request cannot permanently suppress otherwise valid aiding.
+        if (!dynamic_ && error > .61f && !pending_) { // 35 degrees
+            pending_ = true;
+            if (!post_dynamic_) recovery_wait_ = 0;
+        }
         if (error < .26f) pending_ = false;             // 15 degrees
-        d.hold_attitude = dynamic_ || pending_ || post_dynamic_;
+        d.hold_attitude = holdAttitude_();
         const float dip = down.dot(field) / fn;
         const bool field_matches = !have_field_ ||
             (std::abs(fn / field_norm_ - 1) < .20f && std::abs(dip - field_dip_) < .12f);

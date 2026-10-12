@@ -42,6 +42,9 @@ struct Decision {
     bool repair_gyro_bias = false;
     Vec gyro_bias = Vec::Zero();
     Quat target = Quat::Identity();
+    // hold_attitude protects force-derived attitude feedback and bias learning.
+    // It does not invalidate magnetic observations. Their health, timestamp,
+    // freshness and innovation gates remain independent of vessel motion.
 };
 
 class Protection {
@@ -68,12 +71,18 @@ public:
     /** @brief Print the hold, dynamic-motion, and recovery-count diagnostics. */
     template<class Print> void print(Print& out) const {
         out.printf("[ATT] hold=%d dynamic=%d recoveries=%lu\n",
-            int(dynamic_ || pending_ || post_dynamic_), int(dynamic_), static_cast<unsigned long>(recoveries_));
+            int(holdAttitude_()), int(dynamic_), static_cast<unsigned long>(recoveries_));
     }
 private:
+    // A requested capture must not starve ordinary aiding indefinitely when
+    // continuing motion prevents the settled observation window from closing.
+    bool holdAttitude_() const {
+        return dynamic_ || (pending_ && gross_bias_) ||
+            ((pending_ || post_dynamic_) && recovery_wait_ < 2.0f);
+    }
     /** @brief Discard accumulated recovery observations and restart the sample count. */
     void clearWindow_() { have_window_ = false; count_ = 0; }
-    bool post_dynamic_ = false;
+    bool post_dynamic_ = false, gross_bias_ = false;
     bool have_accel_ = false;
     bool have_rate_ = false;
     Vec rate_lpf_ = Vec::Zero(), angular_accel_lpf_ = Vec::Zero();

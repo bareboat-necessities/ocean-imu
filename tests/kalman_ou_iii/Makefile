@@ -21,6 +21,9 @@ TARGETS += mag_timing-test
 mag_timing-test: mag_timing-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 TARGETS += rapid_motion-test
+TARGETS += live_aiding-test
+live_aiding-test: live_aiding-test.o AttitudeProtection.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 rapid_motion-test: rapid_motion-test.o AttitudeProtection.o
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 rapid_motion-test.o: ../common/RapidMotionReplay.h ../common/RapidMotionBackends.h ../../src/util/AttitudeProtection.h ../../src/util/ImuFreshness.h

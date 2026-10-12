@@ -46,6 +46,70 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Rapid-motion runtime repair scope
 
+Runtime qualification failure **E**: the shared protection's pending-capture
+latch could suppress aiding indefinitely during continued motion. The pinned
+OU-III startup/device-order regression at large physical heel holds aiding for
+411.58 seconds, applies no magnetic corrections in its final 30 seconds, and
+reaches 93.38 degrees of attitude error and 139.51 m raw heave with the original
+policy. The corrected execution, with magnetic heading feedback retained during holds,
+ends at 3.99 degrees and bounds raw heave to 1.52 m. This invalidates the claim that the previous rapid-motion core
+tests qualified continued Live operation with a pending capture. It does not
+refute a regional stability theorem: the handheld large-heel execution is
+outside its retained domain. The capture-only hold is now bounded to two seconds;
+the request remains available for later qualified capture. Existing core,
+covariance and local proof identities are retained. Current limiter: AtomS3R
+bench confirmation. Next falsifiable experiment: repeat the same physical
+tilt/turn sequence while recording `[ATT]`, magnetic service, heading and raw
+heave; verify no ordinary-bias non-dynamic pending hold starves accepted corrections.
+
+The first timeout trial also released a grossly corrupted qMEKF gyro bias before
+its noise-qualified capture closed, leaving a 20.49-degree inherited-state tail
+(**E**, invalid timeout scope). The existing 0.08 rad/s gross-bias threshold now
+retains that protected repair window; the two-second bound applies to ordinary
+bias estimates. No measurement/covariance or capture-quality threshold is relaxed.
+PR #671 also conflated force-derived tilt/bias protection with magnetic
+validity in all seven backends. Healthy time-aligned magnetic heading feedback
+now remains active through a force hold, while tilt/bias protection remains.
+The first unrestricted 3D-magnetic trial exposed 34.13 degrees of excursion in
+a 720 deg/s case with an unmodelled 40 ms field delay (**E**, invalid timing
+qualification). This invalidates using a turn-long magnetic veto as evidence
+that an incorrectly timestamped field is harmless. Protected latency tests
+use the existing calibrated delay and transport; ordinary-aiding unmodelled
+latency controls remain visible. A subsequent OU-III inherited-state trial ended at 16.52 degrees because
+magnetic navigation gain rows carried corrupt turn cross-covariance into
+retained navigation means (**E**, heading-only repair was incomplete). Held
+magnetic corrections now retain physical navigation means as well as tilt
+and bias. For TFG, the invariant rho=[x]phi correction cancels the finite
+rotation of the retained physical navigation vector; the modified gain is
+used in Joseph covariance and reset. A new held-field/absent-field comparison
+checks informative magnetic service, tilt preservation and bias preservation
+across the production backends. Its initial arbitrary 20% two-second response
+criterion rejected OU-II despite a measured 17.19-to-14.45-degree improvement
+(**E**, observer-independent rate assumption). The service check instead
+requires a resolved 0.01 rad improvement without prescribing a common rate.
+The NLO scheduling-gap case initially peaked at 17.80 degrees because an
+end-of-gap field was reused as feedback during every intervening substep
+(**E**, magnetic-epoch mismatch). Held NLO propagation now applies the current
+field only on the final bounded substep rather than inventing magnetic
+observations through the unobserved gap. Healthy NLO heading feedback also
+resolved a 90-degree error before capture qualification; the old exactly-one
+capture assertion rejected an already accurate 0.01-degree heading (**E**,
+obsolete control-flow expectation). Large-angle tails still must be below
+three degrees with at most one capture, and the zero-innovation antipode still
+requires one independent capture. The PII sketch's actual update-body replay retains healthy magnetic service
+through a 137-degree start and a full protected turn; a genuine field outage
+still expires service and fresh fields restore it. Its graphical timeout
+previously drew `0 / N` with no visible invalid-status strip. The shared
+renderer now suppresses the unavailable needle and shows `--- / WAIT`; actual
+zero-degree headings remain valid. These are runtime/output repairs, not proof
+results. Hardware qualification remains the limiter. Local full-suite validation also
+exhausted the temporary filesystem while writing reproducible replay CSV
+outputs (**E**, infrastructure); completed outputs can be discarded between
+backend runs without changing any estimator or quality gate. Required CI
+correctly rejects stale proof/publication source bindings after these source
+changes. Those records need exact regeneration before this draft can be merged;
+their older ordinary-aiding results do not certify the new held-magnetic path.
+
 Current recovery hypothesis: qualified two-vector/gyro bias repair,
 physical-coordinate TFG covariance reset, and explicit treatment of corrupted
 navigation feedback close the finite inherited-state recovery cases. qMEKF's

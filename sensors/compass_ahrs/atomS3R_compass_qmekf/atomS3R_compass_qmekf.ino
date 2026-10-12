@@ -67,6 +67,7 @@ class QmekfBackend : public IAttitudeBackend {
       inited_ = true;
     }
 
+    mekf_->set_bias_updates_enabled(!s.motion.hold_attitude);
     mekf_->time_update(s.w_cal, s.dt);
 
     Vector3f a_att = s.a_cal;
@@ -74,7 +75,7 @@ class QmekfBackend : public IAttitudeBackend {
     if (an > 1e-6f) a_att *= (ImuCalCfg::g_cal_local / an);
     if (!s.motion.hold_attitude && s.accel_fresh) mekf_->measurement_update_acc_only(a_att);
 
-    if (!s.motion.hold_attitude && s.mag_ok && s.mag_fresh) {
+    if (s.mag_ok && s.mag_fresh) {
       // Field reference rebuilt from this reading, as in Mahony: its own dip,
       // pointing to magnetic north. A reference frozen at start keeps the
       // dip error of that one sample (local disturbance, motion at boot),

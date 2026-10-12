@@ -417,13 +417,24 @@ public:
         const std::uint32_t steps = static_cast<std::uint32_t>(steps_real);
         const R step_dt = dt / R(steps);
         for (std::uint32_t i = 0; i < steps; ++i) {
+            if constexpr (Mag == NloMagType::Magnetometer) {
+                if (!attitude_aiding_enabled_ && i + 1 < steps) {
+                    // The delivered field is aligned to this frame's end.
+                    // Do not invent magnetic observations in an unobserved
+                    // scheduling gap; retain feedback at its observed epoch.
+                    Aux propagation_aux = aux;
+                    propagation_aux.mag_valid = false;
+                    updateStep_(step_dt, gyro_b_rad_s, specific_force_b_mps2, propagation_aux);
+                    continue;
+                }
+            }
             updateStep_(step_dt, gyro_b_rad_s, specific_force_b_mps2, aux);
         }
     }
 
 private:
     /** @brief Advance one NLO integration step using body gyro and specific force.
-     * Suppress attitude innovation and its bias learning when aiding is disabled.
+     * During a force hold retain magnetic heading feedback and freeze bias learning.
      */
     void updateStep_(R dt,
                      const Vec3& gyro_b_rad_s,
@@ -470,7 +481,16 @@ private:
                 computeNoGnssAttitudeSigmaBody(f_b, fhat_n_, aux, R_nb_before);
         }
 
-        if (!attitude_aiding_enabled_) sigma_b_.setZero();
+        if (!attitude_aiding_enabled_) {
+            // Heading uses estimated vertical, never the slammed force vector.
+            sigma_b_.setZero();
+            Vec3 c_b, c_n;
+            if (makeYawReference(aux, R_nb_before, c_b, c_n)) {
+                const Vec3 down_b = R_nb_before.transpose() * Vec3::UnitZ();
+                const Vec3 magnetic = k2_ * c_b.cross(R_nb_before.transpose() * c_n);
+                sigma_b_ = down_b * down_b.dot(magnetic);
+            }
+        }
 
         Vec3 bias_dot =
             projectBallDerivative(
@@ -478,6 +498,7 @@ private:
                 -kI_ * sigma_b_,
                 cfg_.gyro_bias_limit_rad_s
             );
+        if (!attitude_aiding_enabled_) bias_dot.setZero();
 
         if constexpr (Mag == NloMagType::None) {
             bias_dot.z() = R(0);

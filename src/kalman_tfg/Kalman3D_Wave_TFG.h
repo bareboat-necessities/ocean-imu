@@ -770,18 +770,18 @@ class Kalman3D_Wave_TFG {
         return apply_update3_(r, H, Rw, last_acc_diag_);
     }
 
-    /** @brief Correct from a body magnetic field when aiding and a world reference are available.
+    /** @brief Correct from a body magnetic field when a world reference is available.
      * Return whether the correction was accepted.
      */
     bool measurement_update_mag_only(const Vector3& mag_meas_body) {
-        if (!attitude_aiding_enabled_ || !have_mag_reference_ || !mag_meas_body.allFinite() ||
+        if (!have_mag_reference_ || !mag_meas_body.allFinite() ||
             !(mag_meas_body.norm() > T(1e-9))) {
             last_mag_diag_ = MeasDiag3{};
             return false;
         }
         Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
         mag_residual(mag_meas_body, r, H, Rw);
-        return apply_update3_(r, H, Rw, last_mag_diag_);
+        return apply_update3_(r, H, Rw, last_mag_diag_, false, true);
     }
 
     bool measurement_update_mag_only(const Vector3& mag, const Matrix3& covariance_body) {
@@ -947,10 +947,11 @@ class Kalman3D_Wave_TFG {
     bool recovered_bias_navigation_only_ = false;
 
     /** @brief Apply a gated three-component correction and fill its diagnostics.
-     * Return whether it was accepted; held attitude and bias gain rows remain zero.
+     * Return whether it was accepted; magnetic attitude gains survive a force hold.
      */
     bool apply_update3_(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
-                        const Matrix3& Rw, MeasDiag3& diag, bool navigation_only = false) {
+                        const Matrix3& Rw, MeasDiag3& diag, bool navigation_only = false,
+                        bool magnetic = false) {
         diag = MeasDiag3{};
         diag.r = r;
         if (!r.allFinite() || !H.allFinite() || !Rw.allFinite()) return false;
@@ -975,7 +976,15 @@ class Kalman3D_Wave_TFG {
         K = ldlt.solve(PHt.transpose()).transpose();
         if (!K.allFinite()) return false;
         if (!attitude_aiding_enabled_ || navigation_only) {
-            K.template topRows<3>().setZero();
+            if (!magnetic || navigation_only) K.template topRows<3>().setZero();
+            else {
+                K.template topRows<2>().setZero(); // invariant attitude error is in world axes
+                // Physical navigation means stay fixed under heading-only
+                // injection: rho_x = [x] phi cancels Exp(phi)*x exactly.
+                for (int c = 0; c < 4; ++c)
+                    K.template middleRows<3>(OFF_V+3*c) =
+                        ocean_imu::lie::skew<T>(Vector3(X_.X.col(c))) * K.template topRows<3>();
+            }
             if constexpr (with_gyro_bias) K.template middleRows<3>(OFF_BG).setZero();
             if constexpr (with_accel_bias) K.template middleRows<3>(OFF_BA).setZero();
         }

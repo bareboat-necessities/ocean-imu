@@ -58,7 +58,8 @@ class CompassUI {
             bool tiltWarn = false) {
     if (!_ok) return;
 
-    headingDeg = wrap360(headingDeg);
+    const bool headingOk = magOk && std::isfinite(headingDeg);
+    if (headingOk) headingDeg = wrap360(headingDeg);
 
     auto* fb = (uint8_t*)_frame.getBuffer();
     auto* bb = (uint8_t*)_bg.getBuffer();
@@ -67,8 +68,8 @@ class CompassUI {
     // 16-bit RGB565 => 2 bytes/pixel
     std::memcpy(fb, bb, (size_t)_w * (size_t)_h * 2u);
 
-    drawNeedle(headingDeg);
-    drawCenterText(headingDeg, magOk, magStrength_uT, tiltWarn);
+    if (headingOk) drawNeedle(headingDeg);
+    drawCenterText(headingDeg, headingOk, magStrength_uT, tiltWarn);
 
     // Push explicitly to display (no parent pointer needed)
     _frame.pushSprite(&M5.Display, 0, 0);
@@ -154,8 +155,8 @@ class CompassUI {
   void drawCenterText(float headingDeg, bool magOk, float mag_uT, bool tiltWarn) {
     // Big numeric
     char buf[16];
-    int hdg = (int)lroundf(headingDeg);
-    snprintf(buf, sizeof(buf), "%d", hdg);
+    if (magOk) snprintf(buf, sizeof(buf), "%d", (int)lroundf(headingDeg));
+    else snprintf(buf, sizeof(buf), "---");
 
     _frame.setTextColor(TFT_WHITE, TFT_BLACK);
     _frame.setTextSize(2);
@@ -164,14 +165,16 @@ class CompassUI {
     centerPrint(buf, yText);
 
     // draw degree circle to the right of the number
-    int w = _frame.textWidth(buf);
-    int x = (_w - w) / 2 + w + 4;
-    int y = yText + 2;
-    _frame.drawCircle(x, y, 3, TFT_WHITE);
+    if (magOk) {
+      int w = _frame.textWidth(buf);
+      int x = (_w - w) / 2 + w + 4;
+      int y = yText + 2;
+      _frame.drawCircle(x, y, 3, TFT_WHITE);
+    }
 
     // Small cardinal
     _frame.setTextSize(1);
-    centerPrint(cardinal8(headingDeg), yText + 22);
+    centerPrint(magOk ? cardinal8(headingDeg) : "WAIT", yText + 22);
 
     // Bottom status strip
     if (false) {
