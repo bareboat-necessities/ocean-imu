@@ -140,7 +140,9 @@ private:
       // stationary gyro level used by the rotation gate.
       ImuCalBlobV5 prev{};
       const bool have_prev = store_.load(prev);
-      const bool can_accel_only = have_prev && prev.gyro_ok;
+      sensorIdentity_();
+      const bool can_accel_only = have_prev && magTimingCompatible(prev,
+          sensor_id_lo_,sensor_id_hi_,imu_type_,activeMagSource(),activeMagTimingConfiguration());
 
       const M5Ui::StartAction start = ui_.startMenu(can_accel_only);
       if (start == M5Ui::StartAction::CANCEL) {
@@ -150,7 +152,6 @@ private:
       const bool accel_only = (start == M5Ui::StartAction::ACCEL_ONLY);
       Serial.printf("[WIZ] mode=%s have_prev=%d\n", accel_only ? "accel_only" : "full", (int)have_prev);
 
-      sensorIdentity_();
       const imu_cal::AccelThermalPrior prior =
           have_prev ? accelThermalPriorFrom(prev, sensor_id_lo_, sensor_id_hi_, imu_type_) : imu_cal::AccelThermalPrior{};
       Serial.printf("[ACC] thermal prior: %s\n", prior.valid ? "compatible slope available" : "none");

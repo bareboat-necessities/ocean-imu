@@ -61,6 +61,14 @@ static void persistence() {
     bindTimingFixture(b);
     check(store.saveVerified(b,loaded) && store.load(loaded),"complete v5 record round trip");
     check(loaded.mag_timing.delay_us==40000,"saved delay survives reload");
+    const auto compatible=[&](uint32_t id,uint8_t type,uint8_t source,uint32_t config) {
+        return magTimingCompatible(b,id,b.sensor_id_hi,type,source,config);
+    };
+    check(compatible(123,3,b.mag_source,b.mag_timing.configuration),"current timing can be preserved");
+    check(!compatible(124,3,b.mag_source,b.mag_timing.configuration),"new device requires full calibration");
+    check(!compatible(123,4,b.mag_source,b.mag_timing.configuration),"new IMU requires full calibration");
+    check(!compatible(123,3,uint8_t(b.mag_source+1),b.mag_timing.configuration),"new source requires full calibration");
+    check(!compatible(123,3,b.mag_source,b.mag_timing.configuration+1),"new config requires full calibration");
     auto changed=b; changed.mag_b[0]=1;
     check(!store.save(changed),"magnetic binding");
     changed=b; changed.gyro_b0[0]=.01f; changed.gyro_coeff_crc=gyroCoeffCrc(changed);

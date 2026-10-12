@@ -447,10 +447,8 @@ static inline uint32_t magTimingConfiguration_(m5::IMU_Base* dev, const Bmm150Re
 }
 static inline void loadMagTiming_(const ImuCalBlobV5& b) {
   const uint64_t id=ESP.getEfuseMac();
-  if (b.sensor_id_lo!=uint32_t(id) || b.sensor_id_hi!=uint32_t(id>>32) ||
-      b.imu_type!=uint8_t(M5.Imu.getType())) return;
-  if (magTimingValid(b.mag_timing) && b.mag_timing.binding==magTimingBinding(b) &&
-      b.mag_timing.configuration==activeMagTimingConfiguration()) activeMagTiming()=b.mag_timing;
+  if (magTimingCompatible(b,uint32_t(id),uint32_t(id>>32),uint8_t(M5.Imu.getType()),
+      activeMagSource(),activeMagTimingConfiguration())) activeMagTiming()=b.mag_timing;
   const auto& t=activeMagTiming();
   Serial.printf("[MAGTIME CAL] valid=%u delay_ms=%.1f allowance_ms=%.1f\n",
       unsigned(magTimingValid(t)), double(t.delay_us)*.001,

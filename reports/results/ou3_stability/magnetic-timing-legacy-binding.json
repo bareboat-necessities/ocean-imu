@@ -21,10 +21,15 @@
     "baseline_commit": "453a1dfa66c7f90f4936f50940443fb0844d7959",
     "command": "python3 -m tools.stability.ou3_theorem.planar_native_secants --eigen EIGEN_DIR --output OUTPUT",
     "complete_two_epsilon_replay_performed": true,
-    "current_source_tree_sha256": "27ef61e34b62cad9adcc68b91709b78a353f3446608d01c6c05b0891ced0a80e",
+    "current_source_tree_sha256": "106c1af9b22a574939243741835eac3fd88642a4f0a336ba50fbbee4ed2a4326",
     "derived_analysis_matches_rtol": 1e-12,
     "native_secant_bytes_exactly_equal": true,
     "original_numerical_payload_preserved": true,
+    "post_replay_changes_outside_compiler_dependency_closure": [
+      "src/AtomS3R/AtomS3R_ImuCal.h",
+      "src/AtomS3R/AtomS3R_ImuCalBlob.h",
+      "src/AtomS3R/AtomS3R_ImuCalWizard.h"
+    ],
     "previous_source_tree_sha256": "74ff4bedfe9cf68811e6db13198878bca5cb835f8bab5dce4f9826eced0694cc",
     "timed_api_equivalence_claimed": false
   },
@@ -94,7 +99,7 @@
     "planar-native-secants-diagnostic.json": {
       "new_bindings": {
         "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0",
-        "shipping_source_tree_sha256": "27ef61e34b62cad9adcc68b91709b78a353f3446608d01c6c05b0891ced0a80e"
+        "shipping_source_tree_sha256": "106c1af9b22a574939243741835eac3fd88642a4f0a336ba50fbbee4ed2a4326"
       },
       "old_bindings": {
         "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",

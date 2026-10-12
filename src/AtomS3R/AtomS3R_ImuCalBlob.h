@@ -304,6 +304,13 @@ inline bool magTimingValid(const MagTimingRecord& r) {
       std::isfinite(r.improvement) && r.improvement>=.05f && r.improvement<=1 &&
       r.train_pairs>=50 && r.validation_pairs>=50;
 }
+inline bool magTimingCompatible(const ImuCalBlobV5& b, uint32_t id_lo, uint32_t id_hi,
+                                uint8_t imu_type, uint8_t source, uint32_t configuration) {
+  return gyroSetValid(b) && magSetValid(b) && b.sensor_id_lo==id_lo &&
+      b.sensor_id_hi==id_hi && b.imu_type==imu_type && b.mag_source==source &&
+      magTimingValid(b.mag_timing) && b.mag_timing.binding==magTimingBinding(b) &&
+      b.mag_timing.configuration==configuration;
+}
 inline MagTimingRecord& activeMagTiming() { static MagTimingRecord r{}; return r; }
 inline uint32_t& activeMagTimingConfiguration() { static uint32_t c=0; return c; }
 using MagTimingLoader = void (*)(const ImuCalBlobV5&);
