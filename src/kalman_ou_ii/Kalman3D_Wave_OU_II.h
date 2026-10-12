@@ -742,10 +742,15 @@ class Kalman3D_Wave_OU_II {
     MatrixNX3    PCt_scratch_;
     bool attitude_aiding_enabled_ = true;
     bool accelerometer_fresh_ = true;
-    /** @brief Zero attitude and enabled bias gain rows while attitude aiding is held. */
-    template<class Gain> void protect_gain_(Gain& K) const {
+    /** @brief Hold force-derived attitude and bias gains; retain magnetic attitude gains. */
+    template<class Gain> void protect_gain_(Gain& K, bool magnetic = false) const {
         if (!attitude_aiding_enabled_) {
-            K.template topRows<3>().setZero();
+            if (!magnetic) K.template topRows<3>().setZero();
+            else {
+                const Vector3 down = R_wb() * Vector3::UnitZ();
+                K.template topRows<3>() = (down * (down.transpose() * K.template topRows<3>())).eval();
+                K.template middleRows<12>(OFF_V).setZero();
+            }
             if constexpr (with_gyro_bias) K.template middleRows<3>(3).setZero();
             if constexpr (with_accel_bias) K.template middleRows<3>(OFF_BA).setZero();
         }
@@ -2172,8 +2177,6 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
 {
     last_mag_diag_ = MeasDiag3{};
     last_mag_diag_.accepted = false;
-    if (!attitude_aiding_enabled_) return;
-
     // De-heel magnetometer into B'
     const Vector3 mag_meas = deheel_vector_(mag_meas_body);
 
@@ -2227,7 +2230,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
 
     MatrixNX3& K = K_scratch_;
     K.noalias() = PCt * ldlt.solve(Matrix3::Identity());
-    protect_gain_(K);
+    protect_gain_(K, true);
 
     if constexpr (with_accel_bias) {
         if (!acc_bias_updates_enabled_) {

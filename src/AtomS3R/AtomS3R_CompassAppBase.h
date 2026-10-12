@@ -498,7 +498,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
     sample_ = makeCalibratedSample_(s);
     const uint32_t correction_start_us = micros();
     backend_->step(sample_, outputs_.att);
-    if (!sample_.motion.hold_attitude && sample_.mag_ok && (!backend_->discreteMagneticCorrections() || sample_.mag_fresh))
+    if (sample_.mag_ok && (!backend_->discreteMagneticCorrections() || sample_.mag_fresh))
       mag_input_.complete(correction_start_us,
           backend_->discreteMagneticCorrections() ? backend_->lastMagApplied() : true);
     outputs_.rot_dpm = rot_.update(sample_.dt, sample_.a_cal, sample_.w_cal, outputs_.att);

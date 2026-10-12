@@ -28,9 +28,10 @@ struct Backend {
      * Use dt in seconds and pass the available aiding/freshness controls to the backend.
      */
     void step(float dt,const V& w,const V& a,const V& m,bool mag,bool fresh,bool aiding,bool accel) {
+        f.set_bias_updates_enabled(aiding);
         f.time_update(w,dt);
         if (aiding && accel) f.measurement_update_acc_only(V(a.normalized()*gravity));
-        if (aiding && mag && fresh) {
+        if (mag && fresh) {
             const V u=m.normalized(), world=attitude()*u;
             f.set_mag_world_ref(V(std::hypot(world.x(),world.y()),0,world.z()));
             f.measurement_update_mag_only(u);
@@ -134,7 +135,7 @@ struct Backend {
      */
     void step(float dt,const V& w,const V& a,const V& m,bool mag,bool,bool aiding,bool) {
         f.setAttitudeAidingEnabled(aiding);
-        if (mag && aiding) f.setMagBody(m,true); else f.clearMag();
+        if (mag) f.setMagBody(m,true); else f.clearMag();
         f.update(dt,w,a);
     }
 };

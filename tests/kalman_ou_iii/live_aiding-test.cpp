@@ -83,7 +83,7 @@ void replay(float roll,float pitch) {
         const bool due=magnetic.due(gate,true,now/1000);
         fusion->update(dt,gyro,measured);
         magnetic.capture(fusion->raw().startupProxyQuat(),fusion->attitudeQuat(),measured,gyro);
-        if(!decision.hold_attitude&&due) {
+        if(due) {
             magnetic.correct(*fusion,now);
             if(t>420&&magnetic.lastApplied()) ++tail_mag_updates;
         }

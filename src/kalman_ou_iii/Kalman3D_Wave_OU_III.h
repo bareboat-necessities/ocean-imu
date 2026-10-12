@@ -903,7 +903,7 @@ class Kalman3D_Wave_OU_III {
     // PCt * ldlt.solve(I), which can make cc1plus exhaust memory on Windows.
     inline void gain_from_ldlt3_(const Eigen::Matrix<T,NX,3>& PCt,
                                  const Eigen::LDLT<Matrix3>& ldlt,
-                                 Eigen::Matrix<T,NX,3>& K) const
+                                 Eigen::Matrix<T,NX,3>& K, bool magnetic = false) const
     {
         for (int i = 0; i < NX; ++i) {
             const Vector3 rhs(PCt(i,0), PCt(i,1), PCt(i,2));
@@ -913,7 +913,12 @@ class Kalman3D_Wave_OU_III {
             K(i,2) = sol(2);
         }
         if (!attitude_aiding_enabled_) {
-            K.template topRows<3>().setZero();
+            if (!magnetic) K.template topRows<3>().setZero();
+            else {
+                const Vector3 down = R_wb() * Vector3::UnitZ();
+                K.template topRows<3>() = (down * (down.transpose() * K.template topRows<3>())).eval();
+                K.template middleRows<12>(OFF_V).setZero();
+            }
             if constexpr (with_gyro_bias) K.template middleRows<3>(3).setZero();
             if constexpr (with_accel_bias) K.template middleRows<3>(OFF_BA).setZero();
         }
@@ -2205,8 +2210,6 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 {
     last_mag_diag_ = MeasDiag3{};
     last_mag_diag_.accepted = false;
-    if (!attitude_aiding_enabled_) return;
-
     // De-heel magnetometer into B'
     const Vector3 mag_meas = deheel_vector_(mag_meas_body);
 
@@ -2259,7 +2262,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     last_mag_diag_.nis = nis3_from_ldlt_(ldlt, r);
 
     MatrixNX3& K = K_scratch_;
-    gain_from_ldlt3_(PCt, ldlt, K);
+    gain_from_ldlt3_(PCt, ldlt, K, true);
 
     if constexpr (with_accel_bias) {
 		if (!acc_bias_updates_enabled_) {

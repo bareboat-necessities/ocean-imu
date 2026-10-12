@@ -134,9 +134,12 @@ int main(){
                 self.assertLess(policy, imu_update)
                 if 'kalman_ou' in path.name or 'tfg' in path.name:
                     self.assertIn('setAccelerometerFresh(s.accel_fresh)', update)
-                    self.assertIn('if (!motion.hold_attitude && mag_ok_ && mag_fresh_)', update)
+                    self.assertIn('if (mag_ok_ && mag_fresh_)', update)
+                elif 'pii_observer' in path.name:
+                    self.assertIn('mag_used_ = mag_usable;', update)
+                    self.assertNotIn('mag_used_ = mag_usable && !motion.hold_attitude', update)
                 else:
-                    self.assertIn('mag_used_ = mag_usable && !motion.hold_attitude', update)
+                    self.assertIn('mag_used_ = mag_usable;', update)
         for path in compass:
             code = path.read_text()
             self.assertIn('s.motion.hold_attitude', code)
@@ -145,7 +148,7 @@ int main(){
         self.assertIn('out.accel_fresh = s.accel_fresh', base)
         self.assertIn('out.a_cal, s.accel_fresh, ImuCalCfg::g_cal_local', base)
         self.assertNotIn('clampf_(out.dt', base)
-        self.assertIn('!sample_.motion.hold_attitude && sample_.mag_ok', base)
+        self.assertIn('if (sample_.mag_ok', base)
 
     def test_shipping_acquisition_mask_and_single_burst(self):
         """Compile shipping acquisition helpers and check delivery masks and AUX freshness."""

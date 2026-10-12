@@ -594,7 +594,10 @@ class FusionApp {
         a_cal_, s.accel_fresh, APP_G_LOCAL, q_before, magnetic_now, mag_usable,
         mag_input_.newSource(), s.sample_us, 0.0f, mahony_seeded_);
     fusion_.mahonyState().setAidingEnabled(!motion.hold_attitude);
-    mag_used_ = mag_usable && !motion.hold_attitude;
+    // A force/rate hazard disables gravity feedback and bias learning, not a
+    // healthy time-aligned compass. PII applies its magnetic feedback only
+    // about the estimated vertical and preserves the bias integral in a hold.
+    mag_used_ = mag_usable;
 
     const Vector3f gyr_body_m = ned_to_mahony_body_(w_cal_);
     const Vector3f acc_body_m = ned_to_mahony_body_(a_cal_);

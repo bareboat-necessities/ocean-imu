@@ -78,7 +78,7 @@ int main(){
                             '-o', str(binary)], check=True, capture_output=True, text=True)
             subprocess.run([str(binary)], check=True, timeout=5)
 
-    def test_pii_sketch_propagates_heading_during_hold_and_resumes_aiding(self):
+    def test_pii_sketch_keeps_healthy_magnetic_heading_during_gravity_hold(self):
         eigen = Path(os.environ.get('EIGEN_INCLUDE_DIR', '/usr/include/eigen3'))
         if not (eigen / 'Eigen/Dense').is_file():
             eigen = ROOT / 'third_party/eigen'
@@ -136,26 +136,28 @@ struct App {
 int main(){
  App app;ImuSample s;
  Quaternionf truth(Eigen::AngleAxisf(137.f/57.295779513f,Vector3f::UnitZ()));
- bool timed_out=false,resumed=false;
- for(int i=1;i<=4000;++i){
+ bool saw_hold=false,timed_out=false,resumed=false;
+ for(int i=1;i<=5000;++i){
    clock_us+=5000;s.sample_us=clock_us;s.accel_fresh=i%2==0;
    const float rate=i>1000&&i<=1400?3.14159265f:0;
    const Vector3f w(0,0,rate);
    truth=(truth*ocean_imu::attitude::rotation(Vector3f(w*.005f))).normalized();
    s.a=truth.conjugate()*Vector3f(0,0,-APP_G_LOCAL);s.w=w;
-   if(i%8==0){s.m=truth.conjugate()*Vector3f(20.3f,0,46.8f);
+   const bool field_available=i<=4000||i>4800;
+   if(i%8==0&&field_available){s.m=truth.conjugate()*Vector3f(20.3f,0,46.8f);
      s.mag_timing.acquired(clock_us/1000,clock_us,clock_us,clock_us);}
    app.updateFilter_(s);
    if(i==999)assert(app.heading_valid_&&std::abs(app.heading_deg_-137)<1);
-   if(i>1400&&i<1600&&!app.heading_valid_){
-     timed_out=true;
-     // The observer still holds its propagated nonzero heading. Only the
-     // invalid graphical fallback used to substitute 0/N for this value.
-     assert(std::abs(std::remainder(app.heading_deg_-137,360.f))<2);
+   if(i>1000&&i<=2000){
+     saw_hold=saw_hold||!app.fusion_.mahonyState().aidingEnabled();
+     assert(app.mag_used_&&app.heading_valid_);
+     const float actual=std::atan2((truth*Vector3f::UnitX()).y(),(truth*Vector3f::UnitX()).x())*57.295779513f;
+     assert(std::abs(std::remainder(app.heading_deg_-actual,360.f))<2);
    }
-   if(i>2000&&app.heading_valid_)resumed=true;
+   if(i>4600&&i<=4800){assert(!app.mag_used_&&!app.heading_valid_);timed_out=true;}
+   if(i>4900&&app.heading_valid_)resumed=true;
  }
- assert(timed_out&&resumed&&app.mahony_seeded_);
+ assert(saw_hold&&timed_out&&resumed&&app.mahony_seeded_);
  assert(std::abs(std::remainder(app.heading_deg_-137,360.f))<2);
 }
 '''

@@ -28,7 +28,8 @@
 
 /** @brief Apply heading-only magnetic feedback followed by the Mahony IMU update.
  * Use body gyro rates in rad/s and elapsed seconds; write Euler angles in
- * degrees. Magnetic feedback is skipped when aiding is disabled or either vector is all-zero.
+ * degrees. Heading-only feedback during a gravity hold preserves the
+ * learned bias integral; the held IMU path still omits accelerometer feedback.
  */
 template<typename T>
 inline void mahony_AHRS_update_heading_mag(Mahony_AHRS<T>* m,
@@ -40,7 +41,7 @@ inline void mahony_AHRS_update_heading_mag(Mahony_AHRS<T>* m,
 {
     const bool acc_ok = !((ax == T(0)) && (ay == T(0)) && (az == T(0)));
     const bool mag_ok = !((mx == T(0)) && (my == T(0)) && (mz == T(0)));
-    if (m->aidingEnabled() && acc_ok && mag_ok) {
+    if (acc_ok && mag_ok) {
         const T recipNorm = Mahony_AHRS<T>::invSqrt(mx * mx + my * my + mz * mz);
         mx *= recipNorm;
         my *= recipNorm;
@@ -75,7 +76,7 @@ inline void mahony_AHRS_update_heading_mag(Mahony_AHRS<T>* m,
             const T k = (emx * halfvx + emy * halfvy + emz * halfvz) / vn2;
             const T ehx = k * halfvx, ehy = k * halfvy, ehz = k * halfvz;
 
-            if (m->twoKi > T(0)) {
+            if (m->aidingEnabled() && m->twoKi > T(0)) {
                 m->integralFBx += m->twoKi * ehx * delta_t_sec;
                 m->integralFBy += m->twoKi * ehy * delta_t_sec;
                 m->integralFBz += m->twoKi * ehz * delta_t_sec;

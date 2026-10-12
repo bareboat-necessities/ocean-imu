@@ -166,7 +166,7 @@ static void capture(float angle,float heading=0,bool noisy=false) {
     t.peak=0;
     for(int i=0;i<600;++i) tick(i);
     std::printf("capture,%d,%.2f,%.0f,%.5f,%.6f,%u,%d\n",RAPID_BACKEND,angle,heading,t.tail,(t.b->bias()-bias_before).norm(),t.protection.recoveryCount(),noisy);
-    require(t.protection.recoveryCount()==1,"large heading error did not reacquire exactly once");
+    require(t.protection.recoveryCount()<=1,"large heading error caused repeated reacquisition");
     require(t.tail<3,"large-angle capture outside 3 degrees after 3 seconds");
     require((t.b->bias()-bias_before).norm()<.025f,"large heading error became gyro bias");
 }
@@ -264,6 +264,29 @@ static void pendingCaptureDuringMotion() {
     }
     require(held&&resumed&&captured,"bounded hold did not retain qualified recovery");
 }
+/** @brief A wave-force hold must retain informative magnetic heading feedback without learning bias. */
+static void magneticDuringForceHold() {
+    Backend aided, absent;
+    const Q initial(Eigen::AngleAxisf(.30f,V::UnitZ()));
+    aided.recover(initial); absent.recover(initial);
+    const V initial_bias=aided.bias();
+    const V slammed_force(7,-3,-gravity);
+    for(int i=1;i<=400;++i) {
+        aided.step(.005f,V::Zero(),slammed_force,earth,true,i%8==0,false,i%2==0);
+        absent.step(.005f,V::Zero(),slammed_force,earth,false,false,false,i%2==0);
+        require((aided.bias()-initial_bias).norm()<2e-6f,"held magnetic feedback changed learned bias");
+        const V down=aided.attitude().conjugate()*V::UnitZ();
+        require((down-V::UnitZ()).norm()<1e-4f,"held magnetic feedback tilted the gravity estimate");
+        require(aided.finite(),"held magnetic feedback produced nonfinite state");
+    }
+    std::printf("held-mag,%d,%.5f\n",RAPID_BACKEND,aided.attitude().angularDistance(Q::Identity())/rad);
+    // This checks informative service, not a common convergence rate for
+    // seven different observers/covariance priors. The absent-field arm has
+    // zero correction; require a resolved (>0.01 rad) heading improvement.
+    require(aided.attitude().angularDistance(Q::Identity()) < initial.angularDistance(Q::Identity())-.01f,
+        "force hold blocked informative magnetic heading corrections");
+    require(absent.attitude().angularDistance(initial)<1e-4f,"held force changed attitude without a field");
+}
 /** @brief Check single-use acceleration freshness and elapsed time across clock wrap and gaps. */
 static void acquisition() {
     ocean_imu::ImuFreshness f; bool fresh;
@@ -346,6 +369,20 @@ static void selectiveCovarianceAndRecovery() {
         Eigen::SelfAdjointEigenSolver<Eigen::MatrixXf> solver(P);
         require(solver.info()==Eigen::Success && solver.eigenvalues().minCoeff()>-1e-5f,"covariance lost PSD");
     };
+    psd();
+    const V mag_pos=f.get_position(),mag_vel=f.get_velocity(),mag_aw=f.get_world_accel();
+    const V mag_field=Q(Eigen::AngleAxisf(.25f,V::UnitZ())).conjugate()*earth;
+#if RAPID_BACKEND != 3
+    const V mag_integ=f.get_integral_displacement();
+#endif
+    f.measurement_update_mag_only(mag_field);
+    require(f.lastMagDiag().accepted,"held core rejected a finite informative magnetic correction");
+    require((mag_pos-f.get_position()).norm()<1e-5f && (mag_vel-f.get_velocity()).norm()<1e-5f &&
+        (mag_aw-f.get_world_accel()).norm()<1e-5f,"held magnetic correction changed physical navigation means");
+#if RAPID_BACKEND != 3
+    require((mag_integ-f.get_integral_displacement()).norm()<1e-5f,"held magnetic correction changed displacement history");
+#endif
+    require((b->bias()-bg).norm()<1e-6f && (f.get_acc_bias()-ba).norm()<1e-6f,"held magnetic correction changed bias");
     psd();
     const auto physical_covariance=[&]() -> Eigen::MatrixXf {
         Eigen::MatrixXf P=f.covariance_full();
@@ -441,12 +478,12 @@ int main(int argc, char** argv) {
         rapid(720,0,false,false,false,0,true); rapid(720,.15f,false,false,false,0,true);
         return 0;
     }
-    acquisition(); biasRecoveryPolicy(); antipodalInnovation(); pendingCaptureDuringMotion();
+    acquisition(); biasRecoveryPolicy(); antipodalInnovation(); pendingCaptureDuringMotion(); magneticDuringForceHold();
     for(float rate:{180.0f,360.0f,720.0f}) for(float r:{0.0f,.05f,.15f})
         for(bool combined:{false,true}) rapid(rate,r,combined);
-    rapid(720,.15f,false,true); rapid(720,.15f,true,false,true,8);
+    rapid(720,.15f,false,true); rapid(720,.15f,true,false,true,8,false,false,false,3600,true);
     rapid(720,.15f,false,false,true,0,true);
-    rapid(720,.15f,true,false,true,8,true);
+    rapid(720,.15f,true,false,true,8,true,false,false,3600,true);
     // Matched unprotected control: perfect sensors, no lag, same acceleration.
     rapid(720,.15f,false,false,false);
     for(bool combined:{false,true}) {

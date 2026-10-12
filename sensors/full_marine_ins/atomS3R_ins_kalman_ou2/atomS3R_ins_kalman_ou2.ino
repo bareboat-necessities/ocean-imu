@@ -567,7 +567,7 @@ private:
 
     fusion_.update(dt_, w_cal_, a_cal_);
     mag_input_.capture(fusion_.raw().startupProxyQuat(), fusion_.attitudeQuat(), a_cal_, w_cal_);
-    if (!motion.hold_attitude && mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
+    if (mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
     if (motion.reacquire) fusion_.raw().mekf().initialize_from_attitude(motion.target, 0.05f, 0.05f);
 
     // Keep startup attitude and startup compass tilt explicitly on the

@@ -214,7 +214,7 @@ public:
     }
 
     // updateMag()  (IMU + magnetometer)
-    /** @brief Integrate body gyro rates with gravity and magnetic feedback when enabled.
+    /** @brief Integrate gyro and magnetic feedback, holding gravity feedback and bias learning when disabled.
      * Use elapsed seconds and write Euler angles in degrees; an all-zero field
      * falls back to the IMU-only update.
      */
@@ -224,10 +224,6 @@ public:
                    T* pitch, T* roll, T* yaw,
                    T delta_t_sec)
     {
-        if (!aiding_enabled_) {
-            predictOnly(gx, gy, gz, pitch, roll, yaw, delta_t_sec);
-            return;
-        }
         // Fall back to IMU-only if magnetometer is all-zero.
         if ((mx == T(0)) && (my == T(0)) && (mz == T(0))) {
             update(gx, gy, gz, ax, ay, az, pitch, roll, yaw, delta_t_sec);
@@ -237,13 +233,17 @@ public:
         T recipNorm;
         T halfex, halfey, halfez;
 
-        if (!((ax == T(0)) && (ay == T(0)) && (az == T(0)))) {
+        if (!aiding_enabled_ || !((ax == T(0)) && (ay == T(0)) && (az == T(0)))) {
 
-            // Normalise accelerometer.
-            recipNorm = invSqrt(ax * ax + ay * ay + az * az);
-            ax *= recipNorm;
-            ay *= recipNorm;
-            az *= recipNorm;
+            // Held force cannot contribute tilt feedback.
+            if (aiding_enabled_) {
+                recipNorm = invSqrt(ax * ax + ay * ay + az * az);
+                ax *= recipNorm;
+                ay *= recipNorm;
+                az *= recipNorm;
+            } else {
+                ax = ay = az = T(0);
+            }
 
             // Normalise magnetometer.
             recipNorm = invSqrt(mx * mx + my * my + mz * mz);
@@ -290,8 +290,20 @@ public:
             halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
             halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);
 
+            if (!aiding_enabled_) {
+                const T norm2 = halfvx*halfvx + halfvy*halfvy + halfvz*halfvz;
+                const T heading = (halfex*halfvx + halfey*halfvy + halfez*halfvz) / norm2;
+                halfex = heading * halfvx;
+                halfey = heading * halfvy;
+                halfez = heading * halfvz;
+            }
+
             // Integral feedback.
-            if (twoKi > T(0)) {
+            if (!aiding_enabled_) {
+                gx += integralFBx;
+                gy += integralFBy;
+                gz += integralFBz;
+            } else if (twoKi > T(0)) {
                 integralFBx += twoKi * halfex * delta_t_sec;
                 integralFBy += twoKi * halfey * delta_t_sec;
                 integralFBz += twoKi * halfez * delta_t_sec;

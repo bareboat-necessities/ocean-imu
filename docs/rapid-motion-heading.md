@@ -2,7 +2,7 @@
 
 All ten `.ino` files are accounted for. Seven contain estimators: compass qMEKF,
 compass Mahony, OU-II, OU-III, TFG, NLO and PII. They use the same motion and
-recovery policy in `src/util/AttitudeProtection.h`. The basic IMU exposes
+recovery policy in `src/util/AttitudeProtection.cpp`. The basic IMU exposes
 acquisition data. The magnetic diagnostic also integrates relative gyro rotation
 for its axis checks; it does not estimate fused heading. The dummy example has
 no estimator.
@@ -31,18 +31,25 @@ pseudo measurements and recovery transitions as well as the accelerometer.
 
 ## Runtime behavior
 
-The guard suspends attitude and bias aiding when angular rate exceeds 1.5 rad/s,
+The guard suspends force-derived attitude feedback and bias learning when angular rate exceeds 1.5 rad/s,
 filtered angular acceleration exceeds 2 rad/s², specific-force magnitude differs
 from local gravity by more than 20%, or an update gap exceeds 20 ms. Angular
 rate threshold uses the raw gyro norm, so a short rate spike also triggers a
 hold. Two 30 ms low-pass stages estimate angular acceleration. Release requires
 500 ms below the lower rate, angular-acceleration and force thresholds.
 
-Gyro propagation continues with the learned bias. Mahony retains its integral
-without adapting it, NLO freezes attitude/bias feedback, and the Kalman filters
-zero attitude, gyro-bias and accelerometer-bias gain rows. Kalman navigation
-updates and the continuous translational observers still receive the measured
-specific force. The private startup/tuner Mahony observers are protected too;
+Gyro propagation continues with the learned bias. Healthy, time-aligned magnetic
+heading feedback continues throughout the hold. A high gyro reading or wave
+slam does not itself invalidate the magnetic field. Mahony and PII project
+magnetic feedback onto estimated vertical and retain their bias integrals;
+NLO keeps its magnetic heading term using estimated vertical rather than the
+force vector. The Kalman filters retain the magnetic heading gain, with the
+projection expressed in each filter's actual attitude-error coordinates, and
+freeze gyro/accelerometer-bias gain rows and preserve physical navigation means
+during the magnetic correction. Force-derived and pseudo-measurement
+attitude rows remain held. Joseph covariance updates use the modified gains.
+Kalman navigation updates and the continuous translational observers still
+receive the measured specific force. The private startup/tuner Mahony observers are protected too;
 dynamic force cannot seed their initial tilt.
 
 A large discrepancy (35 degrees) starts independent attitude capture; the
@@ -94,9 +101,10 @@ Debug output includes `[ATT] hold=… dynamic=… recoveries=…`.
 
 The shared graphical compass displays `--- / WAIT` without a needle when its
 heading/service flag is false or its heading is nonfinite. PII's two-second
-magnetic-service timeout can expire during a protected turn even though its
-quaternion still propagates the heading; that unavailable display must not
-substitute `0 / N`. A valid measured zero-degree heading still displays north.
+magnetic-service timeout tracks available magnetic feedback independently of
+the force hold. Fresh usable fields keep heading valid during a protected turn;
+a real field/timing outage can still expire service and must not substitute
+`0 / N`. A valid measured zero-degree heading still displays north.
 
 ## Acquisition and time
 
@@ -124,14 +132,16 @@ adapters of the production estimator implementations. The suite is part of
 
 - 180, 360 and 720 deg/s turns; 0, 5 and 15 cm pivot offsets; yaw and combined
   rotation; 200 Hz gyro, 100 Hz acceleration and 25 Hz magnetic delivery.
-- A 75 ms scheduling gap, 40 ms unmodelled magnetic latency, and seeded gyro,
+- A 75 ms scheduling gap, calibrated 40 ms magnetic latency, and seeded gyro,
   acceleration and magnetic noise with nonzero physical gyro bias.
 - 90, 150, 179.99, 180, 180.01 and -179.99 degree heading errors at two absolute
   headings and nonzero roll/pitch, plus noisy 180-degree capture at both headings;
   stale, invalid and strength-disturbed fields.
 - Continued moderate roll and wave acceleration after a turn, bias preservation,
   covariance validity, navigation-state preservation and protected startup.
-- An unsuccessful large-angle capture during continued motion, bounded hold,
+- Informative magnetic heading corrections during a force hold, compared with
+  an absent-field control, while preserving tilt and learned bias in all seven
+  backends. An unsuccessful large-angle capture during continued motion, bounded hold,
   and later settled recovery across all seven backends. OU-III additionally runs
   complete startup and 450 seconds of device-rate motion at large physical heel,
   checking recurring magnetic corrections, final attitude, and raw heave.
@@ -140,13 +150,18 @@ adapters of the production estimator implementations. The suite is part of
   recovery after asynchronous fresh acceleration resumes, across all seven backends.
 - Exactly antipodal, horizontal-field controls: ordinary local updates remain
   at 180 degrees, while finite-angle capture escapes the equilibrium in all seven.
+- The actual PII sketch update body across a 137-degree start, a full protected
+  turn, healthy magnetic service, a genuine field outage, and restored service.
+  The actual shared renderer distinguishes unavailable heading from valid north.
 - Actual acquisition function bodies with controlled driver masks and AUX reads,
   and the diagnostic's integration and freshness code with gaps and invalid data.
 
-Protected rapid cases must remain below 12 degrees of total attitude error,
+Time-aligned protected rapid cases must remain below 12 degrees of total attitude error,
 end below 5 degrees after seven seconds, and keep gyro-bias magnitude below
-0.06 rad/s. Every large-angle case must capture exactly once and finish below
-3 degrees within three seconds. The matched unprotected control is printed
+0.06 rad/s. Every large-angle case must finish below 3 degrees within three seconds,
+with at most one qualified capture. If healthy heading feedback resolves the
+error first, capture is unnecessary. The exact zero-innovation antipode control
+still requires one independent capture. The matched unprotected control is printed
 alongside protected results. These are engineering regression bounds, not a
 stability theorem or a hardware accuracy specification.
 
@@ -160,13 +175,13 @@ rounded upward to two decimals.
 
 | Backend | Peak during rapid replay | Rapid tail | Large-angle capture tail |
 | --- | ---: | ---: | ---: |
-| qMEKF | 3.57 | 0.53 | 0.59 |
-| Mahony | 3.78 | 0.91 | 0.96 |
-| OU-II | 4.16 | 1.46 | 0.77 |
-| OU-III | 6.60 | 2.66 | 1.96 |
-| TFG | 4.08 | 0.63 | 0.81 |
-| NLO | 7.06 | 2.80 | 2.03 |
-| PII | 3.53 | 2.09 | 2.26 |
+| qMEKF | 3.68 | 0.52 | 0.59 |
+| Mahony | 5.87 | 0.91 | 0.96 |
+| OU-II | 3.05 | 1.42 | 0.78 |
+| OU-III | 8.18 | 3.33 | 1.97 |
+| TFG | 5.41 | 0.88 | 0.81 |
+| NLO | 8.88 | 2.81 | 1.89 |
+| PII | 4.19 | 2.09 | 2.26 |
 
 ## Qualification limits
 
@@ -178,7 +193,13 @@ unenforced diagnostics. Additional noisy, resumed-motion and sixty-second
 qMEKF/TFG cases test the new repair, including calibrated 40 ms magnetic lag. These finite cases do not establish
 recovery from arbitrary corrupted state or persistent sensor faults.
 
-Hardware turn tests remain necessary. The BMM150 conversion epoch is still
+Hardware turn tests remain necessary. Ordinary-aiding causal controls still
+include an unmodelled 40 ms delay. Once magnetic feedback continues through a
+720 deg/s turn, that incorrect epoch can introduce roughly 29 degrees of
+heading error; motion alone cannot identify or repair a falsely timestamped
+field. The protected latency qualification therefore uses the actual calibrated
+delay and gyro transport, rather than obtaining a good result by suppressing
+magnetic corrections throughout the turn. The BMM150 conversion epoch is still
 unknown; a host read timestamp does not identify it. Main's calibrated effective
 magnetic delay is preserved, including its mandatory new-format recalibration;
 it does not claim absolute conversion timing. A gyro sample cannot

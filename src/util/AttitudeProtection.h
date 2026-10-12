@@ -42,6 +42,9 @@ struct Decision {
     bool repair_gyro_bias = false;
     Vec gyro_bias = Vec::Zero();
     Quat target = Quat::Identity();
+    // hold_attitude protects force-derived attitude feedback and bias learning.
+    // It does not invalidate magnetic observations. Their health, timestamp,
+    // freshness and innovation gates remain independent of vessel motion.
 };
 
 class Protection {

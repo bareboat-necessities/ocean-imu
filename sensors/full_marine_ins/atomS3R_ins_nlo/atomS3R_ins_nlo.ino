@@ -597,7 +597,7 @@ class FusionApp {
         mag_input_.newSource(), s.sample_us,
         fusion_.filter().config().magnetic_declination_rad, fusion_.initialized());
     fusion_.setAttitudeAidingEnabled(!motion.hold_attitude);
-    mag_used_ = mag_usable && !motion.hold_attitude;
+    mag_used_ = mag_usable;
 
     /*
       The observer consumes the magnetometer as a continuous DIRECTION
