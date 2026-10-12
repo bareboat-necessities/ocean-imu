@@ -313,20 +313,17 @@ class CompassAppBase {
       Serial.println("[BOOT] Current calibration required. Starting wizard...");
       ImuCalBlobV5 saved{};
       if (wizard_.runAndSave(saved)) {
-        Serial.println("[BOOT] Wizard saved calibration. Loaded:");
-        printBlobSummary(Serial, saved);
-        printBlobDetail(Serial, saved);
+        Serial.println("[BOOT] Wizard saved calibration.");
         blob_ = saved;
         have_blob_ = true;
         runtime_.rebuildFromBlob(blob_);
       } else {
         Serial.println("[BOOT] Calibration required; repeat the latest wizard before operation.");
       }
-    } else {
-      Serial.println("[BOOT] Found saved calibration:");
-      printBlobSummary(Serial, blob_);
-      printBlobDetail(Serial, blob_);
     }
+    Serial.println("[BOOT] Loaded current calibration:");
+    printBlobSummary(Serial, blob_);
+    printBlobDetail(Serial, blob_);
 
     resetPipeline_();
     drawHomeStatic_();
