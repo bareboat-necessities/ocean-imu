@@ -33,7 +33,7 @@
   "shipping_counterexample": false,
   "shipping_frontend_interval_binding_verified": false,
   "source_sha256": {
-    "src/ahrs/Mahony_AHRS.h": "471fe6319af092b8bdee4a69d7468a68e626ebea45a3278ff04104cd45ba4408",
+    "src/ahrs/Mahony_AHRS.h": "34c3360788403b3d018abf49338fb883613a8cefb1dddf5cb8edbe566e473289",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "a4a39611098ed1ae5e3668eae11a4dfc8165057b2a17e5b5665a9bc698aafa22",
     "src/tuner/VerticalAccelComplementary.h": "b3e4f714b87af69c7285172c8ed929046c6077c9388dbcb894fac94cc1f24463"
   },

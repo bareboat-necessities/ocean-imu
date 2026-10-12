@@ -24,6 +24,14 @@ int main(){
  ins.observeGyro(.005f,Vec(0,0,3));ins.observeGyro(.005f,Vec(0,0,-3));
  auto d=ins.step(.01f,Vec::Zero(),Vec::Zero(),Vec(0,0,-9.8f),true,9.8f,Quat::Identity(),earth,true,true,2000000);
  assert(d.dynamic);
+ for(unsigned i=1;i<=350;++i){
+  const Vec force(0,0,-9.8f-3*std::sin(float(i)*.02513274f));
+  d=ins.step(.01f,Vec::Zero(),Vec::Zero(),force,true,9.8f,Quat::Identity(),earth,true,i%4==0,2000000+i*10000);
+ }
+ assert(!d.dynamic&&!d.hold_attitude);
+ d=ins.step(.03f,Vec::Zero(),Vec::Zero(),Vec(0,0,-9.8f),true,9.8f,Quat::Identity(),earth,true,true,5530000);
+ assert(d.dynamic);
+
  // Packets between force frames retain their own epoch, including zero lag.
  ocean_imu::magnetic::Input magnetic;magnetic.reset(0,Eigen::Matrix3f::Identity());
  atoms3r_ical::MagAcquisition timing;

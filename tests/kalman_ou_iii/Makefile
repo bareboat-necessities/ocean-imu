@@ -80,5 +80,7 @@ clean:
 TARGETS += ins_heave-test
 ins_heave-test: ins_heave-test.o AttitudeProtection.o
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-ins_heave-test.o: ../common/InsHeaveReplay.h
+ins_heave-test.o: ins_heave-test.cpp ../common/InsHeaveReplay.h
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+AttitudeProtection.o: $(REPO_ROOT)/src/util/AttitudeProtection.h
 build: ins_heave-test

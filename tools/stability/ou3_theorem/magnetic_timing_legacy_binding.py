@@ -61,13 +61,19 @@ def ordinary_aiding(path, source):
         end = source.index('    void time_update(', start)
         source = source[:start] + source[end:]
         source = replace_once(source, '''        if (!attitude_aiding_enabled_) {
-            K.template topRows<3>().setZero();
+            if (!magnetic) K.template topRows<3>().setZero();
+            else {
+                const Vector3 down = R_wb() * Vector3::UnitZ();
+                K.template topRows<3>() = (down * (down.transpose() * K.template topRows<3>())).eval();
+                K.template middleRows<12>(OFF_V).setZero();
+            }
             if constexpr (with_gyro_bias) K.template middleRows<3>(3).setZero();
             if constexpr (with_accel_bias) K.template middleRows<3>(OFF_BA).setZero();
         }
 ''')
         source = replace_once(source, '    if (!accelerometer_fresh_) return;\n')
-        source = replace_once(source, '    if (!attitude_aiding_enabled_) return;\n')
+        source = replace_once(source, 'Eigen::Matrix<T,NX,3>& K, bool magnetic = false) const', 'Eigen::Matrix<T,NX,3>& K) const')
+        source = replace_once(source, 'gain_from_ldlt3_(PCt, ldlt, K, true);', 'gain_from_ldlt3_(PCt, ldlt, K);')
         source = replace_once(source, '''        const bool held = !attitude_aiding_enabled_ &&
             (i < BASE_N || (with_accel_bias && i >= OFF_BA));
         K(i) = held ? T(0) : PCt(i) / S;''', '        K(i) = PCt(i) / S;')

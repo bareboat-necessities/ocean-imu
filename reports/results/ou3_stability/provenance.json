@@ -5,7 +5,7 @@
   "authoritative_shipping_sources": [
     {
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "git_blob_sha": "05c90998fe3a1ad35f5a40e17d1d402adb566a83"
+      "git_blob_sha": "f16165132179a1ab7b1beee8c9ad410a67350cd7"
     },
     {
       "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
@@ -41,11 +41,11 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "39b93121e54757140cb63655acc2f5ffe2215495"
+      "git_blob_sha": "2f76b1dcc6175fea63ab71457f4653d60ed2f287"
     },
     {
       "path": "src/util/AttitudeProtection.h",
-      "git_blob_sha": "366dc29e66a0b68cfc8052a6f96c088867b21e72"
+      "git_blob_sha": "d1a8dd220749362d9a3fdc348e789b255e8f5ba1"
     },
     {
       "path": "src/util/ImuFreshness.h",
@@ -61,7 +61,7 @@
     },
     {
       "path": "src/ahrs/Mahony_AHRS.h",
-      "git_blob_sha": "c182d80101c3e83b0f9240e89cd844305d78eac0"
+      "git_blob_sha": "1c7b2caa9f1eb130ae0cf5ac62ae151d4e84c3dc"
     }
   ],
   "semantic_bindings": {
@@ -185,7 +185,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "279d5638f5a7bea1cae799e6d442e5c0bd0ed53d"
+      "git_blob_sha": "27dae0b82a929d1602e251788a8f855066aa8137"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -233,7 +233,7 @@
     },
     {
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "git_blob_sha": "6db9641f76de071e5503d8976444d2a31fda2ff2"
+      "git_blob_sha": "39e1abf003b17477e9e13103bedfc64d3bb9fe40"
     },
     {
       "path": "reports/results/ou3_stability/construction-history-feasibility.json",
@@ -241,11 +241,11 @@
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "git_blob_sha": "ace3d15631b1ba595ec01e9e08f110f846b8059f"
+      "git_blob_sha": "8fc56c47962aef3ca0cbe6b2c3f959248c5c49ab"
     },
     {
       "path": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
-      "git_blob_sha": "567461f6c706e16297b5c51f722a00a1357e0795"
+      "git_blob_sha": "d3a0d9384edcf2b052d7340025cb466185da809a"
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
@@ -257,7 +257,7 @@
     },
     {
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "git_blob_sha": "8d61b9cb1aefdd65bc0f9bbda62d1c07ab4060ab"
+      "git_blob_sha": "dfcec77ca73fa4330ebf1af585e6b00f241f76c9"
     },
     {
       "path": "reports/results/ou3_stability/regime-certificate.json",
@@ -269,11 +269,11 @@
     },
     {
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "git_blob_sha": "5ea7294cd4f9c10a263b1f3332c2ab3849879b7f"
+      "git_blob_sha": "2e3622c341a710b4ca6d36605fabee11dbe26e81"
     },
     {
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "git_blob_sha": "8c73b56473d9d4ad29fd9d74dc9f5149e32f379f"
+      "git_blob_sha": "b9bd28a485a4c47f6b5ce46334a26adef64eab80"
     },
     {
       "path": "reports/results/ou3_stability/signed-injection-certificate.json",
@@ -297,7 +297,7 @@
     },
     {
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "git_blob_sha": "1b11bebb05855e65eb741e5ebdda28c5f81198ed"
+      "git_blob_sha": "48457261c3ac752a1830c0c3766ba871ad578203"
     },
     {
       "path": "src/kalman_common/SeaStateFusionFilterCommon.h",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "5a331c81db00e3dc79aeafbfcf4003ee1e92a6d7"
+      "git_blob_sha": "c5d91214dd6c61a114c96523a876068e3c2b3b0d"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -861,7 +861,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
-      "git_blob_sha": "c0c49dacebd9bb8de0edf25c63c72158982feecb"
+      "git_blob_sha": "301f646ee1000456419114e56ae0ee409b831d3a"
     },
     {
       "path": "tests/validation/test_ou3_compatibility_quotient.py",
@@ -1005,11 +1005,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/magnetic_timing_legacy_binding.py",
-      "git_blob_sha": "9aaf081ed2472961d7b2667b766f38390dd72945"
+      "git_blob_sha": "fc0de19db7749028124776b56ff8dd8cc8fc5367"
     },
     {
       "path": "reports/results/ou3_stability/magnetic-timing-legacy-binding.json",
-      "git_blob_sha": "a2b9b338ea57cb4e927b25dfd318653aa2c1e4f1"
+      "git_blob_sha": "b4e00a1c358b41457c8de4eab3d922bb9007a473"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1722,5 +1722,12 @@
     "legacy_native_secant_replay": "both epsilon replays reproduce identical native bytes; original numerical payload retained",
     "timed_path_theorem_promoted": false,
     "failure_classification": "E: stale source bindings after calibration/runtime changes; no mathematical counterexample"
+  },
+  "fresh_force_runtime_scope": {
+    "force_clock_changed": true,
+    "hardware_qualified": false,
+    "no_5ms_frontend_certificate_transferred": true,
+    "raw_gyro_history_preserved": true,
+    "theorem_closed": false
   }
 }

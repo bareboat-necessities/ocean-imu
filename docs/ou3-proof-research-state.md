@@ -1878,8 +1878,13 @@ for its displacement truth; its metrics were invalid until that sensor-generator
 sign was corrected. The workspace reset interrupted validation and removed
 uncommitted changes; the patch was restored and validation restarted. A parallel
 OU-II test compile was killed by `cc1plus` memory exhaustion; its serial build
-is the next check. The proof evidence command also stopped on missing `mpmath`
-after the environment reset; dependencies are being restored.
+passed. The proof evidence command also stopped on missing `mpmath`
+after the environment reset; dependencies were restored. The exact reproduction audit then reported 16
+stale source/record bindings, including the main-branch heading repair. The
+golden ordinary-operation token hashes remain unchanged; complete native
+stream and two-epsilon replay numerical payloads matched exactly before
+source rebinding. These ordinary facade probes do not exercise the sketch
+force clock, and cannot certify its new chronology.
 
 **Retained facts / current limiter.** No genuine shipping counterexample or
 end-to-end stability theorem is asserted. Established operation identities

@@ -117,7 +117,7 @@ struct Device {
 #endif
 };
 void require(bool ok,const char* message){if(!ok){std::fprintf(stderr,"INS heave %d: %s\n",HEAVE_BACKEND,message);std::exit(1);}}
-struct Metrics{double mean=0,rms=0,sine=0,cosine=0,hold=0;bool ready=false;};
+struct Metrics{double mean=0,rms=0,sine=0,cosine=0,hold=0,tilt=0;bool ready=false;};
 Metrics replay(bool split,bool previous=false){
  auto d=std::make_unique<Device>();
  ocean_imu::attitude::Protection protection{previous?ocean_imu::attitude::MotionUse::Compass:ocean_imu::attitude::MotionUse::INS};
@@ -153,11 +153,15 @@ Metrics replay(bool split,bool previous=false){
 #endif
   if(policy.reacquire)d->recover(policy.target);
   require(std::isfinite(d->height())&&d->attitude().coeffs().allFinite(),"nonfinite state");
-  if(t>180){const double h=d->height(),truth_h=amplitude*std::sin(omega*t);++n;result.mean+=h;result.rms+=(h-truth_h)*(h-truth_h);result.sine+=h*std::sin(omega*t);result.cosine+=h*std::cos(omega*t);result.hold+=policy.hold_attitude;}
+  if(t>180){const double h=d->height(),truth_h=amplitude*std::sin(omega*t);++n;result.mean+=h;result.rms+=(h-truth_h)*(h-truth_h);result.sine+=h*std::sin(omega*t);result.cosine+=h*std::cos(omega*t);result.hold+=policy.hold_attitude;const V estimated_down=d->attitude().conjugate()*V::UnitZ(),true_down=truth.conjugate()*V::UnitZ();result.tilt=std::max(result.tilt,double(estimated_down.cross(true_down).norm()));}
  }
  result.mean/=n;result.rms=std::sqrt(result.rms/n);result.sine=2*result.sine/n/amplitude;result.cosine=2*result.cosine/n;result.hold/=n;result.ready=d->ready();
  std::printf("INS %d %s: ready=%d mean=%.5f rms=%.5f gain=%.5f cosine=%.5f held=%.3f\n",HEAVE_BACKEND,split?"split200/100":"combined100",result.ready,result.mean,result.rms,result.sine,result.cosine,result.hold);
- if(!previous){require(result.ready,"startup blocked");require(result.hold<.05,"waves latched aiding hold");require(std::abs(result.mean)<.1,"heave mean drift");require(result.sine>.5&&result.sine<1.4,"wave amplitude response");}
+ if(!previous){require(result.ready,"startup blocked");require(result.hold<.05,"waves latched aiding hold");require(std::abs(result.mean)<.1,"heave mean drift");require(result.sine>.5&&result.sine<1.4,"wave amplitude response");require(result.tilt<.1,"tilt contamination");
+#if HEAVE_BACKEND != 5
+ require(result.rms/amplitude<.6,"heave tracking RMS");
+#endif
+}
  return result;
 }
 int main(int argc,char**){const bool previous=argc>1;const auto a=replay(false,previous),b=replay(true,previous);if(!previous){require(std::abs(a.mean-b.mean)<.02,"split clock changed mean");require(std::abs(a.sine-b.sine)<.05,"split clock changed gain");require(std::abs(a.cosine-b.cosine)<.025,"split clock changed phase");require(b.rms<=1.15*a.rms+.01,"split clock increased RMS");}}

@@ -98,6 +98,13 @@
     "timed_api_equivalence_claimed": false
   },
   "execution_scope": "legacy API; aiding always enabled; every acceleration fresh; no external reacquisition",
+  "fresh_force_runtime_revalidation": {
+    "complete_stream_bitwise_equal": true,
+    "current_source_tree_sha256": "bb571387a5f2a55d638079b56d3ecea4a7cc6ee2002d72ddf1a12064d9193aa5",
+    "ordinary_operation_tokens_unchanged": true,
+    "scope": "Fresh native probes validate the unchanged ordinary full-gyro facade execution only. They do not exercise the new sketch force clock or prove guarded/timed/runtime equivalence. No theorem promotion.",
+    "two_epsilon_numerical_runs_unchanged": true
+  },
   "guarded_or_recovery_equivalence_claimed": false,
   "legacy_api_operation_projection_verified": true,
   "previous_binding_commit": "453a1dfa66c7f90f4936f50940443fb0844d7959",
@@ -116,77 +123,77 @@
   },
   "regenerated_records": {
     "aw-tracking-source-feasibility.json": {
-      "record_sha256": "89d31ec4a8878be0db978794e3e437ef94f857bfb7062faa754188c948583ff4",
+      "record_sha256": "28bbc3284c5da70a381d106775e6544659b8a9e270a7e7238d71037fdd4065e1",
       "source_bindings": {
-        "header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "header_sha256": "82f578397b68d0fd45dd1f481b4a5c976c52b67828ed1d97e21ec0a08e84e2f9"
       }
     },
     "construction-mean-action.json": {
-      "record_sha256": "e02fd1c9b8300061462ac2f97b0771dd3b4b00b455a78e6d4df030e1f9535eeb",
+      "record_sha256": "931eb2fbe71241529bb30f8120dd9e680b8d14d61af9fa744aee8b15a79eb3a7",
       "source_bindings": {
-        "instrumented_header_sha256": "6728ec1d8cff60f922819a0ec86e202cac35a8c2f3ff5eff4e4296beca62ebb5"
+        "instrumented_header_sha256": "4823239ff4b08ded0384ea78c7c46e7f6b8e9989b83f072429d14c40f6c9e7b7"
       }
     },
     "information-ratio-source-feasibility.json": {
-      "record_sha256": "558df4442b4767c2ef82f79304ee55d1b90b7aba731c4bbdddc700fe613cc4ce",
+      "record_sha256": "1feda20a338ec1a3fc32a6d3f965516db872737841dc6b21782883cfa9bcc88f",
       "source_bindings": {
-        "header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "header_sha256": "82f578397b68d0fd45dd1f481b4a5c976c52b67828ed1d97e21ec0a08e84e2f9"
       }
     },
     "moving-compatibility-carried-1200s.json": {
-      "record_sha256": "2a67edb9beb7dcd8c14933d55a2dc4f0b9ab7bc7f40341a363d50d09c53a48c1",
+      "record_sha256": "43a87a44fc57f3d9faeb500da0111ee1b688306cdc45879c658616dd82a633b6",
       "source_bindings": {
-        "instrumented_header_sha256": "09f62ace3c48abf8d80159d69860b5d0174b552d49995eaf76ce12d0b31dcc17",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "instrumented_header_sha256": "83e3a1b43b7c5965ed465b2f9fef0a1c63a306b52691ec468edac62b9c240933",
+        "shipping_header_sha256": "82f578397b68d0fd45dd1f481b4a5c976c52b67828ed1d97e21ec0a08e84e2f9"
       }
     },
     "moving-compatibility-carried.json": {
-      "record_sha256": "f8ca2734be56d24ee5304a0025ffa0511ad29237077fdbfc597e76f34a452c2a",
+      "record_sha256": "0d97b5f9d9322b794c8ccf23217595b370b538327a37b1be68a8c3eaca000bc8",
       "source_bindings": {
-        "instrumented_header_sha256": "09f62ace3c48abf8d80159d69860b5d0174b552d49995eaf76ce12d0b31dcc17",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "instrumented_header_sha256": "83e3a1b43b7c5965ed465b2f9fef0a1c63a306b52691ec468edac62b9c240933",
+        "shipping_header_sha256": "82f578397b68d0fd45dd1f481b4a5c976c52b67828ed1d97e21ec0a08e84e2f9"
       }
     },
     "moving-transport-source-feasibility.json": {
-      "record_sha256": "46d11637e2f6c29e6776acc0ea6d33677baf5b97f33b8907c7050bfa4ca153f3",
+      "record_sha256": "b49aa5ed0851eaa9f95bd45ea7b7c177e8979bf99e4dae3441a9bea3826c249c",
       "source_bindings": {
-        "observer_header_sha256": "cd6a6b5f638bf454f00b53caa237a576393f821154f3fb2fde420f6307590438",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "observer_header_sha256": "28aa5c54434ebfed489145d03ba45fe38f5c29a1aa9e53b2adee5dfb4a2609d1",
+        "shipping_header_sha256": "82f578397b68d0fd45dd1f481b4a5c976c52b67828ed1d97e21ec0a08e84e2f9"
       }
     },
     "planar-native-secants-diagnostic.json": {
-      "record_sha256": "df94aedbb0f1fe1f8bd8ae3d33516a35c9eb3d47b9943f6eb9d0f83ac1d03b24",
+      "record_sha256": "e4ec937d1f3f766c6242770dbce8fdb59c8a5b441009daa6c9e5df8bd031d295",
       "source_bindings": {
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b",
-        "shipping_source_tree_sha256": "8306ab60058e3cc8629164ad554d828ff2fcaff8c37ee203df4eb1c1a25a37b0"
+        "shipping_header_sha256": "82f578397b68d0fd45dd1f481b4a5c976c52b67828ed1d97e21ec0a08e84e2f9",
+        "shipping_source_tree_sha256": "bb571387a5f2a55d638079b56d3ecea4a7cc6ee2002d72ddf1a12064d9193aa5"
       }
     },
     "planar-service-stream-diagnostic.json": {
-      "record_sha256": "954f3a04db9f4f258ffb7a55ef0b661b594e1e8d2f00ffc122065b85da732f34",
+      "record_sha256": "4493c785684a0f0c8ec0393a99c5fc95e51c6e4b8b19404beee902bd894cccd3",
       "source_bindings": {
-        "instrumented_header_sha256": "11f61197c6b3c65fbe7e7640e99275dd9811ba4753121d806036ba8641dd3989",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "instrumented_header_sha256": "5a14e34aa30e0300dfc830d96a9393e0bdab4b10eaa8533ad97dc80626d0eae2",
+        "shipping_header_sha256": "82f578397b68d0fd45dd1f481b4a5c976c52b67828ed1d97e21ec0a08e84e2f9"
       }
     },
     "signed-adjoint-diagnostic.json": {
-      "record_sha256": "6c958bf9c58ea2865dea7598e3b47dabaf3e15363eef2414f64737ff139a9d08",
+      "record_sha256": "3ef8394ffbe1ea98cd87dfce7df4f5f0984f9c107c98bbb8bae31587f90396c6",
       "source_bindings": {
-        "instrumented_header_sha256": "cd6a6b5f638bf454f00b53caa237a576393f821154f3fb2fde420f6307590438",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "instrumented_header_sha256": "28aa5c54434ebfed489145d03ba45fe38f5c29a1aa9e53b2adee5dfb4a2609d1",
+        "shipping_header_sha256": "82f578397b68d0fd45dd1f481b4a5c976c52b67828ed1d97e21ec0a08e84e2f9"
       }
     },
     "signed-balance-diagnostic.json": {
-      "record_sha256": "1dd633f83a2c3e152886b8c4b80caf9cca8b7791d409cea744b2775c40b58c60",
+      "record_sha256": "62769b8c08aa6e8810f7c095ed45366a4f0b9b7bbc9d9004c590af764a3ed589",
       "source_bindings": {
-        "instrumented_header_sha256": "75dc0b3c4ee6dccc0c2ad73714db9d13b6007eaae2bbb0601f0b3bfed35f900a",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "instrumented_header_sha256": "212ec63e1e8b306fa959d7f0f29ea1941c1f47fa5b69c443c993af4f6addde9d",
+        "shipping_header_sha256": "82f578397b68d0fd45dd1f481b4a5c976c52b67828ed1d97e21ec0a08e84e2f9"
       }
     },
     "world-frame-source-feasibility.json": {
-      "record_sha256": "878f575c7bc1e77245956fc34b5048861c4c60fc7ce00ddaf1130ca9bd75585a",
+      "record_sha256": "a79259f6f1da580771c9766b617f9b2c22887828cf2976077bd3e4d0a4470613",
       "source_bindings": {
-        "observer_header_sha256": "ddb0d399d9f629d24aad500667666933aeee68d7b522a729902b07141b1efd08",
-        "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+        "observer_header_sha256": "657b34bdc3183a2853adb21ef582e07c3098d5a34eda9b300fce5575d72a02d2",
+        "shipping_header_sha256": "82f578397b68d0fd45dd1f481b4a5c976c52b67828ed1d97e21ec0a08e84e2f9"
       }
     }
   },
@@ -198,7 +205,7 @@
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
       "legacy_operation_tokens_sha256": "95aa5cd90dd8d0e1345964095cc6d851d5a337d9b1ce2906fe29f5f1a93999e9",
-      "source_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b"
+      "source_sha256": "82f578397b68d0fd45dd1f481b4a5c976c52b67828ed1d97e21ec0a08e84e2f9"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
       "legacy_operation_tokens_sha256": "41a2b0524f0174880f9045f8e8128ebb45260e39b659be5d8c48354c59a69f0d",
