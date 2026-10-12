@@ -328,6 +328,34 @@ with fresh-sample, elapsed-time, magnetic-age and `[ATT]` diagnostics.
 
 ## Magnetic-input timing scope
 
+The calibration-only follow-up exposed two binding mismatches in
+`python3 -m tools.stability.ou3_theorem.build_evidence`: the edited ledger blob
+and the native-secant whole-source digest (**E: implementation/provenance**).
+The recorded digest matches immutable main `297a211c4105d0ae95c5f31f66d9d2c488268df4`.
+All 36 shipping files in the actual native-probe compiler include closure are
+byte-identical to that main; only the wizard and timing fitter changed outside
+that closure. The existing binding receipt records the closure, old/new digests
+and the baseline record hash with unchanged numerical payload. No replay, numerical result, acceptance
+gate or qualification flag is changed by this binding refresh. The invalidated
+hypothesis is that whole-tree identity survives calibration-only edits; retained
+facts are the unchanged probe/dependencies and finite payload. Hardware timing
+qualification remains the limiter. Next falsifiable check: rerun the unchanged
+source/evidence validators and device capture diagnostics.
+
+Calibration usability regressions (**E: implementation/diagnostic failure**)
+reject the old hypothesis that scalar delay identification needs rank-two gyro
+covariance: variable-rate single-axis rocking identifies an injected 40 ms lag.
+A separate 180 ms pair needs 260 ms history at the largest candidate delay,
+exceeding the former 250 ms query budget. Native noisy 100 Hz rocking/pauses and
+180 ms pair regressions now pass; stillness, constant rate, field-axis rotation
+and held-out disagreement remain rejected. Structures preserved: runtime
+estimator/tuner/covariance, transport, v5 binding and all residual/profile/
+held-out limits. Relaxations introduced: none to the stability argument;
+synthetic tests remain finite diagnostics. No stability counterexample or
+promoted theorem follows. Current limiter: no device trace identifies the
+reported generic failure's exact gate. Next falsifiable experiment: capture
+on-device reason/pair/gap diagnostics and verify a saved fit across reboot/load.
+
 Calibration now identifies an effective magnetic delay relative to the delivered
 gyro clock and stores it in the mandatory v5 record. Exact physical conversion
 timing remains OPEN. CI rejected stale sketch/whole-source fingerprints after

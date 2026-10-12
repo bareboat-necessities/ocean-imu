@@ -5,37 +5,84 @@
 #include "util/MagneticRotation.h"
 
 namespace imu_cal {
+enum class MagTimingReason : uint8_t {
+    Ready, MorePairs, DelayRange, SegmentMismatch, WeakSignal, BroadProfile,
+    FieldResidual, NoImprovement, TimingNoise
+};
+/** Return a static UI/serial message, or "Timing invalid" for an unknown reason. */
+inline const char* magTimingReason(MagTimingReason reason) {
+    switch (reason) {
+    case MagTimingReason::Ready: return "Delay validated";
+    case MagTimingReason::MorePairs: return "Need usable samples";
+    case MagTimingReason::DelayRange: return "Delay outside range";
+    case MagTimingReason::SegmentMismatch: return "Captures disagree";
+    case MagTimingReason::WeakSignal: return "Reverse faster";
+    case MagTimingReason::BroadProfile: return "Weak timing signal";
+    case MagTimingReason::FieldResidual: return "Field/gyro mismatch";
+    case MagTimingReason::NoImprovement: return "No timing improvement";
+    case MagTimingReason::TimingNoise: return "Timing too noisy";
+    }
+    return "Timing invalid";
+}
 struct MagTimingFit {
     uint32_t delay_us = 0;
     float fit_width_s = 0, residual_time_s = 0;
     float train_rms_rad = 0, validation_rms_rad = 0, improvement = 0;
     uint32_t train_pairs = 0, validation_pairs = 0;
+    MagTimingReason reason = MagTimingReason::MorePairs;
     bool ok = false;
 };
 
 class MagTimingCal {
     using V3 = ocean_imu::magnetic::V3;
-    using History = ocean_imu::magnetic::RotationHistory<128, 250000>;
+    // 180 ms pair + 80 ms candidate lag + one 20 ms accepted gyro interval.
+    using History = ocean_imu::magnetic::RotationHistory<128, 280000>;
     static constexpr unsigned N = 41; // 0..80 ms, 2 ms resolution
     struct Scores {
-        std::array<double, N> cost{}; unsigned pairs = 0, gyro_samples = 0;
-        V3 gyro_sum=V3::Zero(); ocean_imu::magnetic::M3 gyro_outer=ocean_imu::magnetic::M3::Zero();
+        std::array<double, N> cost{}; unsigned pairs = 0;
     };
 public:
-    void reset() { history_.reset(); scores_ = {}; have_ = false; seen_ = false; }
-    // Two disjoint capture segments: segment 0 fits, segment 1 validates.
-    // Use unaveraged spatially calibrated magnetic vectors and calibrated gyro.
+    /** Clear both capture scores, gyro history, observation state and diagnostics. */
+    void reset() { history_.reset(); scores_ = {}; have_ = false; seen_ = false; gaps_ = missing_ = 0; }
+    /**
+     * Restart segment 0 (training) or 1 (validation), preserving the other scores
+     * and diagnostic counters. Always clear history and observation state;
+     * an invalid segment leaves both score sets intact.
+     */
+    void resetSegment(unsigned segment) {
+        if (segment < 2) scores_[segment] = {};
+        history_.reset(); have_ = seen_ = false;
+    }
+    /** Return the usable pair count for segment 0 or 1, or zero for an invalid index. */
+    unsigned pairs(unsigned segment) const { return segment < 2 ? scores_[segment].pairs : 0; }
+    /** Return the number of rejected gyro history pushes since reset(). */
+    unsigned gaps() const { return gaps_; }
+    /** Return the number of pairs rejected for unavailable lag history since reset(). */
+    unsigned missingHistory() const { return missing_; }
+    /**
+     * Check training readiness using only training criteria; check validation
+     * progress against the retained training capture. An invalid index returns
+     * a default failed fit. Saving always requires fit() with disjoint data.
+     */
+    MagTimingFit segmentQuality(unsigned segment) const {
+        if (segment == 0) return evaluate(scores_[0], scores_[0], true);
+        return segment == 1 ? fit() : MagTimingFit{};
+    }
+    /**
+     * Append calibrated gyro (rad/s) at now and, when have is true, an unaveraged
+     * spatially calibrated field (microteslas) identified by sequence and
+     * observed_us. Both timestamps are microseconds on the delivered gyro clock.
+     * Accumulate a 120..180 ms pair only when every candidate lag has history.
+     * Use disjoint captures: segment 0 trains and segment 1 validates.
+     */
     void add(uint32_t now, const V3& gyro, bool have, uint32_t sequence,
              uint32_t observed_us, const V3& field, unsigned segment) {
         using ocean_imu::magnetic::Status;
         const auto status = history_.push(now, gyro);
-        if (status != Status::Ready && status != Status::First) { have_ = false; return; }
+        if (status != Status::Ready && status != Status::First) { ++gaps_; have_ = false; return; }
         if (segment > 1 || !have || !field.allFinite() || field.norm() < 5 || field.norm() > 200) {
             have_ = false; return;
         }
-        auto& excitation=scores_[segment];
-        ++excitation.gyro_samples; excitation.gyro_sum+=gyro;
-        excitation.gyro_outer+=gyro*gyro.transpose();
         if (seen_ && sequence == sequence_) return;
         if (seen_ && (int32_t(sequence-sequence_) <= 0 || int32_t(observed_us-last_observed_) <= 0)) {
             have_ = false; return;
@@ -53,7 +100,7 @@ public:
         for (unsigned i=0; i<N; ++i) {
             History::Rotation r;
             if (history_.between(anchor_us_-i*2000, observed_us-i*2000, r) != Status::Ready) {
-                complete = false; break;
+                ++missing_; complete = false; break;
             }
             const double e2 = (field/norm - r.q*anchor_unit_).squaredNorm();
             // Bounded loss limits isolated field disturbances; every candidate
@@ -67,45 +114,68 @@ public:
         }
         anchor(field, observed_us, segment);
     }
-    MagTimingFit fit() const {
+    /** Select a delay from segment 0 and accept it only if segment 1 validates it. */
+    MagTimingFit fit() const { return evaluate(scores_[0], scores_[1]); }
+private:
+    /**
+     * Compare mean loss profiles and return the training-selected delay with fit
+     * diagnostics. Require sufficient pairs, identifiable and agreeing minima,
+     * a narrow profile, low residuals and held-out improvement. A failed result
+     * reports the first failed criterion; only ok permits using the fitted delay.
+     */
+    static MagTimingFit evaluate(const Scores& train, const Scores& validation, bool training_only = false) {
         MagTimingFit out;
-        out.train_pairs=scores_[0].pairs; out.validation_pairs=scores_[1].pairs;
+        out.train_pairs=train.pairs; out.validation_pairs=validation.pairs;
         if (out.train_pairs < 50 || out.validation_pairs < 50) return out;
-        for (const auto& s:scores_) {
-            if (s.gyro_samples<200) return out;
-            const V3 mean=s.gyro_sum/float(s.gyro_samples);
-            const ocean_imu::magnetic::M3 covariance=s.gyro_outer/float(s.gyro_samples)-mean*mean.transpose();
-            Eigen::SelfAdjointEigenSolver<ocean_imu::magnetic::M3> es(covariance);
-            if (es.info()!=Eigen::Success || es.eigenvalues()[1]<.02f) return out;
-        }
+        // A scalar delay needs changing observable magnetic rotation, not a
+        // rank-two gyro covariance. Profile separation below measures that
+        // directly and rejects stillness, constant rate and field-axis spins.
         std::array<double,N> a{}, b{};
-        for(unsigned i=0;i<N;++i) { a[i]=scores_[0].cost[i]/out.train_pairs; b[i]=scores_[1].cost[i]/out.validation_pairs; }
+        for(unsigned i=0;i<N;++i) { a[i]=train.cost[i]/out.train_pairs; b[i]=validation.cost[i]/out.validation_pairs; }
+        if (*std::max_element(a.begin(),a.end())-*std::min_element(a.begin(),a.end())<1e-6 ||
+            *std::max_element(b.begin(),b.end())-*std::min_element(b.begin(),b.end())<1e-6) {
+            out.reason=MagTimingReason::WeakSignal; return out;
+        }
         const unsigned k=unsigned(std::min_element(a.begin(),a.end())-a.begin());
         const unsigned v=unsigned(std::min_element(b.begin(),b.end())-b.begin());
         // Boundary solutions, constant-rate ambiguity, and disagreement between
         // segments cannot authorize a saved correction.
-        if (k<5 || k>N-6 || v<5 || v>N-6 || std::abs(int(k)-int(v))>4) return out;
+        out.delay_us=k*2000;
+        out.train_rms_rad=float(std::sqrt(a[k]));
+        out.validation_rms_rad=float(std::sqrt(b[k]));
+        out.improvement=float(1-b[k]/std::max(b[0],1e-12));
+        if (k<5 || k>N-6 || v<5 || v>N-6) { out.reason=MagTimingReason::DelayRange; return out; }
+        if (std::abs(int(k)-int(v))>4) { out.reason=MagTimingReason::SegmentMismatch; return out; }
         const double curvature=std::min(a[k-5]-a[k],a[k+5]-a[k]);
         const double validation_curve=std::min(b[v-5]-b[v],b[v+5]-b[v]);
-        if (curvature<1e-6 || validation_curve<1e-6) return out;
+        if (curvature<1e-6 || validation_curve<1e-6) { out.reason=MagTimingReason::WeakSignal; return out; }
         const double tolerance=std::max(1e-6, .05*a[k]);
         unsigned lo=k, hi=k;
         // Include disconnected competing minima, not just the local basin.
         for(unsigned i=0;i<N;++i) if(a[i]<=a[k]+tolerance) { lo=std::min(lo,i); hi=std::max(hi,i); }
-        if(hi-lo>12) return out;
-        out.delay_us=k*2000;
+        if(hi-lo>12) { out.reason=MagTimingReason::BroadProfile; return out; }
         out.fit_width_s=std::max(.002f, float(double(hi-lo)*.001));
-        out.train_rms_rad=float(std::sqrt(a[k]));
-        out.validation_rms_rad=float(std::sqrt(b[k]));
-        out.improvement=float(1-b[k]/std::max(b[0],1e-12));
+        // A training capture need not pass held-out improvement or noise gates.
+        // Validation is checked with the actual training-selected delay, never
+        // with an extra training-width requirement on the held-out profile.
+        if (training_only) {
+            out.validation_pairs=0;
+            out.validation_rms_rad=out.improvement=0;
+            out.ok=out.train_rms_rad<.05f;
+            out.reason=out.ok ? MagTimingReason::Ready : MagTimingReason::FieldResidual;
+            return out;
+        }
         // Residual-to-time conversion is a model allowance, NOT a measured
         // jitter standard deviation. Keep a 25 ms floor for asynchronous phase.
         const double sensitivity=std::sqrt(validation_curve)/.01;
         out.residual_time_s=float(std::max(.025, std::sqrt(b[k])/sensitivity));
-        out.ok=out.train_rms_rad<.05f && out.validation_rms_rad<.05f && out.improvement>=.05f && out.residual_time_s<=.060f;
+        if (out.train_rms_rad>=.05f || out.validation_rms_rad>=.05f) out.reason=MagTimingReason::FieldResidual;
+        else if (out.improvement<.05f) out.reason=MagTimingReason::NoImprovement;
+        else if (out.residual_time_s>.060f) out.reason=MagTimingReason::TimingNoise;
+        else { out.reason=MagTimingReason::Ready; out.ok=true; }
         return out;
     }
-private:
+    /** Start the next pair at a previously validated nonzero field and timestamp. */
     void anchor(const V3& m,uint32_t t,unsigned segment) {
         have_=true; anchor_norm_=m.norm(); anchor_unit_=m/anchor_norm_; anchor_us_=t; segment_=segment;
     }
@@ -114,7 +184,7 @@ private:
     V3 anchor_unit_=V3::Zero();
     float anchor_norm_=0;
     uint32_t anchor_us_=0, sequence_=0, last_observed_=0;
-    unsigned segment_=0;
+    unsigned segment_=0, gaps_=0, missing_=0;
     bool have_=false, seen_=false;
 };
 } // namespace imu_cal
