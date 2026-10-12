@@ -918,7 +918,7 @@ private:
         double(timing_fit_.train_rms_rad),double(timing_fit_.validation_rms_rad),
         double(timing_fit_.improvement),static_cast<unsigned long>(timing_fit_.train_pairs),
         static_cast<unsigned long>(timing_fit_.validation_pairs));
-    ui_.waitTap(timing_fit_.ok ? "TIME OK" : "TIME UNKNOWN",
+    ui_.waitTap(timing_fit_.ok ? "TIME OK" : "TIME FAIL",
         timing_fit_.ok ? "Delay validated" : "Motion not conclusive",
         timing_fit_.ok ? "Will save with cal" : "Repeat calibration");
     return timing_fit_.ok;

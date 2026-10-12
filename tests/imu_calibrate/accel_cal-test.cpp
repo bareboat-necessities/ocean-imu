@@ -570,6 +570,7 @@ atoms3r_ical::ImuCalBlobV5 makeBlob() {
   b.gyro_coeff_crc = atoms3r_ical::gyroCoeffCrc(b);
   b.mag_ok = 1; b.mag_A[0] = b.mag_A[4] = b.mag_A[8] = 1; b.mag_b[0] = 5; b.mag_field_uT = 45;
   b.accel_coeff_crc = atoms3r_ical::accelCoeffCrc(b);
+  b.sensor_id_lo=0x1234; b.sensor_id_hi=0x5678; b.imu_type=3;
   bindTimingFixture(b);
   return MemStore::sealed_(b);
 }

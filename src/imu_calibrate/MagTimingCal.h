@@ -94,7 +94,7 @@ public:
         for(unsigned i=0;i<N;++i) if(a[i]<=a[k]+tolerance) { lo=std::min(lo,i); hi=std::max(hi,i); }
         if(hi-lo>12) return out;
         out.delay_us=k*2000;
-        out.fit_width_s=std::max(.002f, float(hi-lo)*.001f);
+        out.fit_width_s=std::max(.002f, float(double(hi-lo)*.001));
         out.train_rms_rad=float(std::sqrt(a[k]));
         out.validation_rms_rad=float(std::sqrt(b[k]));
         out.improvement=float(1-b[k]/std::max(b[0],1e-12));
