@@ -2,6 +2,7 @@
 set -e
 
 ./rapid_motion-test
+./recovery_geometry-test
 
 ./mag_timing-test
 

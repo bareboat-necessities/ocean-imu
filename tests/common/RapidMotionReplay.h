@@ -56,6 +56,11 @@ struct Trial {
             b->recover(decision.target);
             ++applied_recoveries;
             require((b->bias()-old_bias).norm()<2e-6f,"recovery changed learned bias");
+#if RAPID_BACKEND == 1
+            if (decision.repair_gyro_bias) b->f.reacquire_gyro_bias(decision.gyro_bias);
+#elif RAPID_BACKEND == 5
+            if (decision.repair_gyro_bias) b->f.recover_corrupted_biases(decision.gyro_bias);
+#endif
         }
         require(b->finite() && b->attitude().coeffs().allFinite() && b->bias().allFinite(),"nonfinite state");
         tail=b->attitude().angularDistance(truth)/rad;
@@ -73,7 +78,7 @@ struct Trial {
 /** @brief Replay a synthetic turn with rate in deg/s, radius in meters, and optional sensor faults.
  * Emit error metrics and enforce bounds when protection is enabled.
  */
-static void rapid(float rate,float radius,bool combined,bool gap=false,bool enabled=true,int mag_delay=0,bool noisy=false,bool protect_after_turn=false) {
+static void rapid(float rate,float radius,bool combined,bool gap=false,bool enabled=true,int mag_delay=0,bool noisy=false,bool protect_after_turn=false,bool moving_tail=false,int steps=3600) {
     Trial t; t.enabled=enabled; Q truth=Q::Identity(); V prev=V::Zero();
     float inherited_error=0, inherited_bias=0;
     std::deque<V> mag_history;
@@ -81,7 +86,7 @@ static void rapid(float rate,float radius,bool combined,bool gap=false,bool enab
     // Materialize before returning: an Eigen expression would retain a
     // reference to the temporary vector and invalidate the noisy-sensor test.
     auto noise=[&](float sigma) -> V { return sigma*V(normal(rng),normal(rng),normal(rng)); };
-    for(int i=1;i<=3600;++i) {
+    for(int i=1;i<=steps;++i) {
         const float time=float(i)*.005f;
         // Continue the very same estimator, covariance, bias, field reference,
         // frontend and guard history. No attitude injection at this boundary.
@@ -93,9 +98,12 @@ static void rapid(float rate,float radius,bool combined,bool gap=false,bool enab
         const float dt=gap && i==1400 ? .075f : .005f;
         V w(0,0,rate*rad*envelope);
         if(combined) w=rate*rad*envelope*V(.5f*std::sin(time),.35f*std::cos(.7f*time),.7f);
+        // Resume motion after the same seven-second recovery tail.
+        if(moving_tail && time>18) w=V(.18f*std::sin(time-18),.04f*std::sin(.7f*(time-18)),0);
         truth=(truth*rotation(V(w*dt))).normalized();
         const V lever(radius,0,0), alpha=(w-prev)/dt; prev=w;
-        const V a=truth.conjugate()*V(0,0,-gravity)+alpha.cross(lever)+w.cross(w.cross(lever));
+        V a=truth.conjugate()*V(0,0,-gravity)+alpha.cross(lever)+w.cross(w.cross(lever));
+        if(moving_tail && time>18) a+=truth.conjugate()*V(.3f*std::sin(time-18),0,.3f*std::sin(time-18));
         mag_history.push_back(truth.conjugate()*earth);
         if(int(mag_history.size())>mag_delay+1) mag_history.pop_front();
         const V wm=w+(noisy ? V(noise(.019f)+V(.005f,-.004f,.008f)) : V::Zero());
@@ -124,6 +132,13 @@ static void rapid(float rate,float radius,bool combined,bool gap=false,bool enab
         require(t.peak<12,"rapid-motion attitude excursion exceeds 12 degrees");
         require(t.tail<5,"rapid-motion recovery exceeds 5 degrees after 7 seconds");
         require(t.max_bias<.06f,"dynamic acceleration polluted gyro bias");
+    }
+    if(protect_after_turn) {
+        require(t.tail<5,"inherited-state recovery exceeds five degrees");
+        require(t.applied_recoveries>=1,"inherited-state recovery never captured");
+        require(!t.last_held,"inherited-state recovery left aiding held");
+        if(!recovery_diagnosis_mode)
+            std::printf("recovery,%d,%d,%d,%d,%.2f,%.5f,%u\n",RAPID_BACKEND,combined,noisy,moving_tail,float(steps-2200)*.005f,t.tail,t.applied_recoveries);
     }
 }
 /** @brief Inject a heading error in degrees and verify one recovery within three seconds. */
@@ -227,6 +242,36 @@ static void acquisition() {
     clock.update(0xfffff000u);
     require(std::abs(clock.update(uint32_t(0xfffff000u+75000u))-.075f)<1e-6f,"wrap/gap elapsed time lost");
 }
+/** @brief Distinguish corrupt bias, healthy bias and observed slow motion. */
+static void biasRecoveryPolicy() {
+    for (bool moving:{false,true}) for (bool noisy:{false,true}) for (int mode=0;mode<3;++mode) {
+        ocean_imu::attitude::Protection policy;
+        const V actual_bias=mode==2 ? V(0,0,.095f) : V(.008f,-.006f,.012f);
+        const V learned=mode==0 ? V(.3f,-.12f,.09f) : actual_bias;
+        const V rate=moving && mode!=2 ? V(.012f,.006f,.018f) : V::Zero();
+        Q truth=Q(Eigen::AngleAxisf(.3f,V::UnitY()));
+        std::mt19937 rng(913); std::normal_distribution<float> normal(0,1);
+        auto noise=[&](float sigma)->V {return sigma*V(normal(rng),normal(rng),normal(rng));};
+        bool captured=false;
+        for (int i=1;i<=2000 && !captured;++i) {
+            truth=(truth*rotation(V(rate*.005f))).normalized();
+            const V w=rate+actual_bias+(noisy?noise(.003f):V::Zero());
+            const V a=truth.conjugate()*V(0,0,-gravity)+(noisy?noise(.08f):V::Zero());
+            const V m=truth.conjugate()*earth+(noisy?noise(.3f):V::Zero());
+            const Q wrong=Q(Eigen::AngleAxisf(1.2f,V::UnitZ()))*truth;
+            const auto d=policy.step(.005f,w,learned,a,true,gravity,wrong,m,true,i%8==0,uint32_t(i*5000));
+            if (!d.reacquire) { require(!d.repair_gyro_bias,"bias repair without qualified capture"); continue; }
+            captured=true;
+            if(d.repair_gyro_bias!=(mode==0)) std::fprintf(stderr,"bias-policy mode=%d moving=%d noisy=%d sample=%d repair=%d\n",mode,moving,noisy,i,d.repair_gyro_bias);
+            require(d.repair_gyro_bias==(mode==0),"healthy bias replaced or corrupt bias not repaired");
+            if (d.repair_gyro_bias && (d.gyro_bias-actual_bias).norm()>=(noisy?.04f:.003f)) std::fprintf(stderr,"bias-policy mode=%d moving=%d noisy=%d sample=%d bias=%g,%g,%g error=%g\n",mode,moving,noisy,i,d.gyro_bias.x(),d.gyro_bias.y(),d.gyro_bias.z(),(d.gyro_bias-actual_bias).norm());
+            if (d.repair_gyro_bias)
+                require((d.gyro_bias-actual_bias).norm()<(noisy?.04f:.003f),"observed motion was misidentified as gyro bias");
+        }
+        if(!captured) std::fprintf(stderr,"no bias capture mode=%d moving=%d noisy=%d\n",mode,moving,noisy);
+        require(captured,"bias policy did not obtain a qualified window");
+    }
+}
 /** @brief Compare local aiding and protected recovery at an exact horizontal-field antipode. */
 static void antipodalInnovation() {
     const V saved_field=earth;
@@ -268,9 +313,20 @@ static void selectiveCovarianceAndRecovery() {
         require(solver.info()==Eigen::Success && solver.eigenvalues().minCoeff()>-1e-5f,"covariance lost PSD");
     };
     psd();
-    const auto marginal=f.covariance_full();
+    const auto physical_covariance=[&]() -> Eigen::MatrixXf {
+        Eigen::MatrixXf P=f.covariance_full();
+#if RAPID_BACKEND == 5
+        Eigen::MatrixXf J=Eigen::MatrixXf::Identity(P.rows(),P.cols());
+        const V state[4]={f.get_velocity(),f.get_position(),f.get_integral_displacement(),f.get_world_accel()};
+        for (int c=0;c<4;++c) J.block<3,3>(6+3*c,0)=-ocean_imu::lie::skew<float>(state[c]);
+        J.block<3,3>(3,3)=f.R_wb(); J.block<3,3>(18,18)=f.R_wb();
+        P=(J*P*J.transpose()).eval();
+#endif
+        return P;
+    };
+    const auto marginal=physical_covariance();
     f.set_attitude_aiding_enabled(true);
-    require((f.covariance_full().diagonal()-marginal.diagonal()).norm()<1e-6f,"resume changed covariance marginals");
+    require((physical_covariance().diagonal()-marginal.diagonal()).norm()<1e-6f,"resume changed physical covariance marginals");
     psd();
     const V pos=f.get_position(),vel=f.get_velocity(),aw=f.get_world_accel();
 #if RAPID_BACKEND != 3
@@ -334,7 +390,7 @@ int main(int argc, char** argv) {
         std::puts("backend,combined,protection_after_turn,entry_attitude_deg,entry_bias_rad_s,tail_attitude_deg,tail_bias_rad_s,applied_recoveries,tail_held");
         for (bool combined:{false,true}) for (bool late:{false,true})
             rapid(720,.15f,combined,false,false,0,false,late);
-        return 0; // Diagnostic measurements, not a passing recovery assertion.
+        return 0; // The late-protection arms above enforce the recovery target.
     }
     // Causal controls: every ordinary correction remains enabled, with exact
     // delivered gyro/field. Vary only the physical lever arm/rate or one named
@@ -351,7 +407,7 @@ int main(int argc, char** argv) {
         rapid(720,0,false,false,false,0,true); rapid(720,.15f,false,false,false,0,true);
         return 0;
     }
-    acquisition(); antipodalInnovation();
+    acquisition(); biasRecoveryPolicy(); antipodalInnovation();
     for(float rate:{180.0f,360.0f,720.0f}) for(float r:{0.0f,.05f,.15f})
         for(bool combined:{false,true}) rapid(rate,r,combined);
     rapid(720,.15f,false,true); rapid(720,.15f,true,false,true,8);
@@ -359,6 +415,14 @@ int main(int argc, char** argv) {
     rapid(720,.15f,true,false,true,8,true);
     // Matched unprotected control: perfect sensors, no lag, same acceleration.
     rapid(720,.15f,false,false,false);
+    for(bool combined:{false,true}) {
+        rapid(720,.15f,combined,false,false,0,false,true);
+#if RAPID_BACKEND == 1 || RAPID_BACKEND == 5
+        rapid(720,.15f,combined,false,false,0,true,true);
+        rapid(720,.15f,combined,false,false,0,true,true,true,6200);
+        rapid(720,.15f,combined,false,false,0,false,true,false,14200);
+#endif
+    }
     for(float a:{90.0f,150.0f,179.99f,180.0f,180.01f,-179.99f}) for(float h:{0.0f,137.0f}) capture(a,h);
     for(float h:{0.0f,137.0f}) capture(180,h,true);
     staleAndDisturbance(); accelerometerDropout(); movingAfterTurn();

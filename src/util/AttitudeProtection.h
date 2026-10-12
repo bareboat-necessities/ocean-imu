@@ -48,6 +48,8 @@ struct Decision {
     bool dynamic = false;
     bool hold_attitude = false;
     bool reacquire = false;
+    bool repair_gyro_bias = false;
+    Vec gyro_bias = Vec::Zero();
     Quat target = Quat::Identity();
 };
 
@@ -59,7 +61,8 @@ public:
     // q_before is BODY->world before this tick's prediction; field is the
     // calibrated, offset-corrected field at the current gyro epoch in uT.
     // reference_yaw is the azimuth of the existing world magnetic reference.
-    // No reference, calibration, navigation state or bias is relearned here.
+    // References, calibration and navigation means are retained. A grossly
+    // corrupt gyro bias may be repaired from a longer qualified window.
     /** @brief Evaluate motion hazards and return an aiding hold or qualified recovery target.
      * Use dt in seconds, gyro/bias in rad/s, acceleration/gravity in m/s^2,
      * and now_us as a wrapping microsecond clock. Recovery requires fresh,
@@ -141,6 +144,7 @@ public:
             (std::abs(fn / field_norm_ - 1) < .20f && std::abs(dip - field_dip_) < .12f);
         const bool settled = !dynamic_ && speed < .12f && norm_error < .04f && field_matches;
         if (!settled) { clearWindow_(); return d; }
+        if (have_window_) { window_gyro_integral_ += gyro * dt; window_sec_ += dt; }
         // Both source streams must remain fresh throughout the window.
         // Gyro transport alone never establishes recovery observations.
         if (have_window_ && uint32_t(now_us - last_new_us_) > 120000u) clearWindow_();
@@ -152,15 +156,49 @@ public:
         if (!consistent) {
             window_start_us_ = now_us; count_ = 0;
             window_down_ = down; window_field_ = field / fn; window_norm_ = fn;
+            window_target_ = target.normalized();
+            window_gyro_integral_.setZero(); window_sec_ = 0;
+            window_time_sum_ = window_time_square_sum_ = window_angle_square_sum_ = 0;
+            window_angle_sum_.setZero(); window_time_angle_sum_.setZero();
             have_window_ = true;
         }
         last_new_us_ = now_us; ++count_;
+        const Eigen::AngleAxisf observed_turn(window_target_.conjugate() * target.normalized());
+        const Vec observed_angle = observed_turn.axis() * observed_turn.angle();
+        window_time_sum_ += window_sec_;
+        window_time_square_sum_ += window_sec_ * window_sec_;
+        window_angle_sum_ += observed_angle;
+        window_time_angle_sum_ += window_sec_ * observed_angle;
+        window_angle_square_sum_ += observed_angle.squaredNorm();
         if (count_ < 12 || uint32_t(now_us - window_start_us_) < 750000u) return d;
+        const float n = static_cast<float>(count_);
+        const float time_variance = n * window_time_square_sum_ - window_time_sum_ * window_time_sum_;
+        if (!(time_variance > 1e-4f) || !(window_sec_ >= .75f)) return d;
+        // Fit slope with a free intercept. A short quiet arc is usable; a
+        // noisy arc needs more observations before bias replacement is safe.
+        const Vec observed_rate = (n * window_time_angle_sum_ -
+            window_time_sum_ * window_angle_sum_) / time_variance;
+        const float residual = std::max(0.0f, window_angle_square_sum_ -
+            window_angle_sum_.squaredNorm()/n - observed_rate.squaredNorm()*time_variance/n);
+        const float slope_variance = residual*n/((n-2)*time_variance);
+        if (bias.norm() > .08f && slope_variance > .008f*.008f) return d;
         if (!have_field_) { field_norm_ = fn; field_dip_ = dip; have_field_ = true; }
         if (pending_ || post_dynamic_) {
             d.target = target.normalized(); d.reacquire = true;
+            // Estimate residual gyro bias independently of the filter: raw
+            // gyro average minus the rate seen by the two-vector attitude.
+            // The small, settled window bounds noncommuting rotation error.
+            // Subtract observed motion; low raw rate alone is not stillness.
+            const Vec candidate = window_gyro_integral_ / window_sec_ - observed_rate;
+            // Repair gross learned-bias corruption only. Healthy learned
+            // biases are retained; this is not continuous recalibration.
+            if (candidate.allFinite() && candidate.norm() < .06f && bias.norm() > .08f &&
+                (candidate - bias).norm() > .08f) {
+                d.repair_gyro_bias = true; d.gyro_bias = candidate;
+            }
             pending_ = post_dynamic_ = false; ++recoveries_; clearWindow_();
         }
+        else clearWindow_(); // Bound regression sums even during long stillness.
         return d;
     }
     /** @brief Return the number of recovery targets issued since the last reset. */
@@ -181,6 +219,11 @@ private:
     float recovery_wait_ = 0;
     float clear_sec_ = 0, field_norm_ = 0, field_dip_ = 0, window_norm_ = 0;
     Vec window_down_ = Vec::Zero(), window_field_ = Vec::Zero();
+    Quat window_target_ = Quat::Identity();
+    Vec window_gyro_integral_ = Vec::Zero();
+    float window_sec_ = 0;
+    float window_time_sum_ = 0, window_time_square_sum_ = 0, window_angle_square_sum_ = 0;
+    Vec window_angle_sum_ = Vec::Zero(), window_time_angle_sum_ = Vec::Zero();
     uint32_t last_accel_us_ = 0, window_start_us_ = 0, last_new_us_ = 0, count_ = 0, recoveries_ = 0;
 };
 } // namespace ocean_imu::attitude

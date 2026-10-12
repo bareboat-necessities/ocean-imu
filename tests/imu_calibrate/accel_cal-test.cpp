@@ -17,6 +17,7 @@
 #include "accel_cal_sim.h"
 
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
+#include "../common/MagTimingFixture.h"
 #include "accel_cal_replay.h"
 #include "../common/GravityChain.h"
 
@@ -129,7 +130,7 @@ float gCal(const Scenario& sc) { return sc.g_cal > 0 ? (float)sc.g_cal : atoms3r
 
 // g_runtime: the gravity of the firmware applying the blob (it refuses a set
 // fitted against another gravity).
-CalFloat calFromBlob(const atoms3r_ical::ImuCalBlobV4& b, float g_runtime = atoms3r_ical::ImuCalCfg::g_cal_local) {
+CalFloat calFromBlob(const atoms3r_ical::ImuCalBlobV5& b, float g_runtime = atoms3r_ical::ImuCalCfg::g_cal_local) {
   atoms3r_ical::RuntimeCals rc;
   rc.rebuildFromBlob(b, g_runtime);
   CalFloat c;
@@ -378,7 +379,7 @@ OldRun runOld(World& w, Stream& st, const Scenario& sc) {
     out.identity = true;
   }
   // Runtime path: blob -> RuntimeCals, as the deployed wizard applied it.
-  atoms3r_ical::ImuCalBlobV4 b{};
+  atoms3r_ical::ImuCalBlobV5 b{};
   memset((void*)&b, 0, sizeof(b));
   b.accel_ok = 1; b.accel_g = acc.g;
   atoms3r_ical::mat_to_rowmajor9_(acc.S, b.accel_S);
@@ -422,7 +423,7 @@ struct NewRun {
   std::string reason;
   CalFloat cal;
   imu_cal::AccelFullFitResult fit;
-  atoms3r_ical::ImuCalBlobV4 blob{};
+  atoms3r_ical::ImuCalBlobV5 blob{};
   double accel_time_s = 0;
   int retries = 0, extras = 0, attempts = 0, wrong_tilts = 0;
   double T_mid = NAN;
@@ -497,13 +498,13 @@ NewRun runNew(World& w, Stream& st, const Scenario& sc, const imu_cal::AccelTher
     out.fit = proc->result();
     imu_cal::AccelCalibration<float> fc;
     Proc::Fitter::toFloat(out.fit, fcfg.g, fc);
-    atoms3r_ical::ImuCalBlobV4 b{};
+    atoms3r_ical::ImuCalBlobV5 b{};
     memset((void*)&b, 0, sizeof(b));
     atoms3r_ical::fillAccelFromFit(b, out.fit, fc, (uint32_t)(proc->totalHoldMs() / 1000));
     b.sensor_id_lo = 0x1234; b.sensor_id_hi = 0x5678; b.imu_type = 3;
     // Serialize through the store and validate the read-back float set again.
     MemStore store;
-    atoms3r_ical::ImuCalBlobV4 rb{};
+    atoms3r_ical::ImuCalBlobV5 rb{};
     if (!store.saveVerified(b, rb)) { out.reason = "save"; return out; }
     atoms3r_ical::RuntimeCals rc;
     rc.rebuildFromBlob(rb, g_cal);
@@ -556,8 +557,8 @@ void testTempBias() {
 }
 
 // A complete stored calibration (gyro/mag set, accelerometer set bound).
-atoms3r_ical::ImuCalBlobV4 makeBlob() {
-  atoms3r_ical::ImuCalBlobV4 b{};
+atoms3r_ical::ImuCalBlobV5 makeBlob() {
+  atoms3r_ical::ImuCalBlobV5 b{};
   memset((void*)&b, 0, sizeof(b));
   b.accel_ok = 1; b.accel_g = 9.80665f;
   const float S[9] = {1.01f, 0.003f, -0.002f, 0.003f, 0.99f, 0.001f, -0.002f, 0.001f, 1.005f};
@@ -569,6 +570,8 @@ atoms3r_ical::ImuCalBlobV4 makeBlob() {
   b.gyro_coeff_crc = atoms3r_ical::gyroCoeffCrc(b);
   b.mag_ok = 1; b.mag_A[0] = b.mag_A[4] = b.mag_A[8] = 1; b.mag_b[0] = 5; b.mag_field_uT = 45;
   b.accel_coeff_crc = atoms3r_ical::accelCoeffCrc(b);
+  b.sensor_id_lo=0x1234; b.sensor_id_hi=0x5678; b.imu_type=3;
+  bindTimingFixture(b);
   return MemStore::sealed_(b);
 }
 
@@ -578,35 +581,35 @@ void testBlobAndStore() {
   // firmware (any size) are ignored.
   {
     MemStore store;
-    const ImuCalBlobV4 b = makeBlob();
+    const ImuCalBlobV5 b = makeBlob();
     store.kv.putBytes("blob_m5", &b, sizeof(b));
     store.kv.putBytes("blob", &b, sizeof(b));
     uint8_t old[124] = {0x4D, 0x55, 0x4C, 0x43, 2, 0};
     store.kv.putBytes("blob_m5v3", old, sizeof(old));
-    ImuCalBlobV4 ld;
+    ImuCalBlobV5 ld;
     check(!store.load(ld), "earlier keys and layouts are not loaded");
-    ImuCalBlobV4 wrongver = b; wrongver.version = 2; wrongver.crc = computeBlobCrc(wrongver);
+    ImuCalBlobV5 wrongver = b; wrongver.version = 2; wrongver.crc = computeBlobCrc(wrongver);
     check(!validateBlob(wrongver), "other versions do not validate");
-    ImuCalBlobV4 bad = b; bad.accel_b0[0] += 1.0f;
+    ImuCalBlobV5 bad = b; bad.accel_b0[0] += 1.0f;
     check(!validateBlob(bad), "CRC mismatch rejected");
   }
   // Save/readback validates the candidate, never an older blob.
   {
     MemStore store;
-    const ImuCalBlobV4 old = makeBlob();
-    ImuCalBlobV4 rb0;
+    const ImuCalBlobV5 old = makeBlob();
+    ImuCalBlobV5 rb0;
     check(store.saveVerified(old, rb0), "first verified save succeeds");
-    ImuCalBlobV4 cand = old;
+    ImuCalBlobV5 cand = old;
     cand.accel_b0[0] = 0.123f;
     cand.accel_coeff_crc = accelCoeffCrc(cand);
     store.kv.st->drop_writes = true;
-    ImuCalBlobV4 rb;
+    ImuCalBlobV5 rb;
     check(!store.saveVerified(cand, rb), "dropped write (stale blob under the key) is not reported as saved");
-    ImuCalBlobV4 after; check(store.load(after) && after.accel_b0[0] == old.accel_b0[0], "previous calibration retained after failed save");
+    ImuCalBlobV5 after; check(store.load(after) && after.accel_b0[0] == old.accel_b0[0], "previous calibration retained after failed save");
     store.kv.st->drop_writes = false;
     store.kv.st->corrupt_next = 1;
     check(!store.saveVerified(cand, rb), "corrupted write is not reported as saved");
-    ImuCalBlobV4 kept;
+    ImuCalBlobV5 kept;
     check(store.load(kept) && MemStore::sameBytes(kept, MemStore::sealed_(old)),
           "corrupted write: the previous calibration is written back intact");
     store.kv.st->corrupt_writes = true;
@@ -616,16 +619,16 @@ void testBlobAndStore() {
     store.kv.st->corrupt_writes = false;
     check(store.saveVerified(cand, rb), "verified save succeeds");
     check(rb.accel_b0[0] == 0.123f, "read-back is the candidate");
-    ImuCalBlobV4 ld; check(store.load(ld) && MemStore::sameBytes(ld, rb), "load returns the verified blob");
+    ImuCalBlobV5 ld; check(store.load(ld) && MemStore::sameBytes(ld, rb), "load returns the verified blob");
     store.erase();
     check(!store.load(ld), "erase removes the calibration");
     store.kv.st->corrupt_next = 1;
-    check(!store.saveVerified(cand, rb) && store.kv.getBytesLength("blob_m5v4") == 0,
+    check(!store.saveVerified(cand, rb) && store.kv.getBytesLength("blob_m5v5") == 0,
           "corrupted first save with nothing to restore leaves no blob behind");
   }
   // Metadata binding and prior compatibility.
   {
-    ImuCalBlobV4 b = makeBlob();
+    ImuCalBlobV5 b = makeBlob();
     b.accel_thermal = (uint8_t)AccelThermal::LEARNED;
     b.accel_k[0] = 0.003f; b.accel_k_temp_lo = 24; b.accel_k_temp_hi = 30; b.accel_T_lo = 19; b.accel_T_hi = 35;
     b.sensor_id_lo = 0x1234; b.sensor_id_hi = 0x5678; b.imu_type = 3;
@@ -634,13 +637,13 @@ void testBlobAndStore() {
     check(accelThermalPriorFrom(b, 0x1234, 0x5678, 3).valid, "bound learned slope of the same sensor is a prior");
     check(!accelThermalPriorFrom(b, 0x9999, 0x5678, 3).valid, "other sensor: no prior");
     check(!accelThermalPriorFrom(b, 0x1234, 0x5678, 4).valid, "other IMU type: no prior");
-    ImuCalBlobV4 u = b; u.accel_thermal = (uint8_t)AccelThermal::UNLEARNED; u = MemStore::sealed_(u);
+    ImuCalBlobV5 u = b; u.accel_thermal = (uint8_t)AccelThermal::UNLEARNED; u = MemStore::sealed_(u);
     check(!accelThermalPriorFrom(u, 0x1234, 0x5678, 3).valid, "unlearned slope is never carried");
-    ImuCalBlobV4 t = b; t.accel_k[0] = 0.004f;  // coefficient changed, metadata not re-bound
+    ImuCalBlobV5 t = b; t.accel_k[0] = 0.004f;  // coefficient changed, metadata not re-bound
     t = MemStore::sealed_(t);
     check(validateBlob(t) && !accelMetaBound(t), "unbound metadata detected");
     check(!accelThermalPriorFrom(t, 0x1234, 0x5678, 3).valid, "unbound metadata: no prior");
-    ImuCalBlobV4 nf = b; nf.accel_b0[1] = NAN; nf = MemStore::sealed_(nf);
+    ImuCalBlobV5 nf = b; nf.accel_b0[1] = NAN; nf = MemStore::sealed_(nf);
     check(!validateBlob(nf), "non-finite coefficients rejected");
   }
 }
@@ -1234,22 +1237,22 @@ void testPowerCycle(std::ostream& rep) {
   check(pr.valid, "power-cycle: first session provides a prior");
   {
     // Accelerometer-only candidate: gyro and magnetometer carried byte for byte.
-    const atoms3r_ical::ImuCalBlobV4 prev = makeBlob();
+    const atoms3r_ical::ImuCalBlobV5 prev = makeBlob();
     imu_cal::AccelCalibration<float> fc;
     Proc::Fitter::toFloat(a.fit, gCal(sc), fc);
-    const atoms3r_ical::ImuCalBlobV4 c = atoms3r_ical::accelOnlyCandidate(prev, a.fit, fc, 150, 0x1234, 0x5678, 3);
-    const size_t g0 = offsetof(atoms3r_ical::ImuCalBlobV4, gyro_ok);
-    const size_t g1 = offsetof(atoms3r_ical::ImuCalBlobV4, accel_T_lo);
+    const atoms3r_ical::ImuCalBlobV5 c = atoms3r_ical::accelOnlyCandidate(prev, a.fit, fc, 150, 0x1234, 0x5678, 3);
+    const size_t g0 = offsetof(atoms3r_ical::ImuCalBlobV5, gyro_ok);
+    const size_t g1 = offsetof(atoms3r_ical::ImuCalBlobV5, accel_T_lo);
     check(memcmp((const uint8_t*)&c + g0, (const uint8_t*)&prev + g0, g1 - g0) == 0,
           "accel-only candidate keeps gyro and magnetometer fields byte for byte");
-    const size_t meta0 = offsetof(atoms3r_ical::ImuCalBlobV4, gyro_T_lo);
-    const size_t meta1 = offsetof(atoms3r_ical::ImuCalBlobV4, crc);
+    const size_t meta0 = offsetof(atoms3r_ical::ImuCalBlobV5, gyro_T_lo);
+    const size_t meta1 = offsetof(atoms3r_ical::ImuCalBlobV5, crc);
     check(memcmp((const uint8_t*)&c + meta0, (const uint8_t*)&prev + meta0, meta1-meta0) == 0,
           "accel-only candidate keeps gyro thermal metadata and binding byte for byte");
     check(c.accel_ok == 1 && c.accel_b0[0] == fc.biasT.b0(0) && atoms3r_ical::accelMetaBound(c),
           "accel-only candidate carries the new bound accelerometer set");
     MemStore st;
-    atoms3r_ical::ImuCalBlobV4 rb;
+    atoms3r_ical::ImuCalBlobV5 rb;
     check(st.saveVerified(c, rb) && rb.gyro_b0[0] == prev.gyro_b0[0] && rb.mag_b[0] == prev.mag_b[0],
           "accel-only candidate saves with gyro/mag unchanged");
   }
@@ -1507,12 +1510,12 @@ void testGravityConvention(std::ostream& rep) {
     check(c.fc.g == ImuCalCfg::g_cal_local && c.blob.accel_g == ImuCalCfg::g_cal_local,
           "fit gravity carried into the float calibration and the blob");
     check(accelMetaBound(c.blob), "accel_g is bound by accel_coeff_crc");
-    ImuCalBlobV4 moved = c.blob; moved.accel_g = ImuCalCfg::g_std;
+    ImuCalBlobV5 moved = c.blob; moved.accel_g = ImuCalCfg::g_std;
     check(!accelMetaBound(moved), "changing accel_g unbinds the coefficient metadata");
     MemStore store;
-    ImuCalBlobV4 rb;
+    ImuCalBlobV5 rb;
     check(store.saveVerified(c.blob, rb), "blob with local gravity saves and verifies");
-    ImuCalBlobV4 ld;
+    ImuCalBlobV5 ld;
     check(store.load(ld) && ld.accel_g == ImuCalCfg::g_cal_local && accelGravityMatches(ld),
           "loaded blob keeps accel_g = g_cal_local");
     RuntimeCals rt; rt.rebuildFromBlob(ld);
@@ -1524,13 +1527,14 @@ void testGravityConvention(std::ostream& rep) {
   // (9) A calibration fitted against another gravity is never reinterpreted.
   {
     auto c = gc::calibrate(gc::Sensor::typical(), g_local, (double)ImuCalCfg::g_std, ImuCalCfg::g_std);
-    ImuCalBlobV4 b = c.blob;
+    ImuCalBlobV5 b = c.blob;
     b.gyro_ok = 1; b.gyro_b0[0] = 0.01f;
     b.gyro_coeff_crc = atoms3r_ical::gyroCoeffCrc(b);
     b.mag_ok = 1; b.mag_A[0] = b.mag_A[4] = b.mag_A[8] = 1.0f; b.mag_b[0] = 3.0f; b.mag_field_uT = 45.0f;
+    bindTimingFixture(b);
     MemStore store;
-    ImuCalBlobV4 rb, ld;
-    check(store.saveVerified(b, rb) && store.load(ld), "a v4 record fitted against 9.80665 is a valid record");
+    ImuCalBlobV5 rb, ld;
+    check(store.saveVerified(b, rb) && store.load(ld), "a v5 record fitted against 9.80665 is a valid record");
     check(ld.accel_ok && !accelGravityMatches(ld), "its gravity is recognised as not g_cal_local");
     RuntimeCals rt; rt.rebuildFromBlob(ld);
     check(!rt.acc.ok && rt.accel_gravity_mismatch, "its accelerometer calibration is not applied");
@@ -1546,8 +1550,9 @@ void testGravityConvention(std::ostream& rep) {
     RuntimeCals comp; comp.rebuildFromBlob(ld);
     check(!comp.mag.ok && comp.mag_source_mismatch && comp.gyr.ok,
           "an uncompensated mag fit is not applied to compensated data; gyro stays in use");
-    ImuCalBlobV4 cb = ld; cb.mag_source = atoms3r_ical::MAG_SOURCE_BMM150_COMPENSATED;
-    ImuCalBlobV4 crb, cld;
+    ImuCalBlobV5 cb = ld; cb.mag_source = atoms3r_ical::MAG_SOURCE_BMM150_COMPENSATED;
+    bindTimingFixture(cb);
+    ImuCalBlobV5 crb, cld;
     check(store.saveVerified(cb, crb) && store.load(cld) && cld.mag_source == cb.mag_source,
           "the mag source survives save and load");
     RuntimeCals comp2; comp2.rebuildFromBlob(cld);

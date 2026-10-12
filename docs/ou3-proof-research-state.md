@@ -46,21 +46,64 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Rapid-motion runtime repair scope
 
-The inherited-state recovery coverage omission is classification E (diagnostic
-incompleteness): artificial heading injection did not establish recovery from
-the covariance, bias, navigation and reference history produced by a failed
-turn. `--diagnose-recovery` now compares ordinary and late-protected tails
-without reseeding those states. The qMEKF late-protected yaw tail is 16.54773
-degrees after seven seconds, with one capture and 1.158784 rad/s retained bias;
-the five-degree diagnostic target fails. The hypothesis that healthy-state
-capture tests suffice for corrupted-state recovery is rejected. The two qMEKF
-geometry fixes and always-protected replay bounds remain valid. This is a
-deliberately unprotected-prefix engineering control, not an admitted shipping
-theorem counterexample. Current limiter: carried-state recovery qualification.
-Next falsifiable experiment: isolate inherited bias and reference contributions
-at the same recovery boundary, retaining covariance/navigation histories;
-then qualify any proposed recovery change against moderate-motion false capture.
-No theorem status or shipping runtime equation is changed by this diagnostic.
+Current recovery hypothesis: independently qualified two-vector/gyro bias repair,
+physical-coordinate TFG covariance reset, and explicit treatment of corrupted
+navigation feedback close the finite inherited-state recovery cases. qMEKF's
+quiet seven-second tails are below 0.00003 degrees; TFG yaw/combined tails are
+0.34495/0.92293 degrees. Eight qMEKF and eight TFG continuations include sensor
+noise, resumed vessel motion and sixty-second quiet tails; all remain below
+five degrees in the fresh optimized build (maxima 0.48445/2.92141 degrees).
+All fourteen seven-backend late-protection cases pass. Aiding resumes and
+healthy biases survive. The 336 ordinary causal controls change by at most
+0.00079 degrees across the combined-source rebuild; their mechanism conclusions
+are unchanged. The native OU-III rerun reproduces every numerical value and both
+native byte hashes exactly.
+Fresh full-matrix evidence and full-suite status are recorded in PR metadata.
+
+Failed recovery approaches / DEAD_ENDS (all class E, engineering qualification):
+- Attitude-only capture retained 16.54773/17.24282-degree qMEKF tails and a
+  13.96484-degree TFG yaw tail. Artificial-angle injection did not qualify
+  carried bias/covariance/navigation recovery.
+- Gyro-bias repair alone left TFG yaw at 13.77418 degrees; physical covariance
+  mapping alone left 16.45352 degrees. Operation tracing isolated S=0 feedback.
+  TFG now masks its attitude/bias gain rows after gross repair, retaining
+  navigation updates, until explicit estimator initialization.
+- Endpoint differentiation rejected a noisy stationary bias candidate; a
+  short-arc least-squares fit had 0.04747 rad/s error. Regression residuals now
+  qualify slope noise before replacement; slow observed motion is subtracted.
+  A fixed two-second delay gave a 6.99196-degree TFG yaw tail; noise-qualified
+  delay alone gave 8.16057 degrees. The retained acceleration confidence mattered.
+- Adding `(2g)^2 I` world-acceleration uncertainty passed seven-second/noisy
+  recovery but left 12.09322 degrees at sixty seconds. Adding only acceleration-
+  bias uncertainty still left 5.93086 degrees. Quiet force cannot identify tilt
+  and bias independently; further covariance tuning is rejected. The recovery
+  now explicitly returns only a gross learned acceleration bias outside 4% of g
+  to the calibrated zero-residual prior, with matching uncertainty. This prior
+  is the same calibration assumption required by gravity capture, not a new
+  observability theorem. Navigation means are retained and the actual runtime
+  reset, rather than an artificial replay-boundary reseed, is tested.
+- The independent finite-difference covariance test's absolute 1e-8 cross-term
+  tolerance failed after the large PSD uncertainty charge. Its tolerance now
+  scales with covariance norm and finite-difference roundoff; mean preservation,
+  physical marginals, selective S rows, initialization and PSD remain checked.
+
+Retained facts: qMEKF's independent SO(3) geometry fixes, protected replay bounds
+and OU-III ordinary-aiding identities remain valid. No admitted shipping theorem
+counterexample was found and no theorem flag is promoted. Current limiter is
+hardware/calibration qualification, not the reproduced finite quiet tails.
+Next falsifiable qualification: timestamped turns with calibrated force residuals,
+raw gyro, magnetic epochs and recovery state; test the explicit calibration prior
+and retained-state behavior on device. Main `c9c41de` (effective magnetic-delay
+calibration) and intervening PR documentation `8e3e5d8` are incorporated. AUX
+status-bit masking and the required latest calibration format are preserved.
+The source-wide native diagnostic is rerun on this combined source tree.
+The unchanged evidence builder rejects stale source/record hashes after the
+merge (E); refresh only the bindings backed by this new replay and the unchanged
+legacy-operation audit. No numerical record or theorem gate is weakened.
+Integration tests caught duplicate AUX cache storage from the automatic merge
+and fixture omissions for the new timing configuration (E). The shared storage
+is deduplicated; tests retain new main's status-bit masking and verify calibrated
+delay delivery and configuration mismatch, alongside gyro/acceleration freshness.
 
 Documentation validation exposed missing sandbox `mpmath` and `numpy`
 dependencies (classification E). The workflow dependencies are installed and
@@ -123,7 +166,8 @@ reacquisition are new runtime operations. The existing local identities remain
 applicable to the ordinary aiding branch only; no capture or stability theorem
 is transferred to the guarded or recovery branch. Skipped corrections do not
 establish MAGNETIC SERVICE. Covariance recovery clears attitude cross terms
-while preserving the navigation/bias means and the established world reference.
+while preserving navigation means and the established world reference. Bias
+means are preserved except for the explicitly qualified qMEKF/TFG repair above.
 Structures preserved: literal gyro propagation, measured specific force for
 translation, OU/S and tuner chronology, magnetic calibration and frame.
 Relaxations introduced: rapid-motion host tests use synthetic pivot-motion
@@ -252,6 +296,19 @@ check is the same replay on each final binary and an instrumented hardware turn
 with fresh-sample, elapsed-time, magnetic-age and `[ATT]` diagnostics.
 
 ## Magnetic-input timing scope
+
+Calibration now identifies an effective magnetic delay relative to the delivered
+gyro clock and stores it in the mandatory v5 record. Exact physical conversion
+timing remains OPEN. CI rejected stale sketch/whole-source fingerprints after
+this change (**E: implementation/diagnostic failure**); the hypothesis that the
+old bindings described the current tree was invalid. Both complete native
+secant replays reproduce identical raw bytes; original finite numerical payloads
+and all non-promotion flags are retained. No mathematical counterexample or new
+stability result follows. Structures preserved: the legacy core, covariance,
+tuner, OU/S, resets and carried native histories. Relaxations introduced: none
+beyond the existing finite off-orbit diagnostic. The limiter remains the timed
+path's physical timestamp/service qualification; the next falsifiable check is
+device timing under reboot and display/USB load, with applied-service records.
 
 The AtomS3R OU-III frontend now transports known host-cache delay and suppresses
 repeated host observations. The BMM150 conversion epoch/aperture is not known;

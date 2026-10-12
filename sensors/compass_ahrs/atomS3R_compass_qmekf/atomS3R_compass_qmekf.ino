@@ -87,7 +87,10 @@ class QmekfBackend : public IAttitudeBackend {
       else { mekf_->measurement_update_mag_only(s.m_unit); mag_applied_ = true; }
     }
 
-    if (s.motion.reacquire) mekf_->reacquire_attitude(s.motion.target);
+    if (s.motion.reacquire) {
+      mekf_->reacquire_attitude(s.motion.target);
+      if (s.motion.repair_gyro_bias) mekf_->reacquire_gyro_bias(s.motion.gyro_bias);
+    }
     const auto q = mekf_->quaternion();
     out = makeAttitudeFromQuat(q(0), q(1), q(2), q(3));
   }

@@ -63,13 +63,27 @@ the discrepancy is small. Extra settling hold is limited to two seconds once
 the dynamic latch clears, unless a large error remains pending. Thus ordinary
 vessel motion can regain aiding without coming to rest. The three navigation
 Kalman filters discard cross-covariance between held attitude/bias and driven
-navigation blocks when aiding resumes. This preserves means and marginal
-covariances and keeps covariance positive semidefinite.
+navigation blocks when aiding resumes. This preserves means and physical marginal
+covariances and keeps covariance positive semidefinite. TFG performs that
+operation in physical additive coordinates before mapping back to its
+invariant error coordinates.
 
 Capture replaces attitude and its local covariance without clearing navigation
-history, learned bias means, or the magnetic world reference. TFG also transports
-its bias-error covariance coordinates so the physical body bias covariance is
-preserved. Debug output includes `[ATT] hold=… dynamic=… recoveries=…`.
+history or the magnetic world reference. Normally learned biases are retained.
+If the gyro bias is grossly inconsistent with raw gyro minus observed two-vector
+angular rate, qMEKF and TFG can replace that bias after a noise-qualified fit.
+The fit can require more than 750 ms; it subtracts observed motion rather than
+assuming stillness. Healthy biases are retained. When TFG also has a gross
+learned accelerometer bias outside 4% of gravity, that estimate returns to the
+calibrated zero-residual prior with corresponding uncertainty. This explicit
+recovery assumption does not identify arbitrary physical bias from quiet data.
+
+After such a repair, TFG keeps integral-displacement corrections confined to
+navigation until explicit estimator initialization. Direct gravity/magnetic
+aiding continues; additional world-acceleration uncertainty lets the retained
+navigation state adjust to the corrected pose. These recovery policies and
+thresholds are detailed in the [equation audit](rapid-motion-math.md#inherited-state-recovery).
+Debug output includes `[ATT] hold=… dynamic=… recoveries=…`.
 
 ## Acquisition and time
 
@@ -129,26 +143,28 @@ rounded upward to two decimals.
 
 | Backend | Peak during rapid replay | Rapid tail | Large-angle capture tail |
 | --- | ---: | ---: | ---: |
-| qMEKF | 3.57 | 0.53 | 0.56 |
-| Mahony | 3.78 | 0.91 | 0.75 |
-| OU-II | 4.16 | 1.46 | 0.95 |
-| OU-III | 6.60 | 2.66 | 1.61 |
-| TFG | 4.08 | 0.60 | 1.09 |
-| NLO | 7.06 | 2.80 | 2.11 |
-| PII | 3.53 | 2.09 | 1.39 |
+| qMEKF | 3.57 | 0.53 | 0.59 |
+| Mahony | 3.78 | 0.91 | 0.96 |
+| OU-II | 4.16 | 1.46 | 0.77 |
+| OU-III | 6.60 | 2.66 | 1.96 |
+| TFG | 4.08 | 0.63 | 0.81 |
+| NLO | 7.06 | 2.80 | 2.03 |
+| PII | 3.53 | 2.09 | 2.26 |
 
 ## Qualification limits
 
-The [inherited-state recovery controls](rapid-motion-math.md#inherited-state-recovery-is-a-separate-incomplete-qualification)
-show that successful prevention and capture of an artificial attitude error do
-not establish recovery from corrupted bias/covariance/reference history.
-They bypass protection during the turn and enable it only afterward, preserving
-every carried state. qMEKF still exceeds 16 degrees after seven seconds despite
-one capture; the TFG yaw case remains near 14 degrees. This recovery qualification remains open; the diagnostic output is
-not counted as passing recovery evidence.
+The [inherited-state recovery controls](rapid-motion-math.md#inherited-state-recovery)
+bypass protection during the turn and enable it only afterward, preserving the
+actual corrupted bias, covariance, navigation and reference history. They now
+enforce the five-degree seven-second target instead of reporting failures as
+unenforced diagnostics. Additional noisy, resumed-motion and sixty-second
+qMEKF/TFG cases test the new repair. These finite cases do not establish
+recovery from arbitrary corrupted state or persistent sensor faults.
 
 Hardware turn tests remain necessary. The BMM150 conversion epoch is still
-unknown; a host read timestamp does not identify it. A gyro sample cannot
+unknown; a host read timestamp does not identify it. Main's calibrated effective
+magnetic delay is preserved, including its mandatory new-format recalibration;
+it does not claim absolute conversion timing. A gyro sample cannot
 reconstruct motion that occurred during an unobserved gap. The guard cannot
 distinguish every translational acceleration from tilt, and a persistent rotated
 magnetic field with the same strength and dip is not distinguishable from a

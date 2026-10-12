@@ -41,11 +41,11 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "65821ebd83836c4734eda148854c924416bb0820"
+      "git_blob_sha": "39b93121e54757140cb63655acc2f5ffe2215495"
     },
     {
       "path": "src/util/AttitudeProtection.h",
-      "git_blob_sha": "55c64a34c79de5720a4127d270292ec60018bd2a"
+      "git_blob_sha": "366dc29e66a0b68cfc8052a6f96c088867b21e72"
     },
     {
       "path": "src/util/ImuFreshness.h",
@@ -53,7 +53,7 @@
     },
     {
       "path": "src/AtomS3R/AtomS3R_ImuCal.h",
-      "git_blob_sha": "93a9af95ad2be1477e9b3e68caed36c740bbdb00"
+      "git_blob_sha": "e78b5a29653cc4040af65b642d9b404fc2b2ceb6"
     },
     {
       "path": "src/tuner/VerticalAccelComplementary.h",
@@ -185,7 +185,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "3ce85589882575c1ee08563cc58ec84060d610c9"
+      "git_blob_sha": "a0c7d951eb48c11a56e3a4d3bef6837413bc53fc"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "7d75af592dafbf3a27e8050fa9fad7b29546e1a7"
+      "git_blob_sha": "d361a7325c483f9ae3461f962f71da0c6ac51f56"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1009,7 +1009,7 @@
     },
     {
       "path": "reports/results/ou3_stability/magnetic-timing-legacy-binding.json",
-      "git_blob_sha": "d70be30cd5a993b73ca79a048d5449ddfe6f7605"
+      "git_blob_sha": "eae56e879642a668a2f31d9793f9e06e68106719"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1702,12 +1702,25 @@
       "attitude and bias gain-row holds",
       "accelerometer freshness gating",
       "held/navigation covariance decorrelation on aiding re-entry",
-      "settled global attitude reacquisition"
+      "settled global attitude reacquisition",
+      "qualified gross gyro-bias repair in qMEKF/TFG",
+      "TFG physical-coordinate recovery covariance and recovery-only S gain masking",
+      "TFG recovery world-acceleration uncertainty and gross acceleration-bias calibration-prior reset"
     ],
     "new_operations_certified_by_existing_theorem": false,
     "engineering_replays": "tests/common/RapidMotionReplay.h: common synthetic pivot, noise, gap, magnetic lag and antipodal-capture cases on all seven deployed estimators",
     "hardware_qualification": false,
     "skipped_corrections_establish_magnetic_service": false,
-    "theorem_promotion": false
+    "theorem_promotion": false,
+    "incorporated_main_commit": "c9c41de0108816a19b61cb35bd07a961ec2ce88a"
+  },
+  "magnetic_delay_calibration_scope": {
+    "format": 5,
+    "full_recalibration_required": true,
+    "effective_delay_relative_to_delivered_gyro": true,
+    "absolute_physical_epoch_known": false,
+    "legacy_native_secant_replay": "both epsilon replays reproduce identical native bytes; original numerical payload retained",
+    "timed_path_theorem_promoted": false,
+    "failure_classification": "E: stale source bindings after calibration/runtime changes; no mathematical counterexample"
   }
 }

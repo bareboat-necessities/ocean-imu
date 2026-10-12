@@ -134,6 +134,7 @@ class Kalman3D_Wave_TFG {
 
     // Seed the identity state with a nonnegative isotropic covariance.
     void initialize_identity(T initial_covariance = T(1e-4)) {
+        recovered_bias_navigation_only_ = false;
         X_ = Group::Identity();
         P_.setIdentity();
         P_ *= std::max(T(0), initial_covariance);
@@ -144,6 +145,7 @@ class Kalman3D_Wave_TFG {
                                const Vector3& S, const Vector3& a_w,
                                const Vector3& b_g = Vector3::Zero(),
                                const Vector3& b_a = Vector3::Zero()) {
+        recovered_bias_navigation_only_ = false;
         Eigen::Quaternion<T> q = q_bw;
         q.normalize();
         X_.R = q.toRotationMatrix();
@@ -243,13 +245,16 @@ class Kalman3D_Wave_TFG {
      */
     void set_attitude_aiding_enabled(bool enabled) {
         if (enabled && !attitude_aiding_enabled_) {
-            // Preserve each block and its means; discard manoeuvre-era
-            // correlations before the navigation model can drive attitude.
+            // rho_x = delta_x + [x] phi. Decouple PHYSICAL errors, not
+            // invariant coordinates; otherwise S=0 creates attitude feedback
+            // merely because the retained nominal S is nonzero.
+            covariance_to_physical_();
             for (int i = 0; i < NX; ++i) {
                 if (i >= OFF_V && i < OFF_V + 12) continue;
                 for (int j = OFF_V; j < OFF_V + 12; ++j)
                     P_(i,j) = P_(j,i) = T(0);
             }
+            covariance_from_physical_();
         }
         attitude_aiding_enabled_ = enabled;
     }
@@ -268,20 +273,52 @@ class Kalman3D_Wave_TFG {
         if (!q.coeffs().allFinite() || !std::isfinite(q.norm()) ||
             !(q.norm() > T(1e-6)) || !std::isfinite(sigma) || !(sigma > T(0))) return false;
         const Matrix3 target = q.normalized().toRotationMatrix();
-        if constexpr (two_frame_bias) {
-            // Bias-error coordinates are world-expressed in this chart.
-            // Retain their physical body covariance when changing R alone.
-            MatrixNX& transport = scratch_a_;
-            transport.setIdentity();
-            const Matrix3 turn = target * X_.R.transpose();
-            transport.template block<3,3>(OFF_BG, OFF_BG) = turn;
-            if constexpr (with_accel_bias) transport.template block<3,3>(OFF_BA, OFF_BA) = turn;
-            P_ = (transport * P_ * transport.transpose()).eval();
-        }
+        covariance_to_physical_();
         X_.R = target;
         P_.template topRows<3>().setZero();
         P_.template leftCols<3>().setZero();
         P_.template topLeftCorner<3,3>() = Matrix3::Identity() * sigma * sigma;
+        covariance_from_physical_();
+        return true;
+    }
+
+    /** @brief Repair biases after independently qualified gravity/magnetic capture.
+     * Replace gyro bias (rad/s), restore only gross accel bias to its calibration
+     * prior, and retain navigation means with recovery uncertainty. S updates
+     * remain navigation-only until explicit initialization. Reject invalid inputs.
+     */
+    bool recover_corrupted_biases(const Vector3& bias, T sigma = T(0.03)) {
+        if (!bias.allFinite() || !std::isfinite(sigma) || !(sigma > T(0))) return false;
+        X_.B.col(0) = bias;
+        P_.template middleRows<3>(OFF_BG).setZero();
+        P_.template middleCols<3>(OFF_BG).setZero();
+        // Isotropic body uncertainty is the same in the world bias chart.
+        P_.template block<3,3>(OFF_BG,OFF_BG) = Matrix3::Identity()*sigma*sigma;
+        // A gross bias repair invalidates navigation-derived attitude/bias
+        // feedback: the retained p/v/S/a_w were driven by that bad attitude.
+        // Keep S corrections for navigation, using Schmidt gain rows for the
+        // recovered variables. Direct accelerometer/magnetic aiding continues.
+        // Restore ordinary coupling only on explicit estimator initialization.
+        recovered_bias_navigation_only_ = true;
+        // Bad attitude also invalidates confidence in the learned world
+        // acceleration. Retain its mean, but admit the full 2g discrepancy
+        // between two gravity directions. An additive PSD covariance charge
+        // lets fresh force correct a_w instead of rotating the captured pose.
+        P_.template block<3,3>(OFF_AW,OFF_AW).diagonal().array() +=
+            T(4)*gravity_magnitude_*gravity_magnitude_;
+        if constexpr (with_accel_bias) {
+            // Qualified gravity capture assumes calibrated force. A learned
+            // bias outside that same 4%-of-g envelope contradicts this prior;
+            // retaining it can exchange tilt for bias indefinitely. Return
+            // only that gross estimate to the calibrated zero-residual prior.
+            const T sigma_acc = T(.04)*gravity_magnitude_;
+            if (X_.B.col(1).norm() > sigma_acc) {
+                X_.B.col(1).setZero();
+                P_.template middleRows<3>(OFF_BA).setZero();
+                P_.template middleCols<3>(OFF_BA).setZero();
+                P_.template block<3,3>(OFF_BA,OFF_BA) = Matrix3::Identity()*sigma_acc*sigma_acc;
+            }
+        }
         return true;
     }
 
@@ -759,7 +796,7 @@ class Kalman3D_Wave_TFG {
         if (!linear_block_enabled_) { last_S_diag_ = MeasDiag3{}; return false; }
         Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
         integral_residual(r, H, Rw);
-        return apply_update3_(r, H, Rw, last_S_diag_);
+        return apply_update3_(r, H, Rw, last_S_diag_, recovered_bias_navigation_only_);
     }
 
     bool apply_update3(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
@@ -768,6 +805,38 @@ class Kalman3D_Wave_TFG {
     }
 
   private:
+    // Change covariance coordinates only; every nominal mean is preserved.
+    // e_x = rho_x - [x] phi, e_b = R^T beta (Level 2).
+    /** @brief Map invariant covariance into additive world/body-bias errors. */
+    void covariance_to_physical_() {
+        MatrixNX& map = scratch_a_;
+        map.setIdentity();
+        for (int c = 0; c < 4; ++c)
+            map.template block<3,3>(OFF_V+3*c,OFF_PHI) =
+                -ocean_imu::lie::skew<T>(Vector3(X_.X.col(c)));
+        if constexpr (two_frame_bias) {
+            map.template block<3,3>(OFF_BG,OFF_BG) = X_.R.transpose();
+            if constexpr (with_accel_bias)
+                map.template block<3,3>(OFF_BA,OFF_BA) = X_.R.transpose();
+        }
+        P_ = (map * P_ * map.transpose()).eval();
+    }
+    /** @brief Map physical covariance back at the current nominal attitude. */
+    void covariance_from_physical_() {
+        MatrixNX& map = scratch_a_;
+        map.setIdentity();
+        for (int c = 0; c < 4; ++c)
+            map.template block<3,3>(OFF_V+3*c,OFF_PHI) =
+                ocean_imu::lie::skew<T>(Vector3(X_.X.col(c)));
+        if constexpr (two_frame_bias) {
+            map.template block<3,3>(OFF_BG,OFF_BG) = X_.R;
+            if constexpr (with_accel_bias)
+                map.template block<3,3>(OFF_BA,OFF_BA) = X_.R;
+        }
+        P_ = (map * P_ * map.transpose()).eval();
+        symmetrize_in_place_(P_);
+    }
+
     void world_transition_(T dt, Eigen::Matrix<T,4,4>& Phi) const {
         Phi.setIdentity();
         if (linear_block_enabled_)
@@ -875,12 +944,13 @@ class Kalman3D_Wave_TFG {
 
     bool attitude_aiding_enabled_ = true;
     bool accelerometer_fresh_ = true;
+    bool recovered_bias_navigation_only_ = false;
 
     /** @brief Apply a gated three-component correction and fill its diagnostics.
      * Return whether it was accepted; held attitude and bias gain rows remain zero.
      */
     bool apply_update3_(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
-                        const Matrix3& Rw, MeasDiag3& diag) {
+                        const Matrix3& Rw, MeasDiag3& diag, bool navigation_only = false) {
         diag = MeasDiag3{};
         diag.r = r;
         if (!r.allFinite() || !H.allFinite() || !Rw.allFinite()) return false;
@@ -904,7 +974,7 @@ class Kalman3D_Wave_TFG {
         Eigen::Matrix<T,NX,3>& K = scratch_nx3_b_;
         K = ldlt.solve(PHt.transpose()).transpose();
         if (!K.allFinite()) return false;
-        if (!attitude_aiding_enabled_) {
+        if (!attitude_aiding_enabled_ || navigation_only) {
             K.template topRows<3>().setZero();
             if constexpr (with_gyro_bias) K.template middleRows<3>(OFF_BG).setZero();
             if constexpr (with_accel_bias) K.template middleRows<3>(OFF_BA).setZero();

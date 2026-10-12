@@ -168,13 +168,13 @@ class FusionApp {
     reloadBlobAndRuntime_();
 
 #if SEA_STATE_ENABLE_WIZARD
-    if (!have_blob_) {
-      Serial.println("[BOOT] No saved calibration. Starting wizard...");
+    while (!have_blob_) {
+      Serial.println("[BOOT] Current calibration required. Starting wizard...");
       const bool saved = runWizardFlow_(true);
       if (saved) {
         Serial.println("[BOOT] Wizard saved calibration.");
       } else {
-        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
+        Serial.println("[BOOT] Calibration required; repeat the latest wizard before operation.");
       }
     }
 #endif
@@ -239,7 +239,7 @@ class FusionApp {
 
   ImuCalStoreNvs store_{};
   bool have_blob_ = false;
-  ImuCalBlobV4 blob_{};
+  ImuCalBlobV5 blob_{};
   RuntimeCals runtime_{};
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -384,6 +384,7 @@ class FusionApp {
       std::memset(&blob_, 0, sizeof(blob_));
     }
     runtime_.rebuildFromBlob(blob_);
+    have_blob_ = have_blob_ && !runtime_.mag_source_mismatch && !runtime_.mag_timing_mismatch;
   }
 
   bool runWizardFlow_(bool boot_mode) {
@@ -391,7 +392,7 @@ class FusionApp {
     (void)boot_mode;
     clearM5UnifiedImuCalibration();
 
-    ImuCalBlobV4 saved{};
+    ImuCalBlobV5 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
 
     if (did_save) {
@@ -544,6 +545,7 @@ class FusionApp {
 
   /** @brief Calibrate a delivered IMU frame and update fusion with freshness and motion protection. */
   void updateFilter_(const ImuSample& s) {
+    if (!have_blob_) return; // latest calibration required, including wizard-disabled builds
     const uint32_t now_ms = millis();
 
     dt_ = sample_dt_.update(s.sample_us);

@@ -89,6 +89,20 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     }
 
     static Eigen::Quaternion<T> quaternion_from_acc(Vector3 const& acc);
+    /** @brief Replace a qualified gross gyro-bias error, resetting its covariance.
+     * Bias and sigma are in rad/s; preserve attitude and reject invalid inputs.
+     */
+    bool reacquire_gyro_bias(const Vector3& bias, T sigma = T(0.03)) {
+        if constexpr (!with_bias) return false;
+        else {
+            if (!bias.allFinite() || !std::isfinite(sigma) || !(sigma > T(0))) return false;
+            x.template tail<3>() = bias;
+            P.template bottomRows<3>().setZero();
+            P.template rightCols<3>().setZero();
+            P.template bottomRightCorner<3,3>() = Matrix3::Identity()*sigma*sigma;
+            return true;
+        }
+    }
     void time_update(Vector3 const& gyr, T Ts);
     void time_update(T const gyr[3], T Ts);
     void measurement_update(Vector3 const& acc, Vector3 const& mag);

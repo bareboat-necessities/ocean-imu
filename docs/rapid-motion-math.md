@@ -156,40 +156,72 @@ feedback. The combined-axis, centered controls vary only magnetic delay and
 also develop large heading errors. A host read timestamp does not identify the
 BMM150 conversion epoch or each axis's measurement aperture.
 
-## Inherited-state recovery is a separate, incomplete qualification
+## Inherited-state recovery
 
-`--diagnose-recovery` runs ordinary aiding through the same noiseless
-720 deg/s, 15 cm turn, then compares two continuations from identical histories:
-ordinary aiding throughout, or protection enabled after the turn at 11 seconds.
-Neither arm reconstructs the filter or injects an artificial heading error.
-Bias, covariance, navigation, magnetic reference, delivery and guard histories
-all continue. The CSV records the inherited attitude and bias errors, the tail
-seven seconds later, actual captures and the final hold state.
+`--diagnose-recovery` runs ordinary aiding through the noiseless 720 deg/s,
+15 cm turn, then compares continuations from identical histories: ordinary
+aiding throughout, or protection enabled after the turn at 11 seconds. Neither
+arm reconstructs the estimator or injects an artificial heading error. Bias,
+covariance, navigation, magnetic reference and delivery histories continue.
+| Inherited recovery case | Before repair | Current seven-second tail |
+| --- | ---: | ---: |
+| qMEKF yaw | 16.54773° | 0.00000° |
+| qMEKF combined | 17.24282° | 0.00001° |
+| TFG yaw | 13.96484° | 0.34495° |
+| TFG combined | below 5° | 0.92293° |
 
-The corrected qMEKF still fails the five-degree diagnostic recovery target:
-its yaw-turn tail is 13.77477 degrees with ordinary aiding and 16.54773 degrees
-with late protection. The latter performs one capture. Both inherit a
-1.821243 rad/s gyro-bias estimate from the turn; the late-protection tail still
-has 1.158784 rad/s of estimated bias although the physical gyro bias is zero.
-The combined-axis late-protection tail is 17.24282 degrees. Preserving a
-previously corrupted bias estimate is therefore not the same qualification as
-preserving a healthy learned bias during attitude capture.
-
-TFG's yaw-turn tail is also above target: 13.96484 degrees with late protection,
-versus 16.81752 degrees with ordinary aiding. All fourteen late-protection cases
-apply one capture; three remain above five degrees (both qMEKF cases and TFG
-yaw). The other eleven tails meet this diagnostic target. The original 336
-causal controls and all protected-regression metrics reproduce unchanged.
-
-This deliberately disables prevention during the turn; it does **not** refute
-the always-protected turn regressions or identify an actual device failure.
-It does refute interpreting those regressions and artificial-angle capture
-tests as sufficient evidence of recovery from every failed-turn state.
-The diagnostic reports failures without converting them into passing acceptance
-assertions. The source-bound results are in
+All fourteen late-protection cases now finish below five degrees after seven seconds.
+Late-protection tails must finish below five degrees after seven seconds,
+apply a capture and release the aiding hold. Results are in
 [`recovery-controls.csv`](../reports/results/rapid_motion/recovery-controls.csv).
-Recovery of corrupted carried state remains open; no runtime bias reset is
-justified by these controls alone.
+
+An attitude-only capture cannot remove a corrupted gyro-bias estimate. The
+shared policy fits the angular rate of fresh gravity/magnetic two-vector
+attitudes, subtracting it from the mean raw gyro. The free-intercept linear fit
+uses the small rotation relative to the window's first observed attitude; it
+does not differentiate two noisy endpoints or assume low raw rate means zero
+motion. All existing freshness, norm, dip and direction gates still apply.
+For a learned bias above 0.08 rad/s, capture additionally requires a fitted
+slope standard-error norm below 0.008 rad/s. This noise diagnostic is an
+engineering gate, not a certified bound on correlated sensor error. Windows
+may take longer than the minimum 750 ms. A replacement is proposed only if its
+norm is below 0.06 rad/s and it differs from the old bias by over 0.08 rad/s.
+qMEKF and TFG apply that replacement with a 0.03 rad/s covariance standard
+deviation and discard its old cross-covariances. Healthy learned biases remain.
+
+TFG also needs the correct covariance coordinates. Its invariant navigation
+error satisfies `rho_x = e_x + [x] phi`, while Level-2 bias error is `beta=R e_b`.
+Capture and hold-release decorrelation therefore first map covariance to
+physical additive navigation/body-bias errors, perform the reset or
+block separation, then map back using the new attitude. Preserved marginals
+are **physical** marginals; invariant-coordinate diagonals can change.
+`recovery_geometry-test.cpp` checks this against central differences of the
+production retraction in both Level 1 and Level 2, including PSD and mean
+preservation.
+
+After gross bias repair, TFG retains navigation
+means, but they were driven by the failed attitude. Integral-displacement
+pseudo-measurements consequently use zero attitude and bias gain rows until
+explicit estimator initialization. Navigation correction and the Joseph
+covariance update continue. Direct accelerometer and magnetic aiding remain
+active. The world-acceleration covariance receives an additive PSD charge
+`(2g)^2 I`, representing the full discrepancy between two gravity directions,
+so fresh specific force can correct the retained acceleration estimate without
+immediately rotating the captured attitude. If the learned accelerometer bias exceeds `0.04g`, it returns to the calibrated
+zero-residual prior with `0.04g` standard deviation and cleared bias cross terms.
+A healthy smaller estimate remains. This makes the gravity-capture calibration
+assumption explicit: quiet force alone cannot identify transverse bias and tilt
+independently, and merely inflating covariance left a long-term error. The reset
+is a new runtime recovery operation, not a replay-boundary reseed. This is a recovery-only uncertainty
+policy; it is not a certificate covering arbitrary earlier motion or bias.
+Ordinary aiding before a repair retains its existing operations.
+
+Additional qMEKF/TFG regressions cover noisy seven-second tails, motion resumed
+after that recovery interval, and sixty-second quiet continuations. Policy
+controls distinguish slow observed rotation, healthy small biases and a
+legitimate larger physical bias. Successful prevention, artificial-angle
+capture and corrupted-state recovery remain distinct finite qualifications.
+None establishes a hardware accuracy specification or an OU-III theorem.
 
 ## Reproduction and scope
 

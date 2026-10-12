@@ -63,10 +63,10 @@
       }
     },
     "planar-native-secants-diagnostic.json": {
-      "record_sha256": "22b0fac0a3d18c94a4cc81c61da87d0d26989c94e36b7086417ebccc9b969d0a",
+      "record_sha256": "c17f9a69e98ad191766050af024918f8ec86b96285d070e78ae83f6d19fbbd61",
       "source_bindings": {
         "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b",
-        "shipping_source_tree_sha256": "3d962c8e6ae9a6d133bd2dbefda8f5a7f90993b20416f0651a688735c6b014e7"
+        "shipping_source_tree_sha256": "e17413a5c126949d9966242f939e456d7e99d692356e411b67c8c03b3155f654"
       }
     },
     "planar-service-stream-diagnostic.json": {
@@ -114,5 +114,33 @@
     }
   },
   "theorem_closed": false,
-  "timed_api_equivalence_claimed": false
+  "timed_api_equivalence_claimed": false,
+  "calibration_timing_revalidation": {
+    "baseline_commit": "453a1dfa66c7f90f4936f50940443fb0844d7959",
+    "command": "python3 -m tools.stability.ou3_theorem.planar_native_secants --eigen EIGEN_DIR --output OUTPUT",
+    "complete_two_epsilon_replay_performed": true,
+    "current_source_tree_sha256": "106c1af9b22a574939243741835eac3fd88642a4f0a336ba50fbbee4ed2a4326",
+    "derived_analysis_matches_rtol": 1e-12,
+    "native_secant_bytes_exactly_equal": true,
+    "original_numerical_payload_preserved": true,
+    "post_replay_changes_outside_compiler_dependency_closure": [
+      "src/AtomS3R/AtomS3R_ImuCal.h",
+      "src/AtomS3R/AtomS3R_ImuCalBlob.h",
+      "src/AtomS3R/AtomS3R_ImuCalWizard.h"
+    ],
+    "previous_source_tree_sha256": "74ff4bedfe9cf68811e6db13198878bca5cb835f8bab5dce4f9826eced0694cc",
+    "timed_api_equivalence_claimed": false
+  },
+  "recovery_main_integration_revalidation": {
+    "main_commit": "c9c41de0108816a19b61cb35bd07a961ec2ce88a",
+    "previous_pr_commit": "8e3e5d8dec92201b6520d4603bdb28df1aa3b195",
+    "command": "python3 -m tools.stability.ou3_theorem.planar_native_secants --eigen EIGEN_DIR --output OUTPUT",
+    "complete_two_epsilon_replay_performed": true,
+    "native_secant_bytes_exactly_equal": true,
+    "numerical_runs_exactly_equal": true,
+    "current_source_tree_sha256": "e17413a5c126949d9966242f939e456d7e99d692356e411b67c8c03b3155f654",
+    "guarded_or_recovery_equivalence_claimed": false,
+    "timed_api_equivalence_claimed": false,
+    "theorem_closed": false
+  }
 }

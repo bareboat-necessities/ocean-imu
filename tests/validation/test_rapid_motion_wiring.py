@@ -172,7 +172,7 @@ uint32_t millis(){return clock_us/1000;}
 namespace m5 {
 struct imu_3d_t {float x=0,y=0,z=0;};
 struct IMU_Base {
-  uint8_t bytes[8]={1,2,3,4,5,6,7,8};
+  uint8_t bytes[8]={9,2,3,4,5,6,7,8};
   bool good=true; unsigned reads=0;
   bool readRegister(int,uint8_t* out,size_t n) {++reads;if(good)std::memcpy(out,bytes,n);return good;}
 };
@@ -181,6 +181,11 @@ struct Data {m5::imu_3d_t accel,gyro,mag;};
 struct Driver {Data d;Data getImuData(){return d;} bool getTemp(float* t){*t=35;return true;}};
 struct {Driver Imu;} M5;
 namespace atoms3r_ical {
+struct Timing {uint32_t delay_us=10000,configuration=7;float fit_width_s=.001f,residual_time_s=.002f;};
+Timing timing;
+const Timing& activeMagTiming(){return timing;}
+bool magTimingValid(const Timing&){return true;}
+uint32_t activeMagTimingConfiguration(){return 7;}
 struct Bmm150Trim {};
 struct Bmm150Raw {uint8_t x; static Bmm150Raw fromData(const uint8_t* d){return {d[0]};}};
 bool bmm150Compensate(Bmm150Raw r,const Bmm150Trim&,float* v){v[0]=r.x;v[1]=20;v[2]=40;return true;}
@@ -203,15 +208,22 @@ int main(){
   require(!readImuMapped(M5.Imu,2,clock_us,s));
   require(!readImuMapped(M5.Imu,1,clock_us,s));
   require(readImuMapped(M5.Imu,2,clock_us,s)&&s.accel_fresh);
-  require(s.m.x()==1 && source.acquisition.sequence==1);
+  require(s.m.x()==8 && source.acquisition.sequence==1);
+  require(s.mag_timing.delay_us==10000 && std::abs(s.mag_timing.timing_allowance_s-.003f)<1e-6f);
   clock_us+=5000;
   require(readImuMapped(M5.Imu,2,clock_us,s)&&!s.accel_fresh);
   require(source.acquisition.sequence==1);
   // M5's magnetic cache did not change; the actual AUX burst did.
-  aux.bytes[0]=9;clock_us+=5000;
+  aux.bytes[0]=17;clock_us+=5000;
   require(readImuMapped(M5.Imu,3,clock_us,s)&&s.accel_fresh);
-  require(s.m.x()==9 && source.acquisition.sequence==2);
+  require(s.m.x()==16 && source.acquisition.sequence==2);
   require(source.acquisition.frame_us==clock_us);
+  // AUX status bits are not a new magnetic payload.
+  aux.bytes[0]=19;clock_us+=5000;
+  require(readImuMapped(M5.Imu,2,clock_us,s));
+  require(source.acquisition.sequence==2 && s.m.x()==16);
+  timing.configuration=8;clock_us+=5000;
+  require(readImuMapped(M5.Imu,2,clock_us,s) && s.mag_timing.delay_us==0);
   aux.good=false;clock_us+=5000;
   require(readImuMapped(M5.Imu,2,clock_us,s));
   require(source.acquisition.sequence==2);

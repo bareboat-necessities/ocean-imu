@@ -167,13 +167,13 @@ public:
     reloadBlobAndRuntime_();
 
 #if SEA_STATE_ENABLE_WIZARD
-    if (!have_blob_) {
-      Serial.println("[BOOT] No saved calibration. Starting wizard...");
+    while (!have_blob_) {
+      Serial.println("[BOOT] Current calibration required. Starting wizard...");
       const bool saved = runWizardFlow_(true);
       if (saved) {
         Serial.println("[BOOT] Wizard saved calibration.");
       } else {
-        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
+        Serial.println("[BOOT] Calibration required; repeat the latest wizard before operation.");
       }
     }
 #endif
@@ -239,7 +239,7 @@ private:
 
   ImuCalStoreNvs store_{};
   bool           have_blob_ = false;
-  ImuCalBlobV4   blob_{};
+  ImuCalBlobV5   blob_{};
   RuntimeCals    runtime_{};
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -360,6 +360,7 @@ private:
       std::memset(&blob_, 0, sizeof(blob_));
     }
     runtime_.rebuildFromBlob(blob_);
+    have_blob_ = have_blob_ && !runtime_.mag_source_mismatch && !runtime_.mag_timing_mismatch;
   }
 
   bool runWizardFlow_(bool boot_mode) {
@@ -368,7 +369,7 @@ private:
 
     clearM5UnifiedImuCalibration();
 
-    ImuCalBlobV4 saved{};
+    ImuCalBlobV5 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
 
     if (did_save) {
@@ -618,6 +619,7 @@ private:
 
   /** @brief Calibrate a delivered IMU frame and update fusion with freshness and motion protection. */
   void updateFilter_(const ImuSample& s) {
+    if (!have_blob_) return; // latest calibration required, including wizard-disabled builds
     dt_ = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
     imu_temp_c_ = tempC;
@@ -662,7 +664,10 @@ private:
     fusion_.update(dt_, w_cal_, a_cal_, 35.0f);
     mag_input_.capture(fusion_.startupProxyQuat(), fusion_.quaternion(), a_cal_, w_cal_);
     if (!motion.hold_attitude && mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
-    if (motion.reacquire) fusion_.mekf().reacquire_attitude(motion.target);
+    if (motion.reacquire) {
+      fusion_.mekf().reacquire_attitude(motion.target);
+      if (motion.repair_gyro_bias) fusion_.mekf().recover_corrupted_biases(motion.gyro_bias);
+    }
 
     // During startup the MEKF is deliberately held. Publish the Mahony proxy
     // attitude instead; switch atomically to the fused attitude at Live.
