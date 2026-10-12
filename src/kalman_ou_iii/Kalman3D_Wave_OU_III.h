@@ -2576,15 +2576,5 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::QdAxis4x1_analyti
 
 } // namespace ocean_imu::kalman
 
-#if defined(ARDUINO_ARCH_ESP32) && defined(__XTENSA__)
-// Emit the shipping prediction in its own translation unit. Keeping it in
-// the large Arduino sketch object can put its literal pool beyond the L32R
-// reach on Xtensa, even though the function itself is small enough. The
-// library .cpp instantiates this same implementation; other configurations
-// and native builds retain the header-only template.
-extern template void ocean_imu::kalman::Kalman3D_Wave_OU_III<float, true, true>::time_update(
-    const Eigen::Matrix<float, 3, 1>&, float);
-#endif
-
 // Source compatibility for existing callers of the unqualified name.
 using ocean_imu::kalman::Kalman3D_Wave_OU_III;

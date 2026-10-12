@@ -35,7 +35,7 @@ jobs:
           set -euo pipefail
           while IFS= read -r -d '' sketch; do
             echo "Compiling $sketch"
-            arduino-cli compile --warnings default \
+            arduino-cli compile --jobs 1 --warnings default \
               --fqbn esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc \
               --library "$GITHUB_WORKSPACE" "$(dirname "$sketch")"
           done < <(find sensors examples -name '*.ino' -print0 | sort -z)

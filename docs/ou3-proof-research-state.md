@@ -430,8 +430,9 @@ gyro-bias/accel-bias OU-III `time_update` after PRs #671/#673. This invalidates
 the assumption that successful native tests and the older Linux MCU profile
 qualify the Windows IDE build. Prediction equations, state layout, covariance,
 scheduler and prior mathematical results are retained; no instability is
-inferred. The build repair emits the same prediction template in a separate
-Arduino/Xtensa library object. Local `make all` also encountered storage and
+inferred. The build repair compiles the new non-template protection policy
+and held-acceleration transport in a shared library source, retaining the
+estimator's existing template organization. Local `make all` encountered storage and
 compiler-memory exhaustion (class E), so incomplete runs are not passing
 validation. Next falsifiable check: link every shipped sketch on Windows and
 Linux with the reported core and default IDE flags. No theorem is promoted.

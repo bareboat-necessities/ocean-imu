@@ -104,6 +104,7 @@ def main():
         writer.writeheader()
         writer.writerows(rows)
     sources = sorted((ROOT / "src").rglob("*.h")) + [
+        ROOT / "src/util/AttitudeProtection.cpp",
         ROOT / "tests/common/RapidMotionReplay.h",
         ROOT / "tests/common/RapidMotionBackends.h",
         Path(__file__).resolve(),
