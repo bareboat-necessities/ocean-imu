@@ -290,8 +290,8 @@ class FusionApp {
 
   ins::MagFreshGate mag_gate_{MAG_UPDATE_SPACING_MS};
   ocean_imu::magnetic::Input mag_input_{};
-  ocean_imu::attitude::Protection attitude_protection_{};
-  ocean_imu::attitude::AccelHold accel_hold_{};
+  ocean_imu::attitude::Protection attitude_protection_{ocean_imu::attitude::MotionUse::INS};
+  ocean_imu::attitude::GyroWindow gyro_window_{};
   uint32_t last_mag_correction_ms_ = 0;
 
   Vector3f a_cal_ = Vector3f::Zero();
@@ -380,7 +380,7 @@ class FusionApp {
     return false;
   }
 
-  /** @brief Check IMU availability and reset sample timing, motion protection, and held acceleration. */
+  /** @brief Check IMU availability and reset sample timing, motion protection, and the gyro window. */
   void reinitImu_() {
     if (!M5.Imu.isEnabled()) {
       Serial.println("[BOOT] M5.Imu is not enabled");
@@ -393,7 +393,7 @@ class FusionApp {
     rates_.reset(millis());
     sample_dt_.reset();
     attitude_protection_.reset();
-    accel_hold_.reset();
+    gyro_window_.reset();
   }
 
   /** @brief Reset fusion and acquisition history, then restore the configured estimator settings. */
@@ -482,7 +482,7 @@ class FusionApp {
     stale_frame_count_ = 0;
     sample_dt_.reset();
     attitude_protection_.reset();
-    accel_hold_.reset();
+    gyro_window_.reset();
 
     heave_m_ = 0.0f;
     heave_speed_mps_ = 0.0f;
@@ -554,7 +554,7 @@ class FusionApp {
 
     // Pass elapsed sample time through: the NLO integrates delayed samples
     // in bounded steps so its startup feedback remains numerically stable.
-    dt_ = sample_dt_.update(s.sample_us);
+    const float gyro_dt = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
     imu_temp_c_ = tempC;
     rates_.countImu();
@@ -565,9 +565,15 @@ class FusionApp {
     w_cal_ = runtime_.applyGyro(s.w, tempC);
     m_cal_ = runtime_.applyMag(s.m);
     const Vector3f rotation_bias = fusion_.gyroscopeBiasBody();
-    a_cal_ = accel_hold_.update(a_cal_, s.accel_fresh, w_cal_ - rotation_bias, dt_);
+    attitude_protection_.observeGyro(gyro_dt, w_cal_);
+    gyro_window_.push(w_cal_, gyro_dt);
     mag_input_.advance(s.sample_us, w_cal_ - rotation_bias, 0.0f,
         s.mag_timing, m_cal_, Vector3f::Zero(), false);
+    // Full frontend, tuner and heave updates use fresh force only.
+    // Gyro history and motion hazards above still receive every packet.
+    if (!s.accel_fresh) return;
+    gyro_window_.take(w_cal_, dt_);
+
     Vector3f magnetic_now = m_cal_;
     const bool magnetic_time_ok = mag_input_.currentField(Vector3f::Zero(), magnetic_now);
 
@@ -594,7 +600,7 @@ class FusionApp {
 
     const auto motion = attitude_protection_.step(dt_, w_cal_, rotation_bias,
         a_cal_, s.accel_fresh, APP_G_LOCAL, fusion_.snapshot().q_nb, magnetic_now, mag_usable,
-        mag_input_.newSource(), s.sample_us,
+        mag_input_.takeNewSource(), s.sample_us,
         fusion_.filter().config().magnetic_declination_rad, fusion_.initialized());
     fusion_.setAttitudeAidingEnabled(!motion.hold_attitude);
     mag_used_ = mag_usable;

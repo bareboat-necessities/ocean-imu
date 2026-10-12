@@ -3,6 +3,7 @@
 #define EIGEN_NON_ARDUINO
 #endif
 #include "util/AttitudeProtection.h"
+#include <limits>
 
 namespace ocean_imu::attitude {
 
@@ -18,6 +19,42 @@ Vec AccelHold::update(const Vec& measured, bool fresh, const Vec& corrected_gyro
             value_ = rotation(Vec(-corrected_gyro * dt)) * value_;
         return value_;
     }
+
+void GyroWindow::push(const Vec& gyro, float dt) {
+    if (!gyro.allFinite() || !std::isfinite(dt) || dt <= 0) { valid_ = false; return; }
+    elapsed_ += dt;
+    turn_ = (turn_ * rotation(Vec(gyro * dt))).normalized();
+}
+
+void GyroWindow::take(Vec& gyro, float& dt) {
+    dt = elapsed_;
+    if (!valid_ || !(dt > 0) || !std::isfinite(dt)) {
+        dt = std::numeric_limits<float>::quiet_NaN();
+        gyro = Vec::Constant(dt);
+    } else {
+        const Eigen::AngleAxisf aa(turn_);
+        gyro = aa.axis() * (aa.angle() / dt);
+    }
+    reset();
+}
+
+void Protection::observeGyro(float dt, const Vec& gyro) {
+    observed_ = true;
+    const bool finite = gyro.allFinite() && std::isfinite(dt) && dt > 0 && dt < 1;
+    float acceleration = 0;
+    if (finite) {
+        if (have_rate_) {
+            const Vec derivative = (gyro - rate_lpf_) / (.03f + dt);
+            rate_lpf_ += dt * derivative;
+            angular_accel_lpf_ += (dt / (.03f + dt)) * (derivative - angular_accel_lpf_);
+            acceleration = angular_accel_lpf_.norm();
+        } else { rate_lpf_ = gyro; have_rate_ = true; }
+    }
+    const float speed = finite ? gyro.norm() : 100;
+    peak_speed_ = std::max(peak_speed_, speed);
+    gyro_hazard_ = gyro_hazard_ || !finite || dt > .020001f || speed > 1.5f || acceleration > 2;
+    gyro_quiet_ = gyro_quiet_ && finite && speed < .75f && acceleration < 1;
+}
 
 Decision Protection::step(float dt, const Vec& gyro, const Vec& bias, const Vec& acc, bool accel_fresh,
                   float gravity, const Quat& q_before, const Vec& field,
@@ -43,24 +80,17 @@ Decision Protection::step(float dt, const Vec& gyro, const Vec& bias, const Vec&
         // ordinary-bias timeout must not resume corrections that would
         // invalidate its inherited-state recovery window.
         gross_bias_ = bias.allFinite() && bias.norm() > .08f;
-        // A ramp can create tangential acceleration well before the rate
-        // threshold is reached. Filter both rate and its derivative at 30 ms to avoid
-        // treating sample-to-sample gyro noise as angular acceleration.
-        float angular_acceleration = 0;
-        if (finite) {
-            if (have_rate_) {
-                const Vec derivative = (gyro - rate_lpf_) / (.03f + dt);
-                rate_lpf_ += dt * derivative;
-                angular_accel_lpf_ += (dt / (.03f + dt)) * (derivative - angular_accel_lpf_);
-                angular_acceleration = angular_accel_lpf_.norm();
-            } else { rate_lpf_ = gyro; have_rate_ = true; }
-        }
-        // The rate gate also covers acceleration whose norm happens to equal
-        // g. A norm-only test cannot distinguish that from true gravity.
-        const bool hazard = !finite || !accel_recent || dt > .020001f || speed > 1.5f || angular_acceleration > 2.0f || norm_error > .20f;
+        if (!observed_) observeGyro(dt, gyro);
+        const bool rotational_hazard = gyro_hazard_;
+        const bool rotational_quiet = gyro_quiet_;
+        const float observed_speed = peak_speed_;
+        observed_ = gyro_hazard_ = false; gyro_quiet_ = true; peak_speed_ = 0;
+        const bool force_gate = use_ == MotionUse::Compass;
+        const bool hazard = !finite || !accel_recent || dt > .020001f ||
+            rotational_hazard || (force_gate && norm_error > .20f);
         if (hazard) { dynamic_ = true; post_dynamic_ = true; clear_sec_ = recovery_wait_ = 0; }
         else if (dynamic_) {
-            clear_sec_ = speed < .75f && angular_acceleration < 1.0f && norm_error < .08f ? clear_sec_ + dt : 0;
+            clear_sec_ = rotational_quiet && (!force_gate || norm_error < .08f) ? clear_sec_ + dt : 0;
             if (clear_sec_ >= .5f) dynamic_ = false;
         }
         // A vessel need not become completely stationary after a turn.
@@ -103,7 +133,7 @@ Decision Protection::step(float dt, const Vec& gyro, const Vec& bias, const Vec&
         const float dip = down.dot(field) / fn;
         const bool field_matches = !have_field_ ||
             (std::abs(fn / field_norm_ - 1) < .20f && std::abs(dip - field_dip_) < .12f);
-        const bool settled = !dynamic_ && speed < .12f && norm_error < .04f && field_matches;
+        const bool settled = !dynamic_ && std::max(speed, observed_speed) < .12f && norm_error < .04f && field_matches;
         if (!settled) { clearWindow_(); return d; }
         if (have_window_) { window_gyro_integral_ += gyro * dt; window_sec_ += dt; }
         // Both source streams must remain fresh throughout the window.

@@ -115,8 +115,8 @@ struct App {
  mag_fresh_=false,mag_used_=false,heading_valid_=false;
  struct Runtime {Vector3f applyAccel(const Vector3f& a,float){return a;}
  Vector3f applyGyro(const Vector3f& w,float){return w;}Vector3f applyMag(const Vector3f& m){return m;}} runtime_;
- ocean_imu::attitude::AccelHold accel_hold_;
- ocean_imu::attitude::Protection attitude_protection_;
+ ocean_imu::attitude::GyroWindow gyro_window_;
+ ocean_imu::attitude::Protection attitude_protection_{ocean_imu::attitude::MotionUse::INS};
  ocean_imu::magnetic::Input mag_input_;
  ins::MagFreshGate mag_gate_;
  ins::SampleDtTracker sample_dt_{.005f};

@@ -254,8 +254,8 @@ private:
 
   ins::MagFreshGate mag_gate_{};
   ocean_imu::magnetic::Input mag_input_{};
-  ocean_imu::attitude::Protection attitude_protection_{};
-  ocean_imu::attitude::AccelHold accel_hold_{};
+  ocean_imu::attitude::Protection attitude_protection_{ocean_imu::attitude::MotionUse::INS};
+  ocean_imu::attitude::GyroWindow gyro_window_{};
 
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
@@ -344,7 +344,7 @@ private:
 #endif
   }
 
-  /** @brief Check IMU availability and reset sample timing, motion protection, and held acceleration. */
+  /** @brief Check IMU availability and reset sample timing, motion protection, and the gyro window. */
   void reinitImu_() {
     if (!M5.Imu.isEnabled()) {
       Serial.println("[BOOT] M5.Imu is not enabled");
@@ -356,7 +356,7 @@ private:
     rates_.reset(millis());
     sample_dt_.reset();
     attitude_protection_.reset();
-    accel_hold_.reset();
+    gyro_window_.reset();
   }
 
   /** @brief Reset fusion and acquisition history, then restore the configured estimator settings. */
@@ -459,7 +459,7 @@ private:
     stale_frame_count_ = 0;
     sample_dt_.reset();
     attitude_protection_.reset();
-    accel_hold_.reset();
+    gyro_window_.reset();
     heave_speed_mps_     = 0.0f;
     heave_raw_m_         = 0.0f;
     heave_baseline_m_    = 0.0f;
@@ -531,7 +531,7 @@ private:
   /** @brief Calibrate a delivered IMU frame and update fusion with freshness and motion protection. */
   void updateFilter_(const ImuSample& s) {
     if (!have_blob_) return; // latest calibration required, including wizard-disabled builds
-    dt_ = sample_dt_.update(s.sample_us);
+    const float gyro_dt = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
     imu_temp_c_ = tempC;
     rates_.countImu();
@@ -545,11 +545,17 @@ private:
     w_cal_ = runtime_.applyGyro(w_raw, tempC);
     m_cal_ = runtime_.applyMag(s.m);
     const auto& core = fusion_.raw().mekf();
-    a_cal_ = accel_hold_.update(a_cal_, s.accel_fresh,
-        w_cal_ - core.gyroscope_bias_body(), dt_);
+    attitude_protection_.observeGyro(gyro_dt, w_cal_);
+    gyro_window_.push(w_cal_, gyro_dt);
     mag_input_.advance(s.sample_us, w_cal_ - core.gyroscope_bias_body(),
         ocean_imu::magnetic::covarianceBound(core.gyroscope_bias_covariance_body()),
         s.mag_timing, m_cal_, fusion_.magHardIronBodyUT());
+    // Full frontend, tuner and heave updates use fresh force only.
+    // Gyro history and motion hazards above still receive every packet.
+    if (!s.accel_fresh) return;
+    const Vector3f gyro_current = w_cal_;
+    gyro_window_.take(w_cal_, dt_);
+
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
@@ -558,7 +564,7 @@ private:
     const Vector3f& reference = core.magnetic_reference_world();
     const auto motion = attitude_protection_.step(dt_, w_cal_, core.gyroscope_bias_body(),
         a_cal_, s.accel_fresh, g_local, fusion_.attitudeQuat(), magnetic_now, mag_ok_ && field_valid,
-        mag_input_.newSource(), s.sample_us, std::atan2(reference.y(), reference.x()),
+        mag_input_.takeNewSource(), s.sample_us, std::atan2(reference.y(), reference.x()),
         fusion_.isLive() && fusion_.hasMagNorthLock());
     fusion_.raw().setAttitudeAidingEnabled(!motion.hold_attitude);
     fusion_.raw().setAccelerometerFresh(s.accel_fresh);
@@ -566,7 +572,7 @@ private:
     if (mag_fresh_) rates_.countMag();
 
     fusion_.update(dt_, w_cal_, a_cal_);
-    mag_input_.capture(fusion_.raw().startupProxyQuat(), fusion_.attitudeQuat(), a_cal_, w_cal_);
+    mag_input_.capture(fusion_.raw().startupProxyQuat(), fusion_.attitudeQuat(), a_cal_, gyro_current);
     if (mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
     if (motion.reacquire) fusion_.raw().mekf().initialize_from_attitude(motion.target, 0.05f, 0.05f);
 

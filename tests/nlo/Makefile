@@ -69,3 +69,9 @@ device_heave-test: device_heave-test.o
 
 clean:
 	rm -f *.o *.d $(TARGETS) *.exe *.csv
+
+TARGETS += ins_heave-test
+ins_heave-test: ins_heave-test.o AttitudeProtection.o
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+ins_heave-test.o: ../common/InsHeaveReplay.h
+build: ins_heave-test

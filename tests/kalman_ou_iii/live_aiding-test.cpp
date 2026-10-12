@@ -29,7 +29,7 @@ void replay(float roll,float pitch) {
     cfg.sigma_a=V::Constant(.12f); cfg.sigma_g=V::Constant(.00135f);
     cfg.sigma_m=V::Constant(.8f); cfg.mag_continuous_hard_iron=false;
     fusion->begin(cfg); fusion->raw().setTauScaledPseudoUpdateCadence(false);
-    ocean_imu::attitude::Protection protection;
+    ocean_imu::attitude::Protection protection{ocean_imu::attitude::MotionUse::INS};
     ocean_imu::attitude::AccelHold accel_hold;
     ocean_imu::magnetic::Input magnetic;
     magnetic.reset(.00135f,Eigen::Matrix3f::Identity()*.64f);

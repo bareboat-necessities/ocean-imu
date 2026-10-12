@@ -20,7 +20,7 @@ public:
         observation_.covariance = measurement_covariance;
         observation_.uncertainty.gyro_density = gyro_density;
         have_source_ = have_submitted_ = new_source_ = source_valid_ = bad_epoch_ = false;
-        source_sequence_ = submitted_sequence_ = 0;
+        source_sequence_ = submitted_sequence_ = policy_sequence_ = 0;
         duplicates_ = history_misses_ = 0;
         age_ms_ = latency_ms_ = min_latency_ms_ = max_latency_ms_ = NAN;
         applied_ = false;
@@ -95,8 +95,8 @@ public:
         snapshots_[snapshot_next_] = current;
         snapshot_next_ = (snapshot_next_ + 1) % snapshots_.size();
         snapshot_count_ = std::min(snapshot_count_ + 1, unsigned(snapshots_.size()));
-        if (!new_source_) return;
-        if (!delay_us_) { installSnapshot(current); return; }
+        if (!pending() || snapshot_ready_) return;
+        if (measurement_us_ == now_) { installSnapshot(current); return; }
         const unsigned oldest = (snapshot_next_ + snapshots_.size() - snapshot_count_) % snapshots_.size();
         for (unsigned j=1; j<snapshot_count_; ++j) {
             const auto& a = snapshots_[(oldest+j-1)%snapshots_.size()];
@@ -123,6 +123,11 @@ public:
     const Observation& observation() const { return observation_; }
     const Consistency& diagnostic() const { return diagnostic_; }
     bool newSource() const { return new_source_; }
+    // Consume source freshness at the slower INS force cadence.
+    bool takeNewSource() {
+        if (!source_valid_ || source_sequence_ == policy_sequence_) return false;
+        policy_sequence_ = source_sequence_; return true;
+    }
     bool lastApplied() const { return applied_; }
 
     // Continuous feedback intentionally reuses a held observation, rotated to
@@ -190,7 +195,7 @@ private:
     Observation observation_{};
     V3 field_ = V3::Zero();
     uint32_t now_ = 0, source_us_ = 0, read_end_us_ = 0;
-    uint32_t source_sequence_ = 0, submitted_sequence_ = 0;
+    uint32_t source_sequence_ = 0, submitted_sequence_ = 0, policy_sequence_ = 0;
     uint32_t duplicates_ = 0, history_misses_ = 0;
     bool have_source_ = false, source_valid_ = false, have_submitted_ = false;
     bool new_source_ = false, bad_epoch_ = false, applied_ = false, uncertainty_known_ = true;

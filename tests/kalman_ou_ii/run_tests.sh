@@ -2,6 +2,7 @@
 set -e
 
 ./rapid_motion-test
+./ins_heave-test
 ./mag_timing-test
 make -f Makefile -f ../common/GyroBiasProjectionRegression.mk gyro_bias_projection-test
 ./gyro_bias_projection-test

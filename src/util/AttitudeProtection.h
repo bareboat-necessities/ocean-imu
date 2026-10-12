@@ -35,6 +35,22 @@ private:
     Vec value_ = Vec::Zero();
 };
 
+// INS must estimate legitimate wave force, rather than latch on its norm.
+enum class MotionUse { Compass, INS };
+
+// Compose every raw gyro increment between fresh specific-force packets.
+// The frontend remains measurement-only; each estimator removes its own bias.
+class GyroWindow {
+public:
+    void reset() { turn_ = Quat::Identity(); elapsed_ = 0; valid_ = true; }
+    void push(const Vec& gyro, float dt);
+    void take(Vec& gyro, float& dt);
+private:
+    Quat turn_ = Quat::Identity();
+    float elapsed_ = 0;
+    bool valid_ = true;
+};
+
 struct Decision {
     bool dynamic = false;
     bool hold_attitude = false;
@@ -50,7 +66,10 @@ struct Decision {
 class Protection {
 public:
     /** @brief Reset motion history, capture qualification, field baseline, and recovery count. */
-    void reset() { *this = Protection{}; }
+    explicit Protection(MotionUse use = MotionUse::Compass) : use_(use) {}
+    void reset() { *this = Protection{use_}; }
+    // Observe all gyro packets, including opposing rates that a window cancels.
+    void observeGyro(float dt, const Vec& gyro);
 
     // q_before is BODY->world before this tick's prediction; field is the
     // calibrated, offset-corrected field at the current gyro epoch in uT.
@@ -82,6 +101,9 @@ private:
     }
     /** @brief Discard accumulated recovery observations and restart the sample count. */
     void clearWindow_() { have_window_ = false; count_ = 0; }
+    MotionUse use_;
+    bool observed_ = false, gyro_hazard_ = false, gyro_quiet_ = true;
+    float peak_speed_ = 0;
     bool post_dynamic_ = false, gross_bias_ = false;
     bool have_accel_ = false;
     bool have_rate_ = false;

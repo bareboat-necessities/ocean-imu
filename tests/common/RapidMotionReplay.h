@@ -21,7 +21,7 @@ static void require(bool ok,const char* reason) {
 }
 struct Trial {
     std::unique_ptr<Backend> b=std::make_unique<Backend>();
-    ocean_imu::attitude::Protection protection;
+    ocean_imu::attitude::Protection protection{RAPID_BACKEND > 2 ? ocean_imu::attitude::MotionUse::INS : ocean_imu::attitude::MotionUse::Compass};
     ocean_imu::attitude::AccelHold accel_hold;
     ocean_imu::magnetic::Input magnetic;
     atoms3r_ical::MagAcquisition timing{};

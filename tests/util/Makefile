@@ -25,7 +25,7 @@ HEADERS = \
 	$(REPO_ROOT)/src/wave_dir/WaveDirectionReport.h \
 	$(REPO_ROOT)/src/detrend/AdaptiveWaveDetrender.h
 
-TARGETS = ins-helpers-test
+TARGETS = ins-helpers-test attitude_protection-test
 
 all: build test
 build: $(TARGETS)
@@ -37,3 +37,6 @@ ins-helpers-test: ins-helpers-test.cpp $(HEADERS)
 
 clean:
 	rm -f $(TARGETS) $(addsuffix .exe,$(TARGETS)) *.o
+
+attitude_protection-test: attitude_protection-test.cpp $(REPO_ROOT)/src/util/AttitudeProtection.cpp $(REPO_ROOT)/src/util/AttitudeProtection.h $(REPO_ROOT)/src/util/MagneticInput.h
+	$(CXX) $(CXXFLAGS) -o $@ attitude_protection-test.cpp $(REPO_ROOT)/src/util/AttitudeProtection.cpp
