@@ -196,10 +196,10 @@ these sequences must not be described as hardware conversion IDs. Typically
 corrections during a stall disappear, so the previous service count cannot be
 carried over without auditing actually applied events.
 
-Every accepted IMU frame contributes its actual independent proxy quaternion,
-attitude, accelerometer and gyro to a fixed snapshot history. On a new magnetic
-observation the shared layer interpolates these at the calibrated effective
-epoch. It refuses missing/gapped history and large attitude discontinuities;
+Every estimator update contributes its actual independent proxy quaternion,
+attitude, accelerometer and gyro to a fixed snapshot history. Gyro history
+retains every acquisition packet. Pending magnetic observations interpolate
+these snapshots at their calibrated effective epoch once bracketing frames exist. It refuses missing/gapped history and large attitude discontinuities;
 it never rewinds the proxy with a MEKF bias estimate. Reference/refinement and
 continuous hard-iron accumulation use the historical snapshots and time. Body
 offsets are subtracted before final vector/covariance transport. All seven
@@ -440,3 +440,9 @@ configuration; native timings do not establish a 200 Hz device guarantee.
    service on the same hardware history, then carry transport's bias/covariance
    derivatives and shared-noise terms into the existing finite-error supply
    inequality. Do not substitute a timestamp guess or an independent estimator.
+
+The full INS sketches retain gyro rotation history at every delivered gyro
+packet, while magnetic feedback and independent frontend snapshot capture run
+on fresh force packets. A packet between those frames is aligned using its
+own effective epoch, rather than assigning it the next force-frame timestamp.
+Standalone compass observers retain their gyro-frame feedback cadence.

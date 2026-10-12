@@ -85,7 +85,7 @@ struct Device {
 #endif
  }
 #elif HEAVE_BACKEND == 4
- Device(){auto& c=f.config();c.gravity_mps2=gravity;c.filter.gravity_mps2=gravity;c.run_filter_before_initialized=false;}
+ Device(){auto& c=f.config();c.gravity_mps2=gravity;c.filter.gravity_mps2=gravity;c.run_filter_before_initialized=false;c.filter.expected_mag_norm=0;c.auto_theta_from_wave_freq=true;f.reset();}
  Q attitude(){return f.snapshot().q_nb;} V bias(){return f.gyroscopeBiasBody();}
  V hardIron(){return V::Zero();} bool ready(){return f.initialized();}
  float height(){return f.snapshot().disp_zu.z();}
@@ -135,7 +135,7 @@ Metrics replay(bool split,bool previous=false){
   fields.push_back(truth.conjugate()*earth);if(fields.size()>9)fields.pop_front();
   if(i%8==0){field=fields.front()+noise(mr,mn,.5f);timing.acquired(now/1000,now,now,now);}
   const bool fresh=i%2==0||i==1;
-  if(fresh)acc=truth.conjugate()*V(0,0,-gravity-3*std::sin(omega*t))+noise(ar,an,.12f);
+  if(fresh)acc=truth.conjugate()*V(0,0,-gravity+3*std::sin(omega*t))+noise(ar,an,.12f);
   const V gyro=V(.042f*std::cos(.7f*t),0,0)+noise(gr,gn,.003f)+V(.002f,-.003f,.005f);
   if(!split&&!fresh)continue;
   const float gyro_dt=previous_now?float(now-previous_now)*1e-6f:.005f;previous_now=now;

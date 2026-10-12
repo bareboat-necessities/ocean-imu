@@ -32,11 +32,12 @@ pseudo measurements and recovery transitions as well as the accelerometer.
 ## Runtime behavior
 
 The guard suspends force-derived attitude feedback and bias learning when angular rate exceeds 1.5 rad/s,
-filtered angular acceleration exceeds 2 rad/s², specific-force magnitude differs
-from local gravity by more than 20%, or an update gap exceeds 20 ms. Angular
+filtered angular acceleration exceeds 2 rad/s², or an update gap exceeds 20 ms.
+Compass observers additionally gate specific-force magnitude more than 20% from gravity. Angular
 rate threshold uses the raw gyro norm, so a short rate spike also triggers a
 hold. Two 30 ms low-pass stages estimate angular acceleration. Release requires
-500 ms below the lower rate, angular-acceleration and force thresholds.
+500 ms below the lower rate and angular-acceleration thresholds, plus the
+lower force threshold for compass observers.
 
 Gyro propagation continues with the learned bias. Healthy, time-aligned magnetic
 heading feedback continues throughout the hold. A high gyro reading or wave
@@ -58,7 +59,7 @@ horizontal magnetic direction directly, so the antipodal heading has no
 zero-innovation trap. It requires a stable window of at least 750 ms and twelve
 new magnetic observations, with no magnetic gap over 120 ms and no acceleration
 gap over 20 ms. Gyro-transported held acceleration is not new gravity evidence;
-an acceleration dropout holds attitude/bias aiding and clears the capture window.
+an acceleration gap clears the capture window and protects aiding on resumption.
 Acceleration and magnetic observations need not arrive on the same tick.
 Angular rate must be below
 0.12 rad/s and acceleration within 4% of local gravity. Field strength, horizontal
@@ -110,8 +111,8 @@ a real field/timing outage can still expire service and must not substitute
 
 The shared reader now delivers each fresh gyro sample after the first
 accelerometer sample, including gyro-only updates. A pending accelerometer
-sample is consumed once by discrete Kalman updates. Continuous observers
-transport the held force vector into the new body axes between fresh samples.
+sample is consumed once by discrete Kalman updates. Compass continuous observers transport held force into the new body axes.
+Full INS observers instead compose gyro increments and update on fresh force.
 Calibration capture still counts only fresh acceleration observations.
 
 Compensated BMM150 XYZ and RHALL values, and their freshness decision, come from
@@ -209,3 +210,36 @@ magnetic field with the same strength and dip is not distinguishable from a
 heading error using these sensors alone. Existing OU-III proof results retain
 their original ordinary-aiding scope; they do not certify the new guard,
 covariance decorrelation or global capture transitions.
+
+## INS force clock and wave motion
+
+The five full marine INS sketches update their complete frontend, tuner,
+startup and heave pipeline only when a fresh accelerometer packet arrives.
+Every gyro packet still advances magnetic rotation history and the rotational
+motion guard. `GyroWindow` composes calibrated raw body rotations in order and
+supplies their equivalent rate and full elapsed interval at the next force
+packet. It does not discard intervening gyro increments or subtract the main
+filter bias from the measurement-only private frontend. Each estimator retains
+its own bias correction; exact within-window bias/coning equivalence is not
+claimed. During an acceleration dropout, INS outputs hold until fresh force
+returns; elapsed gaps remain subject to motion protection.
+
+`MotionUse::INS` retains gyro-rate, angular-acceleration and freshness/gap
+protection but does not latch on specific-force norm. Real vertical wave
+acceleration can exceed the compass norm gate without providing the continuous
+quiet interval that gate requires to release. Compass norm protection and the
+strict settled gravity/magnetic capture qualification remain in place.
+
+Magnetic packets arriving between force frames retain their effective epoch.
+Historical independent frontend snapshots are interpolated at that epoch,
+including zero-delay packets. Recovery freshness consumes each source sequence
+once at the force cadence.
+
+The five `ins_heave-test` binaries compare 100 Hz combined acquisition with
+200 Hz gyro / 100 Hz acceleration using the complete production facades,
+bounded vertical displacement, slow roll, sensor noise and delayed magnetic
+packets. PII's filtered phase response is compared with its own combined-clock
+reference. The seven-backend rapid-motion tests cover core protection and
+recovery; they do not substitute for complete device dropout testing. The PII
+heading test also compiles the actual sketch update body and checks a turn,
+magnetic outage and restoration with split acquisition.
