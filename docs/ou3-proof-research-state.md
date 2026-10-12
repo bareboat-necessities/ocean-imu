@@ -44,6 +44,20 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Magnetic-input timing scope
 
+The calibration-only follow-up exposed two binding mismatches in
+`python3 -m tools.stability.ou3_theorem.build_evidence`: the edited ledger blob
+and the native-secant whole-source digest (**E: implementation/provenance**).
+The recorded digest matches immutable main `c9c41de0108816a19b61cb35bd07a961ec2ce88a`.
+All 36 shipping files in the actual native-probe compiler include closure are
+byte-identical to that main; only the wizard and timing fitter changed outside
+that closure. The existing binding receipt records the closure, old/new digests
+and unchanged numerical-payload hash. No replay, numerical result, acceptance
+gate or qualification flag is changed by this binding refresh. The invalidated
+hypothesis is that whole-tree identity survives calibration-only edits; retained
+facts are the unchanged probe/dependencies and finite payload. Hardware timing
+qualification remains the limiter. Next falsifiable check: rerun the unchanged
+source/evidence validators and device capture diagnostics.
+
 Calibration usability regressions (**E: implementation/diagnostic failure**)
 reject the old hypothesis that scalar delay identification needs rank-two gyro
 covariance: variable-rate single-axis rocking identifies an injected 40 ms lag.

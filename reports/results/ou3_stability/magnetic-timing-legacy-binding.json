@@ -17,6 +17,70 @@
     "scope": "240 s carried legacy execution; complete last 40 s operation stream; both untapped controls match",
     "stream_sha256": "d1d511551e3ddeb25adcf9fa1c742533d3d9fed2710842f2dbc0be29471c8be9"
   },
+  "calibration_only_source_binding_refresh": {
+    "baseline_commit": "c9c41de0108816a19b61cb35bd07a961ec2ce88a",
+    "baseline_source_tree_sha256": "106c1af9b22a574939243741835eac3fd88642a4f0a336ba50fbbee4ed2a4326",
+    "changed_dependencies": [],
+    "changed_shipping_paths_outside_closure": [
+      "src/AtomS3R/AtomS3R_ImuCalWizard.h",
+      "src/imu_calibrate/MagTimingCal.h"
+    ],
+    "compiler_dependency_command": [
+      "g++",
+      "-std=c++20",
+      "-O1",
+      "-DEIGEN_UNROLLING_LIMIT=0",
+      "-DEIGEN_NON_ARDUINO",
+      "-Isrc",
+      "-isystem",
+      "EIGEN_3_4_0_INCLUDE",
+      "-MM",
+      "tools/stability/ou3_theorem/planar_native_secant_probe.cpp"
+    ],
+    "native_replay_performed": false,
+    "new_source_tree_sha256": "55e721d0dfa5b86eb179162dbdd91672d0d8bda21d1fb92d5ac0878fcf072f02",
+    "numerical_payload_changed": false,
+    "scope": "Calibration-only source binding refresh; exact probe dependencies are unchanged, no timed-path or theorem promotion.",
+    "shipping_dependency_sha256": {
+      "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+      "src/detrend/AdaptiveWaveDetrender3D.h": "3a09bb3dd470744b5e5e440269741266d60ea97ae3fea4a302f9d91ced2cdfc8",
+      "src/freq/AranovskiyFreqTracker.h": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125",
+      "src/freq/FirstOrderIIRSmoother.h": "b7f05229ca3bfccc4d6b2fda87c58d2eef45e1489f999ada70dcdd7dcc4ce7a2",
+      "src/freq/FrequencyTrackerPolicy.h": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3",
+      "src/freq/KalmANFFreqTracker.h": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc",
+      "src/freq/PLLFreqTracker.h": "5199262b5dc37ee68c51b6acdc55d4f08bc8e9561349cb87d8e4adbd2165a76e",
+      "src/freq/SchmittTriggerZCFreqTracker.h": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
+      "src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+      "src/kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+      "src/kalman_common/MarineWaveFrontEnd.h": "52a20e03b14f22d438050eb9b9b3c36ddf9dd39e9f43ab0b6692baf64e453943",
+      "src/kalman_common/ProxyStartupFusion.h": "d7bc77901adfbe788617222ed7ab1f281c679c0d20a5abab8a799acd10370a87",
+      "src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
+      "src/kalman_common/SeaStateFusionDefaults.h": "e58da410e895754e8c18a478e4f131da232f23b8134cd55abf560a54e334fecf",
+      "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
+      "src/kalman_common/SeaStateOUFamilyDefaults.h": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
+      "src/kalman_ou_common/KalmanOUCoreMath.h": "714524883769572a141971074317d2aa62ad23f6cf022eb1f2ec735375b09be2",
+      "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0",
+      "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "64d5419f9b4018ab165fda234eaf7282dbd271b60bdb30c4e05d3940ebccdb32",
+      "src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
+      "src/tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+      "src/tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+      "src/tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+      "src/tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+      "src/tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+      "src/tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+      "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+      "src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+      "src/util/MagneticRotation.h": "8e29130fff1aa9abeda19d4b9bb00b336176e545bb02d839c0515a93d6fffb3a",
+      "src/util/MeasurementCovariance.h": "829634df89a5c32a5cad90beccc3a706590e659423179f87f9788dbf7431aad1",
+      "src/util/WaveFilesSupport.h": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128",
+      "src/wave_dir/KalmanWaveDirection.h": "efa51d7b1ca1da5d5894bdb19ce227203d92882e564ab52345cbd39f0d9ca5eb",
+      "src/wave_dir/VesselRaoEqualizer.h": "11b77b3af39488cd0f038bfe070c53ee815f000a090051a85dbb955546f1fa07",
+      "src/wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
+      "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+      "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2"
+    },
+    "unchanged_payload_sha256": "1371e373a7187aa254c9ce3c534d1d6f075936af181eaf7b1f860f3a606b3ffe"
+  },
   "calibration_timing_revalidation": {
     "baseline_commit": "453a1dfa66c7f90f4936f50940443fb0844d7959",
     "command": "python3 -m tools.stability.ou3_theorem.planar_native_secants --eigen EIGEN_DIR --output OUTPUT",
@@ -99,7 +163,7 @@
     "planar-native-secants-diagnostic.json": {
       "new_bindings": {
         "shipping_header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0",
-        "shipping_source_tree_sha256": "106c1af9b22a574939243741835eac3fd88642a4f0a336ba50fbbee4ed2a4326"
+        "shipping_source_tree_sha256": "55e721d0dfa5b86eb179162dbdd91672d0d8bda21d1fb92d5ac0878fcf072f02"
       },
       "old_bindings": {
         "shipping_header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",
