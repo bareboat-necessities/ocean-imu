@@ -48,6 +48,10 @@ static imu_cal::MagTimingFit replay(unsigned mode, unsigned lag=40000, uint32_t 
         if(n%imu_stride==0) cal.add(now,w,seq!=0,seq,stamp,observed,n>=3000 ? 1 : 0);
     }
     const auto r=cal.fit();
+    check(!r.ok || cal.segmentQuality(0).ok,
+          "accepted fit cannot be blocked by training progress");
+    check(cal.segmentQuality(1).ok==r.ok && cal.segmentQuality(1).reason==r.reason,
+          "validation progress uses the disjoint fit, including capture disagreement");
     std::printf("mode=%u lag=%u ok=%d reason=%s fit=%u width=%g allowance=%g rms=%g improve=%g pairs=%u/%u\n",
         mode,lag,r.ok,imu_cal::magTimingReason(r.reason),r.delay_us,r.fit_width_s,r.residual_time_s,r.validation_rms_rad,r.improvement,r.train_pairs,r.validation_pairs);
     const auto train_pairs=cal.pairs(0);

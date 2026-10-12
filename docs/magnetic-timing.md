@@ -246,8 +246,11 @@ when more evidence is needed. Tilt left and right in a comfortable back-and-fort
 rhythm (roughly one rocking cycle per second), away from metal. Full rotations
 and simultaneous all-axis motion are not required. The display shows usable
 pair count and the current fit limitation instead of just elapsed time.
-The second segment is held out from training-delay selection. Its quality can
-end capture but cannot change the frozen training delay. A failed first segment
+Training progress checks only the training profile and residual; held-out
+improvement and timing-noise limits are applied to the disjoint validation
+capture. Validation progress uses the final two-capture fit, without imposing
+an extra training-width gate on the validation profile. It can end capture
+but cannot change the frozen training delay. A failed first segment
 reports its reason immediately; a failed second segment can be retried while
 retaining the first. Retry, redo and abort remain available; a failed fit cannot
 save a magnetic calibration with an invented or missing delay.

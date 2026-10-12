@@ -60,12 +60,13 @@ public:
     /** Return the number of pairs rejected for unavailable lag history since reset(). */
     unsigned missingHistory() const { return missing_; }
     /**
-     * Evaluate one segment against itself for capture progress only.
-     * An invalid index returns a default failed fit. Saving always requires
-     * fit() with disjoint training and validation data.
+     * Check training readiness using only training criteria; check validation
+     * progress against the retained training capture. An invalid index returns
+     * a default failed fit. Saving always requires fit() with disjoint data.
      */
     MagTimingFit segmentQuality(unsigned segment) const {
-        return segment < 2 ? evaluate(scores_[segment], scores_[segment]) : MagTimingFit{};
+        if (segment == 0) return evaluate(scores_[0], scores_[0], true);
+        return segment == 1 ? fit() : MagTimingFit{};
     }
     /**
      * Append calibrated gyro (rad/s) at now and, when have is true, an unaveraged
@@ -122,7 +123,7 @@ private:
      * a narrow profile, low residuals and held-out improvement. A failed result
      * reports the first failed criterion; only ok permits using the fitted delay.
      */
-    static MagTimingFit evaluate(const Scores& train, const Scores& validation) {
+    static MagTimingFit evaluate(const Scores& train, const Scores& validation, bool training_only = false) {
         MagTimingFit out;
         out.train_pairs=train.pairs; out.validation_pairs=validation.pairs;
         if (out.train_pairs < 50 || out.validation_pairs < 50) return out;
@@ -154,6 +155,16 @@ private:
         for(unsigned i=0;i<N;++i) if(a[i]<=a[k]+tolerance) { lo=std::min(lo,i); hi=std::max(hi,i); }
         if(hi-lo>12) { out.reason=MagTimingReason::BroadProfile; return out; }
         out.fit_width_s=std::max(.002f, float(double(hi-lo)*.001));
+        // A training capture need not pass held-out improvement or noise gates.
+        // Validation is checked with the actual training-selected delay, never
+        // with an extra training-width requirement on the held-out profile.
+        if (training_only) {
+            out.validation_pairs=0;
+            out.validation_rms_rad=out.improvement=0;
+            out.ok=out.train_rms_rad<.05f;
+            out.reason=out.ok ? MagTimingReason::Ready : MagTimingReason::FieldResidual;
+            return out;
+        }
         // Residual-to-time conversion is a model allowance, NOT a measured
         // jitter standard deviation. Keep a 25 ms floor for asynchronous phase.
         const double sensitivity=std::sqrt(validation_curve)/.01;
