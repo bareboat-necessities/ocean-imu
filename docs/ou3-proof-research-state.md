@@ -1018,7 +1018,8 @@ Physical S is never reset by the estimator pseudo-measurement.
   sketch layer. The gate, recapture/bias repair, gyro-only frame delivery and
   the runtime application of the magnetic timing fit are removed; v2.4.2
   runtime behaviour is restored, and the qMEKF right-Jacobian covariance
-  propagation/reset correction is retained. Retained facts: the shipping
+  propagation/reset correction is retained (docs/qmekf-error-geometry.md).
+  Retained facts: the shipping
   OU-III estimator equations are unchanged from v2.4.2, and the timing record
   is calibration evidence only. Current limiter: AtomS3R bench and on-water
   confirmation. Next falsifiable experiment: `ins_sketch_heave-test` in each

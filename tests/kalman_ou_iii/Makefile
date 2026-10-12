@@ -20,6 +20,9 @@ all: build test
 TARGETS += mag_timing-test
 mag_timing-test: mag_timing-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+TARGETS += live_aiding-test
+live_aiding-test: live_aiding-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 build: $(TARGETS)
 test: ensure-sim-data $(TARGETS)
 	bash ./run_tests.sh
