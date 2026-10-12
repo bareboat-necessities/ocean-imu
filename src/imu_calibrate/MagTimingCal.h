@@ -9,6 +9,7 @@ enum class MagTimingReason : uint8_t {
     Ready, MorePairs, DelayRange, SegmentMismatch, WeakSignal, BroadProfile,
     FieldResidual, NoImprovement, TimingNoise
 };
+/** Return a static UI/serial message, or "Timing invalid" for an unknown reason. */
 inline const char* magTimingReason(MagTimingReason reason) {
     switch (reason) {
     case MagTimingReason::Ready: return "Delay validated";
@@ -41,20 +42,38 @@ class MagTimingCal {
         std::array<double, N> cost{}; unsigned pairs = 0;
     };
 public:
+    /** Clear both capture scores, gyro history, observation state and diagnostics. */
     void reset() { history_.reset(); scores_ = {}; have_ = false; seen_ = false; gaps_ = missing_ = 0; }
+    /**
+     * Restart segment 0 (training) or 1 (validation), preserving the other scores
+     * and diagnostic counters. Always clear history and observation state;
+     * an invalid segment leaves both score sets intact.
+     */
     void resetSegment(unsigned segment) {
         if (segment < 2) scores_[segment] = {};
         history_.reset(); have_ = seen_ = false;
     }
+    /** Return the usable pair count for segment 0 or 1, or zero for an invalid index. */
     unsigned pairs(unsigned segment) const { return segment < 2 ? scores_[segment].pairs : 0; }
+    /** Return the number of rejected gyro history pushes since reset(). */
     unsigned gaps() const { return gaps_; }
+    /** Return the number of pairs rejected for unavailable lag history since reset(). */
     unsigned missingHistory() const { return missing_; }
-    // Capture progress only. Saving ALWAYS requires fit() with disjoint data.
+    /**
+     * Evaluate one segment against itself for capture progress only.
+     * An invalid index returns a default failed fit. Saving always requires
+     * fit() with disjoint training and validation data.
+     */
     MagTimingFit segmentQuality(unsigned segment) const {
         return segment < 2 ? evaluate(scores_[segment], scores_[segment]) : MagTimingFit{};
     }
-    // Two disjoint capture segments: segment 0 fits, segment 1 validates.
-    // Use unaveraged spatially calibrated magnetic vectors and calibrated gyro.
+    /**
+     * Append calibrated gyro (rad/s) at now and, when have is true, an unaveraged
+     * spatially calibrated field (microteslas) identified by sequence and
+     * observed_us. Both timestamps are microseconds on the delivered gyro clock.
+     * Accumulate a 120..180 ms pair only when every candidate lag has history.
+     * Use disjoint captures: segment 0 trains and segment 1 validates.
+     */
     void add(uint32_t now, const V3& gyro, bool have, uint32_t sequence,
              uint32_t observed_us, const V3& field, unsigned segment) {
         using ocean_imu::magnetic::Status;
@@ -94,8 +113,15 @@ public:
         }
         anchor(field, observed_us, segment);
     }
+    /** Select a delay from segment 0 and accept it only if segment 1 validates it. */
     MagTimingFit fit() const { return evaluate(scores_[0], scores_[1]); }
 private:
+    /**
+     * Compare mean loss profiles and return the training-selected delay with fit
+     * diagnostics. Require sufficient pairs, identifiable and agreeing minima,
+     * a narrow profile, low residuals and held-out improvement. A failed result
+     * reports the first failed criterion; only ok permits using the fitted delay.
+     */
     static MagTimingFit evaluate(const Scores& train, const Scores& validation) {
         MagTimingFit out;
         out.train_pairs=train.pairs; out.validation_pairs=validation.pairs;
@@ -138,6 +164,7 @@ private:
         else { out.reason=MagTimingReason::Ready; out.ok=true; }
         return out;
     }
+    /** Start the next pair at a previously validated nonzero field and timestamp. */
     void anchor(const V3& m,uint32_t t,unsigned segment) {
         have_=true; anchor_norm_=m.norm(); anchor_unit_=m/anchor_norm_; anchor_us_=t; segment_=segment;
     }

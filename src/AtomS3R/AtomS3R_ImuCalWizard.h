@@ -117,6 +117,11 @@ public:
   }
 
 private:
+  /**
+   * Run calibration stages and retry menus, preserving compatible gyro/magnetic
+   * data in accelerometer-only mode. Fill out_saved and return true only after
+   * saving and validating readback; return false on cancellation or save failure.
+   */
   bool runAndSave_(ImuCalBlobV5& out_saved) {
     Serial.println("[WIZ] start");
 
@@ -884,6 +889,13 @@ private:
     return false;
   }
 
+  /**
+   * Capture and validate magnetic delay using the current spatial/gyro fits.
+   * Each segment collects for 14..45 seconds unless cancelled; retries retain
+   * a successful training segment. Update timing_fit_ and display diagnostics
+   * after capture. Return false for missing configuration, cancellation or a
+   * failed fit; true means both independent captures passed the final fit.
+   */
   bool captureMagTiming_() {
     if (!activeMagTimingConfiguration()) return false;
     timing_fit_ = {};

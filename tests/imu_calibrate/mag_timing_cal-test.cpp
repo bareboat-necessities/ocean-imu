@@ -12,6 +12,13 @@
 using namespace ocean_imu::magnetic;
 using namespace atoms3r_ical;
 static void check(bool v,const char* why) { if(!v) { std::fprintf(stderr,"FAIL %s\n",why); std::exit(1); } }
+/**
+ * Return the fit from two synthetic 15-second captures and check retry isolation.
+ * Mode selects multi-axis motion (0), constant rate (1), stillness (2), phase
+ * jitter (3), conflicting validation (4), single-axis rocking (5), field-axis
+ * rotation (6), or noisy rocking with jitter (7) and additional pauses (8).
+ * Lag and clock origin are microseconds; sensor strides count 5 ms ticks.
+ */
 static imu_cal::MagTimingFit replay(unsigned mode, unsigned lag=40000, uint32_t origin=1000000, unsigned mag_stride=8, unsigned imu_stride=1) {
     imu_cal::MagTimingCal cal;
     Q q=Q::Identity(); std::array<Q,64> poses{};
@@ -128,6 +135,7 @@ static void runtime() {
     input.advance(origin+110000,w,0,timing,field,hard);
     check(!input.currentField(hard,aligned),"invalid lag rejected");
 }
+/** Run delay, ambiguity, runtime and persistence regressions; exit on any failure. */
 int main() {
     Eigen::internal::set_is_malloc_allowed(false);
     for(unsigned lag:{20000u,40000u,60000u}) {
