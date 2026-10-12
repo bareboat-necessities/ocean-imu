@@ -1895,3 +1895,18 @@ relabeled as new evidence. Hardware validation and CI remain necessary.
 **Next falsifiable experiment.** Compare split and combined force-clock heave
 on all five production facades, preserve existing heading/recovery limits,
 then replay recorded device data and check motion/outage resumption.
+
+**Firmware / evidence failures (E).** The ESP32 3.3.11 default Linux build
+linked compass Mahony, compass qMEKF and OU-II, then failed OU-III linking with
+`dangerous relocation: l32r: literal target out of range` in `time_update`.
+The next experiment disables Eigen expression unrolling in that sketch to
+reduce generated code while retaining equations and default IDE flags.
+A native force-clock replay with `EIGEN_UNROLLING_LIMIT=0` already preserves
+the existing large-heel/inverted-startup acceptance limits. Device arithmetic
+and linker qualification still require the actual firmware build.
+
+`python3 tools/ou_evidence_contract.py --auto` also failed with
+`validation: replay dependency differs from replay provenance` and the
+corresponding robustness error. These statistical bundles predate main's
+heading changes and the new test Makefile. Full regeneration is running in CI;
+no numerical bundle has been relabeled as fresh evidence.

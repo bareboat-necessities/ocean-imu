@@ -41,7 +41,7 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "2f76b1dcc6175fea63ab71457f4653d60ed2f287"
+      "git_blob_sha": "b85652f494d1dd69a6814d3d4265967ec62a4849"
     },
     {
       "path": "src/util/AttitudeProtection.h",
@@ -185,7 +185,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "27dae0b82a929d1602e251788a8f855066aa8137"
+      "git_blob_sha": "a61fc9458ab305554a943d69b93583158008154d"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -1728,6 +1728,7 @@
     "hardware_qualified": false,
     "no_5ms_frontend_certificate_transferred": true,
     "raw_gyro_history_preserved": true,
-    "theorem_closed": false
+    "theorem_closed": false,
+    "ou3_device_eigen_unrolling_limit": 0
   }
 }

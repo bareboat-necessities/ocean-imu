@@ -30,7 +30,7 @@ void replay(float roll,float pitch) {
     cfg.sigma_m=V::Constant(.8f); cfg.mag_continuous_hard_iron=false;
     fusion->begin(cfg); fusion->raw().setTauScaledPseudoUpdateCadence(false);
     ocean_imu::attitude::Protection protection{ocean_imu::attitude::MotionUse::INS};
-    ocean_imu::attitude::AccelHold accel_hold;
+    ocean_imu::attitude::GyroWindow gyro_window;
     ocean_imu::magnetic::Input magnetic;
     magnetic.reset(.00135f,Eigen::Matrix3f::Identity()*.64f);
     atoms3r_ical::MagAcquisition timing;
@@ -67,21 +67,25 @@ void replay(float roll,float pitch) {
         const uint32_t now=1000000u+static_cast<uint32_t>(i)*5000u;
         if(i%8==0) timing.acquired(now/1000,now,now,now);
         auto& core=fusion->raw().mekf();
-        const V measured=accel_hold.update(accel,i%2==0,gyro-core.gyroscope_bias_body(),dt);
+        protection.observeGyro(dt,gyro);
+        gyro_window.push(gyro,dt);
         magnetic.advance(now,gyro-core.gyroscope_bias_body(),
             ocean_imu::magnetic::covarianceBound(core.gyroscope_bias_covariance_body()),
             timing,field,fusion->magHardIronBodyUT());
+        if(i%2!=0) continue;
+        V window_rate; float force_dt; gyro_window.take(window_rate,force_dt);
+        const V measured=accel;
         V current_field=V::Zero();
         const bool field_valid=magnetic.currentField(fusion->magHardIronBodyUT(),current_field);
         const V& reference=core.magnetic_reference_world();
-        const auto decision=protection.step(dt,gyro,core.gyroscope_bias_body(),measured,
-            i%2==0,gravity,fusion->attitudeQuat(),current_field,field_valid,
-            magnetic.newSource(),now,std::atan2(reference.y(),reference.x()),
+        const auto decision=protection.step(force_dt,window_rate,core.gyroscope_bias_body(),measured,
+            true,gravity,fusion->attitudeQuat(),current_field,field_valid,
+            magnetic.takeNewSource(),now,std::atan2(reference.y(),reference.x()),
             fusion->isLive()&&fusion->hasMagNorthLock());
         fusion->raw().setAttitudeAidingEnabled(!decision.hold_attitude);
-        fusion->raw().setAccelerometerFresh(i%2==0);
+        fusion->raw().setAccelerometerFresh(true);
         const bool due=magnetic.due(gate,true,now/1000);
-        fusion->update(dt,gyro,measured);
+        fusion->update(force_dt,window_rate,measured);
         magnetic.capture(fusion->raw().startupProxyQuat(),fusion->attitudeQuat(),measured,gyro);
         if(due) {
             magnetic.correct(*fusion,now);
@@ -93,7 +97,7 @@ void replay(float roll,float pitch) {
         require(core.covariance_full().allFinite(),"nonfinite covariance");
         require(fusion->attitudeQuat().coeffs().allFinite(),"nonfinite attitude");
         max_heave=std::max(max_heave,std::abs(core.get_position().z()));
-        current_hold=decision.hold_attitude&&!decision.dynamic ? current_hold+dt : 0;
+        current_hold=decision.hold_attitude&&!decision.dynamic ? current_hold+force_dt : 0;
         max_hold=std::max(max_hold,current_hold);
         tail_error=fusion->attitudeQuat().angularDistance(truth)*degrees;
     }

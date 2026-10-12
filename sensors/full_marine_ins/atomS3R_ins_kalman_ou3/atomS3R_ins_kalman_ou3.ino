@@ -37,6 +37,11 @@
 #ifndef EIGEN_STACK_ALLOCATION_LIMIT
   #define EIGEN_STACK_ALLOCATION_LIMIT 0
 #endif
+// Keep fixed-size Eigen expressions in loops on Xtensa. Large unrolled
+// prediction expressions can put literal loads beyond the linker's range.
+#ifndef EIGEN_UNROLLING_LIMIT
+  #define EIGEN_UNROLLING_LIMIT 0
+#endif
 #include <ArduinoEigenDense.h>
 
 #include <ArduinoOceanImu.h>
