@@ -89,6 +89,19 @@ def project(path, source):
     """Project current source onto the declared ordinary-aiding legacy execution."""
     source = ordinary_aiding(path, source)
     if path == PATHS[0]:
+        # This declaration selects a separate Arduino/Xtensa object only.
+        # It is preprocessed out of the native evidence execution. Require
+        # the complete declaration, including its platform guard, exactly.
+        source = replace_once(source, '''#if defined(ARDUINO_ARCH_ESP32) && defined(__XTENSA__)
+// Emit the shipping prediction in its own translation unit. Keeping it in
+// the large Arduino sketch object can put its literal pool beyond the L32R
+// reach on Xtensa, even though the function itself is small enough. The
+// library .cpp instantiates this same implementation; other configurations
+// and native builds retain the header-only template.
+extern template void ocean_imu::kalman::Kalman3D_Wave_OU_III<float, true, true>::time_update(
+    const Eigen::Matrix<float, 3, 1>&, float);
+#endif
+''')
         source = source.replace('#include "util/MeasurementCovariance.h"', '')
         start = source.index('    // Full covariance in physical body axes')
         end = source.index('    // Extended-only API:', start)

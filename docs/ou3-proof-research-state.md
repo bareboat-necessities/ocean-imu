@@ -424,6 +424,18 @@ first-order transport approximation remains. No theorem or entry claim changes.
 
 ## Evidence
 
+**E — Windows Arduino/Xtensa link failure.** The reported ESP32 3.3.11
+build fails with `l32r: literal target out of range` in the shipping float,
+gyro-bias/accel-bias OU-III `time_update` after PRs #671/#673. This invalidates
+the assumption that successful native tests and the older Linux MCU profile
+qualify the Windows IDE build. Prediction equations, state layout, covariance,
+scheduler and prior mathematical results are retained; no instability is
+inferred. The build repair emits the same prediction template in a separate
+Arduino/Xtensa library object. Local `make all` also encountered storage and
+compiler-memory exhaustion (class E), so incomplete runs are not passing
+validation. Next falsifiable check: link every shipped sketch on Windows and
+Linux with the reported core and default IDE flags. No theorem is promoted.
+
 **D — an inverse-domain estimate alone does not settle the linked receipt.**
 The exact failed sufficient step is promoting CR45's covariance-column
 payment to `alpha>=dbar` without checking the SAME prefix's threshold.
