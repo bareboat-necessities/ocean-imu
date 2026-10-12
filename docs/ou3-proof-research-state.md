@@ -107,6 +107,27 @@ then retry unchanged code while cleaning completed directories' transient output
 Both AtomS3R retries pass: qMEKF uses 823747 flash / 116276 RAM bytes; TFG
 uses 1069043 flash / 45028 RAM bytes. Full native-suite retry is in progress;
 its outcome and the required CI gates remain PR metadata.
+The combined-tree `make -C tests/validation test` stops at
+`python3 ../../tools/ou_evidence_contract.py --auto`: validation replay provenance
+mismatches `src/ahrs/Mahony_AHRS.h`,
+`src/kalman_ou_ii/Kalman3D_Wave_OU_II.h`,
+`src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h`,
+`src/tuner/VerticalAccelComplementary.h` and `src/util/MagneticRotation.h`;
+robustness provenance mismatches the Mahony, vertical-complementary and magnetic-
+rotation paths (E: stale full-replay evidence). The new rapid-motion controls and
+ordinary-aiding native proof diagnostics pass their own source bindings, but do
+not refresh these separate statistical replays. The current merge limiter is
+genuine full OU/TFG evidence regeneration and validation of its published tree;
+the branch's automatic full-evidence CI is queued. Do not replace old replay
+hashes without rerunning their simulations or weaken the publication gate.
+The direct Python suite runs 1137 tests: four failures and two errors concern
+those stale replay bundles; one CMake check is skipped because CMake is absent.
+A fifth failure expected one synthetic stale-source error but saw two because
+this ledger changed during the test (E: overlapping edit/test execution).
+All three provenance tests pass when rerun on a stable tree. The interrupted
+parallel-build attempt could schedule top-level tests before build completion;
+its output is discarded. The retry keeps top-level build/test ordering and
+parallelizes only recursive compilation, with no source or threshold change.
 The unchanged evidence builder rejects stale source/record hashes after the
 merge (E); refresh only the bindings backed by this new replay and the unchanged
 legacy-operation audit. No numerical record or theorem gate is weakened.
