@@ -38,6 +38,11 @@ Decision Protection::step(float dt, const Vec& gyro, const Vec& bias, const Vec&
             std::isfinite(gravity) && gravity > 0;
         const float norm_error = finite ? std::abs(acc.norm() / gravity - 1) : 1;
         const float speed = finite ? gyro.norm() : 100;
+        // The existing gross-bias repair needs a noise-qualified observed-rate
+        // fit. Keep that corrupt state protected until the fit closes; the
+        // ordinary-bias timeout must not resume corrections that would
+        // invalidate its inherited-state recovery window.
+        gross_bias_ = bias.allFinite() && bias.norm() > .08f;
         // A ramp can create tangential acceleration well before the rate
         // threshold is reached. Filter both rate and its derivative at 30 ms to avoid
         // treating sample-to-sample gyro noise as angular acceleration.

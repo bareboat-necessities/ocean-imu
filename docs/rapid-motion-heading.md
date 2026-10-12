@@ -61,7 +61,10 @@ strength/dip fingerprint must also pass.
 After a dynamic interval the filter also attempts this settled capture when
 the discrepancy is small. Extra settling hold is limited to two seconds once
 the dynamic latch clears. A newly detected large discrepancy also permits at
-most two seconds of capture-only hold. If continued motion prevents capture,
+most two seconds of capture-only hold when the learned gyro bias is within
+the existing 0.08 rad/s gross-bias threshold. A gross bias requiring the existing
+noise-qualified repair stays protected until its independent capture closes.
+If continued motion prevents ordinary-bias capture,
 ordinary aiding resumes while the capture request remains pending; a later
 qualified settled window may still replace attitude. An unqualified discrepancy
 must not permanently disable magnetic service or the coupled OU/heave corrections.
@@ -88,6 +91,12 @@ aiding continues; additional world-acceleration uncertainty lets the retained
 navigation state adjust to the corrected pose. These recovery policies and
 thresholds are detailed in the [equation audit](rapid-motion-math.md#inherited-state-recovery).
 Debug output includes `[ATT] hold=… dynamic=… recoveries=…`.
+
+The shared graphical compass displays `--- / WAIT` without a needle when its
+heading/service flag is false or its heading is nonfinite. PII's two-second
+magnetic-service timeout can expire during a protected turn even though its
+quaternion still propagates the heading; that unavailable display must not
+substitute `0 / N`. A valid measured zero-degree heading still displays north.
 
 ## Acquisition and time
 

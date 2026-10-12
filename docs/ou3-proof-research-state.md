@@ -60,7 +60,19 @@ the request remains available for later qualified capture. Existing core,
 covariance and local proof identities are retained. Current limiter: AtomS3R
 bench confirmation. Next falsifiable experiment: repeat the same physical
 tilt/turn sequence while recording `[ATT]`, magnetic service, heading and raw
-heave; verify no non-dynamic pending hold starves accepted corrections.
+heave; verify no ordinary-bias non-dynamic pending hold starves accepted corrections.
+
+The first timeout trial also released a grossly corrupted qMEKF gyro bias before
+its noise-qualified capture closed, leaving a 20.49-degree inherited-state tail
+(**E**, invalid timeout scope). The existing 0.08 rad/s gross-bias threshold now
+retains that protected repair window; the two-second bound applies to ordinary
+bias estimates. No measurement/covariance or capture-quality threshold is relaxed.
+The PII sketch's actual update-body replay retains its 137-degree propagated
+heading across a protected turn and resumes magnetic aiding, but its graphical
+timeout previously drew `0 / N` with no visible invalid-status strip. The shared
+renderer now suppresses the unavailable needle and shows `--- / WAIT`; actual
+zero-degree headings remain valid. These are runtime/output repairs, not proof
+results. Hardware qualification remains the limiter.
 
 Current recovery hypothesis: qualified two-vector/gyro bias repair,
 physical-coordinate TFG covariance reset, and explicit treatment of corrupted

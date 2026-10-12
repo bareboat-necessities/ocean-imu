@@ -74,11 +74,12 @@ private:
     // A requested capture must not starve ordinary aiding indefinitely when
     // continuing motion prevents the settled observation window from closing.
     bool holdAttitude_() const {
-        return dynamic_ || ((pending_ || post_dynamic_) && recovery_wait_ < 2.0f);
+        return dynamic_ || (pending_ && gross_bias_) ||
+            ((pending_ || post_dynamic_) && recovery_wait_ < 2.0f);
     }
     /** @brief Discard accumulated recovery observations and restart the sample count. */
     void clearWindow_() { have_window_ = false; count_ = 0; }
-    bool post_dynamic_ = false;
+    bool post_dynamic_ = false, gross_bias_ = false;
     bool have_accel_ = false;
     bool have_rate_ = false;
     Vec rate_lpf_ = Vec::Zero(), angular_accel_lpf_ = Vec::Zero();
