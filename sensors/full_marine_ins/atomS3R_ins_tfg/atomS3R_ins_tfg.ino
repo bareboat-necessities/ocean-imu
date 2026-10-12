@@ -852,6 +852,12 @@ private:
       static_cast<double>(m_cal_.y()),
       static_cast<double>(m_cal_.z()));
     mag_input_.print(Serial);
+    Serial.printf("[INS_AB] t_ms=%lu filter=TFG heading_deg=%.3f heading_valid=%u "
+                  "heave_raw_m=%.5f heave_clean_m=%.5f mag_norm_uT=%.3f mag_fresh=%u mag_used=%u\n",
+                  static_cast<unsigned long>(now_ms), static_cast<double>(heading_deg_),
+                  heading_valid_ ? 1U : 0U, static_cast<double>(heave_raw_m_),
+                  static_cast<double>(heave_wave_clean_m_), static_cast<double>(mag_norm_uT_),
+                  mag_fresh_ ? 1U : 0U, mag_input_.lastApplied() ? 1U : 0U);
   #endif
 #endif
   }
