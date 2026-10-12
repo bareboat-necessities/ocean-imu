@@ -63,10 +63,10 @@
       }
     },
     "planar-native-secants-diagnostic.json": {
-      "record_sha256": "67e03572acfce269ff4715737020e11a81f3aff147f46ed26b2b4133dc743ffc",
+      "record_sha256": "22b0fac0a3d18c94a4cc81c61da87d0d26989c94e36b7086417ebccc9b969d0a",
       "source_bindings": {
         "shipping_header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b",
-        "shipping_source_tree_sha256": "242ab5f160d492c0633db69fec0248baede3be8eff49b85c9597e32073b1b3b2"
+        "shipping_source_tree_sha256": "3d962c8e6ae9a6d133bd2dbefda8f5a7f90993b20416f0651a688735c6b014e7"
       }
     },
     "planar-service-stream-diagnostic.json": {

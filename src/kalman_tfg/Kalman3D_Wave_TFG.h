@@ -238,15 +238,9 @@ class Kalman3D_Wave_TFG {
         aw_cov_floor_pending_ = true;
     }
 
-    // Rewrite the heading of the attitude, keeping the estimated tilt, the
-    // world columns and the biases untouched.
-    //
-    // This is a state correction and not a gauge change: the world frame is
-    // already the magnetic one fixed at first lock, and what the second-stage
-    // magnetic acquisition finds is that the *heading in it* was wrong. Turning
-    // this into apply_world_yaw_gauge() would rotate v, p and S along with R
-    // and corrupt the displacement history the correction has nothing to say
-    // about. Covariance is left alone, matching OU-III's set_quaternion_boat().
+    /** @brief Enable or hold attitude and bias corrections while retaining navigation updates.
+     * On resumption, clear cross-covariances between navigation and held states.
+     */
     void set_attitude_aiding_enabled(bool enabled) {
         if (enabled && !attitude_aiding_enabled_) {
             // Preserve each block and its means; discard manoeuvre-era
@@ -259,11 +253,17 @@ class Kalman3D_Wave_TFG {
         }
         attitude_aiding_enabled_ = enabled;
     }
+    /** @brief Return whether measurement corrections may update attitude and bias. */
     bool attitude_aiding_enabled() const { return attitude_aiding_enabled_; }
+    /** @brief Set whether the next accelerometer correction may use the supplied sample. */
     void set_accelerometer_fresh(bool fresh) { accelerometer_fresh_ = fresh; }
 
     // Correct attitude in the existing world frame, retaining navigation and
     // biases. The old local attitude covariance cannot describe a large reset.
+    /** @brief Install a body-to-world attitude while retaining navigation and physical bias state.
+     * Reset attitude covariance using sigma in radians and transport bias covariance
+     * when required; return false without changes for invalid quaternion or sigma.
+     */
     bool reacquire_attitude(const Eigen::Quaternion<T>& q, T sigma = T(0.05)) {
         if (!q.coeffs().allFinite() || !std::isfinite(q.norm()) ||
             !(q.norm() > T(1e-6)) || !std::isfinite(sigma) || !(sigma > T(0))) return false;
@@ -285,6 +285,15 @@ class Kalman3D_Wave_TFG {
         return true;
     }
 
+    // Rewrite the heading of the attitude, keeping the estimated tilt, the
+    // world columns and the biases untouched.
+    //
+    // This is a state correction and not a gauge change: the world frame is
+    // already the magnetic one fixed at first lock, and what the second-stage
+    // magnetic acquisition finds is that the *heading in it* was wrong. Turning
+    // this into apply_world_yaw_gauge() would rotate v, p and S along with R
+    // and corrupt the displacement history the correction has nothing to say
+    // about. Covariance is left alone, matching OU-III's set_quaternion_boat().
     void set_attitude_yaw_absolute(T yaw_abs_rad) {
         if (!std::isfinite(yaw_abs_rad)) return;
         const Matrix3 R = X_.R;
@@ -714,6 +723,9 @@ class Kalman3D_Wave_TFG {
         Rw = R_S_;
     }
 
+    /** @brief Correct from fresh body specific force in m/s^2 at tempC degrees C.
+     * Return whether the correction was accepted, respecting held attitude/bias rows.
+     */
     bool measurement_update_acc_only(const Vector3& acc_meas_body, T tempC = T(35)) {
         if (!accelerometer_fresh_ || !acc_meas_body.allFinite()) { last_acc_diag_ = MeasDiag3{}; return false; }
         Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
@@ -721,6 +733,9 @@ class Kalman3D_Wave_TFG {
         return apply_update3_(r, H, Rw, last_acc_diag_);
     }
 
+    /** @brief Correct from a body magnetic field when aiding and a world reference are available.
+     * Return whether the correction was accepted.
+     */
     bool measurement_update_mag_only(const Vector3& mag_meas_body) {
         if (!attitude_aiding_enabled_ || !have_mag_reference_ || !mag_meas_body.allFinite() ||
             !(mag_meas_body.norm() > T(1e-9))) {
@@ -861,6 +876,9 @@ class Kalman3D_Wave_TFG {
     bool attitude_aiding_enabled_ = true;
     bool accelerometer_fresh_ = true;
 
+    /** @brief Apply a gated three-component correction and fill its diagnostics.
+     * Return whether it was accepted; held attitude and bias gain rows remain zero.
+     */
     bool apply_update3_(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
                         const Matrix3& Rw, MeasDiag3& diag) {
         diag = MeasDiag3{};

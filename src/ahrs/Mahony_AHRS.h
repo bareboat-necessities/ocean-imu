@@ -37,9 +37,14 @@ public:
     T integralFBz = T(0);   // integral error terms scaled by Ki
 
     // Aiding can be suspended without discarding an already learned bias.
+    /** @brief Enable sensor feedback or retain gyro-only propagation with the saved bias integral. */
     void setAidingEnabled(bool enabled) { aiding_enabled_ = enabled; }
+    /** @brief Return whether accelerometer and magnetometer feedback is enabled. */
     bool aidingEnabled() const { return aiding_enabled_; }
 
+    /** @brief Normalize and install scalar-first quaternion components.
+     * Ignore a zero or nonfinite norm and preserve the bias integral.
+     */
     void setQuaternion(T w, T x, T y, T z) {
         const T n = std::sqrt(w*w + x*x + y*y + z*z);
         if (!(n > T(0)) || !std::isfinite(n)) return;
@@ -48,6 +53,9 @@ public:
 
     // Exact constant-rate propagation on the protected path. Applying the
     // saved integral here matters: the legacy zero-accel path omits it.
+    /** @brief Propagate constant body gyro rates in rad/s using the saved bias integral.
+     * Use dt in seconds and write pitch, roll, and yaw in degrees to non-null pointers.
+     */
     void predictOnly(T gx, T gy, T gz, T* pitch, T* roll, T* yaw, T dt) {
         gx += integralFBx; gy += integralFBy; gz += integralFBz;
         const T n = std::sqrt(gx*gx + gy*gy + gz*gz);
@@ -111,6 +119,9 @@ public:
     }
 
     // update()  (IMU-only, no magnetometer)
+    /** @brief Integrate body gyro rates in rad/s with gravity-vector feedback when enabled.
+     * Use delta_t_sec in seconds and write pitch, roll, and yaw in degrees.
+     */
     void update(T gx, T gy, T gz,
                 T ax, T ay, T az,
                 T* pitch, T* roll, T* yaw,
@@ -203,6 +214,10 @@ public:
     }
 
     // updateMag()  (IMU + magnetometer)
+    /** @brief Integrate body gyro rates with gravity and magnetic feedback when enabled.
+     * Use elapsed seconds and write Euler angles in degrees; an all-zero field
+     * falls back to the IMU-only update.
+     */
     void updateMag(T gx, T gy, T gz,
                    T ax, T ay, T az,
                    T mx, T my, T mz,

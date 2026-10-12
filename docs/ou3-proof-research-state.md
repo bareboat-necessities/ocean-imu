@@ -62,6 +62,26 @@ at the same recovery boundary, retaining covariance/navigation histories;
 then qualify any proposed recovery change against moderate-motion false capture.
 No theorem status or shipping runtime equation is changed by this diagnostic.
 
+Documentation validation exposed missing sandbox `mpmath` and `numpy`
+dependencies (classification E). The workflow dependencies are installed and
+all three provenance tests pass. The source-tree gate also rejected stale byte
+bindings after comment/docstring edits (E); refreshed source and linked-record
+hashes pass the unchanged gate. Executable C++ tokens and Python ASTs excluding
+docstrings match the prior revision, so the existing numerical evidence and
+open theorem flags are retained. This rebind reuses the existing native run;
+it does not claim a new replay or alter a mathematical hypothesis. The next
+physical qualification remains the timestamped hardware turn below.
+The full native build passes; dataset verification initially failed because
+Python 3.9 lacks `hashlib.file_digest` (E: sandbox runtime mismatch).
+Python 3.11 verifies the pinned archive. The full test run then stops in
+`./heave_only-sim`: Küchler Mahony-frontend Z RMS is 17.2632% > 16.99% for
+JONSWAP Hs=8.5 and 20.2382% > 19.98% for PMSTOKES Hs=8.5 (E: numerical
+regression-gate failure). Clean PR code reproduces these values under GCC
+11.5/Eigen 3.3.9; documentation did not introduce them. Existing source/token
+identities and theorem flags remain valid. Current limiter: heave regression
+qualification in this toolchain; next experiment is comparison under the CI
+toolchain with the same pinned inputs. No threshold or estimator is changed.
+
 The mathematical audit is recorded in `docs/rapid-motion-math.md`. Two qMEKF
 implementation errors are independently reproduced (classification E): the
 quaternion half-angle propagator block was used as an SO(3) attitude-error

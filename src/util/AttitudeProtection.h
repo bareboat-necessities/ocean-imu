@@ -17,6 +17,7 @@ namespace ocean_imu::attitude {
 using Vec = Eigen::Vector3f;
 using Quat = Eigen::Quaternionf;
 
+/** @brief Return a quaternion from a rotation vector in radians, or identity near zero. */
 inline Quat rotation(const Vec& angle) {
     const float n = angle.norm();
     if (!(n > 1e-8f)) return Quat::Identity();
@@ -27,7 +28,11 @@ inline Quat rotation(const Vec& angle) {
 // be expressed in the new body axes before continuous observers reuse it.
 class AccelHold {
 public:
+    /** @brief Discard held acceleration and its availability flag. */
     void reset() { have_ = false; value_.setZero(); }
+    /** @brief Cache fresh body acceleration or rotate the held vector into the new body axes.
+     * Use bias-corrected gyro in rad/s and dt in seconds; transport adds no fresh evidence.
+     */
     Vec update(const Vec& measured, bool fresh, const Vec& corrected_gyro, float dt) {
         if (fresh || !have_) { value_ = measured; have_ = measured.allFinite(); }
         else if (corrected_gyro.allFinite() && std::isfinite(dt) && dt > 0)
@@ -48,12 +53,18 @@ struct Decision {
 
 class Protection {
 public:
+    /** @brief Reset motion history, capture qualification, field baseline, and recovery count. */
     void reset() { *this = Protection{}; }
 
     // q_before is BODY->world before this tick's prediction; field is the
     // calibrated, offset-corrected field at the current gyro epoch in uT.
     // reference_yaw is the azimuth of the existing world magnetic reference.
     // No reference, calibration, navigation state or bias is relearned here.
+    /** @brief Evaluate motion hazards and return an aiding hold or qualified recovery target.
+     * Use dt in seconds, gyro/bias in rad/s, acceleration/gravity in m/s^2,
+     * and now_us as a wrapping microsecond clock. Recovery requires fresh,
+     * consistent gravity and magnetic observations; target is body-to-world.
+     */
     Decision step(float dt, const Vec& gyro, const Vec& bias, const Vec& acc, bool accel_fresh,
                   float gravity, const Quat& q_before, const Vec& field,
                   bool magnetic_valid, bool magnetic_new, uint32_t now_us,
@@ -152,12 +163,15 @@ public:
         }
         return d;
     }
+    /** @brief Return the number of recovery targets issued since the last reset. */
     uint32_t recoveryCount() const { return recoveries_; }
+    /** @brief Print the hold, dynamic-motion, and recovery-count diagnostics. */
     template<class Print> void print(Print& out) const {
         out.printf("[ATT] hold=%d dynamic=%d recoveries=%lu\n",
             int(dynamic_ || pending_ || post_dynamic_), int(dynamic_), static_cast<unsigned long>(recoveries_));
     }
 private:
+    /** @brief Discard accumulated recovery observations and restart the sample count. */
     void clearWindow_() { have_window_ = false; count_ = 0; }
     bool post_dynamic_ = false;
     bool have_accel_ = false;

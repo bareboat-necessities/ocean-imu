@@ -44,6 +44,9 @@ class MahonyBackend : public IAttitudeBackend {
     valid_ = true;
   }
 
+  /** @brief Advance the compass backend and fill the attitude solution.
+   * Honor the sample motion hold and apply a qualified recovery target when requested.
+   */
   void step(const CalibratedSample& s, AttitudeSolution& out) override {
     mahony_.setAidingEnabled(!s.motion.hold_attitude);
     Vector3f a_att = -s.a_cal;

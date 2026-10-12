@@ -44,6 +44,7 @@ def tokens(source):
 
 
 def replace_once(source, old, new=''):
+    """Replace an anchor that occurs exactly once, raising on source drift."""
     if source.count(old) != 1:
         raise ValueError('ordinary-aiding projection anchor changed: ' + old[:80])
     return source.replace(old, new, 1)
@@ -85,6 +86,7 @@ def ordinary_aiding(path, source):
 
 
 def project(path, source):
+    """Project current source onto the declared ordinary-aiding legacy execution."""
     source = ordinary_aiding(path, source)
     if path == PATHS[0]:
         source = source.replace('#include "util/MeasurementCovariance.h"', '')
@@ -133,6 +135,7 @@ def project(path, source):
 
 
 def audit():
+    """Verify fixed legacy-operation hashes and return current source bindings."""
     result = {}
     for path in PATHS:
         source = (ROOT/path).read_text()

@@ -15,6 +15,7 @@ constexpr float rad = .017453292519943295f;
 static bool diagnosis_mode=false;
 static bool known_force_control=false;
 static bool recovery_diagnosis_mode=false;
+/** @brief Exit with a backend-specific diagnostic when a replay invariant fails. */
 static void require(bool ok,const char* reason) {
     if (!ok) { std::fprintf(stderr,"Rapid backend %d: %s\n",RAPID_BACKEND,reason); std::exit(1); }
 }
@@ -31,7 +32,11 @@ struct Trial {
     uint32_t peak_time=0; bool peak_held=false, last_held=false;
     unsigned applied_recoveries=0;
     bool enabled=true;
+    /** @brief Initialize magnetic preprocessing for an independent replay trial. */
     Trial() { magnetic.reset(.00135f,Eigen::Matrix3f::Identity()); }
+    /** @brief Deliver one timed sensor frame, apply optional protection, and record attitude errors.
+     * Assert that held updates and recovery preserve gyro bias and keep state finite.
+     */
     void tick(float dt,const Q& truth,const V& w,const V& measured_acc,const V& measured_mag,
               bool fresh_mag,bool fresh_acc=true,bool valid=true) {
         now+=uint32_t(std::lround(dt*1e6f));
@@ -65,6 +70,9 @@ struct Trial {
         peak=std::max(peak,tail); max_bias=std::max(max_bias,b->bias().norm());
     }
 };
+/** @brief Replay a synthetic turn with rate in deg/s, radius in meters, and optional sensor faults.
+ * Emit error metrics and enforce bounds when protection is enabled.
+ */
 static void rapid(float rate,float radius,bool combined,bool gap=false,bool enabled=true,int mag_delay=0,bool noisy=false,bool protect_after_turn=false) {
     Trial t; t.enabled=enabled; Q truth=Q::Identity(); V prev=V::Zero();
     float inherited_error=0, inherited_bias=0;
@@ -118,6 +126,7 @@ static void rapid(float rate,float radius,bool combined,bool gap=false,bool enab
         require(t.max_bias<.06f,"dynamic acceleration polluted gyro bias");
     }
 }
+/** @brief Inject a heading error in degrees and verify one recovery within three seconds. */
 static void capture(float angle,float heading=0,bool noisy=false) {
     Trial t;
     const Q truth=Q(Eigen::AngleAxisf(heading*rad,V::UnitZ()))*
@@ -142,6 +151,7 @@ static void capture(float angle,float heading=0,bool noisy=false) {
     require(t.tail<3,"large-angle capture outside 3 degrees after 3 seconds");
     require((t.b->bias()-bias_before).norm()<.025f,"large heading error became gyro bias");
 }
+/** @brief Verify that stale, invalid, or disturbed magnetic fields cannot trigger recovery. */
 static void staleAndDisturbance() {
     for(int mode=0;mode<3;++mode) {
         Trial t;
@@ -154,6 +164,7 @@ static void staleAndDisturbance() {
         require(t.protection.recoveryCount()==0,"stale/invalid/disturbed field caused recovery");
     }
 }
+/** @brief Verify recovery requires sustained fresh acceleration, including across clock wrap. */
 static void accelerometerDropout() {
     for (int mode=0; mode<3; ++mode) {
         Trial t;
@@ -190,6 +201,7 @@ static void accelerometerDropout() {
         std::printf("accel-dropout,%d,%d,%.5f,%u\n",RAPID_BACKEND,mode,t.tail,t.protection.recoveryCount());
     }
 }
+/** @brief Verify aiding resumes during moderate vessel motion after a rapid turn. */
 static void movingAfterTurn() {
     Trial t; Q q=Q::Identity();
     for(int i=0;i<2400;++i) {
@@ -203,6 +215,7 @@ static void movingAfterTurn() {
     require(!t.last_held,"normal vessel motion was left indefinitely without aiding");
     require(t.tail<5,"moving recovery tail exceeds 5 degrees");
 }
+/** @brief Check single-use acceleration freshness and elapsed time across clock wrap and gaps. */
 static void acquisition() {
     ocean_imu::ImuFreshness f; bool fresh;
     require(!f.observe(false,true,fresh),"gyro before first accel delivered");
@@ -214,6 +227,7 @@ static void acquisition() {
     clock.update(0xfffff000u);
     require(std::abs(clock.update(uint32_t(0xfffff000u+75000u))-.075f)<1e-6f,"wrap/gap elapsed time lost");
 }
+/** @brief Compare local aiding and protected recovery at an exact horizontal-field antipode. */
 static void antipodalInnovation() {
     const V saved_field=earth;
     earth=V(50,0,0);
@@ -236,6 +250,7 @@ static void antipodalInnovation() {
     earth=saved_field;
 }
 #if RAPID_BACKEND >= 3 && RAPID_BACKEND <= 5
+/** @brief Check held gain rows, covariance PSD, and navigation/bias preservation on recovery. */
 static void selectiveCovarianceAndRecovery() {
     auto b=std::make_unique<Backend>(); auto& f=b->f;
     for(int i=0;i<100;++i) b->step(.005f,V::Zero(),V(0,0,-gravity),earth,true,i%8==0,true,true);
@@ -276,6 +291,7 @@ static void selectiveCovarianceAndRecovery() {
     psd();
 }
 
+/** @brief Check startup and Live facade observers obey the attitude-aiding hold. */
 static void facadeProtection() {
     auto f=std::make_unique<Fusion>(); typename Fusion::Config cfg; f->begin(cfg);
 #if RAPID_BACKEND == 5
@@ -311,6 +327,7 @@ static void facadeProtection() {
     require(proxy().angularDistance(expected)<.01f,"private tilt proxy chased dynamic acceleration");
 }
 #endif
+/** @brief Run protected regression scenarios or emit ordinary-aiding diagnostic controls. */
 int main(int argc, char** argv) {
     if (argc==2 && std::strcmp(argv[1],"--diagnose-recovery")==0) {
         recovery_diagnosis_mode=true;

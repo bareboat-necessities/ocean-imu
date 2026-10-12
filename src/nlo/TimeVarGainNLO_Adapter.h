@@ -680,10 +680,14 @@ public:
         }
     }
 
+    /** @brief Enable or hold core attitude feedback, initialization, and adapter tilt trimming. */
     void setAttitudeAidingEnabled(bool enabled) {
         attitude_aiding_enabled_ = enabled;
         filter_.setAttitudeAidingEnabled(enabled);
     }
+    /** @brief Install a valid nonzero body-to-NED quaternion and discard old tilt-trim history.
+     * Preserve navigation state and learned biases.
+     */
     void reacquireAttitude(const Quat& q) {
         filter_.setQuaternionBodyToNED(q);
         boot_q_nb_ = q.normalized();
@@ -715,6 +719,9 @@ public:
         return update(dt, gyro_b_rad_s, specific_force_b_mps2, aux_);
     }
 
+    /** @brief Advance initialization, NLO fusion, and reporting using elapsed seconds and auxiliary data.
+     * Return false for invalid dt or deferred initialization; honor the aiding hold.
+     */
     bool update(R dt,
                 const Vec3& gyro_b_rad_s,
                 const Vec3& specific_force_b_mps2,

@@ -351,6 +351,9 @@ private:
     // accelerometer is conditioned once for every consumer, the MEKF runs
     // before the tuner sees the sample, and the wave-period estimator runs
     // after it so that the tuner reads the previous sample's period.
+    /** @brief Advance the tuning frontend and, when requested, the MEKF.
+     * Run the tilt watchdog only while core propagation and attitude aiding are enabled.
+     */
     void updateCore_(float dt, const Eigen::Vector3f& gyro,
                      const Eigen::Vector3f& acc, float tempC,
                      bool drive_mekf)
@@ -794,10 +797,12 @@ public:
         if (std::isfinite(sec) && sec > 0.0f) sigma_stillness_decay_sec_ = sec;
     }
 
+    /** @brief Set the aiding policy for both the MEKF and private vertical-acceleration observer. */
     void setAttitudeAidingEnabled(bool enabled) {
         mekf_->set_attitude_aiding_enabled(enabled);
         this->vertical_accel_comp_.setAidingEnabled(enabled);
     }
+    /** @brief Forward acceleration freshness to the core measurement-update gate. */
     void setAccelerometerFresh(bool fresh) { mekf_->set_accelerometer_fresh(fresh); }
 
     inline auto& mekf() noexcept { return *mekf_; }

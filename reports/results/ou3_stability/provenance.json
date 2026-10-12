@@ -41,27 +41,27 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "9db0262ffb64bd24befaef5eb8e58a4aa47bc4bc"
+      "git_blob_sha": "65821ebd83836c4734eda148854c924416bb0820"
     },
     {
       "path": "src/util/AttitudeProtection.h",
-      "git_blob_sha": "fed29c67acfe86c4048dffa13b9ee712e8ed43b2"
+      "git_blob_sha": "55c64a34c79de5720a4127d270292ec60018bd2a"
     },
     {
       "path": "src/util/ImuFreshness.h",
-      "git_blob_sha": "d6ca37824e7527035caee00f89094298e06b628d"
+      "git_blob_sha": "31be7db0a2d3c4dcd7cbbbbe7c8f33f72c1ab681"
     },
     {
       "path": "src/AtomS3R/AtomS3R_ImuCal.h",
-      "git_blob_sha": "33b13f5eb42cbedc52f7a85de6ed65ae6d1f434b"
+      "git_blob_sha": "93a9af95ad2be1477e9b3e68caed36c740bbdb00"
     },
     {
       "path": "src/tuner/VerticalAccelComplementary.h",
-      "git_blob_sha": "ee87a1d0854ef98a4c8a4d32652725f5e113ef98"
+      "git_blob_sha": "defe45e273bb8824f93f567ceb9dbeb875e336a3"
     },
     {
       "path": "src/ahrs/Mahony_AHRS.h",
-      "git_blob_sha": "ca9cd05ebd0c68eb312a50de581c6dc93fb1ddb2"
+      "git_blob_sha": "c182d80101c3e83b0f9240e89cd844305d78eac0"
     }
   ],
   "semantic_bindings": {
@@ -185,7 +185,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "b740e11035dc4030e7960b61ccd11e86bd718297"
+      "git_blob_sha": "3ce85589882575c1ee08563cc58ec84060d610c9"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "0b58e276e481c4d8ce5134d17cce4c90112dd4bb"
+      "git_blob_sha": "7d75af592dafbf3a27e8050fa9fad7b29546e1a7"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1005,11 +1005,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/magnetic_timing_legacy_binding.py",
-      "git_blob_sha": "5fee179a378c5557a84ce9365a774a99e2fcdffa"
+      "git_blob_sha": "9aaf081ed2472961d7b2667b766f38390dd72945"
     },
     {
       "path": "reports/results/ou3_stability/magnetic-timing-legacy-binding.json",
-      "git_blob_sha": "f3a7a3581fd2ddcc8053a8e50c949dda832507b4"
+      "git_blob_sha": "d70be30cd5a993b73ca79a048d5449ddfe6f7605"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",

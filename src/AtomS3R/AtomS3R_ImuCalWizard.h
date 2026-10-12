@@ -664,6 +664,7 @@ private:
   }
 
   // Capture steps
+  /** @brief Return a mapped sample only when it contains fresh acceleration for calibration. */
   bool readSample_(ImuSample& s) {
     // Calibration statistics count independent acceleration observations;
     // gyro-only delivery is useful to fusion, but must not duplicate a pose.

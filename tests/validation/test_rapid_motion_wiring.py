@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class RapidMotionWiringTest(unittest.TestCase):
     def test_backend_scripts_stop_on_rapid_failure(self):
+        """Verify every backend test script stops when its rapid-motion replay fails."""
         for backend in ('ahrs', 'kalman_ou_ii', 'kalman_ou_iii', 'kalman_tfg', 'nlo', 'pii_observer'):
             script = ROOT / 'tests' / backend / 'run_tests.sh'
             first = next(line for line in script.read_text().splitlines()
@@ -112,6 +113,7 @@ int main(){
             subprocess.run([str(binary)], check=True)
 
     def test_all_estimator_sketches(self):
+        """Check every estimator sketch wires motion protection and sensor freshness."""
         full = sorted((ROOT / 'sensors/full_marine_ins').glob('*/*.ino'))
         compass = sorted((ROOT / 'sensors/compass_ahrs').glob('*/*.ino'))
         self.assertEqual(len(full), 5, 'Add new INS backends to the common rapid-motion replay')
@@ -146,12 +148,14 @@ int main(){
         self.assertIn('!sample_.motion.hold_attitude && sample_.mag_ok', base)
 
     def test_shipping_acquisition_mask_and_single_burst(self):
+        """Compile shipping acquisition helpers and check delivery masks and AUX freshness."""
         eigen = Path(os.environ.get('EIGEN_INCLUDE_DIR', '/usr/include/eigen3'))
         if not (eigen / 'Eigen/Dense').is_file():
             eigen = ROOT / 'third_party/eigen'
         self.assertTrue((eigen / 'Eigen/Dense').is_file(), 'Install Eigen or set EIGEN_INCLUDE_DIR')
         src = (ROOT / 'src/AtomS3R/AtomS3R_ImuCal.h').read_text()
         def struct(name):
+            """Extract the named source struct through its closing declaration."""
             start = src.index('struct ' + name + ' {')
             return src[start:src.index('\n};', start) + 3]
         cpp = r'''

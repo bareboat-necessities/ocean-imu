@@ -467,6 +467,7 @@ static void analyzeTask(void*) {
   vTaskDelete(nullptr);
 }
 
+/** @brief Integrate calibrated gyro motion and record fresh magnetic observations for diagnostics. */
 static void onSample(const ImuSample& s) {
   const float dt = sample_dt.update(s.sample_us);
   const float tempC = s.tempC;

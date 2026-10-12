@@ -103,6 +103,9 @@ class Kalman3D_Wave_OU_II {
         v2ref = B_world;    // keep µT magnitude
     }
 
+    /** @brief Enable or hold attitude and bias corrections while retaining navigation updates.
+     * On resumption, clear cross-covariances between navigation and held states.
+     */
     void set_attitude_aiding_enabled(bool enabled) {
         if (enabled && !attitude_aiding_enabled_) {
             // Drop correlations learnt across the manoeuvre between the held
@@ -116,8 +119,11 @@ class Kalman3D_Wave_OU_II {
         }
         attitude_aiding_enabled_ = enabled;
     }
+    /** @brief Return whether measurement corrections may update attitude and bias. */
     bool attitude_aiding_enabled() const { return attitude_aiding_enabled_; }
+    /** @brief Set whether the next accelerometer correction may use the supplied sample. */
     void set_accelerometer_fresh(bool fresh) { accelerometer_fresh_ = fresh; }
+    /** @brief Return the current world-frame magnetic reference in microteslas. */
     const Vector3& magnetic_reference_world() const { return v2ref; }
 
     void time_update(Vector3 const& gyr, T Ts);
@@ -736,6 +742,7 @@ class Kalman3D_Wave_OU_II {
     MatrixNX3    PCt_scratch_;
     bool attitude_aiding_enabled_ = true;
     bool accelerometer_fresh_ = true;
+    /** @brief Zero attitude and enabled bias gain rows while attitude aiding is held. */
     template<class Gain> void protect_gain_(Gain& K) const {
         if (!attitude_aiding_enabled_) {
             K.template topRows<3>().setZero();
@@ -1941,6 +1948,9 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
     }
 }
 
+/** @brief Correct from fresh body specific force in m/s^2 and temperature in degrees C.
+ * Skip stale/invalid samples and freeze attitude/bias gain rows while held.
+ */
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update_acc_only(
     Vector3 const& acc_meas_body, T tempC)
@@ -2155,6 +2165,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     last_acc_diag_.accepted = true;
 }
 
+/** @brief Correct from the body magnetic field in microteslas when aiding is enabled. */
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update_mag_only(
     const Vector3& mag_meas_body)
@@ -2329,6 +2340,9 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::project_acc_bias_(
     }
 }
 
+/** @brief Apply a position pseudo-measurement with per-axis standard deviations.
+ * Respect the attitude/bias hold when applying the Kalman gain.
+ */
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update_position_pseudo(
     const Vector3& p_meas, const Vector3& sigma_meas)
@@ -2382,6 +2396,9 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     applyQuaternionCorrectionFromErrorState();
 }
 
+/** @brief Apply a velocity pseudo-measurement with per-axis standard deviations.
+ * Respect the attitude/bias hold when applying the Kalman gain.
+ */
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update_velocity_pseudo(
     const Vector3& v_meas, const Vector3& sigma_meas)
@@ -2425,6 +2442,9 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     applyQuaternionCorrectionFromErrorState();
 }
 
+/** @brief Apply a vertical-velocity pseudo-measurement and scalar standard deviation.
+ * Respect the attitude/bias hold when applying the Kalman gain.
+ */
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update_vert_velocity_pseudo(
     T vz_meas, T sigma_meas)

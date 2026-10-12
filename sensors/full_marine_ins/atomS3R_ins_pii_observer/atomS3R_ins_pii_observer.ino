@@ -404,6 +404,7 @@ class FusionApp {
     return false;
   }
 
+  /** @brief Check IMU availability and reset sample timing, motion protection, and held acceleration. */
   void reinitImu_() {
     if (!M5.Imu.isEnabled()) {
       Serial.println("[BOOT] M5.Imu is not enabled");
@@ -419,6 +420,7 @@ class FusionApp {
     accel_hold_.reset();
   }
 
+  /** @brief Reset fusion and acquisition history, then restore the configured estimator settings. */
   void resetFusion_() {
     // No bias covariance exists in this observer: report vector residuals,
     // and mark NIS/SNR unavailable rather than inventing uncertainty.
@@ -540,6 +542,7 @@ class FusionApp {
   }
 #endif
 
+  /** @brief Calibrate a delivered IMU frame and update fusion with freshness and motion protection. */
   void updateFilter_(const ImuSample& s) {
     const uint32_t now_ms = millis();
 
@@ -781,6 +784,7 @@ class FusionApp {
                       static_cast<double>(a_cal_.norm()));
   }
 
+  /** @brief Emit the enabled NMEA outputs and optional sensor, fusion, and motion diagnostics. */
   void streamSerial_() {
     const uint32_t now_ms = millis();
 

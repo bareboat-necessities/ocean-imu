@@ -343,6 +343,7 @@ private:
 #endif
   }
 
+  /** @brief Check IMU availability and reset sample timing, motion protection, and held acceleration. */
   void reinitImu_() {
     if (!M5.Imu.isEnabled()) {
       Serial.println("[BOOT] M5.Imu is not enabled");
@@ -357,6 +358,7 @@ private:
     accel_hold_.reset();
   }
 
+  /** @brief Reset fusion and acquisition history, then restore the configured estimator settings. */
   void resetFusion_() {
     constexpr float IMU_TUNE_REF_HZ = 200.0f;
     constexpr float MAG_TUNE_REF_HZ = 25.0f;
@@ -525,6 +527,7 @@ private:
         : (heading_mag_ok_ ? heading_mag_deg_ : NAN);
   }
 
+  /** @brief Calibrate a delivered IMU frame and update fusion with freshness and motion protection. */
   void updateFilter_(const ImuSample& s) {
     dt_ = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
@@ -685,6 +688,7 @@ private:
     ui_.line("");
   }
 
+  /** @brief Emit the enabled NMEA outputs and optional sensor, fusion, and motion diagnostics. */
   void streamSerial_() {
     const uint32_t now_ms = millis();
 

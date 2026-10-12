@@ -37,6 +37,7 @@ class MagneticTimingBindingTests(unittest.TestCase):
                 self.assertNotEqual(tokens(original), tokens(changed))
 
     def test_ordinary_aiding_projection_rejects_changed_defaults_and_operations(self):
+        """Verify the projection rejects changed defaults and detects changed operations."""
         path = PATHS[0]
         source = (ROOT/path).read_text()
         for flag in ('attitude_aiding_enabled_', 'accelerometer_fresh_'):
@@ -50,6 +51,7 @@ class MagneticTimingBindingTests(unittest.TestCase):
         self.assertNotEqual(hashlib.sha256(tokens(project(path, changed)).encode()).hexdigest(), EXPECTED[path])
 
     def test_ordinary_aiding_identity_and_current_replay_binding(self):
+        """Verify legacy-operation identity and the committed replay source bindings."""
         result=audit()
         root=ROOT/'reports/results/ou3_stability'
         receipt=json.loads((root/'magnetic-timing-legacy-binding.json').read_text())

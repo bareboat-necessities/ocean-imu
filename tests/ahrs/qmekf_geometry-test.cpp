@@ -7,19 +7,23 @@ using Vec = Eigen::Vector3d;
 using Mat = Eigen::Matrix3d;
 using Quat = Eigen::Quaterniond;
 static int failures = 0;
+/** @brief Return the quaternion exponential of a rotation vector in radians. */
 static Quat expq(const Vec& v) {
     const double a = v.norm();
     return a == 0 ? Quat::Identity() : Quat(Eigen::AngleAxisd(a, v/a));
 }
+/** @brief Return the shortest rotation vector in radians for a normalized quaternion. */
 static Vec logq(Quat q) {
     q.normalize();
     if (q.w() < 0) q.coeffs() *= -1;
     const double n = q.vec().norm();
     return n < 1e-14 ? Vec(2*q.vec()) : Vec(2*std::atan2(n,q.w())/n*q.vec());
 }
+/** @brief Return the skew matrix representing cross product with v. */
 static Mat cross(const Vec& v) {
     Mat m; m << 0,-v.z(),v.y(), v.z(),0,-v.x(), -v.y(),v.x(),0; return m;
 }
+/** @brief Record a test failure unless error is strictly below tolerance. */
 static void check(double error, double tolerance, const char* name) {
     if (!(error < tolerance)) {
         std::fprintf(stderr, "%s: error %.12g >= %.12g\n", name, error, tolerance);
@@ -27,6 +31,7 @@ static void check(double error, double tolerance, const char* name) {
     }
 }
 
+/** @brief Compare predicted covariance with finite differences of the physical right-error flow. */
 template<bool bias> static void prediction(const Vec& rate, double dt) {
     constexpr int n = bias ? 6 : 3;
     using Matrix = Eigen::Matrix<double,n,n>;
@@ -57,6 +62,7 @@ template<bool bias> static void prediction(const Vec& rate, double dt) {
     check(Quat(f.quaternion()).angularDistance(nominal), 1e-12, "nominal prediction");
 }
 
+/** @brief Compare covariance chart transport with finite differences for joint or accel-only updates. */
 static void reset(bool joint) {
     using Matrix = Eigen::Matrix<double,6,6>;
     QuaternionMEKF<double,true> f(Vec::Constant(.2),Vec::Zero(),Vec::Constant(.2),.7,.4,0);
@@ -92,6 +98,7 @@ static void reset(bool joint) {
           2e-9,"right-error covariance reset");
 }
 
+/** @brief Run qMEKF propagation, spin-axis covariance, and finite-injection geometry checks. */
 int main() {
     for (const Vec& rate : {Vec::Zero().eval(),Vec(1e-9,-2e-9,3e-9),Vec(0,0,4*M_PI),Vec(7,-9,4)})
         for (const double dt : {.005,.075}) {

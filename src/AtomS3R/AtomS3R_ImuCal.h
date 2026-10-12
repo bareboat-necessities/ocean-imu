@@ -327,6 +327,9 @@ inline AtomS3RMagSource& atoms3rMagSource() {
 // compensation this is M5Unified's uncompensated value. Either way, without a
 // new successfully read reading for MagAcquisition::MAX_AGE_MS the result is
 // NaN (no magnetometer value), never an old reading presented as current.
+/** @brief Return the body-frame magnetic field in microteslas, or NaNs when stale.
+ * Compensated values and source freshness come from the same AUX burst.
+ */
 static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag, uint32_t frame_us) {
   auto& src = atoms3rMagSource();
   const uint32_t now = millis();
@@ -366,6 +369,10 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
 }
 
 // Reads M5.Imu, applies AtomS3R axis mapping and unit conversion, but does NOT calibrate.
+/** @brief Deliver a mapped gyro frame once acceleration is available.
+ * Return false when no frame is ready; out.accel_fresh marks acceleration
+ * not yet consumed by a previous delivered gyro frame.
+ */
 static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out) {
   out.sample_us = sample_us;
   out.mask = update_mask;

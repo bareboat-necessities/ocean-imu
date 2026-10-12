@@ -429,6 +429,7 @@ class CompassAppBase {
     resetPipeline_();
   }
 
+  /** @brief Reset the backend, sensor gates, motion history, outputs, and sample clock. */
   void resetPipeline_() {
     backend_->reset();
     attitude_protection_.reset();
@@ -441,6 +442,7 @@ class CompassAppBase {
     last_update_us_ = 0;
   }
 
+/** @brief Return calibrated body-frame readings, elapsed seconds, and aiding/recovery decisions. */
 CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   CalibratedSample out{};
   out.a_raw_norm = s.a.norm();
@@ -492,6 +494,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   return out;
 }
 
+  /** @brief Advance the backend and derived compass outputs from a calibrated, protected sample. */
   void updateOutputs_(const ImuSample& s) {
     sample_ = makeCalibratedSample_(s);
     const uint32_t correction_start_us = micros();
@@ -555,6 +558,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
     }
   }
 
+  /** @brief Emit the enabled NMEA outputs and optional sensor, fusion, and motion diagnostics. */
   void streamSerial_() {
     const uint32_t now_ms = millis();
 

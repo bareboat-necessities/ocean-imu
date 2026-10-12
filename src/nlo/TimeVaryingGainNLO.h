@@ -327,6 +327,7 @@ public:
         return ok;
     }
 
+    /** @brief Enable attitude innovation or suppress it while continuing physical propagation. */
     void setAttitudeAidingEnabled(bool enabled) { attitude_aiding_enabled_ = enabled; }
 
     void setQuaternionBodyToNED(const Quat& q_nb) {
@@ -421,6 +422,9 @@ public:
     }
 
 private:
+    /** @brief Advance one NLO integration step using body gyro and specific force.
+     * Suppress attitude innovation and its bias learning when aiding is disabled.
+     */
     void updateStep_(R dt,
                      const Vec3& gyro_b_rad_s,
                      const Vec3& specific_force_b_mps2,

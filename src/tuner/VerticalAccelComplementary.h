@@ -101,6 +101,7 @@ public:
         up_ms2_ = 0.0f;
     }
 
+    /** @brief Enable gravity feedback or retain gyro-only propagation of the private observer. */
     void setAidingEnabled(bool enabled) { ahrs_.setAidingEnabled(enabled); }
 
     void setGains(float two_kp, float two_ki) {
@@ -112,6 +113,10 @@ public:
     // gyro : body angular rate [rad/s], independent of the MEKF state.
     // acc  : body specific force [m/s^2].  acc.z ~ -g at rest, matching
     //        the z-down body frame the rest of the filter uses.
+    /** @brief Update the private attitude observer and gravity-removed upward acceleration.
+     * Use elapsed seconds, body gyro in rad/s, and specific force in m/s^2;
+     * initialization requires enabled aiding and a nonzero acceleration vector.
+     */
     void update(float dt_sec,
                 const Eigen::Vector3f& gyro,
                 const Eigen::Vector3f& acc,

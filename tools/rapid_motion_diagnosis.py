@@ -24,10 +24,12 @@ BACKENDS = (
 
 
 def sha(path):
+    """Return the SHA-256 hex digest of the bytes at path."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def main():
+    """Build all backends, run matched controls, and write metrics with a source-bound manifest."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--eigen", default=os.environ.get("EIGEN_INCLUDE_DIR"))
     parser.add_argument("--output", type=Path,

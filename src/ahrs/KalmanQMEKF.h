@@ -73,6 +73,10 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
         v2ref = B_world;
     }
 
+    /** @brief Install a body-to-world attitude and reset its local covariance to sigma squared.
+     * Preserve bias state; return false without changes for invalid quaternion or
+     * nonpositive/nonfinite sigma (attitude standard deviation in radians).
+     */
     bool reacquire_attitude(const Eigen::Quaternion<T>& q_bw, T sigma = T(0.05)) {
         if (!q_bw.coeffs().allFinite() || !std::isfinite(q_bw.norm()) ||
             !(q_bw.norm() > T(1e-6)) || !std::isfinite(sigma) || !(sigma > T(0))) return false;
@@ -232,6 +236,9 @@ void QuaternionMEKF<T, with_bias>::initialize_from_acc(T const acc[3]) {
   initialize_from_acc(Map<Matrix<T, 3, 1>>(acc));
 }
 
+/** @brief Propagate attitude and right-error covariance using body gyro rates in rad/s.
+ * Ts is elapsed seconds; the bias-enabled layout subtracts its learned gyro bias.
+ */
 template <typename T, bool with_bias>
 void QuaternionMEKF<T, with_bias>::time_update(Vector3 const& gyr, T Ts) {
   Vector3 rate = gyr;
@@ -424,6 +431,9 @@ Matrix<T, 3, 3> QuaternionMEKF<T, with_bias>::skew_symmetric_matrix(const Eigen:
   return M;
 }
 
+/** @brief Return the SO(3) right Jacobian for a rotation vector in radians.
+ * Use a series near zero to avoid cancellation.
+ */
 template <typename T, bool with_bias>
 typename QuaternionMEKF<T, with_bias>::Matrix3
 QuaternionMEKF<T, with_bias>::right_jacobian(const Vector3& angle) const {
@@ -444,6 +454,9 @@ QuaternionMEKF<T, with_bias>::right_jacobian(const Vector3& angle) const {
 
 // Apply full exponential-map quaternion correction from current error-state x(0..2).
 // Safe for both small and large |δθ|.
+/** @brief Inject the attitude error into the quaternion and transport its covariance.
+ * Clear the attitude error coordinates after changing the local error chart.
+ */
 template<typename T, bool with_bias>
 void QuaternionMEKF<T, with_bias>::applyQuaternionCorrectionFromErrorState() {
     Eigen::Matrix<T,3,1> dtheta = x.template head<3>();
