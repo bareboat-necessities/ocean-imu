@@ -108,22 +108,23 @@
     "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
     "src/wave_dir/WaveDirectionReport.h": "abd1b0d45320d79096bc61eec7ea284ff0501d74d568a17c0deadcaea166c06a",
     "src/wave_dir/WaveEncounter.h": "61b7e882f0b2dd338954994465c493746cfd89b3672879ed5f4798b1031301a6",
-    "tests/common/RapidMotionReplay.h": "e8c17c95a6e1c8cb02d57f7ab69991accd354749ac724b33c95c653ec25aa272",
+    "tests/common/RapidMotionReplay.h": "c4de14f53ec05730f4010c228269d935a9a651535f51e38be9ca3c23556cf29b",
     "tests/common/RapidMotionBackends.h": "0780eee5320e75b36cb1d0f5b9cd6da91935aa90eaccac1e787f042931427668",
-    "tools/rapid_motion_diagnosis.py": "e7e95b391c3362d87789b08b2fecee04721996074e13665e3fa9f7827ebdf306"
+    "tools/rapid_motion_diagnosis.py": "512942a5101f54a0cae25b91d243d7056ad6672228d873154c03ec20bd61a0f2"
   },
   "binary_sha256": {
-    "tests/ahrs/rapid_motion-qmekf": "1860de52021969aa407843b72039dcbbd02084d7406d437ccc0240abd5e8de79",
-    "tests/ahrs/rapid_motion-mahony": "9edc62646c097043394b2bc51c085f738b81bbb7e6957470573b34c3f384cda1",
-    "tests/kalman_ou_ii/rapid_motion-test": "ea577a7aad03cb0a1fd94b42f15ef2360c8140b11554379ae088e2acc8b927d9",
-    "tests/kalman_ou_iii/rapid_motion-test": "61bc067aa474c86807dc7d058f03178e6963a46d2913bd760b7e5bfb150f9f32",
-    "tests/kalman_tfg/rapid_motion-test": "18ac3f9ca7f9bb49b31c177ef7be38afc14c8542b8058d151f476b558c7a5814",
-    "tests/nlo/rapid_motion-test": "163a690a6668742142cb89f7484e0c81894bf0f72fa2bbf963cbfddc1eeecc5d",
-    "tests/pii_observer/rapid_motion-test": "f021f24c56eb28bc1dd1378ffecda28dae9e5d1137f380f9c9639b67281e2387"
+    "tests/ahrs/rapid_motion-qmekf": "2e17b384cbe34c2215e97c84b9f3803bc8f26b2e0280d34ebf100cb71f9816ff",
+    "tests/ahrs/rapid_motion-mahony": "8c31b4367596311f22d32c18d59b2746bdce56dae3fc941e42a32ef423808a77",
+    "tests/kalman_ou_ii/rapid_motion-test": "af992f7c18cfb4ac9c7b38d423de5483ff03345fdfae3e91ba2b40cee72679a3",
+    "tests/kalman_ou_iii/rapid_motion-test": "939824a1d04d173a92712e8f63cb39945f8a68d02fe33e8d2a5e5ed0f049eace",
+    "tests/kalman_tfg/rapid_motion-test": "fe4bb8e16f521d52a1a9f419c5bae9f3da791803401db9ef5aad1ad679253ac5",
+    "tests/nlo/rapid_motion-test": "44a8853cf3caee8f7d4b2305028e936e1958d8c448dade20e0ba014acd8c55e5",
+    "tests/pii_observer/rapid_motion-test": "5d19b638f8b5e6cee33958c9f12ab654bc5544b7edfdd6cbe1e7e185a7ba8f6d"
   },
   "protection_regressions": {
     "qMEKF": {
-      "inherited_state_cases": 8,
+      "inherited_state_cases": 10,
+      "calibrated_delay_recovery_cases": 2,
       "maximum_inherited_state_tail_deg": 0.48445,
       "protected_rapid_cases": 22,
       "capture_cases": 14,
@@ -136,6 +137,7 @@
     },
     "Mahony": {
       "inherited_state_cases": 2,
+      "calibrated_delay_recovery_cases": 0,
       "maximum_inherited_state_tail_deg": 0.47671,
       "protected_rapid_cases": 22,
       "capture_cases": 14,
@@ -148,6 +150,7 @@
     },
     "OU-II": {
       "inherited_state_cases": 2,
+      "calibrated_delay_recovery_cases": 0,
       "maximum_inherited_state_tail_deg": 2.39016,
       "protected_rapid_cases": 22,
       "capture_cases": 14,
@@ -160,6 +163,7 @@
     },
     "OU-III": {
       "inherited_state_cases": 2,
+      "calibrated_delay_recovery_cases": 0,
       "maximum_inherited_state_tail_deg": 0.79513,
       "protected_rapid_cases": 22,
       "capture_cases": 14,
@@ -171,7 +175,8 @@
       "protected_antipode_tail_deg": 0.0
     },
     "TFG": {
-      "inherited_state_cases": 8,
+      "inherited_state_cases": 10,
+      "calibrated_delay_recovery_cases": 2,
       "maximum_inherited_state_tail_deg": 2.92141,
       "protected_rapid_cases": 22,
       "capture_cases": 14,
@@ -184,6 +189,7 @@
     },
     "NLO": {
       "inherited_state_cases": 2,
+      "calibrated_delay_recovery_cases": 0,
       "maximum_inherited_state_tail_deg": 2.32284,
       "protected_rapid_cases": 22,
       "capture_cases": 14,
@@ -196,6 +202,7 @@
     },
     "PII": {
       "inherited_state_cases": 2,
+      "calibrated_delay_recovery_cases": 0,
       "maximum_inherited_state_tail_deg": 4.25622,
       "protected_rapid_cases": 22,
       "capture_cases": 14,

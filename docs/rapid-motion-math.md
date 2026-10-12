@@ -183,7 +183,9 @@ does not differentiate two noisy endpoints or assume low raw rate means zero
 motion. All existing freshness, norm, dip and direction gates still apply.
 For a learned bias above 0.08 rad/s, capture additionally requires a fitted
 slope standard-error norm below 0.008 rad/s. This noise diagnostic is an
-engineering gate, not a certified bound on correlated sensor error. Windows
+engineering gate, not a certified bound on correlated sensor error. The fit does
+not use the estimated quaternion, but its delivered vectors can include gyro-based
+magnetic timing transport; this is not a sensor-independence guarantee. Windows
 may take longer than the minimum 750 ms. A replacement is proposed only if its
 norm is below 0.06 rad/s and it differs from the old bias by over 0.08 rad/s.
 qMEKF and TFG apply that replacement with a 0.03 rad/s covariance standard
@@ -217,7 +219,8 @@ policy; it is not a certificate covering arbitrary earlier motion or bias.
 Ordinary aiding before a repair retains its existing operations.
 
 Additional qMEKF/TFG regressions cover noisy seven-second tails, motion resumed
-after that recovery interval, and sixty-second quiet continuations. Policy
+after that recovery interval, sixty-second quiet continuations, and noisy
+recovery with a calibrated 40 ms magnetic lag from the merged main path. Policy
 controls distinguish slow observed rotation, healthy small biases and a
 legitimate larger physical bias. Successful prevention, artificial-angle
 capture and corrupted-state recovery remain distinct finite qualifications.

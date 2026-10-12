@@ -78,8 +78,12 @@ struct Trial {
 /** @brief Replay a synthetic turn with rate in deg/s, radius in meters, and optional sensor faults.
  * Emit error metrics and enforce bounds when protection is enabled.
  */
-static void rapid(float rate,float radius,bool combined,bool gap=false,bool enabled=true,int mag_delay=0,bool noisy=false,bool protect_after_turn=false,bool moving_tail=false,int steps=3600) {
+static void rapid(float rate,float radius,bool combined,bool gap=false,bool enabled=true,int mag_delay=0,bool noisy=false,bool protect_after_turn=false,bool moving_tail=false,int steps=3600,bool calibrated_delay=false) {
     Trial t; t.enabled=enabled; Q truth=Q::Identity(); V prev=V::Zero();
+    if (calibrated_delay) {
+        t.timing.delay_us=uint32_t(mag_delay*5000);
+        t.timing.timing_allowance_s=.03f;
+    }
     float inherited_error=0, inherited_bias=0;
     std::deque<V> mag_history;
     std::mt19937 rng(7193); std::normal_distribution<float> normal(0,1);
@@ -138,7 +142,7 @@ static void rapid(float rate,float radius,bool combined,bool gap=false,bool enab
         require(t.applied_recoveries>=1,"inherited-state recovery never captured");
         require(!t.last_held,"inherited-state recovery left aiding held");
         if(!recovery_diagnosis_mode)
-            std::printf("recovery,%d,%d,%d,%d,%.2f,%.5f,%u\n",RAPID_BACKEND,combined,noisy,moving_tail,float(steps-2200)*.005f,t.tail,t.applied_recoveries);
+            std::printf("recovery,%d,%d,%d,%d,%.2f,%.5f,%u,%d\n",RAPID_BACKEND,combined,noisy,moving_tail,float(steps-2200)*.005f,t.tail,t.applied_recoveries,calibrated_delay);
     }
 }
 /** @brief Inject a heading error in degrees and verify one recovery within three seconds. */
@@ -421,6 +425,8 @@ int main(int argc, char** argv) {
         rapid(720,.15f,combined,false,false,0,true,true);
         rapid(720,.15f,combined,false,false,0,true,true,true,6200);
         rapid(720,.15f,combined,false,false,0,false,true,false,14200);
+        // Main's calibrated relative lag must coexist with corrupted-state capture.
+        rapid(720,.15f,combined,false,false,8,true,true,false,3600,true);
 #endif
     }
     for(float a:{90.0f,150.0f,179.99f,180.0f,180.01f,-179.99f}) for(float h:{0.0f,137.0f}) capture(a,h);

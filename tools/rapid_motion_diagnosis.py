@@ -79,12 +79,13 @@ def main():
         antipodes = [r for r in records if r[0] == "antipode"]
         dropouts = [r for r in records if r[0] == "accel-dropout"]
         recovered = [r for r in records if r[0] == "recovery"]
-        if len(recovered) != (8 if number in (1, 5) else 2):
+        if len(recovered) != (10 if number in (1, 5) else 2):
             raise ValueError(f"{name}: incomplete carried-state recovery regressions")
         if (len(rapid), len(capture), len(antipodes), len(dropouts)) != (22, 14, 2, 3):
             raise ValueError(f"{name}: incomplete protection regressions")
         regressions[name] = {
             "inherited_state_cases": len(recovered),
+            "calibrated_delay_recovery_cases": sum(int(r[8]) for r in recovered),
             "maximum_inherited_state_tail_deg": max(float(r[6]) for r in recovered),
             "protected_rapid_cases": len(rapid),
             "capture_cases": len(capture),

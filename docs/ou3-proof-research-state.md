@@ -46,12 +46,13 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Rapid-motion runtime repair scope
 
-Current recovery hypothesis: independently qualified two-vector/gyro bias repair,
+Current recovery hypothesis: qualified two-vector/gyro bias repair,
 physical-coordinate TFG covariance reset, and explicit treatment of corrupted
 navigation feedback close the finite inherited-state recovery cases. qMEKF's
 quiet seven-second tails are below 0.00003 degrees; TFG yaw/combined tails are
-0.34495/0.92293 degrees. Eight qMEKF and eight TFG continuations include sensor
-noise, resumed vessel motion and sixty-second quiet tails; all remain below
+0.34495/0.92293 degrees. Ten qMEKF and ten TFG continuations include sensor
+noise, resumed vessel motion, sixty-second quiet tails and calibrated 40 ms
+magnetic delay; all remain below
 five degrees in the fresh optimized build (maxima 0.48445/2.92141 degrees).
 All fourteen seven-backend late-protection cases pass. Aiding resumes and
 healthy biases survive. The 336 ordinary causal controls change by at most
@@ -97,6 +98,15 @@ and retained-state behavior on device. Main `c9c41de` (effective magnetic-delay
 calibration) and intervening PR documentation `8e3e5d8` are incorporated. AUX
 status-bit masking and the required latest calibration format are preserved.
 The source-wide native diagnostic is rerun on this combined source tree.
+The final local `make all EIGEN_DIR=... SIM_DATA_ZIP=...` stopped compiling
+`tests/imu_calibrate/accel_cal-test.o` with `error writing to /tmp/...s: No space
+left on device`; the qMEKF Arduino compile and subsequent git fetch hit the
+same storage exhaustion (E: infrastructure, not a code regression). Dispose
+only of ignored generated CSV outputs, retain pinned inputs/source/evidence,
+then retry unchanged code while cleaning completed directories' transient output.
+Both AtomS3R retries pass: qMEKF uses 823747 flash / 116276 RAM bytes; TFG
+uses 1069043 flash / 45028 RAM bytes. Full native-suite retry is in progress;
+its outcome and the required CI gates remain PR metadata.
 The unchanged evidence builder rejects stale source/record hashes after the
 merge (E); refresh only the bindings backed by this new replay and the unchanged
 legacy-operation audit. No numerical record or theorem gate is weakened.

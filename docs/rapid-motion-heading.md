@@ -158,7 +158,7 @@ bypass protection during the turn and enable it only afterward, preserving the
 actual corrupted bias, covariance, navigation and reference history. They now
 enforce the five-degree seven-second target instead of reporting failures as
 unenforced diagnostics. Additional noisy, resumed-motion and sixty-second
-qMEKF/TFG cases test the new repair. These finite cases do not establish
+qMEKF/TFG cases test the new repair, including calibrated 40 ms magnetic lag. These finite cases do not establish
 recovery from arbitrary corrupted state or persistent sensor faults.
 
 Hardware turn tests remain necessary. The BMM150 conversion epoch is still
