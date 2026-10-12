@@ -20,6 +20,9 @@ public:
         have_source_ = have_submitted_ = new_source_ = source_valid_ = bad_epoch_ = false;
         source_sequence_ = submitted_sequence_ = 0;
         duplicates_ = history_misses_ = 0;
+        source_total_ = complete_total_ = service_total_ = rejected_total_ = 0;
+        last_service_us_ = 0;
+        source_gap_ms_ = max_source_gap_ms_ = service_gap_ms_ = max_service_gap_ms_ = NAN;
         age_ms_ = latency_ms_ = min_latency_ms_ = max_latency_ms_ = NAN;
         applied_ = false;
     }
@@ -42,6 +45,12 @@ public:
             static_cast<int32_t>(now - timing.frame_us) >= 0 &&
             static_cast<int32_t>(timing.read_end_us - timing.frame_us) >= 0;
         if (new_source_) {
+            if (have_source_) {
+                source_gap_ms_ = float(uint32_t(timing.frame_us - source_us_)) * .001f;
+                if (!std::isfinite(max_source_gap_ms_) || source_gap_ms_ > max_source_gap_ms_)
+                    max_source_gap_ms_ = source_gap_ms_;
+            }
+            ++source_total_;
             source_sequence_ = timing.sequence;
             source_us_ = timing.frame_us; read_end_us_ = timing.read_end_us;
             have_source_ = true;
@@ -119,6 +128,18 @@ public:
     }
     void complete(uint32_t correction_start_us, bool applied) {
         applied_ = applied; submitted_sequence_ = source_sequence_; have_submitted_ = true;
+        ++complete_total_;
+        if (applied) {
+            ++service_total_;
+            if (last_service_us_ != 0) {
+                service_gap_ms_ = float(uint32_t(correction_start_us - last_service_us_)) * .001f;
+                if (!std::isfinite(max_service_gap_ms_) || service_gap_ms_ > max_service_gap_ms_)
+                    max_service_gap_ms_ = service_gap_ms_;
+            }
+            last_service_us_ = correction_start_us;
+        } else {
+            ++rejected_total_;
+        }
         age_ms_ = float(uint32_t(now_ - source_us_)) * .001f;
         latency_ms_ = float(uint32_t(correction_start_us - read_end_us_)) * .001f;
         if (!std::isfinite(min_latency_ms_)) min_latency_ms_ = max_latency_ms_ = latency_ms_;
@@ -132,12 +153,18 @@ public:
     void print(Output& out, const char* service_name = "applied") const {
         out.printf("[MAGTIME] host_age_ms=%.3f read_to_update_ms=%.3f jitter_range_ms=%.3f "
                    "rot_pred_rad=%.5f rot_seen_rad=%.5f residual_uT=%.4f d2=%.3f snr=%.3f "
-                   "%s=%u uncertainty_known=%u status=%u duplicates=%lu history_miss=%lu\n",
+                   "%s=%u uncertainty_known=%u status=%u duplicates=%lu history_miss=%lu "
+                   "source_total=%lu complete_total=%lu service_total=%lu rejected_total=%lu "
+                   "source_gap_ms=%.3f max_source_gap_ms=%.3f service_gap_ms=%.3f max_service_gap_ms=%.3f\n",
             double(age_ms_), double(latency_ms_), double(max_latency_ms_-min_latency_ms_),
             double(diagnostic_.predicted_angle_rad), double(diagnostic_.observed_angle_rad),
             double(diagnostic_.residual_uT), double(diagnostic_.nis), double(diagnostic_.rotation_signal_to_noise),
             service_name, unsigned(applied_), unsigned(uncertainty_known_), unsigned(diagnostic_.status),
-            static_cast<unsigned long>(duplicates_), static_cast<unsigned long>(history_misses_));
+            static_cast<unsigned long>(duplicates_), static_cast<unsigned long>(history_misses_),
+            static_cast<unsigned long>(source_total_), static_cast<unsigned long>(complete_total_),
+            static_cast<unsigned long>(service_total_), static_cast<unsigned long>(rejected_total_),
+            double(source_gap_ms_), double(max_source_gap_ms_),
+            double(service_gap_ms_), double(max_service_gap_ms_));
     }
 private:
     RotationHistory<> history_{};
@@ -148,8 +175,12 @@ private:
     uint32_t now_ = 0, source_us_ = 0, read_end_us_ = 0;
     uint32_t source_sequence_ = 0, submitted_sequence_ = 0;
     uint32_t duplicates_ = 0, history_misses_ = 0;
+    uint32_t source_total_ = 0, complete_total_ = 0, service_total_ = 0, rejected_total_ = 0;
+    uint32_t last_service_us_ = 0;
     bool have_source_ = false, source_valid_ = false, have_submitted_ = false;
     bool new_source_ = false, bad_epoch_ = false, applied_ = false, uncertainty_known_ = true;
     float age_ms_ = NAN, latency_ms_ = NAN, min_latency_ms_ = NAN, max_latency_ms_ = NAN;
+    float source_gap_ms_ = NAN, max_source_gap_ms_ = NAN;
+    float service_gap_ms_ = NAN, max_service_gap_ms_ = NAN;
 };
 } // namespace ocean_imu::magnetic
