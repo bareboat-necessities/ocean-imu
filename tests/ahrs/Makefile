@@ -40,12 +40,12 @@ mag_continuous-test: mag_continuous-test.o
 mag_continuous-test.o: ../common/MagneticContinuousReplay.h ../common/MagneticMotion.h ../../src/util/MagneticInput.h ../../src/util/MagneticRotation.h
 
 TARGETS += rapid_motion-qmekf
-rapid_motion-qmekf: rapid_motion-qmekf.o
+rapid_motion-qmekf: rapid_motion-qmekf.o AttitudeProtection.o
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 rapid_motion-qmekf.o: ../common/RapidMotionReplay.h ../common/RapidMotionBackends.h ../../src/ahrs/KalmanQMEKF.h ../../src/util/AttitudeProtection.h ../../src/util/ImuFreshness.h
 
 TARGETS += rapid_motion-mahony
-rapid_motion-mahony: rapid_motion-mahony.o
+rapid_motion-mahony: rapid_motion-mahony.o AttitudeProtection.o
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 rapid_motion-mahony.o: ../common/RapidMotionReplay.h ../common/RapidMotionBackends.h ../../src/util/AttitudeProtection.h ../../src/util/ImuFreshness.h
 
