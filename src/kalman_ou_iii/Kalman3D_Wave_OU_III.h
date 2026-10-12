@@ -104,6 +104,25 @@ class Kalman3D_Wave_OU_III {
         v2ref = B_world;    // keep µT magnitude
     }
 
+    // Device motion policy: retain translation updates, freeze attitude/bias
+    // gain rows during untrusted specific force. Defaults preserve callers.
+    void set_attitude_aiding_enabled(bool enabled) {
+        if (enabled && !attitude_aiding_enabled_) {
+            // Drop correlations learnt across the manoeuvre between the held
+            // attitude/bias block and the driven navigation block. This block
+            // diagonal projection preserves PSD and every mean/marginal.
+            for (int i = 0; i < NX; ++i) {
+                if (i >= OFF_V && i < OFF_V + 12) continue;
+                for (int j = OFF_V; j < OFF_V + 12; ++j)
+                    Pext(i,j) = Pext(j,i) = T(0);
+            }
+        }
+        attitude_aiding_enabled_ = enabled;
+    }
+    bool attitude_aiding_enabled() const { return attitude_aiding_enabled_; }
+    void set_accelerometer_fresh(bool fresh) { accelerometer_fresh_ = fresh; }
+    const Vector3& magnetic_reference_world() const { return v2ref; }
+
     void time_update(Vector3 const& gyr, T Ts);
 
     // Measurement updates preserved (operate on extended state internally)
@@ -876,6 +895,9 @@ class Kalman3D_Wave_OU_III {
         return std::isfinite(v) ? v : std::numeric_limits<T>::quiet_NaN();
     }
 
+    bool attitude_aiding_enabled_ = true;
+    bool accelerometer_fresh_ = true;
+
     // Compute K = PCt * S^-1 using vector solves instead of forming S^-1.
     // This keeps the ESP32/Arduino Eigen instantiation much smaller than
     // PCt * ldlt.solve(I), which can make cc1plus exhaust memory on Windows.
@@ -889,6 +911,11 @@ class Kalman3D_Wave_OU_III {
             K(i,0) = sol(0);
             K(i,1) = sol(1);
             K(i,2) = sol(2);
+        }
+        if (!attitude_aiding_enabled_) {
+            K.template topRows<3>().setZero();
+            if constexpr (with_gyro_bias) K.template middleRows<3>(3).setZero();
+            if constexpr (with_accel_bias) K.template middleRows<3>(OFF_BA).setZero();
         }
     }
 
@@ -1965,6 +1992,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 {
     last_acc_diag_ = MeasDiag3{};
     last_acc_diag_.accepted = false;
+    if (!accelerometer_fresh_) return;
 
     // Reject invalid corrections before they can contaminate any mean/cross term.
     if (!acc_meas_body.allFinite() || !std::isfinite(tempC)) return;
@@ -2177,6 +2205,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 {
     last_mag_diag_ = MeasDiag3{};
     last_mag_diag_.accepted = false;
+    if (!attitude_aiding_enabled_) return;
 
     // De-heel magnetometer into B'
     const Vector3 mag_meas = deheel_vector_(mag_meas_body);
@@ -2501,7 +2530,9 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 
     Eigen::Matrix<T, NX, 1> K;
     for (int i = 0; i < NX; ++i) {
-        K(i) = PCt(i) / S;
+        const bool held = !attitude_aiding_enabled_ &&
+            (i < BASE_N || (with_accel_bias && i >= OFF_BA));
+        K(i) = held ? T(0) : PCt(i) / S;
         xext(i) += K(i) * r;
     }
 

@@ -77,6 +77,7 @@ constexpr float FREQ_GUESS = 0.3f;
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
 #include "util/MagneticInput.h"
+#include "util/AttitudeProtection.h"
 
 #include "util/QuaternionUtils.h"
 #include "wave_dir/WaveDirectionReport.h"
@@ -261,6 +262,8 @@ private:
 
   ins::MagFreshGate mag_gate_{};
   ocean_imu::magnetic::Input mag_input_{};
+  ocean_imu::attitude::Protection attitude_protection_{};
+  ocean_imu::attitude::AccelHold accel_hold_{};
 
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
@@ -349,6 +352,7 @@ private:
 #endif
   }
 
+  /** @brief Check IMU availability and reset sample timing, motion protection, and held acceleration. */
   void reinitImu_() {
     if (!M5.Imu.isEnabled()) {
       Serial.println("[BOOT] M5.Imu is not enabled");
@@ -359,8 +363,11 @@ private:
     mag_gate_.reset();
     rates_.reset(millis());
     sample_dt_.reset();
+    attitude_protection_.reset();
+    accel_hold_.reset();
   }
 
+  /** @brief Reset fusion and acquisition history, then restore the configured estimator settings. */
   void resetFusion_() {
     constexpr float IMU_TUNE_REF_HZ = 200.0f;
     constexpr float MAG_TUNE_REF_HZ = 25.0f;
@@ -459,6 +466,8 @@ private:
 
     stale_frame_count_ = 0;
     sample_dt_.reset();
+    attitude_protection_.reset();
+    accel_hold_.reset();
     heave_speed_mps_     = 0.0f;
     heave_raw_m_         = 0.0f;
     heave_baseline_m_    = 0.0f;
@@ -527,6 +536,7 @@ private:
         : (heading_mag_ok_ ? heading_mag_deg_ : NAN);
   }
 
+  /** @brief Calibrate a delivered IMU frame and update fusion with freshness and motion protection. */
   void updateFilter_(const ImuSample& s) {
     if (!have_blob_) return; // latest calibration required, including wizard-disabled builds
     dt_ = sample_dt_.update(s.sample_us);
@@ -544,18 +554,30 @@ private:
     m_cal_ = runtime_.applyMag(s.m);
 
     const auto& core = fusion_.raw().mekf();
+    a_cal_ = accel_hold_.update(a_cal_, s.accel_fresh,
+        w_cal_ - core.gyroscope_bias_body(), dt_);
     mag_input_.advance(s.sample_us, w_cal_ - core.gyroscope_bias_body(),
         ocean_imu::magnetic::covarianceBound(core.gyroscope_bias_covariance_body()),
         s.mag_timing, m_cal_, fusion_.magHardIronBodyUT());
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
+    Vector3f magnetic_now = Vector3f::Zero();
+    const bool field_valid = mag_input_.currentField(fusion_.magHardIronBodyUT(), magnetic_now);
+    const Vector3f& reference = core.magnetic_reference_world();
+    const auto motion = attitude_protection_.step(dt_, w_cal_, core.gyroscope_bias_body(),
+        a_cal_, s.accel_fresh, g_local, fusion_.attitudeQuat(), magnetic_now, mag_ok_ && field_valid,
+        mag_input_.newSource(), s.sample_us, std::atan2(reference.y(), reference.x()),
+        fusion_.isLive() && fusion_.hasMagNorthLock());
+    fusion_.raw().setAttitudeAidingEnabled(!motion.hold_attitude);
+    fusion_.raw().setAccelerometerFresh(s.accel_fresh);
     mag_fresh_ = mag_input_.due(mag_gate_, mag_ok_, millis());
     if (mag_fresh_) rates_.countMag();
 
     fusion_.update(dt_, w_cal_, a_cal_);
     mag_input_.capture(fusion_.raw().startupProxyQuat(), fusion_.attitudeQuat(), a_cal_, w_cal_);
-    if (mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
+    if (!motion.hold_attitude && mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
+    if (motion.reacquire) fusion_.raw().mekf().initialize_from_attitude(motion.target, 0.05f, 0.05f);
 
     // Keep startup attitude and startup compass tilt explicitly on the
     // yaw-free Mahony proxy. Its yaw is unobservable and must never become a
@@ -677,6 +699,7 @@ private:
     ui_.line("");
   }
 
+  /** @brief Emit the enabled NMEA outputs and optional sensor, fusion, and motion diagnostics. */
   void streamSerial_() {
     const uint32_t now_ms = millis();
 
@@ -763,6 +786,7 @@ private:
       static_cast<double>(m_cal_.y()),
       static_cast<double>(m_cal_.z()));
     mag_input_.print(Serial);
+    attitude_protection_.print(Serial);
   #endif
 #endif
   }

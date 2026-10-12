@@ -48,9 +48,13 @@ class QmekfBackend : public IAttitudeBackend {
     mag_applied_ = false;
   }
 
+  /** @brief Advance the compass backend and fill the attitude solution.
+   * Honor the sample motion hold and apply a qualified recovery target when requested.
+   */
   void step(const CalibratedSample& s, AttitudeSolution& out) override {
     mag_applied_ = false;
     if (!inited_) {
+      if (s.motion.hold_attitude) { out.valid = false; return; }
       Vector3f a_init = s.a_cal;
       const float an0 = a_init.norm();
       if (an0 > 1e-6f) a_init *= (ImuCalCfg::g_cal_local / an0);  // reference at the physical static norm
@@ -68,9 +72,9 @@ class QmekfBackend : public IAttitudeBackend {
     Vector3f a_att = s.a_cal;
     const float an = a_att.norm();
     if (an > 1e-6f) a_att *= (ImuCalCfg::g_cal_local / an);
-    mekf_->measurement_update_acc_only(a_att);
+    if (!s.motion.hold_attitude && s.accel_fresh) mekf_->measurement_update_acc_only(a_att);
 
-    if (s.mag_ok && s.mag_fresh) {
+    if (!s.motion.hold_attitude && s.mag_ok && s.mag_fresh) {
       // Field reference rebuilt from this reading, as in Mahony: its own dip,
       // pointing to magnetic north. A reference frozen at start keeps the
       // dip error of that one sample (local disturbance, motion at boot),
@@ -83,6 +87,10 @@ class QmekfBackend : public IAttitudeBackend {
       else { mekf_->measurement_update_mag_only(s.m_unit); mag_applied_ = true; }
     }
 
+    if (s.motion.reacquire) {
+      mekf_->reacquire_attitude(s.motion.target);
+      if (s.motion.repair_gyro_bias) mekf_->reacquire_gyro_bias(s.motion.gyro_bias);
+    }
     const auto q = mekf_->quaternion();
     out = makeAttitudeFromQuat(q(0), q(1), q(2), q(3));
   }

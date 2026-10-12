@@ -195,12 +195,12 @@
           },
           "kernel_bounded_diameter": {
             "c_nu": 0.0621,
-            "kappa_nu": 198.4,
+            "kappa_nu": 198.3,
             "kernel_rotation_rad": 0.008794,
             "kernel_set_invariant": true,
-            "margin_mu_equals_inverse_c": 0.005041,
+            "margin_mu_equals_inverse_c": 0.005043,
             "next_root_kernel_ceiling": 0.06405,
-            "propagated_next_kernel_variance": 0.06355,
+            "propagated_next_kernel_variance": 0.06352,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
@@ -266,12 +266,12 @@
           },
           "kernel_bounded_diameter": {
             "c_nu": 0.0621,
-            "kappa_nu": 45.93,
+            "kappa_nu": 45.91,
             "kernel_rotation_rad": 0.004768,
             "kernel_set_invariant": true,
-            "margin_mu_equals_inverse_c": 0.02177,
+            "margin_mu_equals_inverse_c": 0.02178,
             "next_root_kernel_ceiling": 0.06138,
-            "propagated_next_kernel_variance": 0.05551,
+            "propagated_next_kernel_variance": 0.05549,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
@@ -348,7 +348,7 @@
           },
           "kernel_bounded_diameter": {
             "c_nu": 0.001046,
-            "kappa_nu": 461.6,
+            "kappa_nu": 461.7,
             "kernel_rotation_rad": 0.00944,
             "kernel_set_invariant": true,
             "margin_mu_equals_inverse_c": 0.002166,
@@ -809,12 +809,12 @@
           },
           "kernel_bounded_diameter": {
             "c_nu": 0.06229,
-            "kappa_nu": 198.2,
+            "kappa_nu": 198.3,
             "kernel_rotation_rad": 0.009857,
             "kernel_set_invariant": true,
-            "margin_mu_equals_inverse_c": 0.005045,
+            "margin_mu_equals_inverse_c": 0.005044,
             "next_root_kernel_ceiling": 0.06387,
-            "propagated_next_kernel_variance": 0.0633,
+            "propagated_next_kernel_variance": 0.06331,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
@@ -885,7 +885,7 @@
             "kernel_set_invariant": true,
             "margin_mu_equals_inverse_c": 0.02179,
             "next_root_kernel_ceiling": 0.06147,
-            "propagated_next_kernel_variance": 0.05555,
+            "propagated_next_kernel_variance": 0.05556,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
@@ -922,7 +922,7 @@
     }
   ],
   "driver_sha256": "ef3e961053be3602b1377c8ae6376ff8fd8b03520889a1e2753e11b56bda5f76",
-  "header_sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0",
+  "header_sha256": "d8e0638c250ee5358cc70d42fc9418404dc6a963c009ed26f3fddf036a43128b",
   "history_s": 64,
   "kernel_set_invariant_on_every_word": true,
   "kill_criterion": {

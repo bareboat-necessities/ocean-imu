@@ -5,11 +5,11 @@
   "authoritative_shipping_sources": [
     {
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "git_blob_sha": "7747915f1759f02ad75897abde9922cda5d65572"
+      "git_blob_sha": "05c90998fe3a1ad35f5a40e17d1d402adb566a83"
     },
     {
       "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
-      "git_blob_sha": "87372a6e726eda68e160a8c4ac4a1bd571bfa9a3"
+      "git_blob_sha": "5bc4fcf45f2f8cf7e7d4a4d5f7b7bce1141ad563"
     },
     {
       "path": "src/kalman_common/SeaStateFusionDefaults.h",
@@ -33,7 +33,7 @@
     },
     {
       "path": "src/kalman_common/ProxyStartupFusion.h",
-      "git_blob_sha": "36fd7eb05d0ff379ad284548e325c535aa08dcd1"
+      "git_blob_sha": "9807ad2ba01ddd4d288ac0c4feba33f5a93cf3b5"
     },
     {
       "path": "src/kalman_common/MagneticStartupCommon.h",
@@ -41,7 +41,27 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "b845ac65184caf525eace31e9aacd54827ab8167"
+      "git_blob_sha": "39b93121e54757140cb63655acc2f5ffe2215495"
+    },
+    {
+      "path": "src/util/AttitudeProtection.h",
+      "git_blob_sha": "366dc29e66a0b68cfc8052a6f96c088867b21e72"
+    },
+    {
+      "path": "src/util/ImuFreshness.h",
+      "git_blob_sha": "31be7db0a2d3c4dcd7cbbbbe7c8f33f72c1ab681"
+    },
+    {
+      "path": "src/AtomS3R/AtomS3R_ImuCal.h",
+      "git_blob_sha": "e78b5a29653cc4040af65b642d9b404fc2b2ceb6"
+    },
+    {
+      "path": "src/tuner/VerticalAccelComplementary.h",
+      "git_blob_sha": "defe45e273bb8824f93f567ceb9dbeb875e336a3"
+    },
+    {
+      "path": "src/ahrs/Mahony_AHRS.h",
+      "git_blob_sha": "c182d80101c3e83b0f9240e89cd844305d78eac0"
     }
   ],
   "semantic_bindings": {
@@ -165,7 +185,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "288fff3135a9b028d7567a73d920dc968952581e"
+      "git_blob_sha": "279d5638f5a7bea1cae799e6d442e5c0bd0ed53d"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -213,7 +233,7 @@
     },
     {
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "git_blob_sha": "bdc9d4e61afcd292acf4285c7a43d26fbef4ee41"
+      "git_blob_sha": "6db9641f76de071e5503d8976444d2a31fda2ff2"
     },
     {
       "path": "reports/results/ou3_stability/construction-history-feasibility.json",
@@ -221,11 +241,11 @@
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "git_blob_sha": "e0493ec196fa5eeb338d92baf84fecda6e43fcfb"
+      "git_blob_sha": "ace3d15631b1ba595ec01e9e08f110f846b8059f"
     },
     {
       "path": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
-      "git_blob_sha": "6c6c56f58f60fdedcb82a813c47e5e46719da6cf"
+      "git_blob_sha": "567461f6c706e16297b5c51f722a00a1357e0795"
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
@@ -237,7 +257,7 @@
     },
     {
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "git_blob_sha": "764e15a27a9f360cedfc3c083b8168562dd8f4d4"
+      "git_blob_sha": "8d61b9cb1aefdd65bc0f9bbda62d1c07ab4060ab"
     },
     {
       "path": "reports/results/ou3_stability/regime-certificate.json",
@@ -249,11 +269,11 @@
     },
     {
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "git_blob_sha": "3ed8164c331871317d7d3756c9ebc89be60847a2"
+      "git_blob_sha": "5ea7294cd4f9c10a263b1f3332c2ab3849879b7f"
     },
     {
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "git_blob_sha": "836bc37abc879ab449981febd04fdc1f9d848207"
+      "git_blob_sha": "8c73b56473d9d4ad29fd9d74dc9f5149e32f379f"
     },
     {
       "path": "reports/results/ou3_stability/signed-injection-certificate.json",
@@ -277,7 +297,7 @@
     },
     {
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "git_blob_sha": "9a3f4393074126d7b7702ab3fdd6c17b4ac8970a"
+      "git_blob_sha": "1b11bebb05855e65eb741e5ebdda28c5f81198ed"
     },
     {
       "path": "src/kalman_common/SeaStateFusionFilterCommon.h",
@@ -505,7 +525,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/aw_tracking_source_diagnostic.py",
-      "git_blob_sha": "f84f566001de054d444c59c3bf0f87d791d139c1"
+      "git_blob_sha": "e65b6c403d77465aebecd821c5e772312caded1c"
     },
     {
       "path": "tools/stability/ou3_theorem/block_factor_numeric.py",
@@ -757,7 +777,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "4e1adddd64d36dc8b1f14e296c66cff0fd17e84d"
+      "git_blob_sha": "246b10f5bd65c622e459f2e55aaa13018a6bd3f0"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -825,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "a99d7a7d8353c64de4f4b5768a0ae19d97716d5b"
+      "git_blob_sha": "5a331c81db00e3dc79aeafbfcf4003ee1e92a6d7"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -841,7 +861,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
-      "git_blob_sha": "fc5c1c0339e67d997dadfceaab495aa4a14331a2"
+      "git_blob_sha": "c0c49dacebd9bb8de0edf25c63c72158982feecb"
     },
     {
       "path": "tests/validation/test_ou3_compatibility_quotient.py",
@@ -982,6 +1002,14 @@
     {
       "path": "docs/ou3-linked-word-score.md",
       "git_blob_sha": "a84aee1789219d2d4f7d4f0de121a96f2c8b0935"
+    },
+    {
+      "path": "tools/stability/ou3_theorem/magnetic_timing_legacy_binding.py",
+      "git_blob_sha": "9aaf081ed2472961d7b2667b766f38390dd72945"
+    },
+    {
+      "path": "reports/results/ou3_stability/magnetic-timing-legacy-binding.json",
+      "git_blob_sha": "a2b9b338ea57cb4e927b25dfd318653aa2c1e4f1"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1667,6 +1695,25 @@
   "receipt_schur_continuation_incorporated_main_commit": "59171c1a4aef654bb9808629e8856e4a56edfcc8",
   "receipt_schur_continuation_automated_evidence_preserved": "944f7bdffa379e3381e4ebfc7b3f2d77722d1990",
   "receipt_schur_continuation_earlier_automated_evidence_preserved": "070e7de3633f396dac2636d1783f735f9ea87d4c",
+  "rapid_motion_runtime_scope": {
+    "base_main_commit": "453a1dfa66c7f90f4936f50940443fb0844d7959",
+    "existing_algebra_scope": "ordinary aiding with its original hypotheses; native default-aiding source diagnostics are reproduced",
+    "new_operations": [
+      "attitude and bias gain-row holds",
+      "accelerometer freshness gating",
+      "held/navigation covariance decorrelation on aiding re-entry",
+      "settled global attitude reacquisition",
+      "qualified gross gyro-bias repair in qMEKF/TFG",
+      "TFG physical-coordinate recovery covariance and recovery-only S gain masking",
+      "TFG recovery world-acceleration uncertainty and gross acceleration-bias calibration-prior reset"
+    ],
+    "new_operations_certified_by_existing_theorem": false,
+    "engineering_replays": "tests/common/RapidMotionReplay.h: common synthetic pivot, noise, gap, magnetic lag and antipodal-capture cases on all seven deployed estimators",
+    "hardware_qualification": false,
+    "skipped_corrections_establish_magnetic_service": false,
+    "theorem_promotion": false,
+    "incorporated_main_commit": "c9c41de0108816a19b61cb35bd07a961ec2ce88a"
+  },
   "magnetic_delay_calibration_scope": {
     "format": 5,
     "full_recalibration_required": true,

@@ -76,6 +76,7 @@
 */
 
 #include <Arduino.h>
+#include "util/ImuFreshness.h"
 #include <M5Unified.h>
 #include <Preferences.h>
 
@@ -276,6 +277,7 @@ struct ImuSample {
   float tempC;    // deg C
   uint32_t mask;  // M5.Imu.update() mask
   uint32_t sample_us; // micros() timestamp captured at imu.update()
+  bool accel_fresh = true; // a new accelerometer sample since the previous delivered gyro
   MagAcquisition mag_timing; // first host observation and AUX read bracket
 };
 
@@ -303,13 +305,14 @@ static constexpr uint32_t kImuMaskAccelGyro = (ATOMS3R_IMU_MASK_ACCEL | ATOMS3R_
 
 // Bosch-compensated magnetometer source (see configureAtomS3RMag()).
 struct AtomS3RMagSource {
+  ocean_imu::ImuFreshness imu_freshness{};
+  uint8_t last_aux[8]{};
   bool compensated = false;      // deliver Bosch trim/RHALL compensated uT
   Bmm150Trim trim{};
   m5::IMU_Base* bmi270 = nullptr;
   m5::imu_3d_t last_m5{};        // M5Unified's cached value of the last reading
   Vector3f last_body = Vector3f(NAN, NAN, NAN);
   bool have_last = false;
-  uint8_t last_aux[8]{};
   MagAcquisition acquisition{};  // last new, successfully read reading
 };
 inline AtomS3RMagSource& atoms3rMagSource() {
@@ -319,6 +322,9 @@ inline AtomS3RMagSource& atoms3rMagSource() {
 
 // Compensated XYZ/RHALL and change detection use the SAME AUX burst. These
 // are distinct byte observations, still not hardware conversion identifiers.
+/** @brief Return the body-frame magnetic field in microteslas, or NaNs when stale.
+ * Compensated values and source freshness come from the same AUX burst.
+ */
 static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag, uint32_t frame_us) {
   auto& src = atoms3rMagSource();
   const uint32_t now = millis();
@@ -358,10 +364,16 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
 }
 
 // Reads M5.Imu, applies AtomS3R axis mapping and unit conversion, but does NOT calibrate.
+/** @brief Deliver a mapped gyro frame once acceleration is available.
+ * Return false when no frame is ready; out.accel_fresh marks acceleration
+ * not yet consumed by a previous delivered gyro frame.
+ */
 static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out) {
   out.sample_us = sample_us;
   out.mask = update_mask;
-  if ((out.mask & kImuMaskAccelGyro) != kImuMaskAccelGyro) return false;
+  if (!atoms3rMagSource().imu_freshness.observe(
+      (out.mask & ATOMS3R_IMU_MASK_ACCEL) != 0,
+      (out.mask & ATOMS3R_IMU_MASK_GYRO) != 0, out.accel_fresh)) return false;
 
   const auto data = imu.getImuData();
   out.tempC = NAN;

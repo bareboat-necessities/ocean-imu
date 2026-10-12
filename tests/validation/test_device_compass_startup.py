@@ -22,7 +22,7 @@ SKETCHES = tuple(ROOT / "sensors/full_marine_ins" / name / (name + ".ino") for n
 def function(source: str, name: str) -> str:
     """Extract a definition from the sketch, not a call or reimplementation."""
     match = re.search(
-        r"^[ \t]*(?:static[ \t]+inline[ \t]+)?(?:void|bool|float|Vector3f)[ \t]+"
+        r"^[ \t]*(?:static[ \t]+(?:inline[ \t]+)?)?(?:void|bool|float|Vector3f)[ \t]+"
         + re.escape(name) + r"\(", source, re.MULTILINE,
     )
     if match is None:

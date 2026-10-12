@@ -25,6 +25,11 @@ TARGETS = ahrs-qmekf-sim
 
 all: build test
 
+TARGETS += qmekf_geometry-test
+qmekf_geometry-test: qmekf_geometry-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+qmekf_geometry-test.o: ../../src/ahrs/KalmanQMEKF.h
+
 TARGETS += mag_continuous-test
 TARGETS += mag_timing-test
 mag_timing-test: mag_timing-test.o
@@ -33,6 +38,16 @@ mag_timing-test.o: ../common/MagneticTimingReplay.h ../common/MagneticMotion.h .
 mag_continuous-test: mag_continuous-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 mag_continuous-test.o: ../common/MagneticContinuousReplay.h ../common/MagneticMotion.h ../../src/util/MagneticInput.h ../../src/util/MagneticRotation.h
+
+TARGETS += rapid_motion-qmekf
+rapid_motion-qmekf: rapid_motion-qmekf.o
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+rapid_motion-qmekf.o: ../common/RapidMotionReplay.h ../common/RapidMotionBackends.h ../../src/ahrs/KalmanQMEKF.h ../../src/util/AttitudeProtection.h ../../src/util/ImuFreshness.h
+
+TARGETS += rapid_motion-mahony
+rapid_motion-mahony: rapid_motion-mahony.o
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+rapid_motion-mahony.o: ../common/RapidMotionReplay.h ../common/RapidMotionBackends.h ../../src/util/AttitudeProtection.h ../../src/util/ImuFreshness.h
 
 build: $(TARGETS)
 
@@ -44,6 +59,7 @@ ensure-sim-data:
 
 ahrs-qmekf-sim: ahrs-qmekf-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+ahrs-qmekf-sim.o: ../../src/ahrs/KalmanQMEKF.h
 
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -c $< -o $@
