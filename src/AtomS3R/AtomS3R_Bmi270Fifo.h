@@ -59,6 +59,12 @@ struct Bmi270 {
   static constexpr uint8_t AUX_MANUAL = 0x80, AUX_DATA_MODE_FCU_BURST8 = 0x4F;
   // FIFO_CONFIG_1: gyr | acc | aux | header.
   static constexpr uint8_t FIFO_ALL_HEADER = 0xF0;
+  // The FIFO holds 2 kB: about 146 frames of accelerometer+gyro with a
+  // magnetometer readout every 8th (0.73 s at 200 Hz). A longer pause in
+  // reading overwrites the oldest frames; the BMI270 reports them with a
+  // skip frame. Read it in one burst: a read that ends inside a frame
+  // breaks the frame alignment of the next read.
+  static constexpr size_t FIFO_BYTES = 2048;
   // Sensortime: 24 bits at 25.6 kHz; a 200 Hz frame every 128 ticks.
   static constexpr double TICK_US = 39.0625;
   static constexpr uint32_t FRAME_TICKS = 128;
@@ -321,10 +327,11 @@ class SensorClockMap {
     last_host_ = host_us;
     ++reads_;
 
-    // Slope over the whole run once it spans 1.3 s. The line is re-anchored
+    // Slope over the whole run once it spans 160 ms (a BMI270 clock can be
+    // 1 % off nominal), refined as the span grows. The line is re-anchored
     // at the current tick when the slope changes, so frame times stay
     // continuous; the offset then follows the read-time jitter slowly.
-    if (st_ - st0_ >= (1u << 15)) {
+    if (st_ - st0_ >= (1u << 12)) {
       const double s = double(host_ - host0_) / double(st_ - st0_);
       offset_ += (us_per_tick_ - s) * double(st_);
       us_per_tick_ = s;

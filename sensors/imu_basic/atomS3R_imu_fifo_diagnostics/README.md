@@ -30,7 +30,7 @@ Ranges stay at ±8 g and ±2000 °/s, the ranges M5Unified's conversion assumes,
 
 Calibrate first with the wizard in any INS sketch; without a calibration the sketch reports the raw sensor. Then:
 
-1. Upload. Open a serial capture at 115200 baud, for example `python3 -m serial.tools.miniterm --raw <port> 115200 | tee fifo.log`, and reset the board.
+1. Upload. Open a serial capture at 115200 baud, for example `python3 -m serial.tools.miniterm --raw <port> 115200 | tee fifo.log`, and reset the board. Frame lines (`R`) are off, so the summary lines stay readable; send `q` to turn them on for a full capture.
 2. **Still poses:** put the board on a firm, level surface away from metal, and leave it untouched for 5 s or more. Then turn it to another resting orientation and leave it again. Use at least six orientations: level, each side down, upside down, nose up and nose down, plus one turned flat on the table. Every pose produces an `S` line, and every turn between poses a `W` line.
 3. **Rocking:** hold the board and rock it back and forth, about one rock per second, tilting 20–40° and changing direction, until the TIME page shows `dly OK` (usually 1–3 minutes). Rocking also checks |m| in motion.
 4. Leave it running past one or two display bursts (every 10 s), then stop the capture.
@@ -41,8 +41,8 @@ Tap the screen to page through **TIME**, **ACC/GYR**, **MAG** and **ROT**.
 
 | Criterion | Pass when |
 |---|---|
-| rate | no frame missing on the sensor clock, and the host-clock rate within 1 % of 200 Hz |
-| no loss | no frame lost across the display bursts (400 ms and 1.5 s, alternating every 10 s; `s` on serial runs another 1.5 s burst) |
+| rate | 200 Hz on the sensor's own clock, no frame missing. The host-clock rate differs by the BMI270 oscillator's error, reported as `clock_ppm` (one AtomS3R showed +6145 ppm over 80 s: frames every 5.031 ms, 198.8 Hz on the ESP32 clock) |
+| no loss | no frame lost across the display bursts (400 ms and 600 ms, alternating every 10 s). The FIFO holds 2 kB, 0.73 s of frames (`fifo_capacity_ms` in the F line); a longer stall drops the oldest frames, which the BMI270 reports with a skip frame and the T line counts as lost. `s <ms>` on serial runs a burst of any length |
 | spacing | every delivered sample spacing (after warm-up) between 4.9 and 5.1 ms |
 | mag | 25 Hz readouts, each with the BMM150 data-ready bit set (a new conversion), each 40 ms after the previous on the sensor clock |
 | delay | three magnetometer-delay fits, each at most 4 ms wide, within 4 ms of each other |
@@ -57,7 +57,9 @@ That is the number a filter needs.
 
 ## Accuracy criteria (`A` lines, every 10 s)
 
-Each check uses still poses (the board resting, detected automatically) or the rotation between two of them. The limits are diagnostic, not sensor specifications, and each can be changed with a `FIFO_DIAG_*` define.
+Each check uses still poses or the rotation between two of them. The limits are diagnostic, not sensor specifications, and each can be changed with a `FIFO_DIAG_*` define.
+
+A still pose is detected automatically. In every 0.25 s block, each accelerometer axis must vary by less than 10 mg rms and each gyro axis by less than 0.5 °/s rms (a few times the noise at rest), the mean rate must be below 5 °/s, and gravity's direction must move by less than 1° from the previous block. A pose needs 2 s of such blocks.
 
 | Criterion | What is measured | Reference | Limit |
 |---|---|---|---|
@@ -77,6 +79,8 @@ Each check uses still poses (the board resting, detected automatically) or the r
 - the rotation and how much the gravity and field directions changed;
 - the prediction error with the gyro as measured;
 - the fitted scale error, from gravity and from the field direction. The field covers turns about the vertical, which the accelerometer cannot see.
+
+**What the saved calibration scales to.** The magnetometer fit scales the field to the strength the sensor itself measured where it was calibrated (`mag_cal_field_uT` in the H line). So F in a pose matches that number, not necessarily WMM: if both are some percent below WMM, the field where you calibrated was that much weaker, or the raw sensor reads low. `F_raw_uT` in the S lines is the uncalibrated strength. The H line also shows the gyro bias the calibration subtracts and the temperature it was measured at; the S lines show the bias left over (`gyro_bias_dps`) next to the uncalibrated one (`gyro_raw_bias_dps`).
 
 **Magnetometer.** The expected field comes from the World Magnetic Model WMM-2025 ([`src/imu_calibrate/GeomagWmm.h`](../../../src/imu_calibrate/GeomagWmm.h)). It is evaluated at the calibration site (`CalibrationSite` in `AtomS3R_ImuUnits.h`, Fair Lawn NJ) and the build date.
 
@@ -100,29 +104,32 @@ USB serial carries one `key=value` line per record:
 
 | Line | When | Content |
 |---|---|---|
-| `H` | boot, every 5 s | sketch, build date, which calibrations are applied |
+| `H` | boot, every 5 s | sketch, build date, which calibrations are applied, and what they hold: accelerometer and gyro calibration temperatures, the gyro bias subtracted (and its temperature slope), the field strength the magnetometer fit scales to |
 | `G` | boot, every 30 s, after `L` | place, date, expected field (F, H, Z, dip, declination) and gravity |
-| `F` | boot, every 5 s | the FIFO and AUX configuration read back from the BMI270 |
-| `D` | 1 Hz | FIFO fill, sensor clock, still state, live \|a\| and \|m\|, temperature |
+| `F` | boot, every 5 s | the FIFO and AUX configuration read back from the BMI270, and how long the FIFO holds frames |
+| `D` | 1 Hz | FIFO fill, frame-type counts, lost frames and grid restarts, sensor clock, still state, live \|a\| and \|m\|, temperature, gyro configuration |
+| `E` | when frames are counted lost | the read that showed it: frames counted, sensortime, FIFO bytes, frame-type and skip counts, whether in warm-up |
 | `T` | 10 s | timing criteria |
 | `X` | each delay fit | delay, fit width, residuals, reason when rejected |
 | `S` | each still pose | duration, tilt, \|a\| error (calibrated and raw), noise, gyro bias, F/Z/H/dip and their errors |
 | `W` | each turn between poses | rotation, direction changes, prediction errors, fitted gyro scale |
 | `A` | 10 s | accuracy summary over all poses and the criteria |
-| `R` | every frame | sequence, time (µs), calibrated a (m/s²), ω (rad/s), m (µT, `nan` when stale), temperature; `q` on serial stops and restarts them |
+| `R` | every frame, after `q` | sequence, time (µs), calibrated a (m/s²), ω (rad/s), m (µT, `nan` when stale), temperature |
 
 R lines wait in a queue while USB is busy, so a display burst delays them but does not drop them.
 
 Serial commands, one per line:
-- `s`: a 1.5 s display burst;
+- `s [ms]`: a display burst, 600 ms by default; longer than 730 ms overflows the FIFO;
 - `r`: restart the timing and accuracy evaluation;
-- `q`: stop or restart the R lines;
+- `q`: start or stop the R lines;
+- `n`: toggle the gyro's noise-performance mode (GYR_CONF bit 6; the INS sketches run with it off, as M5Unified sets it) and restart the evaluation. Compare the `gyro_noise_dps` of still poses in each mode;
 - `L <lat> <lon> [height_m]`: set the place.
 
 ## Settings
 
 - `FIFO_DIAG_AUX_OFFSET` (default 0) is the BMI270 AUX trigger-to-readout offset, in 2.5 ms steps. 0 keeps a full 40 ms between the forced-mode command and the readout. A shorter offset lowers the delay, but must stay above the 28.3 ms conversion time of the low-noise setting; the data-ready count shows when it does not.
 - `FIFO_DIAG_LOAD_EVERY_MS`, `FIFO_DIAG_LOAD_MS` and `FIFO_DIAG_HEAVY_LOAD_MS` set the display bursts.
+- `FIFO_DIAG_RAW_LINES` (default 0) starts with the R lines on; `FIFO_DIAG_GYR_CONF` (default `0xA9`) sets the gyro configuration at start (`0xE9` for noise-performance mode).
 - `FIFO_DIAG_LATITUDE_DEG`, `FIFO_DIAG_LONGITUDE_DEG`, `FIFO_DIAG_HEIGHT_M` and `FIFO_DIAG_YEAR` set the place and date for the field model.
 - `FIFO_DIAG_ACCEL_ERROR_MG`, `FIFO_DIAG_ACCEL_NOISE_MG`, `FIFO_DIAG_GYRO_BIAS_DPS`, `FIFO_DIAG_GYRO_NOISE_DPS`, `FIFO_DIAG_GYRO_SCALE_PCT`, `FIFO_DIAG_FIELD_ERROR_PCT`, `FIFO_DIAG_DIP_ERROR_DEG` and `FIFO_DIAG_MAG_NORM_STD_PCT` set the accuracy limits.
 
@@ -130,7 +137,9 @@ Serial commands, one per line:
 
 `tests/imu_calibrate/fifo_diagnostics_sketch-test` compiles this sketch unchanged and runs it against a simulated BMI270 and BMM150 with known errors in two runs.
 
+The simulated FIFO holds 2 kB. An overflow drops the oldest frames behind a skip frame, and a read consumes only the frames it reads whole: a FIFO read split inside a frame breaks the frame stream, as it did on the device.
+
 - **Good run:** small errors (+3 mg, 0.1 °/s bias, +1 % gyro scale, +2 % field). Every timing and accuracy criterion passes, and each error is measured at its size.
-- **Bad run:** errors beyond the limits, at a place set over serial. The matching criteria fail.
+- **Bad run:** errors beyond the limits, at a place set over serial. The matching criteria fail. A 1.5 s burst overflows the FIFO: every dropped frame is reported by the skip frame, and none is counted lost by the sensor clock.
 
 [Back to basic IMU examples](../README.md)

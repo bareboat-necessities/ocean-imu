@@ -8,10 +8,12 @@
   estimator.
 
   Still poses. Samples are grouped in blocks (default 50 = 0.25 s at 200 Hz).
-  A block is quiet when every accelerometer axis spans less than
-  accel_range, every gyro axis spans less than gyro_range, the mean rate is
-  below gyro_mean, and its mean gravity direction is within direction of
-  the previous quiet block's. A run of quiet blocks is a still pose. Its
+  A block is quiet when the standard deviation of every accelerometer axis
+  is below accel_std and of every gyro axis below gyro_std, the mean rate
+  is below gyro_mean, and its mean gravity direction is within direction
+  of the previous quiet block's. The standard deviations are a few times
+  the noise a resting sensor shows, so a noisy sensor still yields poses
+  and its noise is reported; a hand moving the board exceeds them. A run of quiet blocks is a still pose. Its
   first block (settling) and last block (motion may already have started)
   are left out; a pose of at least min_blocks merged blocks is reported, and
   a long one every max_blocks blocks.
@@ -68,8 +70,8 @@ struct AccuracyReference {
 
 struct AccuracyConfig {
   int block_samples = 50;
-  double accel_range_mps2 = 0.30;  // ~30 mg peak to peak per axis
-  double gyro_range_rad_s = 1.5 * ACCURACY_PI / 180.0;
+  double accel_std_mps2 = 0.10;  // ~10 mg per axis
+  double gyro_std_rad_s = 0.5 * ACCURACY_PI / 180.0;
   double gyro_mean_rad_s = 5.0 * ACCURACY_PI / 180.0;
   double direction_rad = 1.0 * ACCURACY_PI / 180.0;
   int min_blocks = 8;    // 2 s
@@ -196,10 +198,6 @@ public:
     block_.gyro.add(wd);
     if (a_raw.allFinite()) block_.accel_raw.add(a_raw.cast<double>());
     if (w_raw.allFinite()) block_.gyro_raw.add(w_raw.cast<double>());
-    block_.a_min = block_.n ? block_.a_min.cwiseMin(ad) : ad;
-    block_.a_max = block_.n ? block_.a_max.cwiseMax(ad) : ad;
-    block_.w_min = block_.n ? block_.w_min.cwiseMin(wd) : wd;
-    block_.w_max = block_.n ? block_.w_max.cwiseMax(wd) : wd;
     if (std::isfinite(temp_c)) { block_.temp_sum += temp_c; ++block_.temp_n; }
     block_.duration_s += r.dt;
     if (++block_.n >= cfg_.block_samples) endBlock();
@@ -287,8 +285,6 @@ private:
   struct Block {
     int n = 0;
     Vec3Stats accel, gyro, mag, accel_raw, gyro_raw, mag_raw;
-    Eigen::Vector3d a_min = Eigen::Vector3d::Zero(), a_max = Eigen::Vector3d::Zero();
-    Eigen::Vector3d w_min = Eigen::Vector3d::Zero(), w_max = Eigen::Vector3d::Zero();
     double temp_sum = 0;
     int temp_n = 0;
     double duration_s = 0;
@@ -304,8 +300,8 @@ private:
   };
 
   bool quiet(const Block& b) const {
-    const Eigen::Vector3d ar = b.a_max - b.a_min, wr = b.w_max - b.w_min;
-    if (ar.maxCoeff() >= cfg_.accel_range_mps2 || wr.maxCoeff() >= cfg_.gyro_range_rad_s) return false;
+    if (!(b.accel.stddev().maxCoeff() < cfg_.accel_std_mps2) || !(b.gyro.stddev().maxCoeff() < cfg_.gyro_std_rad_s))
+      return false;
     if (b.gyro.mean.norm() >= cfg_.gyro_mean_rad_s) return false;
     if (in_run_) {
       const double c = std::clamp(b.accel.mean.normalized().dot(last_quiet_dir_), -1.0, 1.0);

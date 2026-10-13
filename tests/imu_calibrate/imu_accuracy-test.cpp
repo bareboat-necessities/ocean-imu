@@ -178,6 +178,17 @@ int main() {
     require(r.summary.inclination_deg_max - r.summary.inclination_deg_min > 1.0, "dip varies between poses");
   }
 
+  std::printf("noisy gyro\n");
+  {
+    Sensor s;
+    s.gyro_noise = 0.3 * D2R;  // above the worst 0.25 s block of an AtomS3R at rest (0.26 deg/s, GYR_CONF 0xA9)
+    const Run r = simulate(s, TOUR, 6.0, m_ned, 5);
+    std::printf("  %zu poses, gyro noise %.3f deg/s\n", r.poses.size(), r.summary.gyro_noise_dps_max);
+    require(r.poses.size() == TOUR.size() + 1, "every still pose found");
+    require(r.summary.gyro_noise_dps_max > 0.27 && r.summary.gyro_noise_dps_max < 0.33,
+            "and the gyro noise reported at its size (above the 0.2 deg/s limit)");
+  }
+
   std::printf("hand-held\n");
   {
     Sensor s;

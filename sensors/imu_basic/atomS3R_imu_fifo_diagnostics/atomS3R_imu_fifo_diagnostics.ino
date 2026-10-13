@@ -19,11 +19,14 @@
   The saved calibration is applied to every sample, as the INS sketches do.
 
   Timing (T lines every 10 s):
-    rate      200 Hz delivered (no frame missing on the sensor clock; host-clock
-              rate within 1 %)
+    rate      200 Hz delivered on the sensor's own clock, no frame missing (the
+              host-clock rate differs by the sensor oscillator's error,
+              reported as clock_ppm)
     no loss   no lost frame while the display is loaded: the screen redraws at
-              10 Hz and a display burst (400 ms, then 1.5 s, alternating) runs
-              every 10 s; 's' on serial runs a 1.5 s burst
+              10 Hz and a display burst (400 ms, then 600 ms, alternating)
+              runs every 10 s. The FIFO holds 0.73 s; 's <ms>' on serial runs
+              a burst of any length (a longer one shows how an overflow is
+              reported)
     spacing   delivered sample spacing between 4.9 and 5.1 ms
     mag       25 Hz readouts, each a new conversion (data-ready set), every
               one 40 ms after the previous on the sensor clock
@@ -51,15 +54,20 @@
   percent.
 
   USB serial (115200), one key=value line per record:
-    H identity and calibration status   G the expected field and gravity
-    F FIFO setup read back              D live state, 1 Hz
-    T timing criteria                   X one magnetometer-delay fit
-    S one still pose                    W one rotation check
-    A accuracy summary and criteria     R every frame (calibrated), 'q' toggles
+    H identity, calibration status      G the expected field and gravity
+      and what the calibration holds    D live state, 1 Hz
+    F FIFO setup read back              X one magnetometer-delay fit
+    T timing criteria                   W one rotation check
+    S one still pose                    E frames counted lost (the read that
+    A accuracy summary and criteria       showed it)
+    R every frame (calibrated), off until 'q'
   Tap the screen to page through TIME, ACC/GYR, MAG and ROT. Serial commands
-  (one per line): 's' 1.5 s display burst, 'r' restart the evaluation, 'q'
-  stop/start the R lines, 'L <lat> <lon> [height_m]' set the place.
+  (one per line): 's [ms]' display burst (600 ms), 'r' restart the evaluation, 'q'
+  start/stop the R lines, 'n' toggle the gyro noise-performance mode (and
+  restart the evaluation), 'L <lat> <lon> [height_m]' set the place.
 */
+
+#include <cstdlib>
 
 #include <Arduino.h>
 #include <M5Unified.h>
@@ -83,8 +91,19 @@
 #ifndef FIFO_DIAG_LOAD_MS
 #define FIFO_DIAG_LOAD_MS 400
 #endif
+// Within the 0.73 s the FIFO holds; 's <ms>' on serial runs any length.
 #ifndef FIFO_DIAG_HEAVY_LOAD_MS
-#define FIFO_DIAG_HEAVY_LOAD_MS 1500
+#define FIFO_DIAG_HEAVY_LOAD_MS 600
+#endif
+// R lines (every frame) at start; 'q' on serial toggles them.
+#ifndef FIFO_DIAG_RAW_LINES
+#define FIFO_DIAG_RAW_LINES 0
+#endif
+// BMI270 GYR_CONF at start: 200 Hz, normal filter, performance filter.
+// Bit 6 (0x40) is the gyro noise-performance mode (0 power optimised, the
+// M5Unified/INS setting; 1 performance optimised); 'n' on serial toggles it.
+#ifndef FIFO_DIAG_GYR_CONF
+#define FIFO_DIAG_GYR_CONF 0xA9
 #endif
 // Place for the expected magnetic field (geodetic, height above the WGS84
 // ellipsoid); defaults to the calibration site.
@@ -138,8 +157,10 @@ static constexpr uint32_t LOOP_PERIOD_US = 5000;
 static constexpr uint32_t WARMUP_MS = 3000;
 static constexpr uint32_t UI_MS = 100, TIMING_MS = 10000, ACCURACY_MS = 10000, IDENTITY_MS = 5000,
                           REFERENCE_MS = 30000, STATE_MS = 1000;
-static constexpr size_t FIFO_BUF_BYTES = 6144 + 256;
-static constexpr size_t I2C_CHUNK = 128;
+static constexpr size_t FIFO_BUF_BYTES = Bmi270::FIFO_BYTES + 64;
+// Average header-mode frame: accelerometer+gyro (13 bytes), plus 8 bytes of
+// magnetometer data in every 8th frame.
+static constexpr double FIFO_FRAME_BYTES = 13.0 + 8.0 / 8.0;
 static constexpr size_t QUEUE_FRAMES = 768;
 static constexpr uint32_t MAG_MAX_AGE_US = MagAcquisition::MAX_AGE_MS * 1000u;
 static constexpr unsigned FIT_PAIRS = 50;
@@ -249,7 +270,10 @@ static Verdicts verdicts{};
 static QueuedFrame queue_buf[QUEUE_FRAMES];
 static size_t q_head = 0, q_count = 0, q_max = 0;
 static uint32_t q_dropped = 0;
-static bool raw_lines = true;
+static bool raw_lines = FIFO_DIAG_RAW_LINES != 0;
+static uint8_t gyr_conf_now = 0;
+static unsigned events = 0;
+static constexpr unsigned MAX_EVENTS = 20;
 
 static Evaluation ev{};
 static uint32_t last_ui_ms = 0, last_timing_ms = 0, last_accuracy_ms = 0, last_identity_ms = 0,
@@ -444,12 +468,9 @@ static void emitQueued() {
   }
 }
 
-static bool readFifo(size_t len) {
-  for (size_t off = 0; off < len; off += I2C_CHUNK) {
-    if (!bmi270->readRegister(Bmi270::FIFO_DATA, fifo_buf + off, std::min(I2C_CHUNK, len - off))) return false;
-  }
-  return true;
-}
+// One burst for the whole length: the BMI270 does not continue a frame
+// across separate reads, so a split read loses frame alignment.
+static bool readFifo(size_t len) { return bmi270->readRegister(Bmi270::FIFO_DATA, fifo_buf, len); }
 
 static void pollFifo() {
   // Sensortime, temperature and FIFO length in one burst (0x18..0x25).
@@ -475,7 +496,28 @@ static void pollFifo() {
   parseBmi270Fifo(fifo_buf, n, scratch,
                   [&](const FifoFrame& f) { if (f.acc || f.gyr) ++ticks_here; },
                   [&](unsigned skipped) { ticks_here += skipped; });
+  const uint64_t lost_before = sensor_clock.lostFrames();
+  const uint32_t breaks_before = sensor_clock.gridBreaks();
   if (complete) sensor_clock.observe(host_us, st24, ticks_total + ticks_here);
+  if ((sensor_clock.lostFrames() != lost_before || sensor_clock.gridBreaks() != breaks_before) && events < MAX_EVENTS) {
+    // Frames the sensor clock says were written but never arrived, or a
+    // frame count ahead of the clock: report the read that showed it.
+    ++events;
+    out.reset('E');
+    out.printf(",event=%s", sensor_clock.gridBreaks() != breaks_before ? "grid_break" : "lost");
+    out.kv("t_ms", static_cast<unsigned long>(millis()))
+       .kv("lost_added", static_cast<unsigned long>(sensor_clock.lostFrames() - lost_before))
+       .kv("lost", static_cast<unsigned long>(sensor_clock.lostFrames()))
+       .kv("grid_breaks", static_cast<unsigned long>(sensor_clock.gridBreaks()))
+       .kv("warmup", !ev.open).kv("frames_counted", static_cast<unsigned long>(ticks_total + ticks_here))
+       .kv("sensortime", static_cast<unsigned long>(st24)).kv("fifo_bytes", static_cast<unsigned long>(len))
+       .kv("acc_only", static_cast<unsigned long>(parse_stats.acc_only + scratch.acc_only))
+       .kv("gyr_only", static_cast<unsigned long>(parse_stats.gyr_only + scratch.gyr_only))
+       .kv("aux_alone", static_cast<unsigned long>(parse_stats.aux_only + scratch.aux_only))
+       .kv("unknown", static_cast<unsigned long>(parse_stats.unknown + scratch.unknown))
+       .kv("skipped", static_cast<unsigned long>(parse_stats.skipped + scratch.skipped));
+    emit(out);
+  }
   if (!sensor_clock.settled()) {
     // Until reads at different phases pin the frame grid, frame times would
     // still move: these frames are a counted warm-up, not delivered.
@@ -512,6 +554,15 @@ static void identityLine() {
   out.kv("calibration", have_blob).kv("acc_cal", cals.acc.ok).kv("acc_gravity_mismatch", cals.accel_gravity_mismatch)
      .kv("gyr_cal", cals.gyr.ok).kv("mag_cal", mag_cal_ok)
      .kv("g_cal_local", ImuCalCfg::g_cal_local, 7).kv("lines_dropped", static_cast<unsigned long>(lines_dropped));
+  // What the saved calibration holds: the temperatures it was made at, the
+  // gyro bias it subtracts, and the field strength the magnetometer fit
+  // scales to (the strength the sensor measured where it was calibrated).
+  out.kv("acc_T0_c", blob.accel_T0, 2).kv("gyr_T0_c", blob.gyro_T0, 2)
+     .kv("gyr_b0x_dps", blob.gyro_b0[0] * RAD2DEG, 4).kv("gyr_b0y_dps", blob.gyro_b0[1] * RAD2DEG, 4)
+     .kv("gyr_b0z_dps", blob.gyro_b0[2] * RAD2DEG, 4)
+     .kv("gyr_kx_dps_per_c", blob.gyro_k[0] * RAD2DEG, 5).kv("gyr_ky_dps_per_c", blob.gyro_k[1] * RAD2DEG, 5)
+     .kv("gyr_kz_dps_per_c", blob.gyro_k[2] * RAD2DEG, 5)
+     .kv("mag_cal_field_uT", blob.mag_field_uT, 2);
   emit(out);
 }
 
@@ -537,6 +588,8 @@ static void fifoSetupLine() {
              setup_rb.aux_rd_addr, setup_rb.aux_wr_addr, setup_rb.aux_wr_data, setup_rb.pwr_conf, setup_rb.pwr_ctrl,
              setup_rb.err_reg, setup_rb.bmm_mode_before);
   const unsigned offset = (setup_rb.aux_conf >> 4) & 0x0F;
+  out.printf(",gyr_conf_now=0x%02x", gyr_conf_now);
+  out.kv("fifo_capacity_ms", double(Bmi270::FIFO_BYTES) / FIFO_FRAME_BYTES * sensor_clock.frameSpacingUs() * 1e-3, 0);
   out.kv("aux_offset_ms", offset ? float(offset) * 2.5f : 40.0f, 1)
      .kv("acc_g_per_lsb", acc_scale, 8).kv("gyr_dps_per_lsb", gyr_scale, 6);
   emit(out);
@@ -548,9 +601,12 @@ static void timingLine() {
   const double sensor_s = double(sensor_clock.sensortimeTicks() - ev.start_ticks) / 25600.0;
   const uint64_t lost = (sensor_clock.lostFrames() - ev.start_lost) + (parse_stats.skipped - ev.start_skipped);
   const double rate = host_s > 0 ? double(ev.frames) / host_s : 0;
+  const double sensor_rate = sensor_s > 0 ? double(ev.frames) / sensor_s : 0;
   const double aux_hz = sensor_s > 0 ? double(ev.aux) / sensor_s : 0;
   const bool long_enough = host_s >= 10.0;
-  pass_rate = long_enough && lost == 0 && std::fabs(rate - 200.0) <= 2.0;
+  // Delivered as produced: 200 Hz on the sensor's own clock, nothing missing.
+  // The host-clock rate differs by the sensor oscillator's error (clock_ppm).
+  pass_rate = long_enough && lost == 0 && std::fabs(sensor_rate - 200.0) <= 0.5;
   pass_loss = long_enough && lost == 0 && ev.stalls > 0 && ev.partial == 0;
   pass_spacing = ev.spacing_max_us > 0 && ev.spacing_min_us >= 4900.0 && ev.spacing_max_us <= 5100.0;
   // Data-ready proves each readout is a new conversion (reading the data
@@ -563,7 +619,7 @@ static void timingLine() {
 
   out.reset('T');
   out.kv("window_s", host_s, 1).kv("frames", static_cast<unsigned long>(ev.frames))
-     .kv("rate_hz", rate, 3).kv("lost", static_cast<unsigned long>(lost))
+     .kv("rate_hz", rate, 3).kv("sensor_rate_hz", sensor_rate, 3).kv("lost", static_cast<unsigned long>(lost))
      .kv("partial_reads", static_cast<unsigned long>(ev.partial))
      .kv("stalls", static_cast<unsigned long>(ev.stalls)).kv("stall_max_ms", static_cast<unsigned long>(ev.stall_max_ms))
      .kv("fifo_max_bytes", static_cast<unsigned long>(fifo_len_max))
@@ -665,6 +721,12 @@ static void stateLine() {
      .kv("lost", static_cast<unsigned long>(sensor_clock.lostFrames()))
      .kv("skipped", static_cast<unsigned long>(parse_stats.skipped))
      .kv("unknown", static_cast<unsigned long>(parse_stats.unknown))
+     .kv("config_frames", static_cast<unsigned long>(parse_stats.config_frames))
+     .kv("acc_only", static_cast<unsigned long>(parse_stats.acc_only))
+     .kv("gyr_only", static_cast<unsigned long>(parse_stats.gyr_only))
+     .kv("aux_frames", static_cast<unsigned long>(parse_stats.aux))
+     .kv("aux_alone", static_cast<unsigned long>(parse_stats.aux_only))
+     .kv("grid_breaks", static_cast<unsigned long>(sensor_clock.gridBreaks()))
      .kv("spacing_us", sensor_clock.frameSpacingUs(), 2).kv("clock_ppm", sensor_clock.clockPpm(), 0)
      .kv("t0_unc_us", sensor_clock.t0UncertaintyTicks() * Bmi270::TICK_US, 0)
      .kv("warmup_frames", static_cast<unsigned long>(warmup_ticks))
@@ -672,6 +734,7 @@ static void stateLine() {
      .kv("a_g", last_a_cal.norm() / ImuCalCfg::g_std, 4).kv("m_uT", mag_cal.norm(), 2).kv("temp_c", temp_c, 2)
      .kv("queue", static_cast<unsigned long>(q_count)).kv("queue_max", static_cast<unsigned long>(q_max))
      .kv("stall_ms", static_cast<unsigned long>(last_stall_ms));
+  out.printf(",gyr_conf=0x%02x", gyr_conf_now);
   emit(out);
 }
 
@@ -766,13 +829,29 @@ static void drawUi() {
 
 static void command(const char* c) {
   switch (c[0]) {
-    case 's': displayLoad(FIFO_DIAG_HEAVY_LOAD_MS); break;
+    case 's': {
+      const long ms = std::strtol(c + 1, nullptr, 10);
+      displayLoad(ms > 0 && ms <= 10000 ? uint32_t(ms) : uint32_t(FIFO_DIAG_HEAVY_LOAD_MS));
+      break;
+    }
     case 'r':
       resetEvaluation();
       accuracy.reset();
       have_check = false;
       break;
     case 'q': raw_lines = !raw_lines; break;
+    case 'n': {
+      // Toggle the gyro noise-performance mode; compare the still-pose noise
+      // (S lines) before and after.
+      uint8_t v = uint8_t(gyr_conf_now ^ 0x40), rb = 0;
+      if (bmi270 && bmi270->writeRegister8(Bmi270::GYR_CONF, v) && bmi270->readRegister(Bmi270::GYR_CONF, &rb, 1))
+        gyr_conf_now = rb;
+      resetEvaluation();
+      accuracy.reset();
+      have_check = false;
+      fifoSetupLine();
+      break;
+    }
     case 'L': {
       double lat = NAN, lon = NAN, h = 0.0;
       if (std::sscanf(c + 1, "%lf %lf %lf", &lat, &lon, &h) >= 2 && std::fabs(lat) <= 90.0 && std::fabs(lon) <= 360.0) {
@@ -833,11 +912,13 @@ void setup() {
     setup_failure = "no BMI270";
   } else {
     fifo_cfg.aux_offset = FIFO_DIAG_AUX_OFFSET;
+    fifo_cfg.gyr_conf = FIFO_DIAG_GYR_CONF;
     Bmi270FifoSetup<m5::IMU_Base> setup_fifo(bmi270, waitMs);
     setup_ok = setup_fifo.apply(fifo_cfg);
     setup_failure = setup_fifo.failure();
     setup_rb = setup_fifo.readback();
   }
+  gyr_conf_now = setup_rb.gyr_conf;
   acc_scale = bmi270AccelGPerLsb(setup_rb.acc_range);
   gyr_scale = bmi270GyroDpsPerLsb(setup_rb.gyr_range);
 
