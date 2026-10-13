@@ -12,6 +12,10 @@
 //   moving boot: it is already yawing at 3 deg/s at boot, so no seed is taken
 //                and the bias has to be learned by the observer while it
 //                turns. That takes minutes, so only boundedness is checked.
+//   handled boot: switched on while rocked by hand or by waves, with linear
+//                acceleration, so the first accelerometer sample is not
+//                gravity and the bootstrap's gyro-rate gate keeps its tilt
+//                correction off. Heading must hold from the handoff on.
 //
 // Before the horizontal theta floor and the bias seeds, the still-boot history
 // reached 11 deg of tilt, 24 deg of heading error and 23 m of heave, with a
@@ -89,8 +93,70 @@ static bool run(const char* name, bool still_boot, Limits lim) {
   return ok;
 }
 
+// Before the bootstrap's motion-tolerant handoff attitude, this history
+// handed over with about 20 deg of tilt error; the startup heading gain then
+// tumbled the attitude and the heading spun through 360 deg.
+static bool runHandled(float phase) {
+  Fusion f;
+  f.config().filter.expected_mag_norm = 0.0f;
+  f.reset();
+
+  std::mt19937 rng(11);
+  std::normal_distribution<float> n01(0.0f, 1.0f);
+  auto noise = [&](float s) { return Vec3(s * n01(rng), s * n01(rng), s * n01(rng)); };
+
+  const float dt = 0.005f;
+  const float deg = float(M_PI / 180.0);
+  const Vec3 f_n(0.0f, 0.0f, -g_std);
+  const Vec3 mag_n(20.0f, 0.0f, 45.0f);
+  const float yaw = 1.0f;
+  auto attitude = [&](float t) {
+    const float roll = (25.0f * std::sin(2 * float(M_PI) * t / 1.5f + phase) +
+                        8.0f * std::sin(2 * float(M_PI) * t / 0.7f + 0.5f)) * deg;
+    const float pitch = (10.0f * std::sin(2 * float(M_PI) * t / 1.2f + 0.7f + phase) +
+                         5.0f * std::sin(2 * float(M_PI) * t / 0.5f + 1.1f)) * deg;
+    return Mat3(Eigen::AngleAxisf(yaw, Vec3::UnitZ()) * Eigen::AngleAxisf(pitch, Vec3::UnitY()) *
+                Eigen::AngleAxisf(roll, Vec3::UnitX()));
+  };
+  auto accel = [&](float t) {  // horizontal handling acceleration, about 2 m/s^2
+    const float w1 = 2 * float(M_PI) / 1.2f, w2 = 2 * float(M_PI) / 0.6f;
+    const float a = -0.08f * w1 * w1 * std::sin(w1 * t + 0.3f + phase) -
+                    0.03f * w2 * w2 * std::sin(w2 * t + 2.0f);
+    const float az = 0.10f * 7.9f * 7.9f * std::sin(4.19f * t + phase) / 4.0f;
+    return Vec3(a * std::cos(yaw), a * std::sin(yaw), az);
+  };
+
+  float max_hdg_err = 0.0f;
+  for (int k = 0; k < 200 * 120; ++k) {
+    const float t = k * dt;
+    const Mat3 R_nb = attitude(t);
+    const Eigen::AngleAxisf step(R_nb.transpose() * attitude(t + 1e-4f));
+    const Vec3 w = step.axis() * (step.angle() / 1e-4f);
+
+    f.setMagBody(R_nb.transpose() * mag_n + noise(0.4f), true);
+    f.update(dt, w + noise(0.0016f), R_nb.transpose() * (accel(t) + f_n) + noise(0.02f));
+
+    const auto s = f.snapshot();
+    if (!s.initialized) continue;
+    const Vec3 x_hat = Eigen::AngleAxisf(s.euler_rad.z(), Vec3::UnitZ()) *
+                       Eigen::AngleAxisf(s.euler_rad.y(), Vec3::UnitY()) *
+                       Eigen::AngleAxisf(s.euler_rad.x(), Vec3::UnitX()) * Vec3::UnitX();
+    const Vec3 x_true = R_nb * Vec3::UnitX();
+    const float hdg_err =
+        wrap180((std::atan2(x_hat.y(), x_hat.x()) - std::atan2(x_true.y(), x_true.x())) / deg);
+    max_hdg_err = std::max(max_hdg_err, std::fabs(hdg_err));
+  }
+
+  const bool ok = std::isfinite(max_hdg_err) && max_hdg_err < 25.0f;
+  std::printf("NLO mag turns handled boot phase=%.1f max|hdg err| after handoff=%.2f deg %s\n",
+              phase, max_hdg_err, ok ? "OK" : "FAIL");
+  return ok;
+}
+
 int main() {
   const bool a = run("still boot", true, {2.0f, 5.0f, 0.5f, 0.3f});
   const bool b = run("moving boot", false, {8.0f, 20.0f, 5.0f, 1e9f});
-  return (a && b) ? 0 : 1;
+  bool c = true;
+  for (float phase : {0.0f, 1.3f, 2.6f, 3.9f, 5.2f}) c = runHandled(phase) && c;
+  return (a && b && c) ? 0 : 1;
 }

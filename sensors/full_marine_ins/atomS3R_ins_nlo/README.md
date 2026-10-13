@@ -14,7 +14,7 @@ Open the sketch: [`atomS3R_ins_nlo.ino`](atomS3R_ins_nlo.ino).
 
 - reads and calibrates the AtomS3R IMU using the shared device layer;
 - runs the observer at 200 Hz through [`TimeVarGainNloAdapter`](../../../src/nlo/TimeVarGainNLO_Adapter.h);
-- bootstraps attitude with the adapter's Mahony startup stage, then seeds and hands over to the observer;
+- bootstraps attitude with the adapter's Mahony startup stage, then seeds and hands over to the observer. The handoff attitude comes from the accelerometer and magnetometer directions averaged in a gyro-only frame over the bootstrap, so the device can be switched on while moving in waves;
 - uses the calibrated 3-D magnetometer as a yaw-only magnetic reference, so heading is observable;
 - aids all three translational axes with the paper's virtual zero-mean integrated-position measurement, since the device carries no position reference;
 - schedules the observer's scalar translational tuning parameter `theta` on the tracked dominant wave frequency, which keeps the vertical aiding loop's high-pass corner below the wave band, while the horizontal axes, which carry the tilt reference, keep `theta >= 0.7`;

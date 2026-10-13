@@ -31,7 +31,10 @@
     - optional Mahony-like bootstrap is ON by default
     - it initializes q from accel/mag/compass if available
     - it then gyro-propagates during startup and uses gated accel correction
-    - after bootstrap, it seeds TimeVaryingGainNLO and stops
+    - after bootstrap, it seeds TimeVaryingGainNLO with the attitude given by
+      the force and magnetic directions averaged in a gyro-only frame over
+      the bootstrap, so a startup in waves or in the hand is handed over
+      level and on heading, and stops
 
   Important:
     Wave-time accelerometer tilt trim is OFF by default because it can chase
@@ -876,6 +879,14 @@ private:
     R last_tilt_correction_norm_ = R(0);
 
     Quat boot_q_nb_ = Quat::Identity();
+
+    // Gyro-only startup attitude and the force/magnetic directions averaged
+    // in its frame; see bootFrameAlignedQuat_().
+    Quat boot_gyro_q_nb_ = Quat::Identity();
+    Vec3 boot_force_sum_n_ = Vec3::Zero();
+    Vec3 boot_mag_sum_n_ = Vec3::Zero();
+    R boot_force_time_s_ = R(0);
+    int boot_mag_count_ = 0;
     Vec3 boot_bias_b_ = Vec3::Zero();
     Vec3 boot_down_lpf_b_ = Vec3::Zero();
 
@@ -1303,6 +1314,12 @@ private:
         boot_q_nb_ = tmp.quaternionBodyToNED();
         boot_q_nb_.normalize();
 
+        boot_gyro_q_nb_ = boot_q_nb_;
+        boot_force_sum_n_.setZero();
+        boot_mag_sum_n_.setZero();
+        boot_force_time_s_ = R(0);
+        boot_mag_count_ = 0;
+
         boot_bias_b_.setZero();
         if constexpr (Mag == NloMagType::None) {
             boot_bias_b_.z() = R(0);
@@ -1431,6 +1448,7 @@ private:
         }
 
         integrateBootQuatRight_(dt, omega_b);
+        accumulateBootFrame_(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
 
         const bool enough_good =
             boot_good_time_s_ >= cfg_.mahony_bootstrap_min_time_s;
@@ -1442,6 +1460,7 @@ private:
             filter_ = Filter(cfg_.filter);
             filter_.reset();
 
+            boot_q_nb_ = bootFrameAlignedQuat_();
             filter_.setQuaternionBodyToNED(boot_q_nb_);
 
             Vec3 b0 = boot_bias_b_;
@@ -1536,6 +1555,126 @@ private:
 
         bias = (along / fn) * f_mean;
         return true;
+    }
+
+    /*
+      Motion-tolerant startup attitude.
+
+      The bootstrap seeds tilt and heading from its first accelerometer and
+      magnetometer sample, and its accelerometer correction is gated off
+      while the gyro rate exceeds mahony_gyro_max_rad_s. Switched on in waves
+      or in the hand, the first sample includes linear acceleration and the
+      gate keeps the correction off, so boot_q_nb_ can carry a tilt error of
+      tens of degrees. The observer corrects tilt only through its slow
+      translational loop, while its startup heading gain is k2 = 20 rad/s;
+      handed such a tilt error, the vertical magnetic field leaks into the
+      horizontal heading reference and the attitude tumbles, with the
+      heading spinning.
+
+      In a gyro-only frame the mean specific force over the bootstrap is
+      gravity (wave and handling acceleration are zero-mean), and the mean
+      magnetic direction is the local field. At handoff the gyro frame is
+      rotated so that the mean force points up and the horizontal mean
+      field points to magnetic north. A still startup gives the first-sample
+      attitude unchanged.
+    */
+    void accumulateBootFrame_(R dt,
+                              const Vec3& gyro_b_rad_s,
+                              const Vec3& specific_force_b_mps2,
+                              const Aux& aux)
+    {
+        integrateQuatRight_(boot_gyro_q_nb_, dt, gyro_b_rad_s - boot_bias_b_);
+        const Mat3 R_nb = boot_gyro_q_nb_.toRotationMatrix();
+
+        if (specific_force_b_mps2.allFinite()) {
+            boot_force_sum_n_ += dt * (R_nb * specific_force_b_mps2);
+            boot_force_time_s_ += dt;
+        }
+
+        if constexpr (Mag == NloMagType::Magnetometer) {
+            const R mn = aux.mag_b.norm();
+            if (aux.mag_valid && isFinite_(mn) && mn > R(1e-9)) {
+                boot_mag_sum_n_ += R_nb * (aux.mag_b / mn);
+                ++boot_mag_count_;
+            }
+        } else {
+            (void)aux;
+        }
+    }
+
+    Quat bootFrameAlignedQuat_() const {
+        if (!(boot_force_time_s_ > R(0))) {
+            return boot_q_nb_;
+        }
+
+        const Vec3 f_mean = boot_force_sum_n_ / boot_force_time_s_;
+        const R fn = f_mean.norm();
+        if (!isFinite_(fn) || fn < R(0.5) * cfg_.gravity_mps2) {
+            return boot_q_nb_;
+        }
+
+        // Rotation C of the gyro frame: C * (-f_mean) = down, C * h = north.
+        const Vec3 down_g = -f_mean / fn;
+
+        Vec3 h_g;
+        Vec3 h_ref = nedNorthMagnetic_();
+        bool have_h = false;
+        if constexpr (Mag == NloMagType::Magnetometer) {
+            if (boot_mag_count_ > 0) {
+                h_g = boot_mag_sum_n_ - down_g * down_g.dot(boot_mag_sum_n_);
+                have_h = h_g.norm() > R(1e-3) * static_cast<R>(boot_mag_count_);
+            }
+        }
+        if (!have_h) {
+            // Keep the gyro frame's own heading: its north, made horizontal.
+            h_ref << R(1), R(0), R(0);
+            h_g = h_ref - down_g * down_g.dot(h_ref);
+            if (h_g.norm() < R(1e-3)) {
+                return boot_q_nb_;
+            }
+        }
+        h_g.normalize();
+
+        const Vec3 e_g = down_g.cross(h_g).normalized();
+        Mat3 T_g;
+        T_g.col(0) = h_g;
+        T_g.col(1) = e_g;
+        T_g.col(2) = down_g;
+
+        const Vec3 down_n = nedDown_();
+        const Vec3 h_n = (h_ref - down_n * down_n.dot(h_ref)).normalized();
+        Mat3 T_n;
+        T_n.col(0) = h_n;
+        T_n.col(1) = down_n.cross(h_n).normalized();
+        T_n.col(2) = down_n;
+
+        const Mat3 C = T_n * T_g.transpose();
+        Quat q(C * boot_gyro_q_nb_.toRotationMatrix());
+        q.normalize();
+        return q.coeffs().allFinite() ? q : boot_q_nb_;
+    }
+
+    Vec3 nedNorthMagnetic_() const {
+        const R d = cfg_.filter.magnetic_declination_rad;
+        Vec3 v;
+        v << std::cos(d), std::sin(d), R(0);
+        return v;
+    }
+
+    static void integrateQuatRight_(Quat& q, R dt, const Vec3& omega_b) {
+        const R angle = omega_b.norm() * dt;
+        if (!isFinite_(angle)) {
+            return;
+        }
+        Quat dq;
+        if (angle < R(1e-8)) {
+            const Vec3 half = R(0.5) * dt * omega_b;
+            dq = Quat(R(1), half.x(), half.y(), half.z());
+        } else {
+            dq = Quat(Eigen::AngleAxis<R>(angle, omega_b.normalized()));
+        }
+        q = q * dq;
+        q.normalize();
     }
 
     void integrateBootQuatRight_(R dt, const Vec3& omega_b)
