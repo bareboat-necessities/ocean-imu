@@ -54,12 +54,13 @@ ok()    { printf '\033[32mok\033[0m   %s\n' "$*"; }
 # src/AtomS3R/ is excluded because it includes <Wire.h> and the M5Unified
 # headers, which exist only in the Arduino core. Those files are covered by the
 # build-MCU matrix in build.yml, which compiles them for the real target.
-# tests/common/InsSketchHeaveDrift.cpp and InsSketchReplay.cpp compile a
-# shipped .ino through the host stand-ins in tests/common/ins_sketch_stubs and
-# per-family defines from InsSketchHeaveDrift.mk; they cannot build standalone.
+# tests/common/InsSketchHeaveDrift.cpp, InsSketchReplay.cpp and
+# FifoTimingSketch.cpp compile a shipped .ino through the host stand-ins in
+# tests/common/ins_sketch_stubs and the defines from their make rules
+# (InsSketchHeaveDrift.mk, FifoTimingSketch.mk); they cannot build standalone.
 # The sketches they include are covered by build-MCU and the Arduino IDE
 # workflow.
-SKETCH_HARNESS_TUS='^tests/common/(InsSketchHeaveDrift|InsSketchReplay)\.cpp$'
+SKETCH_HARNESS_TUS='^tests/common/(InsSketchHeaveDrift|InsSketchReplay|FifoTimingSketch)\.cpp$'
 tu_list() {
   git ls-files 'tests/*.cpp' 'src/*.cpp' | grep -v '^src/AtomS3R/' |
     grep -Ev "$SKETCH_HARNESS_TUS"
