@@ -23,8 +23,10 @@
               host-clock rate differs by the sensor oscillator's error,
               reported as clock_ppm)
     no loss   no lost frame while the display is loaded: the screen redraws at
-              10 Hz and a display burst (400 ms, then 1.5 s, alternating) runs
-              every 10 s; 's' on serial runs a 1.5 s burst
+              10 Hz and a display burst (400 ms, then 600 ms, alternating)
+              runs every 10 s. The FIFO holds 0.73 s; 's <ms>' on serial runs
+              a burst of any length (a longer one shows how an overflow is
+              reported)
     spacing   delivered sample spacing between 4.9 and 5.1 ms
     mag       25 Hz readouts, each a new conversion (data-ready set), every
               one 40 ms after the previous on the sensor clock
@@ -60,10 +62,12 @@
     A accuracy summary and criteria       showed it)
     R every frame (calibrated), off until 'q'
   Tap the screen to page through TIME, ACC/GYR, MAG and ROT. Serial commands
-  (one per line): 's' 1.5 s display burst, 'r' restart the evaluation, 'q'
+  (one per line): 's [ms]' display burst (600 ms), 'r' restart the evaluation, 'q'
   start/stop the R lines, 'n' toggle the gyro noise-performance mode (and
   restart the evaluation), 'L <lat> <lon> [height_m]' set the place.
 */
+
+#include <cstdlib>
 
 #include <Arduino.h>
 #include <M5Unified.h>
@@ -87,8 +91,9 @@
 #ifndef FIFO_DIAG_LOAD_MS
 #define FIFO_DIAG_LOAD_MS 400
 #endif
+// Within the 0.73 s the FIFO holds; 's <ms>' on serial runs any length.
 #ifndef FIFO_DIAG_HEAVY_LOAD_MS
-#define FIFO_DIAG_HEAVY_LOAD_MS 1500
+#define FIFO_DIAG_HEAVY_LOAD_MS 600
 #endif
 // R lines (every frame) at start; 'q' on serial toggles them.
 #ifndef FIFO_DIAG_RAW_LINES
@@ -152,8 +157,10 @@ static constexpr uint32_t LOOP_PERIOD_US = 5000;
 static constexpr uint32_t WARMUP_MS = 3000;
 static constexpr uint32_t UI_MS = 100, TIMING_MS = 10000, ACCURACY_MS = 10000, IDENTITY_MS = 5000,
                           REFERENCE_MS = 30000, STATE_MS = 1000;
-static constexpr size_t FIFO_BUF_BYTES = 6144 + 256;
-static constexpr size_t I2C_CHUNK = 128;
+static constexpr size_t FIFO_BUF_BYTES = Bmi270::FIFO_BYTES + 64;
+// Average header-mode frame: accelerometer+gyro (13 bytes), plus 8 bytes of
+// magnetometer data in every 8th frame.
+static constexpr double FIFO_FRAME_BYTES = 13.0 + 8.0 / 8.0;
 static constexpr size_t QUEUE_FRAMES = 768;
 static constexpr uint32_t MAG_MAX_AGE_US = MagAcquisition::MAX_AGE_MS * 1000u;
 static constexpr unsigned FIT_PAIRS = 50;
@@ -461,12 +468,9 @@ static void emitQueued() {
   }
 }
 
-static bool readFifo(size_t len) {
-  for (size_t off = 0; off < len; off += I2C_CHUNK) {
-    if (!bmi270->readRegister(Bmi270::FIFO_DATA, fifo_buf + off, std::min(I2C_CHUNK, len - off))) return false;
-  }
-  return true;
-}
+// One burst for the whole length: the BMI270 does not continue a frame
+// across separate reads, so a split read loses frame alignment.
+static bool readFifo(size_t len) { return bmi270->readRegister(Bmi270::FIFO_DATA, fifo_buf, len); }
 
 static void pollFifo() {
   // Sensortime, temperature and FIFO length in one burst (0x18..0x25).
@@ -509,6 +513,8 @@ static void pollFifo() {
        .kv("sensortime", static_cast<unsigned long>(st24)).kv("fifo_bytes", static_cast<unsigned long>(len))
        .kv("acc_only", static_cast<unsigned long>(parse_stats.acc_only + scratch.acc_only))
        .kv("gyr_only", static_cast<unsigned long>(parse_stats.gyr_only + scratch.gyr_only))
+       .kv("aux_alone", static_cast<unsigned long>(parse_stats.aux_only + scratch.aux_only))
+       .kv("unknown", static_cast<unsigned long>(parse_stats.unknown + scratch.unknown))
        .kv("skipped", static_cast<unsigned long>(parse_stats.skipped + scratch.skipped));
     emit(out);
   }
@@ -583,6 +589,7 @@ static void fifoSetupLine() {
              setup_rb.err_reg, setup_rb.bmm_mode_before);
   const unsigned offset = (setup_rb.aux_conf >> 4) & 0x0F;
   out.printf(",gyr_conf_now=0x%02x", gyr_conf_now);
+  out.kv("fifo_capacity_ms", double(Bmi270::FIFO_BYTES) / FIFO_FRAME_BYTES * sensor_clock.frameSpacingUs() * 1e-3, 0);
   out.kv("aux_offset_ms", offset ? float(offset) * 2.5f : 40.0f, 1)
      .kv("acc_g_per_lsb", acc_scale, 8).kv("gyr_dps_per_lsb", gyr_scale, 6);
   emit(out);
@@ -822,7 +829,11 @@ static void drawUi() {
 
 static void command(const char* c) {
   switch (c[0]) {
-    case 's': displayLoad(FIFO_DIAG_HEAVY_LOAD_MS); break;
+    case 's': {
+      const long ms = std::strtol(c + 1, nullptr, 10);
+      displayLoad(ms > 0 && ms <= 10000 ? uint32_t(ms) : uint32_t(FIFO_DIAG_HEAVY_LOAD_MS));
+      break;
+    }
     case 'r':
       resetEvaluation();
       accuracy.reset();

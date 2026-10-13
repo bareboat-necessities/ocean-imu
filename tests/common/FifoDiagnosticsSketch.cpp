@@ -1,9 +1,16 @@
 // Host run of sensors/imu_basic/atomS3R_imu_fifo_diagnostics against a
-// simulated BMI270: a 6 kB header-mode FIFO filled at 200 Hz on a sensor clock
-// that runs 0.8 % slow (as measured on an AtomS3R), read over 400 kHz I2C
-// (each register byte sampled as it is clocked out), and a forced-mode BMM150
-// whose readout every 40 ms carries the field of a fixed time before it. The simulated sensors have
-// known errors (accelerometer and gyro scale, gyro bias, field strength).
+// simulated BMI270 and BMM150:
+//   - a 2 kB header-mode FIFO filled at 200 Hz on a sensor clock that runs
+//     0.6 % slow (as measured on an AtomS3R). An overflow drops the oldest
+//     frames and the next read starts with a skip frame counting them. A
+//     read consumes only the frames it reads whole: a frame read in part is
+//     delivered again, from its start, by the next read, so a FIFO read split
+//     inside a frame breaks the frame stream as it did on the device;
+//   - 400 kHz I2C, each register byte sampled as it is clocked out;
+//   - a forced-mode BMM150 whose readout every 40 ms carries the field of a
+//     fixed time before it.
+// The simulated sensors have known errors (accelerometer and gyro scale,
+// gyro bias, field strength).
 // The board rests in seven poses (8 s each, 2.5 s turns between them,
 // including a turn about the vertical and a flip), then rocks like a hand
 // test for the magnetometer-delay fit. The sketch's own setup()/loop() run
@@ -15,7 +22,9 @@
 //       error must be measured at its size.
 // bad:  errors beyond the sketch's limits, each accuracy criterion must fail;
 //       the place is moved over serial ("L ...") and the gyro noise mode
-//       toggled ("n") first.
+//       toggled ("n") first. A 1.5 s display burst ("s 1500") overflows the
+//       FIFO: every dropped frame must be reported, by the skip frame, and
+//       none counted lost by the sensor clock.
 //
 // Built against tests/common/ins_sketch_stubs by tests/imu_calibrate/Makefile.
 #include <cmath>
@@ -37,7 +46,7 @@ namespace {
 using V3 = Eigen::Vector3f;
 using Q = Eigen::Quaternionf;
 constexpr double kPi = 3.14159265358979323846;
-constexpr double kPpm = 8000.0;  // the AtomS3R measured about +8000 (frames every 5.04 ms)
+constexpr double kPpm = 6150.0;  // an AtomS3R measured +6145 over 80 s (frames every 5.031 ms)
 constexpr double kTickUs = 39.0625 * (1.0 + kPpm * 1e-6);
 constexpr double kMagDelayUs = 26000.0;  // readout time minus the time the field belongs to
 constexpr double kStillS = 8.0, kTurnS = 2.5, kTourStartS = 3.0, kRockS = 110.0;
@@ -137,8 +146,13 @@ void encodeBmm(const V3& body, uint8_t m[8]) {
 struct SimBmi270 : m5::IMU_Base {
   uint8_t reg[128]{};
   uint8_t bmm[128]{};
+  static constexpr size_t kFifoBytes = 2048;
   std::deque<uint8_t> fifo;
   std::deque<size_t> frame_sizes;
+  unsigned skip_count = 0;  // frames dropped since the last skip frame was read
+  bool reading = false;     // a FIFO_DATA read is in progress
+  size_t cursor = 0;        // bytes of the front frame that read has delivered
+  int skip_byte = -1;       // byte of the skip frame that read delivers next, -1 none
   uint64_t start_us = 0, next_tick = 0;
   double t0_ticks = 53.0;
   uint64_t overflowed = 0, frames_written = 0;
@@ -158,14 +172,39 @@ struct SimBmi270 : m5::IMU_Base {
   }
   double ticksNow() const { return double(ins_sketch_host::clock_us() - start_us) / kTickUs; }
 
+  size_t fifoLength() const { return fifo.size() + (skip_count ? 2 : 0); }
+
+  // A frame that does not fit drops the oldest frames. During a read the
+  // frames it is delivering stay; the new frame is dropped instead, so the
+  // skip frame of the next read still sits where the dropped frames were.
   void push(const std::vector<uint8_t>& frame) {
-    while (fifo.size() + frame.size() > 6144 && !frame_sizes.empty()) {
+    while (fifo.size() + frame.size() + (skip_count ? 2 : 0) > kFifoBytes) {
+      ++overflowed;
+      skip_count = std::min(255u, skip_count + 1);
+      if (reading || frame_sizes.empty()) return;
       for (size_t i = 0; i < frame_sizes.front(); ++i) fifo.pop_front();
       frame_sizes.pop_front();
-      ++overflowed;
     }
     fifo.insert(fifo.end(), frame.begin(), frame.end());
     frame_sizes.push_back(frame.size());
+  }
+
+  uint8_t fifoByte() {
+    if (skip_byte == 0) { skip_byte = 1; return 0x40; }
+    if (skip_byte == 1) {
+      skip_byte = -1;
+      const uint8_t n_skipped = uint8_t(skip_count);
+      skip_count = 0;
+      return n_skipped;
+    }
+    if (frame_sizes.empty()) return 0x80;
+    const uint8_t v = fifo[cursor++];
+    if (cursor == frame_sizes.front()) {
+      for (size_t i = 0; i < cursor; ++i) fifo.pop_front();
+      frame_sizes.pop_front();
+      cursor = 0;
+    }
+    return v;
   }
 
   void advance() {
@@ -216,17 +255,15 @@ struct SimBmi270 : m5::IMU_Base {
 
   bool readRegister(uint8_t r, uint8_t* b, size_t len) override {
     bus(kAddressUs);
+    if (r == 0x26) {
+      reading = true;
+      skip_byte = skip_count ? 0 : -1;
+    }
     for (size_t i = 0; i < len; ++i) {
       advance();
       const uint8_t a = uint8_t(r == 0x26 ? 0x26 : r + i);
       if (a == 0x26) {
-        if (fifo.empty()) {
-          b[i] = 0x80;
-        } else {
-          b[i] = fifo.front();
-          fifo.pop_front();
-          if (!frame_sizes.empty() && --frame_sizes.front() == 0) frame_sizes.pop_front();
-        }
+        b[i] = fifoByte();
       } else {
         if (a == 0x18) {
           const uint32_t st = uint32_t(uint64_t(ticksNow()) & 0xFFFFFF);
@@ -236,11 +273,15 @@ struct SimBmi270 : m5::IMU_Base {
           const int16_t temp = int16_t((30.0f - 23.0f) * 512.0f);
           reg[0x22] = uint8_t(uint16_t(temp) & 0xff); reg[0x23] = uint8_t(uint16_t(temp) >> 8);
         }
-        if (a == 0x24) { reg[0x24] = uint8_t(fifo.size() & 0xff); reg[0x25] = uint8_t((fifo.size() >> 8) & 0x3f); }
+        if (a == 0x24) { reg[0x24] = uint8_t(fifoLength() & 0xff); reg[0x25] = uint8_t((fifoLength() >> 8) & 0x3f); }
         b[i] = reg[a];
       }
       bus(kByteUs);
     }
+    // A frame read in part stays in the FIFO, whole.
+    reading = false;
+    cursor = 0;
+    skip_byte = -1;
     return true;
   }
   bool writeRegister8(uint8_t r, uint8_t v) override {
@@ -251,7 +292,7 @@ struct SimBmi270 : m5::IMU_Base {
     reg[r] = v;
     if (r == 0x4E && manual()) bmm[v] = reg[0x4F];
     if (r == 0x4D && manual()) reg[0x04] = bmm[v];
-    if (r == 0x7E && v == 0xB0) { fifo.clear(); frame_sizes.clear(); }
+    if (r == 0x7E && v == 0xB0) { fifo.clear(); frame_sizes.clear(); skip_count = 0; }
     return true;
   }
 };
@@ -304,7 +345,7 @@ int main(int argc, char** argv) {
   setup();
   const uint64_t start_us = ins_sketch_host::clock_us();
   const uint64_t end_us = start_us + uint64_t(kDurationS * 1e6);
-  bool tapped = false, moved = false, toggled = false;
+  bool tapped = false, moved = false, toggled = false, stalled = false;
   while (ins_sketch_host::clock_us() < end_us) {
     const double t_s = double(ins_sketch_host::clock_us() - start_us) * 1e-6;
     if (bad && !moved && t_s > 1.0) {
@@ -314,6 +355,10 @@ int main(int argc, char** argv) {
     if (bad && !toggled && t_s > 2.0) {
       HardwareSerial::input() = "n\n";  // gyro noise-performance mode on
       toggled = true;
+    }
+    if (bad && !stalled && t_s > 15.0) {
+      HardwareSerial::input() = "s 1500\n";  // a display burst twice as long as the FIFO holds
+      stalled = true;
     }
     if (!tapped && t_s > 31.0) {
       atoms3r_ical::Input::tap() = true;  // next screen page
@@ -373,25 +418,38 @@ int main(int argc, char** argv) {
   std::printf("timing\n");
   check(str(f_line, "ok") == "1", "FIFO setup succeeded (F line)", str(f_line, "ok") == "1", 1);
   check(str(h_line, "sketch") == "atomS3R_imu_fifo_diagnostics", "identity line (H)", !h_line.empty(), 1);
-  check(sim.overflowed == 0, "simulated FIFO never overflowed", double(sim.overflowed), 0);
-  check(str(last_t, "rate_ok") == "1", "rate_ok", num(last_t, "rate_hz"), 200.0 / (1.0 + kPpm * 1e-6));
-  check(std::fabs(num(last_t, "rate_hz") - 200.0 / (1.0 + kPpm * 1e-6)) < 0.05, "host-clock rate is the sensor clock",
-        num(last_t, "rate_hz"), 200.0 / (1.0 + kPpm * 1e-6));
-  check(std::fabs(num(last_t, "sensor_rate_hz") - 200.0) < 0.2, "200 Hz on the sensor clock",
-        num(last_t, "sensor_rate_hz"), 200.0);
-  check(num(last_d, "lost") == 0 && num(last_d, "grid_breaks") == 0, "no frame counted lost, warm-up included",
-        num(last_d, "lost"), 0);
+  check(num(last_d, "lost") == 0 && num(last_d, "grid_breaks") == 0 && num(last_d, "unknown") == 0,
+        "no frame counted lost by the sensor clock, warm-up included", num(last_d, "lost"), 0);
+  if (!bad) {
+    check(sim.overflowed == 0, "simulated FIFO never overflowed", double(sim.overflowed), 0);
+    check(str(last_t, "rate_ok") == "1", "rate_ok", num(last_t, "rate_hz"), 200.0 / (1.0 + kPpm * 1e-6));
+    check(std::fabs(num(last_t, "rate_hz") - 200.0 / (1.0 + kPpm * 1e-6)) < 0.05,
+          "host-clock rate is the sensor clock", num(last_t, "rate_hz"), 200.0 / (1.0 + kPpm * 1e-6));
+    check(std::fabs(num(last_t, "sensor_rate_hz") - 200.0) < 0.2, "200 Hz on the sensor clock",
+          num(last_t, "sensor_rate_hz"), 200.0);
+  } else {
+    check(sim.overflowed > 100, "the 1.5 s burst overflowed the 2 kB FIFO (frames dropped)", double(sim.overflowed),
+          150);
+    check(num(last_d, "skipped") == double(sim.overflowed), "every dropped frame reported by a skip frame",
+          num(last_d, "skipped"), double(sim.overflowed));
+    check(str(last_t, "no_loss_ok") == "0" && num(last_t, "lost") == double(sim.overflowed),
+          "no_loss_ok fails, with the dropped frames as lost", num(last_t, "lost"), double(sim.overflowed));
+  }
   check(str(h_line, "gyr_T0_c") != "missing" && str(h_line, "mag_cal_field_uT") != "missing",
         "H line carries the saved calibration's context", str(h_line, "mag_cal_field_uT") != "missing", 1);
   if (bad)
     check(str(last_f, "gyr_conf_now") == "0xe9" && num(last_d, "config_frames") >= 1,
           "'n' switched the gyro to noise-performance mode", num(last_d, "config_frames"), 1);
-  check(str(last_t, "no_loss_ok") == "1" && num(last_t, "lost") == 0, "no_loss_ok through display bursts",
-        num(last_t, "lost"), 0);
-  check(num(last_t, "stall_max_ms") >= 1500, "a 1.5 s display burst ran", num(last_t, "stall_max_ms"), 1500);
-  check(str(last_t, "spacing_ok") == "1", "spacing_ok", num(last_t, "spacing_max_us"), 5000);
+  const double longest_ms = bad ? 1500 : FIFO_DIAG_HEAVY_LOAD_MS;
+  check(num(last_t, "stall_max_ms") >= longest_ms, bad ? "a 1.5 s display burst ran" : "a 600 ms display burst ran",
+        num(last_t, "stall_max_ms"), longest_ms);
+  if (!bad) {
+    check(str(last_t, "no_loss_ok") == "1" && num(last_t, "lost") == 0, "no_loss_ok through display bursts",
+          num(last_t, "lost"), 0);
+    check(str(last_t, "spacing_ok") == "1", "spacing_ok", num(last_t, "spacing_max_us"), 5000);
+    check(str(last_t, "mag_ok") == "1", "mag_ok: 25 Hz, data ready, 40 ms apart", num(last_t, "aux_hz"), 25.0);
+  }
   check(std::fabs(num(last_t, "clock_ppm") - kPpm) < 30, "sensor clock error measured", num(last_t, "clock_ppm"), kPpm);
-  check(str(last_t, "mag_ok") == "1", "mag_ok: 25 Hz, data ready, 40 ms apart", num(last_t, "aux_hz"), 25.0);
   check(str(last_t, "delay_ok") == "1", "delay_ok: three fits within 4 ms", num(last_t, "delay_spread_ms"), 4.0);
   // The fit uses the shipping rotation-history convention: a gyro sample is
   // the rate over the interval that ends at it. The simulated gyro sample at
@@ -400,9 +458,11 @@ int main(int argc, char** argv) {
   const double expected_delay_ms = kMagDelayUs * 1e-3 + 2.5 + 0.5;
   check(std::fabs(num(last_t, "delay_ms") - expected_delay_ms) <= 2.0, "measured delay matches the simulated delay",
         num(last_t, "delay_ms"), expected_delay_ms);
-  check(r_gaps == 0 && r_lines > long(kDurationS * 190), "every frame has an R line", double(r_lines),
-        kDurationS * 200);
-  check(min_dt >= 4900 && max_dt <= 5100, "every R-line sample spacing within 4.9-5.1 ms", max_dt, 5000);
+  if (!bad) {
+    check(r_gaps == 0 && r_lines > long(kDurationS * 190), "every frame has an R line", double(r_lines),
+          kDurationS * 200);
+    check(min_dt >= 4900 && max_dt <= 5100, "every R-line sample spacing within 4.9-5.1 ms", max_dt, 5000);
+  }
   std::printf("  R-line spacing %.0f..%.0f us, %zu delay fits\n", min_dt, max_dt, fits.size());
 
   std::printf("reference\n");
