@@ -127,6 +127,7 @@ static bool runHandled(float phase) {
   };
 
   float max_hdg_err = 0.0f;
+  bool saw_handoff = false;
   for (int k = 0; k < 200 * 120; ++k) {
     const float t = k * dt;
     const Mat3 R_nb = attitude(t);
@@ -138,6 +139,7 @@ static bool runHandled(float phase) {
 
     const auto s = f.snapshot();
     if (!s.initialized) continue;
+    saw_handoff = true;
     const Vec3 x_hat = Eigen::AngleAxisf(s.euler_rad.z(), Vec3::UnitZ()) *
                        Eigen::AngleAxisf(s.euler_rad.y(), Vec3::UnitY()) *
                        Eigen::AngleAxisf(s.euler_rad.x(), Vec3::UnitX()) * Vec3::UnitX();
@@ -147,7 +149,7 @@ static bool runHandled(float phase) {
     max_hdg_err = std::max(max_hdg_err, std::fabs(hdg_err));
   }
 
-  const bool ok = std::isfinite(max_hdg_err) && max_hdg_err < 25.0f;
+  const bool ok = saw_handoff && std::isfinite(max_hdg_err) && max_hdg_err < 25.0f;
   std::printf("NLO mag turns handled boot phase=%.1f max|hdg err| after handoff=%.2f deg %s\n",
               phase, max_hdg_err, ok ? "OK" : "FAIL");
   return ok;
