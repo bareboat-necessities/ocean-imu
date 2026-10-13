@@ -42,7 +42,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "claude/ins-device-diagnostics",
-  "git_commit": "f1f81509bf7555fb351279a3d6d36f90aa7b9520",
+  "git_commit": "c364126d02fbfd3a443b08366d4c48a76b12b1fc",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -333,8 +333,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-10-12T23:55:45+00:00",
-    "git_commit": "f1f81509bf7555fb351279a3d6d36f90aa7b9520",
+    "generated_at": "2026-10-13T04:45:41+00:00",
+    "git_commit": "c364126d02fbfd3a443b08366d4c48a76b12b1fc",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -525,7 +525,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "38320556186",
+      "run_id": "38341311853",
       "workflow": "ou-full-evidence-branch"
     }
   },
