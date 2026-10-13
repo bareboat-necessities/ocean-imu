@@ -51,3 +51,41 @@ Copy the whole serial log, from the `[DIAG]` header through the `[VERDICT]` bloc
 - [Basic IMU](../atomS3R_imu_m5_basic/README.md)
 - [Mahony compass](../../compass_ahrs/atomS3R_compass_mahony/README.md)
 - [qMEKF compass](../../compass_ahrs/atomS3R_compass_qmekf/README.md)
+
+## Example Calibration Report
+
+```
+    thermal=UNLEARNED/SPAN_SMALL meta=bound
+    holds=13 blocks=284 capture=87s T_seen=[36.31 37.12] k_range=[0.00 0.00]
+    bias_sd=[0.0019 0.0019 0.0018] cross_sd=[0.00025 0.00034 0.00028] k_sd=[-1.00000 -1.00000 -1.00000]
+    sigma_obs=0.0031 heldout_cv rms/max=0.0068/0.0152 verify rms/max=0.0054/0.0084
+  gyro:  T0=36.83
+    b0=[0.002320 -0.010273 -0.007242]
+    k =[0.000000 0.000000 0.000000]
+    S (w_cal = S*(w_raw - bias(T)) ; S=I (stationary bias-only fit)):
+      [1.000, 0.000, 0.000]
+      [0.000, 1.000, 0.000]
+      [0.000, 0.000, 1.000]
+      diag=[1.000000 1.000000 1.000000], offdiag_rms=0.000000
+    thermal=BIAS_ONLY reason=0 bins=7 evidence T=[36.71 36.93] clamp T=[36.83 36.83]
+    k_sigma=[-1.0000000 -1.0000000 -1.0000000] information=0.020 meta=bound
+  mag: field_uT=47.715 rms=0.3593
+    b=[26.087 10.853 -17.710]
+    A (m_cal = A*(m_raw - b)):
+      [0.938192546, 0.002844804, 0.000681775]
+      [0.002844804, 0.945208788, -0.002084012]
+      [0.000681775, -0.002084012, 0.979314506]
+      diag=[0.938193 0.945209 0.979315], offdiag_rms=0.002074
+[DIAG] saved mag calibration applied at runtime: YES
+[DIAG] next: STILL. Lay the board flat, screen up, away from metal; tap and do not touch.
+[DIAG] (serial: 'q' read mag setting, 'o' driver default, 'p' low-noise, 'd' drift monitor)
+[MAGCFG] current: chip=0x32 power=0x01 mode=0x38 rep_xy=23 (n=47) rep_z=40 (n=41)
+[STILL] magnetometer mode: low-noise (47/41 reps, 30 Hz), Bosch-compensated
+[STILL] polls=2000 accel+gyro=990 gyro-only=977 accel-only=0 none=33 mag-bit=246
+[STILL] distinct mag readings=247 interval mean=40.4 ms min=30.0 max=84.9 ms (=> 24.7 Hz)
+[STILL] raw mag mean [39.63 33.57 25.69] noise sd [1.08 0.80 0.51]
+[STILL] cal mag mean [12.80 21.43 42.46] noise sd [1.02 0.76 0.50] |m|=49.26
+[STILL] accel mean [-0.060 0.132 -9.789] |a|=9.790 tilt=0.9 deg; gyro mean [-0.067 0.434 0.553] deg/s
+[STILL] single-reading scatter with saved cal: heading sd=2.4 deg, dip sd=1.0 deg; temp=39.5 C
+[STILL] dip with saved cal=59.1 (expected 66.5), heading=299.7; accel D is negative (screen up)
+```
