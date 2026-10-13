@@ -308,9 +308,12 @@ inline bool magTimingValid(const MagTimingRecord& r) {
 // layout version may be 0 or 1); a present record must be qualified and bound
 // to the saved gyro/mag set. Runtime magnetic corrections never apply it.
 inline bool magTimingAbsent(const MagTimingRecord& r) {
-  MagTimingRecord unversioned = r, none{};
-  unversioned.version = none.version = 0;
-  return memcmp(&unversioned, &none, sizeof(none)) == 0;
+  // Bitwise zero, so a negative zero still counts as a present record.
+  auto zero = [](float v) { uint32_t u; memcpy(&u, &v, sizeof(u)); return u == 0; };
+  return r.binding == 0 && r.configuration == 0 && r.delay_us == 0 &&
+         zero(r.fit_width_s) && zero(r.residual_time_s) && zero(r.train_rms_rad) &&
+         zero(r.validation_rms_rad) && zero(r.improvement) &&
+         r.train_pairs == 0 && r.validation_pairs == 0 && r.crc == 0;
 }
 inline bool magTimingCompatible(const ImuCalBlobV5& b, uint32_t id_lo, uint32_t id_hi,
                                 uint8_t imu_type, uint8_t source, uint32_t configuration) {
