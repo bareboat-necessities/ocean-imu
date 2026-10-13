@@ -55,6 +55,30 @@ Copy the whole serial log, from the `[DIAG]` header through the `[VERDICT]` bloc
 ## Example Calibration Report
 
 ```
+[MAGCFG] BMM150 low-noise: 47/41 repetitions (was 1/1), mode=0x38
+[MAGCFG] BMM150 Bosch compensation on: x1=0 y1=0 x2=26 y2=26 xy1=29 xy2=-3 z1=23337 z2=722 z3=0 z4=0 xyz1=6574
+[DIAG] magnetometer: low-noise (47/41 reps, 30 Hz), Bosch-compensated
+[MAGTIME CAL] valid=1 delay_ms=36.0 allowance_ms=27.0 applied=0
+
+[DIAG] ===== AtomS3R magnetometer diagnostics =====
+[DIAG] imu_type=6 (bmi270=6) expected_dip=66.5 deg
+[DIAG] BMI270 addr=0x68 AUX_CONF=0x46 (aux poll 25.00 Hz) AUX_DEV_ID=0x20 (i2c 0x10) AUX_IF_CONF=0x4F (data mode) AUX_RD_ADDR=0x42 PWR_CTRL=0x0F
+[DIAG] BMM150 main-bus instance: NONE (magnetometer is only behind the BMI270 AUX bus)
+[DIAG] main-bus probe 0x10: no ack
+[DIAG] main-bus probe 0x11: no ack
+[DIAG] main-bus probe 0x12: no ack
+[DIAG] main-bus probe 0x13: no ack
+[DIAG] saved calibration:
+  build_mode: m5_imu_api
+  ok: A=1 G=1 M=1
+  accel: g=9.8025608 (matches g_cal_local) T0=36.60 rms_mag=0.0034
+    b0=[-0.10482 -0.14907 0.06570]
+    k =[0.000000 0.000000 0.000000] clamp T=[-1000.0 1000.0]
+    S (a_cal = S*(a_raw - bias(T))):
+      [0.999178350, 0.001822500, 0.000486332]
+      [0.001822500, 0.998607159, -0.003130334]
+      [0.000486332, -0.003130334, 0.997308433]
+      diag=[0.999178 0.998607 0.997308], offdiag_rms=0.002110
     thermal=UNLEARNED/SPAN_SMALL meta=bound
     holds=13 blocks=284 capture=87s T_seen=[36.31 37.12] k_range=[0.00 0.00]
     bias_sd=[0.0019 0.0019 0.0018] cross_sd=[0.00025 0.00034 0.00028] k_sd=[-1.00000 -1.00000 -1.00000]
@@ -88,4 +112,5 @@ Copy the whole serial log, from the `[DIAG]` header through the `[VERDICT]` bloc
 [STILL] accel mean [-0.060 0.132 -9.789] |a|=9.790 tilt=0.9 deg; gyro mean [-0.067 0.434 0.553] deg/s
 [STILL] single-reading scatter with saved cal: heading sd=2.4 deg, dip sd=1.0 deg; temp=39.5 C
 [STILL] dip with saved cal=59.1 (expected 66.5), heading=299.7; accel D is negative (screen up)
+[DIAG] next: ROTATE. Turn and tilt slowly (under ~45 deg/s) through every direction, including upside down.
 ```
