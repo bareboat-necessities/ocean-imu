@@ -345,10 +345,12 @@ jobs:
     # skipped evidence job off main, but requires evidence success on main.
     # Naming a status function here likewise prevents an automatic skip from
     # an ancestor and lets the two jobs that actually produce release assets
-    # decide whether release can proceed.
+    # decide whether release can proceed. Only main (published as vTest) and
+    # tags release; any other ref would create a release named after a branch.
     if: >-
       ${{ !cancelled()
           && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+          && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
           && needs.build.result == 'success'
           && needs['build-MCU'].result == 'success' }}
     runs-on: ubuntu-latest
