@@ -27,7 +27,30 @@ TARGETS = calibration_accuracy-test mag_field_consistency-test mag_hand_motion-t
 
 all: build test
 
-TARGETS += mag_rotation-test mag_input-test mag_timing_cal-test
+TARGETS += mag_rotation-test mag_input-test mag_timing_cal-test bmi270_fifo-test geomag_wmm-test imu_accuracy-test
+TARGETS += fifo_diagnostics_sketch-test
+bmi270_fifo-test: bmi270_fifo-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+bmi270_fifo-test.o: ../../src/AtomS3R/AtomS3R_Bmi270Fifo.h ../../src/AtomS3R/AtomS3R_ImuUnits.h
+geomag_wmm-test: geomag_wmm-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+geomag_wmm-test.o: ../../src/imu_calibrate/GeomagWmm.h
+imu_accuracy-test: imu_accuracy-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+imu_accuracy-test.o: ../../src/imu_calibrate/ImuAccuracy.h
+
+# The FIFO diagnostics sketch, compiled unchanged against the host stand-ins
+# in tests/common/ins_sketch_stubs, run against a simulated BMI270.
+FIFO_SKETCH_FILE := $(REPO_ROOT)/sensors/imu_basic/atomS3R_imu_fifo_diagnostics/atomS3R_imu_fifo_diagnostics.ino
+FIFO_SKETCH_FLAGS := -O2 -std=c++20 -fno-finite-math-only \
+	-I$(REPO_ROOT)/tests/common/ins_sketch_stubs -I$(REPO_ROOT)/src $(EIGEN_CPPFLAGS) \
+	'-DFIFO_SKETCH_FILE="$(FIFO_SKETCH_FILE)"'
+fifo_diagnostics_sketch-test.o: $(REPO_ROOT)/tests/common/FifoDiagnosticsSketch.cpp $(FIFO_SKETCH_FILE) \
+		$(wildcard $(REPO_ROOT)/tests/common/ins_sketch_stubs/*.h $(REPO_ROOT)/tests/common/ins_sketch_stubs/AtomS3R/*.h)
+	$(CC) $(FIFO_SKETCH_FLAGS) -MMD -MP -MF $@.d -MT $@ -c -o $@ $(REPO_ROOT)/tests/common/FifoDiagnosticsSketch.cpp
+fifo_diagnostics_sketch-test: fifo_diagnostics_sketch-test.o
+	$(CC) $(FIFO_SKETCH_FLAGS) -o $@ $< $(LDFLAGS)
+-include fifo_diagnostics_sketch-test.o.d
 mag_timing_cal-test: mag_timing_cal-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 mag_timing_cal-test.o: ../../src/imu_calibrate/MagTimingCal.h ../../src/util/MagneticInput.h ../../src/util/MagneticRotation.h ../../src/AtomS3R/AtomS3R_ImuCalBlob.h ../../src/AtomS3R/AtomS3R_MagAcquisition.h

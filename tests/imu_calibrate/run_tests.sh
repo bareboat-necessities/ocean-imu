@@ -12,6 +12,11 @@ python3 test_wizard_config.py
 ./mag_rotation-test
 ./mag_input-test
 ./mag_timing_cal-test
+./bmi270_fifo-test
+./geomag_wmm-test
+./imu_accuracy-test
+./fifo_diagnostics_sketch-test good
+./fifo_diagnostics_sketch-test bad
 python3 test_sketch_temperature.py
 ./imu_calibrate-test
 ./accel_cal-test

@@ -12,6 +12,7 @@ Use this directory for **first hardware bring-up**. These sketches stay close to
 
 - [**atomS3R_imu_m5_basic**](atomS3R_imu_m5_basic/README.md) — reads the AtomS3R IMU through M5Unified, maps the measurements into the project frame, loads saved calibration from NVS when available, and prints accelerometer, gyro, magnetometer, and calibrated magnetometer diagnostics.
 - [**atomS3R_mag_diagnostics**](atomS3R_mag_diagnostics/README.md) — guided magnetometer check for wrong compass headings: axis signs against the gyro, saved versus freshly fitted calibration, field strength and dip consistency, and magnetometer/accelerometer frame alignment, with verdict lines on serial.
+- [**atomS3R_imu_fifo_diagnostics**](atomS3R_imu_fifo_diagnostics/README.md) — reads the BMI270 at 200 Hz through its FIFO with sample times from the sensor clock and a BMI270-triggered magnetometer, and measures timing (rate, loss under display load, spacing, magnetometer cadence and delay) and accuracy (|a| against gravity, gyro bias, noise and scale, and the magnetic field strength and dip against the World Magnetic Model at your location).
 
 ## Before running
 

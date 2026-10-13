@@ -9,6 +9,7 @@
 #include <vector>
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
 #include "AtomS3R/AtomS3R_MagAcquisition.h"
+#include "AtomS3R/AtomS3R_Bmm150Compensation.h"
 
 namespace atoms3r_ical {
 using Vector3f = Eigen::Vector3f;
@@ -54,6 +55,9 @@ struct MemoryKv {
 class ImuCalStoreNvs : public ImuCalStoreT<MemoryKv> {};
 
 inline void clearM5UnifiedImuCalibration() {}
+// The BMM150 trim a sketch compensates with; a test sets it.
+struct AtomS3RMagSource { Bmm150Trim trim{}; };
+inline AtomS3RMagSource& atoms3rMagSource() { static AtomS3RMagSource source; return source; }
 inline bool configureAtomS3RMag(Print&, bool = true) { return true; }
 inline void printBlobSummary(Print&, const ImuCalBlobV5&) {}
 inline void printBlobDetail(Print&, const ImuCalBlobV5&) {}
