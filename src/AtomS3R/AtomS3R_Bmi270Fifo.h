@@ -231,8 +231,8 @@ size_t parseBmi270Fifo(const uint8_t* d, size_t n, FifoParseStats& st, OnFrame&&
       if (i + len > n) break;
       size_t k = i + 1;
       if (f.aux) { std::memcpy(f.m, d + k, 8); k += 8; }
-      if (f.gyr) { for (int j = 0; j < 3; ++j) f.g[j] = s16(d + k + 2 * j); k += 6; }
-      if (f.acc) { for (int j = 0; j < 3; ++j) f.a[j] = s16(d + k + 2 * j); k += 6; }
+      if (f.gyr) { for (size_t j = 0; j < 3; ++j) f.g[j] = s16(d + k + 2 * j); k += 6; }
+      if (f.acc) { for (size_t j = 0; j < 3; ++j) f.a[j] = s16(d + k + 2 * j); k += 6; }
       ++st.frames;
       if (f.aux) ++st.aux;
       if (f.acc && f.gyr) ++st.acc_gyr;

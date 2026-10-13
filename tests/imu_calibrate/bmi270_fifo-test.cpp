@@ -3,6 +3,7 @@
 // parsing, unit equivalence with the M5Unified path, and the sensortime clock
 // map under stalls, clock error, lost frames and counter wrap.
 #define EIGEN_NON_ARDUINO
+#include <bit>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -197,8 +198,10 @@ void testUnits() {
         atoms3r_ical::ImuCalCfg::DEG2RAD);
     const Eigen::Vector3f a = atoms3r_ical::bmi270AccelToBodyNed(r, atoms3r_ical::bmi270AccelGPerLsb(0x02));
     const Eigen::Vector3f g = atoms3r_ical::bmi270GyroToBodyNed(r, atoms3r_ical::bmi270GyroDpsPerLsb(0x00));
-    if (std::memcmp(a.data(), a_m5.data(), sizeof(float) * 3) || std::memcmp(g.data(), g_m5.data(), sizeof(float) * 3))
-      ++mismatches;
+    for (int j = 0; j < 3; ++j)
+      if (std::bit_cast<uint32_t>(a[j]) != std::bit_cast<uint32_t>(a_m5[j]) ||
+          std::bit_cast<uint32_t>(g[j]) != std::bit_cast<uint32_t>(g_m5[j]))
+        ++mismatches;
   }
   require(mismatches == 0, "FIFO samples equal readImuMapped() units bit for bit");
   require(atoms3r_ical::bmi270AccelGPerLsb(0) == 2.0f / 32768.0f &&
